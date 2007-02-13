@@ -63,7 +63,7 @@ Each HPLC objects contains a gradient object. A gradient objects contains a list
 
 	public: 
 	  /// Default constructor
-		GradientVisualizer(bool editable= FALSE, QWidget *parent =0, const char *name = 0);
+		GradientVisualizer(bool editable= FALSE, QWidget *parent =0);
 		/// Loads the meta data from the object to the viewer.
 		void load(Gradient &g);
 		

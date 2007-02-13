@@ -56,8 +56,8 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-GradientVisualizer::GradientVisualizer(bool editable, QWidget *parent, const char *name) 
-	: BaseVisualizer(editable, parent, name)
+GradientVisualizer::GradientVisualizer(bool editable, QWidget *parent) 
+	: BaseVisualizer(editable, parent)
 {
 	//type_="Gradient";
 	nextrow_=0;

@@ -45,7 +45,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-SourceFileVisualizer::SourceFileVisualizer(bool editable, QWidget *parent, const char *name) : BaseVisualizer(editable, parent, name)
+SourceFileVisualizer::SourceFileVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
 {
 	addLabel("Modify source file information");
 	addSeperator();	

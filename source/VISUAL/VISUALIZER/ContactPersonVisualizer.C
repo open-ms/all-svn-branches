@@ -43,8 +43,8 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-ContactPersonVisualizer::ContactPersonVisualizer(bool editable, QWidget *parent, const char *name) 
-	: BaseVisualizer(editable, parent, name)
+ContactPersonVisualizer::ContactPersonVisualizer(bool editable, QWidget *parent) 
+	: BaseVisualizer(editable, parent)
 {
   
 	addLabel("Modify ContactPerson information");		

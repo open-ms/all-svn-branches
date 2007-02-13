@@ -91,17 +91,13 @@ namespace OpenMS
 		
 		@ingroup Visual
 		*/
-  class MSMetaDataExplorer : public QDialog 
-	//class MSMetaDataExplorer : public QSplitter 
+  class MSMetaDataExplorer : public QDialog
   {
     Q_OBJECT
   
     public: 
-		  /// Default constructor
-			//MSMetaDataExplorer(QWidget *parent =0, const char *name = 0, bool modal = FALSE, WFlags fl = 0);
-		  
 			/// Constructor with flag for edit mode
-			MSMetaDataExplorer(bool editable = FALSE, QWidget *parent =0, const char *name = 0, bool modal = FALSE, Qt::WFlags fl = 0 );
+			MSMetaDataExplorer(bool editable = FALSE, QWidget *parent =0, bool modal = FALSE, Qt::WFlags fl = 0 );
 		  
 			/**
 			@brief A template class to add classes

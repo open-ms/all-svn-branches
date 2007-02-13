@@ -49,7 +49,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-IonSourceVisualizer::IonSourceVisualizer(bool editable, QWidget *parent, const char *name) : BaseVisualizer(editable, parent, name)
+IonSourceVisualizer::IonSourceVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
 {
 	type_="IonSource";
   

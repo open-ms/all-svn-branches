@@ -63,7 +63,7 @@ This class provides all functionality to view the meta information of an object 
 
 	public: 
 	  /// Default constructor
-		ProteinIdentificationVisualizer(bool editable= FALSE, QWidget *parent =0, MSMetaDataExplorer *caller=0, const char *name = 0);
+		ProteinIdentificationVisualizer(bool editable= FALSE, QWidget *parent =0, MSMetaDataExplorer *caller=0);
 		/// Loads the meta data from the object to the viewer. Gets the id of the item in the tree as parameter.
 		void load(ProteinIdentification &s, int tree_item_id);
 	  

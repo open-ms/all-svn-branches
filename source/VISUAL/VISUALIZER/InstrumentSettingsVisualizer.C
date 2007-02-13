@@ -51,8 +51,8 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-InstrumentSettingsVisualizer::InstrumentSettingsVisualizer(bool editable, QWidget *parent, const char *name) 
-	: BaseVisualizer(editable, parent, name)
+InstrumentSettingsVisualizer::InstrumentSettingsVisualizer(bool editable, QWidget *parent) 
+	: BaseVisualizer(editable, parent)
 {
 	type_="InstrumentSettings";
   

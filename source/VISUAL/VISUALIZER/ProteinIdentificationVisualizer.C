@@ -53,7 +53,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-ProteinIdentificationVisualizer::ProteinIdentificationVisualizer(bool editable, QWidget *parent, MSMetaDataExplorer *caller, const char *name) : BaseVisualizer(editable, parent, name)
+ProteinIdentificationVisualizer::ProteinIdentificationVisualizer(bool editable, QWidget *parent, MSMetaDataExplorer *caller) : BaseVisualizer(editable, parent)
 {
 	type_="ProteinIdentification";
 	pidv_caller_= caller;

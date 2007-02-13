@@ -59,7 +59,7 @@ This class provides all functionality to view the meta information of an object 
 		Q_OBJECT
 
 	public: 
-		SoftwareVisualizer(bool editable= FALSE, QWidget *parent =0, const char *name = 0);
+		SoftwareVisualizer(bool editable= FALSE, QWidget *parent =0);
 		void load(Software &s);
 	  
 	private slots:

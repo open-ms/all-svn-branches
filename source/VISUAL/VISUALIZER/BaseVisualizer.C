@@ -58,8 +58,8 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-BaseVisualizer::BaseVisualizer(bool editable, QWidget *parent, const char *name) 
-	: DataTable(editable, parent, name)
+BaseVisualizer::BaseVisualizer(bool editable, QWidget *parent) 
+	: DataTable(editable, parent)
 {
   
 }

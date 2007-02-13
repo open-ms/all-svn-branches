@@ -48,8 +48,8 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-AcquisitionVisualizer::AcquisitionVisualizer(bool editable, QWidget *parent, const char *name) 
-	: BaseVisualizer(editable, parent, name)
+AcquisitionVisualizer::AcquisitionVisualizer(bool editable, QWidget *parent) 
+	: BaseVisualizer(editable, parent)
 {
   
 	addLabel("Show Acquisition information");		

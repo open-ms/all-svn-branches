@@ -55,7 +55,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-SoftwareVisualizer::SoftwareVisualizer(bool editable, QWidget *parent, const char *name) : BaseVisualizer(editable, parent, name)
+SoftwareVisualizer::SoftwareVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
 {
 	type_="Software";
   

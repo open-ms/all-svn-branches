@@ -74,9 +74,8 @@
 using namespace std;
 using namespace OpenMS;
 
-//MSMetaDataExplorer::MSMetaDataExplorer(QWidget *parent, const char *name, bool modal, WFlags fl): QDialog(parent, name, modal, fl)
-MSMetaDataExplorer::MSMetaDataExplorer(bool editable, QWidget *parent, const char *name, bool modal, Qt::WFlags fl)
-: QDialog(parent, name, modal, fl), editable_(editable)
+MSMetaDataExplorer::MSMetaDataExplorer(bool editable, QWidget *parent, bool modal, Qt::WFlags fl)
+: QDialog(parent,"", modal, fl), editable_(editable)
 {    
   
 	//basiclayout_ = new QHBoxLayout(this);

@@ -32,20 +32,6 @@
 #include <OpenMS/CONCEPT/Types.h>
 
 //QT
-//#include <QtGui/qtextedit.h>
-//#include <q3hbox.h>
-//#include <qspinbox.h>
-//#include <qpushbutton.h>
-//#include <qwidget.h>
-//#include <qlayout.h>
-//#include <qlabel.h>
-//#include <qaction.h>
-//#include <qlineedit.h>
-//#include <qcombobox.h>
-//#include <q3listview.h>
-//#include <q3listbox.h>
-//#include <qbuttongroup.h>
-//#include <QGridLayout>
 
 #include <QtGui/QWidget>
 
@@ -70,7 +56,7 @@ namespace OpenMS
 
 		public: 
 			/// Default constructor
-			DataTable(bool editable, QWidget *parent =0, const char *name = 0);
+			DataTable(bool editable, QWidget *parent =0);
 			/// Adds a label to the grid layout.
 			void addLabel(const QString &label);
 		  /// Adds a line edit field with label to the grid layout.

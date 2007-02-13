@@ -53,7 +53,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-IdentificationVisualizer::IdentificationVisualizer(bool editable, QWidget *parent, MSMetaDataExplorer *caller, const char *name) : BaseVisualizer(editable,parent, name)
+IdentificationVisualizer::IdentificationVisualizer(bool editable, QWidget *parent, MSMetaDataExplorer *caller) : BaseVisualizer(editable,parent)
 {
 	type_="Identification";
 	pidv_caller_= caller;

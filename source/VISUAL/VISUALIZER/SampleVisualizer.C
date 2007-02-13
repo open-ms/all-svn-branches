@@ -57,8 +57,8 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-SampleVisualizer::SampleVisualizer(bool editable, QWidget *parent, const char *name) 
-	: BaseVisualizer(editable, parent, name)
+SampleVisualizer::SampleVisualizer(bool editable, QWidget *parent) 
+	: BaseVisualizer(editable, parent)
 {
 	type_="Sample";
   

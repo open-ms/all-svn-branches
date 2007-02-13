@@ -50,8 +50,8 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-HPLCVisualizer::HPLCVisualizer(bool editable, QWidget *parent, const char *name) 
-	: BaseVisualizer(editable, parent, name)
+HPLCVisualizer::HPLCVisualizer(bool editable, QWidget *parent) 
+	: BaseVisualizer(editable, parent)
 {
   
 	addLabel("Modify HPLC information");		

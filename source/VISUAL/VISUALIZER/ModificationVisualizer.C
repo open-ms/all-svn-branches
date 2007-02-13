@@ -50,7 +50,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-ModificationVisualizer::ModificationVisualizer(bool editable, QWidget *parent, const char *name) : BaseVisualizer(editable, parent, name)
+ModificationVisualizer::ModificationVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
 {
 	type_="Modification";
 	

@@ -54,7 +54,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-MetaInfoVisualizer::MetaInfoVisualizer(bool editable, QWidget *parent, const char *name) : BaseVisualizer(editable, parent, name)
+MetaInfoVisualizer::MetaInfoVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
 {
   type_="MetaInfo";
 	

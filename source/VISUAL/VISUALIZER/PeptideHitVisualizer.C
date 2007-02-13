@@ -49,7 +49,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-PeptideHitVisualizer::PeptideHitVisualizer(bool editable, QWidget *parent, const char *name) : BaseVisualizer(editable, parent, name)
+PeptideHitVisualizer::PeptideHitVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
 {
   
 	addLabel("Show PeptideHit information.");		

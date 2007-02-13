@@ -46,7 +46,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-MetaInfoDescriptionVisualizer::MetaInfoDescriptionVisualizer(bool editable, QWidget *parent, const char *name) : BaseVisualizer(editable, parent, name)
+MetaInfoDescriptionVisualizer::MetaInfoDescriptionVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
 {
   
 	addLabel("Modify MetaInfoDescription information");		

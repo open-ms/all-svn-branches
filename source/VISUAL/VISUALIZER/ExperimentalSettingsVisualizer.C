@@ -52,7 +52,7 @@ using namespace OpenMS;
 using namespace std;
 
 //Constructor
-ExperimentalSettingsVisualizer::ExperimentalSettingsVisualizer(bool editable, QWidget *parent, const char *name) : BaseVisualizer(editable, parent, name)
+ExperimentalSettingsVisualizer::ExperimentalSettingsVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
 {
 	type_="ExperimentalSettings";
   

@@ -77,7 +77,7 @@ This class provides all functionality to view the meta information of an object 
 		QLineEdit *peptidehit_charge_;
 		QLineEdit *peptidehit_score_type_;
 		QLineEdit *peptidehit_rank_;
-		Q3TextEdit *peptidehit_sequence_;
+		QTextEdit *peptidehit_sequence_;
 		
 		QPushButton *savebutton_;
 		QPushButton *cancelbutton_;

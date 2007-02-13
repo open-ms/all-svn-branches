@@ -34,12 +34,12 @@
 #include <OpenMS/METADATA/Digestion.h>
 
 //QT
-#include <q3textedit.h>
-#include <q3hbox.h>
-#include <qpushbutton.h>
-#include <QLabel>
+#include <QtGui/qtextedit.h>
+//#include <QtGui/qhbox.h>
+#include <QtGui/qpushbutton.h>
+#include <QtGui/QLabel>
 #include <iostream>
-#include <qwidget.h>
+#include <QtGui/qwidget.h>
 
 
 
@@ -79,7 +79,7 @@ This class provides all functionality to view the meta information of an object 
    */
     //@{
 		QLineEdit *treatmenttype_;
-		Q3TextEdit *treatmentcomment_;
+		QTextEdit *treatmentcomment_;
 		QLineEdit *digestionenzyme_;
 		QLineEdit *digestiontime_;
 		QLineEdit *digestiontemperature_;

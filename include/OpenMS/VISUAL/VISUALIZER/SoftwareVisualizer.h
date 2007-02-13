@@ -35,14 +35,14 @@
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <q3textedit.h>
+#include <QtGui/qtextedit.h>
 #include <q3hbox.h>
-#include <qspinbox.h>
-#include <qpushbutton.h>
+#include <QtGui/qspinbox.h>
+#include <QtGui/qpushbutton.h>
 #include <iostream>
-#include <qwidget.h>
+#include <QtGui/qwidget.h>
 #include <q3listbox.h>
-#include <qvalidator.h>
+#include <QtGui/qvalidator.h>
 
 class QLineEdit;
 class QComboBox;
@@ -79,7 +79,7 @@ This class provides all functionality to view the meta information of an object 
                 //@{
 		QLineEdit *software_name_;
 		QLineEdit *software_version_;
-		Q3TextEdit *software_comment_;
+		QTextEdit *software_comment_;
 		QLineEdit *software_completion_time_;
                 //@}
 

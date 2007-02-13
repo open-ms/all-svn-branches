@@ -33,7 +33,7 @@
 #include <OpenMS/VISUAL/DataTable.h>
 
 //QT
-#include <qwidget.h>
+#include <QtGui/qwidget.h>
 
 
 namespace OpenMS {

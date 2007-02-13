@@ -34,12 +34,12 @@
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <q3textedit.h>
-#include <qpushbutton.h>
-#include <QLabel>
+#include <QtGui/qtextedit.h>
+#include <QtGui/qpushbutton.h>
+#include <QtGui/QLabel>
 #include <iostream>
-#include <qwidget.h>
-#include <qvalidator.h>
+#include <QtGui/qwidget.h>
+#include <QtGui/qvalidator.h>
 
 class QLabel;
 class QLineEdit;
@@ -82,7 +82,7 @@ This class provides all functionality to view the meta information of an object 
    */
     //@{
 		QLineEdit *treatmenttype_;
-		Q3TextEdit *treatmentcomment_;
+		QTextEdit *treatmentcomment_;
 		QLineEdit *modificationname_;
 		QLineEdit *modificationmass_;
 		QComboBox *modificationspecificity_;

@@ -82,7 +82,7 @@ This class provides all functionality to view the meta information of an object 
 		QLineEdit *instrument_name_;
 		QLineEdit *instrument_vendor_;
 		QLineEdit *instrument_model_;
-		Q3TextEdit *instrument_customizations_;
+		QTextEdit *instrument_customizations_;
     //@}
 
      /** @name Some buttons.

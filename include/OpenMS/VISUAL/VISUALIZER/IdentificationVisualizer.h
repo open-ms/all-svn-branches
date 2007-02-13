@@ -36,14 +36,14 @@
 #include <OpenMS/VISUAL/MSMetaDataExplorer.h>
 
 //QT
-#include <q3textedit.h>
-#include <q3hbox.h>
-#include <qspinbox.h>
-#include <qpushbutton.h>
+#include <QtGui/qtextedit.h>
+//#include <QtGui/qhbox.h>
+#include <QtGui/qspinbox.h>
+#include <QtGui/qpushbutton.h>
 #include <iostream>
-#include <qwidget.h>
-#include <q3listbox.h>
-#include <qvalidator.h>
+#include <QtGui/qwidget.h>
+#include <QtGui/qlistwidget.h>
+#include <QtGui/qvalidator.h>
 
 class QLineEdit;
 class QComboBox;

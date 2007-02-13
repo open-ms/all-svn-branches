@@ -35,11 +35,11 @@
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <qpushbutton.h>
+#include <QtGui/qpushbutton.h>
 #include <iostream>
-#include <qwidget.h>
+#include <QtGui/qwidget.h>
 #include <q3listbox.h>
-#include <q3textedit.h>
+#include <QtGui/qtextedit.h>
 
 
 class QLineEdit;
@@ -81,7 +81,7 @@ This class provides all functionality to view the meta information of an object 
 		/// The type of this experiment
    	QComboBox *spectrumsettings_type_;
 		/// The date of this experiment
-		Q3TextEdit *spectrumsettings_comment_;					
+		QTextEdit *spectrumsettings_comment_;					
 	};
 }
 #endif

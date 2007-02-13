@@ -33,7 +33,7 @@
 #include <qlabel.h> 
 #include <qlineedit.h>
 #include <q3listview.h>
-#include <q3textedit.h>
+#include <QtGui/qtextedit.h>
 #include <Q3GridLayout>
 #include <Q3HBoxLayout>
 #include <Q3Frame>
@@ -109,9 +109,9 @@ void DataTable::addLineEditButton(const QString &labelname, QLineEdit* &ptr1, QP
 }
 
 
-void DataTable::addTextEdit(Q3TextEdit* &ptr ,const QString &label)
+void DataTable::addTextEdit(QTextEdit* &ptr ,const QString &label)
 {
-	ptr = new Q3TextEdit(this);
+	ptr = new QTextEdit(this);
 	addLabel_(label, row_);
 	mainlayout_->addWidget(ptr, row_, 1);
 	ptr->setReadOnly(!isEditable());

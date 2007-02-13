@@ -76,7 +76,7 @@ This class provides all functionality to view the meta information of an object 
    */
     //@{
 		QLineEdit *treatmenttype_;
-		Q3TextEdit *treatmentcomment_;
+		QTextEdit *treatmentcomment_;
 		QLineEdit *modificationname_;
 		QLineEdit *modificationmass_;
 		QComboBox *modificationspecificity_;

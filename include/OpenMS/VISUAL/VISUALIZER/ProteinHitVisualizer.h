@@ -35,12 +35,12 @@
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <q3textedit.h>
-#include <qpushbutton.h>
-#include <QLabel>
+#include <QtGui/qtextedit.h>
+#include <QtGui/qpushbutton.h>
+#include <QtGui/QLabel>
 #include <iostream>
-#include <qwidget.h>
-#include <qvalidator.h>
+#include <QtGui/qwidget.h>
+#include <QtGui/qvalidator.h>
 
 class QLabel;
 class QLineEdit;
@@ -78,7 +78,7 @@ This class provides all functionality to view the meta information of an object 
 		QLineEdit *proteinhit_rank_;
 		QLineEdit *proteinhit_accession_;
 		QLineEdit *proteinhit_accession_type_;
-		Q3TextEdit *proteinhit_sequence_;
+		QTextEdit *proteinhit_sequence_;
 		
 		QPushButton *savebutton_;
 		QPushButton *cancelbutton_;

@@ -32,7 +32,7 @@
 #include <OpenMS/CONCEPT/Types.h>
 
 //QT
-#include <q3textedit.h>
+#include <QtGui/qtextedit.h>
 #include <q3hbox.h>
 #include <qspinbox.h>
 #include <qpushbutton.h>
@@ -73,7 +73,7 @@ namespace OpenMS
 			void addLineEditButton(const QString &labelname, QLineEdit* &ptr1, QPushButton* &ptr2, const QString &buttonlabel);
 	
 			/// Adds a text edit field to the grid layout.
-			void addTextEdit(Q3TextEdit* &ptr ,  const QString &label);
+			void addTextEdit(QTextEdit* &ptr ,  const QString &label);
 			/// Adds a line edit field to the grid layout.
 			void addComboBox(QComboBox* &ptr ,  const QString &label);//,  const std::string* items[]);
 			/// Fills a combo box with data.

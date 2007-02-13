@@ -34,12 +34,12 @@
 #include <OpenMS/METADATA/MetaInfoInterface.h>
 
 //QT
-#include <q3textedit.h>
-#include <qpushbutton.h>
-#include <qwidget.h>
-#include <qlayout.h>
-#include <Q3GridLayout>
-#include <QLabel>
+#include <QtGui/qtextedit.h>
+#include <QtGui/qpushbutton.h>
+#include <QtGui/qwidget.h>
+#include <QtGui/qlayout.h>
+#include <QtGui/QGridLayout>
+#include <QtGui/QLabel>
 
 //STL
 #include <iostream>
@@ -115,7 +115,7 @@ Meta information is an array of Type-Name-Value tupels. Classes that have a Meta
 		int nextrow_;
 		
 		/// The layout to display the Type-Value pairs.
-		Q3GridLayout* viewlayout_;		
+		QGridLayout* viewlayout_;		
 		
 		/// Pointer to current object.
 		MetaInfoInterface* ptr_;

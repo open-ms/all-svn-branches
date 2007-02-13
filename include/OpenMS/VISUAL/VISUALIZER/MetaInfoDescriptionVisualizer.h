@@ -74,7 +74,7 @@ This class provides all functionality to view the meta information of an object 
 		*/
 		//@{
    	QLineEdit *metainfodescription_name_;
-		Q3TextEdit *metainfodescription_comment_;
+		QTextEdit *metainfodescription_comment_;
 		//@}
 		
 		/** @name Some buttons

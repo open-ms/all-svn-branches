@@ -29,7 +29,7 @@
 #define OPENMS_VISUAL_DIALOGS_PREFERENCESDIALOG_H
 
 // QT
-#include <qdialog.h>
+#include <QtGui/QDialog>
 
 // STL
 #include <string>

@@ -29,7 +29,7 @@
 #define OPENMS_VISUAL_DIALOGS_DBSPECTRUMSELECTORDIALOG_H
 
 #include <vector>
-#include <qdialog.h>
+#include <QtGui/QDialog>
 #include <OpenMS/CONCEPT/Types.h>
 
 class QLineEdit;

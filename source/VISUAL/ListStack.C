@@ -30,9 +30,8 @@
 #include <OpenMS/VISUAL/PreferencesManager.h>
 
 //QT includes
-#include <qlayout.h>
-#include <q3header.h>
-#include <Q3GridLayout>
+#include <QtGui/QGridLayout>
+#include <QtGui/QHeaderView>
 
 //STL
 #include <iostream>
@@ -42,31 +41,32 @@ using namespace std;
 namespace OpenMS
 {
 
-	ListStack::ListStack( QWidget * parent, const char * name ): 
-	QWidget(parent,name), 
+	ListStack::ListStack( QWidget * parent): 
+	QWidget(parent), 
 	last_(0)
 	{
 			//layout
-			Q3GridLayout* layout = new Q3GridLayout(this,1,2);
+			QGridLayout* layout = new QGridLayout(this);
 			layout->setSpacing(4);
 			layout->setMargin(6);
 			
 			//listview (left)
-			list_ =  new Q3ListView(this);
-			list_->setSizePolicy(QSizePolicy::QSizePolicy::Preferred,QSizePolicy::Minimum);
-			list_->addColumn("Name");
-			list_->setSorting(-1);
-			list_->setHScrollBarMode(Q3ScrollView::AlwaysOff);
-			list_->header()->hide();
-			layout->addWidget(list_,0,0);
+			tree_ =  new QTreeWidget(this);
+			tree_->setSizePolicy(QSizePolicy::QSizePolicy::Preferred,QSizePolicy::Minimum);
+			tree_->setColumnCount(1);
+			tree_->setHeaderLabel("Name");
+			tree_->setSortingEnabled(false);
+			tree_->setHorizontalScrollBarPolicy ( Qt::ScrollBarAlwaysOff );
+			tree_->header()->hide();
+			layout->addWidget(tree_,0,0);
 				
 			
 			//widget stack (right)
-			stack_ = new Q3WidgetStack(this);
+			stack_ = new QStackedWidget(this);
 			layout->addWidget(stack_,0,1);
-			layout->setColStretch(1,1);
+			layout->setColumnStretch(1,1);
 			
-			connect(list_,SIGNAL( selectionChanged(Q3ListViewItem*) ),this,SLOT( raiseWidget_(Q3ListViewItem*) ));
+			connect(tree_,SIGNAL( itemClicked(QTreeWidgetItem*, int) ),this,SLOT( raiseWidget_(QTreeWidgetItem*, int) ));
 	}
 	
 	ListStack::~ListStack()
@@ -76,22 +76,25 @@ namespace OpenMS
 	
 	void ListStack::addWidget(std::string name, QWidget* widget, void* creator, void* parent)
 	{
-		Q3ListViewItem* i;
+		QTreeWidgetItem* i;
 		if (parent==0 || w_to_item_[parent]==0)
 		{
 			if (last_==0)
 			{
-				i = new Q3ListViewItem(list_,name.c_str());
+				i = new QTreeWidgetItem(tree_);
+				i->setText(0,name.c_str());
 			}
 			else
 			{
-				i = new Q3ListViewItem(list_,last_,name.c_str());
+				i = new QTreeWidgetItem(tree_,last_);
+				i->setText(0,name.c_str());
 			}
 			last_ = i;
 		}
 		else
 		{
-			i = new Q3ListViewItem(w_to_item_[parent],name.c_str());
+			i = new QTreeWidgetItem(w_to_item_[parent]);
+			i->setText(0,name.c_str());
 		}
 		if (parent != creator)
 		{
@@ -99,23 +102,26 @@ namespace OpenMS
 		}
 		//cout << "c:" << creator <<" i:" << w_to_item_[creator] << " p:" <<parent<< " i[p]:" <<w_to_item_[parent]<<endl;
 	
-		stack_->addWidget(widget,reinterpret_cast<PointerSizeInt>(i));
-	
-		if ( ((PreferencesManager*)creator)->isActive())
+		item_to_index_[i] = stack_->addWidget(widget);
+		
+		//Extension for PreferencesManager
+		
+		if (typeid( creator) == typeid( PreferencesManager* ))
 		{
-			list_->clearSelection();
-			list_->setSelected(i,true);
-			((PreferencesManager*)creator)->setActive(false);
+			if ( ((PreferencesManager*)creator)->isActive() )
+			{
+				tree_->setCurrentItem(i);
+				((PreferencesManager*)creator)->setActive(false);
+			}
 		}
 	}
 	
 	void ListStack::expand()
 	{
-		Q3ListViewItemIterator it( list_ );
-		while ( it.current() ) 
+		QTreeWidgetItemIterator it( tree_ );
+		while ( *it ) 
 		{
-		  Q3ListViewItem *item = it.current();
-		  list_->setOpen(item,true);
+		  tree_->expandItem(*it);
 		  ++it;
 		}	
 	}
@@ -123,12 +129,13 @@ namespace OpenMS
 	
 	QWidget* ListStack::activeWidget()
 	{
-		return stack_->visibleWidget();
+		return stack_->currentWidget();
 	}
 	
-	void ListStack::raiseWidget_(Q3ListViewItem* ptr)
+	void ListStack::raiseWidget_(QTreeWidgetItem* ptr, int /*column*/)
 	{
-		stack_->raiseWidget(reinterpret_cast<PointerSizeInt>(ptr));
+		//cout << "raiseWidget_" << ptr << " -> " << item_to_index_[ptr] << endl;
+		stack_->setCurrentIndex(item_to_index_[ptr]);
 	}
 
 } //namespace

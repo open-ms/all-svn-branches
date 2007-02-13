@@ -26,10 +26,10 @@
 
 // OpenMS includes
 #include <OpenMS/VISUAL/DIALOGS/SmoothingDialog.h>
-#include <qlineedit.h>
-#include <qradiobutton.h>
-#include <qcheckbox.h>
-#include <qpushbutton.h>
+#include <QtGui/QLineEdit>
+#include <QtGui/QRadioButton>
+#include <QtGui/QCheckBox>
+#include <QtGui/QPushButton>
 
 #include <iostream> 
 using namespace std;

@@ -28,7 +28,7 @@
 #ifndef OPENMS_VISUAL_DIALOGS_HISTOGRAMDIALOG_H
 #define OPENMS_VISUAL_DIALOGS_HISTOGRAMDIALOG_H
 
-#include <qdialog.h>
+#include <QtGui/QDialog>
 
 #include <OpenMS/MATH/STATISTICS/Histogram.h>
 #include <OpenMS/VISUAL/HistogramWidget.h>

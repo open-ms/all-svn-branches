@@ -26,12 +26,12 @@
 
 #include <OpenMS/VISUAL/DIALOGS/Spectrum3DWidgetPDP.h>
 #include <OpenMS/VISUAL/Spectrum3DWidget.h>
-#include <qlayout.h>
+#include <QtGui/QLayout>
 #include <q3groupbox.h>
-#include <qcheckbox.h>
-#include <qcombobox.h>
-#include<qlabel.h>
-#include <Q3GridLayout>
+#include <QtGui/QCheckBox>
+#include <QtGui/QComboBox>
+#include<QtGui/QLabel>
+#include <QtGui/QGridLayout>
 
 using namespace std;
 
@@ -41,14 +41,14 @@ namespace OpenMS
 	namespace Internal
 	{
 		
-	  Spectrum3DWidgetPDP::Spectrum3DWidgetPDP( Spectrum3DWidget* manager, QWidget* parent, const char* name, Qt::WFlags f)
-			: PreferencesDialogPage(manager,parent,name,f)
+	  Spectrum3DWidgetPDP::Spectrum3DWidgetPDP( Spectrum3DWidget* manager, QWidget* parent,  Qt::WFlags f)
+			: PreferencesDialogPage(manager,parent,f)
 	  {
 			help_ = "This is the preferences dialog of 3D spectrum!"
 							"<br>";
 		
-			Q3GridLayout* grid;	
-			grid = new Q3GridLayout(this,1,1);		
+			QGridLayout* grid;	
+			grid = new QGridLayout(this,1,1);		
 			canvas_ = manager->client("Canvas", this);
 			grid->addMultiCellWidget(canvas_, 0,1,0,1);
 			load();

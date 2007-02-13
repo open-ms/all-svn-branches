@@ -33,8 +33,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	PreferencesDialogPage::PreferencesDialogPage(PreferencesManager* manager,QWidget* parent, const char* name, Qt::WFlags f)
-	:QWidget(parent,name,f),
+	PreferencesDialogPage::PreferencesDialogPage(PreferencesManager* manager,QWidget* parent, Qt::WFlags f)
+	:QWidget(parent,f),
 	manager_(manager),
 	help_()
 	{

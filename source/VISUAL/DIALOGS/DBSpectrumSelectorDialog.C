@@ -27,11 +27,11 @@
 #include <OpenMS/VISUAL/DIALOGS/DBSpectrumSelectorDialog.h>
 #include <OpenMS/FORMAT/DB/DBConnection.h>
 
-#include <qpushbutton.h>
-#include <qlayout.h>
-#include <qlineedit.h>
+#include <QtGui/QPushButton>
+#include <QtGui/QLayout>
+#include <QtGui/QLineEdit>
 #include <q3table.h>
-#include <qlabel.h>
+#include <QtGui/QLabel>
 #include <QSqlQuery>
 #include <Q3HBoxLayout>
 #include <Q3VBoxLayout>
@@ -49,7 +49,7 @@ namespace OpenMS
 	 	 adapter_(adapter), 
 	 	 result_(result)
 	{ 	
-		setCaption("Select spectra from DB to open");
+		setWindowTitle("Select spectra from DB to open");
 		
 		//OK+Cancel button + layout
 		QPushButton* cancel_button_ = new QPushButton("&Cancel",this);
@@ -114,7 +114,7 @@ namespace OpenMS
 		{
 			if(dynamic_cast<Q3CheckTableItem*>(table_->item(col,0))->isChecked())
 			{
-				result_.push_back(atoi(table_->text(col,1).ascii()));
+				result_.push_back(atoi(table_->text(col,1).toAscii().data()));
 			}
 		}
 		emit accept();
@@ -126,7 +126,7 @@ namespace OpenMS
 		query << "SELECT e.id,e.Description, count(s.id) FROM META_MSExperiment e right join DATA_Spectrum s on e.id=s.fid_MSExperiment WHERE";
 		if(search_string_->text()!="")
 		{
-			query << " e.description like '%"<<search_string_->text().ascii()<<"%' and ";
+			query << " e.description like '%"<<search_string_->text().toAscii().data()<<"%' and ";
 		}
 		query << " s.MSLevel='1' GROUP BY e.id ORDER BY e.id ASC";
 		QSqlQuery result;

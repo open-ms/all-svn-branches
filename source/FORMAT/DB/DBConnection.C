@@ -29,10 +29,9 @@
 #include <OpenMS/FORMAT/DB/DBConnection.h>
 
 //QT
-#include <qsqlrecord.h>
-#include <QSqlQuery>
-#include <QSqlError>
-#include <QVariant>
+#include <QtSql/QSqlQuery>
+#include <QtSql/QSqlError>
+#include <QtCore/QVariant>
 
 using namespace std;
 

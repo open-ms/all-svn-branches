@@ -29,7 +29,7 @@
 #define OPENMS_VISUAL_DIALOGS_PREFERENCESDIALOGPAGE_H
 
 // QT
-#include <qwidget.h>
+#include <QtGui/QWidget>
 
 // STL
 #include <string>
@@ -51,7 +51,7 @@ namespace OpenMS
 
 		public:
 			///constructor
-			PreferencesDialogPage( PreferencesManager* manager, QWidget* parent = 0, const char* name = "PreferencesDialogPage", Qt::WFlags f = 0);
+			PreferencesDialogPage( PreferencesManager* manager, QWidget* parent = 0, Qt::WFlags f = 0);
 			///destructor
 			virtual ~PreferencesDialogPage();
 

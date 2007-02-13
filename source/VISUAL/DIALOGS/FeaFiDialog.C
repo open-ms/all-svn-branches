@@ -28,8 +28,8 @@
 #include <OpenMS/VISUAL/DIALOGS/FeaFiDialog.h>
 #include <sstream>
 #include <q3filedialog.h>
-#include <qpushbutton.h>
-#include <qlabel.h>
+#include <QtGui/QPushButton>
+#include <QtGui/QLabel>
 
 using namespace std;
 
@@ -67,7 +67,7 @@ namespace OpenMS
 		if (!file.isEmpty() && file!="")
 		{
 			Param param;
-			param.load(file.ascii());
+			param.load(file.toAscii().data());
 			bool isParamValid = finder_.setParam(param);
 			if (isParamValid)
 			{

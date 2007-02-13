@@ -30,18 +30,18 @@
 #include <OpenMS/VISUAL/MultiGradientSelector.h>
 #include <OpenMS/VISUAL/ColorSelector.h>
 // Qt
-#include <qlayout.h>
-#include <qlineedit.h>
-#include <qradiobutton.h>
-#include <qtabwidget.h>
-#include <qlabel.h>
+#include <QtGui/QLayout>
+#include <QtGui/QLineEdit>
+#include <QtGui/QRadioButton>
+#include <QtGui/QTabWidget>
+#include <QtGui/QLabel>
 #include <q3groupbox.h>
-#include <qcheckbox.h>
+#include <QtGui/QCheckBox>
 #include <q3filedialog.h>
-#include <qcombobox.h>
-#include <qpushbutton.h>
-#include <qspinbox.h>
-#include <Q3GridLayout>
+#include <QtGui/QComboBox>
+#include <QtGui/QPushButton>
+#include <QtGui/QSpinBox>
+#include <QtGui/QGridLayout>
 #include <Q3Frame>
 
 using namespace std;
@@ -53,24 +53,24 @@ namespace OpenMS
 	{
 
 
-		TOPPViewBasePDP::TOPPViewBasePDP( TOPPViewBase* manager, QWidget* parent, const char* name, Qt::WFlags f)
-			:PreferencesDialogPage(manager,parent,name,f)
+		TOPPViewBasePDP::TOPPViewBasePDP( TOPPViewBase* manager, QWidget* parent,  Qt::WFlags f)
+			:PreferencesDialogPage(manager,parent,f)
 		{
 			help_ = "This is the preferences dialog of the main window!"
 							"<br>";
 		
-			Q3GridLayout* grid;
+			QGridLayout* grid;
 			QLabel* label;
 			QWidget* background;
 		
 			//tab widget
-			grid = new Q3GridLayout(this);
+			grid = new QGridLayout(this);
 			QTabWidget* tab = new QTabWidget(this);
 			grid->addWidget(tab,0,0);
 			
 			//-----------General Tab-----------
 			background = new QWidget(this);
-			grid = new Q3GridLayout(background,2,2);
+			grid = new QGridLayout(background,2,2);
 			grid->setMargin(6);
 			grid->setSpacing(4);
 			
@@ -116,7 +116,7 @@ namespace OpenMS
 		
 			//-------------DB Tab-------------
 			background = new QWidget(tab);
-			grid = new Q3GridLayout(background,3,3);
+			grid = new QGridLayout(background,3,3);
 			grid->setMargin(6);
 			grid->setSpacing(4);
 		
@@ -148,7 +148,7 @@ namespace OpenMS
 		
 			//-----------1D View Tab-----------
 			background = new QWidget(tab);
-			grid = new Q3GridLayout(background,2,2);
+			grid = new QGridLayout(background,2,2);
 			grid->setMargin(6);
 			grid->setSpacing(4);
 		
@@ -178,7 +178,7 @@ namespace OpenMS
 			//-----------2D View Tab-----------
 			background = new QWidget(tab);
 		
-			grid = new Q3GridLayout(background,2,2);
+			grid = new QGridLayout(background,2,2);
 			grid->setMargin(6);
 			grid->setSpacing(4);
 			
@@ -232,7 +232,7 @@ namespace OpenMS
 			//-----------3D View Tab-----------
 			background = new QWidget(tab);
 		
-			grid = new Q3GridLayout(background,4,2);
+			grid = new QGridLayout(background,4,2);
 			grid->setMargin(6);
 			grid->setSpacing(4);	
 		
@@ -370,25 +370,25 @@ namespace OpenMS
 		void TOPPViewBasePDP::save()
 		{
 			//main
-			manager_->setPref("Preferences:DefaultPath", main_default_path_->text().ascii());
+			manager_->setPref("Preferences:DefaultPath", main_default_path_->text().toAscii().data());
 			manager_->setPref("Preferences:NumberOfRecentFiles", recent_files_->value());
-			manager_->setPref("Preferences:DefaultMapView", default_map_view_->currentText().ascii());
-			manager_->setPref("Preferences:Legend", show_legend_->currentText().ascii());
-			manager_->setPref("Preferences:MapIntensityCutoff", intensity_cutoff_->currentText().ascii());
+			manager_->setPref("Preferences:DefaultMapView", default_map_view_->currentText().toAscii().data());
+			manager_->setPref("Preferences:Legend", show_legend_->currentText().toAscii().data());
+			manager_->setPref("Preferences:MapIntensityCutoff", intensity_cutoff_->currentText().toAscii().data());
 
 			//DB
-			manager_->setPref("Preferences:DB:Host",db_host_->text().ascii());
-			manager_->setPref("Preferences:DB:Port",db_port_->text().ascii());
-			manager_->setPref("Preferences:DB:Name",db_name_->text().ascii());
-			manager_->setPref("Preferences:DB:Login",db_login_->text().ascii());
+			manager_->setPref("Preferences:DB:Host",db_host_->text().toAscii().data());
+			manager_->setPref("Preferences:DB:Port",db_port_->text().toAscii().data());
+			manager_->setPref("Preferences:DB:Name",db_name_->text().toAscii().data());
+			manager_->setPref("Preferences:DB:Login",db_login_->text().toAscii().data());
 			manager_->removePref("DBPassword");
 
 			//1D
-			manager_->setPref("Preferences:1D:PeakColor",peak_color_->getColor().name().ascii());
-			manager_->setPref("Preferences:1D:IconColor",icon_color_->getColor().name().ascii());
-			manager_->setPref("Preferences:1D:HighColor",high_color_->getColor().name().ascii());
-			manager_->setPref("Preferences:1D:BackgroundColor",back_color_1D_->getColor().name().ascii());
-			manager_->setPref("Preferences:1D:Mapping:MappingOfMzTo",axis_mapping_->currentText().ascii());
+			manager_->setPref("Preferences:1D:PeakColor",peak_color_->getColor().name().toAscii().data());
+			manager_->setPref("Preferences:1D:IconColor",icon_color_->getColor().name().toAscii().data());
+			manager_->setPref("Preferences:1D:HighColor",high_color_->getColor().name().toAscii().data());
+			manager_->setPref("Preferences:1D:BackgroundColor",back_color_1D_->getColor().name().toAscii().data());
+			manager_->setPref("Preferences:1D:Mapping:MappingOfMzTo",axis_mapping_->currentText().toAscii().data());
 			
 			//2D
 			if (dot_mode_gradient_->isChecked())
@@ -402,8 +402,8 @@ namespace OpenMS
 			manager_->setPref("Preferences:2D:MarchingSquaresSteps",marching_squares_steps_->value());
 			manager_->setPref("Preferences:2D:Contour:Lines",contour_steps_->value());
 			manager_->setPref("Preferences:2D:InterpolationSteps",interpolation_steps_->value());
-			manager_->setPref("Preferences:2D:BackgroundColor",back_color_2D_->getColor().name().ascii());
-			manager_->setPref("Preferences:2D:Mapping:MappingOfMzTo",axis_mapping_2d_->currentText().ascii());
+			manager_->setPref("Preferences:2D:BackgroundColor",back_color_2D_->getColor().name().toAscii().data());
+			manager_->setPref("Preferences:2D:Mapping:MappingOfMzTo",axis_mapping_2d_->currentText().toAscii().data());
 			manager_->setPref("Preferences:2D:Dot:Gradient",dot_gradient_->gradient().toString());
 			manager_->setPref("Preferences:2D:Surface:Gradient",surface_gradient_->gradient().toString());
 			
@@ -427,24 +427,24 @@ namespace OpenMS
 			{
 				manager_->setPref("Preferences:3D:Shade:Mode", Spectrum3DCanvas::SHADE_SMOOTH);	
 			}
-		  manager_->setPref("Preferences:3D:BackgroundColor",back_color_3d_->getColor().name().ascii());
-			manager_->setPref("Preferences:3D:AxesColor",axes_color_3d_->getColor().name().ascii());
+		  manager_->setPref("Preferences:3D:BackgroundColor",back_color_3d_->getColor().name().toAscii().data());
+			manager_->setPref("Preferences:3D:AxesColor",axes_color_3d_->getColor().name().toAscii().data());
 			manager_->setPref("Preferences:3D:Dot:LineWidth",dot_line_width_->value());
 	
-			if(data_reduction_3d_->currentText().ascii()=="MaxReduction")
+			if(data_reduction_3d_->currentText().toAscii().data()=="MaxReduction")
 			{
 				manager_->setPref("Preferences:3D:Data:Mode",Spectrum3DCanvas::REDUCTION_MAX);
 			}
-			else if(data_reduction_3d_->currentText().ascii()=="Reduction OFF")
+			else if(data_reduction_3d_->currentText().toAscii().data()=="Reduction OFF")
 			{
 				manager_->setPref("Preferences:3D:Data:Mode",Spectrum3DCanvas::REDUCTION_OFF);
 			}
-			else if(data_reduction_3d_->currentText().ascii()=="SumReduction")
+			else if(data_reduction_3d_->currentText().toAscii().data()=="SumReduction")
 			{
 				manager_->setPref("Preferences:3D:Data:Mode",Spectrum3DCanvas::REDUCTION_SUM);
 			}
 			
-			manager_->setPref("Preferences:3D:Reduction:Mode", data_reduction_3d_->currentText().ascii());
+			manager_->setPref("Preferences:3D:Reduction:Mode", data_reduction_3d_->currentText().toAscii().data());
 			manager_->setPref("Preferences:3D:DisplayedPeaks",	reduction_diplay_peaks_3d_->value());
 		
 		}

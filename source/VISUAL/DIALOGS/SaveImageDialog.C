@@ -28,14 +28,14 @@
 #include <OpenMS/VISUAL/DIALOGS/SaveImageDialog.h>
 
 // Qt
-#include <qlayout.h>
-#include <qpushbutton.h>  
-#include <qcombobox.h>
-#include <qlabel.h>
+#include <QtGui/QLayout>
+#include <QtGui/QPushButton>  
+#include <QtGui/QComboBox>
+#include <QtGui/QLabel>
 #include <qimage.h>
 #include <qapplication.h>
 #include <qvalidator.h>
-#include <Q3GridLayout>
+#include <QtGui/QGridLayout>
 #include <Q3HBoxLayout>
 #include <QImageWriter>
 
@@ -52,7 +52,7 @@ namespace OpenMS
 	{
 		size_ratio_=1;
 		//create dialog and layout (grid)
-		Q3GridLayout* grid=new Q3GridLayout(this,5,2,10,5);
+		QGridLayout* grid=new QGridLayout(this,5,2,10,5);
 		
 		//add accept/cancel buttons (and their layout)
 		Q3BoxLayout* box_layout = new Q3HBoxLayout();

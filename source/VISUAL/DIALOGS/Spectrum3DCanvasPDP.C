@@ -31,13 +31,13 @@
 
 
 // Qt
-#include <qlayout.h>
-#include <qradiobutton.h>
-#include <qlabel.h>
+#include <QtGui/QLayout>
+#include <QtGui/QRadioButton>
+#include <QtGui/QLabel>
 #include <q3groupbox.h>
-#include <qspinbox.h>
-#include <qcombobox.h>
-#include <Q3GridLayout>
+#include <QtGui/QSpinBox>
+#include <QtGui/QComboBox>
+#include <QtGui/QGridLayout>
 #include <Q3VButtonGroup>
 
 using namespace std;
@@ -46,14 +46,14 @@ namespace OpenMS
 {
 	namespace Internal
 	{
-		Spectrum3DCanvasPDP::Spectrum3DCanvasPDP(Spectrum3DCanvas* manager, QWidget* parent, const char* name, Qt::WFlags f)
-				: PreferencesDialogPage(manager,parent,name,f)
+		Spectrum3DCanvasPDP::Spectrum3DCanvasPDP(Spectrum3DCanvas* manager, QWidget* parent,  Qt::WFlags f)
+				: PreferencesDialogPage(manager,parent,f)
 		{
 			help_ = "This is the preferences dialog of 3D spectrum!"
 								"<br>";
-			Q3GridLayout* grid;
+			QGridLayout* grid;
 			QLabel * label;
-			grid = new Q3GridLayout(this, 4, 2);
+			grid = new QGridLayout(this, 4, 2);
 			grid->setMargin(6);
 			grid->setSpacing(4);	
 
@@ -174,24 +174,24 @@ namespace OpenMS
 				}
 			} 
 
-			if(data_reduction_->currentText().ascii()=="MaxReduction")
+			if(data_reduction_->currentText().toAscii().data()=="MaxReduction")
 			{
 				man->setPref("Preferences:3D:Data:Mode",Spectrum3DCanvas::REDUCTION_MAX);
 			}
-			else if(data_reduction_->currentText().ascii()=="Reduction OFF")
+			else if(data_reduction_->currentText().toAscii().data()=="Reduction OFF")
 			{
 				man->setPref("Preferences:3D:Data:Mode",Spectrum3DCanvas::REDUCTION_OFF);
 			}
-			else if(data_reduction_->currentText().ascii()=="SumReduction")
+			else if(data_reduction_->currentText().toAscii().data()=="SumReduction")
 			{
 				man->setPref("Preferences:3D:Data:Mode",Spectrum3DCanvas::REDUCTION_SUM);
 			}
 			
-			man->setPref("Preferences:3D:Reduction:Mode", data_reduction_->currentText().ascii());
+			man->setPref("Preferences:3D:Reduction:Mode", data_reduction_->currentText().toAscii().data());
 			man->setPref("Preferences:3D:DisplayedPeaks",	reduction_diplay_peaks_->value());
 			
-			man->setPref("Preferences:3D:BackgroundColor",background_color_->getColor().name().ascii());
-			man->setPref("Preferences:3D:AxesColor",axes_color_->getColor().name().ascii());
+			man->setPref("Preferences:3D:BackgroundColor",background_color_->getColor().name().toAscii().data());
+			man->setPref("Preferences:3D:AxesColor",axes_color_->getColor().name().toAscii().data());
 			man->setPref("Preferences:3D:Dot:LineWidth",dot_line_width_->value());
 		
 			man->setDataMode();

@@ -28,12 +28,12 @@
 #include <OpenMS/VISUAL/Spectrum1DWidget.h>
 
 // Qt
-#include <qlayout.h>
-#include <qlabel.h>
+#include <QtGui/QLayout>
+#include <QtGui/QLabel>
 #include <q3groupbox.h>
-#include <qcheckbox.h>
-#include <qcombobox.h>
-#include <Q3GridLayout>
+#include <QtGui/QCheckBox>
+#include <QtGui/QComboBox>
+#include <QtGui/QGridLayout>
 
 using namespace std;
 
@@ -43,16 +43,16 @@ namespace OpenMS
 	namespace Internal
 	{
 		
-		Spectrum1DWidgetPDP::Spectrum1DWidgetPDP( Spectrum1DWidget* manager, QWidget* parent, const char* name, Qt::WFlags f)
-			: PreferencesDialogPage(manager,parent,name,f)
+		Spectrum1DWidgetPDP::Spectrum1DWidgetPDP( Spectrum1DWidget* manager, QWidget* parent,  Qt::WFlags f)
+			: PreferencesDialogPage(manager,parent,f)
 		{
 			help_ = "This is the preferences dialog of 1D spectrum!"
 							"<br>";
 		
-			Q3GridLayout* grid;
+			QGridLayout* grid;
 		
 			//1D View Tab
-			grid = new Q3GridLayout(this,3,2);
+			grid = new QGridLayout(this,3,2);
 		
 			grid->setMargin(6);
 			grid->setSpacing(4);	

@@ -26,9 +26,9 @@
 
 // OpenMS includes
 #include <OpenMS/VISUAL/DIALOGS/PeakPickingDialog.h>
-#include <qlineedit.h>
-#include <qcheckbox.h>
-#include <qpushbutton.h>
+#include <QtGui/QLineEdit>
+#include <QtGui/QCheckBox>
+#include <QtGui/QPushButton>
 
 using namespace std;
 

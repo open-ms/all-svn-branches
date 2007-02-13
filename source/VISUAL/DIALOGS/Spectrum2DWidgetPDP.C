@@ -30,11 +30,11 @@
 #include <OpenMS/VISUAL/Spectrum2DCanvas.h>
 
 // Qt
-#include <qlayout.h>
-#include <qlabel.h>
+#include <QtGui/QLayout>
+#include <QtGui/QLabel>
 #include <q3groupbox.h>
-#include <qcombobox.h>
-#include <Q3GridLayout>
+#include <QtGui/QComboBox>
+#include <QtGui/QGridLayout>
 
 using namespace std;
 
@@ -44,15 +44,15 @@ namespace OpenMS
 	namespace Internal
 	{
 	
-		Spectrum2DWidgetPDP::Spectrum2DWidgetPDP( Spectrum2DWidget* manager, QWidget* parent, const char* name, Qt::WFlags f)
-			: PreferencesDialogPage(manager,parent,name,f)
+		Spectrum2DWidgetPDP::Spectrum2DWidgetPDP( Spectrum2DWidget* manager, QWidget* parent,  Qt::WFlags f)
+			: PreferencesDialogPage(manager,parent,f)
 		{
 			help_ = "This is the preferences dialog of 2D spectrum !"
 							"<br>";
 		
-			Q3GridLayout* grid;
+			QGridLayout* grid;
 		
-			grid = new Q3GridLayout(this,1,1);
+			grid = new QGridLayout(this,1,1);
 			grid->setMargin(6);
 			grid->setSpacing(4);	
 			

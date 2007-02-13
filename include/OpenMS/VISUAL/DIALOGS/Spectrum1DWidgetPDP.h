@@ -47,7 +47,7 @@ namespace OpenMS
 	
 			public:
 				/// Constructor
-				Spectrum1DWidgetPDP( Spectrum1DWidget* manager, QWidget* parent = 0, const char* name = "Spectrum1DWidgetPDP", Qt::WFlags f = 0);
+				Spectrum1DWidgetPDP( Spectrum1DWidget* manager, QWidget* parent = 0, Qt::WFlags f = 0);
 				///  Destructor
 				virtual ~Spectrum1DWidgetPDP();
 				// Docu in base class

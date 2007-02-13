@@ -27,8 +27,6 @@
 #ifndef OPENMS_FORMAT_DB_DBADAPTER_H
 #define OPENMS_FORMAT_DB_DBADAPTER_H
 
-//#include <OpenMS/config.h>
-
 //OpenMS includes
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
@@ -39,9 +37,9 @@
 #include <OpenMS/FORMAT/PeakFileOptions.h>
 
 //QT includes
-#include <qsqlquery.h>
-#include <qdatetime.h>
-#include <QVariant>
+#include <QtSql/QSqlQuery>
+#include <QtCore/QVariant>
+#include <QtCore/QDate>
 
 //std and STL includes
 #include <string>

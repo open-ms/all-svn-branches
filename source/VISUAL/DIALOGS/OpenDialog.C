@@ -34,14 +34,14 @@
 #include <OpenMS/SYSTEM/File.h>
 
 // QT includes
-#include <qmessagebox.h>
+#include <QtGui/QMessageBox>
 #include <q3buttongroup.h>
-#include <qradiobutton.h>
+#include <QtGui/QRadioButton>
 #include <q3filedialog.h>
-#include <qlineedit.h>
-#include <qpushbutton.h>
-#include <qinputdialog.h>
-#include <qcombobox.h>
+#include <QtGui/QLineEdit>
+#include <QtGui/QPushButton>
+#include <QtGui/QInputDialog>
+#include <QtGui/QComboBox>
 
 // STL includes
 #include <iostream>
@@ -107,7 +107,7 @@ namespace OpenMS
 					{
 						path_label->setText( File::path((*it).toAscii().data()).c_str() );
 					}
-					names_.push_back((*it).ascii());
+					names_.push_back((*it).toAscii().data());
 					name_label->setText( (String(name_label->text().toAscii().data()) + File::basename((*it).toAscii().data()) + " ").c_str() );
 				}
 			}
@@ -127,7 +127,7 @@ namespace OpenMS
 					QString text = QInputDialog::getText("TOPPView Database Password", ss.str().c_str(), QLineEdit::Password,QString::null, &ok, this);
 					if ( ok )
 						{
-							prefs_.setValue("DBPassword",text.ascii());
+							prefs_.setValue("DBPassword",text.toAscii().data());
 						}
 				}
 		
@@ -173,7 +173,7 @@ namespace OpenMS
 			FileHandler().loadExperiment(names_[0],exp);
 			
 			MSMetaDataExplorer dlg(false, this);
-			dlg.setCaption("Meta data");			
+			dlg.setWindowTitle("Meta data");			
 			dlg.add(&exp);
 			
      	dlg.exec();

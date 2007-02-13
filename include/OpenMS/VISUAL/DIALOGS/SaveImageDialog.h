@@ -30,10 +30,10 @@
 
 #include <OpenMS/config.h>
 
-#include<qdialog.h>
-#include<qcombobox.h>
-#include<qlineedit.h>
-#include<qcheckbox.h>
+#include <QtGui/QDialog>
+#include <QtGui/QComboBox>
+#include <QtGui/QLineEdit>
+#include <QtGui/QCheckBox>
 
 namespace OpenMS 
 {

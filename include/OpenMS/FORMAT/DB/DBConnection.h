@@ -30,7 +30,7 @@
 #include <OpenMS/config.h>
 
 //QT includes
-#include <qsqldatabase.h>
+#include <QtSql/QSqlDatabase>
 
 //OpenMS includes
 #include <OpenMS/CONCEPT/Exception.h>

@@ -30,11 +30,11 @@
 #include <OpenMS/VISUAL/ListStack.h>
 
 #include <iostream>
-#include <qdialog.h>
-#include <qpushbutton.h>
-#include <qlayout.h>
-#include <qmessagebox.h>
-#include <Q3GridLayout>
+#include <QtGui/QDialog>
+#include <QtGui/QPushButton>
+#include <QtGui/QLayout>
+#include <QtGui/QMessageBox>
+#include <QtGui/QGridLayout>
 
 using namespace std;
 
@@ -44,13 +44,13 @@ namespace OpenMS
 	:QDialog(),
 	pages_()
 	{
-		Q3GridLayout* layout;
+		QGridLayout* layout;
 		QPushButton* button;
 		
-		setCaption("Preferences");
+		setWindowTitle("Preferences");
 	
 		//layout
-		layout = new Q3GridLayout(this,2,5);
+		layout = new QGridLayout(this);
 		layout->setSpacing(4);
 		layout->setMargin(6);
 		
@@ -78,7 +78,7 @@ namespace OpenMS
 	
 		//liststack
 		stack_ = new ListStack(this);
-		layout->addMultiCellWidget(stack_,0,0,0,4);
+		layout->addWidget(stack_,0,0,0,4);
 	}
 	
 	PreferencesDialog::~PreferencesDialog()

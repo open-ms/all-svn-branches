@@ -27,9 +27,9 @@
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 
-#include <qfileinfo.h>
-#include <qdir.h>
-#include <qstringlist.h>
+#include <QtCore/QFileInfo>
+#include <QtCore/QDir>
+#include <QtCore/QStringList>
 
 #include <fstream>
 #include <stdio.h>

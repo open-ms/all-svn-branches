@@ -29,8 +29,8 @@
 #define OPENMS_VISUAL_LISTSTACK_H
 
 //QT
-#include <q3listview.h>
-#include <q3widgetstack.h>
+#include <QtGui/QTreeWidget>
+#include <QtGui/QStackedWidget>
 
 //STL
 #include <string>
@@ -42,23 +42,24 @@ namespace OpenMS
 	/**
 		@brief Tree view combined with a widget stack.
 		
-		Displays and manages a tree view of itemsand a stack of widgets.
+		Displays and manages a tree view of items and a stack of widgets.
 		The shown stack item is determined by the activated entry in the tree view.
 		
 		\image html ListStack.png
 		
 		In the above example image a ListStack is shown that consists of the tree view (left red rectangle)
-		and the widget stack (right red triangle).
+		and the widget stack (right red rectangle).
 		
 		@ingroup Visual
 	*/
-	class ListStack : public QWidget
+	class ListStack 
+		: public QWidget
 	{
 		Q_OBJECT
 
 		public:
 			///Constructor
-			ListStack( QWidget * parent = 0, const char * name = 0 );
+			ListStack( QWidget * parent = 0);
 			///Destructor
 			~ListStack();
 
@@ -75,15 +76,20 @@ namespace OpenMS
 			///returns a pointer to the active widget
 			QWidget* activeWidget();
 
-
 		protected:
-			Q3WidgetStack* stack_;
-			Q3ListView* list_;
-			Q3ListViewItem* last_;
-			std::map<void*,Q3ListViewItem*> w_to_item_;
+			/// Widget stack
+			QStackedWidget* stack_;
+			/// Tree view
+			QTreeWidget* tree_;
+			/// The last inserted item
+			QTreeWidgetItem* last_;
+			
+			std::map<void*,QTreeWidgetItem*> w_to_item_;
+			/// Connection map between TreeWidgetItem and index in the QStackedWidget
+			std::map<QTreeWidgetItem*, int> item_to_index_;
 			
 		protected slots:
-			void raiseWidget_( Q3ListViewItem* ptr );
+			void raiseWidget_( QTreeWidgetItem* ptr, int column);
 
 	};
 

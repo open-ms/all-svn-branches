@@ -29,10 +29,10 @@
 #include <OpenMS/VISUAL/ColorSelector.h>
 
 // Qt
-#include <qlayout.h>
-#include <qlabel.h>
+#include <QtGui/QLayout>
+#include <QtGui/QLabel>
 #include <q3groupbox.h>
-#include <Q3GridLayout>
+#include <QtGui/QGridLayout>
 
 
 using namespace std;
@@ -43,16 +43,16 @@ namespace OpenMS
 	namespace Internal
 	{
 	
-		Spectrum1DCanvasPDP::Spectrum1DCanvasPDP(Spectrum1DCanvas* manager, QWidget* parent, const char* name, Qt::WFlags f)
-			: PreferencesDialogPage(manager,parent,name,f)
+		Spectrum1DCanvasPDP::Spectrum1DCanvasPDP(Spectrum1DCanvas* manager, QWidget* parent,  Qt::WFlags f)
+			: PreferencesDialogPage(manager,parent,f)
 		{
 			help_ = "This is the preferences dialog of 1D spectrum!"
 							"<br>";
 		
-			Q3GridLayout* grid;
+			QGridLayout* grid;
 		
 			//1D View Tab
-			grid = new Q3GridLayout(this, 1, 1);
+			grid = new QGridLayout(this, 1, 1);
 			
 			Q3GroupBox* box = new Q3GroupBox(2, Qt::Horizontal,"Colors",this);
 			QLabel* label;
@@ -89,10 +89,10 @@ namespace OpenMS
 		{
 			Spectrum1DCanvas* w = dynamic_cast<Spectrum1DCanvas*>(manager_);
 			
-			w->setPref("Preferences:1D:PeakColor",peak_color_->getColor().name().ascii());
-			w->setPref("Preferences:1D:HighColor",high_color_->getColor().name().ascii());
-			w->setPref("Preferences:1D:IconColor",icon_color_->getColor().name().ascii());
-			w->setPref("Preferences:1D:BackgroundColor",back_color_->getColor().name().ascii());
+			w->setPref("Preferences:1D:PeakColor",peak_color_->getColor().name().toAscii().data());
+			w->setPref("Preferences:1D:HighColor",high_color_->getColor().name().toAscii().data());
+			w->setPref("Preferences:1D:IconColor",icon_color_->getColor().name().toAscii().data());
+			w->setPref("Preferences:1D:BackgroundColor",back_color_->getColor().name().toAscii().data());
 		
 			w->repaintAll();
 		}

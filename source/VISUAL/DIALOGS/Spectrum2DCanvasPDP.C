@@ -31,12 +31,12 @@
 #include <OpenMS/VISUAL/ColorSelector.h>
 
 // Qt
-#include <qlayout.h>
-#include <qradiobutton.h>
-#include <qlabel.h>
+#include <QtGui/QLayout>
+#include <QtGui/QRadioButton>
+#include <QtGui/QLabel>
 #include <q3groupbox.h>
-#include <qspinbox.h>
-#include <Q3GridLayout>
+#include <QtGui/QSpinBox>
+#include <QtGui/QGridLayout>
 #include <Q3Frame>
 #include <Q3VButtonGroup>
 
@@ -48,16 +48,16 @@ namespace OpenMS
 	namespace Internal
 	{
 		
-		Spectrum2DCanvasPDP::Spectrum2DCanvasPDP( Spectrum2DCanvas* manager, QWidget* parent, const char* name, Qt::WFlags f):
-		PreferencesDialogPage(manager,parent,name,f)
+		Spectrum2DCanvasPDP::Spectrum2DCanvasPDP( Spectrum2DCanvas* manager, QWidget* parent,  Qt::WFlags f):
+		PreferencesDialogPage(manager,parent,f)
 		{
 			help_ = "This is the preferences dialog of 2D spectrum!"
 							"<br>";
 		
-			Q3GridLayout* grid;
+			QGridLayout* grid;
 			QLabel* label;
 				
-			grid = new Q3GridLayout(this,3,7);
+			grid = new QGridLayout(this,3,7);
 			grid->setMargin(6);
 			grid->setSpacing(4);	
 			
@@ -138,7 +138,7 @@ namespace OpenMS
 			}
 			man->setDotGradient(dot_gradient_->gradient().toString());
 			man->setSurfaceGradient(surface_gradient_->gradient().toString());
-			man->setPref("Preferences:2D:BackgroundColor",background_color_->getColor().name().ascii());
+			man->setPref("Preferences:2D:BackgroundColor",background_color_->getColor().name().toAscii().data());
 			man->setPref("Preferences:2D:MarchingSquaresSteps",marching_squares_steps_->value());
 			man->setPref("Preferences:2D:InterpolationSteps",interpolation_steps_->value());
 			man->setPref("Preferences:2D:Contour:Lines",contour_steps_->value());

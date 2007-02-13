@@ -88,7 +88,6 @@
 #include <qlayout.h>
 #include <q3listview.h>
 #include <q3header.h>
-//Added by qt3to4:
 #include <QSqlQuery>
 #include <QPixmap>
 #include <QCloseEvent>

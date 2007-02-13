@@ -34,7 +34,6 @@
 #include <OpenMS/VISUAL/PreferencesManager.h>
 #include <OpenMS/VISUAL/AxisWidget.h>
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 #include <Q3PopupMenu>
 

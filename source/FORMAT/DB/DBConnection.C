@@ -30,7 +30,6 @@
 
 //QT
 #include <qsqlrecord.h>
-//Added by qt3to4:
 #include <QSqlQuery>
 #include <QSqlError>
 #include <QVariant>
@@ -70,7 +69,7 @@ namespace OpenMS
 			String query = "Connecting to DB ";
 			query = query + db + "( host: '"+host+"' ,port: '"+String(port)+"' ,user: '"+user+"' ,password: '"+password+"')";
 			//sore error
-			string error = db_handle_.lastError().databaseText().ascii();
+			string error = db_handle_.lastError().databaseText().toAscii().data();
 			//close connection
 			QSqlDatabase::removeDatabase(QSqlDatabase::defaultConnection);
 			
@@ -102,7 +101,7 @@ namespace OpenMS
 		//execute the query
 		if (!result.exec(query.c_str()))
 		{
-	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().ascii() );
+	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().toAscii().data() );
 		}
 		result.first();
 	}
@@ -120,17 +119,17 @@ namespace OpenMS
 		//execute the query
 		if (!lir_->exec(query.c_str()))
 		{
-	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().ascii() );
+	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().toAscii().data() );
 		}
 		
 		lir_->first();
-		return lir_->value(0).asInt();
+		return lir_->value(0).toInt();
 	}
 	
 	std::string DBConnection::DBName() const 
 	{ 
 		if (!db_handle_.isOpen()) return "";
-		return db_handle_.databaseName().ascii();
+		return db_handle_.databaseName().toAscii().data();
 	}
 
 	QSqlQuery& DBConnection::executeQuery_(const string& query) throw(InvalidQuery,NotConnected)
@@ -142,7 +141,7 @@ namespace OpenMS
 		}
 		if (!lir_->exec(query.c_str()))
 		{
-	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().ascii() );
+	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().toAscii().data() );
 		}
 	  return *lir_;
 	}
@@ -153,7 +152,7 @@ namespace OpenMS
 	 	//if res is still empty, do nothing
 	 	if (result.size()!=0)
 	 	{
-	 		SignedInt col_count = db_handle_.record(result).count();
+	 		SignedInt col_count = result.record().count();
 	 		
 	 		out << line_begin;
 	 		
@@ -165,7 +164,7 @@ namespace OpenMS
 	    		out << separator;
 	    	} 
 	
-	      out << db_handle_.record(result).fieldName(i).toAscii().data() ;
+	      out << result.record().fieldName(i).toAscii().data() ;
 	    } 
 	    out << line_end;
 			
@@ -203,15 +202,15 @@ namespace OpenMS
 		//execute the query
 		if (!lir_->exec(query.c_str()))
 		{
-	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().ascii() );
+	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().toAscii().data() );
 		}
 		
 		lir_->first();
-		if (!lir_->value(0).canCast(QVariant::Int))
+		if (!lir_->value(0).canConvert(QVariant::Int))
 		{
 			throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,"Conversion of QVariant to int failed!");
 		}
-		return lir_->value(0).asInt();
+		return lir_->value(0).toInt();
 	}
 
 	double DBConnection::getDoubleValue(const std::string& table, const std::string& column, const std::string& id) throw (InvalidQuery,NotConnected,Exception::ConversionError)
@@ -227,11 +226,11 @@ namespace OpenMS
 		//execute the query
 		if (!lir_->exec(query.c_str()))
 		{
-	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().ascii() );
+	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().toAscii().data() );
 		}
 		
 		lir_->first();
-		if (!lir_->value(0).canCast(QVariant::Double))
+		if (!lir_->value(0).canConvert(QVariant::Double))
 		{
 			throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,"Conversion of QVariant to double failed!");
 		}
@@ -251,26 +250,26 @@ namespace OpenMS
 		//execute the query
 		if (!lir_->exec(query.c_str()))
 		{
-	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().ascii() );
+	    throw InvalidQuery(__FILE__, __LINE__, __PRETTY_FUNCTION__,query,db_handle_.lastError().text().toAscii().data() );
 		}
 		
 		lir_->first();
-		if (!lir_->value(0).canCast(QVariant::String))
+		if (!lir_->value(0).canConvert(QVariant::String))
 		{
 			throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,"Conversion of QVariant to double failed!");
 		}
-		return lir_->value(0).toString().ascii();
+		return lir_->value(0).toString().toAscii().data();
 	}
 	
 	UnsignedInt DBConnection::getAutoId()
 	{
 		executeQuery_("SELECT LAST_INSERT_ID()");
 		lir_->first();
-		if (!lir_->value(0).canCast(QVariant::Int))
+		if (!lir_->value(0).canConvert(QVariant::Int))
 		{
 			throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,"Conversion of QVariant to int failed in DBConnection::getAutoId()!");
 		}
-		return lir_->value(0).asInt();
+		return lir_->value(0).toInt();
 	}
 	
 	

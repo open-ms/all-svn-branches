@@ -69,7 +69,6 @@
 #include <qlayout.h>
 #include <qdialog.h>
 #include <q3toolbar.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 #include <Q3HBoxLayout>
 #include <Q3VBoxLayout>

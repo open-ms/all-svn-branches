@@ -32,7 +32,6 @@
 #include <qlineedit.h>
 #include <q3table.h>
 #include <qlabel.h>
-//Added by qt3to4:
 #include <QSqlQuery>
 #include <Q3HBoxLayout>
 #include <Q3VBoxLayout>

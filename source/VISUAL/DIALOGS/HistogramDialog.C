@@ -37,7 +37,6 @@
 #include <qstring.h>
 #include <qlineedit.h>
 #include <qradiobutton.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 
 

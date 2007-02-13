@@ -64,19 +64,19 @@ namespace OpenMS
 	void File::absolutePath(string& file)
 	{
 		QFileInfo fi(file.c_str());
-		file = fi.absFilePath().ascii();
+		file = fi.absoluteFilePath().toAscii().data();
 	}
 
 	String File::basename(const string& file)
 	{
 		QFileInfo fi(file.c_str());
-		return fi.fileName().ascii();
+		return fi.fileName().toAscii().data();
 	}
 
 	String File::path(const string& file)
 	{
 		QFileInfo fi(file.c_str());
-		return fi.dirPath().ascii();
+		return fi.filePath().toAscii().data();
 	}
 
 	bool File::readable(const string& file)
@@ -88,8 +88,8 @@ namespace OpenMS
 	bool File::writable(const string& file)
 	{
 		QFile f;
-		f.setName(file.c_str());
-		f.open(IO_WriteOnly);
+		f.setFileName(file.c_str());
+		f.open(QIODevice::WriteOnly);
 		bool tmp = f.isWritable();
 		f.close();
 		
@@ -141,7 +141,7 @@ namespace OpenMS
 		UnsignedInt i = 0;
 		for ( QStringList::const_iterator it = list.constBegin(); it != list.constEnd(); ++it )
 		{
-			output[i++] = (*it).ascii();
+			output[i++] = (*it).toAscii().data();
 		}
 		
 		return true;

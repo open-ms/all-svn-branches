@@ -30,6 +30,7 @@
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/FORMAT/DB/DBConnection.h>
 #include <qapplication.h>
+#include <QSqlQuery>
 ///////////////////////////
 
 using namespace OpenMS;

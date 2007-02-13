@@ -31,7 +31,6 @@
 //qt includes
 #include <qpainter.h>
 #include <qcolordialog.h>
-//Added by qt3to4:
 #include <QPaintEvent>
 #include <QMouseEvent>
 

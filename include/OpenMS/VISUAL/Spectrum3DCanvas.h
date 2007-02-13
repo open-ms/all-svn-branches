@@ -29,7 +29,6 @@
 
 // QT
 #include <qpoint.h>
-//Added by qt3to4:
 #include <QResizeEvent>
 
 // STL

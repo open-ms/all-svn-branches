@@ -37,7 +37,6 @@
 #include <qpainter.h>
 #include <qpixmap.h>
 #include <qbitmap.h>
-//Added by qt3to4:
 #include <QPaintEvent>
 #include <QResizeEvent>
 #include <Q3MemArray>

@@ -34,7 +34,6 @@
 #include <qlineedit.h>
 #include <q3listview.h>
 #include <q3textedit.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 #include <Q3HBoxLayout>
 #include <Q3Frame>

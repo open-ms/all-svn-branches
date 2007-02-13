@@ -41,7 +41,6 @@
 #include <qcombobox.h>
 #include <qpushbutton.h>
 #include <qspinbox.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 #include <Q3Frame>
 

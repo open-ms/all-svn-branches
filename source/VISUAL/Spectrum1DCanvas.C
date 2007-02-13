@@ -28,7 +28,6 @@
 #include <qmessagebox.h>
 #include <qaction.h>
 #include <qtimer.h>
-//Added by qt3to4:
 #include <QMouseEvent>
 #include <QPaintEvent>
 #include <QPainterPath>

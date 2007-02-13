@@ -34,7 +34,6 @@
 
 //QT
 #include <qpushbutton.h>
-//Added by qt3to4:
 #include <QLabel>
 #include <iostream>
 #include <qwidget.h>

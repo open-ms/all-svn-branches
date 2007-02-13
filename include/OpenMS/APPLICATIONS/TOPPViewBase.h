@@ -40,7 +40,6 @@
 //QT
 #include <q3mainwindow.h>
 #include <qworkspace.h>
-//Added by qt3to4:
 #include <QCloseEvent>
 #include <QLabel>
 #include <Q3PopupMenu>
@@ -138,7 +137,7 @@ namespace OpenMS
         maximizeActiveSpectrum();
         for (int i=0; i<tab_bar_->count(); ++i)
         {
-        	if (tab_bar_->tabData(i).toInt() == int(ws_->activeWindow()))
+        	if (tab_bar_->tabData(i).toInt() == qlonglong(ws_->activeWindow()))
         	{
         		tab_bar_->setCurrentIndex(i);
         		break;

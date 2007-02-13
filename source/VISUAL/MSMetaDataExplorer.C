@@ -61,7 +61,6 @@
 //QT
 #include <q3listview.h>
 #include <qwidget.h>
-//Added by qt3to4:
 #include <Q3HBoxLayout>
 #include <QLabel>
 #include <Q3GridLayout>

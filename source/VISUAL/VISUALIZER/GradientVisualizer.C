@@ -37,7 +37,6 @@
 #include <qpushbutton.h>
 #include <q3buttongroup.h>
 #include <qsize.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 #include <Q3Frame>
 //STL

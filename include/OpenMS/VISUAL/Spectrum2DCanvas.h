@@ -32,7 +32,6 @@
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
 #include <OpenMS/KERNEL/DimensionDescription.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
-//Added by qt3to4:
 #include <QWheelEvent>
 #include <QMouseEvent>
 

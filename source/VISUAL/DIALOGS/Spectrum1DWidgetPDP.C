@@ -33,7 +33,6 @@
 #include <q3groupbox.h>
 #include <qcheckbox.h>
 #include <qcombobox.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 
 using namespace std;

@@ -31,7 +31,6 @@
 #include <qcheckbox.h>
 #include <qcombobox.h>
 #include<qlabel.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 
 using namespace std;

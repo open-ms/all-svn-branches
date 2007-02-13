@@ -31,7 +31,6 @@
 #include <qlayout.h>
 #include <qimage.h>
 #include <qscrollbar.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 #include <QPixmap>
 

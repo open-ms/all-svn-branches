@@ -32,7 +32,6 @@
 #include <qlayout.h>
 #include <qlabel.h>
 #include <q3groupbox.h>
-//Added by qt3to4:
 #include <Q3GridLayout>
 
 

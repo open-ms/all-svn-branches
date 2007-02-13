@@ -24,28 +24,29 @@
 // $Maintainer:  stefan_heess $
 // --------------------------------------------------------------------------s
 
-
 #include <OpenMS/VISUAL/VISUALIZER/IdentificationVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/METADATA/Identification.h>
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/METADATA/Identification.h>
 #include <OpenMS/DATASTRUCTURES/DateTime.h>
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qcombobox.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <q3listview.h>
-#include <q3textedit.h>
-#include <qpushbutton.h>
-#include <qstring.h>
-#include <qvalidator.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qcombobox.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <q3listview.h>
+//#include <q3textedit.h>
+//#include <qpushbutton.h>
+//#include <qstring.h>
+//#include <qvalidator.h>
+#include <QtGui/QLineEdit>
+#include <QtGui/QValidator>
 
 #include <iostream>
-#include <vector>
-#include <string>
+//#include <vector>
+//#include <string>
 
 //using namespace std;
 using namespace OpenMS;

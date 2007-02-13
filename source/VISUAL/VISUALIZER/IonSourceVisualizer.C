@@ -26,24 +26,23 @@
 
 
 #include <OpenMS/VISUAL/VISUALIZER/IonSourceVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/METADATA/IonSource.h>
-
-
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/METADATA/IonSource.h>
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <qpushbutton.h>
-#include <qstring.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <qpushbutton.h>
+//#include <qstring.h>
+#include <QtGui/QComboBox>
 
 //STL
 #include <iostream>
-#include <vector>
-#include <string>
+//#include <vector>
+//#include <string>
 
 //using namespace std;
 using namespace OpenMS;

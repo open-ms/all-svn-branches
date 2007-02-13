@@ -37,12 +37,9 @@
 #include <Q3GridLayout>
 #include <Q3HBoxLayout>
 #include <Q3Frame>
-
-
+#include <QtGui/QPushButton>
 
 #include <iostream>
-
-
 
 //using namespace std;
 using namespace OpenMS;

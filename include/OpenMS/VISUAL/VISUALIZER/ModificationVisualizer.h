@@ -28,16 +28,16 @@
 #ifndef OPENMS_VISUAL_VISUALIZER_MODIFICATIONVISUALIZER_H
 #define OPENMS_VISUAL_VISUALIZER_MODIFICATIONVISUALIZER_H
 
-#include <OpenMS/config.h>
+//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/Modification.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <qpushbutton.h>
-#include <QLabel>
-#include <iostream>
-#include <qwidget.h>
-#include <qvalidator.h>
+//#include <qpushbutton.h>
+//#include <QLabel>
+//#include <iostream>
+//#include <qwidget.h>
+//#include <qvalidator.h>
 
 
 class QLabel;

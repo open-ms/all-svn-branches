@@ -25,20 +25,25 @@
 // --------------------------------------------------------------------------
 
 //OpenMS
-#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/VISUALIZER/HPLCVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 //#include <OpenMS/VISUAL/DataTable.h>
 
 //QT
-#include <qwidget.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <q3textedit.h>
-#include <qpushbutton.h>
+//#include <qwidget.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <q3textedit.h>
+//#include <qpushbutton.h>
+//#include <iostream>
+//#include <vector>
+//#include <qvalidator.h>
+
+#include <QtGui/QLineEdit>
+#include <QtGui/QTextEdit>
+#include <QtGui/QValidator>
 #include <iostream>
-#include <vector>
-#include <qvalidator.h>
 
 //using namespace std;
 using namespace OpenMS;

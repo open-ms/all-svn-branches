@@ -23,19 +23,24 @@
 // --------------------------------------------------------------------------
 // $Maintainer: stefan_heess  $
 // --------------------------------------------------------------------------
-#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/VISUALIZER/ModificationVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/METADATA/Modification.h>
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/METADATA/Modification.h>
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <q3textedit.h>
-#include <qpushbutton.h>
-#include <qvalidator.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <q3textedit.h>
+//#include <qpushbutton.h>
+//#include <qvalidator.h>
+
+#include <QtGui/QTextEdit>
+#include <QtGui/QComboBox>
+#include <QtGui/QLineEdit>
+
 #include <iostream>
 #include <vector>
 

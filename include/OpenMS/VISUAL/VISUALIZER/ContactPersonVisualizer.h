@@ -35,10 +35,10 @@
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <QtGui/qpushbutton.h>
-#include <QtGui/QLabel>
-#include <iostream>
-#include <QtGui/qwidget.h>
+//#include <QtGui/qpushbutton.h>
+//#include <QtGui/QLabel>
+//#include <iostream>
+//#include <QtGui/qwidget.h>
 
 class QLabel;
 class QLineEdit;

@@ -30,24 +30,22 @@
 
 
 //OpenMS
-#include <OpenMS/config.h>
+//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/Software.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <QtGui/qtextedit.h>
-#include <q3hbox.h>
-#include <QtGui/qspinbox.h>
-#include <QtGui/qpushbutton.h>
-#include <iostream>
-#include <QtGui/qwidget.h>
-#include <q3listbox.h>
-#include <QtGui/qvalidator.h>
+//#include <QtGui/qtextedit.h>
+//#include <q3hbox.h>
+//#include <QtGui/qspinbox.h>
+//#include <QtGui/qpushbutton.h>
+//#include <iostream>
+//#include <QtGui/qwidget.h>
+//#include <q3listbox.h>
+//#include <QtGui/qvalidator.h>
 
 class QLineEdit;
 class QComboBox;
-
-
 
 namespace OpenMS {
 /**

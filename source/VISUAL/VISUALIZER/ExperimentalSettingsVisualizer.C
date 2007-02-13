@@ -24,21 +24,23 @@
 // $Maintainer:  stefan_heess $
 // --------------------------------------------------------------------------s
 
-
 #include <OpenMS/VISUAL/VISUALIZER/ExperimentalSettingsVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/METADATA/ExperimentalSettings.h>
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/METADATA/ExperimentalSettings.h>
 #include <OpenMS/DATASTRUCTURES/Date.h>
 
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <qpushbutton.h>
-#include <qstring.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <qpushbutton.h>
+//#include <qstring.h>
+#include <QtGui/QLineEdit>
+#include <QtGui/QTextEdit>
+#include <QtGui/QComboBox>
 
 //STL
 #include <iostream>

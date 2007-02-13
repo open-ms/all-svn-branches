@@ -24,26 +24,26 @@
 // $Maintainer:  stefan_heess $
 // --------------------------------------------------------------------------s
 
-
 #include <OpenMS/VISUAL/VISUALIZER/SpectrumSettingsVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/METADATA/SpectrumSettings.h>
-#include <OpenMS/DATASTRUCTURES/Date.h>
-
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/METADATA/SpectrumSettings.h>
+//#include <OpenMS/DATASTRUCTURES/Date.h>
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <qpushbutton.h>
-#include <qstring.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <qpushbutton.h>
+//#include <qstring.h>
+#include <QtGui/QComboBox>
+#include <QtGui/QTextEdit>
 
 //STL
 #include <iostream>
-#include <vector>
-#include <string>
+//#include <vector>
+//#include <string>
 
 //using namespace std;
 using namespace OpenMS;

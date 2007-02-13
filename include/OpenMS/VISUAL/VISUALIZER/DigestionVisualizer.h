@@ -29,17 +29,17 @@
 #define OPENMS_VISUAL_VISUALIZER_DIGESTIONVISUALIZER_H
 
 //OpenMS
-#include <OpenMS/config.h>
+//#include <OpenMS/config.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 #include <OpenMS/METADATA/Digestion.h>
 
 //QT
-#include <QtGui/qtextedit.h>
+//#include <QtGui/qtextedit.h>
 //#include <QtGui/qhbox.h>
-#include <QtGui/qpushbutton.h>
-#include <QtGui/QLabel>
-#include <iostream>
-#include <QtGui/qwidget.h>
+//#include <QtGui/qpushbutton.h>
+//#include <QtGui/QLabel>
+//#include <iostream>
+//#include <QtGui/qwidget.h>
 
 
 

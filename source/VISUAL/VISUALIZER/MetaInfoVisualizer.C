@@ -25,19 +25,25 @@
 // --------------------------------------------------------------------------
 
 //OpenMS
-#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/VISUALIZER/MetaInfoVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <qpushbutton.h>
-#include <q3buttongroup.h>
-#include <qsize.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <qpushbutton.h>
+//#include <q3buttongroup.h>
+//#include <qsize.h>
 #include <Q3GridLayout>
+#include <QtGui/QPushButton>
+#include <QtGui/QLineEdit>
+#include <QtGui/QGridLayout>
+#include <QtGui/QLabel>
+#include <QtGui/QButtonGroup>
+
 //STL
 #include <iostream>
 #include <vector>
@@ -52,7 +58,7 @@ MetaInfoVisualizer::MetaInfoVisualizer(bool editable, QWidget *parent, const cha
 {
   type_="MetaInfo";
 	
-	buttongroup_ = new Q3ButtonGroup();
+	buttongroup_ = new QButtonGroup();
 	nextrow_=0;
 	
 	viewlayout_ = new Q3GridLayout(this);
@@ -201,7 +207,7 @@ void MetaInfoVisualizer::loadData_(UnsignedInt index)
 			metabuttons_.push_back(make_pair(index,button));
 				
 			//Insert new button with ID into buttongroup
-			buttongroup_->insert(button, index);
+			buttongroup_->addButton(button, index);
 			nextrow_++;
 			
 			lab->show();
@@ -239,7 +245,7 @@ void MetaInfoVisualizer::add()
 	{
 		//check whether there is already an entry in GUI for added metainfo.
 		//If index already exists, return and do nothing. 
-		if( buttongroup_->find(newindex) != 0 )
+		if( buttongroup_->button(newindex) != 0 )
 		{
 		  return;
 		}

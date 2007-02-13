@@ -24,27 +24,26 @@
 // $Maintainer:  stefan_heess $
 // --------------------------------------------------------------------------s
 
-
 #include <OpenMS/VISUAL/VISUALIZER/PrecursorVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/METADATA/Precursor.h>
-
-
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/METADATA/Precursor.h>
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <qpushbutton.h>
-#include <qstring.h>
-#include <qvalidator.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <qpushbutton.h>
+//#include <qstring.h>
+//#include <qvalidator.h>
+#include <QtGui/QLineEdit>
+#include <QtGui/QComboBox>
 
 //STL
 #include <iostream>
-#include <vector>
-#include <string>
+//#include <vector>
+//#include <string>
 
 //using namespace std;
 using namespace OpenMS;

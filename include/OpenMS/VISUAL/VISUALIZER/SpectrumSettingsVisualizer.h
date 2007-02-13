@@ -23,29 +23,24 @@
 // --------------------------------------------------------------------------
 // $Maintainer: stefan_heess $
 // --------------------------------------------------------------------------
-
  
 #ifndef OPENMS_VISUAL_VISUALIZER_SPECTRUMSETTINGSVISUALIZER_H
 #define OPENMS_VISUAL_VISUALIZER_SPECTRUMSETTINGSVISUALIZER_H
 
-
 //OpenMS
-#include <OpenMS/config.h>
+//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/SpectrumSettings.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <QtGui/qpushbutton.h>
-#include <iostream>
-#include <QtGui/qwidget.h>
-#include <q3listbox.h>
-#include <QtGui/qtextedit.h>
-
+//#include <QtGui/qpushbutton.h>
+//#include <iostream>
+//#include <QtGui/qwidget.h>
+//#include <q3listbox.h>
+//#include <QtGui/qtextedit.h>
 
 class QLineEdit;
 class QComboBox;
-
-
 
 namespace OpenMS {
 /**

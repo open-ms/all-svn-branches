@@ -23,33 +23,37 @@
 // --------------------------------------------------------------------------
 // $Maintainer: stefan_heess  $
 // --------------------------------------------------------------------------
-#include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/METADATA/Sample.h>
+
+//#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/METADATA/Sample.h>
 #include <OpenMS/VISUAL/VISUALIZER/DigestionVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/VISUAL/DataTable.h>
-#include <OpenMS/METADATA/Digestion.h>
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/VISUAL/DataTable.h>
+//#include <OpenMS/METADATA/Digestion.h>
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qaction.h>
-#include <qcombobox.h>
-#include <q3filedialog.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <qmenubar.h>
-#include <qmessagebox.h>
-#include <q3popupmenu.h>
-#include <qsettings.h>
-#include <qstatusbar.h>
-#include <qapplication.h>
-#include <q3listview.h>
-#include <q3textedit.h>
-#include <q3hbox.h>
-#include <q3groupbox.h>
-#include <qpushbutton.h>
-#include <qvalidator.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qaction.h>
+//#include <qcombobox.h>
+//#include <q3filedialog.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <qmenubar.h>
+//#include <qmessagebox.h>
+//#include <q3popupmenu.h>
+//#include <qsettings.h>
+//#include <qstatusbar.h>
+//#include <qapplication.h>
+//#include <q3listview.h>
+//#include <q3textedit.h>
+//#include <q3hbox.h>
+//#include <q3groupbox.h>
+//#include <qpushbutton.h>
+//#include <qvalidator.h>
+#include <QtGui/QValidator>
+#include <QtGui/QLineEdit>
+#include <QtGui/QTextEdit>
 
 //STL
 #include <iostream>

@@ -28,26 +28,32 @@
 #ifndef OPENMS_VISUAL_DATATABLE_H
 #define OPENMS_VISUAL_DATATABLE_H
 
-#include <OpenMS/config.h>
+//#include <OpenMS/config.h>
 #include <OpenMS/CONCEPT/Types.h>
 
 //QT
-#include <QtGui/qtextedit.h>
-#include <q3hbox.h>
-#include <qspinbox.h>
-#include <qpushbutton.h>
-#include <qwidget.h>
-#include <qlayout.h>
-#include <qlabel.h>
-#include <qaction.h>
-#include <qlineedit.h>
-#include <qcombobox.h>
-#include <q3listview.h>
-#include <q3listbox.h>
-#include <q3buttongroup.h>
-#include <Q3GridLayout>
+//#include <QtGui/qtextedit.h>
+//#include <q3hbox.h>
+//#include <qspinbox.h>
+//#include <qpushbutton.h>
+//#include <qwidget.h>
+//#include <qlayout.h>
+//#include <qlabel.h>
+//#include <qaction.h>
+//#include <qlineedit.h>
+//#include <qcombobox.h>
+//#include <q3listview.h>
+//#include <q3listbox.h>
+//#include <qbuttongroup.h>
+//#include <QGridLayout>
 
+#include <QtGui/QWidget>
 
+class QPushButton;
+class QGridLayout;
+class QLineEdit;
+class QTextEdit;
+class QComboBox;
 
 namespace OpenMS 
 {
@@ -98,7 +104,7 @@ namespace OpenMS
 		
 		protected:
 		  /// The main layout.
-			Q3GridLayout* mainlayout_;	
+			QGridLayout* mainlayout_;	
 			
 			/// Counter for the grid row.
 			UnsignedInt row_;

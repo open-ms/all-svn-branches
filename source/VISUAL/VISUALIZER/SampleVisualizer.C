@@ -33,18 +33,22 @@
 
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qcombobox.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <q3listview.h>
-#include <q3textedit.h>
-#include <qpushbutton.h>
-#include <qstring.h>
-#include <qvalidator.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qcombobox.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <q3listview.h>
+//#include <q3textedit.h>
+//#include <qpushbutton.h>
+//#include <qstring.h>
+//#include <qvalidator.h>
+#include <QtGui/QTextEdit>
+#include <QtGui/QValidator>
+#include <QtGui/QLineEdit>
+#include <QtGui/QComboBox>
 
-#include <iostream>
+//#include <iostream>
 #include <vector>
 #include <string>
 

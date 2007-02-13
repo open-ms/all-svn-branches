@@ -29,28 +29,28 @@
 #define OPENMS_VISUAL_VISUALIZER_METAINFOVISUALIZER_H
 
 //OpenMS
-#include <OpenMS/config.h>
+//#include <OpenMS/config.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 #include <OpenMS/METADATA/MetaInfoInterface.h>
 
 //QT
-#include <QtGui/qtextedit.h>
-#include <QtGui/qpushbutton.h>
-#include <QtGui/qwidget.h>
-#include <QtGui/qlayout.h>
-#include <QtGui/QGridLayout>
-#include <QtGui/QLabel>
+//#include <QtGui/qtextedit.h>
+//#include <QtGui/qpushbutton.h>
+//#include <QtGui/qwidget.h>
+//#include <QtGui/qlayout.h>
+//#include <QtGui/QGridLayout>
+//#include <QtGui/QLabel>
 
 //STL
-#include <iostream>
+//#include <iostream>
 #include <vector>
 #include <utility>
 
 
-
 class QLabel;
 class QLineEdit;
-
+class QAbstractButton;
+class QButtonGroup;
 
 namespace OpenMS {
 /**
@@ -108,7 +108,7 @@ Meta information is an array of Type-Name-Value tupels. Classes that have a Meta
 		QPushButton* cancelbutton_;
 		QPushButton* addbutton_;
 		QPushButton* clearbutton_;
-		Q3ButtonGroup* buttongroup_;
+		QButtonGroup* buttongroup_;
 		//@}
 		
 		/// Counter to keep track of the actual row in the layout.

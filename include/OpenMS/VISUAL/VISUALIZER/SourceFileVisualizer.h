@@ -35,15 +35,13 @@
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <qpushbutton.h>
-#include <QLabel>
-#include <iostream>
-#include <qwidget.h>
-
+//#include <qpushbutton.h>
+//#include <QLabel>
+//#include <iostream>
+//#include <qwidget.h>
 
 class QLabel;
 class QLineEdit;
-
 
 namespace OpenMS {
 /**

@@ -25,24 +25,31 @@
 // --------------------------------------------------------------------------
 
 //OpenMS
-#include <OpenMS/DATASTRUCTURES/String.h>
+//#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/VISUALIZER/GradientVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <qlayout.h>
-#include <qwidget.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <qpushbutton.h>
-#include <q3buttongroup.h>
-#include <qsize.h>
+//#include <qlayout.h>
+//#include <qwidget.h>
+//#include <qlabel.h> 
+//#include <qlineedit.h>
+//#include <qpushbutton.h>
+//#include <q3buttongroup.h>
+//#include <qsize.h>
 #include <Q3GridLayout>
 #include <Q3Frame>
+
+
+#include <QtGui/QLabel>
+#include <QtGui/QLineEdit>
+#include <QtGui/QValidator>
+#include <QtGui/QPushButton>
+
 //STL
 #include <iostream>
 #include <vector>
-#include <utility>
+//#include <utility>
 
 
 using namespace OpenMS;

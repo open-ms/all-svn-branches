@@ -30,16 +30,16 @@
 
 
 //OpenMS
-#include <OpenMS/config.h>
+//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/Instrument.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-#include <qpushbutton.h>
-#include <iostream>
-#include <qwidget.h>
-#include <q3listbox.h>
-#include <q3textedit.h>
+//#include <qpushbutton.h>
+//#include <iostream>
+//#include <qwidget.h>
+//#include <q3listbox.h>
+//#include <q3textedit.h>
 
 
 class QLineEdit;

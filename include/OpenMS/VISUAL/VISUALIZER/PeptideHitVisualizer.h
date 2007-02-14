@@ -28,17 +28,8 @@
 #define OPENMS_VISUAL_VISUALIZER_PEPTIDEHITVISUALIZER_H
 
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/PeptideHit.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-
-//QT
-//#include <q3textedit.h>
-//#include <qpushbutton.h>
-//#include <QLabel>
-//#include <iostream>
-//#include <qwidget.h>
-//#include <qvalidator.h>
 
 class QLabel;
 class QLineEdit;

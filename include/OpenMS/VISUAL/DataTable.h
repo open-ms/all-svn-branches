@@ -28,11 +28,9 @@
 #ifndef OPENMS_VISUAL_DATATABLE_H
 #define OPENMS_VISUAL_DATATABLE_H
 
-//#include <OpenMS/config.h>
 #include <OpenMS/CONCEPT/Types.h>
 
 //QT
-
 #include <QtGui/QWidget>
 
 class QPushButton;

@@ -25,29 +25,16 @@
 // --------------------------------------------------------------------------s
 
 #include <OpenMS/VISUAL/VISUALIZER/ExperimentalSettingsVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-//#include <OpenMS/DATASTRUCTURES/String.h>
-//#include <OpenMS/METADATA/ExperimentalSettings.h>
 #include <OpenMS/DATASTRUCTURES/Date.h>
 
-
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <qpushbutton.h>
-//#include <qstring.h>
 #include <QtGui/QLineEdit>
 #include <QtGui/QTextEdit>
 #include <QtGui/QComboBox>
 
 //STL
 #include <iostream>
-#include <vector>
-#include <string>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -81,7 +68,7 @@ void ExperimentalSettingsVisualizer::load(ExperimentalSettings &s)
 
 void ExperimentalSettingsVisualizer::update_()
 {
-		experimentalsettings_type_->setCurrentItem(tempexperimentalsettings_.getType()); 
+		experimentalsettings_type_->setCurrentIndex(tempexperimentalsettings_.getType()); 
 		String str;
     tempexperimentalsettings_.getDate().get(str);
 	  experimentalsettings_date_->setText(str.c_str()); 
@@ -93,12 +80,12 @@ void ExperimentalSettingsVisualizer::store()
 	try
 	{
 		
-		(*ptr_).setType((ExperimentalSettings::ExperimentType)experimentalsettings_type_->currentItem());		
+		(*ptr_).setType((ExperimentalSettings::ExperimentType)experimentalsettings_type_->currentIndex());		
 		Date date;
-		String n((const char*) experimentalsettings_date_->text());
+		String n(experimentalsettings_date_->text().toStdString());
 		date.set(n);
 		(*ptr_).setDate(date);
-		(*ptr_).setComment(string((const char*) experimentalsettings_comment_->text()) );
+		(*ptr_).setComment(experimentalsettings_comment_->toPlainText().toStdString());
 		
 		tempexperimentalsettings_=(*ptr_);
 	}

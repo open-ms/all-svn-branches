@@ -28,17 +28,10 @@
 #define OPENMS_VISUAL_VISUALIZER_EXPERIMENTALSETTINGSVISUALIZER_H
 
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/ExperimentalSettings.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-//#include <QtGui/qpushbutton.h>
-//#include <iostream>
-//#include <QtGui/qwidget.h>
-//#include <QtGui/qlistwidget.h>
-//#include <QtGui/qtextedit.h>
-
 class QLineEdit;
 class QComboBox;
 

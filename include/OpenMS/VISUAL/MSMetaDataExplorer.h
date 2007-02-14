@@ -30,15 +30,22 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 
 //QT
-#include <QtGui/QStackedWidget>
-#include <QtGui/QSplitter>
-#include <QtGui/QPushButton>
+//#include <QtGui/QStackedWidget>
+//#include <QtGui/QSplitter>
+//#include <QtGui/QPushButton>
 #include <QtGui/QDialog>
-#include <QtGui/QGridLayout>
-#include <QtGui/QHBoxLayout>
-#include <QtGui/QVBoxLayout>
-#include <QtGui/QTreeWidget>
-#include <QtGui/QTreeWidgetItem>
+//#include <QtGui/QGridLayout>
+//#include <QtGui/QHBoxLayout>
+//#include <QtGui/QVBoxLayout>
+//#include <QtGui/QTreeWidget>
+//#include <QtGui/QTreeWidgetItem>
+class QTreeWidgetItem;
+class QPushButton;
+class QStackedWidget;
+class QTreeWidget;
+class QHBoxLayout;
+class QVBoxLayout;
+class QGridLayout;
 
 namespace OpenMS 
 {

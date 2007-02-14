@@ -23,46 +23,33 @@
 // --------------------------------------------------------------------------
 // $Maintainer: stefan_heess $
 // --------------------------------------------------------------------------
-
  
 #ifndef OPENMS_VISUAL_VISUALIZER_PROTEINIDENTIFICATIONVISUALIZER_H
 #define OPENMS_VISUAL_VISUALIZER_PROTEINIDENTIFICATIONVISUALIZER_H
 
-
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/ProteinIdentification.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/VISUAL/MSMetaDataExplorer.h>
-
-//QT
-//#include <QtGui/qtextedit.h>
-//#include <QtGui/qhbox.h>
-//#include <QtGui/qspinbox.h>
-//#include <QtGui/qpushbutton.h>
-//#include <iostream>
-//#include <QtGui/qwidget.h>
-//#include <QtGui/qlistwidget.h>
-//#include <QtGui/qvalidator.h>
 
 class QLineEdit;
 class QComboBox;
 
+namespace OpenMS
+{
+	class MSMetaDataExplorer;
 
+	/**
+	@brief Class that displays all meta information for ProteinIdentification objects
 
-namespace OpenMS {
-/**
-@brief Class that displays all meta information for ProteinIdentification objects
-
-This class provides all functionality to view the meta information of an object of type ProteinIdentification.
-*/
+	This class provides all functionality to view the meta information of an object of type ProteinIdentification.
+	*/
 	
 	class ProteinIdentificationVisualizer : public BaseVisualizer
 	{
 		Q_OBJECT
 
-	public: 
-	  /// Default constructor
+public: 
+	  // Default constructor
 		ProteinIdentificationVisualizer(bool editable= FALSE, QWidget *parent =0, MSMetaDataExplorer *caller=0);
 		/// Loads the meta data from the object to the viewer. Gets the id of the item in the tree as parameter.
 		void load(ProteinIdentification &s, int tree_item_id);

@@ -25,28 +25,14 @@
 // --------------------------------------------------------------------------s
 
 #include <OpenMS/VISUAL/VISUALIZER/InstrumentSettingsVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-//#include <OpenMS/DATASTRUCTURES/String.h>
-//#include <OpenMS/METADATA/InstrumentSettings.h>
-#include <OpenMS/DATASTRUCTURES/Date.h>
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <qpushbutton.h>
-//#include <qstring.h>
-//#include <qvalidator.h>
 #include <QtGui/QLineEdit>
 #include <QtGui/QComboBox>
 
 //STL
 #include <iostream>
-//#include <vector>
-//#include <string>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -92,8 +78,8 @@ void InstrumentSettingsVisualizer::load(InstrumentSettings &is)
 
 void InstrumentSettingsVisualizer::update_()
 {
-		instrumentsettings_scan_mode_->setCurrentItem(tempinstrumentsettings_.getScanMode()); 
-		instrumentsettings_polarity_->setCurrentItem(tempinstrumentsettings_.getPolarity()); 
+		instrumentsettings_scan_mode_->setCurrentIndex(tempinstrumentsettings_.getScanMode()); 
+		instrumentsettings_polarity_->setCurrentIndex(tempinstrumentsettings_.getPolarity()); 
 		instrumentsettings_mz_range_start_->setText(String(tempinstrumentsettings_.getMzRangeStart() ).c_str() );
 		instrumentsettings_mz_range_stop_->setText(String(tempinstrumentsettings_.getMzRangeStop() ).c_str() );
 }
@@ -103,10 +89,10 @@ void InstrumentSettingsVisualizer::store()
 	try
 	{
 			
-		(*ptr_).setScanMode((InstrumentSettings::ScanMode)instrumentsettings_scan_mode_->currentItem());		
-		(*ptr_).setPolarity((IonSource::Polarity)instrumentsettings_polarity_->currentItem());		
-		(*ptr_).setMzRangeStart(String((const char*)instrumentsettings_mz_range_start_->text() ).toFloat());
-		(*ptr_).setMzRangeStop(String((const char*)instrumentsettings_mz_range_stop_->text() ).toFloat() );
+		(*ptr_).setScanMode((InstrumentSettings::ScanMode)instrumentsettings_scan_mode_->currentIndex());		
+		(*ptr_).setPolarity((IonSource::Polarity)instrumentsettings_polarity_->currentIndex());		
+		(*ptr_).setMzRangeStart(instrumentsettings_mz_range_start_->text().toFloat());
+		(*ptr_).setMzRangeStop(instrumentsettings_mz_range_stop_->text().toFloat());
 		
 		tempinstrumentsettings_=(*ptr_);
 	}

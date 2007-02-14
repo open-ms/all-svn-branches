@@ -24,22 +24,12 @@
 // $Maintainer: stefan_heess $
 // --------------------------------------------------------------------------
 
- 
 #ifndef OPENMS_VISUAL_VISUALIZER_IONSOURCEVISUALIZER_H
 #define OPENMS_VISUAL_VISUALIZER_IONSOURCEVISUALIZER_H
 
-
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/IonSource.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-
-//QT
-//#include <qpushbutton.h>
-//#include <iostream>
-//#include <qwidget.h>
-//#include <q3listbox.h>
-//#include <q3textedit.h>
 
 class QLineEdit;
 class QComboBox;

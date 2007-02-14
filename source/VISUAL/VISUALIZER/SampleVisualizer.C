@@ -26,33 +26,15 @@
 
 
 #include <OpenMS/VISUAL/VISUALIZER/SampleVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/METADATA/Sample.h>
-
-
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qcombobox.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <q3listview.h>
-//#include <q3textedit.h>
-//#include <qpushbutton.h>
-//#include <qstring.h>
-//#include <qvalidator.h>
 #include <QtGui/QTextEdit>
 #include <QtGui/QValidator>
 #include <QtGui/QLineEdit>
 #include <QtGui/QComboBox>
 
-//#include <iostream>
-#include <vector>
-#include <string>
+#include <iostream>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -112,10 +94,10 @@ void SampleVisualizer::update_()
 	samplenumber_->setText(tempsample_.getNumber().c_str());
 	sampleorganism_->setText(tempsample_.getOrganism().c_str());
   samplecomment_->setText(tempsample_.getComment().c_str());
-	samplestate_->setCurrentItem(tempsample_.getState()); 
-	samplemass_->setText(String( tempsample_.getMass()).c_str()   );
-	samplevolume_->setText(String( tempsample_.getVolume() ).c_str());
-	sampleconcentration_->setText(String( tempsample_.getConcentration() ).c_str() );
+	samplestate_->setCurrentIndex(tempsample_.getState());
+	samplemass_->setText(String(tempsample_.getMass()).c_str()   );
+	samplevolume_->setText(String(tempsample_.getVolume()).c_str());
+	sampleconcentration_->setText(String(tempsample_.getConcentration()).c_str() );
 	
 }
 
@@ -124,21 +106,21 @@ void SampleVisualizer::store()
 {
 	try
 	{
-		(*ptr_).setName(string((const char*) samplename_->text()) );
-		(*ptr_).setNumber(string((const char*) samplenumber_->text()) );
-		(*ptr_).setOrganism(string((const char*) sampleorganism_->text()) );
-		(*ptr_).setComment(string((const char*) samplecomment_->text()) );
+		(*ptr_).setName(samplename_->text().toStdString());
+		(*ptr_).setNumber(samplenumber_->text().toStdString());
+		(*ptr_).setOrganism(sampleorganism_->text().toStdString());
+		(*ptr_).setComment(samplecomment_-> toPlainText().toStdString());
 				
-		(*ptr_).setState((Sample::SampleState)samplestate_->currentItem() );		
+		(*ptr_).setState((Sample::SampleState)samplestate_->currentIndex());		
 	
-		String m((const char*) samplemass_->text()) ;
-		(*ptr_).setMass(m.toFloat() );
+		String m(samplemass_->text().toStdString());
+		(*ptr_).setMass(m.toFloat());
 		
-		String v((const char*) samplevolume_->text()) ;
-		(*ptr_).setVolume(v.toFloat() );
+		String v(samplevolume_->text().toStdString()) ;
+		(*ptr_).setVolume(v.toFloat());
 		
-		String c((const char*) sampleconcentration_->text()) ;
-		(*ptr_).setConcentration(c.toFloat() );
+		String c(sampleconcentration_->text().toStdString()) ;
+		(*ptr_).setConcentration(c.toFloat());
 		
 		tempsample_=(*ptr_);
 		

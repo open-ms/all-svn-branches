@@ -25,27 +25,14 @@
 // --------------------------------------------------------------------------s
 
 #include <OpenMS/VISUAL/VISUALIZER/SpectrumSettingsVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-//#include <OpenMS/DATASTRUCTURES/String.h>
-//#include <OpenMS/METADATA/SpectrumSettings.h>
-//#include <OpenMS/DATASTRUCTURES/Date.h>
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <qpushbutton.h>
-//#include <qstring.h>
 #include <QtGui/QComboBox>
 #include <QtGui/QTextEdit>
 
 //STL
 #include <iostream>
-//#include <vector>
-//#include <string>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -79,7 +66,7 @@ void SpectrumSettingsVisualizer::load(SpectrumSettings &s)
 
 void SpectrumSettingsVisualizer::update_()
 {
-		spectrumsettings_type_->setCurrentItem(tempspectrumsettings_.getType()); 
+		spectrumsettings_type_->setCurrentIndex(tempspectrumsettings_.getType()); 
 		spectrumsettings_comment_->setText(tempspectrumsettings_.getComment().c_str());
 	  
 }
@@ -89,8 +76,8 @@ void SpectrumSettingsVisualizer::store()
 	try
 	{
 			
-		(*ptr_).setType((SpectrumSettings::SpectrumType)spectrumsettings_type_->currentItem());			
-		(*ptr_).setComment(string((const char*) spectrumsettings_comment_->text()) );
+		(*ptr_).setType((SpectrumSettings::SpectrumType)spectrumsettings_type_->currentIndex());			
+		(*ptr_).setComment(spectrumsettings_comment_->toPlainText().toStdString());
 		
 		tempspectrumsettings_=(*ptr_);
 	}

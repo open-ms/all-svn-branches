@@ -25,32 +25,21 @@
 // --------------------------------------------------------------------------
 
 //OpenMS
-//#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/VISUALIZER/GradientVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <qpushbutton.h>
-//#include <q3buttongroup.h>
-//#include <qsize.h>
-#include <Q3GridLayout>
-#include <Q3Frame>
-
+//#include <Q3GridLayout>
+//#include <Q3Frame>
 
 #include <QtGui/QLabel>
 #include <QtGui/QLineEdit>
 #include <QtGui/QValidator>
 #include <QtGui/QPushButton>
+#include <QtGui/QGridLayout>
 
 //STL
 #include <iostream>
 #include <vector>
-//#include <utility>
-
 
 using namespace OpenMS;
 using namespace std;
@@ -62,10 +51,10 @@ GradientVisualizer::GradientVisualizer(bool editable, QWidget *parent)
 	//type_="Gradient";
 	nextrow_=0;
 	
-	viewlayout_ = new Q3GridLayout(this);
+	viewlayout_ = new QGridLayout(this);
 	viewlayout_->setSpacing(6);
   viewlayout_->setMargin(11);
-	mainlayout_->addMultiCellLayout(viewlayout_, row_, row_, 0 ,2);
+	mainlayout_->addLayout(viewlayout_, row_, row_, 0 ,2);
 	row_++;		
 	
 }
@@ -126,7 +115,7 @@ void GradientVisualizer::deleteData()
 void GradientVisualizer::addTimepoint()
 {
   //Check wether new timepoint is in range
-	String m((const char*) new_timepoint_->text()) ;
+	String m(new_timepoint_->text().toStdString()) ;
 	int num_time = timepoints_.size();
 	
 	if(m.trim().length() !=0 && timepoints_[num_time-1] < m.toInt())
@@ -140,7 +129,7 @@ void GradientVisualizer::addTimepoint()
 
 void GradientVisualizer::addEluent()
 {
-	String m((const char*) new_eluent_->text() ) ;
+	String m(new_eluent_->text().toStdString()) ;
 	std::vector<String>::iterator iter; 
 	//check if eluent name is empty
 	if(m.trim().length() !=0 )
@@ -175,7 +164,7 @@ void GradientVisualizer::store()
             elu_count=i;
             for(int j=0; j< elu_size; ++j )
             {
-              String value((const char*) (gradientdata_[elu_count])->text() ) ;
+              String value((gradientdata_[elu_count])->text().toStdString());
               elu_count  = elu_count+ time_size;
               sum_check= sum_check + value.toInt();
               if(j== elu_size-1 && sum_check!=100)
@@ -195,7 +184,7 @@ void GradientVisualizer::store()
         {
           for(UnsignedInt j=0; j< timepoints_.size(); ++j )
           {
-            String value((const char*) (gradientdata_[count+j])->text() ) ;
+            String value((gradientdata_[count+j])->text().toStdString());
             tempgradient_.setPercentage(eluents_[i], timepoints_[j], value.toInt()  );      
           }
           count=count+time_size;
@@ -229,15 +218,15 @@ void GradientVisualizer::loadData_()
 		
 	//Add a header
 	QLabel *header =new QLabel("Modify Gradient information", this);
-	viewlayout_->addMultiCellWidget(header, 0, 0 ,0 , num_timepoints);
+	viewlayout_->addWidget(header, 0, 0 ,0 , num_timepoints);
 	header->show();
 	nextrow_++;
 	gradientlabel_.push_back(header);
 	
 	//Add a seperator
 	QLabel* hline = new QLabel(this);
-	hline->setFrameShape(Q3Frame::HLine); 
-	viewlayout_->addMultiCellWidget(hline, 1, 1, 0, num_timepoints);
+	hline->setFrameShape(QFrame::HLine); 
+	viewlayout_->addWidget(hline, 1, 1, 0, num_timepoints);
 	hline->show();
 	nextrow_++;
 	gradientlabel_.push_back(hline);
@@ -297,7 +286,7 @@ void GradientVisualizer::removeData_()
 	for(iter2 = gradientdata_.begin(); iter2 < gradientdata_.end(); iter2++ ) 
 	{			
 				//Delete QLineEdit field from viewlayout_
-				viewlayout_->remove( (*iter2) );
+				viewlayout_->removeWidget((*iter2));
 				//Free memory of the pointer
 				delete (*iter2);
 				//Set pointer to 0
@@ -309,7 +298,7 @@ void GradientVisualizer::removeData_()
 	
 	for(iter_label = gradientlabel_.begin(); iter_label < gradientlabel_.end(); iter_label++ ) 
 	{
-				viewlayout_->remove( (*iter_label) );
+				viewlayout_->removeWidget((*iter_label));
 				delete (*iter_label);
 				(*iter_label) =0;			
   }

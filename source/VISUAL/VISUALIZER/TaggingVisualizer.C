@@ -23,19 +23,10 @@
 // --------------------------------------------------------------------------
 // $Maintainer: stefan_heess  $
 // --------------------------------------------------------------------------
-//#include <OpenMS/DATASTRUCTURES/String.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+
 #include <OpenMS/VISUAL/VISUALIZER/TaggingVisualizer.h>
-//#include <OpenMS/METADATA/Modification.h>
-//#include <OpenMS/METADATA/Tagging.h>
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <q3textedit.h>
-//#include <qpushbutton.h>
 
 #include <QtGui/QComboBox>
 #include <QtGui/QTextEdit>
@@ -43,8 +34,6 @@
 #include <QtGui/QValidator>
 
 #include <iostream>
-#include <vector>
-
 
 using namespace OpenMS;
 using namespace std;
@@ -99,10 +88,10 @@ void TaggingVisualizer::updateTag_()
 	treatmentcomment_->setText(temptag_.getComment().c_str());
 	modificationname_->setText(temptag_.getReagentName().c_str());
 	modificationmass_->setText(String(temptag_.getMass()).c_str() );
-	modificationspecificity_->setCurrentItem(temptag_.getSpecificityType());
+	modificationspecificity_->setCurrentIndex(temptag_.getSpecificityType());
 	modificationAA_->setText(temptag_.getAffectedAminoAcids().c_str() ); 
 	taggingmass_shift_->setText(String(temptag_.getMassShift()).c_str());
-	taggingvariant_->setCurrentItem(temptag_.getVariant());			
+	taggingvariant_->setCurrentIndex(temptag_.getVariant());			
 
 }
 
@@ -110,16 +99,16 @@ void TaggingVisualizer::store()
 {
 	try
 	{
-		(*ptr_).setComment(string((const char*) treatmentcomment_->text()));
-		(*ptr_).setReagentName(string((const char*) modificationname_->text()));
+		(*ptr_).setComment(treatmentcomment_->toPlainText().toStdString());
+		(*ptr_).setReagentName(modificationname_->text().toStdString());
 				
-		String m((const char*) modificationmass_->text()) ;
-		(*ptr_).setMass(m.toFloat() );
+		String m(modificationmass_->text().toStdString());
+		(*ptr_).setMass(m.toFloat());
 				
-		(*ptr_).setSpecificityType((Modification::SpecificityType)modificationspecificity_->currentItem());	
-		(*ptr_).setAffectedAminoAcids(string((const char*) modificationAA_->text()) );
-		(*ptr_).setMassShift(String((const char*)taggingmass_shift_->text()).toFloat() );
-		(*ptr_).setVariant((Tagging::IsotopeVariant)taggingvariant_->currentItem());		
+		(*ptr_).setSpecificityType((Modification::SpecificityType)modificationspecificity_->currentIndex());
+		(*ptr_).setAffectedAminoAcids(modificationAA_->text().toStdString());
+		(*ptr_).setMassShift(taggingmass_shift_->text().toFloat());
+		(*ptr_).setVariant((Tagging::IsotopeVariant)taggingvariant_->currentIndex());
 		
 		temptag_ = (*ptr_);
 		

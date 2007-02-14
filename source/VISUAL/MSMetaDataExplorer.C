@@ -56,6 +56,10 @@
 #include <OpenMS/VISUAL/VISUALIZER/SpectrumSettingsVisualizer.h>
 
 #include <QtGui/QLabel>
+#include <QtGui/QTreeWidget>
+#include <QtGui/QStackedWidget>
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QPushButton>
 
 using namespace std;
 

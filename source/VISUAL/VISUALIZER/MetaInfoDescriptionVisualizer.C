@@ -25,23 +25,12 @@
 // --------------------------------------------------------------------------
 
 //OpenMS
-//#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/VISUALIZER/MetaInfoDescriptionVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <q3textedit.h>
-//#include <qpushbutton.h>
-//#include <iostream>
-//#include <vector>
-//#include <qvalidator.h>
 #include <QtGui/QLineEdit>
 #include <QtGui/QTextEdit>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -75,8 +64,8 @@ void MetaInfoDescriptionVisualizer::store()
 	try
 	{
 				
-		(*ptr_).setName(String((const char*)metainfodescription_name_->text()) );
-		(*ptr_).setComment(String((const char*)metainfodescription_comment_->text()) );
+		(*ptr_).setName(metainfodescription_name_->text().toStdString());
+		(*ptr_).setComment(metainfodescription_comment_->toPlainText().toStdString());
 					
 		tempMetaInfoDescription_ = (*ptr_);
 		

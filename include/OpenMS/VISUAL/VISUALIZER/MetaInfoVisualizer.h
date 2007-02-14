@@ -23,29 +23,17 @@
 // --------------------------------------------------------------------------
 // $Maintainer: stefan_heess $
 // --------------------------------------------------------------------------
-
  
 #ifndef OPENMS_VISUAL_VISUALIZER_METAINFOVISUALIZER_H
 #define OPENMS_VISUAL_VISUALIZER_METAINFOVISUALIZER_H
 
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 #include <OpenMS/METADATA/MetaInfoInterface.h>
 
-//QT
-//#include <QtGui/qtextedit.h>
-//#include <QtGui/qpushbutton.h>
-//#include <QtGui/qwidget.h>
-//#include <QtGui/qlayout.h>
-//#include <QtGui/QGridLayout>
-//#include <QtGui/QLabel>
-
 //STL
-//#include <iostream>
 #include <vector>
 #include <utility>
-
 
 class QLabel;
 class QLineEdit;

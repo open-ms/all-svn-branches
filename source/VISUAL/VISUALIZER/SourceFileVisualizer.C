@@ -24,23 +24,15 @@
 // $Maintainer: stefan_heess   $
 // --------------------------------------------------------------------------
 
-//OpenMS
-#include <OpenMS/DATASTRUCTURES/String.h>
+// OpenMS
 #include <OpenMS/VISUAL/VISUALIZER/SourceFileVisualizer.h>
-#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
+// QT
+#include <QtGui/QLineEdit>
 
-//QT
-#include <qwidget.h>
-#include <qlabel.h> 
-#include <qlineedit.h>
-#include <q3textedit.h>
-#include <qpushbutton.h>
+// STL
 #include <iostream>
-#include <vector>
 
-
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -80,11 +72,11 @@ void SourceFileVisualizer::store()
 	try
 	{
 				
-		(*ptr_).setNameOfFile(string((const char*)name_of_file_->text()));
-		(*ptr_).setPathToFile(string((const char*)path_to_file_->text()) );
-		(*ptr_).setFileSize(String((const char*)file_size_->text() ).toFloat() );
-		(*ptr_).setFileType(string((const char*)file_type_->text() ) );
-		(*ptr_).setSha1(string((const char*)sha1_->text() ) );
+		(*ptr_).setNameOfFile(name_of_file_->text().toStdString());
+		(*ptr_).setPathToFile(path_to_file_->text().toStdString());
+		(*ptr_).setFileSize(file_size_->text().toFloat());
+		(*ptr_).setFileType(file_type_->text().toStdString());
+		(*ptr_).setSha1(sha1_->text().toStdString());
 				
 		tempSourceFile_=(*ptr_);
 	}

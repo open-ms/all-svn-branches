@@ -23,26 +23,17 @@
 // --------------------------------------------------------------------------
 // $Maintainer: stefan_heess $
 // --------------------------------------------------------------------------
-
  
 #ifndef OPENMS_VISUAL_VISUALIZER_CONTACTPERSONVISUALIZER_H
 #define OPENMS_VISUAL_VISUALIZER_CONTACTPERSONVISUALIZER_H
 
-
 //OpenMS
-#include <OpenMS/config.h>
 #include <OpenMS/METADATA/ContactPerson.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-//#include <QtGui/qpushbutton.h>
-//#include <QtGui/QLabel>
-//#include <iostream>
-//#include <QtGui/qwidget.h>
-
 class QLabel;
 class QLineEdit;
-
 
 namespace OpenMS {
 /**

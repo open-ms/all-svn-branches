@@ -25,32 +25,20 @@
 // --------------------------------------------------------------------------s
 
 #include <OpenMS/VISUAL/VISUALIZER/IdentificationVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-//#include <OpenMS/DATASTRUCTURES/String.h>
-//#include <OpenMS/METADATA/Identification.h>
 #include <OpenMS/DATASTRUCTURES/DateTime.h>
+#include <OpenMS/VISUAL/MSMetaDataExplorer.h>
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qcombobox.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <q3listview.h>
-//#include <q3textedit.h>
-//#include <qpushbutton.h>
-//#include <qstring.h>
-//#include <qvalidator.h>
 #include <QtGui/QLineEdit>
 #include <QtGui/QValidator>
+#include <QtGui/QPushButton>
 
 #include <iostream>
-//#include <vector>
-//#include <string>
 
-//using namespace std;
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 IdentificationVisualizer::IdentificationVisualizer(bool editable, QWidget *parent, MSMetaDataExplorer *caller) : BaseVisualizer(editable,parent)
@@ -109,8 +97,8 @@ void IdentificationVisualizer::load(Identification &s, int tree_item_id)
 
 void IdentificationVisualizer::updateTree()
 {
-	String m((const char*) identification_threshold_->text()) ;
-	tempidentification_.setPeptideSignificanceThreshold(m.toFloat() );
+	String m(identification_threshold_->text().toStdString()) ;
+	tempidentification_.setPeptideSignificanceThreshold(m.toFloat());
 			
 	pidv_caller_->updatePeptideHits_(tempidentification_, tree_id_ );
 	
@@ -119,8 +107,8 @@ void IdentificationVisualizer::updateTree()
 void IdentificationVisualizer::searchRefPeptides()
 {
 	
-	String ref_date((const char*) identification_ref_date_->text()) ;
-	String ref_acc((const char*) identification_acc_->text()) ;
+	String ref_date(identification_ref_date_->text().toStdString());
+	String ref_acc(identification_acc_->text().toStdString());
 	
 	pidv_caller_->updateRefPeptideHits_(tempidentification_, tree_id_, ref_date, ref_acc);
 	
@@ -135,11 +123,11 @@ void IdentificationVisualizer::store()
 {
 	try
 	{
-		String m((const char*) identification_threshold_->text()) ;
-		(*ptr_).setProteinSignificanceThreshold(m.toFloat() );
+		String m(identification_threshold_->text().toStdString());
+		(*ptr_).setProteinSignificanceThreshold(m.toFloat());
 		
 		DateTime date;
-		String o((const char*) identification_date_->text());
+		String o(identification_date_->text().toStdString());
 		date.set(o);
 		(*ptr_).setDateTime(date);
 				
@@ -167,3 +155,4 @@ void IdentificationVisualizer::reject()
 	
 }
 
+}

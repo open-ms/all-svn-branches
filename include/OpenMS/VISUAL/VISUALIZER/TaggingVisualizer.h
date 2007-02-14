@@ -29,17 +29,8 @@
 #define OPENMS_VISUAL_VISUALIZER_TAGGINGVISUALIZER_H
 
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/Tagging.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-
-//QT
-//#include <QtGui/qtextedit.h>
-//#include <QtGui/qpushbutton.h>
-//#include <QtGui/QLabel>
-//#include <iostream>
-//#include <QtGui/qwidget.h>
-//#include <QtGui/qvalidator.h>
 
 class QLabel;
 class QLineEdit;

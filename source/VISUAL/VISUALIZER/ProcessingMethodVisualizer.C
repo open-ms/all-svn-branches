@@ -25,26 +25,14 @@
 // --------------------------------------------------------------------------s
 
 #include <OpenMS/VISUAL/VISUALIZER/ProcessingMethodVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-//#include <OpenMS/DATASTRUCTURES/String.h>
-//#include <OpenMS/METADATA/ProcessingMethod.h>
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <qpushbutton.h>
-//#include <qstring.h>
-//#include <qvalidator.h>
 #include <QtGui/QLineEdit>
 #include <QtGui/QComboBox>
 
 //STL
 #include <iostream>
-#include <string>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -78,7 +66,7 @@ void ProcessingMethodVisualizer::load(ProcessingMethod &s)
 	tempprocessingmethod_=s;
 	
 	//An array for bool values
-	std::string bool_values_[3]= {"FALSE","TRUE"};		
+	String bool_values_[3]= {"FALSE","TRUE"};		
 	
 	fillComboBox(processingmethod_method_, SpectrumSettings::NamesOfSpectrumType , SpectrumSettings::SIZE_OF_SPECTRUMTYPE);
 	fillComboBox(processingmethod_deisotoping_, bool_values_ , 2);
@@ -93,26 +81,26 @@ void ProcessingMethodVisualizer::update_()
 		//update deisotoping
 		if(tempprocessingmethod_.getDeisotoping())
 		{
-			processingmethod_deisotoping_->setCurrentItem(1);
+			processingmethod_deisotoping_->setCurrentIndex(1);
 		}
 		else 
 		{ 
-			processingmethod_deisotoping_->setCurrentItem(0);
+			processingmethod_deisotoping_->setCurrentIndex(0);
 		}
 		
 		
 		//update charge_deconvolution
 		if(tempprocessingmethod_.getChargeDeconvolution())
 		{
-			processingmethod_charge_deconvolution_->setCurrentItem(1);
+			processingmethod_charge_deconvolution_->setCurrentIndex(1);
 		}
 		else 
 		{ 
-			processingmethod_charge_deconvolution_->setCurrentItem(0);
+			processingmethod_charge_deconvolution_->setCurrentIndex(0);
 		}
 		
 		processingmethod_intensity_cutoff_->setText(String( tempprocessingmethod_.getIntensityCutoff() ).c_str() );		
-		processingmethod_method_->setCurrentItem(tempprocessingmethod_.getSpectrumType()); 
+		processingmethod_method_->setCurrentIndex(tempprocessingmethod_.getSpectrumType()); 
 	
 }
 
@@ -120,10 +108,10 @@ void ProcessingMethodVisualizer::store()
 {
 	try
 	{
-		(*ptr_).setSpectrumType((SpectrumSettings::SpectrumType)processingmethod_method_->currentItem());		
-		(*ptr_).setDeisotoping(processingmethod_deisotoping_->currentItem());		
-		(*ptr_).setChargeDeconvolution(processingmethod_charge_deconvolution_->currentItem());
-		(*ptr_).setIntensityCutoff(String((const char*)processingmethod_intensity_cutoff_->text()  ).toFloat() );		
+		(*ptr_).setSpectrumType((SpectrumSettings::SpectrumType)processingmethod_method_->currentIndex());		
+		(*ptr_).setDeisotoping(processingmethod_deisotoping_->currentIndex());		
+		(*ptr_).setChargeDeconvolution(processingmethod_charge_deconvolution_->currentIndex());
+		(*ptr_).setIntensityCutoff(processingmethod_intensity_cutoff_->text().toFloat());
 			
 		tempprocessingmethod_=(*ptr_);
 		

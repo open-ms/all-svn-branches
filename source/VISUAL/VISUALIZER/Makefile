@@ -36,7 +36,6 @@ HEADER_DIR=$(OPENMS_PATH)/include/OpenMS/$(DIRECTORY)
 # Where the UIC-created headers reside
 UIC_DIR=$(OPENMS_PATH)/include/OpenMS/$(DIRECTORY)/UIC
 
-
 THISLIB=$(LIBNAME)
 
 # These depend on QT:
@@ -67,7 +66,7 @@ GUI_CPP_SOURCES=\
 	PrecursorVisualizer.C\
 	InstrumentSettingsVisualizer.C\
 	IdentificationVisualizer.C\
-	SpectrumSettingsVisualizer.C\
+	SpectrumSettingsVisualizer.C
 
 GUI_MOC_SOURCES=\
 	BaseVisualizer_moc.C\
@@ -237,3 +236,5 @@ IdentificationVisualizer_moc.C:  $(HEADER_DIR)/IdentificationVisualizer.h
 	
 SpectrumSettingsVisualizer_moc.C:  $(HEADER_DIR)/SpectrumSettingsVisualizer.h
 	$(MOC) $(HEADER_DIR)/SpectrumSettingsVisualizer.h -o SpectrumSettingsVisualizer_moc.C	
+
+ADD_CXXFLAGS = 

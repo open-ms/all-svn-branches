@@ -25,19 +25,10 @@
 // --------------------------------------------------------------------------
 
 //OpenMS
-//#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/VISUALIZER/MetaInfoVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <qpushbutton.h>
-//#include <q3buttongroup.h>
-//#include <qsize.h>
-#include <Q3GridLayout>
+#include <QGridLayout>
 #include <QtGui/QPushButton>
 #include <QtGui/QLineEdit>
 #include <QtGui/QGridLayout>
@@ -61,12 +52,12 @@ MetaInfoVisualizer::MetaInfoVisualizer(bool editable, QWidget *parent) : BaseVis
 	buttongroup_ = new QButtonGroup();
 	nextrow_=0;
 	
-	viewlayout_ = new Q3GridLayout(this);
+	viewlayout_ = new QGridLayout(this);
 	viewlayout_->setSpacing(6);
   viewlayout_->setMargin(11);
 	addLabel("Modify MetaData information.");
 	addSeperator();	
-	mainlayout_->addMultiCellLayout(viewlayout_, row_, row_, 0 ,2);
+	mainlayout_->addLayout(viewlayout_, row_, row_, 0 ,2);
 	//increase row counter for mainlayout_.
 	row_++;
 		
@@ -107,9 +98,9 @@ void MetaInfoVisualizer::load(MetaInfoInterface &m)
 	
 	finishAdding_();
 		
-	connect(buttongroup_, SIGNAL(clicked(int)), this, SLOT(remove(int)) );			
-	connect(addbutton_, SIGNAL(clicked()), this, SLOT(add()) );
-	connect(clearbutton_, SIGNAL(clicked()), this, SLOT(clear()) );
+	connect(buttongroup_, SIGNAL(clicked(int)), this, SLOT(remove(int)));
+	connect(addbutton_, SIGNAL(clicked()), this, SLOT(add()));
+	connect(clearbutton_, SIGNAL(clicked()), this, SLOT(clear()));
   
 	
 }
@@ -132,21 +123,20 @@ void MetaInfoVisualizer::remove(int index)
 	{	 
      if( (*iter).first == id)
 		 {
-				viewlayout_->remove((*iter).second);
+				viewlayout_->removeWidget((*iter).second);
 				delete (*iter).second;
 				(*iter).second =0;
 				metalabels_.erase(iter);
 		 }
    }
 	 
-	//Remove QLineEdit
-	
+	//Remove QLineEdit	
 	std::vector<std::pair<UnsignedInt,QLineEdit*> >::iterator iter2; 
 	for(iter2 = metainfoptr_.begin(); iter2 < metainfoptr_.end(); iter2++ ) 
 	{
      if( (*iter2).first == id)
 		 {
-				viewlayout_->remove((*iter2).second);
+				viewlayout_->removeWidget((*iter2).second);
 				delete (*iter2).second;
 				(*iter2).second =0;
 				metainfoptr_.erase(iter2);
@@ -161,7 +151,7 @@ void MetaInfoVisualizer::remove(int index)
 	{
      if( (*iter3).first == id)
 		 {	
-				viewlayout_->remove((*iter3).second);
+				viewlayout_->removeWidget((*iter3).second);
 				delete (*iter3).second;
 				(*iter3).second =0;
 				metabuttons_.erase(iter3);
@@ -221,9 +211,9 @@ void MetaInfoVisualizer::loadData_(UnsignedInt index)
 void MetaInfoVisualizer::add()
 { 
  
-	String name =string((const char*) newkey_->text()) ;
-	String description =string((const char*) newdescription_->text()) ;
-	String value =string((const char*) newvalue_->text()) ;
+	String name(newkey_->text().toStdString()) ;
+	String description(newdescription_->text().toStdString());
+	String value(newvalue_->text().toStdString());
 	
 	
 	if(name.trim().length() ==0 )
@@ -280,7 +270,7 @@ void MetaInfoVisualizer::store()
 		for(iter2 = metainfoptr_.begin(); iter2 < metainfoptr_.end(); iter2++ ) 
 		{
 			UnsignedInt index = (*iter2).first;
-			String value( (const char*)((*iter2).second)->text() );
+			String value(((*iter2).second)->text().toStdString());
 			tempmeta_.setMetaValue(index, value);
 		}
 		//copy temporary stored data into metainfo object

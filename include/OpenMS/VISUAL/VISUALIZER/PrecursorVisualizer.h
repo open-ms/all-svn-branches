@@ -28,15 +28,8 @@
 #define OPENMS_VISUAL_VISUALIZER_PRECURSORVISUALIZER_H
 
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/Precursor.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-
-//QT
-//#include <qpushbutton.h>
-//#include <iostream>
-//#include <qwidget.h>
-//#include <q3listbox.h>
 
 class QLineEdit;
 class QComboBox;

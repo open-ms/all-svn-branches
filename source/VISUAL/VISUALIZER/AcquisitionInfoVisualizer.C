@@ -25,25 +25,15 @@
 // --------------------------------------------------------------------------
 
 //OpenMS
-//#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/VISUALIZER/AcquisitionInfoVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
-//QT
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <q3textedit.h>
-//#include <qpushbutton.h>
+// QT
 #include <QtGui/QValidator>
 #include <QtGui/QLineEdit>
 
 // STL
 #include <iostream>
-//#include <vector>
-//#include <qvalidator.h>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -79,7 +69,7 @@ void AcquisitionInfoVisualizer::store()
 	try
 	{
 				
-		(*ptr_).setMethodOfCombination(String((const char*)acquisitioninfo_method_->text()) );
+		(*ptr_).setMethodOfCombination(acquisitioninfo_method_->text().toStdString());
 					
 		tempAcquisitionInfo_ = (*ptr_);
 		

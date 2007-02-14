@@ -25,27 +25,14 @@
 // --------------------------------------------------------------------------s
 
 #include <OpenMS/VISUAL/VISUALIZER/PrecursorVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-//#include <OpenMS/DATASTRUCTURES/String.h>
-//#include <OpenMS/METADATA/Precursor.h>
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <qpushbutton.h>
-//#include <qstring.h>
-//#include <qvalidator.h>
 #include <QtGui/QLineEdit>
 #include <QtGui/QComboBox>
 
 //STL
 #include <iostream>
-//#include <vector>
-//#include <string>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -94,9 +81,9 @@ void PrecursorVisualizer::load(Precursor &s)
 void PrecursorVisualizer::update_()
 {		
 		
-	precursor_activation_method_->setCurrentItem(tempprecursor_.getActivationMethod()); 
+	precursor_activation_method_->setCurrentIndex(tempprecursor_.getActivationMethod()); 
 	precursor_activation_energy_->setText(String( tempprecursor_.getActivationEnergy() ).c_str() );
-	precursor_energy_units_->setCurrentItem(tempprecursor_.getActivationEnergyUnit()); 
+	precursor_energy_units_->setCurrentIndex(tempprecursor_.getActivationEnergyUnit()); 
  	precursor_window_size_->setText(String( tempprecursor_.getWindowSize() ).c_str() );		
 }
 
@@ -104,10 +91,10 @@ void PrecursorVisualizer::store()
 {
 	try
 	{
-		(*ptr_).setActivationMethod((Precursor::ActivationMethod)precursor_activation_method_->currentItem());		
-		(*ptr_).setActivationEnergy(String((const char*)precursor_activation_energy_->text()  ).toFloat() );		
-		(*ptr_).setActivationEnergyUnit((Precursor::EnergyUnits)precursor_energy_units_->currentItem());	
-		(*ptr_).setWindowSize(String((const char*)precursor_window_size_->text()  ).toFloat() );		
+		(*ptr_).setActivationMethod((Precursor::ActivationMethod)precursor_activation_method_->currentIndex());		
+		(*ptr_).setActivationEnergy(precursor_activation_energy_->text().toFloat());		
+		(*ptr_).setActivationEnergyUnit((Precursor::EnergyUnits)precursor_energy_units_->currentIndex());	
+		(*ptr_).setWindowSize(precursor_window_size_->text().toFloat());		
 		
 		tempprecursor_=(*ptr_);
 		

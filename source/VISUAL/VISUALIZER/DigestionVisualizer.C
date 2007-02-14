@@ -24,43 +24,16 @@
 // $Maintainer: stefan_heess  $
 // --------------------------------------------------------------------------
 
-//#include <OpenMS/DATASTRUCTURES/String.h>
-//#include <OpenMS/METADATA/Sample.h>
 #include <OpenMS/VISUAL/VISUALIZER/DigestionVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-//#include <OpenMS/VISUAL/DataTable.h>
-//#include <OpenMS/METADATA/Digestion.h>
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qaction.h>
-//#include <qcombobox.h>
-//#include <q3filedialog.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <qmenubar.h>
-//#include <qmessagebox.h>
-//#include <q3popupmenu.h>
-//#include <qsettings.h>
-//#include <qstatusbar.h>
-//#include <qapplication.h>
-//#include <q3listview.h>
-//#include <q3textedit.h>
-//#include <q3hbox.h>
-//#include <q3groupbox.h>
-//#include <qpushbutton.h>
-//#include <qvalidator.h>
 #include <QtGui/QValidator>
 #include <QtGui/QLineEdit>
 #include <QtGui/QTextEdit>
 
 //STL
 #include <iostream>
-#include <vector>
 
-
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -115,11 +88,11 @@ void DigestionVisualizer::store()
 {
 	try
 	{		
-		(*ptr_).setComment(string((const char*) treatmentcomment_->text()));
-		(*ptr_).setEnzyme(string((const char*)digestionenzyme_->text()));
-		(*ptr_).setDigestionTime(String((const char*)digestiontime_->text()).toFloat() );
-		(*ptr_).setTemperature(String((const char*)digestiontime_->text()).toFloat() );
-		(*ptr_).setPh(String((const char*)digestiontime_->text()).toFloat() );
+		(*ptr_).setComment(treatmentcomment_->toPlainText().toStdString());
+		(*ptr_).setEnzyme(digestionenzyme_->text().toStdString());
+		(*ptr_).setDigestionTime(digestiontime_->text().toFloat());
+		(*ptr_).setTemperature(digestiontime_->text().toFloat());
+		(*ptr_).setPh(digestiontime_->text().toFloat());
 		
 		tempdig_ = (*ptr_);
 	}

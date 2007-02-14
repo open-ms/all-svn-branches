@@ -25,27 +25,14 @@
 // --------------------------------------------------------------------------
 
 //OpenMS
-//#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/VISUALIZER/HPLCVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-//#include <OpenMS/VISUAL/DataTable.h>
 
 //QT
-//#include <qwidget.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <q3textedit.h>
-//#include <qpushbutton.h>
-//#include <iostream>
-//#include <vector>
-//#include <qvalidator.h>
-
 #include <QtGui/QLineEdit>
 #include <QtGui/QTextEdit>
 #include <QtGui/QValidator>
 #include <iostream>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -100,17 +87,17 @@ void HPLCVisualizer::store()
 	{
 				
 		
-		(*ptr_).setInstrument(string((const char*)hplcinstrument_->text()));
+		(*ptr_).setInstrument(hplcinstrument_->text().toStdString());
 				
-		(*ptr_).setColumn(string((const char*)hplccolumn_->text()) );
+		(*ptr_).setColumn(hplccolumn_->text().toStdString());
 		
-		(*ptr_).setTemperature(String((const char*)hplctemperature_->text()).toInt() );
+		(*ptr_).setTemperature(hplctemperature_->text().toInt() );
 		
-		(*ptr_).setPressure(String((const char*)hplcpressure_->text()).toInt() );
+		(*ptr_).setPressure(hplcpressure_->text().toInt() );
 		
-		(*ptr_).setFlux(String((const char*)hplcflux_->text()).toInt() );
+		(*ptr_).setFlux(hplcflux_->text().toInt());
 		
-		(*ptr_).setComment(string((const char*)hplccomment_->text()) );
+		(*ptr_).setComment(hplccomment_->toPlainText().toStdString());
 		
 		tempHPLC_ = (*ptr_);
 		

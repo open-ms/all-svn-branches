@@ -24,33 +24,14 @@
 // $Maintainer:  stefan_heess $
 // --------------------------------------------------------------------------s
 
-
 #include <OpenMS/VISUAL/VISUALIZER/SoftwareVisualizer.h>
-//#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-//#include <OpenMS/DATASTRUCTURES/String.h>
-//#include <OpenMS/METADATA/Software.h>
-//#include <OpenMS/DATASTRUCTURES/DateTime.h>
-
 
 //QT
-//#include <qlayout.h>
-//#include <qwidget.h>
-//#include <qcombobox.h>
-//#include <qlabel.h> 
-//#include <qlineedit.h>
-//#include <q3listview.h>
-//#include <q3textedit.h>
-//#include <qpushbutton.h>
-//#include <qstring.h>
-//#include <qvalidator.h>
 #include <QtGui/QTextEdit>
 #include <QtGui/QLineEdit>
 
 #include <iostream>
-//#include <vector>
-//#include <string>
 
-//using namespace std;
 using namespace OpenMS;
 using namespace std;
 
@@ -93,13 +74,13 @@ void SoftwareVisualizer::store()
 {
 	try
 	{
-		(*ptr_).setName(string((const char*) software_name_->text()) );
-		(*ptr_).setVersion(string((const char*) software_version_->text()) );
-		String m((const char*) software_completion_time_->text()) ;
+		(*ptr_).setName(software_name_->text().toStdString());
+		(*ptr_).setVersion(software_version_->text().toStdString());
+		String m(software_completion_time_->text().toStdString());
 		DateTime date;
 		date.set(m);
 		(*ptr_).setCompletionTime(date);
-		(*ptr_).setComment(string((const char*) software_comment_->text()) );
+		(*ptr_).setComment(software_comment_->toPlainText().toStdString());
 		
 		tempsoftware_=(*ptr_);		
 	}

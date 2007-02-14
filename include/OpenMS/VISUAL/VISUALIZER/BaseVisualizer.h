@@ -24,17 +24,11 @@
 // $Maintainer: stefan_heess $
 // --------------------------------------------------------------------------
 
- 
 #ifndef OPENMS_VISUAL_VISUALIZER_BASEVISUALIZER_H
 #define OPENMS_VISUAL_VISUALIZER_BASEVISUALIZER_H
 
-//#include <OpenMS/config.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/DataTable.h>
-
-//QT
-//#include <QtGui/qwidget.h>
-
 
 namespace OpenMS {
 /**

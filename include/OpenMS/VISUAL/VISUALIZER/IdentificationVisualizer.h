@@ -23,38 +23,26 @@
 // --------------------------------------------------------------------------
 // $Maintainer: stefan_heess $
 // --------------------------------------------------------------------------
-
  
 #ifndef OPENMS_VISUAL_VISUALIZER_IDENTIFICATIONVISUALIZER_H
 #define OPENMS_VISUAL_VISUALIZER_IDENTIFICATIONVISUALIZER_H
 
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/Identification.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-#include <OpenMS/VISUAL/MSMetaDataExplorer.h>
-
-//QT
-//#include <QtGui/qtextedit.h>
-//#include <QtGui/qhbox.h>
-//#include <QtGui/qspinbox.h>
-//#include <QtGui/qpushbutton.h>
-//#include <iostream>
-//#include <QtGui/qwidget.h>
-//#include <QtGui/qlistwidget.h>
-//#include <QtGui/qvalidator.h>
 
 class QLineEdit;
 class QComboBox;
 
+namespace OpenMS
+{
+	class MSMetaDataExplorer;
 
+	/**
+		@brief Class that displays all meta information for Identification objects
 
-namespace OpenMS {
-/**
-@brief Class that displays all meta information for Identification objects
-
-This class provides all functionality to view the meta information of an object of type Identification.
-*/
+		This class provides all functionality to view the meta information of an object of type Identification.
+	*/
 	
 	class IdentificationVisualizer : public BaseVisualizer
 	{

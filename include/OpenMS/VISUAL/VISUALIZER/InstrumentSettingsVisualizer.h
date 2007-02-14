@@ -28,16 +28,8 @@
 #define OPENMS_VISUAL_VISUALIZER_INSTRUMENTSETTINGSVISUALIZER_H
 
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/InstrumentSettings.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
-
-//QT
-//#include <qpushbutton.h>
-//#include <iostream>
-//#include <qwidget.h>
-//#include <q3listbox.h>
-//#include <q3textedit.h>
 
 class QLineEdit;
 class QComboBox;

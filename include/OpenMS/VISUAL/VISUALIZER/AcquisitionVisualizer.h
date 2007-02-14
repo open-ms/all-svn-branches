@@ -28,21 +28,11 @@
 #define OPENMS_VISUAL_VISUALIZER_ACQUISITIONVISUALIZER_H
 
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/Acquisition.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
-//QT
-//#include <QtGui/qtextedit.h>
-//#include <QtGui/qpushbutton.h>
-//#include <QtGui/QLabel>
-//#include <iostream>
-//#include <QtGui/qwidget.h>
-//#include <QtGui/qvalidator.h>
-
 class QLabel;
 class QLineEdit;
-
 
 namespace OpenMS {
 /**

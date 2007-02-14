@@ -23,32 +23,16 @@
 // --------------------------------------------------------------------------
 // $Maintainer: stefan_heess $
 // --------------------------------------------------------------------------
-
  
 #ifndef OPENMS_VISUAL_VISUALIZER_SAMPLEVISUALIZER_H
 #define OPENMS_VISUAL_VISUALIZER_SAMPLEVISUALIZER_H
 
-
 //OpenMS
-//#include <OpenMS/config.h>
 #include <OpenMS/METADATA/Sample.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
 
-//QT
-//#include <QtGui/qtextedit.h>
-//#include <QtGui/qhbox.h>
-//#include <QtGui/qspinbox.h>
-//#include <QtGui/qpushbutton.h>
-//#include <iostream>
-//#include <QtGui/qwidget.h>
-//#include <QtGui/qlistwidget.h>
-//#include <QtGui/qvalidator.h>
-
 class QLineEdit;
 class QComboBox;
-
-
-
 
 namespace OpenMS {
 /**

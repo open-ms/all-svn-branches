@@ -32,11 +32,11 @@
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
 #include <OpenMS/KERNEL/DimensionDescription.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
-#include <QWheelEvent>
-#include <QMouseEvent>
 
 // QT
 class QPainter;
+class QMouseEvent;
+class QWheelEvent;
 
 namespace OpenMS
 {

@@ -27,8 +27,6 @@
 #ifndef OPENMS_VISUAL_SPECTRUMWINDOW_H
 #define OPENMS_VISUAL_SPECTRUMWINDOW_H
 
-#include <OpenMS/config.h>
-
 //OpenMS
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/VISUAL/PreferencesManager.h>

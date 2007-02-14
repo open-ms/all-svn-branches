@@ -28,7 +28,6 @@
 #define OPENMS_VISUAL_SPECTRUM3DWIDGET_H
 
 #include <OpenMS/VISUAL/SpectrumWidget.h>
-#include <OpenMS/config.h>
 
 namespace OpenMS
 {	

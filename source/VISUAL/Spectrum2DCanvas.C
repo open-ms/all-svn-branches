@@ -34,12 +34,11 @@
 #include <algorithm>	
 
 //QT
-#include <qimage.h>
-#include <qpainter.h>
-#include <qbitmap.h>
-#include <Q3PointArray>
-#include <QMouseEvent>
-#include <QWheelEvent>
+#include <QtGui/QWheelEvent>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QPainter>
+#include <QtGui/QBitmap>
+#include <QtGui/QPolygon>
 
 using namespace std;
 
@@ -161,7 +160,7 @@ namespace OpenMS
 					//determine data coordiantes
 					AreaType area(widgetToData_(last_mouse_pos_), widgetToData_(pos));
 					
-					createProjections_(area, e->state() & Qt::ShiftModifier, e->state() & Qt::ControlModifier);
+					createProjections_(area, e->buttons() & Qt::ShiftModifier, e->buttons() & Qt::ControlModifier);
 					
 					tmp_buffer_ = buffer_.copy();
 					refresh_();
@@ -190,7 +189,7 @@ namespace OpenMS
 						emit sendStatusMessage(QString("Measured: dRT = %1, dMZ = %3, Intensity ratio = %2")
 																	.arg(measurement_stop_->getPosition()[MZ] - measurement_start_->getPosition()[MZ])
 																	.arg(measurement_stop_->getIntensity() / measurement_start_->getIntensity())
-																	.arg(measurement_stop_->getPosition()[RT] - measurement_start_->getPosition()[RT]).ascii(), 0);
+																	.arg(measurement_stop_->getPosition()[RT] - measurement_start_->getPosition()[RT]).toAscii().data(), 0);
 					}
 				}
 				break;
@@ -368,7 +367,7 @@ namespace OpenMS
 			{
 	      setCursor(Qt::ArrowCursor);
 				// highlight nearest peak
-				if (e->state() == Qt::NoButton)
+				if (e->buttons() == Qt::NoButton)
 				{
 					
 					DFeature<2>* max_peak = findNearestPeak_(pos);
@@ -392,7 +391,7 @@ namespace OpenMS
 					tmp_buffer_ = buffer_.copy();
 					refresh_();
 				}
-				else if (e->state() & Qt::LeftButton)
+				else if (e->buttons() & Qt::LeftButton)
 				{
 					// select 1D spectrum
 					QRect rect_horz(QPoint(0, last_mouse_pos_.y()), QPoint(width(), pos.y()));
@@ -406,11 +405,11 @@ namespace OpenMS
 					p.setBrush(Qt::red);
 					p.setCompositionMode(QPainter::CompositionMode_Xor);
 	
-					if (e->state() & Qt::ShiftModifier)
+					if (e->modifiers() & Qt::ShiftModifier)
 					{
 						p.drawRect(rect_horz);
 					}
-					else if (e->state() & Qt::ControlModifier)
+					else if (e->modifiers() & Qt::ControlModifier)
 					{
 						p.drawRect(rect_vert);
 					}
@@ -429,7 +428,7 @@ namespace OpenMS
 			{
 	      setCursor(Qt::ArrowCursor);
 				// highlight nearest peak
-				if (e->state() == Qt::NoButton)
+				if (e->buttons() == Qt::NoButton)
 				{
 					DFeature<2>* max_peak = findNearestPeak_(pos);
 					
@@ -446,7 +445,7 @@ namespace OpenMS
 					tmp_buffer_ = buffer_.copy();
 					refresh_();
 				}
-				else if (e->state() & Qt::LeftButton && measurement_start_)
+				else if (e->buttons() & Qt::LeftButton && measurement_start_)
 				{
 					measurement_stop_ = findNearestPeak_(pos);
 					last_mouse_pos_ = pos;
@@ -474,7 +473,7 @@ namespace OpenMS
 	      //set Cursor
 	      setCursor(Qt::CrossCursor);
 				
-				if (e->state() & Qt::LeftButton)
+				if (e->buttons() & Qt::LeftButton)
 				{
 					// draw zoom rect
 					tmp_buffer_ = buffer_.copy();
@@ -491,7 +490,7 @@ namespace OpenMS
 				//set Cursor
 	      setCursor(cursor_translate_);
 				
-				if (e->state() & Qt::LeftButton)
+				if (e->buttons() & Qt::LeftButton)
 				{
 					setCursor(cursor_translate_in_progress_);
 					//caldulate data coordinates of shift
@@ -654,7 +653,7 @@ namespace OpenMS
 		// ####
 		// .##.
 		// This is much faster than always drawing circles
-		QBitmap dotshape(4,4,false);
+		QBitmap dotshape(4,4);
 		dotshape.fill(Qt::color1);
 		QPainter dotshape_painter(&dotshape);
 		dotshape_painter.setPen(Qt::color0);
@@ -796,7 +795,7 @@ namespace OpenMS
 
   void Spectrum2DCanvas::paintConvexHulls_(const DFeature<2>::ConvexHullVector& hulls, QPainter* p)
   {
-		Q3PointArray points;
+		QPolygon points;
 		
 		//iterate over all convex hulls
 		for (UnsignedInt hull=0; hull<hulls.size(); ++hull)
@@ -1017,7 +1016,7 @@ namespace OpenMS
 	{
 		if (max_values_[layer_index] == 0) return;
 		
-		QImage image(buffer_.width(), buffer_.height(), 32);
+		QImage image(buffer_.width(), buffer_.height(),QImage::Format_RGB32);
 		QRgb* image_start = reinterpret_cast<QRgb*>(image.scanLine(0));
 		const uint image_line_diff = reinterpret_cast<QRgb*>(image.scanLine(1)) - image_start;
 

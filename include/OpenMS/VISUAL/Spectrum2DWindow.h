@@ -27,20 +27,15 @@
 #ifndef OPENMS_VISUAL_SPECTRUM2DWINDOW_H
 #define OPENMS_VISUAL_SPECTRUM2DWINDOW_H
 
-#include <OpenMS/config.h>
-
 // OpenMS
 #include <OpenMS/VISUAL/SpectrumWindow.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
-#include <Q3PopupMenu>
-#include <Q3GridLayout>
 
-class Q3PopupMenu;
-class Q3GridLayout;
+//QT
+class QGridLayout;
 
 namespace OpenMS
 {
-	class AxisWidget;
 	class Spectrum1DWidget;
 	class Spectrum2DWidget;
 	
@@ -81,7 +76,7 @@ namespace OpenMS
     virtual void showGoToDialog();    
 
 	protected:
-		Q3GridLayout* grid_;
+		QGridLayout* grid_;
 		Spectrum1DWidget* projection_vert_;
 		Spectrum1DWidget* projection_horz_;
 	

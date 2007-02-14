@@ -24,21 +24,14 @@
 // $Maintainer: Cornelia Friedle $
 // --------------------------------------------------------------------------
 
-//STL
-#include <math.h>
-#include<iostream.h>
-
-//QT
-#include<qimage.h>
-#include <QResizeEvent>
-
 //OpenMS
-#include <OpenMS/VISUAL/Spectrum3DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum3DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum3DOpenGLCanvas.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum3DCanvasPDP.h>
 #include <OpenMS/CONCEPT/Factory.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/DataReducer.h>
+
+#include <QtGui/QResizeEvent>
 
 using namespace std;
 
@@ -222,133 +215,133 @@ void Spectrum3DCanvas::actionModeChange_()
 	case AM_ZOOM:
 		openglwidget()->setAngels(1440,0,0);
 		openglwidget()->resetTranslation();
-		openglwidget()->setZoomFactor(1.25,false);
+			openglwidget()->setZoomFactor(1.25,false);
+			repaintAll();
+			break;
+		case AM_MEASURE:
+			throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+			break;
+		case AM_SELECT:
+			throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+			break;
+		}
+	}
+	
+	void Spectrum3DCanvas::activateLayer(int layer_index)
+	{
+		if (layer_index<0 || layer_index >= int(getLayerCount()) || layer_index==int(current_layer_))
+		{
+			return ;
+		}
+		current_layer_ = layer_index;
+		emit layerActivated(this);
+		invalidate_();
+	}
+	
+	void Spectrum3DCanvas::invalidate_()
+	{				
+		if(recalculate_)
+		{
+			if(intensity_mode_ == SpectrumCanvas::IM_SNAP)
+				{
+					openglwidget()->updateIntensityScale();
+				}
+			openglwidget()->recalculateDotGradient_();
+			openglwidget()->glInit (); 
+		}	
+		openglwidget()->resizeGL(width(),height());
+		openglwidget()->glDraw (); 
+	}
+	
+	void Spectrum3DCanvas::repaintAll()
+	{
+		recalculate_ = true;
+		invalidate_();
+	
+	}
+	
+	void Spectrum3DCanvas::intensityModeChange_()
+	{
 		repaintAll();
-		break;
-	case AM_MEASURE:
-		throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-		break;
-	case AM_SELECT:
-		throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-		break;
-	}
-}
-
-void Spectrum3DCanvas::activateLayer(int layer_index)
-{
-	if (layer_index<0 || layer_index >= int(getLayerCount()) || layer_index==int(current_layer_))
-	{
-		return ;
-	}
-	current_layer_ = layer_index;
-	emit layerActivated(this);
-	invalidate_();
-}
-
-void Spectrum3DCanvas::invalidate_()
-{				
-	if(recalculate_)
-	{
-		if(intensity_mode_ == SpectrumCanvas::IM_SNAP)
-			{
-				openglwidget()->updateIntensityScale();
-			}
-		openglwidget()->recalculateDotGradient_();
-		openglwidget()->glInit (); 
-	}	
-	openglwidget()->resizeGL(width(),height());
-	openglwidget()->glDraw (); 
-}
-
-void Spectrum3DCanvas::repaintAll()
-{
-	recalculate_ = true;
-	invalidate_();
-
-}
-
-void Spectrum3DCanvas::intensityModeChange_()
-{
-	repaintAll();
-}
-
-void Spectrum3DCanvas::removeLayer(int layer_index)
-{
-	if (layer_index<0 || layer_index >= int(getLayerCount()))
-	{
-		return;
-	}
-	layers_.erase(layers_.begin()+layer_index);
-	
-	//update current layer
-	if (current_layer_!=0 && current_layer_ >= getLayerCount())
-	{
-	current_layer_ = getLayerCount()-1;
 	}
 	
-	recalculateRanges_(1,0,2);
-	visible_area_.assign(overall_data_range_);
-	repaintAll();
-}
-
-Spectrum3DOpenGLCanvas* Spectrum3DCanvas::openglwidget()
-{
-	return static_cast<Spectrum3DOpenGLCanvas*>(openglcanvas_);
-}
-
-
-////preferences////////////////////
-  
-SignedInt Spectrum3DCanvas::getDataMode()
-{
-	if(prefs_.getValue("Preferences:3D:Data:Mode").isEmpty())
+	void Spectrum3DCanvas::removeLayer(int layer_index)
 	{
-		return 0;
+		if (layer_index<0 || layer_index >= int(getLayerCount()))
+		{
+			return;
+		}
+		layers_.erase(layers_.begin()+layer_index);
+		
+		//update current layer
+		if (current_layer_!=0 && current_layer_ >= getLayerCount())
+		{
+		current_layer_ = getLayerCount()-1;
+		}
+		
+		recalculateRanges_(1,0,2);
+		visible_area_.assign(overall_data_range_);
+		repaintAll();
 	}
-	return SignedInt(prefs_.getValue("Preferences:3D:Data:Mode"));
-}
-
-void Spectrum3DCanvas::setDataMode()
-{
-	makeReducedDataSet();
-	if(zoom_stack_.empty())
+	
+	Spectrum3DOpenGLCanvas* Spectrum3DCanvas::openglwidget()
 	{
-		resetZoom();
+		return static_cast<Spectrum3DOpenGLCanvas*>(openglcanvas_);
 	}
-	repaintAll();
-}
-
-SignedInt Spectrum3DCanvas::getDotMode()
-{
-	if (prefs_.getValue("Preferences:3D:Dot:Mode").isEmpty())
+	
+	
+	////preferences////////////////////
+	  
+	SignedInt Spectrum3DCanvas::getDataMode()
 	{
-		return 0;
+		if(prefs_.getValue("Preferences:3D:Data:Mode").isEmpty())
+		{
+			return 0;
+		}
+		return SignedInt(prefs_.getValue("Preferences:3D:Data:Mode"));
 	}
-	return SignedInt(prefs_.getValue("Preferences:3D:Dot:Mode"));
-}
-
-void Spectrum3DCanvas::setDotGradient(const std::string& gradient)
-{
-	openglcanvas_->setDotGradient(gradient);
-}
-
-SignedInt Spectrum3DCanvas::getShadeMode()
-{
-	if(prefs_.getValue("Preferences:3D:Shade:Mode").isEmpty())
+	
+	void Spectrum3DCanvas::setDataMode()
 	{
-		return 0;
+		makeReducedDataSet();
+		if(zoom_stack_.empty())
+		{
+			resetZoom();
+		}
+		repaintAll();
 	}
-	return SignedInt(prefs_.getValue("Preferences:3D:Shade:Mode"));
-}
-
-UnsignedInt Spectrum3DCanvas::getDotInterpolationSteps()
-{
-	if(prefs_.getValue("Preferences:3D:InterpolationSteps").isEmpty())
+	
+	SignedInt Spectrum3DCanvas::getDotMode()
 	{
-		return 0;
+		if (prefs_.getValue("Preferences:3D:Dot:Mode").isEmpty())
+		{
+			return 0;
+		}
+		return SignedInt(prefs_.getValue("Preferences:3D:Dot:Mode"));
 	}
-	return UnsignedInt(prefs_.getValue("Preferences:3D:InterpolationSteps"));
-}
+	
+	void Spectrum3DCanvas::setDotGradient(const std::string& gradient)
+	{
+		openglcanvas_->setDotGradient(gradient);
+	}
+	
+	SignedInt Spectrum3DCanvas::getShadeMode()
+	{
+		if(prefs_.getValue("Preferences:3D:Shade:Mode").isEmpty())
+		{
+			return 0;
+		}
+		return SignedInt(prefs_.getValue("Preferences:3D:Shade:Mode"));
+	}
+	
+	UnsignedInt Spectrum3DCanvas::getDotInterpolationSteps()
+	{
+		if(prefs_.getValue("Preferences:3D:InterpolationSteps").isEmpty())
+		{
+			return 0;
+		}
+		return UnsignedInt(prefs_.getValue("Preferences:3D:InterpolationSteps"));
+	}
 
 }//namspace
 

@@ -25,9 +25,7 @@
 // --------------------------------------------------------------------------
 
 // QT
-#include <q3popupmenu.h>
-#include <qlayout.h>
-#include <Q3GridLayout>
+#include <QtGui/QGridLayout>
 
 // STL
 #include <iostream>
@@ -47,12 +45,12 @@ namespace OpenMS
 	Spectrum2DWindow::Spectrum2DWindow(QWidget* parent, Qt::WFlags f)  
 		: SpectrumWindow(parent,f)
 	{
-		QWidget* w = new QWidget(this,"centralWidget");
+		QWidget* w = new QWidget(this);
 		setCentralWidget(w);
 
-		grid_ = new Q3GridLayout(w, 2, 2, 0, 0, "Spectrum2DGridLayout");
+		grid_ = new QGridLayout(w);
 		grid_->setRowStretch(1, 3);
-		grid_->setColStretch(0, 3);
+		grid_->setColumnStretch(0, 3);
 		
 		projection_vert_ = new 	Spectrum1DWidget(w);
 		projection_vert_->hide();

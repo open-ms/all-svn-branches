@@ -28,7 +28,6 @@
 #define OPENMS_VISUAL_SPECTRUMCANVAS_H
 
 //OpenMS
-#include <OpenMS/config.h>
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/VISUAL/PreferencesManager.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>

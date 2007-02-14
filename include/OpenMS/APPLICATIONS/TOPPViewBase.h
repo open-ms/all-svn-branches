@@ -28,7 +28,6 @@
 #define OPENMS_APPLICATIONS_TOPPVIEWBASE_H
 
 //OpenGL
-#include <OpenMS/config.h>
 #include <OpenMS/VISUAL/PreferencesManager.h>
 #include <OpenMS/VISUAL/DIALOGS/OpenDialog.h>
 #include <OpenMS/VISUAL/SpectrumCanvas.h>

@@ -27,11 +27,7 @@
 #ifndef OPENMS_VISUAL_SPECTRUM3DWINDOW_H
 #define OPENMS_VISUAL_SPECTRUM3DWINDOW_H
 
-#ifndef OPENMS_CONFIG_H
-#include <OpenMS/config.h>
-#endif
 #include <OpenMS/VISUAL/SpectrumWindow.h>
-#include <OpenMS/VISUAL/Spectrum3DWidget.h>
 
 namespace OpenMS
 {

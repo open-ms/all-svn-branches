@@ -33,10 +33,9 @@
 #include <OpenMS/VISUAL/Spectrum3DOpenGLCanvas.h>
 
 //QT
-#include <qlayout.h>
-#include <qimage.h>
-#include <QPixmap>
-#include <Q3GridLayout>
+#include <QtGui/QPixmap>
+#include <QtGui/QGridLayout>
+#include <QtGui/QImage>
 
 namespace OpenMS
 {
@@ -49,7 +48,7 @@ namespace OpenMS
 		setCanvas_(new Spectrum3DCanvas(this));
 		
 		delete(grid_);
-		grid_ = new Q3GridLayout(this, 1,1);	
+		grid_ = new QGridLayout(this);	
 		grid_->addWidget(canvas_, 1, 1);
 		
 		
@@ -103,7 +102,7 @@ namespace OpenMS
 	QImage Spectrum3DWidget::getImage(UnsignedInt width, UnsignedInt height )
 	{	
 		QPixmap pix = canvas()->openglwidget()->renderPixmap(width,height,true);
-		QImage img = pix.convertToImage();
+		QImage img = pix.toImage();
 		return img;
 	}
 	void Spectrum3DWidget::showLegend(int show)

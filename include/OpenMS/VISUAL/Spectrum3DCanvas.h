@@ -27,19 +27,13 @@
 #ifndef OPENMS_VISUAL_SPECTRUM3DCANVAS_H
 #define OPENMS_VISUAL_SPECTRUM3DCANVAS_H
 
-// QT
-#include <qpoint.h>
-#include <QResizeEvent>
-
-// STL
-
 // OpenMS
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
-#include <OpenMS/config.h>
 #include <OpenMS/KERNEL/DimensionDescription.h>
 
 class QPainter;
 class QGLWidget;
+class QResizeEvent;
 
 namespace OpenMS
 {
@@ -50,7 +44,8 @@ namespace OpenMS
 
      @ingroup spectrum_widgets
   */	
-  class Spectrum3DCanvas : public SpectrumCanvas
+  class Spectrum3DCanvas
+  	: public SpectrumCanvas
   {
     Q_OBJECT
     

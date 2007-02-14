@@ -45,10 +45,11 @@ namespace OpenMS
 	{
 		Q_OBJECT
 		public:
+
 			/// Constructor
 			Spectrum1DWindow(QWidget* parent=0, Qt::WFlags f=0);
 			/// Destructor
-			~Spectrum1DWindow();
+			virtual ~Spectrum1DWindow();
 			
 			// Docu in base class
 			Spectrum1DWidget* widget();

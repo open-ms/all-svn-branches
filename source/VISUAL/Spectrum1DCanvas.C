@@ -25,12 +25,9 @@
 // --------------------------------------------------------------------------
 
 // Qt
-#include <qmessagebox.h>
-#include <qaction.h>
-#include <qtimer.h>
-#include <QMouseEvent>
-#include <QPaintEvent>
-#include <QPainterPath>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QMessageBox>
+#include <QtGui/QPainterPath>
  
 // OpenMS
 #include <OpenMS/VISUAL/PeakIcon.h>
@@ -163,7 +160,7 @@ namespace OpenMS
 					if (rect.width() > 4 && rect.height() > 4)   // free zoom
 					{
 						Spectrum1DCanvas::AreaType area(widgetToData_(rect.topLeft()), widgetToData_(rect.bottomRight()));
-						if (e->state() & Qt::ShiftModifier)
+						if (e->modifiers() & Qt::ShiftModifier)
 						{
 							//check if selected area is outside visible area and correct errors
 							if (area.minX() < visible_area_.minX())
@@ -259,7 +256,7 @@ namespace OpenMS
 				setCursor(Qt::CrossCursor);
 				PointType pos = widgetToData_(p);
 	
-				if (e->state() & Qt::LeftButton)
+				if (e->modifiers() & Qt::LeftButton)
 				{
 					QPainter painter(&tmp_buffer_);
 					painter.drawImage(0,0,buffer_);			
@@ -267,7 +264,7 @@ namespace OpenMS
 					painter.setBrush(Qt::red);
 					painter.setCompositionMode(QPainter::CompositionMode_Xor);
 
-					if (e->state() & Qt::ShiftModifier) // free zoom
+					if (e->modifiers() & Qt::ShiftModifier) // free zoom
 					{
 						painter.drawRect(last_mouse_pos_.x(), last_mouse_pos_.y(), p.x() - last_mouse_pos_.x(), p.y() - last_mouse_pos_.y());
 					}
@@ -276,7 +273,7 @@ namespace OpenMS
 						painter.drawRect(last_mouse_pos_.x(), 0, p.x() - last_mouse_pos_.x(), height());
 					}
 				}
-				if (e->state() & Qt::ShiftModifier)
+				if (e->modifiers() & Qt::ShiftModifier)
 					emit sendCursorStatus( pos.X(), pos.Y());
 				else
 					emit sendCursorStatus( pos.X() );
@@ -286,7 +283,7 @@ namespace OpenMS
 			{
 				setCursor(cursor_translate_);
 				// Translation of visible area
-				if(e->state() & Qt::LeftButton)
+				if(e->modifiers() & Qt::LeftButton)
 				{
 					setCursor(cursor_translate_in_progress_);
 					// translation in data metric
@@ -703,7 +700,7 @@ namespace OpenMS
 		}
 	
 		painter.end();
-		repaint(false);
+		repaint();
 	}
 	
 	void Spectrum1DCanvas::changeVisibleArea_(const AreaType& new_area, bool add_to_stack)

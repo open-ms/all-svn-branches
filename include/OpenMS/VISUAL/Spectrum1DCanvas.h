@@ -36,10 +36,6 @@
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
 
 //QT
-#include <qpainter.h>
-#include <QMouseEvent>
-#include <QPaintEvent>
-
 class QAction;
 
 namespace OpenMS

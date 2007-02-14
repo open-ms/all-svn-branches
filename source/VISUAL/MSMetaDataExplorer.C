@@ -86,13 +86,14 @@ namespace OpenMS
 	  		
 		//Create the tree for exploring data 
 		treeview_ = new QTreeWidget(this);
+		treeview_->setMinimumWidth(250);
 		treeview_->setColumnCount(2);
 		treeview_->setHeaderLabel("Browse in Metadata tree");
 		treeview_->setRootIsDecorated(true);
 	  treeview_->sortByColumn(2, Qt::AscendingOrder);
 	  
-		basiclayout_->addWidget(treeview_, 0,3,0,0);
-		basiclayout_->addLayout(vertlayout_, 0,3,1,1);
+		basiclayout_->addWidget(treeview_, 0,0,3,1);
+		basiclayout_->addLayout(vertlayout_, 0,1,3,1);
 		  
 		//Create WidgetStack for managing visible metadata
 		ws_ = new QStackedWidget(this);
@@ -122,7 +123,7 @@ namespace OpenMS
 			connect(closebutton_, SIGNAL(clicked()), this, SLOT(reject())  );
 		}
 		
-	  connect(treeview_, SIGNAL(itemClicked(QTreeWidgetItem*)), this, SLOT(showDetails_(QTreeWidgetItem*))  );
+	  connect(treeview_, SIGNAL(itemClicked(QTreeWidgetItem*,int)), this, SLOT(showDetails_(QTreeWidgetItem*,int))  );
 	  
 	}//end of constructor
 	
@@ -134,7 +135,7 @@ namespace OpenMS
 	}
 	
 	
-	void MSMetaDataExplorer::showDetails_(QTreeWidgetItem *item)
+	void MSMetaDataExplorer::showDetails_(QTreeWidgetItem *item,int /*column*/)
 	{
 	  ws_->setCurrentIndex(item->text(1).toInt());
 	}

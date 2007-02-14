@@ -30,15 +30,7 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 
 //QT
-//#include <QtGui/QStackedWidget>
-//#include <QtGui/QSplitter>
-//#include <QtGui/QPushButton>
 #include <QtGui/QDialog>
-//#include <QtGui/QGridLayout>
-//#include <QtGui/QHBoxLayout>
-//#include <QtGui/QVBoxLayout>
-//#include <QtGui/QTreeWidget>
-//#include <QtGui/QTreeWidgetItem>
 class QTreeWidgetItem;
 class QPushButton;
 class QStackedWidget;
@@ -115,7 +107,7 @@ namespace OpenMS
       
     private slots:
 			/// Raises the corresponding viewer from the widget stack according to the item selected in the tree.
-			void showDetails_(QTreeWidgetItem *item);
+			void showDetails_(QTreeWidgetItem *item, int column);
 			
 			/// Saves all changes and close explorer
 			void saveAll_();

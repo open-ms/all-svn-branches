@@ -28,6 +28,7 @@
 #include <OpenMS/VISUAL/Spectrum2DWidget.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum2DWidgetPDP.h>
 #include <OpenMS/VISUAL/Spectrum2DCanvas.h>
+#include <OpenMS/VISUAL/AxisWidget.h>
 
 using namespace std;
 
@@ -37,7 +38,7 @@ namespace OpenMS
 	using namespace Math;
 	
 	Spectrum2DWidget::Spectrum2DWidget(QWidget* parent, const char* name, Qt::WFlags f)
-		: SpectrumWidget(parent, name, f)
+		: SpectrumWidget(parent, f)
 	{
 		setCanvas_(new Spectrum2DCanvas(this));
 		connect(canvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UnsignedInt)),

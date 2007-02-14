@@ -34,24 +34,16 @@
 #include "ICONS/handclosed.xpm"
 
 // QT
-#include <qpainter.h>
-#include <qpixmap.h>
-#include <qbitmap.h>
-#include <QPaintEvent>
-#include <QResizeEvent>
-#include <Q3MemArray>
-
-// STLasdsd
-#include <iostream>
-
+#include <QtGui/QPainter>
+#include <QtGui/QPaintEvent>
+#include <QtGui/QBitmap>
 
 using namespace std;
+
 namespace OpenMS
-{
-	using namespace Math;
-	
-	SpectrumCanvas::SpectrumCanvas(QWidget* parent, const char* name, Qt::WFlags f)
-		: QWidget(parent, name, f | Qt::WNoAutoErase | Qt::WStaticContents ),
+{	
+	SpectrumCanvas::SpectrumCanvas(QWidget* parent, Qt::WFlags f)
+		: QWidget(parent, f),
 			buffer_(),
 			tmp_buffer_(),
 			action_mode_(AM_ZOOM),
@@ -67,6 +59,8 @@ namespace OpenMS
 			percentage_factor_(1.0),
 			snap_factor_(1.0)
 	{
+		setAttribute(Qt::WA_NoBackground);
+		setAttribute(Qt::WA_StaticContents);
 		setAttribute(Qt::WA_PaintOutsidePaintEvent, true);
 		// get mouse coordinates while mouse moves over diagramm.	
 		setMouseTracking(TRUE);
@@ -107,7 +101,7 @@ namespace OpenMS
 	void SpectrumCanvas::paintEvent(QPaintEvent* e)
 	{
 		// blit changed parts of backbuffer on widget
-		Q3MemArray<QRect> rects = e->region().rects();
+		QVector<QRect> rects = e->region().rects();
 		for (int i = 0; i < (int)rects.size(); ++i)
 		{
 			QPainter painter(this);
@@ -266,7 +260,7 @@ namespace OpenMS
 			int x;
 			for (std::vector<double>::const_iterator it = spectrum_widget_->xAxis()->gridLines()[j].begin(); it != spectrum_widget_->xAxis()->gridLines()[j].end(); it++) 
 			{
-				x = static_cast<int>(intervalTransformation(*it, spectrum_widget_->xAxis()->getAxisMinimum(), spectrum_widget_->xAxis()->getAxisMaximum(), xl, xh));
+				x = static_cast<int>(Math::intervalTransformation(*it, spectrum_widget_->xAxis()->getAxisMinimum(), spectrum_widget_->xAxis()->getAxisMaximum(), xl, xh));
 				p->drawLine(x, yl, x, yh);
 			}
 		}
@@ -295,7 +289,7 @@ namespace OpenMS
 			int y;
 			for (std::vector<double>::const_iterator it = spectrum_widget_->yAxis()->gridLines()[j].begin(); it != spectrum_widget_->yAxis()->gridLines()[j].end(); it++) 
 			{
-				y = static_cast<int>(intervalTransformation(*it, spectrum_widget_->yAxis()->getAxisMinimum(), spectrum_widget_->yAxis()->getAxisMaximum(), yl, yh));
+				y = static_cast<int>(Math::intervalTransformation(*it, spectrum_widget_->yAxis()->getAxisMinimum(), spectrum_widget_->yAxis()->getAxisMaximum(), yl, yh));
 				p->drawLine(xl, y, xh, y);
 			}
 		}

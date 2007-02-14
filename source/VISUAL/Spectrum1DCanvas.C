@@ -47,7 +47,7 @@ namespace OpenMS
 	using namespace Internal;
 		
 	Spectrum1DCanvas::Spectrum1DCanvas(QWidget* parent, const char* name, Qt::WFlags f)
-		: SpectrumCanvas(parent, name, f | Qt::WNoAutoErase)
+		: SpectrumCanvas(parent, f)
 	{
 		
 	}

@@ -48,7 +48,7 @@ namespace OpenMS
 	using namespace Internal;
 
 	Spectrum2DCanvas::Spectrum2DCanvas(QWidget* parent, const char* name)
-		: SpectrumCanvas(parent, name),
+		: SpectrumCanvas(parent),
 		marching_squares_matrices_(),
 		max_values_(),
 		show_contours_(),

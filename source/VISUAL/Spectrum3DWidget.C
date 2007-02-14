@@ -44,7 +44,7 @@ namespace OpenMS
 	using namespace Math;
 	
 	Spectrum3DWidget::Spectrum3DWidget(QWidget* parent, const char* name, Qt::WFlags f)
-	  : SpectrumWidget(parent, name, f)		
+	  : SpectrumWidget(parent, f)		
 	{
 		setCanvas_(new Spectrum3DCanvas(this));
 		

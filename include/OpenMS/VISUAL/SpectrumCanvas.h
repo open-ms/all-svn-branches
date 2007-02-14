@@ -38,16 +38,8 @@
 #include <stack>
 #include <vector>
 
-//QT
-#include <qwidget.h>
-#include <qcursor.h>
-#include <QPaintEvent>
-#include <QResizeEvent>
-#include <QImage>
-
 namespace OpenMS
 {
-	class AxisWidget;
 	class SpectrumWidget;
 	class DataReducer;
 	
@@ -67,7 +59,9 @@ namespace OpenMS
 		
 		@ingroup spectrum_widgets
 	*/
-	class SpectrumCanvas : public QWidget, public PreferencesManager
+	class SpectrumCanvas 
+		: public QWidget, 
+			public PreferencesManager
 	{
 		Q_OBJECT
 	
@@ -121,7 +115,7 @@ namespace OpenMS
 			@param name the widget's name
 			@param f Window flags
 		*/
-		SpectrumCanvas(QWidget* parent = 0, const char* name="SpectrumCanvas", Qt::WFlags f=0);
+		SpectrumCanvas(QWidget* parent = 0, Qt::WFlags f=0);
 		
 		/**
 			@brief Sets the spectrum widget.

@@ -52,7 +52,7 @@ namespace OpenMS
 	using namespace Math;
 	
 	AxisWidget::AxisWidget(UnsignedInt alignment, const char* legend, QWidget* parent, const char* name, Qt::WFlags f)
-		: QWidget( parent, name, f | Qt::WNoAutoErase),
+		: QWidget( parent, name, f),
 		is_log_(false),
 		show_legend_(false),
 		alignment_(alignment),
@@ -63,6 +63,8 @@ namespace OpenMS
 		buffer_(0),
 		pen_width_(0)
 	{
+		setAttribute(Qt::WA_NoBackground);
+		
 		buffer_ = new QPixmap(1,1);
 		if (!(alignment==RIGHT || alignment==LEFT || alignment==BOTTOM || alignment==TOP))
 		{

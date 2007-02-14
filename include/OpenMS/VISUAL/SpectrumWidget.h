@@ -28,27 +28,18 @@
 #define OPENMS_VISUAL_SPECTRUMWIDGET_H
 
 //OpenMS
-#include <OpenMS/config.h>
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/MATH/STATISTICS/Histogram.h>
 #include <OpenMS/VISUAL/PreferencesManager.h>
-#include <OpenMS/VISUAL/AxisWidget.h>
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
-#include <Q3GridLayout>
-#include <Q3PopupMenu>
 
-//STL
-
-// QT
-class Q3PopupMenu;
-class QAction;
-class Q3GridLayout;
+class QGridLayout;
 class QScrollBar;
 
 namespace OpenMS
 {
+
 	class AxisWidget;
-	class SpectrumCanvas;
 	class SpectrumWindow;
 	
 	/**
@@ -65,7 +56,9 @@ namespace OpenMS
 		
 		@ingroup spectrum_widgets
 	*/
-	class SpectrumWidget : public QWidget, public PreferencesManager
+	class SpectrumWidget 
+		: public QWidget,
+			public PreferencesManager
 	{
 		Q_OBJECT
 	
@@ -210,7 +203,7 @@ namespace OpenMS
 		void updateVScrollbar(float min, float disp_min, float disp_max, float max);
 	protected:
 		/// Default constructor
-		SpectrumWidget(QWidget* parent = 0, const char* name="SpectrumWidget", Qt::WFlags f=0);
+		SpectrumWidget(QWidget* parent = 0, Qt::WFlags f=0);
 		/// Destructor
 		~SpectrumWidget();
 		/// Adds the canvas to the layout and connects some signals/slots
@@ -227,7 +220,7 @@ namespace OpenMS
 		/// Pointer to the main window widget
 		SpectrumWindow* spectrum_window_;	
 		///Main layout
-		Q3GridLayout* grid_;
+		QGridLayout* grid_;
 		/// Vertical axis
 		AxisWidget* y_axis_;
 		/// Horizontal axis

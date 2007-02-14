@@ -86,3 +86,5 @@ TOPPViewBase_moc.C:  $(HEADER_DIR)/TOPPViewBase.h
 # For debugging the TOPP applications, please create the file 'Makefile_debug'
 # and add the line 'ADD_CXXFLAGS=-DDEBUG_TOPP' to it
 -include Makefile_debug
+
+ADD_CXXFLAGS = -DQT3_SUPPORT

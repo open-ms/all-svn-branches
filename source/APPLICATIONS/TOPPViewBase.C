@@ -309,7 +309,7 @@ namespace OpenMS
       {
       	//cout << "NEW 1D" << endl;
         // create 1D window
-        w = new Spectrum1DWindow(ws_,"Spectrum1DWindow",Qt::WDestructiveClose);
+        w = new Spectrum1DWindow(ws_,Qt::WDestructiveClose);
 
         //determine Spectrum id
         con.executeQuery("SELECT id from DATA_Spectrum where fid_MSExperiment='"+db_id_string+"' and MSLevel='1'",result);
@@ -328,7 +328,7 @@ namespace OpenMS
         {
           //cout << "NEW 2D" << endl;
           //create 2D window
-          w = new Spectrum2DWindow(ws_,"Spectrum2DWindow",Qt::WDestructiveClose);
+          w = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
 
           //load spectrum
           exp = &(w->widget()->canvas()->addEmptyPeakLayer());
@@ -339,7 +339,7 @@ namespace OpenMS
         {
           //cout << "NEW 3D" << endl;
         	// create 3D window
-          w = new Spectrum3DWindow(ws_, "Spectrum3DWindow", Qt::WDestructiveClose);
+          w = new Spectrum3DWindow(ws_, Qt::WDestructiveClose);
 
           //load data
           exp = &(w->widget()->canvas()->addEmptyPeakLayer());
@@ -526,15 +526,15 @@ namespace OpenMS
     {
       if (force_type==FileHandler::DTA)
       {
-        w = new Spectrum1DWindow(ws_,"Spectrum1DWindow",Qt::WDestructiveClose);
+        w = new Spectrum1DWindow(ws_,Qt::WDestructiveClose);
       }
       else if (maps_as_2d || force_type==FileHandler::FEATURE || force_type==FileHandler::FEATURE_PAIRS) //2d or features
       {
-        w = new Spectrum2DWindow(ws_,"Spectrum1DWindow",Qt::WDestructiveClose);
+        w = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
       }
       else //3d
       {
-        w = new Spectrum3DWindow(ws_,"Spectrum1DWindow",Qt::WDestructiveClose);
+        w = new Spectrum3DWindow(ws_,Qt::WDestructiveClose);
       }
 
       //set main preferences
@@ -626,7 +626,7 @@ namespace OpenMS
       if (as_new_window && active1DWindow_()==0 && exp->size()==1)
       {
         delete(w);
-        w = new Spectrum1DWindow(ws_,"Spectrum1DWindow",Qt::WDestructiveClose);
+        w = new Spectrum1DWindow(ws_,Qt::WDestructiveClose);
         w->setMainPreferences(prefs_);
         exp = &(w->widget()->canvas()->addEmptyPeakLayer());
         FileHandler().loadExperiment(filename,*exp, force_type);
@@ -1772,7 +1772,7 @@ namespace OpenMS
           const Spectrum2DCanvas::ExperimentType& exp_raw = w2->widget()->canvas()->getCurrentPeakData();
           	
          	//add new window for picked peaks
-          Spectrum2DWindow* w_smoothed = new Spectrum2DWindow(ws_,"Spectrum2DWindow",Qt::WDestructiveClose);
+          Spectrum2DWindow* w_smoothed = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
           //set main preferences
           w_smoothed->setMainPreferences(prefs_);
           String new_name = w2->widget()->canvas()->getCurrentLayer().name+" (smoothed)";
@@ -1936,7 +1936,7 @@ namespace OpenMS
           bool resampling_flag = dialog.getResampling();
 
           //add new window for baseline filtered data
-          Spectrum2DWindow* w_tophat = new Spectrum2DWindow(ws_,"Spectrum2DWindow",Qt::WDestructiveClose);
+          Spectrum2DWindow* w_tophat = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
           //set main preferences
           w_tophat->setMainPreferences(prefs_);
           String new_name = w2->widget()->canvas()->getCurrentLayer().name+" (basline)";
@@ -2049,7 +2049,7 @@ namespace OpenMS
         if (w2!=0)
         {
           //add new window for picked peaks
-          Spectrum2DWindow* w_picked = new Spectrum2DWindow(ws_,"Spectrum2DWindow",Qt::WDestructiveClose);
+          Spectrum2DWindow* w_picked = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
           //set main preferences
           w_picked->setMainPreferences(prefs_);
           String new_name = w2->widget()->canvas()->getCurrentLayer().name+"(picked)";

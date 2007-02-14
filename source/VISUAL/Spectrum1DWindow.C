@@ -41,8 +41,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	Spectrum1DWindow::Spectrum1DWindow(QWidget* parent, const char* name, Qt::WFlags f)
-		: SpectrumWindow(parent,name,f)
+	Spectrum1DWindow::Spectrum1DWindow(QWidget* parent, Qt::WFlags f)
+		: SpectrumWindow(parent,f)
 	{
 		setWidget_(new Spectrum1DWidget(this));
 		widget()->PreferencesManager::setParent(this);

@@ -32,6 +32,7 @@
 #include <QtSql/QSqlQuery>
 #include <QtSql/QSqlError>
 #include <QtCore/QVariant>
+#include <QtSql/QSqlRecord>
 
 using namespace std;
 

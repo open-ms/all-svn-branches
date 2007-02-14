@@ -192,3 +192,4 @@ BaselineFilteringDialog_moc.C:  $(HEADER_DIR)/BaselineFilteringDialog.h
 	$(MOC) $(HEADER_DIR)/BaselineFilteringDialog.h -o BaselineFilteringDialog_moc.C
 
 
+ADD_CXXFLAGS = -DQT3_SUPPORT

@@ -48,8 +48,8 @@
 namespace OpenMS
 {
   
-Spectrum3DOpenGLCanvas::Spectrum3DOpenGLCanvas(QWidget *parent, const char* name,Spectrum3DCanvas &canvas_3d)
-  : QGLWidget(parent,name),
+Spectrum3DOpenGLCanvas::Spectrum3DOpenGLCanvas(QWidget *parent,Spectrum3DCanvas &canvas_3d)
+  : QGLWidget(parent),
     canvas_3d_(canvas_3d)
     
 {

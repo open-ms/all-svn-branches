@@ -3159,12 +3159,10 @@ AC_DEFUN(CF_GUI_QT_LINK_TEST, [
 		if test "${QT_LIBPATH}" != "/usr/lib" ; then
 			QTQGL_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL -lQtNetwork -lQtXml"
 			QT_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtNetwork -lQtXml"
-			ADD_CXXFLAGS="-DQT3_SUPPORT"
 		else 
 			QT_LIBPATH=""
 			QTQGL_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL -lQtNetwork -lQtXml"
 			QT_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtNetwork -lQtXml"
-			ADD_CXXFLAGS="-DQT3_SUPPORT"
 		fi
 
 		SAVE_LIBS=${LIBS}

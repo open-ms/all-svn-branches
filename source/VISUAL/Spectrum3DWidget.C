@@ -43,7 +43,7 @@ namespace OpenMS
 	using namespace Internal;
 	using namespace Math;
 	
-	Spectrum3DWidget::Spectrum3DWidget(QWidget* parent, const char* name, Qt::WFlags f)
+	Spectrum3DWidget::Spectrum3DWidget(QWidget* parent, Qt::WFlags f)
 	  : SpectrumWidget(parent, f)		
 	{
 		setCanvas_(new Spectrum3DCanvas(this));

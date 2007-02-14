@@ -73,7 +73,7 @@ namespace OpenMS
 			@param name The widget's name.
 			@param f Widget flags.
 		*/
-		Spectrum2DWidget(QWidget* parent = 0, const char* name = "Spectrum2DWidget", Qt::WFlags f = 0);
+		Spectrum2DWidget(QWidget* parent = 0, Qt::WFlags f = 0);
 		
 		/**
 			@brief Destructor

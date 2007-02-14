@@ -56,7 +56,7 @@ namespace OpenMS
 		Q_OBJECT
 	public:
 		/// Constructor
-		Spectrum2DWindow(QWidget* parent=0, const char* name="Spectrum2DWindow", Qt::WFlags f=0);
+		Spectrum2DWindow(QWidget* parent=0, Qt::WFlags f=0);
 		/// Destructor
 		~Spectrum2DWindow();
 		

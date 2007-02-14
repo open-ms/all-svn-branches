@@ -96,7 +96,7 @@ namespace OpenMS
       	@param parent The parent widget.
       	@param name The widget's name.
       */
-      Spectrum2DCanvas(QWidget* parent = 0, const char* name = "Spectrum2DCanvas");
+      Spectrum2DCanvas(QWidget* parent = 0);
 
       /**
       	@brief Destructor

@@ -29,13 +29,11 @@
 #include <OpenMS/VISUAL/SpectrumWindow.h>
 #include <OpenMS/VISUAL/SpectrumWidget.h>
 
-#include <q3popupmenu.h>
-
 namespace OpenMS
 {
 
-	SpectrumWindow::SpectrumWindow(QWidget* parent, const char* name, Qt::WFlags f)  
-		: Q3MainWindow(parent,name,f),
+	SpectrumWindow::SpectrumWindow(QWidget* parent, Qt::WFlags f)  
+		: QMainWindow(parent,f),
 			PreferencesManager()
 	{
 		setMinimumSize(300,300);	// prevents errors caused by too small width,height values

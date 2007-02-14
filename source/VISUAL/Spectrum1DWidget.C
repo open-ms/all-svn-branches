@@ -40,11 +40,11 @@ namespace OpenMS
 	using namespace Internal;
 	using namespace Math;
 	
-	Spectrum1DWidget::Spectrum1DWidget(QWidget* parent, const char* name, Qt::WFlags f)
+	Spectrum1DWidget::Spectrum1DWidget(QWidget* parent, Qt::WFlags f)
 		: SpectrumWidget(parent, f)
 	{
 		//set the label mode for the axes  - side effect
-		setCanvas_(new Spectrum1DCanvas(this, "Spectrum1DCanvas"));
+		setCanvas_(new Spectrum1DCanvas(this));
 		connect(canvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UnsignedInt)), this, SIGNAL(sendStatusMessage(std::string, OpenMS::UnsignedInt)));
 		connect(canvas(), SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
 		

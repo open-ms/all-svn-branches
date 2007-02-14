@@ -235,6 +235,4 @@ IdentificationVisualizer_moc.C:  $(HEADER_DIR)/IdentificationVisualizer.h
 	$(MOC) $(HEADER_DIR)/IdentificationVisualizer.h -o IdentificationVisualizer_moc.C		
 	
 SpectrumSettingsVisualizer_moc.C:  $(HEADER_DIR)/SpectrumSettingsVisualizer.h
-	$(MOC) $(HEADER_DIR)/SpectrumSettingsVisualizer.h -o SpectrumSettingsVisualizer_moc.C	
-
-ADD_CXXFLAGS = 
+	$(MOC) $(HEADER_DIR)/SpectrumSettingsVisualizer.h -o SpectrumSettingsVisualizer_moc.C

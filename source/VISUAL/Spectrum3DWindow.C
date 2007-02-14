@@ -31,8 +31,8 @@
 namespace OpenMS 
 {
 	
-	Spectrum3DWindow::Spectrum3DWindow(QWidget* parent, const char* name, Qt::WFlags f)
-		: SpectrumWindow(parent,name,f)
+	Spectrum3DWindow::Spectrum3DWindow(QWidget* parent, Qt::WFlags f)
+		: SpectrumWindow(parent,f)
 	{
 		setWidget_(new Spectrum3DWidget(this));
 		setCentralWidget(widget());

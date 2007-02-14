@@ -33,12 +33,11 @@
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/VISUAL/PreferencesManager.h>
 
-//QT
-#include <q3mainwindow.h>
-#include <qaction.h>
-
 //STL
 #include <string>
+
+//QT
+#include <QtGui/QMainWindow>
 
 namespace OpenMS 
 {
@@ -60,13 +59,15 @@ namespace OpenMS
 		
 		@ingroup spectrum_widgets
 	*/
-	class SpectrumWindow : public Q3MainWindow, public PreferencesManager
+	class SpectrumWindow 
+		: public QMainWindow, 
+			public PreferencesManager
 	{
 		Q_OBJECT
 		public:
 			
 			/// Constructor
-			SpectrumWindow(QWidget* parent=0, const char* name="SpectrumWindow", Qt::WFlags f=0);
+			SpectrumWindow(QWidget* parent=0, Qt::WFlags f=0);
 			/// Destructor
 			virtual ~SpectrumWindow();
 			

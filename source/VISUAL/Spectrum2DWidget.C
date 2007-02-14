@@ -37,7 +37,7 @@ namespace OpenMS
 	using namespace Internal;
 	using namespace Math;
 	
-	Spectrum2DWidget::Spectrum2DWidget(QWidget* parent, const char* name, Qt::WFlags f)
+	Spectrum2DWidget::Spectrum2DWidget(QWidget* parent, Qt::WFlags f)
 		: SpectrumWidget(parent, f)
 	{
 		setCanvas_(new Spectrum2DCanvas(this));

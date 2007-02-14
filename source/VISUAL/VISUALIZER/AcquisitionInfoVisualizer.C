@@ -34,8 +34,10 @@
 // STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 AcquisitionInfoVisualizer::AcquisitionInfoVisualizer(bool editable, QWidget *parent) 
@@ -90,4 +92,6 @@ void AcquisitionInfoVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original AcquisitionInfo data. "<<e.what()<<endl;
 	} 
+}
+
 }

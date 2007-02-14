@@ -32,8 +32,10 @@
 
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 SoftwareVisualizer::SoftwareVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -105,3 +107,4 @@ void SoftwareVisualizer::reject()
 	
 }
 
+}

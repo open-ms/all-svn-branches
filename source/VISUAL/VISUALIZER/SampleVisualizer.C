@@ -35,8 +35,10 @@
 
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 SampleVisualizer::SampleVisualizer(bool editable, QWidget *parent) 
@@ -147,3 +149,4 @@ void SampleVisualizer::reject()
 	
 }
 
+}

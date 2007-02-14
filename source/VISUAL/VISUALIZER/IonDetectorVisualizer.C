@@ -34,8 +34,10 @@
 //STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 IonDetectorVisualizer::IonDetectorVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -124,3 +126,4 @@ void IonDetectorVisualizer::reject()
 	
 }
 
+}

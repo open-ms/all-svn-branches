@@ -33,8 +33,10 @@
 //STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 InstrumentSettingsVisualizer::InstrumentSettingsVisualizer(bool editable, QWidget *parent) 
@@ -118,3 +120,4 @@ void InstrumentSettingsVisualizer::reject()
 	
 }
 
+}

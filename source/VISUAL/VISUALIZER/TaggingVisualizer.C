@@ -35,8 +35,10 @@
 
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 TaggingVisualizer::TaggingVisualizer(bool editable, QWidget *parent) 
@@ -130,4 +132,6 @@ void TaggingVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original tagging data. "<<e.what()<<endl;
 	} 
+}
+
 }

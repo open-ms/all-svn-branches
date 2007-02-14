@@ -33,8 +33,10 @@
 // STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 SourceFileVisualizer::SourceFileVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -96,4 +98,6 @@ void SourceFileVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original source file data. "<<e.what()<<endl;
 	} 
+}
+
 }

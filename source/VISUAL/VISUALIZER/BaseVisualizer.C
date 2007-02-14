@@ -28,8 +28,10 @@
 
 #include <QtGui/QPushButton>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 BaseVisualizer::BaseVisualizer(bool editable, QWidget *parent) 
 	: DataTable(editable, parent)
@@ -64,4 +66,4 @@ void BaseVisualizer::finishAdding_()
 	}
 }
 
-
+}

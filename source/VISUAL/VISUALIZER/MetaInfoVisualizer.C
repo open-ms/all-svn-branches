@@ -40,9 +40,10 @@
 #include <vector>
 #include <utility>
 
-
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 MetaInfoVisualizer::MetaInfoVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -317,4 +318,6 @@ void MetaInfoVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original metainfo data. "<<e.what()<<endl;
 	} 
+}
+
 }

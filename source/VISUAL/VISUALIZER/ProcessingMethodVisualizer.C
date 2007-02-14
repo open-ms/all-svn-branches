@@ -33,8 +33,10 @@
 //STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 ProcessingMethodVisualizer::ProcessingMethodVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -138,3 +140,4 @@ void ProcessingMethodVisualizer::reject()
 	
 }
 
+}

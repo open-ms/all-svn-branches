@@ -33,8 +33,10 @@
 
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 ProteinHitVisualizer::ProteinHitVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -101,4 +103,6 @@ void ProteinHitVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original ProteinHit data. "<<e.what()<<endl;
 	} 
+}
+
 }

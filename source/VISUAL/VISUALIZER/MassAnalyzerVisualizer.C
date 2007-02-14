@@ -33,8 +33,10 @@
 //STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 MassAnalyzerVisualizer::MassAnalyzerVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -193,3 +195,4 @@ void MassAnalyzerVisualizer::reject()
 	
 }
 
+}

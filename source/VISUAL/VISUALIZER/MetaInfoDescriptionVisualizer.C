@@ -31,8 +31,10 @@
 #include <QtGui/QLineEdit>
 #include <QtGui/QTextEdit>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 MetaInfoDescriptionVisualizer::MetaInfoDescriptionVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -86,4 +88,6 @@ void MetaInfoDescriptionVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original MetaInfoDescription data. "<<e.what()<<endl;
 	} 
+}
+
 }

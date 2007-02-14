@@ -34,8 +34,10 @@
 // STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 PeptideHitVisualizer::PeptideHitVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -100,4 +102,6 @@ void PeptideHitVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original PeptideHit data. "<<e.what()<<endl;
 	} 
+}
+
 }

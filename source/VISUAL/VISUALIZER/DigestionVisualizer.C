@@ -34,8 +34,10 @@
 //STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 DigestionVisualizer::DigestionVisualizer(bool editable, QWidget *parent) 
@@ -112,4 +114,6 @@ void DigestionVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original digestion data. "<<e.what()<<endl;
 	} 
+}
+
 }

@@ -28,9 +28,6 @@
 #include <OpenMS/VISUAL/VISUALIZER/GradientVisualizer.h>
 
 //QT
-//#include <Q3GridLayout>
-//#include <Q3Frame>
-
 #include <QtGui/QLabel>
 #include <QtGui/QLineEdit>
 #include <QtGui/QValidator>
@@ -41,8 +38,10 @@
 #include <iostream>
 #include <vector>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 GradientVisualizer::GradientVisualizer(bool editable, QWidget *parent) 
@@ -349,3 +348,4 @@ void GradientVisualizer::reject()
 	
 }
 
+}

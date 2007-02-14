@@ -34,8 +34,10 @@
 #include <iostream>
 #include <vector>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 ModificationVisualizer::ModificationVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -127,3 +129,4 @@ void ModificationVisualizer::reject()
 	}
 }
 
+}

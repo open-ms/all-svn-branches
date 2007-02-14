@@ -35,8 +35,10 @@
 //STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 ExperimentalSettingsVisualizer::ExperimentalSettingsVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
@@ -111,3 +113,4 @@ void ExperimentalSettingsVisualizer::reject()
 	
 }
 
+}

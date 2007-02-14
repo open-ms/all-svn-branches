@@ -33,8 +33,10 @@
 #include <QtGui/QValidator>
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 HPLCVisualizer::HPLCVisualizer(bool editable, QWidget *parent) 
@@ -118,4 +120,6 @@ void HPLCVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original HPLC data. "<<e.what()<<endl;
 	} 
+}
+
 }

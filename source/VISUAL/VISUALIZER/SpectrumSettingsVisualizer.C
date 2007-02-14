@@ -33,8 +33,10 @@
 //STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 SpectrumSettingsVisualizer::SpectrumSettingsVisualizer(bool editable, QWidget *parent) 
@@ -103,3 +105,4 @@ void SpectrumSettingsVisualizer::reject()
 	
 }
 
+}

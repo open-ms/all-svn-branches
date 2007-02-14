@@ -33,8 +33,10 @@
 //STL
 #include <iostream>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 PrecursorVisualizer::PrecursorVisualizer(bool editable, QWidget *parent) 
@@ -121,3 +123,4 @@ void PrecursorVisualizer::reject()
 	
 }
 
+}

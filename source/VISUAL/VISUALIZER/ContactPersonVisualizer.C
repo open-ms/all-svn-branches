@@ -30,8 +30,10 @@
 //QT
 #include <QtGui/QLineEdit>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 //Constructor
 ContactPersonVisualizer::ContactPersonVisualizer(bool editable, QWidget *parent) 
@@ -100,4 +102,6 @@ void ContactPersonVisualizer::reject()
 	{
 		cout<<"Error while trying to restore original contact person data. "<<e.what()<<endl;
 	} 
+}
+
 }

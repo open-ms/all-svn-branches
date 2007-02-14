@@ -27,7 +27,6 @@
 #ifndef OPENMS_VISUAL_SPECTRUM1DWINDOW_H
 #define OPENMS_VISUAL_SPECTRUM1DWINDOW_H
 
-#include <OpenMS/config.h>
 #include <OpenMS/VISUAL/SpectrumWindow.h>
 
 namespace OpenMS

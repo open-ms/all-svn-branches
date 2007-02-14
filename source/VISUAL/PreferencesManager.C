@@ -29,13 +29,6 @@
 #include <OpenMS/VISUAL/DIALOGS/PreferencesDialog.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 
-#include <sstream>
-#include <iostream>
-
-#include <qdialog.h>
-#include <qpushbutton.h>
-#include <qlayout.h>
-
 using namespace std;
 
 namespace OpenMS

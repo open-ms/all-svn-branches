@@ -30,8 +30,8 @@
 #include <OpenMS/CONCEPT/Types.h>
 
 //QT
-#include <qtabbar.h>
-#include <QMouseEvent>
+#include <QtGui/QTabBar>
+class QMouseEvent;
 
 namespace OpenMS 
 {
@@ -42,8 +42,8 @@ namespace OpenMS
 		
 		@ingroup Visual
 	*/
-	
-	class EnhancedTabBar: public QTabBar
+	class EnhancedTabBar
+		: public QTabBar
 	{
 		Q_OBJECT
 		public:

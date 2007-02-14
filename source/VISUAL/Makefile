@@ -214,4 +214,4 @@ DataTable_moc.C:  $(HEADER_DIR)/DataTable.h
 MSMetaDataExplorer_moc.C:  $(HEADER_DIR)/MSMetaDataExplorer.h
 	$(MOC) $(HEADER_DIR)/MSMetaDataExplorer.h -o MSMetaDataExplorer_moc.C
 	
-ADD_CXXFLAGS = -DQT3_SUPPORT
+

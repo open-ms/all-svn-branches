@@ -33,6 +33,9 @@
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <OpenMS/VISUAL/LayerData.h>
 
+//QT
+#include <QtGui/QWidget>
+
 //STL
 #include <stack>
 #include <vector>

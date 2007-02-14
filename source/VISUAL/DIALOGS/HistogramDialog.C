@@ -27,16 +27,8 @@
 
 #include <OpenMS/VISUAL/DIALOGS/HistogramDialog.h>
 
-#include <sstream>
-
 #include <QtGui/QPushButton>
-#include <QtGui/QLayout>
-#include <QtGui/QTabWidget>
-#include <QtGui/QLabel>
-#include <QtGui/QLineEdit>
-#include <QtGui/QRadioButton>
 #include <QtGui/QGridLayout>
-
 
 using namespace std;
 
@@ -44,7 +36,8 @@ namespace OpenMS
 {
 	using namespace Math;
 	
-	HistogramDialog::HistogramDialog(const Histogram<UnsignedInt,float>& distribution, QWidget* parent, const char* name) :QDialog(parent,name)
+	HistogramDialog::HistogramDialog(const Histogram<UnsignedInt,float>& distribution, QWidget* parent) 
+		: QDialog(parent)
 	{ 	
 		setWindowTitle("Intensity Distribution");
 		
@@ -67,7 +60,7 @@ namespace OpenMS
 		layout->addWidget(cancel_button_,1,2);
 		
 		//distribution
-		mw_ = new HistogramWidget(distribution, this, "HistogramWidget");
+		mw_ = new HistogramWidget(distribution, this);
 		mw_->showSplitters(true);
 		layout->addMultiCellWidget(mw_,0,0,0,2);
 		

@@ -29,19 +29,19 @@
 #include <OpenMS/CONCEPT/Types.h>
 
 //qt includes
-#include <qpainter.h>
-#include <qcolordialog.h>
-#include <QPaintEvent>
-#include <QMouseEvent>
-
-#include <iostream>
+#include <QtGui/QPainter>
+#include <QtGui/QColorDialog>
+#include <QtGui/QPaintEvent>
+#include <QtGui/QMouseEvent>
 
 using namespace std;
 
 namespace OpenMS
 {
 
-	ColorSelector::ColorSelector( QWidget * parent, const char * name) : QWidget(parent,name),color_(255,255,255)
+	ColorSelector::ColorSelector( QWidget * parent) 
+		: QWidget(parent),
+			color_(255,255,255)
 	{
 		setMinimumSize(12,12);
 	}
@@ -53,7 +53,7 @@ namespace OpenMS
 	
 	void ColorSelector::paintEvent(QPaintEvent* /*e*/)
 	{
-		SignedInt size=QMIN(width(),height());
+		SignedInt size=std::min(width(),height());
 		QPainter painter(this);
 		painter.setPen(QColor(0,0,0));
 		painter.drawRect(0,0,size,size);
@@ -70,7 +70,7 @@ namespace OpenMS
 			e->ignore();
 			return;
 	  } 	
-		color_ = QColorDialog::getColor(color_,this, "Color dialog");
+		color_ = QColorDialog::getColor(color_,this);
 		repaint();
 	}	
 	

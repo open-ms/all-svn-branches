@@ -26,7 +26,7 @@
 
 // OpenMS includes
 #include <OpenMS/VISUAL/EnhancedTabBar.h>
-#include <QMouseEvent>
+#include <QtGui/QMouseEvent>
 
 using namespace std;
 

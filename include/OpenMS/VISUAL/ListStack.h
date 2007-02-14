@@ -32,11 +32,6 @@
 #include <QtGui/QTreeWidget>
 #include <QtGui/QStackedWidget>
 
-//STL
-#include <string>
-#include <map>
-#include <vector>
-
 namespace OpenMS 
 {
 	/**

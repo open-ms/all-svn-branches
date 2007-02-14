@@ -37,9 +37,6 @@
 #include <QtGui/QPushButton>
 #include <QtGui/QHBoxLayout>
 
-#include <iostream>
-
-//using namespace std;
 using namespace OpenMS;
 
 //Constructor

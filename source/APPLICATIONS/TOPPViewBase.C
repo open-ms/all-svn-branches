@@ -147,9 +147,8 @@ namespace OpenMS
     return instance_;
   }
 
-  TOPPViewBase::TOPPViewBase(QWidget* parent, const char* name, Qt::WindowFlags f):
-      Q3MainWindow(parent,name,f),
-
+  TOPPViewBase::TOPPViewBase(QWidget* parent, Qt::WindowFlags f):
+      Q3MainWindow(parent,"",f),
       PreferencesManager(),
       recent_files_()
   {

@@ -33,7 +33,6 @@
 // OpenMS
 #include <OpenMS/VISUAL/SpectrumWidget.h>
 #include <OpenMS/VISUAL/Spectrum1DCanvas.h>
-#include <OpenMS/config.h>
 
 class QAction;
 

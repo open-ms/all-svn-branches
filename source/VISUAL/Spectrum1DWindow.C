@@ -24,10 +24,6 @@
 // $Maintainer: Marc Sturm $
 // --------------------------------------------------------------------------
 
-
-// QT
-//#include <q3popupmenu.h>
-
 //STL
 #include <iostream>
 

@@ -27,9 +27,8 @@
 // OpenMS includes
 #include <OpenMS/VISUAL/MultiGradient.h>
 
-// stl
-#include <iostream>
-#include <sstream>
+#include <QtGui/QColor>
+
 #include <math.h>
 
 using namespace std;

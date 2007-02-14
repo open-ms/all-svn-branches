@@ -28,32 +28,35 @@
 #include <OpenMS/VISUAL/MultiGradientSelector.h>
 
 //qt includes
-#include <qpainter.h>
-#include <qcolordialog.h>
-#include <qpixmap.h>
-#include <qtooltip.h>
-#include <QMouseEvent>
-#include <QKeyEvent>
-#include <QPaintEvent>
-
-
-#include <iostream>
+#include <QtGui/QPainter>
+#include <QtGui/QColorDialog>
+#include <QtGui/QPixmap>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QKeyEvent>
+#include <QtGui/QPaintEvent>
 
 using namespace std;
 
 namespace OpenMS
 {
 
-	MultiGradientSelector::MultiGradientSelector( QWidget * parent, const char * name) : QWidget(parent,name), gradient_(), margin_(5), gradient_area_width_(0), lever_area_height_(17), selected_(-1), selected_color_(Qt::white)
+	MultiGradientSelector::MultiGradientSelector( QWidget * parent) 
+		: QWidget(parent), 
+			gradient_(), 
+			margin_(5), 
+			gradient_area_width_(0), 
+			lever_area_height_(17), 
+			selected_(-1), 
+			selected_color_(Qt::white)
 	{
 		setMinimumSize(250,45);
 		setFocusPolicy(Qt::ClickFocus);
-		QToolTip::add( this, "Click the lever area to add new levers.<BR>"
-													"Levers are removed with the DEL key.<BR>"
-		                      "<NOBR>Double click a lever to change its color.</NOBR><BR>"
-		                      "Levers can be dragged.<BR>"
-		                      "Click the gradient to change its mode.<BR>"
-		             );
+		setToolTip( "Click the lever area to add new levers.<BR>"
+								"Levers are removed with the DEL key.<BR>"
+                "<NOBR>Double click a lever to change its color.</NOBR><BR>"
+                "Levers can be dragged.<BR>"
+                "Click the gradient to change its mode.<BR>"
+		           );
 	}
 	
 	MultiGradientSelector::~MultiGradientSelector()
@@ -73,9 +76,8 @@ namespace OpenMS
 	
 	void MultiGradientSelector::paintEvent(QPaintEvent * /* e */ )
 	{
-	  static QPixmap pixmap;
-		pixmap.resize(size());
-		pixmap.fill(paletteBackgroundColor());	
+	  static QPixmap pixmap = QPixmap(size());
+		pixmap.fill(palette().window().color());	
 		
 		//calculate gradient area width
 		if (gradient_area_width_==0)
@@ -114,7 +116,8 @@ namespace OpenMS
 			}
 		}
 		
-		bitBlt(this,0,0,&pixmap,0,0,width(),height());		
+		QPainter painter2(this);
+		painter2.drawPixmap(0,0,pixmap);		
 	}
 	
 	void MultiGradientSelector::mousePressEvent ( QMouseEvent * e )
@@ -200,7 +203,7 @@ namespace OpenMS
 			SignedInt pos = SignedInt(float(gradient_.position(i))/100.0*gradient_area_width_+margin_+1);
 			if (e->x() >= pos-3 && e->x() <= pos+4 && e->y() >= height()-margin_-lever_area_height_+8 && e->y() <= height()-margin_-lever_area_height_+15)
 			{
-				gradient_.insert(gradient_.position(i),QColorDialog::getColor(gradient_.color(i),this, "Color dialog"));
+				gradient_.insert(gradient_.position(i),QColorDialog::getColor(gradient_.color(i),this));
 				if (SignedInt(gradient_.position(i))==selected_)
 				{
 					selected_color_=gradient_.color(i);

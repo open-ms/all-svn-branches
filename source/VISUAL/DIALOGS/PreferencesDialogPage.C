@@ -25,6 +25,7 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/PreferencesManager.h>
+#include <OpenMS/VISUAL/DIALOGS/PreferencesDialogPage.h>
 
 #include <iostream>
 
@@ -34,7 +35,7 @@ namespace OpenMS
 {
 
 	PreferencesDialogPage::PreferencesDialogPage(PreferencesManager* manager,QWidget* parent, Qt::WFlags f)
-	:QWidget(parent,f),
+	: QWidget(parent,f),
 	manager_(manager),
 	help_()
 	{

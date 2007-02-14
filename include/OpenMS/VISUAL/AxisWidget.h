@@ -28,17 +28,12 @@
 #define OPENMS_VISUAL_AXISWIDGET_H
 
 // QT
-#include <qwidget.h>
-#include <qpainter.h>
-#include <QPixmap>
-#include <QResizeEvent>
-#include <QMouseEvent>
-#include <QPaintEvent>
+#include <QtGui/QWidget>
+#include <QtGui/QPainter>
 class QPixmap;
-
-// STL
-#include <vector>
-#include <math.h>
+class QResizeEvent;
+class QMouseEvent;
+class QPaintEvent;
 
 // OpenMS
 #include <OpenMS/CONCEPT/Types.h>
@@ -55,7 +50,8 @@ namespace OpenMS
 	
 		@ingroup Visual
 	*/
-	class AxisWidget : public QWidget
+	class AxisWidget 
+		: public QWidget
 	{
 		Q_OBJECT
 		
@@ -68,7 +64,7 @@ namespace OpenMS
 	
 	
 			/// constructor
-			AxisWidget(UnsignedInt alignment, const char* legend="", QWidget* parent = 0, const char* name = "AxisWidget", Qt::WFlags f = 0);
+			AxisWidget(UnsignedInt alignment, const char* legend="", QWidget* parent = 0, Qt::WFlags f = 0);
 			/// destructor
 			virtual ~AxisWidget();
 	
@@ -164,7 +160,7 @@ namespace OpenMS
 			UnsignedInt tick_level_;
 	
 			///painting buffer
-			QPixmap* buffer_;
+			QPixmap buffer_;
 			///the painter
 			QPainter painter_;
 			/// drawing thicker lines (e.g. in printing) leads to better results

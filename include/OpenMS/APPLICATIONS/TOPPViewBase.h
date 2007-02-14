@@ -246,7 +246,7 @@ namespace OpenMS
       ///singleton instance
       static TOPPViewBase* instance_;
       ///not accessable as this class is a singleton
-      TOPPViewBase(QWidget* parent=0, const char* name="TOPPViewBase", Qt::WindowFlags f=0);
+      TOPPViewBase(QWidget* parent=0, Qt::WindowFlags f=0);
       ///not accessable as this class is a singleton
       ~TOPPViewBase();
 

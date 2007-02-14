@@ -27,8 +27,6 @@
 #ifndef OPENMS_VISUAL_SPECTRUM1DCANVAS_H
 #define OPENMS_VISUAL_SPECTRUM1DCANVAS_H
 
-#include <OpenMS/config.h>
-
 // STL
 #include <vector>
 

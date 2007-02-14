@@ -25,25 +25,19 @@
 // --------------------------------------------------------------------------
 
 // Qt
-#include <qtooltip.h>
-#include <qpixmap.h>
-#include <QPaintEvent>
-#include <QResizeEvent>
-#include <QMouseEvent>
+#include <QtGui/QPainter>
+#include <QtGui/QPixmap>
+#include <QtGui/QResizeEvent>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QPaintEvent>
 
-// STL
+//// STL
 #include <iostream>
-
 
 // OpenMS
 #include <OpenMS/VISUAL/AxisWidget.h>
 #include <OpenMS/CONCEPT/Exception.h>
 #include <OpenMS/VISUAL/AxisTickCalculator.h>
-
-// ANSI C/C++
-#include "stdio.h"
-#include "stdlib.h"
-#include "math.h"
 
 using namespace std;
 
@@ -51,8 +45,8 @@ namespace OpenMS
 {
 	using namespace Math;
 	
-	AxisWidget::AxisWidget(UnsignedInt alignment, const char* legend, QWidget* parent, const char* name, Qt::WFlags f)
-		: QWidget( parent, name, f),
+	AxisWidget::AxisWidget(UnsignedInt alignment, const char* legend, QWidget* parent, Qt::WFlags f)
+		: QWidget( parent, f),
 		is_log_(false),
 		show_legend_(false),
 		alignment_(alignment),
@@ -60,12 +54,11 @@ namespace OpenMS
 		margin_(0),
 		legend_(legend),
 		tick_level_(3),
-		buffer_(0),
+		buffer_(),
 		pen_width_(0)
 	{
 		setAttribute(Qt::WA_NoBackground);
 		
-		buffer_ = new QPixmap(1,1);
 		if (!(alignment==RIGHT || alignment==LEFT || alignment==BOTTOM || alignment==TOP))
 		{
 			throw Exception::OutOfRange(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -86,13 +79,12 @@ namespace OpenMS
 	
 	AxisWidget::~AxisWidget()
 	{
-		delete(buffer_);
 	}
 	
 	void AxisWidget::resizeEvent(QResizeEvent* e)
 	
 	{
-		buffer_->resize(e->size().width(),e->size().height());
+		buffer_ = QPixmap(e->size().width(),e->size().height());
 		invalidate_();
 	}
 	
@@ -109,13 +101,15 @@ namespace OpenMS
 		int w_plus_m = (isXAxis)? w+margin_ : w;
 	
 		this->QWidget::resize(w_plus_m,h_plus_m);
-		buffer_->resize(w_plus_m, h_plus_m);
+		
+		buffer_ = QPixmap(w_plus_m, h_plus_m);
 		invalidate_();
 	}
 	
 	void AxisWidget::paintEvent(QPaintEvent *)
 	{
-		bitBlt(this, 0, 0, buffer_);
+		QPainter painter(this);
+		painter.drawPixmap(0,0,buffer_);
 	}
 	
 	void AxisWidget::invalidate_()
@@ -123,12 +117,12 @@ namespace OpenMS
 		QColor text_color;
 		int tick_size = 0;
 	
-		buffer_->fill(paletteBackgroundColor());
-	 	painter_.begin(buffer_);
+		buffer_.fill(palette().window().color());
+	 	painter_.begin(&buffer_);
 	
 		bool isXAxis = (alignment_==BOTTOM || alignment_==TOP);
-		int h = buffer_->height();
-		int w = buffer_->width();
+		int h = buffer_.height();
+		int w = buffer_.width();
 		w = (isXAxis)? w-margin_ : w;  // Remove margin to get the scale right
 		h = (isXAxis)? h : h-margin_;
 	
@@ -361,11 +355,11 @@ namespace OpenMS
 	  	show_legend_ = show_legend;
 		  if (show_legend_)
 		  { 
-			  QToolTip::remove(this);
+			  setToolTip("");
 	  	}
 	  	else
 	  	{
-		  	QToolTip::add(this,legend_.c_str());
+		  	setToolTip(legend_.c_str());
 	    }
 	    invalidate_();
 	  }
@@ -401,8 +395,7 @@ namespace OpenMS
 			legend_ = legend;
 			if (!show_legend_)
 	  	{ 
-			  QToolTip::remove(this);
-	 	 		QToolTip::add(this,legend_.c_str());
+			  setToolTip(legend_.c_str());
    	 	}
   	}
 	}

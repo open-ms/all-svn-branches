@@ -28,6 +28,7 @@
 #include <QtGui/QMouseEvent>
 #include <QtGui/QMessageBox>
 #include <QtGui/QPainterPath>
+#include <QtGui/QPainter>
  
 // OpenMS
 #include <OpenMS/VISUAL/PeakIcon.h>

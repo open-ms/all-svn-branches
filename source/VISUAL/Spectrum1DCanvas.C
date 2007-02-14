@@ -700,6 +700,7 @@ namespace OpenMS
 		}
 	
 		painter.end();
+		tmp_buffer_ = buffer_.copy();
 		repaint();
 	}
 	

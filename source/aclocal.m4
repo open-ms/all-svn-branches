@@ -3004,51 +3004,6 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
 		AC_MSG_RESULT((${QT_LIBPATH}))	
 	fi
 
-				
-	dnl
-	dnl extract the Qt version number and version number string from include/Qt/qglobal.h
-	dnl
-	QT_VERSION=`${GREP} "#define QT_VERSION[^_]" ${QT_INCPATH}/Qt/qglobal.h | ${TR} '\011' ' ' | ${TR} -s ' ' | ${CUT} -d\  -f3`
-	QT_VERSION_STR=`${GREP} "#define QT_VERSION_STR" ${QT_INCPATH}/Qt/qglobal.h | ${TR} '\011' ' ' | ${TR} -s ' ' | ${CUT} -d\  -f3 | ${TR} -d '\042'`
-	AC_MSG_CHECKING(for Qt version number in Qt/qglobal.h)
-	if test "${QT_VERSION}" = "" ; then
-		AC_MSG_RESULT([<unknown>])
-		AC_MSG_RESULT()
-		AC_MSG_RESULT([  Could not determine version number of Qt library -- please])
-		AC_MSG_RESULT([  check config.log for details.])
-		AC_MSG_RESULT([  You might have a problem with your (DY)LD_LIBRARY_PATH.])
-		AC_MSG_RESULT([  Please check the settings of QTDIR as well or specify])
-		AC_MSG_RESULT([  the path to the library/headers with])
-		AC_MSG_RESULT([    --with-qt-libs=<DIR> / --with-qt-incl=<DIR>])
-		CF_ERROR
-	else
-		AC_MSG_RESULT([${QT_VERSION} (${QT_VERSION_STR})])
-		AC_DEFINE_UNQUOTED(PROJECT[]_QT_VERSION, ${QT_VERSION})
-		AC_DEFINE_UNQUOTED(PROJECT[]_QT_VERSION_STR, ${QT_VERSION_STR})
-		if test "4" = "-mt" ; then
-			AC_DEFINE(PROJECT[]_QT_HAS_THREADS,)
-		fi
-	fi			
-		
-	dnl
-	dnl  Check for the right version number of QT
-	dnl
-	if test `echo ${QT_VERSION} | ${CUT} -c1-2` != "0x" ; then
-		if test "${QT_VERSION}" -lt ${QT_MIN_VERSION} -o "${QT_VERSION}" -gt ${QT_MAX_VERSION} ; then
-			AC_MSG_RESULT()
-			AC_MSG_RESULT([Qt version ]${QT_RECOMMENDED_VERSION}[ is recommended for PROJECT[]. Please update])
-			AC_MSG_RESULT([to a suitable version or specify the path to a more])
-			AC_MSG_RESULT([suitable version of libQtCore by passing the option --with-qt-libs=DIR])
-			AC_MSG_RESULT([to configure.])
-			AC_MSG_RESULT([You may also set the environment variable QTDIR to the correct])
-			AC_MSG_RESULT([path - configure will recognize this, too.])
-			AC_MSG_RESULT()
-			AC_MSG_RESULT([The complete Qt package can be found under the following URL:])
-			AC_MSG_RESULT([  http://www.troll.no/qt])
-			CF_ERROR
-		fi
-	fi
-
 	dnl
 	dnl	Add the Qt include path to the GUI includes
 	dnl
@@ -3248,14 +3203,14 @@ AC_DEFUN(CF_GUI_QT_LINK_TEST, [
 			AC_MSG_RESULT(You might also want to check your LD_LIBRARY_PATH.)
 			CF_ERROR
 		else
-			QT_VERSION_STRING=`cat qt.version`
-			AC_MSG_RESULT(${QT_VERSION_STRING})
+			QT_VERSION_STR=`cat qt.version`
+			AC_MSG_RESULT(${QT_VERSION_STR})
 
 			dnl
 			dnl  test whether this version is the right one
 			dnl
 			${RM} qt.version 2>/dev/null
-			QT_MAJOR=`echo ${QT_VERSION_STRING} | ${CUT} -d. -f1`
+			QT_MAJOR=`echo ${QT_VERSION_STR} | ${CUT} -d. -f1`
 			if test "${QT_MAJOR}" -lt 3 ; then
 				AC_MSG_RESULT()
 				AC_MSG_RESULT(Qt version 4.x is required.)
@@ -3315,7 +3270,7 @@ AC_DEFUN(CF_GUI_QT_EXECUTABLES, [
 			
 			if test "${MOC_VERSION}" != "${QT_VERSION_STR}" ; then
 				AC_MSG_RESULT()
-				AC_MSG_RESULT([Qt version (${QT_VERSION_STR}) is incompatible with moc version (${MOC_VERISON})!])
+				AC_MSG_RESULT([Qt version (${QT_VERSION_STR}) is incompatible with moc version (${MOC_VERSION})!])
 				AC_MSG_RESULT([Please check your QTDIR environment variable, include the correct])
 				AC_MSG_RESULT([path to moc in your PATH environment variable, or specify the correct])
 				AC_MSG_RESULT([path to moc using the option --with-moc=PATH to rerun configure.])

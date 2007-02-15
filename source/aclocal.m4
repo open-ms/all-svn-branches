@@ -2983,7 +2983,7 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
 		if test -a "${QTDIR}/lib/libQtCore.so" ; then
 			QT_LIBPATH="${QTDIR}/lib"
 		fi
-		if test "${QT_LIBPATH}" = "" ; then
+			if test "${QT_LIBPATH}" = "" ; then
 			CF_FIND_LIB(QT_LIBPATH, libQtCore, ${QTDIR}/lib ${QTDIR}/lib/${BINFMT})
 		fi
 	else
@@ -2993,7 +2993,7 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
 	if test "${QT_LIBPATH}" = "" ; then
 		AC_MSG_RESULT((not found!))
 		AC_MSG_RESULT()
-		AC_MSG_RESULT([The Qt4 library could not be found. Please specify the path to libQtCore])
+		AC_MSG_RESULT([The Qt4 libraries could not be found. Please specify the path to libQtCore])
  		AC_MSG_RESULT([by passing the option --with-qt-libs=DIR to configure.])
 		AC_MSG_RESULT([You may also set the environment variable QTDIR to the correct])
 		AC_MSG_RESULT([path - configure will recognize this, too.])
@@ -3001,8 +3001,66 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
 		AC_MSG_RESULT(  http://www.troll.no/qt)
 		CF_ERROR
 	else
-		AC_MSG_RESULT((${QT_LIBPATH}))	
+		AC_MSG_RESULT((${QT_LIBPATH}))
 	fi
+
+  AC_MSG_CHECKING(for libQtGui)
+  if test "${QT_LIBPATH}" != "" ; then
+    if test -a "${QT_LIBPATH}/libQtGui.so" ; then
+      AC_MSG_RESULT(yes)
+  	else
+    	AC_MSG_RESULT((not found!))
+	    AC_MSG_RESULT()
+	    AC_MSG_RESULT([The QtGui library could not be found. Please specify the path to libqt])
+	    AC_MSG_RESULT([by passing the option --with-qt-libs=DIR to configure.])
+	    AC_MSG_RESULT([If the QT library was built with thread support enabled (libqt-mt])
+	    AC_MSG_RESULT([instead of libqt), please specify the option --with-threadsafe-qt.])
+	    AC_MSG_RESULT([The QT package can be found under the following URL:])
+	    AC_MSG_RESULT(  http://www.troll.no/qt)
+	    AC_MSG_RESULT()
+	    AC_MSG_RESULT(Note: OpenMS requires QT 4.x! QT3 is no longer supported.)
+	    CF_ERROR
+		fi
+  fi
+
+  AC_MSG_CHECKING(for libQtOpenGL)
+  if test "${QT_LIBPATH}" != "" ; then
+    if test -a "${QT_LIBPATH}/libQtOpenGL.so" ; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT((not found!))
+      AC_MSG_RESULT()
+      AC_MSG_RESULT([The QtOpenGL library could not be found. Please specify the path to libqt])
+      AC_MSG_RESULT([by passing the option --with-qt-libs=DIR to configure.])
+      AC_MSG_RESULT([If the QT library was built with thread support enabled (libqt-mt])
+      AC_MSG_RESULT([instead of libqt), please specify the option --with-threadsafe-qt.])
+      AC_MSG_RESULT([The QT package can be found under the following URL:])
+      AC_MSG_RESULT(  http://www.troll.no/qt)
+      AC_MSG_RESULT()
+      AC_MSG_RESULT(Note: OpenMS requires QT 4.x! QT3 is no longer supported.)
+      CF_ERROR
+    fi
+  fi
+
+  AC_MSG_CHECKING(for libQtSql)
+  if test "${QT_LIBPATH}" != "" ; then
+    if test -a "${QT_LIBPATH}/libQtSql.so" ; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT((not found!))
+      AC_MSG_RESULT()
+      AC_MSG_RESULT([The QtSql library could not be found. Please specify the path to libqt])
+      AC_MSG_RESULT([by passing the option --with-qt-libs=DIR to configure.])
+      AC_MSG_RESULT([If the QT library was built with thread support enabled (libqt-mt])
+      AC_MSG_RESULT([instead of libqt), please specify the option --with-threadsafe-qt.])
+      AC_MSG_RESULT([The QT package can be found under the following URL:])
+      AC_MSG_RESULT(  http://www.troll.no/qt)
+      AC_MSG_RESULT()
+      AC_MSG_RESULT(Note: OpenMS requires QT 4.x! QT3 is no longer supported.)
+      CF_ERROR
+    fi
+  fi
+	
 
 	dnl
 	dnl	Add the Qt include path to the GUI includes
@@ -3112,12 +3170,12 @@ AC_DEFUN(CF_GUI_QT_LINK_TEST, [
 		AC_MSG_CHECKING(linking against Qt libraries)
 
 		if test "${QT_LIBPATH}" != "/usr/lib" ; then
-			QTQGL_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL -lQtNetwork -lQtXml"
-			QT_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtNetwork -lQtXml"
+			QTQGL_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL"
+			QT_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support"
 		else 
 			QT_LIBPATH=""
-			QTQGL_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL -lQtNetwork -lQtXml"
-			QT_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtNetwork -lQtXml"
+			QTQGL_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL"
+			QT_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support"
 		fi
 
 		SAVE_LIBS=${LIBS}

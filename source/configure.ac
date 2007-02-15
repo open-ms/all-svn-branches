@@ -245,9 +245,9 @@ if test "$with_arflags" != "" ; then
 	AROPTS="${AROPTS}`echo $with_arflags|tr ,  \  `"
 fi
 
-if test "$with_qt" != "" ; then
+#if test "$with_qt" != "" ; then
   QTDIR=$with_qt
-fi
+#fi
 if test "$with_qt_incl" != "" ; then
   QT_INCPATH=$with_qt_incl
 fi

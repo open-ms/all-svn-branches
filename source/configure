@@ -1920,9 +1920,9 @@ if test "$with_arflags" != "" ; then
 	AROPTS="${AROPTS}`echo $with_arflags|tr ,  \  `"
 fi
 
-if test "$with_qt" != "" ; then
+#if test "$with_qt" != "" ; then
   QTDIR=$with_qt
-fi
+#fi
 if test "$with_qt_incl" != "" ; then
   QT_INCPATH=$with_qt_incl
 fi
@@ -22422,7 +22422,7 @@ echo $ECHO_N "checking for libQtCore... $ECHO_C" >&6
 		if test -a "${QTDIR}/lib/libQtCore.so" ; then
 			QT_LIBPATH="${QTDIR}/lib"
 		fi
-		if test "${QT_LIBPATH}" = "" ; then
+			if test "${QT_LIBPATH}" = "" ; then
 
 	_LIBS=
 
@@ -22578,8 +22578,8 @@ echo $ECHO_N "checking for libQtCore... $ECHO_C" >&6
 echo "${ECHO_T}(not found!)" >&6
 		echo "$as_me:$LINENO: result: " >&5
 echo "${ECHO_T}" >&6
-		echo "$as_me:$LINENO: result: The Qt4 library could not be found. Please specify the path to libQtCore" >&5
-echo "${ECHO_T}The Qt4 library could not be found. Please specify the path to libQtCore" >&6
+		echo "$as_me:$LINENO: result: The Qt4 libraries could not be found. Please specify the path to libQtCore" >&5
+echo "${ECHO_T}The Qt4 libraries could not be found. Please specify the path to libQtCore" >&6
  		echo "$as_me:$LINENO: result: by passing the option --with-qt-libs=DIR to configure." >&5
 echo "${ECHO_T}by passing the option --with-qt-libs=DIR to configure." >&6
 		echo "$as_me:$LINENO: result: You may also set the environment variable QTDIR to the correct" >&5
@@ -22624,6 +22624,190 @@ echo "$as_me: error: Aborted." >&2;}
 		echo "$as_me:$LINENO: result: (${QT_LIBPATH})" >&5
 echo "${ECHO_T}(${QT_LIBPATH})" >&6
 	fi
+
+<<<<<<< .mine
+  echo "$as_me:$LINENO: checking for libQtGui" >&5
+echo $ECHO_N "checking for libQtGui... $ECHO_C" >&6
+  if test "${QT_LIBPATH}" != "" ; then
+    if test -a "${QT_LIBPATH}/libQtGui.so" ; then
+      echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+  	else
+    	echo "$as_me:$LINENO: result: (not found!)" >&5
+echo "${ECHO_T}(not found!)" >&6
+	    echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+	    echo "$as_me:$LINENO: result: The QtGui library could not be found. Please specify the path to libqt" >&5
+echo "${ECHO_T}The QtGui library could not be found. Please specify the path to libqt" >&6
+	    echo "$as_me:$LINENO: result: by passing the option --with-qt-libs=DIR to configure." >&5
+echo "${ECHO_T}by passing the option --with-qt-libs=DIR to configure." >&6
+	    echo "$as_me:$LINENO: result: If the QT library was built with thread support enabled (libqt-mt" >&5
+echo "${ECHO_T}If the QT library was built with thread support enabled (libqt-mt" >&6
+	    echo "$as_me:$LINENO: result: instead of libqt), please specify the option --with-threadsafe-qt." >&5
+echo "${ECHO_T}instead of libqt), please specify the option --with-threadsafe-qt." >&6
+	    echo "$as_me:$LINENO: result: The QT package can be found under the following URL:" >&5
+echo "${ECHO_T}The QT package can be found under the following URL:" >&6
+	    echo "$as_me:$LINENO: result: http://www.troll.no/qt" >&5
+echo "${ECHO_T}http://www.troll.no/qt" >&6
+	    echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+	    echo "$as_me:$LINENO: result: Note: OpenMS requires QT 4.x! QT3 is no longer supported." >&5
+echo "${ECHO_T}Note: OpenMS requires QT 4.x! QT3 is no longer supported." >&6
+
+	echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+	echo "$as_me:$LINENO: result: Configure failed. If you cannot solve your problem with the aid" >&5
+echo "${ECHO_T}Configure failed. If you cannot solve your problem with the aid" >&6
+	echo "$as_me:$LINENO: result: of the above error message, please contact the OPENMS mailing list" >&5
+echo "${ECHO_T}of the above error message, please contact the OPENMS mailing list" >&6
+	echo "$as_me:$LINENO: result: or the OPENMS developers. Please enclose the file 'conf.diag.tar'" >&5
+echo "${ECHO_T}or the OPENMS developers. Please enclose the file 'conf.diag.tar'" >&6
+	echo "$as_me:$LINENO: result: which has been created in OPENMS/source. It contains the relevant" >&5
+echo "${ECHO_T}which has been created in OPENMS/source. It contains the relevant" >&6
+	echo "$as_me:$LINENO: result: files from this configure run. In most cases, the information" >&5
+echo "${ECHO_T}files from this configure run. In most cases, the information" >&6
+	echo "$as_me:$LINENO: result: is necessary to diagnose what went wrong. This file contains" >&5
+echo "${ECHO_T}is necessary to diagnose what went wrong. This file contains" >&6
+	echo "$as_me:$LINENO: result: information about your system setup and versions of compilers" >&5
+echo "${ECHO_T}information about your system setup and versions of compilers" >&6
+	echo "$as_me:$LINENO: result: and other tools installed in your system." >&5
+echo "${ECHO_T}and other tools installed in your system." >&6
+	echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+	TARFILE=conf.diag.tar
+	if test -f $TARFILE ; then
+		${RM} $TARFILE ;
+	fi
+  tar cf $TARFILE configure configure.ac aclocal.m4 config.log
+	{ { echo "$as_me:$LINENO: error: Aborted." >&5
+echo "$as_me: error: Aborted." >&2;}
+   { (exit 1); exit 1; }; }
+
+		fi
+  fi
+
+  echo "$as_me:$LINENO: checking for libQtOpenGL" >&5
+echo $ECHO_N "checking for libQtOpenGL... $ECHO_C" >&6
+  if test "${QT_LIBPATH}" != "" ; then
+    if test -a "${QT_LIBPATH}/libQtOpenGL.so" ; then
+      echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+    else
+      echo "$as_me:$LINENO: result: (not found!)" >&5
+echo "${ECHO_T}(not found!)" >&6
+      echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+      echo "$as_me:$LINENO: result: The QtOpenGL library could not be found. Please specify the path to libqt" >&5
+echo "${ECHO_T}The QtOpenGL library could not be found. Please specify the path to libqt" >&6
+      echo "$as_me:$LINENO: result: by passing the option --with-qt-libs=DIR to configure." >&5
+echo "${ECHO_T}by passing the option --with-qt-libs=DIR to configure." >&6
+      echo "$as_me:$LINENO: result: If the QT library was built with thread support enabled (libqt-mt" >&5
+echo "${ECHO_T}If the QT library was built with thread support enabled (libqt-mt" >&6
+      echo "$as_me:$LINENO: result: instead of libqt), please specify the option --with-threadsafe-qt." >&5
+echo "${ECHO_T}instead of libqt), please specify the option --with-threadsafe-qt." >&6
+      echo "$as_me:$LINENO: result: The QT package can be found under the following URL:" >&5
+echo "${ECHO_T}The QT package can be found under the following URL:" >&6
+      echo "$as_me:$LINENO: result: http://www.troll.no/qt" >&5
+echo "${ECHO_T}http://www.troll.no/qt" >&6
+      echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+      echo "$as_me:$LINENO: result: Note: OpenMS requires QT 4.x! QT3 is no longer supported." >&5
+echo "${ECHO_T}Note: OpenMS requires QT 4.x! QT3 is no longer supported." >&6
+
+	echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+	echo "$as_me:$LINENO: result: Configure failed. If you cannot solve your problem with the aid" >&5
+echo "${ECHO_T}Configure failed. If you cannot solve your problem with the aid" >&6
+	echo "$as_me:$LINENO: result: of the above error message, please contact the OPENMS mailing list" >&5
+echo "${ECHO_T}of the above error message, please contact the OPENMS mailing list" >&6
+	echo "$as_me:$LINENO: result: or the OPENMS developers. Please enclose the file 'conf.diag.tar'" >&5
+echo "${ECHO_T}or the OPENMS developers. Please enclose the file 'conf.diag.tar'" >&6
+	echo "$as_me:$LINENO: result: which has been created in OPENMS/source. It contains the relevant" >&5
+echo "${ECHO_T}which has been created in OPENMS/source. It contains the relevant" >&6
+	echo "$as_me:$LINENO: result: files from this configure run. In most cases, the information" >&5
+echo "${ECHO_T}files from this configure run. In most cases, the information" >&6
+	echo "$as_me:$LINENO: result: is necessary to diagnose what went wrong. This file contains" >&5
+echo "${ECHO_T}is necessary to diagnose what went wrong. This file contains" >&6
+	echo "$as_me:$LINENO: result: information about your system setup and versions of compilers" >&5
+echo "${ECHO_T}information about your system setup and versions of compilers" >&6
+	echo "$as_me:$LINENO: result: and other tools installed in your system." >&5
+echo "${ECHO_T}and other tools installed in your system." >&6
+	echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+	TARFILE=conf.diag.tar
+	if test -f $TARFILE ; then
+		${RM} $TARFILE ;
+	fi
+  tar cf $TARFILE configure configure.ac aclocal.m4 config.log
+	{ { echo "$as_me:$LINENO: error: Aborted." >&5
+echo "$as_me: error: Aborted." >&2;}
+   { (exit 1); exit 1; }; }
+
+    fi
+  fi
+
+  echo "$as_me:$LINENO: checking for libQtSql" >&5
+echo $ECHO_N "checking for libQtSql... $ECHO_C" >&6
+  if test "${QT_LIBPATH}" != "" ; then
+    if test -a "${QT_LIBPATH}/libQtSql.so" ; then
+      echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+    else
+      echo "$as_me:$LINENO: result: (not found!)" >&5
+echo "${ECHO_T}(not found!)" >&6
+      echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+      echo "$as_me:$LINENO: result: The QtSql library could not be found. Please specify the path to libqt" >&5
+echo "${ECHO_T}The QtSql library could not be found. Please specify the path to libqt" >&6
+      echo "$as_me:$LINENO: result: by passing the option --with-qt-libs=DIR to configure." >&5
+echo "${ECHO_T}by passing the option --with-qt-libs=DIR to configure." >&6
+      echo "$as_me:$LINENO: result: If the QT library was built with thread support enabled (libqt-mt" >&5
+echo "${ECHO_T}If the QT library was built with thread support enabled (libqt-mt" >&6
+      echo "$as_me:$LINENO: result: instead of libqt), please specify the option --with-threadsafe-qt." >&5
+echo "${ECHO_T}instead of libqt), please specify the option --with-threadsafe-qt." >&6
+      echo "$as_me:$LINENO: result: The QT package can be found under the following URL:" >&5
+echo "${ECHO_T}The QT package can be found under the following URL:" >&6
+      echo "$as_me:$LINENO: result: http://www.troll.no/qt" >&5
+echo "${ECHO_T}http://www.troll.no/qt" >&6
+      echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+      echo "$as_me:$LINENO: result: Note: OpenMS requires QT 4.x! QT3 is no longer supported." >&5
+echo "${ECHO_T}Note: OpenMS requires QT 4.x! QT3 is no longer supported." >&6
+
+	echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+	echo "$as_me:$LINENO: result: Configure failed. If you cannot solve your problem with the aid" >&5
+echo "${ECHO_T}Configure failed. If you cannot solve your problem with the aid" >&6
+	echo "$as_me:$LINENO: result: of the above error message, please contact the OPENMS mailing list" >&5
+echo "${ECHO_T}of the above error message, please contact the OPENMS mailing list" >&6
+	echo "$as_me:$LINENO: result: or the OPENMS developers. Please enclose the file 'conf.diag.tar'" >&5
+echo "${ECHO_T}or the OPENMS developers. Please enclose the file 'conf.diag.tar'" >&6
+	echo "$as_me:$LINENO: result: which has been created in OPENMS/source. It contains the relevant" >&5
+echo "${ECHO_T}which has been created in OPENMS/source. It contains the relevant" >&6
+	echo "$as_me:$LINENO: result: files from this configure run. In most cases, the information" >&5
+echo "${ECHO_T}files from this configure run. In most cases, the information" >&6
+	echo "$as_me:$LINENO: result: is necessary to diagnose what went wrong. This file contains" >&5
+echo "${ECHO_T}is necessary to diagnose what went wrong. This file contains" >&6
+	echo "$as_me:$LINENO: result: information about your system setup and versions of compilers" >&5
+echo "${ECHO_T}information about your system setup and versions of compilers" >&6
+	echo "$as_me:$LINENO: result: and other tools installed in your system." >&5
+echo "${ECHO_T}and other tools installed in your system." >&6
+	echo "$as_me:$LINENO: result: " >&5
+echo "${ECHO_T}" >&6
+	TARFILE=conf.diag.tar
+	if test -f $TARFILE ; then
+		${RM} $TARFILE ;
+	fi
+  tar cf $TARFILE configure configure.ac aclocal.m4 config.log
+	{ { echo "$as_me:$LINENO: error: Aborted." >&5
+echo "$as_me: error: Aborted." >&2;}
+   { (exit 1); exit 1; }; }
+
+    fi
+  fi
+
+=======
+>>>>>>> .r1530
 
 				if test "${QT_INCPATH}" != /usr/include && test "${QT_INCPATH}" != "" ; then
 		GUI_INCLUDES="${GUI_INCLUDES} -I${QT_INCPATH} -I${QT_INCPATH}/QtCore/ -I${QT_INCPATH}/QtXml/ -I${QT_INCPATH}/QtSql/ -I${QT_INCPATH}/QtNetwork/ -I${QT_INCPATH}/QtGui/ -I${QT_INCPATH}/QtOpenGL/ -I${QT_INCPATH}/Qt3Support/"
@@ -23281,12 +23465,12 @@ echo "${ECHO_T}yes" >&6
 echo $ECHO_N "checking linking against Qt libraries... $ECHO_C" >&6
 
 		if test "${QT_LIBPATH}" != "/usr/lib" ; then
-			QTQGL_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL -lQtNetwork -lQtXml"
-			QT_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtNetwork -lQtXml"
+			QTQGL_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL"
+			QT_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support"
 		else
 			QT_LIBPATH=""
-			QTQGL_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL -lQtNetwork -lQtXml"
-			QT_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtNetwork -lQtXml"
+			QTQGL_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL"
+			QT_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support"
 		fi
 
 		SAVE_LIBS=${LIBS}

@@ -89,8 +89,8 @@
 */
 
 //QT
-#include <qapplication.h>
-#include <qwindowsstyle.h>
+#include <QtGui/QApplication>
+#include <QtGui/QPlastiqueStyle>
 
 //OpenMS
 #include <OpenMS/APPLICATIONS/TOPPViewBase.h>
@@ -159,6 +159,8 @@ int main( int argc, char ** argv )
 	{
 #endif
 	  QApplication a( argc, argv );
+		QPlastiqueStyle* plastique = new QPlastiqueStyle();
+		a.setStyle(plastique);
 	  TOPPViewBase* mw = TOPPViewBase::instance();
 	  a.setMainWidget(mw);
 	  if (!param.getValue("ini").isEmpty())

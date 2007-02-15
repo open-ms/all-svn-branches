@@ -960,11 +960,11 @@ namespace OpenMS
 
   void TOPPViewBase::createToolBar_()
   {
-    tool_bar_ = new QToolBar(this);
+    tool_bar_ = addToolBar("Basic tool bar");
 
     //action modes
     QActionGroup* group = new QActionGroup(tool_bar_);
-    group->setExclusive(TRUE);
+    group->setExclusive(true);
     am_zoom_ = new QAction(QPixmap(XPM_zoom), "Action: Zoom", group);
     am_zoom_->setShortcut(Qt::Key_Z);
     am_translate_ = new QAction(QPixmap(XPM_translate), "Action: Translate", group);
@@ -974,12 +974,12 @@ namespace OpenMS
     am_measure_ = new QAction(QPixmap(XPM_measure), "Action: Measure",  group);
     am_measure_->setShortcut(Qt::Key_M);
     connect(group,SIGNAL(selected(QAction*)),this,SLOT(setActionMode(QAction*)));
-
+		tool_bar_->addActions(group->actions());
     tool_bar_->addSeparator();
 
     //intensity modes
     group = new QActionGroup(tool_bar_);
-    group->setExclusive(TRUE);
+    group->setExclusive(true);
     im_none_ = new QAction(QPixmap(XPM_lin), "Intensity: Normal", group);
     im_none_->setShortcut(Qt::Key_N);
     im_log_ = new QAction(QPixmap(XPM_log), "Intensity: Logarithmic", group);
@@ -989,73 +989,58 @@ namespace OpenMS
     im_snap_ = new QAction(QPixmap(XPM_snap), "Intensity: Snap to maximum displayed intensity",group);
     im_snap_->setShortcut(Qt::Key_A);
     connect(group,SIGNAL(selected(QAction*)),this,SLOT(setIntensityMode(QAction*)));
-
+		tool_bar_->addActions(group->actions());
     tool_bar_->addSeparator();
 
     //common buttons
-    QToolButton* reset_zoom_button = new QToolButton(tool_bar_);
-    reset_zoom_button->setIcon(QIcon(QPixmap(XPM_reset_zoom)));
-    reset_zoom_button->setToolTip("Reset Zoom");
+    QAction* reset_zoom_button = tool_bar_->addAction(QPixmap(XPM_reset_zoom), "Reset Zoom", this, SLOT(resetZoom()));
     reset_zoom_button->setShortcut(Qt::Key_Backspace);
-    connect(reset_zoom_button,SIGNAL(clicked()),this,SLOT(resetZoom()));
-
     tool_bar_->addSeparator();
 
-    grid_button_ = new QToolButton(tool_bar_);
+    grid_button_ = tool_bar_->addAction(QPixmap(XPM_grid), "Show grid");
     grid_button_->setIcon(QIcon(QPixmap(XPM_grid)));
-    grid_button_->setToolTip("Show grid");
-    grid_button_->setShortcut(Qt::Key_G);
     grid_button_->setCheckable(true);
     connect(grid_button_,SIGNAL(toggled(bool)),this,SLOT(showGridLines(bool)));
-
     tool_bar_->addSeparator();
 
-    QToolButton* print_button = new QToolButton(tool_bar_);
-    print_button->setIcon(QIcon(QPixmap(XPM_print)));
-    print_button->setToolTip("Print");
+    QAction* print_button = tool_bar_->addAction(QPixmap(XPM_print), "Print", this, SLOT(print()));
     print_button->setShortcut(Qt::CTRL + Qt::Key_P);
-    connect(print_button,SIGNAL(clicked()),this,SLOT(print()));
 
     tool_bar_->resize(tool_bar_->sizeHint());
     tool_bar_->show();
 
     // 1d toolbar
-    tool_bar_1d_ = new QToolBar(this);
+    tool_bar_1d_ = addToolBar("1D tool bar");
 
     group = new QActionGroup(tool_bar_1d_);
-    group->setExclusive(TRUE);
+    group->setExclusive(true);
     dm_peaks_1d_ = new QAction(QPixmap(XPM_peaks), "Peak mode", group);
     dm_peaks_1d_->setShortcut(Qt::Key_I);
     dm_rawdata_1d_ = new QAction(QPixmap(XPM_lines), "Raw data mode", group);
     dm_rawdata_1d_->setShortcut(Qt::Key_R);
     connect(group,SIGNAL(selected(QAction*)),this,SLOT(setDrawMode1D(QAction*)));
-
+		tool_bar_1d_->addActions(group->actions());
     tool_bar_1d_->addSeparator();
 
     link_box_ = new QComboBox(tool_bar_1d_);
     link_box_->setToolTip("Use this combobox to link two spectra.\nLinked spectra zoom in/out together");
+    tool_bar_1d_->addWidget(link_box_);
     connect(link_box_,SIGNAL(activated(const QString&)),this,SLOT(linkActiveTo(const QString&)));
 
     // 2d toolbar
-    tool_bar_2d_ = new QToolBar(this);
+    tool_bar_2d_ = addToolBar("2D tool bar");
 
-    dm_points_2d_ = new QToolButton(tool_bar_2d_);
-    dm_points_2d_->setIcon(QIcon(QPixmap(XPM_points)));
-    dm_points_2d_->setToolTip("Show dots"); 
+    dm_points_2d_ = tool_bar_2d_->addAction(QPixmap(XPM_points),"Show dots");
     dm_points_2d_->setShortcut(Qt::Key_D);
     dm_points_2d_->setCheckable(true);
     connect(dm_points_2d_, SIGNAL(toggled(bool)), this, SLOT(showPoints(bool)));
 
-    dm_surface_2d_ = new QToolButton(tool_bar_2d_);
-    dm_surface_2d_->setIcon(QIcon(QPixmap(XPM_colors)));
-    dm_surface_2d_->setToolTip("Show colored surface");
+    dm_surface_2d_ = tool_bar_2d_->addAction(QPixmap(XPM_colors),"Show colored surface");
     dm_surface_2d_->setShortcut(Qt::Key_U);
     dm_surface_2d_->setCheckable(true);
     connect(dm_surface_2d_, SIGNAL(toggled(bool)), this, SLOT(showSurface(bool)));
 
-    dm_contours_2d_ = new QToolButton(tool_bar_2d_);
-    dm_contours_2d_->setIcon(QIcon(QPixmap(XPM_contours)));
-    dm_contours_2d_->setToolTip("Show contour lines");
+    dm_contours_2d_ = tool_bar_2d_->addAction(QPixmap(XPM_contours),"Show contour lines");
     dm_contours_2d_->setShortcut(Qt::Key_C);
     dm_contours_2d_->setCheckable(true);
     connect(dm_contours_2d_, SIGNAL(toggled(bool)), this, SLOT(showContours(bool)));

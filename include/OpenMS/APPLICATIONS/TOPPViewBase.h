@@ -42,7 +42,6 @@
 
 class QAction;
 class QComboBox;
-class QToolButton;
 class QLabel;
 class QMenu;
 class QListWidget;
@@ -301,7 +300,7 @@ namespace OpenMS
       QAction* im_percentage_;
       QAction* im_snap_;
       //common buttons
-      QToolButton* grid_button_;
+      QAction* grid_button_;
       //1D specific stuff
       QToolBar* tool_bar_1d_;
       QAction* dm_peaks_1d_;
@@ -309,9 +308,9 @@ namespace OpenMS
       QComboBox* link_box_;
       //2D specific stuff
       QToolBar* tool_bar_2d_;
-      QToolButton* dm_points_2d_;
-      QToolButton* dm_surface_2d_;
-      QToolButton* dm_contours_2d_;
+      QAction* dm_points_2d_;
+      QAction* dm_surface_2d_;
+      QAction* dm_contours_2d_;
       //@}
 
       /// Main workspace

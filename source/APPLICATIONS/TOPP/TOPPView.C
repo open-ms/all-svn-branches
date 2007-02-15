@@ -162,15 +162,16 @@ int main( int argc, char ** argv )
 	  
 	  //set plastique style if not windows / mac style is available
 	  QStringList styles = QStyleFactory::keys();
-	  if (styles.contains("windowsxp"))
+	  
+	  if (styles.contains("windowsxp",Qt::CaseInsensitive))
 	  {
 			a.setStyle("windowsxp");
 	  }
-	  else if (styles.contains("macintosh"))
+	  else if (styles.contains("macintosh",Qt::CaseInsensitive))
 	  {
 			a.setStyle("macintosh");
 	  }
-	  else if (styles.contains("plastique"))
+	  else if (styles.contains("plastique",Qt::CaseInsensitive))
 	  {
 			a.setStyle("plastique");
 	  }

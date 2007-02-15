@@ -37,23 +37,17 @@
 #include <map>
 
 //QT
-#include <q3mainwindow.h>
-#include <qworkspace.h>
-#include <QCloseEvent>
-#include <QLabel>
-#include <Q3PopupMenu>
-#include <Q3ActionGroup>
+#include <QtGui/QMainWindow>
+#include <QtGui/QWorkspace>
 
-class Q3Action;
+class QAction;
 class QComboBox;
 class QToolButton;
-class QMenuBar;
 class QLabel;
-class QRadioButton;
-class Q3ActionGroup;
-class Q3PopupMenu;
-class Q3ListView;
-class Q3ListViewItem;
+class QMenu;
+class QListWidget;
+class QListWidgetItem;
+class QCloseEvent;
 
 namespace OpenMS
 {
@@ -62,6 +56,7 @@ namespace OpenMS
   class Spectrum2DWindow;
   class Spectrum3DWindow;
   class SpectrumWindow;
+  class EnhancedTabBar;
 
   /**
   	@brief MDI window of TOPPView tool
@@ -69,10 +64,11 @@ namespace OpenMS
   	@todo Add preferences for layers (Marc)
   	@todo Reimplement PreferenceDialogPages (Marc)
   	@todo Use right mouse button for navigation in data (Marc)
-		@todo: Use log-scaled intensities intensity-cutoff plot (Marc)
 		
   */
-  class TOPPViewBase : public Q3MainWindow, public PreferencesManager
+  class TOPPViewBase 
+  	: public QMainWindow, 
+  		public PreferencesManager
   {
       Q_OBJECT
 
@@ -212,24 +208,36 @@ namespace OpenMS
       void findFeaturesActiveSpectrum();
 			
     protected slots:
+      /** @name Layer manager slots
+      */
+      //@{  
     	/// slot for layer manager selection change
-    	void layerSelectionChange();
+    	void layerSelectionChange(int);
     	/// slot for layer manager context menu
-    	void layerContextMenu(Q3ListViewItem* item, const QPoint& pos, int col);
+    	void layerContextMenu(const QPoint& pos);
     	/// signal for layer manager visibility change (check box)
-    	void layerVisibilityChange(Q3ListViewItem* item, const QPoint& pnt, int col);
-    	
-      void closeFileByTab(int);
-      void focusByTab(int);
+    	void layerVisibilityChange(QListWidgetItem* item);
+      //@}
+      
+      /** @name Tabbar slots
+      */
+      //@{    	
+    	/// Closes the window associated to tab @p index
+      void closeFileByTab(int index);
+      /// Raises the window associated to tab @p index
+      void focusByTab(int index);
+      /// Removes a window from the tab bar when it is closed
       void removeWidgetFromBar(QObject*);
-      void openRecentFile(int i);
-
+      /// Opens a file from the recent files menu
+      void openRecentFile();
+      //@}
+      
       /** @name Toolbar slots
       */
       //@{
-      void setActionMode(Q3Action*);
-      void setDrawMode1D(Q3Action*);
-      void setIntensityMode(Q3Action* a);
+      void setActionMode(QAction*);
+      void setDrawMode1D(QAction*);
+      void setIntensityMode(QAction* a);
       void showGridLines(bool);
       void showPoints(bool);
       void showSurface(bool);
@@ -271,9 +279,9 @@ namespace OpenMS
       virtual PreferencesDialogPage* createPreferences(QWidget* parent);
 
       /// Layer mangment bar
-      Q3ToolBar* layer_bar_;
+      QToolBar* layer_bar_;
       /// Layer mangment widget
-      Q3ListView* layer_manager_;
+      QListWidget* layer_manager_;
 
       /// Creates the toolbars and connects the signals and slots
       void createToolBar_();
@@ -281,38 +289,29 @@ namespace OpenMS
       /** @name Toolbar members
       */
       //@{
-      Q3ToolBar* tool_bar_;
+      QToolBar* tool_bar_;
       //common actions
-      Q3ActionGroup* action_modes_;
-      Q3Action* am_zoom_;
-      Q3Action* am_translate_;
-      Q3Action* am_select_;
-      Q3Action* am_measure_;
+      QAction* am_zoom_;
+      QAction* am_translate_;
+      QAction* am_select_;
+      QAction* am_measure_;
       //common intensity modes
-      Q3ActionGroup* intensity_modes_;
-      Q3Action* im_none_;
-      Q3Action* im_log_;
-      Q3Action* im_percentage_;
-      Q3Action* im_snap_;
+      QAction* im_none_;
+      QAction* im_log_;
+      QAction* im_percentage_;
+      QAction* im_snap_;
       //common buttons
-      QToolButton* reset_zoom_button_;
       QToolButton* grid_button_;
-      QToolButton* print_button_;
       //1D specific stuff
-      Q3ToolBar* tool_bar_1d_;
-      Q3ActionGroup* draw_modes_;
-      Q3Action* dm_peaks_1d_;
-      Q3Action* dm_rawdata_1d_;
+      QToolBar* tool_bar_1d_;
+      QAction* dm_peaks_1d_;
+      QAction* dm_rawdata_1d_;
       QComboBox* link_box_;
       //2D specific stuff
-      Q3ToolBar* tool_bar_2d_;
+      QToolBar* tool_bar_2d_;
       QToolButton* dm_points_2d_;
       QToolButton* dm_surface_2d_;
       QToolButton* dm_contours_2d_;
-      Q3ActionGroup* draw_modes_2d_;
-      Q3Action* dm2_points_2d_;
-      Q3Action* dm2_surface_2d_;
-      Q3Action* dm2_contours_2d_;
       //@}
 
       /// Main workspace
@@ -353,10 +352,8 @@ namespace OpenMS
       /// list of the recently opened files
       std::vector<String> recent_files_;
 
-      /// Pointer to "Tools" menu: so that derived classes can add stuff into it
-      Q3PopupMenu* tools_menu_;
       /// pointer to the recent files menu
-      Q3PopupMenu* recent_menu_;
+      QMenu* recent_menu_;
 
   }
   ; //class

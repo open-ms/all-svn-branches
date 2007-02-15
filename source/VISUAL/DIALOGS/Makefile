@@ -40,7 +40,6 @@ THISLIB=$(LIBNAME)
 GUI_CPP_SOURCES=\
 	PreferencesDialog.C\
 	PreferencesDialogPage.C\
-	TOPPViewBasePDP.C\
 	Spectrum1DWidgetPDP.C\
 	Spectrum1DCanvasPDP.C\
 	Spectrum2DWidgetPDP.C\
@@ -48,7 +47,6 @@ GUI_CPP_SOURCES=\
 	Spectrum3DWidgetPDP.C\
   Spectrum3DCanvasPDP.C\
 	SaveImageDialog.C\
-	DBSpectrumSelectorDialog.C\
 	HistogramDialog.C\
 	Spectrum1DGoToDialog.C\
 	Spectrum2DGoToDialog.C\
@@ -56,7 +54,9 @@ GUI_CPP_SOURCES=\
 	PeakPickingDialog.C\
 	SmoothingDialog.C\
 	BaselineFilteringDialog.C\
-	FeaFiDialog.C
+	FeaFiDialog.C\
+	DBSpectrumSelectorDialog.C\
+	TOPPViewBasePDP.C
 
 GUI_MOC_SOURCES=\
 	PreferencesDialog_moc.C\
@@ -192,4 +192,3 @@ BaselineFilteringDialog_moc.C:  $(HEADER_DIR)/BaselineFilteringDialog.h
 	$(MOC) $(HEADER_DIR)/BaselineFilteringDialog.h -o BaselineFilteringDialog_moc.C
 
 
-ADD_CXXFLAGS = -DQT3_SUPPORT

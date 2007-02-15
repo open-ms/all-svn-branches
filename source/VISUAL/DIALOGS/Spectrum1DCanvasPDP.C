@@ -31,7 +31,7 @@
 // Qt
 #include <QtGui/QLayout>
 #include <QtGui/QLabel>
-#include <q3groupbox.h>
+#include <QtGui/QGroupBox>
 #include <QtGui/QGridLayout>
 
 
@@ -52,9 +52,9 @@ namespace OpenMS
 			QGridLayout* grid;
 		
 			//1D View Tab
-			grid = new QGridLayout(this, 1, 1);
+			grid = new QGridLayout(this);
 			
-			Q3GroupBox* box = new Q3GroupBox(2, Qt::Horizontal,"Colors",this);
+			QGroupBox* box = new QGroupBox("Colors",this);
 			QLabel* label;
 			label = new QLabel("Peak color: ",box);
 			peak_color_ = new ColorSelector(box);

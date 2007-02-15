@@ -27,7 +27,7 @@
 // OpenMS includes
 #include <OpenMS/VISUAL/DIALOGS/FeaFiDialog.h>
 #include <sstream>
-#include <q3filedialog.h>
+#include <QtGui/QFileDialog>
 #include <QtGui/QPushButton>
 #include <QtGui/QLabel>
 
@@ -36,8 +36,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	FeaFiDialog::FeaFiDialog( QWidget * parent, const char * name, Qt::WFlags fl)
-		: QDialog(parent,name,fl), 
+	FeaFiDialog::FeaFiDialog( QWidget * parent, Qt::WFlags fl)
+		: QDialog(parent,fl), 
 			finder_()
 	{
 		setupUi(this);
@@ -60,9 +60,8 @@ namespace OpenMS
 	void FeaFiDialog::loadParamFile()
 	{
 		QString dir = QDir::current().path();
-		dir = dir.left(dir.find("OpenMS")).append("OpenMS/source/APPLICATIONS/FEATUREFINDER/");
-	 	QString file = Q3FileDialog::getOpenFileName(dir, "Parameters (*.ini)", this,
-																								"featurefinder dialog","Select file(s) to open");
+		dir = dir.left(dir.indexOf("OpenMS")).append("OpenMS/source/APPLICATIONS/FEATUREFINDER/");
+	 	QString file = QFileDialog::getOpenFileName(this, "Open file", dir, "Parameters (*.ini)");
 	
 		if (!file.isEmpty() && file!="")
 		{
@@ -74,7 +73,7 @@ namespace OpenMS
 				std::ostringstream label;
 				label << finder_;
 				param_label->setText(label.str().c_str());
-				param_label->setAlignment( int( Qt::AlignVCenter|Qt::AlignLeft ) );
+				param_label->setAlignment( Qt::AlignVCenter|Qt::AlignLeft );
 				start_button->setEnabled(true);
 				start_button->setFocus();
 			}

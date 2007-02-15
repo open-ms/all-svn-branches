@@ -133,14 +133,14 @@ namespace OpenMS
 	
 	void Spectrum2DWindow::showGoToDialog()
 	{
-	  Spectrum2DGoToDialog goToDialog(this, "Spectrum2DGoToDialog");
+	  Spectrum2DGoToDialog goto_dialog(this);
 	  const DRange<3>& area = widget()->canvas()->getDataRange();
-	  goToDialog.setMinX(area.minX());
-	  goToDialog.setMaxX(area.maxX());
-	  goToDialog.setMinY(area.minY());
-	  goToDialog.setMaxY(area.maxY());  
-	  goToDialog.exec();
-	  widget()->canvas()->setVisibleArea(SpectrumCanvas::AreaType( goToDialog.getMinX(), goToDialog.getMinY(), goToDialog.getMaxX(), goToDialog.getMaxY()));
+	  goto_dialog.setMinX(area.minX());
+	  goto_dialog.setMaxX(area.maxX());
+	  goto_dialog.setMinY(area.minY());
+	  goto_dialog.setMaxY(area.maxY());  
+	  goto_dialog.exec();
+	  widget()->canvas()->setVisibleArea(SpectrumCanvas::AreaType( goto_dialog.getMinX(), goto_dialog.getMinY(), goto_dialog.getMaxX(), goto_dialog.getMaxY()));
 	}
 
 	const Spectrum1DWidget* Spectrum2DWindow::getHorizontalProjection() const

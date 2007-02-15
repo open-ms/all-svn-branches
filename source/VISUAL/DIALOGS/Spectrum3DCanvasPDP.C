@@ -34,11 +34,10 @@
 #include <QtGui/QLayout>
 #include <QtGui/QRadioButton>
 #include <QtGui/QLabel>
-#include <q3groupbox.h>
+#include <QtGui/QGroupBox>
 #include <QtGui/QSpinBox>
 #include <QtGui/QComboBox>
 #include <QtGui/QGridLayout>
-#include <Q3VButtonGroup>
 
 using namespace std;
 
@@ -53,52 +52,58 @@ namespace OpenMS
 								"<br>";
 			QGridLayout* grid;
 			QLabel * label;
-			grid = new QGridLayout(this, 4, 2);
+			grid = new QGridLayout(this);
 			grid->setMargin(6);
 			grid->setSpacing(4);	
 
-			Q3GroupBox* box = new Q3GroupBox(2,Qt::Horizontal,"Dot coloring",this);
+			QGroupBox* box = new QGroupBox("Dot coloring",this);
 
-			Q3VButtonGroup* coloring_group = new Q3VButtonGroup("Color Mode:",box);
-			box->addSpace(0);  
+			QGroupBox* coloring_group = new QGroupBox("Color Mode:",box);
 			dot_mode_black_ = new QRadioButton("Black",coloring_group);
 			dot_mode_gradient_ = new QRadioButton("Gradient",coloring_group);
 			dot_gradient_ = new MultiGradientSelector(coloring_group);
-		// 	box->addSpace(0);
-			//		
-			Q3HButtonGroup* interpolation_box = new Q3HButtonGroup("Interpolation steps",box);
+
+			QGroupBox* interpolation_box = new QGroupBox("Interpolation steps",box);
 			label = new QLabel("Interpolation steps: ",interpolation_box);
-			dot_interpolation_steps_ = new QSpinBox(10,1000,1,interpolation_box,"");
+			dot_interpolation_steps_ = new QSpinBox(interpolation_box);
+			dot_interpolation_steps_->setMinimum(10);
+			dot_interpolation_steps_->setMaximum(1000);
+			dot_interpolation_steps_->setSingleStep(1);	
 			dot_interpolation_steps_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
-			box->addSpace(0);
-			Q3VButtonGroup* shading_group = new Q3VButtonGroup("Shade Mode:",box);
+
+			QGroupBox* shading_group = new QGroupBox("Shade Mode:",box);
 			//shading_group->setFrameStyle(QFrame::NoFrame);
 			shade_mode_flat_ = new QRadioButton("Flat",shading_group);
 			shade_mode_smooth_ = new QRadioButton("Smooth",shading_group);	
-			grid->addMultiCellWidget(box,0,3,0,0);
+			grid->addWidget(box,0,0,1,3);
 
-			box = new Q3GroupBox(2,Qt::Horizontal,"Line Width",this);
+			box = new QGroupBox("Line Width",this);
 			label = new QLabel("Line Width: ",box);
-			dot_line_width_ = new QSpinBox(1,10,1,box,"");
+			dot_line_width_ = new QSpinBox(box);
+			dot_line_width_->setMinimum(1);
+			dot_line_width_->setMaximum(10);
+			dot_line_width_->setSingleStep(1);	
 			dot_line_width_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
 			grid->addWidget(box,0,1);	
 
-			box = new Q3GroupBox(2,Qt::Horizontal,"Colors",this);
+			box = new QGroupBox("Colors",this);
 			label = new QLabel("Background color: ",box);
 			background_color_ = new ColorSelector(box);
 			label = new QLabel("Axes Color: ",box);
 			axes_color_ = new ColorSelector(box);
 			grid->addWidget(box,1,1);	
 
-			box = new Q3GroupBox(2,Qt::Horizontal,"Data",this);
+			box = new QGroupBox("Data",this);
 			label = new QLabel("Reduction Mode:  ",box);
-			data_reduction_ = new QComboBox(false, box, "read-only combobox");
-			data_reduction_->insertItem("Reduction OFF");
-			data_reduction_->insertItem("MaxReduction");
-			data_reduction_->insertItem("SumReduction");
+			data_reduction_ = new QComboBox( box);
+			data_reduction_->insertItem(0,"Reduction OFF");
+			data_reduction_->insertItem(1,"MaxReduction");
+			data_reduction_->insertItem(2,"SumReduction");
 			label = new QLabel("Displayed Peaks : ",box);
-			reduction_diplay_peaks_ = new QSpinBox(10000,50000,10000,box,"");
-			
+			reduction_diplay_peaks_ = new QSpinBox(box);
+			reduction_diplay_peaks_->setMinimum(10000);
+			reduction_diplay_peaks_->setMaximum(50000);
+			reduction_diplay_peaks_->setSingleStep(5000);	
 			grid->addWidget(box,2,1);
 		
 			load();
@@ -135,7 +140,7 @@ namespace OpenMS
 					shade_mode_smooth_->setChecked(true);
 				}
 			}
-			data_reduction_->setCurrentText(man->getPrefAsString("Preferences:3D:Reduction:Mode").c_str());	
+			data_reduction_->setCurrentIndex(data_reduction_->findText(man->getPrefAsString("Preferences:3D:Reduction:Mode").c_str()));	
 			reduction_diplay_peaks_->setValue(UnsignedInt(man->getPrefAsInt("Preferences:3D:DisplayedPeaks")));
 		
 			background_color_->setColor(QColor(man->getPrefAsString("Preferences:3D:BackgroundColor").c_str()));

@@ -34,11 +34,10 @@
 #include <QtGui/QLayout>
 #include <QtGui/QRadioButton>
 #include <QtGui/QLabel>
-#include <q3groupbox.h>
+#include <QtGui/QGroupBox>
 #include <QtGui/QSpinBox>
 #include <QtGui/QGridLayout>
-#include <Q3Frame>
-#include <Q3VButtonGroup>
+#include <QtGui/QButtonGroup>
 
 using namespace std;
 
@@ -57,42 +56,49 @@ namespace OpenMS
 			QGridLayout* grid;
 			QLabel* label;
 				
-			grid = new QGridLayout(this,3,7);
+			grid = new QGridLayout(this);
 			grid->setMargin(6);
 			grid->setSpacing(4);	
 			
 			//dot mode
-			Q3GroupBox* box = new Q3GroupBox(2,Qt::Horizontal,"Dot coloring",this);
-			Q3VButtonGroup* coloring_group = new Q3VButtonGroup("Mode:",box);
-			coloring_group->setFrameStyle(Q3Frame::NoFrame);
-			box->addSpace(0);
+			QGroupBox* box = new QGroupBox("Dot coloring",this);
+			QGroupBox* coloring_group = new QGroupBox("Mode:",box);
 			dot_mode_black_ = new QRadioButton("Black",coloring_group);
 			dot_mode_gradient_ = new QRadioButton("Gradient",coloring_group);
 			dot_gradient_ = new MultiGradientSelector(box);
 			
-			grid->addMultiCellWidget(box,0,1,0,0);
+			grid->addWidget(box,0,0,1,1);
 			
 			//Surface mode
-			box = new Q3GroupBox(2,Qt::Horizontal,"Surface coloring",this);
+			box = new QGroupBox("Surface coloring",this);
 			surface_gradient_ = new MultiGradientSelector(box);
 			grid->addWidget(box,0,1);
 
 			//colors
-			box = new Q3GroupBox(2,Qt::Horizontal,"Colors",this);
+			box = new QGroupBox("Colors",this);
 			label = new QLabel("Background color: ",box);
 			background_color_ = new ColorSelector(box);
 			label = new QLabel("Interpolation steps: ",box);
-			interpolation_steps_ = new QSpinBox(10,1000,1,box,"");
+			interpolation_steps_ = new QSpinBox(box);
+			interpolation_steps_->setMinimum(10);
+			interpolation_steps_->setMaximum(1000);
+			interpolation_steps_->setSingleStep(1);	
 			interpolation_steps_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
 			grid->addWidget(box,1,1);
 			
 			//details
-			box = new Q3GroupBox(2,Qt::Horizontal,"Surface/contour details",this);
+			box = new QGroupBox("Surface/contour details",this);
 			label = new QLabel("Squares per axis: ",box);
-			marching_squares_steps_ = new QSpinBox(10,100,1,box,"");
+			marching_squares_steps_ = new QSpinBox(box);
+			marching_squares_steps_->setMinimum(10);
+			marching_squares_steps_->setMaximum(100);
+			marching_squares_steps_->setSingleStep(1);	
 			marching_squares_steps_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
 			label = new QLabel("Contour lines: ",box);
-			contour_steps_ = new QSpinBox(3,30,1,box,"");
+			contour_steps_ = new QSpinBox(box);
+			contour_steps_->setMinimum(3);
+			contour_steps_->setMaximum(30);
+			contour_steps_->setSingleStep(1);	
 			contour_steps_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
 			grid->addWidget(box,2,0);
 

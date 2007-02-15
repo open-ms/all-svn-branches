@@ -33,7 +33,7 @@
 #include <OpenMS/CONCEPT/Types.h>
 
 class QLineEdit;
-class Q3Table;
+class QTableWidget;
 
 namespace OpenMS
 {
@@ -56,7 +56,7 @@ namespace OpenMS
 				
 				An external DB connection is used by handing over @p adapter.
 			*/
-			DBSpectrumSelectorDialog(DBConnection& adapter, std::vector<UnsignedInt>& result,QWidget* parent=0, const char* name="DBSpectrumSelectorDialog");
+			DBSpectrumSelectorDialog(DBConnection& adapter, std::vector<UnsignedInt>& result,QWidget* parent=0);
 			/// Destructor
 			~DBSpectrumSelectorDialog();
 
@@ -74,7 +74,7 @@ namespace OpenMS
 			/// pointer to the search string lineedit
 			QLineEdit* search_string_;
 			/// pointer to the table for displaying the overview
-			Q3Table* table_;
+			QTableWidget* table_;
 	};
 
 } //namespace

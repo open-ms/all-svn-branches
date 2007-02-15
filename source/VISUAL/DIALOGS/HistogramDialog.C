@@ -42,7 +42,7 @@ namespace OpenMS
 		setWindowTitle("Intensity Distribution");
 		
 		//layout
-		QGridLayout* layout = new QGridLayout(this,3,2);
+		QGridLayout* layout = new QGridLayout(this);
 		layout->setMargin(6);
 		layout->setSpacing(6);
 		layout->setRowStretch(0,100);
@@ -62,7 +62,7 @@ namespace OpenMS
 		//distribution
 		mw_ = new HistogramWidget(distribution, this);
 		mw_->showSplitters(true);
-		layout->addMultiCellWidget(mw_,0,0,0,2);
+		layout->addWidget(mw_,0,0,1,2);
 		
 		//resize dialog
 		adjustSize();

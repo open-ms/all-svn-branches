@@ -29,7 +29,6 @@
 #ifdef DB_DEF
 #include <OpenMS/FORMAT/DB/DBConnection.h>
 #include <OpenMS/FORMAT/DB/DBAdapter.h>
-#include <OpenMS/VISUAL/DIALOGS/DBSpectrumSelectorDialog.h>
 #endif
 
 #ifdef CGAL_DEF
@@ -39,15 +38,13 @@
 
 #include <OpenMS/VISUAL/DIALOGS/SaveImageDialog.h>
 #include <OpenMS/VISUAL/DIALOGS/TOPPViewBasePDP.h>
-#include <OpenMS/VISUAL/Spectrum1DWidget.h>
 #include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum2DCanvas.h>
-#include <OpenMS/VISUAL/Spectrum2DWidget.h>
-#include <OpenMS/VISUAL/MultiGradientSelector.h>
 #include <OpenMS/VISUAL/Spectrum1DWindow.h>
 #include <OpenMS/VISUAL/Spectrum2DWindow.h>
 #include <OpenMS/VISUAL/Spectrum3DWindow.h>
-#include <OpenMS/VISUAL/Spectrum3DOpenGLCanvas.h>
+#include <OpenMS/VISUAL/Spectrum1DWidget.h>
+#include <OpenMS/VISUAL/Spectrum2DWidget.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/DFeatureMapFile.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerCWT.h>
@@ -59,45 +56,26 @@
 #include <OpenMS/FILTERING/BASELINE/TopHatFilter.h>
 #include <OpenMS/VISUAL/DIALOGS/BaselineFilteringDialog.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
-#include <OpenMS/VISUAL/Spectrum3DCanvas.h>
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/VISUAL/MSMetaDataExplorer.h>
 #include <OpenMS/FORMAT/DFeaturePairsFile.h>
 
-// Qt
-#include <qaction.h>
-#include <q3mainwindow.h>
-#include <qtoolbutton.h>
-#include <qworkspace.h>
-#include <q3filedialog.h>
-#include <qapplication.h>
-#include <qprinter.h>
-#include <qpainter.h>
-#include <q3paintdevicemetrics.h>
-#include <qmessagebox.h>
-#include <qlabel.h>
-#include <qtooltip.h>
-#include <qinputdialog.h>
-#include <qstring.h>
-#include <qlineedit.h>
-#include <qdir.h>
-#include <q3popupmenu.h>
-#include <qmenubar.h>
-#include <qstatusbar.h>
-#include <qimage.h>
-#include <qlayout.h>
-#include <q3listview.h>
-#include <q3header.h>
-#include <QSqlQuery>
-#include <QPixmap>
-#include <QCloseEvent>
-#include <Q3VBoxLayout>
-#include <Q3Frame>
-#include <Q3ActionGroup>
-
-// STL
-#include <iostream>
-#include <sstream>
+//Qt
+#include <QtGui/QToolBar>
+#include <QtGui/QListWidget>
+#include <QtGui/QMenu>
+#include <QtGui/QMenuBar>
+#include <QtGui/QPrinter>
+#include <QtGui/QStatusBar>
+#include <QtGui/QToolButton>
+#include <QtGui/QCloseEvent>
+#include <QtGui/QMessageBox>
+#include <QtGui/QListWidgetItem>
+#include <QtGui/QToolTip>
+#include <QtGui/QFileDialog>
+#include <QtGui/QPainter>
+#include <QtGui/QPrintDialog>
+#include <QtCore/QDir>
 
 //action modes
 #include "../VISUAL/ICONS/zoom.xpm"
@@ -127,8 +105,6 @@
 #include "../VISUAL/ICONS/colors.xpm"
 #include "../VISUAL/ICONS/contours.xpm"
 
-
-
 using namespace std;
 
 namespace OpenMS
@@ -148,7 +124,7 @@ namespace OpenMS
   }
 
   TOPPViewBase::TOPPViewBase(QWidget* parent, Qt::WindowFlags f):
-      Q3MainWindow(parent,"",f),
+      QMainWindow(parent,f),
       PreferencesManager(),
       recent_files_()
   {
@@ -158,7 +134,7 @@ namespace OpenMS
     // create dummy widget (to be able to have a layout), Tab bar and workspace
     QWidget* dummy = new QWidget(this);
     setCentralWidget(dummy);
-    Q3VBoxLayout* box_layout = new Q3VBoxLayout(dummy);
+    QVBoxLayout* box_layout = new QVBoxLayout(dummy);
     tab_bar_ = new EnhancedTabBar(dummy);
     tab_bar_->addTab("dummy");
     tab_bar_->setMinimumSize(tab_bar_->sizeHint());
@@ -176,54 +152,54 @@ namespace OpenMS
     box_layout->addWidget(ws_);
 
     // File menu
-    Q3PopupMenu * file = new Q3PopupMenu(this);
-    menuBar()->insertItem("&File", file);
-    file->insertItem("&Open",this,SLOT(openSpectrumDialog()));
-    file->insertItem("&Close",this,SLOT(closeFile()));
-    file->insertSeparator();
-    recent_menu_ = new Q3PopupMenu(this);
-    file->insertItem("Recent files",recent_menu_);
-    file->insertSeparator();
-    file->insertItem("&Preferences",this, SLOT(preferencesDialog()));
-    file->insertItem("&Quit",qApp,SLOT(quit()));
+    QMenu * file = new QMenu("&File",this);
+    menuBar()->addMenu(file);
+    file->addAction("&Open",this,SLOT(openSpectrumDialog()));
+    file->addAction("&Close",this,SLOT(closeFile()));
+    file->addSeparator();
+    recent_menu_ = new QMenu("Recent files", this);
+    file->addMenu(recent_menu_);
+    file->addSeparator();
+    file->addAction("&Preferences",this, SLOT(preferencesDialog()));
+    file->addAction("&Quit",qApp,SLOT(quit()));
     
     //Layer menu
-    Q3PopupMenu * layer = new Q3PopupMenu(this);
-    menuBar()->insertItem("&Layer", layer);
-    layer->insertItem("&Save visible data",this,SLOT(saveLayer()));
-    layer->insertItem("&Edit metadata",this,SLOT(editMetadata()));
-    layer->insertItem("&Intensity distribution",this,SLOT(layerIntensityDistribution()));
-		layer->insertSeparator();
-    layer->insertItem("&Preferences",this, SLOT(layerPreferencesDialog()));
+    QMenu * layer = new QMenu("&Layer",this);
+    menuBar()->addMenu(layer);
+    layer->addAction("&Save visible data",this,SLOT(saveLayer()));
+    layer->addAction("&Edit metadata",this,SLOT(editMetadata()));
+    layer->addAction("&Intensity distribution",this,SLOT(layerIntensityDistribution()));
+		layer->addSeparator();
+    layer->addAction("&Preferences",this, SLOT(layerPreferencesDialog()));
     
     //View menu
-    Q3PopupMenu * view = new Q3PopupMenu(this);
-    menuBar()->insertItem("&View", view);
-    view->insertItem("&Go to",this,SLOT(gotoDialog()), Qt::CTRL+Qt::Key_G);
-   	view->insertItem("Show/Hide axis legends",this,SLOT(changeAxisVisibility()));
+    QMenu * view = new QMenu("&View",this);
+    menuBar()->addMenu(view);
+    view->addAction("&Go to",this,SLOT(gotoDialog()), Qt::CTRL+Qt::Key_G);
+   	view->addAction("Show/Hide axis legends",this,SLOT(changeAxisVisibility()));
    	
     //Image menu
-    Q3PopupMenu * image = new Q3PopupMenu(this);
-    menuBar()->insertItem("&Image", image);
-    image->insertItem("&Save to file",this,SLOT(saveImage()));
-    image->insertItem("&Print",this,SLOT(print()));
+    QMenu * image = new QMenu("&Image",this);
+    menuBar()->addMenu(image);
+    image->addAction("&Save to file",this,SLOT(saveImage()));
+    image->addAction("&Print",this,SLOT(print()));
 
     //Windows menu
-    Q3PopupMenu * windows = new Q3PopupMenu(this);
-    menuBar()->insertItem("&Windows", windows);
-    windows->insertItem("&Cascade",this->ws_,SLOT(cascade()));
-    windows->insertItem("&Tile automatic",this->ws_,SLOT(tile()));
-    windows->insertItem(QIcon(QPixmap(XPM_tile_h)),"Tile &vertical",this,SLOT(tileHorizontal()));
-    windows->insertItem(QIcon(QPixmap(XPM_tile_v)),"Tile &horizontal",this,SLOT(tileVertical()));
+    QMenu * windows = new QMenu("&Windows", this);
+    menuBar()->addMenu(windows);
+    windows->addAction("&Cascade",this->ws_,SLOT(cascade()));
+    windows->addAction("&Tile automatic",this->ws_,SLOT(tile()));
+    windows->addAction(QIcon(QPixmap(XPM_tile_h)),"Tile &vertical",this,SLOT(tileHorizontal()));
+    windows->addAction(QIcon(QPixmap(XPM_tile_v)),"Tile &horizontal",this,SLOT(tileVertical()));
     
     //Tools menu
-    tools_menu_ = new Q3PopupMenu(this);
-    menuBar()->insertItem("&Tools", tools_menu_);
-    tools_menu_->insertItem("&Show Selected Peaks (1D)", this, SLOT(showPeaklistActiveSpectrum()));
-    tools_menu_->insertItem("&Pick Peaks", this, SLOT(pickActiveSpectrum()));
-    tools_menu_->insertItem("&Smooth data", this, SLOT(smoothActiveSpectrum()));
-    tools_menu_->insertItem("&Filter baseline in data", this, SLOT(baselineFilteringActiveSpectrum()));
-    tools_menu_->insertItem("&Find Features (2D)", this, SLOT(findFeaturesActiveSpectrum()));
+    QMenu* tools_menu = new QMenu("&Tools",this);
+    menuBar()->addMenu(tools_menu);
+    tools_menu->addAction("&Show Selected Peaks (1D)", this, SLOT(showPeaklistActiveSpectrum()));
+    tools_menu->addAction("&Pick Peaks", this, SLOT(pickActiveSpectrum()));
+    tools_menu->addAction("&Smooth data", this, SLOT(smoothActiveSpectrum()));
+    tools_menu->addAction("&Filter baseline in data", this, SLOT(baselineFilteringActiveSpectrum()));
+    tools_menu->addAction("&Find Features (2D)", this, SLOT(findFeaturesActiveSpectrum()));
 
     //create status bar
     message_label_ = new QLabel(statusBar());
@@ -232,40 +208,33 @@ namespace OpenMS
     rt_label_ = new QLabel("RT: 12345678", statusBar());
     rt_label_->setMinimumSize(rt_label_->sizeHint());
     rt_label_->setText("");
-    statusBar()->addWidget(rt_label_,0,true);
+    statusBar()->addPermanentWidget(rt_label_,0);
     mz_label_ = new QLabel("m/z: 12345678", statusBar());
     mz_label_->setMinimumSize(mz_label_->sizeHint());
     mz_label_->setText("");
-    statusBar()->addWidget(mz_label_,0,true);
+    statusBar()->addPermanentWidget(mz_label_,0);
     int_label_ = new QLabel("Int: 123456789012", statusBar());
     int_label_->setMinimumSize(int_label_->sizeHint());
     int_label_->setText("");
-    statusBar()->addWidget(int_label_,0,true);
+    statusBar()->addPermanentWidget(int_label_,0);
 
     //create toolbars and connect signals
     createToolBar_();
 
     //layer bar (for managing several Spectra in a 1D-Window)
-    layer_bar_ = new Q3ToolBar(this,"layerbar");
-    layer_bar_->setLabel( "Layer manager" );
-    layer_bar_->setFrameStyle( QFrame::StyledPanel | Q3Frame::Plain );
-    layer_bar_->setLineWidth( 1 );
-    layer_bar_->setResizeEnabled(true);
-    moveDockWindow(layer_bar_,Qt::DockRight);
-    setDockEnabled(layer_bar_,Qt::DockTop,false);
-    setDockEnabled(layer_bar_,Qt::DockBottom,false);
+    layer_bar_ = new QToolBar(this);
+    layer_bar_->setWindowTitle("Layer manager");
+    addToolBar(Qt::RightToolBarArea, layer_bar_); 
 
     //add Layer Manager and connect signals
-    layer_manager_ = new Q3ListView(layer_bar_, "LayerManager");
+    layer_manager_ = new QListWidget(layer_bar_);
+    layer_manager_->setContextMenuPolicy(Qt::CustomContextMenu);
 		layer_manager_->setSizePolicy(QSizePolicy::QSizePolicy::Preferred,QSizePolicy::Minimum);
-		layer_manager_->addColumn("Layer");
-		layer_manager_->setSorting(-1);
-		layer_manager_->setHScrollBarMode(Q3ScrollView::AlwaysOff);
-		layer_manager_->header()->hide();
-    layer_bar_->hide();
-    connect(layer_manager_,SIGNAL(selectionChanged()),this,SLOT(layerSelectionChange()));
-		connect(layer_manager_,SIGNAL(contextMenuRequested(Q3ListViewItem* ,const QPoint&, int)),this,SLOT(layerContextMenu(Q3ListViewItem*, const QPoint&, int)));
-		connect(layer_manager_,SIGNAL(clicked(Q3ListViewItem*, const QPoint&, int)),this,SLOT(layerVisibilityChange(Q3ListViewItem*, const QPoint&, int)));
+		layer_manager_->setSortingEnabled(false);
+		layer_bar_->hide();
+    connect(layer_manager_,SIGNAL(currentRowChanged(int)),this,SLOT(layerSelectionChange(int)));
+		connect(layer_manager_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(layerContextMenu(const QPoint&)));
+		connect(layer_manager_,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(layerVisibilityChange(QListWidgetItem*)));
 		
     //register meta value names
     MetaInfo::registry().registerName("FeatureDrawMode", "Specify what to draw of the Feature: BoundingBox, ConvexHulls");
@@ -308,7 +277,7 @@ namespace OpenMS
       {
       	//cout << "NEW 1D" << endl;
         // create 1D window
-        w = new Spectrum1DWindow(ws_,Qt::WDestructiveClose);
+        w = new Spectrum1DWindow(ws_);
 
         //determine Spectrum id
         con.executeQuery("SELECT id from DATA_Spectrum where fid_MSExperiment='"+db_id_string+"' and MSLevel='1'",result);
@@ -327,7 +296,7 @@ namespace OpenMS
         {
           //cout << "NEW 2D" << endl;
           //create 2D window
-          w = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
+          w = new Spectrum2DWindow(ws_);
 
           //load spectrum
           exp = &(w->widget()->canvas()->addEmptyPeakLayer());
@@ -338,7 +307,7 @@ namespace OpenMS
         {
           //cout << "NEW 3D" << endl;
         	// create 3D window
-          w = new Spectrum3DWindow(ws_, Qt::WDestructiveClose);
+          w = new Spectrum3DWindow(ws_);
 
           //load data
           exp = &(w->widget()->canvas()->addEmptyPeakLayer());
@@ -422,7 +391,7 @@ namespace OpenMS
     if (as_new_window)
     {
       connectWindowSignals_(w);
-      w->setCaption(caption.c_str());
+      w->setWindowTitle(caption.c_str());
       addClient(w,caption);
       addTab_(w,caption);
     }
@@ -525,15 +494,15 @@ namespace OpenMS
     {
       if (force_type==FileHandler::DTA)
       {
-        w = new Spectrum1DWindow(ws_,Qt::WDestructiveClose);
+        w = new Spectrum1DWindow(ws_);
       }
       else if (maps_as_2d || force_type==FileHandler::FEATURE || force_type==FileHandler::FEATURE_PAIRS) //2d or features
       {
-        w = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
+        w = new Spectrum2DWindow(ws_);
       }
       else //3d
       {
-        w = new Spectrum3DWindow(ws_,Qt::WDestructiveClose);
+        w = new Spectrum3DWindow(ws_);
       }
 
       //set main preferences
@@ -625,7 +594,7 @@ namespace OpenMS
       if (as_new_window && active1DWindow_()==0 && exp->size()==1)
       {
         delete(w);
-        w = new Spectrum1DWindow(ws_,Qt::WDestructiveClose);
+        w = new Spectrum1DWindow(ws_);
         w->setMainPreferences(prefs_);
         exp = &(w->widget()->canvas()->addEmptyPeakLayer());
         FileHandler().loadExperiment(filename,*exp, force_type);
@@ -642,13 +611,14 @@ namespace OpenMS
       w->widget()->canvas()->finishAdding(cutoff);
       w->widget()->canvas()->setCurrentLayerName(caption);
     }
+    
   	updateLayerbar();
 
     if (as_new_window)
     {
     	ws_->addWindow(w);
       connectWindowSignals_(w);
-      w->setCaption(filename.c_str());
+      w->setWindowTitle(filename.c_str());
       addClient(w,filename);
       addTab_(w,caption);
     }
@@ -667,17 +637,16 @@ namespace OpenMS
     //add prefix to relative paths
     if (!tmp.hasPrefix("/"))
     {
-      tmp = QDir::currentDirPath().ascii()+string("/")+ tmp;
+      tmp = QDir::currentPath().toAscii().data()+string("/")+ tmp;
     }
 
     //check if the file is already in the vector. if so remove it
-    recent_files_.erase(remove
-                        (recent_files_.begin(),recent_files_.end(),tmp),recent_files_.end());
+    recent_files_.erase(remove(recent_files_.begin(),recent_files_.end(),tmp),recent_files_.end());
 
     //add the file to the front
     recent_files_.insert(recent_files_.begin(),tmp);
 
-    //shrink the recent_files to 10
+    //shrink the recent_files to the desired number
     if (recent_files_.size()>number_of_recent_files_)
     {
       recent_files_.resize(number_of_recent_files_);
@@ -693,7 +662,7 @@ namespace OpenMS
     recent_menu_->clear();
     for (UnsignedInt i=0; i<recent_files_.size(); ++i)
     {
-      recent_menu_->insertItem(recent_files_[i].c_str(),this,SLOT(openRecentFile(int)),0,i);
+      recent_menu_->addAction(recent_files_[i].c_str(),this,SLOT(openRecentFile()));
     }
   }
 
@@ -741,19 +710,18 @@ namespace OpenMS
       if (dialog->exec())
       {
         QString format=dialog->getFormat();
-        QString file_name = Q3FileDialog::getSaveFileName( window->caption().section('.',0,0),
-                            format+" Images(*."+format+" *."+format.lower()+")",
-                            this, "save image dialog","Select file to save" );
+        QString file_name = QFileDialog::getSaveFileName(this, "Save file", window->windowTitle().section('.',0,0),
+                            format+" Images(*."+format+" *."+format.toLower()+")");
         if (!file_name.isEmpty())
         {
           //append missing file extension
-          if (!file_name.upper().endsWith(format))
+          if (!file_name.toUpper().endsWith(format))
           {
-            file_name.append("."+format.lower());
+            file_name.append("."+format.toLower());
           }
 
           QImage image = window->widget()->getImage(dialog->getXSize(),dialog->getYSize());
-          image.save(file_name,format,100);
+          image.save(file_name,format.toAscii().data(),100);
         }
       }
     }
@@ -767,18 +735,18 @@ namespace OpenMS
     {
       QPrinter* printer = new QPrinter(QPrinter::HighResolution);
       printer->setResolution(300);
-      if (printer->setup(this))
+      
+      QPrintDialog dialog(printer, this);
+ 			if (dialog.exec())
       {
         QPainter p;
-        if (!p.begin(printer))
-          return;
-        Q3PaintDeviceMetrics metrics(p.device());
-        unsigned int dpix = metrics.logicalDpiX();
-        unsigned int dpiy = metrics.logicalDpiY();
-        QRect body(dpix,dpiy,metrics.width()-2*dpix,metrics.height()-2*dpiy);			// one inch margin
+        if (!p.begin(printer)) return;
+        unsigned int dpix = printer->logicalDpiX();
+        unsigned int dpiy = printer->logicalDpiY();
+        QRect body(dpix,dpiy,printer->width()-2*dpix,printer->height()-2*dpiy);			// one inch margin
         QImage image = window->widget()->getImage(body.width(),body.height());
         p.drawImage(body,image);
-        QString titel = QString("%1\n%2").arg(window->caption().section('/',-1)).arg(QDate::currentDate().toString());
+        QString titel = QString("%1\n%2").arg(window->windowTitle().section('/',-1)).arg(QDate::currentDate().toString());
         //	p.drawText(dpix,0,body.width(),dpiy, Qt::AlignCenter, titel);
         p.drawText(dpix,body.height()+dpiy, body.width(), dpiy, Qt::AlignCenter, titel);
       }
@@ -855,23 +823,21 @@ namespace OpenMS
     		//one scan => DTA
     		else if (out.size()==1)
     		{
-		      QString file_name = Q3FileDialog::getSaveFileName( prefs_.getValue("Preferences:DefaultPath").toString().c_str(),
-					                    "DTA files (*.dta)",
-					                    this, "Save spectrum dialog","Select filename for spectrum" );
+		      QString file_name = QFileDialog::getSaveFileName(this, "Save file", prefs_.getValue("Preferences:DefaultPath").toString().c_str(),
+					                    "DTA files (*.dta)");
 					if (!file_name.isEmpty())
 					{
-					  DTAFile().store(file_name.ascii(),out[0]);
+					  DTAFile().store(file_name.toAscii().data(),out[0]);
 					}
     		}
     		//more than one scan => MzData
     		else
     		{
-		      QString file_name = Q3FileDialog::getSaveFileName( prefs_.getValue("Preferences:DefaultPath").toString().c_str(),
-					                    "MzData files (*.mzData)",
-					                    this, "Save map dialog","Select filename for map" );
+		      QString file_name = QFileDialog::getSaveFileName(this, "Save file",  prefs_.getValue("Preferences:DefaultPath").toString().c_str(),
+					                    "MzData files (*.mzData)");
 					if (!file_name.isEmpty())
 					{
-					  MzDataFile().store(file_name.ascii(),out);
+					  MzDataFile().store(file_name.toAscii().data(),out);
 					}
     		}
 			}
@@ -907,12 +873,11 @@ namespace OpenMS
     		}
     		else
     		{
-		      QString file_name = Q3FileDialog::getSaveFileName( prefs_.getValue("Preferences:DefaultPath").toString().c_str(),
-					                    "features files (*.feat)",
-					                    this, "Save feature data dialog","Select filename for feature data" );
+		      QString file_name = QFileDialog::getSaveFileName(this, "Save file",  prefs_.getValue("Preferences:DefaultPath").toString().c_str(),
+					                    "features files (*.feat)" );
 					if (!file_name.isEmpty())
 					{
-					  DFeatureMapFile().store(file_name.ascii(),out);
+					  DFeatureMapFile().store(file_name.toAscii().data(),out);
 					}
     		}
 			}
@@ -931,7 +896,7 @@ namespace OpenMS
     		QMessageBox::warning(this,"Warning","The current layer is not visible!");
     	}
 			MSMetaDataExplorer dlg(true, this);
-      dlg.setCaption("Edit meta data");
+      dlg.setWindowTitle("Edit meta data");
 			if (layer.type==LayerData::DT_PEAK) //peak data
     	{
     		dlg.add(&(const_cast<LayerData&>(layer).peaks));
@@ -995,93 +960,104 @@ namespace OpenMS
 
   void TOPPViewBase::createToolBar_()
   {
-    tool_bar_ = new Q3ToolBar(this,"toolbar");
+    tool_bar_ = new QToolBar(this);
 
     //action modes
-    action_modes_ = new Q3ActionGroup(tool_bar_);
-    action_modes_->setExclusive(TRUE);
-    am_zoom_ = new Q3Action( QString("Action: Zoom"), QPixmap(XPM_zoom), NULL, Qt::Key_Z, action_modes_,"AM_ZOOM",TRUE);
-    am_zoom_->addTo(tool_bar_);
-    am_translate_ = new Q3Action( QString("Action: Translate"), QPixmap(XPM_translate), NULL, Qt::Key_T, action_modes_,"AM_TRANSLATE",TRUE);
-    am_translate_->addTo(tool_bar_);
-    am_select_ = new Q3Action( QString("Action: Select"), QPixmap(XPM_select), NULL, Qt::Key_S, action_modes_,"AM_SELECT",TRUE);
-    am_select_->addTo(tool_bar_);
-    am_measure_ = new Q3Action( QString("Action: Measure"), QPixmap(XPM_measure), NULL, Qt::Key_M, action_modes_,"AM_MEASURE",TRUE);
-    am_measure_->addTo(tool_bar_);
-    connect(action_modes_,SIGNAL(selected(Q3Action*)),this,SLOT(setActionMode(Q3Action*)));
+    QActionGroup* group = new QActionGroup(tool_bar_);
+    group->setExclusive(TRUE);
+    am_zoom_ = new QAction(QPixmap(XPM_zoom), "Action: Zoom", group);
+    am_zoom_->setShortcut(Qt::Key_Z);
+    am_translate_ = new QAction(QPixmap(XPM_translate), "Action: Translate", group);
+    am_translate_->setShortcut(Qt::Key_T);
+    am_select_ = new QAction(QPixmap(XPM_select), "Action: Select",  group);
+    am_select_->setShortcut(Qt::Key_S);
+    am_measure_ = new QAction(QPixmap(XPM_measure), "Action: Measure",  group);
+    am_measure_->setShortcut(Qt::Key_M);
+    connect(group,SIGNAL(selected(QAction*)),this,SLOT(setActionMode(QAction*)));
 
     tool_bar_->addSeparator();
 
     //intensity modes
-    intensity_modes_ = new Q3ActionGroup(tool_bar_);
-    intensity_modes_->setExclusive(TRUE);
-    im_none_ = new Q3Action( QString("Intensity: Normal"), QPixmap(XPM_lin), NULL, Qt::Key_N, intensity_modes_,"IM_NONE",TRUE);
-    im_none_->addTo(tool_bar_);
-    im_log_ = new Q3Action( QString("Intensity: Logarithmic"), QPixmap(XPM_log), NULL, Qt::Key_L, intensity_modes_,"IM_LOG",TRUE);
-    im_log_->addTo(tool_bar_);
-    im_percentage_ = new Q3Action( QString("Intensity: Percentage"), QPixmap(XPM_percentage), NULL, Qt::Key_P, intensity_modes_,"IM_PERCENTAGE",TRUE);
-    im_percentage_->addTo(tool_bar_);
-    im_snap_ = new Q3Action( QString("Intensity: Snap to maximum displayed intensity"), QPixmap(XPM_snap), NULL, Qt::Key_A, intensity_modes_,"IM_SNAP",TRUE);
-    im_snap_->addTo(tool_bar_);
-    connect(intensity_modes_,SIGNAL(selected(Q3Action*)),this,SLOT(setIntensityMode(Q3Action*)));
+    group = new QActionGroup(tool_bar_);
+    group->setExclusive(TRUE);
+    im_none_ = new QAction(QPixmap(XPM_lin), "Intensity: Normal", group);
+    im_none_->setShortcut(Qt::Key_N);
+    im_log_ = new QAction(QPixmap(XPM_log), "Intensity: Logarithmic", group);
+    im_log_->setShortcut(Qt::Key_L);
+    im_percentage_ = new QAction(QPixmap(XPM_percentage), "Intensity: Percentage", group);
+    im_percentage_->setShortcut(Qt::Key_P);
+    im_snap_ = new QAction(QPixmap(XPM_snap), "Intensity: Snap to maximum displayed intensity",group);
+    im_snap_->setShortcut(Qt::Key_A);
+    connect(group,SIGNAL(selected(QAction*)),this,SLOT(setIntensityMode(QAction*)));
 
     tool_bar_->addSeparator();
 
     //common buttons
-    reset_zoom_button_ = new QToolButton(QIcon(QPixmap(XPM_reset_zoom)),"Reset Zoom (Backspace)", "Reset Zoom", NULL, NULL , tool_bar_, "resetZoomButton");
-    reset_zoom_button_->setAccel(Qt::Key_Backspace);
-    connect(reset_zoom_button_,SIGNAL(clicked()),this,SLOT(resetZoom()));
+    QToolButton* reset_zoom_button = new QToolButton(tool_bar_);
+    reset_zoom_button->setIcon(QIcon(QPixmap(XPM_reset_zoom)));
+    reset_zoom_button->setToolTip("Reset Zoom");
+    reset_zoom_button->setShortcut(Qt::Key_Backspace);
+    connect(reset_zoom_button,SIGNAL(clicked()),this,SLOT(resetZoom()));
 
     tool_bar_->addSeparator();
 
-    grid_button_ = new QToolButton(QIcon(QPixmap(XPM_grid)),"Show grid (G)","Show grid",NULL, NULL ,tool_bar_,"gridButton");
-    grid_button_->setAccel(Qt::Key_G);
-    grid_button_->setToggleButton(true);
+    grid_button_ = new QToolButton(tool_bar_);
+    grid_button_->setIcon(QIcon(QPixmap(XPM_grid)));
+    grid_button_->setToolTip("Show grid");
+    grid_button_->setShortcut(Qt::Key_G);
+    grid_button_->setCheckable(true);
     connect(grid_button_,SIGNAL(toggled(bool)),this,SLOT(showGridLines(bool)));
 
     tool_bar_->addSeparator();
 
-    print_button_ = new QToolButton(QIcon(QPixmap(XPM_print)),"Print (Ctrl + P)","print",NULL, NULL,tool_bar_,"printButton");
-    print_button_->setAccel(Qt::CTRL + Qt::Key_P);
-    connect(print_button_,SIGNAL(clicked()),this,SLOT(print()));
+    QToolButton* print_button = new QToolButton(tool_bar_);
+    print_button->setIcon(QIcon(QPixmap(XPM_print)));
+    print_button->setToolTip("Print");
+    print_button->setShortcut(Qt::CTRL + Qt::Key_P);
+    connect(print_button,SIGNAL(clicked()),this,SLOT(print()));
 
     tool_bar_->resize(tool_bar_->sizeHint());
     tool_bar_->show();
 
     // 1d toolbar
-    tool_bar_1d_ = new Q3ToolBar(this,"toolbar");
+    tool_bar_1d_ = new QToolBar(this);
 
-    draw_modes_ = new Q3ActionGroup(tool_bar_1d_);
-    draw_modes_->setExclusive(TRUE);
-    dm_peaks_1d_ = new Q3Action( QString("Stick mode"), QPixmap(XPM_peaks), NULL, Qt::Key_I, draw_modes_,"DM_PEAKS",TRUE);
-    dm_peaks_1d_->addTo(tool_bar_1d_);
-    dm_rawdata_1d_ = new Q3Action( QString("Raw data mode"), QPixmap(XPM_lines), NULL, Qt::Key_R, draw_modes_,"DM_CONNECTEDLINES",TRUE);
-    dm_rawdata_1d_->addTo(tool_bar_1d_);
-    connect(draw_modes_,SIGNAL(selected(Q3Action*)),this,SLOT(setDrawMode1D(Q3Action*)));
+    group = new QActionGroup(tool_bar_1d_);
+    group->setExclusive(TRUE);
+    dm_peaks_1d_ = new QAction(QPixmap(XPM_peaks), "Peak mode", group);
+    dm_peaks_1d_->setShortcut(Qt::Key_I);
+    dm_rawdata_1d_ = new QAction(QPixmap(XPM_lines), "Raw data mode", group);
+    dm_rawdata_1d_->setShortcut(Qt::Key_R);
+    connect(group,SIGNAL(selected(QAction*)),this,SLOT(setDrawMode1D(QAction*)));
 
     tool_bar_1d_->addSeparator();
 
     link_box_ = new QComboBox(tool_bar_1d_);
-    QToolTip::add
-      (link_box_,"Use this combobox to link two spectra.\nLinked spectra zoom in/out together");
+    link_box_->setToolTip("Use this combobox to link two spectra.\nLinked spectra zoom in/out together");
     connect(link_box_,SIGNAL(activated(const QString&)),this,SLOT(linkActiveTo(const QString&)));
 
     // 2d toolbar
-    tool_bar_2d_ = new Q3ToolBar(this,"toolbar");
+    tool_bar_2d_ = new QToolBar(this);
 
-    dm_points_2d_ = new QToolButton(QIcon(QPixmap(XPM_points)), "Show dots (D)", "Show dots", 0, 0, tool_bar_2d_, "showPoints");
-    dm_points_2d_->setAccel(Qt::Key_D);
-    dm_points_2d_->setToggleButton(true);
+    dm_points_2d_ = new QToolButton(tool_bar_2d_);
+    dm_points_2d_->setIcon(QIcon(QPixmap(XPM_points)));
+    dm_points_2d_->setToolTip("Show dots"); 
+    dm_points_2d_->setShortcut(Qt::Key_D);
+    dm_points_2d_->setCheckable(true);
     connect(dm_points_2d_, SIGNAL(toggled(bool)), this, SLOT(showPoints(bool)));
 
-    dm_surface_2d_ = new QToolButton(QIcon(QPixmap(XPM_colors)), "Show colored surface (U)", "Show colored surface", 0, 0, tool_bar_2d_, "showSurface");
-    dm_surface_2d_->setAccel(Qt::Key_U);
-    dm_surface_2d_->setToggleButton(true);
+    dm_surface_2d_ = new QToolButton(tool_bar_2d_);
+    dm_surface_2d_->setIcon(QIcon(QPixmap(XPM_colors)));
+    dm_surface_2d_->setToolTip("Show colored surface");
+    dm_surface_2d_->setShortcut(Qt::Key_U);
+    dm_surface_2d_->setCheckable(true);
     connect(dm_surface_2d_, SIGNAL(toggled(bool)), this, SLOT(showSurface(bool)));
 
-    dm_contours_2d_ = new QToolButton(QIcon(QPixmap(XPM_contours)), "Show contour lines (C)", "Show contour lines", 0, 0, tool_bar_2d_, "showContours");
-    dm_contours_2d_->setAccel(Qt::Key_C);
-    dm_contours_2d_->setToggleButton(true);
+    dm_contours_2d_ = new QToolButton(tool_bar_2d_);
+    dm_contours_2d_->setIcon(QIcon(QPixmap(XPM_contours)));
+    dm_contours_2d_->setToolTip("Show contour lines");
+    dm_contours_2d_->setShortcut(Qt::Key_C);
+    dm_contours_2d_->setCheckable(true);
     connect(dm_contours_2d_, SIGNAL(toggled(bool)), this, SLOT(showContours(bool)));
   }
 
@@ -1095,7 +1071,7 @@ namespace OpenMS
       for ( int i = 0; i < int(windows.count()); ++i )
       {
         QWidget *window = windows.at(i);
-        if (File::basename(window->caption().toAscii().data())+"  ("+window->caption().ascii()+")"==path.toAscii().data())
+        if (File::basename(window->windowTitle().toAscii().data())+"  ("+window->windowTitle().toAscii().data()+")"==path.toAscii().data())
         {
           //connect the slots
           connect(activeWindow_()->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)),dynamic_cast<SpectrumWindow*>(window)->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
@@ -1133,7 +1109,7 @@ namespace OpenMS
     }
     else
     {
-      statusBar()->message(msg.c_str(), time);
+      statusBar()->showMessage(msg.c_str(), time);
     }
   }
 
@@ -1185,56 +1161,40 @@ namespace OpenMS
     }
   }
 
-  void TOPPViewBase::setActionMode(Q3Action* a)
+  void TOPPViewBase::setActionMode(QAction* a)
   {
     SpectrumWindow* w = activeWindow_();
     if (w)
     {
-      string name = a->name();
-      if(name=="AM_SELECT")
-        w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_SELECT);
-      else if (name=="AM_ZOOM")
-        w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_ZOOM);
-      else if(name=="AM_TRANSLATE")
-        w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_TRANSLATE);
-      else if(name=="AM_MEASURE")
-        w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_MEASURE);
-      else
-        throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+      if(a==am_select_) w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_SELECT);
+      else if (a==am_zoom_) w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_ZOOM);
+      else if(a==am_translate_) w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_TRANSLATE);
+      else if(a==am_measure_) w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_MEASURE);
+      else  throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     };
   }
 
-  void TOPPViewBase::setIntensityMode(Q3Action* a)
+  void TOPPViewBase::setIntensityMode(QAction* a)
   {
     SpectrumWindow* w = activeWindow_();
     if (w)
     {
-      string name = a->name();
-      if(name=="IM_NONE")
-        w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_NONE);
-      else if (name=="IM_LOG")
-        w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_LOG);
-      else if(name=="IM_PERCENTAGE")
-        w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_PERCENTAGE);
-      else if(name=="IM_SNAP")
-        w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_SNAP);
-      else
-        throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+      if(a==im_none_) w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_NONE);
+      else if (a==im_log_) w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_LOG);
+      else if(a==im_percentage_) w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_PERCENTAGE);
+      else if(a==im_snap_) w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_SNAP);
+      else throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     };
   }
 
-  void TOPPViewBase::setDrawMode1D(Q3Action* a)
+  void TOPPViewBase::setDrawMode1D(QAction* a)
   {
     Spectrum1DWindow* w = active1DWindow_();
     if (w)
     {
-      string name = a->name();
-      if (name == "DM_PEAKS")
-        w->widget()->canvas()->setDrawMode(Spectrum1DCanvas::DM_PEAKS);
-      else if (name == "DM_CONNECTEDLINES")
-        w->widget()->canvas()->setDrawMode(Spectrum1DCanvas::DM_CONNECTEDLINES);
-      else
-        throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+      if (a==dm_peaks_1d_) w->widget()->canvas()->setDrawMode(Spectrum1DCanvas::DM_PEAKS);
+      else if (a==dm_rawdata_1d_) w->widget()->canvas()->setDrawMode(Spectrum1DCanvas::DM_CONNECTEDLINES);
+      else throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
     }
   }
 
@@ -1271,43 +1231,43 @@ namespace OpenMS
       //set action mode
       switch (w->widget()->getActionMode())
       {
-          case SpectrumCanvas::AM_SELECT:
-          am_select_->setOn(true);
+        case SpectrumCanvas::AM_SELECT:
+          am_select_->setEnabled(true);
           break;
-          case SpectrumCanvas::AM_ZOOM:
-          am_zoom_->setOn(true);
+        case SpectrumCanvas::AM_ZOOM:
+          am_zoom_->setEnabled(true);
           break;
-          case SpectrumCanvas::AM_TRANSLATE:
-          am_translate_->setOn(true);
+        case SpectrumCanvas::AM_TRANSLATE:
+          am_translate_->setEnabled(true);
           break;
-          case SpectrumCanvas::AM_MEASURE:
-          am_measure_->setOn(true);
+        case SpectrumCanvas::AM_MEASURE:
+          am_measure_->setEnabled(true);
           break;
-          default:
+        default:
           throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
       }
 
       //set intensity mode
       switch (w->widget()->canvas()->getIntensityMode())
       {
-          case SpectrumCanvas::IM_NONE:
-          im_none_->setOn(true);
+        case SpectrumCanvas::IM_NONE:
+          im_none_->setEnabled(true);
           break;
-          case SpectrumCanvas::IM_LOG:
-          im_log_->setOn(true);
+        case SpectrumCanvas::IM_LOG:
+          im_log_->setEnabled(true);
           break;
-          case SpectrumCanvas::IM_PERCENTAGE:
-          im_percentage_->setOn(true);
+        case SpectrumCanvas::IM_PERCENTAGE:
+          im_percentage_->setEnabled(true);
           break;
-          case SpectrumCanvas::IM_SNAP:
-          im_snap_->setOn(true);
+        case SpectrumCanvas::IM_SNAP:
+          im_snap_->setEnabled(true);
           break;
-          default:
+        default:
           throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
       }
 
       //grid lines
-      grid_button_->setOn(w->widget()->canvas()->gridLinesShown());
+      grid_button_->setEnabled(w->widget()->canvas()->gridLinesShown());
     }
 
     //1D
@@ -1317,13 +1277,13 @@ namespace OpenMS
       //draw mode
       switch (w1->widget()->canvas()->getDrawMode())
       {
-          case Spectrum1DCanvas::DM_PEAKS:
-          dm_peaks_1d_->setOn(true);
+        case Spectrum1DCanvas::DM_PEAKS:
+          dm_peaks_1d_->setEnabled(true);
           break;
-          case Spectrum1DCanvas::DM_CONNECTEDLINES:
-          dm_rawdata_1d_->setOn(true);
+        case Spectrum1DCanvas::DM_CONNECTEDLINES:
+          dm_rawdata_1d_->setEnabled(true);
           break;
-          default:
+        default:
           throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
       };
 
@@ -1331,7 +1291,7 @@ namespace OpenMS
       int current_index=0;
       int active_linked_to_address = link_map_[qlonglong(ws_->activeWindow())];
       link_box_->clear();
-      link_box_->insertItem("<unlinked>");
+      link_box_->insertItem(0,"<unlinked>");
       QWidgetList windows = ws_->windowList();
       for ( int i = 0; i < int(windows.count()); ++i )
       {
@@ -1339,10 +1299,10 @@ namespace OpenMS
         if (window!=w)
         {
           current_index++;
-          link_box_->insertItem((File::basename(window->caption().toAscii().data())+"  ("+window->caption().ascii()+")").c_str());
+          link_box_->insertItem(i,(File::basename(window->windowTitle().toAscii().data())+"  ("+window->windowTitle().toAscii().data()+")").c_str());
           if (active_linked_to_address==qlonglong(window))
           {
-            link_box_->setCurrentItem(current_index);
+            link_box_->setCurrentIndex(current_index);
           }
         }
       }
@@ -1359,9 +1319,9 @@ namespace OpenMS
     if (w2)
     {
       //draw modes
-      dm_points_2d_->setOn(w2->widget()->canvas()->dotsAreShown());
-      dm_surface_2d_->setOn(w2->widget()->canvas()->surfaceIsShown());
-      dm_contours_2d_->setOn(w2->widget()->canvas()->contoursAreShown());
+      dm_points_2d_->setEnabled(w2->widget()->canvas()->dotsAreShown());
+      dm_surface_2d_->setEnabled(w2->widget()->canvas()->surfaceIsShown());
+      dm_contours_2d_->setEnabled(w2->widget()->canvas()->contoursAreShown());
 
       //show/hide toolbars and buttons
       tool_bar_1d_->hide();
@@ -1393,115 +1353,55 @@ namespace OpenMS
     {
       return;
     }
-		Q3CheckListItem* item = 0;
+		QListWidgetItem* item = 0;
     for (UnsignedInt i = 0; i<cc->getLayerCount(); ++i)
     {
     	//add item
-    	item = new Q3CheckListItem( layer_manager_, item, cc->getLayer(i).name.c_str(), Q3CheckListItem::CheckBox );
-    	//set visibility
+    	item = new QListWidgetItem( layer_manager_ );
+			item->setText(cc->getLayer(i).name.c_str());
     	if (cc->getLayer(i).visible)
     	{
-    		item->setState(Q3CheckListItem::On);
+    		item->setCheckState(Qt::Checked);
     	}
     	//highlight active item
     	if (i == cc->activeLayerIndex())
     	{
 		    layer_manager_->blockSignals(true);
-				layer_manager_->setSelected(item,true);
+				layer_manager_->setCurrentItem(item);
 				layer_manager_->blockSignals(false);
     	}
     }
     layer_bar_->show();
   }
 
-	void TOPPViewBase::layerSelectionChange()
+	void TOPPViewBase::layerSelectionChange(int i)
 	{
-		//cout << "layerSelectionChange()" << endl;
-		//get current canvas
-		SpectrumCanvas* cc = activeCanvas_();
-		//nothing selcted -> find last active item and select it
-		if (layer_manager_->selectedItem() == 0)
-		{
-			Q3ListViewItemIterator it( layer_manager_ );
-	    for (unsigned int i = 0; i < cc->activeLayerIndex(); ++i) 
-	    {
-				++it;
-	    }
-	    //cout << "  RESELECTING: " << cc->activeLayerIndex() << endl;
-	    layer_manager_->blockSignals(true);
-			layer_manager_->setSelected(*it,true);
-			layer_manager_->blockSignals(false);
-		}
-		// new layer selected -> highlight it
-		else
-		{
-	    int i = 0;
-	    Q3ListViewItemIterator it( layer_manager_ );
-	    while (it.current()) 
-	    {
-	      if (it.current()->isSelected())
-	      {
-	      	//cout << "  SELECTING: " << i << endl;
-	      	layer_manager_->blockSignals(true);
-	      	layer_manager_->setSelected(*it,true);
-	      	layer_manager_->blockSignals(false);
-	      	cc->activateLayer(i);
-	      	//cout << "  SELECTED: " << i << endl;
-	      	break;
-	      }
-				++it;
-				++i;
-	    }
-		}
+		activeCanvas_()->activateLayer(i);
 	}
 
-	void TOPPViewBase::layerContextMenu(Q3ListViewItem* item, const QPoint & pos, int /*col*/)
+	void TOPPViewBase::layerContextMenu(const QPoint & pos)
 	{
-		if (item && item!=layer_manager_->firstChild())
+		QListWidgetItem* item = layer_manager_->itemAt(pos);
+		if (item && item!=layer_manager_->item(0))
 		{
-			Q3PopupMenu* context_menu = new Q3PopupMenu(layer_manager_);
-			context_menu->insertItem("Delete",0,0);
-			int result = context_menu->exec(pos);
-			//delete
-			if (result == 0)
+			QMenu* context_menu = new QMenu(layer_manager_);
+			QAction* delete_action = context_menu->addAction("Delete");
+			if (context_menu->exec(pos) == delete_action)
 			{
-		 		int i = 0;
-		    Q3ListViewItemIterator it( layer_manager_ );
-		    while (it.current()) 
-		    {
-		      if (it.current()==item)
-		      {
-		  			activeCanvas_()->removeLayer(i);
-						updateLayerbar();
-						break;
-		      }
-					++it;
-					++i;
-		    }
+				activeCanvas_()->removeLayer(layer_manager_->row(item));
+				updateLayerbar();
 			}
 			delete (context_menu);
 		}
 	}
 
-	void TOPPViewBase::layerVisibilityChange(Q3ListViewItem* item, const QPoint& /*pnt*/, int /*col*/)
+	void TOPPViewBase::layerVisibilityChange(QListWidgetItem* item)
 	{
 		//cout << "layerVisibilityChange() " << endl;
 		if (item)
 		{
-			SpectrumCanvas* cc = activeCanvas_();
-			int i = 0;
-	    Q3ListViewItemIterator it( layer_manager_ );
-	    while (it.current()) 
-	    {
-	    	if (((Q3CheckListItem*)(it.current()))->isOn() != cc->getLayer(i).visible)
-	    	{
-	    		//cout << "  SHOWING/HIDING: " << i << endl;
-	    		cc->changeVisibility(i,!cc->getLayer(i).visible);
-	    		break;
-	    	}
-				++it;
-				++i;
-	    }
+			int i = layer_manager_->row(item);
+			activeCanvas_()->changeVisibility(i,!activeCanvas_()->getLayer(i).visible);
 		}
 	}
 
@@ -1546,7 +1446,7 @@ namespace OpenMS
         window->show();
       }
       int preferredHeight = window->minimumHeight()+window->parentWidget()->baseSize().height();
-      int actHeight = QMAX(heightForEach, preferredHeight);
+      int actHeight = std::max(heightForEach, preferredHeight);
 
       window->parentWidget()->setGeometry( 0, y, ws_->width(), actHeight );
       y += actHeight;
@@ -1578,7 +1478,7 @@ namespace OpenMS
       }
       int preferredWidth = window->minimumWidth()+window->parentWidget()->baseSize().width();
 
-      int actWidth = QMAX(widthForEach, preferredWidth);
+      int actWidth = std::max(widthForEach, preferredWidth);
 
       window->parentWidget()->setGeometry( y, 0, actWidth , ws_->height() );
       y += actWidth;
@@ -1670,7 +1570,7 @@ namespace OpenMS
 
   void TOPPViewBase::smoothActiveSpectrum()
   {
-    SmoothingDialog dialog(this,"Open Smoothing Dialog");
+    SmoothingDialog dialog(this);
     if (dialog.exec())
     {
       float kernel_width = dialog.getKernelWidth();
@@ -1771,7 +1671,8 @@ namespace OpenMS
           const Spectrum2DCanvas::ExperimentType& exp_raw = w2->widget()->canvas()->getCurrentPeakData();
           	
          	//add new window for picked peaks
-          Spectrum2DWindow* w_smoothed = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
+          Spectrum2DWindow* w_smoothed = new Spectrum2DWindow(ws_);
+					
           //set main preferences
           w_smoothed->setMainPreferences(prefs_);
           String new_name = w2->widget()->canvas()->getCurrentLayer().name+" (smoothed)";
@@ -1864,7 +1765,7 @@ namespace OpenMS
 					w_smoothed->widget()->canvas()->setCurrentLayerName(new_name);
 					
 	        connectWindowSignals_(w_smoothed);
-	        w_smoothed->setCaption(new_name.c_str());
+	        w_smoothed->setWindowTitle(new_name.c_str());
 	        addClient(w_smoothed,filename);
 	        addTab_(w_smoothed,new_name);
 	
@@ -1881,7 +1782,7 @@ namespace OpenMS
 
   void TOPPViewBase::baselineFilteringActiveSpectrum()
   {
-    BaselineFilteringDialog dialog(this,"Open Smoothing Dialog");
+    BaselineFilteringDialog dialog(this);
     if (dialog.exec())
     {
       // 1D baseline filtering
@@ -1935,7 +1836,8 @@ namespace OpenMS
           bool resampling_flag = dialog.getResampling();
 
           //add new window for baseline filtered data
-          Spectrum2DWindow* w_tophat = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
+          Spectrum2DWindow* w_tophat = new Spectrum2DWindow(ws_);
+          
           //set main preferences
           w_tophat->setMainPreferences(prefs_);
           String new_name = w2->widget()->canvas()->getCurrentLayer().name+" (basline)";
@@ -1987,7 +1889,7 @@ namespace OpenMS
           w_tophat->widget()->canvas()->finishAdding();
           w_tophat->widget()->canvas()->setCurrentLayerName(new_name);
           connectWindowSignals_(w_tophat);
-          w_tophat->setCaption(new_name.c_str());
+          w_tophat->setWindowTitle(new_name.c_str());
           addClient(w_tophat,filename);
           addTab_(w_tophat,new_name);
 
@@ -2006,7 +1908,7 @@ namespace OpenMS
 
   void TOPPViewBase::pickActiveSpectrum()
   {
-    PeakPickingDialog dialog(this,"Open Peak Picking Dialog");
+    PeakPickingDialog dialog(this);
     if (dialog.exec())
     {
       //pick data
@@ -2048,7 +1950,7 @@ namespace OpenMS
         if (w2!=0)
         {
           //add new window for picked peaks
-          Spectrum2DWindow* w_picked = new Spectrum2DWindow(ws_,Qt::WDestructiveClose);
+          Spectrum2DWindow* w_picked = new Spectrum2DWindow(ws_);
           //set main preferences
           w_picked->setMainPreferences(prefs_);
           String new_name = w2->widget()->canvas()->getCurrentLayer().name+"(picked)";
@@ -2063,7 +1965,7 @@ namespace OpenMS
           w_picked->widget()->canvas()->setCurrentLayerName(new_name);
 
           connectWindowSignals_(w_picked);
-          w_picked->setCaption(new_name.c_str());
+          w_picked->setWindowTitle(new_name.c_str());
           addClient(w_picked,filename);
           addTab_(w_picked,new_name);
 
@@ -2144,9 +2046,7 @@ namespace OpenMS
     prefs_.setValue("PreferencesFile" , filename);
 
     //load preferences, if file exists
-    FILE * infile;
-    infile = fopen (filename.c_str(), "r");
-    if (infile != NULL)
+    if (File::exists(filename))
     {
       prefs_.clear();
       prefs_.setValue("PreferencesFile" , filename);
@@ -2158,7 +2058,6 @@ namespace OpenMS
       {
         cerr << "Unable to load INI File: '" << filename << "'" << endl;
       }
-      close (infile);
     }
 
     //set missing defaults
@@ -2249,7 +2148,7 @@ namespace OpenMS
     prefs_.setDefaults(default_preferences,"Preferences");
   }
 
-  void TOPPViewBase::openRecentFile(int i)
+  void TOPPViewBase::openRecentFile()
   {
     setCursor(Qt::WaitCursor);
     OpenDialog::Mower mow = OpenDialog::NO_MOWER;
@@ -2257,7 +2156,8 @@ namespace OpenMS
     {
       mow = OpenDialog::NOISE_ESTIMATOR;
     }
-    addSpectrum(recent_files_[i].c_str(),true,getPrefAsString("Preferences:DefaultMapView")=="2D",true,mow);
+    
+    addSpectrum(qobject_cast<QAction*>(sender())->text().toAscii().data(),true,getPrefAsString("Preferences:DefaultMapView")=="2D",true,mow);
     setCursor(Qt::ArrowCursor);
   }
 
@@ -2267,7 +2167,7 @@ namespace OpenMS
     Spectrum2DWindow* w = active2DWindow_();
     if (w!=0)
     {
-      FeaFiDialog dialog(this, "FeaFiDialog");
+      FeaFiDialog dialog(this);
       if (dialog.exec() == QDialog::Accepted)
       {
         //find features
@@ -2303,7 +2203,7 @@ namespace OpenMS
 
   void TOPPViewBase::openSpectrumDialog()
   {
-    OpenDialog dialog(prefs_,this,"Open Spectrum Dialog");
+    OpenDialog dialog(prefs_,this);
     if (dialog.exec())
     {
       //Open Files

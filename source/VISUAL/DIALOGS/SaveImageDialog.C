@@ -32,13 +32,12 @@
 #include <QtGui/QPushButton>  
 #include <QtGui/QComboBox>
 #include <QtGui/QLabel>
-#include <qimage.h>
-#include <qapplication.h>
-#include <qvalidator.h>
+#include <QtGui/QValidator>
 #include <QtGui/QGridLayout>
-#include <Q3HBoxLayout>
-#include <QImageWriter>
-
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QImageWriter>
+#include <QtGui/QApplication>
+ 
 // STL
 #include <iostream>
 #include <math.h>
@@ -47,15 +46,15 @@ namespace OpenMS
 {
 
 
-	SaveImageDialog::SaveImageDialog( QWidget * parent, const char * name, bool modal, Qt::WFlags f ):
-	QDialog(parent,name,modal,f)
+	SaveImageDialog::SaveImageDialog( QWidget * parent, Qt::WFlags f ):
+	QDialog(parent,f)
 	{
 		size_ratio_=1;
 		//create dialog and layout (grid)
-		QGridLayout* grid=new QGridLayout(this,5,2,10,5);
+		QGridLayout* grid=new QGridLayout(this);
 		
 		//add accept/cancel buttons (and their layout)
-		Q3BoxLayout* box_layout = new Q3HBoxLayout();
+		QBoxLayout* box_layout = new QHBoxLayout();
 		grid->addLayout(box_layout,5,1);
 		
 		QPushButton* button = new QPushButton(this);
@@ -72,11 +71,11 @@ namespace OpenMS
 		//add picture format selector
 		QLabel* label = new QLabel("Picture format:",this);
 		grid->addWidget(label,0,0);
-		format_ = new QComboBox(this,false);
+		format_ = new QComboBox(this);
 		QList<QByteArray> list = QImageWriter::supportedImageFormats();
 		for (int i = 0; i < list.size(); ++i)
 		{
-			format_->insertItem(list.at(i));
+			format_->insertItem(i,list.at(i));
 		}
 		grid->addWidget(format_,0,1,Qt::AlignLeft);
 		//set format to PNG/JPEG if available
@@ -84,22 +83,22 @@ namespace OpenMS
 		int jpeg=-1;
 		for (int i=0;i<format_->count();i++)
 		{	
-			if (format_->text(i)=="PNG")
+			if (format_->itemText(i)=="PNG")
 			{
 				png=i;
 			}
-			if (format_->text(i)=="JPEG")
+			if (format_->itemText(i)=="JPEG")
 			{
 				jpeg=i;
 			}			
 		}
 		if (png!=-1)
 		{
-			format_->setCurrentItem(png);
+			format_->setCurrentIndex(png);
 		}
 		else if (jpeg!=-1)
 		{
-			format_->setCurrentItem(jpeg);
+			format_->setCurrentIndex(jpeg);
 		}
 		
 		//add size boxes and label (and their layout)
@@ -107,7 +106,7 @@ namespace OpenMS
 		grid->addWidget(label,1,0);
 		
 		QValidator* v = new QIntValidator(1,10000,this);
-		box_layout = new Q3HBoxLayout();
+		box_layout = new QHBoxLayout();
 		grid->addLayout(box_layout,1,1);
 		size_x_ = new QLineEdit(this);
 		size_x_->setValidator(v);

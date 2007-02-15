@@ -90,7 +90,7 @@
 
 //QT
 #include <QtGui/QApplication>
-#include <QtGui/QPlastiqueStyle>
+#include <QtGui/QStyleFactory>
 
 //OpenMS
 #include <OpenMS/APPLICATIONS/TOPPViewBase.h>
@@ -159,15 +159,28 @@ int main( int argc, char ** argv )
 	{
 #endif
 	  QApplication a( argc, argv );
-		QPlastiqueStyle* plastique = new QPlastiqueStyle();
-		a.setStyle(plastique);
+	  
+	  //set plastique style if not windows / mac style is available
+	  QStringList styles = QStyleFactory::keys();
+	  if (styles.contains("windowsxp"))
+	  {
+			a.setStyle("windowsxp");
+	  }
+	  else if (styles.contains("macintosh"))
+	  {
+			a.setStyle("macintosh");
+	  }
+	  else if (styles.contains("plastique"))
+	  {
+			a.setStyle("plastique");
+	  }
+	  
 	  TOPPViewBase* mw = TOPPViewBase::instance();
-	  a.setMainWidget(mw);
 	  if (!param.getValue("ini").isEmpty())
 	  {
 	  	mw->loadPreferences((String)param.getValue("ini"));
 	  }
-	  mw->setCaption( "TOPPView" );
+	  mw->setWindowTitle( "TOPPView" );
 	  mw->show();
 	  
 	  //load command line files

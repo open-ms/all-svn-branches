@@ -34,8 +34,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	Spectrum1DGoToDialog::Spectrum1DGoToDialog( QWidget * parent, const char * name, Qt::WFlags fl)
-		:	QDialog(parent,name,fl),
+	Spectrum1DGoToDialog::Spectrum1DGoToDialog( QWidget * parent, Qt::WFlags fl)
+		:	QDialog(parent,fl),
 	  min_pos_(0.0f),
 	  max_pos_(1000.0f),
 	  center_pos_((min_pos_+max_pos_)/2.0f)

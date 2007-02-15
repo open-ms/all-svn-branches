@@ -37,8 +37,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	SmoothingDialog::SmoothingDialog(QWidget* parent, const char* name , Qt::WFlags fl )
-	    : QDialog(parent,name,fl)
+	SmoothingDialog::SmoothingDialog(QWidget* parent, Qt::WFlags fl )
+	    : QDialog(parent,fl)
 	{
 		setupUi(this);
 		

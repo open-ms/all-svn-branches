@@ -27,7 +27,7 @@
 #include <OpenMS/VISUAL/DIALOGS/Spectrum3DWidgetPDP.h>
 #include <OpenMS/VISUAL/Spectrum3DWidget.h>
 #include <QtGui/QLayout>
-#include <q3groupbox.h>
+#include <QtGui/QGroupBox>
 #include <QtGui/QCheckBox>
 #include <QtGui/QComboBox>
 #include<QtGui/QLabel>
@@ -48,9 +48,9 @@ namespace OpenMS
 							"<br>";
 		
 			QGridLayout* grid;	
-			grid = new QGridLayout(this,1,1);		
+			grid = new QGridLayout(this);		
 			canvas_ = manager->client("Canvas", this);
-			grid->addMultiCellWidget(canvas_, 0,1,0,1);
+			grid->addWidget(canvas_, 0,0,1,1);
 			load();
 	  }
 		

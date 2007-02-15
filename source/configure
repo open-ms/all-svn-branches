@@ -852,12 +852,11 @@ Optional Features:
   --enable-debuginfo      add -g to the compiler flags (to create debug information). Disables optimization!
   --disable-pedantic      removes the '-pedantic' flag when using gcc
   --disable-db            disable support for database connectivity
-  --with-db-driver        set the SQL DB driver to use (default: QMYSQL3)
+  --with-db-plugin        set the Qt SQL DB plugin to use (default: QMYSQL)
   --disable-cgal          disable the use of CGAL (for advanced d-dimensional geometry)
   --disable-netcdf        disable the use of NetCDF (a library for a data format)
   --disable-andims        disable the use of ANDI/MS (a library for a data format based on NetCDF)
   --disable-boost         disable the use of the Boost library (used for persitence)
-  --enable-python         enable Python support and search for executable
   --disable-libsvm        disable the use of libSVM (needed for rentention time prediction)
 
 Optional Packages:
@@ -872,12 +871,12 @@ Optional Packages:
   --with-qt=QTDIR         Qt4 is installed in QTDIR. Prefer this over the following options.
   --with-qt-incl=DIR      Qt4 header files are in DIR
   --with-qt-libs=DIR      Qt4 libraries are in DIR
-  --with-cgal-incl=DIR    CGAL header files are in DIR
-  --with-cgal-libs=DIR    CGAL libraries are in DIR
-  --with-moc=MOC          use MOC as the absolut	e path to the QT meta object compiler (moc)
+  --with-moc=MOC          use MOC as the absolute path to the QT meta object compiler (moc)
   --with-uic=UIC          use UIC as the absolute path to the QT user interface compiler (uic)
   --with-opengl-incl=DIR  OpenGL/Mesa header files are in DIR/GL
   --with-opengl-libs=DIR  OpenGL/Mesa libraries are in DIR/GL
+  --with-cgal-incl=DIR    CGAL header files are in DIR
+  --with-cgal-libs=DIR    CGAL libraries are in DIR
   --with-mesa             use MESA instead of OpenGL
   --with-netcdf-incl=DIR  specify the location of the NetCDF header file "netcdf.h"
   --with-netcdf-libs=DIR  specify the location of the NetCDF archive files "libnetcdf.a" and "libnetcdf_c++.a"
@@ -887,13 +886,6 @@ Optional Packages:
   --with-gsl-libs=DIR     specify the location of the GSL library files "libgsl.so" and "libgslcblas.so"
   --with-boost-incl=DIR   specify the location of the directory containing "boost/version.hpp"
   --with-boost-libs=DIR   specify the location of the Boost library files e.g. "libboost_serialization-gcc.a"
-  --with-python=EXE       enable Python support and use Python executable in EXE
-  --with-python-incl=DIR  Python includes (Python.h) is in DIR
-  --with-python-libs=DIR  Python library (libpython*.a) is in DIR
-  --with-python-ldopts=X  Use additional options X when linking with the Python library
-  --with-sip=DIR          the SIP executable resides in DIR
-  --with-sip-lib=DIR      the SIP library resides in DIR
-  --with-sip-incl=DIR     the SIP header file resides in DIR
   --with-libsvm-incl=DIR  specify the location of the libSVM directory containing "svm.h"
   --with-libsvm-libs=DIR  specify the location of the libSVM directory containing "svm.o"
   --with-xerces-incl=DIR  specify the location of the XERCES include directory containing "xercesc/util/Base64.hpp"
@@ -1492,9 +1484,9 @@ if test "${enable_db+set}" = set; then
   enableval="$enable_db"
 
 fi;
-# Check whether --enable-db-driver or --disable-db-driver was given.
-if test "${enable_db_driver+set}" = set; then
-  enableval="$enable_db_driver"
+# Check whether --enable-db-plugin or --disable-db-plugin was given.
+if test "${enable_db_plugin+set}" = set; then
+  enableval="$enable_db_plugin"
 
 fi;
 
@@ -1551,23 +1543,6 @@ if test "${with_qt_libs+set}" = set; then
   withval="$with_qt_libs"
 
 fi;
-# Check whether --enable-cgal or --disable-cgal was given.
-if test "${enable_cgal+set}" = set; then
-  enableval="$enable_cgal"
-
-fi;
-
-# Check whether --with-cgal-incl or --without-cgal-incl was given.
-if test "${with_cgal_incl+set}" = set; then
-  withval="$with_cgal_incl"
-
-fi;
-
-# Check whether --with-cgal-libs or --without-cgal-libs was given.
-if test "${with_cgal_libs+set}" = set; then
-  withval="$with_cgal_libs"
-
-fi;
 
 # Check whether --with-moc or --without-moc was given.
 if test "${with_moc+set}" = set; then
@@ -1590,6 +1565,23 @@ fi;
 # Check whether --with-opengl-libs or --without-opengl-libs was given.
 if test "${with_opengl_libs+set}" = set; then
   withval="$with_opengl_libs"
+
+fi;
+# Check whether --enable-cgal or --disable-cgal was given.
+if test "${enable_cgal+set}" = set; then
+  enableval="$enable_cgal"
+
+fi;
+
+# Check whether --with-cgal-incl or --without-cgal-incl was given.
+if test "${with_cgal_incl+set}" = set; then
+  withval="$with_cgal_incl"
+
+fi;
+
+# Check whether --with-cgal-libs or --without-cgal-libs was given.
+if test "${with_cgal_libs+set}" = set; then
+  withval="$with_cgal_libs"
 
 fi;
 
@@ -1661,53 +1653,6 @@ if test "${with_boost_libs+set}" = set; then
   withval="$with_boost_libs"
 
 fi;
-# Check whether --enable-python or --disable-python was given.
-if test "${enable_python+set}" = set; then
-  enableval="$enable_python"
-
-fi;
-
-# Check whether --with-python or --without-python was given.
-if test "${with_python+set}" = set; then
-  withval="$with_python"
-
-fi;
-
-# Check whether --with-python-incl or --without-python-incl was given.
-if test "${with_python_incl+set}" = set; then
-  withval="$with_python_incl"
-
-fi;
-
-# Check whether --with-python-libs or --without-python-libs was given.
-if test "${with_python_libs+set}" = set; then
-  withval="$with_python_libs"
-
-fi;
-
-# Check whether --with-python-ldopts or --without-python-ldopts was given.
-if test "${with_python_ldopts+set}" = set; then
-  withval="$with_python_ldopts"
-
-fi;
-
-# Check whether --with-sip or --without-sip was given.
-if test "${with_sip+set}" = set; then
-  withval="$with_sip"
-
-fi;
-
-# Check whether --with-sip-lib or --without-sip-lib was given.
-if test "${with_sip_lib+set}" = set; then
-  withval="$with_sip_lib"
-
-fi;
-
-# Check whether --with-sip-incl or --without-sip-incl was given.
-if test "${with_sip_incl+set}" = set; then
-  withval="$with_sip_incl"
-
-fi;
 # Check whether --enable-libsvm or --disable-libsvm was given.
 if test "${enable_libsvm+set}" = set; then
   enableval="$enable_libsvm"
@@ -1737,6 +1682,8 @@ if test "${with_xerces_libs+set}" = set; then
   withval="$with_xerces_libs"
 
 fi;
+
+
 
 
 
@@ -1784,7 +1731,7 @@ fi
 if test "$with_db_plugin" != ""; then
 	DB_PLUGIN="${with_db_plugin}"
 else
-	DB_PLUGIN="QMYSQL3"
+	DB_PLUGIN="QMYSQL"
 fi
 cat >>confdefs.h <<_ACEOF
 #define DB_PLUGIN "${DB_PLUGIN}"
@@ -22787,7 +22734,7 @@ echo "$as_me: error: Aborted." >&2;}
 
 
 				if test "${QT_INCPATH}" != /usr/include && test "${QT_INCPATH}" != "" ; then
-		GUI_INCLUDES="${GUI_INCLUDES} -I${QT_INCPATH} -I${QT_INCPATH}/QtCore/ -I${QT_INCPATH}/QtXml/ -I${QT_INCPATH}/QtSql/ -I${QT_INCPATH}/QtNetwork/ -I${QT_INCPATH}/QtGui/ -I${QT_INCPATH}/QtOpenGL/ -I${QT_INCPATH}/Qt3Support/"
+		GUI_INCLUDES="${GUI_INCLUDES} -I${QT_INCPATH}"
 	fi
 
 
@@ -23438,16 +23385,14 @@ echo "${ECHO_T}yes" >&6
 
 
 		X=`pwd`
-		echo "$as_me:$LINENO: checking linking against Qt libraries" >&5
-echo $ECHO_N "checking linking against Qt libraries... $ECHO_C" >&6
+		echo "$as_me:$LINENO: checking linking against QtCore lib" >&5
+echo $ECHO_N "checking linking against QtCore lib... $ECHO_C" >&6
 
 		if test "${QT_LIBPATH}" != "/usr/lib" ; then
-			QTQGL_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL"
-			QT_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support"
+			QT_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQtOpenGL"
 		else
 			QT_LIBPATH=""
-			QTQGL_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL"
-			QT_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support"
+			QT_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQtOpenGL"
 		fi
 
 								SAVE_LIBS=${LIBS}

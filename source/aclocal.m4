@@ -3056,7 +3056,7 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
 	dnl	Add the Qt include path to the GUI includes
 	dnl
 	if test "${QT_INCPATH}" != /usr/include && test "${QT_INCPATH}" != "" ; then
-		GUI_INCLUDES="${GUI_INCLUDES} -I${QT_INCPATH} -I${QT_INCPATH}/QtCore/ -I${QT_INCPATH}/QtXml/ -I${QT_INCPATH}/QtSql/ -I${QT_INCPATH}/QtNetwork/ -I${QT_INCPATH}/QtGui/ -I${QT_INCPATH}/QtOpenGL/ -I${QT_INCPATH}/Qt3Support/"
+		GUI_INCLUDES="${GUI_INCLUDES} -I${QT_INCPATH}"
 	fi	
 ])
 
@@ -3157,15 +3157,13 @@ AC_DEFUN(CF_GUI_OPENGL_LINK_TEST, [
 
 AC_DEFUN(CF_GUI_QT_LINK_TEST, [
 		X=`pwd`
-		AC_MSG_CHECKING(linking against Qt libraries)
+		AC_MSG_CHECKING(linking against QtCore lib)
 
 		if test "${QT_LIBPATH}" != "/usr/lib" ; then
-			QTQGL_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL"
-			QT_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQt3Support"
+			QT_LIBOPTS="-L${QT_LIBPATH} -lQtCore -lQtSql -lQtGui -lQtOpenGL"
 		else 
 			QT_LIBPATH=""
-			QTQGL_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support -lQtOpenGL"
-			QT_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQt3Support"
+			QT_LIBOPTS="-lQtCore -lQtSql -lQtGui -lQtOpenGL"
 		fi
 
 		dnl

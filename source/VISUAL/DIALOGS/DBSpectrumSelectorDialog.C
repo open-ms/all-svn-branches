@@ -30,12 +30,11 @@
 #include <QtGui/QPushButton>
 #include <QtGui/QLayout>
 #include <QtGui/QLineEdit>
-#include <q3table.h>
+#include <QtGui/QTableWidget>
 #include <QtGui/QLabel>
-#include <QSqlQuery>
-#include <Q3HBoxLayout>
-#include <Q3VBoxLayout>
-#include <QVariant>
+#include <QtSql/QSqlQuery>
+#include <QtGui/QHBoxLayout>
+#include <QtGui/QVBoxLayout>
 
 #include <sstream>
 
@@ -44,8 +43,8 @@ using namespace std;
 
 namespace OpenMS
 {
-	DBSpectrumSelectorDialog::DBSpectrumSelectorDialog(DBConnection& adapter, vector<UnsignedInt>& result,QWidget* parent, const char* name) 
-	 : QDialog(parent,name), 
+	DBSpectrumSelectorDialog::DBSpectrumSelectorDialog(DBConnection& adapter, vector<UnsignedInt>& result,QWidget* parent) 
+	 : QDialog(parent), 
 	 	 adapter_(adapter), 
 	 	 result_(result)
 	{ 	
@@ -57,7 +56,7 @@ namespace OpenMS
 		QPushButton* ok_button_ = new QPushButton("&OK",this);
 		connect(ok_button_,SIGNAL(clicked()),this,SLOT(ok()));
 	
-		Q3HBoxLayout* hbox1_ = new Q3HBoxLayout();
+		QHBoxLayout* hbox1_ = new QHBoxLayout();
 		hbox1_->addStretch(1);
 		hbox1_->addWidget(ok_button_);
 		hbox1_->addWidget(cancel_button_);
@@ -70,7 +69,7 @@ namespace OpenMS
 		QPushButton* search_button_ = new QPushButton("refresh",this);
 		connect(search_button_,SIGNAL(clicked()),this,SLOT(loadSpectra()));
 		
-		Q3HBoxLayout* hbox2_ = new Q3HBoxLayout();
+		QHBoxLayout* hbox2_ = new QHBoxLayout();
 		hbox2_->addWidget(label_);
 		hbox2_->addWidget(search_string_);
 		hbox2_->addWidget(search_button_);
@@ -79,22 +78,17 @@ namespace OpenMS
 		hbox2_->setMargin(6);
 	
 		//table + layout
-		table_ = new Q3Table(0,4,this);
+		table_ = new QTableWidget(0,4,this);
 		table_->setMinimumWidth(650);
 		table_->setMinimumHeight(300);
 		//todo sort whole rows instead of one column
 		//table_->setSorting(true);
-		table_->setSelectionMode(Q3Table::NoSelection);
-		table_->setRowMovingEnabled(false);
-		table_->setColumnReadOnly(1,true);
-		table_->setColumnReadOnly(2,true);
-		table_->setColumnReadOnly(3,true);
-		table_->setLeftMargin(0);
-		table_->horizontalHeader()->setLabel(0, "",20);
-		table_->horizontalHeader()->setLabel(1, "MS Experiment id",100);
-		table_->horizontalHeader()->setLabel(2, "description",400);
-		table_->horizontalHeader()->setLabel(3, "type",80);
-		Q3VBoxLayout* vbox1_ = new Q3VBoxLayout(this);
+		table_->setSelectionMode(QTableWidget::NoSelection);
+		table_->horizontalHeaderItem(0)->setText("");
+		table_->horizontalHeaderItem(1)->setText("MS Experiment id");
+		table_->horizontalHeaderItem(2)->setText("description");
+		table_->horizontalHeaderItem(3)->setText("type");
+		QVBoxLayout* vbox1_ = new QVBoxLayout(this);
 		vbox1_->addLayout(hbox2_);
 		vbox1_->insertWidget(-1,table_,1);
 		vbox1_->addLayout(hbox1_);
@@ -110,11 +104,11 @@ namespace OpenMS
 	
 	void DBSpectrumSelectorDialog::ok()
 	{ 	
-		for (SignedInt col=0;col<table_->numRows();++col)
+		for (SignedInt col=0;col<table_->rowCount();++col)
 		{
-			if(dynamic_cast<Q3CheckTableItem*>(table_->item(col,0))->isChecked())
+			if(table_->item(col,0)->checkState()==Qt::Checked)
 			{
-				result_.push_back(atoi(table_->text(col,1).toAscii().data()));
+				result_.push_back(table_->item(col,1)->text().toInt());
 			}
 		}
 		emit accept();
@@ -131,28 +125,26 @@ namespace OpenMS
 		query << " s.MSLevel='1' GROUP BY e.id ORDER BY e.id ASC";
 		QSqlQuery result;
 		adapter_.executeQuery(query.str(),result);
-		table_->setNumRows(result.size());
-	 	table_->setLeftMargin(0);
+		table_->setRowCount(result.size());
 	 	UnsignedInt row=0;
 	 	while(result.isValid())
 		{
 			//id, description
 	 		for (unsigned int col = 0; col < 3; col++) 
 	 		{ 
-	      table_->setText(row,col+1,result.value(col).toString());
+	      table_->item(row,col+1)->setText(result.value(col).toString());
 	    }
 	    //type
-	    if (result.value(2).asInt()==1)
+	    if (result.value(2).toInt()==1)
 	    {
-	    	table_->setText(row,3,"MS");
+	    	table_->item(row,3)->setText("MS");
 	    }
 	    else
 	    {
-	    	table_->setText(row,3,"HPLC-MS");
+	    	table_->item(row,3)->setText("HPLC-MS");
 	    }
 	    //checkboxes
-	    Q3CheckTableItem* checker = new Q3CheckTableItem(table_,QString());
-	    table_->setItem(row,0,checker);
+	    table_->item(row,0)->setCheckState(Qt::Unchecked);
 	    ++row;
 	    result.next();
 		}

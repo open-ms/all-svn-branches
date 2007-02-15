@@ -28,7 +28,7 @@
 #include <OpenMS/VISUAL/VISUALIZER/MetaInfoVisualizer.h>
 
 //QT
-#include <QGridLayout>
+#include <QtGui/QGridLayout>
 #include <QtGui/QPushButton>
 #include <QtGui/QLineEdit>
 #include <QtGui/QGridLayout>

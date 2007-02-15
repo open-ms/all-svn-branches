@@ -35,9 +35,8 @@
 
 // QT includes
 #include <QtGui/QMessageBox>
-#include <q3buttongroup.h>
 #include <QtGui/QRadioButton>
-#include <q3filedialog.h>
+#include <QtGui/QFileDialog>
 #include <QtGui/QLineEdit>
 #include <QtGui/QPushButton>
 #include <QtGui/QInputDialog>
@@ -51,8 +50,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	OpenDialog::OpenDialog( Param& preferences, QWidget * parent, const char * name, Qt::WFlags fl)
-		: QDialog(parent,name,fl),
+	OpenDialog::OpenDialog( Param& preferences, QWidget * parent, Qt::WFlags fl)
+		: QDialog(parent,fl),
 			prefs_(preferences)
 	{
 		setupUi(this);
@@ -63,14 +62,14 @@ namespace OpenMS
 		}
 		if ((String)(getPref_("Preferences:MapIntensityCutoff"))!="None")
 		{
-			mower->setCurrentText("Noise Estimator");
+			mower->setCurrentIndex(mower->findText("Noise Estimator"));
 		}
 
 		FileHandler fh;
-		filetypes_->insertItem("Detect automatically",0);
+		filetypes_->insertItem(0,"Detect automatically",0);
 		for (int i=1; i< FileHandler::SIZE_OF_TYPE; ++i)
 		{
-			filetypes_->insertItem(fh.typeToName((FileHandler::Type)(i)).c_str(),i);
+			filetypes_->insertItem(filetypes_->count(),fh.typeToName((FileHandler::Type)(i)).c_str(),i);
 		}
 	}
 	
@@ -82,7 +81,7 @@ namespace OpenMS
 	void OpenDialog::browse()
 	{
 		//browse files
-		if (source->selected()==dynamic_cast<QAbstractButton*>(file_radio))
+		if (file_radio->isChecked())
 		{
 			String filter_all = "all files (*.dta;*.dta2d;*.DTA;*.DTA2D";
 			String filter_single = "dta files (*.dta;*.DTA);;dta2d files (*.dta2d;*.DTA2D)";
@@ -93,7 +92,7 @@ namespace OpenMS
 			filter_single +=";;mzXML files (*.mzXML;*.mzxml;*.MZXML);;mzData files (*.mzData;*.mzdata;*.MZDATA);;feature map (*.feat;*.FEAT);;feature pairs (*.pairs;*.PAIRS);;all files (*.*)";
 			filter_all += ";*.mzXML;*.mzxml;*.MZXML;*.mzData;*.mzdata;*.MZDATA;*.feat;*.FEAT;*.pairs;*.PAIRS);;" + filter_single;
 		
-		 	QStringList files = Q3FileDialog::getOpenFileNames(filter_all.c_str(), prefs_.getValue("Preferences:DefaultPath").toString().c_str(), this,"open file dialog", "Select file(s) to open");
+		 	QStringList files = QFileDialog::getOpenFileNames(this, "Open file(s)", filter_all.c_str(), prefs_.getValue("Preferences:DefaultPath").toString().c_str());
 			//check if the dialog was canceled
 			if (files.size()!=0)
 			{
@@ -124,11 +123,11 @@ namespace OpenMS
 					stringstream ss;
 					ss << "Enter password for user '" << getPref_("Preferences:DB:Login") << "' at '"<< getPref_("Preferences:DB:Host")<<":"<<getPref_("Preferences:DB:Port")<<"' : ";
 					bool ok;
-					QString text = QInputDialog::getText("TOPPView Database Password", ss.str().c_str(), QLineEdit::Password,QString::null, &ok, this);
+					QString text = QInputDialog::getText(this, "TOPPView Database Password", ss.str().c_str(), QLineEdit::Password,QString::null, &ok);
 					if ( ok )
-						{
-							prefs_.setValue("DBPassword",text.toAscii().data());
-						}
+					{
+						prefs_.setValue("DBPassword",text.toAscii().data());
+					}
 				}
 		
 				if (!(prefs_.getValue("DBPassword").isEmpty()))
@@ -188,7 +187,7 @@ namespace OpenMS
 	OpenDialog::DataSource OpenDialog::getSource() const
 	{
 		// files
-		if (source->selected()==dynamic_cast<QAbstractButton*>(file_radio))
+		if (file_radio->isChecked())
 		{
 			return FILE;
 		}
@@ -207,7 +206,7 @@ namespace OpenMS
 	
 	bool OpenDialog::isViewMaps2D() const
 	{
-		if (open_maps->selected()==dynamic_cast<QAbstractButton*>(d2_radio))
+		if (d2_radio->isChecked())
 		{
 			return true;
 		}
@@ -216,7 +215,7 @@ namespace OpenMS
 	
 	OpenDialog::Mower OpenDialog::getMower() const
 	{
-		if (mower->currentItem()==0)
+		if (mower->currentIndex()==0)
 		{
 			return NO_MOWER;
 		}
@@ -225,7 +224,7 @@ namespace OpenMS
 	
 	bool OpenDialog::isOpenAsNewTab() const
 	{
-		if (open_in->selected()==dynamic_cast<QAbstractButton*>(newtab_radio))
+		if (newtab_radio->isChecked())
 		{
 			return true;
 		}
@@ -234,7 +233,7 @@ namespace OpenMS
 
   FileHandler::Type OpenDialog::forcedFileType() const
   {
-  	return (FileHandler::Type) (filetypes_->currentItem());
+  	return (FileHandler::Type) (filetypes_->currentIndex());
   }
 
 }

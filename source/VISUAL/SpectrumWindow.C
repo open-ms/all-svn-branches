@@ -36,6 +36,7 @@ namespace OpenMS
 		: QMainWindow(parent,f),
 			PreferencesManager()
 	{
+		setAttribute(Qt::WA_DeleteOnClose);
 		setMinimumSize(300,300);	// prevents errors caused by too small width,height values
 	}
 	

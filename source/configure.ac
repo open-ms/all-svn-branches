@@ -29,7 +29,7 @@ AC_ARG_ENABLE(optimization,    [  --disable-optimization  disables optimizing th
 AC_ARG_ENABLE(debuginfo,       [  --enable-debuginfo      add -g to the compiler flags (to create debug information). Disables optimization!])
 AC_ARG_ENABLE(pedantic,        [  --disable-pedantic      removes the '-pedantic' flag when using gcc])
 AC_ARG_ENABLE(db, 				     [  --disable-db            disable support for database connectivity])
-AC_ARG_ENABLE(db-driver,       [  --with-db-driver        set the SQL DB driver to use (default: QMYSQL3)])
+AC_ARG_ENABLE(db-plugin,       [  --with-db-plugin        set the Qt SQL DB plugin to use (default: QMYSQL)])
 AC_ARG_WITH(compiler,          [  --with-compiler=CXX     use CXX as C++ compiler])
 AC_ARG_WITH(cxxflags,          [  --with-cxxflags=FLAGS   add FLAGS to the C++ compiler flags (commas are converted to blanks)])
 AC_ARG_WITH(ldflags,           [  --with-ldflags=FLAGS    add FLAGS to the linker flags (commas are converted to blanks)])
@@ -39,13 +39,13 @@ AC_ARG_WITH(default-path,      [  --with-default-path=DIR use default path DIR/i
 AC_ARG_WITH(qt,                [  --with-qt=QTDIR         Qt4 is installed in QTDIR. Prefer this over the following options.])
 AC_ARG_WITH(qt-incl,           [  --with-qt-incl=DIR      Qt4 header files are in DIR])
 AC_ARG_WITH(qt-libs,           [  --with-qt-libs=DIR      Qt4 libraries are in DIR])
-AC_ARG_ENABLE(cgal,            [  --disable-cgal          disable the use of CGAL (for advanced d-dimensional geometry)])
-AC_ARG_WITH(cgal-incl,         [  --with-cgal-incl=DIR    CGAL header files are in DIR])
-AC_ARG_WITH(cgal-libs,         [  --with-cgal-libs=DIR    CGAL libraries are in DIR])
-AC_ARG_WITH(moc,               [  --with-moc=MOC          use MOC as the absolut	e path to the QT meta object compiler (moc)])
+AC_ARG_WITH(moc,               [  --with-moc=MOC          use MOC as the absolute path to the QT meta object compiler (moc)])
 AC_ARG_WITH(uic,               [  --with-uic=UIC          use UIC as the absolute path to the QT user interface compiler (uic)])
 AC_ARG_WITH(opengl-incl,       [  --with-opengl-incl=DIR  OpenGL/Mesa header files are in DIR/GL])
 AC_ARG_WITH(opengl-libs,       [  --with-opengl-libs=DIR  OpenGL/Mesa libraries are in DIR/GL])
+AC_ARG_ENABLE(cgal,            [  --disable-cgal          disable the use of CGAL (for advanced d-dimensional geometry)])
+AC_ARG_WITH(cgal-incl,         [  --with-cgal-incl=DIR    CGAL header files are in DIR])
+AC_ARG_WITH(cgal-libs,         [  --with-cgal-libs=DIR    CGAL libraries are in DIR])
 AC_ARG_WITH(mesa,              [  --with-mesa             use MESA instead of OpenGL])
 AC_ARG_ENABLE(netcdf,          [  --disable-netcdf        disable the use of NetCDF (a library for a data format)])
 AC_ARG_WITH(netcdf-incl,       [  --with-netcdf-incl=DIR  specify the location of the NetCDF header file "netcdf.h"])
@@ -58,25 +58,27 @@ AC_ARG_WITH(gsl-libs,          [  --with-gsl-libs=DIR     specify the location o
 AC_ARG_ENABLE(boost,           [  --disable-boost         disable the use of the Boost library (used for persitence)])
 AC_ARG_WITH(boost-incl,        [  --with-boost-incl=DIR   specify the location of the directory containing "boost/version.hpp"])
 AC_ARG_WITH(boost-libs,        [  --with-boost-libs=DIR   specify the location of the Boost library files e.g. "libboost_serialization-gcc.a"])
-AC_ARG_ENABLE(python,          [  --enable-python         enable Python support and search for executable])
-AC_ARG_WITH(python,            [  --with-python=EXE       enable Python support and use Python executable in EXE])
-AC_ARG_WITH(python-incl,       [  --with-python-incl=DIR  Python includes (Python.h) is in DIR])
-AC_ARG_WITH(python-libs,       [  --with-python-libs=DIR  Python library (libpython*.a) is in DIR])
-AC_ARG_WITH(python-ldopts,     [  --with-python-ldopts=X  Use additional options X when linking with the Python library])
-AC_ARG_WITH(sip,               [  --with-sip=DIR          the SIP executable resides in DIR])
-AC_ARG_WITH(sip-lib,           [  --with-sip-lib=DIR      the SIP library resides in DIR])
-AC_ARG_WITH(sip-incl,          [  --with-sip-incl=DIR     the SIP header file resides in DIR])
+AC_ARG_ENABLE(libsvm,          [  --disable-libsvm        disable the use of libSVM (needed for rentention time prediction)])
+AC_ARG_WITH(libsvm-incl,       [  --with-libsvm-incl=DIR  specify the location of the libSVM directory containing "svm.h"])
+AC_ARG_WITH(libsvm-libs,       [  --with-libsvm-libs=DIR  specify the location of the libSVM directory containing "svm.o"])
+AC_ARG_WITH(xerces-incl,       [  --with-xerces-incl=DIR  specify the location of the XERCES include directory containing "xercesc/util/Base64.hpp"])
+AC_ARG_WITH(xerces-libs,       [  --with-xerces-libs=DIR  specify the location of the XERCES lib directory containing "libxerces-c.so"])
+
+dnl AC_ARG_ENABLE(python,          [  --enable-python         enable Python support and search for executable])
+dnl AC_ARG_WITH(python,            [  --with-python=EXE       enable Python support and use Python executable in EXE])
+dnl AC_ARG_WITH(python-incl,       [  --with-python-incl=DIR  Python includes (Python.h) is in DIR])
+dnl AC_ARG_WITH(python-libs,       [  --with-python-libs=DIR  Python library (libpython*.a) is in DIR])
+dnl AC_ARG_WITH(python-ldopts,     [  --with-python-ldopts=X  Use additional options X when linking with the Python library])
+dnl AC_ARG_WITH(sip,               [  --with-sip=DIR          the SIP executable resides in DIR])
+dnl AC_ARG_WITH(sip-lib,           [  --with-sip-lib=DIR      the SIP library resides in DIR])
+dnl AC_ARG_WITH(sip-incl,          [  --with-sip-incl=DIR     the SIP header file resides in DIR])
 dnl AC_ARG_ENABLE(fftw,            [  --enable-fftw           enable the build of OpenMS with support for FFTW (a FFT library)])
 dnl AC_ARG_WITH(fftw-incl,         [  --with-fftw-incl=DIR    fftw includes are in DIR])
 dnl AC_ARG_WITH(fftw-lib,          [  --with-fftw-lib=DIR     libfftw is in DIR])
 dnl AC_ARG_ENABLE(fftw-float,      [  --disable-fftw-float    disable support for float precision in FFT code])
 dnl AC_ARG_ENABLE(fftw-double,     [  --disable-fftw-double   disable support for double precision in FFT code])
 dnl AC_ARG_ENABLE(fftw-longdbl,    [  --disable-fftw-longdbl  disable support for long double precision in FFT code])
-AC_ARG_ENABLE(libsvm,          [  --disable-libsvm        disable the use of libSVM (needed for rentention time prediction)])
-AC_ARG_WITH(libsvm-incl,       [  --with-libsvm-incl=DIR  specify the location of the libSVM directory containing "svm.h"])
-AC_ARG_WITH(libsvm-libs,       [  --with-libsvm-libs=DIR  specify the location of the libSVM directory containing "svm.o"])
-AC_ARG_WITH(xerces-incl,       [  --with-xerces-incl=DIR  specify the location of the XERCES include directory containing "xercesc/util/Base64.hpp"])
-AC_ARG_WITH(xerces-libs,       [  --with-xerces-libs=DIR  specify the location of the XERCES lib directory containing "libxerces-c.so"])
+
 
 dnl
 dnl find the path to the OpenMS root directory
@@ -127,7 +129,7 @@ AC_SUBST(ENABLE_DB)
 if test "$with_db_plugin" != ""; then
 	DB_PLUGIN="${with_db_plugin}"
 else
-	DB_PLUGIN="QMYSQL3"
+	DB_PLUGIN="QMYSQL"
 fi
 AC_DEFINE_UNQUOTED(DB_PLUGIN,"${DB_PLUGIN}")
 

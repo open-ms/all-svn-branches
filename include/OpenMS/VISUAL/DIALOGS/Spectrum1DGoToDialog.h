@@ -47,7 +47,7 @@ namespace OpenMS
 		Q_OBJECT
 		
 		public:
-			Spectrum1DGoToDialog( QWidget* parent = 0, const char* name = 0, Qt::WFlags fl = 0 );
+			Spectrum1DGoToDialog( QWidget* parent = 0, Qt::WFlags fl = 0 );
 			~Spectrum1DGoToDialog();    
 	    void setMinPosition(float min);
 	    void setMaxPosition(float max);

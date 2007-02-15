@@ -46,7 +46,7 @@ namespace OpenMS
 		Q_OBJECT
 		
 		public:
-			FeaFiDialog( QWidget* parent = 0, const char* name = 0, Qt::WFlags fl = 0 );
+			FeaFiDialog( QWidget* parent = 0, Qt::WFlags fl = 0 );
 			~FeaFiDialog();    
 	    FeatureFinder& getFeatureFinder();
 	

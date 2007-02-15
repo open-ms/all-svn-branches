@@ -35,8 +35,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	PeakPickingDialog::PeakPickingDialog(QWidget* parent, const char* name , Qt::WFlags fl )
-	    : QDialog(parent,name,fl)
+	PeakPickingDialog::PeakPickingDialog(QWidget* parent, Qt::WFlags fl )
+	    : QDialog(parent,fl)
 	{
 		setupUi(this);
 		

@@ -30,7 +30,7 @@
 // Qt
 #include <QtGui/QLayout>
 #include <QtGui/QLabel>
-#include <q3groupbox.h>
+#include <QtGui/QGroupBox>
 #include <QtGui/QCheckBox>
 #include <QtGui/QComboBox>
 #include <QtGui/QGridLayout>
@@ -52,7 +52,7 @@ namespace OpenMS
 			QGridLayout* grid;
 		
 			//1D View Tab
-			grid = new QGridLayout(this,3,2);
+			grid = new QGridLayout(this);
 		
 			grid->setMargin(6);
 			grid->setSpacing(4);	
@@ -61,11 +61,11 @@ namespace OpenMS
 			
 			grid->addWidget(colors_,0,0);
 		
-			Q3GroupBox* box = new Q3GroupBox(2,Qt::Horizontal,"Mapping",this);
+			QGroupBox* box = new QGroupBox("Mapping",this);
 			new QLabel("Map m/z to: ",box);
-			axis_mapping_ = new QComboBox(false, box, "read-only combobox");
-			axis_mapping_->insertItem("X-Axis");
-			axis_mapping_->insertItem("Y-Axis");  
+			axis_mapping_ = new QComboBox( box);
+			axis_mapping_->insertItem(0,"X-Axis");
+			axis_mapping_->insertItem(1,"Y-Axis");  
 			grid->addWidget(box,1,0);
 		
 			load();
@@ -80,7 +80,14 @@ namespace OpenMS
 		{
 			Spectrum1DWidget* w = dynamic_cast<Spectrum1DWidget*>(manager_);
 			
-		  (w->canvas()->isMzToXAxis()) ? axis_mapping_->setCurrentText("X-Axis") : axis_mapping_->setCurrentText("Y-Axis");
+		  if (w->canvas()->isMzToXAxis()) 
+		  {
+		  	axis_mapping_->setCurrentIndex(0);
+			}
+			else
+			{
+				axis_mapping_->setCurrentIndex(1);
+			}
 		}
 		
 		void Spectrum1DWidgetPDP::save()

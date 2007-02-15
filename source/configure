@@ -22625,7 +22625,6 @@ echo "$as_me: error: Aborted." >&2;}
 echo "${ECHO_T}(${QT_LIBPATH})" >&6
 	fi
 
-<<<<<<< .mine
   echo "$as_me:$LINENO: checking for libQtGui" >&5
 echo $ECHO_N "checking for libQtGui... $ECHO_C" >&6
   if test "${QT_LIBPATH}" != "" ; then
@@ -22806,8 +22805,6 @@ echo "$as_me: error: Aborted." >&2;}
     fi
   fi
 
-=======
->>>>>>> .r1530
 
 				if test "${QT_INCPATH}" != /usr/include && test "${QT_INCPATH}" != "" ; then
 		GUI_INCLUDES="${GUI_INCLUDES} -I${QT_INCPATH} -I${QT_INCPATH}/QtCore/ -I${QT_INCPATH}/QtXml/ -I${QT_INCPATH}/QtSql/ -I${QT_INCPATH}/QtNetwork/ -I${QT_INCPATH}/QtGui/ -I${QT_INCPATH}/QtOpenGL/ -I${QT_INCPATH}/Qt3Support/"

@@ -2969,8 +2969,6 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
 		AC_MSG_RESULT()
 		AC_MSG_RESULT(Qt header file Qt/qgl.h not found! Please specify the path to the Qt headers)
 		AC_MSG_RESULT(by passing the option --with-qt-incl=DIR to configure.)
-		AC_MSG_RESULT(You may also set the environment variable QTDIR to the correct)
-		AC_MSG_RESULT(path - configure will recognize this, too.)
 		AC_MSG_RESULT(The Qt package can be found under the following URL:)
 		AC_MSG_RESULT(  http://www.troll.no/qt)
 		CF_ERROR
@@ -2995,8 +2993,6 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
 		AC_MSG_RESULT()
 		AC_MSG_RESULT([The Qt4 libraries could not be found. Please specify the path to libQtCore])
  		AC_MSG_RESULT([by passing the option --with-qt-libs=DIR to configure.])
-		AC_MSG_RESULT([You may also set the environment variable QTDIR to the correct])
-		AC_MSG_RESULT([path - configure will recognize this, too.])
 		AC_MSG_RESULT([The Qt package can be found under the following URL:])
 		AC_MSG_RESULT(  http://www.troll.no/qt)
 		CF_ERROR
@@ -3013,8 +3009,6 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
 	    AC_MSG_RESULT()
 	    AC_MSG_RESULT([The QtGui library could not be found. Please specify the path to libqt])
 	    AC_MSG_RESULT([by passing the option --with-qt-libs=DIR to configure.])
-	    AC_MSG_RESULT([If the QT library was built with thread support enabled (libqt-mt])
-	    AC_MSG_RESULT([instead of libqt), please specify the option --with-threadsafe-qt.])
 	    AC_MSG_RESULT([The QT package can be found under the following URL:])
 	    AC_MSG_RESULT(  http://www.troll.no/qt)
 	    AC_MSG_RESULT()
@@ -3032,8 +3026,6 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
       AC_MSG_RESULT()
       AC_MSG_RESULT([The QtOpenGL library could not be found. Please specify the path to libqt])
       AC_MSG_RESULT([by passing the option --with-qt-libs=DIR to configure.])
-      AC_MSG_RESULT([If the QT library was built with thread support enabled (libqt-mt])
-      AC_MSG_RESULT([instead of libqt), please specify the option --with-threadsafe-qt.])
       AC_MSG_RESULT([The QT package can be found under the following URL:])
       AC_MSG_RESULT(  http://www.troll.no/qt)
       AC_MSG_RESULT()
@@ -3051,8 +3043,6 @@ AC_DEFUN(CF_GUI_QT_BASICS, [
       AC_MSG_RESULT()
       AC_MSG_RESULT([The QtSql library could not be found. Please specify the path to libqt])
       AC_MSG_RESULT([by passing the option --with-qt-libs=DIR to configure.])
-      AC_MSG_RESULT([If the QT library was built with thread support enabled (libqt-mt])
-      AC_MSG_RESULT([instead of libqt), please specify the option --with-threadsafe-qt.])
       AC_MSG_RESULT([The QT package can be found under the following URL:])
       AC_MSG_RESULT(  http://www.troll.no/qt)
       AC_MSG_RESULT()
@@ -3192,7 +3182,7 @@ AC_DEFUN(CF_GUI_QT_LINK_TEST, [
     	AC_MSG_RESULT()
     	AC_MSG_RESULT([Cannot link against Qt!])
     	AC_MSG_RESULT([If Qt4 is installed, please specify the path to the library])
-    	AC_MSG_RESULT([using the option --with-qt-libs=DIR or the environment variable QTDIR.])
+    	AC_MSG_RESULT([using the option --with-qt-libs=DIR])
     	AC_MSG_RESULT()
     	AC_MSG_RESULT([Another possible reason is threading support. Have a look at the OpenMS installation documentation!])
     	CF_ERROR
@@ -3215,7 +3205,7 @@ AC_DEFUN(CF_GUI_QT_LINK_TEST, [
       AC_MSG_RESULT()
       AC_MSG_RESULT([Cannot link against QtGui!])
       AC_MSG_RESULT([If Qt4 is installed, please specify the path to the library])
-      AC_MSG_RESULT([using the option --with-qt-libs=DIR or the environment variable QTDIR.])
+      AC_MSG_RESULT([using the option --with-qt-libs=DIR])
       AC_MSG_RESULT()
       AC_MSG_RESULT([Another possible reason is threading support. Have a look at the OpenMS installation documentation!])
       CF_ERROR
@@ -3322,6 +3312,7 @@ AC_DEFUN(CF_GUI_QT_LINK_TEST, [
       CF_ERROR
     else
       QT_VERSION_STR=`cat qt.version | ${SED} "s/-.*//"`
+			${RM} qt.version 2>/dev/null
       AC_MSG_RESULT(${QT_VERSION_STR})
 
       dnl
@@ -3335,8 +3326,6 @@ AC_DEFUN(CF_GUI_QT_LINK_TEST, [
           AC_MSG_RESULT([to a suitable version or specify the path to a more])
           AC_MSG_RESULT([suitable version of libqt* by passing the option --with-qt-libs=DIR])
           AC_MSG_RESULT([to configure.])
-          AC_MSG_RESULT([You may also set the environment variable QTDIR to the correct])
-          AC_MSG_RESULT([path - configure will recognize this, too.])
           AC_MSG_RESULT()
           AC_MSG_RESULT([The complete QT package can be found under the following URL:])
           AC_MSG_RESULT([  http://www.troll.no/qt])
@@ -3395,7 +3384,7 @@ AC_DEFUN(CF_GUI_QT_EXECUTABLES, [
 			if test "${MOC_VERSION}" != "${QT_VERSION_STR}" ; then
 				AC_MSG_RESULT()
 				AC_MSG_RESULT([Qt version (${QT_VERSION_STR}) is incompatible with moc version (${MOC_VERSION})!])
-				AC_MSG_RESULT([Please check your QTDIR environment variable, include the correct])
+				AC_MSG_RESULT([Please set the correct --with-qt=QTDIR option, include the correct ])
 				AC_MSG_RESULT([path to moc in your PATH environment variable, or specify the correct])
 				AC_MSG_RESULT([path to moc using the option --with-moc=PATH to rerun configure.])
 				CF_ERROR
@@ -3421,7 +3410,6 @@ AC_DEFUN(CF_GUI_QT_EXECUTABLES, [
 		if test "${UIC}" = uic ; then
 			AC_MSG_RESULT()
 			AC_MSG_RESULT([Could not find the Qt User Interface Compiler (uic)!])
-			AC_MSG_RESULT([You might run into trouble if you want to compile MolGUI.])
 			AC_MSG_RESULT([Please include the correct path to uic into your])
 			AC_MSG_RESULT([PATH environment variable or specify the path to uic])
 			AC_MSG_RESULT([using the option --with-uic=PATH to rerun configure.])

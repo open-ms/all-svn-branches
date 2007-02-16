@@ -92,7 +92,7 @@ namespace OpenMS
 			filter_single +=";;mzXML files (*.mzXML;*.mzxml;*.MZXML);;mzData files (*.mzData;*.mzdata;*.MZDATA);;feature map (*.feat;*.FEAT);;feature pairs (*.pairs;*.PAIRS);;all files (*.*)";
 			filter_all += ";*.mzXML;*.mzxml;*.MZXML;*.mzData;*.mzdata;*.MZDATA;*.feat;*.FEAT;*.pairs;*.PAIRS);;" + filter_single;
 		
-		 	QStringList files = QFileDialog::getOpenFileNames(this, "Open file(s)", filter_all.c_str(), prefs_.getValue("Preferences:DefaultPath").toString().c_str());
+		 	QStringList files = QFileDialog::getOpenFileNames(this, "Open file(s)", prefs_.getValue("Preferences:DefaultPath").toString().c_str(), filter_all.c_str());
 			//check if the dialog was canceled
 			if (files.size()!=0)
 			{

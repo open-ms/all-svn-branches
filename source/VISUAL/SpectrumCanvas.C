@@ -82,11 +82,11 @@ namespace OpenMS
 	void SpectrumCanvas::createCustomMouseCursors_()
 	{
 		// create custom mouse cursor for translate action as Qt doesn't provide one
-		QPixmap* pm1 = new QPixmap(handopen);
+		QPixmap* pm1 = new QPixmap(XPM_handopen);
 		pm1->setMask(pm1->createHeuristicMask());
 		cursor_translate_ = QCursor(*pm1);
 	
-		QPixmap* pm2 = new QPixmap(handclosed);
+		QPixmap* pm2 = new QPixmap(XPM_handclosed);
 		pm2->setMask(pm2->createHeuristicMask());
 		cursor_translate_in_progress_ = QCursor(*pm2); 
 	}

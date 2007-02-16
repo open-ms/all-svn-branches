@@ -83,16 +83,16 @@ namespace OpenMS
 		//browse files
 		if (file_radio->isChecked())
 		{
-			String filter_all = "all files (*.dta;*.dta2d;*.DTA;*.DTA2D";
-			String filter_single = "dta files (*.dta;*.DTA);;dta2d files (*.dta2d;*.DTA2D)";
+			String filter_all = "readable files (*.dta *.dta2d";
+			String filter_single = "dta files (*.dta);;dta2d files (*.dta2d)";
 	#ifdef ANDIMS_DEF
-			filter_single += ";;ANDI/MS files (*.cdf;*.CDF)";
-			filter_all +=";*.cdf;*.CDF";
+			filter_all +=" *.cdf";
+			filter_single += ";;ANDI/MS files (*.cdf)";
 	#endif
-			filter_single +=";;mzXML files (*.mzXML;*.mzxml;*.MZXML);;mzData files (*.mzData;*.mzdata;*.MZDATA);;feature map (*.feat;*.FEAT);;feature pairs (*.pairs;*.PAIRS);;all files (*.*)";
-			filter_all += ";*.mzXML;*.mzxml;*.MZXML;*.mzData;*.mzdata;*.MZDATA;*.feat;*.FEAT;*.pairs;*.PAIRS);;" + filter_single;
+			filter_all += " *.mzXML *.mzData *.feat *.pairs);;" ;
+			filter_single +=";;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.feat);;feature pairs (*.pairs);;all files (*.*)";
 		
-		 	QStringList files = QFileDialog::getOpenFileNames(this, "Open file(s)", prefs_.getValue("Preferences:DefaultPath").toString().c_str(), filter_all.c_str());
+		 	QStringList files = QFileDialog::getOpenFileNames(this, "Open file(s)", prefs_.getValue("Preferences:DefaultPath").toString().c_str(), (filter_all+ filter_single).c_str());
 			//check if the dialog was canceled
 			if (files.size()!=0)
 			{

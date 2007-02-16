@@ -29,10 +29,6 @@
 
 // QT
 #include <QtGui/QWidget>
-#include <QtGui/QPainter>
-class QPixmap;
-class QResizeEvent;
-class QMouseEvent;
 class QPaintEvent;
 
 // OpenMS
@@ -59,6 +55,7 @@ namespace OpenMS
 	
 			///Vector of vector of doubles that defines the grid
 			typedef std::vector<std::vector<double> > GridVector;
+			
 			/// Where the axis is placed
 			static enum {TOP, BOTTOM, LEFT, RIGHT} ALIGNMENT_ENUM;
 	
@@ -103,9 +100,6 @@ namespace OpenMS
 			void setInverseOrientation(bool inverse_orientation);
 			bool hasInverseOrientation();
 	
-			/// see QWidget
-			virtual QSize sizeHint () const;
-	
 	    inline double getAxisMinimum() const
 	    {
 	    	return min_;
@@ -118,29 +112,19 @@ namespace OpenMS
 			inline void setPenWidth(int p)
 			{
 				pen_width_ = p;
-				invalidate_();
+				update();
 			}
-	
-		signals:
-			void sendAxisMouseMovement();
 	
 		public slots:
 			///sets min/max of the axis
 			void setAxisBounds(double min, double max);
-			/// see QWidget
-			void resize(int,int);
-			/// see QWidget
-			void resize(QSize);
-			/// set maximum number of tick levels (default=3), reduce number in case of small axis
-			bool setTickLevel(UnsignedInt level);
-			void mouseMoveEvent( QMouseEvent *e);
+			
+			/// set maximum number of tick levels (1 <= level <= 3)
+			void setTickLevel(UnsignedInt level);
 	
 		protected:
 			/// Vector that defines the position of the ticks/gridlines and the shown values on axis
 			GridVector grid_line_;
-	
-	    /// The MappingInfo object holds information about switched/mirrored axis
-	    MappingInfo mapping_info_;
 	
 			/// format of axis scale (linear or logarithmic)
 			bool is_log_;
@@ -158,24 +142,13 @@ namespace OpenMS
 			std::string legend_;
 			/// maximum number of tick levels (default=3)
 			UnsignedInt tick_level_;
-	
-			///painting buffer
-			QPixmap buffer_;
-			///the painter
-			QPainter painter_;
 			/// drawing thicker lines (e.g. in printing) leads to better results
 			UnsignedInt pen_width_;
-	
-			/// see QWidget
-			void resizeEvent( QResizeEvent * );
+
 			/// see QWidget
 			void paintEvent( QPaintEvent * );
-	
+			
 			double grid_line_dist_;
-	
-		private:
-			///repaint the content of the widget to the internal pixmap if content or size changed.
-			void invalidate_();
 	
 			/// Scale axis values to correct value (i.e. reverse log, unit conversion)
 			inline double scale_(double x)
@@ -183,27 +156,7 @@ namespace OpenMS
 				return (is_log_)? Math::round_decimal(pow(x,10),-8) : Math::round_decimal(x,-8);
 			}
 	
-			inline int probeFont_(QString probe, double width, double height, int index=0)
-			{
-				int probe_font = 10;
-				painter_.setFont(QFont("courier",probe_font));
-				QRect prb_bound = QFontMetrics(painter_.font()).boundingRect(probe);
-				double ratio1 = prb_bound.width()/width;
-				double ratio2 = prb_bound.height()/height;
-				double res = (ratio1 > ratio2)? ratio1:ratio2;
-				if (index==1)
-				{
-					return static_cast<int>(probe_font/res*3.0/2.4);
-				}
-				else if (index==2)
-				{
-					return static_cast<int>(probe_font/res*3.0/2);
-				}
-				else
-				{ 
-					return static_cast<int>(probe_font/res);
-				}
-			}
+			int probeFont_(QPainter& painter, const QString& probe, double width, double height, int index=0);
  	};
 } // namespace OpenMS
 

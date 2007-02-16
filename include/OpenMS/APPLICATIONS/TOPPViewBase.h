@@ -46,7 +46,7 @@ class QLabel;
 class QMenu;
 class QListWidget;
 class QListWidgetItem;
-class QCloseEvent;
+class QDockWidget;
 
 namespace OpenMS
 {
@@ -72,9 +72,11 @@ namespace OpenMS
       Q_OBJECT
 
     public:
-      /// Access is possible only through this method as TOPPViewBase is a singleton
-      static TOPPViewBase* instance();
-
+      ///Constructor
+      TOPPViewBase(QWidget* parent=0, Qt::WindowFlags f=0);
+      ///Destructor
+      ~TOPPViewBase();
+      
       /**
       	@brief Opens and displays a spectrum form a file
       	
@@ -173,8 +175,8 @@ namespace OpenMS
       void closeFile();
       /// saves the current view of the current layer
       void saveLayer();
-      /// updates the toolbar, when the active window changes
-      void updateToolbar(QWidget* widget);
+      /// updates the toolbar
+      void updateToolbar();
       /// adapts the layer bar to the active window
       void updateLayerbar();
       /// brings the tab corresponding to the active window in front
@@ -221,12 +223,12 @@ namespace OpenMS
       /** @name Tabbar slots
       */
       //@{    	
-    	/// Closes the window associated to tab @p index
-      void closeFileByTab(int index);
-      /// Raises the window associated to tab @p index
+    	/// Closes the window with id @p index
+      void closeByTab(int index);
+      /// Raises the window with id @p index
       void focusByTab(int index);
-      /// Removes a window from the tab bar when it is closed
-      void removeWidgetFromBar(QObject*);
+      /// Removes the tab with index @p index
+      void removeTab(int index);
       /// Opens a file from the recent files menu
       void openRecentFile();
       //@}
@@ -244,23 +246,13 @@ namespace OpenMS
       void resetZoom();
       //@}
 
-      ///use this event to do the cleanup
-      virtual void closeEvent(QCloseEvent * e);
-      /// Call whenever a window is closed
-      virtual void windowClosed();
-
     protected:
-      ///singleton instance
-      static TOPPViewBase* instance_;
-      ///not accessable as this class is a singleton
-      TOPPViewBase(QWidget* parent=0, Qt::WindowFlags f=0);
-      ///not accessable as this class is a singleton
-      ~TOPPViewBase();
-
       /// Adds a tab for the window in the tabbar
       void addTab_(SpectrumWindow*, const String&);
       /// connect the slots/signals for status messages and mode changes (paint or mouse mode)
       void connectWindowSignals_(SpectrumWindow* sw);
+      ///returns the window with id @p id
+      SpectrumWindow* window_(int id) const;
       ///returns a pointer to the active SpectrumWindow (0 if none is active)
       SpectrumWindow*  activeWindow_() const;
       ///returns a pointer to the active SpectrumCanvas (0 if none is active)
@@ -277,13 +269,11 @@ namespace OpenMS
       // Docu in base class
       virtual PreferencesDialogPage* createPreferences(QWidget* parent);
 
-      /// Layer mangment bar
-      QToolBar* layer_bar_;
       /// Layer mangment widget
       QListWidget* layer_manager_;
 
       /// Creates the toolbars and connects the signals and slots
-      void createToolBar_();
+      void createToolBars_();
 
       /** @name Toolbar members
       */
@@ -318,8 +308,6 @@ namespace OpenMS
 
       ///Tab bar. The address of the corresponding window to a tab is stored as an int in tabData()
       EnhancedTabBar* tab_bar_;
-      ///map between window address as int and window pointer used for toolbar and tabbar
-      std::map<qlonglong,SpectrumWindow*> id_map_;
 
       /// Label for messages in the status bar
       QLabel* message_label_;

@@ -62,13 +62,13 @@
 
 //Qt
 #include <QtGui/QToolBar>
+#include <QtGui/QDockWidget>
 #include <QtGui/QListWidget>
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
 #include <QtGui/QPrinter>
 #include <QtGui/QStatusBar>
 #include <QtGui/QToolButton>
-#include <QtGui/QCloseEvent>
 #include <QtGui/QMessageBox>
 #include <QtGui/QListWidgetItem>
 #include <QtGui/QToolTip>
@@ -111,23 +111,14 @@ namespace OpenMS
 {
   using namespace Internal;
 	using namespace Math;
-	
-  TOPPViewBase* TOPPViewBase::instance_ = 0;
-
-  TOPPViewBase* TOPPViewBase::instance()
-  {
-    if (!instance_)
-    {
-      instance_ = new TOPPViewBase();
-    }
-    return instance_;
-  }
 
   TOPPViewBase::TOPPViewBase(QWidget* parent, Qt::WindowFlags f):
       QMainWindow(parent,f),
       PreferencesManager(),
       recent_files_()
   {
+  	setWindowTitle("TOPPView");
+    
     //prevents errors caused by too small width,height values
     setMinimumSize(200,200);
 
@@ -142,11 +133,11 @@ namespace OpenMS
 
     //connect slots and sigals for selecting spectra
     connect(tab_bar_,SIGNAL(selected(int)),this,SLOT(focusByTab(int)));
-    connect(tab_bar_,SIGNAL(doubleClicked(int)),this,SLOT(closeFileByTab(int)));
+    connect(tab_bar_,SIGNAL(doubleClicked(int)),this,SLOT(closeByTab(int)));
 
     box_layout->addWidget(tab_bar_);
     ws_=new QWorkspace(dummy);
-    connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateToolbar(QWidget*)));
+    connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateToolbar()));
     connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateTabBar(QWidget*)));
     connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateLayerbar()));
     box_layout->addWidget(ws_);
@@ -219,28 +210,18 @@ namespace OpenMS
     statusBar()->addPermanentWidget(int_label_,0);
 
     //create toolbars and connect signals
-    createToolBar_();
+    createToolBars_();
 
-    //layer bar (for managing several Spectra in a 1D-Window)
-    layer_bar_ = new QToolBar(this);
-    layer_bar_->setWindowTitle("Layer manager");
-    addToolBar(Qt::RightToolBarArea, layer_bar_); 
-
-    //add Layer Manager and connect signals
-    layer_manager_ = new QListWidget(layer_bar_);
-    layer_manager_->setContextMenuPolicy(Qt::CustomContextMenu);
-		layer_manager_->setSizePolicy(QSizePolicy::QSizePolicy::Preferred,QSizePolicy::Minimum);
-		layer_manager_->setSortingEnabled(false);
-		layer_bar_->hide();
-    connect(layer_manager_,SIGNAL(currentRowChanged(int)),this,SLOT(layerSelectionChange(int)));
-		connect(layer_manager_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(layerContextMenu(const QPoint&)));
-		connect(layer_manager_,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(layerVisibilityChange(QListWidgetItem*)));
-		
     //register meta value names
     MetaInfo::registry().registerName("FeatureDrawMode", "Specify what to draw of the Feature: BoundingBox, ConvexHulls");
 
     //set preferences file name + load preferencs
     loadPreferences();
+  }
+
+  TOPPViewBase::~TOPPViewBase()
+  {
+    savePreferences();
   }
 
   void TOPPViewBase::addDBSpectrum(UnsignedInt db_id, bool as_new_window, bool maps_as_2d, bool maximize, OpenDialog::Mower use_mower)
@@ -666,18 +647,6 @@ namespace OpenMS
     }
   }
 
-
-  void TOPPViewBase::addTab_(SpectrumWindow* w, const String& tabCaption)
-  {
-    //add to tab bar (map the address of the widget and the pointer)
-    int index = tab_bar_->addTab(tabCaption.c_str());
-    tab_bar_->setTabData(index, qlonglong(w));
-    id_map_[qlonglong(w)]=w;
-    //connect slots and sigals for removing the spectrum from the bar, when it is closed
-    connect(w,SIGNAL(destroyed(QObject*)),this,SLOT(removeWidgetFromBar(QObject*)));
-    tab_bar_->setCurrentIndex(index);
-  }
-
   void TOPPViewBase::maximizeActiveSpectrum()
   {
     if (ws_->activeWindow())
@@ -686,16 +655,50 @@ namespace OpenMS
     }
   }
 
+  void TOPPViewBase::addTab_(SpectrumWindow* w, const String& tabCaption)
+  {
+    //add to tab bar
+    w->window_id  = tab_bar_->addTab(tabCaption.c_str());
+    
+    //connect slots and sigals for removing the spectrum from the bar, when it is closed
+    connect(w,SIGNAL(aboutToBeDestroyed(int)),this,SLOT(removeTab(int)));
+    tab_bar_->setCurrentIndex(w->window_id );
+  }
+
+  void TOPPViewBase::removeTab(int index)
+  {
+  	tab_bar_->removeTab(index);
+  }
+
+  SpectrumWindow* TOPPViewBase::window_(int id) const
+  {
+  	QList<QWidget*> windows = ws_->windowList();
+		for(int i=0; i< windows.size(); ++i)
+		{
+			SpectrumWindow* window = dynamic_cast<SpectrumWindow*>(windows.at(i));
+			if (window->window_id == id)
+			{
+				return window;
+			}
+		}
+		return 0;
+  }
+
+  void TOPPViewBase::closeByTab(int index)
+  {
+  	SpectrumWindow* window = window_(index);
+  	if (window)
+  	{
+  		window->close();
+  	}
+  }
+ 
   void TOPPViewBase::focusByTab(int index)
   {
-		std::map<qlonglong,SpectrumWindow*>::iterator it = id_map_.find(tab_bar_->tabData(index).toInt());
-		if ( it != id_map_.end())
-		{
-  		it->second->setFocus();
-  	}
-  	else
+  	SpectrumWindow* window = window_(index);
+  	if (window)
   	{
-  		cout << "focusByTab: Could not find tab with index '" << index << "'!" << endl;
+  		window->setFocus();
   	}
   }
 
@@ -939,27 +942,9 @@ namespace OpenMS
     }  	
   }
 
-  void TOPPViewBase::closeFileByTab(int index)
+  void TOPPViewBase::createToolBars_()
   {
-		std::map<qlonglong,SpectrumWindow*>::iterator it = id_map_.find(tab_bar_->tabData(index).toInt());
-		if ( it != id_map_.end())
-		{
-  		it->second->close();
-  	}
-  	else
-  	{
-  		cout << "closeFileByTab: Could not find tab with index '" << index << "'!" << endl;
-  	}
-  }
-
-  TOPPViewBase::~TOPPViewBase()
-  {
-    //do not add anything here. This class is a singleton
-    //use closeEvent(...) to do the cleanup
-  }
-
-  void TOPPViewBase::createToolBar_()
-  {
+  	//**Basic tool bar for all views**
     tool_bar_ = addToolBar("Basic tool bar");
 
     //action modes
@@ -1009,7 +994,7 @@ namespace OpenMS
     tool_bar_->resize(tool_bar_->sizeHint());
     tool_bar_->show();
 
-    // 1d toolbar
+    //**1D toolbar**
     tool_bar_1d_ = addToolBar("1D tool bar");
 
     group = new QActionGroup(tool_bar_1d_);
@@ -1027,7 +1012,7 @@ namespace OpenMS
     tool_bar_1d_->addWidget(link_box_);
     connect(link_box_,SIGNAL(activated(const QString&)),this,SLOT(linkActiveTo(const QString&)));
 
-    // 2d toolbar
+    //**2D toolbar**
     tool_bar_2d_ = addToolBar("2D tool bar");
 
     dm_points_2d_ = tool_bar_2d_->addAction(QPixmap(XPM_points),"Show dots");
@@ -1044,6 +1029,16 @@ namespace OpenMS
     dm_contours_2d_->setShortcut(Qt::Key_C);
     dm_contours_2d_->setCheckable(true);
     connect(dm_contours_2d_, SIGNAL(toggled(bool)), this, SLOT(showContours(bool)));
+
+    //**layer bar**
+    QDockWidget* layer_bar = new QDockWidget("Layers", this);
+    addDockWidget(Qt::RightDockWidgetArea, layer_bar);
+    layer_manager_ = new QListWidget(layer_bar);
+    layer_bar->setWidget(layer_manager_);
+    layer_manager_->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(layer_manager_,SIGNAL(currentRowChanged(int)),this,SLOT(layerSelectionChange(int)));
+		connect(layer_manager_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(layerContextMenu(const QPoint&)));
+		connect(layer_manager_,SIGNAL(itemChanged(QListWidgetItem*)),this,SLOT(layerVisibilityChange(QListWidgetItem*)));
   }
 
   void TOPPViewBase::linkActiveTo(const QString& path)
@@ -1077,8 +1072,8 @@ namespace OpenMS
     if (active_linked_to_address != 0)
     {
       //remove signals
-      disconnect(id_map_[active_linked_to_address]->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)), activeWindow_()->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
-      disconnect(activeWindow_()->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)), id_map_[active_linked_to_address]->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
+      //disconnect(id_map_[active_linked_to_address]->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)), activeWindow_()->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
+      //disconnect(activeWindow_()->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)), id_map_[active_linked_to_address]->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
       //remove from the map
       link_map_.erase(active_address);
       link_map_.erase(active_linked_to_address);
@@ -1207,7 +1202,7 @@ namespace OpenMS
     }
   }
 
-  void TOPPViewBase::updateToolbar(QWidget* /*widget*/)
+  void TOPPViewBase::updateToolbar()
   {
     SpectrumWindow* w = activeWindow_();
 
@@ -1329,8 +1324,6 @@ namespace OpenMS
 
   void TOPPViewBase::updateLayerbar()
   {
-  	//cout << "updateLayerbar()" << endl;
-    layer_bar_->hide();
 		layer_manager_->clear();
 
     SpectrumCanvas* cc = activeCanvas_();
@@ -1346,6 +1339,10 @@ namespace OpenMS
 			item->setText(cc->getLayer(i).name.c_str());
     	if (cc->getLayer(i).visible)
     	{
+    		item->setCheckState(Qt::Unchecked);
+    	}
+    	else
+    	{
     		item->setCheckState(Qt::Checked);
     	}
     	//highlight active item
@@ -1356,12 +1353,11 @@ namespace OpenMS
 				layer_manager_->blockSignals(false);
     	}
     }
-    layer_bar_->show();
   }
 
 	void TOPPViewBase::layerSelectionChange(int i)
 	{
-		activeCanvas_()->activateLayer(i);
+		if (i!=-1) activeCanvas_()->activateLayer(i);
 	}
 
 	void TOPPViewBase::layerContextMenu(const QPoint & pos)
@@ -1371,7 +1367,7 @@ namespace OpenMS
 		{
 			QMenu* context_menu = new QMenu(layer_manager_);
 			QAction* delete_action = context_menu->addAction("Delete");
-			if (context_menu->exec(pos) == delete_action)
+			if (context_menu->exec(layer_manager_->mapToGlobal(pos)) == delete_action)
 			{
 				activeCanvas_()->removeLayer(layer_manager_->row(item));
 				updateLayerbar();
@@ -1382,27 +1378,27 @@ namespace OpenMS
 
 	void TOPPViewBase::layerVisibilityChange(QListWidgetItem* item)
 	{
-		//cout << "layerVisibilityChange() " << endl;
-		if (item)
+		int layer = layer_manager_->row(item);
+		bool visible = activeCanvas_()->getLayer(layer).visible;
+		
+		if (item->checkState()==Qt::Unchecked && visible)
 		{
-			int i = layer_manager_->row(item);
-			activeCanvas_()->changeVisibility(i,!activeCanvas_()->getLayer(i).visible);
+			activeCanvas_()->changeVisibility(layer,false);
 		}
+		else if (item->checkState()==Qt::Checked && !visible)
+		{
+			activeCanvas_()->changeVisibility(layer,true);
+		}
+			
+			
 	}
 
   void TOPPViewBase::updateTabBar(QWidget* w)
   {
-    if (w)
-    {
-      for (int i=0; i<tab_bar_->count(); ++i)
-      {
-      	if (tab_bar_->tabData(i).toLongLong() == qlonglong(w))
-      	{
-      		tab_bar_->setCurrentIndex(i);
-      		break;
-      	}
-      }
-    }
+  	if (w)
+  	{
+  		tab_bar_->setCurrentIndex(dynamic_cast<SpectrumWindow*>(w)->window_id);
+  	}
   }
 
   void TOPPViewBase::tileVertical()
@@ -1470,26 +1466,12 @@ namespace OpenMS
     }
   }
 
-  void TOPPViewBase::removeWidgetFromBar(QObject* o)
-  {
-    for (int i=0; i<tab_bar_->count(); ++i)
-    {
-    	if (tab_bar_->tabData(i).toLongLong() == qlonglong(o))
-    	{
-		    tab_bar_->removeTab(i);
-		    id_map_.erase(qlonglong(o));
-    		break;
-    	}
-    }
-  }
-
   void TOPPViewBase::connectWindowSignals_(SpectrumWindow* sw)
   {
-    connect(sw->widget()->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateToolbar(QWidget*)));
+    connect(sw->widget()->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateToolbar()));
     connect(sw,SIGNAL(sendStatusMessage(std::string,OpenMS::UnsignedInt)),this,SLOT(showStatusMessage(std::string,OpenMS::UnsignedInt)));
     connect(sw,SIGNAL(sendCursorStatus(double,double,double)),this,SLOT(showCursorStatus(double,double,double)));
-    connect(sw,SIGNAL(modesChanged(QWidget*)),this,SLOT(updateToolbar(QWidget*)));
-    connect(sw,SIGNAL(destroyed()),this,SLOT(windowClosed()));
+    connect(sw,SIGNAL(modesChanged(QWidget*)),this,SLOT(updateToolbar()));
   
   	Spectrum2DWindow* sw2 = dynamic_cast<Spectrum2DWindow*>(sw);
   	if (sw2 != 0)
@@ -2135,16 +2117,17 @@ namespace OpenMS
 
   void TOPPViewBase::openRecentFile()
   {
-    setCursor(Qt::WaitCursor);
+  	cout << "TEST" << endl;
+  	setCursor(Qt::WaitCursor);
     OpenDialog::Mower mow = OpenDialog::NO_MOWER;
     if ( getPrefAsString("Preferences:MapIntensityCutoff")=="Noise Estimator")
     {
       mow = OpenDialog::NOISE_ESTIMATOR;
     }
-    
     addSpectrum(qobject_cast<QAction*>(sender())->text().toAscii().data(),true,getPrefAsString("Preferences:DefaultMapView")=="2D",true,mow);
-    setCursor(Qt::ArrowCursor);
-  }
+    setCursor(Qt::ArrowCursor); 	
+  	cout << "TEST_END" << endl; 
+ }
 
   void TOPPViewBase::findFeaturesActiveSpectrum()
   {
@@ -2169,22 +2152,6 @@ namespace OpenMS
     }
 #endif
   }
-
-  void TOPPViewBase::closeEvent(QCloseEvent * e)
-  {
-    savePreferences();
-    e->accept();
-  }
-
-  void TOPPViewBase::windowClosed()
-  {
-    // close tab bar, when last window is closed
-    if (ws_->windowList().count()==1)
-    {
-      layer_bar_->hide();
-    }
-  }
-
 
   void TOPPViewBase::openSpectrumDialog()
   {

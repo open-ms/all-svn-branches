@@ -34,7 +34,8 @@ namespace OpenMS
 
 	SpectrumWindow::SpectrumWindow(QWidget* parent, Qt::WFlags f)  
 		: QMainWindow(parent,f),
-			PreferencesManager()
+			PreferencesManager(),
+			window_id(-1)
 	{
 		setAttribute(Qt::WA_DeleteOnClose);
 		setMinimumSize(300,300);	// prevents errors caused by too small width,height values
@@ -42,6 +43,7 @@ namespace OpenMS
 	
 	SpectrumWindow::~SpectrumWindow()
 	{
+		emit aboutToBeDestroyed(window_id);
 	}
 	
 	void SpectrumWindow::setWidget_(SpectrumWidget* widget)

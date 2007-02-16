@@ -160,7 +160,7 @@ int main( int argc, char ** argv )
 #endif
 	  QApplication a( argc, argv );
 	  
-	  //set plastique style if not windows / mac style is available
+	  //set plastique style unless windows / mac style is available
 	  QStringList styles = QStyleFactory::keys();
 	  
 	  if (styles.contains("windowsxp",Qt::CaseInsensitive))
@@ -176,12 +176,11 @@ int main( int argc, char ** argv )
 			a.setStyle("plastique");
 	  }
 	  
-	  TOPPViewBase* mw = TOPPViewBase::instance();
+	  TOPPViewBase* mw = new TOPPViewBase();
 	  if (!param.getValue("ini").isEmpty())
 	  {
 	  	mw->loadPreferences((String)param.getValue("ini"));
 	  }
-	  mw->setWindowTitle( "TOPPView" );
 	  mw->show();
 	  
 	  //load command line files
@@ -197,10 +196,10 @@ int main( int argc, char ** argv )
 	  }
 	  
 	  a.connect( &a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()) );
-	
-	  int res = a.exec();
-		mw->savePreferences();
-	  return res;
+
+	  int result = a.exec();
+	  delete(mw);
+	  return result;
 #ifndef DEBUG_TOPP
 	}
 	//######################## ERROR HANDLING #################################
@@ -242,6 +241,6 @@ int main( int argc, char ** argv )
 	}
 #endif
 	
-	return 0;
+	return 1;
 }
 

@@ -39,6 +39,19 @@ THISLIB=$(LIBNAME)
 
 # These depend on QT:
 GUI_CPP_SOURCES=\
+	EnhancedTabBar.C\
+	AxisWidget.C\
+	ColorSelector.C\
+	MultiGradient.C\
+	MultiGradientSelector.C\
+	HistogramWidget.C\
+	PreferencesManager.C\
+	ListStack.C\
+	PeakIcon.C\
+	MappingInfo.C\
+	AxisTickCalculator.C\
+	DataTable.C\
+	MSMetaDataExplorer.C\
 	LayerData.C\
 	SpectrumCanvas.C\
 	SpectrumWidget.C\
@@ -52,22 +65,18 @@ GUI_CPP_SOURCES=\
 	Spectrum3DCanvas.C\
 	Spectrum3DOpenGLCanvas.C\
 	Spectrum3DWidget.C\
-	Spectrum3DWindow.C\
-	EnhancedTabBar.C\
-	AxisWidget.C\
-	ColorSelector.C\
-	MultiGradientSelector.C\
-	MultiGradient.C\
-	HistogramWidget.C\
-	PreferencesManager.C\
-	ListStack.C\
-	PeakIcon.C\
-	MappingInfo.C\
-	AxisTickCalculator.C\
-	DataTable.C\
-	MSMetaDataExplorer.C
+	Spectrum3DWindow.C
+
 
 GUI_MOC_SOURCES=\
+	EnhancedTabBar_moc.C\
+	AxisWidget_moc.C\
+	ColorSelector_moc.C\
+	MultiGradientSelector_moc.C\
+	HistogramWidget_moc.C\
+	ListStack_moc.C\
+	DataTable_moc.C\
+	MSMetaDataExplorer_moc.C\
 	SpectrumCanvas_moc.C\
 	SpectrumWindow_moc.C\
 	SpectrumWidget_moc.C\
@@ -80,15 +89,7 @@ GUI_MOC_SOURCES=\
 	Spectrum3DCanvas_moc.C\
 	Spectrum3DOpenGLCanvas_moc.C\
 	Spectrum3DWidget_moc.C\
-	Spectrum3DWindow_moc.C\
-	EnhancedTabBar_moc.C\
-	AxisWidget_moc.C\
-	ColorSelector_moc.C\
-	MultiGradientSelector_moc.C\
-	HistogramWidget_moc.C\
-	ListStack_moc.C\
-	DataTable_moc.C\
-	MSMetaDataExplorer_moc.C
+	Spectrum3DWindow_moc.C
 
 #conditional compiles QT
 ifeq ($(ENABLE_GUI),true)

@@ -86,7 +86,7 @@ namespace OpenMS
   
     public: 
 			/// Constructor with flag for edit mode
-			MSMetaDataExplorer(bool editable = FALSE, QWidget *parent = 0, bool modal = FALSE, Qt::WFlags fl = 0 );
+			MSMetaDataExplorer(bool editable = FALSE, QWidget *parent = 0, bool modal = FALSE );
 		  
 			/**
 				@brief A template class to add classes

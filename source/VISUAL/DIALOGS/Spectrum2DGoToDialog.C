@@ -33,8 +33,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	Spectrum2DGoToDialog::Spectrum2DGoToDialog( QWidget * parent, Qt::WFlags fl)
-		: QDialog(parent,fl),
+	Spectrum2DGoToDialog::Spectrum2DGoToDialog( QWidget * parent)
+		: QDialog(parent),
 	  area_(DRange<2>(0.0f, 0.0f, 1000.0f, 1000.0f)),
 	  center_x_((area_.minX() + area_.maxX())/2.0f),
 	  center_y_((area_.minY() + area_.maxY())/2.0f)

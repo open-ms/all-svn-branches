@@ -49,7 +49,7 @@ namespace OpenMS
       Q_OBJECT
       
     public:
-      Spectrum3DCanvasPDP( Spectrum3DCanvas* manager, QWidget* parent = 0, Qt::WFlags f = 0);
+      Spectrum3DCanvasPDP( Spectrum3DCanvas* manager, QWidget* parent = 0);
       virtual ~Spectrum3DCanvasPDP();
       virtual void load();
       virtual void save();

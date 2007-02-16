@@ -49,7 +49,7 @@ namespace OpenMS
 			@param name The Widget's name
 			@param f Widget flags
 		*/
-		Spectrum3DWidget(QWidget* parent = 0, Qt::WFlags f = 0);
+		Spectrum3DWidget(QWidget* parent = 0);
 		
 		/// Destructor
 		virtual ~Spectrum3DWidget();

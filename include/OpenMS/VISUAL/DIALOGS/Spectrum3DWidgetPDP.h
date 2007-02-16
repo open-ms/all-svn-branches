@@ -46,7 +46,7 @@ namespace OpenMS
 			Q_OBJECT
 	
 			public:
-				Spectrum3DWidgetPDP( Spectrum3DWidget* manager, QWidget* parent = 0, Qt::WFlags f = 0);
+				Spectrum3DWidgetPDP( Spectrum3DWidget* manager, QWidget* parent = 0);
 				virtual ~Spectrum3DWidgetPDP();
 				virtual void load();
 				virtual void save();

@@ -50,7 +50,7 @@ namespace OpenMS
 		
 		public:
 			///Constructor
-			SaveImageDialog( QWidget * parent = 0, Qt::WFlags f = 0 );
+			SaveImageDialog( QWidget * parent = 0 );
 			///set size and size ratio
 			void setSize(int x, int y);
 			///accessors for the width

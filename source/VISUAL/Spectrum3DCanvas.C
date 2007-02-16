@@ -39,8 +39,8 @@ namespace OpenMS
 {
 	using namespace Internal;
 	
-Spectrum3DCanvas::Spectrum3DCanvas(QWidget* parent, Qt::WFlags f)
-	: SpectrumCanvas(parent, f)
+Spectrum3DCanvas::Spectrum3DCanvas(QWidget* parent)
+	: SpectrumCanvas(parent)
 {  
 	setFocusPolicy(Qt::TabFocus);
 	openglcanvas_= new Spectrum3DOpenGLCanvas(this, *this);

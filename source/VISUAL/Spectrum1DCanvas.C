@@ -44,8 +44,8 @@ namespace OpenMS
 	using namespace Math;
 	using namespace Internal;
 		
-	Spectrum1DCanvas::Spectrum1DCanvas(QWidget* parent, Qt::WFlags f)
-		: SpectrumCanvas(parent, f)
+	Spectrum1DCanvas::Spectrum1DCanvas(QWidget* parent)
+		: SpectrumCanvas(parent)
 	{
 		
 	}

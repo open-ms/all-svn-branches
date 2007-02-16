@@ -31,6 +31,7 @@
 #include <OpenMS/VISUAL/PreferencesManager.h>
 #include <OpenMS/VISUAL/DIALOGS/OpenDialog.h>
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
+#include <OpenMS/VISUAL/SpectrumWindow.h>
 #include <OpenMS/VISUAL/EnhancedTabBar.h>
 
 //STL
@@ -55,7 +56,6 @@ namespace OpenMS
   class Spectrum1DWindow;
   class Spectrum2DWindow;
   class Spectrum3DWindow;
-  class SpectrumWindow;
 
   /**
   	@brief MDI window of TOPPView tool
@@ -73,7 +73,7 @@ namespace OpenMS
 
     public:
       ///Constructor
-      TOPPViewBase(QWidget* parent=0, Qt::WindowFlags f=0);
+      TOPPViewBase(QWidget* parent=0);
       ///Destructor
       ~TOPPViewBase();
       
@@ -131,14 +131,6 @@ namespace OpenMS
         	}
         }
         maximizeActiveSpectrum();
-        for (int i=0; i<tab_bar_->count(); ++i)
-        {
-        	if (tab_bar_->tabData(i).toInt() == qlonglong(ws_->activeWindow()))
-        	{
-        		tab_bar_->setCurrentIndex(i);
-        		break;
-        	}
-        }
       }
       /// returns selected peaks of the active spectrum framed by \c layer_index_.begin() and the last peak BEFORE \c layer_index_.end();
       std::vector<MSExperiment<>::SpectrumType::Iterator> getActiveSpectrumSelectedPeaks();
@@ -223,12 +215,12 @@ namespace OpenMS
       /** @name Tabbar slots
       */
       //@{    	
-    	/// Closes the window with id @p index
+    	/// Closes the window corresponding to the data of the tab with index @p index
       void closeByTab(int index);
-      /// Raises the window with id @p index
+      /// Raises the window corresponding to the data of the tab with index @p index
       void focusByTab(int index);
-      /// Removes the tab with index @p index
-      void removeTab(int index);
+      /// Removes the tab with data @p id
+      void removeTab(int id);
       /// Opens a file from the recent files menu
       void openRecentFile();
       //@}

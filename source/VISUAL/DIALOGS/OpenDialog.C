@@ -50,8 +50,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	OpenDialog::OpenDialog( Param& preferences, QWidget * parent, Qt::WFlags fl)
-		: QDialog(parent,fl),
+	OpenDialog::OpenDialog( Param& preferences, QWidget * parent)
+		: QDialog(parent),
 			prefs_(preferences)
 	{
 		setupUi(this);

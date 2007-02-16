@@ -45,8 +45,8 @@ namespace OpenMS
 {
 	namespace Internal
 	{
-		Spectrum3DCanvasPDP::Spectrum3DCanvasPDP(Spectrum3DCanvas* manager, QWidget* parent,  Qt::WFlags f)
-				: PreferencesDialogPage(manager,parent,f)
+		Spectrum3DCanvasPDP::Spectrum3DCanvasPDP(Spectrum3DCanvas* manager, QWidget* parent)
+				: PreferencesDialogPage(manager,parent)
 		{
 			help_ = "This is the preferences dialog of 3D spectrum!"
 								"<br>";

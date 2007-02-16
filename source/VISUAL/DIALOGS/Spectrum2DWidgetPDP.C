@@ -44,8 +44,8 @@ namespace OpenMS
 	namespace Internal
 	{
 	
-		Spectrum2DWidgetPDP::Spectrum2DWidgetPDP( Spectrum2DWidget* manager, QWidget* parent,  Qt::WFlags f)
-			: PreferencesDialogPage(manager,parent,f)
+		Spectrum2DWidgetPDP::Spectrum2DWidgetPDP( Spectrum2DWidget* manager, QWidget* parent)
+			: PreferencesDialogPage(manager,parent)
 		{
 			help_ = "This is the preferences dialog of 2D spectrum !"
 							"<br>";

@@ -36,8 +36,8 @@ using namespace std;
 namespace OpenMS
 {
 	
-	SpectrumWidget::SpectrumWidget(QWidget* parent, Qt::WFlags f)
-		: QWidget(parent,f),
+	SpectrumWidget::SpectrumWidget(QWidget* parent)
+		: QWidget(parent),
 			canvas_(0),
 			spectrum_window_(0)
 	{

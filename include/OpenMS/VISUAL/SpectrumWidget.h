@@ -203,7 +203,7 @@ namespace OpenMS
 		void updateVScrollbar(float min, float disp_min, float disp_max, float max);
 	protected:
 		/// Default constructor
-		SpectrumWidget(QWidget* parent = 0, Qt::WFlags f=0);
+		SpectrumWidget(QWidget* parent = 0);
 		/// Destructor
 		~SpectrumWidget();
 		/// Adds the canvas to the layout and connects some signals/slots

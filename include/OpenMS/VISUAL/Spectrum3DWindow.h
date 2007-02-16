@@ -47,7 +47,7 @@ namespace OpenMS
 		
 		public:
 			/// Constructor
-			Spectrum3DWindow(QWidget* parent=0, Qt::WFlags f=0);
+			Spectrum3DWindow(QWidget* parent=0);
 			/// Destructor
 			virtual ~Spectrum3DWindow();
 			// Docu in base class

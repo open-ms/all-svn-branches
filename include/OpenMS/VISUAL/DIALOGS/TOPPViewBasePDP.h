@@ -51,7 +51,7 @@ namespace OpenMS
 			
 		public:
 			/// Constructor
-			TOPPViewBasePDP( TOPPViewBase* manager, QWidget* parent = 0, Qt::WFlags f = 0);
+			TOPPViewBasePDP( TOPPViewBase* manager, QWidget* parent = 0);
 			///  Destructor
 			virtual ~TOPPViewBasePDP();
 			// Docu in base class

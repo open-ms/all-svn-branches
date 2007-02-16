@@ -74,7 +74,7 @@ namespace OpenMS
 			@param name The widget name.
 			@param f Qt::WidgetFlags that are passed on.
 		*/
-		Spectrum1DCanvas(QWidget* parent = 0, Qt::WFlags f = 0);	
+		Spectrum1DCanvas(QWidget* parent = 0);	
 		
 		/// Destructor
 		virtual ~Spectrum1DCanvas();

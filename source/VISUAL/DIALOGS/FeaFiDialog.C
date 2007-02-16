@@ -36,8 +36,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	FeaFiDialog::FeaFiDialog( QWidget * parent, Qt::WFlags fl)
-		: QDialog(parent,fl), 
+	FeaFiDialog::FeaFiDialog( QWidget * parent)
+		: QDialog(parent), 
 			finder_()
 	{
 		setupUi(this);

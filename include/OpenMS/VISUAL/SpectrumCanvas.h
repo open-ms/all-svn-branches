@@ -117,7 +117,7 @@ namespace OpenMS
 			@param name the widget's name
 			@param f Window flags
 		*/
-		SpectrumCanvas(QWidget* parent = 0, Qt::WFlags f=0);
+		SpectrumCanvas(QWidget* parent = 0);
 		
 		/**
 			@brief Sets the spectrum widget.

@@ -51,7 +51,7 @@ namespace OpenMS
 
 		public:
 			///constructor
-			PreferencesDialogPage( PreferencesManager* manager, QWidget* parent = 0, Qt::WFlags f = 0);
+			PreferencesDialogPage( PreferencesManager* manager, QWidget* parent = 0);
 			///destructor
 			virtual ~PreferencesDialogPage();
 

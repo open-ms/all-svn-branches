@@ -32,8 +32,8 @@
 namespace OpenMS
 {
 
-	SpectrumWindow::SpectrumWindow(QWidget* parent, Qt::WFlags f)  
-		: QMainWindow(parent,f),
+	SpectrumWindow::SpectrumWindow(QWidget* parent)  
+		: QMainWindow(parent),
 			PreferencesManager(),
 			window_id(-1)
 	{

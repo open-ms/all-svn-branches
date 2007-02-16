@@ -37,8 +37,8 @@ namespace OpenMS
 	using namespace Internal;
 	using namespace Math;
 	
-	Spectrum1DWidget::Spectrum1DWidget(QWidget* parent, Qt::WFlags f)
-		: SpectrumWidget(parent, f)
+	Spectrum1DWidget::Spectrum1DWidget(QWidget* parent)
+		: SpectrumWidget(parent)
 	{
 		//set the label mode for the axes  - side effect
 		setCanvas_(new Spectrum1DCanvas(this));

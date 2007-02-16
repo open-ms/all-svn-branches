@@ -112,8 +112,8 @@ namespace OpenMS
   using namespace Internal;
 	using namespace Math;
 
-  TOPPViewBase::TOPPViewBase(QWidget* parent, Qt::WindowFlags f):
-      QMainWindow(parent,f),
+  TOPPViewBase::TOPPViewBase(QWidget* parent):
+      QMainWindow(parent),
       PreferencesManager(),
       recent_files_()
   {
@@ -657,25 +657,28 @@ namespace OpenMS
 
   void TOPPViewBase::addTab_(SpectrumWindow* w, const String& tabCaption)
   {
-    //add to tab bar
-    w->window_id  = tab_bar_->addTab(tabCaption.c_str());
-    
+  	//static window counter
+  	static int window_counter = 4711;
+  	w->window_id = ++window_counter;
+
+		//add tab and assign window id as data  	
+    int tab_index = tab_bar_->addTab(tabCaption.c_str());
+    tab_bar_->setTabData(tab_index, window_counter);
+    //cout << "Added tab: '" << tabCaption << "' => " << window_counter << endl;
+        
     //connect slots and sigals for removing the spectrum from the bar, when it is closed
     connect(w,SIGNAL(aboutToBeDestroyed(int)),this,SLOT(removeTab(int)));
-    tab_bar_->setCurrentIndex(w->window_id );
-  }
-
-  void TOPPViewBase::removeTab(int index)
-  {
-  	tab_bar_->removeTab(index);
+    tab_bar_->setCurrentIndex(tab_index);
   }
 
   SpectrumWindow* TOPPViewBase::window_(int id) const
   {
+  	//cout << "Looking for tab with id: " << id << endl;
   	QList<QWidget*> windows = ws_->windowList();
 		for(int i=0; i< windows.size(); ++i)
 		{
 			SpectrumWindow* window = dynamic_cast<SpectrumWindow*>(windows.at(i));
+			//cout << "  Tab " << i << ": " << window->window_id << endl;
 			if (window->window_id == id)
 			{
 				return window;
@@ -684,9 +687,21 @@ namespace OpenMS
 		return 0;
   }
 
+  void TOPPViewBase::removeTab(int id)
+  {
+  	for (int i=0; i < tab_bar_->count(); ++i)
+  	{ 
+  		if( tab_bar_->tabData(i).toInt() == id)
+  		{
+  			tab_bar_->removeTab(i);
+  			return;
+  		}
+  	}
+  }
+
   void TOPPViewBase::closeByTab(int index)
   {
-  	SpectrumWindow* window = window_(index);
+  	SpectrumWindow* window = window_(tab_bar_->tabData(index).toInt());
   	if (window)
   	{
   		window->close();
@@ -695,7 +710,7 @@ namespace OpenMS
  
   void TOPPViewBase::focusByTab(int index)
   {
-  	SpectrumWindow* window = window_(index);
+  	SpectrumWindow* window = window_(tab_bar_->tabData(index).toInt());
   	if (window)
   	{
   		window->setFocus();
@@ -2130,15 +2145,17 @@ namespace OpenMS
   void TOPPViewBase::openRecentFile()
   {
   	cout << "TEST" << endl;
+  	String filename = qobject_cast<QAction*>(sender())->text().toAscii().data();
+  	cout << "filename: " << filename << endl;
   	setCursor(Qt::WaitCursor);
     OpenDialog::Mower mow = OpenDialog::NO_MOWER;
     if ( getPrefAsString("Preferences:MapIntensityCutoff")=="Noise Estimator")
     {
       mow = OpenDialog::NOISE_ESTIMATOR;
     }
-    addSpectrum(qobject_cast<QAction*>(sender())->text().toAscii().data(),true,getPrefAsString("Preferences:DefaultMapView")=="2D",true,mow);
+    addSpectrum(filename,true,getPrefAsString("Preferences:DefaultMapView")=="2D",true,mow);
     setCursor(Qt::ArrowCursor); 	
-  	cout << "TEST_END" << endl; 
+  	cout << "TEST_END" << endl;
  }
 
   void TOPPViewBase::findFeaturesActiveSpectrum()

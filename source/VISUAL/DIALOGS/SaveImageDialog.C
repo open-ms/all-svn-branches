@@ -46,8 +46,8 @@ namespace OpenMS
 {
 
 
-	SaveImageDialog::SaveImageDialog( QWidget * parent, Qt::WFlags f ):
-	QDialog(parent,f)
+	SaveImageDialog::SaveImageDialog( QWidget * parent ):
+	QDialog(parent)
 	{
 		size_ratio_=1;
 		//create dialog and layout (grid)

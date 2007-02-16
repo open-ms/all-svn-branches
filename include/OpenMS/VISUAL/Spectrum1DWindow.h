@@ -46,7 +46,7 @@ namespace OpenMS
 		public:
 
 			/// Constructor
-			Spectrum1DWindow(QWidget* parent=0, Qt::WFlags f=0);
+			Spectrum1DWindow(QWidget* parent=0);
 			/// Destructor
 			virtual ~Spectrum1DWindow();
 			

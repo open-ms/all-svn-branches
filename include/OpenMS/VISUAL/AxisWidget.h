@@ -61,7 +61,7 @@ namespace OpenMS
 	
 	
 			/// constructor
-			AxisWidget(UnsignedInt alignment, const char* legend="", QWidget* parent = 0, Qt::WFlags f = 0);
+			AxisWidget(UnsignedInt alignment, const char* legend="", QWidget* parent = 0);
 			/// destructor
 			virtual ~AxisWidget();
 	

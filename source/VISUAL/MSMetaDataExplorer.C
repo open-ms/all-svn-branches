@@ -66,8 +66,9 @@ using namespace std;
 namespace OpenMS
 {
 	
-	MSMetaDataExplorer::MSMetaDataExplorer(bool editable, QWidget *parent, bool modal, Qt::WFlags fl)
-	: QDialog(parent, fl), editable_(editable)
+	MSMetaDataExplorer::MSMetaDataExplorer(bool editable, QWidget *parent, bool modal)
+	: QDialog(parent), 
+		editable_(editable)
 	{    
 	  setModal(modal);
 	  

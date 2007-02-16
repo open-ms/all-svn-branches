@@ -69,7 +69,7 @@ namespace OpenMS
 			};
 			
 			/// constructor
-			OpenDialog(Param& preferences, QWidget* parent = 0, Qt::WFlags fl = 0 );
+			OpenDialog(Param& preferences, QWidget* parent = 0 );
 			/// destructor
 			virtual ~OpenDialog();    
 			

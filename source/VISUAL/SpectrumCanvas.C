@@ -42,8 +42,8 @@ using namespace std;
 
 namespace OpenMS
 {	
-	SpectrumCanvas::SpectrumCanvas(QWidget* parent, Qt::WFlags f)
-		: QWidget(parent, f),
+	SpectrumCanvas::SpectrumCanvas(QWidget* parent)
+		: QWidget(parent),
 			buffer_(),
 			tmp_buffer_(),
 			action_mode_(AM_ZOOM),

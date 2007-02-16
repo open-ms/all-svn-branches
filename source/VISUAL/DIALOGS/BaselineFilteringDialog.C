@@ -35,8 +35,8 @@ using namespace std;
 namespace OpenMS
 {
 
-	BaselineFilteringDialog::BaselineFilteringDialog(QWidget* parent, Qt::WFlags fl )
-		: QDialog(parent,fl)
+	BaselineFilteringDialog::BaselineFilteringDialog(QWidget* parent )
+		: QDialog(parent)
 	{
 		setupUi(this);
 		

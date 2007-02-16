@@ -42,8 +42,8 @@ namespace OpenMS
 {
 	using namespace Math;
 	
-	AxisWidget::AxisWidget(UnsignedInt alignment, const char* legend, QWidget* parent, Qt::WFlags f)
-		: QWidget( parent, f),
+	AxisWidget::AxisWidget(UnsignedInt alignment, const char* legend, QWidget* parent)
+		: QWidget( parent),
 		is_log_(false),
 		show_legend_(false),
 		alignment_(alignment),

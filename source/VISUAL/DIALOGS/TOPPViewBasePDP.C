@@ -52,8 +52,8 @@ namespace OpenMS
 	{
 
 
-		TOPPViewBasePDP::TOPPViewBasePDP( TOPPViewBase* manager, QWidget* parent,  Qt::WFlags f)
-			:PreferencesDialogPage(manager,parent,f)
+		TOPPViewBasePDP::TOPPViewBasePDP( TOPPViewBase* manager, QWidget* parent)
+			:PreferencesDialogPage(manager,parent)
 		{
 			help_ = "This is the preferences dialog of the main window!"
 							"<br>";

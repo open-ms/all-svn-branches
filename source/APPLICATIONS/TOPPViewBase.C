@@ -221,7 +221,7 @@ namespace OpenMS
 
   TOPPViewBase::~TOPPViewBase()
   {
-    savePreferences();
+  	
   }
 
   void TOPPViewBase::addDBSpectrum(UnsignedInt db_id, bool as_new_window, bool maps_as_2d, bool maximize, OpenDialog::Mower use_mower)
@@ -944,37 +944,87 @@ namespace OpenMS
 
   void TOPPViewBase::createToolBars_()
   {
+  	QToolButton* b;
+  	
   	//**Basic tool bar for all views**
     tool_bar_ = addToolBar("Basic tool bar");
-
+    
     //action modes
-    QActionGroup* group = new QActionGroup(tool_bar_);
-    group->setExclusive(true);
-    am_zoom_ = new QAction(QPixmap(XPM_zoom), "Action: Zoom", group);
-    am_zoom_->setShortcut(Qt::Key_Z);
-    am_translate_ = new QAction(QPixmap(XPM_translate), "Action: Translate", group);
-    am_translate_->setShortcut(Qt::Key_T);
-    am_select_ = new QAction(QPixmap(XPM_select), "Action: Select",  group);
-    am_select_->setShortcut(Qt::Key_S);
-    am_measure_ = new QAction(QPixmap(XPM_measure), "Action: Measure",  group);
-    am_measure_->setShortcut(Qt::Key_M);
-    connect(group,SIGNAL(selected(QAction*)),this,SLOT(setActionMode(QAction*)));
-		tool_bar_->addActions(group->actions());
-    tool_bar_->addSeparator();
+    action_group_ = new QButtonGroup(tool_bar_);
+    action_group_->setExclusive(true);
+    
+    b = new QToolButton(tool_bar_);
+    b->setIcon(QPixmap(XPM_zoom));
+    b->setToolTip("Action: Zoom");
+    b->setShortcut(Qt::Key_Z);
+    b->setCheckable(true);
+    action_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::AM_ZOOM);
+		tool_bar_->addWidget(b);
+		
+    b = new QToolButton(tool_bar_);
+    b->setIcon(QPixmap(XPM_translate));
+    b->setToolTip("Action: Translate");
+    b->setShortcut(Qt::Key_T);
+    b->setCheckable(true);
+    action_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::AM_TRANSLATE);
+		tool_bar_->addWidget(b);
 
+    b = new QToolButton(tool_bar_);
+    b->setIcon(QPixmap(XPM_select));
+    b->setToolTip("Action: Select");
+    b->setShortcut(Qt::Key_S);
+    b->setCheckable(true);
+    action_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::AM_SELECT);
+		tool_bar_->addWidget(b);
+
+    b = new QToolButton(tool_bar_);
+    b->setIcon(QPixmap(XPM_measure));
+    b->setToolTip("Action: Measure");
+    b->setShortcut(Qt::Key_M);
+    b->setCheckable(true);
+    action_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::AM_MEASURE);
+		tool_bar_->addWidget(b);
+
+    connect(action_group_,SIGNAL(buttonClicked(int)),this,SLOT(setActionMode(int)));
+    tool_bar_->addSeparator();
+	   
     //intensity modes
-    group = new QActionGroup(tool_bar_);
-    group->setExclusive(true);
-    im_none_ = new QAction(QPixmap(XPM_lin), "Intensity: Normal", group);
-    im_none_->setShortcut(Qt::Key_N);
-    im_log_ = new QAction(QPixmap(XPM_log), "Intensity: Logarithmic", group);
-    im_log_->setShortcut(Qt::Key_L);
-    im_percentage_ = new QAction(QPixmap(XPM_percentage), "Intensity: Percentage", group);
-    im_percentage_->setShortcut(Qt::Key_P);
-    im_snap_ = new QAction(QPixmap(XPM_snap), "Intensity: Snap to maximum displayed intensity",group);
-    im_snap_->setShortcut(Qt::Key_A);
-    connect(group,SIGNAL(selected(QAction*)),this,SLOT(setIntensityMode(QAction*)));
-		tool_bar_->addActions(group->actions());
+    intensity_group_ = new QButtonGroup(tool_bar_);
+    intensity_group_->setExclusive(true);
+    
+    b = new QToolButton(tool_bar_);
+    b->setIcon(QPixmap(XPM_lin));
+    b->setToolTip("Intensity: Normal");
+    b->setShortcut(Qt::Key_N);
+    b->setCheckable(true);
+    intensity_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::IM_NONE);
+		tool_bar_->addWidget(b);
+    
+    b = new QToolButton(tool_bar_);
+    b->setIcon(QPixmap(XPM_log));
+    b->setToolTip("Intensity: Logarithmic");
+    b->setShortcut(Qt::Key_L);
+    b->setCheckable(true);
+    intensity_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::IM_LOG);
+		tool_bar_->addWidget(b);
+
+    b = new QToolButton(tool_bar_);
+    b->setIcon(QPixmap(XPM_percentage));
+    b->setToolTip("Intensity: Percentage");
+    b->setShortcut(Qt::Key_P);
+    b->setCheckable(true);
+    intensity_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::IM_NONE);
+		tool_bar_->addWidget(b);
+
+    b = new QToolButton(tool_bar_);
+    b->setIcon(QPixmap(XPM_snap));
+    b->setToolTip("Intensity: Snap to maximum displayed intensity");
+    b->setShortcut(Qt::Key_A);
+    b->setCheckable(true);
+    intensity_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::IM_NONE);
+		tool_bar_->addWidget(b);
+
+    connect(intensity_group_,SIGNAL(buttonClicked(int)),this,SLOT(setIntensityMode(int)));
     tool_bar_->addSeparator();
 
     //common buttons
@@ -997,15 +1047,29 @@ namespace OpenMS
     //**1D toolbar**
     tool_bar_1d_ = addToolBar("1D tool bar");
 
-    group = new QActionGroup(tool_bar_1d_);
-    group->setExclusive(true);
-    dm_peaks_1d_ = new QAction(QPixmap(XPM_peaks), "Peak mode", group);
-    dm_peaks_1d_->setShortcut(Qt::Key_I);
-    dm_rawdata_1d_ = new QAction(QPixmap(XPM_lines), "Raw data mode", group);
-    dm_rawdata_1d_->setShortcut(Qt::Key_R);
-    connect(group,SIGNAL(selected(QAction*)),this,SLOT(setDrawMode1D(QAction*)));
-		tool_bar_1d_->addActions(group->actions());
-    tool_bar_1d_->addSeparator();
+    //draw modes 1D
+    draw_group_1d_ = new QButtonGroup(tool_bar_1d_);
+    draw_group_1d_->setExclusive(true);
+    
+    b = new QToolButton(tool_bar_1d_);
+    b->setIcon(QPixmap(XPM_peaks));
+    b->setToolTip("Peak mode");
+    b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    draw_group_1d_->addButton(b,Spectrum1DCanvas::DM_PEAKS);
+		tool_bar_1d_->addWidget(b);
+    
+    b = new QToolButton(tool_bar_1d_);
+    b->setIcon(QPixmap(XPM_lines));
+    b->setToolTip("Raw data mode");
+    b->setShortcut(Qt::Key_R);
+    b->setCheckable(true);
+    draw_group_1d_->addButton(b,Spectrum1DCanvas::DM_CONNECTEDLINES);
+		tool_bar_1d_->addWidget(b);
+
+    connect(draw_group_1d_,SIGNAL(buttonClicked(int)),this,SLOT(setDrawMode1D(int)));
+    tool_bar_->addSeparator();
+
 
     link_box_ = new QComboBox(tool_bar_1d_);
     link_box_->setToolTip("Use this combobox to link two spectra.\nLinked spectra zoom in/out together");
@@ -1141,41 +1205,31 @@ namespace OpenMS
     }
   }
 
-  void TOPPViewBase::setActionMode(QAction* a)
+  void TOPPViewBase::setActionMode(int index)
   {
     SpectrumWindow* w = activeWindow_();
     if (w)
     {
-      if(a==am_select_) w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_SELECT);
-      else if (a==am_zoom_) w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_ZOOM);
-      else if(a==am_translate_) w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_TRANSLATE);
-      else if(a==am_measure_) w->widget()->setActionMode(SpectrumCanvas::SpectrumCanvas::AM_MEASURE);
-      else  throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    };
+    	w->widget()->setActionMode((OpenMS::SpectrumCanvas::ActionModes)index);
+  	}
   }
 
-  void TOPPViewBase::setIntensityMode(QAction* a)
+  void TOPPViewBase::setIntensityMode(int index)
   {
     SpectrumWindow* w = activeWindow_();
     if (w)
     {
-      if(a==im_none_) w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_NONE);
-      else if (a==im_log_) w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_LOG);
-      else if(a==im_percentage_) w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_PERCENTAGE);
-      else if(a==im_snap_) w->widget()->setIntensityMode(SpectrumCanvas::SpectrumCanvas::IM_SNAP);
-      else throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    };
+    	w->widget()->setIntensityMode((OpenMS::SpectrumCanvas::IntensityModes)index);
+  	}
   }
 
-  void TOPPViewBase::setDrawMode1D(QAction* a)
+  void TOPPViewBase::setDrawMode1D(int index)
   {
     Spectrum1DWindow* w = active1DWindow_();
     if (w)
     {
-      if (a==dm_peaks_1d_) w->widget()->canvas()->setDrawMode(Spectrum1DCanvas::DM_PEAKS);
-      else if (a==dm_rawdata_1d_) w->widget()->canvas()->setDrawMode(Spectrum1DCanvas::DM_CONNECTEDLINES);
-      else throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-    }
+    	w->widget()->canvas()->setDrawMode((OpenMS::Spectrum1DCanvas::DrawModes)index);
+  	}
   }
 
   void TOPPViewBase::showPoints(bool on)
@@ -1209,45 +1263,13 @@ namespace OpenMS
     if (w)
     {
       //set action mode
-      switch (w->widget()->getActionMode())
-      {
-        case SpectrumCanvas::AM_SELECT:
-          am_select_->setEnabled(true);
-          break;
-        case SpectrumCanvas::AM_ZOOM:
-          am_zoom_->setEnabled(true);
-          break;
-        case SpectrumCanvas::AM_TRANSLATE:
-          am_translate_->setEnabled(true);
-          break;
-        case SpectrumCanvas::AM_MEASURE:
-          am_measure_->setEnabled(true);
-          break;
-        default:
-          throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-      }
+     	action_group_->button(w->widget()->getActionMode())->setChecked(true);
 
       //set intensity mode
-      switch (w->widget()->canvas()->getIntensityMode())
-      {
-        case SpectrumCanvas::IM_NONE:
-          im_none_->setEnabled(true);
-          break;
-        case SpectrumCanvas::IM_LOG:
-          im_log_->setEnabled(true);
-          break;
-        case SpectrumCanvas::IM_PERCENTAGE:
-          im_percentage_->setEnabled(true);
-          break;
-        case SpectrumCanvas::IM_SNAP:
-          im_snap_->setEnabled(true);
-          break;
-        default:
-          throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-      }
+     	intensity_group_->button(w->widget()->canvas()->getIntensityMode())->setChecked(true);
 
       //grid lines
-      grid_button_->setEnabled(w->widget()->canvas()->gridLinesShown());
+      grid_button_->setChecked(w->widget()->canvas()->gridLinesShown());
     }
 
     //1D
@@ -1255,17 +1277,7 @@ namespace OpenMS
     if (w1)
     {
       //draw mode
-      switch (w1->widget()->canvas()->getDrawMode())
-      {
-        case Spectrum1DCanvas::DM_PEAKS:
-          dm_peaks_1d_->setEnabled(true);
-          break;
-        case Spectrum1DCanvas::DM_CONNECTEDLINES:
-          dm_rawdata_1d_->setEnabled(true);
-          break;
-        default:
-          throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-      };
+      draw_group_1d_->button(w1->widget()->canvas()->getDrawMode())->setChecked(true);
 
       //update link selector
       int current_index=0;
@@ -1290,8 +1302,8 @@ namespace OpenMS
       //show/hide toolbars and buttons
       tool_bar_1d_->show();
       tool_bar_2d_->hide();
-      am_measure_->setEnabled(false);
-      am_select_->setEnabled(true);
+      action_group_->button(SpectrumCanvas::SpectrumCanvas::AM_MEASURE)->setEnabled(false);
+      action_group_->button(SpectrumCanvas::SpectrumCanvas::AM_SELECT)->setEnabled(true);
     }
 
     //2d
@@ -1306,8 +1318,8 @@ namespace OpenMS
       //show/hide toolbars and buttons
       tool_bar_1d_->hide();
       tool_bar_2d_->show();
-      am_measure_->setEnabled(true);
-      am_select_->setEnabled(true);
+      action_group_->button(SpectrumCanvas::SpectrumCanvas::AM_MEASURE)->setEnabled(true);
+      action_group_->button(SpectrumCanvas::SpectrumCanvas::AM_SELECT)->setEnabled(true);
     }
 
     //1D
@@ -1317,8 +1329,8 @@ namespace OpenMS
       //show/hide toolbars and buttons
       tool_bar_1d_->hide();
       tool_bar_2d_->hide();
-      am_measure_->setEnabled(false);
-      am_select_->setEnabled(false);
+      action_group_->button(SpectrumCanvas::SpectrumCanvas::AM_MEASURE)->setEnabled(false);
+      action_group_->button(SpectrumCanvas::SpectrumCanvas::AM_SELECT)->setEnabled(false);
     }
   }
 

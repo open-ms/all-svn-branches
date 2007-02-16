@@ -47,6 +47,7 @@ class QMenu;
 class QListWidget;
 class QListWidgetItem;
 class QDockWidget;
+class QToolButton;
 
 namespace OpenMS
 {
@@ -55,7 +56,6 @@ namespace OpenMS
   class Spectrum2DWindow;
   class Spectrum3DWindow;
   class SpectrumWindow;
-  class EnhancedTabBar;
 
   /**
   	@brief MDI window of TOPPView tool
@@ -236,9 +236,9 @@ namespace OpenMS
       /** @name Toolbar slots
       */
       //@{
-      void setActionMode(QAction*);
-      void setDrawMode1D(QAction*);
-      void setIntensityMode(QAction* a);
+      void setActionMode(int);
+      void setDrawMode1D(int);
+      void setIntensityMode(int);
       void showGridLines(bool);
       void showPoints(bool);
       void showSurface(bool);
@@ -280,21 +280,14 @@ namespace OpenMS
       //@{
       QToolBar* tool_bar_;
       //common actions
-      QAction* am_zoom_;
-      QAction* am_translate_;
-      QAction* am_select_;
-      QAction* am_measure_;
+      QButtonGroup* action_group_;
       //common intensity modes
-      QAction* im_none_;
-      QAction* im_log_;
-      QAction* im_percentage_;
-      QAction* im_snap_;
+      QButtonGroup* intensity_group_;
       //common buttons
       QAction* grid_button_;
       //1D specific stuff
       QToolBar* tool_bar_1d_;
-      QAction* dm_peaks_1d_;
-      QAction* dm_rawdata_1d_;
+      QButtonGroup* draw_group_1d_;
       QComboBox* link_box_;
       //2D specific stuff
       QToolBar* tool_bar_2d_;

@@ -177,8 +177,8 @@ namespace OpenMS
       void tileVertical();
       /// tile the open windows horizontally
       void tileHorizontal();
-      /// Links or unlinks two spectra (for zooming)
-      void linkActiveTo(const QString&);
+      /// Links/unlinks two spectra (for zooming)
+      void linkActiveTo(int);
       /**
       	@brief Shows a status message in the status bar.
       	
@@ -267,7 +267,7 @@ namespace OpenMS
       /// Creates the toolbars and connects the signals and slots
       void createToolBars_();
 
-      /** @name Toolbar members
+      /** @name Toolbar
       */
       //@{
       QToolBar* tool_bar_;
@@ -294,6 +294,9 @@ namespace OpenMS
       ///Tab bar. The address of the corresponding window to a tab is stored as an int in tabData()
       EnhancedTabBar* tab_bar_;
 
+      /** @name Status bar
+      */
+      //@{
       /// Label for messages in the status bar
       QLabel* message_label_;
       /// m/z label for messages in the status bar
@@ -302,31 +305,30 @@ namespace OpenMS
       QLabel* int_label_;
       /// RT label for messages in the status bar
       QLabel* rt_label_;
-
+			//@}
+			
       /**
-        @brief Map that stores linked pairs of 1D windows (uses int value of addresses to identify the widgets).
+        @brief Map that stores linked pairs of 1D windows.
       	
       	Each link is stored twice (both directions).
       */
-      std::map<qlonglong,qlonglong> link_map_;
+      std::map<int,int> link_map_;
 
-      ///unlinks active spectrum (for zooming)
-      void unlinkActive_();
-
+      /** @name Recent files
+      */
+      //@{
       ///adds a Filename to the recent files
       void addRecentFile_(const String& filename);
-
       ///update the recent files menu
       void updateRecentMenu_();
+      /// list of the recently opened files
+      std::vector<String> recent_files_;
+      /// pointer to the recent files menu
+      QMenu* recent_menu_;
+			//@}
 
       /// check if all avaiable preferences get set by the .ini file. If there are some missing entries fill them with default values.
       void checkPreferences_();
-      /// list of the recently opened files
-      std::vector<String> recent_files_;
-
-      /// pointer to the recent files menu
-      QMenu* recent_menu_;
-
   }
   ; //class
 

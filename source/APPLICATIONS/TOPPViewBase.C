@@ -221,7 +221,11 @@ namespace OpenMS
 
   TOPPViewBase::~TOPPViewBase()
   {
-  	
+  	QList<QWidget*> windows = ws_->windowList();
+		for(int i=0; i< windows.size(); ++i)
+		{
+			windows.at(i)->close();
+		}
   }
 
   void TOPPViewBase::addDBSpectrum(UnsignedInt db_id, bool as_new_window, bool maps_as_2d, bool maximize, OpenDialog::Mower use_mower)
@@ -1089,7 +1093,7 @@ namespace OpenMS
     link_box_ = new QComboBox(tool_bar_1d_);
     link_box_->setToolTip("Use this combobox to link two spectra.\nLinked spectra zoom in/out together");
     tool_bar_1d_->addWidget(link_box_);
-    connect(link_box_,SIGNAL(activated(const QString&)),this,SLOT(linkActiveTo(const QString&)));
+    connect(link_box_,SIGNAL(activated(int)),this,SLOT(linkActiveTo(int)));
 
     //**2D toolbar**
     tool_bar_2d_ = addToolBar("2D tool bar");
@@ -1120,43 +1124,51 @@ namespace OpenMS
 		connect(layer_manager_,SIGNAL(itemChanged(QListWidgetItem*)),this,SLOT(layerVisibilityChange(QListWidgetItem*)));
   }
 
-  void TOPPViewBase::linkActiveTo(const QString& path)
+  void TOPPViewBase::linkActiveTo(int index)
   {
-    unlinkActive_();
-    if (path!="<unlinked>")
-    {
-      //link spectras
-      QWidgetList windows = ws_->windowList();
-      for ( int i = 0; i < int(windows.count()); ++i )
-      {
-        QWidget *window = windows.at(i);
-        if (File::basename(window->windowTitle().toAscii().data())+"  ("+window->windowTitle().toAscii().data()+")"==path.toAscii().data())
-        {
-          //connect the slots
-          connect(activeWindow_()->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)),dynamic_cast<SpectrumWindow*>(window)->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
-          connect(dynamic_cast<SpectrumWindow*>(window)->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)),activeWindow_()->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
-          //add links to the map
-          link_map_[qlonglong(ws_->activeWindow())]=qlonglong(window);
-          link_map_[qlonglong(window)]=qlonglong(ws_->activeWindow());
-        }
-      }
-    }
-
-  }
-
-  void TOPPViewBase::unlinkActive_()
-  {
-    qlonglong active_address = qlonglong(ws_->activeWindow());
-    qlonglong active_linked_to_address = link_map_[active_address];
-    if (active_linked_to_address != 0)
-    {
-      //remove signals
-      //disconnect(id_map_[active_linked_to_address]->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)), activeWindow_()->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
-      //disconnect(activeWindow_()->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)), id_map_[active_linked_to_address]->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
-      //remove from the map
-      link_map_.erase(active_address);
-      link_map_.erase(active_linked_to_address);
-    }
+  	Spectrum1DWindow* active = active1DWindow_();
+  	if (active==0) return;
+  	
+  	//cout << "linkActiveTo() active: " << active->window_id << endl;
+  	
+  	//remove link if present
+  	if (link_map_.find(active->window_id)!=link_map_.end())
+  	{
+  		SpectrumWindow* linked_to = window_(link_map_[active->window_id]);
+  		if (linked_to != 0)
+  		{
+  			//cout << "  disconnect signals to: " << linked_to->window_id << endl;
+	  		//disconnect outgoing signals
+	  		disconnect(active->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)),linked_to->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
+  			//disconnect incoming signals
+  			disconnect(linked_to->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)),active->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
+  			//erase entries in id map
+  			link_map_.erase(active->window_id);
+  			link_map_.erase(linked_to->window_id);
+  		}
+  		else
+  		{
+  			cout << "linkActiveTo() - disconnect: Error, could not find window with id '" << active->window_id << "'!" << endl;
+  		}
+  	}
+  	  
+    if (link_box_->itemText(index)=="<unlinked>") return;
+    
+    //link
+    SpectrumWindow* link_to = window_(link_box_->itemData(index).toInt());
+		if (link_to!=0)
+		{
+			//cout << "  connecting signals to: " << link_to->window_id << endl;
+		  connect(active->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)),link_to->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
+      connect(link_to->widget()->canvas(),SIGNAL(visibleAreaChanged(DRange<2>)),active->widget()->canvas(),SLOT(setVisibleArea(DRange<2>)));
+      //add entries to id map
+      link_map_[link_to->window_id]=active->window_id;
+      link_map_[active->window_id]=link_to->window_id;
+		}
+		else
+		{
+			cout << "linkActiveTo() - connect: Error, could not find window with id '" << link_box_->itemData(index).toInt() << "'!" << endl;
+		}    
   }
 
   void TOPPViewBase::showStatusMessage(string msg, OpenMS::UnsignedInt time)
@@ -1295,21 +1307,19 @@ namespace OpenMS
       draw_group_1d_->button(w1->widget()->canvas()->getDrawMode())->setChecked(true);
 
       //update link selector
-      int current_index=0;
-      int active_linked_to_address = link_map_[qlonglong(ws_->activeWindow())];
+      int item_index = -1;
       link_box_->clear();
-      link_box_->insertItem(0,"<unlinked>");
+      link_box_->insertItem(++item_index,"<unlinked>",0);
       QWidgetList windows = ws_->windowList();
-      for ( int i = 0; i < int(windows.count()); ++i )
+      for ( int i = 0; i < windows.count(); ++i )
       {
-        QWidget *window = windows.at(i);
-        if (window!=w)
+        Spectrum1DWindow* window = dynamic_cast<Spectrum1DWindow*>(windows.at(i));
+        if (window !=0 && window!=w)
         {
-          current_index++;
-          link_box_->insertItem(i,(File::basename(window->windowTitle().toAscii().data())+"  ("+window->windowTitle().toAscii().data()+")").c_str());
-          if (active_linked_to_address==qlonglong(window))
+          link_box_->insertItem(++item_index,File::basename(window->windowTitle().toAscii().data()).c_str(),window->window_id);
+        	if (link_map_.find(w1->window_id)!=link_map_.end() && link_map_[w1->window_id] == window->window_id)
           {
-            link_box_->setCurrentIndex(current_index);
+            link_box_->setCurrentIndex(item_index);
           }
         }
       }

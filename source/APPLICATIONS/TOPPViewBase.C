@@ -105,6 +105,8 @@
 #include "../VISUAL/ICONS/colors.xpm"
 #include "../VISUAL/ICONS/contours.xpm"
 
+#include <algorithm>
+
 using namespace std;
 
 namespace OpenMS
@@ -114,9 +116,11 @@ namespace OpenMS
 
   TOPPViewBase::TOPPViewBase(QWidget* parent):
       QMainWindow(parent),
-      PreferencesManager(),
-      recent_files_()
+      PreferencesManager()
   {
+		//set preferences file name + load preferencs
+		loadPreferences();
+
   	setWindowTitle("TOPPView");
     
     //prevents errors caused by too small width,height values
@@ -149,6 +153,14 @@ namespace OpenMS
     file->addAction("&Close",this,SLOT(closeFile()));
     file->addSeparator();
     recent_menu_ = new QMenu("Recent files", this);
+		UnsignedInt number_of_recent_files = UnsignedInt(prefs_.getValue("Preferences:NumberOfRecentFiles"));
+		recent_actions_.resize(number_of_recent_files);
+		for (Size i = 0; i != number_of_recent_files; ++i)
+		{
+			recent_actions_[i] = recent_menu_->addAction("",this,SLOT(openRecentFile()));
+			recent_actions_[i]->setVisible(false);
+		}
+
     file->addMenu(recent_menu_);
     file->addSeparator();
     file->addAction("&Preferences",this, SLOT(preferencesDialog()));
@@ -216,7 +228,7 @@ namespace OpenMS
     MetaInfo::registry().registerName("FeatureDrawMode", "Specify what to draw of the Feature: BoundingBox, ConvexHulls");
 
     //set preferences file name + load preferencs
-    loadPreferences();
+    //loadPreferences();
   }
 
   TOPPViewBase::~TOPPViewBase()
@@ -619,8 +631,9 @@ namespace OpenMS
 
   void TOPPViewBase::addRecentFile_(const String& filename)
   {
+		
     //get number of files in list from settings
-    UnsignedInt number_of_recent_files_ = UnsignedInt(prefs_.getValue("Preferences:NumberOfRecentFiles"));
+    UnsignedInt number_of_recent_files = UnsignedInt(prefs_.getValue("Preferences:NumberOfRecentFiles"));
     String tmp = filename;
 
     //add prefix to relative paths
@@ -628,31 +641,37 @@ namespace OpenMS
     {
       tmp = QDir::currentPath().toAscii().data()+string("/")+ tmp;
     }
+	
+		// remove the new file if already in the recent list
+		recent_files_.removeAll(tmp.c_str());
+		
+		recent_files_.prepend(tmp.c_str());
 
-    //check if the file is already in the vector. if so remove it
-    recent_files_.erase(remove(recent_files_.begin(),recent_files_.end(),tmp),recent_files_.end());
+		while ((Size)recent_files_.size() > number_of_recent_files)
+		{
+			recent_files_.removeLast();
+		}
 
-    //add the file to the front
-    recent_files_.insert(recent_files_.begin(),tmp);
-
-    //shrink the recent_files to the desired number
-    if (recent_files_.size()>number_of_recent_files_)
-    {
-      recent_files_.resize(number_of_recent_files_);
-    }
-
-    //update recent file menu
     updateRecentMenu_();
   }
 
   void TOPPViewBase::updateRecentMenu_()
   {
     //update recent file menu
-    recent_menu_->clear();
-    for (UnsignedInt i=0; i<recent_files_.size(); ++i)
-    {
-      recent_menu_->addAction(recent_files_[i].c_str(),this,SLOT(openRecentFile()));
-    }
+		UnsignedInt number_of_recent_files = min(UnsignedInt(prefs_.getValue("Preferences:NumberOfRecentFiles")), (UnsignedInt)recent_files_.size());
+
+		for (Size i = 0; i < number_of_recent_files; ++i)
+		{
+			QString text = tr("&%1 %2").arg(i+1).arg(recent_files_[i]);
+			recent_actions_[i]->setText(text);
+			recent_actions_[i]->setData(recent_files_[i]);
+			recent_actions_[i]->setVisible(true);
+		}
+
+		for (Size i = recent_files_.size(); i < number_of_recent_files; ++i)
+		{
+			recent_actions_[i]->setVisible(false);
+		}
   }
 
   void TOPPViewBase::maximizeActiveSpectrum()
@@ -2077,7 +2096,7 @@ namespace OpenMS
     {
       for (Param::ConstIterator it=p.begin() ; it!=p.end() ; ++it)
       {
-        recent_files_.push_back(string(it->second));
+        recent_files_.append(string(it->second).c_str());
       }
     }
 
@@ -2089,9 +2108,9 @@ namespace OpenMS
     // replace recent files
     prefs_.remove("Preferences:RecentFiles");
 
-    for (UnsignedInt i=0; i<recent_files_.size(); ++i)
+    for (int i = 0; i < recent_files_.size(); ++i)
     {
-      prefs_.setValue("Preferences:RecentFiles:"+String(i),recent_files_[i]);
+      prefs_.setValue("Preferences:RecentFiles:"+String(i),recent_files_[i].toStdString());
     }
 
     //save only the subsection that begins with "Preferences:"
@@ -2158,18 +2177,23 @@ namespace OpenMS
 
   void TOPPViewBase::openRecentFile()
   {
-  	cout << "TEST" << endl;
-  	String filename = qobject_cast<QAction*>(sender())->text().toAscii().data();
-  	cout << "filename: " << filename << endl;
-  	setCursor(Qt::WaitCursor);
-    OpenDialog::Mower mow = OpenDialog::NO_MOWER;
-    if ( getPrefAsString("Preferences:MapIntensityCutoff")=="Noise Estimator")
-    {
-      mow = OpenDialog::NOISE_ESTIMATOR;
-    }
-    addSpectrum(filename,true,getPrefAsString("Preferences:DefaultMapView")=="2D",true,mow);
-    setCursor(Qt::ArrowCursor); 	
-  	cout << "TEST_END" << endl;
+  	//cout << "TEST" << endl;
+
+		QAction* action = qobject_cast<QAction *>(sender());
+    if (action)
+		{
+	  	String filename = action->data().toString().toStdString();
+	  	//cout << "filename: " << filename << endl;
+	  	setCursor(Qt::WaitCursor);
+ 	  	OpenDialog::Mower mow = OpenDialog::NO_MOWER;
+			if ( getPrefAsString("Preferences:MapIntensityCutoff")=="Noise Estimator")
+			{
+				mow = OpenDialog::NOISE_ESTIMATOR;
+			}
+   		addSpectrum(filename,true,getPrefAsString("Preferences:DefaultMapView")=="2D",true,mow);
+			setCursor(Qt::ArrowCursor); 	
+			//cout << "TEST_END" << endl;
+		}
  }
 
   void TOPPViewBase::findFeaturesActiveSpectrum()

@@ -40,6 +40,7 @@
 //QT
 #include <QtGui/QMainWindow>
 #include <QtGui/QWorkspace>
+#include <QtCore/QStringList>
 
 class QAction;
 class QComboBox;
@@ -323,7 +324,11 @@ namespace OpenMS
       ///update the recent files menu
       void updateRecentMenu_();
       /// list of the recently opened files
-      std::vector<String> recent_files_;
+      QStringList recent_files_;
+
+			/// list of the recently opened files actions (menu entries)
+			std::vector<QAction*> recent_actions_;
+
       /// pointer to the recent files menu
       QMenu* recent_menu_;
 			//@}

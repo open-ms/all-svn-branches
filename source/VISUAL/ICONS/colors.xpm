@@ -2,7 +2,7 @@
 static char * XPM_colors[] = {
 "32 32 351 2",
 "  	c None",
-"! 	c white",
+"! 	c None",
 "# 	c #D8D8D8",
 "$ 	c #9F9F9F",
 "% 	c #4000FF",
@@ -383,4 +383,5 @@ static char * XPM_colors[] = {
 "! & ' ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ",
 "! f$g$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$h$i$j$! ",
 "! ! k$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$l$m$! ! ",
-"! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! "};
+"! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! ! "
+};

@@ -78,7 +78,7 @@ namespace OpenMS
 	
 		//liststack
 		stack_ = new ListStack(this);
-		layout->addWidget(stack_,0,0,0,4);
+		layout->addWidget(stack_,0,0,1,5);
 	}
 	
 	PreferencesDialog::~PreferencesDialog()

@@ -30,6 +30,10 @@
 
 // QT
 #include <QtGui/QWidget>
+class QGridLayout;
+class QString;
+class QGroupBox;
+class QLayout;
 
 // STL
 #include <string>
@@ -45,7 +49,8 @@ namespace OpenMS
 		
 		@ingroup Dialogs
 	*/
-	class PreferencesDialogPage: public QWidget
+	class PreferencesDialogPage
+		: public QWidget
 	{
 		Q_OBJECT
 
@@ -68,6 +73,14 @@ namespace OpenMS
 
 
 		protected:
+			///Adds a new QGroupBox with a @p label to the QGridlayout @p grid
+			QGroupBox* addBox(QGridLayout* grid, int row, int column, const QString& label);
+			///Adds a @p label and a @p widget to the give @p row of a QGridlayout @p grid
+			void addWidget(QLayout* grid, int row, const QString& label, QWidget* widget) const;
+			///Adds a @p label and a @p layout to the give @p row of a QGridlayout @p grid
+			void addLayout(QLayout* grid, int row, const QString& label, QLayout* layout) const;
+			///Appends a row and column with strech @p stretch to a QGridlayout @p grid
+			void finish(QLayout* grid, int stretch = 2) const;
 			///Pointer to the PreferencesManager
 			PreferencesManager* manager_;
 			///stores the help text

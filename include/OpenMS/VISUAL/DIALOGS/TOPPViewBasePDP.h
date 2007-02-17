@@ -45,7 +45,8 @@ namespace OpenMS
 	namespace Internal
 	{
 		///Preferences dialog page of a TOPPViewBase (internal use only)	
-		class TOPPViewBasePDP: public PreferencesDialogPage
+		class TOPPViewBasePDP
+			: public PreferencesDialogPage
 		{
 			Q_OBJECT
 			

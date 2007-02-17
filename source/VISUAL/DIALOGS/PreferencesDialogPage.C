@@ -29,6 +29,10 @@
 
 #include <iostream>
 
+#include <QtGui/QLabel>
+#include <QtGui/QGridLayout>
+#include <QtGui/QGroupBox>
+
 using namespace std;
 
 namespace OpenMS
@@ -66,6 +70,58 @@ namespace OpenMS
 	void PreferencesDialogPage::save()
 	{
 		
+	}
+
+	QGroupBox* PreferencesDialogPage::addBox(QGridLayout* grid, int row, int column, const QString& label)
+	{
+		QGroupBox* box = new QGroupBox(label);
+		box->setLayout(new QGridLayout(box));
+		grid->addWidget(box, row, column);
+		return box;
+	}
+	
+	void PreferencesDialogPage::addWidget(QLayout* grid, int row, const QString& label, QWidget* widget) const
+	{
+		QGridLayout* grid2 = qobject_cast<QGridLayout*>(grid);
+		if (grid2!=0)
+		{
+			QLabel* lab = new QLabel(label);
+			grid2->addWidget(lab,row,0);
+			grid2->addWidget(widget,row,1);
+		}
+		else
+		{
+			cout << __PRETTY_FUNCTION__ << ": Warning, could not cast grid to QGridlayout!" << endl;
+		}
+	}
+
+	void PreferencesDialogPage::addLayout(QLayout* grid, int row, const QString& label, QLayout* layout) const
+	{
+		QGridLayout* grid2 = qobject_cast<QGridLayout*>(grid);
+		if (grid2!=0)
+		{
+			QLabel* lab = new QLabel(label);
+			grid2->addWidget(lab,row,0);
+			grid2->addLayout(layout,row,1);
+		}
+		else
+		{
+			cout << __PRETTY_FUNCTION__ << ": Warning, could not cast grid to QGridlayout!" << endl;
+		}
+	}
+
+	void PreferencesDialogPage::finish(QLayout* grid, int stretch) const
+	{
+		QGridLayout* grid2 = qobject_cast<QGridLayout*>(grid);
+		if (grid2!=0)
+		{
+			grid2->setColumnStretch(grid2->columnCount(),stretch);	
+			grid2->setRowStretch(grid2->rowCount(),stretch);
+		}
+		else
+		{
+			cout << __PRETTY_FUNCTION__ << ": Warning, could not cast grid to QGridlayout!" << endl;
+		}
 	}
 
 } //namespace OpenMS

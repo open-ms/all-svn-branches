@@ -221,6 +221,10 @@ namespace OpenMS
 
   TOPPViewBase::~TOPPViewBase()
   {
+  }
+
+  void TOPPViewBase::closeEvent(QCloseEvent* /*event*/)
+  {
   	QList<QWidget*> windows = ws_->windowList();
 		for(int i=0; i< windows.size(); ++i)
 		{

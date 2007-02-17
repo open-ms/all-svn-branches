@@ -49,6 +49,7 @@ class QListWidget;
 class QListWidgetItem;
 class QDockWidget;
 class QToolButton;
+class QCloseEvent;
 
 namespace OpenMS
 {
@@ -329,6 +330,8 @@ namespace OpenMS
 
       /// check if all avaiable preferences get set by the .ini file. If there are some missing entries fill them with default values.
       void checkPreferences_();
+      
+      void closeEvent(QCloseEvent* event); 
   }
   ; //class
 

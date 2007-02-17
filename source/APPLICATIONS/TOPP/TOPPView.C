@@ -198,7 +198,7 @@ int main( int argc, char ** argv )
 	  a.connect( &a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()) );
 
 	  int result = a.exec();
-	  mw->close();
+	  delete(mw);
 	  return result;
 #ifndef DEBUG_TOPP
 	}

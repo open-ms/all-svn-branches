@@ -161,6 +161,8 @@ namespace OpenMS
 			recent_actions_[i]->setVisible(false);
 		}
 
+		updateRecentMenu_();
+
     file->addMenu(recent_menu_);
     file->addSeparator();
     file->addAction("&Preferences",this, SLOT(preferencesDialog()));
@@ -2100,7 +2102,7 @@ namespace OpenMS
       }
     }
 
-    updateRecentMenu_();
+    //updateRecentMenu_();
   }
 
   void TOPPViewBase::savePreferences()

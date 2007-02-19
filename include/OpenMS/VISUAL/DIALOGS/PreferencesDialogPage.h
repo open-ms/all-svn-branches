@@ -34,6 +34,7 @@ class QGridLayout;
 class QString;
 class QGroupBox;
 class QLayout;
+class QSpinBox;
 
 // STL
 #include <string>
@@ -73,6 +74,8 @@ namespace OpenMS
 
 
 		protected:
+			///Adds a QSpinBox to the @p parent
+			QSpinBox* addSpinBox(QWidget* parent, int min, int max, int step) const;
 			///Adds a new QGroupBox with a @p label to the QGridlayout @p grid
 			QGroupBox* addBox(QGridLayout* grid, int row, int column, const QString& label);
 			///Adds a @p label and a @p widget to the give @p row of a QGridlayout @p grid

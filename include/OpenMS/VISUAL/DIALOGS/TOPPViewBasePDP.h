@@ -35,7 +35,6 @@ class QComboBox;
 class QLineEdit;
 class QRadioButton;
 class QCheckBox;
-class QSpinBox;
 
 namespace OpenMS
 {
@@ -91,7 +90,6 @@ namespace OpenMS
 			//2d
 			QSpinBox* marching_squares_steps_;
 			QSpinBox* contour_steps_;
-			
 			QSpinBox* interpolation_steps_;
 			QRadioButton* dot_mode_black_;
 			QRadioButton* dot_mode_gradient_;
@@ -99,7 +97,6 @@ namespace OpenMS
 			MultiGradientSelector* surface_gradient_;
 			
 			//3d
-		
 			QRadioButton* dot_mode_black_3d_;
 			QRadioButton* dot_mode_gradient_3d_;
 			ColorSelector* back_color_3d_; 

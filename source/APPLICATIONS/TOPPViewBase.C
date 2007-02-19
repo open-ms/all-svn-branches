@@ -118,13 +118,10 @@ namespace OpenMS
       QMainWindow(parent),
       PreferencesManager()
   {
-		//set preferences file name + load preferencs
-		loadPreferences();
-
   	setWindowTitle("TOPPView");
     
     //prevents errors caused by too small width,height values
-    setMinimumSize(200,200);
+    setMinimumSize(400,400);
 
     // create dummy widget (to be able to have a layout), Tab bar and workspace
     QWidget* dummy = new QWidget(this);
@@ -147,29 +144,28 @@ namespace OpenMS
     box_layout->addWidget(ws_);
 
     // File menu
-    QMenu * file = new QMenu("&File",this);
+    QMenu* file = new QMenu("&File",this);
     menuBar()->addMenu(file);
     file->addAction("&Open",this,SLOT(openSpectrumDialog()));
     file->addAction("&Close",this,SLOT(closeFile()));
     file->addSeparator();
-    recent_menu_ = new QMenu("Recent files", this);
-		UnsignedInt number_of_recent_files = UnsignedInt(prefs_.getValue("Preferences:NumberOfRecentFiles"));
-		recent_actions_.resize(number_of_recent_files);
-		for (Size i = 0; i != number_of_recent_files; ++i)
+    
+    QMenu* recent_menu = new QMenu("Recent files", this);
+    //create the max mumber of recent files actions
+  	recent_actions_.resize(20);
+		for (Size i = 0; i<20; ++i)
 		{
-			recent_actions_[i] = recent_menu_->addAction("",this,SLOT(openRecentFile()));
+			recent_actions_[i] = recent_menu->addAction("",this,SLOT(openRecentFile()));
 			recent_actions_[i]->setVisible(false);
 		}
+  	file->addMenu(recent_menu);
 
-		updateRecentMenu_();
-
-    file->addMenu(recent_menu_);
     file->addSeparator();
     file->addAction("&Preferences",this, SLOT(preferencesDialog()));
     file->addAction("&Quit",qApp,SLOT(quit()));
     
     //Layer menu
-    QMenu * layer = new QMenu("&Layer",this);
+    QMenu* layer = new QMenu("&Layer",this);
     menuBar()->addMenu(layer);
     layer->addAction("&Save visible data",this,SLOT(saveLayer()));
     layer->addAction("&Edit metadata",this,SLOT(editMetadata()));
@@ -230,11 +226,12 @@ namespace OpenMS
     MetaInfo::registry().registerName("FeatureDrawMode", "Specify what to draw of the Feature: BoundingBox, ConvexHulls");
 
     //set preferences file name + load preferencs
-    //loadPreferences();
+    loadPreferences();
   }
 
   TOPPViewBase::~TOPPViewBase()
   {
+  	savePreferences();
   }
 
   void TOPPViewBase::closeEvent(QCloseEvent* /*event*/)
@@ -633,9 +630,6 @@ namespace OpenMS
 
   void TOPPViewBase::addRecentFile_(const String& filename)
   {
-		
-    //get number of files in list from settings
-    UnsignedInt number_of_recent_files = UnsignedInt(prefs_.getValue("Preferences:NumberOfRecentFiles"));
     String tmp = filename;
 
     //add prefix to relative paths
@@ -644,35 +638,43 @@ namespace OpenMS
       tmp = QDir::currentPath().toAscii().data()+string("/")+ tmp;
     }
 	
-		// remove the new file if already in the recent list
+		// remove the new file if already in the recent list and prepend it
 		recent_files_.removeAll(tmp.c_str());
-		
 		recent_files_.prepend(tmp.c_str());
-
+		
+		//remove those files exceeding the defined number
+		UnsignedInt number_of_recent_files = UnsignedInt(prefs_.getValue("Preferences:NumberOfRecentFiles"));
 		while ((Size)recent_files_.size() > number_of_recent_files)
 		{
 			recent_files_.removeLast();
 		}
-
+		
     updateRecentMenu_();
   }
 
   void TOPPViewBase::updateRecentMenu_()
   {
-    //update recent file menu
-		UnsignedInt number_of_recent_files = min(UnsignedInt(prefs_.getValue("Preferences:NumberOfRecentFiles")), (UnsignedInt)recent_files_.size());
-
-		for (Size i = 0; i < number_of_recent_files; ++i)
+    //get/correct number of recent files
+		UnsignedInt number_of_recent_files = UnsignedInt(prefs_.getValue("Preferences:NumberOfRecentFiles"));
+		if (number_of_recent_files>20)
 		{
-			QString text = tr("&%1 %2").arg(i+1).arg(recent_files_[i]);
-			recent_actions_[i]->setText(text);
-			recent_actions_[i]->setData(recent_files_[i]);
-			recent_actions_[i]->setVisible(true);
+			number_of_recent_files = 20;
+			prefs_.setValue("Preferences:NumberOfRecentFiles",20);
 		}
-
-		for (Size i = recent_files_.size(); i < number_of_recent_files; ++i)
+		
+		for (UnsignedInt i = 0; i < 20; ++i)
 		{
-			recent_actions_[i]->setVisible(false);
+			if (i < (UnsignedInt)(recent_files_.size()))
+			{
+				QString text = tr("&%1 %2").arg(i).arg(recent_files_[i]);
+				recent_actions_[i]->setText(text);
+				recent_actions_[i]->setData(recent_files_[i]);
+				recent_actions_[i]->setVisible(true);
+			}
+			else
+			{
+				recent_actions_[i]->setVisible(false);
+			}
 		}
   }
 
@@ -2098,11 +2100,12 @@ namespace OpenMS
     {
       for (Param::ConstIterator it=p.begin() ; it!=p.end() ; ++it)
       {
-        recent_files_.append(string(it->second).c_str());
+      	QString filename = ((string)it->second).c_str();
+      	if (File::exists(filename.toAscii().data())) recent_files_.append(filename);
       }
     }
-
-    //updateRecentMenu_();
+		
+    updateRecentMenu_();
   }
 
   void TOPPViewBase::savePreferences()

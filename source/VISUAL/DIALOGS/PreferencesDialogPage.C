@@ -32,6 +32,7 @@
 #include <QtGui/QLabel>
 #include <QtGui/QGridLayout>
 #include <QtGui/QGroupBox>
+#include <QtGui/QSpinBox>
 
 using namespace std;
 
@@ -122,6 +123,15 @@ namespace OpenMS
 		{
 			cout << __PRETTY_FUNCTION__ << ": Warning, could not cast grid to QGridlayout!" << endl;
 		}
+	}
+
+	QSpinBox* PreferencesDialogPage::addSpinBox(QWidget* parent, int min, int max, int step) const
+	{
+		QSpinBox* box = new QSpinBox(parent);
+		box->setRange(min,max);
+		box->setSingleStep(step);
+		box->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
+		return box;
 	}
 
 } //namespace OpenMS

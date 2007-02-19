@@ -45,7 +45,6 @@
 class QAction;
 class QComboBox;
 class QLabel;
-class QMenu;
 class QListWidget;
 class QListWidgetItem;
 class QDockWidget;
@@ -328,9 +327,6 @@ namespace OpenMS
 
 			/// list of the recently opened files actions (menu entries)
 			std::vector<QAction*> recent_actions_;
-
-      /// pointer to the recent files menu
-      QMenu* recent_menu_;
 			//@}
 
       /// check if all avaiable preferences get set by the .ini file. If there are some missing entries fill them with default values.

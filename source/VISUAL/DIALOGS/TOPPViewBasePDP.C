@@ -82,11 +82,7 @@ namespace OpenMS
 			grid->addWidget(tmp,0,2);
 			connect(tmp,SIGNAL(clicked()),this,SLOT(browseDefaultPath_()));
 			//recent files
-			recent_files_ = new QSpinBox(tab);
-			recent_files_->setMinimum(1);
-			recent_files_->setMaximum(99);
-			recent_files_->setSingleStep(1);	
-			recent_files_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
+			recent_files_ = addSpinBox(tab,1,20,1);
 			addWidget(grid,1,"Number of recent files:",recent_files_);
 			//default map view
 			default_map_view_ = new QComboBox( tab);
@@ -164,11 +160,7 @@ namespace OpenMS
 			box = addBox(grid,0,0,"Colors");
 			back_color_2D_ = new ColorSelector(box);
 			addWidget(box->layout(),0,"Background color:",back_color_2D_);
-			interpolation_steps_ = new QSpinBox(box);
-			interpolation_steps_->setMinimum(10);
-			interpolation_steps_->setMaximum(1000);
-			interpolation_steps_->setSingleStep(1);	
-			interpolation_steps_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
+			interpolation_steps_ = addSpinBox(box,10,1000,1);
 			addWidget(box->layout(),1,"Interpolation steps:",interpolation_steps_);
 			finish(box->layout());
 			
@@ -198,11 +190,7 @@ namespace OpenMS
 			surface_gradient_ = new MultiGradientSelector(box);
 			addWidget(box->layout(),0,"Surface gradient:",surface_gradient_);			
 
-			marching_squares_steps_ = new QSpinBox(box);
-			marching_squares_steps_->setMinimum(10);
-			marching_squares_steps_->setMaximum(100);
-			marching_squares_steps_->setSingleStep(1);	
-			marching_squares_steps_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
+			marching_squares_steps_ = addSpinBox(box,10,100,1);
 			addWidget(box->layout(),1,"Squares per axis:",marching_squares_steps_);
 			
 			contour_steps_ = new QSpinBox(box);
@@ -267,10 +255,7 @@ namespace OpenMS
 			data_reduction_3d_->insertItem(1,"MaxReduction");
 			data_reduction_3d_->insertItem(2,"SumReduction");
 			label = new QLabel("Displayed Peaks : ",box);
-			reduction_diplay_peaks_3d_ = new QSpinBox(box);
-			reduction_diplay_peaks_3d_->setMinimum(10000);
-			reduction_diplay_peaks_3d_->setMaximum(50000);
-			reduction_diplay_peaks_3d_->setSingleStep(5000);	
+			reduction_diplay_peaks_3d_ = addSpinBox(box,10000,50000,5000);
 			grid->addWidget(box,2,1);	
 
 			grid->addWidget(box,2,1);	

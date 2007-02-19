@@ -55,10 +55,8 @@ namespace OpenMS
 		TOPPViewBasePDP::TOPPViewBasePDP( TOPPViewBase* manager, QWidget* parent)
 			:PreferencesDialogPage(manager,parent)
 		{
-			help_ = "This is the preferences dialog of the main window!"
-							"<br>";
+			help_ = "This is the preferences dialog of the main window!";
 		
-			QLabel* label;
 			//temporary box
 			QGroupBox* box;
 			
@@ -188,16 +186,12 @@ namespace OpenMS
 			//surface mode
 			box = addBox(grid,1,1,"Surface/contour settings");
 			surface_gradient_ = new MultiGradientSelector(box);
-			addWidget(box->layout(),0,"Surface gradient:",surface_gradient_);			
+			addWidget(box->layout(),0,"Gradient:",surface_gradient_);			
 
 			marching_squares_steps_ = addSpinBox(box,10,100,1);
 			addWidget(box->layout(),1,"Squares per axis:",marching_squares_steps_);
 			
-			contour_steps_ = new QSpinBox(box);
-			contour_steps_->setMinimum(3);
-			contour_steps_->setMaximum(30);
-			contour_steps_->setSingleStep(1);	
-			contour_steps_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
+			contour_steps_ = addSpinBox(box,3,30,1);
 			addWidget(box->layout(),2,"Contour lines:",contour_steps_);
 			finish(box->layout());
 			
@@ -208,59 +202,61 @@ namespace OpenMS
 			//-----------3D View Tab-----------
 			tab = new QWidget(tab_widget);
 			grid = new QGridLayout(tab);
-		
-			box = new QGroupBox("Dot coloring",tab);
-		  QGroupBox* coloring_group_3d = new QGroupBox("Color Mode:",box);
-
-	    
-	    dot_mode_black_3d_ = new QRadioButton("Black",coloring_group_3d);
-			dot_mode_gradient_3d_ = new QRadioButton("Gradient",coloring_group_3d);
-			dot_gradient_3d_ = new MultiGradientSelector(coloring_group_3d);
-
-			QGroupBox* interpolation_box = new QGroupBox("Interpolation steps",box);
-			label = new QLabel("Interpolation steps: ",interpolation_box);
-			dot_interpolation_steps_3d_ = new QSpinBox(interpolation_box);
-			dot_interpolation_steps_3d_->setMinimum(10);
-			dot_interpolation_steps_3d_->setMaximum(1000);
-			dot_interpolation_steps_3d_->setSingleStep(1);	
-			dot_interpolation_steps_3d_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
-
-			QGroupBox* shading_group_3d = new QGroupBox("Shade Mode:",box);
-			shade_mode_flat_3d_ = new QRadioButton("Flat",shading_group_3d);
-			shade_mode_smooth_3d_ = new QRadioButton("Smooth",shading_group_3d);	
-			grid->addWidget(box,0,0,1,3);
 			
-			box = new QGroupBox("Line Width",tab);
-			label = new QLabel("Line Width: ",box);
-			dot_line_width_ = new QSpinBox(box);
-			dot_line_width_->setMinimum(1);
-			dot_line_width_->setMaximum(10);
-			dot_line_width_->setSingleStep(1);	
-			dot_line_width_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
-			grid->addWidget(box,0,1);	
+			//peak color box
+			box = addBox(grid,0,0,"Peak colors",1,2);
+
+			tmp2 = new QVBoxLayout();
+			dot_mode_black_3d_ = new QRadioButton("Black",tab);
+			tmp2->addWidget(dot_mode_black_3d_);
+			dot_mode_gradient_3d_ = new QRadioButton("Gradient",tab);
+			tmp2->addWidget(dot_mode_gradient_3d_);
+			addLayout(box->layout(),0,"Mode:",tmp2);
+
+			dot_gradient_3d_ = new MultiGradientSelector(box);
+			addWidget(box->layout(),1,"Gradient:",dot_gradient_3d_);
+
+			dot_interpolation_steps_3d_ = addSpinBox(box,10,1000,1);
+			addWidget(box->layout(),2,"Interpolation steps:",dot_interpolation_steps_3d_);
+			finish(box->layout());
 			
-			box = new QGroupBox("Colors",tab);
-			label = new QLabel("Background color: ",box);
+			tmp2 = new QVBoxLayout();
+			QButtonGroup* tmp3 = new QButtonGroup(tab);
+			shade_mode_flat_3d_ = new QRadioButton("Flat",tab);
+			tmp2->addWidget(shade_mode_flat_3d_);
+			tmp3->addButton(shade_mode_flat_3d_);
+			shade_mode_smooth_3d_ = new QRadioButton("Smooth",tab);
+			tmp2->addWidget(shade_mode_smooth_3d_);
+			tmp3->addButton(shade_mode_smooth_3d_);
+			addLayout(box->layout(),3,"Shade mode:",tmp2);
+			finish(box->layout());
+			
+			//misc box
+			box = addBox(grid,1,0,"Misc");
+			
+			dot_line_width_ = addSpinBox(box,1,10,1);
+			addWidget(box->layout(),0,"Line width:",dot_line_width_);
+			
 			back_color_3d_ = new ColorSelector(box);
-			label = new QLabel("Axes color: ",box);
+			addWidget(box->layout(),1,"Background color:",back_color_3d_);
 			axes_color_3d_ = new ColorSelector(box);
-			
-			grid->addWidget(box,1,1);	
+			addWidget(box->layout(),2,"Axis color:",axes_color_3d_);
+			finish(box->layout());
 
-
-		 	box = new QGroupBox("Data",tab);
-			label = new QLabel("Reduction Mode:  ",box);
+			//data reduction box
+		 	box = addBox(grid,1,1,"Data reduction");
 			data_reduction_3d_ = new QComboBox( box);
 			data_reduction_3d_->insertItem(0,"Reduction OFF");
 			data_reduction_3d_->insertItem(1,"MaxReduction");
 			data_reduction_3d_->insertItem(2,"SumReduction");
-			label = new QLabel("Displayed Peaks : ",box);
-			reduction_diplay_peaks_3d_ = addSpinBox(box,10000,50000,5000);
-			grid->addWidget(box,2,1);	
+			addWidget(box->layout(),0,"Mode:",data_reduction_3d_);
 
-			grid->addWidget(box,2,1);	
-			grid->setRowStretch (2,2);
+			reduction_diplay_peaks_3d_ = addSpinBox(box,5000,200000,5000);
+			addWidget(box->layout(),1,"Displayed Peaks:",reduction_diplay_peaks_3d_);
+			finish(box->layout());
 			
+			finish(grid);
+						
 			tab_widget->addTab(tab,"3D View");
 	
 			load();

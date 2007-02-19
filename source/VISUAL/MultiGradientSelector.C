@@ -92,10 +92,10 @@ namespace OpenMS
 		painter.drawRect(margin_,margin_,width()-2*margin_,height()-2*margin_-lever_area_height_);
 	
 		//draw gradient
-		for (SignedInt i=0;i<gradient_area_width_;++i)
+		for (SignedInt i=0;i<=gradient_area_width_;++i)
 		{
 			painter.setPen(gradient_.interpolatedColorAt(i,0,gradient_area_width_));
-			painter.drawLine(margin_+1+i,margin_+1,margin_+1+i,height()-margin_-lever_area_height_-2);		
+			painter.drawLine(margin_+1+i,margin_+1,margin_+1+i,height()-margin_-lever_area_height_-1);		
 		}
 		
 		//levers
@@ -106,13 +106,13 @@ namespace OpenMS
 			painter.drawRect(pos-4,height()-margin_-lever_area_height_+5,9,9);
 			painter.drawLine(pos-4,height()-margin_-lever_area_height_+5,pos,height()-margin_-lever_area_height_);
 			painter.drawLine(pos,height()-margin_-lever_area_height_,pos+4,height()-margin_-lever_area_height_+5);
-			painter.fillRect(pos-3,height()-margin_-lever_area_height_+6,7,7,gradient_.color(i));
+			painter.fillRect(pos-3,height()-margin_-lever_area_height_+6,8,8,gradient_.color(i));
 			
 			//selected lever
 			if (SignedInt(gradient_.position(i)) == selected_)
 			{
-				painter.fillRect(pos-2,height()-margin_-lever_area_height_+3,5,2,QColor(0,0,0));
-				painter.fillRect(pos-1,height()-margin_-lever_area_height_+1,3,2,QColor(0,0,0));
+				painter.fillRect(pos-2,height()-margin_-lever_area_height_+3,6,3,QColor(0,0,0));
+				painter.fillRect(pos-1,height()-margin_-lever_area_height_+1,4,3,QColor(0,0,0));
 			}
 		}
 		

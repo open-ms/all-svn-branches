@@ -46,28 +46,23 @@ namespace OpenMS
 		Spectrum1DWidgetPDP::Spectrum1DWidgetPDP( Spectrum1DWidget* manager, QWidget* parent)
 			: PreferencesDialogPage(manager,parent)
 		{
-			help_ = "This is the preferences dialog of 1D spectrum!"
-							"<br>";
+			help_ = "This is the preferences dialog of a displayed spectrum!";
 		
-			QGridLayout* grid;
-		
-			//1D View Tab
-			grid = new QGridLayout(this);
-		
-			grid->setMargin(6);
-			grid->setSpacing(4);	
+			QGridLayout* grid = new QGridLayout(this);
 			
+			//Specetrum1DCanvas settings
 			colors_ = manager->client("Canvas", this);
-			
 			grid->addWidget(colors_,0,0);
-		
-			QGroupBox* box = new QGroupBox("Mapping",this);
-			new QLabel("Map m/z to: ",box);
+			
+			//mapping
+			QGroupBox* box = addBox(grid,1,0,"Mapping");
 			axis_mapping_ = new QComboBox( box);
 			axis_mapping_->insertItem(0,"X-Axis");
 			axis_mapping_->insertItem(1,"Y-Axis");  
-			grid->addWidget(box,1,0);
-		
+			addWidget(box->layout(),0,"Map m/z to:",axis_mapping_);
+			
+			finish(grid);
+			
 			load();
 		}
 		

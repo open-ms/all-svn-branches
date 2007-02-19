@@ -41,8 +41,8 @@ namespace OpenMS
 
 	PreferencesDialogPage::PreferencesDialogPage(PreferencesManager* manager,QWidget* parent)
 	: QWidget(parent),
-	manager_(manager),
-	help_()
+		manager_(manager),
+		help_()
 	{
 		
 	}
@@ -73,11 +73,11 @@ namespace OpenMS
 		
 	}
 
-	QGroupBox* PreferencesDialogPage::addBox(QGridLayout* grid, int row, int column, const QString& label)
+	QGroupBox* PreferencesDialogPage::addBox(QGridLayout* grid, int row, int col, const QString& label, int row_span, int col_span)
 	{
 		QGroupBox* box = new QGroupBox(label);
 		box->setLayout(new QGridLayout(box));
-		grid->addWidget(box, row, column);
+		grid->addWidget(box, row, col, row_span, col_span);
 		return box;
 	}
 	

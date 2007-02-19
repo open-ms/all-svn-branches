@@ -77,7 +77,7 @@ namespace OpenMS
 			///Adds a QSpinBox to the @p parent
 			QSpinBox* addSpinBox(QWidget* parent, int min, int max, int step) const;
 			///Adds a new QGroupBox with a @p label to the QGridlayout @p grid
-			QGroupBox* addBox(QGridLayout* grid, int row, int column, const QString& label);
+			QGroupBox* addBox(QGridLayout* grid, int row, int col, const QString& label, int row_span=1, int col_span=1);
 			///Adds a @p label and a @p widget to the give @p row of a QGridlayout @p grid
 			void addWidget(QLayout* grid, int row, const QString& label, QWidget* widget) const;
 			///Adds a @p label and a @p layout to the give @p row of a QGridlayout @p grid

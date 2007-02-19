@@ -44,8 +44,7 @@ namespace OpenMS
 	  Spectrum3DWidgetPDP::Spectrum3DWidgetPDP( Spectrum3DWidget* manager, QWidget* parent)
 			: PreferencesDialogPage(manager,parent)
 	  {
-			help_ = "This is the preferences dialog of 3D spectrum!"
-							"<br>";
+			help_ = "This is the preferences dialog of a 3D view of a map!";
 		
 			QGridLayout* grid;	
 			grid = new QGridLayout(this);		

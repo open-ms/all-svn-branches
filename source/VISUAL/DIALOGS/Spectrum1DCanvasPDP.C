@@ -46,26 +46,23 @@ namespace OpenMS
 		Spectrum1DCanvasPDP::Spectrum1DCanvasPDP(Spectrum1DCanvas* manager, QWidget* parent)
 			: PreferencesDialogPage(manager,parent)
 		{
-			help_ = "This is the preferences dialog of 1D spectrum!"
-							"<br>";
+			help_ = "This is the preferences dialog of a displayed spectrum!";
 		
-			QGridLayout* grid;
-		
-			//1D View Tab
-			grid = new QGridLayout(this);
+			QGridLayout* grid = new QGridLayout(this);
 			
-			QGroupBox* box = new QGroupBox("Colors",this);
-			QLabel* label;
-			label = new QLabel("Peak color: ",box);
+			QGroupBox* box = addBox(grid,0,0,"Colors:");
+
 			peak_color_ = new ColorSelector(box);
-			label = new QLabel("Icon color: ",box);
+			addWidget(box->layout(),0,"Peak color:", peak_color_);
+
 			icon_color_ = new ColorSelector(box);
-			label = new QLabel("Highlighted peak color: ",box);
-			high_color_ = new ColorSelector(box);
-			label = new QLabel("Background color: ",box);
-			back_color_ = new ColorSelector(box);
+			addWidget(box->layout(),1,"Icon color:", icon_color_);
 			
-			grid->addWidget(box, 0, 0);
+			high_color_ = new ColorSelector(box);
+			addWidget(box->layout(),2,"Highlighted peak color:", high_color_);
+			
+			back_color_ = new ColorSelector(box);
+			addWidget(box->layout(),3,"Background color:", back_color_);
 		
 			load();
 		}

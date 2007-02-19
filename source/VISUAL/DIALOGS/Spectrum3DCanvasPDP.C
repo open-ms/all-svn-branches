@@ -38,6 +38,7 @@
 #include <QtGui/QSpinBox>
 #include <QtGui/QComboBox>
 #include <QtGui/QGridLayout>
+#include <QtGui/QButtonGroup>
 
 using namespace std;
 
@@ -48,63 +49,63 @@ namespace OpenMS
 		Spectrum3DCanvasPDP::Spectrum3DCanvasPDP(Spectrum3DCanvas* manager, QWidget* parent)
 				: PreferencesDialogPage(manager,parent)
 		{
-			help_ = "This is the preferences dialog of 3D spectrum!"
-								"<br>";
-			QGridLayout* grid;
-			QLabel * label;
-			grid = new QGridLayout(this);
-			grid->setMargin(6);
-			grid->setSpacing(4);	
+			help_ = "This is the preferences dialog of a 3D view of a map!";
+			
+			QGridLayout* grid = new QGridLayout(this);
 
-			QGroupBox* box = new QGroupBox("Dot coloring",this);
+			//peak color box
+			QGroupBox* box = addBox(grid,0,0,"Peak colors",1,2);
 
-			QGroupBox* coloring_group = new QGroupBox("Color Mode:",box);
-			dot_mode_black_ = new QRadioButton("Black",coloring_group);
-			dot_mode_gradient_ = new QRadioButton("Gradient",coloring_group);
-			dot_gradient_ = new MultiGradientSelector(coloring_group);
+			QVBoxLayout* tmp2 = new QVBoxLayout();
+			dot_mode_black_= new QRadioButton("Black",this);
+			tmp2->addWidget(dot_mode_black_);
+			dot_mode_gradient_= new QRadioButton("Gradient",this);
+			tmp2->addWidget(dot_mode_gradient_);
+			addLayout(box->layout(),0,"Mode:",tmp2);
 
-			QGroupBox* interpolation_box = new QGroupBox("Interpolation steps",box);
-			label = new QLabel("Interpolation steps: ",interpolation_box);
-			dot_interpolation_steps_ = new QSpinBox(interpolation_box);
-			dot_interpolation_steps_->setMinimum(10);
-			dot_interpolation_steps_->setMaximum(1000);
-			dot_interpolation_steps_->setSingleStep(1);	
-			dot_interpolation_steps_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
+			dot_gradient_= new MultiGradientSelector(box);
+			addWidget(box->layout(),1,"Gradient:",dot_gradient_);
 
-			QGroupBox* shading_group = new QGroupBox("Shade Mode:",box);
-			//shading_group->setFrameStyle(QFrame::NoFrame);
-			shade_mode_flat_ = new QRadioButton("Flat",shading_group);
-			shade_mode_smooth_ = new QRadioButton("Smooth",shading_group);	
-			grid->addWidget(box,0,0,1,3);
+			dot_interpolation_steps_= addSpinBox(box,10,1000,1);
+			addWidget(box->layout(),2,"Interpolation steps:",dot_interpolation_steps_);
+			finish(box->layout());
+			
+			tmp2 = new QVBoxLayout();
+			QButtonGroup* tmp3 = new QButtonGroup(this);
+			shade_mode_flat_= new QRadioButton("Flat",this);
+			tmp2->addWidget(shade_mode_flat_);
+			tmp3->addButton(shade_mode_flat_);
+			shade_mode_smooth_= new QRadioButton("Smooth",this);
+			tmp2->addWidget(shade_mode_smooth_);
+			tmp3->addButton(shade_mode_smooth_);
+			addLayout(box->layout(),3,"Shade mode:",tmp2);
+			finish(box->layout());
+			
+			//misc box
+			box = addBox(grid,1,0,"Misc");
+			
+			dot_line_width_ = addSpinBox(box,1,10,1);
+			addWidget(box->layout(),0,"Line width:",dot_line_width_);
+			
+			background_color_= new ColorSelector(box);
+			addWidget(box->layout(),1,"Background color:",background_color_);
+			axes_color_= new ColorSelector(box);
+			addWidget(box->layout(),2,"Axis color:",axes_color_);
+			finish(box->layout());
 
-			box = new QGroupBox("Line Width",this);
-			label = new QLabel("Line Width: ",box);
-			dot_line_width_ = new QSpinBox(box);
-			dot_line_width_->setMinimum(1);
-			dot_line_width_->setMaximum(10);
-			dot_line_width_->setSingleStep(1);	
-			dot_line_width_->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Minimum);
-			grid->addWidget(box,0,1);	
-
-			box = new QGroupBox("Colors",this);
-			label = new QLabel("Background color: ",box);
-			background_color_ = new ColorSelector(box);
-			label = new QLabel("Axes Color: ",box);
-			axes_color_ = new ColorSelector(box);
-			grid->addWidget(box,1,1);	
-
-			box = new QGroupBox("Data",this);
-			label = new QLabel("Reduction Mode:  ",box);
-			data_reduction_ = new QComboBox( box);
+			//data reduction box
+		 	box = addBox(grid,1,1,"Data reduction");
+			data_reduction_= new QComboBox( box);
 			data_reduction_->insertItem(0,"Reduction OFF");
 			data_reduction_->insertItem(1,"MaxReduction");
 			data_reduction_->insertItem(2,"SumReduction");
-			label = new QLabel("Displayed Peaks : ",box);
-			reduction_diplay_peaks_ = new QSpinBox(box);
-			reduction_diplay_peaks_->setMinimum(10000);
-			reduction_diplay_peaks_->setMaximum(50000);
-			reduction_diplay_peaks_->setSingleStep(5000);	
-			grid->addWidget(box,2,1);
+			addWidget(box->layout(),0,"Mode:",data_reduction_);
+
+			reduction_diplay_peaks_= addSpinBox(box,5000,200000,5000);
+			addWidget(box->layout(),1,"Displayed Peaks:",reduction_diplay_peaks_);
+			finish(box->layout());
+			
+			finish(grid);
 		
 			load();
 		}

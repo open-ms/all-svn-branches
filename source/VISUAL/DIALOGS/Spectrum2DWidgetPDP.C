@@ -47,26 +47,22 @@ namespace OpenMS
 		Spectrum2DWidgetPDP::Spectrum2DWidgetPDP( Spectrum2DWidget* manager, QWidget* parent)
 			: PreferencesDialogPage(manager,parent)
 		{
-			help_ = "This is the preferences dialog of 2D spectrum !"
-							"<br>";
+			help_ = "This is the preferences dialog of a 2D view of a map!";
 		
-			QGridLayout* grid;
-		
-			grid = new QGridLayout(this);
-			grid->setMargin(6);
-			grid->setSpacing(4);	
+			QGridLayout* grid = new QGridLayout(this);
 			
+			//Spectrum2DCanvas
 			canvas_ = manager->client("Canvas", this);
-			grid->addWidget(canvas_, 0,0,1,1);
+			grid->addWidget(canvas_, 0,0,1,2);
 			
-			QGroupBox* box = new QGroupBox("Mapping",this);
-			QLabel* label;
-			label = new QLabel("Map m/z to: ",box);
+			//mapping
+			QGroupBox* box = addBox(grid,1,0,"Mapping");
 			axis_mapping_ = new QComboBox( box);
 			axis_mapping_->insertItem(0,"X-Axis");
-			axis_mapping_->insertItem(1,"Y-Axis");  
-			grid->addWidget(box,2,0);
-
+			axis_mapping_->insertItem(1,"Y-Axis");
+			addWidget(box->layout(),0,"Map m/z to:",axis_mapping_);
+			finish(box->layout());			
+			
 			load();
 		}
 		

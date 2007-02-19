@@ -61,7 +61,9 @@ namespace OpenMS
 			const QColor& getColor();
 			/// Sets the selected color
 			void setColor(const QColor&);
-		
+			
+			/// Qt size hint
+			QSize sizeHint () const;
 		protected:
 			void paintEvent(QPaintEvent * e);
 			void mousePressEvent(QMouseEvent* e);

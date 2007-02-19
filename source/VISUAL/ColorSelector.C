@@ -43,7 +43,12 @@ namespace OpenMS
 		: QWidget(parent),
 			color_(255,255,255)
 	{
-		setMinimumSize(12,12);
+		setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
+	}
+	
+	QSize ColorSelector::sizeHint() const
+	{
+		return QSize(15,15);
 	}
 	
 	ColorSelector::~ColorSelector()
@@ -56,9 +61,9 @@ namespace OpenMS
 		SignedInt size=std::min(width(),height());
 		QPainter painter(this);
 		painter.setPen(QColor(0,0,0));
-		painter.drawRect(0,0,size,size);
+		painter.drawRect(0,0,size-1,size-1);
 		painter.setPen(QColor(255,255,255));
-		painter.drawRect(1,1,size-2,size-2);	
+		painter.drawRect(1,1,size-3,size-3);	
 	
 		painter.fillRect(2,2,size-4,size-4,color_);
 	}
@@ -81,7 +86,7 @@ namespace OpenMS
 	
 	void ColorSelector::setColor(const QColor& col)
 	{
-		color_=col;
+		color_ = col;
 		repaint();
 	}
 

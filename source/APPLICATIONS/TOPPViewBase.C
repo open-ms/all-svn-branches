@@ -105,6 +105,8 @@
 #include "../VISUAL/ICONS/colors.xpm"
 #include "../VISUAL/ICONS/contours.xpm"
 
+#include "../VISUAL/ICONS/TOPPView.xpm"
+
 #include <algorithm>
 
 using namespace std;
@@ -119,7 +121,7 @@ namespace OpenMS
       PreferencesManager()
   {
   	setWindowTitle("TOPPView");
-    
+    setWindowIcon(QIcon(XPM_toppview));
     //prevents errors caused by too small width,height values
     setMinimumSize(400,400);
 

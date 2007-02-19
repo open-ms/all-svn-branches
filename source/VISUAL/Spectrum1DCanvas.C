@@ -558,7 +558,7 @@ namespace OpenMS
 
 						for (SpectrumIteratorType it = visible_begin_[i]; it != visible_end_[i]; ++it)
 						{
-							if (it->getIntensity() >= getLayer(i).min_int || it->getIntensity() <= getLayer(i).max_int)
+							if (it->getIntensity() >= getLayer(i).min_int && it->getIntensity() <= getLayer(i).max_int)
 							{
 								if (intensity_mode_==IM_LOG)
 								{

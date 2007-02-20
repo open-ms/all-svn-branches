@@ -33,6 +33,7 @@
 
 //QT
 class QGridLayout;
+class QPushButton;
 
 namespace OpenMS
 {
@@ -79,6 +80,7 @@ namespace OpenMS
 		QGridLayout* grid_;
 		Spectrum1DWidget* projection_vert_;
 		Spectrum1DWidget* projection_horz_;
+		QPushButton* hide_button_;
 	
 	private slots:
 		void horizontalProjection(const MSExperiment<>&);

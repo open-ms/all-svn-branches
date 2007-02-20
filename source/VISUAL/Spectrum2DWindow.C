@@ -54,21 +54,22 @@ namespace OpenMS
 		
 		projection_vert_ = new 	Spectrum1DWidget(w);
 		projection_vert_->hide();
-	
+		grid_->addWidget(projection_vert_, 1, 1);
+		
 		projection_horz_ = new Spectrum1DWidget(w);
 		projection_horz_->hide();
+		grid_->addWidget(projection_horz_, 0, 0);
 		
 		setWidget_(new Spectrum2DWidget(w));
-		
-		grid_->addWidget(projection_horz_, 0, 0);
-		grid_->addWidget(projection_vert_, 1, 1);
 		grid_->addWidget(widget(), 1, 0);
-		
 		connectWidgetSignals(widget());
-		
 		connect(widget()->canvas(), SIGNAL(showProjectionHorizontal(const MSExperiment<>&)), this, SLOT(horizontalProjection(const MSExperiment<>&)));
 		connect(widget()->canvas(), SIGNAL(showProjectionVertical(const MSExperiment<>&)), this, SLOT(verticalProjection(const MSExperiment<>&)));
-	
+		
+		hide_button_ = new QPushButton("Hide projections", w);
+		hide_button_->hide();
+		grid_->addWidget(hide_button_, 0, 1, Qt::AlignLeft | Qt::AlignBottom);
+		connect(hide_button_, SIGNAL(clicked()), this, SLOT(hideProjections()));
 	}
 	
 	Spectrum2DWidget* Spectrum2DWindow::widget()
@@ -83,17 +84,13 @@ namespace OpenMS
 	
 	void Spectrum2DWindow::hideProjections()
 	{
+		hide_button_->hide();
 		projection_horz_->hide();
 		projection_vert_->hide();
 	}
 	
 	void Spectrum2DWindow::horizontalProjection(const MSExperiment<>& exp)
 	{
-		if (exp[0].size()<3)
-		{
-			projection_horz_->hide();
-			return;
-		}
 		projection_horz_->setMainPreferences(prefs_);
 		projection_horz_->mzToXAxis(true);
 		projection_horz_->showLegend(false);
@@ -102,15 +99,11 @@ namespace OpenMS
 		projection_horz_->canvas()->addLayer(exp);
 		projection_horz_->canvas()->setActionMode(SpectrumCanvas::AM_SELECT);
 		projection_horz_->show();
+		hide_button_->show();
 	}
 	
 	void Spectrum2DWindow::verticalProjection(const MSExperiment<>& exp)
 	{
-		if (exp[0].size()<3)
-		{
-			projection_vert_->hide();
-			return;
-		}
 		projection_vert_->setMainPreferences(prefs_);
 		projection_vert_->mzToXAxis(false);
 		projection_vert_->showLegend(false);
@@ -119,6 +112,7 @@ namespace OpenMS
 		projection_vert_->canvas()->addLayer(exp);
 		projection_vert_->canvas()->setActionMode(SpectrumCanvas::AM_SELECT);
 		projection_vert_->show();
+		hide_button_->show();
 	}
 	
 	PreferencesDialogPage* Spectrum2DWindow::createPreferences(QWidget* parent)

@@ -115,7 +115,9 @@ namespace OpenMS
 	
 	void PreferencesManager::createPreferences_(PreferencesDialog* dialog, const string& name)
 	{
-		dialog->addPage(name,createPreferences(dialog),this,getParent());
+		dialog->addPage(name,createPreferences(dialog),this,is_active_,getParent());
+		is_active_ = false;
+		
 		//client preferences
 		for (map<PreferencesManager*,string>::iterator it = clients_.begin();it!=clients_.end();++it)
 		{

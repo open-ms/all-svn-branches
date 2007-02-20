@@ -86,10 +86,10 @@ namespace OpenMS
 		
 	}
 	
-	void PreferencesDialog::addPage(std::string name, PreferencesDialogPage* page, PreferencesManager* creator, PreferencesManager* parent) 
+	void PreferencesDialog::addPage(std::string name, PreferencesDialogPage* page, PreferencesManager* creator, bool highlight, PreferencesManager* parent) 
 	{
 		pages_.push_back(page);
-		stack_->addWidget(name,page,creator,parent);
+		stack_->addWidget(name,page,creator,highlight,parent);
 		stack_->expand();
 	}
 	

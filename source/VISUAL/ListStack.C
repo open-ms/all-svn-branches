@@ -45,28 +45,28 @@ namespace OpenMS
 	QWidget(parent), 
 	last_(0)
 	{
-			//layout
-			QGridLayout* layout = new QGridLayout(this);
-			layout->setSpacing(4);
-			layout->setMargin(6);
+		//layout
+		QGridLayout* layout = new QGridLayout(this);
+		layout->setSpacing(4);
+		layout->setMargin(6);
+		
+		//listview (left)
+		tree_ =  new QTreeWidget(this);
+		tree_->setSizePolicy(QSizePolicy::QSizePolicy::Preferred,QSizePolicy::Minimum);
+		tree_->setColumnCount(1);
+		tree_->setHeaderLabel("Name");
+		tree_->setSortingEnabled(false);
+		tree_->setHorizontalScrollBarPolicy ( Qt::ScrollBarAlwaysOff );
+		tree_->header()->hide();
+		layout->addWidget(tree_,0,0);
 			
-			//listview (left)
-			tree_ =  new QTreeWidget(this);
-			tree_->setSizePolicy(QSizePolicy::QSizePolicy::Preferred,QSizePolicy::Minimum);
-			tree_->setColumnCount(1);
-			tree_->setHeaderLabel("Name");
-			tree_->setSortingEnabled(false);
-			tree_->setHorizontalScrollBarPolicy ( Qt::ScrollBarAlwaysOff );
-			tree_->header()->hide();
-			layout->addWidget(tree_,0,0);
-				
-			
-			//widget stack (right)
-			stack_ = new QStackedWidget(this);
-			layout->addWidget(stack_,0,1);
-			layout->setColumnStretch(1,1);
-			
-			connect(tree_,SIGNAL( itemClicked(QTreeWidgetItem*, int) ),this,SLOT( raiseWidget_(QTreeWidgetItem*, int) ));
+		
+		//widget stack (right)
+		stack_ = new QStackedWidget(this);
+		layout->addWidget(stack_,0,1);
+		layout->setColumnStretch(1,1);
+		
+		connect(tree_,SIGNAL( itemSelectionChanged() ),this,SLOT( raiseActiveWidget_() ));
 	}
 	
 	ListStack::~ListStack()
@@ -74,7 +74,7 @@ namespace OpenMS
 		
 	}
 	
-	void ListStack::addWidget(std::string name, QWidget* widget, void* creator, void* parent)
+	void ListStack::addWidget(std::string name, QWidget* widget, void* creator, bool highlight, void* parent)
 	{
 		QTreeWidgetItem* i;
 		if (parent==0 || w_to_item_[parent]==0)
@@ -100,19 +100,12 @@ namespace OpenMS
 		{
 			w_to_item_[creator] = i;	
 		}
-		//cout << "c:" << creator <<" i:" << w_to_item_[creator] << " p:" <<parent<< " i[p]:" <<w_to_item_[parent]<<endl;
-	
+		
 		item_to_index_[i] = stack_->addWidget(widget);
 		
-		//Extension for PreferencesManager
-		
-		if (typeid( creator) == typeid( PreferencesManager* ))
+		if (highlight)
 		{
-			if ( ((PreferencesManager*)creator)->isActive() )
-			{
-				tree_->setCurrentItem(i);
-				((PreferencesManager*)creator)->setActive(false);
-			}
+			tree_->setCurrentItem(i);
 		}
 	}
 	
@@ -132,10 +125,10 @@ namespace OpenMS
 		return stack_->currentWidget();
 	}
 	
-	void ListStack::raiseWidget_(QTreeWidgetItem* ptr, int /*column*/)
+	void ListStack::raiseActiveWidget_()
 	{
-		//cout << "raiseWidget_" << ptr << " -> " << item_to_index_[ptr] << endl;
-		stack_->setCurrentIndex(item_to_index_[ptr]);
+		QTreeWidgetItem* item = tree_->selectedItems().first();
+		stack_->setCurrentIndex(item_to_index_[item]);
 	}
 
 } //namespace

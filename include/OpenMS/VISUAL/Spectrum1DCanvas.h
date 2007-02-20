@@ -141,9 +141,6 @@ namespace OpenMS
 		
 		/// Calls dataToWidget_(const PointType&, QPoint& point) but takes snap_factor_ and percentage_factor_ into account.
 		void dataToWidget_(const PeakType& peak, QPoint& point);
-
-		// Docu in base class
-		virtual void invalidate_();
 		
 		/**
 			@brief Sets the visible area
@@ -173,7 +170,9 @@ namespace OpenMS
 		SpectrumIteratorType nearest_peak_;
 		/// Find peak next to the given position
 		SpectrumIteratorType findPeakAtPosition_(QPoint);  
-
+		/// Selected area
+		QRect* selected_area_;
+		
 		/// Draws peaks for layer @p index
 		void drawPeaks_(UnsignedInt index, QPainter& p);
 		/// Draws connectedLines for layer @p index

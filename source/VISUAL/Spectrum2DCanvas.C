@@ -162,8 +162,7 @@ namespace OpenMS
 					
 					createProjections_(area, e->buttons() & Qt::ShiftModifier, e->buttons() & Qt::ControlModifier);
 					
-					tmp_buffer_ = buffer_.copy();
-					refresh_();
+										refresh_();
 				}
 				break;
 			}
@@ -181,8 +180,7 @@ namespace OpenMS
 						measurement_stop_ = new DFeature<2>(*measurement_stop_);
 					}
 					
-					tmp_buffer_ = buffer_.copy();
-					refresh_();
+										refresh_();
 					
 					if (measurement_start_)
 					{
@@ -250,7 +248,7 @@ namespace OpenMS
 	
 	void Spectrum2DCanvas::highlightPeaks_()
 	{
-		QPainter p(&tmp_buffer_);
+		QPainter p(&buffer_);
 		
 		if (measurement_start_)
 		{
@@ -388,8 +386,7 @@ namespace OpenMS
 					}
 					
 					nearest_peak_ = max_peak;
-					tmp_buffer_ = buffer_.copy();
-					refresh_();
+										refresh_();
 				}
 				else if (e->buttons() & Qt::LeftButton)
 				{
@@ -399,8 +396,7 @@ namespace OpenMS
 					QRect rect_mid(last_mouse_pos_, pos);
 	
 					// draw rubber band(s)
-					tmp_buffer_ = buffer_.copy();
-					QPainter p(&tmp_buffer_);
+					QPainter p(&buffer_);
 					p.setPen(Qt::NoPen);
 					p.setBrush(Qt::red);
 					p.setCompositionMode(QPainter::CompositionMode_Xor);
@@ -442,15 +438,13 @@ namespace OpenMS
 					}
 					
 					nearest_peak_ = max_peak;
-					tmp_buffer_ = buffer_.copy();
-					refresh_();
+										refresh_();
 				}
 				else if (e->buttons() & Qt::LeftButton && measurement_start_)
 				{
 					measurement_stop_ = findNearestPeak_(pos);
 					last_mouse_pos_ = pos;
-					tmp_buffer_ = buffer_.copy();
-					refresh_();
+										refresh_();
 				
 					if (measurement_stop_)
 					{
@@ -476,8 +470,7 @@ namespace OpenMS
 				if (e->buttons() & Qt::LeftButton)
 				{
 					// draw zoom rect
-					tmp_buffer_ = buffer_.copy();
-					QPainter p(this);
+										QPainter p(this);
 					p.setBrush(Qt::red);
 					p.setCompositionMode(QPainter::CompositionMode_Xor);
 					p.drawRect(last_mouse_pos_.x(), last_mouse_pos_.y(), pos.x() - last_mouse_pos_.x(), pos.y() - last_mouse_pos_.y());
@@ -1145,7 +1138,7 @@ namespace OpenMS
 		highlightPeaks_();
 		
 		QPainter p(this);
-		p.drawImage(0,0,tmp_buffer_);
+		p.drawImage(0,0,buffer_);
 	}
 	
 	void Spectrum2DCanvas::invalidate_()
@@ -1223,8 +1216,7 @@ namespace OpenMS
 		p.end();
 		cout << "repainting END: " << PreciseTime::now().getSeconds()-start << " s" << endl;
 		
-		tmp_buffer_ = buffer_.copy();
-		refresh_();
+				refresh_();
 	}
 	
 	void Spectrum2DCanvas::zoom_(const PointType& pos, float factor, bool add_to_stack)

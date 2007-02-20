@@ -164,6 +164,22 @@ namespace OpenMS
 		inline void setActionMode(ActionModes mode) 
 		{ 
 			action_mode_ = mode;
+			if (mode == AM_ZOOM)
+			{
+				setCursor(Qt::CrossCursor);
+			}
+			else if (mode == AM_SELECT)
+			{
+			  setCursor(Qt::ArrowCursor);
+			}
+			else if (mode == AM_TRANSLATE)
+			{
+				setCursor(cursor_translate_);	
+			}
+			else if (mode == AM_MEASURE)
+			{
+				setCursor(Qt::ArrowCursor);
+			}
 			actionModeChange_();
 		}
 		
@@ -544,7 +560,10 @@ namespace OpenMS
 			
 			@see recalculate_
 		*/
-		virtual void invalidate_() = 0;
+		virtual void invalidate_()
+		{
+			update();
+		}
 		
 		/**
 			@brief Sets the visible area
@@ -649,9 +668,6 @@ namespace OpenMS
 		
 		/// Buffer that stores the actual peak information
 		QImage buffer_;
-
-		/// Buffer that is used to draw selection rectanges and other temprorary stuff on the peak information
-		QImage tmp_buffer_;
 		
 		/// Stores the current action mode (Pick, Zoom, Translate)
 		ActionModes action_mode_;
@@ -715,9 +731,12 @@ namespace OpenMS
 		/// The zoom stack. This is dealt with in the changeVisibleArea_() and zoomBack_() functions.
 		std::stack<AreaType> zoom_stack_;
 
-		/// Whether to recalculate the data before drawing. This is used to optimize redrawing in invalidate_().
+		/// Whether to recalculate the data when repainting
 		bool recalculate_;
-		
+
+		/// Whether to recalculate the axes when repainting
+		bool update_axes_;
+
 		/**
 			@brief Creates mouse cursors
 			

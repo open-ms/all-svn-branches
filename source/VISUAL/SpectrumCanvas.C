@@ -45,7 +45,6 @@ namespace OpenMS
 	SpectrumCanvas::SpectrumCanvas(QWidget* parent)
 		: QWidget(parent),
 			buffer_(),
-			tmp_buffer_(),
 			action_mode_(AM_ZOOM),
 			intensity_mode_(IM_NONE),
 			layers_(),
@@ -100,19 +99,17 @@ namespace OpenMS
 	
 	void SpectrumCanvas::paintEvent(QPaintEvent* e)
 	{
-		// blit changed parts of backbuffer on widget
 		QVector<QRect> rects = e->region().rects();
+		QPainter painter(this);
 		for (int i = 0; i < (int)rects.size(); ++i)
 		{
-			QPainter painter(this);
-			painter.drawImage(rects[i].topLeft(), tmp_buffer_, rects[i]);
+			painter.drawImage(rects[i].topLeft(), buffer_, rects[i]);
 		}
 	}
 	
 	void SpectrumCanvas::adjustBuffer_()
 	{
 		buffer_ = QImage(width(), height(), QImage::Format_ARGB32);
-		tmp_buffer_ = buffer_.copy();
 	}
 	
 	void SpectrumCanvas::setDispInt(float min, float max)

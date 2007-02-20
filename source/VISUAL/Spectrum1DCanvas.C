@@ -36,6 +36,7 @@
 #include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum1DCanvasPDP.h>
 #include <OpenMS/FORMAT/PeakTypeEstimator.h>
+#include <OpenMS/CONCEPT/TimeStamp.h>
 
 using namespace std;
 
@@ -45,9 +46,10 @@ namespace OpenMS
 	using namespace Internal;
 		
 	Spectrum1DCanvas::Spectrum1DCanvas(QWidget* parent)
-		: SpectrumCanvas(parent)
+		: SpectrumCanvas(parent),
+			selected_area_(0)
 	{
-		
+		setAttribute(Qt::WA_PaintOutsidePaintEvent, false);
 	}
 	
 	//change the current layer
@@ -68,11 +70,6 @@ namespace OpenMS
 		emit layerActivated(this);
 	}
 	
-	void Spectrum1DCanvas::paintEvent(QPaintEvent* e)
-	{
-		SpectrumCanvas::paintEvent(e);
-	}
-	
 	void Spectrum1DCanvas::setVisibleArea(DRange<2> range)
 	{
 		changeVisibleArea_(AreaType(range.minX(), visible_area_.minY(), range.maxX(), visible_area_.maxY()));
@@ -91,11 +88,10 @@ namespace OpenMS
 	//////////////////////////////////////////////////////////////////////////////////
 	// Qt events
 	
-	void Spectrum1DCanvas::mousePressEvent( QMouseEvent *e)
+	void Spectrum1DCanvas::mousePressEvent( QMouseEvent* e)
 	{
 		// get mouse position in widget coordinates
-		QPoint p = e->pos();
-		last_mouse_pos_ = p;
+		last_mouse_pos_ = e->pos();
 	
 		if (e->button() == Qt::LeftButton)
 		{
@@ -105,9 +101,83 @@ namespace OpenMS
 			}
 		}
 	}
+
+	void Spectrum1DCanvas::mouseMoveEvent( QMouseEvent *e)
+	{
+		// mouse position relative to the diagram widget
+		QPoint p = e->pos();
 	
+		switch (action_mode_)
+		{
+			case AM_SELECT:
+			{ 
+				emit sendCursorStatus();
+				nearest_peak_ = findPeakAtPosition_(p);
+				invalidate_();
+				break;
+			}
+			case AM_ZOOM:
+			{
+				PointType pos = widgetToData_(p);
 	
-	void Spectrum1DCanvas::mouseReleaseEvent(QMouseEvent *e)
+				if (e->buttons() & Qt::LeftButton)
+				{
+					if (e->modifiers() & Qt::ShiftModifier) // free zoom
+					{
+						selected_area_ = new QRect(last_mouse_pos_.x(), last_mouse_pos_.y(), p.x() - last_mouse_pos_.x(), p.y() - last_mouse_pos_.y());
+					}
+					else // zoom on position axis only
+					{
+						selected_area_ = new QRect(last_mouse_pos_.x(), 0, p.x() - last_mouse_pos_.x(), height());
+					}
+					update();
+				}
+				if (e->modifiers() & Qt::ShiftModifier)
+				{
+					emit sendCursorStatus( pos.X(), pos.Y());
+				}
+				else
+				{
+					emit sendCursorStatus( pos.X() );
+				}
+				break;
+			}
+			case AM_TRANSLATE:
+			{
+				// Translation of visible area
+				if(e->buttons() & Qt::LeftButton)
+				{
+					// translation in data metric
+					double shift = widgetToData_(last_mouse_pos_).X() - widgetToData_(p).X();
+					double newLo = visible_area_.minX() + shift;
+					double newHi = visible_area_.maxX() + shift;
+					// check if we are falling out of bounds
+					if (newLo < overall_data_range_.minX())
+					{
+						newLo = overall_data_range_.minX();
+						newHi = newLo + visible_area_.width();
+					}
+					if (newHi > overall_data_range_.maxX())
+					{
+						newHi = overall_data_range_.maxX();
+						newLo = newHi - visible_area_.width();
+					}
+					//chage data area
+					changeVisibleArea_(newLo, newHi);
+					last_mouse_pos_=p;
+				// End of: Translation
+				}
+				break;
+			}
+			case AM_MEASURE:
+			{
+				
+			}
+		}
+	}
+
+	
+	void Spectrum1DCanvas::mouseReleaseEvent(QMouseEvent* e)
 	{
 		switch (action_mode_)
 		{
@@ -153,6 +223,8 @@ namespace OpenMS
 			}
 			case AM_ZOOM:
 			{
+				delete(selected_area_);
+				
 				// zoom-in-at-position or zoom-in-to-area
 				if (e->button() == Qt::LeftButton)
 				{
@@ -234,85 +306,6 @@ namespace OpenMS
 		if (e->button() == Qt::MidButton)
 		{
 			resetZoom();
-		}
-	}
-	
-	void Spectrum1DCanvas::mouseMoveEvent( QMouseEvent *e)
-	{
-		// mouse position relative to the diagram widget
-		QPoint p = e->pos();
-	
-		switch (action_mode_)
-		{
-			case AM_SELECT:
-			{ 
-				emit sendCursorStatus();
-	 			setCursor(Qt::ArrowCursor);
-				nearest_peak_ = findPeakAtPosition_(p);
-				invalidate_();
-				break;
-			}
-			case AM_ZOOM:
-			{
-				setCursor(Qt::CrossCursor);
-				PointType pos = widgetToData_(p);
-	
-				if (e->modifiers() & Qt::LeftButton)
-				{
-					QPainter painter(&tmp_buffer_);
-					painter.drawImage(0,0,buffer_);			
-					painter.setPen(Qt::NoPen);
-					painter.setBrush(Qt::red);
-					painter.setCompositionMode(QPainter::CompositionMode_Xor);
-
-					if (e->modifiers() & Qt::ShiftModifier) // free zoom
-					{
-						painter.drawRect(last_mouse_pos_.x(), last_mouse_pos_.y(), p.x() - last_mouse_pos_.x(), p.y() - last_mouse_pos_.y());
-					}
-					else // zoom on position axis only
-					{
-						painter.drawRect(last_mouse_pos_.x(), 0, p.x() - last_mouse_pos_.x(), height());
-					}
-				}
-				if (e->modifiers() & Qt::ShiftModifier)
-					emit sendCursorStatus( pos.X(), pos.Y());
-				else
-					emit sendCursorStatus( pos.X() );
-				break;
-			}
-			case AM_TRANSLATE:
-			{
-				setCursor(cursor_translate_);
-				// Translation of visible area
-				if(e->modifiers() & Qt::LeftButton)
-				{
-					setCursor(cursor_translate_in_progress_);
-					// translation in data metric
-					double shift = widgetToData_(last_mouse_pos_).X() - widgetToData_(p).X();
-					double newLo = visible_area_.minX() + shift;
-					double newHi = visible_area_.maxX() + shift;
-					// check if we are falling out of bounds
-					if (newLo < overall_data_range_.minX())
-					{
-						newLo = overall_data_range_.minX();
-						newHi = newLo + visible_area_.width();
-					}
-					if (newHi > overall_data_range_.maxX())
-					{
-						newHi = overall_data_range_.maxX();
-						newLo = newHi - visible_area_.width();
-					}
-					//chage data area
-					changeVisibleArea_(newLo, newHi);
-					last_mouse_pos_=p;
-				// End of: Translation
-				}
-				break;
-			}
-			case AM_MEASURE:
-			{
-				
-			}
 		}
 	}
 	
@@ -516,193 +509,205 @@ namespace OpenMS
 		}
 	}
 	
-	void Spectrum1DCanvas::invalidate_()
+	void Spectrum1DCanvas::paintEvent(QPaintEvent* e)
 	{
+		long start = PreciseTime::now().getMicroSeconds();
+		cout << "PaintEvent" << endl;
 		QPen norm_pen = QPen(QColor(getPrefAsString("Preferences:1D:PeakColor").c_str()), 1);
 		QPen high_pen = QPen(QColor(getPrefAsString("Preferences:1D:HighColor").c_str()), 3);
 		QPen icon_pen = QPen(QColor(getPrefAsString("Preferences:1D:IconColor").c_str()), 1);
-		
-		QPainter painter(&buffer_);
-		
-		buffer_.fill(QColor(getPrefAsString("Preferences:1D:BackgroundColor").c_str()).rgb());
-		
-		emit recalculateAxes();
-		paintGridLines_(&painter);
-		
-		QPoint begin, end;
-		float log_factor;
-		
-		for (UnsignedInt i=0; i< getLayerCount();++i)
-		{
-			if (getLayer(i).visible)
-			{
-				if (intensity_mode_ == IM_PERCENTAGE)
-				{
-					percentage_factor_ = overall_data_range_.max()[1]/getPeakData(i)[0].getMaxInt();
-				}
-				else 
-				{
-					percentage_factor_ = 1.0;
-				}
-				
-				switch (draw_modes_[i])
-				{
-					case DM_PEAKS:
-						//-----------------------------------------DRAWING PEAKS-------------------------------------------
-						painter.setPen(norm_pen);
-		
-						//Factor to stretch the log value to the shown intensity interval
-						log_factor = getPeakData(i).getMaxInt()/log(getPeakData(i).getMaxInt());
-						
-						bool custom_color;
 
-						for (SpectrumIteratorType it = visible_begin_[i]; it != visible_end_[i]; ++it)
-						{
-							if (it->getIntensity() >= getLayer(i).min_int && it->getIntensity() <= getLayer(i).max_int)
-							{
-								if (intensity_mode_==IM_LOG)
-								{
-									SpectrumCanvas::dataToWidget_(it->getPosition()[0], log(it->getIntensity()+1)*log_factor,end);
-								}
-								else
-								{
-									dataToWidget_(*it,end);
-								}
-								SpectrumCanvas::dataToWidget_(it->getPosition()[0], 0.0f, begin);
-								
-								// highlight selected peak
-								if (it->getPosition()[0] == nearest_peak_->getPosition()[0])
-								{
-									painter.setPen(high_pen);
-									painter.drawLine(begin, end);
-									painter.setPen(norm_pen);
-									emit sendCursorStatus( it->getPosition()[0], it->getIntensity());
-								}
-								else
-								{
-									// custom peak color
-									custom_color = it->metaValueExists(5);
-									if (custom_color)
-									{
-										painter.setPen(QColor(string(it->getMetaValue(5)).c_str()));
-									}
-									painter.drawLine(begin, end);
-									if (custom_color)
-									{
-										painter.setPen(norm_pen);
-									}
-								}
-								//draw icon if necessary
-								if (it->metaValueExists(4))
-								{
-									painter.setPen(icon_pen);	
-									PeakIcon::drawIcon((PeakIcon::Icon)(UnsignedInt)(it->getMetaValue(4)),painter,QRect(end.x() - 5, end.y() - 5, 10, 10));
-									painter.setPen(norm_pen);
-								}
-							}
-						}
-						//-----------------------------------------DRAWING PEAKS END-------------------------------------------
-						break;
-					case DM_CONNECTEDLINES:
-						{
-							//-------------------------------------DRAWING CONNECTED LINES-----------------------------------------
+		if (recalculate_)
+		{
+			static QPainter painter(&buffer_);
+			buffer_.fill(QColor(getPrefAsString("Preferences:1D:BackgroundColor").c_str()).rgb());
+			
+			emit recalculateAxes();
+			paintGridLines_(&painter);
+			
+			QPoint begin, end;
+			float log_factor;
+			
+			for (UnsignedInt i=0; i< getLayerCount();++i)
+			{
+				if (getLayer(i).visible)
+				{
+					if (intensity_mode_ == IM_PERCENTAGE)
+					{
+						percentage_factor_ = overall_data_range_.max()[1]/getPeakData(i)[0].getMaxInt();
+					}
+					else 
+					{
+						percentage_factor_ = 1.0;
+					}
+					
+					switch (draw_modes_[i])
+					{
+						case DM_PEAKS:
+							//-----------------------------------------DRAWING PEAKS-------------------------------------------
 							painter.setPen(norm_pen);
-							QPainterPath path;
-							
+			
 							//Factor to stretch the log value to the shown intensity interval
 							log_factor = getPeakData(i).getMaxInt()/log(getPeakData(i).getMaxInt());
 							
-							//cases where 1 or 0 points are shown
-							if (visible_begin_[i]==visible_end_[i])
+							bool custom_color;
+	
+							for (SpectrumIteratorType it = visible_begin_[i]; it != visible_end_[i]; ++it)
 							{
-								// check cases where no peak at all is visible
-								if (visible_begin_[i] == getPeakData_(i)[0].end()) 
+								if (it->getIntensity() >= getLayer(i).min_int && it->getIntensity() <= getLayer(i).max_int)
 								{
-									break;
-								}
-								if (visible_end_[i] == getPeakData_(i)[0].begin())
-								{
-									break;
-								}
-								// draw line (clipping performed by Qt on both sides)
-								dataToWidget_(*(visible_begin_[i] - 1), begin);
-								dataToWidget_(*visible_begin_[i], end);
-								painter.drawLine(begin, end);
-								break;
-							}
-						
-							// connect peaks in visible area; (no clipping needed)
-							bool firstPoint=true;
-							QPoint p;
-							for (SpectrumIteratorType it = visible_begin_[i]; it != visible_end_[i]; it++)
-							{
-								if (intensity_mode_==IM_LOG)
-								{
-									SpectrumCanvas::dataToWidget_(it->getPosition()[0], log(it->getIntensity()+1)*log_factor,p);
-								}
-								else
-								{
-									dataToWidget_(*it, p);
-								}
-					
-								// connect lines
-								if (firstPoint)
-								{
-									path.moveTo(p);
-									firstPoint = false;
-								} 
-								else
-								{
-									path.lineTo(p);
-								}
-								painter.drawPath(path);
-								
-								// highlight selected peak
-								if (it->getPosition()[0] == nearest_peak_->getPosition()[0])
-								{
-									painter.setPen(high_pen);
-									painter.drawLine(p.x(), p.y()-4, p.x(), p.y()+4);
-									painter.drawLine(p.x()-4, p.y(), p.x()+4, p.y());
-									painter.setPen(norm_pen);
+									if (intensity_mode_==IM_LOG)
+									{
+										SpectrumCanvas::dataToWidget_(it->getPosition()[0], log(it->getIntensity()+1)*log_factor,end);
+									}
+									else
+									{
+										dataToWidget_(*it,end);
+									}
+									SpectrumCanvas::dataToWidget_(it->getPosition()[0], 0.0f, begin);
 									
-									emit sendCursorStatus( it->getPosition()[0], it->getIntensity());
+									// highlight selected peak
+									if (it->getPosition()[0] == nearest_peak_->getPosition()[0])
+									{
+										painter.setPen(high_pen);
+										painter.drawLine(begin, end);
+										painter.setPen(norm_pen);
+										emit sendCursorStatus( it->getPosition()[0], it->getIntensity());
+									}
+									else
+									{
+										// custom peak color
+										custom_color = it->metaValueExists(5);
+										if (custom_color)
+										{
+											painter.setPen(QColor(string(it->getMetaValue(5)).c_str()));
+										}
+										painter.drawLine(begin, end);
+										if (custom_color)
+										{
+											painter.setPen(norm_pen);
+										}
+									}
+									//draw icon if necessary
+									if (it->metaValueExists(4))
+									{
+										painter.setPen(icon_pen);	
+										PeakIcon::drawIcon((PeakIcon::Icon)(UnsignedInt)(it->getMetaValue(4)),painter,QRect(end.x() - 5, end.y() - 5, 10, 10));
+										painter.setPen(norm_pen);
+									}
 								}
-								// draw associated icon
-								if (it->metaValueExists(4))
+							}
+							//-----------------------------------------DRAWING PEAKS END-------------------------------------------
+							break;
+						case DM_CONNECTEDLINES:
+							{
+								//-------------------------------------DRAWING CONNECTED LINES-----------------------------------------
+								painter.setPen(norm_pen);
+								QPainterPath path;
+								
+								//Factor to stretch the log value to the shown intensity interval
+								log_factor = getPeakData(i).getMaxInt()/log(getPeakData(i).getMaxInt());
+								
+								//cases where 1 or 0 points are shown
+								if (visible_begin_[i]==visible_end_[i])
 								{
-									painter.setPen(icon_pen);	
-									PeakIcon::drawIcon((PeakIcon::Icon)(UnsignedInt)(it->getMetaValue(4)),painter,QRect(p.x() - 5, p.y() - 5, 10, 10));
-									painter.setPen(norm_pen);
+									// check cases where no peak at all is visible
+									if (visible_begin_[i] == getPeakData_(i)[0].end()) 
+									{
+										break;
+									}
+									if (visible_end_[i] == getPeakData_(i)[0].begin())
+									{
+										break;
+									}
+									// draw line (clipping performed by Qt on both sides)
+									dataToWidget_(*(visible_begin_[i] - 1), begin);
+									dataToWidget_(*visible_begin_[i], end);
+									painter.drawLine(begin, end);
+									break;
 								}
-							}
 							
-							// clipping on left side
-							if (visible_begin_[i] > getPeakData_(i)[0].begin())
-							{
-								dataToWidget_(*(visible_begin_[i]-1), begin);
-								dataToWidget_(*(visible_begin_[i]), end);
-								painter.drawLine(begin, end);
-							}
+								// connect peaks in visible area; (no clipping needed)
+								bool firstPoint=true;
+								QPoint p;
+								for (SpectrumIteratorType it = visible_begin_[i]; it != visible_end_[i]; it++)
+								{
+									if (intensity_mode_==IM_LOG)
+									{
+										SpectrumCanvas::dataToWidget_(it->getPosition()[0], log(it->getIntensity()+1)*log_factor,p);
+									}
+									else
+									{
+										dataToWidget_(*it, p);
+									}
 						
-							// clipping on right side
-							if (visible_end_[i] < getPeakData_(i)[0].end())
-							{
-								dataToWidget_(*(visible_end_[i]-1), begin);
-								dataToWidget_(*(visible_end_[i]), end);
-								painter.drawLine(begin,end);
+									// connect lines
+									if (firstPoint)
+									{
+										path.moveTo(p);
+										firstPoint = false;
+									} 
+									else
+									{
+										path.lineTo(p);
+									}
+									painter.drawPath(path);
+									
+									// highlight selected peak
+									if (it->getPosition()[0] == nearest_peak_->getPosition()[0])
+									{
+										painter.setPen(high_pen);
+										painter.drawLine(p.x(), p.y()-4, p.x(), p.y()+4);
+										painter.drawLine(p.x()-4, p.y(), p.x()+4, p.y());
+										painter.setPen(norm_pen);
+										
+										emit sendCursorStatus( it->getPosition()[0], it->getIntensity());
+									}
+									// draw associated icon
+									if (it->metaValueExists(4))
+									{
+										painter.setPen(icon_pen);	
+										PeakIcon::drawIcon((PeakIcon::Icon)(UnsignedInt)(it->getMetaValue(4)),painter,QRect(p.x() - 5, p.y() - 5, 10, 10));
+										painter.setPen(norm_pen);
+									}
+								}
+								
+								// clipping on left side
+								if (visible_begin_[i] > getPeakData_(i)[0].begin())
+								{
+									dataToWidget_(*(visible_begin_[i]-1), begin);
+									dataToWidget_(*(visible_begin_[i]), end);
+									painter.drawLine(begin, end);
+								}
+							
+								// clipping on right side
+								if (visible_end_[i] < getPeakData_(i)[0].end())
+								{
+									dataToWidget_(*(visible_end_[i]-1), begin);
+									dataToWidget_(*(visible_end_[i]), end);
+									painter.drawLine(begin,end);
+								}
+								//-------------------------------------DRAWING CONNECTED LINES END-----------------------------------------
 							}
-							//-------------------------------------DRAWING CONNECTED LINES END-----------------------------------------
-						}
-						break;
-					default:
-						throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+							break;
+						default:
+							throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+					}
 				}
 			}
+			painter.end();
 		}
-	
-		painter.end();
-		tmp_buffer_ = buffer_.copy();
-		repaint();
+		
+		//draw peak data
+		QPainter painter(this);
+		painter.drawImage(e->rect().topLeft(),buffer_,e->rect());
+		
+		//draw selection rectangle
+		if (selected_area_)
+		{
+			painter.drawRect(*selected_area_);
+		}
+		cout << "PaintEvent took " << PreciseTime::now().getMicroSeconds()-start << " ms" << endl;
 	}
 	
 	void Spectrum1DCanvas::changeVisibleArea_(const AreaType& new_area, bool add_to_stack)

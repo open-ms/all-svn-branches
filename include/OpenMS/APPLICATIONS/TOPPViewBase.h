@@ -62,7 +62,7 @@ namespace OpenMS
   	@brief MDI window of TOPPView tool
   	
   	@todo Add preferences for layers (Marc)
-  	@todo Use right mouse button for navigation in data (Marc)
+  	@todo Use right mouse button and double-click for navigation in data (Marc)
   */
   class TOPPViewBase 
   	: public QMainWindow, 

@@ -115,7 +115,7 @@ namespace OpenMS
       	@param width The width of the canvas in pixels.
       	@param height The height of the canvas in pixels.
       */
-      void print(QPainter* p, int width, int height);
+      void print(QPainter& p, int width, int height);
 
       /**
       	@brief Sets the mode for 2D dots.
@@ -201,26 +201,15 @@ namespace OpenMS
       virtual void verticalScrollBarChange(int value);
 
     protected:
-      /** @name Mouse events */
+      /** @name Reimplemented QT events */
       //@{
-      virtual void mousePressEvent(QMouseEvent* e);
-      virtual void mouseReleaseEvent(QMouseEvent* e);
-      virtual void mouseMoveEvent(QMouseEvent* e);
-      virtual void wheelEvent(QWheelEvent* e);
+      void mousePressEvent(QMouseEvent* e);
+      void mouseReleaseEvent(QMouseEvent* e);
+      void mouseMoveEvent(QMouseEvent* e);
+      void wheelEvent(QWheelEvent* e);
+			void mouseDoubleClickEvent(QMouseEvent* e);
+			void paintEvent(QPaintEvent* e);
       //@}
-
-      /**
-      	@brief Reblits the drawing buffer onto the screen.
-
-      	Refreshes the screen. This function should be called
-      	when the internal buffer is still current and the screen
-      	representation was damaged by overdrawing. If the internal
-      	buffer is outdated, invalidate_() should be called.
-      */
-      void refresh_();
-
-      // Docu in base class
-      virtual void invalidate_();
 
       // Docu in base class
       virtual void updateScrollbars_();
@@ -234,7 +223,7 @@ namespace OpenMS
       	@param layer_index The index of the layer.
       	@param p The QPainter to paint on.
       */
-      void paintDots_(UnsignedInt layer_index, QPainter* p);
+      void paintDots_(UnsignedInt layer_index, QPainter& p);
 
       /**
       	@brief Paints data as a height map.
@@ -246,7 +235,7 @@ namespace OpenMS
       	@param layer_index The index of the layer.
       	@param p The QPainter to paint on.
       */
-      void paintContours_(UnsignedInt layer_index, QPainter* p);
+      void paintContours_(UnsignedInt layer_index, QPainter& p);
 
       /**
       	@brief Paints data as a colored surface gradient.
@@ -258,7 +247,7 @@ namespace OpenMS
       	@param layer_index The index of the layer.
       	@param p The QPainter to paint on.
       */
-      void paintSurface_(UnsignedInt layer_index, QPainter* p);
+      void paintSurface_(UnsignedInt layer_index, QPainter& p);
 
       /**
       	@brief Paints all feature convex hulls for a feature layer.
@@ -266,7 +255,7 @@ namespace OpenMS
       	@param layer_index Index of the layer.
       	@param p The QPainter to paint on.
       */
-      void paintConvexHulls_(UnsignedInt layer_index, QPainter* p);
+      void paintConvexHulls_(UnsignedInt layer_index, QPainter& p);
 
       /**
       	@brief Paints feature convex hulls.
@@ -274,7 +263,7 @@ namespace OpenMS
       	@param hulls Reference to convex hull vector.
       	@param p The QPainter to paint on.
       */
-      void paintConvexHulls_(const DFeature<2>::ConvexHullVector& hulls, QPainter* p);
+      void paintConvexHulls_(const DFeature<2>::ConvexHullVector& hulls, QPainter& p);
 
       /**
       	@brief Paints feature pair connections.
@@ -282,7 +271,7 @@ namespace OpenMS
       	@param layer_index Index of the layer.
       	@param p The QPainter to paint on.
       */
-			void paintFeaturePairConnections_(UnsignedInt layer_index, QPainter* p);
+			void paintFeaturePairConnections_(UnsignedInt layer_index, QPainter& p);
 			
       // Docu in base class
       virtual void intensityModeChange_();
@@ -306,13 +295,6 @@ namespace OpenMS
       */
       void createProjections_(const AreaType& area, bool shift_pressed, bool ctrl_pressed);
 
-      /// zooms around position pos with factor.
-      void zoom_(const PointType& pos, float factor, bool add_to_stack = false);
-      /// zooms in around position pos with a fixed factor.
-      void zoomIn_(const PointType& pos);
-      /// zooms out around position pos with a fixed factor.
-      void zoomOut_(const PointType& pos);
-
       /// m/z projection data
       MSExperiment<> projection_mz_;
       /// RT projection data
@@ -333,10 +315,8 @@ namespace OpenMS
       /// Returns the marching square cell with the smallest data coordinates
       AreaType getOriginCell_(UnsignedInt layer_index);
 
-      /// Highlights peak under cursor and start/stop peak for measurement
-      void highlightPeaks_();
       /// Highlights a single peak
-      void highlightPeak_(QPainter* p, DFeature<2>* peak);
+      void highlightPeak_(QPainter& p, DFeature<2>* peak);
 
       /// Returns the nearest peak to position @p pos
       DFeature<2>* findNearestPeak_(const QPoint& pos);

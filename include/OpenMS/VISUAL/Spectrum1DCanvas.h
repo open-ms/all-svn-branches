@@ -34,7 +34,6 @@
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
 
 //QT
-#include <QtGui/QRubberBand>
 class QAction;
 
 namespace OpenMS
@@ -49,6 +48,7 @@ namespace OpenMS
 		@brief Canvas for visualization of spectrum
 		
 		@todo Add measurement (Marc)
+		@todo Add zoom in and out with wheel (Marc)
 		
 		@bug Logarithmic intensity mode is broken
 		
@@ -167,20 +167,16 @@ namespace OpenMS
 		SpectrumIteratorType selected_peak_;
 		/// Find peak next to the given position
 		SpectrumIteratorType findPeakAtPosition_(QPoint);  
-		/// Rubber band for selected area
-		QRubberBand rubber_band_;
 
-		/// QT Event
-		void paintEvent( QPaintEvent * );
-		/// QT Event
-		void mousePressEvent( QMouseEvent *);
-		/// QT Event
-		void mouseDoubleClickEvent( QMouseEvent *);
-		/// QT Event
-		void mouseReleaseEvent( QMouseEvent *);
-		/// QT Event
-		void mouseMoveEvent( QMouseEvent *);
-
+    /** @name Reimplemented QT events */
+    //@{
+		void paintEvent(QPaintEvent* e);
+		void mousePressEvent(QMouseEvent* e);
+		void mouseDoubleClickEvent(QMouseEvent* e);
+		void mouseReleaseEvent(QMouseEvent* e);
+		void mouseMoveEvent(QMouseEvent* e);
+		void wheelEvent(QWheelEvent* e);
+    //@}
 
 	};
 } // namespace OpenMS

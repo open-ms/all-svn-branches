@@ -1120,7 +1120,7 @@ namespace OpenMS
 
 
     link_box_ = new QComboBox(tool_bar_1d_);
-    link_box_->setToolTip("Use this combobox to link two spectra.\nLinked spectra zoom in/out together");
+    link_box_->setToolTip("Use this combobox to link two spectra.<BR>Linked spectra zoom in/out together.");
     tool_bar_1d_->addWidget(link_box_);
     connect(link_box_,SIGNAL(activated(int)),this,SLOT(linkActiveTo(int)));
 
@@ -1366,8 +1366,8 @@ namespace OpenMS
     {
       //draw modes
       dm_points_2d_->setEnabled(w2->widget()->canvas()->dotsAreShown());
-      dm_surface_2d_->setEnabled(w2->widget()->canvas()->surfaceIsShown());
-      dm_contours_2d_->setEnabled(w2->widget()->canvas()->contoursAreShown());
+      dm_surface_2d_->setChecked(w2->widget()->canvas()->surfaceIsShown());
+      dm_contours_2d_->setChecked(w2->widget()->canvas()->contoursAreShown());
 
       //show/hide toolbars and buttons
       tool_bar_1d_->hide();

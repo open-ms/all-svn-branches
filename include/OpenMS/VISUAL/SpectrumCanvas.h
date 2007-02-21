@@ -35,6 +35,7 @@
 
 //QT
 #include <QtGui/QWidget>
+#include <QtGui/QRubberBand>
 
 //STL
 #include <stack>
@@ -524,17 +525,8 @@ namespace OpenMS
 			return getCurrentLayer_().peaks;
 		}
 	
-		/**
-			@brief QT resize event of the widget
-			
-		*/
-		virtual void resizeEvent(QResizeEvent* e);
-		
-		/**
-			@brief QT repaint event of the widget
-			
-		*/
-		virtual void paintEvent(QPaintEvent* e);
+		/// reimplemented QT event
+		void resizeEvent(QResizeEvent* e);
 		
 		/**
 			@brief Change of the intensity distribution
@@ -651,7 +643,7 @@ namespace OpenMS
 			
 			@param p the QPainter to paint the grid lines on
 		*/
-		void paintGridLines_(QPainter* p);
+		void paintGridLines_(QPainter& painter);
 		
 		/// Buffer that stores the actual peak information
 		QPixmap buffer_;
@@ -748,6 +740,9 @@ namespace OpenMS
 			In this mode the highest currently visible intensisty is treated like the maximum overall intensity.
 		*/
 		double snap_factor_;
+		
+		/// Rubber band for selected area
+		QRubberBand rubber_band_;
 	};
 }
 

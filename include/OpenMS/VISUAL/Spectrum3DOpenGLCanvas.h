@@ -130,15 +130,15 @@ namespace OpenMS
 			/// method to make the font
 			virtual GLuint makeLegend();
 	
-			///reimplementation if the mouseMoveEvent
+      /** @name Reimplemented QT events */
+      //@{
 	    void mouseMoveEvent(QMouseEvent *e);
-			///reimplementation if the mousePressEvent
 			void mouseReleaseEvent(QMouseEvent *e);
-			///reimplementation if the mouseRealeaseEvent
 	    void mousePressEvent(QMouseEvent *e);
-			///reimplementation if the wheelEvent
 			void wheelEvent(QWheelEvent * e);
 			void keyPressEvent(QKeyEvent * e);
+      //@}
+      
 			/**
 				 @brief Sets the 3D stick gradient.
 				 the dot mode is set to	DOT_GRADIENT.

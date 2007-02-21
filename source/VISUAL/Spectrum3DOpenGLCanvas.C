@@ -120,8 +120,7 @@ namespace OpenMS
 	}
 	
 	void Spectrum3DOpenGLCanvas::initializeGL()
-	{     
-	  //timeMessure();
+	{
 	  QColor color(canvas_3d_.getPrefAsString("Preferences:3D:BackgroundColor").c_str());
 	  qglClearColor(color);
 	  glEnable(GL_DEPTH_TEST);
@@ -188,123 +187,7 @@ namespace OpenMS
 	  }
 	  
 	}
-	void Spectrum3DOpenGLCanvas::timeMessure()
-	{	
-	// 	 cout<<"Peaksanzahl des Sumreudcers:"<<endl;
-	//  	for (int x = 1;x <=100;x = x+1)
-	//   		{
-				
-	// 				canvas_3d_.setPref("Preferences:3D:Data:Reduction:Sum",x);
-	//   			canvas_3d_.makeReducedDataSet();
-	// 			}
-	// 		 cout<<"Reduction Max:"<<canvas_3d_.reduction_param_.getValue("Peaksperstep")<<endl;
-	// 		 //cout<<"Reduction Sum:"<<canvas_3d_.reduction_param_.getValue("Rangeperstep")<<endl;
-		
-	// 	for(int x = 71;x<=100;x = x+1)
-	// 		{
-	// 			canvas_3d_.setPref("Preferences:3D:Data:Reduction:Max",x);
-	// 			canvas_3d_.makeReducedDataSet();
-	// 			cout<<"parameter:  "<<x;
-	// 			for (int j = 0;j<1;j++)
-	// 				{ 
-	// 					int i = 0;
-	// 					double tstart = 0.0;
-	// 					double time = 0.0;
-	// 					tstart = clock();
-	// 					//zeitmessung 100x neuzeichnen
-	// 			// 		while (i<=10)
-	// // 						{
-	// // 							canvas_3d_.repaintAll();
-	// // 							i++;
-	// // 						}
-	// 					while(i<5)
-	// 						{
-	// 							canvas_3d_.intensity_mode_ = SpectrumCanvas::IM_NONE;
-	// 							canvas_3d_.repaintAll();
-	// 							canvas_3d_.intensity_mode_ = SpectrumCanvas::IM_LOG;
-	// 							canvas_3d_.repaintAll();
-	// 							canvas_3d_.intensity_mode_ = SpectrumCanvas::IM_PERCENTAGE;
-	// 							canvas_3d_.repaintAll();
-	// 							canvas_3d_.intensity_mode_ = SpectrumCanvas::IM_SNAP;
-	// 							canvas_3d_.repaintAll();
-	// 							i++;
-	// 						}
-	// 					time = clock()-tstart;
-	// 					double time1 = time / CLOCKS_PER_SEC;
-	// 					cout<<"\t"<<time1<<"    sec";
-	// 			// 		cout<<" Durchlauf:  "<<j<<"    "<<time<<"    in sec: "<<time1<<endl;
-	// 				}
-	// 			cout<<"   "<<endl;
-	// 		}
 	
-	// 		}
-		//zeitmessung drehen
-		
-		// // double end = 360 * 16 * 10;
-		
-	// //    for (int i = 1;i<6;i++)
-	// //  	{	
-	// // 		yrot_ = 0;
-	// // 		zrot_ = 0;
-	// // 		xrot_ = 0;
-	// // 		double tstart = 0.0;
-	// // 		double time = 0.0;
-	// // 		tstart = clock();
-	// // 		//	cout<<clock()<<endl;
-	// // 		while (yrot_ <end)
-	// // 			{
-	// // 				yrot_ = yrot_ + 10;
-	// // 				zrot_ = zrot_ + 10;;
-	// // 				// 		xrot_++;
-	// // 				updateGL();
-	// // 			}
-	// // 		cout<<clock()<<endl;
-	// // 		time = clock()-tstart;
-	// // 		double time1 = time / CLOCKS_PER_SEC;
-	// // 		cout<<"Durchlauf:"<<i<<"     time:  :"<<time<<" time in sec:"<<time1<<" sec."<<endl; 
-	// //  	}
-	
-	// 	time = clock()-tstart;
-		
-	// 	time = time / CLOCKS_PER_SEC;
-	// 	tstart = tstart / CLOCKS_PER_SEC;
-		
-	// 	cout<<"start: "<<tstart<<"     time:  :"<<time<<endl; 
-	
-		 //	for (int x = 60;x <=100;x = x + 4)
-	// 			{
-					
-	// 				canvas_3d_.setPref("Preferences:3D:Data:Reduction:Sum",x);
-	// 				canvas_3d_.makeReducedDataSet();
-	// 				//Zeitmessung umschalten zwischen einzelenen intensitymodes
-	// 				cout<<"Reduction Max:"<<canvas_3d_.reduction_param_.getValue("Peaksperstep")<<endl;
-	// 				cout<<"Reduction Sum:"<<canvas_3d_.reduction_param_.getValue("Rangeperstep")<<endl;
-		
-	// 				for (int j = 1;j<3;j++)
-	// 					{
-	// 						double tstart = 0.0;
-	// 						tstart = clock();
-	// 						double time = 0.0;
-	// 		//	cout<<"Reduction Max:"<<canvas_3d_.reduction_param_.getValue("Peaksperstep")<<endl;
-	// 		//	cout<<"Reduction Sum:"<<canvas_3d_.reduction_param_.getValue("Rangeperstep")<<endl;
-		
-	// 						for (int i = 0;i<10;i++)
-	// 							{
-	// 								canvas_3d_.intensity_mode_ = SpectrumCanvas::IM_NONE;
-	// 								canvas_3d_.repaintAll();
-	// 								canvas_3d_.intensity_mode_ = SpectrumCanvas::IM_LOG;
-	// 								canvas_3d_.repaintAll();
-	// 								canvas_3d_.intensity_mode_ = SpectrumCanvas::IM_PERCENTAGE;
-	// 								canvas_3d_.repaintAll();
-	// 								canvas_3d_.intensity_mode_ = SpectrumCanvas::IM_SNAP;
-	// 								canvas_3d_.repaintAll();
-	// 							}
-	// 						time = clock()-tstart;
-	// 						double time1 = time / CLOCKS_PER_SEC;
-	// 						cout<<"Durchlauf:"<<j<<"     time:  :"<<time<<" time in sec:"<<time1<<" sec."<<endl; 
-	// 					}	
-	// 			}
-	}
 	void Spectrum3DOpenGLCanvas::setAngels(int xrot, int yrot, int zrot)
 	{
 		xrot_=xrot;
@@ -1363,16 +1246,12 @@ namespace OpenMS
 	
 	void Spectrum3DOpenGLCanvas::keyPressEvent(QKeyEvent * e) 
 	{
-		if(e->key()==Qt::Key_T)
-		{
-			cout<<"TimeMessure"<<endl; 
-			timeMessure();
-		}
 		if(e->key()==Qt::Key_Control)
 		{
 			translation_on_ = true;
 		}
 	}
+	
 	void Spectrum3DOpenGLCanvas::dataToZoomArray(double x_1, double y_1, double x_2, double y_2)
 	{
 		double scale_x1 = scaledInversRT(x_1+100.0);

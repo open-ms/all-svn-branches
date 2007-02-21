@@ -46,8 +46,7 @@ namespace OpenMS
 	using namespace Internal;
 		
 	Spectrum1DCanvas::Spectrum1DCanvas(QWidget* parent)
-		: SpectrumCanvas(parent),
-			rubber_band_(QRubberBand::Rectangle,this)
+		: SpectrumCanvas(parent)
 	{
 	}
 	
@@ -106,7 +105,7 @@ namespace OpenMS
 		}
 	}
 
-	void Spectrum1DCanvas::mouseMoveEvent( QMouseEvent *e)
+	void Spectrum1DCanvas::mouseMoveEvent(QMouseEvent* e)
 	{
 		// mouse position relative to the diagram widget
 		QPoint p = e->pos();
@@ -173,10 +172,8 @@ namespace OpenMS
 				}
 				break;
 			}
-			case AM_MEASURE:
-			{
-				
-			}
+			default:
+				break;
 		}
 	}
 
@@ -187,12 +184,8 @@ namespace OpenMS
 		{
 			case AM_SELECT:
 			{
-				if (e->button() == Qt::RightButton)
-				{
-					return;
-				}
 				// Peak selection
-				else if (selected_peak_ != currentPeakData_()[0].end())
+				if (e->button() == Qt::LeftButton && selected_peak_ != currentPeakData_()[0].end())
 				{
 					if (!selected_peak_->metaValueExists(4) || (UnsignedInt)(selected_peak_->getMetaValue(4)) == PeakIcon::IT_NOICON)
 					{
@@ -237,10 +230,9 @@ namespace OpenMS
 					
 					//cout << "Canvas area (x,y)-(x1,y1): " << rect.x() << "/" << rect.y() << " - " << rect.x() + rect.width() << "/" << rect.y() + rect.height() << endl;
 					
-					if (rect.width() > 4 && rect.height() > 4)   // free zoom
+					if (rect.width()!=0 && rect.height()!=0) // probably double click -> mouseDoubleClickEvent
 					{
 						AreaType area(widgetToData_(rect.topLeft()), widgetToData_(rect.bottomRight()));
-						//cout << "Data area: " << area << endl;
 						if (e->modifiers() & Qt::ShiftModifier)
 						{
 							//check if selected area is outside visible area and correct errors
@@ -268,18 +260,6 @@ namespace OpenMS
 							changeVisibleArea_(area.minX(), area.maxX(), true);
 						}
 					}
-					else  // position axis only zoom
-					{
-						double position = widgetToData_(rect.topLeft()).X();
-						double delta = (visible_area_.maxX()-visible_area_.minX())/4.0;
-						changeVisibleArea_(position - delta, position + delta, true);
-					}
-				}
-	
-				// zoom-back
-				if (e->button() == Qt::MidButton)
-				{
-					zoomBack_();
 				}
 				break;
 			}
@@ -295,7 +275,7 @@ namespace OpenMS
 		}
 	}
 	
-	void Spectrum1DCanvas::mouseDoubleClickEvent( QMouseEvent *e)
+	void Spectrum1DCanvas::mouseDoubleClickEvent(QMouseEvent* e)
 	{
 		if (e->button() == Qt::LeftButton && action_mode_ == AM_SELECT)
 		{
@@ -311,13 +291,35 @@ namespace OpenMS
 			}
 		}
 	
-		// mid-doubleclick shows the whole spectrum
-		if (e->button() == Qt::MidButton)
+		// left-doubleclick shows the whole spectrum
+		if (e->button() == Qt::LeftButton && action_mode_ == AM_ZOOM)
 		{
 			resetZoom();
 		}
 	}
-	
+
+	void Spectrum1DCanvas::wheelEvent(QWheelEvent* e)
+	{
+		switch (action_mode_)
+		{
+			case AM_ZOOM:
+				if (e->delta() > 0) // forward rotation -> zoom in
+				{
+					double position = widgetToData_(e->pos()).X();
+					double delta = (visible_area_.maxX()-visible_area_.minX())/2.5;
+					changeVisibleArea_(position - delta, position + delta, true);
+				}
+				else // backward rotation -> zoom out
+				{
+					zoomBack_();
+				}
+				break;
+			default:
+				e->ignore();
+		}
+		e->accept();
+	}
+
 	Spectrum1DCanvas::SpectrumIteratorType Spectrum1DCanvas::findPeakAtPosition_(QPoint p)
 	{
 		//reference to the current data
@@ -421,7 +423,14 @@ namespace OpenMS
 		{
 			current_layer_ = getLayerCount()-1;
 		}
-
+		
+		//abort if there are no layers anymore
+		if (layers_.empty())
+		{
+			overall_data_range_ = DRange<3>::empty;
+			return;
+		}
+		
 		//update nearest peak
 		selected_peak_ = currentPeakData_()[0].end();
 		//update selected peaks
@@ -487,7 +496,6 @@ namespace OpenMS
 #endif
 #ifdef TIMING_TOPPVIEW
 		long start = PreciseTime::now().getMicroSeconds();
-		cout << "1D PaintEvent" << endl;
 #endif
 		
 		QPainter painter;
@@ -507,7 +515,7 @@ namespace OpenMS
 			buffer_.fill(QColor(getPrefAsString("Preferences:1D:BackgroundColor").c_str()).rgb());
 
 			emit recalculateAxes();
-			paintGridLines_(&painter);
+			paintGridLines_(painter);
 			
 			SpectrumIteratorType vbegin, vend;
 								
@@ -857,7 +865,7 @@ namespace OpenMS
 			changeVisibleArea_(newval, newval + (visible_area_.maxX() - visible_area_.minX()));
 		}
 	}
-	
+
 }//Namespace
 
 

@@ -91,7 +91,7 @@ namespace OpenMS
 			show_legend_ = new QComboBox( tab);
 			show_legend_->insertItem(0,"Show");
 			show_legend_->insertItem(1,"Hide");
-			addWidget(grid,3,"Default path:",show_legend_);
+			addWidget(grid,3,"Axis legend:",show_legend_);
 			//legend
 			intensity_cutoff_ = new QComboBox( tab);
 			intensity_cutoff_->insertItem(0,"None");

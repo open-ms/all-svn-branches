@@ -60,7 +60,8 @@ namespace OpenMS
 			spectrum_widget_(0),
 			datareducer_(0),
 			percentage_factor_(1.0),
-			snap_factor_(1.0)
+			snap_factor_(1.0),
+			rubber_band_(QRubberBand::Rectangle,this)
 	{
 		setAttribute(Qt::WA_OpaquePaintEvent);
 		// get mouse coordinates while mouse moves over diagramm.	
@@ -86,16 +87,6 @@ namespace OpenMS
 #ifdef DEBUG_TOPPVIEW
 		cout << "END   " << __PRETTY_FUNCTION__ << endl;
 #endif
-	}
-	
-	void SpectrumCanvas::paintEvent(QPaintEvent* e)
-	{
-		QVector<QRect> rects = e->region().rects();
-		QPainter painter(this);
-		for (int i = 0; i < (int)rects.size(); ++i)
-		{
-			painter.drawPixmap(rects[i].topLeft(), buffer_, rects[i]);
-		}
 	}
 	
 	void SpectrumCanvas::setDispInt(float min, float max)
@@ -213,7 +204,7 @@ namespace OpenMS
 	}
 	
 	
-	void SpectrumCanvas::paintGridLines_(QPainter* p)
+	void SpectrumCanvas::paintGridLines_(QPainter& painter)
 	{
 		QColor g1(130,130,130);
 		QColor g2(170,170,170);
@@ -221,7 +212,7 @@ namespace OpenMS
 		
 		if (!show_grid_ || !spectrum_widget_) return;
 	
-		p->save();
+		painter.save();
 	
 		unsigned int xl, xh, yl, yh; //width/height of the diagram area, x, y coordinates of lo/hi x,y values
 	
@@ -239,17 +230,17 @@ namespace OpenMS
 			switch(j)
 			{
 				case 0:	// style settings for big intervals 
-					p->setPen(QPen(g1));
+					painter.setPen(QPen(g1));
 					break;
 				case 1:	// style settings for small intervals
-					p->setPen(QPen(g2));
+					painter.setPen(QPen(g2));
 					break;
 				case 2: // style settings for smalles intervals
-					p->setPen(QPen(g3));
+					painter.setPen(QPen(g3));
 					break;
 				default:
 					std::cout << "empty vertical grid line vector error!" << std::endl;
-					p->setPen(QPen(QColor(0,0,0)));
+					painter.setPen(QPen(QColor(0,0,0)));
 					break;
 			}
 
@@ -257,7 +248,7 @@ namespace OpenMS
 			for (std::vector<double>::const_iterator it = spectrum_widget_->xAxis()->gridLines()[j].begin(); it != spectrum_widget_->xAxis()->gridLines()[j].end(); it++) 
 			{
 				x = static_cast<int>(Math::intervalTransformation(*it, spectrum_widget_->xAxis()->getAxisMinimum(), spectrum_widget_->xAxis()->getAxisMaximum(), xl, xh));
-				p->drawLine(x, yl, x, yh);
+				painter.drawLine(x, yl, x, yh);
 			}
 		}
 		
@@ -268,17 +259,17 @@ namespace OpenMS
 			switch(j)
 			{
 				case 0:	// style settings for big intervals 
-					p->setPen(QPen(g1));
+					painter.setPen(QPen(g1));
 					break;
 				case 1:	// style settings for small intervals
-					p->setPen(QPen(g2));
+					painter.setPen(QPen(g2));
 					break;
 				case 2: // style settings for smalles intervals
-					p->setPen(QPen(g3));
+					painter.setPen(QPen(g3));
 					break;
 				default:
 					std::cout << "empty vertical grid line vector error!" << std::endl;
-					p->setPen(QPen(QColor(0,0,0)));
+					painter.setPen(QPen(QColor(0,0,0)));
 					break;
 			}
 
@@ -286,11 +277,11 @@ namespace OpenMS
 			for (std::vector<double>::const_iterator it = spectrum_widget_->yAxis()->gridLines()[j].begin(); it != spectrum_widget_->yAxis()->gridLines()[j].end(); it++) 
 			{
 				y = static_cast<int>(Math::intervalTransformation(*it, spectrum_widget_->yAxis()->getAxisMinimum(), spectrum_widget_->yAxis()->getAxisMaximum(), yl, yh));
-				p->drawLine(xl, y, xh, y);
+				painter.drawLine(xl, y, xh, y);
 			}
 		}
 		
-		p->restore();
+		painter.restore();
 	}
 	
 	void SpectrumCanvas::setMainPreferences(const Param& prefs)

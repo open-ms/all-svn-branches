@@ -1061,7 +1061,7 @@ namespace OpenMS
     b->setToolTip("Intensity: Percentage");
     b->setShortcut(Qt::Key_P);
     b->setCheckable(true);
-    intensity_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::IM_NONE);
+    intensity_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::IM_PERCENTAGE);
 		tool_bar_->addWidget(b);
 
     b = new QToolButton(tool_bar_);
@@ -1069,7 +1069,7 @@ namespace OpenMS
     b->setToolTip("Intensity: Snap to maximum displayed intensity");
     b->setShortcut(Qt::Key_A);
     b->setCheckable(true);
-    intensity_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::IM_NONE);
+    intensity_group_->addButton(b,SpectrumCanvas::SpectrumCanvas::IM_SNAP);
 		tool_bar_->addWidget(b);
 
     connect(intensity_group_,SIGNAL(buttonClicked(int)),this,SLOT(setIntensityMode(int)));

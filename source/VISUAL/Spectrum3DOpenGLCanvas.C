@@ -1326,7 +1326,7 @@ namespace OpenMS
 			lastMousePos_ = e->pos();
 			trans_x_= lastMousePos_.x()-firstMousePos_.x();
 			trans_y_ = (heigth_-lastMousePos_.y())-(heigth_ -firstMousePos_.y());
-			canvas_3d_.recalculate_ = false;
+			canvas_3d_.update_buffer_ = false;
 			canvas_3d_.invalidate_();
 		}
 	
@@ -1340,7 +1340,7 @@ namespace OpenMS
 	}
 	void Spectrum3DOpenGLCanvas::mouseReleaseEvent ( QMouseEvent * e)
 	{
-		canvas_3d_.recalculate_ = true;
+		canvas_3d_.update_buffer_ = true;
 		translation_on_ = false;
 	
 		if(e->button()==Qt::RightButton)

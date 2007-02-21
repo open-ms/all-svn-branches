@@ -34,6 +34,7 @@
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
 
 //QT
+#include <QtGui/QRubberBand>
 class QAction;
 
 namespace OpenMS
@@ -161,22 +162,13 @@ namespace OpenMS
 		std::vector<SpectrumIteratorType> selected_peaks_;
 
 		/// Draw modes (for each spectrum)
-		std::vector<DrawModes> draw_modes_;
-		/// Iterators on first visible peak (for each spectrum)
-		std::vector<SpectrumIteratorType> visible_begin_;
-		/// Iterators after the last visible peak (for each spectrum)
-		std::vector<SpectrumIteratorType> visible_end_;    
+		std::vector<DrawModes> draw_modes_; 
 		/// Iterator on peak next to mouse position
-		SpectrumIteratorType nearest_peak_;
+		SpectrumIteratorType selected_peak_;
 		/// Find peak next to the given position
 		SpectrumIteratorType findPeakAtPosition_(QPoint);  
-		/// Selected area
-		QRect* selected_area_;
-		
-		/// Draws peaks for layer @p index
-		void drawPeaks_(UnsignedInt index, QPainter& p);
-		/// Draws connectedLines for layer @p index
-		void drawConnectedLines_(UnsignedInt index, QPainter& p);
+		/// Rubber band for selected area
+		QRubberBand rubber_band_;
 
 		/// QT Event
 		void paintEvent( QPaintEvent * );

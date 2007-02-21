@@ -49,52 +49,43 @@ namespace OpenMS
 			intensity_mode_(IM_NONE),
 			layers_(),
 			mz_to_x_axis_(true),
+			visible_area_(AreaType::empty),
+			overall_data_range_(DRange<3>::empty),
 			show_grid_(true),
 			show_reduced_(false),
-			recalculate_(false),
+			update_buffer_(false),
+			cursor_translate_(QPixmap(XPM_handopen)),
+			cursor_translate_in_progress_(QPixmap(XPM_handclosed)),
 			current_layer_(0),
 			spectrum_widget_(0),
 			datareducer_(0),
 			percentage_factor_(1.0),
 			snap_factor_(1.0)
 	{
-		setAttribute(Qt::WA_NoBackground);
-		setAttribute(Qt::WA_StaticContents);
-		setAttribute(Qt::WA_PaintOutsidePaintEvent, true);
+		setAttribute(Qt::WA_OpaquePaintEvent);
 		// get mouse coordinates while mouse moves over diagramm.	
 		setMouseTracking(TRUE);
 		// prevents errors caused by too small width,height values
 		setMinimumSize(200,200);
 		// Take as much space as possible
 		setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
-		resetRanges_();
-	  createCustomMouseCursors_();
 	  
-	  //reserve enough space to avoid copying dat
+	  //reserve enough space to avoid copying layer data
 	  layers_.reserve(10);
-	  
-		// we need to initialize the painting buffer in the
-		// constructor for maximum performance
-		adjustBuffer_();
-	}
-	
-	void SpectrumCanvas::createCustomMouseCursors_()
-	{
-		// create custom mouse cursor for translate action as Qt doesn't provide one
-		QPixmap* pm1 = new QPixmap(XPM_handopen);
-		pm1->setMask(pm1->createHeuristicMask());
-		cursor_translate_ = QCursor(*pm1);
-	
-		QPixmap* pm2 = new QPixmap(XPM_handclosed);
-		pm2->setMask(pm2->createHeuristicMask());
-		cursor_translate_in_progress_ = QCursor(*pm2); 
 	}
 	
 	void SpectrumCanvas::resizeEvent(QResizeEvent* /* e */)
 	{
-		adjustBuffer_();
+#ifdef DEBUG_TOPPVIEW
+		cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
+#endif
+		buffer_ = QPixmap(width(), height());
+		update_buffer_ = true;
 		updateScrollbars_();
-		invalidate_();
+		update();
+#ifdef DEBUG_TOPPVIEW
+		cout << "END   " << __PRETTY_FUNCTION__ << endl;
+#endif
 	}
 	
 	void SpectrumCanvas::paintEvent(QPaintEvent* e)
@@ -103,13 +94,8 @@ namespace OpenMS
 		QPainter painter(this);
 		for (int i = 0; i < (int)rects.size(); ++i)
 		{
-			painter.drawImage(rects[i].topLeft(), buffer_, rects[i]);
+			painter.drawPixmap(rects[i].topLeft(), buffer_, rects[i]);
 		}
-	}
-	
-	void SpectrumCanvas::adjustBuffer_()
-	{
-		buffer_ = QImage(width(), height(), QImage::Format_ARGB32);
 	}
 	
 	void SpectrumCanvas::setDispInt(float min, float max)
@@ -122,20 +108,21 @@ namespace OpenMS
 	void SpectrumCanvas::showGridLines(bool show)
 	{
 		show_grid_ = show;
-		invalidate_();
+		update_buffer_ = true;
+		update();
 	}
 	
 	void SpectrumCanvas::intensityDistributionChange_()
 	{
-		recalculate_ = true;
-		invalidate_();
+		update_buffer_ = true;
+		update();
 	}
 	
 	void SpectrumCanvas::intensityModeChange_()
 	{
 		recalculateSnapFactor_();
-		recalculate_ = true;
-		invalidate_();
+		update_buffer_ = true;
+		update();
 	}
 
 	bool SpectrumCanvas::isMzToXAxis() 
@@ -152,8 +139,8 @@ namespace OpenMS
 	void SpectrumCanvas::axisMappingChange_()
 	{
 		updateScrollbars_();
-		recalculate_ = true;
-		invalidate_();
+		update_buffer_ = true;
+		update();
 	}
 
 	void SpectrumCanvas::actionModeChange_()
@@ -163,6 +150,9 @@ namespace OpenMS
 	
 	void SpectrumCanvas::changeVisibleArea_(const AreaType& new_area, bool add_to_stack)
 	{
+#ifdef DEBUG_TOPPVIEW
+		cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
+#endif
 		if (new_area==visible_area_)
 		{
 			return;
@@ -177,8 +167,11 @@ namespace OpenMS
 		updateScrollbars_();
 	
 		emit visibleAreaChanged(new_area);
-		recalculate_ = true;
-		invalidate_();
+		update_buffer_ = true;
+		update();
+#ifdef DEBUG_TOPPVIEW
+		cout << "END   " << __PRETTY_FUNCTION__ << endl;
+#endif
 	}
 	
 	void SpectrumCanvas::updateScrollbars_()
@@ -201,11 +194,17 @@ namespace OpenMS
 	
 	void SpectrumCanvas::resetZoom()
 	{
+#ifdef DEBUG_TOPPVIEW
+		cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
+#endif
 		zoom_stack_ = stack<AreaType>();
 
 		AreaType tmp;
 		tmp.assign(overall_data_range_);
 		changeVisibleArea_(tmp);
+#ifdef DEBUG_TOPPVIEW
+		cout << "END   " << __PRETTY_FUNCTION__ << endl;
+#endif
 	}
 	
 	void SpectrumCanvas::setVisibleArea(AreaType area)
@@ -341,7 +340,8 @@ namespace OpenMS
 		if (layer.visible!=b)
 		{
 			layer.visible=b;
-			invalidate_();
+			update_buffer_ = true;
+			update();
 		}
 	}
 
@@ -401,16 +401,10 @@ namespace OpenMS
 		
 		//cout << "Updated range: " << overall_data_range_ << endl;
 	}
-
-	void SpectrumCanvas::resetRanges_()
-	{
-		overall_data_range_ = DRange<3>::empty;
-		//cout << "Reset range: " << overall_data_range_ << endl;
-	}
 	
 	void SpectrumCanvas::recalculateRanges_(UnsignedInt mz_dim, UnsignedInt rt_dim, UnsignedInt it_dim)
 	{
-		resetRanges_();
+		overall_data_range_ = DRange<3>::empty;
 		
 		for (UnsignedInt i=0; i< getLayerCount(); ++i)
 		{
@@ -425,8 +419,8 @@ namespace OpenMS
 
 	void SpectrumCanvas::repaintAll()
 	{
-		recalculate_ = true;
-		invalidate_();
+		update_buffer_ = true;
+		update();
 	}
 
 	void SpectrumCanvas::recalculateSnapFactor_()

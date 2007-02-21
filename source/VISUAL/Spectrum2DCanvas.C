@@ -53,7 +53,7 @@ namespace OpenMS
 		show_contours_(),
 		show_surface_(),
 		show_dots_(),
-		nearest_peak_(0),
+		selected_peak_(0),
 		measurement_start_(0),
 		measurement_stop_(0),
 		tmp_peak_(),
@@ -72,7 +72,7 @@ namespace OpenMS
 	{
 		if (on != show_contours_[current_layer_])
 		{
-			recalculate_ = true;
+			update_buffer_ = true;
 			show_contours_[current_layer_] = on;
 			invalidate_();
 		}
@@ -82,7 +82,7 @@ namespace OpenMS
 	{
 		if (on != show_surface_[current_layer_])
 		{
-			recalculate_ = true;
+			update_buffer_ = true;
 			show_surface_[current_layer_] = on;
 			invalidate_();
 		}
@@ -92,7 +92,7 @@ namespace OpenMS
 	{
 		if (on != show_dots_[current_layer_])
 		{
-			recalculate_ = true;
+			update_buffer_ = true;
 			show_dots_[current_layer_] = on;
 			invalidate_();
 		}
@@ -124,10 +124,10 @@ namespace OpenMS
 			}
 			else if (action_mode_ == AM_MEASURE)
 			{
-				if (nearest_peak_)
+				if (selected_peak_)
 				{
 					delete(measurement_start_);
-					measurement_start_ = new DFeature<2>(*nearest_peak_);
+					measurement_start_ = new DFeature<2>(*selected_peak_);
 				}
 				else
 				{
@@ -272,12 +272,12 @@ namespace OpenMS
 		
 		highlightPeak_(&p, measurement_start_);
 		highlightPeak_(&p, measurement_stop_);
-		highlightPeak_(&p, nearest_peak_);
+		highlightPeak_(&p, selected_peak_);
 		//highlight convex hull of nearest peak
-		if (nearest_peak_ && getCurrentLayer().type!=LayerData::DT_PEAK)
+		if (selected_peak_ && getCurrentLayer().type!=LayerData::DT_PEAK)
 		{
 			p.setPen(QPen(Qt::red, 2));
-			paintConvexHulls_(nearest_peak_->getConvexHulls(),&p);
+			paintConvexHulls_(selected_peak_->getConvexHulls(),&p);
 		}
 	}
 	
@@ -385,7 +385,7 @@ namespace OpenMS
 						emit sendCursorStatus( pnt[0], -1.0, pnt[1]);				
 					}
 					
-					nearest_peak_ = max_peak;
+					selected_peak_ = max_peak;
 										refresh_();
 				}
 				else if (e->buttons() & Qt::LeftButton)
@@ -428,7 +428,7 @@ namespace OpenMS
 				{
 					DFeature<2>* max_peak = findNearestPeak_(pos);
 					
-					if (max_peak && max_peak != nearest_peak_ && !measurement_start_)
+					if (max_peak && max_peak != selected_peak_ && !measurement_start_)
 					{
 						//show Peak Coordinates
 						emit sendCursorStatus(max_peak->getPosition()[RT], max_peak->getIntensity(), max_peak->getPosition()[MZ]);
@@ -437,7 +437,7 @@ namespace OpenMS
 							sendStatusMessage(meta, 0);
 					}
 					
-					nearest_peak_ = max_peak;
+					selected_peak_ = max_peak;
 										refresh_();
 				}
 				else if (e->buttons() & Qt::LeftButton && measurement_start_)
@@ -1138,13 +1138,13 @@ namespace OpenMS
 		highlightPeaks_();
 		
 		QPainter p(this);
-		p.drawImage(0,0,buffer_);
+		p.drawPixmap(0,0,buffer_);
 	}
 	
 	void Spectrum2DCanvas::invalidate_()
 	{
 		//cout << "invalidate: "<<Date::now() << endl;
-		if (recalculate_)
+		if (update_buffer_)
 		{
 			//clear matrix
 			marching_squares_matrices_.clear();
@@ -1159,7 +1159,7 @@ namespace OpenMS
 					calculateMarchingSquareMatrix_(i);
 				}
 			}
-			recalculate_ = false;
+			update_buffer_ = false;
 			recalculateSnapFactor_();
 		}
 		buffer_.fill(QColor(getPrefAsString("Preferences:2D:BackgroundColor").c_str()).rgb());
@@ -1254,7 +1254,7 @@ namespace OpenMS
 	
 	void Spectrum2DCanvas::intensityDistributionChange_()
 	{
-		recalculate_ = true;
+		update_buffer_ = true;
 		invalidate_();
 	}
 	
@@ -1451,7 +1451,7 @@ namespace OpenMS
 			currentPeakData_().updateRanges(1);
 			getCurrentLayer_().min_int = low_intensity_cutoff;
 			getCurrentLayer_().max_int = getCurrentPeakData().getMaxInt();
-			recalculate_ = true;
+			update_buffer_ = true;
 		}
 		else //peak data
 		{
@@ -1521,11 +1521,6 @@ namespace OpenMS
 		{
 			current_layer_ = getLayerCount()-1;
 		}
-	
-		if (layers_.empty())
-		{
-			return;
-		}
 
 		intensityModeChange_();
 
@@ -1544,7 +1539,7 @@ namespace OpenMS
 		emit layerActivated(this);
 		
 		//unselect all peaks
-		nearest_peak_ = 0;
+		selected_peak_ = 0;
 		delete(measurement_start_);
 		measurement_start_ = 0;
 		delete(measurement_stop_);

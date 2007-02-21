@@ -111,7 +111,7 @@ void Spectrum3DCanvas::changeVisibleArea_(const AreaType& new_area, bool add_to_
 	
 	emit visibleAreaChanged(new_area);
 	makeReducedDataSet();
-	recalculate_ = true;
+	update_buffer_ = true;
 	invalidate_();
 }
 void Spectrum3DCanvas::makeReducedDataSet()
@@ -240,7 +240,7 @@ void Spectrum3DCanvas::actionModeChange_()
 	
 	void Spectrum3DCanvas::invalidate_()
 	{				
-		if(recalculate_)
+		if(update_buffer_)
 		{
 			if(intensity_mode_ == SpectrumCanvas::IM_SNAP)
 				{
@@ -255,7 +255,7 @@ void Spectrum3DCanvas::actionModeChange_()
 	
 	void Spectrum3DCanvas::repaintAll()
 	{
-		recalculate_ = true;
+		update_buffer_ = true;
 		invalidate_();
 	
 	}

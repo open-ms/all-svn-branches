@@ -553,19 +553,6 @@ namespace OpenMS
 		virtual void axisMappingChange_();
 		
 		/**
-			@brief Invalidates the contents of the back buffer and repaints.
-			
-			Repaints the content into buffer_ after a data or view change (e.g. zoom, translate, displayed intesity). You need to
-			reimplement this method and you need to draw all contents into buffer_ rather than to paint on the widget directly.
-			
-			@see recalculate_
-		*/
-		virtual void invalidate_()
-		{
-			update();
-		}
-		
-		/**
 			@brief Sets the visible area
 			
 			Changes the visible area, adjustes the zoom stack and notifies interested clients about the change. 
@@ -667,7 +654,7 @@ namespace OpenMS
 		void paintGridLines_(QPainter* p);
 		
 		/// Buffer that stores the actual peak information
-		QImage buffer_;
+		QPixmap buffer_;
 		
 		/// Stores the current action mode (Pick, Zoom, Translate)
 		ActionModes action_mode_;
@@ -697,18 +684,11 @@ namespace OpenMS
 			@note Make sure the updateRanges() of the layers has been called before this method is called
 		*/
 		void updateRanges_(UnsignedInt layer_index, UnsignedInt mz_dim, UnsignedInt rt_dim, UnsignedInt it_dim);
-
-		/**
-			@brief Resets data and range to +/- infinity
-		
-			@see overall_data_range_
-		*/
-		void resetRanges_();
 		
 		/**
 			@brief Recalculates the data range.
 			
-			This method calls resetRanges_() followed by updateRanges_(UnsignedInt,UnsignedInt,UnsignedInt,UnsignedInt)
+			This method resets overall_data_range_ and calls updateRanges_(UnsignedInt,UnsignedInt,UnsignedInt,UnsignedInt)
 			for all layers.
 	
 			@param mz_dim Index of m/z in overall_data_range_
@@ -731,18 +711,8 @@ namespace OpenMS
 		/// The zoom stack. This is dealt with in the changeVisibleArea_() and zoomBack_() functions.
 		std::stack<AreaType> zoom_stack_;
 
-		/// Whether to recalculate the data when repainting
-		bool recalculate_;
-
-		/// Whether to recalculate the axes when repainting
-		bool update_axes_;
-
-		/**
-			@brief Creates mouse cursors
-			
-			Creates custom cursors for translate action
-		*/
-		void createCustomMouseCursors_();
+		/// Whether to recalculate the data in the buffer when repainting
+		bool update_buffer_;
 
 		/// The cursor used in the @c translate action mode
 		QCursor cursor_translate_;

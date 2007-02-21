@@ -216,3 +216,8 @@ MSMetaDataExplorer_moc.C:  $(HEADER_DIR)/MSMetaDataExplorer.h
 	$(MOC) $(HEADER_DIR)/MSMetaDataExplorer.h -o MSMetaDataExplorer_moc.C
 	
 
+# For debugging the visual classes, create the file 'Makefile_debug' and 
+# set 'ADD_CXXFLAGS' one or more of the following flags
+#  -DDEBUG_TOPPVIEW  
+#  -DTIMING_TOPPVIEW (time measurement of repaint methods)
+-include Makefile_debug

@@ -354,7 +354,7 @@ namespace OpenMS
       std::vector<bool> show_dots_;
 
       /// the nearest peak/feature to the mouse cursor (DFeature to be able to store the convex hull too)
-      DFeature<2>* nearest_peak_;
+      DFeature<2>* selected_peak_;
       /// start peak/feature of measuring mode
       DFeature<2>* measurement_start_;
       /// end peak/feature of measuring mode

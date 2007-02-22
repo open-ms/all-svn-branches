@@ -100,6 +100,10 @@ namespace OpenMS
 			void setInverseOrientation(bool inverse_orientation);
 			bool hasInverseOrientation();
 	
+			/// 
+			void setAllowShortNumbers(bool short_nums = true);
+
+
 	    inline double getAxisMinimum() const
 	    {
 	    	return min_;
@@ -157,6 +161,12 @@ namespace OpenMS
 			}
 	
 			int probeFont_(QPainter& painter, const QString& probe, double width, double height, int index=0);
+
+			/// calculates the unit of the intensity axis shortened with k,M,G...
+			void getShortenedNumber_(QString& short_num, double number);
+
+			/// true if k/M/G units can be used
+			bool allow_short_numbers_;
  	};
 } // namespace OpenMS
 

@@ -30,6 +30,7 @@
 
 //// STL
 #include <iostream>
+#include <algorithm>
 
 // OpenMS
 #include <OpenMS/VISUAL/AxisWidget.h>
@@ -78,6 +79,9 @@ namespace OpenMS
 	
 	void AxisWidget::paintEvent(QPaintEvent *)
 	{
+		const int legend_default_size = 12;
+		const int tick1_default_size = 16;
+
 		QColor text_color;
 		int tick_size = 0;
 		
@@ -92,14 +96,16 @@ namespace OpenMS
 		h = (isXAxis)? h : h-margin_;
 	
 		// probe legend font size (use a third (fifth) of available space for legend)
-		int legend_font_size;
+		int legend_font_size(0);
 		if (isXAxis)
 		{
-			legend_font_size =  probeFont_(painter, QString(legend_.c_str()),w,h/3.0);
+			//legend_font_size = probeFont_(painter, QString(legend_.c_str()), w, h / 2.0);
+			legend_font_size = legend_default_size;
 		}
 		else
 		{
-			legend_font_size = probeFont_(painter, QString(legend_.c_str()),h,w/5.0);
+			//legend_font_size = probeFont_(painter, QString(legend_.c_str()), h, w / 2.0);
+			legend_font_size = legend_default_size;
 		}
 		
 		// probe text font size with last axis labels  
@@ -108,9 +114,10 @@ namespace OpenMS
 		for (unsigned int i=0; i<3; i++)
 		{
 			QString s;
-			if (grid_line_.size()>i)
+			if (grid_line_.size() > i)
 			{
-				s = QString("%1").arg(scale_(grid_line_[i][ grid_line_[i].size()-1])); //last axis label
+				//s = QString("%1").arg(scale_(grid_line_[i][ grid_line_[i].size() - 1])); //last axis label
+				getShortenedNumber_(s, scale_(grid_line_[i][ grid_line_[i].size() - 1]));
 			}
 			if (s.length() > probe.length())
 			{
@@ -119,17 +126,19 @@ namespace OpenMS
 			}
 		}
 	
-		double trans_dist = intervalTransformation(grid_line_dist_+min_, min_, max_, 0, (isXAxis)? w:h );
+		//double trans_dist = intervalTransformation(grid_line_dist_ + min_, min_, max_, 0, (isXAxis)? w:h );
 	
-		int text_font_size;
+		int text_font_size(0);
 		// use rest of space for axis label (i.e. 1/5 legend, 4/5 label) or use all available space if no legend is shown;
 		if (show_legend_)
 		{
-			text_font_size = (isXAxis)? probeFont_(painter, probe,trans_dist,0.8*h*2.0/3) : probeFont_(painter, probe,0.8*w,trans_dist,index);
+			//text_font_size = (isXAxis) ? probeFont_(painter, probe, trans_dist, 0.8 * h * 2.0 / 3) : probeFont_(painter, probe, 0.8 * w, trans_dist, index);
+			text_font_size = tick1_default_size;
 		}
 		else
 		{
-			text_font_size = (isXAxis)? probeFont_(painter, probe,trans_dist,0.8*h) : probeFont_(painter, probe,w,trans_dist,index);
+			//text_font_size = (isXAxis) ? probeFont_(painter, probe, trans_dist, 0.8 * h) : probeFont_(painter, probe, w, trans_dist, index);
+			text_font_size = tick1_default_size;
 		}
 		
 		// length of one big tick equals a quarter of the text_font_size
@@ -137,7 +146,7 @@ namespace OpenMS
 		if (grid_scaling > w/5 ) grid_scaling = w/5;  // don't let font size get to big
 		if (grid_scaling > h/5 ) grid_scaling = h/5;  
 	
-		for (unsigned int j = 0; j != grid_line_.size() ; j++) 
+		for (unsigned int j = 0; j != min((unsigned int)grid_line_.size(), (unsigned int)2) ; j++) 
 		{
 	    if (is_log_ && j>0) break; // just draw text on big intervalls
 			// style definitions
@@ -193,7 +202,8 @@ namespace OpenMS
 				}			
 					
 				// values at axis lines
-				QString text = QString("%1").arg(scale_(*it));
+				QString text;
+				getShortenedNumber_(text, scale_(*it)); //QString("%1").arg(scale_(*it));
 				painter.setPen(QPen(text_color, pen_width_));
 		
 				// get bounding rectangle for text we want to layout
@@ -210,9 +220,9 @@ namespace OpenMS
 	
 				switch (alignment_)	
 				{
-				  case BOTTOM: posy = static_cast<UnsignedInt>(1.5*grid_scaling) + textbound.height() ; break;
+				  case BOTTOM: posy = static_cast<UnsignedInt>(1.5*grid_scaling) + static_cast<UnsignedInt>(textbound.height()/2.0); break;
 				  case TOP:	posy = h-static_cast<UnsignedInt>(1.5*grid_scaling); break;
-				  case LEFT: case RIGHT: posy = x+margin_ + static_cast<UnsignedInt>(textbound.height()/ 2);  break;
+				  case LEFT: case RIGHT: posy = x + margin_ + static_cast<UnsignedInt>(textbound.height()/4.0);  break;
 				}	
 				painter.drawText(posx, posy, text);
 			}		
@@ -395,18 +405,49 @@ namespace OpenMS
 		double ratio1 = prb_bound.width()/width;
 		double ratio2 = prb_bound.height()/height;
 		double res = (ratio1 > ratio2)? ratio1:ratio2;
-		if (index==1)
+		if (index == 1)
 		{
-			return static_cast<int>(probe_font/res*3.0/2.4);
+			return static_cast<int>(probe_font / res * 3.0 / 2.4);
 		}
-		else if (index==2)
+		else if (index == 2)
 		{
-			return static_cast<int>(probe_font/res*3.0/2);
+			return static_cast<int>(probe_font / res * 3.0 / 2);
 		}
 		else
 		{ 
-			return static_cast<int>(probe_font/res);
+			return static_cast<int>(probe_font / res);
 		}
+	}
+
+	void AxisWidget::getShortenedNumber_(QString& short_num, double number)
+	{
+		if (!allow_short_numbers_)
+		{
+			short_num = QString("%1").arg(number);
+			return;
+		}
+		if (number < 1000.0)
+		{
+			short_num = QString("%1").arg(number);
+			return;
+		}
+		if (number < 1000000.0)
+		{
+			short_num = QString("%1k").arg(Math::round_decimal(number/1000.0, -1));
+			return;
+		}
+		if (number < 1000000000.0)
+		{
+			short_num = QString("%1M").arg(number/1000000.0);
+			return;
+		}
+		short_num = QString("%1G").arg(number/1000000000.0);
+		return;
+	}
+
+	void AxisWidget::setAllowShortNumbers(bool short_nums)
+	{
+		allow_short_numbers_ = short_nums;
 	}
 
 } //Namespace

@@ -46,7 +46,9 @@ namespace OpenMS
 		connect(canvas(), SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
 		
 		x_axis_->setLegend("m/z");
+		x_axis_->setAllowShortNumbers(false);
 		y_axis_->setLegend("Intensity");
+		y_axis_->setAllowShortNumbers(true);
 		y_axis_->setMinimumWidth(50);
 		addClient(canvas(),"Canvas",true);
 	}

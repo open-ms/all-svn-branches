@@ -39,11 +39,11 @@ using std::endl;
 namespace OpenMS
 {
 	  
-	Spectrum3DOpenGLCanvas::Spectrum3DOpenGLCanvas(QWidget *parent,Spectrum3DCanvas &canvas_3d)
+	Spectrum3DOpenGLCanvas::Spectrum3DOpenGLCanvas(QWidget *parent,Spectrum3DCanvas& canvas_3d)
 	  : QGLWidget(parent),
 	    canvas_3d_(canvas_3d)
-	    
 	{
+		canvas_3d.rubber_band_.setParent(this);
 	  setFocusPolicy(Qt::StrongFocus);
 	  corner_=100.0;  
 	  near_=0.0;  
@@ -52,71 +52,58 @@ namespace OpenMS
 	  xrot_=220;
 	  yrot_ = 220;
 	  zrot_=0;
-	  
-	  translation_on_ = false;
 	  trans_x_ =0.0;
 	  trans_y_ = 0.0;
-	  show_zoom_selection_=false;
 	  setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
 	}
 	  
 	Spectrum3DOpenGLCanvas::~Spectrum3DOpenGLCanvas()
 	{
-	  grid_rt_.erase( grid_rt_.begin(), grid_rt_.end());
-	  grid_mz_.erase(grid_mz_.begin(),grid_mz_.end());
-	  grid_intensity_.erase(grid_intensity_.begin(),grid_intensity_.end());
 	}
 	
 	void Spectrum3DOpenGLCanvas::calculateGridLines_()
 	{
-	// 	cout<<"calculateGridlines(9<<"<<endl;
 	  double dist;
 	  switch(canvas_3d_.intensity_mode_)
 	  {
-	  case SpectrumCanvas::IM_SNAP:
-	    updateIntensityScale();
-	    AxisTickCalculator::calcGridLines(int_scale_.min_[0],int_scale_.max_[0],3,grid_intensity_,7,5,dist); 
-	    
-	    break;
-	  case SpectrumCanvas::IM_NONE:
-	    AxisTickCalculator::calcGridLines(canvas_3d_.overall_data_range_.min_[2],canvas_3d_.overall_data_range_.max_[2],3,grid_intensity_,7,5,dist); 
-	    break;
-	  case SpectrumCanvas::IM_LOG:
-	    double log_min;
-	    if(log10(canvas_3d_.overall_data_range_.min_[2])<0)
-	    {
-	      log_min = 0.0;
-	    }
-	    else
-	    {
-	      log_min = log10(canvas_3d_.overall_data_range_.min_[2]);
-	    }
-	    AxisTickCalculator::calcLogGridLines(log_min,log10(canvas_3d_.overall_data_range_.max_[2]), grid_intensity_log_); 
-	    break;
-	  case SpectrumCanvas::IM_PERCENTAGE:
-	    AxisTickCalculator::calcGridLines(0.0,100.0,3,grid_intensity_,7,5,dist); 
-	    break;
+		  case SpectrumCanvas::IM_SNAP:
+		    updateIntensityScale();
+		    AxisTickCalculator::calcGridLines(int_scale_.min_[0],int_scale_.max_[0],3,grid_intensity_,7,5,dist); 
+		    
+		    break;
+		  case SpectrumCanvas::IM_NONE:
+		    AxisTickCalculator::calcGridLines(canvas_3d_.overall_data_range_.min_[2],canvas_3d_.overall_data_range_.max_[2],3,grid_intensity_,7,5,dist); 
+		    break;
+		  case SpectrumCanvas::IM_LOG:
+		    double log_min;
+		    if(log10(canvas_3d_.overall_data_range_.min_[2])<0)
+		    {
+		      log_min = 0.0;
+		    }
+		    else
+		    {
+		      log_min = log10(canvas_3d_.overall_data_range_.min_[2]);
+		    }
+		    AxisTickCalculator::calcLogGridLines(log_min,log10(canvas_3d_.overall_data_range_.max_[2]), grid_intensity_log_); 
+		    break;
+		  case SpectrumCanvas::IM_PERCENTAGE:
+		    AxisTickCalculator::calcGridLines(0.0,100.0,3,grid_intensity_,7,5,dist); 
+		    break;
 	  }
 	  AxisTickCalculator::calcGridLines(canvas_3d_.visible_area_.min_[0],canvas_3d_.visible_area_.max_[0],3,grid_rt_,7,5,dist);
 	  AxisTickCalculator::calcGridLines(canvas_3d_.visible_area_.min_[1],canvas_3d_.visible_area_.max_[1],3,grid_mz_,7,5,dist);
-	
 	}
 	
 	
 	void Spectrum3DOpenGLCanvas::resizeGL(int w,int h)
 	{
-	      width_ = (float)w;
-	      heigth_ = (float)h;
-	      glViewport(0,0,(GLsizei) w, (GLsizei) h);   
-	      glMatrixMode(GL_PROJECTION);
-	      glLoadIdentity();
-	      glOrtho(-corner_*zoom_,
-	              corner_*zoom_, 
-	              -corner_*zoom_,
-	              corner_*zoom_ ,
-	              near_,
-	              far_);
-	      glMatrixMode(GL_MODELVIEW);
+    width_ = (float)w;
+    heigth_ = (float)h;
+    glViewport(0,0,(GLsizei) w, (GLsizei) h);   
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glOrtho(-corner_*zoom_, corner_*zoom_,  -corner_*zoom_, corner_*zoom_ , near_, far_);
+    glMatrixMode(GL_MODELVIEW);
 	}
 	
 	void Spectrum3DOpenGLCanvas::initializeGL()
@@ -129,16 +116,11 @@ namespace OpenMS
 	  calculateGridLines_();
 	  switch(canvas_3d_.action_mode_)
 	  {
-	  case SpectrumCanvas::AM_ZOOM:
+	  	case SpectrumCanvas::AM_ZOOM:
 	      if(canvas_3d_.getLayerCount()!=0 )
 	      {
-	        if(show_zoom_selection_)
+	        if(!canvas_3d_.rubber_band_.isVisible())
 	        {
-	          zoomselection_ = makeZoomSelection();
-	        }
-	        else
-	        {
-	          //  calculateGridLines_();
 	          coord_ = makeCoordinates();
 	          if(canvas_3d_.show_grid_)
 	          {
@@ -157,33 +139,29 @@ namespace OpenMS
 	        }
 	      }
 	      break;
-	      
-	  case SpectrumCanvas::AM_TRANSLATE:  
-	    
-	    if(canvas_3d_.getLayerCount()!=0)
-	    {
-	      if(canvas_3d_.show_grid_)
-	      {
-	        gridlines_ = makeGridLines();
-	      }   
-	      coord_ = makeCoordinates();   
-	      ground_ = makeGround();
-	      x_1_ = 0.0;
-	      y_1_ = 0.0;
-	      x_2_ = 0.0;
-	      y_2_ = 0.0;
-	      stickdata_ =  makeDataAsStick();
-	      axeslabel_ = makeAxesLabel();
-	      if(canvas_3d_.legend_shown_)
-	      {
-	        axeslegend_ = makeLegend();
-	      }
-	    }
-	    break;
-	  case SpectrumCanvas::AM_MEASURE:
-	    break;
-	  case SpectrumCanvas::AM_SELECT:
-	    break;
+	  	case SpectrumCanvas::AM_TRANSLATE:  
+		    if(canvas_3d_.getLayerCount()!=0)
+		    {
+		      if(canvas_3d_.show_grid_)
+		      {
+		        gridlines_ = makeGridLines();
+		      }   
+		      coord_ = makeCoordinates();   
+		      ground_ = makeGround();
+		      x_1_ = 0.0;
+		      y_1_ = 0.0;
+		      x_2_ = 0.0;
+		      y_2_ = 0.0;
+		      stickdata_ =  makeDataAsStick();
+		      axeslabel_ = makeAxesLabel();
+		      if(canvas_3d_.legend_shown_)
+		      {
+		        axeslegend_ = makeLegend();
+		      }
+		    }
+		    break;
+		  default:
+		    break;
 	  }
 	  
 	}
@@ -193,8 +171,8 @@ namespace OpenMS
 		xrot_=xrot;
 		yrot_ =yrot;
 		zrot_=zrot;
-	
 	}
+	
 	void Spectrum3DOpenGLCanvas::resetTranslation()
 	{
 		trans_x_ = 0.0;
@@ -219,51 +197,42 @@ namespace OpenMS
 		{
 			switch (canvas_3d_.action_mode_)
 			{
-			case SpectrumCanvas::AM_ZOOM:
-				
-				glCallList(stickdata_);	
-				if(canvas_3d_.legend_shown_)
+				case SpectrumCanvas::AM_ZOOM:
+					
+					glCallList(stickdata_);	
+					if(canvas_3d_.legend_shown_)
+						{
+							glCallList(axeslegend_);	
+						}
+					glCallList(axeslabel_);
+					if(canvas_3d_.show_grid_)
+					{	
+						glEnable (GL_LINE_STIPPLE);	
+						glCallList(gridlines_);
+						glDisable (GL_LINE_STIPPLE);	
+					}
+					glDisable(GL_DEPTH_TEST);
+					glCallList(coord_);
+					glEnable(GL_DEPTH_TEST);
+					break;
+				case SpectrumCanvas::AM_TRANSLATE:	
+					glCallList(ground_);
+					glCallList(stickdata_);	
+					glCallList(axeslabel_);
+					if(canvas_3d_.legend_shown_)
 					{
 						glCallList(axeslegend_);	
 					}
-				glCallList(axeslabel_);
-				if(canvas_3d_.show_grid_)
-				{	
-					glEnable (GL_LINE_STIPPLE);	
-					glCallList(gridlines_);
-					glDisable (GL_LINE_STIPPLE);	
-				}
-				glDisable(GL_DEPTH_TEST);
-				glCallList(coord_);
-				glEnable(GL_DEPTH_TEST);
-				if(show_zoom_selection_)
+					if(canvas_3d_.show_grid_)
 					{
-						glCallList(zoomselection_);
+						glCallList(gridlines_);
 					}
-				break;
-				
-			case SpectrumCanvas::AM_TRANSLATE:	
-				glCallList(ground_);
-				glCallList(stickdata_);	
-				glCallList(axeslabel_);
-				if(canvas_3d_.legend_shown_)
-				{
-					glCallList(axeslegend_);	
-				}
-				if(canvas_3d_.show_grid_)
-				{
-					glCallList(gridlines_);
-				}
-				glDisable(GL_DEPTH_TEST);
-				glCallList(coord_);
-				glEnable(GL_DEPTH_TEST);
-				break;
-				
-			case SpectrumCanvas::AM_MEASURE:
-				break;
-				
-			case SpectrumCanvas::AM_SELECT:
-				break;
+					glDisable(GL_DEPTH_TEST);
+					glCallList(coord_);
+					glEnable(GL_DEPTH_TEST);
+					break;
+				default:
+					break;			
 			}
 		}
 	}
@@ -504,33 +473,6 @@ namespace OpenMS
 							 -near_-2*corner_);
 		glEnd();
 		glEndList();
-		return list;
-	}
-	
-	
-	GLuint Spectrum3DOpenGLCanvas::makeZoomSelection()
-	{
-		GLuint list = glGenLists(1);
-		glNewList(list,GL_COMPILE);
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4ub(100, 0, 0, 40);	
-		glBegin(GL_QUADS);
-		glVertex3d((GLfloat)x_1_,
-	 						 corner_,
-	 						 (GLfloat)y_1_);
-		glVertex3d((GLfloat)x_1_,
-							 corner_,
-							 (GLfloat)y_2_);
-		glVertex3d((GLfloat)x_2_,
-							 corner_,
-							 (GLfloat)y_2_);
-		glVertex3d((GLfloat)x_2_,
-							 corner_,
-							 (GLfloat)y_1_);
-		glEnd();
-		glEndList();
-	
 		return list;
 	}
 	
@@ -1074,35 +1016,35 @@ namespace OpenMS
 		double scaledintensity= 0;
 		switch(canvas_3d_.intensity_mode_)
 		{
-		case  SpectrumCanvas::IM_SNAP:
-			scaledintensity = intensity -int_scale_.min_[0];
-			scaledintensity = ( scaledintensity * 2.0 * corner_)/(int_scale_.max_[0]-int_scale_.min_[0]);
-			break;
-		case  SpectrumCanvas::IM_NONE:
-			scaledintensity = intensity -canvas_3d_.overall_data_range_.min_[2];
-			scaledintensity = ( scaledintensity * 2.0 * corner_)/(canvas_3d_.overall_data_range_.max_[2]-canvas_3d_.overall_data_range_.min_[2]);
-			break;
-		case  SpectrumCanvas::IM_PERCENTAGE: 
-	 		scaledintensity =  intensity * 100.0 /canvas_3d_.getMaxIntensity(layer_index);
-			scaledintensity = scaledintensity * 2.0 * corner_/100.0;	
-			break;	
-		case SpectrumCanvas::IM_LOG:
-			double log_min = 0.0;
-			if(log10(canvas_3d_.overall_data_range_.min_[2])<0)
-			{
-				log_min = 0.0;
-			}
-			else
-			{
-				log_min = log10(canvas_3d_.overall_data_range_.min_[2]);
-			}
-			scaledintensity = intensity -log_min;	
-			scaledintensity =(scaledintensity * 2.0 * corner_)/(log10(canvas_3d_.overall_data_range_.max_[2])-log_min);
-			if(scaledintensity<0)
-			{
-				scaledintensity =0.0;
-			}
-			break;
+			case  SpectrumCanvas::IM_SNAP:
+				scaledintensity = intensity -int_scale_.min_[0];
+				scaledintensity = ( scaledintensity * 2.0 * corner_)/(int_scale_.max_[0]-int_scale_.min_[0]);
+				break;
+			case  SpectrumCanvas::IM_NONE:
+				scaledintensity = intensity -canvas_3d_.overall_data_range_.min_[2];
+				scaledintensity = ( scaledintensity * 2.0 * corner_)/(canvas_3d_.overall_data_range_.max_[2]-canvas_3d_.overall_data_range_.min_[2]);
+				break;
+			case  SpectrumCanvas::IM_PERCENTAGE: 
+		 		scaledintensity =  intensity * 100.0 /canvas_3d_.getMaxIntensity(layer_index);
+				scaledintensity = scaledintensity * 2.0 * corner_/100.0;	
+				break;	
+			case SpectrumCanvas::IM_LOG:
+				double log_min = 0.0;
+				if(log10(canvas_3d_.overall_data_range_.min_[2])<0)
+				{
+					log_min = 0.0;
+				}
+				else
+				{
+					log_min = log10(canvas_3d_.overall_data_range_.min_[2]);
+				}
+				scaledintensity = intensity -log_min;	
+				scaledintensity =(scaledintensity * 2.0 * corner_)/(log10(canvas_3d_.overall_data_range_.max_[2])-log_min);
+				if(scaledintensity<0)
+				{
+					scaledintensity =0.0;
+				}
+				break;
 		}
 		return scaledintensity;
 	}
@@ -1121,20 +1063,20 @@ namespace OpenMS
 	{
 		normalizeAngle(&angle);
 		if (angle != yrot_) 
-			{
-				yrot_ = angle;	
-				updateGL();
-			}
+		{
+			yrot_ = angle;	
+			updateGL();
+		}
 	}
 	
 	void Spectrum3DOpenGLCanvas::setRotationZ(int angle)
 	{
 		normalizeAngle(&angle);
 		if (angle != zrot_)
-			{
-				zrot_ = angle;	
-				updateGL();
-			}
+		{
+			zrot_ = angle;	
+			updateGL();
+		}
 	}	
 	
 	void Spectrum3DOpenGLCanvas::normalizeAngle(int *angle)
@@ -1153,102 +1095,91 @@ namespace OpenMS
 	{
 	 	zoom_ = zoom;
 		if(repaint)
-			{
-				resizeGL((int)width_,(int) heigth_);
-				glDraw (); 
-			}
+		{
+			resizeGL((int)width_,(int) heigth_);
+			glDraw (); 
+		}
 	}
 	
 	///////////////wheel- and MouseEvents//////////////////
-	void Spectrum3DOpenGLCanvas::wheelEvent ( QWheelEvent * e )
+	void Spectrum3DOpenGLCanvas::wheelEvent (QWheelEvent* e)
 	{
 		if(canvas_3d_.action_mode_ == SpectrumCanvas::AM_TRANSLATE)
 			{
-				int wheel = e->delta();
-				double distance = double(wheel/480.0);
-				double zoom = zoom_+distance;
+				double zoom = zoom_ + double(e->delta()/480.0);
 				if(zoom>0.0)
-					{	
-						setZoomFactor( zoom,true);
-					}
+				{	
+					setZoomFactor( zoom,true);
+				}
 				else
-					{
-						zoom = 0.25;
-						setZoomFactor( zoom,true);
-					}
+				{
+					zoom = 0.25;
+					setZoomFactor( zoom,true);
+				}
 			}
 	}
-	
-	void Spectrum3DOpenGLCanvas::mouseMoveEvent ( QMouseEvent * e)
+
+	void Spectrum3DOpenGLCanvas::mousePressEvent (QMouseEvent* e)
 	{
-		if(canvas_3d_.action_mode_ == SpectrumCanvas::AM_TRANSLATE && !translation_on_)
-		{
-			int d_x = e->x() - lastMousePos_.x();
-			int d_y = e->y() - lastMousePos_.y();
-			setRotationX(xrot_ + 8 * d_y);
-			setRotationY(yrot_ + 8 * d_x);
-			lastMousePos_ = e->pos();
-		}
-		else
-		{
-			if(canvas_3d_.action_mode_ == SpectrumCanvas::AM_ZOOM)
-			{
-				lastMousePos_ = e->pos();
-				x_1_ = ((firstMousePos_.x()- width_/2) * corner_ *1.25* 2) / width_;
-				y_1_ = -300 + (((firstMousePos_.y()-heigth_/2) * corner_*1.25* 2) / heigth_);
-				x_2_ = ((lastMousePos_.x()- width_/2) * corner_ *1.25* 2) / width_;
-				y_2_ = -300 + (((lastMousePos_.y()-heigth_/2) * corner_*1.25* 2) / heigth_);
-				//	cout<<x_1_<<"  "<<x_2_<<"  "<<y_1_<<"  "<<y_2_<<endl;
-				show_zoom_selection_=true;
-		
-				canvas_3d_.repaintAll();
-			}
-		}
-		if(translation_on_)
-		{
-			lastMousePos_ = e->pos();
-			trans_x_= lastMousePos_.x()-firstMousePos_.x();
-			trans_y_ = (heigth_-lastMousePos_.y())-(heigth_ -firstMousePos_.y());
-			canvas_3d_.update_buffer_ = false;
-			canvas_3d_.invalidate_();
-		}
-	
+		mouse_move_begin_ = e->pos();
+		mouse_move_end_ = e->pos();	
+
+	  switch(canvas_3d_.action_mode_)
+	  {
+	  	case SpectrumCanvas::AM_ZOOM:
+				if(e->button()==Qt::LeftButton)
+				{			
+					canvas_3d_.rubber_band_.setGeometry(e->pos().x(),e->pos().y(),0,0);
+					canvas_3d_.rubber_band_.show();
+					canvas_3d_.update_(__PRETTY_FUNCTION__);
+				}
+	      break;
+		  default:
+		    break;
+	  }
 	}
-	void Spectrum3DOpenGLCanvas::mousePressEvent ( QMouseEvent * e)
+
+	void Spectrum3DOpenGLCanvas::mouseMoveEvent(QMouseEvent* e)
 	{
-		firstMousePos_ = e->pos();
-		lastMousePos_ = e->pos();	
-	
-	
+	  switch(canvas_3d_.action_mode_)
+	  {
+	  	case SpectrumCanvas::AM_ZOOM:
+				if(e->buttons() & Qt::LeftButton)
+				{			
+					canvas_3d_.rubber_band_.setGeometry(QRect(mouse_move_begin_, e->pos()));
+					canvas_3d_.update_(__PRETTY_FUNCTION__);
+				}
+	      break;
+	    case SpectrumCanvas::AM_TRANSLATE:
+				if(e->buttons() & Qt::LeftButton)
+				{
+					int d_x = e->x() - mouse_move_end_.x();
+					int d_y = e->y() - mouse_move_end_.y();
+					setRotationX(xrot_ + 8 * d_y);
+					setRotationY(yrot_ + 8 * d_x);
+					mouse_move_end_ = e->pos();
+					canvas_3d_.update_(__PRETTY_FUNCTION__);
+				}
+				else if(e->buttons() & Qt::RightButton)
+				{
+					mouse_move_end_ = e->pos();
+					trans_x_= mouse_move_end_.x()-mouse_move_begin_.x();
+					trans_y_ = (heigth_-mouse_move_end_.y())-(heigth_ -mouse_move_begin_.y());
+					canvas_3d_.update_(__PRETTY_FUNCTION__);
+				}
+	    	break;
+		  default:
+		    break;
+	  }
 	}
-	void Spectrum3DOpenGLCanvas::mouseReleaseEvent ( QMouseEvent * e)
+	
+	void Spectrum3DOpenGLCanvas::mouseReleaseEvent (QMouseEvent* e)
 	{
-		canvas_3d_.update_buffer_ = true;
-		translation_on_ = false;
-	
-		if(e->button()==Qt::RightButton)
-		{
-				emit rightButton(e->globalPos());
-		}
-		if(e->buttons() & Qt::MidButton)
-		{
-			canvas_3d_.zoomBack_();	
-		}
-	
 		if(canvas_3d_.action_mode_ == SpectrumCanvas::AM_ZOOM && e->button()==Qt::LeftButton)
 		{			
-				dataToZoomArray(x_1_, y_1_, x_2_, y_2_);
-				show_zoom_selection_ = false;
-				canvas_3d_.repaintAll();
-		}
-	
-	}
-	
-	void Spectrum3DOpenGLCanvas::keyPressEvent(QKeyEvent * e) 
-	{
-		if(e->key()==Qt::Key_Control)
-		{
-			translation_on_ = true;
+			dataToZoomArray(x_1_, y_1_, x_2_, y_2_);
+			canvas_3d_.rubber_band_.hide();
+			canvas_3d_.update_(__PRETTY_FUNCTION__);
 		}
 	}
 	
@@ -1260,56 +1191,52 @@ namespace OpenMS
 		double scale_y2 = scaledInversMZ(-200-y_2);
 		DRange<2> new_area_;
 		if(scale_x1<=scale_x2)
-			{
-				new_area_.min_[0]= scale_x1;
-				new_area_.max_[0]= scale_x2;
-			} 
+		{
+			new_area_.min_[0]= scale_x1;
+			new_area_.max_[0]= scale_x2;
+		} 
 		else
-			{
-				new_area_.min_[0]= scale_x2;
-				new_area_.max_[0]= scale_x1;
-			}
+		{
+			new_area_.min_[0]= scale_x2;
+			new_area_.max_[0]= scale_x1;
+		}
 		if(scale_y1<=scale_y2)
-			{
-				new_area_.min_[1]= scale_y1;
-				new_area_.max_[1]= scale_y2;
-			} 
+		{
+			new_area_.min_[1]= scale_y1;
+			new_area_.max_[1]= scale_y2;
+		} 
 		else
-			{
-			 new_area_.min_[1]= scale_y2;
-			 new_area_.max_[1]= scale_y1;
-		 } 
+		{
+		 new_area_.min_[1]= scale_y2;
+		 new_area_.max_[1]= scale_y1;
+		} 
 		canvas_3d_.changeVisibleArea_(new_area_, true);
 	}
-	
-	
-	
 	
 	void Spectrum3DOpenGLCanvas::updateIntensityScale()
 	{
 		int_scale_.min_[0]= canvas_3d_.overall_data_range_.max_[2];
 		int_scale_.max_[0]= canvas_3d_.overall_data_range_.min_[2];
 		
-			for(UnsignedInt i =0;i<canvas_3d_.getLayerCount();i++)
+		for(UnsignedInt i =0;i<canvas_3d_.getLayerCount();i++)
+		{
+			for (SpectrumCanvas::ExperimentType::ConstIterator spec_it = canvas_3d_.getPeakData(i).RTBegin(canvas_3d_.visible_area_.min_[0]); 
+					 spec_it != canvas_3d_.getPeakData(i).RTEnd(canvas_3d_.visible_area_.max_[0]); 
+					 ++spec_it)
 			{
-					for (Spectrum3DCanvas::ExperimentType::ConstIterator spec_it = canvas_3d_.getPeakData(i).RTBegin(canvas_3d_.visible_area_.min_[0]); 
-							 spec_it != canvas_3d_.getPeakData(i).RTEnd(canvas_3d_.visible_area_.max_[0]); 
-							 ++spec_it)
+				for (SpectrumCanvas::ExperimentType::SpectrumType::ConstIterator it = spec_it->MZBegin(canvas_3d_.visible_area_.min_[1]); it!=spec_it->MZEnd(canvas_3d_.visible_area_.max_[1]); ++it)
+				{
+					if(	int_scale_.min_[0]>= it->getIntensity())
 					{
-						for (BaseSpectrum::ConstIterator it = spec_it->MZBegin(canvas_3d_.visible_area_.min_[1]); it!=spec_it->MZEnd(canvas_3d_.visible_area_.max_[1]); ++it)
-						{
-							if(	int_scale_.min_[0]>= it->getIntensity())
-							{
-								int_scale_.min_[0]= it->getIntensity(); 
-							}
-							if(	int_scale_.max_[0]<= it->getIntensity())
-							{
-								int_scale_.max_[0]= it->getIntensity(); 
-							} 
-						}
+						int_scale_.min_[0]= it->getIntensity(); 
 					}
+					if(	int_scale_.max_[0]<= it->getIntensity())
+					{
+						int_scale_.max_[0]= it->getIntensity(); 
+					} 
+				}
 			}
-		
+		}
 	}
 	
 	// sets the Multigradient gradient_
@@ -1317,41 +1244,42 @@ namespace OpenMS
 	{	
 		gradient_.fromString(gradient);
 	}
+	
 	// recalculates the gradient of layer number i 
 	void Spectrum3DOpenGLCanvas::recalculateDotGradient_()
 	{
 		switch(canvas_3d_.intensity_mode_)
 		{
-		case SpectrumCanvas::IM_SNAP:
-		gradient_.activatePrecalculationMode(int_scale_.min_[0],
-																					 int_scale_.max_[0], 
-																					 UnsignedInt(canvas_3d_.getPref("Preferences:3D:Dot:InterpolationSteps")));
-			break;
-		case SpectrumCanvas::IM_NONE:
-			gradient_.activatePrecalculationMode(canvas_3d_.overall_data_range_.min_[2],
-																					 canvas_3d_.overall_data_range_.max_[2], 
-																					 UnsignedInt(canvas_3d_.getPref("Preferences:3D:Dot:InterpolationSteps")));
-			break;
-		case SpectrumCanvas::IM_LOG:
-			double log_min;
-			if(log10(canvas_3d_.overall_data_range_.min_[2])<0)
-			{
-				log_min = 0.0;
-			}
-			else
-			{
-				log_min = log10(canvas_3d_.overall_data_range_.min_[2]);
-			}
-			gradient_.activatePrecalculationMode(log_min,
-																					 log10(canvas_3d_.overall_data_range_.max_[2]), 
-																					 UnsignedInt(canvas_3d_.getPref("Preferences:3D:Dot:InterpolationSteps")));
-			
-			break;
-		case SpectrumCanvas::IM_PERCENTAGE:
-			gradient_.activatePrecalculationMode(0.0,
-																					 100.0,
-																					 UnsignedInt(canvas_3d_.getPref("Preferences:3D:Dot:InterpolationSteps")));
-			break;
+			case SpectrumCanvas::IM_SNAP:
+				gradient_.activatePrecalculationMode(int_scale_.min_[0],
+																						 int_scale_.max_[0], 
+																						 UnsignedInt(canvas_3d_.getPref("Preferences:3D:Dot:InterpolationSteps")));
+				break;
+			case SpectrumCanvas::IM_NONE:
+				gradient_.activatePrecalculationMode(canvas_3d_.overall_data_range_.min_[2],
+																						 canvas_3d_.overall_data_range_.max_[2], 
+																						 UnsignedInt(canvas_3d_.getPref("Preferences:3D:Dot:InterpolationSteps")));
+				break;
+			case SpectrumCanvas::IM_LOG:
+				double log_min;
+				if(log10(canvas_3d_.overall_data_range_.min_[2])<0)
+				{
+					log_min = 0.0;
+				}
+				else
+				{
+					log_min = log10(canvas_3d_.overall_data_range_.min_[2]);
+				}
+				gradient_.activatePrecalculationMode(log_min,
+																						 log10(canvas_3d_.overall_data_range_.max_[2]), 
+																						 UnsignedInt(canvas_3d_.getPref("Preferences:3D:Dot:InterpolationSteps")));
+				
+				break;
+			case SpectrumCanvas::IM_PERCENTAGE:
+				gradient_.activatePrecalculationMode(0.0,
+																						 100.0,
+																						 UnsignedInt(canvas_3d_.getPref("Preferences:3D:Dot:InterpolationSteps")));
+				break;
 		}
 	}
 

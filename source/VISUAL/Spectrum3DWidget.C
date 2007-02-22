@@ -31,6 +31,7 @@
 #include <OpenMS/VISUAL/DIALOGS/Spectrum3DWidgetPDP.h>
 #include <OpenMS/VISUAL/Spectrum3DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum3DOpenGLCanvas.h>
+#include <OpenMS/VISUAL/AxisWidget.h>
 
 //QT
 #include <QtGui/QPixmap>
@@ -47,13 +48,10 @@ namespace OpenMS
 	{
 		setCanvas_(new Spectrum3DCanvas(this));
 		
-		delete(grid_);
-		grid_ = new QGridLayout(this);	
-		grid_->addWidget(canvas_, 1, 1);
+		x_axis_->hide();
+		y_axis_->hide();	
 		
-		
-		connect(canvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UnsignedInt)),
-		        this, SIGNAL(sendStatusMessage(std::string, OpenMS::UnsignedInt)));
+		connect(canvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UnsignedInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UnsignedInt)));
 		
 		connect(canvas(), SIGNAL(sendCursorStatus(double,double,double)),
 		this, SIGNAL(sendCursorStatus(double,double,double)));
@@ -94,6 +92,7 @@ namespace OpenMS
 		
 		return tmp;
 	}
+	
 	Spectrum3DCanvas * Spectrum3DWidget::canvas()
 	{
 	  return static_cast<Spectrum3DCanvas*>(canvas_);
@@ -105,6 +104,7 @@ namespace OpenMS
 		QImage img = pix.toImage();
 		return img;
 	}
+	
 	void Spectrum3DWidget::showLegend(int show)
 	{
 		legend_shown_ = (bool)show;

@@ -124,7 +124,7 @@ dummy:
 depend:	uic_depend $(MOC_SOURCES) $(ADD_MOC_SOURCES)
 	@echo "creating dependencies for $(DIRECTORY)..."
 	@echo "" > .Dependencies
-	@$(CXX) -M  -fPIC -pedantic -Wno-long-long -Wno-deprecated  $(CPP_SOURCES) $(ADD_CPP_SOURCES) $(STD_CPP_INCLUDES) $(ADD_INCLUDES) $(OPENMS_INCLUDES)  >.Dependencies
+	@$(CXX) -M  -fPIC -pedantic -Wno-long-long -Wno-deprecated  $(CPP_SOURCES) $(ADD_CPP_SOURCES) $(ADD_MOC_SOURCES) $(STD_CPP_INCLUDES) $(ADD_INCLUDES) $(OPENMS_INCLUDES)  >.Dependencies
 	@$(MAKE) subdirs SUBDIRS="$(VISUAL_DIRS)" TARGET=depend
 
 uic_depend:

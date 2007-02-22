@@ -99,7 +99,7 @@ default: echodir $(OBJECTS)
 depend:	$(MOC_SOURCES) $(ADD_MOC_SOURCES)
 	@echo "creating dependencies for $(DIRECTORY)..."
 	@echo "" > .Dependencies
-	@$(CXX) -M  -fPIC -pedantic -Wno-long-long -Wno-deprecated  $(CPP_SOURCES) $(ADD_CPP_SOURCES) $(STD_CPP_INCLUDES) $(ADD_INCLUDES) $(OPENMS_INCLUDES)  >.Dependencies
+	@$(CXX) -M  -fPIC -pedantic -Wno-long-long -Wno-deprecated  $(CPP_SOURCES) $(ADD_CPP_SOURCES) $(ADD_MOC_SOURCES) $(STD_CPP_INCLUDES) $(ADD_INCLUDES) $(OPENMS_INCLUDES)  >.Dependencies
 
 uic_depend:
 	$(UIC) -o $(UIC_DIR)/Spectrum1DGoToDialogTemplate.h Spectrum1DGoToDialog.ui

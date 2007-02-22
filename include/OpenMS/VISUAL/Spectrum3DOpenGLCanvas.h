@@ -52,27 +52,12 @@ namespace OpenMS
     Q_OBJECT
 		
 			friend class Spectrum3DCanvas;
-			
-			/**	@name Type definitions */
-			//@{
-			enum ViewMode
-			{
-				VIEW_SELECT,
-				VIEW_TOP,
-				VIEW_ZOOM
-			};
-			///
-			typedef std::vector<std::vector<double> > GridVector;
-			///
-			typedef DimensionDescription < LCMS_Tag > DimDesc;
-			///
-			enum DimensionId { MZ = DimDesc::MZ, RT = DimDesc::RT };
-			
-			typedef DPeak<1> PeakT;
-			typedef DSpectrum< 1, DPeakArray<1, PeakT > > 	BaseSpectrum;
-			//@}
 
     public:
+    				
+			/// Container for axis ticks
+			typedef std::vector<std::vector<double> > AxisTickVector;
+			
 	    /**
 	     @brief Constructor
 	     
@@ -80,7 +65,7 @@ namespace OpenMS
 	     @param name The widget's name
 	     @param canvas_3d The main 3d canvas
 	    */
-			Spectrum3DOpenGLCanvas(QWidget *parent, Spectrum3DCanvas & canvas_3d);
+			Spectrum3DOpenGLCanvas(QWidget* parent, Spectrum3DCanvas& canvas_3d);
 			/**
 				@brief Destructor
 			
@@ -116,10 +101,6 @@ namespace OpenMS
 			*/
 			virtual GLuint makeDataAsTopView();
 			/**
-				 @brief Display list 
-			*/
-			virtual GLuint makeZoomSelection();
-			/**
 			 @brief displaylist
 			*/	
 			virtual GLuint makeGround();
@@ -136,7 +117,6 @@ namespace OpenMS
 			void mouseReleaseEvent(QMouseEvent* e);
 	    void mousePressEvent(QMouseEvent* e);
 			void wheelEvent(QWheelEvent* e);
-			void keyPressEvent(QKeyEvent* e);
       //@}
       
 			/**
@@ -182,7 +162,7 @@ namespace OpenMS
 			void resetTranslation();
 			///
 			void timeMessure();
-			ViewMode view_mode_;
+			
 			/// displaylist
 	    GLuint stickdata_;
 			/// displaylist
@@ -191,10 +171,6 @@ namespace OpenMS
 			GLuint axeslabel_;
 			///displaylist
 			GLuint gridlines_;
-			/// displaylist
-			GLuint zoomselection_;
-			/// displaylist
-			GLuint zoomdata_;
 			/// displaylist
 			GLuint ground_;
 			/// displaylist
@@ -213,7 +189,7 @@ namespace OpenMS
 	    int zrot_;
 	
 			/// member variables fot the zoom-modus
-	    QPoint lastMousePos_,firstMousePos_;    
+	    QPoint mouse_move_end_, mouse_move_begin_;    
 	
 			///member variable for the x and y axis of the BB 
 	    double corner_;
@@ -232,17 +208,13 @@ namespace OpenMS
 			///object wich contains the values of the current min and max intensity
 			DRange<1> int_scale_;
 			///member gridvectors which contains the data for the mz-axis-ticks
-			GridVector grid_mz_;
+			AxisTickVector grid_mz_;
 			///member gridvectors which contains the data for the rt-axis-ticks
-			GridVector grid_rt_;
+			AxisTickVector grid_rt_;
 			///member gridvectors which contains the data for the intensity-axis-ticks
-			GridVector grid_intensity_;
+			AxisTickVector grid_intensity_;
 			///member gridvectors which contains the data for the log-intensity-axis-ticks
-			GridVector grid_intensity_log_;
-			/// if it is true the zoom_selection is shown
-			bool show_zoom_selection_;	
-			///if the ControlKey is pressed ->true
-			bool translation_on_;	
+			AxisTickVector grid_intensity_log_;
 			/// x1 coordinate of the zoomselection
 			double x_1_;
 			/// x2 coordinate of the zoomselection
@@ -264,11 +236,7 @@ namespace OpenMS
 			/// first normalize the angel and then set zRot_ 
 	    void setRotationZ(int angle);
 			/// set the member variable zoom_ and calls initializeGL and updateGL
-			void setZoomFactor(double zoom,bool repaint);
-		
-		signals:
-			/// signal which is emmited in the mouseReleaseEvent 
-			void rightButton(QPoint pos);
+			void setZoomFactor(double zoom, bool repaint);
 	};
 }
 #endif

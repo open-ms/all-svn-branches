@@ -75,7 +75,7 @@ namespace OpenMS
 		{
 			show_contours_[current_layer_] = on;
 			update_buffer_ = true;
-			update_(__PRETTY_FUNCTION__);
+			update();
 		}
 	}
 	
@@ -85,7 +85,7 @@ namespace OpenMS
 		{
 			show_surface_[current_layer_] = on;
 			update_buffer_ = true;
-			update_(__PRETTY_FUNCTION__);
+			update();
 		}
 	}
 	
@@ -95,7 +95,7 @@ namespace OpenMS
 		{
 			show_dots_[current_layer_] = on;
 			update_buffer_ = true;
-			update_(__PRETTY_FUNCTION__);
+			update();
 		}
 	}
 	
@@ -772,7 +772,7 @@ namespace OpenMS
 	void Spectrum2DCanvas::intensityDistributionChange_()
 	{
 		update_buffer_ = true;
-		update_(__PRETTY_FUNCTION__);
+		update();
 	}
 	
 	void Spectrum2DCanvas::intensityModeChange_()
@@ -1067,7 +1067,7 @@ namespace OpenMS
 		delete(measurement_stop_);
 		measurement_stop_ = 0;
 		
-		update_(__PRETTY_FUNCTION__);
+		update();
 	}
 	
 	void Spectrum2DCanvas::repaintAll()
@@ -1392,7 +1392,7 @@ namespace OpenMS
 					}
 					
 					selected_peak_ = max_peak;
-					update_(__PRETTY_FUNCTION__);
+					update();
 				}
 				else if (e->buttons() & Qt::LeftButton) //projection
 				{
@@ -1408,7 +1408,7 @@ namespace OpenMS
 					{
 						rubber_band_.setGeometry(QRect(last_mouse_pos_, pos));
 					}
-					update_(__PRETTY_FUNCTION__);
+					update();
 				}
 				break;
 			}
@@ -1429,13 +1429,13 @@ namespace OpenMS
 					}
 					
 					selected_peak_ = max_peak;
-					update_(__PRETTY_FUNCTION__);
+					update();
 				}
 				else if (e->buttons() & Qt::LeftButton && measurement_start_)
 				{
 					measurement_stop_ = findNearestPeak_(pos);
 					last_mouse_pos_ = pos;
-					update_(__PRETTY_FUNCTION__);
+					update();
 				
 					if (measurement_stop_)
 					{
@@ -1459,7 +1459,7 @@ namespace OpenMS
 				if (e->buttons() & Qt::LeftButton)
 				{
 					rubber_band_.setGeometry(last_mouse_pos_.x(), last_mouse_pos_.y(), pos.x() - last_mouse_pos_.x(), pos.y() - last_mouse_pos_.y());
-					update_(__PRETTY_FUNCTION__);
+					update();
 				}
 				break;
 			}
@@ -1546,7 +1546,7 @@ namespace OpenMS
 						measurement_stop_ = new DFeature<2>(*measurement_stop_);
 					}
 					
-					update_(__PRETTY_FUNCTION__);
+					update();
 					
 					if (measurement_start_)
 					{

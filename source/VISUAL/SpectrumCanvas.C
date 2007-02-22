@@ -433,7 +433,7 @@ namespace OpenMS
 #ifdef DEBUG_UPDATE_
 			caller_name)
 	{
-		cout << "Update from '" << caller_name << "'" << endl;
+		cout << "Spectrum3DCanvas::update_ from '" << caller_name << "'" << endl;
 #else
 		)
 	{

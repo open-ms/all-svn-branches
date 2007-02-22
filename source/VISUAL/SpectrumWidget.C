@@ -70,8 +70,8 @@ namespace OpenMS
 		//scrollbars
 		connect(canvas_, SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
 		connect(canvas_, SIGNAL(updateVScrollbar(float,float,float,float)), this, SLOT(updateVScrollbar(float,float,float,float)));
-		connect(x_scrollbar_, SIGNAL(sliderMoved(int)), canvas_, SLOT(horizontalScrollBarChange(int)));
-		connect(y_scrollbar_, SIGNAL(sliderMoved(int)), canvas_, SLOT(verticalScrollBarChange(int)));
+		connect(x_scrollbar_, SIGNAL(valueChanged(int)), canvas_, SLOT(horizontalScrollBarChange(int)));
+		connect(y_scrollbar_, SIGNAL(valueChanged(int)), canvas_, SLOT(verticalScrollBarChange(int)));
 		
 		canvas_->setSpectrumWidget(this);
 	}

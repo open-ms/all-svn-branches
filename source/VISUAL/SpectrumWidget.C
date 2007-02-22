@@ -48,8 +48,6 @@ namespace OpenMS
 		x_axis_ = new AxisWidget(AxisWidget::BOTTOM, "",this);
 		grid_->addWidget(y_axis_,0,1);
 		grid_->addWidget(x_axis_,1,2);
-//	x_axis_->setBackgroundColor(Qt::green); //For debugging
-//	y_axis_->setBackgroundColor(Qt::green); //For debugging
 
 		//add scrollbars
 		x_scrollbar_ = new QScrollBar(Qt::Horizontal, this);

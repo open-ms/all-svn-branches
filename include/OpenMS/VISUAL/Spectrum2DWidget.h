@@ -64,22 +64,9 @@ namespace OpenMS
 		Q_OBJECT
 	public:
 
-		/**
-			@brief Constructor
-			
-			Spectrum2DWidget constructor. See QWidget for details.
-			
-			@param parent The parent widget.
-			@param name The widget's name.
-			@param f Widget flags.
-		*/
+		/// Default constructor
 		Spectrum2DWidget(QWidget* parent = 0);
-		
-		/**
-			@brief Destructor
-			
-			Destroys the Widget and all associated data.
-		*/
+		/// Destructor
 		virtual ~Spectrum2DWidget();
 		
 		// Docu in base class

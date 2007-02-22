@@ -50,15 +50,8 @@ namespace OpenMS
 		Q_OBJECT
 		
 	public:
-		/**
-			@brief Default constructor
-			
-			@param parent The parent widget.
-			@param name The widget name.
-			@param f Qt::WidgetFlags that are passed on.
-		*/
+		/// Default constructor
 		Spectrum1DWidget(QWidget* parent = 0);
-		
 		///Destructor
 		virtual ~Spectrum1DWidget();
 		

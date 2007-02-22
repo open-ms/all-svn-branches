@@ -65,15 +65,8 @@ namespace OpenMS
 			LM_XPERCENT_YPERCENT
 		};
 		
-		/**
-			@brief Default constructor
-			
-			@param parent The parent widget.
-			@param name The widget name.
-			@param f Qt::WidgetFlags that are passed on.
-		*/
-		Spectrum1DCanvas(QWidget* parent = 0);	
-		
+		/// Default constructor
+		Spectrum1DCanvas(QWidget* parent = 0);
 		/// Destructor
 		virtual ~Spectrum1DCanvas();
 	

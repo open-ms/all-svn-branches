@@ -111,13 +111,7 @@ namespace OpenMS
 		
 		//@}
 
-		/**
-			@brief Constructor.
-			
-			@param parent the parent QWidget
-			@param name the widget's name
-			@param f Window flags
-		*/
+		/// Default constructor
 		SpectrumCanvas(QWidget* parent = 0);
 		
 		/**

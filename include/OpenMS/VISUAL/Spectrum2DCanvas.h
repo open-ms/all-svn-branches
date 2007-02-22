@@ -88,21 +88,10 @@ namespace OpenMS
 
       //@}
 
-      /**
-      	@brief Constructor
-
-      	Spectrum2DCanvas constructor. See QWidget for details.
-
-      	@param parent The parent widget.
-      	@param name The widget's name.
-      */
+      /// Default constructor
       Spectrum2DCanvas(QWidget* parent = 0);
 
-      /**
-      	@brief Destructor
-
-      	Destroys the Widget and all associated data.
-      */
+      /// Destructor
       ~Spectrum2DCanvas();
 
       /**

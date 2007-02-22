@@ -450,14 +450,14 @@ namespace OpenMS
 		
 			Reimplement this slot to react on scrollbar events.
 		*/
-		virtual void horizontalScrollBarChange(int from, int to);
+		virtual void horizontalScrollBarChange(int value);
 
 		/**
 			@brief Notifies the canvas that the vertical scollbar has been moved.
 		
 			Reimplement this slot to react on scrollbar events.
 		*/
-		virtual void verticalScrollBarChange(int from, int to);
+		virtual void verticalScrollBarChange(int value);
 		
 	signals:
 		/// Signal emitted whenever a new Layer is activated within the current window

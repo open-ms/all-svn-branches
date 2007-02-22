@@ -1365,7 +1365,7 @@ namespace OpenMS
     if (w2)
     {
       //draw modes
-      dm_points_2d_->setEnabled(w2->widget()->canvas()->dotsAreShown());
+      dm_points_2d_->setChecked(w2->widget()->canvas()->dotsAreShown());
       dm_surface_2d_->setChecked(w2->widget()->canvas()->surfaceIsShown());
       dm_contours_2d_->setChecked(w2->widget()->canvas()->contoursAreShown());
 
@@ -2157,7 +2157,7 @@ namespace OpenMS
     default_preferences.setValue("2D:BackgroundColor", "#ffffff");
     default_preferences.setValue("2D:MarchingSquaresSteps", 20);
     default_preferences.setValue("2D:InterpolationSteps", 200);
-    default_preferences.setValue("2D:Dot:Gradient", "Linear|0,#ffff00;11,#ffaa00;32,#ff0000;55,#aa00ff;78,#5500ff;100,#000000");
+    default_preferences.setValue("2D:Dot:Gradient", "Linear|0,#efef00;11,#ffaa00;32,#ff0000;55,#aa00ff;78,#5500ff;100,#000000");
     default_preferences.setValue("2D:Dot:Mode", 1);
     default_preferences.setValue("2D:Surface:Gradient", "Linear|0,#ffffff;22,#fdffcb;50,#ffb4b4;75,#d7cfff;100,#c1c1c1");
     default_preferences.setValue("2D:Contour:Lines", 8);
@@ -2166,7 +2166,7 @@ namespace OpenMS
     //3d
     default_preferences.setValue("3D:Dot:Mode", 1);
     default_preferences.setValue("3D:Shade:Mode", 1);
-    default_preferences.setValue("3D:Dot:Gradient", "Linear|0,#ffff00;11,#ffaa00;32,#ff0000;55,#aa00ff;78,#5500ff;100,#000000");
+    default_preferences.setValue("3D:Dot:Gradient", "Linear|0,#efef00;11,#ffaa00;32,#ff0000;55,#aa00ff;78,#5500ff;100,#000000");
     default_preferences.setValue("3D:Dot:InterpolationSteps",200);
     default_preferences.setValue("3D:BackgroundColor", "#ffffff");
     default_preferences.setValue("3D:AxesColor", "#000000");

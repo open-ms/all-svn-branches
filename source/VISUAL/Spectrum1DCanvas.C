@@ -29,6 +29,7 @@
 #include <QtGui/QMessageBox>
 #include <QtGui/QPainterPath>
 #include <QtGui/QPainter>
+#include <QtCore/QTime>
  
 // OpenMS
 #include <OpenMS/VISUAL/PeakIcon.h>
@@ -495,7 +496,8 @@ namespace OpenMS
 	  cout << "  Overall area -- m/z: " << overall_data_range_.min()[0] << " - " << overall_data_range_.max()[0] << " int: " << overall_data_range_.min()[1] << " - " << overall_data_range_.max()[1] << endl; 
 #endif
 #ifdef TIMING_TOPPVIEW
-		long start = PreciseTime::now().getMicroSeconds();
+		QTime timer;
+ 		timer.start();
 #endif
 		
 		QPainter painter;
@@ -701,9 +703,7 @@ namespace OpenMS
 		cout << "END   " << __PRETTY_FUNCTION__ << endl;
 #endif
 #ifdef TIMING_TOPPVIEW	
-		double time = (PreciseTime::now().getMicroSeconds()-start)/1000.0;
-		if (time<0) time +=1000.0;
-		cout << "1D PaintEvent took " << time << " ms" << endl;
+		cout << "1D PaintEvent took " << timer.elapsed() << " ms" << endl;
 #endif	
 	}
 	

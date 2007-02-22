@@ -47,8 +47,6 @@ namespace OpenMS
 		
 		It can also be used to define a left and right boundary inside the values.
 		
-		@bug Splitter are not shown although they are painted sometimes
-		
 		@ingroup Visual
 	*/
 	class HistogramWidget

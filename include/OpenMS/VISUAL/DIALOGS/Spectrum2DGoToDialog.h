@@ -50,20 +50,14 @@ namespace OpenMS
 		public:
 			Spectrum2DGoToDialog( QWidget* parent = 0 );
 			~Spectrum2DGoToDialog();
-	    void setMinX(float minX);
-	    void setMaxX(float maxX);
-	    float getMinX();
-	    float getMaxX();
-	    void setMinY(float minY);
-	    void setMaxY(float maxY);
-	    float getMinY();
-	    float getMaxY();
-	  protected:
-	    DRange<2> area_;
-	    float center_x_, center_y_;
-	  protected slots:
-	    virtual void gotoButton_clicked();
-	    virtual void setVisibleAreaButton_clicked();
+	    void setMinRT(double value);
+	    void setMaxRT(double value);
+	    float getMinRT();
+	    float getMaxRT();
+	    void setMinMZ(double value);
+	    void setMaxMZ(double value);
+	    float getMinMZ();
+	    float getMaxMZ();
 	};
 
 }

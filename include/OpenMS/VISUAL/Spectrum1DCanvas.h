@@ -48,9 +48,6 @@ namespace OpenMS
 		@brief Canvas for visualization of spectrum
 		
 		@todo Add measurement (Marc)
-		@todo Add zoom in and out with wheel (Marc)
-		
-		@bug Logarithmic intensity mode is broken
 		
 		@ingroup spectrum_widgets
 	*/

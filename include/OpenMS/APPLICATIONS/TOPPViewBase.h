@@ -63,6 +63,8 @@ namespace OpenMS
   	
   	@todo Add preferences for layers (Marc)
   	@todo Use right mouse button and double-click for navigation in data (Marc)
+  	@todo Remove coordinate-data transformations (Marc)
+  	@todo Remove SpectrumWindow (Marc)
   */
   class TOPPViewBase 
   	: public QMainWindow, 

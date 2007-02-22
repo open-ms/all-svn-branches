@@ -39,6 +39,7 @@
 #include <QtGui/QPainter>
 #include <QtGui/QBitmap>
 #include <QtGui/QPolygon>
+#include <QtCore/QTime>
 
 using namespace std;
 
@@ -266,23 +267,27 @@ namespace OpenMS
 	
 	void Spectrum2DCanvas::paintDots_(UnsignedInt layer_index, QPainter& painter)
 	{
-		// Create this dot shape: 
-		// .##.
-		// ####
-		// ####
-		// .##.
-		// This is much faster than always drawing circles
-		QBitmap dotshape(4,4);
-		dotshape.fill(Qt::color1);
-		QPainter dotshape_painter(&dotshape);
-		dotshape_painter.setPen(Qt::color0);
-		dotshape_painter.drawPoint(0,0);
-		dotshape_painter.drawPoint(3,3);
-		dotshape_painter.drawPoint(0,3);
-		dotshape_painter.drawPoint(3,0);
-		
-		//shift of the bitmap
-		QPoint shift(2,2);
+#ifdef TIMING_TOPPVIEW
+		QTime timer;
+		timer.start();
+#endif	
+//		// Create this dot shape: 
+//		// .##.
+//		// ####
+//		// ####
+//		// .##.
+//		// This is much faster than always drawing circles
+//		QBitmap dotshape(4,4);
+//		dotshape.fill(Qt::color1);
+//		QPainter dotshape_painter(&dotshape);
+//		dotshape_painter.setPen(Qt::color0);
+//		dotshape_painter.drawPoint(0,0);
+//		dotshape_painter.drawPoint(3,3);
+//		dotshape_painter.drawPoint(0,3);
+//		dotshape_painter.drawPoint(3,0);
+//		
+//		//shift of the bitmap
+//		QPoint shift(2,2);
 		
 		if (intensity_mode_ == IM_PERCENTAGE)
 		{
@@ -308,7 +313,7 @@ namespace OpenMS
 		SignedInt mode = getDotMode();
 		
 		painter.setPen(Qt::black);
-		
+
 		if (getLayer(layer_index).type==LayerData::DT_PEAK) //peaks
 		{
 			for (ExperimentType::ConstAreaIterator i = getPeakData(layer_index).areaBeginConst(visible_area_.min()[1],visible_area_.max()[1],visible_area_.min()[0],visible_area_.max()[0]); 
@@ -322,7 +327,8 @@ namespace OpenMS
 						painter.setPen(heightColor_(i->getIntensity(), dot_gradient_));
 					}
 					dataToWidget_(i->getPos(), i.getRetentionTime(),pos);
-					painter.drawPixmap(pos-shift, dotshape);
+					painter.drawLine(pos.x(),pos.y()-1,pos.x(),pos.y()+1);
+					painter.drawLine(pos.x()-1,pos.y(),pos.x()+1,pos.y());
 				}
 			}
 		}
@@ -344,10 +350,15 @@ namespace OpenMS
 						painter.setPen(heightColor_(i->getIntensity(), dot_gradient_));
 					}
 					dataToWidget_(i->getPosition()[MZ],i->getPosition()[RT],pos);
-					painter.drawPixmap(pos-shift, dotshape);
+					painter.drawLine(pos.x(),pos.y()-1,pos.x(),pos.y()+1);
+					painter.drawLine(pos.x()-1,pos.y(),pos.x()+1,pos.y());
 				}
 			}
 		}
+
+#ifdef TIMING_TOPPVIEW
+		cout << "paintDots_ took " << timer.elapsed() << " ms" << endl;
+#endif	
 	}
 
 	void Spectrum2DCanvas::paintConvexHulls_(UnsignedInt layer_index, QPainter& painter)
@@ -1179,7 +1190,8 @@ namespace OpenMS
 	  cout << "  Overall area -- m/z: " << overall_data_range_.min()[0] << " - " << overall_data_range_.max()[0] << " int: " << overall_data_range_.min()[1] << " - " << overall_data_range_.max()[1] << endl; 
 #endif
 #ifdef TIMING_TOPPVIEW
-		long start = PreciseTime::now().getMicroSeconds();
+		QTime timer;
+ 		timer.start();
 #endif
 		
 		QPainter painter;
@@ -1204,11 +1216,10 @@ namespace OpenMS
 			//recalculate snap factor
 			recalculateSnapFactor_();
 			
-			//update buffer
+			//draw buffer in image in order to have composition
+			//QImage image(buffer_.width(),buffer_.height(),QImage::Format_ARGB32_Premultiplied);
 			buffer_.fill(QColor(getPrefAsString("Preferences:2D:BackgroundColor").c_str()).rgb());
 			painter.begin(&buffer_);
-			painter.setCompositionMode(QPainter::CompositionMode_SourceAtop);
-			
 			for (UnsignedInt i=0; i<getLayerCount(); i++)
 			{
 				if (getLayer(i).visible)
@@ -1246,16 +1257,13 @@ namespace OpenMS
 					}
 				}
 			}
-	    
-			painter.setCompositionMode(QPainter::CompositionMode_Source);
 			paintGridLines_(painter);
-			
 			painter.end();
 		}
 		
 		painter.begin(this);
 		
-		//draw peak data
+		//copy peak data from buffer
 		QVector<QRect> rects = e->region().rects();
 		for (int i = 0; i < (int)rects.size(); ++i)
 		{
@@ -1299,10 +1307,8 @@ namespace OpenMS
 #ifdef DEBUG_TOPPVIEW
 		cout << "END   " << __PRETTY_FUNCTION__ << endl;
 #endif
-#ifdef TIMING_TOPPVIEW	
-		double time = (PreciseTime::now().getMicroSeconds()-start)/1000.0;
-		if (time<0) time +=1000.0;
-		cout << "2D PaintEvent took " << time << " ms" << endl;
+#ifdef TIMING_TOPPVIEW
+		cout << "2D PaintEvent took " << timer.elapsed() << " ms" << endl << endl;
 #endif	
 	}
 

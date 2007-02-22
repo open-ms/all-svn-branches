@@ -120,23 +120,23 @@ namespace OpenMS
 			*/
 			virtual GLuint makeZoomSelection();
 			/**
-			 * @brief displaylist
-			 */	
+			 @brief displaylist
+			*/	
 			virtual GLuint makeGround();
 			/**
-			 * @brief displaylist
-			 */	
+			 @brief displaylist
+			*/	
 			virtual GLuint makeGridLines();
 			/// method to make the font
 			virtual GLuint makeLegend();
 	
       /** @name Reimplemented QT events */
       //@{
-	    void mouseMoveEvent(QMouseEvent *e);
-			void mouseReleaseEvent(QMouseEvent *e);
-	    void mousePressEvent(QMouseEvent *e);
-			void wheelEvent(QWheelEvent * e);
-			void keyPressEvent(QKeyEvent * e);
+	    void mouseMoveEvent(QMouseEvent* e);
+			void mouseReleaseEvent(QMouseEvent* e);
+	    void mousePressEvent(QMouseEvent* e);
+			void wheelEvent(QWheelEvent* e);
+			void keyPressEvent(QKeyEvent* e);
       //@}
       
 			/**
@@ -175,7 +175,7 @@ namespace OpenMS
 	    /// return zRot_
 			int zRotation() const { return zrot_; }
 	    /// normalize the angel
-			void normalizeAngle(int *angle);
+			void normalizeAngle(int* angle);
 			///
 			void setAngels(int xrot, int yrot, int zrot);
 			///

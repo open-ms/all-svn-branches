@@ -49,16 +49,10 @@ namespace OpenMS
 		public:
 			Spectrum1DGoToDialog( QWidget* parent = 0 );
 			~Spectrum1DGoToDialog();    
-	    void setMinPosition(float min);
-	    void setMaxPosition(float max);
-	    float getMinPosition();
-	    float getMaxPosition();
-	  public slots:
-	    virtual void gotoButton_clicked();
-	    virtual void setVisibleAreaButton_clicked();
-	    
-	  protected:
-	    float min_pos_, max_pos_, center_pos_;
+	    void setMin(double value);
+	    void setMax(double value);
+	    float getMin();
+	    float getMax();
 	};
 
 }

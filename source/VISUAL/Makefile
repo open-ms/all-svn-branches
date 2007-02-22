@@ -220,4 +220,5 @@ MSMetaDataExplorer_moc.C:  $(HEADER_DIR)/MSMetaDataExplorer.h
 # set 'ADD_CXXFLAGS' one or more of the following flags
 #  -DDEBUG_TOPPVIEW  
 #  -DTIMING_TOPPVIEW (time measurement of repaint methods)
+#  -DDEBUG_UPDATE_ (output of update_(...) callers) 
 -include Makefile_debug

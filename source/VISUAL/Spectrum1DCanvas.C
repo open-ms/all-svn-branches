@@ -117,7 +117,7 @@ namespace OpenMS
 			{ 
 				emit sendCursorStatus();
 				selected_peak_ = findPeakAtPosition_(p);
-				update();
+				update_(__PRETTY_FUNCTION__);
 				break;
 			}
 			case AM_ZOOM:
@@ -134,7 +134,7 @@ namespace OpenMS
 					{
 						rubber_band_.setGeometry(last_mouse_pos_.x(), 0, p.x() - last_mouse_pos_.x(), height());
 					}
-					update();
+					update_(__PRETTY_FUNCTION__);
 				}
 				if (e->modifiers() & Qt::ShiftModifier)
 				{
@@ -216,7 +216,7 @@ namespace OpenMS
 						//cout << "selected_peaks_.size(): " << selected_peaks_.size() << endl;
 					}
 					update_buffer_ = true;
-					update();
+					update_(__PRETTY_FUNCTION__);
 				}
 				break;
 			}
@@ -461,7 +461,7 @@ namespace OpenMS
 		}
 		
 		update_buffer_ = true;
-		update();
+		update_(__PRETTY_FUNCTION__);
 	}
 
 	void Spectrum1DCanvas::setDrawMode(DrawModes mode)
@@ -470,7 +470,7 @@ namespace OpenMS
 		{
 			draw_modes_[current_layer_] = mode;
 			update_buffer_ = true;
-			update();
+			update_(__PRETTY_FUNCTION__);
 		}
 	}
 
@@ -728,13 +728,13 @@ namespace OpenMS
 		
 		emit visibleAreaChanged(new_area);
 		update_buffer_ = true;
-		update();
+		update_(__PRETTY_FUNCTION__);
 #ifdef DEBUG_TOPPVIEW
 		cout << "END   " << __PRETTY_FUNCTION__ << endl;
 #endif
 	}
 	
-	// destructor
+	/// Destructor
 	Spectrum1DCanvas::~Spectrum1DCanvas()
 	{
 		

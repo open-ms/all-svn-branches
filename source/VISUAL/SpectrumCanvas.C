@@ -83,7 +83,7 @@ namespace OpenMS
 		buffer_ = QPixmap(width(), height());
 		update_buffer_ = true;
 		updateScrollbars_();
-		update();
+		update_(__PRETTY_FUNCTION__);
 #ifdef DEBUG_TOPPVIEW
 		cout << "END   " << __PRETTY_FUNCTION__ << endl;
 #endif
@@ -100,20 +100,20 @@ namespace OpenMS
 	{
 		show_grid_ = show;
 		update_buffer_ = true;
-		update();
+		update_(__PRETTY_FUNCTION__);
 	}
 	
 	void SpectrumCanvas::intensityDistributionChange_()
 	{
 		update_buffer_ = true;
-		update();
+		update_(__PRETTY_FUNCTION__);
 	}
 	
 	void SpectrumCanvas::intensityModeChange_()
 	{
 		recalculateSnapFactor_();
 		update_buffer_ = true;
-		update();
+		update_(__PRETTY_FUNCTION__);
 	}
 
 	bool SpectrumCanvas::isMzToXAxis() 
@@ -131,7 +131,7 @@ namespace OpenMS
 	{
 		updateScrollbars_();
 		update_buffer_ = true;
-		update();
+		update_(__PRETTY_FUNCTION__);
 	}
 
 	void SpectrumCanvas::actionModeChange_()
@@ -159,7 +159,7 @@ namespace OpenMS
 	
 		emit visibleAreaChanged(new_area);
 		update_buffer_ = true;
-		update();
+		update_(__PRETTY_FUNCTION__);
 #ifdef DEBUG_TOPPVIEW
 		cout << "END   " << __PRETTY_FUNCTION__ << endl;
 #endif
@@ -332,7 +332,7 @@ namespace OpenMS
 		{
 			layer.visible=b;
 			update_buffer_ = true;
-			update();
+			update_(__PRETTY_FUNCTION__);
 		}
 	}
 
@@ -411,7 +411,7 @@ namespace OpenMS
 	void SpectrumCanvas::repaintAll()
 	{
 		update_buffer_ = true;
-		update();
+		update_(__PRETTY_FUNCTION__);
 	}
 
 	void SpectrumCanvas::recalculateSnapFactor_()
@@ -428,7 +428,19 @@ namespace OpenMS
 	{
 		
 	}
-		
+	
+	void SpectrumCanvas::update_(const char*
+#ifdef DEBUG_UPDATE_
+			caller_name)
+	{
+		cout << "Update from '" << caller_name << "'" << endl;
+#else
+		)
+	{
+#endif
+		update();
+	}
+	
 } //namespace
 
 

@@ -697,6 +697,17 @@ namespace OpenMS
 		/// The zoom stack. This is dealt with in the changeVisibleArea_() and zoomBack_() functions.
 		std::stack<AreaType> zoom_stack_;
 
+		/**
+			@brief Updates the diplayed data
+			
+			The default implementation calls QQidget::update().
+			
+			This method is reimplemented in the 3D view to update the OpenGL widget.
+			
+			@param caller_name Name of the calling function (use __PRETTY_FUNCTION__).
+		*/
+		virtual void update_(const char* caller_name);
+
 		/// Whether to recalculate the data in the buffer when repainting
 		bool update_buffer_;
 

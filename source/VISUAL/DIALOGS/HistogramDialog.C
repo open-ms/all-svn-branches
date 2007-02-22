@@ -62,7 +62,7 @@ namespace OpenMS
 		//distribution
 		mw_ = new HistogramWidget(distribution, this);
 		mw_->showSplitters(true);
-		layout->addWidget(mw_,0,0,1,2);
+		layout->addWidget(mw_,0,0,1,3);
 		
 		//resize dialog
 		adjustSize();

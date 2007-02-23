@@ -31,7 +31,13 @@
 	
 	<H2 style="border-top:2px solid grey;">General information</H2>
 		<UL>
-		
+
+			<LI><B>Was sind die wichtigen URLs für OpenMS?</B>
+				<BR>
+				http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS/search/
+				<BR>
+				Neben der Docu-Suche können dort weitere Links gefunden werden.
+
 			<LI><B>Wie update ich die Website?</B>
 				<OL>
 					<LI> Das Modul web auschecken:
@@ -41,12 +47,6 @@
 					<LI> Änderungen einchecken
 					<LI> Auf shell.sourceforge.net das Skript <TT>/home/groups/o/op/open-ms/scripts/webupdate.sh</TT> ausführen. 
 				</OL>
-			
-			<LI><B>Was sind die wichtigen URLs für OpenMS?</B>
-				<BR>
-				http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS/search/
-				<BR>
-				Neben der Docu-Suche können dort weitere Links gefunden werden.
 
 	    <li><b>How do I add a new directory in the <tt>source/</tt> directory to the built system?</b><br>
 	      Add the new directory name to the end of the

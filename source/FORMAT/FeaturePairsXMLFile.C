@@ -32,7 +32,7 @@ namespace OpenMS
   // not much going on here...
 
   FeaturePairsXMLFile::FeaturePairsXMLFile()
-      : SchemaFile()
+  	: XMLFile(OPENMS_PATH"/data/SCHEMAS/FeaturePairsXML_1_0.xsd")
   {
   }
   ///Destructor
@@ -59,7 +59,6 @@ namespace OpenMS
 
   void FeaturePairsXMLFile::store(String filename, const std::vector< ElementPair < Feature > > & pairs) const throw (Exception::UnableToCreateFile)
   {
-    if (pairs.empty()) return;
     Internal::FeaturePairsHandler handler(pairs,filename);
     save_(filename, &handler);
   }

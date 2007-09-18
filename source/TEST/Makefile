@@ -349,19 +349,15 @@ EXECUTABLES_TRANSFORMATIONS_FEATUREFINDER = \
 	ProductModel_test\
 	FeatureFinder_test\
 	FeaFiModule_test\
+	FeatureFinderAlgorithm_test\
 	SimpleSeeder_test\
-	FeatureFinderAlgorithm_test
+	SimpleExtender_test\
+	SimpleModelFitter_test
 
-
-# SimpleExtender_test\
 #	EuclideanDistance_test\
 #	PickedPeakSeeder_test\
 #	MarrWaveletSeeder_test\
-#	SimpleModelFitter_test\
 #	IsotopeWaveletSeeder_test\
-#	DummySeeder_test\
-#	DummyExtender_test\
-#	DummyFitter_test\
 #	RankCorrelation_test\
 #	BaseSweepSeeder_test\
 #	AveragineMatcher_test

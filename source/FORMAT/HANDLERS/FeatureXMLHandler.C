@@ -68,11 +68,9 @@ namespace OpenMS
 					}
 					break;
 				case FEATURE:
-					if (
-							(!options_.hasRTRange() || options_.getRTRange().encloses(feature_->getPosition()[0]))
-					&&	(!options_.hasMZRange() || options_.getMZRange().encloses(feature_->getPosition()[1]))
-					&&	(!options_.hasIntensityRange() || options_.getIntensityRange().encloses(feature_->getIntensity()))
-					)
+					if ((!options_.hasRTRange() || options_.getRTRange().encloses(feature_->getPosition()[0]))
+							&&	(!options_.hasMZRange() || options_.getMZRange().encloses(feature_->getPosition()[1]))
+							&&	(!options_.hasIntensityRange() || options_.getIntensityRange().encloses(feature_->getIntensity())))
 					{
 						map_->push_back(*feature_);
 					}
@@ -207,7 +205,7 @@ namespace OpenMS
 			UniqueIdGenerator id_generator = UniqueIdGenerator::instance();
 	
 			os << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
-			   << "<featureMap>\n";
+			   << "<featureMap xsi:noNamespaceSchemaLocation=\"http://open-ms.sourceforge.net/schemas/FeatureXML_1_0.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\n";
 	
 			// delegate control to ExperimentalSettings handler
 			Internal::MzDataExpSettHandler handler(*((const ExperimentalSettings*)cmap_),"");
@@ -242,10 +240,10 @@ namespace OpenMS
 				ModelDescription<2> desc = feat.getModelDescription();
 				os << "\t\t\t<model name=\"" << desc.getName() << "\">" << std:: endl;
 				Param modelp = desc.getParam();
-				Param::ConstIterator piter = modelp.begin();
+				Param::ParamIterator piter = modelp.begin();
 				while (piter != modelp.end())
 				{
-					os << "\t\t\t\t<param name=\"" << piter->first << "\" value=\"" << piter->second << "\">";
+					os << "\t\t\t\t<param name=\"" << piter.getName() << "\" value=\"" << piter->value << "\">";
 					os << "</param>" << std::endl;
 					piter++;
 				}

@@ -1,5 +1,3 @@
-
-
 // -*- Mode: C++; tab-widt: 2; -*-
 // vi: set ts=2:
 //
@@ -27,11 +25,6 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/IdXMLFile.h>
-#include <OpenMS/SYSTEM/File.h>
-
-#include <xercesc/sax2/SAX2XMLReader.hpp>
-#include <xercesc/framework/LocalFileInputSource.hpp>
-#include <xercesc/sax2/XMLReaderFactory.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -43,6 +36,7 @@ namespace OpenMS
 
 	IdXMLFile::IdXMLFile()
 		: XMLHandler(""),
+			XMLFile(OPENMS_PATH"/data/SCHEMAS/IdXML_1_0.xsd"),
 			last_meta_(0)
 	{
 	  	
@@ -59,42 +53,8 @@ namespace OpenMS
   	
   	prot_ids_ = &protein_ids;
   	pep_ids_ = &peptide_ids;
-  	//try to open file
-		if (!File::exists(filename))
-    {
-      throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
-    }
-		
-		// initialize parser
-		try 
-		{
-			xercesc::XMLPlatformUtils::Initialize();
-		}
-		catch (const xercesc::XMLException& toCatch) 
-		{
-			throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, "", String("Error during initialization: ") + sm_.convert(toCatch.getMessage()) );
-	  }
-		xercesc::SAX2XMLReader* parser = xercesc::XMLReaderFactory::createXMLReader();
-		parser->setFeature(xercesc::XMLUni::fgSAX2CoreNameSpaces,false);
-		parser->setFeature(xercesc::XMLUni::fgSAX2CoreNameSpacePrefixes,false);
 
-		parser->setContentHandler(const_cast<IdXMLFile*>(this));
-		parser->setErrorHandler(const_cast<IdXMLFile*>(this));
-		
-		xercesc::LocalFileInputSource source( sm_.convert(filename.c_str()) );
-		try 
-    {
-    	parser->parse(source);
-    	delete(parser);
-    }
-    catch (const xercesc::XMLException& toCatch) 
-    {
-      throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, "", String("XMLException: ") + sm_.convert(toCatch.getMessage()) );
-    }
-    catch (const xercesc::SAXException& toCatch) 
-    {
-      throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, "", String("SAXException: ") + sm_.convert(toCatch.getMessage()) );
-    }
+		parse_(filename,this);
     
     //reset members
     prot_ids_ = 0;
@@ -112,7 +72,7 @@ namespace OpenMS
   					 
   void IdXMLFile::store(String filename, const vector<ProteinIdentification>& protein_ids, const vector<PeptideIdentification>& peptide_ids) throw (Exception::UnableToCreateFile)
   {
-  		//open stream
+  	//open stream
 		std::ofstream os(filename.c_str());
 		if (!os)
 		{
@@ -194,6 +154,11 @@ namespace OpenMS
 			writeUserParam_(os, params[i], 4);
 			
 			os << "  </SearchParameters>" << endl;
+		}
+		//empty search paramters
+		if (params.size()==0)
+		{
+			os << "<SearchParameters charges=\"+0, +0\" id=\"ID_1\" db_version=\"0\" mass_type=\"monoisotopic\" peak_mass_tolerance=\"0.0\" precursor_peak_tolerance=\"0.0\" db=\"Unknown\"/>" << endl;
 		}
 		
 		UInt prot_count = 0;
@@ -328,7 +293,12 @@ namespace OpenMS
 
 			os << "  </IdentificationRun>" << endl;
 		}
-		
+		//empty protein ids  paramters
+		if (protein_ids.size()==0)
+		{
+			os << "<IdentificationRun date=\"1900-01-01T01:01:01.0Z\" search_engine=\"Unknown\" search_parameters_ref=\"ID_1\" search_engine_version=\"0\"/>" << endl;
+		}
+
 		for (UInt i=0; i<peptide_ids.size(); ++i)
 		{
 			if (find(done_identifiers.begin(), done_identifiers.end(), peptide_ids[i].getIdentifier())==done_identifiers.end())
@@ -743,11 +713,10 @@ namespace OpenMS
 				}
 				if (d.valueType()==DataValue::DOUVALUE || d.valueType()==DataValue::FLOVALUE)
 				{
-					os << "double\" name=\"" << keys[i] << "\" value=\"" << (String)(d) << "\"/>" << endl;
+					os << "float\" name=\"" << keys[i] << "\" value=\"" << (String)(d) << "\"/>" << endl;
 				}
 			}
 		}
 	}
-
 
 } // namespace OpenMS

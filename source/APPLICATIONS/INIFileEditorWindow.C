@@ -34,6 +34,8 @@
 #include <QtGui/QMenuBar>
 #include <QtGui/QMessageBox>
 #include <QtGui/QCloseEvent>
+#include <QtGui/QGridLayout>
+#include <QtGui/QCheckBox>
 
 using namespace std;
 
@@ -44,8 +46,20 @@ namespace OpenMS
 		: QMainWindow(parent)
 	{
 		setWindowTitle("INIFileEditor");
-		editor_=new ParamEditor;
-		setCentralWidget(editor_);
+		
+		//create central widget and layout
+		QWidget* central_widget = new QWidget;
+		setCentralWidget(central_widget);
+		QGridLayout* layout = new QGridLayout(central_widget);
+		
+		//create advanced check box and ParamEditor and connect them
+		editor_=new ParamEditor(central_widget);
+		layout->addWidget(editor_,0,0,1,2);
+		QCheckBox* advanced = new QCheckBox("Show advanced parameters",central_widget);
+		layout->addWidget(advanced,1,1);
+		layout->setColumnStretch(0,2);
+		connect(advanced,SIGNAL(toggled(bool)),editor_,SLOT(toggleAdvancedMode(bool)));
+		
 		
 		QMenu* file = new QMenu("&File",this);
 		menuBar()->addMenu(file);
@@ -107,16 +121,9 @@ namespace OpenMS
 			QMessageBox::warning(this,"No ini-file!","You have to open an ini-file before saving!");
 			return false;
 		}
-		else if(editor_->isNameEmpty())
-		{
-			QMessageBox::warning(this,"Empty Name","You have to enter a name before saving!");
-			return false;
-		}
 		
-		if(!editor_->store())
-		{
-			return false;
-		}
+		editor_->store();
+
 		param_.store(filename_.toStdString());
 		QString str=QString("%1 - INIFileEditor").arg(filename_);
 		setWindowTitle(str.remove(0,str.lastIndexOf('/')+1));
@@ -127,23 +134,16 @@ namespace OpenMS
 	bool INIFileEditorWindow::saveFileAs()
 	{
 		filename_=QFileDialog::getSaveFileName(this,tr("Save ini file"),".",tr("ini files (*.ini)"));
-		if(!filename_.isEmpty() && !editor_->isNameEmpty())
+		if(!filename_.isEmpty())
 		{
 			if(!filename_.endsWith(".ini")) filename_.append(".ini");
 			
-			if(!editor_->store())
-			{
-				return false;
-			}
+			editor_->store();
 			
 			param_.store(filename_.toStdString());
 			QString str=QString("%1 - INIFileEditor").arg(filename_);
 			setWindowTitle(str.remove(0,str.lastIndexOf('/')+1));
 			return true;
-		}
-		else if(editor_->isNameEmpty())
-		{
-			QMessageBox::warning(this,"Empty Name","You have to enter a name before saving!");
 		}
 		return false;
 	}

@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_SIMPLEEXTENDER_H
@@ -64,7 +64,9 @@ namespace OpenMS
 
 		@ref SimpleExtender_Parameters are explained on a separate page.
 
-		@todo fix local extension, usage of tolerance_rt_ and tolerance_mz_ apparently leads to undesirable priority values, so this has been disabled for now
+		@todo fix local extension, usage of tolerance_rt_ and tolerance_mz_
+		apparently leads to undesirable priority values, so this has been disabled
+		for now
 
 		@ingroup FeatureFinder
 	*/
@@ -120,10 +122,10 @@ namespace OpenMS
 		}
 
     /// return next seed
-    const ChargedIndexSet& extend(const ChargedIndexSet& seed_region)
+    void extend(const ChargedIndexSet& seed_region, ChargedIndexSet& result_region)
 		{
 			// empty region and boundary datastructures
-			region_.clear();
+			result_region.clear();
 			priorities_.clear();
 			running_avg_.clear();
 			boundary_ = std::priority_queue< IndexWithPriority, std::vector<IndexWithPriority>, typename IndexWithPriority::PriorityLess>();
@@ -157,10 +159,10 @@ namespace OpenMS
 				boundary_.push(IndexWithPriority(*citer,priority));
 			}
 			// pass on charge information
-			region_.charge_ = seed_region.charge_;
+			result_region.charge_ = seed_region.charge_;
 
 			// re-compute intensity threshold
-			intensity_threshold_ = (double)(this->param_).getValue("intensity_factor") * this->getPeakIntensity(seed);
+			intensity_threshold_ = (DoubleReal)(this->param_).getValue("intensity_factor") * this->getPeakIntensity(seed);
 
 			std::cout << "Extending from " << this->getPeakRt(seed) << "/" << this->getPeakMz(seed);
 			std::cout << " (" << seed.first << "/" << seed.second << ")" << std::endl;
@@ -200,11 +202,11 @@ namespace OpenMS
 #ifdef DEBUG_FEATUREFINDER
 				debug_vector.push_back(current_index);
 #endif
-				region_.insert(current_index);
+				result_region.insert(current_index);
 
 			} // end of while ( !boundary_.empty() )
 
-			std::cout << "Feature region size: " << region_.size() << std::endl;
+			std::cout << "Feature region size: " << result_region.size() << std::endl;
 
 #ifdef DEBUG_FEATUREFINDER
 			static UInt number=1;
@@ -212,7 +214,7 @@ namespace OpenMS
 			debug_vector.clear();
 #endif
 
-			return region_;
+			return;
 		} // end of extend
 
     /**
@@ -404,11 +406,11 @@ namespace OpenMS
 			}
 			if ( this->ff_->getPeakFlag(index) == UNUSED)
 			{
-				double pr_new = computePeakPriority_(index);
+				DoubleReal pr_new = computePeakPriority_(index);
 
 				if (pr_new > priority_threshold_)
 				{
-					std::map<IDX, double>::iterator piter = priorities_.find(index);
+					std::map<IDX, DoubleReal>::iterator piter = priorities_.find(index);
 					this->ff_->getPeakFlag(index) = USED;
 					priorities_[index] = pr_new;
 					boundary_.push(IndexWithPriority(index,pr_new));

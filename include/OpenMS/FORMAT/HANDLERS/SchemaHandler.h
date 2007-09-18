@@ -54,6 +54,8 @@ namespace OpenMS
 		This makes the implementation independent	from the underlying xml scheme.
 		str2enum_() delivers the enum-value for a given string whereas enum2str_() returns
 		the string for a given enum-value.
+
+		@deprecated This class will be replaced by XMLHandler (Marc)
   */
   class SchemaHandler
 		: public XMLHandler
@@ -81,9 +83,6 @@ namespace OpenMS
 			/// Sets up members for handling the current tag. Call this in your startElement() reimplementation.
 			/// @returns a numerical value representing the tag.
 			UInt enterTag(const XMLCh* const qname, const xercesc::Attributes& attributes);
-
-			/// Writes the contents to a stream
-			virtual void writeTo(std::ostream& os) = 0;
 
     protected:
 			std::stack<bool> skip_tag_;
@@ -196,7 +195,7 @@ namespace OpenMS
 			void setMaps_(UInt tagmap, UInt attmap);
 			
 		private:
-    	/// Default construtctor not implemented => private
+    	/// Not implemented
     	SchemaHandler();
     	
 			UInt tag_map_, att_map_;

@@ -117,6 +117,9 @@ namespace OpenMS
       virtual void startElement(const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname, const xercesc::Attributes& attrs);
 			/// Parsing method for closing tags
       virtual void endElement( const XMLCh* const uri, const XMLCh* const localname, const XMLCh* const qname);
+
+			/// Writes the contents to a stream.
+			virtual void writeTo(std::ostream& /*os*/) {};
 			
 			/// Returns the last error description
   		String errorString();
@@ -131,6 +134,15 @@ namespace OpenMS
 			/// Helper class for string conversion
 			StringManager sm_;
 			
+			/// Returns if two xerces strings are equal
+			inline bool equal(const XMLCh* a, const XMLCh* b)
+			{
+				return xercesc::XMLString::compareString(a,b)==0;
+			}
+
+			
+			///@name String conversion
+			//@{ 
 			/// Conversion of a String to an integer value
 			inline Int asInt_(const String& in)
 			{
@@ -178,7 +190,6 @@ namespace OpenMS
 				}
 				return res;
 			}
-	
 			/// Conversion of a String to a float value
 	 		inline float asFloat_(const String& in)
 			{
@@ -193,7 +204,6 @@ namespace OpenMS
 				}
 				return res;
 			}
-			
 			/// Conversion of a String to a bool value
 	 		inline bool asBool_(const String& in)
 			{
@@ -211,7 +221,6 @@ namespace OpenMS
 				}
 				return false;
 			}
-
 			/// Conversion of a String to a DataTime value
 	 		inline DateTime asDateTime_(const String& in)
 			{
@@ -234,73 +243,125 @@ namespace OpenMS
 				}
 				return res;
 			}
+			//@}
 		
-		/// Converts an attribute to a String
-		inline char* attributeAsString_(const xercesc::Attributes& a, const char* name) const
-		{
-			return sm_.convert(a.getValue(sm_.convert(name)));
-		}
-		
-		/// Converts an attribute to a Int
-		inline Int attributeAsInt_(const xercesc::Attributes& a, const char* name) const
-		{
-			return xercesc::XMLString::parseInt(a.getValue(sm_.convert(name)));
-		}
-		
-		/// Converts an attribute to a DoubleReal
-		inline DoubleReal attributeAsDouble_(const xercesc::Attributes& a, const char* name) const
-		{
-			return atof(sm_.convert(a.getValue(sm_.convert(name))));
-		}
-
-		/// Assigns the attribute content to the String @a value if the attribute is present
-		inline void optionalAttributeAsString_(String& value, const xercesc::Attributes& a, const char* name) const
-		{
-			const XMLCh* val = a.getValue(sm_.convert(name));
-			if (val!=0)
+			///@name Accessing attributes
+			//@{		
+			/// Converts an attribute to a String
+			inline char* attributeAsString_(const xercesc::Attributes& a, const char* name) const
 			{
-				char* tmp2 = sm_.convert(val);
-				if (String(tmp2) != "")
+				return sm_.convert(a.getValue(sm_.convert(name)));
+			}
+			/// Converts an attribute to a Int
+			inline Int attributeAsInt_(const xercesc::Attributes& a, const char* name) const
+			{
+				return xercesc::XMLString::parseInt(a.getValue(sm_.convert(name)));
+			}
+			/// Converts an attribute to a DoubleReal
+			inline DoubleReal attributeAsDouble_(const xercesc::Attributes& a, const char* name) const
+			{
+				return atof(sm_.convert(a.getValue(sm_.convert(name))));
+			}
+			/// Assigns the attribute content to the String @a value if the attribute is present
+			inline void optionalAttributeAsString_(String& value, const xercesc::Attributes& a, const char* name) const
+			{
+				const XMLCh* val = a.getValue(sm_.convert(name));
+				if (val!=0)
 				{
-					value = tmp2;
+					char* tmp2 = sm_.convert(val);
+					if (String(tmp2) != "")
+					{
+						value = tmp2;
+					}
 				}
 			}
-		}
-		
-		/// Assigns the attribute content to the Int @a value if the attribute is present
-		inline void optionalAttributeAsInt_(Int& value, const xercesc::Attributes& a, const char* name) const
-		{
-			const XMLCh* val = a.getValue(sm_.convert(name));
-			if (val!=0)
+			/// Assigns the attribute content to the Int @a value if the attribute is present
+			inline void optionalAttributeAsInt_(Int& value, const xercesc::Attributes& a, const char* name) const
 			{
-				value = xercesc::XMLString::parseInt(val);
+				const XMLCh* val = a.getValue(sm_.convert(name));
+				if (val!=0)
+				{
+					value = xercesc::XMLString::parseInt(val);
+				}
 			}
-		}
-
-		/// Assigns the attribute content to the UInt @a value if the attribute is present
-		inline void optionalAttributeAsUInt_(UInt& value, const xercesc::Attributes& a, const char* name) const
-		{
-			const XMLCh* val = a.getValue(sm_.convert(name));
-			if (val!=0)
+			/// Assigns the attribute content to the UInt @a value if the attribute is present
+			inline void optionalAttributeAsUInt_(UInt& value, const xercesc::Attributes& a, const char* name) const
 			{
-				value = xercesc::XMLString::parseInt(val);
+				const XMLCh* val = a.getValue(sm_.convert(name));
+				if (val!=0)
+				{
+					value = xercesc::XMLString::parseInt(val);
+				}
 			}
-		}
-		
-		/// Assigns the attribute content to the DoubleReal @a value if the attribute is present
-		inline void optionalAttributeAsDouble_(DoubleReal& value, const xercesc::Attributes& a, const char* name) const
-		{
-			const XMLCh* val = a.getValue(sm_.convert(name));
-			if (val!=0)
+			/// Assigns the attribute content to the DoubleReal @a value if the attribute is present
+			inline void optionalAttributeAsDouble_(DoubleReal& value, const xercesc::Attributes& a, const char* name) const
 			{
-				value = atof(sm_.convert(val));
+				const XMLCh* val = a.getValue(sm_.convert(name));
+				if (val!=0)
+				{
+					value = atof(sm_.convert(val));
+				}
 			}
-		}
+			/// Converts an attribute to a String
+			inline char* attributeAsString_(const xercesc::Attributes& a, const XMLCh* name) const
+			{
+				return sm_.convert(a.getValue(name));
+			}
+			/// Converts an attribute to a Int
+			inline Int attributeAsInt_(const xercesc::Attributes& a, const XMLCh* name) const
+			{
+				return xercesc::XMLString::parseInt(a.getValue(name));
+			}
+			/// Converts an attribute to a DoubleReal
+			inline DoubleReal attributeAsDouble_(const xercesc::Attributes& a, const XMLCh* name) const
+			{
+				return atof(sm_.convert(a.getValue(name)));
+			}
+			/// Assigns the attribute content to the String @a value if the attribute is present
+			inline void optionalAttributeAsString_(String& value, const xercesc::Attributes& a, const XMLCh* name) const
+			{
+				const XMLCh* val = a.getValue(name);
+				if (val!=0)
+				{
+					char* tmp2 = sm_.convert(val);
+					if (String(tmp2) != "")
+					{
+						value = tmp2;
+					}
+				}
+			}
+			/// Assigns the attribute content to the Int @a value if the attribute is present
+			inline void optionalAttributeAsInt_(Int& value, const xercesc::Attributes& a, const XMLCh* name) const
+			{
+				const XMLCh* val = a.getValue(name);
+				if (val!=0)
+				{
+					value = xercesc::XMLString::parseInt(val);
+				}
+			}
+			/// Assigns the attribute content to the UInt @a value if the attribute is present
+			inline void optionalAttributeAsUInt_(UInt& value, const xercesc::Attributes& a, const XMLCh* name) const
+			{
+				const XMLCh* val = a.getValue(name);
+				if (val!=0)
+				{
+					value = xercesc::XMLString::parseInt(val);
+				}
+			}
+			/// Assigns the attribute content to the DoubleReal @a value if the attribute is present
+			inline void optionalAttributeAsDouble_(DoubleReal& value, const xercesc::Attributes& a, const XMLCh* name) const
+			{
+				const XMLCh* val = a.getValue(name);
+				if (val!=0)
+				{
+					value = atof(sm_.convert(val));
+				}
+			}
+			//@}
 		
 		private:
-			XMLHandler(); /// Not implemented => private
-		
-
+			/// Not implemented
+			XMLHandler();
 	};
 	
 	} // namespace Internal

@@ -27,7 +27,7 @@
 #ifndef OPENMS_FORMAT_FEATUREPAIRSXMLFILE_H
 #define OPENMS_FORMAT_FEATUREPAIRSXMLFILE_H
 
-#include <OpenMS/FORMAT/SchemaFile.h>
+#include <OpenMS/FORMAT/XMLFile.h>
 #include <OpenMS/FORMAT/HANDLERS/FeaturePairsHandler.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
 
@@ -44,32 +44,29 @@ namespace OpenMS
     @ingroup FileIO
   */
   class FeaturePairsXMLFile
-        : public Internal::SchemaFile
+        : public Internal::XMLFile
   {
-  public:
-    /** @name Constructors and Destructor */
-    //@{
-    ///Default constructor
-    FeaturePairsXMLFile();
-    ///Destructor
-    ~FeaturePairsXMLFile();
-    //@}
+	  public:
+	    /** @name Constructors and Destructor */
+	    //@{
+	    ///Default constructor
+	    FeaturePairsXMLFile();
+	    ///Destructor
+	    ~FeaturePairsXMLFile();
+	    //@}
 
-    /** @name Accessors */
-    //@{
-    /// loads the file with name @p filename into @p pairs.
-    void load(String filename, std::vector< ElementPair < Feature > > & pairs) throw (Exception::FileNotFound, Exception::ParseError);
-
-    /// stores the pair vector @p pairs in file with name @p filename.
-    void store(String filename, const std::vector< ElementPair < Feature > > & pairs) const throw (Exception::UnableToCreateFile);
-
-    /**
-      @brief Convert pair vector into feature map
-
-    */
-    static void pairsToFeatures(const std::vector< ElementPair < Feature > >& pairs, FeatureMap<>& map);
-
-    //@}
+	    /// loads the file with name @p filename into @p pairs.
+	    void load(String filename, std::vector< ElementPair < Feature > > & pairs) throw (Exception::FileNotFound, Exception::ParseError);
+	
+	    /// stores the pair vector @p pairs in file with name @p filename.
+	    void store(String filename, const std::vector< ElementPair < Feature > > & pairs) const throw (Exception::UnableToCreateFile);
+	
+	    /**
+	      @brief Convert pair vector into feature map
+	
+	    */
+	    static void pairsToFeatures(const std::vector< ElementPair < Feature > >& pairs, FeatureMap<>& map);
+	
   };
 
 } // namespace OpenMS

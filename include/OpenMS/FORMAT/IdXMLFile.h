@@ -30,6 +30,7 @@
 #include <OpenMS/METADATA/ProteinIdentification.h>
 #include <OpenMS/METADATA/PeptideIdentification.h>
 #include <OpenMS/FORMAT/HANDLERS/XMLHandler.h>
+#include <OpenMS/FORMAT/XMLFile.h>
 
 #include <vector>
 
@@ -52,7 +53,8 @@ namespace OpenMS
   	@ingroup FileIO
   */
   class IdXMLFile
-  	: protected Internal::XMLHandler
+  	: protected Internal::XMLHandler,
+  		public Internal::XMLFile
   {
 		public:
 		

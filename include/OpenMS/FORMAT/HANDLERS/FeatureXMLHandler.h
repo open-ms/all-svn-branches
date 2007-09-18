@@ -35,7 +35,7 @@
 #include <OpenMS/FORMAT/HANDLERS/XMLSchemes.h>
 #include <OpenMS/FORMAT/HANDLERS/MzDataExpSettHandler.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ModelDescription.h>
-#include <OpenMS/FORMAT/Param.h>
+#include <OpenMS/DATASTRUCTURES/Param.h>
 #include <OpenMS/FORMAT/PeakFileOptions.h>
 
 #include <xercesc/sax2/SAX2XMLReader.hpp>
@@ -114,7 +114,10 @@ namespace OpenMS
 			///Writes the contents to a stream
 			void writeTo(std::ostream& os);
 			
-			void setOptions(const PeakFileOptions& options) { options_ = options; }
+			void setOptions(const PeakFileOptions& options)
+			{ 
+				options_ = options; 
+			}
 
     protected:
 		// Feature map pointer for reading

@@ -131,7 +131,7 @@ namespace OpenMS
     {
 
       os << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n";
-      os << "<featurePairs>" << std::endl;
+      os << "<featurePairs xsi:noNamespaceSchemaLocation=\"http://open-ms.sourceforge.net/schemas/FeaturePairsXML_1_0.xsd\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">" << std::endl;
 
       // write features with their attributes
       for (UInt s=0; s<cpairs_->size(); s++)
@@ -190,10 +190,10 @@ namespace OpenMS
       ModelDescription<2> desc = dfeat.getModelDescription();
       os << "\t\t<model name=\"" << desc.getName() << "\">" << std:: endl;
       Param modelp = desc.getParam();
-      Param::ConstIterator piter = modelp.begin();
+      Param::ParamIterator piter = modelp.begin();
       while (piter != modelp.end())
       {
-        os << "\t\t\t<param name=\"" << piter->first << "\" value=\"" << piter->second << "\">";
+        os << "\t\t\t<param name=\"" << piter.getName() << "\" value=\"" << piter->value << "\">";
         os << "</param>" << std::endl;
         piter++;
       }

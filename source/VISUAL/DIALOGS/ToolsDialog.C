@@ -29,7 +29,7 @@
 #include <OpenMS/VISUAL/ParamEditor.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/VISUAL/LayerData.h>
-#include <OpenMS/FORMAT/Param.h>
+#include <OpenMS/DATASTRUCTURES/Param.h>
 #include <OpenMS/SYSTEM/File.h>
 #include <QtCore/QStringList>
 #include <QtGui/QPushButton>
@@ -40,7 +40,7 @@
 #include <QtGui/QMessageBox>
 #include <QtGui/QRadioButton>
 #include <QtGui/QFileDialog>
-
+#include <QtGui/QCheckBox>
 
 using namespace std;
 
@@ -81,13 +81,13 @@ namespace OpenMS
 		main_grid->addWidget(label,1,0);
 		input_combo_=new QComboBox;
 		input_combo_->setEnabled(false);
-		main_grid->addWidget(input_combo_,1,1,1,1);
+		main_grid->addWidget(input_combo_,1,1);
 		
 		label=new QLabel("output argument:");
 		main_grid->addWidget(label,2,0);
 		output_combo_=new QComboBox;
 		output_combo_->setEnabled(false);
-		main_grid->addWidget(output_combo_,2,1,1,1);
+		main_grid->addWidget(output_combo_,2,1);
 		
 		
 		QGridLayout* radio_grid = new QGridLayout;
@@ -101,25 +101,25 @@ namespace OpenMS
 		radio_grid->addWidget(layer_radio_,2,0);
 		main_grid->addWidget(label,3,0);
 		main_grid->addLayout(radio_grid,3,1);
-		
-		editor_=new ParamEditor;
+
+		//Add advanced mode check box		
+		editor_=new ParamEditor(this);
 		editor_->createShortcuts();
-		
-		main_grid->addWidget(editor_,4,0,2,4);
+		main_grid->addWidget(editor_,4,0,1,4);
+		QCheckBox* advanced = new QCheckBox("Show advanced parameters",this);
+		main_grid->addWidget(advanced,5,3);
+		connect(advanced,SIGNAL(toggled(bool)),editor_,SLOT(toggleAdvancedMode(bool)));
+		main_grid->setColumnStretch(2,2);
 		
 		
 		QHBoxLayout* hbox = new QHBoxLayout;
-		
 		QPushButton* load_button=new QPushButton(tr("&Load"));
 		connect(load_button,SIGNAL(clicked()),this,SLOT(loadIni()));
 		hbox->addWidget(load_button);
-		
 		QPushButton* store_button=new QPushButton(tr("&Store"));
 		connect(store_button,SIGNAL(clicked()),this,SLOT(storeIni()));
 		hbox->addWidget(store_button);
-		
 		hbox->addStretch();
-		
 		
 		ok_button_= new QPushButton(tr("&Ok"));
 		connect(ok_button_, SIGNAL(clicked()),this,SLOT(ok_()));
@@ -155,7 +155,7 @@ namespace OpenMS
 			output_combo_->setCurrentIndex(0);
 			output_combo_->setEnabled(false);
 			output_combo_->setEnabled(false);
-			editor_->deleteAll();
+			editor_->clear();
 			return;
 		}
 		
@@ -169,10 +169,6 @@ namespace OpenMS
 		{
 			QMessageBox::critical(this,"Error",(String("Could not open '")+tmp_dir_+"/in.ini'!").c_str());
 		}
-		else if(editor_->isNameEmpty())
-		{
-			QMessageBox::critical(this,"Error","Name of an item is still empty!");
-		}
 		else
 		{
 			ok_button_->setEnabled(true);
@@ -182,7 +178,7 @@ namespace OpenMS
 			{
 				arg_param_.clear();
 				vis_param_.clear();
-				editor_->deleteAll();
+				editor_->clear();
 				arg_map_.clear();
 			}
 			
@@ -194,12 +190,12 @@ namespace OpenMS
 			
 			String str;
 			QStringList arg_list;
-			for (Param::ConstIterator iter=arg_param_.begin();iter!=arg_param_.end();++iter)
+			for (Param::ParamIterator iter=arg_param_.begin();iter!=arg_param_.end();++iter)
 			{
-				str=iter->first.substr(iter->first.rfind("1:")+2,iter->first.size());
+				str=iter.getName().substr(iter.getName().rfind("1:")+2,iter.getName().size());
 				if(str.size()!=0 && str.find(":")==String::npos)
 				{
-					arg_map_.insert(make_pair(str,iter->first));
+					arg_map_.insert(make_pair(str,iter.getName()));
 					arg_list<<QStringList(str.c_str());
 				}
 			}
@@ -263,14 +259,14 @@ namespace OpenMS
 			{
 				arg_param_.clear();
 				vis_param_.clear();
-				editor_->deleteAll();
+				editor_->clear();
 				arg_map_.clear();
 			}
 			
 			arg_param_.load(filename_.toStdString());
-			Param::ConstIterator iter=arg_param_.begin();
+			Param::ParamIterator iter=arg_param_.begin();
 			String str;
-			string=iter->first.substr(0,iter->first.find(":")).c_str();
+			string=iter.getName().substr(0,iter.getName().find(":")).c_str();
 			Int pos = tools_combo_->findText(string);
 			if (pos!=-1)
 			{
@@ -281,12 +277,12 @@ namespace OpenMS
 			editor_->loadEditable(vis_param_);
 			
 			QStringList arg_list;
-			for (Param::ConstIterator iter=arg_param_.begin();iter!=arg_param_.end();++iter)
+			for (Param::ParamIterator iter=arg_param_.begin();iter!=arg_param_.end();++iter)
 			{
-				str=iter->first.substr(iter->first.rfind("1:")+2,iter->first.size());
+				str=iter.getName().substr(iter.getName().rfind("1:")+2,iter.getName().size());
 				if(str.size()!=0 && str.find(":")==String::npos)
 				{
-					arg_map_.insert(make_pair(str,iter->first));
+					arg_map_.insert(make_pair(str,iter.getName()));
 					arg_list<<QStringList(str.c_str());
 				}
 			}

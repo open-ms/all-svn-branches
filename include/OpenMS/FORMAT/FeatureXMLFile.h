@@ -28,8 +28,8 @@
 #define OPENMS_FORMAT_FEATUREXMLFILE_H
 
 #include <OpenMS/KERNEL/FeatureMap.h>
-#include <OpenMS/FORMAT/SchemaFile.h>
 #include <OpenMS/FORMAT/PeakFileOptions.h>
+#include <OpenMS/FORMAT/XMLFile.h>
 
 namespace OpenMS
 {
@@ -42,7 +42,8 @@ namespace OpenMS
   	
   	@ingroup FileIO
   */
-  class FeatureXMLFile : public Internal::SchemaFile
+  class FeatureXMLFile
+  	: public Internal::XMLFile
   {
 	 public:
 		/** @name Constructors and Destructor */
@@ -54,14 +55,11 @@ namespace OpenMS
 		~FeatureXMLFile();
 		//@}
 
-		/** @name Accessors */
-		//@{
 		/// loads the file with name @p filename into @p map.
 		void load(String filename, FeatureMap<>& feature_map) throw (Exception::FileNotFound, Exception::ParseError);
 					
 		/// stores the map @p feature_map in file with name @p filename.
 		void store(String filename, const FeatureMap<>& feature_map) const throw (Exception::UnableToCreateFile);
-		//@}
 		
 		/// Mutable access to the options for loading/storing 
 		PeakFileOptions& getOptions() { return options_; }

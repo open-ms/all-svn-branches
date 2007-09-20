@@ -309,6 +309,7 @@ namespace OpenMS
 			{
 				map<IDX, double>::iterator piter = priorities_.find(index);
 				traits_->getPeakFlag(index) = FeaFiTraits::USED;
+				pr_new = traits_->getPeakIntensity(index);
 				priorities_[index] = pr_new;
 				boundary_.push(IndexWithPriority(index,pr_new));
 			}

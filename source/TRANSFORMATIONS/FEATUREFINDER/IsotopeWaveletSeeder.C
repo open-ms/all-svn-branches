@@ -442,8 +442,8 @@ namespace OpenMS
 				}
 
 				ScoredChargeType sc_charge;
-				sc_charge.first 			= best_charge;		// charge
-				sc_charge.second = best_score;			// score
+				sc_charge.first  = best_charge;		// charge
+				sc_charge.second = best_score;		// score
 
 				scmzvec.push_back( make_pair( last_pattern.at(best_charge-1) ,sc_charge) );	// store scored m/z position
 

@@ -207,7 +207,7 @@ void BaseSweepSeeder::sweep_()
 				CoordinateType mz_dist  = 0;
 						
 				// walk to the left (for at most 3 Th)
-				while (mz_dist < 3.0 && this_peak >= 1)
+				while (mz_dist < 1.0 && this_peak >= 1)
 				{
 					mz_dist = ( start_mz - traits_->getPeakMz( make_pair(currscan_index,this_peak) ) );
 					
@@ -224,7 +224,7 @@ void BaseSweepSeeder::sweep_()
 				mz_dist   = ( traits_->getPeakMz( make_pair(currscan_index,this_peak) )  - start_mz );
 					
 				// and to the right (we walk for at most 3 Th)
-				while (mz_dist <= 3.0 && this_peak < current_scan.size() )
+				while (mz_dist <= 2.0 && this_peak < current_scan.size() )
 				{
 					if ( traits_->getPeakFlag( make_pair(currscan_index,this_peak) )  == FeaFiTraits::UNUSED )
 					{
@@ -446,13 +446,13 @@ void BaseSweepSeeder::filterHash_()
 			computeBorders_(iter);		
 		}
 
-		filterForSize_();
+		//filterForSize_();
 		
 		// filter two times for overlaps
-		filterForOverlaps_( );
-		filterForOverlaps_( );
+		//filterForOverlaps_( );
+		//filterForOverlaps_( );
 		
-		filterForSignificance_();
+		//filterForSignificance_();
 					
 		cout << iso_map_.size() << " clusters remained after filtering." << endl;
 }

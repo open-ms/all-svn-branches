@@ -60,7 +60,7 @@ namespace OpenMS
 		defaults_.setValue("avg_cwt_factor",3,"Positions whose intensity in continuous wavelet transform is this factor above average are considered in charge detection");
 
 		// minimum number of maxima in cwt
-		defaults_.setValue("min_peaks_per_scan",2,"Minimum number of maxima in CWT (per scan)");
+		defaults_.setValue("min_peaks_per_scan",3,"Minimum number of maxima in CWT (per scan)");
 
 		defaultsToParam_();
 	}
@@ -110,11 +110,11 @@ namespace OpenMS
 		charge5_lb_	 = param_.getValue("charge5_lb");
 
 		// thresholds for signal and cwt
-		avg_signal_factor_ 							 = param_.getValue("avg_signal_factor");
-		avg_cwt_factor_                  = param_.getValue("avg_cwt_factor");
+		avg_signal_factor_ = param_.getValue("avg_signal_factor");
+		avg_cwt_factor_    = param_.getValue("avg_cwt_factor");
 
 		// scale of Marr wavelet
-		cwt_scale_                          = param_.getValue("cwt_scale");
+		cwt_scale_        = param_.getValue("cwt_scale");
 
 		// minimum number of maxima per scan
 		min_peaks_ = param_.getValue("min_peaks_per_scan");

@@ -104,15 +104,15 @@ void BaseSweepSeeder::updateMembers_()
 {
 	// params for scan alignment
 	mass_tolerance_alignment_ = param_.getValue("mass_tolerance_alignment");
-	scans_to_sumup_               = param_.getValue("scans_to_sumup");
+	scans_to_sumup_           = param_.getValue("scans_to_sumup");
 
 	// sweepline params
-	mass_tolerance_cluster_      = param_.getValue("mass_tolerance_cluster");
-	rt_tolerance_cluster_            = (UInt) param_.getValue("rt_tolerance_cluster");
+	mass_tolerance_cluster_   = param_.getValue("mass_tolerance_cluster");
+	rt_tolerance_cluster_     = (UInt) param_.getValue("rt_tolerance_cluster");
 	
 	// cluster merging params
-	max_rt_dist_merging_          = param_.getValue("max_rt_dist_merging"); 
-	max_mz_dist_merging_       = param_.getValue("max_mz_dist_merging");
+	max_rt_dist_merging_      = param_.getValue("max_rt_dist_merging"); 
+	max_mz_dist_merging_      = param_.getValue("max_mz_dist_merging");
 }
 
 void BaseSweepSeeder::sweep_()
@@ -122,8 +122,6 @@ void BaseSweepSeeder::sweep_()
 		
 		// copy current scan. 
 		// This is necessary as the peak intensities have to be modified in the sumUp_ method
- 		//SpectrumType current_scan  = traits_->getData()[0];
-				
 		for (UInt currscan_index = 0; currscan_index < traits_->getData().size(); ++currscan_index)
 		{		
 			traits_->setProgress(currscan_index);
@@ -145,12 +143,7 @@ void BaseSweepSeeder::sweep_()
 			out.close();
 			#endif
 			
-			StopWatch w;
-			w.start();			
-			sumUp_(current_scan,currscan_index);
-			w.stop();
-			cout << "Alignment took " << w.getClockTime() << " [s]. " << endl;
-			w.reset();
+  		sumUp_(current_scan,currscan_index);
 						
 			#ifdef DEBUG_FEATUREFINDER
 			// write debug output
@@ -163,12 +156,8 @@ void BaseSweepSeeder::sweep_()
 			out.close();
 			#endif
 						
-			// detect isotopic pattern...
-			w.start();		
+			// detect isotopic pattern...	
 			ScoredMZVector iso_curr_scan = detectIsotopicPattern_(current_scan );
-			w.stop();
-			cout << "Isotopic pattern detection took " << w.getClockTime() << " [s]. " << endl;
-			w.reset();	
 			
 			for (ScoredMZVector::const_iterator citer = iso_curr_scan.begin();
 						citer != iso_curr_scan.end();
@@ -198,19 +187,15 @@ void BaseSweepSeeder::sweep_()
 				entry_to_insert->second.scored_charges_.push_back( citer->second );
 				// store seed
 				entry_to_insert->second.peaks_.insert( make_pair(currscan_index,citer->first) );
-				
-				// Problem: how to perform the extension (i.e. handle scans with weak signals)
-				// Solution: use very low threshold in cwt, return many possible positions, use high threshold if exact match in previous
-				// scan, lower threshold if previous scan is further away.
-				UInt this_peak                =  citer->first;
+	
+				UInt this_peak =  citer->first;
 				CoordinateType start_mz = traits_->getPeakMz( make_pair(currscan_index,this_peak) );
 				CoordinateType mz_dist  = 0;
 						
-				// walk to the left (for at most 3 Th)
-				while (mz_dist < 1.0 && this_peak >= 1)
+				// walk to the left (for at most 0.5 Th)
+				while (mz_dist < 0.5 && this_peak >= 1)
 				{
 					mz_dist = ( start_mz - traits_->getPeakMz( make_pair(currscan_index,this_peak) ) );
-					
 					if ( traits_->getPeakFlag( make_pair(currscan_index,this_peak) ) == FeaFiTraits::UNUSED )
 					{
 						entry_to_insert->second.peaks_.insert( make_pair(currscan_index,this_peak) );
@@ -222,9 +207,10 @@ void BaseSweepSeeder::sweep_()
 				// reset
 				this_peak =  (citer->first+1);
 				mz_dist   = ( traits_->getPeakMz( make_pair(currscan_index,this_peak) )  - start_mz );
-					
-				// and to the right (we walk for at most 3 Th)
-				while (mz_dist <= 2.0 && this_peak < current_scan.size() )
+        
+        // and to the right (we walk for at most ( 3.0 / charge estimate) Th )
+        CoordinateType dist_to_right = 3.0 / (double) citer->second.first;
+		  	while (mz_dist <= dist_to_right && this_peak < current_scan.size() )
 				{
 					if ( traits_->getPeakFlag( make_pair(currscan_index,this_peak) )  == FeaFiTraits::UNUSED )
 					{
@@ -240,11 +226,11 @@ void BaseSweepSeeder::sweep_()
 					
 		}	// end loop for all scans
 	
-		// fliter hash entries (by number of scans and number of points in the cluster)
-		filterHash_();		
-		
-		// determine most likely charge state by majority voting
-		voteForCharge_();
+		// filter hash entries (by number of scans and number of points in the cluster)
+    filterHash_();    
+    
+    // determine most likely charge state by majority voting
+    voteForCharge_();
 		
 		// debug output of all seeding regions with charge
 		#ifdef DEBUG_FEATUREFINDER 
@@ -267,6 +253,8 @@ void BaseSweepSeeder::sweep_()
 		
 		}
 		#endif
+    
+    cout << "Here!!" << endl;
 		
 }
 
@@ -282,7 +270,7 @@ void BaseSweepSeeder::computeBorders_(TableIteratorType& entry)
 
 void BaseSweepSeeder::deleteHashEntries_(std::vector<TableIteratorType>& entries)
 {
-	//cout << "Deleting " << entries.size() << " entries. " << endl;
+	cout << "Deleting " << entries.size() << " entries. " << endl;
 	for (UInt i=0; i<entries.size();++i)
 	{
 		iso_map_.erase(entries[i]);
@@ -335,7 +323,7 @@ void BaseSweepSeeder::filterForOverlaps_()
 				rt_dist   = tmp_iter->second.first_scan_ - iter->second.last_scan_;
 				mz_dist = tmp_iter->first - iter->first;
 				
-				//if (rt_dist < max_rt_dist_merging_) rt_overlap = true;
+				if (rt_dist < max_rt_dist_merging_) rt_overlap = true;
 						
 				// we merge only features with the same charge, overlap in rt and if we haven't seen them yet.
 				if ( tmp_iter->second.peaks_.charge_ == iter->second.peaks_.charge_ 
@@ -423,7 +411,7 @@ void BaseSweepSeeder::filterForSignificance_()
 	vector<TableIteratorType> entries_to_delete;
 			
 	ProbabilityType alpha = param_.getValue("fdr_alpha");
-	//cout << "Filtering for significance with alpha: " << (alpha/iso_map_.size() ) << endl;	
+	cout << "Filtering for significance with alpha: " << (alpha/iso_map_.size() ) << endl;	
 
 	for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
 	{				
@@ -446,11 +434,11 @@ void BaseSweepSeeder::filterHash_()
 			computeBorders_(iter);		
 		}
 
-		//filterForSize_();
+		filterForSize_();
 		
 		// filter two times for overlaps
-		//filterForOverlaps_( );
-		//filterForOverlaps_( );
+		filterForOverlaps_( );
+		filterForOverlaps_( );
 		
 		//filterForSignificance_();
 					
@@ -467,10 +455,13 @@ void BaseSweepSeeder::voteForCharge_()
 		charge_scores.clear();
 		
 		for (std::vector< ScoredChargeType >::const_iterator scmz_iter = iter->second.scored_charges_.begin();
-		       scmz_iter != iter->second.scored_charges_.end();
-					 ++scmz_iter)
+		     scmz_iter != iter->second.scored_charges_.end();
+				++scmz_iter)
 		{
-			//cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
+			cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
+      cout << "Size of charge vector: " << charge_scores.size() << endl;
+      
+      if (scmz_iter->first == 0) continue; // zero <=> no charge estimate      
 			
 			if ( (scmz_iter->first-1) >= charge_scores.size() || charge_scores.size() == 0)
 			{
@@ -498,9 +489,9 @@ void BaseSweepSeeder::voteForCharge_()
 			}
 		
 		}
-		cout << "And the winner is " << max_charge << " with score " << max_vote << endl;
+		//cout << "And the winner is " << max_charge << " with score " << max_vote << endl;
 		
-		iter->second.peaks_.charge_                   = max_charge;
+		iter->second.peaks_.charge_           = max_charge;
 		iter->second.peaks_.max_charge_score_ = max_vote;
 	}
 }

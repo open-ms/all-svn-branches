@@ -406,15 +406,15 @@ namespace OpenMS
 					// we are at a local max in the signal
 					// the last pattern is already behind us
 					if ( candidates[c][i].getIntensity() > cwt_thresholds[c] && 
-// 							 i > last_pattern[c] && 
+							 i > last_pattern[c] && 
 							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ()) > 3.0/ (c+1)  &&                                   
 							(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
-						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0) )						  	  
+						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0))						  	  
 					{						
 							UInt max = findNextMax_(candidates[c],i);
 							ProbabilityType pvalue = testLocalVariance_(candidates[c],max,c);	
 							charge_scores.at(c) = pvalue;
-							last_pattern.at(c)     = max; 	
+							last_pattern.at(c)  = max; 	
 												
 							// store index of last pattern
 					} // end if (local max...)
@@ -474,7 +474,7 @@ namespace OpenMS
 
 		// check to the left
 		UInt i = index;
-		while (mass_diff < 3.0 && i >= 1)
+		while (mass_diff < 2.0 && i >= 1)
 		{
 			if (cwt[i].getIntensity() > 	max_intensity)
 			{
@@ -487,7 +487,7 @@ namespace OpenMS
 
 		// check to the right
 		i = index;
-		while (mass_diff < 3.0 && i<cwt.size())
+		while (mass_diff < 2.0 && i<cwt.size())
 		{
 			if (cwt[i].getIntensity() > 	max_intensity)
 			{
@@ -497,7 +497,7 @@ namespace OpenMS
 			mass_diff = (cwt[i].getMZ() - first_mass);
 			++i;
 		}
-
+    
 		return max_index;
 	}
 

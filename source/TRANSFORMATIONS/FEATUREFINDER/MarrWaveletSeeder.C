@@ -152,7 +152,7 @@ namespace OpenMS
 
 			// search for maximal positions in the cwt and extract potential peaks
 			vector<Int> local_maxima;
-			getMaxPositions_(current_scan.begin(), current_scan.end(), /*cwt_,*/ local_maxima
+			getMaxPositions_(current_scan.begin(), current_scan.end(), local_maxima
 																	#ifdef DEBUG_FEATUREFINDER
 											 						, current_scan.getRT()
 																	#endif
@@ -164,7 +164,6 @@ namespace OpenMS
 			// compute score and charge estimate for each position
 			for (UInt i=0; i < ( nr_maxima - 1 ) && nr_maxima > 0; ++i)
 			{
-
 				// distance in m/z to next local max.
 				CoordinateType curr_mz = current_scan[ local_maxima[i] ].getMZ();
 				CoordinateType dist2nextpeak = (current_scan[ local_maxima[i+1] ].getMZ() - curr_mz);
@@ -193,7 +192,6 @@ namespace OpenMS
 
 					if (count >= min_peaks_)
 					{
-
 						#ifdef DEBUG_FEATUREFINDER
 						cout << "Pattern at " << current_scan[ local_maxima[i] ].getMZ() << endl;
 						cout	<< "There are " << count << " supporting local maxima. " << endl;
@@ -201,6 +199,8 @@ namespace OpenMS
 
 						sc_charge.second = testLocalVariance_(local_maxima,i);
 						scored_positions.push_back( make_pair(local_maxima[i],sc_charge) );
+            
+            i += count; // jump ahead
 					}
 				}
 

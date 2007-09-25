@@ -392,7 +392,7 @@ namespace OpenMS
     
     scan_threshold = 500;
 
-		std::out << "Average intensity in scan: " << avg_scan << std::endl;
+		std::cout << "Average intensity in scan: " << avg_scan << std::endl;
 		std::cout << "Intensity threshold for signal: " << scan_threshold << std::endl;
 
 		for (UInt i = 1; i < candidates[0].size(); ++i) 			// cwt's for all charge states have the same length....

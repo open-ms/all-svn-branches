@@ -116,7 +116,6 @@ namespace OpenMS
 		{
 			f.setIntensity(max_intensity);
 
-			// (cg) 2007-06-13  Ok I am willing to leave this as it is :-( , but please dont forget to adjust the documentation of use_fwhm_intensity if you uncomment this later!
 //
 // if you remove this, Ole is going to decapitate you !!
 //

@@ -544,7 +544,7 @@ namespace OpenMS
 		}
 		file.close();
 	
-		// wrote peaks remaining after model fit
+		// write peaks remaining after model fit
 		fname = String("feature") + counter_ +  "_" + rt + "_" + mz;
 		ofstream file2(fname.c_str()); 
 		for (IndexSetIter it=model_set.begin(); it!=model_set.end(); ++it) 

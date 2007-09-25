@@ -76,7 +76,7 @@ using namespace std;
 				<li>
 				Only the first part of the ProteinIdentification process is performed.
 				This means that an Inspect input file is generated and the given databases are
-				converted and merged Into one trie database. This file can be used
+				converted and merged into one trie database. This file can be used
 				directly with Inspect whereas the created database and the spectrum file(s)
 				have to remain at the given positions.
 				Calling an Inspect process should look like the following:

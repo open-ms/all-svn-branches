@@ -440,7 +440,7 @@ void BaseSweepSeeder::filterHash_()
 		filterForOverlaps_( );
 		filterForOverlaps_( );
 		
-		//filterForSignificance_();
+		filterForSignificance_();
 					
 		cout << iso_map_.size() << " clusters remained after filtering." << endl;
 }

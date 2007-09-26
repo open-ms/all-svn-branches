@@ -362,7 +362,7 @@ namespace OpenMS
 			avg_cwt 	/= candidates[c].size();
 			cwt_thresholds.at(c) =  avg_cwt * cwt_avg_factor_;
       
-      cwt_thresholds.at(c) = 500;
+      //cwt_thresholds.at(c) = 500;
 
 			#ifdef DEBUG_FEATUREFINDER
 			//write debug output
@@ -390,7 +390,7 @@ namespace OpenMS
 		avg_scan /= scan.size();
 		scan_threshold = avg_scan * signal_avg_factor_;
     
-    scan_threshold = 500;
+    //scan_threshold = 500;
 
 		std::cout << "Average intensity in scan: " << avg_scan << std::endl;
 		std::cout << "Intensity threshold for signal: " << scan_threshold << std::endl;

@@ -346,21 +346,40 @@ namespace OpenMS
 
 		std::vector<IntensityType> cwt_thresholds(candidates.size(),0.0);		// threshold for cwt intensities (one for each charge state)
 		std::vector<UInt> last_pattern(candidates.size(),0);								// the last index where a pattern of was found (one for each charge)
+    
+    IntensityType scan_median    = 0;   // median intensity in signal
+    IntensityType scan_threshold = 0;   // threshold for signal intensity
+    std::vector< double > scan_intensities;
+
+    for (UInt z=0; z<scan.size();++z)
+    {
+      scan_intensities.push_back(scan[z].getIntensity());
+    }
+    sort(scan_intensities.begin(),scan_intensities.end());
+    scan_median = gsl_stats_median_from_sorted_data(&scan_intensities[0], 1, scan_intensities.size() );
+    scan_threshold = scan_median * signal_avg_factor_;
+    
+    //scan_threshold = 500;
+
+    std::cout << "Median intensity in scan: " << scan_median << std::endl;
+    std::cout << "Intensity threshold for signal: " << scan_threshold << std::endl;
 
 		for (UInt c = 0; c < candidates.size(); ++c)
 		{
-			IntensityType avg_cwt  = 0;
-
+		
 			computeNullVariance_(candidates[c],c);
 						
-			// compute average intensity in cwt			
+			// compute median intensity in cwt			
+      std::vector<double> cwt_intensities;      
 			for (UInt i =0; i< candidates[c].size(); ++i)
 			{
-				avg_cwt   += fabs(candidates[c][i].getIntensity());			
+				cwt_intensities.push_back(fabs(candidates[c][i].getIntensity()));			
 			}						
 
-			avg_cwt 	/= candidates[c].size();
-			cwt_thresholds.at(c) =  avg_cwt * cwt_avg_factor_;
+      sort(cwt_intensities.begin(),cwt_intensities.end());
+      
+      IntensityType cwt_median = gsl_stats_median_from_sorted_data(&cwt_intensities[0], 1, cwt_intensities.size() );
+			cwt_thresholds.at(c)     =  cwt_median * cwt_avg_factor_;
       
       //cwt_thresholds.at(c) = 500;
 
@@ -379,21 +398,6 @@ namespace OpenMS
 			#endif
 
 		}
-
-		IntensityType avg_scan       = 0;		// average intensity in signal
-		IntensityType scan_threshold = 0;		// threshold for signal intensity
-
-		for (UInt z=0; z<scan.size();++z)
-		{
-			avg_scan += scan[z].getIntensity();
-		}
-		avg_scan /= scan.size();
-		scan_threshold = avg_scan * signal_avg_factor_;
-    
-    //scan_threshold = 500;
-
-		std::cout << "Average intensity in scan: " << avg_scan << std::endl;
-		std::cout << "Intensity threshold for signal: " << scan_threshold << std::endl;
 
 		for (UInt i = 1; i < candidates[0].size(); ++i) 			// cwt's for all charge states have the same length....
 		{

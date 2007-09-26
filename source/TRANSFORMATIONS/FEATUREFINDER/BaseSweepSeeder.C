@@ -254,7 +254,6 @@ void BaseSweepSeeder::sweep_()
 		}
 		#endif
     
-    cout << "Here!!" << endl;
 		
 }
 
@@ -295,7 +294,7 @@ void BaseSweepSeeder::filterForOverlaps_()
 			++tmp_iter;
 		
 			CoordinateType mz_dist = tmp_iter->first - iter->first;
-			UInt rt_dist                    = 0;
+			UInt rt_dist           = 0;
 
 			if (seen.at(counter)) 
 			{

@@ -33,6 +33,7 @@
 #include <OpenMS/DATASTRUCTURES/HashMap.h>
 
 #include <gsl/gsl_cdf.h>
+#include <gsl/gsl_statistics.h>
 
 #include <limits>
 

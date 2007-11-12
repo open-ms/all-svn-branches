@@ -117,6 +117,8 @@ namespace OpenMS
 		// find maximum of region (seed)
 		CoordinateType max_intensity = 0.0;
 		IDX seed;
+		
+		cout << "Seeding region size: " << seed_region.size() << endl;
 				
     for (IndexSet::const_iterator citer = seed_region.begin(); citer != seed_region.end(); ++citer)
     {	

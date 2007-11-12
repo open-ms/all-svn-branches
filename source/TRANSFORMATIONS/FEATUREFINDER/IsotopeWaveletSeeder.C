@@ -102,6 +102,9 @@ namespace OpenMS
 
 		signal_avg_factor_  = param_.getValue("signal_avg_factor");
 		cwt_avg_factor_     = param_.getValue("cwt_avg_factor");
+		
+		signal_avg_factor_  = 200;
+		cwt_avg_factor_     = 200;
 
 		// delete old charge states
 		charges_.clear();
@@ -353,13 +356,13 @@ namespace OpenMS
 
     for (UInt z=0; z<scan.size();++z)
     {
-      scan_intensities.push_back(scan[z].getIntensity());
+			if ( scan[z].getIntensity() > 0) scan_intensities.push_back(scan[z].getIntensity());
     }
     sort(scan_intensities.begin(),scan_intensities.end());
     scan_median = gsl_stats_median_from_sorted_data(&scan_intensities[0], 1, scan_intensities.size() );
     scan_threshold = scan_median * signal_avg_factor_;
     
-    //scan_threshold = 500;
+    scan_threshold = 500;
 
     std::cout << "Median intensity in scan: " << scan_median << std::endl;
     std::cout << "Intensity threshold for signal: " << scan_threshold << std::endl;
@@ -373,7 +376,7 @@ namespace OpenMS
       std::vector<double> cwt_intensities;      
 			for (UInt i =0; i< candidates[c].size(); ++i)
 			{
-				cwt_intensities.push_back(fabs(candidates[c][i].getIntensity()));			
+				if ( fabs(candidates[c][i].getIntensity()) > 0) cwt_intensities.push_back(fabs(candidates[c][i].getIntensity()));			
 			}						
 
       sort(cwt_intensities.begin(),cwt_intensities.end());
@@ -381,7 +384,7 @@ namespace OpenMS
       IntensityType cwt_median = gsl_stats_median_from_sorted_data(&cwt_intensities[0], 1, cwt_intensities.size() );
 			cwt_thresholds.at(c)     =  cwt_median * cwt_avg_factor_;
       
-      //cwt_thresholds.at(c) = 500;
+      cwt_thresholds.at(c) = 500;
 
 			#ifdef DEBUG_FEATUREFINDER
 			//write debug output

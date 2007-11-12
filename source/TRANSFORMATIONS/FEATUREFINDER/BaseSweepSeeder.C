@@ -193,7 +193,7 @@ void BaseSweepSeeder::sweep_()
 				CoordinateType mz_dist  = 0;
 						
 				// walk to the left (for at most 0.5 Th)
-				while (mz_dist < 0.5 && this_peak >= 1)
+				while (mz_dist < 1.5 && this_peak >= 1)
 				{
 					mz_dist = ( start_mz - traits_->getPeakMz( make_pair(currscan_index,this_peak) ) );
 					if ( traits_->getPeakFlag( make_pair(currscan_index,this_peak) ) == FeaFiTraits::UNUSED )
@@ -209,7 +209,7 @@ void BaseSweepSeeder::sweep_()
 				mz_dist   = ( traits_->getPeakMz( make_pair(currscan_index,this_peak) )  - start_mz );
         
         // and to the right (we walk for at most ( 3.0 / charge estimate) Th )
-        CoordinateType dist_to_right = 3.0 / (double) citer->second.first;
+        CoordinateType dist_to_right = 4.0 / (double) citer->second.first;
 		  	while (mz_dist <= dist_to_right && this_peak < current_scan.size() )
 				{
 					if ( traits_->getPeakFlag( make_pair(currscan_index,this_peak) )  == FeaFiTraits::UNUSED )

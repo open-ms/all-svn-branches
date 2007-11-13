@@ -52,7 +52,7 @@ BaseSweepSeeder::BaseSweepSeeder()
 		// minimum number of peaks per cluster
 		defaults_.setValue("min_number_peaks",20,"minimum number of peaks");		
 		
-		// mass tolerance for point cluster construction
+		// mass tolerance for peak cluster construction
 		defaults_.setValue("mass_tolerance_cluster",1.2,"The m/z tolerance for looking up a signal in following scans.");
 		// rt tolerance for cluster construction (given in number of scans)
 		defaults_.setValue("rt_tolerance_cluster",2,"rt tolerance for cluster construction (given in number of scans)");		
@@ -182,23 +182,22 @@ void BaseSweepSeeder::sweep_()
 				cout << "Charge estimate: " << citer->second.first << " score " << citer->second.second << endl;
 				cout << "Extending...." << endl;
 				#endif
-							
-				// store charge estimate and score in this scan
-				entry_to_insert->second.scored_charges_.push_back( citer->second );
-				// store seed
-				entry_to_insert->second.peaks_.insert( make_pair(currscan_index,citer->first) );
-	
-				UInt this_peak =  citer->first;
+				
+				UInt this_peak                =  citer->first;
 				CoordinateType start_mz = traits_->getPeakMz( make_pair(currscan_index,this_peak) );
 				CoordinateType mz_dist  = 0;
-						
+				
+				vector<UInt> points;
+				points.push_back(this_peak);
+													
 				// walk to the left (for at most 0.5 Th)
-				while (mz_dist < 1.5 && this_peak >= 1)
+				while (mz_dist < 1.0 && this_peak >= 1)
 				{
 					mz_dist = ( start_mz - traits_->getPeakMz( make_pair(currscan_index,this_peak) ) );
 					if ( traits_->getPeakFlag( make_pair(currscan_index,this_peak) ) == FeaFiTraits::UNUSED )
 					{
-						entry_to_insert->second.peaks_.insert( make_pair(currscan_index,this_peak) );
+						//entry_to_insert->second.peaks_.insert( make_pair(currscan_index,this_peak) );
+						points.push_back(this_peak);
 						traits_->getPeakFlag( make_pair(currscan_index,this_peak) ) = FeaFiTraits::USED;
 					}
 					--this_peak;
@@ -209,18 +208,32 @@ void BaseSweepSeeder::sweep_()
 				mz_dist   = ( traits_->getPeakMz( make_pair(currscan_index,this_peak) )  - start_mz );
         
         // and to the right (we walk for at most ( 3.0 / charge estimate) Th )
-        CoordinateType dist_to_right = 4.0 / (double) citer->second.first;
+        CoordinateType dist_to_right = 2.0; // / (double) citer->second.first;
+				//cout << "Walkting " << dist_to_right << endl;
 		  	while (mz_dist <= dist_to_right && this_peak < current_scan.size() )
 				{
 					if ( traits_->getPeakFlag( make_pair(currscan_index,this_peak) )  == FeaFiTraits::UNUSED )
 					{
-						entry_to_insert->second.peaks_.insert( make_pair(currscan_index,this_peak) );
+						//entry_to_insert->second.peaks_.insert( make_pair(currscan_index,this_peak) );
+						points.push_back(this_peak);
 						traits_->getPeakFlag( make_pair(currscan_index,this_peak) ) = FeaFiTraits::USED;
 					}					
 					
 					mz_dist = ( traits_->getPeakMz( make_pair(currscan_index,this_peak) )  - start_mz );
 					++this_peak;
 				}
+				
+				if ( points.size() > 10 )
+				{
+						// store charge estimate and score in this scan
+					entry_to_insert->second.scored_charges_.push_back( citer->second );
+					// store points
+					for (vector<UInt>::const_iterator citer = points.begin(); citer != points.end(); ++citer)
+					{
+						entry_to_insert->second.peaks_.insert( make_pair(currscan_index,*citer) );
+					}
+				}
+			
 							
 			}
 					

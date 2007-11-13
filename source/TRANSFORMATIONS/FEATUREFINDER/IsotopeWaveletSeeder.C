@@ -127,8 +127,8 @@ namespace OpenMS
       	computeSpacings_();
 
 				#ifdef DEBUG_FEATUREFINDER
-      	std::cout << "Average m/z spacing: " << avMZSpacing_ << std::endl;
-      	std::cout << "Minimal m/z spacing: " << min_spacing_ << std::endl;
+      	cout << "Average m/z spacing: " << avMZSpacing_ << endl;
+      	cout << "Minimal m/z spacing: " << min_spacing_ << endl;
 				#endif
 
 	    	waveletLength_ = (Int) (peak_cut_off_/avMZSpacing_);
@@ -136,9 +136,9 @@ namespace OpenMS
 
 				wavelet_initialized_ = true;
 			}
-			std::vector<DPeakArray<PeakType > >* pwts = NULL;
+			vector<DPeakArray<PeakType > >* pwts = NULL;
 			// store peak data, once for each charge state
-			pwts = new std::vector<DPeakArray<PeakType > > (charges_.size(), scan.getContainer() );
+			pwts = new vector<DPeakArray<PeakType > > (charges_.size(), scan.getContainer() );
 
 			// compute wavelet transform
 			fastMultiCorrelate_(scan, pwts);
@@ -178,7 +178,7 @@ namespace OpenMS
 	void IsotopeWaveletSeeder::generateGammaValues_()
 	{
 		#ifdef DEBUG_FEATUREFINDER
-		std::cout << "Precomputing the Gamma function ...";
+		cout << "Precomputing the Gamma function ...";
 		#endif
 
 		preComputedGamma_.clear();
@@ -195,7 +195,7 @@ namespace OpenMS
 		}
 
 		#ifdef DEBUG_FEATUREFINDER
-		std::cout << " done." << std::endl;
+		cout << " done." << endl;
 		#endif
 	}
 
@@ -221,17 +221,17 @@ namespace OpenMS
 		null_var_[charge_index] = S / (n-1);
 	}
 
-	void IsotopeWaveletSeeder::fastMultiCorrelate_(const SpectrumType& signal, std::vector<DPeakArray<PeakType > >* pwts)
+	void IsotopeWaveletSeeder::fastMultiCorrelate_(const SpectrumType& signal, vector<DPeakArray<PeakType > >* pwts)
 	{
-		std::vector<DPeakArray<PeakType > >* res = pwts;
+		vector<DPeakArray<PeakType > >* res = pwts;
 		UInt signal_size = signal.size();
 
-		WaveletCollection phis (charges_.size(), std::vector<double> (waveletLength_)); 		//all necessary wavelets (by rows)
+		WaveletCollection phis (charges_.size(), vector<double> (waveletLength_)); 		//all necessary wavelets (by rows)
 
 		//helping variables
 		double cumSpacing=0, cSpacing=0, realMass=0, lambda=0, w_sum=0, w_s_sum=0, max_w_monoi_intens=0.25, align_offset, tmp_pos, tmp_pos1;
 
-		std::list<UInt>::const_iterator charge_iter;
+		list<UInt>::const_iterator charge_iter;
 		UInt k=0; //helping variables
 		double max=0;
 
@@ -310,7 +310,7 @@ namespace OpenMS
 
 				}
 
-			std::vector<double> sums (charges_.size());
+			vector<double> sums (charges_.size());
 			k=0;
 
 			//Since all wavelet functions have the same length, we can simply use phis[0].size()
@@ -342,17 +342,17 @@ namespace OpenMS
 	} // end of fastMultiCorrelate(...)
 
 
-	IsotopeWaveletSeeder::ScoredMZVector IsotopeWaveletSeeder::identifyCharge_(std::vector<DPeakArray<PeakType > >& candidates, SpectrumType& scan)
+	IsotopeWaveletSeeder::ScoredMZVector IsotopeWaveletSeeder::identifyCharge_(vector<DPeakArray<PeakType > >& candidates, SpectrumType& scan)
 	{
 
 		ScoredMZVector scmzvec;	 // scored positions
 
-		std::vector<IntensityType> cwt_thresholds(candidates.size(),0.0);		// threshold for cwt intensities (one for each charge state)
-		std::vector<UInt> last_pattern(candidates.size(),0);								// the last index where a pattern of was found (one for each charge)
+		vector<IntensityType> cwt_thresholds(candidates.size(),0.0);		// threshold for cwt intensities (one for each charge state)
+		vector<UInt> last_pattern(candidates.size(),0);								// the last index where a pattern of was found (one for each charge)
     
     IntensityType scan_median    = 0;   // median intensity in signal
     IntensityType scan_threshold = 0;   // threshold for signal intensity
-    std::vector< double > scan_intensities;
+    vector< double > scan_intensities;
 
     for (UInt z=0; z<scan.size();++z)
     {
@@ -364,8 +364,8 @@ namespace OpenMS
     
     scan_threshold = 500;
 
-    std::cout << "Median intensity in scan: " << scan_median << std::endl;
-    std::cout << "Intensity threshold for signal: " << scan_threshold << std::endl;
+    cout << "Median intensity in scan: " << scan_median << endl;
+    cout << "Intensity threshold for signal: " << scan_threshold << endl;
 
 		for (UInt c = 0; c < candidates.size(); ++c)
 		{
@@ -373,7 +373,7 @@ namespace OpenMS
 			computeNullVariance_(candidates[c],c);
 						
 			// compute median intensity in cwt			
-      std::vector<double> cwt_intensities;      
+      vector<double> cwt_intensities;      
 			for (UInt i =0; i< candidates[c].size(); ++i)
 			{
 				if ( fabs(candidates[c][i].getIntensity()) > 0) cwt_intensities.push_back(fabs(candidates[c][i].getIntensity()));			
@@ -390,12 +390,12 @@ namespace OpenMS
 			//write debug output
 			CoordinateType current_rt = scan.getRT();
 			String filename = String("isowavcwt_") + current_rt + "_charge_" + (c+1);
-			std::ofstream outfile(filename.c_str());
+			ofstream outfile(filename.c_str());
 			for (DPeakArray<PeakType >::const_iterator write_iter=candidates[c].begin();
 						write_iter != candidates[c].end();
 						++write_iter)
 			{
-				outfile << write_iter->getMZ() << " " << write_iter->getIntensity() << std::endl;
+				outfile << write_iter->getMZ() << " " << write_iter->getIntensity() << endl;
 			}
 			outfile.close();
 			#endif
@@ -408,25 +408,26 @@ namespace OpenMS
 				if (scan[i].getIntensity() < scan_threshold)	continue;	// ignore low intensity signals
 
 				// vector of p-values
-				std::vector<ProbabilityType> charge_scores( candidates.size(),numeric_limits<ProbabilityType>::max() );
+				vector<ProbabilityType> charge_scores( candidates.size(),numeric_limits<ProbabilityType>::max() );
 
 				for (UInt c=0; c<candidates.size(); ++c)		// for all charge states
 				{
 					// test if :
-					// intensity in cwt is higher than threshold
-					// we are at a local max in the signal
-					// the last pattern is already behind us
+					// - intensity in cwt is higher than threshold
+					// - we are at a local max in the signal
+					// - the last pattern is already behind us
+				
 					if ( candidates[c][i].getIntensity() > cwt_thresholds[c] && 
 							 i > last_pattern[c] && 
-							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ()) > 3.0/ (c+1)  &&                                   
-							(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
-						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0))						  	  
+							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ()) > 5.0 ) // &&            //   / (c+1)                      
+							/*(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
+						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0))			*/			  	  
 					{						
+							//cout << " Distance to last pattern: " << ( candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) << endl;
 							UInt max = findNextMax_(candidates[c],i);
 							ProbabilityType pvalue = testLocalVariance_(candidates[c],max,c);	
 							charge_scores.at(c) = pvalue;
-							last_pattern.at(c)  = max; 	
-												
+							last_pattern.at(c)  = max; 				
 							// store index of last pattern
 					} // end if (local max...)
 

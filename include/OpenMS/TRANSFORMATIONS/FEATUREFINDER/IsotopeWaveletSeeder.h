@@ -111,8 +111,6 @@ namespace OpenMS
   protected:
 
 		/** @brief detects isotopic pattern
-
-			@improvement Why is a pointer being used here?  It would be faster to reuse a static member.  Avoid reallocation, pwts can be cleared instead.  (Clemens aking Maintainer)
 		*/
 		ScoredMZVector detectIsotopicPattern_(SpectrumType& scan);
 

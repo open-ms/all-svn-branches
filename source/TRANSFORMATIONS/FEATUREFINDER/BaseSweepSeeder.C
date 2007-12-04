@@ -104,11 +104,11 @@ void BaseSweepSeeder::updateMembers_()
 {
 	// params for scan alignment
 	mass_tolerance_alignment_ = param_.getValue("mass_tolerance_alignment");
-	scans_to_sumup_           = param_.getValue("scans_to_sumup");
+	scans_to_sumup_           			= param_.getValue("scans_to_sumup");
 
 	// sweepline params
 	mass_tolerance_cluster_   = param_.getValue("mass_tolerance_cluster");
-	rt_tolerance_cluster_     = (UInt) param_.getValue("rt_tolerance_cluster");
+	rt_tolerance_cluster_     			= (UInt) param_.getValue("rt_tolerance_cluster");
 	
 	// cluster merging params
 	max_rt_dist_merging_      = param_.getValue("max_rt_dist_merging"); 
@@ -335,7 +335,8 @@ void BaseSweepSeeder::filterForOverlaps_()
 				rt_dist   = tmp_iter->second.first_scan_ - iter->second.last_scan_;
 				mz_dist = tmp_iter->first - iter->first;
 				
-				if (rt_dist < max_rt_dist_merging_) rt_overlap = true;
+				if (rt_dist >= max_rt_dist_merging_) rt_overlap = false;
+				if (mz_dist >= max_mz_dist_merging_) rt_overlap = false;
 						
 				// we merge only features with the same charge, overlap in rt and if we haven't seen them yet.
 				if ( tmp_iter->second.peaks_.charge_ == iter->second.peaks_.charge_ 
@@ -470,8 +471,8 @@ void BaseSweepSeeder::voteForCharge_()
 		     scmz_iter != iter->second.scored_charges_.end();
 				++scmz_iter)
 		{
-			cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
-      cout << "Size of charge vector: " << charge_scores.size() << endl;
+			//cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
+      //cout << "Size of charge vector: " << charge_scores.size() << endl;
       
       if (scmz_iter->first == 0) continue; // zero <=> no charge estimate      
 			
@@ -514,10 +515,9 @@ BaseSweepSeeder::TableIteratorType BaseSweepSeeder::checkInPreviousScans_(const 
     TableIteratorType entry_to_insert;
 		CoordinateType mz_in_hash = 0;
 		
-// 		cout << "checkInPreviousScans_(...) : Retrieving m/z " << sc_mz.first << " " << currscan_index << endl;
-		
 		CoordinateType curr_mz = traits_->getPeakMz( make_pair(currscan_index,sc_mz.first) );
-
+		//cout << "checkInPreviousScans_(...) : Checking for m/z " << curr_mz << " in scan " << currscan_index << endl;
+		
     if (currscan_index > 0 && iso_map_.size() > 0 )  // Are we in the first scan?
     {
         // there were some isotopic cluster in the last scan...
@@ -525,10 +525,11 @@ BaseSweepSeeder::TableIteratorType BaseSweepSeeder::checkInPreviousScans_(const 
 				CoordinateType delta_mz = fabs(table_iter->first - curr_mz);
 
 				#ifdef DEBUG_FEATUREFINDER
+				cout << "Candidate at m/z " << table_iter->first << endl;
 				cout << "m/z distance to closest cluster : " << delta_mz << endl;
 				#endif
 				
-        if ( delta_mz > mass_tolerance_cluster_) // check if first peak of last cluster is close enough
+        if ( delta_mz >= mass_tolerance_cluster_) // check if first peak of last cluster is close enough
         {
             mz_in_hash = curr_mz; // update current hash key
 
@@ -596,6 +597,8 @@ BaseSweepSeeder::TableIteratorType BaseSweepSeeder::checkInPreviousScans_(const 
 bool BaseSweepSeeder::checkForMatchingCluster_(const pair<TableIteratorType, TableIteratorType>& range, const UInt scan_wanted, TableIteratorType& entry_to_insert )
 {
 
+	//cout << "checkForMatchingCluster_: " << scan_wanted << endl;
+
 	// so far we check only for matching cluster in the previous scan
 	// maybe it makes sense to take masses being further away into account
 	UInt closest_scan = 0;
@@ -611,21 +614,29 @@ bool BaseSweepSeeder::checkForMatchingCluster_(const pair<TableIteratorType, Tab
       	     it != iter->second.scans_.end();
             ++it)
     	{
+					//cout << "it: " << *it << endl;
 					// find closest scan number
 					if (*it >= closest_scan && *it <= scan_wanted)
 					{
 						closest_scan   = *it;				
 						entry_to_insert = iter;		// remember iterator
 						scan_found      = true;
-					}				
-    	}
+						//cout << "Bingo ! " << endl;	
+					}			
+			}
+			//cout << "******************************************************************************-" << endl;
 	} // end for (TableIteratorType )
 	
+	//cout << "scan wanted: " << scan_wanted << " closest scan " << closest_scan << endl;
+	
 	UInt dist = (scan_wanted - closest_scan);	
+	//cout << "distance : " << dist << endl;
 	if (dist < rt_tolerance_cluster_ && scan_found)
 	{		
 		return true;	
 	}
+	
+	//cout << "Too far in rt..." << endl;
 	
 	// That's too far
 	return false;	
@@ -639,14 +650,14 @@ void BaseSweepSeeder::sumUp_(SpectrumType& scan, UInt current_scan_index)
     }
 }
 
-void BaseSweepSeeder::substractLastScan_(SpectrumType& current_scan, UInt current_scan_index)
-{
-		if (current_scan_index >= 1)
-		{		
-			cout << "Substracting " << (current_scan_index-1) << endl; 
-			AlignAndSubstract_(current_scan,traits_->getData()[ current_scan_index-1 ]);		
-		}
-}
+// void BaseSweepSeeder::substractLastScan_(SpectrumType& current_scan, UInt current_scan_index)
+// {
+// 		if (current_scan_index >= 1)
+// 		{		
+// 			cout << "Substracting " << (current_scan_index-1) << endl; 
+// 			AlignAndSubstract_(current_scan,traits_->getData()[ current_scan_index-1 ]);		
+// 		}
+// }
 
 
 void BaseSweepSeeder::addNextScan_(SpectrumType& scan, UInt current_scan_index)
@@ -702,48 +713,48 @@ void BaseSweepSeeder::AlignAndSum_(SpectrumType& scan, const SpectrumType& neigh
 }	// end of AlignAndSum_(....)
 
 
-void BaseSweepSeeder::AlignAndSubstract_(SpectrumType& scan, const SpectrumType& neighbour)
-{
-    if (scan.size() == 0 || neighbour.size() == 0)
-        return;
-
-    UInt index_newscan = 0;
-    for (SpectrumType::const_iterator p = neighbour.begin(); p != neighbour.end(); ++p)
-    {
-
-        while (scan[index_newscan].getMZ() < p->getMZ() && index_newscan < scan.size())
-					++index_newscan;
-        
-				// This seems to happen more frequently than expected -> quit the loop
-        if (index_newscan >= scan.size() )
-            break;
-
-        if (index_newscan > 0)
-        {
-            CoordinateType left_diff   = fabs(scan[index_newscan-1].getMZ() - p->getMZ());
-            CoordinateType right_diff = fabs(scan[index_newscan].getMZ() - p->getMZ());
-
-            // check which neighbour is closer
-            if (left_diff < right_diff && (left_diff < mass_tolerance_alignment_) )
-            {
-                scan[ (index_newscan-1) ].setIntensity( scan[ (index_newscan-1) ].getIntensity() - p->getIntensity() );
-            }
-            else if (right_diff < mass_tolerance_alignment_)
-            {
-                scan[ (index_newscan) ].setIntensity( scan[ (index_newscan) ].getIntensity() - p->getIntensity() );
-            }
-        }
-        else // no left neighbour available
-        {
-            CoordinateType right_diff = fabs(scan[index_newscan].getMZ() - p->getMZ());
-            if (right_diff < mass_tolerance_alignment_)
-            {
-                scan[index_newscan].setIntensity( scan[index_newscan].getIntensity() - p->getIntensity() );
-            }
-        }
-    } // end for (all peaks in neighbouring scan)
-		
-}	// end of AlignAndSum_(....)
+// void BaseSweepSeeder::AlignAndSubstract_(SpectrumType& scan, const SpectrumType& neighbour)
+// {
+//     if (scan.size() == 0 || neighbour.size() == 0)
+//         return;
+// 
+//     UInt index_newscan = 0;
+//     for (SpectrumType::const_iterator p = neighbour.begin(); p != neighbour.end(); ++p)
+//     {
+// 
+//         while (scan[index_newscan].getMZ() < p->getMZ() && index_newscan < scan.size())
+// 					++index_newscan;
+//         
+// 				// This seems to happen more frequently than expected -> quit the loop
+//         if (index_newscan >= scan.size() )
+//             break;
+// 
+//         if (index_newscan > 0)
+//         {
+//             CoordinateType left_diff   = fabs(scan[index_newscan-1].getMZ() - p->getMZ());
+//             CoordinateType right_diff = fabs(scan[index_newscan].getMZ() - p->getMZ());
+// 
+//             // check which neighbour is closer
+//             if (left_diff < right_diff && (left_diff < mass_tolerance_alignment_) )
+//             {
+//                 scan[ (index_newscan-1) ].setIntensity( scan[ (index_newscan-1) ].getIntensity() - p->getIntensity() );
+//             }
+//             else if (right_diff < mass_tolerance_alignment_)
+//             {
+//                 scan[ (index_newscan) ].setIntensity( scan[ (index_newscan) ].getIntensity() - p->getIntensity() );
+//             }
+//         }
+//         else // no left neighbour available
+//         {
+//             CoordinateType right_diff = fabs(scan[index_newscan].getMZ() - p->getMZ());
+//             if (right_diff < mass_tolerance_alignment_)
+//             {
+//                 scan[index_newscan].setIntensity( scan[index_newscan].getIntensity() - p->getIntensity() );
+//             }
+//         }
+//     } // end for (all peaks in neighbouring scan)
+// 		
+// }	// end of AlignAndSubstract_(....)
 
 
 

@@ -157,10 +157,10 @@ namespace OpenMS
 			void AlignAndSum_(SpectrumType& scan, const SpectrumType& neighbour);
 			
 			/// Aligns two scans and substracts the intensities of matching points.
-			void AlignAndSubstract_(SpectrumType& scan, const SpectrumType& neighbour);
+// 			void AlignAndSubstract_(SpectrumType& scan, const SpectrumType& neighbour);
 			
 			/// Substracts the last scan
-			void substractLastScan_(SpectrumType& scan, UInt current_scan_index);
+// 			void substractLastScan_(SpectrumType& scan, UInt current_scan_index);
 						
 			/// Aligns current scan with its successor
 			void addNextScan_(SpectrumType& scan, UInt current_scan_index);

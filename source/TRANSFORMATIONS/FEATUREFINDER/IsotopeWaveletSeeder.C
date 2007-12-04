@@ -102,9 +102,6 @@ namespace OpenMS
 
 		signal_avg_factor_  = param_.getValue("signal_avg_factor");
 		cwt_avg_factor_     = param_.getValue("cwt_avg_factor");
-		
-		signal_avg_factor_  = 200;
-		cwt_avg_factor_     = 200;
 
 		// delete old charge states
 		charges_.clear();
@@ -361,8 +358,6 @@ namespace OpenMS
     sort(scan_intensities.begin(),scan_intensities.end());
     scan_median = gsl_stats_median_from_sorted_data(&scan_intensities[0], 1, scan_intensities.size() );
     scan_threshold = scan_median * signal_avg_factor_;
-    
-    scan_threshold = 500;
 
     cout << "Median intensity in scan: " << scan_median << endl;
     cout << "Intensity threshold for signal: " << scan_threshold << endl;
@@ -376,15 +371,16 @@ namespace OpenMS
       vector<double> cwt_intensities;      
 			for (UInt i =0; i< candidates[c].size(); ++i)
 			{
-				if ( fabs(candidates[c][i].getIntensity()) > 0) cwt_intensities.push_back(fabs(candidates[c][i].getIntensity()));			
+				if ( candidates[c][i].getIntensity() >= 0) cwt_intensities.push_back( candidates[c][i].getIntensity() );			
 			}						
 
       sort(cwt_intensities.begin(),cwt_intensities.end());
       
       IntensityType cwt_median = gsl_stats_median_from_sorted_data(&cwt_intensities[0], 1, cwt_intensities.size() );
 			cwt_thresholds.at(c)     =  cwt_median * cwt_avg_factor_;
-      
-      cwt_thresholds.at(c) = 500;
+			
+			cout << "Median intensity in cwt: " << cwt_median << endl;
+    	cout << "Intensity threshold for cwt: " << cwt_avg_factor_ << endl;
 
 			#ifdef DEBUG_FEATUREFINDER
 			//write debug output
@@ -415,16 +411,16 @@ namespace OpenMS
 					// test if :
 					// - intensity in cwt is higher than threshold
 					// - we are at a local max in the signal
-					// - the last pattern is already behind us
+					// - the last pattern (of the same charge) is already some way behind us
 				
 					if ( candidates[c][i].getIntensity() > cwt_thresholds[c] && 
 							 i > last_pattern[c] && 
-							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ()) > 5.0 ) // &&            //   / (c+1)                      
-							/*(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
-						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0))			*/			  	  
+							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) > 5.0  &&                               
+							(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
+						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0) )						  	  
 					{						
 							//cout << " Distance to last pattern: " << ( candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) << endl;
-							UInt max = findNextMax_(candidates[c],i);
+							UInt max = findNextMax_(scan.getContainer(),i);
 							ProbabilityType pvalue = testLocalVariance_(candidates[c],max,c);	
 							charge_scores.at(c) = pvalue;
 							last_pattern.at(c)  = max; 				

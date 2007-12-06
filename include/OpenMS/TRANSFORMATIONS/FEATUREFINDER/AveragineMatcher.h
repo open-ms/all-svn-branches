@@ -270,7 +270,7 @@ namespace OpenMS
 
 		QualityType fit_(const ChargedIndexSet& set, MzFitting mz_fit, RtFitting rt_fit, Coordinate isotope_stdev, UInt samplingsize);
 		
-		QualityType compute_mz_corr_(IntensityType& mz_data_sum, IsotopeModel& iso_model, CoordinateType& mz_data_avg);
+		QualityType compute_mz_corr_(IsotopeModel& iso_model);
 
 		BaseQuality* quality_;
 		ProductModel<2> model2D_;

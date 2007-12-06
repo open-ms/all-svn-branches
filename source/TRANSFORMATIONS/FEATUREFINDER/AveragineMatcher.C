@@ -323,28 +323,15 @@ namespace OpenMS
 												          String("Skipping feature, IndexSet size after cutoff too small: ") + model_set.size() );
 		}
  		
-		// normalize data and compute mean position
-		IntensityType mz_data_sum  = 0.0;
-		for (UInt i=0;i<mz_lin_int_.getData().size();++i)
-		{
-			mz_data_sum += mz_lin_int_.getData()[i];
-		}	
 		
-		// compute m/z data average
-		CoordinateType mz_data_avg = 0.0;
-		for (UInt i=0;i<mz_lin_int_.getData().size();++i)
-		{
-			mz_data_avg += ( mz_lin_int_.getData()[i] / mz_data_sum);	
-		}	
-		mz_data_avg /= mz_lin_int_.getData().size();
-	
-		QualityType qual_mz = compute_mz_corr_(mz_data_sum, mz_model_, mz_data_avg);
+		QualityType qual_mz = compute_mz_corr_(mz_model_);
 
 		QualityType qual_rt =	quality_->evaluate(model_set, rt_model_, RT );
 		if (isnan(qual_rt) ) qual_rt = -1.0;
 
-		max_quality = (qual_mz + qual_rt) / 2.0;
-
+		//max_quality = (qual_mz + qual_rt) / 2.0;
+		max_quality = qual_mz;
+		
 		// if the fit is not too bad, we try different charge states and check if we get better
 		if (max_quality > 0.2 && max_quality < (QualityType)(param_.getValue("quality:minimum")))
 		{
@@ -353,6 +340,8 @@ namespace OpenMS
 			fit_loop_(set, fmz,lmz,sampling_size_mz,final);	
 			
 		}
+		
+		max_quality =	compute_mz_corr_(mz_model_);
 		
 		// fit has too low quality or fit was not possible i.e. because of zero stdev
 		if (max_quality < (QualityType)(param_.getValue("quality:minimum")))
@@ -598,10 +587,24 @@ namespace OpenMS
 	
 	}
 	
-	AveragineMatcher::QualityType AveragineMatcher::compute_mz_corr_(IntensityType& mz_data_sum, 
-																																																				IsotopeModel& iso_model,
-																																																				CoordinateType& mz_data_avg)
+	AveragineMatcher::QualityType AveragineMatcher::compute_mz_corr_(IsotopeModel& iso_model)
 	{	
+		
+			// normalize data and compute mean position
+			IntensityType mz_data_sum  = 0.0;
+			for (UInt i=0;i<mz_lin_int_.getData().size();++i)
+			{
+				mz_data_sum += mz_lin_int_.getData()[i];
+			}	
+		
+			// compute m/z data average
+			CoordinateType mz_data_avg = 0.0;
+			for (UInt i=0;i<mz_lin_int_.getData().size();++i)
+			{
+				mz_data_avg += ( mz_lin_int_.getData()[i] / mz_data_sum);	
+			}		
+			mz_data_avg /= mz_lin_int_.getData().size();
+		
 			// normalize m/z model
 			IntensityType mz_model_sum = 0.0;
 			DPeakArray< DPeak<1> > samples;
@@ -665,7 +668,7 @@ namespace OpenMS
 			mz_data_sum += mz_lin_int_.getData()[i];
 		}	
 		
-		if (mz_data_sum == 0.0)
+		if (mz_mean_pos == 0.0)	// check
 		{
 // 			dump_all_(set,(UInt) samplingsize);
 			return -1.0;		
@@ -676,12 +679,12 @@ namespace OpenMS
 // 		cout << "mz_mean_pos = " << mz_mean_pos << endl;
 		
 		// compute m/z data average
-		CoordinateType mz_data_avg = 0.0;
-		for (UInt i=0;i<mz_lin_int_.getData().size();++i)
-		{
-			mz_data_avg += ( mz_lin_int_.getData()[i] / mz_data_sum);	
-		}	
-		mz_data_avg /= mz_lin_int_.getData().size();
+// 		CoordinateType mz_data_avg = 0.0;
+// 		for (UInt i=0;i<mz_lin_int_.getData().size();++i)
+// 		{
+// 			mz_data_avg += ( mz_lin_int_.getData()[i] / mz_data_sum);	
+// 		}	
+// 		mz_data_avg /= mz_lin_int_.getData().size();
 		
 		for (CoordinateType pos = mz_mean_pos- 0.5;
 		     pos <= mz_mean_pos+ 0.5;
@@ -697,7 +700,7 @@ namespace OpenMS
 			iso_model.setSamples();
 					
 			// estimate goodness of m/z fit
-			QualityType corr_mz = compute_mz_corr_(mz_data_sum, iso_model, mz_data_avg);			
+			QualityType corr_mz = compute_mz_corr_(iso_model);			
 			
 // 			if (corr_mz == -2.0)
 // 			{
@@ -722,11 +725,6 @@ namespace OpenMS
 		tmp.setValue("isotope:stdev",isotope_stdev);
 		tmp.setValue("statistics:mean", max_center);
 		mz_model_.setParameters(tmp);
-			
-// 		cout << "Setting averagine model to center (finally) " << mz_model_.getCenter() << endl;
-// 		cout << "Best center: " << max_center << " with correlation " << max_corr << endl;
-// 		
-// 		cout << "in fitOffset_mz_: " << 	mz_model_ << endl;
 		
 		return max_corr;
 	}

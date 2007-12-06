@@ -26,21 +26,6 @@
 
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/AveragineMatcher.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LmaGaussModel.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/GaussModel.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgModel.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BiGaussModel.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LogNormalModel.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
-#include <OpenMS/CONCEPT/Factory.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseQuality.h>
-
-#include <iostream>
-#include <fstream>
-#include <numeric>
-#include <math.h>
-
-#include <vector>
 
 using namespace std;
 
@@ -124,8 +109,7 @@ namespace OpenMS
 		defaults_.setValue("isotope_model:isotope:maximum",100,"Maximum number of isotopes being used for the IsotopeModel.");
 		defaults_.setValue("isotope_model:isotope:distance",1.000495f,"Distance between consecutive isotopic peaks.");
 		defaults_.setDescription("isotope_model","Settings of the isotope model (m/z).");
-		
-		
+				
 		defaultsToParam_();
 	}
 
@@ -309,20 +293,24 @@ namespace OpenMS
 			delete final;
 		}
 		
-		// Cutoff low intensities wrt. to averagine model
+		// Cutoff low intensities wrt. to averagine model and add points with high intensity below the model
 		IndexSet model_set;
-		for (IndexSetIter it=set.begin(); it!=set.end(); ++it) 
-		{
-			if (mz_model_.getIntensity( traits_->getPeakMz(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) &&
-			    rt_model_.getIntensity( traits_->getPeakRt(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) )
-			{
-					model_set.insert(*it);
- 			}
-			else		// free dismissed peak by setting the UNUSED flag
-			{
-					traits_->getPeakFlag(*it) = FeaFiTraits::UNUSED;
-			}
-		}
+		reshapeFeatureRegion_(set, model_set);
+// 		for (IndexSetIter it=set.begin(); it!=set.end(); ++it) 
+// 		{
+// 			if (mz_model_.getIntensity( traits_->getPeakMz(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) &&
+// 			    rt_model_.getIntensity( traits_->getPeakRt(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) )
+// 			{
+// 					model_set.insert(*it);
+//  			}
+// 			else		// free dismissed peak by setting the UNUSED flag
+// 			{
+// 					traits_->getPeakFlag(*it) = FeaFiTraits::UNUSED;
+// 			}
+// 		}
+		
+		
+		
 		// Print number of selected peaks after cutoff
 		cout << " Selected " << model_set.size() << " from " << set.size() << " peaks." << std::endl;
 
@@ -351,22 +339,17 @@ namespace OpenMS
 		mz_data_avg /= mz_lin_int_.getData().size();
 	
 		QualityType qual_mz = compute_mz_corr_(mz_data_sum, mz_model_, mz_data_avg);
-	
-// 		cout << "Quality in m/z : " << qual_mz << endl;
+
 		QualityType qual_rt =	quality_->evaluate(model_set, rt_model_, RT );
 		if (isnan(qual_rt) ) qual_rt = -1.0;
-// 		cout << "Quality in rt : " << qual_rt << endl;
-		
+
 		max_quality = (qual_mz + qual_rt) / 2.0;
 
-		if (max_quality < 0.2)
+		// if the fit is not too bad, we try different charge states and check if we get better
+		if (max_quality > 0.2 && max_quality < (QualityType)(param_.getValue("quality:minimum")))
 		{
-// 			cout << "max quality is too low: " << max_quality << endl;
-
 			Int fmz = first_mz_model_;
 			Int lmz = last_mz_model_;
-			
-// 			cout << "Checking charge states " << fmz << " to " << lmz << endl;
 			fit_loop_(set, fmz,lmz,sampling_size_mz,final);	
 			
 		}
@@ -388,6 +371,8 @@ namespace OpenMS
 		f.setOverallQuality(max_quality);
 		f.setRT(dynamic_cast<InterpolationModel*>(final->getModel(RT))->getCenter());
 		
+		
+		// try to improve mono m/z estimate
 		CoordinateType mz_guess = mz_model_.getCenter();
 		vector< IDX > max_scan;
 		for (IndexSetIter it=set.begin(); it!=set.end(); ++it )
@@ -421,8 +406,6 @@ namespace OpenMS
 			// walk to the left
 			for (vector<IDX>::iterator it = iter; it != max_scan.begin() && mz_dist <= 0.25; --it )
 			{
-// 				cout << "it: " << it->first << " " << it->second << endl;
-			
 				if (it->first >= traits_->getData().size())
 				{
 					break;
@@ -475,7 +458,7 @@ namespace OpenMS
 // 		cout << "Setting to mz " << 		max_mono_candidate_mz << endl;
 // 		cout << "Old estimate " << mz_guess << endl;
 		
-		f.setMZ( max_mono_candidate_mz /*dynamic_cast<InterpolationModel*>(final->getModel(MZ))->getCenter()*/);
+		f.setMZ( max_mono_candidate_mz ); /*dynamic_cast<InterpolationModel*>(final->getModel(MZ))->getCenter()*/
 		if (final->getModel(MZ)->getName() == "IsotopeModel")
 		{
 			f.setCharge(dynamic_cast<IsotopeModel*>(final->getModel(MZ))->getCharge());
@@ -511,10 +494,10 @@ namespace OpenMS
 		f.setIntensity(feature_intensity);
 		traits_->addConvexHull(model_set, f);
 
-		std::cout << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss").toStdString() << " Feature " << counter_
-							<< ": (" << f.getRT()
-							<< "," << f.getMZ() << ") Qual.:"
-							<< max_quality << "\n";
+		cout << QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss").toStdString() << " Feature " << counter_
+						<< ": (" << f.getRT()
+						<< "," << f.getMZ() << ") Qual.:"
+						<< max_quality << "\n";
 
 
 		f.setQuality(RT, qual_rt);
@@ -564,7 +547,7 @@ namespace OpenMS
 		
  		return f;
 	}
-
+		
 	AveragineMatcher::QualityType AveragineMatcher::fit_(const ChargedIndexSet& set, MzFitting mz_fit, RtFitting /*rt_fit*/,
 																	 					  																	  Coordinate isotope_stdev, UInt sampling_size)
 	{
@@ -747,7 +730,122 @@ namespace OpenMS
 		
 		return max_corr;
 	}
+	
+	void  AveragineMatcher::reshapeFeatureRegion_(const ChargedIndexSet& set, IndexSet& result)
+	{
+		vector<IDX> queue;
+		
+		for (IndexSetIter it=set.begin(); it!=set.end(); ++it) 
+		{
+// 			cout << "m/z model intensity " << mz_model_.getIntensity( traits_->getPeakMz(*it) )<< endl;
+// 			cout << "rt model intensity " << rt_model_.getIntensity( traits_->getPeakMz(*it) )<< endl;
+ 			
+			if (mz_model_.getIntensity( traits_->getPeakMz(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) &&
+					rt_model_.getIntensity( traits_->getPeakRt(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) )
+			{
+					result.insert(*it);
+					// check neighbours of this point
+					moveMzUp_(*it,queue);
+					moveMzDown_(*it,queue);
+					moveRtUp_(*it,queue);
+					moveRtDown_(*it,queue);
+ 			}
+			else		// free dismissed peak by setting the UNUSED flag
+			{
+					traits_->getPeakFlag(*it) = FeaFiTraits::UNUSED;
+			}
+		}
+		
+// 		cout << "checking neighbours " << endl;
+		UInt c = 0;
+		while(queue.size() > 0)
+		{
+// 			cout << "queue size: " << queue.size() << endl;
+			IDX id = queue.back();
+			queue.pop_back();
+			traits_->getPeakFlag(id) = FeaFiTraits::USED;
+			result.insert(id);
+			++c;
+			moveMzUp_(id,queue);
+			moveMzDown_(id,queue);
+			moveRtUp_(id,queue);
+			moveRtDown_(id,queue);	
+		}
+		cout << "Added " << c << " points " << endl;
+	}
+		
+	void AveragineMatcher::moveMzUp_(const IDX& index, vector<IDX>& queue)
+	{
+    IDX tmp = index;
+		try
+		{
+				traits_->getNextMz(tmp);
+				if ( mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
+						&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
+							&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
+				{
+					queue.push_back(tmp);
+				}
+    }
+    catch(NoSuccessor)
+    {
+    }
+	}
 
+	void AveragineMatcher::moveMzDown_(const IDX& index, vector<IDX>& queue)
+	{
+    try
+    {
+    	IDX tmp = index;
+			traits_->getPrevMz(tmp);
+				if (  mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
+						&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
+							&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
+				{
+					queue.push_back(tmp);
+				}
+    }
+    catch(NoSuccessor)
+    {
+    }
+	}
+
+	void AveragineMatcher::moveRtUp_(const IDX& index, vector<IDX>& queue)
+	{
+   try
+    {
+    	IDX tmp = index;
+			traits_->getNextRt(tmp);
+				if (  mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
+						&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
+							&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
+				{
+					queue.push_back(tmp);
+				}
+    }
+    catch(NoSuccessor)
+    {
+    }	
+	}
+
+	void AveragineMatcher::moveRtDown_(const IDX& index, vector<IDX>& queue)
+	{
+  try
+    {
+    	IDX tmp = index;
+			traits_->getPrevRt(tmp);
+				if ( mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
+						&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
+							&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
+				{
+					queue.push_back(tmp);
+				}
+    }
+    catch(NoSuccessor)
+    {
+    }		
+	}
+	
 
 	AveragineMatcher::QualityType AveragineMatcher::fitOffset_(	InterpolationModel* model,
 																																													const IndexSet& set, const double stdev1,  const double stdev2,

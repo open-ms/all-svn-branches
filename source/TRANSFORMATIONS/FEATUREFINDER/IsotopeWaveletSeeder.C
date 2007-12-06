@@ -380,7 +380,7 @@ namespace OpenMS
 			cwt_thresholds.at(c)     =  cwt_median * cwt_avg_factor_;
 			
 			cout << "Median intensity in cwt: " << cwt_median << endl;
-    	cout << "Intensity threshold for cwt: " << cwt_avg_factor_ << endl;
+    	cout << "Intensity threshold for cwt: " << (cwt_thresholds.at(c) ) << endl;
 
 			#ifdef DEBUG_FEATUREFINDER
 			//write debug output

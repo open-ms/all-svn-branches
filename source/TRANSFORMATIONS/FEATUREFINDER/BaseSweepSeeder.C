@@ -48,7 +48,7 @@ BaseSweepSeeder::BaseSweepSeeder()
 			// minimum number of scans per isotopic cluster
 		defaults_.setValue("min_number_scans",5,"min. number of scans");
 			// maximum number of scans per isotopic cluster
-		defaults_.setValue("max_number_scans",300,"max. number of scans");
+		defaults_.setValue("max_number_scans",700,"max. number of scans");
 		// minimum number of peaks per cluster
 		defaults_.setValue("min_number_peaks",20,"minimum number of peaks");		
 		
@@ -107,12 +107,12 @@ void BaseSweepSeeder::updateMembers_()
 	scans_to_sumup_           			= param_.getValue("scans_to_sumup");
 
 	// sweepline params
-	mass_tolerance_cluster_   = param_.getValue("mass_tolerance_cluster");
+	mass_tolerance_cluster_   	= param_.getValue("mass_tolerance_cluster");
 	rt_tolerance_cluster_     			= (UInt) param_.getValue("rt_tolerance_cluster");
 	
 	// cluster merging params
-	max_rt_dist_merging_      = param_.getValue("max_rt_dist_merging"); 
-	max_mz_dist_merging_      = param_.getValue("max_mz_dist_merging");
+	max_rt_dist_merging_      	= param_.getValue("max_rt_dist_merging"); 
+	max_mz_dist_merging_     = param_.getValue("max_mz_dist_merging");
 }
 
 void BaseSweepSeeder::sweep_()
@@ -317,30 +317,34 @@ void BaseSweepSeeder::filterForOverlaps_()
 			
 			while (  tmp_iter !=iso_map_.end() && mz_dist < max_mz_dist_merging_ )
 			{			
-				bool rt_overlap = false;
+				bool overlap = false;
 				
 				// test if cluster overlap
 				if (	(iter->second.first_scan_ >= tmp_iter->second.first_scan_ && // first case
 				       iter->second.first_scan_ <= tmp_iter->second.last_scan_ ) ||
 							(iter->second.last_scan_ >= tmp_iter->second.first_scan_ && // second case
-				       iter->second.last_scan_ <= tmp_iter->second.first_scan_ ) ||
+				       iter->second.last_scan_ <= tmp_iter->second.last_scan_ ) ||
 							(tmp_iter->second.first_scan_ >= iter->second.first_scan_ && // third case
 				       tmp_iter->second.first_scan_ <= iter->second.last_scan_ ) ||
 							(tmp_iter->second.last_scan_ >= iter->second.first_scan_ && // fourth case
-				       tmp_iter->second.last_scan_ <= iter->second.first_scan_ ) )
+				       tmp_iter->second.last_scan_ <= iter->second.last_scan_ ) )
 				{
-					rt_overlap = true;				
+					overlap = true;				
 				}
 				       
 				rt_dist   = tmp_iter->second.first_scan_ - iter->second.last_scan_;
 				mz_dist = tmp_iter->first - iter->first;
-				
-				if (rt_dist >= max_rt_dist_merging_) rt_overlap = false;
-				if (mz_dist >= max_mz_dist_merging_) rt_overlap = false;
+// 				cout << "Overlap ! mz distance : " << mz_dist << endl;
+// 				if (rt_dist >= max_rt_dist_merging_) rt_overlap = false;
+				if (mz_dist >= max_mz_dist_merging_) 
+				{
+					overlap = false;
+// 					cout << "Too much. Tolerance: " << max_mz_dist_merging_ << endl;
+				}
 						
 				// we merge only features with the same charge, overlap in rt and if we haven't seen them yet.
-				if ( tmp_iter->second.peaks_.charge_ == iter->second.peaks_.charge_ 
-				     && rt_overlap
+				if ( /*tmp_iter->second.peaks_.charge_ == iter->second.peaks_.charge_ 
+				     &&*/ overlap
 						 && !seen.at(tmpc)) 
 				{
 					// merging features...
@@ -372,7 +376,7 @@ void BaseSweepSeeder::filterForOverlaps_()
 					}
 					
 					// recompute median
-					computeBorders_(iter);		
+// 					computeBorders_(iter);		
 					
 					// mark this cluster as deleted
 					entries_to_delete.push_back(tmp_iter);
@@ -421,6 +425,8 @@ void BaseSweepSeeder::filterForSize_()
 
 void BaseSweepSeeder::filterForSignificance_()
 {
+	if (iso_map_.size() == 0) return;
+
 	vector<TableIteratorType> entries_to_delete;
 			
 	ProbabilityType alpha = param_.getValue("fdr_alpha");
@@ -449,12 +455,22 @@ void BaseSweepSeeder::filterHash_()
 
 		filterForSize_();
 		
-		// filter two times for overlaps
+		// filter 3 times for overlaps (and re-computer feature bounding boxes)
 		filterForOverlaps_( );
-		filterForOverlaps_( );
+		for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
+		{	
+			computeBorders_(iter);		
+		}
 		
+		filterForOverlaps_( );
+		for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
+		{	
+			computeBorders_(iter);		
+		}
+		
+		filterForOverlaps_( );
+				
 		filterForSignificance_();
-					
 		cout << iso_map_.size() << " clusters remained after filtering." << endl;
 }
 

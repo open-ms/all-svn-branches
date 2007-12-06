@@ -27,21 +27,40 @@
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_AVERAGINEMATCHER_H
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_AVERAGINEMATCHER_H
 
+
+// OpenMS includes
+#include <OpenMS/CONCEPT/Factory.h>
+
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseModelFitter.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeaFiTraits.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ProductModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/InterpolationModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgModel.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LmaGaussModel.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/GaussModel.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgModel.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BiGaussModel.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LogNormalModel.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseQuality.h>
 
 #include <OpenMS/MATH/STATISTICS/AsymmetricStatistics.h>
+
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>
 
+// GSL includes
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multifit_nlin.h>
 #include <gsl/gsl_blas.h>
+
+// STL includes
+#include <iostream>
+#include <fstream>
+#include <numeric>
+#include <math.h>
+#include <vector>
 
 namespace OpenMS
 {
@@ -226,11 +245,22 @@ namespace OpenMS
 	
 	 protected:
 	 
-	 /// debug info
+	 	/// debug info
 	 	void dump_all_(ChargedIndexSet set, UInt sampling_size);
 	 
 		/// loop
-	 QualityType fit_loop_(const ChargedIndexSet& set, Int& first_mz, Int& last_mz, CoordinateType& sampling_size_mz , ProductModel<2>*& final); 
+	 	QualityType fit_loop_(const ChargedIndexSet& set, Int& first_mz, Int& last_mz, CoordinateType& sampling_size_mz , ProductModel<2>*& final); 
+	 
+	 	/// reshape feature region
+		void  reshapeFeatureRegion_(const ChargedIndexSet& region, IndexSet& model_set);
+		
+		void moveMzUp_(const IDX& index, std::vector<IDX>& queue);
+		
+		void moveMzDown_(const IDX& index, std::vector<IDX>& queue);
+		
+		void moveRtUp_(const IDX& index, std::vector<IDX>& queue);
+		
+		void moveRtDown_(const IDX& index, std::vector<IDX>& queue);
 
 		virtual void updateMembers_();
 

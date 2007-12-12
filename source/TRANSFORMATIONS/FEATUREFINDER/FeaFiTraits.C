@@ -100,6 +100,8 @@ namespace OpenMS
   	OPENMS_PRECONDITION(index.first<map_.size(), "Scan index outside of map!");
     OPENMS_PRECONDITION(index.second<map_[index.first].size(), "Peak index outside of scan!");
 		
+		cout << "getPrevRt() for index " << index.first << " " << index.second << endl;
+		
 		if (index.first>=map_.size() )
 		{
 			cout << "Scan index outside of map!" << endl;
@@ -119,9 +121,12 @@ namespace OpenMS
 			throw NoSuccessor(__FILE__, __LINE__, "FeaFiTraits::getPrevRt", index);
 		}
 		
+		
 		// perform binary search to find the neighbour in rt dimension
 		CoordinateType mz_pos = map_[index.first][index.second].getMZ();
 		--index.first;
+		cout << "Binary search: " << index.first << " " << index.second << endl;
+		cout << "Current scan size: " << map_[index.first].size() << endl;
 		MapType::SpectrumType::ConstIterator it = lower_bound(map_[index.first].begin(), 
 		                                                                                  map_[index.first].end(), 
 																																								      map_[index.first+1][index.second], 

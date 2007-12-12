@@ -81,7 +81,7 @@ namespace OpenMS
 		defaults_.setValue("rt:max_iteration",500,"Maximum number of iterations for RT fitting.");
 		defaults_.setValue("rt:deltaAbsError",0.0001,"Absolute error used by the Levenberg-Marquardt algorithms.");
 		defaults_.setValue("rt:deltaRelError",0.0001,"Relative error used by the Levenberg-Marquardt algorithms.");
-		defaults_.setValue("rt:profile","EMG","Type of RT model. Currently only 'EMG' is supported.");
+// 		defaults_.setValue("rt:profile","EMG","Type of RT model. Currently only 'EMG' is supported.");
 		defaults_.setDescription("rt","Model settings in RT dimension.");
 		
 		defaults_.setValue("mz:interpolation_step",0.03f,"Interpolation step size for m/z.");
@@ -144,7 +144,7 @@ namespace OpenMS
 		max_iteration_ = param_.getValue("rt:max_iteration");
 		eps_abs_        = param_.getValue("rt:deltaAbsError");
 		eps_rel_         = param_.getValue("rt:deltaRelError");
-		profile_           = (string)param_.getValue("rt:profile");
+// 		profile_           = (string)param_.getValue("rt:profile");
 
 		interpolation_step_mz_ = param_.getValue("mz:interpolation_step");
 		interpolation_step_rt_ = param_.getValue("rt:interpolation_step");
@@ -160,7 +160,7 @@ namespace OpenMS
 	AveragineMatcher::QualityType AveragineMatcher::fit_loop_(const ChargedIndexSet& set, Int& first_mz, Int& last_mz, CoordinateType& sampling_size_mz , ProductModel<2>*& final) 
 	{
 		QualityType quality = 0.0;
-		QualityType max_quality = -std::numeric_limits<QualityType>::max();
+		QualityType max_quality = -numeric_limits<QualityType>::max();
 		
 		for ( float stdev = iso_stdev_first_; stdev <= iso_stdev_last_; stdev += iso_stdev_stepsize_)
 		{
@@ -196,8 +196,7 @@ namespace OpenMS
 		quality_->setTraits(traits_);
 		mz_lin_int_.getData().clear();		// empty interpolation datastructrure
 		
-		//QualityType quality = 0.0;
-		QualityType max_quality = -std::numeric_limits<QualityType>::max();
+		QualityType max_quality = -numeric_limits<QualityType>::max();
 		UInt max_peak_scan = 0;
 
 		// Calculate statistics
@@ -205,7 +204,7 @@ namespace OpenMS
 		rt_stat_.update ( IntensityIterator(set.begin(),traits_),IntensityIterator(set.end(),traits_),RtIterator(set.begin(),traits_) );
 
 		// Calculate bounding box
-		CoordinateType min_mz_distance = std::numeric_limits<CoordinateType>::max();
+		CoordinateType min_mz_distance = numeric_limits<CoordinateType>::max();
 		CoordinateType prev_mz = 0.0;
 		IntensityType highest_intensity = 0.0;
 		IndexSetIter it=set.begin();
@@ -258,17 +257,16 @@ namespace OpenMS
 		// create a vector with RT-values & Intensity
 		// compute the parameters (intial values) for the EMG & Gauss function and finally,
 		// optimize the parameters with Levenberg-Marquardt algorithms
-		if (profile_=="LmaGauss" || profile_=="EMG" || profile_=="LogNormal")
+		setData(set);
+		if (symmetric_==false)
 		{
-			setData(set);
-			if (symmetric_==false)
-				optimize();
-				
-			if (gsl_status_!="success") 
-			{
-				cout << profile_ + " status: " + gsl_status_ << endl;
-				//throw UnableToFit(__FILE__, __LINE__,__PRETTY_FUNCTION__,"UnableToFit-BadQuality",String("Skipping feature, " + profile_ + " status: " + gsl_status_));
-			}
+			optimize();
+		}	
+		
+		if (gsl_status_!="success") 
+		{
+			cout << "EMG fitting status: " + gsl_status_ << endl;
+// 				throw UnableToFit(__FILE__, __LINE__,__PRETTY_FUNCTION__,"UnableToFit-BadQuality",String("Skipping feature, EMG status: " + gsl_status_));
 		}
 
 		// Test charge states and stdevs
@@ -281,7 +279,7 @@ namespace OpenMS
 			first_mz = set.charge_;
 			last_mz = set.charge_;
 		}
-		//cout << "Checking charge state from " << first_mz << " to " << last_mz << endl;
+		cout << "Checking charge state from " << first_mz << " to " << last_mz << endl;
 	
 		ProductModel<2>* final = 0;	// model  with best correlation		
 		fit_loop_(set, first_mz,last_mz,sampling_size_mz,final);
@@ -310,9 +308,8 @@ namespace OpenMS
 // 		}
 		
 		
-		
 		// Print number of selected peaks after cutoff
-		cout << " Selected " << model_set.size() << " from " << set.size() << " peaks." << std::endl;
+		cout << " Selected " << model_set.size() << " from " << set.size() << " peaks." << endl;
 
 		// not enough peaks left for feature
 		if (model_set.size() < (UInt)(param_.getValue("min_num_peaks:final")))
@@ -565,7 +562,7 @@ namespace OpenMS
 	{
 			// dumping linear interpolation DS
 			String filename = "dump_out_" + String(counter_) + String("_") + String(sampling_size);
-			std::ofstream outfile(filename.c_str());
+			ofstream outfile(filename.c_str());
 			
 			for (UInt i=0;i<mz_lin_int_.getData().size();++i)
 			{
@@ -581,7 +578,7 @@ namespace OpenMS
 						citer != set.end();
 						++citer)
 			{
-				outfile << traits_->getPeakRt(*citer) << " " << traits_->getPeakMz(*citer) << " " << traits_->getPeakIntensity(*citer) << std::endl;
+				outfile << traits_->getPeakRt(*citer) << " " << traits_->getPeakMz(*citer) << " " << traits_->getPeakIntensity(*citer) << endl;
 			}
 			outfile.close();
 	
@@ -656,8 +653,8 @@ namespace OpenMS
 		iso_model.setParameters(iso_param);
 		iso_model.setInterpolationStep(interpolation_step_mz_);
 			
-		QualityType max_corr         =  -std::numeric_limits<QualityType>::max();
-		CoordinateType max_center =  -std::numeric_limits<QualityType>::max();
+		QualityType max_corr         =  -numeric_limits<QualityType>::max();
+		CoordinateType max_center =  -numeric_limits<QualityType>::max();
 				
 		// normalize data and compute mean position
 		IntensityType mz_data_sum  = 0.0;
@@ -950,31 +947,14 @@ namespace OpenMS
 		}
 
 		// optimize the symmetry
-		if (profile_=="LogNormal") {
-			// The computations can lead to an overflow error at very low values of symmetry (s~0).
-			
-			if (symmetry_<=0.8)
-				symmetry_=0.8;
-			
-			if (symmetry_==1)
-				symmetry_=1.1;
+		// The computations can lead to an overflow error at very low values of symmetry (s~0). 
+		// For s~5 the parameter can be aproximized by the Levenberg-Marquardt argorithms.
+		// (the other parameters are much greater than one)
+		if (symmetry_<1)	symmetry_+=5;
 
-			if (symmetry_>=1.5)
-				symmetry_=1.4;
-
-			// it is better to proceed from narrow peaks
-			width_ /= 2;
-		}
-		else
-		{
-			// The computations can lead to an overflow error at very low values of symmetry (s~0). For s~5 the parameter can be aproximized by the Levenberg-Marquardt argorithms. (the other parameters are much greater than one)
-				
-			if (symmetry_<1)
-				symmetry_+=5;
-
-			// it is better for the emg function to proceed from narrow peaks
-			width_ = symmetry_;
-		}
+		// it is better for the emg function to proceed from narrow peaks
+		width_ = symmetry_;
+		
 
 		/* set the parameter r of the log normal function;
 		  r is the ratio between h and the height at which w and s are computed;
@@ -987,71 +967,26 @@ namespace OpenMS
 	int residualDC2(const gsl_vector* x, void* params , gsl_vector* f)
 	{
 		size_t n = ((struct ExpFitPolyData*)params)->n;
-		String profile = ((struct ExpFitPolyData*)params)->profile;
+// 		String profile = ((struct ExpFitPolyData*)params)->profile;
+		
+		double h = gsl_vector_get(x,0);
+		double w = gsl_vector_get(x,1);
+		double s = gsl_vector_get(x,2);
+		double z = gsl_vector_get(x,3);
 
-		/// normal distribution (s = standard deviation, m = expected value)
-		if (profile=="LmaGauss")
+		double Yi = 0.0;
+
+		// iterate over all points of the signal
+		for (size_t i = 0; i < n; i++)
 		{
-			double normal_s = gsl_vector_get(x,0);
-			double normal_m = gsl_vector_get(x,1);
-			double normal_scale = gsl_vector_get(x,2);
+			double t = positionsDC2_[i];
 
-			double Yi = 0.0;
-
-			for (size_t i = 0; i < n; i++)
-			{
-				double t = positionsDC2_[i];
-
-				Yi=(1/(sqrt(2*M_PI)*normal_s))*exp(-((t-normal_m)*(t-normal_m))/(2*normal_s*normal_s))*normal_scale;
+				// Simplified EMG
+				Yi=(h*w/s)*sqrt(2*M_PI)*exp(((w*w)/(2*s*s))-((t-z)/s))/(1+exp((-2.4055/sqrt(2))*(((t-z)/w)-w/s)));
 
 				gsl_vector_set(f, i, (Yi - signalDC2_[i]));
-			}
 		}
-		else
-		{
-			/// Simplified EMG
-			if (profile=="EMG")
-			{
-				double h = gsl_vector_get(x,0);
-				double w = gsl_vector_get(x,1);
-				double s = gsl_vector_get(x,2);
-				double z = gsl_vector_get(x,3);
-
-				double Yi = 0.0;
-
-				// iterate over all points of the signal
-				for (size_t i = 0; i < n; i++)
-				{
-					double t = positionsDC2_[i];
-
-					// Simplified EMG
-					Yi=(h*w/s)*sqrt(2*M_PI)*exp(((w*w)/(2*s*s))-((t-z)/s))/(1+exp((-2.4055/sqrt(2))*(((t-z)/w)-w/s)));
-
-					gsl_vector_set(f, i, (Yi - signalDC2_[i]));
-				}
-			}
-			/// log normal
-			else
-			{
-				double h = gsl_vector_get(x,0);
-				double w = gsl_vector_get(x,1);
-				double s = gsl_vector_get(x,2);
-				double z = gsl_vector_get(x,3);
-				double r = 2;//gsl_vector_get(x,4);
-
-				double Yi = 0.0;
-
-				for (size_t i = 0; i < n; i++)
-				{
-					double t = positionsDC2_[i];
-
-					Yi = h*exp(-log(r)/(log(s)*log(s))*pow(log((t-z)*(s*s-1)/(w*s)+1),2));
-
-					gsl_vector_set(f, i, (Yi - signalDC2_[i]));
-				}
-			}
-		}
-
+		
 		return GSL_SUCCESS;
 	}
 
@@ -1062,122 +997,48 @@ namespace OpenMS
 
 		size_t n = ((struct ExpFitPolyData*)params)->n;
 		String profile = ((struct ExpFitPolyData*)params)->profile;
+		
+		double h = gsl_vector_get(x,0);
+		double w = gsl_vector_get(x,1);
+		double s = gsl_vector_get(x,2);
+		double z = gsl_vector_get(x,3);
 
-		// normal distribution (s = standard deviation, m = expected value)
-		if (profile=="LmaGauss")
+		const double emg_const = 2.4055;
+		const double sqrt_2pi = sqrt(2*M_PI);
+		const double sqrt_2   = sqrt(2);
+
+		double exp1, exp2, exp3 = 0.0;
+		double derivative_height, derivative_width, derivative_symmetry, derivative_retention = 0.0;
+
+		// iterate over all points of the signal
+		for (size_t i = 0; i < n; i++)
 		{
-			double normal_s = gsl_vector_get(x,0);
-			double normal_m = gsl_vector_get(x,1);
-			double normal_scale = gsl_vector_get(x,2);
+			double t = positionsDC2_[i];
 
-			double derivative_normal_s, derivative_normal_m, derivative_normal_scale = 0.0;
+			exp1 = exp(((w*w)/(2*s*s))-((t-z)/s));
+			exp2 = (1+exp((-emg_const/sqrt_2)*(((t-z)/w)-w/s)));
+			exp3 = exp((-emg_const/sqrt_2)*(((t-z)/w)-w/s));
 
-			for (size_t i = 0; i < n; i++)
-			{
-				double t = positionsDC2_[i];
+			// f'(h) - sEMG
+			derivative_height = w/s*sqrt_2pi*exp1/exp2;
 
-				// f'(normal_s)
-				derivative_normal_s = -((1/sqrt(2*M_PI))/(normal_s*normal_s))*exp(-((t-normal_m)*(t-normal_m))/(2*normal_s*normal_s))*normal_scale+((1/sqrt(2*M_PI))/(normal_s*normal_s*normal_s*normal_s))*((t-normal_m)*(t-normal_m))*exp(-((t-normal_m)*(t-normal_m))/(2*normal_s*normal_s))*normal_scale;
+			// f'(h) - sEMG
+			derivative_width = h/s*sqrt_2pi*exp1/exp2 + (h*w*w)/(s*s*s)*sqrt_2pi*exp1/exp2 + (emg_const*h*w)/s*sqrt_2pi*exp1*(-(t-z)/(w*w)-1/s)*exp3/((exp2*exp2)*sqrt_2);
 
-				// f'(normal_m)
-				derivative_normal_m = ((1/sqrt(2*M_PI))/(normal_s*normal_s*normal_s))*(t-normal_m)*exp(-((t-normal_m)*(t-normal_m))/(2*normal_s*normal_s))*normal_scale;
+			// f'(s) - sEMG
+			derivative_symmetry = - h*w/(s*s)*sqrt_2pi*exp1/exp2 +  h*w/s*sqrt_2pi*(-(w*w)/(s*s*s)+(t-z)/(s*s))*exp1/exp2 + (emg_const*h*w*w)/(s*s*s)*sqrt_2pi*exp1*exp3/((exp2*exp2)*sqrt_2);
 
-				// f'(normal_scale)
-				derivative_normal_scale = ((1/sqrt(2*M_PI))/(normal_s))*exp(-((t-normal_m)*(t-normal_m))/(2*normal_s*normal_s));
+			// f'(z) - sEMG
+			derivative_retention = h*w/(s*s)*sqrt_2pi*exp1/exp2 - (emg_const*h)/s*sqrt_2pi*exp1*exp3/((exp2*exp2)*sqrt_2);
 
-				// set the jacobian matrix of the normal distribution
-				gsl_matrix_set(J, i, 0, derivative_normal_s);
-				gsl_matrix_set(J, i, 1, derivative_normal_m);
-				gsl_matrix_set(J, i, 2, derivative_normal_scale);
-			}
+			// set the jacobian matrix
+			gsl_matrix_set(J, i, 0, derivative_height);
+			gsl_matrix_set(J, i, 1, derivative_width);
+			gsl_matrix_set(J, i, 2, derivative_symmetry);
+			gsl_matrix_set(J, i, 3, derivative_retention);
+			
 		}
-		else
-		{
-			//Simplified EMG (sEMG)
-			if (profile=="EMG")
-			{
-				double h = gsl_vector_get(x,0);
-				double w = gsl_vector_get(x,1);
-				double s = gsl_vector_get(x,2);
-				double z = gsl_vector_get(x,3);
-
-				const double emg_const = 2.4055;
-				const double sqrt_2pi = sqrt(2*M_PI);
-				const double sqrt_2   = sqrt(2);
-
-				double exp1, exp2, exp3 = 0.0;
-				double derivative_height, derivative_width, derivative_symmetry, derivative_retention = 0.0;
-
-				// iterate over all points of the signal
-				for (size_t i = 0; i < n; i++)
-				{
-					double t = positionsDC2_[i];
-
-					exp1 = exp(((w*w)/(2*s*s))-((t-z)/s));
-					exp2 = (1+exp((-emg_const/sqrt_2)*(((t-z)/w)-w/s)));
-					exp3 = exp((-emg_const/sqrt_2)*(((t-z)/w)-w/s));
-
-					// f'(h) - sEMG
-					derivative_height = w/s*sqrt_2pi*exp1/exp2;
-
-					// f'(h) - sEMG
-					derivative_width = h/s*sqrt_2pi*exp1/exp2 + (h*w*w)/(s*s*s)*sqrt_2pi*exp1/exp2 + (emg_const*h*w)/s*sqrt_2pi*exp1*(-(t-z)/(w*w)-1/s)*exp3/((exp2*exp2)*sqrt_2);
-
-					// f'(s) - sEMG
-					derivative_symmetry = - h*w/(s*s)*sqrt_2pi*exp1/exp2 +  h*w/s*sqrt_2pi*(-(w*w)/(s*s*s)+(t-z)/(s*s))*exp1/exp2 + (emg_const*h*w*w)/(s*s*s)*sqrt_2pi*exp1*exp3/((exp2*exp2)*sqrt_2);
-
-					// f'(z) - sEMG
-					derivative_retention = h*w/(s*s)*sqrt_2pi*exp1/exp2 - (emg_const*h)/s*sqrt_2pi*exp1*exp3/((exp2*exp2)*sqrt_2);
-
-					// set the jacobian matrix
-					gsl_matrix_set(J, i, 0, derivative_height);
-					gsl_matrix_set(J, i, 1, derivative_width);
-					gsl_matrix_set(J, i, 2, derivative_symmetry);
-					gsl_matrix_set(J, i, 3, derivative_retention);
-				}
-			}
-			// log normal function
-			else
-			{
-				double h = gsl_vector_get(x,0);
-				double w = gsl_vector_get(x,1);
-				double s = gsl_vector_get(x,2);
-				double z = gsl_vector_get(x,3);
-				double r = 2;//gsl_vector_get(x,4);
-
-				double derivative_height, derivative_width, derivative_symmetry, derivative_retention,  derivative_r = 0.0;
-
-				// iterate over all points of the signal
-				for (size_t i = 0; i < n; i++)
-				{
-					double t = positionsDC2_[i];
-
-					double exp1  = exp(-log(r)/(log(s)*log(s))*pow(log((t-z)*(s*s-1)/(w*s)+1),2));
-					double term1 = (((t-z)*(s*s-1))/(w*s))+1;
-					double log_s = log(s);
-					double log_term1 = log(term1);
-					double log_r = log(r);
-
-					derivative_height = exp1;
-
-					derivative_width = 2*h*log_r/(log_s*log_s)*log_term1*(t-z)*(s*s-1)/(w*w)/s/term1*exp1;
-
-					derivative_symmetry = h*(2*log_r/(log_s*log_s*log_s)*(log_term1*log_term1)/s-2*log_r/(log_s*log_s)*log_term1*(2*(t-z)/w-(t-z)*(s*s-1)/(w*s*s))/term1)*exp1;
-
-					derivative_retention = 2*h*log_r/(log_s*log_s)*log_term1*(s*s-1)/(w*s)/term1*exp1;
-
-					derivative_r = 	-h/r/(log_s*log_s)*(log_term1*log_term1)*exp1;
-
-					// set the jacobian matrix
-					gsl_matrix_set(J, i, 0, derivative_height);
-					gsl_matrix_set(J, i, 1, derivative_width);
-					gsl_matrix_set(J, i, 2, derivative_symmetry);
-					gsl_matrix_set(J, i, 3, derivative_retention);
-					//gsl_matrix_set(J, i, 4, derivative_r);
-				}
-			}
-		}
-
+		
 		return GSL_SUCCESS;
 	}
 
@@ -1201,11 +1062,8 @@ namespace OpenMS
 		const size_t n = positionsDC2_.size();
 
 		// number of parameter to be optimize
-		unsigned int p = 0;
-		if (profile_=="LmaGauss") p = 3;
-		else if (profile_=="LogNormal") p = 4;//5;
-		else p = 4;
-
+		unsigned int p = 4;
+	
 		// gsl always excepts N>=p or default gsl error handler invoked, cause Jacobian be rectangular M x N with M>=N	
 		if (n<p)
 			throw UnableToFit(__FILE__, __LINE__,__PRETTY_FUNCTION__,"UnableToFit-FinalSet","Skipping feature, gsl always expects N>=p");
@@ -1213,22 +1071,13 @@ namespace OpenMS
 		gsl_matrix *covar = gsl_matrix_alloc(p,p);
 		gsl_multifit_function_fdf f;
 
-		double x_init_normal[3] = { standard_deviation_, expected_value_, height_ };
+// 		double x_init_normal[3] = { standard_deviation_, expected_value_, height_ };
 		double x_init_emg[4] = { height_, width_, symmetry_, retention_ };
 		//double x_init_lognormal[5] = { height_, width_, symmetry_, retention_, r_ };
-		double x_init_lognormal[4] = { height_, width_, symmetry_, retention_ };
+// 		double x_init_lognormal[4] = { height_, width_, symmetry_, retention_ };
 
-		gsl_vector_view x;
+		gsl_vector_view	x = gsl_vector_view_array(x_init_emg, p);
 
-		if (profile_=="LmaGauss")
-			x = gsl_vector_view_array(x_init_normal, p);
-		else
-		{
-			if (profile_=="LogNormal")
-				x = gsl_vector_view_array(x_init_lognormal, p);
-			else
-				x = gsl_vector_view_array(x_init_emg, p);
-		}
 
 		const gsl_rng_type * type;
 		gsl_rng * r;
@@ -1236,7 +1085,7 @@ namespace OpenMS
 		type = gsl_rng_default;
 		r = gsl_rng_alloc (type);
 
-		struct ExpFitPolyData d = {n, profile_};
+		struct ExpFitPolyData d = {n, "EMG"};
 		f.f = &residualDC2;
 		f.df = &jacobianDC2;
 		f.fdf = &evaluateDC2;
@@ -1249,33 +1098,12 @@ namespace OpenMS
 		gsl_multifit_fdfsolver_set(s, &f, &x.vector);
 
 #ifdef DEBUG_FEATUREFINDER
-		if (profile_=="LmaGauss") {
-			printf ("before loop iter: %4u x = % 15.8f % 15.8f % 15.8f |f(x)| = %g\n", iter,
+			printf ("before loop iter: %4u x = % 15.8f % 15.8f  % 15.8f  % 15.8f |f(x)| = %g\n", iter,
 							gsl_vector_get(s->x,0),
 							gsl_vector_get(s->x,1),
 							gsl_vector_get(s->x,2),
+							gsl_vector_get(s->x,3),
 							gsl_blas_dnrm2(s->f));
-		}
-		else {
-			if (profile_=="EMG") {
-				printf ("before loop iter: %4u x = % 15.8f % 15.8f  % 15.8f  % 15.8f |f(x)| = %g\n", iter,
-								gsl_vector_get(s->x,0),
-								gsl_vector_get(s->x,1),
-								gsl_vector_get(s->x,2),
-								gsl_vector_get(s->x,3),
-								gsl_blas_dnrm2(s->f));
-			}
-			else {
-				printf ("before loop iter: %4u x = % 15.8f % 15.8f  % 15.8f  % 15.8f |f(x)| = %g\n", iter,
-								gsl_vector_get(s->x,0),
-								gsl_vector_get(s->x,1),
-								gsl_vector_get(s->x,2),
-								gsl_vector_get(s->x,3),
-								//gsl_vector_get(s->x,4),
-								gsl_blas_dnrm2(s->f));
-
-			}
-		}
 #endif
 
 		// this is the loop for fitting
@@ -1285,33 +1113,13 @@ namespace OpenMS
 			status = gsl_multifit_fdfsolver_iterate (s);
 
 #ifdef DEBUG_FEATUREFINDER
-			// This is useful for debugging
-			if (profile_=="LmaGauss") 	{
-				printf ("in loop iter: %4u x = % 15.8f % 15.8f % 15.8f |f(x)| = %g\n", iter,
-								gsl_vector_get(s->x,0),
-								gsl_vector_get(s->x,1),
-								gsl_vector_get(s->x,2),
-								gsl_blas_dnrm2(s->f));
-			}
-			else {
-				if (profile_=="EMG") {
-					printf ("in loop iter: %4u x = % 15.8f % 15.8f  % 15.8f  % 15.8f |f(x)| = %g\n", iter,
-									gsl_vector_get(s->x,0),
-									gsl_vector_get(s->x,1),
-									gsl_vector_get(s->x,2),
-									gsl_vector_get(s->x,3),
-									gsl_blas_dnrm2(s->f));
-				}
-				else {
-					printf ("in loop iter: %4u x = % 15.8f % 15.8f  % 15.8f  % 15.8f |f(x)| = %g\n", iter,
-									gsl_vector_get(s->x,0),
-									gsl_vector_get(s->x,1),
-									gsl_vector_get(s->x,2),
-									gsl_vector_get(s->x,3),
-									//gsl_vector_get(s->x,4),
-									gsl_blas_dnrm2(s->f));
-				}
-			}
+			// long-winded debugging output
+// 			printf ("in loop iter: %4u x = % 15.8f % 15.8f  % 15.8f  % 15.8f |f(x)| = %g\n", iter,
+// 									gsl_vector_get(s->x,0),
+// 									gsl_vector_get(s->x,1),
+// 									gsl_vector_get(s->x,2),
+// 									gsl_vector_get(s->x,3),
+// 									gsl_blas_dnrm2(s->f));
 #endif
 
 			// fit is done
@@ -1324,7 +1132,7 @@ namespace OpenMS
 		gsl_multifit_covar(s->J, 0.0, covar);
 
 #ifdef DEBUG_FEATUREFINDER
-		gsl_matrix_fprintf(stdout, covar, "%g");
+// 		gsl_matrix_fprintf(stdout, covar, "%g");
 #endif
 
 #define FIT(i) gsl_vector_get(s->x, i)
@@ -1334,50 +1142,11 @@ namespace OpenMS
 
 #ifdef DEBUG_FEATUREFINDER
 		cout << profile_ << " status: " << gsl_status_ << endl;
-#endif
-
-		if (profile_=="LmaGauss")
+		if (status != GSL_SUCCESS)
 		{
-#ifdef DEBUG_FEATUREFINDER
-			printf("deviation          = %.5f +/- %.5f\n", FIT(0), ERR(0));
-			printf("expected_value	   = %.5f +/- %.5f\n", FIT(1), ERR(1));
-			printf("scale_factor       = %.5f +/- %.5f\n", FIT(2), ERR(2));
-#endif
-			standard_deviation_ = FIT(0);
-			expected_value_     = FIT(1);
-			scale_factor_       = FIT(2);
+			cout << "Fitting not succeeded." << endl;
 		}
-		else
-		{
-			if (profile_=="EMG")
-			{
-#ifdef DEBUG_FEATUREFINDER
-				printf("h = %.5f +/- %.5f\n", FIT(0), ERR(0));
-				printf("w = %.5f +/- %.5f\n", FIT(1), ERR(1));
-				printf("s = %.5f +/- %.5f\n", FIT(2), ERR(2));
-				printf("z = %.5f +/- %.5f\n", FIT(3), ERR(3));
 #endif
-				height_     = FIT(0);
-				width_      = FIT(1);
-				symmetry_   = FIT(2);
-				retention_  = FIT(3);
-			}
-			else
-			{
-#ifdef DEBUG_FEATUREFINDER
-				printf("h = %.5f +/- %.5f\n", FIT(0), ERR(0));
-				printf("w = %.5f +/- %.5f\n", FIT(1), ERR(1));
-				printf("s = %.5f +/- %.5f\n", FIT(2), ERR(2));
-				printf("z = %.5f +/- %.5f\n", FIT(3), ERR(3));
-			//	printf("r = %.5f +/- %.5f\n", FIT(4), ERR(4));
-#endif
-				height_     = FIT(0);
-				width_      = FIT(1);
-				symmetry_   = FIT(2);
-				retention_  = FIT(3);
-				r_ 	    = r_;//FIT(4);
-			}
-		}
 
 #ifdef DEBUG_FEATUREFINDER
 		{
@@ -1389,24 +1158,7 @@ namespace OpenMS
 
 		// function free all memory associated with the solver s
 		gsl_multifit_fdfsolver_free(s);
-
-#ifdef DEBUG_FEATUREFINDER
-		for (size_t current_point=0; current_point<positionsDC2_.size();current_point++)
-			std::cout << positionsDC2_[current_point] << " " << signalDC2_[current_point] << std::endl;
-
-		cout << "" << endl;
-		cout << "*** parameter for optimization ***" << endl;
-		cout << "       height:  " << height_ << endl;
-		cout << "        width:  " << width_ << endl;
-		cout << "     symmetry:  " << symmetry_ << endl;
-		cout << "    retention:  " << retention_ << endl;
-		cout << "std.deviation:  " << standard_deviation_ << endl;
-		cout << "max_iteration:  " << max_iteration_ << endl;
-		cout << "      eps_abs:  " << eps_abs_ << endl;
-		cout << "      eps_rel:  " << eps_rel_ << endl;
-		cout << "      profile:  " << profile_ << endl;
-		cout << "" << endl;
-#endif
+		
 		positionsDC2_.clear();
 		signalDC2_.clear();
 	}
@@ -1446,7 +1198,7 @@ namespace OpenMS
 		return scale_factor_; 
 	}
 
-	std::string AveragineMatcher::getGSLStatus() const 
+	string AveragineMatcher::getGSLStatus() const 
 	{ 
 		return gsl_status_; 
 	}

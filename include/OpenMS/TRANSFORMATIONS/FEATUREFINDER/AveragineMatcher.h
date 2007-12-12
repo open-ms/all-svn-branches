@@ -322,7 +322,7 @@ namespace OpenMS
 		/// gsl status
 		std::string gsl_status_;
 		/// function for fitting
-		std::string profile_;
+// 		std::string profile_;
 
 		/** Test for the convergence of the sequence by comparing the last iteration step dx with the absolute error epsabs and relative error epsrel to the current position x */
 		/// absolute error

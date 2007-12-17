@@ -61,7 +61,8 @@ CPP_SOURCES=\
 	DummyExtender.C\
 	BaseSweepSeeder.C\
 	InterpolationModel.C\
-	AveragineMatcher.C
+	AveragineMatcher.C\
+	ConvexHullExtender.C
 
 include ../../common.mak
 -include .Dependencies

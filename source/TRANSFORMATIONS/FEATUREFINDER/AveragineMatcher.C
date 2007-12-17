@@ -144,7 +144,6 @@ namespace OpenMS
 		max_iteration_ = param_.getValue("rt:max_iteration");
 		eps_abs_        = param_.getValue("rt:deltaAbsError");
 		eps_rel_         = param_.getValue("rt:deltaRelError");
-// 		profile_           = (string)param_.getValue("rt:profile");
 
 		interpolation_step_mz_ = param_.getValue("mz:interpolation_step");
 		interpolation_step_rt_ = param_.getValue("rt:interpolation_step");
@@ -319,15 +318,28 @@ namespace OpenMS
 																	"UnableToFit-FinalSet",
 												          String("Skipping feature, IndexSet size after cutoff too small: ") + model_set.size() );
 		}
- 		
+		
+		std::set<CoordinateType> rts;
+		for (IndexSetIter it=model_set.begin(); it!=model_set.end(); ++it )
+		{		
+			rts.insert( traits_->getPeakRt(*it));
+		}
+		
+		if (rts.size() <= 3)
+		{
+				cout << "NOT ENOUGH SCANS !! " << endl;
+				throw UnableToFit(__FILE__, __LINE__,__PRETTY_FUNCTION__,
+																	"UnableToFit-FinalSet",
+												          String("Skipping feature, IndexSet size after cutoff too small: ") + model_set.size() );
+		}
 		
 		QualityType qual_mz = compute_mz_corr_(mz_model_);
 
 		QualityType qual_rt =	quality_->evaluate(model_set, rt_model_, RT );
 		if (isnan(qual_rt) ) qual_rt = -1.0;
 
-		//max_quality = (qual_mz + qual_rt) / 2.0;
-		max_quality = qual_mz;
+		max_quality = (qual_mz + qual_rt) / 2.0;
+// 		max_quality = qual_mz;
 		
 		// if the fit is not too bad, we try different charge states and check if we get better
 		if (max_quality > 0.2 && max_quality < (QualityType)(param_.getValue("quality:minimum")))
@@ -361,7 +373,7 @@ namespace OpenMS
 		// try to improve mono m/z estimate
 		CoordinateType mz_guess = mz_model_.getCenter();
 		vector< IDX > max_scan;
-		for (IndexSetIter it=set.begin(); it!=set.end(); ++it )
+		for (IndexSetIter it=model_set.begin(); it!=model_set.end(); ++it )
 		{		
 			if (it->first == max_peak_scan)
 			{
@@ -490,10 +502,10 @@ namespace OpenMS
 		f.setQuality(MZ, qual_mz);
 
 		// save meta data in feature for TOPPView
-		stringstream meta ;
-		meta << "Feature #" << counter_ << ", +"	<< f.getCharge() << ", " << set.size() << "->" << model_set.size() 
-				 << ", Corr: (" << max_quality << ","  << f.getQuality(RT) << "," << f.getQuality(MZ) << ")";
-		f.setMetaValue(3,String(meta.str()));
+// 		stringstream meta ;
+// 		meta << "Feature #" << counter_ << ", +"	<< f.getCharge() << ", " << set.size() << "->" << model_set.size() 
+// 				 << ", Corr: (" << max_quality << ","  << f.getQuality(RT) << "," << f.getQuality(MZ) << ")";
+// 		f.setMetaValue(3,String(meta.str()));
 
 		#ifdef DEBUG_FEATUREFINDER
 		// write debug output
@@ -755,18 +767,23 @@ namespace OpenMS
 		UInt c = 0;
 		while(queue.size() > 0)
 		{
-// 			cout << "queue size: " << queue.size() << endl;
+//  			cout << "queue size: " << queue.size() << endl;
 			IDX id = queue.back();
+// 			cout << "Retrieved index " << id.first << " " << id.second << endl;
 			queue.pop_back();
 			traits_->getPeakFlag(id) = FeaFiTraits::USED;
 			result.insert(id);
 			++c;
+// 			cout << "mz up." << endl;
 			moveMzUp_(id,queue);
+// 			cout << "mz down." << endl;
 			moveMzDown_(id,queue);
+// 			cout << "rt up." << endl;
 			moveRtUp_(id,queue);
+// 			cout << "mz down." << endl;
 			moveRtDown_(id,queue);	
 		}
-		cout << "Added " << c << " points " << endl;
+// 		cout << "Added " << c << " points " << endl;
 	}
 		
 	void AveragineMatcher::moveMzUp_(const IDX& index, vector<IDX>& queue)
@@ -829,11 +846,19 @@ namespace OpenMS
     {
     	IDX tmp = index;
 			traits_->getPrevRt(tmp);
+			
+// 			cout << "m/z: " << traits_->getPeakMz(tmp) << endl;
+// 			cout << "rt: " << traits_->getPeakRt(tmp) << endl;
+// 			cout << "rt model: " << rt_model_.getIntensity( traits_->getPeakRt(tmp) ) << endl;
+// 			cout << "mz model: " << mz_model_.getIntensity( traits_->getPeakMz(tmp) ) << endl;
+// 			cout << "flag " <<  traits_->getPeakFlag(tmp) << endl;
+			
 				if ( mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
 						&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor") ) 
 							&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
 				{
 					queue.push_back(tmp);
+// 					cout << "push_back()" << endl;
 				}
     }
     catch(NoSuccessor)

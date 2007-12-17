@@ -61,6 +61,7 @@
 #include <numeric>
 #include <math.h>
 #include <vector>
+#include <set>
 
 namespace OpenMS
 {

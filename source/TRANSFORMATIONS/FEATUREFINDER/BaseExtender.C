@@ -30,6 +30,7 @@
 // all from BaseExtender derived classes
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SimpleExtender.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/DummyExtender.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ConvexHullExtender.h>
 
 namespace OpenMS
 {
@@ -37,6 +38,7 @@ namespace OpenMS
 	{
 		Factory<BaseExtender>::registerProduct(SimpleExtender::getProductName(), &SimpleExtender::create);
 		Factory<BaseExtender>::registerProduct(DummyExtender::getProductName(), &DummyExtender::create);
+		Factory<BaseExtender>::registerProduct(ConvexHullExtender::getProductName(), &ConvexHullExtender::create);
 	}	
 
 	BaseExtender::BaseExtender() : FeaFiModule()

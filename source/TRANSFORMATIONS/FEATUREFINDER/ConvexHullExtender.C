@@ -144,8 +144,8 @@ namespace OpenMS
 			moveRtUp_(idx);
 			moveRtDown_(idx);
 
-			cout << "ConvexHullExtender: intensity " << traits_->getPeakIntensity(idx) << " threshold : " << (sqrt(sum_intensity) * 0.01) << endl;
-			
+			cout << "ConvexHullExtender: intensity " << traits_->getPeakIntensity(idx) << " threshold : " << (sum_intensity * 0.1) << endl;
+			cout << "size: " << boundary_.size() << endl;
 			if ( traits_->getPeakIntensity(idx) >= sqrt(sum_intensity) * 0.01)
 			{
 				// set peak flags and add to boundary

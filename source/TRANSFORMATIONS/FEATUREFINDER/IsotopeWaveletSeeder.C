@@ -482,7 +482,7 @@ namespace OpenMS
 
 		// check to the left
 		UInt i = index;
-		while (mass_diff < 2.0 && i >= 1)
+		while (mass_diff < 1.0 && i >= 1)
 		{
 			if (cwt[i].getIntensity() > 	max_intensity)
 			{
@@ -495,7 +495,7 @@ namespace OpenMS
 
 		// check to the right
 		i = index;
-		while (mass_diff < 2.0 && i<cwt.size())
+		while (mass_diff < 1.0 && i<cwt.size())
 		{
 			if (cwt[i].getIntensity() > 	max_intensity)
 			{

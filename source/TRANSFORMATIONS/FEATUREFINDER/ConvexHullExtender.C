@@ -37,8 +37,12 @@ namespace OpenMS
 	{
     setName(getProductName());
         
-		defaults_.setValue("intensity_factor",0.03f,"Influences for intensity (ion count) threshold in the feature extension. We include only raw data"
-																								"points into this region if their intensity is larger than [intensity_factor * (intensity of the seed)].");
+		defaults_.setValue("intensity_factor",0.03f,"Influences for intensity (ion count) threshold in the feature extenstion");
+
+	  defaults_.setValue("dist_mz_up",6.0f,"maximum high m/z distance of peak in the region/boundary from the seed");
+	  defaults_.setValue("dist_mz_down",2.0f,"maximum low m/z distance of peak in the region/boundary from the seed");
+	  defaults_.setValue("dist_rt_up",5.0f,"maximum high RT distance of peak in the region/boundary from the seed");
+	  defaults_.setValue("dist_rt_down",5.0f,"maximum low RT distance of peak in the region/boundary from the seed");
 
     defaultsToParam_();
 	}
@@ -67,8 +71,8 @@ namespace OpenMS
   void ConvexHullExtender::updateMembers_()
   {
 		dist_mz_up_     = param_.getValue("dist_mz_up");
-		dist_mz_down_ = param_.getValue("dist_mz_down");
-		dist_rt_up_       = param_.getValue("dist_rt_up");
+		dist_mz_down_   = param_.getValue("dist_mz_down");
+		dist_rt_up_     = param_.getValue("dist_rt_up");
 		dist_rt_down_   = param_.getValue("dist_rt_down");
 	}
 

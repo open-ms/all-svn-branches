@@ -30,7 +30,9 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseExtender.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeaFiTraits.h>
 
-// #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/Kernel_with_attributes.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/Kernel_with_attributes.h>
+
+#include <OpenMS/MATH/STATISTICS/AveragePosition.h>
 
 #include <CGAL/Cartesian.h>
 #include <CGAL/convex_hull_2.h>
@@ -60,48 +62,10 @@ namespace OpenMS
   	typedef DoubleReal ProbabilityType;
 		/// Position of a point
 		typedef  FeaFiTraits::PositionType2D PositionType2D;
-		///
-		typedef CGAL::Kernel_with_attributes <CGAL::cartesian<double> , CGAL::Kernel_with_attributes_uniform_attributes<int> > KernelWithAttributes; 
+		/// Modified CGAL traits
+		typedef CGAL::Kernel_with_attributes <CGAL::Cartesian<double> , CGAL::Kernel_with_attributes_uniform_attributes<IDX> > KernelWithAttributes; 
 		/// A CGAL point
 		typedef CGAL::Point_2<KernelWithAttributes> Point_2;
-
-// 		class PointIndex 
-// 			: public Point_2
-// 		{
-// 			public:
-// 				/// Base class type
-// 				typedef ConvexHullExtender::Point_2 Base;
-// 		
-// 			PointIndex(CoordinateType rt, CoordinateType mz,  IDX i)
-// 				: Base(rt,mz),index_(i)
-// 			{ }
-// 			
-// 			~PointIndex()
-//       {}
-// 
-//       /// Copy constructor
-//       PointIndex(const PointIndex& source)
-//           : Base(source)
-//       {
-//         index_ = source.index_;
-//       }
-// 
-//       ///  Assignment operator
-//       PointIndex& operator = (const PointIndex& source)
-//       {
-//         if (this==&source)
-//           return *this;
-// 
-// 				Base::operator=(source);
-//         index_ = source.index_;
-//        
-//         return *this;
-//       }
-// 		
-// 			private:
-// 				IDX index_;
-// 			
-// 		};
 		
   	/// Default constructor
     ConvexHullExtender();
@@ -148,15 +112,9 @@ namespace OpenMS
   	/// Extends the seed into negative retention time direction 
   	void moveRtDown_(const IDX& current_peak);
   	
-  	/// Computes the priority of a peak as function of intensity and distance from seed. 
-  	ProbabilityType computePeakPriority_(const IDX& index);
-  	
   	/// Checks the neighbours of the current for insertion into the boundary.
   	void checkNeighbour_(const IDX& index);
-  	
-  	/// Keeps track of peaks already included in the boundary (value is priority of peak) 
-  	std::map<IDX, ProbabilityType> priorities_; 
-  	
+  	  	
   	/// Position of last peak extracted from the boundary (used to compute the priority of neighbouring peaks)
   	PositionType2D last_pos_extracted_;
 	
@@ -171,9 +129,11 @@ namespace OpenMS
 		CoordinateType dist_rt_up_; 
 		/// Maximum distance to seed in negative retention time
 		CoordinateType dist_rt_down_;   			
+				
+		std::vector<IDX> boundary_;
 		
-		/// Minium priority for points in the feature region (priority is function of intensity and distance to seed)
-		ProbabilityType priority_threshold_;
+		/// keeps an running average of the peak coordinates weighted by the intensities 
+  	Math::AveragePosition<2> running_avg_;
 		
   };
 }

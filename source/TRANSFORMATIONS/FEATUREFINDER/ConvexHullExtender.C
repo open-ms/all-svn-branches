@@ -66,34 +66,96 @@ namespace OpenMS
 
   void ConvexHullExtender::updateMembers_()
   {
-		
-  }
+		dist_mz_up_     = param_.getValue("dist_mz_up");
+		dist_mz_down_ = param_.getValue("dist_mz_down");
+		dist_rt_up_       = param_.getValue("dist_rt_up");
+		dist_rt_down_   = param_.getValue("dist_rt_down");
+	}
 
 
 	const FeaFiModule::ChargedIndexSet& ConvexHullExtender::extend(const ChargedIndexSet& seed_region)
 	{
 		// find maximum of region (seed)
-// 		CoordinateType sum_intensity = 0.0;
+		CoordinateType sum_intensity = 0.0;
+		boundary_.clear();
+		region_.clear();
+    running_avg_.clear();
 	
+		// pass on charge information
+		region_.charge_ = seed_region.charge_;
+				
 		cout << "Seeding region size: " << seed_region.size() << endl;
 		
-// 		vector<PointIndex> cgal_points;
-// 				
-//     for (IndexSet::const_iterator cit = seed_region.begin(); cit != seed_region.end(); ++cit)
-//     {	
-// 			sum_intensity += traits_->getPeakIntensity( *cit);
-//      	cgal_points.push_back( PointIndex( traits_->getPeakRt( *cit), traits_->getPeakMz( *cit), *cit ) );
-//     }
-// 		
-// 		// compute convex hull
-// 		std::vector<PointIndex> cgal_result;
-// 	  CGAL::convex_hull_2( cgal_points.begin(), cgal_points.end(), std::inserter(cgal_result, cgal_result.begin() ) );
+		vector<Point_2> cgal_points;
+		
+		CoordinateType max_intensity = 0.0;
+		IDX seed;
+				
+    for (IndexSet::const_iterator cit = seed_region.begin(); cit != seed_region.end(); ++cit)
+    {	
+			sum_intensity += traits_->getPeakIntensity( *cit);
+			
+			region_.insert(*cit);
+			
+			Point_2 p;
+			p.attribute = *cit;
+			cgal_points.push_back(p);
+			
+			if (traits_->getPeakIntensity(*cit) > max_intensity)
+      {
+        seed = *cit;
+        max_intensity = traits_->getPeakIntensity(seed);						
+			}
+    }
+		
+		// re-compute intensity threshold 
+		intensity_threshold_ = (double)param_.getValue("intensity_factor") * traits_->getPeakIntensity(seed);
+		
+		// compute convex hull
+		vector<Point_2> cgal_result;
+	  CGAL::convex_hull_2( cgal_points.begin(), cgal_points.end(), std::inserter(cgal_result, cgal_result.begin() ) );
 	
+		// points on convex hull determine feature boundary
+		for (vector< Point_2>::iterator it = cgal_result.begin(); it != cgal_result.end(); ++it)
+		{
+			boundary_.push_back(it->attribute);
+		}
+		
+		while (boundary_.size() > 0)
+		{
+			IDX idx = boundary_.back();
+			
+			// remember last extracted peak
+			last_pos_extracted_[RawDataPoint2D::RT] = traits_->getPeakRt(idx);
+			last_pos_extracted_[RawDataPoint2D::MZ] = traits_->getPeakMz(idx);
+
+			// Now we explore the neighbourhood of the current peak. Points in this area are included
+			// into the boundary if their intensity is not too low and they are not too
+			// far away from the seed.			
+			// Add position to the current average of positions weighted by intensity
+			running_avg_.add(last_pos_extracted_,traits_->getPeakIntensity(idx));
+			
+			moveMzUp_(idx);
+			moveMzDown_(idx);
+			moveRtUp_(idx);
+			moveRtDown_(idx);
+
+			cout << "ConvexHullExtender: intensity " << traits_->getPeakIntensity(idx) << " threshold : " << (sqrt(sum_intensity) * 0.01) << endl;
+			
+			if ( traits_->getPeakIntensity(idx) >= sqrt(sum_intensity) * 0.01)
+			{
+				// set peak flags and add to boundary
+				traits_->getPeakFlag(idx) = FeaFiTraits::USED;
+				sum_intensity += traits_->getPeakIntensity(idx);
+				region_.insert(idx);
+			}
+		}
+		
     return region_;
 	} // end of extend
 
-/*
-	bool ConvexHullExtender::isTooFarFromCentroid_(const IDX& index)
+
+bool ConvexHullExtender::isTooFarFromCentroid_(const IDX& index)
 	{
 	
 		if ( index.first >= traits_->getData().size()) std::cout << "Scan index outside of map!" << std::endl;
@@ -116,7 +178,7 @@ namespace OpenMS
 		
 		//close enough
 		return false;
-	}*/
+}
 
 	void ConvexHullExtender::moveMzUp_(const IDX& index)
 	{
@@ -186,14 +248,7 @@ namespace OpenMS
     {
     }
 	}
-/*
-	ConvexHullExtender::ProbabilityType ConvexHullExtender::computePeakPriority_(const IDX& index)
-	{
-		return traits_->getData()[index.first][index.second].getIntensity() *
- 			score_distribution_rt_.value(traits_->getData()[index.first].getRT()-last_pos_extracted_[RawDataPoint2D::RT]) *
-			score_distribution_mz_.value(traits_->getData()[index.first][index.second].getMZ()-last_pos_extracted_[RawDataPoint2D::MZ]);
-	}*/
-
+	
 	void ConvexHullExtender::checkNeighbour_(const IDX& index)
 	{
   	//Corrupt index
@@ -207,20 +262,8 @@ namespace OpenMS
 		}
     if ( traits_->getPeakFlag(index) == FeaFiTraits::UNUSED)
     {
-// 			double pr_new = computePeakPriority_(index);
-// 			
-// 			if (pr_new > priority_threshold_)
-// 			{
-// 				map<IDX, double>::iterator piter = priorities_.find(index);
-// 				traits_->getPeakFlag(index) = FeaFiTraits::USED;
-// 				pr_new = traits_->getPeakIntensity(index);
-// 				priorities_[index] = pr_new;
-// 				boundary_.push(IndexWithPriority(index,pr_new));
-// 			}
-// 		
-// 			// Note that Clemens used to update priorities in his FF algo ...
-// 			// I don't think that this is necessary. 
-			
+			traits_->getPeakFlag(index) = FeaFiTraits::USED;
+			boundary_.push_back(index);			
 		}
 	}
 

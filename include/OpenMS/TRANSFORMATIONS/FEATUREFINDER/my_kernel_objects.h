@@ -1,0 +1,23 @@
+CGAL_Kernel_obj(Point_2)
+CGAL_Kernel_obj(Vector_2)
+CGAL_Kernel_obj(Direction_2)
+CGAL_Kernel_obj(Segment_2)
+CGAL_Kernel_obj(Ray_2)
+CGAL_Kernel_obj(Line_2)
+CGAL_Kernel_obj(Triangle_2)
+CGAL_Kernel_obj(Iso_rectangle_2)
+CGAL_Kernel_obj(Circle_2)
+
+CGAL_Kernel_obj(Point_3)
+CGAL_Kernel_obj(Plane_3)
+CGAL_Kernel_obj(Vector_3)
+CGAL_Kernel_obj(Direction_3)
+CGAL_Kernel_obj(Segment_3)
+CGAL_Kernel_obj(Ray_3)
+CGAL_Kernel_obj(Line_3)
+CGAL_Kernel_obj(Triangle_3)
+CGAL_Kernel_obj(Tetrahedron_3)
+CGAL_Kernel_obj(Iso_cuboid_3)
+CGAL_Kernel_obj(Sphere_3)
+#undef CGAL_Kernel_obj 
+

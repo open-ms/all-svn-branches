@@ -30,8 +30,11 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseExtender.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeaFiTraits.h>
 
+// #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/Kernel_with_attributes.h>
+
 #include <CGAL/Cartesian.h>
 #include <CGAL/convex_hull_2.h>
+#include <CGAL/Point_2.h>
 
 #include <queue>
 
@@ -57,46 +60,48 @@ namespace OpenMS
   	typedef DoubleReal ProbabilityType;
 		/// Position of a point
 		typedef  FeaFiTraits::PositionType2D PositionType2D;
+		///
+		typedef CGAL::Kernel_with_attributes <CGAL::cartesian<double> , CGAL::Kernel_with_attributes_uniform_attributes<int> > KernelWithAttributes; 
 		/// A CGAL point
-		typedef CGAL::Cartesian<double>::Point_2 Point_2;
+		typedef CGAL::Point_2<KernelWithAttributes> Point_2;
 
-		class PointIndex 
-			: public Point_2
-		{
-			public:
-				/// Base class type
-				typedef CGAL::Cartesian<double>::Point_2 Base;
-		
-			PointIndex(CoordinateType rt, CoordinateType mz,  IDX i)
-				: Base(rt,mz),index_(i)
-			{ }
-			
-			~PointIndex()
-      {}
-
-      /// Copy constructor
-      PointIndex(const PointIndex& source)
-          : Base(source)
-      {
-        index_ = source.index_;
-      }
-
-      ///  Assignment operator
-      PointIndex& operator = (const PointIndex& source)
-      {
-        if (this==&source)
-          return *this;
-
-				Base::operator=(source);
-        index_ = source.index_;
-       
-        return *this;
-      }
-		
-			private:
-				IDX index_;
-			
-		};
+// 		class PointIndex 
+// 			: public Point_2
+// 		{
+// 			public:
+// 				/// Base class type
+// 				typedef ConvexHullExtender::Point_2 Base;
+// 		
+// 			PointIndex(CoordinateType rt, CoordinateType mz,  IDX i)
+// 				: Base(rt,mz),index_(i)
+// 			{ }
+// 			
+// 			~PointIndex()
+//       {}
+// 
+//       /// Copy constructor
+//       PointIndex(const PointIndex& source)
+//           : Base(source)
+//       {
+//         index_ = source.index_;
+//       }
+// 
+//       ///  Assignment operator
+//       PointIndex& operator = (const PointIndex& source)
+//       {
+//         if (this==&source)
+//           return *this;
+// 
+// 				Base::operator=(source);
+//         index_ = source.index_;
+//        
+//         return *this;
+//       }
+// 		
+// 			private:
+// 				IDX index_;
+// 			
+// 		};
 		
   	/// Default constructor
     ConvexHullExtender();

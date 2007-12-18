@@ -73,20 +73,20 @@ namespace OpenMS
 	const FeaFiModule::ChargedIndexSet& ConvexHullExtender::extend(const ChargedIndexSet& seed_region)
 	{
 		// find maximum of region (seed)
-		CoordinateType sum_intensity = 0.0;
+// 		CoordinateType sum_intensity = 0.0;
 	
 		cout << "Seeding region size: " << seed_region.size() << endl;
 		
-		vector<PointIndex> cgal_points;
-				
-    for (IndexSet::const_iterator cit = seed_region.begin(); cit != seed_region.end(); ++cit)
-    {	
-			sum_intensity += traits_->getPeakIntensity( *cit);
-     	cgal_points.push_back( PointIndex( traits_->getPeakRt( *cit), traits_->getPeakMz( *cit), *cit ) );
-    }
-		
-		// compute convex hull
-		std::vector<PointIndex> cgal_result;
+// 		vector<PointIndex> cgal_points;
+// 				
+//     for (IndexSet::const_iterator cit = seed_region.begin(); cit != seed_region.end(); ++cit)
+//     {	
+// 			sum_intensity += traits_->getPeakIntensity( *cit);
+//      	cgal_points.push_back( PointIndex( traits_->getPeakRt( *cit), traits_->getPeakMz( *cit), *cit ) );
+//     }
+// 		
+// 		// compute convex hull
+// 		std::vector<PointIndex> cgal_result;
 // 	  CGAL::convex_hull_2( cgal_points.begin(), cgal_points.end(), std::inserter(cgal_result, cgal_result.begin() ) );
 	
     return region_;

@@ -330,7 +330,7 @@ namespace OpenMS
 				cout << "NOT ENOUGH SCANS !! " << endl;
 				throw UnableToFit(__FILE__, __LINE__,__PRETTY_FUNCTION__,
 																	"UnableToFit-FinalSet",
-												          String("Skipping feature, IndexSet size after cutoff too small: ") + model_set.size() );
+												          String("Skipping feature, Not enough scans after cutoff: ") + rts.size() );
 		}
 		
 		QualityType qual_mz = compute_mz_corr_(mz_model_);
@@ -346,8 +346,7 @@ namespace OpenMS
 		{
 			Int fmz = first_mz_model_;
 			Int lmz = last_mz_model_;
-			fit_loop_(set, fmz,lmz,sampling_size_mz,final);	
-			
+			fit_loop_(set, fmz,lmz,sampling_size_mz,final);				
 		}
 		
 		max_quality =	compute_mz_corr_(mz_model_);
@@ -369,94 +368,12 @@ namespace OpenMS
 		f.setOverallQuality(max_quality);
 		f.setRT(dynamic_cast<InterpolationModel*>(final->getModel(RT))->getCenter());
 		
-		
 		// try to improve mono m/z estimate
 		CoordinateType mz_guess = mz_model_.getCenter();
-		vector< IDX > max_scan;
-		for (IndexSetIter it=model_set.begin(); it!=model_set.end(); ++it )
-		{		
-			if (it->first == max_peak_scan)
-			{
-				max_scan.push_back( *it );
-			}
-		}
-		sort(max_scan.begin(),max_scan.end());
 		
-		vector<IDX>::iterator iter = lower_bound(max_scan.begin(),max_scan.end(),mz_guess, AveragineMatcher::IndexMzLess::IndexMzLess(traits_));
-		
-		if ( iter == max_scan.end() ) 
-	  {
-	  	--iter; // one step back
-	  }
-		
-		IntensityType max_mono_candidate_it       = 0.0;
-		CoordinateType max_mono_candidate_mz = traits_->getPeakMz(*iter);
-		CoordinateType mz_dist = 0.0;
-		
-		if ( iter == max_scan.end() ) 
-	  {
-	  	--iter; // one step back
-	  }
-		
-		// local search for highest peak
-		if (iter != max_scan.begin())
-		{
-			// walk to the left
-			for (vector<IDX>::iterator it = iter; it != max_scan.begin() && mz_dist <= 0.25; --it )
-			{
-				if (it->first >= traits_->getData().size())
-				{
-					break;
-				}
-				
-				if (it->second >= traits_->getData()[it->first].size())
-				{
-					break;
-				}				
+		CoordinateType mz_guess_improved = localSearchForMonoMz_(mz_guess, max_peak_scan, model_set);
 			
-				if (traits_->getPeakIntensity(*it) > max_mono_candidate_it)
-				{
-					max_mono_candidate_it	   = traits_->getPeakIntensity(*it);
-					max_mono_candidate_mz = traits_->getPeakMz(*it);				
-				} 		
-							
-				mz_dist = traits_->getPeakMz(*iter) - traits_->getPeakMz(*it);			
-			}
-		}
-		
-		if ( iter != max_scan.end() ) 
-		{		
-			// walk to the right
-			mz_dist = 0.0;
-			for (vector<IDX>::iterator it = iter; it != max_scan.end() && mz_dist <= 0.25; ++it )
-			{
-				if (it->first >= traits_->getData().size())
-				{
-					break;
-				}
-				
-				if (it->second >= traits_->getData()[it->first].size())
-				{
-					break;
-				}				
-				
-				if (traits_->getPeakIntensity(*it) > max_mono_candidate_it)
-				{
-					max_mono_candidate_it	   = traits_->getPeakIntensity(*it);
-					max_mono_candidate_mz = traits_->getPeakMz(*it);				
-				} 		
-				mz_dist = traits_->getPeakMz(*it) - traits_->getPeakMz(*iter);			
-			}
-		}		
-		else
-		{
-			--iter; // one step back, no need to check left side
-	  }
-		
-// 		cout << "Setting to mz " << 		max_mono_candidate_mz << endl;
-// 		cout << "Old estimate " << mz_guess << endl;
-		
-		f.setMZ( max_mono_candidate_mz ); /*dynamic_cast<InterpolationModel*>(final->getModel(MZ))->getCenter()*/
+		f.setMZ( mz_guess_improved ); /*dynamic_cast<InterpolationModel*>(final->getModel(MZ))->getCenter()*/
 		if (final->getModel(MZ)->getName() == "IsotopeModel")
 		{
 			f.setCharge(dynamic_cast<IsotopeModel*>(final->getModel(MZ))->getCharge());
@@ -544,6 +461,97 @@ namespace OpenMS
 		delete final;
 		
  		return f;
+	}
+	
+	AveragineMatcher::CoordinateType AveragineMatcher::localSearchForMonoMz_(const CoordinateType mz_guess, const UInt& max_peak_scan, const IndexSet& model_set ) 
+	{		
+		vector< IDX > max_scan;
+		for (IndexSetIter it=model_set.begin(); it!=model_set.end(); ++it )
+		{		
+			if (it->first == max_peak_scan)
+			{
+				max_scan.push_back( *it );
+			}
+		}
+		sort(max_scan.begin(),max_scan.end());
+		
+		if (max_scan.size() == 0 || max_scan.size() == 1) return mz_guess;
+		
+		vector<IDX>::iterator iter = lower_bound(max_scan.begin(),max_scan.end(),mz_guess, AveragineMatcher::IndexMzLess::IndexMzLess(traits_));
+		
+		if ( iter == max_scan.end() ) 
+	  {
+	  	--iter; // one step back
+	  }
+	
+		IntensityType max_mono_candidate_it       = 0.0;
+		CoordinateType max_mono_candidate_mz = traits_->getPeakMz(*iter);
+		CoordinateType mz_dist = 0.0;
+		
+		if ( iter == max_scan.end() ) 
+	  {
+	  	--iter; // one step back
+	  }
+		
+		// local search for highest peak
+		if (iter != max_scan.begin())
+		{
+			// walk to the left
+			for (vector<IDX>::iterator it = iter; it != max_scan.begin() && mz_dist <= 0.25; --it )
+			{
+				if (it->first >= traits_->getData().size())
+				{
+					break;
+				}
+				
+				if (it->second >= traits_->getData()[it->first].size())
+				{
+					break;
+				}				
+			
+				if (traits_->getPeakIntensity(*it) > max_mono_candidate_it)
+				{
+					max_mono_candidate_it	   = traits_->getPeakIntensity(*it);
+					max_mono_candidate_mz = traits_->getPeakMz(*it);				
+				} 		
+							
+				mz_dist = traits_->getPeakMz(*iter) - traits_->getPeakMz(*it);			
+			}
+		}
+		
+		if ( iter != max_scan.end() ) 
+		{		
+			// walk to the right
+			mz_dist = 0.0;
+			for (vector<IDX>::iterator it = iter; it != max_scan.end() && mz_dist <= 0.25; ++it )
+			{
+				if (it->first >= traits_->getData().size())
+				{
+					break;
+				}
+				
+				if (it->second >= traits_->getData()[it->first].size())
+				{
+					break;
+				}				
+				
+				if (traits_->getPeakIntensity(*it) > max_mono_candidate_it)
+				{
+					max_mono_candidate_it	   = traits_->getPeakIntensity(*it);
+					max_mono_candidate_mz = traits_->getPeakMz(*it);				
+				} 		
+				mz_dist = traits_->getPeakMz(*it) - traits_->getPeakMz(*iter);			
+			}
+		}		
+		else
+		{
+			--iter; // one step back, no need to check left side
+	  }
+		
+		cout << "Setting to mz " << 		max_mono_candidate_mz << endl;
+		cout << "Old estimate " << mz_guess << endl;
+	
+		return max_mono_candidate_mz;
 	}
 		
 	AveragineMatcher::QualityType AveragineMatcher::fit_(const ChargedIndexSet& set, MzFitting mz_fit, RtFitting /*rt_fit*/,
@@ -747,8 +755,7 @@ namespace OpenMS
 // 			cout << "m/z model intensity " << mz_model_.getIntensity( traits_->getPeakMz(*it) )<< endl;
 // 			cout << "rt model intensity " << rt_model_.getIntensity( traits_->getPeakMz(*it) )<< endl;
  			
-			if (mz_model_.getIntensity( traits_->getPeakMz(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) &&
-					rt_model_.getIntensity( traits_->getPeakRt(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) )
+			if (mz_model_.getIntensity( traits_->getPeakMz(*it) * rt_model_.getIntensity( traits_->getPeakRt(*it) ) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) )
 			{
 					result.insert(*it);
 					// check neighbours of this point

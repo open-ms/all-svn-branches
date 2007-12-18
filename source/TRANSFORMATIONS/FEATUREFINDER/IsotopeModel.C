@@ -54,6 +54,8 @@ namespace OpenMS
 
 			defaultsToParam_();
 		}
+		
+		IsotopeModel::~IsotopeModel()  { }
 
   	IsotopeModel::IsotopeModel(const IsotopeModel& source)
 		: InterpolationModel(source)
@@ -61,10 +63,6 @@ namespace OpenMS
 			setParameters( source.getParameters() );
 			updateMembers_();
 		}
-
-    IsotopeModel::~IsotopeModel()
-    {
-    }
 
    	IsotopeModel& IsotopeModel::operator = (const IsotopeModel& source)
 		{

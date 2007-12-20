@@ -405,7 +405,7 @@ void BaseSweepSeeder::filterForSize_()
 		UInt max_number_scans = param_.getValue("max_number_scans");
 		
 		UInt min_number_peaks = param_.getValue("min_number_peaks");
-				
+		cout << "Filtering for size: " << endl;
 		// Filter point cluster
 		for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
 		{				
@@ -487,8 +487,8 @@ void BaseSweepSeeder::voteForCharge_()
 		     scmz_iter != iter->second.scored_charges_.end();
 				++scmz_iter)
 		{
-			//cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
-      //cout << "Size of charge vector: " << charge_scores.size() << endl;
+			cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
+      cout << "Size of charge vector: " << charge_scores.size() << endl;
       
       if (scmz_iter->first == 0) continue; // zero <=> no charge estimate      
 			
@@ -518,7 +518,7 @@ void BaseSweepSeeder::voteForCharge_()
 			}
 		
 		}
-		//cout << "And the winner is " << max_charge << " with score " << max_vote << endl;
+		cout << "And the winner is " << max_charge << " with score " << max_vote << endl;
 		
 		iter->second.peaks_.charge_           = max_charge;
 		iter->second.peaks_.max_charge_score_ = max_vote;

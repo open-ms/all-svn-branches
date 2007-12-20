@@ -77,11 +77,10 @@ namespace OpenMS
 		defaults_.setValue("min_num_peaks:extended",10,"Minimum number of peaks after extension. If smaller, feature will be discarded.");
 		defaults_.setDescription("min_num_peaks","Required number of peaks for a feature.");
 		
-		defaults_.setValue("rt:interpolation_step",0.2f,"Step size in seconds used to interpolate model for RT.");
+		defaults_.setValue("rt:interpolation_step",0.05f,"Step size in seconds used to interpolate model for RT.");
 		defaults_.setValue("rt:max_iteration",500,"Maximum number of iterations for RT fitting.");
 		defaults_.setValue("rt:deltaAbsError",0.0001,"Absolute error used by the Levenberg-Marquardt algorithms.");
 		defaults_.setValue("rt:deltaRelError",0.0001,"Relative error used by the Levenberg-Marquardt algorithms.");
-// 		defaults_.setValue("rt:profile","EMG","Type of RT model. Currently only 'EMG' is supported.");
 		defaults_.setDescription("rt","Model settings in RT dimension.");
 		
 		defaults_.setValue("mz:interpolation_step",0.03f,"Interpolation step size for m/z.");
@@ -273,11 +272,11 @@ namespace OpenMS
 		Int last_mz  = last_mz_model_;
 		
 		// Check charge estimate if charge is not specified by user
-		if (set.charge_ != 0)
-		{
-			first_mz = set.charge_;
-			last_mz = set.charge_;
-		}
+		//if (set.charge_ != 0)
+		//{
+		//	first_mz = set.charge_;
+		//	last_mz = set.charge_;
+		//}
 		cout << "Checking charge state from " << first_mz << " to " << last_mz << endl;
 	
 		ProductModel<2>* final = 0;	// model  with best correlation		
@@ -293,19 +292,6 @@ namespace OpenMS
 		// Cutoff low intensities wrt. to averagine model and add points with high intensity below the model
 		IndexSet model_set;
 		reshapeFeatureRegion_(set, model_set);
-// 		for (IndexSetIter it=set.begin(); it!=set.end(); ++it) 
-// 		{
-// 			if (mz_model_.getIntensity( traits_->getPeakMz(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) &&
-// 			    rt_model_.getIntensity( traits_->getPeakRt(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) )
-// 			{
-// 					model_set.insert(*it);
-//  			}
-// 			else		// free dismissed peak by setting the UNUSED flag
-// 			{
-// 					traits_->getPeakFlag(*it) = FeaFiTraits::UNUSED;
-// 			}
-// 		}
-		
 		
 		// Print number of selected peaks after cutoff
 		cout << " Selected " << model_set.size() << " from " << set.size() << " peaks." << endl;
@@ -342,14 +328,14 @@ namespace OpenMS
 // 		max_quality = qual_mz;
 		
 		// if the fit is not too bad, we try different charge states and check if we get better
-		if (max_quality > 0.2 && max_quality < (QualityType)(param_.getValue("quality:minimum")))
-		{
-			Int fmz = first_mz_model_;
-			Int lmz = last_mz_model_;
-			fit_loop_(set, fmz,lmz,sampling_size_mz,final);				
-		}
+		//if (max_quality > 0.2 && max_quality < (QualityType)(param_.getValue("quality:minimum")))
+		//{
+		//	Int fmz = first_mz_model_;
+		//	Int lmz = last_mz_model_;
+		//	fit_loop_(set, fmz,lmz,sampling_size_mz,final);				
+		//}
 		
-		max_quality =	compute_mz_corr_(mz_model_);
+		//max_quality =	compute_mz_corr_(mz_model_);
 		
 		// fit has too low quality or fit was not possible i.e. because of zero stdev
 		if (max_quality < (QualityType)(param_.getValue("quality:minimum")))
@@ -750,11 +736,18 @@ namespace OpenMS
 	{
 		vector<IDX> queue;
 		
+		cout << "Reshaping feature: start." << endl;
+		
 		for (IndexSetIter it=set.begin(); it!=set.end(); ++it) 
 		{
- 			
-			if (mz_model_.getIntensity( traits_->getPeakMz(*it) * rt_model_.getIntensity( traits_->getPeakRt(*it) ) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) )
+ 			cout << "mz : " << mz_model_.getIntensity( traits_->getPeakMz(*it) ) << endl;
+			cout << "rt : " << rt_model_.getIntensity( traits_->getPeakRt(*it) ) << endl;
+			cout << "threshold : " <<  IntensityType(param_.getValue("intensity_cutoff_factor") )<< endl;
+			
+			if (mz_model_.getIntensity( traits_->getPeakMz(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
+					&& rt_model_.getIntensity( traits_->getPeakRt(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) )
 			{
+					cout << "Adding point." << endl;
 					result.insert(*it);
 					// check neighbours of this point
 					moveMzUp_(*it,queue);
@@ -775,13 +768,13 @@ namespace OpenMS
 			queue.pop_back();
 			traits_->getPeakFlag(id) = FeaFiTraits::USED;
 			result.insert(id);
+// 			cout << c << " points in queue." << endl;
 			++c;
 			moveMzUp_(id,queue);
 			moveMzDown_(id,queue);
 			moveRtUp_(id,queue);
 			moveRtDown_(id,queue);	
 		}
-// 		cout << "Added " << c << " points " << endl;
 	}
 		
 	void AveragineMatcher::moveMzUp_(const IDX& index, vector<IDX>& queue)
@@ -790,8 +783,9 @@ namespace OpenMS
 		try
 		{
 				traits_->getNextMz(tmp);
-				if (mz_model_.getIntensity( traits_->getPeakMz(tmp) * rt_model_.getIntensity( traits_->getPeakRt(tmp) ) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
-							&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
+				if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
+						&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
+						&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
 				{
 					queue.push_back(tmp);
 				}
@@ -807,8 +801,9 @@ namespace OpenMS
     {
     	IDX tmp = index;
 			traits_->getPrevMz(tmp);
-				if ( mz_model_.getIntensity( traits_->getPeakMz(tmp) * rt_model_.getIntensity( traits_->getPeakRt(tmp) ) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
-							&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
+			if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
+					&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
+					&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
 				{
 					queue.push_back(tmp);
 				}
@@ -824,8 +819,9 @@ namespace OpenMS
     {
     	IDX tmp = index;
 			traits_->getNextRt(tmp);
-				if (mz_model_.getIntensity( traits_->getPeakMz(tmp) * rt_model_.getIntensity( traits_->getPeakRt(tmp) ) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
-							&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
+			if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
+					&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
+					&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
 				{
 					queue.push_back(tmp);
 				}
@@ -841,9 +837,9 @@ namespace OpenMS
     {
     	IDX tmp = index;
 			traits_->getPrevRt(tmp);
-			
-				if ( mz_model_.getIntensity( traits_->getPeakMz(tmp) * rt_model_.getIntensity( traits_->getPeakRt(tmp) ) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
-							&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
+			if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
+					&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
+					&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
 				{
 					queue.push_back(tmp);
 				}

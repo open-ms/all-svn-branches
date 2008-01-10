@@ -347,20 +347,24 @@ namespace OpenMS
 		vector<IntensityType> cwt_thresholds(candidates.size(),0.0);		// threshold for cwt intensities (one for each charge state)
 		vector<UInt> last_pattern(candidates.size(),0);								// the last index where a pattern of was found (one for each charge)
     
-    IntensityType scan_median    = 0;   // median intensity in signal
+    IntensityType scan_mean      = 0;   // median intensity in signal
     IntensityType scan_threshold = 0;   // threshold for signal intensity
-    vector< double > scan_intensities;
 
+		UInt pos = 0;
     for (UInt z=0; z<scan.size();++z)
     {
-			if ( scan[z].getIntensity() > 0) scan_intensities.push_back(scan[z].getIntensity());
+				if ( scan[z].getIntensity() > 0) 
+				{
+					scan_mean += scan[z].getIntensity();
+					++pos;
+				}
     }
-//     sort(scan_intensities.begin(),scan_intensities.end());
-//     scan_median = gsl_stats_median_from_sorted_data(&scan_intensities[0], 1, scan_intensities.size() );
-//     scan_threshold = scan_median * signal_avg_factor_;
-		scan_threshold = 200;
+		scan_mean /= pos;
+    scan_threshold = scan_mean * signal_avg_factor_;
 
-    cout << "Median intensity in scan: " << scan_median << endl;
+		//scan_threshold = 1000;
+		
+    cout << "Median intensity in scan: " << scan_mean << endl;
     cout << "Intensity threshold for signal: " << scan_threshold << endl;
 
 		for (UInt c = 0; c < candidates.size(); ++c)
@@ -369,18 +373,21 @@ namespace OpenMS
 			computeNullVariance_(candidates[c],c);
 						
 			// compute median intensity in cwt			
-      vector<double> cwt_intensities;      
+			IntensityType cwt_mean = 0.0;
+			pos = 0;
 			for (UInt i =0; i< candidates[c].size(); ++i)
 			{
-				if ( candidates[c][i].getIntensity() >= 0) cwt_intensities.push_back( candidates[c][i].getIntensity() );			
+				if ( candidates[c][i].getIntensity() >= 0) 
+				{
+						cwt_mean += 	candidates[c][i].getIntensity();	
+						++pos;
+				}
 			}						
-
-      //sort(cwt_intensities.begin(),cwt_intensities.end());
-      //IntensityType cwt_median = gsl_stats_median_from_sorted_data(&cwt_intensities[0], 1, cwt_intensities.size() );
-// 			cwt_thresholds.at(c)     =  cwt_median * cwt_avg_factor_;
-			cwt_thresholds.at(c) = 200;
+			cwt_mean /= pos;
+			cwt_thresholds.at(c) =  cwt_mean * cwt_avg_factor_;
+			//cwt_thresholds.at(c) = 1000;
 			
-// 			cout << "Median intensity in cwt: " << cwt_median << endl;
+			cout << "Median intensity in cwt: " << cwt_mean << endl;
     	cout << "Intensity threshold for cwt: " << (cwt_thresholds.at(c) ) << endl;
 
 			#ifdef DEBUG_FEATUREFINDER

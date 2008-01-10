@@ -208,7 +208,7 @@ void BaseSweepSeeder::sweep_()
 				mz_dist   = ( traits_->getPeakMz( make_pair(currscan_index,this_peak) )  - start_mz );
         
         // and to the right (we walk for at most ( 3.0 / charge estimate) Th )
-        CoordinateType dist_to_right = 3.0 / (double) citer->second.first;
+        CoordinateType dist_to_right = 4.0 / (double) citer->second.first;
 				//cout << "Walkting " << dist_to_right << endl;
 		  	while (mz_dist <= dist_to_right && this_peak < current_scan.size() )
 				{
@@ -334,8 +334,9 @@ void BaseSweepSeeder::filterForOverlaps_()
 				       
 				rt_dist   = tmp_iter->second.first_scan_ - iter->second.last_scan_;
 				mz_dist = tmp_iter->first - iter->first;
-// 				cout << "Overlap ! mz distance : " << mz_dist << endl;
-// 				if (rt_dist >= max_rt_dist_merging_) rt_overlap = false;
+				// cout << "Overlap ! mz distance : " << mz_dist << endl;
+
+				if (rt_dist >= max_rt_dist_merging_) overlap = false;
 				if (mz_dist >= max_mz_dist_merging_) 
 				{
 					overlap = false;
@@ -343,8 +344,8 @@ void BaseSweepSeeder::filterForOverlaps_()
 				}
 						
 				// we merge only features with the same charge, overlap in rt and if we haven't seen them yet.
-				if ( /*tmp_iter->second.peaks_.charge_ == iter->second.peaks_.charge_ 
-				     &&*/ overlap
+				if ( tmp_iter->second.peaks_.charge_ == iter->second.peaks_.charge_ 
+				     && overlap
 						 && !seen.at(tmpc)) 
 				{
 					// merging features...
@@ -375,13 +376,10 @@ void BaseSweepSeeder::filterForOverlaps_()
 						iter->second.scored_charges_.push_back(*sc_iter);					
 					}
 					
-					// recompute median
-// 					computeBorders_(iter);		
-					
-					// mark this cluster as deleted
+					// mark this cluster as "deleted"
 					entries_to_delete.push_back(tmp_iter);
 					indizes.push_back(tmpc);
-					// and seen
+					// and as "seen"
 					seen.at(tmpc) = true;
 				} // end of if (...)
 				
@@ -455,7 +453,7 @@ void BaseSweepSeeder::filterHash_()
 
 		filterForSize_();
 		
-		// filter 3 times for overlaps (and re-computer feature bounding boxes)
+		// filter 3 times for overlaps (and re-compute feature bounding boxes)
 		filterForOverlaps_( );
 		for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
 		{	
@@ -487,8 +485,8 @@ void BaseSweepSeeder::voteForCharge_()
 		     scmz_iter != iter->second.scored_charges_.end();
 				++scmz_iter)
 		{
-			cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
-      cout << "Size of charge vector: " << charge_scores.size() << endl;
+			//cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
+      //cout << "Size of charge vector: " << charge_scores.size() << endl;
       
       if (scmz_iter->first == 0) continue; // zero <=> no charge estimate      
 			
@@ -518,7 +516,7 @@ void BaseSweepSeeder::voteForCharge_()
 			}
 		
 		}
-		cout << "And the winner is " << max_charge << " with score " << max_vote << endl;
+		//cout << "And the winner is " << max_charge << " with score " << max_vote << endl;
 		
 		iter->second.peaks_.charge_           = max_charge;
 		iter->second.peaks_.max_charge_score_ = max_vote;
@@ -571,7 +569,20 @@ BaseSweepSeeder::TableIteratorType BaseSweepSeeder::checkInPreviousScans_(const 
             mz_in_hash = table_iter->first;	// set hash key
 
             pair<TableIteratorType, TableIteratorType> range = iso_map_.equal_range(mz_in_hash);
-            
+          					
+						// extend range	
+						//cout << "Extending range: " << distance(range.first,range.second);
+						while (fabs(range.first->first - curr_mz) < mass_tolerance_cluster_)
+						{
+							if ( range.first == iso_map_.begin()) break;
+							--(range.first);
+						}
+						while (range.second != iso_map_.end() && fabs(range.second->first - curr_mz) < mass_tolerance_cluster_ )
+						{
+							++(range.second);
+						}
+						//cout << " to " <<  distance(range.first,range.second) << endl;
+						
 						// we want to find the previous scan
 						// currentscan_index can't be zero so we don't have to check for that.
             UInt scan_wanted = (currscan_index - 1);

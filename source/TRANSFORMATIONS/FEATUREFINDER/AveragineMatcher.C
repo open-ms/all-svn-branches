@@ -410,7 +410,7 @@ namespace OpenMS
 // 				 << ", Corr: (" << max_quality << ","  << f.getQuality(RT) << "," << f.getQuality(MZ) << ")";
 // 		f.setMetaValue(3,String(meta.str()));
 
-		#ifdef DEBUG_FEATUREFINDER
+ 		#ifdef DEBUG_FEATUREFINDER
 		// write debug output
 		CoordinateType rt = f.getRT();
 		CoordinateType mz = f.getMZ();
@@ -483,7 +483,7 @@ namespace OpenMS
 		if (iter != max_scan.begin())
 		{
 			// walk to the left
-			for (vector<IDX>::iterator it = iter; it != max_scan.begin() && mz_dist <= 0.25; --it )
+			for (vector<IDX>::iterator it = iter; it != max_scan.begin() && mz_dist <= 0.1; --it )
 			{
 				if (it->first >= traits_->getData().size())
 				{
@@ -509,7 +509,7 @@ namespace OpenMS
 		{		
 			// walk to the right
 			mz_dist = 0.0;
-			for (vector<IDX>::iterator it = iter; it != max_scan.end() && mz_dist <= 0.25; ++it )
+			for (vector<IDX>::iterator it = iter; it != max_scan.end() && mz_dist <= 0.1; ++it )
 			{
 				if (it->first >= traits_->getData().size())
 				{
@@ -736,18 +736,18 @@ namespace OpenMS
 	{
 		vector<IDX> queue;
 		
-		cout << "Reshaping feature: start." << endl;
+// 		cout << "Reshaping feature: start." << endl;
 		
 		for (IndexSetIter it=set.begin(); it!=set.end(); ++it) 
 		{
- 			cout << "mz : " << mz_model_.getIntensity( traits_->getPeakMz(*it) ) << endl;
-			cout << "rt : " << rt_model_.getIntensity( traits_->getPeakRt(*it) ) << endl;
-			cout << "threshold : " <<  IntensityType(param_.getValue("intensity_cutoff_factor") )<< endl;
+//  cout << "mz : " << mz_model_.getIntensity( traits_->getPeakMz(*it) ) << endl;
+// 	cout << "rt : " << rt_model_.getIntensity( traits_->getPeakRt(*it) ) << endl;
+// 	cout << "threshold : " <<  IntensityType(param_.getValue("intensity_cutoff_factor") )<< endl;
 			
 			if (mz_model_.getIntensity( traits_->getPeakMz(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
 					&& rt_model_.getIntensity( traits_->getPeakRt(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) )
 			{
-					cout << "Adding point." << endl;
+// 					cout << "Adding point." << endl;
 					result.insert(*it);
 					// check neighbours of this point
 					moveMzUp_(*it,queue);

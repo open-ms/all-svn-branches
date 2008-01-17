@@ -123,10 +123,10 @@ namespace OpenMS
       	// compute spacings
       	computeSpacings_();
 
-				//#ifdef DEBUG_FEATUREFINDER
+				#ifdef DEBUG_FEATUREFINDER
       	cout << "Average m/z spacing: " << avMZSpacing_ << endl;
       	cout << "Minimal m/z spacing: " << min_spacing_ << endl;
-				//#endif
+				#endif
 
 	    	waveletLength_ = (Int) (peak_cut_off_/avMZSpacing_);
 				generateGammaValues_();
@@ -347,34 +347,36 @@ namespace OpenMS
 		vector<IntensityType> cwt_thresholds(candidates.size(),0.0);		// threshold for cwt intensities (one for each charge state)
 		vector<UInt> last_pattern(candidates.size(),0);								// the last index where a pattern of was found (one for each charge)
     
-    IntensityType scan_mean      = 0;   // median intensity in signal
-    IntensityType scan_threshold = 0;   // threshold for signal intensity
+    //IntensityType scan_mean      = 0;   // median intensity in signal
+    //IntensityType scan_threshold = 0;   // threshold for signal intensity
 
-		UInt pos = 0;
-    for (UInt z=0; z<scan.size();++z)
-    {
-				if ( scan[z].getIntensity() > 0) 
-				{
-					scan_mean += scan[z].getIntensity();
-					++pos;
-				}
-    }
-		scan_mean /= pos;
-    scan_threshold = scan_mean * signal_avg_factor_;
+// 		UInt pos = 0;
+//     for (UInt z=0; z<scan.size();++z)
+//     {
+// 				if ( scan[z].getIntensity() > 0) 
+// 				{
+// 					scan_mean += scan[z].getIntensity();
+// 					++pos;
+// 				}
+//     }
+// 		scan_mean /= pos;
+//     scan_threshold = scan_mean * signal_avg_factor_;
 
 		//scan_threshold = 1000;
 		
-    cout << "Median intensity in scan: " << scan_mean << endl;
-    cout << "Intensity threshold for signal: " << scan_threshold << endl;
+    //cout << "Median intensity in scan: " << scan_mean << endl;
+    //cout << "Intensity threshold for signal: " << scan_threshold << endl;
 
-		for (UInt c = 0; c < candidates.size(); ++c)
-		{
+		SignalToNoiseEstimatorMedian< > sn;
+		sn.init(scan.begin(),scan.end());		
 		
+		for (UInt c = 0; c < candidates.size(); ++c)
+		{		
 			computeNullVariance_(candidates[c],c);
 						
 			// compute median intensity in cwt			
 			IntensityType cwt_mean = 0.0;
-			pos = 0;
+			UInt pos = 0;
 			for (UInt i =0; i< candidates[c].size(); ++i)
 			{
 				if ( candidates[c][i].getIntensity() >= 0) 
@@ -406,11 +408,16 @@ namespace OpenMS
 
 		}
 
-		for (UInt i = 1; i < candidates[0].size(); ++i) 			// cwt's for all charge states have the same length....
+		SpectrumType::iterator it = scan.begin();
+		for (UInt i = 1; i < candidates[0].size(); ++i, ++it) 			// cwt's for all charge states have the same length....
 		{
-
-				if (scan[i].getIntensity() < scan_threshold)	continue;	// ignore low intensity signals
-
+				
+				if (sn.getSignalToNoise(it) <= signal_avg_factor_)
+				{
+					continue;
+				}
+				//if (scan[i].getIntensity() < scan_threshold)	continue;	// ignore low intensity signals
+				
 				// vector of p-values
 				vector<ProbabilityType> charge_scores( candidates.size(),numeric_limits<ProbabilityType>::max() );
 

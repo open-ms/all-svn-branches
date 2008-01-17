@@ -27,10 +27,12 @@
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_ISOTOPEWAVELETSEEDER_H
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_ISOTOPEWAVELETSEEDER_H
 
+#include <OpenMS/DATASTRUCTURES/HashMap.h>
+
+#include<OpenMS/FILTERING/NOISEESTIMATION/SignalToNoiseEstimatorMedian.h>
+
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseSweepSeeder.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeaFiTraits.h>
-
-#include <OpenMS/DATASTRUCTURES/HashMap.h>
 
 #include <gsl/gsl_cdf.h>
 #include <gsl/gsl_statistics.h>

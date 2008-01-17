@@ -123,10 +123,10 @@ namespace OpenMS
       	// compute spacings
       	computeSpacings_();
 
-				#ifdef DEBUG_FEATUREFINDER
+				//#ifdef DEBUG_FEATUREFINDER
       	cout << "Average m/z spacing: " << avMZSpacing_ << endl;
       	cout << "Minimal m/z spacing: " << min_spacing_ << endl;
-				#endif
+				//#endif
 
 	    	waveletLength_ = (Int) (peak_cut_off_/avMZSpacing_);
 				generateGammaValues_();

@@ -689,8 +689,8 @@ namespace OpenMS
 // 		}	
 // 		mz_data_avg /= mz_lin_int_.getData().size();
 		
-		for (CoordinateType pos = mz_mean_pos- 0.5;
-		     pos <= mz_mean_pos+ 0.5;
+		for (CoordinateType pos = mz_mean_pos- 0.8;
+		     pos <= mz_mean_pos+ 0.8;
 				 pos += 0.1)
 		{
 		
@@ -744,8 +744,8 @@ namespace OpenMS
 // 	cout << "rt : " << rt_model_.getIntensity( traits_->getPeakRt(*it) ) << endl;
 // 	cout << "threshold : " <<  IntensityType(param_.getValue("intensity_cutoff_factor") )<< endl;
 			
-			if (mz_model_.getIntensity( traits_->getPeakMz(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
-					&& rt_model_.getIntensity( traits_->getPeakRt(*it) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) )
+			if (mz_model_.getIntensity( traits_->getPeakMz(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor"))
+					&& rt_model_.getIntensity( traits_->getPeakRt(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) )
 			{
 // 					cout << "Adding point." << endl;
 					result.insert(*it);
@@ -783,8 +783,8 @@ namespace OpenMS
 		try
 		{
 				traits_->getNextMz(tmp);
-				if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
-						&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
+				if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) > IntensityType(param_.getValue("intensity_cutoff_factor"))
+						&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) 
 						&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
 				{
 					queue.push_back(tmp);
@@ -801,8 +801,8 @@ namespace OpenMS
     {
     	IDX tmp = index;
 			traits_->getPrevMz(tmp);
-			if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
-					&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
+			if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) > IntensityType(param_.getValue("intensity_cutoff_factor"))
+					&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) 
 					&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
 				{
 					queue.push_back(tmp);
@@ -819,8 +819,8 @@ namespace OpenMS
     {
     	IDX tmp = index;
 			traits_->getNextRt(tmp);
-			if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
-					&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
+			if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) > IntensityType(param_.getValue("intensity_cutoff_factor"))
+					&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) 
 					&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
 				{
 					queue.push_back(tmp);
@@ -837,8 +837,8 @@ namespace OpenMS
     {
     	IDX tmp = index;
 			traits_->getPrevRt(tmp);
-			if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor"))
-					&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) >= IntensityType(param_.getValue("intensity_cutoff_factor")) 
+			if (mz_model_.getIntensity( traits_->getPeakMz(tmp) ) > IntensityType(param_.getValue("intensity_cutoff_factor"))
+					&& rt_model_.getIntensity( traits_->getPeakRt(tmp) ) > IntensityType(param_.getValue("intensity_cutoff_factor")) 
 					&& traits_->getPeakFlag(tmp) == FeaFiTraits::UNUSED )
 				{
 					queue.push_back(tmp);

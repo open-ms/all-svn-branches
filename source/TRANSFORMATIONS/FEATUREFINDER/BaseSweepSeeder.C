@@ -344,8 +344,8 @@ void BaseSweepSeeder::filterForOverlaps_()
 				}
 						
 				// we merge only features with the same charge, overlap in rt and if we haven't seen them yet.
-				if ( tmp_iter->second.peaks_.charge_ == iter->second.peaks_.charge_ 
-				     && overlap
+				if ( /*tmp_iter->second.peaks_.charge_ == iter->second.peaks_.charge_ 
+				     &&*/ overlap
 						 && !seen.at(tmpc)) 
 				{
 					// merging features...

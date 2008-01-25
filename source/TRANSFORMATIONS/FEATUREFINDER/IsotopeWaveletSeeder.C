@@ -348,7 +348,7 @@ namespace OpenMS
 		vector<UInt> last_pattern(candidates.size(),0);								// the last index where a pattern of was found (one for each charge)
     
     //IntensityType scan_mean      = 0;   // median intensity in signal
-    //IntensityType scan_threshold = 0;   // threshold for signal intensity
+   // IntensityType scan_threshold = 0;   // threshold for signal intensity
 
 // 		UInt pos = 0;
 //     for (UInt z=0; z<scan.size();++z)
@@ -362,7 +362,7 @@ namespace OpenMS
 // 		scan_mean /= pos;
 //     scan_threshold = scan_mean * signal_avg_factor_;
 
-		//scan_threshold = 1000;
+// 		scan_threshold = 1000;
 		
     //cout << "Median intensity in scan: " << scan_mean << endl;
     //cout << "Intensity threshold for signal: " << scan_threshold << endl;

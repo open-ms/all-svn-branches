@@ -147,13 +147,13 @@ void BaseSweepSeeder::sweep_()
 						
 			#ifdef DEBUG_FEATUREFINDER
 			// write debug output
-			fname = String("scan_aligned_") + current_scan.getRT();;
-			out.open( fname.c_str() );
-			for(UInt k = 0; k<current_scan.size();++k)
-			{
-				out << current_scan[k].getMZ() << " " << current_scan[k].getIntensity() << endl;
-			}
-			out.close();
+// 			fname = String("scan_aligned_") + current_scan.getRT();;
+// 			out.open( fname.c_str() );
+// 			for(UInt k = 0; k<current_scan.size();++k)
+// 			{
+// 				out << current_scan[k].getMZ() << " " << current_scan[k].getIntensity() << endl;
+// 			}
+// 			out.close();
 			#endif
 						
 			// detect isotopic pattern...	

@@ -374,6 +374,8 @@ namespace OpenMS
 		Int const intensity_choice = param_.getValue("feature_intensity_sum");
 		IntensityType feature_intensity = 0.0;
 		
+		vector<double> intensities;
+		
 		if (intensity_choice == 1)
 		{
 			// intensity of the feature is the sum of all included data points
@@ -387,9 +389,18 @@ namespace OpenMS
 			// feature intensity is the maximum intensity of all peaks
 			for (IndexSetIter it=model_set.begin(); it!=model_set.end(); ++it) 
 			{
-				if (traits_->getPeakIntensity(*it) > feature_intensity)
-					feature_intensity = traits_->getPeakIntensity(*it);
+				//if (traits_->getPeakIntensity(*it) > feature_intensity)
+				//	feature_intensity = traits_->getPeakIntensity(*it);
+				intensities.push_back(traits_->getPeakIntensity(*it));
 			}	
+			
+			// sort in descending order
+			sort(intensities.rbegin(),intensities.rend());
+			
+			for (UInt i=0;i<10 && i<intensities.size();++i)
+			{
+				feature_intensity += intensities[i];
+			}
 		} 
 		
 		f.setIntensity(feature_intensity);

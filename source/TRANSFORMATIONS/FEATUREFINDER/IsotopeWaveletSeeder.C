@@ -120,14 +120,17 @@ namespace OpenMS
 	{
 			if (!wavelet_initialized_)
 			{
+				cout << "computing spacings..." << endl;
       	// compute spacings
       	computeSpacings_();
 
-				#ifdef DEBUG_FEATUREFINDER
+				//#ifdef DEBUG_FEATUREFINDER
       	cout << "Average m/z spacing: " << avMZSpacing_ << endl;
       	cout << "Minimal m/z spacing: " << min_spacing_ << endl;
-				#endif
+				//#endif
 
+				if (min_spacing_ == 0) min_spacing_ += 0.00001;
+				
 	    	waveletLength_ = (Int) (peak_cut_off_/avMZSpacing_);
 				generateGammaValues_();
 
@@ -152,7 +155,7 @@ namespace OpenMS
 		CoordinateType MZspacing_sum = 0;
 		min_spacing_ = numeric_limits<CoordinateType>::max();
 
-		double current_spacing;
+		CoordinateType current_spacing;
 		for (MapType::ConstIterator it = traits_->getData().begin(); it != traits_->getData().end(); ++it)
 		{
 			if (it->size() == 0) continue;

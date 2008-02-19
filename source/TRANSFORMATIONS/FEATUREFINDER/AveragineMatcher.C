@@ -700,8 +700,8 @@ namespace OpenMS
 // 		}	
 // 		mz_data_avg /= mz_lin_int_.getData().size();
 		
-		for (CoordinateType pos = mz_mean_pos- 0.8;
-		     pos <= mz_mean_pos+ 0.8;
+		for (CoordinateType pos = mz_mean_pos- 0.5;
+		     pos <= mz_mean_pos+ 0.5;
 				 pos += 0.1)
 		{
 		

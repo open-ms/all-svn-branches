@@ -432,10 +432,10 @@ namespace OpenMS
 					// - the last pattern (of the same charge) is already some way behind us
 				
 					if ( candidates[c][i].getIntensity() > cwt_thresholds[c] && 
-							 i > last_pattern[c] && 
-							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) > 5.0  &&                               
+							 i > last_pattern[c]) /*&& 
+							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) > 4.0 )*/ /*&&                               
 							(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
-						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0) )						  	  
+						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0) )						  	  */
 					{						
 							//cout << " Distance to last pattern: " << ( candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) << endl;
 							UInt max = findNextMax_(scan.getContainer(),i);

@@ -49,17 +49,17 @@ namespace OpenMS
 
   void FeaFiTraits::getNextRt(IDX& index) throw (NoSuccessor, Exception::Precondition)
   {
-// 		cout << "getPrevRt() for index " << index.first << " " << index.second << endl;
+		//cout << "getPrevRt() for index " << index.first << " " << index.second << endl;
 		if (index.first>=map_.size() )
 		{
-// 			cout << "Scan index outside of map!" << endl;
-// 			cout << index.first << " " << index.second << endl;
+			//cout << "Scan index outside of map!" << endl;
+			//cout << index.first << " " << index.second << endl;
 			throw NoSuccessor(__FILE__, __LINE__, "FeaFiTraits::getNextRt", index);
 		}
 		if (index.second>=map_[index.first].size())
 		{
-// 			cout << "Peak index outside of scan!" << endl;
-// 			cout << index.first << " " << index.second << endl;
+			//cout << "Peak index outside of scan!" << endl;
+			//cout << index.first << " " << index.second << endl;
 			throw NoSuccessor(__FILE__, __LINE__, "FeaFiTraits::getNextRt", index);
 		}	
 	
@@ -75,54 +75,54 @@ namespace OpenMS
 		
 		// perform binary search to find the neighbour in rt dimension
 		CoordinateType mz_pos = map_[index.first][index.second].getMZ();	// mz value we want to find
-// 		cout << "mz_pos " << mz_pos << endl;
+		//cout << "mz_pos " << mz_pos << endl;
 		++index.first;
-// 		cout << "Binary search: " << index.first << " " << index.second << endl;
-// 		cout << "Current scan size: " << map_[index.first].size() << endl;
-// 		cout << "Previous scan size: " << map_[(index.first-1)].size() << endl;
+		//cout << "Binary search: " << index.first << " " << index.second << endl;
+		//cout << "Current scan size: " << map_[index.first].size() << endl;
+		//cout << "Previous scan size: " << map_[(index.first-1)].size() << endl;
 		
 		MapType::SpectrumType::ConstIterator it = lower_bound(map_[index.first].begin(), 
 																																											map_[index.first].end(), 
 																																								      map_[index.first-1][index.second], 
 																																								      MapType::SpectrumType::PeakType::PositionLess());	
 		
-// 		cout << "Binary search done. Result: "  << *it << endl;
+		//cout << "Binary search done. Result: "  << *it << endl;
 		
 		// if the found peak is at the end of the spectrum, there is not much we can do...
 		if ( it == map_[index.first].end() )
 		{
-// 			cout << "1" << endl;
+			//cout << "1" << endl;
 			// check for empty scans
 			if ( map_[index.first].size() > 0 )
 			{
-// 				cout << "a" << endl;
+				//cout << "a" << endl;
 	 			index.second = map_[index.first].size()-1;
 			}
 			else
 			{
-// 				cout << "a" << endl;
+				//cout << "a" << endl;
 				index.second = 0;
 			}
 		}
 		// if the found peak is at the beginning of the spectrum, there is also not much we can do ! 
 		else if ( it == map_[index.first].begin() ) 
 		{
-// 			cout << "2" << endl;
+			//cout << "2" << endl;
 			index.second = 0;
 		}
 		// see if the next smaller one fits better
 		else 
 		{	
-// 			cout << "3" << endl;
+			//cout << "3" << endl;
 			// peak to the right is closer (in m/z dimension)
 			if (it->getMZ() - mz_pos < mz_pos - (it-1)->getMZ() )
 			{				
-// 				cout << "a" << endl;
+				//cout << "a" << endl;
 				index.second = it - map_[index.first].begin(); 
 			}
 			else	// left one is closer
 			{
-//  				cout << "b" << endl;
+ 				//cout << "b" << endl;
 				index.second = --it - map_[index.first].begin(); 
 			}
 		}

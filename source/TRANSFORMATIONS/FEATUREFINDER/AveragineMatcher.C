@@ -272,11 +272,11 @@ namespace OpenMS
 		Int last_mz  = last_mz_model_;
 		
 		// Check charge estimate if charge is not specified by user
-		//if (set.charge_ != 0)
-		//{
-		//	first_mz = set.charge_;
-		//	last_mz = set.charge_;
-		//}
+		if (set.charge_ != 0)
+		{
+			first_mz = set.charge_;
+			last_mz = set.charge_;
+		}
 		cout << "Checking charge state from " << first_mz << " to " << last_mz << endl;
 	
 		ProductModel<2>* final = 0;	// model  with best correlation		
@@ -328,12 +328,12 @@ namespace OpenMS
 // 		max_quality = qual_mz;
 		
 		// if the fit is not too bad, we try different charge states and check if we get better
-		//if (max_quality > 0.2 && max_quality < (QualityType)(param_.getValue("quality:minimum")))
-		//{
-		//	Int fmz = first_mz_model_;
-		//	Int lmz = last_mz_model_;
-		//	fit_loop_(set, fmz,lmz,sampling_size_mz,final);				
-		//}
+		if (/*max_quality > 0.2 &&*/ max_quality < (QualityType)(param_.getValue("quality:minimum")))
+		{
+			Int fmz = first_mz_model_;
+			Int lmz = last_mz_model_;
+			fit_loop_(set, fmz,lmz,sampling_size_mz,final);				
+		}
 		
 		//max_quality =	compute_mz_corr_(mz_model_);
 		

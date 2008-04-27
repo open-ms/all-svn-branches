@@ -153,7 +153,7 @@ namespace OpenMS
 				
 				// update range informations
 		    map_.updateRanges();
-		
+						
 				if (map_.getSize() == 0)
 				{
 					std::cout << "No data with MS level 1 provided. Aborting. " << std::endl;
@@ -251,7 +251,7 @@ namespace OpenMS
 	    /// fills @p index with the index of nearest peak in m/z dimension in the previous spectrum
 			void getPrevRt(IDX& index) throw (NoSuccessor, Exception::Precondition);
 			
-			//Calculates the convex hull of a index set and adds it to the feature
+			/// Calculates the convex hull of a index set and adds it to the feature
 			void addConvexHull(const IndexSet& set, Feature& f) const;
 	
 	    /// run main loop

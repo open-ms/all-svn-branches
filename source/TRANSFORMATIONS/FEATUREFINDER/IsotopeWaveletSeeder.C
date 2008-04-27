@@ -37,8 +37,9 @@ namespace OpenMS
 	    waveletLength_(0),
 	    avMZSpacing_(0),
 	    min_spacing_(0),
-	    signal_avg_factor_(0),
-			cwt_avg_factor_(0),
+			signal_min_sn_(0),
+	    signal_min_intensity_(0),
+			cwt_min_intensity_(0),
 			null_var_(),
 			n_null_()
 	{
@@ -49,8 +50,9 @@ namespace OpenMS
 		defaults_.setValue("min_charge",1,"Minimum charge state to be considered");
 
 		// intensity threshold in cwt
-		defaults_.setValue("signal_avg_factor",3.0,"Positions whose intensity is this factor above average are considered in charge detection");
-		defaults_.setValue("cwt_avg_factor",3.0,"Positions whose intensity in continuous wavelet transform is this factor above average are considered in charge detection");
+		defaults_.setValue("signal_min_sn",1.5,"Positions whose intensity is this factor above average are considered in charge detection");
+		defaults_.setValue("signal_min_intensity",1000.0,"Min. intensity in signal");
+		defaults_.setValue("cwt_min_intensity",200.0,"Min. intensity in transformed signal");
 
     defaultsToParam_();
 	}
@@ -66,8 +68,9 @@ namespace OpenMS
 			waveletLength_(rhs.peak_cut_off_),
 			avMZSpacing_(rhs.avMZSpacing_),
 			min_spacing_(rhs.min_spacing_),
-			signal_avg_factor_(rhs.signal_avg_factor_),
-			cwt_avg_factor_(rhs.cwt_avg_factor_),
+			signal_min_sn_(rhs.signal_min_sn_),
+			signal_min_intensity_(rhs.signal_min_intensity_),
+			cwt_min_intensity_(rhs.cwt_min_intensity_),
 			null_var_(rhs.null_var_),
 			n_null_(rhs.n_null_)
   {
@@ -85,8 +88,9 @@ namespace OpenMS
 		waveletLength_       = rhs.waveletLength_;
 		avMZSpacing_        = rhs.avMZSpacing_;
 		min_spacing_         = rhs.min_spacing_;
-		signal_avg_factor_  = rhs.signal_avg_factor_;
-		cwt_avg_factor_     = rhs.cwt_avg_factor_;
+		signal_min_sn_     = rhs.signal_min_sn_;
+		signal_min_intensity_  = rhs.signal_min_intensity_;
+		cwt_min_intensity_     = rhs.cwt_min_intensity_;
 		null_var_               = rhs.null_var_;
 		n_null_                 = rhs.n_null_;
 
@@ -99,9 +103,10 @@ namespace OpenMS
 	{
 		// update member of base class first
 		BaseSweepSeeder::updateMembers_();
-
-		signal_avg_factor_  = param_.getValue("signal_avg_factor");
-		cwt_avg_factor_     = param_.getValue("cwt_avg_factor");
+	
+		signal_min_sn_          = param_.getValue("signal_min_sn");
+		signal_min_intensity_  = param_.getValue("signal_min_intensity");
+		cwt_min_intensity_     = param_.getValue("cwt_min_intensity");
 
 		// delete old charge states
 		charges_.clear();
@@ -124,10 +129,10 @@ namespace OpenMS
       	// compute spacings
       	computeSpacings_();
 
-				//#ifdef DEBUG_FEATUREFINDER
+				#ifdef DEBUG_FEATUREFINDER
       	cout << "Average m/z spacing: " << avMZSpacing_ << endl;
       	cout << "Minimal m/z spacing: " << min_spacing_ << endl;
-				//#endif
+				#endif
 
 				if (min_spacing_ == 0) min_spacing_ += 0.00001;
 				
@@ -349,26 +354,7 @@ namespace OpenMS
 
 		vector<IntensityType> cwt_thresholds(candidates.size(),0.0);		// threshold for cwt intensities (one for each charge state)
 		vector<UInt> last_pattern(candidates.size(),0);								// the last index where a pattern of was found (one for each charge)
-    
-    //IntensityType scan_mean      = 0;   // median intensity in signal
-   // IntensityType scan_threshold = 0;   // threshold for signal intensity
 
-// 		UInt pos = 0;
-//     for (UInt z=0; z<scan.size();++z)
-//     {
-// 				if ( scan[z].getIntensity() > 0) 
-// 				{
-// 					scan_mean += scan[z].getIntensity();
-// 					++pos;
-// 				}
-//     }
-// 		scan_mean /= pos;
-//     scan_threshold = scan_mean * signal_avg_factor_;
-
-// 		scan_threshold = 1000;
-		
-    //cout << "Median intensity in scan: " << scan_mean << endl;
-    //cout << "Intensity threshold for signal: " << scan_threshold << endl;
 
 		SignalToNoiseEstimatorMedian< > sn;
 		sn.init(scan.begin(),scan.end());		
@@ -376,25 +362,13 @@ namespace OpenMS
 		for (UInt c = 0; c < candidates.size(); ++c)
 		{		
 			computeNullVariance_(candidates[c],c);
-						
-			// compute median intensity in cwt			
-			IntensityType cwt_mean = 0.0;
-			UInt pos = 0;
-			for (UInt i =0; i< candidates[c].size(); ++i)
-			{
-				if ( candidates[c][i].getIntensity() >= 0) 
-				{
-						cwt_mean += 	candidates[c][i].getIntensity();	
-						++pos;
-				}
-			}						
-			cwt_mean /= pos;
-			cwt_thresholds.at(c) =  cwt_mean * cwt_avg_factor_;
-			//cwt_thresholds.at(c) = 1000;
-			
-			//cout << "Median intensity in cwt: " << cwt_mean << endl;
-    	//cout << "Intensity threshold for cwt: " << (cwt_thresholds.at(c) ) << endl;
 
+			cwt_thresholds.at(c) =  cwt_min_intensity_;
+
+    	cout << "Intensity threshold for cwt: " << (cwt_thresholds.at(c) ) << endl;
+			cout << "s/n threshold for cwt: " << signal_min_sn_ << endl;
+			cout << "Intensity threshold for signal: " << signal_min_intensity_ << endl;
+			
 			#ifdef DEBUG_FEATUREFINDER
 			//write debug output
 			CoordinateType current_rt = scan.getRT();
@@ -415,7 +389,7 @@ namespace OpenMS
 		for (UInt i = 1; i < candidates[0].size(); ++i, ++it) 			// cwt's for all charge states have the same length....
 		{
 				
-				if (sn.getSignalToNoise(it) <= signal_avg_factor_)
+				if (sn.getSignalToNoise(it) <= signal_min_sn_ || it->getIntensity() <= signal_min_intensity_)
 				{
 					continue;
 				}

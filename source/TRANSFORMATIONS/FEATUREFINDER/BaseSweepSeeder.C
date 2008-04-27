@@ -166,6 +166,8 @@ void BaseSweepSeeder::sweep_()
  				traits_->getPeakFlag( make_pair( currscan_index, citer->first ) ) = FeaFiTraits::USED;			
 			}
 			
+			std::cout << iso_curr_scan.size() << " feature candidates detected." << std::endl;
+			
 			// for each m/z position with score: 
 			// => check for cluster at similar m/z in previous scans
 			// => if (matching cluster found) extend
@@ -193,7 +195,6 @@ void BaseSweepSeeder::sweep_()
 				// walk to the left (for at most 1.0 Th)
 				while (mz_dist < 1.0 && this_peak >= 1)
 				{
-					mz_dist = ( start_mz - traits_->getPeakMz( make_pair(currscan_index,this_peak) ) );
 					if ( traits_->getPeakFlag( make_pair(currscan_index,this_peak) ) == FeaFiTraits::UNUSED )
 					{
 						//entry_to_insert->second.peaks_.insert( make_pair(currscan_index,this_peak) );
@@ -201,6 +202,7 @@ void BaseSweepSeeder::sweep_()
 						traits_->getPeakFlag( make_pair(currscan_index,this_peak) ) = FeaFiTraits::USED;
 					}
 					--this_peak;
+					mz_dist = ( start_mz - traits_->getPeakMz( make_pair(currscan_index,this_peak) ) );
 				}
 			
 				// reset
@@ -208,9 +210,8 @@ void BaseSweepSeeder::sweep_()
 				mz_dist   = ( traits_->getPeakMz( make_pair(currscan_index,this_peak) )  - start_mz );
         
         // and to the right (we walk for at most ( 3.0 / charge estimate) Th )
-        CoordinateType dist_to_right = 4.0 / (double) citer->second.first;
-				//cout << "Walkting " << dist_to_right << endl;
-		  	while (mz_dist <= dist_to_right && this_peak < current_scan.size() )
+        CoordinateType dist_to_right = 4.0; // / (double) citer->second.first;
+				while (mz_dist <= dist_to_right && this_peak < current_scan.size() )
 				{
 					if ( traits_->getPeakFlag( make_pair(currscan_index,this_peak) )  == FeaFiTraits::UNUSED )
 					{
@@ -218,9 +219,9 @@ void BaseSweepSeeder::sweep_()
 						points.push_back(this_peak);
 						traits_->getPeakFlag( make_pair(currscan_index,this_peak) ) = FeaFiTraits::USED;
 					}					
-					
-					mz_dist = ( traits_->getPeakMz( make_pair(currscan_index,this_peak) )  - start_mz );
 					++this_peak;
+					mz_dist = ( traits_->getPeakMz( make_pair(currscan_index,this_peak) )  - start_mz );
+					
 				}
 				
 				if ( points.size() > 10 )

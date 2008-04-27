@@ -218,10 +218,12 @@ namespace OpenMS
 		ChargeVector charges_;
 		/// Stores the Gamme function
 		HashMap<UInt, double> preComputedGamma_;
+		/// Min s/n threshold
+		IntensityType signal_min_sn_;
 		/// Determines threshold for the minimum score of a peak
-		IntensityType signal_avg_factor_;
+		IntensityType signal_min_intensity_;
 		/// Determines threshold for cwt of a peak
-		IntensityType cwt_avg_factor_;
+		IntensityType cwt_min_intensity_;
 		/// Tolerance for scan alignment
 		CoordinateType tolerance_scansum_;
 		/// variance on empty interval of cwt (used as null hypothesis)

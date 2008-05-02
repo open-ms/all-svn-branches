@@ -335,7 +335,7 @@ namespace OpenMS
 			fit_loop_(set, fmz,lmz,sampling_size_mz,final);				
 		}
 		
-		//max_quality =	compute_mz_corr_(mz_model_);
+		max_quality =	compute_mz_corr_(mz_model_);
 		
 		// fit has too low quality or fit was not possible i.e. because of zero stdev
 		if (max_quality < (QualityType)(param_.getValue("quality:minimum")))
@@ -1116,14 +1116,14 @@ namespace OpenMS
 		s = gsl_multifit_fdfsolver_alloc(T,n,p);
 		gsl_multifit_fdfsolver_set(s, &f, &x.vector);
 
-#ifdef DEBUG_FEATUREFINDER
-			printf ("before loop iter: %4u x = % 15.8f % 15.8f  % 15.8f  % 15.8f |f(x)| = %g\n", iter,
-							gsl_vector_get(s->x,0),
-							gsl_vector_get(s->x,1),
-							gsl_vector_get(s->x,2),
-							gsl_vector_get(s->x,3),
-							gsl_blas_dnrm2(s->f));
-#endif
+// #ifdef DEBUG_FEATUREFINDER
+// 			printf ("before loop iter: %4u x = % 15.8f % 15.8f  % 15.8f  % 15.8f |f(x)| = %g\n", iter,
+// 							gsl_vector_get(s->x,0),
+// 							gsl_vector_get(s->x,1),
+// 							gsl_vector_get(s->x,2),
+// 							gsl_vector_get(s->x,3),
+// 							gsl_blas_dnrm2(s->f));
+// #endif
 
 		// this is the loop for fitting
 		do
@@ -1159,13 +1159,13 @@ namespace OpenMS
 
 		gsl_status_ = gsl_strerror(status);
 
-#ifdef DEBUG_FEATUREFINDER
-		cout << profile_ << " status: " << gsl_status_ << endl;
-		if (status != GSL_SUCCESS)
-		{
-			cout << "Fitting not succeeded." << endl;
-		}
-#endif
+// #ifdef DEBUG_FEATUREFINDER
+// 		cout << profile_ << " status: " << gsl_status_ << endl;
+// 		if (status != GSL_SUCCESS)
+// 		{
+// 			cout << "Fitting not succeeded." << endl;
+// 		}
+// #endif
 
 #ifdef DEBUG_FEATUREFINDER
 		{

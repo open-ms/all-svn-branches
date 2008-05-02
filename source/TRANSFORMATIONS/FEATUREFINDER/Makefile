@@ -69,4 +69,6 @@ include ../../common.mak
 
 # For debugging the FeatureFinder, please create the file 'Makefile_debug'
 # and add the line 'ADD_CXXFLAGS=-DDEBUG_FEATUREFINDER' to it
--include Makefile_debug
+#-include Makefile_debug
+
+#ADD_CXXFLAGS=-DDEBUG_FEATUREFINDER

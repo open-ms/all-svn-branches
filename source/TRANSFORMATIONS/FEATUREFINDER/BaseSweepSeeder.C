@@ -37,8 +37,7 @@ BaseSweepSeeder::BaseSweepSeeder()
         : BaseSeeder(),
 				is_initialized_(false),
 				mass_tolerance_alignment_(0),
-				scans_to_sumup_(0),
-				mass_tolerance_cluster_(0)
+				scans_to_sumup_(0)
 {
 		// number of scans used for alignment
 		defaults_.setValue("scans_to_sumup",5,"number of scans that are combined in order to improve the signal-to-noise level.");
@@ -53,17 +52,12 @@ BaseSweepSeeder::BaseSweepSeeder()
 		defaults_.setValue("min_number_peaks",20,"minimum number of peaks");		
 		
 		// mass tolerance for peak cluster construction
-		defaults_.setValue("mass_tolerance_cluster",1.2,"The m/z tolerance for looking up a signal in following scans.");
+		defaults_.setValue("mz_tolerance_cluster",1.2,"The m/z tolerance for looking up a signal in following scans.");
 		// rt tolerance for cluster construction (given in number of scans)
 		defaults_.setValue("rt_tolerance_cluster",2,"rt tolerance for cluster construction (given in number of scans)");		
 		
-		// max distance in rt for merged peak cluster (given in # scans)
-		defaults_.setValue("max_rt_dist_merging",40.0,"max distance in rt for merged peak cluster (given in # scans)");
-		// max distance in mz for merged peak cluster 
-		defaults_.setValue("max_mz_dist_merging",1.5,"max distance in mz for merged peak cluster");
-		
 		// minimum false discovery rate for a significant cluster
-		defaults_.setValue("fdr_alpha",5.0,"minimum false discovery rate for a significant cluster");
+		defaults_.setValue("fdr_alpha",5.0,"minimum false discovery rate for a significant isotopic pattern");
 }
 
 BaseSweepSeeder::BaseSweepSeeder(const BaseSweepSeeder& source) : BaseSeeder(source) {}
@@ -107,12 +101,8 @@ void BaseSweepSeeder::updateMembers_()
 	scans_to_sumup_           			= param_.getValue("scans_to_sumup");
 
 	// sweepline params
-	mass_tolerance_cluster_   	= param_.getValue("mass_tolerance_cluster");
-	rt_tolerance_cluster_     			= (UInt) param_.getValue("rt_tolerance_cluster");
-	
-	// cluster merging params
-	max_rt_dist_merging_      	= param_.getValue("max_rt_dist_merging"); 
-	max_mz_dist_merging_     = param_.getValue("max_mz_dist_merging");
+	mz_tolerance_cluster_   	= param_.getValue("mz_tolerance_cluster");
+	rt_tolerance_cluster_     	= (UInt) param_.getValue("rt_tolerance_cluster");
 }
 
 void BaseSweepSeeder::sweep_()
@@ -129,8 +119,9 @@ void BaseSweepSeeder::sweep_()
 			SpectrumType current_scan  = traits_->getData()[ currscan_index ];		
 			
 			cout << "---------------------------------------------------------------------------" << endl;
-			cout << "Processing scan " << (currscan_index + 1) << " of " << traits_->getData().size() << endl;
-			cout << "Retention time: " << current_scan.getRT() << endl;
+			cout << "RT: " << current_scan.getRT() << " ";
+			cout << " scan " << (currscan_index + 1) << " of " << traits_->getData().size() << endl;
+			
 			
 			#ifdef DEBUG_FEATUREFINDER
 			// write debug output
@@ -295,6 +286,9 @@ void BaseSweepSeeder::filterForOverlaps_()
 {
 		if (iso_map_.size() == 0) return; // nothing to do
 
+		#ifdef DEBUG_FEATUREFINDER
+		cout << "Checking for overlaps...." << endl;
+		#endif
 		vector<bool> seen(iso_map_.size(),false);		
 		
 		vector<TableIteratorType> entries_to_delete;
@@ -306,18 +300,24 @@ void BaseSweepSeeder::filterForOverlaps_()
 		{			
 			TableIteratorType tmp_iter = iter;			
 			++tmp_iter;
-		
-			CoordinateType mz_dist = tmp_iter->first - iter->first;
-			UInt rt_dist           = 0;
-
+			
+			#ifdef DEBUG_FEATUREFINDER
+			cout << "Checking " << iter->first << " vs " << endl;
+			#endif
 			if (seen.at(counter)) 
 			{
-				continue; // we've seen that one already
+				#ifdef DEBUG_FEATUREFINDER
+// 				cout << " we've seen that one already " << endl;
+				#endif
+				continue;
 			}
 			UInt tmpc = counter + 1;
 			
-			while (  tmp_iter !=iso_map_.end() && mz_dist < max_mz_dist_merging_ )
+			while (  tmp_iter !=iso_map_.end())
 			{			
+				#ifdef DEBUG_FEATUREFINDER
+				//cout << tmp_iter->first << endl;
+				#endif
 				bool overlap = false;
 				
 				// test if cluster overlap
@@ -331,25 +331,15 @@ void BaseSweepSeeder::filterForOverlaps_()
 				       tmp_iter->second.last_scan_ <= iter->second.last_scan_ ) )
 				{
 					overlap = true;				
-				}
-				       
-				rt_dist   = tmp_iter->second.first_scan_ - iter->second.last_scan_;
-				mz_dist = tmp_iter->first - iter->first;
-				// cout << "Overlap ! mz distance : " << mz_dist << endl;
-
-				if (rt_dist >= max_rt_dist_merging_) overlap = false;
-				if (mz_dist >= max_mz_dist_merging_) 
-				{
-					overlap = false;
-// 					cout << "Too much. Tolerance: " << max_mz_dist_merging_ << endl;
+					//cout << "overlap ! " << endl;
 				}
 						
-				// we merge only features with the same charge, overlap in rt and if we haven't seen them yet.
-				if ( /*tmp_iter->second.peaks_.charge_ == iter->second.peaks_.charge_ 
-				     &&*/ overlap
-						 && !seen.at(tmpc)) 
+				// we merge only features that we haven't seen  yet.
+				if (overlap && !seen.at(tmpc)) 
 				{
 					// merging features...
+					//sort(tmp_iter->second.scans_.begin(),tmp_iter->second.scans_.end());
+					//sort(iter->second.scans_.begin(),iter->second.scans_.end());
 					// copy scans
 					for (std::vector<UInt>::const_iterator scan_iter = tmp_iter->second.scans_.begin(); 
 								scan_iter != tmp_iter->second.scans_.end();
@@ -422,25 +412,25 @@ void BaseSweepSeeder::filterForSize_()
 		deleteHashEntries_(entries_to_delete);		
 }
 
-void BaseSweepSeeder::filterForSignificance_()
-{
-	if (iso_map_.size() == 0) return;
-
-	vector<TableIteratorType> entries_to_delete;
-			
-	ProbabilityType alpha = param_.getValue("fdr_alpha");
-	cout << "Filtering for significance with alpha: " << (alpha/iso_map_.size() ) << endl;	
-
-	for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
-	{				
-		if (iter->second.peaks_.max_charge_score_ > (alpha/iso_map_.size() ) )
-		{
-			entries_to_delete.push_back(iter);	
-		}
-	}
-	
-	deleteHashEntries_(entries_to_delete);	
-}
+// void BaseSweepSeeder::filterForSignificance_()
+// {
+// 	if (iso_map_.size() == 0) return;
+// 
+// 	vector<TableIteratorType> entries_to_delete;
+// 			
+// 	ProbabilityType alpha = param_.getValue("fdr_alpha");
+// 	cout << "Filtering for significance with alpha: " << (alpha/iso_map_.size() ) << endl;	
+// 
+// 	for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
+// 	{				
+// 		if (iter->second.peaks_.max_charge_score_ > (alpha/iso_map_.size() ) )
+// 		{
+// 			entries_to_delete.push_back(iter);	
+// 		}
+// 	}
+// 	
+// 	deleteHashEntries_(entries_to_delete);	
+// }
 
 
 void BaseSweepSeeder::filterHash_()
@@ -469,14 +459,14 @@ void BaseSweepSeeder::filterHash_()
 		
 		filterForOverlaps_( );
 				
-		filterForSignificance_();
+		//filterForSignificance_();
 		cout << iso_map_.size() << " clusters remained after filtering." << endl;
 }
 
 void BaseSweepSeeder::voteForCharge_()
 {
 	// charge states > 10 should rareley be encountered
-	vector<ProbabilityType> charge_scores(10, numeric_limits<ProbabilityType>::max() );
+	vector<UInt> charge_scores(10, 0 );
 
 	for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
 	{
@@ -493,24 +483,21 @@ void BaseSweepSeeder::voteForCharge_()
 			
 			if ( (scmz_iter->first-1) >= charge_scores.size() || charge_scores.size() == 0)
 			{
-				charge_scores.resize( scmz_iter->first, numeric_limits<ProbabilityType>::max() );
+				charge_scores.resize( scmz_iter->first, 0);
 			}
 			
-			if ( charge_scores.at( (scmz_iter->first -1) ) > scmz_iter->second )
-			{
-			charge_scores.at( (scmz_iter->first -1) ) = scmz_iter->second;
-			}	
+			++charge_scores.at( (scmz_iter->first -1) );
 		} // end for ( std::vector< ScoredChargeType > )
-		
 		//cout << "Done..." << endl;
 		
 		// search for winning charge
-		ProbabilityType max_vote = numeric_limits<ProbabilityType>::max();
+		UInt max_vote = 0;
 		UInt max_charge = 0;
 		
 		for (UInt i = 0; i < charge_scores.size(); ++i)
 		{
-			if (charge_scores[i] < max_vote)
+			//cout << (i+1) << " " << charge_scores[i] << endl;
+			if (charge_scores[i] > max_vote)
 			{
 				max_charge = (i + 1);
 				max_vote     = charge_scores[i];
@@ -544,13 +531,13 @@ BaseSweepSeeder::TableIteratorType BaseSweepSeeder::checkInPreviousScans_(const 
 				cout << "m/z distance to closest cluster : " << delta_mz << endl;
 				#endif
 				
-        if ( delta_mz >= mass_tolerance_cluster_) // check if first peak of last cluster is close enough
+        if ( delta_mz >= mz_tolerance_cluster_) // check if first peak of last cluster is close enough
         {
             mz_in_hash = curr_mz; // update current hash key
 
 						#ifdef DEBUG_FEATUREFINDER
             cout << "Last peak cluster too far, creating new cluster" << endl;
-						cout << "Tolerance : " << mass_tolerance_cluster_ << endl;
+						cout << "Tolerance : " << mz_tolerance_cluster_ << endl;
 						cout << "Creating cluster at m/z " << mz_in_hash << std::endl;
 						#endif
 
@@ -563,6 +550,7 @@ BaseSweepSeeder::TableIteratorType BaseSweepSeeder::checkInPreviousScans_(const 
         {
 						#ifdef DEBUG_FEATUREFINDER
             cout << "Found matching cluster within distance (m/z) " << delta_mz << endl;
+						cout << "Tolerance : " << mz_tolerance_cluster_ << endl;
 						#endif
 						
 						// there is at least one cluster with m/z within the tolerance, 
@@ -573,12 +561,12 @@ BaseSweepSeeder::TableIteratorType BaseSweepSeeder::checkInPreviousScans_(const 
           					
 						// extend range	
 						//cout << "Extending range: " << distance(range.first,range.second);
-						while (fabs(range.first->first - curr_mz) < mass_tolerance_cluster_)
+						while (fabs(range.first->first - curr_mz) < mz_tolerance_cluster_)
 						{
 							if ( range.first == iso_map_.begin()) break;
 							--(range.first);
 						}
-						while (range.second != iso_map_.end() && fabs(range.second->first - curr_mz) < mass_tolerance_cluster_ )
+						while (range.second != iso_map_.end() && fabs(range.second->first - curr_mz) < mz_tolerance_cluster_ )
 						{
 							++(range.second);
 						}

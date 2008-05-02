@@ -108,11 +108,14 @@ namespace OpenMS
 				
 				SignalToNoiseEstimatorMeanIterative< > sn_estimator;
 				
-				UInt sc=1;
+				UInt sc=distance(end,begin);
+				startProgress(0, sc, "reading data");
 								
 				for (SpectrumIteratorType it = begin; it != end; ++it)
 				{
-					std::cout << "Reading scan " << sc++ << std::endl;
+					//std::cout << "Reading scan " << sc++ << std::endl;
+					
+					setProgress(distance(it,begin));
 					
 					// remove empty scans and tandem spectra
 					if (it->getMSLevel() == 1 && it->size() > 0) 
@@ -160,7 +163,7 @@ namespace OpenMS
 					return;
 				}
 									
-				std::cout << "This map contains " << map_.size() << " scans and " << map_.getSize() << " data points. " << std::endl;
+				std::cout << "LC-MS map contains " << map_.size() << " scans and " << map_.getSize() << " data points. " << std::endl;
 		
 		    // resize internal data structures
 		    flags_.resize(map_.size());

@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff, Rene Hussong$
+// $Maintainer: Ole Schulz-Trieglaff$
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_ISOTOPEWAVELETSEEDER_H
@@ -126,10 +126,10 @@ namespace OpenMS
 		void generateGammaValues_();
 
 		/// Compute null variance
-		void computeNullVariance_(const DPeakArray<PeakType >& cwt, const UInt charge );
+		//void computeNullVariance_(const DPeakArray<PeakType >& cwt, const UInt charge );
 
 		/// Compute local variance (in an interval) and test its significance
-		ProbabilityType testLocalVariance_(const DPeakArray<PeakType >& cwt, const UInt& start, const UInt charge);
+		IntensityType testLocalVariance_(const DPeakArray<PeakType >& cwt, const UInt& start, const UInt charge);
 
 		/**
 			@brief Computes the wavelet transform for several charges in nearly the same time.
@@ -198,11 +198,6 @@ namespace OpenMS
 			//not found
 			return std::make_pair(-1,-1);
 		}
-
-		/// Returns the absolute mean of the intensities in @p signal
-		double getAbsMean_(const DPeakArray<PeakType >& signal,
-																		UInt startIndex,
-																		UInt endIndex) const;
 
 		/// Does not need much explanation.
 		bool wavelet_initialized_;

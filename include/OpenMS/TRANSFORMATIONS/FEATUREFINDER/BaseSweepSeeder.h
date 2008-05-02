@@ -213,7 +213,7 @@ namespace OpenMS
 			void filterForSize_();
 			
 			/// filters sweepline hash for regions with low p-value
-			void filterForSignificance_();
+			//void filterForSignificance_();
 			
 			/// Deletes the hash entries in @p entries.
 			void deleteHashEntries_(std::vector<TableIteratorType>& entries);
@@ -234,16 +234,16 @@ namespace OpenMS
 			UInt scans_to_sumup_;
 			
 			/// Mass tolerance for sweepline
-			CoordinateType mass_tolerance_cluster_;
+			CoordinateType mz_tolerance_cluster_;
 			
 			/// Rt tolerance for sweepline		
 			UInt rt_tolerance_cluster_;
 			
 			/// Max. distance in rt for merged peak cluster
-			UInt max_rt_dist_merging_;
+			//UInt max_rt_dist_merging_;
 			
 			/// Max. distance in mz for merged peak cluster
-			CoordinateType max_mz_dist_merging_;
+			//CoordinateType max_mz_dist_merging_;
 		
   };
 }

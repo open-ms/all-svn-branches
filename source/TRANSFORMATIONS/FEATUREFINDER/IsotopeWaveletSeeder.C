@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff, Rene Hussong$
+// $Maintainer: Ole Schulz-Trieglaff $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeWaveletSeeder.h>
@@ -132,6 +132,9 @@ namespace OpenMS
 				#ifdef DEBUG_FEATUREFINDER
       	cout << "Average m/z spacing: " << avMZSpacing_ << endl;
       	cout << "Minimal m/z spacing: " << min_spacing_ << endl;
+				cout << "Intensity threshold for cwt: " << cwt_min_intensity_ << endl;
+				cout << "s/n threshold for cwt: " << signal_min_sn_ << endl;
+				cout << "Intensity threshold for signal: " << signal_min_intensity_ << endl;
 				#endif
 
 				if (min_spacing_ == 0) min_spacing_ += 0.00001;
@@ -204,27 +207,27 @@ namespace OpenMS
 		#endif
 	}
 
-	void IsotopeWaveletSeeder::computeNullVariance_(const DPeakArray<PeakType >& cwt, const UInt charge_index )
-	{
-		CoordinateType first_mass = (cwt.size() > 0) ? cwt[ (cwt.size()-1) ].getMZ() : 0.0 ;
-		CoordinateType mass_diff  = 0.0;
-		UInt j = (cwt.size() > 0) ? (cwt.size() - 1) : 0;
-
-		IntensityType mean = 0.0;
-		IntensityType S       = 0.0;
-		UInt n                     = 0;
-						
-		for (; mass_diff < 6.0 && j > 0; --j)
-		{
-			++n;
-  		IntensityType delta = cwt[j].getIntensity() - mean;
-  		mean = mean + delta/n;
-  		S += delta*( cwt[j].getIntensity()  - mean);
-			mass_diff    = cwt[j].getMZ() - first_mass;
-		}
-		n_null_[charge_index] = n;		
-		null_var_[charge_index] = S / (n-1);
-	}
+// 	void IsotopeWaveletSeeder::computeNullVariance_(const DPeakArray<PeakType >& cwt, const UInt charge_index )
+// 	{
+// 		CoordinateType first_mass = (cwt.size() > 0) ? cwt[ (cwt.size()-1) ].getMZ() : 0.0 ;
+// 		CoordinateType mass_diff  = 0.0;
+// 		UInt j = (cwt.size() > 0) ? (cwt.size() - 1) : 0;
+// 
+// 		IntensityType mean = 0.0;
+// 		IntensityType S       = 0.0;
+// 		UInt n                     = 0;
+// 						
+// 		for (; mass_diff < 6.0 && j > 0; --j)
+// 		{
+// 			++n;
+//   		IntensityType delta = cwt[j].getIntensity() - mean;
+//   		mean = mean + delta/n;
+//   		S += delta*( cwt[j].getIntensity()  - mean);
+// 			mass_diff    = cwt[j].getMZ() - first_mass;
+// 		}
+// 		n_null_[charge_index] = n;		
+// 		null_var_[charge_index] = S / (n-1);
+// 	}
 
 	void IsotopeWaveletSeeder::fastMultiCorrelate_(const SpectrumType& signal, vector<DPeakArray<PeakType > >* pwts)
 	{
@@ -349,25 +352,15 @@ namespace OpenMS
 
 	IsotopeWaveletSeeder::ScoredMZVector IsotopeWaveletSeeder::identifyCharge_(vector<DPeakArray<PeakType > >& candidates, SpectrumType& scan)
 	{
-
 		ScoredMZVector scmzvec;	 // scored positions
-
-		vector<IntensityType> cwt_thresholds(candidates.size(),0.0);		// threshold for cwt intensities (one for each charge state)
 		vector<UInt> last_pattern(candidates.size(),0);								// the last index where a pattern of was found (one for each charge)
-
 
 		SignalToNoiseEstimatorMedian< > sn;
 		sn.init(scan.begin(),scan.end());		
 		
 		for (UInt c = 0; c < candidates.size(); ++c)
 		{		
-			computeNullVariance_(candidates[c],c);
-
-			cwt_thresholds.at(c) =  cwt_min_intensity_;
-
-    	cout << "Intensity threshold for cwt: " << (cwt_thresholds.at(c) ) << endl;
-			cout << "s/n threshold for cwt: " << signal_min_sn_ << endl;
-			cout << "Intensity threshold for signal: " << signal_min_intensity_ << endl;
+			//computeNullVariance_(candidates[c],c);
 			
 			#ifdef DEBUG_FEATUREFINDER
 			//write debug output
@@ -384,57 +377,60 @@ namespace OpenMS
 			#endif
 
 		}
-
+		
 		SpectrumType::iterator it = scan.begin();
 		for (UInt i = 1; i < candidates[0].size(); ++i, ++it) 			// cwt's for all charge states have the same length....
-		{
-				
+		{				
 				if (sn.getSignalToNoise(it) <= signal_min_sn_ || it->getIntensity() <= signal_min_intensity_)
 				{
 					continue;
 				}
-				//if (scan[i].getIntensity() < scan_threshold)	continue;	// ignore low intensity signals
-				
 				// vector of p-values
-				vector<ProbabilityType> charge_scores( candidates.size(),numeric_limits<ProbabilityType>::max() );
+				vector<IntensityType> charge_scores( candidates.size(),0.0);
 
 				for (UInt c=0; c<candidates.size(); ++c)		// for all charge states
 				{
 					// test if :
 					// - intensity in cwt is higher than threshold
 					// - we are at a local max in the signal
-					// - the last pattern (of the same charge) is already some way behind us
-				
-					if ( candidates[c][i].getIntensity() > cwt_thresholds[c] && 
-							 i > last_pattern[c]) /*&& 
-							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) > 4.0 )*/ /*&&                               
-							(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
-						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0) )						  	  */
-					{						
-							//cout << " Distance to last pattern: " << ( candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) << endl;
+					// - the last pattern (of the same charge) is already behind us				
+					if ( candidates[c][i].getIntensity() > cwt_min_intensity_ && 
+							 i > last_pattern[c] /*&& 
+							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) > 4.0*/ )                             
+							/*(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
+						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0) )		*/				  	  
+					{				
+							//cout << "Hit at " << 	candidates[c][i].getMZ() << endl;
+							//cout << "Distance to last pattern: " << ( candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) << endl;
 							UInt max = findNextMax_(scan.getContainer(),i);
-							ProbabilityType pvalue = testLocalVariance_(candidates[c],max,c);	
-							charge_scores.at(c) = pvalue;
-							last_pattern.at(c)  = max; 				
+							IntensityType score = testLocalVariance_(candidates[c],max,c);	
+							charge_scores.at(c) = score;
+							last_pattern.at(c)  = max; 			
+								
+							//cout << "score : " << score << endl;
+							//cout << "charge : " << (c+1) << endl;
 							// store index of last pattern
 					} // end if (local max...)
 
 				}  // end for all (charge states)
 
+				//cout << "checking charge estimates..." << endl;
+				
 				// determine highest scoring charge state
-				ProbabilityType best_score = numeric_limits<ProbabilityType>::max();
-				UInt best_charge                = 0;
+				//ProbabilityType best_score = numeric_limits<ProbabilityType>::max();
+				IntensityType best_score = 0;
+				UInt best_charge             = 0;
 
 				for (UInt z=0;z<charge_scores.size();++z)
 				{
-					if (charge_scores.at(z) < best_score)
+					//cout << (z+1) << " " << charge_scores.at(z) << endl;
+					if (charge_scores.at(z) > best_score)
 					{
 						best_score  = charge_scores.at(z);
 						best_charge = (z+1);
 					}
 				}
-
-				if (best_score == numeric_limits<ProbabilityType>::max()) continue;
+				if (best_score == 0.0) continue;
 
 				if (best_score == 0.0)
 				{
@@ -453,16 +449,6 @@ namespace OpenMS
 		return scmzvec;
 	}
 
-	double IsotopeWaveletSeeder::getAbsMean_(const DPeakArray<PeakType >& signal, UInt startIndex, UInt endIndex) const
-	{
-	  double res=0;
-	  for (UInt i=startIndex; i<endIndex; ++i)
-	  {
-	  	res += fabs(signal[i].getIntensity());
-		}
-	  return (res/(double)(endIndex-startIndex+1));
-	}
-
 	UInt IsotopeWaveletSeeder::findNextMax_(const DPeakArray<PeakType >& cwt, const UInt index)
 	{
 
@@ -474,7 +460,7 @@ namespace OpenMS
 
 		// check to the left
 		UInt i = index;
-		while (mass_diff < 1.0 && i >= 1)
+		while (mass_diff < 1.5 && i >= 1)
 		{
 			if (cwt[i].getIntensity() > 	max_intensity)
 			{
@@ -487,7 +473,7 @@ namespace OpenMS
 
 		// check to the right
 		i = index;
-		while (mass_diff < 1.0 && i<cwt.size())
+		while (mass_diff < 1.5 && i<cwt.size())
 		{
 			if (cwt[i].getIntensity() > 	max_intensity)
 			{
@@ -501,19 +487,20 @@ namespace OpenMS
 		return max_index;
 	}
 
-	IsotopeWaveletSeeder::ProbabilityType IsotopeWaveletSeeder::testLocalVariance_(const DPeakArray<PeakType >& cwt, const UInt& start, const UInt charge_index)
+	IsotopeWaveletSeeder::IntensityType IsotopeWaveletSeeder::testLocalVariance_(const DPeakArray<PeakType >& cwt, const UInt& start, const UInt /*charge_index*/)
 	{
 		IntensityType cwt_sum    = 0.0;
-		IntensityType cwt_sqsum = 0.0;
+		//IntensityType cwt_sqsum = 0.0;
 
 		CoordinateType first_mass =  cwt[start].getMZ();
 		CoordinateType mass_diff  = 0.0;
 		UInt i = start;
 		for (; mass_diff < 5.0 && i < cwt.size() ;++i)
 		{
-			cwt_sum    += cwt[i].getIntensity();
-			cwt_sqsum += (cwt[i].getIntensity() * cwt[i].getIntensity());
-			mass_diff    = cwt[i].getMZ() - first_mass;
+			// cwt_sum    += cwt[i].getIntensity();
+			cwt_sum    += fabs(cwt[i].getIntensity());
+			//cwt_sqsum += (cwt[i].getIntensity() * cwt[i].getIntensity());
+			mass_diff    = fabs(cwt[i].getMZ() - first_mass);
 		}
 		UInt N_local = i-start;
 
@@ -522,18 +509,19 @@ namespace OpenMS
 		i = start;
 		for (; mass_diff < 5.0 && i >= 1 ;--i)
 		{
-			cwt_sum    += cwt[i].getIntensity();
-			cwt_sqsum += (cwt[i].getIntensity() * cwt[i].getIntensity());
-			mass_diff    = cwt[i].getMZ() - first_mass;
+			//cwt_sum    += cwt[i].getIntensity();
+			cwt_sum    += fabs(cwt[i].getIntensity());
+			//cwt_sqsum += (cwt[i].getIntensity() * cwt[i].getIntensity());
+			mass_diff    = fabs(cwt[i].getMZ() - first_mass);
 		}
 		N_local += start-i;
 
-		IntensityType local_var = ( N_local * cwt_sqsum - ( cwt_sum * cwt_sum) ) / ( N_local * (N_local-1) );
+		//IntensityType local_var = ( N_local * cwt_sqsum - ( cwt_sum * cwt_sum) ) / ( N_local * (N_local-1) );
 
-		IntensityType f_stat  = local_var/null_var_[charge_index];
-		ProbabilityType pval = (1 - gsl_cdf_fdist_P(f_stat, (N_local-1) , (n_null_[ charge_index ]-1) )) ;
+		//IntensityType f_stat  = local_var/null_var_[charge_index];
+		//ProbabilityType pval = (1 - gsl_cdf_fdist_P(f_stat, (N_local-1) , (n_null_[ charge_index ]-1) )) ;
 
-		return pval;
+		return cwt_sum;
 	}
 
 } // end of namespace OpenMS

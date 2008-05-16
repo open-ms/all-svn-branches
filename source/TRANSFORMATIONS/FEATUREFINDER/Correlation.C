@@ -149,5 +149,60 @@ namespace OpenMS
 		
  		return fabs(corr);
 	}
+	
+	double Correlation::evaluate(const Math::LinearInterpolation<double,double>& lint, const BaseModel<1>& iso_model)
+	{
+			// compute average intensity and intensity sum of spectrum
+			double mz_data_avg = 0.0;
+			double mz_data_sum = 0.0;
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+				mz_data_sum += lint.getData()[i];
+			}		
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+				mz_data_avg  += ( lint.getData()[i] / mz_data_sum);	
+			}		
+			mz_data_avg /= lint.getData().size();
+		
+			// normalize m/z model
+			double mz_model_sum = 0.0;
+			for(UInt i=0; i<lint.getData().size();++i)
+			{
+				mz_model_sum += iso_model.getIntensity(lint.index2key(i));
+			}
+		
+			// compute model intensity average (for the given set of data points)
+			double mz_model_avg = 0.0;		
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+				mz_model_avg += ( iso_model.getIntensity(lint.index2key(i) ) / mz_model_sum);
+			} 		
+			mz_model_avg /= lint.getData().size();
+			
+			// compute Pearson correlation
+			double cross_product_sum = 0;
+			double data_square_sum   = 0;
+			double model_square_sum  = 0; 
+			
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+					double m = (iso_model.getIntensity(lint.index2key(i) ) / mz_model_sum);
+					double d = (lint.getData()[i] / mz_data_sum);
+			
+					cross_product_sum += ( m - mz_model_avg) * ( d - mz_data_avg);
+					data_square_sum    += ( d - mz_data_avg)  * ( d - mz_data_avg);
+					model_square_sum  += ( m - mz_model_avg)  * ( m - mz_model_avg);					
+			}
+		
+			if (data_square_sum == 0 || model_square_sum == 0)
+			{
+				return -2.0;			
+			}
+			
+			double corr_mz = cross_product_sum / sqrt(data_square_sum * model_square_sum);
+	
+			return corr_mz;		
+	}
 
 }

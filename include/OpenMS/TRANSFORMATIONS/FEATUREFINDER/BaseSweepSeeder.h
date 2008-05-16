@@ -201,7 +201,7 @@ namespace OpenMS
 			TableIteratorType checkInPreviousScans_(const ScoredMZType&,  const UInt);
 			
 			/// check for matching cluster. called when there are several point cluster with similar masses.
-			bool checkForMatchingCluster_(const std::pair<TableIteratorType, TableIteratorType>&, const UInt, TableIteratorType&);
+			bool checkForMatchingCluster_(const std::pair<TableIteratorType, TableIteratorType>&, const UInt, TableIteratorType&, CoordinateType curr_mz);
 			
 			/// computes the median scan number for a hash entry
 			void computeBorders_(TableIteratorType& entry);

@@ -47,8 +47,8 @@ namespace OpenMS
 		if (!traits_) throw Exception::NullPointer(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 				
 		// store and sort intensities of model and data
-		std::vector<IntensityType> ranks_data;
-		std::vector<IntensityType> ranks_model;
+		std::vector<double> ranks_data;
+		std::vector<double> ranks_model;
 			
 		for (IndexSet::const_iterator it=set.begin(); it!=set.end(); ++it)
 		{
@@ -63,11 +63,11 @@ namespace OpenMS
 		computeRank_(ranks_data);
 		computeRank_(ranks_model);
 		
-		IntensityType mu = (ranks_data.size() + 1) / 2; // mean of ranks
+		double mu = (ranks_data.size() + 1) / 2; // mean of ranks
 
-		IntensityType sum_model_data = 0;
-		IntensityType sqsum_data     = 0;
-		IntensityType sqsum_model    = 0;
+		double sum_model_data = 0;
+		double sqsum_data     = 0;
+		double sqsum_model    = 0;
 		
 		for (UInt i=0; i<ranks_data.size();++i)
 		{
@@ -95,10 +95,9 @@ namespace OpenMS
 		if (!traits_) throw Exception::NullPointer(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 				
 		// store and sort intensities of model and data
-		std::vector<IntensityType> ranks_data;
-		std::vector<IntensityType> ranks_model;
-	
-				
+		std::vector<double> ranks_data;
+		std::vector<double> ranks_model;
+					
 		for (IndexSet::const_iterator it=set.begin(); it!=set.end(); ++it)
 		{
 			const CoordinateType coord = traits_->getPeakPos(*it)[dim];
@@ -113,11 +112,11 @@ namespace OpenMS
 		computeRank_(ranks_data);
 		computeRank_(ranks_model);
 		
-		IntensityType mu = (ranks_data.size() + 1) / 2; // mean of ranks
+		double mu = (ranks_data.size() + 1) / 2; // mean of ranks
 		
-		IntensityType sum_model_data = 0;
-		IntensityType sqsum_data     = 0;
-		IntensityType sqsum_model    = 0;
+		double sum_model_data = 0;
+		double sqsum_data     = 0;
+		double sqsum_model    = 0;
 		
 		for (UInt i=0; i<ranks_data.size();++i)
 		{
@@ -134,4 +133,63 @@ namespace OpenMS
 			
 		return fabs(corr);
 		}
+		
+		double RankCorrelation::evaluate(const Math::LinearInterpolation<double,double>& lint, const BaseModel<1>& iso_model)
+		{
+			if (!traits_) throw Exception::NullPointer(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+				
+			// store and sort intensities of model and data
+			std::vector<double> ranks_data;
+			std::vector<double> ranks_model;
+			
+			// compute average intensity and intensity sum of spectrum
+			double mz_data_sum = 0.0;
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+				mz_data_sum += lint.getData()[i];
+			}		
+		
+			// normalize m/z model
+			double mz_model_sum = 0.0;
+			for(UInt i=0; i<lint.getData().size();++i)
+			{
+				mz_model_sum += iso_model.getIntensity(lint.index2key(i));
+			}
+					
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+				ranks_data.push_back( (lint.getData()[i] / mz_data_sum) );
+				ranks_model.push_back((iso_model.getIntensity(lint.index2key(i) ) / mz_model_sum) );
+			}
+				
+			// compute ranks of data and model
+			std::sort(ranks_data.begin(),ranks_data.end() );
+			std::sort(ranks_model.begin(),ranks_model.end() );
+				
+			computeRank_(ranks_data);
+			computeRank_(ranks_model);
+		
+			double mu = (ranks_data.size() + 1) / 2; // mean of ranks
+		
+			double sum_model_data = 0;
+			double sqsum_data     = 0;
+			double sqsum_model    = 0;
+		
+			for (UInt i=0; i<ranks_data.size();++i)
+			{
+				sum_model_data  += (ranks_data[i] - mu) *(ranks_model[i] - mu);
+			
+				sqsum_data   += (ranks_data[i] - mu) * (ranks_data[i] - mu);
+				sqsum_model += (ranks_model[i] - mu) * (ranks_model[i] - mu);
+			}
+		
+			// check for division by zero
+			if ( ! sqsum_data || ! sqsum_model ) return 0;		
+		
+			double corr = sum_model_data / (  sqrt(sqsum_data) * sqrt(sqsum_model) ); 
+			
+			//return fabs(corr);
+			return corr;
+		}
+		
 }

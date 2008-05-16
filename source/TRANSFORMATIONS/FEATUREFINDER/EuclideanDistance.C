@@ -76,4 +76,31 @@ namespace OpenMS
 		return (0-sqrt(sum_diff));
 	}
 
+	double EuclideanDistance::evaluate(const Math::LinearInterpolation<double,double>& lint, const BaseModel<1>& iso_model)
+	{
+			// compute average intensity and intensity sum of spectrum
+			double mz_data_sum = 0.0;
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+				mz_data_sum += lint.getData()[i];
+			}		
+		
+			// compute model intensity sum 
+			double mz_model_sum = 0.0;		
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+				mz_model_sum += iso_model.getIntensity(lint.index2key(i) );
+			} 		
+		
+			double temp_diff = 0;		// differences between different coordinate vectors
+			double sum_diff   = 0;		// sum of differences		
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+					temp_diff = (iso_model.getIntensity(lint.index2key(i) ) / mz_model_sum) - (lint.getData()[i] / mz_data_sum);
+					sum_diff +=  temp_diff * temp_diff;
+			}
+					
+			return (0-sqrt(sum_diff));
+	}
+	
 }

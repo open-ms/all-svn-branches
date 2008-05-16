@@ -395,8 +395,8 @@ namespace OpenMS
 					// - we are at a local max in the signal
 					// - the last pattern (of the same charge) is already behind us				
 					if ( candidates[c][i].getIntensity() > cwt_min_intensity_ && 
-							 i > last_pattern[c] /*&& 
-							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) > 4.0*/ )                             
+							 i > last_pattern[c] ) /*&& 
+							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) > 4.0*/                              
 							/*(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
 						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0) )		*/				  	  
 					{				

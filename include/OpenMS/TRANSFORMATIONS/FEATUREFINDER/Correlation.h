@@ -62,6 +62,9 @@ namespace OpenMS
     
     /// evaluates the quality of the fit of @p model to @p set along dimension @p dim
     double evaluate(const IndexSet& set, const BaseModel<1>& model, UInt dim);
+		
+		 /// evaluates the quality of the fit of @p model to @p lint along dimension @p dim
+		double evaluate(const Math::LinearInterpolation<double,double>& lint, const BaseModel<1>& model);
 	
 		/// creates instance of this class (function is called by factory).
     static BaseQuality* create()

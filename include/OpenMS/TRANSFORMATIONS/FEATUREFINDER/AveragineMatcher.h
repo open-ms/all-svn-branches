@@ -37,11 +37,7 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/InterpolationModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgModel.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LmaGaussModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/GaussModel.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgModel.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BiGaussModel.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LogNormalModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseQuality.h>
 
 #include <OpenMS/MATH/STATISTICS/AsymmetricStatistics.h>
@@ -73,9 +69,6 @@ namespace OpenMS
 
 		 This module attempts to remove false positive regions from the feature list by
 		 matching the points in the region against an averagine model (Senko et al.).
-		 
-		 @NOTE: (IMPORTANT) The m/z fitting part is much faster than all *ModelFitter modules but this code
-		 is still experimental and should be used with care only !		 
 		 
 		 Parameters:
 		 <table>
@@ -264,21 +257,21 @@ namespace OpenMS
 		void moveRtDown_(const IDX& index, std::vector<IDX>& queue);
 
 		virtual void updateMembers_();
-
-		QualityType fitOffset_(InterpolationModel* model, const IndexSet& set, double stdev1, double stdev2, Coordinate offset_step);
 		
 		QualityType fit_mz_(ChargedIndexSet set, UInt samplingsize, MzFitting charge,Coordinate isotope_stdev);
 
 		QualityType fit_(const ChargedIndexSet& set, MzFitting mz_fit, RtFitting rt_fit, Coordinate isotope_stdev, UInt samplingsize);
 		
-		QualityType compute_mz_corr_(IsotopeModel& iso_model);
+		//QualityType compute_mz_corr_(IsotopeModel& iso_model);
 		
 		CoordinateType localSearchForMonoMz_(const CoordinateType mz_guess, const UInt& max_peak_scan, const IndexSet& model_set);
 
 		BaseQuality* quality_;
+		
 		ProductModel<2> model2D_;
 		Math::BasicStatistics<> mz_stat_;
 		Math::AsymmetricStatistics<> rt_stat_;
+		
 		double stdev_mz_;
 		double stdev_rt1_;
 		double stdev_rt2_;
@@ -287,6 +280,9 @@ namespace OpenMS
 
 		/// counts features (used for debug output only)
 		UInt counter_;
+		
+		/// minimum intensity during reshaping of feature region
+		IntensityType ext_min_intensity_;
 			
 		/// interpolation step size (in m/z)
 		Coordinate interpolation_step_mz_;
@@ -324,8 +320,6 @@ namespace OpenMS
 		bool symmetric_;
 		/// gsl status
 		std::string gsl_status_;
-		/// function for fitting
-// 		std::string profile_;
 
 		/** Test for the convergence of the sequence by comparing the last iteration step dx with the absolute error epsabs and relative error epsrel to the current position x */
 		/// absolute error

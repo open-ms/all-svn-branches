@@ -30,6 +30,8 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeaFiModule.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseModel.h>
 
+#include <OpenMS/MATH/MISC/LinearInterpolation.h>
+
 #include <OpenMS/CONCEPT/Types.h>
 
 namespace OpenMS
@@ -61,11 +63,14 @@ namespace OpenMS
 	    /// register all derived classes here 
 	    static void registerChildren();
 	
-	    /// Computes the goodness of fit between model @p model and peaks denoted by @p set
+	    /// Computes the goodness of fit between model @p model and points denoted by @p set
 	    virtual double evaluate(const IndexSet& set, const BaseModel<2>& model)=0;
 	    
-	    /// Computes the goodness of fit between model @p model and peaks @p set along dimension @p dim.
+	    /// Computes the goodness of fit between model @p model and points @p set along dimension @p dim.
 	    virtual double evaluate(const IndexSet& set, const BaseModel<1>& model, UInt dim)=0;
+			
+			/// Computes the goodness of fit between model @p model and points  @p lint along dimension @p dim.
+	    virtual double evaluate(const Math::LinearInterpolation<double,double>& lint, const BaseModel<1>& model)=0;
 			
 			/// Returns the significance of the last fit (if applicable, otherwise -1
 			double getPvalue()

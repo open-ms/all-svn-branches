@@ -66,12 +66,10 @@ namespace OpenMS
 
   /**
   	@brief Main window of TOPPView tool
-		
-		@todo Fix focusing problems (Marc)
-		@todo Speed up 2D view: paint only highest point per pixel, paint only part of the data when moving (Marc)
-  	@todo Layers drag and drop : layer => tab (Marc)
+
+		@todo Speed up 2D view: profile first. Ideas: paint only highest point per pixel, paint only part of the data when moving (Marc)
   	@todo Add support for consensusXML (Marc)
-  	
+  	@todo Add histograms (to create filters) for meta data (Marc)
   	@ingroup TOPPView_elements
   */
   class TOPPViewBase 
@@ -156,6 +154,8 @@ namespace OpenMS
       void updateToolBar();
       /// adapts the layer bar to the active window
       void updateLayerBar();
+      /// adapts the spectrum bar to the active window
+      void updateSpectrumBar();
       /// adapts the filter bar to the active window
       void updateFilterBar();
       /// brings the tab corresponding to the active window in front
@@ -181,8 +181,10 @@ namespace OpenMS
       void annotateWithID();
       /// Shows the current peak data of the active layer in 3D 
       void showCurrentPeaksAs3D();
-			/// Shows the spectrum with index @p index of the sctive layer in 1D
+			/// Shows the spectrum with index @p index of the active layer in 1D
 			void showSpectrumAs1D(int index);
+			/// Shows the spectrum with index @p index of the specified @p layer in 1D
+			void showSpectrumAs1D(const LayerData* layer, int index);
       /// Shows the 'About' dialog
       void showAboutDialog();
       /// Saves the whole current layer data
@@ -199,6 +201,8 @@ namespace OpenMS
 			void metadataDatabaseDialog();
 			/// dialog for inspecting file meta data
 			void metadataFileDialog();
+			/// Shows the selected spectrum
+			void selectedSpectrumChange(QListWidgetItem*);
 
     protected slots:
       /** @name Layer manager slots
@@ -230,13 +234,15 @@ namespace OpenMS
       
       /** @name Tabbar slots
       */
-      //@{    	
+      //@{
     	/// Closes the window corresponding to the data of the tab with identifier @p id
       void closeByTab(int id);
       /// Raises the window corresponding to the data of the tab with identifier @p id
       void focusByTab(int id);
       /// Opens a file from the recent files menu
       void openRecentFile();
+			/// Slot for drag-and-drop of layer manager to tabbar
+			void copyLayer(const QMimeData* data, int id=-1);
       //@}
       
       /** @name Toolbar slots
@@ -256,7 +262,7 @@ namespace OpenMS
   		/**
   			@brief Adds a peak or feature map to the viewer
   			
-  			@param feature_map The feature data (empty of peak data)
+  			@param feature_map The feature data (empty if peak data)
   			@param peak_map The peak data (empty if feature data)
   			@param is_feature Flag that indicates the actual data type
   			@param is_2D If more that one MS1 spectrum is contained in peak data
@@ -291,7 +297,7 @@ namespace OpenMS
       ///Estimates the noise by evaluating 10 random scans of MS level 1
       float estimateNoise_(const ExperimentType& exp);
 
-      /// Layer mangment widget
+      /// Layer managment widget
       QListWidget* layer_manager_;
 
       ///@name Data filter widgets
@@ -299,8 +305,13 @@ namespace OpenMS
       QListWidget* filters_;
       QCheckBox* filters_check_box_;
       //@}
-
-
+      
+      ///@name Spectrum selection widgets
+      //@{
+      QDockWidget* spectrum_bar_;
+      QListWidget* spectrum_selection_;
+      //@}
+      
       /// Log output window
       QTextEdit* log_;
 

@@ -49,6 +49,7 @@ namespace OpenMS
 		
 		//init map view
 		QButtonGroup* button_group = new QButtonGroup(this);
+		button_group->addButton(d1_);
 		button_group->addButton(d2_);
 		button_group->addButton(d3_);
 		if (!as_2d)

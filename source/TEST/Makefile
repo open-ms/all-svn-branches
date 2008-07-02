@@ -57,7 +57,6 @@ EXECUTABLES_DATASTRUCTURES = \
 	DRange_test\
 	DBoundingBox_test\
 	DataValue_test\
-	SparseVector_test\
 	DateTime_test\
 	RangeManager_test\
 	Matrix_test\
@@ -66,7 +65,9 @@ EXECUTABLES_DATASTRUCTURES = \
 	SuffixArraySeqan_test\
 	SuffixArrayTrypticSeqan_test\
 	SuffixArrayTrypticCompressed_test\
-	SuffixArrayPeptideFinder_test
+	SuffixArrayPeptideFinder_test\
+	SparseVector_test\
+	DistanceMatrix_test
 
 
 #METADATA
@@ -173,6 +174,7 @@ EXECUTABLES_FORMAT = \
 	FileHandler_test\
 	MzDataExpSettHandler_test\
 	MzXMLFile_test\
+	MzMLFile_test\
 	MzDataFile_test\
 	Param_test\
 	FeatureXMLFile_test\
@@ -268,13 +270,7 @@ EXECUTABLES_FILTERING = \
 
 EXECUTABLES_COMPARISON=\
 	SpectrumCheapDPCorr_test\
-	BinnedRep_test\
 	HierarchicalClustering_test\
-	BinnedRepCompareFunctor_test\
-	BinnedRepMutualInformation_test\
-	BinnedRepSpectrumContrastAngle_test\
-	BinnedRepSharedPeakCount_test\
-	BinnedRepSumAgreeingIntensities_test\
 	PeakSpectrumCompareFunctor_test\
 	SpectrumPrecursorComparator_test\
 	ZhangSimilarityScore_test\
@@ -282,7 +278,18 @@ EXECUTABLES_COMPARISON=\
 	SpectrumAlignmentScore_test\
 	ClusterSpectrum_test\
 	SteinScottImproveScore_test\
-	CompareFouriertransform_test
+	CompareFouriertransform_test\
+	BinnedSpectrum_test\
+	BinnedSpectrumCompareFunctor_test\
+	BinnedSumAgreeingIntensities_test\
+	BinnedSpectralContrastAngle_test\
+	BinnedSharedPeakCount_test\
+	ClusterFunctor_test\
+	SingleLinkage_test\
+	CompleteLinkage_test\
+	AverageLinkage_test\
+	PeakAlignment_test\
+	ClusterHierarchical_test
 
 #CHEMISTRY
 

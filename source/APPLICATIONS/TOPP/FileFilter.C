@@ -28,8 +28,10 @@
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/MzDataFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
+#include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/FILTERING/NOISEESTIMATION/SignalToNoiseEstimatorMedian.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
+#include <OpenMS/KERNEL/ConsensusMap.h>
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
@@ -43,14 +45,20 @@ using namespace std;
 /**
 	@page FileFilter FileFilter
 	
-	@brief Extracts portions of the data from an mzData or featureXML file.
+	@brief Extracts portions of the data from an mzData, featureXML or consensusXML file.
 	
-	With this tool it is possible to extract m/z, retention time and intensity ranges from an input mzData file
-	and to write all data that lies within the given ranges to an output mzData file.<BR>
-	It can also extract spectra of a certain MS level e.g. MS/MS spectra when using level '2'.
-  
-  Furthermore, you can do the same range operations on featureXML files and in addition filter its 'charge' and 'OverallQuality' property.
-  
+	With this tool it is possible to extract m/z, retention time and intensity ranges from an input file
+	and to write all data that lies within the given ranges to an output file.
+	
+	Depending on the input file type, additional specific operations are possible:
+	- mzData 
+		- extract spectra of a certain MS level
+		- filter by signal-to-noise estimation
+		- filter by scan mode of the spectra
+  - featureXML
+    - filter by feature charge
+    - filter by overall feature quality
+
 */
 
 // We do not want this class to show up in the docu:
@@ -61,9 +69,8 @@ class TOPPFileFilter
 {
 	public:
 		TOPPFileFilter()
-			: TOPPBase("FileFilter","extracts/modifies portions of data from an mzData or featureXML file")
+			: TOPPBase("FileFilter","extracts/modifies portions of data from an mzData, featureXML or consensusXML file")
 		{
-			
 		}
 	
 	protected:
@@ -73,17 +80,17 @@ class TOPPFileFilter
 		void registerOptionsAndFlags_()
 		{
       registerInputFile_("in","<file>","","input file ");
-   		setValidFormats_("in",StringList::create("mzData,featureXML"));
+   		setValidFormats_("in",StringList::create("mzData,featureXML,consensusXML"));
 
       registerOutputFile_("out","<file>","","output file");
-	  	setValidFormats_("out",StringList::create("mzData,featureXML"));
+	  	setValidFormats_("out",StringList::create("mzData,featureXML,consensusXML"));
       
 			registerStringOption_("mz","[min]:[max]",":","m/z range to extract", false);
 			registerStringOption_("rt","[min]:[max]",":","retention time range to extract", false);
 			registerStringOption_("int","[min]:[max]",":","intensity range to extract", false);
-      registerDoubleOption_("sn", "<s/n ratio>", 0, "write peaks with S/N > 'sn' values only", false);
       
 			addText_("peak data options:");
+      registerDoubleOption_("sn", "<s/n ratio>", 0, "write peaks with S/N > 'sn' values only", false);
 			registerStringOption_("level","i[,j]...","1,2,3","MS levels to extract", false);
 			registerStringOption_("remove_mode","<mode>","","Remove scans by scan mode\n",false);
 			StringList mode_list;
@@ -341,6 +348,33 @@ class TOPPFileFilter
         //-------------------------------------------------------------
                 
         f.store(out,map_sm);
+      }
+      else if (out_type == FileHandler::CONSENSUSXML)
+      {
+        //-------------------------------------------------------------
+        // loading input
+        //-------------------------------------------------------------
+
+        ConsensusMap consensus_map;
+        ConsensusXMLFile f;
+        //f.setLogType(log_type_);
+        // this does not work yet implicitly - not supported by FeatureXMLFile
+        f.getOptions().setRTRange(DRange<1>(rt_l,rt_u));
+        f.getOptions().setMZRange(DRange<1>(mz_l,mz_u));
+        f.getOptions().setIntensityRange(DRange<1>(it_l,it_u));
+        f.load(in,consensus_map);                 
+
+      
+        //-------------------------------------------------------------
+        // calculations
+        //-------------------------------------------------------------
+        consensus_map.updateRanges();
+        
+        //-------------------------------------------------------------
+        // writing output
+        //-------------------------------------------------------------
+                
+        f.store(out,consensus_map);
       }
       else
       {

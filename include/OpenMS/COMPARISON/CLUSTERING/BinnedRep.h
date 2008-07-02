@@ -52,10 +52,10 @@ namespace OpenMS
   class BinnedRep
   {
   public:
-    typedef SparseVector::const_iterator const_iterator;
-    typedef SparseVector::iterator iterator;
-		typedef SparseVector::const_iterator ConstIterator;
-		typedef SparseVector::iterator Iterator;
+    typedef SparseVector<int>::const_iterator const_iterator;
+    typedef SparseVector<int>::iterator iterator;
+		typedef SparseVector<int>::const_iterator ConstIterator;
+		typedef SparseVector<int>::iterator Iterator;
 
 		/** @name Constructors and destructors
 		*/
@@ -137,7 +137,7 @@ namespace OpenMS
   private:
     
     /// sparse vector containing the summed intensity <br>
-    SparseVector bins_;
+    SparseVector<int> bins_;
 
     /// size of the bins
     double binsize_;

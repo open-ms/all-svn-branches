@@ -51,14 +51,12 @@ namespace OpenMS
 		@brief FeatureFinderAlgorithm for picked peaks.
 
     @ref FeatureFinderAlgorithmPicked_Parameters are explained on a separate page.
-		
-		@improvement extendMassTraces_ can be implemented more efficiently: extension in both directions from max trace (Marc)
-		
+
 		@todo Add RT model with tailing/fronting (Marc)
-		@todo Resolve feature charge clashes (Marc)
-		
+		@improvement The elution profile could be integrated into the trace score (Marc)
+				
 		@experimental This algorithm is work in progress and might change.
-		
+
 		@ingroup FeatureFinder
 	*/
 	template<class PeakType, class FeatureType> class FeatureFinderAlgorithmPicked 
@@ -332,9 +330,8 @@ namespace OpenMS
 					log_("featurefinder.log")
 			{
 				//debugging
-				this->defaults_.setValue("debug",0,"If not 0 debug mode is activated. Then several files with intermediate results are written.");
-				this->defaults_.setMinInt("debug",0);
-				this->defaults_.setMaxInt("debug",1);
+				this->defaults_.setValue("debug","false","When debug mode is activated, several files with intermediate results are written to the folder 'debug'.");
+				this->defaults_.setValidStrings("debug",StringList::create("true,false"));
 				//intensity
 				this->defaults_.setValue("intensity:bins",10,"Number of bins per dimension (RT and m/z).");
 				this->defaults_.setMinInt("intensity:bins",1);
@@ -369,21 +366,29 @@ namespace OpenMS
 				this->defaults_.setMinFloat("isotopic_pattern:mass_window_width",1.0);
 				this->defaults_.setMaxFloat("isotopic_pattern:mass_window_width",200.0);
 				this->defaults_.setSectionDescription("isotopic_pattern","Settings for the calculation of a score indicating if a peak is part of a isotoipic pattern (between 0 and 1).");
+				//Seed settings
+				this->defaults_.setValue("seed:min_score",0.8,"Minimum seed score a peak has to reach to be used as seed.\nThe seed score is the geometric mean of intensity score, mass trace score and isotope pattern score.");
+				this->defaults_.setMinFloat("seed:min_score",0.0);
+				this->defaults_.setMaxFloat("seed:min_score",1.0);
+				this->defaults_.setSectionDescription("seed","Settings that determine which peaks are considered a seed");
 				//Feature settings
-				this->defaults_.setValue("feature:min_feature_score",0.7, "Overall score threshold for a feature to be reported.");
-				this->defaults_.setMinFloat("feature:min_feature_score",0.0);
-				this->defaults_.setMaxFloat("feature:min_feature_score",1.0);
-				this->defaults_.setValue("feature:min_seed_score",0.8,"Minimum score a peak has to have to be used as seed.\nThe score is calculated as the geometric mean of intensity, mass trace score and isotope pattern score.");
-				this->defaults_.setMinFloat("feature:min_seed_score",0.0);
-				this->defaults_.setMaxFloat("feature:min_seed_score",1.0);
-				this->defaults_.setValue("feature:min_isotope_fit",0.8,"Minimum isotope fit quality.", true);
+				this->defaults_.setValue("feature:min_score",0.7, "Feature score threshold for a feature to be reported.\nThe feature score is the geometric mean of the average relative deviation and the correlation between the model and the observed peaks.");
+				this->defaults_.setMinFloat("feature:min_score",0.0);
+				this->defaults_.setMaxFloat("feature:min_score",1.0);
+				this->defaults_.setValue("feature:min_isotope_fit",0.8,"Minimum isotope fit of the feature before model fitting.", true);
 				this->defaults_.setMinFloat("feature:min_isotope_fit",0.0);
 				this->defaults_.setMaxFloat("feature:min_isotope_fit",1.0);
-				this->defaults_.setValue("feature:min_trace_score",0.5, "Trace score threshold.\nTraces below this threshold are removed after the fit.", true);
+				this->defaults_.setValue("feature:min_trace_score",0.5, "Trace score threshold.\nTraces below this threshold are removed after the model fitting.", true);
 				this->defaults_.setMinFloat("feature:min_trace_score",0.0);
 				this->defaults_.setMaxFloat("feature:min_trace_score",1.0);
+				this->defaults_.setValue("feature:min_rt_span",0.333, "Mimum RT span in relation to extended area that has to remain after model fitting.", true);
+				this->defaults_.setMinFloat("feature:min_rt_span",0.0);
+				this->defaults_.setMaxFloat("feature:min_rt_span",1.0);
+				this->defaults_.setValue("feature:max_intersection",0.35, "Maximum allowed intersection of features.", true);
+				this->defaults_.setMinFloat("feature:max_intersection",0.0);
+				this->defaults_.setMaxFloat("feature:max_intersection",1.0);
 				this->defaults_.setSectionDescription("feature","Settings for the features (intensity, quality assessment, ...)");
-
+						
 				this->defaultsToParam_();
 			}
 			
@@ -394,7 +399,7 @@ namespace OpenMS
 				//General initialization
 				
 				//quality estimation
-				DoubleReal min_feature_score = param_.getValue("feature:min_feature_score");
+				DoubleReal min_feature_score = param_.getValue("feature:min_score");
 				//charges to look at				
 				UInt charge_low = param_.getValue("isotopic_pattern:charge_low");
 				UInt charge_high = param_.getValue("isotopic_pattern:charge_high");
@@ -425,7 +430,7 @@ namespace OpenMS
 					}
 				}
 				
-				bool debug = ((UInt)(param_.getValue("debug"))!=0);
+				bool debug = ( (String)(param_.getValue("debug"))=="true" );
 				//clean up / create folders for debug information
 				if (debug)
 				{
@@ -440,7 +445,6 @@ namespace OpenMS
 				log_ << "Precalculating intensity thresholds ..." << std::endl;
 				//new scope to make local variables disappear
 				{
-					//TODO interplolate scores to avoid edges
 					this->ff_->startProgress(0, intensity_bins_*intensity_bins_, "Precalculating intensity scores");
 					DoubleReal rt_start = map_.getMinRT();
 					DoubleReal mz_start = map_.getMinMZ();
@@ -562,7 +566,7 @@ namespace OpenMS
 				//Step 3:
 				//Charge loop (create seeds and features for each charge separately)
 				//-------------------------------------------------------------------------
-				UInt plot_nr = 0; //counter for the number of plots (debug info)
+				Int plot_nr = -1; //counter for the number of plots (debug info)
 				for (UInt c=charge_low; c<=charge_high; ++c)
 				{
 					UInt charge_index_meta = 4 + c - charge_low;
@@ -615,7 +619,7 @@ namespace OpenMS
 					//Find seeds for this charge
 					//-----------------------------------------------------------		
 					this->ff_->startProgress(0, map_.size(), String("Finding seeds for charge ")+c);
-					DoubleReal min_seed_score = param_.getValue("feature:min_seed_score");
+					DoubleReal min_seed_score = param_.getValue("seed:min_score");
 					for (UInt s=0; s<map_.size(); ++s)
 					{
 						this->ff_->setProgress(s);
@@ -680,7 +684,7 @@ namespace OpenMS
 						//Extend all mass traces
 						//------------------------------------------------------------------
 						this->ff_->setProgress(i);
-						log_ << std::endl << "Seed " << i+1 << ":" << std::endl;
+						log_ << std::endl << "Seed " << i << ":" << std::endl;
 						//If the intensity is zero this seed is already uses in another feature
 						const SpectrumType& spectrum = map_[seeds[i].spectrum];
 						const PeakType& peak = spectrum[seeds[i].peak];
@@ -871,15 +875,14 @@ namespace OpenMS
 						  	error_msg = "Invalid fit: Center outside of feature bounds";
 							}
 						}
-						//check if the remaining traces fill out at least a third of the RT span (2*2.5 sigma)
-						//TODO remove magic constant
+						//check if the remaining traces fill out at least a third of the RT span
 						if (feature_ok)
 						{
 							std::pair<DoubleReal,DoubleReal> rt_bounds = new_traces.getRTBounds();
-							if ((rt_bounds.second-rt_bounds.first)<0.33333*5.0*sigma )
+							if ((rt_bounds.second-rt_bounds.first)<min_rt_span_*5.0*sigma )
 							{
 						  	feature_ok = false;
-						  	error_msg = "Invalid fit: Sigma too large";
+						  	error_msg = "Invalid fit: Less than 'min_rt_span' left after fit";
 							}
 						}
 					  //check if feature quality is high enough (average relative deviation and correlation of the whole feature)
@@ -922,7 +925,7 @@ namespace OpenMS
 						{
 							TextFile tf;
 							//gnuplot script	
-							String script = String("plot \"features/") + plot_nr + ".dta\" title 'before fit (RT:" + x0 + " m/z:" + peak.getMZ() + ")' with points 1";
+							String script = String("plot \"debug/features/") + plot_nr + ".dta\" title 'before fit (RT:" + x0 + " m/z:" + peak.getMZ() + ")' with points 1";
 							//feature before fit
 							for (UInt k=0; k<traces.size(); ++k)
 							{
@@ -944,7 +947,7 @@ namespace OpenMS
 									}
 								}
 								tf.store(String("debug/features/") + plot_nr + "_cropped.dta");
-								script = script + ", \"features/" + plot_nr + "_cropped.dta\" title 'feature ";
+								script = script + ", \"debug/features/" + plot_nr + "_cropped.dta\" title 'feature ";
 								if (!feature_ok)
 								{
 									script = script + " - " + error_msg;
@@ -973,7 +976,7 @@ namespace OpenMS
 						}
 						traces = new_traces;
 						
-						log_ << "Feature identifier: " << plot_nr << std::endl;
+						log_ << "Feature label: " << plot_nr << std::endl;
 						
 						//validity output
 						if (!feature_ok)
@@ -990,7 +993,6 @@ namespace OpenMS
 						//set label
 						f.setMetaValue(3,plot_nr);
 						f.setCharge(c);
-						//TODO add signal-to-noise (to score?)
 						f.setOverallQuality(final_score);
 						if (debug)
 						{
@@ -1044,8 +1046,7 @@ namespace OpenMS
 						if (f1.getIntensity()==0.0 || f2.getIntensity()==0.0) continue;
 						//act depending on the intersection
 						DoubleReal intersection = intersection_(f1, f2);
-						//TODO remove magic constant
-						if (intersection>=0.35)
+						if (intersection>=max_feature_intersection_)
 						{
 							log_ << " - Intersection (" << (i+1) << "/" << (j+1) << "): " << intersection << std::endl;
 							if (f1.getCharge()==f2.getCharge())
@@ -1063,13 +1064,21 @@ namespace OpenMS
 							}
 							else if (f2.getCharge()%f1.getCharge()==0)
 							{
-								log_ << "   - different charge -> removing lower charge " << (i+1) << std::endl;
+								log_ << "   - different charge (one is the multiple of the other) -> removing lower charge " << (i+1) << std::endl;
 								f1.setIntensity(0.0);
 							}
 							else
 							{
-								//TODO Resolve feature charge clashes
-								log_ << "   - contradicting features -> ??? " << std::endl;
+								if (f1.getOverallQuality()>f2.getOverallQuality())
+								{
+									log_ << "   - different charge -> removing lower score " << (j+1) << std::endl;
+									f2.setIntensity(0.0);
+								}
+								else
+								{
+									log_ << "   - different charge -> removing lower score " << (i+1) << std::endl;
+									f1.setIntensity(0.0);
+								}
 							}
 						}
 					}
@@ -1107,7 +1116,11 @@ namespace OpenMS
 					}
 					FeatureXMLFile().store("debug/abort_reasons.featureXML", abort_map);
 					
-					//store input map with calculated scores
+					//store input map with calculated scores (without overall score)
+					for (UInt s=0; s<map_.size(); ++s)
+					{
+						map_[s].getMetaDataArrays().erase(map_[s].getMetaDataArrays().begin()+2);
+					}					
 					MzDataFile().store("debug/input.mzData", map_);
 				}
 			}
@@ -1146,6 +1159,8 @@ namespace OpenMS
 			UInt intensity_bins_; ///< Number of bins (in RT and MZ) for intensity significance estimation
 			DoubleReal min_isotope_fit_; ///< Mimimum isotope pattern fit for a feature
 			DoubleReal min_trace_score_; ///< Minimum quality of a traces
+			DoubleReal min_rt_span_; ///< Mimum RT range that has to be left after the fit
+			DoubleReal max_feature_intersection_; ///< Maximum allowed feature intersection (if larger, that one of the feature is removed)
 			//@}
 
 			///@name Members for intensity significance estimation
@@ -1176,6 +1191,8 @@ namespace OpenMS
 				intensity_bins_ =  param_.getValue("intensity:bins");
 				min_isotope_fit_ = param_.getValue("feature:min_isotope_fit");
 				min_trace_score_ = param_.getValue("feature:min_trace_score");
+				min_rt_span_ = param_.getValue("feature:min_rt_span");
+				max_feature_intersection_ = param_.getValue("feature:max_intersection");
 			}
 			
 			///Writes the abort reason to the log file and counts occurences for each reason
@@ -1871,7 +1888,6 @@ namespace OpenMS
 
 			DoubleReal intensityScore_(UInt rt_bin, UInt mz_bin, DoubleReal intensity)
 			{
-				//std::cout << "intScore_: " << rt_bin << " " << mz_bin << " " << intensity << std::endl;
 				//interpolate score value according to quantiles(20)
 				std::vector<DoubleReal>& quantiles20 = intensity_thresholds_[rt_bin][mz_bin];
 				std::vector<DoubleReal>::const_iterator it = std::lower_bound(quantiles20.begin(),quantiles20.end(),intensity);
@@ -1892,8 +1908,11 @@ namespace OpenMS
 				}
 				
 				DoubleReal final = bin_score + 0.05*((it - quantiles20.begin()) -1.0);
-				OPENMS_POSTCONDITION(final>=0.0, (String("Internal error: Intensity score 2 (") + final + ") should be >=0.0").c_str())
-				OPENMS_POSTCONDITION(final<=1.0001, (String("Internal error: Intensity score 2 (") + final + ") should be <=1.0").c_str())				
+				
+				//fix numerical problems
+				if (final<0.0) final = 0.0;
+				if (final>1.0) final = 1.0;				
+				
 				return final;
 			}
 

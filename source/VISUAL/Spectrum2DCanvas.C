@@ -878,12 +878,20 @@ namespace OpenMS
 					//coordinates
 					const FeatureMapType::FeatureType& f = selected_peak_.getFeature(getCurrentLayer().features);
 					emit sendCursorStatus(f.getMZ(), f.getIntensity(), f.getRT());
-					//meta info
+					//additional feature info
 					String status;
-					status = status + "Charge: " + f.getCharge();
-					status = status + " Quality: " + f.getOverallQuality();
-					String label = f.getMetaValue(3).toString();
-					if (label!="") status = status + " Label: " + label;
+					status = status + "Quality: " + f.getOverallQuality();
+					if (f.getCharge()!=0)
+					{
+						status = status + " Charge: " + f.getCharge();
+					}
+					//add meta info
+					std::vector<String> keys;
+					f.getKeys(keys);
+					for (UInt m=0; m<keys.size(); ++m)
+					{
+						status = status + " " + keys[m] + ": " + (String)(f.getMetaValue(keys[m]));
+					}
 					emit sendStatusMessage(status, 0);
 				}
 				else
@@ -1065,7 +1073,7 @@ namespace OpenMS
 		context_menu->addAction(layer_name.toQString())->setEnabled(false);
 		context_menu->addSeparator();
 		
-		context_menu->addAction("Edit metadata");
+		context_menu->addAction("Layer meta data");
 		
 		QMenu* settings_menu = new QMenu("Settings");
  		settings_menu->addAction("Show/hide grid lines");
@@ -1123,8 +1131,8 @@ namespace OpenMS
 				++i;
 			}
 			sort(indices.rbegin(),indices.rend());
-			QMenu* ms1_scans = context_menu->addMenu("survey scan in 1D");
-			QMenu* ms1_meta = context_menu->addMenu("survey scan meta data");
+			QMenu* ms1_scans = context_menu->addMenu("Survey scan in 1D");
+			QMenu* ms1_meta = context_menu->addMenu("Survey scan meta data");
 			context_menu->addSeparator();
 			for(i=0; i<(Int)indices.size(); ++i)
 			{
@@ -1213,7 +1221,7 @@ namespace OpenMS
 			DoubleReal mz_min = min(p1[0],p2[0]);
 			DoubleReal mz_max = max(p1[0],p2[0]);
 			
-			QMenu* meta = new QMenu("View/edit meta data");
+			QMenu* meta = new QMenu("Feature meta data");
 			bool present = false;
 			FeatureMapType& features = getCurrentLayer_().features;
 			for (FeatureMapType::Iterator it = features.begin(); it!=features.end(); ++it)
@@ -1290,7 +1298,7 @@ namespace OpenMS
 			{
 				setLayerFlag(LayerData::P_PRECURSORS,!getLayerFlag(LayerData::P_PRECURSORS));
 			}
-			else if (result->text()=="Edit metadata")
+			else if (result->text()=="Layer meta data")
 			{
 				showMetaData(true);
 			}

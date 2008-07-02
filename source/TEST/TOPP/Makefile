@@ -357,15 +357,19 @@ ifeq ($(ANDIMS_SUPPORT),true)
 	@$(call RUN_PROG_OPT,FileConverter,-in FileConverter_5_input.txt -in_type cdf -out FileConverter.tmp -out_type DTA2D)
 	@$(call TEST_FILE_EQUAL,FileConverter.tmp,FileConverter_5_output.dta2d)
 endif
-	@$(ECHO) "- Test 6: DTA2D -> MzXML -> DTA2D"
+	@$(ECHO) "- Test 6a: DTA2D -> MzXML -> DTA2D"
 	@$(call RUN_PROG_OPT,FileConverter,-in FileConverter_6_input.dta2d -out FileConverter.tmp -out_type mzXML)
 	@$(call RUN_PROG_OPT,FileConverter,-in FileConverter.tmp -in_type mzXML -out FileConverter2.tmp -out_type DTA2D)
 	@$(call TEST_FILE_EQUAL,FileConverter2.tmp,FileConverter_6_input.dta2d)
 
-	@$(ECHO) "- Test 7: DTA2D -> MzData -> DTA2D"
+	@$(ECHO) "- Test 6b: DTA2D -> MzData -> DTA2D"
 	@$(call RUN_PROG_OPT,FileConverter,-in FileConverter_6_input.dta2d -out FileConverter.tmp -out_type mzData)
 	@$(call RUN_PROG_OPT,FileConverter,-in FileConverter.tmp -in_type mzData -out FileConverter2.tmp -out_type DTA2D)
 	@$(call TEST_FILE_EQUAL,FileConverter2.tmp,FileConverter_6_input.dta2d)
+
+	@$(ECHO) "- Test 7: consensusXML -> featureXML"
+	@$(call RUN_PROG_OPT,FileConverter,-in FileConverter_7_input.consensusXML -out FileConverter_7_output.tmp -out_type featureXML)
+	@$(call TEST_FILE_EQUAL,FileConverter_7_output.tmp,FileConverter_7_output.featureXML)
 
 
 FileFilter_test: make_fuzzydiff
@@ -400,6 +404,11 @@ FileFilter_test: make_fuzzydiff
 	@$(call RUN_PROG_OPT,FileFilter,-in FileFilter_7_input.mzData -out FileFilter_7_out.tmp -int 7000:)
 	@$(call TEST_FILE_EQUAL,FileFilter_7_out.tmp,FileFilter_7_out.mzData)
 
+	@$(ECHO) "- Test 8: consensusXML"
+	@$(call RUN_PROG_OPT,FileFilter,-in FileFilter_8_input.consensusXML -out FileFilter_8_out.tmp -rt 600:1400 -mz 700:2300 -int  1100:6000)
+	@$(call TEST_FILE_EQUAL,FileFilter_8_out.tmp,FileFilter_8_out.consensusXML)
+
+
 FileInfo_test: make_fuzzydiff
 	@$(ECHO) ""
 	@$(ECHO) "FileInfo:"
@@ -425,14 +434,17 @@ FileInfo_test: make_fuzzydiff
 	@$(call TEST_FILE_EQUAL,FileInfo.tmp,FileInfo_5_output.txt)
 
 	@$(ECHO) "- Test 6: Meta data arrays test (with details and statistics)"
-	@$(call RUN_PROG_OPT,FileInfo,-in FileInfo_7_input.mzData -d -s -no_progress > FileInfo.tmp)
+	@$(call RUN_PROG_OPT,FileInfo,-in FileInfo_6_input.mzData -d -s -no_progress > FileInfo.tmp)
+	@$(call TEST_FILE_EQUAL,FileInfo.tmp,FileInfo_6_output.txt)
+
+	@$(ECHO) "- Test 7: ConsensusXML file test (with statistics)"
+	@$(call RUN_PROG_OPT,FileInfo,-in FileInfo_7_input.consensusXML -s -no_progress > FileInfo.tmp)
 	@$(call TEST_FILE_EQUAL,FileInfo.tmp,FileInfo_7_output.txt)
 
-
 ifeq ($(ANDIMS_SUPPORT),true)
-	@$(ECHO) "- Test 7: netCDF file test (with meta info)"
-	@$(call RUN_PROG_OPT,FileInfo,-in FileInfo_6_input.txt -in_type cdf -m -no_progress > FileInfo.tmp)
-	@$(call TEST_FILE_EQUAL,FileInfo.tmp,FileInfo_6_output.txt)
+	@$(ECHO) "- Test 8: netCDF file test (with meta info)"
+	@$(call RUN_PROG_OPT,FileInfo,-in FileInfo_8_input.notype -in_type cdf -m -no_progress > FileInfo.tmp)
+	@$(call TEST_FILE_EQUAL,FileInfo.tmp,FileInfo_8_output.txt)
 endif
 
 

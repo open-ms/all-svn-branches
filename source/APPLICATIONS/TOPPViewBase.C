@@ -162,8 +162,8 @@ namespace OpenMS
 		file->addSeparator();
 		
 		//Meta data
-		file->addAction("&Show metadata (file)",this,SLOT(metadataFileDialog()));
-    file->addAction("&Show metadata (database)",this,SLOT(metadataDatabaseDialog()));
+		file->addAction("&Show meta data (file)",this,SLOT(metadataFileDialog()));
+    file->addAction("&Show meta data (database)",this,SLOT(metadataDatabaseDialog()));
     file->addSeparator();
 		
 		//Recent files    
@@ -184,7 +184,7 @@ namespace OpenMS
     QMenu* tools = new QMenu("&Tools",this);
     menuBar()->addMenu(tools);
     tools->addAction("&Go to",this,SLOT(gotoDialog()), Qt::CTRL+Qt::Key_G);
-    tools->addAction("&Edit metadata",this,SLOT(editMetadata()), Qt::CTRL+Qt::Key_M);
+    tools->addAction("&Edit meta data",this,SLOT(editMetadata()), Qt::CTRL+Qt::Key_M);
     tools->addAction("&Statistics",this,SLOT(layerStatistics()));
 		tools->addSeparator();
     tools->addAction("Apply TOPP tool (whole layer)", this, SLOT(showTOPPDialog()), Qt::CTRL+Qt::Key_T)->setData(false);
@@ -360,7 +360,7 @@ namespace OpenMS
     QDockWidget* layer_bar = new QDockWidget("Layers", this);
     addDockWidget(Qt::RightDockWidgetArea, layer_bar);
     layer_manager_ = new QListWidget(layer_bar);
-    layer_manager_->setWhatsThis("Layer bar<BR><BR>Here the availabe layers are shown. Left-click on a layer to select it.<BR>Layers can be shown and hidden using the checkboxes in front of the name.<BR> Renaming and removing a layer is possible through the context menu.<BR>Dragging a layer to the tab bar copies the layer.");
+    layer_manager_->setWhatsThis("Layer bar<BR><BR>Here the availabe layers are shown. Left-click on a layer to select it.<BR>Layers can be shown and hidden using the checkboxes in front of the name.<BR> Renaming and removing a layer is possible through the context menu.<BR>Dragging a layer to the tab bar copies the layer.<BR>Double-clicking a layer open its preferences.");
 
     layer_bar->setWidget(layer_manager_);
     layer_manager_->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -368,6 +368,7 @@ namespace OpenMS
     connect(layer_manager_,SIGNAL(currentRowChanged(int)),this,SLOT(layerSelectionChange(int)));
 		connect(layer_manager_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(layerContextMenu(const QPoint&)));
 		connect(layer_manager_,SIGNAL(itemChanged(QListWidgetItem*)),this,SLOT(layerVisibilityChange(QListWidgetItem*)));
+    connect(layer_manager_,SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,SLOT(layerEdit(QListWidgetItem*)));
     
     windows->addAction("&Show layer window",layer_bar,SLOT(show()));
 		
@@ -572,8 +573,7 @@ namespace OpenMS
         ++count;
       }
     }
-    noise = noise / 10.0f;
-    return noise;
+    return noise / 10.0f;
   }
 
   void TOPPViewBase::preferencesDialog()
@@ -814,7 +814,7 @@ namespace OpenMS
       //calculate noise
       if(use_mower && is_2D)
       {
-        DoubleReal cutoff = estimateNoise_(peak_map);
+        DoubleReal cutoff = estimateNoise_(open_window->canvas()->getCurrentLayer().peaks);
 				//create filter
 				DataFilters::DataFilter filter;
 				filter.field = DataFilters::INTENSITY;
@@ -1430,6 +1430,11 @@ namespace OpenMS
 			activeCanvas_()->setFilters(filters);
 			updateFilterBar();
 		}
+	}
+
+	void TOPPViewBase::layerEdit(QListWidgetItem* /*item*/)
+	{
+		activeCanvas_()->showCurrentLayerPreferences();
 	}
 
   void TOPPViewBase::updateFilterBar()
@@ -2184,7 +2189,7 @@ namespace OpenMS
 					actions[i]->setEnabled(true);
 				}
 			}
-			else if (text=="&Go to" || text=="&Edit metadata" || text=="&Statistics" || text=="&Annotate with identifiction"  || text=="Save all data"  || text=="Save visible data"  || text=="Preferences")
+			else if (text=="&Go to" || text=="&Edit meta data" || text=="&Statistics" || text=="&Annotate with identifiction"  || text=="Save all data"  || text=="Save visible data"  || text=="Preferences")
 			{
 				actions[i]->setEnabled(false);
 				if (canvas_exists && layer_exists)

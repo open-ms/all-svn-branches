@@ -32,18 +32,19 @@ include ../../config_defs.mak
 
 CPP_SOURCES=\
 	SpectrumCheapDPCorr.C\
-	BinnedRepSpectrumContrastAngle.C\
-	BinnedRepMutualInformation.C\
-	BinnedRepSumAgreeingIntensities.C\
-	BinnedRepSharedPeakCount.C\
 	SpectrumPrecursorComparator.C\
 	PeakSpectrumCompareFunctor.C\
-	BinnedRepCompareFunctor.C\
 	ZhangSimilarityScore.C\
 	SpectrumAlignmentScore.C\
 	SpectrumAlignment.C\
 	SteinScottImproveScore.C\
-	CompareFouriertransform.C
+	CompareFouriertransform.C\
+	BinnedSpectrum.C\
+	BinnedSpectrumCompareFunctor.C\
+	BinnedSumAgreeingIntensities.C\
+	BinnedSpectralContrastAngle.C\
+	BinnedSharedPeakCount.C\
+	PeakAlignment.C
 	
 
 ADD_CPP_SOURCES = 

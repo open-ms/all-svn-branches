@@ -41,6 +41,9 @@ namespace OpenMS
 		
 	  @ref MapAlignmentAlgorithmSpectrumAlignment_Parameters are explained on a separate page.  
 	  
+	  @todo fix warnings (Vipul)
+	  @todo fill transformations with pairs as soon as this is implemented in TransformationDescription (Vipul)
+	  
 		@experimental This algorithm is work in progress and might change.
 
 		@ingroup MapAlignment
@@ -220,6 +223,7 @@ namespace OpenMS
 			PeakSpectrumCompareFunctor* c1_;
 			///This is the minimal score to be count as a mismatch(range 0.0 - 1.0)
 			Real cutoffScore_;
+			
 
 			void updateMembers_();
 

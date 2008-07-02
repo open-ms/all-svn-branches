@@ -117,16 +117,16 @@ namespace OpenMS
   void BinnedRep::normalize()
   {
     double max = 0;
-    for ( SparseVector::iterator bit = bins_.begin(); bit != bins_.end(); bit.hop())
+    for ( SparseVector<int>::iterator bit = bins_.begin(); bit != bins_.end(); bit.hop())
     {
-      if ( *bit > max )
+      if ( (int)*bit > max )
       {
-        max = *bit;
+        max = (int)*bit;
       }
     }
-    for ( SparseVector::iterator bit = bins_.begin(); bit != bins_.end(); bit.hop())
+    for ( SparseVector<int>::iterator bit = bins_.begin(); bit != bins_.end(); bit.hop())
     {
-      *bit = *bit/max;
+      *bit = (int)*bit/max;
     }
   }
 
@@ -175,11 +175,11 @@ namespace OpenMS
         {
           for (uint i = 1; i <= binrep.spread_ && position + i < binrep.size(); ++i)
           {
-            binrep.bins_[position+i] = binrep.bins_[position+i]+ cit->getIntensity();
+            binrep.bins_[position+i] = binrep.bins_.at(position+i)+ cit->getIntensity();
           }
           for (uint i = 1; i <= binrep.spread_ && position >= i ; ++i)
           {
-            binrep.bins_[position-i]  = binrep.bins_[position -i]+cit->getIntensity();
+            binrep.bins_[position-i]  = binrep.bins_.at(position -i)+ cit->getIntensity();
           }
         }
       }

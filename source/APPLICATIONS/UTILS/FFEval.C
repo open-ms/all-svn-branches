@@ -73,8 +73,10 @@ class TOPPFFEVal
 
 		addText_("Output options");
 		registerOutputFile_("manual_out","<file>","","'manual' feature converted to featureXML",false);
-		registerOutputFile_("intensity_out","<file>","","Gnuplot file of matched intensities",false);
-		registerOutputFile_("ratio_out","<file>","","Gnuplot file of matched intensity ratios",false);
+		registerOutputFile_("unmatched_out","<file>","","unmatched 'manual' feature converted to featureXML",false);
+		registerOutputFile_("ratio_out","<file>","","pairs with big ratio differences",false);
+		registerOutputFile_("intensity_plot","<file>","","Gnuplot file of matched intensities",false);
+		registerOutputFile_("ratio_plot","<file>","","Gnuplot file of matched intensity ratios",false);
 	}
 
 	String correlation(vector<DoubleReal> a, vector<DoubleReal> b)
@@ -156,9 +158,11 @@ class TOPPFFEVal
 		UInt matched_single = 0;
 		UInt matched_multi = 0;
 		UInt matched_pairs = 0;
-		vector<DoubleReal> a_int, m_int, a_ratio, m_ratio;
+		vector<DoubleReal> a_int, m_int, a_ratio, m_ratio, rt_diffs, mz_diffs;
 		vector<DoubleReal> matched_int, unmatched_int;
 		Feature last_best_match;
+		FeatureMap<> unmatched_features;
+		FeatureMap<> ratio_pairs;
 		Map<String,UInt> abort_strings;
 		for (UInt m=0; m<features_manual.size(); ++m)
 		{
@@ -202,10 +206,21 @@ class TOPPFFEVal
 					a_ratio.push_back(a_r);
 					DoubleReal m_r = f_m.getIntensity()/features_manual[m-1].getIntensity();
 					m_ratio.push_back(m_r);
-//					if ((a_r/m_r)>2 || (a_r/m_r)<0.5)
-//					{
-//						cout << 
-//					} 
+					rt_diffs.push_back(best_match.getRT()-last_best_match.getRT());
+					mz_diffs.push_back(best_match.getMZ()-last_best_match.getMZ());
+					
+					//store pairs with too big deviation from the manual ratio
+					if (a_r/m_r < 0.5 || a_r/m_r > 2.0)
+					{
+						ratio_pairs.push_back(f_m);
+						ratio_pairs.back().setMetaValue("automatic_int", best_match.getIntensity());
+						ratio_pairs.back().setMetaValue("ratio_quotient", a_r/m_r);
+						ratio_pairs.back().setMetaValue("automatic_label", String(best_match.getMetaValue("label")));
+						ratio_pairs.push_back(features_manual[m-1]);
+						ratio_pairs.back().setMetaValue("automatic_int", last_best_match.getIntensity());
+						ratio_pairs.back().setMetaValue("ratio_quotient", a_r/m_r);
+						ratio_pairs.back().setMetaValue("automatic_label", String(last_best_match.getMetaValue("label")));
+					}
 				}
 			}
 			else
@@ -231,8 +246,12 @@ class TOPPFFEVal
 						}
 					}
 				}
-				if (reason=="") reason = "No seed found";
-
+				if (reason=="")
+				{
+					reason = "No seed found";
+					unmatched_features.push_back(features_manual[m]);
+				}
+				
 				if (abort_strings.has(reason))
 				{
 					abort_strings[reason]++;	
@@ -270,10 +289,11 @@ class TOPPFFEVal
 		cout << "  manual pairs: " <<0.5*features_manual.size() << endl;
 		cout << "  found: " << matched_pairs << " (" << String::number(100.0*(matched_pairs)/(0.5*features_manual.size()),2) << "%)" << endl;
 		cout << "  relative pair ratios: " << fiveNumberQuotients(m_ratio,a_ratio,3) << endl;
-		
+		cout << "  pair distance RT : " << fiveNumbers(rt_diffs, 2) << endl;
+		cout << "  pair distance m/z: " << fiveNumbers(mz_diffs, 2) << endl;
 		
 		//write intensity pair file
-		if (getStringOption_("intensity_out")!="")
+		if (getStringOption_("intensity_plot")!="")
 		{
 			TextFile int_out;
 			int_out.push_back("#manual automatic");		
@@ -281,19 +301,31 @@ class TOPPFFEVal
 			{
 				int_out.push_back(String(m_int[i]) + " " + a_int[i]);		
 			}
-			int_out.store(getStringOption_("intensity_out"));
+			int_out.store(getStringOption_("intensity_plot"));
 		}
 
 		//write intensity pair file
-		if (getStringOption_("ratio_out")!="")
+		if (getStringOption_("ratio_plot")!="")
 		{
-			TextFile ratio_out;
-			ratio_out.push_back("#manual automatic");		
+			TextFile ratio_plot;
+			ratio_plot.push_back("#manual automatic");		
 			for (UInt i=0; i< a_ratio.size(); ++i)
 			{
-				ratio_out.push_back(String(m_ratio[i]) + " " + a_ratio[i]);		
+				ratio_plot.push_back(String(m_ratio[i]) + " " + a_ratio[i]);		
 			}
-			ratio_out.store(getStringOption_("ratio_out"));
+			ratio_plot.store(getStringOption_("ratio_plot"));
+		}
+
+		//write unmatched manual features
+		if (getStringOption_("unmatched_out")!="")
+		{
+			FeatureXMLFile().store(getStringOption_("unmatched_out"),unmatched_features);
+		}
+		
+		//write pairs with too much deviation of the ratio
+		if (getStringOption_("ratio_out")!="")
+		{
+			FeatureXMLFile().store(getStringOption_("ratio_out"),ratio_pairs);
 		}
 		
 		return EXECUTION_OK;

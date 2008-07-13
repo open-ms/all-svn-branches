@@ -153,17 +153,17 @@ namespace OpenMS
 				}
 
 				/// increment operator
-				const_pointer operator ++ ()
+				ConstIterator& operator ++ ()
 				{
 					++position_;
-					return (*vector_)[position_];
+					return *this;
 				}
 
 				/// decrement operator
-				const_pointer operator -- ()
+				ConstIterator& operator -- ()
 				{
 					--position_;
-					return (*vector_)[position_];
+					return *this;
 				}
 				//@}
 
@@ -278,17 +278,17 @@ namespace OpenMS
 				}
 
 				/// increment operator
-				const_pointer operator ++ ()
+				Iterator& operator ++ ()
 				{
 					++position_;
-					return (*vector_)[position_];
+					return *this;
 				}
 
 				/// decrement operator
-				const_pointer operator -- ()
+				Iterator& operator -- ()
 				{
 					--position_;
-					return (*vector_)[position_];
+					return *this;
 				}
 				//@}
 
@@ -504,9 +504,9 @@ namespace OpenMS
 
 			bool valid_;
 
-			const ResidueModification* n_term_mod_;
+			String n_term_mod_;
 
-			const ResidueModification* c_term_mod_;
+			String c_term_mod_;
 	};			
 
 	std::ostream& operator << (std::ostream& os, const AASequence& peptide);

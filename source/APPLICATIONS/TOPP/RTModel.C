@@ -156,9 +156,7 @@ class TOPPRTModel
 {
 	public:
 		TOPPRTModel()
-			: TOPPBase("RTModel","Builds a model for retention time prediction of peptides from a training set."+
-								String("\nFurthermore the tool can be used to build a model for peptide separation prediction.")
-								+ "\nIn this case one file with positive examples and one file with negative examples have to be given.")
+			: TOPPBase("RTModel","Trains a model for the retention time prediction of peptides from a training set.")
 		{
 			
 		}
@@ -223,7 +221,7 @@ class TOPPRTModel
 			registerDoubleOption_("sigma_stop","<float>",15,"stopping point of sigma",false);
 		}
 		
-	  void loadStringLabelLines(String                		filename, 
+	  void loadStringLabelLines_(String                		filename, 
 														  std::vector<String>&  		sequences, 
 														  std::vector<DoubleReal>&  labels)
 	  {
@@ -262,7 +260,8 @@ class TOPPRTModel
 				      }
 				      else
 				      {
-								std::cout << "found line '" << *it << "' in file which is not of the form <string> <label>" << std::endl;
+				      	String debug_string = "found line '" + *it + "' in file which is not of the form <string> <label>\n";
+								writeDebug_(debug_string, 1);
 								++it;
 				      }
 				    }
@@ -587,7 +586,7 @@ class TOPPRTModel
 			{
 				if (textfile_input)
 				{
-					loadStringLabelLines(inputfile_name, training_peptides, training_retention_times);
+					loadStringLabelLines_(inputfile_name, training_peptides, training_retention_times);
 					for(UInt i = 0; i < training_peptides.size(); ++i)
 					{
 						redundant_peptides.insert(make_pair(training_peptides[i], training_retention_times[i]));

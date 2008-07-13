@@ -68,7 +68,7 @@ class TOPPFileInfo
 {
 	public:
 		TOPPFileInfo()
-			: TOPPBase("FileInfo","Shows basic information about the file e.g. data ranges and file type")
+			: TOPPBase("FileInfo","Shows basic information about the file, such as data ranges and file type.")
 		{
 			
 		}
@@ -240,8 +240,19 @@ class TOPPFileInfo
 				}
 				cout << endl
 						 << "peak type (metadata) : " << SpectrumSettings::NamesOfSpectrumType[exp.getProcessingMethod().getSpectrumType()] << endl
-						 << "peak type (estimated): " << SpectrumSettings::NamesOfSpectrumType[type] << endl
-						 << endl;
+						 << "peak type (estimated): " << SpectrumSettings::NamesOfSpectrumType[type] << endl;
+				//if raw data, determine the spacing
+				if (type==SpectrumSettings::RAWDATA)
+				{
+					vector<Real> spacing;
+					for (UInt j=1; j<exp[i].size(); ++j)
+					{
+						spacing.push_back(exp[i][j].getMZ()-exp[i][j-1].getMZ());
+					}
+					std::sort(spacing.begin(),spacing.end());
+					cout << "raw data spacing: " << spacing[spacing.size()/2] << endl;	
+				}
+				cout << endl;
 		
 				//basic info
 				exp.updateRanges();

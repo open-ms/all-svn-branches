@@ -67,7 +67,7 @@ class TOPPNoiseFilter
 {
   public:
     TOPPNoiseFilter()
-        : TOPPBase("NoiseFilter","remove the noise from LC/MS raw data")
+        : TOPPBase("NoiseFilter","Removes noise from profile spectra by using different smoothing techniques.")
     {
     }
 
@@ -214,7 +214,8 @@ class TOPPNoiseFilter
         }
         catch(Exception::IllegalArgument& e)
         {
-          writeLog_("The width of the gaussian is smaller than the spacing in raw data! Try to use a greater gaussian_width value.")  ;
+        	writeLog_(String("Error: ") + e.getMessage()) ;
+        	return INCOMPATIBLE_INPUT_DATA;
         }
       }
 

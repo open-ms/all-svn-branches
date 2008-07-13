@@ -1330,8 +1330,9 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --disable-optimization  disables optimizing the library for speed.
   --enable-debuginfo      add -g to the compiler flags (to create debug information). Disables optimization!
+  --enable-stl-debug      enables debug mode of the STL when using gcc.
+  --disable-pedantic      removes the '-pedantic' flag when using gcc.
   --enable-externalmemory enable external memory structure for all MSExperiments (warning: performance hit). Only recommended if you run out of RAM+swap!
-  --disable-pedantic      removes the '-pedantic' flag when using gcc
   --with-db-plugin        set the Qt SQL DB plugin to use (default: QMYSQL)
   --disable-netcdf        disable the use of NetCDF (a library for a data format)
   --disable-andims        disable the use of ANDI/MS (a library for a data format based on NetCDF)
@@ -1833,14 +1834,19 @@ if test "${enable_debuginfo+set}" = set; then
   enableval=$enable_debuginfo;
 fi
 
-# Check whether --enable-externalmemory was given.
-if test "${enable_externalmemory+set}" = set; then
-  enableval=$enable_externalmemory;
+# Check whether --enable-stl-debug was given.
+if test "${enable_stl_debug+set}" = set; then
+  enableval=$enable_stl_debug;
 fi
 
 # Check whether --enable-pedantic was given.
 if test "${enable_pedantic+set}" = set; then
   enableval=$enable_pedantic;
+fi
+
+# Check whether --enable-externalmemory was given.
+if test "${enable_externalmemory+set}" = set; then
+  enableval=$enable_externalmemory;
 fi
 
 # Check whether --enable-db-plugin was given.
@@ -2053,6 +2059,17 @@ else
 	DEBUG_INFO=false
 fi
 
+{ echo "$as_me:$LINENO: checking STL_debug" >&5
+echo $ECHO_N "checking STL_debug... $ECHO_C" >&6; }
+if test "$enable_stl_debug" = "yes" ; then
+  GCC_STL_DEBUG=-D_GLIBCXX_DEBUG
+	{ echo "$as_me:$LINENO: result: enabled" >&5
+echo "${ECHO_T}stl debug enabled" >&6; }
+else
+	{ echo "$as_me:$LINENO: result: disabled" >&5
+echo "${ECHO_T}disabled" >&6; }
+	GCC_STL_DEBUG=
+fi
 
 { echo "$as_me:$LINENO: checking externalmemory" >&5
 echo $ECHO_N "checking externalmemory... $ECHO_C" >&6; }
@@ -5279,11 +5296,12 @@ echo "${ECHO_T}yes" >&6; }
   fi
 
         CXX_MAKEDEPEND="${CXX}"
-  MAKEDEP_CXX_OPTS="-M -Wno-long-long -Wno-deprecated -Wno-non-virtual-dtor ${GCC_PEDANTIC}"
-  CXXFLAGS_D="${CXXFLAGS_D} -Wall -Wno-long-long -Wno-deprecated -Wno-non-virtual-dtor ${GCC_PEDANTIC}"
+  MAKEDEP_CXX_OPTS="-M -Wno-long-long -Wno-deprecated -Wno-non-virtual-dtor ${GCC_PEDANTIC} ${GCC_STL_DEBUG}"
+  CXXFLAGS_D="${CXXFLAGS_D} -Wall -Wno-long-long -Wno-deprecated -Wno-non-virtual-dtor ${GCC_PEDANTIC} ${GCC_STL_DEBUG}"
   CXXFLAGS_DI="${CXXFLAGS_DI} -g"
-  CXXFLAGS_O="${CXXFLAGS_O} -O3 -Wall -Wno-long-long -Wno-deprecated -Wno-non-virtual-dtor ${GCC_PEDANTIC}"
+  CXXFLAGS_O="${CXXFLAGS_O} -O3 -Wall -Wno-long-long -Wno-deprecated -Wno-non-virtual-dtor ${GCC_PEDANTIC} ${GCC_STL_DEBUG}"
   MAKEDEP_CXX_SUFFIX=" >.Dependencies"
+	NONLIB_CXXFLAGS="${NONLIB_CXXFLAGS} ${GCC_STL_DEBUG}"
 
         if test "${OS}" != "CYGWIN" -a "${OS}" != "MINGW32" ; then
     CXXFLAGS="${CXXFLAGS} -W -fPIC"

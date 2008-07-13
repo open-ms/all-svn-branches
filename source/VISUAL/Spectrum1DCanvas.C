@@ -44,6 +44,8 @@
 #include <OpenMS/CONCEPT/TimeStamp.h>
 #include <OpenMS/SYSTEM/FileWatcher.h>
 
+#include <iostream>
+
 using namespace std;
 
 namespace OpenMS
@@ -99,7 +101,7 @@ namespace OpenMS
 	//////////////////////////////////////////////////////////////////////////////////
 	// Qt events
 	
-	void Spectrum1DCanvas::mousePressEvent( QMouseEvent* e)
+	void Spectrum1DCanvas::mousePressEvent(QMouseEvent* e)
 	{
 		// get mouse position in widget coordinates
 		last_mouse_pos_ = e->pos();
@@ -111,6 +113,21 @@ namespace OpenMS
 				rubber_band_.setGeometry(e->pos().x(),e->pos().y(),0,0);
 				rubber_band_.show();
 			}
+			else if (action_mode_ == AM_MEASURE)
+			{
+				if (selected_peak_.isValid())
+				{
+					measurement_start_ = selected_peak_;
+					const ExperimentType::PeakType& peak = measurement_start_.getPeak(getCurrentLayer().peaks);
+					dataToWidget_(peak, measurement_start_point_);
+					measurement_start_point_.setY(last_mouse_pos_.y());
+				}
+				else
+				{
+					measurement_start_.clear();
+					// measurement_start_point too?
+				}
+			}
 		}
 	}
 
@@ -118,6 +135,8 @@ namespace OpenMS
 	{
 		// mouse position relative to the diagram widget
 		QPoint p = e->pos();
+		
+		PeakIndex near_peak = findPeakAtPosition_(p);
 	
 		if(e->buttons() & Qt::LeftButton)
 		{
@@ -142,6 +161,29 @@ namespace OpenMS
 				changeVisibleArea_(newLo, newHi);
 				last_mouse_pos_=p;
 			}
+			else if (action_mode_ == AM_MEASURE)
+			{
+				selected_peak_ = near_peak;
+								
+				if (selected_peak_.isValid())
+				{
+					if (true/*getCurrentLayer().type == LayerData::DT_PEAK*/) // JJ necessary for later when I tweak LayerData (DT_ANNOTATION or so) ... 
+					{
+						const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
+						const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
+						emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
+						emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
+					}
+				}
+				else
+				{
+					emit sendCursorStatus();
+				}
+				
+				last_mouse_pos_ = p;
+				
+				update_(__PRETTY_FUNCTION__);
+			}
 			else if (action_mode_ == AM_ZOOM)
 			{
 				PointType pos = widgetToData_(p);
@@ -154,9 +196,17 @@ namespace OpenMS
 		}
 		else if (!e->buttons()) //no buttons pressed
 		{
-			emit sendCursorStatus();
 			selected_peak_ = findPeakAtPosition_(p);
 			update_(__PRETTY_FUNCTION__);
+			if (selected_peak_.isValid())
+			{
+				const ExperimentType::PeakType& sel = near_peak.getPeak(getCurrentLayer().peaks);
+				emit sendCursorStatus(sel.getMZ(), sel.getIntensity());
+			}
+			else
+			{
+				emit sendCursorStatus();
+			}
 		}
 	}
 
@@ -175,6 +225,25 @@ namespace OpenMS
 					changeVisibleArea_(area.minX(), area.maxX(), true, true);
 				}
 			}
+			else if (action_mode_ == AM_MEASURE)
+			{
+				if (!selected_peak_.isValid())
+				{
+					measurement_start_.clear();
+				}
+				if (measurement_start_.isValid())
+				{
+					if (getCurrentLayer().type == LayerData::DT_PEAK) // (JJ) for later (layerdata tweak?) (needed?)
+					{
+						const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
+						const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
+						emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
+						emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
+					}
+				}
+			}
+			measurement_start_.clear();
+			update_(__PRETTY_FUNCTION__);
 		}
 	}
 
@@ -458,43 +527,16 @@ namespace OpenMS
 		{
 			painter.drawPixmap(rects[i].topLeft(), buffer_, rects[i]);
 		}
-		//draw selected peak
-		if (selected_peak_.isValid())
+		// draw "ruler" line when in measure mode and valid measurement start peak selected
+		if (action_mode_ == AM_MEASURE && measurement_start_.isValid())
 		{
-			const ExperimentType::PeakType& sel = selected_peak_.getPeak(getCurrentLayer().peaks);
-
-			painter.setPen(QPen(QColor(param_.getValue("highlighted_peak_color").toQString()), 2));		
-			if (getDrawMode() == DM_PEAKS)
-			{
-				if (intensity_mode_==IM_PERCENTAGE)
-				{
-					percentage_factor_ = overall_data_range_.max()[1]/getCurrentLayer().peaks[0].getMaxInt();
-					dataToWidget_(sel, end);
-				}
-				else
-				{
-					dataToWidget_(sel,end);
-				}
-				SpectrumCanvas::dataToWidget_(sel.getMZ(), 0.0f, begin);
-				painter.drawLine(begin, end);
-			}
-			else if (getDrawMode() == DM_CONNECTEDLINES)
-			{
-				if (intensity_mode_==IM_PERCENTAGE)
-				{
-					percentage_factor_ = overall_data_range_.max()[1]/getCurrentLayer().peaks[0].getMaxInt();
-					dataToWidget_(sel, begin);
-				}
-				else
-				{
-					dataToWidget_(sel, begin);
-				}
-				painter.drawLine(begin.x(), begin.y()-4, begin.x(), begin.y()+4);
-				painter.drawLine(begin.x()-4, begin.y(), begin.x()+4, begin.y());
-			}
-			emit sendCursorStatus(sel.getMZ(), sel.getIntensity());
+			QPoint measurement_end_point(last_mouse_pos_.x(), measurement_start_point_.y());
+			painter.drawLine(measurement_start_point_, measurement_end_point);
 		}
-
+		//draw measurement start peak and selected peak
+		drawHighlightedPeak_(measurement_start_, painter);
+		drawHighlightedPeak_(selected_peak_, painter);
+		
 
 //		if (draw_metainfo_)
 //		{
@@ -524,6 +566,65 @@ namespace OpenMS
 #ifdef TIMING_TOPPVIEW	
 		cout << "1D PaintEvent took " << timer.elapsed() << " ms" << endl;
 #endif	
+	}
+	
+	void Spectrum1DCanvas::drawHighlightedPeak_(PeakIndex& peak, QPainter& painter)
+	{
+		if (peak.isValid())
+		{
+			QPoint begin, end;
+			const ExperimentType::PeakType& sel = peak.getPeak(getCurrentLayer().peaks);
+
+			painter.setPen(QPen(QColor(param_.getValue("highlighted_peak_color").toQString()), 2));		
+			if (getDrawMode() == DM_PEAKS)
+			{
+				if (intensity_mode_==IM_PERCENTAGE)
+				{
+					percentage_factor_ = overall_data_range_.max()[1]/getCurrentLayer().peaks[0].getMaxInt();
+					dataToWidget_(sel, end);
+				}
+				else
+				{
+					dataToWidget_(sel,end);
+				}
+				SpectrumCanvas::dataToWidget_(sel.getMZ(), 0.0f, begin);
+				
+				//painter.drawLine(begin, end); (JJ) looks ugly now.. different color?
+
+				// draw elongations as dashed line
+				QPen pen;
+				QVector<qreal> dashes;
+				dashes << 4 << 3 << 1 << 3;
+				pen.setDashPattern(dashes);
+				pen.setColor("red");
+				painter.setPen(pen);
+				painter.drawLine(end.x(), end.y(), end.x(), 0);
+			}
+			else if (getDrawMode() == DM_CONNECTEDLINES)
+			{
+				if (intensity_mode_==IM_PERCENTAGE)
+				{
+					percentage_factor_ = overall_data_range_.max()[1]/getCurrentLayer().peaks[0].getMaxInt();
+					dataToWidget_(sel, begin);					
+				}
+				else
+				{
+					dataToWidget_(sel, begin);
+				}
+				painter.drawLine(begin.x(), begin.y()-4, begin.x(), begin.y()+4);
+				painter.drawLine(begin.x()-4, begin.y(), begin.x()+4, begin.y());
+				// draw elongations as dashed line
+				QPen pen;
+				QVector<qreal> dashes;
+				dashes << 4 << 3 << 1 << 3;
+				pen.setDashPattern(dashes);
+				pen.setColor("red");
+				painter.setPen(pen);
+				painter.drawLine(begin.x(), begin.y(), begin.x(), 0);
+
+			}
+			//emit sendCursorStatus(sel.getMZ(), sel.getIntensity()); (JJ)
+		}
 	}
 	
 	void Spectrum1DCanvas::changeVisibleArea_(const AreaType& new_area, bool repaint, bool add_to_stack)

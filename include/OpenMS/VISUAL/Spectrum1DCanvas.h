@@ -120,6 +120,9 @@ namespace OpenMS
 			/// Calls dataToWidget_(const PointType&, QPoint& point) but takes snap_factor_ and percentage_factor_ into account.
 			void dataToWidget_(const PeakType& peak, QPoint& point);
 			
+			/// draws a highlighted peak
+			void drawHighlightedPeak_(PeakIndex& peak, QPainter& painter);
+			
 			/**
 				@brief Sets the visible area
 				
@@ -142,8 +145,12 @@ namespace OpenMS
 			std::vector<DrawModes> draw_modes_; 
 			/// Iterator on peak next to mouse position
 			PeakIndex selected_peak_;
+			/// start peak of measuring mode
+      PeakIndex measurement_start_;
+      /// start point of "ruler" for measure mode
+      QPoint measurement_start_point_;
 			/// Find peak next to the given position
-			PeakIndex findPeakAtPosition_(QPoint);  
+			PeakIndex findPeakAtPosition_(QPoint);
 	
 	    /** @name Reimplemented QT events */
 	    //@{

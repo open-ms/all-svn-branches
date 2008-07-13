@@ -778,7 +778,7 @@ namespace OpenMS
 			painter.drawPixmap(rects[i].topLeft(), buffer_, rects[i]);
 		}
 		
-		//draw mesaurement peak
+		//draw measurement peak
 		if (action_mode_==AM_MEASURE && measurement_start_.isValid())
 		{
 			painter.setPen(Qt::black);
@@ -912,7 +912,7 @@ namespace OpenMS
 		}
 		else
 		{
-			//Zoom mode => no peak should be select
+			//Zoom mode => no peak should be selected
 			selected_peak_.clear(); 
 			update_(__PRETTY_FUNCTION__);
 		}

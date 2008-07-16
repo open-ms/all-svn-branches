@@ -37,8 +37,6 @@
 #include <OpenMS/VISUAL/Spectrum1DWidget.h>
 #include <OpenMS/VISUAL/Spectrum2DWidget.h>
 #include <OpenMS/VISUAL/Spectrum3DWidget.h>
-#include <OpenMS/VISUAL/Spectrum1DWidget.h>
-#include <OpenMS/VISUAL/Spectrum2DWidget.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerCWT.h>

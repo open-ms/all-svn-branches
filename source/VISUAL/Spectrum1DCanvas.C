@@ -165,15 +165,12 @@ namespace OpenMS
 			{
 				selected_peak_ = near_peak;
 								
-				if (selected_peak_.isValid())
+				if (measurement_start_.isValid() && selected_peak_.isValid())
 				{
-					if (true/*getCurrentLayer().type == LayerData::DT_PEAK*/) // JJ necessary for later when I tweak LayerData (DT_ANNOTATION or so) ... 
-					{
-						const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
-						const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
-						emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
-						emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
-					}
+					const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
+					const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
+					emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
+					emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
 				}
 				else
 				{
@@ -233,13 +230,10 @@ namespace OpenMS
 				}
 				if (measurement_start_.isValid())
 				{
-					if (getCurrentLayer().type == LayerData::DT_PEAK) // (JJ) for later (layerdata tweak?) (needed?)
-					{
-						const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
-						const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
-						emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
-						emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
-					}
+					const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
+					const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
+					emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
+					emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
 				}
 			}
 			measurement_start_.clear();
@@ -572,57 +566,29 @@ namespace OpenMS
 	{
 		if (peak.isValid())
 		{
-			QPoint begin, end;
+			QPoint begin;
 			const ExperimentType::PeakType& sel = peak.getPeak(getCurrentLayer().peaks);
 
-			painter.setPen(QPen(QColor(param_.getValue("highlighted_peak_color").toQString()), 2));		
-			if (getDrawMode() == DM_PEAKS)
-			{
-				if (intensity_mode_==IM_PERCENTAGE)
-				{
-					percentage_factor_ = overall_data_range_.max()[1]/getCurrentLayer().peaks[0].getMaxInt();
-					dataToWidget_(sel, end);
-				}
-				else
-				{
-					dataToWidget_(sel,end);
-				}
-				SpectrumCanvas::dataToWidget_(sel.getMZ(), 0.0f, begin);
+			painter.setPen(QPen(QColor(param_.getValue("highlighted_peak_color").toQString()), 2));
 				
-				//painter.drawLine(begin, end); (JJ) looks ugly now.. different color?
-
-				// draw elongations as dashed line
-				QPen pen;
-				QVector<qreal> dashes;
-				dashes << 4 << 3 << 1 << 3;
-				pen.setDashPattern(dashes);
-				pen.setColor("red");
-				painter.setPen(pen);
-				painter.drawLine(end.x(), end.y(), end.x(), 0);
-			}
-			else if (getDrawMode() == DM_CONNECTEDLINES)
+			if (intensity_mode_==IM_PERCENTAGE)
 			{
-				if (intensity_mode_==IM_PERCENTAGE)
-				{
-					percentage_factor_ = overall_data_range_.max()[1]/getCurrentLayer().peaks[0].getMaxInt();
-					dataToWidget_(sel, begin);					
-				}
-				else
-				{
-					dataToWidget_(sel, begin);
-				}
-				painter.drawLine(begin.x(), begin.y()-4, begin.x(), begin.y()+4);
-				painter.drawLine(begin.x()-4, begin.y(), begin.x()+4, begin.y());
-				// draw elongations as dashed line
-				QPen pen;
-				QVector<qreal> dashes;
-				dashes << 4 << 3 << 1 << 3;
-				pen.setDashPattern(dashes);
-				pen.setColor("red");
-				painter.setPen(pen);
-				painter.drawLine(begin.x(), begin.y(), begin.x(), 0);
-
+				percentage_factor_ = overall_data_range_.max()[1]/getCurrentLayer().peaks[0].getMaxInt();
 			}
+			
+			dataToWidget_(sel, begin);					
+			
+			painter.drawLine(begin.x(), begin.y()-4, begin.x(), begin.y()+4);
+			painter.drawLine(begin.x()-4, begin.y(), begin.x()+4, begin.y());
+			// draw elongations as dashed line
+			QPen pen;
+			QVector<qreal> dashes;
+			dashes << 4 << 3 << 1 << 3;
+			pen.setDashPattern(dashes);
+			pen.setColor("red");
+			painter.setPen(pen);
+			painter.drawLine(begin.x(), begin.y(), begin.x(), 0);
+				
 			//emit sendCursorStatus(sel.getMZ(), sel.getIntensity()); (JJ)
 		}
 	}

@@ -32,6 +32,7 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/DataFilters.h>
+//#include <OpenMS/VISUAL/Annotations1D.h>
 
 namespace OpenMS 
 {
@@ -121,6 +122,10 @@ namespace OpenMS
 		
 		///The "parent" layer from which this spectrum was selected (0 if not existent)
 		mutable const LayerData* parent_layer;
+		
+		///Annotations for the 1D view
+	//	mutable Annotations1D annotations_1d_;
+		
 	};
 
 	///Print the contents to a stream.

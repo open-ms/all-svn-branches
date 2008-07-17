@@ -32,8 +32,8 @@ namespace OpenMS
 {	
 	
 	Annotations1D::Annotations1D()
+		: annotation_items_()
 	{
-		empty_item_ = new Annotation1DEmptyItem();
 	}
 	
 	Annotation1DItem* Annotations1D::getAnnotationAt(PointType& p)
@@ -44,15 +44,15 @@ namespace OpenMS
 	Annotation1DItem* Annotations1D::getAnnotationAt(CoordinateType x, CoordinateType y)
 	{
 		// try to find an item whose bounding box encloses (x,y)
-		for(Ann1DIterator it = annotation_items_.begin(); it != annotation_items_.end(); it++)
+		for(Ann1DIterator_ it = annotation_items_.begin(); it != annotation_items_.end(); it++)
 		{
 			if ((*it)->boundingBox().encloses(x,y))
 			{
 				return *it;
 			}
 		}
-		// if no such item exists, return the empty item
-		return empty_item_;
+		// if no such item exists, return null pointer
+		return 0;
 	}
 	
 	UInt Annotations1D::size()
@@ -72,7 +72,7 @@ namespace OpenMS
 	
 	bool Annotations1D::remove(Annotation1DItem* item)
 	{
-		Ann1DIterator it = find(annotation_items_.begin(), annotation_items_.end(), item);
+		Ann1DIterator_ it = find(annotation_items_.begin(), annotation_items_.end(), item);
 		if (it == annotation_items_.end())
 		{
 			return false;
@@ -85,6 +85,25 @@ namespace OpenMS
 	{
 		annotation_items_.clear();
 	}
+	
+	void Annotations1D::deselectAll()
+	{
+		for (Ann1DIterator_ it = annotation_items_.begin(); it != annotation_items_.end(); it++)
+		{
+			(*it)->setSelected(false);
+		}
+	}
+	
+	Annotations1D::Ann1DConstIterator Annotations1D::begin()
+	{
+		return annotation_items_.begin();
+	}
+	
+	Annotations1D::Ann1DConstIterator Annotations1D::end()
+	{
+		return annotation_items_.end();
+	}
+	
 	
 }//Namespace
 

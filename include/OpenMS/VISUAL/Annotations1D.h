@@ -28,8 +28,8 @@
 #define OPENMS_VISUAL_ANNOTATIONS1D_H
 
 #include <OpenMS/VISUAL/Annotation1DItem.h>
-#include <OpenMS/VISUAL/Annotation1DEmptyItem.h>
-#include <OpenMS/VISUAL/Spectrum1DCanvas.h>
+
+#include <vector>
 
 namespace OpenMS
 {
@@ -46,10 +46,9 @@ namespace OpenMS
 			typedef DoubleReal CoordinateType;
 			/// Container type
 			typedef std::vector<Annotation1DItem*> ContainerType;
-			/// Iterator
-			typedef ContainerType::iterator Ann1DIterator;
 			/// const iterator
 			typedef ContainerType::const_iterator Ann1DConstIterator;
+			
 			/// Constructor
 			Annotations1D();
 			
@@ -67,15 +66,20 @@ namespace OpenMS
 			bool remove(Annotation1DItem* item);
 			/// Clears the annotation_items_ vector
 			void clear();
-			
+			/// Deselects all items
+			void deselectAll();
+			/// See std::vector documentation.
+			Ann1DConstIterator begin();
+			/// See std::vector documentation.
+			Ann1DConstIterator end();
 					
 		protected:
 			
+			/// Iterator
+			typedef ContainerType::iterator Ann1DIterator_;
+			
 			/// Vector containing all the Annotation1DItems
 			ContainerType annotation_items_;
-			
-			/// Empty annotation
-			Annotation1DEmptyItem* empty_item_;
 
 	};
 } // namespace OpenMS

@@ -32,7 +32,7 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/DataFilters.h>
-//#include <OpenMS/VISUAL/Annotations1D.h>
+#include <OpenMS/VISUAL/Annotations1D.h>
 
 namespace OpenMS 
 {
@@ -84,7 +84,8 @@ namespace OpenMS
 				gradient(),
 				filters(),
 				is_selected_spectrum(false),
-				parent_layer(0)
+				parent_layer(0),
+				annotations_1d_()
 		{
 		}
 		
@@ -124,7 +125,7 @@ namespace OpenMS
 		mutable const LayerData* parent_layer;
 		
 		///Annotations for the 1D view
-	//	mutable Annotations1D annotations_1d_;
+		mutable Annotations1D annotations_1d_;
 		
 	};
 

@@ -29,6 +29,7 @@
 
 #include <OpenMS/VISUAL/Annotation1DItem.h>
 #include <OpenMS/DATASTRUCTURES/DBoundingBox.h>
+#include <OpenMS/KERNEL/PeakIndex.h>
 
 namespace OpenMS
 {
@@ -50,7 +51,8 @@ namespace OpenMS
 			typedef DoubleReal CoordinateType;
 
 			/// Constructor
-			Annotation1DDistanceItem(Annotation1DDistanceItem::PointType start, Annotation1DDistanceItem::PointType end);
+			Annotation1DDistanceItem(PeakIndex& start_peak, PeakIndex& end_peak,
+				Annotation1DDistanceItem::PointType start_point, Annotation1DDistanceItem::PointType end_point);
 			
 			/// Returns the bounding box of the item
 			const BoundingBoxType boundingBox();
@@ -58,10 +60,18 @@ namespace OpenMS
 			void setSelected(bool selected);
 			/// Returns true if this item is currently selected on the canvas, else false
 			const bool isSelected();
+			/// Sets the start peak index of the measurement
+			void setStartPeak(PeakIndex& start_peak);
+			/// Sets the end peak index of the measurement
+			void setEndPeak(PeakIndex& end_peak);
 			/// Sets the start point of the measured distance line
 			void setStartPoint(PointType& start);
 			/// Sets the peak index of the end peak of the measurement
 			void setEndPoint(PointType& end);
+			/// Returns the start peak index of the measurement
+			PeakIndex& getStartPeak();
+			/// Returns the end peak index of the measurement
+			PeakIndex& getEndPeak();
 			/// Returns the start point as (MZ,intensity)
 			const PointType& getStartPoint();
 			/// Returns the end point as (MZ,intensity)
@@ -71,6 +81,11 @@ namespace OpenMS
 		
 			/// Determines whether this item is currently selected on the canvas
 			bool is_selected_;
+			
+			/// PeakIndex of the start peak of the measurement
+			PeakIndex start_peak_;
+			/// PeakIndex of the end peak of the measurement
+			PeakIndex end_peak_;
 			/// The start point of the measured distance line
 			PointType start_point_;
 			/// The end point of the measured distance line

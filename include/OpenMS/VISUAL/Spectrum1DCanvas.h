@@ -32,6 +32,8 @@
 
 // OpenMS
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
+#include <OpenMS/VISUAL/Annotation1DItem.h>
+#include <OpenMS/VISUAL/Annotation1DDistanceItem.h>
 
 //QT
 class QAction;
@@ -120,8 +122,14 @@ namespace OpenMS
 			/// Calls dataToWidget_(const PointType&, QPoint& point) but takes snap_factor_ and percentage_factor_ into account.
 			void dataToWidget_(const PeakType& peak, QPoint& point);
 			
-			/// draws a highlighted peak
-			void drawHighlightedPeak_(PeakIndex& peak, QPainter& painter);
+			/// draws a highlighted peak; if draw_elongation is true, the elongation line is drawn (for measuring)
+			void drawHighlightedPeak_(PeakIndex& peak, QPainter& painter, bool draw_elongation = false);
+			
+			/// draws all annotations of the current layer
+			void drawAnnotations_(QPainter& painter);
+			
+			/// draws the distance annotation @p item
+			void drawDistanceAnnotation_(Annotation1DDistanceItem* item, QPainter& painter);
 			
 			/**
 				@brief Sets the visible area

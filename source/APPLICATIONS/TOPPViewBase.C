@@ -1227,7 +1227,7 @@ namespace OpenMS
   	{
   		if(cl.peaks.size() == 1) // single spectrum
   		{
-  			if(cl.is_selected_spectrum && cl.parent_layer != 0) // JJ
+  			if(cl.is_selected_spectrum && cl.parent_layer != 0)
   			{
   				/* selected spectrum of a map --> show the other 
   				   spectra of this map in the spectrum bar and

@@ -60,12 +60,12 @@ namespace OpenMS
 		return is_selected_;
 	}
 	
-	void Annotation1DDistanceItem::setStartPeak(PeakIndex& start_peak)
+	void Annotation1DDistanceItem::setStartPeak(const PeakIndex& start_peak)
 	{
 		start_peak_ = start_peak;
 	}
 	
-	void Annotation1DDistanceItem::setEndPeak(PeakIndex& end_peak)
+	void Annotation1DDistanceItem::setEndPeak(const PeakIndex& end_peak)
 	{
 		end_peak_ = end_peak;
 	}
@@ -80,12 +80,12 @@ namespace OpenMS
 		return end_peak_;
 	}
 	
-	void Annotation1DDistanceItem::setStartPoint(PointType& p)
+	void Annotation1DDistanceItem::setStartPoint(const PointType& p)
 	{
 		start_point_ = p;
 	}
 
-	void Annotation1DDistanceItem::setEndPoint(PointType& p)
+	void Annotation1DDistanceItem::setEndPoint(const PointType& p)
 	{
 		end_point_ = p;
 	}

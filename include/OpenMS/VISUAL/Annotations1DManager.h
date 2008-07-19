@@ -41,9 +41,31 @@
 
 namespace OpenMS
 {
-	class Spectrum1DCanvas;
+	class SpectrumCanvas;
 
-	/** blablabla
+	/** @brief A manager for 1D annotations on the Spectrum1DCanvas
+			
+			All methods dealing with Annotation1DItem objects are located in this class.
+			Every Spectrum1DCanvas has an instance of this class as a member which
+			is responsible for drawing the items on the canvas, calculating their
+			bounding boxes, adding and deleting them, as well as selecting them
+			on the canvas.
+			
+			This class has a pointer to the SpectrumCanvas
+			object of the corresponding Spectrum1DCanvas which it needs in order to
+			translate the data points (MZ / intensity) contained in the annotation 
+			items to canvas coordinates. This is done by SpectrumCanvas::dataToWidget_()
+			which is protected. For this reason, this class is a friend of SpectrumCanvas
+			and can access its protected members.
+			
+			The bounding boxes of the items are computed while they are drawn, because 
+			the current QPainter device is needed in order to compute the boundings of items 
+			containing text.
+			
+			If you want to add a new subclass of Annotation1DItem, e.g.
+			Annotation1DMyCustomItem, tell drawAnnotations() how this item is drawn
+			and how its bounding box is computed.
+			
 	*/
 	class Annotations1DManager
 	{
@@ -56,7 +78,7 @@ namespace OpenMS
 			typedef DoubleReal CoordinateType;
 			
 			/// Constructor
-			Annotations1DManager(Spectrum1DCanvas* canvas);
+			Annotations1DManager(SpectrumCanvas* canvas);
 			
 			/// Selects the item at @p pos on the canvas, if it exists. Searches only in the specified @p layer
 			void selectItemAt(const LayerData& layer, const QPoint& pos);
@@ -76,7 +98,7 @@ namespace OpenMS
 		protected:
 			
 			/// The parent canvas. Needed for translation of data points to positions on the widget and vice versa.
-			Spectrum1DCanvas* canvas_1d_;
+			SpectrumCanvas* canvas_;
 			
 	};
 } // namespace OpenMS

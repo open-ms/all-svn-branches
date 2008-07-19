@@ -35,7 +35,8 @@
 
 namespace OpenMS
 {
-	/** blablabla Abstract class blabla
+	/** @brief An annotation item which represents a measured distance between two peaks.
+			@see Annotation1DItem
 	*/
 	class Annotation1DDistanceItem
 		: public Annotation1DItem
@@ -63,13 +64,13 @@ namespace OpenMS
 			/// Returns true if this item is currently selected on the canvas, else false
 			const bool isSelected() const;
 			/// Sets the start peak index of the measurement
-			void setStartPeak(PeakIndex& start_peak);
+			void setStartPeak(const PeakIndex& start_peak);
 			/// Sets the end peak index of the measurement
-			void setEndPeak(PeakIndex& end_peak);
+			void setEndPeak(const PeakIndex& end_peak);
 			/// Sets the start point of the measured distance line
-			void setStartPoint(PointType& start);
+			void setStartPoint(const PointType& start);
 			/// Sets the peak index of the end peak of the measurement
-			void setEndPoint(PointType& end);
+			void setEndPoint(const PointType& end);
 			/// Returns the start peak index of the measurement
 			const PeakIndex& getStartPeak() const;
 			/// Returns the end peak index of the measurement

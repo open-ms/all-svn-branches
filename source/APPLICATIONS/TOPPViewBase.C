@@ -34,6 +34,7 @@
 #include <OpenMS/VISUAL/DIALOGS/DBOpenDialog.h>
 #include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum2DCanvas.h>
+#include <OpenMS/VISUAL/Spectrum3DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum1DWidget.h>
 #include <OpenMS/VISUAL/Spectrum2DWidget.h>
 #include <OpenMS/VISUAL/Spectrum3DWidget.h>
@@ -1231,7 +1232,7 @@ namespace OpenMS
   				/* selected spectrum of a map --> show the other 
   				   spectra of this map in the spectrum bar and
   				   highlight the current one */
-  				for(int i = 0; i < cl.parent_layer->peaks.size(); i++)
+  				for(UInt i = 0; i < cl.parent_layer->peaks.size(); i++)
   				{
   					item = new QListWidgetItem(spectrum_selection_);
   					item->setText(QString("RT: ") + QString::number(cl.parent_layer->peaks[i].getRT()));
@@ -1250,7 +1251,7 @@ namespace OpenMS
   		}
   		else // map with many spectra --> add spectra to spectrum bar
   		{
-  			for(int i = 0; i < cl.peaks.size(); i++)
+  			for(UInt i = 0; i < cl.peaks.size(); i++)
   			{
   				item = new QListWidgetItem(spectrum_selection_);
   				item->setText(QString("RT: ") + QString::number(cl.peaks[i].getRT()));

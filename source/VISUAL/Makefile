@@ -58,7 +58,7 @@ CPP_SOURCES=\
 	Spectrum3DOpenGLCanvas.C\
 	Spectrum3DWidget.C\
 	ParamEditor.C\
-	Annotations1D.C\
+	Annotations1DManager.C\
 	Annotation1DItem.C\
 	Annotation1DDistanceItem.C
 

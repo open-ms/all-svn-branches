@@ -29,9 +29,10 @@
 namespace OpenMS
 {	
 
-	Annotation1DDistanceItem::Annotation1DDistanceItem(PeakIndex& start_peak, PeakIndex& end_peak,
-		Annotation1DDistanceItem::PointType start_point, Annotation1DDistanceItem::PointType end_point)
-		: is_selected_(true),
+	Annotation1DDistanceItem::Annotation1DDistanceItem(const PeakIndex& start_peak, const PeakIndex& end_peak,
+		const Annotation1DDistanceItem::PointType start_point, const Annotation1DDistanceItem::PointType end_point)
+		: bounding_box_(),
+			is_selected_(true),
 			start_peak_(start_peak),
 			end_peak_(end_peak),
 			start_point_(start_point),
@@ -39,13 +40,14 @@ namespace OpenMS
 	{
 	}
 	
-	const Annotation1DDistanceItem::BoundingBoxType Annotation1DDistanceItem::boundingBox()
+	const QRectF& Annotation1DDistanceItem::boundingBox() const
 	{
-		const Annotation1DDistanceItem::PointType min_point(start_point_.getX(), start_point_.getY());
-		const Annotation1DDistanceItem::PointType max_point(end_point_.getX(), end_point_.getY());
-		const Annotation1DDistanceItem::BoundingBoxType box(min_point, max_point);
-		
-		return box;
+		return bounding_box_;
+	}
+	
+	void Annotation1DDistanceItem::setBoundingBox(const QRectF& bbox)
+	{
+		bounding_box_ = bbox;
 	}
 	
 	void Annotation1DDistanceItem::setSelected(bool selected)
@@ -53,7 +55,7 @@ namespace OpenMS
 		is_selected_ = selected;
 	}
 	
-	const bool Annotation1DDistanceItem::isSelected()
+	const bool Annotation1DDistanceItem::isSelected() const
 	{
 		return is_selected_;
 	}
@@ -68,12 +70,12 @@ namespace OpenMS
 		end_peak_ = end_peak;
 	}
 	
-	PeakIndex& Annotation1DDistanceItem::getStartPeak()
+	const PeakIndex& Annotation1DDistanceItem::getStartPeak() const
 	{
 		return start_peak_;
 	}
 	
-	PeakIndex& Annotation1DDistanceItem::getEndPeak()
+	const PeakIndex& Annotation1DDistanceItem::getEndPeak() const
 	{
 		return end_peak_;
 	}
@@ -88,12 +90,12 @@ namespace OpenMS
 		end_point_ = p;
 	}
 	
-	const Annotation1DDistanceItem::PointType& Annotation1DDistanceItem::getStartPoint()
+	const Annotation1DDistanceItem::PointType& Annotation1DDistanceItem::getStartPoint() const
 	{
 		return start_point_;
 	}
 	
-	const Annotation1DDistanceItem::PointType& Annotation1DDistanceItem::getEndPoint()
+	const Annotation1DDistanceItem::PointType& Annotation1DDistanceItem::getEndPoint() const
 	{
 		return end_point_;
 	}

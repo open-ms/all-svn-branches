@@ -31,8 +31,10 @@
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
+#include <OpenMS/VISUAL/Annotation1DItem.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/DataFilters.h>
-#include <OpenMS/VISUAL/Annotations1D.h>
+
+#include <list>
 
 namespace OpenMS 
 {
@@ -66,7 +68,13 @@ namespace OpenMS
 		/// Main data type (experiment)
 		typedef MSExperiment<Peak1D> ExperimentType;
 		/// Main data type (features)
-		typedef FeatureMap<> FeatureMapType;	
+		typedef FeatureMap<> FeatureMapType;
+		/// Container type for the 1D annotations
+		typedef std::list<Annotation1DItem*> Annotations1DContainerType;
+		/// Iterator for the 1D annotations
+		typedef Annotations1DContainerType::iterator Ann1DIterator;
+		/// Const iterator for the 1D annotations
+		typedef Annotations1DContainerType::const_iterator Ann1DConstIterator;
 		//@}
 		
 		/// Default constructor
@@ -125,7 +133,7 @@ namespace OpenMS
 		mutable const LayerData* parent_layer;
 		
 		///Annotations for the 1D view
-		mutable Annotations1D annotations_1d_;
+		mutable Annotations1DContainerType annotations_1d_;
 		
 	};
 

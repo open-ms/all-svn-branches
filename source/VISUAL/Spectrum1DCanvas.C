@@ -54,7 +54,8 @@ namespace OpenMS
 	using namespace Internal;
 		
 	Spectrum1DCanvas::Spectrum1DCanvas(const Param& preferences, QWidget* parent)
-		: SpectrumCanvas(preferences, parent)
+		: SpectrumCanvas(preferences, parent),
+			annotation_manager_(this)
 	{
     //Paramater handling
     defaults_.setValue("highlighted_peak_color", "#ff0000", "Highlighted peak color.");
@@ -126,14 +127,13 @@ namespace OpenMS
 					measurement_start_.clear();
 				}
 			}
-			// deselect all items except the one under the cursor, if it exists
-			getCurrentLayer().annotations_1d_.deselectAll();
-			PointType cursor_pos = SpectrumCanvas::widgetToData_(last_mouse_pos_);
-			Annotation1DItem* item = getCurrentLayer().annotations_1d_.getAnnotationAt(cursor_pos);
-			if(item != 0)
+			/* if ctrl is pressed (AM_ZOOM), allow selection of multiple annotation items.
+				 else,deselect all annotation items first. */
+			if (action_mode_ != AM_ZOOM)
 			{
-				item->setSelected(true);
+				annotation_manager_.deselectAll(getCurrentLayer());
 			}
+			annotation_manager_.selectItemAt(getCurrentLayer(), last_mouse_pos_);
 		}
 	}
 
@@ -241,16 +241,82 @@ namespace OpenMS
 					emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
 					emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
 					// add new distance item to annotations_1d_ of current layer
-					QPoint end_qp(last_mouse_pos_.x(), measurement_start_point_.y());
 					PointType start_p = widgetToData_(measurement_start_point_);
+					QPoint end_qp(last_mouse_pos_.x(), measurement_start_point_.y());
 					PointType end_p = widgetToData_(end_qp);
-					Annotation1DItem* item = new Annotation1DDistanceItem(measurement_start_, selected_peak_, start_p, end_p);
-					getCurrentLayer().annotations_1d_.add(item);
+					
+					annotation_manager_.addDistanceItem(getCurrentLayer(), measurement_start_, selected_peak_, start_p, end_p);
 				}
 			}
 			measurement_start_.clear();
 			update_(__PRETTY_FUNCTION__);
 		}
+	}
+
+	void Spectrum1DCanvas::keyPressEvent(QKeyEvent* e)
+	{
+		// Delete pressed => delete selected annotations from the current layer
+		if (e->key()==Qt::Key_Delete)
+		{
+			annotation_manager_.removeSelectedItems(getCurrentLayer());
+			update_(__PRETTY_FUNCTION__);
+		}
+		
+		// 'a' pressed && in zoom mode (ctrl pressed) => select all annotation items
+		if (e->key()==Qt::Key_A && action_mode_ == AM_ZOOM)
+		{
+			annotation_manager_.selectAll(getCurrentLayer());
+			update_(__PRETTY_FUNCTION__);
+		}
+		
+		// Alt/Shift pressed => change action mode
+		if (e->key()==Qt::Key_Control)
+		{
+			action_mode_ = AM_ZOOM;
+			emit actionModeChange();
+		}
+		else if (e->key()==Qt::Key_Shift)
+		{
+			action_mode_ = AM_MEASURE;
+			emit actionModeChange();
+		}
+		
+		// CTRL+/CTRL- => Zoom stack
+		if ((e->modifiers() & Qt::ControlModifier) && (e->key()==Qt::Key_Plus))
+		{
+			zoomForward_();
+		}
+		else if ((e->modifiers() & Qt::ControlModifier) && (e->key()==Qt::Key_Minus))
+		{
+			zoomBack_();
+		}
+		
+		// Arrow keys => translate
+		else if (e->key()==Qt::Key_Left)
+		{
+			translateLeft_();
+		}
+		else if (e->key()==Qt::Key_Right)
+		{
+			translateRight_();
+		}
+		else if (e->key()==Qt::Key_Up)
+		{
+			translateForward_();
+		}
+		else if (e->key()==Qt::Key_Down)
+		{
+			translateBackward_();
+		}
+		
+		//Backspace to reset zoom
+		else if (e->key()==Qt::Key_Backspace)
+		{
+			resetZoom();
+		}
+		
+		e->ignore();
+		
 	}
 
 	PeakIndex Spectrum1DCanvas::findPeakAtPosition_(QPoint p)
@@ -533,17 +599,30 @@ namespace OpenMS
 		{
 			painter.drawPixmap(rects[i].topLeft(), buffer_, rects[i]);
 		}
-		// draw "ruler" line when in measure mode and valid measurement start peak selected
+		// draw measuring line when in measure mode and valid measurement start peak selected
 		if (action_mode_ == AM_MEASURE && measurement_start_.isValid())
 		{
 			QPoint measurement_end_point(last_mouse_pos_.x(), measurement_start_point_.y());
 			painter.drawLine(measurement_start_point_, measurement_end_point);
 		}
-		//draw measurement start peak and selected peak
+		// draw highlighted measurement start peak and selected peak
 		bool with_elongation = (action_mode_ == AM_MEASURE) ? true : false;
 		drawHighlightedPeak_(measurement_start_, painter, with_elongation);
 		drawHighlightedPeak_(selected_peak_, painter, with_elongation);
 		
+		// draw dashed elongations for pairs of peaks annotated with a distance
+		for(LayerData::Ann1DIterator it = getCurrentLayer().annotations_1d_.begin(); it != getCurrentLayer().annotations_1d_.end(); ++it)
+		{
+			Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
+			if (distance_item)
+			{
+				if (distance_item->getStartPeak().isValid() && distance_item->getEndPeak().isValid())
+				{
+					drawHighlightedPeak_(distance_item->getStartPeak(), painter, true);
+					drawHighlightedPeak_(distance_item->getEndPeak(), painter, true);
+				}
+			}
+		}
 
 //		if (draw_metainfo_)
 //		{
@@ -565,8 +644,8 @@ namespace OpenMS
 //			}
 //		}
 
-		//draw all annotation items
-		drawAnnotations_(painter);
+		//draw all annotation items of the current layer
+		annotation_manager_.drawAnnotations(getCurrentLayer(), painter);
 
 		painter.end();
 #ifdef DEBUG_TOPPVIEW
@@ -577,7 +656,7 @@ namespace OpenMS
 #endif	
 	}
 	
-	void Spectrum1DCanvas::drawHighlightedPeak_(PeakIndex& peak, QPainter& painter, bool draw_elongation)
+	void Spectrum1DCanvas::drawHighlightedPeak_(const PeakIndex& peak, QPainter& painter, bool draw_elongation)
 	{
 		if (peak.isValid())
 		{
@@ -599,7 +678,7 @@ namespace OpenMS
 				painter.drawLine(begin.x(), begin.y()-4, begin.x(), begin.y()+4);
 				painter.drawLine(begin.x()-4, begin.y(), begin.x()+4, begin.y());
 			}
-			// draw elongation as dashed line (for measure mode)
+			// draw elongation as dashed line (while in measure mode and for all existing distance annotations)
 			if (draw_elongation)
 			{
 				QPen pen;
@@ -611,67 +690,6 @@ namespace OpenMS
 				painter.drawLine(begin.x(), begin.y(), begin.x(), 0);
 			}
 		}
-	}
-	
-	void Spectrum1DCanvas::drawAnnotations_(QPainter& painter)
-	{
-		for(Annotations1D::Ann1DConstIterator it = getCurrentLayer().annotations_1d_.begin(); it != getCurrentLayer().annotations_1d_.end(); it++)
-		{
-			if (dynamic_cast<Annotation1DDistanceItem*>(*it) != 0)
-			{
-				drawDistanceAnnotation_(dynamic_cast<Annotation1DDistanceItem*>(*it), painter);
-			}
-			/*
-			else if (dynamic_cast<Annotation1DSomeOtherItem*>(*it) != 0)
-			{
-				...
-			}
-			*/
-		}
-	}
-	
-	void Spectrum1DCanvas::drawDistanceAnnotation_(Annotation1DDistanceItem* item, QPainter& painter)
-	{
-		//translate mz/intensity to pixel coordinates
-		QPoint start_point, end_point;
-		SpectrumCanvas::dataToWidget_(item->getStartPoint().getX(), item->getStartPoint().getY(), start_point);
-		SpectrumCanvas::dataToWidget_(item->getEndPoint().getX(), item->getEndPoint().getY(), end_point);
-		
-		if (item->getStartPeak().isValid() && item->getEndPeak().isValid())
-		{
-			drawHighlightedPeak_(item->getStartPeak(), painter, true);
-			drawHighlightedPeak_(item->getEndPeak(), painter, true);
-		}
-		//draw the actual item
-		if (item->isSelected())
-		{
-			painter.setPen(Qt::green);
-			
-			// draw additional filled rectangles to highlight bounding box of selected item
-			QPoint top_left_point, top_right_point, bottom_right_point, bottom_left_point;
-			SpectrumCanvas::dataToWidget_(item->boundingBox().minX(), item->boundingBox().minY(), top_left_point);
-			SpectrumCanvas::dataToWidget_(item->boundingBox().maxX(), item->boundingBox().minY(), top_right_point);
-			SpectrumCanvas::dataToWidget_(item->boundingBox().maxX(), item->boundingBox().maxY(), bottom_right_point);
-			SpectrumCanvas::dataToWidget_(item->boundingBox().minX(), item->boundingBox().maxY(), bottom_left_point);
-
-			painter.fillRect(top_left_point.x()-3, top_left_point.y()-3, 3, 3, Qt::green);
-			painter.fillRect(top_right_point.x(), top_right_point.y()-3, 3, 3, Qt::green);
-			painter.fillRect(bottom_right_point.x(), bottom_right_point.y(), 3, 3, Qt::green);
-			painter.fillRect(bottom_left_point.x()-3, bottom_left_point.y(), 3, 3, Qt::green);
-
-		}
-		else
-		{
-			painter.setPen(Qt::darkGreen);
-		}
-		
-		// draw line
-		painter.drawLine(start_point, end_point);
-		// draw arrow heads and the ends
-		painter.drawLine(start_point, QPoint(start_point.x()+5, start_point.y()-4));
-		painter.drawLine(start_point, QPoint(start_point.x()+5, start_point.y()+4));
-		painter.drawLine(end_point, QPoint(end_point.x()-5, end_point.y()-4));
-		painter.drawLine(end_point, QPoint(end_point.x()-5, end_point.y()+4));
 	}
 	
 	void Spectrum1DCanvas::changeVisibleArea_(const AreaType& new_area, bool repaint, bool add_to_stack)

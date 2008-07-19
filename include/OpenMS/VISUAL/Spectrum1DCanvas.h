@@ -34,6 +34,7 @@
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
 #include <OpenMS/VISUAL/Annotation1DItem.h>
 #include <OpenMS/VISUAL/Annotation1DDistanceItem.h>
+#include <OpenMS/VISUAL/Annotations1DManager.h>
 
 //QT
 class QAction;
@@ -53,6 +54,7 @@ namespace OpenMS
 		
 		@ingroup SpectrumWidgets
 	*/
+	
 	class Spectrum1DCanvas 
 		: public SpectrumCanvas
 	{
@@ -123,14 +125,8 @@ namespace OpenMS
 			void dataToWidget_(const PeakType& peak, QPoint& point);
 			
 			/// draws a highlighted peak; if draw_elongation is true, the elongation line is drawn (for measuring)
-			void drawHighlightedPeak_(PeakIndex& peak, QPainter& painter, bool draw_elongation = false);
-			
-			/// draws all annotations of the current layer
-			void drawAnnotations_(QPainter& painter);
-			
-			/// draws the distance annotation @p item
-			void drawDistanceAnnotation_(Annotation1DDistanceItem* item, QPainter& painter);
-			
+			void drawHighlightedPeak_(const PeakIndex& peak, QPainter& painter, bool draw_elongation = false);
+								
 			/**
 				@brief Sets the visible area
 				
@@ -157,6 +153,9 @@ namespace OpenMS
       PeakIndex measurement_start_;
       /// start point of "ruler" for measure mode
       QPoint measurement_start_point_;
+      /// The annotation manager
+      Annotations1DManager annotation_manager_;
+      
 			/// Find peak next to the given position
 			PeakIndex findPeakAtPosition_(QPoint);
 	
@@ -166,6 +165,8 @@ namespace OpenMS
 			void mousePressEvent(QMouseEvent* e);
 			void mouseReleaseEvent(QMouseEvent* e);
 			void mouseMoveEvent(QMouseEvent* e);
+			void keyPressEvent(QKeyEvent* e);
+
 			void contextMenuEvent(QContextMenuEvent* e);
 	    //@}
 			

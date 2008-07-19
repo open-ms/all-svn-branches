@@ -28,8 +28,10 @@
 #define OPENMS_VISUAL_ANNOTATION1DDISTANCEITEM_H
 
 #include <OpenMS/VISUAL/Annotation1DItem.h>
-#include <OpenMS/DATASTRUCTURES/DBoundingBox.h>
+#include <OpenMS/DATASTRUCTURES/DPosition.h>
 #include <OpenMS/KERNEL/PeakIndex.h>
+
+#include <QtCore/QRectF>
 
 namespace OpenMS
 {
@@ -43,23 +45,23 @@ namespace OpenMS
 			
 			/// Type of the Points
 			typedef DPosition<2> PointType;
-			/// Type of the bounding boxes
-			typedef DBoundingBox<2> BoundingBoxType;
 			/// Intensity type
 			typedef Real IntensityType;
 			/// Coordinate type
 			typedef DoubleReal CoordinateType;
 
 			/// Constructor
-			Annotation1DDistanceItem(PeakIndex& start_peak, PeakIndex& end_peak,
-				Annotation1DDistanceItem::PointType start_point, Annotation1DDistanceItem::PointType end_point);
+			Annotation1DDistanceItem(const PeakIndex& start_peak, const PeakIndex& end_peak,
+				const Annotation1DDistanceItem::PointType start_point, const Annotation1DDistanceItem::PointType end_point);
 			
-			/// Returns the bounding box of the item
-			const BoundingBoxType boundingBox();
+			/// Returns the current bounding box of this item on the canvas where it has last been drawn
+			const QRectF& boundingBox() const;
+			/// Sets the bounding_box_ for this item
+			void setBoundingBox(const QRectF& bbox);
 			/// Sets whether this item is currently selected on the canvas or not
 			void setSelected(bool selected);
 			/// Returns true if this item is currently selected on the canvas, else false
-			const bool isSelected();
+			const bool isSelected() const;
 			/// Sets the start peak index of the measurement
 			void setStartPeak(PeakIndex& start_peak);
 			/// Sets the end peak index of the measurement
@@ -69,19 +71,20 @@ namespace OpenMS
 			/// Sets the peak index of the end peak of the measurement
 			void setEndPoint(PointType& end);
 			/// Returns the start peak index of the measurement
-			PeakIndex& getStartPeak();
+			const PeakIndex& getStartPeak() const;
 			/// Returns the end peak index of the measurement
-			PeakIndex& getEndPeak();
+			const PeakIndex& getEndPeak() const;
 			/// Returns the start point as (MZ,intensity)
-			const PointType& getStartPoint();
+			const PointType& getStartPoint() const;
 			/// Returns the end point as (MZ,intensity)
-			const PointType& getEndPoint();
+			const PointType& getEndPoint() const;
 				
 		protected:
 		
+			/// The current bounding box of this item on the canvas where it has last been drawn
+			QRectF bounding_box_;
 			/// Determines whether this item is currently selected on the canvas
 			bool is_selected_;
-			
 			/// PeakIndex of the start peak of the measurement
 			PeakIndex start_peak_;
 			/// PeakIndex of the end peak of the measurement

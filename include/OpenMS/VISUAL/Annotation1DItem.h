@@ -27,7 +27,7 @@
 #ifndef OPENMS_VISUAL_ANNOTATION1DITEM_H
 #define OPENMS_VISUAL_ANNOTATION1DITEM_H
 
-#include <OpenMS/DATASTRUCTURES/DBoundingBox.h>
+#include <QtCore/QRectF>
 
 namespace OpenMS
 {
@@ -38,14 +38,11 @@ namespace OpenMS
 		
 		public:
 			
-			/// Type of the bounding boxes
-			typedef DBoundingBox<2> BoundingBoxType;
-			
-			/// Returns the bounding box of the item
-			virtual const BoundingBoxType boundingBox() = 0;
+			/// Returns the current bounding box of this item on the canvas where it has last been drawn
+			virtual const QRectF& boundingBox() const = 0;
 			
 			/// Returns true if this item is currently selected on the canvas, else false
-			virtual const bool isSelected() = 0;
+			virtual const bool isSelected() const = 0;
 			
 			/// Sets whether this item is currently selected on the canvas or not
 			virtual void setSelected(bool selected) = 0;

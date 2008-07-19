@@ -82,6 +82,8 @@ namespace OpenMS
 	{
 		Q_OBJECT
 	
+		friend class Annotations1DManager;
+		
 	public:
 		/**	@name Type definitions */
 		//@{

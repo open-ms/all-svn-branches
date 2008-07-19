@@ -25,7 +25,6 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
-#include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 #include <OpenMS/VISUAL/Annotations1DManager.h>
 
 #include <iostream>
@@ -33,9 +32,9 @@
 namespace OpenMS
 {	
 	
-	Annotations1DManager::Annotations1DManager(Spectrum1DCanvas* canvas)
+	Annotations1DManager::Annotations1DManager(SpectrumCanvas* canvas)
 	{
-		canvas_1d_ = canvas;
+		canvas_ = canvas;
 	}
 	
 	void Annotations1DManager::selectItemAt(const LayerData& layer, const QPoint& pos)
@@ -70,14 +69,14 @@ namespace OpenMS
 	{
 		//translate mz/intensity to pixel coordinates
 		QPoint start_point, end_point;
-		qobject_cast<SpectrumCanvas*>(canvas_1d_)->dataToWidget_(item->getStartPoint().getX(), item->getStartPoint().getY(), start_point);
-		qobject_cast<SpectrumCanvas*>(canvas_1d_)->dataToWidget_(item->getEndPoint().getX(), item->getEndPoint().getY(), end_point);
+		canvas_->dataToWidget_(item->getStartPoint().getX(), item->getStartPoint().getY(), start_point);
+		canvas_->dataToWidget_(item->getEndPoint().getX(), item->getEndPoint().getY(), end_point);
 		
 		// compute bounding box of item on the specified painter
-		QRectF bbox(QPointF(start_point.x(), start_point.y()), QPointF(end_point.x(), end_point.y()+4)); // +4 for lower half of arrow head
+		QRectF bbox(QPointF(start_point.x(), start_point.y()), QPointF(end_point.x(), end_point.y()+4)); // +4 for lower half of arrow heads
 		// bbox must enclose distance text:
-		const SpectrumCanvas::ExperimentType::PeakType& peak_1 = item->getStartPeak().getPeak(canvas_1d_->getCurrentLayer().peaks);
-		const SpectrumCanvas::ExperimentType::PeakType& peak_2 = item->getEndPeak().getPeak(canvas_1d_->getCurrentLayer().peaks);
+		const SpectrumCanvas::ExperimentType::PeakType& peak_1 = item->getStartPeak().getPeak(canvas_->getCurrentLayer().peaks);
+		const SpectrumCanvas::ExperimentType::PeakType& peak_2 = item->getEndPeak().getPeak(canvas_->getCurrentLayer().peaks);
 		QString distance_string = QString("%1").arg(peak_2.getMZ()-peak_1.getMZ());
 		// find out how much additional space is needed for the text:
 		QRectF text_boundings = painter.boundingRect(QRectF(), Qt::AlignCenter, distance_string);

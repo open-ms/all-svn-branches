@@ -55,7 +55,7 @@ namespace OpenMS
 		
 	Spectrum1DCanvas::Spectrum1DCanvas(const Param& preferences, QWidget* parent)
 		: SpectrumCanvas(preferences, parent),
-			annotation_manager_(this)
+			annotation_manager_(qobject_cast<SpectrumCanvas*>(this))
 	{
     //Paramater handling
     defaults_.setValue("highlighted_peak_color", "#ff0000", "Highlighted peak color.");

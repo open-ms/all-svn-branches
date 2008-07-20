@@ -34,12 +34,12 @@ namespace OpenMS
 	/** @brief An abstract class acting as an interface for the different 1d annotation items.
 	
 			This is an abstract class which acts as an interface between its polymorphic
-			subclasses and all containers and methods that contain/handle Annotation1DItem
+			subclasses and all containers and methods that contain or handle Annotation1DItem
 			objects.
 			
 			If you want to add new kinds of annotation items, inherit this class,
 			implement the pure virtual methods, and add everything else the item should
-			have or be able to do. Then tell the Annotations1DManager how items of
+			have or be capable of. Then tell the Annotations1DManager how items of
 			this new class are drawn and how their bounding boxes are computed
 			
 	*/

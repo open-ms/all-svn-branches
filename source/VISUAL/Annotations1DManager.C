@@ -37,16 +37,33 @@ namespace OpenMS
 		canvas_ = canvas;
 	}
 	
-	void Annotations1DManager::selectItemAt(const LayerData& layer, const QPoint& pos)
+	Annotation1DItem* Annotations1DManager::getItemAt(const LayerData& layer, const QPoint& pos) const
 	{
 		for (LayerData::Ann1DConstIterator it = layer.annotations_1d_.begin(); it != layer.annotations_1d_.end(); ++it)
 		{
 			if ((*it)->boundingBox().contains(pos))
 			{
-				(*it)->setSelected(true);
-				// if more than one item's bounding box encloses pos: select only the one in the foreground --> break here
-				break;
+				return *it;
 			}
+		}
+		return 0;
+	}
+	
+	void Annotations1DManager::selectItemAt(const LayerData& layer, const QPoint& pos)
+	{
+		Annotation1DItem* item = getItemAt(layer, pos);
+		if (item != 0)
+		{
+			item->setSelected(true);
+		}
+	}
+	
+	void Annotations1DManager::deselectItemAt(const LayerData& layer, const QPoint& pos)
+	{
+		Annotation1DItem* item = getItemAt(layer, pos);
+		if (item != 0)
+		{
+			item->setSelected(false);
 		}
 	}
 	
@@ -60,8 +77,6 @@ namespace OpenMS
 			{
 				drawDistanceItem(distance_item, painter);
 			}
-			
-			
 		}
 	}
 	
@@ -129,11 +144,11 @@ namespace OpenMS
 	}
 	
 	// Predicate needed by removeSelectedItems()
-	bool itemSelected(const Annotation1DItem* item) { return item->isSelected(); }
+	bool annotationItemSelected(const Annotation1DItem* item) { return item->isSelected(); }
 	
 	void Annotations1DManager::removeSelectedItems(const LayerData& layer)
 	{
-		layer.annotations_1d_.remove_if(itemSelected);
+		layer.annotations_1d_.remove_if(annotationItemSelected);
 	}
 	
 	void Annotations1DManager::addDistanceItem(const LayerData& layer, const PeakIndex& peak_1, const PeakIndex& peak_2, const PointType& start_point, const PointType& end_point)

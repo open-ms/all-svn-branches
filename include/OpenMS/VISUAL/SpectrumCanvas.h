@@ -32,7 +32,7 @@
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <OpenMS/VISUAL/LayerData.h>
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
-
+#include <OpenMS/VISUAL/Annotations1DManager.h>
 //QT
 #include <QtGui/QWidget>
 #include <QtGui/QRubberBand>
@@ -41,6 +41,7 @@ class QKeyEvent;
 class QMouseEvent;
 class QFocusEvent;
 class QMenu;
+class QPainter;
 
 //STL
 #include <stack>
@@ -50,6 +51,7 @@ namespace OpenMS
 {
 	class SpectrumWidget;
 	class FileWatcher;
+	class Annotation1DDistanceItem;
 	
 	/**
 		@brief Base class for visualization canvas classes
@@ -82,7 +84,7 @@ namespace OpenMS
 	{
 		Q_OBJECT
 	
-		friend class Annotations1DManager;
+		friend void Annotations1DManager::drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter);
 		
 	public:
 		/**	@name Type definitions */

@@ -46,7 +46,7 @@ namespace OpenMS
 	/** @brief A manager for 1D annotations on the Spectrum1DCanvas
 			
 			All methods dealing with Annotation1DItem objects are located in this class.
-			Every Spectrum1DCanvas has an instance of this class as a member which
+			Every Spectrum1DCanvas object has an instance of this class as a member which
 			is responsible for drawing the items on the canvas, calculating their
 			bounding boxes, adding and deleting them, as well as selecting them
 			on the canvas.
@@ -55,7 +55,7 @@ namespace OpenMS
 			object of the corresponding Spectrum1DCanvas which it needs in order to
 			translate the data points (MZ / intensity) contained in the annotation 
 			items to canvas coordinates. This is done by SpectrumCanvas::dataToWidget_()
-			which is protected. For this reason, this class is a friend of SpectrumCanvas
+			which is protected. For this reason, the drawing methods are friends of SpectrumCanvas
 			and can access its protected members.
 			
 			The bounding boxes of the items are computed while they are drawn, because 
@@ -80,8 +80,16 @@ namespace OpenMS
 			/// Constructor
 			Annotations1DManager(SpectrumCanvas* canvas);
 			
+			/** @brief Returns a pointer to the item at @p pos on the specified @p layer, or 0, if not existent
+					
+					If more than one item's bounding box encloses @p pos , the one in the
+					foreground is returned.
+			*/
+			Annotation1DItem* getItemAt(const LayerData& layer, const QPoint& pos) const;
 			/// Selects the item at @p pos on the canvas, if it exists. Searches only in the specified @p layer
 			void selectItemAt(const LayerData& layer, const QPoint& pos);
+			/// Deselects the item at @p pos on the canvas, if it exists. Searches only in the specified @p layer
+			void deselectItemAt(const LayerData& layer, const QPoint& pos);
 			/// Draws all annotation items of the specified @p layer on @p painter
 			void drawAnnotations(const LayerData& layer, QPainter& painter);
 			/// Draws a distance annotation @p distance_item on @p painter

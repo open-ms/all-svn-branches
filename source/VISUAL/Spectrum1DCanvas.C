@@ -127,13 +127,32 @@ namespace OpenMS
 					measurement_start_.clear();
 				}
 			}
-			/* if ctrl is pressed (AM_ZOOM), allow selection of multiple annotation items.
-				 else,deselect all annotation items first. */
+			/* if ctrl is pressed (AM_ZOOM), allow selection / deselection of multiple annotation items.
+				 else,deselect all annotation items before selecting the one under the cursor (if existent). */
 			if (action_mode_ != AM_ZOOM)
 			{
 				annotation_manager_.deselectAll(getCurrentLayer());
 			}
-			annotation_manager_.selectItemAt(getCurrentLayer(), last_mouse_pos_);
+			Annotation1DItem* item = annotation_manager_.getItemAt(getCurrentLayer(), last_mouse_pos_);
+			if (item)
+			{
+				if (item->isSelected())
+				{
+					annotation_manager_.deselectItemAt(getCurrentLayer(), last_mouse_pos_);
+				}
+				else
+				{
+					annotation_manager_.selectItemAt(getCurrentLayer(), last_mouse_pos_);
+				}
+				// if item is a distance item: show distance / intensity ratio of selected item in status bar
+				Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(item);
+				if (distance_item)
+				{
+					const PeakType& peak_1 = distance_item->getStartPeak().getPeak(getCurrentLayer().peaks);
+					const PeakType& peak_2 = distance_item->getEndPeak().getPeak(getCurrentLayer().peaks);
+					emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
+				}
+			}
 		}
 	}
 
@@ -169,23 +188,27 @@ namespace OpenMS
 			}
 			else if (action_mode_ == AM_MEASURE)
 			{
-				selected_peak_ = near_peak;
-								
-				if (measurement_start_.isValid() && selected_peak_.isValid())
+				// measure only positive distances:
+				if (near_peak.peak > measurement_start_.peak)
 				{
-					const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
-					const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
-					emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
-					emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
+					selected_peak_ = near_peak;
+									
+					if (measurement_start_.isValid() && selected_peak_.isValid())
+					{
+						const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
+						const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
+						emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
+						emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
+					}
+					else
+					{
+						emit sendCursorStatus();
+					}
+					
+					last_mouse_pos_ = p;
+					
+					update_(__PRETTY_FUNCTION__);
 				}
-				else
-				{
-					emit sendCursorStatus();
-				}
-				
-				last_mouse_pos_ = p;
-				
-				update_(__PRETTY_FUNCTION__);
 			}
 			else if (action_mode_ == AM_ZOOM)
 			{
@@ -234,7 +257,7 @@ namespace OpenMS
 				{
 					measurement_start_.clear();
 				}
-				if (measurement_start_.isValid())
+				if (measurement_start_.isValid() && selected_peak_.peak > measurement_start_.peak)
 				{
 					const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
 					const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
@@ -242,8 +265,8 @@ namespace OpenMS
 					emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
 					// add new distance item to annotations_1d_ of current layer
 					PointType start_p = widgetToData_(measurement_start_point_);
-					QPoint end_qp(last_mouse_pos_.x(), measurement_start_point_.y());
-					PointType end_p = widgetToData_(end_qp);
+					start_p.setX(peak_1.getMZ());
+					PointType end_p(peak_2.getMZ(), start_p.getY());
 					
 					annotation_manager_.addDistanceItem(getCurrentLayer(), measurement_start_, selected_peak_, start_p, end_p);
 				}

@@ -88,6 +88,17 @@ namespace OpenMS
 		}
 	}
 	
+	void Annotations1DManager::drawBoundingBox(const QRectF& bounding_box, QPainter& painter)
+	{
+		painter.setPen(Qt::green);
+		
+		// draw additional filled rectangles to highlight bounding box of selected distance_item
+		painter.fillRect(bounding_box.topLeft().x()-3, bounding_box.topLeft().y()-3, 3, 3, Qt::green);
+		painter.fillRect(bounding_box.topRight().x(), bounding_box.topRight().y()-3, 3, 3, Qt::green);
+		painter.fillRect(bounding_box.bottomRight().x(), bounding_box.bottomRight().y(), 3, 3, Qt::green);
+		painter.fillRect(bounding_box.bottomLeft().x()-3, bounding_box.bottomLeft().y(), 3, 3, Qt::green);
+	}
+	
 	void Annotations1DManager::drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter)
 	{
 		//translate mz/intensity to pixel coordinates
@@ -104,19 +115,19 @@ namespace OpenMS
 		// find out how much additional space is needed for the text:
 		QRectF text_boundings = painter.boundingRect(QRectF(), Qt::AlignCenter, distance_string);
 		bbox.setTop(bbox.top() - text_boundings.height());
+		// if text doesn't fit between peaks, enlarge bounding box:
+		if (text_boundings.width() > bbox.width())
+		{
+			float additional_space = (text_boundings.width() - bbox.width()) / 2;
+			bbox.setLeft(bbox.left() - additional_space);
+			bbox.setRight(bbox.right() + additional_space);
+		}
 		
 		distance_item->setBoundingBox(bbox);
 		
 		if (distance_item->isSelected())
 		{
-			painter.setPen(Qt::green);
-			
-			// draw additional filled rectangles to highlight bounding box of selected distance_item
-			painter.fillRect(bbox.topLeft().x()-3, bbox.topLeft().y()-3, 3, 3, Qt::green);
-			painter.fillRect(bbox.topRight().x(), bbox.topRight().y()-3, 3, 3, Qt::green);
-			painter.fillRect(bbox.bottomRight().x(), bbox.bottomRight().y(), 3, 3, Qt::green);
-			painter.fillRect(bbox.bottomLeft().x()-3, bbox.bottomLeft().y(), 3, 3, Qt::green);
-
+			drawBoundingBox(bbox, painter);
 		}
 		else
 		{
@@ -147,13 +158,7 @@ namespace OpenMS
 		
 		if (text_item->isSelected())
 		{
-			painter.setPen(Qt::green);
-			
-			// draw additional filled rectangles to highlight bounding box of selected text_item
-			painter.fillRect(bbox.topLeft().x()-3, bbox.topLeft().y()-3, 3, 3, Qt::green);
-			painter.fillRect(bbox.topRight().x(), bbox.topRight().y()-3, 3, 3, Qt::green);
-			painter.fillRect(bbox.bottomRight().x(), bbox.bottomRight().y(), 3, 3, Qt::green);
-			painter.fillRect(bbox.bottomLeft().x()-3, bbox.bottomLeft().y(), 3, 3, Qt::green);
+			drawBoundingBox(bbox, painter);
 		}
 		else
 		{

@@ -92,7 +92,9 @@ namespace OpenMS
 			void deselectItemAt(const LayerData& layer, const QPoint& pos);
 			/// Draws all annotation items of the specified @p layer on @p painter
 			void drawAnnotations(const LayerData& layer, QPainter& painter);
-			/// Draws a distance annotation @p distance_item on @p painter
+			/// Draws the @p bounding_box on @p painter
+			void drawBoundingBox(const QRectF& bounding_box, QPainter& painter);
+			/// Draws a distance annotation @p distance_item on @p painter			
 			void drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter);		
 			/// Draws an arbitrary text annotation @p text_item on @p painter
 			void drawTextItem(Annotation1DTextItem* text_item, QPainter& painter);		
@@ -104,11 +106,12 @@ namespace OpenMS
 			void removeSelectedItems(const LayerData& layer);
 			/// Adds a new distance item between @p peak_1 and @p peak_2 at the position determined by @p start_point and @p end_point to the @p layer
 			void addDistanceItem(const LayerData& layer, const PeakIndex& peak_1, const PeakIndex& peak_2, const PointType& start_point, const PointType& end_point);
+			/// Adds a new text item displaying @p text at @p position on @p layer
 			void addTextItem(const LayerData& layer, const PointType& position, const String& text);
 			
 		protected:
 
-			/// The parent canvas. Needed for translation of data points to positions on the widget and vice versa.
+			/// The parent canvas. Needed for translation of data points to positions on the widget and vice versa
 			SpectrumCanvas* canvas_;
 			
 	};

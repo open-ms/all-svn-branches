@@ -33,6 +33,7 @@
 #include <QtGui/QMenu>
 #include <QtGui/QComboBox>
 #include <QtGui/QFileDialog>
+#include <QtGui/QInputDialog>
  
 // OpenMS
 #include <OpenMS/VISUAL/PeakIcon.h>
@@ -895,7 +896,7 @@ namespace OpenMS
 
 	void Spectrum1DCanvas::contextMenuEvent(QContextMenuEvent* e)
 	{
-		//Abort of there are no layers
+		//Abort if there are no layers
 		if (layers_.empty()) return;
 		
 		QMenu* context_menu = new QMenu(this);
@@ -908,6 +909,9 @@ namespace OpenMS
 			layer_name += " (invisible)";
 		}
 		context_menu->addAction(layer_name.toQString())->setEnabled(false);
+		context_menu->addSeparator();
+
+		context_menu->addAction("Add label");
 		context_menu->addSeparator();
 
 		context_menu->addAction("Layer meta data");
@@ -967,6 +971,15 @@ namespace OpenMS
 			{
 				showMetaData(true);
 			}
+			else if (result->text()=="Add label")
+			{
+				bool ok;
+     		QString text = QInputDialog::getText(this, "Add label", "Enter text:", QLineEdit::Normal, "", &ok);
+     		if (ok && !text.isEmpty())
+     		{
+					annotation_manager_.addTextItem(getCurrentLayer(), widgetToData_(e->pos()), String(text));
+				}
+			}
 		}		
 		e->accept();
 	}
@@ -988,7 +1001,6 @@ namespace OpenMS
 		  {
 				MzDataFile().store(file_name,getCurrentLayer().peaks);
 		  }
-			
 		}
 	}
 

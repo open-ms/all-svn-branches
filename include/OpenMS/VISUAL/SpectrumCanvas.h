@@ -83,8 +83,9 @@ namespace OpenMS
 			public DefaultParamHandler
 	{
 		Q_OBJECT
-	
-		friend void Annotations1DManager::drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter);
+		
+		/// The annotation manager needs access to the protected dataToWidget_() method
+		friend class Annotations1DManager;
 		
 	public:
 		/**	@name Type definitions */

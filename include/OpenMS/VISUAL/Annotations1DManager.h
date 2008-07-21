@@ -32,6 +32,7 @@
 #include <OpenMS/VISUAL/LayerData.h>
 #include <OpenMS/VISUAL/Annotation1DItem.h>
 #include <OpenMS/VISUAL/Annotation1DDistanceItem.h>
+#include <OpenMS/VISUAL/Annotation1DTextItem.h>
 
 #include <QtCore/QObject>
 #include <QtCore/QRectF>
@@ -51,20 +52,19 @@ namespace OpenMS
 			bounding boxes, adding and deleting them, as well as selecting them
 			on the canvas.
 			
-			This class has a pointer to the SpectrumCanvas
-			object of the corresponding Spectrum1DCanvas which it needs in order to
-			translate the data points (MZ / intensity) contained in the annotation 
-			items to canvas coordinates. This is done by SpectrumCanvas::dataToWidget_()
-			which is protected. For this reason, the drawing methods are friends of SpectrumCanvas
-			and can access its protected members.
+			This class has a pointer to the SpectrumCanvas of the corresponding
+			Spectrum1DCanvas which it needs in order to translate the data points
+			(MZ / intensity) contained in the annotation items to canvas coordinates.
+			This is done by SpectrumCanvas::dataToWidget_() which is protected in
+			SpectrumCanvas. For this reason, this class is a friend of SpectrumCanvas
+			and is thus able to call this method.
 			
 			The bounding boxes of the items are computed while they are drawn, because 
-			the current QPainter device is needed in order to compute the boundings of items 
-			containing text.
+			the current QPainter device is needed in order to compute the boundings of
+			items containing text.
 			
-			If you want to add a new subclass of Annotation1DItem, e.g.
-			Annotation1DMyCustomItem, tell drawAnnotations() how this item is drawn
-			and how its bounding box is computed.
+			If you want to add a new subclass "Annotation1DMyCustomItem" of Annotation1DItem,
+			tell drawAnnotations() how this item is drawn and how its bounding box is computed.
 			
 	*/
 	class Annotations1DManager
@@ -94,6 +94,8 @@ namespace OpenMS
 			void drawAnnotations(const LayerData& layer, QPainter& painter);
 			/// Draws a distance annotation @p distance_item on @p painter
 			void drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter);		
+			/// Draws an arbitrary text annotation @p text_item on @p painter
+			void drawTextItem(Annotation1DTextItem* text_item, QPainter& painter);		
 			/// Selects all items in the specified @p layer
 			void selectAll(const LayerData& layer);
 			/// Deselects all items in the specified @p layer
@@ -102,9 +104,10 @@ namespace OpenMS
 			void removeSelectedItems(const LayerData& layer);
 			/// Adds a new distance item between @p peak_1 and @p peak_2 at the position determined by @p start_point and @p end_point to the @p layer
 			void addDistanceItem(const LayerData& layer, const PeakIndex& peak_1, const PeakIndex& peak_2, const PointType& start_point, const PointType& end_point);
+			void addTextItem(const LayerData& layer, const PointType& position, const String& text);
 			
 		protected:
-			
+
 			/// The parent canvas. Needed for translation of data points to positions on the widget and vice versa.
 			SpectrumCanvas* canvas_;
 			

@@ -24,79 +24,57 @@
 // $Maintainer: Marc Sturm $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/VISUAL/Annotation1DDistanceItem.h>
+#include <OpenMS/VISUAL/Annotation1DTextItem.h>
 
 namespace OpenMS
 {	
 
-	Annotation1DDistanceItem::Annotation1DDistanceItem(const PeakIndex& start_peak, const PeakIndex& end_peak, const PointType& start_point, const PointType& end_point)
+	Annotation1DTextItem::Annotation1DTextItem(const PointType& position, const String& text)
 		: bounding_box_(),
 			is_selected_(true),
-			start_peak_(start_peak),
-			end_peak_(end_peak),
-			start_point_(start_point),
-			end_point_(end_point)
+			position_(position),
+			text_(text)
 	{
 	}
 	
-	const QRectF& Annotation1DDistanceItem::boundingBox() const
+	const QRectF& Annotation1DTextItem::boundingBox() const
 	{
 		return bounding_box_;
 	}
 	
-	void Annotation1DDistanceItem::setBoundingBox(const QRectF& bbox)
+	void Annotation1DTextItem::setBoundingBox(const QRectF& bbox)
 	{
 		bounding_box_ = bbox;
 	}
 	
-	void Annotation1DDistanceItem::setSelected(bool selected)
+	void Annotation1DTextItem::setSelected(bool selected)
 	{
 		is_selected_ = selected;
 	}
 	
-	const bool Annotation1DDistanceItem::isSelected() const
+	const bool Annotation1DTextItem::isSelected() const
 	{
 		return is_selected_;
 	}
 	
-	void Annotation1DDistanceItem::setStartPeak(const PeakIndex& start_peak)
+	void Annotation1DTextItem::setPosition(const Annotation1DTextItem::PointType& position)
 	{
-		start_peak_ = start_peak;
+		position_ = position;
 	}
 	
-	void Annotation1DDistanceItem::setEndPeak(const PeakIndex& end_peak)
+ 	const Annotation1DTextItem::PointType& Annotation1DTextItem::getPosition() const
+ 	{
+ 		return position_;
+ 	}
+	
+	void Annotation1DTextItem::setText(const String& text)
 	{
-		end_peak_ = end_peak;
+		text_ = text;
 	}
 	
-	const PeakIndex& Annotation1DDistanceItem::getStartPeak() const
+	const String& Annotation1DTextItem::getText() const
 	{
-		return start_peak_;
-	}
-	
-	const PeakIndex& Annotation1DDistanceItem::getEndPeak() const
-	{
-		return end_peak_;
-	}
-	
-	void Annotation1DDistanceItem::setStartPoint(const PointType& p)
-	{
-		start_point_ = p;
-	}
-
-	void Annotation1DDistanceItem::setEndPoint(const PointType& p)
-	{
-		end_point_ = p;
-	}
-	
-	const Annotation1DDistanceItem::PointType& Annotation1DDistanceItem::getStartPoint() const
-	{
-		return start_point_;
-	}
-	
-	const Annotation1DDistanceItem::PointType& Annotation1DDistanceItem::getEndPoint() const
-	{
-		return end_point_;
+		return text_;
 	}
 	
 }//Namespace

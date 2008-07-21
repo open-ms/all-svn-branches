@@ -76,34 +76,42 @@ namespace OpenMS
 			if (distance_item)
 			{
 				drawDistanceItem(distance_item, painter);
+				continue;
+			}
+			
+			Annotation1DTextItem* text_item = dynamic_cast<Annotation1DTextItem*>(*it);
+			if (text_item)
+			{
+				drawTextItem(text_item, painter);
+				continue;
 			}
 		}
 	}
 	
-	void Annotations1DManager::drawDistanceItem(Annotation1DDistanceItem* item, QPainter& painter)
+	void Annotations1DManager::drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter)
 	{
 		//translate mz/intensity to pixel coordinates
 		QPoint start_point, end_point;
-		canvas_->dataToWidget_(item->getStartPoint().getX(), item->getStartPoint().getY(), start_point);
-		canvas_->dataToWidget_(item->getEndPoint().getX(), item->getEndPoint().getY(), end_point);
+		canvas_->dataToWidget_(distance_item->getStartPoint().getX(), distance_item->getStartPoint().getY(), start_point);
+		canvas_->dataToWidget_(distance_item->getEndPoint().getX(), distance_item->getEndPoint().getY(), end_point);
 		
-		// compute bounding box of item on the specified painter
+		// compute bounding box of distance_item on the specified painter
 		QRectF bbox(QPointF(start_point.x(), start_point.y()), QPointF(end_point.x(), end_point.y()+4)); // +4 for lower half of arrow heads
 		// bbox must enclose distance text:
-		const SpectrumCanvas::ExperimentType::PeakType& peak_1 = item->getStartPeak().getPeak(canvas_->getCurrentLayer().peaks);
-		const SpectrumCanvas::ExperimentType::PeakType& peak_2 = item->getEndPeak().getPeak(canvas_->getCurrentLayer().peaks);
+		const SpectrumCanvas::ExperimentType::PeakType& peak_1 = distance_item->getStartPeak().getPeak(canvas_->getCurrentLayer().peaks);
+		const SpectrumCanvas::ExperimentType::PeakType& peak_2 = distance_item->getEndPeak().getPeak(canvas_->getCurrentLayer().peaks);
 		QString distance_string = QString("%1").arg(peak_2.getMZ()-peak_1.getMZ());
 		// find out how much additional space is needed for the text:
 		QRectF text_boundings = painter.boundingRect(QRectF(), Qt::AlignCenter, distance_string);
 		bbox.setTop(bbox.top() - text_boundings.height());
 		
-		item->setBoundingBox(bbox);
+		distance_item->setBoundingBox(bbox);
 		
-		if (item->isSelected())
+		if (distance_item->isSelected())
 		{
 			painter.setPen(Qt::green);
 			
-			// draw additional filled rectangles to highlight bounding box of selected item
+			// draw additional filled rectangles to highlight bounding box of selected distance_item
 			painter.fillRect(bbox.topLeft().x()-3, bbox.topLeft().y()-3, 3, 3, Qt::green);
 			painter.fillRect(bbox.topRight().x(), bbox.topRight().y()-3, 3, 3, Qt::green);
 			painter.fillRect(bbox.bottomRight().x(), bbox.bottomRight().y(), 3, 3, Qt::green);
@@ -124,6 +132,35 @@ namespace OpenMS
 		painter.drawLine(end_point, QPoint(end_point.x()-5, end_point.y()+4));
 		// draw distance text
 		painter.drawText(bbox, Qt::AlignHCenter, distance_string);
+
+	}
+	
+	void Annotations1DManager::drawTextItem(Annotation1DTextItem* text_item, QPainter& painter)
+	{
+		//translate mz/intensity to pixel coordinates
+		QPoint position;
+		canvas_->dataToWidget_(text_item->getPosition().getX(), text_item->getPosition().getY(), position);
+		
+		// compute bounding box of text_item on the specified painter
+		QRectF bbox = painter.boundingRect(QRectF(position, position), Qt::AlignCenter, text_item->getText().toQString());
+		text_item->setBoundingBox(bbox);
+		
+		if (text_item->isSelected())
+		{
+			painter.setPen(Qt::green);
+			
+			// draw additional filled rectangles to highlight bounding box of selected text_item
+			painter.fillRect(bbox.topLeft().x()-3, bbox.topLeft().y()-3, 3, 3, Qt::green);
+			painter.fillRect(bbox.topRight().x(), bbox.topRight().y()-3, 3, 3, Qt::green);
+			painter.fillRect(bbox.bottomRight().x(), bbox.bottomRight().y(), 3, 3, Qt::green);
+			painter.fillRect(bbox.bottomLeft().x()-3, bbox.bottomLeft().y(), 3, 3, Qt::green);
+		}
+		else
+		{
+			painter.setPen(Qt::darkGreen);
+		}
+		
+		painter.drawText(bbox, Qt::AlignCenter, text_item->getText().toQString());
 
 	}
 	
@@ -157,6 +194,13 @@ namespace OpenMS
 		layer.annotations_1d_.push_front(new_item);
 	}
 	
+	void Annotations1DManager::addTextItem(const LayerData& layer, const PointType& position, const String& text)
+	{
+		Annotation1DItem* new_item = new Annotation1DTextItem(position, text);
+		layer.annotations_1d_.push_front(new_item);
+	}
+
+
 }//Namespace
 
 

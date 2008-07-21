@@ -60,7 +60,8 @@ CPP_SOURCES=\
 	ParamEditor.C\
 	Annotations1DManager.C\
 	Annotation1DItem.C\
-	Annotation1DDistanceItem.C
+	Annotation1DDistanceItem.C\
+	Annotation1DTextItem.C
 
 
 MOC_SOURCES=\

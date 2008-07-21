@@ -97,6 +97,15 @@ namespace OpenMS
 		{
 		}
 		
+		/// Destructor
+		virtual ~LayerData()
+		{
+			for (Ann1DIterator it = annotations_1d_.begin(); it != annotations_1d_.end(); ++it)
+			{
+				delete *it;
+			}
+		}
+		
 		/// if this layer is visible
 		bool visible;
 		/// data type (peak of feature data)

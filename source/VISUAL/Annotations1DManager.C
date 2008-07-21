@@ -179,13 +179,21 @@ namespace OpenMS
 			(*it)->setSelected(false);
 		}
 	}
-	
-	// Predicate needed by removeSelectedItems()
-	bool annotationItemSelected(const Annotation1DItem* item) { return item->isSelected(); }
-	
+		
 	void Annotations1DManager::removeSelectedItems(const LayerData& layer)
 	{
-		layer.annotations_1d_.remove_if(annotationItemSelected);
+		for (LayerData::Ann1DIterator it = layer.annotations_1d_.begin(); it != layer.annotations_1d_.end();)
+		{
+			if ((*it)->isSelected())
+			{
+				delete *it;
+				it = layer.annotations_1d_.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
 	}
 	
 	void Annotations1DManager::addDistanceItem(const LayerData& layer, const PeakIndex& peak_1, const PeakIndex& peak_2, const PointType& start_point, const PointType& end_point)

@@ -749,7 +749,7 @@ namespace OpenMS
   	bool as_new_window = true;
   	bool maps_as_2d = ((String)param_.getValue("preferences:default_map_view")=="2d");
   	bool use_mower = ((String)param_.getValue("preferences:intensity_cutoff")=="on");
-  	
+  	bool as_mirror = false;
 		
 		//set the window where (new layer) data could be opened in
 		SpectrumWidget* open_window = window_(window_id);
@@ -771,6 +771,11 @@ namespace OpenMS
 		{
 			dialog.disableAsWindow(true);
 		}
+		//disable opening in mirror canvas when current window is no 1D window
+		if (qobject_cast<Spectrum1DWidget*>(open_window) == 0)
+		{
+			dialog.setMirrorImpossible();
+		}
 		//disable 2d/3d option for features and single scans
 		if (is_feature || !is_2D) dialog.disableMapAs2D(true);
 		//disable cutoff for features and single scans
@@ -783,6 +788,7 @@ namespace OpenMS
 		as_new_window = dialog.openAsNewWindow();
 		maps_as_2d = dialog.viewMapAs2D();
 		use_mower = dialog.isCutoffEnabled();
+  	as_mirror = dialog.openAsMirrorCanvas();
   	
 		//determine the window to open the data in
 		if (as_new_window) //new window
@@ -801,7 +807,12 @@ namespace OpenMS
       	open_window = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
       }
     }
-
+		else if (as_mirror)
+		{
+			Spectrum1DCanvas* new_canvas = new Spectrum1DCanvas(getSpectrumParameters_(1), open_window);
+			qobject_cast<Spectrum1DWidget*>(open_window)->setFlippedCanvas(new_canvas);
+		}
+		
     //add data to the window
     if (is_feature)
     {
@@ -809,21 +820,28 @@ namespace OpenMS
     }
     else
     {
-		  if (!open_window->canvas()->addLayer(peak_map,filename)) return;
-      //calculate noise
-      if(use_mower && is_2D)
-      {
-        DoubleReal cutoff = estimateNoise_(open_window->canvas()->getCurrentLayer().peaks);
-				//create filter
-				DataFilters::DataFilter filter;
-				filter.field = DataFilters::INTENSITY;
-				filter.op = DataFilters::GREATER_EQUAL;
-				filter.value = cutoff;
-				///add filter
-				DataFilters filters;
-				filters.add(filter);
-				open_window->canvas()->setFilters(filters);
-      }
+    	if (as_mirror)
+    	{
+    		if (!qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas()->addLayer(peak_map,filename)) return;
+    	}
+    	else
+    	{    	
+				if (!open_window->canvas()->addLayer(peak_map,filename)) return;
+				//calculate noise
+				if(use_mower && is_2D)
+				{
+					DoubleReal cutoff = estimateNoise_(open_window->canvas()->getCurrentLayer().peaks);
+					//create filter
+					DataFilters::DataFilter filter;
+					filter.field = DataFilters::INTENSITY;
+					filter.op = DataFilters::GREATER_EQUAL;
+					filter.value = cutoff;
+					///add filter
+					DataFilters filters;
+					filters.add(filter);
+					open_window->canvas()->setFilters(filters);
+				}
+			}
 		}
 
     //caption
@@ -1550,7 +1568,7 @@ namespace OpenMS
   {
   	ws_->addWindow(sw);
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateToolBar()));
-    connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateSpectrumBar())); // JJ
+    connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateSpectrumBar()));
     connect(sw,SIGNAL(sendStatusMessage(std::string,OpenMS::UInt)),this,SLOT(showStatusMessage(std::string,OpenMS::UInt)));
     connect(sw,SIGNAL(sendCursorStatus(double,double,double)),this,SLOT(showCursorStatus(double,double,double)));
   

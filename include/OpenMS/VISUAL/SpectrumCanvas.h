@@ -338,6 +338,12 @@ namespace OpenMS
 		
 		/// Sets the mapping of m/z to axes
 		void mzToXAxis(bool mz_to_x_axis);
+		
+		/// Returns whether this canvas is flipped vertically
+		bool isFlippedVertically() const;
+		
+		/// Sets whether this canvas is flipped vertically
+		void setFlippedVertically(bool is_flipped_vertically);
 
 		/** 
 			@name Dataset handling methods
@@ -707,10 +713,20 @@ namespace OpenMS
 			}
 			else
 			{
-				return PointType(
+				if (!isFlippedVertically())
+				{
+					return PointType(
 								visible_area_.minX() + x / width() * visible_area_.width(),
 								visible_area_.minY() + (height() - y) / height() * visible_area_.height() 
+								);
+				}
+				else
+				{
+					return PointType(
+								visible_area_.minX() + x / width() * visible_area_.width(),
+								visible_area_.minY() + y / height() * visible_area_.height() 
 								);			
+				}
 			}		
 		}
 
@@ -732,13 +748,21 @@ namespace OpenMS
 		{
 			if (!isMzToXAxis())
 			{
-				point.setX( static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * width()));
+				point.setX(static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * width()));
 				point.setY(height() - static_cast<int>((x - visible_area_.minX()) / visible_area_.width() * height()));
 			}
 			else
 			{
-				point.setX( static_cast<int>((x - visible_area_.minX()) / visible_area_.width() * width()));
-				point.setY( height() - static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * height()));
+				if (!isFlippedVertically())
+				{
+					point.setX(static_cast<int>((x - visible_area_.minX()) / visible_area_.width() * width()));
+					point.setY(height() - static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * height()));
+				}
+				else
+				{
+					point.setX(static_cast<int>((x - visible_area_.minX()) / visible_area_.width() * width()));
+					point.setY(static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * height()));
+				}
 			}
 		}
 		
@@ -759,6 +783,9 @@ namespace OpenMS
 		
 		/// Stores the mapping of m/z
 		bool mz_to_x_axis_;
+		
+		/// Stores whether this canvas is flipped vertically
+		bool is_flipped_vertically_;
 		
 		/**
 			@brief Stores the currently visible area.

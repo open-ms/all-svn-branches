@@ -59,13 +59,16 @@ namespace OpenMS
 			bool isCutoffEnabled() const;
 			/// Returns true, if the data should be opened in a new window
 			bool openAsNewWindow() const;
-			
+			/// Returns true, if the data should be opened in a mirror canvas below the active canvas
+			bool openAsMirrorCanvas() const;
 			/// Disables map view option and set it
 			void disableMapAs2D(bool as_2d);
 			/// Disables cutoff option and set it
 			void disableCutoff(bool cutoff_on);
 			/// Disables window option and set it
 			void disableAsWindow(bool window);
+			/// Disables the mirror option and unsets it
+			void setMirrorImpossible();
 		
 		protected slots:
 			///slot that disables 2D/3D options, when as layer is selected

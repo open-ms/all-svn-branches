@@ -52,6 +52,10 @@ namespace OpenMS
 		setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
 	}
 	
+	SpectrumWidget::~SpectrumWidget()
+	{
+		emit aboutToBeDestroyed(window_id);
+	}
 	
 	void SpectrumWidget::setCanvas_(SpectrumCanvas* canvas, UInt row, UInt col)
 	{
@@ -87,14 +91,9 @@ namespace OpenMS
 		canvas_->setSpectrumWidget(this);
 	}
 	
-	SpectrumWidget::~SpectrumWidget()
-	{
-		emit aboutToBeDestroyed(window_id);
-	}
-	
 	Int SpectrumWidget::getActionMode() const 
 	{
-		return canvas_->getActionMode(); 
+		return canvas_->getActionMode();
 	}
 	
 	void SpectrumWidget::setIntensityMode(SpectrumCanvas::IntensityModes mode)

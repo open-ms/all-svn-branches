@@ -9,7 +9,7 @@
     <x>0</x>
     <y>0</y>
     <width>485</width>
-    <height>163</height>
+    <height>184</height>
    </rect>
   </property>
   <property name="windowTitle" >
@@ -18,15 +18,15 @@
   <property name="modal" >
    <bool>true</bool>
   </property>
-  <layout class="QVBoxLayout" >
-   <item>
-    <layout class="QHBoxLayout" >
+  <layout class="QGridLayout" name="gridLayout" >
+   <item row="0" column="0" >
+    <layout class="QHBoxLayout" name="horizontalLayout" >
      <item>
       <widget class="QGroupBox" name="groupBox" >
        <property name="title" >
         <string>Open as</string>
        </property>
-       <layout class="QVBoxLayout" >
+       <layout class="QVBoxLayout" name="verticalLayout" >
         <item>
          <widget class="QRadioButton" name="window_" >
           <property name="text" >
@@ -41,6 +41,13 @@
          <widget class="QRadioButton" name="layer_" >
           <property name="text" >
            <string>new layer</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="mirror_" >
+          <property name="text" >
+           <string>mirror canvas</string>
           </property>
          </widget>
         </item>
@@ -104,7 +111,7 @@
      </item>
     </layout>
    </item>
-   <item>
+   <item row="1" column="0" >
     <spacer>
      <property name="orientation" >
       <enum>Qt::Vertical</enum>
@@ -112,7 +119,7 @@
      <property name="sizeType" >
       <enum>QSizePolicy::MinimumExpanding</enum>
      </property>
-     <property name="sizeHint" >
+     <property name="sizeHint" stdset="0" >
       <size>
        <width>451</width>
        <height>20</height>
@@ -120,7 +127,7 @@
      </property>
     </spacer>
    </item>
-   <item>
+   <item row="2" column="0" >
     <layout class="QHBoxLayout" >
      <item>
       <spacer>
@@ -130,7 +137,7 @@
        <property name="sizeType" >
         <enum>QSizePolicy::Expanding</enum>
        </property>
-       <property name="sizeHint" >
+       <property name="sizeHint" stdset="0" >
         <size>
          <width>111</width>
          <height>23</height>

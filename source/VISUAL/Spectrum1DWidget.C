@@ -29,6 +29,8 @@
 #include <OpenMS/VISUAL/AxisWidget.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum1DGoToDialog.h>
 
+#include <QtGui/QScrollBar>
+
 using namespace std;
 
 namespace OpenMS
@@ -37,7 +39,9 @@ namespace OpenMS
 	using namespace Math;
 	
 	Spectrum1DWidget::Spectrum1DWidget(const Param& preferences, QWidget* parent)
-		: SpectrumWidget(preferences, parent)
+		: SpectrumWidget(preferences, parent),
+			flipped_canvas_(0),
+			has_second_canvas_(0)
 	{
 		//set the label mode for the axes  - side effect
 		setCanvas_(new Spectrum1DCanvas(preferences, this));
@@ -47,6 +51,82 @@ namespace OpenMS
 		y_axis_->setLegend("Intensity");
 		y_axis_->setAllowShortNumbers(true);
 		y_axis_->setMinimumWidth(50);
+	}
+	
+	void Spectrum1DWidget::setFlippedCanvas(Spectrum1DCanvas* flipped_canvas)
+	{
+		flipped_canvas_ = flipped_canvas;
+		flipped_canvas_->setFlippedVertically(true);
+		flipped_canvas_->setSpectrumWidget(this);
+		
+		grid_->removeWidget(x_axis_);
+		grid_->removeWidget(x_scrollbar_);
+		grid_->addWidget(x_axis_, 2, 2);
+		grid_->addWidget(x_scrollbar_, 3, 2);
+		grid_->addWidget(flipped_canvas_, 1, 2);
+		flipped_y_axis_ = new AxisWidget(AxisWidget::LEFT,"Intensity",this);
+		flipped_y_axis_->setInverseOrientation(true);
+		flipped_y_axis_->setAllowShortNumbers(true);
+		flipped_y_axis_->setMinimumWidth(50);
+		grid_->addWidget(flipped_y_axis_, 1, 1);
+		
+		connect(flipped_canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), canvas_, SLOT(setVisibleArea(DRange<2>)));
+		connect(canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), flipped_canvas_, SLOT(setVisibleArea(DRange<2>)));
+		
+		connect(flipped_canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), this, SLOT(updateAxes()));
+		connect(flipped_canvas_, SIGNAL(recalculateAxes()), this, SLOT(updateAxes()));
+		connect(flipped_canvas_, SIGNAL(changeLegendVisibility()), this, SLOT(changeLegendVisibility()));
+		connect(flipped_canvas_, SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
+		connect(flipped_canvas_, SIGNAL(updateVScrollbar(float,float,float,float)), this, SLOT(updateVScrollbar(float,float,float,float)));
+		connect(x_scrollbar_, SIGNAL(valueChanged(int)), flipped_canvas_, SLOT(horizontalScrollBarChange(int)));
+		connect(y_scrollbar_, SIGNAL(valueChanged(int)), flipped_canvas_, SLOT(verticalScrollBarChange(int)));
+		connect(flipped_canvas_, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
+		connect(flipped_canvas_, SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
+		
+		
+		has_second_canvas_ = true;
+	}
+
+	void Spectrum1DWidget::removeFlippedCanvas()
+	{
+		if (has_second_canvas_)
+		{
+			disconnect(flipped_canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), canvas_, SLOT(setVisibleArea(DRange<2>)));
+			disconnect(canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), flipped_canvas_, SLOT(setVisibleArea(DRange<2>)));
+		
+			disconnect(flipped_canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), this, SLOT(updateAxes()));
+			disconnect(flipped_canvas_, SIGNAL(recalculateAxes()), this, SLOT(updateAxes()));
+			disconnect(flipped_canvas_, SIGNAL(changeLegendVisibility()), this, SLOT(changeLegendVisibility()));
+			disconnect(flipped_canvas_, SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
+			disconnect(flipped_canvas_, SIGNAL(updateVScrollbar(float,float,float,float)), this, SLOT(updateVScrollbar(float,float,float,float)));
+			disconnect(x_scrollbar_, SIGNAL(valueChanged(int)), flipped_canvas_, SLOT(horizontalScrollBarChange(int)));
+			disconnect(y_scrollbar_, SIGNAL(valueChanged(int)), flipped_canvas_, SLOT(verticalScrollBarChange(int)));
+			disconnect(flipped_canvas_, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
+			disconnect(flipped_canvas_, SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
+		
+			grid_->removeWidget(flipped_canvas_);
+			grid_->removeWidget(flipped_y_axis_);
+			flipped_canvas_->close();
+			flipped_y_axis_->close();
+			delete flipped_canvas_;
+			delete flipped_y_axis_;
+			grid_->removeWidget(x_axis_);
+			grid_->removeWidget(x_scrollbar_);
+			grid_->addWidget(x_axis_, 1, 2);
+			grid_->addWidget(x_scrollbar_, 2, 2);
+			
+			has_second_canvas_ = false;
+		}
+	}
+	
+	bool Spectrum1DWidget::hasSecondCanvas()
+	{
+		return has_second_canvas_;
+	}
+	
+	void Spectrum1DWidget::setHasSecondCanvas(bool has_second_canvas)
+	{
+		has_second_canvas_ = has_second_canvas;
 	}
 	
 	void Spectrum1DWidget::recalculateAxes_()
@@ -81,6 +161,11 @@ namespace OpenMS
 				break;
 			default:
 				throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+		}
+		
+		if (has_second_canvas_)
+		{
+			flipped_y_axis_->setAxisBounds(it_axis->getAxisMinimum(), it_axis->getAxisMaximum());
 		}
 	}
 	

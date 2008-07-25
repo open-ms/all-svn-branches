@@ -56,6 +56,7 @@ namespace OpenMS
 			intensity_mode_(IM_NONE),
 			layers_(),
 			mz_to_x_axis_(true),
+			is_flipped_vertically_(false),
 			visible_area_(AreaType::empty),
 			overall_data_range_(DRange<3>::empty),
 			show_grid_(true),
@@ -165,6 +166,16 @@ namespace OpenMS
 		updateScrollbars_();
 		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);
+	}
+	
+	bool SpectrumCanvas::isFlippedVertically() const
+	{
+		return is_flipped_vertically_;
+	}
+	
+	void SpectrumCanvas::setFlippedVertically(bool is_flipped_vertically)
+	{
+		is_flipped_vertically_ = is_flipped_vertically;
 	}
 	
 	void SpectrumCanvas::changeVisibleArea_(const AreaType& new_area, bool repaint, bool add_to_stack)
@@ -346,7 +357,15 @@ namespace OpenMS
 			for (std::vector<double>::const_iterator it = spectrum_widget_->yAxis()->gridLines()[j].begin(); it != spectrum_widget_->yAxis()->gridLines()[j].end(); it++) 
 			{
 				y = static_cast<int>(Math::intervalTransformation(*it, spectrum_widget_->yAxis()->getAxisMinimum(), spectrum_widget_->yAxis()->getAxisMaximum(), yl, yh));
-				painter.drawLine(xl, y, xh, y);
+				
+				if (!isFlippedVertically())
+				{
+					painter.drawLine(xl, y, xh, y);
+				}
+				else // needed for mirrored canvas, makes a slight difference
+				{
+					painter.drawLine(xl, yl-y, xh, yl-y);
+				}
 			}
 		}
 		

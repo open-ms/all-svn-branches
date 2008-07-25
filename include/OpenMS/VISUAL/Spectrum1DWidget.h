@@ -67,7 +67,19 @@ namespace OpenMS
 		{
 			return static_cast<Spectrum1DCanvas*>(canvas_);
 		}
-	
+		
+		/// Returns a pointer to the second (vertically flipped) canvas
+		inline Spectrum1DCanvas* flippedCanvas()
+		{
+			return flipped_canvas_;
+		}
+		
+		/// Sets the second (vertically flipped) canvas
+		void setFlippedCanvas(Spectrum1DCanvas* flipped_canvas);
+		
+		/// Removes the second canvas
+		void removeFlippedCanvas();
+		
 	signals:
 		/// Is emitted whenever the visible area changes.		
 		void visibleAreaChanged(double, double); 
@@ -77,12 +89,26 @@ namespace OpenMS
     virtual void showGoToDialog();
 
 	protected:
+		
 		// Docu in base class
 		virtual Math::Histogram<UInt, Real> createIntensityDistribution_() const;
 		// Docu in base class
 		virtual Math::Histogram<UInt, Real> createMetaDistribution_(const String& name) const;
 		// Docu in base class
 		virtual void recalculateAxes_();
+		
+		/// The second (vertically flipped) canvas
+		Spectrum1DCanvas* flipped_canvas_;
+		/// The axis widget of the second canvas
+		AxisWidget* flipped_y_axis_;
+		/// Indicates whether this widget currently shows an additional (vertically flipped) canvas
+		bool has_second_canvas_;
+		
+		/// Returns whether this widget has a second (vertically flipped) canvas
+		bool hasSecondCanvas();
+		/// Sets whether this widget has a second (vertically flipped) canvas
+		void setHasSecondCanvas(bool has_second_canvas);
+	
 	};
 } // namespace OpenMS
 

@@ -116,16 +116,23 @@ namespace OpenMS
 			}
 			else if (action_mode_ == AM_MEASURE)
 			{
-				if (selected_peak_.isValid())
+				if (isMzToXAxis())
 				{
-					measurement_start_ = selected_peak_;
-					const ExperimentType::PeakType& peak = measurement_start_.getPeak(getCurrentLayer().peaks);
-					dataToWidget_(peak, measurement_start_point_);
-					measurement_start_point_.setY(last_mouse_pos_.y());
+					if (selected_peak_.isValid())
+					{
+						measurement_start_ = selected_peak_;
+						const ExperimentType::PeakType& peak = measurement_start_.getPeak(getCurrentLayer().peaks);
+						dataToWidget_(peak, measurement_start_point_);
+						measurement_start_point_.setY(last_mouse_pos_.y());
+					}
+					else
+					{
+						measurement_start_.clear();
+					}
 				}
 				else
 				{
-					measurement_start_.clear();
+					QMessageBox::information(this,"Not supported","Measuring is not yet supported for inverted spectra.");
 				}
 			}
 			/* if ctrl is pressed (AM_ZOOM), allow selection / deselection of multiple annotation items.
@@ -385,18 +392,13 @@ namespace OpenMS
 	
 		SpectrumIteratorType nearest_it = left_it;
 		
+		// select source interval start and end depending on diagram orientation
 		QPoint tmp;
 		SpectrumCanvas::dataToWidget_(0, overall_data_range_.minY(),tmp);
 		double dest_interval_start = tmp.y();
 		SpectrumCanvas::dataToWidget_(0, overall_data_range_.maxY(),tmp);
 		double dest_interval_end = tmp.y();
-		//double dest_interval_start, dest_interval_end;
-		// select source interval start and end depending on diagram orientation
-	
-		// select destination interval start and end
-		dest_interval_start = height();
-		dest_interval_end = 0;
-	
+		
 		int nearest_intensity = static_cast<int>(intervalTransformation(nearest_it->getIntensity(), visible_area_.minY(),
 		                                                                 visible_area_.maxY(), dest_interval_start, dest_interval_end));
 		int current_intensity;
@@ -702,7 +704,9 @@ namespace OpenMS
 				percentage_factor_ = overall_data_range_.max()[1]/getCurrentLayer().peaks[0].getMaxInt();
 			}
 			
-			dataToWidget_(sel, begin);					
+			dataToWidget_(sel, begin);
+			QPoint top_end;
+			SpectrumCanvas::dataToWidget_(sel.getMZ(), getVisibleArea().maxY(), top_end);					
 			
 			// paint the crosshair only for currently selected peaks
 			if (peak == measurement_start_ || peak == selected_peak_)
@@ -719,7 +723,7 @@ namespace OpenMS
 				pen.setDashPattern(dashes);
 				pen.setColor("red");
 				painter.setPen(pen);
-				painter.drawLine(begin.x(), begin.y(), begin.x(), 0);
+				painter.drawLine(begin.x(), begin.y(), top_end.x(), top_end.y());
 			}
 		}
 	}

@@ -32,6 +32,7 @@
 #include <OpenMS/VISUAL/DIALOGS/DataFilterDialog.h>
 #include <OpenMS/VISUAL/DIALOGS/TOPPViewOpenDialog.h>
 #include <OpenMS/VISUAL/DIALOGS/DBOpenDialog.h>
+#include <OpenMS/VISUAL/DIALOGS/TheoreticalSpectrumGenerationDialog.h>
 #include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum2DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum3DCanvas.h>
@@ -57,6 +58,8 @@
 #include <OpenMS/VISUAL/ColorSelector.h>
 #include <OpenMS/VISUAL/MultiGradientSelector.h>
 #include <OpenMS/CONCEPT/VersionInfo.h>
+#include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
 
 //Qt
 #include <QtGui/QToolBar>
@@ -191,6 +194,7 @@ namespace OpenMS
     tools->addAction("Rerun TOPP tool", this, SLOT(rerunTOPPTool()),Qt::Key_F4);
     tools->addSeparator();
     tools->addAction("&Annotate with identifiction", this, SLOT(annotateWithID()), Qt::CTRL+Qt::Key_I);
+    tools->addAction("Generate theoretical spectrum", this, SLOT(showSpectrumGenerationDialog()));
 
     //Layer menu
     QMenu* layer = new QMenu("&Layer",this);
@@ -1085,6 +1089,11 @@ namespace OpenMS
     if (w)
     {
     	w->canvas()->setDrawMode((OpenMS::Spectrum1DCanvas::DrawModes)index);
+    	
+    	if (w->hasSecondCanvas())
+    	{
+    		w->flippedCanvas()->setDrawMode((OpenMS::Spectrum1DCanvas::DrawModes)index);
+    	}
   	}
   }
 
@@ -2016,6 +2025,57 @@ namespace OpenMS
 			else if (layer.type==LayerData::DT_FEATURE)
 			{
 				IDFeatureMapper().annotate(const_cast<LayerData&>(layer).features,identifications,protein_identifications);
+			}
+		}
+	}
+
+	void TOPPViewBase::showSpectrumGenerationDialog()
+	{
+		TheoreticalSpectrumGenerationDialog spec_gen_dialog;
+		if (spec_gen_dialog.exec())
+		{
+			Spectrum1DWidget* active_1d_window = active1DWindow_();
+			
+			if (active_1d_window)
+			{
+				if (active_1d_window->hasSecondCanvas())
+				{
+					active_1d_window->removeFlippedCanvas();
+				}
+				
+				String seq_string(spec_gen_dialog.line_edit->text());
+				AASequence aa_sequence(seq_string);
+				
+				Int charge = spec_gen_dialog.spin_box->value();
+				
+				if (aa_sequence.isValid())
+				{
+					RichPeakSpectrum rich_spec;
+					TheoreticalSpectrumGenerator generator;
+					generator.getSpectrum(rich_spec, aa_sequence, charge);
+					// this is ugly!!
+					PeakSpectrum new_spec;
+					for (RichPeakSpectrum::Iterator it = rich_spec.begin(); it != rich_spec.end(); ++it)
+					{
+						new_spec.push_back(static_cast<Peak1D>(*it));
+						std::cout << "MZ: " << it->getMZ() << ", intensity: " << it->getIntensity() << std::endl;
+					}
+					//
+					PeakMap new_exp;
+					new_exp.push_back(new_spec);
+					Spectrum1DCanvas* new_canvas = new Spectrum1DCanvas(Param(), 0);
+					String filename("Theoretical spectrum (" + seq_string + ")");
+					new_canvas->addLayer(new_exp, filename);
+					active_1d_window->setFlippedCanvas(new_canvas);
+				}
+				else
+				{
+					// say something went wrong
+				}
+			}
+			else
+			{
+				// open as new window
 			}
 		}
 	}

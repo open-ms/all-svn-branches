@@ -77,6 +77,12 @@ namespace OpenMS
 		/// Sets the second (vertically flipped) canvas
 		void setFlippedCanvas(Spectrum1DCanvas* flipped_canvas);
 		
+		/// Returns whether this widget has a second (vertically flipped) canvas
+		bool hasSecondCanvas();
+		
+		/// Sets whether this widget has a second (vertically flipped) canvas
+		void setHasSecondCanvas(bool has_second_canvas);
+		
 		/// Removes the second canvas
 		void removeFlippedCanvas();
 		
@@ -103,11 +109,6 @@ namespace OpenMS
 		AxisWidget* flipped_y_axis_;
 		/// Indicates whether this widget currently shows an additional (vertically flipped) canvas
 		bool has_second_canvas_;
-		
-		/// Returns whether this widget has a second (vertically flipped) canvas
-		bool hasSecondCanvas();
-		/// Sets whether this widget has a second (vertically flipped) canvas
-		void setHasSecondCanvas(bool has_second_canvas);
 	
 	};
 } // namespace OpenMS

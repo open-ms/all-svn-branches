@@ -74,8 +74,9 @@ namespace OpenMS
 		defaults_.setValue("ext_min_intensity",15000.0f,"Min intensity for points during reshaping of feature region");
 		defaults_.setValue("feature_intensity_sum",1,"Determines what is reported as feature intensity.\n1: the sum of peak intensities;\n0: the maximum intensity of all peaks");
 		
-		
-		defaults_.setValue("min_num_peaks:final",5,"Minimum number of peaks left after cutoff. If smaller, feature will be discarded.");
+		defaults_.setValue("min_num_scans_final",3,"Minimum number of peaks after model fit.");
+				
+		defaults_.setValue("min_num_peaks:final",5,"Minimum number of peaks after cutoff. If smaller, feature will be discarded.");
 		defaults_.setValue("min_num_peaks:extended",10,"Minimum number of peaks after extension. If smaller, feature will be discarded.");
 		defaults_.setDescription("min_num_peaks","Required number of peaks for a feature.");
 		
@@ -86,7 +87,7 @@ namespace OpenMS
 		defaults_.setValue("rt:deltaRelError",0.0001,"Relative error used by the Levenberg-Marquardt algorithms.");
 				
 		defaults_.setValue("mz:interpolation_step",0.03f,"Interpolation step size for m/z.");
-		defaults_.setValue("mz:sampling_step",3.0f,"Sampling step size for m/z (for resampling of spectra)");
+		defaults_.setValue("mz:sampling_step",1.0f,"Sampling step size for m/z (for resampling of spectra)");
 		defaults_.setValue("mz:model_type:first",1,"Numeric id of first m/z model fitted (usually indicating the charge state).");
 		defaults_.setValue("mz:model_type:last",4,"Numeric id of last m/z model fitted (usually indicating the charge state).");
 		defaults_.setDescription("mz","Model settings in m/z dimension.");
@@ -95,10 +96,10 @@ namespace OpenMS
 		defaults_.setValue("quality:minimum",0.65f,"Minimum quality of fit, features below this threshold are discarded.");
 		defaults_.setDescription("quality","Fitting quality settings.");
 		
-		defaults_.setValue("isotope_model:stdev:first",0.04f,"First standard deviation to be considered for isotope model.");
-		defaults_.setValue("isotope_model:stdev:last",0.12f,"Last standard deviation to be considered for isotope model.");
-		defaults_.setValue("isotope_model:stdev:step",0.04f,"Step size for standard deviations considered for isotope model.");
-		defaults_.setDescription("isotope_model:stdev","Instrument resolution settings for m/z dimension.");
+		defaults_.setValue("isotope_model:fwhm:first",0.04f,"First standard deviation to be considered for isotope model.");
+		defaults_.setValue("isotope_model:fwhm:last",0.12f,"Last standard deviation to be considered for isotope model.");
+		defaults_.setValue("isotope_model:fwhm:step",0.04f,"Step size for standard deviations considered for isotope model.");
+		defaults_.setDescription("isotope_model:fwhm","Instrument resolution settings for m/z dimension.");
 		
 		defaults_.setValue("isotope_model:averagines:C",0.0443f,"Number of C atoms per Dalton of the mass.");
 		defaults_.setValue("isotope_model:averagines:H",0.007f,"Number of H atoms per Dalton of the mass.");
@@ -150,9 +151,10 @@ namespace OpenMS
 		interpolation_step_mz_ = param_.getValue("mz:interpolation_step");
 		interpolation_step_rt_ = param_.getValue("rt:interpolation_step");
 		
-		iso_stdev_first_        = param_.getValue("isotope_model:stdev:first");
-		iso_stdev_last_        = param_.getValue("isotope_model:stdev:last");
-		iso_stdev_stepsize_ = param_.getValue("isotope_model:stdev:step");
+		double c = 2.35482;		// user sets stdev in terms of fwhm
+		iso_stdev_first_        = ((double) param_.getValue("isotope_model:fwhm:first"))/c;
+		iso_stdev_last_        = ((double) param_.getValue("isotope_model:fwhm:last"))/c;
+		iso_stdev_stepsize_ = ((double) param_.getValue("isotope_model:fwhm:step"))/c;
 		
 		first_mz_model_ = (Int) param_.getValue("mz:model_type:first");
 		last_mz_model_ = (Int) param_.getValue("mz:model_type:last");
@@ -239,11 +241,10 @@ namespace OpenMS
 		}
 		
 		double spl_step = param_.getValue("mz:sampling_step");
-		CoordinateType sampling_size_mz = (max_[MZ] - min_[MZ]) * spl_step;
-				
-// 		cout << "sampling_size_mz " <<  sampling_size_mz << endl;
-// 		cout << "max_[MZ] " << max_[MZ] << " min_[MZ] " << min_[MZ] << endl;
-// 		cout << "min_mz_distance " << min_mz_distance << endl;
+		CoordinateType sampling_size_mz = (max_[MZ] - min_[MZ]) / spl_step;
+		cout << "sampling_size_mz " <<  sampling_size_mz << endl;
+		cout << "max_[MZ] " << max_[MZ] << " min_[MZ] " << min_[MZ] << endl;
+		cout << "min_mz_distance " << min_mz_distance << endl;
 		
 		mz_lin_int_.getData().resize((UInt) sampling_size_mz);	
 		mz_lin_int_.setMapping( 0, min_[MZ] , sampling_size_mz, max_[MZ]);
@@ -301,7 +302,7 @@ namespace OpenMS
 			delete final;
 		}
 		
-		// Cutoff low intensities wrt. to averagine model and add points with high intensity below the model
+		// Cutoff low intensities wrt. to averagine model and add points with high intensity given the model
 		IndexSet model_set;
 		reshapeFeatureRegion_(set, model_set);
 		
@@ -313,7 +314,7 @@ namespace OpenMS
 		{				
 			delete final;
 			throw UnableToFit(__FILE__, __LINE__,__PRETTY_FUNCTION__,
-																	"UnableToFit-FinalSet",
+																	"UnableToFit-FinalSet Peaks",
 												          String("Skipping feature, IndexSet size after cutoff too small: ") + model_set.size() );
 		}
 		
@@ -323,11 +324,11 @@ namespace OpenMS
 			rts.insert( traits_->getPeakRt(*it));
 		}
 		
-		if (rts.size() <= 3)
+		if (rts.size() <= (UInt)(param_.getValue("min_num_scans_final")))
 		{
-				cout << "NOT ENOUGH SCANS !! " << endl;
+				//cout << "NOT ENOUGH SCANS !! " << endl;
 				throw UnableToFit(__FILE__, __LINE__,__PRETTY_FUNCTION__,
-																	"UnableToFit-FinalSet",
+																	"UnableToFit-FinalSet Scans",
 												          String("Skipping feature, Not enough scans after cutoff: ") + rts.size() );
 		}
 		
@@ -683,7 +684,7 @@ namespace OpenMS
 		// new model
 		IsotopeModel iso_model;
 		Param iso_param = param_.copy("isotope_model:",true);
-		iso_param.remove("stdev");
+		iso_param.remove("fwhm");
 		iso_model.setParameters(iso_param);
 		iso_model.setInterpolationStep(interpolation_step_mz_);
 			
@@ -737,7 +738,7 @@ namespace OpenMS
 		}		
 		mz_model_ = IsotopeModel();
 		Param p = param_.copy("isotope_model:",true);
-		p.remove("stdev");
+		p.remove("fwhm");
 		mz_model_.setParameters(p);
 		mz_model_.setInterpolationStep(interpolation_step_mz_);
 			
@@ -761,7 +762,9 @@ namespace OpenMS
 //  			cout << "mz : " << mz_model_.getIntensity( traits_->getPeakMz(*it) ) << endl;
 // 			cout << "rt : " << rt_model_.getIntensity( traits_->getPeakRt(*it) ) << endl;
 // 			cout << "threshold : " <<  IntensityType(param_.getValue("intensity_cutoff_factor") )<< endl;
-			
+		
+			traits_->getPeakFlag(*it) = FeaFiTraits::USED;			
+
 			if ( mz_model_.getIntensity( traits_->getPeakMz(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor"))
 					 && rt_model_.getIntensity( traits_->getPeakRt(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor")))
 			{
@@ -769,10 +772,10 @@ namespace OpenMS
 					result.insert(*it);
 					
 					// check neighbouring points
-					moveMzUp_(*it,queue);
-					moveMzDown_(*it,queue);
-					moveRtUp_(*it,queue);
-					moveRtDown_(*it,queue);
+// 					moveMzUp_(*it,queue);
+// 					moveMzDown_(*it,queue);
+// 					moveRtUp_(*it,queue);
+// 					moveRtDown_(*it,queue);
  			}
 			else		// free dismissed peak by setting the UNUSED flag
 			{
@@ -1069,7 +1072,7 @@ namespace OpenMS
 		// gsl always excepts N>=p or default gsl error handler invoked, cause Jacobian be rectangular M x N with M>=N	
 		if (n<p)
 		{
-			throw UnableToFit(__FILE__, __LINE__,__PRETTY_FUNCTION__,"UnableToFit-FinalSet","Skipping feature, gsl always expects N>=p");
+			throw UnableToFit(__FILE__, __LINE__,__PRETTY_FUNCTION__,"UnableToFit-FinalSet GSL","Skipping feature, gsl always expects N>=p");
  		}
 		
 		gsl_matrix *covar = gsl_matrix_alloc(p,p);

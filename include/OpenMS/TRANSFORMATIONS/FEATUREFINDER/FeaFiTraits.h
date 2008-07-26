@@ -108,14 +108,15 @@ namespace OpenMS
 				
 				SignalToNoiseEstimatorMeanIterative< > sn_estimator;
 				
-				UInt sc=distance(end,begin);
-				startProgress(0, sc, "reading data");
-								
+// 				UInt sc=distance(end,begin);
+// 				startProgress(0, sc, "reading data");
+				
+				UInt i=1;				
 				for (SpectrumIteratorType it = begin; it != end; ++it)
 				{
-					//std::cout << "Reading scan " << sc++ << std::endl;
+					std::cout << "Reading scan " << i++ << std::endl;
 					
-					setProgress(distance(it,begin));
+					//setProgress(distance(it,begin));
 					
 					// remove empty scans and tandem spectra
 					if (it->getMSLevel() == 1 && it->size() > 0) 

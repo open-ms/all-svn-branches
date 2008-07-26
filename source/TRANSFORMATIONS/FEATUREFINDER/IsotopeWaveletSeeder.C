@@ -395,10 +395,10 @@ namespace OpenMS
 					// - we are at a local max in the signal
 					// - the last pattern (of the same charge) is already behind us				
 					if ( candidates[c][i].getIntensity() > cwt_min_intensity_ && 
-							 i > last_pattern[c] ) /*&& 
-							(candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) > 4.0*/                              
-							/*(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
-						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0) )		*/				  	  
+							 i > last_pattern[c] && 
+							candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ()  > 1.0) // &&                          
+						/*	(scan[i-1].getIntensity() - scan[i].getIntensity() < 0.0) && 
+						  (scan[i+1].getIntensity() - scan[i].getIntensity() < 0.0) )	*/					  	  
 					{				
 							//cout << "Hit at " << 	candidates[c][i].getMZ() << endl;
 							//cout << "Distance to last pattern: " << ( candidates[c][i].getMZ() - candidates[c][ last_pattern[c] ].getMZ() ) << endl;
@@ -449,38 +449,38 @@ namespace OpenMS
 		return scmzvec;
 	}
 
-	UInt IsotopeWaveletSeeder::findNextMax_(const DPeakArray<PeakType >& cwt, const UInt index)
+	UInt IsotopeWaveletSeeder::findNextMax_(const DPeakArray<PeakType >& scan, const UInt index)
 	{
 
 		UInt max_index = index;
-		IntensityType max_intensity = cwt[index].getIntensity();
+		IntensityType max_intensity = scan[index].getIntensity();
 
-		CoordinateType first_mass =  cwt[index].getMZ();
+		CoordinateType first_mass =  scan[index].getMZ();
 		CoordinateType mass_diff  = 0.0;
 
 		// check to the left
 		UInt i = index;
-		while (mass_diff < 1.5 && i >= 1)
+		while (mass_diff < 0.2 && i >= 1)
 		{
-			if (cwt[i].getIntensity() > 	max_intensity)
+			if (scan[i].getIntensity() > 	max_intensity)
 			{
-				max_intensity = cwt[i].getIntensity();
+				max_intensity = scan[i].getIntensity();
 				max_index     = i;
 			}
-			mass_diff = (first_mass - cwt[i].getMZ());
+			mass_diff = (first_mass - scan[i].getMZ());
 			--i;
 		}
 
 		// check to the right
 		i = index;
-		while (mass_diff < 1.5 && i<cwt.size())
+		while (mass_diff < 0.2 && i<scan.size())
 		{
-			if (cwt[i].getIntensity() > 	max_intensity)
+			if (scan[i].getIntensity() > 	max_intensity)
 			{
-				max_intensity = cwt[i].getIntensity();
+				max_intensity = scan[i].getIntensity();
 				max_index     = i;
 			}
-			mass_diff = (cwt[i].getMZ() - first_mass);
+			mass_diff = (scan[i].getMZ() - first_mass);
 			++i;
 		}
     

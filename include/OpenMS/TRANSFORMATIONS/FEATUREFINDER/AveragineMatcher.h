@@ -261,9 +261,7 @@ namespace OpenMS
 		QualityType fit_mz_(ChargedIndexSet set, UInt samplingsize, MzFitting charge,Coordinate isotope_stdev);
 
 		QualityType fit_(const ChargedIndexSet& set, MzFitting mz_fit, RtFitting rt_fit, Coordinate isotope_stdev, UInt samplingsize);
-		
-		//QualityType compute_mz_corr_(IsotopeModel& iso_model);
-		
+			
 		CoordinateType localSearchForMonoMz_(const CoordinateType mz_guess, const UInt& max_peak_scan, const IndexSet& model_set);
 
 		BaseQuality* quality_;

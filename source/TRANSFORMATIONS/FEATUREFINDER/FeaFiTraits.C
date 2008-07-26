@@ -351,7 +351,7 @@ namespace OpenMS
     << "Correlation:\n\tminimum: " << corr_min << "\n\tmean: " << corr_mean/size
     << "\n\tmaximum: " << corr_max << endl;
 
-    cout << "Exceptions:\n";
+    cout << "Exceptions (" <<  exception.size() << "):\n";
     for (map<String,UInt>::const_iterator it=exception.begin(); it!=exception.end(); ++it)
     {
       cout << "\t" << it->first << ": " << it->second*100/no_exceptions << "% (" << it->second << ")\n";

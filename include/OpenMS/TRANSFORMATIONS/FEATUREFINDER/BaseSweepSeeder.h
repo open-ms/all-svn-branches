@@ -98,8 +98,8 @@ namespace OpenMS
     		IsotopeClusterScoredCharge()
       		:	IsotopeCluster(),
 						scored_charges_(),
-						first_scan_(),
-						last_scan_()
+						first_scan_()//,
+						//last_scan_()
 				{	
 				}
 				
@@ -108,7 +108,7 @@ namespace OpenMS
 				/// first scan
 				UInt first_scan_;
 				/// last scan
-				UInt last_scan_;
+				//UInt last_scan_;
 			};		
 
 			/// LC-MS map
@@ -117,13 +117,24 @@ namespace OpenMS
 			typedef MapType::SpectrumType SpectrumType;
 			/// a peak
 			typedef	 MapType::PeakType PeakType;
+			/// a table entry
+			typedef  std::pair< CoordinateType, IsotopeClusterScoredCharge> TableEntry;
 			/// hash table mapping m/z values to groups of (isotopic) peaks
-			typedef std::multimap<CoordinateType, IsotopeClusterScoredCharge> TableType;	
+			typedef std::vector< TableEntry > TableType;	
 			/// Iterator in hash table
 			typedef TableType::iterator TableIteratorType;
 			/// Const iterator in hash table
 			typedef TableType::const_iterator TableConstIteratorType;
-									
+						
+			struct TableEntryComparator
+			: public std::binary_function <TableEntry, TableEntry, bool>
+			{
+				inline bool operator () (const TableEntry& a, const TableEntry& b) const
+				{
+					if ( int(a.first) == int(b.first)) return (a.second.first_scan_ < b.second.first_scan_);
+					return (int(a.first) < int(b.first));
+				}
+			};
 			
 		   /// default constructor 
 	    BaseSweepSeeder();
@@ -172,51 +183,57 @@ namespace OpenMS
 			void voteForCharge_();
 			
 			/// Finds the neighbour of the peak denoted by @p current_mz in the previous scan and returns the mass distance
-	    TableConstIteratorType searchClosestCluster_(const CoordinateType current_mz)
-	    {
-	      // perform binary search to find the closest peak cluster in m/z
-	      // 	lower_bound finds the first element whose key is not less than current_mz.first
-	      TableConstIteratorType iter = iso_map_.lower_bound( current_mz );
-	
-	      // the peak found by lower_bound does not have to be the closest one, therefore we have
-	      // to check both neighbours
-	      if ( iter == iso_map_.end() ) // we are at the end and have only one choice
-	      {
-	      	--iter;
-	      }
-        // if the found peak is at the beginning of the spectrum,
-        // there is not much we can do.
-        else if ( iter != iso_map_.begin() )
-        {
-					// check which neighbour (left or right) is closer
-          if ( (iter->first - current_mz) < (current_mz - (--iter)->first) )
-          {
-          	++iter;    // peak to the right is closer
-          }
-	      }
-				return iter;
-	    }
-			
+// 	    TableConstIteratorType searchClosestCluster_(const CoordinateType current_mz)
+// 	    {
+// 	      // perform binary search to find the closest peak cluster in m/z
+// 	      // 	lower_bound finds the first element whose key is not less than current_mz.first
+// 	      TableConstIteratorType iter = iso_map_.lower_bound( current_mz );
+// 	
+// 	      // the peak found by lower_bound does not have to be the closest one, therefore we have
+// 	      // to check both neighbours
+// 	      if ( iter == iso_map_.end() ) // we are at the end and have only one choice
+// 	      {
+// 	      	--iter;
+// 	      }
+//         // if the found peak is at the beginning of the spectrum,
+//         // there is not much we can do.
+//         else if ( iter != iso_map_.begin() )
+//         {
+// 					// check which neighbour (left or right) is closer
+//           if ( (iter->first - current_mz) < (current_mz - (--iter)->first) )
+//           {
+//           	++iter;    // peak to the right is closer
+//           }
+// 	      }
+// 				return iter;
+// 	    }
+// 			
 			/// check for cluster in previous scans
-			TableIteratorType checkInPreviousScans_(const ScoredMZType&,  const UInt);
+			//TableIteratorType checkInPreviousScans_(const ScoredMZType&,  const UInt);
 			
 			/// check for matching cluster. called when there are several point cluster with similar masses.
-			bool checkForMatchingCluster_(const std::pair<TableIteratorType, TableIteratorType>&, const UInt, TableIteratorType&, CoordinateType curr_mz);
+			//bool checkForMatchingCluster_(const std::pair<TableIteratorType, TableIteratorType>&, const UInt, TableIteratorType&, CoordinateType curr_mz);
 			
 			/// computes the median scan number for a hash entry
-			void computeBorders_(TableIteratorType& entry);
+			//void computeBorders_(TableIteratorType& entry);
 			
 			/// filters sweepline hash for overlapping point cluster with the same charge
-			void filterForOverlaps_();
+			//void filterForOverlaps_();
 			
 			/// filters sweepline hash for tiny (and probably insignificant) regions
 			void filterForSize_();
+			
+			/// find isotopeCluster in neighbouring scans
+			void findNeighbours_();
+			
+			/// merge isotope cluster in adjacent scans
+			void mergeIsotopeCluster_(TableIteratorType& it1, const TableIteratorType& it2);
 			
 			/// filters sweepline hash for regions with low p-value
 			//void filterForSignificance_();
 			
 			/// Deletes the hash entries in @p entries.
-			void deleteHashEntries_(std::vector<TableIteratorType>& entries);
+			void deleteHashEntries_(std::vector<bool>& entries);
 							
 			/// Maps m/z to sets of peaks 
 		  TableType iso_map_;
@@ -238,12 +255,9 @@ namespace OpenMS
 			
 			/// Rt tolerance for sweepline		
 			UInt rt_tolerance_cluster_;
-			
-			/// Max. distance in rt for merged peak cluster
-			//UInt max_rt_dist_merging_;
-			
+		
 			/// Max. distance in mz for merged peak cluster
-			//CoordinateType max_mz_dist_merging_;
+			CoordinateType max_mz_dist_merging_;
 		
   };
 }

@@ -70,19 +70,24 @@ namespace OpenMS
 		flipped_y_axis_->setMinimumWidth(50);
 		grid_->addWidget(flipped_y_axis_, 1, 1);
 		
-		connect(flipped_canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), canvas_, SLOT(setVisibleArea(DRange<2>)));
-		connect(canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), flipped_canvas_, SLOT(setVisibleArea(DRange<2>)));
+		connect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), canvas(), SLOT(setVisibleArea(DRange<2>)));
+		connect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), flippedCanvas(), SLOT(setVisibleArea(DRange<2>)));
+		connect(flippedCanvas(), SIGNAL(zoomLevelAdded()), canvas(), SLOT(zoomAdd()));
+		connect(canvas(), SIGNAL(zoomLevelAdded()), flippedCanvas(), SLOT(zoomAdd()));
+		connect(flippedCanvas(), SIGNAL(zoomedForward()), canvas(), SLOT(zoomForward()));
+		connect(canvas(), SIGNAL(zoomedForward()), flippedCanvas(), SLOT(zoomForward()));
+		connect(flippedCanvas(), SIGNAL(zoomedBack()), canvas(), SLOT(zoomBack()));
+		connect(canvas(), SIGNAL(zoomedBack()), flippedCanvas(), SLOT(zoomBack()));
 		
-		connect(flipped_canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), this, SLOT(updateAxes()));
-		connect(flipped_canvas_, SIGNAL(recalculateAxes()), this, SLOT(updateAxes()));
-		connect(flipped_canvas_, SIGNAL(changeLegendVisibility()), this, SLOT(changeLegendVisibility()));
-		connect(flipped_canvas_, SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
-		connect(flipped_canvas_, SIGNAL(updateVScrollbar(float,float,float,float)), this, SLOT(updateVScrollbar(float,float,float,float)));
-		connect(x_scrollbar_, SIGNAL(valueChanged(int)), flipped_canvas_, SLOT(horizontalScrollBarChange(int)));
-		connect(y_scrollbar_, SIGNAL(valueChanged(int)), flipped_canvas_, SLOT(verticalScrollBarChange(int)));
-		connect(flipped_canvas_, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
-		connect(flipped_canvas_, SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
-		
+		connect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), this, SLOT(updateAxes()));
+		connect(flippedCanvas(), SIGNAL(recalculateAxes()), this, SLOT(updateAxes()));
+		connect(flippedCanvas(), SIGNAL(changeLegendVisibility()), this, SLOT(changeLegendVisibility()));
+		connect(flippedCanvas(), SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
+		connect(flippedCanvas(), SIGNAL(updateVScrollbar(float,float,float,float)), this, SLOT(updateVScrollbar(float,float,float,float)));
+		connect(x_scrollbar_, SIGNAL(valueChanged(int)), flippedCanvas(), SLOT(horizontalScrollBarChange(int)));
+		connect(y_scrollbar_, SIGNAL(valueChanged(int)), flippedCanvas(), SLOT(verticalScrollBarChange(int)));
+		connect(flippedCanvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
+		connect(flippedCanvas(), SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
 		
 		has_second_canvas_ = true;
 	}
@@ -91,18 +96,24 @@ namespace OpenMS
 	{
 		if (has_second_canvas_)
 		{
-			disconnect(flipped_canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), canvas_, SLOT(setVisibleArea(DRange<2>)));
-			disconnect(canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), flipped_canvas_, SLOT(setVisibleArea(DRange<2>)));
-		
-			disconnect(flipped_canvas_, SIGNAL(visibleAreaChanged(DRange<2>)), this, SLOT(updateAxes()));
-			disconnect(flipped_canvas_, SIGNAL(recalculateAxes()), this, SLOT(updateAxes()));
-			disconnect(flipped_canvas_, SIGNAL(changeLegendVisibility()), this, SLOT(changeLegendVisibility()));
-			disconnect(flipped_canvas_, SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
-			disconnect(flipped_canvas_, SIGNAL(updateVScrollbar(float,float,float,float)), this, SLOT(updateVScrollbar(float,float,float,float)));
-			disconnect(x_scrollbar_, SIGNAL(valueChanged(int)), flipped_canvas_, SLOT(horizontalScrollBarChange(int)));
-			disconnect(y_scrollbar_, SIGNAL(valueChanged(int)), flipped_canvas_, SLOT(verticalScrollBarChange(int)));
-			disconnect(flipped_canvas_, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
-			disconnect(flipped_canvas_, SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
+			disconnect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), canvas(), SLOT(setVisibleArea(DRange<2>)));
+			disconnect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), flippedCanvas(), SLOT(setVisibleArea(DRange<2>)));
+			disconnect(flippedCanvas(), SIGNAL(zoomLevelAdded(DRange<2>)), canvas(), SLOT(zoomAdd(DRange<2>)));
+			disconnect(canvas(), SIGNAL(zoomLevelAdded(DRange<2>)), flippedCanvas(), SLOT(zoomAdd(DRange<2>)));
+			disconnect(flippedCanvas(), SIGNAL(zoomedForward()), canvas(), SLOT(zoomForward()));
+			disconnect(canvas(), SIGNAL(zoomedForward()), flippedCanvas(), SLOT(zoomForward()));
+			disconnect(flippedCanvas(), SIGNAL(zoomedBack()), canvas(), SLOT(zoomBack()));
+			disconnect(canvas(), SIGNAL(zoomedBack()), flippedCanvas(), SLOT(zoomBack()));
+			
+			disconnect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), this, SLOT(updateAxes()));
+			disconnect(flippedCanvas(), SIGNAL(recalculateAxes()), this, SLOT(updateAxes()));
+			disconnect(flippedCanvas(), SIGNAL(changeLegendVisibility()), this, SLOT(changeLegendVisibility()));
+			disconnect(flippedCanvas(), SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
+			disconnect(flippedCanvas(), SIGNAL(updateVScrollbar(float,float,float,float)), this, SLOT(updateVScrollbar(float,float,float,float)));
+			disconnect(x_scrollbar_, SIGNAL(valueChanged(int)), flippedCanvas(), SLOT(horizontalScrollBarChange(int)));
+			disconnect(y_scrollbar_, SIGNAL(valueChanged(int)), flippedCanvas(), SLOT(verticalScrollBarChange(int)));
+			disconnect(flippedCanvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
+			disconnect(flippedCanvas(), SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
 		
 			grid_->removeWidget(flipped_canvas_);
 			grid_->removeWidget(flipped_y_axis_);
@@ -115,7 +126,38 @@ namespace OpenMS
 			grid_->addWidget(x_axis_, 1, 2);
 			grid_->addWidget(x_scrollbar_, 2, 2);
 			
+			canvas()->setMirrorMode(false);
 			has_second_canvas_ = false;
+		}
+	}
+	
+	void Spectrum1DWidget::calculateUnitedRanges(bool reset_zoom)
+	{
+		if (canvas() != 0 && flippedCanvas() != 0)
+		{
+			DRange<3> new_overall_range = canvas()->getDataRange().united(flippedCanvas()->getDataRange());
+						
+			DRange<3> canvas_range = new_overall_range;
+			//don't change intensity range:
+			canvas_range.setMinY(canvas()->getDataRange().minY());
+			canvas_range.setMaxY(canvas()->getDataRange().maxY());
+			
+			DRange<3> fl_canvas_range = new_overall_range;
+			//don't change intensity range:
+			fl_canvas_range.setMinY(flippedCanvas()->getDataRange().minY());
+			fl_canvas_range.setMaxY(flippedCanvas()->getDataRange().maxY());
+			
+			canvas()->setOverallDataRange(canvas_range);
+			canvas()->setMirrorMode(true);
+			flippedCanvas()->setOverallDataRange(fl_canvas_range);
+			flippedCanvas()->setMirrorMode(true);
+			
+			if (reset_zoom)
+			{
+				canvas()->resetZoom();
+				flippedCanvas()->resetZoom();
+				cout << "hallohallo" << endl;
+			}
 		}
 	}
 	

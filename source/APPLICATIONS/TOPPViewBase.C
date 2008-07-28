@@ -814,6 +814,7 @@ namespace OpenMS
 		else if (as_mirror)
 		{
 			Spectrum1DCanvas* new_canvas = new Spectrum1DCanvas(getSpectrumParameters_(1), open_window);
+			qobject_cast<Spectrum1DWidget*>(open_window)->removeFlippedCanvas();
 			qobject_cast<Spectrum1DWidget*>(open_window)->setFlippedCanvas(new_canvas);
 		}
 		
@@ -827,6 +828,8 @@ namespace OpenMS
     	if (as_mirror)
     	{
     		if (!qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas()->addLayer(peak_map,filename)) return;
+    		// calculate ranges containing the data of both canvasses and set them for both
+    		qobject_cast<Spectrum1DWidget*>(open_window)->calculateUnitedRanges(true);
     	}
     	else
     	{    	
@@ -1071,6 +1074,12 @@ namespace OpenMS
     if (window!=0)
     {
       window->canvas()->resetZoom();
+      
+      Spectrum1DWidget* active_1d_window;
+      if (active_1d_window && active_1d_window->hasSecondCanvas())
+      {
+      	active_1d_window->flippedCanvas()->resetZoom();
+      }
     }
   }
 
@@ -2033,49 +2042,33 @@ namespace OpenMS
 	{
 		TheoreticalSpectrumGenerationDialog spec_gen_dialog;
 		if (spec_gen_dialog.exec())
-		{
-			Spectrum1DWidget* active_1d_window = active1DWindow_();
+		{	
+			String seq_string(spec_gen_dialog.line_edit->text());
+			AASequence aa_sequence(seq_string);
 			
-			if (active_1d_window)
+			Int charge = spec_gen_dialog.spin_box->value();
+			
+			if (aa_sequence.isValid())
 			{
-				if (active_1d_window->hasSecondCanvas())
+				RichPeakSpectrum rich_spec;
+				TheoreticalSpectrumGenerator generator;
+				generator.getSpectrum(rich_spec, aa_sequence, charge);
+				// is this necessary? //
+				PeakSpectrum new_spec;
+				for (RichPeakSpectrum::Iterator it = rich_spec.begin(); it != rich_spec.end(); ++it)
 				{
-					active_1d_window->removeFlippedCanvas();
+					new_spec.push_back(static_cast<Peak1D>(*it));
 				}
+				////////////////////////
+				PeakMap new_exp;
+				new_exp.push_back(new_spec);
 				
-				String seq_string(spec_gen_dialog.line_edit->text());
-				AASequence aa_sequence(seq_string);
-				
-				Int charge = spec_gen_dialog.spin_box->value();
-				
-				if (aa_sequence.isValid())
-				{
-					RichPeakSpectrum rich_spec;
-					TheoreticalSpectrumGenerator generator;
-					generator.getSpectrum(rich_spec, aa_sequence, charge);
-					// this is ugly!!
-					PeakSpectrum new_spec;
-					for (RichPeakSpectrum::Iterator it = rich_spec.begin(); it != rich_spec.end(); ++it)
-					{
-						new_spec.push_back(static_cast<Peak1D>(*it));
-						std::cout << "MZ: " << it->getMZ() << ", intensity: " << it->getIntensity() << std::endl;
-					}
-					//
-					PeakMap new_exp;
-					new_exp.push_back(new_spec);
-					Spectrum1DCanvas* new_canvas = new Spectrum1DCanvas(Param(), 0);
-					String filename("Theoretical spectrum (" + seq_string + ")");
-					new_canvas->addLayer(new_exp, filename);
-					active_1d_window->setFlippedCanvas(new_canvas);
-				}
-				else
-				{
-					// say something went wrong
-				}
+				FeatureMapType dummy;
+				addData_(dummy, new_exp, false, false, true);
 			}
 			else
 			{
-				// open as new window
+				QMessageBox::warning(this, "Error", "The entered peptide sequence is invalid!");
 			}
 		}
 	}

@@ -56,7 +56,8 @@ namespace OpenMS
 		
 	Spectrum1DCanvas::Spectrum1DCanvas(const Param& preferences, QWidget* parent)
 		: SpectrumCanvas(preferences, parent),
-			annotation_manager_(qobject_cast<SpectrumCanvas*>(this))
+			annotation_manager_(qobject_cast<SpectrumCanvas*>(this)),
+			in_mirror_mode_(0)
 	{
     //Paramater handling
     defaults_.setValue("highlighted_peak_color", "#ff0000", "Highlighted peak color.");
@@ -85,7 +86,7 @@ namespace OpenMS
 	}
 	
 	void Spectrum1DCanvas::setVisibleArea(DRange<2> range)
-	{
+	{	
 		changeVisibleArea_(AreaType(range.minX(), visible_area_.minY(), range.maxX(), visible_area_.maxY()));
 	}
 	
@@ -132,12 +133,12 @@ namespace OpenMS
 				}
 				else
 				{
-					QMessageBox::information(this,"Not supported","Measuring is not yet supported for inverted spectra.");
+					QMessageBox::information(this,"Not supported","Measuring is not supported for inverted spectra.");
 				}
 			}
-			/* if ctrl is pressed (AM_ZOOM), allow selection / deselection of multiple annotation items.
+			/* if ctrl is pressed, allow selection / deselection of multiple annotation items.
 				 else,deselect all annotation items before selecting the one under the cursor (if existent). */
-			if (action_mode_ != AM_ZOOM)
+			if (!(e->modifiers() & Qt::ControlModifier))
 			{
 				annotation_manager_.deselectAll(getCurrentLayer());
 			}
@@ -302,7 +303,7 @@ namespace OpenMS
 		}
 		
 		// 'a' pressed && in zoom mode (ctrl pressed) => select all annotation items
-		if (e->key()==Qt::Key_A && action_mode_ == AM_ZOOM)
+		if ((e->modifiers() & Qt::ControlModifier) && (e->key()==Qt::Key_A))
 		{
 			annotation_manager_.selectAll(getCurrentLayer());
 			update_(__PRETTY_FUNCTION__);
@@ -478,6 +479,21 @@ namespace OpenMS
 	Spectrum1DCanvas::DrawModes Spectrum1DCanvas::getDrawMode() const
 	{ 
 		return draw_modes_[current_layer_]; 
+	}
+	
+	void Spectrum1DCanvas::setOverallDataRange(const DRange<3>& overall_range)
+	{
+		overall_data_range_ = overall_range;
+	}
+	
+	void Spectrum1DCanvas::setMirrorMode(bool mode)
+	{
+		in_mirror_mode_ = mode;
+	}
+	
+	bool Spectrum1DCanvas::inMirrorMode()
+	{
+		return in_mirror_mode_;
 	}
 	
 	void Spectrum1DCanvas::paintEvent(QPaintEvent* e)
@@ -730,18 +746,18 @@ namespace OpenMS
 	
 	void Spectrum1DCanvas::changeVisibleArea_(const AreaType& new_area, bool repaint, bool add_to_stack)
 	{
-		//store old zoom state
-		if (add_to_stack)
-		{
-			zoomAdd_(new_area);
-		}
-		
 		if (new_area!=visible_area_)
 		{
 			visible_area_ = new_area;
 			updateScrollbars_();
 			recalculateSnapFactor_();
 			emit visibleAreaChanged(new_area);
+		}
+		
+		//store old zoom state
+		if (add_to_stack)
+		{
+			zoomAdd_(new_area);
 		}
 		
 		if (repaint)
@@ -868,6 +884,31 @@ namespace OpenMS
 	void Spectrum1DCanvas::horizontalScrollBarChange(int value)
 	{
 		changeVisibleArea_(value, value + (visible_area_.max()[0] - visible_area_.min()[0]));
+	}
+	
+	void Spectrum1DCanvas::zoomAdd()
+	{
+		blockSignals(true);
+		zoomAdd_(getVisibleArea());
+		blockSignals(false);
+	}
+	
+	void Spectrum1DCanvas::zoomForward()
+	{
+		blockSignals(true);
+		zoomForward_();
+		update_buffer_ = true;
+		update_(__PRETTY_FUNCTION__);
+		blockSignals(false);
+	}
+	
+	void Spectrum1DCanvas::zoomBack()
+	{
+		blockSignals(true);
+		zoomBack_();
+		update_buffer_ = true;
+		update_(__PRETTY_FUNCTION__);
+		blockSignals(false);
 	}
 	
 	void Spectrum1DCanvas::showCurrentLayerPreferences()
@@ -1074,6 +1115,14 @@ namespace OpenMS
 		}
 		//chage data area
 		changeVisibleArea_(newLo, newHi);
+	}
+	
+	void Spectrum1DCanvas::recalculateRanges_(UInt mz_dim, UInt rt_dim, UInt it_dim)
+	{
+		if (!in_mirror_mode_)
+		{
+			SpectrumCanvas::recalculateRanges_(mz_dim, rt_dim, it_dim);
+		}
 	}
 
 }//Namespace

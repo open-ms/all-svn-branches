@@ -86,6 +86,9 @@ namespace OpenMS
 		/// Removes the second canvas
 		void removeFlippedCanvas();
 		
+		/// Calculates and sets the united ranges for the canvas and the second (vertically flipped) canvas
+		void calculateUnitedRanges(bool reset_zoom = false);
+		
 	signals:
 		/// Is emitted whenever the visible area changes.		
 		void visibleAreaChanged(double, double); 

@@ -85,7 +85,24 @@ namespace OpenMS
 	
 			/// Sets draw mode of the current layer
 			void setDrawMode(DrawModes mode);
-	
+			
+			/**
+				@brief Sets the overall data range
+				
+				This method sets the overall data range. Normally, this is computed by the protected
+				function recalculateRanges_(), but when there are two canvasses which should behave
+				synchronously, the united range of both canvasses has to be computed from outside
+				this class (where both canvasses and their ranges are known). Currently, this
+				is done in Spectrum1DWidget.
+			*/
+			void setOverallDataRange(const DRange<3>& overall_range);
+			
+			/// Sets whether we are currently in mirror mode or not (two 1d canvasses on one widget)
+			void setMirrorMode(bool mode);
+			
+			/// Returns whether we are currently in mirror mode or not (two 1d canvasses on one widget)
+			bool inMirrorMode();
+			
 			// Docu in base class
 			virtual void showCurrentLayerPreferences();
 
@@ -107,6 +124,15 @@ namespace OpenMS
 			void setVisibleArea(DRange<2> range); //Do not change this to AreaType the signal needs QT needs the exact type...
 			// Docu in base class
 			virtual void horizontalScrollBarChange(int value);
+			
+			/// Adds the current visible area to the zoom stack
+			void zoomAdd();
+		
+			/// Calls zoomForward_()
+			void zoomForward();
+		
+			/// Calls zoomBack_()
+			void zoomBack();
 		
 		protected:
 			// Docu in base class
@@ -153,6 +179,8 @@ namespace OpenMS
       QPoint measurement_start_point_;
       /// The annotation manager
       Annotations1DManager annotation_manager_;
+      /// Indicates whether this canvas is currently in mirror mode with another 1d canvas
+      bool in_mirror_mode_;
       
 			/// Find peak next to the given position
 			PeakIndex findPeakAtPosition_(QPoint);
@@ -175,6 +203,18 @@ namespace OpenMS
 			//docu in base class
 			virtual void translateRight_();
 
+		protected slots:
+			
+			/**
+				@brief Overwrites SpectrumCanvas::recalculateRanges_()
+				
+				This method overwrites SpectrumCanvas::recalculateRanges_(), in order
+				to be able to prevent the canvas from recalculating its ranges. This
+				is needed when two 1d canvasses are shown on a single 1d widget
+				(mirror view) and the overall data range has to contain the ranges
+				of both canvasses, which can be set only from outside.
+			*/
+			void recalculateRanges_(UInt mz_dim, UInt rt_dim, UInt it_dim);
 	};
 } // namespace OpenMS
 

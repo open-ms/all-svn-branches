@@ -510,6 +510,16 @@ namespace OpenMS
 		void resetZoom(bool repaint = true);
 		
 		/**
+			@brief Sets the zoom stack to contain only @p new_area
+			
+			Sets the visible area to the value of @p new_area
+			
+			@param new_area The new area to be set
+			@param repaint If @em true a repaint is forced. Otherwise only the new area is set.
+		*/
+		void resetZoom(const DRange<2>& new_area, bool repaint = true);
+		
+		/**
 			@brief Sets the visible area.
 			
 			Sets the visible area to a new value. Note that it does not emit visibleAreaChanged()
@@ -565,7 +575,7 @@ namespace OpenMS
 			@param area The new visible area.
 		*/
 		void visibleAreaChanged(DRange<2> area); //Do not change this to AreaType! QT needs the exact type...
-				
+		
 		/// Emitted when the cursor position changes (for displaying e.g. in status bar)
 		void sendCursorStatus(double mz=-1.0, double intens=-1.0, double rt=-1.0);
 
@@ -586,6 +596,33 @@ namespace OpenMS
 		
 		/// Emitted when the action mode changes
 		void actionModeChange();
+		
+		/**
+			@brief Is emitted when an element is added to the zoom stack.
+			
+			This signal is emitted when an element is added to the zoom stack.
+			It is needed for the synchronization of two 1D canvasses in a 
+			single 1D widget.
+		*/
+		void zoomLevelAdded();
+			
+		/**
+			@brief Is emitted when the zoom stack is browsed forward.
+			
+			This signal is emitted when the zoom stack is browsed forward.
+			It is needed for the synchronization of two 1D canvasses in a 
+			single 1D widget.
+		*/
+		void zoomedForward();
+			
+		/**
+			@brief Is emitted when the zoom stack is browsed backward.
+			
+			This signal is emitted when the zoom stack is browsed backward.
+			It is needed for the synchronization of two 1D canvasses in a 
+			single 1D widget.
+		*/
+		void zoomedBack();
 		
 	protected slots:
 	

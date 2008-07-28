@@ -44,6 +44,8 @@
 #include "../VISUAL/ICONS/cursor_zoom.xpm"
 #include "../VISUAL/ICONS/cursor_move.xpm"
 
+#include <iostream>
+
 using namespace std;
 
 namespace OpenMS
@@ -228,6 +230,7 @@ namespace OpenMS
 			--zoom_pos_;
 			changeVisibleArea_(*zoom_pos_);
 		}
+		emit zoomedBack();
 		//cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 	}
 
@@ -241,6 +244,7 @@ namespace OpenMS
 			++zoom_pos_;
 			changeVisibleArea_(*zoom_pos_);
 		}
+		emit zoomedForward();
 		//cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 	}
 	
@@ -257,6 +261,7 @@ namespace OpenMS
 		zoom_stack_.push_back(area);
 		zoom_pos_ = zoom_stack_.end();
 		--zoom_pos_;
+		emit zoomLevelAdded();
 		//cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 		//cout << " - size after:" << zoom_stack_.size() <<endl;
 	}
@@ -269,10 +274,15 @@ namespace OpenMS
 	
 	void SpectrumCanvas::resetZoom(bool repaint)
 	{
-		zoomClear_();
 		AreaType tmp;
 		tmp.assign(overall_data_range_);
-		changeVisibleArea_(tmp,repaint,true);
+		resetZoom(tmp, repaint);
+	}
+	
+	void SpectrumCanvas::resetZoom(const DRange<2>& new_area, bool repaint)
+	{
+		zoomClear_();
+		changeVisibleArea_(new_area,repaint,true);
 	}
 	
 	void SpectrumCanvas::setVisibleArea(AreaType area)

@@ -39,7 +39,11 @@
         </widget>
        </item>
        <item>
-        <widget class="QSpinBox" name="spin_box" />
+        <widget class="QSpinBox" name="spin_box" >
+         <property name="value" >
+          <number>1</number>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>

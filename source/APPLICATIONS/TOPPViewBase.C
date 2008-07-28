@@ -827,9 +827,15 @@ namespace OpenMS
     {
     	if (as_mirror)
     	{
-    		if (!qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas()->addLayer(peak_map,filename)) return;
+    		if (!qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas()->addLayer(peak_map,filename))
+    		{
+    			return;
+    		}
     		// calculate ranges containing the data of both canvasses and set them for both
     		qobject_cast<Spectrum1DWidget*>(open_window)->calculateUnitedRanges(true);
+    		
+	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
+	      setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
     	}
     	else
     	{    	

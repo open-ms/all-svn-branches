@@ -156,7 +156,6 @@ namespace OpenMS
 			{
 				canvas()->resetZoom();
 				flippedCanvas()->resetZoom();
-				cout << "hallohallo" << endl;
 			}
 		}
 	}

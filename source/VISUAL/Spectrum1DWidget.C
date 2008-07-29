@@ -58,6 +58,9 @@ namespace OpenMS
 		flipped_canvas_ = flipped_canvas;
 		flipped_canvas_->setFlippedVertically(true);
 		flipped_canvas_->setSpectrumWidget(this);
+		// make sure canvasses don't overlap:
+		canvas_->setMinimumHeight(0);
+		flipped_canvas_->setMinimumHeight(0);
 		
 		grid_->removeWidget(x_axis_);
 		grid_->removeWidget(x_scrollbar_);
@@ -98,8 +101,8 @@ namespace OpenMS
 		{
 			disconnect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), canvas(), SLOT(setVisibleArea(DRange<2>)));
 			disconnect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), flippedCanvas(), SLOT(setVisibleArea(DRange<2>)));
-			disconnect(flippedCanvas(), SIGNAL(zoomLevelAdded(DRange<2>)), canvas(), SLOT(zoomAdd(DRange<2>)));
-			disconnect(canvas(), SIGNAL(zoomLevelAdded(DRange<2>)), flippedCanvas(), SLOT(zoomAdd(DRange<2>)));
+			disconnect(flippedCanvas(), SIGNAL(zoomLevelAdded()), canvas(), SLOT(zoomAdd()));
+			disconnect(canvas(), SIGNAL(zoomLevelAdded()), flippedCanvas(), SLOT(zoomAdd()));
 			disconnect(flippedCanvas(), SIGNAL(zoomedForward()), canvas(), SLOT(zoomForward()));
 			disconnect(canvas(), SIGNAL(zoomedForward()), flippedCanvas(), SLOT(zoomForward()));
 			disconnect(flippedCanvas(), SIGNAL(zoomedBack()), canvas(), SLOT(zoomBack()));
@@ -126,6 +129,7 @@ namespace OpenMS
 			grid_->addWidget(x_axis_, 1, 2);
 			grid_->addWidget(x_scrollbar_, 2, 2);
 			
+			canvas()->setMinimumHeight(200);
 			canvas()->setMirrorMode(false);
 			has_second_canvas_ = false;
 		}
@@ -187,26 +191,31 @@ namespace OpenMS
 			it_axis = x_axis_;
 		}
 		
-		// recalculate gridlines
-		mz_axis->setAxisBounds(canvas()->getVisibleArea().minX(), canvas()->getVisibleArea().maxX());
-		switch(canvas()->getIntensityMode())
-		{
-			case SpectrumCanvas::IM_NONE:
-				it_axis->setAxisBounds(canvas()->getVisibleArea().minY(), canvas()->getVisibleArea().maxY());
-				break;
-			case SpectrumCanvas::IM_PERCENTAGE:
-				it_axis->setAxisBounds(canvas()->getVisibleArea().minY() / canvas()->getDataRange().maxY() * 100.0, canvas()->getVisibleArea().maxY() / canvas()->getDataRange().maxY() * 100.0);
-				break;
-			case SpectrumCanvas::IM_SNAP:
-				it_axis->setAxisBounds(canvas()->getVisibleArea().minY()/canvas()->getSnapFactor(), canvas()->getVisibleArea().maxY()/canvas()->getSnapFactor());
-				break;
-			default:
-				throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-		}
+		recalculateAxes_(mz_axis, it_axis, canvas());
 		
 		if (has_second_canvas_)
 		{
-			flipped_y_axis_->setAxisBounds(it_axis->getAxisMinimum(), it_axis->getAxisMaximum());
+			recalculateAxes_(mz_axis, flipped_y_axis_, flippedCanvas());
+		}
+	}
+	
+	void Spectrum1DWidget::recalculateAxes_(AxisWidget* mz_axis, AxisWidget* it_axis, Spectrum1DCanvas* canvas)
+	{
+		// recalculate gridlines
+		mz_axis->setAxisBounds(canvas->getVisibleArea().minX(), canvas->getVisibleArea().maxX());
+		switch(canvas->getIntensityMode())
+		{
+			case SpectrumCanvas::IM_NONE:
+				it_axis->setAxisBounds(canvas->getVisibleArea().minY(), canvas->getVisibleArea().maxY());
+				break;
+			case SpectrumCanvas::IM_PERCENTAGE:
+				it_axis->setAxisBounds(canvas->getVisibleArea().minY() / canvas->getDataRange().maxY() * 100.0, canvas->getVisibleArea().maxY() / canvas->getDataRange().maxY() * 100.0);
+				break;
+			case SpectrumCanvas::IM_SNAP:
+				it_axis->setAxisBounds(canvas->getVisibleArea().minY()/canvas->getSnapFactor(), canvas->getVisibleArea().maxY()/canvas->getSnapFactor());
+				break;
+			default:
+				throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 		}
 	}
 	

@@ -105,6 +105,8 @@ namespace OpenMS
 		virtual Math::Histogram<UInt, Real> createMetaDistribution_(const String& name) const;
 		// Docu in base class
 		virtual void recalculateAxes_();
+		/// Abstraction over a twice used part of recalculateAxes_() (in 1D we possibly have two canvasses)
+		void recalculateAxes_(AxisWidget* mz_axis, AxisWidget* it_axis, Spectrum1DCanvas* canvas);
 		
 		/// The second (vertically flipped) canvas
 		Spectrum1DCanvas* flipped_canvas_;

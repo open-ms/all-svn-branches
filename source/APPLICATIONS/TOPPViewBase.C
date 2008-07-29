@@ -33,6 +33,7 @@
 #include <OpenMS/VISUAL/DIALOGS/TOPPViewOpenDialog.h>
 #include <OpenMS/VISUAL/DIALOGS/DBOpenDialog.h>
 #include <OpenMS/VISUAL/DIALOGS/TheoreticalSpectrumGenerationDialog.h>
+#include <OpenMS/VISUAL/DIALOGS/SpectrumAlignmentDialog.h>
 #include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum2DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum3DCanvas.h>
@@ -60,6 +61,7 @@
 #include <OpenMS/CONCEPT/VersionInfo.h>
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignment.h>
 
 //Qt
 #include <QtGui/QToolBar>
@@ -110,6 +112,7 @@
 #include "../VISUAL/ICONS/Oesterberg.xpm"
 
 #include <algorithm>
+#include <utility>
 
 using namespace std;
 
@@ -195,6 +198,7 @@ namespace OpenMS
     tools->addSeparator();
     tools->addAction("&Annotate with identifiction", this, SLOT(annotateWithID()), Qt::CTRL+Qt::Key_I);
     tools->addAction("Generate theoretical spectrum", this, SLOT(showSpectrumGenerationDialog()));
+    tools->addAction("Align spectra", this, SLOT(showSpectrumAlignmentDialog()));
 
     //Layer menu
     QMenu* layer = new QMenu("&Layer",this);
@@ -1081,7 +1085,7 @@ namespace OpenMS
     {
       window->canvas()->resetZoom();
       
-      Spectrum1DWidget* active_1d_window;
+      Spectrum1DWidget* active_1d_window = active1DWindow_();
       if (active_1d_window && active_1d_window->hasSecondCanvas())
       {
       	active_1d_window->flippedCanvas()->resetZoom();
@@ -2078,7 +2082,43 @@ namespace OpenMS
 			}
 		}
 	}
+	
+	void TOPPViewBase::showSpectrumAlignmentDialog()
+	{
+		SpectrumAlignmentDialog spec_align_dialog;
+		if (spec_align_dialog.exec())
+		{
+			Spectrum1DWidget* active_1d_window = active1DWindow_();
+			// only possible in mirror mode:
+			if (active_1d_window && active_1d_window->hasSecondCanvas())
+			{
+				SpectrumAlignment aligner;
+				DoubleReal tolerance = spec_align_dialog.tolerance_spinbox->value();
+				Param param;
+				param.setValue("tolerance", tolerance, "Defines the absolut (in Da) or relative (in ppm) tolerance", false);
+				aligner.setParameters(param);
+				
+				ExperimentType map_1, map_2;
+				active_1d_window->canvas()->getVisiblePeakData(map_1);
+				active_1d_window->flippedCanvas()->getVisiblePeakData(map_2);
+				ExperimentType::Iterator spectrum_1_it = map_1.begin();
+				ExperimentType::Iterator spectrum_2_it = map_2.begin();
+				std::vector<std::pair<UInt, UInt> > alignment;
 
+				aligner.getSpectrumAlignment(alignment, *spectrum_1_it, *spectrum_2_it);
+				
+				for (UInt i = 0; i < alignment.size(); ++i)
+				{
+					cout << alignment[i].first << " --- " << alignment[i].second << endl;
+				}
+			}
+			else
+			{
+				QMessageBox::warning(this, "Not supported", "A spectrum alignment can only be performed if the active window is a 1D view and contains two spectrum canvasses (mirror mode).");
+			}
+		}
+	}
+	
 	void TOPPViewBase::showCurrentPeaksAs3D()
 	{
     const LayerData& layer = activeCanvas_()->getCurrentLayer();

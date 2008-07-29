@@ -49,7 +49,8 @@ CPP_SOURCES=\
 	Spectrum3DPrefDialog.C\
 	DataFilterDialog.C\
 	LayerStatisticsDialog.C\
-	TheoreticalSpectrumGenerationDialog.C
+	TheoreticalSpectrumGenerationDialog.C\
+	SpectrumAlignmentDialog.C
 
 MOC_SOURCES=\
 	SaveImageDialog_moc.C\
@@ -65,7 +66,8 @@ MOC_SOURCES=\
 	Spectrum3DPrefDialog_moc.C\
 	DataFilterDialog_moc.C\
 	LayerStatisticsDialog_moc.C\
-	TheoreticalSpectrumGenerationDialog_moc.C
+	TheoreticalSpectrumGenerationDialog_moc.C\
+	SpectrumAlignmentDialog_moc.C
 
 SOURCES		= $(CPP_SOURCES) $(MOC_SOURCES)
 OBJECTS 	= $(SOURCES:.C=.o)
@@ -79,7 +81,7 @@ depend: uic_depend $(MOC_SOURCES)
 	@echo "" > .Dependencies
 	@$(CXX_MAKEDEPEND) $(MAKEDEP_OPTS) $(CPP_SOURCES) $(STD_CPP_INCLUDES) $(ADD_INCLUDES) $(OPENMS_INCLUDES)  >.Dependencies
 
-uic_depend: $(UIC_DIR)/Spectrum1DGoToDialogTemplate.h $(UIC_DIR)/Spectrum2DGoToDialogTemplate.h $(UIC_DIR)/TOPPViewOpenDialogTemplate.h $(UIC_DIR)/TOPPViewPrefDialogTemplate.h $(UIC_DIR)/Spectrum1DPrefDialogTemplate.h $(UIC_DIR)/Spectrum2DPrefDialogTemplate.h $(UIC_DIR)/Spectrum3DPrefDialogTemplate.h $(UIC_DIR)/DataFilterDialogTemplate.h $(UIC_DIR)/LayerStatisticsDialogTemplate.h $(UIC_DIR)/TheoreticalSpectrumGenerationDialogTemplate.h
+uic_depend: $(UIC_DIR)/Spectrum1DGoToDialogTemplate.h $(UIC_DIR)/Spectrum2DGoToDialogTemplate.h $(UIC_DIR)/TOPPViewOpenDialogTemplate.h $(UIC_DIR)/TOPPViewPrefDialogTemplate.h $(UIC_DIR)/Spectrum1DPrefDialogTemplate.h $(UIC_DIR)/Spectrum2DPrefDialogTemplate.h $(UIC_DIR)/Spectrum3DPrefDialogTemplate.h $(UIC_DIR)/DataFilterDialogTemplate.h $(UIC_DIR)/LayerStatisticsDialogTemplate.h $(UIC_DIR)/TheoreticalSpectrumGenerationDialogTemplate.h $(UIC_DIR)/SpectrumAlignmentDialogTemplate.h
 
 
 uic_clean:
@@ -144,6 +146,9 @@ LayerStatisticsDialog_moc.C:  $(HEADER_DIR)/LayerStatisticsDialog.h
 
 TheoreticalSpectrumGenerationDialog_moc.C:	$(HEADER_DIR)/TheoreticalSpectrumGenerationDialog.h
 	$(MOC) $(HEADER_DIR)/TheoreticalSpectrumGenerationDialog.h -o TheoreticalSpectrumGenerationDialog_moc.C
+	
+SpectrumAlignmentDialog_moc.C:	$(HEADER_DIR)/SpectrumAlignmentDialog.h
+	$(MOC) $(HEADER_DIR)/SpectrumAlignmentDialog.h -o SpectrumAlignmentDialog_moc.C
 
 
 ## UIC HEADER
@@ -177,4 +182,7 @@ $(UIC_DIR)/LayerStatisticsDialogTemplate.h: LayerStatisticsDialog.ui
 
 $(UIC_DIR)/TheoreticalSpectrumGenerationDialogTemplate.h: TheoreticalSpectrumGenerationDialog.ui
 	$(UIC) -o $(UIC_DIR)/TheoreticalSpectrumGenerationDialogTemplate.h TheoreticalSpectrumGenerationDialog.ui
+	
+$(UIC_DIR)/SpectrumAlignmentDialogTemplate.h: SpectrumAlignmentDialog.ui
+	$(UIC) -o $(UIC_DIR)/SpectrumAlignmentDialogTemplate.h SpectrumAlignmentDialog.ui
 

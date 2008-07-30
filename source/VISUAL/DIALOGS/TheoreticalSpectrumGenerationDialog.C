@@ -32,5 +32,9 @@ namespace OpenMS
 	TheoreticalSpectrumGenerationDialog::TheoreticalSpectrumGenerationDialog()
 	{
 		setupUi(this);
+		
+		// select b- and y-ions as residue types by default
+		residue_list_widget->item(1)->setSelected(true);
+		residue_list_widget->item(4)->setSelected(true);
 	}
 } // namespace

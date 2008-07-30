@@ -2072,72 +2072,41 @@ namespace OpenMS
 			if (aa_sequence.isValid())
 			{
 				RichPeakSpectrum rich_spec;
-				RichPeakSpectrum united_rich_spec;
 				TheoreticalSpectrumGenerator generator;
 				
-				bool generate_all = false;
-				if (spec_gen_dialog.residue_list_widget->item(0)->isSelected()) // "Full" selected --> generate all types
-				{
-					generate_all = true;
-				}
-				if (generate_all || spec_gen_dialog.residue_list_widget->item(1)->isSelected()) // "Internal"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::Internal, charge); 
-					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
-					rich_spec.clear();
-				}
-				if (generate_all || spec_gen_dialog.residue_list_widget->item(2)->isSelected()) // "N-terminal"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::NTerminal, charge); 
-					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
-					rich_spec.clear();
-				}
-				if (generate_all || spec_gen_dialog.residue_list_widget->item(3)->isSelected()) // "C-terminal"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::CTerminal, charge); 
-					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
-					rich_spec.clear();
-				}
-				if (generate_all || spec_gen_dialog.residue_list_widget->item(4)->isSelected()) // "A-ions"
+				if (spec_gen_dialog.residue_list_widget->item(0)->isSelected()) // "A-ions"
 				{
 					generator.addPeaks(rich_spec, aa_sequence, Residue::AIon, charge); 
-					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
-					rich_spec.clear();
 				}
-				if (generate_all || spec_gen_dialog.residue_list_widget->item(5)->isSelected()) // "B-ions"
+				if (spec_gen_dialog.residue_list_widget->item(1)->isSelected()) // "B-ions"
 				{
 					generator.addPeaks(rich_spec, aa_sequence, Residue::BIon, charge); 
-					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
-					rich_spec.clear();
 				}
-				if (generate_all || spec_gen_dialog.residue_list_widget->item(6)->isSelected()) // "C-ions"
+				if (spec_gen_dialog.residue_list_widget->item(2)->isSelected()) // "C-ions"
 				{
 					generator.addPeaks(rich_spec, aa_sequence, Residue::CIon, charge); 
-					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
-					rich_spec.clear();
 				}
-				if (generate_all || spec_gen_dialog.residue_list_widget->item(7)->isSelected()) // "X-ions"
+				if (spec_gen_dialog.residue_list_widget->item(3)->isSelected()) // "X-ions"
 				{
 					generator.addPeaks(rich_spec, aa_sequence, Residue::XIon, charge); 
-					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
-					rich_spec.clear();
 				}
-				if (generate_all || spec_gen_dialog.residue_list_widget->item(8)->isSelected()) // "Y-ions"
+				if (spec_gen_dialog.residue_list_widget->item(4)->isSelected()) // "Y-ions"
 				{
 					generator.addPeaks(rich_spec, aa_sequence, Residue::YIon, charge); 
-					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
-					rich_spec.clear();
 				}
-				if (generate_all || spec_gen_dialog.residue_list_widget->item(9)->isSelected()) // "Z-ions"
+				if (spec_gen_dialog.residue_list_widget->item(5)->isSelected()) // "Z-ions"
 				{
 					generator.addPeaks(rich_spec, aa_sequence, Residue::ZIon, charge); 
-					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
-					rich_spec.clear();
+				}
+				
+				if (spec_gen_dialog.add_precursor_checkbox->isChecked())
+				{
+					generator.addPrecursorPeaks(rich_spec, aa_sequence, charge);
 				}
 				
 				// TODO: find a better way to do this:
 				PeakSpectrum new_spec;
-				for (RichPeakSpectrum::Iterator it = united_rich_spec.begin(); it != united_rich_spec.end(); ++it)
+				for (RichPeakSpectrum::Iterator it = rich_spec.begin(); it != rich_spec.end(); ++it)
 				{
 					new_spec.push_back(static_cast<Peak1D>(*it));
 				}
@@ -2146,7 +2115,10 @@ namespace OpenMS
 				new_exp.push_back(new_spec);
 				
 				FeatureMapType dummy;
-				addData_(dummy, new_exp, false, false, true);
+				SpectrumCanvas* canvas = addData_(dummy, new_exp, false, false, true);
+	      
+	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
+				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
 			}
 			else
 			{

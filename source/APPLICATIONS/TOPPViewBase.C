@@ -61,12 +61,14 @@
 #include <OpenMS/CONCEPT/VersionInfo.h>
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignment.h>
 
 //Qt
 #include <QtGui/QToolBar>
 #include <QtGui/QDockWidget>
 #include <QtGui/QListWidget>
+#include <QtGui/QListWidgetItem>
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
 #include <QtGui/QStatusBar>
@@ -751,7 +753,7 @@ namespace OpenMS
     setCursor(Qt::ArrowCursor);
   }
   
-  void TOPPViewBase::addData_(FeatureMapType& feature_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_options, const String& filename, const String& caption, UInt window_id)
+  SpectrumCanvas* TOPPViewBase::addData_(FeatureMapType& feature_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_options, const String& filename, const String& caption, UInt window_id)
   {
   	//initialize flags with defaults from the parameters
   	bool as_new_window = true;
@@ -791,7 +793,7 @@ namespace OpenMS
 		//show options if requested
 		if (show_options && !dialog.exec())
 		{
-			return;
+			return 0;
 		}
 		as_new_window = dialog.openAsNewWindow();
 		maps_as_2d = dialog.viewMapAs2D();
@@ -825,7 +827,7 @@ namespace OpenMS
     //add data to the window
     if (is_feature)
     {
-      if (!open_window->canvas()->addLayer(feature_map,filename)) return;
+      if (!open_window->canvas()->addLayer(feature_map,filename)) return 0;
     }
     else
     {
@@ -833,7 +835,7 @@ namespace OpenMS
     	{
     		if (!qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas()->addLayer(peak_map,filename))
     		{
-    			return;
+    			return 0;
     		}
     		// calculate ranges containing the data of both canvasses and set them for both
     		qobject_cast<Spectrum1DWidget*>(open_window)->calculateUnitedRanges(true);
@@ -843,7 +845,7 @@ namespace OpenMS
     	}
     	else
     	{    	
-				if (!open_window->canvas()->addLayer(peak_map,filename)) return;
+				if (!open_window->canvas()->addLayer(peak_map,filename)) return 0;
 				//calculate noise
 				if(use_mower && is_2D)
 				{
@@ -870,6 +872,15 @@ namespace OpenMS
 		updateSpectrumBar();
 		updateFilterBar();
   	updateMenu();
+  	
+  	if (as_mirror)
+  	{
+  		return qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas();
+  	}
+  	else
+  	{
+  		return open_window->canvas();
+  	}
 	}
 	
   void TOPPViewBase::addRecentFile_(const String& filename)
@@ -2061,11 +2072,72 @@ namespace OpenMS
 			if (aa_sequence.isValid())
 			{
 				RichPeakSpectrum rich_spec;
+				RichPeakSpectrum united_rich_spec;
 				TheoreticalSpectrumGenerator generator;
-				generator.getSpectrum(rich_spec, aa_sequence, charge);
-				// is this necessary? //
+				
+				bool generate_all = false;
+				if (spec_gen_dialog.residue_list_widget->item(0)->isSelected()) // "Full" selected --> generate all types
+				{
+					generate_all = true;
+				}
+				if (generate_all || spec_gen_dialog.residue_list_widget->item(1)->isSelected()) // "Internal"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::Internal, charge); 
+					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
+					rich_spec.clear();
+				}
+				if (generate_all || spec_gen_dialog.residue_list_widget->item(2)->isSelected()) // "N-terminal"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::NTerminal, charge); 
+					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
+					rich_spec.clear();
+				}
+				if (generate_all || spec_gen_dialog.residue_list_widget->item(3)->isSelected()) // "C-terminal"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::CTerminal, charge); 
+					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
+					rich_spec.clear();
+				}
+				if (generate_all || spec_gen_dialog.residue_list_widget->item(4)->isSelected()) // "A-ions"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::AIon, charge); 
+					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
+					rich_spec.clear();
+				}
+				if (generate_all || spec_gen_dialog.residue_list_widget->item(5)->isSelected()) // "B-ions"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::BIon, charge); 
+					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
+					rich_spec.clear();
+				}
+				if (generate_all || spec_gen_dialog.residue_list_widget->item(6)->isSelected()) // "C-ions"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::CIon, charge); 
+					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
+					rich_spec.clear();
+				}
+				if (generate_all || spec_gen_dialog.residue_list_widget->item(7)->isSelected()) // "X-ions"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::XIon, charge); 
+					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
+					rich_spec.clear();
+				}
+				if (generate_all || spec_gen_dialog.residue_list_widget->item(8)->isSelected()) // "Y-ions"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::YIon, charge); 
+					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
+					rich_spec.clear();
+				}
+				if (generate_all || spec_gen_dialog.residue_list_widget->item(9)->isSelected()) // "Z-ions"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::ZIon, charge); 
+					united_rich_spec.insert(united_rich_spec.end(), rich_spec.begin(), rich_spec.end());
+					rich_spec.clear();
+				}
+				
+				// TODO: find a better way to do this:
 				PeakSpectrum new_spec;
-				for (RichPeakSpectrum::Iterator it = rich_spec.begin(); it != rich_spec.end(); ++it)
+				for (RichPeakSpectrum::Iterator it = united_rich_spec.begin(); it != united_rich_spec.end(); ++it)
 				{
 					new_spec.push_back(static_cast<Peak1D>(*it));
 				}
@@ -2098,19 +2170,26 @@ namespace OpenMS
 				param.setValue("tolerance", tolerance, "Defines the absolut (in Da) or relative (in ppm) tolerance", false);
 				aligner.setParameters(param);
 				
-				ExperimentType map_1, map_2;
-				active_1d_window->canvas()->getVisiblePeakData(map_1);
-				active_1d_window->flippedCanvas()->getVisiblePeakData(map_2);
-				ExperimentType::Iterator spectrum_1_it = map_1.begin();
-				ExperimentType::Iterator spectrum_2_it = map_2.begin();
+				const LayerData& current_layer_1 = active_1d_window->canvas()->getCurrentLayer();
+				const LayerData& current_layer_2 = active_1d_window->flippedCanvas()->getCurrentLayer();
+				const ExperimentType& map_1 = current_layer_1.peaks;
+				const ExperimentType& map_2 = current_layer_2.peaks;
+				const ExperimentType::SpectrumType& spectrum_1 = *(map_1.begin());
+				const ExperimentType::SpectrumType& spectrum_2 = *(map_2.begin());
 				std::vector<std::pair<UInt, UInt> > alignment;
 
-				aligner.getSpectrumAlignment(alignment, *spectrum_1_it, *spectrum_2_it);
+				aligner.getSpectrumAlignment(alignment, spectrum_1, spectrum_2);
+				
+				std::vector<std::pair<DoubleReal, DoubleReal > > alignment_lines;
 				
 				for (UInt i = 0; i < alignment.size(); ++i)
 				{
-					cout << alignment[i].first << " --- " << alignment[i].second << endl;
+					DoubleReal line_begin_mz = spectrum_1[alignment[i].first].getMZ();
+					DoubleReal line_end_mz = spectrum_2[alignment[i].second].getMZ();
+					alignment_lines.push_back(std::make_pair(line_begin_mz, line_end_mz));
 				}
+				active_1d_window->canvas()->setAlignmentLines(alignment_lines);
+				active_1d_window->flippedCanvas()->setAlignmentLines(alignment_lines);
 			}
 			else
 			{

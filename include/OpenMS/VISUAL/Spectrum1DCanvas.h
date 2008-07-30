@@ -29,6 +29,7 @@
 
 // STL
 #include <vector>
+#include <utility>
 
 // OpenMS
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
@@ -102,6 +103,12 @@ namespace OpenMS
 			
 			/// Returns whether we are currently in mirror mode or not (two 1d canvasses on one widget)
 			bool inMirrorMode();
+			
+			/// Sets the @p alignment_lines of the canvas
+			void setAlignmentLines(const std::vector<std::pair<DoubleReal,DoubleReal > >& alignment_lines);
+			
+			/// Clears alignment_lines_
+			void clearAlignmentLines();
 			
 			// Docu in base class
 			virtual void showCurrentLayerPreferences();
@@ -181,6 +188,8 @@ namespace OpenMS
       Annotations1DManager annotation_manager_;
       /// Indicates whether this canvas is currently in mirror mode with another 1d canvas
       bool in_mirror_mode_;
+      /// Vector containing all the peak-connecting lines of a spectrum alignment (stored as m/z values)
+      std::vector<std::pair<DoubleReal, DoubleReal > > alignment_lines_;
       
 			/// Find peak next to the given position
 			PeakIndex findPeakAtPosition_(QPoint);
@@ -212,7 +221,8 @@ namespace OpenMS
 				to be able to prevent the canvas from recalculating its ranges. This
 				is needed when two 1d canvasses are shown on a single 1d widget
 				(mirror view) and the overall data range has to contain the ranges
-				of both canvasses, which can be set only from outside.
+				of both canvasses. The united overall range for both canvasses
+				is set in Spectrum1DWidget.
 			*/
 			void recalculateRanges_(UInt mz_dim, UInt rt_dim, UInt it_dim);
 	};

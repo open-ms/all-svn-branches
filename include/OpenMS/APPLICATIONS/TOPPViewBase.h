@@ -274,9 +274,10 @@ namespace OpenMS
   			@param show_options If the options dialog should be shown (otherwise the defaults are used)
   			@param filename source file name (if the data came from a file)
       	@param caption Sets the layer name and window caption of the data. If unset the file name is used. If set, the file is not monitored foro changes.
-      	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current 
+      	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current
+      	@return A pointer to the canvas to which the data was added
       */
-  		void addData_(FeatureMapType& feature_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_options, const String& filename="", const String& caption="", UInt window_id=0);
+  		SpectrumCanvas* addData_(FeatureMapType& feature_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_options, const String& filename="", const String& caption="", UInt window_id=0);
   
     	/// Tries to open a db connection (queries the user for the DB password)
     	void connectToDB_(DBConnection& db);

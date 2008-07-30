@@ -5,16 +5,90 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>102</height>
+    <width>340</width>
+    <height>209</height>
    </rect>
   </property>
   <property name="windowTitle" >
    <string>Generate theoretical spectrum</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_3" >
+  <layout class="QHBoxLayout" name="horizontalLayout" >
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout" >
+    <layout class="QVBoxLayout" name="verticalLayout_3" >
+     <item>
+      <widget class="QLabel" name="residue_label" >
+       <property name="text" >
+        <string>Residue types:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QListWidget" name="residue_list_widget" >
+       <property name="sizePolicy" >
+        <sizepolicy vsizetype="Expanding" hsizetype="Ignored" >
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="selectionMode" >
+        <enum>QAbstractItemView::MultiSelection</enum>
+       </property>
+       <item>
+        <property name="text" >
+         <string>Full</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>Internal</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>N-terminal</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>C-terminal</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>A-ions</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>B-ions</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>C-ions</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>X-ions</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>Y-ions</string>
+        </property>
+       </item>
+       <item>
+        <property name="text" >
+         <string>Z-ions</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QVBoxLayout" name="verticalLayout_5" >
      <item>
       <layout class="QVBoxLayout" name="verticalLayout" >
        <item>
@@ -25,7 +99,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="line_edit" />
+        <widget class="QLineEdit" name="line_edit" >
+         <property name="sizePolicy" >
+          <sizepolicy vsizetype="Fixed" hsizetype="Expanding" >
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
@@ -40,6 +121,12 @@
        </item>
        <item>
         <widget class="QSpinBox" name="spin_box" >
+         <property name="sizePolicy" >
+          <sizepolicy vsizetype="Fixed" hsizetype="Maximum" >
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="value" >
           <number>1</number>
          </property>
@@ -47,17 +134,17 @@
        </item>
       </layout>
      </item>
+     <item>
+      <widget class="QDialogButtonBox" name="button_box" >
+       <property name="orientation" >
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="standardButtons" >
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+       </property>
+      </widget>
+     </item>
     </layout>
-   </item>
-   <item>
-    <widget class="QDialogButtonBox" name="button_box" >
-     <property name="orientation" >
-      <enum>Qt::Horizontal</enum>
-     </property>
-     <property name="standardButtons" >
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-     </property>
-    </widget>
    </item>
   </layout>
  </widget>

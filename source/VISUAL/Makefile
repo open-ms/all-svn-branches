@@ -61,7 +61,8 @@ CPP_SOURCES=\
 	Annotations1DManager.C\
 	Annotation1DItem.C\
 	Annotation1DDistanceItem.C\
-	Annotation1DTextItem.C
+	Annotation1DTextItem.C\
+	Annotation1DPeakItem.C
 
 
 MOC_SOURCES=\

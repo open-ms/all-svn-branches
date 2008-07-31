@@ -44,6 +44,7 @@
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/CONCEPT/TimeStamp.h>
 #include <OpenMS/SYSTEM/FileWatcher.h>
+#include <OpenMS/VISUAL/SpectrumWidget.h>
 
 #include <iostream>
 
@@ -990,7 +991,8 @@ namespace OpenMS
 		context_menu->addAction(layer_name.toQString())->setEnabled(false);
 		context_menu->addSeparator();
 
-		context_menu->addAction("Add label");
+		context_menu->addAction("Add custom label");
+		context_menu->addAction("Add peak annotation");
 		context_menu->addSeparator();
 
 		context_menu->addAction("Layer meta data");
@@ -998,6 +1000,7 @@ namespace OpenMS
 		QMenu* save_menu = new QMenu("Save");
 		save_menu->addAction("Layer");
 		save_menu->addAction("Visible layer data");
+		save_menu->addAction("As image");
 		
 		QMenu* settings_menu = new QMenu("Settings");
 		settings_menu->addAction("Show/hide grid lines");
@@ -1035,6 +1038,10 @@ namespace OpenMS
 			{
 				saveCurrentLayer(result->text()=="Visible layer data");
 			}
+			else if (result->text()=="As image")
+			{
+				spectrum_widget_->saveAsImage();
+			}
 			else if (result->text()=="Show as raw data/peaks")
 			{
 				if (getDrawMode()==DM_PEAKS)
@@ -1050,13 +1057,34 @@ namespace OpenMS
 			{
 				showMetaData(true);
 			}
-			else if (result->text()=="Add label")
+			else if (result->text()=="Add custom label")
 			{
 				bool ok;
-     		QString text = QInputDialog::getText(this, "Add label", "Enter text:", QLineEdit::Normal, "", &ok);
+     		QString text = QInputDialog::getText(this, "Add custom label", "Enter text:", QLineEdit::Normal, "", &ok);
      		if (ok && !text.isEmpty())
      		{
 					annotation_manager_.addTextItem(getCurrentLayer(), widgetToData_(e->pos()), String(text));
+				}
+			}
+			else if  (result->text()=="Add peak annotation")
+			{
+				PeakIndex near_peak = findPeakAtPosition_(e->pos());
+				
+				if (!near_peak.isValid())
+				{
+					QMessageBox::information(this, "No peak selected", "You must right-click a peak in order to annotate it.");
+					return;
+				}
+				else
+				{
+					bool ok;
+					QString text = QInputDialog::getText(this, "Add peak annotation", "Enter text:", QLineEdit::Normal, "", &ok);
+     			if (ok && !text.isEmpty())
+     			{
+     				PointType position = widgetToData_(e->pos());
+     				position.setX(near_peak.getPeak(getCurrentLayer().peaks).getMZ());
+						annotation_manager_.addPeakItem(getCurrentLayer(), position, near_peak, String(text));
+					}
 				}
 			}
 		}		

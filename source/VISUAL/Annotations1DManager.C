@@ -85,6 +85,12 @@ namespace OpenMS
 				drawTextItem(text_item, painter);
 				continue;
 			}
+			
+			Annotation1DPeakItem* peak_item = dynamic_cast<Annotation1DPeakItem*>(*it);
+			if (peak_item)
+			{
+				drawPeakItem(peak_item, painter);
+			}
 		}
 	}
 	
@@ -169,6 +175,31 @@ namespace OpenMS
 
 	}
 	
+	void Annotations1DManager::drawPeakItem(Annotation1DPeakItem* peak_item, QPainter& painter)
+	{
+		//translate mz/intensity to pixel coordinates
+		QPoint position;
+		canvas_->dataToWidget_(peak_item->getPosition().getX(), peak_item->getPosition().getY(), position);
+		
+		// compute bounding box of text_item on the specified painter
+		QRectF bbox = painter.boundingRect(QRectF(position, position), Qt::AlignCenter, peak_item->getText().toQString());
+		// shift position, annotation should be next to the peak and not overlap it
+		bbox.translate(bbox.width()/2.0 + 10.0, -15.0); 
+		peak_item->setBoundingBox(bbox);
+		
+		if (peak_item->isSelected())
+		{
+			drawBoundingBox(bbox, painter);
+		}
+		else
+		{
+			painter.setPen(Qt::darkGreen);
+		}
+		
+		painter.drawText(bbox, Qt::AlignCenter, peak_item->getText().toQString());
+		painter.drawLine(bbox.bottomLeft(), position);
+	}
+	
 	void Annotations1DManager::selectAll(const LayerData& layer)
 	{
 		for (LayerData::Ann1DIterator it = layer.annotations_1d_.begin(); it != layer.annotations_1d_.end(); ++it)
@@ -210,6 +241,12 @@ namespace OpenMS
 	void Annotations1DManager::addTextItem(const LayerData& layer, const PointType& position, const String& text)
 	{
 		Annotation1DItem* new_item = new Annotation1DTextItem(position, text);
+		layer.annotations_1d_.push_front(new_item);
+	}
+	
+	void Annotations1DManager::addPeakItem(const LayerData& layer, const PointType& position, const PeakIndex& peak, const String& text)
+	{
+		Annotation1DItem* new_item = new Annotation1DPeakItem(position, peak, text);
 		layer.annotations_1d_.push_front(new_item);
 	}
 

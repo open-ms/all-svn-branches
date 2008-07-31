@@ -2115,7 +2115,7 @@ namespace OpenMS
 				new_exp.push_back(new_spec);
 				
 				FeatureMapType dummy;
-				SpectrumCanvas* canvas = addData_(dummy, new_exp, false, false, true);
+				addData_(dummy, new_exp, false, false, true);
 	      
 	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
 				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);

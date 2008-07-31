@@ -33,6 +33,7 @@
 #include <OpenMS/VISUAL/Annotation1DItem.h>
 #include <OpenMS/VISUAL/Annotation1DDistanceItem.h>
 #include <OpenMS/VISUAL/Annotation1DTextItem.h>
+#include <OpenMS/VISUAL/Annotation1DPeakItem.h>
 
 #include <QtCore/QObject>
 #include <QtCore/QRectF>
@@ -97,7 +98,9 @@ namespace OpenMS
 			/// Draws a distance annotation @p distance_item on @p painter			
 			void drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter);		
 			/// Draws an arbitrary text annotation @p text_item on @p painter
-			void drawTextItem(Annotation1DTextItem* text_item, QPainter& painter);		
+			void drawTextItem(Annotation1DTextItem* text_item, QPainter& painter);
+			/// Draws a peak annotation @p peak_item on @p painter
+			void drawPeakItem(Annotation1DPeakItem* peak_item, QPainter& painter);
 			/// Selects all items in the specified @p layer
 			void selectAll(const LayerData& layer);
 			/// Deselects all items in the specified @p layer
@@ -108,6 +111,8 @@ namespace OpenMS
 			void addDistanceItem(const LayerData& layer, const PeakIndex& peak_1, const PeakIndex& peak_2, const PointType& start_point, const PointType& end_point);
 			/// Adds a new text item displaying @p text at @p position on @p layer
 			void addTextItem(const LayerData& layer, const PointType& position, const String& text);
+			/// Adds an annotation for @p peak displaying @p text at @p position on @p layer
+			void addPeakItem(const LayerData& layer, const PointType& position, const PeakIndex& peak, const String& text);
 			
 		protected:
 

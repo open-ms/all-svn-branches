@@ -56,17 +56,19 @@ namespace OpenMS
 	void Spectrum1DWidget::setFlippedCanvas(Spectrum1DCanvas* flipped_canvas)
 	{
 		flipped_canvas_ = flipped_canvas;
-		flipped_canvas_->setFlippedVertically(true);
-		flipped_canvas_->setSpectrumWidget(this);
+		flippedCanvas()->setFlippedVertically(true);
+		flippedCanvas()->setSpectrumWidget(this);
+		canvas()->setMirrorMode(true);
+		flippedCanvas()->setMirrorMode(true);
 		// make sure canvasses don't overlap:
-		canvas_->setMinimumHeight(0);
-		flipped_canvas_->setMinimumHeight(0);
+		canvas()->setMinimumHeight(0);
+		flippedCanvas()->setMinimumHeight(0);
 		
 		grid_->removeWidget(x_axis_);
 		grid_->removeWidget(x_scrollbar_);
 		grid_->addWidget(x_axis_, 2, 2);
 		grid_->addWidget(x_scrollbar_, 3, 2);
-		grid_->addWidget(flipped_canvas_, 1, 2);
+		grid_->addWidget(flippedCanvas(), 1, 2);
 		flipped_y_axis_ = new AxisWidget(AxisWidget::LEFT,"Intensity",this);
 		flipped_y_axis_->setInverseOrientation(true);
 		flipped_y_axis_->setAllowShortNumbers(true);
@@ -118,9 +120,9 @@ namespace OpenMS
 			disconnect(flippedCanvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
 			disconnect(flippedCanvas(), SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
 		
-			grid_->removeWidget(flipped_canvas_);
+			grid_->removeWidget(flippedCanvas());
 			grid_->removeWidget(flipped_y_axis_);
-			flipped_canvas_->close();
+			flippedCanvas()->close();
 			flipped_y_axis_->close();
 			delete flipped_canvas_;
 			delete flipped_y_axis_;
@@ -139,6 +141,9 @@ namespace OpenMS
 	{
 		if (canvas() != 0 && flippedCanvas() != 0)
 		{
+			canvas()->recalculateRanges();
+			flippedCanvas()->recalculateRanges();
+			
 			DRange<3> new_overall_range = canvas()->getDataRange().united(flippedCanvas()->getDataRange());
 						
 			DRange<3> canvas_range = new_overall_range;
@@ -152,9 +157,10 @@ namespace OpenMS
 			fl_canvas_range.setMaxY(flippedCanvas()->getDataRange().maxY());
 			
 			canvas()->setOverallDataRange(canvas_range);
-			canvas()->setMirrorMode(true);
 			flippedCanvas()->setOverallDataRange(fl_canvas_range);
-			flippedCanvas()->setMirrorMode(true);
+			
+			cout << "Canvas: " << canvas()->getDataRange().minY() << " - " << canvas()->getDataRange().maxY() << endl;
+			cout << "flippedCanvas: " << flippedCanvas()->getDataRange().minY() << " - " << flippedCanvas()->getDataRange().maxY() << endl;
 			
 			if (reset_zoom)
 			{

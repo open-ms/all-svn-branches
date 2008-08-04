@@ -45,6 +45,7 @@
 #include <OpenMS/CONCEPT/TimeStamp.h>
 #include <OpenMS/SYSTEM/FileWatcher.h>
 #include <OpenMS/VISUAL/SpectrumWidget.h>
+#include <OpenMS/VISUAL/Spectrum1DWidget.h>
 
 #include <iostream>
 
@@ -451,12 +452,7 @@ namespace OpenMS
 		
 		//update range area
 		recalculateRanges_(0,2,1);
-		overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
-		float width = overall_data_range_.width();
-		overall_data_range_.setMinX(overall_data_range_.minX() - 0.002 * width);
-		overall_data_range_.setMaxX(overall_data_range_.maxX() + 0.002 * width);
-		overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
-		
+				
 		zoomClear_();
 		if (overall_data_range_.maxX() - overall_data_range_.minX() <1.0)
 		{
@@ -486,6 +482,12 @@ namespace OpenMS
 	void Spectrum1DCanvas::setOverallDataRange(const DRange<3>& overall_range)
 	{
 		overall_data_range_ = overall_range;
+	}
+	
+	void Spectrum1DCanvas::recalculateRanges()
+	{
+		SpectrumCanvas::recalculateRanges_(0,2,1);
+		overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
 	}
 	
 	void Spectrum1DCanvas::setMirrorMode(bool mode)
@@ -856,12 +858,7 @@ namespace OpenMS
 		
 		//update ranges
 		recalculateRanges_(0,2,1);
-		overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
-		float width = overall_data_range_.width();
-		overall_data_range_.setMinX(overall_data_range_.minX() - 0.002 * width);
-		overall_data_range_.setMaxX(overall_data_range_.maxX() + 0.002 * width);
-		overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
-		
+				
 		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
 		
 		if (getLayerCount()==2)
@@ -1132,11 +1129,7 @@ namespace OpenMS
 		
 		//update ranges
 		recalculateRanges_(0,2,1);
-		overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
-		float width = overall_data_range_.width();
-		overall_data_range_.setMinX(overall_data_range_.minX() - 0.002 * width);
-		overall_data_range_.setMaxX(overall_data_range_.maxX() + 0.002 * width);
-		overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
+		
 		
 		resetZoom();
 	}
@@ -1176,6 +1169,15 @@ namespace OpenMS
 		if (!in_mirror_mode_)
 		{
 			SpectrumCanvas::recalculateRanges_(mz_dim, rt_dim, it_dim);
+			overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
+			float width = overall_data_range_.width();
+			overall_data_range_.setMinX(overall_data_range_.minX() - 0.002 * width);
+			overall_data_range_.setMaxX(overall_data_range_.maxX() + 0.002 * width);
+			overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
+		}
+		else
+		{
+			qobject_cast<Spectrum1DWidget*>(spectrum_widget_)->calculateUnitedRanges(true);
 		}
 	}
 

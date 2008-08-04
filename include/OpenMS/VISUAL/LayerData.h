@@ -91,8 +91,6 @@ namespace OpenMS
 				param(),
 				gradient(),
 				filters(),
-				is_selected_spectrum(false),
-				parent_layer(0),
 				annotations_1d_()
 		{
 		}
@@ -134,13 +132,7 @@ namespace OpenMS
 		
 		///Filters to apply before painting
 		DataFilters filters;
-		
-		///Indicates whether this layer shows a selected spectrum of a map
-		mutable bool is_selected_spectrum;
-		
-		///The "parent" layer from which this spectrum was selected (0 if not existent)
-		mutable const LayerData* parent_layer;
-		
+				
 		///Annotations for the 1D view
 		mutable Annotations1DContainerType annotations_1d_;
 		

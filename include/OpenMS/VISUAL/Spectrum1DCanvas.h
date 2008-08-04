@@ -98,6 +98,9 @@ namespace OpenMS
 			*/
 			void setOverallDataRange(const DRange<3>& overall_range);
 			
+			/// Calls recalculateRanges_()
+			void recalculateRanges();
+			
 			/// Sets whether we are currently in mirror mode or not (two 1d canvasses on one widget)
 			void setMirrorMode(bool mode);
 			

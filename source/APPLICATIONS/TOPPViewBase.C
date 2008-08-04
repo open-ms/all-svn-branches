@@ -837,7 +837,7 @@ namespace OpenMS
     		{
     			return 0;
     		}
-    		// calculate ranges containing the data of both canvasses and set them for both
+    		// calculate ranges containing the data of both canvasses and reset zoom for both
     		qobject_cast<Spectrum1DWidget*>(open_window)->calculateUnitedRanges(true);
     		
 	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
@@ -864,7 +864,15 @@ namespace OpenMS
 		}
 
     //caption
-    open_window->canvas()->setLayerName(open_window->canvas()->activeLayerIndex(), caption);
+    if (!as_mirror)
+    {
+    	open_window->canvas()->setLayerName(open_window->canvas()->activeLayerIndex(), caption);
+    }
+    else
+    {
+    	Spectrum1DCanvas* flipped_canvas = qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas();
+    	flipped_canvas->setLayerName(flipped_canvas->activeLayerIndex(), caption);
+    }
 
     if (as_new_window) showAsWindow_(open_window,caption);
 
@@ -1264,47 +1272,68 @@ namespace OpenMS
 				layer_manager_->setCurrentItem(item);
     	}
     }
+    Spectrum1DWidget* window_1d = active1DWindow_();
+		//if a mirror view is active, list the layers of the second canvas, too:
+		if (window_1d && window_1d->hasSecondCanvas())
+		{
+			cc = window_1d->flippedCanvas();
+			
+			for (UInt i = 0; i<cc->getLayerCount(); ++i)
+			{
+				//add item
+				item = new QListWidgetItem( layer_manager_ );
+				item->setText(QString("Bottom: ") + cc->getLayer(i).name.toQString());
+				if (cc->getLayer(i).visible)
+				{
+					item->setCheckState(Qt::Checked);
+				}
+				else
+				{
+					item->setCheckState(Qt::Unchecked);
+				}
+			}
+		}
+    
 		layer_manager_->blockSignals(false);
   }
   
   void TOPPViewBase::updateSpectrumBar()
   {
   	spectrum_selection_->clear();
-  	SpectrumCanvas* cc = activeCanvas_();
-  	QListWidgetItem* item = 0;
+  	SpectrumCanvas* cc;
+  	int layer_row = layer_manager_->currentRow();
+  	if (layer_row == -1)
+  	{
+  		return;
+  	}
+  	if (layer_manager_->item(layer_row)->text().startsWith(QString("Bottom: ")))
+  	{
+  		if (!active1DWindow_() || !active1DWindow_()->hasSecondCanvas())
+  		{
+  			return;
+  		}
+  		cc = active1DWindow_()->flippedCanvas();
+  	}
+  	else
+  	{
+  		cc = activeCanvas_();
+  	}
   	if (cc == 0)
   	{
   		return;
   	}
+  	spectrum_selection_->blockSignals(true);
   	const LayerData& cl = cc->getCurrentLayer();
-  	
+  	QListWidgetItem* item;
   	int row = 0;
-  	
   	if(cl.type == LayerData::DT_PEAK)
   	{
-  		if(cl.peaks.size() == 1) // single spectrum
+  		if(cl.peaks.size() == 1) // single spectrum contained
   		{
-  			if(cl.is_selected_spectrum && cl.parent_layer != 0)
-  			{
-  				/* selected spectrum of a map --> show the other 
-  				   spectra of this map in the spectrum bar and
-  				   highlight the current one */
-  				for(UInt i = 0; i < cl.parent_layer->peaks.size(); i++)
-  				{
-  					item = new QListWidgetItem(spectrum_selection_);
-  					item->setText(QString("RT: ") + QString::number(cl.parent_layer->peaks[i].getRT()));
-  					if (cl.parent_layer->peaks[i] == cl.peaks[0]) // find active spectrum and highlight it
-  					{
-  						row = i;
-  					}
-  				}
-  				spectrum_selection_->setCurrentRow(row);
-  			}
-  			else // map contains only one spectrum
-  			{
-  				item = new QListWidgetItem(spectrum_selection_);
-  				item->setText(QString("Single spectrum"));
-  			}
+				item = new QListWidgetItem(spectrum_selection_);
+				item->setText(QString("Single spectrum"));
+				item->setFlags(!Qt::ItemIsEnabled);
+				return; // leave signals blocked
   		}
   		else // map with many spectra --> add spectra to spectrum bar
   		{
@@ -1315,19 +1344,30 @@ namespace OpenMS
   			}
   		}
   	}
-  	else if (cl.type == LayerData::DT_FEATURE)
+  	else
   	{
   		item = new QListWidgetItem(spectrum_selection_);
   		item->setText(QString("Feature map"));
+  		item->setFlags(!Qt::ItemIsEnabled);
+			return; // leave signals blocked
   	}
   	
+  	spectrum_selection_->blockSignals(false);
   }
 
 	void TOPPViewBase::layerSelectionChange(int i)
 	{
 		if (i!=-1)
 		{
-			activeCanvas_()->activateLayer(i);
+			if (i <= activeCanvas_()->getLayerCount())
+			{
+				activeCanvas_()->activateLayer(i);
+			}
+			else // selected layer belongs to second canvas (mirror view)
+			{
+				i -= activeCanvas_()->getLayerCount();
+				active1DWindow_()->flippedCanvas()->activateLayer(i);
+			}
 			updateFilterBar();
 			updateSpectrumBar();
 		}
@@ -1336,23 +1376,24 @@ namespace OpenMS
 	void TOPPViewBase::selectedSpectrumChange(QListWidgetItem* item)
 	{
 		int index = spectrum_selection_->row(item);
-		
-		SpectrumCanvas* cc = activeCanvas_();
-		SpectrumWidget* sw = cc->getSpectrumWidget();
-		const LayerData& cl = cc->getCurrentLayer();
-		
-		/* if the active layer is already a selected spectrum: close it,
-		and show newly selected spectrum of the parent map as new 1D window */
-		if(cl.is_selected_spectrum)
+		SpectrumCanvas* cc;
+		if (layer_manager_->currentItem()->text().startsWith(QString("Bottom: ")))
 		{
-			sw->close(); // close the old selected spectrum
-			const LayerData* parent_layer = cl.parent_layer;
-			showSpectrumAs1D(parent_layer, index);
+			cc = active1DWindow_()->flippedCanvas();
+			index -= activeCanvas_()->getLayerCount();
 		}
 		else
 		{
-			showSpectrumAs1D(index);
+			cc = activeCanvas_();
 		}
+		const LayerData& cl = cc->getCurrentLayer();
+		FeatureMapType dummy;
+		ExperimentType exp;
+		exp.resize(1);
+		exp[0] = cl.peaks[index];
+		addData_(dummy, exp, false, false, true, cl.filename, cl.name);
+			
+		updateSpectrumBar();
 	}
 
 	void TOPPViewBase::layerContextMenu(const QPoint & pos)
@@ -2063,7 +2104,7 @@ namespace OpenMS
 	{
 		TheoreticalSpectrumGenerationDialog spec_gen_dialog;
 		if (spec_gen_dialog.exec())
-		{	
+		{
 			String seq_string(spec_gen_dialog.line_edit->text());
 			AASequence aa_sequence(seq_string);
 			
@@ -2115,7 +2156,7 @@ namespace OpenMS
 				new_exp.push_back(new_spec);
 				
 				FeatureMapType dummy;
-				addData_(dummy, new_exp, false, false, true);
+				addData_(dummy, new_exp, false, false, true, "", seq_string + QString(" (theoretical)"));
 	      
 	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
 				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
@@ -2202,16 +2243,11 @@ namespace OpenMS
 
 	void TOPPViewBase::showSpectrumAs1D(int index)
 	{
-		const LayerData* layer = &(activeCanvas_()->getCurrentLayer());
-		showSpectrumAs1D(layer, index);
-	}
-
-	void TOPPViewBase::showSpectrumAs1D(const LayerData* layer, int index)
-	{
+		const LayerData& layer = activeCanvas_()->getCurrentLayer();
 		//copy spectrum
 		ExperimentType exp;
 		exp.resize(1);
-		exp[0] = layer->peaks[index];
+		exp[0] = layer.peaks[index];
 		//open new 1D widget
 		Spectrum1DWidget* w = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
     
@@ -2221,13 +2257,8 @@ namespace OpenMS
   		return;
   	}
     
-		String caption = layer->name + " (RT: " + String(layer->peaks[index].getRT()) + ")";
+		String caption = layer.name + " (RT: " + String(layer.peaks[index].getRT()) + ")";
 		w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
-		
-		//remember that this 1d spectrum is part of a whole map
-		w->canvas()->getCurrentLayer().is_selected_spectrum = true;
-		//remember "parent" map
-		w->canvas()->getCurrentLayer().parent_layer = layer;
 		
     showAsWindow_(w,caption);
     updateLayerBar();

@@ -510,16 +510,6 @@ namespace OpenMS
 		void resetZoom(bool repaint = true);
 		
 		/**
-			@brief Sets the zoom stack to contain only @p new_area
-			
-			Sets the visible area to the value of @p new_area
-			
-			@param new_area The new area to be set
-			@param repaint If @em true a repaint is forced. Otherwise only the new area is set.
-		*/
-		void resetZoom(const DRange<2>& new_area, bool repaint = true);
-		
-		/**
 			@brief Sets the visible area.
 			
 			Sets the visible area to a new value. Note that it does not emit visibleAreaChanged()

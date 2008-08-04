@@ -276,13 +276,8 @@ namespace OpenMS
 	{
 		AreaType tmp;
 		tmp.assign(overall_data_range_);
-		resetZoom(tmp, repaint);
-	}
-	
-	void SpectrumCanvas::resetZoom(const DRange<2>& new_area, bool repaint)
-	{
 		zoomClear_();
-		changeVisibleArea_(new_area,repaint,true);
+		changeVisibleArea_(tmp,repaint,true);
 	}
 	
 	void SpectrumCanvas::setVisibleArea(AreaType area)

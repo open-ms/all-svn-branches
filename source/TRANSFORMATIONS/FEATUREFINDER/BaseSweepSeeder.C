@@ -128,7 +128,7 @@ void BaseSweepSeeder::sweep_()
 			
 			cout << "---------------------------------------------------------------------------" << endl;
 			cout << "RT: " << current_scan.getRT() << " ";
-			cout << " scan " << (currscan_index + 1) << " of " << traits_->getData().size() << endl;
+			cout << " spectrum " << (currscan_index + 1) << " of " << traits_->getData().size() << endl;
 						
 			#ifdef DEBUG_FEATUREFINDER
 			// write debug output
@@ -296,16 +296,6 @@ void BaseSweepSeeder::sweep_()
 //    		
 }
 
-// void BaseSweepSeeder::computeBorders_(TableIteratorType& entry)
-// {
-// 	if (entry->second.scans_.size() == 0) return;		
-// 	
-// 	sort(entry->second.scans_.begin(),entry->second.scans_.end());
-// 	
-// 	entry->second.first_scan_ = *entry->second.scans_.begin();
-// 	entry->second.last_scan_ = *(entry->second.scans_.end() - 1);
-// }
-
 void BaseSweepSeeder::deleteHashEntries_(std::vector<bool>& entries)
 {
 	cout << "Deleting entries..." << endl;
@@ -317,113 +307,6 @@ void BaseSweepSeeder::deleteHashEntries_(std::vector<bool>& entries)
 	iso_map_ = new_table;
 	cout << "Done ...." << endl;
 }
-
-// void BaseSweepSeeder::filterForOverlaps_()
-// {
-// 		if (iso_map_.size() == 0) return; // nothing to do
-// 
-// 		#ifdef DEBUG_FEATUREFINDER
-// 		cout << "Checking for overlaps...." << endl;
-// 		#endif
-// 		vector<bool> seen(iso_map_.size(),false);		
-// 		
-// 		vector<TableIteratorType> entries_to_delete;
-// 		vector<Int> indizes;
-// 
-// 		UInt counter = 0;
-// 		
-// 		for (TableIteratorType iter = iso_map_.begin(); counter < (iso_map_.size() - 1); ++iter, ++counter)
-// 		{			
-// 			TableIteratorType tmp_iter = iter;			
-// 			++tmp_iter;
-// 			
-// 			#ifdef DEBUG_FEATUREFINDER
-// 			cout << "Checking " << iter->first << " vs " << endl;
-// 			#endif
-// 			if (seen.at(counter)) 
-// 			{
-// 				#ifdef DEBUG_FEATUREFINDER
-// 				cout << " we've seen that one already " << endl;
-// 				#endif
-// 				continue;
-// 			}
-// 			UInt tmpc = counter + 1;
-// 			
-// 			while (  tmp_iter !=iso_map_.end())
-// 			{			
-// 				#ifdef DEBUG_FEATUREFINDER
-// 				cout << tmp_iter->first << endl;
-// 				#endif
-// 				bool overlap = false;
-// 				
-// 				// test if cluster overlap
-// 				if (	(iter->second.first_scan_ >= tmp_iter->second.first_scan_ && // first case
-// 				       iter->second.first_scan_ <= tmp_iter->second.last_scan_ ) ||
-// 							(iter->second.last_scan_ >= tmp_iter->second.first_scan_ && // second case
-// 				       iter->second.last_scan_ <= tmp_iter->second.last_scan_ ) ||
-// 							(tmp_iter->second.first_scan_ >= iter->second.first_scan_ && // third case
-// 				       tmp_iter->second.first_scan_ <= iter->second.last_scan_ ) ||
-// 							(tmp_iter->second.last_scan_ >= iter->second.first_scan_ && // fourth case
-// 				       tmp_iter->second.last_scan_ <= iter->second.last_scan_ ) )
-// 				{
-// 					overlap = true;				
-// 					//cout << "overlap ! " << endl;
-// 				}
-// 				
-// 				CoordinateType mz_dist = fabs(tmp_iter->first - iter->first);
-// 				//cout << "mz_dist: " << mz_dist << endl;
-// 				
-// 				// we merge only features that we haven't seen  yet.
-// 				if (overlap && !seen.at(tmpc) && mz_dist < max_mz_dist_merging_) 
-// 				{
-// 					// merging features...
-// 					//sort(tmp_iter->second.scans_.begin(),tmp_iter->second.scans_.end());
-// 					//sort(iter->second.scans_.begin(),iter->second.scans_.end());
-// 					// copy scans
-// 					//cout << "merging " << endl;
-// 					for (std::vector<UInt>::const_iterator scan_iter = tmp_iter->second.scans_.begin(); 
-// 								scan_iter != tmp_iter->second.scans_.end();
-// 								++scan_iter) 
-// 					{
-// 						if ( *(iter->second.scans_.end() - 1 ) != *scan_iter)	// scan already contained ??
-// 						{
-// 							iter->second.scans_.push_back(*scan_iter);
-// 						}
-// 					}
-// 					
-// 					// copy peaks
-// 					for (std::set<IDX>::const_iterator set_iter = tmp_iter->second.peaks_.begin();
-// 								set_iter != tmp_iter->second.peaks_.end();
-// 								++set_iter)
-// 					{
-// 						iter->second.peaks_.insert(*set_iter);	
-// 					}
-// 					
-// 					// copy charge estimates for each scan
-// 					for (std::vector< ScoredChargeType >::const_iterator sc_iter =  tmp_iter->second.scored_charges_.begin();
-// 								sc_iter !=  tmp_iter->second.scored_charges_.end();
-// 								++sc_iter)
-// 					{
-// 						iter->second.scored_charges_.push_back(*sc_iter);					
-// 					}
-// 					
-// 					// mark this cluster as "deleted"
-// 					entries_to_delete.push_back(tmp_iter);
-// 					indizes.push_back(tmpc);
-// 					// and as "seen"
-// 					seen.at(tmpc) = true;
-// 				} // end of if (...)
-// 				
-// 				++tmp_iter;
-// 				++tmpc;
-// 			} // end of while
-// 						
-// 		} // end of for all table entries
-// 		
-// 		deleteHashEntries_(entries_to_delete);
-// 			
-// } // end of filterHashForOverlaps_(...)
-// 
 
 void BaseSweepSeeder::filterForSize_()
 {
@@ -453,25 +336,26 @@ void BaseSweepSeeder::filterForSize_()
 		deleteHashEntries_(entries_to_delete);		
 }
 
-// void BaseSweepSeeder::filterForSignificance_()
-// {
-// 	if (iso_map_.size() == 0) return;
-// 
-// 	vector<TableIteratorType> entries_to_delete;
-// 			
-// 	ProbabilityType alpha = param_.getValue("fdr_alpha");
-// 	cout << "Filtering for significance with alpha: " << (alpha/iso_map_.size() ) << endl;	
-// 
-// 	for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
-// 	{				
-// 		if (iter->second.peaks_.max_charge_score_ > (alpha/iso_map_.size() ) )
-// 		{
-// 			entries_to_delete.push_back(iter);	
-// 		}
-// 	}
-// 	
-// 	deleteHashEntries_(entries_to_delete);	
-// }
+void BaseSweepSeeder::filterForSignificance_()
+{
+	if (iso_map_.size() == 0) return;
+
+	// filter for number of scans / significance
+	vector<bool> entries_to_delete(iso_map_.size(),false);	
+			
+	ProbabilityType alpha = param_.getValue("fdr_alpha");
+	cout << "Filtering for significance with alpha: " << (alpha/iso_map_.size() ) << endl;	
+	UInt c = 0;
+	for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter,++c)
+	{				
+		if (iter->second.peaks_.max_charge_score_ > (alpha/iso_map_.size() ) )
+		{
+			entries_to_delete[c]=true;	
+		}
+	}
+	
+	deleteHashEntries_(entries_to_delete);	
+}
 
 void BaseSweepSeeder::mergeIsotopeCluster_(TableIteratorType& it1, const TableIteratorType& it2)
 {
@@ -512,7 +396,7 @@ void BaseSweepSeeder::findNeighbours_()
 		{
 			if (seen[i])
 			{ 
-				cout << "skipping..." << endl;
+				//cout << "skipping..." << endl;
 				continue;
 			 }
 			 
@@ -541,7 +425,7 @@ void BaseSweepSeeder::findNeighbours_()
 				#endif
 				if ( ((UInt) abs(next_scan - last_scan)) <=  rt_tolerance_cluster_) 
 				{
-					cout << "MERGING..." << endl;
+					//cout << "MERGING..." << endl;
 					// merge cluster 
 					mergeIsotopeCluster_(iter,tmp_iter);
 					last_scan = tmp_iter->second.first_scan_;
@@ -552,7 +436,7 @@ void BaseSweepSeeder::findNeighbours_()
 				}
 				
 			}	// end of while
-			cout << endl;
+			//cout << endl;
 			//iter->second.first_scan_ = last_scan;
 		} // end of for all (table entries)
 		
@@ -562,27 +446,6 @@ void BaseSweepSeeder::findNeighbours_()
 void BaseSweepSeeder::filterHash_()
 {
 		cout << iso_map_.size() << " isotopic clusters were found." << endl;
-					
-// 		for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
-// 		{	
-// 			computeBorders_(iter);		
-// 		}
-// 
-// 		filterForSize_();
-// 		
-// 		// filter 3 times for overlaps (and re-compute feature bounding boxes)
-// 		filterForOverlaps_( );
-// 		for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
-// 		{	
-// 			computeBorders_(iter);		
-// 		}
-// 		
-// 		filterForOverlaps_( );
-// 		for (TableIteratorType iter = iso_map_.begin(); iter != iso_map_.end(); ++iter)
-// 		{	
-// 			computeBorders_(iter);		
-// 		}
-// 		filterForOverlaps_( );
 				
 		filterForSize_();
 		//filterForSignificance_();
@@ -637,154 +500,6 @@ void BaseSweepSeeder::voteForCharge_()
 	}
 }
 
-// BaseSweepSeeder::TableIteratorType BaseSweepSeeder::checkInPreviousScans_(const ScoredMZType& sc_mz, const UInt currscan_index)
-// {
-// 	   // hash entry to write in
-//     TableIteratorType entry_to_insert;
-// 		CoordinateType mz_in_hash = 0;
-// 		
-// 		CoordinateType curr_mz = traits_->getPeakMz( make_pair(currscan_index,sc_mz.first) );
-// 		//cout << "checkInPreviousScans_(...) : Checking for m/z " << curr_mz << " in scan " << currscan_index << endl;
-// 		
-//     if (currscan_index > 0 && iso_map_.size() > 0 )  // Are we in the first scan?
-//     {
-//         // there were some isotopic cluster in the last scan...
-//         TableConstIteratorType table_iter = searchClosestCluster_(curr_mz);
-// 				CoordinateType delta_mz = fabs(table_iter->first - curr_mz);
-// 
-// 				#ifdef DEBUG_FEATUREFINDER
-// 				cout << "Candidate at m/z " << table_iter->first << endl;
-// 				cout << "m/z distance to closest cluster : " << delta_mz << endl;
-// 				#endif
-// 				
-//         if ( delta_mz >= mz_tolerance_cluster_) // check if first peak of last cluster is close enough
-//         {
-//             mz_in_hash = curr_mz; // update current hash key
-// 
-// 						#ifdef DEBUG_FEATUREFINDER
-//             cout << "Last peak cluster too far, creating new cluster" << endl;
-// 						cout << "Tolerance : " << mz_tolerance_cluster_ << endl;
-// 						cout << "Creating cluster at m/z " << mz_in_hash << std::endl;
-// 						#endif
-// 
-//             // create new isotopic cluster
-//             IsotopeClusterScoredCharge isoclust;
-//             isoclust.scans_.push_back( currscan_index );          
-//             entry_to_insert = iso_map_.insert( TableType::value_type(mz_in_hash, isoclust) );
-//         }
-//         else
-//         {
-// 						#ifdef DEBUG_FEATUREFINDER
-//             cout << "Found matching cluster within distance (m/z) " << delta_mz << endl;
-// 						cout << "Tolerance : " << mz_tolerance_cluster_ << endl;
-// 						#endif
-// 						
-// 						// there is at least one cluster with m/z within the tolerance, 
-// 						// so have to check how far away (in rt) this cluster is						
-//             mz_in_hash = table_iter->first;	// set hash key
-// 
-//             pair<TableIteratorType, TableIteratorType> range = iso_map_.equal_range(mz_in_hash);
-//           					
-// 						// equal_range gives us only equal m/z values, but we are search witk a tolerance, so we have to extend the range	
-// 						//cout << "Extending range: " << distance(range.first,range.second);
-// 						while ( ( range.first != iso_map_.begin()) && fabs( (range.first->first-1) - curr_mz) < mz_tolerance_cluster_)
-// 						{
-// 							--(range.first);
-// 						} 
-// 						while (range.second != iso_map_.end() && fabs( (range.second->first+1) - curr_mz) < mz_tolerance_cluster_ ) 
-// 						{
-// 							++(range.second);
-// 						} 
-// 						//cout << " to " <<  distance(range.first,range.second) << endl;
-// 						
-// 						// we want to find the previous scan
-// 						// currentscan_index can't be zero so we don't have to check for that.
-//             UInt scan_wanted = (currscan_index - 1);
-// 				
-// 						if (!checkForMatchingCluster_(range,scan_wanted,entry_to_insert,curr_mz))
-// 						{
-// 							// nope, too far
-// 							#ifdef DEBUG_FEATUREFINDER
-// 							cout << "But too far away in rt or in the same scan" << endl;
-//         			cout << "=> Creating new cluster at m/z: " << curr_mz<< endl;
-// 							#endif
-// 						
-// 							IsotopeClusterScoredCharge isoclust;
-//         			entry_to_insert = iso_map_.insert( TableType::value_type(curr_mz, isoclust) );						
-// 						}
-//             
-// 						// save current rt and m/z
-//             entry_to_insert->second.scans_.push_back( currscan_index );
-//         }
-//     }
-//     else // we are in the first scan (or haven't found any peak cluster), so we have to create a new cluster 
-//     {
-// 				#ifdef DEBUG_FEATUREFINDER
-//         cout << "First scan => creating new cluster." << endl;
-//         cout << "Creating new cluster at m/z: " << curr_mz<< endl;
-// 				#endif
-// 
-//         mz_in_hash = curr_mz; // update current hash key
-// 
-//         IsotopeClusterScoredCharge isoclust;
-//         isoclust.scans_.push_back( currscan_index );
-//         entry_to_insert = iso_map_.insert( TableType::value_type(mz_in_hash, isoclust) );
-// 
-//     } // end if (iso_last_scan.size() > 0)
-// 
-//     return entry_to_insert;
-// }
-
-// bool BaseSweepSeeder::checkForMatchingCluster_(const pair<TableIteratorType, TableIteratorType>& range, const UInt scan_wanted, 
-//                                                                              TableIteratorType& entry_to_insert, CoordinateType curr_mz )
-// {
-// 	//cout << "checkForMatchingCluster_: " << scan_wanted << endl;
-// 
-// 	// so far we check only for matching cluster in the previous scan
-// 	// maybe it makes sense to take masses being further away into account
-// 	UInt closest_scan = 0;
-// 	bool scan_found   = false;
-// 		
-// 	// loop over all matching cluster
-// 	for (TableIteratorType iter = range.first; iter != range.second; ++iter)
-// 	{
-// 			if (fabs(curr_mz - iter->first) >= mz_tolerance_cluster_) continue;
-//    		// enumerate all scans
-//     	// the scan number we are searching for is not necessarily the last one
-//     	// in this cluster if there were other very close local maxima in the same scan.
-//     	for (vector<UInt>::const_iterator it = iter->second.scans_.begin();
-//       	     it != iter->second.scans_.end();
-//             ++it)
-//     	{
-// 					//cout << "it: " << *it << endl;
-// 					// find closest scan number
-// 					if (*it >= closest_scan && *it <= scan_wanted)
-// 					{
-// 						closest_scan   = *it;				
-// 						entry_to_insert = iter;		// remember iterator
-// 						scan_found      = true;
-// 						//cout << "Bingo ! " << endl;	
-// 					}			
-// 			}
-// 			//cout << "******************************************************************************-" << endl;
-// 	} // end for (TableIteratorType )
-// 	
-// 	//cout << "scan wanted: " << scan_wanted << " closest scan " << closest_scan << endl;
-// 	
-// 	UInt dist = (scan_wanted - closest_scan);	
-// 	//cout << "distance : " << dist << endl;
-// 	if (dist < rt_tolerance_cluster_ && scan_found)
-// 	{		
-// 		return true;	
-// 	}
-// 	
-// 	//cout << "Too far in rt..." << endl;
-// 	//cout << "tolerance : " << rt_tolerance_cluster_ << endl;
-// 	
-// 	// That's too far
-// 	return false;	
-// }
-
 void BaseSweepSeeder::sumUp_(SpectrumType& scan, UInt current_scan_index)
 {	
 		for ( UInt i=current_scan_index + 1; i <= current_scan_index + scans_to_sumup_ && i < traits_->getData().size() ; ++i )
@@ -792,16 +507,6 @@ void BaseSweepSeeder::sumUp_(SpectrumType& scan, UInt current_scan_index)
 				AlignAndSum_(scan,traits_->getData()[i]);
     }
 }
-
-// void BaseSweepSeeder::substractLastScan_(SpectrumType& current_scan, UInt current_scan_index)
-// {
-// 		if (current_scan_index >= 1)
-// 		{		
-// 			cout << "Substracting " << (current_scan_index-1) << endl; 
-// 			AlignAndSubstract_(current_scan,traits_->getData()[ current_scan_index-1 ]);		
-// 		}
-// }
-
 
 void BaseSweepSeeder::addNextScan_(SpectrumType& scan, UInt current_scan_index)
 {
@@ -854,52 +559,6 @@ void BaseSweepSeeder::AlignAndSum_(SpectrumType& scan, const SpectrumType& neigh
     } // end for (all peaks in neighbouring scan)
 		
 }	// end of AlignAndSum_(....)
-
-
-// void BaseSweepSeeder::AlignAndSubstract_(SpectrumType& scan, const SpectrumType& neighbour)
-// {
-//     if (scan.size() == 0 || neighbour.size() == 0)
-//         return;
-// 
-//     UInt index_newscan = 0;
-//     for (SpectrumType::const_iterator p = neighbour.begin(); p != neighbour.end(); ++p)
-//     {
-// 
-//         while (scan[index_newscan].getMZ() < p->getMZ() && index_newscan < scan.size())
-// 					++index_newscan;
-//         
-// 				// This seems to happen more frequently than expected -> quit the loop
-//         if (index_newscan >= scan.size() )
-//             break;
-// 
-//         if (index_newscan > 0)
-//         {
-//             CoordinateType left_diff   = fabs(scan[index_newscan-1].getMZ() - p->getMZ());
-//             CoordinateType right_diff = fabs(scan[index_newscan].getMZ() - p->getMZ());
-// 
-//             // check which neighbour is closer
-//             if (left_diff < right_diff && (left_diff < mass_tolerance_alignment_) )
-//             {
-//                 scan[ (index_newscan-1) ].setIntensity( scan[ (index_newscan-1) ].getIntensity() - p->getIntensity() );
-//             }
-//             else if (right_diff < mass_tolerance_alignment_)
-//             {
-//                 scan[ (index_newscan) ].setIntensity( scan[ (index_newscan) ].getIntensity() - p->getIntensity() );
-//             }
-//         }
-//         else // no left neighbour available
-//         {
-//             CoordinateType right_diff = fabs(scan[index_newscan].getMZ() - p->getMZ());
-//             if (right_diff < mass_tolerance_alignment_)
-//             {
-//                 scan[index_newscan].setIntensity( scan[index_newscan].getIntensity() - p->getIntensity() );
-//             }
-//         }
-//     } // end for (all peaks in neighbouring scan)
-// 		
-// }	// end of AlignAndSubstract_(....)
-
-
 
 }	// end of namespace OpenMS
 

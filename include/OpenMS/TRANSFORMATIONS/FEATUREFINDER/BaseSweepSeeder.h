@@ -98,8 +98,7 @@ namespace OpenMS
     		IsotopeClusterScoredCharge()
       		:	IsotopeCluster(),
 						scored_charges_(),
-						first_scan_()//,
-						//last_scan_()
+						first_scan_()
 				{	
 				}
 				
@@ -107,8 +106,6 @@ namespace OpenMS
     		std::vector< ScoredChargeType > scored_charges_;
 				/// first scan
 				UInt first_scan_;
-				/// last scan
-				//UInt last_scan_;
 			};		
 
 			/// LC-MS map
@@ -166,12 +163,6 @@ namespace OpenMS
 			
 			/// Aligns two scans and increases intensities of peaks in @p scan if those peaks are present in @p neighbour
 			void AlignAndSum_(SpectrumType& scan, const SpectrumType& neighbour);
-			
-			/// Aligns two scans and substracts the intensities of matching points.
-// 			void AlignAndSubstract_(SpectrumType& scan, const SpectrumType& neighbour);
-			
-			/// Substracts the last scan
-// 			void substractLastScan_(SpectrumType& scan, UInt current_scan_index);
 						
 			/// Aligns current scan with its successor
 			void addNextScan_(SpectrumType& scan, UInt current_scan_index);
@@ -181,44 +172,6 @@ namespace OpenMS
 			
 			/// Decide about most likely charge state by majority vote
 			void voteForCharge_();
-			
-			/// Finds the neighbour of the peak denoted by @p current_mz in the previous scan and returns the mass distance
-// 	    TableConstIteratorType searchClosestCluster_(const CoordinateType current_mz)
-// 	    {
-// 	      // perform binary search to find the closest peak cluster in m/z
-// 	      // 	lower_bound finds the first element whose key is not less than current_mz.first
-// 	      TableConstIteratorType iter = iso_map_.lower_bound( current_mz );
-// 	
-// 	      // the peak found by lower_bound does not have to be the closest one, therefore we have
-// 	      // to check both neighbours
-// 	      if ( iter == iso_map_.end() ) // we are at the end and have only one choice
-// 	      {
-// 	      	--iter;
-// 	      }
-//         // if the found peak is at the beginning of the spectrum,
-//         // there is not much we can do.
-//         else if ( iter != iso_map_.begin() )
-//         {
-// 					// check which neighbour (left or right) is closer
-//           if ( (iter->first - current_mz) < (current_mz - (--iter)->first) )
-//           {
-//           	++iter;    // peak to the right is closer
-//           }
-// 	      }
-// 				return iter;
-// 	    }
-// 			
-			/// check for cluster in previous scans
-			//TableIteratorType checkInPreviousScans_(const ScoredMZType&,  const UInt);
-			
-			/// check for matching cluster. called when there are several point cluster with similar masses.
-			//bool checkForMatchingCluster_(const std::pair<TableIteratorType, TableIteratorType>&, const UInt, TableIteratorType&, CoordinateType curr_mz);
-			
-			/// computes the median scan number for a hash entry
-			//void computeBorders_(TableIteratorType& entry);
-			
-			/// filters sweepline hash for overlapping point cluster with the same charge
-			//void filterForOverlaps_();
 			
 			/// filters sweepline hash for tiny (and probably insignificant) regions
 			void filterForSize_();
@@ -230,7 +183,7 @@ namespace OpenMS
 			void mergeIsotopeCluster_(TableIteratorType& it1, const TableIteratorType& it2);
 			
 			/// filters sweepline hash for regions with low p-value
-			//void filterForSignificance_();
+			void filterForSignificance_();
 			
 			/// Deletes the hash entries in @p entries.
 			void deleteHashEntries_(std::vector<bool>& entries);
@@ -257,8 +210,7 @@ namespace OpenMS
 			UInt rt_tolerance_cluster_;
 		
 			/// Max. distance in mz for merged peak cluster
-			CoordinateType max_mz_dist_merging_;
-		
+			CoordinateType max_mz_dist_merging_;		
   };
 }
 #endif // OPENMS_TRANSFORMATIONS_FEATUREFINDER_BASESWEEPSEEDER_H

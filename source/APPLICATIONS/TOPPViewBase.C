@@ -2201,8 +2201,7 @@ namespace OpenMS
 					DoubleReal line_end_mz = spectrum_2[alignment[i].second].getMZ();
 					alignment_lines.push_back(std::make_pair(line_begin_mz, line_end_mz));
 				}
-				active_1d_window->canvas()->setAlignmentLines(alignment_lines);
-				active_1d_window->flippedCanvas()->setAlignmentLines(alignment_lines);
+				active_1d_window->setAlignmentLines(alignment_lines);
 			}
 			else
 			{

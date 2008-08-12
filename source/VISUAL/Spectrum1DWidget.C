@@ -28,6 +28,7 @@
 #include <OpenMS/VISUAL/Spectrum1DWidget.h>
 #include <OpenMS/VISUAL/AxisWidget.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum1DGoToDialog.h>
+#include <OpenMS/VISUAL/Alignment1DWidget.h>
 
 #include <QtGui/QScrollBar>
 
@@ -178,6 +179,45 @@ namespace OpenMS
 	void Spectrum1DWidget::setHasSecondCanvas(bool has_second_canvas)
 	{
 		has_second_canvas_ = has_second_canvas;
+	}
+	
+	void Spectrum1DWidget::setAlignmentLines(const std::vector<std::pair<DoubleReal,DoubleReal> >& alignment_lines)
+	{
+		alignment_widget_ = new Alignment1DWidget(this, this);
+		alignment_widget_->setAlignmentLines(alignment_lines);
+		
+		grid_->removeWidget(flippedCanvas());
+		grid_->removeWidget(flipped_y_axis_);
+		grid_->removeWidget(x_axis_);
+		grid_->removeWidget(x_scrollbar_);
+		
+		//place alignment widget between the two canvasses
+		grid_->addWidget(alignment_widget_, 1, 2);
+		
+		//move everything else downwards
+		grid_->addWidget(flippedCanvas(), 2, 2);
+		grid_->addWidget(flipped_y_axis_, 2, 1);
+		grid_->addWidget(x_axis_, 3, 2);
+		grid_->addWidget(x_scrollbar_, 4, 2);
+		
+		alignment_widget_->show();
+	}
+	
+	void Spectrum1DWidget::clearAlignmentLines()
+	{
+		alignment_widget_->hide();
+		delete alignment_widget_;
+		
+		grid_->removeWidget(flippedCanvas());
+		grid_->removeWidget(flipped_y_axis_);
+		grid_->removeWidget(x_axis_);
+		grid_->removeWidget(x_scrollbar_);
+		
+		//move everything back upwards
+		grid_->addWidget(flippedCanvas(), 1, 2);
+		grid_->addWidget(flipped_y_axis_, 1, 1);
+		grid_->addWidget(x_axis_, 2, 2);
+		grid_->addWidget(x_scrollbar_, 3, 2);
 	}
 	
 	void Spectrum1DWidget::recalculateAxes_()

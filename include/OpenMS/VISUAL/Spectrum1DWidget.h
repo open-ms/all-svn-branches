@@ -39,6 +39,7 @@ class QAction;
 namespace OpenMS
 {
 	class Spectrum1DCanvas;
+	class Alignment1DWidget;
 
 	/**
 		@brief Widget for visualization of several spectra
@@ -89,6 +90,12 @@ namespace OpenMS
 		/// Calculates and sets the united ranges for the canvas and the second (vertically flipped) canvas
 		void calculateUnitedRanges(bool reset_zoom = false);
 		
+		/// Shows the alignment widget and sets its alignment_lines_ to @p alignment_lines
+		void setAlignmentLines(const std::vector<std::pair<DoubleReal,DoubleReal > >& alignment_lines);
+		
+		/// Clears and hides the alignment widget
+		void clearAlignmentLines();			
+		
 	signals:
 		/// Is emitted whenever the visible area changes.		
 		void visibleAreaChanged(double, double); 
@@ -112,6 +119,8 @@ namespace OpenMS
 		Spectrum1DCanvas* flipped_canvas_;
 		/// The axis widget of the second canvas
 		AxisWidget* flipped_y_axis_;
+		/// The alignment widget between both canvasses
+		Alignment1DWidget* alignment_widget_;
 		/// Indicates whether this widget currently shows an additional (vertically flipped) canvas
 		bool has_second_canvas_;
 	

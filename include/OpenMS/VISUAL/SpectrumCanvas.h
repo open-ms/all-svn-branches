@@ -33,6 +33,8 @@
 #include <OpenMS/VISUAL/LayerData.h>
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/VISUAL/Annotations1DManager.h>
+#include <OpenMS/VISUAL/Alignment1DWidget.h>
+
 //QT
 #include <QtGui/QWidget>
 #include <QtGui/QRubberBand>
@@ -51,7 +53,6 @@ namespace OpenMS
 {
 	class SpectrumWidget;
 	class FileWatcher;
-	class Annotation1DDistanceItem;
 	
 	/**
 		@brief Base class for visualization canvas classes
@@ -86,6 +87,8 @@ namespace OpenMS
 		
 		/// The annotation manager needs access to the protected dataToWidget_() method
 		friend class Annotations1DManager;
+		/// The alignment widget needs access to the protected dataToWidget_() method
+		friend class Alignment1DWidget;
 		
 	public:
 		/**	@name Type definitions */

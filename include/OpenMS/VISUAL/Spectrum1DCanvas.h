@@ -107,12 +107,6 @@ namespace OpenMS
 			/// Returns whether we are currently in mirror mode or not (two 1d canvasses on one widget)
 			bool inMirrorMode();
 			
-			/// Sets the @p alignment_lines of the canvas
-			void setAlignmentLines(const std::vector<std::pair<DoubleReal,DoubleReal > >& alignment_lines);
-			
-			/// Clears alignment_lines_
-			void clearAlignmentLines();
-			
 			// Docu in base class
 			virtual void showCurrentLayerPreferences();
 
@@ -191,8 +185,6 @@ namespace OpenMS
       Annotations1DManager annotation_manager_;
       /// Indicates whether this canvas is currently in mirror mode with another 1d canvas
       bool in_mirror_mode_;
-      /// Vector containing all the peak-connecting lines of a spectrum alignment (stored as m/z values)
-      std::vector<std::pair<DoubleReal, DoubleReal > > alignment_lines_;
       
 			/// Find peak next to the given position
 			PeakIndex findPeakAtPosition_(QPoint);

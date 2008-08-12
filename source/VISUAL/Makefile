@@ -62,7 +62,8 @@ CPP_SOURCES=\
 	Annotation1DItem.C\
 	Annotation1DDistanceItem.C\
 	Annotation1DTextItem.C\
-	Annotation1DPeakItem.C
+	Annotation1DPeakItem.C\
+	Alignment1DWidget.C\
 
 
 MOC_SOURCES=\
@@ -82,7 +83,8 @@ MOC_SOURCES=\
 	Spectrum3DCanvas_moc.C\
 	Spectrum3DOpenGLCanvas_moc.C\
 	Spectrum3DWidget_moc.C\
-	ParamEditor_moc.C
+	ParamEditor_moc.C\
+	Alignment1DWidget_moc.C
 
 SOURCES		= $(CPP_SOURCES) $(MOC_SOURCES)
 OBJECTS 	= $(SOURCES:.C=.o)
@@ -184,6 +186,9 @@ MSMetaDataExplorer_moc.C:  $(HEADER_DIR)/MSMetaDataExplorer.h
 
 ParamEditor_moc.C:  $(HEADER_DIR)/ParamEditor.h
 	$(MOC) $(HEADER_DIR)/ParamEditor.h -o ParamEditor_moc.C
+	
+Alignment1DWidget_moc.C:	$(HEADER_DIR)/Alignment1DWidget.h
+	$(MOC) $(HEADER_DIR)/Alignment1DWidget.h -o Alignment1DWidget_moc.C
 
 
 

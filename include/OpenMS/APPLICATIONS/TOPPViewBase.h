@@ -186,8 +186,6 @@ namespace OpenMS
       void showCurrentPeaksAs3D();
 			/// Shows the spectrum with index @p index of the active layer in 1D
 			void showSpectrumAs1D(int index);
-			/// Shows the spectrum with index @p index of the specified @p layer in 1D
-			void showSpectrumAs1D(const LayerData* layer, int index);
       /// Shows the 'About' dialog
       void showAboutDialog();
       /// Saves the whole current layer data

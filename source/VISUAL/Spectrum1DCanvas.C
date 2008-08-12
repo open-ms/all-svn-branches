@@ -59,8 +59,7 @@ namespace OpenMS
 	Spectrum1DCanvas::Spectrum1DCanvas(const Param& preferences, QWidget* parent)
 		: SpectrumCanvas(preferences, parent),
 			annotation_manager_(qobject_cast<SpectrumCanvas*>(this)),
-			in_mirror_mode_(0),
-			alignment_lines_()
+			in_mirror_mode_(0)
 	{
     //Paramater handling
     defaults_.setValue("highlighted_peak_color", "#ff0000", "Highlighted peak color.");
@@ -500,16 +499,6 @@ namespace OpenMS
 		return in_mirror_mode_;
 	}
 	
-	void Spectrum1DCanvas::setAlignmentLines(const std::vector<std::pair<DoubleReal, DoubleReal > >& alignment_lines)
-	{
-		alignment_lines_ = alignment_lines;
-	}
-	
-	void Spectrum1DCanvas::clearAlignmentLines()
-	{
-		alignment_lines_.clear();
-	}
-	
 	void Spectrum1DCanvas::paintEvent(QPaintEvent* e)
 	{
 		//Only fill background if no layer is present
@@ -711,20 +700,11 @@ namespace OpenMS
 		//draw all annotation items of the current layer
 		annotation_manager_.drawAnnotations(getCurrentLayer(), painter);
 		
-		//draw peak-connecting lines if an alignment was performed
-		painter.setPen(Qt::red);
-		QPoint begin_p, end_p, dummy_point;
-		SpectrumCanvas::dataToWidget_(0.0, 0.0, dummy_point);
-		double y_pos = dummy_point.y();
-		//y_pos += is_flipped_vertically_ ? 1.0 : -1.0;
-		double double_dummy = 0.0;
-
-		for (UInt i = 0; i < alignment_lines_.size(); ++i)
-		{
-			SpectrumCanvas::dataToWidget_(alignment_lines_[i].first, double_dummy, begin_p);
-			SpectrumCanvas::dataToWidget_(alignment_lines_[i].second, double_dummy, end_p);
-			painter.drawLine(begin_p.x(), y_pos, end_p.x(), y_pos);
-		}
+		//draw x-axis
+		QPoint bottom_left;
+		SpectrumCanvas::dataToWidget_(0.0, 0.0, bottom_left);					
+		painter.setPen(Qt::black);
+		painter.drawLine(0, bottom_left.y(), width(), bottom_left.y());
 		
 		painter.end();
 #ifdef DEBUG_TOPPVIEW
@@ -1129,7 +1109,6 @@ namespace OpenMS
 		
 		//update ranges
 		recalculateRanges_(0,2,1);
-		
 		
 		resetZoom();
 	}

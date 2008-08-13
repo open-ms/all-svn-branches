@@ -1,4 +1,4 @@
-// -*- Mode: C++; tab-width: 2; -*-
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -36,6 +36,8 @@ namespace OpenMS
 {
 	/**
 		@brief File adapter for MzData files
+		
+		@todo Implement 'accessionNumber' attribute - stored in ExperimentalSettings (Clemens, Chris, Marc)
 		
 		@ingroup FileIO
 	*/

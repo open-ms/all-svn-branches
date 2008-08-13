@@ -1,4 +1,4 @@
-// -*- Mode: C++; tab-width: 2; -*-
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -96,6 +96,11 @@ namespace OpenMS
 																																			const String&              allowed_characters,
 																																			UInt                maximum_sequence_length);      
     	
+      /// creates composition vectors with additional length and average weight information for 'sequences' and stores them in LibSVM compliant format
+			svm_problem* encodeLibSVMProblemWithCompositionLengthAndWeightVectors(const std::vector<String>&    sequences,
+																																						std::vector<DoubleReal>& labels,
+																																						const String& 	 				  allowed_characters);
+
     	/// stores the LibSVM-encoded data in a text file that can be used by the LibSVM applications (svm-scale, svm-train,...)
 			bool storeLibSVMProblem(const String& filename, const svm_problem* problem) const;
 
@@ -145,12 +150,6 @@ namespace OpenMS
 			*/ 				
 			void libSVMVectorsToString(svm_problem* vector, String& output);			
 
-			void encodeOligo(const String& sequence,
-								       UInt k_mer_length,
-											 const String& allowed_characters,
-											 std::vector< std::pair<Int, DoubleReal> >& values);
-			
-      
       /**
  				@brief encodes an AASequence instance in oligo encoding
  				

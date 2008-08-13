@@ -1,4 +1,4 @@
-# -*- Mode: makefile; tab-width: 2; -*-
+# -*- mode: makefile; tab-width: 2; -*-
 # vi: set ts=2:
 #
 # --------------------------------------------------------------------------
@@ -34,6 +34,7 @@ HEADER_DIR=$(OPENMS_PATH)/include/OpenMS/$(DIRECTORY)
 UTILS_EXECUTABLES=\
 	FuzzyDiff\
 	Digestor\
+	IdXMLInfo\
 	XMLValidator\
 	FFEval
 

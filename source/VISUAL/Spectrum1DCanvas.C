@@ -1,4 +1,4 @@
-// -*- Mode: C++; tab-width: 2; -*-
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -650,7 +650,7 @@ namespace OpenMS
 		QVector<QRect> rects = e->region().rects();
 		for (int i = 0; i < (int)rects.size(); ++i)
 		{
-			painter.drawPixmap(rects[i].topLeft(), buffer_, rects[i]);
+			painter.drawImage(rects[i].topLeft(), buffer_, rects[i]);
 		}
 		// draw measuring line when in measure mode and valid measurement start peak selected
 		if (action_mode_ == AM_MEASURE && measurement_start_.isValid())

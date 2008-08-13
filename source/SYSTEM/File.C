@@ -1,4 +1,4 @@
-// -*- Mode: C++; tab-width: 2; -*-
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -101,11 +101,21 @@ namespace OpenMS
 
 	bool File::writable(const String& file)
 	{
-		QFile f;
-		f.setFileName(file.c_str());
-		f.open(QIODevice::WriteOnly);
-		bool tmp = f.isWritable();
-		f.close();
+		QFileInfo fi(file.c_str());
+		
+		bool tmp(false);
+		if (!fi.exists())
+		{
+			QFile f;
+			f.setFileName(file.c_str());
+			f.open(QIODevice::WriteOnly);
+			tmp = f.isWritable();
+			f.close();
+		}
+		else
+		{
+			tmp = fi.isWritable();
+		}
 		
 		return tmp;
 	}

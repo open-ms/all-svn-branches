@@ -1,4 +1,4 @@
-// -*- Mode: C++; tab-width: 2; -*-
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -170,8 +170,7 @@ namespace OpenMS
 #ifdef TIMING_TOPPVIEW
 		QTime timer;
 		timer.start();
-#endif	
-		
+#endif
 		const LayerData& layer = getLayer(layer_index);
 		
 		percentage_factor_ = 1.0;
@@ -230,6 +229,8 @@ namespace OpenMS
 			}
 			//cout << "peaks: " << peaks << "  scans: " << scans << endl;
 			//cout << "width: " << width() << "  height: " << height() << endl;
+			Int image_width = buffer_.width();
+			Int image_height = buffer_.height();
 			for (ExperimentType::ConstAreaIterator i = layer.peaks.areaBeginConst(visible_area_.min()[1],visible_area_.max()[1],visible_area_.min()[0],visible_area_.max()[0]); 
 					 i != layer.peaks.areaEndConst(); 
 					 ++i)
@@ -237,17 +238,25 @@ namespace OpenMS
 				PeakIndex pi = i.getPeakIndex();
 				if (layer.filters.passes(layer.peaks[pi.spectrum],pi.peak))
 				{
-					painter.setPen(heightColor_(i->getIntensity(), layer.gradient));
+					QRgb color = heightColor_(i->getIntensity(), layer.gradient).rgb();
+					dataToWidget_(i->getMZ(), i.getRT(),pos);
 					if (dots)
 					{
-						dataToWidget_(i->getMZ(), i.getRT(),pos);
-						painter.drawPoint(pos.x(),pos.y());
+						if (pos.x()<image_width && pos.y()<image_height)
+						{
+							buffer_.setPixel(pos.x(),pos.y(), color);
+						}
 					}
 					else
 					{
-						dataToWidget_(i->getMZ(), i.getRT(),pos);
-						painter.drawLine(pos.x(),pos.y()-1,pos.x(),pos.y()+1);
-						painter.drawLine(pos.x()-1,pos.y(),pos.x()+1,pos.y());
+						if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
+						{
+							buffer_.setPixel(pos.x()   ,pos.y()   ,color);
+							buffer_.setPixel(pos.x()-1 ,pos.y()   ,color);
+							buffer_.setPixel(pos.x()+1 ,pos.y()   ,color);
+							buffer_.setPixel(pos.x()   ,pos.y()-1 ,color);
+							buffer_.setPixel(pos.x()   ,pos.y()+1 ,color);
+						}
 					}
 				}
 			}
@@ -775,7 +784,7 @@ namespace OpenMS
 		QVector<QRect> rects = e->region().rects();
 		for (int i = 0; i < (int)rects.size(); ++i)
 		{
-			painter.drawPixmap(rects[i].topLeft(), buffer_, rects[i]);
+			painter.drawImage(rects[i].topLeft(), buffer_, rects[i]);
 		}
 		
 		//draw measurement peak
@@ -829,7 +838,10 @@ namespace OpenMS
 		cout << "END   " << __PRETTY_FUNCTION__ << endl;
 #endif
 #ifdef TIMING_TOPPVIEW
-		cout << "2D PaintEvent took " << timer.elapsed() << " ms" << endl << endl;
+		if (update_buffer_)
+		{
+			cout << "2D PaintEvent took " << timer.elapsed() << " ms" << endl << endl;
+		}
 #endif	
 	}
 

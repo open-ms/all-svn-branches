@@ -1,4 +1,4 @@
-// -*- Mode: C++; tab-width: 2; -*-
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -35,6 +35,11 @@
 #include <OpenMS/MATH/STATISTICS/Histogram.h>
 #include <OpenMS/MATH/STATISTICS/StatisticFunctions.h>
 
+// Eva
+#include <OpenMS/CHEMISTRY/ElementDB.h>
+#include <OpenMS/CHEMISTRY/Element.h>
+// Eva
+
 #include <numeric>
 #include <fstream>
 
@@ -53,8 +58,10 @@ namespace OpenMS
     @ref FeatureFinderAlgorithmPicked_Parameters are explained on a separate page.
 
 		@todo Add RT model with tailing/fronting (Marc)
+		@todo Add choise monoisotopic vs. average feature mass (Marc)
+		
 		@improvement The elution profile could be integrated into the trace score (Marc)
-				
+		
 		@experimental This algorithm is work in progress and might change.
 
 		@ingroup FeatureFinder
@@ -135,15 +142,17 @@ namespace OpenMS
 					}
 				}
 
-				///Returns the average m/z of all peaks in this trace
+				///Returns the average m/z of all peaks in this trace (weighted by intensity)
 				DoubleReal getAvgMZ() const
 				{
 					DoubleReal sum = 0.0;
+					DoubleReal intensities = 0.0;
 					for (UInt i=0; i<peaks.size(); ++i)
 					{
-						sum += peaks[i].second->getMZ();
+						sum += peaks[i].second->getMZ()*peaks[i].second->getIntensity();
+						intensities += peaks[i].second->getIntensity();
 					}
-					return sum / peaks.size();
+					return sum / intensities;
 				}
 				
 				///Checks if this Trace is valid (has more than 2 points)
@@ -341,7 +350,7 @@ namespace OpenMS
 				this->defaults_.setMinFloat("mass_trace:mz_tolerance",0.0);
 				this->defaults_.setValue("mass_trace:min_spectra",14,"Number of spectra the have to show the same peak mass for a mass trace.");
 				this->defaults_.setMinInt("mass_trace:min_spectra",1);
-				this->defaults_.setValue("mass_trace:max_missing",4,"Number of spectra where a high mass deviation or missing peak is acceptable.");
+				this->defaults_.setValue("mass_trace:max_missing",4,"Number of spectra where a high mass deviation or missing peak is acceptable.\n This parameter should be well below 'min_spectra'!");
 				this->defaults_.setMinInt("mass_trace:max_missing",0);
 				this->defaults_.setValue("mass_trace:slope_bound",0.1,"The maximum slope of mass trace intensities when extending from the highest peak", true);
 				this->defaults_.setMinFloat("mass_trace:slope_bound",0.0);
@@ -387,6 +396,8 @@ namespace OpenMS
 				this->defaults_.setValue("feature:max_intersection",0.35, "Maximum allowed intersection of features.", true);
 				this->defaults_.setMinFloat("feature:max_intersection",0.0);
 				this->defaults_.setMaxFloat("feature:max_intersection",1.0);
+				this->defaults_.setValue("feature:reported_mz","average", "The mass type that is reported for features.\n'average' returns the average mass of the highest mass trace.\n'monoisotopic' returns the theoretical averagene m/z calculated from the average mass.");
+				this->defaults_.setValidStrings("feature:reported_mz",StringList::create("average,monoisotopic"));
 				this->defaults_.setSectionDescription("feature","Settings for the features (intensity, quality assessment, ...)");
 						
 				this->defaultsToParam_();
@@ -1000,7 +1011,76 @@ namespace OpenMS
 							f.setMetaValue("score_correlation",correlation);
 						}
 						f.setRT(x0);
-						f.setMZ(traces[traces.getTheoreticalMax()].getAvgMZ());
+						
+						//Calculate the mass of the feature: 
+						//- monoisotopic
+						//- average
+						if((String)(param_.getValue("feature:reported_mz"))=="average")
+						{
+							f.setMZ(traces[traces.getTheoreticalMax()].getAvgMZ());
+						}
+						else
+						{
+							// compute the average mz value of the whole feature
+							DoubleReal total_intensity = 0.0;
+							DoubleReal average_mass = 0.0;
+	 						for (UInt u=0; u<traces.size(); ++u)
+							{
+								for (UInt v=0; v<traces[u].peaks.size(); ++v)
+								{
+									average_mass += traces[u].peaks[v].second->getMZ()*traces[u].peaks[v].second->getIntensity();
+									total_intensity+=traces[u].peaks[v].second->getIntensity();
+								}
+							}
+							average_mass /= total_intensity;
+	
+							// given the average mz value, estimate the theoretical monoisotopic mass of an averagine
+							const ElementDB* db = ElementDB::getInstance();
+	
+							//Averagine element count divided by averagine weight 
+							std::vector<DoubleReal> factors;
+							factors.push_back(4.9384/111.1254);
+							factors.push_back(7.7583/111.1254);
+							factors.push_back(1.3577/111.1254);
+							factors.push_back(1.4773/111.1254);
+							factors.push_back(0.0417/111.1254);
+	
+							std::vector<String> names;
+							names.push_back("C");
+							names.push_back("H");
+							names.push_back("N");
+							names.push_back("O");
+							names.push_back("S");
+	
+							DoubleReal mono_mass = 0.0;
+							for (UInt w=0; w!=names.size(); ++w)
+							{
+								mono_mass  += db->getElement(names[w])->getMonoWeight()*factors[w]*average_mass;
+							}
+	
+							// try to determine the monoisotopic mass trace in the data
+							// if it is not found, use the theoretical value
+							DoubleReal dist = std::numeric_limits<DoubleReal>::max();
+							DoubleReal exp_mono_mass = 0.0;
+							for (UInt u=0; u<traces.size(); ++u)
+							{
+								DoubleReal act_exp_mono_mass = traces[u].getAvgMZ();
+								if (fabs(act_exp_mono_mass - mono_mass) < dist)
+								{
+									dist = fabs(act_exp_mono_mass - mono_mass);
+									exp_mono_mass = act_exp_mono_mass;
+								}
+							}
+							if (dist < trace_tolerance_)
+							{
+								f.setMZ(exp_mono_mass);
+							}
+							else
+							{
+								f.setMZ(mono_mass);
+							}
+						}
+						
 						//Calculate intensity based on model only
 						// - the model does not include the baseline, so we ignore it here
 						// - as we scaled the isotope distribution to 
@@ -1084,14 +1164,18 @@ namespace OpenMS
 					}
 				}
 				//finally remove features with intensity 0
+				UInt removed = 0;
 				for(Int i=this->features_->size()-1; i>=0; --i)
 				{
 					if (this->features_->operator[](i).getIntensity()==0)
 					{
+						++removed;
 						this->features_->erase(this->features_->begin()+i);
 					}
 				}
 				this->ff_->endProgress();
+				std::cout << "Removed " << removed << " overlapping features." << std::endl;
+				std::cout << this->features_->size() << " features left." << std::endl;
 				
 				//Abort reasons 
 				std::cout << std::endl;
@@ -1452,7 +1536,7 @@ namespace OpenMS
 				DoubleReal rt_min = max_trace.peaks.begin()->first;
 				log_ << "   - rt bounds: " << rt_min << "-" << rt_max << std::endl;
 				//Abort if too few peak were found
-				if (max_trace.peaks.size()<2*min_spectra_-max_missing_trace_peaks_)
+				if (!max_trace.isValid() || max_trace.peaks.size()<2*min_spectra_-max_missing_trace_peaks_)
 				{
 					log_ << "   - could not extend trace with maximum intensity => abort" << std::endl;
 					return;

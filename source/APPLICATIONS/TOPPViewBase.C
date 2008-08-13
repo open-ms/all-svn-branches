@@ -1395,6 +1395,10 @@ namespace OpenMS
 				const LayerData& layer_tmp = active1DWindow_()->flippedCanvas()->getLayer(index);
 				active1DWindow_()->canvas()->addLayerData(layer_tmp);
 				active1DWindow_()->flippedCanvas()->removeLayer(index);
+				
+				//ensure layer is drawn as sticks
+				draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
+				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
 			}
 			//move layer from upper to mirror canvas
 			else if (selected != 0 && selected->text() == "Move to mirror canvas (1D)")
@@ -1407,6 +1411,10 @@ namespace OpenMS
 				}
 				active1DWindow_()->flippedCanvas()->addLayerData(layer_tmp);
 				active1DWindow_()->canvas()->removeLayer(layer);
+				
+				//ensure layer is drawn as sticks
+				draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
+				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
 			}
 			
 			//Update tab bar and window title
@@ -2157,6 +2165,7 @@ namespace OpenMS
 				FeatureMapType dummy;
 				addData_(dummy, new_exp, false, false, true, "", seq_string + QString(" (theoretical)"));
 	      
+	      // ensure spectrum is drawn as sticks (otherwise it will be a straight line)
 	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
 				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
 			}

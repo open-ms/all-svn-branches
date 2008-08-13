@@ -107,6 +107,11 @@ namespace OpenMS
 	
 	void Spectrum1DCanvas::mousePressEvent(QMouseEvent* e)
 	{
+		if (current_layer_ >= getLayerCount())
+		{
+			return;
+		}
+		
 		// get mouse position in widget coordinates
 		last_mouse_pos_ = e->pos();
 	
@@ -165,10 +170,17 @@ namespace OpenMS
 				}
 			}
 		}
+		update_buffer_ = true;
+		update_(__PRETTY_FUNCTION__);
 	}
 
 	void Spectrum1DCanvas::mouseMoveEvent(QMouseEvent* e)
 	{
+		if (current_layer_ >= getLayerCount())
+		{
+			return;
+		}
+		
 		// mouse position relative to the diagram widget
 		QPoint p = e->pos();
 		
@@ -217,7 +229,6 @@ namespace OpenMS
 					}
 					
 					last_mouse_pos_ = p;
-					
 					update_(__PRETTY_FUNCTION__);
 				}
 			}
@@ -258,6 +269,11 @@ namespace OpenMS
 	
 	void Spectrum1DCanvas::mouseReleaseEvent(QMouseEvent* e)
 	{
+		if (current_layer_ >= getLayerCount())
+		{
+			return;
+		}
+		
 		if (e->button() == Qt::LeftButton)
 		{
 			if (action_mode_ == AM_ZOOM)
@@ -291,6 +307,7 @@ namespace OpenMS
 				}
 			}
 			measurement_start_.clear();
+			update_buffer_ = true;
 			update_(__PRETTY_FUNCTION__);
 		}
 	}
@@ -301,6 +318,7 @@ namespace OpenMS
 		if (e->key()==Qt::Key_Delete)
 		{
 			annotation_manager_.removeSelectedItems(getCurrentLayer());
+			update_buffer_ = true;
 			update_(__PRETTY_FUNCTION__);
 		}
 		
@@ -308,6 +326,7 @@ namespace OpenMS
 		if ((e->modifiers() & Qt::ControlModifier) && (e->key()==Qt::Key_A))
 		{
 			annotation_manager_.selectAll(getCurrentLayer());
+			update_buffer_ = true;
 			update_(__PRETTY_FUNCTION__);
 		}
 		
@@ -640,6 +659,22 @@ namespace OpenMS
 						default:
 							throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 					}
+					
+					// draw dashed elongations for pairs of peaks annotated with a distance
+					for(LayerData::Ann1DIterator it = getLayer_(i).annotations_1d_.begin(); it != getLayer_(i).annotations_1d_.end(); ++it)
+					{
+						Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
+						if (distance_item)
+						{
+							if (distance_item->getStartPeak().isValid() && distance_item->getEndPeak().isValid())
+							{
+								drawHighlightedPeak_(i, distance_item->getStartPeak(), painter, true);
+								drawHighlightedPeak_(i, distance_item->getEndPeak(), painter, true);
+							}
+						}
+					}
+					//draw all annotation items
+					annotation_manager_.drawAnnotations(getLayer_(i), painter);
 				}
 			}
 			painter.end();
@@ -656,31 +691,16 @@ namespace OpenMS
 		if (action_mode_ == AM_MEASURE && measurement_start_.isValid())
 		{
 			QPoint measurement_end_point(last_mouse_pos_.x(), measurement_start_point_.y());
-			painter.drawLine(measurement_start_point_, measurement_end_point);
-		}
-		// draw highlighted measurement start peak and selected peak
-		bool with_elongation = (action_mode_ == AM_MEASURE) ? true : false;
-		drawHighlightedPeak_(measurement_start_, painter, with_elongation);
-		drawHighlightedPeak_(selected_peak_, painter, with_elongation);
-		
-		// draw dashed elongations for pairs of peaks annotated with a distance
-		for(LayerData::Ann1DIterator it = getCurrentLayer().annotations_1d_.begin(); it != getCurrentLayer().annotations_1d_.end(); ++it)
-		{
-			Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
-			if (distance_item)
+			if (measurement_end_point.x() >= measurement_start_point_.x())
 			{
-				if (distance_item->getStartPeak().isValid() && distance_item->getEndPeak().isValid())
-				{
-					drawHighlightedPeak_(distance_item->getStartPeak(), painter, true);
-					drawHighlightedPeak_(distance_item->getEndPeak(), painter, true);
-				}
+				painter.drawLine(measurement_start_point_, measurement_end_point);
 			}
 		}
-
-		//draw all annotation items of the current layer
-		annotation_manager_.drawAnnotations(getCurrentLayer(), painter);
+		// draw highlighted measurement start peak and selected peak
+		bool with_elongation = (action_mode_ == AM_MEASURE);
+		drawHighlightedPeak_(current_layer_, measurement_start_, painter, with_elongation);
+		drawHighlightedPeak_(current_layer_, selected_peak_, painter, with_elongation);
 		
-
 //		if (draw_metainfo_)
 //		{
 //			SpectrumIteratorType vbegin, vend;
@@ -701,7 +721,6 @@ namespace OpenMS
 //			}
 //		}
 
-		
 		painter.end();
 #ifdef DEBUG_TOPPVIEW
 		cout << "END   " << __PRETTY_FUNCTION__ << endl;
@@ -711,26 +730,26 @@ namespace OpenMS
 #endif	
 	}
 	
-	void Spectrum1DCanvas::drawHighlightedPeak_(const PeakIndex& peak, QPainter& painter, bool draw_elongation)
+	void Spectrum1DCanvas::drawHighlightedPeak_(UInt layer_index, const PeakIndex& peak, QPainter& painter, bool draw_elongation)
 	{
 		if (peak.isValid())
 		{
 			QPoint begin;
-			const ExperimentType::PeakType& sel = peak.getPeak(getCurrentLayer().peaks);
+			const ExperimentType::PeakType& sel = peak.getPeak(getLayer_(layer_index).peaks);
 
 			painter.setPen(QPen(QColor(param_.getValue("highlighted_peak_color").toQString()), 2));
 				
 			if (intensity_mode_==IM_PERCENTAGE)
 			{
-				percentage_factor_ = overall_data_range_.max()[1]/getCurrentLayer().peaks[0].getMaxInt();
+				percentage_factor_ = overall_data_range_.max()[1]/getLayer_(layer_index).peaks[0].getMaxInt();
 			}
 			
 			dataToWidget_(sel, begin);
 			QPoint top_end;
 			SpectrumCanvas::dataToWidget_(sel.getMZ(), getVisibleArea().maxY(), top_end);					
 			
-			// paint the crosshair only for currently selected peaks
-			if (peak == measurement_start_ || peak == selected_peak_)
+			// paint the crosshair only for currently selected peaks of the current layer
+			if (layer_index == current_layer_ && (peak == measurement_start_ || peak == selected_peak_))
 			{
 				painter.drawLine(begin.x(), begin.y()-4, begin.x(), begin.y()+4);
 				painter.drawLine(begin.x()-4, begin.y(), begin.x()+4, begin.y());

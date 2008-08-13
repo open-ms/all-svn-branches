@@ -151,7 +151,7 @@ namespace OpenMS
 			void dataToWidget_(const PeakType& peak, QPoint& point);
 			
 			/// draws a highlighted peak; if draw_elongation is true, the elongation line is drawn (for measuring)
-			void drawHighlightedPeak_(const PeakIndex& peak, QPainter& painter, bool draw_elongation = false);
+			void drawHighlightedPeak_(UInt layer_index, const PeakIndex& peak, QPainter& painter, bool draw_elongation = false);
 								
 			/**
 				@brief Sets the visible area

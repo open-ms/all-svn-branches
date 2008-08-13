@@ -43,6 +43,12 @@ namespace OpenMS
 	
 	/**
 		@brief Widget visualizing an alignment of two spectra in mirror view
+		
+		This widget visualizes an alignment of two spectra in mirror view. It is
+		located between the two canvasses. If no alignment has been performed yet, it
+		has a fixed height of 1 pixel and draws only an x-axis in order to separate
+		both spectra. If an alignment is performed, it changes its height to 10 pixels,
+		and draws lines connecting the aligned peaks of the two spectra.
 	*/
 	class Alignment1DWidget
 		: public QWidget
@@ -60,7 +66,10 @@ namespace OpenMS
 			void setAlignmentLines(const std::vector<std::pair<DoubleReal,DoubleReal > >& alignment_lines);
 			
 			/// Clears alignment_lines_
-			void clearAlignmentLines();			
+			void clearAlignmentLines();
+				
+			/// Returns whether alignment_lines_ is empty
+			bool isEmpty();
 	
 		public slots:
 		

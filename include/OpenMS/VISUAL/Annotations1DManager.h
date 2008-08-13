@@ -81,6 +81,9 @@ namespace OpenMS
 			/// Constructor
 			Annotations1DManager(SpectrumCanvas* canvas);
 			
+			/// Destructor
+			virtual ~Annotations1DManager();
+			
 			/** @brief Returns a pointer to the item at @p pos on the specified @p layer, or 0, if not existent
 					
 					If more than one item's bounding box encloses @p pos , the one in the

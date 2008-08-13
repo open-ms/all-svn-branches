@@ -54,7 +54,10 @@ namespace OpenMS
 
 			/// Constructor
 			Annotation1DPeakItem(const PointType& position, const PeakIndex& peak, const String& text);
-			
+			/// Copy constructor
+			Annotation1DPeakItem(const Annotation1DPeakItem& rhs);
+			/// Destructor
+			virtual ~Annotation1DPeakItem();
 			/// Returns the current bounding box of this item on the canvas where it has last been drawn
 			const QRectF& boundingBox() const;
 			/// Sets the bounding_box_ for this item
@@ -70,7 +73,7 @@ namespace OpenMS
  			/// Sets the peak annotated by this item
  			void setPeak(const PeakIndex& peak);
 			/// Returns the peak annotated by this item
-			const PeakIndex& getPeak();
+			const PeakIndex& getPeak() const;
  			/// Sets the text
  			void setText(const String& text);
  			/// Returns the text

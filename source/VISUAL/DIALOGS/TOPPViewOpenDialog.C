@@ -77,7 +77,6 @@ namespace OpenMS
 		button_group = new QButtonGroup(this);
 		button_group->addButton(window_);
 		button_group->addButton(layer_);
-		button_group->addButton(mirror_);
 		connect(button_group,SIGNAL(buttonClicked(QAbstractButton*)),this,SLOT(updateViewMode_(QAbstractButton*)));
 		if (!as_window)
 		{
@@ -113,12 +112,6 @@ namespace OpenMS
 		if (window_->isChecked()) return true;
 		return false;	
 	}
-	
-	bool TOPPViewOpenDialog::openAsMirrorCanvas() const
-	{
-		if (mirror_->isChecked()) return true;
-		return false;
-	}
 
 	void TOPPViewOpenDialog::disableMapAs2D(bool as_2d)
 	{
@@ -140,13 +133,6 @@ namespace OpenMS
 		window_->setChecked(as_window);
 		window_->setEnabled(false);
 		layer_->setEnabled(false);
-		mirror_->setEnabled(false);
-	}
-	
-	void TOPPViewOpenDialog::setMirrorImpossible()
-	{
-		mirror_->setEnabled(false);
-		mirror_->setChecked(false);
 	}
 	
 	void TOPPViewOpenDialog::updateViewMode_(QAbstractButton* button)

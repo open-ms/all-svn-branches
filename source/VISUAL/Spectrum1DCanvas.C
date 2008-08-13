@@ -677,6 +677,10 @@ namespace OpenMS
 			}
 		}
 
+		//draw all annotation items of the current layer
+		annotation_manager_.drawAnnotations(getCurrentLayer(), painter);
+		
+
 //		if (draw_metainfo_)
 //		{
 //			SpectrumIteratorType vbegin, vend;
@@ -697,14 +701,6 @@ namespace OpenMS
 //			}
 //		}
 
-		//draw all annotation items of the current layer
-		annotation_manager_.drawAnnotations(getCurrentLayer(), painter);
-		
-		//draw x-axis
-		QPoint bottom_left;
-		SpectrumCanvas::dataToWidget_(0.0, 0.0, bottom_left);					
-		painter.setPen(Qt::black);
-		painter.drawLine(0, bottom_left.y(), width(), bottom_left.y());
 		
 		painter.end();
 #ifdef DEBUG_TOPPVIEW
@@ -775,6 +771,13 @@ namespace OpenMS
 			update_(__PRETTY_FUNCTION__);
 		}
 	}
+	
+	void Spectrum1DCanvas::addLayerData(const LayerData& layer)
+	{
+		layers_.push_back(layer);
+		finishAdding_();
+	}
+
 	
 	// Destructor
 	Spectrum1DCanvas::~Spectrum1DCanvas()
@@ -949,8 +952,6 @@ namespace OpenMS
 		update_(__PRETTY_FUNCTION__);
 	}
 
-
-
 	void Spectrum1DCanvas::contextMenuEvent(QContextMenuEvent* e)
 	{
 		//Abort if there are no layers
@@ -958,6 +959,7 @@ namespace OpenMS
 		
 		QMenu* context_menu = new QMenu(this);
 		QAction* result = 0;
+		QAction* new_action = 0;
 
 		//Display name and warn if current layer invisible
 		String layer_name = String("Layer: ") + getCurrentLayer().name;
@@ -969,7 +971,13 @@ namespace OpenMS
 		context_menu->addSeparator();
 
 		context_menu->addAction("Add custom label");
-		context_menu->addAction("Add peak annotation");
+		new_action = context_menu->addAction("Add peak annotation");
+		PeakIndex near_peak = findPeakAtPosition_(e->pos());
+		if (!near_peak.isValid())
+		{
+			new_action->setEnabled(false);
+		}
+		
 		context_menu->addSeparator();
 
 		context_menu->addAction("Layer meta data");
@@ -994,6 +1002,15 @@ namespace OpenMS
 		{
 			context_menu->addSeparator();
 			context_menu->addMenu(context_add_);
+		}
+		
+		context_menu->addSeparator();
+		new_action = context_menu->addAction("Clear alignment");
+		new_action->setEnabled(false);
+		Spectrum1DWidget* widget_1d = qobject_cast<Spectrum1DWidget*>(spectrum_widget_);
+		if (widget_1d->hasSecondCanvas() && !widget_1d->alignmentWidget()->isEmpty())
+		{
+			new_action->setEnabled(true);
 		}
 
 		//evaluate menu
@@ -1045,26 +1062,20 @@ namespace OpenMS
 			}
 			else if  (result->text()=="Add peak annotation")
 			{
-				PeakIndex near_peak = findPeakAtPosition_(e->pos());
-				
-				if (!near_peak.isValid())
+				bool ok;
+				QString text = QInputDialog::getText(this, "Add peak annotation", "Enter text:", QLineEdit::Normal, "", &ok);
+				if (ok && !text.isEmpty())
 				{
-					QMessageBox::information(this, "No peak selected", "You must right-click a peak in order to annotate it.");
-					return;
-				}
-				else
-				{
-					bool ok;
-					QString text = QInputDialog::getText(this, "Add peak annotation", "Enter text:", QLineEdit::Normal, "", &ok);
-     			if (ok && !text.isEmpty())
-     			{
-     				PointType position = widgetToData_(e->pos());
-     				position.setX(near_peak.getPeak(getCurrentLayer().peaks).getMZ());
-						annotation_manager_.addPeakItem(getCurrentLayer(), position, near_peak, String(text));
-					}
+					PointType position = widgetToData_(e->pos());
+					position.setX(near_peak.getPeak(getCurrentLayer().peaks).getMZ());
+					annotation_manager_.addPeakItem(getCurrentLayer(), position, near_peak, String(text));
 				}
 			}
-		}		
+			else if (result->text()=="Clear alignment")
+			{
+				qobject_cast<Spectrum1DWidget*>(spectrum_widget_)->alignmentWidget()->clearAlignmentLines();
+			}
+		}
 		e->accept();
 	}
 

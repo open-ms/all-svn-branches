@@ -28,5 +28,9 @@
 
 namespace OpenMS
 {
+
+	Annotation1DItem::~Annotation1DItem()
+	{
+	}
   
 }//Namespace

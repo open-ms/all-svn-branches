@@ -46,7 +46,7 @@ namespace OpenMS
 		: QWidget(parent)
 	{
 		spectrum_widget_ = spectrum_widget;
-		setMinimumHeight(10);
+		setMinimumHeight(1);
 		setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
 	}
 	
@@ -67,11 +67,20 @@ namespace OpenMS
 	void Alignment1DWidget::setAlignmentLines(const std::vector<std::pair<DoubleReal, DoubleReal > >& alignment_lines)
 	{
 		alignment_lines_ = alignment_lines;
+		setMinimumHeight(10);
+		update();
 	}
 	
 	void Alignment1DWidget::clearAlignmentLines()
 	{
 		alignment_lines_.clear();
+		setMinimumHeight(1);
+		update();
+	}
+	
+	bool Alignment1DWidget::isEmpty()
+	{
+		return alignment_lines_.empty();
 	}
 	
 	void Alignment1DWidget::paintEvent(QPaintEvent* e)
@@ -79,17 +88,30 @@ namespace OpenMS
 		QPainter painter;
 		painter.begin(this);
 		
-		//draw peak-connecting lines if an alignment was performed
-		painter.setPen(Qt::red);
-		QPoint begin_p, end_p;
-		double dummy = 0.0;
-		int h = height();
-		
-		for (UInt i = 0; i < alignment_lines_.size(); ++i)
+		if (alignment_lines_.empty())
 		{
-			upperCanvas_()->dataToWidget_(alignment_lines_[i].first, dummy, begin_p);
-			lowerCanvas_()->dataToWidget_(alignment_lines_[i].second, dummy, end_p);
-			painter.drawLine(begin_p.x(), 0, end_p.x(), h);
+			painter.setPen(Qt::black);
+			painter.drawLine(0,0,width(),0);
+		}
+		else
+		{
+			painter.setPen(Qt::black);
+			int h = height();
+			int w = width();
+			//draw x-axes
+			painter.drawLine(0,0,w,0);
+			painter.drawLine(0,h-1,w,h-1);
+			//draw peak-connecting lines between the two spectra
+			painter.setPen(Qt::red);
+			QPoint begin_p, end_p;
+			double dummy = 0.0;
+			
+			for (UInt i = 0; i < alignment_lines_.size(); ++i)
+			{
+				upperCanvas_()->dataToWidget_(alignment_lines_[i].first, dummy, begin_p);
+				lowerCanvas_()->dataToWidget_(alignment_lines_[i].second, dummy, end_p);
+				painter.drawLine(begin_p.x(), 0, end_p.x(), h-1);
+			}
 		}
 		
 		painter.end();

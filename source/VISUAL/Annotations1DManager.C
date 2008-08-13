@@ -33,8 +33,12 @@ namespace OpenMS
 {	
 	
 	Annotations1DManager::Annotations1DManager(SpectrumCanvas* canvas)
+		: canvas_(canvas)
 	{
-		canvas_ = canvas;
+	}
+	
+	Annotations1DManager::~Annotations1DManager()
+	{
 	}
 	
 	Annotation1DItem* Annotations1DManager::getItemAt(const LayerData& layer, const QPoint& pos) const

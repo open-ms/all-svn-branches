@@ -30,12 +30,28 @@ namespace OpenMS
 {	
 
 	Annotation1DDistanceItem::Annotation1DDistanceItem(const PeakIndex& start_peak, const PeakIndex& end_peak, const PointType& start_point, const PointType& end_point)
-		: bounding_box_(),
+		: Annotation1DItem(),
+			bounding_box_(),
 			is_selected_(true),
 			start_peak_(start_peak),
 			end_peak_(end_peak),
 			start_point_(start_point),
 			end_point_(end_point)
+	{
+	}
+	
+	Annotation1DDistanceItem::Annotation1DDistanceItem(const Annotation1DDistanceItem& rhs)
+		: Annotation1DItem()
+	{
+		bounding_box_ = rhs.boundingBox();
+		is_selected_ = rhs.isSelected();
+		start_peak_ = rhs.getStartPeak();
+		end_peak_ = rhs.getEndPeak();
+		start_point_ = rhs.getStartPoint();
+		end_point_ = rhs.getEndPoint();
+	}
+	
+	Annotation1DDistanceItem::~Annotation1DDistanceItem()
 	{
 	}
 	

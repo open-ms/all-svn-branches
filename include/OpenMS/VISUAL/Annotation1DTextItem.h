@@ -53,7 +53,10 @@ namespace OpenMS
 
 			/// Constructor
 			Annotation1DTextItem(const PointType& position, const String& text);
-			
+			/// Copy constructor
+			Annotation1DTextItem(const Annotation1DTextItem& rhs);
+			/// Destructor
+			virtual ~Annotation1DTextItem();
 			/// Returns the current bounding box of this item on the canvas where it has last been drawn
 			const QRectF& boundingBox() const;
 			/// Sets the bounding_box_ for this item

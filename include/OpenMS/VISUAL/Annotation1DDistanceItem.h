@@ -54,7 +54,10 @@ namespace OpenMS
 			/// Constructor
 			Annotation1DDistanceItem(const PeakIndex& start_peak, const PeakIndex& end_peak,
 				const PointType& start_point, const PointType& end_point);
-			
+			/// Copy constructor
+			Annotation1DDistanceItem(const Annotation1DDistanceItem& rhs);
+			/// Destructor
+			virtual ~Annotation1DDistanceItem();
 			/// Returns the current bounding box of this item on the canvas where it has last been drawn
 			const QRectF& boundingBox() const;
 			/// Sets the bounding_box_ for this item

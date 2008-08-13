@@ -30,11 +30,26 @@ namespace OpenMS
 {	
 
 	Annotation1DPeakItem::Annotation1DPeakItem(const PointType& position, const PeakIndex& peak, const String& text)
-		: bounding_box_(),
+		: Annotation1DItem(),
+			bounding_box_(),
 			is_selected_(true),
 			position_(position),
 			peak_(peak),
 			text_(text)
+	{
+	}
+	
+	Annotation1DPeakItem::Annotation1DPeakItem(const Annotation1DPeakItem& rhs)
+		: Annotation1DItem()
+	{
+		bounding_box_ = rhs.boundingBox();
+		is_selected_ = rhs.isSelected();
+		position_ = rhs.getPosition();
+		peak_ = rhs.getPeak();
+		text_ = rhs.getText();
+	}
+	
+	Annotation1DPeakItem::~Annotation1DPeakItem()
 	{
 	}
 	
@@ -73,7 +88,7 @@ namespace OpenMS
 		peak_ = peak;
 	}
 	
-	const PeakIndex& Annotation1DPeakItem::getPeak()
+	const PeakIndex& Annotation1DPeakItem::getPeak() const
 	{
 		return peak_;
 	}

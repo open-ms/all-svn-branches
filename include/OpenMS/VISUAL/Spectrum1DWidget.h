@@ -75,6 +75,12 @@ namespace OpenMS
 			return flipped_canvas_;
 		}
 		
+		/// Returns a pointer to the alignment widget
+		inline Alignment1DWidget* alignmentWidget()
+		{
+			return alignment_widget_;
+		}
+		
 		/// Sets the second (vertically flipped) canvas
 		void setFlippedCanvas(Spectrum1DCanvas* flipped_canvas);
 		

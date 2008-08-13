@@ -753,13 +753,12 @@ namespace OpenMS
     setCursor(Qt::ArrowCursor);
   }
   
-  SpectrumCanvas* TOPPViewBase::addData_(FeatureMapType& feature_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_options, const String& filename, const String& caption, UInt window_id)
+  void TOPPViewBase::addData_(FeatureMapType& feature_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_options, const String& filename, const String& caption, UInt window_id)
   {
   	//initialize flags with defaults from the parameters
   	bool as_new_window = true;
   	bool maps_as_2d = ((String)param_.getValue("preferences:default_map_view")=="2d");
   	bool use_mower = ((String)param_.getValue("preferences:intensity_cutoff")=="on");
-  	bool as_mirror = false;
 		
 		//set the window where (new layer) data could be opened in
 		SpectrumWidget* open_window = window_(window_id);
@@ -781,11 +780,6 @@ namespace OpenMS
 		{
 			dialog.disableAsWindow(true);
 		}
-		//disable opening in mirror canvas when current window is no 1D window
-		if (qobject_cast<Spectrum1DWidget*>(open_window) == 0)
-		{
-			dialog.setMirrorImpossible();
-		}
 		//disable 2d/3d option for features and single scans
 		if (is_feature || !is_2D) dialog.disableMapAs2D(true);
 		//disable cutoff for features and single scans
@@ -793,12 +787,11 @@ namespace OpenMS
 		//show options if requested
 		if (show_options && !dialog.exec())
 		{
-			return 0;
+			return;
 		}
 		as_new_window = dialog.openAsNewWindow();
 		maps_as_2d = dialog.viewMapAs2D();
 		use_mower = dialog.isCutoffEnabled();
-  	as_mirror = dialog.openAsMirrorCanvas();
   	
 		//determine the window to open the data in
 		if (as_new_window) //new window
@@ -817,62 +810,32 @@ namespace OpenMS
       	open_window = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
       }
     }
-		else if (as_mirror)
-		{
-			Spectrum1DCanvas* new_canvas = new Spectrum1DCanvas(getSpectrumParameters_(1), open_window);
-			qobject_cast<Spectrum1DWidget*>(open_window)->removeFlippedCanvas();
-			qobject_cast<Spectrum1DWidget*>(open_window)->setFlippedCanvas(new_canvas);
-		}
 		
     //add data to the window
     if (is_feature)
     {
-      if (!open_window->canvas()->addLayer(feature_map,filename)) return 0;
+      if (!open_window->canvas()->addLayer(feature_map,filename)) return;
     }
     else
-    {
-    	if (as_mirror)
-    	{
-    		if (!qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas()->addLayer(peak_map,filename))
-    		{
-    			return 0;
-    		}
-    		// calculate ranges containing the data of both canvasses and reset zoom for both
-    		qobject_cast<Spectrum1DWidget*>(open_window)->calculateUnitedRanges(true);
-    		
-	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
-	      setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
-    	}
-    	else
-    	{    	
-				if (!open_window->canvas()->addLayer(peak_map,filename)) return 0;
-				//calculate noise
-				if(use_mower && is_2D)
-				{
-					DoubleReal cutoff = estimateNoise_(open_window->canvas()->getCurrentLayer().peaks);
-					//create filter
-					DataFilters::DataFilter filter;
-					filter.field = DataFilters::INTENSITY;
-					filter.op = DataFilters::GREATER_EQUAL;
-					filter.value = cutoff;
-					///add filter
-					DataFilters filters;
-					filters.add(filter);
-					open_window->canvas()->setFilters(filters);
-				}
+    {	
+			if (!open_window->canvas()->addLayer(peak_map,filename)) return;
+			//calculate noise
+			if(use_mower && is_2D)
+			{
+				DoubleReal cutoff = estimateNoise_(open_window->canvas()->getCurrentLayer().peaks);
+				//create filter
+				DataFilters::DataFilter filter;
+				filter.field = DataFilters::INTENSITY;
+				filter.op = DataFilters::GREATER_EQUAL;
+				filter.value = cutoff;
+				///add filter
+				DataFilters filters;
+				filters.add(filter);
+				open_window->canvas()->setFilters(filters);
 			}
 		}
-
-    //caption
-    if (!as_mirror)
-    {
-    	open_window->canvas()->setLayerName(open_window->canvas()->activeLayerIndex(), caption);
-    }
-    else
-    {
-    	Spectrum1DCanvas* flipped_canvas = qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas();
-    	flipped_canvas->setLayerName(flipped_canvas->activeLayerIndex(), caption);
-    }
+		   	
+		open_window->canvas()->setLayerName(open_window->canvas()->activeLayerIndex(), caption);
 
     if (as_new_window) showAsWindow_(open_window,caption);
 
@@ -880,15 +843,6 @@ namespace OpenMS
 		updateSpectrumBar();
 		updateFilterBar();
   	updateMenu();
-  	
-  	if (as_mirror)
-  	{
-  		return qobject_cast<Spectrum1DWidget*>(open_window)->flippedCanvas();
-  	}
-  	else
-  	{
-  		return open_window->canvas();
-  	}
 	}
 	
   void TOPPViewBase::addRecentFile_(const String& filename)
@@ -1325,7 +1279,6 @@ namespace OpenMS
   	spectrum_selection_->blockSignals(true);
   	const LayerData& cl = cc->getCurrentLayer();
   	QListWidgetItem* item;
-  	int row = 0;
   	if(cl.type == LayerData::DT_PEAK)
   	{
   		if(cl.peaks.size() == 1) // single spectrum contained
@@ -1359,7 +1312,7 @@ namespace OpenMS
 	{
 		if (i!=-1)
 		{
-			if (i <= activeCanvas_()->getLayerCount())
+			if ((UInt)i <= activeCanvas_()->getLayerCount())
 			{
 				activeCanvas_()->activateLayer(i);
 			}
@@ -1401,10 +1354,23 @@ namespace OpenMS
 		QListWidgetItem* item = layer_manager_->itemAt(pos);
 		if (item)
 		{
+			QAction* new_action = 0;
 			int layer = layer_manager_->row(item);
 			QMenu* context_menu = new QMenu(layer_manager_);
 			context_menu->addAction("Rename");
 			context_menu->addAction("Delete");
+			if (item->text().startsWith("Bottom: "))
+			{
+				new_action = context_menu->addAction("Move to upper canvas (1D)");
+			}
+			else
+			{
+				new_action = context_menu->addAction("Move to mirror canvas (1D)");
+			}
+			if (!active1DWindow_())
+			{
+				new_action->setEnabled(false);
+			}
 			QAction* selected = context_menu->exec(layer_manager_->mapToGlobal(pos));
 			//delete layer
 			if (selected!=0 && selected->text()=="Delete")
@@ -1419,6 +1385,28 @@ namespace OpenMS
 				{
 					activeCanvas_()->setLayerName(layer,name);
 				}
+			}
+			//move layer from mirror to upper canvas
+			else if (selected != 0 && selected->text() == "Move to upper canvas (1D)")
+			{
+				//compute correct layer index for mirror canvas
+				int index = layer - active1DWindow_()->canvas()->getLayerCount();
+				
+				const LayerData& layer_tmp = active1DWindow_()->flippedCanvas()->getLayer(index);
+				active1DWindow_()->canvas()->addLayerData(layer_tmp);
+				active1DWindow_()->flippedCanvas()->removeLayer(index);
+			}
+			//move layer from upper to mirror canvas
+			else if (selected != 0 && selected->text() == "Move to mirror canvas (1D)")
+			{
+				const LayerData& layer_tmp = active1DWindow_()->canvas()->getLayer(layer);
+				// create second canvas if not already there
+				if (!active1DWindow_()->hasSecondCanvas())
+				{
+					active1DWindow_()->setFlippedCanvas(new Spectrum1DCanvas(active1DWindow_()->canvas()->getParameters(), active1DWindow_()));
+				}
+				active1DWindow_()->flippedCanvas()->addLayerData(layer_tmp);
+				active1DWindow_()->canvas()->removeLayer(layer);
 			}
 			
 			//Update tab bar and window title
@@ -1529,9 +1517,20 @@ namespace OpenMS
 		}
 	}
 
-	void TOPPViewBase::layerEdit(QListWidgetItem* /*item*/)
+	void TOPPViewBase::layerEdit(QListWidgetItem* item)
 	{
-		activeCanvas_()->showCurrentLayerPreferences();
+		if (item->text().startsWith("Bottom: "))
+		{
+			Spectrum1DWidget* active_1d_window = active1DWindow_();
+			if (active_1d_window && active_1d_window->hasSecondCanvas())
+			{
+				active_1d_window->flippedCanvas()->showCurrentLayerPreferences();
+			}
+		}
+		else
+		{
+			activeCanvas_()->showCurrentLayerPreferences();
+		}
 	}
 
   void TOPPViewBase::updateFilterBar()

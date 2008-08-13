@@ -67,14 +67,23 @@ namespace OpenMS
 		
 		grid_->removeWidget(x_axis_);
 		grid_->removeWidget(x_scrollbar_);
-		grid_->addWidget(x_axis_, 2, 2);
-		grid_->addWidget(x_scrollbar_, 3, 2);
-		grid_->addWidget(flippedCanvas(), 1, 2);
+		
 		flipped_y_axis_ = new AxisWidget(AxisWidget::LEFT,"Intensity",this);
 		flipped_y_axis_->setInverseOrientation(true);
 		flipped_y_axis_->setAllowShortNumbers(true);
 		flipped_y_axis_->setMinimumWidth(50);
-		grid_->addWidget(flipped_y_axis_, 1, 1);
+		alignment_widget_ = new Alignment1DWidget(this, this);
+
+		//place alignment widget between the two canvasses
+		grid_->addWidget(alignment_widget_, 1, 2);
+		
+		//move everything else downwards
+		grid_->addWidget(flippedCanvas(), 2, 2);
+		grid_->addWidget(flipped_y_axis_, 2, 1);
+		grid_->addWidget(x_axis_, 3, 2);
+		grid_->addWidget(x_scrollbar_, 4, 2);
+		
+		alignment_widget_->show();
 		
 		connect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), canvas(), SLOT(setVisibleArea(DRange<2>)));
 		connect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), flippedCanvas(), SLOT(setVisibleArea(DRange<2>)));
@@ -95,6 +104,9 @@ namespace OpenMS
 		connect(flippedCanvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
 		connect(flippedCanvas(), SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
 		
+		connect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), alignment_widget_, SLOT(update()));
+		connect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), alignment_widget_, SLOT(update()));
+
 		has_second_canvas_ = true;
 	}
 
@@ -121,12 +133,18 @@ namespace OpenMS
 			disconnect(flippedCanvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
 			disconnect(flippedCanvas(), SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
 		
+			disconnect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), alignment_widget_, SLOT(update()));
+			disconnect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), alignment_widget_, SLOT(update()));		
+		
 			grid_->removeWidget(flippedCanvas());
 			grid_->removeWidget(flipped_y_axis_);
+			grid_->removeWidget(alignment_widget_);
 			flippedCanvas()->close();
 			flipped_y_axis_->close();
+			alignment_widget_->close();
 			delete flipped_canvas_;
 			delete flipped_y_axis_;
+			delete alignment_widget_;
 			grid_->removeWidget(x_axis_);
 			grid_->removeWidget(x_scrollbar_);
 			grid_->addWidget(x_axis_, 1, 2);
@@ -183,41 +201,18 @@ namespace OpenMS
 	
 	void Spectrum1DWidget::setAlignmentLines(const std::vector<std::pair<DoubleReal,DoubleReal> >& alignment_lines)
 	{
-		alignment_widget_ = new Alignment1DWidget(this, this);
-		alignment_widget_->setAlignmentLines(alignment_lines);
-		
-		grid_->removeWidget(flippedCanvas());
-		grid_->removeWidget(flipped_y_axis_);
-		grid_->removeWidget(x_axis_);
-		grid_->removeWidget(x_scrollbar_);
-		
-		//place alignment widget between the two canvasses
-		grid_->addWidget(alignment_widget_, 1, 2);
-		
-		//move everything else downwards
-		grid_->addWidget(flippedCanvas(), 2, 2);
-		grid_->addWidget(flipped_y_axis_, 2, 1);
-		grid_->addWidget(x_axis_, 3, 2);
-		grid_->addWidget(x_scrollbar_, 4, 2);
-		
-		alignment_widget_->show();
+		if (has_second_canvas_)
+		{
+			alignment_widget_->setAlignmentLines(alignment_lines);
+		}
 	}
 	
 	void Spectrum1DWidget::clearAlignmentLines()
 	{
-		alignment_widget_->hide();
-		delete alignment_widget_;
-		
-		grid_->removeWidget(flippedCanvas());
-		grid_->removeWidget(flipped_y_axis_);
-		grid_->removeWidget(x_axis_);
-		grid_->removeWidget(x_scrollbar_);
-		
-		//move everything back upwards
-		grid_->addWidget(flippedCanvas(), 1, 2);
-		grid_->addWidget(flipped_y_axis_, 1, 1);
-		grid_->addWidget(x_axis_, 2, 2);
-		grid_->addWidget(x_scrollbar_, 3, 2);
+		if (has_second_canvas_)
+		{
+			alignment_widget_->clearAlignmentLines();
+		}
 	}
 	
 	void Spectrum1DWidget::recalculateAxes_()

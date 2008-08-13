@@ -30,10 +30,24 @@ namespace OpenMS
 {	
 
 	Annotation1DTextItem::Annotation1DTextItem(const PointType& position, const String& text)
-		: bounding_box_(),
+		: Annotation1DItem(),
+			bounding_box_(),
 			is_selected_(true),
 			position_(position),
 			text_(text)
+	{
+	}
+	
+	Annotation1DTextItem::Annotation1DTextItem(const Annotation1DTextItem& rhs)
+		: Annotation1DItem()
+	{
+		bounding_box_ = rhs.boundingBox();
+		is_selected_ = rhs.isSelected();
+		position_ = rhs.getPosition();
+		text_ = rhs.getText();
+	}
+	
+	Annotation1DTextItem::~Annotation1DTextItem()
 	{
 	}
 	

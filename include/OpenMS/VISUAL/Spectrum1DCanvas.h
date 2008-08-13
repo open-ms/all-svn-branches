@@ -118,7 +118,6 @@ namespace OpenMS
 			void activateLayer(int layer_index);
 			// Docu in base class
 			void removeLayer(int layer_index);
-			
 			/**
 				@brief Sets the visible area.
 				
@@ -128,15 +127,14 @@ namespace OpenMS
 			void setVisibleArea(DRange<2> range); //Do not change this to AreaType the signal needs QT needs the exact type...
 			// Docu in base class
 			virtual void horizontalScrollBarChange(int value);
-			
 			/// Adds the current visible area to the zoom stack
 			void zoomAdd();
-		
 			/// Calls zoomForward_()
 			void zoomForward();
-		
 			/// Calls zoomBack_()
 			void zoomBack();
+			/// Adds @p layer to the layers_ vector of this canvas
+			void addLayerData(const LayerData& layer);
 		
 		protected:
 			// Docu in base class

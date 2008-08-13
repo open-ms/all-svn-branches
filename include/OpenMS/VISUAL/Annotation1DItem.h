@@ -48,6 +48,9 @@ namespace OpenMS
 		
 		public:
 			
+			/// Destructor
+			virtual ~Annotation1DItem();
+			
 			/// Returns the current bounding box of this item on the canvas where it has last been drawn
 			virtual const QRectF& boundingBox() const = 0;
 			

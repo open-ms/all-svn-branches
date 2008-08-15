@@ -43,9 +43,10 @@ namespace OpenMS
 {
 	
 	Alignment1DWidget::Alignment1DWidget(Spectrum1DWidget* spectrum_widget, QWidget* parent)
-		: QWidget(parent)
+		: QWidget(parent),
+			spectrum_widget_(spectrum_widget),
+			alignment_is_set_(false)
 	{
-		spectrum_widget_ = spectrum_widget;
 		setMinimumHeight(1);
 		setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
 	}
@@ -69,6 +70,7 @@ namespace OpenMS
 		alignment_lines_ = alignment_lines;
 		setMinimumHeight(10);
 		update();
+		alignment_is_set_ = true;
 	}
 	
 	void Alignment1DWidget::clearAlignmentLines()
@@ -76,11 +78,12 @@ namespace OpenMS
 		alignment_lines_.clear();
 		setMinimumHeight(1);
 		update();
+		alignment_is_set_ = false;
 	}
 	
-	bool Alignment1DWidget::isEmpty()
+	bool Alignment1DWidget::alignmentIsSet()
 	{
-		return alignment_lines_.empty();
+		return alignment_is_set_;
 	}
 	
 	void Alignment1DWidget::paintEvent(QPaintEvent* e)
@@ -88,7 +91,7 @@ namespace OpenMS
 		QPainter painter;
 		painter.begin(this);
 		
-		if (alignment_lines_.empty())
+		if (!alignment_is_set_)
 		{
 			painter.setPen(Qt::black);
 			painter.drawLine(0,0,width(),0);

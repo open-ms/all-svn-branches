@@ -81,6 +81,9 @@ namespace OpenMS
 			return alignment_widget_;
 		}
 		
+		/// Overwrites SpectrumWidget::setIntensityMode(); sets value also for second canvas, if existent
+		virtual void setIntensityMode(SpectrumCanvas::IntensityModes mode);
+		
 		/// Sets the second (vertically flipped) canvas
 		void setFlippedCanvas(Spectrum1DCanvas* flipped_canvas);
 		

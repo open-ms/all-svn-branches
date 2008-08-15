@@ -21,26 +21,39 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm$
+// $Maintainer: Marc Sturm $
 // --------------------------------------------------------------------------
 
-// OpenMS includes
-#include <OpenMS/VISUAL/DIALOGS/TheoreticalSpectrumGenerationDialog.h>
+#ifndef OPENMS_VISUAL_ANNOTATIONS1DCONTAINER_H
+#define OPENMS_VISUAL_ANNOTATIONS1DCONTAINER_H
+
+#include <OpenMS/VISUAL/Annotation1DItem.h>
+
+#include <list>
 
 namespace OpenMS
 {
-	TheoreticalSpectrumGenerationDialog::TheoreticalSpectrumGenerationDialog()
+
+	class Annotations1DContainer
+		: public std::list<Annotation1DItem*>
 	{
-		setupUi(this);
+		public:
 		
-		// select b- and y-ions as residue types by default
-		list_widget->item(0)->setCheckState(Qt::Unchecked);
-		list_widget->item(1)->setCheckState(Qt::Checked);
-		list_widget->item(2)->setCheckState(Qt::Unchecked);
-		list_widget->item(3)->setCheckState(Qt::Unchecked);
-		list_widget->item(4)->setCheckState(Qt::Checked);
-		list_widget->item(5)->setCheckState(Qt::Unchecked);
-		list_widget->item(6)->setCheckState(Qt::Unchecked);
-		list_widget->item(7)->setCheckState(Qt::Unchecked);
-	}
+			/// Iterator for the 1D annotations
+			typedef std::list<Annotation1DItem*>::iterator Iterator;
+			/// Const iterator for the 1D annotations
+			typedef std::list<Annotation1DItem*>::const_iterator ConstIterator;
+
+			/// Default constructor
+			Annotations1DContainer();
+			/// Copy constructor
+			Annotations1DContainer(const Annotations1DContainer& rhs);
+			/// Destructor
+			virtual ~Annotations1DContainer();	
+			/// Assignment operator
+			Annotations1DContainer& operator= (const Annotations1DContainer& rhs);
+	};
+	
 } // namespace
+
+#endif

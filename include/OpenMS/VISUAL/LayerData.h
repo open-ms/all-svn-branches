@@ -31,15 +31,9 @@
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
-#include <OpenMS/VISUAL/Annotation1DItem.h>
-#include <OpenMS/VISUAL/Annotation1DDistanceItem.h>
-#include <OpenMS/VISUAL/Annotation1DTextItem.h>
-#include <OpenMS/VISUAL/Annotation1DPeakItem.h>
-
+#include <OpenMS/VISUAL/Annotations1DContainer.h>
 
 #include <OpenMS/FILTERING/DATAREDUCTION/DataFilters.h>
-
-#include <list>
 
 namespace OpenMS 
 {
@@ -74,12 +68,6 @@ namespace OpenMS
 		typedef MSExperiment<Peak1D> ExperimentType;
 		/// Main data type (features)
 		typedef FeatureMap<> FeatureMapType;
-		/// Container type for the 1D annotations
-		typedef std::list<Annotation1DItem*> Annotations1DContainerType;
-		/// Iterator for the 1D annotations
-		typedef Annotations1DContainerType::iterator Ann1DIterator;
-		/// Const iterator for the 1D annotations
-		typedef Annotations1DContainerType::const_iterator Ann1DConstIterator;
 		//@}
 		
 		/// Default constructor
@@ -96,60 +84,8 @@ namespace OpenMS
 				param(),
 				gradient(),
 				filters(),
-				annotations_1d_()
+				annotations_1d()
 		{
-		}
-		
-		/// Copy constructor
-		LayerData(const LayerData& rhs)
-		{
-			visible = rhs.visible;
-			type = rhs.type;
-			name = rhs.name;
-			filename = rhs.filename;
-			peaks = rhs.peaks;
-			features = rhs.features;
-			f1 = rhs.f1;
-			f2 = rhs.f2;
-			f3 = rhs.f3;
-			param = rhs.param;
-			gradient = rhs.gradient;
-			filters = rhs.filters;
-			//copy annotations
-			Annotation1DItem* new_item = 0;
-			for (Ann1DConstIterator it = rhs.annotations_1d_.begin(); it != rhs.annotations_1d_.end(); ++it)
-			{
-				Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
-				if (distance_item)
-				{
-					new_item = new Annotation1DDistanceItem(*distance_item);
-					annotations_1d_.push_back(new_item);
-					continue;
-				}
-				Annotation1DTextItem* text_item = dynamic_cast<Annotation1DTextItem*>(*it);
-				if (text_item)
-				{
-					new_item = new Annotation1DTextItem(*text_item);
-					annotations_1d_.push_back(new_item);
-					continue;
-				}
-				Annotation1DPeakItem* peak_item = dynamic_cast<Annotation1DPeakItem*>(*it);
-				if (peak_item)
-				{
-					new_item = new Annotation1DPeakItem(*peak_item);
-					annotations_1d_.push_back(new_item);
-					continue;
-				}
-			}
-		}
-		
-		/// Destructor
-		virtual ~LayerData()
-		{
-			for (Ann1DIterator it = annotations_1d_.begin(); it != annotations_1d_.end(); ++it)
-			{
-				delete *it;
-			}
 		}
 		
 		/// if this layer is visible
@@ -182,7 +118,7 @@ namespace OpenMS
 		DataFilters filters;
 				
 		///Annotations for the 1D view
-		mutable Annotations1DContainerType annotations_1d_;
+		mutable Annotations1DContainer annotations_1d;
 		
 	};
 

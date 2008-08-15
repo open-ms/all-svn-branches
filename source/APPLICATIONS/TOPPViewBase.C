@@ -199,8 +199,8 @@ namespace OpenMS
     tools->addAction("Rerun TOPP tool", this, SLOT(rerunTOPPTool()),Qt::Key_F4);
     tools->addSeparator();
     tools->addAction("&Annotate with identifiction", this, SLOT(annotateWithID()), Qt::CTRL+Qt::Key_I);
-    tools->addAction("Generate theoretical spectrum", this, SLOT(showSpectrumGenerationDialog()));
     tools->addAction("Align spectra", this, SLOT(showSpectrumAlignmentDialog()));
+    tools->addAction("Generate theoretical spectrum", this, SLOT(showSpectrumGenerationDialog()));
 
     //Layer menu
     QMenu* layer = new QMenu("&Layer",this);
@@ -1375,7 +1375,15 @@ namespace OpenMS
 			//delete layer
 			if (selected!=0 && selected->text()=="Delete")
 			{
-				activeCanvas_()->removeLayer(layer);
+				if (active1DWindow_() && active1DWindow_()->hasSecondCanvas() && item->text().startsWith("Bottom: "))
+				{
+					int del_index = layer - active1DWindow_()->canvas()->getLayerCount();
+					active1DWindow_()->flippedCanvas()->removeLayer(del_index);
+				}
+				else
+				{
+					activeCanvas_()->removeLayer(layer);
+				}
 			}
 			//rename layer
 			else if (selected!=0 && selected->text()=="Rename")
@@ -1383,7 +1391,15 @@ namespace OpenMS
 				QString name = QInputDialog::getText(this,"Rename layer","Name:");
 				if (name!="")
 				{
-					activeCanvas_()->setLayerName(layer,name);
+					if (active1DWindow_() && active1DWindow_()->hasSecondCanvas() && item->text().startsWith("Bottom: "))
+					{
+						int rename_index = layer - active1DWindow_()->canvas()->getLayerCount();
+						active1DWindow_()->flippedCanvas()->setLayerName(rename_index, name);
+					}
+					else
+					{
+						activeCanvas_()->setLayerName(layer, name);
+					}
 				}
 			}
 			//move layer from mirror to upper canvas
@@ -1391,7 +1407,6 @@ namespace OpenMS
 			{
 				//compute correct layer index for mirror canvas
 				int index = layer - active1DWindow_()->canvas()->getLayerCount();
-				
 				const LayerData& layer_tmp = active1DWindow_()->flippedCanvas()->getLayer(index);
 				active1DWindow_()->canvas()->addLayerData(layer_tmp);
 				active1DWindow_()->flippedCanvas()->removeLayer(index);
@@ -1428,7 +1443,7 @@ namespace OpenMS
 				tab_bar_->setTabText(tab_bar_->currentIndex(),"empty");
 				activeWindow_()->setWindowTitle("empty");
 			}
-			
+					
 			//Update filter bar, spectrum bar and layer bar
 			updateLayerBar();
 			updateSpectrumBar();
@@ -1571,16 +1586,35 @@ namespace OpenMS
 
 	void TOPPViewBase::layerVisibilityChange(QListWidgetItem* item)
 	{
-		int layer = layer_manager_->row(item);
-		bool visible = activeCanvas_()->getLayer(layer).visible;
-		
-		if (item->checkState()==Qt::Unchecked && visible)
+		int layer;
+		bool visible;
+		if (item->text().startsWith("Bottom: "))
 		{
-			activeCanvas_()->changeVisibility(layer,false);
+			layer = layer_manager_->row(item) - active1DWindow_()->canvas()->getLayerCount();
+			visible = active1DWindow_()->flippedCanvas()->getLayer(layer).visible;
+			
+			if (item->checkState()==Qt::Unchecked && visible)
+			{
+				active1DWindow_()->flippedCanvas()->changeVisibility(layer, false);
+			}
+			else if (item->checkState()==Qt::Checked && !visible)
+			{
+				active1DWindow_()->flippedCanvas()->changeVisibility(layer, true);
+			}
 		}
-		else if (item->checkState()==Qt::Checked && !visible)
+		else
 		{
-			activeCanvas_()->changeVisibility(layer,true);
+			layer = layer_manager_->row(item);
+			visible = activeCanvas_()->getLayer(layer).visible;
+			
+			if (item->checkState()==Qt::Unchecked && visible)
+			{
+				activeCanvas_()->changeVisibility(layer, false);
+			}
+			else if (item->checkState()==Qt::Checked && !visible)
+			{
+				activeCanvas_()->changeVisibility(layer, true);
+			}
 		}
 	}
 
@@ -2113,6 +2147,11 @@ namespace OpenMS
 		if (spec_gen_dialog.exec())
 		{
 			String seq_string(spec_gen_dialog.line_edit->text());
+			if (seq_string == "")
+			{
+				QMessageBox::warning(this, "Error", "You must enter a peptide sequence!");
+				return;
+			}
 			AASequence aa_sequence(seq_string);
 			
 			Int charge = spec_gen_dialog.spin_box->value();
@@ -2122,43 +2161,48 @@ namespace OpenMS
 				RichPeakSpectrum rich_spec;
 				TheoreticalSpectrumGenerator generator;
 				
-				if (spec_gen_dialog.residue_list_widget->item(0)->isSelected()) // "A-ions"
+				if (spec_gen_dialog.list_widget->item(7)->checkState() == Qt::Checked) // "Neutral losses"
 				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::AIon, charge); 
+					Param p;
+					p.setValue("add_losses", 1, "Adds common losses to those ion expect to have them, only water and ammonia loss is considered", false);
+					generator.setParameters(p);
 				}
-				if (spec_gen_dialog.residue_list_widget->item(1)->isSelected()) // "B-ions"
+				
+				if (spec_gen_dialog.list_widget->item(0)->checkState() == Qt::Checked) // "A-ions"
 				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::BIon, charge); 
+					generator.addPeaks(rich_spec, aa_sequence, Residue::AIon, charge);
 				}
-				if (spec_gen_dialog.residue_list_widget->item(2)->isSelected()) // "C-ions"
+				if (spec_gen_dialog.list_widget->item(1)->checkState() == Qt::Checked) // "B-ions"
 				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::CIon, charge); 
+					generator.addPeaks(rich_spec, aa_sequence, Residue::BIon, charge);
 				}
-				if (spec_gen_dialog.residue_list_widget->item(3)->isSelected()) // "X-ions"
+				if (spec_gen_dialog.list_widget->item(2)->checkState() == Qt::Checked) // "C-ions"
 				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::XIon, charge); 
+					generator.addPeaks(rich_spec, aa_sequence, Residue::CIon, charge);
 				}
-				if (spec_gen_dialog.residue_list_widget->item(4)->isSelected()) // "Y-ions"
+				if (spec_gen_dialog.list_widget->item(3)->checkState() == Qt::Checked) // "X-ions"
+				{
+					generator.addPeaks(rich_spec, aa_sequence, Residue::XIon, charge);
+				}
+				if (spec_gen_dialog.list_widget->item(4)->checkState() == Qt::Checked) // "Y-ions"
 				{
 					generator.addPeaks(rich_spec, aa_sequence, Residue::YIon, charge); 
 				}
-				if (spec_gen_dialog.residue_list_widget->item(5)->isSelected()) // "Z-ions"
+				if (spec_gen_dialog.list_widget->item(5)->checkState() == Qt::Checked) // "Z-ions"
 				{
 					generator.addPeaks(rich_spec, aa_sequence, Residue::ZIon, charge); 
 				}
-				
-				if (spec_gen_dialog.add_precursor_checkbox->isChecked())
+				if (spec_gen_dialog.list_widget->item(6)->checkState() == Qt::Checked) // "Precursor"
 				{
 					generator.addPrecursorPeaks(rich_spec, aa_sequence, charge);
 				}
 				
-				// TODO: find a better way to do this:
 				PeakSpectrum new_spec;
 				for (RichPeakSpectrum::Iterator it = rich_spec.begin(); it != rich_spec.end(); ++it)
 				{
 					new_spec.push_back(static_cast<Peak1D>(*it));
 				}
-				////////////////////////
+				
 				PeakMap new_exp;
 				new_exp.push_back(new_spec);
 				
@@ -2357,6 +2401,12 @@ namespace OpenMS
 		{
 			topp_running = true;
 		}
+		//is a 1d window active, and is it in mirror view?
+		bool mirror_view = false;
+		if (active1DWindow_() && active1DWindow_()->hasSecondCanvas())
+		{
+			mirror_view = true;
+		}
   	
 		QList<QAction*> actions = this->findChildren<QAction*>("");
 		for (int i=0; i<actions.count(); ++i)
@@ -2398,6 +2448,14 @@ namespace OpenMS
 			{
 				actions[i]->setEnabled(false);
 				if (canvas_exists && layer_exists)
+				{
+					actions[i]->setEnabled(true);
+				}
+			}
+			else if (text=="Align spectra")
+			{
+				actions[i]->setEnabled(false);
+				if (mirror_view)
 				{
 					actions[i]->setEnabled(true);
 				}

@@ -156,6 +156,20 @@ namespace OpenMS
 		}
 	}
 	
+	void Spectrum1DWidget::setIntensityMode(SpectrumCanvas::IntensityModes mode)
+	{
+		if (canvas_->getIntensityMode() != mode)
+		{
+			canvas_->setIntensityMode(mode);
+			intensityModeChange_();
+		}
+		if (has_second_canvas_)
+		{
+			flipped_canvas_->setIntensityMode(mode);
+			intensityModeChange_();
+		}
+	}
+	
 	void Spectrum1DWidget::calculateUnitedRanges(bool reset_zoom)
 	{
 		if (canvas() != 0 && flippedCanvas() != 0)
@@ -177,10 +191,7 @@ namespace OpenMS
 			
 			canvas()->setOverallDataRange(canvas_range);
 			flippedCanvas()->setOverallDataRange(fl_canvas_range);
-			
-			cout << "Canvas: " << canvas()->getDataRange().minY() << " - " << canvas()->getDataRange().maxY() << endl;
-			cout << "flippedCanvas: " << flippedCanvas()->getDataRange().minY() << " - " << flippedCanvas()->getDataRange().maxY() << endl;
-			
+						
 			if (reset_zoom)
 			{
 				canvas()->resetZoom();

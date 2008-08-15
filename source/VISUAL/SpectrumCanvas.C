@@ -384,7 +384,7 @@ namespace OpenMS
 
 	bool SpectrumCanvas::addLayer(ExperimentType& map, const String& filename)
 	{	
-		layers_.resize(getLayerCount()+1);
+		layers_.resize(layers_.size()+1);
 		layers_.back().param = param_;
 		layers_.back().filename = filename;
 		layers_.back().peaks.swap(map);

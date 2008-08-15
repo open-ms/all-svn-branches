@@ -25,6 +25,8 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
+#include <OpenMS/VISUAL/Annotations1DContainer.h>
+
 #include <OpenMS/VISUAL/Annotations1DManager.h>
 
 #include <iostream>
@@ -43,7 +45,7 @@ namespace OpenMS
 	
 	Annotation1DItem* Annotations1DManager::getItemAt(const LayerData& layer, const QPoint& pos) const
 	{
-		for (LayerData::Ann1DConstIterator it = layer.annotations_1d_.begin(); it != layer.annotations_1d_.end(); ++it)
+		for (Annotations1DContainer::ConstIterator it = layer.annotations_1d.begin(); it != layer.annotations_1d.end(); ++it)
 		{
 			if ((*it)->boundingBox().contains(pos))
 			{
@@ -74,7 +76,7 @@ namespace OpenMS
 	
 	void Annotations1DManager::drawAnnotations(const LayerData& layer, QPainter& painter)
 	{
-		for (LayerData::Ann1DConstIterator it = layer.annotations_1d_.begin(); it != layer.annotations_1d_.end(); ++it)
+		for (Annotations1DContainer::ConstIterator it = layer.annotations_1d.begin(); it != layer.annotations_1d.end(); ++it)
 		{
 			Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
 			if (distance_item)
@@ -206,7 +208,7 @@ namespace OpenMS
 	
 	void Annotations1DManager::selectAll(const LayerData& layer)
 	{
-		for (LayerData::Ann1DIterator it = layer.annotations_1d_.begin(); it != layer.annotations_1d_.end(); ++it)
+		for (Annotations1DContainer::Iterator it = layer.annotations_1d.begin(); it != layer.annotations_1d.end(); ++it)
 		{
 			(*it)->setSelected(true);
 		}
@@ -214,7 +216,7 @@ namespace OpenMS
 	
 	void Annotations1DManager::deselectAll(const LayerData& layer)
 	{
-		for (LayerData::Ann1DIterator it = layer.annotations_1d_.begin(); it != layer.annotations_1d_.end(); ++it)
+		for (Annotations1DContainer::Iterator it = layer.annotations_1d.begin(); it != layer.annotations_1d.end(); ++it)
 		{
 			(*it)->setSelected(false);
 		}
@@ -222,12 +224,12 @@ namespace OpenMS
 		
 	void Annotations1DManager::removeSelectedItems(const LayerData& layer)
 	{
-		for (LayerData::Ann1DIterator it = layer.annotations_1d_.begin(); it != layer.annotations_1d_.end();)
+		for (Annotations1DContainer::Iterator it = layer.annotations_1d.begin(); it != layer.annotations_1d.end();)
 		{
 			if ((*it)->isSelected())
 			{
 				delete *it;
-				it = layer.annotations_1d_.erase(it);
+				it = layer.annotations_1d.erase(it);
 			}
 			else
 			{
@@ -239,24 +241,20 @@ namespace OpenMS
 	void Annotations1DManager::addDistanceItem(const LayerData& layer, const PeakIndex& peak_1, const PeakIndex& peak_2, const PointType& start_point, const PointType& end_point)
 	{
 		Annotation1DItem* new_item = new Annotation1DDistanceItem(peak_1, peak_2, start_point, end_point);
-		layer.annotations_1d_.push_front(new_item);
+		layer.annotations_1d.push_front(new_item);
 	}
 	
 	void Annotations1DManager::addTextItem(const LayerData& layer, const PointType& position, const String& text)
 	{
 		Annotation1DItem* new_item = new Annotation1DTextItem(position, text);
-		layer.annotations_1d_.push_front(new_item);
+		layer.annotations_1d.push_front(new_item);
 	}
 	
 	void Annotations1DManager::addPeakItem(const LayerData& layer, const PointType& position, const PeakIndex& peak, const String& text)
 	{
 		Annotation1DItem* new_item = new Annotation1DPeakItem(position, peak, text);
-		layer.annotations_1d_.push_front(new_item);
+		layer.annotations_1d.push_front(new_item);
 	}
 
 
 }//Namespace
-
-
-
-

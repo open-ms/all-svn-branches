@@ -46,6 +46,7 @@
 #include <OpenMS/SYSTEM/FileWatcher.h>
 #include <OpenMS/VISUAL/SpectrumWidget.h>
 #include <OpenMS/VISUAL/Spectrum1DWidget.h>
+#include <OpenMS/VISUAL/Annotations1DContainer.h>
 
 #include <iostream>
 
@@ -661,7 +662,7 @@ namespace OpenMS
 					}
 					
 					// draw dashed elongations for pairs of peaks annotated with a distance
-					for(LayerData::Ann1DIterator it = getLayer_(i).annotations_1d_.begin(); it != getLayer_(i).annotations_1d_.end(); ++it)
+					for(Annotations1DContainer::Iterator it = getLayer_(i).annotations_1d.begin(); it != getLayer_(i).annotations_1d.end(); ++it)
 					{
 						Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
 						if (distance_item)
@@ -1027,7 +1028,7 @@ namespace OpenMS
 		new_action = context_menu->addAction("Clear alignment");
 		new_action->setEnabled(false);
 		Spectrum1DWidget* widget_1d = qobject_cast<Spectrum1DWidget*>(spectrum_widget_);
-		if (widget_1d->hasSecondCanvas() && !widget_1d->alignmentWidget()->isEmpty())
+		if (widget_1d->hasSecondCanvas() && widget_1d->alignmentWidget()->alignmentIsSet())
 		{
 			new_action->setEnabled(true);
 		}
@@ -1077,6 +1078,8 @@ namespace OpenMS
      		if (ok && !text.isEmpty())
      		{
 					annotation_manager_.addTextItem(getCurrentLayer(), widgetToData_(e->pos()), String(text));
+					update_buffer_ = true;
+					update_(__PRETTY_FUNCTION__);
 				}
 			}
 			else if  (result->text()=="Add peak annotation")
@@ -1088,6 +1091,8 @@ namespace OpenMS
 					PointType position = widgetToData_(e->pos());
 					position.setX(near_peak.getPeak(getCurrentLayer().peaks).getMZ());
 					annotation_manager_.addPeakItem(getCurrentLayer(), position, near_peak, String(text));
+					update_buffer_ = true;
+					update_(__PRETTY_FUNCTION__);
 				}
 			}
 			else if (result->text()=="Clear alignment")

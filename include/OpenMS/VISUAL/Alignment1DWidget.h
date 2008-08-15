@@ -68,8 +68,8 @@ namespace OpenMS
 			/// Clears alignment_lines_
 			void clearAlignmentLines();
 				
-			/// Returns whether alignment_lines_ is empty
-			bool isEmpty();
+			/// Returns whether an alignment has been set
+			bool alignmentIsSet();
 	
 		public slots:
 		
@@ -79,7 +79,8 @@ namespace OpenMS
       std::vector<std::pair<DoubleReal, DoubleReal > > alignment_lines_;
  			/// The enclosing spectrum widget
  			Spectrum1DWidget* spectrum_widget_;
-
+			/// Stores whether an alignment has been set
+			bool alignment_is_set_;
 	    /** @name Reimplemented QT events */
 	    //@{
 			void paintEvent(QPaintEvent* e);

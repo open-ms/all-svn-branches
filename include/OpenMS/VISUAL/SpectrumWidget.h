@@ -110,7 +110,7 @@ namespace OpenMS
 			virtual void showLegend(bool show);
 	
 			/// Sets the intensity mode of the SpectrumCanvas
-			void setIntensityMode(SpectrumCanvas::IntensityModes mode);
+			virtual void setIntensityMode(SpectrumCanvas::IntensityModes mode);
 	
 			/// Hides x-axis and y-axis
 			void hideAxes();

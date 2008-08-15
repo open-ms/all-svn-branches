@@ -729,6 +729,7 @@ namespace OpenMS
 #ifdef TIMING_TOPPVIEW	
 		cout << "1D PaintEvent took " << timer.elapsed() << " ms" << endl;
 #endif	
+
 	}
 	
 	void Spectrum1DCanvas::drawHighlightedPeak_(UInt layer_index, const PeakIndex& peak, QPainter& painter, bool draw_elongation)

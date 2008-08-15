@@ -81,7 +81,7 @@ namespace OpenMS
 			Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
 			if (distance_item)
 			{
-				drawDistanceItem(distance_item, painter);
+				drawDistanceItem(layer, distance_item, painter);
 				continue;
 			}
 			
@@ -111,7 +111,7 @@ namespace OpenMS
 		painter.fillRect(bounding_box.bottomLeft().x()-3, bounding_box.bottomLeft().y(), 3, 3, Qt::green);
 	}
 	
-	void Annotations1DManager::drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter)
+	void Annotations1DManager::drawDistanceItem(const LayerData& layer, Annotation1DDistanceItem* distance_item, QPainter& painter)
 	{
 		//translate mz/intensity to pixel coordinates
 		QPoint start_point, end_point;
@@ -121,8 +121,8 @@ namespace OpenMS
 		// compute bounding box of distance_item on the specified painter
 		QRectF bbox(QPointF(start_point.x(), start_point.y()), QPointF(end_point.x(), end_point.y()+4)); // +4 for lower half of arrow heads
 		// bbox must enclose distance text:
-		const SpectrumCanvas::ExperimentType::PeakType& peak_1 = distance_item->getStartPeak().getPeak(canvas_->getCurrentLayer().peaks);
-		const SpectrumCanvas::ExperimentType::PeakType& peak_2 = distance_item->getEndPeak().getPeak(canvas_->getCurrentLayer().peaks);
+		const SpectrumCanvas::ExperimentType::PeakType& peak_1 = distance_item->getStartPeak().getPeak(layer.peaks);
+		const SpectrumCanvas::ExperimentType::PeakType& peak_2 = distance_item->getEndPeak().getPeak(layer.peaks);
 		QString distance_string = QString("%1").arg(peak_2.getMZ()-peak_1.getMZ());
 		// find out how much additional space is needed for the text:
 		QRectF text_boundings = painter.boundingRect(QRectF(), Qt::AlignCenter, distance_string);

@@ -99,7 +99,7 @@ namespace OpenMS
 			/// Draws the @p bounding_box on @p painter
 			void drawBoundingBox(const QRectF& bounding_box, QPainter& painter);
 			/// Draws a distance annotation @p distance_item on @p painter			
-			void drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter);		
+			void drawDistanceItem(const LayerData& layer, Annotation1DDistanceItem* distance_item, QPainter& painter);		
 			/// Draws an arbitrary text annotation @p text_item on @p painter
 			void drawTextItem(Annotation1DTextItem* text_item, QPainter& painter);
 			/// Draws a peak annotation @p peak_item on @p painter

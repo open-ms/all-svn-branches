@@ -49,6 +49,8 @@ class QComboBox;
 class QLabel;
 class QListWidget;
 class QListWidgetItem;
+class QTreeWidget;
+class QTreeWidgetItem;
 class QDockWidget;
 class QToolButton;
 class QCloseEvent;
@@ -205,7 +207,7 @@ namespace OpenMS
 			/// dialog for inspecting file meta data
 			void metadataFileDialog();
 			/// Shows the selected spectrum
-			void selectedSpectrumChange(QListWidgetItem*);
+			void spectrumSelectionChange(QTreeWidgetItem* item, int column);
 
     protected slots:
       /** @name Layer manager and filter manager slots
@@ -305,16 +307,13 @@ namespace OpenMS
       /// Layer managment widget
       QListWidget* layer_manager_;
 
+			/// Spectrum selection widget
+      QTreeWidget* spectrum_selection_;
+
       ///@name Data filter widgets
       //@{
       QListWidget* filters_;
       QCheckBox* filters_check_box_;
-      //@}
-      
-      ///@name Spectrum selection widgets
-      //@{
-      QDockWidget* spectrum_bar_;
-      QListWidget* spectrum_selection_;
       //@}
       
       /// Log output window

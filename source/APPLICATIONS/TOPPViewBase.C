@@ -69,6 +69,8 @@
 #include <QtGui/QDockWidget>
 #include <QtGui/QListWidget>
 #include <QtGui/QListWidgetItem>
+#include <QtGui/QTreeWidget>
+#include <QtGui/QTreeWidgetItem>
 #include <QtGui/QMenu>
 #include <QtGui/QMenuBar>
 #include <QtGui/QStatusBar>
@@ -382,14 +384,20 @@ namespace OpenMS
     windows->addAction("&Show layer window",layer_bar,SLOT(show()));
 		
     //spectrum selection
-    spectrum_bar_ = new QDockWidget("Spectra", this);
-    addDockWidget(Qt::RightDockWidgetArea, spectrum_bar_);
-    spectrum_selection_ = new QListWidget(spectrum_bar_);
-    spectrum_selection_->setWhatsThis("Spectrum selection bar<BR><BR>Here all spectra of the current experiment are shown. Left-click on a spectrum to view it in 1D mode.");
-    spectrum_bar_->setWidget(spectrum_selection_);
-    connect(spectrum_selection_,SIGNAL(itemClicked(QListWidgetItem*)),this,SLOT(selectedSpectrumChange(QListWidgetItem*)));
+    QDockWidget* spectrum_bar = new QDockWidget("Spectra", this);
+    addDockWidget(Qt::RightDockWidgetArea, spectrum_bar);
+    spectrum_selection_ = new QTreeWidget(spectrum_bar);
+    spectrum_selection_->setWhatsThis("Spectrum selection bar<BR><BR>Here all spectra of the current experiment are shown. Left-click on a spectrum to open it.");
+    spectrum_selection_->setColumnCount(3);
+  	QStringList header_labels;
+  	header_labels.append(QString("MS level"));
+  	header_labels.append(QString("RT"));
+  	header_labels.append(QString("m/z"));
+  	spectrum_selection_->setHeaderLabels(header_labels);
+    spectrum_bar->setWidget(spectrum_selection_);
+    connect(spectrum_selection_,SIGNAL(itemClicked(QTreeWidgetItem*, int)),this,SLOT(spectrumSelectionChange(QTreeWidgetItem*, int)));
     
-    windows->addAction("&Show spectrum selection window",spectrum_bar_,SLOT(show()));
+    windows->addAction("&Show spectrum selection window",spectrum_bar,SLOT(show()));
         
     //data filters
     QDockWidget* filter_bar = new QDockWidget("Data filters", this);
@@ -1252,8 +1260,7 @@ namespace OpenMS
   }
   
   void TOPPViewBase::updateSpectrumBar()
-  {
-  	spectrum_selection_->clear();
+  {		
   	SpectrumCanvas* cc;
   	int layer_row = layer_manager_->currentRow();
   	if (layer_row == -1)
@@ -1276,33 +1283,85 @@ namespace OpenMS
   	{
   		return;
   	}
+  	
+  	spectrum_selection_->clear();
   	spectrum_selection_->blockSignals(true);
   	const LayerData& cl = cc->getCurrentLayer();
-  	QListWidgetItem* item;
+  	
+  	QTreeWidgetItem* item;
   	if(cl.type == LayerData::DT_PEAK)
   	{
-  		if(cl.peaks.size() == 1) // single spectrum contained
-  		{
-				item = new QListWidgetItem(spectrum_selection_);
-				item->setText(QString("Single spectrum"));
-				item->setFlags(!Qt::ItemIsEnabled);
-				return; // leave signals blocked
-  		}
-  		else // map with many spectra --> add spectra to spectrum bar
-  		{
-  			for(UInt i = 0; i < cl.peaks.size(); i++)
-  			{
-  				item = new QListWidgetItem(spectrum_selection_);
-  				item->setText(QString("RT: ") + QString::number(cl.peaks[i].getRT()));
-  			}
-  		}
+  		QTreeWidgetItem* parent_item = 0;
+  		QTreeWidgetItem* prev_parent_item = 0;
+			for (UInt i = 0; i < cl.peaks.size(); ++i)
+			{
+				if (cl.peaks[i].getMSLevel() == 1)
+				{
+					item = new QTreeWidgetItem((QTreeWidget*)0);
+					item->setText(0, QString("MS1"));
+					item->setText(1, QString::number(cl.peaks[i].getRT()));
+					item->setText(2, QString("-"));
+					item->setText(3, QString::number(i));
+					spectrum_selection_->addTopLevelItem(item);
+					parent_item = item;
+					prev_parent_item = item;
+				}
+				else if (i > 0)
+				{					
+					if (cl.peaks[i].getMSLevel() == cl.peaks[i-1].getMSLevel() + 1)
+					{
+						item = new QTreeWidgetItem(parent_item);
+						item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
+						item->setText(1, QString::number(cl.peaks[i].getRT()));
+						item->setText(2, QString::number(cl.peaks[i].getPrecursorPeak().getPosition()[0]));
+						item->setText(3, QString::number(i));
+						prev_parent_item = parent_item;
+						parent_item = item;
+					}
+					else if (cl.peaks[i].getMSLevel() == cl.peaks[i-1].getMSLevel())
+					{
+						item = new QTreeWidgetItem(prev_parent_item, parent_item);
+						item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
+						item->setText(1, QString::number(cl.peaks[i].getRT()));
+						item->setText(2, QString::number(cl.peaks[i].getPrecursorPeak().getPosition()[0]));
+						item->setText(3, QString::number(i));
+						parent_item = item;
+					}
+					else
+					{
+						std::cerr << "Spectrum browser: MS levels corrupt, aborting." << std::endl;
+						return; // leave signals blocked
+					}
+				}
+				else // first spectrum has ms level > 1
+				{
+					item = new QTreeWidgetItem((QTreeWidget*)0);
+					item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
+					item->setText(1, QString::number(cl.peaks[i].getRT()));
+					item->setText(2, QString::number(cl.peaks[i].getPrecursorPeak().getPosition()[0]));
+					item->setText(3, QString::number(i));
+					spectrum_selection_->addTopLevelItem(item);
+					prev_parent_item = item;
+					parent_item = item;
+				}
+			}
   	}
   	else
   	{
-  		item = new QListWidgetItem(spectrum_selection_);
-  		item->setText(QString("Feature map"));
-  		item->setFlags(!Qt::ItemIsEnabled);
+  		item = new QTreeWidgetItem((QTreeWidget*)0);
+  		item->setText(0, QString("Feature map"));
+  		item->setText(1, QString("-"));
+  		item->setText(2, QString("-"));
+  		item->setText(3, QString::number(0));
+			item->setFlags(!Qt::ItemIsEnabled);
+			spectrum_selection_->addTopLevelItem(item);
 			return; // leave signals blocked
+  	}
+  	
+  	if (cl.peaks.size() == 1)
+  	{
+  		item->setFlags(!Qt::ItemIsEnabled);
+  		return; // leave signals blocked
   	}
   	
   	spectrum_selection_->blockSignals(false);
@@ -1326,25 +1385,26 @@ namespace OpenMS
 		}
 	}
 	
-	void TOPPViewBase::selectedSpectrumChange(QListWidgetItem* item)
+	void TOPPViewBase::spectrumSelectionChange(QTreeWidgetItem* item, int column)
 	{
-		int index = spectrum_selection_->row(item);
 		SpectrumCanvas* cc;
 		if (layer_manager_->currentItem()->text().startsWith(QString("Bottom: ")))
 		{
 			cc = active1DWindow_()->flippedCanvas();
-			index -= activeCanvas_()->getLayerCount();
 		}
 		else
 		{
 			cc = activeCanvas_();
 		}
 		const LayerData& cl = cc->getCurrentLayer();
+		
+		int index = item->text(3).toInt();
+		
 		FeatureMapType dummy;
 		ExperimentType exp;
 		exp.resize(1);
 		exp[0] = cl.peaks[index];
-		addData_(dummy, exp, false, false, true, cl.filename, cl.name);
+		addData_(dummy, exp, false, false, true, cl.filename, cl.name + " (" + QString::number(cl.peaks[index].getRT()) + ")");
 			
 		updateSpectrumBar();
 	}
@@ -1378,7 +1438,12 @@ namespace OpenMS
 				if (active1DWindow_() && active1DWindow_()->hasSecondCanvas() && item->text().startsWith("Bottom: "))
 				{
 					int del_index = layer - active1DWindow_()->canvas()->getLayerCount();
-					active1DWindow_()->flippedCanvas()->removeLayer(del_index);
+					Spectrum1DCanvas* flipped_canvas = active1DWindow_()->flippedCanvas();
+					flipped_canvas->removeLayer(del_index);
+					if (flipped_canvas->getLayerCount() == 0)
+					{
+						active1DWindow_()->removeFlippedCanvas();
+					}
 				}
 				else
 				{
@@ -1414,6 +1479,11 @@ namespace OpenMS
 				//ensure layer is drawn as sticks
 				draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
 				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
+				
+				if (active1DWindow_()->flippedCanvas()->getLayerCount() == 0)
+				{
+					active1DWindow_()->removeFlippedCanvas();
+				}
 			}
 			//move layer from upper to mirror canvas
 			else if (selected != 0 && selected->text() == "Move to mirror canvas (1D)")

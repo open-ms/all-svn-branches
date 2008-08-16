@@ -38,6 +38,7 @@
 #include <QtCore/QObject>
 #include <QtCore/QRectF>
 #include <QtGui/QPainter>
+#include <QtGui/QPen>
 
 #include <list>
 
@@ -84,6 +85,9 @@ namespace OpenMS
 			/// Destructor
 			virtual ~Annotations1DManager();
 			
+			/// Sets the pen with which the annotations are drawn
+			void setPen(const QPen& pen);
+			
 			/** @brief Returns a pointer to the item at @p pos on the specified @p layer, or 0, if not existent
 					
 					If more than one item's bounding box encloses @p pos , the one in the
@@ -99,7 +103,7 @@ namespace OpenMS
 			/// Draws the @p bounding_box on @p painter
 			void drawBoundingBox(const QRectF& bounding_box, QPainter& painter);
 			/// Draws a distance annotation @p distance_item on @p painter			
-			void drawDistanceItem(const LayerData& layer, Annotation1DDistanceItem* distance_item, QPainter& painter);		
+			void drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter);		
 			/// Draws an arbitrary text annotation @p text_item on @p painter
 			void drawTextItem(Annotation1DTextItem* text_item, QPainter& painter);
 			/// Draws a peak annotation @p peak_item on @p painter
@@ -111,7 +115,7 @@ namespace OpenMS
 			/// Removes the selected items from the @p layer
 			void removeSelectedItems(const LayerData& layer);
 			/// Adds a new distance item between @p peak_1 and @p peak_2 at the position determined by @p start_point and @p end_point to the @p layer
-			void addDistanceItem(const LayerData& layer, const PeakIndex& peak_1, const PeakIndex& peak_2, const PointType& start_point, const PointType& end_point);
+			void addDistanceItem(const LayerData& layer, const String& text, const PointType& start_point, const PointType& end_point);
 			/// Adds a new text item displaying @p text at @p position on @p layer
 			void addTextItem(const LayerData& layer, const PointType& position, const String& text);
 			/// Adds an annotation for @p peak displaying @p text at @p position on @p layer
@@ -121,6 +125,11 @@ namespace OpenMS
 
 			/// The parent canvas. Needed for translation of data points to positions on the widget and vice versa
 			SpectrumCanvas* canvas_;
+			
+			/// The pen with which the annotations are drawn
+			QPen pen_;		
+			/// The pen for selected items (a little brighter)
+			QPen selected_pen_;	
 			
 	};
 } // namespace OpenMS

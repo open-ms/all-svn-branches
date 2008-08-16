@@ -150,9 +150,12 @@ namespace OpenMS
 			/// Calls dataToWidget_(const PointType&, QPoint& point) but takes snap_factor_ and percentage_factor_ into account.
 			void dataToWidget_(const PeakType& peak, QPoint& point);
 			
-			/// draws a highlighted peak; if draw_elongation is true, the elongation line is drawn (for measuring)
+			/// Draws a highlighted peak; if draw_elongation is true, the elongation line is drawn (for measuring)
 			void drawHighlightedPeak_(UInt layer_index, const PeakIndex& peak, QPainter& painter, bool draw_elongation = false);
-								
+			
+			/// Draws a dashed line using the highlighted peak color parameter
+			void drawDashedLine_(const QPoint& from, const QPoint& to, QPainter& painter);
+			
 			/**
 				@brief Sets the visible area
 				

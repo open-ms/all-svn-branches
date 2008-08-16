@@ -52,32 +52,27 @@ namespace OpenMS
 			typedef DoubleReal CoordinateType;
 
 			/// Constructor
-			Annotation1DDistanceItem(const PeakIndex& start_peak, const PeakIndex& end_peak,
-				const PointType& start_point, const PointType& end_point);
+			Annotation1DDistanceItem(const String& text, const PointType& start_point, const PointType& end_point);
 			/// Copy constructor
 			Annotation1DDistanceItem(const Annotation1DDistanceItem& rhs);
 			/// Destructor
 			virtual ~Annotation1DDistanceItem();
 			/// Returns the current bounding box of this item on the canvas where it has last been drawn
-			const QRectF& boundingBox() const;
+			virtual const QRectF& boundingBox() const;
 			/// Sets the bounding_box_ for this item
-			void setBoundingBox(const QRectF& bbox);
+			virtual void setBoundingBox(const QRectF& bbox);
 			/// Sets whether this item is currently selected on the canvas or not
-			void setSelected(bool selected);
+			virtual void setSelected(bool selected);
 			/// Returns true if this item is currently selected on the canvas, else false
-			const bool isSelected() const;
-			/// Sets the start peak index of the measurement
-			void setStartPeak(const PeakIndex& start_peak);
-			/// Sets the end peak index of the measurement
-			void setEndPeak(const PeakIndex& end_peak);
+			virtual const bool isSelected() const;
+			/// Sets the displayed text
+			virtual void setText(const String& text);
+			/// Returns the displayed text
+			virtual const String& getText() const;
 			/// Sets the start point of the measured distance line
 			void setStartPoint(const PointType& start);
 			/// Sets the peak index of the end peak of the measurement
 			void setEndPoint(const PointType& end);
-			/// Returns the start peak index of the measurement
-			const PeakIndex& getStartPeak() const;
-			/// Returns the end peak index of the measurement
-			const PeakIndex& getEndPeak() const;
 			/// Returns the start point as (MZ,intensity)
 			const PointType& getStartPoint() const;
 			/// Returns the end point as (MZ,intensity)
@@ -89,10 +84,8 @@ namespace OpenMS
 			QRectF bounding_box_;
 			/// Determines whether this item is currently selected on the canvas
 			bool is_selected_;
-			/// PeakIndex of the start peak of the measurement
-			PeakIndex start_peak_;
-			/// PeakIndex of the end peak of the measurement
-			PeakIndex end_peak_;
+			/// The displayed text
+			String text_;
 			/// The start point of the measured distance line
 			PointType start_point_;
 			/// The end point of the measured distance line

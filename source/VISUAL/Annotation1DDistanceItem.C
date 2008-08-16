@@ -29,12 +29,11 @@
 namespace OpenMS
 {	
 
-	Annotation1DDistanceItem::Annotation1DDistanceItem(const PeakIndex& start_peak, const PeakIndex& end_peak, const PointType& start_point, const PointType& end_point)
+	Annotation1DDistanceItem::Annotation1DDistanceItem(const String& text, const PointType& start_point, const PointType& end_point)
 		: Annotation1DItem(),
 			bounding_box_(),
 			is_selected_(true),
-			start_peak_(start_peak),
-			end_peak_(end_peak),
+			text_(text),
 			start_point_(start_point),
 			end_point_(end_point)
 	{
@@ -45,8 +44,7 @@ namespace OpenMS
 	{
 		bounding_box_ = rhs.boundingBox();
 		is_selected_ = rhs.isSelected();
-		start_peak_ = rhs.getStartPeak();
-		end_peak_ = rhs.getEndPeak();
+		text_ = rhs.getText();
 		start_point_ = rhs.getStartPoint();
 		end_point_ = rhs.getEndPoint();
 	}
@@ -75,24 +73,14 @@ namespace OpenMS
 		return is_selected_;
 	}
 	
-	void Annotation1DDistanceItem::setStartPeak(const PeakIndex& start_peak)
+	void Annotation1DDistanceItem::setText(const String& text)
 	{
-		start_peak_ = start_peak;
+		text_ = text;
 	}
 	
-	void Annotation1DDistanceItem::setEndPeak(const PeakIndex& end_peak)
+	const String& Annotation1DDistanceItem::getText() const
 	{
-		end_peak_ = end_peak;
-	}
-	
-	const PeakIndex& Annotation1DDistanceItem::getStartPeak() const
-	{
-		return start_peak_;
-	}
-	
-	const PeakIndex& Annotation1DDistanceItem::getEndPeak() const
-	{
-		return end_peak_;
+		return text_;
 	}
 	
 	void Annotation1DDistanceItem::setStartPoint(const PointType& p)

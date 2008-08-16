@@ -58,21 +58,21 @@ namespace OpenMS
 			/// Destructor
 			virtual ~Annotation1DTextItem();
 			/// Returns the current bounding box of this item on the canvas where it has last been drawn
-			const QRectF& boundingBox() const;
+			virtual const QRectF& boundingBox() const;
 			/// Sets the bounding_box_ for this item
-			void setBoundingBox(const QRectF& bbox);
+			virtual void setBoundingBox(const QRectF& bbox);
 			/// Sets whether this item is currently selected on the canvas or not
-			void setSelected(bool selected);
+			virtual void setSelected(bool selected);
 			/// Returns true if this item is currently selected on the canvas, else false
-			const bool isSelected() const;
+			virtual const bool isSelected() const;
+			/// Sets the text
+ 			virtual void setText(const String& text);
+ 			/// Returns the text
+			virtual const String& getText() const;
 			/// Sets the position of the item (in MZ / intensity coordinates)
 			void setPosition(const PointType& position);
 			/// Returns the position of the item (in MZ / intensity coordinates)
  			const PointType& getPosition() const;
- 			/// Sets the text
- 			void setText(const String& text);
- 			/// Returns the text
-			const String& getText() const;
 			
 		protected:
 		

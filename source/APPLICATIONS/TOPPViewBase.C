@@ -63,6 +63,7 @@
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignment.h>
+#include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignmentScore.h>
 
 //Qt
 #include <QtGui/QToolBar>
@@ -1333,7 +1334,7 @@ namespace OpenMS
 						return; // leave signals blocked
 					}
 				}
-				else // first spectrum has ms level > 1
+				else // first spectrum has ms level > 1, possible when it was copied
 				{
 					item = new QTreeWidgetItem((QTreeWidget*)0);
 					item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
@@ -1385,7 +1386,7 @@ namespace OpenMS
 		}
 	}
 	
-	void TOPPViewBase::spectrumSelectionChange(QTreeWidgetItem* item, int column)
+	void TOPPViewBase::spectrumSelectionChange(QTreeWidgetItem* item, int /*column*/)
 	{
 		SpectrumCanvas* cc;
 		if (layer_manager_->currentItem()->text().startsWith(QString("Bottom: ")))
@@ -2230,14 +2231,22 @@ namespace OpenMS
 			{
 				RichPeakSpectrum rich_spec;
 				TheoreticalSpectrumGenerator generator;
-				
-				if (spec_gen_dialog.list_widget->item(7)->checkState() == Qt::Checked) // "Neutral losses"
-				{
-					Param p;
-					p.setValue("add_losses", 1, "Adds common losses to those ion expect to have them, only water and ammonia loss is considered", false);
-					generator.setParameters(p);
-				}
-				
+				Param p;
+
+				bool losses = (spec_gen_dialog.list_widget->item(7)->checkState() == Qt::Checked); // "Neutral losses"
+				p.setValue("add_losses", losses, "Adds common losses to those ion expect to have them, only water and ammonia loss is considered", false);
+				bool isotopes = (spec_gen_dialog.list_widget->item(8)->checkState() == Qt::Checked); // "Isotope clusters"
+				p.setValue("add_isotopes", isotopes, "If set to 1 isotope peaks of the product ion peaks are added", false);
+				p.setValue("a_intensity", spec_gen_dialog.a_intensity->value(), "Intensity of the a-ions", false);
+				p.setValue("b_intensity", spec_gen_dialog.b_intensity->value(), "Intensity of the b-ions", false);
+				p.setValue("c_intensity", spec_gen_dialog.c_intensity->value(), "Intensity of the c-ions", false);
+				p.setValue("x_intensity", spec_gen_dialog.x_intensity->value(), "Intensity of the x-ions", false);
+				p.setValue("y_intensity", spec_gen_dialog.y_intensity->value(), "Intensity of the y-ions", false);
+				p.setValue("z_intensity", spec_gen_dialog.z_intensity->value(), "Intensity of the z-ions", false);
+				DoubleReal rel_loss_int = (DoubleReal)(spec_gen_dialog.rel_loss_intensity->value()) / 100.0;
+				p.setValue("relative_loss_intensity", rel_loss_int, "Intensity of loss ions, in relation to the intact ion intensity", false);
+				generator.setParameters(p);
+
 				if (spec_gen_dialog.list_widget->item(0)->checkState() == Qt::Checked) // "A-ions"
 				{
 					generator.addPeaks(rich_spec, aa_sequence, Residue::AIon, charge);
@@ -2300,9 +2309,11 @@ namespace OpenMS
 			if (active_1d_window && active_1d_window->hasSecondCanvas())
 			{
 				SpectrumAlignment aligner;
-				DoubleReal tolerance = spec_align_dialog.tolerance_spinbox->value();
 				Param param;
+				DoubleReal tolerance = spec_align_dialog.tolerance_spinbox->value();
 				param.setValue("tolerance", tolerance, "Defines the absolut (in Da) or relative (in ppm) tolerance", false);
+				String unit_is_ppm = spec_align_dialog.ppm->isChecked() ? "true" : "false";
+				param.setValue("is_relative_tolerance", unit_is_ppm, "If true, the 'tolerance' is interpreted as ppm-value", false);
 				aligner.setParameters(param);
 				
 				const LayerData& current_layer_1 = active_1d_window->canvas()->getCurrentLayer();
@@ -2324,6 +2335,12 @@ namespace OpenMS
 					alignment_lines.push_back(std::make_pair(line_begin_mz, line_end_mz));
 				}
 				active_1d_window->setAlignmentLines(alignment_lines);
+				
+				SpectrumAlignmentScore scorer;
+				scorer.setParameters(param);
+				double score = scorer(spectrum_1, spectrum_2);
+				
+				QMessageBox::information(this, "Alignment performed", QString("Aligned %1 pairs of peaks (Score: %2).").arg(alignment_lines.size()).arg(score));
 			}
 			else
 			{

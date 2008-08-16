@@ -66,6 +66,7 @@ namespace OpenMS
     defaults_.setValue("highlighted_peak_color", "#ff0000", "Highlighted peak color.");
     defaults_.setValue("icon_color", "#000000", "Peak icon color.");
     defaults_.setValue("peak_color", "#0000ff", "Peak color.");
+   	defaults_.setValue("annotation_color", "#0e6805", "Annotation color.");
     defaults_.setValue("background_color", "#ffffff", "Background color.");
 		defaultsToParam_();
 		setName("Spectrum1DCanvas");
@@ -141,7 +142,7 @@ namespace OpenMS
 				}
 				else
 				{
-					QMessageBox::information(this,"Not supported","Measuring is not supported for inverted spectra.");
+					QMessageBox::information(this,"Not supported","Measuring is not yet supported for rotated spectra.");
 				}
 			}
 			/* if ctrl is pressed, allow selection / deselection of multiple annotation items.
@@ -161,13 +162,13 @@ namespace OpenMS
 				{
 					annotation_manager_.selectItemAt(getCurrentLayer(), last_mouse_pos_);
 				}
-				// if item is a distance item: show distance / intensity ratio of selected item in status bar
+				// if item is a distance item: show distance of selected item in status bar
 				Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(item);
 				if (distance_item)
 				{
-					const PeakType& peak_1 = distance_item->getStartPeak().getPeak(getCurrentLayer().peaks);
-					const PeakType& peak_2 = distance_item->getEndPeak().getPeak(getCurrentLayer().peaks);
-					emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
+					const DoubleReal start_p = distance_item->getStartPoint().getX();
+					const DoubleReal end_p = distance_item->getEndPoint().getX();
+					emit sendStatusMessage(QString("Measured: dMZ = %1").arg(end_p - start_p).toStdString(), 0);
 				}
 			}
 		}
@@ -298,13 +299,14 @@ namespace OpenMS
 					const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
 					const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
 					emit sendCursorStatus(peak_2.getMZ(), peak_2.getIntensity());
-					emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(peak_2.getMZ()-peak_1.getMZ()).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
-					// add new distance item to annotations_1d_ of current layer
+					DoubleReal distance = peak_2.getMZ() - peak_1.getMZ();
+					emit sendStatusMessage(QString("Measured: dMZ = %1, Intensity ratio = %2").arg(distance).arg(peak_2.getIntensity()/peak_1.getIntensity()).toStdString(), 0);
+					// add new distance item to annotations_1d of current layer
 					PointType start_p = widgetToData_(measurement_start_point_);
 					start_p.setX(peak_1.getMZ());
 					PointType end_p(peak_2.getMZ(), start_p.getY());
 					
-					annotation_manager_.addDistanceItem(getCurrentLayer(), measurement_start_, selected_peak_, start_p, end_p);
+					annotation_manager_.addDistanceItem(getCurrentLayer(), String(distance), start_p, end_p);
 				}
 			}
 			measurement_start_.clear();
@@ -578,6 +580,26 @@ namespace OpenMS
 					vbegin = getLayer_(i).peaks[0].MZBegin(visible_area_.minX());
 					vend = getLayer_(i).peaks[0].MZEnd(visible_area_.maxX());
 					
+					// draw dashed elongations for pairs of peaks annotated with a distance
+					for(Annotations1DContainer::Iterator it = getLayer_(i).annotations_1d.begin(); it != getLayer_(i).annotations_1d.end(); ++it)
+					{
+						Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
+						if (distance_item)
+						{
+								QPoint from;
+								QPoint to;
+								SpectrumCanvas::dataToWidget_(distance_item->getStartPoint().getX(), 0, from);
+								
+								SpectrumCanvas::dataToWidget_(distance_item->getStartPoint().getX(), getVisibleArea().maxY(), to);
+								drawDashedLine_(from, to, painter);
+								
+								SpectrumCanvas::dataToWidget_(distance_item->getEndPoint().getX(), 0, from);
+								
+								SpectrumCanvas::dataToWidget_(distance_item->getEndPoint().getX(), getVisibleArea().maxY(), to);
+								drawDashedLine_(from, to, painter);
+						}
+					}
+					
 					switch (draw_modes_[i])
 					{
 						case DM_PEAKS:
@@ -661,20 +683,8 @@ namespace OpenMS
 							throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 					}
 					
-					// draw dashed elongations for pairs of peaks annotated with a distance
-					for(Annotations1DContainer::Iterator it = getLayer_(i).annotations_1d.begin(); it != getLayer_(i).annotations_1d.end(); ++it)
-					{
-						Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
-						if (distance_item)
-						{
-							if (distance_item->getStartPeak().isValid() && distance_item->getEndPeak().isValid())
-							{
-								drawHighlightedPeak_(i, distance_item->getStartPeak(), painter, true);
-								drawHighlightedPeak_(i, distance_item->getEndPeak(), painter, true);
-							}
-						}
-					}
 					//draw all annotation items
+					annotation_manager_.setPen(QPen(QColor(layer.param.getValue("annotation_color").toQString()), 1));
 					annotation_manager_.drawAnnotations(getLayer_(i), painter);
 				}
 			}
@@ -759,15 +769,22 @@ namespace OpenMS
 			// draw elongation as dashed line (while in measure mode and for all existing distance annotations)
 			if (draw_elongation)
 			{
-				QPen pen;
-				QVector<qreal> dashes;
-				dashes << 5 << 5 << 1 << 5;
-				pen.setDashPattern(dashes);
-				pen.setColor("red");
-				painter.setPen(pen);
-				painter.drawLine(begin.x(), begin.y(), top_end.x(), top_end.y());
+				drawDashedLine_(begin, top_end, painter);
 			}
 		}
+	}
+	
+	void Spectrum1DCanvas::drawDashedLine_(const QPoint& from, const QPoint& to, QPainter& painter)
+	{
+		QPen pen;
+		QVector<qreal> dashes;
+		dashes << 5 << 5 << 1 << 5;
+		pen.setDashPattern(dashes);
+		pen.setColor(QColor(param_.getValue("highlighted_peak_color").toQString()));
+		painter.save();
+		painter.setPen(pen);
+		painter.drawLine(from, to);
+		painter.restore();
 	}
 	
 	void Spectrum1DCanvas::changeVisibleArea_(const AreaType& new_area, bool repaint, bool add_to_stack)
@@ -945,12 +962,14 @@ namespace OpenMS
 		
 		ColorSelector* peak_color = dlg.findChild<ColorSelector*>("peak_color");
 		ColorSelector* icon_color = dlg.findChild<ColorSelector*>("icon_color");
+		ColorSelector* annotation_color = dlg.findChild<ColorSelector*>("annotation_color");
 		ColorSelector* bg_color = dlg.findChild<ColorSelector*>("bg_color");
 		ColorSelector* selected_color = dlg.findChild<ColorSelector*>("selected_color");
 		QComboBox* on_file_change = dlg.findChild<QComboBox*>("on_file_change");
 		
 		peak_color->setColor(QColor(getCurrentLayer_().param.getValue("peak_color").toQString()));
 		icon_color->setColor(QColor(getCurrentLayer_().param.getValue("icon_color").toQString()));
+		annotation_color->setColor(QColor(getCurrentLayer_().param.getValue("annotation_color").toQString()));
 		bg_color->setColor(QColor(param_.getValue("background_color").toQString()));
 		selected_color->setColor(QColor(param_.getValue("highlighted_peak_color").toQString()));
 		on_file_change->setCurrentIndex(on_file_change->findText(param_.getValue("on_file_change").toQString()));		
@@ -959,6 +978,7 @@ namespace OpenMS
 		{
 			getCurrentLayer_().param.setValue("peak_color",peak_color->getColor().name());
 			getCurrentLayer_().param.setValue("icon_color",icon_color->getColor().name());
+			getCurrentLayer_().param.setValue("annotation_color",annotation_color->getColor().name());
 			param_.setValue("background_color",bg_color->getColor().name());
 			param_.setValue("highlighted_peak_color",selected_color->getColor().name());
 			param_.setValue("on_file_change", on_file_change->currentText());
@@ -982,123 +1002,157 @@ namespace OpenMS
 		QAction* result = 0;
 		QAction* new_action = 0;
 
-		//Display name and warn if current layer invisible
-		String layer_name = String("Layer: ") + getCurrentLayer().name;
-		if (!getCurrentLayer().visible)
+		Annotation1DItem* annot_item = annotation_manager_.getItemAt(getCurrentLayer(), e->pos());
+		if (annot_item)
 		{
-			layer_name += " (invisible)";
+			annotation_manager_.deselectAll(getCurrentLayer());
+			annotation_manager_.selectItemAt(getCurrentLayer(), e->pos());
+			update_buffer_ = true;
+			update_(__PRETTY_FUNCTION__);
+			
+			context_menu->addAction("Edit");
+			context_menu->addAction("Delete");
+			if ((result = context_menu->exec(mapToGlobal(e->pos()))))
+			{
+				if (result->text() == "Delete")
+				{
+					annotation_manager_.removeSelectedItems(getCurrentLayer());
+				}
+				else if (result->text() == "Edit")
+				{
+					const String& old_text = annot_item->getText();
+					
+					bool ok;
+					QString text = QInputDialog::getText(this, "Edit text", "Enter text:", QLineEdit::Normal, old_text.toQString(), &ok);
+					if (ok && !text.isEmpty())
+					{
+						annot_item->setText(text);
+					}
+				}
+				update_buffer_ = true;
+				update_(__PRETTY_FUNCTION__);
+			}
 		}
-		context_menu->addAction(layer_name.toQString())->setEnabled(false);
-		context_menu->addSeparator();
-
-		context_menu->addAction("Add custom label");
-		new_action = context_menu->addAction("Add peak annotation");
-		PeakIndex near_peak = findPeakAtPosition_(e->pos());
-		if (!near_peak.isValid())
+		else
 		{
-			new_action->setEnabled(false);
-		}
-		
-		context_menu->addSeparator();
-
-		context_menu->addAction("Layer meta data");
-
-		QMenu* save_menu = new QMenu("Save");
-		save_menu->addAction("Layer");
-		save_menu->addAction("Visible layer data");
-		save_menu->addAction("As image");
-		
-		QMenu* settings_menu = new QMenu("Settings");
-		settings_menu->addAction("Show/hide grid lines");
-		settings_menu->addAction("Show/hide axis legends");
-		settings_menu->addAction("Show as raw data/peaks");
-		settings_menu->addSeparator();
-		settings_menu->addAction("Preferences");
-		
-		context_menu->addMenu(save_menu);
-		context_menu->addMenu(settings_menu);
-
-		//add external context menu
-		if (context_add_)
-		{
+			//Display name and warn if current layer invisible
+			String layer_name = String("Layer: ") + getCurrentLayer().name;
+			if (!getCurrentLayer().visible)
+			{
+				layer_name += " (invisible)";
+			}
+			context_menu->addAction(layer_name.toQString())->setEnabled(false);
 			context_menu->addSeparator();
-			context_menu->addMenu(context_add_);
-		}
-		
-		context_menu->addSeparator();
-		new_action = context_menu->addAction("Clear alignment");
-		new_action->setEnabled(false);
-		Spectrum1DWidget* widget_1d = qobject_cast<Spectrum1DWidget*>(spectrum_widget_);
-		if (widget_1d->hasSecondCanvas() && widget_1d->alignmentWidget()->alignmentIsSet())
-		{
-			new_action->setEnabled(true);
-		}
-
-		//evaluate menu
-		if ((result = context_menu->exec(mapToGlobal(e->pos()))))
-		{
-			if (result->text() == "Preferences")
+	
+			context_menu->addAction("Add custom label");
+			new_action = context_menu->addAction("Add peak annotation");
+			PeakIndex near_peak = findPeakAtPosition_(e->pos());
+			if (!near_peak.isValid())
 			{
-				showCurrentLayerPreferences();
+				new_action->setEnabled(false);
 			}
-			else if (result->text() == "Show/hide grid lines")
+			
+			context_menu->addSeparator();
+	
+			context_menu->addAction("Layer meta data");
+	
+			QMenu* save_menu = new QMenu("Save");
+			save_menu->addAction("Layer");
+			save_menu->addAction("Visible layer data");
+			save_menu->addAction("As image");
+			
+			QMenu* settings_menu = new QMenu("Settings");
+			settings_menu->addAction("Show/hide grid lines");
+			settings_menu->addAction("Show/hide axis legends");
+			settings_menu->addAction("Show as raw data/peaks");
+			settings_menu->addSeparator();
+			settings_menu->addAction("Preferences");
+			
+			context_menu->addMenu(save_menu);
+			context_menu->addMenu(settings_menu);
+	
+			//add external context menu
+			if (context_add_)
 			{
-				showGridLines(!gridLinesShown());
-			} 
-			else if (result->text() == "Show/hide axis legends")
-			{
-				emit changeLegendVisibility();
+				context_menu->addSeparator();
+				context_menu->addMenu(context_add_);
 			}
-			else if (result->text()=="Layer" || result->text()=="Visible layer data")
+			
+			context_menu->addSeparator();
+			new_action = context_menu->addAction("Clear alignment");
+			new_action->setEnabled(false);
+			Spectrum1DWidget* widget_1d = qobject_cast<Spectrum1DWidget*>(spectrum_widget_);
+			if (widget_1d->hasSecondCanvas() && widget_1d->alignmentWidget()->alignmentIsSet())
 			{
-				saveCurrentLayer(result->text()=="Visible layer data");
+				new_action->setEnabled(true);
 			}
-			else if (result->text()=="As image")
+	
+			//evaluate menu
+			if ((result = context_menu->exec(mapToGlobal(e->pos()))))
 			{
-				spectrum_widget_->saveAsImage();
-			}
-			else if (result->text()=="Show as raw data/peaks")
-			{
-				if (getDrawMode()==DM_PEAKS)
+				if (result->text() == "Preferences")
 				{
-					setDrawMode(DM_CONNECTEDLINES);
+					showCurrentLayerPreferences();
 				}
-				else
+				else if (result->text() == "Show/hide grid lines")
 				{
-					setDrawMode(DM_PEAKS);
-				}
-			}
-			else if (result->text()=="Layer meta data")
-			{
-				showMetaData(true);
-			}
-			else if (result->text()=="Add custom label")
-			{
-				bool ok;
-     		QString text = QInputDialog::getText(this, "Add custom label", "Enter text:", QLineEdit::Normal, "", &ok);
-     		if (ok && !text.isEmpty())
-     		{
-					annotation_manager_.addTextItem(getCurrentLayer(), widgetToData_(e->pos()), String(text));
-					update_buffer_ = true;
-					update_(__PRETTY_FUNCTION__);
-				}
-			}
-			else if  (result->text()=="Add peak annotation")
-			{
-				bool ok;
-				QString text = QInputDialog::getText(this, "Add peak annotation", "Enter text:", QLineEdit::Normal, "", &ok);
-				if (ok && !text.isEmpty())
+					showGridLines(!gridLinesShown());
+				} 
+				else if (result->text() == "Show/hide axis legends")
 				{
-					PointType position = widgetToData_(e->pos());
-					position.setX(near_peak.getPeak(getCurrentLayer().peaks).getMZ());
-					annotation_manager_.addPeakItem(getCurrentLayer(), position, near_peak, String(text));
-					update_buffer_ = true;
-					update_(__PRETTY_FUNCTION__);
+					emit changeLegendVisibility();
 				}
-			}
-			else if (result->text()=="Clear alignment")
-			{
-				qobject_cast<Spectrum1DWidget*>(spectrum_widget_)->alignmentWidget()->clearAlignmentLines();
+				else if (result->text()=="Layer" || result->text()=="Visible layer data")
+				{
+					saveCurrentLayer(result->text()=="Visible layer data");
+				}
+				else if (result->text()=="As image")
+				{
+					spectrum_widget_->saveAsImage();
+				}
+				else if (result->text()=="Show as raw data/peaks")
+				{
+					if (getDrawMode()==DM_PEAKS)
+					{
+						setDrawMode(DM_CONNECTEDLINES);
+					}
+					else
+					{
+						setDrawMode(DM_PEAKS);
+					}
+				}
+				else if (result->text()=="Layer meta data")
+				{
+					showMetaData(true);
+				}
+				else if (result->text()=="Add custom label")
+				{
+					bool ok;
+					QString text = QInputDialog::getText(this, "Add custom label", "Enter text:", QLineEdit::Normal, "", &ok);
+					if (ok && !text.isEmpty())
+					{
+						annotation_manager_.addTextItem(getCurrentLayer(), widgetToData_(e->pos()), String(text));
+						update_buffer_ = true;
+						update_(__PRETTY_FUNCTION__);
+					}
+				}
+				else if  (result->text()=="Add peak annotation")
+				{
+					bool ok;
+					QString text = QInputDialog::getText(this, "Add peak annotation", "Enter text:", QLineEdit::Normal, "", &ok);
+					if (ok && !text.isEmpty())
+					{
+						PointType position = widgetToData_(e->pos());
+						position.setX(near_peak.getPeak(getCurrentLayer().peaks).getMZ());
+						annotation_manager_.addPeakItem(getCurrentLayer(), position, near_peak, String(text));
+						update_buffer_ = true;
+						update_(__PRETTY_FUNCTION__);
+					}
+				}
+				else if (result->text()=="Clear alignment")
+				{
+					qobject_cast<Spectrum1DWidget*>(spectrum_widget_)->alignmentWidget()->clearAlignmentLines();
+				}
 			}
 		}
 		e->accept();

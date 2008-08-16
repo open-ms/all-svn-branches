@@ -27,10 +27,18 @@
 // OpenMS includes
 #include <OpenMS/VISUAL/DIALOGS/SpectrumAlignmentDialog.h>
 
+// QT includes
+#include <QtGui/QButtonGroup>
+
 namespace OpenMS
 {
 	SpectrumAlignmentDialog::SpectrumAlignmentDialog()
 	{
 		setupUi(this);
+		
+		QButtonGroup* button_group = new QButtonGroup(this);
+		button_group->addButton(ppm);
+		button_group->addButton(da);
+		da->setChecked(true);
 	}
 } // namespace

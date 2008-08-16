@@ -52,6 +52,8 @@ namespace OpenMS
 			
 		protected slots:
 		
+			void itemChanged(QListWidgetItem* item);
+		
 		protected:
 			
 		private:

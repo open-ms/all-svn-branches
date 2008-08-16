@@ -27,13 +27,14 @@
 #ifndef OPENMS_VISUAL_ANNOTATION1DITEM_H
 #define OPENMS_VISUAL_ANNOTATION1DITEM_H
 
+#include <OpenMS/DATASTRUCTURES/String.h>
 #include <QtCore/QRectF>
 
 namespace OpenMS
 {
 	/** @brief An abstract class acting as an interface for the different 1d annotation items.
 	
-			This is an abstract class which acts as an interface between its polymorphic
+			This is an abstract polymorphic class which acts as an interface between its
 			subclasses and all containers and methods that contain or handle Annotation1DItem
 			objects.
 			
@@ -41,6 +42,8 @@ namespace OpenMS
 			implement the pure virtual methods, and add everything else the item should
 			have or be capable of. Then tell the Annotations1DManager how items of
 			this new class are drawn and how their bounding boxes are computed
+			and make the copy constructor and assignment operator
+			of Annotations1DContainer copy these new kinds of items.
 			
 	*/
 	class Annotation1DItem
@@ -59,6 +62,12 @@ namespace OpenMS
 			
 			/// Sets whether this item is currently selected on the canvas or not
 			virtual void setSelected(bool selected) = 0;
+			
+			/// Sets the text of the item
+			virtual void setText(const String& text) = 0;
+			
+			/// Returns the text of the item
+			virtual const String& getText() const = 0;
 			
 	};
 } // namespace OpenMS

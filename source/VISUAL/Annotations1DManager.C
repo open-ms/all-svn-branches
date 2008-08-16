@@ -43,6 +43,23 @@ namespace OpenMS
 	{
 	}
 	
+	void Annotations1DManager::setPen(const QPen& pen)
+	{
+		pen_ = pen;
+		selected_pen_ = pen;
+		
+		//make selected items a little brighter
+		int sel_red = pen.color().red() + 50;
+		int sel_green = pen.color().green() + 50;
+		int sel_blue = pen.color().blue() + 50;
+		//check if rgb out of bounds
+		sel_red = sel_red > 255 ? 255 : sel_red;
+		sel_green = sel_green > 255 ? 255 : sel_green;
+		sel_blue = sel_blue > 255 ? 255 : sel_blue;
+		
+		selected_pen_.setColor(QColor(sel_red, sel_green, sel_blue));
+	}
+	
 	Annotation1DItem* Annotations1DManager::getItemAt(const LayerData& layer, const QPoint& pos) const
 	{
 		for (Annotations1DContainer::ConstIterator it = layer.annotations_1d.begin(); it != layer.annotations_1d.end(); ++it)
@@ -73,7 +90,6 @@ namespace OpenMS
 		}
 	}
 	
-	
 	void Annotations1DManager::drawAnnotations(const LayerData& layer, QPainter& painter)
 	{
 		for (Annotations1DContainer::ConstIterator it = layer.annotations_1d.begin(); it != layer.annotations_1d.end(); ++it)
@@ -81,7 +97,7 @@ namespace OpenMS
 			Annotation1DDistanceItem* distance_item = dynamic_cast<Annotation1DDistanceItem*>(*it);
 			if (distance_item)
 			{
-				drawDistanceItem(layer, distance_item, painter);
+				drawDistanceItem(distance_item, painter);
 				continue;
 			}
 			
@@ -96,22 +112,21 @@ namespace OpenMS
 			if (peak_item)
 			{
 				drawPeakItem(peak_item, painter);
+				continue;
 			}
 		}
 	}
 	
 	void Annotations1DManager::drawBoundingBox(const QRectF& bounding_box, QPainter& painter)
 	{
-		painter.setPen(Qt::green);
-		
 		// draw additional filled rectangles to highlight bounding box of selected distance_item
-		painter.fillRect(bounding_box.topLeft().x()-3, bounding_box.topLeft().y()-3, 3, 3, Qt::green);
-		painter.fillRect(bounding_box.topRight().x(), bounding_box.topRight().y()-3, 3, 3, Qt::green);
-		painter.fillRect(bounding_box.bottomRight().x(), bounding_box.bottomRight().y(), 3, 3, Qt::green);
-		painter.fillRect(bounding_box.bottomLeft().x()-3, bounding_box.bottomLeft().y(), 3, 3, Qt::green);
+		painter.fillRect(bounding_box.topLeft().x()-3, bounding_box.topLeft().y()-3, 3, 3, selected_pen_.color());
+		painter.fillRect(bounding_box.topRight().x(), bounding_box.topRight().y()-3, 3, 3, selected_pen_.color());
+		painter.fillRect(bounding_box.bottomRight().x(), bounding_box.bottomRight().y(), 3, 3, selected_pen_.color());
+		painter.fillRect(bounding_box.bottomLeft().x()-3, bounding_box.bottomLeft().y(), 3, 3, selected_pen_.color());
 	}
 	
-	void Annotations1DManager::drawDistanceItem(const LayerData& layer, Annotation1DDistanceItem* distance_item, QPainter& painter)
+	void Annotations1DManager::drawDistanceItem(Annotation1DDistanceItem* distance_item, QPainter& painter)
 	{
 		//translate mz/intensity to pixel coordinates
 		QPoint start_point, end_point;
@@ -120,12 +135,9 @@ namespace OpenMS
 		
 		// compute bounding box of distance_item on the specified painter
 		QRectF bbox(QPointF(start_point.x(), start_point.y()), QPointF(end_point.x(), end_point.y()+4)); // +4 for lower half of arrow heads
-		// bbox must enclose distance text:
-		const SpectrumCanvas::ExperimentType::PeakType& peak_1 = distance_item->getStartPeak().getPeak(layer.peaks);
-		const SpectrumCanvas::ExperimentType::PeakType& peak_2 = distance_item->getEndPeak().getPeak(layer.peaks);
-		QString distance_string = QString("%1").arg(peak_2.getMZ()-peak_1.getMZ());
+		
 		// find out how much additional space is needed for the text:
-		QRectF text_boundings = painter.boundingRect(QRectF(), Qt::AlignCenter, distance_string);
+		QRectF text_boundings = painter.boundingRect(QRectF(), Qt::AlignCenter, distance_item->getText().toQString());
 		bbox.setTop(bbox.top() - text_boundings.height());
 		// if text doesn't fit between peaks, enlarge bounding box:
 		if (text_boundings.width() > bbox.width())
@@ -139,11 +151,12 @@ namespace OpenMS
 		
 		if (distance_item->isSelected())
 		{
+			painter.setPen(selected_pen_);
 			drawBoundingBox(bbox, painter);
 		}
 		else
 		{
-			painter.setPen(Qt::darkGreen);
+			painter.setPen(pen_);
 		}
 		
 		// draw line
@@ -154,8 +167,7 @@ namespace OpenMS
 		painter.drawLine(end_point, QPoint(end_point.x()-5, end_point.y()-4));
 		painter.drawLine(end_point, QPoint(end_point.x()-5, end_point.y()+4));
 		// draw distance text
-		painter.drawText(bbox, Qt::AlignHCenter, distance_string);
-
+		painter.drawText(bbox, Qt::AlignHCenter, distance_item->getText().toQString());
 	}
 	
 	void Annotations1DManager::drawTextItem(Annotation1DTextItem* text_item, QPainter& painter)
@@ -170,11 +182,12 @@ namespace OpenMS
 		
 		if (text_item->isSelected())
 		{
+			painter.setPen(selected_pen_);
 			drawBoundingBox(bbox, painter);
 		}
 		else
 		{
-			painter.setPen(Qt::darkGreen);
+			painter.setPen(pen_);
 		}
 		
 		painter.drawText(bbox, Qt::AlignCenter, text_item->getText().toQString());
@@ -195,11 +208,12 @@ namespace OpenMS
 		
 		if (peak_item->isSelected())
 		{
+			painter.setPen(selected_pen_);
 			drawBoundingBox(bbox, painter);
 		}
 		else
 		{
-			painter.setPen(Qt::darkGreen);
+			painter.setPen(pen_);
 		}
 		
 		painter.drawText(bbox, Qt::AlignCenter, peak_item->getText().toQString());
@@ -238,9 +252,9 @@ namespace OpenMS
 		}
 	}
 	
-	void Annotations1DManager::addDistanceItem(const LayerData& layer, const PeakIndex& peak_1, const PeakIndex& peak_2, const PointType& start_point, const PointType& end_point)
+	void Annotations1DManager::addDistanceItem(const LayerData& layer, const String& text, const PointType& start_point, const PointType& end_point)
 	{
-		Annotation1DItem* new_item = new Annotation1DDistanceItem(peak_1, peak_2, start_point, end_point);
+		Annotation1DItem* new_item = new Annotation1DDistanceItem(text, start_point, end_point);
 		layer.annotations_1d.push_front(new_item);
 	}
 	
@@ -252,7 +266,14 @@ namespace OpenMS
 	
 	void Annotations1DManager::addPeakItem(const LayerData& layer, const PointType& position, const PeakIndex& peak, const String& text)
 	{
-		Annotation1DItem* new_item = new Annotation1DPeakItem(position, peak, text);
+		CoordinateType peak_height = peak.getPeak(layer.peaks).getIntensity();
+		PointType actual_pos = position;
+
+		if (position.getY() > peak_height)
+		{
+			actual_pos.setY(peak_height);
+		}
+		Annotation1DItem* new_item = new Annotation1DPeakItem(actual_pos, peak, text);
 		layer.annotations_1d.push_front(new_item);
 	}
 

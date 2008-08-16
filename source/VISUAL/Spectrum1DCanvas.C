@@ -1044,7 +1044,7 @@ namespace OpenMS
 			context_menu->addAction(layer_name.toQString())->setEnabled(false);
 			context_menu->addSeparator();
 	
-			context_menu->addAction("Add custom label");
+			context_menu->addAction("Add label");
 			new_action = context_menu->addAction("Add peak annotation");
 			PeakIndex near_peak = findPeakAtPosition_(e->pos());
 			if (!near_peak.isValid())
@@ -1125,10 +1125,10 @@ namespace OpenMS
 				{
 					showMetaData(true);
 				}
-				else if (result->text()=="Add custom label")
+				else if (result->text()=="Add label")
 				{
 					bool ok;
-					QString text = QInputDialog::getText(this, "Add custom label", "Enter text:", QLineEdit::Normal, "", &ok);
+					QString text = QInputDialog::getText(this, "Add label", "Enter text:", QLineEdit::Normal, "", &ok);
 					if (ok && !text.isEmpty())
 					{
 						annotation_manager_.addTextItem(getCurrentLayer(), widgetToData_(e->pos()), String(text));

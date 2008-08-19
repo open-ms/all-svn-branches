@@ -64,7 +64,7 @@ namespace OpenMS
 			/// Sets whether this item is currently selected on the canvas or not
 			virtual void setSelected(bool selected);
 			/// Returns true if this item is currently selected on the canvas, else false
-			virtual const bool isSelected() const;
+			virtual bool isSelected() const;
 			/// Sets the text
  			virtual void setText(const String& text);
  			/// Returns the text

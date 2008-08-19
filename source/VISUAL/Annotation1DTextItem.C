@@ -66,7 +66,7 @@ namespace OpenMS
 		is_selected_ = selected;
 	}
 	
-	const bool Annotation1DTextItem::isSelected() const
+	bool Annotation1DTextItem::isSelected() const
 	{
 		return is_selected_;
 	}

@@ -58,7 +58,7 @@ namespace OpenMS
 			virtual const QRectF& boundingBox() const = 0;
 			
 			/// Returns true if this item is currently selected on the canvas, else false
-			virtual const bool isSelected() const = 0;
+			virtual bool isSelected() const = 0;
 			
 			/// Sets whether this item is currently selected on the canvas or not
 			virtual void setSelected(bool selected) = 0;

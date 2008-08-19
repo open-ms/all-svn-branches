@@ -68,7 +68,7 @@ namespace OpenMS
 		is_selected_ = selected;
 	}
 	
-	const bool Annotation1DDistanceItem::isSelected() const
+	bool Annotation1DDistanceItem::isSelected() const
 	{
 		return is_selected_;
 	}

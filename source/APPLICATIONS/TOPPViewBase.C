@@ -1268,12 +1268,9 @@ namespace OpenMS
   	{
   		return;
   	}
-  	if (layer_manager_->item(layer_row)->text().startsWith(QString("Bottom: ")))
+  	if ((UInt)layer_row >= activeCanvas_()->getLayerCount())
   	{
-  		if (!active1DWindow_() || !active1DWindow_()->hasSecondCanvas())
-  		{
-  			return;
-  		}
+			// this can only be the case when a 1D window is active, no further check needed
   		cc = active1DWindow_()->flippedCanvas();
   	}
   	else
@@ -1288,53 +1285,79 @@ namespace OpenMS
   	spectrum_selection_->clear();
   	spectrum_selection_->blockSignals(true);
   	const LayerData& cl = cc->getCurrentLayer();
-  	
-  	QTreeWidgetItem* item;
+  	QTreeWidgetItem* item = 0;
+
   	if(cl.type == LayerData::DT_PEAK)
   	{
-  		QTreeWidgetItem* parent_item = 0;
-  		QTreeWidgetItem* prev_parent_item = 0;
+  		std::vector<QTreeWidgetItem*> parent_stack;
+  		parent_stack.push_back(0);
+  		bool fail = false;
+  		
 			for (UInt i = 0; i < cl.peaks.size(); ++i)
 			{
-				if (cl.peaks[i].getMSLevel() == 1)
+				if (i > 0)
 				{
-					item = new QTreeWidgetItem((QTreeWidget*)0);
-					item->setText(0, QString("MS1"));
-					item->setText(1, QString::number(cl.peaks[i].getRT()));
-					item->setText(2, QString("-"));
-					item->setText(3, QString::number(i));
-					spectrum_selection_->addTopLevelItem(item);
-					parent_item = item;
-					prev_parent_item = item;
-				}
-				else if (i > 0)
-				{					
 					if (cl.peaks[i].getMSLevel() == cl.peaks[i-1].getMSLevel() + 1)
 					{
-						item = new QTreeWidgetItem(parent_item);
-						item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
-						item->setText(1, QString::number(cl.peaks[i].getRT()));
-						item->setText(2, QString::number(cl.peaks[i].getPrecursorPeak().getPosition()[0]));
-						item->setText(3, QString::number(i));
-						prev_parent_item = parent_item;
-						parent_item = item;
+						item = new QTreeWidgetItem(parent_stack.back());
+						parent_stack.resize(parent_stack.size()+1);
 					}
 					else if (cl.peaks[i].getMSLevel() == cl.peaks[i-1].getMSLevel())
 					{
-						item = new QTreeWidgetItem(prev_parent_item, parent_item);
-						item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
-						item->setText(1, QString::number(cl.peaks[i].getRT()));
-						item->setText(2, QString::number(cl.peaks[i].getPrecursorPeak().getPosition()[0]));
-						item->setText(3, QString::number(i));
-						parent_item = item;
+						if (parent_stack.size() == 1)
+						{
+							item = new QTreeWidgetItem((QTreeWidget*)0);
+						}
+						else
+						{
+							item = new QTreeWidgetItem(*(parent_stack.end()-2));
+						}
+					}
+					else if (cl.peaks[i].getMSLevel() < cl.peaks[i-1].getMSLevel())
+					{
+						int level_diff = cl.peaks[i-1].getMSLevel() - cl.peaks[i].getMSLevel();
+						int parent_index = 0;
+						QTreeWidgetItem* parent = 0;
+						if (parent_stack.size() - level_diff >= 1)
+						{
+							parent_index = parent_stack.size() - level_diff - 1;
+							item = new QTreeWidgetItem(parent, parent_stack[parent_index+1]);
+						}
+						else
+						{
+							item = new QTreeWidgetItem((QTreeWidget*)0);
+						}
+						parent = parent_stack[parent_index];
+						parent_stack.resize(parent_index+1);
 					}
 					else
 					{
-						std::cerr << "Spectrum browser: MS levels corrupt, aborting." << std::endl;
-						return; // leave signals blocked
+						std::cerr << "Cannot build treelike view for spectrum browser, generating flat list instead." << std::endl;
+						fail = true;
+						break;
 					}
 				}
-				else // first spectrum has ms level > 1, possible when it was copied
+				else
+				{
+					item = new QTreeWidgetItem((QTreeWidget*)0);
+				}
+				
+				parent_stack.back() = item;
+				if (parent_stack.size() == 1)
+				{
+					spectrum_selection_->addTopLevelItem(item);
+				}
+				
+				item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
+				item->setText(1, QString::number(cl.peaks[i].getRT()));
+				item->setText(2, QString::number(cl.peaks[i].getPrecursorPeak().getPosition()[0]));
+				item->setText(3, QString::number(i));
+			}
+			if (fail)
+			{
+				// generate flat list instead
+				spectrum_selection_->clear();
+				for (int i = 0; i < cl.peaks.size(); ++i)
 				{
 					item = new QTreeWidgetItem((QTreeWidget*)0);
 					item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
@@ -1342,8 +1365,6 @@ namespace OpenMS
 					item->setText(2, QString::number(cl.peaks[i].getPrecursorPeak().getPosition()[0]));
 					item->setText(3, QString::number(i));
 					spectrum_selection_->addTopLevelItem(item);
-					prev_parent_item = item;
-					parent_item = item;
 				}
 			}
   	}
@@ -1389,8 +1410,9 @@ namespace OpenMS
 	void TOPPViewBase::spectrumSelectionChange(QTreeWidgetItem* item, int /*column*/)
 	{
 		SpectrumCanvas* cc;
-		if (layer_manager_->currentItem()->text().startsWith(QString("Bottom: ")))
+		if ((UInt)layer_manager_->currentRow() >= activeCanvas_()->getLayerCount())
 		{
+			// this can only be the case when a 1D window is active, no further check needed
 			cc = active1DWindow_()->flippedCanvas();
 		}
 		else
@@ -1420,7 +1442,7 @@ namespace OpenMS
 			QMenu* context_menu = new QMenu(layer_manager_);
 			context_menu->addAction("Rename");
 			context_menu->addAction("Delete");
-			if (item->text().startsWith("Bottom: "))
+			if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
 			{
 				new_action = context_menu->addAction("Move to upper canvas (1D)");
 			}
@@ -1436,8 +1458,9 @@ namespace OpenMS
 			//delete layer
 			if (selected!=0 && selected->text()=="Delete")
 			{
-				if (active1DWindow_() && active1DWindow_()->hasSecondCanvas() && item->text().startsWith("Bottom: "))
+				if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
 				{
+					// this can only be the case when a 1D window is active, no further check needed
 					int del_index = layer - active1DWindow_()->canvas()->getLayerCount();
 					Spectrum1DCanvas* flipped_canvas = active1DWindow_()->flippedCanvas();
 					flipped_canvas->removeLayer(del_index);
@@ -1457,8 +1480,9 @@ namespace OpenMS
 				QString name = QInputDialog::getText(this,"Rename layer","Name:");
 				if (name!="")
 				{
-					if (active1DWindow_() && active1DWindow_()->hasSecondCanvas() && item->text().startsWith("Bottom: "))
+					if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
 					{
+						// this can only be the case when a 1D window is active, no further check needed
 						int rename_index = layer - active1DWindow_()->canvas()->getLayerCount();
 						active1DWindow_()->flippedCanvas()->setLayerName(rename_index, name);
 					}
@@ -1613,7 +1637,7 @@ namespace OpenMS
 
 	void TOPPViewBase::layerEdit(QListWidgetItem* item)
 	{
-		if (item->text().startsWith("Bottom: "))
+		if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
 		{
 			Spectrum1DWidget* active_1d_window = active1DWindow_();
 			if (active_1d_window && active_1d_window->hasSecondCanvas())
@@ -1659,8 +1683,10 @@ namespace OpenMS
 	{
 		int layer;
 		bool visible;
-		if (item->text().startsWith("Bottom: "))
+		if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
 		{
+			// this can only be the case when a 1D window is active, no further check needed
+
 			layer = layer_manager_->row(item) - active1DWindow_()->canvas()->getLayerCount();
 			visible = active1DWindow_()->flippedCanvas()->getLayer(layer).visible;
 			

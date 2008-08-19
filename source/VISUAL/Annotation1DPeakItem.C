@@ -68,7 +68,7 @@ namespace OpenMS
 		is_selected_ = selected;
 	}
 	
-	const bool Annotation1DPeakItem::isSelected() const
+	bool Annotation1DPeakItem::isSelected() const
 	{
 		return is_selected_;
 	}

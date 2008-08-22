@@ -1318,16 +1318,17 @@ namespace OpenMS
 						int level_diff = cl.peaks[i-1].getMSLevel() - cl.peaks[i].getMSLevel();
 						int parent_index = 0;
 						QTreeWidgetItem* parent = 0;
-						if (parent_stack.size() - level_diff >= 1)
+						if (parent_stack.size() - level_diff >= 2)
 						{
 							parent_index = parent_stack.size() - level_diff - 1;
+							parent = parent_stack[parent_index];
+
 							item = new QTreeWidgetItem(parent, parent_stack[parent_index+1]);
 						}
 						else
 						{
 							item = new QTreeWidgetItem((QTreeWidget*)0);
 						}
-						parent = parent_stack[parent_index];
 						parent_stack.resize(parent_index+1);
 					}
 					else
@@ -1429,7 +1430,7 @@ namespace OpenMS
 		exp[0] = cl.peaks[index];
 		addData_(dummy, exp, false, false, true, cl.filename, cl.name + " (" + QString::number(cl.peaks[index].getRT()) + ")");
 			
-		updateSpectrumBar();
+		//updateSpectrumBar();
 	}
 
 	void TOPPViewBase::layerContextMenu(const QPoint & pos)
@@ -2370,7 +2371,7 @@ namespace OpenMS
 			}
 			else
 			{
-				QMessageBox::warning(this, "Not supported", "A spectrum alignment can only be performed if the active window is a 1D view and contains two spectrum canvasses (mirror mode).");
+				QMessageBox::warning(this, "Not supported", "A spectrum alignment can only be performed if the active window is a 1D view and contains two spectrum canvases (mirror mode).");
 			}
 		}
 	}

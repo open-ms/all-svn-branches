@@ -306,7 +306,7 @@ namespace OpenMS
 					start_p.setX(peak_1.getMZ());
 					PointType end_p(peak_2.getMZ(), start_p.getY());
 					
-					annotation_manager_.addDistanceItem(getCurrentLayer(), String(distance), start_p, end_p);
+					annotation_manager_.addDistanceItem(getCurrentLayer(), String(QString::number(distance, 'f', 3)), start_p, end_p);
 				}
 			}
 			measurement_start_.clear();

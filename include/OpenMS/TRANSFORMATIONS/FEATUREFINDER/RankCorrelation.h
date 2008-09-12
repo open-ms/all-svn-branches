@@ -87,6 +87,8 @@ namespace OpenMS
 		/// Computes the rank of the sorted vector @p w 
 		void computeRank_(IntensityVector& w)
 		{
+			if (w.size() == 0) return;
+		
 			UInt i       = 0;					// main index
 			UInt v, z  = 0;						// "secondary" indizes
 			IntensityType rank = 0;

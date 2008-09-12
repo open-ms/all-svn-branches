@@ -467,14 +467,14 @@ namespace OpenMS
 		}
 		of.close();
 		
-		fname = String("interpol_mz") + counter_ +  "_" + rt + "_" + mz;		
-		of.open(fname.c_str());
-		for (UInt i=0;i<mz_lin_int_.getData().size();++i)
-     {
-             of << mz_lin_int_.index2key(i) << " ";
-             of << mz_lin_int_.getData()[i] << endl;
-     }
-		of.close();
+// 		fname = String("interpol_mz") + counter_ +  "_" + rt + "_" + mz;		
+// 		of.open(fname.c_str());
+// 		for (UInt i=0;i<mz_lin_int_.getData().size();++i)
+//      {
+//              of << mz_lin_int_.index2key(i) << " ";
+//              of << mz_lin_int_.getData()[i] << endl;
+//      }
+// 		of.close();
 		#endif
 	
 		++counter_;
@@ -709,6 +709,15 @@ namespace OpenMS
 		
 		mz_mean_pos /= mz_data_sum;
 		
+		String fname = String("interpol_mz") + counter_;	
+		ofstream of(fname.c_str());
+		for (UInt i=0;i<mz_lin_int_.getData().size();++i)
+    {
+      of << mz_lin_int_.index2key(i) << " ";
+    	of << mz_lin_int_.getData()[i] << endl;
+    }
+		of.close();
+		
 		cout << "mz_mean_pos " << mz_mean_pos << endl;
 		cout << "max_center before loop: " << max_center << endl;
 		for (CoordinateType pos = mz_mean_pos- 0.6;
@@ -746,11 +755,15 @@ namespace OpenMS
 				
 		}		
 		cout << "max_center after loop: " << max_center << endl;
+		if (max_center ==  -numeric_limits<QualityType>::max())  return -1.0;
+		
 		mz_model_ = IsotopeModel();
 		Param p = param_.copy("isotope_model:",true);
 		p.remove("fwhm");
 		mz_model_.setParameters(p);
 		mz_model_.setInterpolationStep(interpolation_step_mz_);
+		
+// 		if (max_center ==  -numeric_limits<QualityType>::max()) return -1.0;
 			
 		Param tmp;
 		tmp.setValue("charge", static_cast<Int>(charge));

@@ -45,151 +45,212 @@ namespace OpenMS
 	double RankCorrelation::evaluate(const IndexSet& set, const BaseModel<2>& model)
 	{
 		if (!traits_) throw Exception::NullPointer(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-				
-		// store and sort intensities of model and data
-		std::vector<double> ranks_data;
-		std::vector<double> ranks_model;
-			
+		
+		unsigned int n = set.size(); 						
+		gsl_vector* dv = gsl_vector_alloc(n);
+		gsl_vector* mv = gsl_vector_alloc(n);
+
+		unsigned int i=0;
 		for (IndexSet::const_iterator it=set.begin(); it!=set.end(); ++it)
 		{
-			ranks_model.push_back( model.getIntensity( traits_->getPeakPos(*it) ) );
-			ranks_data.push_back( traits_->getPeakIntensity(*it));
+			gsl_vector_set(dv,i,traits_->getPeakIntensity(*it) );
+			gsl_vector_set(mv,i,model.getIntensity(  traits_->getPeakPos(*it) ));
+			++i;
 		}
-						
 		// compute ranks 
-		std::sort(ranks_data.begin(),ranks_data.end());
-		std::sort(ranks_model.begin(),ranks_model.end());
-			
-		computeRank_(ranks_data);
-		computeRank_(ranks_model);
-		
-		double mu = (ranks_data.size() + 1) / 2; // mean of ranks
+    gsl_permutation * perm1 = gsl_permutation_alloc(n);
+    gsl_permutation * perm2 = gsl_permutation_alloc(n);
+    
+		gsl_permutation * rank1 = gsl_permutation_alloc(n);
+   	gsl_permutation * rank2 = gsl_permutation_alloc(n);
 
-		double sum_model_data = 0;
-		double sqsum_data     = 0;
-		double sqsum_model    = 0;
-		
-		for (UInt i=0; i<ranks_data.size();++i)
+    gsl_sort_vector_index(perm1,dv);
+    gsl_permutation_inverse(rank1,perm1);
+    
+		gsl_sort_vector_index(perm2,mv);
+    gsl_permutation_inverse(rank2,perm2);
+
+		double sum_model_data, sqsum_data, sqsum_model = 0;
+		double mu = (n + 1) / 2;
+
+		for (unsigned int i=0; i<n;++i)
 		{
-			sum_model_data  += (ranks_data[i] - mu) *(ranks_model[i] - mu);
-			sqsum_data   += (ranks_data[i] - mu) * (ranks_data[i] - mu);
-			sqsum_model += (ranks_model[i] - mu) * (ranks_model[i] - mu);
-		}
-			
+			//cout << "ranks data " << rank1->data[i] << endl;
+			//cout << "ranks model " << rank2->data[i] << endl;
+			//cout << "------------------------" << endl;
+			sum_model_data += (rank1->data[i] - mu) * (rank2->data[i] - mu);
+			sqsum_data += (rank1->data[i] - mu) * (rank1->data[i] - mu);
+			sqsum_model += (rank2->data[i] - mu) * (rank2->data[i] - mu);
+		}	
+																																															
 		// check for division by zero
 		if ( ! sqsum_data || ! sqsum_model ) return 0;		
 		
-		double corr = sum_model_data / (  sqrt(sqsum_data) * sqrt(sqsum_model) ); 
-		
+		//cout << "sum_model_data " << sum_model_data << endl;
+		//cout <<  "sqsum_data " << sqsum_data << endl;
+		//cout << "sqsum_model " << sqsum_model << endl;
+
+		double rs = sum_model_data /  sqrt(sqsum_data * sqsum_model); 
+		//cout << "Spearman correlation: " << fabs(rs) << endl;
+			
+		// free gsl data structures
+		gsl_vector_free(dv);
+		gsl_vector_free(mv);
+		gsl_permutation_free(perm1);
+		gsl_permutation_free(rank1);
+		gsl_permutation_free(perm2);
+		gsl_permutation_free(rank2);
+							
 		UInt df = set.size()-1;
-		double t_stat = sqrt(df) * corr; 
+		double t_stat = sqrt(df) * rs; 
 		
 		// t_stat follows Normal Gaussian distribution 
 		pval_ = (1 - gsl_cdf_ugaussian_P(t_stat));	
 				
-		return ( fabs(corr));
+		return ( fabs(rs));
 	}
 	
 	double RankCorrelation::evaluate(const IndexSet& set, const BaseModel<1>& model, UInt dim)
 	{
-		if (!traits_) throw Exception::NullPointer(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-				
-		// store and sort intensities of model and data
-		std::vector<double> ranks_data;
-		std::vector<double> ranks_model;
-					
-		for (IndexSet::const_iterator it=set.begin(); it!=set.end(); ++it)
-		{
-			const CoordinateType coord = traits_->getPeakPos(*it)[dim];
-			ranks_data.push_back(traits_->getPeakIntensity(*it));
-			ranks_model.push_back( model.getIntensity( coord ) );
-		}
-				
-		// compute ranks of data and model
-		std::sort(ranks_data.begin(),ranks_data.end() );
-		std::sort(ranks_model.begin(),ranks_model.end() );
-				
-		computeRank_(ranks_data);
-		computeRank_(ranks_model);
-		
-		double mu = (ranks_data.size() + 1) / 2; // mean of ranks
-		
-		double sum_model_data = 0;
-		double sqsum_data     = 0;
-		double sqsum_model    = 0;
-		
-		for (UInt i=0; i<ranks_data.size();++i)
-		{
-			sum_model_data  += (ranks_data[i] - mu) *(ranks_model[i] - mu);
-			
-			sqsum_data   += (ranks_data[i] - mu) * (ranks_data[i] - mu);
-			sqsum_model += (ranks_model[i] - mu) * (ranks_model[i] - mu);
-		}
-		
-		// check for division by zero
-		if ( ! sqsum_data || ! sqsum_model ) return 0;		
-		
-		double corr = sum_model_data / (  sqrt(sqsum_data) * sqrt(sqsum_model) ); 
-			
-		return fabs(corr);
-		}
-		
-		double RankCorrelation::evaluate(const Math::LinearInterpolation<double,double>& lint, const BaseModel<1>& iso_model)
-		{
 			if (!traits_) throw Exception::NullPointer(__FILE__, __LINE__, __PRETTY_FUNCTION__);
-				
-			// store and sort intensities of model and data
-			std::vector<double> ranks_data;
-			std::vector<double> ranks_model;
-			
-			// compute average intensity and intensity sum of spectrum
-			double mz_data_sum = 0.0;
-			for (UInt i=0;i<lint.getData().size();++i)
+	
+			unsigned int n = set.size(); 						
+			gsl_vector* dv = gsl_vector_alloc(n);
+			gsl_vector* mv = gsl_vector_alloc(n);
+
+			unsigned int i=0;
+			for (IndexSet::const_iterator it=set.begin(); it!=set.end(); ++it)
 			{
-				mz_data_sum += lint.getData()[i];
-			}		
-		
-			// normalize m/z model
-			double mz_model_sum = 0.0;
-			for(UInt i=0; i<lint.getData().size();++i)
-			{
-				mz_model_sum += iso_model.getIntensity(lint.index2key(i));
+				const CoordinateType coord = traits_->getPeakPos(*it)[dim];
+				gsl_vector_set(dv,i,traits_->getPeakIntensity(*it) );
+				gsl_vector_set(mv,i,model.getIntensity( coord ) );
+				++i;
 			}
-					
-			for (UInt i=0;i<lint.getData().size();++i)
+			// compute ranks 
+    	gsl_permutation * perm1 = gsl_permutation_alloc(n);
+    	gsl_permutation * perm2 = gsl_permutation_alloc(n);
+    
+			gsl_permutation * rank1 = gsl_permutation_alloc(n);
+   		gsl_permutation * rank2 = gsl_permutation_alloc(n);
+
+    	gsl_sort_vector_index(perm1,dv);
+    	gsl_permutation_inverse(rank1,perm1);
+    
+			gsl_sort_vector_index(perm2,mv);
+    	gsl_permutation_inverse(rank2,perm2);
+
+			double sum_model_data, sqsum_data, sqsum_model = 0;
+			double mu = (n + 1) / 2;
+
+			for (unsigned int i=0; i<n;++i)
 			{
-				ranks_data.push_back( (lint.getData()[i] / mz_data_sum) );
-				ranks_model.push_back((iso_model.getIntensity(lint.index2key(i) ) / mz_model_sum) );
-			}
-				
-			// compute ranks of data and model
-			std::sort(ranks_data.begin(),ranks_data.end() );
-			std::sort(ranks_model.begin(),ranks_model.end() );
-				
-			computeRank_(ranks_data);
-			computeRank_(ranks_model);
-		
-			double mu = (ranks_data.size() + 1) / 2; // mean of ranks
-		
-			double sum_model_data = 0;
-			double sqsum_data     = 0;
-			double sqsum_model    = 0;
-		
-			for (UInt i=0; i<ranks_data.size();++i)
-			{
-				sum_model_data  += (ranks_data[i] - mu) *(ranks_model[i] - mu);
-			
-				sqsum_data   += (ranks_data[i] - mu) * (ranks_data[i] - mu);
-				sqsum_model += (ranks_model[i] - mu) * (ranks_model[i] - mu);
-			}
-		
+				//cout << "ranks data " << rank1->data[i] << endl;
+				//cout << "ranks model " << rank2->data[i] << endl;
+				//cout << "------------------------" << endl;
+				sum_model_data += (rank1->data[i] - mu) * (rank2->data[i] - mu);
+				sqsum_data += (rank1->data[i] - mu) * (rank1->data[i] - mu);
+				sqsum_model += (rank2->data[i] - mu) * (rank2->data[i] - mu);
+			}	
+																																															
 			// check for division by zero
 			if ( ! sqsum_data || ! sqsum_model ) return 0;		
 		
-			double corr = sum_model_data / (  sqrt(sqsum_data) * sqrt(sqsum_model) ); 
+			//cout << "sum_model_data " << sum_model_data << endl;
+			//cout <<  "sqsum_data " << sqsum_data << endl;
+			//cout << "sqsum_model " << sqsum_model << endl;
+
+			double rs = sum_model_data /  sqrt(sqsum_data * sqsum_model); 
+			//cout << "Spearman correlation: " << fabs(rs) << endl;
 			
-			//return fabs(corr);
-			return corr;
+			// free gsl data structures
+			gsl_vector_free(dv);
+			gsl_vector_free(mv);
+			gsl_permutation_free(perm1);
+			gsl_permutation_free(rank1);
+			gsl_permutation_free(perm2);
+			gsl_permutation_free(rank2);
+							
+			UInt df = set.size()-1;
+			double t_stat = sqrt(df) * rs; 
+		
+			// t_stat follows Normal Gaussian distribution 
+			pval_ = (1 - gsl_cdf_ugaussian_P(t_stat));	
+				
+			return (fabs(rs));
+		}
+		
+		double RankCorrelation::evaluate(const Math::LinearInterpolation<double,double>& lint, const BaseModel<1>& isomodel)
+		{
+			if (!traits_) throw Exception::NullPointer(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+						
+			unsigned int n = lint.getData().size(); 						
+			gsl_vector* dv = gsl_vector_alloc(n);
+			gsl_vector* mv = gsl_vector_alloc(n);
+			
+			double data_sum, model_sum = 0.0;
+			for (UInt i=0;i<lint.getData().size();++i)
+			{
+				data_sum += lint.getData()[i];
+				model_sum += isomodel.getIntensity(lint.index2key(i));
+			}
+			
+ 			for (UInt i=0;i<lint.getData().size();++i)
+			{
+				double x = lint.getData()[i] / data_sum;
+				double y = isomodel.getIntensity(lint.index2key(i)) / model_sum;
+
+				gsl_vector_set(dv,i,x);
+				gsl_vector_set(mv,i,y);
+
+				//cout << "r : "  << lin_int.getData()[i] / data_sum << endl;
+				//cout << "r : " << isomodel.getIntensity(lin_int.index2key(i)) /  model_sum << endl;
+				//cout << "-----------------------------------------------------------" << endl;
+			}
+			// compute ranks 
+    	gsl_permutation * perm1 = gsl_permutation_alloc(n);
+    	gsl_permutation * perm2 = gsl_permutation_alloc(n);
+    
+			gsl_permutation * rank1 = gsl_permutation_alloc(n);
+   		gsl_permutation * rank2 = gsl_permutation_alloc(n);
+
+    	gsl_sort_vector_index(perm1,dv);
+    	gsl_permutation_inverse(rank1,perm1);
+    
+			gsl_sort_vector_index(perm2,mv);
+    	gsl_permutation_inverse(rank2,perm2);
+
+			double sum_model_data, sqsum_data, sqsum_model = 0;
+			double mu = (n + 1) / 2;
+
+			for (unsigned int i=0; i<n;++i)
+			{
+				//cout << "ranks data " << rank1->data[i] << endl;
+				//cout << "ranks model " << rank2->data[i] << endl;
+				//cout << "------------------------" << endl;
+				sum_model_data += (rank1->data[i] - mu) * (rank2->data[i] - mu);
+				sqsum_data += (rank1->data[i] - mu) * (rank1->data[i] - mu);
+				sqsum_model += (rank2->data[i] - mu) * (rank2->data[i] - mu);
+			}	
+																																															
+			// check for division by zero
+			if ( ! sqsum_data || ! sqsum_model ) return 0;		
+		
+			//cout << "sum_model_data " << sum_model_data << endl;
+			//cout <<  "sqsum_data " << sqsum_data << endl;
+			//cout << "sqsum_model " << sqsum_model << endl;
+
+			double rs = sum_model_data /  sqrt(sqsum_data * sqsum_model); 
+			//cout << "Spearman correlation: " << fabs(rs) << endl;
+			
+			// free gsl data structures
+			gsl_vector_free(dv);
+			gsl_vector_free(mv);
+			gsl_permutation_free(perm1);
+			gsl_permutation_free(rank1);
+			gsl_permutation_free(perm2);
+			gsl_permutation_free(rank2);
+						
+			return fabs(rs);
 		}
 		
 }

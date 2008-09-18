@@ -87,7 +87,7 @@ namespace OpenMS
 		defaults_.setValue("rt:deltaRelError",0.0001,"Relative error used by the Levenberg-Marquardt algorithms.");
 				
 		defaults_.setValue("mz:interpolation_step",0.03f,"Interpolation step size for m/z.");
-		defaults_.setValue("mz:sampling_step",1.0f,"Sampling step size for m/z (for resampling of spectra)");
+		defaults_.setValue("mz:sampling_step",0.1f,"Sampling step size for m/z (for resampling of spectra)");
 		defaults_.setValue("mz:model_type:first",1,"Numeric id of first m/z model fitted (usually indicating the charge state).");
 		defaults_.setValue("mz:model_type:last",4,"Numeric id of last m/z model fitted (usually indicating the charge state).");
 		defaults_.setDescription("mz","Model settings in m/z dimension.");
@@ -171,7 +171,7 @@ namespace OpenMS
 		{
 				for (Int mz_fit_type = first_mz; mz_fit_type <= last_mz; ++mz_fit_type)
 				{
-					//cout << "stdev: " << stdev << " charge: " << mz_fit_type << endl;
+// 					cout << "stdev: " << stdev << " charge: " << mz_fit_type << endl;
 					quality = fit_(set, static_cast<MzFitting>(mz_fit_type), LMAGAUSS, stdev, (UInt) sampling_size_mz );
 				
 					if (quality > max_quality)
@@ -243,9 +243,9 @@ namespace OpenMS
 		
 		double spl_step = param_.getValue("mz:sampling_step");
 		CoordinateType sampling_size_mz = (max_[MZ] - min_[MZ]) / spl_step;
-		cout << "sampling_size_mz " <<  sampling_size_mz << endl;
-		cout << "max_[MZ] " << max_[MZ] << " min_[MZ] " << min_[MZ] << endl;
-		cout << "min_mz_distance " << min_mz_distance << endl;
+// 		cout << "sampling_size_mz " <<  sampling_size_mz << endl;
+// 		cout << "max_[MZ] " << max_[MZ] << " min_[MZ] " << min_[MZ] << endl;
+// 		cout << "min_mz_distance " << min_mz_distance << endl;
 		
 		mz_lin_int_.getData().resize((UInt) sampling_size_mz);	
 		mz_lin_int_.setMapping( 0, min_[MZ] , sampling_size_mz, max_[MZ]);
@@ -333,23 +333,36 @@ namespace OpenMS
 												          String("Skipping feature, Not enough scans after cutoff: ") + rts.size() );
 		}
 		
-		//QualityType qual_mz = compute_mz_corr_(mz_model_);
-
 		QualityType qual_mz =	quality_->evaluate(mz_lin_int_, mz_model_);
-		
 		QualityType qual_rt =	quality_->evaluate(model_set, rt_model_, RT );
 		if (isnan(qual_rt) ) qual_rt = -1.0;
 
+// 		cout << "After fitting :  qual_mz " << qual_mz << " qual_rt " << qual_rt << endl;
 		max_quality = (qual_mz + qual_rt) / 2.0;
 		
+// 		String fn = String("model")+ counter_;
+// 		ofstream ofstr(fn.c_str()); 
+// 		for (IndexSetIter it=model_set.begin(); it!=model_set.end(); ++it) 
+// 		{
+// 			DPosition<2> pos = traits_->getPeakPos(*it);
+// 			if ( final->isContained(pos) )
+// 			{
+// 				ofstr << pos[RT] << " " << pos[MZ] << " " << final->getIntensity( traits_->getPeakPos(*it)) << endl;						
+// 			}
+// 		}
+// 		ofstr.close();
+// 		
 		// if the fit is not too bad, we try different charge states and check if we get better
 		if ( (max_quality > 0.0) && (max_quality < (QualityType)(param_.getValue("quality:minimum"))) )
 		{
+// 			cout << "Refitting ..... " << endl;
 			Int fmz = first_mz_model_;
 			Int lmz = last_mz_model_;
 			fit_loop_(set, fmz,lmz,sampling_size_mz,final);				
 			qual_mz =	quality_->evaluate(mz_lin_int_, mz_model_);
+// 			cout << "After fitting :  qual_mz " << qual_mz << " qual_rt " << qual_rt << endl;
 			max_quality = (qual_mz + qual_rt) / 2.0;
+// 			cout << "New quality " << max_quality << endl;
 		}
 				
 		// fit has too low quality or has failed
@@ -624,62 +637,7 @@ namespace OpenMS
 			outfile.close();
 	
 	}
-	
-// 	AveragineMatcher::QualityType AveragineMatcher::compute_mz_corr_(IsotopeModel& iso_model)
-// 	{			
-// 			// compute average intensity and intensity sum of spectrum
-// 			CoordinateType mz_data_avg = 0.0;
-// 			IntensityType mz_data_sum = 0.0;
-// 			for (UInt i=0;i<mz_lin_int_.getData().size();++i)
-// 			{
-// 				mz_data_sum += mz_lin_int_.getData()[i];
-// 			}		
-// 			for (UInt i=0;i<mz_lin_int_.getData().size();++i)
-// 			{
-// 				mz_data_avg  += ( mz_lin_int_.getData()[i] / mz_data_sum);	
-// 			}		
-// 			mz_data_avg /= mz_lin_int_.getData().size();
-// 		
-// 			// normalize m/z model
-// 			IntensityType mz_model_sum = 0.0;
-// 			for(UInt i=0; i<mz_lin_int_.getData().size();++i)
-// 			{
-// 				mz_model_sum += iso_model.getIntensity(mz_lin_int_.index2key(i));
-// 			}
-// 		
-// 			// compute model intensity average (for the given set of data points)
-// 			CoordinateType mz_model_avg = 0.0;		
-// 			for (UInt i=0;i<mz_lin_int_.getData().size();++i)
-// 			{
-// 				mz_model_avg += ( iso_model.getIntensity(mz_lin_int_.index2key(i) ) / mz_model_sum);
-// 			} 		
-// 			mz_model_avg /= mz_lin_int_.getData().size();
-// 			
-// 			// compute Pearson correlation
-// 			IntensityType cross_product_sum = 0;
-// 			IntensityType data_square_sum   = 0;
-// 			IntensityType model_square_sum  = 0; 
-// 			
-// 			for (UInt i=0;i<mz_lin_int_.getData().size();++i)
-// 			{
-// 					IntensityType m = (iso_model.getIntensity(mz_lin_int_.index2key(i) ) / mz_model_sum);
-// 					IntensityType d = (mz_lin_int_.getData()[i] / mz_data_sum);
-// 			
-// 					cross_product_sum += ( m - mz_model_avg) * ( d - mz_data_avg);
-// 					data_square_sum    += ( d - mz_data_avg)  * ( d - mz_data_avg);
-// 					model_square_sum  += ( m - mz_model_avg)  * ( m - mz_model_avg);					
-// 			}
-// 		
-// 			if (data_square_sum == 0 || model_square_sum == 0)
-// 			{
-// 				return -2.0;			
-// 			}
-// 			
-// 			QualityType corr_mz = cross_product_sum / sqrt(data_square_sum * model_square_sum);
-// 	
-// 			return corr_mz;	
-// 	}
-// 	
+
 	AveragineMatcher::QualityType AveragineMatcher::fit_mz_(ChargedIndexSet /*set*/, UInt /*samplingsize*/, MzFitting charge,Coordinate isotope_stdev)
 	{			
 		// new model
@@ -689,8 +647,12 @@ namespace OpenMS
 		iso_model.setParameters(iso_param);
 		iso_model.setInterpolationStep(interpolation_step_mz_);
 			
-		QualityType max_corr         =  -numeric_limits<QualityType>::max();
+		QualityType max_corr          =  -numeric_limits<QualityType>::max();
 		CoordinateType max_center =  -numeric_limits<QualityType>::max();
+		
+// 		cout << "-------------------------------------FIT_MZ_--------------------------------------------" << endl;
+// 		cout << "mz_lin_int_.getData().size() : " << mz_lin_int_.getData().size() << endl;
+// 		cout << "initializing model to : " << endl;
 				
 		// normalize data and compute mean position
 		IntensityType mz_data_sum  = 0.0;
@@ -709,17 +671,17 @@ namespace OpenMS
 		
 		mz_mean_pos /= mz_data_sum;
 		
-		String fname = String("interpol_mz") + counter_;	
-		ofstream of(fname.c_str());
-		for (UInt i=0;i<mz_lin_int_.getData().size();++i)
-    {
-      of << mz_lin_int_.index2key(i) << " ";
-    	of << mz_lin_int_.getData()[i] << endl;
-    }
-		of.close();
-		
+// 		String fname = String("interpol_mz_tmp") + counter_;	
+// 		ofstream of(fname.c_str());
+// 		for (UInt i=0;i<mz_lin_int_.getData().size();++i)
+//     {
+//       of << mz_lin_int_.index2key(i) << " ";
+//     	of << mz_lin_int_.getData()[i] << endl;
+//     }
+// 		of.close();
+/*		
 		cout << "mz_mean_pos " << mz_mean_pos << endl;
-		cout << "max_center before loop: " << max_center << endl;
+		cout << "max_center before loop: " << max_center << endl;*/
 		for (CoordinateType pos = mz_mean_pos- 0.6;
 		     pos <= mz_mean_pos+ 0.6;
 				 pos += 0.1)
@@ -737,16 +699,18 @@ namespace OpenMS
 	
 			iso_model.setParameters(tmp);
 			iso_model.setSamples();
+			
+// 			cout << iso_param << endl;
 					
 			// estimate goodness of m/z fit
-			QualityType corr_mz = quality_->evaluate(mz_lin_int_, mz_model_);
+			QualityType corr_mz = quality_->evaluate(mz_lin_int_, iso_model);
 			
 // 			if (corr_mz == -2.0)
 // 			{
 // 					dump_all_(set,(UInt) samplingsize);
 // 			}
 			
-			cout << "corr_mz " << corr_mz << endl; 
+// 			cout << "corr_mz " << corr_mz << " pos " << pos << endl; 
 			if (corr_mz > max_corr)
 			{
 				max_corr   = corr_mz;
@@ -754,7 +718,7 @@ namespace OpenMS
 			}
 				
 		}		
-		cout << "max_center after loop: " << max_center << endl;
+// 		cout << "max_center after loop: " << max_center << endl;
 		if (max_center ==  -numeric_limits<QualityType>::max())  return -1.0;
 		
 		mz_model_ = IsotopeModel();
@@ -770,8 +734,8 @@ namespace OpenMS
 		tmp.setValue("isotope:stdev",isotope_stdev);
 		tmp.setValue("statistics:mean", max_center);
 				
-		cout << "------------------- chosen params : ---------------------" << endl;
-		cout << tmp << endl;
+/*		cout << "------------------- chosen params : ---------------------" << endl;
+		cout << tmp << endl;*/
 		
 		mz_model_.setParameters(tmp);
 			
@@ -782,20 +746,20 @@ namespace OpenMS
 	{
 		vector<IDX> queue;
 		
-		//cout << "Reshaping feature: start." << endl;
+// 		cout << "Reshaping feature: start." << endl;
 		
 		for (IndexSetIter it=set.begin(); it!=set.end(); ++it) 
 		{
-//  			cout << "mz : " << mz_model_.getIntensity( traits_->getPeakMz(*it) ) << endl;
-// 			cout << "rt : " << rt_model_.getIntensity( traits_->getPeakRt(*it) ) << endl;
-// 			cout << "threshold : " <<  IntensityType(param_.getValue("intensity_cutoff_factor") )<< endl;
+//   			cout << "mz : " << mz_model_.getIntensity( traits_->getPeakMz(*it) ) << endl;
+// 				cout << "rt : " << rt_model_.getIntensity( traits_->getPeakRt(*it) ) << endl;
+// 	 			cout << "threshold : " <<  IntensityType(param_.getValue("intensity_cutoff_factor") )<< endl;
 		
 			traits_->getPeakFlag(*it) = FeaFiTraits::USED;			
 
 			if ( mz_model_.getIntensity( traits_->getPeakMz(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor"))
 					 && rt_model_.getIntensity( traits_->getPeakRt(*it) ) > IntensityType(param_.getValue("intensity_cutoff_factor")))
 			{
-					//cout << "Adding point." << endl;
+// 					cout << "Adding point." << endl;
 					result.insert(*it);
 					
 					// check neighbouring points
@@ -817,7 +781,7 @@ namespace OpenMS
 			queue.pop_back();
 			traits_->getPeakFlag(id) = FeaFiTraits::USED;
 			result.insert(id);
-			//cout << c << " points in queue." << endl;
+// 			cout << c << " points in queue." << endl;
 			++c;
 			moveMzUp_(id,queue);
 			moveMzDown_(id,queue);
@@ -825,7 +789,7 @@ namespace OpenMS
 			moveRtDown_(id,queue);	
 		}
 		
-		//cout << "Before reshaping: " << set.size() << " after: " << result.size() << endl;
+// 		cout << "Before reshaping: " << set.size() << " after: " << result.size() << endl;
 	}
 		
 	void AveragineMatcher::moveMzUp_(const IDX& index, vector<IDX>& queue)

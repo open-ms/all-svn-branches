@@ -112,10 +112,13 @@ namespace OpenMS
 		charges_.clear();
 
     // store charge states
+// 		cout << "Charge states: ";
     for (UInt i=(UInt)param_.getValue("min_charge"); i<=(UInt)param_.getValue("max_charge"); ++i)
     {
+// 			cout << " " << i;
     	charges_.push_back(i);
 		}
+// 		cout << endl;
 
 		null_var_.resize(charges_.size(),0.0);
 		n_null_.resize(charges_.size(),0);
@@ -128,7 +131,7 @@ namespace OpenMS
 				cout << "computing spacings..." << endl;
       	// compute spacings
       	computeSpacings_();
-
+				
 				#ifdef DEBUG_FEATUREFINDER
       	cout << "Average m/z spacing: " << avMZSpacing_ << endl;
       	cout << "Minimal m/z spacing: " << min_spacing_ << endl;
@@ -358,10 +361,30 @@ namespace OpenMS
 		SignalToNoiseEstimatorMedian< > sn;
 		sn.init(scan.begin(),scan.end());		
 		
+		IntensityType sc_avg = 0.0;
+		for (SpectrumType::const_iterator it = scan.begin();
+		      it != scan.end();
+					++it)
+		{
+			sc_avg += it->getIntensity();
+		}
+		sc_avg /= scan.size();
+		cout << "Average intensity in scan : " << sc_avg << endl;
+		
 		for (UInt c = 0; c < candidates.size(); ++c)
 		{		
-			//computeNullVariance_(candidates[c],c);
-			
+			//computeNullVariance_(candidates[c],c);			
+			IntensityType cwt_avg;
+			for (DPeakArray<PeakType >::const_iterator it=candidates[c].begin();
+						it != candidates[c].end();
+						++it)
+			{
+				cwt_avg +=  it->getIntensity();
+			}
+ 			cwt_avg /= candidates[c].size();
+
+			cout << "Average intensity in cwt for charge " << c << " : " << cwt_avg << endl;
+						
 			#ifdef DEBUG_FEATUREFINDER
 			//write debug output
 			CoordinateType current_rt = scan.getRT();

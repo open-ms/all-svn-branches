@@ -264,9 +264,9 @@ void BaseSweepSeeder::sweep_()
 		}
 		#endif
 		
-		ofstream of("seed_counts");
-		of << iso_map_.size() << endl;
-		of.close();
+// 		ofstream of("seed_counts");
+// 		of << iso_map_.size() << endl;
+// 		of.close();
 		
 		findNeighbours_();
 	
@@ -470,8 +470,8 @@ void BaseSweepSeeder::voteForCharge_()
 		     scmz_iter != iter->second.scored_charges_.end();
 				++scmz_iter)
 		{
-			//cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
-      //cout << "Size of charge vector: " << charge_scores.size() << endl;
+// 			cout << "Vote for charge " << scmz_iter->first << " score " << scmz_iter->second << endl;
+//       cout << "Size of charge vector: " << charge_scores.size() << endl;
       
       if (scmz_iter->first == 0) continue; // zero <=> no charge estimate      
 			
@@ -483,7 +483,7 @@ void BaseSweepSeeder::voteForCharge_()
 			
 			++charge_scores.at( (scmz_iter->first -1) );
 		} // end for ( std::vector< ScoredChargeType > )
-		//cout << "Done..." << endl;
+// 		cout << "Done..." << endl;
 		
 		// search for winning charge
 		UInt max_vote = 0;
@@ -491,7 +491,7 @@ void BaseSweepSeeder::voteForCharge_()
 		
 		for (UInt i = 0; i < charge_scores.size(); ++i)
 		{
-			//cout << (i+1) << " " << charge_scores[i] << endl;
+// 			cout << (i+1) << " " << charge_scores[i] << endl;
 			if (charge_scores[i] > max_vote)
 			{
 				max_charge = (i + 1);
@@ -499,7 +499,7 @@ void BaseSweepSeeder::voteForCharge_()
 			}
 		
 		}
-		//cout << "And the winner is " << max_charge << " with score " << max_vote << endl;		
+		cout << "And the winner is " << max_charge << " with score " << max_vote << endl;		
 		iter->second.peaks_.charge_           = max_charge;
 		iter->second.peaks_.max_charge_score_ = max_vote;
 	}

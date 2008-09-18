@@ -31,6 +31,12 @@
 
 #include "gsl/gsl_cdf.h"
 
+#include <gsl/gsl_vector.h>
+#include <gsl/gsl_sort.h>
+#include <gsl/gsl_statistics.h>
+#include <gsl/gsl_permutation.h>
+#include <gsl/gsl_sort_vector.h>
+
 #include <math.h>
 #include<limits>
 
@@ -82,41 +88,6 @@ namespace OpenMS
 	  { 
 	  	return "RankCorrelation"; 
 	  }
-	
-	protected:
-		/// Computes the rank of the sorted vector @p w 
-		void computeRank_(IntensityVector& w)
-		{
-			if (w.size() == 0) return;
-		
-			UInt i       = 0;					// main index
-			UInt v, z  = 0;						// "secondary" indizes
-			IntensityType rank = 0;
-			UInt n = ( w.size() - 1);
-			
-			while (i < n) 
-			{
-				// test for equality with tolerance 
-				if ( fabs( w[i+1] - w[i] ) > 0.0000001 * fabs(w[i+1]) ) 
-				{ 
-					// no tie
-					w[i]=i;
-					++i;
-				} 
-				else 	// tie, replace by mean rank 
-				{
-					// count number of ties
-					for (z=i+1;z<=n &&  fabs( w[z] - w[i] ) <= 0.0000001 * fabs(w[z]) ; ++z);
-					// compute mean rank of tie
-					rank=0.5*(i+z-1); 
-					// replace intensities by rank
-					for (v=i;v<=(z-1);++v) w[v]=rank; 
-					
-					i=z;
-				}
-			}
-			if (i == n) w[n]=n; 
-		}
 		
   }; //class
 }

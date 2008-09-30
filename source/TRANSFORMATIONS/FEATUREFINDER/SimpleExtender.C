@@ -186,7 +186,7 @@ namespace OpenMS
     } // end of while ( !boundary_.empty() )
 
     cout << "Feature region size: " << region_.size() << endl;
-    
+  	
     return region_;
 	} // end of extend
 

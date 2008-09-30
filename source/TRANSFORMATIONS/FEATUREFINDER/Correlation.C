@@ -185,6 +185,9 @@ namespace OpenMS
 			double data_square_sum   = 0;
 			double model_square_sum  = 0; 
 			
+			//std::cout << "mz_model_avg : " << mz_model_avg << std::endl;
+			//std::cout << "mz_model_sum : " << mz_model_sum << std::endl;
+			
 			for (UInt i=0;i<lint.getData().size();++i)
 			{
 					double m = (iso_model.getIntensity(lint.index2key(i) ) / mz_model_sum);
@@ -195,11 +198,10 @@ namespace OpenMS
 					model_square_sum  += ( m - mz_model_avg)  * ( m - mz_model_avg);					
 			}
 		
-			if (data_square_sum == 0 || model_square_sum == 0)
-			{
-				return -2.0;			
-			}
-			
+			//std::cout << "model_square_sum " << model_square_sum  << std::endl;
+			//std::cout << "data_square_sum " << data_square_sum << std::endl;
+			//std::cout << "cross_product_sum " << cross_product_sum << std::endl;
+					
 			double corr_mz = cross_product_sum / sqrt(data_square_sum * model_square_sum);
 	
 			return corr_mz;		

@@ -72,7 +72,9 @@ namespace OpenMS
 		gsl_sort_vector_index(perm2,mv);
     gsl_permutation_inverse(rank2,perm2);
 
-		double sum_model_data, sqsum_data, sqsum_model = 0;
+		double sum_model_data = 0.0;
+		double sqsum_data = 0.0;
+		double sqsum_model = 0.0;
 		double mu = (n + 1) / 2;
 
 		for (unsigned int i=0; i<n;++i)
@@ -141,7 +143,9 @@ namespace OpenMS
 			gsl_sort_vector_index(perm2,mv);
     	gsl_permutation_inverse(rank2,perm2);
 
-			double sum_model_data, sqsum_data, sqsum_model = 0;
+			double sum_model_data = 0.0;
+			double sqsum_data = 0.0;
+			double sqsum_model = 0.0;
 			double mu = (n + 1) / 2;
 
 			for (unsigned int i=0; i<n;++i)
@@ -189,16 +193,17 @@ namespace OpenMS
 			gsl_vector* dv = gsl_vector_alloc(n);
 			gsl_vector* mv = gsl_vector_alloc(n);
 			
-			double data_sum, model_sum = 0.0;
+			double data_sum = 0.0;
+			double model_sum = 0.0;
 			for (UInt i=0;i<lint.getData().size();++i)
 			{
 				data_sum += lint.getData()[i];
 				model_sum += isomodel.getIntensity(lint.index2key(i));
 			}
 			
-			cout << "size : " << lint.getData().size() << endl;
-			cout << "model sum : " << model_sum << endl;
-			cout << "-----------------------------------------------------------" << endl;
+// 			cout << "size : " << lint.getData().size() << endl;
+// 			cout << "model sum : " << model_sum << endl;
+// 			cout << "-----------------------------------------------------------" << endl;
 			
 			if (model_sum == 0.0) 
 			{
@@ -214,9 +219,9 @@ namespace OpenMS
 				gsl_vector_set(dv,i,x);
 				gsl_vector_set(mv,i,y);
 
-				cout << "r : "  << lint.getData()[i] / data_sum << endl;
-				cout << "r : " << isomodel.getIntensity(lint.index2key(i)) /  model_sum << endl;
-				cout << "-----------------------------------------------------------" << endl;
+// 				cout << "r : "  << lint.getData()[i] / data_sum << endl;
+// 				cout << "r : " << isomodel.getIntensity(lint.index2key(i)) /  model_sum << endl;
+// 				cout << "-----------------------------------------------------------" << endl;
 			}
 			// compute ranks 
     	gsl_permutation * perm1 = gsl_permutation_alloc(n);
@@ -231,14 +236,16 @@ namespace OpenMS
 			gsl_sort_vector_index(perm2,mv);
     	gsl_permutation_inverse(rank2,perm2);
 
-			double sum_model_data, sqsum_data, sqsum_model = 0;
+			double sum_model_data = 0.0;
+			double sqsum_data = 0.0;
+			double sqsum_model = 0.0;
 			double mu = (n + 1) / 2;
 
 			for (unsigned int i=0; i<n;++i)
 			{
-				cout << "ranks data " << rank1->data[i] << endl;
-				cout << "ranks model " << rank2->data[i] << endl;
-				cout << "------------------------" << endl;
+// 				cout << "ranks data " << rank1->data[i] << endl;
+// 				cout << "ranks model " << rank2->data[i] << endl;
+// 				cout << "------------------------" << endl;
 				sum_model_data += (rank1->data[i] - mu) * (rank2->data[i] - mu);
 				sqsum_data += (rank1->data[i] - mu) * (rank1->data[i] - mu);
 				sqsum_model += (rank2->data[i] - mu) * (rank2->data[i] - mu);
@@ -247,12 +254,12 @@ namespace OpenMS
 			// check for division by zero
 			if ( ! sqsum_data || ! sqsum_model ) return 0;		
 		
-			cout << "sum_model_data " << sum_model_data << endl;
-			cout <<  "sqsum_data " << sqsum_data << endl;
-			cout << "sqsum_model " << sqsum_model << endl;
+// 			cout << "sum_model_data " << sum_model_data << endl;
+// 			cout <<  "sqsum_data " << sqsum_data << endl;
+// 			cout << "sqsum_model " << sqsum_model << endl;
 
 			double rs = sum_model_data /  sqrt(sqsum_data * sqsum_model); 
-			cout << "Spearman correlation: " << fabs(rs) << endl;
+// 			cout << "Spearman correlation: " << fabs(rs) << endl;
 			
 			// free gsl data structures
 			gsl_vector_free(dv);

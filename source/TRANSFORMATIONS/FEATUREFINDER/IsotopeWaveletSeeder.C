@@ -370,11 +370,12 @@ namespace OpenMS
 		}
 		sc_avg /= scan.size();
 		cout << "Average intensity in scan : " << sc_avg << endl;
+		cout << "-----------------------------------------" << endl;
 		
 		for (UInt c = 0; c < candidates.size(); ++c)
 		{		
 			//computeNullVariance_(candidates[c],c);			
-			IntensityType cwt_avg;
+			IntensityType cwt_avg = 0.0;
 			for (DPeakArray<PeakType >::const_iterator it=candidates[c].begin();
 						it != candidates[c].end();
 						++it)

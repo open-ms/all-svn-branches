@@ -334,6 +334,12 @@ namespace OpenMS
 				#endif
         }
 
+// 				if (features_.size() == 1859) break;
+// 				
+// 				cout << "Collected " << features_.size() << " features." << endl;
+// 				cout << (1859 - features_.size()) << " remaining. " << endl;
+// 				cout << "seed count " << seed_count << endl;
+								
       } // end of while(true)
   	}
     catch(NoSuccessor ex)

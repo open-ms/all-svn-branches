@@ -263,14 +263,9 @@ void BaseSweepSeeder::sweep_()
 		
 		}
 		#endif
-		
-// 		ofstream of("seed_counts");
-// 		of << iso_map_.size() << endl;
-// 		of.close();
-		
-		findNeighbours_();
 	
-		
+		findNeighbours_();
+			
 		// filter hash entries (by number of scans and number of points in the cluster)
     filterHash_();    
     		
@@ -298,6 +293,10 @@ void BaseSweepSeeder::sweep_()
 		
 		}
 		#endif
+		
+		ofstream of("seed_counts");
+		of << iso_map_.size() << endl;
+		of.close();
 //    		
 }
 

@@ -28,6 +28,8 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeaFiTraits.h>
 #include <iostream>
 
+using namespace std;
+
 namespace OpenMS
 {
 
@@ -194,6 +196,16 @@ namespace OpenMS
 				model_sum += isomodel.getIntensity(lint.index2key(i));
 			}
 			
+			cout << "size : " << lint.getData().size() << endl;
+			cout << "model sum : " << model_sum << endl;
+			cout << "-----------------------------------------------------------" << endl;
+			
+			if (model_sum == 0.0) 
+			{
+				cout << "zero model intensities: check your sampling step size. !" << endl;
+				return -1.0;
+			}
+			
  			for (UInt i=0;i<lint.getData().size();++i)
 			{
 				double x = lint.getData()[i] / data_sum;
@@ -202,9 +214,9 @@ namespace OpenMS
 				gsl_vector_set(dv,i,x);
 				gsl_vector_set(mv,i,y);
 
-				//cout << "r : "  << lin_int.getData()[i] / data_sum << endl;
-				//cout << "r : " << isomodel.getIntensity(lin_int.index2key(i)) /  model_sum << endl;
-				//cout << "-----------------------------------------------------------" << endl;
+				cout << "r : "  << lint.getData()[i] / data_sum << endl;
+				cout << "r : " << isomodel.getIntensity(lint.index2key(i)) /  model_sum << endl;
+				cout << "-----------------------------------------------------------" << endl;
 			}
 			// compute ranks 
     	gsl_permutation * perm1 = gsl_permutation_alloc(n);
@@ -224,9 +236,9 @@ namespace OpenMS
 
 			for (unsigned int i=0; i<n;++i)
 			{
-				//cout << "ranks data " << rank1->data[i] << endl;
-				//cout << "ranks model " << rank2->data[i] << endl;
-				//cout << "------------------------" << endl;
+				cout << "ranks data " << rank1->data[i] << endl;
+				cout << "ranks model " << rank2->data[i] << endl;
+				cout << "------------------------" << endl;
 				sum_model_data += (rank1->data[i] - mu) * (rank2->data[i] - mu);
 				sqsum_data += (rank1->data[i] - mu) * (rank1->data[i] - mu);
 				sqsum_model += (rank2->data[i] - mu) * (rank2->data[i] - mu);
@@ -235,12 +247,12 @@ namespace OpenMS
 			// check for division by zero
 			if ( ! sqsum_data || ! sqsum_model ) return 0;		
 		
-			//cout << "sum_model_data " << sum_model_data << endl;
-			//cout <<  "sqsum_data " << sqsum_data << endl;
-			//cout << "sqsum_model " << sqsum_model << endl;
+			cout << "sum_model_data " << sum_model_data << endl;
+			cout <<  "sqsum_data " << sqsum_data << endl;
+			cout << "sqsum_model " << sqsum_model << endl;
 
 			double rs = sum_model_data /  sqrt(sqsum_data * sqsum_model); 
-			//cout << "Spearman correlation: " << fabs(rs) << endl;
+			cout << "Spearman correlation: " << fabs(rs) << endl;
 			
 			// free gsl data structures
 			gsl_vector_free(dv);

@@ -171,7 +171,7 @@ namespace OpenMS
 		{
 				for (Int mz_fit_type = first_mz; mz_fit_type <= last_mz; ++mz_fit_type)
 				{
-// 					cout << "stdev: " << stdev << " charge: " << mz_fit_type << endl;
+ 					cout << "stdev: " << stdev << " charge: " << mz_fit_type << endl;
 					quality = fit_(set, static_cast<MzFitting>(mz_fit_type), LMAGAUSS, stdev, (UInt) sampling_size_mz );
 				
 					if (quality > max_quality)
@@ -679,9 +679,9 @@ namespace OpenMS
 //     	of << mz_lin_int_.getData()[i] << endl;
 //     }
 // 		of.close();
-/*		
-		cout << "mz_mean_pos " << mz_mean_pos << endl;
-		cout << "max_center before loop: " << max_center << endl;*/
+		
+// 		cout << "mz_mean_pos " << mz_mean_pos << endl;
+// 		cout << "max_center before loop: " << max_center << endl;
 		for (CoordinateType pos = mz_mean_pos- 0.6;
 		     pos <= mz_mean_pos+ 0.6;
 				 pos += 0.1)
@@ -692,6 +692,7 @@ namespace OpenMS
 				cout << "pos <= 0.0 !!" << endl; 
 			 	continue;
 			}
+// 			cout << "Init model." << endl;
 			Param tmp;
 			tmp.setValue("charge", static_cast<Int>(charge));
 			tmp.setValue("isotope:stdev",isotope_stdev);
@@ -700,7 +701,7 @@ namespace OpenMS
 			iso_model.setParameters(tmp);
 			iso_model.setSamples();
 			
-// 			cout << iso_param << endl;
+//  			cout << iso_param << endl;
 					
 			// estimate goodness of m/z fit
 			QualityType corr_mz = quality_->evaluate(mz_lin_int_, iso_model);
@@ -710,7 +711,7 @@ namespace OpenMS
 // 					dump_all_(set,(UInt) samplingsize);
 // 			}
 			
-// 			cout << "corr_mz " << corr_mz << " pos " << pos << endl; 
+//  			cout << "corr_mz " << corr_mz << " pos " << pos << endl; 
 			if (corr_mz > max_corr)
 			{
 				max_corr   = corr_mz;
@@ -718,7 +719,7 @@ namespace OpenMS
 			}
 				
 		}		
-// 		cout << "max_center after loop: " << max_center << endl;
+//  		cout << "max_center after loop: " << max_center << endl;
 		if (max_center ==  -numeric_limits<QualityType>::max())  return -1.0;
 		
 		mz_model_ = IsotopeModel();
@@ -733,8 +734,8 @@ namespace OpenMS
 		tmp.setValue("charge", static_cast<Int>(charge));
 		tmp.setValue("isotope:stdev",isotope_stdev);
 		tmp.setValue("statistics:mean", max_center);
-				
-/*		cout << "------------------- chosen params : ---------------------" << endl;
+	/*			
+		cout << "------------------- chosen params : ---------------------" << endl;
 		cout << tmp << endl;*/
 		
 		mz_model_.setParameters(tmp);

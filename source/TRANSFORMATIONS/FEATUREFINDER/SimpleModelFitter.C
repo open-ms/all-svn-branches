@@ -210,6 +210,12 @@ namespace OpenMS
 		ProductModel<2>* final = 0;	// model  with best correlation
 		
 		// Test charges and stdevs
+		if (iso_stdev_first_ >= iso_stdev_last_)
+		{
+			cout << "iso_stdev_first_ == iso_stdev_last_" << endl;
+			cout << "Check your settings." << endl;
+		}
+		
 		for ( float stdev = iso_stdev_first_; stdev <= iso_stdev_last_; stdev += iso_stdev_stepsize_)
 		{
 			for (Int mz_fit_type = first_mz; mz_fit_type <= last_mz; ++mz_fit_type)

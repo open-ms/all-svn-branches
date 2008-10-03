@@ -156,9 +156,11 @@ class TOPPFeaturePairSplitter
 					<< iter - feature_pairs.begin() << ' '
 					<< iter -> getFirst() . getRT() << ' '
 					<< iter -> getFirst() . getMZ() << ' '
+					<< iter -> getFirst() . getCharge() << ' '
 					<< iter -> getFirst() . getIntensity() << "  "
 					<< iter -> getSecond() . getRT() << ' '
 					<< iter -> getSecond() . getMZ() << ' '
+					<< iter -> getSecond() . getCharge() << ' '
 					<< iter -> getSecond() . getIntensity() << "  "
 					<< iter -> getQuality() << '\n';
 			}

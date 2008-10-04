@@ -171,7 +171,7 @@ namespace OpenMS
 		{
 				for (Int mz_fit_type = first_mz; mz_fit_type <= last_mz; ++mz_fit_type)
 				{
- 					cout << "stdev: " << stdev << " charge: " << mz_fit_type << endl;
+//  					cout << "stdev: " << stdev << " charge: " << mz_fit_type << endl;
 					quality = fit_(set, static_cast<MzFitting>(mz_fit_type), LMAGAUSS, stdev, (UInt) sampling_size_mz );
 				
 					if (quality > max_quality)
@@ -286,11 +286,11 @@ namespace OpenMS
 		Int last_mz  = last_mz_model_;
 		
 		// Check charge estimate if charge is not specified by user
-		if (set.charge_ != 0)
-		{
-			first_mz = set.charge_;
-			last_mz = set.charge_;
-		}
+// 		if (set.charge_ != 0)
+// 		{
+// 			first_mz = set.charge_;
+// 			last_mz = set.charge_;
+// 		}
 		cout << "Checking charge state from " << first_mz << " to " << last_mz << endl;
 	
 		ProductModel<2>* final = 0;	// model  with best correlation		

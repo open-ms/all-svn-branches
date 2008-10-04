@@ -294,9 +294,9 @@ void BaseSweepSeeder::sweep_()
 		}
 		#endif
 		
-		ofstream of("seed_counts");
-		of << iso_map_.size() << endl;
-		of.close();
+		//ofstream of("seed_counts");
+		//of << iso_map_.size() << endl;
+		//of.close();
 //    		
 }
 

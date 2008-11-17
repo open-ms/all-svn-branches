@@ -1,6 +1,21 @@
 
 Allgemein:
 - CMake muss man erneut ausführen wenn man eine Quelldatei hinzufügt
+- Defines vom Compiler, z.B. int mit 32Bit, wie bestimmen?
+- Folgende defines brauchen wir noch:
+	OPENMS_DATA_PATH
+	PACKAGE_VERSION
+	OPENMS_BINFMT
+	PreciseTime kommt weg, benutzt keiner
+
+	OPENMS_64BIT_ARCHITECTURE
+	OPENMS_WINDOWSPLATFORM
+	Stopwatch und Timer neu schreiben mit Qt
+
+
+
+TODO:
+- uic und moc files werden mit schlechten hack erzeugt
 
 Qt:
 - wenn Qt installiert wird muss qmake im Pfad sein, sonst findet CMake Qt nicht

@@ -1,0 +1,6 @@
+
+Allgemein:
+- CMake muss man erneut ausführen wenn man eine Quelldatei hinzufügt
+
+Qt:
+- wenn Qt installiert wird muss qmake im Pfad sein, sonst findet CMake Qt nicht

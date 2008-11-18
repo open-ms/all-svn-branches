@@ -36,7 +36,7 @@
 #include <signal.h> // for SIGSEGV and kill
 
 #ifdef OPENMS_HAS_UNISTD_H
-#include <unistd.h> // fot getpid
+#include <unistd.h> // for getpid
 #endif
 #ifdef OPENMS_HAS_PROCESS_H
 #include <process.h>

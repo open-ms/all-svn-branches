@@ -52,30 +52,43 @@
 
 namespace OpenMS
 {
-	#ifndef OPENMS_HAS_STDINT_H
 
 	/**
-		@brief Signed integer type
+		@brief Signed integer type (32bit)
 		
 		@ingroup Concept
   */
-	typedef OPENMS_INDEX_TYPE Int;
+  typedef OPENMS_INT32_TYPE Int32; 
+
+	/**
+		@brief Signed integer type (64bit)
+		
+		@ingroup Concept
+  */
+  typedef OPENMS_INT64_TYPE Int64; 
+
+	/**	
+		@brief Time type
+		
+		Use this type to represent a point in time (as a synonym for time_t).
+		
+		@ingroup Concept
+	*/
+	typedef time_t 	Time;
 
 	/**
 		@brief Unsigned integer type
 		
 		@ingroup Concept
   */
-	typedef OPENMS_SIZE_TYPE UInt;
+	typedef unsigned int UInt;
 
-	/**	
-		@brief Time type
-		
-		Use this type to represent a point in time (as a replaecement for time_t).
+	/**
+		@brief Signed integer type
 		
 		@ingroup Concept
-	*/
-	typedef time_t 	Time;
+  */
+	typedef int Int;
 
 	/**	
 		@brief Real type
@@ -94,6 +107,7 @@ namespace OpenMS
 		@ingroup Concept
 	*/
 	typedef double DoubleReal;
+	
 
 	/**	
 		@brief Byte type
@@ -102,62 +116,17 @@ namespace OpenMS
 		
 		@ingroup Concept
 	*/
-	typedef	unsigned char Byte;
-
-	/**	
-		@brief Pointer-sized unsigned int type
+	typedef	OPENMS_BYTE_TYPE Byte;
 		
-		This type holds unsigned 64 bit integer numbers and is used to store pointers
-		in a portable fashion (for both 32-bit and 64-bit systems).
-	
-		@ingroup Concept
-	*/
-	typedef OPENMS_ULONG64_TYPE PointerSizeUInt;
-
 	/**	
-		@brief Pointer-sized signed int type
-		
-		This type holds signed 64 bit numbers and is used to store pointers
-		in a portable fashion (for both 32-bit and 64-bit systems).
-	
-		@ingroup Concept
-	*/
-	typedef OPENMS_LONG64_TYPE PointerSizeInt;
-
-	/**	
-		@brief A unique object ID.
+		@brief A unique object ID (as unsigned 64bit type).
 		
 		@see PersistentObject
 		
 		@ingroup Concept
 	*/
-	typedef OPENMS_ULONG64_TYPE UID;
+	typedef OPENMS_UINT64_TYPE UID;
 
-	/**	
-		@brief Offset type (64-bit).
-		
-		This pointer holds signed 64 bit integers for large file access
-		
-		@ingroup Concept
-	*/
-	typedef OPENMS_LONG64_TYPE Offset64Int;
-	
-	
-	#else
-   	// the ISO C99 definitions
-		typedef int32_t Int; 
-		typedef uint32_t UInt;
-		typedef time_t	Time;
-   	typedef unsigned int UInt;
-		typedef float Real;
-		typedef double DoubleReal;
-		typedef	uint8_t Byte;
-		typedef int64_t	 PointerSizeInt;
-		typedef uint64_t PointerSizeUInt;
-		typedef uint64_t UID;
-    typedef int64_t	 Offset64Int;
-
-	#endif
   
 	enum ASCII
 	{

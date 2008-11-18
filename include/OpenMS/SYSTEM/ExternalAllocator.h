@@ -102,7 +102,7 @@ namespace OpenMS
        */
     
       /// C'tor where @p filename specifies the swap file of size @p filesize bytes
-      ExternalAllocator(const String& filename = File::getUniqueName(), const Offset64Int &filesize = 1) 
+      ExternalAllocator(const String& filename = File::getUniqueName(), const Int64 &filesize = 1) 
       {
         #ifdef DEBUG_ALLOC      
         std::cout << "<<-->> 2-tuple Ctor called \n";
@@ -300,7 +300,7 @@ namespace OpenMS
       }
       
 			/// number of bytes currently mapped from file into virtual memory
-  		Offset64Int getMappingSize()
+  		Int64 getMappingSize()
 			{
 				return shared_extalloc_->getTotalmappingsize();
 			}

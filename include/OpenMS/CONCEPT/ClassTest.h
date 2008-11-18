@@ -55,12 +55,6 @@
 #include <math.h>   // fabs
 #include <stdlib.h> // getenv()
 
-#ifdef OPENMS_HAS_SSTREAM
-# include <sstream>
-#else
-# include <strstream>
-#endif
-
 // Empty declaration to avoid problems in case the namespace is not
 // yet defined (e.g. TEST/ClassTest_test.C)
 namespace OpenMS

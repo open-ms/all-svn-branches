@@ -55,7 +55,7 @@ CHECK(~ExternalAllocatorUnique())
 }
 RESULT
 
-CHECK((ExternalAllocatorUnique(const String &filename, const Offset64Int &filesize)))
+CHECK((ExternalAllocatorUnique(const String &filename, const Int64 &filesize)))
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	NOT_TESTABLE
@@ -79,14 +79,14 @@ CHECK((const String& getFilename() const))
 }
 RESULT
 
-CHECK((const Offset64Int& getFilesize() const))
+CHECK((const Int64& getFilesize() const))
 {
   ExternalAllocatorUnique eau(filename, 10000);
 	TEST_EQUAL(eau.getFilesize(), 10000)
 }
 RESULT
 
-CHECK((void advanceFilesize(const Offset64Int &x)))
+CHECK((void advanceFilesize(const Int64 &x)))
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	eau.advanceFilesize(33);
@@ -112,14 +112,14 @@ CHECK([EXTRA](const int& getMmapHandle() const))
 }
 RESULT
 
-CHECK((const Offset64Int& getNextfree() const))
+CHECK((const Int64& getNextfree() const))
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	TEST_EQUAL(eau.getNextfree(), 0);
 }
 RESULT
 
-CHECK((void advanceNextfree(const Offset64Int &x)))
+CHECK((void advanceNextfree(const Int64 &x)))
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	eau.advanceNextfree(33);
@@ -128,14 +128,14 @@ CHECK((void advanceNextfree(const Offset64Int &x)))
 }
 RESULT
 
-CHECK((const Offset64Int& getTotalmappingsize() const))
+CHECK((const Int64& getTotalmappingsize() const))
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	TEST_EQUAL(eau.getTotalmappingsize(), 0);
 }
 RESULT
 
-CHECK((void setTotalmappingsize(const Offset64Int &x)))
+CHECK((void setTotalmappingsize(const Int64 &x)))
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	eau.setTotalmappingsize(33);
@@ -143,7 +143,7 @@ CHECK((void setTotalmappingsize(const Offset64Int &x)))
 }
 RESULT
 
-CHECK((bool hasFreeSwap(const Offset64Int& bytes_needed)))
+CHECK((bool hasFreeSwap(const Int64& bytes_needed)))
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	eau.advanceNextfree(33);

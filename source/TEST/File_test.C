@@ -110,7 +110,7 @@ CHECK((static String getUniqueName()))
 	TEST_EQUAL(split.size() >= 4, true) // if name of machine also contains '_' ...
 RESULT
 
-CHECK((static bool createSparseFile(const String &filename, const Offset64Int &filesize)))
+CHECK((static bool createSparseFile(const String &filename, const Int64 &filesize)))
 	String filename;
 	NEW_TMP_FILE(filename);
   
@@ -123,9 +123,9 @@ RESULT
 
 	
 #ifdef OPENMS_WINDOWSPLATFORM
-CHECK((static int getSwapFileHandle(const String &filename, const Offset64Int &filesize, const bool &create)))
+CHECK((static int getSwapFileHandle(const String &filename, const Int64 &filesize, const bool &create)))
 #else
-CHECK((static int getSwapFileHandle(const String &filename, const Offset64Int &filesize, const bool &create)))
+CHECK((static int getSwapFileHandle(const String &filename, const Int64 &filesize, const bool &create)))
 #endif
 	String filename;
 	NEW_TMP_FILE(filename);
@@ -143,9 +143,9 @@ RESULT
 
 
 #ifdef OPENMS_WINDOWSPLATFORM
-CHECK((static bool extendSparseFile(const int &hFile, const Offset64Int &filesize)))
+CHECK((static bool extendSparseFile(const int &hFile, const Int64 &filesize)))
 #else
-CHECK((static bool extendSparseFile(const int &hFile, const Offset64Int &filesize)))
+CHECK((static bool extendSparseFile(const int &hFile, const Int64 &filesize)))
 #endif
 	String filename;
 	NEW_TMP_FILE(filename);

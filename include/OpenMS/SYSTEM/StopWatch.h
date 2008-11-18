@@ -240,7 +240,7 @@ namespace OpenMS
 
 		static PointerSizeInt cpu_speed_;
 
-		#ifdef OPENMS_HAS_WINDOWS_PERFORMANCE_COUNTER
+		#ifdef OPENMS_WINDOWSPLATFORM
 			static PointerSizeInt clock_speed_;
 		#endif
 

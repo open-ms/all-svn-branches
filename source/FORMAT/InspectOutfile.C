@@ -26,8 +26,7 @@
 
 #if defined OPENMS_BIG_ENDIAN
 #define OPENMS_IS_BIG_ENDIAN true
-#endif
-#if defined OPENMS_LITTLE_ENDIAN
+#else
 #define OPENMS_IS_BIG_ENDIAN false
 #endif
 

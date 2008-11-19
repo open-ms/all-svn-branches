@@ -6,6 +6,7 @@ Allgemein:
 	OPENMS_WINDOWSPLATFORM
 	Stopwatch und Timer neu schreiben mit Qt
 
+- niemals "\" in Pfadangaben innerhalb CmakeLists.txt benutzen! Cmake will Unix-style Pfade!
 
 
 TODO:

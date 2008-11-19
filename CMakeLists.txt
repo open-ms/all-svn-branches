@@ -21,9 +21,9 @@ SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
 ## define some directories
 if (CMAKE_INSTALL_PREFIX)
-	set(DIR_SHARE ${CMAKE_INSTALL_PREFIX}/share_${CF_PACKAGE_VERSION}/ CACHE INTERNAL)
+	set(DIR_SHARE ${CMAKE_INSTALL_PREFIX}/share_${CF_PACKAGE_VERSION}/ CACHE INTERNAL "Path to the /share directory after installation.")
 else (CMAKE_INSTALL_PREFIX)
-	set(DIR_SHARE ${PROJECT_SOURCE_DIR}/share/ CACHE INTERNAL)
+	set(DIR_SHARE ${PROJECT_SOURCE_DIR}/share/ CACHE INTERNAL "Path to the /share directory after installation.")
 endif (CMAKE_INSTALL_PREFIX)
 
 
@@ -69,9 +69,9 @@ endif()
 
 ## disable AndiMS for 64-bit platforms (until fixed)
 if (CMAKE_SIZEOF_VOID_P MATCHES "8")
-	set(USE_ANDIMS "false" CACHE BOOL INTERNAL)
+	set(USE_ANDIMS "false" CACHE INTERNAL "Support AndiMS?!")
 else()
-	set(USE_ANDIMS "true" CACHE BOOL INTERNAL)
+	set(USE_ANDIMS "true" CACHE INTERNAL "Support AndiMS?!")
 endif()
 
 set(CONTRIB_DIR CACHE PATH "User defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib!")
@@ -118,8 +118,8 @@ INCLUDE(UseQt4)
 
 find_program(PROG_Svnversion             
              svnversion
-             PATHS "c:\programme\subversion\bin\" "c:\program files\subversion\bin"   ### additional search paths (along with $PATH)
-             DOC "svnversion executable which helps in determining the svn revision when building TOPP tools"
+             PATHS "c:/programme/subversion/bin" "c:/program files/subversion/bin"   ### additional search paths (along with $PATH)
+             DOC "svnversion executable which helps in determining the svn revision when building TOPP tools")
 
 if (PROG_Svnversion-NOTFOUND)
 	message(STATUS "The programm svnversion could not be found. SVN-revision information will not be available! Add the location of svnversion(.exe) to your PATH environment variable if you require SVN-revision.")
@@ -134,15 +134,15 @@ endif()
 set(CF_OPENMS_DEBUG)
 
 # can be set automatically
-set(CF_OPENMS_DATA_PATH ${DIR_SHARE}/OpenMS/ CACHE INTERNAL)
+set(CF_OPENMS_DATA_PATH ${DIR_SHARE}/OpenMS/ CACHE INTERNAL "Path to the shared documents of OpenMS.")
 
 # check for Microsoft Visual Studio compiler
 if (MSVC)
-	set(CF_OPENMS_COMPILER_MSVC "1" CACHE INTERNAL);
+	set(CF_OPENMS_COMPILER_MSVC "1" CACHE INTERNAL "Do we use Microsoft Compiler?")
 endif()
 # check for G++
 if (CMAKE_COMPILER_IS_GNUCXX)
-	set(CF_OPENMS_COMPILER_GXX "1" CACHE INTERNAL);
+	set(CF_OPENMS_COMPILER_GXX "1" CACHE INTERNAL "Do we use Microsoft Compiler?")
 endif()
 
 INCLUDE(TestBigEndian)
@@ -280,11 +280,11 @@ if (NOT PROG_Svnversion-NOTFOUND)
 	
 	## ensure that the file is always rebuild
   add_custom_target(svnversion_file_target ALL  ${PROG_Svnversion} -n ${PROJECT_SOURCE_DIR} > svnversion_file
+  									COMMAND "file(READ ${svnversion_file} ENV_OPENMS_REVISION)" ## read content of file into variable
+  									COMMAND "set( ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION} )" ## set env variable
                    	COMMENT "Call svnversion in project directory to generate openms_svnversion.txt")
-	 
- 
-  file(READ ${svnversion_file} ENV_OPENMS_REVISION) ## read content of file into variable
-  set( ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION} )## set env variable
+	  
+  
 endif()
 
 ########################################################
@@ -312,22 +312,19 @@ ENDMACRO (QT4_WRAP_UI_OWN)
 
 set(OpenMS_sources  CACHE INTERNAL "This variable should hold all OpenMS sources at the end of the config step" )
 include(source/ANALYSIS/sources.cmake)
-include(source/APPLICATIONS/sources.cmake)
-include(source/CHEMISTRY/sources.cmake)
-include(source/COMPARISON/sources.cmake)
-include(source/CONCEPT/sources.cmake)
-include(source/DATASTRUCTURES/sources.cmake)
-include(source/FILTERING/sources.cmake)
-include(include/OpenMS/FORMAT/sources.cmake)
+#include(source/APPLICATIONS/sources.cmake)
+#include(source/CHEMISTRY/sources.cmake)
+#include(source/COMPARISON/sources.cmake)
+#include(source/CONCEPT/sources.cmake)
+#include(source/DATASTRUCTURES/sources.cmake)
+#include(source/FILTERING/sources.cmake)
+#include(include/OpenMS/FORMAT/sources.cmake)
 include(source/FORMAT/sources.cmake)
-include(source/KERNEL/sources.cmake)
-include(source/MATH/sources.cmake)
-
-
+#include(source/KERNEL/sources.cmake)
+#include(source/MATH/sources.cmake)
 include(include/OpenMS/VISUAL/UIC/sources.cmake)
 include(include/OpenMS/VISUAL/DIALOGS/UIC/sources.cmake)
 include(include/OpenMS/VISUAL/sources.cmake)
-
 include(source/VISUAL/sources.cmake)
 
 #QT4_WRAP_CPP(MOC_SOURCES_OUTPUT ${MOC_sources})
@@ -338,57 +335,8 @@ include(source/VISUAL/sources.cmake)
 
 message("OpenMS sources: " ${OpenMS_sources})
 
+ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
 
-
-ADD_LIBRARY(OpenMS SHARED 
-						${OpenMS_sources}
-					 )
-
-
-						
-#						${ANALYSIS_SOURCES} 
-#						${APPLICATIONS_SOURCES}
-#						${CHEMISTRY_SOURCES}
-#						${COMPARISON_SOURCES}
-#						${CONCEPT_SOURCES}
-#						${DATASTRUCTURES_SOURCES}
-#						${FILTERING_SOURCES}
-#						${FORMAT_SOURCES}
-#						${KERNEL_SOURCES}
-#						${MATH_SOURCES}
-#						${METADATA_SOURCES}
-#						${SYSTEM_SOURCES}
-#						${TRANSFORMATIONS_SOURCES}
-#						${VISUAL_DIALOGS_UI_SOURCES}
-#						${VISUAL_SOURCES}
- #           ${TRANSFORMATIONS_SOURCES}
-  #          ${ANALYSIS_DECHARGING_SOURCES}
-#            ${ANALYSIS_ID_SOURCES}
-#            ${ANALYSIS_MAPMATCHING_SOURCES}
-#            ${ANALYSIS_QUANTITATION_SOURCES}
-#            ${ANALYSIS_SVM_SOURCES}
-#            ${COMPARISON_CLUSTERING_SOURCES}
-#            ${COMPARISON_SPECTRA_SOURCES}
-#            ${FILTERING_BASELINE_SOURCES}
-#            ${FILTERING_CALIBRATION_SOURCES}
-#            ${FILTERING_DATAREDUCTION_SOURCES}
-#            ${FILTERING_ID_SOURCES}
-#            ${FILTERING_NOISEESTIMATION_SOURCES}
-#            ${FILTERING_SMOOTHING_SOURCES}
-#            ${FILTERING_TRANSFORMERS_SOURCES}
-#            ${FORMAT_DB_SOURCES}
-#            ${FORMAT_HANDLER_SOURCES}
-#            ${FORMAT_VALIDATOR_SOURCES}
-#            ${MATH_MISC_SOURCES}
-#            ${MATH_STATISTICS_SOURCES}
-#            ${TRANFORMATION_FEATUREFINDER_SOURCES}
-#            ${TRANSFORMATIONS_RAW2PEAK_SOURCES}
-#            ${VISUAL_VISUALIZER_SOURCES}
-#						${VISUAL_DIALOGS_SOURCES}
-#						${MOC_SOURCES_OUTPUT}
-#						${QT_RESOURCES_OUTPUT}
-#						source/APPLICATIONS/TOPP/splash.C
-#						)
 
 #link_directories(${CONTRIB_LIB_DIR})
 

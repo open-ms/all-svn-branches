@@ -1728,7 +1728,7 @@ namespace OpenMS
   {
 		String filter_all = "readable files (*.dta *.dta2d";
 		String filter_single = "dta files (*.dta);;dta2d files (*.dta2d)";
-#ifdef ANDIMS_DEF
+#ifdef USE_ANDIMS
 		filter_all +=" *.cdf";
 		filter_single += ";;ANDI/MS files (*.cdf)";
 #endif

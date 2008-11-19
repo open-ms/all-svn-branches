@@ -151,7 +151,7 @@ CHECK((template <class PeakType> bool loadExperiment(const String &filename, MSE
 	TEST_EQUAL(exp.size(),4)
 
 
-#ifdef ANDIMS_DEF
+#ifdef USE_ANDIMS
   TEST_EQUAL(tmp.loadExperiment("data/ANDIFile_test.cdf",exp), true)
 #else
 	TEST_EQUAL(tmp.loadExperiment("data/ANDIFile_test.cdf",exp), false)
@@ -180,7 +180,7 @@ CHECK((static bool isSupported(Type type)))
 	TEST_EQUAL(true, tmp.isSupported(FileHandler::MZML));
   TEST_EQUAL(true, tmp.isSupported(FileHandler::MZXML));
 	TEST_EQUAL(true, tmp.isSupported(FileHandler::FEATUREXML));
-#ifdef ANDIMS_DEF
+#ifdef USE_ANDIMS
   TEST_EQUAL(true, tmp.isSupported(FileHandler::ANDIMS));
 #else
 	TEST_EQUAL(false, tmp.isSupported(FileHandler::ANDIMS));

@@ -9,13 +9,15 @@ PROJECT("OpenMS")
 ### - edit them within CMakeCache.txt								 ### 
 ########################################################
 # CUSTOM_CONTRIB_DIR
-
+# OPENMS_DEBUG
+# OPENMS_ENABLE_EXTERNALMEMORY
+# CF_DB_PLUGIN
 
 ########################################################
 ###    manual entries (edit this for new release)    ###
 ########################################################
 
-set(CF_PACKAGE_VERSION "1.3")
+set(CF_PACKAGE_VERSION "1.3" CACHE INTERNAL "OpenMS VERSION" FORCE)
 
 ########################################################
 ###    end manual																	   ###
@@ -137,7 +139,7 @@ find_program(PROG_Svnversion
              PATHS "c:/programme/subversion/bin" "c:/program files/subversion/bin"   ### additional search paths (along with $PATH)
              DOC "svnversion executable which helps in determining the svn revision when building TOPP tools")
 
-if (PROG_Svnversion-NOTFOUND)
+if (PROG_Svnversion STREQUAL "PROG_Svnversion-NOTFOUND")
 	message(STATUS "The programm svnversion could not be found. SVN-revision information will not be available! Add the location of svnversion(.exe) to your PATH environment variable if you require SVN-revision.")
 endif()
 
@@ -147,26 +149,26 @@ endif()
 
 
 # user DEBUG flag (needs a cmake flag/cache entry, so we define it empty which causes it to show up in the wizard)
-set(CF_OPENMS_DEBUG)
+set(OPENMS_DEBUG CACHE BOOL "Enable debug output for certain classes")
 
 # can be set automatically
-set(CF_OPENMS_DATA_PATH ${DIR_SHARE}/OpenMS/ CACHE INTERNAL "Path to the shared documents of OpenMS.")
+set(CF_OPENMS_DATA_PATH ${DIR_SHARE}OpenMS/ CACHE INTERNAL "Path to the shared documents of OpenMS.")
 
 # check for Microsoft Visual Studio compiler
 if (MSVC)
-	set(CF_OPENMS_COMPILER_MSVC "1" CACHE INTERNAL "Do we use Microsoft Compiler?")
+	set(OPENMS_COMPILER_MSVC "1" CACHE INTERNAL "Do we use Microsoft Compiler?")
 endif()
 # check for G++
 if (CMAKE_COMPILER_IS_GNUCXX)
-	set(CF_OPENMS_COMPILER_GXX "1" CACHE INTERNAL "Do we use Microsoft Compiler?")
+	set(OPENMS_COMPILER_GXX "1" CACHE INTERNAL "Do we use G++ Compiler?")
 endif()
 
 INCLUDE(TestBigEndian)
-TEST_BIG_ENDIAN(CF_OPENMS_BIG_ENDIAN)
+TEST_BIG_ENDIAN(OPENMS_BIG_ENDIAN)
 
 # check 32/64 bit architecture
 if (CMAKE_SIZEOF_VOID_P MATCHES "8")
-	set(CF_OPENMS_64BIT_ARCHITECTURE, "1")
+	set(OPENMS_64BIT_ARCHITECTURE, "1")
 endif()
 
 
@@ -246,21 +248,21 @@ endif()
 ## system headers:
 include(CheckIncludeFileCXX) # Check if the include file exists.
 
-CHECK_INCLUDE_FILE_CXX("unistd.h" CF_OPENMS_HAS_UNISTD_H)
-CHECK_INCLUDE_FILE_CXX("process.h" CF_OPENMS_HAS_PROCESS_H)
+CHECK_INCLUDE_FILE_CXX("unistd.h" OPENMS_HAS_UNISTD_H)
+CHECK_INCLUDE_FILE_CXX("process.h" OPENMS_HAS_PROCESS_H)
 
-CHECK_INCLUDE_FILE_CXX("time.h" CF_OPENMS_HAS_TIME_H)
-CHECK_INCLUDE_FILE_CXX("sys/types.h" CF_OPENMS_HAS_SYS_TYPES_H)
-CHECK_INCLUDE_FILE_CXX("sys/times.h" CF_OPENMS_HAS_SYS_TIMES_H)
-CHECK_INCLUDE_FILE_CXX("sys/time.h"  CF_OPENMS_HAS_SYS_TIME_H)
+CHECK_INCLUDE_FILE_CXX("time.h" OPENMS_HAS_TIME_H)
+CHECK_INCLUDE_FILE_CXX("sys/types.h" OPENMS_HAS_SYS_TYPES_H)
+CHECK_INCLUDE_FILE_CXX("sys/times.h" OPENMS_HAS_SYS_TIMES_H)
+CHECK_INCLUDE_FILE_CXX("sys/time.h"  OPENMS_HAS_SYS_TIME_H)
 
 # user flag (needs a cmake flag/cache entry, so we define it empty which causes it to show up in the wizard)
-set(CF_OPENMS_ENABLE_EXTERNALMEMORY)
+set(OPENMS_ENABLE_EXTERNALMEMORY CACHE BOOL "User switch to enable external memory support (if you run out of RAM+swap). Warning: performance penalty!")
 
 include(CheckFunctionExists)
 ## in MinGW we have the signal.h header, but no kill() as in Linux, so we need to check for the kill() function 
-CHECK_FUNCTION_EXISTS("kill" CF_OPENMS_HAS_KILL)
-CHECK_FUNCTION_EXISTS("sysconf" CF_OPENMS_HAS_SYSCONF)
+CHECK_FUNCTION_EXISTS("kill" OPENMS_HAS_KILL)
+CHECK_FUNCTION_EXISTS("sysconf" OPENMS_HAS_SYSCONF)
 
 ## ANDIMS flag USE_ANDIMS defined above!
 if (NOT DEFINED USE_ANDIMS)
@@ -268,7 +270,7 @@ if (NOT DEFINED USE_ANDIMS)
 endif()
 
 # user flag with default "QMYSQL" (needs a cmake flag/cache entry, so we define it empty which causes it to show up in the wizard)
-set(CF_DB_PLUGIN "QMYSQL")
+set(CF_DB_PLUGIN "QMYSQL" CACHE BOOL "User switch to change the DB plugin.")
 
 
 ## replace any variables in config.h.in with current values
@@ -324,7 +326,6 @@ MACRO (QT4_WRAP_UI_OWN outfiles )
 
 ENDMACRO (QT4_WRAP_UI_OWN)
 
-##TODO: USE_ANDIMS to exclude sources which are broken under 64bit
 
 set(OpenMS_sources  CACHE INTERNAL "This variable should hold all OpenMS sources at the end of the config step" )
 include(source/ANALYSIS/sources.cmake)

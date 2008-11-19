@@ -49,229 +49,54 @@
 // find the corresponding source code line.
 // See also COMMON/debug.h for these symbols.
 
-#cmakedefine OPENMS_DEBUG @CF_OPENMS_DEBUG@
-
-#undef OPENMS_NO_INLINE_FUNCTIONS -- DEAD!
+#cmakedefine OPENMS_DEBUG
 
 // The path to the directory where OpenMS data is installed
-#cmakedefine OPENMS_DATA_PATH @CF_OPENMS_DATA_PATH@
-#cmakedefine PACKAGE_VERSION "@CF_PACKAGE_VERSION@"
-
-// The string describing the binary format
-#define OPENMS_BINFMT "(unknown)"  -- DEAD!
-
-// Define architecture
-#undef OPENMS_ARCH_SPARC  -- DEAD!
-#undef OPENMS_ARCH_MIPS  -- DEAD!
-#undef OPENMS_ARCH_I386  -- DEAD!
-#undef OPENMS_ARCH_ALPHA  -- DEAD!
-#undef OPENMS_ARCH_POWERPC  -- DEAD!
-
-// Define OS
-#undef OPENMS_OS_LINUX  -- DEAD!
-#undef OPENMS_OS_SOLARIS -- DEAD!
-#undef OPENMS_OS_SUNOS -- DEAD!
-#undef OPENMS_OS_IRIX -- DEAD!
-#undef OPENMS_OS_IRIX32 -- DEAD!
-#undef OPENMS_OS_IRIX64 -- DEAD!
-#undef OPENMS_OS_FREEBSD -- DEAD!
-#undef OPENMS_OS_DARWIN -- DEAD!
-#undef OPENMS_OS_MINGW32 -- DEAD!
+#define OPENMS_DATA_PATH "@CF_OPENMS_DATA_PATH@"
+#define PACKAGE_VERSION "@CF_PACKAGE_VERSION@"
 
 // Define compiler specifics (used in VERY few places only)
 // Microsoft Visual Studio .NET, 2005, 2008
-#cmakedefine OPENMS_COMPILER_MSVC @CF_OPENMS_COMPILER_MSVC@
+#cmakedefine OPENMS_COMPILER_MSVC
 // GNU g++
-#cmakedefine OPENMS_COMPILER_GXX @CF_OPENMS_COMPILER_GXX@
+#cmakedefine OPENMS_COMPILER_GXX
 
-#undef OPENMS_COMPILER_INTEL  -- DEAD!
-#undef OPENMS_COMPILER_MIPSPRO  -- DEAD!
-#undef OPENMS_COMPILER_SUNPRO  -- DEAD!
-#undef OPENMS_COMPILER_COMPAQ  -- DEAD!
-#undef OPENMS_COMPILER_KAI  -- DEAD!
-#undef OPENMS_COMPILER "unknown"  -- DEAD!
 
-// Defines for the compiler version (major.minor.minor_minor)
-#undef OPENMS_COMPILER_VERSION_MAJOR 0  -- DEAD!
-#undef OPENMS_COMPILER_VERSION_MINOR 0  -- DEAD!
-#undef OPENMS_COMPILER_VERSION_MINOR_MINOR 0  -- DEAD!
-
-// define if gethostname is supported
-#undef OPENMS_HAVE_GETHOSTNAME -- DEAD!
-
-// Define if sysinfo(SI_HOSTNAME,) has to be used instead of
-// gethostname (older Solaris variants)
-#undef OPENMS_HAVE_SYSINFO -- DEAD!
-
-// define if gethostname is not in the unistd.h header
-#undef OPENMS_DEFINE_GETHOSTNAME -- DEAD!
-
-// Define if you have the inet_aton function.  
-// Note: inet_aton is a marginally improved version of inet_addr
-// If configure finds inet_aton, OPENMS_HAVE_INET_ATON is set and used.
-#undef OPENMS_HAVE_INET_ATON -- DEAD!
-
-// Define the type needed for getsockname, getpeername, and accept
-// This type is probably one of socklen_t, size_t, or int
-// Refer to /usr/include/sys/socket.h in case of doubt
-#define OPENMS_SOCKLEN_TYPE int -- DEAD!
-
-// Define some symbols for the (bit)size of some builtin types
-#define OPENMS_INT_SIZE 32  -- DEAD!
-#define OPENMS_CHAR_SIZE 32 -- DEAD!
-#define OPENMS_LONG_SIZE 32 -- DEAD!
-#define OPENMS_SIZE_T_SIZE 32 -- DEAD!
-#define OPENMS_POINTER_SIZE 32 -- DEAD!
-
-// Define symbols for the endianness of the system
-#undef OPENMS_LITTLE_ENDIAN -- DEAD!
-
-#cmakedefine OPENMS_BIG_ENDIAN @CF_OPENMS_BIG_ENDIAN@
-
-// the signature of the function arguments used in xdrrec_create differs
-// from platform to platform, so we define some symbols describing the
-// correct arguments: (void*, char*, int), (char*, char*, int), or (void)
-// take arguments of type (void*, char*, int)
-#undef OPENMS_XDRREC_CREATE_VOID_CHAR_INT  -- DEAD!
-#undef OPENMS_XDRREC_CREATE_CHAR_CHAR_INT  -- DEAD!
-#undef OPENMS_XDRREC_CREATE_VOID  -- DEAD!
-
-// Some platforms (e.g. Debian 2.1) do not provide xdr_u_hyper, so we 
-// need a workaround for this
-#undef OPENMS_HAS_XDR_U_HYPER   -- DEAD!
-
-// Define to `int' if <sys/types.h> doesn't define.  
-#undef pid_t --dead!!
+#cmakedefine OPENMS_BIG_ENDIAN
 
 // Define to `unsigned' if <sys/types.h> doesn't define.  
 #undef size_t -- dead?!
 #TODO confirm that every compiler we support has a proper
 # #include <cstdlib> available, which already defines size_t
 
-// Define if you have the ANSI C header files.  
-#undef STDC_HEADERS --dead!!
-
-// Define if numeric_limits is defined in <limits>
-#undef OPENMS_HAS_NUMERIC_LIMITS  --dead!!
-
-// Define the argument type for xdr_u_hyper (64 bit)
-#define OPENMS_XDR_UINT64_TYPE u_quad_t  --dead!!
-
 // Define on 64 bit architectures to avoid the use of long long
 // which is required on 32 bit machines for comatibility
-#cmakedefine OPENMS_64BIT_ARCHITECTURE @CF_OPENMS_64BIT_ARCHITECTURE@
+#cmakedefine OPENMS_64BIT_ARCHITECTURE
 
+#define OPENMS_INT32_TYPE @CF_OPENMS_INT32_TYPE@
+#define OPENMS_INT64_TYPE @CF_OPENMS_INT64_TYPE@
+#define OPENMS_BYTE_TYPE @CF_OPENMS_BYTE_TYPE@
+#define OPENMS_UINT64_TYPE @CF_OPENMS_UINT64_TYPE@
 
-#cmakedefine OPENMS_INT32_TYPE @CF_OPENMS_INT32_TYPE@
-#cmakedefine OPENMS_INT64_TYPE @CF_OPENMS_INT64_TYPE@
-#cmakedefine OPENMS_BYTE_TYPE @CF_OPENMS_BYTE_TYPE@
-#cmakedefine OPENMS_UINT64_TYPE @CF_OPENMS_UINT64_TYPE@
+#cmakedefine OPENMS_HAS_UNISTD_H
+#cmakedefine OPENMS_HAS_PROCESS_H
 
-// Define the template argument for friends of template classes:
-// either "" or "<>"
-#undef OPENMS_NULL_TEMPLATE_ARGS "" --dead!!
-
-// Basically a work-around for the broken SUNPro CC (WS 6U2),
-// which handles function template incorrectly -- see amberNonBonded.C
-#undef OPENMS_MUST_CAST_TEMPLATE_FUNCTION_ARGS  --dead!!
-
-// Define whether the compiler provides an ANSI-compliant implementation
-// of <iostream>. This is required in COMMON/socket.h/C since we need
-// the correct initialisation of the base classes. These base classes are
-// either something like std::basic_ios<char> etc., or ios, istream etc.
-#undef OPENMS_HAS_ANSI_IOSTREAM  --dead!!
-
-// Define whether we can use <sstream> or whether we have to use the older <strstream>
-#undef OPENMS_HAS_SSTREAM --dead!!
-
-// Define whether inline functions may be used as template parameters.
-#undef OPENMS_HAS_INLINE_TPL_ARGS --dead!!
-
-// Define the precision for the OPENMS Complex type (has to be consistent
-// with the FFTW precision, if included).
-#define OPENMS_COMPLEX_PRECISION float --dead!!
-
-// Define whether the FFTW library/header is available.
-#undef OPENMS_HAS_FFTW --dead!!
-#undef OPENMS_HAS_FFTW_DOUBLE --dead!!
-#undef OPENMS_HAS_FFTW_FLOAT --dead!!
-#undef OPENMS_HAS_FFTW_LONG_DOUBLE --dead!!
-#undef OPENMS_HAS_FFTW_H --dead!!
-
-// Define whether the CGAL library/header is available.
-#undef OPENMS_HAS_CGAL --dead!!
-
-// Define whether to use the ARM style or ANSI style access modifications
-//   ARM style:   BaseClass::foo;
-//   ANSI style:  using BaseClass::foo;
-#undef OPENMS_CFG_USING_METHOD_DIRECTIVE  --dead!!
-
-// Define for activated PYTHON support
-#undef OPENMS_PYTHON_SUPPORT  --dead!!
-
-// Maximum line length for reading from files (see source/FORMAT)
-#undef OPENMS_MAX_LINE_LENGTH 65535  --dead!!
-
-// On some systems (e.g. Solaris) we need to include /usr/include/ieeefp.h
-// for some floating point functions
-#undef OPENMS_HAS_IEEEFP_H  --dead!!
-
-// On some systems (e.g. Solaris) we need to include /usr/include/values.h
-// for some floating point functions
-#undef OPENMS_HAS_VALUES_H  --dead!!
-
-// On some systems, we do not have regex.h, so we have to use regexp.h
-#undef OPENMS_HAS_REGEXP_H  --dead!!
-#undef OPENMS_HAS_REGEX_H  --dead!!
-
-// Define whether float.h has to be included along with limits.h
-#undef OPENMS_HAS_FLOAT_H   --dead!!
-#undef OPENMS_HAS_STDINT_H  --dead!!
-
-#cmakedefine OPENMS_HAS_UNISTD_H @CF_OPENMS_HAS_UNISTD_H@
-#cmakedefine OPENMS_HAS_PROCESS_H @CF_OPENMS_HAS_PROCESS_H@
-
-
-#cmakedefine OPENMS_HAS_TIME_H @CF_OPENMS_HAS_TIME_H@
-#cmakedefine OPENMS_HAS_SYS_TYPES_H @CF_OPENMS_HAS_SYS_TYPES_H@
-#cmakedefine OPENMS_HAS_SYS_TIMES_H @CF_OPENMS_HAS_SYS_TIMES_H@
-#cmakedefine OPENMS_HAS_SYS_TIME_H @CF_OPENMS_HAS_SYS_TIME_H@
-
-
-#undef OPENMS_HAS_LIMITS_H  --dead!!
-#undef OPENMS_HAS_FLOAT_H  --dead!!
-#undef OPENMS_HAS_DIRENT_H  --dead!!
-#undef OPENMS_HAS_DIRECT_H  --dead!!
-#undef OPENMS_HAS_PWD_H  --dead!!
-#undef OPENMS_HAS_SYS_IOCTL_H  --dead!!
-#undef OPENMS_HAS_SYS_STAT_H  --dead!!
-#undef OPENMS_HAS_SYS_PARAM_H  --dead!!
-#undef OPENMS_HAS_SYS_SOCKET_H  --dead!!
+#cmakedefine OPENMS_HAS_TIME_H
+#cmakedefine OPENMS_HAS_SYS_TYPES_H
+#cmakedefine OPENMS_HAS_SYS_TIMES_H
+#cmakedefine OPENMS_HAS_SYS_TIME_H
 
 // use ExternalAllocator for MSExperiment as default (usually not recommended due to performance penalty)
-#cmakedefine OPENMS_ENABLE_EXTERNALMEMORY @CF_OPENMS_ENABLE_EXTERNALMEMORY@
+#cmakedefine OPENMS_ENABLE_EXTERNALMEMORY
 
-#undef OPENMS_HAS_NETINET_IN_H --dead!!
-#undef OPENMS_HAS_NETDB_H --dead!!
-#undef OPENMS_HAS_ARPA_INET_H --dead!!
+#cmakedefine OPENMS_HAS_KILL
+#cmakedefine OPENMS_HAS_SYSCONF
 
-#cmakedefine OPENMS_HAS_KILL @CF_OPENMS_HAS_KILL@
-#cmakedefine OPENMS_HAS_SYSCONF @CF_OPENMS_HAS_SYSCONF@
-
-
-// Specific to the Windows port (and actually not used here,
-// included for completeness, rather).
-#undef OPENMS_HAS_CLOCKS_PER_SEC --dead!!
-#undef OPENMS_HAS_WINDOWS_PERFORMANCE_COUNTER --dead!! (replaced by OPENMS_WINDOWSPLATFORM)
-#undef OPENMS_USE_WINSOCK --dead!!
 
 // Defines for conditional compiles when Libs are missing
-#cmakedefine ANDIMS_DEF @USE_ANDIMS@
+#cmakedefine USE_ANDIMS
 
-#undef LIBSVM_DEF --dead!!
-#undef NETCDF_DEF --dead!!
-
-#cmakedefine DB_PLUGIN @CF_DB_PLUGIN@
+#define DB_PLUGIN "@CF_DB_PLUGIN@"
 
 // __PRETTY_FUNCTION__ is a GNU G++ extension.  It is used in exceptions to indicate their origin.
 #ifndef OPENMS_COMPILER_GXX 

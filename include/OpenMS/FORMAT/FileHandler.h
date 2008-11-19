@@ -38,7 +38,7 @@
 #include <OpenMS/FORMAT/MS2File.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 
-#ifdef ANDIMS_DEF
+#ifdef USE_ANDIMS
 #include <OpenMS/FORMAT/ANDIFile.h>
 #endif
 
@@ -195,7 +195,7 @@ namespace OpenMS
 						return true;
 					}
 					break;
-#ifdef ANDIMS_DEF
+#ifdef USE_ANDIMS
 				case ANDIMS:
 					{
 						ANDIFile f;

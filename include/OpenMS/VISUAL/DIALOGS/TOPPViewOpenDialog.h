@@ -28,7 +28,7 @@
 #ifndef OPENMS_VISUAL_DIALOGS_TOPPVIEWOPENDIALOG_H
 #define OPENMS_VISUAL_DIALOGS_TOPPVIEWOPENDIALOG_H
 
-#include <OpenMS/VISUAL/DIALOGS/UIC/TOPPViewOpenDialogTemplate.h>
+#include <OpenMS/VISUAL/DIALOGS/UIC/ui_TOPPViewOpenDialog.h>
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/DATASTRUCTURES/Map.h>
 

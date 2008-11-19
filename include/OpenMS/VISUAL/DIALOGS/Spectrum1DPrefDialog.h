@@ -28,7 +28,7 @@
 #ifndef OPENMS_VISUAL_DIALOGS_SPECTRUM1DPREFDIALOG_H
 #define OPENMS_VISUAL_DIALOGS_SPECTRUM1DPREFDIALOG_H
 
-#include <OpenMS/VISUAL/DIALOGS/UIC/Spectrum1DPrefDialogTemplate.h>
+#include <OpenMS/VISUAL/DIALOGS/UIC/ui_Spectrum1DPrefDialog.h>
 
 namespace OpenMS 
 {

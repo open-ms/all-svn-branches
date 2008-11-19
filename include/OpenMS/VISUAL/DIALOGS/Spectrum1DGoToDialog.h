@@ -29,7 +29,7 @@
 #define OPENMS_VISUAL_DIALOGS_SPECTRUM1DGOTODIALOG_H
 
 #include <QtGui/QDialog>
-#include <OpenMS/VISUAL/DIALOGS/UIC/Spectrum1DGoToDialogTemplate.h>
+#include <OpenMS/VISUAL/DIALOGS/UIC/ui_Spectrum1DGoToDialog.h>
 #include <OpenMS/CONCEPT/Types.h>
 
 namespace OpenMS 

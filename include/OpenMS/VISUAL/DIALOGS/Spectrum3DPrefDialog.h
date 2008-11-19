@@ -28,7 +28,7 @@
 #ifndef OPENMS_VISUAL_DIALOGS_SPECTRUM3DPREFDIALOG_H
 #define OPENMS_VISUAL_DIALOGS_SPECTRUM3DPREFDIALOG_H
 
-#include <OpenMS/VISUAL/DIALOGS/UIC/Spectrum3DPrefDialogTemplate.h>
+#include <OpenMS/VISUAL/DIALOGS/UIC/ui_Spectrum3DPrefDialog.h>
 
 namespace OpenMS 
 {

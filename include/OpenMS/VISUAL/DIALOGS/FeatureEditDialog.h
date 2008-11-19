@@ -29,7 +29,7 @@
 #define OPENMS_VISUAL_DIALOGSFEATUREEDITDIALOG_H
 
 #include <OpenMS/KERNEL/Feature.h>
-#include <OpenMS/VISUAL/DIALOGS/UIC/FeatureEditDialogTemplate.h>
+#include <OpenMS/VISUAL/DIALOGS/UIC/ui_FeatureEditDialog.h>
 
 namespace OpenMS 
 {

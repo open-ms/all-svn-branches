@@ -28,7 +28,7 @@
 #ifndef OPENMS_VISUAL_DIALOGS_TOPPVIEWPREFDIALOG_H
 #define OPENMS_VISUAL_DIALOGS_TOPPVIEWPREFDIALOG_H
 
-#include <OpenMS/VISUAL/DIALOGS/UIC/TOPPViewPrefDialogTemplate.h>
+#include <OpenMS/VISUAL/DIALOGS/UIC/ui_TOPPViewPrefDialog.h>
 
 namespace OpenMS 
 {

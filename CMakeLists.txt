@@ -65,75 +65,52 @@ endif()
 ###    external libs																 ###
 ########################################################
 
+## contrib
 
-FIND_PACKAGE(Qt4 REQUIRED)
-SET(QT_USE_QTXML 1)
+## disable AndiMS for 64-bit platforms (until fixed)
+if (CMAKE_SIZEOF_VOID_P MATCHES "8")
+	set(USE_ANDIMS "false" CACHE BOOL INTERNAL)
+else()
+	set(USE_ANDIMS "true" CACHE BOOL INTERNAL)
+endif()
 
-# bla add others, only QtCore and QtGui are enabled by default
-INCLUDE(${QT_USE_FILE})
-
-INCLUDE(UseQt4)
-
-
-
-#### bla
-MACRO (QT4_WRAP_UI_OWN outfiles dest_dir)
-    QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
-    FOREACH (it ${ui_files}) 
-      GET_FILENAME_COMPONENT(outfile ${it} NAME_WE)
-      GET_FILENAME_COMPONENT(infile ${it} ABSOLUTE)
-      SET(outfile ${dest_dir}/${outfile}Template.h)
-			#message(${QT_UIC_EXECUTABLE})
-			message("Generating uic header of file: " ${outfile})
-			execute_process(COMMAND ${QT_UIC_EXECUTABLE} ${ui_options} -o ${outfile} ${infile})
-      SET(${outfiles} ${${outfiles}} ${outfile})
-    ENDFOREACH (it)
-ENDMACRO (QT4_WRAP_UI_OWN)
-
-ADD_SUBDIRECTORY(source/VISUAL)
-ADD_SUBDIRECTORY(source/VISUAL/DIALOGS)
-
-# TODO check for Cmake custom flag for this 
-set(CONTRIB_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/contrib/)
-set(CONTRIB_LIB_DIR ${PROJECT_SOURCE_DIR}/contrib/)
+set(CONTRIB_DIR CACHE PATH "User defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib!")
+ 
+if (NOT CUSTOM_CONTRIB_DIR) ## set default for contrib
+	set(CONTRIB_DIR ${PROJECT_SOURCE_DIR}/contrib/)
+endif()
+set(CONTRIB_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/contrib/include/)
+set(CONTRIB_LIB_DIR ${PROJECT_SOURCE_DIR}/contrib/lib/)
 
 # TODO check whether this is necessary
-FIND_PATH(GSL_INCLUDE_DIR
-    NAMES gsl/gsl_cdf.h gsl/gsl_randist.h
-    PATHS ${CONTRIB_INCLUDE_DIR}
-    PATH_SUFFIXES include
-    DOC "GSL header include dir"
-    )
+FIND_PATH(GSL_INCLUDE_DIR NAMES gsl/gsl_cdf.h gsl/gsl_randist.h PATHS ${CONTRIB_INCLUDE_DIR} DOC "GSL header include dir")
 MESSAGE(STATUS "Found gsl headers at: " ${GSL_INCLUDE_DIR})
-INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIR})
 
 # TODO check whether this is necessary
-FIND_LIBRARY(GSL_GSL_LIBRARY
-    NAMES gsl libgsl
-    PATHS  ${CONTRIB_LIB_DIR}
-    PATH_SUFFIXES lib
-    DOC "GSL library dir" 
-		)
-MESSAGE(STATUS "Found gsl library at: " ${GSL_GSL_LIBRARY})
+FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
+MESSAGE(STATUS "Found gsl library at: " ${GSL_LIBRARY})
 
-ADD_LIBRARY(OpenMS SHARED 
-						${ANALYSIS_SOURCES} 
-						${APPLICATIONS_SOURCES}
-						{CHEMISTRY_SOURCES}
-						${COMPARISON_SOURCES}
-						${CONCEPT_SOURCES}
-						${DATASTRUCTURES_SOURCES}
-						${FILTERING_SOURCES}
-						${FORMAT_SOURCES}
-						${KERNEL_SOURCES}
-						${MATH_SOURCES}
-						${METADATA_SOURCES}
-						${SYSTEM_SOURCES}
-						${TRANSFORMATIONS_SOURCES}
-						${VISUAL_DIALOGS_UI_SOURCES}
-						${VISUAL_SOURCES}
-						)
+FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
+MESSAGE(STATUS "Found cgal library at: " ${CGAL_LIBRARY})
 
+FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
+if (XERCESC_LIBRARY-NOTFOUND)
+	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CUSTOM_CONTRIB_DIR}")
+else()
+	MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
+endif()
+
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/)
+INCLUDE_DIRECTORIES(${CONTRIB_INCLUDE_DIR})
+
+## QT
+SET(QT_USE_QTXML 1)
+SET(QT_USE_QTNETWORK 1)
+SET(QT_USE_QTSQL 1)
+SET(QT_USE_QTOPENGL 1)
+FIND_PACKAGE(Qt4 REQUIRED)
+INCLUDE(${QT_USE_FILE})
+INCLUDE(UseQt4)
 
 ########################################################
 ###    useful programms															 ###
@@ -269,6 +246,11 @@ include(CheckFunctionExists)
 CHECK_FUNCTION_EXISTS("kill" CF_OPENMS_HAS_KILL)
 CHECK_FUNCTION_EXISTS("sysconf" CF_OPENMS_HAS_SYSCONF)
 
+## ANDIMS flag USE_ANDIMS defined above!
+if (NOT DEFINED USE_ANDIMS)
+	message(FATAL_ERROR "Cmake script was re-ordered and is now invalid! Please make sure that USE_ANIMS is defined when config.h.in is configured!")		
+endif()
+
 # user flag with default "QMYSQL" (needs a cmake flag/cache entry, so we define it empty which causes it to show up in the wizard)
 set(CF_DB_PLUGIN "QMYSQL")
 
@@ -304,6 +286,117 @@ if (NOT PROG_Svnversion-NOTFOUND)
   file(READ ${svnversion_file} ENV_OPENMS_REVISION) ## read content of file into variable
   set( ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION} )## set env variable
 endif()
+
+########################################################
+###    BUILD the lib																 ###
+########################################################
+
+
+MACRO (QT4_WRAP_UI_OWN outfiles )
+  QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
+
+  FOREACH (it ${ui_files}) 
+    GET_FILENAME_COMPONENT(outfile ${it} NAME_WE)
+    GET_FILENAME_COMPONENT(infile ${it} ABSOLUTE)
+    SET(outfile ${PROJECT_SOURCE_DIR}/${directory}/ui_${outfile}.h)
+    ADD_CUSTOM_COMMAND(OUTPUT ${outfile}
+      COMMAND ${QT_UIC_EXECUTABLE}
+      ARGS ${ui_options} -o ${outfile} ${infile}
+      MAIN_DEPENDENCY ${infile})
+    SET(${outfiles} ${${outfiles}} ${outfile})
+  ENDFOREACH (it)
+
+ENDMACRO (QT4_WRAP_UI_OWN)
+
+##TODO: USE_ANDIMS to exclude sources which are broken under 64bit
+
+set(OpenMS_sources  CACHE INTERNAL "This variable should hold all OpenMS sources at the end of the config step" )
+include(source/ANALYSIS/sources.cmake)
+include(source/APPLICATIONS/sources.cmake)
+include(source/CHEMISTRY/sources.cmake)
+include(source/COMPARISON/sources.cmake)
+include(source/CONCEPT/sources.cmake)
+include(source/DATASTRUCTURES/sources.cmake)
+include(source/FILTERING/sources.cmake)
+include(include/OpenMS/FORMAT/sources.cmake)
+include(source/FORMAT/sources.cmake)
+include(source/KERNEL/sources.cmake)
+include(source/MATH/sources.cmake)
+
+
+include(include/OpenMS/VISUAL/UIC/sources.cmake)
+include(include/OpenMS/VISUAL/DIALOGS/UIC/sources.cmake)
+include(include/OpenMS/VISUAL/sources.cmake)
+
+include(source/VISUAL/sources.cmake)
+
+#QT4_WRAP_CPP(MOC_SOURCES_OUTPUT ${MOC_sources})
+#message("mocced sources: "${MOC_SOURCES_OUTPUT})
+
+#QT4_WRAP_UI(UIC_SOURCES_OUTPUT ${UI_sources})
+#set(OpenMS_sources ${OpenMS_sources} ${UIC_SOURCES_OUTPUT})
+
+message("OpenMS sources: " ${OpenMS_sources})
+
+
+
+ADD_LIBRARY(OpenMS SHARED 
+						${OpenMS_sources}
+					 )
+
+
+						
+#						${ANALYSIS_SOURCES} 
+#						${APPLICATIONS_SOURCES}
+#						${CHEMISTRY_SOURCES}
+#						${COMPARISON_SOURCES}
+#						${CONCEPT_SOURCES}
+#						${DATASTRUCTURES_SOURCES}
+#						${FILTERING_SOURCES}
+#						${FORMAT_SOURCES}
+#						${KERNEL_SOURCES}
+#						${MATH_SOURCES}
+#						${METADATA_SOURCES}
+#						${SYSTEM_SOURCES}
+#						${TRANSFORMATIONS_SOURCES}
+#						${VISUAL_DIALOGS_UI_SOURCES}
+#						${VISUAL_SOURCES}
+ #           ${TRANSFORMATIONS_SOURCES}
+  #          ${ANALYSIS_DECHARGING_SOURCES}
+#            ${ANALYSIS_ID_SOURCES}
+#            ${ANALYSIS_MAPMATCHING_SOURCES}
+#            ${ANALYSIS_QUANTITATION_SOURCES}
+#            ${ANALYSIS_SVM_SOURCES}
+#            ${COMPARISON_CLUSTERING_SOURCES}
+#            ${COMPARISON_SPECTRA_SOURCES}
+#            ${FILTERING_BASELINE_SOURCES}
+#            ${FILTERING_CALIBRATION_SOURCES}
+#            ${FILTERING_DATAREDUCTION_SOURCES}
+#            ${FILTERING_ID_SOURCES}
+#            ${FILTERING_NOISEESTIMATION_SOURCES}
+#            ${FILTERING_SMOOTHING_SOURCES}
+#            ${FILTERING_TRANSFORMERS_SOURCES}
+#            ${FORMAT_DB_SOURCES}
+#            ${FORMAT_HANDLER_SOURCES}
+#            ${FORMAT_VALIDATOR_SOURCES}
+#            ${MATH_MISC_SOURCES}
+#            ${MATH_STATISTICS_SOURCES}
+#            ${TRANFORMATION_FEATUREFINDER_SOURCES}
+#            ${TRANSFORMATIONS_RAW2PEAK_SOURCES}
+#            ${VISUAL_VISUALIZER_SOURCES}
+#						${VISUAL_DIALOGS_SOURCES}
+#						${MOC_SOURCES_OUTPUT}
+#						${QT_RESOURCES_OUTPUT}
+#						source/APPLICATIONS/TOPP/splash.C
+#						)
+
+#link_directories(${CONTRIB_LIB_DIR})
+
+#target_link_libraries(source/APPLICATIONS/UTILS/SemanticValidator ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+
+#add_executable(source/APPLICATIONS/TOPP/TOPPView source/APPLICATIONS/TOPP/TOPPView.C)
+#target_link_libraries(source/APPLICATIONS/TOPP/TOPPView ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+
 
                     
                     

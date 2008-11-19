@@ -266,7 +266,7 @@
 #undef OPENMS_USE_WINSOCK --dead!!
 
 // Defines for conditional compiles when Libs are missing
-#undef ANDIMS_DEF
+#cmakedefine ANDIMS_DEF @USE_ANDIMS@
 
 #undef LIBSVM_DEF --dead!!
 #undef NETCDF_DEF --dead!!

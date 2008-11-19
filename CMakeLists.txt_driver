@@ -1,0 +1,230 @@
+# CMake installation file
+# Created 2008/10 during OpenMS
+# retreat by CB && AB
+#
+#
+#
+
+PROJECT("OpenMS")
+cmake_minimum_required(VERSION 2.6)
+
+### this variable contains the OpenMS source files
+#set(OpenMS_sources CACHE INTERNAL "This variable should hold all OpenMS sources at the end of the config step" PARENT_SCOPE)
+
+### this macro adds sources to the openms sources
+#function (getFullPath sources)
+	#message("OpenMS_sources before: " ${depend_sources})
+#	foreach(i ${ARGV})
+		#message("Inner loop: "${i})
+#		set(sources ${sources} ${CMAKE_CURRENT_SOURCE_DIR}${i})
+#	endforeach(i ${ARGV})
+	#message(${depend_sources})
+#endfunction (getFullPath)
+
+
+set(CONTRIB_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/contrib/)
+set(CONTRIB_LIB_DIR ${PROJECT_SOURCE_DIR}/contrib/)
+
+# TODO check whether this is necessary
+FIND_PATH(GSL_INCLUDE_DIR NAMES gsl/gsl_cdf.h gsl/gsl_randist.h PATHS
+${CONTRIB_INCLUDE_DIR} PATH_SUFFIXES include DOC "GSL header include dir")
+MESSAGE(STATUS "Found gsl headers at: " ${GSL_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(${GSL_INCLUDE_DIR})
+
+# TODO check whether this is necessary
+FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl PATHS  ${CONTRIB_LIB_DIR}
+PATH_SUFFIXES lib DOC "GSL library dir")
+MESSAGE(STATUS "Found gsl library at: " ${GSL_LIBRARY})
+
+FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR}
+PATH_SUFFIXES lib DOC "CGAL library dir")
+MESSAGE(STATUS "Found cgal library at: " ${CGAL_LIBRARY})
+
+FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c libxerces-c PATHS
+${CONTRIB_LIB_DIR} PATH_SUFFIXES lib DOC "xerces-c library dir")
+MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
+
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/)
+
+INCLUDE(TestBigEndian)
+TEST_BIG_ENDIAN(OPENMS_HAS_BIG_ENDIAN)
+
+ADD_DEFINITIONS("-Wall -ansi -pedantic -Wno-long-long -Wno-non-virtual-dtor -fpic")
+
+SET(QT_USE_QTXML 1)
+SET(QT_USE_QTNETWORK 1)
+SET(QT_USE_QTSQL 1)
+SET(QT_USE_QTOPENGL 1)
+FIND_PACKAGE(Qt4 REQUIRED)
+INCLUDE(${QT_USE_FILE})
+INCLUDE(UseQt4)
+
+
+ MACRO (QT4_WRAP_UI_OWN outfiles )
+    QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
+
+    FOREACH (it ${ui_files}) 
+      GET_FILENAME_COMPONENT(outfile ${it} NAME_WE)
+      GET_FILENAME_COMPONENT(infile ${it} ABSOLUTE)
+      SET(outfile ${PROJECT_SOURCE_DIR}/${directory}/ui_${outfile}.h)
+      ADD_CUSTOM_COMMAND(OUTPUT ${outfile}
+        COMMAND ${QT_UIC_EXECUTABLE}
+        ARGS ${ui_options} -o ${outfile} ${infile}
+        MAIN_DEPENDENCY ${infile})
+      SET(${outfiles} ${${outfiles}} ${outfile})
+    ENDFOREACH (it)
+
+  ENDMACRO (QT4_WRAP_UI_OWN)
+
+
+#	 MACRO (QT4_WRAP_CPP_OWN outfiles )
+#    # get include dirs
+#    QT4_GET_MOC_INC_DIRS(moc_includes)
+#    QT4_EXTRACT_OPTIONS(moc_files moc_options ${ARGN})
+#
+#    FOREACH (it ${moc_files})
+#      GET_FILENAME_COMPONENT(it ${it} ABSOLUTE)
+#      QT4_MAKE_OUTPUT_FILE(${it} moc_ cxx outfile)
+#      QT4_CREATE_MOC_COMMAND(${it} ${outfile} ${moc_includes} ${moc_options})
+#      SET(${outfiles} ${${outfiles}} ${outfile})
+#    ENDFOREACH(it)
+
+#  ENDMACRO (QT4_WRAP_CPP_OWN)
+
+###
+
+set(OpenMS_sources)
+include(source/ANALYSIS/sources.cmake)
+include(source/APPLICATIONS/sources.cmake)
+include(source/CHEMISTRY/sources.cmake)
+include(source/COMPARISON/sources.cmake)
+include(source/CONCEPT/sources.cmake)
+include(source/DATASTRUCTURES/sources.cmake)
+include(source/FILTERING/sources.cmake)
+include(include/OpenMS/FORMAT/sources.cmake)
+include(source/FORMAT/sources.cmake)
+include(source/KERNEL/sources.cmake)
+include(source/MATH/sources.cmake)
+
+
+include(include/OpenMS/VISUAL/UIC/sources.cmake)
+include(include/OpenMS/VISUAL/DIALOGS/UIC/sources.cmake)
+include(include/OpenMS/VISUAL/sources.cmake)
+
+include(source/VISUAL/sources.cmake)
+
+#set(MOC_sources)
+#set(UI_sources)
+#add_subdirectory(source/ANALYSIS)
+#add_subdirectory(source/APPLICATIONS)
+#add_subdirectory(source/CHEMISTRY)
+#add_subdirectory(include/OpenMS/FORMAT)
+#add_subdirectory(source/FORMAT)
+#add_subdirectory(include/OpenMS/VISUAL/UIC)
+#add_subdirectory(include/OpenMS/VISUAL/DIALOGS/UIC)
+#add_subdirectory(source/VISUAL)
+
+#message("Analysis sources: " ${analysis_sources})
+
+#set(OpenMS_sources 
+#		${analysis_sources})
+#		${application_sources}
+#		${chemistry_sources}
+#	 )
+
+#set(MOC_SOURCES_INPUT include/OpenMS/FORMAT/MascotRemoteQuery.h)
+#QT4_WRAP_CPP(MOC_SOURCES_OUTPUT ${MOC_sources})
+#set(OpenMS_sources ${OpenMS_sources} ${MOC_SOURCES_OUTPUT})
+
+#QT4_WRAP_UI(UIC_SOURCES_OUTPUT ${UI_sources})
+#set(OpenMS_sources ${OpenMS_sources} ${UIC_SOURCES_OUTPUT})
+
+message("OpenMS sources: " ${OpenMS_sources})
+
+#set(OpenMS_sources ${OpenMS_sources} ${MOC_SOURCES_OUTPUT})
+#message("mocced sources: "${MOC_SOURCES_OUTPUT})
+
+#### QResource files non needed right now
+#set(QT_RESOURCE_FILES source/APPLICATIONS/TOPP/INIFileEditor_icon.o.rc
+#								 source/APPLICATIONS/TOPP/TOPPView_icon.o.rc)
+#
+#QT4_ADD_RESOURCES(QT_RESOURCES_OUTPUT ${QT_RESOURCE_FILES})
+#####
+
+
+
+#ADD_SUBDIRECTORY(source/VISUAL)
+#ADD_SUBDIRECTORY(source/VISUAL/DIALOGS)
+
+
+ADD_LIBRARY(OpenMS SHARED 
+						${OpenMS_sources}
+						#/share/usr/bertsch/OpenMS_x86_64_sl4/source/ANALYSIS/DECHARGING/FeatureDecharger.C
+						)
+
+
+						
+#						${ANALYSIS_SOURCES} 
+#						${APPLICATIONS_SOURCES}
+#						${CHEMISTRY_SOURCES}
+#						${COMPARISON_SOURCES}
+#						${CONCEPT_SOURCES}
+#						${DATASTRUCTURES_SOURCES}
+#						${FILTERING_SOURCES}
+#						${FORMAT_SOURCES}
+#						${KERNEL_SOURCES}
+#						${MATH_SOURCES}
+#						${METADATA_SOURCES}
+#						${SYSTEM_SOURCES}
+#						${TRANSFORMATIONS_SOURCES}
+#						${VISUAL_DIALOGS_UI_SOURCES}
+#						${VISUAL_SOURCES}
+ #           ${TRANSFORMATIONS_SOURCES}
+  #          ${ANALYSIS_DECHARGING_SOURCES}
+#            ${ANALYSIS_ID_SOURCES}
+#            ${ANALYSIS_MAPMATCHING_SOURCES}
+#            ${ANALYSIS_QUANTITATION_SOURCES}
+#            ${ANALYSIS_SVM_SOURCES}
+#            ${COMPARISON_CLUSTERING_SOURCES}
+#            ${COMPARISON_SPECTRA_SOURCES}
+#            ${FILTERING_BASELINE_SOURCES}
+#            ${FILTERING_CALIBRATION_SOURCES}
+#            ${FILTERING_DATAREDUCTION_SOURCES}
+#            ${FILTERING_ID_SOURCES}
+#            ${FILTERING_NOISEESTIMATION_SOURCES}
+#            ${FILTERING_SMOOTHING_SOURCES}
+#            ${FILTERING_TRANSFORMERS_SOURCES}
+#            ${FORMAT_DB_SOURCES}
+#            ${FORMAT_HANDLER_SOURCES}
+#            ${FORMAT_VALIDATOR_SOURCES}
+#            ${MATH_MISC_SOURCES}
+#            ${MATH_STATISTICS_SOURCES}
+#            ${TRANFORMATION_FEATUREFINDER_SOURCES}
+#            ${TRANSFORMATIONS_RAW2PEAK_SOURCES}
+#            ${VISUAL_VISUALIZER_SOURCES}
+#						${VISUAL_DIALOGS_SOURCES}
+#						${MOC_SOURCES_OUTPUT}
+#						${QT_RESOURCES_OUTPUT}
+#						source/APPLICATIONS/TOPP/splash.C
+#						)
+
+#link_directories(${CONTRIB_LIB_DIR})
+#add_executable(source/APPLICATIONS/UTILS/SemanticValidator source/APPLICATIONS/UTILS/SemanticValidator.C)
+#MESSAGE(${QT_LIBRARIES})
+
+#target_link_libraries(source/APPLICATIONS/UTILS/SemanticValidator ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+
+
+
+#add_executable(source/APPLICATIONS/TOPP/TOPPView source/APPLICATIONS/TOPP/TOPPView.C)
+#target_link_libraries(source/APPLICATIONS/TOPP/TOPPView ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+#
+#### TODO test 32/64bit version
+#if (UNIX AND NOT WIN32)
+#  if (CMAKE_SIZEOF_VOID_P MATCHES "8")
+#    ow_check_cxx_compiler_flag("-fPIC" WITH_FPIC)
+#      if (WITH_FPIC)
+#        add_definitions(-fPIC)
+#    endif (WITH_FPIC)
+#  endif (CMAKE_SIZEOF_VOID_P MATCHES "8")
+#endif (UNIX AND NOT WIN32)

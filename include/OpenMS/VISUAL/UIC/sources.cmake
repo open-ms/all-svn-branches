@@ -2,7 +2,8 @@
 set(directory include/OpenMS/VISUAL/UIC)
 
 set(uic_sources
-		ParamEditor.ui)
+		#ParamEditor.ui
+		)
 
 set(sources)
 foreach(i ${uic_sources})

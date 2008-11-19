@@ -4,6 +4,14 @@
 PROJECT("OpenMS")
 
 ########################################################
+### entries meant to be configured using CMake cache ###
+### - do NOT hardcode them here!										 ###
+### - edit them within CMakeCache.txt								 ### 
+########################################################
+# CUSTOM_CONTRIB_DIR
+
+
+########################################################
 ###    manual entries (edit this for new release)    ###
 ########################################################
 
@@ -25,24 +33,6 @@ if (CMAKE_INSTALL_PREFIX)
 else (CMAKE_INSTALL_PREFIX)
 	set(DIR_SHARE ${PROJECT_SOURCE_DIR}/share/ CACHE INTERNAL "Path to the /share directory after installation.")
 endif (CMAKE_INSTALL_PREFIX)
-
-
-AUX_SOURCE_DIRECTORY(source/ANALYSIS ANALYSIS_SOURCES)
-AUX_SOURCE_DIRECTORY(source/APPLICATIONS APPLICATIONS_SOURCES)
-AUX_SOURCE_DIRECTORY(source/CHEMISTRY CHEMISTRY_SOURCES)
-AUX_SOURCE_DIRECTORY(source/COMPARISON COMPARISON_SOURCES)
-AUX_SOURCE_DIRECTORY(source/CONCEPT CONCEPT_SOURCES)
-AUX_SOURCE_DIRECTORY(source/DATASTRUCTURES DATASTRUCTURES_SOURCES)
-AUX_SOURCE_DIRECTORY(source/FILTERING FILTERING_SOURCES)
-AUX_SOURCE_DIRECTORY(source/FORMAT FORMAT_SOURCES)
-AUX_SOURCE_DIRECTORY(source/KERNEL KERNEL_SOURCES)
-AUX_SOURCE_DIRECTORY(source/MATH MATH_SOURCES)
-AUX_SOURCE_DIRECTORY(source/METADATA METADATA_SOURCES)
-AUX_SOURCE_DIRECTORY(source/SYSTEM SYSTEM_SOURCES)
-AUX_SOURCE_DIRECTORY(source/TRANSFORMATIONS TRANSFORMATIONS_SOURCES)
-AUX_SOURCE_DIRECTORY(source/VISUAL/DIALOGS VISUAL_SOURCES)
-
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/)
 
 ########################################################
 ###    compiler flags																 ###
@@ -74,28 +64,54 @@ else()
 	set(USE_ANDIMS "true" CACHE INTERNAL "Support AndiMS?!")
 endif()
 
-set(CONTRIB_DIR CACHE PATH "User defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib!")
+set(CUSTOM_CONTRIB_DIR CACHE PATH "User defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib!")
+set(CONTRIB_DIR ${PROJECT_SOURCE_DIR}/contrib/ CACHE INTERNAL "Final contrib path after looking at custom_contrib_path. defaults to OpenMS/contrib")
+
+message("CUSTOM contrib is: " ${CUSTOM_CONTRIB_DIR}) 
  
-if (NOT CUSTOM_CONTRIB_DIR) ## set default for contrib
-	set(CONTRIB_DIR ${PROJECT_SOURCE_DIR}/contrib/)
+if (CUSTOM_CONTRIB_DIR STREQUAL "")
+	message(STATUS "Using DEFAULT setting for contrib directory: ${CONTRIB_DIR}")
+else()
+	set(CONTRIB_DIR ${CUSTOM_CONTRIB_DIR})
+	message(STATUS "Using user defined contrib directory: ${CONTRIB_DIR}")
 endif()
-set(CONTRIB_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/contrib/include/)
-set(CONTRIB_LIB_DIR ${PROJECT_SOURCE_DIR}/contrib/lib/)
+
+FIND_PATH(CONFIRM_CONTRIB_DIR README.txt PATHS ${CONTRIB_DIR} NO_DEFAULT_PATH)
+if (CONFIRM_CONTRIB_DIR STREQUAL "CONFIRM_CONTRIB_DIR-NOTFOUND")
+	message(FATAL_ERROR "The path to the Contrib directory (${CONTRIB_DIR}) is not correct!")
+endif()
+
+set(CONTRIB_INCLUDE_DIR ${CONTRIB_DIR}/include/ CACHE INTERNAL "contrib include dir")
+set(CONTRIB_LIB_DIR ${CONTRIB_DIR}/lib/ CACHE INTERNAL "contrib lib dir")
+
 
 # TODO check whether this is necessary
-FIND_PATH(GSL_INCLUDE_DIR NAMES gsl/gsl_cdf.h gsl/gsl_randist.h PATHS ${CONTRIB_INCLUDE_DIR} DOC "GSL header include dir")
-MESSAGE(STATUS "Found gsl headers at: " ${GSL_INCLUDE_DIR})
+FIND_PATH(GSL_INCLUDE_DIR gsl/gsl_cdf.h NAMES gsl/gsl_randist.h PATHS ${CONTRIB_INCLUDE_DIR} DOC "GSL header include dir")
+if (GSL_INCLUDE_DIR STREQUAL "GSL_INCLUDE_DIR-NOTFOUND")
+	MESSAGE(FATAL_ERROR "Unable to find GSL include dir! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
+else()
+	MESSAGE(STATUS "Found GSL include dir at: " ${GSL_INCLUDE_DIR})
+endif()
 
 # TODO check whether this is necessary
-FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
-MESSAGE(STATUS "Found gsl library at: " ${GSL_LIBRARY})
+#FIND_LIBRARY(GSL_LIBRARY NAMES acctres hal hal.dll PATHS c:/windows/system32/ )
+#FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl libgsl.a PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
+if (GSL_LIBRARY STREQUAL "GSL_LIBRARY-NOTFOUND")
+	MESSAGE(FATAL_ERROR "Unable to find GSL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
+else()
+	MESSAGE(STATUS "Found GSL library at: " ${GSL_LIBRARY})
+endif()
 
-FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
-MESSAGE(STATUS "Found cgal library at: " ${CGAL_LIBRARY})
+#FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
+if (CGAL_LIBRARY STREQUAL "CGAL_LIBRARY-NOTFOUND")
+	MESSAGE(FATAL_ERROR "Unable to find CGAL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
+else()
+	MESSAGE(STATUS "Found CGAL library at: " ${CGAL_LIBRARY})
+endif()
 
-FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
-if (XERCESC_LIBRARY-NOTFOUND)
-	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CUSTOM_CONTRIB_DIR}")
+#FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
+if (XERCESC_LIBRARY STREQUAL "XERCESC_LIBRARY-NOTFOUND")
+	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
 endif()

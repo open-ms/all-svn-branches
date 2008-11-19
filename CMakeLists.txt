@@ -10,24 +10,18 @@ PROJECT("OpenMS")
 set(CF_PACKAGE_VERSION "1.3")
 
 ########################################################
-# END manual
+###    end manual																	   ###
 ########################################################
 
 # Heart of the BUILD system : only edit when you know what you´re doing (we don´t)
 # quick manual for most commands: http://www.cmake.org/cmake/help/cmake2.6docs.html
 
-
-
 cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
-
-## some directories
+## define some directories
 if (CMAKE_INSTALL_PREFIX)
 	set(DIR_SHARE ${CMAKE_INSTALL_PREFIX}/share_${CF_PACKAGE_VERSION}/ CACHE INTERNAL)
-	
-	# TODO: install (copy) directories
-	# ...
 else (CMAKE_INSTALL_PREFIX)
 	set(DIR_SHARE ${PROJECT_SOURCE_DIR}/share/ CACHE INTERNAL)
 endif (CMAKE_INSTALL_PREFIX)
@@ -50,7 +44,27 @@ AUX_SOURCE_DIRECTORY(source/VISUAL/DIALOGS VISUAL_SOURCES)
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/)
 
+########################################################
+###    compiler flags																 ###
+########################################################
+
+## general
+#TODO confirm that these flags are general
 add_definitions("-Wall -ansi -pedantic -Wno-long-long -Wno-non-virtual-dtor")
+
+## platform dependent compiler flags:
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-fPIC" WITH_FPIC)
+if (WITH_FPIC)
+	add_definitions(-fPIC)
+endif()
+
+
+
+########################################################
+###    external libs																 ###
+########################################################
+
 
 FIND_PACKAGE(Qt4 REQUIRED)
 SET(QT_USE_QTXML 1)
@@ -121,7 +135,23 @@ ADD_LIBRARY(OpenMS SHARED
 						)
 
 
-## set some variables for config.h
+########################################################
+###    useful programms															 ###
+########################################################
+
+find_program(PROG_Svnversion             
+             svnversion
+             PATHS "c:\programme\subversion\bin\" "c:\program files\subversion\bin"   ### additional search paths (along with $PATH)
+             DOC "svnversion executable which helps in determining the svn revision when building TOPP tools"
+
+if (PROG_Svnversion-NOTFOUND)
+	message(STATUS "The programm svnversion could not be found. SVN-revision information will not be available! Add the location of svnversion(.exe) to your PATH environment variable if you require SVN-revision.")
+endif()
+
+########################################################
+###    configure config.h														 ###
+########################################################
+
 
 # user DEBUG flag (needs a cmake flag/cache entry, so we define it empty which causes it to show up in the wizard)
 set(CF_OPENMS_DEBUG)
@@ -239,16 +269,47 @@ include(CheckFunctionExists)
 CHECK_FUNCTION_EXISTS("kill" CF_OPENMS_HAS_KILL)
 CHECK_FUNCTION_EXISTS("sysconf" CF_OPENMS_HAS_SYSCONF)
 
-
+# user flag with default "QMYSQL" (needs a cmake flag/cache entry, so we define it empty which causes it to show up in the wizard)
+set(CF_DB_PLUGIN "QMYSQL")
 
 
 ## replace any variables in config.h.in with current values
 configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${PROJECT_SOURCE_DIR}/include/config.h)
 
+########################################################
+###    configure Doxyfile														 ###
+########################################################
 
-## compiler flags:
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-fPIC" WITH_FPIC)
-if (WITH_FPIC)
-	add_definitions(-fPIC)
+## CF_PACKAGE_VERSION (already defined above in manual section)
+
+set(CF_OPENMS_PATH ${PROJECT_BINARY_DIR})
+
+## replace any variables in config.h.in with current values
+configure_file(${PROJECT_SOURCE_DIR}/source/config/Doxyfile.in ${PROJECT_SOURCE_DIR}/doc/doxygen/Doxyfile)
+
+##TODO: when building documentation, set in environment using svnversion before calling doxygen
+if (NOT PROG_Svnversion-NOTFOUND)
+
+	# define some filenames
+	set( svnversion_file ${PROJECT_SOURCE_DIR}/include/openms_svnversion.txt) # file with just the revision number
+	set( svnversion_file_h ${PROJECT_SOURCE_DIR}/include/openms_svnversion.h) # file with #define directive, e.g. #define OPENMS_SVNREV 1234:2345M
+	
+	#set_source_files_properties(${PROJECT_SOURCE_DIR}/source/CONCEPT/VersionInfo.C)
+	
+	## ensure that the file is always rebuild
+  add_custom_target(svnversion_file_target ALL  ${PROG_Svnversion} -n ${PROJECT_SOURCE_DIR} > svnversion_file
+                   	COMMENT "Call svnversion in project directory to generate openms_svnversion.txt")
+	 
+ 
+  file(READ ${svnversion_file} ENV_OPENMS_REVISION) ## read content of file into variable
+  set( ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION} )## set env variable
 endif()
+
+                    
+                    
+########################################################
+###    install/copy??																 ###
+########################################################
+
+# TODO: install (copy) directories?!
+# ...

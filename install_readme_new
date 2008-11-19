@@ -15,6 +15,11 @@ Qt:
 - wenn Qt installiert wird muss qmake im Pfad sein, sonst findet CMake Qt nicht
 
 
+Windows:
+- TortoiseSVN reicht nicht aus wenn SVN-Revision bestimmt werden soll!
+--> download svn binaries (enthält svnversion.exe)
+
+
 Qt für VS2005 compilen:
 - visual studio command line öffnen
 - ins Qt Verzeichnis gehen

@@ -267,9 +267,11 @@
 
 // Defines for conditional compiles when Libs are missing
 #undef ANDIMS_DEF
-#undef LIBSVM_DEF
-#undef NETCDF_DEF
-#define DB_PLUGIN "(undefined)"
+
+#undef LIBSVM_DEF --dead!!
+#undef NETCDF_DEF --dead!!
+
+#cmakedefine DB_PLUGIN @CF_DB_PLUGIN@
 
 // __PRETTY_FUNCTION__ is a GNU G++ extension.  It is used in exceptions to indicate their origin.
 #ifndef OPENMS_COMPILER_GXX 

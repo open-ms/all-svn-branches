@@ -1,22 +1,10 @@
 ### the directory name
-set(directory include/OpenMS/VISUAL/DIALOGS)
+set(directory include/OpenMS/APPLICATIONS)
 
 ### list all filenames of the directory here
 set(sources_list
-DBOpenDialog.h
-DataFilterDialog.h
-FeatureEditDialog.h
-HistogramDialog.h
-LayerStatisticsDialog.h
-SaveImageDialog.h
-Spectrum1DGoToDialog.h
-Spectrum1DPrefDialog.h
-Spectrum2DGoToDialog.h
-Spectrum2DPrefDialog.h
-Spectrum3DPrefDialog.h
-TOPPViewOpenDialog.h
-TOPPViewPrefDialog.h
-ToolsDialog.h
+INIFileEditorWindow.h
+TOPPViewBase.h
 )
 
 ### add path to the filenames

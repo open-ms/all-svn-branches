@@ -1,9 +1,16 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/CONCEPT)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+ClassTest.C
+Constants.C
+Exception.C
+FactoryProduct.C
+FuzzyStringComparator.C
+ProgressLogger.C
+SingletonRegistry.C
+VersionInfo.C
 )
 
 ### add path to the filenames

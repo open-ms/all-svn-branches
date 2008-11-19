@@ -1,9 +1,16 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/MATH/STATISTICS)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+AsymmetricStatistics.C
+AveragePosition.C
+BasicStatistics.C
+GammaDistributionFitter.C
+GaussFitter.C
+Histogram.C
+LinearRegression.C
+ROCCurve.C
 )
 
 ### add path to the filenames

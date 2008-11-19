@@ -1,9 +1,16 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/TRANSFORMATIONS/RAW2PEAK)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+ContinuousWaveletTransform.C
+ContinuousWaveletTransformNumIntegration.C
+OptimizePeakDeconvolution.C
+OptimizePick.C
+PeakPicker.C
+PeakPickerCWT.C
+PeakShape.C
+TwoDOptimization.C
 )
 
 ### add path to the filenames

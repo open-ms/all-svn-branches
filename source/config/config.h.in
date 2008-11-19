@@ -64,11 +64,6 @@
 
 #cmakedefine OPENMS_BIG_ENDIAN
 
-// Define to `unsigned' if <sys/types.h> doesn't define.  
-#undef size_t -- dead?!
-#TODO confirm that every compiler we support has a proper
-# #include <cstdlib> available, which already defines size_t
-
 // Define on 64 bit architectures to avoid the use of long long
 // which is required on 32 bit machines for comatibility
 #cmakedefine OPENMS_64BIT_ARCHITECTURE
@@ -77,6 +72,9 @@
 #define OPENMS_INT64_TYPE @CF_OPENMS_INT64_TYPE@
 #define OPENMS_BYTE_TYPE @CF_OPENMS_BYTE_TYPE@
 #define OPENMS_UINT64_TYPE @CF_OPENMS_UINT64_TYPE@
+
+#define PointerSizeInt @CF_OPENMS_INT64_TYPE@
+#define PointerSizeUInt @CF_OPENMS_UINT64_TYPE@
 
 #cmakedefine OPENMS_HAS_UNISTD_H
 #cmakedefine OPENMS_HAS_PROCESS_H

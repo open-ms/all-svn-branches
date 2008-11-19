@@ -1,9 +1,10 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/FORMAT/DB)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+DBAdapter.C
+DBConnection.C
 )
 
 ### add path to the filenames

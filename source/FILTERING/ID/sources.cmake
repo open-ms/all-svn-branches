@@ -1,9 +1,9 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/FILTERING/ID)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+IDFilter.C
 )
 
 ### add path to the filenames

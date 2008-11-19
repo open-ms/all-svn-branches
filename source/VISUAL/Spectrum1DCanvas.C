@@ -41,7 +41,6 @@
 #include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 #include <OpenMS/FORMAT/PeakTypeEstimator.h>
 #include <OpenMS/FORMAT/FileHandler.h>
-#include <OpenMS/CONCEPT/TimeStamp.h>
 #include <OpenMS/SYSTEM/FileWatcher.h>
 
 using namespace std;

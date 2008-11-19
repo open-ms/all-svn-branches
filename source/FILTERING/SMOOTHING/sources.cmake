@@ -1,9 +1,10 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/FILTERING/SMOOTHING)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+GaussFilter.C
+SavitzkyGolayFilter.C
 )
 
 ### add path to the filenames

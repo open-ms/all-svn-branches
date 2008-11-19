@@ -1,9 +1,12 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/MATH/MISC)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+BilinearInterpolation.C
+LinearInterpolation.C
+MathFunctions.C
+NonNegativeLeastSquaresSolver.C
 )
 
 ### add path to the filenames

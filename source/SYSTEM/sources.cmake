@@ -1,9 +1,14 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/SYSTEM)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+ExternalAllocator.C
+ExternalAllocatorUnique.C
+File.C
+FileWatcher.C
+ProcessResource.C
+StopWatch.C
 )
 
 ### add path to the filenames

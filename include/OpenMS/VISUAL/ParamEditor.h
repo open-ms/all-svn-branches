@@ -30,7 +30,7 @@
 
 #include <OpenMS/CONCEPT/Types.h>
 
-#include <OpenMS/VISUAL/UIC/ParamEditorTemplate.h>
+#include <OpenMS/VISUAL/UIC/ui_ParamEditor.h>
 
 
 #include <QtGui/QItemDelegate>

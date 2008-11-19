@@ -1,9 +1,21 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/APPLICATIONS/UTILS)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+CAAP_groundtruth_to_consensusXML.C
+CVInspector.C
+Digestor.C
+FFEval.C
+FuzzyDiff.C
+HistView.C
+IDExtractor.C
+IdXMLInfo.C
+LabeledEval.C
+RTEvaluation.C
+SemanticValidator.C
+SequenceCoverageCalculator.C
+XMLValidator.C
 )
 
 ### add path to the filenames

@@ -24,7 +24,6 @@
 // $Maintainer: Nico Pfeifer $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/CONCEPT/TimeStamp.h>
 #include <OpenMS/FORMAT/MascotOutfile.h>
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/METADATA/ProteinHit.h>
@@ -103,7 +102,8 @@ namespace OpenMS
 		//	ss.str().substr(0,4) + " " + it->suffix('=').trim());
 		date.setTime(it->suffix('=').trim());
 		// now add the date
-		date.setDate(precise_date);		
+		// @todo fix this after cmake installation (Andreas, Chris)
+		//date.setDate(precise_date);		
 		
 		//temp_identification.id.setDateTime(date);
 		

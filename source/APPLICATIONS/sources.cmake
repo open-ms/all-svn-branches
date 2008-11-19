@@ -1,9 +1,11 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/APPLICATIONS)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+INIFileEditorWindow.C
+TOPPBase.C
+TOPPViewBase.C
 )
 
 ### add path to the filenames

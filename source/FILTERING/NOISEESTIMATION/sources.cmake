@@ -1,9 +1,11 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/FILTERING/NOISEESTIMATION)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+SignalToNoiseEstimator.C
+SignalToNoiseEstimatorMeanIterative.C
+SignalToNoiseEstimatorMedian.C
 )
 
 ### add path to the filenames

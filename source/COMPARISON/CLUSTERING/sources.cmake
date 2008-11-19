@@ -1,9 +1,16 @@
 ### the directory name
-set(directory source/ANALYSIS/SVM)
+set(directory source/COMPARISON/CLUSTERING)
 
 ### list all filenames of the directory here
 set(sources_list
-SVMWrapper.C
+AverageLinkage.C
+ClusterAnalyzer.C
+ClusterFunctor.C
+ClusterHierarchical.C
+CompleteLinkage.C
+EuclideanSimilarity.C
+HierarchicalClustering.C
+SingleLinkage.C
 )
 
 ### add path to the filenames

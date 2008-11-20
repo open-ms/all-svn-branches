@@ -97,12 +97,14 @@ endif()
 
 # TODO check whether this is necessary
 #FIND_LIBRARY(GSL_LIBRARY NAMES acctres hal hal.dll PATHS c:/windows/system32/ )
-#FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl libgsl.a PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
+FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl libgsl.a PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
 if (GSL_LIBRARY STREQUAL "GSL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find GSL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found GSL library at: " ${GSL_LIBRARY})
 endif()
+
+# TODO check for gslcblaslib
 
 FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
 if (CGAL_LIBRARY STREQUAL "CGAL_LIBRARY-NOTFOUND")
@@ -111,7 +113,7 @@ else()
 	MESSAGE(STATUS "Found CGAL library at: " ${CGAL_LIBRARY})
 endif()
 
-#FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
+FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
 if (XERCESC_LIBRARY STREQUAL "XERCESC_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
@@ -288,22 +290,22 @@ set(CF_OPENMS_PATH ${PROJECT_BINARY_DIR})
 configure_file(${PROJECT_SOURCE_DIR}/source/config/Doxyfile.in ${PROJECT_SOURCE_DIR}/doc/doxygen/Doxyfile)
 
 ##TODO: when building documentation, set in environment using svnversion before calling doxygen
-if (NOT PROG_Svnversion-NOTFOUND)
-
-	# define some filenames
-	set( svnversion_file ${PROJECT_SOURCE_DIR}/include/openms_svnversion.txt) # file with just the revision number
-	set( svnversion_file_h ${PROJECT_SOURCE_DIR}/include/openms_svnversion.h) # file with #define directive, e.g. #define OPENMS_SVNREV 1234:2345M
+#if (NOT PROG_Svnversion-NOTFOUND)
+#
+#	# define some filenames
+#	set( svnversion_file ${PROJECT_SOURCE_DIR}/include/openms_svnversion.txt) # file with just the revision number
+#	set( svnversion_file_h ${PROJECT_SOURCE_DIR}/include/openms_svnversion.h) # file with #define directive, e.g. #define OPENMS_SVNREV 1234:2345M
 	
 	#set_source_files_properties(${PROJECT_SOURCE_DIR}/source/CONCEPT/VersionInfo.C)
 	
 	## ensure that the file is always rebuild
-  add_custom_target(svnversion_file_target ALL  ${PROG_Svnversion} -n ${PROJECT_SOURCE_DIR} > svnversion_file
-  									COMMAND "file(READ ${svnversion_file} ENV_OPENMS_REVISION)" ## read content of file into variable
-  									COMMAND "set( ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION} )" ## set env variable
-                   	COMMENT "Call svnversion in project directory to generate openms_svnversion.txt")
-	  
-  
-endif()
+#  add_custom_target(svnversion_file_target ALL  ${PROG_Svnversion} -n ${PROJECT_SOURCE_DIR} > svnversion_file
+#  									COMMAND "file(READ ${svnversion_file} ENV_OPENMS_REVISION)" ## read content of file into variable
+#  									COMMAND "set( ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION} )" ## set env variable
+#                   	COMMENT "Call svnversion in project directory to generate openms_svnversion.txt")
+#	  
+#  
+#endif()
 
 ########################################################
 ###    BUILD the lib																 ###
@@ -361,7 +363,7 @@ include(source/FILTERING/NOISEESTIMATION/sources.cmake)
 include(source/FILTERING/ID/sources.cmake)
 include(source/SYSTEM/sources.cmake)
 #include(source/APPLICATIONS/UTILS/sources.cmake)
-#include(source/APPLICATIONS/TOPP/sources.cmake)
+include(source/APPLICATIONS/TOPP/sources.cmake)
 include(source/APPLICATIONS/sources.cmake)
 include(source/FORMAT/DB/sources.cmake)
 include(source/FORMAT/HANDLERS/sources.cmake)
@@ -402,11 +404,28 @@ ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
 
 
 #link_directories(${CONTRIB_LIB_DIR})
+#target_link_libraries(source/APPLICATIONS/UTILS/SemanticValidator ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} OpenMS)
+#add_executable(source/APPLICATIONS/UTILS/SemanticValidator source/APPLICATIONS/UTILS/SemanticValidator.C)
 
 #target_link_libraries(source/APPLICATIONS/UTILS/SemanticValidator ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
 
-#add_executable(source/APPLICATIONS/TOPP/TOPPView source/APPLICATIONS/TOPP/TOPPView.C)
-#target_link_libraries(source/APPLICATIONS/TOPP/TOPPView ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+set(TOPP_executables)
+include(source/APPLICATIONS/TOPP/executables.cmake)
+
+foreach(i ${TOPP_executables}) 
+	add_executable(${i} ${i}.C)
+	target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+endforeach(i)
+
+set(UTILS_executables)
+include(source/APPLICATIONS/UTILS/executables.cmake)
+
+foreach(i ${UTILS_executables})
+	add_executable(${i} ${i}.C)
+	target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+endforeach(i)
+
+#/share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
 
 
                     

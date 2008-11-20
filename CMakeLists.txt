@@ -377,18 +377,16 @@ include(include/OpenMS/APPLICATIONS/sources.cmake)
 include(include/OpenMS/FORMAT/sources.cmake)
 
 
-if (MINGW)
-	ADD_LIBRARY(OpenMS STATIC ${OpenMS_sources} )
-else()
-	ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
-endif()
-
 
 # TODO track why the duplicate warnings are thrown for all (!) MOC sources
 # Macro problem?
 list(REMOVE_DUPLICATES OpenMS_sources)
 
-ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
+if (MINGW)
+	ADD_LIBRARY(OpenMS STATIC ${OpenMS_sources} )
+else()
+	ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
+endif()
 
 ####### TOPP #########
 set(TOPP_executables)

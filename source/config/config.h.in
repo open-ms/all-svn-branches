@@ -98,12 +98,18 @@
 
 // __PRETTY_FUNCTION__ is a GNU G++ extension.  It is used in exceptions to indicate their origin.
 #ifndef OPENMS_COMPILER_GXX 
-#  define __PRETTY_FUNCTION__ "<unknown>"
+#define __PRETTY_FUNCTION__ "<unknown>"
 #endif
 
 
-#ifdef WINNT   //internal compiler macros which should be true on: MinGW (32bit + 64bit) & MSVS compiler
-#  define OPENMS_WINDOWSPLATFORM 1
+
+// let Cmake decide if we are using Windows (ie if windows.h is available). 
+//   GCC and MSVC have pre-defined macros for this as well but using -ansi in GCC will disable those, thus asking the compiler is fragile
+#ifndef WIN32  //avoid warning of redefinition
+#cmakedefine WIN32
+#endif
+#ifdef WIN32   //should be true on: MinGW (32bit + 64bit) & MSVS compiler
+#define OPENMS_WINDOWSPLATFORM 1
 #endif
 
 

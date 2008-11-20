@@ -26,7 +26,7 @@
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgModel.h>
 #include <numeric>
-#include <math.h>
+#include <OpenMS/CONCEPT/Constants.h>
 
 namespace OpenMS
 {
@@ -77,7 +77,7 @@ namespace OpenMS
       data.reserve( UInt ( (max_-min_) / interpolation_step_ + 1 ) );
       CoordinateType pos = min_;
   
-      DoubleReal sqrt_2pi = sqrt(2*M_PI);
+      DoubleReal sqrt_2pi = sqrt(2*Constants::PI);
       DoubleReal term_sq2 = (-2.4055/sqrt(2));
       DoubleReal part1    = (height_*width_/symmetry_);
       DoubleReal part2    = pow(width_,2)/(2*pow(symmetry_,2));

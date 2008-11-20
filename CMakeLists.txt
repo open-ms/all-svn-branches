@@ -42,15 +42,16 @@ endif (CMAKE_INSTALL_PREFIX)
 
 ## general
 #TODO confirm that these flags are general
-add_definitions("-Wall -ansi -pedantic -Wno-long-long -Wno-non-virtual-dtor")
+add_definitions("-Wall -pedantic -Wno-long-long -Wno-non-virtual-dtor -ansi")
 
 ## platform dependent compiler flags:
 include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-fPIC" WITH_FPIC)
-if (WITH_FPIC)
-	add_definitions(-fPIC)
+if (NOT WIN32) # we only want fPIC on non-windows systems (fPIC is implicitly true there)
+	CHECK_CXX_COMPILER_FLAG("-fPIC" WITH_FPIC) 
+	if (WITH_FPIC)
+		add_definitions(-fPIC)
+	endif()
 endif()
-
 
 
 ########################################################

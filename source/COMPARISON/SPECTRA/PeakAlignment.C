@@ -26,6 +26,7 @@
 //
 
 #include <OpenMS/COMPARISON/SPECTRA/PeakAlignment.h>
+#include <OpenMS/CONCEPT/Constants.h>
 
 using namespace std;
 
@@ -411,7 +412,7 @@ namespace OpenMS
 	{
 		//scoring formula : peakintensity score * peakposition score
 		double pi(sqrt(intens1*intens2));
-		double pp( (1/(sigma*sqrt(2*M_PI)))* exp(-(fabs(pos1-pos2))/2*sigma*sigma) );
+		double pp( (1/(sigma*sqrt(2*Constants::PI)))* exp(-(fabs(pos1-pos2))/2*sigma*sigma) );
 
 		#ifdef OPENMS_DEBUG
 		cout << fabs(pos1-pos2) << " - "<< pi*pp << endl;

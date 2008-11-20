@@ -24,7 +24,6 @@ foreach(i ${sources_list})
 	list(APPEND sources ${directory}/${i})
 endforeach(i)
 
-#### source group definition
-set(source_group_name source\\ANALYSIS\\DECHARGING)
-source_group(${source_group_name} ${sources})
+### source group definition
+source_group(source\\APPLICATIONS\\UTILS FILES ${sources})
 

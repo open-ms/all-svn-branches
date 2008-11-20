@@ -15,6 +15,7 @@ endforeach(i)
 ### pass source file list to the upper instance
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
+### list all filenames of the directory here
 set(sources_list
 AdditiveSeries.C
 BaselineFilter.C
@@ -61,12 +62,15 @@ TOFCalibration.C
 TOPPView.C
 TextExporter.C
 XTandemAdapter.C
-splash.C)
+splash.C
+)
+
+### add path to the filenames
+set(sources)
+foreach(i ${sources_list})
+  list(APPEND sources ${directory}/${i})
+endforeach(i)
 
 ### source group definition
-set(source_group_name source\\APPLICATIONS\\TOPP)
-source_group(${source_group_name} ${sources})
-
-
-
+source_group(source\\APPLICATIONS\\TOPP FILES ${sources})
 

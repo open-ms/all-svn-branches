@@ -141,9 +141,17 @@ do
 	echo "set(OpenMS_sources \${OpenMS_sources} \${sources})" >> ${source_name}
 	echo "" >> ${source_name}
 	echo "### source group definition" >> ${source_name}
-	echo "set(source_group_name source\\\\ANALYSIS\\\\DECHARGING)" >> ${source_name}
-	echo "source_group(\${source_group_name} \${sources})" >> ${source_name}
+	#SOURCE_GROUP_NAME=`echo ${d} | tr "/" "\\\\\\\\"`
+	#echo "set(source_group_name ${SOURCE_GROUP_NAME})" >> ${source_name}
+	echo "source_group(`echo ${d} | cut -d "/" --output-delimiter="\\\\\\\\" -f 1,2,3,4` FILES \${sources})" >> ${source_name}
 	echo "" >> ${source_name}
 done
+
+
+### include ANDIFile only if set as option
+#if (USE_ANDIMS)
+#  list(APPEND sources ANDIFile.C)
+#endif()
+	
 
 

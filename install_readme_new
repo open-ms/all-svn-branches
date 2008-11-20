@@ -14,6 +14,11 @@ TODO:
 
 Qt:
 - wenn Qt installiert wird muss qmake im Pfad sein, sonst findet CMake Qt nicht
+ -ABER: wenn es mehrere QT-versionen gibt (eine mit MinGW, eine mit VS compiled)
+ 				 falls QTCore nicht gefunden wird: Cache editieren und auf VS-QT pfad setzen!! PATH env hat anscheinend keine Wirkung!
+ 				 speziell: QT_LIBRARY_DIR, QT_INCLUDE_DIR, QT_DOC_DIR
+
+"c:\Programme\CMake 2.6\bin\cmake.exe" -Wdev -D CUSTOM_CONTRIB_DIR:PATH="C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\merged" -G "Visual Studio 7" ../OpenMS_Retreat2008 
 
 
 Windows:

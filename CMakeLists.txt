@@ -40,13 +40,19 @@ endif (CMAKE_INSTALL_PREFIX)
 ###    compiler flags																 ###
 ########################################################
 
-## general
-#TODO confirm that these flags are general
-add_definitions("-Wall -pedantic -Wno-long-long -Wno-non-virtual-dtor")
+if (CMAKE_COMPILER_IS_GNUCXX)
+	add_definitions(-Wno-long-long -Wall -Wno-non-virtual-dtor  -pedantic)
+elseif (MSVC)
+	#add_definitions(/Wall) ## disable for now.. its just too much!
+	
+	## disable stupid warnings. enable if you want to have fun with MSVC 7
+	add_definitions(/wd4996 /wd4521 /wd4522)
+endif()
 
 ## platform dependent compiler flags:
 include(CheckCXXCompilerFlag)
 if (NOT WIN32) # we only want fPIC on non-windows systems (fPIC is implicitly true there)
+	
 	CHECK_CXX_COMPILER_FLAG("-fPIC" WITH_FPIC) 
 	if (WITH_FPIC)
 		add_definitions(-fPIC)

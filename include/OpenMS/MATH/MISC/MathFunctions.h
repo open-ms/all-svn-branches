@@ -27,7 +27,7 @@
 #ifndef OPENMS_MATH_MISC_MATHFUNCTIONS_H
 #define OPENMS_MATH_MISC_MATHFUNCTIONS_H
 
-#include <cmath>
+#include <cmath> // which does not support round() in VS
 #include <OpenMS/CONCEPT/Types.h>
 // #include <iostream> // debugging
 
@@ -76,7 +76,7 @@ namespace OpenMS
 		*/
 		inline static double ceil_decimal(double x, int decPow)
 		{
-			return (ceil(x/pow(10,decPow)))*pow(10,decPow); // decimal shift right, ceiling, decimal shift left
+			return (ceil(x/pow(10.0,decPow)))*pow(10.0,decPow); // decimal shift right, ceiling, decimal shift left
 		}
 		
 		/**
@@ -91,8 +91,8 @@ namespace OpenMS
 		*/
 		inline static double round_decimal(double x, int decPow) 	
 		{
-			if (x>0) return (floor(0.5+x/pow(10,decPow)))*pow(10,decPow);
-			return -((floor(0.5+fabs(x)/pow(10,decPow)))*pow(10,decPow));
+			if (x>0) return (floor(0.5+x/pow(10.0,decPow)))*pow(10.0,decPow);
+			return -((floor(0.5+fabs(x)/pow(10.0,decPow)))*pow(10.0,decPow));
 		}
 		
 		/**
@@ -137,6 +137,19 @@ namespace OpenMS
 		inline bool isOdd(UInt x)
 		{
 			return ((x & 1)!=0);
+		}
+
+		template <typename T>
+		T round (T x) 
+		{ 
+			if (x >= 0.0) 
+			{ 
+				return floor(x+0.5); 
+			} 
+			else 
+			{ 
+				return floor(x-0.5); 
+			}
 		}
 
 	} // namespace Math

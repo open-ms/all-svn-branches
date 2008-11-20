@@ -10,7 +10,8 @@ Allgemein:
 
 
 TODO:
-- uic und moc files werden mit schlechten hack erzeugt
+- check Types.h. preprocessor macros!
+- MathFunctions test for round()
 
 Qt:
 - wenn Qt installiert wird muss qmake im Pfad sein, sonst findet CMake Qt nicht

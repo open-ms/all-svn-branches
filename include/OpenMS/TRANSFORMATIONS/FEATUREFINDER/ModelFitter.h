@@ -570,7 +570,7 @@ namespace OpenMS
 				std::vector<Real> model_data;
 				model_data.reserve(set.size());
           
-				for (IndexSet::iterator it=set.begin(); it != set.end(); ++it)
+				for (IndexSet::const_iterator it=set.begin(); it != set.end(); ++it)
 				{
 					real_data.push_back(this->getPeakIntensity(*it));
 					model_data.push_back(model2D_.getIntensity(DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it))));

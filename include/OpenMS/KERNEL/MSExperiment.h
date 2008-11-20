@@ -27,6 +27,7 @@
 #ifndef OPENMS_KERNEL_MSEXPERIMENT_H
 #define OPENMS_KERNEL_MSEXPERIMENT_H
 
+#define NOMINMAX // fixes a macro bug for WIN32
 #include <OpenMS/KERNEL/MSSpectrum.h>
 #include <OpenMS/METADATA/ExperimentalSettings.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>
@@ -244,7 +245,7 @@ namespace OpenMS
 					// If the container is empty, nothing will happen
 					if (cont.size() == 0) return;
 
-					typename PeakType::CoordinateType current_rt = - std::numeric_limits<typename PeakType::CoordinateType>::max();
+					typename PeakType::CoordinateType current_rt = - (std::numeric_limits<typename PeakType::CoordinateType>::max)();
 
 					for (typename Container::const_iterator iter = cont.begin(); iter != cont.end(); ++iter)
 					{

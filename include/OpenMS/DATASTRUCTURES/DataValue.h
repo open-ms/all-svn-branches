@@ -204,8 +204,7 @@ namespace OpenMS
 			/// Space to store the data
 			union
 			{
-				// @todo do we need a pointer size int here???? (Andreas, Chris)
- 				PointerSizeInt int_;
+ 				Int int_;
 				DoubleReal dou_;
 				String* str_;
 				StringList* str_list_;

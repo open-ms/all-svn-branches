@@ -42,7 +42,7 @@ endif (CMAKE_INSTALL_PREFIX)
 
 ## general
 #TODO confirm that these flags are general
-add_definitions("-Wall -pedantic -Wno-long-long -Wno-non-virtual-dtor -ansi")
+add_definitions("-Wall -pedantic -Wno-long-long -Wno-non-virtual-dtor")
 
 ## platform dependent compiler flags:
 include(CheckCXXCompilerFlag)
@@ -97,8 +97,8 @@ else()
 endif()
 
 # TODO check whether this is necessary
-#FIND_LIBRARY(GSL_LIBRARY NAMES acctres hal hal.dll PATHS c:/windows/system32/ )
-FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl libgsl.a PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
+#FIND_LIBRARY(GSL_LIBRARY NAMES acctres hal hal.dll PATHS "c:/windows/system32/" )
+#FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl libgsl.dll PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
 if (GSL_LIBRARY STREQUAL "GSL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find GSL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
@@ -107,14 +107,14 @@ endif()
 
 # TODO check for gslcblaslib
 
-FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
+#FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
 if (CGAL_LIBRARY STREQUAL "CGAL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find CGAL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found CGAL library at: " ${CGAL_LIBRARY})
 endif()
 
-FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
+#FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
 if (XERCESC_LIBRARY STREQUAL "XERCESC_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
@@ -393,15 +393,11 @@ include(include/OpenMS/APPLICATIONS/sources.cmake)
 include(include/OpenMS/FORMAT/sources.cmake)
 
 
-#QT4_WRAP_CPP(MOC_SOURCES_OUTPUT ${MOC_sources})
-#message("mocced sources: "${MOC_SOURCES_OUTPUT})
-
-#QT4_WRAP_UI(UIC_SOURCES_OUTPUT ${UI_sources})
-#set(OpenMS_sources ${OpenMS_sources} ${UIC_SOURCES_OUTPUT})
-
-#message("OpenMS sources: " ${OpenMS_sources})
-
-ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
+if (MINGW)
+	ADD_LIBRARY(OpenMS STATIC ${OpenMS_sources} )
+else()
+	ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
+endif()
 
 
 #link_directories(${CONTRIB_LIB_DIR})

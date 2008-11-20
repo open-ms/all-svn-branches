@@ -15,3 +15,58 @@ endforeach(i)
 ### pass source file list to the upper instance
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
+set(sources_list
+AdditiveSeries.C
+BaselineFilter.C
+ConsensusID.C
+DBExporter.C
+DBImporter.C
+DTAExtractor.C
+Decharger.C
+FalseDiscoveryRate.C
+FeatureFinder.C
+FeatureFinderMRM.C
+FeatureLinker.C
+FileConverter.C
+FileFilter.C
+FileInfo.C
+FileMerger.C
+IDDecoyProbability.C
+IDFilter.C
+IDMerger.C
+INIFileEditor.C
+ITRAQAnalyzer.C
+InspectAdapter.C
+InternalCalibration.C
+MapAligner.C
+MapNormalizer.C
+MascotAdapter.C
+MascotAdapterOnline.C
+NoiseFilter.C
+OMSSAAdapter.C
+PILISIdentification.C
+PILISModel.C
+PTModel.C
+PTPredict.C
+PeakPicker.C
+PepNovoAdapter.C
+QuantIDMerger.C
+RTModel.C
+RTPredict.C
+Resampler.C
+SILACAnalyzer.C
+SequestAdapter.C
+SpectraFilter.C
+TOFCalibration.C
+TOPPView.C
+TextExporter.C
+XTandemAdapter.C
+splash.C)
+
+### source group definition
+set(source_group_name source\\APPLICATIONS\\TOPP)
+source_group(${source_group_name} ${sources})
+
+
+
+

@@ -16,7 +16,8 @@ UIC_FILE_EXTENSION="ui"
 ######################################################
 
 
-include_dirs=`ls -R include/OpenMS/* | grep ":" | cut -d ":" -f1`
+#include_dirs=`ls -R include/OpenMS/* | grep ":" | cut -d ":" -f1`
+
 source_dirs=`ls -R source/* | grep ":" | cut -d ":" -f1`
 working_dir=`pwd`
 
@@ -103,8 +104,6 @@ do
   echo "" >> ${source_name}
 done
 
-exit 1;
-
 ### generate cmake files in source/
 for d in ${source_dirs}
 do
@@ -141,5 +140,10 @@ do
 	echo "### pass source file list to the upper instance" >> ${source_name}
 	echo "set(OpenMS_sources \${OpenMS_sources} \${sources})" >> ${source_name}
 	echo "" >> ${source_name}
+	echo "### source group definition" >> ${source_name}
+	echo "set(source_group_name source\\\\ANALYSIS\\\\DECHARGING)" >> ${source_name}
+	echo "source_group(\${source_group_name} \${sources})" >> ${source_name}
+	echo "" >> ${source_name}
 done
+
 

@@ -20,3 +20,7 @@ endforeach(i)
 ### pass source file list to the upper instance
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
+#### source group definition
+set(source_group_name source\\ANALYSIS\\DECHARGING)
+source_group(${source_group_name} ${sources})
+

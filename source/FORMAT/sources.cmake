@@ -3,6 +3,7 @@ set(directory source/FORMAT)
 
 ### list all filenames of the directory here
 set(sources_list
+ANDIFile.C
 Base64.C
 CVMappingFile.C
 CVMappings.C
@@ -55,6 +56,7 @@ if (USE_ANDIMS)
   list(APPEND sources ANDIFile.C)
 endif()
 
+
 ### add path to the filenames
 set(sources)
 foreach(i ${sources_list})
@@ -63,4 +65,8 @@ endforeach(i)
 
 ### pass source file list to the upper instance
 set(OpenMS_sources ${OpenMS_sources} ${sources})
+
+#### source group definition
+set(source_group_name source\\ANALYSIS\\DECHARGING)
+source_group(${source_group_name} ${sources})
 

@@ -69,7 +69,7 @@ namespace OpenMS
 		return max_isotope_;
 	}
 
-	IsotopeDistribution::IsotopeDistribution& IsotopeDistribution::operator = (const IsotopeDistribution& iso)
+	IsotopeDistribution& IsotopeDistribution::operator = (const IsotopeDistribution& iso)
 	{
 		if (this != &iso)
 		{
@@ -79,7 +79,7 @@ namespace OpenMS
 		return *this;
 	}
 
-	IsotopeDistribution::IsotopeDistribution IsotopeDistribution::operator + (const IsotopeDistribution& iso) const
+	IsotopeDistribution IsotopeDistribution::operator + (const IsotopeDistribution& iso) const
 	{
 		ContainerType result;
 		convolve_(result, distribution_, iso.distribution_);
@@ -89,7 +89,7 @@ namespace OpenMS
 		return result_iso;
 	}
 
-	IsotopeDistribution::IsotopeDistribution& IsotopeDistribution::operator += (const IsotopeDistribution& iso)
+	IsotopeDistribution& IsotopeDistribution::operator += (const IsotopeDistribution& iso)
 	{
 		ContainerType result;
 		convolve_(result, distribution_, iso.distribution_);
@@ -97,7 +97,7 @@ namespace OpenMS
 		return *this;
 	}
 
-	IsotopeDistribution::IsotopeDistribution& IsotopeDistribution::operator *= (UInt factor)
+	IsotopeDistribution& IsotopeDistribution::operator *= (UInt factor)
 	{
 		ContainerType result;
 		convolvePow_(result, distribution_, factor);
@@ -105,7 +105,7 @@ namespace OpenMS
 		return *this;
 	}
 
-	IsotopeDistribution::IsotopeDistribution IsotopeDistribution::operator * (UInt factor) const
+	IsotopeDistribution IsotopeDistribution::operator * (UInt factor) const
 	{
 		ContainerType result;
 		convolvePow_(result, distribution_, factor);

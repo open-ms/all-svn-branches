@@ -17,12 +17,6 @@ SequenceCoverageCalculator
 XMLValidator
 )
 
-### add path to the filenames
-set(executables)
-foreach(i ${executables_list})
-	list(APPEND executables ${directory}/${i})
-endforeach(i)
-
 ### pass source file list to the upper instance
-set(UTILS_executables ${UTILS_executables} ${executables})
+set(UTILS_executables ${UTILS_executables} ${executables_list})
 

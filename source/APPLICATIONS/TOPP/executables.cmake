@@ -50,12 +50,6 @@ TextExporter
 XTandemAdapter
 )
 
-### add path to the filenames
-set(executables)
-foreach(i ${executables_list})
-	list(APPEND executables ${directory}/${i})
-endforeach(i)
-
 ### pass source file list to the upper instance
-set(TOPP_executables ${TOPP_executables} ${executables})
+set(TOPP_executables ${TOPP_executables} ${executables_list})
 

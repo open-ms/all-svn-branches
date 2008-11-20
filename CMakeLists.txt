@@ -31,7 +31,7 @@ SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
 ## define some directories
 if (CMAKE_INSTALL_PREFIX)
-	set(DIR_SHARE ${CMAKE_INSTALL_PREFIX}/share_${CF_PACKAGE_VERSION}/ CACHE INTERNAL "Path to the /share directory after installation.")
+	set(DIR_SHARE ${CMAKE_INSTALL_PREFIX}/share/ CACHE INTERNAL "Path to the /share directory after installation.")
 else (CMAKE_INSTALL_PREFIX)
 	set(DIR_SHARE ${PROJECT_SOURCE_DIR}/share/ CACHE INTERNAL "Path to the /share directory after installation.")
 endif (CMAKE_INSTALL_PREFIX)
@@ -70,7 +70,7 @@ endif()
 set(CUSTOM_CONTRIB_DIR CACHE PATH "User defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib!")
 set(CONTRIB_DIR ${PROJECT_SOURCE_DIR}/contrib/ CACHE INTERNAL "Final contrib path after looking at custom_contrib_path. defaults to OpenMS/contrib")
 
-message("CUSTOM contrib is: " ${CUSTOM_CONTRIB_DIR}) 
+#message("CUSTOM contrib is: " ${CUSTOM_CONTRIB_DIR}) 
  
 if (CUSTOM_CONTRIB_DIR STREQUAL "")
 	message(STATUS "Using DEFAULT setting for contrib directory: ${CONTRIB_DIR}")
@@ -155,7 +155,7 @@ endif()
 set(OPENMS_DEBUG CACHE BOOL "Enable debug output for certain classes")
 
 # can be set automatically
-set(CF_OPENMS_DATA_PATH ${DIR_SHARE}OpenMS/ CACHE INTERNAL "Path to the shared documents of OpenMS.")
+set(CF_OPENMS_DATA_PATH ${DIR_SHARE}OpenMS-${CF_PACKAGE_VERSION}/ CACHE INTERNAL "Path to the shared documents of OpenMS.")
 
 # check for Microsoft Visual Studio compiler
 if (MSVC)
@@ -312,6 +312,8 @@ configure_file(${PROJECT_SOURCE_DIR}/source/config/Doxyfile.in ${PROJECT_SOURCE_
 ###    BUILD the lib																 ###
 ########################################################
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY lib)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY bin)
 
 MACRO (QT4_WRAP_UI_OWN outfiles )
   QT4_EXTRACT_OPTIONS(ui_files ui_options ${ARGN})
@@ -329,24 +331,7 @@ MACRO (QT4_WRAP_UI_OWN outfiles )
 
 ENDMACRO (QT4_WRAP_UI_OWN)
 
-
 set(OpenMS_sources  CACHE INTERNAL "This variable should hold all OpenMS sources at the end of the config step" )
-#include(source/ANALYSIS/sources.cmake)
-#include(source/APPLICATIONS/sources.cmake)
-#include(source/CHEMISTRY/sources.cmake)
-#include(source/COMPARISON/sources.cmake)
-#include(source/CONCEPT/sources.cmake)
-#include(source/DATASTRUCTURES/sources.cmake)
-#include(source/FILTERING/sources.cmake)
-#include(include/OpenMS/FORMAT/sources.cmake)
-#include(source/FORMAT/sources.cmake)
-#include(source/KERNEL/sources.cmake)
-#include(source/MATH/sources.cmake)
-#include(include/OpenMS/VISUAL/UIC/sources.cmake)
-#include(include/OpenMS/VISUAL/DIALOGS/UIC/sources.cmake)
-#include(include/OpenMS/VISUAL/sources.cmake)
-#include(source/VISUAL/sources.cmake)
-
 #include(source/TEST/sources.cmake)                                   
 include(source/KERNEL/sources.cmake)                                 
 include(source/METADATA/sources.cmake)                               
@@ -363,7 +348,6 @@ include(source/FILTERING/SMOOTHING/sources.cmake)
 include(source/FILTERING/NOISEESTIMATION/sources.cmake)
 include(source/FILTERING/ID/sources.cmake)
 include(source/SYSTEM/sources.cmake)
-#include(source/APPLICATIONS/UTILS/sources.cmake)
 include(source/APPLICATIONS/TOPP/sources.cmake)
 include(source/APPLICATIONS/sources.cmake)
 include(source/FORMAT/DB/sources.cmake)
@@ -400,30 +384,66 @@ else()
 endif()
 
 
-#link_directories(${CONTRIB_LIB_DIR})
-#target_link_libraries(source/APPLICATIONS/UTILS/SemanticValidator ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} OpenMS)
-#add_executable(source/APPLICATIONS/UTILS/SemanticValidator source/APPLICATIONS/UTILS/SemanticValidator.C)
+# TODO track why the duplicate warnings are thrown for all (!) MOC sources
+# Macro problem?
+list(REMOVE_DUPLICATES OpenMS_sources)
 
-#target_link_libraries(source/APPLICATIONS/UTILS/SemanticValidator ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
 
+####### TOPP #########
 set(TOPP_executables)
 include(source/APPLICATIONS/TOPP/executables.cmake)
 
 foreach(i ${TOPP_executables}) 
-	add_executable(${i} ${i}.C)
+	add_executable(${i} source/APPLICATIONS/TOPP/${i}.C)
 	target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
 endforeach(i)
+add_custom_target(TOPP)
+add_dependencies(TOPP ${TOPP_executables})
 
+
+##### UTILS ########
 set(UTILS_executables)
 include(source/APPLICATIONS/UTILS/executables.cmake)
 
 foreach(i ${UTILS_executables})
-	add_executable(${i} ${i}.C)
+	add_executable(${i} source/APPLICATIONS/UTILS/${i}.C)
 	target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
 endforeach(i)
+add_custom_target(UTILS)
+add_dependencies(UTILS ${UTILS_executables})
 
-#/share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
 
+###### Examples ######
+set(EXAMPLES_executables)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY source/EXAMPLES)
+include(source/EXAMPLES/executables.cmake)
+foreach(i ${EXAMPLES_executables})
+  add_executable(${i} source/EXAMPLES/${i}.C)
+  target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+endforeach(i)
+add_custom_target(EXAMPLES)
+add_dependencies(EXAMPLES ${EXAMPLES_executables})
+
+
+##### Test Executables ####
+set(TEST_executables)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY source/TEST)
+include(source/TEST/executables.cmake)
+foreach(i ${TEST_executables})
+  add_executable(${i} source/TEST/${i}.C)
+  target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+endforeach(i)
+add_custom_target(TEST)
+add_dependencies(TEST ${TEST_executables})
+
+
+#### Tests #####
+enable_testing()
+add_subdirectory(source/TEST)
+
+##### TOPPtests #####
+add_subdirectory(source/TEST/TOPP)
 
                     
                     
@@ -433,3 +453,5 @@ endforeach(i)
 
 # TODO: install (copy) directories?!
 # ...
+
+

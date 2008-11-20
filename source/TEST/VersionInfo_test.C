@@ -76,7 +76,7 @@ RESULT
 CHECK(static Int getMinorVersion())
 {
 	STATUS("We might need to update this for a new release, oops!");
-	TEST_EQUAL(VersionInfo::getMinorVersion(), 2);
+	TEST_EQUAL(VersionInfo::getMinorVersion(), 3);
 }
 RESULT
 

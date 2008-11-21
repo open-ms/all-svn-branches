@@ -78,7 +78,7 @@ namespace OpenMS
       CoordinateType pos = min_;
   
       DoubleReal sqrt_2pi = sqrt(2*Constants::PI);
-      DoubleReal term_sq2 = (-2.4055/sqrt(2));
+      DoubleReal term_sq2 = (-2.4055/sqrt(2.0));
       DoubleReal part1    = (height_*width_/symmetry_);
       DoubleReal part2    = pow(width_,2)/(2*pow(symmetry_,2));
       DoubleReal part3    = width_/symmetry_;

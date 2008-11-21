@@ -354,7 +354,7 @@ namespace OpenMS
 		}
 		//return track from best alloverscore to 0,0
 		vector< pair<UInt,UInt> > ret_val;
-		pair<UInt,UInt> max_pair();
+		pair<UInt,UInt> max_pair;
 
 		//get matrix coordinates from best alloverscore
 		UInt row_index(0), col_index(0);

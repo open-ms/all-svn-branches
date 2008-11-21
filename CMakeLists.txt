@@ -68,7 +68,7 @@ endif()
 ## contrib
 
 ## disable AndiMS for 64-bit platforms (until fixed)
-if (CMAKE_SIZEOF_VOID_P MATCHES "8")
+if (CMAKE_SIZEOF_VOID_P MATCHES "8" OR MSVC)
 	set(USE_ANDIMS "false" CACHE INTERNAL "Support AndiMS?!")
 else()
 	set(USE_ANDIMS "true" CACHE INTERNAL "Support AndiMS?!")
@@ -104,15 +104,15 @@ else()
 endif()
 
 ##### find libs (for linking)
+## on windows we need the *.lib versions (dlls alone won't do for linking)
 
-FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c xerces-c_2_8.dll xerces-c_2_8 libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
+FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c_2D xerces-c xerces-c_2_8 libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
 if (XERCESC_LIBRARY STREQUAL "XERCESC_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
 endif()
 
-#FIND_LIBRARY(GSL_LIBRARY NAMES acctres hal hal.dll PATHS "c:/windows/system32/" )
 FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl libgsl.dll PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
 if (GSL_LIBRARY STREQUAL "GSL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find GSL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
@@ -120,7 +120,7 @@ else()
 	MESSAGE(STATUS "Found GSL library at: " ${GSL_LIBRARY})
 endif()
 
-FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
+FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL cgal-vc80-mt PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
 if (CGAL_LIBRARY STREQUAL "CGAL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find CGAL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
@@ -136,13 +136,6 @@ endif()
 
 # there is no FIND_OBJECT.. so just hard-code it (FIND_LIBRARY wont work)
 set(SVM_LIBRARY ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library")
-
-FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
-if (CGAL_LIBRARY STREQUAL "CGAL_LIBRARY-NOTFOUND")
-	MESSAGE(FATAL_ERROR "Unable to find CGAL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
-else()
-	MESSAGE(STATUS "Found CGAL library at: " ${CGAL_LIBRARY})
-endif()
 
 
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include/) ## for configured files, i.e. config.h

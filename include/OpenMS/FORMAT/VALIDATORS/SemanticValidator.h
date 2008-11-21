@@ -93,8 +93,6 @@ namespace OpenMS
 				*/
 				void setCheckTermValueTypes(bool check);
 				
-			protected:
-				
 				///Representation of a parsed CV term
 				struct CVTerm
 				{
@@ -102,6 +100,8 @@ namespace OpenMS
 					String name;
 					String value;
 				};
+
+		protected:
 					
 				// Docu in base class
 				void startElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname, const xercesc::Attributes& attributes);

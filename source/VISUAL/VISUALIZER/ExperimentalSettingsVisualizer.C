@@ -66,7 +66,7 @@ namespace OpenMS
 			date.set(datetime_->text());
 			ptr_->setDateTime(date);
 		}
-		catch(exception& e)
+		catch(exception& /*e*/)
 		{
 			if(date.isNull())
 			{

@@ -12,6 +12,7 @@ Allgemein:
 TODO:
 - check Types.h. preprocessor macros!
 - MathFunctions test for round()
+- update boost to 1.37
 
 Qt:
 - wenn Qt installiert wird muss qmake im Pfad sein, sonst findet CMake Qt nicht

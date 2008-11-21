@@ -50,7 +50,10 @@
 #include <fstream>
 #include <boost/lexical_cast.hpp>
 
+#ifdef OPENMS_HAS_UNISTD_H
 #include <unistd.h> // unlink()
+#endif
+
 #include <stdio.h>  // tmpnam()
 #include <math.h>   // fabs
 #include <stdlib.h> // getenv()

@@ -1126,7 +1126,7 @@ namespace OpenMS
 		exp.getInstrument().getIonSources().resize(1);
 		exp.getInstrument().getIonSources()[0].setInletType((IonSource::InletType) result.value(0).toInt());
 		exp.getInstrument().getIonSources()[0].setIonizationMethod((IonSource::IonizationMethod) result.value(1).toInt());
-		exp.getInstrument().getIonSources()[0].setPolarity((IonSource::Polarity) result.value(2).toDouble());
+		exp.getInstrument().getIonSources()[0].setPolarity((IonSource::Polarity)(Int) result.value(2).toDouble());
 		loadMetaInfo_(result.value(3).toInt(),exp.getInstrument().getIonSources()[0]);
 		
 		// MassAnalyzers

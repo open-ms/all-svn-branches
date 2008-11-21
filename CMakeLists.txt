@@ -12,6 +12,7 @@ PROJECT("OpenMS")
 # OPENMS_DEBUG
 # OPENMS_ENABLE_EXTERNALMEMORY
 # CF_DB_PLUGIN
+# DO_INSTALL
 
 ########################################################
 ###    manual entries (edit this for new release)    ###
@@ -29,12 +30,8 @@ set(CF_PACKAGE_VERSION "1.3" CACHE INTERNAL "OpenMS VERSION" FORCE)
 cmake_minimum_required(VERSION 2.6)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
-## define some directories
-if (CMAKE_INSTALL_PREFIX)
-	set(DIR_SHARE ${CMAKE_INSTALL_PREFIX}/share/ CACHE INTERNAL "Path to the /share directory after installation.")
-else (CMAKE_INSTALL_PREFIX)
-	set(DIR_SHARE ${PROJECT_SOURCE_DIR}/share/ CACHE INTERNAL "Path to the /share directory after installation.")
-endif (CMAKE_INSTALL_PREFIX)
+set(DO_INSTALL false CACHE BOOL "Set to 'true' if you want the CMAKE_INSTALL_PREFIX to be used and the library to be installed. On 'false' the library and Tools will be build but not installed!")
+
 
 ########################################################
 ###    compiler flags																 ###
@@ -106,30 +103,47 @@ else()
 	MESSAGE(STATUS "Found GSL include dir at: " ${GSL_INCLUDE_DIR})
 endif()
 
-# TODO check whether this is necessary
+##### find libs (for linking)
+
+FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c xerces-c_2_8.dll xerces-c_2_8 libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
+if (XERCESC_LIBRARY STREQUAL "XERCESC_LIBRARY-NOTFOUND")
+	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
+else()
+	MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
+endif()
+
 #FIND_LIBRARY(GSL_LIBRARY NAMES acctres hal hal.dll PATHS "c:/windows/system32/" )
-#FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl libgsl.dll PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
+FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl libgsl.dll PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
 if (GSL_LIBRARY STREQUAL "GSL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find GSL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found GSL library at: " ${GSL_LIBRARY})
 endif()
 
-# TODO check for gslcblaslib
-
-#FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
+FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
 if (CGAL_LIBRARY STREQUAL "CGAL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find CGAL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found CGAL library at: " ${CGAL_LIBRARY})
 endif()
 
-#FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
-if (XERCESC_LIBRARY STREQUAL "XERCESC_LIBRARY-NOTFOUND")
-	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
+FIND_LIBRARY(GSL_CBLAS_LIBRARY NAMES gslcblas libgslcblas PATHS  ${CONTRIB_LIB_DIR} DOC "gslcblas library dir")
+if (GSL_CBLAS_LIBRARY STREQUAL "GSL_CBLAS_LIBRARY-NOTFOUND")
+	MESSAGE(FATAL_ERROR "Unable to find GSL_CBLAS library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
-	MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
+	MESSAGE(STATUS "Found GSL_CBLAS library at: " ${GSL_CBLAS_LIBRARY})
 endif()
+
+# there is no FIND_OBJECT.. so just hard-code it (FIND_LIBRARY wont work)
+set(SVM_LIBRARY ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library")
+
+FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
+if (CGAL_LIBRARY STREQUAL "CGAL_LIBRARY-NOTFOUND")
+	MESSAGE(FATAL_ERROR "Unable to find CGAL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
+else()
+	MESSAGE(STATUS "Found CGAL library at: " ${CGAL_LIBRARY})
+endif()
+
 
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include/) ## for configured files, i.e. config.h
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/)
@@ -165,8 +179,12 @@ endif()
 # user DEBUG flag (needs a cmake flag/cache entry, so we define it empty which causes it to show up in the wizard)
 set(OPENMS_DEBUG CACHE BOOL "Enable debug output for certain classes")
 
-# can be set automatically
-set(CF_OPENMS_DATA_PATH ${DIR_SHARE}OpenMS-${CF_PACKAGE_VERSION}/ CACHE INTERNAL "Path to the shared documents of OpenMS.")
+## define some directories
+if (DO_INSTALL)
+	set(CF_OPENMS_DATA_PATH ${CMAKE_INSTALL_PREFIX}/share/OpenMS-${CF_PACKAGE_VERSION} CACHE INTERNAL "Path to the shared documents of OpenMS.")
+else()
+	set(CF_OPENMS_DATA_PATH ${PROJECT_SOURCE_DIR}/share/OpenMS CACHE INTERNAL "Path to the shared documents of OpenMS.")
+endif()
 
 # check for Microsoft Visual Studio compiler
 if (MSVC)
@@ -405,7 +423,7 @@ include(source/APPLICATIONS/TOPP/executables.cmake)
 
 foreach(i ${TOPP_executables}) 
 	add_executable(${i} source/APPLICATIONS/TOPP/${i}.C)
-	target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+	target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${GSL_CBLAS_LIBRARY} ${SVM_LIBRARY} ${XERCESC_LIBRARY} OpenMS)
 endforeach(i)
 add_custom_target(TOPP)
 add_dependencies(TOPP ${TOPP_executables})
@@ -417,7 +435,7 @@ include(source/APPLICATIONS/UTILS/executables.cmake)
 
 foreach(i ${UTILS_executables})
 	add_executable(${i} source/APPLICATIONS/UTILS/${i}.C)
-	target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+	target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} ${GSL_CBLAS_LIBRARY} ${SVM_LIBRARY} OpenMS)
 endforeach(i)
 add_custom_target(UTILS)
 add_dependencies(UTILS ${UTILS_executables})
@@ -429,7 +447,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY source/EXAMPLES)
 include(source/EXAMPLES/executables.cmake)
 foreach(i ${EXAMPLES_executables})
   add_executable(${i} source/EXAMPLES/${i}.C)
-  target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+  target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} ${GSL_CBLAS_LIBRARY} ${SVM_LIBRARY} OpenMS)
 endforeach(i)
 add_custom_target(EXAMPLES)
 add_dependencies(EXAMPLES ${EXAMPLES_executables})
@@ -441,7 +459,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY source/TEST)
 include(source/TEST/executables.cmake)
 foreach(i ${TEST_executables})
   add_executable(${i} source/TEST/${i}.C)
-  target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
+  target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} ${GSL_CBLAS_LIBRARY} ${SVM_LIBRARY} OpenMS)
 endforeach(i)
 add_custom_target(TEST)
 add_dependencies(TEST ${TEST_executables})

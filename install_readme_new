@@ -19,7 +19,12 @@ Qt:
  				 falls QTCore nicht gefunden wird: Cache editieren und auf VS-QT pfad setzen!! PATH env hat anscheinend keine Wirkung!
  				 speziell: QT_LIBRARY_DIR, QT_INCLUDE_DIR, QT_DOC_DIR
 
-"c:\Programme\CMake 2.6\bin\cmake.exe" -Wdev -D CUSTOM_CONTRIB_DIR:PATH="C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\merged" -G "Visual Studio 7" ../OpenMS_Retreat2008 
+from command.exe:
+"c:\Programme\CMake 2.6\bin\cmake.exe" -Wdev -D CUSTOM_CONTRIB_DIR:PATH="C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\merged" -G "Visual Studio 8 2005" ../OpenMS_Retreat2008 
+
+from command.exe:
+"c:\Programme\CMake 2.6\bin\cmake.exe" -Wdev -D CUSTOM_CONTRIB_DIR:PATH="D:\uni\OpenMS_Win\my\contrib" -G "MSYS Makefiles" ../OpenMS_Retreat2008 
+
 
 
 Windows:

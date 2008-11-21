@@ -77,7 +77,7 @@ public:
 	@throw InvalidValue if the spectrum is not sorted ascendingly
 	
 	*/
-	virtual void findSpec(std::vector<std::vector<std::pair<std::pair<int, int>,float > > >& candidates, const std::vector<double> & spec) = 0;
+	virtual void findSpec(std::vector<std::vector<std::pair<std::pair<int, int>,double > > >& candidates, const std::vector<double> & spec) = 0;
 
 	/**
 	@brief saves the suffix array to disc

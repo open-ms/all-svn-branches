@@ -436,7 +436,7 @@ namespace OpenMS
 
 					feature_collection.push_back(f);
 				} // ! try
-				catch (Exception::UnableToFit& e) 
+				catch (Exception::UnableToFit& /*e*/) 
 				{
 				//	std::cout << "CAUGHT!! " << e.getName() << "  " << e.getMessage() << std::endl;
 				}

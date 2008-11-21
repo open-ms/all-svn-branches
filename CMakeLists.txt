@@ -47,6 +47,10 @@ elseif (MSVC)
 	
 	## disable stupid warnings. enable if you want to have fun with MSVC 7
 	add_definitions(/wd4996 /wd4521 /wd4522)
+	
+	## disable min and max macros by default
+	## see CGAL and BOOST configs for more elaborate explanations
+	add_definitions(/DNOMINMAX)
 endif()
 
 ## platform dependent compiler flags:
@@ -127,6 +131,7 @@ else()
 	MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
 endif()
 
+INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include/) ## for configured files, i.e. config.h
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/)
 INCLUDE_DIRECTORIES(${CONTRIB_INCLUDE_DIR})
 
@@ -283,7 +288,7 @@ set(CF_DB_PLUGIN "QMYSQL" CACHE BOOL "User switch to change the DB plugin.")
 
 
 ## replace any variables in config.h.in with current values
-configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${PROJECT_SOURCE_DIR}/include/OpenMS/config.h)
+configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${PROJECT_BINARY_DIR}/include/OpenMS/config.h)
 
 ########################################################
 ###    configure Doxyfile														 ###
@@ -294,7 +299,7 @@ configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${PROJECT_SOURCE_
 set(CF_OPENMS_PATH ${PROJECT_BINARY_DIR})
 
 ## replace any variables in config.h.in with current values
-configure_file(${PROJECT_SOURCE_DIR}/source/config/Doxyfile.in ${PROJECT_SOURCE_DIR}/doc/doxygen/Doxyfile)
+configure_file(${PROJECT_SOURCE_DIR}/source/config/Doxyfile.in ${PROJECT_BINARY_DIR}/doc/doxygen/Doxyfile)
 
 ##TODO: when building documentation, set in environment using svnversion before calling doxygen
 #if (NOT PROG_Svnversion-NOTFOUND)

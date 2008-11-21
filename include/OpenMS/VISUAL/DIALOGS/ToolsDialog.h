@@ -40,8 +40,6 @@ class QString;
 namespace OpenMS 
 {
 	class ParamEditor;
-	class Param;
-	class LayerData;
 		
 	/**
 		@brief TOPP tool selection dialog

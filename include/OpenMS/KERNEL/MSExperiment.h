@@ -27,7 +27,6 @@
 #ifndef OPENMS_KERNEL_MSEXPERIMENT_H
 #define OPENMS_KERNEL_MSEXPERIMENT_H
 
-#define NOMINMAX // fixes a macro bug for WIN32
 #include <OpenMS/KERNEL/MSSpectrum.h>
 #include <OpenMS/METADATA/ExperimentalSettings.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>

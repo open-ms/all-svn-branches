@@ -69,7 +69,7 @@ RESULT
 
 
 
-CHECK([EXTRA]SuffixArrayTrypticSeqan::findSpec(const std::vector<float> & spec ))
+CHECK([EXTRA]SuffixArrayTrypticSeqan::findSpec(const std::vector<double> & spec ))
 	double masse[255];
 	ResidueDB* rdb = ResidueDB::getInstance();
 		
@@ -91,7 +91,7 @@ CHECK([EXTRA]SuffixArrayTrypticSeqan::findSpec(const std::vector<float> & spec )
 	spec.push_back(245.2816);
 	spec.push_back(387.4392);
 	const vector<double> specc (spec);
-	vector <vector< pair<pair<int,int>,float> > > res;
+	vector <vector< pair<pair<int,int>,double> > > res;
 	sa->findSpec(res, specc);
 	TEST_EQUAL(res.size(),specc.size());
 	for (unsigned int i = 0; i<res.size();i++)
@@ -121,7 +121,7 @@ CHECK([EXTRA]SuffixArrayTrypticSeqan::findSpec(const std::vector<float> & spec )
 	vector<double> spec_new;
 	for (int i = 500; i < 5000; i += 20) 
 	{
-		spec_new.push_back((float)i);
+		spec_new.push_back((double)i);
 	}
 
 	vector<double> specc_new(spec_new);
@@ -152,7 +152,7 @@ CHECK([EXTRA]SuffixArrayTrypticSeqan::findSpec(const std::vector<float> & spec )
 			String seq = txt.substr(res.at(i).at(j).first.first,res.at(i).at(j).first.second);
 			if (txt[res.at(i).at(j).first.first-1]!='$') TEST_NOT_EQUAL(seq[0],'P');
 			if (txt[res.at(i).at(j).first.first+res.at(i).at(j).first.second]!='$') TEST_EQUAL(seq[seq.length()-1]=='R'||seq[seq.length()-1]=='K',true)
-			float m = 18;
+			double m = 18;
 			for (unsigned int k = 0; k < seq.length();k++)
 			{
 				m += masse[(int)seq[k]];
@@ -240,7 +240,7 @@ CHECK([EXTRA]SuffixArrayTrypticSeqan::findSpec(const std::vector<float> & spec )
 		for (unsigned int j = 0; j < res[i].size(); j++)
 		{
 			String seq = txt.substr(res.at(i).at(j).first.first,res.at(i).at(j).first.second);
-			float m = 18.0;
+			double m = 18.0;
 			for (unsigned int k = 0; k < seq.length(); k++)
 			{
 				m += masse[(int)seq[k]];

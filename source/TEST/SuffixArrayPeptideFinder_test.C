@@ -68,7 +68,7 @@ CHECK(SuffixArrayPeptideFinder(const SuffixArrayPeptideFinder &source))
 	TEST_EQUAL (ptr->getTolerance(),new_ptr->getTolerance());
 RESULT
 
-CHECK(float getTolerance() const)
+CHECK(double getTolerance() const)
 	SuffixArrayPeptideFinder* sa = new SuffixArrayPeptideFinder("data/SuffixArrayPeptideFinder_test.fasta","trypticSeqan");
 	TEST_REAL_EQUAL (sa->getTolerance(),0.5);
 	sa->setTolerance(0.1);
@@ -76,7 +76,7 @@ CHECK(float getTolerance() const)
 	sa->setTolerance(0.5);
 RESULT
 
-CHECK(void setTolerance(const float t))
+CHECK(void setTolerance(const double t))
 	SuffixArrayPeptideFinder* sa = new SuffixArrayPeptideFinder("data/SuffixArrayPeptideFinder_test.fasta","trypticSeqan");
 	TEST_REAL_EQUAL (sa->getTolerance(),0.5);
 	sa->setTolerance(0.1);

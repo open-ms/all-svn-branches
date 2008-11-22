@@ -27,14 +27,16 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 
 #include <cstdlib>
+#include <fstream>
 
-#ifndef  OPENMS_REVISION
+using namespace std;
+//#ifndef  OPENMS_REVISION
 // #warning is not a standard preprocessor directive, but supported by many compilers, including GCC.
-#ifdef   OPENMS_COMPILER_GXX
-#warning "Note: OPENMS_REVISION is undefined.  OpenMS uses the subversion software for revision control, but now revision info is unavailable.  This is normally the case when you are compiling a released version (without .svn subdirectories)."
-#endif
-#define OPENMS_REVISION ""
-#endif
+//#ifdef   OPENMS_COMPILER_GXX
+//#warning "Note: OPENMS_REVISION is undefined.  OpenMS uses the subversion software for revision control, but now revision info is unavailable.  This is normally the case when you are compiling a released version (without .svn subdirectories)."
+//#endif
+//#define OPENMS_REVISION ""
+//#endif
 
 namespace OpenMS
 {
@@ -98,9 +100,8 @@ namespace OpenMS
 		static String result;
 		if ( !is_initialized )
 		{
-			// Ultimately, this is derived from a shell command, and hence might have
-			// whitespace around it
-			result = OPENMS_REVISION;
+			ifstream in(PACKAGE_REVISION_FILE);
+			getline(in, result, '\n');
 			result.trim();
 			is_initialized = true;
 		}

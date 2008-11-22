@@ -54,7 +54,7 @@ endif()
 include(CheckCXXCompilerFlag)
 if (NOT WIN32) # we only want fPIC on non-windows systems (fPIC is implicitly true there)
 	
-	CHECK_CXX_COMPILER_FLAG("-fPIC" WITH_FPIC) 
+	CHECK_CXX_COMPILER_FLAG("-fPIC" WITH_FPIC)
 	if (WITH_FPIC)
 		add_definitions(-fPIC)
 	endif()
@@ -155,7 +155,7 @@ INCLUDE(UseQt4)
 ###    useful programms															 ###
 ########################################################
 
-find_program(PROG_Svnversion             
+find_program(PROG_Svnversion
              svnversion
              PATHS "c:/programme/subversion/bin" "c:/program files/subversion/bin"   ### additional search paths (along with $PATH)
              DOC "svnversion executable which helps in determining the svn revision when building TOPP tools")
@@ -298,9 +298,6 @@ endif()
 set(CF_DB_PLUGIN "QMYSQL" CACHE BOOL "User switch to change the DB plugin.")
 
 
-## replace any variables in config.h.in with current values
-configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${PROJECT_BINARY_DIR}/include/OpenMS/config.h)
-
 ########################################################
 ###    configure Doxyfile														 ###
 ########################################################
@@ -312,23 +309,22 @@ set(CF_OPENMS_PATH ${PROJECT_BINARY_DIR})
 ## replace any variables in config.h.in with current values
 configure_file(${PROJECT_SOURCE_DIR}/source/config/Doxyfile.in ${PROJECT_BINARY_DIR}/doc/doxygen/Doxyfile)
 
-##TODO: when building documentation, set in environment using svnversion before calling doxygen
-#if (NOT PROG_Svnversion-NOTFOUND)
-#
-#	# define some filenames
-#	set( svnversion_file ${PROJECT_SOURCE_DIR}/include/openms_svnversion.txt) # file with just the revision number
-#	set( svnversion_file_h ${PROJECT_SOURCE_DIR}/include/openms_svnversion.h) # file with #define directive, e.g. #define OPENMS_SVNREV 1234:2345M
-	
-	#set_source_files_properties(${PROJECT_SOURCE_DIR}/source/CONCEPT/VersionInfo.C)
+## TODO: test this -> when building documentation, set in environment using svnversion before calling doxygen
+set(CF_PACKAGE_REVISION_FILE)
+if (NOT PROG_Svnversion-NOTFOUND)
+
+	set(svnversion_file_h ${PROJECT_SOURCE_DIR}/source/CONCEPT/openms_svnversion) # file with version number
 	
 	## ensure that the file is always rebuild
-#  add_custom_target(svnversion_file_target ALL  ${PROG_Svnversion} -n ${PROJECT_SOURCE_DIR} > svnversion_file
-#  									COMMAND "file(READ ${svnversion_file} ENV_OPENMS_REVISION)" ## read content of file into variable
-#  									COMMAND "set( ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION} )" ## set env variable
-#                   	COMMENT "Call svnversion in project directory to generate openms_svnversion.txt")
-#	  
-#  
-#endif()
+  add_custom_target(svnversion_file_target ALL ${PROG_Svnversion} -n ${PROJECT_SOURCE_DIR} > ${svnversion_file_h} COMMENT "Call svnversion in project directory to generate openms_svnversion.txt")
+	set(CF_PACKAGE_REVISION_FILE ${svnversion_file_h})
+	#file(READ ${svnversion_file_h} ENV_OPENMS_REVISION) # read revision from file
+	#set($ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION}) # set environment variable e.g. for doxygen
+endif()
+
+## replace any variables in config.h.in with current values
+configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${PROJECT_BINARY_DIR}/include/OpenMS/config.h)
+
 
 ########################################################
 ###    BUILD the lib																 ###
@@ -410,7 +406,13 @@ else()
 	ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
 endif()
 
+# always create the svn version file before compiling OpenMS
+add_dependencies(OpenMS svnversion_file_target)
+
+### OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables
 set(OPENMS_LIBRARIES ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${GSL_CBLAS_LIBRARY} ${SVM_LIBRARY} ${XERCESC_LIBRARY} OpenMS)
+
+
 ####### TOPP #########
 set(TOPP_executables)
 include(source/APPLICATIONS/TOPP/executables.cmake)
@@ -447,23 +449,13 @@ add_custom_target(EXAMPLES)
 add_dependencies(EXAMPLES ${EXAMPLES_executables})
 
 
-##### Test Executables ####
-#set(TEST_executables)
-#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY source/TEST)
-#include(source/TEST/executables.cmake)
-#foreach(i ${TEST_executables})
-#  add_executable(${i} source/TEST/${i}.C)
-#  target_link_libraries(${i} ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${XERCESC_LIBRARY} /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/libgslcblas.so /share/opt/x86_64_sl4/OpenMS_contrib-current-gcc_4.1.1/lib/svm.o OpenMS)
-#endforeach(i)
-#add_custom_target(TEST)
-#add_dependencies(TEST ${TEST_executables})
-
 #### Tests #####
 enable_testing()
-add_subdirectory(source/TEST)
+add_subdirectory(source/TEST EXCLUDE_FROM_ALL)
+
 
 ##### TOPPtests #####
-add_subdirectory(source/TEST/TOPP)
+add_subdirectory(source/TEST/TOPP EXCLUDE_FROM_ALL)
 
                     
                     

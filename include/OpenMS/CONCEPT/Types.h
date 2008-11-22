@@ -298,9 +298,9 @@ namespace OpenMS
 	std::ostream & operator << ( std::ostream& os, const PrecisionWrapper<FloatingPointType>& rhs)
 	{
 		const unsigned prec_save = os.precision();
-		os << std::setprecision(writtenDigits<FloatingPointType>());
+		//os << std::setprecision(writtenDigits<FloatingPointType>());
 							os << rhs.ref_;
-							os << std::setprecision(prec_save);
+		//					os << std::setprecision(prec_save);
 							return os;
 	}
 

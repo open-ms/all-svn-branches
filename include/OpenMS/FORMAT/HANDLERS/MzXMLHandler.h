@@ -297,7 +297,7 @@ namespace OpenMS
 				{
 					exp_->back().getPrecursorPeak().setIntensity( attributeAsDouble_(attributes, s_precursorintensity) );
 				}
-				catch (Exception::ParseError& e)
+				catch (Exception::ParseError& /*e*/)
 				{
 					std::cerr << "Error: MzXMLHandler: mandatory attribute precursorMz not found! Setting precursor intensity to 0; trying to continue;" << std::endl;
 					exp_->back().getPrecursorPeak().setIntensity(0.0);

@@ -12,7 +12,7 @@ TODO:
 - contrib/lib dir && Qt/lib in VC library path eintragen (wie geht das mit CMAKE automatisch?) Tools -> Options -> Projects -> VC++ Directories
 - boost.lib wird benötigt... von CGAL... argghh
 -- download bjam (see boost/index.html for install instructions)
-bjam --build-dir="C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\boost_1_37_0_BUILD" --toolset=msvc-8 --build-type=complete stage
+bjam --build-dir="C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\boost_1_37_0_BUILD" --toolset=msvc-80 --build-type=complete variant=release threading=single install
 
 
 Qt:

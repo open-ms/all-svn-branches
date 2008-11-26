@@ -415,7 +415,7 @@ add_dependencies(OpenMS svnversion_file_target)
 
 set(OPENMS_DEP_LIBRARIES ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${GSL_CBLAS_LIBRARY} ${SVM_LIBRARY} ${XERCESC_LIBRARY})
 if (MSVC)
-	list(APPEND OPENMS_DEP_LIBRARIES opengl32.lib);
+	list(APPEND OPENMS_DEP_LIBRARIES opengl32.lib)
 endif()
 
 ### OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables

@@ -1106,7 +1106,7 @@ namespace OpenMS
 					}
 				dif /= peaks-1;
 				charge = (int) Math::round(1/dif);
-				if(isnan(charge) || isinf(charge)) charge = 0;
+				if(isnan((double)charge) || isinf((double)charge)) charge = 0;
 #ifdef DEBUG_DECONV
 				std::cout<<"1/dif = "<<1/dif<<";\tcharge = "<<charge<<std::endl;
 #endif

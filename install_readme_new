@@ -57,7 +57,7 @@ command (im libsvm dir ausführen):nmake -f Makefile.win clean all
 -- vorher #define INF (std::numeric_limits<double>::max())  in svm.cpp einfügen!
 
 
-GSL: beim compilen von OpenMS das Macro GSL_DLL setzen!
+GSL: beim compilen von OpenMS das Macro GSL_DLL setzen! libgsl.dll.a in libgsl.dll.lib umbenennen, same with libgslcblas
 
 Qt:
 - wenn Qt installiert wird muss qmake im Pfad sein, sonst findet CMake Qt nicht

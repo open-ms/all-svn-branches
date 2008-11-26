@@ -236,11 +236,11 @@ namespace OpenMS
 	}
 
 	/// The general template definition will force a compile-time error if FloatingPointType is in fact not a floating point type.  Only the template specializations for float, double, long double shall be used.
- 	//template <typename FloatingPointType> inline Int writtenDigits(const FloatingPointType& /* unused */ = FloatingPointType())
-	//{
+ 	template <typename FloatingPointType> inline Int writtenDigits(const FloatingPointType& /* unused */)
+	{
 		// Self-explanatory compile time error!
-	//	return FloatingPointType::Sorry_but_writtenDigits_is_designed_to_work_for_floating_point_types_only;
-	//}
+		return FloatingPointType::Sorry_but_writtenDigits_is_designed_to_work_for_floating_point_types_only;
+	}
 	
 	// Note: I once tried to move PrecisionWrapper to namespace Internal, but oops! operator <<  won't be found (through ADL?) anymore.
 	/// Wrapper class to implement output with appropriate precision.  See precisionWrapper().
@@ -298,10 +298,10 @@ namespace OpenMS
 	std::ostream & operator << ( std::ostream& os, const PrecisionWrapper<FloatingPointType>& rhs)
 	{
 		const unsigned prec_save = os.precision();
-		//os << std::setprecision(writtenDigits<FloatingPointType>());
-							os << rhs.ref_;
-		//					os << std::setprecision(prec_save);
-							return os;
+		os << std::setprecision(writtenDigits(FloatingPointType()));
+		os << rhs.ref_;
+		os << std::setprecision(prec_save);
+		return os;
 	}
 
 	//@}

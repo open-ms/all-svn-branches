@@ -48,6 +48,12 @@ elseif (MSVC)
 	## disable min and max macros by default
 	## see CGAL and BOOST configs for more elaborate explanations
 	add_definitions(/DNOMINMAX)
+	
+	# compile such that GSL is in DLL mode
+	add_definitions(/DGSL_DLL)
+	
+	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
+SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
 endif()
 
 ## platform dependent compiler flags:
@@ -419,7 +425,7 @@ if (MSVC)
 endif()
 
 ### OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables
-set(OPENMS_LIBRARIES {OPENMS_DEP_LIBRARIES} OpenMS)
+set(OPENMS_LIBRARIES ${OPENMS_DEP_LIBRARIES} OpenMS)
 
 target_link_libraries(OpenMS ${OPENMS_DEP_LIBRARIES})
 
@@ -428,8 +434,8 @@ set(TOPP_executables)
 include(source/APPLICATIONS/TOPP/executables.cmake)
 
 foreach(i ${TOPP_executables}) 
-	add_executable(${i} source/APPLICATIONS/TOPP/${i}.C)
-	target_link_libraries(${i} ${OPENMS_LIBRARIES})
+	#add_executable(${i} source/APPLICATIONS/TOPP/${i}.C)
+	#target_link_libraries(${i} ${OPENMS_LIBRARIES})
 endforeach(i)
 add_custom_target(TOPP)
 add_dependencies(TOPP ${TOPP_executables})
@@ -452,8 +458,8 @@ set(EXAMPLES_executables)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY source/EXAMPLES)
 include(source/EXAMPLES/executables.cmake)
 foreach(i ${EXAMPLES_executables})
-  add_executable(${i} source/EXAMPLES/${i}.C)
-  target_link_libraries(${i} ${OPENMS_LIBRARIES})
+  #add_executable(${i} source/EXAMPLES/${i}.C)
+  #target_link_libraries(${i} ${OPENMS_LIBRARIES})
 endforeach(i)
 add_custom_target(EXAMPLES)
 add_dependencies(EXAMPLES ${EXAMPLES_executables})
@@ -461,11 +467,11 @@ add_dependencies(EXAMPLES ${EXAMPLES_executables})
 
 #### Tests #####
 enable_testing()
-add_subdirectory(source/TEST EXCLUDE_FROM_ALL)
+#add_subdirectory(source/TEST EXCLUDE_FROM_ALL)
 
 
 ##### TOPPtests #####
-add_subdirectory(source/TEST/TOPP EXCLUDE_FROM_ALL)
+#add_subdirectory(source/TEST/TOPP EXCLUDE_FROM_ALL)
 
                     
                     

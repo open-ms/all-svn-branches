@@ -72,7 +72,7 @@ namespace OpenMS
 			eraseMetaDataArrayEntry_(spectrum_pointers);
 			endProgress();
 		}
-		catch (Exception::OutOfRange& e) 
+		catch (Exception::OutOfRange& /*e*/) 
 		{
 			throw Exception::OutOfRange(__FILE__,__LINE__,__PRETTY_FUNCTION__);	
 		}
@@ -330,7 +330,7 @@ namespace OpenMS
 									}
 									//std::cout << s << " s " << std::endl;
 			  				}
-								catch (Exception::OutOfRange &e) 
+								catch (Exception::OutOfRange & /*e*/) 
 					  		{
 									throw Exception::OutOfRange(__FILE__,__LINE__,__PRETTY_FUNCTION__);
 					  		}
@@ -634,7 +634,7 @@ namespace OpenMS
 			  	k_ *=2;
 			  }
 			}
-			catch (Exception::OutOfRange& e) 
+			catch (Exception::OutOfRange& /*e*/) 
 			{
 				throw Exception::OutOfRange(__FILE__,__LINE__,__PRETTY_FUNCTION__);
 			}

@@ -15,6 +15,50 @@ TODO:
 bjam --build-dir="C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\boost_1_37_0_BUILD" --toolset=msvc-80 --build-type=complete variant=release threading=single install
 
 
+additional lib dirs:
+C:\Qt\4.3.4_vs\lib;C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\merged\lib
+
+linker-input on MSVC:
+
+opengl32.lib
+
+xerces-depdom_2D.lib
+
+xerces-c_2D.lib
+
+svm.obj
+
+libgslcblas.dll.a
+
+libgsl.dll.a
+
+cgal-vc80-mt.lib
+
+QtCore4.lib
+
+QtGui4.lib
+
+QtNetwork4.lib
+
+QtOpenGL4.lib
+
+QtSql4.lib
+
+QtXml4.lib
+
+
+CGAL:
+-Windows installer enthält libs und VS80 project files
+	- zum compilen von CGAL muss QTDIR als Env gesetzt sein
+
+libsvm:
+- enhält NMake file --> erzeugt svm.obj --> nach contrib/lib kopieren
+command (im libsvm dir ausführen):nmake -f Makefile.win clean all
+-- vorher #define INF (std::numeric_limits<double>::max())  in svm.cpp einfügen!
+
+
+GSL: beim compilen von OpenMS das Macro GSL_DLL setzen!
+
 Qt:
 - wenn Qt installiert wird muss qmake im Pfad sein, sonst findet CMake Qt nicht
  -ABER: wenn es mehrere QT-versionen gibt (eine mit MinGW, eine mit VS compiled)
@@ -40,3 +84,7 @@ Qt für VS2005 compilen:
 - configure
 - nmake
 - lange warten
+
+-get preprocessor macros of GCC:
+$ touch empty.c
+$ gcc -v -dD -E empty.c 

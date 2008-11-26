@@ -77,7 +77,7 @@ namespace OpenMS
 			return;
 		}
 
-		void ConsensusXMLHandler::characters(const XMLCh* const /*chars*/, unsigned int /*length*/)
+		void ConsensusXMLHandler::characters(const XMLCh* const /*chars*/, const unsigned int /*length*/)
 		{
 		}
 

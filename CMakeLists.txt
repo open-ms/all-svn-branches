@@ -113,11 +113,18 @@ else()
 	MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
 endif()
 
-FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl libgsl.dll PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
+FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl.dll PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
 if (GSL_LIBRARY STREQUAL "GSL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find GSL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found GSL library at: " ${GSL_LIBRARY})
+endif()
+
+FIND_LIBRARY(GSL_CBLAS_LIBRARY NAMES gslcblas libgslcblas.dll PATHS  ${CONTRIB_LIB_DIR} DOC "gslcblas library dir")
+if (GSL_CBLAS_LIBRARY STREQUAL "GSL_CBLAS_LIBRARY-NOTFOUND")
+	MESSAGE(FATAL_ERROR "Unable to find GSL_CBLAS library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
+else()
+	MESSAGE(STATUS "Found GSL_CBLAS library at: " ${GSL_CBLAS_LIBRARY})
 endif()
 
 FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL cgal-vc80-mt PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
@@ -127,16 +134,12 @@ else()
 	MESSAGE(STATUS "Found CGAL library at: " ${CGAL_LIBRARY})
 endif()
 
-FIND_LIBRARY(GSL_CBLAS_LIBRARY NAMES gslcblas libgslcblas PATHS  ${CONTRIB_LIB_DIR} DOC "gslcblas library dir")
-if (GSL_CBLAS_LIBRARY STREQUAL "GSL_CBLAS_LIBRARY-NOTFOUND")
-	MESSAGE(FATAL_ERROR "Unable to find GSL_CBLAS library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
-else()
-	MESSAGE(STATUS "Found GSL_CBLAS library at: " ${GSL_CBLAS_LIBRARY})
-endif()
-
 # there is no FIND_OBJECT.. so just hard-code it (FIND_LIBRARY wont work)
-set(SVM_LIBRARY ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library")
-
+if (MSVC)
+	set(SVM_LIBRARY ${CONTRIB_LIB_DIR}svm.obj CACHE INTERNAL "object file of svm library")
+else()
+	set(SVM_LIBRARY ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library")
+endif()
 
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include/) ## for configured files, i.e. config.h
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/)
@@ -409,9 +412,16 @@ endif()
 # always create the svn version file before compiling OpenMS
 add_dependencies(OpenMS svnversion_file_target)
 
-### OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables
-set(OPENMS_LIBRARIES ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${GSL_CBLAS_LIBRARY} ${SVM_LIBRARY} ${XERCESC_LIBRARY} OpenMS)
 
+set(OPENMS_DEP_LIBRARIES ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${GSL_CBLAS_LIBRARY} ${SVM_LIBRARY} ${XERCESC_LIBRARY})
+if (MSVC)
+	list(APPEND OPENMS_DEP_LIBRARIES opengl32.lib);
+endif()
+
+### OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables
+set(OPENMS_LIBRARIES {OPENMS_DEP_LIBRARIES} OpenMS)
+
+target_link_libraries(OpenMS ${OPENMS_DEP_LIBRARIES})
 
 ####### TOPP #########
 set(TOPP_executables)

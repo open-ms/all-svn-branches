@@ -196,7 +196,7 @@ namespace OpenMS
 			}
 		}
 
-		void FeatureXMLHandler::characters(const XMLCh* const chars, unsigned int /*length*/)
+		void FeatureXMLHandler::characters(const XMLCh* const chars, const unsigned int /*length*/)
 		{
 			// std::cout << "characters: "	 << sm_.convert(chars) << std::endl;
 

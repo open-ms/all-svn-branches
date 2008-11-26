@@ -1653,7 +1653,7 @@ namespace OpenMS
     		{
       		setParameters(tmp);
     		}
-    		catch (Exception::InvalidParameter& e)
+    		catch (Exception::InvalidParameter& /*e*/)
     		{
     			error = true;
     		}
@@ -1709,7 +1709,7 @@ namespace OpenMS
     {
       param_.copy("preferences:").store(string(param_.getValue("PreferencesFile")));
     }
-    catch(Exception::UnableToCreateFile& e)
+    catch(Exception::UnableToCreateFile& /*e*/)
     {
       cerr << "Unable to create INI File: '" << string(param_.getValue("PreferencesFile")) << "'" << endl;
     }

@@ -310,9 +310,6 @@ foreach(i ${sources_list})
 	list(APPEND sources ${directory}/${i})
 endforeach(i)
 
-### pass source file list to the upper instance
-set(OpenMS_sources ${OpenMS_sources} ${sources})
-
 ### source group definition
-source_group(source\\TEST FILES ${sources})
+source_group("Source Files\\TEST" FILES ${sources})
 

@@ -1,13 +1,15 @@
 
 Allgemein:
 - CMake muss man erneut ausführen wenn man eine Quelldatei hinzufügt
-
+	--> sollte er allein mitbekommen, wenn man make aufruft (zu testen)
 - niemals "\" in Pfadangaben innerhalb CmakeLists.txt benutzen! Cmake will Unix-style Pfade!
 
 
 TODO:
 - check Types.h. preprocessor macros!
-- MathFunctions test for round()
+- TOPPtests portieren!
+
+
 - done: update boost to 1.37
 - contrib/lib dir && Qt/lib in VC library path eintragen (wie geht das mit CMAKE automatisch?) Tools -> Options -> Projects -> VC++ Directories
 - boost.lib wird benötigt... von CGAL... argghh
@@ -15,6 +17,16 @@ TODO:
 bjam --build-dir="C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\boost_1_37_0_BUILD" --toolset=msvc-80 --build-type=complete variant=release threading=single install
 
 
+generate_source_files.bash:
+	- in source/FORMAT:
+		### include ANDIFile only if set as option
+		if (USE_ANDIMS)
+		  list(APPEND sources ANDIFile.C)
+		endif()
+	- in source/FORMAT/HANDLERS
+		same with AndiHandler.C
+		
+		
 additional lib dirs:
 C:\Qt\4.3.4_vs\lib;C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\merged\lib
 

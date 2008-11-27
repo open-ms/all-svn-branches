@@ -18,5 +18,5 @@ endforeach(i)
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
 ### source group definition
-source_group(source\\APPLICATIONS FILES ${sources})
+source_group("Source Files\\APPLICATIONS" FILES ${sources})
 

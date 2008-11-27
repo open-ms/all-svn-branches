@@ -18,5 +18,5 @@ endforeach(i)
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
 ### source group definition
-source_group(source\\FILTERING\\NOISEESTIMATION FILES ${sources})
+source_group("Source Files\\FILTERING\\NOISEESTIMATION" FILES ${sources})
 

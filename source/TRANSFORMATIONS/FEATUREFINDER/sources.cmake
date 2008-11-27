@@ -49,5 +49,5 @@ endforeach(i)
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
 ### source group definition
-source_group(source\\TRANSFORMATIONS\\FEATUREFINDER FILES ${sources})
+source_group("Source Files\\TRANSFORMATIONS\\FEATUREFINDER" FILES ${sources})
 

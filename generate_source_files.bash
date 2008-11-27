@@ -32,7 +32,7 @@ do
 		continue
 	fi
 
-  echo "Generating ${d}/${SOURCE_FILENAME}"
+  echo "Generating MOC ${d}/${SOURCE_FILENAME}"
 
   # add directory name
   echo "### the directory name" > ${source_name}
@@ -61,6 +61,9 @@ do
   echo "### pass source file list to the upper instance" >> ${source_name}
   echo "set(OpenMS_sources \${OpenMS_sources} \${mocced_sources})" >> ${source_name}
   echo "" >> ${source_name}
+	echo "source_group(\"Source Files\\\\`echo ${d} | cut -d "/" --output-delimiter="\\\\\\\\" -f 2,3,4,5,6`\" FILES \${mocced_sources})" >> ${source_name}
+  echo "" >> ${source_name}
+
 done 
 
 # UIC files
@@ -73,7 +76,7 @@ do
     continue
   fi
 
-  echo "Generating ${d}/${SOURCE_FILENAME}"
+  echo "Generating UIC ${d}/${SOURCE_FILENAME}"
 
   # add directory name
   echo "### the directory name" > ${source_name}
@@ -137,13 +140,21 @@ do
   echo "	list(APPEND sources \${directory}/\${i})" >> ${source_name}
 	echo "endforeach(i)" >> ${source_name}
 	echo "" >> ${source_name}	
-	echo "### pass source file list to the upper instance" >> ${source_name}
-	echo "set(OpenMS_sources \${OpenMS_sources} \${sources})" >> ${source_name}
-	echo "" >> ${source_name}
+	
+# do not add EXAMPLES to OpenMS library source files	
+	if [ "${d}" != "source/EXAMPLES" ] && [ "${d}" != "source/TEST" ] && [ "${d}" != "source/APPLICATIONS/TOPP" ]
+	then
+		echo "### pass source file list to the upper instance" >> ${source_name}
+		echo "set(OpenMS_sources \${OpenMS_sources} \${sources})" >> ${source_name}
+		echo "" >> ${source_name}
+	else
+		echo "skipping EXAMPLES|TEST|TOPP for lib source"
+	fi
+
 	echo "### source group definition" >> ${source_name}
 	#SOURCE_GROUP_NAME=`echo ${d} | tr "/" "\\\\\\\\"`
 	#echo "set(source_group_name ${SOURCE_GROUP_NAME})" >> ${source_name}
-	echo "source_group(`echo ${d} | cut -d "/" --output-delimiter="\\\\\\\\" -f 1,2,3,4` FILES \${sources})" >> ${source_name}
+	echo "source_group(\"Source Files\\\\`echo ${d} | cut -d "/" --output-delimiter="\\\\\\\\" -f 2,3,4,5,6`\" FILES \${sources})" >> ${source_name}
 	echo "" >> ${source_name}
 done
 

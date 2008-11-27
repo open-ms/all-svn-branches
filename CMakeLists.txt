@@ -348,7 +348,7 @@ MACRO (QT4_WRAP_UI_OWN outfiles )
   FOREACH (it ${ui_files}) 
     GET_FILENAME_COMPONENT(outfile ${it} NAME_WE)
     GET_FILENAME_COMPONENT(infile ${it} ABSOLUTE)
-    SET(outfile ${PROJECT_SOURCE_DIR}/${directory}/ui_${outfile}.h)
+    SET(outfile ${PROJECT_BINARY_DIR}/${directory}/ui_${outfile}.h)
     ADD_CUSTOM_COMMAND(OUTPUT ${outfile}
       COMMAND ${QT_UIC_EXECUTABLE}
       ARGS ${ui_options} -o ${outfile} ${infile}
@@ -359,7 +359,6 @@ MACRO (QT4_WRAP_UI_OWN outfiles )
 ENDMACRO (QT4_WRAP_UI_OWN)
 
 set(OpenMS_sources  CACHE INTERNAL "This variable should hold all OpenMS sources at the end of the config step" )
-#include(source/TEST/sources.cmake)
 include(source/KERNEL/sources.cmake)                                 
 include(source/METADATA/sources.cmake)                               
 include(source/ANALYSIS/QUANTITATION/sources.cmake)                  
@@ -375,7 +374,6 @@ include(source/FILTERING/SMOOTHING/sources.cmake)
 include(source/FILTERING/NOISEESTIMATION/sources.cmake)
 include(source/FILTERING/ID/sources.cmake)
 include(source/SYSTEM/sources.cmake)
-include(source/APPLICATIONS/TOPP/sources.cmake)
 include(source/APPLICATIONS/sources.cmake)
 include(source/FORMAT/DB/sources.cmake)
 include(source/FORMAT/HANDLERS/sources.cmake)
@@ -393,7 +391,6 @@ include(source/CHEMISTRY/sources.cmake)
 include(source/COMPARISON/CLUSTERING/sources.cmake)
 include(source/COMPARISON/SPECTRA/sources.cmake)
 include(source/DATASTRUCTURES/sources.cmake)
-#include(source/EXAMPLES/sources.cmake)
 include(include/OpenMS/VISUAL/DIALOGS/UIC/sources.cmake)
 include(include/OpenMS/VISUAL/UIC/sources.cmake)
 include(include/OpenMS/VISUAL/DIALOGS/sources.cmake)
@@ -403,17 +400,25 @@ include(include/OpenMS/SYSTEM/sources.cmake)
 include(include/OpenMS/APPLICATIONS/sources.cmake)
 include(include/OpenMS/FORMAT/sources.cmake)
 
-
+## not part of the actual sources for the lib
+include(source/APPLICATIONS/TOPP/sources.cmake)
+include(source/EXAMPLES/sources.cmake)
+include(source/TEST/sources.cmake)
 
 # TODO track why the duplicate warnings are thrown for all (!) MOC sources
 # Macro problem?
 list(REMOVE_DUPLICATES OpenMS_sources)
 
 if (MINGW)
-	ADD_LIBRARY(OpenMS STATIC ${OpenMS_sources} )
+	set(BUILD_SHARED_LIBS false)
 else()
-	ADD_LIBRARY(OpenMS SHARED ${OpenMS_sources} )
+	set(BUILD_SHARED_LIBS true)
 endif()
+
+# add library target
+# warning: set BUILD_SHARED_LIBS to decide if library is shared or static (see above)! We need the BUILD_SHARED_LIBS flag to set declspec flags for MSVC!
+ADD_LIBRARY(OpenMS ${OpenMS_sources} )
+
 
 # always create the svn version file before compiling OpenMS
 add_dependencies(OpenMS svnversion_file_target)
@@ -437,8 +442,8 @@ foreach(i ${TOPP_executables})
 	#add_executable(${i} source/APPLICATIONS/TOPP/${i}.C)
 	#target_link_libraries(${i} ${OPENMS_LIBRARIES})
 endforeach(i)
-add_custom_target(TOPP)
-add_dependencies(TOPP ${TOPP_executables})
+#add_custom_target(TOPP)
+#add_dependencies(TOPP ${TOPP_executables})
 
 
 ##### UTILS ########
@@ -461,8 +466,8 @@ foreach(i ${EXAMPLES_executables})
   #add_executable(${i} source/EXAMPLES/${i}.C)
   #target_link_libraries(${i} ${OPENMS_LIBRARIES})
 endforeach(i)
-add_custom_target(EXAMPLES)
-add_dependencies(EXAMPLES ${EXAMPLES_executables})
+#add_custom_target(EXAMPLES)
+#add_dependencies(EXAMPLES ${EXAMPLES_executables})
 
 
 #### Tests #####

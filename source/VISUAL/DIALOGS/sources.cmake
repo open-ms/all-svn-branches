@@ -29,5 +29,5 @@ endforeach(i)
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
 ### source group definition
-source_group(source\\VISUAL\\DIALOGS FILES ${sources})
+source_group("Source Files\\VISUAL\\DIALOGS" FILES ${sources})
 

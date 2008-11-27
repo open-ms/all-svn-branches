@@ -3,20 +3,6 @@ set(directory source/APPLICATIONS/TOPP)
 
 ### list all filenames of the directory here
 set(sources_list
-splash.C
-)
-
-### add path to the filenames
-set(sources)
-foreach(i ${sources_list})
-	list(APPEND sources ${directory}/${i})
-endforeach(i)
-
-### pass source file list to the upper instance
-set(OpenMS_sources ${OpenMS_sources} ${sources})
-
-### list all filenames of the directory here
-set(sources_list
 AdditiveSeries.C
 BaselineFilter.C
 ConsensusID.C
@@ -68,9 +54,9 @@ splash.C
 ### add path to the filenames
 set(sources)
 foreach(i ${sources_list})
-  list(APPEND sources ${directory}/${i})
+	list(APPEND sources ${directory}/${i})
 endforeach(i)
 
 ### source group definition
-source_group(source\\APPLICATIONS\\TOPP FILES ${sources})
+source_group("Source Files\\APPLICATIONS\\TOPP" FILES ${sources})
 

@@ -41,5 +41,5 @@ foreach(i ${sources_list})
 endforeach(i)
 
 ### source group definition
-source_group(source\\EXAMPLES FILES ${sources})
+source_group("Source Files\\EXAMPLES" FILES ${sources})
 

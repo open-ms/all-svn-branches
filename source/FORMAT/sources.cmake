@@ -51,11 +51,6 @@ XTandemInfile.C
 XTandemXMLFile.C
 )
 
-### include ANDIFile only if set as option
-if (USE_ANDIMS)
-  list(APPEND sources ANDIFile.C)
-endif()
-
 ### add path to the filenames
 set(sources)
 foreach(i ${sources_list})
@@ -66,5 +61,5 @@ endforeach(i)
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
 ### source group definition
-source_group(source\\FORMAT FILES ${sources})
+source_group("Source Files\\FORMAT" FILES ${sources})
 

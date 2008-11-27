@@ -33,5 +33,5 @@ endforeach(i)
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
 ### source group definition
-source_group(source\\CHEMISTRY FILES ${sources})
+source_group("Source Files\\CHEMISTRY" FILES ${sources})
 

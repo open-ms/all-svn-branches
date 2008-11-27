@@ -29,5 +29,5 @@ endforeach(i)
 set(OpenMS_sources ${OpenMS_sources} ${sources})
 
 ### source group definition
-source_group(source\\COMPARISON\\SPECTRA FILES ${sources})
+source_group("Source Files\\COMPARISON\\SPECTRA" FILES ${sources})
 

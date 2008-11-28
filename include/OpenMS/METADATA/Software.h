@@ -36,7 +36,7 @@ namespace OpenMS
 		
 		@ingroup Metadata
 	*/
-  class Software
+  class OPENMS_DLLAPI Software
   {
     public:
     	/// Constructor

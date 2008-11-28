@@ -46,7 +46,7 @@ namespace OpenMS
 		
 		@ingroup Datastructures
 	*/
-	class ConvexHull2D
+	class OPENMS_DLLAPI ConvexHull2D
 	{
 		public:
 			typedef DPosition<2> PointType;

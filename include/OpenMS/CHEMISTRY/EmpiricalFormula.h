@@ -54,7 +54,7 @@ namespace OpenMS
 		 	the charge of +/- 1 is set.
 	*/
 
-	class EmpiricalFormula
+	class OPENMS_DLLAPI EmpiricalFormula
 	{
 
 		public:

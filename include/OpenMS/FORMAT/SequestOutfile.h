@@ -49,7 +49,7 @@ namespace OpenMS
   	
   	@ingroup FileIO
   */
-	class SequestOutfile
+	class OPENMS_DLLAPI SequestOutfile
 	{
 		public:
 			/// Constructor

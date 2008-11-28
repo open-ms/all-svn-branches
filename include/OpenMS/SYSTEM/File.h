@@ -47,7 +47,7 @@ namespace OpenMS
 		
 		@ingroup System
 	*/
-	class File
+	class OPENMS_DLLAPI File
 	{
 		public:
 			

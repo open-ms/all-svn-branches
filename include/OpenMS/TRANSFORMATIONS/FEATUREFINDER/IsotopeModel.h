@@ -37,7 +37,7 @@ namespace OpenMS
 
 		@ref IsotopeModel_Parameters are explained on a separate page.
 	*/
-	class IsotopeModel
+	class OPENMS_DLLAPI IsotopeModel
   : public InterpolationModel
   {
 

@@ -38,7 +38,7 @@ namespace OpenMS
     @ingroup Metadata
   */
   
-  class DocumentIdentifier
+  class OPENMS_DLLAPI DocumentIdentifier
   {
     public:
       /** @name Constructors and Destructors

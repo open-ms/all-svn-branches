@@ -55,7 +55,7 @@ namespace OpenMS
 		
 		@ingroup FileIO
 	*/
-	class FileHandler
+	class OPENMS_DLLAPI FileHandler
 	{
 	 public:
 		/**

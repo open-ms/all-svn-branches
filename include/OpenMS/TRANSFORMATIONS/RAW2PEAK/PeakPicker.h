@@ -44,7 +44,7 @@ namespace OpenMS
 		
 		@ingroup PeakPicking
   */
-  class PeakPicker
+  class OPENMS_DLLAPI PeakPicker
   	: public DefaultParamHandler, 
   		public ProgressLogger
   {

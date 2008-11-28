@@ -58,7 +58,7 @@ namespace OpenMS
 
 		@ingroup Metadata
 	*/
-	class MetaInfoRegistry
+	class OPENMS_DLLAPI MetaInfoRegistry
 	{
     public:	
 			///default constructor

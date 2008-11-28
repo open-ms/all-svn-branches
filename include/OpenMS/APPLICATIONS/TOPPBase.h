@@ -48,7 +48,7 @@ namespace OpenMS
   namespace Exception
   {
     /// An unregistered parameter was accessed
-    class UnregisteredParameter
+    class OPENMS_DLLAPI UnregisteredParameter
           : public Exception::BaseException
     {
       public:
@@ -59,7 +59,7 @@ namespace OpenMS
         }
     };
     /// A parameter was accessed with the wrong type
-    class WrongParameterType
+    class OPENMS_DLLAPI WrongParameterType
           : public Exception::BaseException
     {
       public:
@@ -70,7 +70,7 @@ namespace OpenMS
         }
     };
     /// A required parameter was not given
-    class RequiredParameterNotGiven
+    class OPENMS_DLLAPI RequiredParameterNotGiven
           : public Exception::BaseException
     {
       public:
@@ -99,7 +99,7 @@ namespace OpenMS
 		@todo Create infrastructure for command line arguments that are lists, use it in all TOPP tools that take lists as arguments e.g. file lists (Hiwi)
   	@todo Use DataProcessing in all TOPP tools (Marc)
   */
-  class TOPPBase
+  class OPENMS_DLLAPI TOPPBase
   {
     public:
 

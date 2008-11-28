@@ -39,7 +39,7 @@ namespace OpenMS
 		
 		@ingroup Visual
 	*/
-	class PeakIcon
+	class OPENMS_DLLAPI PeakIcon
 	{
 		public:
 			/// Icon names

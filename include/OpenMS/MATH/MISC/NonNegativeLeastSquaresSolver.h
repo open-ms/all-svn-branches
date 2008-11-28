@@ -37,7 +37,7 @@ namespace OpenMS
 	 *  (i.e. minimum residual)
 	 *
 	 */
-	class NonNegativeLeastSquaresSolver
+	class OPENMS_DLLAPI NonNegativeLeastSquaresSolver
 	{
 	public:
 		

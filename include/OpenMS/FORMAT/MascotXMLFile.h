@@ -45,7 +45,7 @@ namespace OpenMS
   
   	@ingroup FileIO
   */
-  class MascotXMLFile
+  class OPENMS_DLLAPI MascotXMLFile
   {
     public:
       /// Constructor

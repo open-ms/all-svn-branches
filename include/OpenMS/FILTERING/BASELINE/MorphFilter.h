@@ -50,7 +50,7 @@ namespace OpenMS
 		@ref MorphFilter_Parameters are explained on a separate page.
 */
 
-  class MorphFilter 
+  class OPENMS_DLLAPI MorphFilter 
   	: public DefaultParamHandler, 
   		public ProgressLogger
   {

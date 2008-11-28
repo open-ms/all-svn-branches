@@ -41,7 +41,7 @@ namespace OpenMS
 		
 		@ingroup Datastructures
 	*/
-	class DateTime 
+	class OPENMS_DLLAPI DateTime 
 		: public QDateTime
 	{
 		public:

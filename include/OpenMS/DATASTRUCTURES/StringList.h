@@ -38,7 +38,7 @@ namespace OpenMS
 		
 		@ingroup Datastructures
 	*/
-	class StringList
+	class OPENMS_DLLAPI StringList
 		: public std::vector<String>
 	{
 		public:

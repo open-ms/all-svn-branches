@@ -63,7 +63,7 @@ namespace OpenMS
   */
 //#define DEBUG_FILTERING
 
-  class GaussFilter 
+  class OPENMS_DLLAPI GaussFilter 
   	: public ProgressLogger,
   		public DefaultParamHandler
   {

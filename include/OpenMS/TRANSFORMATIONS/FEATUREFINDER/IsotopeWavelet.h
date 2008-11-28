@@ -79,7 +79,7 @@ namespace OpenMS
 	 *
 	 * 	@todo Tests for negative mode (Rene)
 	*/
-	class IsotopeWavelet
+	class OPENMS_DLLAPI IsotopeWavelet
 	{
 		public:
 	

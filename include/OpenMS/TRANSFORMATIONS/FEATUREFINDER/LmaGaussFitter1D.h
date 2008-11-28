@@ -36,7 +36,7 @@ namespace OpenMS
                  
       @ref LmaGaussFitter1D_Parameters are explained on a separate page.                   
     */
-    class LmaGaussFitter1D 
+    class OPENMS_DLLAPI LmaGaussFitter1D 
     : public LevMarqFitter1D
     {
         public:

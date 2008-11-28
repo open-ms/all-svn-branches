@@ -35,7 +35,7 @@
 
 namespace OpenMS {
 
-	class ItraqChannelExtractor
+	class OPENMS_DLLAPI ItraqChannelExtractor
 		: public DefaultParamHandler,
 			public ItraqConstants
 	{

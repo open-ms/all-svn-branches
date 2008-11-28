@@ -66,7 +66,7 @@ namespace OpenMS
 		
 		@ingroup Chemistry
 	*/
-	class AASequence
+	class OPENMS_DLLAPI AASequence
 	{
 					
 		public:
@@ -76,7 +76,7 @@ namespace OpenMS
 			
 					AASequence constant iterator
 			*/
-			class ConstIterator
+			class OPENMS_DLLAPI ConstIterator
 			{
 				public: 
 				
@@ -206,7 +206,7 @@ namespace OpenMS
 			
 					Mutable iterator for AASequence
 			*/
-			class Iterator
+			class OPENMS_DLLAPI Iterator
 			{
 				public: 
 

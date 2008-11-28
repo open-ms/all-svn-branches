@@ -45,7 +45,7 @@ namespace OpenMS
 
 			@ref LevMarqFitter1D_Parameters are explained on a separate page.
 		*/
-    class LevMarqFitter1D
+    class OPENMS_DLLAPI LevMarqFitter1D
     : public Fitter1D
     {
 

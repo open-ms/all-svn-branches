@@ -39,7 +39,7 @@ namespace OpenMS
 		
 		@ingroup Datastructures
 	*/
-	class DoubleList
+	class OPENMS_DLLAPI DoubleList
 		: public std::vector<DoubleReal>
 	{
 		public:

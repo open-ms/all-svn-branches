@@ -58,7 +58,7 @@ namespace OpenMS
 		@ingroup Kernel
 	*/
 	template <typename FeatureT = Feature >
-	class FeatureMap
+	class OPENMS_DLLAPI FeatureMap
 		: public std::vector<FeatureT>,
 			public RangeManager<2>,
 			public DocumentIdentifier

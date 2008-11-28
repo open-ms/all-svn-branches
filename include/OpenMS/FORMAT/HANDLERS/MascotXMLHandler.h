@@ -42,7 +42,7 @@ namespace OpenMS
     @brief Handler that is used for parsing MascotXML data
     
   */
-  class MascotXMLHandler:
+  class OPENMS_DLLAPI MascotXMLHandler:
     public XMLHandler
   {
     public:

@@ -43,7 +43,7 @@ namespace OpenMS
   	  	
   	@ingroup FileIO
 	*/
-  class XTandemInfile
+  class OPENMS_DLLAPI XTandemInfile
   {
     public:
 

@@ -52,7 +52,7 @@ namespace OpenMS
 	/**
 		@brief Cross platform memory mapping.
 	*/
-	class MemoryMap
+	class OPENMS_DLLAPI MemoryMap
 	{
     public:
     // recreate the functions already offered by POSIX  

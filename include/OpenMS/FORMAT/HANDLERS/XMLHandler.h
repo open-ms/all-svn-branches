@@ -48,7 +48,7 @@ namespace OpenMS
 	{
 	
 		/// Helper class for XML parsing that handles the memory management for conversions of Xerces strings
-		class StringManager 
+		class OPENMS_DLLAPI StringManager 
 		{
 			public:
 				/// Constructor
@@ -79,12 +79,12 @@ namespace OpenMS
 	/**
 		@brief Base class for XML handlers.
 	*/
-  class XMLHandler
+  class OPENMS_DLLAPI XMLHandler
   	: public xercesc::DefaultHandler
   {
     public:
 	  	/// Exception that is thrown if the parsing is ended by some event (e.g. if only a prefix of the XML file is needed).
-	  	class EndParsingSoftly
+	  	class OPENMS_DLLAPI EndParsingSoftly
 	  		: public Exception::BaseException
 	  	{
 	  		public:

@@ -40,7 +40,7 @@ namespace OpenMS
 		Visualizers are mainly used by the MetaDataBrowser.
 	*/
 	template<typename ObjectType>
-	class BaseVisualizer
+	class OPENMS_DLLAPI BaseVisualizer
 	{
 		public:
 			

@@ -47,7 +47,7 @@ namespace OpenMS
     
 		It contains the size, name and handle of the swap file.
   */
-  class ExternalAllocatorUnique {
+  class OPENMS_DLLAPI ExternalAllocatorUnique {
   
 		private:
 			/// do not allow default C'tor

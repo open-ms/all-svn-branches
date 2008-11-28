@@ -42,7 +42,7 @@ namespace OpenMS
                  
       @ref LmaIsotopeFitter1D_Parameters are explained on a separate page.                   
      */
-    class LmaIsotopeFitter1D
+    class OPENMS_DLLAPI LmaIsotopeFitter1D
     : public LevMarqFitter1D
     {
         public:

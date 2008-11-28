@@ -48,7 +48,7 @@ namespace OpenMS
 
 		@ingroup MapAlignment
 	*/
-	class MapAlignmentAlgorithmSpectrumAlignment
+	class OPENMS_DLLAPI MapAlignmentAlgorithmSpectrumAlignment
 	 : public MapAlignmentAlgorithm, 
 	 	public ProgressLogger
 	{
@@ -88,7 +88,7 @@ namespace OpenMS
 				@experimental This algorithm is work in progress and might change.
 		
 			*/
-			class Compare
+			class OPENMS_DLLAPI Compare
 			{
 				bool flag;
 				public:

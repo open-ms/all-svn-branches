@@ -55,7 +55,7 @@ namespace OpenMS
 
 			@ingroup FileIO
   */
-  class DTA2DFile
+  class OPENMS_DLLAPI DTA2DFile
   	: public ProgressLogger
   {
 	 private:

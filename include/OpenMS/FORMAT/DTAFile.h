@@ -44,7 +44,7 @@ namespace OpenMS
   	
   	@ingroup FileIO
   */
-  class DTAFile
+  class OPENMS_DLLAPI DTAFile
   {
     public:
       /// Default constructor

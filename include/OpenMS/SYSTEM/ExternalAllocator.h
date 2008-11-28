@@ -57,7 +57,7 @@ namespace OpenMS
 		@todo evaluate possibility of simply wrapping std:allocator when RAM is sufficient, else use external (Chris)
   */
   template <class T>
-  class ExternalAllocator {
+  class OPENMS_DLLAPI ExternalAllocator {
   
     protected:
 

@@ -41,7 +41,7 @@ namespace OpenMS
 		 @ingroup Datastructures		
 	*/
 	template <UInt D>
-	class DPosition
+	class OPENMS_DLLAPI DPosition
 	{
 	 public:
 

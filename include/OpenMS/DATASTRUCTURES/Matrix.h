@@ -70,7 +70,7 @@ namespace OpenMS
 		 @ingroup Datastructures
   */
   template <typename Value>
-	class Matrix : protected std::vector < Value >
+	class OPENMS_DLLAPI Matrix : protected std::vector < Value >
 	{
 	 protected:
 		typedef std::vector < Value > Base;

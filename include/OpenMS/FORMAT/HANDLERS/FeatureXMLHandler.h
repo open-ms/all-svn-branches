@@ -56,7 +56,7 @@ namespace OpenMS
 			(encapsulated by class ExperimentalSettings) is stored according to the mzData format. The features
 			and their members are stored in a proprietary format (see funtion writeTo(stream& os) for details). 
 		*/
-	  class FeatureXMLHandler
+	  class OPENMS_DLLAPI FeatureXMLHandler
 			: public XMLHandler
 	  {
 	    public:

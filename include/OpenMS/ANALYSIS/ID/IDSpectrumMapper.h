@@ -42,7 +42,7 @@ namespace OpenMS
     corresponding spectrum. Furthermore the annotations that are present
     can be retrieved.
   */
-  class IDSpectrumMapper
+  class OPENMS_DLLAPI IDSpectrumMapper
   {
     public:
 

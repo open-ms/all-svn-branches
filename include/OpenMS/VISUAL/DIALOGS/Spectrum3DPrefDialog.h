@@ -35,7 +35,7 @@ namespace OpenMS
 	namespace Internal
 	{
 		///Preferences dialog for Spectrum3DWidget
-		class Spectrum3DPrefDialog
+		class OPENMS_DLLAPI Spectrum3DPrefDialog
 			: public QDialog,
 	  		public Ui::Spectrum3DPrefDialogTemplate
 		{

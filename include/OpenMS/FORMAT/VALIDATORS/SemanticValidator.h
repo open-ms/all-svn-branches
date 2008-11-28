@@ -45,7 +45,7 @@ namespace OpenMS
 	    This is the general validator.
 	    @n Specialized validators for specific file formats are derived from this class.
 	  */
-	  class SemanticValidator
+	  class OPENMS_DLLAPI SemanticValidator
 			: protected Internal::XMLHandler,
 				public Internal::XMLFile
 	  {

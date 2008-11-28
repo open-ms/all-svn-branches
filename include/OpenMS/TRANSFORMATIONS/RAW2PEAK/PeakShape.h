@@ -147,7 +147,7 @@ namespace OpenMS
 
     	 Lexicographical comparison from dimension 0 to dimension D is done.
     */
-    class PositionLess
+    class OPENMS_DLLAPI PositionLess
     {
 	    public:
 	

@@ -46,7 +46,7 @@ namespace OpenMS
 
 	The convolution of the signal and the wavelet is computed by numerical integration.
   */
-  class ContinuousWaveletTransformNumIntegration : public ContinuousWaveletTransform
+  class OPENMS_DLLAPI ContinuousWaveletTransformNumIntegration : public ContinuousWaveletTransform
   {
 	 public:
     /// Raw data const iterator type

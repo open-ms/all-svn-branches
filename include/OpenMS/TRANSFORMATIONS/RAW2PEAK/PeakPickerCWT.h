@@ -70,7 +70,7 @@ namespace OpenMS
     
 	@ingroup PeakPicking
   */
-  class PeakPickerCWT : public PeakPicker
+  class OPENMS_DLLAPI PeakPickerCWT : public PeakPicker
   {
 	 public:
 
@@ -612,7 +612,7 @@ namespace OpenMS
 		A regularData-Object which contents some additional useful informations
 		for analysing peaks and their properties
     */
-    class PeakArea_
+    class OPENMS_DLLAPI PeakArea_
     {
       typedef std::vector<PeakType>::iterator PeakIterator;
 

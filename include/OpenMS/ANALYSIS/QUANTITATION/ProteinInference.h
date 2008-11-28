@@ -35,7 +35,7 @@
 
 namespace OpenMS {
 
-	class ProteinInference
+	class OPENMS_DLLAPI ProteinInference
 	{
 
 	public:

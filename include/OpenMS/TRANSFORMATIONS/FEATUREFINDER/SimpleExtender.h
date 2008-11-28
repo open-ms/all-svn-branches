@@ -69,7 +69,7 @@ namespace OpenMS
 		@ingroup FeatureFinder
 	*/
 	template<class PeakType,class FeatureType>
-  class SimpleExtender
+  class OPENMS_DLLAPI SimpleExtender
     : public FeaFiModule<PeakType,FeatureType>,
 			public FeatureFinderDefs
   {

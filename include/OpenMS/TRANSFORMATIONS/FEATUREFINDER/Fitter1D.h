@@ -47,7 +47,7 @@ namespace OpenMS
 		  
 	@ingroup FeatureFinder
 	*/
-	class Fitter1D
+	class OPENMS_DLLAPI Fitter1D
     : public FactoryProduct,
       public FeatureFinderDefs
 	{

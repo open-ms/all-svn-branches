@@ -55,7 +55,7 @@ namespace OpenMS
 	
 		@ingroup Dialogs
 	*/
-	class ToolsDialog
+	class OPENMS_DLLAPI ToolsDialog
 		: public QDialog
 	{
 		Q_OBJECT

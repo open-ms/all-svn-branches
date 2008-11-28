@@ -37,7 +37,7 @@ namespace OpenMS
 		This is needed for all peak and feature container like Spectrum, MSExperiment and FeatureMap.
 	*/
 	template <UInt D>
-	class RangeManager
+	class OPENMS_DLLAPI RangeManager
 	{
 		public:
 			/// Dimension of the position range

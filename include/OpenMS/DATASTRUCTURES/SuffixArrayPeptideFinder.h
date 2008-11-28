@@ -39,7 +39,7 @@ namespace OpenMS
 	/**
 		@brief wrapper for easy use of sufArray
 	*/
-class SuffixArrayPeptideFinder 
+class OPENMS_DLLAPI SuffixArrayPeptideFinder 
 {
 
 public:

@@ -51,7 +51,7 @@ namespace OpenMS
 		
 		@ingroup System
 	*/
-	class StopWatch
+	class OPENMS_DLLAPI StopWatch
 	{
 		public:
 		

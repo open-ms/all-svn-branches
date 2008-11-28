@@ -38,7 +38,7 @@ namespace OpenMS
 	
 		@ref GaussModel_Parameters are explained on a separate page.
 	*/
-	class GaussModel
+	class OPENMS_DLLAPI GaussModel
 		: public InterpolationModel
 	{
 	

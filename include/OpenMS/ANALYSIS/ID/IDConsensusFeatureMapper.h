@@ -46,7 +46,7 @@ namespace OpenMS
  		be given in the MetaInfoInterface ('MZ' and 'RT').
 	 
   */
-  class IDConsensusFeatureMapper
+  class OPENMS_DLLAPI IDConsensusFeatureMapper
   {
     public:
 

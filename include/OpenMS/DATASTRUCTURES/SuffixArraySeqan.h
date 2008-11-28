@@ -44,7 +44,7 @@ namespace OpenMS
 
 	*/
 
-	class SuffixArraySeqan : public SuffixArray
+	class OPENMS_DLLAPI SuffixArraySeqan : public SuffixArray
 	{
 
 		typedef seqan::TopDown<seqan::ParentLinks<> > TIterSpec;

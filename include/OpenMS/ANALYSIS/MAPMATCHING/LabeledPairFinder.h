@@ -43,7 +43,7 @@ namespace OpenMS
 		
 		@ingroup FeatureGrouping
 	*/
-	class LabeledPairFinder
+	class OPENMS_DLLAPI LabeledPairFinder
 		: public BaseGroupFinder
 	{
 		

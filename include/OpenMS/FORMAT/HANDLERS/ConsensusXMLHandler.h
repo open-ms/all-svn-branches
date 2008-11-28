@@ -45,7 +45,7 @@ namespace OpenMS
 		/**
 		@brief XML Handler for a consensusXML.
 		*/
-		class ConsensusXMLHandler
+		class OPENMS_DLLAPI ConsensusXMLHandler
 			: public XMLHandler
 		{
 		 public:

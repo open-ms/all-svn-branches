@@ -41,7 +41,7 @@ namespace OpenMS
 
 		@ref PILISModelGenerator_Parameters are explained on a separate page.
 	*/	
-	class PILISModelGenerator : public DefaultParamHandler
+	class OPENMS_DLLAPI PILISModelGenerator : public DefaultParamHandler
 	{
 	
 		public:

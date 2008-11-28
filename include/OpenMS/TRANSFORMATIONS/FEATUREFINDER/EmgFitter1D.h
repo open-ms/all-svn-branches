@@ -36,7 +36,7 @@ namespace OpenMS
                  
       @ref EmgFitter1D_Parameters are explained on a separate page.   
     */
-    class EmgFitter1D 
+    class OPENMS_DLLAPI EmgFitter1D 
     : public LevMarqFitter1D
     {
         public:

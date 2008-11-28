@@ -34,7 +34,7 @@
 
 namespace OpenMS {
 
-	class ItraqConstants
+	class OPENMS_DLLAPI ItraqConstants
 	{
 
 	public:

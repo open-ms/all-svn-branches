@@ -172,7 +172,7 @@ namespace OpenMS
 		small sequences of different lengths.
     
   */
-	class SVMWrapper
+	class OPENMS_DLLAPI SVMWrapper
 	{
 	 public:
 	

@@ -38,7 +38,7 @@ namespace OpenMS
 		@brief Dialog for creating and changing a DataFilter
 		
 	*/
-	class DataFilterDialog
+	class OPENMS_DLLAPI DataFilterDialog
 		: public QDialog,
   		public Ui::DataFilterDialogTemplate
 	{

@@ -40,7 +40,7 @@ namespace OpenMS
 		@ingroup Datastructures
 	*/
 	template <class Key, class T>
-	class Map
+	class OPENMS_DLLAPI Map
 	  : public std::map<Key,T>
 	{
 		public:
@@ -50,7 +50,7 @@ namespace OpenMS
 	
 				@ingroup Exceptions
 			*/
-			class IllegalKey
+			class OPENMS_DLLAPI IllegalKey
 				:	public Exception::BaseException
 			{
 				public:

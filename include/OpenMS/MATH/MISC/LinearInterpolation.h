@@ -64,7 +64,7 @@ namespace OpenMS
 			 @ingroup Math
 		*/
 		template < typename Key = DoubleReal, typename Value = Key >
-		class LinearInterpolation
+		class OPENMS_DLLAPI LinearInterpolation
 		{
 
 		 public:

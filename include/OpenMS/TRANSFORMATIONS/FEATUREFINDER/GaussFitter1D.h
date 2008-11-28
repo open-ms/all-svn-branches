@@ -38,7 +38,7 @@ namespace OpenMS
                  
       @ref GaussFitter1D_Parameters are explained on a separate page.                 
     */
-    class GaussFitter1D
+    class OPENMS_DLLAPI GaussFitter1D
     : public MaxLikeliFitter1D
     {
         public:

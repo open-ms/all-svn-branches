@@ -54,7 +54,7 @@ namespace OpenMS
     @ingroup DatabaseIO
   */
  
-  class DBAdapter
+  class OPENMS_DLLAPI DBAdapter
   {
     public:
 			/// Constructor

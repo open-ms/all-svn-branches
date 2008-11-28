@@ -36,7 +36,7 @@ namespace OpenMS
 		
 		@ingroup Concept
 	*/
-  class FactoryBase
+  class OPENMS_DLLAPI FactoryBase
   {
 		public:
 			/// destructor 

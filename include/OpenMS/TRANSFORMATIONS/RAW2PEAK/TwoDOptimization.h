@@ -83,7 +83,7 @@ namespace OpenMS
 		 
 		 @ref TwoDOptimization_Parameters are explained on a separate page.
 	*/
-	class TwoDOptimization : public DefaultParamHandler
+	class OPENMS_DLLAPI TwoDOptimization : public DefaultParamHandler
 	{
 	public:
 

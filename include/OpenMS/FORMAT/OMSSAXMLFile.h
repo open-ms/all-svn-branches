@@ -50,7 +50,7 @@ namespace OpenMS
 
   	@ingroup FileIO
   */
-  class OMSSAXMLFile 
+  class OPENMS_DLLAPI OMSSAXMLFile 
 		: protected Internal::XMLHandler, 
 			public Internal::XMLFile
   {

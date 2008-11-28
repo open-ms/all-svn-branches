@@ -38,7 +38,7 @@
 
 namespace OpenMS {
 
-	class ItraqQuantifier
+	class OPENMS_DLLAPI ItraqQuantifier
 		: public DefaultParamHandler,
 			public ItraqConstants
 	{

@@ -44,7 +44,7 @@ namespace OpenMS
 
 	@todo Think about return values from compare_files (11 is not a bool :) (Clemens)
 	*/
-	class FuzzyStringComparator
+	class OPENMS_DLLAPI FuzzyStringComparator
 	{
 		/// Internal exeption class.
 		struct AbortComparison{};

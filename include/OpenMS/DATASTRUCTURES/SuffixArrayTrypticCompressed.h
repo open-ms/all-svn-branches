@@ -42,7 +42,7 @@ namespace OpenMS {
 	Only the sufices that are matching the function isDigestingEnd are created. Besides a suffix will not reach till the end of the string but till the next occurence of the seperator ($). So only the interessting sufices will be saved. This will reduce the used space.
 */
 
-class SuffixArrayTrypticCompressed : public SuffixArray {
+class OPENMS_DLLAPI SuffixArrayTrypticCompressed : public SuffixArray {
 	
 public:
 

@@ -43,7 +43,7 @@ namespace OpenMS
 	  @todo check if ConvexHull exists and fall back to centroid if its missing (and allow a deviation of xy in that case) (Marc)
 	 
   */
-  class IDFeatureMapper
+  class OPENMS_DLLAPI IDFeatureMapper
   {
     public:
 

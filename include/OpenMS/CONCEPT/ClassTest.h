@@ -65,7 +65,7 @@ namespace OpenMS
 	namespace Internal
 	{
 		/// Auxilary class for class tests
-		class ClassTest
+		class OPENMS_DLLAPI ClassTest
 		{
 			
 			public:

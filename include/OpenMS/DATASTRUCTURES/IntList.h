@@ -39,7 +39,7 @@ namespace OpenMS
 		
 		@ingroup Datastructures
 	*/
-	class IntList
+	class OPENMS_DLLAPI IntList
 		: public std::vector<Int>
 	{
 		public:

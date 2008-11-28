@@ -45,7 +45,7 @@ namespace OpenMS
 		
 		@ingroup Datastructures
 	*/
-	class String:
+	class OPENMS_DLLAPI String:
 		public std::string
 	{
 		public:

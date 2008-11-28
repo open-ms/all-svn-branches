@@ -48,7 +48,7 @@ namespace OpenMS
 
 		@ingroup Datastructures
 	*/
-	class DataValue
+	class OPENMS_DLLAPI DataValue
 	{
 
 		public:

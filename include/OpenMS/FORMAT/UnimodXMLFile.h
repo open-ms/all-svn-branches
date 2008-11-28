@@ -39,7 +39,7 @@ namespace OpenMS
     
   	@ingroup FileIO
   */
-  class UnimodXMLFile
+  class OPENMS_DLLAPI UnimodXMLFile
   {
     public:
 						

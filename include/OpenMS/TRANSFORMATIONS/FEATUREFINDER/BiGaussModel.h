@@ -41,7 +41,7 @@ namespace OpenMS
 
     @ref BiGaussModel_Parameters are explained on a separate page.
 	*/
-	class BiGaussModel
+	class OPENMS_DLLAPI BiGaussModel
   : public InterpolationModel
   {
 		public:

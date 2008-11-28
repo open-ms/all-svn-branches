@@ -83,7 +83,7 @@ namespace OpenMS
 		@ingroup RangeUtils
 	*/
 	template <class SpectrumType>
-	class InRTRange
+	class OPENMS_DLLAPI InRTRange
 		: std::unary_function<SpectrumType, bool>
 	{
 		public:
@@ -126,7 +126,7 @@ namespace OpenMS
 		@ingroup RangeUtils
 	*/	
 	template <class SpectrumType>
-	class InMSLevelRange
+	class OPENMS_DLLAPI InMSLevelRange
 		: std::unary_function<SpectrumType, bool>
 	{
 		public:
@@ -167,7 +167,7 @@ namespace OpenMS
 		@ingroup RangeUtils
 	*/	
 	template <class SpectrumType>
-	class HasScanMode
+	class OPENMS_DLLAPI HasScanMode
 		: std::unary_function<SpectrumType, bool>
 	{
 		public:
@@ -207,7 +207,7 @@ namespace OpenMS
 		@ingroup RangeUtils
 	*/	
 	template <class SpectrumType>
-	class IsEmptySpectrum
+	class OPENMS_DLLAPI IsEmptySpectrum
 		: std::unary_function<SpectrumType, bool>
 	{
 		public:
@@ -245,7 +245,7 @@ namespace OpenMS
 		@ingroup RangeUtils
 	*/		
 	template <class PeakType>
-	class InMzRange
+	class OPENMS_DLLAPI InMzRange
 		: std::unary_function<PeakType, bool>
 	{
 		public:
@@ -288,7 +288,7 @@ namespace OpenMS
 		@ingroup RangeUtils
 	*/	
 	template <class PeakType>
-	class InIntensityRange
+	class OPENMS_DLLAPI InIntensityRange
 		: std::unary_function<PeakType, bool>
 	{
 		public:

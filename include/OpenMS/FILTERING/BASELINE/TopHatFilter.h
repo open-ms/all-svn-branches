@@ -54,7 +54,7 @@ namespace OpenMS
     
 		@ingroup SignalProcessing
   */
-  class TopHatFilter 
+  class OPENMS_DLLAPI TopHatFilter 
   	: public MorphFilter
   {
     public:

@@ -40,7 +40,7 @@ namespace OpenMS
 	@brief abstract class for suffix array
 */
 
-class SuffixArray 
+class OPENMS_DLLAPI SuffixArray 
 {
 	
 public:

@@ -27,6 +27,8 @@
 #ifndef OPENMS_CONCEPT_FACTORYBASE_H
 #define OPENMS_CONCEPT_FACTORYBASE_H
 
+#include <OpenMS/config.h>
+
 namespace OpenMS
 {
   /** 

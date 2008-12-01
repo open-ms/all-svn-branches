@@ -27,6 +27,8 @@
 #ifndef OPENMS_VISUAL_PEAKICON_H
 #define OPENMS_VISUAL_PEAKICON_H
 
+#include <OpenMS/config.h>
+
 class QPainter;
 class QRect;
 

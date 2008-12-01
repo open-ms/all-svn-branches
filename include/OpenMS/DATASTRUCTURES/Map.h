@@ -40,7 +40,7 @@ namespace OpenMS
 		@ingroup Datastructures
 	*/
 	template <class Key, class T>
-	class OPENMS_DLLAPI Map
+	class Map
 	  : public std::map<Key,T>
 	{
 		public:

@@ -5,6 +5,14 @@ Allgemein:
 - niemals "\" in Pfadangaben innerhalb CmakeLists.txt benutzen! Cmake will Unix-style Pfade!
 
 
+für alle neuen Klassen (auch für Template Spezialisierungen, jedoch nicht für reine Template Klassen)
+hinter class das Macro OPENMS_DLLAPI einfügen.
+e.g. aus
+class Myclass {
+wird
+class OPENMS_DLLAPI Myclass {
+
+
 TODO:
 - check Types.h. preprocessor macros!
 - TOPPtests portieren!

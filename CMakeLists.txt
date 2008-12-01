@@ -43,7 +43,8 @@ elseif (MSVC)
 	#add_definitions(/Wall) ## disable for now.. its just too much!
 	
 	## disable stupid warnings. enable if you want to have fun with MSVC 7
-	add_definitions(/wd4996 /wd4521 /wd4522)
+	## warning! 4275,4251 is for dllexport/import warnings! this could be vital. recheck!
+	add_definitions(/wd4996 /wd4521 /wd4522 /wd4275 /wd4251)
 	
 	## disable min and max macros by default
 	## see CGAL and BOOST configs for more elaborate explanations
@@ -53,7 +54,7 @@ elseif (MSVC)
 	add_definitions(/DGSL_DLL)
 	
 	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
-SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
+	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
 endif()
 
 ## platform dependent compiler flags:
@@ -331,6 +332,14 @@ if (NOT PROG_Svnversion-NOTFOUND)
 	#set($ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION}) # set environment variable e.g. for doxygen
 endif()
 
+# are we building a shared or static lib?! (BOTH within the same BUILD-tree is NOT possible with OpenMS!!)
+if (MINGW)
+	set(BUILD_SHARED_LIBS false)
+else()
+	set(BUILD_SHARED_LIBS true)
+endif()
+
+
 ## replace any variables in config.h.in with current values
 configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${PROJECT_BINARY_DIR}/include/OpenMS/config.h)
 
@@ -358,62 +367,8 @@ MACRO (QT4_WRAP_UI_OWN outfiles )
 
 ENDMACRO (QT4_WRAP_UI_OWN)
 
-set(OpenMS_sources  CACHE INTERNAL "This variable should hold all OpenMS sources at the end of the config step" )
-include(source/KERNEL/sources.cmake)                                 
-include(source/METADATA/sources.cmake)                               
-include(source/ANALYSIS/QUANTITATION/sources.cmake)                  
-include(source/ANALYSIS/SVM/sources.cmake)                           
-include(source/ANALYSIS/MAPMATCHING/sources.cmake)
-include(source/ANALYSIS/DECHARGING/sources.cmake)
-include(source/ANALYSIS/ID/sources.cmake)
-include(source/FILTERING/BASELINE/sources.cmake)
-include(source/FILTERING/TRANSFORMERS/sources.cmake)
-include(source/FILTERING/DATAREDUCTION/sources.cmake)
-include(source/FILTERING/CALIBRATION/sources.cmake)
-include(source/FILTERING/SMOOTHING/sources.cmake)
-include(source/FILTERING/NOISEESTIMATION/sources.cmake)
-include(source/FILTERING/ID/sources.cmake)
-include(source/SYSTEM/sources.cmake)
-include(source/APPLICATIONS/sources.cmake)
-include(source/FORMAT/DB/sources.cmake)
-include(source/FORMAT/HANDLERS/sources.cmake)
-include(source/FORMAT/VALIDATORS/sources.cmake)
-include(source/FORMAT/sources.cmake)
-include(source/TRANSFORMATIONS/FEATUREFINDER/sources.cmake)
-include(source/TRANSFORMATIONS/RAW2PEAK/sources.cmake)
-include(source/MATH/STATISTICS/sources.cmake)
-include(source/MATH/MISC/sources.cmake)
-include(source/CONCEPT/sources.cmake)
-include(source/VISUAL/DIALOGS/sources.cmake)
-include(source/VISUAL/VISUALIZER/sources.cmake)
-include(source/VISUAL/sources.cmake)
-include(source/CHEMISTRY/sources.cmake)
-include(source/COMPARISON/CLUSTERING/sources.cmake)
-include(source/COMPARISON/SPECTRA/sources.cmake)
-include(source/DATASTRUCTURES/sources.cmake)
-include(include/OpenMS/VISUAL/DIALOGS/UIC/sources.cmake)
-include(include/OpenMS/VISUAL/UIC/sources.cmake)
-include(include/OpenMS/VISUAL/DIALOGS/sources.cmake)
-include(include/OpenMS/VISUAL/VISUALIZER/sources.cmake)
-include(include/OpenMS/VISUAL/sources.cmake)
-include(include/OpenMS/SYSTEM/sources.cmake)
-include(include/OpenMS/APPLICATIONS/sources.cmake)
-include(include/OpenMS/FORMAT/sources.cmake)
-
-## not part of the actual sources for the lib
-include(source/APPLICATIONS/TOPP/sources.cmake)
-include(source/EXAMPLES/sources.cmake)
-include(source/TEST/sources.cmake)
-
-# TODO track why the duplicate warnings are thrown for all (!) MOC sources
-# Macro problem?
-list(REMOVE_DUPLICATES OpenMS_sources)
-
-if (MINGW)
-	set(BUILD_SHARED_LIBS false)
-else()
-	set(BUILD_SHARED_LIBS true)
-endif()
+# big include file for headers and C files, which fills the OpenMS_sources variable
+include (includes.cmake)
 
 # add library target
 # warning: set BUILD_SHARED_LIBS to decide if library is shared or static (see above)! We need the BUILD_SHARED_LIBS flag to set declspec flags for MSVC!

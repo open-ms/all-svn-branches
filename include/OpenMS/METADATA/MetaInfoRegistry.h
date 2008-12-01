@@ -34,6 +34,9 @@
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 
+#pragma warning( push )
+#pragma warning( disable : 4251 ) // disable MSVC dll-interface warning
+
 namespace OpenMS
 {
 
@@ -164,5 +167,7 @@ namespace OpenMS
 	};
 
 } // namespace OpenMS
+
+#pragma warning( pop ) 
 
 #endif // OPENMS_METADATA_METAINFOREGISTRY_H

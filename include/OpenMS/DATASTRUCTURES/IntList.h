@@ -30,6 +30,9 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/CONCEPT/Types.h>
 
+#pragma warning( push )
+#pragma warning( disable : 4251 ) // disable MSVC dll-interface warning
+
 namespace OpenMS
 {
 	/**
@@ -83,5 +86,7 @@ namespace OpenMS
 
 
 } // namespace OPENMS
+
+#pragma warning( pop ) 
 
 #endif // OPENMS_DATASTRUCTURES_INTLIST_H

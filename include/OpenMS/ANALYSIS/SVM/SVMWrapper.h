@@ -37,7 +37,7 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <math.h>
+#include <cmath>
 #include <iostream>
 #include <fstream>
 

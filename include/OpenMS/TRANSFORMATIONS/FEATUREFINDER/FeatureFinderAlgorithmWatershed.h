@@ -30,7 +30,7 @@
 #include <iostream>
 #include <fstream>
 #include <deque>
-#include <math.h>
+#include <cmath>
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithm.h>
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>

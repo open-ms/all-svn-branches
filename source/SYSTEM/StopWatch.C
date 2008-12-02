@@ -31,7 +31,7 @@
 #include <unistd.h>
 #endif
 #ifdef OPENMS_HAS_TIME_H
-#include <time.h>
+#include <ctime>
 #endif
 #ifdef OPENMS_HAS_SYS_TYPES_H
 #include <sys/types.h>

@@ -29,13 +29,15 @@
 
 #include <limits>
 #include <iostream>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <fcntl.h> // for O_RDWR etc
-#include <math.h>  // for ldiv()
+#include <cstdio>
+#include <cstdlib>
+#include <cmath>  // for ldiv()
 
+#ifdef OPENMS_WINDOWSPLATFORM
+#  include <sys/stat.h>
+#  include <sys/types.h>
+#  include <fcntl.h> // for O_RDWR etc
+#endif
 
 
 #include <OpenMS/config.h>
@@ -57,7 +59,7 @@ namespace OpenMS
 		@todo evaluate possibility of simply wrapping std:allocator when RAM is sufficient, else use external (Chris)
   */
   template <class T>
-  class OPENMS_DLLAPI ExternalAllocator {
+  class ExternalAllocator {
   
     protected:
 

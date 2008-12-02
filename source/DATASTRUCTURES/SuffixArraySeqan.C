@@ -32,7 +32,7 @@
 #include <fstream>
 #include <cmath>
 #include <typeinfo>
-#include <time.h>
+#include <ctime>
 #include <cstdio>
 
 #include <OpenMS/CHEMISTRY/ModifierRep.h>

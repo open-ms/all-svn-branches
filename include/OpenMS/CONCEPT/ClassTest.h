@@ -54,9 +54,9 @@
 #include <unistd.h> // unlink()
 #endif
 
-#include <stdio.h>  // tmpnam()
-#include <math.h>   // fabs
-#include <stdlib.h> // getenv()
+#include <cstdio>  // tmpnam()
+#include <cmath>   // fabs
+#include <cstdlib> // getenv()
 
 // Empty declaration to avoid problems in case the namespace is not
 // yet defined (e.g. TEST/ClassTest_test.C)

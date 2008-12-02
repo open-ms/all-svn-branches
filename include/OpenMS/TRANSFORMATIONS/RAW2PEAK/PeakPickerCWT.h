@@ -36,7 +36,7 @@
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/TwoDOptimization.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/OptimizePick.h>
 
-#include <math.h>
+#include <cmath>
 #include <vector>
 #include <algorithm>
 

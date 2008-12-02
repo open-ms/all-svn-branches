@@ -37,7 +37,7 @@
 #endif
 
 #ifdef OPENMS_HAS_TIME_H
-#include <time.h>
+#include <ctime>
 #endif
 
 #include <iostream>

@@ -30,7 +30,7 @@
 #include <OpenMS/config.h>
 
 #include <limits>
-#include <time.h>
+#include <ctime>
 #include <string>
 #include <iostream>
 #include <iomanip>

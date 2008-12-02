@@ -34,7 +34,7 @@
 
 #include <vector>
 #include <map>
-#include <math.h>
+#include <cmath>
 
 #include <CGAL/Cartesian.h>
 #include <CGAL/convex_hull_2.h>

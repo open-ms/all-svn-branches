@@ -27,7 +27,7 @@
 #include <OpenMS/DATASTRUCTURES/DateTime.h>
 
 #include <iostream>
-#include <time.h>
+#include <ctime>
 
 using namespace std;
 

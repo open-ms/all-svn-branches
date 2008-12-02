@@ -33,7 +33,7 @@
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/CONCEPT/Exception.h>
 #include <OpenMS/MATH/STATISTICS/LinearRegression.h>
-#include <math.h>
+#include <cmath>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_statistics_double.h>
 #include <vector>

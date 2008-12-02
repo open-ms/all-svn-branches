@@ -44,7 +44,7 @@ namespace OpenMS
 			           i.e. min()[x] <= max()[x].
 		*/
 		template <UInt D>
-		class OPENMS_DLLAPI DIntervalBase
+		class DIntervalBase
 		{
 			public:
 			

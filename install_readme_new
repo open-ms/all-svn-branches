@@ -16,13 +16,16 @@ class OPENMS_DLLAPI Myclass {
 TODO:
 - check Types.h. preprocessor macros!
 - TOPPtests portieren!
+- set svn:eol to native for all .c and .h files!
 
 
 - done: update boost to 1.37
 - contrib/lib dir && Qt/lib in VC library path eintragen (wie geht das mit CMAKE automatisch?) Tools -> Options -> Projects -> VC++ Directories
 - boost.lib wird benötigt... von CGAL... argghh
 -- download bjam (see boost/index.html for install instructions)
-bjam --build-dir="C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\boost_1_37_0_BUILD" --toolset=msvc-80 --build-type=complete variant=release threading=single install
+bjam variant=debug threading=multi link=static
+bjam variant=release threading=multi link=static (??)
+
 
 
 generate_source_files.bash:
@@ -74,7 +77,8 @@ CGAL:
 libsvm:
 - enhält NMake file --> erzeugt svm.obj --> nach contrib/lib kopieren
 command (im libsvm dir ausführen):nmake -f Makefile.win clean all
--- vorher #define INF (std::numeric_limits<double>::max())  in svm.cpp einfügen!
+-- vorher #define INF (std::numeric_limits<double>::max())  in svm.cpp einfügen! (nur für release?)
+	 extern "C" aus Header entfernt für Debug
 
 
 GSL: beim compilen von OpenMS das Macro GSL_DLL setzen! libgsl.dll.a in libgsl.dll.lib umbenennen, same with libgslcblas
@@ -86,7 +90,7 @@ Qt:
  				 speziell: QT_LIBRARY_DIR, QT_INCLUDE_DIR, QT_DOC_DIR
 
 from command.exe:
-"c:\Programme\CMake 2.6\bin\cmake.exe" -Wdev -D CUSTOM_CONTRIB_DIR:PATH="C:\Dokumente und Einstellungen\admin\Desktop\OpenMSretreat2008\contrib_vs\merged" -G "Visual Studio 8 2005" ../OpenMS_Retreat2008 
+"c:\Programme\CMake 2.6\bin\cmake.exe" -Wdev -D CUSTOM_CONTRIB_DIR:PATH="D:\uni\OpenMS_Win\my\contrib_vs\merged" -G "Visual Studio 8 2005" ../OpenMS_Retreat2008 
 
 from command.exe:
 "c:\Programme\CMake 2.6\bin\cmake.exe" -Wdev -D CUSTOM_CONTRIB_DIR:PATH="D:\uni\OpenMS_Win\my\contrib" -G "MSYS Makefiles" ../OpenMS_Retreat2008 

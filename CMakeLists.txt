@@ -52,6 +52,9 @@ elseif (MSVC)
 	
 	# compile such that GSL is in DLL mode
 	add_definitions(/DGSL_DLL)
+
+	# minimal code rebuild
+	add_definitions(/Gm)
 	
 	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
 	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
@@ -366,6 +369,8 @@ MACRO (QT4_WRAP_UI_OWN outfiles )
   ENDFOREACH (it)
 
 ENDMACRO (QT4_WRAP_UI_OWN)
+
+link_directories(${CONTRIB_LIB_DIR})
 
 # big include file for headers and C files, which fills the OpenMS_sources variable
 include (includes.cmake)

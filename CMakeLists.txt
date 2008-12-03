@@ -56,8 +56,8 @@ elseif (MSVC)
 	# minimal code rebuild
 	add_definitions(/Gm)
 	
-	SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
-	SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
+	#SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
+	#SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /NODEFAULTLIB:LIBCMT.lib,libcpmt.lib")
 endif()
 
 ## platform dependent compiler flags:
@@ -336,7 +336,7 @@ if (NOT PROG_Svnversion-NOTFOUND)
 endif()
 
 # are we building a shared or static lib?! (BOTH within the same BUILD-tree is NOT possible with OpenMS!!)
-if (MINGW)
+if (MINGW OR MSVC)
 	set(BUILD_SHARED_LIBS false)
 else()
 	set(BUILD_SHARED_LIBS true)
@@ -399,11 +399,11 @@ set(TOPP_executables)
 include(source/APPLICATIONS/TOPP/executables.cmake)
 
 foreach(i ${TOPP_executables}) 
-	#add_executable(${i} source/APPLICATIONS/TOPP/${i}.C)
-	#target_link_libraries(${i} ${OPENMS_LIBRARIES})
+	add_executable(${i} source/APPLICATIONS/TOPP/${i}.C)
+	target_link_libraries(${i} ${OPENMS_LIBRARIES})
 endforeach(i)
-#add_custom_target(TOPP)
-#add_dependencies(TOPP ${TOPP_executables})
+add_custom_target(TOPP)
+add_dependencies(TOPP ${TOPP_executables})
 
 
 ##### UTILS ########

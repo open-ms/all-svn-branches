@@ -29,8 +29,10 @@
 
 #include <OpenMS/DATASTRUCTURES/String.h>
 
-#pragma warning( push )
-#pragma warning( disable : 4251 ) // disable MSVC dll-interface warning
+#ifdef OPENMS_COMPILER_MSVC
+	#pragma warning( push )
+	#pragma warning( disable : 4251 ) // disable MSVC dll-interface warning
+#endif
 
 namespace OpenMS
 {
@@ -88,6 +90,8 @@ namespace OpenMS
 	
 } // namespace OPENMS
 
-#pragma warning( pop ) 
+#ifdef OPENMS_COMPILER_MSVC
+	#pragma warning( pop ) 
+#endif
 
 #endif // OPENMS_DATASTRUCTURES_STRINGLIST_H

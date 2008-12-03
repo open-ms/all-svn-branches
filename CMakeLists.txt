@@ -392,7 +392,9 @@ endif()
 ### OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables
 set(OPENMS_LIBRARIES ${OPENMS_DEP_LIBRARIES} OpenMS)
 
-target_link_libraries(OpenMS ${OPENMS_DEP_LIBRARIES})
+if (MSVC)
+	target_link_libraries(OpenMS ${OPENMS_DEP_LIBRARIES})
+endif()
 
 ####### TOPP #########
 set(TOPP_executables)
@@ -432,11 +434,11 @@ endforeach(i)
 
 #### Tests #####
 enable_testing()
-#add_subdirectory(source/TEST EXCLUDE_FROM_ALL)
+add_subdirectory(source/TEST EXCLUDE_FROM_ALL)
 
 
 ##### TOPPtests #####
-#add_subdirectory(source/TEST/TOPP EXCLUDE_FROM_ALL)
+add_subdirectory(source/TEST/TOPP EXCLUDE_FROM_ALL)
 
                     
                     

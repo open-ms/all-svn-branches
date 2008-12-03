@@ -141,8 +141,8 @@ namespace OpenMS
 						}				
 						
 						//fill peak
-						p.setPosition(strings[0].toDouble());
-						p.setIntensity(strings[1].toDouble());
+						p.setPosition((SpectrumType::PeakType::PositionType)strings[0].toDouble());
+						p.setIntensity((SpectrumType::PeakType::IntensityType)strings[1].toDouble());
 					} 
 					catch ( Exception::BaseException & /*e*/ )
 					{

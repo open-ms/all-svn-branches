@@ -42,7 +42,7 @@
 #include <QtGui/QSplashScreen>
 
 // include the splashscreen graphics
-#include "../VISUAL/ICONS/TOPPView_Splashscreen.xpm"
+#include "../../VISUAL/ICONS/TOPPView_Splashscreen.xpm"
 
 //OpenMS
 #include <OpenMS/APPLICATIONS/TOPPViewBase.h>

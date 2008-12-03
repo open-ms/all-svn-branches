@@ -33,6 +33,11 @@ include(source/COMPARISON/CLUSTERING/sources.cmake)
 include(source/COMPARISON/SPECTRA/sources.cmake)
 include(source/DATASTRUCTURES/sources.cmake)
 
+## uic are "sources" of OpenMS because they add .ui depedencies to the lib
+include(include/OpenMS/VISUAL/UIC/sources.cmake)
+include(include/OpenMS/VISUAL/DIALOGS/UIC/sources.cmake)
+
+
 ## not part of the actual sources for the lib
 include(source/APPLICATIONS/TOPP/sources.cmake)
 include(source/EXAMPLES/sources.cmake)

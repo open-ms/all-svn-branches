@@ -144,8 +144,8 @@ namespace OpenMS
 			last_secs_  = tms.QuadPart / cpu_speed_;			
 			last_usecs_ = (PointerSizeInt)((DoubleReal)(tms.QuadPart - (last_secs_*cpu_speed_)) / (DoubleReal)(cpu_speed_) * 1000000.0);
 
-			last_user_time_ = user_time.QuadPart / 10;
-			last_system_time_ = kernel_time.QuadPart / 10;
+			last_user_time_ = (clock_t) (user_time.QuadPart / 10);
+			last_system_time_ = (clock_t) (kernel_time.QuadPart / 10);
 
 		#else
 
@@ -194,8 +194,8 @@ namespace OpenMS
 			PointerSizeInt usecs_to_add = (PointerSizeInt)((DoubleReal)(tms.QuadPart - secs_to_add*cpu_speed_) /(DoubleReal)(cpu_speed_) * 1000000.0);
 			current_usecs_ += usecs_to_add - last_usecs_;
 			
-			current_user_time_ += user_time.QuadPart / 10 - last_user_time_;
-			current_system_time_ += kernel_time.QuadPart / 10 - last_system_time_;
+			current_user_time_ += (clock_t) (user_time.QuadPart / 10 - last_user_time_);
+			current_system_time_ += (clock_t) (kernel_time.QuadPart / 10 - last_system_time_);
 		#else
 			struct tms tms_buffer;
 			struct timeval timeval_buffer;

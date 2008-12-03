@@ -27,7 +27,7 @@
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
 #include <OpenMS/DATASTRUCTURES/StringList.h>
-
+#include <OpenMS/MATH/MISC/MathFunctions.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/MzDataFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>

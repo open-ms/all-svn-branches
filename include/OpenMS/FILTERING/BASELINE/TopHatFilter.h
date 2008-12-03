@@ -110,9 +110,9 @@ namespace OpenMS
         // compute the erosion of raw data
         erosion(first, last, erosion_result, struc_elem_number_of_points);
         // compute the dilation of erosion_result
-        this->template dilatation(erosion_result.begin(),erosion_result.end(), baseline_filtered_container, struc_elem_number_of_points);
+        dilatation(erosion_result.begin(),erosion_result.end(), baseline_filtered_container, struc_elem_number_of_points);
         // subtract the result from the original data
-        this->template minusIntensities_(first,last,baseline_filtered_container);
+        minusIntensities_(first,last,baseline_filtered_container);
       }
 
 

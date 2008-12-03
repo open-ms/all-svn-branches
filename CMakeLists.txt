@@ -336,11 +336,11 @@ if (NOT PROG_Svnversion-NOTFOUND)
 endif()
 
 # are we building a shared or static lib?! (BOTH within the same BUILD-tree is NOT possible with OpenMS!!)
-if (MINGW OR MSVC)
-	set(BUILD_SHARED_LIBS false)
-else()
+#if (MINGW OR MSVC)
+#	set(BUILD_SHARED_LIBS false)
+#else()
 	set(BUILD_SHARED_LIBS true)
-endif()
+#endif()
 
 
 ## replace any variables in config.h.in with current values

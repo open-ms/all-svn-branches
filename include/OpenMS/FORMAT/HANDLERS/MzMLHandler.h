@@ -83,7 +83,7 @@ namespace OpenMS
 			@note Do not use this class. It is only needed in MzMLFile.
 		*/
 		template <typename MapType>
-		class OPENMS_DLLAPI MzMLHandler
+		class MzMLHandler
 			: public XMLHandler
 		{
 		 public:

@@ -63,13 +63,13 @@ ref_vector.sortByIntensity();
 		@ingroup Datastructures
 	*/
   template <typename ContainerT>
-  class OPENMS_DLLAPI ConstRefVector
+  class ConstRefVector
   {
 	  public:
 	
 	    ///ConstIterator for the ConstRefVector
 	    template <class ValueT>
-	    class OPENMS_DLLAPI ConstRefVectorConstIterator
+	    class ConstRefVectorConstIterator
 	    {
 		    friend class ConstRefVector;
 		
@@ -235,7 +235,7 @@ ref_vector.sortByIntensity();
 	
 	    /// Mutable iterator for the ConstRefVector
 	    template <class ValueT>
-			class OPENMS_DLLAPI ConstRefVectorIterator
+			class ConstRefVectorIterator
 				: public ConstRefVectorConstIterator<ValueT>
 	    {
 	      friend class ConstRefVector;

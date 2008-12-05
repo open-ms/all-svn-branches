@@ -63,7 +63,7 @@ namespace OpenMS
 		@ingroup Kernel
 	*/
 	template <typename PeakT = Peak1D, typename AllocT = OPENMS_DEFAULT_ALLOC >
-	class OPENMS_DLLAPI MSExperiment
+	class MSExperiment
 		:	public std::vector<MSSpectrum<PeakT, AllocT> >,
 			public RangeManager<2>,
 			public ExperimentalSettings,

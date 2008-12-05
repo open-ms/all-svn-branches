@@ -62,7 +62,7 @@ namespace OpenMS
 			 @ingroup Math
 		*/
 		template < typename Key = double, typename Value = Key >
-		class OPENMS_DLLAPI BilinearInterpolation
+		class BilinearInterpolation
 		{
 
 		 public:

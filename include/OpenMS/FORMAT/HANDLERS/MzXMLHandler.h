@@ -49,7 +49,7 @@ namespace OpenMS
 			Do not use this class. It is only needed in MzXMLFile.
 	  */
 		template <typename MapType>
-	  class OPENMS_DLLAPI MzXMLHandler
+	  class MzXMLHandler
 			: public XMLHandler
 	  {
 	    public:

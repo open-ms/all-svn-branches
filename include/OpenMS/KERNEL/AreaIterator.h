@@ -47,7 +47,7 @@ namespace OpenMS
 			@note This iterator iterates over spectra with MS level 1 only!
 		*/
 		template<class ValueT, class ReferenceT, class PointerT, class SpectrumIteratorT, class PeakIteratorT>
-		class OPENMS_DLLAPI AreaIterator : public std::iterator<std::forward_iterator_tag, ValueT>
+		class AreaIterator : public std::iterator<std::forward_iterator_tag, ValueT>
 		{
 			public:
 				typedef DoubleReal CoordinateType;

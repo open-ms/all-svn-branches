@@ -116,28 +116,28 @@ endif()
 ##### find libs (for linking)
 ## on windows we need the *.lib versions (dlls alone won't do for linking)
 
-FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c_2D xerces-c xerces-c_2_8 libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
+FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c_2D xerces-c_2D xerces-c xerces-c_2_8 libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
 if (XERCESC_LIBRARY STREQUAL "XERCESC_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
 endif()
 
-FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl.dll PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
+FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl_dll_d PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
 if (GSL_LIBRARY STREQUAL "GSL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find GSL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found GSL library at: " ${GSL_LIBRARY})
 endif()
 
-FIND_LIBRARY(GSL_CBLAS_LIBRARY NAMES gslcblas libgslcblas.dll PATHS  ${CONTRIB_LIB_DIR} DOC "gslcblas library dir")
+FIND_LIBRARY(GSL_CBLAS_LIBRARY NAMES gslcblas libgslcblas_dll_d PATHS  ${CONTRIB_LIB_DIR} DOC "gslcblas library dir")
 if (GSL_CBLAS_LIBRARY STREQUAL "GSL_CBLAS_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find GSL_CBLAS library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
 	MESSAGE(STATUS "Found GSL_CBLAS library at: " ${GSL_CBLAS_LIBRARY})
 endif()
 
-FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL cgal-vc80-mt PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
+FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL cgal-vc80-mt-gd PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
 if (CGAL_LIBRARY STREQUAL "CGAL_LIBRARY-NOTFOUND")
 	MESSAGE(FATAL_ERROR "Unable to find CGAL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 else()
@@ -336,15 +336,16 @@ if (NOT PROG_Svnversion-NOTFOUND)
 endif()
 
 # are we building a shared or static lib?! (BOTH within the same BUILD-tree is NOT possible with OpenMS!!)
-#if (MINGW OR MSVC)
-#	set(BUILD_SHARED_LIBS false)
-#else()
+if (MINGW OR MSVC)
+	set(BUILD_SHARED_LIBS false)
+else()
 	set(BUILD_SHARED_LIBS true)
-#endif()
+endif()
 
 
 ## replace any variables in config.h.in with current values
-configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${PROJECT_BINARY_DIR}/include/OpenMS/config.h)
+set (CONFIGURED_CONFIG_H ${PROJECT_BINARY_DIR}/include/OpenMS/config.h)
+configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${CONFIGURED_CONFIG_H})
 
 
 ########################################################

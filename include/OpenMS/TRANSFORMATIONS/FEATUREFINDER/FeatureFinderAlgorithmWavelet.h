@@ -56,7 +56,7 @@ namespace OpenMS
     @ingroup FeatureFinder
    */
     template<class PeakType, class FeatureType> 
-    class OPENMS_DLLAPI FeatureFinderAlgorithmWavelet :
+    class FeatureFinderAlgorithmWavelet :
       public FeatureFinderAlgorithm<PeakType, FeatureType>,
       public FeatureFinderDefs
       {

@@ -140,7 +140,7 @@ namespace OpenMS
 	@brief Implements a module of the FeatureFinder algorithm.
 	*/
 	template<class PeakType, class FeatureType>
-	class OPENMS_DLLAPI FeaFiModule
+	class FeaFiModule
 		: public DefaultParamHandler
 	{
 	 public:

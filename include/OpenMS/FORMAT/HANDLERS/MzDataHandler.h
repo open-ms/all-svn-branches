@@ -54,7 +54,7 @@ namespace OpenMS
 			Do not use this class. It is only needed in MzDataFile.
 		*/
 		template <typename MapType>
-		class OPENMS_DLLAPI MzDataHandler
+		class MzDataHandler
 			: public XMLHandler
 		{
 		 public:

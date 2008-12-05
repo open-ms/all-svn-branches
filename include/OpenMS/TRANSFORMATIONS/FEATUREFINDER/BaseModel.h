@@ -42,7 +42,7 @@ namespace OpenMS
 	"T* create()" and "const String getProductName()" (see FactoryProduct for details)
   */
   template <UInt D>
-	class OPENMS_DLLAPI BaseModel
+	class BaseModel
     : public FactoryProduct
 	{
 

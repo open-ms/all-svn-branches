@@ -82,7 +82,9 @@ include (include/OpenMS/VISUAL/VISUALIZER/sources.cmake)
 
 ## merge all headers to sources (for source group view in VS)
 if (MSVC)
-	list(APPEND OpenMS_sources ${OpenMS_sources_h})
+	##add configured config.h to source group
+	source_group("Header Files\\OpenMS" FILES ${CONFIGURED_CONFIG_H})
+	list(APPEND OpenMS_sources ${OpenMS_sources_h} ${CONFIGURED_CONFIG_H})
 endif()
 
 # TODO track why the duplicate warnings are thrown for all (!) MOC sources

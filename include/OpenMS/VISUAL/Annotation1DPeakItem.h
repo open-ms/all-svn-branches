@@ -32,8 +32,6 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/KERNEL/PeakIndex.h>
 
-#include <QtCore/QRectF>
-
 namespace OpenMS
 {
 	/** @brief A peak annotation item
@@ -53,23 +51,13 @@ namespace OpenMS
 			typedef DoubleReal CoordinateType;
 
 			/// Constructor
-			Annotation1DPeakItem(const PointType& position, const PeakIndex& peak, const String& text);
+			Annotation1DPeakItem(const PointType& position, const PeakIndex& peak, const QString& text, const QPen& pen);
 			/// Copy constructor
 			Annotation1DPeakItem(const Annotation1DPeakItem& rhs);
 			/// Destructor
 			virtual ~Annotation1DPeakItem();
-			/// Returns the current bounding box of this item on the canvas where it has last been drawn
-			virtual const QRectF& boundingBox() const;
-			/// Sets the bounding_box_ for this item
-			virtual void setBoundingBox(const QRectF& bbox);
-			/// Sets whether this item is currently selected on the canvas or not
-			virtual void setSelected(bool selected);
-			/// Returns true if this item is currently selected on the canvas, else false
-			virtual bool isSelected() const;
-			/// Sets the text
- 			virtual void setText(const String& text);
- 			/// Returns the text
-			virtual const String& getText() const;
+			/// Draws the item
+			virtual void draw(Spectrum1DCanvas* const canvas, QPainter& painter, bool flipped = false);
 			/// Sets the position of the item (in MZ / intensity coordinates)
 			void setPosition(const PointType& position);
 			/// Returns the position of the item (in MZ / intensity coordinates)
@@ -81,16 +69,10 @@ namespace OpenMS
 			
 		protected:
 		
-			/// The current bounding box of this item on the canvas where it has last been drawn
-			QRectF bounding_box_;
-			/// Determines whether this item is currently selected on the canvas
-			bool is_selected_;
 			/// The position of the item (in MZ / intensity coordinates)
 			PointType position_;
 			/// The peak annotated by this item
 			PeakIndex peak_;
-			/// The text to be drawn on the canvas
-			String text_;
 			
 	};
 } // namespace OpenMS

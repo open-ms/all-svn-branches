@@ -33,9 +33,6 @@
 
 // OpenMS
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
-#include <OpenMS/VISUAL/Annotation1DItem.h>
-#include <OpenMS/VISUAL/Annotation1DDistanceItem.h>
-#include <OpenMS/VISUAL/Annotations1DManager.h>
 
 //QT
 class QAction;
@@ -87,32 +84,44 @@ namespace OpenMS
 			/// Sets draw mode of the current layer
 			void setDrawMode(DrawModes mode);
 			
-			/**
-				@brief Sets the overall data range
-				
-				This method sets the overall data range. Normally, this is computed by the protected
-				function recalculateRanges_(), but when there are two canvasses which should behave
-				synchronously, the united range of both canvasses has to be computed from outside
-				this class (where both canvasses and their ranges are known). Currently, this
-				is done in Spectrum1DWidget.
-			*/
-			void setOverallDataRange(const DRange<3>& overall_range);
-			
-			/// Calls recalculateRanges_()
-			void recalculateRanges();
-			
-			/// Sets whether we are currently in mirror mode or not (two 1d canvasses on one widget)
-			void setMirrorMode(bool mode);
-			
-			/// Returns whether we are currently in mirror mode or not (two 1d canvasses on one widget)
-			bool inMirrorMode();
-			
 			// Docu in base class
 			virtual void showCurrentLayerPreferences();
 
 			// Docu in base class
 			virtual void saveCurrentLayer(bool visible);
 	
+			/// Returns whether flipped layers exist or not
+			bool flippedLayersExist();
+			
+			/// Returns whether this widget is currently in mirror mode
+			inline bool mirrorModeActive()
+			{
+				return mirror_mode_;
+			}
+			
+			/// Sets whether this widget is currently in mirror mode
+			inline void setMirrorModeActive(bool b)
+			{
+				mirror_mode_ = b;
+				update_buffer_ = true;
+				update_(__PRETTY_FUNCTION__);
+			}
+			
+			/// Calls dataToWidget_() but takes snap_factor_ and percentage_factor_ into account.
+			void dataToWidget(const PeakType& peak, QPoint& point, bool flipped = false);
+			
+			/// Calls SpectrumCanvas::dataToWidget_() but takes mirror mode into account
+			void dataToWidget(float x, float y, QPoint& point, bool flipped = false);
+			
+			/// Calls SpectrumCanvas::widgetToData_() but takes mirror mode into account
+			PointType widgetToData(const QPoint& pos);
+			
+			/// Calls SpectrumCanvas::widgetToData_() but takes mirror mode into account
+			PointType widgetToData(float x, float y);
+			
+			/// Draws all annotation items of @p layer on @p painter
+			void drawAnnotations(const LayerData& layer, QPainter& painter);
+			
 		public slots:
 			// Docu in base class
 			void activateLayer(int layer_index);
@@ -127,14 +136,6 @@ namespace OpenMS
 			void setVisibleArea(DRange<2> range); //Do not change this to AreaType the signal needs QT needs the exact type...
 			// Docu in base class
 			virtual void horizontalScrollBarChange(int value);
-			/// Adds the current visible area to the zoom stack
-			void zoomAdd();
-			/// Calls zoomForward_()
-			void zoomForward();
-			/// Calls zoomBack_()
-			void zoomBack();
-			/// Adds @p layer to the layers_ vector of this canvas
-			void addLayerData(const LayerData& layer);
 		
 		protected:
 			// Docu in base class
@@ -146,9 +147,6 @@ namespace OpenMS
 				This method is for convenience only. It calls changeVisibleArea_(const AreaType&, bool, bool) .
 			*/
 			void changeVisibleArea_(double lo, double hi, bool repaint = true, bool add_to_stack = false);  
-			
-			/// Calls dataToWidget_(const PointType&, QPoint& point) but takes snap_factor_ and percentage_factor_ into account.
-			void dataToWidget_(const PeakType& peak, QPoint& point);
 			
 			/// Draws a highlighted peak; if draw_elongation is true, the elongation line is drawn (for measuring)
 			void drawHighlightedPeak_(UInt layer_index, const PeakIndex& peak, QPainter& painter, bool draw_elongation = false);
@@ -182,10 +180,10 @@ namespace OpenMS
       PeakIndex measurement_start_;
       /// start point of "ruler" for measure mode
       QPoint measurement_start_point_;
-      /// The annotation manager
-      Annotations1DManager annotation_manager_;
-      /// Indicates whether this canvas is currently in mirror mode with another 1d canvas
-      bool in_mirror_mode_;
+      /// Indicates whether this widget is currently in mirror mode
+			bool mirror_mode_;
+			/// Indicates whether the lower or upper half is currently active (only relevant in mirror mode)
+			bool lower_half_active_;
       
 			/// Find peak next to the given position
 			PeakIndex findPeakAtPosition_(QPoint);
@@ -207,20 +205,6 @@ namespace OpenMS
 			virtual void translateLeft_();
 			//docu in base class
 			virtual void translateRight_();
-
-		protected slots:
-			
-			/**
-				@brief Overwrites SpectrumCanvas::recalculateRanges_()
-				
-				This method overwrites SpectrumCanvas::recalculateRanges_(), in order
-				to be able to prevent the canvas from recalculating its ranges. This
-				is needed when two 1d canvasses are shown on a single 1d widget
-				(mirror view) and the overall data range has to contain the ranges
-				of both canvasses. The united overall range for both canvasses
-				is set in Spectrum1DWidget.
-			*/
-			void recalculateRanges_(UInt mz_dim, UInt rt_dim, UInt it_dim);
 	};
 } // namespace OpenMS
 

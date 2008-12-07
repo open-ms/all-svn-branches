@@ -28,7 +28,6 @@
 #include <OpenMS/VISUAL/Spectrum1DWidget.h>
 #include <OpenMS/VISUAL/AxisWidget.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum1DGoToDialog.h>
-#include <OpenMS/VISUAL/Alignment1DWidget.h>
 
 #include <QtGui/QScrollBar>
 
@@ -40,9 +39,7 @@ namespace OpenMS
 	using namespace Math;
 	
 	Spectrum1DWidget::Spectrum1DWidget(const Param& preferences, QWidget* parent)
-		: SpectrumWidget(preferences, parent),
-			flipped_canvas_(0),
-			has_second_canvas_(0)
+		: SpectrumWidget(preferences, parent)
 	{
 		//set the label mode for the axes  - side effect
 		setCanvas_(new Spectrum1DCanvas(preferences, this));
@@ -52,178 +49,6 @@ namespace OpenMS
 		y_axis_->setLegend("Intensity");
 		y_axis_->setAllowShortNumbers(true);
 		y_axis_->setMinimumWidth(50);
-	}
-	
-	void Spectrum1DWidget::setFlippedCanvas(Spectrum1DCanvas* flipped_canvas)
-	{
-		flipped_canvas_ = flipped_canvas;
-		flippedCanvas()->setFlippedVertically(true);
-		flippedCanvas()->setSpectrumWidget(this);
-		canvas()->setMirrorMode(true);
-		flippedCanvas()->setMirrorMode(true);
-		// make sure canvasses don't overlap:
-		canvas()->setMinimumHeight(0);
-		flippedCanvas()->setMinimumHeight(0);
-		
-		grid_->removeWidget(x_axis_);
-		grid_->removeWidget(x_scrollbar_);
-		
-		flipped_y_axis_ = new AxisWidget(AxisWidget::LEFT,"Intensity",this);
-		flipped_y_axis_->setInverseOrientation(true);
-		flipped_y_axis_->setAllowShortNumbers(true);
-		flipped_y_axis_->setMinimumWidth(50);
-		alignment_widget_ = new Alignment1DWidget(this, this);
-
-		//place alignment widget between the two canvasses
-		grid_->addWidget(alignment_widget_, 1, 2);
-		
-		//move everything else downwards
-		grid_->addWidget(flippedCanvas(), 2, 2);
-		grid_->addWidget(flipped_y_axis_, 2, 1);
-		grid_->addWidget(x_axis_, 3, 2);
-		grid_->addWidget(x_scrollbar_, 4, 2);
-		
-		alignment_widget_->show();
-		
-		connect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), canvas(), SLOT(setVisibleArea(DRange<2>)));
-		connect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), flippedCanvas(), SLOT(setVisibleArea(DRange<2>)));
-		connect(flippedCanvas(), SIGNAL(zoomLevelAdded()), canvas(), SLOT(zoomAdd()));
-		connect(canvas(), SIGNAL(zoomLevelAdded()), flippedCanvas(), SLOT(zoomAdd()));
-		connect(flippedCanvas(), SIGNAL(zoomedForward()), canvas(), SLOT(zoomForward()));
-		connect(canvas(), SIGNAL(zoomedForward()), flippedCanvas(), SLOT(zoomForward()));
-		connect(flippedCanvas(), SIGNAL(zoomedBack()), canvas(), SLOT(zoomBack()));
-		connect(canvas(), SIGNAL(zoomedBack()), flippedCanvas(), SLOT(zoomBack()));
-		
-		connect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), this, SLOT(updateAxes()));
-		connect(flippedCanvas(), SIGNAL(recalculateAxes()), this, SLOT(updateAxes()));
-		connect(flippedCanvas(), SIGNAL(changeLegendVisibility()), this, SLOT(changeLegendVisibility()));
-		connect(flippedCanvas(), SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
-		connect(flippedCanvas(), SIGNAL(updateVScrollbar(float,float,float,float)), this, SLOT(updateVScrollbar(float,float,float,float)));
-		connect(x_scrollbar_, SIGNAL(valueChanged(int)), flippedCanvas(), SLOT(horizontalScrollBarChange(int)));
-		connect(y_scrollbar_, SIGNAL(valueChanged(int)), flippedCanvas(), SLOT(verticalScrollBarChange(int)));
-		connect(flippedCanvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
-		connect(flippedCanvas(), SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
-		
-		connect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), alignment_widget_, SLOT(update()));
-		connect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), alignment_widget_, SLOT(update()));
-
-		has_second_canvas_ = true;
-	}
-
-	void Spectrum1DWidget::removeFlippedCanvas()
-	{
-		if (has_second_canvas_)
-		{
-			disconnect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), canvas(), SLOT(setVisibleArea(DRange<2>)));
-			disconnect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), flippedCanvas(), SLOT(setVisibleArea(DRange<2>)));
-			disconnect(flippedCanvas(), SIGNAL(zoomLevelAdded()), canvas(), SLOT(zoomAdd()));
-			disconnect(canvas(), SIGNAL(zoomLevelAdded()), flippedCanvas(), SLOT(zoomAdd()));
-			disconnect(flippedCanvas(), SIGNAL(zoomedForward()), canvas(), SLOT(zoomForward()));
-			disconnect(canvas(), SIGNAL(zoomedForward()), flippedCanvas(), SLOT(zoomForward()));
-			disconnect(flippedCanvas(), SIGNAL(zoomedBack()), canvas(), SLOT(zoomBack()));
-			disconnect(canvas(), SIGNAL(zoomedBack()), flippedCanvas(), SLOT(zoomBack()));
-			
-			disconnect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), this, SLOT(updateAxes()));
-			disconnect(flippedCanvas(), SIGNAL(recalculateAxes()), this, SLOT(updateAxes()));
-			disconnect(flippedCanvas(), SIGNAL(changeLegendVisibility()), this, SLOT(changeLegendVisibility()));
-			disconnect(flippedCanvas(), SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
-			disconnect(flippedCanvas(), SIGNAL(updateVScrollbar(float,float,float,float)), this, SLOT(updateVScrollbar(float,float,float,float)));
-			disconnect(x_scrollbar_, SIGNAL(valueChanged(int)), flippedCanvas(), SLOT(horizontalScrollBarChange(int)));
-			disconnect(y_scrollbar_, SIGNAL(valueChanged(int)), flippedCanvas(), SLOT(verticalScrollBarChange(int)));
-			disconnect(flippedCanvas(), SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
-			disconnect(flippedCanvas(), SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
-		
-			disconnect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), alignment_widget_, SLOT(update()));
-			disconnect(flippedCanvas(), SIGNAL(visibleAreaChanged(DRange<2>)), alignment_widget_, SLOT(update()));		
-		
-			grid_->removeWidget(flippedCanvas());
-			grid_->removeWidget(flipped_y_axis_);
-			grid_->removeWidget(alignment_widget_);
-			flippedCanvas()->close();
-			flipped_y_axis_->close();
-			alignment_widget_->close();
-			delete flipped_canvas_;
-			delete flipped_y_axis_;
-			delete alignment_widget_;
-			grid_->removeWidget(x_axis_);
-			grid_->removeWidget(x_scrollbar_);
-			grid_->addWidget(x_axis_, 1, 2);
-			grid_->addWidget(x_scrollbar_, 2, 2);
-			
-			canvas()->setMinimumHeight(200);
-			canvas()->setMirrorMode(false);
-			has_second_canvas_ = false;
-		}
-	}
-	
-	void Spectrum1DWidget::setIntensityMode(SpectrumCanvas::IntensityModes mode)
-	{
-		if (canvas_->getIntensityMode() != mode)
-		{
-			canvas_->setIntensityMode(mode);
-			intensityModeChange_();
-		}
-		if (has_second_canvas_)
-		{
-			flipped_canvas_->setIntensityMode(mode);
-			intensityModeChange_();
-		}
-	}
-	
-	void Spectrum1DWidget::calculateUnitedRanges(bool reset_zoom)
-	{
-		if (canvas() != 0 && flippedCanvas() != 0)
-		{
-			canvas()->recalculateRanges();
-			flippedCanvas()->recalculateRanges();
-			
-			DRange<3> new_overall_range = canvas()->getDataRange().united(flippedCanvas()->getDataRange());
-						
-			DRange<3> canvas_range = new_overall_range;
-			//don't change intensity range:
-			canvas_range.setMinY(canvas()->getDataRange().minY());
-			canvas_range.setMaxY(canvas()->getDataRange().maxY());
-			
-			DRange<3> fl_canvas_range = new_overall_range;
-			//don't change intensity range:
-			fl_canvas_range.setMinY(flippedCanvas()->getDataRange().minY());
-			fl_canvas_range.setMaxY(flippedCanvas()->getDataRange().maxY());
-			
-			canvas()->setOverallDataRange(canvas_range);
-			flippedCanvas()->setOverallDataRange(fl_canvas_range);
-						
-			if (reset_zoom)
-			{
-				canvas()->resetZoom();
-				flippedCanvas()->resetZoom();
-			}
-		}
-	}
-	
-	bool Spectrum1DWidget::hasSecondCanvas()
-	{
-		return has_second_canvas_;
-	}
-	
-	void Spectrum1DWidget::setHasSecondCanvas(bool has_second_canvas)
-	{
-		has_second_canvas_ = has_second_canvas;
-	}
-	
-	void Spectrum1DWidget::setAlignmentLines(const std::vector<std::pair<DoubleReal,DoubleReal> >& alignment_lines)
-	{
-		if (has_second_canvas_)
-		{
-			alignment_widget_->setAlignmentLines(alignment_lines);
-		}
-	}
-	
-	void Spectrum1DWidget::clearAlignmentLines()
-	{
-		if (has_second_canvas_)
-		{
-			alignment_widget_->clearAlignmentLines();
-		}
 	}
 	
 	void Spectrum1DWidget::recalculateAxes_()
@@ -243,28 +68,18 @@ namespace OpenMS
 			it_axis = x_axis_;
 		}
 		
-		recalculateAxes_(mz_axis, it_axis, canvas());
-		
-		if (has_second_canvas_)
-		{
-			recalculateAxes_(mz_axis, flipped_y_axis_, flippedCanvas());
-		}
-	}
-	
-	void Spectrum1DWidget::recalculateAxes_(AxisWidget* mz_axis, AxisWidget* it_axis, Spectrum1DCanvas* canvas)
-	{
 		// recalculate gridlines
-		mz_axis->setAxisBounds(canvas->getVisibleArea().minX(), canvas->getVisibleArea().maxX());
-		switch(canvas->getIntensityMode())
+		mz_axis->setAxisBounds(canvas()->getVisibleArea().minX(), canvas()->getVisibleArea().maxX());
+		switch(canvas()->getIntensityMode())
 		{
 			case SpectrumCanvas::IM_NONE:
-				it_axis->setAxisBounds(canvas->getVisibleArea().minY(), canvas->getVisibleArea().maxY());
+				it_axis->setAxisBounds(canvas()->getVisibleArea().minY(), canvas()->getVisibleArea().maxY());
 				break;
 			case SpectrumCanvas::IM_PERCENTAGE:
-				it_axis->setAxisBounds(canvas->getVisibleArea().minY() / canvas->getDataRange().maxY() * 100.0, canvas->getVisibleArea().maxY() / canvas->getDataRange().maxY() * 100.0);
+				it_axis->setAxisBounds(canvas()->getVisibleArea().minY() / canvas()->getDataRange().maxY() * 100.0, canvas()->getVisibleArea().maxY() / canvas()->getDataRange().maxY() * 100.0);
 				break;
 			case SpectrumCanvas::IM_SNAP:
-				it_axis->setAxisBounds(canvas->getVisibleArea().minY()/canvas->getSnapFactor(), canvas->getVisibleArea().maxY()/canvas->getSnapFactor());
+				it_axis->setAxisBounds(canvas()->getVisibleArea().minY()/canvas()->getSnapFactor(), canvas()->getVisibleArea().maxY()/canvas()->getSnapFactor());
 				break;
 			default:
 				throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);

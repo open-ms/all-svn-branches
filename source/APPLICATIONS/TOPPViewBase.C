@@ -1066,12 +1066,6 @@ namespace OpenMS
     if (window!=0)
     {
       window->canvas()->resetZoom();
-      
-      Spectrum1DWidget* active_1d_window = active1DWindow_();
-      if (active_1d_window && active_1d_window->hasSecondCanvas())
-      {
-      	active_1d_window->flippedCanvas()->resetZoom();
-      }
     }
   }
 
@@ -1090,11 +1084,6 @@ namespace OpenMS
     if (w)
     {
     	w->canvas()->setDrawMode((OpenMS::Spectrum1DCanvas::DrawModes)index);
-    	
-    	if (w->hasSecondCanvas())
-    	{
-    		w->flippedCanvas()->setDrawMode((OpenMS::Spectrum1DCanvas::DrawModes)index);
-    	}
   	}
   }
 
@@ -1216,11 +1205,17 @@ namespace OpenMS
     }
 		layer_manager_->blockSignals(true);
 		QListWidgetItem* item = 0;
+		QString name;
     for (UInt i = 0; i<cc->getLayerCount(); ++i)
     {
     	//add item
     	item = new QListWidgetItem( layer_manager_ );
-			item->setText(cc->getLayer(i).name.toQString());
+			name = cc->getLayer(i).name.toQString();
+			if (cc->getLayer(i).flipped)
+			{
+				name += " (flipped)";
+			}
+			item->setText(name);
     	if (cc->getLayer(i).visible)
     	{
     		item->setCheckState(Qt::Checked);
@@ -1234,50 +1229,15 @@ namespace OpenMS
     	{
 				layer_manager_->setCurrentItem(item);
     	}
-    }
-    Spectrum1DWidget* window_1d = active1DWindow_();
-		//if a mirror view is active, list the layers of the second canvas, too:
-		if (window_1d && window_1d->hasSecondCanvas())
-		{
-			cc = window_1d->flippedCanvas();
-			
-			for (UInt i = 0; i<cc->getLayerCount(); ++i)
-			{
-				//add item
-				item = new QListWidgetItem( layer_manager_ );
-				item->setText(QString("Bottom: ") + cc->getLayer(i).name.toQString());
-				if (cc->getLayer(i).visible)
-				{
-					item->setCheckState(Qt::Checked);
-				}
-				else
-				{
-					item->setCheckState(Qt::Unchecked);
-				}
-			}
 		}
-    
 		layer_manager_->blockSignals(false);
   }
   
   void TOPPViewBase::updateSpectrumBar()
   {		
-  	SpectrumCanvas* cc;
+  	SpectrumCanvas* cc = activeCanvas_();
   	int layer_row = layer_manager_->currentRow();
-  	if (layer_row == -1)
-  	{
-  		return;
-  	}
-  	if ((UInt)layer_row >= activeCanvas_()->getLayerCount())
-  	{
-			// this can only be the case when a 1D window is active, no further check needed
-  		cc = active1DWindow_()->flippedCanvas();
-  	}
-  	else
-  	{
-  		cc = activeCanvas_();
-  	}
-  	if (cc == 0)
+  	if (layer_row == -1 || cc == 0)
   	{
   		return;
   	}
@@ -1358,7 +1318,7 @@ namespace OpenMS
 			{
 				// generate flat list instead
 				spectrum_selection_->clear();
-				for (int i = 0; i < cl.peaks.size(); ++i)
+				for (UInt i = 0; i < cl.peaks.size(); ++i)
 				{
 					item = new QTreeWidgetItem((QTreeWidget*)0);
 					item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
@@ -1394,15 +1354,7 @@ namespace OpenMS
 	{
 		if (i!=-1)
 		{
-			if ((UInt)i <= activeCanvas_()->getLayerCount())
-			{
-				activeCanvas_()->activateLayer(i);
-			}
-			else // selected layer belongs to second canvas (mirror view)
-			{
-				i -= activeCanvas_()->getLayerCount();
-				active1DWindow_()->flippedCanvas()->activateLayer(i);
-			}
+			activeCanvas_()->activateLayer(i);
 			updateFilterBar();
 			updateSpectrumBar();
 		}
@@ -1410,16 +1362,7 @@ namespace OpenMS
 	
 	void TOPPViewBase::spectrumSelectionChange(QTreeWidgetItem* item, int /*column*/)
 	{
-		SpectrumCanvas* cc;
-		if ((UInt)layer_manager_->currentRow() >= activeCanvas_()->getLayerCount())
-		{
-			// this can only be the case when a 1D window is active, no further check needed
-			cc = active1DWindow_()->flippedCanvas();
-		}
-		else
-		{
-			cc = activeCanvas_();
-		}
+		SpectrumCanvas* cc = activeCanvas_();
 		const LayerData& cl = cc->getCurrentLayer();
 		
 		int index = item->text(3).toInt();
@@ -1443,13 +1386,14 @@ namespace OpenMS
 			QMenu* context_menu = new QMenu(layer_manager_);
 			context_menu->addAction("Rename");
 			context_menu->addAction("Delete");
-			if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
+			
+			if (activeCanvas_()->getLayer(layer).flipped)
 			{
-				new_action = context_menu->addAction("Move to upper canvas (1D)");
+				new_action = context_menu->addAction("Flip upwards (1D)");
 			}
 			else
 			{
-				new_action = context_menu->addAction("Move to mirror canvas (1D)");
+				new_action = context_menu->addAction("Flip downwards (1D)");
 			}
 			if (!active1DWindow_())
 			{
@@ -1459,21 +1403,7 @@ namespace OpenMS
 			//delete layer
 			if (selected!=0 && selected->text()=="Delete")
 			{
-				if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
-				{
-					// this can only be the case when a 1D window is active, no further check needed
-					int del_index = layer - active1DWindow_()->canvas()->getLayerCount();
-					Spectrum1DCanvas* flipped_canvas = active1DWindow_()->flippedCanvas();
-					flipped_canvas->removeLayer(del_index);
-					if (flipped_canvas->getLayerCount() == 0)
-					{
-						active1DWindow_()->removeFlippedCanvas();
-					}
-				}
-				else
-				{
-					activeCanvas_()->removeLayer(layer);
-				}
+				activeCanvas_()->removeLayer(layer);
 			}
 			//rename layer
 			else if (selected!=0 && selected->text()=="Rename")
@@ -1481,51 +1411,20 @@ namespace OpenMS
 				QString name = QInputDialog::getText(this,"Rename layer","Name:");
 				if (name!="")
 				{
-					if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
-					{
-						// this can only be the case when a 1D window is active, no further check needed
-						int rename_index = layer - active1DWindow_()->canvas()->getLayerCount();
-						active1DWindow_()->flippedCanvas()->setLayerName(rename_index, name);
-					}
-					else
-					{
-						activeCanvas_()->setLayerName(layer, name);
-					}
+					activeCanvas_()->setLayerName(layer, name);
 				}
 			}
-			//move layer from mirror to upper canvas
-			else if (selected != 0 && selected->text() == "Move to upper canvas (1D)")
+			// flip layer up/downwards
+			else if (selected != 0 && selected->text() == "Flip downwards (1D)")
 			{
-				//compute correct layer index for mirror canvas
-				int index = layer - active1DWindow_()->canvas()->getLayerCount();
-				const LayerData& layer_tmp = active1DWindow_()->flippedCanvas()->getLayer(index);
-				active1DWindow_()->canvas()->addLayerData(layer_tmp);
-				active1DWindow_()->flippedCanvas()->removeLayer(index);
-				
-				//ensure layer is drawn as sticks
-				draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
-				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
-				
-				if (active1DWindow_()->flippedCanvas()->getLayerCount() == 0)
-				{
-					active1DWindow_()->removeFlippedCanvas();
-				}
+				activeCanvas_()->getLayer(layer).flipped = true;
+				active1DWindow_()->canvas()->setMirrorModeActive(true);
 			}
-			//move layer from upper to mirror canvas
-			else if (selected != 0 && selected->text() == "Move to mirror canvas (1D)")
+			else if (selected != 0 && selected->text() == "Flip upwards (1D)")
 			{
-				const LayerData& layer_tmp = active1DWindow_()->canvas()->getLayer(layer);
-				// create second canvas if not already there
-				if (!active1DWindow_()->hasSecondCanvas())
-				{
-					active1DWindow_()->setFlippedCanvas(new Spectrum1DCanvas(active1DWindow_()->canvas()->getParameters(), active1DWindow_()));
-				}
-				active1DWindow_()->flippedCanvas()->addLayerData(layer_tmp);
-				active1DWindow_()->canvas()->removeLayer(layer);
-				
-				//ensure layer is drawn as sticks
-				draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
-				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
+				activeCanvas_()->getLayer(layer).flipped = false;
+				bool b = active1DWindow_()->canvas()->flippedLayersExist();
+				active1DWindow_()->canvas()->setMirrorModeActive(b);
 			}
 			
 			//Update tab bar and window title
@@ -1636,20 +1535,9 @@ namespace OpenMS
 		}
 	}
 
-	void TOPPViewBase::layerEdit(QListWidgetItem* item)
+	void TOPPViewBase::layerEdit(QListWidgetItem* /*item*/)
 	{
-		if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
-		{
-			Spectrum1DWidget* active_1d_window = active1DWindow_();
-			if (active_1d_window && active_1d_window->hasSecondCanvas())
-			{
-				active_1d_window->flippedCanvas()->showCurrentLayerPreferences();
-			}
-		}
-		else
-		{
-			activeCanvas_()->showCurrentLayerPreferences();
-		}
+		activeCanvas_()->showCurrentLayerPreferences();
 	}
 
   void TOPPViewBase::updateFilterBar()
@@ -1684,35 +1572,16 @@ namespace OpenMS
 	{
 		int layer;
 		bool visible;
-		if ((UInt)layer_manager_->row(item) >= activeCanvas_()->getLayerCount())
+		layer = layer_manager_->row(item);
+		visible = activeCanvas_()->getLayer(layer).visible;
+		
+		if (item->checkState()==Qt::Unchecked && visible)
 		{
-			// this can only be the case when a 1D window is active, no further check needed
-
-			layer = layer_manager_->row(item) - active1DWindow_()->canvas()->getLayerCount();
-			visible = active1DWindow_()->flippedCanvas()->getLayer(layer).visible;
-			
-			if (item->checkState()==Qt::Unchecked && visible)
-			{
-				active1DWindow_()->flippedCanvas()->changeVisibility(layer, false);
-			}
-			else if (item->checkState()==Qt::Checked && !visible)
-			{
-				active1DWindow_()->flippedCanvas()->changeVisibility(layer, true);
-			}
+			activeCanvas_()->changeVisibility(layer, false);
 		}
-		else
+		else if (item->checkState()==Qt::Checked && !visible)
 		{
-			layer = layer_manager_->row(item);
-			visible = activeCanvas_()->getLayer(layer).visible;
-			
-			if (item->checkState()==Qt::Unchecked && visible)
-			{
-				activeCanvas_()->changeVisibility(layer, false);
-			}
-			else if (item->checkState()==Qt::Checked && !visible)
-			{
-				activeCanvas_()->changeVisibility(layer, true);
-			}
+			activeCanvas_()->changeVisibility(layer, true);
 		}
 	}
 
@@ -1853,7 +1722,7 @@ namespace OpenMS
 		if (!w) return 0;
 		return w;
   }
-
+  
   Spectrum2DWidget* TOPPViewBase::active2DWindow_() const
   {
 		Spectrum2DWidget* w = qobject_cast<Spectrum2DWidget*>(activeWindow_());
@@ -2315,7 +2184,7 @@ namespace OpenMS
 				FeatureMapType dummy;
 				addData_(dummy, new_exp, false, false, true, "", seq_string + QString(" (theoretical)"));
 	      
-	      // ensure spectrum is drawn as sticks (otherwise it will be a straight line)
+	      // ensure spectrum is drawn as sticks
 	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
 				setDrawMode1D(Spectrum1DCanvas::DM_PEAKS);
 			}
@@ -2331,48 +2200,50 @@ namespace OpenMS
 		SpectrumAlignmentDialog spec_align_dialog;
 		if (spec_align_dialog.exec())
 		{
-			Spectrum1DWidget* active_1d_window = active1DWindow_();
-			// only possible in mirror mode:
-			if (active_1d_window && active_1d_window->hasSecondCanvas())
-			{
-				SpectrumAlignment aligner;
-				Param param;
-				DoubleReal tolerance = spec_align_dialog.tolerance_spinbox->value();
-				param.setValue("tolerance", tolerance, "Defines the absolut (in Da) or relative (in ppm) tolerance", false);
-				String unit_is_ppm = spec_align_dialog.ppm->isChecked() ? "true" : "false";
-				param.setValue("is_relative_tolerance", unit_is_ppm, "If true, the 'tolerance' is interpreted as ppm-value", false);
-				aligner.setParameters(param);
-				
-				const LayerData& current_layer_1 = active_1d_window->canvas()->getCurrentLayer();
-				const LayerData& current_layer_2 = active_1d_window->flippedCanvas()->getCurrentLayer();
-				const ExperimentType& map_1 = current_layer_1.peaks;
-				const ExperimentType& map_2 = current_layer_2.peaks;
-				const ExperimentType::SpectrumType& spectrum_1 = *(map_1.begin());
-				const ExperimentType::SpectrumType& spectrum_2 = *(map_2.begin());
-				std::vector<std::pair<UInt, UInt> > alignment;
-
-				aligner.getSpectrumAlignment(alignment, spectrum_1, spectrum_2);
-				
-				std::vector<std::pair<DoubleReal, DoubleReal > > alignment_lines;
-				
-				for (UInt i = 0; i < alignment.size(); ++i)
-				{
-					DoubleReal line_begin_mz = spectrum_1[alignment[i].first].getMZ();
-					DoubleReal line_end_mz = spectrum_2[alignment[i].second].getMZ();
-					alignment_lines.push_back(std::make_pair(line_begin_mz, line_end_mz));
-				}
-				active_1d_window->setAlignmentLines(alignment_lines);
-				
-				SpectrumAlignmentScore scorer;
-				scorer.setParameters(param);
-				double score = scorer(spectrum_1, spectrum_2);
-				
-				QMessageBox::information(this, "Alignment performed", QString("Aligned %1 pairs of peaks (Score: %2).").arg(alignment_lines.size()).arg(score));
-			}
-			else
-			{
-				QMessageBox::warning(this, "Not supported", "A spectrum alignment can only be performed if the active window is a 1D view and contains two spectrum canvases (mirror mode).");
-			}
+// 			Spectrum1DMirrorWidget* active_1d_mirror_window = active1DMirrorWindow_();
+// 			// only possible in mirror mode:
+// 			if (active_1d_mirror_window)
+// 			{
+// 				SpectrumAlignment aligner;
+// 				Param param;
+// 				DoubleReal tolerance = spec_align_dialog.tolerance_spinbox->value();
+// 				param.setValue("tolerance", tolerance, "Defines the absolut (in Da) or relative (in ppm) tolerance", false);
+// 				String unit_is_ppm = spec_align_dialog.ppm->isChecked() ? "true" : "false";
+// 				param.setValue("is_relative_tolerance", unit_is_ppm, "If true, the 'tolerance' is interpreted as ppm-value", false);
+// 				aligner.setParameters(param);
+// 				
+// 				// TODO JJ kacke
+// 				
+// 				const LayerData& current_layer_1 = active_1d_mirror_window->canvas()->getCurrentLayer();
+// 				const LayerData& current_layer_2 = active_1d_mirror_window->flippedCanvas()->getCurrentLayer();
+// 				const ExperimentType& map_1 = current_layer_1.peaks;
+// 				const ExperimentType& map_2 = current_layer_2.peaks;
+// 				const ExperimentType::SpectrumType& spectrum_1 = *(map_1.begin());
+// 				const ExperimentType::SpectrumType& spectrum_2 = *(map_2.begin());
+// 				std::vector<std::pair<UInt, UInt> > alignment;
+// 
+// 				aligner.getSpectrumAlignment(alignment, spectrum_1, spectrum_2);
+// 				
+// 				std::vector<std::pair<DoubleReal, DoubleReal > > alignment_lines;
+// 				
+// 				for (UInt i = 0; i < alignment.size(); ++i)
+// 				{
+// 					DoubleReal line_begin_mz = spectrum_1[alignment[i].first].getMZ();
+// 					DoubleReal line_end_mz = spectrum_2[alignment[i].second].getMZ();
+// 					alignment_lines.push_back(std::make_pair(line_begin_mz, line_end_mz));
+// 				}
+// 				active_1d_mirror_window->setAlignmentLines(alignment_lines);
+// 				
+// 				SpectrumAlignmentScore scorer;
+// 				scorer.setParameters(param);
+// 				double score = scorer(spectrum_1, spectrum_2);
+// 				
+// 				QMessageBox::information(this, "Alignment performed", QString("Aligned %1 pairs of peaks (Score: %2).").arg(alignment_lines.size()).arg(score));
+// 			}
+// 			else
+// 			{
+// 				QMessageBox::warning(this, "Not supported", "Here be some description.");
+// 			}
 		}
 	}
 	
@@ -2515,13 +2386,11 @@ namespace OpenMS
 		{
 			topp_running = true;
 		}
-		//is a 1d window active, and is it in mirror view?
-		bool mirror_view = false;
-		if (active1DWindow_() && active1DWindow_()->hasSecondCanvas())
-		{
-			mirror_view = true;
-		}
-  	
+  	bool mirror_mode = false;
+  	if (active1DWindow_() && active1DWindow_()->canvas()->mirrorModeActive())
+  	{
+  		mirror_mode = true;
+  	}
 		QList<QAction*> actions = this->findChildren<QAction*>("");
 		for (int i=0; i<actions.count(); ++i)
 		{
@@ -2569,7 +2438,7 @@ namespace OpenMS
 			else if (text=="Align spectra")
 			{
 				actions[i]->setEnabled(false);
-				if (mirror_view)
+				if (mirror_mode)
 				{
 					actions[i]->setEnabled(true);
 				}

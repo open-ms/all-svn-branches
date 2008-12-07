@@ -29,9 +29,14 @@
 
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <QtCore/QRectF>
+#include <QtGui/QPen>
+#include <QtGui/QPainter>
+#include <QtCore/QString>
 
 namespace OpenMS
 {
+	class Spectrum1DCanvas;
+
 	/** @brief An abstract class acting as an interface for the different 1d annotation items.
 	
 			This is an abstract polymorphic class which acts as an interface between its
@@ -40,34 +45,67 @@ namespace OpenMS
 			
 			If you want to add new kinds of annotation items, inherit this class,
 			implement the pure virtual methods, and add everything else the item should
-			have or be capable of. Then tell the Annotations1DManager how items of
-			this new class are drawn and how their bounding boxes are computed
-			and make the copy constructor and assignment operator
-			of Annotations1DContainer copy these new kinds of items.
+			have or be capable of.
 			
 	*/
 	class Annotation1DItem
 	{
-		
+	
 		public:
 			
 			/// Destructor
 			virtual ~Annotation1DItem();
 			
 			/// Returns the current bounding box of this item on the canvas where it has last been drawn
-			virtual const QRectF& boundingBox() const = 0;
+			const QRectF& boundingBox() const;
 			
 			/// Returns true if this item is currently selected on the canvas, else false
-			virtual bool isSelected() const = 0;
+			bool isSelected() const;
 			
 			/// Sets whether this item is currently selected on the canvas or not
-			virtual void setSelected(bool selected) = 0;
+			void setSelected(bool selected);
 			
 			/// Sets the text of the item
-			virtual void setText(const String& text) = 0;
+			void setText(const QString& text);
 			
 			/// Returns the text of the item
-			virtual const String& getText() const = 0;
+			const QString& getText() const;
+			
+			/// Sets the pen_
+			void setPen(const QPen& pen);
+			
+			/// Returns the pen_
+			const QPen& getPen() const;
+			
+			/// Sets the selected_pen_
+			void setSelectedPen(const QPen& pen);
+			
+			/// Returns the selected_pen_
+			const QPen& getSelectedPen() const;
+			
+			/// Draws the item on @p painter
+			virtual void draw(Spectrum1DCanvas* const canvas, QPainter& painter, bool flipped = false) = 0;
+			
+		protected:
+		
+			/// Constructor
+			Annotation1DItem(const QString& text, const QPen& pen);
+			/// Copy constructor
+			Annotation1DItem(const Annotation1DItem& rhs);		
+			
+			/// Draws the bounding_box_
+			void drawBoundingBox_(QPainter& painter);
+			
+			/// The current bounding box of this item on the canvas where it has last been drawn
+			QRectF bounding_box_;
+			/// Determines whether this item is currently selected on the canvas
+			bool selected_;
+			/// The displayed text
+			QString text_;
+			/// The pen with which the item is drawn
+			QPen pen_;
+			/// The pen which is used if the item is selected
+			QPen selected_pen_;
 			
 	};
 } // namespace OpenMS

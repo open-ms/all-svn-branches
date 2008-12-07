@@ -28,8 +28,17 @@
 #define OPENMS_VISUAL_ANNOTATIONS1DCONTAINER_H
 
 #include <OpenMS/VISUAL/Annotation1DItem.h>
+#include <OpenMS/DATASTRUCTURES/DPosition.h>
+#include <OpenMS/KERNEL/PeakIndex.h>
 
 #include <list>
+
+#include <QtCore/QPoint>
+#include <QtCore/QObject>
+#include <QtCore/QRectF>
+#include <QtGui/QPainter>
+
+class Spectrum1DCanvas;
 
 namespace OpenMS
 {
@@ -43,7 +52,11 @@ namespace OpenMS
 			typedef std::list<Annotation1DItem*>::iterator Iterator;
 			/// Const iterator for the 1D annotations
 			typedef std::list<Annotation1DItem*>::const_iterator ConstIterator;
-
+			/// Type of the Points
+			typedef DPosition<2> PointType;
+			/// Coordinate type
+			typedef DoubleReal CoordinateType;
+			
 			/// Default constructor
 			Annotations1DContainer();
 			/// Copy constructor
@@ -52,6 +65,23 @@ namespace OpenMS
 			virtual ~Annotations1DContainer();	
 			/// Assignment operator
 			Annotations1DContainer& operator= (const Annotations1DContainer& rhs);
+			
+			/** @brief Returns a pointer to the item at @p pos, or 0, if not existent
+					
+					If more than one item's bounding box encloses @p pos , the one in the
+					foreground is returned.
+			*/
+			Annotation1DItem* getItemAt(const QPoint& pos) const;
+			/// Selects the item at @p pos on the canvas, if it exists.
+			void selectItemAt(const QPoint& pos);
+			/// Deselects the item at @p pos on the canvas, if it exists.
+			void deselectItemAt(const QPoint& pos);
+			/// Selects all items
+			void selectAll();
+			/// Deselects all items
+			void deselectAll();
+			/// Removes the selected items
+			void removeSelectedItems();
 	};
 	
 } // namespace

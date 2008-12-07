@@ -58,7 +58,6 @@ namespace OpenMS
 			intensity_mode_(IM_NONE),
 			layers_(),
 			mz_to_x_axis_(true),
-			is_flipped_vertically_(false),
 			visible_area_(AreaType::empty),
 			overall_data_range_(DRange<3>::empty),
 			show_grid_(true),
@@ -170,16 +169,6 @@ namespace OpenMS
 		update_(__PRETTY_FUNCTION__);
 	}
 	
-	bool SpectrumCanvas::isFlippedVertically() const
-	{
-		return is_flipped_vertically_;
-	}
-	
-	void SpectrumCanvas::setFlippedVertically(bool is_flipped_vertically)
-	{
-		is_flipped_vertically_ = is_flipped_vertically;
-	}
-	
 	void SpectrumCanvas::changeVisibleArea_(const AreaType& new_area, bool repaint, bool add_to_stack)
 	{
 		//store old zoom state
@@ -230,7 +219,6 @@ namespace OpenMS
 			--zoom_pos_;
 			changeVisibleArea_(*zoom_pos_);
 		}
-		emit zoomedBack();
 		//cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 	}
 
@@ -244,7 +232,6 @@ namespace OpenMS
 			++zoom_pos_;
 			changeVisibleArea_(*zoom_pos_);
 		}
-		emit zoomedForward();
 		//cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 	}
 	
@@ -261,7 +248,6 @@ namespace OpenMS
 		zoom_stack_.push_back(area);
 		zoom_pos_ = zoom_stack_.end();
 		--zoom_pos_;
-		emit zoomLevelAdded();
 		//cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 		//cout << " - size after:" << zoom_stack_.size() <<endl;
 	}
@@ -363,14 +349,7 @@ namespace OpenMS
 			{
 				y = static_cast<int>(Math::intervalTransformation(*it, spectrum_widget_->yAxis()->getAxisMinimum(), spectrum_widget_->yAxis()->getAxisMaximum(), yl, yh));
 				
-				if (!isFlippedVertically())
-				{
-					painter.drawLine(xl, y, xh, y);
-				}
-				else // needed for mirrored canvas, makes a slight difference
-				{
-					painter.drawLine(xl, yl-y, xh, yl-y);
-				}
+				painter.drawLine(xl, y, xh, y);
 			}
 		}
 		

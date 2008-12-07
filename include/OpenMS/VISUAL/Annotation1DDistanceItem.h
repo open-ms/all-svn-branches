@@ -31,8 +31,6 @@
 #include <OpenMS/DATASTRUCTURES/DPosition.h>
 #include <OpenMS/KERNEL/PeakIndex.h>
 
-#include <QtCore/QRectF>
-
 namespace OpenMS
 {
 	/** @brief An annotation item which represents a measured distance between two peaks.
@@ -52,23 +50,13 @@ namespace OpenMS
 			typedef DoubleReal CoordinateType;
 
 			/// Constructor
-			Annotation1DDistanceItem(const String& text, const PointType& start_point, const PointType& end_point);
+			Annotation1DDistanceItem(const QString& text, const PointType& start_point, const PointType& end_point, const QPen& pen);
 			/// Copy constructor
 			Annotation1DDistanceItem(const Annotation1DDistanceItem& rhs);
 			/// Destructor
 			virtual ~Annotation1DDistanceItem();
-			/// Returns the current bounding box of this item on the canvas where it has last been drawn
-			virtual const QRectF& boundingBox() const;
-			/// Sets the bounding_box_ for this item
-			virtual void setBoundingBox(const QRectF& bbox);
-			/// Sets whether this item is currently selected on the canvas or not
-			virtual void setSelected(bool selected);
-			/// Returns true if this item is currently selected on the canvas, else false
-			virtual bool isSelected() const;
-			/// Sets the displayed text
-			virtual void setText(const String& text);
-			/// Returns the displayed text
-			virtual const String& getText() const;
+			/// Draw the item
+			virtual void draw(Spectrum1DCanvas* const canvas, QPainter& painter, bool flipped = false);
 			/// Sets the start point of the measured distance line
 			void setStartPoint(const PointType& start);
 			/// Sets the peak index of the end peak of the measurement
@@ -80,12 +68,6 @@ namespace OpenMS
 				
 		protected:
 		
-			/// The current bounding box of this item on the canvas where it has last been drawn
-			QRectF bounding_box_;
-			/// Determines whether this item is currently selected on the canvas
-			bool is_selected_;
-			/// The displayed text
-			String text_;
 			/// The start point of the measured distance line
 			PointType start_point_;
 			/// The end point of the measured distance line

@@ -73,6 +73,7 @@ namespace OpenMS
 		/// Default constructor
 		LayerData()
 			: visible(true),
+				flipped(false),
 				type(DT_UNKNOWN),
 				name(),
 				filename(),
@@ -90,6 +91,8 @@ namespace OpenMS
 		
 		/// if this layer is visible
 		bool visible;
+		/// if this layer is flipped (1d mirror view)
+		mutable bool flipped;
 		/// data type (peak of feature data)
 		DataType type;
 		/// layer name

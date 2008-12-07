@@ -39,7 +39,6 @@ class QAction;
 namespace OpenMS
 {
 	class Spectrum1DCanvas;
-	class Alignment1DWidget;
 
 	/**
 		@brief Widget for visualization of several spectra
@@ -69,42 +68,6 @@ namespace OpenMS
 			return static_cast<Spectrum1DCanvas*>(canvas_);
 		}
 		
-		/// Returns a pointer to the second (vertically flipped) canvas
-		inline Spectrum1DCanvas* flippedCanvas()
-		{
-			return flipped_canvas_;
-		}
-		
-		/// Returns a pointer to the alignment widget
-		inline Alignment1DWidget* alignmentWidget()
-		{
-			return alignment_widget_;
-		}
-		
-		/// Overwrites SpectrumWidget::setIntensityMode(); sets value also for second canvas, if existent
-		virtual void setIntensityMode(SpectrumCanvas::IntensityModes mode);
-		
-		/// Sets the second (vertically flipped) canvas
-		void setFlippedCanvas(Spectrum1DCanvas* flipped_canvas);
-		
-		/// Returns whether this widget has a second (vertically flipped) canvas
-		bool hasSecondCanvas();
-		
-		/// Sets whether this widget has a second (vertically flipped) canvas
-		void setHasSecondCanvas(bool has_second_canvas);
-		
-		/// Removes the second canvas
-		void removeFlippedCanvas();
-		
-		/// Calculates and sets the united ranges for the canvas and the second (vertically flipped) canvas
-		void calculateUnitedRanges(bool reset_zoom = false);
-		
-		/// Shows the alignment widget and sets its alignment_lines_ to @p alignment_lines
-		void setAlignmentLines(const std::vector<std::pair<DoubleReal,DoubleReal > >& alignment_lines);
-		
-		/// Clears and hides the alignment widget
-		void clearAlignmentLines();			
-		
 	signals:
 		/// Is emitted whenever the visible area changes.		
 		void visibleAreaChanged(double, double); 
@@ -121,18 +84,7 @@ namespace OpenMS
 		virtual Math::Histogram<UInt, Real> createMetaDistribution_(const String& name) const;
 		// Docu in base class
 		virtual void recalculateAxes_();
-		/// Recalculates the axis ticks of @p canvas from @p mz_axis and @p it_axis
-		void recalculateAxes_(AxisWidget* mz_axis, AxisWidget* it_axis, Spectrum1DCanvas* canvas);
 		
-		/// The second (vertically flipped) canvas
-		Spectrum1DCanvas* flipped_canvas_;
-		/// The axis widget of the second canvas
-		AxisWidget* flipped_y_axis_;
-		/// The alignment widget between both canvasses
-		Alignment1DWidget* alignment_widget_;
-		/// Indicates whether this widget currently shows an additional (vertically flipped) canvas
-		bool has_second_canvas_;
-	
 	};
 } // namespace OpenMS
 

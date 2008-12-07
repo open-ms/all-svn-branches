@@ -29,6 +29,7 @@
 #include <OpenMS/VISUAL/Annotation1DDistanceItem.h>
 #include <OpenMS/VISUAL/Annotation1DTextItem.h>
 #include <OpenMS/VISUAL/Annotation1DPeakItem.h>
+#include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 
 #include <iostream>
 
@@ -117,6 +118,68 @@ namespace OpenMS
 		for (Iterator it = begin(); it != end(); ++it)
 		{
 			delete *it;
+		}
+	}
+	
+	Annotation1DItem* Annotations1DContainer::getItemAt(const QPoint& pos) const
+	{
+		for (ConstIterator it = begin(); it != end(); ++it)
+		{
+			if ((*it)->boundingBox().contains(pos))
+			{
+				return *it;
+			}
+		}
+		return 0;
+	}
+	
+	void Annotations1DContainer::selectItemAt(const QPoint& pos)
+	{
+		Annotation1DItem* item = getItemAt(pos);
+		if (item != 0)
+		{
+			item->setSelected(true);
+		}
+	}
+	
+	void Annotations1DContainer::deselectItemAt(const QPoint& pos)
+	{
+		Annotation1DItem* item = getItemAt(pos);
+		if (item != 0)
+		{
+			item->setSelected(false);
+		}
+	}
+	
+	void Annotations1DContainer::selectAll()
+	{
+		for (Iterator it = begin(); it != end(); ++it)
+		{
+			(*it)->setSelected(true);
+		}
+	}
+	
+	void Annotations1DContainer::deselectAll()
+	{
+		for (Iterator it = begin(); it != end(); ++it)
+		{
+			(*it)->setSelected(false);
+		}
+	}
+		
+	void Annotations1DContainer::removeSelectedItems()
+	{
+		for (Iterator it = begin(); it != end();)
+		{
+			if ((*it)->isSelected())
+			{
+				delete *it;
+				it = erase(it);
+			}
+			else
+			{
+				++it;
+			}
 		}
 	}
 	

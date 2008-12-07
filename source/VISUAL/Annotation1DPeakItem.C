@@ -25,52 +25,52 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/Annotation1DPeakItem.h>
+#include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 
 namespace OpenMS
 {	
 
-	Annotation1DPeakItem::Annotation1DPeakItem(const PointType& position, const PeakIndex& peak, const String& text)
-		: Annotation1DItem(),
-			bounding_box_(),
-			is_selected_(true),
+	Annotation1DPeakItem::Annotation1DPeakItem(const PointType& position, const PeakIndex& peak, const QString& text, const QPen& pen)
+		: Annotation1DItem(text, pen),
 			position_(position),
-			peak_(peak),
-			text_(text)
+			peak_(peak)
 	{
 	}
 	
 	Annotation1DPeakItem::Annotation1DPeakItem(const Annotation1DPeakItem& rhs)
-		: Annotation1DItem()
+		: Annotation1DItem(rhs)
 	{
-		bounding_box_ = rhs.boundingBox();
-		is_selected_ = rhs.isSelected();
 		position_ = rhs.getPosition();
 		peak_ = rhs.getPeak();
-		text_ = rhs.getText();
 	}
 	
 	Annotation1DPeakItem::~Annotation1DPeakItem()
 	{
 	}
 	
-	const QRectF& Annotation1DPeakItem::boundingBox() const
+	void Annotation1DPeakItem::draw(Spectrum1DCanvas* const canvas, QPainter& painter, bool flipped)
 	{
-		return bounding_box_;
-	}
-	
-	void Annotation1DPeakItem::setBoundingBox(const QRectF& bbox)
-	{
-		bounding_box_ = bbox;
-	}
-	
-	void Annotation1DPeakItem::setSelected(bool selected)
-	{
-		is_selected_ = selected;
-	}
-	
-	bool Annotation1DPeakItem::isSelected() const
-	{
-		return is_selected_;
+		//translate mz/intensity to pixel coordinates
+		QPoint pos;
+		canvas->dataToWidget(position_.getX(), position_.getY(), pos, flipped);
+		
+		// compute bounding box of text_item on the specified painter
+		bounding_box_ = painter.boundingRect(QRectF(pos, pos), Qt::AlignCenter, text_);
+		// shift pos, annotation should be next to the peak and not overlap it
+		bounding_box_.translate(bounding_box_.width()/2.0 + 10.0, -15.0);
+		
+		if (selected_)
+		{
+			painter.setPen(selected_pen_);
+			drawBoundingBox_(painter);
+		}
+		else
+		{
+			painter.setPen(pen_);
+		}
+		
+		painter.drawText(bounding_box_, Qt::AlignCenter, text_);
+		painter.drawLine(bounding_box_.bottomLeft(), pos);
 	}
 	
 	void Annotation1DPeakItem::setPosition(const Annotation1DPeakItem::PointType& position)
@@ -91,16 +91,6 @@ namespace OpenMS
 	const PeakIndex& Annotation1DPeakItem::getPeak() const
 	{
 		return peak_;
-	}
-	
-	void Annotation1DPeakItem::setText(const String& text)
-	{
-		text_ = text;
-	}
-	
-	const String& Annotation1DPeakItem::getText() const
-	{
-		return text_;
 	}
 	
 }//Namespace

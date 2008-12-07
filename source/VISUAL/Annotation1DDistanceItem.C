@@ -25,26 +25,23 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/Annotation1DDistanceItem.h>
+#include <OpenMS/VISUAL/Spectrum1DCanvas.h>
+
+#include <QtCore/QPoint>
 
 namespace OpenMS
 {	
 
-	Annotation1DDistanceItem::Annotation1DDistanceItem(const String& text, const PointType& start_point, const PointType& end_point)
-		: Annotation1DItem(),
-			bounding_box_(),
-			is_selected_(true),
-			text_(text),
+	Annotation1DDistanceItem::Annotation1DDistanceItem(const QString& text, const PointType& start_point, const PointType& end_point, const QPen& pen)
+		: Annotation1DItem(text, pen),
 			start_point_(start_point),
 			end_point_(end_point)
 	{
 	}
 	
 	Annotation1DDistanceItem::Annotation1DDistanceItem(const Annotation1DDistanceItem& rhs)
-		: Annotation1DItem()
+		: Annotation1DItem(rhs)
 	{
-		bounding_box_ = rhs.boundingBox();
-		is_selected_ = rhs.isSelected();
-		text_ = rhs.getText();
 		start_point_ = rhs.getStartPoint();
 		end_point_ = rhs.getEndPoint();
 	}
@@ -53,34 +50,46 @@ namespace OpenMS
 	{
 	}
 	
-	const QRectF& Annotation1DDistanceItem::boundingBox() const
+	void Annotation1DDistanceItem::draw(Spectrum1DCanvas* const canvas, QPainter& painter, bool flipped)
 	{
-		return bounding_box_;
-	}
-	
-	void Annotation1DDistanceItem::setBoundingBox(const QRectF& bbox)
-	{
-		bounding_box_ = bbox;
-	}
-	
-	void Annotation1DDistanceItem::setSelected(bool selected)
-	{
-		is_selected_ = selected;
-	}
-	
-	bool Annotation1DDistanceItem::isSelected() const
-	{
-		return is_selected_;
-	}
-	
-	void Annotation1DDistanceItem::setText(const String& text)
-	{
-		text_ = text;
-	}
-	
-	const String& Annotation1DDistanceItem::getText() const
-	{
-		return text_;
+		//translate mz/intensity to pixel coordinates
+		QPoint start_p, end_p;
+		canvas->dataToWidget(start_point_.getX(), start_point_.getY(), start_p, flipped);
+		canvas->dataToWidget(end_point_.getX(), end_point_.getY(), end_p, flipped);
+		
+		// compute bounding box on the specified painter
+		bounding_box_ = QRectF(QPointF(start_p.x(), start_p.y()), QPointF(end_p.x(), end_p.y()+4)); // +4 for lower half of arrow heads
+		
+		// find out how much additional space is needed for the text:
+		QRectF text_boundings = painter.boundingRect(QRectF(), Qt::AlignCenter, text_);
+		bounding_box_.setTop(bounding_box_.top() - text_boundings.height());
+		// if text doesn't fit between peaks, enlarge bounding box:
+		if (text_boundings.width() > bounding_box_.width())
+		{
+			float additional_space = (text_boundings.width() - bounding_box_.width()) / 2;
+			bounding_box_.setLeft(bounding_box_.left() - additional_space);
+			bounding_box_.setRight(bounding_box_.right() + additional_space);
+		}
+		
+		if (selected_)
+		{
+			painter.setPen(selected_pen_);
+			drawBoundingBox_(painter);
+		}
+		else
+		{
+			painter.setPen(pen_);
+		}
+		
+		// draw line
+		painter.drawLine(start_p, end_p);
+		// draw arrow heads and the ends
+		painter.drawLine(start_p, QPoint(start_p.x()+5, start_p.y()-4));
+		painter.drawLine(start_p, QPoint(start_p.x()+5, start_p.y()+4));
+		painter.drawLine(end_p, QPoint(end_p.x()-5, end_p.y()-4));
+		painter.drawLine(end_p, QPoint(end_p.x()-5, end_p.y()+4));
+		// draw distance text
+		painter.drawText(bounding_box_, Qt::AlignHCenter, text_);
 	}
 	
 	void Annotation1DDistanceItem::setStartPoint(const PointType& p)

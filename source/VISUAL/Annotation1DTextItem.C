@@ -25,50 +25,47 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/Annotation1DTextItem.h>
+#include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 
 namespace OpenMS
 {	
 
-	Annotation1DTextItem::Annotation1DTextItem(const PointType& position, const String& text)
-		: Annotation1DItem(),
-			bounding_box_(),
-			is_selected_(true),
-			position_(position),
-			text_(text)
+	Annotation1DTextItem::Annotation1DTextItem(const PointType& position, const QString& text, const QPen& pen)
+		: Annotation1DItem(text, pen),
+			position_(position)
 	{
 	}
 	
 	Annotation1DTextItem::Annotation1DTextItem(const Annotation1DTextItem& rhs)
-		: Annotation1DItem()
+		: Annotation1DItem(rhs)
 	{
-		bounding_box_ = rhs.boundingBox();
-		is_selected_ = rhs.isSelected();
 		position_ = rhs.getPosition();
-		text_ = rhs.getText();
 	}
 	
 	Annotation1DTextItem::~Annotation1DTextItem()
 	{
 	}
 	
-	const QRectF& Annotation1DTextItem::boundingBox() const
+	void Annotation1DTextItem::draw(Spectrum1DCanvas* const canvas, QPainter& painter, bool flipped)
 	{
-		return bounding_box_;
-	}
-	
-	void Annotation1DTextItem::setBoundingBox(const QRectF& bbox)
-	{
-		bounding_box_ = bbox;
-	}
-	
-	void Annotation1DTextItem::setSelected(bool selected)
-	{
-		is_selected_ = selected;
-	}
-	
-	bool Annotation1DTextItem::isSelected() const
-	{
-		return is_selected_;
+		//translate mz/intensity to pixel coordinates
+		QPoint pos;
+		canvas->dataToWidget(position_.getX(), position_.getY(), pos, flipped);
+		
+		// compute bounding box of text_item on the specified painter
+		bounding_box_ = painter.boundingRect(QRectF(pos, pos), Qt::AlignCenter, text_);
+		
+		if (selected_)
+		{
+			painter.setPen(selected_pen_);
+			drawBoundingBox_(painter);
+		}
+		else
+		{
+			painter.setPen(pen_);
+		}
+		
+		painter.drawText(bounding_box_, Qt::AlignCenter, text_);
 	}
 	
 	void Annotation1DTextItem::setPosition(const Annotation1DTextItem::PointType& position)
@@ -80,16 +77,6 @@ namespace OpenMS
  	{
  		return position_;
  	}
-	
-	void Annotation1DTextItem::setText(const String& text)
-	{
-		text_ = text;
-	}
-	
-	const String& Annotation1DTextItem::getText() const
-	{
-		return text_;
-	}
 	
 }//Namespace
 

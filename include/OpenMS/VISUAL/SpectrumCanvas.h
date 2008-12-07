@@ -32,8 +32,6 @@
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <OpenMS/VISUAL/LayerData.h>
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
-#include <OpenMS/VISUAL/Annotations1DManager.h>
-#include <OpenMS/VISUAL/Alignment1DWidget.h>
 
 //QT
 #include <QtGui/QWidget>
@@ -84,11 +82,6 @@ namespace OpenMS
 			public DefaultParamHandler
 	{
 		Q_OBJECT
-		
-		/// The annotation manager needs access to the protected dataToWidget_() method
-		friend class Annotations1DManager;
-		/// The alignment widget needs access to the protected dataToWidget_() method
-		friend class Alignment1DWidget;
 		
 	public:
 		/**	@name Type definitions */
@@ -342,12 +335,6 @@ namespace OpenMS
 		/// Sets the mapping of m/z to axes
 		void mzToXAxis(bool mz_to_x_axis);
 		
-		/// Returns whether this canvas is flipped vertically
-		bool isFlippedVertically() const;
-		
-		/// Sets whether this canvas is flipped vertically
-		void setFlippedVertically(bool is_flipped_vertically);
-
 		/** 
 			@name Dataset handling methods
 			
@@ -590,33 +577,6 @@ namespace OpenMS
 		/// Emitted when the action mode changes
 		void actionModeChange();
 		
-		/**
-			@brief Is emitted when an element is added to the zoom stack.
-			
-			This signal is emitted when an element is added to the zoom stack.
-			It is needed for the synchronization of two 1D canvasses in a 
-			single 1D widget.
-		*/
-		void zoomLevelAdded();
-			
-		/**
-			@brief Is emitted when the zoom stack is browsed forward.
-			
-			This signal is emitted when the zoom stack is browsed forward.
-			It is needed for the synchronization of two 1D canvasses in a 
-			single 1D widget.
-		*/
-		void zoomedForward();
-			
-		/**
-			@brief Is emitted when the zoom stack is browsed backward.
-			
-			This signal is emitted when the zoom stack is browsed backward.
-			It is needed for the synchronization of two 1D canvasses in a 
-			single 1D widget.
-		*/
-		void zoomedBack();
-		
 	protected slots:
 	
 		///Slot that is used to track file changes in order to update the data
@@ -743,21 +703,11 @@ namespace OpenMS
 			}
 			else
 			{
-				if (!isFlippedVertically())
-				{
-					return PointType(
+				return PointType(
 								visible_area_.minX() + x / width() * visible_area_.width(),
 								visible_area_.minY() + (height() - y) / height() * visible_area_.height() 
 								);
-				}
-				else
-				{
-					return PointType(
-								visible_area_.minX() + x / width() * visible_area_.width(),
-								visible_area_.minY() + y / height() * visible_area_.height() 
-								);			
-				}
-			}		
+			}
 		}
 
 		/// Calls widgetToData_(float, float) with x and y position of @p pos
@@ -783,16 +733,8 @@ namespace OpenMS
 			}
 			else
 			{
-				if (!isFlippedVertically())
-				{
-					point.setX(static_cast<int>((x - visible_area_.minX()) / visible_area_.width() * width()));
-					point.setY(height() - static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * height()));
-				}
-				else
-				{
-					point.setX(static_cast<int>((x - visible_area_.minX()) / visible_area_.width() * width()));
-					point.setY(static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * height()));
-				}
+				point.setX(static_cast<int>((x - visible_area_.minX()) / visible_area_.width() * width()));
+				point.setY(height() - static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * height()));
 			}
 		}
 		
@@ -813,9 +755,6 @@ namespace OpenMS
 		
 		/// Stores the mapping of m/z
 		bool mz_to_x_axis_;
-		
-		/// Stores whether this canvas is flipped vertically
-		bool is_flipped_vertically_;
 		
 		/**
 			@brief Stores the currently visible area.

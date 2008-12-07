@@ -56,6 +56,7 @@ class QToolButton;
 class QCloseEvent;
 class QTextEdit;
 class QCheckBox;
+class QSplashScreen;
 
 namespace OpenMS
 {
@@ -68,11 +69,10 @@ namespace OpenMS
 
   /**
   	@brief Main window of TOPPView tool
-
-  	@todo Add support for consensusXML (Marc)
-
-    @improvement Paint only highest point per pixel, paint only part of the data when moving (Marc)
-
+		
+		@todo Add meta data browsing for consensus features. e.g. to show annotated peptide identifications (Hiwi)
+    @improvement Paint only highest point per pixel, paint only part of the data when moving (Hiwi)
+		
     @ingroup TOPPView_elements
   */
   class TOPPViewBase 
@@ -86,6 +86,8 @@ namespace OpenMS
     	//@{
     	//Feature map type
     	typedef LayerData::FeatureMapType FeatureMapType;
+    	//Consensus feature map type
+    	typedef LayerData::ConsensusMapType ConsensusMapType;
     	//Peak map type
     	typedef LayerData::ExperimentType ExperimentType;
     	///Peak spectrum type
@@ -122,7 +124,7 @@ namespace OpenMS
       void addDataDB(UInt db_id, bool show_options, String caption="", UInt window_id=0);
 
       /// opens all the files that are inside the handed over string list
-      void loadFiles(const StringList& list);
+      void loadFiles(const StringList& list, QSplashScreen* splash_screen);
 
       /**
       	@brief Loads the preferences from the filename given.
@@ -269,8 +271,9 @@ namespace OpenMS
   		/**
   			@brief Adds a peak or feature map to the viewer
   			
-  			@param feature_map The feature data (empty if peak data)
-  			@param peak_map The peak data (empty if feature data)
+  			@param feature_map The feature data (empty if not feature data)
+  			@param consensus_map The consensus feature data (empty if not consensus feature data)
+  			@param peak_map The peak data (empty if not peak data)
   			@param is_feature Flag that indicates the actual data type
   			@param is_2D If more that one MS1 spectrum is contained in peak data
   			@param show_options If the options dialog should be shown (otherwise the defaults are used)
@@ -278,7 +281,7 @@ namespace OpenMS
       	@param caption Sets the layer name and window caption of the data. If unset the file name is used. If set, the file is not monitored foro changes.
       	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current
       */
-  		void addData_(FeatureMapType& feature_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_options, const String& filename="", const String& caption="", UInt window_id=0);
+  		void addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_options, const String& filename="", const String& caption="", UInt window_id=0);
   
     	/// Tries to open a db connection (queries the user for the DB password)
     	void connectToDB_(DBConnection& db);
@@ -335,6 +338,7 @@ namespace OpenMS
       QAction* dm_hull_2d_;
       QAction* dm_hulls_2d_;
       QAction* dm_numbers_2d_;
+      QAction* dm_elements_2d_;
       QAction* projections_2d_;
       //@}
 
@@ -398,9 +402,11 @@ namespace OpenMS
 
       /// check if all avaiable preferences get set by the .ini file. If there are some missing entries fill them with default values.
       void checkPreferences_();
-      ///reimplemented Qt close event
+      ///@name reimplemented Qt events
+      //@{
       void closeEvent(QCloseEvent* event);
-			///shows a log message in the log window
+			void keyPressEvent(QKeyEvent* e);
+			//@}
 			
 			///Log message states
 			enum LogState

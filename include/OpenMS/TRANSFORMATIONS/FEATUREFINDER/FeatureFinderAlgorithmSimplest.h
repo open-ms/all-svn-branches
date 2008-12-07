@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_FEATUREFINDERALGORITHMSIMPLEST_H
@@ -40,7 +40,7 @@ namespace OpenMS
 
     SimpleSeeder, SimpleExtender, ModelFitter (using BiGaussModel in RT dimension and IsotopeModel (charge does not equal zero) or GaussModel in dimension of mz).
 
-    @ref FeatureFinderAlgorithmSimplest_Parameters are explained on a separate page.
+    @htmlinclude OpenMS_FeatureFinderAlgorithmSimplest.parameters
 	
 		@ingroup FeatureFinder
 	*/
@@ -169,7 +169,7 @@ namespace OpenMS
 								}
 							}
 						}
-						catch( UnableToFit ex)
+						catch( Exception::UnableToFit ex)
 						{
 							std::cout << "UnableToFit: " << ex.what() << std::endl;
 

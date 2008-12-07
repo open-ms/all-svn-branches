@@ -62,7 +62,7 @@ namespace OpenMS
 
 		@ingroup Kernel
 	*/
-	template <typename PeakT = Peak1D, typename AllocT = OPENMS_DEFAULT_ALLOC > // @@ ExternalAllocator<PeakT> >  @@ std::allocator<PeakT> >
+	template <typename PeakT = Peak1D, typename AllocT = OPENMS_DEFAULT_ALLOC >
 	class MSExperiment
 		:	public std::vector<MSSpectrum<PeakT, AllocT> >,
 			public RangeManager<2>,
@@ -171,14 +171,12 @@ namespace OpenMS
       template <typename A>
       void push_back(const MSSpectrum<PeakT, A>& spec)
       {
-        // create new spectrum with local allocator
-        SpectrumType newSpec(spec, alloc_);
-        // add it to our spectrum
-        Base::push_back(newSpec);
+        // create new spectrum with local allocator and add it to our spectrum
+        Base::push_back(SpectrumType(spec));
         
-        if (spec.size() != this->back().getContainer().size())
+        if (spec.size() != this->back().size())
         {
-          std::cout << "ERROR in MSExperiment::push_back() : given size (" << spec.size() << ") <=> pushed size (" << this->back().getContainer().size() << ")" << std::endl;
+          std::cout << "ERROR in MSExperiment::push_back() : given size (" << spec.size() << ") <=> pushed size (" << this->back().size() << ")" << std::endl;
         }
       }      
       
@@ -482,7 +480,7 @@ namespace OpenMS
 					// sort each spectrum by m/z
 					for (Iterator iter = this->begin(); iter != this->end(); ++iter)
 					{
-						iter->getContainer().sortByPosition();
+						iter->sortByPosition();
 					}
 				}
 			}

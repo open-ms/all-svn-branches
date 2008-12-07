@@ -27,8 +27,8 @@
 #ifndef OPENMS_KERNEL_STANDARDTYPES_H
 #define OPENMS_KERNEL_STANDARDTYPES_H
 
-#include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/KERNEL/RichPeak1D.h>
+#include <OpenMS/KERNEL/MSExperiment.h>
 
 namespace OpenMS
 {
@@ -61,6 +61,7 @@ namespace OpenMS
 		@ingroup Kernel
 	*/
 	typedef MSExperiment<RichPeak1D> RichPeakMap;
+
 	//@}
 
 }

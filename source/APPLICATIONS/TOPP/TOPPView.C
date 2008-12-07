@@ -25,7 +25,7 @@
 // --------------------------------------------------------------------------
 
 /**
-  @page TOPPView TOPPView
+  @page TOPP_TOPPView TOPPView
   
   TOPPView is a viewer for MS and HPLC-MS data. It can be used to inspect files in mzData, mzXML, mzML, ANDI/MS
   and several other file formats. It also supports viewing data from an OpenMS database.
@@ -39,9 +39,13 @@
 //QT
 #include <QtGui/QApplication>
 #include <QtGui/QStyleFactory>
+#include <QtGui/QSplashScreen>
+
+#include "splash.h" // include the splashscreen graphics
 
 //OpenMS
 #include <OpenMS/APPLICATIONS/TOPPViewBase.h>
+
 
 using namespace OpenMS;
 using namespace std;
@@ -87,12 +91,12 @@ void print_usage()
 int main( int argc, const char** argv )
 {
 	//list of all the valid options
-	map<String,String> valid_options, valid_flags;
+	Map<String,String> valid_options, valid_flags, option_lists;
 	valid_flags["--help"] = "help";
 	valid_options["-ini"] = "ini";
 	
 	Param param;
-	param.parseCommandLine(argc, argv, valid_options, valid_flags, "misc", "unknown");
+	param.parseCommandLine(argc, argv, valid_options, valid_flags, option_lists);
 
 	// '--help' given
 	if (param.exists("help"))
@@ -104,7 +108,7 @@ int main( int argc, const char** argv )
 	// test if unknown options were given
 	if (param.exists("unknown"))
 	{
-		cout << "Unknown option '" << (string)(param.getValue("unknown")) << "' given. Aborting!" << endl;
+		cout << "Unknown option(s) '" << param.getValue("unknown").toString() << "' given. Aborting!" << endl;
 		print_usage();
 		return 1;
 	}
@@ -114,7 +118,8 @@ int main( int argc, const char** argv )
 	{
 #endif
 	  QApplication a( argc, const_cast<char**>(argv));
-	  
+	  a.connect( &a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()) );
+	  		
 	  //set plastique style unless windows / mac style is available
 	  if (QStyleFactory::keys().contains("windowsxp",Qt::CaseInsensitive))
 	  {
@@ -130,22 +135,34 @@ int main( int argc, const char** argv )
 	  }
 
 	  TOPPViewBase* mw = new TOPPViewBase();
+	  mw->show();
+
+		// Create the splashscreen that is displayed while the application loads
+		QSplashScreen* splash_screen = new QSplashScreen(QPixmap(splash),Qt::WindowStaysOnTopHint | Qt::X11BypassWindowManagerHint);
+		splash_screen->show();
+		splash_screen->showMessage("Loading parameters");
+		QApplication::processEvents();
+		StopWatch stop_watch;
+		stop_watch.start();
+
 	  if (param.exists("ini"))
 	  {
 	  	mw->loadPreferences((String)param.getValue("ini"));
 	  }
-	  mw->show();
-	  
+
 	  //load command line files
 	  if (param.exists("misc"))
 	  {
-	  	// parameters in "misc" are stored as a StringList
-	  	StringList file_list = param.getValue("misc");
-	  	mw->loadFiles(file_list);
+	  	mw->loadFiles((StringList)(param.getValue("misc")), splash_screen);
 	  }
-	  
-	  a.connect( &a, SIGNAL(lastWindowClosed()), &a, SLOT(quit()) );
 
+		// We are about to show the application. 
+		// Proper time to  remove the splashscreen, if at least 1.5 seconds have passed...
+		while(stop_watch.getClockTime()<1.5) {/*wait*/};
+		stop_watch.stop();
+		splash_screen->close();
+		delete splash_screen;
+		
 	  int result = a.exec();
 	  delete(mw);
 	  return result;

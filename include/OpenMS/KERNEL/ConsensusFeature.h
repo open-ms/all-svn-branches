@@ -29,86 +29,142 @@
 
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>
-#include <OpenMS/KERNEL/Peak2D.h>
+#include <OpenMS/KERNEL/RichPeak2D.h>
 #include <OpenMS/KERNEL/FeatureHandle.h>
+#include <OpenMS/METADATA/MetaInfoInterface.h>
+#include <OpenMS/METADATA/PeptideIdentification.h>
 
 #include <set>
 
 namespace OpenMS
 {
-  /**
+	/**
 		@brief A 2-dimensional consensus feature.
-	    
-		A consensus feature represents corresponding features in multiple feature
-		maps. The corresponding features are represented a set of @ref FeatureHandle instances.
 	
-		This implements a variant of the <i>composite</i> design pattern: Each
-		ConsensusFeature "contains" zero or more FeatureHandles.
-	  
-	  @see ConsensusMap
-	  
+		A consensus feature represents corresponding features in multiple feature
+		maps. The corresponding features are represented a set of @ref
+		FeatureHandle instances.  Each ConsensusFeature "contains" zero or more
+		FeatureHandles.
+	
+		@see ConsensusMap
+	
 		@ingroup Kernel
-  */
-  class ConsensusFeature
-  	: public Peak2D,
-    	public std::set<FeatureHandle, FeatureHandle::IndexLess>
-  {
+	*/
+	class ConsensusFeature
+		: public RichPeak2D,
+			public std::set<FeatureHandle, FeatureHandle::IndexLess>
+	{
 	 public:
-		/**
-		@name Type definitions
-		*/
+		///Type definitions
 		//@{
+		typedef DoubleReal QualityType;
 		typedef std::set<FeatureHandle, FeatureHandle::IndexLess> HandleSetType;
 		//@}
 
-			/// Compare by getQuality()
-			struct QualityLess
+		/// Compare by getQuality()
+		struct QualityLess
 			: std::binary_function < ConsensusFeature, ConsensusFeature, bool >
+		{
+			inline bool operator () ( ConsensusFeature const & left, ConsensusFeature const & right ) const
 			{
-				inline bool operator () ( ConsensusFeature const & left, ConsensusFeature const & right ) const
-				{
-					return ( left.getQuality() < right.getQuality() );
-				}
-				inline bool operator () ( ConsensusFeature const & left, DoubleReal const & right ) const
-				{
-					return ( left.getQuality() < right );
-				}
-				inline bool operator () ( DoubleReal const & left, ConsensusFeature const & right ) const
-				{
-					return ( left< right.getQuality() );
-				}
-				inline bool operator () ( DoubleReal const & left, DoubleReal const & right ) const
-				{
-					return ( left < right );
-				}
-			};
+				return ( left.getQuality() < right.getQuality() );
+			}
+			inline bool operator () ( ConsensusFeature const & left, QualityType const & right ) const
+			{
+				return ( left.getQuality() < right );
+			}
+			inline bool operator () ( QualityType const & left, ConsensusFeature const & right ) const
+			{
+				return ( left< right.getQuality() );
+			}
+			inline bool operator () ( QualityType const & left, QualityType const & right ) const
+			{
+				return ( left < right );
+			}
+		};
+
+		/// Compare by size(), the number of consensus elements
+		struct SizeLess
+			: std::binary_function < ConsensusFeature, ConsensusFeature, bool >
+		{
+			inline bool operator () ( ConsensusFeature const & left, ConsensusFeature const & right ) const
+			{
+				return ( left.size() < right.size() );
+			}
+			inline bool operator () ( ConsensusFeature const & left, UInt const & right ) const
+			{
+				return ( left.size() < right );
+			}
+			inline bool operator () ( UInt const & left, ConsensusFeature const & right ) const
+			{
+				return ( left< right.size() );
+			}
+			inline bool operator () ( const UInt & left,	const UInt & right ) const
+			{
+				return ( left < right );
+			}
+		};
+
+		/// Compare by the sets of consensus elements (lexicographically)
+		struct MapsLess
+			: std::binary_function < ConsensusFeature, ConsensusFeature, bool >
+		{
+			inline bool operator () ( ConsensusFeature const & left, ConsensusFeature const & right ) const
+			{
+				return std::lexicographical_compare( left.begin(), left.end(), right.begin(), right.end(), FeatureHandle::IndexLess() );
+			}
+		};
+
 
 		///@name Constructors and Destructor
 		//@{
 		/// Default constructor
 		ConsensusFeature()
-			: Peak2D(),
+			: RichPeak2D(),
 				HandleSetType(),
 				quality_(0.0),
-				charge_(0)
+				charge_(0),
+				peptide_identifications_()
 		{
 		}
-      
+
 		/// Copy constructor
 		ConsensusFeature(const ConsensusFeature& rhs)
-			: Peak2D(rhs),
+			: RichPeak2D(rhs),
 				HandleSetType(rhs),
 				quality_(rhs.quality_),
-				charge_(rhs.charge_)
+				charge_(rhs.charge_),
+				peptide_identifications_(rhs.peptide_identifications_)
 		{
 		}
-      
-		///Constructor from raw data point
-		ConsensusFeature(const Peak2D& point)
-			: Peak2D(point),
+
+		/// Constructor from raw data point
+		ConsensusFeature(const RichPeak2D& point)
+			: RichPeak2D(point),
 				HandleSetType(),
 				quality_(0.0),
-				charge_(0)
+				charge_(0),
+				peptide_identifications_()
+		{
+		}
+
+		///Constructor from raw data point
+		ConsensusFeature(const Peak2D& point)
+			: RichPeak2D(point),
+				HandleSetType(),
+				quality_(0.0),
+				charge_(0),
+				peptide_identifications_()
+		{
+		}
+
+		///Constructor from raw data point
+		ConsensusFeature(const Feature& feature)
+			: RichPeak2D(feature),
+				HandleSetType(),
+				quality_(0.0),
+				charge_(0),
+				peptide_identifications_(feature.getPeptideIdentifications())
 		{
 		}
 
@@ -117,11 +173,12 @@ namespace OpenMS
 			feature. Sets the consensus feature position and intensity to the values
 			of @p element as well.
 		*/
-		ConsensusFeature(UInt map_index,  UInt element_index, const Peak2D& element)
-			: Peak2D(element),
+		ConsensusFeature(UInt map_index,	UInt element_index, const Peak2D& element)
+			: RichPeak2D(element),
 				HandleSetType(),
 				quality_(0.0),
-				charge_(0)
+				charge_(0),
+				peptide_identifications_()
 		{
 			insert(map_index,element_index,element);
 		}
@@ -132,11 +189,12 @@ namespace OpenMS
 			feature. Sets the consensus feature position, intensity, charge and quality to the values
 			of @p element as well.
 		*/
-		ConsensusFeature(UInt map_index,  UInt element_index, const Feature& element)
-			: Peak2D(element),
+		ConsensusFeature(UInt map_index,	UInt element_index, const Feature& element)
+			: RichPeak2D(element),
 				HandleSetType(),
 				quality_(element.getOverallQuality()),
-				charge_(element.getCharge())
+				charge_(element.getCharge()),
+				peptide_identifications_()
 		{
 			insert(map_index,element_index,element);
 		}
@@ -146,25 +204,27 @@ namespace OpenMS
 			feature. Sets the consensus feature position, intensity, charge and quality to the values
 			of @p element as well.
 		*/
-		ConsensusFeature(UInt map_index,  UInt element_index, const ConsensusFeature& element)
-			: Peak2D(element),
+		ConsensusFeature(UInt map_index,	UInt element_index, const ConsensusFeature& element)
+			: RichPeak2D(element),
 				HandleSetType(),
 				quality_(element.getQuality()),
-				charge_(element.getCharge())
+				charge_(element.getCharge()),
+				peptide_identifications_()
 		{
 			insert(map_index,element_index,element);
 		}
 
-		
+
 		/// Assignment operator
 		ConsensusFeature& operator=(const ConsensusFeature& rhs)
 		{
 			if (&rhs==this) return *this;
 
 			HandleSetType::operator=(rhs);
-			Peak2D::operator=(rhs);
+			RichPeak2D::operator=(rhs);
 			quality_ = rhs.quality_;
 			charge_ = rhs.charge_;
+			peptide_identifications_ =  rhs.peptide_identifications_;
 			
 			return *this;
 		}
@@ -179,33 +239,31 @@ namespace OpenMS
 		///@name Management of feature handles
 		//@{
 		/**
-			@brief Adds an feature handle into the consensus feature
-	      	
-			@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
+		@brief Adds an feature handle into the consensus feature
+
+		@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
 		*/
-		void insert(FeatureHandle const & handle)
+		void insert(const FeatureHandle& handle)
 		{
 			if (!(HandleSetType::insert(handle).second))
 			{
 				String key = String("map") + handle.getMapIndex() + "/feature" + handle.getElementIndex();
 				throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__,"The set already contained an element with this key.",key) ;
 			}
-			return;
 		}
-		
-		///Adds all feature handles in @p handle_set to this consensus feature.
-		void insert(HandleSetType const & handle_set)
+
+		/// Adds all feature handles in @p handle_set to this consensus feature.
+		void insert(const HandleSetType& handle_set)
 		{
 			for (ConsensusFeature::HandleSetType::const_iterator it = handle_set.begin(); it != handle_set.end(); ++it)
 			{
 				insert(*it);
 			}
-			return;
 		}
 
 		/**
-			@brief Creates an FeatureHandle and adds it
-					
+			@brief Creates a FeatureHandle and adds it
+	
 			@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
 		*/
 		void insert(UInt map_index, UInt element_index, const Peak2D& element)
@@ -214,23 +272,25 @@ namespace OpenMS
 		}
 
 		/**
-			@brief Creates an FeatureHandle and adds it
-					
+			@brief Creates a FeatureHandle and adds it
+	
 			@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
 		*/
 		void insert(UInt map_index, UInt element_index, const Feature& element)
 		{
 			insert(FeatureHandle(map_index,element_index,element));
+			peptide_identifications_.insert(peptide_identifications_.end(), element.getPeptideIdentifications().begin(), element.getPeptideIdentifications().end());
 		}
-		
+
 		/**
-			@brief Creates an FeatureHandle and adds it
-					
+			@brief Creates a FeatureHandle and adds it
+	
 			@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
 		*/
 		void insert(UInt map_index, UInt element_index, const ConsensusFeature& element)
 		{
 			insert(FeatureHandle(map_index,element_index,element));
+			peptide_identifications_.insert(peptide_identifications_.end(), element.getPeptideIdentifications().begin(), element.getPeptideIdentifications().end());
 		}
 
 		/// Non-mutable access to the contained feature handles
@@ -239,16 +299,16 @@ namespace OpenMS
 			return *this;
 		}
 		//@}
-		
+
 		///@name Accessors
 		//@{
 		/// Returns the quality
-		DoubleReal getQuality() const
+		QualityType getQuality() const
 		{
 			return quality_;
 		}
 		/// Sets the quality
-		void setQuality(DoubleReal quality)
+		void setQuality(QualityType quality)
 		{
 			quality_ = quality;
 		}
@@ -289,26 +349,49 @@ namespace OpenMS
 			return DRange<1>(min,max);
 		}
 		//@}
-		
+
 		/**
-			@brief Computes a consensus position and intensity and assigns them to this consensus feature.
-			
-			The position and intensity of the contained feature handles is simply averaged and assigned to
-			this consensus feature.
-			
-			@note This method has to be called explicitly, after adding all feature handles.
+		@brief Computes a consensus position and intensity and assigns them to this consensus feature.
+
+		The position and intensity of the contained feature handles is simply averaged and assigned to
+		this consensus feature.
+
+		@note This method has to be called explicitly, after adding all feature handles.
 		*/
 		void computeConsensus();
 
-	 protected:
-		///Quality of the consensus feature
-		DoubleReal quality_;
-		///Charge of the consensus feature
-		Int charge_;
-  };
+		/// returns a const reference to the PeptideIdentification vector
+		const std::vector<PeptideIdentification>& getPeptideIdentifications() const
+		{
+			return peptide_identifications_;
+		};
 
-  ///Print the contents of a ConsensusFeature to a stream
-  std::ostream& operator << (std::ostream& os, const ConsensusFeature& cons);
+		/// returns a mutable reference to the PeptideIdentification vector
+		std::vector<PeptideIdentification>& getPeptideIdentifications()
+		{
+			return peptide_identifications_;
+		};
+
+		/// sets the PeptideIdentification vector
+		void setPeptideIdentifications( const std::vector<PeptideIdentification>& peptide_identifications )
+		{
+			peptide_identifications_ = peptide_identifications;
+		};
+
+	 protected:
+		/// Quality of the consensus feature
+		QualityType quality_;
+
+		/// Charge of the consensus feature
+		Int charge_;
+
+		/// Peptide identifications belonging to the consensus feature
+		std::vector<PeptideIdentification> peptide_identifications_;
+
+	};
+
+	///Print the contents of a ConsensusFeature to a stream
+	std::ostream& operator << (std::ostream& os, const ConsensusFeature& cons);
 
 } // namespace OpenMS
 

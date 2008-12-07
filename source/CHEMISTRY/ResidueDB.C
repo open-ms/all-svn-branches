@@ -67,9 +67,34 @@ namespace OpenMS
 		return modified_residues_.size();
 	}
 		
-	const set<const Residue*>& ResidueDB::getResidues() const
+	const set<const Residue*> ResidueDB::getResidues(AminoAcidSet aa_set) const
 	{
-		return const_residues_;
+		if (aa_set == ALL)
+		{
+			return const_residues_;
+		}
+		String aa;
+		set<const Residue*> residues;
+		if (aa_set == NATURAL_20)
+		{
+			aa = "ACDEFGHIKLMNPQRSTVWY";
+		}
+
+		if (aa_set == NATURAL_19)
+		{
+			aa = "ACDEFGHKLMNPQRSTVWY";
+		}
+	
+		if (aa == "")
+		{
+			throw Exception::ElementNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, "AminoAcidSet cannot be found: '" + String(aa_set) + "'");
+		}
+		
+		for (String::ConstIterator it = aa.begin(); it != aa.end(); ++it)
+		{
+			residues.insert(getResidue(*it));
+		}
+		return residues;	
 	}
 
 	void ResidueDB::setResidues(const String& file_name)
@@ -149,15 +174,20 @@ namespace OpenMS
 		}
 		return false;
 	}
+
+	bool ResidueDB::hasResidue(const Residue* residue) const
+	{
+		if (const_residues_.find(residue) != const_residues_.end() ||
+				const_modified_residues_.find(residue) != const_modified_residues_.end())
+		{
+			return true;
+		}
+		return false;
+	}
 	
 	void ResidueDB::readResiduesFromFile_(const String& file_name)
 	{
 		String file = File::find(file_name);
-
-		if (!File::exists(file))
-		{
-			throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, file_name);
-		}
 		
 		Param param;
 		param.load(file);
@@ -167,8 +197,8 @@ namespace OpenMS
 			throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, "", "");
 		}
 
-		try
-		{
+		//try
+		//{
 			vector<String> split;
 			param.begin().getName().split(':',split);
 			String prefix = split[0] + split[1];
@@ -199,11 +229,11 @@ namespace OpenMS
 			res_ptr = parseResidue_(values);
 			residues_.insert(res_ptr);
 			const_residues_.insert(res_ptr);
-		}
-		catch (...)
-		{
-			throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, "", "");
-		}
+		//}
+		//catch (Exception::BaseException& e)
+		//{
+		//	throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, e.what(), "");
+		//}
 	}
 
 	void ResidueDB::clear_()
@@ -262,19 +292,32 @@ namespace OpenMS
 				res_ptr->setMonoWeight(formula.getMonoWeight());
 				continue;
 			}
-			if (key.hasSuffix(":LossName"))
+
+			if (key.hasSubstring(":Losses:LossName"))
 			{
-				res_ptr->setLossName(value);
+				res_ptr->addLossName(value);
 				continue;
 			}
-			if (key.hasSuffix(":LossFormula"))
+			if (key.hasSubstring(":Losses:LossFormula"))
 			{
 				EmpiricalFormula loss(value);
-				res_ptr->setLossFormula(loss);
-				res_ptr->setLossAverageWeight(loss.getAverageWeight());
-				res_ptr->setLossMonoWeight(loss.getMonoWeight());
+				res_ptr->addLossFormula(loss);
 				continue;
 			}
+
+			if (key.hasSubstring("NTermLosses:LossName"))
+			{
+				res_ptr->addNTermLossName(value);
+				continue;
+			}
+
+			if (key.hasSubstring("NTermLosses:LossFormula"))
+			{
+				EmpiricalFormula loss(value);
+				res_ptr->addNTermLossFormula(loss);
+				continue;
+			}
+			
 			if (key.hasSubstring("LowMassIons"))
 			{
 				// no markers defined?
@@ -384,7 +427,7 @@ namespace OpenMS
 		if (origin.size() > 1 || origin.size() == 0 || (origin.size() == 1 && origin == "X"))
 		{
 			throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, String("Modification '" + modification
-						+ "' has no specific residue as origin! Please specifiy it!").c_str());
+						+ "' has no specific residue as origin! Please specify it!").c_str());
 		}
 
 		return getModifiedResidue(getResidue(origin), modification);
@@ -412,6 +455,34 @@ namespace OpenMS
 		
 		Residue* res = new Residue(*residue_names_[res_name]);
 		res->setModification(id);
+		res->setLossFormulas(vector<EmpiricalFormula>());
+		res->setLossNames(vector<String>());
+
+		// TODO HACK HACK HACK TODO
+		if (id == "MOD:00719")
+		{
+			// Methionine
+			cerr << "Setting new neutral losses for mod " << id << endl;
+			res->addLossFormula(EmpiricalFormula("CH3SOH"));
+			res->addLossName("");
+		}
+
+		if (id == "MOD:09997")
+		{
+			// Carbamyl K
+			cerr << "Setting new neutral losses for mod " << id << endl;
+			res->addLossFormula(EmpiricalFormula("NHCO"));
+			res->addLossName("");
+		}
+
+		/*
+		if (id == "MOD:01214")
+		{
+			// Cmc
+			res->addLossFormula(EmpiricalFormula(""));
+			res->addLossName("");
+		}*/
+
 		
 		// now register this modified residue 
 		addResidue_(res);

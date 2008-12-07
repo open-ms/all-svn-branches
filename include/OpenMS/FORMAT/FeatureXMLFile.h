@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff $
+// $Maintainer: Marc Sturm, Chris Bielow, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_FEATUREXMLFILE_H
@@ -30,6 +30,9 @@
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/FORMAT/PeakFileOptions.h>
 #include <OpenMS/FORMAT/XMLFile.h>
+#include <OpenMS/FORMAT/HANDLERS/XMLHandler.h>
+
+#include <iostream>
 
 namespace OpenMS
 {
@@ -40,34 +43,37 @@ namespace OpenMS
 		
   	@note This format will eventually be replaced by the HUPO-PSI AnalysisXML format!
   	
-  	@note If a feature meta value named 'id' is present, it is stored in the feature 'id' attribute in the file.
-  	      If meta value 'id' is not set, incrementing numbers are used.
-
-  	@todo Update version to 1.3 in load and store (Clemens, Chris)
-  	@todo Implement 'id' attribute - stored in ExperimentalSettings (Clemens, Chris)
-
   	@ingroup FileIO
   */
   class FeatureXMLFile
-  	: public Internal::XMLFile
+  	: protected Internal::XMLHandler,
+  		public Internal::XMLFile
   {
 	
 		public:
 		
 			/** @name Constructors and Destructor */
 			//@{
-			
 			///Default constructor
 			FeatureXMLFile();
 			///Destructor
 			~FeatureXMLFile();
 			//@}
 			
-			/// loads the file with name @p filename into @p map.
-			void load(String filename, FeatureMap<>& feature_map) throw (Exception::FileNotFound, Exception::ParseError);
+			/**
+				@brief loads the file with name @p filename into @p map.
+			
+				@exception Exception::FileNotFound is thrown if the file could not be opened
+				@exception Exception::ParseError is thrown if an error occurs during parsing
+			*/
+			void load(String filename, FeatureMap<>& feature_map);
 					
-			/// stores the map @p feature_map in file with name @p filename.
-			void store(String filename, const FeatureMap<>& feature_map) const throw (Exception::UnableToCreateFile);
+			/**
+				@brief stores the map @p feature_map in file with name @p filename.
+				
+				@exception Exception::UnableToCreateFile is thrown if the file could not be created
+			*/
+			void store(String filename, const FeatureMap<>& feature_map);
 			
       /// Mutable access to the options for loading/storing 
       PeakFileOptions& getOptions();
@@ -76,9 +82,71 @@ namespace OpenMS
       const PeakFileOptions& getOptions() const;
 		
 		protected:
-		
-			/// options for reading / writing
+
+			// Docu in base class
+      virtual void endElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname);
+			
+			// Docu in base class
+      virtual void startElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname, const xercesc::Attributes& attributes);
+			
+			// Docu in base class
+      virtual void characters(const XMLCh* const chars, unsigned int length);
+
+			/// Writes a feature body to a stream
+			void writeFeature_(const String& filename, std::ostream& os, const Feature& feat, const String& identifier_prefix, UInt identifier, UInt indentation_level);
+			
+			/** 
+				@brief update the pointer to the current feature
+					
+				@param create If true, a new (empty) Feature is added at the appropriate subordinate_feature_level_
+			*/
+			void updateCurrentFeature_(bool create);
+
+			/// points to the last open &lt;feature&gt; tag (possibly a subordinate feature)
+			Feature* current_feature_;
+			/// Feature map pointer for reading
+			FeatureMap<Feature>* map_;
+			/// Options that can be set				
 			PeakFileOptions options_;
+			
+			/**@name temporary datastructures to hold parsed data */
+	    //@{
+			ModelDescription<2>* model_desc_;
+			Param param_;
+			ConvexHull2D current_chull_;
+			DPosition<2> hull_position_;	
+	    //@}
+			
+			/// current dimension of the feature position, quality, or convex hull point
+	 		UInt dim_;			
+			
+			//for downward compatibility, all tags in the old description must be ignored
+			bool in_description_;
+			
+			/// level in Feature stack during parsing
+			Int subordinate_feature_level_;
+			
+			/// Pointer to last read object as a MetaInfoInterface, or null.
+			MetaInfoInterface* last_meta_;
+			
+			/// Temporary protein ProteinIdentification
+			ProteinIdentification prot_id_;
+			/// Temporary peptide ProteinIdentification
+			PeptideIdentification pep_id_;
+			/// Temporary protein hit
+			ProteinHit prot_hit_;
+			/// Temporary peptide hit
+			PeptideHit pep_hit_;
+			/// Map from protein id to accession
+			Map<String,String> proteinid_to_accession_;
+			/// 
+			Map<String,UInt> accession_to_id_;
+			/// Map from identification run identifier to file xs:id (for linking peptide identifications to the corresponding run)
+			Map<String,String> identifier_id_;
+			/// Map from file xs:id to identification run identifier (for linking peptide identifications to the corresponding run)
+			Map<String,String> id_identifier_;
+			/// Temporary search parameters file
+			ProteinIdentification::SearchParameters search_param_;
 
 	};
 

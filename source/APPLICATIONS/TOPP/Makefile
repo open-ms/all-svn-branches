@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# --------------------------------------------------------------------------
 
 include ../../config_defs.mak
 
@@ -31,17 +29,11 @@ DIRECTORY=APPLICATIONS/TOPP
 # Where the headers of the derived classes reside
 HEADER_DIR=$(OPENMS_PATH)/include/OpenMS/$(DIRECTORY)
 
-ifeq ($(LIBSVM_SUPPORT),true)
-LIBSVM_EXEC=\
+TOPP_EXECUTABLES=\
 	RTModel\
 	RTPredict\
 	PTModel\
-	PTPredict
-
-endif
-
-TOPP_EXECUTABLES=\
-	$(LIBSVM_EXEC)\
+	PTPredict\
 	MapAligner\
 	FeatureLinker\
 	ConsensusID\
@@ -74,7 +66,12 @@ TOPP_EXECUTABLES=\
 	FeatureFinderMRM\
 	XTandemAdapter\
 	FalseDiscoveryRate\
-	IDDecoyProbability
+	IDDecoyProbability\
+	MascotAdapterOnline\
+	SILACAnalyzer\
+	ITRAQAnalyzer\
+	IDMapper\
+	IDRTCalibration
 
 # Those executables not derived from TOPPBase (they are left out when writing the ini files)
 OTHER_EXECUTABLES=\
@@ -87,6 +84,12 @@ write_ini:
 	@mkdir -p ini
 	@cd ini
 	@for i in $(TOPP_EXECUTABLES); do echo $$i; `cd ini && $$i -write_ini $$i.ini`; done;
+
+
+write_wsdl:
+	@mkdir -p wsdl
+	@cd wsdl
+	@for i in $(TOPP_EXECUTABLES); do echo $$i; `cd wsdl && $$i -write_wsdl $$i.xml`; done;
 
 # replace library-specific flags by application-specific compiler flags 
 LIB_CXXFLAGS=$(NONLIB_CXXFLAGS) 
@@ -108,6 +111,8 @@ CPP_SOURCES =\
 test:
 	cd ${OPENMS_PATH}/source/TEST/TOPP/ && make
 
+splash.C:
+	convert TOPPView_Splashscreen.png xpm:splash.C && mv splash.C tmp.xpm && cat tmp.xpm | sed 's/static char/const char/' > splash.C && rm tmp.xpm
 
 ### for all the stuff below, Chris is responsible. If you want to have a look at the old Makefile, see SVN-Revision 2501
 
@@ -119,17 +124,17 @@ test:
 
 # special target for GUI apps, as we want to hide the additional & ugly cmd.exe screen on Windows
 
-TOPPView: TOPPView.o
+TOPPView: TOPPView.o splash.o
 	@if [ -f $@_icon.ico -a "$(OS)" = "MINGW32" ]; then \
 		$(ECHO) "Windows & Icon detected ... embedding icon into binary."; \
 		$(MAKE) $@_icon.o; \
-		$(ECHO) $(CXX) $(LDFLAGS) $(LDFLAGS_GUI_MINGW) -o $@ $@.o $@_icon.o $(LIBS); \
-		$(CXX) $(LDFLAGS) $(LDFLAGS_GUI_MINGW) -o $@ $@.o $@_icon.o $(LIBS); \
+		$(ECHO) $(CXX) $(LDFLAGS) $(LDFLAGS_GUI_MINGW) -o $@ $^ $@_icon.o $(LIBS); \
+		$(CXX) $(LDFLAGS) $(LDFLAGS_GUI_MINGW) -o $@ $^ $@_icon.o $(LIBS); \
 		$(ECHO) $(CP) $@ $(PREFIX)/bin/; \
 		$(CP) $@ $(PREFIX)/bin/; \
 	else \
-		$(ECHO) $(CXX) $(LDFLAGS) $(LDFLAGS_GUI_MINGW) -o $@ $@.o $(LIBS); \
-		$(CXX) $(LDFLAGS) $(LDFLAGS_GUI_MINGW) -o $@ $@.o $(LIBS); \
+		$(ECHO) $(CXX) $(LDFLAGS) $(LDFLAGS_GUI_MINGW) -o $@ $^ $(LIBS); \
+		$(CXX) $(LDFLAGS) $(LDFLAGS_GUI_MINGW) -o $@ $^ $(LIBS); \
 		$(ECHO) $(CP) $@ $(PREFIX)/bin/; \
 		$(CP) $@ $(PREFIX)/bin/; \
 	fi;

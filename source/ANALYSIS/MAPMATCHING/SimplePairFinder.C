@@ -34,11 +34,11 @@ namespace OpenMS
   	//set the name for DefaultParamHandler error messages
 		setName(getProductName());
 		
-		defaults_.setValue("similarity:diff_intercept:RT",1.0,"This parameter controls the asymptotic decay rate for large differences (for more details see the similarity measurement).",true);
-    defaults_.setValue("similarity:diff_intercept:MZ",0.1,"This parameter controls the asymptotic decay rate for large differences (for more details see the similarity measurement).",true);
-    defaults_.setValue("similarity:diff_exponent:RT",2.0,"This parameter is important for small differences (for more details see the similarity measurement).",true);
-    defaults_.setValue("similarity:diff_exponent:MZ",1.0,"This parameter is important for small differences (for more details see the similarity measurement).",true);
-    defaults_.setValue("similarity:pair_min_quality",0.01,"Minimum required pair quality.",true);
+		defaults_.setValue("similarity:diff_intercept:RT",1.0,"This parameter controls the asymptotic decay rate for large differences (for more details see the similarity measurement).",StringList::create("advanced"));
+    defaults_.setValue("similarity:diff_intercept:MZ",0.1,"This parameter controls the asymptotic decay rate for large differences (for more details see the similarity measurement).",StringList::create("advanced"));
+    defaults_.setValue("similarity:diff_exponent:RT",2.0,"This parameter is important for small differences (for more details see the similarity measurement).",StringList::create("advanced"));
+    defaults_.setValue("similarity:diff_exponent:MZ",1.0,"This parameter is important for small differences (for more details see the similarity measurement).",StringList::create("advanced"));
+    defaults_.setValue("similarity:pair_min_quality",0.01,"Minimum required pair quality.",StringList::create("advanced"));
 
     Base::defaultsToParam_();
   }
@@ -56,7 +56,7 @@ namespace OpenMS
 	 	}
 		Int number_of_considered_element_pairs = 0;
 
-    // For each element in map 0, find his/her best friend in map 1
+    // For each element in map 0, find its best friend in map 1
     std::vector<UInt>        best_companion_index_0(input_maps[0].size(),UInt(-1));
     std::vector<DoubleReal> best_companion_quality_0(input_maps[0].size(),0);
     for ( UInt fi0 = 0; fi0 < input_maps[0].size(); ++fi0 )
@@ -81,7 +81,7 @@ namespace OpenMS
 			best_companion_quality_0[fi0] = best_quality;
     }
 
-		// For each element in map 1, find his/her best friend in map 0
+		// For each element in map 1, find its best friend in map 0
 		std::vector<UInt>        best_companion_index_1(input_maps[1].size(),UInt(-1));
     std::vector<DoubleReal> best_companion_quality_1(input_maps[1].size(),0);
     for ( UInt fi1 = 0; fi1 < input_maps[1].size(); ++fi1 )
@@ -135,7 +135,17 @@ namespace OpenMS
   void SimplePairFinder::updateMembers_()
   {
     diff_intercept_[Peak2D::RT] = (DoubleReal)param_.getValue("similarity:diff_intercept:RT");
+		if ( diff_intercept_[Peak2D::RT] <= 0 )
+		{
+			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,"intercept for RT must be > 0");
+		}
+
     diff_intercept_[Peak2D::MZ] = (DoubleReal)param_.getValue("similarity:diff_intercept:MZ");
+		if ( diff_intercept_[Peak2D::MZ] <= 0 )
+		{
+			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,"intercept for MZ must be > 0");
+		}
+
     diff_exponent_[Peak2D::RT] = (DoubleReal)param_.getValue("similarity:diff_exponent:RT");
     diff_exponent_[Peak2D::MZ] = (DoubleReal)param_.getValue("similarity:diff_exponent:MZ");
     pair_min_quality_ = (DoubleReal)param_.getValue("similarity:pair_min_quality");
@@ -153,15 +163,14 @@ namespace OpenMS
 
     for ( UInt dimension = 0; dimension < 2; ++dimension )
     {
-			// Take the absolute value
+			// the formula is explained in class doc
 			if ( position_difference[dimension] < 0 )
 			{
 				position_difference[dimension] = -position_difference[dimension];
 			}
-			// Raise the difference to a (potentially fractional) power
+			position_difference[dimension] *= diff_intercept_[dimension];
+			position_difference[dimension] += 1.0;
 			position_difference[dimension] = pow(position_difference[dimension],diff_exponent_[dimension]);
-			// Add an absolute number
-			position_difference[dimension] += diff_intercept_[dimension];
     }
 
     return intensity_ratio / position_difference[Peak2D::RT] / position_difference[Peak2D::MZ];

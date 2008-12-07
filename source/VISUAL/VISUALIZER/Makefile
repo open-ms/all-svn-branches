@@ -21,16 +21,18 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm$
-# --------------------------------------------------------------------------
 
 include ../../config_defs.mak
 
 DIRECTORY=VISUAL/VISUALIZER
 
 
+CPP_SOURCES_NOMOC=\
+	BaseVisualizer.C
+
 CPP_SOURCES=\
 	BaseVisualizer.C\
+	BaseVisualizerGUI.C\
 	SampleVisualizer.C\
 	DigestionVisualizer.C\
 	ModificationVisualizer.C\
@@ -45,7 +47,7 @@ CPP_SOURCES=\
 	IonSourceVisualizer.C\
 	IonDetectorVisualizer.C\
 	MassAnalyzerVisualizer.C\
-	ProcessingMethodVisualizer.C\
+	DataProcessingVisualizer.C\
 	ProteinHitVisualizer.C\
 	PeptideHitVisualizer.C\
 	PeptideIdentificationVisualizer.C\
@@ -56,10 +58,12 @@ CPP_SOURCES=\
 	MetaInfoDescriptionVisualizer.C\
 	PrecursorVisualizer.C\
 	InstrumentSettingsVisualizer.C\
-	SpectrumSettingsVisualizer.C
+	SpectrumSettingsVisualizer.C\
+	DocumentIdentifierVisualizer.C\
+	ScanWindowVisualizer.C
 
 MOC_SOURCES=\
-	BaseVisualizer_moc.C\
+	BaseVisualizerGUI_moc.C\
 	SampleVisualizer_moc.C\
 	DigestionVisualizer_moc.C\
 	ModificationVisualizer_moc.C\
@@ -74,7 +78,7 @@ MOC_SOURCES=\
 	IonSourceVisualizer_moc.C\
 	IonDetectorVisualizer_moc.C\
 	MassAnalyzerVisualizer_moc.C\
-  ProcessingMethodVisualizer_moc.C\
+  DataProcessingVisualizer_moc.C\
 	PeptideIdentificationVisualizer_moc.C\
 	ProteinHitVisualizer_moc.C\
 	PeptideHitVisualizer_moc.C\
@@ -85,9 +89,11 @@ MOC_SOURCES=\
 	PrecursorVisualizer_moc.C\
 	InstrumentSettingsVisualizer_moc.C\
 	ProteinIdentificationVisualizer_moc.C\
-	SpectrumSettingsVisualizer_moc.C	
+	SpectrumSettingsVisualizer_moc.C\
+	DocumentIdentifierVisualizer_moc.C\
+	ScanWindowVisualizer_moc.C
 
-SOURCES		= $(CPP_SOURCES) $(MOC_SOURCES)
+SOURCES		= $(CPP_SOURCES) $(MOC_SOURCES) $(CPP_SOURCES_NOMOC)
 OBJECTS 	= $(SOURCES:.C=.o)
 
 -include .Dependencies
@@ -97,7 +103,7 @@ default: echodir $(OBJECTS)
 depend:	$(MOC_SOURCES)
 	@echo "creating dependencies for $(DIRECTORY)..."
 	@echo "" > .Dependencies
-	@$(CXX_MAKEDEPEND) $(MAKEDEP_OPTS) $(CPP_SOURCES) $(MOC_SOURCES) $(OPENMS_INCLUDES)  >.Dependencies
+	@$(CXX_MAKEDEPEND) $(MAKEDEP_OPTS) $(CPP_SOURCES) $(CPP_SOURCES_NOMOC) $(MOC_SOURCES) $(OPENMS_INCLUDES)  >.Dependencies
 
 default_clean:
 	@-$(RM) -rf .Dependencies *~  core.* $(OBJECTS) $(MOC_SOURCES)
@@ -114,8 +120,8 @@ include ../../config.mak
 
 HEADER_DIR = $(OPENMS_PATH)/include/OpenMS/$(DIRECTORY)
 
-BaseVisualizer_moc.C:  $(HEADER_DIR)/BaseVisualizer.h
-	$(MOC) $(HEADER_DIR)/BaseVisualizer.h -o BaseVisualizer_moc.C	
+BaseVisualizerGUI_moc.C:  $(HEADER_DIR)/BaseVisualizerGUI.h
+	$(MOC) $(HEADER_DIR)/BaseVisualizerGUI.h -o BaseVisualizerGUI_moc.C	
 
 SampleVisualizer_moc.C:  $(HEADER_DIR)/SampleVisualizer.h
 	$(MOC) $(HEADER_DIR)/SampleVisualizer.h -o SampleVisualizer_moc.C
@@ -159,8 +165,8 @@ IonDetectorVisualizer_moc.C:  $(HEADER_DIR)/IonDetectorVisualizer.h
 MassAnalyzerVisualizer_moc.C:  $(HEADER_DIR)/MassAnalyzerVisualizer.h
 	$(MOC) $(HEADER_DIR)/MassAnalyzerVisualizer.h -o MassAnalyzerVisualizer_moc.C		
 	
-ProcessingMethodVisualizer_moc.C:  $(HEADER_DIR)/ProcessingMethodVisualizer.h
-	$(MOC) $(HEADER_DIR)/ProcessingMethodVisualizer.h -o ProcessingMethodVisualizer_moc.C		
+DataProcessingVisualizer_moc.C:  $(HEADER_DIR)/DataProcessingVisualizer.h
+	$(MOC) $(HEADER_DIR)/DataProcessingVisualizer.h -o DataProcessingVisualizer_moc.C		
 
 PeptideIdentificationVisualizer_moc.C:  $(HEADER_DIR)/PeptideIdentificationVisualizer.h
 	$(MOC) $(HEADER_DIR)/PeptideIdentificationVisualizer.h -o PeptideIdentificationVisualizer_moc.C		
@@ -194,3 +200,9 @@ ProteinIdentificationVisualizer_moc.C:  $(HEADER_DIR)/ProteinIdentificationVisua
 	
 SpectrumSettingsVisualizer_moc.C:  $(HEADER_DIR)/SpectrumSettingsVisualizer.h
 	$(MOC) $(HEADER_DIR)/SpectrumSettingsVisualizer.h -o SpectrumSettingsVisualizer_moc.C
+
+DocumentIdentifierVisualizer_moc.C:  $(HEADER_DIR)/DocumentIdentifierVisualizer.h
+	$(MOC) $(HEADER_DIR)/DocumentIdentifierVisualizer.h -o DocumentIdentifierVisualizer_moc.C
+
+ScanWindowVisualizer_moc.C:  $(HEADER_DIR)/ScanWindowVisualizer.h
+	$(MOC) $(HEADER_DIR)/ScanWindowVisualizer.h -o ScanWindowVisualizer_moc.C

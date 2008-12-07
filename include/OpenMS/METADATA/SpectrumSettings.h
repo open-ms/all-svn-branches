@@ -53,11 +53,13 @@ namespace OpenMS
 	*/
   class SpectrumSettings 
   {
+  	
     public:
+    
     	/**
     		@brief spectrum type
     		
-    		If set to unknown see SpectrumType of the ProcessingMethod ( in MSExperiment ).
+    		If set to unknown see SpectrumType of the DataProcessing ( in MSExperiment ).
     	*/
     	enum SpectrumType
     	{
@@ -84,18 +86,15 @@ namespace OpenMS
       /// Equality operator
       bool operator!= (const SpectrumSettings& rhs) const;
 
-			/**
-				@brief returns the spectrum type
-				
-				If the type is 'UNKNOWN', a general type for all spectra of an experiment might be stored in the ProcessingMethod instance of an ExperimentalSettings .
-			*/
+			///returns the spectrum type
       SpectrumType getType() const;
-      /**
-				@brief sets the spectrum type
-				
-				If the type is 'UNKNOWN', a general type for all spectra of an experiment might be stored in the ProcessingMethod instance of an ExperimentalSettings .
-			*/
+      ///sets the spectrum type
       void setType(SpectrumType type);
+
+			/// returns the native identifier for the spectrum, used by the acquisition software.
+      const String& getNativeID() const;
+      /// sets the native identifier for the spectrum, used by the acquisition software.
+      void setNativeID(const String& native_id);
 
 			/// returns the free-text comment
       const String& getComment() const;
@@ -138,7 +137,9 @@ namespace OpenMS
 	    void setPeptideIdentifications(const std::vector<PeptideIdentification>& identifications);	
 
     protected:
+    	
     	SpectrumType type_;
+    	String native_id_;
       String comment_;
       InstrumentSettings instrument_settings_;
       SourceFile source_file_;

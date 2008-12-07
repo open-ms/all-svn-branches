@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -44,36 +44,41 @@ using namespace std;
 typedef FeatureFinderAlgorithmSimple<Peak1D,Feature> FFASS;
 
 FFASS* ptr;
-CHECK(FeatureFinderAlgorithmSimple())
+START_SECTION(FeatureFinderAlgorithmSimple())
 	ptr = new FFASS;
 	TEST_NOT_EQUAL(ptr,0)
-	delete ptr;
-RESULT
+END_SECTION
 
-CHECK(virtual void run())
+START_SECTION((virtual ~FeatureFinderAlgorithmSimple()))
+	delete ptr;
+END_SECTION
+
+//TODO: this should work (Clemens)
+//START_SECTION([EXTRA] FeatureFinderAlgorithmSimple() - with RichPeak1D)
+//	FeatureFinderAlgorithmSimple<RichPeak1D,Feature> ffa;
+//END_SECTION
+
+START_SECTION(virtual void run())
 	// dummy subtest
 	TEST_EQUAL(1,1)
-RESULT
+END_SECTION
 
-CHECK((virtual Param getDefaultParameters() const))
+START_SECTION((virtual Param getDefaultParameters() const))
 {
   // dummy subtest
 	TEST_EQUAL(1,1)
 }
-RESULT
+END_SECTION
 
-CHECK((static FeatureFinderAlgorithm<PeakType,FeatureType>* create()))
+START_SECTION((static FeatureFinderAlgorithm<PeakType,FeatureType>* create()))
 	FeatureFinderAlgorithm<Peak1D,Feature>* ptr2 = FFASS::create();
 	TEST_NOT_EQUAL(ptr2,0)
 	delete ptr2;
-RESULT
+END_SECTION
 
-CHECK(static const String getProductName())
+START_SECTION(static const String getProductName())
 	TEST_EQUAL(FFASS::getProductName(),"simple")
-RESULT
-
-//remove log file
-File::remove("featurefinder.log");
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

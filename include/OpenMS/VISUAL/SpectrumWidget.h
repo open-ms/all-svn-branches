@@ -34,6 +34,7 @@
 
 class QGridLayout;
 class QScrollBar;
+class QCloseEvent;
 
 namespace OpenMS
 {
@@ -54,6 +55,8 @@ namespace OpenMS
 		instance of the SpectrumCanvas class as a child widget.
 		
 		This Widget also provides axis widgets and scrollbars.
+		
+		@todo Add support to store the displayed data as SVG or PNG image (HiWi)
 	*/
 	class SpectrumWidget 
 		: public QWidget
@@ -164,6 +167,11 @@ namespace OpenMS
 			void changeLegendVisibility();
 			
 		protected:
+			/// @name Reimplemented Qt events
+			//@{ 
+			void closeEvent(QCloseEvent* e);
+			//@}
+				
 			/**
 				@brief Adds the canvas, axes and scrollbars to the layout
 			

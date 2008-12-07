@@ -50,7 +50,7 @@ namespace OpenMS
     
     @note This filter works only for uniform raw data!
     
-    @ref TopHatFilter_Parameters are explained on a separate page.
+    @htmlinclude OpenMS_TopHatFilter.parameters
     
 		@ingroup SignalProcessing
   */
@@ -126,7 +126,7 @@ namespace OpenMS
               points to a data point of type Peak1D or any other class derived from Peak1D.
         
         @note The resulting peaks in the baseline_filtered_container (e.g. of type MSSpectrum<Peak1D >)
-              can be of type Peak1D or any other class derived from DPeak. 
+              can be of type Peak1D or any other class derived from Peak1D. 
       */
       template <typename InputPeakContainer, typename OutputPeakContainer >
       void filter(const InputPeakContainer& input_peak_container, OutputPeakContainer& baseline_filtered_container)
@@ -149,7 +149,7 @@ namespace OpenMS
         {
           typename MSExperiment<PeakType>::SpectrumType spectrum;
           filter(map[i],spectrum);
-          map[i].getContainer() = spectrum.getContainer();
+          map[i].swap(spectrum);
           setProgress(i);
         }
         endProgress();

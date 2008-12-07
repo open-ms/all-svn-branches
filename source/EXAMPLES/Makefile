@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# --------------------------------------------------------------------------
 
 DIRECTORY=EXAMPLES
 
@@ -53,7 +51,8 @@ CPP_SOURCES=\
 	Tutorial_ParamEditor.C\
 	Tutorial_Unlabeled.C\
 	Tutorial_Labeled.C\
-	Tutorial_Clustering.C
+	Tutorial_Clustering.C\
+	Tutorial_typeAsString.C
 
 OBJECTS=$(SOURCES:.C=.o)
 
@@ -64,6 +63,9 @@ help:
 	@echo "depend -- updates dependencies"
 	@echo "clean -- cleans up the directory"
 	@echo "execute -- executes all examples"
+	@echo ""
+	@echo "Internal targets are:"
+	@echo "ex -- Builds the executable 'example' from 'example.C'"
 	@echo ""
 
 include ../common.mak

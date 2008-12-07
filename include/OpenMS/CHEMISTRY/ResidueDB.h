@@ -71,6 +71,17 @@ namespace OpenMS
         return db_;
       }
 
+			/** @name Enumerations
+			*/
+			//@{
+			enum AminoAcidSet
+			{
+				ALL = 0, // all stored amino acids
+				NATURAL_20=1, // all natural amino acids: ACDEFGHIKLMNPQRSTVWY
+				NATURAL_19=2 // all natural amino acids, without Isoleucine: ACDEFGHKLMNPQRSTVWY
+			};
+			//@}
+			
 			
 			/** @name Constructors and Destructors
 			*/
@@ -99,7 +110,7 @@ namespace OpenMS
 			//const Residue* getModifiedResidue(const ResidueModification& mod);
 			
 			/// returns a set of all residues stored in this residue db
-			const std::set<const Residue*>& getResidues() const;
+			const std::set<const Residue*> getResidues(AminoAcidSet aa_set = ALL) const;
 
 			/// sets the residues from given file
 			void setResidues(const String& filename);
@@ -113,6 +124,9 @@ namespace OpenMS
 			//@{
 			/// returns true if the db contains a residue with the given name
 			bool hasResidue(const String& name) const;
+
+			/// returns true if the db contains the residue of the given pointer
+			bool hasResidue(const Residue* residue) const;
 			//@}
 			
 			/** @name Iterators

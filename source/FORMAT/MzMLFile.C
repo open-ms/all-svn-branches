@@ -25,12 +25,18 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/MzMLFile.h>
+#include <OpenMS/FORMAT/VALIDATORS/MzMLValidator.h>
+#include <OpenMS/FORMAT/CVMappingFile.h>
+#include <OpenMS/FORMAT/XMLValidator.h>
+#include <OpenMS/FORMAT/TextFile.h>
+
 
 namespace OpenMS
 {
 
 	MzMLFile::MzMLFile()
-		: XMLFile("/SCHEMAS/mzML_1_00.xsd","1.0")
+		: XMLFile("/SCHEMAS/mzML_1_10.xsd","1.10"),
+			indexed_schema_location_("/SCHEMAS/mzML_idx_1_10.xsd")
 	{
 	}
 
@@ -47,6 +53,51 @@ namespace OpenMS
   {
   	return options_;
   }
+	
+	//reimplemented in order to handle index MzML
+	bool MzMLFile::isValid(const String& filename) 
+	{
+		//determine if this is indexed mzML or not
+		bool indexed = false;
+		TextFile file(filename,true,4);
+		if (file.asString().hasSubstring("<indexedmzML"))
+		{
+			indexed = true;
+		}
+		// find the corresponding schema
+		String current_location;
+		if (indexed)
+		{
+			current_location = File::find(indexed_schema_location_);
+		}
+		else
+		{
+			current_location = File::find(schema_location_);
+		}
+		
+		return XMLValidator().isValid(filename,current_location);
+	}
+	
+	bool MzMLFile::isSemanticallyValid(const String& filename, StringList& errors, StringList& warnings)
+	{
+		//load mapping
+		CVMappings mapping;
+		CVMappingFile().load(File::find("/MAPPING/ms-mapping.xml"),mapping);
+		
+		//load cvs
+		ControlledVocabulary cv;
+		cv.loadFromOBO("PSI",File::find("/CV/psi-ms.obo"));
+		cv.loadFromOBO("PATO",File::find("/CV/quality.obo"));
+		cv.loadFromOBO("UO",File::find("/CV/unit.obo"));
+		cv.loadFromOBO("brenda",File::find("/CV/brenda.obo"));
+		cv.loadFromOBO("GO",File::find("/CV/goslim_goa.obo"));
+		
+		//validate
+		Internal::MzMLValidator v(mapping, cv);
+		bool result = v.validate(filename, errors, warnings);
+		
+		return result;
+	}
 
 }// namespace OpenMS
 

@@ -41,30 +41,30 @@ START_TEST(PoseClusteringAffineSuperimposer, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-PoseClusteringAffineSuperimposer<FeatureMap<> >* ptr = 0;
-CHECK((PoseClusteringAffineSuperimposer()))
-	ptr = new PoseClusteringAffineSuperimposer<FeatureMap<> >();
+PoseClusteringAffineSuperimposer* ptr = 0;
+START_SECTION((PoseClusteringAffineSuperimposer()))
+	ptr = new PoseClusteringAffineSuperimposer();
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((virtual ~PoseClusteringAffineSuperimposer()))
+START_SECTION((virtual ~PoseClusteringAffineSuperimposer()))
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK((static BaseSuperimposer<ElementMapType>* create()))
-  BaseSuperimposer<FeatureMap<> >* base_ptr = 0;
-	base_ptr = PoseClusteringAffineSuperimposer<FeatureMap<> >::create();
+START_SECTION((static BaseSuperimposer* create()))
+  BaseSuperimposer* base_ptr = 0;
+	base_ptr = PoseClusteringAffineSuperimposer::create();
 	TEST_NOT_EQUAL(base_ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((static const String getProductName()))
-  PoseClusteringAffineSuperimposer<FeatureMap<> > pcat;
+START_SECTION((static const String getProductName()))
+  PoseClusteringAffineSuperimposer pcat;
   
   TEST_EQUAL(pcat.getName() == "poseclustering_affine",true)
-RESULT
+END_SECTION
 
-CHECK((virtual void run(const std::vector<ElementMapType>& maps, std::vector<TransformationDescription>& transformations)))
-  std::vector<FeatureMap<> > input(2);
+START_SECTION((virtual void run(const std::vector<ElementMapType>& maps, std::vector<TransformationDescription>& transformations)))
+  std::vector<ConsensusMap> input(2);
   Feature feat1;
   Feature feat2;
   PositionType pos1(1,1);
@@ -93,7 +93,7 @@ CHECK((virtual void run(const std::vector<ElementMapType>& maps, std::vector<Tra
 	parameters.setValue(String("bucket_window_scaling"), 1);
 
   std::vector<TransformationDescription> transformations;  
-  PoseClusteringAffineSuperimposer<FeatureMap<> > pcat;
+  PoseClusteringAffineSuperimposer pcat;
   pcat.setParameters(parameters);
   pcat.run(input, transformations);
 
@@ -101,9 +101,9 @@ CHECK((virtual void run(const std::vector<ElementMapType>& maps, std::vector<Tra
   TEST_STRING_EQUAL(transformations[0].getName(),"linear")
 	TEST_EQUAL(transformations[0].getParameters().size(),2)    
   TEST_STRING_EQUAL(transformations[0].getName(),"linear")
-  TEST_REAL_EQUAL(transformations[0].getParameters().getValue("slope"),1.0)
-  TEST_REAL_EQUAL(transformations[0].getParameters().getValue("intercept"),-0.4)
-RESULT
+  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("slope"),1.0)
+  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("intercept"),-0.4)
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

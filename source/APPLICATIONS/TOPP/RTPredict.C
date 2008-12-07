@@ -42,7 +42,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page RTPredict RTPredict
+	@page TOPP_RTPredict RTPredict
 	
 	@brief This application is used to predict retention times 
 				 for peptides or peptide separation.
@@ -51,7 +51,7 @@ using namespace std;
 	is an svm model and an IdXML
 	file with peptide identifications. The svm model file is specified
 	by the <b>svm_model</b> parameter in the command line or the ini file. 
-	This file should have been produced by the RTModel application. 
+	This file should have been produced by the @ref TOPP_RTModel application. 
 	<br>
 	For retention time prediction the peptide sequences are extracted 
 	from the IdXML inputfile 
@@ -63,8 +63,9 @@ using namespace std;
 	'out_positive' is the filename of the peptides which are predicted
 	to be collected by the column and 'out_negative' is the file
 	of the predicted flowthrough peptides.
-	
-	@todo Reactivate TOPPtest after fixing issue below on MinGW (Niko, Chris)
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_RTPredict.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -84,7 +85,7 @@ class TOPPRTPredict
 		void registerOptionsAndFlags_()
 		{
 			registerInputFile_("in","<file>","","input file ");
-			setValidFormats_("in",StringList::create("IdXML"));
+			//			setValidFormats_("in",StringList::create("IdXML"));
 			registerOutputFile_("out","<file>","","output file (peptide RT prediction)\n", false);
 			setValidFormats_("out",StringList::create("IdXML"));
 			registerFlag_("textfile_input", "if this flag is set, RTPredict expects a textfile instead of an IdXML file as input which contains one peptide sequence per line output as a textfile is switched on as well");
@@ -434,6 +435,7 @@ class TOPPRTPredict
 									temp_peptide_hits[j].setMetaValue("predicted_RT_p_value_first_dim",temp_p_value);
 								}
 								temp_peptide_hits[j].setMetaValue("predicted_RT_first_dim",temp_rt);
+								performance_retention_times.push_back(identifications[i].getMetaValue("first_dim_rt"));					
 							}
 							else
 							{
@@ -442,8 +444,8 @@ class TOPPRTPredict
 									temp_peptide_hits[j].setMetaValue("predicted_RT_p_value",temp_p_value);
 								}
 								temp_peptide_hits[j].setMetaValue("predicted_RT",temp_rt);
+								performance_retention_times.push_back(identifications[i].getMetaValue("RT"));					
 							}
-							performance_retention_times.push_back(identifications[i].getMetaValue("RT"));					
 						}
 						identifications[i].setHits(temp_peptide_hits);				
 					}

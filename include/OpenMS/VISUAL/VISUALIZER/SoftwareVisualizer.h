@@ -30,55 +30,50 @@
 //OpenMS
 #include <OpenMS/METADATA/Software.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizerGUI.h>
 
-class QLineEdit;
-class QComboBox;
 
-namespace OpenMS {
+namespace OpenMS
+{
 
-	class MSMetaDataExplorer;
+	class MetaDataBrowser;
 	
 	/**
-	@brief Class that displays all meta information for Software objects
-	
-	This class provides all functionality to view the meta information of an object of type Software.
+		@brief Class that displays all meta information for Software objects
+		
+		This class provides all functionality to view the meta information of an object of type Software.
 	*/
-	
-	class SoftwareVisualizer : public BaseVisualizer
+	class SoftwareVisualizer
+		: public BaseVisualizerGUI,
+			public BaseVisualizer<Software>
 	{
 		Q_OBJECT
 
-	public:
-		/// Default constructor 
-		SoftwareVisualizer(bool editable= FALSE, QWidget *parent =0);
-		/// Loads the meta data from the object to the viewer.
-		void load(Software &s);
-	  
-	private slots:
-		/// Saves the changes made to the meta data into the object.
-		void store_();
-		/// Deletes all changes made in the viewer and restores the original meta data.
-		void reject_();
-
-	private:  
-		/// Pointer to current object to keep track of the actual object
-		Software *ptr_;
-		/// Copy of current object for restoring the original values
-		Software  tempsoftware_;
-	  
-		/** @name Edit fields and buttons
-   */
-    //@{
-		QLineEdit *software_name_;
-		QLineEdit *software_version_;
-		QTextEdit *software_comment_;
-		QLineEdit *software_completion_time_;
-    //@}
-
-    
+		public:
+			
+			///Constructor 
+			SoftwareVisualizer(bool editable = false, QWidget* parent = 0);
+		  
+		public slots:
+			
+			//Docu in base class
+			void store();
 		
-		
-					
+		protected slots:
+			
+			///Undo the changes made in the GUI.
+			void undo_();
+	
+		protected:
+			
+			///@name Edit fields and buttons
+	    //@{
+			QLineEdit* software_name_;
+			QLineEdit* software_version_;
+	    //@}
+	    
+			//Docu in base class
+			void update_();
 	};
 }
 #endif

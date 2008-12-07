@@ -38,58 +38,36 @@ using namespace std;
 
 namespace OpenMS
 {
-
-//Constructor
-AcquisitionVisualizer::AcquisitionVisualizer(bool editable, QWidget *parent) 
-	: BaseVisualizer(editable, parent)
-{
-  
-	addLabel("Show Acquisition information");		
-	addSeperator();
-	addIntLineEdit(acquisitionnumber_, "Index/Number of the scan" );
-	acquisitionnumber_->setReadOnly(true);
-		
-	finishAdding_();
 	
-}
-
-
-void AcquisitionVisualizer::load(Acquisition &a)
-{
-  ptr_ = &a;
-	
-	//Copy of current object for restoring the original values
-	tempAcquisition_=a;
-  acquisitionnumber_->setText(String(tempAcquisition_.getNumber()).c_str() );
-				
-}
-
-void AcquisitionVisualizer::store_()
-{
-	try
+	AcquisitionVisualizer::AcquisitionVisualizer(bool editable, QWidget* parent) 
+		: BaseVisualizerGUI(editable, parent),
+			BaseVisualizer<Acquisition>()
 	{
-				
-		//(*ptr_).setNumber(String((const char*)acquisitionnumber_->text()).toInt() );
+	  
+		addLabel_("Show Acquisition information");		
+		addSeparator_();
+		addIntLineEdit_(acquisitionnumber_, "Index/Number of the scan" );
+		acquisitionnumber_->setReadOnly(true);
+			
+		finishAdding_();
+	}
+	
+	
+	void AcquisitionVisualizer::update_()
+	{
+	  acquisitionnumber_->setText(String(temp_.getNumber()).c_str() );
+	}
+	
+	void AcquisitionVisualizer::store()
+	{
+		ptr_->setNumber(acquisitionnumber_->text().toInt());
 					
-		tempAcquisition_ = (*ptr_);
-		
+		temp_ = (*ptr_);
 	}
-	catch(exception& e)
+	
+	void AcquisitionVisualizer::undo_()
 	{
-		std::cout<<"Error while trying to store the new Acquisition data. "<<e.what()<<endl;
+		update_();
 	}
-}
-
-void AcquisitionVisualizer::reject_()
-{
-	try
-	{
-		load(tempAcquisition_);
-	}
-	catch(exception e)
-	{
-		cout<<"Error while trying to restore original Acquisition data. "<<e.what()<<endl;
-	} 
-}
 
 }

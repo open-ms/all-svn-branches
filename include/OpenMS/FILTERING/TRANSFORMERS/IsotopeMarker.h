@@ -41,7 +41,7 @@ namespace OpenMS
   /**
 	  @brief IsotopeMarker marks peak pairs which could represent an ion and its isotope
 
-		@ref IsotopeMarker_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_IsotopeMarker.parameters
 
 		@ingroup PeakMarker
   */
@@ -80,31 +80,31 @@ namespace OpenMS
     	double invariation = (double)param_.getValue("in_variation");
     	UInt marks = (unsigned int)param_.getValue("marks");
 			
-    	spectrum.getContainer().sortByPosition();
+    	spectrum.sortByPosition();
 			
 			std::map<double, uint> isotopemarks ; // possible isotopes
 			
     	for (uint i = 0; i < spectrum.size(); ++i)
     	{
-      	double mz = spectrum.getContainer()[i].getPosition()[0];
-      	double intensity = spectrum.getContainer()[i].getIntensity();
+      	double mz = spectrum[i].getPosition()[0];
+      	double intensity = spectrum[i].getIntensity();
       	uint j = i+1;
 
       	//std::vector<std::pair<double, double> > isotopes = SpectrumGenerator::instance()->isotopepeaks(mz, intensity);
 				IsotopeDistribution id;
 				id.estimateFromPeptideWeight(mz);
 
-      	while (j < spectrum.getContainer().size() && spectrum.getContainer()[j].getPosition()[0] <= mz + 3 + mzvariation)
+      	while (j < spectrum.size() && spectrum[j].getPosition()[0] <= mz + 3 + mzvariation)
       	{
-        	double curmz = spectrum.getContainer()[j].getPosition()[0];
-        	double curIntensity = spectrum.getContainer()[j].getIntensity();
+        	double curmz = spectrum[j].getPosition()[0];
+        	double curIntensity = spectrum[j].getIntensity();
         	UInt iso = (UInt)(curmz - mz + 0.499999);
         	if (iso > 0 && curmz - mz - iso > mzvariation)
         	{
           	++j;
           	continue;
         	}
-        	if (std::fabs(id.getContainer().begin()->second * intensity - curIntensity) < invariation * id.getContainer().begin()->second * intensity)
+        	if (std::fabs(id.begin()->second * intensity - curIntensity) < invariation * id.begin()->second * intensity)
         	{
           	isotopemarks[mz]++;
         	  isotopemarks[curmz]++;

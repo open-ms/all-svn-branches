@@ -28,7 +28,10 @@
 #include <OpenMS/ANALYSIS/MAPMATCHING/DelaunayPairFinder.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringAffineSuperimposer.h>
 
+#include <gsl/gsl_fit.h>
+
 #include <iostream>
+
 
 namespace OpenMS
 {
@@ -38,7 +41,7 @@ namespace OpenMS
 	{
 		setName("MapAlignmentAlgorithmPoseClustering");
 	
-		defaults_.insert("superimposer:",PoseClusteringAffineSuperimposer<ConsensusMap>().getParameters());
+		defaults_.insert("superimposer:",PoseClusteringAffineSuperimposer().getParameters());
 		defaults_.insert("pairfinder:",DelaunayPairFinder().getParameters());
 		defaults_.setValue("symmetric_regression","true","If true, linear regression will be based on (y-x) versus (x+y).\nIf false, a \"standard\" linear regression will be performed for y versus x.");
 		defaults_.setValidStrings("symmetric_regression",StringList::create("true,false"));
@@ -79,7 +82,7 @@ namespace OpenMS
 		ConsensusMap::convert( reference_map_index, maps[reference_map_index], input[0], max_num_peaks_considered );
 		
 		//init superimposer and pairfinder with model and parameters
-		PoseClusteringAffineSuperimposer<ConsensusMap> superimposer;
+		PoseClusteringAffineSuperimposer superimposer;
     superimposer.setParameters(param_.copy("superimposer:",true));
     
     DelaunayPairFinder pairfinder;
@@ -94,7 +97,6 @@ namespace OpenMS
 
 				// run superimposer to find the global transformation 
 	      std::vector<TransformationDescription> si_trafos;
-				//TODO si_trafos.setName("linear");
 	      superimposer.run(input, si_trafos);
 				
 				//apply transformation to consensus feature and contained feature handles
@@ -106,10 +108,7 @@ namespace OpenMS
 					//Set rt of consensus feature centroid
 					input[1][j].setRT(rt);
 					//Set RT of consensus feature handles
-					FeatureHandle tmp = *(input[1][j].begin()); //TODO: make this better!?
-					tmp.setRT(rt);
-					input[1][j].clear();
-					input[1][j].insert(tmp);
+					input[1][j].begin()->asMutable().setRT(rt);
 				}
 				
 	      //run pairfinder fo find pairs
@@ -145,7 +144,7 @@ namespace OpenMS
 				}
 			}
 		}
-		//set no transformation for reference map
+		// set no transformation for reference map
 		transformations[reference_map_index].setName("none");
 	}
 
@@ -155,10 +154,12 @@ namespace OpenMS
 		// prepare transformations for output
 		transformations.clear();
 		transformations.resize(maps.size());
+
+		startProgress(0, 10 * maps.size(),"aligning feature maps");
 		
 		const bool symmetric_regression = param_.getValue("symmetric_regression").toBool();
 
-		//define reference map (the one with most peaks)
+		// define reference map (the one with most peaks)
 		UInt reference_map_index = 0;
 		UInt max_count = 0;		
 		for (UInt m=0; m<maps.size(); ++m)
@@ -174,39 +175,43 @@ namespace OpenMS
     std::vector<ConsensusMap> input(2);
 		ConsensusMap::convert(reference_map_index, maps[reference_map_index], input[0]);
    
-		//init superimposer and pairfinder with model and parameters
-		PoseClusteringAffineSuperimposer<ConsensusMap> superimposer;
+		// init superimposer and pairfinder with model and parameters
+		PoseClusteringAffineSuperimposer superimposer;
     superimposer.setParameters(param_.copy("superimposer:",true));
+		superimposer.setLogType(getLogType());
     
     DelaunayPairFinder pairfinder;
     pairfinder.setParameters(param_.copy("pairfinder:",true));
+		pairfinder.setLogType(getLogType());
 
     for (UInt i = 0; i < maps.size(); ++i)
 		{
+			setProgress(10*i);
 			if (i != reference_map_index)
 			{
 				ConsensusMap::convert(i,maps[i],input[1]);
+				setProgress(10*i+1);
 
-				//run superimposer to find the global transformation
+				// run superimposer to find the global transformation
 	      std::vector<TransformationDescription> si_trafos;
-				//si_trafos.setName("linear");
 	      superimposer.run(input, si_trafos);
+				setProgress(10*i+2);
 
-				//apply transformation
+				// apply transformation
 				for (UInt j=0; j<input[1].size(); ++j)
 				{
 					DoubleReal rt = input[1][j].getRT();
 					si_trafos[0].apply(rt);
 					input[1][j].setRT(rt);
-					FeatureHandle tmp = *(input[1][j].begin());  //TODO: make this better!?
-					tmp.setRT(rt);
-					input[1][j].clear();
-					input[1][j].insert(tmp);
+					input[1][j].begin()->asMutable().setRT(rt);
 				}
-				
+				setProgress(10*i+3);
+
 	      //run pairfinder to find pairs
 				ConsensusMap result;
 				pairfinder.run(input, result);
+
+				setProgress(10*i+4);
 
 				// calculate the small local transformation
 				TransformationDescription trafo;
@@ -222,6 +227,8 @@ namespace OpenMS
 					trafo.setParam("intercept",0.0);
 				}
 
+				setProgress(10*i+5);
+
 				// combine the two transformations
 				transformations[i].setName("linear");
 				transformations[i].setParam("slope",si_trafos[0].getParam("slope")*trafo.getParam("slope"));
@@ -231,13 +238,21 @@ namespace OpenMS
 				for (UInt j = 0; j < maps[i].size(); ++j)
 				{
 					DoubleReal rt = maps[i][j].getRT();
+					// DoubleReal rt_old = rt;
 					transformations[i].apply(rt);
 					maps[i][j].setRT(rt);
+					// transformations[i].getPairs().push_back(TransformationDescription::PairVector::value_type(rt_old,rt));
 				}
+				// std::sort(transformations[i].getPairs().begin(),transformations[i].getPairs().end());
+				setProgress(10*i+6);
 			}
 		}
 		//set no transformation for reference map
 		transformations[reference_map_index].setName("none");
+
+		setProgress(10*maps.size());
+		endProgress();
+		return;
 	}
 
 	TransformationDescription MapAlignmentAlgorithmPoseClustering::calculateRegression_(UInt const index_x_map, UInt const index_y_map, ConsensusMap const& consensus_map, bool const symmetric_regression) const

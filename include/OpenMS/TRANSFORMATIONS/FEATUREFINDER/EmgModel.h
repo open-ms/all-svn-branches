@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 
@@ -37,7 +37,7 @@ namespace OpenMS
 	/** 
 		@brief Exponentially modified gaussian distribution model for elution profiles.
     
-    @ref EmgModel_Parameters are explained on a separate page.
+    @htmlinclude OpenMS_EmgModel.parameters
 	*/
 	class EmgModel
 		: public InterpolationModel

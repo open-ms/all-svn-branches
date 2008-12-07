@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# --------------------------------------------------------------------------
 
 DIRECTORY=METADATA
 
@@ -36,7 +34,7 @@ CPP_SOURCES=\
 	IonDetector.C\
 	Software.C\
   Acquisition.C\
-  ProcessingMethod.C\
+  DataProcessing.C\
   ExperimentalSettings.C\
   AcquisitionInfo.C\
 	InstrumentSettings.C\
@@ -55,7 +53,8 @@ CPP_SOURCES=\
 	MetaInfoRegistry.C\
 	MetaInfoInterface.C\
 	PeptideIdentification.C\
-	ProteinIdentification.C
+	ProteinIdentification.C\
+	DocumentIdentifier.C
 
 include ../common.mak
 -include .Dependencies

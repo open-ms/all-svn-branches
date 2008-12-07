@@ -31,60 +31,55 @@
 //OpenMS
 #include <OpenMS/METADATA/Tagging.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizerGUI.h>
 
-class QLabel;
-class QLineEdit;
-class QComboBox;
 class QDoubleValidator;
 
-namespace OpenMS {
-/**
-@brief Class that displays all meta information of tagging objects.
-
-This class provides all functionality to view the meta information of an object of type Tagging.
-*/
-	class TaggingVisualizer : public BaseVisualizer
+namespace OpenMS
+{
+	/**
+		@brief Class that displays all meta information of tagging objects.
+		
+		This class provides all functionality to view the meta information of an object of type Tagging.
+	*/
+	class TaggingVisualizer
+		: public BaseVisualizerGUI,
+			public BaseVisualizer<Tagging>
 	{
 		Q_OBJECT
 
-	public: 
-	  /// Default constructor
-		TaggingVisualizer(bool editable= FALSE, QWidget *parent =0);
-		/// Loads the meta data from the object to the viewer.
-		void load(Tagging &t);
-
-	private slots:
-	  /// Saves the changes made to the meta data into the object.
-		void store_();
-		/// Deletes all changes made in the viewer and restores the original meta data.
-		void reject_();
-
-	private:  
+		public:
 			
-		/// Sets the fields and comboboxes with current values
-		void updateTag_();
+		  ///Constructor
+			TaggingVisualizer(bool editable = false, QWidget* parent = 0);
+	
+		public slots:
+			
+		  //Docu in base class
+			void store();
 		
-		/** @name Edit fields and buttons
-   */
-    //@{
-		QLineEdit *treatmenttype_;
-		QTextEdit *treatmentcomment_;
-		QLineEdit *modificationname_;
-		QLineEdit *modificationmass_;
-		QComboBox *modificationspecificity_;
-		QLineEdit *modificationAA_;
-		QLineEdit *taggingmass_shift_;
-		QComboBox *taggingvariant_;
-		//@}
-		
-		/// Pointer to current object	 to keep track of the actual object.
-		Tagging *ptr_;
-		/// Copy of current object for restoring the original values.
-		Tagging temptag_;
-		
-		
-	};
+		protected slots:
+			
+			///Undo the changes made in the GUI.
+			void undo_();
 
+		protected:  
+			
+			///@name Edit fields and buttons
+	    //@{
+			QLineEdit* treatmenttype_;
+			QTextEdit* treatmentcomment_;
+			QLineEdit* modificationname_;
+			QLineEdit* modificationmass_;
+			QComboBox* modificationspecificity_;
+			QLineEdit* modificationAA_;
+			QLineEdit* taggingmass_shift_;
+			QComboBox* taggingvariant_;
+			//@}
+			
+			//Docu in base class
+			void update_();
+	};
 
 }
 #endif

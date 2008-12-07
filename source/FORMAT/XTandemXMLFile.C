@@ -56,18 +56,12 @@ namespace OpenMS
 	
   void XTandemXMLFile::load(const String& filename, ProteinIdentification& protein_identification, vector<PeptideIdentification>& peptide_ids)
   {
-  	//try to open file
-		if (!File::exists(filename))
-    {
-      throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
-    }
-		
+  	//File name for error message in XMLHandler
 		file_ = filename;
-
+		
 		parse_(filename, this);
 
-		DateTime now;
-		now.now();
+		DateTime now = DateTime::now();
 		String date_string;
 		String identifier("XTandem_" + date_string);
 		//vector<String> accessions;
@@ -84,8 +78,6 @@ namespace OpenMS
 				seq_to_hits[it1->getSequence().toString()].push_back(*it1);
 			}
 
-			//cerr << it->second.size() << ", " << seq_to_hits.size() << ": " << seq_to_hits.begin()->first << endl;
-			
 			PeptideIdentification id;
 			//if (descriptions_.find(it->first) != descriptions_.end())
 			//{
@@ -151,13 +143,7 @@ namespace OpenMS
 
   void XTandemXMLFile::startElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname, const Attributes& attributes)
   {
-
     tag_ = String(sm_.convert(qname));
-    //cerr << "start_local_name: " << String(sm_.convert(local_name)) << endl;
-    //cerr << "start_uri: " << String(sm_.convert(uri)) << endl;
-
-    //cerr << "startElement tag_: " << tag_ << endl;
-
 
     if (tag_ == "domain")
     {
@@ -252,7 +238,7 @@ namespace OpenMS
 			
 			if (possible_mods.size() == 0)
 			{
-				cerr << "XTandemXMLFile: No modification found which fits residue '" << type << "' with mass '" << modified << "'!" << endl;
+				error(LOAD, String("No modification found which fits residue '") + type + "' with mass '" + modified + "'!");
 			}
 			else
 			{
@@ -293,12 +279,11 @@ namespace OpenMS
 				
 					if (possible_mods.size() > 1)
 					{
-						cerr << "XTandemXMLFile: More than one modification found which fits residue '" << type << "' with mass '" << modified << "': ";
-						for (vector<String>::const_iterator it = possible_mods.begin(); it != possible_mods.end(); ++it)
-						{
-							cerr << *it << ", ";
-						}
-						cerr << "using first hit: '" << *possible_mods.begin() <<"'!" << endl;
+						String error_string = String("More than one modification found which fits residue '") + type + "' with mass '" + modified + "': ";
+						String possbile_mods;
+						possbile_mods.implode(possible_mods.begin(),possible_mods.end(),',');
+						error_string += possbile_mods + ". Using first hit: '" + *possible_mods.begin() + "'.";
+						error(LOAD, error_string);
 					}
 				}
 

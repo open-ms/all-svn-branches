@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert, Clemens Groepl$
+// $Maintainer: Clemens Groepl$
 // --------------------------------------------------------------------------
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinder.h>
@@ -46,7 +46,7 @@ namespace OpenMS
 		This class simply sorts the peaks according to intensity and proposes
 		the highest peak, which is not yet included in a feature, as next seed.
 
-		@ref SimpleSeeder_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_SimpleSeeder.parameters
 
 		@ingroup FeatureFinder
 	*/
@@ -65,12 +65,14 @@ namespace OpenMS
 			{
 				this->setName("SimpleSeeder");				
 
-        this->defaults_.setValue("min_intensity",0.0, "Absolute value for the minimum intensity of a seed. If set to 0, a fixed percentage of the intensity of the largest peak is taken (see intensity_perc).", false);
+        this->defaults_.setValue("min_intensity",0.0, "Absolute value for the minimum intensity required for a seed.");
         this->defaults_.setMinFloat("min_intensity",0.0);
-        this->defaults_.setValue("signal_to_noise", 10.0, "SignalToNoise (S/N) ratio.", false);
+        this->defaults_.setValue("signal_to_noise", 10.0, "Minimal required SignalToNoise (S/N) ratio for a seed.");
         this->defaults_.setMinFloat("signal_to_noise",0.0);
         
-        this->subsections_.push_back("SignalToNoiseEstimationParameter");
+        //this->subsections_.push_back("SignalToNoiseEstimationParameter");
+				SignalToNoiseEstimatorMedian < typename MapType::SpectrumType > sne; // make sure this is the same as in pick()!
+				this->defaults_.insert ("SignalToNoiseEstimationParameter:", sne.getDefaults());
         
         this->defaultsToParam_();
 			}
@@ -165,7 +167,7 @@ namespace OpenMS
 
 				// sort index vector by intensity of peaks (highest first)
 				sort(indices_.begin(),indices_.end(),
-						reverseComparator(Internal::IntensityLess<Base>(*this))
+						 reverseComparator(Internal::IntensityLess<Base>(*this))
 						);
 
 				// progress logger

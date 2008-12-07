@@ -157,6 +157,8 @@ file formats, data reduction functionality and all other analysis algorithms.
   @a DoubleReal (double) are used.
 
   These and more types are defined in @a OpenMS/CONCEPT/Types.h.
+  The typeAsString() function can be used to find out the actual type of an object,
+  e.g. if typedefs are used.
 
 @section concept_namespace The OpenMS namespace
 
@@ -379,11 +381,6 @@ file formats, data reduction functionality and all other analysis algorithms.
 
   @par d-dimensional spectrum
   The base class of @a MSSpectrum is @a DSpectrum. This class provides a generic container for d-dimensional data.
-  One of the template arguments of @a DSpectrum is the Container the data is stored in. As container @p DPeakArray or a
-  container with the same interface is used. @a DPeakArray is a vector of data points with a more convenient interface
-  for sorting the data. @n
-  The peak container can be accessed through the @a getContainer() method. For convenience, part of the container interface is
-  also provided by @a DSpectrum.
 
   In the following example (Tutorial_MSSpectrum.C) program, a @a MSSpectrum is filled with peaks, sorted according to mass-to-charge
   ratio and a selection of peak positions is displayed.
@@ -402,7 +399,7 @@ file formats, data reduction functionality and all other analysis algorithms.
   @par Typedefs
   For convenience, the following type definitions are defined in @a OpenMS/KERNEL/StandardTypes.h.
   @code
-  typedef MSSpectrum<RichPeak1D> PeakSpectrum;
+  typedef MSSpectrum<RichPeak1D> RichPeakSpectrum;
   typedef MSSpectrum<Peak1D> PeakSpectrum;
   @endcode
 
@@ -423,8 +420,8 @@ file formats, data reduction functionality and all other analysis algorithms.
   The following figure shows the big picture of the kernel datastructures. @a MSExperiment is
   derived from @a ExperimentalSettings (meta data of the experiment) and from @a vector<MSSpectrum>.
   The one-dimensional spectrum @a MSSpectrum is derived from SpectrumSettings (meta data of a spectrum)
-  and from @a DSpectrum<1>, which stores the actual peak data in a @a DPeakArray. @n
-  Since DPeakArray can store all types of peaks derived from @a Peak, all the data containers
+  and from @a DSpectrum<1>. @n
+  Since DSpectrum can store all types of peaks derived from @a Peak, all the data containers
   are template classes that take the peak type as template argument. This is omitted in the diagram for
   simplicity.
 
@@ -434,7 +431,7 @@ file formats, data reduction functionality and all other analysis algorithms.
   @par Typedefs
   For convenience, the following map types are defined in @a OpenMS/KERNEL/StandardTypes.h.
   @code
-  typedef MSExperiment<RichPeak1D> PeakMap;
+  typedef MSExperiment<RichPeak1D> RichPeakMap;
   typedef MSExperiment<Peak1D> PeakMap;
   @endcode
 
@@ -539,12 +536,11 @@ file formats, data reduction functionality and all other analysis algorithms.
 
   This class holds meta information about the experiment that is valid for the whole experiment:
   - protein identifications
-  - preprocessing performed on the data
   - MS instrument
-  - source file
-  - contact person
+  - source files
+  - contact persons
   - sample description
-  - instrument software
+  - processing performed on the data
   - HPLC settings
 
   @image html ExperimentalSettings.png "Map meta information"
@@ -556,8 +552,8 @@ file formats, data reduction functionality and all other analysis algorithms.
   - spectrum-specific instrument settings
   - peptide and protein identifications
   - precursor information (of MS/MS spectra)
-  - description of the @a MetaInfo present for each data point
   - information on the acquisition
+  - source file
 
   @image html SpectrumSettings.png "Spectrum meta information"
   @image latex SpectrumSettings.png "Spectrum meta information" width=7cm
@@ -1092,9 +1088,7 @@ way round.
 
 @section Clustering
 
-Clustering is conducted in the @a OpenMS::ClusterHierarchical class that offers two ways of clustering,
-both using ClusterFunctors to perform the clustering. They only differ in elaboration of
-the output.
+Clustering is conducted in the @a OpenMS::ClusterHierarchical class that offers an easy way to perform the clustering.
 
   @skip main
   @until must be filled
@@ -1102,43 +1096,36 @@ the output.
   @until setThreshold
 
 The @a ClusterHierarchical functions will need at least these arguments, setting the threshold is
-optional (per default set to 1,0).
+optional (per default set to 1,0). The template-arguments have to be set to the type of clustered data and the type of CompareFunctor used. In this example double and LowLevelComparator.
 
   @skip clustering
-  @until clusterForVector
+  @until ch.cluster
 
-This function will create a clustering up to the threshold in the @a result vector. See @ref Output.
-
-  @skip clear
-  @until end of main
-
-This function will generate a more elaborate output to the given path, therefor see @ref Output.
-@n
-The ClusterFunctors cluster distancebased, so the closest clusters will be merged until the given
-threshold is exceeded. The ClusterFuctors differ in the way they update the distances between the
-clusters after each step, in which the two closest clusters were merged.
+This function will create a hirarchical clustering up to the threshold. See @ref Output.
 
 @section Output
 
-If known, at what threshold (see @a OpenMS::ClusterHierarchical::clusterForVector) a reasonable clustering is produced,
-there is only the final clustering needed. Use the @a clusterForVector function. Elements of the @a result vector
-(vectors again) represent the cluster structure and the elements of those inner vectors are indices for the elements
-in @a data.
-@n
-If closer survey of the clustering process is desired, use the @a OpenMS::ClusterHierarchical::clusterForDendrogramm
-function. This will generate a file that can be used to generate a dendrogramm (cluster tree), since it contains for
-each step the indices to the clusters merged in this step and the distance that separated them (i.e. the minimal
-distance between all clusters). This file will be found under the given name (@a "output/Tutorial_Clustering.den"
-in the example).
-@n
-In Addition, a similaritymatrix corresponding to the actual clustering status will be given in regular intervals.
-Those files will have the given name appended the corresponding step number and file appendix (in the example
-@a "output/Tutorial_Clustering.den.step#.sm"). The similaritiymatrices are ordered corresponding to the clustering and
-can be used to create heatmaps, visualizing the density and coherence of the clustering up to the corresponding step
-(for example with gnuplot 4.3 heatmaps).
+If known, at what threshold (see @a OpenMS::ClusterHierarchical::cluster) a reasonable clustering is produced,
+the setting of the right threshold can potentually speed up the clustering process. After exceeding the threshold,
+the resulting tree (std::vector of OpenMS::BinaryTreeNode) is filled with dummy nodes. The tree represents the hirarchy of
+clusters by storing the stepwise merging process. It can eventually be transformed to a tree-representation in Newick-format
+and/or be analyzed with other methods the OpenMS::ClusterAnalyzer class provides.
 
-Note that write access to the given folder has to be granted (@a "output/" in the example).
+  @skip ClusterAnalyzer
+  @until return
+  @skip end of main
+  @until end of main
 
+So the output will look something like this (may actually vary since random numbers are used in this example):
+@code
+( ( ( ( ( 0 , 1 ) , ( 2 , ( 7 , 8 ) ) ) , ( ( 3 , 10 ) , ( 4 , 5 ) ) ) , ( 6 , 9 ) ) , 11 )
+@endcode
+
+
+For closer survey of the clustering process one can also view the whole hirarchy by viewing the tree in Newick-format
+with a tree viewer such as TreeViewX. A visualization of a particular cluster step (which gives rise
+to a certain partition of the data clustered) can be created with heatmaps (for example with gnuplot 4.3 heatmaps and the
+corresponding distance matrix).
 
 */
 

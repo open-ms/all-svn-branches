@@ -51,7 +51,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page MascotAdapter MascotAdapter
+	@page TOPP_MascotAdapter MascotAdapter
 	
 	@brief Identifies peptides in MS/MS spectra via Mascot.
 	
@@ -171,7 +171,9 @@ using namespace std;
 			</li>
 		</ul>
 	</ul>		
-	
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_MascotAdapter.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -201,9 +203,9 @@ class TOPPMascotAdapter
 			registerDoubleOption_("peak_mass_tolerance", "<tol>", 1.0, "the peak mass tolerance", false);
 			registerStringOption_("taxonomy", "<tax>", "All entries" , "the taxonomy", false);
 			setValidStrings_("taxonomy",StringList::create("All entries,. . Archaea (Archaeobacteria),. . Eukaryota (eucaryotes),. . . . Alveolata (alveolates),. . . . . . Plasmodium falciparum (malaria parasite),. . . . . . Other Alveolata,. . . . Metazoa (Animals),. . . . . . Caenorhabditis elegans,. . . . . . Drosophila (fruit flies),. . . . . . Chordata (vertebrates and relatives),. . . . . . . . bony vertebrates,. . . . . . . . . . lobe-finned fish and tetrapod clade,. . . . . . . . . . . . Mammalia (mammals),. . . . . . . . . . . . . . Primates,. . . . . . . . . . . . . . . . Homo sapiens (human),. . . . . . . . . . . . . . . . Other primates,. . . . . . . . . . . . . . Rodentia (Rodents),. . . . . . . . . . . . . . . . Mus.,. . . . . . . . . . . . . . . . . . Mus musculus (house mouse),. . . . . . . . . . . . . . . . Rattus,. . . . . . . . . . . . . . . . Other rodentia,. . . . . . . . . . . . . . Other mammalia,. . . . . . . . . . . . Xenopus laevis (African clawed frog),. . . . . . . . . . . . Other lobe-finned fish and tetrapod clade,. . . . . . . . . . Actinopterygii (ray-finned fishes),. . . . . . . . . . . . Takifugu rubripes (Japanese Pufferfish),. . . . . . . . . . . . Danio rerio (zebra fish),. . . . . . . . . . . . Other Actinopterygii,. . . . . . . . Other Chordata,. . . . . . Other Metazoa,. . . . Dictyostelium discoideum,. . . . Fungi,. . . . . . Saccharomyces Cerevisiae (baker's yeast),. . . . . . Schizosaccharomyces pombe (fission yeast),. . . . . . Pneumocystis carinii,. . . . . . Other Fungi,. . . . Viridiplantae (Green Plants),. . . . . . Arabidopsis thaliana (thale cress),. . . . . . Oryza sativa (rice),. . . . . . Other green plants,. . . . Other Eukaryota,. . Bacteria (Eubacteria),. . . . Actinobacteria (class),. . . . . . Mycobacterium tuberculosis complex,. . . . . . Other Actinobacteria (class),. . . . Firmicutes (gram-positive bacteria),. . . . . . Bacillus subtilis,. . . . . . Mycoplasma,. . . . . . Streptococcus Pneumoniae,. . . . . . Streptomyces coelicolor,. . . . . . Other Firmicutes,. . . . Proteobacteria (purple bacteria),. . . . . . Agrobacterium tumefaciens,. . . . . . Campylobacter jejuni,. . . . . . Escherichia coli,. . . . . . Neisseria meningitidis,. . . . . . Salmonella,. . . . . . Other Proteobacteria,. . . . Other Bacteria,. . Viruses,. . . . Hepatitis C virus,. . . . Other viruses,. . Other (includes plasmids and artificial sequences),. . unclassified,. . Species information unavailable"));
-			registerStringOption_("modifications", "<mods>", "", "the modifications i.e. Carboxymethyl (C)", false);
-			registerStringOption_("variable_modifications", "<mods>", "", "the variable modifications i.e. Carboxymethyl (C)", false);
-			registerStringOption_("charges", "[1+,2+,...]", "1+,2+,3+", "the different charge states separated by comma",false);
+			registerStringList_("modifications", "<mods>", StringList(), "the modifications i.e. Carboxymethyl (C)", false);
+			registerStringList_("variable_modifications", "<mods>", StringList(), "the variable modifications i.e. Carboxymethyl (C)", false);
+			registerStringList_("charges", "[1+ 2+ ...]", StringList::create("1+,2+,3+"), "the different charge states",false);
 			registerStringOption_("db", "<name>", "MSDB", "the database to search in", false);
 			registerStringOption_("hits", "<num>", "AUTO", "the number of hits to report", false);
 			registerStringOption_("cleavage", "<enz>", "Trypsin", "the enzyme used for digestion", false);
@@ -244,7 +246,6 @@ class TOPPMascotAdapter
 			String call;
 			String instrument;
 			String taxonomy;
-			String temp_string;
 			String mascotXML_file_name = "";
 			String pepXML_file_name = "";
 			MzDataFile mzdata_infile;
@@ -254,12 +255,12 @@ class TOPPMascotAdapter
 			PepXMLFile pepXML_file;
 			MascotInfile mascot_infile;
 			ContactPerson contact_person;
-			vector<String> mods;
-			vector<String> variable_mods;
+			StringList mods;
+			StringList variable_mods;
 			ProteinIdentification protein_identification;
 			vector<PeptideIdentification> identifications;
-			vector<Int> charges;
-			vector<String> parts;
+			IntList charges;
+			StringList parts;
 			DoubleReal precursor_mass_tolerance(0);
 			DoubleReal peak_mass_tolerance(0);
 			double pep_ident(0), sigthreshold(0), pep_homol(0), prot_score(0), pep_score(0);
@@ -275,13 +276,12 @@ class TOPPMascotAdapter
 			bool mascot_out = false;
 			DateTime date_time;
 			String date_time_string;
-			String time_string;
 			String boundary = "";
 			map<String, vector<AASequence> > modified_peptides;
 			DoubleReal first_dim_rt = 0;
 			
 			date_time.now();
-			date_time.get(date_time_string);
+			date_time_string = date_time.get();
 			date_time_string.substitute(':','.'); // Windows does not allow ":" in filenames!
 			date_time_string.split(' ', parts);
 			
@@ -348,39 +348,15 @@ class TOPPMascotAdapter
 				peak_mass_tolerance = getDoubleOption_("peak_mass_tolerance");
 				taxonomy = getStringOption_("taxonomy");
 				
-				// fixed modifications
-				temp_string = getStringOption_("modifications");
-				temp_string.split(',', mods);
-				if (mods.size() == 0 && temp_string != "")
-				{
-					mods.push_back(temp_string);
-				}
-
-				// variable modifications
-				temp_string = getStringOption_("variable_modifications");
-				temp_string.split(',', variable_mods);
-				if (variable_mods.size() == 0 && temp_string != "")
-				{
-					variable_mods.push_back(temp_string);
-				}					
-
+				/// fixed modifications
+				mods = getStringList_("modifications");
+				
+				/// variable modifications			
+				variable_mods = getStringList_("variable_modifications");
+				
 				///charges
-				temp_string = getStringOption_("charges");
-				temp_string.split(',', parts);
-				if (parts.size() == 0 && temp_string != "")
-				{
-					temp_charge = temp_string;
-					if (temp_charge[temp_charge.size() - 1] == '-' || temp_charge[0] == '-')
-					{
-						charges.push_back(-1 * (temp_charge.toInt()));
-					}
-					else
-					{
-						charges.push_back(temp_charge.toInt());						
-					}
-				}									
-				else if (temp_string != "")
-				{
+				parts = getStringList_("charges");
+
 					for(UInt i = 0; i < parts.size(); i++)
 					{
 						temp_charge = parts[i];
@@ -393,7 +369,6 @@ class TOPPMascotAdapter
 							charges.push_back(temp_charge.toInt());						
 						}
 					}
-				}
 				if (charges.size() == 0)
 				{
 					writeLog_("No charge states specified for Mascot search. Aborting!");
@@ -498,7 +473,7 @@ class TOPPMascotAdapter
 				if (!mascot_in)
 				{
 					#ifdef OPENMS_WINDOWSPLATFORM
-					/// @TODO test this with a real mascot version for windows
+					/// @todo test this with a real mascot version for windows
 					writeLog_(QString("The windows platform version of this tool has not been tested yet! If you encounter problems,") +
 										QString(" please write to the OpenMS mailing list (open-ms-general@lists.sourceforge.net)"));
 					#endif
@@ -544,12 +519,12 @@ class TOPPMascotAdapter
 							" && cd \\ && cd \"." + QDir(mascot_cgi_dir.toQString()).absolutePath().mid(2).toStdString() + "\"" + 
 							"& perl export_dat.pl " +
 					#else
-					call = "cd " + mascot_cgi_dir + "; ./export_dat.pl " +
+					call = "cd " + mascot_cgi_dir + "; ./export_dat_2.pl " +
 					#endif
 						" do_export=1 export_format=XML file=" + mascot_data_dir + 
 						"/" + mascot_outfile_name + " _sigthreshold=" + String(sigthreshold) + " _showsubset=1 show_same_sets=1 show_unassigned=" + String(show_unassigned) + 
-						" prot_score=" + String(prot_score) + " pep_exp_z=" + String(pep_exp_z) + " pep_score=" + String(pep_score) + 
-						" pep_homol=" + String(pep_homol) + " pep_ident=" + String(pep_ident) + " pep_seq=1 report=0 " + 
+						" prot_score=" + String(prot_score) + " query_master=1 search_master=1 protein_master=1 peptide_master=1 pep_exp_z=" + String(pep_exp_z) + " pep_score=" + String(pep_score) + 
+						" pep_homol=" + String(pep_homol) + " query_title=1 pep_ident=" + String(pep_ident) + " pep_seq=1 report=0 " + 
 						"show_params=1 _showallfromerrortolerant=1 show_header=1 show_queries=1 pep_rank=" + String(pep_rank) + " > " + mascotXML_file_name + 
 						
 					#ifdef OPENMS_WINDOWSPLATFORM
@@ -562,6 +537,7 @@ class TOPPMascotAdapter
 						" prot_score=" + String(prot_score) + " pep_exp_z=" + String(pep_exp_z) + " pep_score=" + String(pep_score) + 
 						" pep_homol=" + String(pep_homol) + " pep_ident=" + String(pep_ident) + " pep_seq=1 report=0 " + 
 						"show_params=1 show_header=1 show_queries=1 pep_rank=" + String(pep_rank) + " > " + pepXML_file_name;
+					cout << call << endl;
 					writeDebug_("CALLING: " + call + "\nCALL Done!    ", 10);
 					status = system(call.c_str());
 

@@ -35,7 +35,7 @@ using namespace OpenMS;
 using namespace std;
 
 /**
-	@page INIFileEditor INIFileEditor
+	@page TOPP_INIFileEditor INIFileEditor
 	
 	@brief Can be used to visually edit INI files of TOPP tools.
 	
@@ -44,17 +44,18 @@ using namespace std;
 	The documentation of each value is shown in the text area on the bottom of the widget.
 	
 	@image html INIFileEditor.png
-	
 */
 
 int main(int argc, const char** argv)
 {
-	std::map<String,String> options;
+	
+	Map<String,String> option_lists;
+	Map<String,String> options;
 	options["-print"] = "print";
-	std::map<String,String> flags;
+	Map<String,String> flags;
 	flags["--help"] = "help";
 	Param param;
-	param.parseCommandLine(argc, argv, options, flags);
+	param.parseCommandLine(argc, argv, options, flags, option_lists);
 	
 	//catch command line errors
 	if (param.exists("help") //help requested

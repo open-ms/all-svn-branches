@@ -46,7 +46,7 @@ namespace OpenMS
         
     The result is an STL vector of vectors. Each inner vector respresents one cluster, holding the indices of the input elements.
 		 
-		@ref HierarchicalClustering_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_HierarchicalClustering.parameters
         
     @ingroup Comparison
   */
@@ -75,8 +75,8 @@ namespace OpenMS
       HierarchicalClustering()
       : DefaultParamHandler("HierarchicalClustering")
       {
-        defaults_.setValue("cluster_cutoff", 40.0, "maximal distance allowed between two clusters before merging them", false);           // maximal distance allowed between two clusters before merging them
-        defaults_.setValue("linkage_type", COMPLETE_LINKAGE,"clustering method: 0=complete linkage 1=single_linkage", true);
+        defaults_.setValue("cluster_cutoff", 40.0, "maximal distance allowed between two clusters before merging them");           // maximal distance allowed between two clusters before merging them
+        defaults_.setValue("linkage_type", COMPLETE_LINKAGE,"clustering method: 0=complete linkage 1=single_linkage");
     
         defaultsToParam_();
       }
@@ -121,8 +121,11 @@ namespace OpenMS
 
       //@}
       
-      /// compute clusters from a vector of DPositions up until given cutoff
-      void compute(const std::vector<ClusterPointType>& points) throw (Exception::NotImplemented)
+      /** @brief compute clusters from a vector of DPositions up until given cutoff
+			 *  
+			 *	@exception Throws Exception::NotImplemented if linkage_type Param is invalid
+			 */
+      void compute(const std::vector<ClusterPointType>& points)
       {
         double cutoff = param_.getValue("cluster_cutoff");
         int linkage_method = param_.getValue("linkage_type");

@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LmaGaussFitter1D.h>
@@ -33,7 +33,7 @@ namespace OpenMS
     : LevMarqFitter1D()
     {
       setName(getProductName());
-      defaults_.setValue("statistics:variance",1.0,"Variance of the model.", true);
+      defaults_.setValue("statistics:variance",1.0,"Variance of the model.", StringList::create("advanced"));
       defaultsToParam_();
     }
 

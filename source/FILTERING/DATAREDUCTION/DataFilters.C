@@ -26,6 +26,7 @@
 
 #include <OpenMS/FILTERING/DATAREDUCTION/DataFilters.h>
 #include <OpenMS/KERNEL/Feature.h>
+#include <OpenMS/KERNEL/ConsensusFeature.h>
 
 #include <iostream>
 
@@ -41,6 +42,7 @@ namespace OpenMS
 		if (field==INTENSITY) out = "Intensity ";
 		else if (field==QUALITY) out = "Quality ";
 		else if (field==CHARGE) out = "Charge ";
+		else if (field==SIZE) out = "Size ";
 		else if (field==META_DATA) out = "Meta::" + meta_name + " ";
 		//operation
 		if (op==GREATER_EQUAL) out += ">= ";
@@ -75,6 +77,7 @@ namespace OpenMS
 		tmp.toLower();
 		if (tmp=="intensity") field = INTENSITY;
 		else if (tmp=="charge") field = CHARGE;
+		else if (tmp=="size") field = SIZE;
 		else if (tmp=="quality") field = QUALITY;
 		else if (tmp.hasPrefix(String("meta::")))
 		{
@@ -204,10 +207,9 @@ namespace OpenMS
 	{
 		if (!is_active_) return true;
 			
-		DataFilters::DataFilter filter;
 		for (UInt i = 0; i < filters_.size(); i++)
 		{
-			filter = filters_[i]; 
+			const DataFilters::DataFilter& filter = filters_[i];
 			if (filter.field==INTENSITY)
 			{
 				if (filter.op==GREATER_EQUAL && feature.getIntensity()<filter.value) return false;
@@ -226,6 +228,12 @@ namespace OpenMS
 				else if (filter.op==GREATER_EQUAL && feature.getCharge()<filter.value) return false;
 				else if (filter.op==LESS_EQUAL && feature.getCharge()>filter.value) return false;
 			}
+			else if (filter.field==SIZE)
+			{
+				if (filter.op==EQUAL && feature.getSubordinates().size()!=filter.value) return false;
+				else if (filter.op==GREATER_EQUAL && feature.getSubordinates().size()<filter.value) return false;
+				else if (filter.op==LESS_EQUAL && feature.getSubordinates().size()>filter.value) return false;
+			}
 			else if (filter.field==META_DATA)
 			{
 				const MetaInfoInterface& mii = static_cast<MetaInfoInterface>(feature);
@@ -235,6 +243,40 @@ namespace OpenMS
 		return true;
 	}
 
+	bool DataFilters::passes(const ConsensusFeature& consensus_feature) const
+	{
+		if (!is_active_) return true;
+			
+		for (UInt i = 0; i < filters_.size(); i++)
+		{
+			const DataFilters::DataFilter& filter = filters_[i];
+			if (filter.field==INTENSITY)
+			{
+				if (filter.op==GREATER_EQUAL && consensus_feature.getIntensity()<filter.value) return false;
+				else if (filter.op==LESS_EQUAL && consensus_feature.getIntensity()>filter.value) return false;
+				else if (filter.op==EQUAL && consensus_feature.getIntensity()!=filter.value) return false;
+			}
+			else if (filter.field==QUALITY)
+			{
+				if (filter.op==GREATER_EQUAL && consensus_feature.getQuality()<filter.value) return false;
+				else if (filter.op==LESS_EQUAL && consensus_feature.getQuality()>filter.value) return false;
+				else if (filter.op==EQUAL && consensus_feature.getQuality()!=filter.value) return false;
+			}
+			else if (filter.field==CHARGE)
+			{
+				if (filter.op==EQUAL && consensus_feature.getCharge()!=filter.value) return false;
+				else if (filter.op==GREATER_EQUAL && consensus_feature.getCharge()<filter.value) return false;
+				else if (filter.op==LESS_EQUAL && consensus_feature.getCharge()>filter.value) return false;
+			}
+			else if (filter.field==SIZE)
+			{
+				if (filter.op==EQUAL && consensus_feature.size()!=filter.value) return false;
+				else if (filter.op==GREATER_EQUAL && consensus_feature.size()<filter.value) return false;
+				else if (filter.op==LESS_EQUAL && consensus_feature.size()>filter.value) return false;
+			}
+		}
+		return true;
+	}
 	
 	void DataFilters::setActive(bool is_active)
 	{

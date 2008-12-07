@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_LEVMARQFITTER1D_H
@@ -42,8 +42,6 @@ namespace OpenMS
   
     /** 
       @brief Abstract class for 1D-model fitter using Levenberg-Marquardt algorithm for parameter optimization.
-
-			@ref LevMarqFitter1D_Parameters are explained on a separate page.
 		*/
     class LevMarqFitter1D
     : public Fitter1D
@@ -57,9 +55,9 @@ namespace OpenMS
         LevMarqFitter1D()
         : Fitter1D()
         {
-          this->defaults_.setValue( "max_iteration", 500, "Maximum number of iterations using by Levenberg-Marquardt algorithm.", true );
-          this->defaults_.setValue( "deltaAbsError", 0.0001, "Absolute error used by the Levenberg-Marquardt algorithm.", true );
-          this->defaults_.setValue( "deltaRelError", 0.0001, "Relative error used by the Levenberg-Marquardt algorithm.", true );
+          this->defaults_.setValue( "max_iteration", 500, "Maximum number of iterations using by Levenberg-Marquardt algorithm.", StringList::create("advanced") );
+          this->defaults_.setValue( "deltaAbsError", 0.0001, "Absolute error used by the Levenberg-Marquardt algorithm.", StringList::create("advanced") );
+          this->defaults_.setValue( "deltaRelError", 0.0001, "Relative error used by the Levenberg-Marquardt algorithm.", StringList::create("advanced") );
         }
   
         /// copy constructor
@@ -102,10 +100,8 @@ namespace OpenMS
         CoordinateType abs_error_;
         /// Relative error
         CoordinateType rel_error_;
-        /// Statistic needed by pearson correlation coefficient
-        Math::BasicStatistics<Real> stat_;
        
-        /** Diplay the intermediate state of the solution. The solver state contains 
+        /** Display the intermediate state of the solution. The solver state contains 
             the vector s->x which is the current position, and the vector s->f with 
             corresponding function values */
         virtual void printState_(Int iter, gsl_multifit_fdfsolver * s) = 0;  
@@ -116,11 +112,18 @@ namespace OpenMS
           return gsl_strerror( gsl_status_ );
         }
            
-        /// Optimize start parameter
+
+				/**
+					@brief Optimize start parameter
+					
+					@exception Exception::UnableToFit is thrown if fitting cannot be performed
+				*/
         void optimize_(const RawDataArrayType& set, Int num_params, CoordinateType x_init[],
                        Int (* residual)(const gsl_vector * x, void * params, gsl_vector * f),
                        Int (* jacobian)(const gsl_vector * x, void * params, gsl_matrix * J),
-                       Int (* evaluate)(const gsl_vector * x, void * params, gsl_vector * f, gsl_matrix * J), void* advanced_params )
+                       Int (* evaluate)(const gsl_vector * x, void * params, gsl_vector * f, gsl_matrix * J),
+											 void* advanced_params
+											)
         {
           
           const gsl_multifit_fdfsolver_type *T;
@@ -130,12 +133,12 @@ namespace OpenMS
           Int iter = 0;
           const UInt n = set.size();
     
-          // number of parameter to be optimize
+          // number of parameters to be optimized
           UInt p = num_params;
           
           // gsl always expects N>=p or default gsl error handler invoked, 
           // cause Jacobian be rectangular M x N with M>=N
-          if ( n < p ) throw UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-FinalSet", "Skipping feature, gsl always expects N>=p" );
+          if ( n < p ) throw Exception::UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-FinalSet", "Skipping feature, gsl always expects N>=p" );
     
 		 		 // allocate space for a covariance matrix of size p by p
           gsl_matrix *covar = gsl_matrix_alloc( p, p );
@@ -217,7 +220,7 @@ namespace OpenMS
           }
 #endif
         
-          // set optimized parameter  
+          // set optimized parameters
           for (UInt i = 0; i < p; ++i)
           {
             x_init[i] = FIT( i );

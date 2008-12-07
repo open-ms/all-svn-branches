@@ -82,11 +82,12 @@ namespace OpenMS
 			/**
 				@brief Looks up the location of the file @p filename
 				
-				First the directories in @p directories are cheched, 
-				then the 'data' directory of the environment variable $OPENMS_DATA_PATH is checked,
-				at last the 'data' directory of the OpenMS built directory is checked.
+				The following locations are checked in this order:
+				- the directories in @p directories
+				- the directory contained in the environment variable $OPENMS_DATA_PATH
+				- the 'share/OpenMS/' directory of the OpenMS install directory
 				
-				If the file is not found there, an empty string is returned.
+				@exception FileNotFound is thrown, if the file is not found
 			*/
 			static String find(const String& filename, std::vector<String> directories = std::vector<String>());
 			
@@ -127,7 +128,7 @@ namespace OpenMS
 				  
       	@return handle to a file (which is created if necessary)
       	
-				@throws exception on failure to acquire the handle (to make cross platform error handling easy)
+				@throws Exception::UnableToCreateFile or Exception::FileNotFound on failure to acquire the handle (to make cross platform error handling easy)
       	
 				@note implementation is platform dependent, as handles in Windows are void* vs. int in Unix
 			*/

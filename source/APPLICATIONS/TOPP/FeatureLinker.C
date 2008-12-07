@@ -39,21 +39,24 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-   @page FeatureLinker FeatureLinker
- 
-	 @brief Groups corresponding features in one map or across maps. 
-	 
-	 This tool provides several algorithms for grouping correpsonding features in isotope-labeled 
-	 and label-free experiments.
-	 
-	 It takes one or several feaure maps and stores the corresponding features in a ConsensusXML files.
-	 
-	 It is assumed that major retention time distortions are corrected before applying this tool.
-	 Please use MapAligner to do that on the peak or feature level.
-	 
-	 @improvement Estimate the RT parameters by fitting a gaussian distribution to all shifts of the correct m/z distance (Marc)
-	 
-	 @ingroup TOPP
+	@page TOPP_FeatureLinker FeatureLinker
+	
+	@brief Groups corresponding features in one map or across maps. 
+	
+	This tool provides several algorithms for grouping correpsonding features in isotope-labeled 
+	and label-free experiments.
+	
+	It takes one or several feaure maps and stores the corresponding features in a ConsensusXML files.
+	
+	It is assumed that major retention time distortions are corrected before applying this tool.
+	Please use @ref TOPP_MapAligner to do that on the peak or feature level.
+	
+	In order to create feature data from peak data use the @ref TOPP_FeatureFinder.
+	
+	@todo Verify support of features annotated with protein/peptide identifications for labeled algorithm (Clemens)
+	
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_FeatureLinker.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -72,8 +75,10 @@ public:
 protected: 
 	void registerOptionsAndFlags_()
 	{
-		registerStringOption_("in","<files>","","Comma-separated list of input file names in FeatureXML format",true);
-		registerStringOption_("out","<file>","","Output file in ConsensusXML format",true);
+		registerInputFileList_("in","<files>",StringList(),"input files seperated by blanks",true);
+		setValidFormats_("in",StringList::create("featureXML"));
+		registerOutputFile_("out","<file>","","Output file",true);
+		setValidFormats_("out",StringList::create("consensusXML"));
 		registerStringOption_("type","<name>","","Feature grouping algorithm type",true);
 		setValidStrings_("type",Factory<FeatureGroupingAlgorithm>::registeredProducts());
     
@@ -91,10 +96,7 @@ protected:
 		//-------------------------------------------------------------
 		// parameter handling
 		//-------------------------------------------------------------
-		StringList ins;
-		String in = getStringOption_("in");
-		in.split(',',ins);
-		if (ins.size()==0) ins.push_back(in);
+		StringList ins = getStringList_("in");
 
 		String out = getStringOption_("out");
 

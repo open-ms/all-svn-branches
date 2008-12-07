@@ -32,7 +32,6 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/METADATA/ProteinIdentification.h>
 #include <OpenMS/METADATA/PeptideIdentification.h>
-#include <OpenMS/MATH/STATISTICS/BasicStatistics.h>
 
 #include <map>
 #include <vector>
@@ -47,6 +46,7 @@ namespace OpenMS
     retrieved via the load function.
 
   	@todo Handle Modifications (Andreas)
+		@todo Complete rewrite of the parser (and those of InsPecT and PepNovo), the code is bullshit... (Andreas)
   	
   	@ingroup FileIO
   */

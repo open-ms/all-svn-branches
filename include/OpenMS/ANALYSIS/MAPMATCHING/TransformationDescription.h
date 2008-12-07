@@ -28,195 +28,188 @@
 #define OPENMS_ANALYSIS_MAPMATCHING_TRANSFORMATIONDESCRIPTION_H
 
 #include <OpenMS/DATASTRUCTURES/Param.h>
+#include <algorithm>
 
 namespace OpenMS
 {
 	/**
-		@brief Generic description of a coordinate transformation.
+	@brief Generic description of a coordinate transformation.
 		
-		This description stores the transformation name and parameters.
+	This description stores the transformation name and parameters.
 		
-		The transformation can be applied to a double coordinate by using the @ref apply() method.
-		@n Available transformations and parameters are:
-			- none : f(x) = x
-			- linear : f(x) = @em intercept + @em slope * x
+	The transformation can be applied to a double coordinate by using the @ref apply() method.
+	@n Available transformations and parameters are:
+	- none : \f$ f(x) = x \f$
+	- linear : \f$ f(x) = \textit{intercept} + \textit{slope} * x \f$
+	- interpolated_linear : Linear interpolation between pairs, extrapolation using first and last pair. At least two pairs must be given.
+	- interpolated_cubic : Like interpolated_linear but cubic (?). <i>Not yet implemented!</i>
 		
-		You can also use transformation names not listed above, but you cannot apply
-		the tranformation using this class then.
+	You can also use transformation names not listed above, but you cannot apply
+	the tranformation using this class then.
 		
-		Additionally corresponding coordinate pairs can be stored, e.g.
-		to describe transformations that cannot be expressed as a simple function.
-		When storing the pairs, but no function parameters, the name 'pairs' should be used.
+	Additionally corresponding coordinate pairs can be stored, e.g.
+	to describe transformations that cannot be expressed as a simple function.
+	When storing the pairs, but no function parameters, the name 'pairs' should be used.
 		
-		@ingroup MapAlignment
+	@ingroup MapAlignment
 	*/
 	class TransformationDescription
 	{
-		
-		public:
+		friend class MapAlignmentAlgorithmApplyGivenTrafo;
+
+	 public:
 			
-			///Coordnate pair vector type
-			typedef std::vector< std::pair<Real,Real> > PairVector;
+		/// Coordnate pair vector type
+		typedef std::vector< std::pair<Real,Real> > PairVector;
 			
-			/// Constructor
-			TransformationDescription();
-			/// Destructor
-			~TransformationDescription();
+		/// Constructor
+		TransformationDescription();
+		/// Destructor
+		~TransformationDescription();
 				
-			/// Copy constructor 
-			TransformationDescription(const TransformationDescription& rhs);
-			/// Assignment operator
-			TransformationDescription& operator = (const TransformationDescription& rhs);
+		/// Copy constructor 
+		TransformationDescription(const TransformationDescription& rhs);
+		/// Assignment operator
+		TransformationDescription& operator = (const TransformationDescription& rhs);
 				
-			/// Resets everything
-			void clear();
+		/// Resets everything
+		void clear();
 			
-			///Returns the name
-			const String& getName() const
-			{
-				return name_;
-			}
-			///Sets the name
-			void setName(const String& name)
-			{
-				delete trafo_;
-				trafo_ = 0;
-				name_ = name;
-			}
+		///Returns the name
+		const String& getName() const
+		{
+			return name_;
+		}
+		/// Sets the name
+		void setName(const String& name)
+		{
+			delete trafo_;
+			trafo_ = 0;
+			name_ = name;
+		}
 			
-			///Non-mutable access to the parameters
-			const Param& getParameters() const
-			{
-				return param_;
-			}
+		/// Non-mutable access to the parameters
+		const Param& getParameters() const
+		{
+			return param_;
+		}
 			
-			///Sets the name
-			void setParameters(const Param& param)
-			{
-				delete trafo_;
-				trafo_ = 0;
-				param_ = param;
-			}
+		/// Sets the name
+		void setParameters(const Param& param)
+		{
+			delete trafo_;
+			trafo_ = 0;
+			param_ = param;
+		}
 			
-			///Returns the pairs
-			const PairVector& getPairs() const
-			{
-				return pairs_;
-			}
+		/// Returns the pairs
+		const PairVector& getPairs() const
+		{
+			return pairs_;
+		}
+		/// Returns the pairs
+		PairVector& getPairs()
+		{
+			return pairs_;
+		}
 			
-			///Sets the pairs
-			void setPairs(const PairVector& pairs)
-			{
-				pairs_ = pairs;
-			}
+		/// Sets the pairs
+		void setPairs(const PairVector& pairs)
+		{
+			pairs_ = pairs;
+		}
 			
-			/**
-				@brief Convenience method to access double parameters
+		/**
+		@brief Convenience method to access double parameters
 					
-				@exception Exception::ElementNotFound is thrown if the parameter does not exist.
-			*/
-			DoubleReal getParam(const String& name) const
-			{
-				return param_.getValue(name);
-			}
+		@exception Exception::ElementNotFound is thrown if the parameter does not exist.
+		*/
+		DoubleReal getParam(const String& name) const
+		{
+			return param_.getValue(name);
+		}
 				
-			/// Convenience method to set double parameters
-			void setParam(const String& name, DoubleReal value)
-			{
-				delete trafo_;
-				trafo_ = 0;
-				param_.setValue(name,value);
-			}
+		/// Convenience method to set double parameters
+		void setParam(const String& name, DoubleReal value)
+		{
+			delete trafo_;
+			trafo_ = 0;
+			param_.setValue(name,value);
+		}
 				
-			/**
-				@brief Apply the transformation to @p value .
+		/**
+		@brief Apply the transformation to @p value.
 					 
-				@exception Exception::IllegalArgument is thrown if the transformation cannot be initialized according to the given name and parameters.
-			*/
-			void apply(DoubleReal& value)
-			{
-				//initialize transformation (if unset)
-				if (!trafo_) init_();
-				//apply transformation
-				trafo_->operator()(value);
-			}
+		@exception Exception::IllegalArgument is thrown if the transformation cannot be initialized according to the given name and parameters.
+		*/
+		void apply(DoubleReal& value) const
+		{
+			// Initialize transformation (if unset).
+			if (!trafo_) init_();
+			//apply transformation
+			trafo_->operator()(value);
+		}
 				
-		protected:
+	 protected:
 			
-			///Base class for all transformations
-			struct Trafo_
-			{
-				virtual void operator ()(DoubleReal& value) const = 0;
-			};
+		/**@brief Base class for all transformations
+
+		Derived classes are:
+		<ul>
+
+		<li>None_ : No transformation (i.e. identity) </li>
+
+		<li>Linear_ : Linear transformation that actually applies an affine
+		transformation ;-) </li>
+
+		<li>InterpolatedLinear_ : Piecewise linear transformation.  In between the
+		pairs, the interpolation uses the neighboring pairs.  Outside the range
+		spanned by the pairs, we extrapolate using a line through the first and
+		the last pair. (Each time this is applied, a binary search is performed.
+		We could precompute slopes for each segment, but it is not clear if this
+		will pay off.)  </li>
+
+		</ul>
+
+		(The derived classes are defined in TransformationDescription.C .)
+		*/
+		struct Trafo_
+		{
+			Trafo_(const TransformationDescription&) {}
+			virtual void operator ()(DoubleReal& value) const = 0;
+		 private:			
+			Trafo_(const Trafo_&) {}
+		};
 			
-			///Tranformation name
-			String name_;
-			///Tranformation parameters
-			Param param_;
-			///Pairs of corrensponding values
-			PairVector pairs_;
-			///Poiter to actual transformation functor
-			Trafo_ * trafo_;
+		/**
+		@brief Initialize the transformation according to the name and parameters.
+		
+		This is declared a const method for usability, but in fact it changes
+		"hidden" state.
+
+		@exception Exception::IllegalArgument is thrown if the transformation
+		cannot be initialized according to the name and parameters.
+		*/
+		void init_() const;
+		
+		/// Transformation name
+		String name_;
+		/// Transformation parameters
+		Param param_;
+		/// Pairs of corresponding values
+		PairVector pairs_;
+		/// Pointer to actual transformation functor
+		Trafo_ * trafo_;
 				
-			/// Linear transformation that applies a linear transformation
-			struct Linear_ : Trafo_
-			{
-				Linear_(DoubleReal slope, DoubleReal intercept)
-					: slope_(slope),
-						intercept_(intercept)
-				{
-				}
-				virtual void operator ()(DoubleReal& value) const
-				{
-					value *= slope_;
-					value += intercept_;
-				}
-				DoubleReal slope_;
-				DoubleReal intercept_;
-			};
+		/// See Trafo_ for documentation.
+		struct None_;
 			
-			/// No transformation (i.e. identity)
-			struct None_ : Trafo_
-			{
-				None_()
-				{
-				}
-				virtual void operator ()(DoubleReal& ) const
-				{
-				}
-			};
-			
-			/**
-				@brief Initialize the transformation according to the name and parameters.
-					
-				@exception Exception::IllegalArgument is thrown if the transformation cannot be initialized according to the name and parameters.
-			*/
-			void init_()
-			{
-				if ( trafo_ ) delete trafo_;
-				trafo_ = 0;
-				if (name_=="linear")
-				{
-					if (!param_.exists("slope"))
-					{
-						throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"parameter 'slope' for 'linear' transformation not given");
-					}
-					if (!param_.exists("intercept"))
-					{
-						throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"parameter 'intercept' for 'linear' transformation not given");
-					}
-					trafo_ = new Linear_(param_.getValue("slope"),param_.getValue("intercept"));
-				}
-				else if (name_=="none")
-				{
-					trafo_ = new None_();
-				}
-				else
-				{
-					throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,(String("unknown transformation name '") + name_ + "'").c_str());
-				}
-			}
-			
+		/// See Trafo_ for documentation
+		struct Linear_;
+		
+		/// See Trafo_ for documentation
+		struct InterpolatedLinear_;
+		
 	};
 
 	std::ostream& operator<<(std::ostream& os, TransformationDescription const & td);

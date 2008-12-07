@@ -29,6 +29,7 @@
 //QT
 #include <QtGui/QComboBox>
 #include <QtGui/QTextEdit>
+#include <QtGui/QLineEdit>
 
 //STL
 #include <iostream>
@@ -37,81 +38,48 @@ using namespace std;
 
 namespace OpenMS
 {
-
-//Constructor
-SpectrumSettingsVisualizer::SpectrumSettingsVisualizer(bool editable, QWidget *parent) 
-	: BaseVisualizer(editable, parent)
-{
-	type_="SpectrumSettings";
-  
-	addLabel("Modify the settings of the spectrum.");	
-	addSeperator();  
-	addComboBox(spectrumsettings_type_, "Type of spectrum");
-	addTextEdit(spectrumsettings_comment_, "Comment");
-		
-	finishAdding_();
-}
-
-
-void SpectrumSettingsVisualizer::load(SpectrumSettings &s)
-{
-  //Pointer to current object to keep track of the actual object
-	ptr_ = &s;
 	
-	//Copy of current object for restoring the original values
-	tempspectrumsettings_=s;
+	SpectrumSettingsVisualizer::SpectrumSettingsVisualizer(bool editable, QWidget* parent) 
+		: BaseVisualizerGUI(editable, parent),
+			BaseVisualizer<SpectrumSettings>()
+	{
+		addLabel_("Modify the settings of the spectrum.");	
+		addSeparator_();  
+		addComboBox_(type_, "Type of spectrum");
+		addLineEdit_(native_id_, "Native ID");
+		addTextEdit_(comment_, "Comment");
+			
+		finishAdding_();
+	}
 	
-  
-		
-	update_();
-}
-
-void SpectrumSettingsVisualizer::update_()
-{
+	void SpectrumSettingsVisualizer::update_()
+	{
 		if(! isEditable())
 		{
-			fillComboBox(spectrumsettings_type_, &tempspectrumsettings_.NamesOfSpectrumType[tempspectrumsettings_.getType()] , 1);
+			fillComboBox_(type_,& temp_.NamesOfSpectrumType[temp_.getType()] , 1);
 		}
 		else
 		{
-			fillComboBox(spectrumsettings_type_, tempspectrumsettings_.NamesOfSpectrumType , SpectrumSettings::SIZE_OF_SPECTRUMTYPE);
-			spectrumsettings_type_->setCurrentIndex(tempspectrumsettings_.getType()); 
+			fillComboBox_(type_, temp_.NamesOfSpectrumType , SpectrumSettings::SIZE_OF_SPECTRUMTYPE);
+			type_->setCurrentIndex(temp_.getType()); 
 		}
 		
-		spectrumsettings_comment_->setText(tempspectrumsettings_.getComment().c_str());
-	  
-}
-
-void SpectrumSettingsVisualizer::store_()
-{
-	try
+		native_id_->setText(temp_.getNativeID().c_str());
+		comment_->setText(temp_.getComment().c_str());
+	}
+	
+	void SpectrumSettingsVisualizer::store()
 	{
-			
-		(*ptr_).setType((SpectrumSettings::SpectrumType)spectrumsettings_type_->currentIndex());			
-		(*ptr_).setComment(spectrumsettings_comment_->toPlainText().toStdString());
+		ptr_->setType((SpectrumSettings::SpectrumType)type_->currentIndex());			
+		ptr_->setNativeID(native_id_->text());
+		ptr_->setComment(comment_->toPlainText());
 		
-		tempspectrumsettings_=(*ptr_);
-	}
-	catch(exception& e)
-	{
-		std::cout<<"Error while trying to store the new SpectrumSettings data. "<<e.what()<<endl;
+		temp_=(*ptr_);
 	}
 	
-}
-
-void SpectrumSettingsVisualizer::reject_()
-{
-	
-	try
+	void SpectrumSettingsVisualizer::undo_()
 	{
-
 		update_();
 	}
-	catch(exception e)
-	{
-		cout<<"Error while trying to restore original SpectrumSettings data. "<<e.what()<<endl;
-	}
-	
-}
 
 }

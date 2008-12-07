@@ -37,7 +37,7 @@ namespace OpenMS
   /**
   	@brief NeutralLossMarker marks peak pairs which could represent an ion an its neutral loss (water, ammonia)
 		 
-		@ref NeutralLossMarker_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_NeutralLossMarker.parameters
 
 		@ingroup PeakMarker
   */
@@ -76,16 +76,16 @@ namespace OpenMS
     	double marks = (double)param_.getValue("marks");
     	double tolerance = (double)param_.getValue("tolerance");
     	std::map<double, int> ions_w_neutrallosses;
-    	spectrum.getContainer().sortByPosition();
+    	spectrum.sortByPosition();
     	for (uint i = 0; i < spectrum.size(); ++i)
     	{
-      	double mz = spectrum.getContainer()[i].getPosition()[0];
-      	double intensity = spectrum.getContainer()[i].getIntensity();
+      	double mz = spectrum[i].getPosition()[0];
+      	double intensity = spectrum[i].getIntensity();
       	int j = i - 1;
       	while (j >= 0)
       	{
-        	double curmz = spectrum.getContainer()[j].getPosition()[0];
-        	double curIntensity = spectrum.getContainer()[j].getIntensity();
+        	double curmz = spectrum[j].getPosition()[0];
+        	double curIntensity = spectrum[j].getIntensity();
 
         	// check for peak thats a a water or ammonia away
         	if (std::fabs(mz - curmz - 17) < tolerance || std::fabs(mz - curmz - 18) < tolerance)

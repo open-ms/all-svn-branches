@@ -100,7 +100,7 @@ rm core *.backtrace 2>/dev/null
 COUNT=1
 for i in $* ; do
 	# print the name of the test running
-	$ECHO " (${COUNT})	$i: $SUFFIX"
+	$ECHO "`if [ ${COUNT} -le 9 ] ; then echo ' '; fi;`  (${COUNT})	$i: $SUFFIX"
 	
 	# remove potential log files
 	rm $i.log 2>/dev/null
@@ -115,7 +115,7 @@ for i in $* ; do
 		echo "OK"
 	elif test "$RETVAL" = "24" -o "$RETVAL" = "152"; then
 		# test timed out (SIGXCPU signal ~ 24 (MinGW) ~ 128+24=152 (Linux) )
-		echo "TIMEOUT"	
+		echo "warning: TIMEOUT: "$i	
 	else 
 		# test didn't pass
 		OK=false

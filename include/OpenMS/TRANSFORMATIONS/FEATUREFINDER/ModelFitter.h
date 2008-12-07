@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 
@@ -54,12 +54,14 @@ namespace OpenMS
 	@brief Tests a group of data points in an LC-MS map for goodness-of-fit with a 2D averagine model.
 								
 	The ModelFitter class uses a gaussian or isotope model in m/z and bigauss,
-	lmagauss (bigauss with Levenberg-Marquardt) or emg (exponent. modified
-	Gaussian with lma aproximized arameters) in retention time.
+	lmagauss (bigauss with Levenberg-Marquardt) or emg (exponentially modified
+	Gaussian with lma optimized parameters) in retention time.
 				
-	For the isotope model, we  test different charge states and peaks widths.
-                   
-	@ref ModelFitter_Parameters are explained on a separate page.                   
+	For the isotope model, we test different charge states and peaks widths.
+  
+  @todo Fix problem with other peak types than Peak1D and enable the respective tests for FeatureFinderAlgorithmSimple, FeatureFinderAlgorithmSimplest, FeatureFinderAlgorithmWavelet (Clemens)
+  
+	@htmlinclude OpenMS_ModelFitter.parameters                 
     
 	@ingroup FeatureFinder
 	*/
@@ -80,9 +82,9 @@ namespace OpenMS
 		/// Isotope charge
 		typedef Feature::ChargeType ChargeType;
 		/// FeaFiModule
-		typedef FeaFiModule<PeakType,FeatureType> Base;
+		typedef FeaFiModule< PeakType, FeatureType > Base;
 		/// Raw data container type using for the temporary storage of the input data
-		typedef DPeakArray<PeakType > RawDataArrayType;
+		typedef std::vector< PeakType > RawDataArrayType;
     
 		enum 
 			{
@@ -97,7 +99,9 @@ namespace OpenMS
 			mz_stat_(),
 			rt_stat_(),
 			monoisotopic_mz_( 0 ),
+#ifdef DEBUG_FEATUREFINDER						
 			counter_( 1 ),
+#endif
 			iso_stdev_first_( 0 ),
 			iso_stdev_last_( 0 ),
 			iso_stdev_stepsize_( 0 ),
@@ -108,84 +112,84 @@ namespace OpenMS
 		{
 			this->setName("ModelFitter");
                 
-			this->defaults_.setValue("fit_algorithm", "simple", "Fitting algorithm type (internal parameter).", true);
+			this->defaults_.setValue("fit_algorithm", "simple", "Fitting algorithm type (internal parameter).", StringList::create("advanced"));
 			std::vector<String> fit_opts;
 			fit_opts.push_back("simple");
 			fit_opts.push_back("simplest");
 			fit_opts.push_back("wavelet");
 			this->defaults_.setValidStrings("fit_algorithm", fit_opts);
                 
-			this->defaults_.setValue( "max_iteration", 500, "Maximum number of iterations for fitting with Levenberg-Marquardt algorithm.", true );
+			this->defaults_.setValue( "max_iteration", 500, "Maximum number of iterations for fitting with Levenberg-Marquardt algorithm.", StringList::create("advanced") );
 			this->defaults_.setMinInt("max_iteration", 1);
-			this->defaults_.setValue( "deltaAbsError", 0.0001, "Absolute error used by the Levenberg-Marquardt algorithm.", true );
+			this->defaults_.setValue( "deltaAbsError", 0.0001, "Absolute error used by the Levenberg-Marquardt algorithm.", StringList::create("advanced") );
 			this->defaults_.setMinFloat("deltaAbsError", 0.0);
-			this->defaults_.setValue( "deltaRelError", 0.0001, "Relative error used by the Levenberg-Marquardt algorithm.", true );
+			this->defaults_.setValue( "deltaRelError", 0.0001, "Relative error used by the Levenberg-Marquardt algorithm.", StringList::create("advanced") );
 			this->defaults_.setMinFloat("deltaRelError", 0.0);
                 
-			this->defaults_.setValue( "tolerance_stdev_bounding_box", 3.0f, "Bounding box has range [minimim of data, maximum of data] enlarged by tolerance_stdev_bounding_box times the standard deviation of the data", true );
+			this->defaults_.setValue( "tolerance_stdev_bounding_box", 3.0f, "Bounding box has range [minimim of data, maximum of data] enlarged by tolerance_stdev_bounding_box times the standard deviation of the data", StringList::create("advanced") );
 			this->defaults_.setMinFloat("tolerance_stdev_bounding_box", 0.0);
                 
-			this->defaults_.setValue( "intensity_cutoff_factor", 0.05f, "Cutoff peaks with a predicted intensity below intensity_cutoff_factor times the maximal intensity of the model", false );
+			this->defaults_.setValue( "intensity_cutoff_factor", 0.05f, "Cutoff peaks with a predicted intensity below intensity_cutoff_factor times the maximal intensity of the model" );
 			this->defaults_.setMinFloat("intensity_cutoff_factor", 0.0);
 			this->defaults_.setMaxFloat("intensity_cutoff_factor", 1.0);
                 
-			this->defaults_.setValue( "feature_intensity_sum", 1, "Determines what is reported as feature intensity.\n1: the sum of peak intensities;\n0: the maximum intensity of all peaks" , true);
+			this->defaults_.setValue( "feature_intensity_sum", 1, "Determines what is reported as feature intensity.\n1: the sum of peak intensities;\n0: the maximum intensity of all peaks" , StringList::create("advanced"));
 			this->defaults_.setMinInt("feature_intensity_sum", 0);
 			this->defaults_.setMaxInt("feature_intensity_sum", 1);
                 
-			this->defaults_.setValue( "min_num_peaks:final", 5, "Minimum number of peaks left after cutoff. If smaller, feature will be discarded." , false);
+			this->defaults_.setValue( "min_num_peaks:final", 5, "Minimum number of peaks left after cutoff. If smaller, feature will be discarded.");
 			this->defaults_.setMinInt("min_num_peaks:final", 1);
-			this->defaults_.setValue( "min_num_peaks:extended", 10, "Minimum number of peaks after extension. If smaller, feature will be discarded." , false);
+			this->defaults_.setValue( "min_num_peaks:extended", 10, "Minimum number of peaks after extension. If smaller, feature will be discarded.");
 			this->defaults_.setMinInt("min_num_peaks:extended", 1);
 			this->defaults_.setSectionDescription( "min_num_peaks", "Required number of peaks for a feature." );
                 
-			this->defaults_.setValue( "rt:interpolation_step", 0.2f, "Step size in seconds used to interpolate model for RT." , false);
+			this->defaults_.setValue( "rt:interpolation_step", 0.2f, "Step size in seconds used to interpolate model for RT.");
 			this->defaults_.setMinFloat("rt:interpolation_step", 0.0);
 			this->defaults_.setSectionDescription( "rt", "Model settings in RT dimension." );
                 
-			this->defaults_.setValue( "mz:interpolation_step", 0.03f, "Interpolation step size for m/z.", false );
+			this->defaults_.setValue( "mz:interpolation_step", 0.03f, "Interpolation step size for m/z." );
 			this->defaults_.setMinFloat("mz:interpolation_step", 0.001);
-			this->defaults_.setValue( "mz:model_type:first", 1, "Numeric id of first m/z model fitted (usually indicating the charge state), 0 = no isotope pattern (fit a single gaussian).", false );
+			this->defaults_.setValue( "mz:model_type:first", 1, "Numeric id of first m/z model fitted (usually indicating the charge state), 0 = no isotope pattern (fit a single gaussian)." );
 			this->defaults_.setMinInt("mz:model_type:first", 0);
-			this->defaults_.setValue( "mz:model_type:last", 4, "Numeric id of last m/z model fitted (usually indicating the charge state), 0 = no isotope pattern (fit a single gaussian).", false );
+			this->defaults_.setValue( "mz:model_type:last", 4, "Numeric id of last m/z model fitted (usually indicating the charge state), 0 = no isotope pattern (fit a single gaussian)." );
 			this->defaults_.setMinInt("mz:model_type:last", 0);
 			this->defaults_.setSectionDescription( "mz", "Model settings in m/z dimension." );
                 
-			this->defaults_.setValue( "quality:type", "Correlation", "Type of the quality measure used to assess the fit of model vs data.", true );
+			this->defaults_.setValue( "quality:type", "Correlation", "Type of the quality measure used to assess the fit of model vs data.", StringList::create("advanced") );
 			std::vector<String> quality_opts;
 			quality_opts.push_back("Correlation");
 			quality_opts.push_back("RankCorrelation");
 			this->defaults_.setValidStrings("quality:type", quality_opts);
-			this->defaults_.setValue( "quality:minimum", 0.65f, "Minimum quality of fit, features below this threshold are discarded." , false);
+			this->defaults_.setValue( "quality:minimum", 0.65f, "Minimum quality of fit, features below this threshold are discarded." );
 			this->defaults_.setMinFloat("quality:minimum", 0.0);
 			this->defaults_.setMaxFloat("quality:minimum", 1.0);
 			this->defaults_.setSectionDescription( "quality", "Fitting quality settings." );
                 
-			this->defaults_.setValue( "isotope_model:stdev:first", 0.04f, "First standard deviation to be considered for isotope model.", false );
+			this->defaults_.setValue( "isotope_model:stdev:first", 0.04f, "First standard deviation to be considered for isotope model." );
 			this->defaults_.setMinFloat("isotope_model:stdev:first", 0.0);
-			this->defaults_.setValue( "isotope_model:stdev:last", 0.12f, "Last standard deviation to be considered for isotope model.", false );
+			this->defaults_.setValue( "isotope_model:stdev:last", 0.12f, "Last standard deviation to be considered for isotope model." );
 			this->defaults_.setMinFloat("isotope_model:stdev:last", 0.0);
-			this->defaults_.setValue( "isotope_model:stdev:step", 0.04f, "Step size for standard deviations considered for isotope model.", false );
+			this->defaults_.setValue( "isotope_model:stdev:step", 0.04f, "Step size for standard deviations considered for isotope model." );
 			this->defaults_.setMinFloat("isotope_model:stdev:step", 0.0);
 			this->defaults_.setSectionDescription( "isotope_model:stdev", "Instrument resolution settings for m/z dimension." );
                 
-			this->defaults_.setValue( "isotope_model:averagines:C", 0.0443f, "Number of C atoms per Dalton of the mass.", true );
+			this->defaults_.setValue( "isotope_model:averagines:C", 0.0443f, "Number of C atoms per Dalton of the mass.", StringList::create("advanced") );
 			this->defaults_.setMinFloat("isotope_model:averagines:C", 0.0);
-			this->defaults_.setValue( "isotope_model:averagines:H", 0.007f, "Number of H atoms per Dalton of the mass.", true );
+			this->defaults_.setValue( "isotope_model:averagines:H", 0.007f, "Number of H atoms per Dalton of the mass.", StringList::create("advanced") );
 			this->defaults_.setMinFloat("isotope_model:averagines:H", 0.0);
-			this->defaults_.setValue( "isotope_model:averagines:N", 0.0012f, "Number of N atoms per Dalton of the mass.", true );
+			this->defaults_.setValue( "isotope_model:averagines:N", 0.0012f, "Number of N atoms per Dalton of the mass.", StringList::create("advanced") );
 			this->defaults_.setMinFloat("isotope_model:averagines:N", 0.0);
-			this->defaults_.setValue( "isotope_model:averagines:O", 0.013f, "Number of O atoms per Dalton of the mass.", true );
+			this->defaults_.setValue( "isotope_model:averagines:O", 0.013f, "Number of O atoms per Dalton of the mass.", StringList::create("advanced") );
 			this->defaults_.setMinFloat("isotope_model:averagines:O", 0.0);
-			this->defaults_.setValue( "isotope_model:averagines:S", 0.00037f, "Number of S atoms per Dalton of the mass.", true);
+			this->defaults_.setValue( "isotope_model:averagines:S", 0.00037f, "Number of S atoms per Dalton of the mass.", StringList::create("advanced"));
 			this->defaults_.setMinFloat("isotope_model:averagines:S", 0.0);
 			this->defaults_.setSectionDescription( "isotope_model:averagines", "Averagines are used to approximate the number of atoms (C,H,N,O,S) which a peptide of a given mass contains." ); 
                 
-			this->defaults_.setValue( "isotope_model:isotope:trim_right_cutoff", 0.001f, "Cutoff for averagine distribution, trailing isotopes below this relative intensity are not considered.", true );
+			this->defaults_.setValue( "isotope_model:isotope:trim_right_cutoff", 0.001f, "Cutoff for averagine distribution, trailing isotopes below this relative intensity are not considered.", StringList::create("advanced") );
 			this->defaults_.setMinFloat("isotope_model:isotope:trim_right_cutoff", 0.0);
-			this->defaults_.setValue( "isotope_model:isotope:maximum", 100, "Maximum number of isotopes being used for the IsotopeModel.", true );
+			this->defaults_.setValue( "isotope_model:isotope:maximum", 100, "Maximum number of isotopes being used for the IsotopeModel.", StringList::create("advanced") );
 			this->defaults_.setMinInt("isotope_model:isotope:maximum", 1);
-			this->defaults_.setValue( "isotope_model:isotope:distance", 1.000495f, "Distance between consecutive isotopic peaks.", true );
+			this->defaults_.setValue( "isotope_model:isotope:distance", 1.000495f, "Distance between consecutive isotopic peaks.", StringList::create("advanced") );
 			this->defaults_.setMinFloat("isotope_model:isotope:distance", 0.0);
 			this->defaults_.setSectionDescription( "isotope_model", "Settings of the isotope model (m/z)." );
     
@@ -198,20 +202,25 @@ namespace OpenMS
 		}
             
 		/** @brief Sets or fixed the monoisotopic m/z at a specific position. 
-		* @param mz The monoisotopic m/z that occures in the current data set. */
+		* @param mz The monoisotopic m/z that occurres in the current data set. */
 		void setMonoIsotopicMass(CoordinateType mz)
 		{
 			monoisotopic_mz_ = mz;
 		}
-            
-		/// Return next feature
-		Feature fit(const ChargedIndexSet& index_set) throw (UnableToFit)
+
+		/**
+			@brief Return next feature
+			
+			@exception Exception::UnableToFit is thrown if fitting cannot be performed
+			@exception Exception::InvalidParameter if first and last charge to test do not define a range (first<=last)
+		*/
+		Feature fit(const ChargedIndexSet& index_set)
 		{
 			// Test the number of peaks (not enough peaks to fit)
 			if ( index_set.size() < ( UInt ) ( this->param_.getValue( "min_num_peaks:extended" ) ) )
 			{
 				String mess = String( "Skipping feature, IndexSet size too small: " ) + index_set.size();
-				throw UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-IndexSet", mess.c_str() );
+				throw Exception::UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-IndexSet", mess.c_str() );
 			}
                 
 			// Calculate statistics for mz and rt
@@ -235,203 +244,257 @@ namespace OpenMS
 				last_mz_model_ = index_set.charge_;
 			}
                 
+			if (first_mz_model_ > last_mz_model_) throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "ModelFitter::fit(): charge range tested is not valid; check \"model_type:first\" and \"model_type:last\" ");
+			
 			// Check charge estimate if charge is not specified by user
 #ifdef DEBUG_FEATUREFINDER			
 			std::cout << "Checking charge state from " << first_mz_model_ << " to " << last_mz_model_ << std::endl;
 #endif
              
-			// Compute model with the best correlation
-			ProductModel<2>* final = 0;
-			QualityType max_quality = fitLoop_(index_set, first_mz_model_, last_mz_model_, final);
-			             
-			// model_desc.createModel() returns 0 if class model_desc is not initialized
-			// in this case something went wrong during the model fitting and we stop.
-			if ( ! final )
-			{				
-				delete final;
-				throw UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-BadQuality", "Zero quality after fitting. Skipping this feature" );
+			// ** Projection    
+			doProjectionDim_(RT, index_set, rt_input_data_);
+			doProjectionDim_(MZ, index_set, mz_input_data_);
+      // Fit rt model
+			InterpolationModel* model_rt = 0;
+   		quality_rt_ = fitRT_(model_rt);
+      model2D_.setModel(RT, model_rt);			// Set model in 2D-model	
+			
+			FeatureMap<Feature> feature_collection;
+			
+			for (ChargeType charge = first_mz_model_; charge <= last_mz_model_; ++charge)
+			{
+				Feature f;
+				try
+				{
+					// "reset" model2D!!
+					model2D_.setScale( 1. );
+					
+					// TODO: intensity scaling should use a more robust estimator (rather than comparing max of data vs. model)
+					
+					// Compute model with the best correlation
+					// result is in model2D_
+					QualityType max_quality = fitMZLoop_(index_set, charge);
+
+					// find peak with highest predicted intensity to use as cutoff
+					IntensityType model_max = 0;
+
+					for ( IndexSetIter it = index_set.begin(); it != index_set.end(); ++it )
+					{
+						IntensityType model_int = model2D_.getIntensity( DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it)) );
+						if ( model_int > model_max ) model_max = model_int;
+					}
+					model2D_.setCutOff( model_max * Real( this->param_.getValue( "intensity_cutoff_factor" ) ) );
+
+					// Cutoff low intensities wrt to model maximum -> cutoff independent of scaling
+					IndexSet model_set;
+					for ( IndexSetIter it = index_set.begin(); it != index_set.end(); ++it )
+					{
+						if ( model2D_.isContained( DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it)) ) )
+						{
+							model_set.insert( *it );
+						}
+					}
+
+					// Print number of selected peaks after cutoff
+#ifdef DEBUG_FEATUREFINDER						
+					std::cout << " Selected " << model_set.size() << " from " << index_set.size() << " peaks.\n";
+#endif
+
+					// Calculate intensity scaling
+					IntensityType model_sum = 0;
+					//IntensityType data_sum = 0;
+					IntensityType data_max = 0;
+					for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
+					{
+						IntensityType model_int = model2D_.getIntensity( DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it)) );
+						model_sum += model_int;
+						//data_sum += this->getPeakIntensity( *it );
+						if ( this->getPeakIntensity( *it ) > data_max ) data_max = this->getPeakIntensity( *it );
+					}
+
+					if ( model_sum == 0 )
+					{
+						throw Exception::UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__,"UnableToFit-ZeroSum", "Skipping feature, model_sum zero." );
+					}
+
+					//std::cout << "data_max: " << data_max << " model_max: " <<  model_max << " model2dscale: " << (data_max / model_max) << std::endl;
+					model2D_.setScale( data_max / model_max );	// use max quotient instead of sum quotient
+
+					//std::cout << model2D_.getParameters() << std::endl;
+												
+					// Build Feature
+					// The feature coordinate in rt dimension is given
+					// by the centroid of the rt model whereas the coordinate
+					// in mz dimension is equal to the monoisotopic peak.
+					f.setModelDescription( ModelDescription<2>( &model2D_ ) );
+					f.setOverallQuality( max_quality );
+					f.setRT( static_cast<InterpolationModel*>( model2D_.getModel( RT ) ) ->getCenter() );
+					f.setMZ( static_cast<InterpolationModel*>( model2D_.getModel( MZ ) ) ->getCenter() );
+
+					// set and check convex hull whether m/z is contained or not
+					this->addConvexHull( model_set, f );
+					if (!f.encloses(f.getRT(),f.getMZ())) f.setMZ(f.getConvexHull().getBoundingBox().minY());
+
+					// feature charge ...	
+					// if we used a simple Gaussian model to fit the feature, we can't say anything about
+					// its charge state. The value 0 indicates that charge state is undetermined.
+					if ( model2D_.getModel( MZ ) ->getName() == "LmaIsotopeModel" )
+					{
+						f.setCharge( static_cast<LmaIsotopeModel*>( model2D_.getModel( MZ ) ) ->getCharge() );
+					}
+					else if (model2D_.getModel( MZ ) ->getName() == "IsotopeModel")
+					{
+						f.setCharge( static_cast<IsotopeModel*>( model2D_.getModel( MZ ) ) ->getCharge() );
+					}
+					else if (model2D_.getModel( MZ ) ->getName() == "ExtendedIsotopeModel")
+					{
+						f.setCharge( static_cast<ExtendedIsotopeModel*>( model2D_.getModel( MZ ) ) ->getCharge() );
+					}
+					else
+					{
+						f.setCharge( 0 );
+					}
+
+					// feature intensity
+					Int const intensity_choice = this->param_.getValue( "feature_intensity_sum" );
+					IntensityType feature_intensity = 0.0;
+					if ( intensity_choice == 1 )
+					{
+						// intensity of the feature is the sum of all included data points
+						for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
+						{
+							feature_intensity += this->getPeakIntensity( *it );
+						}
+					}
+					else
+					{
+						// feature intensity is the maximum intensity of all peaks
+						for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
+						{
+							if ( this->getPeakIntensity( *it ) > feature_intensity )
+							{
+								feature_intensity = this->getPeakIntensity( *it );
+							}
+						}
+					}
+
+					// set intensity      
+					f.setIntensity( feature_intensity );
+
+					// set quality (1D)
+					f.setQuality( RT, quality_rt_);
+					f.setQuality( MZ, quality_mz_);
+					
+					//std::cout << "QA: " << f.getOverallQuality() << "  qMZ: " << f.getQuality(1) << " charge: " << f.getCharge() << " stdev: " <<  f.getModelDescription().getParam().getValue("MZ:isotope:stdev")<< std::endl;
+
+#ifdef DEBUG_FEATUREFINDER
+					// debug output
+					if (this->param_.getValue( "fit_algorithm" ) != "wavelet")
+					{
+							std::cout << "Feature " << counter_	<< ": (" << f.getRT()	<< "," << f.getMZ() << ") Qual.: "	<< max_quality << std::endl;
+					}
+					// Save meta data in feature for TOPPView
+					f.setMetaValue( 3, String( counter_ ) );
+
+					std::cout << "Feature charge: " << f.getCharge() << std::endl;
+					std::cout << "Feature quality in mz: " << f.getQuality( MZ ) << std::endl;
+
+					// write debug output
+					CoordinateType rt = f.getRT();
+					CoordinateType mz = f.getMZ();
+
+					// write feature model
+					String fname = String( "model" ) + counter_ + "_" + rt + "_" + mz;
+					std::ofstream file( fname.c_str() );
+					for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
+					{
+						DPosition<2> pos = DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it));
+						if ( model2D_.isContained( pos ) )
+						{
+							file << pos[ RT ] << " " << pos[ MZ ] << " " << model2D_.getIntensity( DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it)) ) << "\n";
+						}
+					}
+					file.close();
+
+					// wrote peaks remaining after model fit
+					fname = String( "feature" ) + counter_ + "_" + rt + "_" + mz;
+					std::ofstream file2( fname.c_str() );
+					for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
+					{
+						DPosition<2> pos = DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it));
+						if ( model2D_.isContained( pos ) )
+						{
+							file2 << pos[ RT ] << " " << pos[ MZ ] << " " << this->getPeakIntensity( *it ) << "\n";
+						}
+					}
+					file2.close();
+
+					// Count features
+					++counter_;
+
+#endif   
+
+					feature_collection.push_back(f);
+				} // ! try
+				catch (Exception::UnableToFit& e) 
+				{
+				//	std::cout << "CAUGHT!! " << e.getName() << "  " << e.getMessage() << std::endl;
+				}
 			}
-			                
-			// find peak with highest predicted intensity to use as cutoff
-			IntensityType model_max = 0;
+
+			QualityType best_quality = -std::numeric_limits<QualityType>::max();
+			// find best feature
+			std::size_t best_idx = 0;
+			for (std::size_t idx = 0; idx < feature_collection.size(); ++idx)
+			{
+					if (best_quality < feature_collection[idx].getOverallQuality())
+					{
+						best_quality = feature_collection[idx].getOverallQuality();
+						best_idx = idx;
+					}
+			}
+			
+			Feature best_feature = feature_collection[best_idx];
+			// check some more conditions
+			// not enough peaks left for feature
+
+			// fit has too low quality or fit was not possible i.e. because of zero stdev
+			if ( best_feature.getOverallQuality() < ( Real ) ( this->param_.getValue( "quality:minimum" ) ) )
+			{
+				String mess = String( "Skipping feature, correlation too small: " ) + best_feature.getOverallQuality();
+				throw Exception::UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-Correlation", mess.c_str() );
+			}
+
+			// free unused peaks for best feature
+			IndexSet model_set;
+			ProductModel<2>* best_model = static_cast< ProductModel<2>* >	(best_feature.getModelDescription().createModel());
 			for ( IndexSetIter it = index_set.begin(); it != index_set.end(); ++it )
 			{
-				IntensityType model_int = final->getIntensity( DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it)) );
-				if ( model_int > model_max ) model_max = model_int;
-			}
-			final->setCutOff( model_max * Real( this->param_.getValue( "intensity_cutoff_factor" ) ) );
-
-  		// Cutoff low intensities wrt to model maximum -> cutoff independent of scaling
-			IndexSet model_set;
-  		for ( IndexSetIter it = index_set.begin(); it != index_set.end(); ++it )
-			{
-				if ( final->isContained( DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it)) ) )
+				if ( best_model->isContained( DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it)) ) )
 				{
 					model_set.insert( *it );
-  			}
-				else		// free dismissed peak via setting the appropriate flag
+				}
+				else
 				{
 					this->ff_->getPeakFlag( *it ) = UNUSED;
 				}
 			}
-		                    
-			// Print number of selected peaks after cutoff
-#ifdef DEBUG_FEATUREFINDER						
-			std::cout << " Selected " << model_set.size() << " from " << index_set.size() << " peaks.\n";
-#endif
-
-			// not enough peaks left for feature
+			delete best_model;
 			if ( model_set.size() < ( UInt ) ( this->param_.getValue( "min_num_peaks:final" ) ) )
 			{
-				delete final;
-				throw UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__,"UnableToFit-FinalSet",String( "Skipping feature, IndexSet size after cutoff too small: " ) + model_set.size() );
+				throw Exception::UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__,"UnableToFit-FinalSet",String( "Skipping feature, IndexSet size after cutoff too small: " ) + model_set.size() );
 			}
-				
-			// fit has too low quality or fit was not possible i.e. because of zero stdev
-			if ( max_quality < ( Real ) ( this->param_.getValue( "quality:minimum" ) ) )
-			{
-				delete final;
-				String mess = String( "Skipping feature, correlation too small: " ) + max_quality;
-				throw UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-Correlation", mess.c_str() );
-			}
-				
-			// Calculate intensity scaling
-			IntensityType model_sum = 0;
-			IntensityType data_sum = 0;
-			IntensityType data_max = 0;
-			for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
-			{
-				IntensityType model_int = final->getIntensity( DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it)) );
-				model_sum += model_int;
-				data_sum += this->getPeakIntensity( *it );
-				if ( this->getPeakIntensity( *it ) > data_max ) data_max = this->getPeakIntensity( *it );
-			}
-			                
-			// fit has too low quality or fit was not possible i.e. because of zero stdev
-			if ( model_sum == 0 )
-			{
-				delete final;
-				throw UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__,"UnableToFit-ZeroSum", "Skipping feature, model_sum zero." );
-			}
-
-			final->setScale( data_max / model_max );	// use max quotient instead of sum quotient
-
-			// Build Feature
-			// The feature coordinate in rt dimension is given
-			// by the centroid of the rt model whereas the coordinate
-			// in mz dimension is equal to the monoisotopic peak.
-			Feature f;
-			f.setModelDescription( ModelDescription<2>( final ) );
-			f.setOverallQuality( max_quality );
-			f.setRT( static_cast<InterpolationModel*>( final->getModel( RT ) ) ->getCenter() );
-			f.setMZ( static_cast<InterpolationModel*>( final->getModel( MZ ) ) ->getCenter() );
-      
-      // set and check convex hull whether m/z is contained or not
-      this->addConvexHull( model_set, f );
-      if (!f.encloses(f.getRT(),f.getMZ())) f.setMZ(f.getConvexHull().getBoundingBox().minY());
-                                
-			// feature charge ...	
-			// if we used a simple Gaussian model to fit the feature, we can't say anything about
-			// its charge state. The value 0 indicates that charge state is undetermined.
-			if ( final->getModel( MZ ) ->getName() == "LmaIsotopeModel" )
-			{
-				f.setCharge( static_cast<LmaIsotopeModel*>( final->getModel( MZ ) ) ->getCharge() );
-			}
-			else if (final->getModel( MZ ) ->getName() == "IsotopeModel")
-			{
-				f.setCharge( static_cast<IsotopeModel*>( final->getModel( MZ ) ) ->getCharge() );
-			}
-			else if (final->getModel( MZ ) ->getName() == "ExtendedIsotopeModel")
-			{
-				f.setCharge( static_cast<ExtendedIsotopeModel*>( final->getModel( MZ ) ) ->getCharge() );
-			}
-			else
-			{
-				f.setCharge( 0 );
-			}
-			            
-			// feature intensity
-			Int const intensity_choice = this->param_.getValue( "feature_intensity_sum" );
-			IntensityType feature_intensity = 0.0;
-			if ( intensity_choice == 1 )
-			{
-				// intensity of the feature is the sum of all included data points
-				for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
-				{
-					feature_intensity += this->getPeakIntensity( *it );
-				}
-			}
-			else
-			{
-				// feature intensity is the maximum intensity of all peaks
-				for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
-				{
-					if ( this->getPeakIntensity( *it ) > feature_intensity )
-					{
-						feature_intensity = this->getPeakIntensity( *it );
-					}
-				}
-			}
-			                        
-      // set intensity      
-			f.setIntensity( feature_intensity );
-      
-      // set quality (1D)
-      f.setQuality( RT, quality_rt_);
-      f.setQuality( MZ, quality_mz_);
-      
-       // debug output
-      if (this->param_.getValue( "fit_algorithm" ) != "wavelet")
-      {
-        std::cout << "Feature " << counter_	<< ": (" << f.getRT()	<< "," << f.getMZ() << ") Qual.: "	<< max_quality << std::endl;
-      }
-      
-			// Save meta data in feature for TOPPView
-			f.setMetaValue( 3, String( counter_ ) );
-			                
-#ifdef DEBUG_FEATUREFINDER
-			std::cout << "Feature charge: " << f.getCharge() << std::endl;
-			std::cout << "Feature quality in mz: " << f.getQuality( MZ ) << std::endl;
-#endif
-        
-#ifdef DEBUG_FEATUREFINDER
-			// write debug output
-			CoordinateType rt = f.getRT();
-			CoordinateType mz = f.getMZ();
-        
-			// write feature model
-			String fname = String( "model" ) + counter_ + "_" + rt + "_" + mz;
-			std::ofstream file( fname.c_str() );
-			for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
-			{
-				DPosition<2> pos = DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it));
-				if ( final->isContained( pos ) )
-				{
-					file << pos[ RT ] << " " << pos[ MZ ] << " " << final->getIntensity( DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it)) ) << "\n";
-				}
-			}
-			file.close();
-        
-			// wrote peaks remaining after model fit
-			fname = String( "feature" ) + counter_ + "_" + rt + "_" + mz;
-			std::ofstream file2( fname.c_str() );
-			for ( IndexSetIter it = model_set.begin(); it != model_set.end(); ++it )
-			{
-				DPosition<2> pos = DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it));
-				if ( final->isContained( pos ) )
-				{
-					file2 << pos[ RT ] << " " << pos[ MZ ] << " " << this->getPeakIntensity( *it ) << "\n";
-				}
-			}
-			file2.close();
-#endif   
-
-			// Count features
-			++counter_;
-                
-			delete final;
 			
-			return f;
+			// add all but the best feature to the suboptimal ones
+			for (std::size_t idx = 0; idx < feature_collection.size(); ++idx)
+			{
+					if (idx == best_idx) continue;
+					best_feature.getSubordinates().push_back(feature_collection[idx]);
+			}
+			
+			// return "best" feature
+			return best_feature;
+			
 		}
             
 	 protected:
@@ -459,53 +522,48 @@ namespace OpenMS
 		}
              
 		/// main fit loop
-		QualityType fitLoop_(const ChargedIndexSet& set, Int& first_mz, Int& last_mz, ProductModel<2>*& final) 
+		QualityType fitMZLoop_(const ChargedIndexSet& set, const ChargeType& charge) 
 		{
-			// Projection    
-			doProjectionDim_(set, rt_input_data_, RT, algorithm_);
-			total_intensity_mz_ = doProjectionDim_(set, mz_input_data_, MZ, algorithm_);
-          
-      quality_rt_ = 0.0;
-      quality_mz_ = 0.0;
-          
-      // Fit rt model
-   		quality_rt_ = fitDim_(RT, algorithm_);
-                           
+
 			// Fit mz model ... test different charge states and stdevs
 			QualityType max_quality_mz = -std::numeric_limits<QualityType>::max();
             
-			std::map<QualityType,ProductModel<2> > model_map;
+			InterpolationModel* best_model_mz = 0;
 			for ( Real stdev = iso_stdev_first_; stdev <= iso_stdev_last_; stdev += iso_stdev_stepsize_)
 			{
-				for (Int mz_fit_type = first_mz; mz_fit_type <= last_mz; ++mz_fit_type)
+				isotope_stdev_ = stdev;
+				
+				InterpolationModel* model_mz = 0;
+				quality_mz_ = fitMZ_(model_mz, charge);
+							
+				
+				if (quality_mz_ > max_quality_mz)
 				{
-					charge_ = mz_fit_type;
-					isotope_stdev_ = stdev;
-					quality_mz_ = fitDim_(MZ, algorithm_);
-                    
-					if (quality_mz_ > max_quality_mz)
-					{
-						max_quality_mz = quality_mz_;
-						model_map.insert( std::make_pair( quality_mz_, model2D_) ); 
-					}
+					max_quality_mz = quality_mz_;
+					if (best_model_mz) delete best_model_mz;	
+					best_model_mz = model_mz; 
+				}
+				else
+				{
+					delete model_mz;
 				}
 			}
 			              
-			std::map<QualityType,ProductModel<2> >::iterator it_map = model_map.find(max_quality_mz);
-			final = new ProductModel<2>((*it_map).second);
+			model2D_.setModel(MZ, best_model_mz);			// Set model in 2D-model	
+			
 			quality_mz_ = max_quality_mz;
                             
 			// return overall quality
-			return evaluate_(set, final, algorithm_);
+			return evaluate_(set);
 		}
             
 		/// evaluate 2d-model
-		QualityType evaluate_(const IndexSet& set, ProductModel<2>*& final, String algorithm)
+		QualityType evaluate_(const IndexSet& set) const
 		{
 			QualityType quality = 0.0;
               
 			// Calculate the pearson correlation coefficient for the values in [begin_a, end_a) and [begin_b, end_b)
-			if (algorithm!="")
+			if (algorithm_!="")
 			{
 				std::vector<Real> real_data;
 				real_data.reserve(set.size());
@@ -515,7 +573,7 @@ namespace OpenMS
 				for (IndexSet::iterator it=set.begin(); it != set.end(); ++it)
 				{
 					real_data.push_back(this->getPeakIntensity(*it));
-					model_data.push_back(final->getIntensity(DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it))));
+					model_data.push_back(model2D_.getIntensity(DPosition<2>(this->getPeakRt(*it),this->getPeakMz(*it))));
 				}
 
         if (this->param_.getValue( "quality:type" ) == "RankCorrelation")
@@ -530,108 +588,113 @@ namespace OpenMS
 			return quality;
 		}
             
-		/// 1d fit
-		QualityType fitDim_(Int dim, String algorithm)  
+		/// 1d fit in RT
+		QualityType fitRT_(InterpolationModel*& model) const
 		{
 			QualityType quality;
 			Param param;
 			Fitter1D* fitter;
-			InterpolationModel* model = 0;
-              
-			if (dim==RT) // RT dimension
-			{
-				if (algorithm=="simplest") // Fit with BiGauss
-				{
-					param.setValue( "tolerance_stdev_bounding_box", tolerance_stdev_box_);
-					param.setValue( "statistics:mean", rt_stat_.mean() );
-					param.setValue( "statistics:variance", rt_stat_.variance() );
-					param.setValue( "statistics:variance1", rt_stat_.variance1() );
-					param.setValue( "statistics:variance2", rt_stat_.variance2() );
-					param.setValue( "interpolation_step", interpolation_step_rt_ );
-                    
-					fitter = Factory<Fitter1D >::create("BiGaussFitter1D");
-				}
-				else // Fit with EMG (LM optimization)
-				{
-					param.setValue( "tolerance_stdev_bounding_box", tolerance_stdev_box_);
-					param.setValue( "statistics:mean", rt_stat_.mean() );
-					param.setValue( "statistics:variance", rt_stat_.variance() );
-					param.setValue( "interpolation_step", interpolation_step_rt_ );
-					param.setValue( "max_iteration", max_iteration_);
-					param.setValue( "deltaAbsError", deltaAbsError_);
-					param.setValue( "deltaRelError", deltaRelError_);
-                                          
-					fitter = Factory<Fitter1D >::create("EmgFitter1D");
-				}
-				
-				// Set parameter for fitter                
-				fitter->setParameters( param );
-				
-				// Construct model for rt
-				quality = fitter->fit1d(rt_input_data_, model);
-			}
-			else // MZ dimension
+
+			if (algorithm_=="simplest") // Fit with BiGauss
 			{
 				param.setValue( "tolerance_stdev_bounding_box", tolerance_stdev_box_);
-				param.setValue( "statistics:mean", mz_stat_.mean() );
-				param.setValue( "statistics:variance", mz_stat_.variance() );
-				param.setValue( "interpolation_step", interpolation_step_mz_ );
-                
-				if ( monoisotopic_mz_ != 0 ) // monnoisotopic mz is known
+				param.setValue( "statistics:mean", rt_stat_.mean() );
+				param.setValue( "statistics:variance", rt_stat_.variance() );
+				param.setValue( "statistics:variance1", rt_stat_.variance1() );
+				param.setValue( "statistics:variance2", rt_stat_.variance2() );
+				param.setValue( "interpolation_step", interpolation_step_rt_ );
+
+				fitter = Factory<Fitter1D >::create("BiGaussFitter1D");
+			}
+			else // Fit with EMG (LM optimization)
+			{
+				param.setValue( "tolerance_stdev_bounding_box", tolerance_stdev_box_);
+				param.setValue( "statistics:mean", rt_stat_.mean() );
+				param.setValue( "statistics:variance", rt_stat_.variance() );
+				param.setValue( "interpolation_step", interpolation_step_rt_ );
+				param.setValue( "max_iteration", max_iteration_);
+				param.setValue( "deltaAbsError", deltaAbsError_);
+				param.setValue( "deltaRelError", deltaRelError_);
+
+				fitter = Factory<Fitter1D >::create("EmgFitter1D");
+			}
+
+			// Set parameter for fitter                
+			fitter->setParameters( param );
+
+			// Construct model for rt
+			quality = fitter->fit1d(rt_input_data_, model);
+			// Check quality
+			if (isnan(quality) ) quality = -1.0;
+              
+			delete(fitter);
+			
+			return quality;
+		}
+
+		/// 1d fit in MZ
+		QualityType fitMZ_(InterpolationModel*& model, const ChargeType& charge) const
+		{
+			QualityType quality;
+			Param param;
+			Fitter1D* fitter;
+
+			param.setValue( "tolerance_stdev_bounding_box", tolerance_stdev_box_);
+			param.setValue( "statistics:mean", mz_stat_.mean() );
+			param.setValue( "statistics:variance", mz_stat_.variance() );
+			param.setValue( "interpolation_step", interpolation_step_mz_ );
+
+			if ( monoisotopic_mz_ != 0 ) // monoisotopic mz is known
+			{
+				param.setValue( "statistics:mean",monoisotopic_mz_ );
+			}
+
+			if (charge != 0) // charge is not zero
+			{
+				param.setValue( "charge", charge );
+				param.setValue( "isotope:stdev", isotope_stdev_ );
+				param.setValue( "isotope:maximum", max_isotope_ );
+				fitter = Factory<Fitter1D >::create("IsotopeFitter1D");
+			}
+			else // charge is zero
+			{
+				if (algorithm_=="simplest") // Fit with GaussModel
 				{
-					param.setValue( "statistics:mean",monoisotopic_mz_ );
-				}
-                
-				if (charge_ != 0) // charge is not zero
-				{
-					param.setValue( "charge", charge_ );
+					param.setValue( "charge", charge );
 					param.setValue( "isotope:stdev", isotope_stdev_ );
 					param.setValue( "isotope:maximum", max_isotope_ );
 					fitter = Factory<Fitter1D >::create("IsotopeFitter1D");
 				}
-				else // charge is zero
+				else // Fit with LmaGaussModel
 				{
-					if (algorithm=="simplest") // Fit with GaussModel
-					{
-						param.setValue( "charge", charge_ );
-						param.setValue( "isotope:stdev", isotope_stdev_ );
-						param.setValue( "isotope:maximum", max_isotope_ );
-						fitter = Factory<Fitter1D >::create("IsotopeFitter1D");
-					}
-					else // Fit with LmaGaussModel
-					{
-						param.setValue( "max_iteration", max_iteration_);
-						param.setValue( "deltaAbsError", deltaAbsError_);
-						param.setValue( "deltaRelError", deltaRelError_);
-      			fitter = Factory<Fitter1D >::create("LmaGaussFitter1D");
-					}
+					param.setValue( "max_iteration", max_iteration_);
+					param.setValue( "deltaAbsError", deltaAbsError_);
+					param.setValue( "deltaRelError", deltaRelError_);
+					fitter = Factory<Fitter1D >::create("LmaGaussFitter1D");
 				}
-
-				// Set parameter for fitter                
-				fitter->setParameters( param );
-                  
-      	// Construct model for mz
-				quality = fitter->fit1d(mz_input_data_, model);
-				
 			}
+
+			// Set parameter for fitter                
+			fitter->setParameters( param );
+
+			// Construct model for mz
+			quality = fitter->fit1d(mz_input_data_, model);
+			
+			//std::cout << "model after fitting: " << model->getParameters() << std::endl << std::endl;
 			
 			// Check quality
 			if (isnan(quality) ) quality = -1.0;
-              
-			// Set model in 2D-model						
-			model2D_.setModel(dim, model);
               
 			delete(fitter);
 			
 			return quality;
 		}
            
-		/// Copy the raw data into 1-dim. DPeakArray 
-		CoordinateType doProjectionDim_(const ChargedIndexSet& index_set, RawDataArrayType& set, Int dim, String algorithm)
+		/// Project the raw data into 1-dim array
+		void doProjectionDim_(const Int dim, const ChargedIndexSet& index_set, RawDataArrayType& set) const
 		{
-			CoordinateType total_intensity = 0;
          
-			if (algorithm!="")
+			if (algorithm_!="")
 			{
 				std::map<CoordinateType,CoordinateType> data_map;
                  
@@ -650,7 +713,7 @@ namespace OpenMS
 					}  
 				}
                  
-				// Copy the raw data into a DPeakArray<DPeak<D> >
+				// Copy the raw data into set
 				set.resize(data_map.size());
 				std::map<CoordinateType,CoordinateType>::iterator it;
 				UInt i=0;
@@ -658,13 +721,10 @@ namespace OpenMS
 				{
 					set[i].setPosition((*it).first);
 					set[i].setIntensity((*it).second);
-					total_intensity += (*it).second;
 				}   
                 
-				data_map.clear();
 			}            
-              
-			return total_intensity;
+
 		}
             
 		/// 2D model
@@ -681,8 +741,10 @@ namespace OpenMS
 		CoordinateType tolerance_stdev_box_;
 		/// monoistopic mass
 		CoordinateType monoisotopic_mz_;
+#ifdef DEBUG_FEATUREFINDER
 		/// counts features (used for debug output only)
 		UInt counter_;
+#endif
 		/// interpolation step size (in m/z)
 		CoordinateType interpolation_step_mz_;
 		/// interpolation step size (in retention time)
@@ -699,8 +761,6 @@ namespace OpenMS
 		Int first_mz_model_;			
 		/// last mz model
 		Int last_mz_model_;
-		/// isotope charge
-		ChargeType charge_;
 		/// isotope stdev
 		CoordinateType isotope_stdev_;
 		/// algorithm
@@ -714,8 +774,6 @@ namespace OpenMS
 		CoordinateType deltaRelError_;
 		/// statistics
 		Math::BasicStatistics<> basic_stat_;
-		/// area under mz curve
-		CoordinateType total_intensity_mz_;
 		/// fit quality in RT dimension
 		QualityType quality_rt_;
 		/// fit quality in MZ dimension
@@ -733,4 +791,6 @@ namespace OpenMS
 	};
  
 }
+
 #endif // OPENMS_TRANSFORMATIONS_FEATUREFINDER_MODELFITTER_H
+

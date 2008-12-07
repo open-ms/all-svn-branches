@@ -142,7 +142,7 @@ namespace OpenMS
 		: string()
 	{
 		stringstream s;
-		s.precision(7);
+		s.precision(writtenDigits(f));
 		s << f;
 		string::operator=(s.str());
 	}
@@ -151,17 +151,17 @@ namespace OpenMS
 		: string()
 	{
 		stringstream s;
-		s.precision(10);
+		s.precision(writtenDigits(d));
 		s << d;
 		string::operator=(s.str());
 	}
 
-	String::String(long double d)
+	String::String(long double ld)
 		: string()
 	{
 		stringstream s;
-		s.precision(16);
-		s << d;
+		s.precision(writtenDigits(ld));
+		s << ld;
 		string::operator=(s.str());
 	}
 	
@@ -175,7 +175,7 @@ namespace OpenMS
 		
 		if (d<pow(10.0,Int(n-sign-2)))
 		{
-			s.precision(10);
+			s.precision(writtenDigits(d)); // Note: Precision was formerly set to 10.  TODO: remove this comment.
 			if (sign==1) s << "-";
 			s << d;
 		}
@@ -556,7 +556,7 @@ namespace OpenMS
 	{
     std::stringstream ss(c_str());
     Int ret = 0;
-    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__, String("Could not convert string ")+*this+" to an int");
+    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__, String("Could not convert string '")+*this+"' to an integer value");
     return ret;
 	}
 
@@ -564,7 +564,7 @@ namespace OpenMS
 	{
     std::stringstream ss(c_str());
     Real ret;
-    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,  String("Could not convert string ")+*this+" to a float");
+    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,  String("Could not convert string '")+*this+"' to a float value");
     return ret;    
 	}
 
@@ -572,7 +572,7 @@ namespace OpenMS
 	{
     std::stringstream ss(c_str());
     DoubleReal ret;
-    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,  String("Could not convert string ")+*this+" to a double");
+    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,  String("Could not convert string '")+*this+"' to a double value");
     return ret;    
 	}
 
@@ -700,7 +700,7 @@ namespace OpenMS
 	String String::operator+ (float f) const
 	{
 		stringstream s;
-		s.precision(7);
+		s.precision(writtenDigits(f));
 		s << *this << f;
 		return s.str();
 	}
@@ -708,16 +708,16 @@ namespace OpenMS
 	String String::operator+ (double d) const
 	{
 		stringstream s;
-		s.precision(10);
+		s.precision(writtenDigits(d));
 		s << *this << d;
 		return s.str();
 	}
 
-	String String::operator+ (long double d) const
+	String String::operator+ (long double ld) const
 	{
 		stringstream s;
-		s.precision(16);
-		s << *this << d;
+		s.precision(writtenDigits(ld));
+		s << *this << ld;
 		return s.str();
 	}
 

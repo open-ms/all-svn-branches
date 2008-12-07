@@ -1,33 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<featureMap version="1.2" xsi:noNamespaceSchemaLocation="http://open-ms.sourceforge.net/schemas/FeatureXML_1_2.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<description>
-		<admin>
-			<sampleName></sampleName>
-			<contact>
-				<name> </name>
-				<institution></institution>
-			</contact>
-		</admin>
-		<instrument>
-			<instrumentName></instrumentName>
-			<source>
-			</source>
-			<analyzerList count="1">
-				<analyzer>
-				</analyzer>
-			</analyzerList>
-			<detector>
-			</detector>
-		</instrument>
-		<dataProcessing>
-			<software>
-				<name></name>
-				<version></version>
-			</software>
-		</dataProcessing>
-	</description>
+<featureMap version="1.3" xsi:noNamespaceSchemaLocation="http://open-ms.sourceforge.net/schemas/FeatureXML_1_3.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<featureList count="3">
-		<feature id="21">
+		<feature id="f_21">
 			<position dim="0">922.64</position>
 			<position dim="1">941.449</position>
 			<intensity>2.15944e+08</intensity>
@@ -35,8 +9,6 @@
 			<quality dim="1">240</quality>
 			<overallquality>0</overallquality>
 			<charge>2</charge>
-			<model name="">
-			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">877.64</hposition>
@@ -89,7 +61,7 @@
 			</convexhull>
 			<userParam type="string" name="sequence" value="RPCFSALTPDETYVPK"/>
 		</feature>
-		<feature id="22">
+		<feature id="f_22">
 			<position dim="0">963.927</position>
 			<position dim="1">1014.61</position>
 			<intensity>3.71373e+08</intensity>
@@ -97,8 +69,6 @@
 			<quality dim="1">248</quality>
 			<overallquality>0</overallquality>
 			<charge>1</charge>
-			<model name="">
-			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">898.927</hposition>
@@ -151,7 +121,7 @@
 			</convexhull>
 			<userParam type="string" name="sequence" value="QTALVELLK"/>
 		</feature>
-		<feature id="23">
+		<feature id="f_23">
 			<position dim="0">1037.54</position>
 			<position dim="1">1163.62</position>
 			<intensity>1.34898e+08</intensity>
@@ -159,8 +129,6 @@
 			<quality dim="1">263</quality>
 			<overallquality>0</overallquality>
 			<charge>1</charge>
-			<model name="">
-			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">877.542</hposition>

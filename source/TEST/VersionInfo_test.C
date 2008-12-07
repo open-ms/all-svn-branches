@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm$
+// $Maintainer: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -31,6 +31,7 @@
 #include <OpenMS/CONCEPT/VersionInfo.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 
+
 ///////////////////////////
 
 START_TEST(VersionInfo, "$Id$")
@@ -39,24 +40,45 @@ START_TEST(VersionInfo, "$Id$")
 /////////////////////////////////////////////////////////////
 
 using namespace OpenMS;
+using namespace std;
 
-CHECK(static String getVersionAndTime())
-	TEST_EQUAL(VersionInfo::getVersionAndTime().hasPrefix(PACKAGE_VERSION),true)
-RESULT
+START_SECTION(static String getVersionAndTime())
+{
+	STATUS(VersionInfo::getVersionAndTime());
+	STATUS(PACKAGE_VERSION);
+	TEST_EQUAL(VersionInfo::getVersionAndTime().hasPrefix(String(PACKAGE_VERSION).trim()),true);
+}
+END_SECTION
 
-CHECK(static String getVersion() )
-	TEST_EQUAL(VersionInfo::getVersion(), PACKAGE_VERSION)
-RESULT
-
-CHECK(static Int getMajorRevision())
+START_SECTION(static String getRevision() )
+{
 	// just to call the method
-	TEST_NOT_EQUAL(VersionInfo::getMajorRevision(), -1)
-RESULT
+	STATUS("If you have compiled from an SVN sandbox, then this should print a revision number, or a range of revisions followed by \"M\", or something similar.");
+  STATUS("Compare with \"svnversion\" or \"svn info\".")
+	STATUS(VersionInfo::getRevision());
+	NOT_TESTABLE;
+}
+END_SECTION
 
-CHECK(static Int getMinorRevision())
-	// just to call the method
-	TEST_NOT_EQUAL(VersionInfo::getMinorRevision(), -1)
-RESULT
+START_SECTION(static String getVersion() )
+{
+	TEST_STRING_EQUAL(VersionInfo::getVersion(),String(PACKAGE_VERSION).trim());
+}
+END_SECTION
+
+START_SECTION(static Int getMajorVersion())
+{
+	STATUS("We might need to update this for a new release, oops!");
+	TEST_EQUAL(VersionInfo::getMajorVersion(), 1);
+}
+END_SECTION
+
+START_SECTION(static Int getMinorVersion())
+{
+	STATUS("We might need to update this for a new release, oops!");
+	TEST_EQUAL(VersionInfo::getMinorVersion(), 2);
+}
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

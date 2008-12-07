@@ -29,57 +29,53 @@
 
 //OpenMS
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizerGUI.h>
 #include <OpenMS/METADATA/Digestion.h>
 
-class QLabel;
-class QLineEdit;
 
-namespace OpenMS {
-/**
-@brief Class that displays all meta information of digestion objects.
-
-This class provides all functionality to view the meta information of an object of type Digestion.
-*/
-
-	class DigestionVisualizer : public BaseVisualizer
+namespace OpenMS
+{
+	/**
+		@brief Class that displays all meta information of digestion objects.
+		
+		This class provides all functionality to view the meta information of an object of type Digestion.
+	*/
+	class DigestionVisualizer
+		: public BaseVisualizerGUI,
+			public BaseVisualizer<Digestion>
 	{
 		Q_OBJECT
 
-	public: 
-	  /// Default constructor
-		DigestionVisualizer(bool editable= FALSE, QWidget *parent =0);
-		 
-		/// Loads the meta data from the object to the viewer.
-		void load(Digestion &d);
-
-	private slots:
-	  /// Saves the changes made to the meta data into the object.
-		void store_();
-		/// Deletes all changes made in the viewer and restores the original meta data.
-		void reject_();
-
-	private:  
-		
-				
-		/** @name Edit fields and buttons
-   */
-    //@{
-		QLineEdit *treatmenttype_;
-		QTextEdit *treatmentcomment_;
-		QLineEdit *digestionenzyme_;
-		QLineEdit *digestiontime_;
-		QLineEdit *digestiontemperature_;
-		QLineEdit *digestionPH_;
-		  //@}
+		public:
 			
-		/// Pointer to current object	 to keep track of the actual object.
-		Digestion *ptr_;
-		/// Copy of current object for restoring the original values.
-		Digestion tempdig_;
+		  ///Constructor
+			DigestionVisualizer(bool editable = false, QWidget* parent = 0);
+			 
+		public slots:
+			
+		  //Docu in base class
+			void store();
 		
-		
+		protected slots:
+			
+			///Undo the changes made in the GUI.
+			void undo_();
+	
+		protected:  
+			
+			///@name Edit fields and buttons
+	    //@{
+			QLineEdit* treatmenttype_;
+			QTextEdit* treatmentcomment_;
+			QLineEdit* digestionenzyme_;
+			QLineEdit* digestiontime_;
+			QLineEdit* digestiontemperature_;
+			QLineEdit* digestionPH_;
+			//@}
+			
+			//Docu in base class
+			void update_();
 	};
-
 
 }
 #endif

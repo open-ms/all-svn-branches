@@ -21,14 +21,13 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_LMAISOTOPEFITTER1D_H
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_LMAISOTOPEFITTER1D_H
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LevMarqFitter1D.h>
-#include <OpenMS/MATH/STATISTICS/BasicStatistics.h>
 #include <OpenMS/MATH/MISC/MathFunctions.h>
 #include <OpenMS/CHEMISTRY/IsotopeDistribution.h>
 #include <OpenMS/CHEMISTRY/EmpiricalFormula.h>
@@ -41,7 +40,7 @@ namespace OpenMS
     /** 
       @brief Isotope distribution fitter (1-dim.) approximated using Levenberg-Marquardt algorithm (GSL implementation) for parameter optimization.
                  
-      @ref LmaIsotopeFitter1D_Parameters are explained on a separate page.                   
+      @htmlinclude OpenMS_LmaIsotopeFitter1D.parameters                 
      */
     class LmaIsotopeFitter1D
     : public LevMarqFitter1D
@@ -62,7 +61,7 @@ namespace OpenMS
             /// assignment operator
             virtual LmaIsotopeFitter1D& operator = (const LmaIsotopeFitter1D& source);
     
-            /// create new BiGaussModel object (function needed by Factory)
+            /// create new LmaIsotopeFitter1D object (function needed by Factory)
             static Fitter1D* create()
             {
               return new LmaIsotopeFitter1D();
@@ -83,7 +82,7 @@ namespace OpenMS
           struct Data
           {
             typedef Peak1D PeakType;
-            typedef DPeakArray<PeakType > RawDataArrayType;
+            typedef std::vector<PeakType > RawDataArrayType;
             typedef std::vector < double > ContainerType;
             typedef Feature::CoordinateType CoordinateType;
       
@@ -109,7 +108,7 @@ namespace OpenMS
           /// Driver function for the evaluation of function and jacobian
           static Int evaluate_(const gsl_vector* x, void* params, gsl_vector* f, gsl_matrix* J);
         
-          /** Diplay the intermediate state of the solution. The solver state contains 
+          /** Display the intermediate state of the solution. The solver state contains 
               the vector s->x which is the current position, and the vector s->f with 
               corresponding function values 
           */
@@ -131,7 +130,7 @@ namespace OpenMS
           DoubleReal isotope_distance_;
           /// Centroid m/z (as opposed to monoisotopic m/z)
           CoordinateType mean_;
-          /// number of an atom per Daton of mass
+          /// number of an atom per Dalton of mass
           DoubleReal averagine_[AVERAGINE_NUM];
           /// relative abundance of i-th isotopic peak
           ContainerType isotopes_exact_;

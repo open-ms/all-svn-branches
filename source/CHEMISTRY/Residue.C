@@ -52,18 +52,15 @@ namespace OpenMS
 	Residue::Residue(	const String& name,
 										const String& three_letter_code,
 										const String& one_letter_code,
-										const EmpiricalFormula& formula,
-										const EmpiricalFormula& neutral_loss)
+										const EmpiricalFormula& formula)
 		:	name_(name),
 			three_letter_code_(three_letter_code),
 			one_letter_code_(one_letter_code),
 			formula_(formula),
-			internal_formula_(formula_ - getInternalToFull()),
 			average_weight_(0),
 			mono_weight_(0),
 			is_modified_(false),
 			modification_(""),
-			loss_formula_(neutral_loss),
 			loss_average_weight_(0.0f),
 			loss_mono_weight_(0.0f),
 			pka_(0.0),
@@ -73,6 +70,10 @@ namespace OpenMS
 			gb_bb_l_(0.0),
 			gb_bb_r_(0.0)
 	{
+		if (formula_ != "")
+		{
+			internal_formula_ = formula_ - getInternalToFull();
+		}
 	}
 
 	Residue::Residue(const Residue& residue)
@@ -88,8 +89,10 @@ namespace OpenMS
 			is_modified_(residue.is_modified_),
 			pre_mod_name_(residue.pre_mod_name_),
 			modification_(residue.modification_),
-			loss_name_(residue.loss_name_),
-			loss_formula_(residue.loss_formula_),
+			loss_names_(residue.loss_names_),
+			loss_formulas_(residue.loss_formulas_),
+			NTerm_loss_names_(residue.NTerm_loss_names_),
+			NTerm_loss_formulas_(residue.NTerm_loss_formulas_),
 			loss_average_weight_(residue.loss_average_weight_),
 			loss_mono_weight_(residue.loss_mono_weight_),
 			low_mass_ions_(residue.low_mass_ions_),
@@ -122,8 +125,10 @@ namespace OpenMS
 			is_modified_ = residue.is_modified_;
 			pre_mod_name_ = residue.pre_mod_name_;
 			modification_ = residue.modification_;
-			loss_name_ = residue.loss_name_;
-			loss_formula_ = residue.loss_formula_;
+			loss_names_ = residue.loss_names_;
+			loss_formulas_ = residue.loss_formulas_;
+			NTerm_loss_names_ = residue.NTerm_loss_names_;
+			NTerm_loss_formulas_ = residue.NTerm_loss_formulas_;
 			loss_average_weight_ = residue.loss_average_weight_;
 			loss_mono_weight_ = residue.loss_mono_weight_;
 			low_mass_ions_ = residue.low_mass_ions_;
@@ -272,48 +277,75 @@ namespace OpenMS
 		pkc_ = value;
 	}
 
-	void Residue::setLossFormula(const EmpiricalFormula& loss_formula)
+	void Residue::setLossFormulas(const vector<EmpiricalFormula>& loss_formulas)
 	{
-		loss_formula_ = loss_formula;
+		loss_formulas_ = loss_formulas;
 	}
 
-	const EmpiricalFormula& Residue::getLossFormula() const
+	void Residue::addLossFormula(const EmpiricalFormula& loss_formula)
 	{
-		return loss_formula_;
+		loss_formulas_.push_back(loss_formula);
+	}
+	
+	const vector<EmpiricalFormula>& Residue::getLossFormulas() const
+	{
+		return loss_formulas_;
 	}
 
-	void Residue::setLossAverageWeight(DoubleReal weight)
+	void Residue::addLossName(const String& name)
 	{
-		loss_average_weight_ = weight;
+		loss_names_.push_back(name);
+	}
+	
+	void Residue::setLossNames(const vector<String>& names)
+	{
+		loss_names_ = names;
 	}
 
-	DoubleReal Residue::getLossAverageWeight() const
+	const vector<String>& Residue::getLossNames() const
 	{
-		return loss_average_weight_;
+		return loss_names_;
 	}
 
-	void Residue::setLossMonoWeight(DoubleReal weight)
-	{
-		loss_mono_weight_ = weight;
-	}
 
-	DoubleReal Residue::getLossMonoWeight() const
-	{
-		return loss_mono_weight_;
-	}
+  void Residue::setNTermLossFormulas(const vector<EmpiricalFormula>& NTerm_loss_formulas)
+  {
+    NTerm_loss_formulas_ = NTerm_loss_formulas;
+  }
 
-	void Residue::setLossName(const String& name)
-	{
-		loss_name_ = name;
-	}
+  void Residue::addNTermLossFormula(const EmpiricalFormula& NTerm_loss_formula)
+  {
+    NTerm_loss_formulas_.push_back(NTerm_loss_formula);
+  }
 
-	const String& Residue::getLossName() const
-	{
-		return loss_name_;
-	}
+  const vector<EmpiricalFormula>& Residue::getNTermLossFormulas() const
+  {
+    return NTerm_loss_formulas_;
+  }
+
+  void Residue::addNTermLossName(const String& name)
+  {
+    NTerm_loss_names_.push_back(name);
+  }
+
+  void Residue::setNTermLossNames(const vector<String>& names)
+  {
+    NTerm_loss_names_ = names;
+  }
+
+  const vector<String>& Residue::getNTermLossNames() const
+  {
+    return NTerm_loss_names_;
+  }
+	
 	
 	void Residue::setFormula(const EmpiricalFormula& formula, ResidueType res_type)
 	{
+		if (formula == "")
+		{
+			return;
+		}
+
 		switch (res_type)
 		{
 			case Full: 
@@ -650,7 +682,12 @@ namespace OpenMS
 	
 	bool Residue::hasNeutralLoss() const
 	{
-		return !loss_formula_.isEmpty();
+		return loss_formulas_.size() != 0;
+	}
+
+	bool Residue::hasNTermNeutralLosses() const
+  {
+		return NTerm_loss_formulas_.size() != 0;
 	}
 	
 	bool Residue::operator == (const Residue& residue) const
@@ -666,8 +703,10 @@ namespace OpenMS
 						is_modified_ == residue.is_modified_ &&
 						pre_mod_name_ == residue.pre_mod_name_ &&
 						modification_ == residue.modification_ &&
-						loss_name_ == residue.loss_name_ &&
-						loss_formula_ == residue.loss_formula_ &&
+						loss_names_ == residue.loss_names_ &&
+						loss_formulas_ == residue.loss_formulas_ &&
+						NTerm_loss_names_ == residue.NTerm_loss_names_ &&
+						NTerm_loss_formulas_ == residue.NTerm_loss_formulas_ &&
 						loss_average_weight_ == residue.loss_average_weight_ &&
 						loss_mono_weight_ == residue.loss_mono_weight_ &&
 						low_mass_ions_ == residue.low_mass_ions_ &&

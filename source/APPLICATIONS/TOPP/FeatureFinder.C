@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff, Marcel Grunert, Clemens Groepl$
+// $Maintainer: Ole Schulz-Trieglaff, Clemens Groepl$
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/MzDataFile.h>
@@ -37,7 +37,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page FeatureFinder FeatureFinder
+	@page TOPP_FeatureFinder FeatureFinder
 	
 	@brief The feature detection application (quantitation)
 	
@@ -60,6 +60,40 @@ using namespace std;
 	Note that the wavelet transform is very slow on high-resolution spectra (i.e. FT, Orbitrap). We recommend 
 	to use a noise or intensity filter to remove spurious points first and to speed-up the feature detection process.
   
+	In the following table you, can find example values of the most important parameters for 
+	different instrument types. @n These parameters are not valid for all instruments of that type,
+	but can be used as a starting point for finding suitable parameters.
+
+	<b>'picked_peak' algorithm</b>:
+	<table>
+		<tr>
+			<td>&nbsp;</td>
+			<td><b>Q-TOF</b></td>
+			<td><b>LTQ Orbitrap</b></td>
+		</tr>
+		<tr>
+			<td><b>intensity:bins</b></td>
+			<td>10</td>
+			<td>10</td>
+		</tr>
+		<tr>
+			<td><b>mass_trace:mz_tolerance</b></td>
+			<td>0.02</td>
+			<td>0.004</td>
+		</tr>
+		<tr>
+			<td><b>isotopic_pattern:mz_tolerance</b></td>
+			<td>0.04</td>
+			<td>0.005</td>
+		</tr>
+	</table>
+	
+	For the @em picked_peak algorithm peak data is needed. In order to create peak data from raw data use the @ref TOPP_PeakPicker.
+	
+	Specialized tools are available for some experimental techniques: @ref TOPP_SILACAnalyzer, @ref TOPP_ITRAQAnalyzer.
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_FeatureFinder.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -79,13 +113,13 @@ class TOPPFeatureFinder
 	{
 		registerInputFile_("in","<file>","","input file ");
 		setValidFormats_("in",StringList::create("mzData"));
-		registerOutputFile_("out","<file>","","output feature list ");
+		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("featureXML"));
 		registerStringOption_("type","<name>","","FeatureFinder algorithm type\n",true);
 		setValidStrings_("type", Factory<FeatureFinderAlgorithm<Peak1D,Feature> >::registeredProducts());
 		addEmptyLine_();
 		addText_("All other options of the Featurefinder depend on the algorithm type used.\n"
-						 "They are set in the 'algorithm' seciton of the INI file.\n");	
+						 "They are set in the 'algorithm' section of the INI file.\n");	
 
 		registerSubsection_("algorithm","Algorithm section");
 	}

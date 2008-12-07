@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/Fitter1D.h>
@@ -40,10 +40,10 @@ namespace OpenMS
     Fitter1D::Fitter1D()
     : FactoryProduct("Fitter1D")
     {
-      defaults_.setValue("interpolation_step",0.2,"Sampling rate for the interpolation of the model function.", true);
-      defaults_.setValue("statistics:mean",1.0,"Centroid position of the model.", true);
-      defaults_.setValue("statistics:variance",1.0,"The variance of the model.", true);
-      defaults_.setValue("tolerance_stdev_bounding_box",3.0,"Bounding box has range [minimim of data, maximum of data] enlarged by tolerance_stdev_bounding_box times the standard deviation of the data.", true);
+      defaults_.setValue("interpolation_step",0.2,"Sampling rate for the interpolation of the model function.", StringList::create("advanced"));
+      defaults_.setValue("statistics:mean",1.0,"Centroid position of the model.", StringList::create("advanced"));
+      defaults_.setValue("statistics:variance",1.0,"The variance of the model.", StringList::create("advanced"));
+      defaults_.setValue("tolerance_stdev_bounding_box",3.0,"Bounding box has range [minimim of data, maximum of data] enlarged by tolerance_stdev_bounding_box times the standard deviation of the data.", StringList::create("advanced"));
                         
       defaultsToParam_();
     }
@@ -53,10 +53,6 @@ namespace OpenMS
     {
       setParameters( source.getParameters() );
       updateMembers_();
-    }
-
-    Fitter1D::~Fitter1D()
-    {
     }
 
     Fitter1D& Fitter1D::operator = (const Fitter1D& source)

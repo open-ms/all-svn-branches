@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Andreas Bertsch $
-# --------------------------------------------------------------------------
 
 
 DIRECTORY=COMPARISON/CLUSTERING
@@ -36,7 +34,9 @@ CPP_SOURCES=\
 	SingleLinkage.C\
 	CompleteLinkage.C\
 	AverageLinkage.C\
-	ClusterHierarchical.C
+	ClusterHierarchical.C\
+	ClusterAnalyzer.C\
+	EuclideanSimilarity.C
 
 include ../../common.mak
 

@@ -28,6 +28,7 @@
 
 //QT
 #include <QtGui/QComboBox>
+#include <QtGui/QLineEdit>
 
 //STL
 #include <iostream>
@@ -36,86 +37,57 @@ using namespace std;
 
 namespace OpenMS
 {
-
-//Constructor
-IonSourceVisualizer::IonSourceVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
-{
-	type_="IonSource";
-  
-	addLabel("Modify ionsource information.");	
-	addSeperator();  
-	addComboBox(ionsource_inlet_type_, "Inlet type");
-	addComboBox(ionsource_ionization_method_, "Ionization method");
-	addComboBox(ionsource_polarity_, "Polarity");      
 	
-	finishAdding_();
-}
-
-
-
-void IonSourceVisualizer::load(IonSource &s)
-{
-  //Pointer to current object to keep track of the actual object
-	ptr_ = &s;
-	
-	//Copy of current object for restoring the original values
-	tempionsource_=s;
-			
-	update_();
-}
-
-void IonSourceVisualizer::update_()
-{
+	IonSourceVisualizer::IonSourceVisualizer(bool editable, QWidget* parent)
+		: BaseVisualizerGUI(editable, parent),
+			BaseVisualizer<IonSource>()
+	{
+		addLabel_("Modify ionsource information.");	
+		addSeparator_();
 		
+		addIntLineEdit_(order_, "Order" );
+		addComboBox_(inlet_type_, "Inlet type");
+		addComboBox_(ionization_method_, "Ionization method");
+		addComboBox_(polarity_, "Polarity");      
+		
+		finishAdding_();
+	}
+	
+	void IonSourceVisualizer::update_()
+	{
 		if(! isEditable())
 		{
-			fillComboBox(ionsource_inlet_type_, &tempionsource_.NamesOfInletType[tempionsource_.getInletType()]  , 1);
-			fillComboBox(ionsource_ionization_method_, &tempionsource_.NamesOfIonizationMethod[tempionsource_.getIonizationMethod()] , 1);
-			fillComboBox(ionsource_polarity_, &tempionsource_.NamesOfPolarity[tempionsource_.getPolarity()] , 1);	
+			fillComboBox_(inlet_type_,& temp_.NamesOfInletType[temp_.getInletType()]  , 1);
+			fillComboBox_(ionization_method_,& temp_.NamesOfIonizationMethod[temp_.getIonizationMethod()] , 1);
+			fillComboBox_(polarity_,& temp_.NamesOfPolarity[temp_.getPolarity()] , 1);	
 		}
 		else
 		{
-			fillComboBox(ionsource_inlet_type_, tempionsource_.NamesOfInletType  , IonSource::SIZE_OF_INLETTYPE);
-			fillComboBox(ionsource_ionization_method_, tempionsource_.NamesOfIonizationMethod , IonSource::SIZE_OF_IONIZATIONMETHOD);
-			fillComboBox(ionsource_polarity_, tempionsource_.NamesOfPolarity , IonSource::SIZE_OF_POLARITY);
+			fillComboBox_(inlet_type_, temp_.NamesOfInletType  , IonSource::SIZE_OF_INLETTYPE);
+			fillComboBox_(ionization_method_, temp_.NamesOfIonizationMethod , IonSource::SIZE_OF_IONIZATIONMETHOD);
+			fillComboBox_(polarity_, temp_.NamesOfPolarity , IonSource::SIZE_OF_POLARITY);
 			
-			ionsource_inlet_type_->setCurrentIndex(tempionsource_.getInletType()); 
-			ionsource_ionization_method_->setCurrentIndex(tempionsource_.getIonizationMethod()); 
-			ionsource_polarity_->setCurrentIndex(tempionsource_.getPolarity()); 
+			inlet_type_->setCurrentIndex(temp_.getInletType()); 
+			ionization_method_->setCurrentIndex(temp_.getIonizationMethod()); 
+			polarity_->setCurrentIndex(temp_.getPolarity()); 
 		}
-		
-}
 
-void IonSourceVisualizer::store_()
-{
-	try
-	{
-	
-		(*ptr_).setInletType((IonSource::InletType)ionsource_inlet_type_->currentIndex());		
-		(*ptr_).setIonizationMethod((IonSource::IonizationMethod)ionsource_ionization_method_->currentIndex());		
-		(*ptr_).setPolarity((IonSource::Polarity)ionsource_polarity_->currentIndex());		
-		
-		tempionsource_=(*ptr_);
-	}
-	catch(exception& e)
-	{
-		std::cout<<"Error while trying to store the new ion source data. "<<e.what()<<endl;
+		order_->setText(String(temp_.getOrder()).c_str());
 	}
 	
-}
-
-void IonSourceVisualizer::reject_()
-{
+	void IonSourceVisualizer::store()
+	{
+		ptr_->setOrder(order_->text().toInt());
+		ptr_->setInletType((IonSource::InletType)inlet_type_->currentIndex());		
+		ptr_->setIonizationMethod((IonSource::IonizationMethod)ionization_method_->currentIndex());		
+		ptr_->setPolarity((IonSource::Polarity)polarity_->currentIndex());		
+		
+		temp_=(*ptr_);
+	}
 	
-	try
+	void IonSourceVisualizer::undo_()
 	{
 		update_();
 	}
-	catch(exception e)
-	{
-		cout<<"Error while trying to restore original ion source data. "<<e.what()<<endl;
-	}
-	
-}
 
 }

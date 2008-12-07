@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff $
+// $Maintainer: Ole Schulz-Trieglaff, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 
@@ -36,7 +36,7 @@ namespace OpenMS
 	/** 
 		@brief Normal distribution approximated using linear interpolation
 	
-		@ref GaussModel_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_GaussModel.parameters
 	*/
 	class GaussModel
 		: public InterpolationModel

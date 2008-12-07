@@ -30,9 +30,8 @@
 //OpenMS
 #include <OpenMS/METADATA/ProteinHit.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizerGUI.h>
 
-class QLabel;
-class QLineEdit;
 
 namespace OpenMS 
 {
@@ -41,41 +40,40 @@ namespace OpenMS
 		
 		This class provides all functionality to view the meta information of an object of type ProteinHit.
 	*/
-	class ProteinHitVisualizer : public BaseVisualizer
+	class ProteinHitVisualizer
+		: public BaseVisualizerGUI,
+			public BaseVisualizer<ProteinHit>
 	{
 		Q_OBJECT
 
-	public: 
-	   /// Default constructor
-		ProteinHitVisualizer(bool editable= FALSE, QWidget *parent =0);
+		public:
+			
+		   ///Constructor
+			ProteinHitVisualizer(bool editable = false, QWidget* parent = 0);
+			
+		public slots:
+			
+		  //Docu in base class
+			void store();
 		
-		/// Loads the meta data from the object to the viewer.
-		void load(ProteinHit &h);
-
-	private slots:
-	  /// Saves the changes made to the meta data into the object.
-		void store_();
-		/// Deletes all changes made in the viewer and restores the original meta data.
-		void reject_();
-
-	private:  
+		protected slots:
+			
+			///Undo the changes made in the GUI.
+			void undo_();
+	
+		protected:  
 		
-		///@name Edit fields 
-    //@{
-		QLineEdit *proteinhit_score_;
-		QLineEdit *proteinhit_rank_;
-		QLineEdit *proteinhit_accession_;
-		QTextEdit *proteinhit_sequence_;
-		//@}
-		
-		/// Pointer to current object	to keep track of the actual object.
-		ProteinHit *ptr_;
-		/// Copy of current object for restoring the original values
-		ProteinHit tempProteinHit_;
-		
-		
+			///@name Edit fields and buttons
+	    //@{
+			QLineEdit* proteinhit_score_;
+			QLineEdit* proteinhit_rank_;
+			QLineEdit* proteinhit_accession_;
+			QTextEdit* proteinhit_sequence_;
+			//@}
+			
+			//Docu in base class
+			void update_();
 	};
-
 
 }
 #endif

@@ -46,7 +46,7 @@ namespace OpenMS
 		
 		The example image shows %Spectrum1DCanvas displaying a raw data layer and a peak data layer. 
 		
-		@ref Spectrum1DCanvas_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_Spectrum1DCanvas.parameters
 		
 		@ingroup SpectrumWidgets
 	*/
@@ -107,7 +107,7 @@ namespace OpenMS
 				update_(__PRETTY_FUNCTION__);
 			}
 			
-			/// Calls dataToWidget_() but takes snap_factor_ and percentage_factor_ into account.
+			/// Calls dataToWidget_() but takes snap_factors_ and percentage_factor_ into account.
 			void dataToWidget(const PeakType& peak, QPoint& point, bool flipped = false);
 			
 			/// Calls SpectrumCanvas::dataToWidget_() but takes mirror mode into account

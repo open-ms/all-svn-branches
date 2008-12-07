@@ -36,7 +36,7 @@
 namespace OpenMS 
 {
 	class Feature;
-	
+	class ConsensusFeature;
 	/**
 		@brief DataFilter array providing some convenience functions
 		
@@ -59,6 +59,7 @@ namespace OpenMS
 				INTENSITY,		///< Filter the intensity value
 				QUALITY,		  ///< Filter the overall quality value
 				CHARGE,				///< Filter the charge value
+				SIZE,         ///< Filter the number of subordinates/elements
 				META_DATA			///< Filter meta data
 			};
 			///Filter operation
@@ -164,6 +165,9 @@ namespace OpenMS
 			
 			///Returns if the @p feature fulfills the current filter criteria
 			bool passes(const Feature& feature) const;
+
+			///Returns if the @p consensus_feature fulfills the current filter criteria
+			bool passes(const ConsensusFeature& consensus_feature) const;
 			
 			///Returns if the @p peak fulfills the current filter criteria
 			template<class PeakType>

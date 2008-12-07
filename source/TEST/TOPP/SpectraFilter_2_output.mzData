@@ -46,7 +46,6 @@
 					<cvParam cvLabel="psi" accession="PSI:1000014" name="Accuracy" value="33.44"/>
 					<cvParam cvLabel="psi" accession="PSI:1000015" name="ScanRate" value="44.55"/>
 					<cvParam cvLabel="psi" accession="PSI:1000016" name="ScanTime" value="55.66"/>
-					<cvParam cvLabel="psi" accession="PSI:1000017" name="ScanFunction" value="MassScan"/>
 					<cvParam cvLabel="psi" accession="PSI:1000018" name="ScanDirection" value="Up"/>
 					<cvParam cvLabel="psi" accession="PSI:1000019" name="ScanLaw" value="Linear"/>
 					<cvParam cvLabel="psi" accession="PSI:1000020" name="TandemScanningMethod" value="PrecursorIonScan"/>
@@ -66,7 +65,6 @@
 					<cvParam cvLabel="psi" accession="PSI:1000014" name="Accuracy" value="13.4"/>
 					<cvParam cvLabel="psi" accession="PSI:1000015" name="ScanRate" value="14.5"/>
 					<cvParam cvLabel="psi" accession="PSI:1000016" name="ScanTime" value="15.6"/>
-					<cvParam cvLabel="psi" accession="PSI:1000017" name="ScanFunction" value="SelectedIonDetection"/>
 					<cvParam cvLabel="psi" accession="PSI:1000018" name="ScanDirection" value="Down"/>
 					<cvParam cvLabel="psi" accession="PSI:1000019" name="ScanLaw" value="Exponential"/>
 					<cvParam cvLabel="psi" accession="PSI:1000020" name="TandemScanningMethod" value="ProductIonScan"/>
@@ -102,9 +100,8 @@
 				<comments>none</comments>
 			</software>
 			<processingMethod>
-				<cvParam cvLabel="psi" name="Deisotoping" accession="PSI:1000033" value="false"/>
-				<cvParam cvLabel="psi" name="ChargeDeconvolution" accession="PSI:1000034" value="false"/>
-				<cvParam cvLabel="psi" accession="PSI:1000035" name="PeakProcessing" value="CentroidMassSpectrum"/>
+				<cvParam cvLabel="psi" name="Deisotoping" accession="PSI:1000033" value="true"/>
+				<cvParam cvLabel="psi" name="ChargeDeconvolution" accession="PSI:1000034" value="true"/>
 				<userParam name="URL" value="www.open-ms.de"/>
 				<userParam name="ProcessingComment" value="Processed"/>
 			</processingMethod>
@@ -152,11 +149,11 @@
 					</spectrumInstrument>
 				</spectrumSettings>
 				<precursorList count="1">
-					<precursor msLevel="2" spectrumRef="1">
+					<precursor msLevel="1" spectrumRef="1">
 						<ionSelection>
 							<cvParam cvLabel="psi" accession="PSI:1000040" name="MassToChargeRatio" value="1.2"/>
 							<cvParam cvLabel="psi" accession="PSI:1000041" name="ChargeState" value="2"/>
-							<cvParam cvLabel="psi" accession="PSI:1000042" name="Intensity" value="2.3"/>
+							<cvParam cvLabel="psi" accession="PSI:1000042" name="Intensity" value="2.29999995231628"/>
 							<cvParam cvLabel="psi" accession="PSI:1000043" name="IntensityUnits" value="NumberOfCounts"/>
 							<userParam name="URL" value="www.open-ms.de"/>
 							<userParam name="IonSelectionComment" value="selected"/>

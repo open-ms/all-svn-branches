@@ -70,8 +70,8 @@ namespace OpenMS
 				The information is read in and the information is stored in the
 				corresponding variables
 
-				@exception Exception::FileNotFound is thrown  if the file could not be opened
-				@exception Exception::ParseError is thrown  if an error occurs during parsing
+				@exception Exception::FileNotFound is thrown if the file could not be opened
+				@exception Exception::ParseError is thrown if an error occurs during parsing
 			*/
 			void load(const String& filename, std::vector<ProteinIdentification>& protein_ids, std::vector<PeptideIdentification>& peptide_ids);
 
@@ -117,7 +117,7 @@ namespace OpenMS
 			ProteinHit prot_hit_;
 			/// Temporary peptide hit
 			PeptideHit pep_hit_;
-			/// 
+			/// Map from protein id to accession
 			std::map<String,String> proteinid_to_accession_;
 			
 			//@}

@@ -21,21 +21,20 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_LMAGAUSSFITTER1D_H
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_LMAGAUSSFITTER1D_H
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LevMarqFitter1D.h>
-#include <OpenMS/MATH/STATISTICS/BasicStatistics.h>
 
 namespace OpenMS
 {
     /** 
       @brief Gaussian distribution fitter (1-dim.) using Levenberg-Marquardt algorithm (GSL implementation) for parameter optimization.
                  
-      @ref LmaGaussFitter1D_Parameters are explained on a separate page.                   
+      @htmlinclude OpenMS_LmaGaussFitter1D.parameters                 
     */
     class LmaGaussFitter1D 
     : public LevMarqFitter1D
@@ -54,7 +53,7 @@ namespace OpenMS
             /// assignment operator
             virtual LmaGaussFitter1D& operator = (const LmaGaussFitter1D& source);
             
-            /// create new BiGaussModel object (function needed by Factory)
+            /// create new LmaGaussFitter1D object (function needed by Factory)
             static Fitter1D* create()
             {
                 return new LmaGaussFitter1D();
@@ -75,7 +74,7 @@ namespace OpenMS
           struct Data
           {
             typedef Peak1D PeakType;
-            typedef DPeakArray<PeakType > RawDataArrayType;
+            typedef std::vector<PeakType > RawDataArrayType;
                 
             UInt n;
             RawDataArrayType set;

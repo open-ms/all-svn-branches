@@ -44,7 +44,6 @@
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakShape.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/KERNEL/MSSpectrum.h>
-#include <OpenMS/KERNEL/DPeak.h>
 #include <OpenMS/KERNEL/PeakIndex.h>
 #include <OpenMS/CONCEPT/Exception.h>
 #include <OpenMS/DATASTRUCTURES/Param.h>
@@ -82,7 +81,7 @@ namespace OpenMS
 		 
 		 @todo Works only with defined types due to pointers to the data in the optimization namespace! Change that or remove templates (Alexandra)
 		 
-		 @ref TwoDOptimization_Parameters are explained on a separate page.
+		 @htmlinclude OpenMS_TwoDOptimization.parameters
 	*/
 	class TwoDOptimization : public DefaultParamHandler
 	{

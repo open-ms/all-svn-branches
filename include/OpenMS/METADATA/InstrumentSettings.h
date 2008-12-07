@@ -35,15 +35,15 @@ namespace OpenMS
 	/**
 		@brief Description of the settings a MS Instrument was run with.
 		
-		
-		
 		@ingroup Metadata
 	*/
-  class InstrumentSettings: public MetaInfoInterface
+  class InstrumentSettings
+    : public MetaInfoInterface
   {
     public:
 			/// scan mode
-      enum ScanMode{
+      enum ScanMode
+      {
       	UNKNOWN,					///< Unknown scan method
       	ZOOM,							///< Zoom scan
       	FULL,							///< Full scan
@@ -54,11 +54,31 @@ namespace OpenMS
       	CNL,							///< Constant neutral loss scan
       	PRODUCT,					///< Product ion scan
       	PRECURSOR,				///< Precursor ion scan
-      	SIZE_OF_SCANMODE};
+      	ER,								///< Enhanced resolution scan
+      	SIZE_OF_SCANMODE
+      };
 			
 			/// Names of scan modes
 			static const std::string NamesOfScanMode[SIZE_OF_SCANMODE];
 			
+      /// Scan window type containing m/z begin and end
+      struct ScanWindow
+      {
+        ScanWindow()
+          : begin(0.0),
+            end(0.0)
+        {
+        }
+        
+        bool operator==(const ScanWindow& rhs) const
+        {
+          return begin == rhs.begin && end == rhs.end;
+        }
+        
+        DoubleReal begin;
+        DoubleReal end;
+      };        
+        
 			/// Constructor
       InstrumentSettings();
       /// Copy constructor
@@ -84,21 +104,17 @@ namespace OpenMS
       /// sets the polariy
       void setPolarity(IonSource::Polarity polarity);
 			
-			/// returns the scan begin in m/z dimension (default is 0.0)
-      float getMzRangeStart() const;
-      /// sets the scan begin in m/z dimension
-      void setMzRangeStart(float mz_range_start);
-			
-			/// returns the scan end in m/z dimension (default is 0.0)
-      float getMzRangeStop() const;
-      /// sets the scan end in m/z dimension
-      void setMzRangeStop(float mz_range_stop);
+			/// returns a const reference to the m/z scan windows
+      const std::vector< ScanWindow >&  getScanWindows() const;
+			/// returns a mutable reference to the m/z scan windows
+      std::vector< ScanWindow >&  getScanWindows();
+      /// sets the m/z scan windows
+      void setScanWindows(std::vector< ScanWindow >  scan_windows);
 
     protected:
       ScanMode scan_mode_;
       IonSource::Polarity polarity_;
-      float mz_range_start_;
-      float mz_range_stop_;
+      std::vector< ScanWindow > scan_windows_;
   };
 } // namespace OpenMS
 

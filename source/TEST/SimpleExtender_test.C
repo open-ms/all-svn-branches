@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 //
 
@@ -35,9 +35,7 @@
 
 #include <OpenMS/CONCEPT/Exception.h>
 
-#include <OpenMS/KERNEL/DPeakArray.h>
 #include <OpenMS/KERNEL/ComparatorUtils.h>
-#include <OpenMS/KERNEL/DPeak.h>
 
 #include <OpenMS/DATASTRUCTURES/Param.h>
 #include <OpenMS/FORMAT/MzDataFile.h>
@@ -60,7 +58,7 @@ typedef FeatureFinderDefs::ChargedIndexSet ChargedIndexSet;
 {
 	ExtenderType* ptr = 0;
 
-	CHECK((SimpleExtender(const MSExperiment<PeakType>* map, FeatureMap<FeatureType>* features, FeatureFinder* ff)))
+	START_SECTION((SimpleExtender(const MSExperiment<PeakType>* map, FeatureMap<FeatureType>* features, FeatureFinder* ff)))
 		{
 			MSExperiment<PeakType> map;
 			FeatureMap<FeatureType> features;
@@ -69,14 +67,14 @@ typedef FeatureFinderDefs::ChargedIndexSet ChargedIndexSet;
 			TEST_EQUAL(ptr->getName(), "SimpleExtender");
 			TEST_NOT_EQUAL(ptr, 0);
 		}
-	RESULT
+END_SECTION
 		
-		CHECK((virtual ~SimpleExtender()))
+		START_SECTION((virtual ~SimpleExtender()))
 		delete ptr;
-	RESULT;
+END_SECTION;
 }
 				
-CHECK(void extend(const ChargedIndexSet &seed_region, ChargedIndexSet& result_region))
+START_SECTION(void extend(const ChargedIndexSet &seed_region, ChargedIndexSet& result_region))
 {
 	// this test checks the regions returned by SimpleExtender
 	// on one artificial data set and a picked (centroided) data set
@@ -264,11 +262,11 @@ CHECK(void extend(const ChargedIndexSet &seed_region, ChargedIndexSet& result_re
 
 	TEST_EQUAL(citer==region.end(),true)
 }
-RESULT
+END_SECTION
 
-PRECISION(0.01)
+TOLERANCE_ABSOLUTE(0.01)
 
-CHECK(([EXTRA] Extension on real-world data))
+START_SECTION(([EXTRA] Extension on real-world data))
 {
 
 	MSExperiment<PeakType> input;
@@ -305,9 +303,9 @@ CHECK(([EXTRA] Extension on real-world data))
 		
 		TEST_NOT_EQUAL(citer == region.end(),true)
 		
-			TEST_REAL_EQUAL(extender.getPeakRt(*citer),rt)
-			TEST_REAL_EQUAL(extender.getPeakMz(*citer),mz)
-			TEST_REAL_EQUAL(extender.getPeakIntensity(*citer),intensity)
+			TEST_REAL_SIMILAR(extender.getPeakRt(*citer),rt)
+			TEST_REAL_SIMILAR(extender.getPeakMz(*citer),mz)
+			TEST_REAL_SIMILAR(extender.getPeakIntensity(*citer),intensity)
 				
 			++citer;				
 	}	
@@ -315,11 +313,11 @@ CHECK(([EXTRA] Extension on real-world data))
 	TEST_EQUAL(citer == region.end(),true)
 
 }
-RESULT
+END_SECTION
 
-PRECISION(0.01)
+TOLERANCE_ABSOLUTE(0.01)
 
-CHECK(([EXTRA] Extension on picked data))
+START_SECTION(([EXTRA] Extension on picked data))
 {
 
 	MSExperiment<PeakType> input;
@@ -352,11 +350,11 @@ CHECK(([EXTRA] Extension on picked data))
 		
 		TEST_NOT_EQUAL(citer == region.end(),true)
 		
-			TEST_REAL_EQUAL(extender.getPeakRt(*citer),rt)
-			TEST_REAL_EQUAL(extender.getPeakMz(*citer),mz)
+			TEST_REAL_SIMILAR(extender.getPeakRt(*citer),rt)
+			TEST_REAL_SIMILAR(extender.getPeakMz(*citer),mz)
 			{
-				PRECISION(1000)	// lower (absolute) precision for high intensities
-					TEST_REAL_EQUAL(extender.getPeakIntensity(*citer),intensity)
+				TOLERANCE_ABSOLUTE(1000)	// lower (absolute) precision for high intensities
+					TEST_REAL_SIMILAR(extender.getPeakIntensity(*citer),intensity)
 					}		
 		++citer;				
 	}	
@@ -365,7 +363,7 @@ CHECK(([EXTRA] Extension on picked data))
 	TEST_EQUAL(citer == region.end(),true)
 
 }
-RESULT
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

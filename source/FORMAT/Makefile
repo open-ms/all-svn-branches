@@ -21,14 +21,16 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer:  Early Pearly$
-# --------------------------------------------------------------------------
 
 all:	default
 
 include ../config_defs.mak
 
 DIRECTORY=FORMAT
+
+
+# Where the headers of the derived classes reside
+HEADER_DIR=$(OPENMS_PATH)/include/OpenMS/$(DIRECTORY)
 
 -include .Dependencies
 
@@ -44,6 +46,8 @@ CPP_SOURCES=\
 	XMLFile.C\
 	MzXMLFile.C\
 	MascotInfile.C\
+	MascotInfile2.C\
+	MascotRemoteQuery.C\
 	MascotOutfile.C\
 	InspectInfile.C\
 	InspectOutfile.C\
@@ -71,16 +75,18 @@ CPP_SOURCES=\
 	UnimodXMLFile.C\
 	PepXMLFile.C\
 	ControlledVocabulary.C\
-	TransformationXMLFile.C
+	TransformationXMLFile.C\
+	LibSVMEncoder.C\
+	CVMappings.C\
+	CVMappingFile.C\
+	MS2File.C
+
+MOC_SOURCES=\
+	MascotRemoteQuery_moc.C
 
 ifeq ($(ANDIMS_SUPPORT),true)
 	ANDI_SOURCES=\
 		ANDIFile.C
-endif
-
-ifeq ($(LIBSVM_SUPPORT),true)
-	LIBSVM_SOURCES=\
-		LibSVMEncoder.C
 endif
 
 
@@ -88,33 +94,41 @@ endif
 
 dummy:
 
-depend:	dummy
+depend:	dummy $(MOC_SOURCES)
 	@echo "creating dependencies for $(DIRECTORY)..."
 	@echo "" > .Dependencies
-	@$(CXX_MAKEDEPEND) $(MAKEDEP_OPTS) $(CPP_SOURCES) $(STD_CPP_INCLUDES) $(ADD_INCLUDES) $(OPENMS_INCLUDES)  >.Dependencies
+	@$(CXX_MAKEDEPEND) $(MAKEDEP_OPTS) $(MOC_SOURCES) $(CPP_SOURCES) $(STD_CPP_INCLUDES) $(ADD_INCLUDES) $(OPENMS_INCLUDES)  >.Dependencies
 	@cd DB; if $(MAKE) depend; then cd .. ; else cd .. ; exit 1; fi;
 	@cd HANDLERS; if $(MAKE) depend; then cd .. ; else cd .. ; exit 1; fi;
+	@cd VALIDATORS; if $(MAKE) depend; then cd .. ; else cd .. ; exit 1; fi;
 
 default_clean: dummy
-	@-$(RM) -rf .Dependencies *~  core.* $(OBJECTS) $(EXECUTABLES) $(EXECUTABLE)
+	@-$(RM) -rf .Dependencies *~  core.* $(OBJECTS) $(EXECUTABLES) $(EXECUTABLE) $(MOC_SOURCES)
 	@cd DB; if $(MAKE) default_clean; then cd .. ; else cd .. ; exit 1; fi;
 	@cd HANDLERS; if $(MAKE) default_clean; then cd .. ; else cd .. ; exit 1; fi;
+	@cd VALIDATORS; if $(MAKE) default_clean; then cd .. ; else cd .. ; exit 1; fi;
 
 collectlib:	dummy
 	@echo "collecting objects from $(DIRECTORY)..."
 	@for i in $(OBJECTS); do echo $(DIRECTORY)/$$i >>$(OPENMS_PATH)/source/libOpenMS.objects ; done
 	@cd DB; if $(MAKE) collectlib; then cd .. ; else cd .. ; exit 1; fi;
 	@cd HANDLERS; if $(MAKE) collectlib; then cd .. ; else cd .. ; exit 1; fi;
+	@cd VALIDATORS; if $(MAKE) collectlib; then cd .. ; else cd .. ; exit 1; fi;
 
 
 include ../config.mak
 
-SOURCES		= $(CPP_SOURCES) $(ANDI_SOURCES) $(LIBSVM_SOURCES)
+MascotRemoteQuery_moc.C:  $(HEADER_DIR)/MascotRemoteQuery.h 
+	$(MOC) $(HEADER_DIR)/MascotRemoteQuery.h -o MascotRemoteQuery_moc.C
+
+
+SOURCES		= $(CPP_SOURCES) $(ANDI_SOURCES) $(MOC_SOURCES)
 OBJECTS 	= $(SOURCES:.C=.o)
 
 default: $(OBJECTS) dummy
 	@echo "Entering directory $(DIRECTORY) ..."
 	@cd DB; if $(MAKE) default; then cd .. ; else cd .. ; exit 1; fi;
 	@cd HANDLERS; if $(MAKE) default; then cd .. ; else cd .. ; exit 1; fi;
+	@cd VALIDATORS; if $(MAKE) default; then cd .. ; else cd .. ; exit 1; fi;
 
 

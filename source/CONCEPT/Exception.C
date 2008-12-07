@@ -185,6 +185,11 @@ namespace OpenMS
 				globalHandler.setMessage(what_);
 			}
 
+		  FailedAPICall::FailedAPICall(const char* file, int line, const char* function, const std::string& message) throw()
+				: BaseException(file, line, function, "FailedAPICall", message)
+			{
+			}
+		
 			OutOfMemory::OutOfMemory(const char* file, int line, const char* function, UInt size) throw()
 				:	BaseException(file, line, function, "OutOfMemory", "a memory allocation failed")
 			{
@@ -263,6 +268,13 @@ namespace OpenMS
 				globalHandler.setMessage(what_);
 			}
 
+			FileNotWritable::FileNotWritable(const char* file, int line, const char* function, const std::string& filename) throw()
+				: BaseException(file, line, function, "FileNotWritable", "")
+			{
+				what_ = "the file '" + filename + "' is not writable for the current user";
+				globalHandler.setMessage(what_);
+			}
+
 			FileEmpty::FileEmpty(const char* file, int line, const char* function, const std::string& filename) throw()
 				:	BaseException(file, line, function, "FileEmpty", "")
 			{
@@ -317,6 +329,17 @@ namespace OpenMS
 				what_ = "the element '" + element + "' could not be found";
 				globalHandler.setMessage(what_);
 			}
+
+			UnableToFit::UnableToFit(const char* file, int line, const char* function, const string& name , const string& message) throw()
+				: BaseException(file, line, function, name, message)
+			{
+			}
+		
+  		UnableToCalibrate::UnableToCalibrate(const char* file, int line, const char* function, const string& name , const string& message) throw()
+	  		: BaseException(file, line, function, name, message)
+			{
+			}
+		
 		
 			DEF_EXCEPTION(DivisionByZero, "a division by zero was requested")
 

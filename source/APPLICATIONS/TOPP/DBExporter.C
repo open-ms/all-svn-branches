@@ -33,7 +33,7 @@ using namespace OpenMS;
 using namespace std;
 
 /**
-	@page DBExporter DBExporter
+	@page TOPP_DBExporter DBExporter
 	
 	@brief Extracts MS data from a %OpenMS database.
 	
@@ -44,8 +44,10 @@ using namespace std;
 	If only one dataset is exported, it is stored with the given name.
 	If several datasets are exported, the given name is prefixed with the DB id and an underscore.
 	
-	In order to create a new %OpenMS database, please use the 'init' flag of the DBImporter.
-
+	In order to create a new %OpenMS database, use the @ref TOPP_DBImporter.
+	
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_DBExporter.cli
 */
 
 // We do not want this class to show up in the docu -> cond

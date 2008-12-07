@@ -29,7 +29,7 @@
 #include <OpenMS/VISUAL/SpectrumWidget.h>
 #include <OpenMS/VISUAL/AxisWidget.h>
 #include <OpenMS/SYSTEM/FileWatcher.h>
-#include <OpenMS/VISUAL/MSMetaDataExplorer.h>
+#include <OpenMS/VISUAL/MetaDataBrowser.h>
 
 // QT
 #include <QtGui/QPainter>
@@ -67,7 +67,7 @@ namespace OpenMS
 			current_layer_(0),
 			spectrum_widget_(0),
 			percentage_factor_(1.0),
-			snap_factor_(1.0),
+			snap_factors_(1,1.0),
 			rubber_band_(QRubberBand::Rectangle,this),
 			watcher_(0),
 			context_add_(0)
@@ -382,6 +382,17 @@ namespace OpenMS
 		return finishAdding_();
 	}
 
+	bool SpectrumCanvas::addLayer(ConsensusMapType& map, const String& filename)
+	{
+		layers_.resize(layers_.size()+1);
+		layers_.back().param = param_;
+		layers_.back().filename = filename;
+		layers_.back().consensus.swap(map);
+		layers_.back().type = LayerData::DT_CONSENSUS;
+
+		return finishAdding_();
+	}
+
 	void SpectrumCanvas::setLayerName(UInt i, const String& name)
 	{ 
 		OPENMS_PRECONDITION(i < layers_.size(), "SpectrumCanvas::setLayerName(i,name) index overflow");
@@ -428,24 +439,34 @@ namespace OpenMS
 		{
 			if (getLayer(layer_index).type==LayerData::DT_PEAK)
 			{
-				const ExperimentType& peaks = getLayer(layer_index).peaks;
-				if (peaks.getMinMZ() < min[mz_dim]) min[mz_dim] = peaks.getMinMZ();
-				if (peaks.getMaxMZ() > max[mz_dim]) max[mz_dim] = peaks.getMaxMZ();
-				if (peaks.getMinRT() < min[rt_dim]) min[rt_dim] = peaks.getMinRT();
-				if (peaks.getMaxRT() > max[rt_dim]) max[rt_dim] = peaks.getMaxRT();
-				if (peaks.getMinInt() < min[it_dim]) min[it_dim] = peaks.getMinInt();
-				if (peaks.getMaxInt() > max[it_dim]) max[it_dim] = peaks.getMaxInt();
+				const ExperimentType& map = getLayer(layer_index).peaks;
+				if (map.getMinMZ() < min[mz_dim]) min[mz_dim] = map.getMinMZ();
+				if (map.getMaxMZ() > max[mz_dim]) max[mz_dim] = map.getMaxMZ();
+				if (map.getMinRT() < min[rt_dim]) min[rt_dim] = map.getMinRT();
+				if (map.getMaxRT() > max[rt_dim]) max[rt_dim] = map.getMaxRT();
+				if (map.getMinInt() < min[it_dim]) min[it_dim] = map.getMinInt();
+				if (map.getMaxInt() > max[it_dim]) max[it_dim] = map.getMaxInt();
+			}
+			else if (getLayer(layer_index).type==LayerData::DT_FEATURE)
+			{
+				const FeatureMapType& map = getLayer(layer_index).features;
+				if (map.getMin()[1] < min[mz_dim]) min[mz_dim] = map.getMin()[1];
+				if (map.getMax()[1] > max[mz_dim]) max[mz_dim] = map.getMax()[1];
+				if (map.getMin()[0] < min[rt_dim]) min[rt_dim] = map.getMin()[0];
+				if (map.getMax()[0] > max[rt_dim]) max[rt_dim] = map.getMax()[0];
+				if (map.getMinInt() < min[it_dim]) min[it_dim] = map.getMinInt();
+				if (map.getMaxInt() > max[it_dim]) max[it_dim] = map.getMaxInt();
 			}
 			else
 			{
-				const FeatureMapType& feat = getLayer(layer_index).features;
-				if (feat.getMin()[1] < min[mz_dim]) min[mz_dim] = feat.getMin()[1];
-				if (feat.getMax()[1] > max[mz_dim]) max[mz_dim] = feat.getMax()[1];
-				if (feat.getMin()[0] < min[rt_dim]) min[rt_dim] = feat.getMin()[0];
-				if (feat.getMax()[0] > max[rt_dim]) max[rt_dim] = feat.getMax()[0];
-				if (feat.getMinInt() < min[it_dim]) min[it_dim] = feat.getMinInt();
-				if (feat.getMaxInt() > max[it_dim]) max[it_dim] = feat.getMaxInt();
-			}	
+				const ConsensusMapType& map = getLayer(layer_index).consensus;
+				if (map.getMin()[1] < min[mz_dim]) min[mz_dim] = map.getMin()[1];
+				if (map.getMax()[1] > max[mz_dim]) max[mz_dim] = map.getMax()[1];
+				if (map.getMin()[0] < min[rt_dim]) min[rt_dim] = map.getMin()[0];
+				if (map.getMax()[0] > max[rt_dim]) max[rt_dim] = map.getMax()[0];
+				if (map.getMinInt() < min[it_dim]) min[it_dim] = map.getMinInt();
+				if (map.getMaxInt() > max[it_dim]) max[it_dim] = map.getMaxInt();
+			}
 		}
 		//Add 1% margin to RT in order to display all the data
 		DoubleReal margin = 0.01*std::max(1.0, max[rt_dim] - min[rt_dim]);
@@ -460,9 +481,9 @@ namespace OpenMS
 		overall_data_range_.setMax(max);
 	}
 
-	double SpectrumCanvas::getSnapFactor()
+	DoubleReal SpectrumCanvas::getSnapFactor()
 	{
-		return snap_factor_;
+		return snap_factors_[0];
 	}
 
 	void SpectrumCanvas::recalculateSnapFactor_()
@@ -554,13 +575,13 @@ namespace OpenMS
 
 	void SpectrumCanvas::leaveEvent(QEvent* /*e*/)
 	{
-		//grab keyboard, as we need to handle key presses
+		//release keyboard, when the mouse pointer leaves
 		releaseKeyboard();
 	}
 
 	void SpectrumCanvas::enterEvent(QEvent* /*e*/)
 	{
-		//release keyboard, when the mouse pointer leaves
+		//grab keyboard, as we need to handle key presses
 		grabKeyboard();
 	}
 
@@ -571,7 +592,10 @@ namespace OpenMS
 		{
 			action_mode_ = AM_TRANSLATE;
 			emit actionModeChange();
+			e->accept();
 		}
+
+		e->ignore();
 	}
 
 	void SpectrumCanvas::keyPressEvent(QKeyEvent* e)
@@ -579,11 +603,13 @@ namespace OpenMS
 		// Alt/Shift pressed => change action mode
 		if (e->key()==Qt::Key_Control)
 		{
+			e->accept();
 			action_mode_ = AM_ZOOM;
 			emit actionModeChange();
 		}
 		else if (e->key()==Qt::Key_Shift)
 		{
+			e->accept();
 			action_mode_ = AM_MEASURE;
 			emit actionModeChange();
 		}
@@ -591,37 +617,45 @@ namespace OpenMS
 		// CTRL+/CTRL- => Zoom stack
 		if ((e->modifiers() & Qt::ControlModifier) && (e->key()==Qt::Key_Plus))
 		{
+			e->accept();
 			zoomForward_();
 		}
 		else if ((e->modifiers() & Qt::ControlModifier) && (e->key()==Qt::Key_Minus))
 		{
+			e->accept();
 			zoomBack_();
 		}
 		
 		// Arrow keys => translate
 		else if (e->key()==Qt::Key_Left)
 		{
+			e->accept();
 			translateLeft_();
 		}
 		else if (e->key()==Qt::Key_Right)
 		{
+			e->accept();
 			translateRight_();
 		}
 		else if (e->key()==Qt::Key_Up)
 		{
+			e->accept();
 			translateForward_();
 		}
 		else if (e->key()==Qt::Key_Down)
 		{
+			e->accept();
 			translateBackward_();
 		}
 		
 		//Backspace to reset zoom
 		else if (e->key()==Qt::Key_Backspace)
 		{
+			e->accept();
 			resetZoom();
 		}
 		
+		releaseKeyboard();// ensure that the key event is passed on to parent widget
 		e->ignore();
 	}
 
@@ -661,8 +695,10 @@ namespace OpenMS
 			//reserve space for the correct number of spectra in RT range
 			ExperimentType::ConstIterator begin = layer.peaks.RTBegin(area.min()[1]);
 			ExperimentType::ConstIterator end = layer.peaks.RTEnd(area.max()[1]);
+			
 			//Exception for Spectrum1DCanvas, here we simply copy all spectra
-			if (getName()=="Spectrum1DCanvas")
+			bool is_1d = (getName()=="Spectrum1DCanvas");
+			if (is_1d)
 			{
 				begin = layer.peaks.begin();
 				end = layer.peaks.end();
@@ -679,11 +715,21 @@ namespace OpenMS
 				spectrum.setMSLevel(it->getMSLevel());
 				spectrum.setPrecursorPeak(it->getPrecursorPeak());
 				//copy peak information
-				for (SpectrumType::ConstIterator it2 = it->MZBegin(area.min()[0]); it2!= it->MZEnd(area.max()[0]); ++it2)
+				if (!is_1d && it->getMSLevel()>1) //MS^n (n>1) spectra are copied if their precursor is in the m/z range
 				{
-					if (layer.filters.passes(*it,it2-it->begin()))
+					if (it->getPrecursorPeak().getMZ()>=area.min()[0] && it->getPrecursorPeak().getMZ()<= area.max()[0])
 					{
-						spectrum.push_back(*it2);
+						spectrum.insert(spectrum.begin(), it->begin(), it->end());
+					}
+				}
+				else // MS1(0) spectra are cropped to the m/z range
+				{
+					for (SpectrumType::ConstIterator it2 = it->MZBegin(area.min()[0]); it2!= it->MZEnd(area.max()[0]); ++it2)
+					{
+						if (layer.filters.passes(*it,it2-it->begin()))
+						{
+							spectrum.push_back(*it2);
+						}
 					}
 				}
 				map.push_back(spectrum);
@@ -699,8 +745,9 @@ namespace OpenMS
     const LayerData& layer = getCurrentLayer();
   	if (layer.type==LayerData::DT_FEATURE)
   	{
-			//copy experimental settings
-			map.ExperimentalSettings::operator=(layer.features);
+			//copy meta data
+			map.setIdentifier(layer.features.getIdentifier());
+			map.setProteinIdentifications(layer.features.getProteinIdentifications());
 			//Visible area
 			DoubleReal min_rt = getVisibleArea().min()[1];
 			DoubleReal max_rt = getVisibleArea().max()[1];
@@ -721,27 +768,65 @@ namespace OpenMS
 		}
 	}
 
+	void SpectrumCanvas::getVisibleConsensusData(ConsensusMapType& map) const
+	{		
+		//clear output experiment
+		map.clear();
+		
+    const LayerData& layer = getCurrentLayer();
+  	if (layer.type==LayerData::DT_CONSENSUS)
+  	{
+			//copy file descriptions
+			map.getFileDescriptions() = layer.consensus.getFileDescriptions();
+			//Visible area
+			DoubleReal min_rt = getVisibleArea().min()[1];
+			DoubleReal max_rt = getVisibleArea().max()[1];
+			DoubleReal min_mz = getVisibleArea().min()[0];
+			DoubleReal max_mz = getVisibleArea().max()[0];
+			//copy features
+  		for (ConsensusMapType::ConstIterator it=layer.consensus.begin(); it!=layer.consensus.end(); ++it)
+  		{
+				if ( layer.filters.passes(*it)
+					&& it->getRT() >= min_rt 
+					&& it->getRT() <= max_rt 
+					&& it->getMZ() >= min_mz 
+					&& it->getMZ() <= max_mz )
+				{
+					map.push_back(*it);
+				}
+			}
+		}
+	}
 
 	void SpectrumCanvas::showMetaData(bool modifiable)
   {
 		LayerData& layer = getCurrentLayer_();
 		
-		MSMetaDataExplorer dlg(modifiable, this);
+		MetaDataBrowser dlg(modifiable, this);
     dlg.setWindowTitle("Layer meta data");
 		if (layer.type==LayerData::DT_PEAK)
   	{
-  		dlg.visualize(layer.peaks);
+  		dlg.add(layer.peaks);
 			//Exception for Spectrum1DCanvas, here we add the meta data of the one spectrum
 			if (getName()=="Spectrum1DCanvas")
 			{
-				dlg.visualize(static_cast<SpectrumSettings&>(layer.peaks[0]));
+				dlg.add(layer.peaks[0]);
 			}
   	}
-  	else
+  	else if (layer.type==LayerData::DT_FEATURE)
   	{
-  		dlg.visualize(layer.features);
+  		dlg.add(layer.features);
   	}
-    dlg.exec();
+  	else if (layer.type==LayerData::DT_CONSENSUS)
+  	{
+  		dlg.add(layer.consensus);
+  	}
+  	
+  	//if the meta data was modified, set the flag
+    if (modifiable && dlg.exec())
+    {
+			modificationStatus_(activeLayerIndex(), true);
+    }
   }
 	
 	void SpectrumCanvas::updateCursor_()
@@ -760,7 +845,16 @@ namespace OpenMS
 		}
 	}
 
-	
+	void SpectrumCanvas::modificationStatus_(UInt layer_index, bool modified)
+	{
+		LayerData& layer = getLayer_(layer_index);
+		if (layer.modified!=modified)
+		{
+			layer.modified = modified;
+			emit layerModficationChange(activeLayerIndex(), modified);
+		}
+	}
+
 } //namespace
 
 

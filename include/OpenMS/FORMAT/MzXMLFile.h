@@ -62,14 +62,15 @@ namespace OpenMS
 
 				@p map has to be a MSExperiment or have the same interface.
 				
-				@exception Exception::FileNotFound is thrown  if the file could not be opened
-				@exception Exception::ParseError is thrown  if an error occurs during parsing
+				@exception Exception::FileNotFound is thrown if the file could not be opened
+				@exception Exception::ParseError is thrown if an error occurs during parsing
 			*/
 			template <typename MapType>
 			void load(const String& filename, MapType& map)
 			{
 				map.reset();
-				
+				map.setNativeIDType(ExperimentalSettings::SCAN_NUMBER);
+					
 				Internal::MzXMLHandler<MapType> handler(map,filename,schema_version_,*this);
 				handler.setOptions(options_);
 				parse_(filename, &handler);

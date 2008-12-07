@@ -21,10 +21,17 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
+# $Maintainer: Marc Sturm, Clemens Groepl $
 # --------------------------------------------------------------------------
 
 -include ../source/config.mak
+
+# We want to add the revision info only if it is meaningful.
+# If the svnversion command fails, the result of the shell builtin function is "".
+# If we have a download without svn, the result of svnversion is "exported",
+# which is replaced by "" using the subst builtin function.
+# In both cases, we get "(revision )", which becomes "" by another use of the subst builtin.
+OPENMS_REVISION := $(subst (revision ),,(revision $(subst exported,,$(shell export LC_ALL=C; cd ..; svnversion -n))))
 
 #######################################################################
 # HELP TARGET
@@ -44,12 +51,17 @@ help:
 paramdoc: dummy
 	@echo "";
 	@echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
-	@echo "Creating the algorithm parameter documentation";
+	@echo "Creating the algorithm parameter and TOPP parameter documentation";
 	@echo "";
-	@echo "Note: A functioning OpenMS installation and a running X-server is required for this step!";
+	@echo "Note: A functioning OpenMS/TOPP installation and a running X-server is required for this step!";
 	@echo "      If this step fails the rest of the documentation is created nevertheless.";
 	@echo "";
+	@echo "[ param doc ... "
 	@-make paramdoc_try 
+	@echo "  param doc: ok. ]"
+	@echo "[ TOPP doc ... "
+	@-make toppdoc_try 
+	@echo "  TOPP doc: ok. ]"
 
 # the actual paramdoc is created in this target to make sure the above text is printed without the config.mak file
 paramdoc_try: doxygen/parameters/DefaultParamHandlerDocumenter.C ../source/config.mak dummy
@@ -57,8 +69,12 @@ paramdoc_try: doxygen/parameters/DefaultParamHandlerDocumenter.C ../source/confi
 	 $(CXX) $(CXXFLAGS) $(ADD_CXXFLAGS) $(CPP_MODE_FLAGS) $(LIB_CXXFLAGS) $(OPENMS_INCLUDES) $(ADD_INCLUDES) -c DefaultParamHandlerDocumenter.C -o DefaultParamHandlerDocumenter.o && \
 	 $(CXX) $(LDFLAGS) -o DefaultParamHandlerDocumenter DefaultParamHandlerDocumenter.o $(LIBS) && \
 	 ./DefaultParamHandlerDocumenter;
-	@echo "[ DefaultParamHandlerDocumenter: ok ]"
-	@touch doxygen/parameters/DefaultParameters.doxygen
+
+toppdoc_try: doxygen/parameters/TOPPDocumenter.C ../source/config.mak dummy
+	@cd doxygen/parameters/ && \
+	 $(CXX) $(CXXFLAGS) $(ADD_CXXFLAGS) $(CPP_MODE_FLAGS) $(LIB_CXXFLAGS) $(OPENMS_INCLUDES) $(ADD_INCLUDES) -c TOPPDocumenter.C -o TOPPDocumenter.o && \
+	 $(CXX) $(LDFLAGS) -o TOPPDocumenter TOPPDocumenter.o $(LIBS) && \
+	 ./TOPPDocumenter;
 
 #######################################################################
 # creates the documentation
@@ -70,7 +86,7 @@ doc:
 	@echo "";
 	@rm -rf doxygen/xml_output html
 	@test -f doxygen/Doxyfile || cp ../source/config/Doxyfile.in doxygen/Doxyfile
-	@doxygen doxygen/Doxyfile
+	@export OPENMS_REVISION='$(OPENMS_REVISION)'; doxygen doxygen/Doxyfile
 	@echo "";
 	@echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 	@echo "The documentation has been successfully created.";
@@ -87,7 +103,7 @@ idoc:
 	@echo "";
 	@rm -rf doxygen/xml_output html
 	@test -f doxygen/Doxyfile || cp ../source/config/Doxyfile.in doxygen/Doxyfile
-	@doxygen doxygen/Doxyfile_internal
+	@export OPENMS_REVISION='$(OPENMS_REVISION)'; doxygen doxygen/Doxyfile_internal
 	@echo "";
 	@echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 	@echo "The documentation has been successfully created.";
@@ -95,7 +111,7 @@ idoc:
 	@echo "";
 
 #######################################################################
-# Creates the full-blown, graphical, super-duper, internal documentation.
+# Creates the full-blown, graphical, internal documentation.
 # This requires the "dot" program, see http://www.graphviz.org/
 # Also required is some patience when creating the doc.
 # Therefore the output goes to a different directory.
@@ -107,7 +123,7 @@ dotdoc:
 	@echo "";
 	@rm -rf doxygen/xml_output html-dot
 	@test -f doxygen/Doxyfile || cp ../source/config/Doxyfile.in doxygen/Doxyfile
-	@doxygen doxygen/Doxyfile_dot
+	@export OPENMS_REVISION='$(OPENMS_REVISION)'; doxygen doxygen/Doxyfile_dot
 	@echo "";
 	@echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 	@echo "The documentation has been successfully created.";
@@ -117,14 +133,14 @@ dotdoc:
 
 #######################################################################
 # Creates the internal documentation without class documentation.
-noclassdoc:
+noclassdoc: toppdoc_try
 	@echo "";
 	@echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 	@echo "Creating the internal documentation with out class documentation";
 	@echo "";
 	@rm -rf doxygen/xml_output html
 	@test -f doxygen/Doxyfile || cp ../source/config/Doxyfile.in doxygen/Doxyfile
-	@doxygen doxygen/Doxyfile_noclass
+	@export OPENMS_REVISION='$(OPENMS_REVISION)'; doxygen doxygen/Doxyfile_noclass
 	@echo "";
 	@echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 	@echo "The documentation has been successfully created.";
@@ -139,7 +155,7 @@ OpenMS_tutorial: OpenMS_tutorial/OpenMS_Tutorial.doxygen OpenMS_tutorial/Doxyfil
 	@echo "Creating the OpenMS tutorial";
 	@echo "";
 	@rm -rf OpenMS_tutorial/latex_output
-	@doxygen OpenMS_tutorial/Doxyfile
+	@export OPENMS_REVISION='$(OPENMS_REVISION)'; doxygen OpenMS_tutorial/Doxyfile
 	@cp OpenMS_tutorial/refman_overwrite.tex OpenMS_tutorial/latex_output/refman.tex
 	@cd OpenMS_tutorial/latex_output/ && make
 	@cp OpenMS_tutorial/latex_output/refman.pdf OpenMS_tutorial.pdf
@@ -158,7 +174,7 @@ TOPP_tutorial: TOPP_tutorial/TOPP_Tutorial.doxygen TOPP_tutorial/TOPPView_Tutori
 	@echo "Creating the TOPP tutorial (TOPP_tutorial.pdf)";
 	@echo "";
 	@rm -rf TOPP_tutorial/latex_output
-	@doxygen TOPP_tutorial/Doxyfile
+	@export OPENMS_REVISION='$(OPENMS_REVISION)'; doxygen TOPP_tutorial/Doxyfile
 	@cp TOPP_tutorial/refman_overwrite.tex TOPP_tutorial/latex_output/refman.tex
 	@cd TOPP_tutorial/latex_output/ && make
 	@cp TOPP_tutorial/latex_output/refman.pdf TOPP_tutorial.pdf
@@ -174,6 +190,7 @@ clean:
 	@rm -rf html html-dot doxygen/xml_output/ doxygen/doxygen-error.log
 	@rm -rf OpenMS_tutorial/latex_output/ OpenMS_tutorial.pdf OpenMS_tutorial/doxygen-error.log
 	@rm -rf TOPP_tutorial/latex_output/ TOPP_tutorial.pdf TOPP_tutorial/doxygen-error.log
-	@rm -rf doxygen/parameters/DefaultParamHandlerDocumenter doxygen/parameters/DefaultParamHandlerDocumenter.o
+	@rm -rf doxygen/parameters/DefaultParamHandlerDocumenter doxygen/parameters/DefaultParamHandlerDocumenter.o doxygen/parameters/output/OpenMS_*.parameters
+	@rm -rf doxygen/parameters/TOPPDocumenter doxygen/parameters/TOPPDocumenter.o doxygen/parameters/output/TOPP_*.cli
 
 dummy:

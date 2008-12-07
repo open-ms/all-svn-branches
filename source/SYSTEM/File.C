@@ -158,6 +158,10 @@ namespace OpenMS
 			}
 		}
 		
+		//if the file was not found, throw an exception
+		throw Exception::FileNotFound(__FILE__,__LINE__,__PRETTY_FUNCTION__,filename);
+		
+		//this is never reached, but needs to be there to avoid compiler warnings
 		return "";
 	}
 	
@@ -188,19 +192,15 @@ namespace OpenMS
 
 	String File::getUniqueName()
 	{
-		DateTime now;
-		String date_str, time_str, pid;
-		now.now();
-		now.getDate(date_str);
-		now.getTime(time_str);
+		DateTime now = DateTime::now();
+		String pid;
 		#ifdef OPENMS_OS_MINGW32
 			pid = (String)GetCurrentProcessId();
 		#else
 			pid = (String)getpid();	
 		#endif		
-		time_str.remove(':'); // remove ':', because of Windoze 
 		static int number = 0;
-		return date_str + "_" + time_str + "_" + String(QHostInfo::localHostName()) + "_" + pid + "_" + (++number);
+		return now.getDate() + "_" + now.getTime().remove(':') + "_" + String(QHostInfo::localHostName()) + "_" + pid + "_" + (++number);
 	}
 
   bool File::createSparseFile(const String& filename, const Offset64Int& sfilesize = 1)

@@ -39,74 +39,73 @@ START_TEST(ExperimentalSettings, "$Id$")
 /////////////////////////////////////////////////////////////
 
 ExperimentalSettings* ptr = 0;
-CHECK(ExperimentalSettings())
+START_SECTION(ExperimentalSettings())
 	ptr = new ExperimentalSettings();
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK(~ExperimentalSettings())
+START_SECTION(~ExperimentalSettings())
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK(ExperimentType getType() const)
+START_SECTION(const Date& getDateTime() const)
   ExperimentalSettings tmp;
-  TEST_EQUAL(tmp.getType(),ExperimentalSettings::UNKNOWN);
-RESULT
+  TEST_EQUAL(tmp.getDateTime().get(),"0000-00-00 00:00:00");
+END_SECTION
 
-CHECK(const Date& getDate() const)
-  ExperimentalSettings tmp;
-  String s;
-  tmp.getDate().get(s);
-  TEST_EQUAL(s,"0000-00-00");
-RESULT
-
-CHECK(const HPLC& getHPLC() const)
+START_SECTION(const HPLC& getHPLC() const)
   ExperimentalSettings tmp;
   TEST_EQUAL(tmp.getHPLC()==HPLC(),true);
-RESULT
+END_SECTION
 
-CHECK(const Instrument& getInstrument() const)
+START_SECTION(const Instrument& getInstrument() const)
   ExperimentalSettings tmp;
   TEST_EQUAL(tmp.getInstrument()==Instrument(),true);
-RESULT
+END_SECTION
 
-CHECK(const ProcessingMethod& getProcessingMethod() const)
+START_SECTION(const DataProcessing& getDataProcessing() const)
   ExperimentalSettings tmp;
-  TEST_EQUAL(tmp.getProcessingMethod()==ProcessingMethod(),true);
-RESULT
+  TEST_EQUAL(tmp.getDataProcessing().size(),0);
+END_SECTION
 
-CHECK(const Sample& getSample() const)
+START_SECTION(const Sample& getSample() const)
   ExperimentalSettings tmp;
   TEST_EQUAL(tmp.getSample()==Sample(),true);
-RESULT
+END_SECTION
 
-CHECK(const Software& getSoftware() const)
+START_SECTION(const SourceFile& getSourceFiles() const)
   ExperimentalSettings tmp;
-  TEST_EQUAL(tmp.getSoftware()==Software(),true);
-RESULT
+  TEST_EQUAL(tmp.getSourceFiles().size(),0);
+END_SECTION
 
-CHECK(const SourceFile& getSourceFile() const)
-  ExperimentalSettings tmp;
-  TEST_EQUAL(tmp.getSourceFile()==SourceFile(),true);
-RESULT
-
-CHECK((const String& getComment() const))
+START_SECTION((const String& getComment() const))
 	ExperimentalSettings tmp;
 	TEST_EQUAL(tmp.getComment(), "");
-RESULT
+END_SECTION
 
-CHECK((void setComment(const String& comment)))
+START_SECTION((void setComment(const String& comment)))
 	ExperimentalSettings tmp;
 	tmp.setComment("bla");
 	TEST_EQUAL(tmp.getComment(), "bla");
-RESULT
+END_SECTION
 
-CHECK(const std::vector<ContactPerson>& getContacts() const)
+START_SECTION((const String& getIdentifier() const))
+	ExperimentalSettings tmp;
+	TEST_EQUAL(tmp.getIdentifier(), "");
+END_SECTION
+
+START_SECTION((void setIdentifier(const String& identifier)))
+	ExperimentalSettings tmp;
+	tmp.setIdentifier("bla");
+	TEST_EQUAL(tmp.getIdentifier(), "bla");
+END_SECTION
+
+START_SECTION(const std::vector<ContactPerson>& getContacts() const)
   ExperimentalSettings tmp;
   TEST_EQUAL(tmp.getContacts().size(),0);
-RESULT
+END_SECTION
 
-CHECK(void setContacts(const std::vector<ContactPerson>& contacts))
+START_SECTION(void setContacts(const std::vector<ContactPerson>& contacts))
   ExperimentalSettings tmp;
   std::vector<ContactPerson> dummy;
   ContactPerson c;
@@ -122,109 +121,87 @@ CHECK(void setContacts(const std::vector<ContactPerson>& contacts))
   TEST_EQUAL(tmp.getContacts()[1].getFirstName(),"bla18");
   TEST_EQUAL(tmp.getContacts()[0].getLastName(),"blubb17");
   TEST_EQUAL(tmp.getContacts()[1].getLastName(),"blubb18");
-RESULT
+END_SECTION
 
-CHECK(void setDate(const Date& date))
+START_SECTION(void setDateTime(const Date& date))
   ExperimentalSettings tmp;
-  Date dummy;
-  String s;
-  dummy.set("02/07/2006");
-  tmp.setDate(dummy);
-  tmp.getDate().get(s);
-  TEST_EQUAL(s,"2006-02-07");
-RESULT
+  DateTime dummy;
+  dummy.set("02/07/2006 01:02:03");
+  tmp.setDateTime(dummy);
+  TEST_EQUAL(tmp.getDateTime().get(),"2006-02-07 01:02:03");
+END_SECTION
 
-CHECK(void setHPLC(const HPLC& hplc))
+START_SECTION(void setHPLC(const HPLC& hplc))
   ExperimentalSettings tmp;
   HPLC dummy;
   dummy.setFlux(5);
   tmp.setHPLC(dummy);
   TEST_EQUAL(tmp.getHPLC().getFlux(),5);
-RESULT
+END_SECTION
 
-CHECK(void setInstrument(const Instrument& instrument))
+START_SECTION(void setInstrument(const Instrument& instrument))
   ExperimentalSettings tmp;
   Instrument dummy;
   dummy.setName("bla");
   tmp.setInstrument(dummy);
   TEST_EQUAL(tmp.getInstrument().getName(),"bla");
-RESULT
+END_SECTION
 
-CHECK(void setProcessingMethod(const ProcessingMethod& processing_method))
+START_SECTION(void setDataProcessing(const DataProcessing& data_processing))
   ExperimentalSettings tmp;
-  ProcessingMethod dummy;
-  dummy.setDeisotoping(true);
-  tmp.setProcessingMethod(dummy);
-  TEST_EQUAL(tmp.getProcessingMethod().getDeisotoping(),true);
-RESULT
+  std::vector<DataProcessing> dummy;
+  dummy.resize(1);
+  tmp.setDataProcessing(dummy);
+  TEST_EQUAL(tmp.getDataProcessing().size(),1);
+END_SECTION
 
-CHECK(void setSample(const Sample& sample))
+START_SECTION(void setSample(const Sample& sample))
   ExperimentalSettings tmp;
   Sample dummy;
   dummy.setName("bla3");
   tmp.setSample(dummy);
   TEST_EQUAL(tmp.getSample().getName(),"bla3");
-RESULT
+END_SECTION
 
-CHECK(void setSoftware(const Software& software))
+START_SECTION(void setSourceFiles(const vector<SourceFile>& source_file))
   ExperimentalSettings tmp;
-  Software dummy;
-  dummy.setName("bla33");
-  tmp.setSoftware(dummy);
-  TEST_EQUAL(tmp.getSoftware().getName(),"bla33");
-RESULT
+  vector<SourceFile> dummy;
+  dummy.resize(1);
+  tmp.setSourceFiles(dummy);
+  TEST_EQUAL(tmp.getSourceFiles().size(),1);
+END_SECTION
 
-CHECK(void setSourceFile(const SourceFile& source_file))
-  ExperimentalSettings tmp;
-  SourceFile dummy;
-  dummy.setNameOfFile("bla4");
-  tmp.setSourceFile(dummy);
-  TEST_EQUAL(tmp.getSourceFile().getNameOfFile(),"bla4");
-RESULT
-
-CHECK(void setType(ExperimentType type))
-  ExperimentalSettings tmp;
-  tmp.setType(ExperimentalSettings::HPLC_MS);
-  TEST_EQUAL(tmp.getType(),ExperimentalSettings::HPLC_MS);
-RESULT
-
-CHECK(HPLC& getHPLC())
+START_SECTION(HPLC& getHPLC())
   ExperimentalSettings tmp;
   tmp.getHPLC().setFlux(5);
   TEST_EQUAL(tmp.getHPLC().getFlux(),5);
-RESULT
+END_SECTION
 
-CHECK(Instrument& getInstrument())
+START_SECTION(Instrument& getInstrument())
   ExperimentalSettings tmp;
   tmp.getInstrument().setName("bla55");
   TEST_EQUAL(tmp.getInstrument().getName(),"bla55");
-RESULT
+END_SECTION
 
-CHECK(ProcessingMethod& getProcessingMethod())
+START_SECTION(DataProcessing& getDataProcessing())
   ExperimentalSettings tmp;
-  tmp.getProcessingMethod().setDeisotoping(true);
-  TEST_EQUAL(tmp.getProcessingMethod().getDeisotoping(),true);
-RESULT
+  tmp.getDataProcessing().resize(1);
+  TEST_EQUAL(tmp.getDataProcessing().size(),1);
+END_SECTION
 
-CHECK(Sample& getSample())
+START_SECTION(Sample& getSample())
   ExperimentalSettings tmp;
   tmp.getSample().setName("bla2");
   TEST_EQUAL(tmp.getSample().getName(),"bla2");
-RESULT
+END_SECTION
 
-CHECK(Software& getSoftware())
+START_SECTION(SourceFile& getSourceFiles())
   ExperimentalSettings tmp;
-  tmp.getSoftware().setName("bla3");
-  TEST_EQUAL(tmp.getSoftware().getName(),"bla3");
-RESULT
+  tmp.getSourceFiles().resize(1);
+  TEST_EQUAL(tmp.getSourceFiles().size(),1)
+END_SECTION
 
-CHECK(SourceFile& getSourceFile())
-  ExperimentalSettings tmp;
-  tmp.getSourceFile().setNameOfFile("bla4");
-  TEST_EQUAL(tmp.getSourceFile().getNameOfFile(),"bla4");
-RESULT
-
-CHECK(std::vector<ContactPerson>& getContacts())
+START_SECTION(std::vector<ContactPerson>& getContacts())
   ExperimentalSettings tmp;
   ContactPerson c;
   c.setFirstName("bla17");
@@ -234,65 +211,59 @@ CHECK(std::vector<ContactPerson>& getContacts())
   TEST_EQUAL(tmp.getContacts().size(),2);
   TEST_EQUAL(tmp.getContacts()[0].getFirstName(),"bla17");
   TEST_EQUAL(tmp.getContacts()[1].getFirstName(),"bla18");
-RESULT
+END_SECTION
 
-CHECK(ExperimentalSettings(const ExperimentalSettings& source))
+START_SECTION(ExperimentalSettings(const ExperimentalSettings& source))
   ExperimentalSettings tmp;
   ProteinIdentification id;
-  DateTime date;
 	ProteinHit protein_hit;
 	Real protein_significance_threshold = 63.2f;
 
-	date.now();
-
-	id.setDateTime(date);
+	id.setDateTime(DateTime::now());
 	id.setSignificanceThreshold(protein_significance_threshold);
 	id.insertHit(protein_hit);
   
   tmp.getHPLC().setFlux(5);
   tmp.setComment("bla");
+  tmp.setIdentifier("lsid");
   tmp.getInstrument().setName("bla");
-  tmp.getProcessingMethod().setDeisotoping(true);
+  tmp.getDataProcessing().resize(1);
   tmp.getSample().setName("bla2");
-  tmp.getSoftware().setName("bla3");
-  tmp.getSourceFile().setNameOfFile("bla4");
+  tmp.getSourceFiles().resize(1);
   tmp.getContacts().resize(1);
   tmp.addProteinIdentification(id);
   tmp.setMetaValue("label",String("label"));
   
   ExperimentalSettings tmp2(tmp);
   TEST_EQUAL(tmp2.getComment(),"bla");
+  TEST_EQUAL(tmp2.getIdentifier(),"lsid");
   TEST_EQUAL(tmp2.getHPLC().getFlux(),5);
   TEST_EQUAL(tmp2.getInstrument().getName(),"bla");
-  TEST_EQUAL(tmp2.getProcessingMethod().getDeisotoping(),true);
+  TEST_EQUAL(tmp2.getDataProcessing().size(),1);
   TEST_EQUAL(tmp2.getSample().getName(),"bla2");
-  TEST_EQUAL(tmp2.getSoftware().getName(),"bla3");
-  TEST_EQUAL(tmp2.getSourceFile().getNameOfFile(),"bla4");
+  TEST_EQUAL(tmp2.getSourceFiles().size(),1);
   TEST_EQUAL(tmp2.getContacts().size(),1);
   TEST_EQUAL(id == tmp2.getProteinIdentifications()[0], true);
   TEST_EQUAL((String)(tmp2.getMetaValue("label")), "label");  
-RESULT
+END_SECTION
 
-CHECK(ExperimentalSettings& operator= (const ExperimentalSettings& source))
+START_SECTION(ExperimentalSettings& operator= (const ExperimentalSettings& source))
   ExperimentalSettings tmp;
   ProteinIdentification id;
-  DateTime date;
 	ProteinHit protein_hit;
 	Real protein_significance_threshold = 63.2f;
 
-	date.now();
-
-	id.setDateTime(date);
+	id.setDateTime(DateTime::now());
 	id.setSignificanceThreshold(protein_significance_threshold);
 	id.insertHit(protein_hit);
 
   tmp.getHPLC().setFlux(5);
   tmp.setComment("bla");
+  tmp.setIdentifier("lsid");
   tmp.getInstrument().setName("bla");
-  tmp.getProcessingMethod().setDeisotoping(true);
+  tmp.getDataProcessing().resize(1);
   tmp.getSample().setName("bla2");
-  tmp.getSoftware().setName("bla3");
-  tmp.getSourceFile().setNameOfFile("bla4");
+  tmp.getSourceFiles().resize(1);
   tmp.getContacts().resize(1);
 	tmp.addProteinIdentification(id);
   tmp.setMetaValue("label",String("label"));
@@ -302,10 +273,10 @@ CHECK(ExperimentalSettings& operator= (const ExperimentalSettings& source))
   TEST_EQUAL(tmp2.getHPLC().getFlux(),5);
   TEST_EQUAL(tmp2.getInstrument().getName(),"bla");
   TEST_EQUAL(tmp2.getComment(),"bla");
-  TEST_EQUAL(tmp2.getProcessingMethod().getDeisotoping(),true);
+  TEST_EQUAL(tmp2.getIdentifier(),"lsid");
+  TEST_EQUAL(tmp2.getDataProcessing().size(),1);
   TEST_EQUAL(tmp2.getSample().getName(),"bla2");
-  TEST_EQUAL(tmp2.getSoftware().getName(),"bla3");
-  TEST_EQUAL(tmp2.getSourceFile().getNameOfFile(),"bla4");
+  TEST_EQUAL(tmp2.getSourceFiles().size(),1);
   TEST_EQUAL(tmp2.getContacts().size(),1);
   TEST_EQUAL(tmp2.getProteinIdentifications().size(), 1);
   TEST_EQUAL(id == tmp2.getProteinIdentifications()[0], true);
@@ -314,25 +285,22 @@ CHECK(ExperimentalSettings& operator= (const ExperimentalSettings& source))
   tmp2 = ExperimentalSettings();
   TEST_EQUAL(tmp2.getHPLC().getFlux(),0);
   TEST_EQUAL(tmp2.getInstrument().getName(),"");
-  TEST_EQUAL(tmp2.getProcessingMethod().getDeisotoping(),false);
+  TEST_EQUAL(tmp2.getIdentifier(),"");
+  TEST_EQUAL(tmp2.getDataProcessing().size(),0);
   TEST_EQUAL(tmp2.getSample().getName(),"");
-  TEST_EQUAL(tmp2.getSoftware().getName(),"");
-  TEST_EQUAL(tmp2.getSourceFile().getNameOfFile(),"");
+  TEST_EQUAL(tmp2.getSourceFiles().size(),0);
   TEST_EQUAL(tmp2.getContacts().size(),0);
   TEST_EQUAL(tmp2.getProteinIdentifications().size(), 0);
   TEST_EQUAL(tmp2.getMetaValue("label").isEmpty(), true);
-RESULT
+END_SECTION
 
-CHECK(bool operator== (const ExperimentalSettings& rhs) const)
+START_SECTION(bool operator== (const ExperimentalSettings& rhs) const)
   ExperimentalSettings edit, empty;
   ProteinIdentification id;
-  DateTime date;
 	ProteinHit protein_hit;
 	Real protein_significance_threshold = 63.2f;
 
-	date.now();
-
-	id.setDateTime(date);
+	id.setDateTime(DateTime::now());
 	id.setSignificanceThreshold(protein_significance_threshold);
 	id.insertHit(protein_hit);
   
@@ -346,7 +314,7 @@ CHECK(bool operator== (const ExperimentalSettings& rhs) const)
   TEST_EQUAL(edit==empty,false);
   
   edit = empty;
-  edit.getProcessingMethod().setDeisotoping(true);
+  edit.getDataProcessing().resize(1);
   TEST_EQUAL(edit==empty,false);
   
   edit = empty;
@@ -354,11 +322,7 @@ CHECK(bool operator== (const ExperimentalSettings& rhs) const)
   TEST_EQUAL(edit==empty,false);
   
   edit = empty;
-  edit.getSoftware().setName("bla3");
-  TEST_EQUAL(edit==empty,false);
-  
-  edit = empty;
-  edit.getSourceFile().setNameOfFile("bla4");
+  edit.getSourceFiles().resize(1);
   TEST_EQUAL(edit==empty,false);
   
   edit = empty;
@@ -373,21 +337,22 @@ CHECK(bool operator== (const ExperimentalSettings& rhs) const)
 	edit.setComment("bla");
   TEST_EQUAL(edit==empty, false);
 
+  edit = empty;
+	edit.setIdentifier("bla");
+  TEST_EQUAL(edit==empty, false);
+
 	edit = empty;
 	edit.setMetaValue("label",String("label"));
 	TEST_EQUAL(edit==empty,false);
-RESULT
+END_SECTION
 
-CHECK(bool operator!= (const ExperimentalSettings& rhs) const)
+START_SECTION(bool operator!= (const ExperimentalSettings& rhs) const)
   ExperimentalSettings edit, empty;
   ProteinIdentification id;
-  DateTime date;
 	ProteinHit protein_hit;
 	Real protein_significance_threshold = 63.2f;
 
-	date.now();
-
-	id.setDateTime(date);
+	id.setDateTime(DateTime::now());
 	id.setSignificanceThreshold(protein_significance_threshold);
 	id.insertHit(protein_hit);
   
@@ -401,7 +366,7 @@ CHECK(bool operator!= (const ExperimentalSettings& rhs) const)
   TEST_EQUAL(edit!=empty,true);
   
   edit = empty;
-  edit.getProcessingMethod().setDeisotoping(true);
+  edit.getDataProcessing().resize(1);
   TEST_EQUAL(edit!=empty,true);
   
   edit = empty;
@@ -409,11 +374,7 @@ CHECK(bool operator!= (const ExperimentalSettings& rhs) const)
   TEST_EQUAL(edit!=empty,true);
   
   edit = empty;
-  edit.getSoftware().setName("bla3");
-  TEST_EQUAL(edit!=empty,true);
-  
-  edit = empty;
-  edit.getSourceFile().setNameOfFile("bla4");
+  edit.getSourceFiles().resize(1);
   TEST_EQUAL(edit!=empty,true);
   
   edit = empty;
@@ -427,73 +388,61 @@ CHECK(bool operator!= (const ExperimentalSettings& rhs) const)
 	edit = empty;
 	edit.setMetaValue("label",String("label"));
 	TEST_EQUAL(edit!=empty,true);
-RESULT
+END_SECTION
 
-CHECK(const std::vector<ProteinIdentification>& getProteinIdentifications() const)
+START_SECTION(const std::vector<ProteinIdentification>& getProteinIdentifications() const)
   ExperimentalSettings settings;
   ProteinIdentification id;
-  DateTime date;
 	ProteinHit protein_hit;
 	Real protein_significance_threshold = 63.2f;
 
-	date.now();
-
-	id.setDateTime(date);
+	id.setDateTime(DateTime::now());
 	id.setSignificanceThreshold(protein_significance_threshold);
 	id.insertHit(protein_hit);
 	
 	settings.addProteinIdentification(id);
 	const ProteinIdentification& test_id = settings.getProteinIdentifications()[0];
 	TEST_EQUAL(id == test_id, true)
-RESULT
+END_SECTION
 
-CHECK(std::vector<ProteinIdentification>& getProteinIdentifications())
+START_SECTION(std::vector<ProteinIdentification>& getProteinIdentifications())
   ExperimentalSettings settings;
   ProteinIdentification id;
-  DateTime date;
 	ProteinHit protein_hit;
 	Real protein_significance_threshold = 63.2f;
 
-	date.now();
-
-	id.setDateTime(date);
+	id.setDateTime(DateTime::now());
 	id.setSignificanceThreshold(protein_significance_threshold);
 	id.insertHit(protein_hit);
 	
 	settings.addProteinIdentification(id);
 	ProteinIdentification& test_id = settings.getProteinIdentifications()[0];
 	TEST_EQUAL(id == test_id, true)
-RESULT
+END_SECTION
 
-CHECK(void addProteinIdentification(ProteinIdentification& protein_identification))
+START_SECTION(void addProteinIdentification(ProteinIdentification& protein_identification))
   ExperimentalSettings settings;
   ProteinIdentification id;
-  DateTime date;
 	ProteinHit protein_hit;
 	Real protein_significance_threshold = 63.2f;
 
-	date.now();
-
-	id.setDateTime(date);
+	id.setDateTime(DateTime::now());
 	id.setSignificanceThreshold(protein_significance_threshold);
 	id.insertHit(protein_hit);
 	
 	settings.addProteinIdentification(id);
 	ProteinIdentification& test_id = settings.getProteinIdentifications()[0];
 	TEST_EQUAL(id == test_id, true)
-RESULT
+END_SECTION
 
-CHECK(void setProteinIdentifications(const std::vector<ProteinIdentification>& protein_identifications))
+START_SECTION(void setProteinIdentifications(const std::vector<ProteinIdentification>& protein_identifications))
   ExperimentalSettings settings;
   ProteinIdentification id;
-  DateTime date;
 	ProteinHit protein_hit;
 	Real protein_significance_threshold = 63.2f;
 	vector<ProteinIdentification> ids;
 
-	date.now();
-
-	id.setDateTime(date);
+	id.setDateTime(DateTime::now());
 	id.setSignificanceThreshold(protein_significance_threshold);
 	id.insertHit(protein_hit);
 	ids.push_back(id);
@@ -501,7 +450,7 @@ CHECK(void setProteinIdentifications(const std::vector<ProteinIdentification>& p
 	ids.push_back(id);
 	settings.setProteinIdentifications(ids);
 	TEST_EQUAL(ids == settings.getProteinIdentifications(), true)
-RESULT
+END_SECTION
 
 
 /////////////////////////////////////////////////////////////

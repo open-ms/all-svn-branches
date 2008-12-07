@@ -21,19 +21,14 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Nico Pfeifer  $
-# --------------------------------------------------------------------------
-#
 
 DIRECTORY=ANALYSIS/SVM
 
 
 include ../../config_defs.mak
 
-ifeq ($(LIBSVM_SUPPORT),true)
-	CPP_SOURCES=\
- 	 SVMWrapper.C
-endif
+CPP_SOURCES=\
+	SVMWrapper.C
 
 include ../../common.mak
 -include .Dependencies

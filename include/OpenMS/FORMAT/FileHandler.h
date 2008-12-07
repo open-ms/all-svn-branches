@@ -34,7 +34,8 @@
 #include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/MzDataFile.h>
-#include <OpenMS/FORMAT/MascotInfile.h>
+#include <OpenMS/FORMAT/MascotInfile2.h>
+#include <OpenMS/FORMAT/MS2File.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 
 #ifdef ANDIMS_DEF
@@ -77,6 +78,7 @@ namespace OpenMS
 			PARAM,          		///< %OpenMS parameters file (.ini)                  
 			TRANSFORMATIONXML,  ///< Tranformation description file (.trafoXML)
 			MZML,								///< MzML file (.mzML)
+			MS2,								///< MS2 file (.ms2)
 			SIZE_OF_TYPE    		///< No file type. Simply stores the number of types
 		};
 			
@@ -205,7 +207,14 @@ namespace OpenMS
 #endif
 				case MGF:
 					{
-						MascotInfile f;
+						MascotInfile2 f;
+						f.setLogType(log);
+						f.load(filename, exp);
+						return true;
+					}
+				case MS2:
+					{
+						MS2File f;
 						f.setLogType(log);
 						f.load(filename, exp);
 						return true;

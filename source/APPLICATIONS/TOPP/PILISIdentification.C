@@ -27,7 +27,6 @@
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/ANALYSIS/ID/PILISIdentification.h>
-#include <OpenMS/ANALYSIS/ID/PILISSequenceDB.h>
 #include <OpenMS/ANALYSIS/ID/PILISModel.h>
 #include <OpenMS/ANALYSIS/ID/PILISScoring.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
@@ -40,7 +39,7 @@ using namespace OpenMS;
 using namespace std;
 
 /**
-	@page PILISIdentification PILISIdentification
+	@page TOPP_PILISIdentification PILISIdentification
 	
 	@brief Performs an ProteinIdentification with PILIS
 
@@ -52,6 +51,9 @@ using namespace std;
 	used,given in the peptide_db_file parameter. This should contain a 
 	peptide in a separate line, either only the sequence or additionally 
 	with weight and charge in the second and third column.
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_PILISIdentification.cli
 */
 
 
@@ -166,8 +168,6 @@ class TOPPPILISIdentification
 			writeDebug_("Reading sequence db", 2);
 
 			// create sequence db 
-			//PILISSequenceDB* db = new PILISSequenceDB();
-			//db->addPeptidesFromFile(getStringOption_("peptide_db_file"));
 			SuffixArrayPeptideFinder*  sapf = new SuffixArrayPeptideFinder(getStringOption_("peptide_db_file"), "trypticCompressed");
 			sapf->setTolerance(getDoubleOption_("precursor_mass_tolerance"));
 			sapf->setNumberOfModifications(0);
@@ -206,7 +206,6 @@ class TOPPPILISIdentification
 			// create ProteinIdentification and set the options
 			PILISIdentification PILIS_id;
 			
-			//PILIS_id.setSequenceDB(db);
 			PILIS_id.setModel(model);
 
 			Param id_param(PILIS_id.getParameters());

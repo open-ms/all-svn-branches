@@ -30,17 +30,11 @@
 #include <OpenMS/CONCEPT/Exception.h>
 
 #include <OpenMS/FORMAT/HANDLERS/XMLHandler.h>
-#include <OpenMS/FORMAT/HANDLERS/MzDataExpSettHandler.h>
 #include <OpenMS/FORMAT/PeakFileOptions.h>
 #include <OpenMS/FORMAT/Base64.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
-#include <OpenMS/KERNEL/DPeak.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakShape.h>
-
-#include <xercesc/sax2/SAX2XMLReader.hpp>
-#include <xercesc/framework/MemBufInputSource.hpp>
-#include <xercesc/sax2/XMLReaderFactory.hpp>
 
 #include <sstream>
 
@@ -48,7 +42,6 @@ namespace OpenMS
 {
 	namespace Internal
 	{
-
 		/**
 			@brief XML handler for MzDataFile
 			
@@ -69,22 +62,49 @@ namespace OpenMS
 					cexp_(0),
 					peak_count_(0),
 					meta_id_descs_(),
-					exp_sett_(),
 					decoder_(),
-					spec_write_counter_(1),
-					in_description_(false),
 					skip_spectrum_(false),
 					logger_(logger)
 	  	{
-	  		cv_terms_.resize(4);
+				cv_terms_.resize(19);
+				// SampleState
+				String(";Solid;Liquid;Gas;Solution;Emulsion;Suspension").split(';',cv_terms_[0]);
+				// IonizationMode
+				String(";PositiveIonMode;NegativeIonMode").split(';',cv_terms_[1]);
+				// ResolutionMethod
+				String(";FWHM;TenPercentValley;Baseline").split(';',cv_terms_[2]);
+				// ResolutionType
+				String(";Constant;Proportional").split(';',cv_terms_[3]);
+				// ScanFunction
+				// is no longer used cv_terms_[4] is empty now
+				// ScanDirection
+				String(";Up;Down").split(';',cv_terms_[5]);
+				// ScanLaw
+				String(";Exponential;Linear;Quadratic").split(';',cv_terms_[6]);
+				// PeakProcessing
+				String(";CentroidMassSpectrum;ContinuumMassSpectrum").split(';',cv_terms_[7]);
+				// ReflectronState
+				String(";On;Off;None").split(';',cv_terms_[8]);
+				// AcquisitionMode
+				String(";PulseCounting;ADC;TDC;TransientRecorder").split(';',cv_terms_[9]);
+				// IonizationType
+				String(";ESI;EI;CI;FAB;TSP;LD;FD;FI;PD;SI;TI;API;ISI;CID;CAD;HN;APCI;APPI;ICP").split(';',cv_terms_[10]);
+				// InletType
+				String(";Direct;Batch;Chromatography;ParticleBeam;MembraneSeparator;OpenSplit;JetSeparator;Septum;Reservoir;MovingBelt;MovingWire;FlowInjectionAnalysis;ElectrosprayInlet;ThermosprayInlet;Infusion;ContinuousFlowFastAtomBombardment;InductivelyCoupledPlasma").split(';',cv_terms_[11]);
+				// TandemScanningMethod
+				String(";ProductIonScan;PrecursorIonScan;ConstantNeutralLoss;SingleReactionMonitoring;MultipleReactionMonitoring;SingleIonMonitoring;MultipleIonMonitoring").split(';',cv_terms_[12]);
+				// DetectorType
+				String(";EM;Photomultiplier;FocalPlaneArray;FaradayCup;ConversionDynodeElectronMultiplier;ConversionDynodePhotomultiplier;Multi-Collector;ChannelElectronMultiplier").split(';',cv_terms_[13]);
+				// AnalyzerType
+				String(";Quadrupole;PaulIonTrap;RadialEjectionLinearIonTrap;AxialEjectionLinearIonTrap;TOF;Sector;FourierTransform;IonStorage").split(';',cv_terms_[14]);
 				// EnergyUnits
-				String(";eV;Percent").split(';',cv_terms_[0]);
+				String(";eV;Percent").split(';',cv_terms_[15]);
 				// ScanMode
-				String(";SelectedIonDetection;MassScan").split(';',cv_terms_[1]);
+				String(";Zoom;MassScan;SelectedIonDetection;SelectedReactionMonitoring;ConsecutiveReactionMonitoring;ConstantNeutralGainScan;ConstantNeutralLossScan;ProductIonScan;PrecursorIonScan;EnhancedResolutionScan").split(';',cv_terms_[16]);
 				// Polarity
-				String(";Positive;Negative").split(';',cv_terms_[2]);
+				String(";Positive;Negative").split(';',cv_terms_[17]);
 				// ActivationMethod
-				String(";CID;PSD;PD;SID").split(';',cv_terms_[3]);
+				String(";CID;PSD;PD;SID").split(';',cv_terms_[18]);
 			}
 
       /// Constructor for a read-only handler
@@ -94,22 +114,49 @@ namespace OpenMS
 					cexp_(&exp),
 					peak_count_(0),
 					meta_id_descs_(),
-					exp_sett_(),
 					decoder_(),
-					spec_write_counter_(1),
-					in_description_(false),
 					skip_spectrum_(false),
 					logger_(logger)
   		{
-	  		cv_terms_.resize(4);
+				cv_terms_.resize(19);
+				// SampleState
+				String(";Solid;Liquid;Gas;Solution;Emulsion;Suspension").split(';',cv_terms_[0]);
+				// IonizationMode
+				String(";PositiveIonMode;NegativeIonMode").split(';',cv_terms_[1]);
+				// ResolutionMethod
+				String(";FWHM;TenPercentValley;Baseline").split(';',cv_terms_[2]);
+				// ResolutionType
+				String(";Constant;Proportional").split(';',cv_terms_[3]);
+				// ScanFunction
+				// is no longer used cv_terms_[4] is empty now
+				// ScanDirection
+				String(";Up;Down").split(';',cv_terms_[5]);
+				// ScanLaw
+				String(";Exponential;Linear;Quadratic").split(';',cv_terms_[6]);
+				// PeakProcessing
+				String(";CentroidMassSpectrum;ContinuumMassSpectrum").split(';',cv_terms_[7]);
+				// ReflectronState
+				String(";On;Off;None").split(';',cv_terms_[8]);
+				// AcquisitionMode
+				String(";PulseCounting;ADC;TDC;TransientRecorder").split(';',cv_terms_[9]);
+				// IonizationType
+				String(";ESI;EI;CI;FAB;TSP;LD;FD;FI;PD;SI;TI;API;ISI;CID;CAD;HN;APCI;APPI;ICP").split(';',cv_terms_[10]);
+				// InletType
+				String(";Direct;Batch;Chromatography;ParticleBeam;MembraneSeparator;OpenSplit;JetSeparator;Septum;Reservoir;MovingBelt;MovingWire;FlowInjectionAnalysis;ElectrosprayInlet;ThermosprayInlet;Infusion;ContinuousFlowFastAtomBombardment;InductivelyCoupledPlasma").split(';',cv_terms_[11]);
+				// TandemScanningMethod
+				String(";ProductIonScan;PrecursorIonScan;ConstantNeutralLoss;SingleReactionMonitoring;MultipleReactionMonitoring;SingleIonMonitoring;MultipleIonMonitoring").split(';',cv_terms_[12]);
+				// DetectorType
+				String(";EM;Photomultiplier;FocalPlaneArray;FaradayCup;ConversionDynodeElectronMultiplier;ConversionDynodePhotomultiplier;Multi-Collector;ChannelElectronMultiplier").split(';',cv_terms_[13]);
+				// AnalyzerType
+				String(";Quadrupole;PaulIonTrap;RadialEjectionLinearIonTrap;AxialEjectionLinearIonTrap;TOF;Sector;FourierTransform;IonStorage").split(';',cv_terms_[14]);
 				// EnergyUnits
-				String(";eV;Percent").split(';',cv_terms_[0]);
+				String(";eV;Percent").split(';',cv_terms_[15]);
 				// ScanMode
-				String(";SelectedIonDetection;MassScan").split(';',cv_terms_[1]);
+				String(";Zoom;MassScan;SelectedIonDetection;SelectedReactionMonitoring;ConsecutiveReactionMonitoring;ConstantNeutralGainScan;ConstantNeutralLossScan;ProductIonScan;PrecursorIonScan;EnhancedResolutionScan").split(';',cv_terms_[16]);
 				// Polarity
-				String(";Positive;Negative").split(';',cv_terms_[2]);
+				String(";Positive;Negative").split(';',cv_terms_[17]);
 				// ActivationMethod
-				String(";CID;PSD;PD;SID").split(';',cv_terms_[3]);
+				String(";CID;PSD;PD;SID").split(';',cv_terms_[18]);
 			}
 
       /// Destructor
@@ -168,20 +215,12 @@ namespace OpenMS
 			std::vector<std::vector<DoubleReal> > decoded_double_list_;
 			std::vector<String> precisions_;
 			std::vector<String> endians_;
-			/// stream to collect experimental settings
-			std::stringstream exp_sett_;
 			//@}
 
 			/// Decoder/Encoder for Base64-data in MzData
 			Base64 decoder_;
 
-			/// spectrum counter (needed because spectra without peaks are not written)
-			UInt spec_write_counter_;
-			
-			/// Flag that indicates that of the parser is in a description
-			bool in_description_;
-			
-			/// Flag that indicates wether this spectrum should be skipped (due to options)
+			/// Flag that indicates whether this spectrum should be skipped (due to options)
 			bool skip_spectrum_;
 			
 			/// Progress logger
@@ -190,21 +229,104 @@ namespace OpenMS
 			/// fills the current spectrum with peaks and meta data
 			void fillData_();
 
+			///@name cvParam and userParam handling methods (for mzData and FeatureXML)
+			//@{
+			/**  
+				@brief write cvParam containing strings to stream
+				
+				@p value string value
+				@p acc accession number defined by ontology
+				@p name term defined by ontology
+				@p indent number of tabs used in front of tag
+				
+				Example:
+				&lt;cvParam cvLabel="psi" accession="PSI:@p acc" name="@p name" value="@p value"/&gt;
+			*/
+			inline void writeCVS_(std::ostream& os, DoubleReal value, const String& acc, const String& name, UInt indent=4) const
+			{
+				if (value!=0.0)
+				{
+					os << String(indent,'\t') << "<cvParam cvLabel=\"psi\" accession=\"PSI:" << acc << "\" name=\"" << name << "\" value=\"" << std::setprecision(writtenDigits<DoubleReal>()) << value << "\"/>\n";
+				}
+			}
+			/**  
+				@brief write cvParam containing strings to stream
+				
+				@p value string value
+				@p acc accession number defined by ontology
+				@p name term defined by ontology
+				@p indent number of tabs used in front of tag
+				
+				Example:
+				&lt;cvParam cvLabel="psi" accession="PSI:@p acc" name="@p name" value="@p value"/&gt;
+			*/
+			inline void writeCVS_(std::ostream& os, const String& value, const String& acc, const String& name, UInt indent=4) const
+			{
+				if (value!="")
+				{
+					os << String(indent,'\t') << "<cvParam cvLabel=\"psi\" accession=\"PSI:" << acc << "\" name=\"" << name << "\" value=\"" << value << "\"/>\n";
+				}
+			}
+
+			/**  
+				@brief write cvParam element to stream
+
+				@p os Output stream
+				@p value enumeration value	
+				@p map index if the terms in cv_terms_
+				@p acc accession number defined by ontology
+				@p name term defined by ontology
+				@p indent number of tabs used in front of tag
+				
+				Example:
+				&lt;cvParam cvLabel="psi" accession="PSI:@p acc" name="@p name" value=""/&gt;
+			*/
+			inline void writeCVS_(std::ostream& os, UInt value, UInt map, const String& acc, const String& name, UInt indent=4)
+			{
+				//abort when receiving a wrong map index
+				if (map>=cv_terms_.size())
+				{
+					warning(STORE, String("Cannot find map '") + map + "' needed to write CV term '" + name + "' with accession '" + acc + "'.");
+					return;
+				}
+				//abort when receiving a wrong term index
+				if (value>=cv_terms_[map].size())
+				{
+					warning(STORE, String("Cannot find value '") + value + "' needed to write CV term '" + name + "' with accession '" + acc + "'.");
+					return;
+				}
+				writeCVS_(os, cv_terms_[map][value], acc, name, indent);
+			}
+			
+			///Writing the MetaInfo as UserParam to the file
+			inline void writeUserParam_(std::ostream& os, const MetaInfoInterface& meta, UInt indent=4)
+			{
+				std::vector<String> keys;
+				meta.getKeys(keys);
+				for (std::vector<String>::const_iterator it = keys.begin(); it!=keys.end(); ++it)
+				{
+					if ( (*it)[0] != '#')  // internally used meta info start with '#'
+					{
+						os << String(indent,'\t') << "<userParam name=\"" << *it << "\" value=\"" << meta.getMetaValue(*it) << "\"/>\n";
+					}
+				}
+			}
 			/** 
 				@brief read attributes of MzData's cvParamType
-	
+
 				Example:
 				&lt;cvParam cvLabel="psi" accession="PSI:1000001" name="@p name" value="@p value"/&gt;
 				@p name and sometimes @p value are defined in the MzData ontology.
 			*/
 			void cvParam_(const String& name, const String& value);
+			//@}
 
 			/**
 				@brief write binary data to stream (first one)
 			
 				The @p name and @p id are only used if the @p tag is @em supDataArrayBinary or @em supDataArray.
 			*/
-			inline void writeBinary_(std::ostream& os, UInt size, const String& tag, const String& name="", int id=-1)
+			inline void writeBinary_(std::ostream& os, UInt size, const String& tag, const String& name="", Int id=-1)
 			{
 				os 	<< "\t\t\t<" << tag;
 				if (tag=="supDataArrayBinary" || tag=="supDataArray")
@@ -228,8 +350,6 @@ namespace OpenMS
 			
 		};
 
-
-
 		//--------------------------------------------------------------------------------
 
 		template <typename MapType>
@@ -240,13 +360,6 @@ namespace OpenMS
 			
 			char* transcoded_chars = sm_.convert(chars);
 			
-			// collect Experimental Settings
-			if (in_description_)
-			{
-				exp_sett_ << transcoded_chars;
-				return;
-			}
-			
 			//current tag
 			const String& current_tag = open_tags_.back();
 			
@@ -254,7 +367,40 @@ namespace OpenMS
 			String parent_tag;
 			if (open_tags_.size()>1) parent_tag = *(open_tags_.end()-2);
 			
-			if (current_tag == "comments" && parent_tag=="spectrumDesc")
+			
+			if (current_tag=="sampleName")
+			{
+				exp_->getSample().setName( sm_.convert(chars) );
+			}
+			else if (current_tag=="instrumentName")
+			{
+				exp_->getInstrument().setName(sm_.convert(chars));
+			}
+			else if (current_tag=="version")
+			{
+				exp_->getDataProcessing().back().getSoftware().setVersion( sm_.convert(chars) );
+			}
+			else if (current_tag=="institution")
+			{
+				exp_->getContacts().back().setInstitution( sm_.convert(chars) );
+			}
+			else if (current_tag=="contactInfo")
+			{
+				exp_->getContacts().back().setContactInfo( sm_.convert(chars) );
+			}
+			else if (current_tag=="name" && parent_tag=="contact")
+			{
+				exp_->getContacts().back().setName(sm_.convert(chars));
+			}
+			else if (current_tag=="name" && parent_tag=="software")
+			{
+				exp_->getDataProcessing().back().getSoftware().setName( sm_.convert(chars) );
+			}
+			else if (current_tag=="comments" && parent_tag=="software")
+			{
+				exp_->getDataProcessing().back().setMetaValue("#comment", String(sm_.convert(chars)) );
+			}
+			else if (current_tag == "comments" && parent_tag=="spectrumDesc")
 			{
 				spec_.setComment( transcoded_chars );
 			}
@@ -267,13 +413,25 @@ namespace OpenMS
 			{
 				spec_.getMetaDataArrays().back().setName(transcoded_chars);
 			}
+			else if (current_tag=="nameOfFile" && parent_tag == "sourceFile")
+			{
+				exp_->getSourceFiles().back().setNameOfFile( sm_.convert(chars) );
+			}
 			else if (current_tag == "nameOfFile" && parent_tag == "supSourceFile")
 			{
 				meta_id_descs_.back().second.getSourceFile().setNameOfFile( transcoded_chars );
 			}
+			else if (current_tag=="pathToFile" && parent_tag == "sourceFile")
+			{
+				exp_->getSourceFiles().back().setPathToFile( sm_.convert(chars) );
+			}
 			else if (current_tag == "pathToFile" && parent_tag == "supSourceFile")
 			{
 				meta_id_descs_.back().second.getSourceFile().setPathToFile( transcoded_chars );
+			}
+			else if (current_tag=="fileType" && parent_tag == "sourceFile")
+			{
+				exp_->getSourceFiles().back().setFileType( sm_.convert(chars) );
 			}
 			else if (current_tag == "fileType" && parent_tag == "supSourceFile")
 			{
@@ -285,7 +443,7 @@ namespace OpenMS
 				trimmed_transcoded_chars.trim();
 				if (trimmed_transcoded_chars!="")
 				{
-					warning(String("Unhandled character content in tag '") + current_tag + "': " + trimmed_transcoded_chars);
+					warning(LOAD, String("Unhandled character content in tag '") + current_tag + "': " + trimmed_transcoded_chars);
 				}
 			}
 		}
@@ -309,7 +467,8 @@ namespace OpenMS
 			static const XMLCh* s_endian = xercesc::XMLString::transcode("endian");
 			static const XMLCh* s_length = xercesc::XMLString::transcode("length");
 			static const XMLCh* s_comment = xercesc::XMLString::transcode("comment");
-			
+			static const XMLCh* s_accessionnumber = xercesc::XMLString::transcode("accessionNumber");
+
 			String tag = sm_.convert(qname);
 			open_tags_.push_back(tag);
 			//std::cout << "Start: '" << tag << "'" << std::endl;
@@ -318,26 +477,38 @@ namespace OpenMS
 			String parent_tag;
 			if (open_tags_.size()>1) parent_tag = *(open_tags_.end()-2);
 							
-			//do nothing as until a new spectrum is reached
+			//do nothing until a new spectrum is reached
 			if (tag!="spectrum" && skip_spectrum_) return;
-			
-			// collect Experimental Settings
-			if (in_description_)
+
+
+			// Do something depending on the tag
+			if (tag=="sourceFile")
 			{
-				exp_sett_ << '<' << tag;
-				UInt n=attributes.getLength();
-				for (UInt i=0; i<n; ++i)
-				{
-					exp_sett_ << ' ' << sm_.convert(attributes.getQName(i)) << "=\""	<< sm_.convert(attributes.getValue(i)) << '\"';
-				}
-				exp_sett_ << '>';
-				return;
+				exp_->getSourceFiles().push_back(SourceFile());
 			}
-			
-			if (tag=="description")
+			if (tag=="contact")
 			{
-				exp_sett_ << "<description>";
-				in_description_ = true; 
+				exp_->getContacts().resize(exp_->getContacts().size()+1);
+			}
+			else if (tag=="source")
+			{
+				exp_->getInstrument().getIonSources().resize(1);
+			}
+			else if (tag=="detector")
+			{
+				exp_->getInstrument().getIonDetectors().resize(1);
+			}
+			else if (tag=="analyzer")
+			{
+				exp_->getInstrument().getMassAnalyzers().resize(exp_->getInstrument().getMassAnalyzers().size()+1);
+			}
+			else if (tag=="software")
+			{
+				exp_->getDataProcessing().resize(1);
+				if (attributes.getIndex(sm_.convert("completionTime"))!=-1)
+				{
+					exp_->getDataProcessing().back().setCompletionTime( asDateTime_(sm_.convert(attributes.getValue(sm_.convert("completionTime")))) );
+				}
 			}
 			else if (tag=="cvParam")
 			{
@@ -378,9 +549,33 @@ namespace OpenMS
 				{
 					meta_id_descs_.back().second.setMetaValue(name, value);
 				}
+				else if (parent_tag=="detector")
+				{
+					exp_->getInstrument().getIonDetectors().back().setMetaValue(name,value);
+				}
+				else if (parent_tag=="source")
+				{
+					exp_->getInstrument().getIonSources().back().setMetaValue(name,value);
+				}
+				else if (parent_tag=="sampleDescription")
+				{
+					exp_->getSample().setMetaValue(name,value);
+				}
+				else if (parent_tag=="analyzer")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setMetaValue(name,value);
+				}
+				else if (parent_tag=="additional")
+				{
+					exp_->getInstrument().setMetaValue(name,value);
+				}
+				else if (parent_tag=="processingMethod")
+				{
+					exp_->getDataProcessing().back().setMetaValue(name,value);			
+				}
 				else
 				{
-					warning("Invalid userParam: name=\"" + name + ", value=\"" + value + "\"");
+					warning(LOAD, "Invalid userParam: name=\"" + name + ", value=\"" + value + "\"");
 				}
 			}
 			else if (tag=="supDataArrayBinary")
@@ -404,6 +599,7 @@ namespace OpenMS
 			else if (tag=="spectrum")
 			{
 				spec_ = SpectrumType();
+				spec_.setNativeID(String("spectrum=") + attributeAsString_(attributes, s_id));
 			}
 			else if (tag=="spectrumList")
 			{
@@ -413,6 +609,11 @@ namespace OpenMS
 		  	exp_->reserve(count);
 		  	logger_.startProgress(0,count,"loading mzData file");
 		  	//std::cout << Date::now() << " done" << std::endl;
+			}
+			else if (tag=="mzData")
+			{
+				//handle file id
+				exp_->setIdentifier(attributeAsString_(attributes, s_accessionnumber));
 			}
 			else if (tag=="acqSpecification")
 			{
@@ -428,7 +629,7 @@ namespace OpenMS
 				else
 				{
 					spec_.setType(SpectrumSettings::UNKNOWN);
-					warning(String("Invalid MzData/SpectrumList/Spectrum/SpectrumDescription/SpectrumSettings/acqSpecification/SpectrumType '") + tmp_type + "'.");
+					warning(LOAD, String("Invalid spectrum type '") + tmp_type + "'.");
 				}
 				
 				spec_.getAcquisitionInfo().setMethodOfCombination(attributeAsString_(attributes, s_methodofcombination));
@@ -441,11 +642,13 @@ namespace OpenMS
 			else if (tag=="spectrumInstrument" || tag=="acqInstrument")
 			{
 				spec_.setMSLevel(attributeAsInt_(attributes, s_mslevel));
-				DoubleReal start=0.0, stop=0.0;
-				optionalAttributeAsDouble_(start, attributes, s_mzrangestart);
-				optionalAttributeAsDouble_(stop, attributes, s_mzrangestop);
-				spec_.getInstrumentSettings().setMzRangeStart(start);
-				spec_.getInstrumentSettings().setMzRangeStop(stop);
+				InstrumentSettings::ScanWindow window;
+				optionalAttributeAsDouble_(window.begin, attributes, s_mzrangestart);
+				optionalAttributeAsDouble_(window.end, attributes, s_mzrangestop);
+				if (window.begin!=0.0 || window.end!=0.0)
+				{
+					spec_.getInstrumentSettings().getScanWindows().push_back(window);
+				}
 				
 				if (options_.hasMSLevels() && !options_.containsMSLevel(spec_.getMSLevel()))
 				{
@@ -466,7 +669,7 @@ namespace OpenMS
 				if (parent_tag=="mzArrayBinary")
 				{
 					peak_count_ = attributeAsInt_(attributes, s_length);
-					spec_.getContainer().reserve(peak_count_);
+					spec_.reserve(peak_count_);
 				}			
 			}
 			else if (tag=="mzArrayBinary")
@@ -491,40 +694,13 @@ namespace OpenMS
 		{
 			static UInt scan_count = 0;
 			
-			static const XMLCh* s_description = xercesc::XMLString::transcode("description");
 			static const XMLCh* s_spectrum = xercesc::XMLString::transcode("spectrum");
 			static const XMLCh* s_mzdata = xercesc::XMLString::transcode("mzData");
 			
 			open_tags_.pop_back();			
 			//std::cout << "End: '" << sm_.convert(qname) << "'" << std::endl;
 			
-			if (in_description_)	// collect Experimental Settings
-			{
-				exp_sett_ << "</" << sm_.convert(qname) << ">\n";
-				if (!equal_(qname,s_description)) return;
-			}
-			
-			if(equal_(qname,s_description))
-			{
-				// initialize parser
-				xercesc::XMLPlatformUtils::Initialize();
-				xercesc::SAX2XMLReader* parser = xercesc::XMLReaderFactory::createXMLReader();
-				parser->setFeature(xercesc::XMLUni::fgSAX2CoreNameSpaces,false);
-				parser->setFeature(xercesc::XMLUni::fgSAX2CoreNameSpacePrefixes,false);
-				
-				MzDataExpSettHandler handler(exp_->getExperimentalSettings(),file_);
-				handler.resetErrors();
-				parser->setContentHandler(&handler);
-				parser->setErrorHandler(&handler);
-				
-				String tmp(exp_sett_.str().c_str());
-				xercesc::MemBufInputSource source((const XMLByte*)(tmp.c_str()), tmp.size(), "dummy");
-				parser->parse(source);
-				delete(parser);
-				
-				in_description_ = false;
-			}
-			else if(equal_(qname,s_spectrum))
+			if(equal_(qname,s_spectrum))
 			{
 				if (!skip_spectrum_)
 				{
@@ -547,110 +723,6 @@ namespace OpenMS
 			}
 
 			sm_.clear();
-		}
-
-		template <typename MapType>
-		void MzDataHandler<MapType>::cvParam_(const String& accession, const String& value)
-		{
-			String error = "";
-
-			//determine the parent tag
-			String parent_tag;
-			if (open_tags_.size()>1) parent_tag = *(open_tags_.end()-2);
-			
-			if(parent_tag=="spectrumInstrument")
-			{
-				if (accession=="PSI:1000036") //Scan Mode
-				{
-					spec_.getInstrumentSettings().setScanMode((InstrumentSettings::ScanMode)cvStringToEnum_(1, value,"scan mode"));
-				}
-				else if (accession=="PSI:1000038") //Time in minutes
-				{
-					spec_.setRT(asFloat_(value)*60); //Minutes to seconds
-					if (options_.hasRTRange() && !options_.getRTRange().encloses(DPosition<1>(spec_.getRT())))
-					{
-						skip_spectrum_=true;
-					}
-				}
-				else if (accession=="PSI:1000039") //Time in seconds
-				{
-					spec_.setRT(asFloat_(value));
-					if (options_.hasRTRange() && !options_.getRTRange().encloses(DPosition<1>(spec_.getRT())))
-					{
-						skip_spectrum_=true;
-					}
-				}
-				else if (accession=="PSI:1000037") //Polarity
-				{
-					spec_.getInstrumentSettings().setPolarity((IonSource::Polarity)cvStringToEnum_(2, value,"polarity") );				
-				}
-				else 
-				{
-			  	error = "SpectrumDescription.SpectrumSettings.SpectrumInstrument";
-				}
-			}
-			else if(parent_tag=="ionSelection")
-			{
-				if (accession=="PSI:1000040") //m/z
-				{
-					spec_.getPrecursorPeak().getPosition()[0] = asFloat_(value);			
-				}
-				else if (accession=="PSI:1000041") //Charge
-				{
-					spec_.getPrecursorPeak().setCharge(asInt_(value));		
-				}
-				else if (accession=="PSI:1000042") //Intensity
-				{
-					spec_.getPrecursorPeak().setIntensity(asFloat_(value));		
-				}
-				else if (accession=="PSI:1000043") //Intensity unit (not really handled)
-				{
-					spec_.getPrecursorPeak().setMetaValue("#IntensityUnits", value);
-				}
-				else
-				{
-					error = "PrecursorList.Precursor.IonSelection.UserParam";
-				}
-			}
-			else if (parent_tag=="activation") 
-			{
-				if (accession=="PSI:1000044") //Method
-				{
-					spec_.getPrecursor().setActivationMethod((Precursor::ActivationMethod)cvStringToEnum_(3, value,"activation method"));
-				}
-				else if (accession=="PSI:1000045") //Energy
-				{
-					spec_.getPrecursor().setActivationEnergy( asFloat_(value) );
-				}
-				else if (accession=="PSI:1000046") //Energy unit
-				{
-					spec_.getPrecursor().setActivationEnergyUnit((Precursor::EnergyUnits)cvStringToEnum_(0, value, "energy unit"));
-				}
-				else 
-				{
-					error = "PrecursorList.Precursor.Activation.UserParam";
-				}
-			}
-			else if (parent_tag=="supDataDesc") 
-			{
-				//no terms defined in ontology
-				error = "supDataDesc.UserParam";
-			}
-			else if (parent_tag=="acquisition")
-			{
-				 //no terms defined in ontology
-				 error = "spectrumDesc.spectrumSettings.acquisitionSpecification.acquisition.UserParam";
-			}
-			else
-			{
-				warning(String("Unexpected cvParam: accession=\"") + accession + ", value=\"" + value + "\" in tag " + parent_tag);
-			}
-
-			if (error != "")
-			{
-				warning(String("Invalid cvParam: accession=\"") + accession + ", value=\"" + value + "\" in " + error);
-			}
-			//std::cout << "End of MzDataHander::cvParam_" << std::endl;
 		}
 
 		template <typename MapType>
@@ -705,7 +777,7 @@ namespace OpenMS
 				}
 			}
 
-			// this works only if MapType::PeakType is at least DPeak
+			// this works only if MapType::PeakType is a Peak1D or derived from it
 			{
 				//store what precision is used for intensity and m/z
 				bool mz_precision_64 = true;
@@ -753,24 +825,249 @@ namespace OpenMS
 			logger_.startProgress(0,cexp_->size(),"storing mzData file");
 			
 			os << "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
-				 << "<mzData version=\"1.05\" accessionNumber=\"\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"http://psidev.sourceforge.net/ms/xml/mzdata/mzdata.xsd\">\n";
+				 << "<mzData version=\"1.05\" accessionNumber=\"" << cexp_->getIdentifier() << "\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"http://psidev.sourceforge.net/ms/xml/mzdata/mzdata.xsd\">\n";
+			
+			//---------------------------------------------------------------------------------------------------
+			//DESCRIPTION
+			const Sample& sm = cexp_->getSample();
+			os << "\t<description>\n"
+				 << "\t\t<admin>\n"
+				 << "\t\t\t<sampleName>"
+				 << sm.getName()
+				 << "</sampleName>\n";
 
-			// delegate control to ExperimentalSettings handler
-			Internal::MzDataExpSettHandler handler( cexp_->getExperimentalSettings(),"");
-			handler.writeTo(os);
+			if( sm.getNumber()!="" || sm.getState() || sm.getMass() || sm.getVolume() || sm.getConcentration()	|| !sm.isMetaEmpty())
+			{
+				os << "\t\t\t<sampleDescription>\n";
+				writeCVS_(os, sm.getNumber(), "1000001", "SampleNumber");
+				writeCVS_(os, sm.getState(), 0, "1000003", "SampleState");
+				writeCVS_(os, sm.getMass(), "1000004", "SampleMass");
+				writeCVS_(os, sm.getVolume(), "1000005", "SampleVolume");
+				writeCVS_(os, sm.getConcentration(), "1000006", "SampleConcentration");
+				writeUserParam_(os, cexp_->getSample());
+				os << "\t\t\t</sampleDescription>\n";
+			}
 
+			if (cexp_->getSourceFiles().size()>=1)
+			{
+				os << "\t\t\t<sourceFile>\n"
+					 << "\t\t\t\t<nameOfFile>" << cexp_->getSourceFiles()[0].getNameOfFile() << "</nameOfFile>\n"
+					 << "\t\t\t\t<pathToFile>" << cexp_->getSourceFiles()[0].getPathToFile() << "</pathToFile>\n";
+				if (cexp_->getSourceFiles()[0].getFileType()!="")
+					os << "\t\t\t\t<fileType>" << cexp_->getSourceFiles()[0].getFileType() << "</fileType>\n";
+				os << "\t\t\t</sourceFile>\n";
+			}
+			if (cexp_->getSourceFiles().size()>1)
+			{
+				warning(STORE, "The MzData format can store only one source file. Only the first one is stored!");
+			}
+
+			for (UInt i=0; i < cexp_->getContacts().size(); ++i)
+			{
+				os << "\t\t\t<contact>\n"
+					 << "\t\t\t\t<name>" << cexp_->getContacts()[i].getFirstName() << " " << cexp_->getContacts()[i].getLastName() << "</name>\n"
+					 << "\t\t\t\t<institution>" << cexp_->getContacts()[i].getInstitution() << "</institution>\n";
+				if (cexp_->getContacts()[i].getContactInfo()!="")
+					os << "\t\t\t\t<contactInfo>" << cexp_->getContacts()[i].getContactInfo() << "</contactInfo>\n";
+				os << "\t\t\t</contact>\n";
+			}
+			//no contacts given => add empty entry as there must be a contact entry
+			if (cexp_->getContacts().size()==0)
+			{
+				os << "\t\t\t<contact>\n"
+					 << "\t\t\t\t<name></name>\n"
+					 << "\t\t\t\t<institution></institution>\n";
+				os << "\t\t\t</contact>\n";
+			}
+			
+			os << "\t\t</admin>\n";
+			const Instrument& inst = cexp_->getInstrument();
+			os << "\t\t<instrument>\n"
+				 << "\t\t\t<instrumentName>" << inst.getName() << "</instrumentName>\n"
+				 << "\t\t\t<source>\n";
+			if (inst.getIonSources().size()>=1)
+			{
+				writeCVS_(os, inst.getIonSources()[0].getInletType(),11, "1000007", "InletType");
+				writeCVS_(os, inst.getIonSources()[0].getIonizationMethod(), 10, "1000008","IonizationType");
+				writeCVS_(os, inst.getIonSources()[0].getPolarity(), 1, "1000009", "IonizationMode");
+				writeUserParam_(os, inst.getIonSources()[0]);
+			}
+			if (inst.getIonSources().size()>1)
+			{
+				warning(STORE, "The MzData format can store only one ion source. Only the first one is stored!");
+			}
+			os << "\t\t\t</source>\n";
+						
+			//no analyzer given => add empty entry as there must be one entry
+			UInt num_analyzers = inst.getMassAnalyzers().size();
+			if (num_analyzers == 0)
+			{
+				os << "\t\t\t<analyzerList count=\"1\">\n"
+				   << "\t\t\t\t<analyzer>\n"
+				   << "\t\t\t\t</analyzer>\n";
+			}
+			else
+			{
+				os << "\t\t\t<analyzerList count=\"" << inst.getMassAnalyzers().size() << "\">\n";
+				for (UInt i=0; i<inst.getMassAnalyzers().size(); ++i)
+				{
+					os << "\t\t\t\t<analyzer>\n";
+					const MassAnalyzer& ana = inst.getMassAnalyzers()[i];
+					writeCVS_(os, ana.getType(), 14, "1000010", "AnalyzerType",5);
+					writeCVS_(os, ana.getResolution(), "1000011", "Resolution",5);
+					writeCVS_(os, ana.getResolutionMethod(), 2,"1000012", "ResolutionMethod",5);
+					writeCVS_(os, ana.getResolutionType(), 3, "1000013", "ResolutionType",5);
+					writeCVS_(os, ana.getAccuracy(), "1000014", "Accuracy",5);
+					writeCVS_(os, ana.getScanRate(), "1000015", "ScanRate",5);
+					writeCVS_(os, ana.getScanTime(), "1000016", "ScanTime",5);
+					writeCVS_(os, ana.getScanDirection(), 5,	"1000018", "ScanDirection",5);
+					writeCVS_(os, ana.getScanLaw(), 6, "1000019", "ScanLaw",5);
+					writeCVS_(os, ana.getTandemScanMethod(), 12,"1000020", "TandemScanningMethod",5);
+					writeCVS_(os, ana.getReflectronState(), 8, "1000021", "ReflectronState",5);
+					writeCVS_(os, ana.getTOFTotalPathLength(), "1000022", "TOFTotalPathLength",5);
+					writeCVS_(os, ana.getIsolationWidth(), "1000023", "IsolationWidth",5);
+					writeCVS_(os, ana.getFinalMSExponent(), "1000024", "FinalMSExponent",5);
+					writeCVS_(os, ana.getMagneticFieldStrength(), "1000025", "MagneticFieldStrength",5);
+					writeUserParam_(os, ana, 5);
+					os << "\t\t\t\t</analyzer>\n";
+				}
+			}
+			os << "\t\t\t</analyzerList>\n";
+			
+			os << "\t\t\t<detector>\n";
+			if (inst.getIonDetectors().size()>=1)
+			{
+				writeCVS_(os, inst.getIonDetectors()[0].getType(), 13, "1000026", "DetectorType");
+				writeCVS_(os, inst.getIonDetectors()[0].getAcquisitionMode(), 9, "1000027", "DetectorAcquisitionMode");
+				writeCVS_(os, inst.getIonDetectors()[0].getResolution(), "1000028", "DetectorResolution");
+				writeCVS_(os, inst.getIonDetectors()[0].getADCSamplingFrequency(), "1000029", "ADCSamplingFrequency");
+				writeUserParam_(os, inst.getIonDetectors()[0]);
+			}
+			if (inst.getIonDetectors().size()>1)
+			{
+				warning(STORE, "The MzData format can store only one ion detector. Only the first one is stored!");
+			}
+			os << "\t\t\t</detector>\n";
+			if (inst.getVendor()!="" || inst.getModel()!="" || inst.getCustomizations()!="")
+			{
+				os << "\t\t\t<additional>\n";
+				writeCVS_(os, inst.getVendor(), "1000030", "Vendor");
+				writeCVS_(os, inst.getModel(), "1000031", "Model");
+				writeCVS_(os, inst.getCustomizations(), "1000032", "Customization");
+				writeUserParam_(os, inst);
+				os << "\t\t\t</additional>\n";
+			}
+			os << "\t\t</instrument>\n";
+			
+			if (cexp_->getDataProcessing().size()==0)
+			{
+				os << "\t\t<dataProcessing>\n"
+					 << "\t\t\t<software>\n"
+					 << "\t\t\t\t<name></name>\n"
+					 << "\t\t\t\t<version></version>\n"
+					 << "\t\t\t</software>\n"
+					 << "\t\t</dataProcessing>\n";
+			}
+			else
+			{
+				const DataProcessing& data_processing = cexp_->getDataProcessing()[0];
+				os << "\t\t<dataProcessing>\n"
+					 << "\t\t\t<software";
+				if (data_processing.getCompletionTime()!=DateTime())
+				{
+					os << " completionTime=\"" << data_processing.getCompletionTime().get().substitute(' ','T') << "\"";
+				}
+				os << ">\n"
+					 << "\t\t\t\t<name>" << data_processing.getSoftware().getName() << "</name>\n"
+					 << "\t\t\t\t<version>" << data_processing.getSoftware().getVersion() << "</version>\n";
+				if (data_processing.metaValueExists("#comment"))
+				{
+					os << "\t\t\t\t<comments>" << data_processing.getMetaValue("#comment").toString() << "</comments>\n";
+				}
+				os << "\t\t\t</software>\n"
+					 << "\t\t\t<processingMethod>\n";
+				if(data_processing.getProcessingActions().count(DataProcessing::DEISOTOPING)==1)
+				{
+					os << "\t\t\t\t<cvParam cvLabel=\"psi\" name=\"Deisotoping\" accession=\"PSI:1000033\" value=\"true\"/>\n";
+				}
+				if(data_processing.getProcessingActions().count(DataProcessing::CHARGE_DECONVOLUTION)==1)
+				{
+					os << "\t\t\t\t<cvParam cvLabel=\"psi\" name=\"ChargeDeconvolution\" accession=\"PSI:1000034\" value=\"true\"/>\n";
+				}
+				if(data_processing.getProcessingActions().count(DataProcessing::PEAK_PICKING)==1)
+				{
+					os << "\t\t\t\t<cvParam cvLabel=\"psi\" name=\"Centroid Mass Spectrum\" accession=\"PSI:1000127\"/>\n";
+				}
+				writeUserParam_(os, data_processing);
+				os << "\t\t\t</processingMethod>\n"
+					 << "\t\t</dataProcessing>\n";
+				
+				//warn if we loose information
+				if (cexp_->getDataProcessing().size()>1)
+				{
+					warning(STORE, "The MzData format can store only one dataProcessing. Only the first one is stored!");
+				}
+			}
+			os << "\t</description>\n";
+
+			//---------------------------------------------------------------------------------------------------
+			//ACTUAL DATA
 			if (cexp_->size()!=0)
 			{
+				//check if the nativeID of all spectra are numbers or numbers prefixed with 'spectrum='
+				//If not we need to renumber all spectra.
+				bool all_numbers = true;
+				bool all_empty = true;
+				bool all_prefixed_numbers = true;
+				for (UInt s=0; s<cexp_->size(); s++)
+				{
+					String native_id = (*cexp_)[s].getNativeID();
+					if (!native_id.hasPrefix("spectrum="))
+					{
+						all_prefixed_numbers = false;
+					}
+					else
+					{
+						native_id = native_id.substr(9);
+					}
+					try
+					{
+						native_id.toInt();
+					}
+					catch (Exception::ConversionError&)
+					{
+						all_numbers = false;
+						all_prefixed_numbers = false;
+						if (native_id!="")
+						{
+							all_empty = false;
+						}
+					}
+				}
+				//If we need to renumber and the nativeIDs were not empty, warn the user
+				if (!all_numbers && !all_empty)
+				{
+					warning(STORE, "Not all spectrum native IDs are numbers or correctly prefixed with 'spectrum='. The spectra are renumbered and the native IDs are lost!");
+				}
+				//Map to store the last spectrum ID for each MS level (needed to find precursor spectra)
+				Map<UInt,UInt> level_id; 
+				
 				os << "\t<spectrumList count=\"" << cexp_->size() << "\">\n";
-				int spectrum_ref = -1;
 				for (UInt s=0; s<cexp_->size(); s++)
 				{
 					logger_.setProgress(s);
-					//std::cout << "writing scan" << std::endl;
-					
 					const SpectrumType& spec = (*cexp_)[s];
-	
-					os << "\t\t<spectrum id=\"" << spec_write_counter_++ << "\">\n"
+					
+					UInt spectrum_id = s+1;
+					if (all_prefixed_numbers)
+					{
+						spectrum_id = spec.getNativeID().substr(9).toInt();
+					}
+					else if (all_numbers)
+					{
+						spectrum_id = spec.getNativeID().toInt();
+					}
+					os << "\t\t<spectrum id=\"" << spectrum_id << "\">\n"
 						 << "\t\t\t<spectrumDesc>\n"
 						 << "\t\t\t\t<spectrumSettings>\n";
 	
@@ -786,9 +1083,8 @@ namespace OpenMS
 							os << "continuous";
 						}
 	
-						os << "\" methodOfCombination=\""
-							 << spec.getAcquisitionInfo().getMethodOfCombination() << "\" count=\""
-							 << spec.getAcquisitionInfo().size() << "\">\n";
+						os << "\" methodOfCombination=\"" << spec.getAcquisitionInfo().getMethodOfCombination() << "\""
+						   << " count=\"" << spec.getAcquisitionInfo().size() << "\">\n";
 						for (UInt i=0; i<spec.getAcquisitionInfo().size(); ++i)
 						{
 							const Acquisition& ac = spec.getAcquisitionInfo()[i];
@@ -800,32 +1096,37 @@ namespace OpenMS
 					}
 	
 					const InstrumentSettings& iset = spec.getInstrumentSettings();
-					os << "\t\t\t\t\t<spectrumInstrument msLevel=\"" << spec.getMSLevel()
-						 << "\"";
-	
-					if (spec.getMSLevel()==1) spectrum_ref = spec_write_counter_-1;
-					if (iset.getMzRangeStart() != 0 && iset.getMzRangeStop() != 0)
+					os << "\t\t\t\t\t<spectrumInstrument msLevel=\"" << spec.getMSLevel() << "\"";
+					level_id[spec.getMSLevel()] = spectrum_id;
+					
+					if (iset.getScanWindows().size() > 0)
 					{
-						os << " mzRangeStart=\""
-							 << iset.getMzRangeStart() << "\" mzRangeStop=\""
-							 << iset.getMzRangeStop() << "\"";
+						os << " mzRangeStart=\"" << iset.getScanWindows()[0].begin << "\" mzRangeStop=\"" << iset.getScanWindows()[0].end << "\"";
+					}
+					if (iset.getScanWindows().size() > 1)
+					{
+						warning(STORE, "The MzData format can store only one scan window for each scan. Only the first one is stored!");
 					}
 					os << ">\n";
 	
-					writeCVS_(os, spec.getInstrumentSettings().getScanMode(), 1, "1000036", "ScanMode",6);
-					writeCVS_(os, spec.getInstrumentSettings().getPolarity(), 2, "1000037", "Polarity",6);
+					writeCVS_(os, spec.getInstrumentSettings().getScanMode(), 16, "1000036", "ScanMode",6);
+					writeCVS_(os, spec.getInstrumentSettings().getPolarity(), 17, "1000037", "Polarity",6);
 					//Retiontion time already in TimeInSeconds
 					writeCVS_(os, spec.getRT(), "1000039", "TimeInSeconds",6);
 					writeUserParam_(os, spec.getInstrumentSettings(), 6);
 					os 	<< "\t\t\t\t\t</spectrumInstrument>\n\t\t\t\t</spectrumSettings>\n";
 	
 					typedef typename SpectrumType::PrecursorPeakType PrecursorPeak;
-					if (spec.getPrecursorPeak() != PrecursorPeak()
-							|| spec.getPrecursor() != Precursor())
+					if (spec.getPrecursorPeak() != PrecursorPeak() || spec.getPrecursor() != Precursor())
 					{
+						UInt precursor_ms_level = spec.getMSLevel()-1;
+						UInt precursor_id = -1;
+						if (level_id.has(precursor_ms_level))
+						{
+							precursor_id = level_id[precursor_ms_level];
+						}
 						os	<< "\t\t\t\t<precursorList count=\"1\">\n"
-								<< "\t\t\t\t\t<precursor msLevel=\"2\" spectrumRef=\""
-								<< spectrum_ref << "\">\n";
+								<< "\t\t\t\t\t<precursor msLevel=\"" << precursor_ms_level << "\" spectrumRef=\"" << precursor_id << "\">\n";
 						os << "\t\t\t\t\t\t<ionSelection>\n";
 						if (spec.getPrecursorPeak() != PrecursorPeak())
 						{
@@ -844,9 +1145,9 @@ namespace OpenMS
 						if (spec.getPrecursor() != Precursor())
 						{
 							const Precursor& prec = spec.getPrecursor();
-							writeCVS_(os, prec.getActivationMethod(), 3, "1000044", "Method",7);
+							writeCVS_(os, prec.getActivationMethod(), 18, "1000044", "Method",7);
 							writeCVS_(os, prec.getActivationEnergy(), "1000045", "CollisionEnergy",7);
-							writeCVS_(os, prec.getActivationEnergyUnit(), 0,"1000046", "EnergyUnits",7);
+							writeCVS_(os, prec.getActivationEnergyUnit(), 15,"1000046", "EnergyUnits",7);
 							writeUserParam_(os, prec,7);
 						}
 						os << "\t\t\t\t\t\t</activation>\n";
@@ -893,7 +1194,7 @@ namespace OpenMS
 					data_to_encode_.clear();
 					for (UInt i=0; i<spec.size(); i++)
 					{
-						data_to_encode_.push_back(spec.getContainer()[i].getPosition()[0]);
+						data_to_encode_.push_back(spec[i].getPosition()[0]);
 					}
 					
 					writeBinary_(os,spec.size(),"mzArrayBinary");
@@ -902,7 +1203,7 @@ namespace OpenMS
 					data_to_encode_.clear();
 					for (UInt i=0; i<spec.size(); i++)
 					{
-						data_to_encode_.push_back(spec.getContainer()[i].getIntensity());
+						data_to_encode_.push_back(spec[i].getIntensity());
 					}
 					
 					writeBinary_(os,spec.size(),"intenArrayBinary");
@@ -917,7 +1218,7 @@ namespace OpenMS
 							//check if spectrum and meta data array have the same length
 							if (mda.size()!=spec.size())
 							{
-								error(String("Length of meta data array (index:'")+i+"' name:'"+mda.getName()+"') differs from spectrum length. meta data array: " + mda.size() + " / spectrum: " + spec.size() +" .");
+								error(LOAD, String("Length of meta data array (index:'")+i+"' name:'"+mda.getName()+"') differs from spectrum length. meta data array: " + mda.size() + " / spectrum: " + spec.size() +" .");
 							}
 							//encode meta data array
 							data_to_encode_.clear();
@@ -955,6 +1256,292 @@ namespace OpenMS
 			logger_.endProgress();
 		}
 
+		template <typename MapType>
+		void MzDataHandler<MapType>::cvParam_(const String& accession, const String& value)
+		{
+			String error = "";
+
+			//determine the parent tag
+			String parent_tag;
+			if (open_tags_.size()>1) parent_tag = *(open_tags_.end()-2);
+			
+			if(parent_tag=="spectrumInstrument")
+			{
+				if (accession=="PSI:1000036") //Scan Mode
+				{
+					spec_.getInstrumentSettings().setScanMode((InstrumentSettings::ScanMode)cvStringToEnum_(16, value,"scan mode"));
+				}
+				else if (accession=="PSI:1000038") //Time in minutes
+				{
+					spec_.setRT(asDouble_(value)*60); //Minutes to seconds
+					if (options_.hasRTRange() && !options_.getRTRange().encloses(DPosition<1>(spec_.getRT())))
+					{
+						skip_spectrum_=true;
+					}
+				}
+				else if (accession=="PSI:1000039") //Time in seconds
+				{
+					spec_.setRT(asDouble_(value));
+					if (options_.hasRTRange() && !options_.getRTRange().encloses(DPosition<1>(spec_.getRT())))
+					{
+						skip_spectrum_=true;
+					}
+				}
+				else if (accession=="PSI:1000037") //Polarity
+				{
+					spec_.getInstrumentSettings().setPolarity((IonSource::Polarity)cvStringToEnum_(17, value,"polarity") );				
+				}
+				else 
+				{
+			  	error = "SpectrumDescription.SpectrumSettings.SpectrumInstrument";
+				}
+			}
+			else if(parent_tag=="ionSelection")
+			{
+				if (accession=="PSI:1000040") //m/z
+				{
+					spec_.getPrecursorPeak().getPosition()[0] = asDouble_(value);			
+				}
+				else if (accession=="PSI:1000041") //Charge
+				{
+					if (spec_.getPrecursorPeak().getCharge() != 0)
+					{
+						warning(LOAD, String("Multiple precursor charges detected, expected only one! Ignoring this charge setting! accession=\"") + accession + "\", value=\"" + value + "\"");
+						spec_.getPrecursorPeak().setCharge(0);
+					}
+					else
+					{
+						spec_.getPrecursorPeak().setCharge(asInt_(value));
+					}
+				}
+				else if (accession=="PSI:1000042") //Intensity
+				{
+					spec_.getPrecursorPeak().setIntensity(asDouble_(value));		
+				}
+				else if (accession=="PSI:1000043") //Intensity unit (not really handled)
+				{
+					spec_.getPrecursorPeak().setMetaValue("#IntensityUnits", value);
+				}
+				else
+				{
+					error = "PrecursorList.Precursor.IonSelection.UserParam";
+				}
+			}
+			else if (parent_tag=="activation") 
+			{
+				if (accession=="PSI:1000044") //Method
+				{
+					spec_.getPrecursor().setActivationMethod((Precursor::ActivationMethod)cvStringToEnum_(18, value,"activation method"));
+				}
+				else if (accession=="PSI:1000045") //Energy
+				{
+					spec_.getPrecursor().setActivationEnergy( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000046") //Energy unit
+				{
+					spec_.getPrecursor().setActivationEnergyUnit((Precursor::EnergyUnits)cvStringToEnum_(15, value, "energy unit"));
+				}
+				else 
+				{
+					error = "PrecursorList.Precursor.Activation.UserParam";
+				}
+			}
+			else if (parent_tag=="supDataDesc") 
+			{
+				//no terms defined in ontology
+				error = "supDataDesc.UserParam";
+			}
+			else if (parent_tag=="acquisition")
+			{
+				 //no terms defined in ontology
+				 error = "spectrumDesc.spectrumSettings.acquisitionSpecification.acquisition.UserParam";
+			}
+			else if (parent_tag=="detector")
+			{
+				if (accession=="PSI:1000026")
+				{
+					exp_->getInstrument().getIonDetectors().back().setType( (IonDetector::Type)cvStringToEnum_(13,value, "detector type") );
+				}
+				else if (accession=="PSI:1000028")
+				{
+					exp_->getInstrument().getIonDetectors().back().setResolution( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000029")
+				{
+					exp_->getInstrument().getIonDetectors().back().setADCSamplingFrequency( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000027")
+				{
+					exp_->getInstrument().getIonDetectors().back().setAcquisitionMode((IonDetector::AcquisitionMode)cvStringToEnum_(9, value, "acquisition mode") );
+				}
+				else
+				{
+					error = "Description.Instrument.Detector.UserParam";
+				}
+			}
+			else if (parent_tag=="source")
+			{
+				if (accession=="PSI:1000008")
+				{
+					exp_->getInstrument().getIonSources().back().setIonizationMethod( (IonSource::IonizationMethod)cvStringToEnum_(10, value, "ion source") );
+				}
+				else if (accession=="PSI:1000007")
+				{
+					exp_->getInstrument().getIonSources().back().setInletType( (IonSource::InletType)cvStringToEnum_(11, value,"inlet type") );
+				}
+				else if (accession=="PSI:1000009")
+				{
+					exp_->getInstrument().getIonSources().back().setPolarity( (IonSource::Polarity)cvStringToEnum_(1, value,"polarity") );
+				}
+				else 
+				{
+					error = "Description.Instrument.Source.UserParam";
+				}
+			}
+			else if (parent_tag=="sampleDescription")
+			{
+				if (accession=="PSI:1000001")
+				{
+					exp_->getSample().setNumber( value );
+				}
+				else if (accession=="PSI:1000003")
+				{
+					exp_->getSample().setState( (Sample::SampleState)cvStringToEnum_(0, value, "sample state") );
+				}
+				else if (accession=="PSI:1000004")
+				{
+					exp_->getSample().setMass( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000005")
+				{
+					exp_->getSample().setVolume( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000006")
+				{
+					exp_->getSample().setConcentration( asDouble_(value) );
+				}
+				else 
+				{
+					error = "Description.Admin.SampleDescription.UserParam";
+				}
+			}
+			else if (parent_tag=="analyzer")
+			{
+				if (accession=="PSI:1000010")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setType( (MassAnalyzer::AnalyzerType)cvStringToEnum_(14, value,"analyzer type"));
+				}
+				else if (accession=="PSI:1000011")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setResolution( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000012")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setResolutionMethod( (MassAnalyzer::ResolutionMethod)cvStringToEnum_(2, value,"resolution method"));
+				}
+				else if (accession=="PSI:1000013")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setResolutionType( (MassAnalyzer::ResolutionType)cvStringToEnum_(3, value, "resolution type"));
+				}
+				else if (accession=="PSI:1000014")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setAccuracy( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000015")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setScanRate( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000016")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setScanTime( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000018")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setScanDirection( (MassAnalyzer::ScanDirection)cvStringToEnum_(5, value, "scan direction"));
+				}
+				else if (accession=="PSI:1000019")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setScanLaw( (MassAnalyzer::ScanLaw)cvStringToEnum_(6, value, "scan law"));
+				}
+				else if (accession=="PSI:1000020")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setTandemScanMethod((MassAnalyzer::TandemScanningMethod)cvStringToEnum_(12, value, "tandem scanning mode"));
+				}
+				else if (accession=="PSI:1000021")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setReflectronState( (MassAnalyzer::ReflectronState)cvStringToEnum_(8, value, "reflectron state"));
+				}
+				else if (accession=="PSI:1000022")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setTOFTotalPathLength( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000023")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setIsolationWidth( asDouble_(value) );
+				}
+				else if (accession=="PSI:1000024")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setFinalMSExponent( asInt_(value) );
+				}
+				else if (accession=="PSI:1000025")
+				{
+					exp_->getInstrument().getMassAnalyzers().back().setMagneticFieldStrength( asDouble_(value) );
+				}
+				else 
+				{
+					error = "AnalyzerList.Analyzer.UserParam";
+				}
+			}
+			else if (parent_tag=="additional")
+			{
+				if (accession=="PSI:1000030")
+				{
+					exp_->getInstrument().setVendor(value);
+				}
+				else if (accession=="PSI:1000031")
+				{
+					exp_->getInstrument().setModel(value);
+				}
+				else if (accession=="PSI:1000032")
+				{
+					exp_->getInstrument().setCustomizations(value);
+				}
+				else 
+				{
+					error = "Description.Instrument.Additional";
+				}
+			}
+			else if (parent_tag=="processingMethod")
+			{
+				if (accession=="PSI:1000033")
+				{
+					exp_->getDataProcessing().back().getProcessingActions().insert(DataProcessing::DEISOTOPING);
+				}
+				else if (accession=="PSI:1000034")
+				{
+					exp_->getDataProcessing().back().getProcessingActions().insert(DataProcessing::CHARGE_DECONVOLUTION);
+				}
+				else if (accession=="PSI:1000127")
+				{
+					exp_->getDataProcessing().back().getProcessingActions().insert(DataProcessing::PEAK_PICKING);
+				}
+				else 
+				{
+					error = "DataProcessing.DataProcessing.UserParam";
+				}
+			}
+			else
+			{
+				warning(LOAD, String("Unexpected cvParam: accession=\"") + accession + ", value=\"" + value + "\" in tag " + parent_tag);
+			}
+
+			if (error != "")
+			{
+				warning(LOAD, String("Invalid cvParam: accession=\"") + accession + ", value=\"" + value + "\" in " + error);
+			}
+			//std::cout << "End of MzDataHander::cvParam_" << std::endl;
+		}
+		
 	} // namespace Internal
 
 } // namespace OpenMS

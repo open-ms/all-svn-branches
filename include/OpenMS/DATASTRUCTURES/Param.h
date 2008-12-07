@@ -31,10 +31,11 @@
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/DATASTRUCTURES/DataValue.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
+#include <OpenMS/DATASTRUCTURES/Map.h>
 #include <OpenMS/CONCEPT/Exception.h>
 #include <OpenMS/FORMAT/XMLFile.h>
 
-#include <map>
+#include <set>
 #include <iostream>
 
 
@@ -50,11 +51,9 @@ namespace OpenMS
 		
 		Each parameter and section has a description. Newline characters in the description are possible.
 		
-		Each parameter has an <i>advanced</i> flag that indicates if this parameter is shown to 
-		all users (false) or in advanced mode only (true). This is mostly used in visualization.
-		
-		@todo Add support for string/int/float lists (Hiwi)
-		
+		Each parameter can be annotated with an arbitrary number of tags. Tags cannot contain comma chracters!
+		@n E.g. the <i>advanced</i> tag indicates if this parameter is shown to all users or in advanced mode only.
+ 
 		@see DefaultParamHandler
 		
 		@ingroup Datastructures
@@ -70,7 +69,7 @@ namespace OpenMS
 				/// Default constructor
 				ParamEntry();
 				/// Constructor with name, description, value and advanced flag
-				ParamEntry(const String& n, const DataValue& v, const String& d, bool a);
+				ParamEntry(const String& n, const DataValue& v, const String& d, const StringList& t=StringList());
 				/// Equality operator (only name and value are compared)
 				bool operator==(const ParamEntry& rhs) const;
 				
@@ -80,13 +79,13 @@ namespace OpenMS
 				String description;
 				/// Value associated with the entry
 				DataValue value;
-				/// Advanced parameter flag (If 'true' it is only shown in advanced mode)
-				bool advanced;
+				/// Tags list, used e.g. for advanced parameter tag
+				std::set<String> tags;
 				///@name Restrictions to accepted values (used in checkDefaults)
 				//@{
-				DoubleReal min_float; ///< Default: -std::numeric_limits<DoubleReal>::max()
+				DoubleReal min_float; ///< Default: - std::numeric_limits<DoubleReal>::max()
 				DoubleReal max_float; ///< Default: std::numeric_limits<DoubleReal>::max()
-				Int min_int; ///< Default: -std::numeric_limits<Int>::max()
+				Int min_int; ///< Default: - std::numeric_limits<Int>::max()
 				Int max_int; ///< Default: std::numeric_limits<Int>::max()
 				std::vector<String> valid_strings; ///< Default: empty
 				//@}
@@ -207,9 +206,6 @@ namespace OpenMS
 					
 			};
 			
-			/** @name Constructors and Destructors
-			 */
-			//@{
 			/// Default construtor
 			Param();
 			
@@ -218,13 +214,18 @@ namespace OpenMS
 			
 			/// Destructor
 			~Param();
-			//@}
 			
 			/// Assignment operator
 			Param& operator = (const Param& rhs);
 			
 			/// Equality operator
 			bool operator == (const Param& rhs) const;
+
+			/// Begin iterator for the internal tree
+			ParamIterator begin() const;
+			
+			/// End iterator for the internal tree
+			ParamIterator end() const;
 
 			///@name Accessors for single parameters
 			//@{
@@ -234,54 +235,72 @@ namespace OpenMS
 				@param key String key. Can contain ':' which separates section names
 				@param value The actual value
 				@param description Verbose description of the parameter
-				@param advanced If 'false' this parameter is always shown. If 'true' it is only shown in the expert mode
+				@param tags list of tags associated to this parameter
 			*/
-			void setValue(const String& key, Int value, const String& description="", bool advanced=false);
+			void setValue(const String& key, Int value, const String& description="", const StringList& tags=StringList());
 			/**
 				@brief Set a UInt value.
 				
 				@param key String key. Can contain ':' which separates section names
 				@param value The actual value
 				@param description Verbose description of the parameter
-				@param advanced If 'false' this parameter is always shown. If 'true' it is only shown in the expert mode
+				@param tags list of tags associated to this parameter
 			*/
-			void setValue(const String& key, UInt value, const String& description="", bool advanced=false);
+			void setValue(const String& key, UInt value, const String& description="", const StringList& tags=StringList());
 			/**
 				@brief Set a float value.
 
 				@param key String key. Can contain ':'which separates section names
 				@param value The actual value
 				@param description Verbose description of the parameter
-				@param advanced If 'false' this parameter is always shown. If 'true' it is only shown in the expert mode
+				@param tags list of tags associated to this parameter
 			*/
-			void setValue(const String& key, Real value, const String& description="", bool advanced=false);
+			void setValue(const String& key, Real value, const String& description="", const StringList& tags=StringList());
 			/**
 				@brief Set a double value.
 
 				@param key String key. Can contain ':' which separates section names
 				@param value The actual value
 				@param description Verbose description of the parameter
-				@param advanced If 'false' this parameter is always shown. If 'true' it is only shown in the expert mode
+				@param tags list of tags associated to this parameter
 			*/
-			void setValue(const String& key, DoubleReal value, const String& description="", bool advanced=false);
+			void setValue(const String& key, DoubleReal value, const String& description="", const StringList& tags=StringList());
 			/**
 				@brief Set a string value.
 
 				@param key String key. Can contain ':' which separates section names
 				@param value The actual value
 				@param description Verbose description of the parameter
-				@param advanced If 'false' this parameter is always shown. If 'true' it is only shown in the expert mode
+				@param tags list of tags associated to this parameter
 			*/
-			void setValue(const String& key, const String& value, const String& description="", bool advanced=false);
+			void setValue(const String& key, const String& value, const String& description="", const StringList& tags=StringList());
 			/**
-				@brief Set a StringList value.
+				@brief Set a string list value.
 
 				@param key String key. Can contain ':' which separates section names
 				@param value The actual value
 				@param description Verbose description of the parameter
-				@param advanced If 'false' this parameter is always shown. If 'true' it is only shown in the expert mode
+				@param tags list of tags associated to this parameter
 			*/
-			void setValue(const String& key, const StringList& value, const String& description="", bool advanced=false);
+			void setValue(const String& key, const StringList& value, const String& description="", const StringList& tags=StringList());
+			/**
+				@brief Set a integer list value.
+
+				@param key String key. Can contain ':' which separates section names
+				@param value The actual value
+				@param description Verbose description of the parameter
+				@param tags list of tags associated to this parameter
+			*/
+			void setValue(const String& key, const IntList& value, const String& description="", const StringList& tags=StringList());
+			/**
+				@brief Set a double list value.
+
+				@param key String key. Can contain ':' which separates section names
+				@param value The actual value
+				@param description Verbose description of the parameter
+				@param tags list of tags associated to this parameter
+			*/
+			void setValue(const String& key, const DoubleList& value, const String& description="", const StringList& tags=StringList());
 
 			/**
 				@brief Returns a value of a parameter.
@@ -295,21 +314,59 @@ namespace OpenMS
 				@exception Exception::ElementNotFound is thrown if the parameter does not exists.
 			*/
 			const ParamEntry& getEntry(const String& key) const;
+
+			/// Tests if a parameter is set
+			bool exists(const String& key) const;
+			//@}
+			
+			///@name Tags handling
+			//@{
+			/**
+				@brief Adds the tag @p tag to the entry @p key
+				
+				@exception Exception::ElementNotFound is thrown if the parameter does not exists.
+				@exception Exception::InvalidValue is thrown if the tag contain a comma character.
+			*/
+			void addTag(const String& key, const String& tag);
+			/**
+				@brief Adds the tags in the list @p tags to the entry @p key
+				
+				@exception Exception::ElementNotFound is thrown if the parameter does not exists.
+				@exception Exception::InvalidValue is thrown if a tag contain a comma character.
+			*/
+			void addTags(const String& key, const StringList& tags);
+			/**
+			  @brief Returns if the parameter @p key has a tag
+			
+				Example: The tag 'advanced' is used in the GUI to determine which parmeters are always displayed 
+				and which parameters are displayed only in 'advanced mode'.
+				
+				@exception Exception::ElementNotFound is thrown if the parameter does not exists.
+			*/
+			bool hasTag(const String& key, const String& tag) const;
+			/**
+				@brief Returns the tags of entry @p key
+				
+				@exception Exception::ElementNotFound is thrown if the parameter does not exists.
+			*/
+			StringList getTags(const String& key) const;
+			/**
+				@brief Removes all tags from the entry @p key
+				
+				@exception Exception::ElementNotFound is thrown if the parameter does not exists.
+			*/
+			void clearTags(const String& key);
+			//@}
+					
+
+			///@name Descriptions handling
+			//@{
 			/**
 				@brief Returns the description of a parameter.
 			
 				@exception Exception::ElementNotFound is thrown if the parameter does not exists.
 			*/
 			const String& getDescription(const String& key) const;
-			/**
-			  @brief Returns if the parameter is a advanced parameter.
-			
-				This is mainly used in the GUI to determine which parmeters are always displayed 
-				and which parameters are displayed only in 'advanced mode'.
-				
-				@exception Exception::ElementNotFound is thrown if the parameter does not exists.
-			*/
-			bool isAdvancedParameter(const String& key) const;
 			/**
 				@brief Sets a description for an existing section
 				
@@ -325,14 +382,8 @@ namespace OpenMS
 				If the section does not exist an empty string is returned.
 			*/
 			const String& getSectionDescription(const String& key) const;
-			/// Begin iterator for the internal tree
-			ParamIterator begin() const;
-			/// End iterator for the internal tree
-			ParamIterator end() const;
-			/// Tests if a parameter is set
-			bool exists(const String& key) const;
 			//@}
-			
+						
 			///@name Manipulation of the whole parameter set
 			//@{
 			///Returns the number of entries (leafs).
@@ -343,8 +394,13 @@ namespace OpenMS
 			void clear();
 			///Insert all values of @p param and adds the prefix @p prefix.
 			void insert(String prefix, const Param& param);
-			///Remove all entries that start with @p prefix.
-			void remove(const String& prefix);
+			/**
+				@brief Remove the entry @p key
+				@note This method does not remove subnodes. Use removeAll() to do that.
+			*/
+			void remove(const String& key);
+			///Remove all entries that start with @p prefix 
+			void removeAll(const String& prefix);
 			/**
 				@brief Returns a new Param object containing all entries that start with @p prefix.
 				
@@ -374,7 +430,9 @@ namespace OpenMS
 				- If a parameter is present for which no default value is specified, a warning is issued to @p os.
 				- If the type of a parameter and its default do not match, an exception is thrown.
 				- If a string parameter contains an invalid string, an exception is thrown.
+				-	If parameter entry is a string list, an exception is thrown, if one or more list members are invalid strings
 				- If a numeric parameter is out of the valid range, an exception is thrown.
+				- If entry is a numeric list an exception is thrown, if one or more list members are out of the valid range
 				
 				@param name The name that is used in error messages.
 				@param defaults The default values. 
@@ -384,6 +442,10 @@ namespace OpenMS
 				@exception Exception::InvalidParameter is thrown if errors occur during the check
 			*/
 			void checkDefaults(const String& name, const Param& defaults, String prefix="", std::ostream& os = std::cout) const;	
+			//@}
+			
+			///@name Restriction handling
+			//@{
 			/**
 				@brief Sets the valid strings for the parameter @p key.
 				
@@ -394,7 +456,7 @@ namespace OpenMS
 			*/
 			void setValidStrings(const String& key, const std::vector<String>& strings);
 			/**
-				@brief Sets the minimum value for the integer parameter @p key. 
+				@brief Sets the minimum value for the integer or integer list parameter @p key. 
 				
 				It is only checked in checkDefaults(). 
 				
@@ -402,7 +464,7 @@ namespace OpenMS
 			*/			
 			void setMinInt(const String& key, Int min);
 			/**
-				@brief Sets the maximum value for the integer parameter @p key. 
+				@brief Sets the maximum value for the integer or integer list parameter @p key. 
 				
 				It is only checked in checkDefaults().
 				
@@ -410,7 +472,7 @@ namespace OpenMS
 			*/
 			void setMaxInt(const String& key, Int max);
 			/**
-				@brief Sets the minimum value for the floating point parameter @p key. 
+				@brief Sets the minimum value for the floating point or floating point list parameter @p key. 
 				
 				It is only checked in checkDefaults(). 
 				
@@ -418,7 +480,7 @@ namespace OpenMS
 			*/
 			void setMinFloat(const String& key, DoubleReal min);
 			/**
-				@brief Sets the maximum value for the floating point parameter @p key. 
+				@brief Sets the maximum value for the floating point or floating point list parameter @p key. 
 				
 				It is only checked in checkDefaults(). 
 				
@@ -441,7 +503,7 @@ namespace OpenMS
 				 "prefix:-a" -> "avalue"<BR>
 				 "prefix:-b" -> ""<BR>
 				 "prefix:-c" -> "bvalue"<BR>
-				 "prefix:misc" -> "misc1 misc2"<BR>
+				 "prefix:misc" -> list("misc1","misc2")<BR>
 			
 				 @param argc argc variable from command line
 				 @param argv argv varaible from command line
@@ -453,12 +515,15 @@ namespace OpenMS
 				
 				 @param argc argc variable from command line
 				 @param argv argv varaible from command line
-				 @param options_with_argument a map of options that are followed by an argument (with key where they are stored)
+				 @param options_with_one_argument a map of options that are followed by one argument (with key where they are stored)
 				 @param options_without_argument a map of options that are not followed by an argument (with key where they are stored). Present options are set to the the string 'true'.
-				 @param misc key where all non-option arguments are stored (format: comma separated values enclosed in quotes, e.g. "val1","val2","val3","val with space")
-				 @param unknown key where all unknown options are stored
+				 @param options_with_multiple_argument a map of options that are followed by several arguments(with key where they are stored)
+				 @param misc key where a StringList of all non-option arguments are stored
+				 @param unknown key where a StringList of all unknown options are stored
+				 
 			*/
-			void parseCommandLine(const int argc , const char** argv, const std::map<String, String>& options_with_argument, const std::map<String, String>& options_without_argument, const String& misc="misc", const String& unknown="unknown");
+
+			void parseCommandLine(const int argc , const char** argv, const Map<String, String>& options_with_one_argument, const Map<String, String>& options_without_argument,const Map<String,String>& options_with_multiple_argument, const String& misc="misc", const String& unknown="unknown");
 			//@}
 						
 			///@name File I/O methods

@@ -40,9 +40,7 @@ namespace OpenMS
 	  To speed up the search for element pairs an consensus elements, the %DelaunayPairFinder
 	  uses the CGAL delaunay triangulation for the nearest neighbour search.
 		
-	  @ref DelaunayPairFinder_Parameters are explained on a separate page.  
-	
-	  @todo work out all TODOs in the code, add offsets (Clemens)
+	  @htmlinclude OpenMS_DelaunayPairFinder.parameters
 	
 	  @ingroup FeatureGrouping
   */
@@ -96,7 +94,11 @@ namespace OpenMS
 		///Calculates the squared distance between two-dimensional points
 		inline DoubleReal squaredDistance_( DoubleReal x1, DoubleReal y1, DoubleReal x2, DoubleReal y2 ) const
 		{
-			return pow(x1-x2,2) + pow(y1-y2,2); // TODO: check if pow(x,2) is really faster than x*x  (as claimed by AnHi)
+			DoubleReal tmpx = x1-x2;
+			tmpx *= tmpx;
+			DoubleReal tmpy = y1-y2;
+			tmpy *= tmpy;
+			return tmpx + tmpy;
 		}
 		
 		//docu in base class

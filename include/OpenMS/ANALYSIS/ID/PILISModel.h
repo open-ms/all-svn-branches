@@ -28,20 +28,19 @@
 #ifndef OPENMS_ANALYSIS_ID_PILISMODEL_H
 #define OPENMS_ANALYSIS_ID_PILISMODEL_H
 
-//#include <OpenMS/CHEMISTRY/Residue.h>
 #include <vector>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/DATASTRUCTURES/Map.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/ANALYSIS/ID/HiddenMarkovModel.h>
-#include <OpenMS/ANALYSIS/ID/HiddenMarkovModelLight.h>
 #include <OpenMS/ANALYSIS/ID/ProtonDistributionModel.h>
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
-//#include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignment.h>
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
+#include <OpenMS/ANALYSIS/ID/PILISNeutralLossModel.h>
+
 
 namespace OpenMS 
 {
@@ -54,14 +53,13 @@ namespace OpenMS
 		from a peptide. The spectrum generator can be accessed via the getSpectrum
 		method.
 		 
-		@ref PILISModel_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_PILISModel.parameters
 
 		@ingroup Analysis_ID
 	*/	
-	class PILISModel : public DefaultParamHandler
+	class PILISModel
+		: public DefaultParamHandler
 	{
-		friend class PILISModelGenerator;
-
 		public:
 						
 			/** @name Constructors and destructors
@@ -99,29 +97,27 @@ namespace OpenMS
 			*/			 
 			void writeToFile(const String& filename);
 
+
+			// 
+			void init(bool generate_models = true);
+			
 			/// greedy specturm aligner, should be replaced by a better algorithm
 			//void getSpectrumAlignment(Map<UInt, UInt>& peak_map, const PeakSpectrum& spec1, const PeakSpectrum& spec2);
 
 			/// simulates a spectrum with the model of the given peptide and charge and writes it to the given PeakSpectrum
 			void getSpectrum(RichPeakSpectrum& spec, const AASequence& peptide, UInt charge);
 
+			/// sets the main hidden Markov model
+			void setHMM(const HiddenMarkovModel& model);
+
+			/// set the precursor hidden Markov model
+			void setPrecursorHMM(const HiddenMarkovModel& model);
+			
 			/// this method evaluates the model after training; it should be called after all training steps with train
 			void evaluate();
 			//@}
 
 		protected:
-
-			/// enumerates the basic loss types implemented
-			enum NeutralLossType_
-			{
-				LOSS_TYPE_H2O = 0,
-				LOSS_TYPE_NH3,
-				LOSS_TYPE_NONE,
-				LOSS_TYPE_NH2CHNH,
-				LOSS_TYPE_CO,
-				LOSS_TYPE_H2O_H2O,
-				LOSS_TYPE_H2O_NH3
-			};
 
 			/// enumeration of the basic ion types used
 			enum IonType_
@@ -136,107 +132,23 @@ namespace OpenMS
 				YIon_NH3
 			};
 			
-			/// describes precursor and related peaks
-			struct PrecursorPeaks_
-			{
-				double pre;
-				double pre_H2O;
-				double pre_NH3;
-				double pre_H2O_H2O;
-				double pre_H2O_NH3;
-				double pre_NH2CHNH;
-			};
-		
 			/// describes ions peaks and the relatives of them
 			struct IonPeaks_
 			{
 				Map<IonType_, std::vector<double> > ints;
 			};
 			
-			/// initializes the model
-			void initModels_();
-	
-			/// the states of the precursor and loss states
-			enum States_
-			{							
-				PRE_MH = 0,
-				PRE_MH_H2O,
-				PRE_MH_NH3,
-				PRE_MH_NH2CHNH,
-				PRE_END,
-				PRE_ION,
-				PRE_BASE1,
-				PRE_BASE2,
-				PRE_H2O_S,
-				PRE_H2O_T,
-				PRE_H2O_E,
-				PRE_H2O_D,
-				PRE_H2O_Q1,
-				PRE_H2O_CTERM,
-				PRE_NH3_K,
-				PRE_NH3_R,
-				PRE_NH3_Q,
-				PRE_NH3_N,
-				PRE_NH2CHNH_R,
-				B_H2O,
-				B_NH3,
-				B_LOSS_END,
-				B_ION,
-				B_BASE1,
-				B_BASE2,
-				B_H2O_S,
-				B_H2O_T,
-				B_H2O_E,
-				B_H2O_D,
-				B_H2O_Q1,
-				B_NH3_K,
-				B_NH3_R,
-				B_NH3_Q,
-				B_NH3_N,
-				B_CO,
-				A_ION,
-        Y_H2O,
-        Y_NH3,
-        Y_LOSS_END,
-        Y_ION,
-        Y_BASE1,
-        Y_BASE2,
-        Y_H2O_S,
-        Y_H2O_T,
-        Y_H2O_E,
-        Y_H2O_D,
-				Y_H2O_Q1,
-				Y_H2O_CTERM,
-        Y_NH3_K,
-        Y_NH3_R,
-				Y_NH3_Q,
-				Y_NH3_N
-      };			
-
-			
-			/// extracts the precursor and related intensities of a training spectrum
-			void getPrecursorIntensitiesFromSpectrum_(const RichPeakSpectrum& train_spec, PrecursorPeaks_& pre_ints, double peptide_weight, UInt charge);
-
 			/// extracts the ions intensities of a training spectrum
 			double getIntensitiesFromSpectrum_(const RichPeakSpectrum& train_spec, IonPeaks_& ion_ints, const AASequence& peptide, UInt charge);
 
 			/// aligns two spectra a writes the intensities from the first which matches the second to the vector
 			double getIntensitiesFromComparison_(const RichPeakSpectrum& train_spec, const RichPeakSpectrum& theo_spec, std::vector<double>& intensities);
 
-			/// trains precursor and related peaks
-			void trainPrecursorIons_(double initial_probability, const PrecursorPeaks_& intensities, const AASequence& peptide, bool Q_only);
-
 			/// trains neutral losses an related peaks
-			void trainNeutralLossesFromIon_(double initial_probability, const Map<NeutralLossType_, double>& intensities, IonType_ ion_type, double ion_intensity, const AASequence& ion);
-
-			/// estimates the precursor intensities 
-			void getPrecursorIons_(Map<NeutralLossType_, double>& intensities, double initial_probability, const AASequence& precursor, bool Q_only);
+			void trainNeutralLossesFromIon_(double initial_probability, const Map<String, double>& intensities, IonType_ ion_type, double ion_intensity, const AASequence& ion);
 
 			/// estimates the neutral losses of an ion
-			void getNeutralLossesFromIon_(Map<NeutralLossType_, double>& intensities, double initial_probability, IonType_ ion_type, const AASequence& ion);
-
-			/// enables the states needed for precursor training/simulation
-			void enablePrecursorIonStates_(const AASequence& peptide, bool Q_only);
+			void getNeutralLossesFromIon_(Map<String, double>& intensities, double initial_probability, IonType_ ion_type, const AASequence& ion);
 
 			/// enables the states needed for neutral loss training/simulation
 			void enableNeutralLossStates_(IonType_ ion_type, const AASequence& ion);
@@ -249,41 +161,22 @@ namespace OpenMS
 																							const Map<UInt, double>& sc_charges,
 																							const AASequence& peptide);
 
+			double getAvailableBackboneCharge_(const AASequence& ion, Residue::ResidueType res_type, int charge);
+
 			/// add peaks to spectrum
 			void addPeaks_(double mz, int charge, double mz_offset, double intensity, RichPeakSpectrum& spectrum, const IsotopeDistribution& id, const String& name);
 		
 			/// parse the base model
 			void parseHMMModel_(const TextFile::ConstIterator& begin, const TextFile::ConstIterator& end, HiddenMarkovModel& hmm);
-			
-			/// parse model file of losses and precursor models
-			void parseHMMLightModel_(const TextFile::ConstIterator& begin, const TextFile::ConstIterator& end, HiddenMarkovModelLight& model);
-
+		
 			/// base model used
 			HiddenMarkovModel hmm_;
-
-			/// precursor model used
-			HiddenMarkovModelLight hmm_precursor_;
-
-			/// loss models used
-			Map<IonType_, HiddenMarkovModelLight> hmms_losses_;
-
-			HiddenMarkovModel hmm_yloss_;
-
-			HiddenMarkovModel hmm_bloss_;
-
-			HiddenMarkovModel hmm_pre_loss_;
 
 			/// proton distribution model
 			ProtonDistributionModel prot_dist_;
 
 			/// theoretical spectrum generator (needed for training/aligning and spectrum intensity extraction)
 			TheoreticalSpectrumGenerator tsg_;
-
-			/// name to enum mapping of the losses/precursor states
-			Map<String, States_> name_to_enum_;
-
-			/// enum to name mapping of the losses/precursor states
-			Map<States_, String> enum_to_name_;
 
 			/// true if the instance is valid
 			bool valid_;
@@ -293,6 +186,23 @@ namespace OpenMS
 
 			/// the alignment algorithm used
 			SpectrumAlignment spectra_aligner_;
+
+			/// precursor model used
+			PILISNeutralLossModel precursor_model_cr_;
+
+			PILISNeutralLossModel precursor_model_cd_;
+
+			PILISNeutralLossModel a_ion_losses_cr_;
+			PILISNeutralLossModel a_ion_losses_cd_;
+			
+			PILISNeutralLossModel b_ion_losses_cr_;
+			PILISNeutralLossModel b_ion_losses_cd_;
+
+			PILISNeutralLossModel b2_ion_losses_cr_;
+			PILISNeutralLossModel b2_ion_losses_cd_;
+			
+			PILISNeutralLossModel y_ion_losses_cr_;
+			PILISNeutralLossModel y_ion_losses_cd_;
 
 			void updateMembers_();
 	};

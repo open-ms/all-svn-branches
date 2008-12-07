@@ -56,7 +56,7 @@ namespace OpenMS
 	}
 	
 	void MascotInfile::store(const String& filename,
-													const DPeakArray<Peak1D>& spec, 
+													const PeakSpectrum& spec, 
 													DoubleReal mz ,
 													DoubleReal retention_time, 
 													String search_title)		
@@ -226,7 +226,7 @@ namespace OpenMS
 	
 	void MascotInfile::writeSpectrum_(FILE* fp, 
 																		const String& filename,
-																		const DPeakArray<Peak1D>& peaks)
+																		const PeakSpectrum& peaks)
 	{
 		stringstream ss;
 
@@ -263,7 +263,7 @@ namespace OpenMS
 			ss << retention_time_;
 			fputs(String("RTINSECONDS=" + ss.str() + "\n").c_str(),fp);				
 
-			for (DPeakArray<Peak1D>::const_iterator it = peaks.begin() ; it != peaks.end();++it)
+			for (PeakSpectrum::const_iterator it = peaks.begin() ; it != peaks.end();++it)
 			{
 				//mass
 				ss.str("");
@@ -288,7 +288,6 @@ namespace OpenMS
 		stringstream ss;
 		MSSpectrum<>::PrecursorPeakType precursor_peak;
 		DPosition< 1 >::CoordinateType precursor_position;
-		MSSpectrum<>::ContainerType peaks;
 		
 		fputs ("\n--",fp);
 		fputs (boundary_.c_str(),fp);
@@ -298,7 +297,7 @@ namespace OpenMS
 
 		for(UInt i = 0; i < experiment.size(); i++)
 		{
-			peaks = experiment[i].getContainer();
+			MSSpectrum<> peaks = experiment[i];
 			peaks.sortByPosition();
 			precursor_peak = experiment[i].getPrecursorPeak();
 			precursor_position = experiment[i].getPrecursorPeak().getPosition()[0];
@@ -352,7 +351,7 @@ namespace OpenMS
 					}
 					fputs("\n",fp);
 							
-					for (DPeakArray<Peak1D>::iterator it = peaks.begin(); 
+					for (PeakSpectrum::iterator it = peaks.begin(); 
 							 it != peaks.end();
 							 ++it)
 					{
@@ -632,21 +631,34 @@ namespace OpenMS
 						// test if we have a line like "TITLE= Cmpd 1, +MSn(595.3), 10.9 min"
 						if (line.hasSubstring("min"))
 						{
-							vector<String> split;
-							line.split(',', split);
-							if (split.size() > 0)
+							try 
 							{
-								for (UInt i = 0; i != split.size(); ++i)
+								vector<String> split;
+								line.split(',', split);
+								if (split.size() > 0)
 								{
-									if (split[i].hasSubstring("min"))
+									for (UInt i = 0; i != split.size(); ++i)
 									{
-										vector<String> split2;
-										split[i].trim().split(' ', split2);
-										if (split2.size() > 0)
+										if (split[i].hasSubstring("min"))
 										{
-											rt = split2[0].trim().toDouble() * 60.0;
+											vector<String> split2;
+											split[i].trim().split(' ', split2);
+											if (split2.size() > 0)
+											{
+												rt = split2[0].trim().toDouble() * 60.0;
+											}
 										}
 									}
+								}
+							}
+							catch (Exception::BaseException& /*e*/)
+							{
+								// just do nothing and write the whole title to spec
+								vector<String> split;
+								line.split('=', split);
+								if (split.size() >= 2)
+								{
+									title = split[1];
 								}
 							}
 						}
@@ -654,7 +666,7 @@ namespace OpenMS
 						{
 							vector<String> split;
 							line.split('=', split);
-							if (split.size() == 2)
+							if (split.size() >= 2)
 							{
 								title = split[1];
 							}

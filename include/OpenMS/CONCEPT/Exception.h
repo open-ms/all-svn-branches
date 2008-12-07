@@ -252,6 +252,23 @@ namespace OpenMS
 		};
 
 		/**	
+			@brief A call to an external library (other than OpenMS) went wrong.
+
+			Throw this exception to indicate that an external library call came
+			back unsuccessfull.
+
+			@param	size the size causing the problem
+
+			@ingroup Exceptions
+		*/
+		class FailedAPICall 
+			: public BaseException
+		{
+			public:
+			  FailedAPICall(const char* file, int line, const char* function, const std::string& message) throw();
+		};
+		
+		/**	
 			@brief Invalid range exception.
 
 			Use this exception to indicate a general range problems.
@@ -345,7 +362,7 @@ namespace OpenMS
 		/**	
 			@brief Illegal self operation exception.	
 				
-			Throw this excpetion to indicate an invalid operation on the object
+			Throw this exception to indicate an invalid operation on the object
 			itself. In general these operations are self assignments or related
 			methods.
 
@@ -511,6 +528,20 @@ namespace OpenMS
 				FileNotReadable(const char* file, int line, const char* function, const std::string& filename) throw();
 		};
 
+		/** 
+		  @brief File not writable exception.
+
+			A given file is not writable for the current user.
+
+			@ingroup Exceptions
+		*/
+	 	class FileNotWritable
+			: public BaseException
+		{
+			public:
+				FileNotWritable(const char* file, int line, const char* function, const std::string& filename) throw();
+		};
+
 		/**	
 			@brief File is empty.
 
@@ -593,6 +624,35 @@ namespace OpenMS
 				ElementNotFound(const char* file, int line, const char* function, const std::string& element)	throw();
 		};
 
+		/**	
+			@brief Exception used if an error occurred while fitting a model to a given dataset
+			
+			The given element could not be found. 
+
+			@ingroup Exceptions
+		*/			
+		class UnableToFit
+			: public BaseException
+		{
+			public:
+				UnableToFit(const char* file, int line, const char* function, const std::string& name , const std::string& message) throw();
+		};
+
+		/**	
+			@brief Exception used if an error occurred while calibrating a dataset.
+				
+			The calibration can not be performed because not enough reference masses
+					were detected.
+				
+			@ingroup Exceptions
+		*/			
+		class UnableToCalibrate
+			: public BaseException
+		{
+		public:
+			UnableToCalibrate(const char* file, int line, const char* function, const std::string& name , const std::string& message) throw();
+		};
+		
 
 		/**
 			@brief OpenMS global exception handler

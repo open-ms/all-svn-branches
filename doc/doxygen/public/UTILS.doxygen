@@ -39,4 +39,15 @@
 	- @subpage Digestor
   - @subpage FuzzyDiff
   - @subpage FFEval
+  - @subpage LabeledEval
+  - @subpage HistView
+  - @subpage IdXMLInfo
+  - @subpage CVInspector
+  - @subpage RTEvaluation
+	- @subpage SequenceCoverageCalculator 
+  - @subpage IDExtractor
+	- @subpage SemanticValidator
+	- @subpage DecoyDatabase
+	- @subpage CaapConvert
+
 */

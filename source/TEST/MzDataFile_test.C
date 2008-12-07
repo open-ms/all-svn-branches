@@ -33,7 +33,7 @@
 using namespace OpenMS;
 using namespace std;
 
-DRange<1> makeRange(float a, float b)
+DRange<1> makeRange(Real a, Real b)
 {
 	DPosition<1> pa(a), pb(b);
 	return DRange<1>(pa, pb);
@@ -47,99 +47,51 @@ START_TEST(MzDataFile, "$Id$")
 /////////////////////////////////////////////////////////////
 
 MzDataFile* ptr = 0;
-CHECK((MzDataFile()))
+START_SECTION((MzDataFile()))
 	ptr = new MzDataFile;
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((~MzDataFile()))
+START_SECTION((~MzDataFile()))
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK(const PeakFileOptions& getOptions() const)
+START_SECTION(const PeakFileOptions& getOptions() const)
 	MzDataFile file;
 	TEST_EQUAL(file.getOptions().hasMSLevels(),false)
-RESULT
+END_SECTION
 
-CHECK(PeakFileOptions& getOptions())
+START_SECTION(PeakFileOptions& getOptions())
 	MzDataFile file;
 	file.getOptions().addMSLevel(1);
 	TEST_EQUAL(file.getOptions().hasMSLevels(),true);
-RESULT
+END_SECTION
 
-CHECK((template<typename MapType> void load(const String& filename, MapType& map) ))
-	PRECISION(0.01)
+START_SECTION((template<typename MapType> void load(const String& filename, MapType& map) ))
+	TOLERANCE_ABSOLUTE(0.01)
 
-  //---------------------------------------------------------------------------
-  // test with DPeak (only peak data is tested, no meta data)
-  //---------------------------------------------------------------------------
-
-	MSExperiment< Peak1D > e2;
-	MzDataFile mzdata;
-	
-	//test exception
-	TEST_EXCEPTION( Exception::FileNotFound , mzdata.load("dummy/dummy.MzData",e2) )
-	
-	// real test
-	mzdata.load("data/MzDataFile_test_1.mzData",e2);
-  //---------------------------------------------------------------------------
-  // 60 : (120,100)
-  // 120: (110,100) (120,200) (130,100)
-  // 180: (100,100) (110,200) (120,300) (130,200) (140,100)
-	//--------------------------------------------------------------------------- 
-  TEST_EQUAL(e2.size(), 3)
-
-	TEST_EQUAL(e2[0].getContainer().size(), 1)
-	TEST_EQUAL(e2[1].getContainer().size(), 3)
-	TEST_EQUAL(e2[2].getContainer().size(), 5)
-
-	TEST_REAL_EQUAL(e2[0].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e2[0].getContainer()[0].getIntensity(), 100)
-
-	TEST_REAL_EQUAL(e2[1].getContainer()[0].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e2[1].getContainer()[0].getIntensity(), 100)
-
-	TEST_REAL_EQUAL(e2[1].getContainer()[1].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e2[1].getContainer()[1].getIntensity(), 200)
-
-	TEST_REAL_EQUAL(e2[1].getContainer()[2].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e2[1].getContainer()[2].getIntensity(), 100)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[0].getPosition()[0], 100)
-	TEST_REAL_EQUAL(e2[2].getContainer()[0].getIntensity(), 100)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[1].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e2[2].getContainer()[1].getIntensity(), 200)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[2].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e2[2].getContainer()[2].getIntensity(), 300)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[3].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e2[2].getContainer()[3].getIntensity(), 200)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[4].getPosition()[0], 140)
-	TEST_REAL_EQUAL(e2[2].getContainer()[4].getIntensity(), 100)
-
-  //---------------------------------------------------------------------------
-  // test with Peak1D
-  //---------------------------------------------------------------------------
+	MzDataFile file;
 	MSExperiment<> e;
 
 	// real test
-	mzdata.load("data/MzDataFile_test_1.mzData",e);
+	file.load("data/MzDataFile_1.mzData",e);
   //---------------------------------------------------------------------------
   // 60 : (120,100)
   // 120: (110,100) (120,200) (130,100)
   // 180: (100,100) (110,200) (120,300) (130,200) (140,100) 
 	//--------------------------------------------------------------------------- 
   TEST_EQUAL(e.size(), 3)
-	TEST_REAL_EQUAL(e[0].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e[1].getMSLevel(), 2)
-	TEST_REAL_EQUAL(e[2].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e[0].getRT(), 60)
-	TEST_REAL_EQUAL(e[1].getRT(), 120)
-	TEST_REAL_EQUAL(e[2].getRT(), 180)
+	TEST_REAL_SIMILAR(e[0].getMSLevel(), 1)
+	TEST_REAL_SIMILAR(e[1].getMSLevel(), 2)
+	TEST_REAL_SIMILAR(e[2].getMSLevel(), 1)
+	TEST_REAL_SIMILAR(e[0].getRT(), 60)
+	TEST_REAL_SIMILAR(e[1].getRT(), 120)
+	TEST_REAL_SIMILAR(e[2].getRT(), 180)
+	TEST_STRING_EQUAL(e[0].getNativeID(),"spectrum=10")
+	TEST_STRING_EQUAL(e[1].getNativeID(),"spectrum=11")
+	TEST_STRING_EQUAL(e[2].getNativeID(),"spectrum=12")
 	TEST_EQUAL(e[0].getType(), SpectrumSettings::UNKNOWN)
+	TEST_EQUAL(e.getNativeIDType(),ExperimentalSettings::SPECTRUM_IDENTIFIER)
 
 	TEST_EQUAL(e[0].getMetaDataArrays()[0].getSourceFile().getNameOfFile(),"area.raw")
 	TEST_EQUAL(e[0].getMetaDataArrays()[0].getSourceFile().getPathToFile(),"/share/data/")
@@ -190,7 +142,7 @@ CHECK((template<typename MapType> void load(const String& filename, MapType& map
 	TEST_EQUAL(e[0].getMetaDataArrays()[7].getMetaValue("URL"),"www.open-ms.de")
 	TEST_EQUAL(e[0].getMetaDataArrays()[7].getMetaValue("Comment"),"Peak shape")
 
-	TEST_EQUAL(e[1].getPrecursorPeak().getPosition()[0], 1.2f)
+	TEST_EQUAL(e[1].getPrecursorPeak().getPosition()[0], 1.2)
 	TEST_EQUAL(e[1].getPrecursorPeak().getCharge(), 2)
 	TEST_EQUAL(e[1].getPrecursorPeak().getIntensity(), 2.3f)
 	TEST_EQUAL(e[1].getPrecursorPeak().getMetaValue("#IntensityUnits"),
@@ -198,7 +150,7 @@ CHECK((template<typename MapType> void load(const String& filename, MapType& map
 	TEST_EQUAL(e[1].getPrecursorPeak().getMetaValue("URL"), "www.open-ms.de")
 	TEST_EQUAL(e[1].getPrecursorPeak().getMetaValue("IonSelectionComment"), "selected")
 	TEST_EQUAL(e[1].getPrecursor().getActivationMethod(), Precursor::CID)
-	TEST_EQUAL(e[1].getPrecursor().getActivationEnergy(), 3.4f)
+	TEST_EQUAL(e[1].getPrecursor().getActivationEnergy(), 3.4)
 	TEST_EQUAL(e[1].getPrecursor().getActivationEnergyUnit(), Precursor::PERCENT)
 	TEST_EQUAL(e[1].getPrecursor().getMetaValue("URL"), "www.open-ms.de")
 	TEST_EQUAL(e[1].getPrecursor().getMetaValue("ActivationComment"), "active")
@@ -211,16 +163,18 @@ CHECK((template<typename MapType> void load(const String& filename, MapType& map
 	TEST_EQUAL(e[2].getInstrumentSettings().metaValueExists("SpecComment"), false)
 	TEST_EQUAL(e[0].getInstrumentSettings().getScanMode(), InstrumentSettings::FULL)
 	TEST_EQUAL(e[1].getInstrumentSettings().getScanMode(), InstrumentSettings::FULL)
-	TEST_EQUAL(e[2].getInstrumentSettings().getScanMode(), InstrumentSettings::ZOOM)
+	TEST_EQUAL(e[2].getInstrumentSettings().getScanMode(), InstrumentSettings::SIM)
 	TEST_EQUAL(e[0].getInstrumentSettings().getPolarity(), IonSource::POSITIVE)
 	TEST_EQUAL(e[1].getInstrumentSettings().getPolarity(), IonSource::POSITIVE)
 	TEST_EQUAL(e[2].getInstrumentSettings().getPolarity(), IonSource::NEGATIVE)
-	TEST_REAL_EQUAL(e[0].getInstrumentSettings().getMzRangeStart(), 0)
-	TEST_REAL_EQUAL(e[1].getInstrumentSettings().getMzRangeStart(), 110)
-	TEST_REAL_EQUAL(e[2].getInstrumentSettings().getMzRangeStart(), 100)
-	TEST_REAL_EQUAL(e[0].getInstrumentSettings().getMzRangeStop(), 0)
-	TEST_REAL_EQUAL(e[1].getInstrumentSettings().getMzRangeStop(), 130)
-	TEST_REAL_EQUAL(e[2].getInstrumentSettings().getMzRangeStop(), 140)
+	TEST_EQUAL(e[0].getInstrumentSettings().getScanWindows().size(), 0)
+	TEST_EQUAL(e[1].getInstrumentSettings().getScanWindows().size(), 1)
+	TEST_REAL_SIMILAR(e[1].getInstrumentSettings().getScanWindows()[0].begin, 110)
+	TEST_REAL_SIMILAR(e[1].getInstrumentSettings().getScanWindows()[0].end, 0)
+	TEST_EQUAL(e[2].getInstrumentSettings().getScanWindows().size(), 1)
+	TEST_REAL_SIMILAR(e[2].getInstrumentSettings().getScanWindows()[0].begin, 100)
+	TEST_REAL_SIMILAR(e[2].getInstrumentSettings().getScanWindows()[0].end, 140)
+
 
 
 	TEST_EQUAL(e[0].getAcquisitionInfo().size(), 0)
@@ -243,9 +197,9 @@ CHECK((template<typename MapType> void load(const String& filename, MapType& map
 	TEST_EQUAL(e[2].getAcquisitionInfo().getMethodOfCombination(), "average")
 	TEST_EQUAL(e[2].getAcquisitionInfo()[0].getNumber(), 601)
 
-	TEST_EQUAL(e[0].getContainer().size(), 1)
-	TEST_EQUAL(e[1].getContainer().size(), 3)
-	TEST_EQUAL(e[2].getContainer().size(), 5)
+	TEST_EQUAL(e[0].size(), 1)
+	TEST_EQUAL(e[1].size(), 3)
+	TEST_EQUAL(e[2].size(), 5)
  
 //	0) r_value
 //  1) area
@@ -256,111 +210,119 @@ CHECK((template<typename MapType> void load(const String& filename, MapType& map
 //  5) type
 //  6) signal_to_noise
 
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[1][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[2][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[4][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[3][0], 100)
+	TEST_REAL_SIMILAR(e[0][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[0][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[0].getMetaDataArrays()[1][0], 100)
+	TEST_REAL_SIMILAR(e[0].getMetaDataArrays()[2][0], 100)
+	TEST_REAL_SIMILAR(e[0].getMetaDataArrays()[4][0], 100)
+	TEST_REAL_SIMILAR(e[0].getMetaDataArrays()[3][0], 100)
 	TEST_EQUAL(e[0].getMetaDataArrays()[5][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[0][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[7][0], 100)
+	TEST_REAL_SIMILAR(e[0].getMetaDataArrays()[0][0], 100)
+	TEST_REAL_SIMILAR(e[0].getMetaDataArrays()[7][0], 100)
 	TEST_EQUAL(e[0].getMetaDataArrays()[6][0], 100)
 
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[1][0], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[2][0], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[4][0], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[3][0], 100)
+	TEST_REAL_SIMILAR(e[1][0].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e[1][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[1][0], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[2][0], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[4][0], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[3][0], 100)
 	TEST_EQUAL(e[1].getMetaDataArrays()[5][0], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[0][0], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[7][0], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[0][0], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[7][0], 100)
 	TEST_EQUAL(e[1].getMetaDataArrays()[6][0], 100)
 
-	TEST_REAL_EQUAL(e[1].getContainer()[1].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[1].getContainer()[1].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[1][1], 200)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[2][1], 200)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[4][1], 200)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[3][1], 200)
+	TEST_REAL_SIMILAR(e[1][1].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[1][1].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[1][1], 200)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[2][1], 200)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[4][1], 200)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[3][1], 200)
 	TEST_EQUAL(e[1].getMetaDataArrays()[5][1], 200)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[0][1], 200)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[7][1], 200)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[0][1], 200)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[7][1], 200)
 	TEST_EQUAL(e[1].getMetaDataArrays()[6][1], 200)
 
-	TEST_REAL_EQUAL(e[1].getContainer()[2].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[1].getContainer()[2].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[1][2], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[2][2], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[4][2], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[3][2], 100)
+	TEST_REAL_SIMILAR(e[1][2].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[1][2].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[1][2], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[2][2], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[4][2], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[3][2], 100)
 	TEST_EQUAL(e[1].getMetaDataArrays()[5][2], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[0][2], 100)
-	TEST_REAL_EQUAL(e[1].getMetaDataArrays()[7][2], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[0][2], 100)
+	TEST_REAL_SIMILAR(e[1].getMetaDataArrays()[7][2], 100)
 	TEST_EQUAL(e[1].getMetaDataArrays()[6][2], 100)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getPosition()[0], 100)
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[1][0], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[2][0], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[4][0], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[3][0], 100)
+	TEST_REAL_SIMILAR(e[2][0].getPosition()[0], 100)
+	TEST_REAL_SIMILAR(e[2][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[1][0], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[2][0], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[4][0], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[3][0], 100)
 	TEST_EQUAL(e[2].getMetaDataArrays()[5][0], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[0][0], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[7][0], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[0][0], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[7][0], 100)
 	TEST_EQUAL(e[2].getMetaDataArrays()[6][0], 100)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[1][1], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[2][1], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[4][1], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[3][1], 200)
+	TEST_REAL_SIMILAR(e[2][1].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e[2][1].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[1][1], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[2][1], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[4][1], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[3][1], 200)
 	TEST_EQUAL(e[2].getMetaDataArrays()[5][1], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[0][1], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[7][1], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[0][1], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[7][1], 200)
 	TEST_EQUAL(e[2].getMetaDataArrays()[6][1], 200)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[2].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[2].getContainer()[2].getIntensity(), 300)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[1][2], 300)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[2][2], 300)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[4][2], 300)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[3][2], 300)
+	TEST_REAL_SIMILAR(e[2][2].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[2][2].getIntensity(), 300)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[1][2], 300)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[2][2], 300)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[4][2], 300)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[3][2], 300)
 	TEST_EQUAL(e[2].getMetaDataArrays()[5][2], 300)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[0][2], 300)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[7][2], 300)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[0][2], 300)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[7][2], 300)
 	TEST_EQUAL(e[2].getMetaDataArrays()[6][2], 300)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[3].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[2].getContainer()[3].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[1][3], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[2][3], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[4][3], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[3][3], 200)
+	TEST_REAL_SIMILAR(e[2][3].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[2][3].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[1][3], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[2][3], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[4][3], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[3][3], 200)
 	TEST_EQUAL(e[2].getMetaDataArrays()[5][3], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[0][3], 200)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[7][3], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[0][3], 200)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[7][3], 200)
 	TEST_EQUAL(e[2].getMetaDataArrays()[6][3], 200)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[4].getPosition()[0], 140)
-	TEST_REAL_EQUAL(e[2].getContainer()[4].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[1][4], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[2][4], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[4][4], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[3][4], 100)
+	TEST_REAL_SIMILAR(e[2][4].getPosition()[0], 140)
+	TEST_REAL_SIMILAR(e[2][4].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[1][4], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[2][4], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[4][4], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[3][4], 100)
 	TEST_EQUAL(e[2].getMetaDataArrays()[5][4], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[0][4], 100)
-	TEST_REAL_EQUAL(e[2].getMetaDataArrays()[7][4], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[0][4], 100)
+	TEST_REAL_SIMILAR(e[2].getMetaDataArrays()[7][4], 100)
 	TEST_EQUAL(e[2].getMetaDataArrays()[6][4], 100)
 
   //---------------------------------------------------------------------------
-  // const SourceFile& getSourceFile() const;
+  // accessionNumber
   //---------------------------------------------------------------------------
-  TEST_EQUAL(e.getSourceFile().getNameOfFile(), "MzDataFile_test_1.raw");
-  TEST_EQUAL(e.getSourceFile().getPathToFile(), "/share/data/");
-  TEST_EQUAL(e.getSourceFile().getFileType(), "MS");
+	TEST_EQUAL(e.getIdentifier(),"lsid");
+  
+  //---------------------------------------------------------------------------
+  // const vector<SourceFile>& getSourceFiles() const;
+  //---------------------------------------------------------------------------
+  TEST_EQUAL(e.getSourceFiles().size(),1)
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getNameOfFile(), "MzDataFile_test_1.raw");
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getPathToFile(), "/share/data/");
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getFileType(), "MS");
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getChecksum(), "");
+  TEST_EQUAL(e.getSourceFiles()[0].getChecksumType(), SourceFile::UNKNOWN);
 
   //---------------------------------------------------------------------------
   // const std::vector<ContactPerson>& getContacts() const;
@@ -377,23 +339,16 @@ CHECK((template<typename MapType> void load(const String& filename, MapType& map
   TEST_EQUAL(e.getContacts()[1].getContactInfo(), "www.jane.doe");
 
   //---------------------------------------------------------------------------
-  // const Software& getSoftware() const;
+  // const DataProcessing& getDataProcessing() const;
   //---------------------------------------------------------------------------
-  TEST_EQUAL(e.getSoftware().getName(), "MS-X");
-  TEST_EQUAL(e.getSoftware().getVersion(), "1.0");
-  TEST_EQUAL(e.getSoftware().getComment(), "none");
-	String tmp;
-	e.getSoftware().getCompletionTime().get(tmp);
-  TEST_EQUAL(tmp, "2001-02-03 04:05:06");
+  TEST_EQUAL(e.getDataProcessing().size(), 1)
+	TEST_EQUAL(e.getDataProcessing()[0].getMetaValue("URL"), "www.open-ms.de")
+	TEST_EQUAL(e.getDataProcessing()[0].getMetaValue("comment"), "ProcessingComment")
+	TEST_EQUAL(e.getDataProcessing()[0].getMetaValue("#comment"), "SoftwareComment")
+  TEST_EQUAL(e.getDataProcessing()[0].getCompletionTime().get(), "2001-02-03 04:05:06");
 
-  //---------------------------------------------------------------------------
-  // const ProcessingMethod& getProcessingMethod() const;
-  //---------------------------------------------------------------------------
-  TEST_EQUAL(e.getProcessingMethod().getDeisotoping(), false)
-	TEST_EQUAL(e.getProcessingMethod().getChargeDeconvolution(), false)
-	TEST_EQUAL(e.getProcessingMethod().getSpectrumType(), SpectrumSettings::PEAKS)
-	TEST_EQUAL(e.getProcessingMethod().getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(e.getProcessingMethod().getMetaValue("ProcessingComment"), "Processed")
+  TEST_EQUAL(e.getDataProcessing()[0].getSoftware().getName(), "MS-X");
+  TEST_EQUAL(e.getDataProcessing()[0].getSoftware().getVersion(), "1.0");
 
   //---------------------------------------------------------------------------
   // const Instrument& getInstrument() const;
@@ -405,53 +360,53 @@ CHECK((template<typename MapType> void load(const String& filename, MapType& map
 	TEST_EQUAL(inst.getCustomizations(), "tuned")
 	TEST_EQUAL(inst.getMetaValue("URL"), "www.open-ms.de")
 	TEST_EQUAL(inst.getMetaValue("AdditionalComment"), "Additional")
-	TEST_EQUAL(inst.getIonSource().getIonizationMethod(), IonSource::ESI)
-	TEST_EQUAL(inst.getIonSource().getInletType(), IonSource::DIRECT)
-	TEST_EQUAL(inst.getIonSource().getPolarity(), IonSource::NEGATIVE) 
-	TEST_EQUAL(inst.getIonSource().getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(inst.getIonSource().getMetaValue("SourceComment"), "Source")
-	TEST_EQUAL(inst.getIonDetector().getType(), IonDetector::FARADAYCUP)
-	TEST_EQUAL(inst.getIonDetector().getAcquisitionMode(), IonDetector::TDC)
-	TEST_EQUAL(inst.getIonDetector().getResolution(), 0.815f)
-	TEST_EQUAL(inst.getIonDetector().getADCSamplingFrequency(), 11.22f)
-	TEST_EQUAL(inst.getIonDetector().getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(inst.getIonDetector().getMetaValue("DetectorComment"), "Detector")
+	TEST_EQUAL(inst.getIonSources().size(),1)
+	TEST_EQUAL(inst.getIonSources()[0].getIonizationMethod(), IonSource::ESI)
+	TEST_EQUAL(inst.getIonSources()[0].getInletType(), IonSource::DIRECT)
+	TEST_EQUAL(inst.getIonSources()[0].getPolarity(), IonSource::NEGATIVE) 
+	TEST_EQUAL(inst.getIonSources()[0].getMetaValue("URL"), "www.open-ms.de")
+	TEST_EQUAL(inst.getIonSources()[0].getMetaValue("SourceComment"), "Source")
+	TEST_EQUAL(inst.getIonDetectors().size(),1)
+	TEST_EQUAL(inst.getIonDetectors()[0].getType(), IonDetector::FARADAYCUP)
+	TEST_EQUAL(inst.getIonDetectors()[0].getAcquisitionMode(), IonDetector::TDC)
+	TEST_EQUAL(inst.getIonDetectors()[0].getResolution(), 0.815)
+	TEST_EQUAL(inst.getIonDetectors()[0].getADCSamplingFrequency(), 11.22)
+	TEST_EQUAL(inst.getIonDetectors()[0].getMetaValue("URL"), "www.open-ms.de")
+	TEST_EQUAL(inst.getIonDetectors()[0].getMetaValue("DetectorComment"), "Detector")
   TEST_EQUAL(inst.getMassAnalyzers().size(), 2)
   ABORT_IF(inst.getMassAnalyzers().size()!=2);
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getType(), MassAnalyzer::PAULIONTRAP)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionMethod(), MassAnalyzer::FWHM)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionType(), MassAnalyzer::CONSTANT)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanFunction(), MassAnalyzer::MASSSCAN)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanDirection(), MassAnalyzer::UP)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanLaw(), MassAnalyzer::LINEAR)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getTandemScanMethod(), MassAnalyzer::PRECURSORIONSCAN)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getReflectronState(), MassAnalyzer::OFF)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getResolution(), 22.33f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getAccuracy(), 33.44f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanRate(), 44.55f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanTime(), 55.66f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getTOFTotalPathLength(), 66.77f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getIsolationWidth(), 77.88f)
+	TEST_EQUAL(inst.getMassAnalyzers()[0].getResolution(), 22.33)
+	TEST_EQUAL(inst.getMassAnalyzers()[0].getAccuracy(), 33.44)
+	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanRate(), 44.55)
+	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanTime(), 55.66)
+	TEST_EQUAL(inst.getMassAnalyzers()[0].getTOFTotalPathLength(), 66.77)
+	TEST_EQUAL(inst.getMassAnalyzers()[0].getIsolationWidth(), 77.88)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getFinalMSExponent(), 2)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getMagneticFieldStrength(), 88.99f)
+	TEST_EQUAL(inst.getMassAnalyzers()[0].getMagneticFieldStrength(), 88.99)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getMetaValue("URL"), "www.open-ms.de")
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getMetaValue("AnalyzerComment"), "Analyzer 1")
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getType(), MassAnalyzer::QUADRUPOLE)
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getResolutionMethod(), MassAnalyzer::BASELINE)
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getResolutionType(), MassAnalyzer::PROPORTIONAL)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanFunction(), MassAnalyzer::SELECTEDIONDETECTION)
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanDirection(), MassAnalyzer::DOWN)
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanLaw(), MassAnalyzer::EXPONENTIAL)
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getTandemScanMethod(), MassAnalyzer::PRODUCTIONSCAN)
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getReflectronState(), MassAnalyzer::ON)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getResolution(), 12.3f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getAccuracy(), 13.4f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanRate(), 14.5f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanTime(), 15.6f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getTOFTotalPathLength(), 16.7f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getIsolationWidth(), 17.8f)
+	TEST_EQUAL(inst.getMassAnalyzers()[1].getResolution(), 12.3)
+	TEST_EQUAL(inst.getMassAnalyzers()[1].getAccuracy(), 13.4)
+	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanRate(), 14.5)
+	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanTime(), 15.6)
+	TEST_EQUAL(inst.getMassAnalyzers()[1].getTOFTotalPathLength(), 16.7)
+	TEST_EQUAL(inst.getMassAnalyzers()[1].getIsolationWidth(), 17.8)
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getFinalMSExponent(), -2)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getMagneticFieldStrength(), 18.9f)
+	TEST_EQUAL(inst.getMassAnalyzers()[1].getMagneticFieldStrength(), 18.9)
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getMetaValue("URL"), "www.open-ms.de")
 	TEST_EQUAL(inst.getMassAnalyzers()[1].getMetaValue("AnalyzerComment"), "Analyzer 2")
 
@@ -461,251 +416,158 @@ CHECK((template<typename MapType> void load(const String& filename, MapType& map
 	TEST_EQUAL(e.getSample().getName(), "MS-Sample")
 	TEST_EQUAL(e.getSample().getNumber(), "0-815")
 	TEST_EQUAL(e.getSample().getState(), Sample::GAS)
- 	TEST_EQUAL(e.getSample().getMass(), 1.01f)
-	TEST_EQUAL(e.getSample().getVolume(), 2.02f)
-	TEST_EQUAL(e.getSample().getConcentration(), 3.03f)
+ 	TEST_EQUAL(e.getSample().getMass(), 1.01)
+	TEST_EQUAL(e.getSample().getVolume(), 2.02)
+	TEST_EQUAL(e.getSample().getConcentration(), 3.03)
 	TEST_EQUAL(e.getSample().getMetaValue("URL"), "www.open-ms.de")
 	TEST_EQUAL(e.getSample().getMetaValue("SampleComment"), "Sample")
-RESULT
 
-CHECK([EXTRA] load with DPeak)
-	PRECISION(0.01)
+	/////////////////////// TESTING SPECIAL CASES ///////////////////////
+	
+	//load a second time to make sure everything is re-initialized correctly
+	MSExperiment<> e2;
+	file.load("data/MzDataFile_1.mzData",e2);
+	TEST_EQUAL(e==e2,true)
+	
+	//loading a minimal file containing one spectrum  - with whitespaces inside the base64 data
+	MSExperiment<> e3;
+  file.load("data/MzDataFile_3_minimal.mzData",e3);
+  TEST_EQUAL(e3.size(),1)
+  TEST_EQUAL(e3[0].size(),3)
 
-  //---------------------------------------------------------------------------
-  // test with DPeak (only peak data is tested, no meta data)
-  //---------------------------------------------------------------------------
+	//load one extremely long spectrum - tests CDATA splitting
+	MSExperiment<> e4;
+	file.load("data/MzDataFile_2_long.mzData",e4);
+	TEST_EQUAL(e4.size(), 1)
+	TEST_EQUAL(e4[0].size(), 997530)
 
-	MSExperiment< Peak1D > e2;
+	//load with 64 bit precision and endian conversion
+	MSExperiment<> e5;
+	file.load("data/MzDataFile_4_64bit.mzData",e5);
+	TEST_EQUAL(e5.getIdentifier(),"");
+  TEST_EQUAL(e5.size(), 1)
+	TEST_EQUAL(e5[0].size(), 3)
+	TEST_REAL_SIMILAR(e5[0][0].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e5[0][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[1][0], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[2][0], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[4][0], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[3][0], 100)
+	TEST_EQUAL(e5[0].getMetaDataArrays()[5][0], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[0][0], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[7][0], 100)
+	TEST_EQUAL(e5[0].getMetaDataArrays()[6][0], 100)
 
-	// real test
-	MzDataFile().load("data/MzDataFile_test_1.mzData",e2);
-  //---------------------------------------------------------------------------
-  // 60 : (120,100)
-  // 120: (110,100) (120,200) (130,100)
-  // 180: (100,100) (110,200) (120,300) (130,200) (140,100)
-	//--------------------------------------------------------------------------- 
-  TEST_EQUAL(e2.size(), 3)
+	TEST_REAL_SIMILAR(e5[0][1].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e5[0][1].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[1][1], 200)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[2][1], 200)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[4][1], 200)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[3][1], 200)
+	TEST_EQUAL(e5[0].getMetaDataArrays()[5][1], 200)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[0][1], 200)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[7][1], 200)
+	TEST_EQUAL(e5[0].getMetaDataArrays()[6][1], 200)
 
-	TEST_EQUAL(e2[0].getContainer().size(), 1)
-	TEST_EQUAL(e2[1].getContainer().size(), 3)
-	TEST_EQUAL(e2[2].getContainer().size(), 5)
+	TEST_REAL_SIMILAR(e5[0][2].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e5[0][2].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[1][2], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[2][2], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[4][2], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[3][2], 100)
+	TEST_EQUAL(e5[0].getMetaDataArrays()[5][2], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[0][2], 100)
+	TEST_REAL_SIMILAR(e5[0].getMetaDataArrays()[7][2], 100)
+	TEST_EQUAL(e5[0].getMetaDataArrays()[6][2], 100)
+	
+	//test if it works with different peak types
+	MSExperiment<RichPeak1D> e_rich;
+  file.load("data/MzDataFile_1.mzData",e_rich);
+	
+END_SECTION
 
-	TEST_REAL_EQUAL(e2[0].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e2[0].getContainer()[0].getIntensity(), 100)
-
-	TEST_REAL_EQUAL(e2[1].getContainer()[0].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e2[1].getContainer()[0].getIntensity(), 100)
-
-	TEST_REAL_EQUAL(e2[1].getContainer()[1].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e2[1].getContainer()[1].getIntensity(), 200)
-
-	TEST_REAL_EQUAL(e2[1].getContainer()[2].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e2[1].getContainer()[2].getIntensity(), 100)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[0].getPosition()[0], 100)
-	TEST_REAL_EQUAL(e2[2].getContainer()[0].getIntensity(), 100)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[1].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e2[2].getContainer()[1].getIntensity(), 200)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[2].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e2[2].getContainer()[2].getIntensity(), 300)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[3].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e2[2].getContainer()[3].getIntensity(), 200)
-
-	TEST_REAL_EQUAL(e2[2].getContainer()[4].getPosition()[0], 140)
-	TEST_REAL_EQUAL(e2[2].getContainer()[4].getIntensity(), 100)
-
-RESULT  
-
-
-CHECK(([EXTRA] load with metadata-only flag))
-	PRECISION(0.01)
-
-  //---------------------------------------------------------------------------
-  // test with DPeak (only peak data is tested, no meta data)
-  //---------------------------------------------------------------------------
-
-	MzDataFile mzdata;
-	mzdata.getOptions().setMetadataOnly(true);
+START_SECTION(([EXTRA] load with metadata-only flag))
+	TOLERANCE_ABSOLUTE(0.01)
+	
+	MzDataFile file;
+	file.getOptions().setMetadataOnly(true);
 	
 	MSExperiment<> e;
 
 	// real test
-	mzdata.load("data/MzDataFile_test_1.mzData",e);
+	file.load("data/MzDataFile_1.mzData",e);
 
 	//check number of scans
 	TEST_EQUAL(e.size(),0)
 
-  //---------------------------------------------------------------------------
-  // const SourceFile& getSourceFile() const;
-  //---------------------------------------------------------------------------
-  TEST_EQUAL(e.getSourceFile().getNameOfFile(), "MzDataFile_test_1.raw");
-  TEST_EQUAL(e.getSourceFile().getPathToFile(), "/share/data/");
-  TEST_EQUAL(e.getSourceFile().getFileType(), "MS");
-
-  //---------------------------------------------------------------------------
-  // const std::vector<ContactPerson>& getContacts() const;
-  //---------------------------------------------------------------------------
+  TEST_EQUAL(e.getSourceFiles().size(),1)
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getNameOfFile(), "MzDataFile_test_1.raw");
   TEST_EQUAL(e.getContacts().size(), 2);
-  ABORT_IF(e.getContacts().size()!=2);
   TEST_EQUAL(e.getContacts()[0].getFirstName(), "John");
   TEST_EQUAL(e.getContacts()[0].getLastName(), "Doe");
-  TEST_EQUAL(e.getContacts()[0].getInstitution(), "department 1");
-  TEST_EQUAL(e.getContacts()[0].getContactInfo(), "www.john.doe");
-  TEST_EQUAL(e.getContacts()[1].getFirstName(), "Jane");
-  TEST_EQUAL(e.getContacts()[1].getLastName(), "Doe");
-  TEST_EQUAL(e.getContacts()[1].getInstitution(), "department 2");
-  TEST_EQUAL(e.getContacts()[1].getContactInfo(), "www.jane.doe");
-
-  //---------------------------------------------------------------------------
-  // const Software& getSoftware() const;
-  //---------------------------------------------------------------------------
-  TEST_EQUAL(e.getSoftware().getName(), "MS-X");
-  TEST_EQUAL(e.getSoftware().getVersion(), "1.0");
-  TEST_EQUAL(e.getSoftware().getComment(), "none");
-	String tmp;
-	e.getSoftware().getCompletionTime().get(tmp);
-  TEST_EQUAL(tmp, "2001-02-03 04:05:06");
-
-  //---------------------------------------------------------------------------
-  // const ProcessingMethod& getProcessingMethod() const;
-  //---------------------------------------------------------------------------
-  TEST_EQUAL(e.getProcessingMethod().getDeisotoping(), false)
-	TEST_EQUAL(e.getProcessingMethod().getChargeDeconvolution(), false)
-	TEST_EQUAL(e.getProcessingMethod().getSpectrumType(), SpectrumSettings::PEAKS)
-	TEST_EQUAL(e.getProcessingMethod().getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(e.getProcessingMethod().getMetaValue("ProcessingComment"), "Processed")
-
-  //---------------------------------------------------------------------------
-  // const Instrument& getInstrument() const;
-  //---------------------------------------------------------------------------
-	const Instrument& inst = e.getInstrument();
-  TEST_EQUAL(inst.getName(), "MS-Instrument")
-	TEST_EQUAL(inst.getVendor(), "MS-Vendor")
-	TEST_EQUAL(inst.getModel(), "MS 1")
-	TEST_EQUAL(inst.getCustomizations(), "tuned")
-	TEST_EQUAL(inst.getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(inst.getMetaValue("AdditionalComment"), "Additional")
-	TEST_EQUAL(inst.getIonSource().getIonizationMethod(), IonSource::ESI)
-	TEST_EQUAL(inst.getIonSource().getInletType(), IonSource::DIRECT)
-	TEST_EQUAL(inst.getIonSource().getPolarity(), IonSource::NEGATIVE) 
-	TEST_EQUAL(inst.getIonSource().getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(inst.getIonSource().getMetaValue("SourceComment"), "Source")
-	TEST_EQUAL(inst.getIonDetector().getType(), IonDetector::FARADAYCUP)
-	TEST_EQUAL(inst.getIonDetector().getAcquisitionMode(), IonDetector::TDC)
-	TEST_EQUAL(inst.getIonDetector().getResolution(), 0.815f)
-	TEST_EQUAL(inst.getIonDetector().getADCSamplingFrequency(), 11.22f)
-	TEST_EQUAL(inst.getIonDetector().getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(inst.getIonDetector().getMetaValue("DetectorComment"), "Detector")
-  TEST_EQUAL(inst.getMassAnalyzers().size(), 2)
-  ABORT_IF(inst.getMassAnalyzers().size()!=2);
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getType(), MassAnalyzer::PAULIONTRAP)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionMethod(), MassAnalyzer::FWHM)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionType(), MassAnalyzer::CONSTANT)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanFunction(), MassAnalyzer::MASSSCAN)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanDirection(), MassAnalyzer::UP)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanLaw(), MassAnalyzer::LINEAR)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getTandemScanMethod(), MassAnalyzer::PRECURSORIONSCAN)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getReflectronState(), MassAnalyzer::OFF)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getResolution(), 22.33f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getAccuracy(), 33.44f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanRate(), 44.55f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanTime(), 55.66f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getTOFTotalPathLength(), 66.77f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getIsolationWidth(), 77.88f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getFinalMSExponent(), 2)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getMagneticFieldStrength(), 88.99f)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getMetaValue("AnalyzerComment"), "Analyzer 1")
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getType(), MassAnalyzer::QUADRUPOLE)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getResolutionMethod(), MassAnalyzer::BASELINE)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getResolutionType(), MassAnalyzer::PROPORTIONAL)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanFunction(), MassAnalyzer::SELECTEDIONDETECTION)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanDirection(), MassAnalyzer::DOWN)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanLaw(), MassAnalyzer::EXPONENTIAL)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getTandemScanMethod(), MassAnalyzer::PRODUCTIONSCAN)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getReflectronState(), MassAnalyzer::ON)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getResolution(), 12.3f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getAccuracy(), 13.4f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanRate(), 14.5f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getScanTime(), 15.6f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getTOFTotalPathLength(), 16.7f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getIsolationWidth(), 17.8f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getFinalMSExponent(), -2)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getMagneticFieldStrength(), 18.9f)
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(inst.getMassAnalyzers()[1].getMetaValue("AnalyzerComment"), "Analyzer 2")
-
-  //---------------------------------------------------------------------------
-	// const Sample& getSample()
-  //---------------------------------------------------------------------------
+  TEST_EQUAL(e.getInstrument().getName(), "MS-Instrument")
+	TEST_EQUAL(e.getInstrument().getVendor(), "MS-Vendor")
 	TEST_EQUAL(e.getSample().getName(), "MS-Sample")
 	TEST_EQUAL(e.getSample().getNumber(), "0-815")
-	TEST_EQUAL(e.getSample().getState(), Sample::GAS)
- 	TEST_EQUAL(e.getSample().getMass(), 1.01f)
-	TEST_EQUAL(e.getSample().getVolume(), 2.02f)
-	TEST_EQUAL(e.getSample().getConcentration(), 3.03f)
-	TEST_EQUAL(e.getSample().getMetaValue("URL"), "www.open-ms.de")
-	TEST_EQUAL(e.getSample().getMetaValue("SampleComment"), "Sample")
-RESULT
+END_SECTION
 
-CHECK(([EXTRA] load with selected MS levels))
-	PRECISION(0.01)
+START_SECTION(([EXTRA] load with selected MS levels))
+	TOLERANCE_ABSOLUTE(0.01)
 
-	MSExperiment< Peak1D > e;
-	MzDataFile mzdata;
+	MSExperiment<> e;
+	MzDataFile file;
 	
 	// load only MS level 1
-	mzdata.getOptions().addMSLevel(1);
-	mzdata.load("data/MzDataFile_test_1.mzData",e);
+	file.getOptions().addMSLevel(1);
+	file.load("data/MzDataFile_1.mzData",e);
 	TEST_EQUAL(e.size(), 2)
-	TEST_EQUAL(e[0].getContainer().size(), 1)
-	TEST_EQUAL(e[1].getContainer().size(), 5)
-	TEST_REAL_EQUAL(e[0].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e[1].getMSLevel(), 1)
+	TEST_EQUAL(e[0].size(), 1)
+	TEST_STRING_EQUAL(e[0].getNativeID(),"spectrum=10")
+	TEST_EQUAL(e[1].size(), 5)
+	TEST_STRING_EQUAL(e[1].getNativeID(),"spectrum=12")
+	TEST_REAL_SIMILAR(e[0].getMSLevel(), 1)
+	TEST_REAL_SIMILAR(e[1].getMSLevel(), 1)
 	
 	// load all MS levels
-	mzdata.getOptions().clearMSLevels();
-	mzdata.load("data/MzDataFile_test_1.mzData",e);
+	file.getOptions().clearMSLevels();
+	file.load("data/MzDataFile_1.mzData",e);
 	TEST_EQUAL(e.size(), 3)
-	TEST_EQUAL(e[0].getContainer().size(), 1)
-	TEST_EQUAL(e[1].getContainer().size(), 3)
-	TEST_EQUAL(e[2].getContainer().size(), 5)
-	TEST_REAL_EQUAL(e[0].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e[1].getMSLevel(), 2)
-	TEST_REAL_EQUAL(e[2].getMSLevel(), 1)
-RESULT
+	TEST_EQUAL(e[0].size(), 1)
+	TEST_EQUAL(e[1].size(), 3)
+	TEST_EQUAL(e[2].size(), 5)
+	TEST_REAL_SIMILAR(e[0].getMSLevel(), 1)
+	TEST_REAL_SIMILAR(e[1].getMSLevel(), 2)
+	TEST_REAL_SIMILAR(e[2].getMSLevel(), 1)
+END_SECTION
 
-CHECK(([EXTRA] load with RT range))
-	PRECISION(0.01)
+START_SECTION(([EXTRA] load with RT range))
+	TOLERANCE_ABSOLUTE(0.01)
 
-	MSExperiment< Peak1D > e;
-	MzDataFile mzdata;
+	MSExperiment<> e;
+	MzDataFile file;
 	
-	mzdata.getOptions().setRTRange(makeRange(100, 200));
-	mzdata.load("data/MzDataFile_test_1.mzData",e);
+	file.getOptions().setRTRange(makeRange(100, 200));
+	file.load("data/MzDataFile_1.mzData",e);
 	//---------------------------------------------------------------------------
 	// 60 : (120,100)
 	// 120: (110,100) (120,200) (130,100)
 	// 180: (100,100) (110,200) (120,300) (130,200) (140,100) 
 	//--------------------------------------------------------------------------- 
 	TEST_EQUAL(e.size(), 2)
-	TEST_REAL_EQUAL(e[0].getMSLevel(), 2)
-	TEST_REAL_EQUAL(e[1].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e[0].getRT(), 120)
-	TEST_REAL_EQUAL(e[1].getRT(), 180)
-RESULT
+	TEST_REAL_SIMILAR(e[0].getMSLevel(), 2)
+	TEST_REAL_SIMILAR(e[1].getMSLevel(), 1)
+	TEST_REAL_SIMILAR(e[0].getRT(), 120)
+	TEST_REAL_SIMILAR(e[1].getRT(), 180)
+END_SECTION
 
-CHECK(([EXTRA] load with MZ range))
-	PRECISION(0.01)
+START_SECTION(([EXTRA] load with MZ range))
+	TOLERANCE_ABSOLUTE(0.01)
 
-	MSExperiment< Peak1D > e;
-	MzDataFile mzdata;
+	MSExperiment<> e;
+	MzDataFile file;
 	
-	mzdata.getOptions().setMZRange(makeRange(115, 135));
-	mzdata.load("data/MzDataFile_test_1.mzData",e);
+	file.getOptions().setMZRange(makeRange(115, 135));
+	file.load("data/MzDataFile_1.mzData",e);
 	//---------------------------------------------------------------------------
 	// 60 : +(120,100)
 	// 120: -(110,100) +(120,200) +(130,100)
@@ -713,34 +575,34 @@ CHECK(([EXTRA] load with MZ range))
 	//--------------------------------------------------------------------------- 
 	TEST_EQUAL(e.size(), 3)
 
-	TEST_EQUAL(e[0].getContainer().size(), 1)
-	TEST_EQUAL(e[1].getContainer().size(), 2)
-	TEST_EQUAL(e[2].getContainer().size(), 2)
+	TEST_EQUAL(e[0].size(), 1)
+	TEST_EQUAL(e[1].size(), 2)
+	TEST_EQUAL(e[2].size(), 2)
 
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[0][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[0][0].getIntensity(), 100)
 
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[1][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[1][0].getIntensity(), 200)
 
-	TEST_REAL_EQUAL(e[1].getContainer()[1].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[1].getContainer()[1].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[1][1].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[1][1].getIntensity(), 100)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getIntensity(), 300)
+	TEST_REAL_SIMILAR(e[2][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[2][0].getIntensity(), 300)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getIntensity(), 200)
-RESULT
+	TEST_REAL_SIMILAR(e[2][1].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[2][1].getIntensity(), 200)
+END_SECTION
 
-CHECK(([EXTRA] load with intensity range))
-	PRECISION(0.01)
+START_SECTION(([EXTRA] load with intensity range))
+	TOLERANCE_ABSOLUTE(0.01)
 
-	MSExperiment< Peak1D > e;
-	MzDataFile mzdata;
+	MSExperiment<> e;
+	MzDataFile file;
 	
-	mzdata.getOptions().setIntensityRange(makeRange(150, 350));
-	mzdata.load("data/MzDataFile_test_1.mzData",e);
+	file.getOptions().setIntensityRange(makeRange(150, 350));
+	file.load("data/MzDataFile_1.mzData",e);
 	//---------------------------------------------------------------------------
 	// 60 : -(120,100)
 	// 120: -(110,100) +(120,200) -(130,100)
@@ -748,124 +610,43 @@ CHECK(([EXTRA] load with intensity range))
 	//--------------------------------------------------------------------------- 
 	TEST_EQUAL(e.size(), 3)
 
-	TEST_EQUAL(e[0].getContainer().size(), 0)
-	TEST_EQUAL(e[1].getContainer().size(), 1)
-	TEST_EQUAL(e[2].getContainer().size(), 3)
+	TEST_EQUAL(e[0].size(), 0)
+	TEST_EQUAL(e[1].size(), 1)
+	TEST_EQUAL(e[2].size(), 3)
 
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[1][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[1][0].getIntensity(), 200)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[2][0].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e[2][0].getIntensity(), 200)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getIntensity(), 300)
+	TEST_REAL_SIMILAR(e[2][1].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[2][1].getIntensity(), 300)
 
-	TEST_REAL_EQUAL(e[2].getContainer()[2].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[2].getContainer()[2].getIntensity(), 200)
-RESULT
+	TEST_REAL_SIMILAR(e[2][2].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[2][2].getIntensity(), 200)
+END_SECTION
 
-CHECK(([EXTRA] load one extremely long spectrum - tests CDATA splitting))
-	MSExperiment< Peak1D > e;
-	MzDataFile mzdata;
-	
-	mzdata.load("data/MzDataFile_test_4.mzData",e);
-	TEST_EQUAL(e.size(), 1)
-	TEST_EQUAL(e[0].size(), 997530)
-RESULT
-
-CHECK((template<typename MapType> void store(const String& filename, const MapType& map) const ))
+START_SECTION((template<typename MapType> void store(const String& filename, const MapType& map) const ))
   MSExperiment<> e1, e2;
   MzDataFile f;
-  f.load("data/MzDataFile_test_1.mzData",e1);
+  f.load("data/MzDataFile_1.mzData",e1);
 	TEST_EQUAL(e1.size(), 3)
 
 	std::string tmp_filename;
  	NEW_TMP_FILE(tmp_filename);
 	f.store(tmp_filename,e1);
 	f.load(tmp_filename,e2);
+  TEST_EQUAL(e2.getIdentifier(),"lsid");
   TEST_EQUAL(e1==e2,true);
-	TEST_EQUAL(e1[0].getMetaDataArrays()==e1[0].getMetaDataArrays(),true);
-	TEST_EQUAL(e1[1].getMetaDataArrays()==e1[1].getMetaDataArrays(),true);
-	TEST_EQUAL(e1[2].getMetaDataArrays()==e1[2].getMetaDataArrays(),true);
+	TEST_EQUAL(e1[0].getMetaDataArrays()==e2[0].getMetaDataArrays(),true);
+	TEST_EQUAL(e1[1].getMetaDataArrays()==e2[1].getMetaDataArrays(),true);
+	TEST_EQUAL(e1[2].getMetaDataArrays()==e2[2].getMetaDataArrays(),true);
 	NEW_TMP_FILE(tmp_filename);
 	f.store(tmp_filename,e2);
-	
-	MSExperiment< Peak1D > e3, e4;
-	NEW_TMP_FILE(tmp_filename);
-	f.load("data/MzDataFile_test_2.mzData",e3);
-	f.store(tmp_filename,e3);
-	f.load(tmp_filename,e4);
-	TEST_EQUAL(e3==e4,true);
-RESULT
+END_SECTION
 
-CHECK([EXTRA] load with 64 bit precision and endian conversion )
-	PRECISION(0.01)
-
-	MSExperiment<> e;
-	MzDataFile mzdata;
-
-	// real test
-	mzdata.load("data/MzDataFile_test_3.mzData",e);
-  //---------------------------------------------------------------------------
-  // 120: (110,100) (120,200) (130,100)
-	//---------------------------------------------------------------------------
-  TEST_EQUAL(e.size(), 1)
-
-	TEST_EQUAL(e[0].getContainer().size(), 3)
-
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[1][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[2][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[4][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[3][0], 100)
-	TEST_EQUAL(e[0].getMetaDataArrays()[5][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[0][0], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[7][0], 100)
-	TEST_EQUAL(e[0].getMetaDataArrays()[6][0], 100)
-
-	TEST_REAL_EQUAL(e[0].getContainer()[1].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[0].getContainer()[1].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[1][1], 200)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[2][1], 200)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[4][1], 200)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[3][1], 200)
-	TEST_EQUAL(e[0].getMetaDataArrays()[5][1], 200)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[0][1], 200)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[7][1], 200)
-	TEST_EQUAL(e[0].getMetaDataArrays()[6][1], 200)
-
-	TEST_REAL_EQUAL(e[0].getContainer()[2].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[0].getContainer()[2].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[1][2], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[2][2], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[4][2], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[3][2], 100)
-	TEST_EQUAL(e[0].getMetaDataArrays()[5][2], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[0][2], 100)
-	TEST_REAL_EQUAL(e[0].getMetaDataArrays()[7][2], 100)
-	TEST_EQUAL(e[0].getMetaDataArrays()[6][2], 100)
-RESULT
-
-CHECK([EXTRA] static bool isValid(const String& filename))
-	std::string tmp_filename;
-  MzDataFile f;
-  MSExperiment<> e;
-  
-  //test if empty file is valid
-	NEW_TMP_FILE(tmp_filename);
-  f.store(tmp_filename,e);
-  TEST_EQUAL(f.isValid(tmp_filename),true);
-
-	//test if fill file is valid
-	NEW_TMP_FILE(tmp_filename);
-	f.load("data/MzDataFile_test_1.mzData",e);
-  f.store(tmp_filename,e);
-  TEST_EQUAL(f.isValid(tmp_filename),true);
-RESULT
-
-CHECK([EXTRA] storing/loading of meta data arrays)
+START_SECTION([EXTRA] storing/loading of meta data arrays)
 	MzDataFile file;
 	//init spectrum/experiment/meta data array
 	MSExperiment<> exp;
@@ -930,25 +711,25 @@ CHECK([EXTRA] storing/loading of meta data arrays)
 	TEST_EQUAL(exp2[2].getMetaDataArrays()[1].getName(),"MDA2");
 	
 	TEST_EQUAL(exp2[0].getMetaDataArrays()[0].size(),5)
-	TEST_REAL_EQUAL(exp2[0].getMetaDataArrays()[0][0],1.1);
-	TEST_REAL_EQUAL(exp2[0].getMetaDataArrays()[0][1],1.2);
-	TEST_REAL_EQUAL(exp2[0].getMetaDataArrays()[0][2],1.3);
-	TEST_REAL_EQUAL(exp2[0].getMetaDataArrays()[0][3],1.4);
-	TEST_REAL_EQUAL(exp2[0].getMetaDataArrays()[0][4],1.5);
+	TEST_REAL_SIMILAR(exp2[0].getMetaDataArrays()[0][0],1.1);
+	TEST_REAL_SIMILAR(exp2[0].getMetaDataArrays()[0][1],1.2);
+	TEST_REAL_SIMILAR(exp2[0].getMetaDataArrays()[0][2],1.3);
+	TEST_REAL_SIMILAR(exp2[0].getMetaDataArrays()[0][3],1.4);
+	TEST_REAL_SIMILAR(exp2[0].getMetaDataArrays()[0][4],1.5);
 	
 	TEST_EQUAL(exp2[2].getMetaDataArrays()[0].size(),5)
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[0][0],1.1);
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[0][1],1.2);
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[0][2],1.3);
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[0][3],1.4);
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[0][4],1.5);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[0][0],1.1);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[0][1],1.2);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[0][2],1.3);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[0][3],1.4);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[0][4],1.5);
 	
 	TEST_EQUAL(exp2[2].getMetaDataArrays()[1].size(),5)
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[1][0],-2.1);
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[1][1],-2.2);
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[1][2],-2.3);
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[1][3],-2.4);
-	TEST_REAL_EQUAL(exp2[2].getMetaDataArrays()[1][4],-2.5);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[1][0],-2.1);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[1][1],-2.2);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[1][2],-2.3);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[1][3],-2.4);
+	TEST_REAL_SIMILAR(exp2[2].getMetaDataArrays()[1][4],-2.5);
 	
 	//*******************************************	
 	//check if filtering of meta data arrays works
@@ -970,19 +751,19 @@ CHECK([EXTRA] storing/loading of meta data arrays)
 	TEST_EQUAL(exp3[2].getMetaDataArrays()[1].getName(),"MDA2");
 
 	TEST_EQUAL(exp3[0].getMetaDataArrays()[0].size(),3)	
-	TEST_REAL_EQUAL(exp3[0].getMetaDataArrays()[0][0],1.3);
-	TEST_REAL_EQUAL(exp3[0].getMetaDataArrays()[0][1],1.4);
-	TEST_REAL_EQUAL(exp3[0].getMetaDataArrays()[0][2],1.5)
+	TEST_REAL_SIMILAR(exp3[0].getMetaDataArrays()[0][0],1.3);
+	TEST_REAL_SIMILAR(exp3[0].getMetaDataArrays()[0][1],1.4);
+	TEST_REAL_SIMILAR(exp3[0].getMetaDataArrays()[0][2],1.5)
 	
 	TEST_EQUAL(exp3[2].getMetaDataArrays()[0].size(),3)
-	TEST_REAL_EQUAL(exp3[2].getMetaDataArrays()[0][0],1.3);
-	TEST_REAL_EQUAL(exp3[2].getMetaDataArrays()[0][1],1.4);
-	TEST_REAL_EQUAL(exp3[2].getMetaDataArrays()[0][2],1.5);
+	TEST_REAL_SIMILAR(exp3[2].getMetaDataArrays()[0][0],1.3);
+	TEST_REAL_SIMILAR(exp3[2].getMetaDataArrays()[0][1],1.4);
+	TEST_REAL_SIMILAR(exp3[2].getMetaDataArrays()[0][2],1.5);
 	
 	TEST_EQUAL(exp3[2].getMetaDataArrays()[1].size(),3)
-	TEST_REAL_EQUAL(exp3[2].getMetaDataArrays()[1][0],-2.3);
-	TEST_REAL_EQUAL(exp3[2].getMetaDataArrays()[1][1],-2.4);
-	TEST_REAL_EQUAL(exp3[2].getMetaDataArrays()[1][2],-2.5);
+	TEST_REAL_SIMILAR(exp3[2].getMetaDataArrays()[1][0],-2.3);
+	TEST_REAL_SIMILAR(exp3[2].getMetaDataArrays()[1][1],-2.4);
+	TEST_REAL_SIMILAR(exp3[2].getMetaDataArrays()[1][2],-2.5);
 
   //*********************************************
   //test if the storing meta data arrays without a name works
@@ -1009,30 +790,40 @@ CHECK([EXTRA] storing/loading of meta data arrays)
 	TEST_EQUAL(exp4[2].getMetaDataArrays()[1].getName(),"");
 
 	TEST_EQUAL(exp4[0].getMetaDataArrays()[0].size(),3)	
-	TEST_REAL_EQUAL(exp4[0].getMetaDataArrays()[0][0],1.3);
-	TEST_REAL_EQUAL(exp4[0].getMetaDataArrays()[0][1],1.4);
-	TEST_REAL_EQUAL(exp4[0].getMetaDataArrays()[0][2],1.5)
+	TEST_REAL_SIMILAR(exp4[0].getMetaDataArrays()[0][0],1.3);
+	TEST_REAL_SIMILAR(exp4[0].getMetaDataArrays()[0][1],1.4);
+	TEST_REAL_SIMILAR(exp4[0].getMetaDataArrays()[0][2],1.5)
 	
 	TEST_EQUAL(exp4[2].getMetaDataArrays()[0].size(),3)
-	TEST_REAL_EQUAL(exp4[2].getMetaDataArrays()[0][0],1.3);
-	TEST_REAL_EQUAL(exp4[2].getMetaDataArrays()[0][1],1.4);
-	TEST_REAL_EQUAL(exp4[2].getMetaDataArrays()[0][2],1.5);
+	TEST_REAL_SIMILAR(exp4[2].getMetaDataArrays()[0][0],1.3);
+	TEST_REAL_SIMILAR(exp4[2].getMetaDataArrays()[0][1],1.4);
+	TEST_REAL_SIMILAR(exp4[2].getMetaDataArrays()[0][2],1.5);
 	
 	TEST_EQUAL(exp4[2].getMetaDataArrays()[1].size(),3)
-	TEST_REAL_EQUAL(exp4[2].getMetaDataArrays()[1][0],-2.3);
-	TEST_REAL_EQUAL(exp4[2].getMetaDataArrays()[1][1],-2.4);
-	TEST_REAL_EQUAL(exp4[2].getMetaDataArrays()[1][2],-2.5);
-	
+	TEST_REAL_SIMILAR(exp4[2].getMetaDataArrays()[1][0],-2.3);
+	TEST_REAL_SIMILAR(exp4[2].getMetaDataArrays()[1][1],-2.4);
+	TEST_REAL_SIMILAR(exp4[2].getMetaDataArrays()[1][2],-2.5);
+END_SECTION
 
-RESULT
 
-CHECK([EXTRA] loading a minimal file containing one spectrum  - with whitespaces inside the base64 data)
-	MSExperiment<> e;
+START_SECTION([EXTRA] static bool isValid(const String& filename))
+	std::string tmp_filename;
   MzDataFile f;
-  f.load("data/MzDataFile_test_5.mzData",e);
-  TEST_EQUAL(e.size(),1)
-  TEST_EQUAL(e[0].size(),3)
-RESULT
+  MSExperiment<> e;
+  
+  //test if empty file is valid
+	NEW_TMP_FILE(tmp_filename);
+  f.store(tmp_filename,e);
+  TEST_EQUAL(f.isValid(tmp_filename),true);
+
+	//test if filled file is valid
+	NEW_TMP_FILE(tmp_filename);
+	f.load("data/MzDataFile_1.mzData",e);
+  f.store(tmp_filename,e);
+  TEST_EQUAL(f.isValid(tmp_filename),true);
+END_SECTION
+
+
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

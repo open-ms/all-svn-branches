@@ -13,6 +13,7 @@
 			<sourceFile>
 				<nameOfFile>tiny1.RAW</nameOfFile>
 				<pathToFile>file:///F:/data/Exp01</pathToFile>
+				<fileType>Xcalibur RAW file</fileType>
 			</sourceFile>
 			<contact>
 				<name>William Pennington</name>
@@ -47,6 +48,7 @@
 			<additional>
 				<cvParam cvLabel="psi" accession="PSI:1000032" name="Customization" value="Umbau"/>
 				<userParam name="name" value="instrumentConfiguration"/>
+				<userParam name="instrument serial number" value="23433"/>
 			</additional>
 		</instrument>
 		<dataProcessing>
@@ -54,10 +56,15 @@
 				<name>Xcalibur</name>
 				<version>2.0.5</version>
 			</software>
+			<processingMethod>
+				<cvParam cvLabel="psi" name="Deisotoping" accession="PSI:1000033" value="true"/>
+				<userParam name="name" value="processingMethod"/>
+				<userParam name="low_intensity_threshold" value="5.9"/>
+			</processingMethod>
 		</dataProcessing>
 	</description>
 	<spectrumList count="3">
-		<spectrum id="1">
+		<spectrum id="19">
 			<spectrumDesc>
 				<spectrumSettings>
 					<acqSpecification spectrumType="discrete" methodOfCombination="" count="2">
@@ -71,7 +78,6 @@
 					<spectrumInstrument msLevel="1" mzRangeStart="400" mzRangeStop="1800">
 						<cvParam cvLabel="psi" accession="PSI:1000036" name="ScanMode" value="MassScan"/>
 						<cvParam cvLabel="psi" accession="PSI:1000039" name="TimeInSeconds" value="5.8905"/>
-						<userParam name="name" value="scan1"/>
 					</spectrumInstrument>
 				</spectrumSettings>
 			</spectrumDesc>
@@ -82,17 +88,16 @@
 				<data precision="32" endian="little" length="15">AABwQQAAYEEAAFBBAABAQQAAMEEAACBBAAAQQQAAAEEAAOBAAADAQAAAoEAAAIBAAABAQAAAAEAAAIA/</data>
 			</intenArrayBinary>
 		</spectrum>
-		<spectrum id="2">
+		<spectrum id="20">
 			<spectrumDesc>
 				<spectrumSettings>
 					<spectrumInstrument msLevel="2" mzRangeStart="110" mzRangeStop="905">
 						<cvParam cvLabel="psi" accession="PSI:1000036" name="ScanMode" value="MassScan"/>
 						<cvParam cvLabel="psi" accession="PSI:1000039" name="TimeInSeconds" value="5.9905"/>
-						<userParam name="name" value="scan2"/>
 					</spectrumInstrument>
 				</spectrumSettings>
 				<precursorList count="1">
-					<precursor msLevel="2" spectrumRef="1">
+					<precursor msLevel="1" spectrumRef="19">
 						<ionSelection>
 							<cvParam cvLabel="psi" accession="PSI:1000040" name="MassToChargeRatio" value="445.34"/>
 							<cvParam cvLabel="psi" accession="PSI:1000041" name="ChargeState" value="2"/>
@@ -123,15 +128,15 @@
 				<data precision="32" endian="little" length="10">AACgQQAAkEEAAIBBAABgQQAAQEEAACBBAAAAQQAAwEAAAIBAAAAAQA==</data>
 			</intenArrayBinary>
 			<supDataArrayBinary id="1">
-				<arrayName>signal to noise</arrayName>
+				<arrayName>signal to noise array</arrayName>
 				<data precision="32" endian="little" length="10">AACgQQAAkEEAAIBBAABgQQAAQEEAACBBAAAAQQAAwEAAAIBAAAAAQA==</data>
 			</supDataArrayBinary>
 			<supDataArrayBinary id="2">
-				<arrayName>charge</arrayName>
+				<arrayName>charge array</arrayName>
 				<data precision="32" endian="little" length="10">AACgQQAAkEEAAIBBAABgQQAAQEEAACBBAAAAQQAAwEAAAIBAAAAAQA==</data>
 			</supDataArrayBinary>
 		</spectrum>
-		<spectrum id="3">
+		<spectrum id="21">
 			<spectrumDesc>
 				<spectrumSettings>
 					<spectrumInstrument msLevel="1">

@@ -52,37 +52,40 @@ namespace OpenMS
 	
 		void XMLHandler::fatalError(const SAXParseException& exception)
 		{
-			fatalError(sm_.convert(exception.getMessage()),exception.getLineNumber(),exception.getColumnNumber());
+			fatalError(LOAD, sm_.convert(exception.getMessage()),exception.getLineNumber(),exception.getColumnNumber());
 		}
 	
 		void XMLHandler::error(const SAXParseException& exception)
 		{
-			error(sm_.convert(exception.getMessage()),exception.getLineNumber(),exception.getColumnNumber());
+			error(LOAD, sm_.convert(exception.getMessage()),exception.getLineNumber(),exception.getColumnNumber());
 		}
 		
 		void XMLHandler::warning(const SAXParseException& exception)
 		{
-			warning(sm_.convert(exception.getMessage()),exception.getLineNumber(),exception.getColumnNumber());
+			warning(LOAD, sm_.convert(exception.getMessage()),exception.getLineNumber(),exception.getColumnNumber());
 		}
 		
-		void XMLHandler::fatalError(const String& msg, UInt line, UInt column) const
+		void XMLHandler::fatalError(ActionMode mode, const String& msg, UInt line, UInt column) const
 		{
-			error_message_ = String("Fatal error while parsing '") + file_ + "': " + msg;
+			if (mode==LOAD)  error_message_ =  String("Fatal error while loading '") + file_ + "': " + msg;
+			if (mode==STORE) error_message_ =  String("Fatal error while storing '") + file_ + "': " + msg;
 			if (line!=0 || column!=0) error_message_ += String("( in line ") + line + " column " + column + ")";
 			cerr << error_message_ << endl;
 			throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, file_, error_message_);
 		}
 	
-		void XMLHandler::error(const String& msg, UInt line, UInt column) const
+		void XMLHandler::error(ActionMode mode, const String& msg, UInt line, UInt column) const
 		{
-			error_message_ = String("Non-fatal error while parsing '") + file_ + "': " + msg;
+			if (mode==LOAD)  error_message_ =  String("Non-fatal error while loading '") + file_ + "': " + msg;
+			if (mode==STORE) error_message_ =  String("Non-fatal error while storing '") + file_ + "': " + msg;
 			if (line!=0 || column!=0) error_message_ += String("( in line ") + line + " column " + column + ")";
 			cerr << error_message_ << endl;
 		}
 		
-		void XMLHandler::warning(const String& msg, UInt line, UInt column) const
+		void XMLHandler::warning(ActionMode mode, const String& msg, UInt line, UInt column) const
 		{
-			error_message_ = String("Warning while parsing '") + file_ + "': " + msg;
+			if (mode==LOAD)  error_message_ =  String("Warning while loading '") + file_ + "': " + msg;
+			if (mode==STORE) error_message_ =  String("Warning while storing '") + file_ + "': " + msg;
 			if (line!=0 || column!=0) error_message_ += String("( in line ") + line + " column " + column + ")";
 			cerr << error_message_ << endl;
 		}
@@ -104,23 +107,6 @@ namespace OpenMS
 			return error_message_;
 		}
 
-		void XMLHandler::writeCVS_(std::ostream& os, UInt value, UInt map, const String& acc, const String& name, UInt indent)
-		{
-			//abort when receiving a wrong map index
-			if (map>=cv_terms_.size())
-			{
-				warning(String("Cannot find map '") + map + "' needed to write CV term '" + name + "' with accession '" + acc + "'.");
-				return;
-			}
-			//abort when receiving a wrong term index
-			if (value>=cv_terms_[map].size())
-			{
-				warning(String("Cannot find value '") + value + "' needed to write CV term '" + name + "' with accession '" + acc + "'.");
-				return;
-			}
-			XMLHandler::writeCVS_(os, cv_terms_[map][value], acc, name, indent);
-		}
-
 		void XMLHandler::writeUserParam_(const String& tag_name, std::ostream& os, const MetaInfoInterface& meta, UInt indent) const
 		{
 			std::vector<String> keys;
@@ -132,18 +118,19 @@ namespace OpenMS
 				
 				DataValue d = meta.getMetaValue(keys[i]);
 				//determine type
-				if (d.valueType()==DataValue::STRING_VALUE)
-				{
-					os << "string\" name=\"" << keys[i] << "\" value=\"" << (String)(d) << "\"/>" << endl;
-				}
 				if (d.valueType()==DataValue::INT_VALUE)
 				{
-					os << "int\" name=\"" << keys[i] << "\" value=\"" << (String)(d) << "\"/>" << endl;
+					os << "int";
 				}
-				if (d.valueType()==DataValue::DOUBLE_VALUE)
+				else if (d.valueType()==DataValue::DOUBLE_VALUE)
 				{
-					os << "float\" name=\"" << keys[i] << "\" value=\"" << (String)(d) << "\"/>" << endl;
+					os << "float";
 				}
+				else //string or lists are converted to string
+				{
+					os << "string"; 
+				}
+				os << "\" name=\"" << keys[i] << "\" value=\"" << (String)(d) << "\"/>" << endl;
 			}
 		}
 		

@@ -48,13 +48,13 @@ namespace OpenMS
 			own_sequence_db_(false),
 			own_model_(false)
 	{
-		defaults_.setValue("precursor_mass_tolerance", 3.0, "Precursor mass tolerance which is used to query the peptide database for peptides", false);
-		defaults_.setValue("peak_mass_tolerance", 0.3, "Peak mass tolerance to align the simulated and experimental spectra", false);
-		defaults_.setValue("max_candidates", 200, "Number of candidates which are kept at the end of the identification", false);
-		defaults_.setValue("pre_score_name", "ZhangSimilarityScore", "The prescoring which is used", true);
-		defaults_.setValue("score_name", "ZhangSimilarityScore", "The scoring for the comparison of simulated and experimental spectrum", true);
-		defaults_.setValue("use_evalue_scoring", 1, "If set to 1 EValue scoring as described in PILISScoring is used, otherwise similarity scores are directly reported", false);
-		defaults_.setValue("fixed_modifications", "", "fixed modifications to used in the format 57.001@C", false);
+		defaults_.setValue("precursor_mass_tolerance", 3.0, "Precursor mass tolerance which is used to query the peptide database for peptides");
+		defaults_.setValue("peak_mass_tolerance", 0.3, "Peak mass tolerance to align the simulated and experimental spectra");
+		defaults_.setValue("max_candidates", 200, "Number of candidates which are kept at the end of the identification");
+		defaults_.setValue("pre_score_name", "ZhangSimilarityScore", "The prescoring which is used", StringList::create("advanced"));
+		defaults_.setValue("score_name", "ZhangSimilarityScore", "The scoring for the comparison of simulated and experimental spectrum", StringList::create("advanced"));
+		defaults_.setValue("use_evalue_scoring", 1, "If set to 1 EValue scoring as described in PILISScoring is used, otherwise similarity scores are directly reported");
+		defaults_.setValue("fixed_modifications", "", "fixed modifications to used in the format 57.001@C");
 		
 		defaultsToParam_();
 		updateMembers_();
@@ -127,21 +127,7 @@ namespace OpenMS
 		}
 		return hmm_model_;
 	}
-/*
-	//PILISSequenceDB* PILISIdentification::getSequenceDB_()
-	SuffixArrayPeptidefinder* PILISIdentification::getSequenceDB_()
-	{
-		if (sequence_db_ == 0)
-		{*/
-			/*sequence_db_ = new PILISSequenceDB();
-			own_sequence_db_ = true;
-			*/
-		/*	cerr << "Sequence DB not set!" << endl;
-			exit(0);
-		}
-		return sequence_db_;
-	}
-	*/
+	
 	void PILISIdentification::getIdentifications(const vector<map<String, UInt> >& candidates, vector<PeptideIdentification>& ids, const RichPeakMap& exp)
 	{
 		UInt max_candidates = (UInt)param_.getValue("max_candidates");
@@ -216,11 +202,6 @@ namespace OpenMS
     }
 
 
-		//vector<PILISSequenceDB::PepStruct> cand_peptides;
-    //getSequenceDB_()->getPeptides(cand_peptides, pre_pos - pre_tol, pre_pos + pre_tol);
-			
-
-		
 		//cerr << "#cand peptides: " << cand_peptides.size() << ", " << pre_pos << ", +/- " << pre_tol << endl;
 
 		PeptideIdentification pre_id;
@@ -242,8 +223,8 @@ namespace OpenMS
 			double rms(0);
 			for (UInt j = 0; j != alignment.size(); ++j)
 			{
-				double mz1(spec_copy.getContainer()[alignment[j].first].getMZ()), mz2(sim_specs_[i].getContainer()[alignment[j].second].getMZ());
-				cerr << mz1 << " " << mz2 << " " << mz1 - mz2 << " " << sim_specs_[i].getContainer()[alignment[j].second].getMetaValue("IonName") << endl;
+				double mz1(spec_copy[alignment[j].first].getMZ()), mz2(sim_specs_[i][alignment[j].second].getMZ());
+				cerr << mz1 << " " << mz2 << " " << mz1 - mz2 << " " << sim_specs_[i][alignment[j].second].getMetaValue("IonName") << endl;
 				rms += pow(mz1 - mz2, 2.0);
 			}
 			cerr << "RMS=" << sqrt(rms/double(id.getPeptideHits().size())) << endl;
@@ -361,7 +342,7 @@ namespace OpenMS
 				// b-ions
 				p_.setPosition((b_pos + z)/z);
 				p_.setIntensity(0.8);
-				spec.getContainer().push_back(p_);
+				spec.push_back(p_);
 
 				// b-ion losses
 				if (b_H2O_loss || aa == 'S' || aa == 'T' || aa == 'E' || aa == 'D')
@@ -369,25 +350,25 @@ namespace OpenMS
 					b_H2O_loss = true;
 					p_.setPosition((b_pos + z - 18.0)/z);
 					p_.setIntensity(0.1);
-					spec.getContainer().push_back(p_);
+					spec.push_back(p_);
 				}
 				if (b_NH3_loss || aa == 'Q' || aa == 'N' || aa == 'R' || aa == 'K')
 				{
 					b_NH3_loss = true;
 					p_.setPosition((b_pos + z - 17.0)/z);
 					p_.setIntensity(0.1);
-					spec.getContainer().push_back(p_);
+					spec.push_back(p_);
 				}
 
 				// a-ions
 				p_.setPosition((b_pos +z - 28.0)/z);
 				p_.setIntensity(0.3);
-				spec.getContainer().push_back(p_);
+				spec.push_back(p_);
 				
 				// y-ions
 				p_.setPosition((y_pos + z)/z);
 				p_.setIntensity(1.0);
-				spec.getContainer().push_back(p_);
+				spec.push_back(p_);
 
 				if (y_H2O_loss || aa2 == 'S' || aa2 == 'T' || aa2 == 'E' || aa2 == 'D' || aa2 == 'Q')
 				{
@@ -401,7 +382,7 @@ namespace OpenMS
 					{
 						p_.setIntensity(1);
 					}
-					spec.getContainer().push_back(p_);
+					spec.push_back(p_);
 				}
 				if (y_NH3_loss || aa == 'Q' || aa == 'N' || aa == 'R' || aa == 'K')
 				{
@@ -412,7 +393,7 @@ namespace OpenMS
 			}
 		}
 
-		spec.getContainer().sortByPosition();
+		spec.sortByPosition();
 		
 		return;
 	}

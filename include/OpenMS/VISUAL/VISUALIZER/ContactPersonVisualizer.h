@@ -30,55 +30,54 @@
 //OpenMS
 #include <OpenMS/METADATA/ContactPerson.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizerGUI.h>
 
 //QT
-class QLabel;
-class QLineEdit;
 
-namespace OpenMS {
-/**
-@brief Class that displays all meta information for ContactPerson objects
-
-This class provides all functionality to view the meta information of an object of type ContactPerson.
-*/
-	class ContactPersonVisualizer : public BaseVisualizer
+namespace OpenMS
+{
+	/**
+		@brief Class that displays all meta information for ContactPerson objects
+		
+		This class provides all functionality to view the meta information of an object of type ContactPerson.
+	*/
+	class ContactPersonVisualizer
+		: public BaseVisualizerGUI,
+			public BaseVisualizer<ContactPerson>
 	{
 		Q_OBJECT
 
-	public: 
-	   /// Default constructor
-		ContactPersonVisualizer(bool editable= FALSE, QWidget *parent =0);
+		public:
 	
-		/// Loads the meta data from the object to the viewer.
-		void load(ContactPerson &h);
-
-	private slots:
-	  /// Saves the changes made to the meta data into the object.
-		void store_();
-		/// Deletes all changes made in the viewer and restores the original meta data.
-		void reject_();
-
-	private:  
-				
-				
-		/** @name Edit fields and buttons
-   */
-    //@{
-		QLineEdit *cp_firstname_;
-		QLineEdit *cp_lastname_;
-		QLineEdit *cp_institution_;
-		QLineEdit *cp_email_;
-		QLineEdit *cp_contact_info_;
-		//@}
+		   ///Constructor
+			ContactPersonVisualizer(bool editable = false, QWidget* parent = 0);	
+	
+		public slots:
+	
+		  //Docu in base class
+			void store();
 		
-		/// Pointer to current object	to keep track of the actual object.
-		ContactPerson* ptr_;
-		/// Copy of current object for restoring the original values
-		ContactPerson tempContactPerson_;
-		
-		
+		protected slots:
+			
+			///Undo the changes made in the GUI.
+			void undo_();
+	
+		protected:  
+					
+			///@name Edit fields and buttons
+	    //@{
+			QLineEdit* firstname_;
+			QLineEdit* lastname_;
+			QLineEdit* institution_;
+			QLineEdit* email_;
+			QLineEdit* contact_info_;
+			QLineEdit* address_;
+			QLineEdit* url_;
+			//@}
+			
+			//Docu in base class
+			void update_();
 	};
-
 
 }
 #endif

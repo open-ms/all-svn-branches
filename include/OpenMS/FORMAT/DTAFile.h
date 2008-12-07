@@ -58,8 +58,8 @@ namespace OpenMS
  				The content of the file is stored in @p spectrum.
  				@p spectrum has to be a DSpectrum<1>/MSSpectrum<> or have the same interface.
 
-				@exception Exception::FileNotFound is thrown  if the file could not be opened
-				@exception Exception::ParseError is thrown  if an error occurs during parsing
+				@exception Exception::FileNotFound is thrown if the file could not be opened
+				@exception Exception::ParseError is thrown if an error occurs during parsing
       */
       template <typename SpectrumType>
       void load(const String& filename, SpectrumType& spectrum)
@@ -71,7 +71,7 @@ namespace OpenMS
 				}
 		
 				//  Delete old spectrum
-				spectrum.getContainer().clear();
+				spectrum.clear();
 				
 				//temporary variables
 				String line;
@@ -148,7 +148,7 @@ namespace OpenMS
 					{
 						throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" ,filename);
 					}
-					spectrum.getContainer().push_back(p);
+					spectrum.push_back(p);
 				}
 				
 				is.close();  	
@@ -170,7 +170,8 @@ namespace OpenMS
 				{
 					throw Exception::UnableToCreateFile(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
 				}
-		
+				os.precision(writtenDigits<DoubleReal>());
+				
 				// Write mh+ mass
 				if (spectrum.getPrecursorPeak().getCharge()==0)
 				{

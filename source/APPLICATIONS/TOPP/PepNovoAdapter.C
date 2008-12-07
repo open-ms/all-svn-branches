@@ -52,7 +52,7 @@ using namespace std;
 
 
 /**
-	@page PepNovoAdapter PepNovoAdapter
+	@page TOPP_PepNovoAdapter PepNovoAdapter
 
 	@brief Identifies peptides in MS/MS spectra via PepNovo.
 
@@ -87,9 +87,9 @@ using namespace std;
 				This mode is selected by the <b>-pepnovo_out</b> option in the command line.
 				</li>
 	</ol>
-
-
-
+	
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_PepNovoAdapter.cli
 */
 
 // We do not want this class to show up in the docu -> cond
@@ -154,13 +154,7 @@ class TOPPPepNovoAdapter
 			registerStringOption_("contact_info", "<info>", "unknown", "Some information about the contact", false);
 		}
 
-  UInt
-		MSExperiment2DTAs(
-			MSExperiment<Peak1D>& msexperiment,
-			const String& common_name,
-			const vector< Int >& charges,
-			map< String, Real >& dta_filenames_and_precursor_retention_times,
-			bool make_dtas = true)
+  UInt MSExperiment2DTAs(MSExperiment<Peak1D>& msexperiment, const String& common_name,	const vector< Int >& charges,	map< String, Real >& dta_filenames_and_precursor_retention_times, bool make_dtas = true)
 		throw (Exception::UnableToCreateFile)
 		{
 			DTAFile dtafile;
@@ -256,7 +250,7 @@ class TOPPPepNovoAdapter
 				monoisotopic(false),
 				make_dtas(false);
 
-			vector< String >
+			vector<String>
 				substrings,
 				substrings2,
 				spectra,
@@ -278,9 +272,9 @@ class TOPPPepNovoAdapter
 				writable(4),
 				delete_afterwards(8);
 
-			vector< Int > charges;
+			vector<Int> charges;
 
-			map< String, Real > dta_filenames_and_precursor_retention_times;
+			map<String, Real> dta_filenames_and_precursor_retention_times;
 
 			/*
 				LTQ - linear quadrupole ion trap
@@ -759,7 +753,7 @@ class TOPPPepNovoAdapter
 
 			if ( exit_code == EXECUTION_OK )
 			{
-				// check the Mz files, get the names for the dtas and check wether they do no already exist
+				// check the Mz files, get the names for the dtas and check whether they do no already exist
 				make_dtas = ( pepnovo_out && !pepnovo_in ) ? false : true; // if only pepnovo_out is set, just get the retention times
 				if ( make_dtas ) writeLog_("creating dta files");
 				// first get the dta names

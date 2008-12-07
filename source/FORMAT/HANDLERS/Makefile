@@ -21,12 +21,8 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer:  $
-# --------------------------------------------------------------------------
-#
 
 DIRECTORY=FORMAT/HANDLERS
-
 
 include ../../config_defs.mak
 
@@ -36,11 +32,8 @@ CPP_SOURCES=\
 	MzXMLHandler.C\
 	MzMLHandler.C\
 	ParamXMLHandler.C\
-	FeatureXMLHandler.C\
-	MzDataExpSettHandler.C\
 	MascotXMLHandler.C\
 	PTMXMLHandler.C\
-	ConsensusXMLHandler.C\
 	XTandemInfileXMLHandler.C\
 	UnimodXMLHandler.C
 

@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# --------------------------------------------------------------------------
 
 include ../config_defs.mak
 DIRECTORY=KERNEL
@@ -38,7 +36,6 @@ CPP_SOURCES= \
   RichPeak1D.C\
   RichPeak2D.C\
 	Feature.C\
-  DPeakArray.C\
   StandardTypes.C\
 	RangeManager.C\
 	FeatureMap.C\
@@ -46,7 +43,6 @@ CPP_SOURCES= \
   MSSpectrum.C\
   AreaIterator.C\
 	MSExperiment.C\
-	MSExperimentExtern.C\
 	FeatureHandle.C\
 	ConsensusFeature.C\
 	ConsensusMap.C

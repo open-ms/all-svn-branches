@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Ole Schulz-Trieglaff  $
-# --------------------------------------------------------------------------
 
 DIRECTORY=ANALYSIS/ID
 
@@ -30,16 +28,15 @@ DIRECTORY=ANALYSIS/ID
 include ../../config_defs.mak
 
 CPP_SOURCES=\
-  IDSpectrumMapper.C\
-	IDFeatureMapper.C\
+  IDMapper.C\
 	ConsensusID.C\
 	ProtonDistributionModel.C\
 	PILISScoring.C\
-	PILISSequenceDB.C\
 	HiddenMarkovModel.C\
-	HiddenMarkovModelLight.C\
 	PILISModel.C\
+	PILISNeutralLossModel.C\
 	PILISModelGenerator.C\
+	PILISIdentification.C\
 	IDDecoyProbability.C\
 	FalseDiscoveryRate.C
 

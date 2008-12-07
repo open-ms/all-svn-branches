@@ -41,31 +41,31 @@ START_TEST(PoseClusteringShiftSuperimposer, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-PoseClusteringShiftSuperimposer<FeatureMap<> >* ptr = 0;
-CHECK((PoseClusteringShiftSuperimposer()))
-	ptr = new PoseClusteringShiftSuperimposer<FeatureMap<> >();
+PoseClusteringShiftSuperimposer* ptr = 0;
+START_SECTION((PoseClusteringShiftSuperimposer()))
+	ptr = new PoseClusteringShiftSuperimposer();
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((virtual ~PoseClusteringShiftSuperimposer()))
+START_SECTION((virtual ~PoseClusteringShiftSuperimposer()))
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK((static BaseSuperimposer<ElementMapType>* create()))
-  BaseSuperimposer<FeatureMap<> >* base_ptr = 0;
-	base_ptr = PoseClusteringShiftSuperimposer<FeatureMap<> >::create();
+START_SECTION((static BaseSuperimposer* create()))
+  BaseSuperimposer* base_ptr = 0;
+	base_ptr = PoseClusteringShiftSuperimposer::create();
 	TEST_NOT_EQUAL(base_ptr, 0)
   delete (base_ptr);
-RESULT
+END_SECTION
 
-CHECK((static const String getProductName()))
-  PoseClusteringShiftSuperimposer<FeatureMap<> > pcsi;
+START_SECTION((static const String getProductName()))
+  PoseClusteringShiftSuperimposer pcsi;
   
   TEST_EQUAL(pcsi.getName() == "poseclustering_shift",true)
-RESULT
+END_SECTION
 
-CHECK((virtual void run(const std::vector<ElementMapType>& maps, std::vector<TransformationDescription>& transformations)))
-  std::vector<FeatureMap<> > input(2);
+START_SECTION((virtual void run(const std::vector<ElementMapType>& maps, std::vector<TransformationDescription>& transformations)))
+  std::vector<ConsensusMap> input(2);
   Feature feat1;
   Feature feat2;
   PositionType pos1(1,1);
@@ -90,15 +90,15 @@ CHECK((virtual void run(const std::vector<ElementMapType>& maps, std::vector<Tra
   input[1].push_back(feat4);
 
   std::vector<TransformationDescription> transformations;
-  PoseClusteringShiftSuperimposer<FeatureMap<> > pcat;
+  PoseClusteringShiftSuperimposer pcat;
   pcat.run(input,transformations);
   
 	TEST_EQUAL(transformations.size(),1)
   TEST_STRING_EQUAL(transformations[0].getName(),"linear")
 	TEST_EQUAL(transformations[0].getParameters().size(),2)
-  TEST_REAL_EQUAL(transformations[0].getParameters().getValue("slope"),1.0)
-  TEST_REAL_EQUAL(transformations[0].getParameters().getValue("intercept"),-20.4)
-RESULT
+  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("slope"),1.0)
+  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("intercept"),-20.4)
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

@@ -71,7 +71,7 @@ namespace OpenMS
 	  			//Polarity
 					String("any;+;-").split(';',cv_terms_[0]);
 					//Scan type
-					String(";zoom;Full,SIM,SRM,CRM").split(';',cv_terms_[1]);
+					String(";zoom;Full;SIM;SRM;CRM;CNG;CNL;PRODUCT;PRECURSOR;ER").split(';',cv_terms_[1]);
 					//Ionization method
 					String(";ESI;EI;CI;FAB;TSP;MALDI;FD;FI;PD;SI;TI;API;ISI;CID;CAD;HN;APCI;APPI;ICP").split(';',cv_terms_[2]);
 					//Mass analyzer
@@ -98,7 +98,7 @@ namespace OpenMS
 	  			//Polarity
 					String("any;+;-").split(';',cv_terms_[0]);
 					//Scan type
-					String(";zoom;Full,SIM,SRM,CRM").split(';',cv_terms_[1]);
+					String(";zoom;Full;SIM;SRM;CRM;CNG;CNL;PRODUCT;PRECURSOR;ER").split(';',cv_terms_[1]);
 					//Ionization method
 					String(";ESI;EI;CI;FAB;TSP;MALDI;FD;FI;PD;SI;TI;API;ISI;CID;CAD;HN;APCI;APPI;ICP").split(';',cv_terms_[2]);
 					//Mass analyzer
@@ -108,7 +108,7 @@ namespace OpenMS
 					//Resolution method
 					String(";FWHM;TenPercentValley;Baseline").split(';',cv_terms_[5]);
 				}
-	
+
 	  		/// Destructor
 	      virtual ~MzXMLHandler()
 	      {
@@ -159,7 +159,7 @@ namespace OpenMS
 				String char_rest_;
 				//@}
 				
-				/// Flag that indicates that the current spectrum should be skipped
+				/// Flag that indicates whether this spectrum should be skipped (due to options)
 				bool skip_spectrum_;
 				
 				/// spectrum counter (spectra without peaks are not written)
@@ -175,22 +175,11 @@ namespace OpenMS
 					meta.getKeys(keys);
 		
 					for (std::vector<String>::const_iterator it = keys.begin(); it!=keys.end(); ++it)
-						if ( (*it)[0] != '#')  // internally used meta info start with '#'
 					{
-						String name = *it;
-						os << String(indent,'\t') << "<" << tag << " name=\"";
-						if (tag=="processingOperation" && name.find('#')!=std::string::npos)
+						if ( (*it)[0] != '#')  // internally used meta info start with '#'
 						{
-							std::vector<String> parts;
-							name.split('#',parts);
-							os << parts[0] << "\" type=\"" << parts[1];
+							os << String(indent,'\t') << "<" << tag << " name=\"" << *it << "\" value=\"" << meta.getMetaValue(*it) << "\"/>\n";
 						}
-						else
-						{
-							os << name;
-						}
-						os << "\" value=\""
-							 << meta.getMetaValue(*it) << "\"/>\n";
 					}
 				}
 			
@@ -232,11 +221,13 @@ namespace OpenMS
 	  	static const XMLCh* s_phone = xercesc::XMLString::transcode("phone");
 	  	static const XMLCh* s_email = xercesc::XMLString::transcode("email");
 	  	static const XMLCh* s_uri = xercesc::XMLString::transcode("URI");
+	  	static const XMLCh* s_num = xercesc::XMLString::transcode("num");
 	  	static const XMLCh* s_intensitycutoff = xercesc::XMLString::transcode("intensityCutoff");
 	  	static const XMLCh* s_centroided = xercesc::XMLString::transcode("centroided");
 	  	static const XMLCh* s_deisotoped = xercesc::XMLString::transcode("deisotoped");
 	  	static const XMLCh* s_chargedeconvoluted = xercesc::XMLString::transcode("chargeDeconvoluted");
 	  	
+	  	static UInt scan_count = 0;
 	  	
 	  	String tag = sm_.convert(qname);
 	  	open_tags_.push_back(tag);
@@ -251,49 +242,34 @@ namespace OpenMS
 				optionalAttributeAsInt_(count, attributes, s_count);
 				exp_->reserve(count);
 				logger_.startProgress(0,count,"loading mzXML file");
+				scan_count = 0;
+				//start and end time are xs:duration. This makes no senes => ignore them
 			}
 			else if (tag=="parentFile")
 			{
-				exp_->getSourceFile().setNameOfFile(attributeAsString_(attributes, s_filename));
-				exp_->getSourceFile().setFileType(attributeAsString_(attributes, s_filetype));
-				exp_->getSourceFile().setSha1(attributeAsString_(attributes, s_filesha1));					
+				SourceFile sf;
+				sf.setNameOfFile(attributeAsString_(attributes, s_filename));
+				sf.setFileType(attributeAsString_(attributes, s_filetype));
+				sf.setChecksum(attributeAsString_(attributes, s_filesha1), SourceFile::SHA1);		
+				exp_->getSourceFiles().push_back(sf);			
 			}
 			else if (tag=="software")
 			{
 				String& parent_tag = *(open_tags_.end()-2);
-				//TODO dataProcessing - software can occur several times. Can we store that?
-				//     Perhaps we need to adjust our model!
 				if (parent_tag=="dataProcessing")
 				{
-					exp_->getSoftware().setVersion(attributeAsString_(attributes, s_version));
-					exp_->getSoftware().setName(attributeAsString_(attributes, s_name));
-					//TODO Software type can be aquisition/conversion/processing
-					//     Should we store information like that?
-					exp_->getSoftware().setComment(attributeAsString_(attributes, s_type));
+					exp_->getDataProcessing().back().getSoftware().setVersion(attributeAsString_(attributes, s_version));
+					exp_->getDataProcessing().back().getSoftware().setName(attributeAsString_(attributes, s_name));
+					exp_->getDataProcessing().back().setMetaValue("#type",String(attributeAsString_(attributes, s_type)));
 					
 					String time;
 					optionalAttributeAsString_(time,attributes,s_completiontime);
-					exp_->getSoftware().setCompletionTime( asDateTime_(time) );
+					exp_->getDataProcessing().back().setCompletionTime( asDateTime_(time) );
 				}
 				else if (parent_tag=="msInstrument")
 				{
-					// not part of METADATA -> putting it into MetaInfo
-					MetaInfo().registry().registerName("#InstSoftware","Instrument software name");
-					exp_->getInstrument().setMetaValue("#InstSoftware", (String)attributeAsString_(attributes, s_name));
-					
-					MetaInfo().registry().registerName("#InstSoftwareVersion","Instrument software version");
-					exp_->getInstrument().setMetaValue("#InstSoftwareVersion", (String)attributeAsString_(attributes, s_version));
-					
-					MetaInfo().registry().registerName("#InstSoftwareType","Instrument software type");
-					exp_->getInstrument().setMetaValue("#InstSoftwareType", (String)attributeAsString_(attributes, s_type));
-					
-					String time;
-					optionalAttributeAsString_(time,attributes,s_completiontime);
-					if (time!="")
-					{
-						MetaInfo().registry().registerName("#InstSoftwareTime","Instrument software completion time");
-						exp_->getInstrument().setMetaValue("#InstSoftwareTime",time);
-					}
+					exp_->getInstrument().getSoftware().setVersion(attributeAsString_(attributes, s_version));
+					exp_->getInstrument().getSoftware().setName(attributeAsString_(attributes, s_name));
 				}
 			}
 			else if (tag=="peaks")
@@ -301,19 +277,19 @@ namespace OpenMS
 				precision_ = attributeAsString_(attributes, s_precision);
 				if (precision_!="32" && precision_!="64")
 				{
-					error(String("Invalid precision '") + precision_ + "' in element 'peaks'");
+					error(LOAD, String("Invalid precision '") + precision_ + "' in element 'peaks'");
 				}
 				String byte_order;
 				optionalAttributeAsString_(byte_order, attributes, s_byteorder);
 				if (byte_order!="network")
 				{
-					error(String("Invalid or missing byte order '") + byte_order + "' in element 'peaks'. Must be 'network'!");
+					error(LOAD, String("Invalid or missing byte order '") + byte_order + "' in element 'peaks'. Must be 'network'!");
 				}
 				String pair_order;
 				optionalAttributeAsString_(pair_order, attributes, s_pairorder);
 				if (pair_order!="m/z-int")
 				{
-					error(String("Invalid or missing pair order '") + pair_order + "' in element 'peaks'. Must be 'm/z-int'!");
+					error(LOAD, String("Invalid or missing pair order '") + pair_order + "' in element 'peaks'. Must be 'm/z-int'!");
 				}
 			}
 			else if (tag=="precursorMz")
@@ -324,7 +300,7 @@ namespace OpenMS
 				}
 				catch (Exception::ParseError& e)
 				{
-					std::cerr << "Error: MzXMLHandler: mandatory attribute precursorMz not found! Setting precursor intensity to 0; trying to continue;" << std::endl;
+					error(LOAD, "Mandatory attribute precursorMz not found! Setting precursor intensity to 0 - trying to continue");
 					exp_->back().getPrecursorPeak().setIntensity(0.0);
 				}
 				
@@ -371,37 +347,38 @@ namespace OpenMS
 					}
 				}
 
+				logger_.setProgress(scan_count);
+				
 				if ( (options_.hasRTRange() && !options_.getRTRange().encloses(DPosition<1>(retention_time)))
 				 || (options_.hasMSLevels() && !options_.containsMSLevel(ms_level)) )
 				{
 					// skip this tag
-					skip_spectrum_ = true;					
+					skip_spectrum_ = true;
+					++scan_count;			
 					return;
 				}
-				
-				logger_.setProgress(exp_->size());
+
 				//Add a new spectrum and set MS level and RT
 				exp_->resize(exp_->size()+1);
 				exp_->back().setMSLevel(ms_level);
 				exp_->back().setRT(retention_time);
-				
+				exp_->back().setNativeID(String("scan=") + attributeAsString_(attributes, s_num));
 				//peak count == twice the scan size
 				peak_count_ = attributeAsInt_(attributes, s_peakscount);
 				exp_->back().reserve(peak_count_);
 				
-				//TODO centroided, chargeDeconvoluted, deisotoped are ignored.
-				//     Should we include them into our model?
+				//centroided, chargeDeconvoluted, deisotoped are ignored
 
 				//other optional attributes
-				DoubleReal tmp = 0.0;
-				optionalAttributeAsDouble_(tmp, attributes, s_startmz);
-				exp_->back().getInstrumentSettings().setMzRangeStart(tmp);
+				InstrumentSettings::ScanWindow window;
+				optionalAttributeAsDouble_(window.begin, attributes, s_startmz);
+				optionalAttributeAsDouble_(window.end, attributes, s_endmz);
+				if (window.begin!=0.0 || window.end!=0.0 )
+				{
+					exp_->back().getInstrumentSettings().getScanWindows().push_back(window);
+				}
 				
-				tmp = 0.0;
-				optionalAttributeAsDouble_(tmp, attributes, s_endmz);
-				exp_->back().getInstrumentSettings().setMzRangeStop(tmp);
-
-				tmp = 0.0;
+				DoubleReal tmp = 0.0;
 				optionalAttributeAsDouble_(tmp, attributes, s_collisionenergy);
 				exp_->back().getPrecursor().setActivationEnergy(tmp);
 				
@@ -411,7 +388,11 @@ namespace OpenMS
 				
 				String type = "";
 				optionalAttributeAsString_(type, attributes, s_scantype);
+				if (type=="EMS") type=""; //Enhanced MS (ABI - Sashimi converter)
+				if (type=="EPI") type=""; //Enhanced Product Ion (ABI - Sashimi converter)
 				exp_->back().getInstrumentSettings().setScanMode( (InstrumentSettings::ScanMode) cvStringToEnum_(1,type,"scanType") );
+				
+				++scan_count;
 			}
 			else if (tag=="operator")
 			{
@@ -422,25 +403,17 @@ namespace OpenMS
 				String tmp = "";
 				optionalAttributeAsString_(tmp, attributes,s_email);
 				exp_->getContacts().back().setEmail(tmp);
-				
-				//TODO all other info has to go into misc info field
-				String contact_info;
+
 				tmp = "";
 				optionalAttributeAsString_(tmp, attributes,s_phone);
 				if (tmp != "") 
 				{
-					contact_info = "PHONE: " + tmp;
+					exp_->getContacts().back().setMetaValue("#phone", tmp);
 				}
+				
 				tmp = "";
 				optionalAttributeAsString_(tmp, attributes,s_uri);
-				if (tmp != "") 
-				{
-					contact_info += String(contact_info == "" ? "" : " ") + "URI: " + tmp;
-				}
-				if (contact_info != "")
-				{
-					exp_->getContacts().back().setContactInfo(contact_info);
-				}
+				exp_->getContacts().back().setURL(tmp);
 			}
 			else if (tag=="msManufacturer")
 			{
@@ -452,7 +425,8 @@ namespace OpenMS
 			}
 			else if (tag=="msIonisation")
 			{
-				exp_->getInstrument().getIonSource().setIonizationMethod((IonSource::IonizationMethod) cvStringToEnum_(2, attributeAsString_(attributes, s_value), "msIonization") );
+				exp_->getInstrument().getIonSources().resize(1);
+				exp_->getInstrument().getIonSources()[0].setIonizationMethod((IonSource::IonizationMethod) cvStringToEnum_(2, attributeAsString_(attributes, s_value), "msIonization") );
 			}
 			else if (tag=="msMassAnalyzer")
 			{
@@ -461,39 +435,42 @@ namespace OpenMS
 			}
 			else if (tag=="msDetector")
 			{
-				exp_->getInstrument().getIonDetector().setType( (IonDetector::Type) cvStringToEnum_(4, attributeAsString_(attributes, s_value), "msDetector") );
+				exp_->getInstrument().getIonDetectors().resize(1);
+				exp_->getInstrument().getIonDetectors()[0].setType( (IonDetector::Type) cvStringToEnum_(4, attributeAsString_(attributes, s_value), "msDetector") );
 			}
 			else if (tag=="msResolution")
 			{
 				exp_->getInstrument().getMassAnalyzers()[0].setResolutionMethod( (MassAnalyzer::ResolutionMethod) cvStringToEnum_(5, attributeAsString_(attributes, s_value), "msResolution"));
 			}
-			//TODO dataProcessing can occur several times. Can we store that?
-			//     Perhaps we need to adjust our model!
 			else if (tag=="dataProcessing")
 			{
+				exp_->getDataProcessing().push_back(DataProcessing());
 				String boolean = "";
 				optionalAttributeAsString_(boolean, attributes, s_deisotoped);
 				if (boolean == "true" || boolean == "1")
 				{
-					exp_->getProcessingMethod().setDeisotoping(true);
+					exp_->getDataProcessing().back().getProcessingActions().insert(DataProcessing::DEISOTOPING);
 				}
 				
 				boolean = "";
 				optionalAttributeAsString_(boolean, attributes, s_chargedeconvoluted);
 				if (boolean == "true" || boolean == "1")
 				{
-					exp_->getProcessingMethod().setChargeDeconvolution(true);
+					exp_->getDataProcessing().back().getProcessingActions().insert(DataProcessing::CHARGE_DECONVOLUTION);
 				}
 				
 				DoubleReal cutoff = 0.0;
 				optionalAttributeAsDouble_(cutoff, attributes, s_intensitycutoff);
-				exp_->getProcessingMethod().setIntensityCutoff(cutoff);
-				
-				String peaks = "";
-				optionalAttributeAsString_(peaks, attributes, s_centroided);
-				if (peaks == "true" || peaks == "1")
+				if (cutoff!=0.0)
 				{
-					exp_->getProcessingMethod().setSpectrumType(SpectrumSettings::PEAKS);
+					exp_->getDataProcessing().back().setMetaValue("#intensity_cutoff",cutoff);
+				}
+					
+				boolean = "";
+				optionalAttributeAsString_(boolean, attributes, s_centroided);
+				if (boolean == "true" || boolean == "1")
+				{
+					exp_->getDataProcessing().back().getProcessingActions().insert(DataProcessing::PEAK_PICKING);
 				}
 			}
 			else if (tag=="nameValue")
@@ -520,11 +497,16 @@ namespace OpenMS
 					std::cout << " Warning: Unexpected tag 'nameValue' in tag '" << parent_tag << "'" << std::endl;
 				}
 			}
-			//TODO dataProcessing - processingOperation can occur several times. Can we store that?
-			//     Perhaps we need to adjust our model!
 			else if (tag=="processingOperation")
 			{
-				//TODO This is currently ignored
+				String name = "";
+				optionalAttributeAsString_(name, attributes, s_name);
+				if (name == "") return;
+
+				String value = "";
+				optionalAttributeAsString_(value, attributes, s_value);
+				
+				exp_->getDataProcessing().back().setMetaValue(name, value);
 			}
 			
 			//std::cout << " -- !Start -- " << std::endl;
@@ -621,7 +603,7 @@ namespace OpenMS
 			}
 			else if (	open_tags_.back()=="precursorMz")
 			{
-				exp_->back().getPrecursorPeak().getPosition()[0] = asFloat_(transcoded_chars);
+				exp_->back().getPrecursorPeak().getPosition()[0] = asDouble_(transcoded_chars);
 			}
 			else if (	open_tags_.back()=="comment")
 			{
@@ -632,11 +614,9 @@ namespace OpenMS
 				{
 					exp_->getInstrument().setMetaValue("#Comment" , String(transcoded_chars));
 				}
-				//TODO dataProcessing - comment can occur several times. Can we store that?
-				//     Perhaps we need to adjust our model!
 				else if (parent_tag=="dataProcessing")
 				{
-					//TODO this is currently ignored
+					//this is currently ignored
 				}
 				else if (parent_tag=="scan")
 				{
@@ -644,14 +624,13 @@ namespace OpenMS
 				}
 				else if (String(transcoded_chars).trim()!="")
 				{
-					std::cerr << "Unhandled comment '" << transcoded_chars << "' in element '" << open_tags_.back() << "'" << std::endl;
+					warning(LOAD, String("Unhandled comment '") + transcoded_chars + "' in element '" + open_tags_.back() + "'");
 				}
 			}
 			else if (String(transcoded_chars).trim()!="")
 			{
-					std::cerr << "Unhandled character content '" << transcoded_chars << "' in tag '" << open_tags_.back() << "'" << std::endl;
+				warning(LOAD, String("Unhandled character content '") + transcoded_chars + "' in element '" + open_tags_.back() + "'");
 			}
-	  	//std::cout << " -- !Chars -- " << std::endl;
 	  }
 	
 		template <typename MapType>
@@ -671,122 +650,112 @@ namespace OpenMS
 				 << "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" "
 				 << "xsi:schemaLocation=\"http://sashimi.sourceforge.net/schema_revision/mzXML_2.1 "
 				 << "http://sashimi.sourceforge.net/schema_revision/mzXML_2.1/mzXML_idx_2.1.xsd\">\n"
-				 << "\t<msRun scanCount=\"" << count_tmp_ << "\">\n"
-				 << "\t\t<parentFile fileName=\"" << cexp_->getSourceFile().getNameOfFile()
-				 //file type is an enum in mzXML => search for 'raw' string
-				 << "\" fileType=\"";
-				 String tmp_string = cexp_->getSourceFile().getFileType();
-				 tmp_string.toLower();
-				 if (tmp_string.hasSubstring("raw"))
-				 {
-				 	os << "RAWData";
-				 }
-				 else
-				 {
-				 	os << "processedData";
-				 }
-				 //Sha1 checksum must have 40 characters => create a fake if it is unknown
-				 os << "\" fileSha1=\"";
-				 tmp_string = cexp_->getSourceFile().getSha1();
-				 if (cexp_->getSourceFile().getSha1().size()!=40)
-				 {
-				 	 os << "0000000000000000000000000000000000000000";
-				 }
-				 else
-				 {
-				   os << cexp_->getSourceFile().getSha1();
-				 }
-				 os  << "\"/>\n";
-	
-			if (cexp_->getInstrument() != Instrument())
+				 << "\t<msRun scanCount=\"" << count_tmp_ << "\">\n";
+			
+			//----------------------------------------------------------------------------------------
+			// parent files
+			//----------------------------------------------------------------------------------------
+			if (cexp_->getSourceFiles().size()==0)
+			{
+					os << "\t\t<parentFile fileName=\"\" fileType=\"processedData\" fileSha1=\"0000000000000000000000000000000000000000\"/>\n";
+			}
+			else 
+			{
+				for (UInt i=0; i< cexp_->getSourceFiles().size(); ++i)
+				{
+					const SourceFile& sf = cexp_->getSourceFiles()[i];
+					os << "\t\t<parentFile fileName=\"" << sf.getNameOfFile() << "\" fileType=\"";
+					//file type is an enum in mzXML => search for 'raw' string
+					String tmp_string = sf.getFileType();
+					tmp_string.toLower();
+					if (tmp_string.hasSubstring("raw"))
+					{
+						os << "RAWData";
+					}
+					else
+					{
+						os << "processedData";
+					}
+					//Sha1 checksum must have 40 characters => create a fake if it is unknown
+					os << "\" fileSha1=\"";
+					tmp_string = sf.getChecksum();
+					if (sf.getChecksum().size()!=40 || sf.getChecksumType()!=SourceFile::SHA1)
+					{
+						os << "0000000000000000000000000000000000000000";
+					}
+					else
+					{
+						os << sf.getChecksum();
+					}
+					os  << "\"/>\n";
+				}
+			}
+
+			//----------------------------------------------------------------------------------------
+			//instrument
+			//----------------------------------------------------------------------------------------
+			if (cexp_->getInstrument() != Instrument() || cexp_->getContacts().size()!=0)
 			{
 				const Instrument& inst = cexp_->getInstrument();
 				os << "\t\t<msInstrument>\n"
-					 << "\t\t\t<msManufacturer category=\"msManufacturer\" value=\""
-					 <<	inst.getVendor() << "\"/>\n"
-					 << "\t\t\t<msModel category=\"msModel\" value=\""
-					 << inst.getModel() << "\"/>\n"
-					 << "\t\t\t<msIonisation category=\"msIonisation\" value=\""
-					 << cv_terms_[2][inst.getIonSource().getIonizationMethod()]
-					 << "\"/>\n";
-	
+					 << "\t\t\t<msManufacturer category=\"msManufacturer\" value=\"" <<	inst.getVendor() << "\"/>\n" << "\t\t\t<msModel category=\"msModel\" value=\"" << inst.getModel() << "\"/>\n";
+				if (inst.getIonSources().size()==0 || !inst.getIonSources()[0].getIonizationMethod())
+				{
+					os << "\t\t\t<msIonisation category=\"msIonisation\" value=\"\"/>\n";
+				}
+				else
+				{
+					os << "\t\t\t<msIonisation category=\"msIonisation\" value=\"" << cv_terms_[2][inst.getIonSources()[0].getIonizationMethod()] << "\"/>\n";
+				}
 				const std::vector<MassAnalyzer>& analyzers = inst.getMassAnalyzers();
-				if ( analyzers.size()>0 )
+				if (analyzers.size()==0 || !analyzers[0].getResolutionMethod())
 				{
-					os << "\t\t\t<msMassAnalyzer category=\"msMassAnalyzer\" value=\""
-						 << cv_terms_[3][analyzers[0].getType()]  << "\"/>\n";
+					os << "\t\t\t<msMassAnalyzer category=\"msMassAnalyzer\" value=\"\"/>\n";
 				}
 				else
 				{
-					std::cout << " Warning: mzXML supports only one analyzer! Skipping the other " << (analyzers.size()-1) << "mass analyzers." << std::endl;
+					os << "\t\t\t<msMassAnalyzer category=\"msMassAnalyzer\" value=\"" << cv_terms_[3][analyzers[0].getType()]  << "\"/>\n";
 				}
-				os << "\t\t\t<msDetector category=\"msDetector\" value=\""
-					 << cv_terms_[4][inst.getIonDetector().getType()] << "\"/>\n";
-				try
+				if (inst.getIonDetectors().size()==0 || !inst.getIonDetectors()[0].getType())
 				{
-					String type = inst.getMetaValue("#InstSoftwareType").toString();
-					//invalid type is resetted to 'processing' as it fits all actions
-					if (type!="acquisition" && type!="conversion" && type!="processing")
-					{
-						type = "processing";
-					}
-					String name = inst.getMetaValue("#InstSoftware").toString();
-					String version = inst.getMetaValue("#InstSoftwareVersion").toString();
-					String str = inst.getMetaValue("#InstSoftwareTime").toString();
-					String time(str);
-					time.substitute(' ', 'T');
-					os << "\t\t\t<software type=\"" << type
-						 << "\" name=\"" << name
-						 << "\" version=\"" << version << "\"";
-					if (time != "")
-					{
-						os << " completionTime=\"" << time << "\"";
-					}
-					os << "/>\n";
-				}
-				catch(Exception::InvalidValue exception)
-				{
-	
-				}
-				
-				if ( analyzers.size()>0 )
-				{
-					if (analyzers[0].getResolutionMethod())
-						os << "\t\t\t<msResolution category=\"msResolution\" value=\""
-					 		 << cv_terms_[5][analyzers[0].getResolutionMethod()] << "\"/>\n";
+					os << "\t\t\t<msDetector category=\"msDetector\" value=\"\"/>\n";
 				}
 				else
 				{
-					std::cout << "Warning: mzXML supports only one analyzer! Skipping the other " << (analyzers.size()-1) << "mass analyzers." << std::endl;
+					os << "\t\t\t<msDetector category=\"msDetector\" value=\"" << cv_terms_[4][inst.getIonDetectors()[0].getType()] << "\"/>\n";					
+				}
+				os << "\t\t\t<software type=\"acquisition\" name=\"" << inst.getSoftware().getName() << "\" version=\"" << inst.getSoftware().getVersion() << "\"/>\n";
+				if (analyzers.size()==0 || !analyzers[0].getResolutionMethod())
+				{
+					os << "\t\t\t<msResolution category=\"msResolution\" value=\"\"/>\n";
+				}
+				else
+				{
+					os << "\t\t\t<msResolution category=\"msResolution\" value=\"" << cv_terms_[5][analyzers[0].getResolutionMethod()] << "\"/>\n";
 				}
 				
 				if ( cexp_->getContacts().size()>0 )
 				{
 					const ContactPerson& cont = cexp_->getContacts()[0];
 					
-					os << "\t\t\t<operator first=\"" << cont.getFirstName() << "\" last=\"" << cont.getLastName();
-					
-					String info = cont.getContactInfo();
-					std::string::size_type phone = info.find("PHONE:");
-					std::string::size_type uri = info.find("URI:");
-					if (phone != std::string::npos)
-					{
-						UInt end = uri != std::string::npos ? uri : info.size();
-						os << "\" phone=\"" << info.substr(phone + 6, end - phone + 6);
-					}
+					os << "\t\t\t<operator first=\"" << cont.getFirstName() << "\" last=\"" << cont.getLastName() <<  "\"" ;
 					
 					if (cont.getEmail() != "")
 					{
-						os << "\" email=\"" << cont.getEmail();
+						os << " email=\"" << cont.getEmail() << "\"";
 					}
 					
-					if (uri != std::string::npos)
+					if (cont.getURL() != "")
 					{
-						UInt uri = info.find("URI:");
-						os << "\" URI=\"" << info.substr(uri+4).trim();
+						os << " URI=\"" << cont.getURL() << "\"";
 					}
 					
-					os << "\"/>\n";
+					if (cont.metaValueExists("#phone"))
+					{
+						os << " phone=\"" << (String)(cont.getMetaValue("#phone")) << "\"";
+					}
+					
+					os << "/>\n";
 				}
 				writeUserParam_(os,inst,3);
 				try
@@ -800,53 +769,115 @@ namespace OpenMS
 				}
 				os << "\t\t</msInstrument>\n";
 			}
-	
-			const Software& software = cexp_->getSoftware();
-			os << "\t\t<dataProcessing deisotoped=\""
-				 << cexp_->getProcessingMethod().getDeisotoping()
-				 << "\" chargeDeconvoluted=\""
-				 << cexp_->getProcessingMethod().getChargeDeconvolution()
-				 << "\" centroided=\"";
-			if(cexp_->getProcessingMethod().getSpectrumType()==SpectrumSettings::PEAKS)
+			
+			//----------------------------------------------------------------------------------------
+			//data processing
+			//----------------------------------------------------------------------------------------
+			if (cexp_->getDataProcessing().size()==0)
 			{
-				os << "1";
+				os << "\t\t<dataProcessing>\n"
+					 << "\t\t\t<software type=\"processing\" name=\"\" version=\"\"/>\n"
+					 << "\t\t</dataProcessing>\n";
 			}
 			else
 			{
-				os << "0";
-			}
-			os << "\" intensityCutoff=\""
-				 << cexp_->getProcessingMethod().getIntensityCutoff()
-				 << "\">\n"
-				 << "\t\t\t<software type=\"processing\" name=\"" << software.getName()
-				 << "\" version=\"" << software.getVersion();
-	
-			if (software.getCompletionTime() != DateTime())
-			{
-				String tmp;
-				software.getCompletionTime().get(tmp);
-				String qtmp(tmp);
-				qtmp.substitute(' ', 'T');
-				os << "\" completionTime=\"" << qtmp;
-			}
-			os << "\"/>\n";
-			writeUserParam_(os,cexp_->getProcessingMethod(),3,"processingOperation");
-	
-			os << "\t\t</dataProcessing>\n";
+				for (UInt i=0; i<cexp_->getDataProcessing().size(); ++i)
+				{
+					const DataProcessing& data_processing = cexp_->getDataProcessing()[i];
+					os << "\t\t<dataProcessing deisotoped=\""
+						 << data_processing.getProcessingActions().count(DataProcessing::DEISOTOPING)
+						 << "\" chargeDeconvoluted=\""
+						 << data_processing.getProcessingActions().count(DataProcessing::CHARGE_DECONVOLUTION)
+						 << "\" centroided=\""
+						 << data_processing.getProcessingActions().count(DataProcessing::PEAK_PICKING)
+						 << "\"";
+					if (data_processing.metaValueExists("#intensity_cutoff"))
+					{
+						os  << " intensityCutoff=\"" << data_processing.getMetaValue("#intensity_cutoff").toString() << "\"";
+					}
+					os << ">\n"
+						 << "\t\t\t<software type=\"";
+					if (data_processing.metaValueExists("#type"))
+					{
+						os << data_processing.getMetaValue("#type").toString();
+					}
+					else
+					{
+						os << "processing";
+					}
+					
+					os << "\" name=\"" << data_processing.getSoftware().getName()
+						 << "\" version=\"" << data_processing.getSoftware().getVersion();
 			
-			std::stack<UInt> open_scans;
+					if (data_processing.getCompletionTime() != DateTime())
+					{
+						os << "\" completionTime=\"" << data_processing.getCompletionTime().get().substitute(' ', 'T');
+					}
+					os << "\"/>\n";
+					writeUserParam_(os,data_processing,3,"processingOperation");
+			
+					os << "\t\t</dataProcessing>\n";	
+				}
+			}
+			
+			//check if the nativeID of all spectra are numbers or numbers prefixed with 'scan='
+			//If not we need to renumber all spectra.
+			bool all_numbers = true;
+			bool all_empty = true;
+			bool all_prefixed_numbers = true;
+			for (UInt s=0; s<cexp_->size(); s++)
+			{
+				String native_id = (*cexp_)[s].getNativeID();
+				if (!native_id.hasPrefix("scan="))
+				{
+					all_prefixed_numbers = false;
+				}
+				else
+				{
+					native_id = native_id.substr(5);
+				}
+				try
+				{
+					native_id.toInt();
+				}
+				catch (Exception::ConversionError&)
+				{
+					all_numbers = false;
+					all_prefixed_numbers = false;
+					if (native_id!="")
+					{
+						all_empty = false;
+					}
+				}
+			}
+			//If we need to renumber and the nativeIDs were not empty, warn the user
+			if (!all_numbers && !all_empty)
+			{
+				warning(STORE, "Not all spectrum native IDs are numbers or correctly prefixed with 'scan='. The spectra are renumbered and the native IDs are lost!");
+			}
 			
 			// write scans
+			std::stack<UInt> open_scans;
 			for (UInt s=0; s<cexp_->size(); s++)
 			{
 				logger_.setProgress(s);
 				const SpectrumType& spec = (*cexp_)[s];
 							
-				int ms_level = spec.getMSLevel();
+				UInt ms_level = spec.getMSLevel();
 				open_scans.push(ms_level);
-				
+
+				UInt spectrum_id = s+1;
+				if (all_prefixed_numbers)
+				{
+					spectrum_id = spec.getNativeID().substr(5).toInt();
+				}
+				else if (all_numbers)
+				{
+					spectrum_id = spec.getNativeID().toInt();
+				}
+
 				os << String(ms_level+1,'\t')
-					 << "<scan num=\"" << spec_write_counter_++ << "\" msLevel=\""
+					 << "<scan num=\"" << spectrum_id << "\" msLevel=\""
 					 << ms_level << "\" peaksCount=\""
 					 << spec.size() << "\" polarity=\"";
 				if (spec.getInstrumentSettings().getPolarity()==IonSource::POSITIVE)
@@ -862,18 +893,21 @@ namespace OpenMS
 					os << "any";
 				}
 				
-				if (spec.getInstrumentSettings().getScanMode()!=0 && spec.getInstrumentSettings().getScanMode()<6)
+				if (spec.getInstrumentSettings().getScanMode()!=0)
 				{
-					os << "\" scanType=\""
-						 << cv_terms_[1][spec.getInstrumentSettings().getScanMode()];
+					os << "\" scanType=\"" << cv_terms_[1][spec.getInstrumentSettings().getScanMode()];
 				}
 				os << "\" retentionTime=\"";
 				if (spec.getRT()<0) os << "-";
 				os << "PT"<< std::fabs(spec.getRT()) << "S\"";
-				if (spec.getInstrumentSettings().getMzRangeStart()!=0)
-					os << " startMz=\"" << spec.getInstrumentSettings().getMzRangeStart() << "\"";
-				if (spec.getInstrumentSettings().getMzRangeStop()!=0)
-					os << " endMz=\"" << spec.getInstrumentSettings().getMzRangeStop() << "\"";
+				if (spec.getInstrumentSettings().getScanWindows().size() > 0)
+				{
+					os << " startMz=\"" << spec.getInstrumentSettings().getScanWindows()[0].begin << "\" endMz=\"" << spec.getInstrumentSettings().getScanWindows()[0].end << "\"";
+				}
+				if (spec.getInstrumentSettings().getScanWindows().size() > 1)
+				{
+					warning(STORE, "The MzXML format can store only one scan window for each scan. Only the first one is stored!");
+				}
 				os << ">\n";
 	
 				const PrecursorPeakType& peak = spec.getPrecursorPeak();
@@ -881,23 +915,20 @@ namespace OpenMS
 				{
 					os << String(ms_level+2,'\t') << "<precursorMz precursorIntensity=\""
 						 << peak.getIntensity();
-					if (peak.getCharge()!=0)
-						os << "\" precursorCharge=\"" << peak.getCharge();
-					os << "\">"
-					 	 << peak.getPosition()[0] << "</precursorMz>\n";
+					if (peak.getCharge()!=0) os << "\" precursorCharge=\"" << peak.getCharge();
+					os << "\">" << peak.getPosition()[0] << "</precursorMz>\n";
 				}
 	
 				if (spec.size() > 0)
 				{
-					os << String(ms_level+2,'\t') << "<peaks precision=\"32\""
-						 << " byteOrder=\"network\" pairOrder=\"m/z-int\">";
+					os << String(ms_level+2,'\t') << "<peaks precision=\"32\"" << " byteOrder=\"network\" pairOrder=\"m/z-int\">";
 					
 					//std::cout << "Writing scan " << s << std::endl;
 					std::vector<Real> tmp;
 					for (UInt i=0; i<spec.size(); i++)
 					{
-						tmp.push_back(spec.getContainer()[i].getMZ());
-						tmp.push_back(spec.getContainer()[i].getIntensity());
+						tmp.push_back(spec[i].getMZ());
+						tmp.push_back(spec[i].getIntensity());
 					}
 					
 					std::string encoded;
@@ -906,8 +937,7 @@ namespace OpenMS
 				}
 				else
 				{
-					os << String(ms_level+2,'\t') << "<peaks precision=\"32\""
-						 << " byteOrder=\"network\" pairOrder=\"m/z-int\" xsi:nil=\"1\"/>\n";
+					os << String(ms_level+2,'\t') << "<peaks precision=\"32\"" << " byteOrder=\"network\" pairOrder=\"m/z-int\" xsi:nil=\"1\"/>\n";
 				}
 				
 				writeUserParam_(os,spec,ms_level+2);
@@ -917,7 +947,7 @@ namespace OpenMS
 				}
 				
 				//check MS level of next scan and close scans (scans can be nested)
-				int next_ms_level = 0;
+				UInt next_ms_level = 0;
 				if (s < cexp_->size()-1)
 				{
 					next_ms_level = ((*cexp_)[s+1]).getMSLevel();
@@ -925,7 +955,7 @@ namespace OpenMS
 				//std::cout << "scan: " << s << " this: " << ms_level << " next: " << next_ms_level << std::endl;
 				if (next_ms_level <= ms_level)
 				{
-					for (Int i = 0; i<= ms_level-next_ms_level && !open_scans.empty(); ++i)
+					for (UInt i = 0; i<= ms_level-next_ms_level && !open_scans.empty(); ++i)
 					{
 						os << String(ms_level-i+1,'\t') << "</scan>\n";
 						open_scans.pop();

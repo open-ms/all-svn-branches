@@ -40,7 +40,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page FileConverter FileConverter
+	@page TOPP_FileConverter FileConverter
 	
 	@brief Converts between different MS file formats.
 	
@@ -51,6 +51,9 @@ using namespace std;
 	In these cases a warning is shown. 
 
 	@improvement Implement support for writing MGF (Andreas) 
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_FileConverter.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -71,14 +74,14 @@ class TOPPFileConverter
 	void registerOptionsAndFlags_()
 	{
 		registerInputFile_("in","<file>","","input file ");
-		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML"));
+		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,ms2"));
 		registerStringOption_("in_type", "<type>", "", "input file type -- default: determined from file extension or content\n", false);
-		setValidStrings_("in_type",StringList::create("mzData,mzXML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML"));
+		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,ms2"));
 		
 		registerOutputFile_("out","<file>","","output file ");
-		setValidFormats_("out",StringList::create("mzData,mzXML,DTA2D,mgf,featureXML"));
+		setValidFormats_("out",StringList::create("mzData,mzXML,mzML,DTA2D,mgf,featureXML"));
 		registerStringOption_("out_type", "<type>", "", "output file type -- default: determined from file extension or content\n", false);
-		setValidStrings_("out_type",StringList::create("mzData,mzXML,DTA2D,featureXML"));
+		setValidStrings_("out_type",StringList::create("mzData,mzXML,mzML,DTA2D,mgf,featureXML"));
 	}
 	
 	ExitCodes main_(int , const char**)
@@ -158,14 +161,22 @@ class TOPPFileConverter
 		{
 			fh.loadExperiment(in,exp,in_type,log_type_);
 		}
-	
+		
 		//-------------------------------------------------------------
 		// writing output
 		//-------------------------------------------------------------
-			
+		
 		writeDebug_(String("Writing output file"), 1);
+		if (out_type == FileHandler::MZML)
+		{
+			//add data processing entry
+			addDataProcessing_(exp, DataProcessing::CONVERSION_MZML);
 			
-		if (out_type == FileHandler::MZDATA)
+			MzMLFile f;
+			f.setLogType(log_type_);
+			f.store(out,exp);					
+		}			
+		else if (out_type == FileHandler::MZDATA)
 		{
 			MzDataFile f;
 			f.setLogType(log_type_);
@@ -185,10 +196,12 @@ class TOPPFileConverter
 		}
 		else if (out_type == FileHandler::FEATUREXML)
 		{
+			//add data processing entry
+			addDataProcessing_(exp, DataProcessing::CONVERSION_FEATUREXML);
+			
 			// The feature specific information is only defaulted. Enough reasons to issue a warning!
 			writeLog_("Warning: Converting peaks to features results in incomplete features!");	
 			FeatureMapType feature_map;
-			static_cast<ExperimentalSettings>(feature_map) = exp;
 			feature_map.reserve(exp.getSize());
 			typedef FeatureMapType::FeatureType FeatureType;
 			FeatureType feature;
@@ -216,8 +229,11 @@ class TOPPFileConverter
 		}
 		else if (out_type == FileHandler::MGF)
 		{
-			MascotInfile f;
-			f.store(out, exp, "");
+			MascotInfile2 f;
+			Param p(f.getParameters());
+			p.setValue("peaklists_only", "true");
+			f.setParameters(p);
+			f.store(out, exp);
 		}
 		else
 		{

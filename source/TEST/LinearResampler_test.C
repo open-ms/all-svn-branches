@@ -41,34 +41,34 @@ START_TEST(LinearResampler, "$Id$")
 using namespace OpenMS;
 
 LinearResampler* lr_ptr = 0;
-CHECK((LinearResampler()))
+START_SECTION((LinearResampler()))
   lr_ptr = new LinearResampler;
   TEST_NOT_EQUAL(lr_ptr,0);
-RESULT
+END_SECTION
 
-CHECK((~LinearResampler()))
+START_SECTION((~LinearResampler()))
   delete lr_ptr;
-RESULT
+END_SECTION
 
 Param param;
 param.setValue("spacing",0.5);
 
-CHECK((template<typename InputSpectrumIterator, typename OutputPeakType > void rasterExperiment(InputSpectrumIterator first, InputSpectrumIterator last, MSExperiment<OutputPeakType>& ms_exp_filtered)))
+START_SECTION((template<typename InputSpectrumIterator, typename OutputPeakType > void rasterExperiment(InputSpectrumIterator first, InputSpectrumIterator last, MSExperiment<OutputPeakType>& ms_exp_filtered)))
   MSExperiment< Peak1D > raw;
   raw.resize(1);
   MSExperiment< Peak1D > resampled;
   MSSpectrum< Peak1D > spec;
-  spec.getContainer().resize(5);
-  spec.getContainer()[0].setMZ(0);
-  spec.getContainer()[0].setIntensity(3);
-  spec.getContainer()[1].setMZ(0.5);
-  spec.getContainer()[1].setIntensity(6);
-  spec.getContainer()[2].setMZ(1.);
-  spec.getContainer()[2].setIntensity(8);
-  spec.getContainer()[3].setMZ(1.6);
-  spec.getContainer()[3].setIntensity(2);
-  spec.getContainer()[4].setMZ(1.8);
-  spec.getContainer()[4].setIntensity(1);
+  spec.resize(5);
+  spec[0].setMZ(0);
+  spec[0].setIntensity(3);
+  spec[1].setMZ(0.5);
+  spec[1].setIntensity(6);
+  spec[2].setMZ(1.);
+  spec[2].setIntensity(8);
+  spec[3].setMZ(1.6);
+  spec[3].setIntensity(2);
+  spec[4].setMZ(1.8);
+  spec[4].setIntensity(1);
   raw[0] = spec;
 
   LinearResampler lr;
@@ -83,25 +83,25 @@ CHECK((template<typename InputSpectrumIterator, typename OutputPeakType > void r
     ++it;
   }
 
-  TEST_REAL_EQUAL(sum, 20);
-RESULT
+  TEST_REAL_SIMILAR(sum, 20);
+END_SECTION
 
-CHECK((template<typename InputPeakType, typename OutputPeakType > void rasterExperiment(const MSExperiment< InputPeakType >& ms_exp_raw, MSExperiment<OutputPeakType>& ms_exp_filtered)))
+START_SECTION((template<typename InputPeakType, typename OutputPeakType > void rasterExperiment(const MSExperiment< InputPeakType >& ms_exp_raw, MSExperiment<OutputPeakType>& ms_exp_filtered)))
   MSExperiment< Peak1D > raw;
   raw.resize(1);
   MSExperiment< Peak1D > resampled;
   MSSpectrum< Peak1D > spec;
-  spec.getContainer().resize(5);
-  spec.getContainer()[0].setMZ(0);
-  spec.getContainer()[0].setIntensity(3);
-  spec.getContainer()[1].setMZ(0.5);
-  spec.getContainer()[1].setIntensity(6);
-  spec.getContainer()[2].setMZ(1.);
-  spec.getContainer()[2].setIntensity(8);
-  spec.getContainer()[3].setMZ(1.6);
-  spec.getContainer()[3].setIntensity(2);
-  spec.getContainer()[4].setMZ(1.8);
-  spec.getContainer()[4].setIntensity(1);
+  spec.resize(5);
+  spec[0].setMZ(0);
+  spec[0].setIntensity(3);
+  spec[1].setMZ(0.5);
+  spec[1].setIntensity(6);
+  spec[2].setMZ(1.);
+  spec[2].setIntensity(8);
+  spec[3].setMZ(1.6);
+  spec[3].setIntensity(2);
+  spec[4].setMZ(1.8);
+  spec[4].setIntensity(1);
   raw[0] = spec;
 
   LinearResampler lr;
@@ -116,22 +116,22 @@ CHECK((template<typename InputPeakType, typename OutputPeakType > void rasterExp
     ++it;
   }
 
-  TEST_REAL_EQUAL(sum, 20);
-RESULT
+  TEST_REAL_SIMILAR(sum, 20);
+END_SECTION
 
-CHECK((template< typename InputPeakIterator, typename OutputPeakContainer > void raster(InputPeakIterator first, InputPeakIterator last, OutputPeakContainer& resampled_peak_container)))
+START_SECTION((template< typename InputPeakIterator, typename OutputPeakContainer > void raster(InputPeakIterator first, InputPeakIterator last, OutputPeakContainer& resampled_peak_container)))
   MSSpectrum< Peak1D > spec;
-  spec.getContainer().resize(5);
-  spec.getContainer()[0].setMZ(0);
-  spec.getContainer()[0].setIntensity(3);
-  spec.getContainer()[1].setMZ(0.5);
-  spec.getContainer()[1].setIntensity(6);
-  spec.getContainer()[2].setMZ(1.);
-  spec.getContainer()[2].setIntensity(8);
-  spec.getContainer()[3].setMZ(1.6);
-  spec.getContainer()[3].setIntensity(2);
-  spec.getContainer()[4].setMZ(1.8);
-  spec.getContainer()[4].setIntensity(1);
+  spec.resize(5);
+  spec[0].setMZ(0);
+  spec[0].setIntensity(3);
+  spec[1].setMZ(0.5);
+  spec[1].setIntensity(6);
+  spec[2].setMZ(1.);
+  spec[2].setIntensity(8);
+  spec[3].setMZ(1.6);
+  spec[3].setIntensity(2);
+  spec[4].setMZ(1.8);
+  spec[4].setIntensity(1);
 
   LinearResampler lr;
   lr.setParameters(param);
@@ -146,22 +146,22 @@ CHECK((template< typename InputPeakIterator, typename OutputPeakContainer > void
     ++it;
   }
 
-  TEST_REAL_EQUAL(sum, 20);
-RESULT
+  TEST_REAL_SIMILAR(sum, 20);
+END_SECTION
 
-CHECK((template<typename InputPeakContainer, typename OutputPeakContainer > void raster(const InputPeakContainer& input_peak_container, OutputPeakContainer& baseline_filtered_container)))
+START_SECTION((template<typename InputPeakContainer, typename OutputPeakContainer > void raster(const InputPeakContainer& input_peak_container, OutputPeakContainer& baseline_filtered_container)))
   MSSpectrum< Peak1D > spec;
-  spec.getContainer().resize(5);
-  spec.getContainer()[0].setMZ(0);
-  spec.getContainer()[0].setIntensity(3);
-  spec.getContainer()[1].setMZ(0.5);
-  spec.getContainer()[1].setIntensity(6);
-  spec.getContainer()[2].setMZ(1.);
-  spec.getContainer()[2].setIntensity(8);
-  spec.getContainer()[3].setMZ(1.6);
-  spec.getContainer()[3].setIntensity(2);
-  spec.getContainer()[4].setMZ(1.8);
-  spec.getContainer()[4].setIntensity(1);
+  spec.resize(5);
+  spec[0].setMZ(0);
+  spec[0].setIntensity(3);
+  spec[1].setMZ(0.5);
+  spec[1].setIntensity(6);
+  spec[2].setMZ(1.);
+  spec[2].setIntensity(8);
+  spec[3].setMZ(1.6);
+  spec[3].setIntensity(2);
+  spec[4].setMZ(1.8);
+  spec[4].setIntensity(1);
 
   LinearResampler lr;
   lr.setParameters(param);
@@ -176,8 +176,8 @@ CHECK((template<typename InputPeakContainer, typename OutputPeakContainer > void
     ++it;
   }
 
-  TEST_REAL_EQUAL(sum, 20);
-RESULT
+  TEST_REAL_SIMILAR(sum, 20);
+END_SECTION
 
 
 /////////////////////////////////////////////////////////////

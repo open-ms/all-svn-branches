@@ -31,8 +31,10 @@
 
 #include <QtGui/QGridLayout>
 #include <QtGui/QScrollBar>
-#include <QtGui/QFileDialog>
+#include <QtGui/QCloseEvent>
+#include <QtGui/QMessageBox>
 #include <QtGui/QPixmap>
+#include <QtGui/QFileDialog>
 
 using namespace std;
 
@@ -117,7 +119,7 @@ namespace OpenMS
 		Histogram<UInt,Real> dist = createIntensityDistribution_();
 		HistogramDialog dw(dist);
 		dw.setLegend("intensity");
-		
+		dw.setLogMode(true);
 		if (dw.exec() == QDialog::Accepted)
 		{
 			DataFilters filters;
@@ -268,6 +270,25 @@ namespace OpenMS
 	void SpectrumWidget::changeLegendVisibility()
 	{
 		showLegend(!isLegendShown());
+	}
+
+	void SpectrumWidget::closeEvent(QCloseEvent* e)
+	{
+		for (UInt l=0; l<canvas()->getLayerCount(); ++l)
+		{
+			//modified => ask if it should be saved		
+			const LayerData& layer = canvas()->getLayer(l);
+			if (layer.modified)
+			{
+				QMessageBox::StandardButton result=QMessageBox::question(this,"Save?",(String("Do you want to save your changes to layer '")+ layer.name +  "'?").toQString(),QMessageBox::Ok|QMessageBox::Discard);
+				if (result==QMessageBox::Ok)
+				{
+					canvas()->activateLayer(l);
+					canvas()->saveCurrentLayer(false);
+				}
+			}
+		}
+		e->accept();
 	}
 
 } //namespace OpenMS

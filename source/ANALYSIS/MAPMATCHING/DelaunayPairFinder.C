@@ -30,6 +30,7 @@
 #include <OpenMS/KERNEL/FeatureHandle.h>
 #include <OpenMS/KERNEL/ConsensusFeature.h>
 
+#include <climits> // damn CGAL uses INT_MAX!
 #include <CGAL/Cartesian.h>
 #include <CGAL/Point_set_2.h>
 
@@ -165,7 +166,6 @@ namespace OpenMS
 
   void DelaunayPairFinder::run(const std::vector<ConsensusMap>& input_maps, ConsensusMap &result_map)
   {
-  	
   	if (input_maps.size()!=2) throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"exactly two input maps required");
 		checkIds_(input_maps);
 		
@@ -176,6 +176,10 @@ namespace OpenMS
   	maps_array[MODEL_] = &(input_maps[0]);
 		maps_array[SCENE_] = &(input_maps[1]);
   	
+  	startProgress(0,10,"Delaunay pair finder");
+		UInt progress = 0;
+		setProgress(++progress);
+
     V_("@@@ DelaunayPairFinder::run()");
 		VV_(max_pair_distance_[RT]);
 		VV_(max_pair_distance_[MZ]);
@@ -192,7 +196,7 @@ namespace OpenMS
 		// really_big_doublereal: Something like
 		// std::numeric_limits<DoubleReal>::max() / 2.  does not work here,
 		// because CGAL fails on a precondition.  But 1E10 is a really big
-		// number, doesn't it?  Found by trial and error.  Clemens, 2008-05-19]
+		// number, isn't it?  Found by trial and error.  Clemens, 2008-05-19]
 		DoubleReal const really_big_doublereal = 1E10;
 		Feature outlier_feature_1;
 		outlier_feature_1.setRT(-really_big_doublereal); outlier_feature_1.setMZ(-really_big_doublereal);
@@ -207,6 +211,8 @@ namespace OpenMS
 		// do the preprocessing for both input maps
     for ( UInt input = MODEL_; input <= SCENE_; ++ input )
     {
+			setProgress(++progress);
+
 			// TODO Find out whether it is (1) correct and (2) fast if we
 			// push_back() the Points into the Delaunay triangulation. Otherwise,
 			// use an iterator adapter and construct Point_set_2 p_set from an
@@ -252,6 +258,8 @@ namespace OpenMS
 		std::vector<Vertex_handle> neighbors_buffer;
     for ( UInt input = MODEL_; input <= SCENE_; ++ input )
     {
+			setProgress(++progress);
+
 			UInt const other_input = 1 - input;
 			
 			neighbours[input].resize( maps_array[input]->size(), outlier_points );
@@ -289,6 +297,8 @@ namespace OpenMS
 		V_("second_nearest_gap:     " << second_nearest_gap_   );
 
     UInt current_result_cf_index = 0;
+
+		setProgress(++progress);
 
     // take each point in the model map and search for its neighbours in the scene map
 		
@@ -358,6 +368,8 @@ namespace OpenMS
 			}
     }
 
+		setProgress(++progress);
+
     // write out singleton (but possibly unpacked) consensus features for
     // unmatched consensus features in model and scene
     for ( UInt input = MODEL_; input <= SCENE_; ++ input )
@@ -376,6 +388,8 @@ namespace OpenMS
 				}
 			}
 		}
+
+		setProgress(++progress);
 		
 		// Acquire statistics about distances // TODO: use these statistics to
 		// derive aposteriori estimates for optimal matching parameters.
@@ -409,9 +423,14 @@ namespace OpenMS
 			VV_(avg_dist_MZ);
 		}
 		
+		setProgress(++progress);
+
 		// Very useful for checking the results, and the ids have no real meaning anyway
-		result_map.sortByNthPosition(Peak2D::MZ);
+		result_map.sortByMZ();
 		
+		setProgress(++progress);
+		endProgress();
+
     return;
   }
 

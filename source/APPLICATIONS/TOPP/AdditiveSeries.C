@@ -48,7 +48,7 @@ typedef Feature::CoordinateType CoordinateType;
 //-------------------------------------------------------------
 
 /**
-	@page AdditiveSeries AdditiveSeries
+	@page TOPP_AdditiveSeries AdditiveSeries
 	
 	@brief Computes an additive series to quantify a peptide in a set of samples.
 	
@@ -61,6 +61,9 @@ typedef Feature::CoordinateType CoordinateType;
 	series as a ratio of the intensities of two different peptides.
 	One of these peptides serves as internal standard for
 	calibration.
+	
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_AdditiveSeries.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -232,8 +235,7 @@ class AdditiveSeries
 
 		try
 		{
-			LinearRegression<vector<double>::const_iterator> linreg;
-
+			LinearRegression linreg;
 			linreg.computeRegression ( confidence_p, conc_vec_begin, conc_vec_end, area_vec_begin );
 
 			if (write_gnuplot)
@@ -294,7 +296,7 @@ class AdditiveSeries
 				// writing the peak data points
 				vector<double>::const_iterator cit = conc_vec_begin;
 				vector<double>::const_iterator ait = area_vec_begin;
-				dataout.precision(15);
+				dataout.precision(writtenDigits<DoubleReal>());
 				for ( ;cit != conc_vec_end; ++cit, ++ait )
 				{
 					dataout << *cit << ' ' << *ait << '\n';

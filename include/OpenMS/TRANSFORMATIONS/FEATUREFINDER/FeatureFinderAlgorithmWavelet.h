@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert, Ole Schulz-Trieglaff $
+// $Maintainer: Clemens Groepl, Ole Schulz-Trieglaff $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_FEATUREFINDERALGORITHMWAVELET_H
@@ -40,8 +40,8 @@ namespace OpenMS
     IsotopeWavelet (Seeding & Extension) and ModelFitter (using EMG in RT dimension and 
 		improved IsotopeModel in dimension of mz)
 
-    The algorithm based on a combination of the sweep line paradigm with a novel wavelet function 
-		tailored to detect isotopic patterns (seeding and extension). 
+    The algorithm is based on a combination of the sweep line paradigm with a novel wavelet function 
+		tailored to detect isotopic patterns. 
 		More details are given in Schulz-Trieglaff and Hussong et al. ("A fast and accurate algorithm 
 		for the quantification of peptides from mass spectrometry data", In "Proceedings of the Eleventh 
 		Annual International Conference on Research in Computational Molecular Biology (RECOMB 2007)", 
@@ -51,7 +51,7 @@ namespace OpenMS
 		recommend to use a noise or intensity filter to remove spurious points and to speed-up 
 		the feature detection process.
 
-    @ref FeatureFinderAlgorithmWavelet_Parameters are explained on a separate page.
+    @htmlinclude OpenMS_FeatureFinderAlgorithmWavelet.parameters
 	
     @ingroup FeatureFinder
    */
@@ -82,12 +82,12 @@ namespace OpenMS
             {
               Param tmp;
     
-              tmp.setValue("max_charge", 2, "The maximal charge state to be considered.", false);
-              tmp.setValue("intensity_threshold", 1, "The final threshold t' is build upon the formula: t' = av+t*sd where t is the intensity_threshold, av the average intensity within the wavelet transformed signal and sd the standard deviation of the transform. If you set intensity_threshold=-1, t' will be zero. For single scan analysis (e.g. MALDI peptide fingerprints) you should start with an intensity_threshold around 0..1 and increase it if necessary.", false);
-              tmp.setValue("rt_votes_cutoff", 5, "A parameter of the sweep line algorithm. It" "subsequent scans a pattern must occur to be considered as a feature.", false);
-              tmp.setValue("rt_interleave", 2, "A parameter of the sweep line algorithm. It determines the maximum number of scans (w.r.t. rt_votes_cutoff) where a pattern is missing.", false);
-              tmp.setValue("recording_mode", 1, "Determines if the spectra have been recorded in positive ion (1) or negative ion (-1) mode.", true);
-              tmp.setValue("charge_threshold", 0.1, "All features/seeds (found by isotope wavelet) get a set of possible charges. Every charge holds a score and the charge threshold limits the number of charge states to be considered (in ModelFitter).", true);
+              tmp.setValue("max_charge", 2, "The maximal charge state to be considered.");
+              tmp.setValue("intensity_threshold", 1, "The final threshold t' is build upon the formula: t' = av+t*sd where t is the intensity_threshold, av the average intensity within the wavelet transformed signal and sd the standard deviation of the transform. If you set intensity_threshold=-1, t' will be zero. For single scan analysis (e.g. MALDI peptide fingerprints) you should start with an intensity_threshold around 0..1 and increase it if necessary.");
+              tmp.setValue("rt_votes_cutoff", 5, "A parameter of the sweep line algorithm. It" "subsequent scans a pattern must occur to be considered as a feature.");
+              tmp.setValue("rt_interleave", 2, "A parameter of the sweep line algorithm. It determines the maximum number of scans (w.r.t. rt_votes_cutoff) where a pattern is missing.");
+              tmp.setValue("recording_mode", 1, "Determines if the spectra have been recorded in positive ion (1) or negative ion (-1) mode.", StringList::create("advanced"));
+              tmp.setValue("charge_threshold", 0.1, "All features/seeds (found by isotope wavelet) get a set of possible charges. Every charge holds a score and the charge threshold limits the number of charge states to be considered (in ModelFitter).", StringList::create("advanced"));
 
               ModelFitter<PeakType,FeatureType> fitter(this->map_, this->features_, this->ff_);
               tmp.insert("fitter:", fitter.getParameters());
@@ -197,7 +197,6 @@ namespace OpenMS
           typename std::multimap<CoordinateType, Box>::iterator iter;
           typename Box::iterator box_iter;
           UInt best_charge_index; CoordinateType c_mz;
-          UInt c_charge; // UInt peak_cutoff;
           CoordinateType av_intens=0, av_mz=0;// begin_mz=0; 
           
         	this->ff_->setLogType (ProgressLogger::CMD);
@@ -213,6 +212,14 @@ namespace OpenMS
             Box& c_box = iter->second;
             std::vector<CoordinateType> charge_votes (max_charge_, 0), charge_binary_votes (max_charge_, 0);
   
+						
+						//TODO (big)
+						//{
+						
+						
+						//TODO: can we just test ALL charges, that were tested by the Wavelet?!
+						// --> need subordinate features! In this case most code from the TODO (big) is obsolete
+						
   		      //Let's first determine the charge
             for (box_iter=c_box.begin(); box_iter!=c_box.end(); ++box_iter)
             {
@@ -261,13 +268,10 @@ namespace OpenMS
               best_charge_index = i-1;
               
             	// Pattern found in too few RT scan 
-            	if (charge_binary_votes[best_charge_index] < RT_votes_cutoff && RT_votes_cutoff <= this->map_->size()) 
+            	if (charge_binary_votes[best_charge_index] < RT_votes_cutoff) 
            	 	{
             		continue;
             	}
-                
-              // that's the finally predicted charge state for the pattern
-              c_charge = best_charge_index + 1; 
               
               //---------------------------------------------------------------------------
               // Get the boundaries for the box with specific charge
@@ -275,14 +279,17 @@ namespace OpenMS
               av_intens=0, av_mz=0;
 
               // Index set for seed region
+							// TODO: why is this charge dependent (except for the if(best_charge_...) ??!
+							// ---> pull outside charge-loop
+							// TODO: do extension of region depending on charge?! (so far only the box itself is used)
               ChargedIndexSet region;
               for (box_iter=c_box.begin(); box_iter!=c_box.end(); ++box_iter)
               {
                 c_mz = box_iter->second.mz;
                 
                 // begin/end of peaks in spectrum
-								// peak_cutoff = iwt.getPeakCutOff (c_mz, c_charge);
-                //begin_mz = c_mz - NEUTRON_MASS/(CoordinateType)c_charge;
+								// peak_cutoff = iwt.getPeakCutOff (c_mz, i);
+                //begin_mz = c_mz - NEUTRON_MASS/(CoordinateType)i;
                 //const SpectrumType& spectrum = this->map_->at(box_iter->second.RT_index);
 								
                 UInt spec_index_begin = box_iter->second.MZ_begin; //spectrum.findNearest(begin_mz);
@@ -291,6 +298,7 @@ namespace OpenMS
                 if (spec_index_end >= this->map_->at(box_iter->second.RT_index).size() )
                 	break;
                 
+								//TODO add some mz left to the box for modelfitting
                 // compute index set for seed region
                 for (UInt p=spec_index_begin; p<=spec_index_end; ++p)
                 {
@@ -305,12 +313,15 @@ namespace OpenMS
                 
               };
        
+							// } TODO
+							
+							
+              // calculate monoisotopic peak
+              av_mz /= av_intens;
               // calculate the average intensity
               av_intens /= (CoordinateType)charge_binary_votes[best_charge_index];
-              // calculate monoisotopic peak
-              av_mz /= av_intens*(CoordinateType)charge_binary_votes[best_charge_index];
               // Set charge for seed region
-              region.charge_ = c_charge;
+              region.charge_ = i;
               
               //---------------------------------------------------------------------------
               // Step 3:
@@ -357,7 +368,9 @@ namespace OpenMS
                       if (corr<summary.corr_min) summary.corr_min = corr;
                       if (corr>summary.corr_max) summary.corr_max = corr;
 
+											
                       // charge
+											//TODO this will fail badly for negative charges!
                       UInt ch = f.getCharge();
                       if (ch>= summary.charge.size())
                       {
@@ -379,11 +392,13 @@ namespace OpenMS
                 } // if
              
              }	// try
-             catch(UnableToFit ex)
+             catch(Exception::UnableToFit ex)
              {
 								std::cout << "UnableToFit: " << ex.what() << std::endl;
  
-                // set unused flag for all data points
+								// TODO: WHY ARE THE Peaks released?! this is only valid if NO charge was sucessfully fitted!!
+                
+								// set unused flag for all data points
                 for (IndexSet::const_iterator it=region.begin(); it!=region.end(); ++it)
                 {
                 	this->ff_->getPeakFlag(*it) = UNUSED;

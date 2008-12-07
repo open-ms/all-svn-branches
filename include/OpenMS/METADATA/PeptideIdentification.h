@@ -40,12 +40,15 @@ namespace OpenMS
     @brief Represents the peptide hits for a spectrum
     
 	  This class is closely related to ProteinIdentification, which stores the protein hits 
-	  and the general information about the identification run.
+	  and the general information about the identification run. More than one PeptideIdentification
+	  can belong to one ProteinIdentification. The general information about a
+	  PeptideIdentification has to be looked up in the correpsonding ProteinIndentification, using
+	  the unique <i>identifier</i> that links the two.
 	  
 	  When loading PeptideHit instances from a File, the retention time and mass-to-charge ratio
 	  of the precursor spectrum is stored in the MetaInfoInterface using the names 'MZ' and 'RT'.
-	  This information can be used to map the PeptideHits to a MSExperiment or a FeatureMap using
-	  IDSpectrumMapper or IDFeatureMapper.
+	  This information can be used to map the peptide hits to an MSExperiment, a FeatureMap 
+	  or a ConsensusMap using the IDMapper class.
 	  
 		@ingroup Metadata
   */
@@ -109,10 +112,15 @@ namespace OpenMS
 		  
 			///@name Methods for linking peptide and protein hits
 			//@{
+			
+			/// get all peptide hits which reference to a given protein accession
 			void getReferencingHits(const String& protein_accession, std::vector<PeptideHit>& peptide_hits) const;			
+			/// get all peptide hits which reference to a given list of protein accessions
 			void getReferencingHits(const std::vector<String>& accessions, std::vector<PeptideHit>& peptide_hits) const;
+			/// get all peptide hits which reference to a given list of proteins (via their accessions)
 			void getReferencingHits(const std::vector<ProteinHit>& protein_hits, std::vector<PeptideHit>& peptide_hits) const;
 
+			/// the complement of the above
 			void getNonReferencingHits(const String& protein_accession, std::vector<PeptideHit>& peptide_hits) const;			
 			void getNonReferencingHits(const std::vector<String>& accessions, std::vector<PeptideHit>& peptide_hits) const;
 			void getNonReferencingHits(const std::vector<ProteinHit>& protein_hits, std::vector<PeptideHit>& peptide_hits) const;

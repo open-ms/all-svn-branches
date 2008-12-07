@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff $
+// $Maintainer: Marc Sturm, Chris Bielow, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_KERNEL_FEATUREMAP_H
@@ -29,8 +29,11 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/KERNEL/Feature.h>
-#include <OpenMS/METADATA/ExperimentalSettings.h>
+#include <OpenMS/METADATA/DocumentIdentifier.h>
+#include <OpenMS/METADATA/ProteinIdentification.h>
+#include <OpenMS/METADATA/DataProcessing.h>
 #include <OpenMS/KERNEL/RangeManager.h>
+#include <OpenMS/KERNEL/ComparatorUtils.h>
 
 #include <algorithm>
 #include <vector>
@@ -39,14 +42,18 @@ namespace OpenMS
 {
 
 	/**	
-		@brief A container for (composite) features.
+		@brief A container for features.
 		
 		A map is a container holding 2-dimensional features,
 		which in turn represent chemical entities (peptides, proteins, etc.) found
 		in a 2-dimensional experiment.
+		
 		Maps are implemented as vectors of features and have basically the same interface
 		as an STL vector has (model of Random Access Container and Back Insertion Sequence).
-		Maps are typically created from peak data of 2D runs through the FeatureFinder.
+		
+		Feature maps are typically created from peak data of 2D runs through the FeatureFinder.
+		
+		@improvement Add list of unassigned peptide features; allow loading and storing; change IDMapper; add to TextExport (Hiwi)
 		
 		@ingroup Kernel
 	*/
@@ -54,9 +61,9 @@ namespace OpenMS
 	class FeatureMap
 		: public std::vector<FeatureT>,
 			public RangeManager<2>,
-			public ExperimentalSettings
+			public DocumentIdentifier
 	{
-	 public:
+		public:
 			/**	
 				 @name Type definitions
 			*/
@@ -70,7 +77,6 @@ namespace OpenMS
 			typedef typename Base::const_reverse_iterator ConstReverseIterator;
 			typedef FeatureType& Reference;
 			typedef const FeatureType& ConstReference;
-	
 			//@}
 			/**	
 				 @name Constructors and Destructor
@@ -81,24 +87,25 @@ namespace OpenMS
 			FeatureMap()
 				: Base(),
 					RangeManagerType(),
-					ExperimentalSettings()
+					DocumentIdentifier(),
+					protein_identifications_(),
+					data_processing_()
 			{
-				
 			}
 			
 			/// Copy constructor
-			FeatureMap(const FeatureMap& map) 
-				: Base(map),
-					RangeManagerType(map),
-					ExperimentalSettings(map)
+			FeatureMap(const FeatureMap& source) 
+				: Base(source),
+					RangeManagerType(source),
+					DocumentIdentifier(source),
+					protein_identifications_(source.protein_identifications_),
+					data_processing_(source.data_processing_)
 			{
-			
 			}
 			
 			/// Destructor
 			virtual ~FeatureMap()
 			{
-				
 			}
 			
 			//@}
@@ -110,8 +117,10 @@ namespace OpenMS
 					
 				Base::operator=(rhs);
 				RangeManagerType::operator=(rhs);
-				ExperimentalSettings::operator=(rhs);
-				
+				DocumentIdentifier::operator=(rhs);
+				protein_identifications_ = rhs.protein_identifications_;
+				data_processing_ = rhs.data_processing_;
+
 				return *this;
 			}
 	
@@ -121,8 +130,10 @@ namespace OpenMS
 				return
 					std::operator==(*this, rhs) &&
 					RangeManagerType::operator==(rhs) &&
-					ExperimentalSettings::operator==(rhs) 
-					;				
+					DocumentIdentifier::operator==(rhs) &&
+					protein_identifications_==rhs.protein_identifications_ &&
+					data_processing_ == rhs.data_processing_
+					;
 			}
 				
 			/// Equality operator
@@ -130,37 +141,57 @@ namespace OpenMS
 			{
 				return !(operator==(rhs));
 			}
-				
-			/** @brief Sort features by intensity. */
-			void sortByIntensity() 
+
+			/**	
+				@name Sorting.
+				These simplified sorting methods are supported in addition to	
+				the standard sorting methods of std::vector.
+			*/
+			//@{
+			/// Sorts the peaks according to ascending intensity.
+			void sortByIntensity(bool reverse=false)
 			{ 
-				typename FeatureMap::iterator beg = this->begin();
-				typename FeatureMap::iterator ed  = this->end();
-				std::sort(beg, ed, typename FeatureType::IntensityLess() ); 
+				if (reverse)
+				{
+					std::sort(this->begin(), this->end(), reverseComparator(typename FeatureType::IntensityLess()) );
+				}
+				else
+				{
+					std::sort(this->begin(), this->end(), typename FeatureType::IntensityLess() ); 
+				}
 			}
 				
-			/** @brief Sort features by position.
-				
-				Lexicographical sorting from dimention 0 to dimension 1 is performed.			
-			*/
+			///Sort features by position. Lexicographical comparison (first RT then m/z) is done.
 			void sortByPosition() 
 			{ 
 				std::sort(this->begin(), this->end(), typename FeatureType::PositionLess() );
 			}
 			
-			/** @brief Sort features by position @p i.
-				
-			   Features are only sorted by position @p i.		
-			*/
-			void sortByNthPosition(UInt i) throw (Exception::NotImplemented);
-			
-			///Sort features by overall quality @p i.
-			void sortByOverallQuality()
-			{
-				typename FeatureMap::iterator beg = this->begin();
-				typename FeatureMap::iterator ed  = this->end();
-				std::sort(beg, ed, typename FeatureType::OverallQualityLess() ); 
+			///Sort features by RT position.
+			void sortByRT() 
+			{ 
+				std::sort(this->begin(), this->end(), typename FeatureType::RTLess() );
 			}
+
+			///Sort features by m/z position.
+			void sortByMZ() 
+			{ 
+				std::sort(this->begin(), this->end(), typename FeatureType::MZLess() );
+			}
+			
+			///Sort features by ascending overall quality.
+			void sortByOverallQuality(bool reverse=false) 
+			{
+				if (reverse)
+				{
+					std::sort(this->begin(), this->end(), reverseComparator(typename FeatureType::OverallQualityLess()) );
+				}
+				else
+				{
+					std::sort(this->begin(), this->end(), typename FeatureType::OverallQualityLess() );
+				}
+			}
+			//@}
 			
 			// Docu in base class
 			void updateRanges()
@@ -200,21 +231,73 @@ namespace OpenMS
 			void swap(FeatureMap& from)
 			{
 				FeatureMap tmp;
-				
-				//swap range information
+
+				//range information
 				tmp.RangeManagerType::operator=(*this);
 				this->RangeManagerType::operator=(from);
 				from.RangeManagerType::operator=(tmp);
-				
-				//swap experimental settings
-				tmp.ExperimentalSettings::operator=(*this);
-				this->ExperimentalSettings::operator=(from);
-				from.ExperimentalSettings::operator=(tmp);
-				
-				//swap features
+
+				//swap actual features
 				Base::swap(from);
+				
+				// swap DocumentIdentifier
+				DocumentIdentifier::swap(from);
+				
+				// swap the remaining members
+				protein_identifications_.swap(from.protein_identifications_);
+				data_processing_.swap(from.data_processing_);
+			}
+			
+			/// non-mutable access to the protein identifications
+		 	const std::vector<ProteinIdentification>& getProteinIdentifications() const
+		 	{
+		  	return protein_identifications_;	   		
+		 	}	
+		 		    	
+			/// mutable access to the protein identifications
+		  std::vector<ProteinIdentification>& getProteinIdentifications()
+		  {
+		  	return protein_identifications_;	
+		  }
+
+			/// sets the protein identifications
+		  void setProteinIdentifications(const std::vector<ProteinIdentification>& protein_identifications)
+		  {
+		  	protein_identifications_ = protein_identifications;
+		  }
+		  
+			/// adds a protein identifications
+		  void addProteinIdentification(ProteinIdentification& protein_identification)
+		  {
+		  	protein_identifications_.push_back(protein_identification);
+		  }
+
+			/// returns a const reference to the description of the applied data processing 
+			const std::vector<DataProcessing>& getDataProcessing() const
+			{
+				return data_processing_; 
 			}
 
+			/// returns a mutable reference to the description of the applied data processing 
+			std::vector<DataProcessing>& getDataProcessing()
+			{
+				return data_processing_; 
+			}
+			
+			/// sets the description of the applied data processing 
+			void setDataProcessing(const std::vector<DataProcessing>& processing_method)
+			{
+				data_processing_ = processing_method; 
+			}
+
+		protected:
+			
+			/// protein identifications
+			std::vector<ProteinIdentification> protein_identifications_;
+			
+			/// applied data processing
+			std::vector<DataProcessing> data_processing_;
+			
 	};
 	
 	/// Print content of a feature map to a stream.
@@ -233,23 +316,6 @@ namespace OpenMS
 		}
 		os << "# -- DFEATUREMAP END --"<< std::endl;
 		return os;
-	}
-	
-	template <typename FeatureType > 
-	void FeatureMap<FeatureType>::sortByNthPosition(UInt i) throw (Exception::NotImplemented)
-	{ 
-		if (i==0)
-		{
-			std::sort(Base::begin(), Base::end(), typename FeatureType::template NthPositionLess<0>() );
-		}
-		else if (i==1)
-		{
-			std::sort(Base::begin(), Base::end(), typename FeatureType::template NthPositionLess<1>() );
-		}
-		else
-		{
-			throw Exception::NotImplemented(__FILE__,__LINE__,__FUNCTION__);
-		}
 	}
 	
 } // namespace OpenMS

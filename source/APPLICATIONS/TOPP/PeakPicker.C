@@ -37,7 +37,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page PeakPicker PeakPicker
+	@page TOPP_PeakPicker PeakPicker
 	
 	@brief A tool for peak detection in raw data
 	
@@ -57,8 +57,38 @@ using namespace std;
 	techniques from nonlinear optimization.
 	
 	How to find @ref TOPP_example_signalprocessing_parameters is explained in the TOPP tutorial. 
-
-	@ingroup TOPP
+	
+	In the following table you, can find example values of the most important parameters for 
+	different instrument types. @n These parameters are not valid for all instruments of that type,
+	but can be used as a starting point for finding suitable parameters.
+	<table>
+		<tr>
+			<td>&nbsp;</td>
+			<td><b>Q-TOF</b></td>
+			<td><b>LTQ Orbitrap</b></td>
+		</tr>
+		<tr>
+			<td><b>thresholds:signal_to_noise</b></td>
+			<td>2</td>
+			<td>0</td>
+		</tr>
+		<tr>
+			<td><b>thresholds:fwhm_bound</b></td>
+			<td>0.1</td>
+			<td>0.005</td>
+		</tr>
+		<tr>
+		<td><b>wavelet_transform:scale</b></td>
+			<td>0.1</td>
+			<td>0.012</td>
+		</tr>
+	</table>
+	
+	In order to impove the results of the peak detection on low resolution data @ref TOPP_NoiseFilter and @ref TOPP_BaselineFilter can be applied.
+	For high resolution data this is not necessary.
+	
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_PeakPicker.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -123,10 +153,6 @@ class TOPPPeakPicker
     mz_data_file.load(in,ms_exp_raw);
 		
 		//check for peak type (raw data required)
-		if (ms_exp_raw.getProcessingMethod().getSpectrumType()==SpectrumSettings::PEAKS)
-		{
-			writeLog_("Warning: The file meta data claims that this is not raw data!");
-		}
 		if (PeakTypeEstimator().estimateType(ms_exp_raw[0].begin(),ms_exp_raw[0].end())==SpectrumSettings::PEAKS)
 		{
 			writeLog_("Warning: OpenMS peak type estimation indicates that this is not raw data!");
@@ -143,10 +169,7 @@ class TOPPPeakPicker
 		// writing output
 		//-------------------------------------------------------------
 
-		ms_exp_peaks.getProcessingMethod().setSpectrumType(SpectrumSettings::PEAKS);
 		mz_data_file.store(out,ms_exp_peaks);
-
-
 		
 		return EXECUTION_OK;
 	}

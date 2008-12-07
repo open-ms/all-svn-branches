@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff$
+// $Maintainer: Ole Schulz-Trieglaff $
 // --------------------------------------------------------------------------
 
 
@@ -35,7 +35,7 @@ namespace OpenMS
   /** 
 		@brief Isotope distribution approximated using linear interpolation.
 
-		@ref IsotopeModel_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_IsotopeModel.parameters
 	*/
 	class IsotopeModel
   : public InterpolationModel

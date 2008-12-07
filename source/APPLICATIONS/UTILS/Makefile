@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# --------------------------------------------------------------------------
 
 include ../../config_defs.mak
 
@@ -32,11 +30,21 @@ DIRECTORY=APPLICATIONS/UTILS
 HEADER_DIR=$(OPENMS_PATH)/include/OpenMS/$(DIRECTORY)
 
 UTILS_EXECUTABLES=\
-	FuzzyDiff\
+	CVInspector\
+	DecoyDatabase\
 	Digestor\
+	FFEval\
+	FuzzyDiff\
+	HistView\
+	IDExtractor\
 	IdXMLInfo\
+	LabeledEval\
+	RTEvaluation\
+	SemanticValidator\
+	SequenceCoverageCalculator\
 	XMLValidator\
-	FFEval
+	CaapConvert
+
 
 all: $(UTILS_EXECUTABLES)
 
@@ -56,7 +64,7 @@ CPP_SOURCES =\
 	$(UTILS_EXECUTABLES:=.C)
 
 %: %.o
-	$(ECHO) $(CXX) $(LDFLAGS) -o $@ $< $(LIBS); \
+	@$(ECHO) $(CXX) $(LDFLAGS) -o $@ $< $(LIBS); \
 	$(CXX) $(LDFLAGS) -o $@ $< $(LIBS); \
 	$(ECHO) $(CP) $@ $(PREFIX)/bin/; \
 	$(CP) $@ $(PREFIX)/bin/; \

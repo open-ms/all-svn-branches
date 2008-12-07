@@ -37,23 +37,16 @@ namespace OpenMS
 	/**
 		@brief File adapter for MzML files
 		
-		This is a beta implementation that does not support all functionality of MzML:
-		- Currently only reading is supported
-  	- Missing features are:
+		This implementation does currently not support the whole functionality of MzML.
+		Some minor features are still missing:
   	  - chromatograms
   	  - zlib compression of base64 data
   	  - base64 integer data
   	  - base64 16 bit data
-		- Meta information that does not fit into the %OpenMS object model is ignored.
 		
-		If a critical error occurs, Exception::NotImplemented is thrown.
+		If a critical error occurs due to the missing functionality, Exception::NotImplemented is thrown.
 		
-		@todo Implement mzML semantic validator (Hiwi)
-		@todo Add tests for PeakFileOptions (Hiwi)
-		@todo Implement and use Base64 integers and 16 bit (Hiwi)
-		@todo Implement and use zlib support (Hiwi)
-		@todo Implement all extensions to our data model that are necessary for mzML (Hiwi, Marc)
-		@todo Implement 'id' attribute - stored in ExperimentalSettings (Clemens, Chris, Marc)
+		@todo Implement Base64 integers, 16 bit, zlib support, chromatograms and CV units (Hiwi)
 		
 		@ingroup FileIO
 	*/
@@ -105,11 +98,33 @@ namespace OpenMS
 				handler.setOptions(options_);
 				save_(filename, &handler);
 			}
-			
+
+			/**
+				@brief Checks if a file validates against the XML schema.
+				
+		  	@exception Exception::FileNotFound is thrown if the file cannot be found.
+				@exception Exception::NotImplemented is thrown if there is no schema available for the file type.
+			*/
+			bool isValid(const String& filename);
+
+			/**
+				@brief Checks if a file is valid with respect to the mapping file and the controlled vocabulary.
+				
+				@param filename File name of the file to be checked.
+				@param errors Errors during the validation are returned in this output parameter.
+				@param warnings Warnings during the validation are returned in this output parameter.
+				
+				@exception Exception::FileNotFound is thrown if the file could not be opened
+			*/
+			bool isSemanticallyValid(const String& filename, StringList& errors, StringList& warnings);
+
 		private:
 			
 			/// Options for loading / storing
 			PeakFileOptions options_;
+			
+			/// Location of indexed mzML schema
+			String indexed_schema_location_;
 	};
 
 } // namespace OpenMS

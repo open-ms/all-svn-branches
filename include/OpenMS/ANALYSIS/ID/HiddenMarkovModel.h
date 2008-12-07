@@ -154,7 +154,7 @@ namespace OpenMS
 			void writeGraphMLFile(const String& filename);
 	
 			/// writes the HMM into an outstream
-			void write(std::ostream& out);
+			void write(std::ostream& out) const;
 
 			/// read a HMM from the given file
 			//void readFromFile(const String& filename);
@@ -229,7 +229,7 @@ namespace OpenMS
 			void forwardDump(); 
 
 			/// builds a synonyms structure, needed when synonyms are used
-			void buildSynonyms();
+			//void buildSynonyms();
 
 			/// estimates the transition probabilities of not trained transitions by averages similar trained ones
 			void estimateUntrainedTransitions();

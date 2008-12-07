@@ -28,6 +28,7 @@
 #define OPENMS_FORMAT_HANDLERS_XMLHANDLER_H
 
 #include <iostream>
+#include <iomanip> // setprecision etc.
 
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/CONCEPT/Macros.h>
@@ -92,7 +93,14 @@ namespace OpenMS
 		  		{
 		  		}
 	  	};
-
+			
+			///Action to set the current mode (for error messages)
+			enum ActionMode
+			{
+				LOAD,		///< Loading a file
+				STORE		///< Storing a file
+			};
+			
     	/// Default constructor
       XMLHandler(const String& filename, const String& version);
 			/// Destructor
@@ -110,11 +118,11 @@ namespace OpenMS
 			//@}
 			
 			/// Fatal error handler. Throws a ParseError exception
-			void fatalError(const String& msg, UInt line=0, UInt column=0) const;
+			void fatalError(ActionMode mode, const String& msg, UInt line=0, UInt column=0) const;
 			/// Error handler for recoverable errors.
-			void error(const String& msg, UInt line=0, UInt column=0) const;
+			void error(ActionMode mode, const String& msg, UInt line=0, UInt column=0) const;
 			/// Warning handler.
-			void warning(const String& msg, UInt line=0, UInt column=0) const;
+			void warning(ActionMode mode, const String& msg, UInt line=0, UInt column=0) const;
 			
 			/// Parsing method for character data
 		  virtual void characters(const XMLCh* const chars, unsigned int length);
@@ -155,83 +163,17 @@ namespace OpenMS
 				return xercesc::XMLString::compareString(a,b)==0;
 			}
 
-			///@name cvParam and userParam handling methods (for mzData and FeatureXML)
+			///@name General MetaInfo handling (for IdXML, FeatureXML, consensusXML)
 			//@{
-			/**  
-				@brief write cvParam containing strings to stream
-				
-				@p value string value
-				@p acc accession number defined by ontology
-				@p name term defined by ontology
-				@p indent number of tabs used in front of tag
-				
-				Example:
-				&lt;cvParam cvLabel="psi" accession="PSI:@p acc" name="@p name" value="@p value"/&gt;
-			*/
-			inline void writeCVS_(std::ostream& os, DoubleReal value, const String& acc, const String& name, int indent=4) const
-			{
-				if (value!=0.0)
-				{
-					os << String(indent,'\t') << "<cvParam cvLabel=\"psi\" accession=\"PSI:" << acc << "\" name=\"" << name << "\" value=\"" << value << "\"/>\n";
-				}
-			}
-			/**  
-				@brief write cvParam containing strings to stream
-				
-				@p value string value
-				@p acc accession number defined by ontology
-				@p name term defined by ontology
-				@p indent number of tabs used in front of tag
-				
-				Example:
-				&lt;cvParam cvLabel="psi" accession="PSI:@p acc" name="@p name" value="@p value"/&gt;
-			*/
-			inline void writeCVS_(std::ostream& os, const String& value, const String& acc, const String& name, int indent=4) const
-			{
-				if (value!="")
-				{
-					os << String(indent,'\t') << "<cvParam cvLabel=\"psi\" accession=\"PSI:" << acc << "\" name=\"" << name << "\" value=\"" << value << "\"/>\n";
-				}
-			}
-
-			/**  
-				@brief write cvParam element to stream
-
-				@p os Output stream
-				@p value enumeration value	
-				@p map index if the terms in cv_terms_
-				@p acc accession number defined by ontology
-				@p name term defined by ontology
-				@p indent number of tabs used in front of tag
-				
-				Example:
-				&lt;cvParam cvLabel="psi" accession="PSI:@p acc" name="@p name" value=""/&gt;
-			*/
-			void writeCVS_(std::ostream& os, UInt value, UInt map, const String& acc, const String& name, UInt indent=4);
-
-			///Writing the MetaInfo as UserParam to the file
-			inline void writeUserParam_(std::ostream& os, const MetaInfoInterface& meta, int indent=4)
-			{
-				std::vector<String> keys;
-				meta.getKeys(keys);
-				for (std::vector<String>::const_iterator it = keys.begin(); it!=keys.end(); ++it)
-				{
-					if ( (*it)[0] != '#')  // internally used meta info start with '#'
-					{
-						os << String(indent,'\t') << "<userParam name=\"" << *it << "\" value=\"" << meta.getMetaValue(*it) << "\"/>\n";
-					}
-				}
-			}
-			//@}
-
-			///@name General MetaInfo handling (for IdXML, FeatureXML, FeaturePairsXML)
-			//@{
+			
 			///Writes the content of MetaInfoInterface to the file
 			void writeUserParam_(const String& tag_name, std::ostream& os, const MetaInfoInterface& meta, UInt indent) const;
+			
 			//@}
 
 			///@name controlled vocabulary handling methods 
 			//@{
+			
 			/// Array of CV term lists (one sublist denotes one term and it's children)
 			std::vector< std::vector<String> > cv_terms_;
 			
@@ -239,12 +181,11 @@ namespace OpenMS
 			inline UInt cvStringToEnum_(UInt section, const String& term, const char* message)
 			{
 				OPENMS_PRECONDITION(section<cv_terms_.size(),"cvStringToEnum_: Index overflow (secion number too large)");
-				//std::cout << "looking up key \"" << value << "\" in map nr. " << index << "..." << std::endl;
-		
+					
 				std::vector<String>::const_iterator it = std::find(cv_terms_[section].begin(), cv_terms_[section].end(), term);
 				if (it == cv_terms_[section].end())
 				{
-					std::cout << "Warning: Unexpected CV entry '" << message << "'='" << term << "' parsed in " << file_ << std::endl;
+					warning(LOAD, String("Unexpected CV entry '") + message + "'='" + term + "'");
 				}
 				else
 				{
@@ -258,6 +199,7 @@ namespace OpenMS
 			
 			///@name String conversion
 			//@{ 
+			
 			/// Conversion of a String to an integer value
 			inline Int asInt_(const String& in)
 			{
@@ -268,15 +210,17 @@ namespace OpenMS
 				}
 				catch (Exception::ConversionError)
 				{
-					error(String("Int conversion error of \"") + in + "\"");
+					error(LOAD, String("Int conversion error of \"") + in + "\"");
 				}
 				return res;
 			}
+			
 			/// Conversion of a Xerces string to an integer value
 			inline Int asInt_(const XMLCh* in)
 			{
 				return xercesc::XMLString::parseInt(in);
 			}
+			
 			/// Conversion of a String to an unsigned integer value
 			inline UInt asUInt_(const String& in)
 			{
@@ -292,10 +236,11 @@ namespace OpenMS
 				}
 				catch (Exception::ConversionError)
 				{
-					error(String("UInt conversion error of \"") + in + "\"");
+					error(LOAD, String("UInt conversion error of \"") + in + "\"");
 				}
 				return res;
 			}
+			
 			/// Conversion of a String to a double value
 	 		inline double asDouble_(const String& in)
 			{
@@ -306,10 +251,11 @@ namespace OpenMS
 				}
 				catch (Exception::ConversionError)
 				{
-					error(String("Double conversion error of \"") + in + "\"");
+					error(LOAD, String("Double conversion error of \"") + in + "\"");
 				}
 				return res;
 			}
+			
 			/// Conversion of a String to a float value
 	 		inline float asFloat_(const String& in)
 			{
@@ -320,11 +266,17 @@ namespace OpenMS
 				}
 				catch (Exception::ConversionError)
 				{
-					error(String("Float conversion error of \"") + in + "\"");
+					error(LOAD, String("Float conversion error of \"") + in + "\"");
 				}
 				return res;
 			}
-			/// Conversion of a String to a bool value
+			
+			/**
+				@brief Conversion of a string to a boolean value
+				
+				'true', 'false', '1' and '0' are accpeted.
+				@n For all other values a parse error is produced.
+			*/
 	 		inline bool asBool_(const String& in)
 			{
 				if (in == "true" || in == "TRUE" || in == "True" || in == "1") 
@@ -337,57 +289,60 @@ namespace OpenMS
 				}
 				else 
 				{
-					error(String("Boolean conversion error of \"") + in + "\"");
+					error(LOAD, String("Boolean conversion error of \"") + in + "\"");
 				}
 				return false;
 			}
-			/// Conversion of a String to a DataTime value
-	 		inline DateTime asDateTime_(const String& in)
+			
+			/// Conversion of a xs:datetime string to a DataTime value
+	 		inline DateTime asDateTime_(String date_string)
 			{
-				//std::cout << "IN: " << in << std::endl;
-				DateTime res;
-				if (in!="")
+				DateTime date_time;
+				if (date_string!="")
 				{ 
 					try
 					{
-						// xs::DateTime to OpenMS::DateTime
-						String tmp(in);
-						tmp.substitute('T', ' ');
-						tmp = tmp.substr(0,19);
-						res.set(tmp);
+						//strip away milliseconds
+						date_string.trim();
+						date_string = date_string.substr(0,19);
+						date_time.set(date_string);
 					}
 					catch(Exception::ParseError err)
 					{
-						error(String("DateTime conversion error of \"") + in + "\"");
+						error(LOAD, String("DateTime conversion error of \"") + date_string + "\"");
 					}
 				}
-				return res;
+				return date_time;
 			}
 			//@}
 		
 			///@name Accessing attributes
 			//@{		
+			
 			/// Converts an attribute to a String
 			inline char* attributeAsString_(const xercesc::Attributes& a, const char* name) const
 			{
 				const XMLCh* val = a.getValue(sm_.convert(name));
-				if (val==0) fatalError(String("Required attribute '") + name + "' not present!");
+				if (val==0) fatalError(LOAD, String("Required attribute '") + name + "' not present!");
 				return sm_.convert(val);
 			}
+			
 			/// Converts an attribute to a Int
 			inline Int attributeAsInt_(const xercesc::Attributes& a, const char* name) const
 			{
 				const XMLCh* val = a.getValue(sm_.convert(name));
-				if (val==0) fatalError(String("Required attribute '") + name + "' not present!");
+				if (val==0) fatalError(LOAD, String("Required attribute '") + name + "' not present!");
 				return xercesc::XMLString::parseInt(val);
 			}
+			
 			/// Converts an attribute to a DoubleReal
 			inline DoubleReal attributeAsDouble_(const xercesc::Attributes& a, const char* name) const
 			{
 				const XMLCh* val = a.getValue(sm_.convert(name));
-				if (val==0) fatalError(String("Required attribute '") + name + "' not present!");
+				if (val==0) fatalError(LOAD, String("Required attribute '") + name + "' not present!");
 				return atof(sm_.convert(val));
 			}
+			
 			/**
 				@brief Assigns the attribute content to the String @a value if the attribute is present
 				
@@ -407,6 +362,7 @@ namespace OpenMS
 				}
 				return false;
 			}
+			
 			/**
 				@brief Assigns the attribute content to the Int @a value if the attribute is present
 				
@@ -422,6 +378,7 @@ namespace OpenMS
 				}
 				return false;
 			}
+			
 			/**
 				@brief Assigns the attribute content to the UInt @a value if the attribute is present
 				
@@ -437,6 +394,7 @@ namespace OpenMS
 				}
 				return false;
 			}
+			
 			/**
 				@brief Assigns the attribute content to the DoubleReal @a value if the attribute is present
 				
@@ -452,27 +410,31 @@ namespace OpenMS
 				}
 				return false;
 			}
+			
 			/// Converts an attribute to a String
 			inline char* attributeAsString_(const xercesc::Attributes& a, const XMLCh* name) const
 			{
 				const XMLCh* val = a.getValue(name);
-				if (val==0) fatalError(String("Required attribute '") + sm_.convert(name) + "' not present!");
+				if (val==0) fatalError(LOAD, String("Required attribute '") + sm_.convert(name) + "' not present!");
 				return sm_.convert(val);
 			}
+			
 			/// Converts an attribute to a Int
 			inline Int attributeAsInt_(const xercesc::Attributes& a, const XMLCh* name) const
 			{
 				const XMLCh* val = a.getValue(name);
-				if (val==0) fatalError(String("Required attribute '") + sm_.convert(name) + "' not present!");
+				if (val==0) fatalError(LOAD, String("Required attribute '") + sm_.convert(name) + "' not present!");
 				return xercesc::XMLString::parseInt(val);
 			}
+			
 			/// Converts an attribute to a DoubleReal
 			inline DoubleReal attributeAsDouble_(const xercesc::Attributes& a, const XMLCh* name) const
 			{
 				const XMLCh* val = a.getValue(name);
-				if (val==0) fatalError(String("Required attribute '") + sm_.convert(name) + "' not present!");
+				if (val==0) fatalError(LOAD, String("Required attribute '") + sm_.convert(name) + "' not present!");
 				return atof(sm_.convert(val));
 			}
+			
 			/// Assigns the attribute content to the String @a value if the attribute is present
 			inline bool optionalAttributeAsString_(String& value, const xercesc::Attributes& a, const XMLCh* name) const
 			{
@@ -488,6 +450,7 @@ namespace OpenMS
 				}
 				return false;
 			}
+			
 			/// Assigns the attribute content to the Int @a value if the attribute is present
 			inline bool optionalAttributeAsInt_(Int& value, const xercesc::Attributes& a, const XMLCh* name) const
 			{
@@ -499,6 +462,7 @@ namespace OpenMS
 				}
 				return false;
 			}
+			
 			/// Assigns the attribute content to the UInt @a value if the attribute is present
 			inline bool optionalAttributeAsUInt_(UInt& value, const xercesc::Attributes& a, const XMLCh* name) const
 			{
@@ -510,6 +474,7 @@ namespace OpenMS
 				}
 				return false;
 			}
+			
 			/// Assigns the attribute content to the DoubleReal @a value if the attribute is present
 			inline bool optionalAttributeAsDouble_(DoubleReal& value, const xercesc::Attributes& a, const XMLCh* name) const
 			{

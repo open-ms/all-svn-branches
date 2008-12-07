@@ -21,14 +21,13 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_ISOTOPEFITTER1D_H
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_ISOTOPEFITTER1D_H
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/MaxLikeliFitter1D.h>
-#include <OpenMS/MATH/STATISTICS/BasicStatistics.h>
 #include <OpenMS/MATH/MISC/MathFunctions.h>
 
 namespace OpenMS
@@ -36,7 +35,7 @@ namespace OpenMS
     /** 
       @brief Isotope distribution fitter (1-dim.) approximated using linear interpolation.
                  
-      @ref IsotopeFitter1D_Parameters are explained on a separate page.                   
+      @htmlinclude OpenMS_IsotopeFitter1D.parameters                 
      */
     class IsotopeFitter1D
     : public MaxLikeliFitter1D
@@ -55,7 +54,7 @@ namespace OpenMS
             /// assignment operator
             virtual IsotopeFitter1D& operator = (const IsotopeFitter1D& source);
       
-            /// create new BiGaussModel object (function needed by Factory)
+            /// create new IsotopeFitter1D object (function needed by Factory)
             static Fitter1D* create()
             {
               return new IsotopeFitter1D();

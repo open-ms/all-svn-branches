@@ -29,12 +29,13 @@
 
 #include <OpenMS/METADATA/Sample.h>
 #include <OpenMS/METADATA/Software.h>
-#include <OpenMS/METADATA/ProcessingMethod.h>
+#include <OpenMS/METADATA/DataProcessing.h>
 #include <OpenMS/METADATA/MetaInfoInterface.h>
 #include <OpenMS/METADATA/HPLC.h>
 #include <OpenMS/METADATA/SourceFile.h>
 #include <OpenMS/METADATA/ContactPerson.h>
 #include <OpenMS/METADATA/Instrument.h>
+#include <OpenMS/METADATA/DocumentIdentifier.h>
 #include <OpenMS/METADATA/ProteinIdentification.h>
 #include <OpenMS/DATASTRUCTURES/Date.h>
 
@@ -51,22 +52,30 @@ namespace OpenMS
 		@ingroup Metadata
 	*/
   class ExperimentalSettings
-  	: public MetaInfoInterface
+  	: public MetaInfoInterface,
+			public DocumentIdentifier
   {
-    public:
-    	///Type of the experiment
-    	enum ExperimentType 
+    public:			
+
+    	///Native ID type
+    	enum NativeIDType
     	{
-    		UNKNOWN, ///< Unknown experiment type
-    		MS, ///< MS experiment
-    		MS_MS, ///< Tandem MS experiment
-    		HPLC_MS, ///< HPLC-MS experiment
-    		HPLC_MS_MS, ///< HPLC-MS experiment with tandem MS information
-    		SIZE_OF_EXPERIMENTTYPE ///< Number of experiment types (can be used to iterate over the names)
+    		UNKNOWN,							///< Unknown native ID type
+    		THERMO,								///< controller=xsd:nonNegativeInteger scan=xsd:positiveInteger
+    		WATERS,								///< function=xsd:positiveInteger process=xsd:nonNegativeInteger scan=xsd:nonNegativeInteger
+    		WIFF,									///< sample=xsd:nonNegativeInteger period=xsd:nonNegativeInteger cycle=xsd:nonNegativeInteger experiment=xsd:nonNegativeInteger
+    		BRUKER_AGILENT,				///< scan=xsd:nonNegativeInteger
+    		BRUKER_BAF,						///< scan=xsd:nonNegativeInteger
+    		BRUKER_FID,						///< file=xsd:IDREF
+    		MULTIPLE_PEAK_LISTS,	///< index=xsd:nonNegativeInteger @n Used for conversion of peak list files with multiple spectra, i.e. MGF, PKL, merged DTA files. Index is the spectrum number in the file, starting from 0.
+    		SINGLE_PEAK_LIST,			///< file=xsd:IDREF @n The nativeID must be the same as the source file ID. Used for conversion of peak list files with one spectrum per file, typically folder of PKL or DTAs, each sourceFileRef is different.
+    		SCAN_NUMBER,					///< scan=xsd:nonNegativeInteger @n Used for conversion from mzXML, or DTA folder where native scan numbers can be derived.
+    		SPECTRUM_IDENTIFIER,	///< spectrum=xsd:nonNegativeInteger @n Used for conversion from mzData. The spectrum id attribute is referenced.
+    		SIZE_OF_NATIVEIDTYPE
     	};
-    	///Names of experiment types                                 
-    	static const std::string NamesOfExperimentType[SIZE_OF_EXPERIMENTTYPE];
-			
+			/// Names of native ID types
+			static const std::string NamesOfNativeIDType[SIZE_OF_NATIVEIDTYPE];
+
 			///Constructor
       ExperimentalSettings();
       ///Copy constructor
@@ -81,6 +90,11 @@ namespace OpenMS
       bool operator== (const ExperimentalSettings& rhs) const;      
       /// Equality operator
       bool operator!= (const ExperimentalSettings& rhs) const;
+			
+			/// Returns the native ID type of the spectra
+  		NativeIDType getNativeIDType() const;
+			/// Sets the native ID type of the spectra
+  		void setNativeIDType(NativeIDType type);
 
 	    /// returns a const reference to the sample description
       const Sample& getSample() const;
@@ -90,11 +104,11 @@ namespace OpenMS
       void setSample(const Sample& sample);
 			
 			/// returns a const reference to the source date file
-      const SourceFile& getSourceFile() const;
+      const std::vector<SourceFile>& getSourceFiles() const;
       /// returns a mutable reference to the source date file
-      SourceFile& getSourceFile();
+      std::vector<SourceFile>& getSourceFiles();
       /// sets the source date file
-      void setSourceFile(const SourceFile& source_file);
+      void setSourceFiles(const std::vector<SourceFile>& source_files);
 			
 			/// returns a const reference to the list of contact persons
       const std::vector<ContactPerson>& getContacts() const;
@@ -110,19 +124,12 @@ namespace OpenMS
       /// sets the MS instrument description
       void setInstrument(const Instrument& instrument);
 			
-			/// returns a const reference to the software used for processing
-      const Software& getSoftware() const;
-      /// returns a mutable reference to the software used for processing
-      Software& getSoftware();
-      /// sets the software used for processing
-      void setSoftware(const Software& software);
-			
 			/// returns a const reference to the description of the applied processing 
-      const ProcessingMethod& getProcessingMethod() const;
+      const std::vector<DataProcessing>& getDataProcessing() const;
       /// returns a mutable reference to the description of the applied processing 
-      ProcessingMethod& getProcessingMethod();
+      std::vector<DataProcessing>& getDataProcessing();
       /// sets the description of the applied processing 
-      void setProcessingMethod(const ProcessingMethod& processing_method);
+      void setDataProcessing(const std::vector<DataProcessing>& processing_method);
 
 			/// returns a const reference to the description of the HPLC run
       const HPLC& getHPLC() const;
@@ -130,16 +137,11 @@ namespace OpenMS
       HPLC& getHPLC();
       /// sets the description of the HPLC run
       void setHPLC(const HPLC& hplc);
-
-      /// returns the experiment type
-    	ExperimentType getType() const;
-    	/// sets the experiment type
-      void setType(ExperimentType type);
-
+      
      	/// returns the date the experiment was performed
-    	const Date& getDate() const;
+    	const DateTime& getDateTime() const;
     	/// sets the date the experiment was performed
-      void setDate(const Date& date);   
+      void setDateTime(const DateTime& date);   
 
 			/// returns the free-text comment
       const String& getComment() const;
@@ -156,15 +158,14 @@ namespace OpenMS
 		  void addProteinIdentification(ProteinIdentification& protein_identification);
 
     protected:
+    	NativeIDType native_id_type_;
 			Sample sample_;
-			SourceFile source_file_;
+			std::vector<SourceFile> source_files_;
 			std::vector<ContactPerson> contacts_;
 			Instrument instrument_;
-			Software software_;
-		  ProcessingMethod processing_method_;
+		  std::vector<DataProcessing> data_processing_;
 		  HPLC hplc_;
-		  ExperimentType type_;
-		  Date date_;
+		  DateTime datetime_;
 			String comment_;
 			std::vector<ProteinIdentification> protein_identifications_;
   };

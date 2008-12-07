@@ -33,19 +33,17 @@
 using namespace OpenMS;
 using namespace std;
 
-typedef FeatureMap<> ElementMapType;
-
 class TestSuperimposer 
-	: public BaseSuperimposer<ElementMapType>
+	: public BaseSuperimposer
 {
   public:
 	TestSuperimposer() 
-		: BaseSuperimposer<ElementMapType>()
+		: BaseSuperimposer()
 	{ 
 		check_defaults_ = false; 
 	}
 
-	virtual void run(const std::vector<ElementMapType>& maps, std::vector<TransformationDescription>& transformations)
+	virtual void run(const std::vector<ConsensusMap>& maps, std::vector<TransformationDescription>& transformations)
 	{
 		if (maps.size()!=2) throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"scene_map");
 		transformations.clear();
@@ -62,30 +60,30 @@ START_TEST(BaseSuperimposer, "$Id$")
 /////////////////////////////////////////////////////////////
 
 TestSuperimposer* ptr = 0;
-CHECK((BaseSuperimposer()))
+START_SECTION((BaseSuperimposer()))
 	ptr = new TestSuperimposer();
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((virtual ~BaseSuperimposer()))
+START_SECTION((virtual ~BaseSuperimposer()))
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK((virtual void run(const std::vector< ElementMapType > &maps, std::vector<TransformationDescription>& transformations)=0))
+START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::vector<TransformationDescription>& transformations)=0))
   std::vector<TransformationDescription> transformations;
   TestSuperimposer si;
-	std::vector<ElementMapType> maps;
+	std::vector<ConsensusMap> maps;
 	TEST_EXCEPTION(Exception::IllegalArgument,si.run(maps,transformations))
 	maps.resize(2);
   si.run(maps, transformations);
   TEST_STRING_EQUAL(transformations[0].getName(),"linear");
-  TEST_REAL_EQUAL(transformations[0].getParameters().getValue("slope"),1.1)
-  TEST_REAL_EQUAL(transformations[0].getParameters().getValue("intercept"),5.0)
-RESULT
+  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("slope"),1.1)
+  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("intercept"),5.0)
+END_SECTION
 
-CHECK((static void registerChildren()))
+START_SECTION((static void registerChildren()))
   NOT_TESTABLE
-RESULT
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

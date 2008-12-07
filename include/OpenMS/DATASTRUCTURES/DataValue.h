@@ -29,113 +29,132 @@
 
 #include <OpenMS/CONCEPT/Exception.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/DATASTRUCTURES/StringList.h> 
+#include <OpenMS/DATASTRUCTURES/StringList.h>
+#include <OpenMS/DATASTRUCTURES/IntList.h>
+#include <OpenMS/DATASTRUCTURES/DoubleList.h>
 #include <QtCore/QString>
 
 namespace OpenMS
 {
 
 	/**
-		@brief Class to hold a string(-list) or numeric value (UInt, Int, Real, DoubleReal)
+		@brief Class to hold strings, numeric values, lists of strings and lists of numeric values.
 		
-		<UL>
-			<LI> To choose one of these types, just use the apropriate constructor.
-			<LI> Automatic conversion is supported and throws Exceptions in case of invalid ones.
-			<LI> An empty objects is created with the default constructor.
-		</UL>
-		
+		- To choose one of these types, just use the apropriate constructor.
+		- Automatic conversion is supported and throws Exceptions in case of invalid conversions.
+		- An empty objects is created with the default constructor.
+
 		@ingroup Datastructures
 	*/
 	class DataValue
 	{
 
-    public:
+		public:
 
 			/// Empty data value for comparisons
 			static const DataValue EMPTY;
-	
+
 			/// Supported types for DataValue
-			enum DataType {
-				STRING_VALUE,     ///< String value
-				STRING_LIST,      ///< StringList value
-				INT_VALUE,        ///< UInt/Int value
-				DOUBLE_VALUE,     ///< DoubleReal/Real value
-				EMPTY_VALUE       ///< Empty value
-				};
-			
-			///@name Constructors and destructors
+			enum DataType
+			{
+				STRING_VALUE,     ///< string value
+				INT_VALUE,        ///< integer value
+				DOUBLE_VALUE,     ///< double value
+				STRING_LIST,      ///< string list
+				INT_LIST,					///< integer list
+				DOUBLE_LIST,			///< double list
+				EMPTY_VALUE     	///< empty value
+			};
+
+			/// @name Constructors and destructors
 			//@{
 			/// default constructor
 			DataValue();
 			/// specific constructor for char* (converted to string)
 			DataValue(const char*);
-			/// specific constructor for String
+			/// specific constructor for string values
 			DataValue(const String&);
-			/// specific constructor for StringList
+			/// specific constructor for string lists
 			DataValue(const StringList&);
-			/// specific constructor for DoubleReal
+			/// specific constructor for integer lists
+			DataValue(const IntList&);
+			/// specific constructor for double lists
+			DataValue(const DoubleList&);
+			/// specific constructor for double values
 			DataValue(DoubleReal);
-			/// specific constructor for Real
+			/// specific constructor for real values
 			DataValue(Real);
-			/// specific constructor for Int
+			/// specific constructor for integer values
 			DataValue(Int);
-			/// specific constructor for UInt
+			/// specific constructor for unsigned integer values
 			DataValue(UInt);
 			/// copy constructor
 			DataValue(const DataValue&);
 			/// destructor
 			virtual ~DataValue();
 			//@}
-			
+
 			///@name cast operators
-			///These methods are used when the DataType is known. 
+			///These methods are used when the DataType is known.
 			///If they are applied to a DataValue with the wrong DataType, an exception is thrown.
 			//@{
 			/**
-			  @brief conversion operator to string
+				@brief conversion operator to string
 
-			  @exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
+				@exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
 			*/
 			operator std::string() const ;
 			/**
-			  @brief conversion operator to StringList
+				@brief conversion operator to string list
 
-			  @exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
+				@exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
 			*/
 			operator StringList() const ;
 			/**
-			  @brief conversion operator to double
+				@brief conversion operator to integer list
 
-			  @exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
+				@exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
+			*/
+			operator IntList() const ;
+			/**
+				@brief conversion operator to double list
+	
+				@exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
+			*/
+			operator DoubleList() const ;
+			/**
+				@brief conversion operator to double
+
+				@exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
 			*/
 			operator DoubleReal() const ;
 			/**
-			  @brief conversion operator to float
+				@brief conversion operator to float
 
-			  @exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
+				@exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
 			*/
 			operator Real() const;
 			/**
-			  @brief conversion operator to int
+				@brief conversion operator to int
 
-			  @exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
+				@exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
 			*/
 			operator Int() const;
 			/**
-			  @brief conversion operator to unsigned int
+				@brief conversion operator to unsigned int
 
-			  @exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
+				@exception Exception::ConversionError is thrown if a cast from the the wrong type is requested
 			*/
 			operator UInt() const;
 			/**
 				@brief Convert DataValues to char*
-				
+
 				If the DataValue contains a string, a pointer to it's char* is returned.
 				If the DataValue is empty, NULL is returned.
-			*/	
+			*/
 			const char* toChar() const;
 			//@}
-			
+
 			///@name conversion operators
 			///These methods can be used independent of the DataType. If you already know the DataType, you should use a cast operator!
 			/// <BR>For conversion of string DataValues to numeric types, first use toString() and then the conversion methods of String.
@@ -146,10 +165,10 @@ namespace OpenMS
 			QString toQString() const;
 			/**
 				@brief Conversion to bool
-			  
-			  Converts the strings 'true' and 'false' to a bool.
 
-			  @exception Exception::ConversionError is thrown for non-string parameters and string parameters with values other than 'true' and 'false'.
+				Converts the strings 'true' and 'false' to a bool.
+
+				@exception Exception::ConversionError is thrown for non-string parameters and string parameters with values other than 'true' and 'false'.
 			*/
 			bool toBool() const;
 			//@}
@@ -159,28 +178,29 @@ namespace OpenMS
 			{
 				return value_type_;
 			}
-	
+
 			/// assignment operator
 			DataValue& operator = (const DataValue&);
-			
+
 			/// test if the value is empty
 			inline bool isEmpty() const
 			{
 				return value_type_ == EMPTY_VALUE;
 			}
-	
+
 			/// output stream operator
 			friend std::ostream& operator<<(std::ostream&, const DataValue&);
-	
+
 			/// Equality comparator
 			friend bool operator==(const DataValue&, const DataValue&);
 			/// Equality comparator
 			friend bool operator!=(const DataValue&, const DataValue&);
 
-	  protected:
-	  	/// Type of the currently stored value
+		protected:
+			
+			/// Type of the currently stored value
 			DataType value_type_;
-	
+
 			/// Space to store the data
 			union
 			{
@@ -188,9 +208,10 @@ namespace OpenMS
 				DoubleReal dou_;
 				String* str_;
 				StringList* str_list_;
+				IntList* int_list_;
+				DoubleList* dou_list_;
 			} data_;
 	};
 }
 
 #endif // OPENMS_DATASTRUCTURES_DATAVALUE_H
-

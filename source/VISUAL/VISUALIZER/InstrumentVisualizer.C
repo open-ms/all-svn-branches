@@ -39,70 +39,53 @@ using namespace std;
 
 namespace OpenMS
 {
-
-//Constructor
-InstrumentVisualizer::InstrumentVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
-{
-	type_="Instrument";
-  
-	addLabel("Modify instrument information.");	
-	addSeperator();        
-	addLineEdit(instrument_name_, "Name" );
-	addLineEdit(instrument_vendor_, "Vendor" );	
-	addLineEdit(instrument_model_, "Model");
-	addTextEdit(instrument_customizations_, "Customizations" );
 	
-	finishAdding_();
-}
-
-
-
-void InstrumentVisualizer::load(Instrument &s)
-{
-        //Pointer to current object to keep track of the actual object
-	ptr_ = &s;
-	
-	//Copy of current object for restoring the original values
-	tempinstrument_=s;
-			
-  instrument_name_->setText(s.getName().c_str());
-	instrument_vendor_->setText(s.getVendor().c_str());
-	instrument_model_->setText(s.getModel().c_str());
-  instrument_customizations_->setText(s.getCustomizations().c_str()); 
-				
-}
-
-void InstrumentVisualizer::store_()
-{
-	try
+	InstrumentVisualizer::InstrumentVisualizer(bool editable, QWidget* parent)
+		: BaseVisualizerGUI(editable, parent),
+			BaseVisualizer<Instrument>()
 	{
+		addLabel_("Modify instrument information.");	
+		addSeparator_();        
+		addLineEdit_(name_, "Name" );
+		addLineEdit_(vendor_, "Vendor" );	
+		addLineEdit_(model_, "Model");
+		addTextEdit_(customizations_, "Customizations" );
+		addComboBox_(ion_optics_,"Ion optics");
 		
-		(*ptr_).setName(instrument_name_->text().toStdString());
-		(*ptr_).setVendor(instrument_vendor_->text().toStdString());
-		(*ptr_).setModel(instrument_model_->text().toStdString());
-		(*ptr_).setCustomizations(instrument_customizations_->toPlainText().toStdString());
-		
-		tempinstrument_ = (*ptr_);		
-	}
-	catch(exception& e)
-	{
-		std::cout<<"Error while trying to store the new instrument data. "<<e.what()<<endl;
+		finishAdding_();
 	}
 	
-}
+	void InstrumentVisualizer::update_()
+	{
+	  name_->setText(temp_.getName().c_str());
+		vendor_->setText(temp_.getVendor().c_str());
+		model_->setText(temp_.getModel().c_str());
+	  customizations_->setText(temp_.getCustomizations().c_str()); 
 
-void InstrumentVisualizer::reject_()
-{
-	
-	try
-	{
-		load(tempinstrument_);
-	}
-	catch(exception e)
-	{
-		cout<<"Error while trying to restore original instrument data. "<<e.what()<<endl;
+		if(! isEditable())
+		{
+			fillComboBox_(ion_optics_, &temp_.NamesOfIonOpticsType[temp_.getIonOptics()]  , 1);
+		}
+		else
+		{
+			fillComboBox_(ion_optics_, temp_.NamesOfIonOpticsType  , Instrument::SIZE_OF_IONOPTICSTYPE);
+		}
 	}
 	
-}
+	void InstrumentVisualizer::store()
+	{
+		ptr_->setName(name_->text());
+		ptr_->setVendor(vendor_->text());
+		ptr_->setModel(model_->text());
+		ptr_->setCustomizations(customizations_->toPlainText());
+		ptr_->setIonOptics((Instrument::IonOpticsType)ion_optics_->currentIndex());		
+		
+		temp_ = (*ptr_);		
+	}
+	
+	void InstrumentVisualizer::undo_()
+	{
+		update_();
+	}
 
 }

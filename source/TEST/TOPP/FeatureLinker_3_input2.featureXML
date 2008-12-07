@@ -1,33 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<featureMap version="1.2" xsi:noNamespaceSchemaLocation="http://open-ms.sourceforge.net/schemas/FeatureXML_1_2.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-	<description>
-		<admin>
-			<sampleName></sampleName>
-			<contact>
-				<name> </name>
-				<institution></institution>
-			</contact>
-		</admin>
-		<instrument>
-			<instrumentName></instrumentName>
-			<source>
-			</source>
-			<analyzerList count="1">
-				<analyzer>
-				</analyzer>
-			</analyzerList>
-			<detector>
-			</detector>
-		</instrument>
-		<dataProcessing>
-			<software>
-				<name></name>
-				<version></version>
-			</software>
-		</dataProcessing>
-	</description>
+<featureMap version="1.3" xsi:noNamespaceSchemaLocation="http://open-ms.sourceforge.net/schemas/FeatureXML_1_3.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<featureList count="5">
-		<feature id="44">
+		<feature id="f_44">
 			<position dim="0">908.712</position>
 			<position dim="1">941.449</position>
 			<intensity>1.25569e+08</intensity>
@@ -35,8 +9,6 @@
 			<quality dim="1">237</quality>
 			<overallquality>0</overallquality>
 			<charge>2</charge>
-			<model name="">
-			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">883.712</hposition>
@@ -81,7 +53,7 @@
 			</convexhull>
 			<userParam type="string" name="sequence" value="RPCFSALTPDETYVPK"/>
 		</feature>
-		<feature id="45">
+		<feature id="f_45">
 			<position dim="0">1005.49</position>
 			<position dim="1">1014.61</position>
 			<intensity>2.35017e+08</intensity>
@@ -89,8 +61,6 @@
 			<quality dim="1">257</quality>
 			<overallquality>0</overallquality>
 			<charge>1</charge>
-			<model name="">
-			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">915.492</hposition>
@@ -151,7 +121,7 @@
 			</convexhull>
 			<userParam type="string" name="sequence" value="QTALVELLK"/>
 		</feature>
-		<feature id="46">
+		<feature id="f_46">
 			<position dim="0">1033.52</position>
 			<position dim="1">1163.62</position>
 			<intensity>2.93257e+08</intensity>
@@ -159,8 +129,6 @@
 			<quality dim="1">262</quality>
 			<overallquality>0</overallquality>
 			<charge>1</charge>
-			<model name="">
-			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">873.524</hposition>
@@ -197,7 +165,7 @@
 			</convexhull>
 			<userParam type="string" name="sequence" value="LVNELTEFAK"/>
 		</feature>
-		<feature id="47">
+		<feature id="f_47">
 			<position dim="0">1192.41</position>
 			<position dim="1">954.949</position>
 			<intensity>1.93777e+08</intensity>
@@ -205,8 +173,6 @@
 			<quality dim="1">294</quality>
 			<overallquality>0</overallquality>
 			<charge>2</charge>
-			<model name="">
-			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">1032.41</hposition>
@@ -251,7 +217,7 @@
 			</convexhull>
 			<userParam type="string" name="sequence" value="LFTFHADICTLPDTEK"/>
 		</feature>
-		<feature id="48">
+		<feature id="f_48">
 			<position dim="0">1297.92</position>
 			<position dim="1">944.96</position>
 			<intensity>3.20176e+08</intensity>
@@ -259,8 +225,6 @@
 			<quality dim="1">315</quality>
 			<overallquality>0</overallquality>
 			<charge>2</charge>
-			<model name="">
-			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">1137.92</hposition>

@@ -64,7 +64,10 @@ namespace OpenMS
 			/**
 				@brief sets data from a string
 				
-				Reads both english, german and iso/ansi date formats: 'mm/dd/yyyy', 'dd.mm.yyyy' or 'yyyy-mm-dd'
+				The following date formats are supoported:
+				- mm/dd/yyyy
+				- dd.mm.yyyy
+				- yyyy-mm-dd
 				
 				@exception Exception::ParseError is thrown if the date is given in the wrong format
 			*/
@@ -77,15 +80,15 @@ namespace OpenMS
 			*/
 			void set(UInt month, UInt day, UInt year);
 		
-			/// sets the date to today
-			void today();
+			/// Returns the current date
+			static Date today();
 
 			/**
-				@brief Fills the string @p date with the iso/ansi date
+				@brief Returns a string representation of the date
 				
 				Uses the iso/ansi date format: 'yyyy-mm-dd'
 			*/
-			void get(String& date) const;
+			String get() const;
 			
 			/**
 				@brief Fills the arguments with the date

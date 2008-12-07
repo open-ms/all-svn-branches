@@ -29,6 +29,7 @@
 #define OPENMS_ANALYSIS_MAPMATCHING_BASESUPERIMPOSER_H
 
 #include <OpenMS/ANALYSIS/MAPMATCHING/TransformationDescription.h>
+#include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
 
@@ -37,58 +38,56 @@
 
 namespace OpenMS
 {
+	/**
+	@brief The base class of all superimposer algorithms.
 
-  /**
-    @brief The base class of all superimposition algorithms.
+	This class defines the basic interface for all superimposer algorithms. It
+	works on several element maps and computes transformations that map the
+	elements of the maps as near as possible to each other.
+	*/
+	class BaseSuperimposer
+		: public FactoryProduct,
+			public ProgressLogger
+	{
 
-		This class defines the basic interface for all superimposer algorithms. It works on several element maps and
-		computes transformations, that map the elements of the maps as near as possible to each other.
-		
-		The element map must be a random access container (e.g. vector, DPeakArray, FeatureMap)
-		of elements that have the same interface as Peak2D.
-  */
-  template <typename MapT>
-  class BaseSuperimposer 
-  	: public FactoryProduct
-  {
-  	
-  	public:
+	 public:
 
-	    /// Container for input elements
-	    typedef MapT ElementMapType;
-	
-	    /// Constructor
-	    BaseSuperimposer()
-	    	: FactoryProduct("BaseSuperimposer")
-	    {
-	    }
-	
-	    /// Destructor
-	    virtual ~BaseSuperimposer()
-	  	{
-	  	}
+		/// Constructor
+		BaseSuperimposer()
+			: FactoryProduct("BaseSuperimposer"),
+				ProgressLogger()
+		{
+		}
 
-	    /**
-	    	@brief Estimates the transformation between input @p maps and returns the estimated transformations
-	    	
-	    	@exception IllegalArgument is thrown if the input maps are invalid.
-	    */
-	    virtual void run(const std::vector<ElementMapType>& maps, std::vector<TransformationDescription>& transformations) = 0;
-	
-	    /// Register all derived classes here
-	    static void registerChildren();
+		/// Destructor
+		virtual ~BaseSuperimposer()
+		{
+		}
 
-		 private:
-	
-	    /// Copy constructor intentionally not implemented
-	    BaseSuperimposer(const BaseSuperimposer&);
-			
-	    /// Assignment operator intentionally not implemented
-	    BaseSuperimposer & operator=(const BaseSuperimposer&);
-		
-  
-  };
+		/**
+		@brief Estimates the transformation between input @p maps and returns the
+		estimated transformations
+
+		@exception IllegalArgument is thrown if the input maps are invalid.
+		*/
+		virtual void run ( const std::vector<ConsensusMap>& maps,
+											 std::vector<TransformationDescription>& transformations
+										 ) = 0;
+
+		/// Register all derived classes here
+		static void registerChildren();
+
+	 private:
+
+		/// Copy constructor intentionally not implemented
+		BaseSuperimposer(const BaseSuperimposer&);
+
+		/// Assignment operator intentionally not implemented
+		BaseSuperimposer & operator=(const BaseSuperimposer&);
+
+	};
 
 } // namespace OpenMS
 
 #endif  // OPENMS_ANALYSIS_MAPMATCHING_BASESUPERIMPOSER_H
+

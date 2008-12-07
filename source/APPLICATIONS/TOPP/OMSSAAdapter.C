@@ -43,11 +43,14 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page OMSSAAdapter OMSSAAdapter
+	@page TOPP_OMSSAAdapter OMSSAAdapter
 	
 	@brief Identifies peptides in MS/MS spectra via OMSSA (Open Mass Spectrometry Search Algorithm).
 	
 	@improvement modes to read OMSSA output data and save in idXML format (Andreas)
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_OMSSAAdapter.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -384,12 +387,6 @@ class TOPPOMSSAAdapter
 
 			// read mapping for the modifications
 			String file = File::find("CHEMISTRY/OMSSA_modification_mapping");
-
-   		//try to open file
-    	if (!File::exists(file))
-    	{
-      	throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, "CHEMISTRY/OMSSA_modification_mapping");
-    	}
 
     	TextFile infile(file);
 			Map<String, UInt> mods_map;

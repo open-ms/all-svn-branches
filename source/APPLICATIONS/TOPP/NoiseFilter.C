@@ -29,7 +29,6 @@
 #include <OpenMS/FORMAT/MzDataFile.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/FILTERING/SMOOTHING/GaussFilter.h>
-#include <OpenMS/FILTERING/TRANSFORMERS/LinearResampler.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/FORMAT/PeakTypeEstimator.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
@@ -42,20 +41,24 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-   @page NoiseFilter NoiseFilter
- 
-   @brief  Executes a Savitzky Golay or a Gaussian filter to reduce the noise in a MS experiment.
- 
-   The idea of the Savitzky Golay filter is to find filter-coefficients
-   that preserve higher moments, which means to approximate the underlying
-   function within the moving window by a polynomial of higher order
-   (typically quadratic or quartic) (see A. Savitzky and M. J. E. Golay,
-   ''Smoothing and Differentiation of Data by Simplified Least Squares Procedures'').
-   
-   The Gaussian is a peak area preserving low-pass filter and is characterized by narrow bandwidths,
-   sharp cutoffs, and low passband ripple.
- 
-   @ingroup TOPP
+	@page TOPP_NoiseFilter NoiseFilter
+	
+	@brief  Executes a Savitzky Golay or a Gaussian filter to reduce the noise in a MS experiment.
+	
+	The idea of the Savitzky Golay filter is to find filter-coefficients
+	that preserve higher moments, which means to approximate the underlying
+	function within the moving window by a polynomial of higher order
+	(typically quadratic or quartic) (see A. Savitzky and M. J. E. Golay,
+	''Smoothing and Differentiation of Data by Simplified Least Squares Procedures'').
+	
+	The Gaussian is a peak area preserving low-pass filter and is characterized by narrow bandwidths,
+	sharp cutoffs, and low passband ripple.
+	
+	@note The Savitzky Golay filter works only on uniform data (to generate equally spaced data use the @ref TOPP_Resampler tool).
+	      The Gaussian filter works for uniform as well as for non-uniform data.
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_NoiseFilter.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -79,11 +82,10 @@ class TOPPNoiseFilter
 	  	setValidFormats_("out",StringList::create("mzData"));
       registerStringOption_("type","<type>","","smoothing filter type", true);
 			setValidStrings_("type", StringList::create("sgolay,gaussian"));
-      registerDoubleOption_("resampling","<spacing>",0.0,"spacing for the resampling process",false);
 			addEmptyLine_();
 	  	addText_("Parameters for the algorithms can be given in the INI file only.");
 			addEmptyLine_();
-			addText_("Note: The Savitzky Golay filter works only on uniform data (to generate equally spaced data use the resampling option).\n"
+			addText_("Note: The Savitzky Golay filter works only on uniform data (to generate equally spaced data use the Resampler tool).\n"
       				 "      The Gaussian filter works for uniform as well as for non-uniform data.");
     	registerSubsection_("algorithm","Algorithm parameters section");
     }
@@ -112,7 +114,6 @@ class TOPPNoiseFilter
       String in = getStringOption_("in");
       String out = getStringOption_("out");
       String type = getStringOption_("type");
-      float spacing = getDoubleOption_("resampling");
 
       //-------------------------------------------------------------
       // loading input
@@ -124,10 +125,6 @@ class TOPPNoiseFilter
       mz_data_file.load(in,exp);
 
 			//check for peak type (raw data required)
-			if (exp.getProcessingMethod().getSpectrumType()==SpectrumSettings::PEAKS)
-			{
-				writeLog_("Warning: The file meta data claims that this is not raw data!");
-			}
 			if (PeakTypeEstimator().estimateType(exp[0].begin(),exp[0].end())==SpectrumSettings::PEAKS)
 			{
 				writeLog_("Warning: OpenMS peak type estimation indicates that this is not raw data!");
@@ -143,35 +140,7 @@ class TOPPNoiseFilter
   			SavitzkyGolayFilter sgolay;
         sgolay.setLogType(log_type_);
   			sgolay.setParameters( filter_param );
-        
-        // no resampling of the data
-        if (spacing==0.0)
-        { 
-           sgolay.filterExperiment(exp);
-					 writeDebug_(String("No resampling!"), 1);
-        }
-        else
-        {
-					LinearResampler lin_resampler;
-					Param resampler_param;
-					resampler_param.setValue("spacing",spacing);
-					lin_resampler.setParameters(resampler_param);
-			
-          sgolay.startProgress(0,exp.size(),"smoothing mzData file");
-          // resample and filter every scan
-          for (UInt i = 0; i < exp.size(); ++i)
-          {
-            // temporary container for the resampled data
-            MSSpectrum<Peak1D> resampled_spectrum;
-            lin_resampler.raster(exp[i],resampled_spectrum);
-
-            MSSpectrum<Peak1D> smoothed_spectrum;
-						sgolay.filter(resampled_spectrum, smoothed_spectrum);
-            exp[i].getContainer() = smoothed_spectrum.getContainer();
-            sgolay.setProgress(i);            
-          }
-          sgolay.endProgress();
-        }
+				sgolay.filterExperiment(exp);
       }
       else if (type == "gaussian")
       {	
@@ -192,7 +161,6 @@ class TOPPNoiseFilter
       //-------------------------------------------------------------
       // writing output
       //-------------------------------------------------------------
-			exp.getProcessingMethod().setSpectrumType(SpectrumSettings::RAWDATA);
       mz_data_file.store(out,exp);
 
       return EXECUTION_OK;

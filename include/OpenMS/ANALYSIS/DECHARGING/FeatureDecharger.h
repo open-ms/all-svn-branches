@@ -53,7 +53,7 @@ namespace OpenMS
     <li>cluster consists of several charge variants -> dispose cluster</li>
     </ul>
 		 
-		@ref FeatureDecharger_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_FeatureDecharger.parameters
     
     @ingroup Analysis
   */
@@ -75,7 +75,7 @@ namespace OpenMS
       FeatureDecharger()
       : DefaultParamHandler("FeatureDecharger")
       {
-        defaults_.setValue("cluster_rt_mz_relation", 100.0, "Multiplication factor for m/z coordinates used to balance the dimension differences of RT and m/z.", false);
+        defaults_.setValue("cluster_rt_mz_relation", 100.0, "Multiplication factor for m/z coordinates used to balance the dimension differences of RT and m/z.");
         
         HierarchicalClustering<> hc;
         defaults_.insert("hierarchical_clustering:",hc.getParameters());

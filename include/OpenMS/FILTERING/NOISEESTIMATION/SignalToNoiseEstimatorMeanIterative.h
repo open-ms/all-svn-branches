@@ -54,7 +54,7 @@ namespace OpenMS
 
     @note If more than 20 percent of windows have less than <i>min_required_elements</i> of elements, a warning is issued to <i>stderr</i> and noise estimates in those windows are set to the constant <i>noise_for_empty_window</i>. 
     
-    @ref SignalToNoiseEstimatorMeanIterative_Parameters are explained on a separate page.
+    @htmlinclude OpenMS_SignalToNoiseEstimatorMeanIterative.parameters
     
     @ingroup SignalProcessing
   */
@@ -90,36 +90,36 @@ namespace OpenMS
 " Only provide this parameter if you know what you are doing (and change 'auto_mode' to '-1')!"\
 " All intensities EQUAL/ABOVE 'max_intensity' will not be added to the histogram."\
 " If you choose 'max_intensity' too small, the noise estimate might be too small as well."\
-" If chosen too big, the bins become quite large (which you could counter by increasing 'bin_count', which increases runtime).", true); 
+" If chosen too big, the bins become quite large (which you could counter by increasing 'bin_count', which increases runtime).", StringList::create("advanced")); 
 				defaults_.setMinInt ("max_intensity", -1);
 				
-        defaults_.setValue("auto_max_stdev_factor", 3.0, "parameter for 'max_intensity' estimation (if 'auto_mode' == 0): mean + 'auto_max_stdev_factor' * stdev", true); 
+        defaults_.setValue("auto_max_stdev_factor", 3.0, "parameter for 'max_intensity' estimation (if 'auto_mode' == 0): mean + 'auto_max_stdev_factor' * stdev", StringList::create("advanced")); 
 				defaults_.setMinFloat ("auto_max_stdev_factor", 0.0);
 				defaults_.setMaxFloat ("auto_max_stdev_factor", 999.0);
 
 								
-        defaults_.setValue("auto_max_percentile", 95, "parameter for 'max_intensity' estimation (if 'auto_mode' == 1): auto_max_percentile th percentile", true); 
+        defaults_.setValue("auto_max_percentile", 95, "parameter for 'max_intensity' estimation (if 'auto_mode' == 1): auto_max_percentile th percentile", StringList::create("advanced")); 
 				defaults_.setMinInt ("auto_max_percentile", 0);
 				defaults_.setMaxInt ("auto_max_percentile", 100);
         
-				defaults_.setValue("auto_mode", 0, "method to use to determine maximal intensity: -1 --> use 'max_intensity'; 0 --> 'auto_max_stdev_factor' method (default); 1 --> 'auto_max_percentile' method", true); 
+				defaults_.setValue("auto_mode", 0, "method to use to determine maximal intensity: -1 --> use 'max_intensity'; 0 --> 'auto_max_stdev_factor' method (default); 1 --> 'auto_max_percentile' method", StringList::create("advanced")); 
 				defaults_.setMinInt ("auto_mode", -1);
 				defaults_.setMaxInt ("auto_mode", 1);        
 				
-				defaults_.setValue("win_len", 200.0, "window length in Thomson", false); 
+				defaults_.setValue("win_len", 200.0, "window length in Thomson"); 
 				defaults_.setMinFloat ("win_len", 1.0);
 								
-        defaults_.setValue("bin_count", 30, "number of bins for intensity values", false); 
+        defaults_.setValue("bin_count", 30, "number of bins for intensity values"); 
 				defaults_.setMinInt ("bin_count", 3);
 								
-        defaults_.setValue("stdev_mp", 3.0, "multiplier for stdev", true); 
+        defaults_.setValue("stdev_mp", 3.0, "multiplier for stdev", StringList::create("advanced")); 
 				defaults_.setMinFloat ("stdev_mp", 0.01);
 				defaults_.setMaxFloat ("stdev_mp", 999.0);
 								
-        defaults_.setValue("min_required_elements", 10, "minimum number of elements required in a window (otherwise it is considered sparse)", false); 
+        defaults_.setValue("min_required_elements", 10, "minimum number of elements required in a window (otherwise it is considered sparse)"); 
 				defaults_.setMinInt ("min_required_elements", 1);
 								
-        defaults_.setValue("noise_for_empty_window", std::pow(10.0,20), "noise value used for sparse windows", true); 
+        defaults_.setValue("noise_for_empty_window", std::pow(10.0,20), "noise value used for sparse windows", StringList::create("advanced")); 
 
         SignalToNoiseEstimator< Container >::defaultsToParam_();
       }
@@ -155,11 +155,12 @@ namespace OpenMS
 		protected:
 
 
-      /// calculate StN values for all datapoints given, by using a sliding window approach
-      /// @param scan_first_ first element in the scan
-      /// @param scan_last_ last element in the scan (disregarded)
+      /** calculate StN values for all datapoints given, by using a sliding window approach
+					@param scan_first_ first element in the scan
+					@param scan_last_ last element in the scan (disregarded)
+					@exception Throws Exception::InvalidValue
+			 */
       virtual void computeSTN_(const PeakIterator& scan_first_, const PeakIterator& scan_last_) 
-      throw(Exception::InvalidValue)
       {
         // reset counter for sparse windows
         double sparse_window_percent = 0;
@@ -268,7 +269,7 @@ namespace OpenMS
         double hist_mean;
         double hist_stdev;
 
-        // tracks elements in current window, which may vary because of uneven spaced data
+        // tracks elements in current window, which may vary because of unevenly spaced data
         int elements_in_window = 0;
         int window_count = 0;
 
@@ -380,7 +381,7 @@ namespace OpenMS
         {
           std::cerr << "WARNING in SignalToNoiseEstimatorMeanIterative: "
           << sparse_window_percent
-          << "% of all windows were sparse. You should consider increasing win_len or increasing MinReqElementsInWindow"
+          << "% of all windows were sparse. You should consider increasing 'win_len' or increasing 'min_required_elements'"
           << " You should also check the MaximalIntensity value (or the parameters for its heuristic estimation)"
           << " If it is too low, then too many high intensity peaks will be discarded, which leads to a sparse window!"
           << std::endl;

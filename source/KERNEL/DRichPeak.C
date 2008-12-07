@@ -21,13 +21,15 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/KERNEL/DPeak.h>
+#include <OpenMS/KERNEL/DRichPeak.h>
 
 namespace OpenMS
 {
-	DPeak<1> default_dpeak_1;
-	DPeak<2> default_dpeak_2;
+	DRichPeak<1> default_drichpeak_1;
+	DRichPeak<1>::Type default_drichpeak_1_type;
+	DRichPeak<2> default_drichpeak_2;
+	DRichPeak<2>::Type default_drichpeak_2_type;
 }

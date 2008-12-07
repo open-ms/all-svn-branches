@@ -39,87 +39,87 @@ START_TEST(MSSpectrum, "$Id$")
 /////////////////////////////////////////////////////////////
 
 MSSpectrum<>* ptr = 0;
-CHECK((MSSpectrum()))
+START_SECTION((MSSpectrum()))
 	ptr = new MSSpectrum<>();
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((~MSSpectrum()))
+START_SECTION((~MSSpectrum()))
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK((MSSpectrum(const MSSpectrum& source)))
+START_SECTION((MSSpectrum(const MSSpectrum& source)))
   MSSpectrum<> tmp;
-  tmp.getInstrumentSettings().setMzRangeStart(5.1);
+  tmp.getInstrumentSettings().getScanWindows().resize(1);
 	MSSpectrum<>::PeakType peak;
 	peak.getPosition()[0] = 47.11;
-	tmp.getContainer().push_back(peak);
+	tmp.push_back(peak);
 	
 	MSSpectrum<> tmp2(tmp);
-	TEST_REAL_EQUAL(tmp2.getInstrumentSettings().getMzRangeStart(),5.1);
+	TEST_EQUAL(tmp2.getInstrumentSettings().getScanWindows().size(),1);
 	TEST_EQUAL(tmp2.size(),1);
-	TEST_REAL_EQUAL(tmp2.getContainer()[0].getPosition()[0],47.11);
-RESULT
+	TEST_REAL_SIMILAR(tmp2[0].getPosition()[0],47.11);
+END_SECTION
 
-CHECK((MSSpectrum& operator= (const MSSpectrum& source)))
+START_SECTION((MSSpectrum& operator= (const MSSpectrum& source)))
   MSSpectrum<> tmp;
-  tmp.getInstrumentSettings().setMzRangeStart(5.1);
+  tmp.getInstrumentSettings().getScanWindows().resize(1);
 	MSSpectrum<>::PeakType peak;
 	peak.getPosition()[0] = 47.11;
-	tmp.getContainer().push_back(peak);
+	tmp.push_back(peak);
 	
 	//normal assignment
 	MSSpectrum<> tmp2;
 	tmp2 = tmp;
-	TEST_REAL_EQUAL(tmp2.getInstrumentSettings().getMzRangeStart(),5.1);
+	TEST_EQUAL(tmp2.getInstrumentSettings().getScanWindows().size(),1);
 	TEST_EQUAL(tmp2.size(),1);
-	TEST_REAL_EQUAL(tmp2.getContainer()[0].getPosition()[0],47.11);
+	TEST_REAL_SIMILAR(tmp2[0].getPosition()[0],47.11);
 	
 	//Assignment of empty object
 	//normal assignment
 	tmp2 = MSSpectrum<>();
-	TEST_REAL_EQUAL(tmp2.getInstrumentSettings().getMzRangeStart(),0.0);
+	TEST_EQUAL(tmp2.getInstrumentSettings().getScanWindows().size(),0);
 	TEST_EQUAL(tmp2.size(),0);
-RESULT
+END_SECTION
 
-CHECK((bool operator== (const MSSpectrum& rhs) const))
+START_SECTION((bool operator== (const MSSpectrum& rhs) const))
   MSSpectrum<> edit, empty;
   
   TEST_EQUAL(edit==empty,true);
   
-  edit.getInstrumentSettings().setMzRangeStart(5.1);
+  edit.getInstrumentSettings().getScanWindows().resize(1);
 	TEST_EQUAL(edit==empty,false);
 	
 	edit = empty;
 	MSSpectrum<>::PeakType peak;
 	peak.getPosition()[0] = 47.11;
-	edit.getContainer().push_back(peak);
+	edit.push_back(peak);
 	TEST_EQUAL(edit==empty,false);
-RESULT
+END_SECTION
 
-CHECK((bool operator!= (const MSSpectrum& rhs) const))
+START_SECTION((bool operator!= (const MSSpectrum& rhs) const))
   MSSpectrum<> edit, empty;
   
   TEST_EQUAL(edit!=empty,false);
   
-  edit.getInstrumentSettings().setMzRangeStart(5.1);
+  edit.getInstrumentSettings().getScanWindows().resize(1);
 	TEST_EQUAL(edit!=empty,true);
 	
 	edit = empty;
 	MSSpectrum<>::PeakType peak;
 	peak.getPosition()[0] = 47.11;
-	edit.getContainer().push_back(peak);
+	edit.push_back(peak);
 	TEST_EQUAL(edit!=empty,true);
-RESULT
+END_SECTION
 
-CHECK(([EXTRA] MSSpectrum<Peak1D >))
+START_SECTION(([EXTRA] MSSpectrum<Peak1D >))
 	MSSpectrum<Peak1D > tmp;
 	MSSpectrum<Peak1D >::PeakType rdp;
 	rdp.getPosition()[0] = 47.11;
-	tmp.getContainer().push_back(rdp);
+	tmp.push_back(rdp);
 	TEST_EQUAL(tmp.size(),1);
-	TEST_REAL_EQUAL(tmp.getContainer()[0].getPosition()[0],47.11);	
-RESULT
+	TEST_REAL_SIMILAR(tmp[0].getPosition()[0],47.11);	
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

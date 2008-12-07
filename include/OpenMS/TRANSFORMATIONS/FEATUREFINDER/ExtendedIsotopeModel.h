@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 
@@ -35,7 +35,7 @@ namespace OpenMS
   /** 
 		@brief Extended isotope distribution approximated using linear interpolation.
 
-		@ref ExtendedIsotopeModel_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_ExtendedIsotopeModel.parameters
 	*/
 	class ExtendedIsotopeModel
   : public InterpolationModel

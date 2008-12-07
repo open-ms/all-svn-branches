@@ -48,7 +48,9 @@ namespace OpenMS
   	@brief A class for accessing and storing data in a SQL database
   	
     It can be used to create objects from the DB or store them in the DB.
-   
+		
+		@todo Check if METADATA implementation is complete - all members and MetaInfoInterface (HiWi)
+		
     @ingroup DatabaseIO
   */
  
@@ -188,11 +190,9 @@ namespace OpenMS
 			query << "UPDATE META_MSExperiment SET ";
 			end = " WHERE id='" + String(exp.getPersistenceId()) + "'";
 		}
-		//type
-		query << "Type=" << (1u+exp.getType());
 		//date
-		exp.getDate().get(tmp);
-		query << ",Date='" << tmp << "'";
+		//TODO make sure date and time are stored/loaded correctly
+		query << "Date='" << exp.getDateTime().get() << "'";
 		//description
 		query << ",Description='" << exp.getComment() << "'";
 		
@@ -210,7 +210,6 @@ namespace OpenMS
 		//----------------------------------------------------------------------------------------
 
 		std::vector<ProteinIdentification>& pi = exp.getProteinIdentifications();
-		String date;
 		
 		// first delete all old values, no matter whether we're updating or not
 		// do we have to delete the MetaInfo as well?
@@ -225,8 +224,7 @@ namespace OpenMS
 			query << "fid_MSExperiment='" << exp.getPersistenceId() << "'";
 			query << ",SearchEngine='" << pi_it->getSearchEngine() << "'";
 			query << ",SearchEngineVersion='" << pi_it->getSearchEngineVersion() << "'";
-			pi_it->getDateTime().get(date);
-			query << ",Date='" << date << "'";
+			query << ",Date='" << pi_it->getDateTime().get() << "'";
 			query << ",ScoreType='" << pi_it->getScoreType() << "'";
 			query << ",HigherScoreBetter='" << pi_it->isHigherScoreBetter() << "'";
 			query << ",SignificanceThreshold='" << pi_it->getSignificanceThreshold() << "'";
@@ -450,7 +448,9 @@ namespace OpenMS
 		//-------------------------------------- IONDETECTOR ------------------------------------- 
 		//----------------------------------------------------------------------------------------
 		
-		const IonDetector& detector = exp.getInstrument().getIonDetector();
+		//TODO Hack: Multiple ion detectors should be supported
+		exp.getInstrument().getIonDetectors().resize(1);
+		const IonDetector& detector = exp.getInstrument().getIonDetectors()[0];
 		query.str("");
 		
 		if (new_entry)
@@ -490,7 +490,9 @@ namespace OpenMS
 		//-------------------------------------- IONSOURCE --------------------------------------- 
 		//----------------------------------------------------------------------------------------
 		
-		const IonSource& source = exp.getInstrument().getIonSource();
+		//TODO Hack: Multiple ion sources should be supported
+		exp.getInstrument().getIonSources().resize(1);
+		const IonSource& source = exp.getInstrument().getIonSources()[0];
 		query.str("");
 		
 		if (new_entry)
@@ -551,7 +553,6 @@ namespace OpenMS
 			query << ",ResolutionMethod=" << (1u+analyzer_it->getResolutionMethod());
 			query << ",ResolutionType=" << (1u+analyzer_it->getResolutionType());
 			query << ",ScanDirection=" << (1u+analyzer_it->getScanDirection());
-			query << ",ScanFunction=" << (1u+analyzer_it->getScanFunction());
 			query << ",ScanLaw=" << (1u+analyzer_it->getScanLaw());
 			query << ",ScanRate=" << analyzer_it->getScanRate();
 			query << ",ScanTime=" << analyzer_it->getScanTime();
@@ -831,10 +832,18 @@ namespace OpenMS
 				query << "UPDATE META_InstrumentSettings SET ";
 				end = " WHERE fid_Spectrum='" + String(exp_it->getPersistenceId()) + "'";
 			}
-
-			query << "MZRangeBegin=" << settings.getMzRangeStart() << ",";
-			query << "MZRangeEnd=" << settings.getMzRangeStop() << ",";
+			//TODO handle several scan windows
+			if (settings.getScanWindows().size()>0)
+			{
+				query << "MZRangeBegin=" << settings.getScanWindows()[0].begin << ",";
+				query << "MZRangeEnd=" << settings.getScanWindows()[0].end << ",";
+			}
+			else
+			{
+				query << "MZRangeBegin=0.0, MZRangeEnd=0.0,";
+			}
 			query << "Polarity=" << (1u+settings.getPolarity()) << ",";
+			//TODO handle all types!!!
 			query << "ScanMode=" << (1u+settings.getScanMode());
 			query << end;
 			
@@ -918,12 +927,11 @@ namespace OpenMS
 		result.first();
 		
 		//Experiment meta info
-		exp.setType((ExperimentalSettings::ExperimentType)(result.value(0).toInt()));
 		if (result.value(1).toDate().isValid())
 		{
-			Date d;
-			d.set(result.value(1).toDate().toString(Qt::ISODate));
-			exp.setDate(d);
+			DateTime d;
+			d.set(result.value(1).toDateTime().toString(Qt::ISODate));
+			exp.setDateTime(d);
 		}
 		exp.setComment(result.value(3).toString());
 		loadMetaInfo_(result.value(2).toInt(),exp);
@@ -1100,11 +1108,13 @@ namespace OpenMS
 		result = db_con_.executeQuery(query.str());
 		result.first();
 		
-		exp.getInstrument().getIonDetector().setAcquisitionMode((IonDetector::AcquisitionMode) result.value(0).toInt());
-		exp.getInstrument().getIonDetector().setType((IonDetector::Type) result.value(1).toInt());
-		exp.getInstrument().getIonDetector().setResolution(result.value(2).toDouble());
-		exp.getInstrument().getIonDetector().setADCSamplingFrequency(result.value(3).toDouble());
-		loadMetaInfo_(result.value(4).toInt(),exp.getInstrument().getIonDetector());
+		//TODO Hack: Multiple ion detectors should be supported
+		exp.getInstrument().getIonDetectors().resize(1);
+		exp.getInstrument().getIonDetectors()[0].setAcquisitionMode((IonDetector::AcquisitionMode) result.value(0).toInt());
+		exp.getInstrument().getIonDetectors()[0].setType((IonDetector::Type) result.value(1).toInt());
+		exp.getInstrument().getIonDetectors()[0].setResolution(result.value(2).toDouble());
+		exp.getInstrument().getIonDetectors()[0].setADCSamplingFrequency(result.value(3).toDouble());
+		loadMetaInfo_(result.value(4).toInt(),exp.getInstrument().getIonDetectors()[0]);
 		
 		// IonSource
 		query.str("");
@@ -1112,16 +1122,18 @@ namespace OpenMS
 		result = db_con_.executeQuery(query.str());
 		result.first();
 		
-		exp.getInstrument().getIonSource().setInletType((IonSource::InletType) result.value(0).toInt());
-		exp.getInstrument().getIonSource().setIonizationMethod((IonSource::IonizationMethod) result.value(1).toInt());
-		exp.getInstrument().getIonSource().setPolarity((IonSource::Polarity) result.value(2).toDouble());
-		loadMetaInfo_(result.value(3).toInt(),exp.getInstrument().getIonSource());
+		//TODO Hack: Multiple ion sources should be supported
+		exp.getInstrument().getIonSources().resize(1);
+		exp.getInstrument().getIonSources()[0].setInletType((IonSource::InletType) result.value(0).toInt());
+		exp.getInstrument().getIonSources()[0].setIonizationMethod((IonSource::IonizationMethod) result.value(1).toInt());
+		exp.getInstrument().getIonSources()[0].setPolarity((IonSource::Polarity) result.value(2).toDouble());
+		loadMetaInfo_(result.value(3).toInt(),exp.getInstrument().getIonSources()[0]);
 		
 		// MassAnalyzers
 		MassAnalyzer analyzer;
 		std::vector<MassAnalyzer> analyzers;
 		query.str("");
-		query << "SELECT Accuracy,FinalMSExponent,IsolationWidth,MagneticFieldStrength,ReflectronState-1,Resolution,ResolutionMethod-1,ResolutionType-1,ScanDirection-1,ScanFunction-1,ScanLaw-1,ScanRate,ScanTime,TandemScanningMethod-1,TOFPathLength,Type-1,fid_MetaInfo FROM META_MassAnalyzer WHERE fid_MSInstrument='" << parent_id << "'";
+		query << "SELECT Accuracy,FinalMSExponent,IsolationWidth,MagneticFieldStrength,ReflectronState-1,Resolution,ResolutionMethod-1,ResolutionType-1,ScanDirection-1,ScanLaw-1,ScanRate,ScanTime,TandemScanningMethod-1,TOFPathLength,Type-1,fid_MetaInfo FROM META_MassAnalyzer WHERE fid_MSInstrument='" << parent_id << "'";
 		result = db_con_.executeQuery(query.str());
 		
 		result.first();
@@ -1136,14 +1148,13 @@ namespace OpenMS
 			analyzer.setResolutionMethod((MassAnalyzer::ResolutionMethod) result.value(6).toInt());
 			analyzer.setResolutionType((MassAnalyzer::ResolutionType) result.value(7).toInt());
 			analyzer.setScanDirection((MassAnalyzer::ScanDirection) result.value(8).toInt());
-			analyzer.setScanFunction((MassAnalyzer::ScanFunction) result.value(9).toInt());
-			analyzer.setScanLaw((MassAnalyzer::ScanLaw) result.value(10).toInt());
-			analyzer.setScanRate(result.value(11).toDouble());
-			analyzer.setScanTime(result.value(12).toDouble());
-			analyzer.setTandemScanMethod((MassAnalyzer::TandemScanningMethod) result.value(13).toInt());
-			analyzer.setTOFTotalPathLength(result.value(14).toDouble());
-			analyzer.setType((MassAnalyzer::AnalyzerType) result.value(15).toInt());
-			loadMetaInfo_(result.value(16).toInt(), analyzer);
+			analyzer.setScanLaw((MassAnalyzer::ScanLaw) result.value(9).toInt());
+			analyzer.setScanRate(result.value(10).toDouble());
+			analyzer.setScanTime(result.value(11).toDouble());
+			analyzer.setTandemScanMethod((MassAnalyzer::TandemScanningMethod) result.value(12).toInt());
+			analyzer.setTOFTotalPathLength(result.value(13).toDouble());
+			analyzer.setType((MassAnalyzer::AnalyzerType) result.value(14).toInt());
+			loadMetaInfo_(result.value(15).toInt(), analyzer);
 			
 			analyzers.push_back(analyzer);
 			result.next();
@@ -1226,9 +1237,11 @@ namespace OpenMS
 		query << "SELECT MZRangeBegin, MZRangeEnd, Polarity-1, ScanMode-1, fid_MetaInfo FROM META_InstrumentSettings WHERE fid_Spectrum=" << id;
 		result = db_con_.executeQuery(query.str());
 		result.first();
-		
-		settings.setMzRangeStart(result.value(0).toDouble());
-		settings.setMzRangeStop(result.value(1).toDouble());
+
+		InstrumentSettings::ScanWindow window;
+		window.begin = result.value(0).toDouble();
+		window.end = result.value(1).toDouble();
+		settings.getScanWindows().push_back(window);
 		settings.setPolarity((IonSource::Polarity) (result.value(2).toInt()));
 		settings.setScanMode((InstrumentSettings::ScanMode) (result.value(3).toInt()));
 		spec.setInstrumentSettings(settings);

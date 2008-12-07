@@ -38,56 +38,32 @@ using namespace std;
 
 namespace OpenMS
 {
-
-//Constructor
-AcquisitionInfoVisualizer::AcquisitionInfoVisualizer(bool editable, QWidget *parent) 
-	: BaseVisualizer(editable, parent)
-{
-  
-	addLabel("Show AcquisitionInfo information");		
-	addSeperator();
-	addIntLineEdit(acquisitioninfo_method_, "Method of combination" );
 	
-	finishAdding_();
-}
-
-
-
-void AcquisitionInfoVisualizer::load(AcquisitionInfo &a)
-{
-  ptr_ = &a;
-	
-	//Copy of current object for restoring the original values
-	tempAcquisitionInfo_=a;
-  acquisitioninfo_method_->setText( tempAcquisitionInfo_.getMethodOfCombination().c_str() );
-}
-
-void AcquisitionInfoVisualizer::store_()
-{
-	try
+	AcquisitionInfoVisualizer::AcquisitionInfoVisualizer(bool editable, QWidget* parent) 
+		: BaseVisualizerGUI(editable, parent),
+			BaseVisualizer<AcquisitionInfo>()
 	{
-				
-		(*ptr_).setMethodOfCombination(acquisitioninfo_method_->text().toStdString());
-					
-		tempAcquisitionInfo_ = (*ptr_);
+		addLabel_("Show AcquisitionInfo information");		
+		addSeparator_();
+		addIntLineEdit_(acquisitioninfo_method_, "Method of combination" );
 		
+		finishAdding_();
 	}
-	catch(exception& e)
+	
+	void AcquisitionInfoVisualizer::update_()
 	{
-		std::cout<<"Error while trying to store the new AcquisitionInfo data. "<<e.what()<<endl;
+	  acquisitioninfo_method_->setText( temp_.getMethodOfCombination().c_str() );
 	}
-}
-
-void AcquisitionInfoVisualizer::reject_()
-{
-	try
+	
+	void AcquisitionInfoVisualizer::store()
 	{
-		load(tempAcquisitionInfo_);
+		ptr_->setMethodOfCombination(acquisitioninfo_method_->text());
+					
+		temp_ = (*ptr_);
 	}
-	catch(exception e)
+	
+	void AcquisitionInfoVisualizer::undo_()
 	{
-		cout<<"Error while trying to restore original AcquisitionInfo data. "<<e.what()<<endl;
-	} 
-}
-
+		update_();
+	}
 }

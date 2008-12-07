@@ -32,7 +32,7 @@
 namespace OpenMS 
 {
 	/**
-		@brief Description of a ion detector ( part of a MS Instrument )
+		@brief Description of a ion detector (part of a MS Instrument)
 		
 		@ingroup Metadata
 	*/
@@ -109,20 +109,35 @@ namespace OpenMS
       void setAcquisitionMode(AcquisitionMode acquisition_mode);
 			
 			/// returns the resolution (in ns)
-      float getResolution() const;
+      DoubleReal getResolution() const;
       /// sets the resolution (in ns)
-      void setResolution(float resolution);
+      void setResolution(DoubleReal resolution);
 			
 			/// retruns the analog-to-digital converter sampling frequency (in MHz)
-      float getADCSamplingFrequency() const;
+      DoubleReal getADCSamplingFrequency() const;
       /// sets the analog-to-digital converter sampling frequency (in MHz)
-      void setADCSamplingFrequency(float ADC_sampling_frequency);
+      void setADCSamplingFrequency(DoubleReal ADC_sampling_frequency);
+
+			/**
+				@brief returns the position of this part in the whole Instrument. 
+				
+				Order can be ignored, as long the instrument has this default setup:
+				- one ion source
+				- one or many mass analyzers
+				- one ion detector
+				
+				For more complex instuments, the order should be defined.
+      */
+      Int getOrder() const;
+      /// sets the order
+      void setOrder(Int order);
 
     protected:
 	    Type type_;
 	    AcquisitionMode acquisition_mode_; 
-	    float resolution_;
-	    float ADC_sampling_frequency_;
+	    DoubleReal resolution_;
+	    DoubleReal ADC_sampling_frequency_;
+    	Int order_;
     
   };
 } // namespace OpenMS

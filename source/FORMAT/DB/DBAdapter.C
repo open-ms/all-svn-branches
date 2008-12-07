@@ -224,6 +224,7 @@ namespace OpenMS
 				query << "('" << meta_id << "','" << *it;
 				val = &info.getMetaValue(*it);
 				if (debug) cout << *it << "=" << *val << endl;
+				//TODO Handling of int list, double list and string list
 				switch (val->valueType())
 				{
 					case DataValue::STRING_VALUE:
@@ -304,7 +305,7 @@ namespace OpenMS
 		file.setPathToFile(result.value(1).toString());
 		file.setFileSize(result.value(2).toDouble());
 		file.setFileType(result.value(3).toString());
-		file.setSha1(result.value(4).toString());
+		file.setChecksum(result.value(4).toString(), SourceFile::UNKNOWN);
 	}
 
 	UID DBAdapter::storeFile_(const String& parent_table, UID parent_id, const SourceFile& file)
@@ -316,16 +317,16 @@ namespace OpenMS
 		bool debug = false;
 		UID file_id = 0;
 		
-		// If there is no file to save, set empty reference and return
-		if (file.isFileEmpty())
-		{
-			if (debug) cout << "Empty file for " << parent_table << " given, skipping..." << endl;
-			query.str("");
-			query << "UPDATE " << parent_table << " SET fid_File=NULL";
-			query << " WHERE id=" << String(parent_id);
-			result = db_con_.executeQuery(query.str());
-			return 0;
-		}
+//		// If there is no file to save, set empty reference and return
+//		if (file.isFileEmpty())
+//		{
+//			if (debug) cout << "Empty file for " << parent_table << " given, skipping..." << endl;
+//			query.str("");
+//			query << "UPDATE " << parent_table << " SET fid_File=NULL";
+//			query << " WHERE id=" << String(parent_id);
+//			result = db_con_.executeQuery(query.str());
+//			return 0;
+//		}
 		
 		if (debug) cout << "file given, saving to entry '" << parent_id << "' in table '" << parent_table << endl;
 		query.str("");
@@ -355,7 +356,7 @@ namespace OpenMS
 		query << "FileName='" << file.getNameOfFile() << "',";
 		query << "FilePath='" << file.getPathToFile() << "',";
 		query << "Size=" << file.getFileSize() << ",";
-		query << "sha1='" << file.getSha1() << "',";
+		query << "sha1='" << file.getChecksum() << "',";
 		query << "`Type`='" << file.getFileType() << "'";
 		query << end;
 
@@ -624,35 +625,38 @@ namespace OpenMS
 			db_version = db_version.prefix('$');
 			db_version.trim();
 			
-			String sql_path = File::find("OpenMS_DB.sql");
-			if (sql_path == "")
+			String sql_path;
+			try
+			{
+				sql_path = File::find("OpenMS_DB.sql");
+			}
+			catch(Exception::FileNotFound&)
 			{
 				cerr << "Warning: Could not verify DB version. Please set the environment variable OPENMS_DATA_PATH to the OpenMS data directory: $PREFIX/share/OpenMS/" << endl;
+				return true;
 			}
-			else
+				
+			TextFile sql(sql_path);
+			// ReverseIterator instead or ConstReverseIterator as rend() it non-const and operator!= fails (until gcc 4.0.x)
+			for (TextFile::ReverseIterator it = sql.rbegin(); it != sql.rend(); ++it)
 			{
-				TextFile sql(sql_path);
-				// ReverseIterator instead or ConstReverseIterator as rend() it non-const and operator!= fails (until gcc 4.0.x)
-				for (TextFile::ReverseIterator it = sql.rbegin(); it != sql.rend(); ++it)
+				if (it->hasSubstring("$Revision:"))
 				{
-					if (it->hasSubstring("$Revision:"))
+					String file_version = *it;
+					file_version = file_version.suffix(':');
+					file_version = file_version.prefix('$');
+					file_version.trim();
+					if (file_version!=db_version)
 					{
-						String file_version = *it;
-						file_version = file_version.suffix(':');
-						file_version = file_version.prefix('$');
-						file_version.trim();
-						if (file_version!=db_version)
+						if (warning)
 						{
-							if (warning)
-							{
-								cerr << "Error: The given DB (Rev: " << db_version 
-										 << ") has a different revision than OpenMS (Rev: " 
-										 << file_version << ")!"<< endl;
-							}
-							return false;
+							cerr << "Error: The given DB (Rev: " << db_version 
+									 << ") has a different revision than OpenMS (Rev: " 
+									 << file_version << ")!"<< endl;
 						}
-						break;
+						return false;
 					}
+					break;
 				}
 			}
 		}
@@ -661,15 +665,19 @@ namespace OpenMS
 	
 	void DBAdapter::createDB()
 	{
-		String sql_path = File::find("OpenMS_DB.sql");
-		if (sql_path == "")
+		String sql_path;
+		try
+		{
+			sql_path = File::find("OpenMS_DB.sql");
+		}
+		catch(Exception::FileNotFound&)
 		{
 			cerr << "Error: Could not find the OpenMS DB declaration file. Please set the environment variable OPENMS_DATA_PATH to the OpenMS data directory: $PREFIX/share/OpenMS/" << endl;
 			return;
 		}
 
 		// load sql queries
-		TextFile sql(File::find("OpenMS_DB.sql"));
+		TextFile sql(sql_path);
 		
 		// delete existing tables
 		QSqlQuery result, dummy;

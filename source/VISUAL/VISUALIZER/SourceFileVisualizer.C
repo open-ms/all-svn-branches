@@ -24,81 +24,68 @@
 // $Maintainer: Marc Sturm   $
 // --------------------------------------------------------------------------
 
-// OpenMS
 #include <OpenMS/VISUAL/VISUALIZER/SourceFileVisualizer.h>
 
-// QT
 #include <QtGui/QLineEdit>
+#include <QtGui/QComboBox>
 
-// STL
 #include <iostream>
 
 using namespace std;
 
 namespace OpenMS
 {
-
-//Constructor
-SourceFileVisualizer::SourceFileVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
-{
-	addLabel("Modify source file information");
-	addSeperator();	
-	addLineEdit(name_of_file_, "Name of file" );
-	addLineEdit(path_to_file_, "Path to file" );
-	addLineEdit(file_size_, "File size (in MB)" );
-	addLineEdit(file_type_, "File type" );
-	addLineEdit(sha1_, "SHA1 hash value" );
 	
-	finishAdding_();
+	SourceFileVisualizer::SourceFileVisualizer(bool editable, QWidget* parent)
+		: BaseVisualizerGUI(editable, parent),
+			BaseVisualizer<SourceFile>()
+	{
+		addLabel_("Modify source file information");
+		addSeparator_();	
+		addLineEdit_(name_of_file_, "Name of file" );
+		addLineEdit_(path_to_file_, "Path to file" );
+		addLineEdit_(file_size_, "File size (in MB)" );
+		addLineEdit_(file_type_, "File type" );
+		addLineEdit_(checksum_, "Checksum" );
+		addComboBox_(checksum_type_, "Checksum type" );
 		
-}
-
-
-
-void SourceFileVisualizer::load(SourceFile &s)
-{
-  ptr_ = &s;
+		finishAdding_();
+	}
 	
-	//Copy of current object for restoring the original values
-	tempSourceFile_=s;
-  name_of_file_->setText(s.getNameOfFile().c_str());
-	path_to_file_->setText(s.getPathToFile().c_str() );
-	file_size_->setText(String(s.getFileSize()).c_str());
-  file_type_->setText(String(s.getFileType()).c_str());
-	sha1_->setText(String(s.getSha1()).c_str());
+	void SourceFileVisualizer::update_()
+	{
+	  name_of_file_->setText(temp_.getNameOfFile().c_str());
+		path_to_file_->setText(temp_.getPathToFile().c_str() );
+		file_size_->setText(String(temp_.getFileSize()).c_str());
+	  file_type_->setText(String(temp_.getFileType()).c_str());
+		checksum_->setText(String(temp_.getChecksum()).c_str());
+
+		if(! isEditable())
+		{
+			fillComboBox_(checksum_type_,& temp_.NamesOfChecksumType[temp_.getChecksumType()] , 1);
+		}
+		else
+		{
+			fillComboBox_(checksum_type_, temp_.NamesOfChecksumType , SourceFile::SIZE_OF_CHECKSUMTYPE);
+			checksum_type_->setCurrentIndex(temp_.getChecksumType()); 
+		}
+
+	}
+	
+	void SourceFileVisualizer::store()
+	{
+		ptr_->setNameOfFile(name_of_file_->text());
+		ptr_->setPathToFile(path_to_file_->text());
+		ptr_->setFileSize(file_size_->text().toFloat());
+		ptr_->setFileType(file_type_->text());
+		ptr_->setChecksum(checksum_->text(),(SourceFile::ChecksumType)checksum_type_->currentIndex());
 		
-			
-}
-
-void SourceFileVisualizer::store_()
-{
-	try
-	{
-				
-		(*ptr_).setNameOfFile(name_of_file_->text().toStdString());
-		(*ptr_).setPathToFile(path_to_file_->text().toStdString());
-		(*ptr_).setFileSize(file_size_->text().toFloat());
-		(*ptr_).setFileType(file_type_->text().toStdString());
-		(*ptr_).setSha1(sha1_->text().toStdString());
-				
-		tempSourceFile_=(*ptr_);
+		temp_=(*ptr_);
 	}
-	catch(exception& e)
+	
+	void SourceFileVisualizer::undo_()
 	{
-		std::cout<<"Error while trying to store the new source file data. "<<e.what()<<endl;
+		update_();
 	}
-}
-
-void SourceFileVisualizer::reject_()
-{
-	try
-	{
-		load(tempSourceFile_);
-	}
-	catch(exception e)
-	{
-		cout<<"Error while trying to restore original source file data. "<<e.what()<<endl;
-	} 
-}
 
 }

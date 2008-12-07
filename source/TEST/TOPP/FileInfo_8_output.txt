@@ -4,9 +4,9 @@
 file name: FileInfo_8_input.notype
 file type: cdf
 
-peak type (metadata) : Peak data
+peak type (metadata) : Unknown
 peak type (estimated): Raw data
-raw data spacing: 10
+estimated raw data spacing: 10 (min: 10 max: 10)
 
 Number of peaks: 9
 
@@ -20,21 +20,21 @@ Spectra of MS Level 1: 3
 
 -- Meta information --
 
-Experiment Type  : Unknown
-Date             : 0000-00-00
+Document id       : 
+Date              : 0000-00-00 00:00:00
 
 Sample
   Name             : 
   Organism         : 
   Comment          : 42
 
-Instument
+Instrument
   Name             : i1
   Model            : i4
   Vendor           : i3
-  Ion source       : Electron ionization
-  Detector         : Electron multiplier
-  Mass Analyzer(s) : Unknown, 
+  Ion source(s)    : Electron ionization
+  Mass Analyzer(s) : Unknown
+  Detector(s)      : Electron multiplier
 
 Contact Person
   First Name       : 

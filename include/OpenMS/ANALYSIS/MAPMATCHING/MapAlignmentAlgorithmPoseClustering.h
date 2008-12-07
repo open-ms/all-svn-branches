@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl$
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_ANALYSIS_MAPMATCHING_MAPALIGNMENTALGORITHMPOSECLUSTERING_H
@@ -30,8 +30,6 @@
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithm.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/TransformationDescription.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
-
-#include <gsl/gsl_fit.h>
 
 namespace OpenMS
 {
@@ -45,7 +43,7 @@ namespace OpenMS
 		@n A Geometric Approach for the Alignment of Liquid Chromatography-Mass Spectrometry Data
 		@n ISMB/ECCB 2007 
 
-	  @ref MapAlignmentAlgorithmPoseClustering_Parameters are explained on a separate page.  
+	  @htmlinclude OpenMS_MapAlignmentAlgorithmPoseClustering.parameters
 
 		@ingroup MapAlignment
 

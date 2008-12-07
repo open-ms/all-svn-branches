@@ -31,82 +31,80 @@ using namespace std;
 namespace OpenMS
 {
 
-	const std::string ExperimentalSettings::NamesOfExperimentType[] = {"Unknown","MS","MS_MS","HPLC_MS","HPLC_MS_MS"};
+	const std::string ExperimentalSettings::NamesOfNativeIDType[] = {"Unknown","Thermo","Waters","WIFF","Bruker/Agilent","Bruker BAF","Bruker FID","multiple peak lists","single peak list","scan number","spectrum identifier"};
+
 
 	ExperimentalSettings::ExperimentalSettings():
 		MetaInfoInterface(),
+		DocumentIdentifier(),
+		native_id_type_(UNKNOWN),
 		sample_(),
-		source_file_(),
+		source_files_(),
 		contacts_(),
 		instrument_(),
-		software_(),
-		processing_method_(),
+		data_processing_(),
 		hplc_(),
-		type_(UNKNOWN),
-		date_(),
+		datetime_(),
 		comment_(),
 		protein_identifications_()
 	{
-	  
 	}
 	
 	ExperimentalSettings::ExperimentalSettings(const ExperimentalSettings& source):
 		MetaInfoInterface(source),
+		DocumentIdentifier(source),
+		native_id_type_(source.native_id_type_),
 	  sample_(source.sample_),
-	  source_file_(source.source_file_),
+	  source_files_(source.source_files_),
 	  contacts_(source.contacts_),
 	  instrument_(source.instrument_),
-	  software_(source.software_),
-	  processing_method_(source.processing_method_),
+	  data_processing_(source.data_processing_),
 	  hplc_(source.hplc_),
-	  type_(source.type_),
-	  date_(source.date_),
+	  datetime_(source.datetime_),
 	  comment_(source.comment_),
 		protein_identifications_(source.protein_identifications_)
 	{
-	  
 	}
 	
 	ExperimentalSettings::~ExperimentalSettings()
 	{
-	  
 	}
 	
 	ExperimentalSettings& ExperimentalSettings::operator = (const ExperimentalSettings& source)
 	{
 	  if (&source == this) return *this;
 	  
+	  native_id_type_ = source.native_id_type_;
     sample_ = source.sample_;
-    source_file_ = source.source_file_;
+    source_files_ = source.source_files_;
     contacts_ = source.contacts_;
     instrument_ = source.instrument_;
-    software_ = source.software_;
-    processing_method_ = source.processing_method_;
+    data_processing_ = source.data_processing_;
     hplc_ = source.hplc_;
-    type_ = source.type_;
-    date_ = source.date_;
+    datetime_ = source.datetime_;
     comment_ = source.comment_;
     protein_identifications_ = source.protein_identifications_;
     MetaInfoInterface::operator=(source);
+		DocumentIdentifier::operator=(source);
 	  
 	  return *this;
 	}
 
   bool ExperimentalSettings::operator== (const ExperimentalSettings& rhs) const
   {
-  	return  
+  	return
+  		native_id_type_ == rhs.native_id_type_ &&
 	    sample_ == rhs.sample_ &&
-	    source_file_ == rhs.source_file_ &&
+	    source_files_ == rhs.source_files_ &&
 	    contacts_ == rhs.contacts_ &&
 	    instrument_ == rhs.instrument_ &&
-	    software_ == rhs.software_ &&
-	    processing_method_ == rhs.processing_method_ &&
+	    data_processing_ == rhs.data_processing_ &&
 	    hplc_ == rhs.hplc_ &&
-	    type_ == rhs.type_ &&
-	    date_ == rhs.date_ &&
+	    datetime_ == rhs.datetime_ &&
     	protein_identifications_ == rhs.protein_identifications_ &&
     	comment_ == rhs.comment_ &&
-  		MetaInfoInterface::operator==(rhs)
+  		MetaInfoInterface::operator==(rhs) &&
+			DocumentIdentifier::operator==(rhs)
   		;
   }
 
@@ -130,19 +128,19 @@ namespace OpenMS
 	  sample_ = sample; 
 	}
 	
-	const SourceFile& ExperimentalSettings::getSourceFile() const 
+	const vector<SourceFile>& ExperimentalSettings::getSourceFiles() const 
 	{
-	  return source_file_; 
+	  return source_files_; 
 	}
 	
-	SourceFile&  ExperimentalSettings::getSourceFile()
+	vector<SourceFile>& ExperimentalSettings::getSourceFiles()
 	{
-	  return source_file_; 
+	  return source_files_; 
 	}
 	
-	void ExperimentalSettings::setSourceFile(const SourceFile& source_file)
+	void ExperimentalSettings::setSourceFiles(const vector<SourceFile>& source_file)
 	{
-	  source_file_ = source_file; 
+	  source_files_ = source_file; 
 	}
 	
 	const vector<ContactPerson>& ExperimentalSettings::getContacts() const 
@@ -175,54 +173,29 @@ namespace OpenMS
 	  instrument_ = instrument; 
 	}
 	
-	const Software& ExperimentalSettings::getSoftware() const 
+	const vector<DataProcessing>& ExperimentalSettings::getDataProcessing() const 
 	{
-	  return software_; 
+	  return data_processing_; 
 	}
 	
-	Software&  ExperimentalSettings::getSoftware()
+	vector<DataProcessing>&  ExperimentalSettings::getDataProcessing()
 	{
-	  return software_; 
+	  return data_processing_; 
 	}
 	
-	void ExperimentalSettings::setSoftware(const Software& software)
+	void ExperimentalSettings::setDataProcessing(const vector<DataProcessing>& processing_method)
 	{
-	  software_ = software; 
-	}
-	
-	const ProcessingMethod& ExperimentalSettings::getProcessingMethod() const 
-	{
-	  return processing_method_; 
-	}
-	
-	ProcessingMethod&  ExperimentalSettings::getProcessingMethod()
-	{
-	  return processing_method_; 
-	}
-	
-	void ExperimentalSettings::setProcessingMethod(const ProcessingMethod& processing_method)
-	{
-	  processing_method_ = processing_method; 
+	  data_processing_ = processing_method; 
 	}
 
-	ExperimentalSettings::ExperimentType ExperimentalSettings::getType() const
+	const DateTime& ExperimentalSettings::getDateTime() const
 	{
-		return type_;
+		return datetime_;
 	}
 	
-	void ExperimentalSettings::setType(ExperimentalSettings::ExperimentType type)
+	void ExperimentalSettings::setDateTime(const DateTime& date)
 	{
-		type_ = type;
-	}
-
-	const Date& ExperimentalSettings::getDate() const
-	{
-		return date_;
-	}
-	
-	void ExperimentalSettings::setDate(const Date& date)
-	{
-		date_ = date;
+		datetime_ = date;
 	}
 
 
@@ -277,5 +250,16 @@ namespace OpenMS
 	{
 	  comment_ = comment; 
 	}
+
+  ExperimentalSettings::NativeIDType ExperimentalSettings::getNativeIDType() const
+	{
+		return native_id_type_;
+	}
+	
+  void ExperimentalSettings::setNativeIDType(ExperimentalSettings::NativeIDType type)
+	{
+		native_id_type_ = type;
+	}
+
 }
 

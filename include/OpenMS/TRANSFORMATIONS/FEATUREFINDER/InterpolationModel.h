@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff $
+// $Maintainer: Clemens Groepl, Ole Schulz-Trieglaff $
 // --------------------------------------------------------------------------
 
 
@@ -39,17 +39,7 @@ namespace OpenMS
 		Model wrapping LinearInterpolation for speed-up in calculation of predicted intensities
 		Derived classes have to implement setSamples()
 		
-		Parameters:
-		<table>
-			<tr>
-				<td>interpolation_step</td>
-				<td>step size used to interpolate model</td>
-			</tr>
-			<tr>
-				<td>intensity_scaling</td>
-				<td>factor used to scale the calculated intensities</td>
-			</tr>
-		</table>
+    @htmlinclude OpenMS_InterpolationModel.parameters
 
 		@ingroup FeatureFinder
 
@@ -59,12 +49,10 @@ namespace OpenMS
     {
 
       public:
-			typedef DPeak<1>::IntensityType IntensityType;
+			typedef DoubleReal IntensityType;
       typedef DPosition<1> PositionType;
-			typedef PositionType::CoordinateType CoordinateType;
+			typedef DoubleReal CoordinateType;
 			typedef Math::LinearInterpolation<DoubleReal> LinearInterpolation;
-			typedef LinearInterpolation::container_type ContainerType;
-			typedef DPeakArray<DPeak<1> > SamplesType;
 
       /// Default constructor
       InterpolationModel()
@@ -144,7 +132,7 @@ namespace OpenMS
 			void getSamples(SamplesType& cont) const
 			{
 				cont = SamplesType();
-				DPeak<1> peak;
+				BaseModel<1>::PeakType peak;
 				for (UInt i=0; i<interpolation_.getData().size(); ++i)
 				{
 					peak.setIntensity( interpolation_.getData()[i] );
@@ -154,10 +142,17 @@ namespace OpenMS
 			}
 
 			/// "center" of the model, particular definition (depends on the derived model)
-			virtual CoordinateType getCenter() const=0;
+			virtual CoordinateType getCenter() const
+			{
+				throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+				return CoordinateType(); // we will never get here, but this avoids a warning
+			}
 
 			/// set sample/supporting points of interpolation wrt params.
-			virtual void setSamples() =0;
+			virtual void setSamples()
+			{
+				throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+			};
 
 			/**
 				@brief Set the interpolation step for the linear interpolation of the model

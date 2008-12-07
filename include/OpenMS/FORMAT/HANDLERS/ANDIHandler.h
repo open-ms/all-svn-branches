@@ -41,7 +41,7 @@ namespace OpenMS
 	namespace Internal
 	{
 	  /**
-	  	@brief Read-only File handler for ANDIFile (Version 1.0)
+	  	@brief Read-only File handler for ANDI/MS format (Version 1.0)
 	
 			MapType has to be a MSExperiment or have the same interface.
 	  	
@@ -90,7 +90,7 @@ namespace OpenMS
 				void getInstrumentData_(MS_Instrument_Data* inst_data);
 		
 				/// fill scan data with @p scan_data and @p global_data
-				void getRawPerScan_(MS_Raw_Per_Scan* scan_data, MS_Raw_Data_Global* global_data);
+				void getRawPerScan_(UInt scan_number, MS_Raw_Per_Scan* scan_data, MS_Raw_Data_Global* global_data);
 		    //@}
 		
 				/// map pointer for reading
@@ -254,7 +254,7 @@ namespace OpenMS
 			else
 			{
 				//parse data
-				getRawPerScan_(&ms_raw,&ms_raw_global);
+				getRawPerScan_(index, &ms_raw,&ms_raw_global);
 			}	
 			//clean up
 			ms_init_per_scan( 1, &ms_raw, &ms_lib);					
@@ -273,16 +273,16 @@ namespace OpenMS
 		int last_slash = file.rfind("/",file.size());
 		int last_backslash = file.rfind("\\",file.size());
 		int cut = (last_slash > last_backslash)? last_slash : last_backslash;
-		exp_.getSourceFile().setNameOfFile( file.substr(cut+1) ); 
-		exp_.getSourceFile().setPathToFile( file.substr(0,cut+1) ); 
-
-		exp_.getSourceFile().setFileType( string_(admin_data->source_file_format) );
-
+		SourceFile sf;
+		sf.setNameOfFile( file.substr(cut+1) ); 
+		sf.setPathToFile( file.substr(0,cut+1) ); 
+		sf.setFileType( string_(admin_data->source_file_format) );
+		exp_.getSourceFiles().push_back(sf);
+		
 		ContactPerson contact;
 		contact.setLastName( string_(admin_data->operator_name) );
 		contact.setMetaValue(user_params_[CONTACT], String("Operator"));
 		exp_.getContacts().push_back(contact);
-
 		
 		contact = ContactPerson();
 		contact.setLastName( string_(admin_data->dataset_owner) );
@@ -290,20 +290,16 @@ namespace OpenMS
 		contact.setMetaValue(user_params_[CONTACT], String("Dataset owner"));
 		exp_.getContacts().push_back(contact);
  		
-		typedef ProcessingMethod pm;
-		// Centroided Mass Spectrum, Continuum Mass Spectrum, Library Mass Spectrum
-		int exp_map[] = {SpectrumSettings::PEAKS, SpectrumSettings::RAWDATA, 0};
-		exp_.getProcessingMethod().setSpectrumType( (SpectrumSettings::SpectrumType) exp_map[admin_data->experiment_type - expt_centroid]);
-
-		exp_.getSoftware().setName( string_(admin_data->post_expt_program_name) );
-		exp_.getProcessingMethod().setMetaValue(user_params_[ANDI_ERROR], string_(admin_data->error_log));
-		exp_.getProcessingMethod().setMetaValue(user_params_[PROC], int_(admin_data->number_times_processed));
+ 		exp_.getDataProcessing().resize(1);
+		exp_.getDataProcessing().back().getSoftware().setName( string_(admin_data->post_expt_program_name) );
+		exp_.getDataProcessing().back().setMetaValue(user_params_[ANDI_ERROR], string_(admin_data->error_log));
+		exp_.getDataProcessing().back().setMetaValue(user_params_[PROC], int_(admin_data->number_times_processed));
 	 
 		std::stringstream buffer;
 		buffer << string_(admin_data->calibration_history_0) << string_(admin_data->calibration_history_1)
 					 << string_(admin_data->calibration_history_2) << string_(admin_data->calibration_history_3);
-		exp_.getProcessingMethod().setMetaValue(user_params_[CALHIST], String(buffer.str()));	
-		exp_.getProcessingMethod().setMetaValue(user_params_[CALTIMES], int_(admin_data->number_times_calibrated));	
+		exp_.getDataProcessing().back().setMetaValue(user_params_[CALHIST], String(buffer.str()));	
+		exp_.getDataProcessing().back().setMetaValue(user_params_[CALTIMES], int_(admin_data->number_times_calibrated));	
 
 		// unused MS_Admin_Data fields: comments, experiment_title, ms_template_revision, netcdf_revision, languages
 		// experiment_date_time, netcdf_date_time, source_file_date_time, pre_expt_program_name
@@ -338,20 +334,20 @@ namespace OpenMS
 		// Membrane Separator, Capillary Direct, Open Split, Jet Separator, Direct Inlet Probe, Septum, Particle Beam,
 		// Reservoir, Moving Belt, Atmospheric Pressure Chemical Ionization, Flow Injection Analysis, Electrospray,
 		// Infusion, Thermospray, Other Probe, Other
-		typedef IonSource is;
-		IonSource& src = exp_.getInstrument().getIonSource();
-		int inlet_map[] = {is::MEMBRANESEPARATOR, 0, is::OPENSPLIT, is::JETSEPARATOR, is::DIRECT, is::SEPTUM,
-		is::PARTICLEBEAM, is::RESERVOIR, is::MOVINGBELT, 0, is::FLOWINJECTIONANALYSIS, is::ELECTROSPRAYINLET,
-		is::INFUSION, is::THERMOSPRAYINLET, 0, 0};
-		src.setInletType( (is::InletType) inlet_map[test_data->ms_inlet - inlet_membrane]);
+		exp_.getInstrument().getIonSources().resize(1);
+		IonSource& src = exp_.getInstrument().getIonSources()[0];
+		int inlet_map[] = {IonSource::MEMBRANESEPARATOR, 0, IonSource::OPENSPLIT, IonSource::JETSEPARATOR, IonSource::DIRECT, IonSource::SEPTUM,
+		IonSource::PARTICLEBEAM, IonSource::RESERVOIR, IonSource::MOVINGBELT, 0, IonSource::FLOWINJECTIONANALYSIS, IonSource::ELECTROSPRAYINLET,
+		IonSource::INFUSION, IonSource::THERMOSPRAYINLET, 0, 0};
+		src.setInletType( (IonSource::InletType) inlet_map[test_data->ms_inlet - inlet_membrane]);
 		src.setMetaValue(user_params_[INLETTEMP], float_(test_data->ms_inlet_temperature));
 
 		// Electron Impact, Chemical Ionization, Fast Atom Bombardment, Field Desorption, Field Ionization,
 		// Electrospray, Thermospray, Atmospheric Pressure Chemical Ionization, Plasma Desorption,
 		// Laser Desorption, Spark Ionization, Thermal Ionization, Other
-		int ion_map[] = {is::EI, is::CI, is::FAB, is::FD, is::FI, is::ESI, 
-										 is::TSP, is::APCI, is::PD, is::LD, is::SI, is::TI, 0};
-		src.setIonizationMethod( (is::IonizationMethod) ion_map[test_data->ionization_mode - ionization_ei]);
+		int ion_map[] = {IonSource::EI, IonSource::CI, IonSource::FAB, IonSource::FD, IonSource::FI, IonSource::ESI, 
+										 IonSource::TSP, IonSource::APCI, IonSource::PD, IonSource::LD, IonSource::SI, IonSource::TI, 0};
+		src.setIonizationMethod( (IonSource::IonizationMethod) ion_map[test_data->ionization_mode - ionization_ei]);
 
 		std::stringstream buffer;
 		if (test_data->fab_type != NULL) buffer << "FABType=" << test_data->fab_type << " ";
@@ -370,45 +366,39 @@ namespace OpenMS
 
 		// Electron Multiplier, Photomultplier, Focal Plane Array, Faraday Cup, Conversion Dynode Electron Multiplier,
 		// Conversion dynode Photomultiplier, Multicollector, Other
-		typedef IonDetector id;
-		IonDetector& det = exp_.getInstrument().getIonDetector();
-		int detector_map[] = {id::ELECTRONMULTIPLIER, id::PHOTOMULTIPLIER, id::FOCALPLANEARRAY, id::FARADAYCUP,
-													id::CONVERSIONDYNODEELECTRONMULTIPLIER, id::CONVERSIONDYNODEPHOTOMULTIPLIER,
-													id::MULTICOLLECTOR, 0};
-		det.setType( (id::Type) detector_map[test_data->detector_type - detector_em]);
+		exp_.getInstrument().getIonDetectors().resize(1);
+		IonDetector& det = exp_.getInstrument().getIonDetectors()[0];
+		int detector_map[] = {IonDetector::ELECTRONMULTIPLIER, IonDetector::PHOTOMULTIPLIER, IonDetector::FOCALPLANEARRAY, IonDetector::FARADAYCUP,
+													IonDetector::CONVERSIONDYNODEELECTRONMULTIPLIER, IonDetector::CONVERSIONDYNODEPHOTOMULTIPLIER,
+													IonDetector::MULTICOLLECTOR, 0};
+		det.setType( (IonDetector::Type) detector_map[test_data->detector_type - detector_em]);
 		det.setMetaValue(user_params_[DETPOT], float_(test_data->detector_potential));
 		det.setMetaValue(user_params_[DETENTRPOT], float_(test_data->detector_entrance_potential));
 
 
 
-		typedef MassAnalyzer ma;
-		ma analyzer;
-
-		int dir_map[] = {ma::UP, ma::DOWN, 0};
-		analyzer.setScanDirection( (ma::ScanDirection) dir_map[test_data->scan_direction - direction_up]);
+		MassAnalyzer analyzer;
+		int dir_map[] = {MassAnalyzer::UP, MassAnalyzer::DOWN, 0};
+		analyzer.setScanDirection( (MassAnalyzer::ScanDirection) dir_map[test_data->scan_direction - direction_up]);
 		
 		// Linear, Exponential, Quadratic,  Other
-		int law_map[] = {ma::LINEAR, ma::EXPONENTIAL, ma::QUADRATIC, 0};
-		analyzer.setScanLaw( (ma::ScanLaw) law_map[test_data->scan_law - law_linear]);
+		int law_map[] = {MassAnalyzer::LINEAR, MassAnalyzer::EXPONENTIAL, MassAnalyzer::QUADRATIC, 0};
+		analyzer.setScanLaw( (MassAnalyzer::ScanLaw) law_map[test_data->scan_law - law_linear]);
 
-		//Mass Scan, Selected Ion Detection, Other
-		int function_map[] = {ma::MASSSCAN, ma::SELECTEDIONDETECTION, 0};
-		analyzer.setScanFunction( (ma::ScanFunction) function_map[test_data->scan_function - function_scan]);
-
-		analyzer.setResolutionType( (ma::ResolutionType) (test_data->resolution_type - resolution_constant));
+		analyzer.setResolutionType( (MassAnalyzer::ResolutionType) (test_data->resolution_type - resolution_constant));
 		analyzer.setScanTime(test_data->scan_time);
 
 		if (test_data->resolution_method != NULL)
 		{
 			if (String(test_data->resolution_method) == "50% peak height")
 			{
-				analyzer.setResolutionMethod(ma::FWHM);
+				analyzer.setResolutionMethod(MassAnalyzer::FWHM);
 			}
 			else
 			{
 				if (String(test_data->resolution_method) == "10% peak valley") 
 				{
-					analyzer.setResolutionMethod(ma::TENPERCENTVALLEY);
+					analyzer.setResolutionMethod(MassAnalyzer::TENPERCENTVALLEY);
 				}
 			}
 		}
@@ -434,7 +424,7 @@ namespace OpenMS
 	}
 
 	template <typename MapType>
-	void ANDIHandler<MapType>::getRawPerScan_(MS_Raw_Per_Scan* scan_data, MS_Raw_Data_Global* global_data)
+	void ANDIHandler<MapType>::getRawPerScan_(UInt scan_number, MS_Raw_Per_Scan* scan_data, MS_Raw_Data_Global* global_data)
 	{
 		float mass_factor = float_(global_data->mass_factor, 1.0f);
 		float intens_factor = float_(global_data->intensity_factor, 1.0f);
@@ -457,9 +447,12 @@ namespace OpenMS
 		typename MapType::SpectrumType& spectrum = exp_.back();
 		spectrum.resize(scan_data->points);
 		spectrum.setRT( float_(scan_data->scan_acq_time));
+		spectrum.setNativeID(String("index=")+ scan_number);
 		spectrum.setMSLevel(1);
-		spectrum.getInstrumentSettings().setMzRangeStart(float_(scan_data->mass_range_min));
-		spectrum.getInstrumentSettings().setMzRangeStop(float_(scan_data->mass_range_max));
+		InstrumentSettings::ScanWindow window;
+		window.begin = float_(scan_data->mass_range_min);
+		window.end = float_(scan_data->mass_range_max);
+		spectrum.getInstrumentSettings().getScanWindows().push_back(window);
 		spectrum.getInstrumentSettings().setPolarity(pol_);
 
 		//check intensity/mass format
@@ -483,7 +476,7 @@ namespace OpenMS
 			else if (intensity_format == "Long") intensity =  (double) ((long*)   scan_data->intensities)[i];
 			else if (intensity_format == "Float") intensity =  (double) ((float*)  scan_data->intensities)[i];
 			else if (intensity_format == "Double") intensity =  ((double*) scan_data->intensities)[i];
-			spectrum.getContainer()[i].setIntensity(intensity * intens_factor + intens_offset);
+			spectrum[i].setIntensity(intensity * intens_factor + intens_offset);
 			
 			//parse mass
 			double mass(0);
@@ -491,7 +484,7 @@ namespace OpenMS
 			else if (mass_format == "Long") mass = (double) ((long*)   scan_data->masses)[i];
 			else if (mass_format == "Float") mass = (double) ((float*)  scan_data->masses)[i];
 			else if (mass_format == "Double") mass = ((double*) scan_data->masses)[i];
-			spectrum.getContainer()[i].setPosition(mass * mass_factor);
+			spectrum[i].setPosition(mass * mass_factor);
 		}
 
 		// unused MS_Raw_Data_Global fields:	mass_axis_global_min, mass_axis_global_max, time_axis_global_min,

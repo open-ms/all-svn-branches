@@ -26,7 +26,7 @@
 
 #include <OpenMS/VISUAL/VISUALIZER/PeptideIdentificationVisualizer.h>
 #include <OpenMS/DATASTRUCTURES/DateTime.h>
-#include <OpenMS/VISUAL/MSMetaDataExplorer.h>
+#include <OpenMS/VISUAL/MetaDataBrowser.h>
 
 //QT
 #include <QtGui/QLineEdit>
@@ -41,50 +41,47 @@ using namespace std;
 namespace OpenMS
 {
 
-	PeptideIdentificationVisualizer::PeptideIdentificationVisualizer(bool editable, QWidget *parent, MSMetaDataExplorer *caller) 
-		: BaseVisualizer(editable,parent)
+	PeptideIdentificationVisualizer::PeptideIdentificationVisualizer(bool editable, QWidget* parent, MetaDataBrowser* caller) 
+		: BaseVisualizerGUI(editable, parent),
+			BaseVisualizer<PeptideIdentification>()
 	{
-		type_="PeptideIdentification";
 		pidv_caller_= caller;
 		
-		addLineEdit(identifier_, "Identifier<br>(of corresponding ProteinIdentification)" );
-		addSeperator();   
+		addLineEdit_(identifier_, "Identifier<br>(of corresponding ProteinIdentification)" );
+		addSeparator_();   
 		
-		addLineEdit(score_type_, "Score type" );
-		addBooleanComboBox(higher_better_,"Higher score is better"); 
-		addDoubleLineEdit(identification_threshold_, "Peptide significance threshold" );	
+		addLineEdit_(score_type_, "Score type" );
+		addBooleanComboBox_(higher_better_,"Higher score is better"); 
+		addDoubleLineEdit_(identification_threshold_, "Peptide significance threshold" );	
 		
-		addSeperator();       
-		addLabel("Show peptide hits with score equal or better than a threshold.");
+		addSeparator_();       
+		addLabel_("Show peptide hits with score equal or better than a threshold.");
 		QPushButton* button;
-		addLineEditButton("Score threshold", filter_threshold_, button, "Filter");
+		addLineEditButton_("Score threshold", filter_threshold_, button, "Filter");
 		connect(button, SIGNAL(clicked()), this, SLOT(updateTree_()) );
 		
 		finishAdding_();
 	}
 
-	void PeptideIdentificationVisualizer::load(PeptideIdentification &s, int tree_item_id)
+	void PeptideIdentificationVisualizer::load(PeptideIdentification& s, int tree_item_id)
 	{
-	  //Pointer to current object to keep track of the actual object
 		ptr_ = &s;
+		temp_ = s;
 		
 		// id of the item in the tree
 		tree_id_ = tree_item_id;
 		
-		//Copy of current object for restoring the original values
-		tempidentification_=s;
-	  
-	  identifier_->setText(tempidentification_.getIdentifier().toQString());
-		identification_threshold_->setText(QString::number(tempidentification_.getSignificanceThreshold()));					
-		score_type_->setText(tempidentification_.getScoreType().toQString());
-		higher_better_->setCurrentIndex(tempidentification_.isHigherScoreBetter());
+	  identifier_->setText(temp_.getIdentifier().toQString());
+		identification_threshold_->setText(QString::number(temp_.getSignificanceThreshold()));					
+		score_type_->setText(temp_.getScoreType().toQString());
+		higher_better_->setCurrentIndex(temp_.isHigherScoreBetter());
 	}
 	
 	void PeptideIdentificationVisualizer::updateTree_()
 	{
 		if (filter_threshold_->text()!="")
 		{
-			pidv_caller_->filterHits_(filter_threshold_->text().toDouble(),tempidentification_.isHigherScoreBetter(),tree_id_ );
+			pidv_caller_->filterHits_(filter_threshold_->text().toDouble(),temp_.isHigherScoreBetter(),tree_id_ );
 		}
 		else
 		{
@@ -92,33 +89,19 @@ namespace OpenMS
 		}
 	}
 	
-	void PeptideIdentificationVisualizer::store_()
+	void PeptideIdentificationVisualizer::store()
 	{
-		try
-		{
-			ptr_->setIdentifier(identifier_->text());
-			ptr_->setSignificanceThreshold(identification_threshold_->text().toFloat());
-			ptr_->setScoreType(score_type_->text());
-			ptr_->setHigherScoreBetter(higher_better_->currentIndex());
-			tempidentification_=(*ptr_);		
-		}
-		catch(exception& e)
-		{
-			std::cout<<"Error while trying to store the ProteinIdentification data. "<<e.what()<<endl;
-		}
+		ptr_->setIdentifier(identifier_->text());
+		ptr_->setSignificanceThreshold(identification_threshold_->text().toFloat());
+		ptr_->setScoreType(score_type_->text());
+		ptr_->setHigherScoreBetter(higher_better_->currentIndex());
 		
+		temp_=(*ptr_);		
 	}
 	
-	void PeptideIdentificationVisualizer::reject_()
+	void PeptideIdentificationVisualizer::undo_()
 	{
-		try
-		{
-			load(*ptr_, tree_id_);
-		}
-		catch(exception e)
-		{
-			cout<<"Error while trying to restore original protein ProteinIdentification data. "<<e.what()<<endl;
-		}
+		load(*ptr_, tree_id_);
 	}
 
 }

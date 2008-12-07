@@ -41,15 +41,17 @@ class QMouseEvent;
 namespace OpenMS
 {
   /**
-  	@brief Canvas for 2D-visualization of peak map and feature map data
+  	@brief Canvas for 2D-visualization of peak map, feature map and consensus map data
 
-  	This widget displays a 2D representation of a set of peaks or features.
+  	This widget displays a 2D representation of a set of peaks, features or consensus elements.
 		
 		@image html Spectrum2DCanvas.png
 		
 		The example image shows %Spectrum2DCanvas displaying a peak layer and a feature layer. 
   	
-		@ref Spectrum2DCanvas_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_Spectrum2DCanvas.parameters
+
+    @improvement Support different peak icons - cross, star, square, ... (HiWi)
 		
   	@ingroup SpectrumWidgets
   */
@@ -70,6 +72,12 @@ namespace OpenMS
 
 			// Docu in base class
 			virtual void saveCurrentLayer(bool visible);
+			
+			/// Merges the features in @p map into the features layer @p i 
+			void mergeIntoLayer(UInt i, FeatureMapType& map);
+
+			/// Merges the consensus features in @p map into the features layer @p i 
+			void mergeIntoLayer(UInt i, ConsensusMapType& map);
 			
     signals:
       /// Sets the data for the horizontal projection
@@ -115,6 +123,9 @@ namespace OpenMS
       void mouseMoveEvent(QMouseEvent* e);
 			void paintEvent(QPaintEvent* e);
 			void contextMenuEvent(QContextMenuEvent* e);
+			void keyPressEvent(QKeyEvent* e);
+      void keyReleaseEvent(QKeyEvent* e);
+			void mouseDoubleClickEvent(QMouseEvent* e); 
       //@}
 
       // Docu in base class
@@ -132,22 +143,48 @@ namespace OpenMS
       void paintDots_(UInt layer_index, QPainter& p);
 
       /**
-      	@brief Paints convex hulls (one for each mass trace) for a features of a layer.
+      	@brief Paints convex hulls (one for each mass trace) of a features layer.
       	
-      	@param layer_index Int of the layer.
+      	@param layer_index Index of the layer.
       	@param p The QPainter to paint on.
       */
       void paintTraceConvexHulls_(UInt layer_index, QPainter& p);
 
       /**
-      	@brief Paints the convex hulls (one for each feature) for a features of a layer.
+      	@brief Paints the convex hulls (one for each feature) of a features layer.
       	
-      	@param layer_index Int of the layer.
+      	@param layer_index Index of the layer.
       	@param p The QPainter to paint on.
       */
       void paintFeatureConvexHulls_(UInt layer_index, QPainter& p);
 
       /**
+      	@brief Paints the consensus elements of a consensus features layer.
+      	
+      	@param layer_index Index of the layer.
+      	@param p The QPainter to paint on.
+      */
+      void paintConsensusElements_(UInt layer_index, QPainter& p);
+
+      /**
+      	@brief Paints one consensus element of a consensus features layer.
+      	
+      	@param layer_index Index of the layer.
+      	@param cf Reference to the feature to be painted.
+      	@param p The QPainter to paint on.
+      	@param use_buffer Flag to switch between painting on the buffer and screen.
+      */		
+			void paintConsensusElement_(UInt layer_index, const ConsensusFeature& cf, QPainter& p, bool use_buffer);
+			
+      /**
+      	@brief checks if any element of a consensus feature is currently visible.
+      	
+      	@param layer_index Index of the layer.
+      	@param ce The ConsensusFeature that needs checking
+      */
+			bool isConsensusFeatureVisible_(const ConsensusFeature& ce, UInt layer_index);
+
+			/**
       	@brief Paints convex hulls (one for each mass trace) for a single feature.
       	
       	@param hulls Reference to convex hull vector.
@@ -169,15 +206,12 @@ namespace OpenMS
       /// RT projection data
       ExperimentType projection_rt_;
 
-
-      /// interpolation helper function
-      float betweenFactor_(float v1, float v2, float val);
       /**
       	@brief Returns the color associated with @p val for the gradient @p gradient.
       	
       	Takes intensity modes into account.
       */
-      inline const QColor& heightColor_(float val, const MultiGradient& gradient)
+      inline const QColor& heightColor_(Real val, const MultiGradient& gradient, DoubleReal snap_factor)
 			{
 				switch (intensity_mode_)
 				{
@@ -188,7 +222,7 @@ namespace OpenMS
 						return gradient.precalculatedColorAt(val*percentage_factor_);
 						break;
 					case IM_SNAP:
-						return gradient.precalculatedColorAt(val*snap_factor_);
+						return gradient.precalculatedColorAt(val*snap_factor);
 						break;
 					default:
 						throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -216,6 +250,9 @@ namespace OpenMS
 			virtual void translateForward_();
 			//docu in base class
 			virtual void translateBackward_();
+			
+			/// Finishes context menu after customization to peaks, features or consensus features
+			void finishContextMenu_(QMenu* context_menu, QMenu* settings_menu);
   };
 }
 

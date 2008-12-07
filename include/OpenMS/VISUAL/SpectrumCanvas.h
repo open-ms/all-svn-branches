@@ -1,3 +1,4 @@
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -91,6 +92,8 @@ namespace OpenMS
 		typedef LayerData::ExperimentType ExperimentType;
 		/// Main data type (features)
 		typedef LayerData::FeatureMapType FeatureMapType;
+		/// Main data type (consensus features)
+		typedef LayerData::ConsensusMapType ConsensusMapType;
 		/// Spectrum type
 		typedef ExperimentType::SpectrumType SpectrumType;
 		/// Spectrum iterator type (iterates over peaks)
@@ -230,6 +233,8 @@ namespace OpenMS
 					return layers_[current_layer_].f1;
 				case LayerData::P_PROJECTIONS:
 					return layers_[current_layer_].f2;
+				case LayerData::C_ELEMENTS:
+					return layers_[current_layer_].f1;
 			}
 			std::cout << "Error: SpectrumCanvas::getLayerFlag -- unknown flag '" << f << "'!" << std::endl;
 			return false;
@@ -259,6 +264,9 @@ namespace OpenMS
 				case LayerData::P_PROJECTIONS:
 					layers_[current_layer_].f2 = value;
 					break;
+				case LayerData::C_ELEMENTS:
+					layers_[current_layer_].f1 = value;
+					break;
 			}
 			update_buffer_ = true;
 			update();
@@ -280,6 +288,8 @@ namespace OpenMS
 					return layers_[layer].f1;
 				case LayerData::P_PROJECTIONS:
 					return layers_[layer].f2;
+				case LayerData::C_ELEMENTS:
+					return layers_[layer].f1;
 			}
 			std::cout << "Error: SpectrumCanvas::getLayerFlag -- unknown flag '" << f << "'!" << std::endl;
 			return false;
@@ -308,6 +318,9 @@ namespace OpenMS
 					break;
 				case LayerData::P_PROJECTIONS:
 					layers_[layer].f2 = value;
+					break;
+				case LayerData::C_ELEMENTS:
+					layers_[layer].f1 = value;
 					break;
 			}
 			update_buffer_ = true;
@@ -354,7 +367,7 @@ namespace OpenMS
 		///removes the layer with index @p layer_index
 		virtual void removeLayer(int layer_index)=0;
 		/**
-			@brief Add a peak data layer (data is copied)
+			@brief Add a peak data layer
 			
 			@param map Input map, which has to be mutable and will be empty after adding. Swapping is used to insert the data. It can be performed in constant time and does not double the required memory. 
 			@param filename This @em absolute filename is used to monitor changes in the file and reload the data
@@ -364,53 +377,92 @@ namespace OpenMS
 		bool addLayer(ExperimentType& map, const String& filename="");
 
 		/**
-			@brief Add a feature data layer (data is copied)
+			@brief Add a feature data layer
 			
-			@param pairs Flag that indicates that a feature pair file was read.
 			@param map Input map, which has to be mutable and will be empty after adding. Swapping is used to insert the data. It can be performed in constant time and does not double the required memory. 
 			@param filename This @em absolute filename is used to monitor changes in the file and reload the data
 			
 			@return If a new layer was created
 		*/
 		bool addLayer(FeatureMapType& map, const String& filename="");
+		
+		/**
+			@brief Add a consensus feature data layer
+			
+			@param map Input map, which has to be mutable and will be empty after adding. Swapping is used to insert the data. It can be performed in constant time and does not double the required memory. 
+			@param filename This @em absolute filename is used to monitor changes in the file and reload the data
+			
+			@return If a new layer was created
+		*/
+		bool addLayer(ConsensusMapType& map, const String& filename="");
 		//@}
 		
 		/// Returns the minimum intensity of the active layer
-		inline double getCurrentMinIntensity() const 
+		inline Real getCurrentMinIntensity() const 
 		{ 
 			if (getCurrentLayer().type==LayerData::DT_PEAK)
 			{
 				return getCurrentLayer().peaks.getMinInt(); 
 			}
-			else
+			else if (getCurrentLayer().type==LayerData::DT_FEATURE)
 			{
 				return getCurrentLayer().features.getMinInt(); 
+			}
+			else
+			{
+				return getCurrentLayer().consensus.getMinInt(); 
 			}
 		}
 
 		/// Returns the maximum intensity of the active layer
-		inline double getCurrentMaxIntensity() const 
+		inline Real getCurrentMaxIntensity() const 
 		{ 
 			if (getCurrentLayer().type==LayerData::DT_PEAK)
 			{
-				return getCurrentLayer().peaks.getMaxInt(); 
+				return getCurrentLayer().peaks.getMaxInt();
+			}
+			else if (getCurrentLayer().type==LayerData::DT_FEATURE)
+			{
+				return getCurrentLayer().features.getMaxInt();
 			}
 			else
 			{
-				return getCurrentLayer().features.getMaxInt(); 
+				return getCurrentLayer().consensus.getMaxInt();
 			}
+			
 		}
 
 		/// Returns the minimum intensity of the layer with index @p index
-		inline double getMinIntensity(UInt index) const 
+		inline Real getMinIntensity(UInt index) const 
 		{ 
 			if (getLayer(index).type==LayerData::DT_PEAK)
 			{
-				return getCurrentLayer().peaks.getMinInt(); 
+				return getLayer(index).peaks.getMinInt();
+			}
+			else if (getLayer(index).type==LayerData::DT_FEATURE)
+			{
+				return getLayer(index).features.getMinInt();
 			}
 			else
 			{
-				return getLayer(index).features.getMinInt(); 
+				return getLayer(index).consensus.getMinInt();
+			}
+		}
+
+		/// Returns the maximum intensity of the layer with index @p index
+		inline Real getMaxIntensity(UInt index) const 
+		{ 
+			if (getLayer(index).type==LayerData::DT_PEAK)
+			{
+				return getLayer(index).peaks.getMaxInt();
+			}
+			else if (getLayer(index).type==LayerData::DT_FEATURE)
+			{
+				return getLayer(index).features.getMaxInt();
+			}
+			else
+			{
+				return getLayer(index).consensus.getMaxInt();
 			}
 		}
 
@@ -424,19 +476,6 @@ namespace OpenMS
 		  currentLayerParamtersChanged_();
 		}
 
-		/// Returns the maximum intensity of the layer with index @p index
-		inline double getMaxIntensity(UInt index) const 
-		{ 
-			if (getLayer(index).type==LayerData::DT_PEAK)
-			{
-				return getLayer(index).peaks.getMaxInt(); 
-			}
-			else
-			{
-				return getLayer(index).features.getMaxInt(); 
-			}
-		}
-
 		/**
 			@brief Returns the area which encloses all data points.
 			
@@ -445,11 +484,11 @@ namespace OpenMS
 		const DRange<3>& getDataRange();	
 
 		/**
-			@brief Returns the intensity scaling factor for 'snap to maximum intensity mode'.
+			@brief Returns the first intensity scaling factor for 'snap to maximum intensity mode'.
 			
-			@see snap_factor_
+			@see snap_factors_
 		*/
-		double getSnapFactor();
+		DoubleReal getSnapFactor();
 		
 		/// Shows the preferences dialog of the active layer
 		virtual void showCurrentLayerPreferences() = 0;
@@ -535,17 +574,29 @@ namespace OpenMS
 
 
 		/**
-			@brief Fills the handed over @p map with the visible peaks of the current layer. 
+			@brief Fills the handed over @p map with the visible features of the current layer. 
 			
 			Takes zoom area and data filters into account.
 			
 			If the current layer is not a feature layer, @p map is cleared only.
 		*/
 		void getVisibleFeatureData(FeatureMapType& map) const;
+
+		/**
+			@brief Fills the handed over @p map with the visible consensus features of the current layer. 
+			
+			Takes zoom area and data filters into account.
+			
+			If the current layer is not a consensus feature layer, @p map is cleared only.
+		*/
+		void getVisibleConsensusData(ConsensusMapType& map) const;
 		
 	signals:
+
+		/// Signal emitted whenever the modification status of a layer changes (editing and storing)
+		void layerModficationChange(UInt layer, bool modified);
 		
-		/// Signal emitted whenever a new Layer is activated within the current window
+		/// Signal emitted whenever a new layer is activated within the current window
 		void layerActivated(QWidget* w);
 		
 		/**
@@ -646,7 +697,7 @@ namespace OpenMS
 		/**
 			@brief REcalculates the intensity scaling factor for 'snap to maximum intensity mode'.
 			
-			@see snap_factor_
+			@see snap_factors_
 		*/
 		virtual void recalculateSnapFactor_();
 		
@@ -802,7 +853,10 @@ namespace OpenMS
 			@param caller_name Name of the calling function (use __PRETTY_FUNCTION__).
 		*/
 		virtual void update_(const char* caller_name);
-
+		
+		///Takes all actions necessary when the modification status of a layer changes (signals etc.)
+		void modificationStatus_(UInt layer_index, bool modified);
+		
 		/// Whether to recalculate the data in the buffer when repainting
 		bool update_buffer_;
 
@@ -830,7 +884,7 @@ namespace OpenMS
 			
 			In this mode the highest currently visible intensisty is treated like the maximum overall intensity.
 		*/
-		double snap_factor_;
+		std::vector<DoubleReal> snap_factors_;
 		
 		/// Rubber band for selected area
 		QRubberBand rubber_band_;

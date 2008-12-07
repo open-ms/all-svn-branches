@@ -44,7 +44,7 @@ namespace OpenMS
      the relative errors of the peaks in the data are approximated by linear interpolation and
      subtracted from the data. If the input data is raw data peak picking is done first.
 
-	   @ref InternalCalibration_Parameters are explained on a separate page.
+	   @htmlinclude OpenMS_InternalCalibration.parameters
 	   
 	   @ingroup SignalProcessing
   */
@@ -117,7 +117,7 @@ namespace OpenMS
   void InternalCalibration::calibrate(MSExperiment<InputPeakType>& exp, std::vector<double>& ref_masses,bool peak_data)
   {
 #ifdef DEBUG_CALIBRATION
-		std::cout.precision(12);
+		std::cout.precision(writtenDigits<DoubleReal>());
 #endif
 	
 		if(peak_data)

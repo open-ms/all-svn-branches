@@ -29,7 +29,6 @@
 ///////////////////////////
 
 #include <OpenMS/MATH/MISC/MathFunctions.h>
-#include <OpenMS/MATH/STATISTICS/BasicStatistics.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmPicked.h>
 
 ///////////////////////////
@@ -46,26 +45,35 @@ using namespace std;
 typedef FeatureFinderAlgorithmPicked<Peak1D,Feature> FFPP;
 
 FFPP* ptr;
-CHECK(FeatureFinderAlgorithmPicked())
+START_SECTION(FeatureFinderAlgorithmPicked())
 	ptr = new FFPP;
 	TEST_NOT_EQUAL(ptr,0)
-	delete ptr;
-RESULT
+END_SECTION
 
-CHECK((static FeatureFinderAlgorithm<PeakType,FeatureType>* create()))
+START_SECTION((virtual ~FeatureFinderAlgorithmPicked()))
+	delete ptr;
+END_SECTION
+
+START_SECTION([EXTRA] FeatureFinderAlgorithmPicked() - with RichPeak1D)
+	FeatureFinderAlgorithmPicked<RichPeak1D,Feature> ffa;
+END_SECTION
+	
+START_SECTION((static FeatureFinderAlgorithm<PeakType,FeatureType>* create()))
 	FeatureFinderAlgorithm<Peak1D,Feature>* ptr2 = FFPP::create();
 	TEST_NOT_EQUAL(ptr2,0)
 	delete ptr2;
-RESULT
+END_SECTION
 
-CHECK(static const String getProductName())
+START_SECTION(static const String getProductName())
 	TEST_EQUAL(FFPP::getProductName(),"picked_peak")
-RESULT
+END_SECTION
 
-CHECK(virtual void run())
+START_SECTION(virtual void run())
 	//input and output
 	MSExperiment<> input;
-	MzDataFile().load("data/FeatureFinderAlgorithmPicked.mzData",input);
+	MzDataFile mzdata_file;
+	mzdata_file.getOptions().addMSLevel(1);
+	mzdata_file.load("data/FeatureFinderAlgorithmPicked.mzData",input);
 	input.updateRanges(1);
 	FeatureMap<> output;
 	
@@ -83,29 +91,36 @@ CHECK(virtual void run())
 	
 	TEST_EQUAL(output.size(),8);
 	
-	PRECISION(0.001);
-	TEST_REAL_EQUAL(output[0].getOverallQuality(),0.8819);
-	TEST_REAL_EQUAL(output[1].getOverallQuality(),0.8674);
-	TEST_REAL_EQUAL(output[2].getOverallQuality(),0.9083);
-	TEST_REAL_EQUAL(output[3].getOverallQuality(),0.9268);
-	TEST_REAL_EQUAL(output[4].getOverallQuality(),0.9402);
-	TEST_REAL_EQUAL(output[5].getOverallQuality(),0.9093);
-	TEST_REAL_EQUAL(output[6].getOverallQuality(),0.9403);
-	TEST_REAL_EQUAL(output[7].getOverallQuality(),0.9243);
+	TOLERANCE_ABSOLUTE(0.001);
+	TEST_REAL_SIMILAR(output[0].getOverallQuality(),0.8819);
+	TEST_REAL_SIMILAR(output[1].getOverallQuality(),0.8766);
+	TEST_REAL_SIMILAR(output[2].getOverallQuality(),0.9158);
+	TEST_REAL_SIMILAR(output[3].getOverallQuality(),0.9271);
+	TEST_REAL_SIMILAR(output[4].getOverallQuality(),0.9538);
+	TEST_REAL_SIMILAR(output[5].getOverallQuality(),0.9094);
+	TEST_REAL_SIMILAR(output[6].getOverallQuality(),0.9392);
+	TEST_REAL_SIMILAR(output[7].getOverallQuality(),0.9243);
 	
-	PRECISION(20.0);
-	TEST_REAL_EQUAL(output[0].getIntensity(),51249.6);
-	TEST_REAL_EQUAL(output[1].getIntensity(),44637.9);
-	TEST_REAL_EQUAL(output[2].getIntensity(),34596.9);
-	TEST_REAL_EQUAL(output[3].getIntensity(),19423.1);
-	TEST_REAL_EQUAL(output[4].getIntensity(),12528.0);
-	TEST_REAL_EQUAL(output[5].getIntensity(),8510.74);
-	TEST_REAL_EQUAL(output[6].getIntensity(),7295.91);
-	TEST_REAL_EQUAL(output[7].getIntensity(),5026.28);
-RESULT
-
-//remove log file
-File::remove("featurefinder.log");
+	TOLERANCE_ABSOLUTE(20.0);
+	TEST_REAL_SIMILAR(output[0].getIntensity(),51260.0);
+	TEST_REAL_SIMILAR(output[1].getIntensity(),44667.3);
+	TEST_REAL_SIMILAR(output[2].getIntensity(),34613.3);
+	TEST_REAL_SIMILAR(output[3].getIntensity(),19428.9);
+	TEST_REAL_SIMILAR(output[4].getIntensity(),12513.9);
+	TEST_REAL_SIMILAR(output[5].getIntensity(),8512.71);
+	TEST_REAL_SIMILAR(output[6].getIntensity(),6561.2);
+	TEST_REAL_SIMILAR(output[7].getIntensity(),5024.74);
+	
+	TEST_STRING_EQUAL(output[0].getMetaValue("rt_apex_spectrum"),"spectrum=89")
+	TEST_STRING_EQUAL(output[1].getMetaValue("rt_apex_spectrum"),"spectrum=84")
+	TEST_STRING_EQUAL(output[2].getMetaValue("rt_apex_spectrum"),"spectrum=58")
+	TEST_STRING_EQUAL(output[3].getMetaValue("rt_apex_spectrum"),"spectrum=51")
+	TEST_STRING_EQUAL(output[4].getMetaValue("rt_apex_spectrum"),"spectrum=27")
+	TEST_STRING_EQUAL(output[5].getMetaValue("rt_apex_spectrum"),"spectrum=33")
+	TEST_STRING_EQUAL(output[6].getMetaValue("rt_apex_spectrum"),"spectrum=22")
+	TEST_STRING_EQUAL(output[7].getMetaValue("rt_apex_spectrum"),"spectrum=27")
+	
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

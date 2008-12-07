@@ -34,7 +34,7 @@ using namespace std;
 namespace OpenMS
 {
 	
-	const std::string Sample::NamesOfSampleState[] = {"Unknown","SOLID","LIQUID","GAS","SOLUTION","EULSION","SUSPENSION"};
+	const std::string Sample::NamesOfSampleState[] = {"Unknown","solid","liquid","gas","solution","emulsion","suspension"};
 	
 	Sample::Sample() : 
 		MetaInfoInterface(),
@@ -185,32 +185,32 @@ namespace OpenMS
 	  state_ = state; 
 	}
 	
-	float Sample::getMass() const 
+	DoubleReal Sample::getMass() const 
 	{
 	  return mass_; 
 	}
 	
-	void Sample::setMass(float mass)
+	void Sample::setMass(DoubleReal mass)
 	{
 	  mass_ = mass; 
 	}
 	
-	float Sample::getVolume() const 
+	DoubleReal Sample::getVolume() const 
 	{
 	  return volume_; 
 	}
 	
-	void Sample::setVolume(float volume)
+	void Sample::setVolume(DoubleReal volume)
 	{
 	  volume_ = volume; 
 	}
 	
-	float Sample::getConcentration() const 
+	DoubleReal Sample::getConcentration() const 
 	{
 	  return concentration_; 
 	}
 	
-	void Sample::setConcentration(float concentration)
+	void Sample::setConcentration(DoubleReal concentration)
 	{
 	  concentration_ = concentration; 
 	}

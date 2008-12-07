@@ -30,45 +30,48 @@
 //OpenMS
 #include <OpenMS/METADATA/SpectrumSettings.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizerGUI.h>
 
-class QLineEdit;
-class QComboBox;
+class QTextEdit;
 
-namespace OpenMS {
-/**
-@brief Class that displays all meta information for SpectrumSettings objects
-
-This class provides all functionality to view the meta information of an object of type SpectrumSettings.
-*/
-	
-	class SpectrumSettingsVisualizer : public BaseVisualizer
+namespace OpenMS 
+{
+	/**
+		@brief Class that displays all meta information for SpectrumSettings objects
+		
+		This class provides all functionality to view the meta information of an object of type SpectrumSettings.
+	*/
+	class SpectrumSettingsVisualizer
+		: public BaseVisualizerGUI,
+			public BaseVisualizer<SpectrumSettings>
 	{
 		Q_OBJECT
 
-	public: 
-	  /// Default constructor
-		SpectrumSettingsVisualizer(bool editable= FALSE, QWidget *parent =0);
-		/// Loads the meta data from the object to the viewer.
-		void load(SpectrumSettings &s);
-	  
-	private slots:
-		 /// Saves the changes made to the meta data into the object.
-		void store_();
-		/// Deletes all changes made in the viewer and restores the original meta data.
-		void reject_();
-
-	private:  
-		/// Pointer to current object to keep track of the actual object
-		SpectrumSettings *ptr_;
-		/// Copy of current object for restoring the original values
-		SpectrumSettings  tempspectrumsettings_;
-		/// Fills the comboboxes with current values
-		void update_();
-	  
-		/// The type of this experiment
-   	QComboBox *spectrumsettings_type_;
-		/// The date of this experiment
-		QTextEdit *spectrumsettings_comment_;					
+		public:
+			
+		  ///Constructor
+			SpectrumSettingsVisualizer(bool editable = false, QWidget* parent = 0);
+		  
+		public slots:
+			
+		  //Docu in base class
+			void store();
+		
+		protected slots:
+			
+			///Undo the changes made in the GUI.
+			void undo_();
+	
+		protected:  
+			/// The date of this experiment
+			QLineEdit* native_id_;
+			/// The type of this experiment
+	   	QComboBox* type_;
+			/// The date of this experiment
+			QTextEdit* comment_;
+			
+			//Docu in base class
+			void update_();
 	};
 }
 #endif

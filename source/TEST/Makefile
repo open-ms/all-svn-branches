@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# --------------------------------------------------------------------------
 
 include ../config_defs.mak
 
@@ -51,6 +49,8 @@ EXECUTABLES_CONCEPT = \
 EXECUTABLES_DATASTRUCTURES = \
 	String_test\
 	StringList_test\
+	IntList_test\
+	DoubleList_test\
 	Date_test\
 	Map_test\
 	DPosition_test\
@@ -70,7 +70,6 @@ EXECUTABLES_DATASTRUCTURES = \
 	SuffixArrayPeptideFinder_test\
 	SparseVector_test\
 	DistanceMatrix_test
-
 
 #METADATA
 
@@ -98,12 +97,13 @@ EXECUTABLES_METADATA = \
 	SourceFile_test\
 	Software_test\
 	MetaInfoDescription_test\
-	ProcessingMethod_test\
+	DataProcessing_test\
 	InstrumentSettings_test\
 	SpectrumSettings_test\
 	Gradient_test\
 	HPLC_test\
-	ExperimentalSettings_test
+	ExperimentalSettings_test\
+	DocumentIdentifier_test
 
 #SYSTEM
 
@@ -119,13 +119,12 @@ EXECUTABLES_SYSTEM = \
 
 EXECUTABLES_KERNEL =\
 	PeakIndex_test\
-	DPeak_test\
 	Peak1D_test\
 	Peak2D_test\
-	DRichPeak_test\
+	DPeak_test\
 	RichPeak1D_test\
 	RichPeak2D_test\
-	DPeakArray_test\
+	DRichPeak_test\
 	ConstRefVector_test\
 	DSpectrum_test\
 	ComparatorUtils_test\
@@ -135,7 +134,6 @@ EXECUTABLES_KERNEL =\
 	RangeUtils_test\
 	MSSpectrum_test\
 	MSExperiment_test\
-	MSExperimentExtern_test\
 	ConsensusMap_test\
 	ConsensusFeature_test\
 	AreaIterator_test
@@ -154,17 +152,12 @@ ifeq ($(ANDIMS_SUPPORT),true)
 		ANDIFile_test
 endif
 
-ifeq ($(LIBSVM_SUPPORT),true)
-	LIBSVM_EXECUTABLES_FORMAT=\
-		LibSVMEncoder_test
-endif
-
 EXECUTABLES_FORMAT = \
 	XMLValidator_test\
 	TextFile_test\
 	XMLFile_test\
 	$(ANDI_EXECUTABLES_FORMAT)\
-	${LIBSVM_EXECUTABLES_FORMAT}\
+	LibSVMEncoder_test\
 	DTAFile_test\
 	DTA2DFile_test\
 	MascotInfile_test\
@@ -174,7 +167,6 @@ EXECUTABLES_FORMAT = \
 	PersistentObject_test\
 	FASTAFile_test\
 	FileHandler_test\
-	MzDataExpSettHandler_test\
 	MzXMLFile_test\
 	MzMLFile_test\
 	MzDataFile_test\
@@ -203,7 +195,9 @@ EXECUTABLES_FORMAT = \
 	UnimodXMLFile_test\
 	PepXMLFile_test\
 	ControlledVocabulary_test\
-	TransformationXMLFile_test
+	TransformationXMLFile_test\
+	SemanticValidator_test\
+	MS2File_test
 
 #MATH
 
@@ -219,7 +213,8 @@ EXECUTABLES_MATH = \
 	LinearRegression_test\
 	BilinearInterpolation_test\
 	GammaDistributionFitter_test\
-	GaussFitter_test
+	GaussFitter_test\
+	NonNegativeLeastSquaresSolver_test
 
 
 #FILTERING
@@ -284,7 +279,9 @@ EXECUTABLES_COMPARISON=\
 	CompleteLinkage_test\
 	AverageLinkage_test\
 	PeakAlignment_test\
-	ClusterHierarchical_test
+	ClusterHierarchical_test\
+	ClusterAnalyzer_test\
+	EuclideanSimilarity_test
 
 #CHEMISTRY
 
@@ -312,12 +309,12 @@ EXECUTABLES_CHEMISTRY = \
 
 #ANALYSIS
 
-ifeq ($(LIBSVM_SUPPORT),true)
-	EXECUTABLES_ANALYSIS_SVM = \
+EXECUTABLES_ANALYSIS_QUANTITATION = \
+	ItraqChannelExtractor_test \
+	ItraqQuantifier_test
+				
+EXECUTABLES_ANALYSIS_SVM = \
 	SVMWrapper_test
-endif
-
-
 
 EXECUTABLES_ANALYSIS_MAPMATCHING=\
 	TransformationDescription_test\
@@ -340,16 +337,12 @@ EXECUTABLES_ANALYSIS_DECHARGING = \
 	FeatureDecharger_test
 
 EXECUTABLES_ANALYSIS_ID =\
-	IDSpectrumMapper_test\
-	IDFeatureMapper_test\
+	IDMapper_test\
 	ConsensusID_test\
+	ProteinInference_test\
 	ProtonDistributionModel_test\
 	PILISScoring_test\
 	HiddenMarkovModel_test\
-	HiddenMarkovModelLight_test\
-	PILISModel_test\
-	PILISModelGenerator_test\
-	PILISSequenceDB_test\
 	IDDecoyProbability_test\
 	FalseDiscoveryRate_test
 
@@ -380,6 +373,7 @@ EXECUTABLES_TRANSFORMATIONS_FEATUREFINDER = \
 	FeatureFinderAlgorithmSimple_test\
 	FeatureFinderAlgorithmWavelet_test\
 	FeatureFinderAlgorithmIsotopeWavelet_test\
+	FeatureFinderAlgorithmWatershed_test\
 	SimpleSeeder_test\
 	SimpleExtender_test\
   GaussFitter1D_test\
@@ -399,7 +393,6 @@ EXECUTABLES_TRANSFORMATIONS_FEATUREFINDER = \
 EXECUTABLES_TRANSFORMATIONS_PEAKPICKER = \
 	ContinuousWaveletTransform_test\
 	PeakShape_test\
-	PeakPicker_test\
 	ContinuousWaveletTransformNumIntegration_test\
 	OptimizePick_test\
 	PeakPickerCWT_test\
@@ -423,6 +416,7 @@ EXECUTABLES = \
 	$(EXECUTABLES_ANALYSIS_ID)\
 	$(EXECUTABLES_ANALYSIS_DECHARGING)\
 	$(EXECUTABLES_ANALYSIS_SVM)\
+	$(EXECUTABLES_ANALYSIS_QUANTITATION)\
 	$(EXECUTABLES_ANALYSIS_MAPMATCHING)\
 	$(EXECUTABLES_APPLICATIONS)
 
@@ -460,7 +454,7 @@ CPP_MODE_FLAGS= $(CPP_MODE_FLAGS_NO_OPTIMIZATION) -O0
 dummy:
 
 # concept_test should be the first one, because it tests the testing ...
-test: info concept_test system_test math_test datastructures_test metadata_test kernel_test format_test filtering_test visual_test comparison_test chemistry_test transformations_featurefinder_test transformations_peakpicker_test analysis_id_test analysis_decharging_test analysis_svm_test analysis_mapmatching_test applications_test
+test: info concept_test system_test math_test datastructures_test metadata_test kernel_test format_test filtering_test visual_test comparison_test chemistry_test transformations_featurefinder_test transformations_peakpicker_test analysis_id_test analysis_decharging_test analysis_svm_test analysis_quantitation_test analysis_mapmatching_test applications_test
 	@./runtests -success
 
 info:
@@ -514,6 +508,9 @@ analysis_decharging_test:	$(EXECUTABLES_ANALYSIS_DECHARGING) dummy
 analysis_svm_test:	$(EXECUTABLES_ANALYSIS_SVM) dummy
 	@./runtests -section "ANALYSIS_SVM" $(TEST_OPTIONS) $(EXECUTABLES_ANALYSIS_SVM)
 
+analysis_quantitation_test:	$(EXECUTABLES_ANALYSIS_QUANTITATION) dummy
+	@./runtests -section "ANALYSIS_QUANTITATION" $(TEST_OPTIONS) $(EXECUTABLES_ANALYSIS_QUANTITATION)
+
 analysis_mapmatching_test:	$(EXECUTABLES_ANALYSIS_MAPMATCHING) dummy
 	@./runtests -section "ANALYSIS_MAPMATCHING" $(TEST_OPTIONS) $(EXECUTABLES_ANALYSIS_MAPMATCHING)
 
@@ -523,11 +520,6 @@ applications_test:	$(EXECUTABLES_APPLICATIONS) dummy
 clean:	default_clean
 	@$(RM) -rf -- *.o *~ *.log ii_files Templates.DB	SunWS_cache *.TMP *.tmp core a.out region* cut* feature* model* *.vgr *.output $(EXECUTABLES)
 	@cd TOPP && make clean
-
-# Create data files for MzData, MzXML, ANDIFile with variable number of scans
-# Call: format_data [#scans] [filename] (i.e. format_data 100 tmp)
-format_data:	format_data.o
-	$(CXX)	$(LDFLAGS) -o format_data format_data.o $(LIBS)
 
 #creates a .vgr-file with valgrind check output for each test
 valgrind: $(VALGRINDS)

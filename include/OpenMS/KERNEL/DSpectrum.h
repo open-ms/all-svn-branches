@@ -27,16 +27,14 @@
 #ifndef OPENMS_KERNEL_DSPECTRUM_H
 #define OPENMS_KERNEL_DSPECTRUM_H
 
-#include <OpenMS/KERNEL/DPeakArray.h>
 #include <OpenMS/KERNEL/DRichPeak.h>
 #include <OpenMS/METADATA/MetaInfoInterface.h>
 #include <OpenMS/METADATA/MetaInfoDescription.h>
 #include <OpenMS/KERNEL/RangeManager.h>
+#include <OpenMS/KERNEL/ComparatorUtils.h>
 
 #include <gsl/gsl_randist.h>
 
-
-#include <list>
 #include <cmath>
 
 namespace OpenMS
@@ -51,29 +49,17 @@ namespace OpenMS
 			precursor ions.
 
 			This class is designed for limited use cases, such as storing
-			precursor information from DTA files.  No data processing!
-
-			@internal If you ever think about using it for more than
-			the most trivial tasks, please contact Clemens!
-			We could easily replace DPeak with a better class, but
-			at the moment this does not seem to pay off the effort.
-			The class has been pulled out of the scope of the DSpectrum class
-			because it does not depend on the container type, only on the dimension.
-			Thus we can avoid unnecessary code duplication and incompatible types,
-			e.g. when raw data and picked data is present during peak picking.
+			precursor information from DTA files. No data processing!
 		*/
 		template < UInt D >
 		class PrecursorPeak
-			: public DRichPeak<D>
+			: public DRichPeak<D>::Type
 		{
 
 			/// Base class (do not even think of using this outside the scope of this class)
-			typedef DRichPeak<D> Base;
+			typedef typename DRichPeak<D>::Type Base;
 
 		 public:
-
-			/// Charge Type
-			typedef Int ChargeType;
 
 			/// Dimensionality
 			enum
@@ -84,14 +70,16 @@ namespace OpenMS
 			/// Default constructor
 			PrecursorPeak()
 				: Base(),
-					charge_(0)
+					charge_(0),
+					possible_charge_states_()
 			{
 			}
 
 			/// Copy constructor
 			PrecursorPeak(const PrecursorPeak& rhs)
 				: Base(rhs),
-					charge_(rhs.charge_)
+					charge_(rhs.charge_),
+					possible_charge_states_(rhs.possible_charge_states_)
 			{
 			}
 
@@ -99,7 +87,10 @@ namespace OpenMS
 			PrecursorPeak & operator=(const PrecursorPeak& rhs)
 			{
 				Base::operator=(rhs);
+				
 				charge_=rhs.charge_;
+				possible_charge_states_ = rhs.possible_charge_states_;
+				
 				return *this;
 			}
 
@@ -109,48 +100,61 @@ namespace OpenMS
 			}
 
 			/// Non-mutable access to the charge
-			ChargeType const & getCharge() const
+			Int const & getCharge() const
 			{
 				return charge_;
 			}
 
 			/// Mutable access to the charge
-			void setCharge( ChargeType charge )
+			void setCharge( Int charge )
 			{
 				charge_ = charge;
 				return;
 			}
 
+			std::vector<Int>& getPossibleChargeStates()
+			{
+				return possible_charge_states_;
+			}
+			
+			const std::vector<Int>& getPossibleChargeStates() const
+			{
+				return possible_charge_states_;
+			}
+			
+			void setPossibleChargeStates(const std::vector<Int>& possible_charge_states)
+			{
+				possible_charge_states_ = possible_charge_states;
+			}
+			
 		 protected:
 
-			ChargeType charge_;
+			Int charge_;
+		  std::vector<Int> possible_charge_states_;
 
 		};
 
 	} // namespace Internal
 
 	/**
-		 @brief Representation of a D-dimensional spectrum.
-
-		 The peak data itself is stored in a container class, which can be a DPeakArray
-		 or a STL container like std::list or std::vector.
-
-		 Some meta information about the spectrum (ms-level, precursor peak, ...) is
-		 also stored. If you want to store more meta information
-		 see the MSSpectrum and MSExperiment classes.
-
-		 The interface to the container is wrapped for convenience. Only  members
-		 and types contained in both std::list and std::vector are available.
-
-		 Additionally an interface for the minimum and maximum position, and the minimum and maximum
-		 intensity of the peaks is provided by RangeManager.
-
-		 @ingroup Kernel
+		@brief Representation of a D-dimensional spectrum.
+		
+		Some meta information about the spectrum (ms-level, precursor peak, ...) is
+		also stored. If you want to store more meta information
+		see the MSSpectrum and MSExperiment classes.
+		
+		Additionally an interface for the minimum and maximum position, and the minimum and maximum
+		intensity of the peaks is provided by RangeManager.
+		
+		@todo Implement sorting methods, that also sort meta data (Hiwi)
+		
+		@ingroup Kernel
 	*/
-	template < typename ContainerT = DPeakArray<Peak1D> >
-	class DSpectrum	:
-		public MetaInfoInterface,
-		public RangeManager<ContainerT::value_type::DIMENSION>
+	template < typename PeakT = Peak1D, typename AllocT = std::allocator<PeakT> >
+	class DSpectrum
+		: public std::vector<PeakT, AllocT>,
+			public MetaInfoInterface,
+			public RangeManager<PeakT::DIMENSION>
 	{
 	 public:
 
@@ -164,10 +168,10 @@ namespace OpenMS
 
 		/**	@name	Type definitions */
 		//@{
-		/// Peak container type
-		typedef ContainerT ContainerType;
 		/// Peak type
-		typedef typename ContainerType::value_type PeakType;
+		typedef PeakT PeakType;
+		/// Peak container type
+		typedef std::vector<PeakType, AllocT> ContainerType;
 		/// Dimensionality of the peaks
 		enum
 		{
@@ -181,23 +185,6 @@ namespace OpenMS
 		typedef RangeManager<DIMENSION> RangeManagerType;
 		/// MetaDataArrays type
 		typedef std::vector<MetaDataArray> MetaDataArrays;
-		//@}
-		
-    // allow c'tors of other template instances to access private members
-    template < typename ContainerT_ > friend class DSpectrum;
-
-		/**	@name	STL-compliance type definitions of the container interface*/
-		//@{
-		typedef typename ContainerType::iterator iterator;
-		typedef typename ContainerType::const_iterator const_iterator;
-		typedef typename ContainerType::reverse_iterator reverse_iterator;
-		typedef typename ContainerType::const_reverse_iterator const_reverse_iterator;
-		typedef typename ContainerType::value_type value_type;
-		typedef typename ContainerType::reference reference;
-		typedef typename ContainerType::const_reference const_reference;
-		typedef typename ContainerType::pointer pointer;
-		typedef typename ContainerType::difference_type difference_type;
-		typedef typename ContainerType::size_type size_type;
 		//@}
 
 		/**	@name	Type definitions of the container interface*/
@@ -217,9 +204,9 @@ namespace OpenMS
 
 		/// Default constructor
 		DSpectrum()
-			:	MetaInfoInterface(),
+			:	ContainerType(),
+      	MetaInfoInterface(),
 				RangeManagerType(),
-				container_(),
 				precursor_peak_(),
 				retention_time_(-1), // warning: don't change this !! Otherwise MSExperimentExtern might not behave as expected !!
 				ms_level_(1),
@@ -229,10 +216,10 @@ namespace OpenMS
 		}
 
     /// constructor with custom allocator
-    DSpectrum(const typename ContainerType::AllocType& alloc)
-      : MetaInfoInterface(),
+    DSpectrum(const AllocT& alloc)
+      : ContainerType(alloc),
+      	MetaInfoInterface(),
         RangeManagerType(),
-        container_(alloc),
         precursor_peak_(),
         retention_time_(-1), // warning: don't change this !! Otherwise MSExperimentExtern might not behave as expected !!
         ms_level_(1),
@@ -243,9 +230,9 @@ namespace OpenMS
     
 		/// Copy constructor
 		DSpectrum(const DSpectrum& rhs)
-			: MetaInfoInterface(rhs),
+			: ContainerType(rhs),
+      	MetaInfoInterface(rhs),
 				RangeManagerType(rhs),
-				container_(rhs.container_),
 				precursor_peak_(rhs.precursor_peak_),
 				retention_time_(rhs.retention_time_),
 				ms_level_(rhs.ms_level_),
@@ -255,32 +242,18 @@ namespace OpenMS
 		}
 
     /// Copy constructor for different allocator
-    template < template < typename, typename > class ContainerT2, typename AllocT2>
-    DSpectrum(const DSpectrum< ContainerT2 <PeakType, AllocT2 > >& rhs)
-      : MetaInfoInterface(rhs),
+    template < typename AllocT2>
+    DSpectrum(const DSpectrum<PeakType,AllocT2>& rhs)
+      : ContainerType(rhs),
+      	MetaInfoInterface(rhs),
         RangeManagerType(rhs),
-        container_(rhs.container_),
         precursor_peak_(rhs.precursor_peak_),
         retention_time_(rhs.retention_time_),
         ms_level_(rhs.ms_level_),
         name_(rhs.name_),
         meta_data_arrays_(rhs.meta_data_arrays_)
     {
-    }    
-
-    /// Copy constructor for different (but unique) allocator
-    template < template < typename, typename > class ContainerT2, typename AllocT2, typename AllocT>
-    DSpectrum(const DSpectrum< ContainerT2 <PeakType, AllocT2 > >& rhs, const AllocT& alloc)
-      : MetaInfoInterface(rhs),
-        RangeManagerType(rhs),
-        container_(rhs.container_, alloc),
-        precursor_peak_(rhs.precursor_peak_),
-        retention_time_(rhs.retention_time_),
-        ms_level_(rhs.ms_level_),
-        name_(rhs.name_),
-        meta_data_arrays_(rhs.meta_data_arrays_)
-    {
-    }       
+    } 
         
 		/// Destructor
 		inline ~DSpectrum()
@@ -293,31 +266,33 @@ namespace OpenMS
 		{
 			if (this==&rhs) return *this;
 
+			ContainerType::operator=(rhs);
 			MetaInfoInterface::operator=(rhs);
 			RangeManagerType::operator=(rhs);
-			container_ = rhs.container_;
 			precursor_peak_ = rhs.precursor_peak_;
 			retention_time_ = rhs.retention_time_;
 			ms_level_ = rhs.ms_level_;
 			name_ = rhs.name_;
 			meta_data_arrays_ = rhs.meta_data_arrays_;
+			
 			return *this;
 		}
 
     /// Assignment operator for different allocator
-    template < template < typename, typename > class ContainerT2, typename AllocT>
-    DSpectrum& operator = (const DSpectrum< ContainerT2 <PeakType, AllocT > >& rhs)
+    template < typename AllocT2>
+    DSpectrum& operator = (const DSpectrum< PeakType, AllocT2 >& rhs)
     {
-      //if (this==&rhs) return *this;
+      if (this==&rhs) return *this;
 
+			ContainerType::operator=(rhs);
       MetaInfoInterface::operator=(rhs);
       RangeManagerType::operator=(rhs);
-      container_ = rhs.container_;
       precursor_peak_ = rhs.precursor_peak_;
       retention_time_ = rhs.retention_time_;
       ms_level_ = rhs.ms_level_;
       name_ = rhs.name_;
       meta_data_arrays_ = rhs.meta_data_arrays_;
+      
       return *this;
     }
     
@@ -325,9 +300,9 @@ namespace OpenMS
 		bool operator == (const DSpectrum& rhs) const
 		{
 			return
+				std::operator==(*this, rhs) &&
 				MetaInfoInterface::operator==(rhs) &&
 				RangeManagerType::operator==(rhs) &&
-				container_ == rhs.container_ &&
 				precursor_peak_ == rhs.precursor_peak_ &&
 				retention_time_ == rhs.retention_time_ &&
 				ms_level_ == rhs.ms_level_
@@ -341,231 +316,11 @@ namespace OpenMS
 			return !(operator==(rhs));
 		}
 
-		/**	@name	Wrappers of container accessors */
-		//@{
-		/// Non-mutable access to the peak container
-		inline const ContainerType& getContainer() const
-		{
-			return container_;
-		}
-		/// Mutable access to the peak container.
-		inline ContainerType& getContainer()
-		{
-			return container_;
-		}
-		/// Mutable access to the peak container.
-		inline void setContainer(const ContainerType& container)
-		{
-			container_ = container;
-		}
-
-		/// Returns the const begin iterator of the container
-		inline ConstIterator begin() const
-		{
-			return container_.begin();
-		}
-		/// Returns the const end iterator of the container
-		inline ConstIterator end() const
-		{
-			return container_.end();
-		}
-
-		/// Returns the begin iterator of the container
-		inline Iterator begin()
-		{
-			return container_.begin();
-		}
-		/// Returns the end iterator of the container
-		inline Iterator end()
-		{
-			return container_.end();
-		}
-
-		/// returns the element with index n
-		reference operator[] (size_type n)
-		{
-			return container_[n];
-		}
-
-		/// returns the element with index n
-		const_reference operator[] (size_type n) const
-		{
-			return container_[n];
-		}
-
-		/// returns the maxium size possbile (the number of peaks)
-		inline size_type max_size() const
-		{
-			return container_.max_size();
-		}
-		/// returns the size (the number of peaks)
-		inline UInt size() const
-		{
-			return container_.size();
-		}
-		/// Returns if the container is empty
-		inline bool empty() const
-		{
-			return container_.empty();
-		}
-
-		/// Swaps two containers
-		inline void swap(ContainerType& rhs)
-		{
-			container_.swap(rhs);
-		}
-
-		/// Comparison of container sizes
-		inline bool operator<(const DSpectrum& rhs)
-		{
-			return container_<rhs.getContainer();
-		}
-
-		/// Comparison of container sizes
-		inline bool operator>(const DSpectrum& rhs)
-		{
-			return container_>rhs.getContainer();
-		}
-
-		/// Comparison of container sizes
-		inline bool operator<=(const DSpectrum& rhs)
-		{
-			return container_<=rhs.getContainer();
-		}
-
-		/// Comparison of container sizes
-		inline bool operator>=(const DSpectrum& rhs)
-		{
-			return container_>=rhs.getContainer();
-		}
-
-		/// See STL documentation
-		inline ReverseIterator rbegin()
-		{
-			return container_.rbegin();
-		}
-
-		/// See STL documentation
-		inline ConstReverseIterator rbegin() const
-		{
-			return container_.rbegin();
-		}
-
-		/// See STL documentation
-		inline ReverseIterator rend()
-		{
-			return container_.rend();
-		}
-
-		/// See STL documentation
-		inline ConstReverseIterator rend() const
-		{
-			return container_.rend();
-		}
-
-		/// Inserts an element
-		inline Iterator insert( Iterator loc, const value_type& val )
-		{
-			return container_.insert(loc, val);
-		}
-
-		/// Inserts an element several times
-		inline void insert( iterator loc, size_type num, const value_type& val )
-		{
-			container_.insert(loc, num, val);
-		}
-
-		/// Inserts a range of elements
-		template<class InputIterator> void insert( iterator loc, InputIterator start, InputIterator end )
-		{
-			container_.insert(loc, start, end);
-		}
-
-		/// Erases an element
-		inline Iterator erase( iterator loc )
-		{
-			return container_.erase(loc);
-		}
-
-		/// Erases a range of elements
-		inline Iterator erase( iterator start, iterator end )
-		{
-			return container_.erase(start, end);
-		}
-
-		/// Returns the first element
-		inline value_type& front()
-		{
-			return container_.front();
-		}
-
-		/// Returns the first element
-		inline const value_type& front() const
-		{
-			return container_.front();
-		}
-
-		/// Returns the last element
-		inline value_type& back()
-		{
-			return container_.back();
-		}
-
-		/// Returns the last element
-		inline const value_type& back() const
-		{
-			return container_.back();
-		}
-
-		/// Removes the last element
-		inline void pop_back()
-		{
-			container_.pop_back();
-		}
-
-		/// Inserts an element at the end
-		inline void push_back( const value_type& val )
-		{
-			container_.push_back(val);
-		}
-
-		/// Fills the container with serval copies of a value
-		inline void assign( size_type num, const value_type& val )
-		{
-			container_.assign(num, val);
-		}
-
-		/// Fills the container with a range of values
-		template<class InputIterator> void assign( InputIterator start, InputIterator end )
-		{
-			container_.assign(start, end);
-		}
-
-		/// Removes all elements
-		inline void clear()
-		{
-			container_.clear();
-		}
-
-		/// Resizes the container to size @p num. Uses @p val to fill up if it is shorter than @p num.
-		inline void resize(size_type num, const value_type& val = value_type() )
-		{
-			container_.resize(num, val);
-		}
-
-		/// Reserves space for @p num elements in the container.
-		inline void reserve(size_type num)
-		{
-			container_.reserve(num);
-		}
-
-		//@}
-
 		// Docu in base class
 		virtual void updateRanges()
 		{
 			this->clearRanges();
-			updateRanges_(container_.begin(), container_.end());
+			updateRanges_(ContainerType::begin(), ContainerType::end());
 		}
 
 		/**	@name Accessors for meta information*/
@@ -630,6 +385,25 @@ namespace OpenMS
 
 		//@}
 
+		/// Sorts the peaks according to ascending intensity
+		void sortByIntensity(bool reverse=false)
+		{
+			if (reverse)
+			{
+				std::sort(ContainerType::begin(), ContainerType::end(), reverseComparator(typename PeakType::IntensityLess()));
+			}
+			else
+			{
+				std::sort(ContainerType::begin(), ContainerType::end(), typename PeakType::IntensityLess());
+			}
+		}
+		
+		/// Lexicographically sorts the peaks by their position.
+		void sortByPosition()
+		{
+			std::sort(ContainerType::begin(), ContainerType::end(), typename PeakType::PositionLess());
+		}
+
 
 		///	@name Searching a peak or peak range
 		//@{
@@ -646,23 +420,23 @@ namespace OpenMS
 		UInt findNearest(CoordinateType mz) const
 		{
 			//no peak => no search
-			if (size()==0) throw Exception::Precondition(__FILE__,__LINE__,__PRETTY_FUNCTION__,"There must be at least one peak to determine the nearest peak!");
+			if (ContainerType::size()==0) throw Exception::Precondition(__FILE__,__LINE__,__PRETTY_FUNCTION__,"There must be at least one peak to determine the nearest peak!");
 			
 			//searh for position for inserting
 			ConstIterator it = MZBegin(mz);
 			//border cases
-			if (it==begin()) return 0;
-			if (it==end()) return size()-1;
+			if (it==ContainerType::begin()) return 0;
+			if (it==ContainerType::end()) return ContainerType::size()-1;
 			//the peak before or the current peak are closest
 			ConstIterator it2 = it;
 			--it2;
 			if (std::fabs(it->getMZ()-mz)<std::fabs(it2->getMZ()-mz))
 			{
-				return it - begin();
+				return it - ContainerType::begin();
 			}
 			else
 			{
-				return it2 - begin();
+				return it2 - ContainerType::begin();
 			}
 		}
 		/**
@@ -674,7 +448,7 @@ namespace OpenMS
 		{
 			PeakType p;
 			p.setPosition(mz);
-			return lower_bound(container_.begin(), container_.end(), p, typename PeakType::PositionLess());
+			return lower_bound(ContainerType::begin(), ContainerType::end(), p, typename PeakType::PositionLess());
 		}
 		/**
 			 @brief Binary search for peak range end (returns the past-the-end iterator)
@@ -685,7 +459,7 @@ namespace OpenMS
 		{
 			PeakType p;
 			p.setPosition(mz);
-			return upper_bound(container_.begin(), container_.end(), p, typename PeakType::PositionLess());
+			return upper_bound(ContainerType::begin(), ContainerType::end(), p, typename PeakType::PositionLess());
 		}
 		/**
 			 @brief Binary search for peak range begin
@@ -696,7 +470,7 @@ namespace OpenMS
 		{
 			PeakType p;
 			p.setPosition(mz);
-			return lower_bound(container_.begin(), container_.end(), p, typename PeakType::PositionLess());
+			return lower_bound(ContainerType::begin(), ContainerType::end(), p, typename PeakType::PositionLess());
 		}
 		/**
 			 @brief Binary search for peak range end (returns the past-the-end iterator)
@@ -707,7 +481,7 @@ namespace OpenMS
 		{
 			PeakType p;
 			p.setPosition(mz);
-			return upper_bound(container_.begin(), container_.end(), p, typename PeakType::PositionLess());
+			return upper_bound(ContainerType::begin(), ContainerType::end(), p, typename PeakType::PositionLess());
 		}
 		//@}
 		
@@ -739,9 +513,6 @@ namespace OpenMS
 		
 	protected:
 
-		/// The container with all the peak data
-		ContainerType		container_;
-
 		/// Precursor information
 		PrecursorPeakType precursor_peak_;
 
@@ -759,14 +530,17 @@ namespace OpenMS
 	};
 
 	///Print the contents to a stream.
-	template <typename Container>
-	std::ostream& operator << (std::ostream& os, const DSpectrum<Container>& rhs)
+	template <typename PeakT, typename AllocT>
+	std::ostream& operator << (std::ostream& os, const DSpectrum<PeakT,AllocT>& rhs)        
 	{
 		os << "-- DSpectrum BEGIN --"<<std::endl;
 		os << "MS-LEVEL:" <<rhs.getMSLevel() << std::endl;
 		os << "RT:" <<rhs.getRT() << std::endl;
 		os << "NAME:" <<rhs.getName() << std::endl;
-    os << "\n" << rhs.getContainer() << std::endl;
+		for (typename DSpectrum<PeakT, AllocT>::const_iterator it = rhs.begin(); it!=rhs.end(); ++it)
+		{
+			os << *it << std::endl;
+		}
 		os << "-- DSpectrum END --"<<std::endl;
 
 		return os;
@@ -774,6 +548,4 @@ namespace OpenMS
 
 } // namespace OpenMS
 
-
-
-#endif // OPENMS_KERNEL_SPECTRUM_H
+#endif // OPENMS_KERNEL_DSPECTRUM_H

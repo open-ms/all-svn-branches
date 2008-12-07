@@ -30,4 +30,18 @@ namespace OpenMS
 {
 	Matrix<int>    default_matrix_int;
 	Matrix<double> default_matrix_double;
+	
+	template<>
+	gsl_matrix* Matrix<double>::toGslMatrix()
+	{
+		gsl_matrix* m_ptr = gsl_matrix_alloc(rows_, cols_);
+	  for ( size_type i = 0; i < this->rows_; ++i ) 
+		{
+	    for ( size_type j = 0; j < this->cols_; ++j ) 
+			{
+				gsl_matrix_set (m_ptr, i, j, (*this)(i,j));
+	    }
+	  }
+		return m_ptr;
+	}
 }

@@ -49,414 +49,119 @@ START_TEST(MzXMLFile, "$Id$")
 /////////////////////////////////////////////////////////////
 
 MzXMLFile* ptr = 0;
-CHECK((MzXMLFile()))
+START_SECTION((MzXMLFile()))
 	ptr = new MzXMLFile;
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((~MzXMLFile()))
+START_SECTION((~MzXMLFile()))
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK(const PeakFileOptions& getOptions() const)
+START_SECTION(const PeakFileOptions& getOptions() const)
 	MzXMLFile file;
 	TEST_EQUAL(file.getOptions().hasMSLevels(),false)
-RESULT
+END_SECTION
 
-CHECK(PeakFileOptions& getOptions())
+START_SECTION(PeakFileOptions& getOptions())
 	MzXMLFile file;
 	file.getOptions().addMSLevel(1);
 	TEST_EQUAL(file.getOptions().hasMSLevels(),true);
-RESULT
+END_SECTION
 
-CHECK((template<typename MapType> void load(const String& filename, MapType& map) ))
-	PRECISION(0.01)
+START_SECTION((template<typename MapType> void load(const String& filename, MapType& map) ))
+	TOLERANCE_ABSOLUTE(0.01)
 	
-	MzXMLFile mzxml;
-
-	//test exception
-	{
-		MSExperiment< Peak1D > e;
-		TEST_EXCEPTION( Exception::FileNotFound , mzxml.load("dummy/dummy.mzXML",e) )
-	}
+	MzXMLFile file;
 	
-	// first test
-	{
-		MSExperiment< Peak1D > e;
-		mzxml.load("data/MzXMLFile_test_1.mzXML",e);
-	  
-	  //---------------------------------------------------------------------------
-	  // 60 : (120,100)
-	  // 120: (110,100) (120,200) (130,100)
-	  // 180: (100,100) (110,200) (120,300) (130,200) (140,100)
-		//--------------------------------------------------------------------------- 
-	  TEST_EQUAL(e.size(), 4)
-		TEST_REAL_EQUAL(e[0].getMSLevel(), 1)
-		TEST_REAL_EQUAL(e[1].getMSLevel(), 1)
-		TEST_REAL_EQUAL(e[2].getMSLevel(), 1)
-		TEST_REAL_EQUAL(e[0].getContainer().size(), 1)
-		TEST_REAL_EQUAL(e[1].getContainer().size(), 3)
-		TEST_REAL_EQUAL(e[2].getContainer().size(), 5)
+	//exception
+	MSExperiment<> e;
+	TEST_EXCEPTION( Exception::FileNotFound , file.load("dummy/dummy.mzXML",e) )
 	
-		TEST_REAL_EQUAL(e[0].getContainer()[0].getPosition()[0], 120)
-		TEST_REAL_EQUAL(e[0].getContainer()[0].getIntensity(), 100)
-		TEST_REAL_EQUAL(e[1].getContainer()[0].getPosition()[0], 110)
-		TEST_REAL_EQUAL(e[1].getContainer()[0].getIntensity(), 100)
-		TEST_REAL_EQUAL(e[1].getContainer()[1].getPosition()[0], 120)
-		TEST_REAL_EQUAL(e[1].getContainer()[1].getIntensity(), 200)
-		TEST_REAL_EQUAL(e[1].getContainer()[2].getPosition()[0], 130)
-		TEST_REAL_EQUAL(e[1].getContainer()[2].getIntensity(), 100)
-		TEST_REAL_EQUAL(e[2].getContainer()[0].getPosition()[0], 100)
-		TEST_REAL_EQUAL(e[2].getContainer()[0].getIntensity(), 100)
-		TEST_REAL_EQUAL(e[2].getContainer()[1].getPosition()[0], 110)
-		TEST_REAL_EQUAL(e[2].getContainer()[1].getIntensity(), 200)
-		TEST_REAL_EQUAL(e[2].getContainer()[2].getPosition()[0], 120)
-		TEST_REAL_EQUAL(e[2].getContainer()[2].getIntensity(), 300)
-		TEST_REAL_EQUAL(e[2].getContainer()[3].getPosition()[0], 130)
-		TEST_REAL_EQUAL(e[2].getContainer()[3].getIntensity(), 200)
-		TEST_REAL_EQUAL(e[2].getContainer()[4].getPosition()[0], 140)
-		TEST_REAL_EQUAL(e[2].getContainer()[4].getIntensity(), 100)
-	
-		TEST_EQUAL(e[0].getMetaValue("URL1"), "www.open-ms.de")
-		TEST_EQUAL(e[0].getMetaValue("URL2"), "www.uni-tuebingen.de")
-		TEST_EQUAL(e[0].getComment(), "Scan Comment")
-	
-		//---------------------------------------------------------------------------
-	  // const SourceFile& getSourceFile() const;
-	  //---------------------------------------------------------------------------
-	  TEST_EQUAL(e.getSourceFile().getNameOfFile(), "File_test_1.raw");
-	  TEST_EQUAL(e.getSourceFile().getPathToFile(), "");
-	  TEST_EQUAL(e.getSourceFile().getFileType(), "RAWData");
-	  TEST_EQUAL(e.getSourceFile().getSha1(), "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12");
-	
-		//---------------------------------------------------------------------------
-	  // const Software& getSoftware() const;
-	  //---------------------------------------------------------------------------
-	  TEST_EQUAL(e.getSoftware().getName(), "MS-X");
-	  TEST_EQUAL(e.getSoftware().getVersion(), "1.0");
-	  TEST_EQUAL(e.getSoftware().getComment(), "processing");
-	
-		//---------------------------------------------------------------------------
-	  // const Instrument& getInstrument() const;
-	  //---------------------------------------------------------------------------
-		const Instrument& inst = e.getInstrument();
-		TEST_EQUAL(inst.getVendor(), "MS-Vendor")
-		TEST_EQUAL(inst.getModel(), "MS 1")
-		TEST_EQUAL(inst.getMetaValue("URL1"), "www.open-ms.de")
-		TEST_EQUAL(inst.getMetaValue("URL2"), "www.uni-tuebingen.de")
-		TEST_EQUAL(inst.getMetaValue("#Comment"), "Instrument Comment")
-		TEST_EQUAL(inst.getIonSource().getIonizationMethod(), IonSource::ESI)
-		TEST_EQUAL(inst.getIonDetector().getType(), IonDetector::FARADAYCUP)
-		// UNSET:
-	  TEST_EQUAL(inst.getName(), "")
-		TEST_EQUAL(inst.getCustomizations(), "")
-		TEST_EQUAL(inst.getIonDetector().getResolution(), 0.0f)
-		TEST_EQUAL(inst.getIonDetector().getADCSamplingFrequency(), 0.0f)
-		TEST_EQUAL(inst.getIonSource().getInletType(), IonSource::INLETNULL)
-		TEST_EQUAL(inst.getIonDetector().getAcquisitionMode(), IonDetector::ACQMODENULL)
-		TEST_EQUAL(inst.getIonSource().getPolarity(), IonSource::POLNULL)
-	
-		TEST_EQUAL(inst.getMassAnalyzers().size(), 1)
-	  ABORT_IF(inst.getMassAnalyzers().size()!=1);
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getType(), MassAnalyzer::PAULIONTRAP)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionMethod(), MassAnalyzer::FWHM)
-		// UNSET:
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionType(), MassAnalyzer::RESTYPENULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanFunction(), MassAnalyzer::SCANFCTNULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanDirection(), MassAnalyzer::SCANDIRNULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanLaw(), MassAnalyzer::SCANLAWNULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getTandemScanMethod(), MassAnalyzer::TANDEMNULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getReflectronState(), MassAnalyzer::REFLSTATENULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getResolution(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getAccuracy(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanRate(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanTime(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getTOFTotalPathLength(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getIsolationWidth(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getFinalMSExponent(), 0)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getMagneticFieldStrength(), 0.0f)
-	
-	  //---------------------------------------------------------------------------
-		// const Sample& getSample()
-	  //---------------------------------------------------------------------------
-		// UNSET:
-		TEST_EQUAL(e.getSample().getName(), "")
-		TEST_EQUAL(e.getSample().getNumber(), "")
-		TEST_EQUAL(e.getSample().getState(), Sample::SAMPLENULL)
-	 	TEST_EQUAL(e.getSample().getMass(), 0.0f)
-		TEST_EQUAL(e.getSample().getVolume(), 0.0f)
-		TEST_EQUAL(e.getSample().getConcentration(), 0.0f)
-	}
-	
-	//second test (to see if everything is initialized properly
-	{
-		MSExperiment< Peak1D > e;
-		MzXMLFile().load("data/MzXMLFile_test_1.mzXML",e);
-	  
-	  //---------------------------------------------------------------------------
-	  // 60 : (120,100)
-	  // 120: (110,100) (120,200) (130,100)
-	  // 180: (100,100) (110,200) (120,300) (130,200) (140,100)
-		//--------------------------------------------------------------------------- 
-	  TEST_EQUAL(e.size(), 4)
-		TEST_REAL_EQUAL(e[0].getMSLevel(), 1)
-		TEST_REAL_EQUAL(e[1].getMSLevel(), 1)
-		TEST_REAL_EQUAL(e[2].getMSLevel(), 1)
-		TEST_REAL_EQUAL(e[0].getContainer().size(), 1)
-		TEST_REAL_EQUAL(e[1].getContainer().size(), 3)
-		TEST_REAL_EQUAL(e[2].getContainer().size(), 5)
-	
-		TEST_REAL_EQUAL(e[0].getContainer()[0].getPosition()[0], 120)
-		TEST_REAL_EQUAL(e[0].getContainer()[0].getIntensity(), 100)
-		TEST_REAL_EQUAL(e[1].getContainer()[0].getPosition()[0], 110)
-		TEST_REAL_EQUAL(e[1].getContainer()[0].getIntensity(), 100)
-		TEST_REAL_EQUAL(e[1].getContainer()[1].getPosition()[0], 120)
-		TEST_REAL_EQUAL(e[1].getContainer()[1].getIntensity(), 200)
-		TEST_REAL_EQUAL(e[1].getContainer()[2].getPosition()[0], 130)
-		TEST_REAL_EQUAL(e[1].getContainer()[2].getIntensity(), 100)
-		TEST_REAL_EQUAL(e[2].getContainer()[0].getPosition()[0], 100)
-		TEST_REAL_EQUAL(e[2].getContainer()[0].getIntensity(), 100)
-		TEST_REAL_EQUAL(e[2].getContainer()[1].getPosition()[0], 110)
-		TEST_REAL_EQUAL(e[2].getContainer()[1].getIntensity(), 200)
-		TEST_REAL_EQUAL(e[2].getContainer()[2].getPosition()[0], 120)
-		TEST_REAL_EQUAL(e[2].getContainer()[2].getIntensity(), 300)
-		TEST_REAL_EQUAL(e[2].getContainer()[3].getPosition()[0], 130)
-		TEST_REAL_EQUAL(e[2].getContainer()[3].getIntensity(), 200)
-		TEST_REAL_EQUAL(e[2].getContainer()[4].getPosition()[0], 140)
-		TEST_REAL_EQUAL(e[2].getContainer()[4].getIntensity(), 100)
-	
-		TEST_EQUAL(e[0].getMetaValue("URL1"), "www.open-ms.de")
-		TEST_EQUAL(e[0].getMetaValue("URL2"), "www.uni-tuebingen.de")
-		TEST_EQUAL(e[0].getComment(), "Scan Comment")
-	
-		//---------------------------------------------------------------------------
-	  // const SourceFile& getSourceFile() const;
-	  //---------------------------------------------------------------------------
-	  TEST_EQUAL(e.getSourceFile().getNameOfFile(), "File_test_1.raw");
-	  TEST_EQUAL(e.getSourceFile().getPathToFile(), "");
-	  TEST_EQUAL(e.getSourceFile().getFileType(), "RAWData");
-	  TEST_EQUAL(e.getSourceFile().getSha1(), "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12");
-	
-		//---------------------------------------------------------------------------
-	  // const Software& getSoftware() const;
-	  //---------------------------------------------------------------------------
-	  TEST_EQUAL(e.getSoftware().getName(), "MS-X");
-	  TEST_EQUAL(e.getSoftware().getVersion(), "1.0");
-	  TEST_EQUAL(e.getSoftware().getComment(), "processing");
-	
-		//---------------------------------------------------------------------------
-	  // const Instrument& getInstrument() const;
-	  //---------------------------------------------------------------------------
-		const Instrument& inst = e.getInstrument();
-		TEST_EQUAL(inst.getVendor(), "MS-Vendor")
-		TEST_EQUAL(inst.getModel(), "MS 1")
-		TEST_EQUAL(inst.getMetaValue("URL1"), "www.open-ms.de")
-		TEST_EQUAL(inst.getMetaValue("URL2"), "www.uni-tuebingen.de")
-		TEST_EQUAL(inst.getMetaValue("#Comment"), "Instrument Comment")
-		TEST_EQUAL(inst.getIonSource().getIonizationMethod(), IonSource::ESI)
-		TEST_EQUAL(inst.getIonDetector().getType(), IonDetector::FARADAYCUP)
-		// UNSET:
-	  TEST_EQUAL(inst.getName(), "")
-		TEST_EQUAL(inst.getCustomizations(), "")
-		TEST_EQUAL(inst.getIonDetector().getResolution(), 0.0f)
-		TEST_EQUAL(inst.getIonDetector().getADCSamplingFrequency(), 0.0f)
-		TEST_EQUAL(inst.getIonSource().getInletType(), IonSource::INLETNULL)
-		TEST_EQUAL(inst.getIonDetector().getAcquisitionMode(), IonDetector::ACQMODENULL)
-		TEST_EQUAL(inst.getIonSource().getPolarity(), IonSource::POLNULL)
-	
-		TEST_EQUAL(inst.getMassAnalyzers().size(), 1)
-	  ABORT_IF(inst.getMassAnalyzers().size()!=1);
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getType(), MassAnalyzer::PAULIONTRAP)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionMethod(), MassAnalyzer::FWHM)
-		// UNSET:
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionType(), MassAnalyzer::RESTYPENULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanFunction(), MassAnalyzer::SCANFCTNULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanDirection(), MassAnalyzer::SCANDIRNULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanLaw(), MassAnalyzer::SCANLAWNULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getTandemScanMethod(), MassAnalyzer::TANDEMNULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getReflectronState(), MassAnalyzer::REFLSTATENULL)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getResolution(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getAccuracy(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanRate(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getScanTime(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getTOFTotalPathLength(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getIsolationWidth(), 0.0f)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getFinalMSExponent(), 0)
-		TEST_EQUAL(inst.getMassAnalyzers()[0].getMagneticFieldStrength(), 0.0f)
-	
-	  //---------------------------------------------------------------------------
-		// const Sample& getSample()
-	  //---------------------------------------------------------------------------
-		// UNSET:
-		TEST_EQUAL(e.getSample().getName(), "")
-		TEST_EQUAL(e.getSample().getNumber(), "")
-		TEST_EQUAL(e.getSample().getState(), Sample::SAMPLENULL)
-	 	TEST_EQUAL(e.getSample().getMass(), 0.0f)
-		TEST_EQUAL(e.getSample().getVolume(), 0.0f)
-		TEST_EQUAL(e.getSample().getConcentration(), 0.0f)
-	}
-
-	// test reading 64 bit data
-
-	MSExperiment< Peak1D > e2;
-	mzxml.load("data/MzXMLFile_test_3.mzXML",e2);
-
-  TEST_EQUAL(e2.size(), 3)
-	TEST_REAL_EQUAL(e2[0].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e2[1].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e2[2].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e2[0].getRT(), 1)
-	TEST_REAL_EQUAL(e2[1].getRT(), 121)
-	TEST_REAL_EQUAL(e2[2].getRT(), 3661)
-	TEST_REAL_EQUAL(e2[0].getContainer().size(), 1)
-	TEST_REAL_EQUAL(e2[1].getContainer().size(), 3)
-	TEST_REAL_EQUAL(e2[2].getContainer().size(), 5)
-
-	TEST_REAL_EQUAL(e2[0].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e2[0].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e2[1].getContainer()[0].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e2[1].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e2[1].getContainer()[1].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e2[1].getContainer()[1].getIntensity(), 200)
-	TEST_REAL_EQUAL(e2[1].getContainer()[2].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e2[1].getContainer()[2].getIntensity(), 100)
-	TEST_REAL_EQUAL(e2[2].getContainer()[0].getPosition()[0], 100)
-	TEST_REAL_EQUAL(e2[2].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e2[2].getContainer()[1].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e2[2].getContainer()[1].getIntensity(), 200)
-	TEST_REAL_EQUAL(e2[2].getContainer()[2].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e2[2].getContainer()[2].getIntensity(), 300)
-	TEST_REAL_EQUAL(e2[2].getContainer()[3].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e2[2].getContainer()[3].getIntensity(), 200)
-	TEST_REAL_EQUAL(e2[2].getContainer()[4].getPosition()[0], 140)
-	TEST_REAL_EQUAL(e2[2].getContainer()[4].getIntensity(), 100)
-
-RESULT
-
-CHECK((template<typename MapType> void store(const String& filename, const MapType& map) const ))
-	std::string tmp_filename;
-  MSExperiment< Peak1D > e1, e2;
-  MzXMLFile f;
-
-  NEW_TMP_FILE(tmp_filename);
- 	 f.load("data/MzXMLFile_test_1.mzXML",e1);
-	TEST_EQUAL(e1.size(), 4)
-
-	f.store(tmp_filename,e1);
-	f.load(tmp_filename,e2);
-	TEST_EQUAL(e1==e2, true);
-
-
-	NEW_TMP_FILE(tmp_filename);
-	f.load("data/MzXMLFile_test_2.mzXML",e1);
-	f.store(tmp_filename,e1);
-	f.load(tmp_filename,e2);
-	TEST_EQUAL(e1==e2,true);
-RESULT
-
-CHECK(([EXTRA] load/store for Float Kernel Traits))
-	std::string tmp_filename;
-	NEW_TMP_FILE(tmp_filename);
-	
-  MSExperiment< Peak1D > e1, e2;
-  MzXMLFile f;
-	
-	f.load("data/MzXMLFile_test_2.mzXML",e1);
-	f.store(tmp_filename,e1);
-	f.load(tmp_filename,e2);
-	TEST_EQUAL(e1==e2,true);
-RESULT
-
-// check for Float Kernel traits
-CHECK(([EXTRA] load/store for empty scans))
-	std::string tmp_filename;
-	NEW_TMP_FILE(tmp_filename);
-
-  MzXMLFile f;
-	MSExperiment<> e2;
-	e2.resize(5);
-	
-	f.store(tmp_filename,e2);
-	f.load(tmp_filename,e2);
-	
-	e2.updateRanges();
-	
-	TEST_EQUAL(e2.size(),5);
-	TEST_EQUAL(e2.getSize(),0);
-RESULT
-
-CHECK(([EXTRA] load with optional attributes))
-	PRECISION(0.01)
-
-	MSExperiment< Peak1D > e;
-	MzXMLFile mzxml;
-	
-	// real test
-	mzxml.load("data/MzXMLFile_test_4.mzXML",e);
+	//real test
+	file.load("data/MzXMLFile_1.mzXML",e);
+  
   //---------------------------------------------------------------------------
   // 60 : (120,100)
   // 120: (110,100) (120,200) (130,100)
   // 180: (100,100) (110,200) (120,300) (130,200) (140,100)
 	//--------------------------------------------------------------------------- 
   TEST_EQUAL(e.size(), 4)
-	TEST_REAL_EQUAL(e[0].getRT(), 60)
-	TEST_REAL_EQUAL(e[1].getRT(), 120)
-	TEST_REAL_EQUAL(e[2].getRT(), 180)
+	TEST_EQUAL(e[0].getMSLevel(), 1)
+	TEST_EQUAL(e[1].getMSLevel(), 1)
+	TEST_EQUAL(e[2].getMSLevel(), 1)
+	TEST_EQUAL(e[3].getMSLevel(), 2)
+	TEST_EQUAL(e[0].size(), 1)
+	TEST_EQUAL(e[1].size(), 3)
+	TEST_EQUAL(e[2].size(), 5)
+	TEST_EQUAL(e[3].size(), 5)
+	TEST_STRING_EQUAL(e[0].getNativeID(),"scan=10")
+	TEST_STRING_EQUAL(e[1].getNativeID(),"scan=11")
+	TEST_STRING_EQUAL(e[2].getNativeID(),"scan=12")
+	TEST_STRING_EQUAL(e[3].getNativeID(),"scan=13")
 
-	TEST_EQUAL(e[0].getInstrumentSettings().getPolarity(), IonSource::POLNULL)
-	TEST_EQUAL(e[1].getInstrumentSettings().getPolarity(), IonSource::POSITIVE)
-	TEST_EQUAL(e[2].getInstrumentSettings().getPolarity(), IonSource::NEGATIVE)
+	TEST_REAL_SIMILAR(e[0][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[0][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[1][0].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e[1][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[1][1].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[1][1].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[1][2].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[1][2].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[2][0].getPosition()[0], 100)
+	TEST_REAL_SIMILAR(e[2][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[2][1].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e[2][1].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[2][2].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[2][2].getIntensity(), 300)
+	TEST_REAL_SIMILAR(e[2][3].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[2][3].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[2][4].getPosition()[0], 140)
+	TEST_REAL_SIMILAR(e[2][4].getIntensity(), 100)
 
-	TEST_REAL_EQUAL(e[0].getInstrumentSettings().getMzRangeStart(), 0)
-	TEST_REAL_EQUAL(e[1].getInstrumentSettings().getMzRangeStart(), 110)
-	TEST_REAL_EQUAL(e[2].getInstrumentSettings().getMzRangeStart(), 100)
-	TEST_REAL_EQUAL(e[0].getInstrumentSettings().getMzRangeStop(), 0)
-	TEST_REAL_EQUAL(e[1].getInstrumentSettings().getMzRangeStop(), 130)
-	TEST_REAL_EQUAL(e[2].getInstrumentSettings().getMzRangeStop(), 140)
-
-	//---------------------------------------------------------------------------
-  // const Software& getSoftware() const;
-  //---------------------------------------------------------------------------
-	String tmp;
-	e.getSoftware().getCompletionTime().get(tmp);
-  TEST_EQUAL(tmp, "2001-02-03 04:05:06");
-
-	//---------------------------------------------------------------------------
-  // const ProcessingMethod& getProcessingMethod() const;
-  //---------------------------------------------------------------------------
-  TEST_EQUAL(e.getProcessingMethod().getDeisotoping(), true)
-	TEST_EQUAL(e.getProcessingMethod().getChargeDeconvolution(), true)
-	TEST_EQUAL(e.getProcessingMethod().getSpectrumType(), SpectrumSettings::PEAKS)
-	TEST_REAL_EQUAL(e.getProcessingMethod().getIntensityCutoff(), 2);
-RESULT
-
-CHECK(([EXTRA] load with metadata only flag))
-	PRECISION(0.01)
-
-	MSExperiment< Peak1D > e;
-	MzXMLFile mzxml;
-	mzxml.getOptions().setMetadataOnly(true);
-
-	// real test
-	mzxml.load("data/MzXMLFile_test_1.mzXML",e);
-	
-	//check number of scans
-	TEST_EQUAL(e.size(),0)
-	
-	//---------------------------------------------------------------------------
-  // const SourceFile& getSourceFile() const;
-  //---------------------------------------------------------------------------
-  TEST_EQUAL(e.getSourceFile().getNameOfFile(), "File_test_1.raw");
-  TEST_EQUAL(e.getSourceFile().getPathToFile(), "");
-  TEST_EQUAL(e.getSourceFile().getFileType(), "RAWData");
-  TEST_EQUAL(e.getSourceFile().getSha1(), "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12");
+	TEST_EQUAL(e[0].getMetaValue("URL1"), "www.open-ms.de")
+	TEST_EQUAL(e[0].getMetaValue("URL2"), "www.uni-tuebingen.de")
+	TEST_EQUAL(e[0].getComment(), "Scan Comment")
+	TEST_EQUAL(e.getNativeIDType(),ExperimentalSettings::SCAN_NUMBER)
 
 	//---------------------------------------------------------------------------
-  // const Software& getSoftware() const;
+  // const vector<SourceFile>& getSourceFiles() const;
   //---------------------------------------------------------------------------
-  TEST_EQUAL(e.getSoftware().getName(), "MS-X");
-  TEST_EQUAL(e.getSoftware().getVersion(), "1.0");
-  TEST_EQUAL(e.getSoftware().getComment(), "processing");
+  TEST_EQUAL(e.getSourceFiles().size(),2)
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getNameOfFile(), "File_test_1.raw");
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getPathToFile(), "");
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getFileType(), "RAWData");
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getChecksum(), "2fd4e1c67a2d28fced849ee1bb76e7391b93eb12");
+	TEST_EQUAL(e.getSourceFiles()[0].getChecksumType(),SourceFile::SHA1)
+  TEST_STRING_EQUAL(e.getSourceFiles()[1].getNameOfFile(), "File_test_2.raw");
+  TEST_STRING_EQUAL(e.getSourceFiles()[1].getPathToFile(), "");
+  TEST_STRING_EQUAL(e.getSourceFiles()[1].getFileType(), "processedData");
+  TEST_STRING_EQUAL(e.getSourceFiles()[1].getChecksum(), "2fd4e1c67a2d28fced849ee1bb76e7391b93eb13");
+	TEST_EQUAL(e.getSourceFiles()[1].getChecksumType(),SourceFile::SHA1)
+
+	//---------------------------------------------------------------------------
+  // const vector<DataProcessing>& getDataProcessing() const;
+  //---------------------------------------------------------------------------
+  TEST_EQUAL(e.getDataProcessing().size(),2)
+
+  TEST_EQUAL(e.getDataProcessing()[0].getSoftware().getName(), "MS-X");
+  TEST_EQUAL(e.getDataProcessing()[0].getSoftware().getVersion(), "1.0");
+  TEST_STRING_EQUAL(e.getDataProcessing()[0].getMetaValue("#type").toString(), "conversion");
+  TEST_STRING_EQUAL(e.getDataProcessing()[0].getMetaValue("processing 1").toString(), "done 1");
+  TEST_STRING_EQUAL(e.getDataProcessing()[0].getMetaValue("processing 2").toString(), "done 2");
+  TEST_EQUAL(e.getDataProcessing()[0].getCompletionTime().get(), "2001-02-03 04:05:06");
+	TEST_EQUAL(e.getDataProcessing()[0].getProcessingActions().size(),0)
+
+  TEST_EQUAL(e.getDataProcessing()[1].getSoftware().getName(), "MS-Y");
+  TEST_EQUAL(e.getDataProcessing()[1].getSoftware().getVersion(), "1.1");
+  TEST_STRING_EQUAL(e.getDataProcessing()[1].getMetaValue("#type").toString(), "processing");
+  TEST_REAL_SIMILAR((DoubleReal)(e.getDataProcessing()[1].getMetaValue("#intensity_cutoff")), 3.4);
+  TEST_STRING_EQUAL(e.getDataProcessing()[1].getMetaValue("processing 3").toString(), "done 3");
+  TEST_EQUAL(e.getDataProcessing()[1].getCompletionTime().get(), "0000-00-00 00:00:00");
+	TEST_EQUAL(e.getDataProcessing()[1].getProcessingActions().size(),3)
+	TEST_EQUAL(e.getDataProcessing()[1].getProcessingActions().count(DataProcessing::DEISOTOPING),1)
+	TEST_EQUAL(e.getDataProcessing()[1].getProcessingActions().count(DataProcessing::CHARGE_DECONVOLUTION),1)
+	TEST_EQUAL(e.getDataProcessing()[1].getProcessingActions().count(DataProcessing::PEAK_PICKING),1)
 
 	//---------------------------------------------------------------------------
   // const Instrument& getInstrument() const;
@@ -467,24 +172,21 @@ CHECK(([EXTRA] load with metadata only flag))
 	TEST_EQUAL(inst.getMetaValue("URL1"), "www.open-ms.de")
 	TEST_EQUAL(inst.getMetaValue("URL2"), "www.uni-tuebingen.de")
 	TEST_EQUAL(inst.getMetaValue("#Comment"), "Instrument Comment")
-	TEST_EQUAL(inst.getIonSource().getIonizationMethod(), IonSource::ESI)
-	TEST_EQUAL(inst.getIonDetector().getType(), IonDetector::FARADAYCUP)
-	// UNSET:
   TEST_EQUAL(inst.getName(), "")
 	TEST_EQUAL(inst.getCustomizations(), "")
-	TEST_EQUAL(inst.getIonDetector().getResolution(), 0.0f)
-	TEST_EQUAL(inst.getIonDetector().getADCSamplingFrequency(), 0.0f)
-	TEST_EQUAL(inst.getIonSource().getInletType(), IonSource::INLETNULL)
-	TEST_EQUAL(inst.getIonDetector().getAcquisitionMode(), IonDetector::ACQMODENULL)
-	TEST_EQUAL(inst.getIonSource().getPolarity(), IonSource::POLNULL)
-
+	TEST_EQUAL(inst.getIonSources().size(),1)
+	TEST_EQUAL(inst.getIonSources()[0].getIonizationMethod(), IonSource::ESI)
+	TEST_EQUAL(inst.getIonSources()[0].getInletType(), IonSource::INLETNULL)
+	TEST_EQUAL(inst.getIonSources()[0].getPolarity(), IonSource::POLNULL)
+	TEST_EQUAL(inst.getIonDetectors().size(),1)
+	TEST_EQUAL(inst.getIonDetectors()[0].getType(), IonDetector::FARADAYCUP)
+	TEST_REAL_SIMILAR(inst.getIonDetectors()[0].getResolution(), 0.0f)
+	TEST_REAL_SIMILAR(inst.getIonDetectors()[0].getADCSamplingFrequency(), 0.0f)
+	TEST_EQUAL(inst.getIonDetectors()[0].getAcquisitionMode(), IonDetector::ACQMODENULL)
 	TEST_EQUAL(inst.getMassAnalyzers().size(), 1)
-  ABORT_IF(inst.getMassAnalyzers().size()!=1);
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getType(), MassAnalyzer::PAULIONTRAP)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionMethod(), MassAnalyzer::FWHM)
-	// UNSET:
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getResolutionType(), MassAnalyzer::RESTYPENULL)
-	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanFunction(), MassAnalyzer::SCANFCTNULL)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanDirection(), MassAnalyzer::SCANDIRNULL)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getScanLaw(), MassAnalyzer::SCANLAWNULL)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getTandemScanMethod(), MassAnalyzer::TANDEMNULL)
@@ -497,134 +199,233 @@ CHECK(([EXTRA] load with metadata only flag))
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getIsolationWidth(), 0.0f)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getFinalMSExponent(), 0)
 	TEST_EQUAL(inst.getMassAnalyzers()[0].getMagneticFieldStrength(), 0.0f)
-
+	TEST_EQUAL(inst.getSoftware().getName(),"MS-Z")
+	TEST_EQUAL(inst.getSoftware().getVersion(),"3.0")
+	
+  //---------------------------------------------------------------------------
+	// vector<ContactPerson>& getContacts()
+  //---------------------------------------------------------------------------
+	const vector<ContactPerson>& contacts = e.getContacts();
+	TEST_EQUAL(contacts.size(),1)
+	TEST_STRING_EQUAL(contacts[0].getFirstName(),"FirstName")
+	TEST_STRING_EQUAL(contacts[0].getLastName(),"LastName")
+	TEST_STRING_EQUAL(contacts[0].getMetaValue("#phone"),"0049")
+	TEST_STRING_EQUAL(contacts[0].getEmail(),"a@b.de")
+	TEST_STRING_EQUAL(contacts[0].getURL(),"http://bla.de")
+	TEST_STRING_EQUAL(contacts[0].getContactInfo(),"")
+	
   //---------------------------------------------------------------------------
 	// const Sample& getSample()
   //---------------------------------------------------------------------------
-	// UNSET:
 	TEST_EQUAL(e.getSample().getName(), "")
 	TEST_EQUAL(e.getSample().getNumber(), "")
 	TEST_EQUAL(e.getSample().getState(), Sample::SAMPLENULL)
  	TEST_EQUAL(e.getSample().getMass(), 0.0f)
 	TEST_EQUAL(e.getSample().getVolume(), 0.0f)
 	TEST_EQUAL(e.getSample().getConcentration(), 0.0f)
-RESULT
+	
+	/////////////////////// TESTING SPECIAL CASES ///////////////////////
+	
+	//load a second time to make sure everything is re-initialized correctly
+	MSExperiment<> e2;
+	file.load("data/MzXMLFile_1.mzXML",e2);
+	TEST_EQUAL(e==e2,true)
+	
+	//test reading 64 bit data
+	MSExperiment<> e3;
+	file.load("data/MzXMLFile_3_64bit.mzXML",e3);
 
-CHECK(([EXTRA] load with selected MS levels))
-	PRECISION(0.01)
+  TEST_EQUAL(e3.size(), 3)
+	TEST_REAL_SIMILAR(e3[0].getMSLevel(), 1)
+	TEST_REAL_SIMILAR(e3[1].getMSLevel(), 1)
+	TEST_REAL_SIMILAR(e3[2].getMSLevel(), 1)
+	TEST_REAL_SIMILAR(e3[0].getRT(), 1)
+	TEST_REAL_SIMILAR(e3[1].getRT(), 121)
+	TEST_REAL_SIMILAR(e3[2].getRT(), 3661)
+	TEST_REAL_SIMILAR(e3[0].size(), 1)
+	TEST_REAL_SIMILAR(e3[1].size(), 3)
+	TEST_REAL_SIMILAR(e3[2].size(), 5)
 
-	MSExperiment< Peak1D > e;
-	MzXMLFile mzxml;
+	TEST_REAL_SIMILAR(e3[0][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e3[0][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e3[1][0].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e3[1][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e3[1][1].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e3[1][1].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e3[1][2].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e3[1][2].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e3[2][0].getPosition()[0], 100)
+	TEST_REAL_SIMILAR(e3[2][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e3[2][1].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e3[2][1].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e3[2][2].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e3[2][2].getIntensity(), 300)
+	TEST_REAL_SIMILAR(e3[2][3].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e3[2][3].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e3[2][4].getPosition()[0], 140)
+	TEST_REAL_SIMILAR(e3[2][4].getIntensity(), 100)
+
+	//loading a minimal file containing one spectrum - with whitespaces inside the base64 data
+	MSExperiment<> e4;
+  file.load("data/MzXMLFile_2_minimal.mzXML",e4);
+  TEST_EQUAL(e4.size(),1)
+  TEST_EQUAL(e4[0].size(),1)
+	
+	//load one extremely long spectrum - tests CDATA splitting
+	MSExperiment<> e5;
+	file.load("data/MzXMLFile_4_long.mzXML",e5);
+	TEST_EQUAL(e5.size(), 1)
+	TEST_EQUAL(e5[0].size(), 997530)
+
+	//test if it works with different peak types
+	MSExperiment<RichPeak1D> e_rich;
+  file.load("data/MzXMLFile_1.mzXML",e_rich);
+END_SECTION
+
+START_SECTION(([EXTRA] load with metadata only flag))
+	TOLERANCE_ABSOLUTE(0.01)
+
+	MSExperiment<> e;
+	MzXMLFile file;
+	file.getOptions().setMetadataOnly(true);
+
+	// real test
+	file.load("data/MzXMLFile_1.mzXML",e);
+	
+	TEST_EQUAL(e.size(),0)
+  TEST_EQUAL(e.getSourceFiles().size(),2)
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getNameOfFile(), "File_test_1.raw");
+  TEST_STRING_EQUAL(e.getSourceFiles()[0].getPathToFile(), "");
+	TEST_EQUAL(e.getDataProcessing().size(),2)
+  TEST_STRING_EQUAL(e.getDataProcessing().back().getSoftware().getName(), "MS-Y");
+  TEST_STRING_EQUAL(e.getDataProcessing().back().getSoftware().getVersion(), "1.1");
+	TEST_STRING_EQUAL(e.getInstrument().getVendor(), "MS-Vendor")
+	TEST_STRING_EQUAL(e.getInstrument().getModel(), "MS 1")
+	TEST_EQUAL(e.getContacts().size(),1)
+	TEST_STRING_EQUAL(e.getContacts()[0].getFirstName(),"FirstName")
+	TEST_STRING_EQUAL( e.getContacts()[0].getLastName(),"LastName")
+	TEST_STRING_EQUAL(e.getSample().getName(), "")
+	TEST_STRING_EQUAL(e.getSample().getNumber(), "")
+END_SECTION
+
+START_SECTION(([EXTRA] load with selected MS levels))
+	TOLERANCE_ABSOLUTE(0.01)
+
+	MSExperiment<> e;
+	MzXMLFile file;
 	
 	// load only MS level 1
-	mzxml.getOptions().addMSLevel(1);
-	mzxml.load("data/MzXMLFile_test_1.mzXML",e);
+	file.getOptions().addMSLevel(1);
+	file.load("data/MzXMLFile_1.mzXML",e);
 
 	TEST_EQUAL(e.size(), 3)
-	TEST_REAL_EQUAL(e[0].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e[1].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e[2].getMSLevel(), 1)
-	TEST_REAL_EQUAL(e[0].getContainer().size(), 1)
-	TEST_REAL_EQUAL(e[1].getContainer().size(), 3)
-	TEST_REAL_EQUAL(e[2].getContainer().size(), 5)
+	TEST_EQUAL(e[0].getMSLevel(), 1)
+	TEST_EQUAL(e[1].getMSLevel(), 1)
+	TEST_EQUAL(e[2].getMSLevel(), 1)
+	TEST_EQUAL(e[0].size(), 1)
+	TEST_EQUAL(e[1].size(), 3)
+	TEST_EQUAL(e[2].size(), 5)
+	TEST_STRING_EQUAL(e[0].getNativeID(),"scan=10")
+	TEST_STRING_EQUAL(e[1].getNativeID(),"scan=11")
+	TEST_STRING_EQUAL(e[2].getNativeID(),"scan=12")
 	
 	// load all levels
-	mzxml.getOptions().clearMSLevels();
-	mzxml.load("data/MzXMLFile_test_1.mzXML",e);
+	file.getOptions().clearMSLevels();
+	file.load("data/MzXMLFile_1.mzXML",e);
 
 	TEST_EQUAL(e.size(), 4)
-RESULT
+END_SECTION
 
-CHECK(([EXTRA] load with selected MZ range))
-	PRECISION(0.01)
+START_SECTION(([EXTRA] load with selected MZ range))
+	TOLERANCE_ABSOLUTE(0.01)
 
-	MSExperiment< Peak1D > e;
-	MzXMLFile mzxml;
+	MSExperiment<> e;
+	MzXMLFile file;
 
-	mzxml.getOptions().setMZRange(makeRange(115,135));
-	mzxml.load("data/MzXMLFile_test_1.mzXML",e);
+	file.getOptions().setMZRange(makeRange(115,135));
+	file.load("data/MzXMLFile_1.mzXML",e);
 	//---------------------------------------------------------------------------
 	// 60 : +(120,100)
 	// 120: -(110,100) +(120,200) +(130,100)
 	// 180: -(100,100) -(110,200) +(120,300) +(130,200) -(140,100)
 	//--------------------------------------------------------------------------- 
 	
-	TEST_REAL_EQUAL(e[0].getContainer().size(), 1)
-	TEST_REAL_EQUAL(e[1].getContainer().size(), 2)
-	TEST_REAL_EQUAL(e[2].getContainer().size(), 2)
+	TEST_REAL_SIMILAR(e[0].size(), 1)
+	TEST_REAL_SIMILAR(e[1].size(), 2)
+	TEST_REAL_SIMILAR(e[2].size(), 2)
 
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[1].getContainer()[1].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[1].getContainer()[1].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getIntensity(), 300)
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getIntensity(), 200)
-RESULT
+	TEST_REAL_SIMILAR(e[0][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[0][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[1][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[1][0].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[1][1].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[1][1].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[2][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[2][0].getIntensity(), 300)
+	TEST_REAL_SIMILAR(e[2][1].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[2][1].getIntensity(), 200)
+END_SECTION
 
-CHECK(([EXTRA] load with RT range))
-	PRECISION(0.01)
+START_SECTION(([EXTRA] load with RT range))
+	TOLERANCE_ABSOLUTE(0.01)
 
-	MSExperiment< Peak1D > e;
-	MzXMLFile mzxml;
-	mzxml.getOptions().setRTRange(makeRange(100, 200));
-	mzxml.load("data/MzXMLFile_test_2.mzXML",e);
+	MSExperiment<> e;
+	MzXMLFile file;
+	file.getOptions().setRTRange(makeRange(100, 200));
+	file.load("data/MzXMLFile_1.mzXML",e);
 	//---------------------------------------------------------------------------
 	// 120: (110,100) (120,200) (130,100)
 	// 180: (100,100) (110,200) (120,300) (130,200) (140,100)
 	//--------------------------------------------------------------------------- 
- 	TEST_REAL_EQUAL(e.size(), 2)
- 	TEST_REAL_EQUAL(e[0].getContainer().size(), 3)
- 	TEST_REAL_EQUAL(e[1].getContainer().size(), 5)
+ 	TEST_EQUAL(e.size(), 2)
+ 	TEST_EQUAL(e[0].size(), 3)
+ 	TEST_EQUAL(e[1].size(), 5)
 
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e[0].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[0].getContainer()[1].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[0].getContainer()[1].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[0].getContainer()[2].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[0].getContainer()[2].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getPosition()[0], 100)
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getIntensity(), 100)
-	TEST_REAL_EQUAL(e[1].getContainer()[1].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e[1].getContainer()[1].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[1].getContainer()[2].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[1].getContainer()[2].getIntensity(), 300)
-	TEST_REAL_EQUAL(e[1].getContainer()[3].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[1].getContainer()[3].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[1].getContainer()[4].getPosition()[0], 140)
-	TEST_REAL_EQUAL(e[1].getContainer()[4].getIntensity(), 100)
-RESULT
+	TEST_REAL_SIMILAR(e[0][0].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e[0][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[0][1].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[0][1].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[0][2].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[0][2].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[1][0].getPosition()[0], 100)
+	TEST_REAL_SIMILAR(e[1][0].getIntensity(), 100)
+	TEST_REAL_SIMILAR(e[1][1].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e[1][1].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[1][2].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[1][2].getIntensity(), 300)
+	TEST_REAL_SIMILAR(e[1][3].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[1][3].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[1][4].getPosition()[0], 140)
+	TEST_REAL_SIMILAR(e[1][4].getIntensity(), 100)
+END_SECTION
 
-CHECK(([EXTRA] load with intensity range))
-	PRECISION(0.01)
+START_SECTION(([EXTRA] load with intensity range))
+	TOLERANCE_ABSOLUTE(0.01)
 
-	MSExperiment< Peak1D > e;
-	MzXMLFile mzxml;
-	mzxml.getOptions().setIntensityRange(makeRange(150, 350));
-	mzxml.load("data/MzXMLFile_test_1.mzXML",e);
+	MSExperiment<> e;
+	MzXMLFile file;
+	file.getOptions().setIntensityRange(makeRange(150, 350));
+	file.load("data/MzXMLFile_1.mzXML",e);
 	//---------------------------------------------------------------------------
 	// 60 : -(120,100)
 	// 120: -(110,100) +(120,200) -(130,100)
 	// 180: -(100,100) +(110,200) +(120,300) +(130,200) -(140,100)
 	//--------------------------------------------------------------------------- 
-	TEST_REAL_EQUAL(e[0].getContainer().size(), 0)
-	TEST_REAL_EQUAL(e[1].getContainer().size(), 1)
-	TEST_REAL_EQUAL(e[2].getContainer().size(), 3)
+	TEST_REAL_SIMILAR(e[0].size(), 0)
+	TEST_REAL_SIMILAR(e[1].size(), 1)
+	TEST_REAL_SIMILAR(e[2].size(), 3)
 
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[1].getContainer()[0].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getPosition()[0], 110)
-	TEST_REAL_EQUAL(e[2].getContainer()[0].getIntensity(), 200)
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getPosition()[0], 120)
-	TEST_REAL_EQUAL(e[2].getContainer()[1].getIntensity(), 300)
-	TEST_REAL_EQUAL(e[2].getContainer()[2].getPosition()[0], 130)
-	TEST_REAL_EQUAL(e[2].getContainer()[2].getIntensity(), 200)
-RESULT
+	TEST_REAL_SIMILAR(e[1][0].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[1][0].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[2][0].getPosition()[0], 110)
+	TEST_REAL_SIMILAR(e[2][0].getIntensity(), 200)
+	TEST_REAL_SIMILAR(e[2][1].getPosition()[0], 120)
+	TEST_REAL_SIMILAR(e[2][1].getIntensity(), 300)
+	TEST_REAL_SIMILAR(e[2][2].getPosition()[0], 130)
+	TEST_REAL_SIMILAR(e[2][2].getIntensity(), 200)
+END_SECTION
 
-CHECK(([EXTRA] load/store for nested scans))
+START_SECTION(([EXTRA] load/store for nested scans))
 	std::string tmp_filename;
 	NEW_TMP_FILE(tmp_filename);
   MzXMLFile f;
@@ -690,9 +491,23 @@ CHECK(([EXTRA] load/store for nested scans))
 	f.store(tmp_filename,e2);
 	f.load(tmp_filename,e2);
 	TEST_EQUAL(e2.size(),5);
-RESULT
+END_SECTION
 
-CHECK([EXTRA] static bool isValid(const String& filename))
+START_SECTION((template<typename MapType> void store(const String& filename, const MapType& map) const ))
+	std::string tmp_filename;
+  MSExperiment<> e1, e2;
+  MzXMLFile f;
+
+  NEW_TMP_FILE(tmp_filename);
+ 	 f.load("data/MzXMLFile_1.mzXML",e1);
+	TEST_EQUAL(e1.size(), 4)
+
+	f.store(tmp_filename,e1);
+	f.load(tmp_filename,e2);
+	TEST_EQUAL(e1==e2, true);
+END_SECTION
+
+START_SECTION([EXTRA] static bool isValid(const String& filename))
 	std::string tmp_filename;
   MzXMLFile f;
   MSExperiment<> e;
@@ -701,18 +516,10 @@ CHECK([EXTRA] static bool isValid(const String& filename))
 
 	//test if fill file is valid
 	NEW_TMP_FILE(tmp_filename);
-	f.load("data/MzXMLFile_test_1.mzXML",e);
+	f.load("data/MzXMLFile_1.mzXML",e);
   f.store(tmp_filename,e);
   TEST_EQUAL(f.isValid(tmp_filename),true);
-RESULT
-
-CHECK([EXTRA] loading a minimal file containing one spectrum  - with whitespaces inside the base64 data)
-	MSExperiment<> e;
-  MzXMLFile f;
-  f.load("data/MzXMLFile_test_5.mzXML",e);
-  TEST_EQUAL(e.size(),1)
-  TEST_EQUAL(e[0].size(),1)
-RESULT
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

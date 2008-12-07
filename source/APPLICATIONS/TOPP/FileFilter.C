@@ -43,7 +43,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page FileFilter FileFilter
+	@page TOPP_FileFilter FileFilter
 	
 	@brief Extracts portions of the data from an mzData, featureXML or consensusXML file.
 	
@@ -58,7 +58,12 @@ using namespace std;
   - featureXML
     - filter by feature charge
     - filter by overall feature quality
+	
+	@todo MS2 and higher spectra should be filtered according to precursor m/z and RT.
+	      The MzMLFile, MzDataFile, MzXMLFile have to be changed for that (Hiwi)
 
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_FileFilter.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -91,7 +96,7 @@ class TOPPFileFilter
       
 			addText_("peak data options:");
       registerDoubleOption_("sn", "<s/n ratio>", 0, "write peaks with S/N > 'sn' values only", false);
-			registerStringOption_("level","i[,j]...","1,2,3","MS levels to extract", false);
+			registerIntList_("level","i j...",IntList::create("1,2,3"),"MS levels to extract", false);
 			registerStringOption_("remove_mode","<mode>","","Remove scans by scan mode\n",false);
 			StringList mode_list;
 			for (UInt i=0; i<InstrumentSettings::SIZE_OF_SCANMODE; ++i)
@@ -145,9 +150,9 @@ class TOPPFileFilter
       FileHandler::Type out_type = in_type;            
 
 			//ranges
-			String mz, rt, it, level, charge, q, tmp;
+			String mz, rt, it, charge, q;
+			IntList levels;
 			double mz_l, mz_u, rt_l, rt_u, it_l, it_u, sn, charge_l, charge_u, q_l, q_u;
-			vector<UInt> levels;		
 			//initialize ranges
 			mz_l = rt_l = it_l = charge_l = q_l = -1 * numeric_limits<double>::max();
 			mz_u = rt_u = it_u = charge_u = q_u = numeric_limits<double>::max();
@@ -155,7 +160,7 @@ class TOPPFileFilter
 			rt = getStringOption_("rt");
 			mz = getStringOption_("mz");
 			it = getStringOption_("int");
-			level = getStringOption_("level");
+			levels = getIntList_("level");
 			sn = getDoubleOption_("sn");
 			charge = getStringOption_("charge");
       q = getStringOption_("q");
@@ -165,52 +170,23 @@ class TOPPFileFilter
 			{
 				//rt
 				parseRange_(rt,rt_l,rt_u);
-				writeDebug_("rt lower/upper bound: " + String(rt_l) + " / " + String(rt_u),1);	
-				
 				//mz
 				parseRange_(mz,mz_l,mz_u);
-				writeDebug_("mz lower/upper bound: " + String(mz_l) + " / " + String(mz_u),1);	
-				
 				//int
 				parseRange_(it,it_l,it_u);
-				writeDebug_("int lower/upper bound: " + String(it_l) + " / " + String(it_u),1);	
-	
-				//levels
-				tmp = level;
-				if (level.has(',')) //several levels given
-				{
-					vector<String> tmp2;
-					level.split(',',tmp2);
-					for (vector<String>::iterator it = tmp2.begin(); it != tmp2.end(); ++it)
-					{
-						levels.push_back(it->toInt());
-					}
-				}
-				else //one level given
-				{
-					levels.push_back(level.toInt());
-				}
-				
-				String tmp3("MS levels: ");
-				tmp3 = tmp3 + *(levels.begin());
-				for (vector<UInt>::iterator it = ++levels.begin(); it != levels.end(); ++it)
-				{
-					tmp3 = tmp3 + ", " + *it;
-				}
-				writeDebug_(tmp3,1);	
-
-
         //charge (features only)
         parseRange_(charge,charge_l,charge_u);
-        writeDebug_("charge lower/upper bound: " + String(charge_l) + " / " + String(charge_u),1); 
-
         //charge (features only)
         parseRange_(q,q_l,q_u);
-        writeDebug_("quality lower/upper bound: " + String(q_l) + " / " + String(q_u),1); 
-
 			}
 			catch(Exception::ConversionError&)
 			{
+				String tmp;
+				for(IntList::iterator it = levels.begin(); it != levels.end();++it)
+				{
+					tmp += *it;
+				}
+				
 				writeLog_(String("Invalid boundary '") + tmp + "' given. Aborting!");
 				printUsage_();
 				return ILLEGAL_PARAMETERS;			

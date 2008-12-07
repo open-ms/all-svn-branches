@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Ole Schulz-Trieglaff $
+// $Maintainer: Clemens Groepl, Ole Schulz-Trieglaff $
 // --------------------------------------------------------------------------
 
 
@@ -39,19 +39,28 @@ namespace OpenMS
 	
 		The predicted intensity is simply the product of the intensities in each dimension
 	
-		@ref ProductModel_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_ProductModel.parameters
 	
+	@todo This class provides new member functions, which makes
+	Factory<BaseModel<2> >::create("ProductModel2D") pretty much useless!  (Clemens)
+
 		@ingroup FeatureFinder
 	*/
-	template <UInt D>
-	class ProductModel
-		: public BaseModel<D>
-	{
+	template <UInt D> class ProductModel;
 
- 	public:
-    typedef typename DPeak<D>::IntensityType IntensityType;
+	/// The class template is only implemented for D=2 because we use Peak2D here.
+	template <>
+	class ProductModel <2>
+		: public BaseModel<2>
+	{
+	 public:
+
+		/// Number of dimensions
+		enum { D=2 };
+		
+    typedef DoubleReal IntensityType;
     typedef DPosition<D> PositionType;
-    typedef DPeakArray<DPeak<D> > SamplesType;
+    typedef BaseModel<D>::SamplesType SamplesType;
 
     /// Default constructor
     ProductModel()
@@ -173,7 +182,7 @@ namespace OpenMS
 
 			// Update model info
 			String name = Peak2D::shortDimensionName(dim);
-	    this->param_.remove(name + ':');
+	    this->param_.removeAll(name + ':');
 	    this->param_.insert(name + ':',distributions_[dim]->getParameters());
 	    this->param_.setValue(name, distributions_[dim]->getName());
 
@@ -204,8 +213,8 @@ namespace OpenMS
     /// get reasonable set of samples from the model (i.e. for printing)
     void getSamples(SamplesType& cont) const
     {
-      cont = SamplesType();
-      typedef typename BaseModel<1>::SamplesType Samples1D;
+      cont.clear();
+      typedef BaseModel<1>::SamplesType Samples1D;
       std::vector<Samples1D> samples(D);
       // get samples for each dimension
       for (UInt dim=0; dim<D; ++dim)
@@ -213,7 +222,7 @@ namespace OpenMS
       	distributions_[dim]->getSamples(samples[dim]);
       }
 
-      typename BaseModel<D>::PeakType peak;
+      BaseModel<D>::PeakType peak;
       std::vector<UInt> i(D,0);  // index vector
 
       while(i[D-1]<samples[D-1].size())
@@ -235,6 +244,7 @@ namespace OpenMS
           }
         }
       }
+			return;
     }
 
 	protected:

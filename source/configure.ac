@@ -9,7 +9,7 @@ dnl
 dnl 
 dnl    Some initialization stuff...
 dnl 
-AC_INIT(OpenMS, 1.2 , www.OpenMS.de)
+AC_INIT(OpenMS, 1.2, www.OpenMS.de)
 AC_CONFIG_HEADER([
 	config.h:config/config.h.in
 ])
@@ -27,6 +27,7 @@ AC_ARG_ENABLE(debuginfo,       [  --enable-debuginfo      add -g to the compiler
 AC_ARG_ENABLE(stl-debug,       [  --enable-stl-debug      enables debug mode of the STL when using gcc.])
 AC_ARG_ENABLE(pedantic,        [  --disable-pedantic      removes the '-pedantic' flag when using gcc.])
 AC_ARG_ENABLE(externalmemory,  [  --enable-externalmemory enable external memory structure for all MSExperiments (warning: performance hit). Only recommended if you run out of RAM+swap!])
+AC_ARG_ENABLE(openmp,          [  --enable-openmp         enable usage of OpenMP features, which enables compiling OpenMS to use more than one thread.])
 AC_ARG_ENABLE(db-plugin,       [  --with-db-plugin        set the Qt SQL DB plugin to use (default: QMYSQL)])
 AC_ARG_WITH(compiler,          [  --with-compiler=CXX     use CXX as C++ compiler])
 AC_ARG_WITH(cxxflags,          [  --with-cxxflags=FLAGS   add FLAGS to the C++ compiler flags (commas are converted to blanks)])
@@ -52,7 +53,6 @@ AC_ARG_WITH(andims-incl,       [  --with-andims-incl=DIR  specify the location o
 AC_ARG_WITH(andims-libs,       [  --with-andims-libs=DIR  specify the location of the ANDI/MS archive file "ms10lib.a"])
 AC_ARG_WITH(gsl-incl,          [  --with-gsl-incl=DIR     specify the location of the directory containing "gsl/gsl_version.h"])
 AC_ARG_WITH(gsl-libs,          [  --with-gsl-libs=DIR     specify the location of the GSL library files "libgsl.so" and "libgslcblas.so"])
-AC_ARG_ENABLE(libsvm,          [  --disable-libsvm        disable the use of libSVM (needed for rentention time prediction)])
 AC_ARG_WITH(libsvm-incl,       [  --with-libsvm-incl=DIR  specify the location of the libSVM directory containing "svm.h"])
 AC_ARG_WITH(libsvm-libs,       [  --with-libsvm-libs=DIR  specify the location of the libSVM directory containing "svm.o"])
 AC_ARG_WITH(xerces-incl,       [  --with-xerces-incl=DIR  specify the location of the XERCES include directory containing "xercesc/util/Base64.hpp"])
@@ -111,7 +111,19 @@ if test "$enable_externalmemory" = "yes" -o "$with_externalmemory" = "yes"; then
 else
 	AC_MSG_RESULT(disabled (default))
 fi
-	
+
+dnl
+dnl   checking for openmp-flag
+dnl
+AC_MSG_CHECKING(openmp)
+if test "$enable_openmp" = "yes" -o "$with_openmp" = "yes"; then
+	CXXFLAGS="$CXX_FLAGS -fopenmp"
+	LIBS="$LIBS -fopenmp"
+	AC_MSG_RESULT(enabled)
+else
+	AC_MSG_RESULT(disabled (default))
+fi
+
 
 if test "$with_pedantic" = "no" -o "$enable_pedantic" = "no"; then
 	GCC_PEDANTIC=
@@ -272,13 +284,8 @@ else
 fi
 
 # support for libSVM
-if test "$with_libsvm" = "no" -o "$enable_libsvm" = "no"; then
-  LIBSVM_SUPPORT=false
-else
-  LIBSVM_SUPPORT=true
-  AC_DEFINE(LIBSVM_DEF)
-fi
-
+LIBSVM_SUPPORT=true
+AC_DEFINE(LIBSVM_DEF)
 if test "$with_libsvm_incl" != "" ; then
   LIBSVM_INCPATH="${with_libsvm_incl}"
 else
@@ -560,10 +567,18 @@ dnl
 BINFMT="${BINFMT}-${CXX_NAME}"
 
 LIBS_EXTERNAL=" ${OPENMS_LIBS} ${LIBS} -lm"
-CF_UNIQUIFY(${LIBS_EXTERNAL},LIBS_EXTERNAL)
-
 OPENMS_LIBS=" -L${PREFIX}/lib/ -lOpenMS ${LIBS_EXTERNAL}"
-CF_UNIQUIFY(${OPENMS_LIBS},OPENMS_LIBS)
+
+dnl
+dnl   Remove duplicate library entries, but make sure
+dnl   that the linker lines don't get messed up for Mac OS
+dnl   (-framework XY needs to be kept as it is)
+dnl
+if test "${OS}" != "Darwin" ; then
+  CF_UNIQUIFY(${LIBS_EXTERNAL},LIBS_EXTERNAL)
+  CF_UNIQUIFY(${LIBS_EXTERNAL},LIBS_EXTERNAL)
+fi
+
 
 
 LIBS="${OPENMS_LIBS}"
@@ -764,7 +779,7 @@ AC_MSG_RESULT()
 AC_MSG_RESULT()
 AC_MSG_RESULT(Your Makefiles have been created. If everything went OK: just type)
 AC_MSG_RESULT()
-AC_MSG_RESULT(		make)
+AC_MSG_RESULT(		make lib)
 AC_MSG_RESULT()
 AC_MSG_RESULT(to build the OpenMS library.)
 AC_MSG_RESULT()

@@ -30,52 +30,47 @@
 //OpenMS
 #include <OpenMS/METADATA/InstrumentSettings.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizerGUI.h>
 
-class QLineEdit;
-class QComboBox;
 
-namespace OpenMS {
-/**
-@brief Class that displays all meta information for InstrumentSettings objects
-
-This class provides all functionality to view the meta information of an object of type InstrumentSettings.
-*/
-	
-	class InstrumentSettingsVisualizer : public BaseVisualizer
+namespace OpenMS
+{
+	/**
+		@brief Class that displays all meta information for InstrumentSettings objects
+		
+		This class provides all functionality to view the meta information of an object of type InstrumentSettings.
+	*/
+	class InstrumentSettingsVisualizer
+		: public BaseVisualizerGUI,
+			public BaseVisualizer<InstrumentSettings>
 	{
 		Q_OBJECT
 
-	public: 
-	  /// Default constructor
-		InstrumentSettingsVisualizer(bool editable= FALSE, QWidget *parent =0);
+		public:
+			
+		  ///Constructor
+			InstrumentSettingsVisualizer(bool editable = false, QWidget* parent = 0);
+			
+		public slots:
+			
+		  //Docu in base class
+			void store();
 		
-		/// Loads the meta data from the object to the viewer.
-		void load(InstrumentSettings &s);
-	  
-	private slots:
-		 /// Saves the changes made to the meta data into the object.
-		void store_();
-		/// Deletes all changes made in the viewer and restores the original meta data.
-		void reject_();
-
-	private:  
-		/// Pointer to current object to keep track of the actual object
-		InstrumentSettings *ptr_;
-		/// Copy of current object for restoring the original values
-		InstrumentSettings  tempinstrumentsettings_;
-		/// Fills the comboboxes with current values
-		void update_();
-	  
-		/** @name Edit fields
-   */
-    //@{
-   	QComboBox *instrumentsettings_scan_mode_;
-		QComboBox *instrumentsettings_polarity_;
-		QLineEdit *instrumentsettings_mz_range_start_;
-		QLineEdit *instrumentsettings_mz_range_stop_;
-		//@}
+		protected slots:
+			
+			///Undo the changes made in the GUI.
+			void undo_();
+	
+		protected:  
+		  
+			///@name Edit fields and buttons
+	    //@{
+	   	QComboBox* instrumentsettings_scan_mode_;
+			QComboBox* instrumentsettings_polarity_;
+			//@}
 		
-					
+			//Docu in base class
+			void update_();
 	};
 }
 #endif

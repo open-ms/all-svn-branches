@@ -35,60 +35,36 @@ using namespace std;
 
 namespace OpenMS
 {
-
-//Constructor
-MetaInfoDescriptionVisualizer::MetaInfoDescriptionVisualizer(bool editable, QWidget *parent) : BaseVisualizer(editable, parent)
-{
-  
-	addLabel("Modify MetaInfoDescription information");		
-	addSeperator();
-	addLineEdit(metainfodescription_name_, "Name of peak annotations" );
-	addTextEdit(metainfodescription_comment_, "Comment" );
-		
-	finishAdding_();
-}
-
-
-
-void MetaInfoDescriptionVisualizer::load(MetaInfoDescription &a)
-{
-  ptr_ = &a;
 	
-	//Copy of current object for restoring the original values
-	tempMetaInfoDescription_=a;
-	
-  metainfodescription_name_->setText(tempMetaInfoDescription_.getName().c_str() );
-	metainfodescription_comment_->setText(tempMetaInfoDescription_.getComment().c_str() );
-				
-}
-
-void MetaInfoDescriptionVisualizer::store_()
-{
-	try
+	MetaInfoDescriptionVisualizer::MetaInfoDescriptionVisualizer(bool editable, QWidget* parent)
+		: BaseVisualizerGUI(editable, parent),
+			BaseVisualizer<MetaInfoDescription>()
 	{
-				
-		(*ptr_).setName(metainfodescription_name_->text().toStdString());
-		(*ptr_).setComment(metainfodescription_comment_->toPlainText().toStdString());
+		addLabel_("Modify MetaInfoDescription information");		
+		addSeparator_();
+		addLineEdit_(metainfodescription_name_, "Name of peak annotations" );
+		addTextEdit_(metainfodescription_comment_, "Comment" );
+			
+		finishAdding_();
+	}
+	
+	void MetaInfoDescriptionVisualizer::update_()
+	{
+	  metainfodescription_name_->setText(temp_.getName().c_str() );
+		metainfodescription_comment_->setText(temp_.getComment().c_str() );
+	}
+	
+	void MetaInfoDescriptionVisualizer::store()
+	{
+		ptr_->setName(metainfodescription_name_->text().toStdString());
+		ptr_->setComment(metainfodescription_comment_->toPlainText().toStdString());
 					
-		tempMetaInfoDescription_ = (*ptr_);
-		
+		temp_ = (*ptr_);
 	}
-	catch(exception& e)
+	
+	void MetaInfoDescriptionVisualizer::undo_()
 	{
-		std::cout<<"Error while trying to store the new MetaInfoDescription data. "<<e.what()<<endl;
+		update_();
 	}
-}
-
-void MetaInfoDescriptionVisualizer::reject_()
-{
-	try
-	{
-		load(tempMetaInfoDescription_);
-	}
-	catch(exception e)
-	{
-		cout<<"Error while trying to restore original MetaInfoDescription data. "<<e.what()<<endl;
-	} 
-}
 
 }

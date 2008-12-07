@@ -39,100 +39,91 @@ START_TEST(InstrumentSettings, "$Id$")
 /////////////////////////////////////////////////////////////
 
 InstrumentSettings* ptr = 0;
-CHECK(InstrumentSettings())
+START_SECTION(InstrumentSettings())
 	ptr = new InstrumentSettings();
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK(~InstrumentSettings())
+START_SECTION(~InstrumentSettings())
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK(IonSource::Polarity getPolarity() const)
+START_SECTION(IonSource::Polarity getPolarity() const)
 	InstrumentSettings tmp;
 	TEST_EQUAL(tmp.getPolarity(),IonSource::POLNULL);
-RESULT
+END_SECTION
 
-CHECK(void setPolarity(IonSource::Polarity polarity))
+START_SECTION(void setPolarity(IonSource::Polarity polarity))
 	InstrumentSettings tmp;
 	tmp.setPolarity(IonSource::NEGATIVE);
 	TEST_EQUAL(tmp.getPolarity(),IonSource::NEGATIVE);
-RESULT
+END_SECTION
 
-CHECK(float getMzRangeStart() const)
+START_SECTION(const std::vector< ScanWindow >&  getScanWindows() const)
 	InstrumentSettings tmp;
-	TEST_REAL_EQUAL(tmp.getMzRangeStart(),0.0);
-RESULT
+  TEST_EQUAL(tmp.getScanWindows().size(),0);
+END_SECTION
 
-CHECK(void setMzRangeStart(float mz_range_start))
+START_SECTION(std::vector< ScanWindow >&  getScanWindows();)
 	InstrumentSettings tmp;
-	tmp.setMzRangeStart(47.11);
-	TEST_REAL_EQUAL(tmp.getMzRangeStart(),47.11);
-RESULT
+  tmp.getScanWindows().resize(1);
+  TEST_EQUAL(tmp.getScanWindows().size(),1);
+END_SECTION
 
-CHECK(float getMzRangeStop() const)
+START_SECTION(void setScanWindows(std::vector< ScanWindow >  scan_windows))
 	InstrumentSettings tmp;
-	TEST_REAL_EQUAL(tmp.getMzRangeStop(),0.0);
-RESULT
+  vector<InstrumentSettings::ScanWindow> vec(17);
+  tmp.setScanWindows(vec);
+  TEST_EQUAL(tmp.getScanWindows().size(),17);
+END_SECTION
 
-CHECK(void setMzRangeStop(float mz_range_stop))
-	InstrumentSettings tmp;
-	tmp.setMzRangeStop(47.11);
-	TEST_REAL_EQUAL(tmp.getMzRangeStop(),47.11);
-RESULT
-
-CHECK(ScanMode getScanMode() const)
+START_SECTION(ScanMode getScanMode() const)
 	InstrumentSettings tmp;
 	TEST_EQUAL(tmp.getScanMode(),InstrumentSettings::UNKNOWN);
-RESULT
+END_SECTION
 
-CHECK(void setScanMode(ScanMode scan_mode))
+START_SECTION(void setScanMode(ScanMode scan_mode))
 	InstrumentSettings tmp;
 	tmp.setScanMode(InstrumentSettings::ZOOM);
 	TEST_EQUAL(tmp.getScanMode(),InstrumentSettings::ZOOM);
-RESULT
+END_SECTION
 
-CHECK(InstrumentSettings(const InstrumentSettings& source))
+START_SECTION(InstrumentSettings(const InstrumentSettings& source))
   InstrumentSettings tmp;
   tmp.setScanMode(InstrumentSettings::ZOOM);
-  tmp.setMzRangeStart(47.11);
-  tmp.setMzRangeStop(47.12);
+  tmp.getScanWindows().resize(1);
   tmp.setPolarity(IonSource::NEGATIVE);
   tmp.setMetaValue("label",String("label"));
   
   InstrumentSettings tmp2(tmp);
   TEST_EQUAL(tmp2.getScanMode(),InstrumentSettings::ZOOM);
-  TEST_REAL_EQUAL(tmp2.getMzRangeStart(),47.11);
-  TEST_REAL_EQUAL(tmp2.getMzRangeStop(),47.12);
+  TEST_EQUAL(tmp2.getScanWindows().size(),1);
   TEST_EQUAL(tmp2.getPolarity(),IonSource::NEGATIVE);  
 	TEST_EQUAL((String)(tmp2.getMetaValue("label")), "label");  
-RESULT
+END_SECTION
 
-CHECK(InstrumentSettings& operator= (const InstrumentSettings& source))
+START_SECTION(InstrumentSettings& operator= (const InstrumentSettings& source))
   InstrumentSettings tmp;
   tmp.setScanMode(InstrumentSettings::ZOOM);
-  tmp.setMzRangeStart(47.11);
-  tmp.setMzRangeStop(47.12);
+  tmp.getScanWindows().resize(1);
   tmp.setPolarity(IonSource::NEGATIVE);
   tmp.setMetaValue("label",String("label"));
   
   InstrumentSettings tmp2;
   tmp2 = tmp;
   TEST_EQUAL(tmp2.getScanMode(),InstrumentSettings::ZOOM);
-  TEST_REAL_EQUAL(tmp2.getMzRangeStart(),47.11);
-  TEST_REAL_EQUAL(tmp2.getMzRangeStop(),47.12);
+  TEST_EQUAL(tmp2.getScanWindows().size(),1);
   TEST_EQUAL(tmp2.getPolarity(),IonSource::NEGATIVE);  
   TEST_EQUAL((String)(tmp2.getMetaValue("label")), "label");  
   
   tmp2 = InstrumentSettings();
   TEST_EQUAL(tmp2.getScanMode(),InstrumentSettings::UNKNOWN);
-  TEST_REAL_EQUAL(tmp2.getMzRangeStart(),0.0);
-  TEST_REAL_EQUAL(tmp2.getMzRangeStop(),0.0);
+  TEST_EQUAL(tmp2.getScanWindows().size(),0);
   TEST_EQUAL(tmp2.getPolarity(),IonSource::POLNULL);  
 	TEST_EQUAL(tmp2.getMetaValue("label").isEmpty(), true);
-RESULT
+END_SECTION
 
-CHECK(bool operator== (const InstrumentSettings& rhs) const)
+START_SECTION(bool operator== (const InstrumentSettings& rhs) const)
   InstrumentSettings edit, empty;
   
   TEST_EQUAL(edit==empty,true);
@@ -140,12 +131,8 @@ CHECK(bool operator== (const InstrumentSettings& rhs) const)
   edit.setScanMode(InstrumentSettings::ZOOM);
   TEST_EQUAL(edit==empty,false);
   
-  edit = empty;	
-  edit.setMzRangeStart(47.11);
-  TEST_EQUAL(edit==empty,false);
-  
-  edit = empty;
-  edit.setMzRangeStop(47.12);
+  edit = empty; 
+  edit.getScanWindows().resize(1);
   TEST_EQUAL(edit==empty,false);
   
   edit = empty;
@@ -155,9 +142,9 @@ CHECK(bool operator== (const InstrumentSettings& rhs) const)
 	edit = empty;
 	edit.setMetaValue("label",String("label"));
 	TEST_EQUAL(edit==empty,false);
-RESULT
+END_SECTION
 
-CHECK(bool operator!= (const InstrumentSettings& rhs) const)
+START_SECTION(bool operator!= (const InstrumentSettings& rhs) const)
   InstrumentSettings edit, empty;
   
   TEST_EQUAL(edit!=empty,false);
@@ -166,11 +153,7 @@ CHECK(bool operator!= (const InstrumentSettings& rhs) const)
   TEST_EQUAL(edit!=empty,true);
   
   edit = empty;	
-  edit.setMzRangeStart(47.11);
-  TEST_EQUAL(edit!=empty,true);
-  
-  edit = empty;
-  edit.setMzRangeStop(47.12);
+  edit.getScanWindows().resize(1);
   TEST_EQUAL(edit!=empty,true);
   
   edit = empty;
@@ -180,7 +163,7 @@ CHECK(bool operator!= (const InstrumentSettings& rhs) const)
 	edit = empty;
 	edit.setMetaValue("label",String("label"));
 	TEST_EQUAL(edit!=empty,true);
-RESULT
+END_SECTION
 
 
 

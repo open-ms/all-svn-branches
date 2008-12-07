@@ -4,8 +4,8 @@
 		<admin>
 			<sampleName></sampleName>
 			<sourceFile>
-				<nameOfFile>file://IMMUNO-LAP-VER/Doktorarbeit/060104_Phosphopeptide/V1_RCC68 + Sorafenib/LCMSMS  (ab 070213) + Autoauswertung/RCC68 W632/vm_070712_rwm.raw</nameOfFile>
-				<pathToFile></pathToFile>
+				<nameOfFile>name</nameOfFile>
+				<pathToFile>path</pathToFile>
 				<fileType>RAWData</fileType>
 			</sourceFile>
 			<contact>
@@ -1054,6 +1054,21 @@
 				<spectrumSettings>
 					<spectrumInstrument msLevel="1">
 						<cvParam cvLabel="psi" accession="PSI:1000039" name="TimeInSeconds" value="4336.86"/>
+					</spectrumInstrument>
+				</spectrumSettings>
+			</spectrumDesc>
+			<mzArrayBinary>
+				<data precision="32" endian="little" length="30">CM8gRGHvIETtESFEmzAhRCpRIUTmbyFEwI0hREStIUT4ziFEoe4hRGkPIkTlMiJEv1AiRCWQIkQPriJExbIiRLnPIkSM7yJEPxAjRB4wI0TKUSNEt3EjRJaPI0SFryNEbNAjRE/vI0QJESRE2TIkROtQJESrcSRE</data>
+			</mzArrayBinary>
+			<intenArrayBinary>
+				<data precision="32" endian="little" length="30">NZ++QUM5qEHWQwRCq7OkQfL4G0Kwqd9BNPW2QVb4gkKm0mlCXPkJQgoVEkIW4I9BBkupQVLIkkEFLJBBzjqTQWGNskHQzINCFoBcQhQ2D0LzpBdCxZzsQdrMjEKVmUNC0szoQUqPl0HbyFhCuEZdQpZQD0LHOZhB</data>
+			</intenArrayBinary>
+		</spectrum>
+		<spectrum id="680">
+			<spectrumDesc>
+				<spectrumSettings>
+					<spectrumInstrument msLevel="2">
+						<cvParam cvLabel="psi" accession="PSI:1000039" name="TimeInSeconds" value="4338.86"/>
 					</spectrumInstrument>
 				</spectrumSettings>
 			</spectrumDesc>

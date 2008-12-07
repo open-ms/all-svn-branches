@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl$
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_ANALYSIS_MAPMATCHING_FEATUREGROUPINGALGORITHMUNLABELED_H
@@ -37,7 +37,7 @@ namespace OpenMS
 		It takes many maps and searches for corresponding features.
 		The corresponding features must be aligned, but may have small position deviations.
 
-	  @ref FeatureGroupingAlgorithmUnlabeled_Parameters are explained on a separate page.  
+	  @htmlinclude OpenMS_FeatureGroupingAlgorithmUnlabeled.parameters
 	  
 		@ingroup FeatureGrouping
 	*/

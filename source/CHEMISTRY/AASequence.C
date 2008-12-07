@@ -228,14 +228,16 @@ namespace OpenMS
 	{
 		// the following losses are from the Zhang paper (AC, 76, 14, 2004)
 		// charge directed
+		/*
 		static const EmpiricalFormula R_44("NH2CHNH"); 
 		static const EmpiricalFormula R_59("CN3H5"); // guanidium
 		static const EmpiricalFormula R_61("N2H4CH");
 		// charge remote
 		static const EmpiricalFormula R_60("N2H4CO"); // combination of NH=C=NH + C-terminal H2O
 		static const EmpiricalFormula H2O("H2O"); // loss from the C-terminus
-		static const EmpiricalFormula NH3("NH3");
+		static const EmpiricalFormula NH3("NH3");*/
 		Map<const EmpiricalFormula*, UInt> losses;
+		/*
 		for (UInt i=0;i!=peptide_.size();++i)
 		{
 			if (peptide_[i]->hasNeutralLoss())
@@ -261,7 +263,7 @@ namespace OpenMS
 			}
 			losses[&H2O] = 1;
 			losses[&NH3] = 1;
-		}		
+		}	*/	
 		return losses;
 	}
 
@@ -311,6 +313,17 @@ namespace OpenMS
 	{
 		return *this + String(peptide);
 	}
+
+	AASequence AASequence::operator + (const Residue* residue) const
+	{
+		if (!ResidueDB::getInstance()->hasResidue(residue))
+		{
+			throw Exception::ElementNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, "given residue");
+		}
+		AASequence seq = *this;
+		seq += residue;
+		return seq;
+	}
 	
 	AASequence& AASequence::operator += (const AASequence& sequence)
 	{
@@ -338,6 +351,17 @@ namespace OpenMS
 		return *this;
 	}
 
+
+	AASequence& AASequence::operator += (const Residue* residue)
+	{
+		if (!ResidueDB::getInstance()->hasResidue(residue))
+		{
+			throw Exception::ElementNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, "given residue");
+		}
+		peptide_.push_back(residue);
+		return *this;
+	}
+	
 	UInt AASequence::size() const
 	{
 		return peptide_.size();
@@ -866,9 +890,9 @@ namespace OpenMS
 					// if the residue db does not have this tag-residue, we add one
 					if (res_ptr == 0)
 					{
-						Residue res(tag, String(""), String(""), EmpiricalFormula(""), EmpiricalFormula(""));
-						res.setMonoWeight(tag.toFloat());
-						res.setAverageWeight(tag.toFloat());
+						Residue res(tag, String(""), String(""), EmpiricalFormula(""));
+						res.setMonoWeight(tag.toFloat(), Residue::Internal);
+						res.setAverageWeight(tag.toFloat(), Residue::Internal);
 						getResidueDB_()->addResidue(res);
 						sequence.push_back(getResidueDB_()->getResidue(tag));
 					}
@@ -897,6 +921,39 @@ namespace OpenMS
 		return ResidueDB::getInstance();
 	}	
 
+	UInt AASequence::getNumberOf(const String& residue) const
+	{
+		UInt count(0);
+		const Residue* res = getResidueDB_()->getResidue(residue);
+		if (valid_)
+		{
+			for (vector<const Residue*>::const_iterator it = peptide_.begin(); it != peptide_.end(); ++it)
+			{
+				if (*it == res)
+				{
+					++count;
+				}
+			}
+		}
+		else
+		{
+			for (String::ConstIterator it = sequence_string_.begin(); it != sequence_string_.end(); ++it)
+			{
+				if (String(*it) == res->getOneLetterCode())
+				{
+					++count;
+				}
+			}
+		}
+
+		return count;
+	}
+
+	UInt AASequence::getNumberOf(const char* residue) const
+	{
+		return getNumberOf(String(residue));
+	}
+	
 	AASequence::AASequence(ConstIterator begin, ConstIterator end)
 		: valid_(true)
 	{

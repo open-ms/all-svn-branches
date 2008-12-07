@@ -32,7 +32,7 @@
 namespace OpenMS 
 {
 	/**
-		@brief Description of a ion source ( Part of a MS Instrument )
+		@brief Description of a ion source (part of a MS Instrument)
 		
 		@ingroup Metadata
 	*/
@@ -131,9 +131,9 @@ namespace OpenMS
       /// Polarity of the ion source
       enum Polarity
       {
-      	POLNULL,	///> Unknown
-      	POSITIVE, ///> Positive polarity
-      	NEGATIVE, ///> Negative polarity
+      	POLNULL,	///< Unknown
+      	POSITIVE, ///< Positive polarity
+      	NEGATIVE, ///< Negative polarity
       	SIZE_OF_POLARITY
       };
 			/// Names of polarity of the ion source
@@ -169,10 +169,25 @@ namespace OpenMS
       /// sets the ionization mode
       void setPolarity(Polarity polarity);
 
+			/**
+				@brief returns the position of this part in the whole Instrument. 
+				
+				Order can be ignored, as long the instrument has this default setup:
+				- one ion source
+				- one or many mass analyzers
+				- one ion detector
+				
+				For more complex instuments, the order should be defined.
+      */
+      Int getOrder() const;
+      /// sets the order
+      void setOrder(Int order);			
+
     protected:
 	    InletType inlet_type_;
 	    IonizationMethod ionization_method_;
 			Polarity polarity_;
+    	Int order_;
 
 	};
 

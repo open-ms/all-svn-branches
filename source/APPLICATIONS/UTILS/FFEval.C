@@ -25,11 +25,8 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
-#include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
-#include <OpenMS/MATH/STATISTICS/Histogram.h>
 #include <OpenMS/MATH/STATISTICS/StatisticFunctions.h>
-#include <OpenMS/MATH/MISC/MathFunctions.h>
 
 using namespace OpenMS;
 using namespace OpenMS::Math;
@@ -42,7 +39,9 @@ using namespace std;
 /**
 	@page FFEval FFEval
 	
-	@brief Evaluation tool for isotope-labeled quantitation experiments.
+	@brief Evaluation tool for for feature detection algorithms.
+	
+	@improvement Handling of truth convex hulls (Marc)
 */
 
 // We do not want this class to show up in the docu:
@@ -53,7 +52,7 @@ class TOPPFFEVal
 {
  public:
 	TOPPFFEVal()
-		: TOPPBase("FFEVal","Validates XML files against an XML schema.")
+		: TOPPBase("FFEVal","Evaluation tool for feature detection algorithms.",false)
 	{
 	}
 	
@@ -62,27 +61,50 @@ class TOPPFFEVal
 	void registerOptionsAndFlags_()
 	{
 		addText_("Input options");
-		registerInputFile_("features","<file>","","Feature result file");
-		setValidFormats_("features", StringList::create("featureXML"));
-		registerInputFile_("manual","<file>","","Manual result file, which contains 6 semicolon-separated columns:\n"
-																						"RT, m/z, int for feature 1 and RT, m/z, int for feature 2");
-		registerInputFile_("abort_reasons","<file>","","Feature file containing the abort reasons",false);
+		registerInputFile_("in","<file>","","Feature input file, which contains the data to be tested against the truth file.");
+		setValidFormats_("in", StringList::create("featureXML"));
+		registerInputFile_("truth","<file>","","Truth feature file that defines what features should be found.");
+		setValidFormats_("truth", StringList::create("featureXML"));
+		registerOutputFile_("out","<file>","","Feature output file. If given, an annotated input file is written.", false);
+		setValidFormats_("out", StringList::create("featureXML"));
+		registerInputFile_("abort_reasons","<file>","","Feature file containing seeds with abort reasons.",false);
 		setValidFormats_("abort_reasons", StringList::create("featureXML"));
-		registerDoubleOption_("rt_tol","<tol>",100.0,"Maximum allowed retention time deviation",false);
-		registerDoubleOption_("mz_tol","<tol>",0.1,"Maximum allowed m/z deviation",false);
-
-		addText_("Output options");
-		registerOutputFile_("manual_out","<file>","","'manual' feature converted to featureXML",false);
-		registerOutputFile_("unmatched_out","<file>","","unmatched 'manual' feature converted to featureXML",false);
-		registerOutputFile_("ratio_out","<file>","","pairs with big ratio differences",false);
-		registerOutputFile_("intensity_plot","<file>","","Gnuplot file of matched intensities",false);
-		registerOutputFile_("ratio_plot","<file>","","Gnuplot file of matched intensity ratios",false);
+		registerDoubleOption_("rt_tol","<double>",0.15,"Allowed tolerance of RT relative to average feature RT span.", false);
+		setMinFloat_("rt_tol",0);
+		setMaxFloat_("rt_tol",1);
+		registerDoubleOption_("mz_tol","<double>",0.25,"Allowed tolerance in m/z (is divided by charge).", false);
+		setMinFloat_("mz_tol",0);
+		setMaxFloat_("mz_tol",1);
 	}
-
-	String correlation(vector<DoubleReal> a, vector<DoubleReal> b)
+	
+	/// Counts the number of features with meta value @p name equal to @p value
+	UInt count(const FeatureMap<>& map, const String& name, const String& value="")
 	{
-		DoubleReal corr = Math::pearsonCorrelationCoefficient(a.begin(),a.end(),b.begin(),b.end());
-		return String::number(corr,3);
+		UInt count =0;
+		for (UInt i=0; i<map.size(); ++i)
+		{
+			if (map[i].metaValueExists(name))
+			{
+				if (value=="")
+				{
+					++count;
+				}
+				else
+				{
+					if (map[i].getMetaValue(name).toString()==value)
+					{
+						++count;
+					}
+				}
+			} 
+		}
+		return count;
+	}
+	
+	/// Returns the total number and percentage in parentheses
+	String percentage(UInt count, UInt size)
+	{
+		return String(" (") + String::number(100.0*count/size,2) + "%)";
 	}
 
 	String fiveNumbers(vector<DoubleReal> a, UInt decimal_places)
@@ -90,142 +112,111 @@ class TOPPFFEVal
 		sort(a.begin(),a.end());
 		return String::number(a[0],decimal_places) + " " + String::number(a[a.size()/4],decimal_places) + " " + String::number(a[a.size()/2],decimal_places) + " " + String::number(a[(3*a.size())/4],decimal_places) + " " + String::number(a.back(),decimal_places);
 	}
-	
-	String fiveNumberErrors(vector<DoubleReal> a, vector<DoubleReal> b, UInt decimal_places)
-	{
-		vector<DoubleReal> errors;
-		for (UInt i=0; i< a.size(); ++i) errors.push_back(fabs(b[i] - a[i]));
-		return fiveNumbers(errors, decimal_places);
-	}
-
-	String fiveNumberQuotients(vector<DoubleReal> a, vector<DoubleReal> b, UInt decimal_places)
-	{
-		vector<DoubleReal> errors;
-		for (UInt i=0; i< a.size(); ++i) errors.push_back(a[i] / b[i]);
-		return fiveNumbers(errors, decimal_places);
-	}
-
-	String meanError(vector<DoubleReal> a, vector<DoubleReal> b)
-	{
-		DoubleReal sum;
-		for (UInt i=0; i< a.size(); ++i) sum += fabs(b[i] - a[i]);
-		return  String::number(sum/a.size(),3);
-	}
 
 	ExitCodes main_(int , const char**)
 	{
-		//load automatic features
-		FeatureMap<> features_automatic;
-		FeatureXMLFile().load(getStringOption_("features"),features_automatic);
-		features_automatic.sortByPosition();
-		
-		//create manual features
-		TextFile text;		
-		text.load(getStringOption_("manual"));
-		FeatureMap<> features_manual;
-		Feature tmp;		
-		StringList parts;
-		for(UInt i=2; i< text.size(); ++i)
-		{
-			text[i].split(';',parts);
-
-			tmp.setRT(parts[0].toDouble());
-			tmp.setMZ(parts[1].toDouble());		
-			tmp.setIntensity(parts[2].toDouble());
-			features_manual.push_back(tmp);
-
-			tmp.setRT(parts[3].toDouble());
-			tmp.setMZ(parts[4].toDouble());		
-			tmp.setIntensity(parts[5].toDouble());
-			features_manual.push_back(tmp);
-		}
-		features_manual.sortByPosition();
-		if (getStringOption_("manual_out")!="")
-		{
-			FeatureXMLFile().store(getStringOption_("manual_out"),features_manual);
-		}
-		
-		//load abort reasons
+		//load data
+		FeatureMap<> features_in,features_truth;
+		FeatureXMLFile().load(getStringOption_("in"),features_in);
+		features_in.sortByPosition();
+		FeatureXMLFile().load(getStringOption_("truth"),features_truth);
+		features_truth.sortByPosition();
 		FeatureMap<> abort_reasons;
 		if(getStringOption_("abort_reasons")!="")
 		{
 			FeatureXMLFile().load(getStringOption_("abort_reasons"),abort_reasons);
 		}
-		
-		//compare seek manual feature in automatic feature map
 		DoubleReal mz_tol = getDoubleOption_("mz_tol");
-		DoubleReal rt_tol = getDoubleOption_("rt_tol");
-		UInt matched_single = 0;
-		UInt matched_multi = 0;
-		UInt matched_pairs = 0;
-		vector<DoubleReal> a_int, m_int, a_ratio, m_ratio, rt_diffs, mz_diffs;
-		vector<DoubleReal> matched_int, unmatched_int;
-		Feature last_best_match;
-		FeatureMap<> unmatched_features;
-		FeatureMap<> ratio_pairs;
-		Map<String,UInt> abort_strings;
-		for (UInt m=0; m<features_manual.size(); ++m)
+		
+		//determine average RT tolerance:
+		//median feature RT span times given factor
+		vector<DoubleReal> rt_spans;
+		for (UInt t=0; t<features_in.size(); ++t)
 		{
-			const Feature& f_m =  features_manual[m];
-			//cout << "manual: " << f_m.getRT() << "/" << f_m.getMZ() << endl;
+			rt_spans.push_back(features_in[t].getConvexHull().getBoundingBox().width());
+		}
+		sort(rt_spans.begin(), rt_spans.end());
+		DoubleReal rt_tol = getDoubleOption_("rt_tol")*rt_spans[rt_spans.size()/2];
+		
+		//general statistics
+		std::vector<DoubleReal> ints_t;
+		std::vector<DoubleReal> ints_i;
+		std::vector<DoubleReal> ints_found;
+		std::vector<DoubleReal> ints_missed;
+		Map<String,UInt> abort_strings;
+
+		for (UInt m=0; m<features_truth.size(); ++m)
+		{
+			Feature& f_t =  features_truth[m];
 			UInt match_count = 0;
-			DoubleReal best_score = 0;
-			Feature best_match;
-			for (UInt a=0; a<features_automatic.size(); ++a)
+			bool correct_charge = false;
+			bool exact_centroid_match = false;
+			Feature last_match;
+			for (UInt a=0; a<features_in.size(); ++a)
 			{
-				const Feature& f_a =  features_automatic[a];
-				if ( f_a.getRT()< (f_m.getRT() + rt_tol) 
-					&& f_a.getRT()> (f_m.getRT() - rt_tol)
-					&& f_a.getMZ()< (f_m.getMZ() + mz_tol)
-					&& f_a.getMZ()> (f_m.getMZ() - mz_tol))
+				const Feature& f_i =  features_in[a];
+				//RT match
+				if (fabs(f_i.getRT()-f_t.getRT())<rt_tol)
 				{
-					++match_count;
-					DoubleReal score = (1.0-fabs(f_a.getMZ()-f_m.getMZ())/mz_tol) * (1.0-fabs(f_a.getRT()-f_m.getRT())/rt_tol);
-					if (score > best_score)
+					DoubleReal charge_mz_tol = mz_tol / f_t.getCharge();
+					//Exact m/z match
+					if (fabs(f_i.getMZ()-f_t.getMZ())<charge_mz_tol)
 					{
-						best_score = score;
-						best_match = f_a;
+						++match_count;
+						last_match = f_i;
+						exact_centroid_match = true;
+						if(f_i.getCharge()==f_t.getCharge()) correct_charge = true;
 					}
-					//cout << " - match: " << f_a.getRT() << "/" << f_a.getMZ() << " score: " <<  score << endl;	
+					//Centroid is one trace off, but still contained in the convex hull
+					else if (f_i.getConvexHull().encloses(f_t.getPosition())
+									 &&
+									 (
+									  fabs(f_i.getMZ()+1.0/f_t.getCharge()-f_t.getMZ())<charge_mz_tol
+									  ||
+									  fabs(f_i.getMZ()-1.0/f_t.getCharge()-f_t.getMZ())<charge_mz_tol
+									 )
+						      )
+					{
+						++match_count;
+						last_match = f_i;
+						if(f_i.getCharge()==f_t.getCharge()) correct_charge = true;
+					}
 				}
 			}
-			if (match_count==1) ++matched_single;
-			if (match_count>1) ++matched_multi;
 			
-			//calculate statistics with the best match only
-			if (match_count>=1)
+			f_t.setMetaValue("matches",match_count);
+			if (match_count==1)
 			{
-				a_int.push_back(best_match.getIntensity());
-				m_int.push_back(f_m.getIntensity());
-				matched_int.push_back(f_m.getIntensity());
-				//found pair
-				if (Math::isOdd(m) && last_best_match!=Feature())
+				//flag matched feature with addition information
+				if (correct_charge)
 				{
-					++matched_pairs;
-					DoubleReal a_r = best_match.getIntensity()/last_best_match.getIntensity();
-					a_ratio.push_back(a_r);
-					DoubleReal m_r = f_m.getIntensity()/features_manual[m-1].getIntensity();
-					m_ratio.push_back(m_r);
-					rt_diffs.push_back(best_match.getRT()-last_best_match.getRT());
-					mz_diffs.push_back(best_match.getMZ()-last_best_match.getMZ());
-					
-					//store pairs with too big deviation from the manual ratio
-					if (a_r/m_r < 0.5 || a_r/m_r > 2.0)
-					{
-						ratio_pairs.push_back(f_m);
-						ratio_pairs.back().setMetaValue("automatic_int", best_match.getIntensity());
-						ratio_pairs.back().setMetaValue("ratio_quotient", a_r/m_r);
-						ratio_pairs.back().setMetaValue("automatic_label", String(best_match.getMetaValue("label")));
-						ratio_pairs.push_back(features_manual[m-1]);
-						ratio_pairs.back().setMetaValue("automatic_int", last_best_match.getIntensity());
-						ratio_pairs.back().setMetaValue("ratio_quotient", a_r/m_r);
-						ratio_pairs.back().setMetaValue("automatic_label", String(last_best_match.getMetaValue("label")));
-					}
+					f_t.setMetaValue("correct_charge",String("true"));
+					f_t.setMetaValue("intensity_ratio",last_match.getIntensity()/f_t.getIntensity());
 				}
+				else
+				{
+					f_t.setMetaValue("correct_charge",String("false"));
+				}
+				
+				if (exact_centroid_match)
+				{
+					f_t.setMetaValue("exact_centroid_match",String("true"));
+				}
+				else
+				{
+					f_t.setMetaValue("exact_centroid_match",String("false"));
+				}
+			}
+			//evaluation of correct features only
+			if (match_count==1 && correct_charge)
+			{
+				ints_t.push_back(f_t.getIntensity());
+				ints_i.push_back(last_match.getIntensity());
+				ints_found.push_back(f_t.getIntensity());
 			}
 			else
 			{
-				unmatched_int.push_back(f_m.getIntensity());
+				ints_missed.push_back(f_t.getIntensity());
 				
 				//look up the abort reason of the nearest seed
 				DoubleReal best_score_ab = 0;
@@ -233,12 +224,10 @@ class TOPPFFEVal
 				for (UInt b=0; b<abort_reasons.size(); ++b)
 				{
 					const Feature& f_ab =  abort_reasons[b];
-					if ( f_ab.getRT()< (f_m.getRT() + rt_tol) 
-						&& f_ab.getRT()> (f_m.getRT() - rt_tol)
-						&& f_ab.getMZ()< (f_m.getMZ() + mz_tol)
-						&& f_ab.getMZ()> (f_m.getMZ() - mz_tol))
+					if ( fabs(f_ab.getRT() - f_t.getRT()) <= rt_tol
+						&& fabs(f_ab.getMZ() - f_t.getMZ()) <= mz_tol) 
 					{
-						DoubleReal score = (1.0-fabs(f_ab.getMZ()-f_m.getMZ())/mz_tol) * (1.0-fabs(f_ab.getRT()-f_m.getRT())/rt_tol);
+						DoubleReal score = (1.0-fabs(f_ab.getMZ()-f_t.getMZ())/mz_tol) * (1.0-fabs(f_ab.getRT()-f_t.getRT())/rt_tol);
 						if (score > best_score_ab)
 						{
 							best_score_ab = score;
@@ -249,9 +238,7 @@ class TOPPFFEVal
 				if (reason=="")
 				{
 					reason = "No seed found";
-					unmatched_features.push_back(features_manual[m]);
 				}
-				
 				if (abort_strings.has(reason))
 				{
 					abort_strings[reason]++;	
@@ -261,71 +248,68 @@ class TOPPFFEVal
 					abort_strings[reason] = 1;
 				}
 			}
-			
-			//store last best match (for pairs)
-			last_best_match = best_match;
-		}
-		
-		cout << endl;
-		cout << "feature detection statistics:" << endl;
-		cout << "=============================" << endl;
-		cout << "  manual features: " << features_manual.size() << endl;
-		cout << "  matches: " << matched_single + matched_multi << " (" << String::number(100.0*(matched_single + matched_multi)/features_manual.size(),2) << "%)" << endl;
-		cout << "    one match: " << matched_single << " (" << String::number(100.0*matched_single/features_manual.size(),2) << "%)" << endl;
-		cout << "    multiple matches: " << matched_multi << " (" << String::number(100.0*matched_multi/features_manual.size(),2) << "%)" << endl;
-		cout << "  intensity correlation: " << correlation(m_int,a_int) << endl;
-		cout << endl;
-		cout << "  intensity of matched: " << fiveNumbers(matched_int,1) << endl;
-		cout << "  intensity of unmatched: " << fiveNumbers(unmatched_int,1) << endl;
-		cout << endl;		
-		cout << "  reasons for unmatched features:" << endl;
-		for (Map<String,UInt>::iterator it=abort_strings.begin(); it!=abort_strings.end(); ++it)
-		{
-			cout << "    " << String(it->second).fillLeft(' ',3) << ": " << it->first << endl;
-		}
-		cout << endl << endl;
-		cout << "pair detection statistics:" << endl;
-		cout << "==========================" << endl;
-		cout << "  manual pairs: " <<0.5*features_manual.size() << endl;
-		cout << "  found: " << matched_pairs << " (" << String::number(100.0*(matched_pairs)/(0.5*features_manual.size()),2) << "%)" << endl;
-		cout << "  relative pair ratios: " << fiveNumberQuotients(m_ratio,a_ratio,3) << endl;
-		cout << "  pair distance RT : " << fiveNumbers(rt_diffs, 2) << endl;
-		cout << "  pair distance m/z: " << fiveNumbers(mz_diffs, 2) << endl;
-		
-		//write intensity pair file
-		if (getStringOption_("intensity_plot")!="")
-		{
-			TextFile int_out;
-			int_out.push_back("#manual automatic");		
-			for (UInt i=0; i< a_int.size(); ++i)
-			{
-				int_out.push_back(String(m_int[i]) + " " + a_int[i]);		
-			}
-			int_out.store(getStringOption_("intensity_plot"));
 		}
 
-		//write intensity pair file
-		if (getStringOption_("ratio_plot")!="")
-		{
-			TextFile ratio_plot;
-			ratio_plot.push_back("#manual automatic");		
-			for (UInt i=0; i< a_ratio.size(); ++i)
-			{
-				ratio_plot.push_back(String(m_ratio[i]) + " " + a_ratio[i]);		
-			}
-			ratio_plot.store(getStringOption_("ratio_plot"));
-		}
+		//------------------------ general statistics ------------------------
+		cout << endl;
+		cout << "general information:" << endl;
+		cout << "====================" << endl;
+		cout << "input features: " << features_in.size() << endl;		
+		cout << "truth features: " << features_truth.size() << endl;		
 
-		//write unmatched manual features
-		if (getStringOption_("unmatched_out")!="")
+		//------------------------ matches ------------------------
+		cout << endl;
+		cout << "feature matching statistics:" << endl;
+		cout << "============================" << endl;
+		UInt tmp = count(features_truth,"matches","0");
+		cout << "no match: " << tmp << percentage(tmp,features_truth.size()) << endl;
+		tmp = count(features_truth,"matches","1");
+		cout << "one match: " << tmp << percentage(tmp,features_truth.size()) << endl;
+		tmp = count(features_truth,"correct_charge","true");
+		cout << " - correct charge: " << tmp << percentage(tmp,features_truth.size()) << endl;
+		tmp = count(features_truth,"exact_centroid_match","true");
+		cout << " - exact centroid match: " << tmp << percentage(tmp,features_truth.size()) << endl;
+		tmp = features_truth.size() - count(features_truth,"matches","0") - count(features_truth,"matches","1");
+		cout << "multiple matches: " << tmp << percentage(tmp,features_truth.size()) << endl;
+		if (abort_reasons.size())
 		{
-			FeatureXMLFile().store(getStringOption_("unmatched_out"),unmatched_features);
+			cout << "reasons for unmatched features:" << endl;
+			for (Map<String,UInt>::iterator it=abort_strings.begin(); it!=abort_strings.end(); ++it)
+			{
+				cout << " - " << String(it->second).fillLeft(' ',4) << ": " << it->first << endl;
+			}
 		}
+		//------------------------ intensity ------------------------
+		cout << endl;
+		cout << "intensity statistics:" << endl;
+		cout << "=====================" << endl;
+		cout << "correlation of found features: " << pearsonCorrelationCoefficient(ints_i.begin(),ints_i.end(),ints_t.begin(),ints_t.end()) << endl;
+		cout << "intensity distribution of found: " << fiveNumbers(ints_found,1) << endl;
+		cout << "intensity distribution of missed: " << fiveNumbers(ints_missed,1) << endl;
 		
-		//write pairs with too much deviation of the ratio
-		if (getStringOption_("ratio_out")!="")
+		//------------------------ charges ------------------------
+		cout << endl;
+		cout << "charge matches statistics:" << endl;
+		cout << "===========================" << endl;
+		Map<UInt,UInt> present_charges,found_charges;
+		for (UInt i=0;i<features_truth.size(); ++i)
 		{
-			FeatureXMLFile().store(getStringOption_("ratio_out"),ratio_pairs);
+			UInt charge = features_truth[i].getCharge();
+			present_charges[charge]++;
+			if (features_truth[i].getMetaValue("correct_charge").toString()=="true")
+			{
+				found_charges[charge]++;
+			}
+		}
+ 		for (Map<UInt,UInt>::const_iterator it=present_charges.begin(); it!=present_charges.end(); ++it)
+ 		{
+ 			cout << "charge " << it->first << ": " << found_charges[it->first] << "/" << it->second << percentage(found_charges[it->first],it->second) << endl;
+ 		}
+		
+		//write output
+		if (getStringOption_("out")!="")
+		{
+			FeatureXMLFile().store(getStringOption_("out"),features_truth);
 		}
 		
 		return EXECUTION_OK;

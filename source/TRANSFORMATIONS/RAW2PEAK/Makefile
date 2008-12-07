@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Eva Lange $
-# --------------------------------------------------------------------------
 
 
 DIRECTORY=TRANSFORMATIONS/RAW2PEAK
@@ -32,7 +30,6 @@ include ../../config_defs.mak
 
 CPP_SOURCES= \
 	OptimizePick.C\
-	PeakPicker.C\
 	ContinuousWaveletTransform.C\
 	ContinuousWaveletTransformNumIntegration.C\
 	PeakShape.C\

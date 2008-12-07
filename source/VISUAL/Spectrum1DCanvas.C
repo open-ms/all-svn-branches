@@ -105,7 +105,7 @@ namespace OpenMS
 	
 	void Spectrum1DCanvas::dataToWidget(const PeakType& peak, QPoint& point, bool flipped)
 	{
-		dataToWidget(peak.getMZ(), snap_factor_*percentage_factor_*peak.getIntensity(), point, flipped);
+		dataToWidget(peak.getMZ(), getSnapFactor()*percentage_factor_*peak.getIntensity(), point, flipped);
 	}
 	
 	void Spectrum1DCanvas::dataToWidget(float x, float y, QPoint& point, bool flipped)
@@ -535,7 +535,12 @@ namespace OpenMS
 		
 		//update range area
 		recalculateRanges_(0,2,1);
-				
+		overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
+		float width = overall_data_range_.width();
+		overall_data_range_.setMinX(overall_data_range_.minX() - 0.002 * width);
+		overall_data_range_.setMaxX(overall_data_range_.maxX() + 0.002 * width);
+		overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
+		
 		zoomClear_();
 		if (overall_data_range_.maxX() - overall_data_range_.minX() <1.0)
 		{
@@ -925,14 +930,19 @@ namespace OpenMS
 		}
 	
 		// sort peaks in accending order of position
-		currentPeakData_()[0].getContainer().sortByPosition();
+		currentPeakData_()[0].sortByPosition();
 		
 		//update nearest peak
 		selected_peak_.clear();
 		
 		//update ranges
 		recalculateRanges_(0,2,1);
-				
+		overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
+		float width = overall_data_range_.width();
+		overall_data_range_.setMinX(overall_data_range_.minX() - 0.002 * width);
+		overall_data_range_.setMaxX(overall_data_range_.maxX() + 0.002 * width);
+		overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
+		
 		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
 		
 		if (getLayerCount()==2)
@@ -965,11 +975,11 @@ namespace OpenMS
 					local_max = tmp->getIntensity();
 				}
 			}
-			snap_factor_ = overall_data_range_.max()[1]/local_max;
+			snap_factors_[0] = overall_data_range_.max()[1]/local_max;
 		}
 		else
 		{ 
-			snap_factor_ = 1.0;
+			snap_factors_[0] = 1.0;
 		}  	
   }
 
@@ -1189,7 +1199,16 @@ namespace OpenMS
 
 	void Spectrum1DCanvas::saveCurrentLayer(bool visible)
 	{
-		QString file_name = QFileDialog::getSaveFileName(this, "Save file", param_.getValue("default_path").toQString(),"mzData files (*.mzData);;All files (*)");
+		const LayerData& layer = getCurrentLayer();
+		
+		//determine proposed filename
+		String proposed_name = param_.getValue("default_path");
+    if (visible==false && layer.filename!="")
+    {
+    	proposed_name = layer.filename;
+    }
+		
+		QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzData files (*.mzData);;All files (*)");
 
 		if (!file_name.isEmpty())
 		{
@@ -1201,7 +1220,7 @@ namespace OpenMS
 		  }
 		  else
 		  {
-				MzDataFile().store(file_name,getCurrentLayer().peaks);
+				MzDataFile().store(file_name,layer.peaks);
 		  }
 		}
 	}
@@ -1240,8 +1259,14 @@ namespace OpenMS
 		
 		//update ranges
 		recalculateRanges_(0,2,1);
+		overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
+		float width = overall_data_range_.width();
+		overall_data_range_.setMinX(overall_data_range_.minX() - 0.002 * width);
+		overall_data_range_.setMaxX(overall_data_range_.maxX() + 0.002 * width);
+		overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
 		
 		resetZoom();
+		modificationStatus_(i, false);
 	}
 
 	void Spectrum1DCanvas::translateLeft_()

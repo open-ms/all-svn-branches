@@ -21,8 +21,6 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Ole Schulz-Trieglaff, Clemens Groepl $
-# --------------------------------------------------------------------------
 
 DIRECTORY=TRANSFORMATIONS/FEATUREFINDER
 
@@ -60,11 +58,11 @@ CPP_SOURCES=\
 	FeatureFinderAlgorithmSimplest.C\
 	FeatureFinderAlgorithmSimple.C\
 	FeatureFinderAlgorithmPicked.C\
+	FeatureFinderAlgorithmWatershed.C\
 	IsotopeWavelet.C\
 	FeatureFinderAlgorithmIsotopeWavelet.C\
-  FeatureFinderAlgorithmWavelet.C
-
-
+  FeatureFinderAlgorithmWavelet.C\
+#  FeatureFinderAlgorithmComposite.C
 
 include ../../common.mak
 -include .Dependencies

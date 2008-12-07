@@ -29,6 +29,7 @@
 ///////////////////////////
 #include <OpenMS/ANALYSIS/MAPMATCHING/LabeledPairFinder.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
+#include <OpenMS/FORMAT/FeatureXMLFile.h>
 
 
 ///////////////////////////
@@ -42,14 +43,14 @@ START_TEST(LabeledPairFinder, "$Id LabeledPairFinder_test.C 139 2006-07-14 10:08
 /////////////////////////////////////////////////////////////
 
 LabeledPairFinder* ptr = 0;
-CHECK((LabeledPairFinder()))
+START_SECTION((LabeledPairFinder()))
 	ptr = new LabeledPairFinder();
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((virtual ~LabeledPairFinder()))
+START_SECTION((virtual ~LabeledPairFinder()))
 	delete ptr;
-RESULT
+END_SECTION
 
 FeatureMap<> features;
 features.resize(10);
@@ -107,9 +108,10 @@ features[9].setMZ(6.0f);
 features[9].setCharge(1);
 features[9].setOverallQuality(1);
 
-CHECK((virtual void run(const std::vector<ConsensusMap>& input_maps, ConsensusMap& result_map)))
+START_SECTION((virtual void run(const std::vector<ConsensusMap>& input_maps, ConsensusMap& result_map)))
 	LabeledPairFinder pm;
 	Param p;
+	p.setValue("rt_estimate","false");
 	p.setValue("rt_pair_dist",0.4);
 	p.setValue("rt_dev_low",1.0);
 	p.setValue("rt_dev_high",2.0);
@@ -130,12 +132,34 @@ CHECK((virtual void run(const std::vector<ConsensusMap>& input_maps, ConsensusMa
 
 	TEST_EQUAL(output.size(),1);
 	ABORT_IF(output.size()!=1)
-	TEST_REAL_EQUAL(output[0].begin()->getMZ(),1.0f);
-	TEST_REAL_EQUAL(output[0].begin()->getRT(),1.0f);
-	TEST_REAL_EQUAL(output[0].rbegin()->getMZ(),5.0f);
-	TEST_REAL_EQUAL(output[0].rbegin()->getRT(),1.5f);
-	TEST_REAL_EQUAL(output[0].getQuality(),0.959346);
-RESULT
+	TEST_REAL_SIMILAR(output[0].begin()->getMZ(),1.0f);
+	TEST_REAL_SIMILAR(output[0].begin()->getRT(),1.0f);
+	TEST_REAL_SIMILAR(output[0].rbegin()->getMZ(),5.0f);
+	TEST_REAL_SIMILAR(output[0].rbegin()->getRT(),1.5f);
+	TEST_REAL_SIMILAR(output[0].getQuality(),0.959346);
+	TEST_EQUAL(output[0].getCharge(),1);
+	
+	//test automated RT parameter estimation
+	LabeledPairFinder pm2;
+	Param p2;
+	p2.setValue("rt_estimate","true");
+	p2.setValue("mz_pair_dist",4.0);
+	p2.setValue("mz_dev",0.2);
+	pm2.setParameters(p2);
+	
+	FeatureMap<> features2;
+	FeatureXMLFile().load("data/LabeledPairFinder.featureXML",features2);
+	
+	ConsensusMap output2;
+	vector<ConsensusMap> input2(1);
+	ConsensusMap::convert(5,features2,input2[0]);
+	output2.getFileDescriptions()[5].label = "light";
+	output2.getFileDescriptions()[5].filename = "filename";
+	output2.getFileDescriptions()[8] = output.getFileDescriptions()[5];
+	output2.getFileDescriptions()[8].label = "heavy";
+	pm2.run(input2,output2);
+	TEST_EQUAL(output2.size(),250);
+END_SECTION
 
 
 /////////////////////////////////////////////////////////////

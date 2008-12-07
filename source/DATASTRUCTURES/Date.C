@@ -63,6 +63,7 @@ namespace OpenMS
 
 	void Date::set(const String& date)
 	{
+		clear();
 		
 		//check for format (german/english)
 		if (date.has('.'))
@@ -77,10 +78,7 @@ namespace OpenMS
 		{
 			QDate::operator=(QDate::fromString(date.c_str(), "yyyy-MM-dd"));
 		}
-		else
-		{
-			throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__, date, "Is no valid german, english or iso date");
-		}
+
 		if (!isValid())
 		{
 			throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__, date, "Is no valid german, english or iso date");
@@ -95,21 +93,18 @@ namespace OpenMS
 		}
 	}
 
-	void Date::today()
+	Date Date::today()
 	{
-		QDate::operator=(QDate::currentDate());
+		return QDate::currentDate();
 	}
 
-	void Date::get(String& date) const
+	String Date::get() const
 	{
 		if (QDate::isValid())
 		{
-			date = toString("yyyy-MM-dd").toStdString();
+			return toString("yyyy-MM-dd");
 		}
-		else
-		{
-			date = "0000-00-00";
-		}
+		return "0000-00-00";
 	}
 	
 	void Date::get(UInt& month, UInt& day, UInt& year) const

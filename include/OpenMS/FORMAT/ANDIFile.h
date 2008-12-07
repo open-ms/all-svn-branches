@@ -39,7 +39,7 @@ namespace OpenMS
   /**
   	@brief File adapter for ANDI/MS files
   	
-  	@todo Fix bugs on 64 bit systems (Hiwi)
+  	@improvement Fix bugs on 64 bit systems (Hiwi)
   	
   	@ingroup FileIO
   */
@@ -57,8 +57,8 @@ namespace OpenMS
 
       	@p map has to be a MSExperiment or have the same interface.
 
-				@exception Exception::FileNotFound is thrown  if the file could not be opened
-				@exception Exception::ParseError is thrown  if an error occurs during parsing
+				@exception Exception::FileNotFound is thrown if the file could not be opened
+				@exception Exception::ParseError is thrown if an error occurs during parsing
       */
       template <typename MapType>
       void load(const String& filename, MapType& map)
@@ -69,7 +69,10 @@ namespace OpenMS
 		    {
 		      throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
 		    }
-
+				
+				map.reset();
+				map.setNativeIDType(ExperimentalSettings::MULTIPLE_PEAK_LISTS);
+				
 				Internal::ANDIHandler<MapType> handler(map,*this);
 				handler.parse(filename);
       }

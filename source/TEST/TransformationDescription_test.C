@@ -44,64 +44,64 @@ using namespace std;
 
 
 TransformationDescription* ptr = 0;
-CHECK((TransformationDescription()))
+START_SECTION((TransformationDescription()))
 	ptr = new TransformationDescription;
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((~TransformationDescription()))
+START_SECTION((~TransformationDescription()))
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK((const String& getName() const))
+START_SECTION((const String& getName() const))
 	TransformationDescription td;
 	TEST_STRING_EQUAL(td.getName(),"")
-RESULT
+END_SECTION
 
-CHECK((void setName(const String& name)))
+START_SECTION((void setName(const String& name)))
 	TransformationDescription td;
 	td.setName("bla");
 	TEST_STRING_EQUAL(td.getName(),"bla")
 
-RESULT
+END_SECTION
 
-CHECK((const Param& getParameters() const))
+START_SECTION((const Param& getParameters() const))
 	TransformationDescription td;
 	TEST_EQUAL(td.getParameters(),Param())
-RESULT
+END_SECTION
 
-CHECK((DoubleReal getParam(const String& name) const))
+START_SECTION((DoubleReal getParam(const String& name) const))
 	TransformationDescription td;
 	TEST_EXCEPTION(Exception::ElementNotFound, td.getParam("bla"))
-RESULT
+END_SECTION
 
-CHECK((void setParam(const String& name, DoubleReal value)))
+START_SECTION((void setParam(const String& name, DoubleReal value)))
 	TransformationDescription td;
 	td.setParam("bla",4.5);
-	TEST_REAL_EQUAL(td.getParam("bla"),4.5)
-RESULT
+	TEST_REAL_SIMILAR(td.getParam("bla"),4.5)
+END_SECTION
 
-CHECK((void setParameters(const Param& param)))
+START_SECTION((void setParameters(const Param& param)))
 	TransformationDescription td;
 	Param p;
 	p.setValue("int",5);
 	td.setParameters(p);
 	TEST_EQUAL((Int)td.getParameters().size(),1)
 	TEST_EQUAL((Int)td.getParameters().getValue("int"),5)
-RESULT
+END_SECTION
 
 
 TransformationDescription::PairVector pairs;
 pairs.push_back(make_pair(1.2,5.2));
-pairs.push_back(make_pair(2.2,6.25));
 pairs.push_back(make_pair(3.2,7.3));
+pairs.push_back(make_pair(2.2,6.25));
 
-CHECK(const PairVector& getPairs() const)
+START_SECTION(const PairVector& getPairs() const)
 	TransformationDescription td;
 	TEST_EQUAL(td.getPairs().size(),0)
-RESULT
+END_SECTION
 
-CHECK(void setPairs(const PairVector& pairs))	
+START_SECTION(void setPairs(const PairVector& pairs))	
 {
 	TransformationDescription td;
 	td.setPairs(pairs);
@@ -112,9 +112,9 @@ CHECK(void setPairs(const PairVector& pairs))
 	td.setPairs(pairs_empty);
 	TEST_EQUAL(td.getPairs().size(),0)
 }
-RESULT
+END_SECTION
 
-CHECK((TransformationDescription(const TransformationDescription& rhs)))
+START_SECTION((TransformationDescription(const TransformationDescription& rhs)))
 {
 	TransformationDescription td;
 	td.setName("dummy");
@@ -125,9 +125,9 @@ CHECK((TransformationDescription(const TransformationDescription& rhs)))
 	TEST_EQUAL(td.getParameters()==td.getParameters(),true)
 	TEST_EQUAL(td.getPairs().size(),3)
 }
-RESULT
+END_SECTION
 
-CHECK((TransformationDescription& operator = (const TransformationDescription& rhs)))
+START_SECTION((TransformationDescription& operator = (const TransformationDescription& rhs)))
 {
 	TransformationDescription td;
 	td.setName("dummy");
@@ -140,9 +140,9 @@ CHECK((TransformationDescription& operator = (const TransformationDescription& r
 	TEST_EQUAL(td2.getParameters()==td.getParameters(),true);
 	TEST_EQUAL(td2.getPairs()==td.getPairs(),true);
 }
-RESULT
+END_SECTION
 
-CHECK((void clear()))
+START_SECTION((void clear()))
 {
 	TransformationDescription td;
 
@@ -153,7 +153,7 @@ CHECK((void clear()))
 
 	DoubleReal value = 5.0;
 	td.apply(value);
-	TEST_REAL_EQUAL(value,57.12);
+	TEST_REAL_SIMILAR(value,57.12);
 
  	TEST_STRING_EQUAL(td.getName(),"linear");
 	TEST_EQUAL((DoubleReal)td.getParameters().getValue("slope"),2.0);
@@ -169,39 +169,92 @@ CHECK((void clear()))
 	TEST_EQUAL(td.getPairs().size(),0);
 	TEST_EXCEPTION(Exception::IllegalArgument,td.apply(value));
 }
-RESULT
+END_SECTION
 
-CHECK((void apply(DoubleReal& value)))
+START_SECTION((void apply(DoubleReal& value)))
+{
 	DoubleReal value = 5.0;
 	TransformationDescription td;
 	
 	//test missing name and parameters
- 	TEST_EXCEPTION(Exception::IllegalArgument,td.apply(value))
-
+ 	TEST_EXCEPTION(Exception::IllegalArgument,td.apply(value));
+	
 	td.setName("bla");
-	TEST_EXCEPTION(Exception::IllegalArgument,td.apply(value))
+	TEST_EXCEPTION(Exception::IllegalArgument,td.apply(value));
 	
 	//test with identity
 	td.setName("none");
 	td.apply(value);
-	TEST_REAL_EQUAL(value,5.0);
+	TEST_REAL_SIMILAR(value,5.0);
 	
 	//test for missing parameter
 	td.setName("linear");
 	td.setParam("slope",1.0);	
-	TEST_EXCEPTION(Exception::IllegalArgument,td.apply(value))
+	TEST_EXCEPTION(Exception::IllegalArgument,td.apply(value));
 	
 	//real test (linear, identity)
 	td.setParam("intercept",0.0);
-	TEST_REAL_EQUAL(value,5.0);
-
+	TEST_REAL_SIMILAR(value,5.0);
+	
 	//real test (linear, no identity)
 	td.setParam("slope",2.0);
 	td.setParam("intercept",47.12);
 	td.apply(value);
-	TEST_REAL_EQUAL(value,57.12);
-		
-RESULT
+	TEST_REAL_SIMILAR(value,57.12);
+
+	td.clear();
+	td.setName("interpolated_linear");
+	TEST_EXCEPTION(Exception::IllegalArgument,td.apply(value));
+	td.setPairs(pairs);
+	td.apply(value);
+
+	// VALUES FROM ABOVE:
+	// pairs.push_back(make_pair(1.2,5.2));
+	// pairs.push_back(make_pair(2.2,6.25));
+	// pairs.push_back(make_pair(3.2,7.3));
+
+	value = 0.2;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value,4.15);
+
+	value = 0.7;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value,4.675);
+
+	value = 1.2;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value,5.2);
+
+	value = 1.45;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value,5.4625);
+
+	value = 1.7;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value,5.725);
+
+	value = 2.2;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value,6.25);
+
+	value = 2.45;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value, 6.5125);
+
+	value = 2.7;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value,6.775);
+
+	value = 3.2;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value,7.3);
+
+	value = 4.2;
+	td.apply(value);
+	TEST_REAL_SIMILAR(value,8.35);
+
+}
+END_SECTION
 
 
 /////////////////////////////////////////////////////////////

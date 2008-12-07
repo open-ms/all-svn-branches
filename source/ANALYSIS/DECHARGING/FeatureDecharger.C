@@ -31,6 +31,6 @@ using namespace std;
 namespace OpenMS 
 {
   
-  FeatureDecharger default_fdc;
+  FeatureDecharger default_fd123;
   
 } // namespace OpenMS

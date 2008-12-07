@@ -36,38 +36,38 @@
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(DPeak<D>, "$Id$")
+START_TEST(Param, "$Id$")
 
 //////////////////// Param::ParamEntry /////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
 Param::ParamEntry* pe_ptr =0;
-CHECK((Param::ParamEntry()))
+START_SECTION((Param::ParamEntry()))
 	pe_ptr = new Param::ParamEntry();
 	TEST_NOT_EQUAL(pe_ptr,0)
-RESULT
+END_SECTION
 
-CHECK((~Param::ParamEntry()))
+START_SECTION((~Param::ParamEntry()))
 	delete pe_ptr;
-RESULT
+END_SECTION
 
-CHECK((Param::ParamEntry(const String& n, const DataValue& v, const String& d, bool u)))
-	Param::ParamEntry pe("n","v","d",true);
+START_SECTION((Param::ParamEntry(const String& n, const DataValue& v, const String& d, bool u)))
+	Param::ParamEntry pe("n","v","d",StringList::create("advanced"));
 	TEST_EQUAL(pe.name,"n")
 	TEST_EQUAL(pe.description,"d")
 	TEST_EQUAL(pe.value,"v")
-	TEST_EQUAL(pe.advanced,true)
+	TEST_EQUAL(pe.tags.count("advanced")==1,true)
 	
-	 pe = Param::ParamEntry("n1","v1","d1",false);
+	 pe = Param::ParamEntry("n1","v1","d1");
 	TEST_EQUAL(pe.name,"n1")
 	TEST_EQUAL(pe.description,"d1")
 	TEST_EQUAL(pe.value,"v1")
-	TEST_EQUAL(pe.advanced,false)
-RESULT
+	TEST_EQUAL(pe.tags.count("advanced")==1,false)
+END_SECTION
 
-CHECK((bool operator==(const Param::ParamEntry& rhs) const))
-	Param::ParamEntry n1("n","d","v",true);
-	Param::ParamEntry n2("n","d","v",true);
+START_SECTION((bool operator==(const Param::ParamEntry& rhs) const))
+	Param::ParamEntry n1("n","d","v",StringList::create("advanced"));
+	Param::ParamEntry n2("n","d","v",StringList::create("advanced"));
 	
 	TEST_EQUAL(n1==n2,true)
 	
@@ -82,24 +82,24 @@ CHECK((bool operator==(const Param::ParamEntry& rhs) const))
 	n2.description = "bla";
 	TEST_EQUAL(n1==n2,true)
 
-	n2.advanced = false;
+	n2.tags.clear();
 	TEST_EQUAL(n1==n2,true)	
-RESULT
+END_SECTION
 
 ////////////////// Param::ParamNode ////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
 Param::ParamNode* pn_ptr =0;
-CHECK((Param::ParamNode()))
+START_SECTION((Param::ParamNode()))
 	pn_ptr = new Param::ParamNode();
 	TEST_NOT_EQUAL(pn_ptr,0)
-RESULT
+END_SECTION
 
-CHECK((~Param::ParamNode()))
+START_SECTION((~Param::ParamNode()))
 	delete pn_ptr;
-RESULT
+END_SECTION
 
-CHECK((Param::ParamNode(const String& n, const String& d)))
+START_SECTION((Param::ParamNode(const String& n, const String& d)))
 	Param::ParamNode n("n","d");
 	TEST_EQUAL(n.name,"n")
 	TEST_EQUAL(n.description,"d")
@@ -107,9 +107,9 @@ CHECK((Param::ParamNode(const String& n, const String& d)))
 	n = Param::ParamNode("n1","d1");
 	TEST_EQUAL(n.name,"n1")
 	TEST_EQUAL(n.description,"d1")
-RESULT
+END_SECTION
 
-CHECK((bool operator==(const Param::ParamNode& rhs) const))
+START_SECTION((bool operator==(const Param::ParamNode& rhs) const))
 	Param::ParamNode n1("n","d");
 	Param::ParamNode n2("n","d");
 
@@ -131,10 +131,10 @@ CHECK((bool operator==(const Param::ParamNode& rhs) const))
 	TEST_EQUAL(n1==n2,false)
 	n2 = n1;
 	
-	n2.entries.push_back(Param::ParamEntry("a","x","",false));
-	n2.entries.push_back(Param::ParamEntry("b","y","",false));
-	n1.entries.push_back(Param::ParamEntry("b","y","",false));
-	n1.entries.push_back(Param::ParamEntry("a","x","",false));
+	n2.entries.push_back(Param::ParamEntry("a","x",""));
+	n2.entries.push_back(Param::ParamEntry("b","y",""));
+	n1.entries.push_back(Param::ParamEntry("b","y",""));
+	n1.entries.push_back(Param::ParamEntry("a","x",""));
 	TEST_EQUAL(n1==n2,true)
 	
 	n2.nodes.push_back(Param::ParamNode("a","x"));
@@ -142,9 +142,9 @@ CHECK((bool operator==(const Param::ParamNode& rhs) const))
 	n1.nodes.push_back(Param::ParamNode("b","y"));
 	n1.nodes.push_back(Param::ParamNode("a","x"));
 	TEST_EQUAL(n1==n2,true)	
-RESULT
+END_SECTION
 
-CHECK((String suffix(const String& key)))
+START_SECTION((String suffix(const String& key)))
 	Param::ParamNode node;
 	TEST_EQUAL(node.suffix(""),"")
 	TEST_EQUAL(node.suffix("A"),"A")
@@ -152,7 +152,7 @@ CHECK((String suffix(const String& key)))
 	TEST_EQUAL(node.suffix("A:AB"),"AB")
 	TEST_EQUAL(node.suffix("AB:A"),"A")
 	TEST_EQUAL(node.suffix(":A"),"A")
-RESULT
+END_SECTION
 
 //Dummy Tree:
 // A
@@ -173,13 +173,13 @@ n.name="B"; pn.nodes.push_back(n);
 e.name="G"; e.value=1; pn.nodes[1].entries.push_back(e);
 
 
-CHECK((UInt size() const))
+START_SECTION((UInt size() const))
 	TEST_EQUAL(pn.size(),4)
 	TEST_EQUAL(pn.nodes[0].size(),2)
 	TEST_EQUAL(pn.nodes[1].size(),1)
-RESULT
+END_SECTION
 
-CHECK((EntryIterator findEntry(const String& name)))
+START_SECTION((EntryIterator findEntry(const String& name)))
 	TEST_EQUAL(pn.findEntry("A")==pn.entries.end(),true)
 	TEST_EQUAL(pn.findEntry("B")!=pn.entries.end(),true)
 	TEST_EQUAL(pn.findEntry("C")==pn.entries.end(),true)
@@ -188,9 +188,9 @@ CHECK((EntryIterator findEntry(const String& name)))
 	TEST_EQUAL(pn.findEntry("F")==pn.entries.end(),true)
 	TEST_EQUAL(pn.findEntry("G")==pn.entries.end(),true)
 	TEST_EQUAL(pn.findEntry("H")==pn.entries.end(),true)
-RESULT
+END_SECTION
 
-CHECK((NodeIterator findNode(const String& name)))
+START_SECTION((NodeIterator findNode(const String& name)))
 	TEST_EQUAL(pn.findNode("A")==pn.nodes.end(),true)
 	TEST_EQUAL(pn.findNode("B")!=pn.nodes.end(),true)
 	TEST_EQUAL(pn.findNode("C")!=pn.nodes.end(),true)
@@ -199,9 +199,9 @@ CHECK((NodeIterator findNode(const String& name)))
 	TEST_EQUAL(pn.findNode("F")==pn.nodes.end(),true)
 	TEST_EQUAL(pn.findNode("G")==pn.nodes.end(),true)
 	TEST_EQUAL(pn.findNode("H")==pn.nodes.end(),true)
-RESULT
+END_SECTION
 
-CHECK((Param::ParamNode* findParentOf(const String& name)))
+START_SECTION((Param::ParamNode* findParentOf(const String& name)))
 	TEST_EQUAL(pn.findParentOf("A"),0)
 	TEST_EQUAL(pn.findParentOf("B"),&pn)
 	TEST_EQUAL(pn.findParentOf("C"),&pn)
@@ -213,9 +213,9 @@ CHECK((Param::ParamNode* findParentOf(const String& name)))
 	TEST_EQUAL(pn.findParentOf("H:X"),0)
 	TEST_EQUAL(pn.findParentOf("H:C:X"),0)
 	TEST_EQUAL(pn.findParentOf("H:C:"),0)
-RESULT
+END_SECTION
 
-CHECK((Param::ParamEntry* findEntryRecursive(const String& name)))
+START_SECTION((Param::ParamEntry* findEntryRecursive(const String& name)))
 	TEST_EQUAL(pn.findEntryRecursive("A"),0)
 	TEST_EQUAL(pn.findEntryRecursive("B"),&(pn.entries[0]))
 	TEST_EQUAL(pn.findEntryRecursive("C"),0)
@@ -227,7 +227,7 @@ CHECK((Param::ParamEntry* findEntryRecursive(const String& name)))
 	TEST_EQUAL(pn.findEntryRecursive("H:X"),0)
 	TEST_EQUAL(pn.findEntryRecursive("H:C:X"),0)
 	TEST_EQUAL(pn.findEntryRecursive("H:C:"),0)
-RESULT
+END_SECTION
 
 //Dummy Tree:
 // A
@@ -240,9 +240,9 @@ RESULT
 // |-F
 //   |-H(5)
 
-CHECK((void insert(const Param::ParamNode& node, const String& prefix = "")))
+START_SECTION((void insert(const Param::ParamNode& node, const String& prefix = "")))
 	Param::ParamNode node("","");
-	node.entries.push_back(Param::ParamEntry("H",5,"",true));
+	node.entries.push_back(Param::ParamEntry("H",5,"",StringList::create("advanced")));
 	pn.insert(node,"F");
 	TEST_NOT_EQUAL(pn.findEntryRecursive("F:H"),0)
 
@@ -261,10 +261,10 @@ CHECK((void insert(const Param::ParamNode& node, const String& prefix = "")))
 
 	pn.insert(node,"Q");
 	TEST_NOT_EQUAL(pn.findEntryRecursive("QW:H"),0)	
-RESULT
+END_SECTION
 
-CHECK((void insert(const Param::ParamEntry& entry, const String& prefix = "")))
-	Param::ParamEntry entry("H","",5,true);
+START_SECTION((void insert(const Param::ParamEntry& entry, const String& prefix = "")))
+	Param::ParamEntry entry("H","",5,StringList::create("advanced"));
 
 	pn.insert(entry);
 	TEST_NOT_EQUAL(pn.findEntryRecursive("H"),0)
@@ -277,7 +277,7 @@ CHECK((void insert(const Param::ParamEntry& entry, const String& prefix = "")))
 
 	pn.insert(entry,"FD:ZD:D");
 	TEST_NOT_EQUAL(pn.findEntryRecursive("FD:ZD:DH"),0)
-RESULT
+END_SECTION
 
 
 ////////////////// Param::ParamIterator ////////////////////////////
@@ -285,40 +285,40 @@ RESULT
 
 
 Param::ParamIterator* pi_ptr=0;
-CHECK((ParamIterator()))
+START_SECTION((ParamIterator()))
 	pi_ptr = new Param::ParamIterator();
 	TEST_NOT_EQUAL(pi_ptr,0)
-RESULT
+END_SECTION
 
-CHECK((~ParamIterator()))
+START_SECTION((~ParamIterator()))
 	delete(pi_ptr);
-RESULT
+END_SECTION
 
-CHECK((ParamIterator(const Param::ParamNode& root)))
+START_SECTION((ParamIterator(const Param::ParamNode& root)))
 	Param::ParamNode node;
 	pi_ptr = new Param::ParamIterator(node);
 	TEST_NOT_EQUAL(pi_ptr,0)
-RESULT
+END_SECTION
 
-CHECK((const Param::ParamEntry& operator*()))
+START_SECTION((const Param::ParamEntry& operator*()))
 	Param::ParamNode node;
-	node.entries.push_back(Param::ParamEntry("name","value","description",true));
+	node.entries.push_back(Param::ParamEntry("name","value","description",StringList::create("advanced")));
 	Param::ParamIterator it(node);
 	TEST_EQUAL((*it).name,"name")
 	TEST_EQUAL((*it).value,"value");
 	TEST_EQUAL((*it).description,"description")
-	TEST_EQUAL((*it).advanced,true)
-RESULT
+	TEST_EQUAL((*it).tags.count("advanced")==1,true)
+END_SECTION
 
-CHECK((const Param::ParamEntry* operator->()))
+START_SECTION((const Param::ParamEntry* operator->()))
 	Param::ParamNode node;
-	node.entries.push_back(Param::ParamEntry("name","value","description",true));
+	node.entries.push_back(Param::ParamEntry("name","value","description",StringList::create("advanced")));
 	Param::ParamIterator it(node);
 	TEST_EQUAL(it->name,"name");
 	TEST_EQUAL(it->value,"value");	
 	TEST_EQUAL(it->description,"description");
-	TEST_EQUAL(it->advanced,true);
-RESULT
+	TEST_EQUAL(it->tags.count("advanced")==1,true);
+END_SECTION
 
 //complicated subtree
 // Root
@@ -335,20 +335,20 @@ root.name="root";
 r.name="r";
 s.name="s";
 t.name="t";
-root.entries.push_back(Param::ParamEntry("A","1","",false));
-s.entries.push_back(Param::ParamEntry("B","2","",false));
+root.entries.push_back(Param::ParamEntry("A","1",""));
+s.entries.push_back(Param::ParamEntry("B","2",""));
 s.description="s_desc";
-s.entries.push_back(Param::ParamEntry("C","3","",false));
-t.entries.push_back(Param::ParamEntry("D","4","",false));
+s.entries.push_back(Param::ParamEntry("C","3",""));
+t.entries.push_back(Param::ParamEntry("D","4",""));
 r.nodes.push_back(s);
 root.nodes.push_back(r);
 root.nodes.push_back(t);
 
-CHECK((ParamIterator& operator++()))
+START_SECTION((ParamIterator& operator++()))
 	Param::ParamNode node;
-	node.entries.push_back(Param::ParamEntry("name","value","description",true));
-	node.entries.push_back(Param::ParamEntry("name2","value2","description2",false));
-	node.entries.push_back(Param::ParamEntry("name3","value3","description3",true));
+	node.entries.push_back(Param::ParamEntry("name","value","description",StringList::create("advanced")));
+	node.entries.push_back(Param::ParamEntry("name2","value2","description2"));
+	node.entries.push_back(Param::ParamEntry("name3","value3","description3",StringList::create("advanced")));
 
 	//linear list
 	Param::ParamIterator it(node);
@@ -356,13 +356,13 @@ CHECK((ParamIterator& operator++()))
 	TEST_EQUAL(it->name,"name2");
 	TEST_EQUAL(it->value,"value2");	
 	TEST_EQUAL(it->description,"description2");
-	TEST_EQUAL(it->advanced,false);
+	TEST_EQUAL(it->tags.count("advanced")==1,false);
 
 	++it;
 	TEST_EQUAL(it->name,"name3");
 	TEST_EQUAL(it->value,"value3");	
 	TEST_EQUAL(it->description,"description3");
-	TEST_EQUAL(it->advanced,true);
+	TEST_EQUAL(it->tags.count("advanced")==1,true);
 	
 	++it;
 
@@ -378,37 +378,37 @@ CHECK((ParamIterator& operator++()))
 	TEST_EQUAL(it->name,"name");
 	TEST_EQUAL(it->value,"value");	
 	TEST_EQUAL(it->description,"description");
-	TEST_EQUAL(it->advanced,true);
+	TEST_EQUAL(it->tags.count("advanced")==1,true);
 	
 	++it;
 	TEST_EQUAL(it->name,"name2");
 	TEST_EQUAL(it->value,"value2");	
 	TEST_EQUAL(it->description,"description2");
-	TEST_EQUAL(it->advanced,false);
+	TEST_EQUAL(it->tags.count("advanced")==1,false);
 
 	++it;
 	TEST_EQUAL(it->name,"name3");
 	TEST_EQUAL(it->value,"value3");	
 	TEST_EQUAL(it->description,"description3");
-	TEST_EQUAL(it->advanced,true);
+	TEST_EQUAL(it->tags.count("advanced")==1,true);
 	
 	++it;
 	TEST_EQUAL(it->name,"name4");
 	TEST_EQUAL(it->value,"value");	
 	TEST_EQUAL(it->description,"description");
-	TEST_EQUAL(it->advanced,true);
+	TEST_EQUAL(it->tags.count("advanced")==1,true);
 	
 	++it;
 	TEST_EQUAL(it->name,"name5");
 	TEST_EQUAL(it->value,"value2");	
 	TEST_EQUAL(it->description,"description2");
-	TEST_EQUAL(it->advanced,false);
+	TEST_EQUAL(it->tags.count("advanced")==1,false);
 
 	++it;
 	TEST_EQUAL(it->name,"name6");
 	TEST_EQUAL(it->value,"value3");	
 	TEST_EQUAL(it->description,"description3");
-	TEST_EQUAL(it->advanced,true);
+	TEST_EQUAL(it->tags.count("advanced")==1,true);
 
 	++it;
 	
@@ -430,13 +430,13 @@ CHECK((ParamIterator& operator++()))
 	TEST_EQUAL(it2->name,"D");
 	TEST_EQUAL(it2->value,"4");	
 	++it2;
-RESULT
+END_SECTION
 
-CHECK((ParamIterator operator++(Int)))
+START_SECTION((ParamIterator operator++(Int)))
 	Param::ParamNode node;
-	node.entries.push_back(Param::ParamEntry("name","value","description",true));
-	node.entries.push_back(Param::ParamEntry("name2","value2","description2",false));
-	node.entries.push_back(Param::ParamEntry("name3","value3","description3",true));
+	node.entries.push_back(Param::ParamEntry("name","value","description",StringList::create("advanced")));
+	node.entries.push_back(Param::ParamEntry("name2","value2","description2"));
+	node.entries.push_back(Param::ParamEntry("name3","value3","description3",StringList::create("advanced")));
 
 	//linear list
 	Param::ParamIterator it(node), it2(node);
@@ -445,14 +445,14 @@ CHECK((ParamIterator operator++(Int)))
 	TEST_EQUAL(it->name,"name2");
 	TEST_EQUAL(it->value,"value2");	
 	TEST_EQUAL(it->description,"description2");
-	TEST_EQUAL(it->advanced,false);
+	TEST_EQUAL(it->tags.count("advanced")==1,false);
 	TEST_EQUAL(it2->name,"name");
 	TEST_EQUAL(it2->value,"value");	
 	TEST_EQUAL(it2->description,"description");
-	TEST_EQUAL(it2->advanced,true);
-RESULT
+	TEST_EQUAL(it2->tags.count("advanced")==1,true);
+END_SECTION
 
-CHECK((String getName() const))
+START_SECTION((String getName() const))
 	Param::ParamIterator it(root);
 	
 	TEST_EQUAL(it.getName(),"A");
@@ -466,10 +466,10 @@ CHECK((String getName() const))
 
 	TEST_EQUAL(it.getName(),"t:D");
 	++it;
-RESULT
+END_SECTION
 
 
-CHECK((bool operator==(const ParamIterator& rhs) const))
+START_SECTION((bool operator==(const ParamIterator& rhs) const))
 	Param::ParamIterator begin(root), begin2(root), end;
 	TEST_EQUAL(begin==end, false)
 	TEST_EQUAL(begin==begin, true)
@@ -515,9 +515,9 @@ CHECK((bool operator==(const ParamIterator& rhs) const))
 	TEST_EQUAL(begin==begin2, true)
 	TEST_EQUAL(begin==end, true)
 	TEST_EQUAL(begin2==end, true)
-RESULT
+END_SECTION
 
-CHECK((bool operator!=(const ParamIterator& rhs) const))
+START_SECTION((bool operator!=(const ParamIterator& rhs) const))
 	Param::ParamIterator begin(root), begin2(root), end;
 	TEST_EQUAL(begin==end, false)
 	TEST_EQUAL(begin2==end, false)
@@ -525,10 +525,10 @@ CHECK((bool operator!=(const ParamIterator& rhs) const))
 	TEST_EQUAL(begin==begin, true)
 	TEST_EQUAL(begin2==begin2, true)
 	TEST_EQUAL(end==end, true)
-RESULT
+END_SECTION
 
 
-CHECK((const std::vector< TraceInfo>& getTrace() const))
+START_SECTION((const std::vector< TraceInfo>& getTrace() const))
 	
 	//A	
 	Param::ParamIterator it(root);
@@ -562,7 +562,7 @@ CHECK((const std::vector< TraceInfo>& getTrace() const))
 	TEST_EQUAL(it.getTrace().size(),1);
 	TEST_EQUAL(it.getTrace()[0].name,"t");
 	TEST_EQUAL(it.getTrace()[0].opened,false);
-RESULT
+END_SECTION
 
 ///////////////////////// Param ///////////////////////////////
 ///////////////////////////////////////////////////////////////
@@ -570,119 +570,204 @@ RESULT
 
 
 Param* d10_ptr = 0;
-CHECK((Param()))
+START_SECTION((Param()))
 	d10_ptr = new Param();
 	TEST_NOT_EQUAL(d10_ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((~Param()))
+START_SECTION((~Param()))
 	delete d10_ptr;
-RESULT
+END_SECTION
 
-CHECK((bool exists(const String& key) const))
+START_SECTION((bool exists(const String& key) const))
 	Param p;
 	TEST_EQUAL(p.exists(""), false)
 	TEST_EQUAL(p.exists("key"), false)	
 	TEST_EQUAL(p.exists("key:value"), false)
-RESULT
+END_SECTION
 
-CHECK((const DataValue& getValue(const String &key) const  ))
+START_SECTION((const DataValue& getValue(const String &key) const  ))
 	Param p;
 	TEST_EXCEPTION(Exception::ElementNotFound, p.getValue(""))
 	TEST_EXCEPTION(Exception::ElementNotFound, p.getValue("key"))
 	TEST_EXCEPTION(Exception::ElementNotFound, p.getValue("key:value"))
-RESULT
+END_SECTION
 
-CHECK((const String& getSectionDescription(const String& key) const))
+START_SECTION((const String& getSectionDescription(const String& key) const))
 	Param p;
 	TEST_EQUAL(p.getSectionDescription(""),"")
 	TEST_EQUAL(p.getSectionDescription("key"),"")
 	TEST_EQUAL(p.getSectionDescription("key:value"),"")
-RESULT
+END_SECTION
 
-CHECK((const String& getDescription(const String &key) const  ))
+START_SECTION((const String& getDescription(const String &key) const  ))
 	Param p;
 	TEST_EXCEPTION(Exception::ElementNotFound, p.getDescription(""))
 	TEST_EXCEPTION(Exception::ElementNotFound, p.getDescription("key"))
 	TEST_EXCEPTION(Exception::ElementNotFound, p.getDescription("key:value"))
-RESULT
+END_SECTION
 
-CHECK((bool isAdvancedParameter(const String &key) const  ))
-	Param p;
-	TEST_EXCEPTION(Exception::ElementNotFound, p.isAdvancedParameter(""))
-	TEST_EXCEPTION(Exception::ElementNotFound, p.isAdvancedParameter("key"))
-	TEST_EXCEPTION(Exception::ElementNotFound, p.isAdvancedParameter("key:value"))
-RESULT
-
-CHECK((const ParamEntry& getEntry(const String &key) const  ))
+START_SECTION((const ParamEntry& getEntry(const String &key) const  ))
 	Param p;
 	TEST_EXCEPTION(Exception::ElementNotFound, p.getEntry(""))
 	TEST_EXCEPTION(Exception::ElementNotFound, p.getEntry("key"))
 	TEST_EXCEPTION(Exception::ElementNotFound, p.getEntry("key:value"))
-RESULT
+END_SECTION
 
-CHECK((void setValue(const String& key, const String& value, const String& description="", bool advanced=false)))
+START_SECTION((void setValue(const String& key, const String& value, const String& description="", bool advanced=false)))
 	Param p;
 	p.setValue("key","value");
 	TEST_EQUAL(p.exists("key"), true)
 	TEST_EQUAL(p.getValue("key"), "value")
 	TEST_EQUAL(p.getDescription("key"), "")
-	TEST_EQUAL(p.isAdvancedParameter("key"), false)
+	TEST_EQUAL(p.hasTag("key","advanced"), false)
 
-	p.setValue("key","value","description",true);
+	p.setValue("key","value","description",StringList::create("advanced"));
 	TEST_EQUAL(p.exists("key"), true)
 	TEST_EQUAL(p.getValue("key"), "value")
 	TEST_EQUAL(p.getDescription("key"), "description")
-	TEST_EQUAL(p.isAdvancedParameter("key"), true)
+	TEST_EQUAL(p.hasTag("key","advanced"), true)
 
-	p.setValue("key:key","value2","description2",false);
+	p.setValue("key:key","value2","description2");
 	TEST_EQUAL(p.exists("key"), true)
 	TEST_EQUAL(p.getValue("key"), "value")
 	TEST_EQUAL(p.getDescription("key"), "description")
-	TEST_EQUAL(p.isAdvancedParameter("key"), true)
+	TEST_EQUAL(p.hasTag("key","advanced"), true)
 	TEST_EQUAL(p.exists("key:key"), true)
 	TEST_EQUAL(p.getValue("key:key"), "value2")
 	TEST_EQUAL(p.getDescription("key:key"), "description2")
-	TEST_EQUAL(p.isAdvancedParameter("key:key"), false)
-RESULT
+	TEST_EQUAL(p.hasTag("key:key","advanced"), false)
+END_SECTION
 
-CHECK((void setValue(const String& key, Int value, const String& description="", bool advanced=false)))
+START_SECTION((void setValue(const String& key, Int value, const String& description="", bool advanced=false)))
 	Param p;
-	p.setValue("key",-5,"description",true);
+	p.setValue("key",-5,"description",StringList::create("advanced"));
 	TEST_EQUAL(p.exists("key"), true)
 	TEST_EQUAL((Int)p.getValue("key"),-5)
 	TEST_EQUAL(p.getDescription("key"), "description")
-	TEST_EQUAL(p.isAdvancedParameter("key"), true)
-RESULT
+	TEST_EQUAL(p.hasTag("key","advanced"), true)
+END_SECTION
 
-CHECK((void setValue(const String& key, UInt value, const String& description="", bool advanced=false)))
+START_SECTION((void setValue(const String& key, UInt value, const String& description="", bool advanced=false)))
 	Param p;
-	p.setValue("key",5u,"description",true);
+	p.setValue("key",5u,"description",StringList::create("advanced"));
 	TEST_EQUAL(p.exists("key"), true)
 	TEST_EQUAL((Int)p.getValue("key"),5u)
 	TEST_EQUAL(p.getDescription("key"), "description")
-	TEST_EQUAL(p.isAdvancedParameter("key"), true)
-RESULT
+	TEST_EQUAL(p.hasTag("key","advanced"), true)
+END_SECTION
 
-CHECK((void setValue(const String& key, Real value, const String& description="", bool advanced=false)))
+START_SECTION((void setValue(const String& key, Real value, const String& description="", bool advanced=false)))
 	Param p;
-	p.setValue("key",11.4f,"description",true);
+	p.setValue("key",11.4f,"description",StringList::create("advanced"));
 	TEST_EQUAL(p.exists("key"), true)
-	TEST_REAL_EQUAL(p.getValue("key"), 11.4f)
+	TEST_REAL_SIMILAR(p.getValue("key"), 11.4f)
 	TEST_EQUAL(p.getDescription("key"), "description")
-	TEST_EQUAL(p.isAdvancedParameter("key"), true)
-RESULT
+	TEST_EQUAL(p.hasTag("key","advanced"), true)
+END_SECTION
 
-CHECK((void setValue(const String& key, DoubleReal value, const String& description="", bool advanced=false)))
+START_SECTION((void setValue(const String& key, DoubleReal value, const String& description="", bool advanced=false)))
 	Param p;
-	p.setValue("key",11.5,"description",true);
+	p.setValue("key",11.5,"description",StringList::create("advanced"));
 	TEST_EQUAL(p.exists("key"), true)
-	TEST_REAL_EQUAL(p.getValue("key"), 11.5)
+	TEST_REAL_SIMILAR(p.getValue("key"), 11.5)
 	TEST_EQUAL(p.getDescription("key"), "description")
-	TEST_EQUAL(p.isAdvancedParameter("key"), true)
-RESULT
+	TEST_EQUAL(p.hasTag("key","advanced"), true)
+END_SECTION
 
-CHECK((bool empty() const))
+START_SECTION((void setValue(const String& key, StringList value, const String& description="", bool advanced=false)))
+	Param p;
+	p.setValue("key",StringList::create("a,b,c,d"),"description",StringList::create("advanced"));
+	TEST_EQUAL(p.exists("key"), true)
+	TEST_EQUAL(p.getValue("key"), StringList::create("a,b,c,d"))
+	TEST_EQUAL(p.getDescription("key"), "description")
+	TEST_EQUAL(p.hasTag("key","advanced"), true)
+END_SECTION
+
+START_SECTION((void setValue(const String& key, IntList value, const String& description="", bool advanced=false)))
+	Param p;
+	p.setValue("key",IntList::create("1,2,3"),"description",StringList::create("advanced"));
+	TEST_EQUAL(p.exists("key"), true)
+	TEST_EQUAL(p.getValue("key"), IntList::create("1,2,3"))
+	TEST_EQUAL(p.getDescription("key"), "description")
+	TEST_EQUAL(p.hasTag("key","advanced"), true)
+END_SECTION
+
+START_SECTION((void setValue(const String& key, DoubleList value, const String& description="", bool advanced=false)))
+	Param p;
+	p.setValue("key",DoubleList::create("11.5,3.44"),"description",StringList::create("advanced"));
+	TEST_EQUAL(p.exists("key"), true)
+	TEST_EQUAL(p.getValue("key"), DoubleList::create("11.5,3.44"))
+	TEST_EQUAL(p.getDescription("key"), "description")
+	TEST_EQUAL(p.hasTag("key","advanced"), true)
+END_SECTION
+
+START_SECTION(StringList getTags(const String& key) const)
+	Param p;
+	TEST_EXCEPTION(Exception::ElementNotFound, p.getTags("key"))
+
+	p.setValue("key","value");
+	TEST_EQUAL(p.getTags("key").size(),0)
+END_SECTION
+
+START_SECTION(void addTag(const String& key, const String& tag))
+	Param p;
+	TEST_EXCEPTION(Exception::ElementNotFound, p.addTag("key","bla"))
+	StringList error_list;
+	error_list.push_back("a,b");
+	TEST_EXCEPTION(Exception::ElementNotFound, p.addTags("key",error_list))
+
+	p.setValue("key","value");
+	TEST_EQUAL(p.getTags("key").size(),0)
+	p.addTag("key","advanced");
+	TEST_EQUAL(p.getTags("key").size(),1)
+	p.addTag("key","advanced");
+	TEST_EQUAL(p.getTags("key").size(),1)
+	p.addTag("key","advanced2");
+	TEST_EQUAL(p.getTags("key").size(),2)
+END_SECTION
+
+START_SECTION(bool hasTag(const String& key, const String& tag) const)
+	Param p;
+	TEST_EXCEPTION(Exception::ElementNotFound, p.hasTag("key","bla"))
+
+	p.setValue("key","value");
+	TEST_EQUAL(p.hasTag("key","advanced"),false)
+	TEST_EQUAL(p.hasTag("key","advanced2"),false)
+	p.addTag("key","advanced");
+	TEST_EQUAL(p.hasTag("key","advanced"),true)
+	TEST_EQUAL(p.hasTag("key","advanced2"),false)
+	p.addTag("key","advanced2");
+	TEST_EQUAL(p.hasTag("key","advanced"),true)
+	TEST_EQUAL(p.hasTag("key","advanced2"),true)
+END_SECTION
+
+START_SECTION(void addTags(const String& key, const StringList& tags))
+	Param p;
+	TEST_EXCEPTION(Exception::ElementNotFound, p.addTags("key",StringList()))
+	StringList error_list;
+	error_list.push_back("a,b");
+	TEST_EXCEPTION(Exception::ElementNotFound, p.addTags("key",error_list))
+
+	p.setValue("key","value");
+	TEST_EQUAL(p.hasTag("key","advanced"),false)
+	TEST_EQUAL(p.hasTag("key","advanced2"),false)
+	p.addTags("key",StringList::create("advanced,advanced2"));
+	TEST_EQUAL(p.hasTag("key","advanced"),true)
+	TEST_EQUAL(p.hasTag("key","advanced2"),true)
+END_SECTION
+
+START_SECTION(void clearTags(const String& key))
+	Param p;
+	TEST_EXCEPTION(Exception::ElementNotFound, p.clearTags("key"))
+	p.setValue("key","value");
+	p.addTag("key","advanced");
+	TEST_EQUAL(p.getTags("key").size(),1)
+	p.clearTags("key");
+	TEST_EQUAL(p.getTags("key").size(),0)
+END_SECTION
+
+START_SECTION((bool empty() const))
 	Param p;
 	TEST_EQUAL(p.empty(), true)
 	p.setValue("key",17.4f);
@@ -692,9 +777,9 @@ CHECK((bool empty() const))
 	TEST_EQUAL(p2.empty(), true)
 	p2.setValue("a:key",17.4f);
 	TEST_EQUAL(p2.empty(), false)
-RESULT
+END_SECTION
 
-CHECK((void clear()))
+START_SECTION((void clear()))
 	Param p;
 	p.setValue("key",17.4,"keydesc");
 	p.clear();
@@ -704,9 +789,9 @@ CHECK((void clear()))
 	p2.setValue("a:b:key",17.4,"keydesc");
 	p2.clear();
 	TEST_EQUAL(p2.empty(), true)
-RESULT
+END_SECTION
 
-CHECK((UInt size() const))
+START_SECTION((UInt size() const))
 	Param p;
 	TEST_EQUAL(p.size(), 0)
 	p.setValue("key",17.4f);
@@ -721,9 +806,9 @@ CHECK((UInt size() const))
 	TEST_EQUAL(p.size(), 3)
 	p.setValue("b",18.5f);
 	TEST_EQUAL(p.size(), 4)
-RESULT
+END_SECTION
 
-CHECK((void setSectionDescription(const String &key, const String &description) ))
+START_SECTION((void setSectionDescription(const String &key, const String &description) ))
 	Param p;
 	
 	p.setValue("test:test",47.1);
@@ -738,9 +823,9 @@ CHECK((void setSectionDescription(const String &key, const String &description) 
 	TEST_EQUAL(p.getSectionDescription("test2"), "b")
 	TEST_EQUAL(p.getSectionDescription("test:test"), "c")
 	TEST_EQUAL(p.getSectionDescription("test:test2"), "d")
-RESULT
+END_SECTION
 
-CHECK([EXTRA](friend std::ostream& operator << (std::ostream& os, const Param& param)))
+START_SECTION([EXTRA](friend std::ostream& operator << (std::ostream& os, const Param& param)))
 	Param p;
 	p.setValue("key",17.4);
 	stringstream ss;
@@ -757,7 +842,7 @@ CHECK([EXTRA](friend std::ostream& operator << (std::ostream& os, const Param& p
 	p.setValue("tree:key",17.5);
 	ss<<p;
 	TEST_EQUAL(ss.str(), "\"tree|key\" -> \"17.5\"\n")
-RESULT
+END_SECTION
 
 Param p;
 p.setValue("test:float",17.4f,"floatdesc");
@@ -768,17 +853,17 @@ p.setValue("test2:string","test2");
 p.setValue("test2:int",18);
 p.setSectionDescription("test","sectiondesc");
 
-CHECK((void insert(String prefix, const Param &param)))
+START_SECTION((void insert(String prefix, const Param &param)))
 	Param p2;
 	p2.insert("test3",p);
 	
-	TEST_REAL_EQUAL(float(p2.getValue("test3test:float")), 17.4)
+	TEST_REAL_SIMILAR(float(p2.getValue("test3test:float")), 17.4)
 	TEST_STRING_EQUAL(p2.getDescription("test3test:float"), "floatdesc")
 	TEST_EQUAL(p2.getValue("test3test:string"), "test,test,test")
 	TEST_STRING_EQUAL(p2.getDescription("test3test:string"), "stringdesc")
 	TEST_EQUAL(Int(p2.getValue("test3test:int")), 17)
 	TEST_STRING_EQUAL(p2.getDescription("test3test:int"), "intdesc")
-	TEST_REAL_EQUAL(float(p2.getValue("test3test2:float")), 17.5)
+	TEST_REAL_SIMILAR(float(p2.getValue("test3test2:float")), 17.5)
 	TEST_STRING_EQUAL(p2.getDescription("test3test2:float"), String::EMPTY)
 	TEST_EQUAL(p2.getValue("test3test2:string"), "test2")
 	TEST_STRING_EQUAL(p2.getDescription("test3test2:string"), String::EMPTY)
@@ -787,13 +872,13 @@ CHECK((void insert(String prefix, const Param &param)))
 	TEST_EQUAL(p2.getSectionDescription("test3test"),"sectiondesc")
 		
 	p2.insert("",p);
-	TEST_REAL_EQUAL(float(p2.getValue("test:float")), 17.4)
+	TEST_REAL_SIMILAR(float(p2.getValue("test:float")), 17.4)
 	TEST_STRING_EQUAL(p2.getDescription("test:float"), "floatdesc")
 	TEST_EQUAL(p2.getValue("test:string"), "test,test,test")
 	TEST_STRING_EQUAL(p2.getDescription("test:int"), "intdesc")
 	TEST_EQUAL(Int(p2.getValue("test:int")), 17)
 	TEST_STRING_EQUAL(p2.getDescription("test:string"), "stringdesc")
-	TEST_REAL_EQUAL(float(p2.getValue("test2:float")), 17.5)
+	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), 17.5)
 	TEST_STRING_EQUAL(p2.getDescription("test2:float"), String::EMPTY)
 	TEST_EQUAL(p2.getValue("test2:string"), "test2")
 	TEST_STRING_EQUAL(p2.getDescription("test2:string"), String::EMPTY)
@@ -803,13 +888,13 @@ CHECK((void insert(String prefix, const Param &param)))
 
 	p2.insert("test3:",p);
 	
-	TEST_REAL_EQUAL(float(p2.getValue("test3:test:float")), 17.4)
+	TEST_REAL_SIMILAR(float(p2.getValue("test3:test:float")), 17.4)
 	TEST_STRING_EQUAL(p2.getDescription("test3:test:float"), "floatdesc")
 	TEST_EQUAL(p2.getValue("test3:test:string"), "test,test,test")
 	TEST_STRING_EQUAL(p2.getDescription("test3:test:string"), "stringdesc")
 	TEST_EQUAL(Int(p2.getValue("test3:test:int")), 17)
 	TEST_STRING_EQUAL(p2.getDescription("test3:test:int"), "intdesc")
-	TEST_REAL_EQUAL(float(p2.getValue("test3:test2:float")), 17.5)
+	TEST_REAL_SIMILAR(float(p2.getValue("test3:test2:float")), 17.5)
 	TEST_STRING_EQUAL(p2.getDescription("test3:test2:float"), String::EMPTY)
 	TEST_EQUAL(p2.getValue("test3:test2:string"), "test2")
 	TEST_STRING_EQUAL(p2.getDescription("test3:test2:string"), String::EMPTY)
@@ -818,57 +903,57 @@ CHECK((void insert(String prefix, const Param &param)))
 	TEST_EQUAL(p2.getSectionDescription("test3:test"),"sectiondesc")
 		
 	p2.insert("",p);
-	TEST_REAL_EQUAL(float(p2.getValue("test:float")), 17.4)
+	TEST_REAL_SIMILAR(float(p2.getValue("test:float")), 17.4)
 	TEST_STRING_EQUAL(p2.getDescription("test:float"), "floatdesc")
 	TEST_EQUAL(p2.getValue("test:string"), "test,test,test")
 	TEST_STRING_EQUAL(p2.getDescription("test:int"), "intdesc")
 	TEST_EQUAL(Int(p2.getValue("test:int")), 17)
 	TEST_STRING_EQUAL(p2.getDescription("test:string"), "stringdesc")
-	TEST_REAL_EQUAL(float(p2.getValue("test2:float")), 17.5)
+	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), 17.5)
 	TEST_STRING_EQUAL(p2.getDescription("test2:float"), String::EMPTY)
 	TEST_EQUAL(p2.getValue("test2:string"), "test2")
 	TEST_STRING_EQUAL(p2.getDescription("test2:string"), String::EMPTY)
 	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)	
 	TEST_STRING_EQUAL(p2.getDescription("test2:int"), String::EMPTY)
 	TEST_EQUAL(p2.getSectionDescription("test"),"sectiondesc")
-RESULT
+END_SECTION
 
-CHECK((Param(const Param& rhs)))
+START_SECTION((Param(const Param& rhs)))
 	Param p2(p);
-	TEST_REAL_EQUAL(float(p2.getValue("test:float")), 17.4)
+	TEST_REAL_SIMILAR(float(p2.getValue("test:float")), 17.4)
 	TEST_STRING_EQUAL(p.getDescription("test:float"), "floatdesc")
 	TEST_EQUAL(p2.getValue("test:string"), "test,test,test")
 	TEST_STRING_EQUAL(p.getDescription("test:string"), "stringdesc")
 	TEST_EQUAL(Int(p2.getValue("test:int")), 17)
 	TEST_STRING_EQUAL(p.getDescription("test:int"), "intdesc")
-	TEST_REAL_EQUAL(float(p2.getValue("test2:float")), 17.5)
+	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), 17.5)
 	TEST_STRING_EQUAL(p2.getDescription("test2:float"), String::EMPTY)
 	TEST_EQUAL(p2.getValue("test2:string"), "test2")
 	TEST_STRING_EQUAL(p2.getDescription("test2:string"), String::EMPTY)
 	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)
 	TEST_STRING_EQUAL(p2.getDescription("test2:int"), String::EMPTY)
 	TEST_EQUAL(p2.getSectionDescription("test"),"sectiondesc")
-RESULT
+END_SECTION
 
-CHECK((Param& operator = (const Param& rhs)))
+START_SECTION((Param& operator = (const Param& rhs)))
 	Param p2;
 	p2=p;
-	TEST_REAL_EQUAL(float(p2.getValue("test:float")), 17.4)
+	TEST_REAL_SIMILAR(float(p2.getValue("test:float")), 17.4)
 	TEST_STRING_EQUAL(p.getDescription("test:float"), "floatdesc")
 	TEST_EQUAL(p2.getValue("test:string"), "test,test,test")
 	TEST_STRING_EQUAL(p.getDescription("test:string"), "stringdesc")
 	TEST_EQUAL(Int(p2.getValue("test:int")), 17)
 	TEST_STRING_EQUAL(p2.getDescription("test:int"), "intdesc")
-	TEST_REAL_EQUAL(float(p2.getValue("test2:float")), 17.5)
+	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), 17.5)
 	TEST_STRING_EQUAL(p2.getDescription("test2:float"), String::EMPTY)
 	TEST_EQUAL(p2.getValue("test2:string"), "test2")
 	TEST_STRING_EQUAL(p2.getDescription("test2:string"), String::EMPTY)
 	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)
 	TEST_STRING_EQUAL(p2.getDescription("test2:int"), String::EMPTY)
 	TEST_EQUAL(p2.getSectionDescription("test"),"sectiondesc")
-RESULT
+END_SECTION
 
-CHECK((Param copy(const String &prefix, bool remove_prefix=false) const))
+START_SECTION((Param copy(const String &prefix, bool remove_prefix=false) const))
 	Param p2;
 
 	p2 = p.copy("notthere:");
@@ -876,7 +961,7 @@ CHECK((Param copy(const String &prefix, bool remove_prefix=false) const))
 
 	p2 = p.copy("test:");
 	
-	TEST_REAL_EQUAL(float(p2.getValue("test:float")), 17.4)
+	TEST_REAL_SIMILAR(float(p2.getValue("test:float")), 17.4)
 	TEST_STRING_EQUAL(p2.getDescription("test:float"), "floatdesc")
 	TEST_EQUAL(p2.getValue("test:string"), "test,test,test")
 	TEST_STRING_EQUAL(p2.getDescription("test:int"), "intdesc")
@@ -885,54 +970,83 @@ CHECK((Param copy(const String &prefix, bool remove_prefix=false) const))
 	TEST_EXCEPTION(Exception::ElementNotFound, p2.getValue("test2:float"))
 
 	p2 = p.copy("test:",true);
-	TEST_REAL_EQUAL(float(p2.getValue("float")), 17.4)
+	TEST_REAL_SIMILAR(float(p2.getValue("float")), 17.4)
 	TEST_STRING_EQUAL(p2.getDescription("float"), "floatdesc")
 	TEST_EQUAL(p2.getValue("string"), "test,test,test")
 	TEST_STRING_EQUAL(p2.getDescription("string"), "stringdesc")
 
 	p2 = p.copy("test");
-	TEST_REAL_EQUAL(float(p2.getValue("test:float")), 17.4)
+	TEST_REAL_SIMILAR(float(p2.getValue("test:float")), 17.4)
 	TEST_STRING_EQUAL(p2.getDescription("test:float"), "floatdesc")
 	TEST_EQUAL(p2.getValue("test:string"), "test,test,test")
 	TEST_STRING_EQUAL(p2.getDescription("test:string"), "stringdesc")
 	TEST_EQUAL(Int(p2.getValue("test:int")), 17)
 	TEST_STRING_EQUAL(p2.getDescription("test:int"), "intdesc")
-	TEST_REAL_EQUAL(float(p2.getValue("test2:float")), 17.5)
+	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), 17.5)
 	TEST_STRING_EQUAL(p2.getDescription("test2:float"), String::EMPTY)
 	TEST_EQUAL(p2.getValue("test2:string"), "test2")
 	TEST_STRING_EQUAL(p2.getDescription("test2:string"), String::EMPTY)
 	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)
 	TEST_STRING_EQUAL(p2.getDescription("test2:int"), String::EMPTY)
 	TEST_EQUAL(p2.getSectionDescription("test"),"sectiondesc")
-RESULT
+END_SECTION
 
-CHECK((void remove(const String& prefix)))
+START_SECTION((void remove(const String& key)))
+	Param p2(p);
+	p2.setValue("test:string2","test,test");
+	
+	TEST_EQUAL(p2.size(),7)
+	
+	p2.remove("test");
+	TEST_EQUAL(p2.size(),7)
+	
+	p2.remove("test2");
+	TEST_EQUAL(p2.size(),7)
+	
+	p2.remove("test:strin");
+	TEST_EQUAL(p2.size(),7)
+	
+	p2.remove("test:string");
+	TEST_EQUAL(p2.size(),6)
+
+	p2.remove("test:string2");
+	TEST_EQUAL(p2.size(),5)
+
+	p2.remove("test:float");
+	TEST_EQUAL(p2.size(),4)
+
+	p2.remove("test:int");
+	TEST_EQUAL(p2.size(),3)
+
+END_SECTION
+
+START_SECTION((void removeAll(const String& prefix)))
 	Param p2(p);
 	
-	p2.remove("test:float");
+	p2.removeAll("test:float");
 	TEST_EXCEPTION(Exception::ElementNotFound, p2.getValue("test:float"))
 	TEST_EQUAL(p2.getValue("test:string"), "test,test,test")
 	TEST_EQUAL(Int(p2.getValue("test:int")), 17)
-	TEST_REAL_EQUAL(float(p2.getValue("test2:float")), 17.5)
+	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), 17.5)
 	TEST_EQUAL(p2.getValue("test2:string"), "test2")
 	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)
 	TEST_EQUAL(p2.getSectionDescription("test"),"sectiondesc")
 
-	p2.remove("test:");
+	p2.removeAll("test:");
 	TEST_EXCEPTION(Exception::ElementNotFound, p2.getValue("test:string"))
 	TEST_EXCEPTION(Exception::ElementNotFound, p2.getValue("test:int"))
-	TEST_REAL_EQUAL(float(p2.getValue("test2:float")), 17.5)
+	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), 17.5)
 	TEST_EQUAL(p2.getValue("test2:string"), "test2")
 	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)
 
-	p2.remove("test");
+	p2.removeAll("test");
 	TEST_EQUAL(p2.empty(),true)
 
 	cout << p2;
-RESULT
+END_SECTION
 
 
-CHECK((bool operator == (const Param& rhs) const))
+START_SECTION((bool operator == (const Param& rhs) const))
 	Param p2(p);
 	TEST_EQUAL(p==p2, true)
 	p2.setValue("test:float",17.5f);
@@ -941,7 +1055,7 @@ CHECK((bool operator == (const Param& rhs) const))
 	p2.setValue("test:float3",17.4f);
 	TEST_EQUAL(p==p2, false)
 	p2 = p;
-	p2.remove("test:float");
+	p2.removeAll("test:float");
 	TEST_EQUAL(p==p2, false)
 	
 	//it should be independent of entry order
@@ -960,20 +1074,20 @@ CHECK((bool operator == (const Param& rhs) const))
 	p6.setValue("1:1",1);
 	TEST_EQUAL(p5==p6, true)
 
-RESULT
+END_SECTION
 
-CHECK((void load(const String& filename) ))
+START_SECTION((void load(const String& filename) ))
 	Param p2;
 	TEST_EXCEPTION(Exception::FileNotFound, p2.load("FileDoesNotExist.xml"))	
-RESULT
+END_SECTION
 
-CHECK((void store(const String& filename) const ))
+START_SECTION((void store(const String& filename) const ))
 	Param p2(p);
 	p2.setValue("test:a:a1", 47.1,"a1desc\"<>\nnewline");
 	p2.setValue("test:b:b1", 47.1);
 	p2.setSectionDescription("test:b","bdesc\"<>\nnewline");
 	p2.setValue("test2:a:a1", 47.1);
-	p2.setValue("test2:b:b1", 47.1,"",true);
+	p2.setValue("test2:b:b1", 47.1,"",StringList::create("advanced"));
 	p2.setSectionDescription("test2:a","adesc");
 	
 	//exception
@@ -985,10 +1099,10 @@ CHECK((void store(const String& filename) const ))
 	p2.store(filename);
 	Param p3;
 	p3.load(filename);
-	TEST_REAL_EQUAL(float(p2.getValue("test:float")), float(p3.getValue("test:float")))
+	TEST_REAL_SIMILAR(float(p2.getValue("test:float")), float(p3.getValue("test:float")))
 	TEST_EQUAL(p2.getValue("test:string"), p3.getValue("test:string"))
 	TEST_EQUAL(p2.getValue("test:int"), p3.getValue("test:int"))
-	TEST_REAL_EQUAL(float(p2.getValue("test2:float")), float(p3.getValue("test2:float")))
+	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), float(p3.getValue("test2:float")))
 	TEST_EQUAL(p2.getValue("test2:string"), p3.getValue("test2:string"))
 	TEST_EQUAL(p2.getValue("test2:int"), p3.getValue("test2:int"))	
 	
@@ -999,23 +1113,23 @@ CHECK((void store(const String& filename) const ))
 	TEST_EQUAL(p3.getDescription("test:a:a1"),"a1desc'<>\nnewline")
 	TEST_EQUAL(p3.getSectionDescription("test:b"),"bdesc'<>\nnewline")
 	TEST_EQUAL(p3.getSectionDescription("test2:a"),"adesc")
-	TEST_EQUAL(p3.isAdvancedParameter("test2:b:b1"),true)
-	TEST_EQUAL(p3.isAdvancedParameter("test2:a:a1"),false)
+	TEST_EQUAL(p3.hasTag("test2:b:b1","advanced"),true)
+	TEST_EQUAL(p3.hasTag("test2:a:a1","advanced"),false)
 	TEST_EQUAL(p2.isValid(filename),true)
 	
 	//advanced
 	NEW_TMP_FILE(filename);
 	Param p7;
-	p7.setValue("true",5,"",true);
-	p7.setValue("false",5,"",false);
+	p7.setValue("true",5,"",StringList::create("advanced"));
+	p7.setValue("false",5,"");
 	
 	p7.store(filename);
 	TEST_EQUAL(p7.isValid(filename),true)
 	Param p8;
 	p8.load(filename);
 	
-	TEST_EQUAL(p8.getEntry("true").advanced, true)
-	TEST_EQUAL(p8.getEntry("false").advanced, false)
+	TEST_EQUAL(p8.getEntry("true").tags.count("advanced")==1, true)
+	TEST_EQUAL(p8.getEntry("false").tags.count("advanced")==1, false)
 
 	//restrictions
 	NEW_TMP_FILE(filename);
@@ -1028,7 +1142,7 @@ CHECK((void store(const String& filename) const ))
 	p5.setValue("int_min_max",5);
 	p5.setMinInt("int_min_max",0);
 	p5.setMaxInt("int_min_max",10);
-
+	
 	p5.setValue("float",5.1);
 	p5.setValue("float_min",5.1);
 	p5.setMinFloat("float_min",4.1);
@@ -1045,10 +1159,39 @@ CHECK((void store(const String& filename) const ))
 	p5.setValue("string_2","bla");
 	p5.setValidStrings("string_2",strings);
 	
+		//list restrictions
+	vector<String> strings2;
+	strings2.push_back("xml");
+	strings2.push_back("txt");
+	p5.setValue("stringlist2",StringList::create("a.txt,b.xml,c.pdf"));
+	p5.setValue("stringlist",StringList::create("aa.C,bb.h,c.doxygen"));
+	p5.setValidStrings("stringlist2",strings2);
+	
+	p5.setValue("intlist",IntList::create("2,5,10"));
+	p5.setValue("intlist2",IntList::create("2,5,10"));
+	p5.setValue("intlist3",IntList::create("2,5,10"));
+	p5.setValue("intlist4",IntList::create("2,5,10"));
+	p5.setMinInt("intlist2",1);
+	p5.setMaxInt("intlist3",11);
+	p5.setMinInt("intlist4",0);
+	p5.setMaxInt("intlist4",15);
+	
+	p5.setValue("doublelist",DoubleList::create("1.2,3.33,4.44"));
+	p5.setValue("doublelist2",DoubleList::create("1.2,3.33,4.44"));
+	p5.setValue("doublelist3",DoubleList::create("1.2,3.33,4.44"));
+	p5.setValue("doublelist4",DoubleList::create("1.2,3.33,4.44"));			
+	
+	p5.setMinFloat("doublelist2",1.1);
+	p5.setMaxFloat("doublelist3",4.45);
+	p5.setMinFloat("doublelist4",0.1);
+	p5.setMaxFloat("doublelist4",5.8);
+	
+	
 	p5.store(filename);
 	TEST_EQUAL(p5.isValid(filename),true)
 	Param p6;
 	p6.load(filename);
+	
 	
 	TEST_EQUAL(p6.getEntry("int").min_int, -numeric_limits<Int>::max())
 	TEST_EQUAL(p6.getEntry("int").max_int, numeric_limits<Int>::max())
@@ -1059,35 +1202,66 @@ CHECK((void store(const String& filename) const ))
 	TEST_EQUAL(p6.getEntry("int_min_max").min_int, 0)
 	TEST_EQUAL(p6.getEntry("int_min_max").max_int, 10)
 
-	TEST_REAL_EQUAL(p6.getEntry("float").min_float, -numeric_limits<DoubleReal>::max())
-	TEST_REAL_EQUAL(p6.getEntry("float").max_float, numeric_limits<DoubleReal>::max())
-	TEST_REAL_EQUAL(p6.getEntry("float_min").min_float, 4.1)
-	TEST_REAL_EQUAL(p6.getEntry("float_min").max_float, numeric_limits<DoubleReal>::max())
-	TEST_REAL_EQUAL(p6.getEntry("float_max").min_float, -numeric_limits<DoubleReal>::max())
-	TEST_REAL_EQUAL(p6.getEntry("float_max").max_float, 6.1)
-	TEST_REAL_EQUAL(p6.getEntry("float_min_max").min_float, 0.1)
-	TEST_REAL_EQUAL(p6.getEntry("float_min_max").max_float, 10.1)
+	TEST_REAL_SIMILAR(p6.getEntry("float").min_float, -numeric_limits<DoubleReal>::max())
+	TEST_REAL_SIMILAR(p6.getEntry("float").max_float, numeric_limits<DoubleReal>::max())
+	TEST_REAL_SIMILAR(p6.getEntry("float_min").min_float, 4.1)
+	TEST_REAL_SIMILAR(p6.getEntry("float_min").max_float, numeric_limits<DoubleReal>::max())
+	TEST_REAL_SIMILAR(p6.getEntry("float_max").min_float, -numeric_limits<DoubleReal>::max())
+	TEST_REAL_SIMILAR(p6.getEntry("float_max").max_float, 6.1)
+	TEST_REAL_SIMILAR(p6.getEntry("float_min_max").min_float, 0.1)
+	TEST_REAL_SIMILAR(p6.getEntry("float_min_max").max_float, 10.1)
 
 	TEST_EQUAL(p6.getEntry("string").valid_strings.size(),0)
 	TEST_EQUAL(p6.getEntry("string_2").valid_strings.size(),2)
 	TEST_EQUAL(p6.getEntry("string_2").valid_strings[0],"bla")
 	TEST_EQUAL(p6.getEntry("string_2").valid_strings[1],"bluff")
 
+
+	
+	TEST_EQUAL(p6.getEntry("stringlist").valid_strings.size(),0)
+	TEST_EQUAL(p6.getEntry("stringlist2").valid_strings.size(),2)
+	TEST_EQUAL(p6.getEntry("stringlist2").valid_strings[0],"xml")
+	TEST_EQUAL(p6.getEntry("stringlist2").valid_strings[1],"txt")
+	
+	TEST_EQUAL(p6.getEntry("intlist").min_int, -numeric_limits<Int>::max())
+	TEST_EQUAL(p6.getEntry("intlist").max_int, numeric_limits<Int>::max())
+	TEST_EQUAL(p6.getEntry("intlist2").min_int, 1)
+	TEST_EQUAL(p6.getEntry("intlist2").max_int, numeric_limits<Int>::max())
+	TEST_EQUAL(p6.getEntry("intlist3").min_int, -numeric_limits<Int>::max())
+	TEST_EQUAL(p6.getEntry("intlist3").max_int, 11)
+	TEST_EQUAL(p6.getEntry("intlist4").min_int, 0)
+	TEST_EQUAL(p6.getEntry("intlist4").max_int, 15)
+	
+	TEST_REAL_SIMILAR(p6.getEntry("doublelist").min_float, -numeric_limits<DoubleReal>::max())
+	TEST_REAL_SIMILAR(p6.getEntry("doublelist").max_float, numeric_limits<DoubleReal>::max())
+	TEST_REAL_SIMILAR(p6.getEntry("doublelist2").min_float, 1.1)
+	TEST_REAL_SIMILAR(p6.getEntry("doublelist2").max_float, numeric_limits<DoubleReal>::max())
+	TEST_REAL_SIMILAR(p6.getEntry("doublelist3").min_float, -numeric_limits<DoubleReal>::max())
+	TEST_REAL_SIMILAR(p6.getEntry("doublelist3").max_float, 4.45)
+	TEST_REAL_SIMILAR(p6.getEntry("doublelist4").min_float, 0.1)
+	TEST_REAL_SIMILAR(p6.getEntry("doublelist4").max_float, 5.8)
 	//Test if an empty Param written to a file validates against the schema
 	NEW_TMP_FILE(filename);
 	Param p4;
 	p4.store(filename);
 	TEST_EQUAL(p4.isValid(filename),true)
-RESULT
+END_SECTION
 
 
-CHECK((void setDefaults(const Param& defaults, String prefix="", bool showMessage=false)))
+START_SECTION((void setDefaults(const Param& defaults, String prefix="", bool showMessage=false)))
 	Param defaults;
 	defaults.setValue("float",1.0f,"float");	
 	defaults.setValue("float2",2.0f,"float2");
 	defaults.setValue("string","default string1","string");
 	defaults.setValue("string2","default string2","string2");
 	defaults.setValue("PATH:onlyfordescription",45.2);
+	
+	defaults.setValue("stringlist",StringList::create("a,b,c"),"stringlist");
+	defaults.setValue("stringlist2",StringList::create("d,e,f"),"stringlist2");
+	defaults.setValue("intlist",IntList::create("1,2,3"),"intlist");
+	defaults.setValue("intlist2",IntList::create("11,22,33"),"intlist2");
+	defaults.setValue("doublelist",DoubleList::create("1.2,2.3"),"doublelist");
+	defaults.setValue("doublelist2",DoubleList::create("11.22,22.33"),"doublelist2");
 	defaults.setSectionDescription("PATH","PATHdesc");
 	Param p2;
 	p2.setValue("PATH:float",-1.0f,"PATH:float");
@@ -1095,27 +1269,42 @@ CHECK((void setDefaults(const Param& defaults, String prefix="", bool showMessag
 	p2.setValue("float",-2.0f,"float");
 	p2.setValue("string","other string","string");
 	
-	TEST_EQUAL(p2.size(),4);
+	p2.setValue("PATH:stringlist",StringList::create("d,a,v,i,d"),"PATH:stringlist");
+	p2.setValue("stringlist",StringList::create("r,o,c,k,s"),"stringlist");
+	p2.setValue("PATH:intlist2",IntList::create("14,9"),"PATH:intlist2");
+	p2.setValue("intlist", IntList::create("16,9"),"intlist");
+	p2.setValue("PATH:doublelist2",DoubleList::create("6.66,6.16"),"PATH:doublelist2");
+	p2.setValue("doublelist",DoubleList::create("1.2,5.55"),"doublelist");
+	
+	TEST_EQUAL(p2.size(),10);
 	
 	p2.setDefaults(defaults);
-	TEST_EQUAL(p2.size(),7);
-	TEST_REAL_EQUAL(float(p2.getValue("float")),-2.0);
+	TEST_EQUAL(p2.size(),16);
+	TEST_REAL_SIMILAR(float(p2.getValue("float")),-2.0);
 	TEST_STRING_EQUAL(p2.getDescription("float"),"float");
-	TEST_REAL_EQUAL(float(p2.getValue("float2")),2.0);
+	TEST_REAL_SIMILAR(float(p2.getValue("float2")),2.0);
 	TEST_STRING_EQUAL(p2.getDescription("float2"),"float2");
 	TEST_EQUAL(string(p2.getValue("string")),"other string");
 	TEST_STRING_EQUAL(p2.getDescription("string"),"string");
 	TEST_EQUAL(string(p2.getValue("string2")),"default string2");
 	TEST_STRING_EQUAL(p2.getDescription("string2"),"string2");
 	TEST_STRING_EQUAL(p2.getSectionDescription("PATH"),"PATHdesc");
-
-
+	
+	TEST_EQUAL(p2.getValue("stringlist"), StringList::create("r,o,c,k,s"))
+	TEST_EQUAL(p2.getValue("intlist"),IntList::create("16,9"))
+	TEST_EQUAL(p2.getValue("doublelist"),DoubleList::create("1.2,5.55"))
+	TEST_EQUAL(p2.getValue("stringlist2"),StringList::create("d,e,f"))
+	TEST_EQUAL(p2.getValue("intlist2"),IntList::create("11,22,33"))
+	TEST_EQUAL(p2.getValue("doublelist2"),DoubleList::create("11.22,22.33"))
+	
+	
+	
 	p2.setDefaults(defaults,"PATH");
 
-	TEST_EQUAL(p2.size(),10);
-	TEST_REAL_EQUAL(float(p2.getValue("PATH:float")),-1.0);
+	TEST_EQUAL(p2.size(),22);
+	TEST_REAL_SIMILAR(float(p2.getValue("PATH:float")),-1.0);
 	TEST_STRING_EQUAL(p2.getDescription("PATH:float"),"PATH:float");
-	TEST_REAL_EQUAL(float(p2.getValue("PATH:float2")),2.0);
+	TEST_REAL_SIMILAR(float(p2.getValue("PATH:float2")),2.0);
 	TEST_STRING_EQUAL(p2.getDescription("PATH:float2"),"float2");
 	TEST_EQUAL(string(p2.getValue("PATH:string")),"some string");
 	TEST_STRING_EQUAL(p2.getDescription("PATH:string"),"PATH:string");
@@ -1123,7 +1312,12 @@ CHECK((void setDefaults(const Param& defaults, String prefix="", bool showMessag
 	TEST_STRING_EQUAL(p2.getDescription("PATH:string2"),"string2");
 	TEST_STRING_EQUAL(p2.getSectionDescription("PATH"),"PATHdesc");
 	TEST_STRING_EQUAL(p2.getSectionDescription("PATH:PATH"),"PATHdesc");
-RESULT
+	
+	TEST_EQUAL(p2.getValue("PATH:stringlist"),StringList::create("d,a,v,i,d"))
+	TEST_EQUAL(p2.getValue("PATH:intlist"), IntList::create("1,2,3"))
+	TEST_EQUAL(p2.getValue("PATH:doublelist"),DoubleList::create("1.2,2.3"))
+	
+END_SECTION
 
 const char* a1 ="executable";
 const char* a2 ="-a";
@@ -1175,7 +1369,7 @@ command_line4[7] = a8;
 command_line4[8] = a9;
 command_line4[9] = a10;
 
-CHECK((void parseCommandLine(const int argc, const char** argv, String prefix = "")))
+START_SECTION((void parseCommandLine(const int argc, const char** argv, String prefix = "")))
 	Param p2,p3;
 	p2.parseCommandLine(9,command_line,"test4");
 	p3.setValue("test4:-a","av");
@@ -1199,16 +1393,23 @@ CHECK((void parseCommandLine(const int argc, const char** argv, String prefix = 
 	p300.setValue("test4:misc",StringList::create("rv1,rv2,-1.0"));
 	TEST_EQUAL(p200==p300,true)
 
-RESULT
+END_SECTION
 
-CHECK((void parseCommandLine(const int argc, const char** argv, const std::map<String, String>& options_with_argument, const std::map<String, String>& options_without_argument, const String& misc="misc", const String& unknown="unknown")))
-	map<String,String> with,without;
-	with["-a"]="a";
-	with["-b"]="b";
-	with["-c"]="c";
+
+START_SECTION((void parseCommandLine(const int argc, const char** argv, const Map<String, String>& options_with_one_argument, const Map<String, String>& options_without_argument,const Map<String,String>& options_with_multiple_argument, const String& misc="misc", const String& unknown="unknown")))
+
+	Map<String,String> with_one,without,with_multiple;
+	with_one["-a"]="a";
+	with_one["-b"]="b";
+	with_one["-c"]="c";
+	
+	with_multiple["-d"] = "d";
+	with_multiple["-e"] = "e";
+	with_multiple["-f"] = "f";
+	with_multiple["-g"] = "g";
 
 	Param p2,p3;
-	p2.parseCommandLine(10,command_line4,with,without,"misc_","unknown_");
+	p2.parseCommandLine(10,command_line4,with_one,without,with_multiple,"misc_","unknown_");
 	p3.setValue("a","-1.0");
 	p3.setValue("b","bv");
 	p3.setValue("c","cv");
@@ -1216,45 +1417,85 @@ CHECK((void parseCommandLine(const int argc, const char** argv, const std::map<S
 	TEST_EQUAL(p2==p3,true)
 	
 	Param p4,p5;
-	p4.parseCommandLine(9,command_line,with,without,"misc_","unknown_");
+	p4.parseCommandLine(9,command_line,with_one,without,with_multiple,"misc_","unknown_");
 	p5.setValue("a","av");
 	p5.setValue("b","bv");
 	p5.setValue("c","cv");
 	p5.setValue("misc_",StringList::create("rv1,rv2"));
 	TEST_EQUAL(p4==p5,true)
 
-	with.clear();
-	with["-a"]="a";
+	with_one.clear();
+	with_one["-a"]="a";
 	without["-b"]="b";
 	
 	Param p40,p50;
-	p40.parseCommandLine(9,command_line,with,without,"misc__","unknown__");
+	p40.parseCommandLine(9,command_line,with_one,without,with_multiple,"misc__","unknown__");
 	p50.setValue("a","av");
 	p50.setValue("b","true");
 	p50.setValue("misc__",StringList::create("bv,cv,rv1,rv2"));
-	p50.setValue("unknown__","-c");
+	p50.setValue("unknown__",StringList::create("-c"));
 	TEST_EQUAL(p40==p50,true)
-
+	TEST_EQUAL(p40,p50)
 	//"executable -a av -b -c cv"	
 	Param p400,p500;
-	p400.parseCommandLine(6,command_line2,with,without,"misc__","unknown__");
+	p400.parseCommandLine(6,command_line2,with_one,without,with_multiple,"misc__","unknown__");
 	p500.setValue("a","av");
 	p500.setValue("b","true");
 	p500.setValue("misc__",StringList::create("cv"));
-	p500.setValue("unknown__","-c");
+	p500.setValue("unknown__",StringList::create("-c"));
 	TEST_EQUAL(p400==p500,true)
 
 	//"executable -a -b -c cv rv1"
 	Param p4000,p5000;
-	p4000.parseCommandLine(6,command_line3,with,without,"misc__","unknown__");
+	p4000.parseCommandLine(6,command_line3,with_one,without,with_multiple,"misc__","unknown__");
 	p5000.setValue("a","");
 	p5000.setValue("b","true");
 	p5000.setValue("misc__",StringList::create("cv,rv1"));
-	p5000.setValue("unknown__","-c");
+	p5000.setValue("unknown__",StringList::create("-c"));
 	TEST_EQUAL(p4000==p5000,true)
-RESULT
+		
+	//"mult -d 1.333 2.23 3 -e 4 -f -g"
+	const char* a1 ="mult";
+	const char* a2 ="-d";
+	const char* a3 ="1.333";
+	const char* a4 ="2.23";
+	const char* a5 ="3";
+	const char* a6 ="-e";
+	const char* a7 ="4";
+	const char* a8 ="-f";
+	const char* a9 ="-g";
 
-CHECK((void setValidStrings(const String &key, const std::vector< String > &strings) ))
+	const char* command_line_mult[9];
+	command_line_mult[0] = a1;
+	command_line_mult[1] = a2;
+	command_line_mult[2] = a3;
+	command_line_mult[3] = a4;
+	command_line_mult[4] = a5;
+	command_line_mult[5] = a6;
+	command_line_mult[6] = a7;
+	command_line_mult[7] = a8;
+	command_line_mult[8] = a9;
+	Param p6,p7;
+	p6.parseCommandLine(9,command_line_mult,with_one,without,with_multiple,"misc__","unkown__");
+	p7.setValue("d",StringList::create("1.333,2.23,3"));
+	p7.setValue("e",StringList::create("4"));
+	p7.setValue("f",StringList());
+	p7.setValue("g",StringList());
+	TEST_EQUAL(p6,p7);
+	TEST_EQUAL(StringList(),StringList());
+	const char* command_line_mult1[4];
+	command_line_mult1[0] = a1;
+	command_line_mult1[1] = a2;
+	command_line_mult1[2] = a3;
+	command_line_mult1[3] = a4;
+	Param p8,p9;
+	p9.parseCommandLine(4,command_line_mult,with_one,without,with_multiple,"misc__","unkown__");
+	p8.setValue("d",StringList::create("1.333,2.23"));
+	TEST_EQUAL(p9,p8);
+	
+END_SECTION
+
+START_SECTION((void setValidStrings(const String &key, const std::vector< String > &strings) ))
   vector<String> strings;
   strings.push_back("bla");
   Param d;
@@ -1266,9 +1507,9 @@ CHECK((void setValidStrings(const String &key, const std::vector< String > &stri
   TEST_EXCEPTION(Exception::ElementNotFound, d.setValidStrings("dummy",strings))
   strings.push_back("sdf,sdfd");
   TEST_EXCEPTION(Exception::InvalidParameter, d.setValidStrings("ok",strings))
-RESULT
+END_SECTION
 
-CHECK((void setMinInt(const String &key, Int min) ))
+START_SECTION((void setMinInt(const String &key, Int min) ))
   Param d;
   d.setValue("ok",4);
   d.setValue("dummy",5.5);
@@ -1276,9 +1517,9 @@ CHECK((void setMinInt(const String &key, Int min) ))
   d.setMinInt("ok",4);
   TEST_EQUAL(d.getEntry("ok").min_int,4);
   TEST_EXCEPTION(Exception::ElementNotFound, d.setMinInt("dummy",4))
-RESULT
+END_SECTION
 
-CHECK((void setMaxInt(const String &key, Int max) ))
+START_SECTION((void setMaxInt(const String &key, Int max) ))
   Param d;
   d.setValue("ok",4);
   d.setValue("dummy",5.5);
@@ -1286,30 +1527,30 @@ CHECK((void setMaxInt(const String &key, Int max) ))
   d.setMaxInt("ok",4);
   TEST_EQUAL(d.getEntry("ok").max_int,4);
   TEST_EXCEPTION(Exception::ElementNotFound, d.setMaxInt("dummy",4))
-RESULT
+END_SECTION
 
-CHECK((void setMinFloat(const String &key, DoubleReal min) ))
+START_SECTION((void setMinFloat(const String &key, DoubleReal min) ))
   Param d;
   d.setValue("ok",4.5);
   d.setValue("dummy",4);
   
   d.setMinFloat("ok",4.0);
-  TEST_REAL_EQUAL(d.getEntry("ok").min_float,4.0);
+  TEST_REAL_SIMILAR(d.getEntry("ok").min_float,4.0);
   TEST_EXCEPTION(Exception::ElementNotFound, d.setMinFloat("dummy",4.5))
-RESULT
+END_SECTION
 
-CHECK((void setMaxFloat(const String &key, DoubleReal max) ))
+START_SECTION((void setMaxFloat(const String &key, DoubleReal max) ))
   Param d;
   d.setValue("ok",4.5);
   d.setValue("dummy",4);
   
   d.setMaxFloat("ok",4.0);
-  TEST_REAL_EQUAL(d.getEntry("ok").max_float,4.0);
+  TEST_REAL_SIMILAR(d.getEntry("ok").max_float,4.0);
   TEST_EXCEPTION(Exception::ElementNotFound, d.setMaxFloat("dummy",4.5))
-RESULT
+END_SECTION
 
 
-CHECK((void checkDefaults(const String &name, const Param &defaults, String prefix="", std::ostream &os=std::cout) const  ))
+START_SECTION((void checkDefaults(const String &name, const Param &defaults, String prefix="", std::ostream &os=std::cout) const  ))
 	//warnings for unknown parameters
 	ostringstream os;
 	Param p,d;
@@ -1395,6 +1636,20 @@ CHECK((void checkDefaults(const String &name, const Param &defaults, String pref
 	p.setValue("doublev2",4.1);
 	TEST_EXCEPTION(Exception::InvalidParameter,p.checkDefaults("Param_test",d,"",os));
 	
+	//check list restrictions
+	vector<String> s_rest1;
+	s_rest1.push_back("a");
+	s_rest1.push_back("b");
+	s_rest1.push_back("c");
+	d.setValue("stringlist",StringList::create("aaa,abc,cab"),"desc");
+	d.setValidStrings("stringlist", s_rest);
+	p.clear();
+	p.setValue("stringlist",StringList::create("a,c"));
+	p.checkDefaults("Param_test",d,"",os);
+	p.setValue("stringlist",StringList::create("aa,dd,cc"));
+	TEST_EXCEPTION(Exception::InvalidParameter,p.checkDefaults("Param_test",d,"",os))
+	
+	
 	//wrong type
 	p.clear();
 	p.setValue("doublev",4);
@@ -1405,13 +1660,13 @@ CHECK((void checkDefaults(const String &name, const Param &defaults, String pref
 	p.clear();
 	p.setValue("stringv",4.5);
 	TEST_EXCEPTION(Exception::InvalidParameter,p.checkDefaults("Param_test",d,"",os));
-RESULT
+END_SECTION
 
-CHECK(ParamIterator begin() const)
+START_SECTION(ParamIterator begin() const)
 	NOT_TESTABLE
-RESULT
+END_SECTION
 
-CHECK(ParamIterator end() const)
+START_SECTION(ParamIterator end() const)
 	Param p;
 	p.setValue("a",5);
 	p.setValue("b:a",6);
@@ -1440,16 +1695,22 @@ CHECK(ParamIterator end() const)
 	
 	++it;
 	TEST_EQUAL(it==p.end(),true)
-RESULT
+END_SECTION
 
-CHECK([EXTRA] loading and storing of lists)
+START_SECTION([EXTRA] loading and storing of lists)
 	Param p;
 	p.setValue("stringlist", StringList::create("a,bb,ccc"));
+	p.setValue("intlist", IntList::create("1,22,333"));
 	p.setValue("item", String("bla"));
 	p.setValue("stringlist2", StringList::create(""));
+	p.setValue("intlist2", IntList::create(""));
 	p.setValue("item1", 7);
+	p.setValue("intlist3", IntList::create("1"));	
 	p.setValue("stringlist3", StringList::create("1"));
 	p.setValue("item3", 7.6);
+	p.setValue("doublelist",DoubleList::create("1.22,2.33,4.55"));
+	p.setValue("doublelist2",DoubleList::create(""));
+	p.setValue("doublelist3",DoubleList::create("1.4"));
 	//store
 	String filename;
 	NEW_TMP_FILE(filename);
@@ -1458,7 +1719,7 @@ CHECK([EXTRA] loading and storing of lists)
 	Param p2;
 	p2.load(filename);
 	
-	TEST_EQUAL(p2.size(),6);
+	TEST_EQUAL(p2.size(),12);
 	
 	TEST_EQUAL(p2.getValue("stringlist").valueType(), DataValue::STRING_LIST)
 	StringList list = p2.getValue("stringlist");
@@ -1475,8 +1736,40 @@ CHECK([EXTRA] loading and storing of lists)
 	list = p2.getValue("stringlist3");
 	TEST_EQUAL(list.size(),1)
 	TEST_EQUAL(list[0],"1")
-
-RESULT
+	
+	TEST_EQUAL(p2.getValue("intlist").valueType(), DataValue::INT_LIST)
+	IntList intlist = p2.getValue("intlist");
+	TEST_EQUAL(intlist.size(),3);
+	TEST_EQUAL(intlist[0], 1)
+	TEST_EQUAL(intlist[1], 22)
+	TEST_EQUAL(intlist[2], 333)
+	
+	TEST_EQUAL(p2.getValue("intlist2").valueType(),DataValue::INT_LIST)
+	intlist = p2.getValue("intlist2");
+	TEST_EQUAL(intlist.size(),0)
+	
+	TEST_EQUAL(p2.getValue("intlist3").valueType(),DataValue::INT_LIST)
+	intlist = p2.getValue("intlist3");
+	TEST_EQUAL(intlist.size(),1)
+	TEST_EQUAL(intlist[0],1)
+	
+		TEST_EQUAL(p2.getValue("doublelist").valueType(), DataValue::DOUBLE_LIST)
+	DoubleList doublelist = p2.getValue("doublelist");
+	TEST_EQUAL(doublelist.size(),3);
+	TEST_EQUAL(doublelist[0], 1.22)
+	TEST_EQUAL(doublelist[1], 2.33)
+	TEST_EQUAL(doublelist[2], 4.55)
+	
+	TEST_EQUAL(p2.getValue("doublelist2").valueType(),DataValue::DOUBLE_LIST)
+	doublelist = p2.getValue("doublelist2");
+	TEST_EQUAL(doublelist.size(),0)
+	
+	TEST_EQUAL(p2.getValue("doublelist3").valueType(),DataValue::DOUBLE_LIST)
+	doublelist = p2.getValue("doublelist3");
+	TEST_EQUAL(doublelist.size(),1)
+	TEST_EQUAL(doublelist[0],1.4)
+	
+END_SECTION
 
 
 /////////////////////////////////////////////////////////////

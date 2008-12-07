@@ -39,7 +39,7 @@ namespace OpenMS
 
 		@improvement read paper and try to confirm implementation (andreas)
 	
-		@ref BernNorm_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_BernNorm.parameters
 	
 		@ingroup SpectraPreprocessers
   */
@@ -81,7 +81,7 @@ namespace OpenMS
     	double c2 = (double)param_.getValue("C2");
     	double threshold = (double)param_.getValue("threshold");
 
-    	spectrum.getContainer().sortByPosition();
+    	spectrum.sortByPosition();
 
     	// find highest peak and ranking
     	double maxint = 0;
@@ -104,9 +104,9 @@ namespace OpenMS
     	double maxmz = 0;
     	for (int i = spectrum.size() -1 ; i >= 0 ; --i)
     	{
-      	if (spectrum.getContainer()[i].getIntensity() > maxint * threshold)
+      	if (spectrum[i].getIntensity() > maxint * threshold)
       	{
-        	maxmz = spectrum.getContainer()[i].getMZ();
+        	maxmz = spectrum[i].getMZ();
         	break;
       	}
     	}
@@ -117,7 +117,7 @@ namespace OpenMS
       	double newint = c1 - (c2 / maxmz) * peakranks[it->getIntensity()];
       	if (newint < 0)
       	{
-        	it = spectrum.getContainer().erase(it);
+        	it = spectrum.erase(it);
       	}
       	else
       	{

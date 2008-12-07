@@ -31,6 +31,7 @@
 #include <algorithm>
 #include <vector>
 #include <OpenMS/CONCEPT/Types.h>
+#include <OpenMS/DATASTRUCTURES/IntList.h>
 
 namespace OpenMS 
 {	
@@ -41,7 +42,7 @@ namespace OpenMS
 		
 		@ingroup Kernel
 		A group of predicates that can be used to perform range operations on MS data.
-		They operate on classes that have the save interface as Spectrum or DPeak respectively.
+		They operate on classes that have the save interface as Spectrum or Peak1D or Peak2D, respectively.
 		<BR>
 		<BR>
 		The code for the removal of spectra in a certain retention time range from a vector of spectra might look like this:
@@ -136,7 +137,7 @@ namespace OpenMS
 				@param levels an array of MS levels
 				@param reverse if @p reverse is true, operator() return true if the spectrum lies outside the set
 			*/
-			InMSLevelRange(const std::vector<UInt>& levels, bool reverse = false)
+			InMSLevelRange(const IntList& levels, bool reverse = false)
 				: 
 				levels_(levels),
 				reverse_(reverse)
@@ -146,7 +147,7 @@ namespace OpenMS
 		
 			inline bool operator()(const SpectrumType& s) const
 			{
-				UInt tmp = s.getMSLevel();
+				Int tmp = s.getMSLevel();
 				if (reverse_)
 				{
 					return ( std::find(levels_.begin(), levels_.end(), tmp) == levels_.end() ); 
@@ -155,7 +156,7 @@ namespace OpenMS
 			}
 		
 		protected:
-			std::vector<UInt> levels_;
+			IntList levels_;
 			bool reverse_;
 	};
 
@@ -202,7 +203,7 @@ namespace OpenMS
 	/**
 		@brief Predicate that determines if a spectrum is empty.
 		
-		SpectrumType must have a size() member function
+		SpectrumType must have a empty() member function
 		
 		@ingroup RangeUtils
 	*/	
@@ -226,9 +227,9 @@ namespace OpenMS
 			{
 				if (reverse_)
 				{
-					return s.size() != 0 ; 
+					return !s.empty(); 
 				}
-				return s.size() == 0 ; 
+				return s.empty(); 
 			}
 		
 		protected:
@@ -238,7 +239,7 @@ namespace OpenMS
 	/**
 		@brief Predicate that determines if a peak lies inside/outside a specific m/z range
 		
-		PeakType must be a DPeak or have the same interface.
+		PeakType must have a getPosition() member function.
 		
 		@note It is assumed that the m/z dimension is dimension 0!
 		
@@ -283,7 +284,7 @@ namespace OpenMS
 	/**
 		@brief Predicate that determines if a peak lies inside/outside a specific intensity range
 		
-		PeakType must be a DPeak or have the same interface 
+		PeakType must have a getIntensity() member function.
 		
 		@ingroup RangeUtils
 	*/	

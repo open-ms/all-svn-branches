@@ -30,54 +30,52 @@
 //OpenMS
 #include <OpenMS/METADATA/HPLC.h>
 #include <OpenMS/VISUAL/VISUALIZER/BaseVisualizer.h>
+#include <OpenMS/VISUAL/VISUALIZER/BaseVisualizerGUI.h>
 
-class QLabel;
-class QLineEdit;
 
-namespace OpenMS {
-/**
-@brief Class that displays all meta information for HPLC objects
-
-This class provides all functionality to view the meta information of an object of type HPLC.
-*/
-	class HPLCVisualizer : public BaseVisualizer
+namespace OpenMS
+{
+	/**
+		@brief Class that displays all meta information for HPLC objects
+		
+		This class provides all functionality to view the meta information of an object of type HPLC.
+	*/
+	class HPLCVisualizer
+		: public BaseVisualizerGUI,
+			public BaseVisualizer<HPLC>
 	{
 		Q_OBJECT
-
-	public: 
-	   /// Default constructor
-		HPLCVisualizer(bool editable= FALSE, QWidget *parent =0);
+	
+		public:
+			
+		   ///Constructor
+			HPLCVisualizer(bool editable = false, QWidget* parent = 0);
+			
+		public slots:
+			
+		  //Docu in base class
+			void store();
 		
-		/// Loads the meta data from the object to the viewer.
-		void load(HPLC &h);
-
-	private slots:
-	  /// Saves the changes made to the meta data into the object.
-		void store_();
-		/// Deletes all changes made in the viewer and restores the original meta data.
-		void reject_();
-
-	private:  
-		
-		/** @name Edit fields 
-   */
-    //@{
-		QLineEdit *hplcinstrument_;
-		QLineEdit *hplccolumn_;
-		QLineEdit *hplctemperature_;
-		QLineEdit *hplcpressure_;
-		QLineEdit *hplcflux_;
-		QTextEdit *hplccomment_;
-		//@}
-		
-		/// Pointer to current object	to keep track of the actual object.
-		HPLC *ptr_;
-		/// Copy of current object for restoring the original values
-		HPLC tempHPLC_;
-		
-		
+		protected slots:
+			
+			///Undo the changes made in the GUI.
+			void undo_();
+	
+		protected:  
+			
+			///@name Edit fields and buttons
+	    //@{
+			QLineEdit* hplcinstrument_;
+			QLineEdit* hplccolumn_;
+			QLineEdit* hplctemperature_;
+			QLineEdit* hplcpressure_;
+			QLineEdit* hplcflux_;
+			QTextEdit* hplccomment_;
+			//@}
+			
+			//Docu in base class
+			void update_();
 	};
-
 
 }
 #endif

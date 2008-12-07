@@ -30,6 +30,7 @@
 #include <OpenMS/COMPARISON/SPECTRA/PeakSpectrumCompareFunctor.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/DATASTRUCTURES/Matrix.h>
+#include <OpenMS/KERNEL/DSpectrum.h>
 
 #include <cfloat>
 #include <cmath>
@@ -44,7 +45,7 @@ namespace OpenMS
 
 		The alignment is done according to the Needleman-Wunsch Algorithm (local alignment considering gaps).
 
-		@ref PeakAlignment_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_PeakAlignment.parameters
 
 		@ingroup SpectraComparison
 	*/

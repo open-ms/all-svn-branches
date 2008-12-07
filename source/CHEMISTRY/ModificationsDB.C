@@ -184,9 +184,24 @@ namespace OpenMS
 			if (fabs((*it)->getDiffMonoMass() - mass) <= error)
 			{
 				String origin = (*it)->getOrigin();
-				if (origin  == "X" || ResidueDB::getInstance()->getResidue(origin) == ResidueDB::getInstance()->getResidue(residue))
+				if (ResidueDB::getInstance()->getResidue(origin) == ResidueDB::getInstance()->getResidue(residue))
 				{
 					mods.push_back((*it)->getId());
+				}
+			}
+		}
+
+		// no specific mod found? Then use 'X' as origin
+		if (mods.size() == 0)
+		{
+			for (vector<ResidueModification*>::const_iterator it = mods_.begin(); it != mods_.end(); ++it)
+			{
+				if (fabs((*it)->getDiffMonoMass() - mass) <= error)
+				{
+					if ((*it)->getOrigin() == "X")
+					{
+						mods.push_back((*it)->getId());
+					}
 				}
 			}
 		}
@@ -195,12 +210,6 @@ namespace OpenMS
 	void ModificationsDB::readFromUnimodXMLFile(const String& filename)
 	{
 		String file = File::find(filename);
-    ifstream is(file.c_str());
-    if (!is)
-    {
-      throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
-    }	
-		is.close();
 
 		UnimodXMLFile().load(file, mods_);
 
@@ -217,13 +226,7 @@ namespace OpenMS
 		ResidueModification mod;
 		Map<String, ResidueModification> all_mods;
 	
-		String file = File::find(filename);
- 		ifstream is(file.c_str());
-    if (!is)
-    {
-    	throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
-    }
-
+ 		ifstream is(File::find(filename).c_str());
     String line, line_wo_spaces, id;
       
 		//parse file

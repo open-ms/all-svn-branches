@@ -26,7 +26,7 @@
 
 #include <OpenMS/VISUAL/VISUALIZER/ExperimentalSettingsVisualizer.h>
 #include <OpenMS/DATASTRUCTURES/Date.h>
-#include <OpenMS/VISUAL/MSMetaDataExplorer.h>
+#include <OpenMS/VISUAL/MetaDataBrowser.h>
 
 //QT
 #include <QtGui/QLineEdit>
@@ -40,70 +40,45 @@ using namespace std;
 
 namespace OpenMS
 {
-
-//Constructor
-ExperimentalSettingsVisualizer::ExperimentalSettingsVisualizer(bool editable, QWidget *parent) 
-: BaseVisualizer(editable, parent)
-{
-	type_="ExperimentalSettings";
-  
-	addLabel("Modify the settings of the experiment.");	
-	addSeperator();  
-	addComboBox(experimentalsettings_type_, "Type of the experiment");
-	addLineEdit(experimentalsettings_date_, "Date of experiment");
-	addTextEdit(experimentalsettings_comment_, "Comment");
 	
-	finishAdding_();
-	
-	
-}
-
-
-
-void ExperimentalSettingsVisualizer::load(ExperimentalSettings &s)
-{
-  //Pointer to current object to keep track of the actual object
-	ptr_ = &s;
-	
-	//Copy of current object for restoring the original values
-	tempexperimentalsettings_=s;
-			
-  
+	ExperimentalSettingsVisualizer::ExperimentalSettingsVisualizer(bool editable, QWidget* parent) 
+		: BaseVisualizerGUI(editable, parent),
+			BaseVisualizer<ExperimentalSettings>()
+	{
+		addLabel_("Modify the settings of the experiment.");	
+		addSeparator_();
+		addComboBox_(native_id_type_, "Native ID type of spectra");
+		addLineEdit_(datetime_, "Date and time of experiment");
+		addTextEdit_(comment_, "Comment");
 		
-	update_();
-}
-
-void ExperimentalSettingsVisualizer::update_()
-{
+		finishAdding_();
+	}
+	
+	void ExperimentalSettingsVisualizer::update_()
+	{
 		if(! isEditable())
 		{
-			
-			fillComboBox(experimentalsettings_type_, &tempexperimentalsettings_.NamesOfExperimentType[tempexperimentalsettings_.getType()] ,1); 
-			
+			fillComboBox_(native_id_type_,& temp_.NamesOfNativeIDType[temp_.getNativeIDType()] , 1);
 		}
 		else
 		{
-			fillComboBox(experimentalsettings_type_, tempexperimentalsettings_.NamesOfExperimentType , ExperimentalSettings::SIZE_OF_EXPERIMENTTYPE);
-			experimentalsettings_type_->setCurrentIndex(tempexperimentalsettings_.getType()); 
+			fillComboBox_(native_id_type_, temp_.NamesOfNativeIDType , ExperimentalSettings::SIZE_OF_NATIVEIDTYPE);
+			native_id_type_->setCurrentIndex(temp_.getNativeIDType()); 
 		}
-		String str;
-    tempexperimentalsettings_.getDate().get(str);
-	  experimentalsettings_date_->setText(str.c_str()); 
-		experimentalsettings_comment_->setText(tempexperimentalsettings_.getComment().c_str());
-}
-
-void ExperimentalSettingsVisualizer::store_()
-{
-	try
-	{
 		
-		(*ptr_).setType((ExperimentalSettings::ExperimentType)experimentalsettings_type_->currentIndex());		
-		Date date;
-		String n(experimentalsettings_date_->text().toStdString());
+	  datetime_->setText(temp_.getDateTime().get().c_str()); 
+		comment_->setText(temp_.getComment().c_str());
+	}
+	
+	void ExperimentalSettingsVisualizer::store()
+	{
+		ptr_->setNativeIDType((ExperimentalSettings::NativeIDType)native_id_type_->currentIndex());			
+		
+		DateTime date;
 		try
 		{
-			date.set(n);
-			(*ptr_).setDate(date);
+			date.set(datetime_->text());
+			ptr_->setDateTime(date);
 		}
 		catch(exception& e)
 		{
@@ -114,30 +89,14 @@ void ExperimentalSettingsVisualizer::store_()
 			}
 		}
 		
-		(*ptr_).setComment(experimentalsettings_comment_->toPlainText().toStdString());
+		ptr_->setComment(comment_->toPlainText());
 		
-		tempexperimentalsettings_=(*ptr_);
-	}
-	catch(exception& e)
-	{
-		std::cout<<"Error while trying to store the new ExperimentalSettings data. "<<e.what()<<endl;
+		temp_=(*ptr_);
 	}
 	
-}
-
-void ExperimentalSettingsVisualizer::reject_()
-{
-	
-	try
+	void ExperimentalSettingsVisualizer::undo_()
 	{
-
 		update_();
 	}
-	catch(exception e)
-	{
-		cout<<"Error while trying to restore original ExperimentalSettings data. "<<e.what()<<endl;
-	}
-	
-}
 
 }

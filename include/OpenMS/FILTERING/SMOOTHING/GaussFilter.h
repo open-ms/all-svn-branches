@@ -56,7 +56,7 @@ namespace OpenMS
           Normally it is applied to MSExperiment and MSSpectrum instances.
 
 		 
-		@ref GaussFilter_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_GaussFilter.parameters
     
     @ingroup SignalProcessing
   */
@@ -174,7 +174,7 @@ namespace OpenMS
         {
           typename MSExperiment<PeakType>::SpectrumType spectrum;
           filter(map[i],spectrum);
-          map[i].getContainer() = spectrum.getContainer();
+          map[i].swap(spectrum);
           setProgress(i);
         }
         endProgress();

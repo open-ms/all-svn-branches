@@ -29,10 +29,7 @@
 #define OPENMS_ANALYSIS_ID_PILISIDENTIFICATION_H
 
 #include <OpenMS/ANALYSIS/ID/PILISModel.h>
-#include <OpenMS/ANALYSIS/ID/PILISSequenceDB.h>
-
 #include <OpenMS/METADATA/PeptideIdentification.h>
-
 #include <OpenMS/KERNEL/StandardTypes.h>
 
 #include <vector>
@@ -49,7 +46,7 @@ namespace OpenMS
 		The PILISIdentification class needs a PILISModel and a PILISSequenceDB to generate
 		identifications. Simply call getIdentifications with a RichPeakMap.
 		 
-		@ref PILISIdentification_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_PILISIdentification.parameters
 		
 		@ingroup Analysis_ID
 	*/

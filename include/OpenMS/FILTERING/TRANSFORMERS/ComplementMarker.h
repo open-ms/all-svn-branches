@@ -37,7 +37,7 @@ namespace OpenMS
   /**
     @brief ComplementMarker marks peak pairs which could represent y - b ion pairs
     
-		@ref ComplementMarker_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_ComplementMarker.parameters
 
 		@ingroup PeakMarker
   */
@@ -83,21 +83,21 @@ namespace OpenMS
     	double tolerance = (double)param_.getValue("tolerance");
     	std::map<double, int> matching_b_y_ions;
 			
-    	spectrum.getContainer().sortByPosition();
+    	spectrum.sortByPosition();
 			
     	int j = spectrum.size() -1;
     	for (uint i = 0; i < spectrum.size(); ++i)
     	{
-      	while (j >= 0 && spectrum.getContainer()[j].getPosition()[0] > (parentmass - spectrum.getContainer()[i].getPosition()[0]) + tolerance)
+      	while (j >= 0 && spectrum[j].getPosition()[0] > (parentmass - spectrum[i].getPosition()[0]) + tolerance)
 				{
         	j--;
       	}
 				
       	// just takes the first matching ion; todo take all
-      	if (j >= 0 && std::fabs(spectrum.getContainer()[i].getPosition()[0] + spectrum.getContainer()[j].getPosition()[0] - parentmass) < tolerance)
+      	if (j >= 0 && std::fabs(spectrum[i].getPosition()[0] + spectrum[j].getPosition()[0] - parentmass) < tolerance)
       	{
-        	matching_b_y_ions[spectrum.getContainer()[i].getPosition()[0]]++;
-        	matching_b_y_ions[spectrum.getContainer()[j].getPosition()[0]]++;
+        	matching_b_y_ions[spectrum[i].getPosition()[0]]++;
+        	matching_b_y_ions[spectrum[j].getPosition()[0]]++;
         	j--;
       	}
     	}

@@ -60,7 +60,7 @@ namespace OpenMS
 		typedef DPosition<2> PositionType;
     //@}
 
-		/// Dimensions
+		/// @name Dimension descriptions
 		//@{
 		
 		/// This enum maps the symbolic names of the dimensions to numbers
@@ -99,7 +99,13 @@ namespace OpenMS
     /// Unit of measurement (self-explanatory form)
 		static char const * fullDimensionUnitMZ();
 
+		//@}
+		
 	 protected:
+		
+		/// @name Dimension descriptions
+		//@{
+		
     /// Short name of the dimension (abbreviated form)
 		static char const * const dimension_name_short_[DIMENSION];
 		
@@ -120,13 +126,13 @@ namespace OpenMS
 		 */
 		//@{
 		/// Default constructor
-		inline Peak2D() 
+		Peak2D() 
       : position_(), 
         intensity_(0) 
     {
     }
 		/// Copy constructor
-		inline Peak2D(const Peak2D& p) 
+		Peak2D(const Peak2D& p) 
 			: position_(p.position_), 
         intensity_(p.intensity_)
 		{
@@ -149,44 +155,51 @@ namespace OpenMS
 		 */
 		//@{
 		/// Non-mutable access to the data point intensity (height)
-		inline IntensityType getIntensity() const { return intensity_; }
+		IntensityType getIntensity() const
+		{
+			return intensity_;
+		}
+
 		/// Non-mutable access to the data point intensity (height)
-		inline void setIntensity(IntensityType intensity) { intensity_ = intensity; }
+		void setIntensity(IntensityType intensity)
+		{
+			intensity_ = intensity;
+		}
 
 		/// Non-mutable access to the position
-		inline PositionType const & getPosition() const 
+		PositionType const & getPosition() const 
     { 
       return position_; 
     }
 		/// Mutable access to the position
-		inline PositionType& getPosition() 
+		PositionType& getPosition() 
     {
       return position_; 
     }
 		/// Mutable access to the position
-		inline void setPosition(const PositionType& position) 
+		void setPosition(const PositionType& position) 
     { 
       position_ = position; 
     }
 
     /// Returns the m/z coordinate (index 1)
-    inline CoordinateType getMZ() const 
+		CoordinateType getMZ() const 
     { 
       return position_[1]; 
     }
     /// Mutable access to the m/z coordinate (index 1)
-    inline void setMZ(CoordinateType coordinate) 
+		void setMZ(CoordinateType coordinate) 
     { 
       position_[1] = coordinate; 
     }
 
     /// Returns the RT coordinate (index 0)
-    inline CoordinateType getRT() const 
+		CoordinateType getRT() const 
     { 
       return position_[0]; 
     }
     /// Mutable access to the RT coordinate (index 0)
-    inline void setRT(CoordinateType coordinate) 
+		void setRT(CoordinateType coordinate) 
     { 
       position_[0] = coordinate; 
     }
@@ -194,7 +207,7 @@ namespace OpenMS
 		//@}
 
 		/// Assignment operator
-		inline Peak2D& operator = (const Peak2D& rhs)
+		Peak2D& operator = (const Peak2D& rhs)
 		{
 			if (this==&rhs) return *this;
 		
@@ -205,13 +218,13 @@ namespace OpenMS
 		}
 				
 		/// Equality operator
-		inline bool operator == (const Peak2D& rhs) const
+		bool operator == (const Peak2D& rhs) const
 		{
 			return  intensity_ == rhs.intensity_ && position_ == rhs.position_ ;
 		}
 
 		/// Equality operator
-		inline bool operator != (const Peak2D& rhs) const
+		bool operator != (const Peak2D& rhs) const
 		{
 			return !( operator==(rhs) );
 		}
@@ -219,97 +232,99 @@ namespace OpenMS
 									
  		/**	@name	Comparator classes.
 				These classes implement binary predicates that can be used 
-				to compare two peaks with respect to their intensities, positions.
-				They are employed by the sort methods in container classes such as PeakArray.
+				to compare two peaks with respect to their intensities, positions, etc.
 		*/
 		//@{
-
-		/// Compare by getIntensity()
+		/// Comparator by intensity
 		struct IntensityLess
 			: std::binary_function < Peak2D, Peak2D, bool >
 		{
-			inline bool operator () ( Peak2D const & left, Peak2D const & right ) const
+			bool operator () ( const Peak2D& left, const Peak2D& right ) const
 			{
 				return ( left.getIntensity() < right.getIntensity() );
 			}
-			inline bool operator () ( Peak2D const & left, IntensityType const & right ) const
+			bool operator () ( const Peak2D& left, IntensityType right ) const
 			{
 				return ( left.getIntensity() < right );
 			}
-			inline bool operator () ( IntensityType const & left, Peak2D const & right ) const
+			bool operator () ( IntensityType left, const Peak2D& right ) const
 			{
 				return ( left< right.getIntensity() );
 			}
-			inline bool operator () ( IntensityType const & left, IntensityType const & right ) const
+			bool operator () ( IntensityType left, IntensityType right ) const
 			{
 				return ( left < right );
 			}
 		};
-		
-		/**
-			@brief Comparator for the n-th coordinate of the position.
-		*/
-		template <UInt i>
-		struct NthPositionLess
+
+		/// Comparator by RT position
+		struct RTLess
 			: std::binary_function <Peak2D, Peak2D, bool>
 		{
-			enum { DIMENSION = i };
-			
-			/// comparison of two Peak2Ds
-			inline bool operator () ( Peak2D const & left, Peak2D const & right ) const 
+			bool operator () (const Peak2D& left, const Peak2D& right ) const 
 			{
-				return (left.getPosition()[i] < right.getPosition()[i]);
+				return (left.getRT() < right.getRT());
 			}
-			
-			/// comparison of a Peak2D with a CoordinateType
-			inline bool operator () ( Peak2D const & left, CoordinateType right ) const 
+			bool operator () ( const Peak2D& left, CoordinateType right ) const 
 			{
-				return (left.getPosition()[i] < right );
+				return (left.getRT() < right );
 			}
-			
-			/// comparison of a CoordinateType with a Peak2D
-			inline bool operator () ( CoordinateType left, Peak2D const & right ) const 
+			bool operator () ( CoordinateType left, const Peak2D& right ) const 
 			{
-				return (left < right.getPosition()[i] );
+				return (left < right.getRT() );
 			}
-
-			/**
-				@brief Operator to check if comparison is done increasing or decreasing.
-				
-				Sometimes we need a way to find out which way the CoordinateType is
-				sorted and adding this overload seems to be the best way to achieve that goal.
-			*/
-			inline bool operator () ( CoordinateType left, CoordinateType right ) const 
+			bool operator () ( CoordinateType left, CoordinateType right ) const 
 			{
 				return (left < right );
 			}
-
 		};
-
-		/// Comparator with respect to retention time
-		typedef NthPositionLess < RT > LessRT;
 		
-		/// Comparator with respect to mass-to-charge
-		typedef NthPositionLess < MZ > LessMZ;
-		
-
-		/**
-			@brief Comparator for the position.
-			
-			Lexicographical comparison from dimension 0 to dimension D-1 is done.
-		*/
+		/// Comparator by m/z position
+		struct MZLess
+			: std::binary_function <Peak2D, Peak2D, bool>
+		{
+			bool operator () ( const Peak2D& left, const Peak2D& right ) const 
+			{
+				return (left.getMZ() < right.getMZ());
+			}
+			bool operator () ( const Peak2D& left, CoordinateType right ) const 
+			{
+				return (left.getMZ() < right );
+			}
+			bool operator () ( CoordinateType left, const Peak2D& right ) const 
+			{
+				return (left < right.getMZ() );
+			}
+			bool operator () ( CoordinateType left, CoordinateType right ) const 
+			{
+				return (left < right );
+			}
+		};
+		/// Comparator by position. Lexicographical comparison (first RT then m/z) is done.
 		struct PositionLess
 			: public std::binary_function <Peak2D, Peak2D, bool>
 		{
-			inline bool operator () (const Peak2D& a, const Peak2D& b) const
+			bool operator () ( const Peak2D& left, const Peak2D& right) const
 			{
-				return (a.getPosition() < b.getPosition());
+				return (left.getPosition() < right.getPosition());
+			}
+			bool operator () ( const Peak2D& left, const PositionType& right ) const 
+			{
+				return (left.getPosition() < right );
+			}
+			bool operator () ( const PositionType& left, const Peak2D& right ) const 
+			{
+				return (left < right.getPosition() );
+			}
+			bool operator () ( const PositionType& left, const PositionType& right ) const 
+			{
+				return (left < right );
 			}
 		};
-		
 		//@}
 		
-		protected:
+	 protected:
+	 	
 		/// The data point position
 		PositionType	position_;
 		/// The data point intensity

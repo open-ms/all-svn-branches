@@ -44,7 +44,7 @@ namespace OpenMS
 		in peptide prophet the forward distribution is modeled using a gaussian 
 		distribution the reverse scores are modeled using a famma distribution.
 
-		@ref IDDecoyProbability_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_IDDecoyProbability.parameters
 
     @ingroup Analysis_ID
   */
@@ -95,9 +95,9 @@ namespace OpenMS
 			void normalizeBins_(const std::vector<double>& scores, Map<double, double>& binned, Transformation_& trafo);
 
 			// returns the probability of given score with the transformations of reverse and forward searches and the results of the fits
-			double getProbability_(const GammaDistributionFitter::GammaDistributionFitResult& result_gamma,
+			double getProbability_(const Math::GammaDistributionFitter::GammaDistributionFitResult& result_gamma,
 														const Transformation_& gamma_trafo,
-														const GaussFitter::GaussFitResult& result_gauss,
+														const Math::GaussFitter::GaussFitResult& result_gauss,
 														const Transformation_& gauss_trafo,
 														double score);
 			

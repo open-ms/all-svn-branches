@@ -67,7 +67,6 @@ namespace OpenMS
 
 		String
 			line,
-			buffer,
 			score_type,
 			version,
 			identifier,
@@ -75,8 +74,7 @@ namespace OpenMS
 			sequence,
 			sequence_with_mods;
 
-		DateTime datetime;
-		datetime.now(); // there's no date given from PepNovo
+		DateTime datetime = DateTime::now(); // there's no date given from PepNovo
 		protein_identification.setDateTime(datetime);
 
 		peptide_identifications.clear();
@@ -100,8 +98,7 @@ namespace OpenMS
 			protein_identification.setSearchEngine("PepNovo");
 			protein_identification.setSearchEngineVersion(version);
 		}
-		datetime.getDate(buffer);
-		identifier = protein_identification.getSearchEngine() + "_" + buffer;
+		identifier = protein_identification.getSearchEngine() + "_" + datetime.getDate();
 		protein_identification.setIdentifier(identifier);
 
 		while ( getline(result_file, line) )

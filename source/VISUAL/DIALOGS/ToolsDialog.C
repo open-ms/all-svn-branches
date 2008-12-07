@@ -41,6 +41,7 @@
 #include <QtGui/QRadioButton>
 #include <QtGui/QFileDialog>
 #include <QtGui/QCheckBox>
+#include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithm.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/PreprocessingFunctor.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinder_impl.h>
 
@@ -63,24 +64,30 @@ namespace OpenMS
 				
 		if (type==LayerData::DT_PEAK)
 		{
-			list<<"FileFilter"<<"FileInfo"<<"NoiseFilter"<<"BaselineFilter"<<"PeakPicker"<<"Resampler"<<"SpectraFilter"<<"MapNormalizer"<<"InternalCalibration"<<"TOFCalibration"<<"FeatureFinder";
+			list<<"FileFilter"<<"FileInfo"<<"NoiseFilter"<<"BaselineFilter"<<"PeakPicker"<<"Resampler"<<"SpectraFilter"<<"MapNormalizer"<<"InternalCalibration"<<"TOFCalibration"<<"FeatureFinder"<<"SILACAnalyzer";
 		}
 		else if (type==LayerData::DT_FEATURE)
 		{
-			list<<"FileFilter"<<"FileConverter"<<"FileInfo"<<"Decharger";
+			list<<"FileFilter"<<"FileConverter"<<"FileInfo"<<"Decharger"<<"FeatureLinker";
+		}
+		else if (type==LayerData::DT_CONSENSUS)
+		{
+			list<<"FileFilter"<<"FileConverter"<<"FileInfo";
 		}
 		//sort list alphabetically
 		list.sort();
 		list.push_front("<select tool>");
 		tools_combo_=new QComboBox;
+		tools_combo_->setMinimumWidth(150);
 		tools_combo_->addItems(list);
 		connect(tools_combo_,SIGNAL(activated(int)),this,SLOT(setTool_(int)));
-		connect(tools_combo_,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTypes_(int)));
+		connect(tools_combo_,SIGNAL(currentIndexChanged(int)),this,SLOT(updateTypes_()));
 
 		main_grid->addWidget(tools_combo_,0,1);
 
 		//type combobox
 		type_combo_=new QComboBox;
+		type_combo_->setMinimumWidth(150);
 		connect(type_combo_,SIGNAL(activated(int)),this,SLOT(setType_(int)));
 		list.clear();
 		list << "<select type>";
@@ -171,8 +178,6 @@ namespace OpenMS
 			arg_param_.load((ini_file_).c_str());
 			
 			vis_param_=arg_param_.copy(getTool()+":1:",true);
-			vis_param_.remove("in");
-			vis_param_.remove("out");
 			vis_param_.remove("log");
 			vis_param_.remove("no_progress");
 			vis_param_.remove("debug");
@@ -228,7 +233,7 @@ namespace OpenMS
 		}
 
 		String tool = getTool();
-		if (tool!="NoiseFilter" && tool!="FeatureFinder" && tool!="SpectraFilter")
+		if (tool!="NoiseFilter" && tool!="FeatureFinder" && tool!="SpectraFilter" && tool!="FeatureLinker")
 		{
 			setType_(-1);
 		}
@@ -251,7 +256,7 @@ namespace OpenMS
 		
 	}
 
-	void ToolsDialog::updateTypes_(int)
+	void ToolsDialog::updateTypes_()
 	{
 		QString tool = tools_combo_->currentText();
 		type_combo_->clear();
@@ -273,6 +278,14 @@ namespace OpenMS
 		else if (tool=="SpectraFilter")
 		{
 			std::vector<String> list2 = Factory<PreprocessingFunctor>::registeredProducts();
+			for (UInt i=0; i<list2.size(); ++i)
+			{
+				list << list2[i].toQString();			
+			}
+		}
+		else if (tool=="FeatureLinker")
+		{
+			std::vector<String> list2 = Factory<FeatureGroupingAlgorithm>::registeredProducts();
 			for (UInt i=0; i<list2.size(); ++i)
 			{
 				list << list2[i].toQString();			
@@ -351,15 +364,13 @@ namespace OpenMS
 		tools_combo_->setCurrentIndex(pos);
 		//Extract the required parameters
 		vis_param_=arg_param_.copy(getTool()+":1:",true);
-		vis_param_.remove("in");
-		vis_param_.remove("out");
 		vis_param_.remove("log");
 		vis_param_.remove("no_progress");
 		vis_param_.remove("debug");
 		//load data into editor
 		editor_->load(vis_param_);			
 		//special treatment for FeatureFinder, NoiseFilter, SpectraFilter => set type combo
-		if (string=="FeatureFinder" || string=="NoiseFilter" || string=="SpectraFilter")
+		if (string=="FeatureFinder" || string=="NoiseFilter" || string=="SpectraFilter" || string=="FeatureLinker")
 		{
 			String type;
 			if (vis_param_.exists("type")) type = vis_param_.getValue("type");

@@ -37,7 +37,7 @@ namespace OpenMS
   /**
     @brief total intensity of peak pairs that could result from complementing fragments of charge state 1
 		 
-		@ref ComplementFilter_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_ComplementFilter.parameters
 
 		@ingroup SpectraFilter
   */
@@ -78,17 +78,17 @@ namespace OpenMS
 	    double parentmass = spectrum.getPrecursorPeak().getPosition()[0];
 	    double result(0);
 		
-			spectrum.getContainer().sortByPosition();
+			spectrum.sortByPosition();
 	
 			/// @improvement think about an correct fast algorithm, not just an heuristic (Andreas)
 	    uint j = spectrum.size() - 1;
 	    for (uint i = 0; i < spectrum.size() && i <= j; /*++i*/)
 	    {
-	      double sum = spectrum.getContainer()[i].getPosition()[0] + spectrum.getContainer()[j].getPosition()[0];
+	      double sum = spectrum[i].getPosition()[0] + spectrum[j].getPosition()[0];
 				
 	      if (std::fabs(sum - parentmass) < tolerance)
 	      {
-	        result += spectrum.getContainer()[i].getIntensity() + spectrum.getContainer()[j].getIntensity();
+	        result += spectrum[i].getIntensity() + spectrum[j].getIntensity();
 	      }
 				
 				if (sum < parentmass)

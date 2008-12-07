@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marcel Grunert $
+// $Maintainer: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 
@@ -29,7 +29,6 @@
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_GAUSSFITTER1D_H
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/MaxLikeliFitter1D.h>
-#include <OpenMS/MATH/STATISTICS/BasicStatistics.h>
 #include <OpenMS/MATH/MISC/MathFunctions.h>
 
 namespace OpenMS
@@ -37,7 +36,7 @@ namespace OpenMS
     /** 
       @brief Gaussian distribution fitter (1-dim.) approximated using linear interpolation.
                  
-      @ref GaussFitter1D_Parameters are explained on a separate page.                 
+      @htmlinclude OpenMS_GaussFitter1D.parameters               
     */
     class GaussFitter1D
     : public MaxLikeliFitter1D
@@ -56,7 +55,7 @@ namespace OpenMS
           /// assignment operator
           virtual GaussFitter1D& operator = (const GaussFitter1D& source);
 
-          /// create new BiGaussModel object (function needed by Factory)
+          /// create new GaussFitter1D object (function needed by Factory)
           static Fitter1D* create()
           {
             return new GaussFitter1D();

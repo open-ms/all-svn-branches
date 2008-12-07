@@ -37,8 +37,6 @@ namespace OpenMS
 	/**
 		@brief File adapter for MzData files
 		
-		@todo Implement 'accessionNumber' attribute - stored in ExperimentalSettings (Clemens, Chris, Marc)
-		
 		@ingroup FileIO
 	*/
 	class MzDataFile 
@@ -64,13 +62,14 @@ namespace OpenMS
 
 				@p map has to be a MSExperiment or have the same interface.
 
-				@exception Exception::FileNotFound is thrown  if the file could not be opened
-				@exception Exception::ParseError is thrown  if an error occurs during parsing
+				@exception Exception::FileNotFound is thrown if the file could not be opened
+				@exception Exception::ParseError is thrown if an error occurs during parsing
 			*/
 			template <typename MapType>
 			void load(const String& filename, MapType& map)
 			{
 				map.reset();
+				map.setNativeIDType(ExperimentalSettings::SPECTRUM_IDENTIFIER);
 				
 				Internal::MzDataHandler<MapType> handler(map,filename,schema_version_,*this);
 				handler.setOptions(options_);

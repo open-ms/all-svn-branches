@@ -21,12 +21,11 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# --------------------------------------------------------------------------
 
 DIRECTORY=CONCEPT
 
 
+# Note: VersionInfo should be the last target such that ADD_CXXFLAGS will not affect the other targets.
 CPP_SOURCES=\
 	ClassTest.C\
 	Constants.C\
@@ -35,8 +34,17 @@ CPP_SOURCES=\
 	SingletonRegistry.C\
 	ProgressLogger.C\
 	TimeStamp.C\
+	FuzzyStringComparator.C\
 	VersionInfo.C\
-	FuzzyStringComparator.C
 
 include ../common.mak
 -include .Dependencies
+
+
+# Always remake VersionInfo.o to reflect the current status of your SVN working copy
+VersionInfo.o: always
+
+always:
+	@$(eval ADD_CXXFLAGS += -DOPENMS_REVISION=\"$$(shell set LC_ALL=C; cd ../../; svnversion -n)\")
+	@$(ECHO) "Note:  VersionInfo.o  is always (re-)compiled to reflect the current status of your SVN working copy"
+

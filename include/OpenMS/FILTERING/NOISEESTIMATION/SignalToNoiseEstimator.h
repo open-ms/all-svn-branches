@@ -143,7 +143,12 @@ namespace OpenMS
 
   protected:
 
-    virtual void computeSTN_(const PeakIterator& scan_first_, const PeakIterator& scan_last_) throw(Exception::InvalidValue) = 0;
+    /**
+		 * @brief computes the S/N values when init() is called
+		 *
+		 * @exception Throws Exception::InvalidValue
+		 */
+		virtual void computeSTN_(const PeakIterator& scan_first_, const PeakIterator& scan_last_) = 0;
         
 
 
@@ -159,7 +164,7 @@ namespace OpenMS
     };  
 
 
-    /// calculate mean & stdev of intensities of a DPeakArray
+    /// calculate mean & stdev of intensities of a spectrum
     inline GaussianEstimate estimate_(const PeakIterator& scan_first_, const PeakIterator& scan_last_) const
     {
       int size = 0;

@@ -3,7 +3,6 @@ set(directory source/FORMAT)
 
 ### list all filenames of the directory here
 set(sources_list
-ANDIFile.C
 Base64.C
 CVMappingFile.C
 CVMappings.C
@@ -50,6 +49,10 @@ XMLValidator.C
 XTandemInfile.C
 XTandemXMLFile.C
 )
+
+if (USE_ANDIMS) 	 
+	list(APPEND sources_list ANDIFile.C) 	 
+endif()
 
 ### add path to the filenames
 set(sources)

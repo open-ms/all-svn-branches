@@ -4,7 +4,6 @@ set(directory source/TEST)
 ### list all filenames of the directory here
 set(sources_list
 AASequence_test.C
-ANDIFile_test.C
 AcquisitionInfo_test.C
 Acquisition_test.C
 AreaIterator_test.C
@@ -303,6 +302,10 @@ XTandemInfile_test.C
 XTandemXMLFile_test.C
 ZhangSimilarityScore_test.C
 )
+
+if (USE_ANDIMS) 	 
+	list(APPEND sources_list ANDIFile_test.C) 	 
+endif()
 
 ### add path to the filenames
 set(sources)

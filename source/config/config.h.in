@@ -123,14 +123,12 @@
 # ifdef BUILD_SHARED_LIBS
 #  ifdef OpenMS_EXPORTS  //automatically defined by CMake when building a dll
 #    define OPENMS_DLLAPI  __declspec( dllexport )
-#		 define OPENMS_EXPIMP_TEMPLATE
 #  else
 #    define OPENMS_DLLAPI  __declspec( dllimport )
-#		 define OPENMS_EXPIMP_TEMPLATE extern
 #  endif
-#	 define OPENMS_EXPIMP_TEMPLATE //
 # endif
-#else //leave it empty on non-windows OS
+#endif
+#ifndef OPENMS_DLLAPI //leave empty when not building DLL
 # define OPENMS_DLLAPI
 #endif
 

@@ -534,9 +534,9 @@ namespace OpenMS
 
 			inline ConstIterator begin() const { return ConstIterator(&peptide_, 0); }
 
-			inline Iterator end() { return Iterator(&peptide_, peptide_.size()); }
+			inline Iterator end() { return Iterator(&peptide_, (Int) peptide_.size()); }
 
-			inline ConstIterator end() const { return ConstIterator(&peptide_, peptide_.size()); }
+			inline ConstIterator end() const { return ConstIterator(&peptide_, (Int) peptide_.size()); }
 			//@}
 
 			/** @name Stream operators

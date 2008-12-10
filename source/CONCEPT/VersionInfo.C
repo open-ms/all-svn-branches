@@ -100,9 +100,13 @@ namespace OpenMS
 		static String result;
 		if ( !is_initialized )
 		{
+#ifdef OPENMS_HAS_SVNVERSION			
 			ifstream in(PACKAGE_REVISION_FILE);
 			getline(in, result, '\n');
 			result.trim();
+#else
+			result = "<unknown>";
+#endif
 			is_initialized = true;
 		}
 		return result;

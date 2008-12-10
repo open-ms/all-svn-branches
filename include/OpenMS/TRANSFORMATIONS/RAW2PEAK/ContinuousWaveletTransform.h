@@ -172,7 +172,7 @@ namespace OpenMS
     /// Non-mutable access to signal length including padded zeros [0,end]
     inline int getSize() const
     {
-			return signal_.size();
+			return (int) signal_.size();
     }
 
 

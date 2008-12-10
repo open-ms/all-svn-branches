@@ -45,10 +45,6 @@
 #include <stdint.h>
 #endif
 
-// Added to avoid warnings with MS Visual Studio .NET
-#ifdef OPENMS_COMPILER_MSVC
-#	pragma warning( disable : 4290 )
-#endif
 
 namespace OpenMS
 {
@@ -297,7 +293,7 @@ namespace OpenMS
 	template <typename FloatingPointType >
 	std::ostream & operator << ( std::ostream& os, const PrecisionWrapper<FloatingPointType>& rhs)
 	{
-		const unsigned prec_save = os.precision();
+		const std::streamsize prec_save = os.precision();
 		os << std::setprecision(writtenDigits(FloatingPointType()));
 		os << rhs.ref_;
 		os << std::setprecision(prec_save);

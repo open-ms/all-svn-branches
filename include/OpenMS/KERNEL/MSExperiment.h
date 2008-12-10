@@ -589,7 +589,7 @@ namespace OpenMS
 	    /// MS levels of the data
 	    std::vector<UInt> ms_levels_;
 	    /// Number of all data points
-	    UInt total_size_;
+	    size_t total_size_;
       /// allocator for MSSpectrum
       AllocT alloc_;
 	};

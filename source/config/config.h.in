@@ -41,19 +41,15 @@
 
 // Here are some global configuration flags for OpenMS
 
-// OPENMS_DEBUG enables some debugging methods
-// change the DEBUG entry in configure to define this flag.
-// If in debug mode, inline functions won't be compiled
-// as inline by defining OPENMS_NO_INLINE_FUNCTIONS
-// This facilitates debugging, as the debugger can always
-// find the corresponding source code line.
-// See also COMMON/debug.h for these symbols.
-
+// OPENMS_DEBUG enables some debugging methods within some OpenMS classes
 #cmakedefine OPENMS_DEBUG
 
 // The path to the directory where OpenMS data is installed
 #define OPENMS_DATA_PATH "@CF_OPENMS_DATA_PATH@"
 #define PACKAGE_VERSION "@CF_PACKAGE_VERSION@"
+
+// do we use SVN revision in VersionInfo.C?! [depending on the availability of svnversion(.exe)]
+#cmakedefine OPENMS_HAS_SVNVERSION
 #define PACKAGE_REVISION_FILE "@CF_PACKAGE_REVISION_FILE@"
 
 // Define compiler specifics (used in VERY few places only)
@@ -65,8 +61,7 @@
 
 #cmakedefine OPENMS_BIG_ENDIAN
 
-// Define on 64 bit architectures to avoid the use of long long
-// which is required on 32 bit machines for comatibility
+// Define on 64 bit architectures
 #cmakedefine OPENMS_64BIT_ARCHITECTURE
 
 #define OPENMS_INT32_TYPE @CF_OPENMS_INT32_TYPE@

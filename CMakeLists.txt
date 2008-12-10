@@ -6,12 +6,14 @@ PROJECT("OpenMS")
 ########################################################
 ### entries meant to be configured using CMake cache ###
 ### - do NOT hardcode them here!										 ###
-### - edit them within CMakeCache.txt								 ### 
+### - edit them within CMakeCache.txt using ccmake	 ### 
 ########################################################
 # CUSTOM_CONTRIB_DIR
 # OPENMS_DEBUG
 # OPENMS_ENABLE_EXTERNALMEMORY
 # CF_DB_PLUGIN
+
+## not implemented yet (TODO):
 # DO_INSTALL
 
 ########################################################
@@ -32,6 +34,12 @@ SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
 set(DO_INSTALL false CACHE BOOL "Set to 'true' if you want the CMAKE_INSTALL_PREFIX to be used and the library to be installed. On 'false' the library and Tools will be build but not installed!")
 
+if (CMAKE_SIZEOF_VOID_P MATCHES "8")
+	set(OPENMS_64BIT_ARCHITECTURE 1 CACHE INTERNAL "Architecture-bits")
+else()
+	set(OPENMS_64BIT_ARCHITECTURE 0 CACHE INTERNAL "Architecture-bits")
+endif()
+
 
 ########################################################
 ###    compiler flags																 ###
@@ -42,7 +50,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 elseif (MSVC)
 	#add_definitions(/Wall) ## disable for now.. its just too much!
 	
-	## disable stupid warnings. enable if you want to have fun with MSVC 7
+	## disable stupid warnings. enable if you want to have fun with MSVC 8
 	## warning! 4275,4251 is for dllexport/import warnings! this could be vital. recheck!
 	add_definitions(/wd4996 /wd4521 /wd4522 /wd4275 /wd4251)
 	
@@ -78,10 +86,10 @@ endif()
 ## contrib
 
 ## disable AndiMS for 64-bit platforms (until fixed)
-if (CMAKE_SIZEOF_VOID_P MATCHES "8" OR MSVC)
-	set(USE_ANDIMS "false" CACHE INTERNAL "Support AndiMS?!")
+if (CMAKE_SIZEOF_VOID_P MATCHES "8")
+	set(USE_ANDIMS 0 CACHE INTERNAL "Support AndiMS?!")
 else()
-	set(USE_ANDIMS "true" CACHE INTERNAL "Support AndiMS?!")
+	set(USE_ANDIMS 1 CACHE INTERNAL "Support AndiMS?!")
 endif()
 
 set(CUSTOM_CONTRIB_DIR CACHE PATH "User defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib!")
@@ -102,8 +110,17 @@ if (CONFIRM_CONTRIB_DIR STREQUAL "CONFIRM_CONTRIB_DIR-NOTFOUND")
 endif()
 
 set(CONTRIB_INCLUDE_DIR ${CONTRIB_DIR}/include/ CACHE INTERNAL "contrib include dir")
-set(CONTRIB_LIB_DIR ${CONTRIB_DIR}/lib/ CACHE INTERNAL "contrib lib dir")
+if (NOT MSVC)
+	set(CONTRIB_LIB_DIR ${CONTRIB_DIR}/lib/ CACHE INTERNAL "contrib lib dir")
+else()
+	if (OPENMS_64BIT_ARCHITECTURE)
+		set(CONTRIB_LIB_DIR ${CONTRIB_DIR}/win/lib_64/ CACHE INTERNAL "contrib lib dir")
+	else()
+		set(CONTRIB_LIB_DIR ${CONTRIB_DIR}/win/lib_32/ CACHE INTERNAL "contrib lib dir")
+	endif()
+endif()
 
+message(STATUS "Contrib lib dir: ${CONTRIB_LIB_DIR}")
 
 # TODO check whether this is necessary
 FIND_PATH(GSL_INCLUDE_DIR gsl/gsl_cdf.h NAMES gsl/gsl_randist.h PATHS ${CONTRIB_INCLUDE_DIR} DOC "GSL header include dir")
@@ -113,42 +130,44 @@ else()
 	MESSAGE(STATUS "Found GSL include dir at: " ${GSL_INCLUDE_DIR})
 endif()
 
-##### find libs (for linking)
+###########################################################
+###							 find libs (for linking)								###
+###########################################################
 ## on windows we need the *.lib versions (dlls alone won't do for linking)
+## Also we need to be very careful to link against the correct debug/release version in MSVC!
+## TODO: check if we also need to distinguish between compiler versions
 
-FIND_LIBRARY(XERCESC_LIBRARY NAMES xerces-c_2D xerces-c_2D xerces-c xerces-c_2_8 libxerces-c PATHS ${CONTRIB_LIB_DIR} DOC "xerces-c library dir")
-if (XERCESC_LIBRARY STREQUAL "XERCESC_LIBRARY-NOTFOUND")
-	MESSAGE(FATAL_ERROR "Unable to find xerces-c library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
-else()
-	MESSAGE(STATUS "Found xerces-c library at: " ${XERCESC_LIBRARY})
-endif()
+MACRO (OPENMS_CHECKLIB varname libnames libnames_d human_libname)
+	FIND_LIBRARY(${varname}_OPT NAMES ${libnames} PATHS ${CONTRIB_LIB_DIR} DOC "${human_libname} library dir")
+	if (${varname}_OPT STREQUAL "${varname}_OPT-NOTFOUND")
+		MESSAGE(FATAL_ERROR "Unable to find ${human_libname} library! Searched names are: [${libnames}] Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
+	else()
+		MESSAGE(STATUS "Found ${human_libname} library at: " ${${varname}_OPT})
+	endif()
+	FIND_LIBRARY(${varname}_DBG NAMES ${libnames_d} PATHS ${CONTRIB_LIB_DIR} DOC "${human_libname} (Debug) library dir")
+	if (${varname}_DBG STREQUAL "${varname}_DBG-NOTFOUND")
+		MESSAGE(FATAL_ERROR "Unable to find ${human_libname} (Debug) library! Searched names are: [${libnames}] Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
+	else()
+		MESSAGE(STATUS "Found ${human_libname} library at: " ${${varname}_DBG})
+	endif()
+	## combine result and include "optimized" and "debug" keywords which are essential for target_link_libraries()
+	set(${varname} optimized ${${varname}_OPT} debug ${${varname}_DBG})	
+ENDMACRO (OPENMS_CHECKLIB)
 
-FIND_LIBRARY(GSL_LIBRARY NAMES gsl libgsl_dll_d PATHS  ${CONTRIB_LIB_DIR} DOC "GSL library dir")
-if (GSL_LIBRARY STREQUAL "GSL_LIBRARY-NOTFOUND")
-	MESSAGE(FATAL_ERROR "Unable to find GSL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
-else()
-	MESSAGE(STATUS "Found GSL library at: " ${GSL_LIBRARY})
-endif()
+OPENMS_CHECKLIB(XERCESC_LIBRARY "xerces-c_2;libxerces-c" "xerces-c_2D;libxerces-c" xerces_c)
 
-FIND_LIBRARY(GSL_CBLAS_LIBRARY NAMES gslcblas libgslcblas_dll_d PATHS  ${CONTRIB_LIB_DIR} DOC "gslcblas library dir")
-if (GSL_CBLAS_LIBRARY STREQUAL "GSL_CBLAS_LIBRARY-NOTFOUND")
-	MESSAGE(FATAL_ERROR "Unable to find GSL_CBLAS library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
-else()
-	MESSAGE(STATUS "Found GSL_CBLAS library at: " ${GSL_CBLAS_LIBRARY})
-endif()
+OPENMS_CHECKLIB(GSL_LIBRARY "libgsl_dll;gsl" "libgsl_dll_d;gsl" "GSL")
 
-FIND_LIBRARY(CGAL_LIBRARY NAMES CGAL libCGAL cgal-vc80-mt-gd PATHS  ${CONTRIB_LIB_DIR} DOC "CGAL library dir")
-if (CGAL_LIBRARY STREQUAL "CGAL_LIBRARY-NOTFOUND")
-	MESSAGE(FATAL_ERROR "Unable to find CGAL library! Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
-else()
-	MESSAGE(STATUS "Found CGAL library at: " ${CGAL_LIBRARY})
-endif()
+OPENMS_CHECKLIB(GSLCBLAS_LIBRARY "libgslcblas_dll;gslcblas" "libgslcblas_dll_d;gslcblas" "GSL-CBLAS")
 
-# there is no FIND_OBJECT.. so just hard-code it (FIND_LIBRARY wont work)
+OPENMS_CHECKLIB(CGAL_LIBRARY "cgal-vc80-mt;cgal-vc90-mt;CGAL" "cgal-vc80-mt-gd;cgal-vc90-mt-gd;CGAL" "CGAL")
+
+# libSVM:
+# there is no FIND_OBJECT.. so just hard-code it (FIND_LIBRARY won't work)
 if (MSVC)
-	set(SVM_LIBRARY ${CONTRIB_LIB_DIR}svm.obj CACHE INTERNAL "object file of svm library")
+	set(SVM_LIBRARY optimized ${CONTRIB_LIB_DIR}svm.obj debug ${CONTRIB_LIB_DIR}svm_d.obj CACHE INTERNAL "object file of svm library")
 else()
-	set(SVM_LIBRARY ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library")
+	set(SVM_LIBRARY general ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library") # do not distinguish between optimized and debug
 endif()
 
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include/) ## for configured files, i.e. config.h
@@ -175,6 +194,9 @@ find_program(PROG_Svnversion
 
 if (PROG_Svnversion STREQUAL "PROG_Svnversion-NOTFOUND")
 	message(STATUS "The programm svnversion could not be found. SVN-revision information will not be available! Add the location of svnversion(.exe) to your PATH environment variable if you require SVN-revision.")
+	set(OPENMS_HAS_SVNVERSION false CACHE INTERNAL "SVNVersion(.exe) present?")
+else()
+	set(OPENMS_HAS_SVNVERSION true CACHE INTERNAL "SVNVersion(.exe) present?")
 endif()
 
 ########################################################
@@ -204,9 +226,9 @@ endif()
 INCLUDE(TestBigEndian)
 TEST_BIG_ENDIAN(OPENMS_BIG_ENDIAN)
 
-# check 32/64 bit architecture
-if (CMAKE_SIZEOF_VOID_P MATCHES "8")
-	set(OPENMS_64BIT_ARCHITECTURE, "1")
+# check 32/64 bit architecture (defined above!)
+if (NOT DEFINED OPENMS_64BIT_ARCHITECTURE)
+	message(FATAL_ERROR "Cmake script was re-ordered and is now invalid! Please make sure that OPENMS_64BIT_ARCHITECTURE is defined when config.h.in is configured!")		
 endif()
 
 
@@ -304,7 +326,7 @@ CHECK_FUNCTION_EXISTS("sysconf" OPENMS_HAS_SYSCONF)
 
 ## ANDIMS flag USE_ANDIMS defined above!
 if (NOT DEFINED USE_ANDIMS)
-	message(FATAL_ERROR "Cmake script was re-ordered and is now invalid! Please make sure that USE_ANIMS is defined when config.h.in is configured!")		
+	message(FATAL_ERROR "Cmake script was re-ordered and is now invalid! Please make sure that USE_ANDIMS is defined when config.h.in is configured!")		
 endif()
 
 # user flag with default "QMYSQL" (needs a cmake flag/cache entry, so we define it empty which causes it to show up in the wizard)
@@ -319,7 +341,7 @@ set(CF_DB_PLUGIN "QMYSQL" CACHE BOOL "User switch to change the DB plugin.")
 
 set(CF_OPENMS_PATH ${PROJECT_BINARY_DIR})
 
-## replace any variables in config.h.in with current values
+## replace any variables in Doxyfile.in with current values
 configure_file(${PROJECT_SOURCE_DIR}/source/config/Doxyfile.in ${PROJECT_BINARY_DIR}/doc/doxygen/Doxyfile)
 
 ## TODO: test this -> when building documentation, set in environment using svnversion before calling doxygen
@@ -378,24 +400,25 @@ include (includes.cmake)
 
 # add library target
 # warning: set BUILD_SHARED_LIBS to decide if library is shared or static (see above)! We need the BUILD_SHARED_LIBS flag to set declspec flags for MSVC!
-ADD_LIBRARY(OpenMS ${OpenMS_sources} )
+ADD_LIBRARY(OpenMS ${OpenMS_sources})
 
 
 # always create the svn version file before compiling OpenMS
-add_dependencies(OpenMS svnversion_file_target)
+if (OPENMS_HAS_SVNVERSION)
+## TODO replace this with PreProcessorMacro when compiling lib
+## e.g. SET_SOURCE_FILE_PROPERTIES(libSource.c main.c COMPILE_FLAGS -DREVISON=234)
+	add_dependencies(OpenMS svnversion_file_target)
+endif()	
 
 
-set(OPENMS_DEP_LIBRARIES ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${GSL_CBLAS_LIBRARY} ${SVM_LIBRARY} ${XERCESC_LIBRARY})
+set(OPENMS_DEP_LIBRARIES ${QT_LIBRARIES} ${CGAL_LIBRARY} ${GSL_LIBRARY} ${GSLCBLAS_LIBRARY} ${SVM_LIBRARY} ${XERCESC_LIBRARY})
 if (MSVC)
 	list(APPEND OPENMS_DEP_LIBRARIES opengl32.lib)
+	target_link_libraries(OpenMS ${OPENMS_DEP_LIBRARIES})
 endif()
 
 ### OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables
 set(OPENMS_LIBRARIES ${OPENMS_DEP_LIBRARIES} OpenMS)
-
-if (MSVC)
-	target_link_libraries(OpenMS ${OPENMS_DEP_LIBRARIES})
-endif()
 
 ####### TOPP #########
 set(TOPP_executables)

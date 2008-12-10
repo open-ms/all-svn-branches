@@ -154,7 +154,7 @@ MACRO (OPENMS_CHECKLIB varname libnames libnames_d human_libname)
 	set(${varname} optimized ${${varname}_OPT} debug ${${varname}_DBG})	
 ENDMACRO (OPENMS_CHECKLIB)
 
-OPENMS_CHECKLIB(XERCESC_LIBRARY "xerces-c_2;libxerces-c" "xerces-c_2D;libxerces-c" xerces_c)
+OPENMS_CHECKLIB(XERCESC_LIBRARY "xerces-c_2;libxerces-c;xerces-c" "xerces-c_2D;libxerces-c;xerces-c" "xerces_c")
 
 OPENMS_CHECKLIB(GSL_LIBRARY "libgsl_dll;gsl" "libgsl_dll_d;gsl" "GSL")
 

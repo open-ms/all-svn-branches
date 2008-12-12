@@ -2,6 +2,7 @@ FAQ todo:
 	- What is CMake?!
 		CMake builds BuildSystems for different platforms, e.g. VisualStudio Solutions on Windows, Makefiles on Linux etc.
 		This allows us to define in one central location (namely CMakeLists.txt) how OpenMS is build and have the platform specific stuff handled by CMake.
+		See http://www.cmake.org for more information.
 
 	- How do I use CMake?!
 		See Installation instructions for your platform.
@@ -39,10 +40,22 @@ FAQ todo:
 		becomes
 		class OPENMS_DLLAPI Myclass { ...
 
-	- Does AndiMS work on 64bit systems?! Do I need to disable it?!
-		-  AndiMS currently does not work on 64bit (we are planing a bugfix). CMake will *automatically* disable AndiMS on 64bit systems!
+	- CMake can't seem to find a Qt library (usually QtCore)! What now?
+		Did you set the Environment Variable QTDIR correctly?!
+		If the problem still persists: do you have a second installation of Qt (especially the MinGW version?)?
+		This might lead CMake to the wrong path (it's searching for the Qt*.lib files).
+		You should only move/delete the offending Qt version if you know what you are doing!
+		A save workaround is to edit the CMakeCache file (e.g. via ccmake) and set all paths relating to QT (e.g. QT_LIBRARY_DIR) manually.
 
-Dev-FAQ:
+	- Does AndiMS work on 64bit systems?! Do I need to disable it?!
+		-  AndiMS currently does not work on 64bit (we are planning a bugfix). CMake will *automatically* disable AndiMS on 64bit systems!
+
+	- Shall I use VS2008 or VS2005?
+		- Use VS2008 if you can. It it much more convenient when reloading your Solution-File (VS2005 will give you ~10e10 Messageboxes).
+			This happens whenever the Build-System calls CMake (which can be whenever you do svn-update).
+
+
+Build-System-Developer-FAQ:
 	- CMake doesn't find a lib using find_library(VAR ...)!
 		- make sure that the returning VAR is *not* initialized before (within a Message() or Set()) - otherwise find_library will just be skipped because it assumes that
 			the lib is already found! The only way to force it to re-find the lib is to set the value of VAR to "${VAR}-NOTFOUND"
@@ -67,6 +80,11 @@ Installation instructions (Windows)
 	Pre-Requisites:
 	- have a Visual Studio 2005/2008 installed (2003 is not supported, but might work, if you compile your own contrib)
 	- have CMake 2.6 or greater installed (www.cmake.org)
+	- if you work with the SVN version of OpenMS (instead of the Release package), we recommend downloading
+	  the svn binaries (which contain svnversion.exe). TortoiseSVN is *not* enough!
+	  You can find the binaries here: http://subversion.tigris.org
+	  Make sure to add the location of svnversion.exe to your PATH
+	  (the current SVN installer will do this for you automatically).
 
 	Install dependencies:
 	- QT (choose commercial or non-commercial - whatever is applicable to you: read more on the Trolltech website)
@@ -90,7 +108,7 @@ Installation instructions (Windows)
 		...
 		- add the <contrib>/lib | <contrib>/win/lib[32|64|/ directory to your PATH Environment Variable
 
-	- OpenMS
+	OpenMS:
 		- check out OpenMS or download from SF
 		- create BuildSystem using CMake:
 			- open a Visual Studio Command Line (use x64 version if you want 64bit apps!)
@@ -99,8 +117,8 @@ Installation instructions (Windows)
 				- call CMake to create the BuildSystem there
 					$ cd <path_to_OpenMS_build_directory>
 						e.g. $ cd OpenMS_Win64
-					$ cmake -D CUSTOM_CONTRIB_DIR:PATH="<path_to_contrib>" -G "<generator>" "<path_to_OpenMS_source_directory>"
-						the choice of <generator> is dependent on your system. Type $ cmake to see a list of available generators.
+					$ cmake -D CUSTOM_CONTRIB_DIR:PATH="<path_to_contrib>" -G "<generator>" "<path_to_OpenMS>"
+					The choice of <generator> is dependent on your system. Type $ cmake to see a list of available generators.
 						e.g. $ cmake -D CUSTOM_CONTRIB_DIR:PATH="C:\svn\contrib" -G "Visual Studio 8 2005 Win64" "../OpenMS"
 
 
@@ -190,7 +208,7 @@ Qt:
  				 speziell: QT_LIBRARY_DIR, QT_INCLUDE_DIR, QT_DOC_DIR
 
 from command.exe:
-cmake -Wdev -D CUSTOM_CONTRIB_DIR:PATH="C:\svn\contrib\merged" -G "Visual Studio 8 2005" ../OpenMS_Retreat2008 
+cmake -Wdev -D CUSTOM_CONTRIB_DIR:PATH="C:\svn\contrib\merged" -G "Visual Studio 9 2008 Win64" ../OpenMS_Retreat2008 
 
 from command.exe:
 cmake -Wdev -D CUSTOM_CONTRIB_DIR:PATH="D:\uni\OpenMS_Win\my\contrib" -G "MSYS Makefiles" ../OpenMS_Retreat2008 

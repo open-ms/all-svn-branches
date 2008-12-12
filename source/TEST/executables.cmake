@@ -2,40 +2,40 @@
 set(directory source/TEST)
 
 set(concept_executables_list
-ClassTest_test
-Exception_Base_test
-FactoryBase_test
-Factory_test
-FactoryProduct_test
-SingletonRegistry_test
-VersionInfo_test
-FuzzyStringComparator_test
+	ClassTest_test
+	Exception_Base_test
+	FactoryBase_test
+	Factory_test
+	FactoryProduct_test
+	SingletonRegistry_test
+	VersionInfo_test
+	FuzzyStringComparator_test
 )
 
 set(datastructures_executables_list
-String_test
-StringList_test
-IntList_test
-DoubleList_test
-Date_test
-Map_test
-DPosition_test
-DIntervalBase_test
-DRange_test
-DBoundingBox_test
-DataValue_test
-DateTime_test
-RangeManager_test
-Matrix_test
-ConvexHull2D_test
-DefaultParamHandler_test
-SuffixArray_test
-SuffixArraySeqan_test
-SuffixArrayTrypticSeqan_test
-SuffixArrayTrypticCompressed_test
-SuffixArrayPeptideFinder_test
-SparseVector_test
-DistanceMatrix_test
+	String_test
+	StringList_test
+	IntList_test
+	DoubleList_test
+	Date_test
+	Map_test
+	DPosition_test
+	DIntervalBase_test
+	DRange_test
+	DBoundingBox_test
+	DataValue_test
+	DateTime_test
+	RangeManager_test
+	Matrix_test
+	ConvexHull2D_test
+	DefaultParamHandler_test
+	SuffixArray_test
+	SuffixArraySeqan_test
+	SuffixArrayTrypticSeqan_test
+	SuffixArrayTrypticCompressed_test
+	SuffixArrayPeptideFinder_test
+	SparseVector_test
+	DistanceMatrix_test
 )
 
 set(metadata_executables_list
@@ -213,7 +213,7 @@ set(filtering_executables_list
 )
 
 set(comparison_executables_list
-	SpectrumCheapDPCorr_test	
+	SpectrumCheapDPCorr_test
   HierarchicalClustering_test
   PeakSpectrumCompareFunctor_test
   SpectrumPrecursorComparator_test
@@ -262,7 +262,7 @@ set(chemistry_executables_list
 
 
 set(analysis_executables_list
-  ItraqChannelExtractor_test 
+  ItraqChannelExtractor_test
   ItraqQuantifier_test
   SVMWrapper_test
   TransformationDescription_test

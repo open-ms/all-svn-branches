@@ -248,7 +248,7 @@ namespace OpenMS
 			: public BaseException
 		{
 			public:
-				IndexOverflow(const char* file, int line, const char* function, Int index = 0, UInt size = 0) throw();
+				IndexOverflow(const char* file, int line, const char* function, Int index = 0, size_t size = 0) throw();
 		};
 
 		/**	

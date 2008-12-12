@@ -68,6 +68,7 @@
 #define OPENMS_INT64_TYPE @CF_OPENMS_INT64_TYPE@
 #define OPENMS_BYTE_TYPE @CF_OPENMS_BYTE_TYPE@
 #define OPENMS_UINT64_TYPE @CF_OPENMS_UINT64_TYPE@
+//#define OPENMS_SIZE_T_SIGNED @CF_OPENMS_SIZE_T_SIGNED@
 
 
 // if you ever want to do abs() or floor() on this type in VC then use _abs64() and include <stdlib.h> (no kidding!)

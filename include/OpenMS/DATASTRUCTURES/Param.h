@@ -184,7 +184,7 @@ namespace OpenMS
 			    ///Prefix increment operator 
 			    ParamIterator& operator++();
 			    ///Postfix increment operator 
-			    ParamIterator operator++(Int);
+			    ParamIterator operator++(int);
 		 			///Equality operator
 			    bool operator==(const ParamIterator& rhs) const;
 					///Equality operator

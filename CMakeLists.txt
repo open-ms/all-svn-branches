@@ -52,7 +52,7 @@ elseif (MSVC)
 	
 	## disable stupid warnings. enable if you want to have fun with MSVC 8
 	## warning! 4275,4251 is for dllexport/import warnings! this could be vital. recheck!
-	add_definitions(/wd4996 /wd4521 /wd4522 /wd4275 /wd4251)
+	add_definitions(/wd4267 /wd4290 /wd4996 /wd4521 /wd4522 /wd4275 /wd4251)
 	
 	## disable min and max macros by default
 	## see CGAL and BOOST configs for more elaborate explanations
@@ -243,7 +243,6 @@ CHECK_TYPE_SIZE("int" SIZE_INT)
 CHECK_TYPE_SIZE("long" SIZE_LONG)
 CHECK_TYPE_SIZE("long long" SIZE_LONGLONG)
 
-
 CHECK_TYPE_SIZE("int32_t" SIZE_INT32)
 if (HAVE_SIZE_INT32)
 	set(CF_OPENMS_INT32_TYPE int32_t)
@@ -275,6 +274,20 @@ else()
 		message(FATAL_ERROR "Cannot find signed 64bit integer type. Please contact the developers!")		
 	endif()
 endif()
+
+
+#### this is currently disabled due to too many problems 
+#### e.g. calling setValue("myParam",114) will not work, because it setValue would require a setValue(String, int) signature,
+####      but only has setValue(String, long long). Casting everything to (Int) (which is long long on 64bit VS) is unintuitiv!)
+## set OpenMS Types (Int) and (UInt) to the size of size_t and not simply as "int" or "unsigned int"
+## - under unix this seems equivalent, but MSVS defined "int" always as 32bit, even on 64bit platforms.
+#if (OPENMS_64BIT_ARCHITECTURE)
+#	set(CF_OPENMS_SIZE_T_SIGNED ${CF_OPENMS_INT64_TYPE})
+#else()
+#	set(CF_OPENMS_SIZE_T_SIGNED ${CF_OPENMS_INT32_TYPE})
+#endif()	
+
+
 
 CHECK_TYPE_SIZE("uint8_t" SIZE_UINT8)
 if (HAVE_SIZE_UINT8)
@@ -346,7 +359,7 @@ configure_file(${PROJECT_SOURCE_DIR}/source/config/Doxyfile.in ${PROJECT_BINARY_
 
 ## TODO: test this -> when building documentation, set in environment using svnversion before calling doxygen
 set(CF_PACKAGE_REVISION_FILE)
-if (NOT PROG_Svnversion-NOTFOUND)
+if (OPENMS_HAS_SVNVERSION)
 
 	set(svnversion_file_h ${PROJECT_SOURCE_DIR}/source/CONCEPT/openms_svnversion) # file with version number
 	
@@ -407,6 +420,7 @@ ADD_LIBRARY(OpenMS ${OpenMS_sources})
 if (OPENMS_HAS_SVNVERSION)
 ## TODO replace this with PreProcessorMacro when compiling lib
 ## e.g. SET_SOURCE_FILE_PROPERTIES(libSource.c main.c COMPILE_FLAGS -DREVISON=234)
+	message(STATUS "Adding dependency on SVN-Version target file...")
 	add_dependencies(OpenMS svnversion_file_target)
 endif()	
 

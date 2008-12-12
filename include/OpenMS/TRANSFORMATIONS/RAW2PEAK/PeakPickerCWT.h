@@ -312,7 +312,7 @@ namespace OpenMS
         sort(peak_shapes_.begin(), peak_shapes_.end(), PeakShape::PositionLess());
 				std::vector<UInt> peaks_to_skip;
         // search for broad or asymmetric peaks
-        UInt n = peak_shapes_.size();
+        UInt n = (UInt) peak_shapes_.size();
 				if( deconvolution_)
 				{
 					for (UInt i = 0; i < n; ++i)

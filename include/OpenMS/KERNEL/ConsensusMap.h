@@ -75,7 +75,7 @@ namespace OpenMS
 			String label;
 			/// @brief Number of elements (features, peaks, ...).
 			/// This is e.g. used to check for correct element indices when writing a consensus map
-			UInt size;
+			size_t size;
 		};
 
 		///@name Type definitions

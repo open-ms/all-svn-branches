@@ -591,16 +591,16 @@ class TOPPFileInfo
 					mz_qualities.push_back(fm_iter->getQuality(Feature::MZ));
 				}
 
-				cout.precision(writtenDigits<Feature::IntensityType>());
+				cout.precision(writtenDigits<>(Feature::IntensityType() ));
 				cout << "Intensities:\n" << some_statistics(intensities) << endl;
 
-				cout.precision(writtenDigits<Feature::QualityType>());
+				cout.precision(writtenDigits<>(Feature::QualityType() ));
 				cout << "Overall qualities:\n" << some_statistics(overallqualities) << endl;
 
-				cout.precision(writtenDigits(Feature::QualityType()));
+				cout.precision(writtenDigits<>(Feature::QualityType()));
 				cout << "Qualities in retention time dimension:\n" << some_statistics(rt_qualities) << endl;
 
-				cout.precision(writtenDigits(Feature::QualityType()));
+				cout.precision(writtenDigits<>(Feature::QualityType()));
 				cout << "Qualities in mass-to-charge dimension:\n" << some_statistics(mz_qualities) << endl;
 
 			}

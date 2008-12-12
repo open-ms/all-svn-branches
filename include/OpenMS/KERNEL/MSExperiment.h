@@ -452,7 +452,7 @@ namespace OpenMS
 			}
 
 			/// returns the total number of peaks
-			UInt getSize() const
+			UInt64 getSize() const
 		 	{
 			 	return total_size_;
 		 	}
@@ -589,7 +589,7 @@ namespace OpenMS
 	    /// MS levels of the data
 	    std::vector<UInt> ms_levels_;
 	    /// Number of all data points
-	    size_t total_size_;
+	    UInt64 total_size_;
       /// allocator for MSSpectrum
       AllocT alloc_;
 	};

@@ -30,6 +30,7 @@
 #include <OpenMS/config.h>
 
 #include <limits>
+#include <cstddef> // for size_t
 #include <ctime>
 #include <string>
 #include <iostream>
@@ -63,6 +64,13 @@ namespace OpenMS
   */
   typedef OPENMS_INT64_TYPE Int64; 
 
+	/**
+		@brief Unsigned integer type (64bit)
+		
+		@ingroup Concept
+  */
+	typedef OPENMS_UINT64_TYPE UInt64;
+	
 	/**	
 		@brief Time type
 		
@@ -77,6 +85,7 @@ namespace OpenMS
 		
 		@ingroup Concept
   */
+	//typedef size_t UInt;
 	typedef unsigned int UInt;
 
 	/**
@@ -84,6 +93,7 @@ namespace OpenMS
 		
 		@ingroup Concept
   */
+	//typedef OPENMS_SIZE_T_SIGNED Int;
 	typedef int Int;
 
 	/**	

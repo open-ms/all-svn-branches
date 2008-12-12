@@ -157,6 +157,11 @@ CHECK((String(long long unsigned int i)))
 	TEST_EQUAL(s,"12345678")
 RESULT
 
+CHECK((String(long long signed int i)))
+	String s((long long signed int)(-12345678));
+	TEST_EQUAL(s,"-12345678")
+RESULT
+
 CHECK((static String numberLength(DoubleReal d, UInt n)))
 	TEST_EQUAL(String::numberLength(12345678.9123,11),"12345678.91")
 	TEST_EQUAL(String::numberLength(-12345678.9123,11),"-12345678.9")

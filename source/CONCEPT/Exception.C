@@ -170,7 +170,7 @@ namespace OpenMS
 				globalHandler.setMessage(what_);
 			}
 
-			IndexOverflow::IndexOverflow(const char* file, int line, const char* function, Int index, UInt size) throw()
+			IndexOverflow::IndexOverflow(const char* file, int line, const char* function, Int index, size_t size) throw()
 				:	BaseException(file, line, function, "IndexOverflow", "an index was too large")
 			{
 				what_ = "the given index was too large: ";

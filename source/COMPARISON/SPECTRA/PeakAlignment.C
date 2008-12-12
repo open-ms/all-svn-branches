@@ -132,9 +132,9 @@ namespace OpenMS
 		// average peak distance
 		mid /= (spec1.size()*spec2.size());
 
-			#ifdef OPENMS_DEBUG
+			/* to manually retrace
 			cout << "average peak distance " << mid << endl;
-			#endif
+			*/
 
 
 		double var(0);
@@ -149,18 +149,18 @@ namespace OpenMS
 		// peak distance variance
 		var /= (spec1.size()*spec2.size());
 
-			#ifdef OPENMS_DEBUG
+			/* to manually retrace
 			cout << "peak distance variance " << var << endl;
-			#endif
+			*/
 
 		//only in case of only two equal peaks in the spectra sigma is 0
 
 
 		const double sigma((var==0)?FLT_MIN:sqrt(var));
 
-			#ifdef OPENMS_DEBUG
+			/* to manually retrace
 			cout << "peak standard deviation " << sigma << endl;
-			#endif
+			*/
 
 		//fill alignment matrix
 		for (UInt i = 1; i < spec1.size()+1; ++i)
@@ -188,9 +188,9 @@ namespace OpenMS
 			}
 		}
 
-		#ifdef OPENMS_DEBUG
+		/* to manually retrace
 		cout << endl << matrix << endl;
-		#endif
+		*/
 
 		//get best overall score and return
 		double best_score(DBL_MIN);
@@ -219,9 +219,9 @@ namespace OpenMS
 		}
 
 
-		#ifdef OPENMS_DEBUG
+		/* to manually retrace
 		cout << "score_spec1: " << score_spec1 << "score_spec2: " << score_spec2 << endl;
-		#endif
+		*/
 
 		//normalize score to interval [0,1] with geometric mean
 		double best_score_normalized(best_score/sqrt(score_spec1*score_spec2));
@@ -234,8 +234,8 @@ namespace OpenMS
 		//normalize score to interval [0,1] with arithmeic mean
 		double best_score_normalized( (best_score*2) / (score_spec1 + score_spec2) );
 		*/
-	    return best_score_normalized;
 
+		return best_score_normalized;
 	}
 
 	vector< pair<UInt,UInt> > PeakAlignment::getAlignmentTraceback (const PeakSpectrum& spec1, const PeakSpectrum& spec2) const
@@ -273,9 +273,9 @@ namespace OpenMS
 		}
 		mid /= (spec1.size()*spec2.size());
 
-			#ifdef OPENMS_DEBUG
+		/* to manually retrace
 			cout << mid << endl;
-			#endif
+		*/
 
 		double var(0);
 		for (UInt i = 0; i < spec1.size(); ++i)
@@ -288,15 +288,15 @@ namespace OpenMS
 		}
 		var /= (spec1.size()*spec2.size());
 
-			#ifdef OPENMS_DEBUG
+		/* to manually retrace
 			cout << var << endl;
-			#endif
+		*/
 
 		const double sigma(sqrt(var));
 
-			#ifdef OPENMS_DEBUG
+		/* to manually retrace
 			cout << sigma << endl;
-			#endif
+		*/
 
 
 		//fill alignment matrix
@@ -400,11 +400,11 @@ namespace OpenMS
 			}
 		}
 
-		#ifdef OPENMS_DEBUG
+		/* to manually retrace
 		cout << endl << matrix << endl << traceback << endl;
-		#endif
+		*/
 
-	    return ret_val;
+		return ret_val;
 	}
 
 
@@ -414,9 +414,9 @@ namespace OpenMS
 		double pi(sqrt(intens1*intens2));
 		double pp( (1/(sigma*sqrt(2*Constants::PI)))* exp(-(fabs(pos1-pos2))/2*sigma*sigma) );
 
-		#ifdef OPENMS_DEBUG
+		/* to manually retrace
 		cout << fabs(pos1-pos2) << " - "<< pi*pp << endl;
-		#endif
+		*/
 
 		return pi*pp;
 	}

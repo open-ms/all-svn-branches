@@ -62,9 +62,7 @@ namespace OpenMS
 	    	const std::vector<CVTerm>& terms = param_groups_[attributeAsString_(attributes,"ref")];
 				for (UInt i=0; i< terms.size(); ++i)
 				{
-					String value;
-					bool has_value_attribute = optionalAttributeAsString_(value, attributes, value_att_.c_str());
-					handleTerm_(path, terms[i], has_value_attribute, value);
+					handleTerm_(path, terms[i]);
 				}
 	  	}
 	    else if (tag==cv_tag_)
@@ -93,9 +91,7 @@ namespace OpenMS
 	    	}
 	    	else
 	    	{	
-					String value;
-					bool has_value_attribute = optionalAttributeAsString_(value, attributes, value_att_.c_str());
-					handleTerm_(path, parsed_term, has_value_attribute, value);
+					handleTerm_(path, parsed_term);
 				}
 			}
 	  }
@@ -106,11 +102,11 @@ namespace OpenMS
 			String path;
 			if (open_tags_.size()!=0 && open_tags_.front()=="indexedmzML")
 			{
-				path.implode(open_tags_.begin()+1, open_tags_.end()-remove_from_end,"/");
+				path.concatenate(open_tags_.begin()+1, open_tags_.end()-remove_from_end,"/");
 			}
 			else
 			{
-				path.implode(open_tags_.begin(), open_tags_.end()-remove_from_end,"/");
+				path.concatenate(open_tags_.begin(), open_tags_.end()-remove_from_end,"/");
 			}
 			path = String("/") + path;
 			return path;

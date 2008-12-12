@@ -37,7 +37,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page PeakPicker PeakPicker
+	@page TOPP_PeakPicker PeakPicker
 	
 	@brief A tool for peak detection in raw data
 	
@@ -84,7 +84,11 @@ using namespace std;
 		</tr>
 	</table>
 	
-	@ingroup TOPP
+	In order to impove the results of the peak detection on low resolution data @ref TOPP_NoiseFilter and @ref TOPP_BaselineFilter can be applied.
+	For high resolution data this is not necessary.
+	
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_PeakPicker.cli
 */
 
 // We do not want this class to show up in the docu:

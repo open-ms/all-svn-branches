@@ -33,8 +33,14 @@
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/ANALYSIS/QUANTITATION/ItraqConstants.h>
 
-namespace OpenMS {
-
+namespace OpenMS
+{
+	
+	/**
+		@brief
+		
+		@todo Docu (Chris)
+	*/
 	class OPENMS_DLLAPI ItraqChannelExtractor
 		: public DefaultParamHandler,
 			public ItraqConstants

@@ -40,10 +40,8 @@
 					<cvParam cvLabel="psi" accession="PSI:1000010" name="AnalyzerType" value="TOF"/>
 					<cvParam cvLabel="psi" accession="PSI:1000015" name="ScanRate" value="5.555"/>
 					<cvParam cvLabel="psi" accession="PSI:1000016" name="ScanTime" value="6.666"/>
-					<cvParam cvLabel="psi" accession="PSI:1000017" name="ScanFunction" value="MassScan"/>
 					<cvParam cvLabel="psi" accession="PSI:1000018" name="ScanDirection" value="Up"/>
 					<cvParam cvLabel="psi" accession="PSI:1000019" name="ScanLaw" value="Linear"/>
-					<cvParam cvLabel="psi" accession="PSI:1000020" name="TandemScanningMethod" value="ProductIonScan"/>
 					<cvParam cvLabel="psi" accession="PSI:1000022" name="TOFTotalPathLength" value="7.777"/>
 					<userParam name="label" value="pink"/>
 				</analyzer>
@@ -74,7 +72,7 @@
 			<spectrumDesc>
 				<spectrumSettings>
 					<spectrumInstrument msLevel="1" mzRangeStart="3.456" mzRangeStop="7.89">
-						<cvParam cvLabel="psi" accession="PSI:1000036" name="ScanMode" value="SelectedIonDetection"/>
+						<cvParam cvLabel="psi" accession="PSI:1000036" name="ScanMode" value="MassScan"/>
 						<cvParam cvLabel="psi" accession="PSI:1000037" name="Polarity" value="Negative"/>
 						<cvParam cvLabel="psi" accession="PSI:1000039" name="TimeInSeconds" value="1.98"/>
 					</spectrumInstrument>
@@ -91,13 +89,13 @@
 			<spectrumDesc>
 				<spectrumSettings>
 					<spectrumInstrument msLevel="2" mzRangeStart="3.456" mzRangeStop="7.89">
-						<cvParam cvLabel="psi" accession="PSI:1000036" name="ScanMode" value="SelectedIonDetection"/>
+						<cvParam cvLabel="psi" accession="PSI:1000036" name="ScanMode" value="MassScan"/>
 						<cvParam cvLabel="psi" accession="PSI:1000037" name="Polarity" value="Negative"/>
 						<cvParam cvLabel="psi" accession="PSI:1000039" name="TimeInSeconds" value="3.96"/>
 					</spectrumInstrument>
 				</spectrumSettings>
 				<precursorList count="1">
-					<precursor msLevel="2" spectrumRef="1">
+					<precursor msLevel="1" spectrumRef="1">
 						<ionSelection>
 							<cvParam cvLabel="psi" accession="PSI:1000040" name="MassToChargeRatio" value="600.1"/>
 							<cvParam cvLabel="psi" accession="PSI:1000041" name="ChargeState" value="2"/>

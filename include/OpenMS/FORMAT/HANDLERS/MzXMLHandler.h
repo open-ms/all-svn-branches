@@ -71,7 +71,7 @@ namespace OpenMS
 	  			//Polarity
 					String("any;+;-").split(';',cv_terms_[0]);
 					//Scan type
-					String(";zoom;Full;SIM;SRM;CRM").split(';',cv_terms_[1]);
+					// is no longer used cv_terms_[1] is empty now
 					//Ionization method
 					String(";ESI;EI;CI;FAB;TSP;MALDI;FD;FI;PD;SI;TI;API;ISI;CID;CAD;HN;APCI;APPI;ICP").split(';',cv_terms_[2]);
 					//Mass analyzer
@@ -98,7 +98,7 @@ namespace OpenMS
 	  			//Polarity
 					String("any;+;-").split(';',cv_terms_[0]);
 					//Scan type
-					String(";zoom;Full;SIM;SRM;CRM").split(';',cv_terms_[1]);
+					// is no longer used cv_terms_[1] is empty now
 					//Ionization method
 					String(";ESI;EI;CI;FAB;TSP;MALDI;FD;FI;PD;SI;TI;API;ISI;CID;CAD;HN;APCI;APPI;ICP").split(';',cv_terms_[2]);
 					//Mass analyzer
@@ -108,7 +108,7 @@ namespace OpenMS
 					//Resolution method
 					String(";FWHM;TenPercentValley;Baseline").split(';',cv_terms_[5]);
 				}
-	
+
 	  		/// Destructor
 	      virtual ~MzXMLHandler()
 	      {
@@ -215,6 +215,7 @@ namespace OpenMS
 	  		static const XMLCh* s_phone_;
 	  		static const XMLCh* s_email_;
 	  		static const XMLCh* s_uri_;
+				static const XMLCh* s_num_;
 	  		static const XMLCh* s_intensitycutoff_;
 	  		static const XMLCh* s_centroided_;
 	  		static const XMLCh* s_deisotoped_;
@@ -253,6 +254,7 @@ namespace OpenMS
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_phone_ = xercesc::XMLString::transcode("phone");
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_email_ = xercesc::XMLString::transcode("email");
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_uri_ = xercesc::XMLString::transcode("URI");
+		template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_num_ = xercesc::XMLString::transcode("num"); 
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_intensitycutoff_ = xercesc::XMLString::transcode("intensityCutoff");
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_centroided_ = xercesc::XMLString::transcode("centroided");
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_deisotoped_ = xercesc::XMLString::transcode("deisotoped");
@@ -312,19 +314,19 @@ namespace OpenMS
 				precision_ = attributeAsString_(attributes, s_precision_);
 				if (precision_!="32" && precision_!="64")
 				{
-					error(String("Invalid precision '") + precision_ + "' in element 'peaks'");
+					error(LOAD, String("Invalid precision '") + precision_ + "' in element 'peaks'");
 				}
 				String byte_order;
 				optionalAttributeAsString_(byte_order, attributes, s_byteorder_);
 				if (byte_order!="network")
 				{
-					error(String("Invalid or missing byte order '") + byte_order + "' in element 'peaks'. Must be 'network'!");
+					error(LOAD, String("Invalid or missing byte order '") + byte_order + "' in element 'peaks'. Must be 'network'!");
 				}
 				String pair_order;
 				optionalAttributeAsString_(pair_order, attributes, s_pairorder_);
 				if (pair_order!="m/z-int")
 				{
-					error(String("Invalid or missing pair order '") + pair_order + "' in element 'peaks'. Must be 'm/z-int'!");
+					error(LOAD, String("Invalid or missing pair order '") + pair_order + "' in element 'peaks'. Must be 'm/z-int'!");
 				}
 			}
 			else if (tag=="precursorMz")
@@ -335,7 +337,7 @@ namespace OpenMS
 				}
 				catch (Exception::ParseError& /*e*/)
 				{
-					std::cerr << "Error: MzXMLHandler: mandatory attribute precursorMz not found! Setting precursor intensity to 0; trying to continue;" << std::endl;
+					error(LOAD, "Mandatory attribute precursorMz not found! Setting precursor intensity to 0 - trying to continue");
 					exp_->back().getPrecursorPeak().setIntensity(0.0);
 				}
 				
@@ -397,15 +399,12 @@ namespace OpenMS
 				exp_->resize(exp_->size()+1);
 				exp_->back().setMSLevel(ms_level);
 				exp_->back().setRT(retention_time);
-				if (options_.hasMSLevels())
-				{
-					exp_->back().setMetaValue("original_spectrum_number", scan_count);
-				}
+				exp_->back().setNativeID(String("scan=") + attributeAsString_(attributes, s_num_));
 				//peak count == twice the scan size
 				peak_count_ = attributeAsInt_(attributes, s_peakscount_);
 				exp_->back().reserve(peak_count_);
 				
-				//TODO centroided, chargeDeconvoluted, deisotoped are ignored
+				//centroided, chargeDeconvoluted, deisotoped are ignored
 
 				//other optional attributes
 				InstrumentSettings::ScanWindow window;
@@ -426,8 +425,57 @@ namespace OpenMS
 				
 				String type = "";
 				optionalAttributeAsString_(type, attributes, s_scantype_);
-				exp_->back().getInstrumentSettings().setScanMode( (InstrumentSettings::ScanMode) cvStringToEnum_(1,type,"scanType") );
-				
+				if (type=="")
+				{
+					//unknown/unset => do nothing here => no warning in the end
+				}
+				else if (type=="zoom")
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::ZOOM);
+				}
+				else if (type=="Full")
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::FULL);
+				}
+				else if (type=="SIM")
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::SIM);
+				}
+				else if (type=="SRM")
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::SRM);
+				}
+				else if (type=="CRM")
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::CRM);
+				}
+				else if (type=="Q1")
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::FULL);
+				}
+				else if (type=="Q3")
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::FULL);
+				}
+				else if (type=="EMS")//Non-standard type: Enhanced MS (ABI - Sashimi converter)
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::FULL);
+				}
+				else if (type=="EPI")//Non-standard type: Enhanced Product Ion (ABI - Sashimi converter)
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::FULL);
+					exp_->back().setMSLevel(2);
+				}
+				else if (type=="ER") // Non-stanard type: Enhanced Resolution (ABI - Sashimi converter)
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::ZOOM);
+				}
+				else
+				{
+					exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::FULL);
+					warning(LOAD, String("Unknown scan mode '") + type + "'. Assuming full scan");
+				}
+					
 				++scan_count;
 			}
 			else if (tag=="operator")
@@ -652,7 +700,7 @@ namespace OpenMS
 				}
 				else if (parent_tag=="dataProcessing")
 				{
-					//TODO this is currently ignored
+					//this is currently ignored
 				}
 				else if (parent_tag=="scan")
 				{
@@ -660,14 +708,13 @@ namespace OpenMS
 				}
 				else if (String(transcoded_chars).trim()!="")
 				{
-					std::cerr << "Unhandled comment '" << transcoded_chars << "' in element '" << open_tags_.back() << "'" << std::endl;
+					warning(LOAD, String("Unhandled comment '") + transcoded_chars + "' in element '" + open_tags_.back() + "'");
 				}
 			}
 			else if (String(transcoded_chars).trim()!="")
 			{
-					std::cerr << "Unhandled character content '" << transcoded_chars << "' in tag '" << open_tags_.back() << "'" << std::endl;
+				warning(LOAD, String("Unhandled character content '") + transcoded_chars + "' in element '" + open_tags_.back() + "'");
 			}
-	  	//std::cout << " -- !Chars -- " << std::endl;
 	  }
 	
 		template <typename MapType>
@@ -857,19 +904,64 @@ namespace OpenMS
 				}
 			}
 			
-			std::stack<UInt> open_scans;
+			//check if the nativeID of all spectra are numbers or numbers prefixed with 'scan='
+			//If not we need to renumber all spectra.
+			bool all_numbers = true;
+			bool all_empty = true;
+			bool all_prefixed_numbers = true;
+			for (UInt s=0; s<cexp_->size(); s++)
+			{
+				String native_id = (*cexp_)[s].getNativeID();
+				if (!native_id.hasPrefix("scan="))
+				{
+					all_prefixed_numbers = false;
+				}
+				else
+				{
+					native_id = native_id.substr(5);
+				}
+				try
+				{
+					native_id.toInt();
+				}
+				catch (Exception::ConversionError&)
+				{
+					all_numbers = false;
+					all_prefixed_numbers = false;
+					if (native_id!="")
+					{
+						all_empty = false;
+					}
+				}
+			}
+			//If we need to renumber and the nativeIDs were not empty, warn the user
+			if (!all_numbers && !all_empty)
+			{
+				warning(STORE, "Not all spectrum native IDs are numbers or correctly prefixed with 'scan='. The spectra are renumbered and the native IDs are lost!");
+			}
 			
 			// write scans
+			std::stack<UInt> open_scans;
 			for (UInt s=0; s<cexp_->size(); s++)
 			{
 				logger_.setProgress(s);
 				const SpectrumType& spec = (*cexp_)[s];
 							
-				int ms_level = spec.getMSLevel();
+				UInt ms_level = spec.getMSLevel();
 				open_scans.push(ms_level);
-				
+
+				UInt spectrum_id = s+1;
+				if (all_prefixed_numbers)
+				{
+					spectrum_id = spec.getNativeID().substr(5).toInt();
+				}
+				else if (all_numbers)
+				{
+					spectrum_id = spec.getNativeID().toInt();
+				}
+
 				os << String(ms_level+1,'\t')
-					 << "<scan num=\"" << spec_write_counter_++ << "\" msLevel=\""
+					 << "<scan num=\"" << spectrum_id << "\" msLevel=\""
 					 << ms_level << "\" peaksCount=\""
 					 << spec.size() << "\" polarity=\"";
 				if (spec.getInstrumentSettings().getPolarity()==IonSource::POSITIVE)
@@ -884,12 +976,32 @@ namespace OpenMS
 				{
 					os << "any";
 				}
-				
-				if (spec.getInstrumentSettings().getScanMode()!=0 && spec.getInstrumentSettings().getScanMode()<6)
+
+				//scan type
+				switch(spec.getInstrumentSettings().getScanMode())
 				{
-					os << "\" scanType=\""
-						 << cv_terms_[1][spec.getInstrumentSettings().getScanMode()];
+					case InstrumentSettings::UNKNOWN:
+						break;
+					case InstrumentSettings::FULL:
+						os << "\" scanType=\"Full";
+						break;
+					case InstrumentSettings::ZOOM:
+						os << "\" scanType=\"zoom";
+						break;
+					case InstrumentSettings::SIM:
+						os << "\" scanType=\"SIM";
+						break;
+					case InstrumentSettings::SRM:
+						os << "\" scanType=\"SRM";
+						break;
+					case InstrumentSettings::CRM:
+						os << "\" scanType=\"CRM";
+						break;
+					default:
+						os << "\" scanType=\"Full";
+						warning(STORE, String("Scan type '") + InstrumentSettings::NamesOfScanMode[spec.getInstrumentSettings().getScanMode()] + "' not supported by mzXML. Using 'Full' scan mode!");
 				}
+
 				os << "\" retentionTime=\"";
 				if (spec.getRT()<0) os << "-";
 				os << "PT"<< std::fabs(spec.getRT()) << "S\"";
@@ -899,7 +1011,7 @@ namespace OpenMS
 				}
 				if (spec.getInstrumentSettings().getScanWindows().size() > 1)
 				{
-					warning("Warning: The MzXML format can store only one scan window for each scan. Only the first one is stored!");
+					warning(STORE, "The MzXML format can store only one scan window for each scan. Only the first one is stored!");
 				}
 				os << ">\n";
 	
@@ -940,7 +1052,7 @@ namespace OpenMS
 				}
 				
 				//check MS level of next scan and close scans (scans can be nested)
-				int next_ms_level = 0;
+				UInt next_ms_level = 0;
 				if (s < cexp_->size()-1)
 				{
 					next_ms_level = ((*cexp_)[s+1]).getMSLevel();
@@ -948,7 +1060,7 @@ namespace OpenMS
 				//std::cout << "scan: " << s << " this: " << ms_level << " next: " << next_ms_level << std::endl;
 				if (next_ms_level <= ms_level)
 				{
-					for (Int i = 0; i<= ms_level-next_ms_level && !open_scans.empty(); ++i)
+					for (UInt i = 0; i<= ms_level-next_ms_level && !open_scans.empty(); ++i)
 					{
 						os << String(ms_level-i+1,'\t') << "</scan>\n";
 						open_scans.pop();

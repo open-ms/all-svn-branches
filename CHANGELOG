@@ -3,32 +3,47 @@
 ------------------------------------------------------------------------------------------
 
 New features and improvements of OpenMS:
-- Kernel: replaced comparators NthPositionLess by the comparator(s) RTLess and/or MZLess.
-- Kernel: replaced methods sortByNthPosition() by the method(s) sortByRT() and/or sortByMZ().
-- Improved the whole framework for meta data visualization.
-- Finalized MzML implementation: previously unsupported parts, index MzML, semantic validation
+- Kernel: Replaced comparators NthPositionLess by the comparator(s) RTLess and/or MZLess.
+- Kernel: Replaced methods sortByNthPosition() by the method(s) sortByRT() and/or sortByMZ().
+- Improved the framework for meta data visualization.
+- Finalized MzML implementation (version 1.10)
+  - previously unsupported parts
+  - index MzML
+  - semantic validation
+  - correctly handling of nativeID for all formats
 - Meta data: Several extensions to the meta data handling classes for mzML compliance.
+- The macros used for unit testing in source/TEST have been revised.
+- More consistent handling of single vs. double numeric precision, esp. in file output.
 
 New features and improvements of TOPP:
-- FeatureLinker: Added automated RT parameter estimated for 'labeled' algorithm.
-- Added new Tools: SILACAnalyzer, IDQuantMerger, ITRAQAnalyzer
-- Resampler: this tool is now used for resampling raw data instead of NoiseFilter or BaselineFilter
-- FileInfo: The option '-v' now also does a semantic validation of MzML files
+- Added SILACAnalyzer: A specialized tool for quantitation of SILAC experiments (contributed by Lars Nilse).
+- Added ITRAQAnalyzer: A specialized tool for quantitation of ITRAQ experiments.
+- Added IDMapper: Assigns protein/peptide identifications to features or consensus features.
+- FeatureLinker: Added automated RT parameter estimation for 'labeled' algorithm.
+- MapAligner: Added spectrum_alignment and apply_given_trafo, IdXML is supported
+- Resampler: This tool is now used for resampling raw data instead of resampling in NoiseFilter or BaselineFilter.
+- FileInfo: The option '-v' now also does a semantic validation of MzML files.
+- FileMerger: Improved interface
+- ConsensusID: Now also supports consensus identification of features and consensus features.
 
 New features and improvements of TOPPView:
 - Added functionality for editing feature data
+- Added measuring and generic annotations to 1D view
 
 Changes to OpenMS XML formats:
 - ParamXML:
   - Restrictions in Param .ini files are represented by 'min:max' instead
     of 'min-max' now, to avoid issues with small (1e-06) and negative numbers.
-  - replaced 'advanced' attribute by the 'tags' attribute.
+  - Replaced 'advanced' attribute by the more general 'tags' attribute.
+  - Added support for float, int and string lists
 - featureXML:
-  - added tag <subordinate> to store competing features that did not qualify for the final map
-  - removed <description> section
-  - added document Id
+  - Added tag <subordinate> to store competing features that did not qualify for the final map
+  - Removed <description> section
+  - Added document Id
+  - Added protein and peptide information
 - consensusXML:
-	- added document Id
+	- Added document Id
+	- Added protein and peptide information
 
 Changes to the contrib package:
 - Updated SeqAn package to revision 2666 (this fixes the STL debug error)
@@ -38,11 +53,20 @@ Detailed list of changes to specific OpenMS classes:
   - Renamed MSMetaDataExplorer to MetaDataBrowser
   - Renamed ProcessingMethod to DataProcessing
 - Removed classes
-  - Removed DPeakArray and moved the functionality to the classes that inherited from DPeakArray
+  - DPeakArray (moved the functionality to the classes that inherited from it)
+  - IDSpectrumMapper (replaced by IDMapper)
+  - IDFeatureMapper (replaced by IDMapper)
+  - FeatureXMLHandler (merged into FeatureXMLFile)
+  - ConsensusXMLHandler (merged into ConsensusXMLFile)
+  - PeakPicker (merged into PeakPickerCWT)
 - New classes
   - DATASTRUCTURES/IntList
   - DATASTRUCTURES/StringList
+  - ANALYSIS/ID/IDMapper
+	- ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmApplyGivenTrafo
+	- ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmSpectrumAlignment
 - Changes to classes
+	- MassAnalyzer: Removed tandem scanning method. This is stored in the ScanMode of InstrumentSettings.
 	- DataProcessing: Now contains Software and can handle multiple processing actions.
 	- Software: Only contains name and version now.
 	- SourceFile: Added MetaInfointerface and checksum type
@@ -55,32 +79,36 @@ Detailed list of changes to specific OpenMS classes:
   - ExperimentalSettings
     - Now contains multiple SourceFiles and DataProcessings
     - ExperimentType was removed
-  - SpectrumSettings: added native ID (from acquisition software)
+  - SpectrumSettings
+    - Added nativeID (from acquisition software)
   - DSpectrum
     - The peaks are no longer stored in a container member, but DSpectrum is derived 
       from std::vector<PeakType>.
     - The container type is no longer a template argument. Peak type and allocator type
       are the new template arguments.
   - LabeledPairFinder: Added automated RT parameter estimation.
-  - GaussFitter: removed several unneeded methods.
-  - GammaDistributionFitter: removed several unneeded methods.
+  - GaussFitter: Removed several unneeded methods.
+  - GammaDistributionFitter: Removed several unneeded methods.
+  - DataValue: Added support for IntList and DoubleList types
   - Param:
     - Added a new remove(key) method, that removed only exact matches.
       The old remove() method was renamed to removeAll(prefix)
-    - replaced 'advanced' flag by a generic tagging mechanism
+    - Replaced 'advanced' flag by a generic tagging mechanism
+    - Added support for IntList and DoubleList types
   - File: find(...) now throws an exception, of the file is not found.
   - DPeak and DRichPeak are metafunctions now, e.g. DPeak<1>::Type is a typedef for Peak1D.
   - VersionInfo: Added support for SVN revision info. Slight interface changes.
   - TOPPBase: Print revison info (if meaningful).
-  - MetaInfo: uses double precision now.
+  - MetaInfo: Uses double precision now.
   - Date
-    - get() now returns a string instead of modifying a string reference
-    - made today() is static now and returns the current DateTime instead of modifying the object
+    - get() now returns a string instead of modifying a string reference.
+    - Made today() is static now and returns the current DateTime instead of modifying the object.
   - DateTime
-    - get(), getDate() and getTime() now return a string instead of modifying a string reference
-    - made now() is static now and returns the current Date instead of modifying the object
-  - MSExperiment: The date is now a DateTime object
-
+    - get(), getDate() and getTime() now return a string instead of modifying a string reference.
+    - Made now() is static now and returns the current Date instead of modifying the object.
+  - MSExperiment: The date is now a DateTime object.
+  - ProgressLogger: Nested application uses indentation.
+	
 ------------------------------------------------------------------------------------------
 ----                                   OpenMS 1.2                                     ----
 ------------------------------------------------------------------------------------------
@@ -309,6 +337,7 @@ Detailed list of changes to specific OpenMS classes:
   - Added support for advanced parameters
 - String
   - Improved implementations of implode and substr
+  - Renamed implode(...) method to concatenate(...)
 - DSpectrum
   - Added method to find the nearest peak to an m/z value (findNearest)
 - Feature

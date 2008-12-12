@@ -17,11 +17,7 @@
 			</sourceFile>
 			<contact>
 				<name>William Pennington</name>
-				<institution></institution>
-			</contact>
-			<contact>
-				<name> Drek'Thar</name>
-				<institution></institution>
+				<institution>Higglesworth University</institution>
 			</contact>
 		</admin>
 		<instrument>
@@ -64,10 +60,10 @@
 		</dataProcessing>
 	</description>
 	<spectrumList count="3">
-		<spectrum id="1">
+		<spectrum id="0">
 			<spectrumDesc>
 				<spectrumSettings>
-					<acqSpecification spectrumType="discrete" methodOfCombination="" count="2">
+					<acqSpecification spectrumType="discrete" methodOfCombination="no combination" count="2">
 						<acquisition acqNumber="4711">
 							<userParam name="name" value="acquisition1"/>
 						</acquisition>
@@ -77,8 +73,8 @@
 					</acqSpecification>
 					<spectrumInstrument msLevel="1" mzRangeStart="400" mzRangeStop="1800">
 						<cvParam cvLabel="psi" accession="PSI:1000036" name="ScanMode" value="MassScan"/>
+						<cvParam cvLabel="psi" accession="PSI:1000037" name="Polarity" value="Positive"/>
 						<cvParam cvLabel="psi" accession="PSI:1000039" name="TimeInSeconds" value="5.89050006866455"/>
-						<userParam name="name" value="scan1"/>
 					</spectrumInstrument>
 				</spectrumSettings>
 			</spectrumDesc>
@@ -89,17 +85,21 @@
 				<data precision="32" endian="little" length="15">AABwQQAAYEEAAFBBAABAQQAAMEEAACBBAAAQQQAAAEEAAOBAAADAQAAAoEAAAIBAAABAQAAAAEAAAIA/</data>
 			</intenArrayBinary>
 		</spectrum>
-		<spectrum id="2">
+		<spectrum id="1">
 			<spectrumDesc>
 				<spectrumSettings>
+					<acqSpecification spectrumType="discrete" methodOfCombination="no combination" count="1">
+						<acquisition acqNumber="0">
+						</acquisition>
+					</acqSpecification>
 					<spectrumInstrument msLevel="2" mzRangeStart="110" mzRangeStop="905">
 						<cvParam cvLabel="psi" accession="PSI:1000036" name="ScanMode" value="MassScan"/>
+						<cvParam cvLabel="psi" accession="PSI:1000037" name="Polarity" value="Positive"/>
 						<cvParam cvLabel="psi" accession="PSI:1000039" name="TimeInSeconds" value="5.99049997329712"/>
-						<userParam name="name" value="scan2"/>
 					</spectrumInstrument>
 				</spectrumSettings>
 				<precursorList count="1">
-					<precursor msLevel="2" spectrumRef="1">
+					<precursor msLevel="1" spectrumRef="0">
 						<ionSelection>
 							<cvParam cvLabel="psi" accession="PSI:1000040" name="MassToChargeRatio" value="445.34"/>
 							<cvParam cvLabel="psi" accession="PSI:1000041" name="ChargeState" value="2"/>
@@ -119,11 +119,16 @@
 				<data precision="32" endian="little" length="10">AACgQQAAkEEAAIBBAABgQQAAQEEAACBBAAAAQQAAwEAAAIBAAAAAQA==</data>
 			</intenArrayBinary>
 		</spectrum>
-		<spectrum id="3">
+		<spectrum id="2">
 			<spectrumDesc>
 				<spectrumSettings>
+					<acqSpecification spectrumType="discrete" methodOfCombination="no combination" count="1">
+						<acquisition acqNumber="0">
+						</acquisition>
+					</acqSpecification>
 					<spectrumInstrument msLevel="1">
 						<cvParam cvLabel="psi" accession="PSI:1000036" name="ScanMode" value="MassScan"/>
+						<cvParam cvLabel="psi" accession="PSI:1000037" name="Polarity" value="Positive"/>
 						<cvParam cvLabel="psi" accession="PSI:1000039" name="TimeInSeconds" value="6.09049987792969"/>
 					</spectrumInstrument>
 				</spectrumSettings>

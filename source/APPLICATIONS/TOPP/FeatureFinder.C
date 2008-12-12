@@ -37,7 +37,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page FeatureFinder FeatureFinder
+	@page TOPP_FeatureFinder FeatureFinder
 	
 	@brief The feature detection application (quantitation)
 	
@@ -86,8 +86,14 @@ using namespace std;
 			<td>0.04</td>
 			<td>0.005</td>
 		</tr>
-
 	</table>
+	
+	For the @em picked_peak algorithm peak data is needed. In order to create peak data from raw data use the @ref TOPP_PeakPicker.
+	
+	Specialized tools are available for some experimental techniques: @ref TOPP_SILACAnalyzer, @ref TOPP_ITRAQAnalyzer.
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_FeatureFinder.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -107,7 +113,7 @@ class TOPPFeatureFinder
 	{
 		registerInputFile_("in","<file>","","input file ");
 		setValidFormats_("in",StringList::create("mzData"));
-		registerOutputFile_("out","<file>","","output feature list ");
+		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("featureXML"));
 		registerStringOption_("type","<name>","","FeatureFinder algorithm type\n",true);
 		setValidStrings_("type", Factory<FeatureFinderAlgorithm<Peak1D,Feature> >::registeredProducts());

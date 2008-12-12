@@ -4,8 +4,6 @@ set(directory source/FORMAT/HANDLERS)
 ### list all filenames of the directory here
 set(sources_list
 ANDIHandler.C
-ConsensusXMLHandler.C
-FeatureXMLHandler.C
 MascotXMLHandler.C
 MzDataHandler.C
 MzMLHandler.C

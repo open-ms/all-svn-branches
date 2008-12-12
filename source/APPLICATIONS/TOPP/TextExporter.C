@@ -46,12 +46,17 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page TextExporter TextExporter
+	@page TOPP_TextExporter TextExporter
 	
 	@brief This application converts several %OpenMS XML formats
 	(namely featureXML, consensusXML and idXML) to text files.
 	These text files can be easily read using other applications
 	such as R, Matlab, Excel, etc.
+	
+	@todo Add identifications output to featureXML and consensusXML and consider no_ids flag (Andreas, Clemens, Chris, Nico)
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_TextExporter.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -155,22 +160,25 @@ namespace OpenMS
 		{
       registerInputFile_("in","<file>","","Input file ");
     	setValidFormats_("in",StringList::create("featureXML,consensusXML,idXML"));
-      registerStringOption_("out","<file>","","Output text file. Only used for FeatureXML and IdXML.",false);
+      registerOutputFile_("out","<file>","","Output file. Only used for FeatureXML and IdXML.",false);
+      registerFlag_("no_ids","Suppresses output of identification data for consensusXML and featureXML");
 			addEmptyLine_();
 			addText_("Options for IdXML files:");
 			registerFlag_("proteins_only", "Set this flag if you want only protein information from an idXML file");
 			registerFlag_("peptides_only", "Set this flag if you want only peptide information from an idXML file");
+			registerFlag_("peptides_only_csv","Set this flag if you want only peptide information from an idXML file in csv format",false);
 			addEmptyLine_();
 			addText_("Options for ConsensusXML files:");
-			registerStringOption_("consensus_centroids","<file>","","Centroids of consensus features",false);
-			registerStringOption_("consensus_elements","<file>","","Elements of consensus features",false);
-			registerStringOption_("consensus_features","<file>","","Consensus features and contained elements from all maps (writes 'nan's if element is missing)",false);
+			registerOutputFile_("consensus_centroids","<file>","","Centroids of consensus features",false);
+			registerOutputFile_("consensus_elements","<file>","","Elements of consensus features",false);
+			registerOutputFile_("consensus_features","<file>","","Consensus features and contained elements from all maps (writes 'nan's if element is missing)",false);
 			addText_("Each of the consensus_... files is created as requested.");
 			registerStringOption_("sorting_method","<method>","none","Sorting method",false);
 			setValidStrings_("sorting_method",StringList::create("none,RT,MZ,RT_then_MZ,intensity,quality_decreasing,quality_increasing"));
 			registerFlag_("sort_by_maps","Apply a stable sort by the covered maps, lexicographically",false);
 			registerFlag_("sort_by_size","Apply a stable sort by decreasing size (i.e., the number of elements)",false);
 			addText_("Sorting options can be combined.  The precedence is: sort_by_size, sort_by_maps, sorting_method");
+			registerFlag_("first_dim_rt","If this flag is set the first_dim RT of the peptide hits will also be printed (if present).");
 			return;
 		}
 	
@@ -192,6 +200,10 @@ namespace OpenMS
 	
 			String in = getStringOption_("in");
 			String out = getStringOption_("out");
+			UInt counter = 0;
+			bool without_header_repetition = getFlag_("peptides_only_csv");
+      bool no_ids = getFlag_("no_ids");
+      bool first_dim_rt = getFlag_("first_dim_rt");
         
       //input file type
       FileHandler::Type in_type = FileHandler::getType(in);
@@ -438,13 +450,13 @@ namespace OpenMS
 				vector<PeptideIdentification> pep_ids;
 				IdXMLFile().load(in, prot_ids, pep_ids);
 				
-				
+				counter = 0;
 				ofstream txt_out(out.c_str());
 
 				for (vector<ProteinIdentification>::const_iterator it = prot_ids.begin(); it != prot_ids.end(); ++it)
 				{
 					String actual_id = it->getIdentifier();
-					if (!getFlag_("peptides_only"))
+					if (!getFlag_("peptides_only") && !getFlag_("peptides_only_csv"))
 					{
 						// protein id header 
 						txt_out << "# Run ID, Score Type, Score Direction, Date/Time, Search Engine Version " << endl;
@@ -541,51 +553,89 @@ namespace OpenMS
 						{
 							if (pit->getIdentifier() == actual_id)
 							{
-								// header of peptide idenfication
-								txt_out << "# RunID, RT, m/z, ScoreType, Score Direction" << endl;
-								txt_out << actual_id << " ";
-								
-								if (pit->metaValueExists("RT"))
+								if (!without_header_repetition)
 								{
-									txt_out << (double)pit->getMetaValue("RT") << " ";
+									// header of peptide idenfication
+									txt_out << "# RunID, RT, m/z, ScoreType, Score Direction" << endl;
+									txt_out << actual_id << " ";
+									
+									if (pit->metaValueExists("RT"))
+									{
+										txt_out << (double)pit->getMetaValue("RT") << " ";
+									}
+									else
+									{
+										txt_out << "-1 ";
+									}
+	
+									if (pit->metaValueExists("MZ"))
+									{
+										txt_out << (double)pit->getMetaValue("MZ") << " ";
+									}
+									else
+									{
+										txt_out << "-1 ";
+									}
+									
+									txt_out	<< pit->getScoreType() << " ";
+									if (pit->isHigherScoreBetter())
+	            		{
+	              		txt_out << "higher-score-better ";
+	            		}
+	            		else
+	            		{
+	              		txt_out << "lower-score-better ";
+	           			}
+									txt_out << endl;
 								}
-								else
-								{
-									txt_out << "-1 ";
-								}
-
-								if (pit->metaValueExists("MZ"))
-								{
-									txt_out << (double)pit->getMetaValue("MZ") << " ";
-								}
-								else
-								{
-									txt_out << "-1 ";
-								}
-								
-								txt_out	<< pit->getScoreType() << " ";
-								if (pit->isHigherScoreBetter())
-            		{
-              		txt_out << "higher-score-better ";
-            		}
-            		else
-            		{
-              		txt_out << "lower-score-better ";
-           			}
-								txt_out << endl;
-
 											
 								// header of peptide hits
-            		txt_out << "# Peptide Hits: Score, Rank, Sequence, Charge, AABefore, AAAfter, Accessions" << endl;
+								if (without_header_repetition && counter == 0)
+								{
+									if (first_dim_rt)
+									{
+            				txt_out << "RT MZ Score Rank Sequence Charge AABefore AAAfter Accessions predicted_RT RT_first_dim predicted_RT_first_dim" << endl;
+									}
+									else
+									{
+            				txt_out << "RT MZ Score Rank Sequence Charge AABefore AAAfter Accessions predicted_RT" << endl;
+            			}
+            			++counter;
+            		}
+            		else if (counter == 0)
+            		{
+            			txt_out << "# Peptide Hits: Score, Rank, Sequence, Charge, AABefore, AAAfter, Accessions, predicted_RT" << endl;
+            		}
 
             		for (vector<PeptideHit>::const_iterator ppit = pit->getHits().begin(); ppit != pit->getHits().end(); ++ppit)
             		{
+            			if (without_header_repetition)
+            			{
+										if (pit->metaValueExists("RT"))
+										{
+											txt_out << (double)pit->getMetaValue("RT") << " ";
+										}
+										else
+										{
+											txt_out << "-1 ";
+										}
+		
+										if (pit->metaValueExists("MZ"))
+										{
+											txt_out << (double)pit->getMetaValue("MZ") << " ";
+										}
+										else
+										{
+											txt_out << "-1 ";
+										}
+            			}
               		txt_out << ppit->getScore() << " "
                 		      << ppit->getRank() << " "
                   		    << ppit->getSequence() << " "
 													<< ppit->getCharge() << " "
 													<< ppit->getAABefore() << " " 
 													<< ppit->getAAAfter() << " ";
+
 									for (vector<String>::const_iterator ait = ppit->getProteinAccessions().begin(); ait != ppit->getProteinAccessions().end(); ++ait)
 									{
 										if (ait != ppit->getProteinAccessions().begin())
@@ -593,6 +643,33 @@ namespace OpenMS
 											txt_out << ";";
 										}
 										txt_out << *ait;
+									}
+									if (ppit->metaValueExists("predicted_RT"))
+									{
+										txt_out << " " << ppit->getMetaValue("predicted_RT");
+									}
+									else
+									{
+										txt_out << " -1";
+									}
+									if (first_dim_rt)
+									{
+										if (pit->metaValueExists("first_dim_rt"))
+										{
+											txt_out << " " << pit->getMetaValue("first_dim_rt");
+										}
+										else
+										{
+											txt_out << " -1";
+										}
+										if (ppit->metaValueExists("predicted_RT_first_dim"))
+										{
+											txt_out << " " << ppit->getMetaValue("predicted_RT_first_dim");
+										}
+										else
+										{
+											txt_out << " -1";
+										}										
 									}
 									txt_out << endl;
 								}

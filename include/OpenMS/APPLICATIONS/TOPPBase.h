@@ -95,9 +95,6 @@ namespace OpenMS
   	- impelment the registerOptionsAndFlags_ and main_ methods
   	- add a doxygen page for the tool and add the page to TOPP.doxygen
   	- hide the derived class in the OpenMS documentation by using doxygen codition macros.
-		
-		@todo Create infrastructure for command line arguments that are lists, use it in all TOPP tools that take lists as arguments e.g. file lists (Hiwi)
-  	@todo Use DataProcessing in all TOPP tools (Marc)
   */
   class OPENMS_DLLAPI TOPPBase
   {
@@ -121,15 +118,29 @@ namespace OpenMS
         INTERNAL_ERROR
     	};
 
-      /// Construtor
-      TOPPBase( const String& tool_name, const String& tool_description, const String& version="");
+      /**
+      	@brief Constructor
+      	
+      	@param name Tool name.
+      	@param description Short description of the tool (one line).
+      	@param official If this is an official TOPP tool contained in the OpenMS/TOPP release.
+      	                If @em true the tool name is checked against the list of TOPP tools and a warning printed if missing.
+      	@param version Optional version of the tools (if empty, the version of OpenMS/TOPP is used).
+      */
+      TOPPBase(const String& name, const String& description, bool official=true, const String& version="");
 
       /// Destructor
       virtual ~TOPPBase();
 
       /// Main routine of all TOPP applications
       ExitCodes main(int argc, const char** argv);
-
+			
+			/// Returns the list of official TOPP tools contained in the OpenMS/TOPP release.
+			static StringList getToolList()
+			{
+				return StringList::create("AdditiveSeries,BaselineFilter,ConsensusID,DBExporter,DBImporter,DTAExtractor,Decharger,FalseDiscoveryRate,FeatureFinder,FeatureFinderMRM,FeatureLinker,FileConverter,FileFilter,FileInfo,FileMerger,IDDecoyProbability,IDFilter,IDMapper,IDMerger,IDRTCalibration,ITRAQAnalyzer,InspectAdapter,InternalCalibration,MapAligner,MapNormalizer,MascotAdapter,MascotAdapterOnline,NoiseFilter,OMSSAAdapter,PILISIdentification,PILISModel,PTModel,PTPredict,PeakPicker,PepNovoAdapter,RTModel,RTPredict,Resampler,SILACAnalyzer,SequestAdapter,SpectraFilter,TOFCalibration,TextExporter,XTandemAdapter");
+			}
+			
       ///Stuct that captures all information of a parameter
       struct ParameterInformation
       {
@@ -157,7 +168,7 @@ namespace OpenMS
         /// type of the parameter
         ParameterTypes type;
         /// default value of the parameter stored as string
-        String default_value;
+        DataValue default_value;
         /// description of the parameter
         String description;
         /// argument in the description
@@ -176,7 +187,7 @@ namespace OpenMS
 				//@}
 				
         /// Constructor that takes all members in declaration order
-        ParameterInformation( const String& n, ParameterTypes t, const String& arg, const String& def, const String& desc, bool req, bool adv )
+        ParameterInformation( const String& n, ParameterTypes t, const String& arg, const DataValue& def, const String& desc, bool req, bool adv )
         	: name(n),
 	          type(t),
 	          default_value(def),
@@ -397,7 +408,7 @@ namespace OpenMS
       	registerIntOption_ and registerFlag_ in order to register parameters in registerOptionsAndFlags_.
 
       	To access the values of registered parameters in the main_ method use methods
-      	getStringOption_ (also for input and output files), getDoubleOption_, getIntOption_ and getFlag_.
+      	getStringOption_ (also for input and output files), getDoubleOption_, getIntOption_,getStringList_(also for input and output file lists),getIntList_,getDoubleList_, and getFlag_.
 
 				The values of the certain options can be restricted using: setMinInt_, setMaxInt_, setMinFloat_, 
 				setMaxFloat_, setValidStrings_ and setValidFormats_.
@@ -420,11 +431,12 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
       void registerStringOption_(const String& name, const String& argument, const String& default_value, const String& description, bool required = true, bool advanced = false);
 			
 			/**
-				@brief Sets the valid strings for a string option
+				@brief Sets the valid strings for a string option or a hole string list
 				
 				@exception Exception::ElementNotFound is thrown if the parameter is unset or not a string parameter
 				@exception Exception::InvalidParameter is thrown if the valid strings contain comma characters
@@ -442,6 +454,7 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
       void registerInputFile_( const String& name, const String& argument, const String& default_value, const String& description, bool required = true, bool advanced = false );
 
@@ -456,11 +469,12 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
       void registerOutputFile_( const String& name, const String& argument, const String& default_value, const String& description, bool required = true, bool advanced = false );
 
 			/**
-				@brief Sets the formats for a input/output file option
+				@brief Sets the formats for a input/output file option or for all members of an input/output file lists
 				
 				Setting the formats causes a check for the right file format (input file) or the right file extension (output file).
 				This check is performed only, when the option is accessed in the TOPP tool.				
@@ -479,29 +493,30 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
       void registerDoubleOption_( const String& name, const String& argument, double default_value, const String& description, bool required = true, bool advanced = false );
 
 			/**
-				@brief Sets the minimum value for the integer parameter @p name. 
+				@brief Sets the minimum value for the integer parameter(can be a list of integers,too) @p name. 
 				
 				@exception Exception::ElementNotFound is thrown if @p name is not found or if the parameter type is wrong
 			*/			
 			void setMinInt_(const String& name, Int min);
 			/**
-				@brief Sets the maximum value for the integer parameter @p name. 
+				@brief Sets the maximum value for the integer parameter(can be a list of integers,too) @p name. 
 				
 					@exception Exception::ElementNotFound is thrown if @p name is not found or if the parameter type is wrong
 		*/
 			void setMaxInt_(const String& name, Int max);
 			/**
-				@brief Sets the minimum value for the floating point parameter @p name. 
+				@brief Sets the minimum value for the floating point parameter(can be a list of floating points,too) @p name. 
 				
 				@exception Exception::ElementNotFound is thrown if @p name is not found or if the parameter type is wrong
 			*/
 			void setMinFloat_(const String& name, DoubleReal min);
 			/**
-				@brief Sets the maximum value for the floating point parameter @p name. 
+				@brief Sets the maximum value for the floating point parameter(can be a list of floating points,too) @p name. 
 				
 				@exception Exception::ElementNotFound is thrown if @p name is not found or if the parameter type is wrong
 			*/
@@ -515,6 +530,7 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
       void registerIntOption_( const String& name, const String& argument, Int default_value, const String& description, bool required = true, bool advanced = false );
 
@@ -526,6 +542,8 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
+
       */
       void registerIntList_( const String& name, const String& argument, IntList default_value, const String& description, bool required = true, bool advanced = false );
       
@@ -537,6 +555,7 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
       void registerDoubleList_( const String& name, const String& argument, DoubleList default_value, const String& description, bool required = true, bool advanced = false );
       
@@ -548,6 +567,7 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
       void registerStringList_( const String& name, const String& argument, StringList default_value, const String& description, bool required = true, bool advanced = false );
 
@@ -562,6 +582,7 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
       void registerInputFileList_( const String& name, const String& argument, StringList default_value, const String& description, bool required = true, bool advanced = false );
 
@@ -576,6 +597,7 @@ namespace OpenMS
       	@param default_value Default argument
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
+      	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
       void registerOutputFileList_( const String& name, const String& argument, StringList default_value, const String& description, bool required = true, bool advanced = false );
       

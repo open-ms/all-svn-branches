@@ -33,6 +33,7 @@
 #include <QtGui/QScrollBar>
 #include <QtGui/QCloseEvent>
 #include <QtGui/QMessageBox>
+#include <QtGui/QFileDialog>
 
 using namespace std;
 
@@ -72,7 +73,7 @@ namespace OpenMS
 		y_scrollbar_ = new QScrollBar(Qt::Vertical, this);
 		y_scrollbar_->setInvertedAppearance(true);
 		grid_->addWidget(y_scrollbar_,row,col-2);
-		grid_->addWidget(x_scrollbar_,row+2,col);		
+		grid_->addWidget(x_scrollbar_,row+2,col);
 		x_scrollbar_->hide();
 		y_scrollbar_->hide();
 		connect(canvas_, SIGNAL(updateHScrollbar(float,float,float,float)), this, SLOT(updateHScrollbar(float,float,float,float)));
@@ -186,6 +187,16 @@ namespace OpenMS
 		y_axis_->showLegend(show);
 		x_axis_->showLegend(show);
 		update();
+	}
+	
+	void SpectrumWidget::saveAsImage()
+	{
+		QString file_name = QFileDialog::getSaveFileName(this, "Save File", "", "Images (*.bmp *.png *.xpm *.jpg)");
+		bool visible = x_scrollbar_->isVisible();
+		x_scrollbar_->hide();
+		QPixmap pixmap = QPixmap::grabWidget(this);
+		x_scrollbar_->setVisible(visible);
+		pixmap.save(file_name);
 	}
 	
 	void SpectrumWidget::updateAxes()

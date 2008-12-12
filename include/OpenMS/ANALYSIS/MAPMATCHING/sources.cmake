@@ -13,6 +13,7 @@ LabeledPairFinder.h
 MapAlignmentAlgorithm.h
 MapAlignmentAlgorithmPoseClustering.h
 MapAlignmentAlgorithmSpectrumAlignment.h
+MapAlignmentAlgorithmApplyGivenTrafo.h
 PoseClusteringAffineSuperimposer.h
 PoseClusteringShiftSuperimposer.h
 SimplePairFinder.h

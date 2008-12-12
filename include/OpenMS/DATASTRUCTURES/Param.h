@@ -53,7 +53,7 @@ namespace OpenMS
 		
 		Each parameter can be annotated with an arbitrary number of tags. Tags cannot contain comma chracters!
 		@n E.g. the <i>advanced</i> tag indicates if this parameter is shown to all users or in advanced mode only.
-		
+ 
 		@see DefaultParamHandler
 		
 		@ingroup Datastructures
@@ -275,7 +275,7 @@ namespace OpenMS
 			*/
 			void setValue(const String& key, const String& value, const String& description="", const StringList& tags=StringList());
 			/**
-				@brief Set a StringList value.
+				@brief Set a string list value.
 
 				@param key String key. Can contain ':' which separates section names
 				@param value The actual value
@@ -283,6 +283,24 @@ namespace OpenMS
 				@param tags list of tags associated to this parameter
 			*/
 			void setValue(const String& key, const StringList& value, const String& description="", const StringList& tags=StringList());
+			/**
+				@brief Set a integer list value.
+
+				@param key String key. Can contain ':' which separates section names
+				@param value The actual value
+				@param description Verbose description of the parameter
+				@param tags list of tags associated to this parameter
+			*/
+			void setValue(const String& key, const IntList& value, const String& description="", const StringList& tags=StringList());
+			/**
+				@brief Set a double list value.
+
+				@param key String key. Can contain ':' which separates section names
+				@param value The actual value
+				@param description Verbose description of the parameter
+				@param tags list of tags associated to this parameter
+			*/
+			void setValue(const String& key, const DoubleList& value, const String& description="", const StringList& tags=StringList());
 
 			/**
 				@brief Returns a value of a parameter.
@@ -412,7 +430,9 @@ namespace OpenMS
 				- If a parameter is present for which no default value is specified, a warning is issued to @p os.
 				- If the type of a parameter and its default do not match, an exception is thrown.
 				- If a string parameter contains an invalid string, an exception is thrown.
+				-	If parameter entry is a string list, an exception is thrown, if one or more list members are invalid strings
 				- If a numeric parameter is out of the valid range, an exception is thrown.
+				- If entry is a numeric list an exception is thrown, if one or more list members are out of the valid range
 				
 				@param name The name that is used in error messages.
 				@param defaults The default values. 
@@ -436,7 +456,7 @@ namespace OpenMS
 			*/
 			void setValidStrings(const String& key, const std::vector<String>& strings);
 			/**
-				@brief Sets the minimum value for the integer parameter @p key. 
+				@brief Sets the minimum value for the integer or integer list parameter @p key. 
 				
 				It is only checked in checkDefaults(). 
 				
@@ -444,7 +464,7 @@ namespace OpenMS
 			*/			
 			void setMinInt(const String& key, Int min);
 			/**
-				@brief Sets the maximum value for the integer parameter @p key. 
+				@brief Sets the maximum value for the integer or integer list parameter @p key. 
 				
 				It is only checked in checkDefaults().
 				
@@ -452,7 +472,7 @@ namespace OpenMS
 			*/
 			void setMaxInt(const String& key, Int max);
 			/**
-				@brief Sets the minimum value for the floating point parameter @p key. 
+				@brief Sets the minimum value for the floating point or floating point list parameter @p key. 
 				
 				It is only checked in checkDefaults(). 
 				
@@ -460,7 +480,7 @@ namespace OpenMS
 			*/
 			void setMinFloat(const String& key, DoubleReal min);
 			/**
-				@brief Sets the maximum value for the floating point parameter @p key. 
+				@brief Sets the maximum value for the floating point or floating point list parameter @p key. 
 				
 				It is only checked in checkDefaults(). 
 				
@@ -502,6 +522,7 @@ namespace OpenMS
 				 @param unknown key where a StringList of all unknown options are stored
 				 
 			*/
+
 			void parseCommandLine(const int argc , const char** argv, const Map<String, String>& options_with_one_argument, const Map<String, String>& options_without_argument,const Map<String,String>& options_with_multiple_argument, const String& misc="misc", const String& unknown="unknown");
 			//@}
 						

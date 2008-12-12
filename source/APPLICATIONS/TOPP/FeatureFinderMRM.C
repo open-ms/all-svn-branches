@@ -52,7 +52,7 @@ typedef LCMSmap::SpectrumType Spectrum;
 //-------------------------------------------------------------
 
 /**
-	@page FeatureFinderMRM FeatureFinderMRM
+	@page TOPP_FeatureFinderMRM FeatureFinderMRM
 	
 	@brief Peptide quantitation based on Multiple-Reaction-Monitoring (MRM).
 	
@@ -74,8 +74,9 @@ typedef LCMSmap::SpectrumType Spectrum;
 	The input to this program consists of a list of precursor m/zs and fragment ion m/zs.
 	It performs a quantitation as explained above and writes a list of peptide features 
 	with the estimate abundance.
-	
-	@todo Add "blind" mode. (Ole).
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_FeatureFinderMRM.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -94,9 +95,9 @@ class TOPPFeatureFinderMRM
  
 	void registerOptionsAndFlags_()
 	{
-		registerInputFile_("in","<file>","","input file ");
+		registerInputFile_("in","<file>","","input file");
 		setValidFormats_("in",StringList::create("mzData"));
-		registerOutputFile_("out","<file>","","output feature list ");
+		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("featureXML"));
 		
 		registerDoubleOption_("p_mz_tol","<float>",50.0,"Precursor m/z tolerance (in ppm)",false);		

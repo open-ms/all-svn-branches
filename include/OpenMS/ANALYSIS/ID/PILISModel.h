@@ -53,7 +53,7 @@ namespace OpenMS
 		from a peptide. The spectrum generator can be accessed via the getSpectrum
 		method.
 		 
-		@ref PILISModel_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_PILISModel.parameters
 
 		@ingroup Analysis_ID
 	*/	

@@ -215,7 +215,6 @@ PeakFileOptions_test.C
 PeakIndex_test.C
 PeakMarker_test.C
 PeakPickerCWT_test.C
-PeakPicker_test.C
 PeakShape_test.C
 PeakSpectrumCompareFunctor_test.C
 PeakTypeEstimator_test.C

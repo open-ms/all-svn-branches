@@ -176,6 +176,10 @@ else()
 	set(SVM_LIBRARY general ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library") # do not distinguish between optimized and debug
 endif()
 
+OPENMS_CHECKLIB(ANDIMS_LIBRARY "ms10lib-TODO_CHRIS_JA_DU;ms10lib" "ms10lib-TODO_CHRIS_JA_DU;ms10lib" "ms10lib")
+
+OPENMS_CHECKLIB(NETCDF_LIBRARY "netCDF-TODO_CHRIS_JA_DU;netcdf_c++" "netCDF-TODO_CHRIS_JA_DU;netcdf_c++" "netCDF")
+
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include/) ## for configured files, i.e. config.h
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/)
 INCLUDE_DIRECTORIES(${CONTRIB_INCLUDE_DIR})
@@ -445,7 +449,7 @@ set(TOPP_executables)
 include(source/APPLICATIONS/TOPP/executables.cmake)
 
 
-ENABLE_LANGUAGE(RC)
+#ENABLE_LANGUAGE(RC)
 foreach(i ${TOPP_executables})
 	set(resource_file "")
 	## add icons to TOPPView and INIFileEditor

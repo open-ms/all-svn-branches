@@ -37,14 +37,16 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page IDMerger IDMerger
+	@page TOPP_IDMerger IDMerger
 	
 	@brief Merges several IdXML files into one IdXML file.
 	
-	You can merge an unlimited number of files into one IdXML file. The file names
-	that are to be merged are given at the '-in' parameter as a comma separated list.
-	The output will be written to the file specified after the '-out' option.
+	You can merge an unlimited number of files into one IdXML file.
 	
+	This tool is typically applied before @ref TOPP_ConsensusID or @ref TOPP_IDMapper.
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_IDMerger.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -63,7 +65,8 @@ class TOPPIDMerger
  protected:
 	void registerOptionsAndFlags_()
 	{
-		registerStringList_("in","<files>",StringList(),"two or more IdXML files separated by blanks");
+		registerInputFileList_("in","<files>",StringList(),"two or more input files separated by blank");
+		setValidFormats_("in",StringList::create("IdXML"));
 		registerOutputFile_("out","<file>","","output file ");
 		setValidFormats_("out",StringList::create("IdXML"));
 	}
@@ -74,8 +77,8 @@ class TOPPIDMerger
 		// parameter handling
 		//-------------------------------------------------------------
 	
-		//file list
 		StringList file_names = getStringList_("in");
+		String out = getStringOption_("out");
 		
 		if (file_names.size() < 2)
 		{
@@ -83,35 +86,20 @@ class TOPPIDMerger
 			printUsage_();
 			return ILLEGAL_PARAMETERS;
 		}
-
-		//output file names and types
-		String out_file = getStringOption_("out");
 				
-		//-------------------------------------------------------------
-		// testing whether input and output files are accessible
-		//-------------------------------------------------------------
-
-		for(UInt i = 0; i < file_names.size(); ++i)
-		{
-			inputFileReadable_(file_names[i]);
-		}
-
 		//-------------------------------------------------------------
 		// calculations
 		//-------------------------------------------------------------
-		IdXMLFile file;
-		vector<ProteinIdentification> 	protein_identifications;
+		vector<ProteinIdentification> protein_identifications;
 		vector<PeptideIdentification> identifications;
-		vector<ProteinIdentification> 	additional_protein_identifications;
-		vector<PeptideIdentification> additional_identifications;
-		
-		file.load(file_names[0], protein_identifications, identifications);
+		IdXMLFile().load(file_names[0], protein_identifications, identifications);
 
 		vector<String> used_ids;
-		for(UInt counter = 1; counter < file_names.size(); ++counter)
+		for(UInt i=1; i<file_names.size(); ++i)
 		{
-			file.load(file_names[counter], additional_protein_identifications, additional_identifications);
-			
+			vector<ProteinIdentification> additional_protein_identifications;
+			vector<PeptideIdentification> additional_identifications;
+			IdXMLFile().load(file_names[i], additional_protein_identifications, additional_identifications);
 			
 			for (UInt i=0; i<additional_protein_identifications.size();++i)
 			{
@@ -125,15 +113,13 @@ class TOPPIDMerger
 			
 			protein_identifications.insert(protein_identifications.end(), additional_protein_identifications.begin(), additional_protein_identifications.end());
 			identifications.insert(identifications.end(), additional_identifications.begin(), additional_identifications.end());
-		}										
+		}
 															
 		//-------------------------------------------------------------
 		// writing output
 		//-------------------------------------------------------------
 			
-		file.store(out_file, 
-													protein_identifications, 
-													identifications);
+		IdXMLFile().store(out, protein_identifications, identifications);
 			
 		return EXECUTION_OK;
 	}

@@ -51,29 +51,29 @@ START_TEST(MzMLFile, "$Id$")
 
 
 MzMLFile* ptr = 0;
-CHECK((MzMLFile()))
+START_SECTION((MzMLFile()))
 	ptr = new MzMLFile;
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((~MzMLFile()))
+START_SECTION((~MzMLFile()))
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK(const PeakFileOptions& getOptions() const)
+START_SECTION(const PeakFileOptions& getOptions() const)
 	MzMLFile file;
 	TEST_EQUAL(file.getOptions().hasMSLevels(),false)
-RESULT
+END_SECTION
 
-CHECK(PeakFileOptions& getOptions())
+START_SECTION(PeakFileOptions& getOptions())
 	MzMLFile file;
 	file.getOptions().addMSLevel(1);
 	TEST_EQUAL(file.getOptions().hasMSLevels(),true);
-RESULT
+END_SECTION
 
-PRECISION(0.01)
+TOLERANCE_ABSOLUTE(0.01)
 
-CHECK((template <typename MapType> void load(const String& filename, MapType& map)))
+START_SECTION((template <typename MapType> void load(const String& filename, MapType& map)))
 	MzMLFile file;
 	MSExperiment<> exp;
 	file.load("data/MzMLFile_1.mzML",exp);
@@ -82,6 +82,7 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
   		
 	TEST_EQUAL(exp.size(),4)
 	//run
+	TEST_EQUAL(exp.getNativeIDType(),ExperimentalSettings::MULTIPLE_PEAK_LISTS)
 	TEST_EQUAL(exp.getIdentifier(),"document_accession")
 	TEST_EQUAL(exp.getDateTime().get(),"2007-06-27 15:23:45")
 	//contacts
@@ -110,10 +111,11 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 	TEST_STRING_EQUAL(exp.getSourceFiles()[1].getFileType(),"pkl file")
 	//sample
 	TEST_STRING_EQUAL(exp.getSample().getName(),"Sample1")
-	TEST_REAL_EQUAL(exp.getSample().getMass(),11.7)
+	TEST_REAL_SIMILAR(exp.getSample().getMass(),11.7)
 	TEST_STRING_EQUAL(exp.getSample().getNumber(),"5")
-	TEST_REAL_EQUAL(exp.getSample().getVolume(),3.1)
-	TEST_REAL_EQUAL(exp.getSample().getConcentration(),5.5)
+	TEST_REAL_SIMILAR(exp.getSample().getVolume(),3.1)
+	TEST_REAL_SIMILAR(exp.getSample().getConcentration(),5.5)
+	TEST_EQUAL(exp.getSample().getState(),Sample::SUSPENSION)
 	//instrument (general)
 	TEST_STRING_EQUAL(exp.getInstrument().getName(),"LCQ Deca")
 	TEST_STRING_EQUAL(exp.getInstrument().getCustomizations(),"Umbau")
@@ -129,41 +131,41 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 	TEST_EQUAL(exp.getInstrument().getMassAnalyzers().size(),2)
 	TEST_EQUAL(exp.getInstrument().getMassAnalyzers()[0].getOrder(),201)
 	TEST_EQUAL(exp.getInstrument().getMassAnalyzers()[0].getType(),MassAnalyzer::PAULIONTRAP)
-	TEST_REAL_EQUAL(exp.getInstrument().getMassAnalyzers()[0].getMagneticFieldStrength(),14.56)
+	TEST_REAL_SIMILAR(exp.getInstrument().getMassAnalyzers()[0].getMagneticFieldStrength(),14.56)
 	TEST_EQUAL(exp.getInstrument().getMassAnalyzers()[1].getOrder(),202)
 	TEST_EQUAL(exp.getInstrument().getMassAnalyzers()[1].getType(),MassAnalyzer::LIT)
-	TEST_REAL_EQUAL(exp.getInstrument().getMassAnalyzers()[1].getMagneticFieldStrength(),1414.14)
+	TEST_REAL_SIMILAR(exp.getInstrument().getMassAnalyzers()[1].getMagneticFieldStrength(),1414.14)
 	//detectors
 	TEST_EQUAL(exp.getInstrument().getIonDetectors().size(),2)
 	TEST_EQUAL(exp.getInstrument().getIonDetectors()[0].getOrder(),301)
 	TEST_EQUAL(exp.getInstrument().getIonDetectors()[0].getType(),IonDetector::ELECTRONMULTIPLIER)
 	TEST_EQUAL(exp.getInstrument().getIonDetectors()[0].getAcquisitionMode(),IonDetector::TDC)
-	TEST_REAL_EQUAL(exp.getInstrument().getIonDetectors()[0].getResolution(),5.1)
-	TEST_REAL_EQUAL(exp.getInstrument().getIonDetectors()[0].getADCSamplingFrequency(),1.1)
+	TEST_REAL_SIMILAR(exp.getInstrument().getIonDetectors()[0].getResolution(),5.1)
+	TEST_REAL_SIMILAR(exp.getInstrument().getIonDetectors()[0].getADCSamplingFrequency(),1.1)
 	TEST_EQUAL(exp.getInstrument().getIonDetectors()[1].getOrder(),302)
 	TEST_EQUAL(exp.getInstrument().getIonDetectors()[1].getType(),IonDetector::ELECTRONMULTIPLIER)
 	TEST_EQUAL(exp.getInstrument().getIonDetectors()[1].getAcquisitionMode(),IonDetector::TDC)
-	TEST_REAL_EQUAL(exp.getInstrument().getIonDetectors()[1].getResolution(),6.1)
-	TEST_REAL_EQUAL(exp.getInstrument().getIonDetectors()[1].getADCSamplingFrequency(),1.1)
+	TEST_REAL_SIMILAR(exp.getInstrument().getIonDetectors()[1].getResolution(),6.1)
+	TEST_REAL_SIMILAR(exp.getInstrument().getIonDetectors()[1].getADCSamplingFrequency(),1.1)
 	//instrument software
 	TEST_EQUAL(exp.getInstrument().getSoftware().getName(),"Bioworks")
 	TEST_EQUAL(exp.getInstrument().getSoftware().getVersion(),"3.3.1 sp1")
 	//processing
 	TEST_EQUAL(exp.getDataProcessing().size(),2)
-	TEST_EQUAL(exp.getDataProcessing()[1].getSoftware().getName(),"ProteoWizard")
-	TEST_EQUAL(exp.getDataProcessing()[1].getSoftware().getVersion(),"1.0")
-	TEST_EQUAL(exp.getDataProcessing()[1].getProcessingActions().size(),1)
-	TEST_EQUAL(exp.getDataProcessing()[1].getProcessingActions().count(DataProcessing::CONVERSION_MZML),1)
-	TEST_EQUAL(exp.getDataProcessing()[1].isMetaEmpty(),true)
 	TEST_EQUAL(exp.getDataProcessing()[0].getSoftware().getName(),"Xcalibur")
 	TEST_EQUAL(exp.getDataProcessing()[0].getSoftware().getVersion(),"2.0.5")
 	TEST_EQUAL(exp.getDataProcessing()[0].getProcessingActions().size(),2)
 	TEST_EQUAL(exp.getDataProcessing()[0].getProcessingActions().count(DataProcessing::DEISOTOPING),1)
 	TEST_EQUAL(exp.getDataProcessing()[0].getProcessingActions().count(DataProcessing::CHARGE_DECONVOLUTION),1)
 	TEST_STRING_EQUAL(exp.getDataProcessing()[0].getCompletionTime().get(),"2001-02-03 04:05:00")
-	TEST_REAL_EQUAL(DoubleReal(exp.getDataProcessing()[0].getMetaValue("low_intensity_threshold")),5.9)
-	TEST_REAL_EQUAL(DoubleReal(exp.getDataProcessing()[0].getMetaValue("high_intensity_threshold")),10.9)
+	TEST_REAL_SIMILAR(DoubleReal(exp.getDataProcessing()[0].getMetaValue("low_intensity_threshold")),5.9)
+	TEST_REAL_SIMILAR(DoubleReal(exp.getDataProcessing()[0].getMetaValue("high_intensity_threshold")),10.9)
 	TEST_EQUAL(exp.getDataProcessing()[0].isMetaEmpty(),false)
+	TEST_EQUAL(exp.getDataProcessing()[1].getSoftware().getName(),"ProteoWizard")
+	TEST_EQUAL(exp.getDataProcessing()[1].getSoftware().getVersion(),"1.0")
+	TEST_EQUAL(exp.getDataProcessing()[1].getProcessingActions().size(),1)
+	TEST_EQUAL(exp.getDataProcessing()[1].getProcessingActions().count(DataProcessing::CONVERSION_MZML),1)
+	TEST_EQUAL(exp.getDataProcessing()[1].isMetaEmpty(),false)
 
 	//-------------------------- spectrum 0 --------------------------
 	{
@@ -172,30 +174,29 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 		TEST_EQUAL(spec.size(),15)
 		for (UInt i=0; i<15; ++i)
 		{
-			TEST_REAL_EQUAL(spec[i].getMZ(),i);
-			TEST_REAL_EQUAL(spec[i].getIntensity(),15-i);
+			TEST_REAL_SIMILAR(spec[i].getMZ(),i);
+			TEST_REAL_SIMILAR(spec[i].getIntensity(),15-i);
 		}
 		//general info		
 		TEST_EQUAL(spec.getMSLevel(),1)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::FULL)
 		TEST_EQUAL(spec.getMetaDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
-		TEST_REAL_EQUAL(spec.getRT(),5.1)
+		TEST_REAL_SIMILAR(spec.getRT(),5.1)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanWindows().size(),1)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[0].begin,400.0)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[0].end,1800.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[0].begin,400.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[0].end,1800.0)
 		TEST_STRING_EQUAL(spec.getAcquisitionInfo().getMethodOfCombination(),"median of spectra")
 		TEST_EQUAL(spec.getAcquisitionInfo().size(),2)
 		TEST_EQUAL(spec.getAcquisitionInfo()[0].getNumber(),4711)
 		TEST_STRING_EQUAL(spec.getAcquisitionInfo()[0].getMetaValue("source_file_name"),"ac.dta")
 		TEST_STRING_EQUAL(spec.getAcquisitionInfo()[0].getMetaValue("source_file_path"),"file:///F:/data/Exp02")
-		TEST_STRING_EQUAL(spec.getAcquisitionInfo()[0].getMetaValue("external_native_id"),"ENI0")
-		TEST_STRING_EQUAL(spec.getAcquisitionInfo()[0].getMetaValue("external_spectrum_id"),"ESI0")
+//		TEST_STRING_EQUAL(spec.getAcquisitionInfo()[0].getMetaValue("external_native_id"),"ENI0")
+//		TEST_STRING_EQUAL(spec.getAcquisitionInfo()[0].getMetaValue("external_spectrum_id"),"ESI0")
 		TEST_EQUAL(spec.getAcquisitionInfo()[1].getNumber(),4712)
 		TEST_EQUAL(spec.getSourceFile()==SourceFile(),true)
 		//ids
-		TEST_STRING_EQUAL(spec.getMetaValue("id"),"S0")
-		TEST_STRING_EQUAL(spec.getNativeID(),"N0")
+		TEST_STRING_EQUAL(spec.getNativeID(),"index=0")
 		TEST_STRING_EQUAL(spec.getMetaValue("maldi_spot_id"),"M0")
 	}
 	
@@ -206,52 +207,52 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 		TEST_EQUAL(spec.size(),10)
 		for (UInt i=0; i<10; ++i)
 		{
-			TEST_REAL_EQUAL(spec[i].getMZ(),2.0*i);
-			TEST_REAL_EQUAL(spec[i].getIntensity(),20-2.0*i);
+			TEST_REAL_SIMILAR(spec[i].getMZ(),2.0*i);
+			TEST_REAL_SIMILAR(spec[i].getIntensity(),20-2.0*i);
 		}
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),2)
-		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::PRODUCT)
+		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::FULL)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
-		TEST_REAL_EQUAL(spec.getRT(),5.2)
+		TEST_REAL_SIMILAR(spec.getRT(),5.2)
 		TEST_EQUAL(spec.getInstrumentSettings().getPolarity(),IonSource::POSITIVE)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanWindows().size(),3)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[0].begin,100.0)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[0].end,500.0)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[1].begin,600.0)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[1].end,1000.0)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[2].begin,1100.0)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[2].end,1500.0)
-		TEST_EQUAL(spec.getAcquisitionInfo().getMethodOfCombination(),"")
-		TEST_EQUAL(spec.getAcquisitionInfo().size(),0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[0].begin,100.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[0].end,500.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[1].begin,600.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[1].end,1000.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[2].begin,1100.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[2].end,1500.0)
+		TEST_EQUAL(spec.getAcquisitionInfo().getMethodOfCombination(),"no combination")
+		TEST_EQUAL(spec.getAcquisitionInfo().size(),1)
+		TEST_EQUAL(spec.getAcquisitionInfo()[0].getNumber(),0)
 		//meta data arrays
 		TEST_EQUAL(spec.getMetaDataArrays().size(),2)
 		TEST_STRING_EQUAL(spec.getMetaDataArrays()[0].getName(),"signal to noise array")
 		TEST_EQUAL(spec.getMetaDataArrays()[0].size(),10)
-		TEST_STRING_EQUAL(spec.getMetaDataArrays()[1].getName(),"charge array")
+		TEST_STRING_EQUAL(spec.getMetaDataArrays()[1].getName(),"user-defined name")
 		TEST_EQUAL(spec.getMetaDataArrays()[1].size(),10)
 		//precursor
-		TEST_REAL_EQUAL(spec.getPrecursorPeak().getIntensity(),120053)
+		TEST_REAL_SIMILAR(spec.getPrecursorPeak().getIntensity(),120053)
 		TEST_EQUAL(spec.getPrecursorPeak().getCharge(),2)
-		TEST_REAL_EQUAL(spec.getPrecursorPeak().getPosition()[0],5.55)
+		TEST_REAL_SIMILAR(spec.getPrecursorPeak().getPosition()[0],5.55)
 		TEST_EQUAL(spec.getPrecursor().getActivationMethod(),Precursor::CID)
-		TEST_REAL_EQUAL(spec.getPrecursor().getActivationEnergy(),35)
+		TEST_REAL_SIMILAR(spec.getPrecursor().getActivationEnergy(),35)
 		TEST_EQUAL(spec.getPrecursorPeak().getPossibleChargeStates().size(),3)
 		TEST_EQUAL(spec.getPrecursorPeak().getPossibleChargeStates()[0],1)
 		TEST_EQUAL(spec.getPrecursorPeak().getPossibleChargeStates()[1],3)
 		TEST_EQUAL(spec.getPrecursorPeak().getPossibleChargeStates()[2],4)
 		TEST_STRING_EQUAL(spec.getPrecursor().getMetaValue("source_file_name"),"pr.dta")
 		TEST_STRING_EQUAL(spec.getPrecursor().getMetaValue("source_file_path"),"file:///F:/data/Exp03")
-		TEST_STRING_EQUAL(spec.getPrecursor().getMetaValue("external_native_id"),"ENI1")
-		TEST_STRING_EQUAL(spec.getPrecursor().getMetaValue("external_spectrum_id"),"ESI1")
+//		TEST_STRING_EQUAL(spec.getPrecursor().getMetaValue("external_native_id"),"ENI1")
+//		TEST_STRING_EQUAL(spec.getPrecursor().getMetaValue("external_spectrum_id"),"ESI1")
 		//source file
 		TEST_STRING_EQUAL(spec.getSourceFile().getNameOfFile(),"tiny1.dta")
 		TEST_STRING_EQUAL(spec.getSourceFile().getPathToFile(),"file:///F:/data/Exp01")
 		TEST_STRING_EQUAL(spec.getSourceFile().getChecksum(),"81be39fb2700ab2f3c8b2234b91274968b6899b1")
 		TEST_EQUAL(spec.getSourceFile().getChecksumType(),SourceFile::SHA1)
 		//ids
-		TEST_STRING_EQUAL(spec.getMetaValue("id"),"S1")
-		TEST_STRING_EQUAL(spec.getNativeID(),"N1")
+		TEST_STRING_EQUAL(spec.getNativeID(),"index=1")
 		TEST_STRING_EQUAL(spec.getMetaValue("maldi_spot_id"),"M1")
 		
 	}
@@ -263,19 +264,19 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 		TEST_EQUAL(spec.size(),15)
 		for (UInt i=0; i<15; ++i)
 		{
-			TEST_REAL_EQUAL(spec[i].getMZ(),i);
-			TEST_REAL_EQUAL(spec[i].getIntensity(),15-i);
+			TEST_REAL_SIMILAR(spec[i].getMZ(),i);
+			TEST_REAL_SIMILAR(spec[i].getIntensity(),15-i);
 		}
 		//general info		
 		TEST_EQUAL(spec.getMSLevel(),1)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::FULL)
 		TEST_EQUAL(spec.getMetaDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
-		TEST_REAL_EQUAL(spec.getRT(),5.3)
+		TEST_REAL_SIMILAR(spec.getRT(),5.3)
 		TEST_EQUAL(spec.getInstrumentSettings().getPolarity(),IonSource::POSITIVE)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanWindows().size(),1)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[0].begin,400.0)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[0].end,1800.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[0].begin,400.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[0].end,1800.0)
 		//acquisition
 		TEST_STRING_EQUAL(spec.getAcquisitionInfo().getMethodOfCombination(),"median of spectra")
 		TEST_EQUAL(spec.getAcquisitionInfo().size(),2)
@@ -283,8 +284,7 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 		TEST_EQUAL(spec.getAcquisitionInfo()[1].getNumber(),4712)
 		TEST_EQUAL(spec.getSourceFile()==SourceFile(),true)
 		//ids
-		TEST_STRING_EQUAL(spec.getMetaValue("id"),"S2")
-		TEST_STRING_EQUAL(spec.getNativeID(),"N2")
+		TEST_STRING_EQUAL(spec.getNativeID(),"index=2")
 		TEST_STRING_EQUAL(spec.getMetaValue("maldi_spot_id"),"M2")
 	}
 
@@ -295,18 +295,18 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 		TEST_EQUAL(spec.size(),0)
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),1)
-		TEST_REAL_EQUAL(spec.getRT(),5.4)
+		TEST_REAL_SIMILAR(spec.getRT(),5.4)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::FULL)
 		TEST_EQUAL(spec.getMetaDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::RAWDATA)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanWindows().size(),1)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[0].begin,110.0)
-		TEST_REAL_EQUAL(spec.getInstrumentSettings().getScanWindows()[0].end,905.0)
-		TEST_STRING_EQUAL(spec.getAcquisitionInfo().getMethodOfCombination(),"")
-		TEST_EQUAL(spec.getAcquisitionInfo().size(),0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[0].begin,110.0)
+		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[0].end,905.0)
+		TEST_STRING_EQUAL(spec.getAcquisitionInfo().getMethodOfCombination(),"no combination")
+		TEST_EQUAL(spec.getAcquisitionInfo().size(),1)
+		TEST_EQUAL(spec.getAcquisitionInfo()[0].getNumber(),0)
 		//ids
-		TEST_STRING_EQUAL(spec.getMetaValue("id"),"S3")
-		TEST_STRING_EQUAL(spec.getNativeID(),"N3")
+		TEST_STRING_EQUAL(spec.getNativeID(),"index=3")
 		TEST_EQUAL(spec.metaValueExists("maldi_spot_id"),false)
 	}
 	
@@ -318,7 +318,7 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
   TEST_EQUAL(exp.getMetaValue("string").valueType(),DataValue::STRING_VALUE)
   TEST_STRING_EQUAL((String)exp.getMetaValue("string"),"bla")
   TEST_EQUAL(exp.getMetaValue("float").valueType(),DataValue::DOUBLE_VALUE)
-  TEST_REAL_EQUAL((double)exp.getMetaValue("float"),5.11)
+  TEST_REAL_SIMILAR((double)exp.getMetaValue("float"),5.11)
   TEST_EQUAL(exp.getMetaValue("int").valueType(),DataValue::INT_VALUE)
   TEST_EQUAL((Int)exp.getMetaValue("int"),5)
 	//instrumentConfiguration
@@ -336,10 +336,6 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 	TEST_STRING_EQUAL((String)exp.getContacts()[0].getMetaValue("name"),"contact1")
 	TEST_STRING_EQUAL((String)exp.getContacts()[1].getMetaValue("name"),"contact2")
 	//spectrum
-	TEST_STRING_EQUAL((String)exp[0].getMetaValue("name"),"spectrum1")
-	TEST_STRING_EQUAL((String)exp[1].getMetaValue("name"),"spectrum2")
-	TEST_STRING_EQUAL((String)exp[2].getMetaValue("name"),"spectrum3")
-	TEST_STRING_EQUAL((String)exp[3].getMetaValue("name"),"spectrum4")
 	TEST_STRING_EQUAL((String)exp[0].getMetaValue("sdname"),"spectrumdescription1")
 	TEST_STRING_EQUAL((String)exp[1].getMetaValue("sdname"),"spectrumdescription2")
 	TEST_STRING_EQUAL((String)exp[2].getMetaValue("sdname"),"spectrumdescription3")
@@ -353,11 +349,6 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 	TEST_STRING_EQUAL((String)exp[1].getMetaDataArrays()[0].getMetaValue("name2"),"binaryDataArray_sn2")
 	TEST_STRING_EQUAL((String)exp[1].getMetaDataArrays()[1].getMetaValue("name"),"binaryDataArray_c")
 	TEST_STRING_EQUAL((String)exp[1].getMetaDataArrays()[1].getMetaValue("name2"),"")
-	//scan
-	TEST_STRING_EQUAL((String)exp[0].getInstrumentSettings().getMetaValue("name"),"scan1")
-	TEST_STRING_EQUAL((String)exp[1].getInstrumentSettings().getMetaValue("name"),"scan2")
-	TEST_STRING_EQUAL((String)exp[2].getInstrumentSettings().getMetaValue("name"),"scan3")
-	TEST_STRING_EQUAL((String)exp[3].getInstrumentSettings().getMetaValue("name"),"")
 	//acquisition list
 	TEST_STRING_EQUAL((String)exp[0].getAcquisitionInfo().getMetaValue("name"),"acquisition_list")	
 	//acquisition
@@ -369,7 +360,7 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 	TEST_STRING_EQUAL((String)exp[1].getSourceFile().getMetaValue("name"),"sourcefile4")
 	//data processing
 	TEST_STRING_EQUAL(exp.getDataProcessing()[0].getMetaValue("p1").toString(),"value1")
-	TEST_STRING_EQUAL(exp.getDataProcessing()[0].getMetaValue("p2").toString(),"value2")
+	TEST_STRING_EQUAL(exp.getDataProcessing()[1].getMetaValue("p2").toString(),"value2")
 	//precursor
 	TEST_STRING_EQUAL(exp[1].getPrecursor().getMetaValue("iwname").toString(),"isolationwindow1")
 	TEST_STRING_EQUAL(exp[1].getPrecursor().getMetaValue("siname").toString(),"selectedion1")
@@ -408,9 +399,14 @@ CHECK((template <typename MapType> void load(const String& filename, MapType& ma
 	TEST_EQUAL(exp5[1].size(),10)
 	TEST_EQUAL(exp5[2].size(),15)
 	TEST_EQUAL(exp5[3].size(),0)
-RESULT
+	
+	//test if it works with different peak types
+	MSExperiment<RichPeak1D> e_rich;
+  file.load("data/MzMLFile_1.mzML",e_rich);
+	
+END_SECTION
 
-CHECK([EXTRA] load only meta data)
+START_SECTION([EXTRA] load only meta data)
 	MzMLFile file;
 	file.getOptions().setMetadataOnly(true);
 	MSExperiment<> exp;
@@ -422,36 +418,33 @@ CHECK([EXTRA] load only meta data)
 	TEST_EQUAL(exp.getSourceFiles().size(),2);
 	TEST_EQUAL(exp.getInstrument().getMassAnalyzers().size(),2)
 	TEST_EQUAL(exp.getDataProcessing().size(),2)
-RESULT
+END_SECTION
 
 
-CHECK([EXTRA] load with restricted MS levels)
+START_SECTION([EXTRA] load with restricted MS levels)
 	MzMLFile file;
 	file.getOptions().addMSLevel(1);
 	MSExperiment<> exp;
 	file.load("data/MzMLFile_1.mzML",exp);
 
 	TEST_EQUAL(exp.size(),3)
-	TEST_REAL_EQUAL(exp[0].getRT(),5.1)
-	TEST_EQUAL((Int)exp[0].getMetaValue("original_spectrum_number"),0)
-	TEST_REAL_EQUAL(exp[1].getRT(),5.3)
-	TEST_EQUAL((Int)exp[1].getMetaValue("original_spectrum_number"),2)
-	TEST_REAL_EQUAL(exp[2].getRT(),5.4)
-	TEST_EQUAL((Int)exp[2].getMetaValue("original_spectrum_number"),3)
-RESULT
+	TEST_REAL_SIMILAR(exp[0].getRT(),5.1)
+	TEST_REAL_SIMILAR(exp[1].getRT(),5.3)
+	TEST_REAL_SIMILAR(exp[2].getRT(),5.4)
+END_SECTION
 
 
-CHECK([EXTRA] load with restricted RT range)
+START_SECTION([EXTRA] load with restricted RT range)
 	MzMLFile file;
 	file.getOptions().setRTRange(makeRange(5.15,5.35));
 	MSExperiment<> exp;
 	file.load("data/MzMLFile_1.mzML",exp);
 	TEST_EQUAL(exp.size(),2)
-	TEST_REAL_EQUAL(exp[0].getRT(),5.2)
-	TEST_REAL_EQUAL(exp[1].getRT(),5.3)
-RESULT
+	TEST_REAL_SIMILAR(exp[0].getRT(),5.2)
+	TEST_REAL_SIMILAR(exp[1].getRT(),5.3)
+END_SECTION
 
-CHECK([EXTRA] load with restricted m/z range)
+START_SECTION([EXTRA] load with restricted m/z range)
 	MzMLFile file;
 	file.getOptions().setMZRange(makeRange(6.5,9.5));
 	MSExperiment<> exp;
@@ -459,19 +452,19 @@ CHECK([EXTRA] load with restricted m/z range)
 	
 	TEST_EQUAL(exp.size(),4)
 	TEST_EQUAL(exp[0].size(),3)
-	TEST_REAL_EQUAL(exp[0][0].getMZ(),7.0)
-	TEST_REAL_EQUAL(exp[0][1].getMZ(),8.0)
-	TEST_REAL_EQUAL(exp[0][2].getMZ(),9.0)
+	TEST_REAL_SIMILAR(exp[0][0].getMZ(),7.0)
+	TEST_REAL_SIMILAR(exp[0][1].getMZ(),8.0)
+	TEST_REAL_SIMILAR(exp[0][2].getMZ(),9.0)
 	TEST_EQUAL(exp[1].size(),1)
-	TEST_REAL_EQUAL(exp[1][0].getMZ(),8.0)
+	TEST_REAL_SIMILAR(exp[1][0].getMZ(),8.0)
 	TEST_EQUAL(exp[2].size(),3)
-	TEST_REAL_EQUAL(exp[2][0].getMZ(),7.0)
-	TEST_REAL_EQUAL(exp[2][1].getMZ(),8.0)
-	TEST_REAL_EQUAL(exp[2][2].getMZ(),9.0)
+	TEST_REAL_SIMILAR(exp[2][0].getMZ(),7.0)
+	TEST_REAL_SIMILAR(exp[2][1].getMZ(),8.0)
+	TEST_REAL_SIMILAR(exp[2][2].getMZ(),9.0)
 	TEST_EQUAL(exp[3].size(),0)
-RESULT
+END_SECTION
 
-CHECK([EXTRA] load intensity range)
+START_SECTION([EXTRA] load intensity range)
 	MzMLFile file;
 	file.getOptions().setIntensityRange(makeRange(6.5,9.5));
 	MSExperiment<> exp;
@@ -479,19 +472,19 @@ CHECK([EXTRA] load intensity range)
 
 	TEST_EQUAL(exp.size(),4)
 	TEST_EQUAL(exp[0].size(),3)
-	TEST_REAL_EQUAL(exp[0][0].getIntensity(),9.0)
-	TEST_REAL_EQUAL(exp[0][1].getIntensity(),8.0)
-	TEST_REAL_EQUAL(exp[0][2].getIntensity(),7.0)
+	TEST_REAL_SIMILAR(exp[0][0].getIntensity(),9.0)
+	TEST_REAL_SIMILAR(exp[0][1].getIntensity(),8.0)
+	TEST_REAL_SIMILAR(exp[0][2].getIntensity(),7.0)
 	TEST_EQUAL(exp[1].size(),1)
-	TEST_REAL_EQUAL(exp[1][0].getIntensity(),8.0)
+	TEST_REAL_SIMILAR(exp[1][0].getIntensity(),8.0)
 	TEST_EQUAL(exp[2].size(),3)
-	TEST_REAL_EQUAL(exp[2][0].getIntensity(),9.0)
-	TEST_REAL_EQUAL(exp[2][1].getIntensity(),8.0)
-	TEST_REAL_EQUAL(exp[2][2].getIntensity(),7.0)
+	TEST_REAL_SIMILAR(exp[2][0].getIntensity(),9.0)
+	TEST_REAL_SIMILAR(exp[2][1].getIntensity(),8.0)
+	TEST_REAL_SIMILAR(exp[2][2].getIntensity(),7.0)
 	TEST_EQUAL(exp[3].size(),0)
-RESULT
+END_SECTION
 
-CHECK((template <typename MapType> void store(const String& filename, const MapType& map) const))
+START_SECTION((template <typename MapType> void store(const String& filename, const MapType& map) const))
 	MzMLFile file;
 	
 	//load map
@@ -510,9 +503,9 @@ CHECK((template <typename MapType> void store(const String& filename, const MapT
 	//test if everything worked
 	TEST_EQUAL(exp==exp_original,true)
 	
-RESULT
+END_SECTION
 
-CHECK([EXTRA] bool isValid(const String& filename))
+START_SECTION([EXTRA] bool isValid(const String& filename))
 	std::string tmp_filename;
   MzMLFile file;
   MSExperiment<> e;
@@ -530,9 +523,9 @@ CHECK([EXTRA] bool isValid(const String& filename))
 	
 	//indexed file
 	TEST_EQUAL(file.isValid("data/MzMLFile_4_indexed.mzML"),true)
-RESULT
+END_SECTION
 
-CHECK( bool isSemanticallyValid(const String& filename, StringList& errors, StringList& warnings))
+START_SECTION( bool isSemanticallyValid(const String& filename, StringList& errors, StringList& warnings))
 	std::string tmp_filename;
 	MzMLFile file;
 	StringList errors, warnings;
@@ -561,13 +554,13 @@ CHECK( bool isSemanticallyValid(const String& filename, StringList& errors, Stri
 	//indexed MzML
 	TEST_EQUAL(file.isSemanticallyValid("data/MzMLFile_4_indexed.mzML", errors, warnings),true)
 	TEST_EQUAL(errors.size(),0)
-	TEST_EQUAL(warnings.size(),2)
+	TEST_EQUAL(warnings.size(),0)
 	
 	//invalid file
 	TEST_EQUAL(file.isSemanticallyValid("data/MzMLFile_3_invalid.mzML", errors, warnings),false)
-	TEST_EQUAL(errors.size(),12)
-	TEST_EQUAL(warnings.size(),2)
-RESULT
+	TEST_EQUAL(errors.size(),5)
+	TEST_EQUAL(warnings.size(),0)
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

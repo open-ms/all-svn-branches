@@ -58,24 +58,27 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page MascotAdapter MascotAdapter
+	@page TOPP_MascotAdapterOnline MascotAdapterOnline
 	
 	@brief Identifies peptides in MS/MS spectra via Mascot.
 	
 	This wrapper application serves for getting peptide identifications
-	for MS/MS spectra. 
+	for MS/MS spectra.
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_MascotAdapterOnline.cli
 */
 
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
 
 
-class TOPPMascotAdapter
+class TOPPMascotAdapterOnline
 	: public TOPPBase
 {
 	public:
-		TOPPMascotAdapter()
-			: TOPPBase("MascotAdapter","Annotates MS/MS spectra using Mascot.")
+		TOPPMascotAdapterOnline()
+			: TOPPBase("MascotAdapterOnline","Annotates MS/MS spectra using Mascot.")
 		{
 		}
 	
@@ -197,7 +200,7 @@ class TOPPMascotAdapter
 
 int main( int argc, const char** argv )
 {
-	TOPPMascotAdapter tool;
+	TOPPMascotAdapterOnline tool;
 
 	return tool.main(argc,argv);
 }

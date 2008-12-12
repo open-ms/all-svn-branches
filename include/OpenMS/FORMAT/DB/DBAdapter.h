@@ -553,11 +553,9 @@ namespace OpenMS
 			query << ",ResolutionMethod=" << (1u+analyzer_it->getResolutionMethod());
 			query << ",ResolutionType=" << (1u+analyzer_it->getResolutionType());
 			query << ",ScanDirection=" << (1u+analyzer_it->getScanDirection());
-			query << ",ScanFunction=" << (1u+analyzer_it->getScanFunction());
 			query << ",ScanLaw=" << (1u+analyzer_it->getScanLaw());
 			query << ",ScanRate=" << analyzer_it->getScanRate();
 			query << ",ScanTime=" << analyzer_it->getScanTime();
-			query << ",TandemScanningMethod=" << (1u+analyzer_it->getTandemScanMethod());
 			query << ",TOFPathLength=" << analyzer_it->getTOFTotalPathLength();
 			query << ",Type=" << (1u+analyzer_it->getType());
 			
@@ -844,6 +842,7 @@ namespace OpenMS
 				query << "MZRangeBegin=0.0, MZRangeEnd=0.0,";
 			}
 			query << "Polarity=" << (1u+settings.getPolarity()) << ",";
+			//TODO handle all types!!!
 			query << "ScanMode=" << (1u+settings.getScanMode());
 			query << end;
 			
@@ -1133,7 +1132,7 @@ namespace OpenMS
 		MassAnalyzer analyzer;
 		std::vector<MassAnalyzer> analyzers;
 		query.str("");
-		query << "SELECT Accuracy,FinalMSExponent,IsolationWidth,MagneticFieldStrength,ReflectronState-1,Resolution,ResolutionMethod-1,ResolutionType-1,ScanDirection-1,ScanFunction-1,ScanLaw-1,ScanRate,ScanTime,TandemScanningMethod-1,TOFPathLength,Type-1,fid_MetaInfo FROM META_MassAnalyzer WHERE fid_MSInstrument='" << parent_id << "'";
+		query << "SELECT Accuracy,FinalMSExponent,IsolationWidth,MagneticFieldStrength,ReflectronState-1,Resolution,ResolutionMethod-1,ResolutionType-1,ScanDirection-1,ScanLaw-1,ScanRate,ScanTime,TOFPathLength,Type-1,fid_MetaInfo FROM META_MassAnalyzer WHERE fid_MSInstrument='" << parent_id << "'";
 		result = db_con_.executeQuery(query.str());
 		
 		result.first();
@@ -1148,14 +1147,12 @@ namespace OpenMS
 			analyzer.setResolutionMethod((MassAnalyzer::ResolutionMethod) result.value(6).toInt());
 			analyzer.setResolutionType((MassAnalyzer::ResolutionType) result.value(7).toInt());
 			analyzer.setScanDirection((MassAnalyzer::ScanDirection) result.value(8).toInt());
-			analyzer.setScanFunction((MassAnalyzer::ScanFunction) result.value(9).toInt());
-			analyzer.setScanLaw((MassAnalyzer::ScanLaw) result.value(10).toInt());
-			analyzer.setScanRate(result.value(11).toDouble());
-			analyzer.setScanTime(result.value(12).toDouble());
-			analyzer.setTandemScanMethod((MassAnalyzer::TandemScanningMethod) result.value(13).toInt());
-			analyzer.setTOFTotalPathLength(result.value(14).toDouble());
-			analyzer.setType((MassAnalyzer::AnalyzerType) result.value(15).toInt());
-			loadMetaInfo_(result.value(16).toInt(), analyzer);
+			analyzer.setScanLaw((MassAnalyzer::ScanLaw) result.value(9).toInt());
+			analyzer.setScanRate(result.value(10).toDouble());
+			analyzer.setScanTime(result.value(11).toDouble());
+			analyzer.setTOFTotalPathLength(result.value(12).toDouble());
+			analyzer.setType((MassAnalyzer::AnalyzerType) result.value(13).toInt());
+			loadMetaInfo_(result.value(14).toInt(), analyzer);
 			
 			analyzers.push_back(analyzer);
 			result.next();

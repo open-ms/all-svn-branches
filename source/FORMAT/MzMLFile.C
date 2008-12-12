@@ -35,8 +35,8 @@ namespace OpenMS
 {
 
 	MzMLFile::MzMLFile()
-		: XMLFile("/SCHEMAS/mzML_1_00.xsd","1.00"),
-			indexed_schema_location_("/SCHEMAS/mzML_idx_1_00.xsd")
+		: XMLFile("/SCHEMAS/mzML_1_10.xsd","1.10"),
+			indexed_schema_location_("/SCHEMAS/mzML_idx_1_10.xsd")
 	{
 	}
 
@@ -57,11 +57,6 @@ namespace OpenMS
 	//reimplemented in order to handle index MzML
 	bool MzMLFile::isValid(const String& filename) 
 	{
-		if (schema_location_.empty())
-		{
-			throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-		}
-		
 		//determine if this is indexed mzML or not
 		bool indexed = false;
 		TextFile file(filename,true,4);

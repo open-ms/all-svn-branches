@@ -216,6 +216,37 @@ namespace OpenMS
 		return std::numeric_limits<double>::digits10;
 	}
 	
+	/// We do not want to bother people who unintentionally provide an int argument to this.
+	template <> inline Int writtenDigits <int> (const int & )
+	{
+		return std::numeric_limits<int>::digits10;
+	}
+
+	/// We do not want to bother people who unintentionally provide an unsigned int argument to this.
+	template <> inline Int writtenDigits <unsigned int> (const unsigned int & )
+	{
+		return std::numeric_limits<unsigned int>::digits10;
+	}
+
+	/// We do not want to bother people who unintentionally provide a long int argument to this.
+	template <> inline Int writtenDigits <long int> (const long int & )
+	{
+		return std::numeric_limits<int>::digits10;
+	}
+
+	/// We do not want to bother people who unintentionally provide an unsigned long int argument to this.
+	template <> inline Int writtenDigits <unsigned long int> (const unsigned long int & )
+	{
+		return std::numeric_limits<unsigned int>::digits10;
+	}
+
+	class DataValue;
+	/// DataValue will be printed like double.
+	template <> inline Int writtenDigits <DataValue> (const DataValue & )
+	{
+		return std::numeric_limits<double>::digits10;
+	}
+
 	/*
 	META-COMMENT:  DO NOT INTRODUCE ANY LINEBREAKS BELOW IN
 	"<code>std::numeric_limits<long double>::digits10 == 18</code>".
@@ -322,9 +353,9 @@ namespace OpenMS
 	@code
 	SomeType instance;
 	string what_type_1 = typeAsString(instance);
-	string what_type_2 = typeAsString<SomeType>();
+	string what_type_2 = typeAsString< SomeType >();
 	@endcode
-	The %typeAsString<SomeType>() version seems to go a bit deeper.
+	The %typeAsString< SomeType >() version seems to go a bit deeper.
 	Sometimes the results
 	depend on how the %typeAsString() is instantiated in the first place.
   The argument given to the function is never used, it only serves to infer the type.

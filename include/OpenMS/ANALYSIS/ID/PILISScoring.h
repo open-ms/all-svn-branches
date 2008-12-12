@@ -57,7 +57,7 @@ namespace OpenMS
 		considering also all other hits of all other spectra. The second type of scoring
 		is somewhat more accurate.
 		 
-		@ref PILISScoring_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_PILISScoring.parameters
 
 		@ingroup Analysis_ID
 	*/

@@ -17,6 +17,8 @@ Spectrum3DPrefDialog.C
 TOPPViewOpenDialog.C
 TOPPViewPrefDialog.C
 ToolsDialog.C
+TheoreticalSpectrumGenerationDialog.C
+SpectrumAlignmentDialog.C
 )
 
 ### add path to the filenames

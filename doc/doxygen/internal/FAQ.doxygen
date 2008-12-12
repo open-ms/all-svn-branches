@@ -247,15 +247,25 @@
 	    <li><b>Where can i add a new module?</b><br>
 	    @a OpenMS/doc/doxygen/public/Modules.doxygen
 	    
-	    <li><b>Why don't a get a subpage for the parameters of my class that is derived from DefaultParamHandler?</b><br>
+	    <li><b>How is the parameter documentation for classes derived from DefaultParamHandler created?</b><br>
 				You have to add your class to the program @a OpenMS/doc/doxygen/parameters/DefaultParamHandlerDocumenter.C. 
-				This program generates a doxygen subpage for the parameters. The subpage can than be included into the 
+				This program generates a html table with the parameters. This table can then be included into the 
 				class documentation using the following doxygen command:
 				@code
-@ref <class name>_Parameters
+@htmlinclude OpenMS_<class name>.parameters
 				@endcode
 				You can test if everything worked by calling @a make @a paramdoc in @a OpenMS/doc/.
-				The parameters documentation is written to @a OpenMS/doc/doxygen/parameters/DefaultParameters.doxygen.
+				The parameters documentation is written to @a OpenMS/doc/doxygen/parameters/output/.
+
+	    <li><b>How is the command line documentation for TOPP tools created?</b><br>
+				The program @a OpenMS/doc/doxygen/parameters/TOPPDocumenter.C creates the comnmand line documentation
+				for all classes that are included in the static TOPPBase tools list.
+				It can be included into the documentation using the following doxygen command:
+				@code
+@verbinclude TOPP_<tool name>.cli
+				@endcode
+				You can test if everything worked by calling @a make @a toppdoc in @a OpenMS/doc/.
+				The comand line documentation is written to @a OpenMS/doc/doxygen/parameters/output/.
 		
 	    <li><b>What are the important files for adding a new tutorial section?</b><br>
 		    %OpenMS tutorial:
@@ -352,7 +362,7 @@
 			
 				<p>
 				Each maintainer must check his/her classes and TOPP tools.
-				Keep in mind that missing documenation scares off potential users!
+				Keep in mind that missing documention scares off potential users!
 				<p>
 				Here is a list of what is to do: 
 				<OL>
@@ -452,6 +462,7 @@
 			<LI><B>What do i have to do to add a new TOPP tool?</B>
 			<OL>
 				<LI> Write the new tool ;)
+				<LI> Add your tool to getToolList() in include/OpenMS/APPLICATIONS/TOPPView.h
 				<LI> Add it to the TOPP docu page (in @a doc/doxygen/public/TOPP.doxygen)
 				<LI> Add the executable to the ignore list if the directory (@a svn @a propedit @a svn:ignore @a source/APPLICATION/TOPP/)
 			</OL>

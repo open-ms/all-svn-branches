@@ -57,7 +57,7 @@ namespace OpenMS
           Normally it is applied to MSExperiment and MSSpectrum instances.
 
 		 
-		@ref GaussFilter_Parameters are explained on a separate page.
+		@htmlinclude OpenMS_GaussFilter.parameters
     
     @ingroup SignalProcessing
   */

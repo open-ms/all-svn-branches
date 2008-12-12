@@ -565,7 +565,7 @@ namespace OpenMS
 	{
     std::stringstream ss(c_str());
     Int ret = 0;
-    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__, String("Could not convert string ")+*this+" to an int");
+    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__, String("Could not convert string '")+*this+"' to an integer value");
     return ret;
 	}
 
@@ -573,7 +573,7 @@ namespace OpenMS
 	{
     std::stringstream ss(c_str());
     Real ret;
-    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,  String("Could not convert string ")+*this+" to a float");
+    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,  String("Could not convert string '")+*this+"' to a float value");
     return ret;    
 	}
 
@@ -581,7 +581,7 @@ namespace OpenMS
 	{
     std::stringstream ss(c_str());
     DoubleReal ret;
-    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,  String("Could not convert string ")+*this+" to a double");
+    if (!(ss >> ret)) throw Exception::ConversionError(__FILE__, __LINE__, __PRETTY_FUNCTION__,  String("Could not convert string '")+*this+"' to a double value");
     return ret;    
 	}
 

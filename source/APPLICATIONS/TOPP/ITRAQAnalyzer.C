@@ -40,16 +40,17 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-   @page ITRAQAnalyzer ITRAQAnalyzer
+	@page TOPP_ITRAQAnalyzer ITRAQAnalyzer
+	
+	@brief Extracts and normalizes iTRAQ information from an MS experiment.
+	
+	Provide an idXML file that you obtained from the same data (e.g. by using InspectAdapter) 
+	to have protein ratios reported, instead of peptide ratios.
+	
+	@warning This tool is still in experimental status.
 
-   @brief Extracts and normalizes iTRAQ information from an MS experiment.
-
-	 Provide an idXML file that you obtained from the same data (e.g. by using InspectAdapter) 
-	 to have protein ratios reported, instead of peptide ratios.
-
-	 @warning This tool is still in experimental status.
- 
-   @ingroup TOPP
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_ITRAQAnalyzer.cli
 */
 
 // We do not want this class to show up in the docu:

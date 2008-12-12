@@ -43,7 +43,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page Resampler Resampler
+	@page TOPP_Resampler Resampler
 	
 	@brief Resampler can be used to transform an LC/MS map into a resampled map or a png image.
 	
@@ -54,6 +54,9 @@ using namespace std;
 	bilinear forward resampling.  Then the content of the matrix is written to
 	a PNG file.  The output has a uniform spacing in both dimensions regardless
 	of the input.
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_Resampler.cli
 */
 
 // We do not want this class to show up in the docu:

@@ -13,6 +13,7 @@ LabeledPairFinder.C
 MapAlignmentAlgorithm.C
 MapAlignmentAlgorithmPoseClustering.C
 MapAlignmentAlgorithmSpectrumAlignment.C
+MapAlignmentAlgorithmApplyGivenTrafo.C
 PoseClusteringAffineSuperimposer.C
 PoseClusteringShiftSuperimposer.C
 SimplePairFinder.C

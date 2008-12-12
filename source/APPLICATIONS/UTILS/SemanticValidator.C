@@ -41,6 +41,9 @@ using namespace std;
 
 /**
 	@page SemanticValidator SemanticValidator
+		
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude UTILS_SemanticValidator.cli
 	
 	@todo Docu (Andreas)
 */
@@ -53,7 +56,7 @@ class TOPPSemanticValidator
 {
  public:
 	TOPPSemanticValidator()
-		: TOPPBase("SemanticValidator","TODO")
+		: TOPPBase("SemanticValidator","TODO",false)
 	{
 	}
 	
@@ -80,13 +83,15 @@ class TOPPSemanticValidator
 		cv.loadFromOBO("UO",File::find("/CV/unit.obo"));
 		cv.loadFromOBO("brenda",File::find("/CV/brenda.obo"));
 		cv.loadFromOBO("GO",File::find("/CV/goslim_goa.obo"));
+		cv.loadFromOBO("UNIMOD",File::find("/CV/unimod.obo"));
 		//cv.loadFromOBO("NCBITaxon", "ncbi_taxonomy.obo");
 
 		// check cv params
 		Internal::SemanticValidator semantic_validator(mappings, cv);
 		semantic_validator.setCheckTermValueTypes(true);
+		semantic_validator.setCheckUnits(true);
 		StringList errors, warnings;
-		bool valid = semantic_validator.validate(in_file, errors, warnings);
+		/*bool valid =*/ semantic_validator.validate(in_file, errors, warnings);
     for (UInt i=0; i<warnings.size(); ++i)
     {
     	cout << "Warning: " << warnings[i] << endl;
@@ -96,6 +101,14 @@ class TOPPSemanticValidator
       cout << "Error: " << errors[i] << endl;
     }
 
+		if (warnings.size() == 0 && errors.size() == 0)
+		{
+			cout << "Congratulations, the file is valid!" << endl;
+		}
+
+						
+
+		/*
 		// check units cv
 		Internal::SemanticValidator semantic_validator_u(mappings, cv);
 		semantic_validator_u.setAccessionAttribute("unitAccession");
@@ -117,7 +130,7 @@ class TOPPSemanticValidator
     	{
       	cout << "Error: " << errors_u[i] << endl;
     	}
-		}
+		}*/
 	
 		return EXECUTION_OK;
 	}

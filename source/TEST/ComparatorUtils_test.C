@@ -2,7 +2,7 @@
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework 
+//                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
 //  Copyright (C) 2003-2008 -- Oliver Kohlbacher, Knut Reinert
 //
@@ -55,7 +55,7 @@ struct
 StrangeMixedLessOfIntAndString : std::binary_function < int, string, bool >
 {
 	bool
-	operator () ( int const & i, string const & s ) const 
+	operator () ( int const & i, string const & s ) const
 	{
 		return i < strtol ( s.c_str(), 0, 10 );
 	}
@@ -63,7 +63,7 @@ StrangeMixedLessOfIntAndString : std::binary_function < int, string, bool >
 
 struct IntStringPairLessFirst : binary_function < IntStringPair, IntStringPair, bool >
 {
-	bool operator () ( IntStringPair const & left, IntStringPair const & right ) const 
+	bool operator () ( IntStringPair const & left, IntStringPair const & right ) const
 	{ return left.first < right.first; }
 };
 
@@ -79,8 +79,8 @@ START_TEST(ComparatorUtils.h, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
-	
-CHECK(PointerComparator < less<int> >)
+
+START_SECTION(PointerComparator < less<int> >)
 	int i = 1000, j = 1000000;
   TEST_EQUAL(less<int>().operator()(i,j),true)
 	TEST_EQUAL(less<int>().operator()(j,i),false)
@@ -95,9 +95,9 @@ CHECK(PointerComparator < less<int> >)
 	TEST_EQUAL(PointerComparator < less<int> >().operator()(&j,&i),true)
 	TEST_EQUAL(PointerComparator < less<int> >().operator()(&i,&j),false)
 	TEST_EQUAL(PointerComparator < less<int> >().operator()(&i,&i),false)
-RESULT
+END_SECTION
 
-CHECK(PointerComparator < ReverseComparator < less<int> > >)
+START_SECTION(PointerComparator < ReverseComparator < less<int> > >)
 	int i = 1000, j = 1000000;
 	TEST_EQUAL(PointerComparator < ReverseComparator < less<int> > >().operator()(&i,&j),false)
 	TEST_EQUAL(PointerComparator < ReverseComparator < less<int> > >().operator()(&i,&i),false)
@@ -106,16 +106,16 @@ CHECK(PointerComparator < ReverseComparator < less<int> > >)
 	TEST_EQUAL(PointerComparator < ReverseComparator < less<int> > >().operator()(&j,&i),false)
 	TEST_EQUAL(PointerComparator < ReverseComparator < less<int> > >().operator()(&i,&i),false)
 	TEST_EQUAL(PointerComparator < ReverseComparator < less<int> > >().operator()(&i,&j),true)
-RESULT
+END_SECTION
 
-CHECK(pointerComparator(std::less<int>()))
+START_SECTION(pointerComparator(std::less<int>()))
 	int i = 88, j = 99;
   TEST_EQUAL(pointerComparator(std::less<int>())(&i,&j),true)
   TEST_EQUAL(pointerComparator(std::less<int>())(&i,&i),false)
   TEST_EQUAL(pointerComparator(std::less<int>())(&j,&i),false)
-RESULT
+END_SECTION
 
-CHECK(ReverseComparator < PointerComparator < less<int> > >)
+START_SECTION(ReverseComparator < PointerComparator < less<int> > >)
 	int i = 1000, j = 1000000;
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&i,&j),false)
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&i,&i),false)
@@ -124,9 +124,9 @@ CHECK(ReverseComparator < PointerComparator < less<int> > >)
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&j,&i),false)
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&i,&i),false)
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&i,&j),true)
-RESULT
+END_SECTION
 
-CHECK(ReverseComparator < PointerComparator < less<int> > >)
+START_SECTION(ReverseComparator < PointerComparator < less<int> > >)
 	int i = 1000, j = 1000000;
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&i,&j),false)
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&i,&i),false)
@@ -135,9 +135,9 @@ CHECK(ReverseComparator < PointerComparator < less<int> > >)
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&j,&i),false)
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&i,&i),false)
 	TEST_EQUAL(ReverseComparator < PointerComparator < less<int> > >().operator()(&i,&j),true)
-RESULT
+END_SECTION
 
-CHECK(typedefs in ReverseComparator<> and PointerComparator<>)
+START_SECTION(typedefs in ReverseComparator<> and PointerComparator<>)
   int i = 1000;
   string s = "1000000";
   TEST_EQUAL(StrangeMixedLessOfIntAndString().operator()(i,s),true)
@@ -156,31 +156,31 @@ CHECK(typedefs in ReverseComparator<> and PointerComparator<>)
   TEST_EQUAL(typeid(ReverseComparator<PointerComparator<StrangeMixedLessOfIntAndString> >::second_argument_type)==typeid(int*),true)
   TEST_EQUAL(typeid(PointerComparator<ReverseComparator<StrangeMixedLessOfIntAndString> >::first_argument_type)==typeid(string*),true)
   TEST_EQUAL(typeid(PointerComparator<ReverseComparator<StrangeMixedLessOfIntAndString> >::second_argument_type)==typeid(int*),true)
-RESULT
+END_SECTION
 
-CHECK(reverseComparator(std::less<int>()))
+START_SECTION(reverseComparator(std::less<int>()))
 	int i = 88, j = 99;
   TEST_EQUAL(reverseComparator(std::less<int>())(i,j),false)
   TEST_EQUAL(reverseComparator(std::less<int>())(i,i),false)
   TEST_EQUAL(reverseComparator(std::less<int>())(j,i),true)
-RESULT
+END_SECTION
 
-CHECK(reverseComparator(pointerComparator(std::less<int>())))
+START_SECTION(reverseComparator(pointerComparator(std::less<int>())))
 	int i = 88, j = 99;
   TEST_EQUAL(reverseComparator(pointerComparator(std::less<int>()))(&i,&j),false)
   TEST_EQUAL(reverseComparator(pointerComparator(std::less<int>()))(&i,&i),false)
   TEST_EQUAL(reverseComparator(pointerComparator(std::less<int>()))(&j,&i),true)
-RESULT
+END_SECTION
 
-CHECK(pointerComparator(reverseComparator(std::less<int>())))
+START_SECTION(pointerComparator(reverseComparator(std::less<int>())))
 	int i = 88, j = 99;
   TEST_EQUAL(pointerComparator(reverseComparator(std::less<int>()))(&i,&j),false)
   TEST_EQUAL(pointerComparator(reverseComparator(std::less<int>()))(&i,&i),false)
   TEST_EQUAL(pointerComparator(reverseComparator(std::less<int>()))(&j,&i),true)
-RESULT
+END_SECTION
 
-CHECK(LexicographicComparator<>)
-  vector < IntStringPair > seq; 
+START_SECTION(LexicographicComparator<>)
+  vector < IntStringPair > seq;
   seq.push_back( IntStringPair ( 1, "a", 1 ) );
   seq.push_back( IntStringPair ( 1, "b", 2 ) );
   seq.push_back( IntStringPair ( 1, "c", 3 ) );
@@ -195,21 +195,21 @@ CHECK(LexicographicComparator<>)
   vector < IntStringPair * > seqp;
   for ( vector < IntStringPair >::iterator pos = seq.begin(); pos != seq.end(); seqp.push_back(&(*pos++)) ) ;
   for ( vector < IntStringPair * >::iterator p = seqp.begin(); p != seqp.end(); ++p ) STATUS( (*p)->id << ":  " << (*p)->first << ' ' << (*p)->second ) ;
-  
+
   sort ( seq.begin(), seq.end(), IntStringPairLessSecond() );
   sort ( seq.begin(), seq.end(), IntStringPairLessFirst() );
   sort ( seq.begin(), seq.end(), ReverseComparator<IntStringPairLessSecond>() );
   sort ( seq.begin(), seq.end(), ReverseComparator<IntStringPairLessFirst>() );
-  
+
   random_shuffle(seq.begin(),seq.end());
   STATUS("after random_shuffle:");
   for ( vector < IntStringPair >::iterator p = seq.begin(); p != seq.end(); ++p ) STATUS( p-> id << ":  " << p->first << ' ' << p->second );
-  OK;
-  
+  STATUS("Okay!");
+
   for ( unsigned loops = 3; loops; --loops )
   {
   	STATUS("\n\nremaining loops: " << loops<<"\n");
-  	
+
   	random_shuffle(seq.begin(),seq.end());
   	sort ( seq.begin(), seq.end(), LexicographicComparator<IntStringPairLessFirst,IntStringPairLessSecond>() );
   	{
@@ -217,8 +217,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seq.begin(),seq.end());
   	sort ( seq.begin(), seq.end(), LexicographicComparator<IntStringPairLessFirst,ReverseComparator<IntStringPairLessSecond> >() );
   	{
@@ -226,8 +226,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seq.begin(),seq.end());
   	sort ( seq.begin(), seq.end(), LexicographicComparator<ReverseComparator<IntStringPairLessFirst>,IntStringPairLessSecond>() );
   	{
@@ -235,8 +235,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seq.begin(),seq.end());
   	sort ( seq.begin(), seq.end(), LexicographicComparator<ReverseComparator<IntStringPairLessFirst>,ReverseComparator<IntStringPairLessSecond> >() );
   	{
@@ -244,8 +244,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seq.begin(),seq.end());
   	sort ( seq.begin(), seq.end(), ReverseComparator<LexicographicComparator<ReverseComparator<IntStringPairLessFirst>,ReverseComparator<IntStringPairLessSecond> > >() );
   	{
@@ -253,8 +253,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seqp.begin(),seqp.end());
   	sort ( seqp.begin(), seqp.end(), PointerComparator<ReverseComparator<LexicographicComparator<ReverseComparator<IntStringPairLessFirst>,ReverseComparator<IntStringPairLessSecond> > > >() );
   	{
@@ -262,8 +262,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seqp[i]->id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seqp.begin(),seqp.end());
   	sort ( seqp.begin(), seqp.end(), ReverseComparator<LexicographicComparator<PointerComparator<ReverseComparator<IntStringPairLessFirst> >,ReverseComparator<PointerComparator<IntStringPairLessSecond> > > >() );
   	{
@@ -271,8 +271,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seqp[i]->id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seq.begin(),seq.end());
   	sort ( seq.begin(), seq.end(), LexicographicComparator<IntStringPairLessSecond,IntStringPairLessFirst>() );
   	{
@@ -280,8 +280,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seq.begin(),seq.end());
   	sort ( seq.begin(), seq.end(), LexicographicComparator<IntStringPairLessSecond,ReverseComparator<IntStringPairLessFirst> >() );
   	{
@@ -289,8 +289,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seq.begin(),seq.end());
   	sort ( seq.begin(), seq.end(), LexicographicComparator<ReverseComparator<IntStringPairLessSecond>,IntStringPairLessFirst>() );
   	{
@@ -298,8 +298,8 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
-  	OK;
-  
+  	STATUS("Okay!");
+
   	random_shuffle(seq.begin(),seq.end());
   	sort ( seq.begin(), seq.end(), LexicographicComparator<ReverseComparator<IntStringPairLessSecond>,ReverseComparator<IntStringPairLessFirst> >() );
   	{
@@ -307,20 +307,20 @@ CHECK(LexicographicComparator<>)
   		for ( unsigned i = 0; i < 9; ++i )
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
-  	OK;
-  
-  }
-  
-RESULT
+  	STATUS("Okay!");
 
-CHECK(lexicographicComparator())
+  }
+
+END_SECTION
+
+START_SECTION(lexicographicComparator())
 
 	// Note: the correctness has been extensively in the preceding test, see
-	// CHECK(LexicographicComparator<>)
+	// START_SECTION(LexicographicComparator<>)
 	// Here we only check if the template instantiation works.
 	// The different line is commented below.
 
-  vector < IntStringPair > seq; 
+  vector < IntStringPair > seq;
   seq.push_back( IntStringPair ( 1, "a", 1 ) );
   seq.push_back( IntStringPair ( 1, "b", 2 ) );
   seq.push_back( IntStringPair ( 1, "c", 3 ) );
@@ -335,21 +335,21 @@ CHECK(lexicographicComparator())
   vector < IntStringPair * > seqp;
   for ( vector < IntStringPair >::iterator pos = seq.begin(); pos != seq.end(); seqp.push_back(&(*pos++)) ) ;
   for ( vector < IntStringPair * >::iterator p = seqp.begin(); p != seqp.end(); ++p ) STATUS( (*p)->id << ":  " << (*p)->first << ' ' << (*p)->second ) ;
-  
+
   sort ( seq.begin(), seq.end(), IntStringPairLessSecond() );
   sort ( seq.begin(), seq.end(), IntStringPairLessFirst() );
   sort ( seq.begin(), seq.end(), ReverseComparator<IntStringPairLessSecond>() );
   sort ( seq.begin(), seq.end(), ReverseComparator<IntStringPairLessFirst>() );
-  
+
   random_shuffle(seq.begin(),seq.end());
   STATUS("after random_shuffle:");
   for ( vector < IntStringPair >::iterator p = seq.begin(); p != seq.end(); ++p ) STATUS( p-> id << ":  " << p->first << ' ' << p->second );
-  OK;
-  
+  STATUS("Okay!");
+
   for ( unsigned loops = 1; loops; --loops )
   {
   	STATUS("remaining loops: " << loops);
-  	
+
   	random_shuffle(seq.begin(),seq.end());
 		// Note how the next line differs from the preceding test...
   	sort ( seq.begin(), seq.end(), lexicographicComparator(IntStringPairLessFirst(),IntStringPairLessSecond()) );
@@ -359,8 +359,27 @@ CHECK(lexicographicComparator())
   			TEST_EQUAL(seq[i].id,order[i]);
   	}
   }
-  
-RESULT
+
+END_SECTION
+
+START_SECTION(PairComaratorFirstElement())
+  std::pair<int,int> i(4,6), j(-3,7);
+  PairComparatorFirstElement<std::pair<int,int> > testcomp;
+  TEST_EQUAL(testcomp(i,j),false);
+  TEST_EQUAL(testcomp(j,i),true);
+  j = std::make_pair(4,7);
+  TEST_EQUAL(testcomp(i,j),false);
+  TEST_EQUAL(testcomp(j,i),false);
+
+END_SECTION
+
+START_SECTION(PairComaratorSecondElement())
+  std::pair<int,int> i(4,6), j(-3,7);
+  PairComparatorSecondElement<std::pair<int,int> > testcomp;
+  TEST_EQUAL(testcomp(i,j),true);
+  j = std::make_pair(4,6);
+  TEST_EQUAL(testcomp(i,j),false);
+END_SECTION
 
 
 /////////////////////////////////////////////////////////////

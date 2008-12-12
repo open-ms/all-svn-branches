@@ -47,13 +47,7 @@ namespace OpenMS
 	}
 	
   void OMSSAXMLFile::load(const String& filename, ProteinIdentification& protein_identification, vector<PeptideIdentification>& peptide_identifications, bool load_proteins)
-  {
-  	//try to open file
-		if (!File::exists(filename))
-    {
-      throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
-    }
-		
+  {		
 		//Filename for error messages in XMLHandler
     file_ = filename;
 
@@ -174,7 +168,7 @@ namespace OpenMS
 			{
 				if (mods_map_[actual_mod_type_.toInt()].size() > 1)
 				{
-					cerr << "OMSSAXMLFile: Warning: cannot determine exact type of modification of position " << actual_mod_site_ << " in sequence " << actual_peptide_hit_.getSequence() << " using modification " << actual_mod_type_ << ", using first possibility!" << endl;
+					warning(STORE, String("Cannot determine exact type of modification of position ") + actual_mod_site_ + " in sequence " + actual_peptide_hit_.getSequence().toString() + " using modification " + actual_mod_type_ + " - using first possibility!");
 				}
 				AASequence pep = actual_peptide_hit_.getSequence();
 				pep.setModification(actual_mod_site_, mods_map_[actual_mod_type_.toInt()].begin()->getFullName());
@@ -182,8 +176,7 @@ namespace OpenMS
 			}
 			else
 			{
-				cerr << "OMSSAXMLFile: Warning: cannot find PSI-MOD mapping for mod, ingoring!: " << actual_mod_type_ << endl;
-				//new_mod = actual_mod_type_ + "@" + actual_mod_site_;
+				warning(STORE, String("Cannot find PSI-MOD mapping for mod -  ingoring '") + actual_mod_type_ + "'");
 			}
 		}
 		
@@ -369,7 +362,7 @@ namespace OpenMS
 			{
 				if (split.size() < 2)
 				{
-					throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, "parse mapping file line: '" + *it + "'", "");
+					fatalError(LOAD, String("Invalid mapping file line: '") + *it + "'");
 				}
 				vector<ResidueModification> mods;
 				for (UInt i = 2; i != split.size(); ++i)

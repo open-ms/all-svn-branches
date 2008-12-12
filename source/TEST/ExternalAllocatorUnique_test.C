@@ -42,63 +42,71 @@ ExternalAllocatorUnique* ptr = 0;
 String filename;
 NEW_TMP_FILE(filename);
 
-CHECK(ExternalAllocatorUnique())
+START_SECTION(ExternalAllocatorUnique())
 {
 	ptr = new ExternalAllocatorUnique(filename, 999);
 	TEST_NOT_EQUAL(ptr, 0)
 }
-RESULT
+END_SECTION
 
-CHECK(~ExternalAllocatorUnique())
+START_SECTION(~ExternalAllocatorUnique())
 {
 	delete ptr;
 }
-RESULT
+END_SECTION
 
-CHECK((ExternalAllocatorUnique(const String &filename, const Int64 &filesize)))
+START_SECTION((ExternalAllocatorUnique(const String &filename, const Int64 &filesize)))
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	NOT_TESTABLE
 }
-RESULT
+END_SECTION
 
-CHECK((ExternalAllocatorUnique(const ExternalAllocatorUnique &rhs)))
+START_SECTION((ExternalAllocatorUnique(const ExternalAllocatorUnique &rhs)))
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	ExternalAllocatorUnique eau2(eau);
 	NOT_TESTABLE
 }
-RESULT
+END_SECTION
 
-CHECK((const String& getFilename() const))
+START_SECTION((const String& getFilename() const))
 {
 	String filename2;
 	NEW_TMP_FILE(filename2);
  	ExternalAllocatorUnique eau(filename2, 10000);
 	TEST_EQUAL(eau.getFilename(), filename2)
 }
-RESULT
+END_SECTION
 
+<<<<<<< .working
 CHECK((const Int64& getFilesize() const))
+=======
+START_SECTION((const Offset64Int& getFilesize() const))
+>>>>>>> .merge-right.r4223
 {
   ExternalAllocatorUnique eau(filename, 10000);
 	TEST_EQUAL(eau.getFilesize(), 10000)
 }
-RESULT
+END_SECTION
 
+<<<<<<< .working
 CHECK((void advanceFilesize(const Int64 &x)))
+=======
+START_SECTION((void advanceFilesize(const Offset64Int &x)))
+>>>>>>> .merge-right.r4223
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	eau.advanceFilesize(33);
 	eau.advanceFilesize(11);
 	TEST_EQUAL(eau.getFilesize(), 10000+44);
 }
-RESULT
+END_SECTION
 
 #ifdef OPENMS_WINDOWSPLATFORM
-CHECK([EXTRA](const HANDLE& getMmapHandle() const))
+START_SECTION([EXTRA](const HANDLE& getMmapHandle() const))
 #else
-CHECK([EXTRA](const int& getMmapHandle() const))
+START_SECTION([EXTRA](const int& getMmapHandle() const))
 #endif
 {
 	ExternalAllocatorUnique eau(filename, 10000);
@@ -110,47 +118,67 @@ CHECK([EXTRA](const int& getMmapHandle() const))
 	//hard to see if the handle is correct...
 	NOT_TESTABLE
 }
-RESULT
+END_SECTION
 
+<<<<<<< .working
 CHECK((const Int64& getNextfree() const))
+=======
+START_SECTION((const Offset64Int& getNextfree() const))
+>>>>>>> .merge-right.r4223
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	TEST_EQUAL(eau.getNextfree(), 0);
 }
-RESULT
+END_SECTION
 
+<<<<<<< .working
 CHECK((void advanceNextfree(const Int64 &x)))
+=======
+START_SECTION((void advanceNextfree(const Offset64Int &x)))
+>>>>>>> .merge-right.r4223
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	eau.advanceNextfree(33);
 	eau.advanceNextfree(11);
 	TEST_EQUAL(eau.getNextfree(), 44);
 }
-RESULT
+END_SECTION
 
+<<<<<<< .working
 CHECK((const Int64& getTotalmappingsize() const))
+=======
+START_SECTION((const Offset64Int& getTotalmappingsize() const))
+>>>>>>> .merge-right.r4223
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	TEST_EQUAL(eau.getTotalmappingsize(), 0);
 }
-RESULT
+END_SECTION
 
+<<<<<<< .working
 CHECK((void setTotalmappingsize(const Int64 &x)))
+=======
+START_SECTION((void setTotalmappingsize(const Offset64Int &x)))
+>>>>>>> .merge-right.r4223
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	eau.setTotalmappingsize(33);
 	TEST_EQUAL(eau.getTotalmappingsize(), 33);
 }
-RESULT
+END_SECTION
 
+<<<<<<< .working
 CHECK((bool hasFreeSwap(const Int64& bytes_needed)))
+=======
+START_SECTION((bool hasFreeSwap(const Offset64Int& bytes_needed)))
+>>>>>>> .merge-right.r4223
 {
 	ExternalAllocatorUnique eau(filename, 10000);
 	eau.advanceNextfree(33);
 	TEST_EQUAL(eau.hasFreeSwap(9900), true);
 	TEST_EQUAL(eau.hasFreeSwap(9990), false);
 }
-RESULT
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

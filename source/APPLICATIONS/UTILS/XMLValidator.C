@@ -50,6 +50,9 @@ using namespace std;
 	
 	@note XML schema files for the %OpenMS XML formats and several other XML formats can be found in the folder
 	      OpenMS/share/OpenMS/SCHEMAS/
+	
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude UTILS_XMLValidator.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -60,7 +63,7 @@ class TOPPXMLValidator
 {
  public:
 	TOPPXMLValidator()
-		: TOPPBase("XMLValidator","Validates XML files against an XML schema.")
+		: TOPPBase("XMLValidator","Validates XML files against an XML schema.",false)
 	{
 	}
 	

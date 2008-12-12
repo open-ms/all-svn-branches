@@ -41,7 +41,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page PTModel PTModel
+	@page TOPP_PTModel PTModel
 	
 	@brief Used to train a prediction model for the prediction
 					of proteotypic peptides.
@@ -128,9 +128,11 @@ using namespace std;
 	</ol>
 			
 	<br>	
-	The model can be used in PTPredict, to predict the likelihood  
+	The model can be used in @ref TOPP_PTPredict, to predict the likelihood  
 	for peptides to be proteotypic.
-
+	
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_PTModel.cli
 */
 
 // We do not want this class to show up in the docu:

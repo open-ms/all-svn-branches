@@ -41,16 +41,16 @@ START_TEST(MSPFile, "$Id$")
 /////////////////////////////////////////////////////////////
 
 MSPFile* ptr = 0;
-CHECK((MSPFile()))
+START_SECTION((MSPFile()))
 	ptr = new MSPFile;
 	TEST_NOT_EQUAL(ptr, 0)
-RESULT
+END_SECTION
 
-CHECK((~MSPFile()))
+START_SECTION((~MSPFile()))
 	delete ptr;
-RESULT
+END_SECTION
 
-CHECK(MSPFile(const MSPFile &rhs))
+START_SECTION(MSPFile(const MSPFile &rhs))
 	MSPFile f1, f2;
 	Param p = f1.getParameters();
 	p.setValue("instrument", "it");
@@ -58,9 +58,9 @@ CHECK(MSPFile(const MSPFile &rhs))
 	TEST_EQUAL(f1.getParameters() == f2.getParameters(), false)
 	MSPFile f3(f1);
 	TEST_EQUAL(f1.getParameters() == f3.getParameters(), true)
-RESULT
+END_SECTION
 
-CHECK(MSPFile& operator=(const MSPFile &rhs))
+START_SECTION(MSPFile& operator=(const MSPFile &rhs))
 	MSPFile f1, f2;
 	Param p = f1.getParameters();
 	p.setValue("instrument", "it");
@@ -68,15 +68,21 @@ CHECK(MSPFile& operator=(const MSPFile &rhs))
 	TEST_EQUAL(f1.getParameters() == f2.getParameters(), false)
 	f2 = f1;
 	TEST_EQUAL(f1.getParameters() == f2.getParameters(), true)
-RESULT
+END_SECTION
 
-CHECK(void load(const String &filename, std::vector< PeptideIdentification > &ids, RichPeakMap &exp))
+START_SECTION(void load(const String &filename, std::vector< PeptideIdentification > &ids, RichPeakMap &exp))
 	MSPFile msp_file;
 	vector<PeptideIdentification> ids;
 	RichPeakMap exp;
 	msp_file.load("data/MSPFile_test.msp", ids, exp);
 	TEST_EQUAL(exp.size(), 5)
 	TEST_EQUAL(ids.size(), 5)
+	
+	TEST_STRING_EQUAL(exp[0].getNativeID(), "index=0")
+	TEST_STRING_EQUAL(exp[1].getNativeID(), "index=1")
+	TEST_STRING_EQUAL(exp[2].getNativeID(), "index=2")
+	TEST_STRING_EQUAL(exp[3].getNativeID(), "index=3")
+	TEST_STRING_EQUAL(exp[4].getNativeID(), "index=4")
 
 	Param p(msp_file.getParameters());
 	p.setValue("instrument", "qtof");
@@ -87,6 +93,9 @@ CHECK(void load(const String &filename, std::vector< PeptideIdentification > &id
 	TEST_EQUAL(exp.size(), 2)
 	TEST_EQUAL(ids.size(), 2)
 
+	TEST_STRING_EQUAL(exp[0].getNativeID(), "index=0")
+	TEST_STRING_EQUAL(exp[1].getNativeID(), "index=1")
+	
 	p.setValue("instrument", "it");
 	msp_file.setParameters(p);
 	ids.clear();
@@ -94,13 +103,18 @@ CHECK(void load(const String &filename, std::vector< PeptideIdentification > &id
 	msp_file.load("data/MSPFile_test.msp", ids, exp);
 	TEST_EQUAL(exp.size(), 3)
 	TEST_EQUAL(ids.size(), 3)
-RESULT
 
-CHECK(void store(const String &, const RichPeakMap &) const)
+	TEST_STRING_EQUAL(exp[0].getNativeID(), "index=2")
+	TEST_STRING_EQUAL(exp[1].getNativeID(), "index=3")
+	TEST_STRING_EQUAL(exp[2].getNativeID(), "index=4")
+
+END_SECTION
+
+START_SECTION(void store(const String &, const RichPeakMap &) const)
 	MSPFile msp_file;
 	RichPeakMap exp;
 	TEST_EXCEPTION(Exception::NotImplemented, msp_file.store("this_file_will_never_be_created", exp))
-RESULT
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

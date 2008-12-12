@@ -3,6 +3,11 @@ set(directory include/OpenMS/VISUAL)
 
 ### list all MOC filenames of the directory here
 set(sources_list
+Annotation1DDistanceItem.h
+Annotation1DItem.h
+Annotation1DPeakItem.h
+Annotation1DTextItem.h  
+Annotations1DContainer.h
 AxisWidget.h
 ColorSelector.h
 EnhancedTabBar.h
@@ -37,6 +42,11 @@ source_group("Source Files\\OpenMS\\VISUAL" FILES ${mocced_sources})
 
 ### list all header files of the directory here
 set(sources_list_h
+Annotation1DDistanceItem.h
+Annotation1DItem.h
+Annotation1DPeakItem.h
+Annotation1DTextItem.h
+Annotations1DContainer.h
 AxisTickCalculator.h
 AxisWidget.h
 ColorSelector.h

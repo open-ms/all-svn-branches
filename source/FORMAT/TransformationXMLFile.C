@@ -100,7 +100,7 @@ namespace OpenMS
 					os << "\t\t<Param  type=\"string\" name=\"" << it->name << "\" value=\"" << it->value.toString() << "\"/>\n";
 					break;
 				default: // no other value types are supported!
-					throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"unsupported parameter type");
+					fatalError(STORE, String("Unsupported parameter type of parameter '") + it->name + "' with value '" + it->value.toString() +"'");
 					break;
 				};
 			}
@@ -113,7 +113,7 @@ namespace OpenMS
 			os << "\t\t<Pairs count=\"" << pairs_size << "\">\n";
 			for (UInt i=0; i<pairs_size; ++i)
 			{
-				os << "\t\t<Pair from=\"" << transformation.getPairs()[i].first << "\" to=\"" << transformation.getPairs()[i].second << "\"/>\n";
+				os << "\t\t\t<Pair from=\"" << transformation.getPairs()[i].first << "\" to=\"" << transformation.getPairs()[i].second << "\"/>\n";
 			}
 			os << "\t\t</Pairs>\n";
 		}
@@ -140,7 +140,7 @@ namespace OpenMS
 			String file_version = attributeAsString_(attributes,"version");
 			if (file_version.toDouble()>version_.toDouble())
 			{
-				warning("The XML file (" + file_version +") is newer than the parser (" + version_ + "). This might lead to undefinded program behaviour.");
+				warning(LOAD, "The XML file (" + file_version +") is newer than the parser (" + version_ + "). This might lead to undefinded program behaviour.");
 			}
 		}
 		else if ( element == "Transformation" )

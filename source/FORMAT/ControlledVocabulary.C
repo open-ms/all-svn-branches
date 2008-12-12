@@ -117,54 +117,85 @@ namespace OpenMS
 						term.parents.insert(line.substr(line.find(':') + 1).trim());
 					}
 				}
+				else if (line_wo_spaces.hasPrefix("relationship:has_units"))
+				{
+					String unit_id;
+					if (line.has('!'))
+					{
+						unit_id = "UO:" + line.suffix(':').prefix('!').trim();
+					}
+					else
+					{
+						unit_id = "UO:" + line.suffix(':').trim();
+					}
+					term.units.insert(unit_id);
+				}
+				else if (line_wo_spaces.hasPrefix("def:"))
+				{
+					String description = line.substr(line.find('"')+1);
+					description.trim();
+					description = description.substr(0,description.find('"'));
+					description.trim();
+					term.description = description;
+				}
+				else if (line_wo_spaces.hasPrefix("synonym:"))
+				{
+					String synonym = line.substr(line.find('"')+1);
+					synonym.trim();
+					synonym = synonym.substr(0,synonym.find('"'));
+					synonym.trim();
+					term.synonyms.push_back(synonym);
+				}
 				else if (line_wo_spaces=="is_obsolete:true")
 				{
 					term.obsolete = true;
 				}
-				else if (line_wo_spaces.hasPrefix("xref:value-type"))
+				else if (line_wo_spaces.hasPrefix("xref:value-type") || line_wo_spaces.hasPrefix("xref_analog:value-type"))
 				{
 					line_wo_spaces.remove('\\');
-          if (line_wo_spaces.hasPrefix("xref:value-type:xsd:string")) 
+          if (line_wo_spaces.hasSubstring("value-type:xsd:string")) 
 					{ 
 						term.xref_type = CVTerm::XSD_STRING; 
 						continue; 
 					}
-          if (line_wo_spaces.hasPrefix("xref:value-type:xsd:integer") || line_wo_spaces.hasPrefix("xref:value-type:xsd:int")) 
+          if (line_wo_spaces.hasSubstring("value-type:xsd:integer") || line_wo_spaces.hasSubstring("value-type:xsd:int")) 
 					{ 
 						term.xref_type = CVTerm::XSD_INTEGER; 
 						continue; 
 					}
-          if (line_wo_spaces.hasPrefix("xref:value-type:xsd:decimal") || line_wo_spaces.hasPrefix("xref:value-type:xsd:float")) 
+          if (line_wo_spaces.hasSubstring("value-type:xsd:decimal") || 
+							line_wo_spaces.hasSubstring("value-type:xsd:float") ||
+							line_wo_spaces.hasSubstring("value-type:xsd:double")) 
 					{ 
 						term.xref_type = CVTerm::XSD_DECIMAL; 
 						continue; 
 					}
-          if (line_wo_spaces.hasPrefix("xref:value-type:xsd:negativeInteger")) 
+          if (line_wo_spaces.hasSubstring("value-type:xsd:negativeInteger")) 
 					{ 
 						term.xref_type = CVTerm::XSD_NEGATIVE_INTEGER; 
 						continue; 
 					}
-          if (line_wo_spaces.hasPrefix("xref:value-type:xsd:positiveInteger")) 
+          if (line_wo_spaces.hasSubstring("value-type:xsd:positiveInteger")) 
 					{ 
 						term.xref_type = CVTerm::XSD_POSITIVE_INTEGER; 
 						continue; 
 					}
-          if (line_wo_spaces.hasPrefix("xref:value-type:xsd:nonNegativeInteger")) 
+          if (line_wo_spaces.hasSubstring("value-type:xsd:nonNegativeInteger")) 
 					{ 
 						term.xref_type = CVTerm::XSD_NON_NEGATIVE_INTEGER; 
 						continue; 
 					}
-          if (line_wo_spaces.hasPrefix("xref:value-type:xsd:nonPositiveInteger")) 
+          if (line_wo_spaces.hasSubstring("value-type:xsd:nonPositiveInteger")) 
 					{ 
 						term.xref_type = CVTerm::XSD_NON_POSITIVE_INTEGER; 
 						continue; 
 					}
-          if (line_wo_spaces.hasPrefix("xref:value-type:xsd:boolean") || line_wo_spaces.hasPrefix("xref:value-type:xsd:bool")) 
+          if (line_wo_spaces.hasSubstring("value-type:xsd:boolean") || line_wo_spaces.hasSubstring("value-type:xsd:bool")) 
 					{ 
 						term.xref_type = CVTerm::XSD_BOOLEAN; 
 						continue; 
 					}
-          if (line_wo_spaces.hasPrefix("xref:value-type:xsd:date"))  
+          if (line_wo_spaces.hasSubstring("value-type:xsd:date"))
 					{ 
 						term.xref_type = CVTerm::XSD_DATE; 
 						continue; 

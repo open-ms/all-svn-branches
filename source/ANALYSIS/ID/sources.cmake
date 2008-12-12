@@ -6,10 +6,8 @@ set(sources_list
 ConsensusID.C
 FalseDiscoveryRate.C
 HiddenMarkovModel.C
-IDConsensusFeatureMapper.C
 IDDecoyProbability.C
-IDFeatureMapper.C
-IDSpectrumMapper.C
+IDMapper.C
 PILISIdentification.C
 PILISModel.C
 PILISModelGenerator.C

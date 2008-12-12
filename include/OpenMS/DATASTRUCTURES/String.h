@@ -378,7 +378,7 @@ namespace OpenMS
 			@see split().
 		*/
 		template<class StringIterator>
-		void implode(StringIterator first, StringIterator last, const String& glue = "")
+		void concatenate(StringIterator first, StringIterator last, const String& glue = "")
 		{
 			//empty container
 			if (first==last)

@@ -37,7 +37,6 @@ PTModel.C
 PTPredict.C
 PeakPicker.C
 PepNovoAdapter.C
-QuantIDMerger.C
 RTModel.C
 RTPredict.C
 Resampler.C

@@ -52,7 +52,7 @@ using namespace std;
 
 
 /**
-	@page PepNovoAdapter PepNovoAdapter
+	@page TOPP_PepNovoAdapter PepNovoAdapter
 
 	@brief Identifies peptides in MS/MS spectra via PepNovo.
 
@@ -87,9 +87,9 @@ using namespace std;
 				This mode is selected by the <b>-pepnovo_out</b> option in the command line.
 				</li>
 	</ol>
-
-
-
+	
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_PepNovoAdapter.cli
 */
 
 // We do not want this class to show up in the docu -> cond

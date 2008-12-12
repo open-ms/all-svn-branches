@@ -43,7 +43,9 @@ using namespace std;
 	@page IdXMLInfo IdXMLInfo
 	
 	@brief This application is used to retrieve information about IdXML files.
-	
+		
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude UTILS_IdXMLInfo.cli
 */
 
 // We do not want this class to show up in the docu:
@@ -54,7 +56,7 @@ class TOPPIdXMLInfo
 {
 	public:
 		TOPPIdXMLInfo()
-			: TOPPBase("IdXMLInfo","prints information about IdXML files")
+			: TOPPBase("IdXMLInfo","prints information about IdXML files",false)
 		{
 			
 		}
@@ -126,10 +128,10 @@ class TOPPIdXMLInfo
 
 			cout << "Number of spectra: " << spectrum_count << endl;
 			cout << "Number of peptide hits: " << peptide_hit_count << endl;
-			cout << "Number of distinct peptide hits: " << peptides.size() << endl;
+			cout << "Number of unique peptide hits: " << peptides.size() << endl;
 			cout << "Number of runs: " << runs_count << endl;
 			cout << "Number of protein hits: " << protein_hit_count << endl;
-			cout << "Number of distinct protein hits: " << proteins.size() << endl;
+			cout << "Number of unique protein hits: " << proteins.size() << endl;
 			
 			return EXECUTION_OK;
 		}

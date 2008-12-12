@@ -332,7 +332,6 @@ set(transformations_executables_list
   IsotopeWaveletTransform_test
   ContinuousWaveletTransform_test
   PeakShape_test
-  PeakPicker_test
   ContinuousWaveletTransformNumIntegration_test
   OptimizePick_test
   PeakPickerCWT_test

@@ -89,8 +89,11 @@ namespace OpenMS
 				std::set<String> parents;	    ///< The parent IDs
 				std::set<String> children;    ///< The child IDs
 				bool obsolete; 								///< Flag that indicates of the term is obsolete
+				String description;       		///< Term description
+				StringList synonyms;					///< List of synonyms
 				StringList unparsed;					///< Unparsed lines from the definition file
 				XRefType xref_type;						///< xref value-type for the CV-term
+				std::set<String> units;       ///< unit accession ids, defined by relationship has units
 				
 				///Default constructor
 				CVTerm()
@@ -99,6 +102,8 @@ namespace OpenMS
 						parents(),
 						children(),
 						obsolete(false),
+						description(),
+						synonyms(),
 						unparsed(),
 						xref_type(NONE)
 				{
@@ -110,8 +115,11 @@ namespace OpenMS
 						parents(rhs.parents),
 						children(rhs.children),
 						obsolete(rhs.obsolete),
+						description(rhs.description),
+						synonyms(rhs.synonyms),
 						unparsed(rhs.unparsed),
-						xref_type(rhs.xref_type)
+						xref_type(rhs.xref_type),
+						units(rhs.units)
 				{
 				}
 
@@ -124,8 +132,11 @@ namespace OpenMS
 						parents = rhs.parents;
 						children = rhs.children;
 						obsolete = rhs.obsolete;
+						description = rhs.description;
+						synonyms = rhs.synonyms;
 						unparsed = rhs.unparsed;
 						xref_type = rhs.xref_type;
+						units = rhs.units;
 					}
 					return *this;
 				}

@@ -37,13 +37,16 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page DTAExtractor DTAExtractor
+	@page TOPP_DTAExtractor DTAExtractor
 	
 	@brief Extracts scans of an mzData file to several files in DTA format.
 	
 	The retention time, the m/z ratio (for MS level > 1) and the file extension are appended to the output file name.
 	
 	You can limit the exported spectra by m/z range, retention time range or MS level.
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_DTAExtractor.cli
 */
 
 // We do not want this class to show up in the docu:

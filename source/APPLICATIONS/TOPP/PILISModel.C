@@ -38,7 +38,7 @@ using namespace OpenMS;
 using namespace std;
 
 /**
-	@page PILISModel PILISModel
+	@page TOPP_PILISModel PILISModel
 	
 	@brief Can be used to train the PILIS model with a given set of spectra an identifications
 
@@ -50,7 +50,10 @@ using namespace std;
 	The default parameters of the model are given in the model_file parameter, this can either be
 	the default file stored in /data/PILIS/ or a custom modelfile with already trained 
 	parameters. The trained parameters are written into the file trained_model_file. This parameter
-	file can be used with PILISIdentification to generate identifications of MS/MS spectra.
+	file can be used with @ref TOPP_PILISIdentification to generate identifications of MS/MS spectra.
+
+	<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_PILISModel.cli
 */
 
 

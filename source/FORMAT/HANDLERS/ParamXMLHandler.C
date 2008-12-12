@@ -87,7 +87,7 @@ namespace OpenMS
 			}
 			else
 			{
-				warning(String("Ignoring entry '") + name + "' because of unknown type '" + type + "'");
+				warning(LOAD, String("Ignoring entry '") + name + "' because of unknown type '" + type + "'");
 			}
 			
 			//restrictions
@@ -164,10 +164,27 @@ namespace OpenMS
 			{
 				list_.tags.push_back("advanced");
 			}
+			list_.restrictions_index = attributes.getIndex(sm_.convert("restrictions"));
+			if(list_.restrictions_index!=-1)
+			{
+				list_.restrictions = sm_.convert(attributes.getValue(list_.restrictions_index));
+			}
 		}
 		else if (element == "LISTITEM")
 		{
-			list_.list.push_back(attributeAsString_(attributes,"value"));
+			if(list_.type == "string")
+			{
+				list_.stringlist.push_back(attributeAsString_(attributes,"value"));
+			}
+			else if(list_.type == "int")
+			{
+				list_.intlist.push_back(asInt_(attributeAsString_(attributes,"value")));
+			}
+			else if(list_.type =="float" || list_.type == "double")
+			{
+				list_.doublelist.push_back(asDouble_(attributeAsString_(attributes,"value")));
+			}
+			
 		}
 		else if (element == "PARAMETERS")
 		{
@@ -176,7 +193,7 @@ namespace OpenMS
 			optionalAttributeAsString_(file_version,attributes,"version");
 			if (file_version.toDouble()>version_.toDouble())
 			{
-				warning("The XML file (" + file_version +") is newer than the parser (" + version_ + "). This might lead to undefinded program behaviour.");
+				warning(LOAD, "The XML file (" + file_version +") is newer than the parser (" + version_ + "). This might lead to undefinded program behaviour.");
 			}
 		}
 	}
@@ -196,15 +213,58 @@ namespace OpenMS
 		}
 		else if (element == "ITEMLIST")
 		{
+			std::vector<String> parts;
+
 			if (list_.type=="string")
 			{
-				param_.setValue(list_.name, list_.list, list_.description, list_.tags);
+				param_.setValue(list_.name, list_.stringlist, list_.description, list_.tags);
+				if(list_.restrictions_index!=-1)
+				{
+					list_.restrictions.split(',', parts);
+					param_.setValidStrings(list_.name,parts);
+				}
+			}
+			else if(list_.type=="int")
+			{
+				param_.setValue(list_.name,list_.intlist,list_.description,list_.tags);
+				if(list_.restrictions_index!=-1)
+				{
+					list_.restrictions.split(':', parts);
+					if (parts.size()!=2) list_.restrictions.split('-', parts); //for downward compatibility
+					if (parts[0]!="")
+					{
+						param_.setMinInt(list_.name,parts[0].toInt());
+					}
+					if (parts[1]!="")
+					{
+						param_.setMaxInt(list_.name,parts[1].toInt());
+					}
+				}
+			}
+			else if(list_.type == "float" || list_.type == "double")
+			{
+				param_.setValue(list_.name,list_.doublelist,list_.description,list_.tags);
+				if(list_.restrictions_index!=-1)
+				{
+					list_.restrictions.split(':', parts);
+					if (parts.size()!=2) list_.restrictions.split('-', parts); //for downward compatibility
+					if (parts[0]!="")
+					{
+						param_.setMinFloat(list_.name,parts[0].toDouble());
+					}
+					if (parts[1]!="")
+					{
+						param_.setMaxFloat(list_.name,parts[1].toDouble());
+					}
+				}
 			}
 			else
 			{
-				warning(String("Ignoring list entry '") + list_.name + "' because of unknown type '" + list_.type + "'");				
+				warning(LOAD, String("Ignoring list entry '") + list_.name + "' because of unknown type '" + list_.type + "'");				
 			}
-			list_.list.clear();
+			list_.stringlist.clear();
+			list_.intlist.clear();
+			list_.doublelist.clear();
 		}
 		else if (element == "PARAMETERS")
 		{

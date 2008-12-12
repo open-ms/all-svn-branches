@@ -49,11 +49,14 @@ class QComboBox;
 class QLabel;
 class QListWidget;
 class QListWidgetItem;
+class QTreeWidget;
+class QTreeWidgetItem;
 class QDockWidget;
 class QToolButton;
 class QCloseEvent;
 class QTextEdit;
 class QCheckBox;
+class QSplashScreen;
 
 namespace OpenMS
 {
@@ -66,8 +69,18 @@ namespace OpenMS
 
   /**
   	@brief Main window of TOPPView tool
-
-    @improvement Paint only highest point per pixel, paint only part of the data when moving (Marc)
+		
+		@todo Add meta data browsing for consensus features. e.g. to show annotated peptide identifications (Hiwi)
+		
+		@todo Make 1d-annotations work properly in mirror mode (Johannes)
+		
+		@todo Repair visualization of spectrum alignments in 1d-view (Johannes)
+		
+		@todo Adapt Spectrum1DWidget/Canvas such that two different grids and two y-axis-widgets are shown in mirror mode (Johannes)
+		
+		@todo Review documentation of all new features (Johannes)
+		
+    @improvement Paint only highest point per pixel, paint only part of the data when moving (Hiwi)
 		
     @ingroup TOPPView_elements
   */
@@ -82,7 +95,7 @@ namespace OpenMS
     	//@{
     	//Feature map type
     	typedef LayerData::FeatureMapType FeatureMapType;
-    	//Feature map type
+    	//Consensus feature map type
     	typedef LayerData::ConsensusMapType ConsensusMapType;
     	//Peak map type
     	typedef LayerData::ExperimentType ExperimentType;
@@ -120,7 +133,7 @@ namespace OpenMS
       void addDataDB(UInt db_id, bool show_options, String caption="", UInt window_id=0);
 
       /// opens all the files that are inside the handed over string list
-      void loadFiles(const StringList& list);
+      void loadFiles(const StringList& list, QSplashScreen* splash_screen);
 
       /**
       	@brief Loads the preferences from the filename given.
@@ -155,6 +168,8 @@ namespace OpenMS
       void updateToolBar();
       /// adapts the layer bar to the active window
       void updateLayerBar();
+      /// adapts the spectrum bar to the active window
+      void updateSpectrumBar();
       /// adapts the filter bar to the active window
       void updateFilterBar();
       /// brings the tab corresponding to the active window in front
@@ -178,9 +193,13 @@ namespace OpenMS
       void showTOPPDialog();
       /// Annotates current layer with ID data
       void annotateWithID();
+      /// Shows the theoretical spectrum generation dialog
+      void showSpectrumGenerationDialog();
+      /// Shows the spectrum alignment dialog
+      void showSpectrumAlignmentDialog();
       /// Shows the current peak data of the active layer in 3D 
       void showCurrentPeaksAs3D();
-			/// Shows the spectrum with index @p index of the sctive layer in 1D
+			/// Shows the spectrum with index @p index of the active layer in 1D
 			void showSpectrumAs1D(int index);
       /// Shows the 'About' dialog
       void showAboutDialog();
@@ -198,6 +217,8 @@ namespace OpenMS
 			void metadataDatabaseDialog();
 			/// dialog for inspecting file meta data
 			void metadataFileDialog();
+			/// Shows the selected spectrum
+			void spectrumSelectionChange(QTreeWidgetItem* item, int /*column*/);
 
     protected slots:
       /** @name Layer manager and filter manager slots
@@ -218,7 +239,7 @@ namespace OpenMS
     	/// slot for editing a filter
     	void filterEdit(QListWidgetItem* item);
     	/// slot for editing the preferences of the current layer
-    	void layerEdit(QListWidgetItem* item);
+    	void layerEdit(QListWidgetItem* /*item*/);
     	/// slot for the finished signal of the TOPP tools execution
     	void finishTOPPToolExecution(int exitCode, QProcess::ExitStatus exitStatus);
     	/// aborts the execution of a TOPP tool
@@ -259,14 +280,15 @@ namespace OpenMS
   		/**
   			@brief Adds a peak or feature map to the viewer
   			
-  			@param feature_map The feature data (empty if peak data)
-  			@param peak_map The peak data (empty if feature data)
+  			@param feature_map The feature data (empty if not feature data)
+  			@param consensus_map The consensus feature data (empty if not consensus feature data)
+  			@param peak_map The peak data (empty if not peak data)
   			@param is_feature Flag that indicates the actual data type
   			@param is_2D If more that one MS1 spectrum is contained in peak data
   			@param show_options If the options dialog should be shown (otherwise the defaults are used)
   			@param filename source file name (if the data came from a file)
       	@param caption Sets the layer name and window caption of the data. If unset the file name is used. If set, the file is not monitored foro changes.
-      	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current 
+      	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current
       */
   		void addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_options, const String& filename="", const String& caption="", UInt window_id=0);
   
@@ -297,13 +319,15 @@ namespace OpenMS
       /// Layer managment widget
       QListWidget* layer_manager_;
 
+			/// Spectrum selection widget
+      QTreeWidget* spectrum_selection_;
+
       ///@name Data filter widgets
       //@{
       QListWidget* filters_;
       QCheckBox* filters_check_box_;
       //@}
-
-
+      
       /// Log output window
       QTextEdit* log_;
 

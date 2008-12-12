@@ -35,7 +35,6 @@ PTModel
 PTPredict
 PeakPicker
 PepNovoAdapter
-QuantIDMerger
 RTModel
 RTPredict
 Resampler

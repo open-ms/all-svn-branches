@@ -143,17 +143,9 @@ END_SECTION
 
 
 #ifdef OPENMS_WINDOWSPLATFORM
-<<<<<<< .working
-CHECK((static bool extendSparseFile(const int &hFile, const Int64 &filesize)))
-=======
-START_SECTION((static bool extendSparseFile(const int &hFile, const Offset64Int &filesize)))
->>>>>>> .merge-right.r4223
+START_SECTION((static bool extendSparseFile(const int &hFile, const Int64 &filesize)))
 #else
-<<<<<<< .working
-CHECK((static bool extendSparseFile(const int &hFile, const Int64 &filesize)))
-=======
-START_SECTION((static bool extendSparseFile(const int &hFile, const Offset64Int &filesize)))
->>>>>>> .merge-right.r4223
+START_SECTION((static bool extendSparseFile(const int &hFile, const Int64 &filesize)))
 #endif
 	String filename;
 	NEW_TMP_FILE(filename);

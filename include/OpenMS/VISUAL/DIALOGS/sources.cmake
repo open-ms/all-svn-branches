@@ -17,6 +17,8 @@ Spectrum3DPrefDialog.h
 TOPPViewOpenDialog.h
 TOPPViewPrefDialog.h
 ToolsDialog.h
+SpectrumAlignmentDialog.h
+TheoreticalSpectrumGenerationDialog.h
 )
 
 ### add path to the filenames
@@ -49,6 +51,8 @@ Spectrum3DPrefDialog.h
 TOPPViewOpenDialog.h
 TOPPViewPrefDialog.h
 ToolsDialog.h
+SpectrumAlignmentDialog.h
+TheoreticalSpectrumGenerationDialog.h
 )
 
 ### add path to the filenames

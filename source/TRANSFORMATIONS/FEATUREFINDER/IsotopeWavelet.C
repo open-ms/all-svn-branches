@@ -90,7 +90,7 @@ namespace OpenMS
 
 	DoubleReal IsotopeWavelet::getValueByLambdaExtrapol (const DoubleReal lambda, const DoubleReal tz1) 
 	{
-		DoubleReal fac (-lambda + (tz1-1)*myLog2_(lambda)*ONEOLOG2E - boost::math::tgamma(tz1));
+		DoubleReal fac (-lambda + (tz1-1)*myLog2_(lambda)*ONEOLOG2E - boost::math::lgamma(tz1));
 		
 		return (sin((tz1-1)*WAVELET_PERIODICITY) * exp(fac));
 	}

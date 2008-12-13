@@ -13,6 +13,8 @@ Spectrum2DPrefDialog.ui
 Spectrum3DPrefDialog.ui
 TOPPViewOpenDialog.ui
 TOPPViewPrefDialog.ui
+SpectrumAlignmentDialog.ui
+TheoreticalSpectrumGenerationDialog.ui
 )
 
 ### add path to the filenames

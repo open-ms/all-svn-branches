@@ -87,16 +87,16 @@ START_SECTION((isOdd))
 	TEST_EQUAL(isOdd(3),true)
 END_SECTION
 
-CHECK((template <typename T> T round (T x)))
+START_SECTION((template <typename T> T round (T x)))
 	float f_down=14.49f;		 // expected 14
 	float f_up = 14.50f;		 // expected 15
 	double d_up = -999.49;   // expected -999
 	double d_down = -675.77; // expected -676
-	TEST_REAL_EQUAL(f_down, 14.0)
-	TEST_REAL_EQUAL(f_up, 15.0)
-	TEST_REAL_EQUAL(d_up, -999)
-	TEST_REAL_EQUAL(d_down, -676)
-RESULT
+	TEST_REAL_SIMILAR(round(f_down), 14.0)
+	TEST_REAL_SIMILAR(round(f_up), 15.0)
+	TEST_REAL_SIMILAR(round(d_up), -999)
+	TEST_REAL_SIMILAR(round(d_down), -676)
+END_SECTION
 /////////////////////////////////////////////////////////////);
 /////////////////////////////////////////////////////////////
 END_TEST

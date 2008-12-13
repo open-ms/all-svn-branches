@@ -176,8 +176,10 @@ else()
 	set(SVM_LIBRARY general ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library") # do not distinguish between optimized and debug
 endif()
 
+# TODO windoes
 OPENMS_CHECKLIB(ANDIMS_LIBRARY "ms10lib-TODO_CHRIS_JA_DU;ms10lib" "ms10lib-TODO_CHRIS_JA_DU;ms10lib" "ms10lib")
 
+# TODO windoes
 OPENMS_CHECKLIB(NETCDF_LIBRARY "netCDF-TODO_CHRIS_JA_DU;netcdf_c++" "netCDF-TODO_CHRIS_JA_DU;netcdf_c++" "netCDF")
 
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include/) ## for configured files, i.e. config.h
@@ -498,6 +500,22 @@ add_subdirectory(source/TEST EXCLUDE_FROM_ALL)
 ##### TOPPtests #####
 add_subdirectory(source/TEST/TOPP EXCLUDE_FROM_ALL)
 
+
+#### configs for external include files, e.g. to develop code with OpenMS
+#get_target_property(OPENMS_LIBRARIES_EXTERNAL OpenMS LOCATION)
+#set(OPENMS_INCLUDE_EXTERNAL ${PROJECT_BINARY_DIR}/include)
+
+configure_file(
+"${PROJECT_SOURCE_DIR}/OpenMSConfig.cmake.in"
+"${PROJECT_SOURCE_DIR}/OpenMSConfig.cmake"
+@ONLY
+)
+
+include(CMakeExportBuildSettings)
+cmake_export_build_settings(${OpenMS_BINARY_DIR}/OpenMSBuildSettings.cmake)
+export_library_dependencies(${OpenMS_BINARY_DIR}/OpenMSLibraryDepends.cmake)
+# TODO install these files to a specific location to have a standard way 
+# to be used with external code
 
 
 ########################################################

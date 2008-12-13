@@ -221,49 +221,99 @@ namespace OpenMS
 	  		static const XMLCh* s_deisotoped_;
 	  		static const XMLCh* s_chargedeconvoluted_;
 
+			// init all the static members, which is necessary because otherwise the undefined order will cause problems
+			void initStaticMembers_()
+    	{
+      	static bool init(false);
+      	if (!init)
+      	{
+        	s_value_ = xercesc::XMLString::transcode("value");
+					s_count_ = xercesc::XMLString::transcode("scanCount");
+		      s_type_ = xercesc::XMLString::transcode("type");
+		      s_name_ = xercesc::XMLString::transcode("name");
+		      s_version_ = xercesc::XMLString::transcode("version");
+		      s_filename_ = xercesc::XMLString::transcode("fileName");
+		      s_filetype_ = xercesc::XMLString::transcode("fileType");
+		      s_filesha1_ = xercesc::XMLString::transcode("fileSha1");
+		      s_completiontime_ = xercesc::XMLString::transcode("completionTime");
+		      s_precision_ = xercesc::XMLString::transcode("precision");
+		      s_byteorder_ = xercesc::XMLString::transcode("byteOrder");
+		      s_pairorder_ = xercesc::XMLString::transcode("pairOrder");
+		      s_precursorintensity_ = xercesc::XMLString::transcode("precursorIntensity");
+		      s_precursorcharge_ = xercesc::XMLString::transcode("precursorCharge");
+		      s_windowwideness_ = xercesc::XMLString::transcode("windowWideness");
+		      s_mslevel_ = xercesc::XMLString::transcode("msLevel");
+		      s_peakscount_ = xercesc::XMLString::transcode("peaksCount");
+		      s_polarity_ = xercesc::XMLString::transcode("polarity");
+		      s_scantype_ = xercesc::XMLString::transcode("scanType");
+		      s_retentiontime_ = xercesc::XMLString::transcode("retentionTime");
+		      s_collisionenergy_ = xercesc::XMLString::transcode("collisionEnergy");
+		      s_startmz_ = xercesc::XMLString::transcode("startMz");
+		      s_endmz_ = xercesc::XMLString::transcode("endMz");
+		      s_first_ = xercesc::XMLString::transcode("first");
+		      s_last_ = xercesc::XMLString::transcode("last");
+		      s_phone_ = xercesc::XMLString::transcode("phone");
+		      s_email_ = xercesc::XMLString::transcode("email");
+		      s_uri_ = xercesc::XMLString::transcode("URI");
+		      s_num_ = xercesc::XMLString::transcode("num");
+		      s_intensitycutoff_ = xercesc::XMLString::transcode("intensityCutoff");
+    		  s_centroided_ = xercesc::XMLString::transcode("centroided");
+		      s_deisotoped_ = xercesc::XMLString::transcode("deisotoped");
+		      s_chargedeconvoluted_ = xercesc::XMLString::transcode("chargeDeconvoluted");
+
+					init = true;
+				}
+				return;
+			}
+			
 	  };
 	
 		//--------------------------------------------------------------------------------
 	
 		// this cannot be moved into a function as VS2008 does not allow more than 31 static members in a function .. don't ask...
-		template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_value_ = xercesc::XMLString::transcode("value");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_count_ = xercesc::XMLString::transcode("scanCount");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_type_ = xercesc::XMLString::transcode("type");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_name_ = xercesc::XMLString::transcode("name");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_version_ = xercesc::XMLString::transcode("version");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_filename_ = xercesc::XMLString::transcode("fileName");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_filetype_ = xercesc::XMLString::transcode("fileType");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_filesha1_ = xercesc::XMLString::transcode("fileSha1");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_completiontime_ = xercesc::XMLString::transcode("completionTime");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_precision_ = xercesc::XMLString::transcode("precision");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_byteorder_ = xercesc::XMLString::transcode("byteOrder");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_pairorder_ = xercesc::XMLString::transcode("pairOrder");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_precursorintensity_ = xercesc::XMLString::transcode("precursorIntensity");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_precursorcharge_ = xercesc::XMLString::transcode("precursorCharge");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_windowwideness_ = xercesc::XMLString::transcode("windowWideness");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_mslevel_ = xercesc::XMLString::transcode("msLevel");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_peakscount_ = xercesc::XMLString::transcode("peaksCount");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_polarity_ = xercesc::XMLString::transcode("polarity");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_scantype_ = xercesc::XMLString::transcode("scanType");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_retentiontime_ = xercesc::XMLString::transcode("retentionTime");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_collisionenergy_ = xercesc::XMLString::transcode("collisionEnergy");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_startmz_ = xercesc::XMLString::transcode("startMz");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_endmz_ = xercesc::XMLString::transcode("endMz");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_first_ = xercesc::XMLString::transcode("first");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_last_ = xercesc::XMLString::transcode("last");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_phone_ = xercesc::XMLString::transcode("phone");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_email_ = xercesc::XMLString::transcode("email");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_uri_ = xercesc::XMLString::transcode("URI");
-		template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_num_ = xercesc::XMLString::transcode("num"); 
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_intensitycutoff_ = xercesc::XMLString::transcode("intensityCutoff");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_centroided_ = xercesc::XMLString::transcode("centroided");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_deisotoped_ = xercesc::XMLString::transcode("deisotoped");
-  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_chargedeconvoluted_ = xercesc::XMLString::transcode("chargeDeconvoluted");
-
+		template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_value_ = 0;
+		template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_count_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_type_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_name_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_version_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_filename_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_filetype_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_filesha1_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_completiontime_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_precision_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_byteorder_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_pairorder_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_precursorintensity_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_precursorcharge_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_windowwideness_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_mslevel_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_peakscount_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_polarity_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_scantype_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_retentiontime_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_collisionenergy_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_startmz_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_endmz_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_first_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_last_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_phone_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_email_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_uri_ = 0;
+		template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_num_ = 0; 
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_intensitycutoff_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_centroided_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_deisotoped_ = 0;
+  	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_chargedeconvoluted_ = 0;
 
 		template <typename MapType>
 	  void MzXMLHandler<MapType>::startElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname, const xercesc::Attributes& attributes)
 	  {
+			static bool init_static_members(false);
+			if (!init_static_members)
+			{
+				initStaticMembers_();
+			}
+						
 	  	static UInt scan_count = 0;
 	  	
 	  	String tag = sm_.convert(qname);

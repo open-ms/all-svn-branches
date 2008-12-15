@@ -10,8 +10,10 @@ FactoryProduct.C
 FuzzyStringComparator.C
 ProgressLogger.C
 SingletonRegistry.C
-VersionInfo.C
 )
+
+## VersionInfo.C is explicitly *NOT* listed here!
+
 
 ### add path to the filenames
 set(sources)

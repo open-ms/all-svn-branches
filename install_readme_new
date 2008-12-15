@@ -83,8 +83,8 @@ Installation instructions (Windows)
 	- if you work with the SVN version of OpenMS (instead of the Release package), we recommend downloading
 	  the svn binaries (which contain svnversion.exe). TortoiseSVN is *not* enough!
 	  You can find the binaries here: http://subversion.tigris.org
-	  Make sure to add the location of svnversion.exe to your PATH
-	  (the current SVN installer will do this for you automatically).
+	  Make sure to add the location of svnversion.exe to your PATH (usually this is "C:\progam files\subversion\bin")
+
 
 	Install dependencies:
 	- QT (choose commercial or non-commercial - whatever is applicable to you: read more on the Trolltech website)

@@ -154,7 +154,7 @@ MACRO (OPENMS_CHECKLIB varname libnames libnames_d human_libname)
 	set(${varname} optimized ${${varname}_OPT} debug ${${varname}_DBG})
 ENDMACRO (OPENMS_CHECKLIB)
 
-OPENMS_CHECKLIB(XERCESC_LIBRARY "xerces-c_2;libxerces-c;xerces-c" "xerces-c_2D;libxerces-c;xerces-c" "xerces_c")
+OPENMS_CHECKLIB(XERCESC_LIBRARY "xerces-c_static_2;xerces-c_2;xerces-c;xerces-c" "xerces-c_static_2D;xerces-c_2D;xerces-c;xerces-c" "xerces_c")
 
 OPENMS_CHECKLIB(GSL_LIBRARY "libgsl_dll;gsl" "libgsl_dll_d;gsl" "GSL")
 
@@ -177,10 +177,10 @@ else()
 endif()
 
 # TODO windoes
-OPENMS_CHECKLIB(ANDIMS_LIBRARY "ms10lib-TODO_CHRIS_JA_DU;ms10lib" "ms10lib-TODO_CHRIS_JA_DU;ms10lib" "ms10lib")
+#OPENMS_CHECKLIB(ANDIMS_LIBRARY "ms10lib-TODO_CHRIS_JA_DU;ms10lib" "ms10lib-TODO_CHRIS_JA_DU;ms10lib" "ms10lib")
 
 # TODO windoes
-OPENMS_CHECKLIB(NETCDF_LIBRARY "netCDF-TODO_CHRIS_JA_DU;netcdf_c++" "netCDF-TODO_CHRIS_JA_DU;netcdf_c++" "netCDF")
+#OPENMS_CHECKLIB(NETCDF_LIBRARY "netCDF-TODO_CHRIS_JA_DU;netcdf_c++" "netCDF-TODO_CHRIS_JA_DU;netcdf_c++" "netCDF")
 
 INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR}/include/) ## for configured files, i.e. config.h
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/include/)
@@ -357,6 +357,51 @@ endif()
 # user flag with default "QMYSQL" (needs a cmake flag/cache entry, so we define it empty which causes it to show up in the wizard)
 set(CF_DB_PLUGIN "QMYSQL" CACHE BOOL "User switch to change the DB plugin.")
 
+## where is the (un)configured VersionInfo.C to be found
+set(VersionInfoC ${PROJECT_SOURCE_DIR}/source/CONCEPT/VersionInfo.C)
+## which file do we use as template?
+set(VersionInfoCIn ${PROJECT_SOURCE_DIR}/source/config/VersionInfo.C.in)
+##create the original of VersionInfo.C (works fine even without svnversion)
+configure_file(${VersionInfoCIn} ${VersionInfoC} COPYONLY)
+
+if (OPENMS_HAS_SVNVERSION)
+
+	set(svnversion_file ${PROJECT_SOURCE_DIR}/source/CONCEPT/openms_svnversion) # file with version number
+
+	## target that recreates the version file
+  add_custom_target(svnversion_file_target ALL ${PROG_Svnversion} -n ${PROJECT_SOURCE_DIR} > ${svnversion_file} COMMENT "Call svnversion in project directory to generate openms_svnversion file.")
+
+	add_executable(VersionInfoCreator ${PROJECT_SOURCE_DIR}/source/config/VersionInfoCreator.C)
+
+	## command that recreates VersionInfo.C using the svnversion_file
+	add_custom_command(OUTPUT ${VersionInfoC}
+										 COMMAND ${EXECUTABLE_OUTPUT_PATH}/VersionInfoCreator ${VersionInfoCIn} ${VersionInfoC} ${svnversion_file}
+										 DEPENDS svnversion_file_target
+										 DEPENDS VersionInfoCreator
+										 COMMENT "create VersionInfo.C from VersionInfo.C.in")
+
+	#//set($ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION}) # set environment variable e.g. for doxygen
+
+else()
+	## nothing to do here
+	## if not svnversion(.exe) is present we do not configure VersionInfo.C and just leave it as it is.
+	## we also undefine (implicitly via the configure_file() below) the preprocessor macro OPENMS_HAS_SVNVERSION. This ensures that VersionInfo.C
+	## (no matter if configured or unconfigured) assumes that there is no OPENMS_SVNREVISION (see VersionInfo.C)
+endif()
+
+
+# are we building a shared or static lib?! (BOTH within the same BUILD-tree is NOT possible with OpenMS!!)
+if (MINGW OR MSVC)
+	set(BUILD_SHARED_LIBS false)
+else()
+	set(BUILD_SHARED_LIBS true)
+endif()
+
+
+## replace any variables in config.h.in with current values
+set (CONFIGURED_CONFIG_H ${PROJECT_BINARY_DIR}/include/OpenMS/config.h)
+configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${CONFIGURED_CONFIG_H})
+
 
 ########################################################
 ###    configure Doxyfile														 ###
@@ -370,29 +415,7 @@ set(CF_OPENMS_PATH ${PROJECT_BINARY_DIR})
 configure_file(${PROJECT_SOURCE_DIR}/source/config/Doxyfile.in ${PROJECT_BINARY_DIR}/doc/doxygen/Doxyfile)
 
 ## TODO: test this -> when building documentation, set in environment using svnversion before calling doxygen
-set(CF_PACKAGE_REVISION_FILE)
-if (OPENMS_HAS_SVNVERSION)
-
-	set(svnversion_file_h ${PROJECT_SOURCE_DIR}/source/CONCEPT/openms_svnversion) # file with version number
-
-	## ensure that the file is always rebuild
-  add_custom_target(svnversion_file_target ALL ${PROG_Svnversion} -n ${PROJECT_SOURCE_DIR} > ${svnversion_file_h} COMMENT "Call svnversion in project directory to generate openms_svnversion.txt")
-	set(CF_PACKAGE_REVISION_FILE ${svnversion_file_h})
-	#file(READ ${svnversion_file_h} ENV_OPENMS_REVISION) # read revision from file
-	#set($ENV{OPENMS_REVISION} ${ENV_OPENMS_REVISION}) # set environment variable e.g. for doxygen
-endif()
-
-# are we building a shared or static lib?! (BOTH within the same BUILD-tree is NOT possible with OpenMS!!)
-if (MINGW OR MSVC)
-	set(BUILD_SHARED_LIBS false)
-else()
-	set(BUILD_SHARED_LIBS true)
-endif()
-
-
-## replace any variables in config.h.in with current values
-set (CONFIGURED_CONFIG_H ${PROJECT_BINARY_DIR}/include/OpenMS/config.h)
-configure_file(${PROJECT_SOURCE_DIR}/source/config/config.h.in ${CONFIGURED_CONFIG_H})
+## this will recreate VersionInfo.C whenever something is build
 
 
 ########################################################
@@ -423,6 +446,9 @@ link_directories(${CONTRIB_LIB_DIR})
 # big include file for headers and C files, which fills the OpenMS_sources variable
 include (includes.cmake)
 
+# append VersionInfo.C (which is generated from VersionInfo.C.in) to Sources
+list(APPEND OpenMS_sources ${VersionInfoC})
+
 # add library target
 # warning: set BUILD_SHARED_LIBS to decide if library is shared or static (see above)! We need the BUILD_SHARED_LIBS flag to set declspec flags for MSVC!
 ADD_LIBRARY(OpenMS ${OpenMS_sources})
@@ -433,7 +459,7 @@ if (OPENMS_HAS_SVNVERSION)
 ## TODO replace this with PreProcessorMacro when compiling lib
 ## e.g. SET_SOURCE_FILE_PROPERTIES(libSource.c main.c COMPILE_FLAGS -DREVISON=234)
 	message(STATUS "Adding dependency on SVN-Version target file...")
-	add_dependencies(OpenMS svnversion_file_target)
+	add_dependencies(OpenMS VersionInfoCreator_target)
 endif()
 
 
@@ -450,15 +476,12 @@ set(OPENMS_LIBRARIES ${OPENMS_DEP_LIBRARIES} OpenMS)
 set(TOPP_executables)
 include(source/APPLICATIONS/TOPP/executables.cmake)
 
-
-#ENABLE_LANGUAGE(RC)
 foreach(i ${TOPP_executables})
-	set(resource_file "")
 	## add icons to TOPPView and INIFileEditor
 	if (MSVC AND i STREQUAL "TOPPView" OR i STREQUAL "INIFileEditor")
 		set(resource_file ${i}_icon.o.rc)
 		message(STATUS "Setting resource file ${resource_file} for ${i}")
-		add_executable(${i} WIN32 source/APPLICATIONS/TOPP/${i}.C source/APPLICATIONS/TOPP/${resource_file})
+		add_executable(${i} source/APPLICATIONS/TOPP/${i}.C source/APPLICATIONS/TOPP/${resource_file})
 	else()
 		add_executable(${i} source/APPLICATIONS/TOPP/${i}.C)
 	endif()
@@ -514,7 +537,7 @@ configure_file(
 include(CMakeExportBuildSettings)
 cmake_export_build_settings(${OpenMS_BINARY_DIR}/OpenMSBuildSettings.cmake)
 export_library_dependencies(${OpenMS_BINARY_DIR}/OpenMSLibraryDepends.cmake)
-# TODO install these files to a specific location to have a standard way 
+# TODO install these files to a specific location to have a standard way
 # to be used with external code
 
 

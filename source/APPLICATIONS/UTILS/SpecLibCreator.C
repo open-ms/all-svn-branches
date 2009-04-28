@@ -1,0 +1,270 @@
+// -*- mode: C++; tab-width: 2; -*-
+// vi: set ts=2:
+//
+// --------------------------------------------------------------------------
+//                   OpenMS Mass Spectrometry Framework
+// --------------------------------------------------------------------------
+//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//
+//  This library is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU Lesser General Public
+//  License as published by the Free Software Foundation; either
+//  version 2.1 of the License, or (at your option) any later version.
+//
+//  This library is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//  Lesser General Public License for more details.
+//
+//  You should have received a copy of the GNU Lesser General Public
+//  License along with this library; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+// --------------------------------------------------------------------------
+// $Maintainer: David Wojnar $
+// $Authors: $
+// --------------------------------------------------------------------------
+
+#include <OpenMS/KERNEL/MSExperiment.h>
+#include <OpenMS/FORMAT/CsvFile.h>
+#include <OpenMS/APPLICATIONS/TOPPBase.h>
+#include <OpenMS/FORMAT/FileTypes.h>
+#include <OpenMS/FORMAT/FileHandler.h>
+#include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/FORMAT/MSPFile.h>
+#include <OpenMS/KERNEL/RichPeak1D.h>
+#include <iostream>
+
+#include <vector>
+using namespace OpenMS;
+using namespace std;
+
+//-------------------------------------------------------------
+//Doxygen docu
+//-------------------------------------------------------------
+
+/**
+ @page TOPP_SpectLibCreator
+ 
+ @brief creates with given data a msp format spectral library.
+ 
+
+ 
+ @note 
+ 
+ */
+
+// We do not want this class to show up in the docu:
+/// @cond TOPPCLASSES
+
+class TOPPSpecLibCreator
+	: public TOPPBase
+	{
+	public:
+		TOPPSpecLibCreator()
+		: TOPPBase("SpecLibCreator","Creates a MSP foramted library.")
+		{
+		}
+		
+	protected:
+		void registerOptionsAndFlags_()
+		{
+			registerInputFile_("info","<file>","","Holds id, peptid, retention time etc.");
+			//setValidFormats_("info",StringList::create("csv"));
+			registerStringOption_("itemseperator","<char>",","," Seperator between items. e.g. ',' or ';'");
+			registerStringOption_("itemenclosed","<bool>","false","'true' or 'false' if true every item is enclosed e.g. '$peptid$,$run$...");
+			//setValidFormats_("itemenclosed",StringList::create("true,false"));
+			registerInputFile_("spec","<file>","","spectra");
+			setValidFormats_("spec",StringList::create("mzData,mzXML"));
+			registerOutputFile_("out","<file>","/Users/david/Desktop/o.msp","output MSP formated spectra library");
+		//	setValidFormats_("out",StringList::create("MSP"));
+
+			addEmptyLine_();
+			addText_("Note: information file should be formated like this: Experimental id , modification ,found by , peptide, run(filename), track, retention time ,first scan, last scan, measured weight, charge state, comment , vaccination peptid, ligand, epitope, confident, hlaallele ");
+		}
+		
+		ExitCodes main_(int , const char**)
+		{
+			//-------------------------------------------------------------
+			// parameter handling
+			//-------------------------------------------------------------
+		
+		  String info = getStringOption_("info");
+			String itemseperator = getStringOption_("itemseperator");
+			String out = getStringOption_("out");
+			bool itemenclosed;
+			if(getStringOption_("itemenclosed") == "true")
+			{
+				itemenclosed  = true;
+			}
+			else
+			{
+				itemenclosed = false;
+			}
+
+			String spec = getStringOption_("spec");
+			if(info == String::EMPTY)
+			{
+				throw Exception::RequiredParameterNotGiven(__FILE__,__LINE__,__PRETTY_FUNCTION__,"info");
+			}
+			if(spec == String::EMPTY)
+			{
+				throw Exception::RequiredParameterNotGiven(__FILE__,__LINE__,__PRETTY_FUNCTION__,"spec");
+			}
+
+			
+			//-------------------------------------------------------------
+			// loading input
+			//-------------------------------------------------------------
+			Int retention_time = -1 ;
+			Int peptide =-1;
+			UInt first_scan;
+			UInt last_scan, measured_weight, charge_state, Experimental_id;//, 
+			modification;//,found_by, track, comment, vaccination_peptid,epitope, confident, hlaallele;
+			const char* sepi = itemseperator.c_str();
+			char sepo = *sepi;
+			CsvFile csv_file(info,sepo,itemenclosed);
+			vector<StringList>	list;
+
+			list.resize(csv_file.size());
+
+			for(UInt i= 0 ; i< csv_file.size(); ++i)
+			{
+				csv_file.getRow(i,list[i]);
+			}
+			for(UInt i = 0;i < list[0].size(); ++i)
+			{
+
+				if(list[0][i].toLower().removeWhitespaces().compare("retentiontime") == 0)
+				{
+					retention_time = i;
+				}
+				else if(list[0][i].toLower().compare("id") == 0)
+				{
+					Experimental_id = i;
+				}
+				else if(list[0][i].toLower() == "last scan")
+				{
+					last_scan = i;
+				}
+				else if(list[0][i].toLower() == "modification")
+				{
+					modification = i;
+				}
+				else if(list[0][i].toLower().removeWhitespaces().compare("chargestate")==0)
+				{
+					charge_state = i;
+				}
+				else if(list[0][i].toLower().trim().compare("peptide") == 0)
+				{
+					peptide = i; 
+				}
+				else if(list[0][i].toLower().removeWhitespaces().compare("measured weight")== 0  || list[0][i].toLower().removeWhitespaces().compare("measured weight [M+nH]n+") == 0)
+				{
+					measured_weight = i;
+				}
+			}
+			if(retention_time  == -1)
+			{
+				throw Exception::RequiredParameterNotGiven(__FILE__,__LINE__,__PRETTY_FUNCTION__,"unclear which parameter is retention time");
+			}
+			if(peptide  == -1)
+			{
+				throw Exception::RequiredParameterNotGiven(__FILE__,__LINE__,__PRETTY_FUNCTION__,"unclear which parameter is peptide");
+			}
+			
+			FileHandler fh;
+			FileTypes::Type in_type = fh.getType(spec);
+			/*MSExperiment<>*/PeakMap msexperiment;
+			
+			if(in_type == FileTypes::UNKNOWN)
+			{
+							writeLog_("Warning: Could not determine input file type!");
+			}			
+			else if(in_type == FileTypes::MZDATA)
+			{
+				MzDataFile mzData;
+				mzData.load(spec,msexperiment);
+			}
+			else if(in_type == FileTypes::MZXML)
+			{
+				MzXMLFile mzXML;
+				mzXML.load(spec, msexperiment);
+			}
+			if (msexperiment.getMinRT() == 0)
+			{
+				throw Exception::RequiredParameterNotGiven(__FILE__,__LINE__,__PRETTY_FUNCTION__,"LEER??");
+			}			
+			RichPeakMap library;
+			
+			//-------------------------------------------------------------
+			// creating library
+			//-------------------------------------------------------------
+				for(UInt i = 1; i < list.size(); ++i)
+				{
+					for(MSExperiment<>::Iterator it=msexperiment.begin(); it < msexperiment.end(); ++it)
+					{
+						DoubleReal rt =  (60* (list[i][retention_time].toFloat())); // from minutes to seconds
+						if(abs(rt - it->getRT()) < 0.1) && abs(measured_weight - it->MZ()) < 0.1 )
+						//if ( ceil(rt) == ceil(it->getRT()) || ceil(rt) == floor(it->getRT()) || floor(rt) == ceil(it->getRT()) || floor(rt) == floor(it->getRT()))
+						{
+						cout<<"Found Peptide " <<list[i][peptide] << " with id: " << list[i][Experimental_id]<<"\n";
+						
+						//		MSSpectrum<RichPeak1D> spec;
+						//	for(UInt k = 0; k < it->size(); ++k)
+						//		{
+						//	spec.push_back(it->operator[](k));
+						//			
+						//		}
+						MSSpectrum<RichPeak1D> speci;
+						for(UInt j=0 ;j < it->size()	;++j)
+						{
+							
+							RichPeak1D richy;
+							//richy.setIntensity(it->operator[](j).getIntensity());
+							//richy.setPosition(it->operator[](j).getPosition());
+							//richy.setMZ(it->operator[](j).getMZ());
+							//richy.setPos(it->operator[](j).getPos());
+							
+							speci.push_back(richy);
+						}
+							PeptideHit hit;// = *it->getPeptideIdentifications().begin()->getHits().begin();
+							AASequence aa(list[i][peptide]);
+							hit.setSequence(aa);
+							hit.setCharge(list[i][charge_state].toInt());
+							vector<PeptideHit> hits;
+							hits.push_back(hit);
+							vector<PeptideIdentification>pepi;
+							PeptideIdentification pep;
+							pep.setHits(hits);
+							pepi.push_back(pep);
+							speci.setPeptideIdentifications(pepi);
+							//it->getPeptideIdentifications().begin()->setHits(hits);
+							library.push_back(speci);
+						}
+					}
+				}
+			//library = static_cast<MSExperiment<MSSpectrum<RichPeak1D> > >(msexperiment);
+
+			//-------------------------------------------------------------
+			// writing output
+			//-------------------------------------------------------------
+			
+			MSPFile MSP_file;
+			MSP_file.store(out, library);
+			
+			return EXECUTION_OK;
+		}
+		
+	};
+
+
+
+
+int main( int argc, const char** argv )
+{
+    TOPPSpecLibCreator tool;
+    return tool.main(argc,argv);
+}
+
+/// @endcond

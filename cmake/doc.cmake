@@ -11,6 +11,7 @@ if (DOXYGEN_FOUND)
 	configure_file(${PROJECT_SOURCE_DIR}/doc/doxygen/Doxyfile_internal.in ${PROJECT_BINARY_DIR}/doc/doxygen/Doxyfile_internal)
 	configure_file(${PROJECT_SOURCE_DIR}/doc/doxygen/Doxyfile_dot.in ${PROJECT_BINARY_DIR}/doc/doxygen/Doxyfile_dot)
 	configure_file(${PROJECT_SOURCE_DIR}/doc/doxygen/Doxyfile_noclass.in ${PROJECT_BINARY_DIR}/doc/doxygen/Doxyfile_noclass)
+	configure_file(${PROJECT_SOURCE_DIR}/doc/doxygen/Doxyfile_xml.in ${PROJECT_BINARY_DIR}/doc/doxygen/Doxyfile_xml)
 	configure_file(${PROJECT_SOURCE_DIR}/doc/OpenMS_tutorial/Doxyfile.in ${PROJECT_BINARY_DIR}/doc/OpenMS_tutorial/Doxyfile)
 	configure_file(${PROJECT_SOURCE_DIR}/doc/TOPP_tutorial/Doxyfile.in ${PROJECT_BINARY_DIR}/doc/TOPP_tutorial/Doxyfile)
 
@@ -27,8 +28,8 @@ if (DOXYGEN_FOUND)
 										COMMAND ${CMAKE_COMMAND} -E echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
 										COMMAND ${CMAKE_COMMAND} -E echo "Creating the algorithm parameter and TOPP parameter documentation";
 										COMMAND ${CMAKE_COMMAND} -E echo "";
-										COMMAND ${CMAKE_COMMAND} -E echo "Note: A functioning OpenMS/TOPP installation and (Linux only:) a running X-server is required for this step!";
-										COMMAND ${CMAKE_COMMAND} -E echo "      If this step fails the rest of the documentation is created nevertheless.";
+										COMMAND ${CMAKE_COMMAND} -E echo "Note: A functioning OpenMS/TOPP installation and a running X-server (Linux) is required for this step!";
+										COMMAND ${CMAKE_COMMAND} -E echo "      If this step fails, use the target 'doc_minimal'.";
 										COMMAND ${CMAKE_COMMAND} -E echo "";
 										COMMAND ${CMAKE_COMMAND} -E echo "Building OpenMS parameter docu:"
 										COMMAND ${CMAKE_COMMAND} -E echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
@@ -41,7 +42,7 @@ if (DOXYGEN_FOUND)
 										COMMAND ${CMAKE_COMMAND} -E echo ""
 										COMMENT "Build the parameters documentation"
 										VERBATIM)
-	if (MSVC)
+	if (MSVC_IDE)
 		##copy required executables:
 		add_custom_target(doc_prepare
 											COMMAND ${CMAKE_COMMAND} -E copy  ${PROJECT_BINARY_DIR}/doc/doxygen/parameters/$(OutDir)/DefaultParamHandlerDocumenter.exe ${PROJECT_BINARY_DIR}/doc/doxygen/parameters/DefaultParamHandlerDocumenter.exe
@@ -80,7 +81,6 @@ if (DOXYGEN_FOUND)
 										COMMAND ${CMAKE_COMMAND} -E echo "Creating intenal html documentation";
 										COMMAND ${CMAKE_COMMAND} -E echo "";   
 										COMMAND ${CMAKE_COMMAND} -E remove_directory doc/html 
-										COMMAND ${CMAKE_COMMAND} -E remove_directory doc/xml_output
 										COMMAND ${CMAKE_COMMAND} -E chdir doc doxygen doxygen/Doxyfile_internal
 										COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/doc/index.html doc/index.html
 										COMMAND ${CMAKE_COMMAND} -E echo "";
@@ -91,7 +91,23 @@ if (DOXYGEN_FOUND)
 										COMMENT "Build the doxygen documentation"
 										VERBATIM)
 	add_dependencies(doc_internal doc_param_internal)
-	
+
+	#######################################################################
+	## doc_internal target
+	add_custom_target(doc_xml
+										COMMAND ${CMAKE_COMMAND} -E echo ""
+										COMMAND ${CMAKE_COMMAND} -E echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+										COMMAND ${CMAKE_COMMAND} -E echo "Creating XML documentation";
+										COMMAND ${CMAKE_COMMAND} -E echo "";   
+										COMMAND ${CMAKE_COMMAND} -E remove_directory doc/xml_output
+										COMMAND ${CMAKE_COMMAND} -E chdir doc doxygen doxygen/Doxyfile_xml
+										COMMAND ${CMAKE_COMMAND} -E echo "";
+										COMMAND ${CMAKE_COMMAND} -E echo "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+										COMMAND ${CMAKE_COMMAND} -E echo "The XML documentation has been successfully created.";
+										COMMAND ${CMAKE_COMMAND} -E echo ""
+										COMMENT "Build the doxygen documentation"
+										VERBATIM)
+
 	#######################################################################
 	## doc_noclass target
 	add_custom_target(doc_noclass
@@ -138,7 +154,6 @@ if (DOXYGEN_FOUND)
 											COMMAND ${CMAKE_COMMAND} -E echo "Creating DOT html documentation";
 											COMMAND ${CMAKE_COMMAND} -E echo "";   
 											COMMAND ${CMAKE_COMMAND} -E remove_directory doc/html-dot
-											COMMAND ${CMAKE_COMMAND} -E remove_directory doc/xml_output
 											COMMAND ${CMAKE_COMMAND} -E chdir doc doxygen doxygen/Doxyfile_dot
 											COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/doc/index.html doc/index.html
 											COMMAND ${CMAKE_COMMAND} -E echo "";

@@ -153,6 +153,8 @@ set(format_executables_list
   SemanticValidator_test
   MzMLValidator_test
   MS2File_test
+	AnalysisXMLFile_test
+	AnalysisXMLValidator_test
 )
 
 if (USE_ANDIMS)
@@ -319,7 +321,7 @@ set(transformations_executables_list
   FeatureFinderAlgorithmSimplest_test
   FeatureFinderAlgorithmSimple_test
   FeatureFinderAlgorithmWavelet_test
-	#FeatureFinderAlgorithmIsotopeWavelet_test
+	FeatureFinderAlgorithmIsotopeWavelet_test
   FeatureFinderAlgorithmWatershed_test
   SimpleSeeder_test
   SimpleExtender_test
@@ -341,6 +343,7 @@ set(transformations_executables_list
   ContinuousWaveletTransformNumIntegration_test
   OptimizePick_test
   PeakPickerCWT_test
+  PeakPickerHiRes_test
   OptimizePeakDeconvolution_test
   TwoDOptimization_test
 )

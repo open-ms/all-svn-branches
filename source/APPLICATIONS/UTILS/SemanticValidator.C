@@ -27,6 +27,8 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/SYSTEM/File.h>
+#include <OpenMS/FORMAT/FileTypes.h>
+#include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/VALIDATORS/SemanticValidator.h>
 #include <OpenMS/FORMAT/CVMappingFile.h>
 #include <OpenMS/FORMAT/ControlledVocabulary.h>
@@ -45,8 +47,9 @@ using namespace std;
 		
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude UTILS_SemanticValidator.cli
-	
-	@todo Docu (Andreas)
+
+	This util is able to validate analysisXML and mzML files
+	using an instance document and a mapping file.
 */
 
 // We do not want this class to show up in the docu:
@@ -57,7 +60,7 @@ class TOPPSemanticValidator
 {
  public:
 	TOPPSemanticValidator()
-		: TOPPBase("SemanticValidator","TODO",false)
+		: TOPPBase("SemanticValidator","SemanticValidator for analysisXML and mzML files.",false)
 	{
 	}
 	
@@ -65,8 +68,8 @@ class TOPPSemanticValidator
 
 	void registerOptionsAndFlags_()
 	{
-		registerInputFile_("in", "<file>", "", "");
-		registerInputFile_("mapping_file", "<file>", "", "", false);
+		registerInputFile_("in", "<file>", "", "Input file, either analysisXML or mzML.");
+		registerInputFile_("mapping_file", "<file>", "", "Mapping file which is used to semantically validate the given XML file against this mapping file.", false);
 	}	
 	
 	ExitCodes main_(int , const char**)
@@ -75,10 +78,10 @@ class TOPPSemanticValidator
 		String mapping_file = getStringOption_("mapping_file");
 
 		CVMappings mappings;
-		CVMappingFile().load(mapping_file, mappings, true);
+		CVMappingFile().load(mapping_file, mappings, false);
 
 		ControlledVocabulary cv;
-		cv.loadFromOBO("PSI-PI", "psi-pi.obo");
+		cv.loadFromOBO("PSI-PI", File::find("/CV/psi-pi.obo"));
 		cv.loadFromOBO("PSI-MS",File::find("/CV/psi-ms.obo"));
 	  cv.loadFromOBO("PATO",File::find("/CV/quality.obo"));
 		cv.loadFromOBO("UO",File::find("/CV/unit.obo"));
@@ -92,6 +95,7 @@ class TOPPSemanticValidator
 		semantic_validator.setCheckTermValueTypes(true);
 		semantic_validator.setCheckUnits(true);
 		StringList errors, warnings;
+
 		/*bool valid =*/ semantic_validator.validate(in_file, errors, warnings);
     for (Size i=0; i<warnings.size(); ++i)
     {
@@ -107,32 +111,6 @@ class TOPPSemanticValidator
 			cout << "Congratulations, the file is valid!" << endl;
 		}
 
-						
-
-		/*
-		// check units cv
-		Internal::SemanticValidator semantic_validator_u(mappings, cv);
-		semantic_validator_u.setAccessionAttribute("unitAccession");
-		semantic_validator_u.setNameAttribute("unitName");
-		semantic_validator_u.setValueAttribute("value");
-		semantic_validator_u.setCheckTermValueTypes(true);
-		StringList unit_tags(StringList::create("MinusValue,PlusValue,MassDelta"));
-
-		for (StringList::const_iterator it = unit_tags.begin(); it != unit_tags.end(); ++it)
-		{
-			semantic_validator_u.setTag(*it);
-    	StringList errors_u, warnings_u;
-    	bool valid_u = semantic_validator_u.validate(in_file, errors_u, warnings_u);
-    	for (Size i=0; i<warnings_u.size(); ++i)
-    	{
-      	cout << "Warning: " << warnings_u[i] << endl;
-    	}
-    	for (Size i=0; i<errors_u.size(); ++i)
-    	{
-      	cout << "Error: " << errors_u[i] << endl;
-    	}
-		}*/
-	
 		return EXECUTION_OK;
 	}
 };

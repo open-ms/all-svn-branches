@@ -12,7 +12,7 @@ HistView
 IDExtractor
 LabeledEval
 MapAlignmentEvaluation
-MapSimulator
+MSSimulator
 RTEvaluation
 SemanticValidator
 SequenceCoverageCalculator
@@ -20,6 +20,7 @@ XMLValidator
 IdXMLEvaluation
 DecoyDatabase
 SpecLibCreator
+IDMassAccuracy
 )
 
 ### pass source file list to the upper instance

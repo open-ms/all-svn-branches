@@ -72,8 +72,12 @@ namespace OpenMS
     @brief Main window of TOPPView tool
 		
     @improvement Use DataRepository singleton to share data between TOPPView and the canvas classes (Hiwi)
-    @todo Paint only highest point per pixel (Marc)
-    @todo Add realtime-Tutorial (Marc)
+    
+    @improvement Keep spectrum browser widgets of all layers in memory in order to avoid rebuilding the entire tree view every time the active layer changes (Johannes)
+    
+    @bug Make sure the right spectrum is selected when applying TOPP tools - wait for next Qt release (Hiwi)
+
+    @todo Add "load instrument defaults" button to tools dialog (Marc)
   
     @ingroup TOPPView_elements
   */
@@ -111,6 +115,7 @@ namespace OpenMS
       	@param caption Sets the layer name and window caption of the data. If unset the file name is used.
       	@param add_to_recent If the file should be added to the recent files after opening
       	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current window).
+      	@param spectrum_id determines the spectrum to show in 1D view.
       */
       void addDataFile(const String& filename, bool show_options, bool add_to_recent, String caption="", UInt window_id=0, Size spectrum_id=0);
       /**
@@ -145,9 +150,11 @@ namespace OpenMS
       void updateCurrentPath();
       /// shows the URL stored in the data of the sender QAction
       void showURL();
-      /// shows the dialog for opening files
+      /// shows the file dialog for opening files
       void openFileDialog();
-      /// shows the dialog for opening files
+      /// shows the file dialog for opening example files
+      void openExampleDialog();
+      /// shows the DB dialog for opening files
       void openDatabaseDialog();
       /// shows the goto dialog
       void gotoDialog();
@@ -181,7 +188,7 @@ namespace OpenMS
       */
       void showStatusMessage(std::string msg, OpenMS::UInt time);
       /// shows m/z, intensity and rt in the status bar
-      void showCursorStatus(double mz, double intensity, double rt);
+      void showCursorStatus(double mz, double rt);
       /// Apply TOPP tool
       void showTOPPDialog();
       /// Annotates current layer with ID data
@@ -272,6 +279,9 @@ namespace OpenMS
 		
 			/// Appends process output to log window
 			void updateProcessLog();
+      
+      /// Shows the tutorial browser
+      void showTutorial();
 		
     protected:
   		/**
@@ -287,13 +297,16 @@ namespace OpenMS
   			@param filename source file name (if the data came from a file)
       	@param caption Sets the layer name and window caption of the data. If unset the file name is used. If set, the file is not monitored foro changes.
       	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current
+      	@param spectrum_id determines the spectrum to show in 1D view.
       */
   		void addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
   
     	/// Tries to open a db connection (queries the user for the DB password)
     	void connectToDB_(DBConnection& db);
-    	/// Shows a dialog where the user can select files
-    	QStringList getFileList_();
+    	/**
+    		@brief Shows a dialog where the user can select files
+    	*/
+    	QStringList getFileList_(const String& path_overwrite = "");
     	
       ///Returns the parameters for a SpectrumCanvas of dimension @p dim 
       Param getSpectrumParameters_(UInt dim);
@@ -363,8 +376,6 @@ namespace OpenMS
       QLabel* message_label_;
       /// m/z label for messages in the status bar
       QLabel* mz_label_;
-      /// Intensity label for messages in the status bar
-      QLabel* int_label_;
       /// RT label for messages in the status bar
       QLabel* rt_label_;
 			//@}

@@ -49,7 +49,7 @@ START_SECTION((~Precursor()))
 	delete ptr;
 END_SECTION
 
-START_SECTION((DoubleReal getActivationEnergy() const ))
+START_SECTION((DoubleReal getActivationEnergy() const))
   Precursor tmp;
   TEST_EQUAL(tmp.getActivationEnergy(),0);
 END_SECTION
@@ -71,41 +71,70 @@ START_SECTION((void setActivationMethod(ActivationMethod activation_method)))
   TEST_EQUAL(tmp.getActivationMethod(),Precursor::CID);
 END_SECTION
 
-START_SECTION((DoubleReal getIsolationWindowUpperBound() const ))
+START_SECTION((DoubleReal getIsolationWindowUpperOffset() const))
   Precursor tmp;
-  TEST_REAL_SIMILAR(tmp.getIsolationWindowUpperBound(), 0);
+  TEST_REAL_SIMILAR(tmp.getIsolationWindowUpperOffset(), 0);
 END_SECTION
 
-START_SECTION((void setIsolationWindowUpperBound(DoubleReal bound)))
+START_SECTION((void setIsolationWindowUpperOffset(DoubleReal bound)))
   Precursor tmp;
-  tmp.setIsolationWindowUpperBound(22.7);
-  TEST_REAL_SIMILAR(tmp.getIsolationWindowUpperBound(), 22.7);
+  tmp.setIsolationWindowUpperOffset(22.7);
+  TEST_REAL_SIMILAR(tmp.getIsolationWindowUpperOffset(), 22.7);
 END_SECTION
 
-START_SECTION((DoubleReal getIsolationWindowLowerBound() const ))
+START_SECTION((DoubleReal getIsolationWindowLowerOffset() const))
   Precursor tmp;
-  TEST_REAL_SIMILAR(tmp.getIsolationWindowLowerBound(), 0);
+  TEST_REAL_SIMILAR(tmp.getIsolationWindowLowerOffset(), 0);
 END_SECTION
 
-START_SECTION((void setIsolationWindowLowerBound(DoubleReal bound)))
+START_SECTION((void setIsolationWindowLowerOffset(DoubleReal bound)))
   Precursor tmp;
-  tmp.setIsolationWindowLowerBound(22.8);
-  TEST_REAL_SIMILAR(tmp.getIsolationWindowLowerBound(), 22.8);
+  tmp.setIsolationWindowLowerOffset(22.8);
+  TEST_REAL_SIMILAR(tmp.getIsolationWindowLowerOffset(), 22.8);
+END_SECTION
+
+START_SECTION((Int getCharge() const))
+  Precursor tmp;
+  TEST_EQUAL(tmp.getCharge(), 0);
+END_SECTION
+
+START_SECTION((void setCharge(Int charge)))
+  Precursor tmp;
+  tmp.setCharge(2);
+  TEST_EQUAL(tmp.getCharge(), 2);
+END_SECTION
+
+START_SECTION((const std::vector<Int>& getPossibleChargeStates() const))
+  Precursor tmp;
+  TEST_EQUAL(tmp.getPossibleChargeStates().size(), 0);
+END_SECTION
+
+START_SECTION((std::vector<Int>& getPossibleChargeStates()))
+  Precursor tmp;
+  tmp.getPossibleChargeStates().resize(1);
+  TEST_EQUAL(tmp.getPossibleChargeStates().size(), 1);
+END_SECTION
+
+START_SECTION((void setPossibleChargeStates(const std::vector<Int>& possible_charge_states)))
+  Precursor tmp;
+  vector<Int> states(1);
+  tmp.setPossibleChargeStates(states);
+  TEST_EQUAL(tmp.getPossibleChargeStates().size(), 1);
 END_SECTION
 
 START_SECTION((Precursor(const Precursor& source)))
 	Precursor tmp;
 	tmp.setActivationEnergy(47.11);
 	tmp.setActivationMethod(Precursor::CID);
-  tmp.setIsolationWindowUpperBound(22.7);
-  tmp.setIsolationWindowLowerBound(22.8);
+  tmp.setIsolationWindowUpperOffset(22.7);
+  tmp.setIsolationWindowLowerOffset(22.8);
 	tmp.setMetaValue("label",String("label"));
 	
 	Precursor tmp2(tmp);
 	TEST_EQUAL((String)(tmp2.getMetaValue("label")), "label");
 	TEST_EQUAL(tmp2.getActivationMethod(),Precursor::CID);
-	TEST_REAL_SIMILAR(tmp2.getIsolationWindowUpperBound(), 22.7);
-	TEST_REAL_SIMILAR(tmp2.getIsolationWindowLowerBound(), 22.8);
+	TEST_REAL_SIMILAR(tmp2.getIsolationWindowUpperOffset(), 22.7);
+	TEST_REAL_SIMILAR(tmp2.getIsolationWindowLowerOffset(), 22.8);
 	TEST_REAL_SIMILAR(tmp2.getActivationEnergy(),47.11);
 END_SECTION
 
@@ -113,8 +142,8 @@ START_SECTION((Precursor& operator= (const Precursor& source)))
 	Precursor tmp;
 	tmp.setActivationEnergy(47.11);
 	tmp.setActivationMethod(Precursor::CID);
-  tmp.setIsolationWindowUpperBound(22.7);
-  tmp.setIsolationWindowLowerBound(22.8);
+  tmp.setIsolationWindowUpperOffset(22.7);
+  tmp.setIsolationWindowLowerOffset(22.8);
 	tmp.setMetaValue("label",String("label"));
 	
 	//normal assignment
@@ -122,16 +151,16 @@ START_SECTION((Precursor& operator= (const Precursor& source)))
 	tmp2 = tmp;
 	TEST_EQUAL((String)(tmp2.getMetaValue("label")), "label");
 	TEST_EQUAL(tmp2.getActivationMethod(),Precursor::CID);
-	TEST_REAL_SIMILAR(tmp2.getIsolationWindowUpperBound(), 22.7);
-	TEST_REAL_SIMILAR(tmp2.getIsolationWindowLowerBound(), 22.8);
+	TEST_REAL_SIMILAR(tmp2.getIsolationWindowUpperOffset(), 22.7);
+	TEST_REAL_SIMILAR(tmp2.getIsolationWindowLowerOffset(), 22.8);
 	TEST_REAL_SIMILAR(tmp2.getActivationEnergy(),47.11);
 		
 	//assignment of empty object
 	tmp2 = Precursor();
 	TEST_EQUAL(tmp2.getMetaValue("label").isEmpty(), true);
 	TEST_EQUAL(tmp2.getActivationMethod(),Precursor::ACTMETHNULL);
-	TEST_REAL_SIMILAR(tmp2.getIsolationWindowUpperBound(), 0.0);
-	TEST_REAL_SIMILAR(tmp2.getIsolationWindowLowerBound(), 0.0);
+	TEST_REAL_SIMILAR(tmp2.getIsolationWindowUpperOffset(), 0.0);
+	TEST_REAL_SIMILAR(tmp2.getIsolationWindowLowerOffset(), 0.0);
 	TEST_REAL_SIMILAR(tmp2.getActivationEnergy(),0.0);
 END_SECTION
 
@@ -148,11 +177,19 @@ START_SECTION((bool operator== (const Precursor& rhs) const))
 	TEST_EQUAL(tmp==tmp2, false);
 	
 	tmp2 = tmp;
-  tmp.setIsolationWindowUpperBound(22.7);
+  tmp.setIsolationWindowUpperOffset(22.7);
 	TEST_EQUAL(tmp==tmp2, false);
 
 	tmp2 = tmp;
-  tmp.setIsolationWindowLowerBound(22.8);
+  tmp.setIsolationWindowLowerOffset(22.8);
+	TEST_EQUAL(tmp==tmp2, false);
+
+	tmp2 = tmp;
+  tmp.setCharge(13);
+	TEST_EQUAL(tmp==tmp2, false);
+
+	tmp2 = tmp;
+  tmp.getPossibleChargeStates().resize(5);
 	TEST_EQUAL(tmp==tmp2, false);
 
 	tmp2 = tmp;
@@ -173,11 +210,19 @@ START_SECTION((bool operator!= (const Precursor& rhs) const))
 	TEST_EQUAL(tmp!=tmp2, true);
 	
 	tmp2 = tmp;	tmp2 = tmp;
-  tmp.setIsolationWindowUpperBound(22.7);
+  tmp.setIsolationWindowUpperOffset(22.7);
 	TEST_EQUAL(tmp!=tmp2, true);
 
 	tmp2 = tmp;	tmp2 = tmp;
-  tmp.setIsolationWindowLowerBound(22.8);
+  tmp.setIsolationWindowLowerOffset(22.8);
+	TEST_EQUAL(tmp!=tmp2, true);
+
+	tmp2 = tmp;
+  tmp.setCharge(13);
+	TEST_EQUAL(tmp!=tmp2, true);
+
+	tmp2 = tmp;
+  tmp.getPossibleChargeStates().resize(5);
 	TEST_EQUAL(tmp!=tmp2, true);
 
 	tmp2 = tmp;

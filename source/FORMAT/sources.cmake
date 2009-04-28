@@ -46,6 +46,7 @@ UnimodXMLFile.C
 XMLFile.C
 XTandemInfile.C
 XTandemXMLFile.C
+CsvFile.C
 )
 
 if (USE_ANDIMS) 	 

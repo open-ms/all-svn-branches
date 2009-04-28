@@ -8,28 +8,25 @@
   
     <fileContent>
       <cvParam cvRef="MS" accession="MS:1000580" name="MSn spectrum" value=""/>
-      <cvParam cvRef="MS" accession="MS:1000774" name="multiple peak list nativeID format" value=""/>
     </fileContent>
     
-    <sourceFileList count="2">
+    <sourceFileList count="3">
       <sourceFile id="sf1" name="tiny1.RAW" location="file:///F:/data/Exp01">
-        <cvParam cvRef="MS" accession="MS:1000563" name="Xcalibur RAW file" value=""/>
+        <cvParam cvRef="MS" accession="MS:1000563" name="Thermo RAW file"/>
         <cvParam cvRef="MS" accession="MS:1000569" name="SHA-1" value="71be39fb2700ab2f3c8b2234b91274968b6899b1"/>
+      	<cvParam cvRef="MS" accession="MS:1000774" name="multiple peak list nativeID format" value=""/>
 				<userParam name="name" value="sourcefile1"/>
       </sourceFile>
-      <sourceFile id="sf2" name="tiny2.RAW" location="file:///F:/data/Exp02">
-        <cvParam cvRef="MS" accession="MS:1000565" name="pkl file" value=""/>
-        <cvParam cvRef="MS" accession="MS:1000568" name="MD5" value="71be39fb2700ab2f3c8b2234b91274968b6899b2"/>
-				<userParam name="name" value="sourcefile2"/>
-      </sourceFile>
       <sourceFile id="sf_parameters" name="parameters.par" location="file:///C:/settings/">
-        <cvParam cvRef="MS" accession="MS:1000563" name="Xcalibur RAW file" value=""/>
+        <cvParam cvRef="MS" accession="MS:1000563" name="Thermo RAW file"/>
         <cvParam cvRef="MS" accession="MS:1000569" name="SHA-1" value="61be39fb2700ab2f3c8b2234b91274968b6899b1"/>
+				<cvParam cvRef="MS" accession="MS:1000824" name="no nativeID format" />
 				<userParam name="name" value="sourcefile3"/>
       </sourceFile>
       <sourceFile id="sf_spectrum_2" name="tiny1.dta" location="file:///F:/data/Exp01">
-        <cvParam cvRef="MS" accession="MS:1000613" name="dta file" value=""/>
+        <cvParam cvRef="MS" accession="MS:1000613" name="DTA file" value=""/>
         <cvParam cvRef="MS" accession="MS:1000569" name="SHA-1" value="81be39fb2700ab2f3c8b2234b91274968b6899b1"/>
+				<cvParam cvRef="MS" accession="MS:1000824" name="no nativeID format" />
 				<userParam name="name" value="sourcefile4"/>
       </sourceFile>
     </sourceFileList>
@@ -88,14 +85,6 @@
       <cvParam cvRef="MS" accession="MS:1000532" name="Xcalibur"/>
     </software>
   </softwareList>
-
-  <scanSettingsList count="1">
-    <scanSettings id="as1" >
-      <sourceFileRefList count="1">
-        <sourceFileRef ref="sf_parameters"/>
-      </sourceFileRefList>
-    </scanSettings>
-  </scanSettingsList>
 
   <instrumentConfigurationList count="1">
     <instrumentConfiguration id="LCQDeca">
@@ -164,15 +153,11 @@
     </dataProcessing>
   </dataProcessingList>
   
-  <run id="Exp01" defaultInstrumentConfigurationRef="LCQDeca" sampleRef="sample1" startTimeStamp="2007-06-27T15:23:45.00035">
+  <run id="Exp01" defaultSourceFileRef="sf1" defaultInstrumentConfigurationRef="LCQDeca" sampleRef="sample1" startTimeStamp="2007-06-27T15:23:45.00035">
   	<userParam name="int" type="xsd:integer" value="5"/>
   	<userParam name="string" value="bla"/>
   	<userParam name="flag"/>
   	<userParam name="float" type="xsd:float" value="5.11"/>
-    <sourceFileRefList count="2">
-      <sourceFileRef ref="sf1"/>
-      <sourceFileRef ref="sf2"/>
-    </sourceFileRefList>
     
     <spectrumList count="4" defaultDataProcessingRef="pwizconversion">
 
@@ -189,7 +174,7 @@
         	<cvParam cvRef="MS" accession="MS:1000573" name="median of spectra"/>
         	<userParam name="name" value="acquisition_list"/>
         	<scan number="4711">
-		        <cvParam cvRef="MS" accession="MS:1000016" name="scan time" value="5.1" unitAccession="UO:0000010" unitName="second" unitCvRef="UO"/>
+		        <cvParam cvRef="MS" accession="MS:1000016" name="scan start time" value="5.1" unitAccession="UO:0000010" unitName="second" unitCvRef="UO"/>
 		        <cvParam cvRef="MS" accession="MS:1000512" name="filter string" value="+ c NSI Full ms [ 400.00-1800.00]"/>
 		        <cvParam cvRef="MS" accession="MS:1000616" name="preset scan configuration" value="3"/>
             <cvParam cvRef="MS" accession="MS:1000011" name="mass resolution" value="4.3"/>
@@ -210,7 +195,7 @@
           <binaryDataArray encodedLength="160" dataProcessingRef="XcaliburProcessing">
             <cvParam cvRef="MS" accession="MS:1000523" name="64-bit float" value=""/>
             <cvParam cvRef="MS" accession="MS:1000576" name="no compression" value=""/>
-            <cvParam cvRef="MS" accession="MS:1000515" name="intensity array" value=""/>
+            <cvParam cvRef="MS" accession="MS:1000515" name="intensity array" value="" unitAccession="MS:1000131" unitName="number of counts" unitCvRef="MS"/>
         		<userParam name="itname" value="itarray1"/>
             <binary>AAAAAAAALkAAAAAAAAAsQAAAAAAAACpAAAAAAAAAKEAAAAAAAAAmQAAAAAAAACRAAAAAAAAAIkAAAAAAAAAgQAAAAAAAABxAAAAAAAAAGEAAAAAAAAAUQAAAAAAAABBAAAAAAAAACEAAAAAAAAAAQAAAAAAAAPA/</binary>
           </binaryDataArray>
@@ -231,7 +216,7 @@
         <scanList count="1">
 					<cvParam cvRef="MS" accession="MS:1000795" name="no combination"/>
 	        <scan number="0">
-		        <cvParam cvRef="MS" accession="MS:1000016" name="scan time" value="5.2" unitAccession="UO:0000010" unitName="second" unitCvRef="UO"/>
+		        <cvParam cvRef="MS" accession="MS:1000016" name="scan start time" value="5.2" unitAccession="UO:0000010" unitName="second" unitCvRef="UO"/>
 		        <cvParam cvRef="MS" accession="MS:1000512" name="filter string" value="+ c d Full ms2  445.35@cid35.00 [ 110.00-905.00]"/>
 		        <cvParam cvRef="MS" accession="MS:1000616" name="preset scan configuration" value="4"/>
 		        <cvParam cvRef="MS" accession="MS:1000011" name="mass resolution" value="4.1"/>
@@ -269,7 +254,7 @@
           <binaryDataArray encodedLength="108" dataProcessingRef="XcaliburProcessing">
             <cvParam cvRef="MS" accession="MS:1000523" name="64-bit float" value=""/>
             <cvParam cvRef="MS" accession="MS:1000576" name="no compression" value=""/>
-            <cvParam cvRef="MS" accession="MS:1000515" name="intensity array" value=""/>
+            <cvParam cvRef="MS" accession="MS:1000515" name="intensity array" value="" unitAccession="MS:1000131" unitName="number of counts" unitCvRef="MS"/>
         		<userParam name="itname" value="itarray2"/>
             <binary>AAAAAAAANEAAAAAAAAAyQAAAAAAAADBAAAAAAAAALEAAAAAAAAAoQAAAAAAAACRAAAAAAAAAIEAAAAAAAAAYQAAAAAAAABBAAAAAAAAAAEA=</binary>
           </binaryDataArray>
@@ -306,7 +291,7 @@
         	<cvParam cvRef="MS" accession="MS:1000573" name="median of spectra"/>
         	<userParam name="name" value="acquisition_list"/>
         	<scan number="4711">
-		        <cvParam cvRef="MS" accession="MS:1000016" name="scan time" value="5.3" unitAccession="UO:0000010" unitName="second" unitCvRef="UO"/>
+		        <cvParam cvRef="MS" accession="MS:1000016" name="scan start time" value="5.3" unitAccession="UO:0000010" unitName="second" unitCvRef="UO"/>
 		        <cvParam cvRef="MS" accession="MS:1000512" name="filter string" value="+ c NSI Full ms [ 400.00-1800.00]"/>
 		        <cvParam cvRef="MS" accession="MS:1000616" name="preset scan configuration" value="3"/>
       			<userParam name="name" value="acquisition1"/>
@@ -325,7 +310,7 @@
           <binaryDataArray encodedLength="160" dataProcessingRef="XcaliburProcessing">
             <cvParam cvRef="MS" accession="MS:1000523" name="64-bit float" value=""/>
             <cvParam cvRef="MS" accession="MS:1000576" name="no compression" value=""/>
-            <cvParam cvRef="MS" accession="MS:1000515" name="intensity array" value=""/>
+            <cvParam cvRef="MS" accession="MS:1000515" name="intensity array" value="" unitAccession="MS:1000131" unitName="number of counts" unitCvRef="MS"/>
             <binary>AAAAAAAALkAAAAAAAAAsQAAAAAAAACpAAAAAAAAAKEAAAAAAAAAmQAAAAAAAACRAAAAAAAAAIkAAAAAAAAAgQAAAAAAAABxAAAAAAAAAGEAAAAAAAAAUQAAAAAAAABBAAAAAAAAACEAAAAAAAAAAQAAAAAAAAPA/</binary>
           </binaryDataArray>
         </binaryDataArrayList>
@@ -339,7 +324,7 @@
         <scanList count="1">
 					<cvParam cvRef="MS" accession="MS:1000795" name="no combination"/>
 	        <scan number="0">
-		     		<cvParam cvRef="MS" accession="MS:1000016" name="scan time" value="5.4" unitAccession="UO:0000010" unitName="second" unitCvRef="UO"/>
+		     		<cvParam cvRef="MS" accession="MS:1000016" name="scan start time" value="5.4" unitAccession="UO:0000010" unitName="second" unitCvRef="UO"/>
 		      </scan>
 		    </scanList>
       </spectrum>

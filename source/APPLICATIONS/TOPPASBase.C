@@ -30,9 +30,6 @@
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/DATASTRUCTURES/DateTime.h> 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithm.h>
-#include <OpenMS/FILTERING/TRANSFORMERS/PreprocessingFunctor.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinder.h>
 #include <OpenMS/VISUAL/TOPPASVertex.h>
 
 //Qt
@@ -154,52 +151,28 @@ namespace OpenMS
   	tools_tree_view_->setHeaderLabels(header_labels);
     topp_tools_bar->setWidget(tools_tree_view_);
     
-    StringList tools_list = TOPPBase::getToolList();
-    sort(tools_list.begin(), tools_list.end());
-    QTreeWidgetItem* item;
+    QTreeWidgetItem* item = new QTreeWidgetItem((QTreeWidget*)0);
+    item->setText(0, "<< Input file >>");
+    tools_tree_view_->addTopLevelItem(item);
+    item = new QTreeWidgetItem((QTreeWidget*)0);
+    item->setText(0, "<< Output file >>");
+    tools_tree_view_->addTopLevelItem(item);
+    
+    
+    Map<String,StringList> tools_list = TOPPBase::getToolList();
     QTreeWidgetItem* parent_item;
-    for (StringList::iterator it = tools_list.begin(); it != tools_list.end(); ++it)
+    for (Map<String,StringList>::Iterator it = tools_list.begin(); it != tools_list.end(); ++it)
     {
     	item = new QTreeWidgetItem((QTreeWidget*)0);
-    	item->setText(0, it->toQString());
+    	item->setText(0, it->first.toQString());
     	tools_tree_view_->addTopLevelItem(item);
    		parent_item = item;
-
-    	if (*it == "NoiseFilter")
-    	{
-    		item = new QTreeWidgetItem(parent_item);
-    		item->setText(1, "sgolay");
-    		
-    		item = new QTreeWidgetItem(parent_item);
-    		item->setText(1, "gaussian");
-    	}
-    	else if (*it == "FeatureFinder")
-			{
-				std::vector<String> type_list = Factory<FeatureFinderAlgorithm<Peak1D,Feature> >::registeredProducts();
-				for (Size i=0; i<type_list.size(); ++i)
-				{
-					item = new QTreeWidgetItem(parent_item);
-					item->setText(1, type_list[i].toQString());
-				}
-			}
-			else if (*it == "SpectraFilter")
-			{
-				std::vector<String> type_list = Factory<PreprocessingFunctor>::registeredProducts();
-				for (Size i=0; i<type_list.size(); ++i)
-				{
-					item = new QTreeWidgetItem(parent_item);
-					item->setText(1, type_list[i].toQString());		
-				}
-			}
-			else if (*it == "FeatureLinker")
-			{
-				std::vector<String> type_list = Factory<FeatureGroupingAlgorithm>::registeredProducts();
-				for (Size i=0; i<type_list.size(); ++i)
-				{
-					item = new QTreeWidgetItem(parent_item);
-					item->setText(1, type_list[i].toQString());		
-				}
-			}
+   		StringList types = it->second;
+   		for (StringList::iterator types_it = types.begin(); types_it != types.end(); ++types_it)
+   		{
+   			item = new QTreeWidgetItem(parent_item);
+   			item->setText(1, types_it->toQString());
+   		}
     }
     tools_tree_view_->setDragEnabled(true);
     
@@ -560,31 +533,49 @@ namespace OpenMS
 	
 	void TOPPASBase::insertNewVertex_(double x, double y)
 	{
-		String tool_name;
-		String tool_type;
 		QTreeWidgetItem* current_tool = tools_tree_view_->currentItem();
+		String tool_name = String(current_tool->text(0));
+		TOPPASVertex* tv = 0;
 		
-		if (current_tool->childCount() > 0)
+		if (tool_name == "<< Input file >>")
 		{
-			// tool has a type, but is selected itself (instead of type)
-			return;
+			tv = new TOPPASVertex(tool_name, String(""), TOPPASVertex::VT_SOURCE);
 		}
-		if (current_tool->parent() != 0)
+		else if (tool_name == "<< Output file >>")
 		{
-			// selected item is a type
-			tool_type = String(current_tool->text(1));
-			tool_name = String(current_tool->parent()->text(0));
+			tv = new TOPPASVertex(tool_name, String(""), TOPPASVertex::VT_TARGET);
 		}
-		else
-		{
-			// normal tool which does not have type selected
-			tool_name = String(current_tool->text(0));
-			tool_type = "";
+		else // node is a TOPP tool
+		{	
+			if (current_tool->childCount() > 0)
+			{
+				// tool has a type, but is selected itself (instead of type)
+				return;
+			}
+			String tool_type;
+			if (current_tool->parent() != 0)
+			{
+				// selected item is a type
+				tool_type = String(current_tool->text(1));
+				tool_name = String(current_tool->parent()->text(0));
+			}
+			else
+			{
+				// normal tool which does not have type selected
+				tool_name = String(current_tool->text(0));
+				tool_type = "";
+			}
+			
+			tv = new TOPPASVertex(tool_name, tool_type);
 		}
 		
-		TOPPASVertex* tv = new TOPPASVertex(tool_name, tool_type);
-		activeWindow_()->getScene()->addItem(tv);
 		tv->setPos(x,y);
+		activeWindow_()->getScene()->addVertex(tv);
+		
+		connect(tv,SIGNAL(clicked()),activeWindow_()->getScene(),SLOT(itemClicked()));
+		connect(tv,SIGNAL(doubleClicked()),activeWindow_()->getScene(),SLOT(itemDoubleClicked()));
+		connect(tv,SIGNAL(hoveringEdgePosChanged(const QPointF&)),activeWindow_()->getScene(),SLOT(updateHoveringEdgePos(const QPointF&)));
+		connect(tv,SIGNAL(newHoveringEdge(const QPointF&)),activeWindow_()->getScene(),SLOT(addHoveringEdge(const QPointF&)));
 	}
 
 } //namespace OpenMS

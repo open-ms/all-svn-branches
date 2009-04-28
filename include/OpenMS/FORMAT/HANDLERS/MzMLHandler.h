@@ -42,12 +42,6 @@
 #include <iostream>
 
 //TODO:
-// - product list
-//
-//TODO (WHEN SETTLED):
-// - CV: terms of spectrum type and file content
-// - CV: terms of intensity description
-// - CV: collision energy / activation energy (and units)
 // - scanSettingsList
 //
 //MISSING:
@@ -294,6 +288,7 @@ namespace OpenMS
 			static const XMLCh* s_default_data_processing_ref = xercesc::XMLString::transcode("defaultDataProcessingRef");
 			static const XMLCh* s_start_time_stamp = xercesc::XMLString::transcode("startTimeStamp");
 			static const XMLCh* s_external_spectrum_id = xercesc::XMLString::transcode("externalSpectrumID");
+			static const XMLCh* s_default_source_file_ref = xercesc::XMLString::transcode("defaultSourceFileRef");
 			
 			String tag = sm_.convert(qname);
 			open_tags_.push_back(tag);
@@ -444,10 +439,6 @@ namespace OpenMS
 			{
 				exp_->getContacts().push_back(ContactPerson());
 			}
-			else if(tag=="sourceFileRef" && parent_tag=="sourceFileRefList" && parent_parent_tag=="run")
-			{
-				exp_->getSourceFiles().push_back(source_files_[ attributeAsString_(attributes, s_ref)]);
-			}
 			else if (tag=="sample")
 			{
 				current_id_ = attributeAsString_(attributes, s_id);
@@ -473,6 +464,12 @@ namespace OpenMS
 				if (optionalAttributeAsString_(start_time, attributes, s_start_time_stamp))
 				{
 					exp_->setDateTime(asDateTime_(start_time));
+				}
+				//defaultSourceFileRef
+				String default_source_file_ref;
+				if(optionalAttributeAsString_(default_source_file_ref, attributes, s_default_source_file_ref))
+				{
+					exp_->getSourceFiles().push_back(source_files_[default_source_file_ref]);
 				}
 			}
 			else if (tag=="software")
@@ -541,6 +538,11 @@ namespace OpenMS
 				//reset selected ion count
 				selected_ion_count_ = 0;
 			}
+			else if (tag=="product")
+			{
+				//initialize
+				spec_.getProducts().push_back(Product());
+			}
 			else if (tag=="selectedIon")
 			{
 				//increase selected ion count
@@ -556,7 +558,7 @@ namespace OpenMS
 			}
 			else if (tag=="scanWindow")
 			{
-				spec_.getInstrumentSettings().getScanWindows().push_back(InstrumentSettings::ScanWindow());
+				spec_.getInstrumentSettings().getScanWindows().push_back(ScanWindow());
 			}
 		}
 
@@ -577,6 +579,12 @@ namespace OpenMS
 				{
 					fillData_();
 					exp_->push_back(spec_);
+					
+					//catch errors stemming from confusion about elution time and scan time
+					if (exp_->back().getRT()==-1.0 && exp_->back().metaValueExists("elution time (seconds)"))
+					{
+						exp_->back().setRT(exp_->back().getMetaValue("elution time (seconds)"));
+					}
 				}
 				skip_spectrum_ = false;
 				logger_.setProgress(++scan_count);
@@ -843,21 +851,9 @@ namespace OpenMS
 					{
 						data_.back().precision = "64";
 					}
-					else if (accession=="MS:1000522") //64-bit integer
-					{
-						throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-					}
 					else if (accession=="MS:1000521") //32-bit float
 					{
 						data_.back().precision = "32";
-					}
-					else if (accession=="MS:1000519") //32-bit integer
-					{
-						throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
-					}
-					else if (accession=="MS:1000520") //16-bit float
-					{
-						throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
 					}
 					//MS:1000513 ! binary data array
 					else if (accession=="MS:1000786") // non-standard binary data array (with name as value)
@@ -866,7 +862,6 @@ namespace OpenMS
 					}
 					else if (cv_.isChildOf(accession,"MS:1000513")) //other array names as string
 					{
-						
 						data_.back().name = cv_.getTerm(accession).name;
 					}
 					//MS:1000572 ! binary data compression type
@@ -992,15 +987,15 @@ namespace OpenMS
 					//No member => meta data
 					spec_.setMetaValue("lowest observed m/z",value.toDouble()); 
 				}
-				else if (accession=="MS:1000618") //highest wavelength value
+				else if (accession=="MS:1000618") //highest observed wavelength
 				{
 					//No member => meta data
-					spec_.setMetaValue("highest wavelength value",value.toDouble()); 
+					spec_.setMetaValue("highest observed wavelength",value.toDouble()); 
 				}
-				else if (accession=="MS:1000619") //lowest wavelength value
+				else if (accession=="MS:1000619") //lowest observed wavelength
 				{
 					//No member => meta data
-					spec_.setMetaValue("lowest wavelength value",value.toDouble()); 
+					spec_.setMetaValue("lowest observed wavelength",value.toDouble()); 
 				}
 				else if (accession=="MS:1000796") //spectrum title
 				{
@@ -1040,10 +1035,6 @@ namespace OpenMS
 				{
 					spec_.getInstrumentSettings().getScanWindows().back().end = value.toDouble();
 				}
-				else if (accession=="MS:1000502") //dwell time
-				{
-					//Currently ignored
-				}
 				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
 			}
 			//------------------------- referenceableParamGroup ----------------------------
@@ -1064,6 +1055,7 @@ namespace OpenMS
 				
 				if (accession=="MS:1000744") //selected ion m/z
 				{
+					//this overwrites the m/z of the isolation window, as it is probably more accurate
 					spec_.getPrecursors().back().setMZ(value.toDouble());
 				}
 				else if (accession=="MS:1000041") //charge state
@@ -1171,25 +1163,33 @@ namespace OpenMS
 			{
 				if (parent_parent_tag=="precursor")
 				{
-					if (accession=="MS:1000793") //isolation window upper limit
+					if (accession=="MS:1000827") //isolation window target m/z
 					{
-						spec_.getPrecursors().back().setIsolationWindowUpperBound(value.toDouble());
+						spec_.getPrecursors().back().setMZ(value.toDouble());
 					}
-					else if (accession=="MS:1000794") //isolation window lower limit
+					else if (accession=="MS:1000828") //isolation window lower offset
 					{
-						spec_.getPrecursors().back().setIsolationWindowLowerBound(value.toDouble());
+						spec_.getPrecursors().back().setIsolationWindowLowerOffset(value.toDouble());
+					}
+					else if (accession=="MS:1000829") //isolation window upper offset
+					{
+						spec_.getPrecursors().back().setIsolationWindowUpperOffset(value.toDouble());
 					}
 					else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
 				}
 				else if (parent_parent_tag=="product")
 				{
-					if (accession=="MS:1000793") //isolation window upper limit
+					if (accession=="MS:1000827") //isolation window target m/z
 					{
-						//TODO
+						spec_.getProducts().back().setMZ(value.toDouble());
 					}
-					else if (accession=="MS:1000794") //isolation window lower limit
+					else if (accession=="MS:1000829") //isolation window upper offset
 					{
-						//TODO
+						spec_.getProducts().back().setIsolationWindowUpperOffset(value.toDouble());
+					}
+					else if (accession=="MS:1000828") //isolation window lower offset
+					{
+						spec_.getProducts().back().setIsolationWindowLowerOffset(value.toDouble());
 					}
 					else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
 				}
@@ -1207,7 +1207,12 @@ namespace OpenMS
 			else if (parent_tag=="scan")
 			{
 				//scan attributes
-				if (accession=="MS:1000011")//mass resolution
+				if (accession=="MS:1000502") //dwell time
+				{
+					//No member => meta data
+					spec_.setMetaValue("dwell time",value.toDouble());
+				}
+				else if (accession=="MS:1000011")//mass resolution
 				{
 					//No member => meta data
 					spec_.setMetaValue("mass resolution",value);
@@ -1217,7 +1222,7 @@ namespace OpenMS
 					//No member => meta data
 					spec_.setMetaValue("scan rate",value.toDouble());
 				}
-				else if (accession=="MS:1000016")//scan time
+				else if (accession=="MS:1000016")//scan start time
 				{
 					if (unit_accession=="UO:0000031") //minutes
 					{
@@ -1227,10 +1232,20 @@ namespace OpenMS
 					{
 						spec_.setRT(value.toDouble());
 					}
-						
 					if (options_.hasRTRange() && !options_.getRTRange().encloses(DPosition<1>(spec_.getRT())))
 					{
 						skip_spectrum_=true;
+					}
+				}
+				else if (accession=="MS:1000826")//elution time
+				{
+					if (unit_accession=="UO:0000031") //minutes
+					{
+						spec_.setMetaValue("elution time (seconds)", 60.0*value.toDouble());
+					}
+					else //seconds
+					{
+						spec_.setMetaValue("elution time (seconds)", value.toDouble());
 					}
 				}
 				else if (accession=="MS:1000512")//filter string
@@ -1321,9 +1336,58 @@ namespace OpenMS
 				{
 					source_files_[current_id_].setChecksum(value, SourceFile::MD5);
 				}
-				else if (cv_.isChildOf(accession,"MS:1000560")) //file type as string
+				else if (cv_.isChildOf(accession,"MS:1000560")) //source file type as string
 				{
 					source_files_[current_id_].setFileType(cv_.getTerm(accession).name);
+				}
+				//native ID format
+				else if (accession=="MS:1000768") //Thermo nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::THERMO);
+				}
+				else if (accession=="MS:1000769") //Waters nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::WATERS);
+				}
+				else if (accession=="MS:1000770") //WIFF nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::WIFF);
+				}
+				else if (accession=="MS:1000771") //Bruker/Agilent YEP nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::BRUKER_AGILENT);
+				}
+				else if (accession=="MS:1000772") //Bruker BAF nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::BRUKER_BAF);
+				}
+				else if (accession=="MS:1000773") //Bruker FID nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::BRUKER_FID);
+				}
+				else if (accession=="MS:1000774") //multiple peak list nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::MULTIPLE_PEAK_LISTS);
+				}
+				else if (accession=="MS:1000775") //single peak list nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::SINGLE_PEAK_LIST);
+				}
+				else if (accession=="MS:1000776") //scan number only nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::SCAN_NUMBER);
+				}
+				else if (accession=="MS:1000777") //spectrum identifier nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::SPECTRUM_IDENTIFIER);
+				}
+				else if (accession=="MS:1000823") // Bruker U2 nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::BRUKER_U2);
+				}
+				else if (accession=="MS:1000824") //no nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::UNKNOWN_NATIVEID);
 				}
 				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
 			}
@@ -1396,7 +1460,7 @@ namespace OpenMS
 			else if (parent_tag=="instrumentConfiguration")
 			{
 				//instrument model
-				if (cv_.isChildOf(accession,"MS:1000031")) //instrument name in value
+				if (cv_.isChildOf(accession,"MS:1000031")) //instrument name as string
 				{
 					instruments_[current_id_].setName(cv_.getTerm(accession).name);
 				}
@@ -1735,6 +1799,10 @@ namespace OpenMS
 				{
 					instruments_[current_id_].getIonSources().back().setIonizationMethod(IonSource::SEND);
 				}
+				else if (accession=="MS:1000008") //ionization type (base term)
+				{
+					instruments_[current_id_].getIonSources().back().setIonizationMethod(IonSource::IONMETHODNULL);
+				}
 				
 				//source attribute
 				else if (accession=="MS:1000392") //ionization efficiency
@@ -1803,6 +1871,10 @@ namespace OpenMS
 				else if (accession=="MS:1000291") //linear ion trap
 				{
 					instruments_[current_id_].getMassAnalyzers().back().setType(MassAnalyzer::LIT);
+				}
+				else if (accession=="MS:1000443") //mass analyzer type (base term)
+				{
+					instruments_[current_id_].getMassAnalyzers().back().setType(MassAnalyzer::ANALYZERNULL);
 				}
 				//mass analyzer attribute
 				else if (accession=="MS:1000014") //accuracy (ppm)
@@ -1913,6 +1985,10 @@ namespace OpenMS
 				else if (accession=="MS:1000113") //focal plane array
 				{
 					instruments_[current_id_].getIonDetectors().back().setType(IonDetector::FOCALPLANEARRAY);
+				}
+				else if (accession=="MS:1000026") //detector type (base term)
+				{
+					instruments_[current_id_].getIonDetectors().back().setType(IonDetector::TYPENULL);
 				}
 				//detector attribute
 				else if (accession=="MS:1000028") //detector resolution
@@ -2035,51 +2111,7 @@ namespace OpenMS
 			}
 			else if (parent_tag=="fileContent")
 			{
-				if (accession=="MS:1000768") //Thermo nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::THERMO);
-				}
-				else if (accession=="MS:1000769") //Waters nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::WATERS);
-				}
-				else if (accession=="MS:1000770") //WIFF nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::WIFF);
-				}
-				else if (accession=="MS:1000771") //Bruker/Agilent YEP nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::BRUKER_AGILENT);
-				}
-				else if (accession=="MS:1000772") //Bruker BAF nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::BRUKER_BAF);
-				}
-				else if (accession=="MS:1000773") //Bruker FID nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::BRUKER_FID);
-				}
-				else if (accession=="MS:1000774") //multiple peak list nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::MULTIPLE_PEAK_LISTS);
-				}
-				else if (accession=="MS:1000775") //single peak list nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::SINGLE_PEAK_LIST);
-				}
-				else if (accession=="MS:1000776") //scan number only nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::SCAN_NUMBER);
-				}
-				else if (accession=="MS:1000777") //spectrum identifier nativeID format
-				{
-					exp_->setNativeIDType(ExperimentalSettings::SPECTRUM_IDENTIFIER);
-				}
-				else if (cv_.isChildOf(accession,"MS:1000524")) //data file content
-				{
-					//ignored
-				}
-				else if (cv_.isChildOf(accession,"MS:1000525")) //spectrum representation
+				if (cv_.isChildOf(accession,"MS:1000524")) //data file content
 				{
 					//ignored
 				}
@@ -2173,6 +2205,10 @@ namespace OpenMS
 			{
 				spec_.getAcquisitionInfo().back().setMetaValue(name,data_value);
 			}
+			else if (parent_tag=="scanWindow")
+			{
+				spec_.getInstrumentSettings().getScanWindows().back().setMetaValue(name,data_value);
+			}
 			else if (parent_tag=="isolationWindow")
 			{
 				//We don't have this as a separate location => store it in the precursor
@@ -2182,7 +2218,7 @@ namespace OpenMS
 				}
 				else if (parent_parent_tag=="product")
 				{
-					//TODO
+					spec_.getProducts().back().setMetaValue(name,data_value);
 				} 
 			}
 			else if (parent_tag=="selectedIon")
@@ -2273,6 +2309,7 @@ namespace OpenMS
 		void MzMLHandler<MapType>::writeSourceFile_(std::ostream& os, const String& id, const SourceFile& source_file)
 		{
 			os	<< "			<sourceFile id=\"" << id << "\" name=\"" << source_file.getNameOfFile() << "\" location=\"" << source_file.getPathToFile() << "\">\n";
+			//checksum
 			if (source_file.getChecksumType()==SourceFile::SHA1)
 			{
 				os  << "				<cvParam cvRef=\"MS\" accession=\"MS:1000569\" name=\"SHA-1\" value=\"" << source_file.getChecksum() << "\" />\n";
@@ -2285,6 +2322,7 @@ namespace OpenMS
 			{
 				os  << "				<cvParam cvRef=\"MS\" accession=\"MS:1000569\" name=\"SHA-1\" value=\"\" />\n";
 			}
+			//file type
 			ControlledVocabulary::CVTerm sf_term = getChildWithName_("MS:1000560",source_file.getFileType());
 			if (sf_term.id!="")
 			{
@@ -2292,7 +2330,56 @@ namespace OpenMS
 			}
 			else //FORCED
 			{
-				os  << "				<cvParam cvRef=\"MS\" accession=\"MS:1000564\" name=\"mzData file\" />\n";
+				os  << "				<cvParam cvRef=\"MS\" accession=\"MS:1000564\" name=\"PSI mzData file\" />\n";
+			}
+			//native ID format
+			if (source_file.getNativeIDType()==SourceFile::THERMO)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000768\" name=\"Thermo nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::WATERS)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000769\" name=\"Waters nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::WIFF)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000770\" name=\"WIFF nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::BRUKER_AGILENT)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000771\" name=\"Bruker/Agilent YEP nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::BRUKER_BAF)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000772\" name=\"Bruker BAF nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::BRUKER_FID)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000773\" name=\"Bruker FID nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::MULTIPLE_PEAK_LISTS)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000774\" name=\"multiple peak list nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::SINGLE_PEAK_LIST)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000775\" name=\"single peak list nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::SCAN_NUMBER)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000776\" name=\"scan number only nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::SPECTRUM_IDENTIFIER)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000777\" name=\"spectrum identifier nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::BRUKER_U2)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000823\" name=\"Bruker U2 nativeID format\" />\n";
+			}
+			else
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000824\" name=\"no nativeID format\" />\n";
 			}
 			writeUserParam_(os, source_file, 4);
 			os	<< "			</sourceFile>\n";
@@ -2327,117 +2414,75 @@ namespace OpenMS
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000294\" name=\"mass spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::SIM))
+			if (file_content.has(InstrumentSettings::SIM))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000582\" name=\"SIM spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::SRM))
+			if (file_content.has(InstrumentSettings::SRM))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000583\" name=\"SRM spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::CRM))
+			if (file_content.has(InstrumentSettings::CRM))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000581\" name=\"CRM spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::PRECURSOR))
+			if (file_content.has(InstrumentSettings::PRECURSOR))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000341\" name=\"precursor ion spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::CNG))
+			if (file_content.has(InstrumentSettings::CNG))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000325\" name=\"constant neutral gain spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::CNL))
+			if (file_content.has(InstrumentSettings::CNL))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000326\" name=\"constant neutral loss spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::EMR))
+			if (file_content.has(InstrumentSettings::EMR))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000804\" name=\"electromagnetic radiation spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::EMISSION))
+			if (file_content.has(InstrumentSettings::EMISSION))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000805\" name=\"emission spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::ABSORBTION))
+			if (file_content.has(InstrumentSettings::ABSORBTION))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000806\" name=\"absorption spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::EMC))
+			if (file_content.has(InstrumentSettings::EMC))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000789\" name=\"enhanced multiply charged spectrum\" />\n";
 			}
-			else if (file_content.has(InstrumentSettings::TDF))
+			if (file_content.has(InstrumentSettings::TDF))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000789\" name=\"time-delayed fragmentation spectrum\" />\n";
 			}
-			else //FORCED
+			if (file_content.has(InstrumentSettings::UNKNOWN) || file_content.empty())
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000294\" name=\"mass spectrum\" />\n";
 			}
-			//native ID format
-			if (exp.getNativeIDType()==ExperimentalSettings::THERMO)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000768\" name=\"Thermo nativeID format\" />\n";
-			}
-			else if (exp.getNativeIDType()==ExperimentalSettings::WATERS)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000769\" name=\"Waters nativeID format\" />\n";
-			}
-			else if (exp.getNativeIDType()==ExperimentalSettings::WIFF)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000770\" name=\"WIFF nativeID format\" />\n";
-			}
-			else if (exp.getNativeIDType()==ExperimentalSettings::BRUKER_AGILENT)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000771\" name=\"Bruker/Agilent YEP nativeID format\" />\n";
-			}
-			else if (exp.getNativeIDType()==ExperimentalSettings::BRUKER_BAF)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000772\" name=\"Bruker BAF nativeID format\" />\n";
-			}
-			else if (exp.getNativeIDType()==ExperimentalSettings::BRUKER_FID)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000773\" name=\"Bruker FID nativeID format\" />\n";
-			}
-			else if (exp.getNativeIDType()==ExperimentalSettings::MULTIPLE_PEAK_LISTS)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000774\" name=\"multiple peak list nativeID format\" />\n";
-			}
-			else if (exp.getNativeIDType()==ExperimentalSettings::SINGLE_PEAK_LIST)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000775\" name=\"single peak list nativeID format\" />\n";
-			}
-			else if (exp.getNativeIDType()==ExperimentalSettings::SCAN_NUMBER)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000776\" name=\"scan number only nativeID format\" />\n";
-			}
-			else if (exp.getNativeIDType()==ExperimentalSettings::SPECTRUM_IDENTIFIER)
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000777\" name=\"spectrum identifier nativeID format\" />\n";
-			}
-			else //FORCED
-			{
-				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000774\" name=\"multiple peak list nativeID format\" />\n";
-			}
-
 			os	<< "		</fileContent>\n";
 			//--------------------------------------------------------------------------------------------
 			// source file list
 			//--------------------------------------------------------------------------------------------
-			if (exp.getSourceFiles().size()!=0)
+			//find out how many spectra source files need to be written
+			UInt sf_sp_count=0;
+			for (Size i=0; i<exp.size(); ++i)
 			{
-				//find out how many spectra source files need to be written
-				UInt sf_sp_count=0;
-				for (Size i=0; i<exp.size(); ++i)
-				{
-					if (exp[i].getSourceFile()!=SourceFile()) ++sf_sp_count;
-				}
+				if (exp[i].getSourceFile()!=SourceFile()) ++sf_sp_count;
+			}
+			if (exp.getSourceFiles().size()>0 || sf_sp_count>0)
+			{
 				os	<< "		<sourceFileList count=\"" << exp.getSourceFiles().size() + sf_sp_count << "\">\n";
-				//write source files of run
-				for (Size i=0; i<exp.getSourceFiles().size(); ++i)
+				//write source file of run
+				if (exp.getSourceFiles().size()>0)
 				{
-					writeSourceFile_(os, String("sf_ru_")+i, exp.getSourceFiles()[i]);
+					writeSourceFile_(os, String("sf_ru_0"), exp.getSourceFiles()[0]);
+				}
+				if (exp.getSourceFiles().size()>1)
+				{
+					warning(STORE, "The MzML format can store only one source file per run. Only the first one is stored!");
 				}
 				//write source files of spectra
 				for (Size i=0; i<exp.size(); ++i)
@@ -2593,10 +2638,6 @@ namespace OpenMS
 			{
 				os << "			<cvParam cvRef=\"MS\" accession=\"MS:1000307\" name=\"einzel lens\" />\n";
 			}
-			else if (in.getIonOptics()==Instrument::ELECTRIC_FIELD_STRENGTH)
-			{
-				os << "			<cvParam cvRef=\"MS\" accession=\"MS:1000308\" name=\"electric field strength\" />\n";
-			}
 			else if (in.getIonOptics()==Instrument::FIRST_STABILITY_REGION)
 			{
 				os << "			<cvParam cvRef=\"MS\" accession=\"MS:1000309\" name=\"first stability region\" />\n";
@@ -2608,10 +2649,6 @@ namespace OpenMS
 			else if (in.getIonOptics()==Instrument::KINETIC_ENERGY_ANALYZER)
 			{
 				os << "			<cvParam cvRef=\"MS\" accession=\"MS:1000311\" name=\"kinetic energy analyzer\" />\n";
-			}
-			else if (in.getIonOptics()==Instrument::SPACE_CHARGE_EFFECT)
-			{
-				os << "			<cvParam cvRef=\"MS\" accession=\"MS:1000319\" name=\"space charge effect\" />\n";
 			}
 			else if (in.getIonOptics()==Instrument::STATIC_FIELD)
 			{
@@ -2884,6 +2921,10 @@ namespace OpenMS
 					{
 						os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000446\" name=\"fast ion bombardment\" />\n";
 					}
+					else if(so.getIonizationMethod()==IonSource::IONMETHODNULL)
+					{
+						os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000008\" name=\"ionization type\" />\n";
+					}
 						
 					writeUserParam_(os, so, 5);
 					os  << "				</source>\n";				
@@ -2970,6 +3011,10 @@ namespace OpenMS
 					else if (ma.getType()==MassAnalyzer::LIT)
 					{
 						os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000291\" name=\"linear ion trap\" />\n";
+					}
+					else if (ma.getType()==MassAnalyzer::ANALYZERNULL)
+					{
+						os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000443\" name=\"mass analyzer type\" />\n";
 					}
 					
 					writeUserParam_(os, ma, 5);
@@ -3090,6 +3135,10 @@ namespace OpenMS
 					else if (id.getType()==IonDetector::FOCALPLANEARRAY)
 					{
 						os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000113\" name=\"focal plane array\" />\n";
+					}
+					else if (id.getType()==IonDetector::TYPENULL)
+					{
+						os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000026\" name=\"detector type\" />\n";
 					}
 	
 					writeUserParam_(os, id, 5);
@@ -3217,19 +3266,13 @@ namespace OpenMS
 			{
 				os << " startTimeStamp=\"" << exp.getDateTime().get().substitute(' ','T') << "\"";
 			}
+			if (exp.getSourceFiles().size()>0)
+			{
+				os << " defaultSourceFileRef=\"sf_ru_0\"";
+			}
 			os  << ">\n";
 			
 			writeUserParam_(os, exp, 2);
-			
-			if (exp.getSourceFiles().size()!=0)
-			{
-				os	<< "		<sourceFileRefList count=\"" << exp.getSourceFiles().size() << "\">\n";
-				for (Size i=0; i<exp.getSourceFiles().size(); ++i)
-				{
-					os	<< "			<sourceFileRef ref=\"sf_ru_" << i << "\" />\n";
-				}
-				os	<< "		</sourceFileRefList>\n";
-			}
 
 			os	<< "		<spectrumList count=\"" << exp.size() << "\" defaultDataProcessingRef=\"dp_ru_0\">\n"; 
 			//--------------------------------------------------------------------------------------------
@@ -3357,7 +3400,7 @@ namespace OpenMS
 					os	<< "					<scan externalSpectrumID=\"" << ac.getIdentifier() << "\">\n";
 					if (j==0)
 					{
-						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
+						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan start time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
 					}
 					writeUserParam_(os, ac, 6);
 					//scan windows
@@ -3369,6 +3412,7 @@ namespace OpenMS
 							os	<< "						<scanWindow>\n";
 							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000501\" name=\"scan window lower limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].begin << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
 							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000500\" name=\"scan window upper limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].end << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+							writeUserParam_(os, spec.getInstrumentSettings().getScanWindows()[j], 8);
 							os	<< "						</scanWindow>\n";
 						}
 						os	<< "						</scanWindowList>\n";
@@ -3378,7 +3422,7 @@ namespace OpenMS
 				if (spec.getAcquisitionInfo().size()==0)
 				{
 					os	<< "					<scan externalSpectrumID=\"0\">\n";
-					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
+					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan start time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
 				
 					//scan windows
 					if (spec.getInstrumentSettings().getScanWindows().size()!=0)
@@ -3389,6 +3433,7 @@ namespace OpenMS
 							os	<< "						<scanWindow>\n";
 							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000501\" name=\"scan window lower limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].begin << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
 							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000500\" name=\"scan window upper limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].end << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+							writeUserParam_(os, spec.getInstrumentSettings().getScanWindows()[j], 8);
 							os	<< "						</scanWindow>\n";
 						}
 						os	<< "						</scanWindowList>\n";
@@ -3409,13 +3454,11 @@ namespace OpenMS
 						//--------------------------------------------------------------------------------------------
 						//isolation window
 						//--------------------------------------------------------------------------------------------
-						if (precursor.getIsolationWindowLowerBound()!=precursor.getIsolationWindowUpperBound())
-						{
-							os	<< "						<isolationWindow>\n";
-							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000794\" name=\"isolation window lower limit\" value=\"" << precursor.getIsolationWindowLowerBound() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000793\" name=\"isolation window upper limit\" value=\"" << precursor.getIsolationWindowUpperBound() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-							os	<< "						</isolationWindow>\n";
-						}
+						os	<< "						<isolationWindow>\n";
+						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000827\" name=\"isolation window target m/z\" value=\"" << precursor.getMZ() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000828\" name=\"isolation window lower offset\" value=\"" << precursor.getIsolationWindowLowerOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000829\" name=\"isolation window upper offset\" value=\"" << precursor.getIsolationWindowUpperOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+						os	<< "						</isolationWindow>\n";
 						//userParam: no extra object for it => no user paramters
 						
 						//--------------------------------------------------------------------------------------------
@@ -3498,7 +3541,25 @@ namespace OpenMS
 					}
 					os	<< "			</precursorList>\n";
 				}
-				writeUserParam_(os, spec.getInstrumentSettings(), 5);
+				//--------------------------------------------------------------------------------------------
+				//product list
+				//--------------------------------------------------------------------------------------------
+				if (spec.getProducts().size()!=0)
+				{
+					os	<< "				<productList count=\"" << spec.getProducts().size() << "\">\n";
+					for (Size p=0; p<spec.getProducts().size(); ++p)
+					{
+						os	<< "					<product>\n";
+						os	<< "						<isolationWindow>\n";
+						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000827\" name=\"isolation window target m/z\" value=\"" << spec.getProducts()[p].getMZ() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000828\" name=\"isolation window lower offset\" value=\"" << spec.getProducts()[p].getIsolationWindowLowerOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000829\" name=\"isolation window upper offset\" value=\"" << spec.getProducts()[p].getIsolationWindowUpperOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+						writeUserParam_(os, spec.getProducts()[p], 7);
+						os	<< "						</isolationWindow>\n";
+						os	<< "				</product>\n";
+					}
+					os	<< "			</productList>\n";
+				}
 				//--------------------------------------------------------------------------------------------
 				//binary data array list
 				//--------------------------------------------------------------------------------------------
@@ -3521,7 +3582,7 @@ namespace OpenMS
 					for (Size p=0; p<spec.size(); ++p) data_to_encode[p] = spec[p].getIntensity();
 					decoder_.encode(data_to_encode, Base64::BYTEORDER_LITTLEENDIAN, encoded_string);
 					os	<< "					<binaryDataArray encodedLength=\"" << encoded_string.size() << "\">\n";
-					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000515\" name=\"intensity array\" />\n";
+					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000515\" name=\"intensity array\" unitAccession=\"MS:1000131\" unitName=\"number of counts\" unitCvRef=\"MS\"/>\n";
 					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000523\" name=\"64-bit float\" />\n";
 					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000576\" name=\"no compression\" />\n";
 					os	<< "						<binary>" << encoded_string << "</binary>\n";

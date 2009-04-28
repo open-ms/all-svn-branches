@@ -65,6 +65,7 @@
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
+#include <OpenMS/VISUAL/DIALOGS/DemoDialog.h>
 
 //Qt
 #include <QtGui/QToolBar>
@@ -84,6 +85,7 @@
 #include <QtGui/QPainter>
 #include <QtCore/QDir>
 #include <QtCore/QDate>
+#include <QtCore/QTime>
 #include <QtGui/QWhatsThis>
 #include <QtGui/QInputDialog>
 #include <QtGui/QTextEdit>
@@ -92,32 +94,6 @@
 #include <QtGui/QDesktopServices>
 #include <QtCore/QUrl>
 #include <QtGui/QSplashScreen>
-
-//intensity modes
-#include "../VISUAL/ICONS/lin.xpm"
-#include "../VISUAL/ICONS/percentage.xpm"
-#include "../VISUAL/ICONS/snap.xpm"
-
-//common
-#include "../VISUAL/ICONS/reset_zoom.xpm"
-#include "../VISUAL/ICONS/tile_horizontal.xpm"
-#include "../VISUAL/ICONS/tile_vertical.xpm"
-
-//1d
-#include "../VISUAL/ICONS/lines.xpm"
-#include "../VISUAL/ICONS/peaks.xpm"
-
-//2d
-#include "../VISUAL/ICONS/precursors.xpm"
-#include "../VISUAL/ICONS/projections.xpm"
-#include "../VISUAL/ICONS/convexhull.xpm"
-#include "../VISUAL/ICONS/convexhulls.xpm"
-#include "../VISUAL/ICONS/numbers.xpm"
-#include "../VISUAL/ICONS/elements.xpm"
-
-//misc
-#include "../VISUAL/ICONS/TOPPView.xpm"
-#include "../VISUAL/ICONS/Oesterberg.xpm"
 
 #include <algorithm>
 #include <utility>
@@ -134,7 +110,7 @@ namespace OpenMS
       DefaultParamHandler("TOPPViewBase")
   {
   	setWindowTitle("TOPPView");
-    setWindowIcon(QIcon(toppview));
+    setWindowIcon(QIcon(":/TOPPView.png"));
     //prevents errors caused by too small width,height values
     setMinimumSize(400,400);
     //enable drag-and-drop
@@ -174,7 +150,8 @@ namespace OpenMS
     QMenu* file = new QMenu("&File",this);
     menuBar()->addMenu(file);
     file->addAction("&Open file",this,SLOT(openFileDialog()), Qt::CTRL+Qt::Key_O);
-    file->addAction("&Open from database",this,SLOT(openDatabaseDialog()), Qt::CTRL+Qt::Key_D);
+    file->addAction("Open from &database",this,SLOT(openDatabaseDialog()), Qt::CTRL+Qt::Key_D);
+    file->addAction("Open &example file",this,SLOT(openExampleDialog()));
     file->addAction("&Close",this,SLOT(closeFile()), Qt::CTRL+Qt::Key_W);
 		file->addSeparator();
 
@@ -228,8 +205,8 @@ namespace OpenMS
     menuBar()->addMenu(windows);
     windows->addAction("&Cascade",this->ws_,SLOT(cascade()));
     windows->addAction("&Tile automatic",this->ws_,SLOT(tile()));
-    windows->addAction(QIcon(QPixmap(tile_h)),"Tile &vertical",this,SLOT(tileHorizontal()));
-    windows->addAction(QIcon(QPixmap(tile_v)),"Tile &horizontal",this,SLOT(tileVertical()));
+    windows->addAction(QIcon(":/tile_horizontal.png"),"Tile &vertical",this,SLOT(tileHorizontal()));
+    windows->addAction(QIcon(":/tile_vertical.png"),"Tile &horizontal",this,SLOT(tileVertical()));
 		windows->addSeparator();
 
 		//Help menu
@@ -239,8 +216,7 @@ namespace OpenMS
 		help->addSeparator();
 		QAction* action = help->addAction("OpenMS website",this,SLOT(showURL()));
 		action->setData("http://www.OpenMS.de");
-		action = help->addAction("TOPPView tutorial (online)",this,SLOT(showURL()), Qt::Key_F1);
-		action->setData("http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS-release/html/TOPPViewTutorial.html");
+		action = help->addAction("TOPPView tutorial",this,SLOT(showTutorial()), Qt::Key_F1);
 		help->addSeparator();
 		help->addAction("&About",this,SLOT(showAboutDialog()));
 
@@ -252,14 +228,10 @@ namespace OpenMS
     rt_label_->setMinimumSize(rt_label_->sizeHint());
     rt_label_->setText("");
     statusBar()->addPermanentWidget(rt_label_,0);
-    mz_label_ = new QLabel("m/z: 12345678", statusBar());
+    mz_label_ = new QLabel("m/z: 123456780912", statusBar());
     mz_label_->setMinimumSize(mz_label_->sizeHint());
     mz_label_->setText("");
     statusBar()->addPermanentWidget(mz_label_,0);
-    int_label_ = new QLabel("Int: 123456789012", statusBar());
-    int_label_->setMinimumSize(int_label_->sizeHint());
-    int_label_->setText("");
-    statusBar()->addPermanentWidget(int_label_,0);
 
 		//################## TOOLBARS #################
     //create toolbars and connect signals
@@ -273,7 +245,7 @@ namespace OpenMS
     intensity_group_->setExclusive(true);
 
     b = new QToolButton(tool_bar_);
-    b->setIcon(QPixmap(lin));
+    b->setIcon(QIcon(":/lin.png"));
     b->setToolTip("Intensity: Normal");
     b->setShortcut(Qt::Key_N);
     b->setCheckable(true);
@@ -282,7 +254,7 @@ namespace OpenMS
 		tool_bar_->addWidget(b);
 
     b = new QToolButton(tool_bar_);
-    b->setIcon(QPixmap(percentage));
+    b->setIcon(QIcon(":/percentage.png"));
     b->setToolTip("Intensity: Percentage");
     b->setShortcut(Qt::Key_P);
     b->setCheckable(true);
@@ -294,7 +266,7 @@ namespace OpenMS
 		tool_bar_->addWidget(b);
 
     b = new QToolButton(tool_bar_);
-    b->setIcon(QPixmap(snap));
+    b->setIcon(QIcon(":/snap.png"));
     b->setToolTip("Intensity: Snap to maximum displayed intensity");
     b->setShortcut(Qt::Key_S);
     b->setCheckable(true);
@@ -307,7 +279,7 @@ namespace OpenMS
     tool_bar_->addSeparator();
 
     //common buttons
-    QAction* reset_zoom_button = tool_bar_->addAction(QPixmap(reset_zoom), "Reset Zoom", this, SLOT(resetZoom()));
+    QAction* reset_zoom_button = tool_bar_->addAction(QIcon(":/reset_zoom.png"), "Reset Zoom", this, SLOT(resetZoom()));
     reset_zoom_button->setWhatsThis("Reset zoom: Zooms out as far as possible and resets the zoom history.<BR>(Hotkey: Backspace)");
 
     tool_bar_->show();
@@ -320,7 +292,7 @@ namespace OpenMS
     draw_group_1d_->setExclusive(true);
 
     b = new QToolButton(tool_bar_1d_);
-    b->setIcon(QPixmap(peaks));
+    b->setIcon(QIcon(":/peaks.png"));
     b->setToolTip("Peak mode");
     b->setShortcut(Qt::Key_I);
     b->setCheckable(true);
@@ -329,7 +301,7 @@ namespace OpenMS
 		tool_bar_1d_->addWidget(b);
 
     b = new QToolButton(tool_bar_1d_);
-    b->setIcon(QPixmap(lines));
+    b->setIcon(QIcon(":/lines.png"));
     b->setToolTip("Raw data mode");
     b->setShortcut(Qt::Key_R);
     b->setCheckable(true);
@@ -343,36 +315,36 @@ namespace OpenMS
     //--2D toolbar--
     tool_bar_2d_ = addToolBar("2D tool bar");
 
-    dm_precursors_2d_ = tool_bar_2d_->addAction(QPixmap(precursors),"Show fragment scan precursors");
+    dm_precursors_2d_ = tool_bar_2d_->addAction(QIcon(":/precursors.png"),"Show fragment scan precursors");
     dm_precursors_2d_->setCheckable(true);
     dm_precursors_2d_->setWhatsThis("2D peak draw mode: Precursors<BR><BR>fragment scan precursor peaks are marked.<BR>(Hotkey: 1)");
 		dm_precursors_2d_->setShortcut(Qt::Key_1);
 
     connect(dm_precursors_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
-    projections_2d_ = tool_bar_2d_->addAction(QPixmap(projections), "Show Projections" ,this, SLOT(toggleProjections()));
+    projections_2d_ = tool_bar_2d_->addAction(QIcon(":/projections.png"), "Show Projections" ,this, SLOT(toggleProjections()));
     projections_2d_->setWhatsThis("Projections: Shows projections of peak data along RT and MZ axis.<BR>(Hotkey: 2)");
 		projections_2d_->setShortcut(Qt::Key_2);
 
-    dm_hull_2d_ = tool_bar_2d_->addAction(QPixmap(convexhull),"Show feature convex hull");
+    dm_hull_2d_ = tool_bar_2d_->addAction(QIcon(":/convexhull.png"),"Show feature convex hull");
     dm_hull_2d_->setCheckable(true);
     dm_hull_2d_->setWhatsThis("2D feature draw mode: Convex hull<BR><BR>The convex hull of the feature is displayed.<BR>(Hotkey: 5)");
 		dm_hull_2d_->setShortcut(Qt::Key_5);
     connect(dm_hull_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
-    dm_hulls_2d_ = tool_bar_2d_->addAction(QPixmap(convexhulls),"Show feature convex hulls");
+    dm_hulls_2d_ = tool_bar_2d_->addAction(QIcon(":/convexhulls.png"),"Show feature convex hulls");
     dm_hulls_2d_->setCheckable(true);
     dm_hulls_2d_->setWhatsThis("2D feature draw mode: Convex hulls<BR><BR>The convex hulls of the feature are displayed: One for each mass trace.<BR>(Hotkey: 6)");
 		dm_hulls_2d_->setShortcut(Qt::Key_6);
     connect(dm_hulls_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
-    dm_numbers_2d_ = tool_bar_2d_->addAction(QPixmap(numbers),"Show feature identifiers");
+    dm_numbers_2d_ = tool_bar_2d_->addAction(QIcon(":/numbers.png"),"Show feature identifiers");
     dm_numbers_2d_->setCheckable(true);
     dm_numbers_2d_->setWhatsThis("2D feature draw mode: Numbers/labels<BR><BR>The feature number is displayed next to the feature. If the meta data value 'label' is set, it is displayed in brackets after the number.<BR>(Hotkey: 7)");
 		dm_numbers_2d_->setShortcut(Qt::Key_7);
     connect(dm_numbers_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
-    dm_elements_2d_ = tool_bar_2d_->addAction(QPixmap(elements),"Show consensus feature element positions");
+    dm_elements_2d_ = tool_bar_2d_->addAction(QIcon(":/elements.png"),"Show consensus feature element positions");
     dm_elements_2d_->setCheckable(true);
     dm_elements_2d_->setWhatsThis("2D consensus feature draw mode: Elements<BR><BR>The individual elements that make up the  consensus feature are drawn.<BR>(Hotkey: 9)");
 		dm_elements_2d_->setShortcut(Qt::Key_9);
@@ -464,6 +436,8 @@ namespace OpenMS
 		defaults_.setValidStrings("preferences:intensity_cutoff",StringList::create("on,off"));
     defaults_.setValue("preferences:on_file_change","ask","What action to take, when a data file changes. Do nothing, update automatically or ask the user.");
 		defaults_.setValidStrings("preferences:on_file_change",StringList::create("none,ask,update automatically"));
+    defaults_.setValue("preferences:topp_cleanup", "true", "If the temporary files for calling of TOPP tools should be removed after the call.");
+		defaults_.setValidStrings("preferences:topp_cleanup",StringList::create("true,false"));
     //db
     defaults_.setValue("preferences:db:host", "localhost", "Database server host name.");
     defaults_.setValue("preferences:db:login", "NoName", "Database login.");
@@ -530,6 +504,25 @@ namespace OpenMS
 														action->data().toString() +
 														tr("\n\nPossible reason: security settings or misconfigured Operating System"));
 		}
+	}
+
+	void TOPPViewBase::showTutorial()
+	{
+		//create dialog
+		DemoDialog* dlg = new DemoDialog(this);
+		dlg->setTitle("TOPPView tutorial");
+		
+		//create file list
+		StringList pages;
+		File::fileList(String(OPENMS_DATA_PATH) + "/tutorial/","TOPPView_tutorial_*.html",pages);
+		for (Size i=0; i<pages.size(); ++i)
+		{
+			pages[i] = String(OPENMS_DATA_PATH) + "/tutorial/" + pages[i];
+		}
+		dlg->setPages(pages);
+		
+		//show dialog		
+		dlg->show();
 	}
 
   void TOPPViewBase::addDataDB(UInt db_id, bool show_options, String caption, UInt window_id)
@@ -744,7 +737,7 @@ namespace OpenMS
       return;
 		}
 		//abort if file type unsupported
-		if (file_type==FileTypes::PARAM || file_type==FileTypes::IDXML)
+		if (file_type==FileTypes::INI || file_type==FileTypes::IDXML)
 		{
 			showLogMessage_(LS_ERROR,"Open file error",String("The type '")+fh.typeToName(file_type)+"' is not supported!");
    		setCursor(Qt::ArrowCursor);
@@ -1089,7 +1082,7 @@ namespace OpenMS
     }
   }
 
-  void TOPPViewBase::showCursorStatus(double mz, double intensity, double rt)
+  void TOPPViewBase::showCursorStatus(double mz, double rt)
   {
     message_label_->setText("");
     if (mz==-1)
@@ -1098,11 +1091,11 @@ namespace OpenMS
     }
     else if (isinf(mz) || isnan(mz))
 		{
-      int_label_->setText("m/z: n/a");
+      mz_label_->setText("m/z: n/a");
 		}
     else
     {
-      mz_label_->setText((String("m/z: ")+String::number(mz,3).fillLeft(' ',8)).toQString());
+      mz_label_->setText((String("m/z: ")+String::number(mz,6).fillLeft(' ',8)).toQString());
     }
     if (rt==-1)
     {
@@ -1110,23 +1103,11 @@ namespace OpenMS
     }
     else if (isinf(rt) || isnan(rt))
 		{
-      int_label_->setText("RT: n/a");
+      rt_label_->setText("RT: n/a");
 		}
     else
     {
       rt_label_->setText((String("RT: ")+String::number(rt,1).fillLeft(' ',8)).toQString());
-    }
-    if (intensity==-1)
-    {
-      int_label_->setText("Int: ");
-    }
-    else if (isinf(intensity) || isnan(intensity))
-		{
-      int_label_->setText("Int: n/a");
-		}
-		else
-    {
-      int_label_->setText((String("Int: ")+String::number(intensity,1).fillLeft(' ',12)).toQString());
     }
     statusBar()->update();
   }
@@ -1267,12 +1248,15 @@ namespace OpenMS
 
   void TOPPViewBase::updateLayerBar()
   {
+  	//reset
 		layer_manager_->clear();
     SpectrumCanvas* cc = activeCanvas_();
-    if (cc == 0)
-    {
-      return;
-    }
+    if (cc == 0) return;
+		
+		//determine if this is a 1D view (for text color)
+		bool is_1d_view = false;
+		if (dynamic_cast<Spectrum1DCanvas*>(cc)) is_1d_view = true;
+		
 		layer_manager_->blockSignals(true);
 		QListWidgetItem* item = 0;
 		QString name;
@@ -1287,6 +1271,12 @@ namespace OpenMS
 				name += " [flipped]";
 			}
 			item->setText(name);
+			if (is_1d_view && cc->getLayerCount()>1)
+			{
+				QPixmap icon(7,7);
+				icon.fill(QColor(layer.param.getValue("peak_color").toQString()));
+				item->setIcon(icon);
+			}
     	if (layer.visible)
     	{
     		item->setCheckState(Qt::Checked);
@@ -1329,7 +1319,8 @@ namespace OpenMS
   	const LayerData& cl = cc->getCurrentLayer();
   	QTreeWidgetItem* item = 0;
   	QTreeWidgetItem* selected_item = 0;
-
+		QList<QTreeWidgetItem*> toplevel_items;
+		
   	if(cl.type == LayerData::DT_PEAK)
   	{
   		std::vector<QTreeWidgetItem*> parent_stack;
@@ -1389,7 +1380,7 @@ namespace OpenMS
 				parent_stack.back() = item;
 				if (parent_stack.size() == 1)
 				{
-					spectrum_selection_->addTopLevelItem(item);
+					toplevel_items.push_back(item);
 				}
 
 				item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
@@ -1405,10 +1396,16 @@ namespace OpenMS
 					selected_item = item;
 				}
 			}
-			if (fail)
+			
+			if (!fail)
+			{
+				spectrum_selection_->addTopLevelItems(toplevel_items);
+			}
+			else
 			{
 				// generate flat list instead
 				spectrum_selection_->clear();
+				toplevel_items.clear();
 				selected_item = 0;
 				for (Size i = 0; i < cl.peaks.size(); ++i)
 				{
@@ -1419,13 +1416,14 @@ namespace OpenMS
 					if (!cl.peaks[i].getPrecursors().empty()) mz_pos = cl.peaks[i].getPrecursors()[0].getMZ();
 					item->setText(2, QString::number(mz_pos));
 					item->setText(3, QString::number(i));
-					spectrum_selection_->addTopLevelItem(item);
+					toplevel_items.push_back(item);
 					if (i == cl.current_spectrum)
 					{
 						item->setSelected(true);
 						selected_item = item;
 					}
 				}
+				spectrum_selection_->addTopLevelItems(toplevel_items);
 			}
 			if (selected_item)
 			{
@@ -1785,19 +1783,20 @@ namespace OpenMS
   void TOPPViewBase::showAsWindow_(SpectrumWidget* sw, const String& caption)
   {
   	ws_->addWindow(sw);
+    connect(sw->canvas(),SIGNAL(preferencesChange()),this,SLOT(updateLayerBar()));
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateToolBar()));
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateSpectrumBar()));
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateCurrentPath()));
     connect(sw->canvas(),SIGNAL(layerModficationChange(Size,bool)),this,SLOT(updateLayerBar()));
     connect(sw,SIGNAL(sendStatusMessage(std::string,OpenMS::UInt)),this,SLOT(showStatusMessage(std::string,OpenMS::UInt)));
-    connect(sw,SIGNAL(sendCursorStatus(double,double,double)),this,SLOT(showCursorStatus(double,double,double)));
+    connect(sw,SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
     connect(sw,SIGNAL(dropReceived(const QMimeData*,QWidget*,int)),this,SLOT(copyLayer(const QMimeData*,QWidget*,int)));			
 
   	Spectrum2DWidget* sw2 = qobject_cast<Spectrum2DWidget*>(sw);
   	if (sw2 != 0)
   	{
-  		connect(sw2->getHorizontalProjection(),SIGNAL(sendCursorStatus(double,double,double)),this,SLOT(showCursorStatus(double,double,double)));
-  		connect(sw2->getVerticalProjection(),SIGNAL(sendCursorStatus(double,double,double)),this,SLOT(showCursorStatus(double,double,double)));
+  		connect(sw2->getHorizontalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
+  		connect(sw2->getVerticalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
   		connect(sw2,SIGNAL(showSpectrumAs1D(int)),this,SLOT(showSpectrumAs1D(int)));
   	}
 
@@ -1964,7 +1963,7 @@ namespace OpenMS
 		}
 	}
 
-  QStringList TOPPViewBase::getFileList_()
+  QStringList TOPPViewBase::getFileList_(const String& path_overwrite)
   {
 		String filter_all = "readable files (*.dta *.dta2d";
 		String filter_single = "dta files (*.dta);;dta2d files (*.dta2d)";
@@ -1974,13 +1973,27 @@ namespace OpenMS
 #endif
 		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML);;" ;
 		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;XML files (*.xml);;all files (*)";
-
-	 	return QFileDialog::getOpenFileNames(this, "Open file(s)", current_path_.toQString(), (filter_all+ filter_single).toQString());
+		
+		QString open_path = current_path_.toQString();
+		if (path_overwrite!="")
+		{
+			open_path = path_overwrite.toQString();;
+		}
+	 	return QFileDialog::getOpenFileNames(this, "Open file(s)", open_path, (filter_all+ filter_single).toQString());
   }
 
   void TOPPViewBase::openFileDialog()
   {
 	 	QStringList files = getFileList_();
+		for(QStringList::iterator it=files.begin();it!=files.end();it++)
+		{
+			addDataFile(*it,true,true);
+		}
+  }
+
+  void TOPPViewBase::openExampleDialog()
+  {
+	 	QStringList files = getFileList_(String(OPENMS_DATA_PATH) + "/examples/");
 		for(QStringList::iterator it=files.begin();it!=files.end();it++)
 		{
 			addDataFile(*it,true,true);
@@ -2207,6 +2220,14 @@ namespace OpenMS
 		delete topp_.process;
 		topp_.process = 0;
 		updateMenu();
+		
+		//clean up temporary files
+		if (param_.getValue("preferences:topp_cleanup")=="true")
+		{
+			File::remove(topp_.file_name+"_ini");
+			File::remove(topp_.file_name+"_in");
+			File::remove(topp_.file_name+"_out");
+  	}
   }
 
 	const LayerData* TOPPViewBase::getCurrentLayer() const
@@ -2452,8 +2473,7 @@ namespace OpenMS
 
 		//image
 		QLabel* label = new QLabel(dlg);
-		QPixmap image(Oesterberg);
-		label->setPixmap(image);
+		label->setPixmap(QPixmap(":/TOPPView_about.png"));
 		grid->addWidget(label,0,0);
 
 		//text

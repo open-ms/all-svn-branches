@@ -84,7 +84,7 @@ namespace OpenMS
 		connect(x_scrollbar_, SIGNAL(valueChanged(int)), canvas_, SLOT(horizontalScrollBarChange(int)));
 		connect(y_scrollbar_, SIGNAL(valueChanged(int)), canvas_, SLOT(verticalScrollBarChange(int)));
 		connect(canvas_, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)),this, SIGNAL(sendStatusMessage(std::string, OpenMS::UInt)));
-		connect(canvas_, SIGNAL(sendCursorStatus(double,double,double)), this, SIGNAL(sendCursorStatus(double,double,double)));
+		connect(canvas_, SIGNAL(sendCursorStatus(double,double)), this, SIGNAL(sendCursorStatus(double,double)));
 		
 		//swap axes if necessary
 		updateAxes();
@@ -194,7 +194,7 @@ namespace OpenMS
 	
 	void SpectrumWidget::saveAsImage()
 	{
-		QString file_name = QFileDialog::getSaveFileName(this, "Save File", "", "Images (*.bmp *.png *.xpm *.jpg)");
+		QString file_name = QFileDialog::getSaveFileName(this, "Save File", "", "Images (*.bmp *.png *.jpg *.gif)");
 		bool x_visible = x_scrollbar_->isVisible();
 		bool y_visible = y_scrollbar_->isVisible();
 		x_scrollbar_->hide();

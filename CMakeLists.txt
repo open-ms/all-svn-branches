@@ -17,6 +17,7 @@ PROJECT("OpenMS")
 # CONTRIB_CUSTOM_DIR
 # STL_DEBUG
 # QT_DB_PLUGIN
+# MT_CUDA_BUILD_TYPE
 
 ########################################################
 ###    manual entries (edit this for new release)    ###
@@ -47,8 +48,12 @@ endif()
 ########################################################
 
 if (CMAKE_COMPILER_IS_GNUCXX)
-	add_definitions(-Wall -Wextra -pedantic -Wno-non-virtual-dtor -Wno-long-long)
-	
+	if (MT_ENABLE_CUDA)
+		add_definitions(-Wall -Wextra -Wno-non-virtual-dtor -Wno-long-long) # necessary since CUDA contains non-pedantic code
+	else()
+		add_definitions(-Wall -Wextra -Wno-non-virtual-dtor -Wno-long-long --pedantic)
+	endif()
+
 	## Recommended setting for eclipse, see http://www.cmake.org/Wiki/CMake:Eclipse
 	if (CMAKE_GENERATOR STREQUAL "Eclipse CDT4 - Unix Makefiles")
 		add_definitions(-fmessage-length=0)
@@ -59,6 +64,13 @@ elseif (MSVC)
 
 	## disable dll-interface warning
 	add_definitions(/wd4251)
+	
+	## disable deprecated functions warning (e.g. for POSIX functions)
+	add_definitions(/wd4996)
+
+	## disable explicit template instantiation request for partially defined classes
+	add_definitions(/wd4661)
+
 	
 	## don't warn about unchecked std::copy()
 	add_definitions(/D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE /D_SECURE_SCL=0)
@@ -87,23 +99,43 @@ endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 
 ## cuda checking
-set(ENABLE_CUDA OFF CACHE BOOL "Should CUDA support be enabled.")
-if (ENABLE_CUDA)
+set(MT_ENABLE_CUDA OFF CACHE BOOL "Should CUDA support be enabled.")
+set(MT_CUDA_BUILD_TYPE Device CACHE STRING "Switch between Device and Emulation mode.")
+if (MT_ENABLE_CUDA)
+	MESSAGE(STATUS "NVIDIA CUDA: ${MT_CUDA_BUILD_TYPE} mode")
 	find_package(Cuda)
+else()
+  MESSAGE(STATUS "NVIDIA CUDA: ${MT_ENABLE_CUDA}")
+endif()
+
+
+if (FOUND_CUDART AND MT_ENABLE_CUDA) #CUDART and not CUDA!!!
+	add_definitions(/DOPENMS_HAS_CUDA)
+	MESSAGE (STATUS "Found CUDA header files in: ${FOUND_CUDA_NVCC_INCLUDE}") #Not CUDA_INCLUDE_DIR
+	MESSAGE (STATUS "Found CUDA library at: ${FOUND_CUDART}") 
+	INCLUDE_DIRECTORIES(${FOUND_CUDA_NVCC_INCLUDE})
+  set (CUDA_NVCC_INCLUDE_ARGS ${CUDA_NVCC_INCLUDE_ARGS} -I ${PROJECT_BINARY_DIR}/include/)
 endif()
 
 ## TBB
-set(ENABLE_TBB OFF CACHE BOOL "Should Intel Threading Building Blocks support be enabled.")
-set(TBB_INCLUDE_DIR CACHE PATH "Intel Threading Building Blocks 'include' directory.")
-set(TBB_LIBRARY_DIR CACHE PATH "Intel Threading Building Blocks libraries directory.")
+set(MT_ENABLE_TBB OFF CACHE BOOL "Should Intel Threading Building Blocks support be enabled.")
+set(MT_TBB_INCLUDE_DIR CACHE PATH "Intel Threading Building Blocks 'include' directory.")
+set(MT_TBB_LIBRARY_DIR CACHE PATH "Intel Threading Building Blocks libraries directory.")
 
-if (ENABLE_TBB)
+
+MESSAGE(STATUS "Intel TBB: ${MT_ENABLE_TBB}")
+if (MT_ENABLE_TBB)
 	find_package(TBB)
 endif()
 
+if (TBB_FOUND)
+	INCLUDE_DIRECTORIES(${MT_TBB_INCLUDE_DIR})
+	add_definitions(/DOPENMS_HAS_TBB)
+endif()
+
 ## OpenMP
-set(ENABLE_OPENMP ON CACHE BOOL "Should OpenMP support be enabled")
-if (ENABLE_OPENMP)
+set(MT_ENABLE_OPENMP ON CACHE BOOL "Should OpenMP support be enabled")
+if (MT_ENABLE_OPENMP)
 	find_package(OpenMP)
 endif()
 
@@ -252,7 +284,7 @@ if (NOT MSVC AND USE_ANDIMS)
 	set(CONTRIB_NETCDF ${CONTRIB_NETCDF_CPP} ${CONTRIB_NETCDF_C})
 endif()
 
-# libSVM:
+#libSVM support
 
 if (MSVC) 
 	## we created a lib here, because we cannot just add an object..
@@ -260,6 +292,23 @@ if (MSVC)
 else()
 	## there is no FIND_OBJECT.. so just hard-code it (FIND_LIBRARY won't work)
 	set(SVM_LIBRARY general ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library") # do not distinguish between optimized and debug
+endif()
+
+# Boost support
+if (MSVC)
+	## needed to locate libs (put this above ADD_LIBRARY() - otherwise it will not work)
+	link_directories(${CONTRIB_LIB_DIR})
+else()
+	set(CONTRIB_ENABLE_BOOST OFF CACHE BOOL "Enable Boost iostreams lib support")
+	if(CONTRIB_ENABLE_BOOST)
+		#determine boost library suffix
+		file(GLOB BOOST_IO_LIB_PATH "${CONTRIB_LIB_DIR}/*boost_iostreams*[^0-9].*")
+		string(REGEX MATCH "-.*-[^.]*" BOOST_LIB_SUFFIX ${BOOST_IO_LIB_PATH})
+		message(STATUS "Boost library suffix: ${BOOST_LIB_SUFFIX}")
+		
+		#find libs
+		OPENMS_CHECKLIB(CONTRIB_BOOST_IO "boost_iostreams${BOOST_LIB_SUFFIX}" "boost_iostreams${BOOST_LIB_SUFFIX}" "Boost iostreams")
+	endif()
 endif()
 
 
@@ -476,13 +525,13 @@ ENDMACRO (QT4_WRAP_UI_OWN)
 ## big include file for headers and C files, which fills the OpenMS_sources variable
 include (cmake/includes.cmake)
 
-## needed for MSVC to locate Boost-Libs (put this above ADD_LIBRARY() - otherwise it will not work)
-link_directories(${CONTRIB_LIB_DIR})
-
 ## add library target
 ## warning: set BUILD_SHARED_LIBS to decide if library is shared or static (see above)! We need the BUILD_SHARED_LIBS flag to set declspec flags for MSVC!
-ADD_LIBRARY(OpenMS ${OpenMS_sources})
-#CUDA_ADD_LIBRARY(OpenMS ${Cuda_sources})
+if (FOUND_CUDART AND MT_ENABLE_CUDA) # we need both conditions due to possible present cached entries
+	CUDA_ADD_LIBRARY(OpenMS ${OpenMS_sources} ${Cuda_sources})
+else()
+	ADD_LIBRARY(OpenMS ${OpenMS_sources})
+endif()
 
 ## always create the svn version file before compiling OpenMS
 if (OPENMS_HAS_SVNVERSION)
@@ -493,8 +542,12 @@ if (OPENMS_HAS_SVNVERSION)
 endif()
 
 
-## all the dependency libraries are linked into libOpenMS.so, except Qt which is still dynamic
-set(OPENMS_DEP_LIBRARIES ${CONTRIB_CGAL} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF})
+## all the dependency libraries are linked into libOpenMS.so, except Qt and CUDA which are still dynamic
+set(OPENMS_DEP_LIBRARIES ${CONTRIB_CGAL} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF} ${CONTRIB_BOOST_IO})
+if (TBB_FOUND)
+	set (OPENMS_DEP_LIBRARIES ${OPENMS_DEP_LIBRARIES} ${TBB_LIBRARIES})
+endif()
+
 if (MSVC)
 	list(APPEND OPENMS_DEP_LIBRARIES opengl32.lib)
 endif()
@@ -524,50 +577,19 @@ foreach(i ${TOPP_executables})
 		Message(STATUS "Setting resource file ${resource_file} for ${i}")
 		add_executable(${i} ${TOPP_DIR}${i}.C ${resource_file})
   elseif(APPLE AND EXISTS ${resource_dir}) 
-    ## transform TOPPView and INIFileEditor to real Mac OS X applications
-		set(MACOSX_BUNDLE_INFO_STRING "${i} - Version 1.3")
-	  set(MACOSX_BUNDLE_SHORT_VERSION_STRING "1.3")
-	  set(MACOSX_BUNDLE_VERSION "1.3")
-	  set(MACOSX_BUNDLE_LONG_VERSION_STRING "1.3")
-	  set(MACOSX_BUNDLE_ICON_FILE "${i}.icns")
-	  set(MACOSX_BUNDLE_GUI_IDENTIFIER "de.openms.${i}")
-	  set(MACOSX_BUNDLE_BUNDLE_NAME "${i}")
-    add_executable(${i} MACOSX_BUNDLE ${TOPP_DIR}${i}.C)          
+    set_source_files_properties(${resource_dir}/${i}.icns 
+      PROPERTIES
+      MACOSX_PACKAGE_LOCATION Resources)
 
-    ## Need to copy the icon file and the custom Info.plist
-    ## if version info changes, please update also the 
-    ## info.plist file located in APPLICATIONS/TOPP/{i}-resources/
-    if(${CMAKE_GENERATOR} MATCHES "Xcode") 
-      ## since Xcode builds several configurations (Debug;Release)
-      ## we need a special handling for the postbuild actions
-      ADD_CUSTOM_COMMAND(
-        TARGET ${i}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Post build action for ${i}.app -- Creating OS X bundle"
-        #COMMAND ${CMAKE_COMMAND} -E copy
-        #${resource_dir}Info.plist
-        #${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/\$\(CONFIGURATION\)/${i}.app/Contents
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/\$\(CONFIGURATION\)/${i}.app/Contents/Resources
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${resource_dir}${i}.icns
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/\$\(CONFIGURATION\)/${i}.app/Contents/Resources
-        )
-    else()
-      ADD_CUSTOM_COMMAND(
-        TARGET ${i}
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E echo "Post build action for ${i}.app -- Creating OS X bundle"
-        #COMMAND ${CMAKE_COMMAND} -E copy
-        #${resource_dir}Info.plist
-        #${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${i}.app/Contents
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${i}.app/Contents/Resources
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${resource_dir}${i}.icns
-        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${i}.app/Contents/Resources
-        )
-    endif()
+    add_executable(${i} MACOSX_BUNDLE ${TOPP_DIR}${i}.C ${resource_dir}/${i}.icns)         
+    ## transform TOPPView and INIFileEditor to real Mac OS X applications
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_INFO_STRING "${i} - Version 1.3")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "1.3")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_VERSION "1.3")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "1.3")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_ICON_FILE "${i}.icns")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_GUI_IDENTIFIER "de.openms.${i}")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "${i}") 
   else()
 		add_executable(${i} ${TOPP_DIR}${i}.C)
 	endif()
@@ -601,7 +623,7 @@ foreach(i ${OpenMS_doc_executables})
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
 endforeach(i)
 add_custom_target(doc_progs)
-add_dependencies(doc_progs ${OpenMS_doc_executables} TOPP)
+add_dependencies(doc_progs ${OpenMS_doc_executables} TOPP UTILS)
 
 ##### Examples #####
 if ("${PACKAGE_TYPE}" STREQUAL "none")
@@ -660,6 +682,8 @@ if (MSVC)
 										COMMAND ${CMAKE_COMMAND} -E echo "    test           [NMake only]         executes OpenMS and TOPP tests (*)"
 										COMMAND ${CMAKE_COMMAND} -E echo "                   *) make sure they are built using the TEST target"
 										COMMAND ${CMAKE_COMMAND} -E echo "    EXAMPLES       builds the example executables in source/EXAMPLES"
+										COMMAND ${CMAKE_COMMAND} -E echo "    doc            builds the doxygen documentation and tutorials"
+										COMMAND ${CMAKE_COMMAND} -E echo "    doc_tutorials  builds the pdf tutorials"
 										COMMAND ${CMAKE_COMMAND} -E echo ""
 										COMMAND ${CMAKE_COMMAND} -E echo "Single TOPP tools have their own target, e.g. TOPPView"
 										COMMAND ${CMAKE_COMMAND} -E echo "The same applies for class tests and UTILS tools."
@@ -684,7 +708,7 @@ else()
 										COMMAND ${CMAKE_COMMAND} -E echo "                   make sure they are built using the TEST target"
 										COMMAND ${CMAKE_COMMAND} -E echo "    EXAMPLES       builds the example executables in source/EXAMPLES"
 										COMMAND ${CMAKE_COMMAND} -E echo "    doc            builds the doxygen documentation and tutorials"
-										COMMAND ${CMAKE_COMMAND} -E echo "    tutorials      builds the pdf tutorials"
+										COMMAND ${CMAKE_COMMAND} -E echo "    doc_tutorials  builds the pdf tutorials"
 										COMMAND ${CMAKE_COMMAND} -E echo "    help           list all available targets (very long)"
 										COMMAND ${CMAKE_COMMAND} -E echo ""
 										COMMAND ${CMAKE_COMMAND} -E echo "Single TOPP tools have their own target, e.g. TOPPView"

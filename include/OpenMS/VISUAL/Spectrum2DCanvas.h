@@ -53,6 +53,7 @@ namespace OpenMS
 		@htmlinclude OpenMS_Spectrum2DCanvas.parameters
 
     @improvement Support different peak icons - cross, star, square - and sizes (HiWi)
+    @improvement Add log mode (Marc)
 		
   	@ingroup SpectrumWidgets
   */
@@ -112,6 +113,11 @@ namespace OpenMS
       	@see projection_rt_
       */
       void updateProjections();
+
+  	protected slots:
+  		
+			/// Reacts on changed layer paramters
+			void currentLayerParamtersChanged_();
       
     protected:
       // Docu in base class
@@ -197,8 +203,6 @@ namespace OpenMS
       virtual void intensityModeChange_();
       // DOcu in base class
       virtual void recalculateSnapFactor_();
-			// Docu in base class
-			virtual void currentLayerParamtersChanged_();
       /// recalculates the dot gradient of a layer
       void recalculateDotGradient_(Size layer);
 
@@ -212,25 +216,25 @@ namespace OpenMS
       	
       	Takes intensity modes into account.
       */
-      inline const QColor& heightColor_(Real val, const MultiGradient& gradient, DoubleReal snap_factor)
+      inline QRgb heightColor_(Real val, const MultiGradient& gradient, DoubleReal snap_factor)
 			{
 				switch (intensity_mode_)
 				{
 					case IM_NONE:
-						return gradient.precalculatedColorAt(val);
+						return gradient.precalculatedColorAt(val).rgb();
 						break;
 					case IM_PERCENTAGE:
-						return gradient.precalculatedColorAt(val*percentage_factor_);
+						return gradient.precalculatedColorAt(val*percentage_factor_).rgb();
 						break;
 					case IM_SNAP:
-						return gradient.precalculatedColorAt(val*snap_factor);
+						return gradient.precalculatedColorAt(val*snap_factor).rgb();
 						break;
 					default:
 						throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 				}
 			}
 
-      /// Highlights a single peak
+      /// Highlights a single peak and prints coordinates to screen
       void highlightPeak_(QPainter& p, const PeakIndex& peak);
 
       /// Returns the nearest peak to position @p pos

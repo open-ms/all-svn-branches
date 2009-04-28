@@ -42,7 +42,7 @@
 			<LI><B>I am new to %OpenMS. What should i do first?</B><BR>
 				<OL>
 					<LI> Check out the developement version of %OpenMS (see website).
-					<LI> (Linux) Build the internal documentation (use 'make idoc' instead of 'make doc').
+					<LI> (Linux) Build the internal documentation (use 'make doc_internal' instead of 'make doc').
 					<LI> Try and build %OpenMS according to the installation instructions.
 					<Li> Read the %OpenMS Coding Convention.
 					<LI> Read the %OpenMS Tutorial.
@@ -176,29 +176,31 @@ svn propset svn:eol-style native MyClass.C
 	    <LI><b>How do I add a new directory <TT>MYDIR</TT> to the build system?</b><BR>
         <OL>
           <LI>Add the new directory to <%OpenMS>/includes.cmake (you should add two lines - one for /source and one for /include).
-          <LI>Create two new sources.cmake files (one for /source/MYDIR, one for /include/MYDIR), using existing sources.cmake files as template
+          <LI>Create two new sources.cmake files (one for %OpenMS/source/MYDIR, one for %OpenMS/include/MYDIR), using existing sources.cmake files as template
+					<LI>Add the new sources.cmake file from %OpenMS/source/MYDIR to %OpenMS/cmake/includes.cmake.
+					<LI>If you created a new directory directly under %OpenMS/source, then have a look at %OpenMS/source/TEST/CMakeLists.txt and add a new section.
         </OL>
 
 	    <LI><b>How do I add a new test for the class <TT>MyClass</TT>?</b><BR>
         <OL>
           <LI> Create the @em MyClass_test.C in @em source/TEST/
-          <LI> Add it to @em sources.cmake and @em executables.cmake
+          <LI> Add it to @em %OpenMS/source/TEST/executables.cmake in the correct section. For a new section: register it at the bottom of the file.
         </OL>
 
 	    <LI><b>How do I add a new TOPP test?</b><BR>
         <OL>
-          <LI> Add commands to @em source/TEST/TOPP/CTestTestfile.cmake
+          <LI> Add commands to @em %OpenMS/source/TEST/TOPP/CTestTestfile.cmake
         </OL>
 
 		</UL>
 	<H2 style="border-top:2px solid grey;">How can I speed up the compile process of %OpenMS?</H2>
 		<UL>
 		
-	    <LI><b>Use ccache.</b><BR>
+	    <LI><b>(Linux/Mac only) Use ccache.</b><BR>
 	    	<TT>ccache</TT> caches the preprocessor output and thereby speeds up the the compile
 	    	process if a file did not change since the last build.
 
-	    <LI><b>Build with several threads.</b><BR>
+	    <LI><b>(Linux/Mac only) Build with several threads.</b><BR>
 				If you have several pocessors/cores you can build %OpenMS classes/tests and TOPP tools
 				in in several threads using the @a make option @a -j:
 				- <code>make -j8 %OpenMS</code>
@@ -365,20 +367,13 @@ svn propset svn:eol-style native MyClass.C
 
 	    <LI><b>What are the important files for adding a new tutorial section?</b><BR>
 		    %OpenMS tutorial:
-		    <BR>%OpenMS/doc/OpenMS_tutorial/OpenMS_Tutorial.doxygen
 		    <BR>OpenMS/doc/OpenMS_tutorial/refman_overwrite.tex
 		    <BR>%OpenMS/doc/doxygen/public/OpenMS_Tutorial_html.doxygen
 
-				TOPP tutorial:
-		    <BR>%OpenMS/doc/TOPP_tutorial/TOPP_Tutorial.doxygen
+				TOPP and TOPPView tutorial:
 		    <BR>OpenMS/doc/TOPP_tutorial/refman_overwrite.tex
 		    <BR>%OpenMS/doc/doxygen/public/TOPP_Tutorial_html.doxygen
 
-				TOPPView tutorial:
-		    <BR>%OpenMS/doc/TOPP_tutorial/TOPPView_Tutorial.doxygen
-		    <BR>OpenMS/doc/TOPP_tutorial/refman_overwrite.tex
-		    <BR>%OpenMS/doc/doxygen/public/TOPPView_Tutorial_html.doxygen
-		
 		</UL>
 	<H2 style="border-top:2px solid grey;">Bug fixes</H2>
 		<UL>
@@ -462,7 +457,7 @@ svn propset svn:eol-style native MyClass.C
 						<LI> Build the documentation that is needed for the release
 							<OL>
 								<LI> Check out a fresh working copy of %OpenMS
-								<LI> Build the library, and build the documentation using <TT>make doc</TT> (not <TT>idoc</TT>!).
+								<LI> Build the library, and build the documentation using <TT>make doc</TT> (not <TT>doc_internal</TT>!).
 								<LI> Build the tutorials using <TT>make totorials</TT>.
 								<LI> Make sure that the Parameter documentation was created.
 								<LI> Make sure the include paths in the documentation are correct.

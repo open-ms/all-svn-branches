@@ -94,6 +94,17 @@ namespace OpenMS
     */
     void pickExperiment(const MSExperiment<>& input, MSExperiment<>& output);
 
+		/**
+			 @brief Estimates average peak width that can then be used for peak picking.
+
+			 The spectra with the highest TICs are used to estimate an average peak width that
+			 can be used as the peak_width parameter for picking the complete data set.
+			 Typically, the number of peaks increases with decreasing peak width until a plateau
+			 is reached. The beginning of this plateau is our estimate for the peak width.
+			 This estimate is averaged over several spectra.
+
+		 */
+		DoubleReal estimatePeakWidth(const MSExperiment<>& input);
 	 protected:
 
     /// Threshold for the peak height in the MS 1 level
@@ -168,6 +179,19 @@ namespace OpenMS
       DPosition<1> centroid_position;
     };
 
+		/**
+			@brief Class for comparison of SpectrumIndex-TIC-Pair needed for peak width estimation.
+    */
+		class OPENMS_DLLAPI TICLess_
+			{
+			  public:
+				bool operator()(const std::pair<Size,DoubleReal>& a, const std::pair<Size,DoubleReal>& b)
+			    {
+			      return a.second < b.second;
+			    }
+			};
+
+		
     /// Computes the peak's left and right area
     void getPeakArea_(const PeakArea_& area, double &area_left, double &area_right);
 

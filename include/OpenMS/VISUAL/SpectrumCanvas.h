@@ -343,7 +343,10 @@ namespace OpenMS
 		virtual void setFilters(const DataFilters& filters);
 		
 		/// Returns the mapping of m/z to axes
-		bool isMzToXAxis();
+		inline bool isMzToXAxis()
+		{ 
+			return mz_to_x_axis_; 
+		}
 		
 		/// Sets the mapping of m/z to axes
 		void mzToXAxis(bool mz_to_x_axis);
@@ -473,7 +476,7 @@ namespace OpenMS
 		inline void setCurrentLayerParameters(const Param& param) 
 		{ 
 		  getCurrentLayer_().param = param;
-		  currentLayerParamtersChanged_();
+		  emit preferencesChange();
 		}
 
 		/**
@@ -611,7 +614,7 @@ namespace OpenMS
 		void visibleAreaChanged(DRange<2> area); //Do not change this to AreaType! QT needs the exact type...
 				
 		/// Emitted when the cursor position changes (for displaying e.g. in status bar)
-		void sendCursorStatus(double mz=-1.0, double intens=-1.0, double rt=-1.0);
+		void sendCursorStatus(double mz=-1.0, double rt=-1.0);
 
 		/// Emits a status message that should be displayed for @p time ms. If @p time is 0 the message should be displayed until the next message is emitted.
 		void sendStatusMessage(std::string message, OpenMS::UInt time);
@@ -631,6 +634,9 @@ namespace OpenMS
 		/// Emitted when the action mode changes
 		void actionModeChange();
 		
+		/// Emitted when the layer preferences have changed
+		void preferencesChange();
+		
 	protected slots:
 	
 		///Slot that is used to track file changes in order to update the data
@@ -640,7 +646,16 @@ namespace OpenMS
 		void updateCursor_();
 
 	protected:
-		
+
+		/// Draws the coordinates (or coordinate deltas) to the widget's upper left corner
+		void drawCoordinates_(QPainter& painter, const PeakIndex& peak, bool print_rt);
+
+		/// Draws the coordinates (or coordinate deltas) to the widget's upper left corner
+		void drawDeltas_(QPainter& painter, const PeakIndex& start, const PeakIndex& end, bool print_rt);
+			
+		/// Draws several lines of text to the upper right corner of the widget
+		void drawText_(QPainter& painter, QStringList text);
+	
 		///Method that is called when a new layer has been added
 		virtual bool finishAdding_() = 0;
 		
@@ -674,13 +689,6 @@ namespace OpenMS
 		void enterEvent(QEvent* e);
 		//@}
 		
-		/**
-			@brief Change of layer parameters
-			
-			This method is called whenever the parameters of the current layer change. Reimplement if you need to react on such changes.
-		*/
-		virtual void currentLayerParamtersChanged_();
-
 		///This method is called whenever the intensity mode changes. Reimplement if you need to react on such changes.
 		virtual void intensityModeChange_();
 		
@@ -782,13 +790,13 @@ namespace OpenMS
 		{
 			if (!isMzToXAxis())
 			{
-				point.setX( static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * width()));
-				point.setY(height() - static_cast<int>((x - visible_area_.minX()) / visible_area_.width() * height()));
+				point.setX( int((y - visible_area_.minY()) / visible_area_.height() * width()));
+				point.setY(height() - int((x - visible_area_.minX()) / visible_area_.width() * height()));
 			}
 			else
 			{
-				point.setX( static_cast<int>((x - visible_area_.minX()) / visible_area_.width() * width()));
-				point.setY( height() - static_cast<int>((y - visible_area_.minY()) / visible_area_.height() * height()));
+				point.setX( int((x - visible_area_.minX()) / visible_area_.width() * width()));
+				point.setY( height() - int((y - visible_area_.minY()) / visible_area_.height() * height()));
 			}
 		}
 		
@@ -900,6 +908,12 @@ namespace OpenMS
 		
 		///Flag that determines if timimg data is printed to the command line
 		bool show_timing_;
+
+		/// selected peak
+		PeakIndex selected_peak_;
+		/// start peak of measuring mode
+    PeakIndex measurement_start_;
+
 
 	};
 }

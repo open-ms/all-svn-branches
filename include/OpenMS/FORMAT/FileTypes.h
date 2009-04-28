@@ -50,10 +50,11 @@ namespace OpenMS
 			IDXML,  						///< %OpenMS identification format (.idXML)
 			CONSENSUSXML,  			///< %OpenMS consensus map format (.consensusXML)
 			MGF,								///< Mascot Generic Format (.mgf)
-			PARAM,          		///< %OpenMS parameters file (.ini)
+			INI,          			///< %OpenMS parameters file (.ini)
 			TRANSFORMATIONXML,  ///< Tranformation description file (.trafoXML)
 			MZML,								///< MzML file (.mzML)
 			MS2,								///< MS2 file (.ms2)
+			PEPXML,							///< TPP pepXML file (.pepXML)
 			SIZE_OF_TYPE    		///< No file type. Simply stores the number of types
 		};
 	}; //struct

@@ -58,6 +58,17 @@ START_SECTION((void load(const String& filename, bool trim_lines=false, Int firs
 	
 	TEST_EXCEPTION(Exception::FileNotFound, file.load("FileDoesNotExist.txt"))	
 	
+	file.load(OPENMS_GET_TEST_DATA_PATH("CsvFile_1.csv"),false);
+	TEST_STRING_EQUAL("a1,b1,c1",file[0])
+	file.load(OPENMS_GET_TEST_DATA_PATH("CsvFile_1.csv"),true);
+	TEST_STRING_EQUAL("a1,b1,c1",file[0])
+	END_SECTION
+
+START_SECTION((void load(const String& filename, bool trim_lines=false, Int first_n=-1) ))
+	TextFile file;
+	
+	TEST_EXCEPTION(Exception::FileNotFound, file.load("FileDoesNotExist.txt"))	
+	
 	file.load(OPENMS_GET_TEST_DATA_PATH("TextFile_test_infile.txt"));
 	TEST_EQUAL(file.size(), 11)
 	TEST_EQUAL(file[0].trim() == "first_line", true)

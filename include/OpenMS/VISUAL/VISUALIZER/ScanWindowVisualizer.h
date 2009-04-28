@@ -46,7 +46,7 @@ namespace OpenMS
 	*/
 	class OPENMS_DLLAPI ScanWindowVisualizer
 		: public BaseVisualizerGUI,
-			public BaseVisualizer<InstrumentSettings::ScanWindow>
+			public BaseVisualizer<ScanWindow>
 	{
 		Q_OBJECT
 

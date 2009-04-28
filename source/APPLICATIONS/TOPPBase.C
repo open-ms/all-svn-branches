@@ -32,6 +32,11 @@
 #include <OpenMS/FORMAT/FileTypes.h>
 #include <OpenMS/FORMAT/VALIDATORS/XMLValidator.h>
 
+// OpenMP support
+#ifdef _OPENMP
+	#include <omp.h>
+#endif
+
 #include <cmath>
 
 using namespace std;
@@ -40,9 +45,11 @@ namespace OpenMS
 {
 	using namespace Exception;
 
-  TOPPBase::TOPPBase(const String& tool_name, const String& tool_description, bool official, const String& version)
+  TOPPBase::TOPPBase(const String& tool_name, const String& tool_description, bool official, bool id_tag_support, const String& version)
   	: tool_name_(tool_name),
   		tool_description_(tool_description),
+			id_tag_support_(id_tag_support),
+			id_tagger_(tool_name),
 			instance_number_(-1),
 			debug_level_(-1),
 			version_(version),
@@ -60,7 +67,7 @@ namespace OpenMS
 		}
 
 		//check if tool is in official tools list
-		if (official && !getToolList().contains(tool_name_))
+		if (official && !getToolList().has(tool_name_))
 		{
 			writeLog_(String("Error: Message to maintainer - If '") + tool_name_ + "' is an official TOPP tool, add it to the TOPPBase tools list. If it is not, set the 'official' bool of the TOPPBase constructor to false.");
 		}
@@ -95,9 +102,17 @@ namespace OpenMS
 		registerStringOption_("log","<file>","TOPP.log","Location of the log file",false, true);
 		registerIntOption_("instance","<n>",1,"Instance number for the TOPP INI file",false);
 		registerIntOption_("debug","<n>",0,"Sets the debug level",false, true);
+		registerIntOption_("threads", "<n>", 1, "Sets the number of threads allowed to be used by the TOPP tool", false);
 		registerStringOption_("write_ini","<file>","","Writes an example configuration file",false);
 		registerStringOption_("write_wsdl","<file>","","Writes an example WSDL file",false);
 		registerFlag_("no_progress","Disables progress logging to command line");
+		if (id_tag_support_)
+		{
+			registerStringOption_("id_pool","<file>",
+														"",
+														String("ID pool file to DocumentID's for all generated output files. Disabled by default. (Set to 'main' to use ") + String() + id_tagger_.getPoolFile() + ")"
+														,false);
+		}
 		registerFlag_("-help","Shows this help");
 
 		// prepare options and flags for command line parsing
@@ -415,6 +430,40 @@ namespace OpenMS
 			{
 				log_type_ = ProgressLogger::CMD;
 			}
+
+			//-------------------------------------------------------------
+			//document ID tagging
+			//-------------------------------------------------------------
+			if (id_tag_support_ && getStringOption_("id_pool").length()>0)
+			{
+				// set custom pool file if given
+				if (!(getStringOption_("id_pool")==String("main"))) id_tagger_.setPoolFile(getStringOption_("id_pool"));
+
+				//check if there are enough IDs in the pool (we require at least one and warn below 5) 
+				Int id_count(0);
+				if (!id_tagger_.countFreeIDs(id_count))
+				{
+					writeLog_("Error: Unable to query ID pool! Ending programm (no computation was performed)!");
+					return INTERNAL_ERROR;
+				}
+				if (id_count == 0)
+				{
+					writeLog_("Error: No Document IDs in the ID pool. Please restock now! Ending programm (no computation was performed)!");
+					return INTERNAL_ERROR;
+				}
+				else if (id_count <= 5)
+				{
+					writeLog_("Warning: Less than five(!) Document IDs in the ID pool. Please restock soon!");
+				}
+			}
+
+			//----------------------------------------------------------
+			//threads
+			//----------------------------------------------------------
+			#ifdef _OPENMP
+			Int threads = getParamAsInt_("threads", 1);
+			omp_set_num_threads(threads);
+			#endif
 
 			//----------------------------------------------------------
 			//main
@@ -1787,6 +1836,22 @@ namespace OpenMS
 		if (param_cmdline_.exists("type")) tmp.setValue(loc + "type", (String) param_cmdline_.getValue("type"));
 
 		return tmp;
+	}
+
+
+	const IDTagger& TOPPBase::getIDTagger_() const
+	{
+		if (!id_tag_support_)
+		{
+			writeLog_(String("Error: Message to maintainer - You created your TOPP tool without id_tag_support and query the ID Pool class! Decide what you want!"));
+			exit(INTERNAL_ERROR);
+		}
+		else if (id_tag_support_ && getStringOption_("id_pool").length()==0)
+		{
+			writeLog_(String("Error: Message to maintainer - You created your TOPP tool with id_tag_support and query the ID Pool class without the user actually requesting it (-id_pool is not set)!"));
+			exit(INTERNAL_ERROR);
+		}
+		return id_tagger_;
 	}
 
 } // namespace OpenMS

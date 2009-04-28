@@ -26,7 +26,7 @@
 // --------------------------------------------------------------------------
 
 /**
-  @page TOPP TOPP documentation
+  @page TOPP_documentation TOPP documentation
   
   'TOPP - The %OpenMS Proteomics Pipeline' is a pipeline for the analysis of HPLC/MS data. It consists of several small applications that
   can be chained to create analysis pipelines tailored for a specific problem.
@@ -36,15 +36,16 @@
  	The TOPP tools are divided into several subgroups:
  	
   <b>File Handling</b>
+  - @subpage TOPP_FileInfo - Shows basic information about the file, such as data ranges and file type.
+  - @subpage TOPP_FileConverter - Converts between different MS file formats.
+  - @subpage TOPP_DTAExtractor - Extracts spectra of an MS run file to several files in DTA format.
+  - @subpage TOPP_FileFilter - Extracts or manipulates portions of data from peak, feature or consensus feature files.
+  - @subpage TOPP_FileMerger - Merges several MS files into one file.
   - @subpage TOPP_IDMerger -  Merges several protein/peptide identification files into one file.
+	- @subpage TOPP_TextExporter - Exports various XML formats to a text file.
+	- @subpage TOPP_TextImporter - Imports text files and converts them to XML.
   - @subpage TOPP_DBExporter - Exports data from an %OpenMS database to a file.
   - @subpage TOPP_DBImporter - Imports data to an %OpenMS database.
-  - @subpage TOPP_DTAExtractor - Extracts spectra of an MS run file to several files in DTA format.
-  - @subpage TOPP_FileConverter - Converts between different MS file formats.
-  - @subpage TOPP_FileFilter - Extracts or manipulates portions of data from peak, feature or consensus feature files.
-  - @subpage TOPP_FileInfo - Shows basic information about the file, such as data ranges and file type.
-  - @subpage TOPP_FileMerger - Merges several MS files into one file.
-	- @subpage TOPP_TextExporter - Exports various XML formats to a text file.
 
   <b>Signal processing and preprocessing</b>
   - @subpage TOPP_BaselineFilter - Removes the baseline from profile spectra using a top-hat filter.
@@ -101,5 +102,5 @@
 	@todo Add DataProcessing for all TOPP tools (Hiwi)
 	
 	@todo Make mzML the default format of TOPP tools as soon as mzML 1.1 is finished and implemented completely (Hiwi)
-	
+
 */

@@ -88,7 +88,6 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 
 	TEST_EQUAL(exp.size(),4)
 	//run
-	TEST_EQUAL(exp.getNativeIDType(),ExperimentalSettings::MULTIPLE_PEAK_LISTS)
 	TEST_EQUAL(exp.getIdentifier(),"document_accession")
 	TEST_EQUAL(exp.getDateTime().get(),"2007-06-27 15:23:45")
 	//contacts
@@ -104,17 +103,13 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 	TEST_STRING_EQUAL(exp.getContacts()[1].getURL(),"")
 	TEST_STRING_EQUAL(exp.getContacts()[1].getAddress(),"")
 	//source files
-	TEST_EQUAL(exp.getSourceFiles().size(),2);
+	TEST_EQUAL(exp.getSourceFiles().size(),1);
 	TEST_STRING_EQUAL(exp.getSourceFiles()[0].getNameOfFile(),"tiny1.RAW")
 	TEST_STRING_EQUAL(exp.getSourceFiles()[0].getPathToFile(),"file:///F:/data/Exp01")
 	TEST_STRING_EQUAL(exp.getSourceFiles()[0].getChecksum(),"71be39fb2700ab2f3c8b2234b91274968b6899b1")
 	TEST_EQUAL(exp.getSourceFiles()[0].getChecksumType(),SourceFile::SHA1)
-	TEST_STRING_EQUAL(exp.getSourceFiles()[0].getFileType(),"Xcalibur RAW file")
-	TEST_STRING_EQUAL(exp.getSourceFiles()[1].getNameOfFile(),"tiny2.RAW")
-	TEST_STRING_EQUAL(exp.getSourceFiles()[1].getPathToFile(),"file:///F:/data/Exp02")
-	TEST_STRING_EQUAL(exp.getSourceFiles()[1].getChecksum(),"71be39fb2700ab2f3c8b2234b91274968b6899b2")
-	TEST_EQUAL(exp.getSourceFiles()[1].getChecksumType(),SourceFile::MD5)
-	TEST_STRING_EQUAL(exp.getSourceFiles()[1].getFileType(),"pkl file")
+	TEST_STRING_EQUAL(exp.getSourceFiles()[0].getFileType(),"Thermo RAW file")
+	TEST_EQUAL(exp.getSourceFiles()[0].getNativeIDType(),SourceFile::MULTIPLE_PEAK_LISTS)
 	//sample
 	TEST_STRING_EQUAL(exp.getSample().getName(),"Sample1")
 	TEST_REAL_SIMILAR(exp.getSample().getMass(),11.7)
@@ -206,6 +201,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		TEST_STRING_EQUAL(spec.getMetaValue("maldi_spot_id"),"M0")
 		//precursors
 		TEST_EQUAL(spec.getPrecursors().size(),0)
+		TEST_EQUAL(spec.getProducts().size(),0)
 	}
 
 	//-------------------------- spectrum 1 --------------------------
@@ -247,18 +243,22 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		TEST_REAL_SIMILAR(spec.getPrecursors()[0].getMZ(),5.55)
 		TEST_EQUAL(spec.getPrecursors()[0].getActivationMethod(),Precursor::CID)
 		TEST_REAL_SIMILAR(spec.getPrecursors()[0].getActivationEnergy(),35)
-		TEST_REAL_SIMILAR(spec.getPrecursors()[0].getIsolationWindowLowerBound(),6.66)
-		TEST_REAL_SIMILAR(spec.getPrecursors()[0].getIsolationWindowUpperBound(),7.77)
+		TEST_REAL_SIMILAR(spec.getPrecursors()[0].getIsolationWindowLowerOffset(),6.66)
+		TEST_REAL_SIMILAR(spec.getPrecursors()[0].getIsolationWindowUpperOffset(),7.77)
 		TEST_EQUAL(spec.getPrecursors()[0].getPossibleChargeStates().size(),3)
 		TEST_EQUAL(spec.getPrecursors()[0].getPossibleChargeStates()[0],1)
 		TEST_EQUAL(spec.getPrecursors()[0].getPossibleChargeStates()[1],3)
 		TEST_EQUAL(spec.getPrecursors()[0].getPossibleChargeStates()[2],4)
-		TEST_REAL_SIMILAR(spec.getPrecursors()[1].getIntensity(),120054)
-		TEST_EQUAL(spec.getPrecursors()[1].getCharge(),3)
-		TEST_REAL_SIMILAR(spec.getPrecursors()[1].getMZ(),6.55)
+		TEST_REAL_SIMILAR(spec.getPrecursors()[1].getMZ(),15.55)
+		TEST_REAL_SIMILAR(spec.getPrecursors()[1].getIsolationWindowLowerOffset(),16.66)
+		TEST_REAL_SIMILAR(spec.getPrecursors()[1].getIsolationWindowUpperOffset(),17.77)
 		TEST_EQUAL(spec.getPrecursors()[1].getActivationMethod(),Precursor::ETD)
 		TEST_REAL_SIMILAR(spec.getPrecursors()[1].getActivationEnergy(),36)
+		TEST_REAL_SIMILAR(spec.getPrecursors()[1].getIntensity(),0.0f)
+		TEST_EQUAL(spec.getPrecursors()[1].getCharge(),0)
 		TEST_EQUAL(spec.getPrecursors()[1].getPossibleChargeStates().size(),0)
+		//products
+		TEST_EQUAL(spec.getProducts().size(),0)
 		//source file
 		TEST_STRING_EQUAL(spec.getSourceFile().getNameOfFile(),"tiny1.dta")
 		TEST_STRING_EQUAL(spec.getSourceFile().getPathToFile(),"file:///F:/data/Exp01")
@@ -301,6 +301,14 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		TEST_STRING_EQUAL(spec.getMetaValue("maldi_spot_id"),"M2")
 		//precursors
 		TEST_EQUAL(spec.getPrecursors().size(),0)
+		//products
+		TEST_EQUAL(spec.getProducts().size(),2)
+		TEST_REAL_SIMILAR(spec.getProducts()[0].getMZ(),18.88)
+		TEST_REAL_SIMILAR(spec.getProducts()[0].getIsolationWindowLowerOffset(),1.0)
+		TEST_REAL_SIMILAR(spec.getProducts()[0].getIsolationWindowUpperOffset(),2.0)
+		TEST_REAL_SIMILAR(spec.getProducts()[1].getMZ(),19.99)
+		TEST_REAL_SIMILAR(spec.getProducts()[1].getIsolationWindowLowerOffset(),3.0)
+		TEST_REAL_SIMILAR(spec.getProducts()[1].getIsolationWindowUpperOffset(),4.0)
 	}
 
 	//-------------------------- spectrum 3 (no peaks) --------------------------
@@ -326,6 +334,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		TEST_EQUAL(spec.metaValueExists("maldi_spot_id"),false)
 		//precursors
 		TEST_EQUAL(spec.getPrecursors().size(),0)
+		TEST_EQUAL(spec.getProducts().size(),0)
 	}
 
 	//-------------------------- userParam --------------------------
@@ -377,7 +386,6 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 	TEST_STRING_EQUAL((String)exp[0].getAcquisitionInfo()[1].getMetaValue("name"),"acquisition2")
 	//source file
 	TEST_STRING_EQUAL((String)exp.getSourceFiles()[0].getMetaValue("name"),"sourcefile1")
-	TEST_STRING_EQUAL((String)exp.getSourceFiles()[1].getMetaValue("name"),"sourcefile2")
 	TEST_STRING_EQUAL((String)exp[1].getSourceFile().getMetaValue("name"),"sourcefile4")
 	//data processing
 	TEST_STRING_EQUAL(exp.getDataProcessing()[0].getMetaValue("p1").toString(),"value1")
@@ -386,16 +394,22 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 	TEST_STRING_EQUAL(exp[1].getPrecursors()[0].getMetaValue("iwname").toString(),"isolationwindow1")
 	TEST_STRING_EQUAL(exp[1].getPrecursors()[0].getMetaValue("siname").toString(),"selectedion1")
 	TEST_STRING_EQUAL(exp[1].getPrecursors()[0].getMetaValue("acname").toString(),"activation1")
-	TEST_STRING_EQUAL(exp[1].getPrecursors()[1].getMetaValue("siname").toString(),"selectedion2")
-	TEST_STRING_EQUAL(exp[1].getPrecursors()[1].getMetaValue("acname").toString(),"activation2")		
+	TEST_STRING_EQUAL(exp[1].getPrecursors()[1].getMetaValue("acname").toString(),"activation2")
+	TEST_STRING_EQUAL(exp[1].getPrecursors()[1].getMetaValue("iwname").toString(),"isolationwindow2")
+	//product
+	TEST_STRING_EQUAL(exp[2].getProducts()[0].getMetaValue("iwname").toString(),"isolationwindow3")
+	TEST_STRING_EQUAL(exp[2].getProducts()[1].getMetaValue("iwname").toString(),"isolationwindow4")
+	//scan window
+	TEST_STRING_EQUAL((String)exp[0].getInstrumentSettings().getScanWindows()[0].getMetaValue("name"),"scanwindow1")
 	//-------------------------- cvParam (but no member => meta data)--------------------------
 	//general
 	TEST_STRING_EQUAL((String)exp.getSample().getMetaValue("sample batch"),"4.4")
 	//spectrum 1
+	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("elution time (seconds)"),55.11)
 	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("lowest observed m/z"),400.39)
 	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("highest observed m/z"),1795.56)
-	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("lowest wavelength value"),500.39)
-	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("highest wavelength value"),795.56)
+	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("lowest observed wavelength"),500.39)
+	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("highest observed wavelength"),795.56)
 	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("base peak m/z"),445.347)
 	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("base peak intensity"),120054)
 	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("total ion current"),16675500)
@@ -405,6 +419,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 
 	TEST_STRING_EQUAL((String)exp[0].getMetaValue("mass resolution"),"4.3")
 	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("analyzer scan offset"),-4.5)
+	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("dwell time"),123.45)
 	TEST_STRING_EQUAL((String)exp[0].getMetaValue("filter string"),"+ c NSI Full ms [ 400.00-1800.00]")
 	TEST_STRING_EQUAL((String)exp[0].getMetaValue("preset scan configuration"),"3 abc")
 	TEST_REAL_SIMILAR((DoubleReal)exp[0].getMetaValue("scan rate"),17.17)
@@ -461,7 +476,7 @@ START_SECTION([EXTRA] load only meta data)
 	TEST_EQUAL(exp.size(),0)
 	TEST_EQUAL(exp.getIdentifier(),"document_accession");
 	TEST_EQUAL(exp.getContacts().size(),2)
-	TEST_EQUAL(exp.getSourceFiles().size(),2);
+	TEST_EQUAL(exp.getSourceFiles().size(),1);
 	TEST_EQUAL(exp.getInstrument().getMassAnalyzers().size(),2)
 	TEST_EQUAL(exp.getDataProcessing().size(),2)
 END_SECTION

@@ -33,6 +33,23 @@
 
 ///////////////////////////
 
+#include <fstream>
+#include <iostream>
+#include <string>
+
+//ZLIB example:
+//#include <boost/iostreams/filter/gzip.hpp>
+//#include <boost/iostreams/filtering_streambuf.hpp>
+//#include <boost/iostreams/copy.hpp>
+//
+//ifstream filein("/share_pride/usr/sturm/contrib/test/text.txt.gz", ios_base::in | ios_base::binary);
+//boost::iostreams::filtering_streambuf<boost::iostreams::input> in;
+//in.push(boost::iostreams::gzip_decompressor());
+//in.push(filein);
+//boost::iostreams::copy(in, cout);
+
+using namespace std;
+
 START_TEST(Base64, "$Id$")
 
 /////////////////////////////////////////////////////////////
@@ -65,9 +82,9 @@ START_SECTION(( template <typename FromType> void encode(std::vector<FromType>& 
 	b64.encode(data, Base64::BYTEORDER_LITTLEENDIAN, dest);
 	TEST_EQUAL(dest, "");
 
-  data.push_back(300.15);
-  data.push_back(303.998);
-  data.push_back(304.6);
+  data.push_back(300.15f);
+  data.push_back(303.998f);
+  data.push_back(304.6f);
 	b64.encode(data, Base64::BYTEORDER_LITTLEENDIAN, dest);
 	TEST_EQUAL(dest, "MxOWQ77/l0PNTJhD");
 	// please remember that it is possible that two different strings can
@@ -75,7 +92,7 @@ START_SECTION(( template <typename FromType> void encode(std::vector<FromType>& 
 	// precision like 0.001).
 	
   data = std::vector<Real>();
-  data.push_back(4711.08);
+  data.push_back(4711.08f);
   b64.encode(data, Base64::BYTEORDER_LITTLEENDIAN, dest);
 	TEST_EQUAL(dest, "pDiTRQ==")
 

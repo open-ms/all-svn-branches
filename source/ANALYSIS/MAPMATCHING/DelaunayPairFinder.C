@@ -57,7 +57,7 @@ namespace OpenMS
     typedef CGAL::Point_2< CGAL::Cartesian<double> > Base;
 
     const ConsensusFeature* element;
-    Int key;
+    SignedSize key;
 
     /// Default ctor
     inline Point() : Base(), element(0), key(0) {}
@@ -66,7 +66,7 @@ namespace OpenMS
     inline Point(const Base& cgal_point) : Base(cgal_point), element(0), key(0) {}
 
     /// Ctor from coordinates, element, and key
-    inline Point(double hx, double hy, const ConsensusFeature& element, Int key) : Base(hx,hy), element(&element), key(key) {}
+    inline Point(double hx, double hy, const ConsensusFeature& element, SignedSize key) : Base(hx,hy), element(&element), key(key) {}
 
     /// Ctor from coordinates
     inline Point(double hx, double hy) : Base(hx,hy), element(0), key(0) {}
@@ -314,7 +314,7 @@ namespace OpenMS
     Size loop_count = 0;
 		for ( Point_set_2::Point_iterator model_iter = p_set[MODEL_].points_begin(); model_iter != p_set[MODEL_].points_end(); ++model_iter )
     {
-     
+
       if ( loop_count++ == p_set_number_of_vertices[MODEL_] ) break; // FIXME this is a hack introduced for Mac using gcc 4.0.1 (Clemens)
 
 			Int const model_cf_index = model_iter->key;
@@ -374,7 +374,7 @@ namespace OpenMS
 						result_map.back().getPeptideIdentifications().insert(result_map.back().getPeptideIdentifications().end(),input_maps[1][scene_cf_index].getPeptideIdentifications().begin(),input_maps[1][scene_cf_index].getPeptideIdentifications().end());
 						result_map.back().insert( input_maps[0][model_cf_index] );
 						result_map.back().getPeptideIdentifications().insert(result_map.back().getPeptideIdentifications().end(),input_maps[0][model_cf_index].getPeptideIdentifications().begin(),input_maps[0][model_cf_index].getPeptideIdentifications().end());
-						
+
 						result_map.back().computeConsensus();
 						V_("Result " << current_result_cf_index << " : " << result_map.back());
 						++current_result_cf_index;
@@ -385,8 +385,7 @@ namespace OpenMS
 
 		setProgress(++progress);
 
-    // write out singleton (but possibly unpacked) consensus features for
-    // unmatched consensus features in model and scene
+    // write out unmatched consensus features in model and scene
     for ( UInt input = MODEL_; input <= SCENE_; ++ input )
     {
 			for ( UInt index = 0; index < maps_array[input]->size(); ++ index )
@@ -450,6 +449,8 @@ namespace OpenMS
 		result_map.getUnassignedPeptideIdentifications().insert(result_map.getUnassignedPeptideIdentifications().end(),input_maps[1].getUnassignedPeptideIdentifications().begin(), input_maps[1].getUnassignedPeptideIdentifications().end());
 
 		endProgress();
+
+		return;
   }
 
 }

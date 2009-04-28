@@ -28,43 +28,7 @@
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_ISOTOPEWAVELET_H
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_ISOTOPEWAVELET_H
 
-
-#ifndef NEUTRON_MASS
-#define NEUTRON_MASS 1.00866491578 
-#define HALF_NEUTRON_MASS 0.5043325
-#define QUARTER_NEUTRON_MASS 0.252166228
-#define WAVELET_PERIODICITY 6.229209734
-#endif
-
-#ifndef PROTON_MASS
-#define PROTON_MASS 1.00727646688
-#endif
-
-#ifndef LAMBDA_L_0
-//Linear Fit (standard)
-#define LAMBDA_L_0 -0.472998839574110749e-1
-#define LAMBDA_L_1 0.743579753540513913e-3
-#endif
-
-#ifndef LAMBDA_Q_0
-//Quadratic Fit (maybe a overkill, since the dependency looks quite linear, at least in moderate mass ranges)
-#define LAMBDA_Q_0 -0.137152573151174711
-#define LAMBDA_Q_1 0.851289601785403817e-3
-#define LAMBDA_Q_2 -0.2834469691e-7
-#endif
-
-#ifndef OPENMS_64BIT_ARCHITECTURE	
-#ifndef SHIFT_PARAMETERS
-//Internal parameters used for fast computation of the power function
-//Please do not modify
-#define SHIFT_PARAMETERS
-#define SHIFT23 (1<<23)
-#define SHIFT23_00 (1.0/(1<<23))
-#define LOG_CONST 0.346607f;
-#define POW_CONST 0.33971f;
-#endif
-#endif
-
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeWaveletConstants.h>
 #include <OpenMS/KERNEL/MSSpectrum.h>
 #include <OpenMS/CHEMISTRY/IsotopeDistribution.h>
 
@@ -76,10 +40,7 @@ namespace OpenMS
 	 * 	Efficient Analysis of Mass Spectrometry Data Using the Isotope Wavelet. Proceedings of the 3rd international 
 	 * 	Symposium in Computational Life Sciences (Complife07). American Institute of Physics (AIP) Proceedings (2007).
 	 *
-	 * 	@note This class features a singleton design pattern.
-	 *
-	 * 	@todo Tests for negative mode (Rene)
-	*/
+	 * 	@note This class features a singleton design pattern. */
 	class OPENMS_DLLAPI IsotopeWavelet
 	{
 		public:
@@ -92,9 +53,10 @@ namespace OpenMS
 				{
 					return (me_);
 				}
-				
-				/** @brief Destructor. */
-				virtual ~IsotopeWavelet () ;
+
+				/** Deletes the singleton instance. */
+				static void destroy ();	
+
 
 				/** @brief Returns the value of the isotope wavelet at position @p t. Usually, you do not need to call this function.
 					* Please use @see sampleTheWavelet instead.			 
@@ -107,7 +69,7 @@ namespace OpenMS
 					* @param mode Indicates whether positive mode (+1) or negative mode (-1) has been used for ionization. */
 				static DoubleReal getValueByMass (const DoubleReal t, const DoubleReal m, const UInt z, const Int mode=+1) 
 				{			
-					return (getValueByLambda (getLambdaQ(m*z-z*mode*PROTON_MASS), t*z+1));
+					return (getValueByLambda (getLambdaL(m*z-z*mode*Constants::IW_PROTON_MASS), t*z+1));
 				}
 	
 				/** @brief Returns the value of the isotope wavelet at position @p t via a fast table lookup. 
@@ -133,6 +95,11 @@ namespace OpenMS
 					* @param lambda The mass-parameter lambda.
 					* @param tz1 t (the position) times the charge (z) plus 1. */ 
 				static DoubleReal getValueByLambdaExtrapol (const DoubleReal lambda, const DoubleReal tz1) ;
+
+				static DoubleReal getValueByExpLambda (const DoubleReal explambda, const DoubleReal lambda, const DoubleReal tz1); 
+
+				static DoubleReal getValueByLambdaExact (const DoubleReal lambda, const DoubleReal tz1) ; 
+				
 
 				/** @brief Returns the largest charge state we will consider. */
 				static UInt getMaxCharge () 
@@ -172,12 +139,10 @@ namespace OpenMS
 				}
 
 
-				/** @brief Returns the mass-parameter lambda (linear fit). 
-					* @note The only possibility to switch between @see getLambdaL and @see getLambdaQ is pure hardcoding. */
+				/** @brief Returns the mass-parameter lambda (linear fit). */ 
 				static DoubleReal getLambdaL (const DoubleReal m) ;
 
-				/** @brief Returns the mass-parameter lambda (quadratic fit). 
-					* @note The only possibility to switch between getLambdaL and getLambdaQ is pure hardcoding. */
+				/** @brief Returns the mass-parameter lambda (quadratic fit).*/ 
 				static DoubleReal getLambdaQ (const DoubleReal m) ;		
 
 
@@ -189,13 +154,13 @@ namespace OpenMS
 
 
 				/** @brief Returns the largest possible index for the pre-sampled gamma table. */
-				static Int getGammaTableMaxIndex ()
+				static Size getGammaTableMaxIndex ()
 				{
 					return (gamma_table_max_index_);
 				};
 
 				/** @brief Returns the largest possible index for the pre-sampled exp table. */
-				static Int getExpTableMaxIndex ()
+				static Size getExpTableMaxIndex ()
 				{
 					return (exp_table_max_index_);
 				};
@@ -204,6 +169,12 @@ namespace OpenMS
 				/** @brief Internally used function; uses register shifts for fast computation of the power function. 
 					* @note Please, do not modify this function. */
 				static float myPow (float a, float b) ;		
+			
+				static UInt getMzPeakCutOffAtMonoPos (const DoubleReal mass, const UInt z);
+	
+				static UInt getNumPeakCutOff (const DoubleReal mass, const UInt z);
+				
+				static UInt getNumPeakCutOff (const DoubleReal mz);
 
 
 		protected:
@@ -218,6 +189,10 @@ namespace OpenMS
  					* @param max_m The maximal deconvoluted mass that occurs in the current data set. 
  					* @param max_charge The maximal charge state we would like to analyze. */
 				IsotopeWavelet (const DoubleReal max_m, const UInt max_charge) ;
+
+
+				/** @brief Destructor. */
+				virtual ~IsotopeWavelet () ;
 				
 
 				/** @brief Should be called once before values are drawn from the isotope wavelet function.
@@ -264,16 +239,20 @@ namespace OpenMS
 
 				/** Internal table for the precomputed values of the gamma function. */ 
 				static std::vector<DoubleReal> gamma_table_;
+				static std::vector<DoubleReal> gamma_table_new_;
 				
 				/** Internal table for the precomputed values of the exponential function. */ 
 				static std::vector<DoubleReal> exp_table_;
 
+				/** Internal table for the precomputed values of the exponential function. */ 
+				static std::vector<DoubleReal> sine_table_;				
+
 				/** Internally used averagine model. */
 				static IsotopeDistribution averagine_;
 
-				/** The largest possible indices for the corresponding tables. */
-				static Int gamma_table_max_index_;
-				static Int exp_table_max_index_;
+				static Size gamma_table_max_index_;
+				static Size exp_table_max_index_;
+
 	};
 
 } //namespace

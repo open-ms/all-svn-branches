@@ -306,7 +306,7 @@ namespace OpenMS
 		file.setPathToFile(result.value(1).toString());
 		file.setFileSize(result.value(2).toDouble());
 		file.setFileType(result.value(3).toString());
-		file.setChecksum(result.value(4).toString(), SourceFile::UNKNOWN);
+		file.setChecksum(result.value(4).toString(), SourceFile::UNKNOWN_CHECKSUM);
 	}
 
 	UID DBAdapter::storeFile_(const String& parent_table, UID parent_id, const SourceFile& file)
@@ -651,9 +651,7 @@ namespace OpenMS
 					{
 						if (warning)
 						{
-							cerr << "Error: The given DB (Rev: " << db_version 
-									 << ") has a different revision than OpenMS (Rev: " 
-									 << file_version << ")!"<< endl;
+							cerr << "Error: The given DB (Rev: " << db_version  << ") has a different revision than OpenMS (Rev: " << file_version << ")!"<< endl;
 						}
 						return false;
 					}
@@ -679,17 +677,6 @@ namespace OpenMS
 
 		// load sql queries
 		TextFile sql(sql_path);
-		
-		// delete existing tables
-		QSqlQuery result, dummy;
-		result = db_con_.executeQuery("SHOW TABLES;");
-		dummy = db_con_.executeQuery("SET FOREIGN_KEY_CHECKS=0;");
-		while (result.isValid())
-		{
-			dummy = db_con_.executeQuery(String("DROP TABLE `") + result.value(0).toString() + "`;");
-			result.next();
-		}
-		dummy = db_con_.executeQuery("SET FOREIGN_KEY_CHECKS=1;");
 		
 		// Conversion of phpMyAdmin output to required format
 		// concatenate lines so that one line is one query

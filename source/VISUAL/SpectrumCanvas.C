@@ -39,11 +39,8 @@
 #include <QtGui/QWheelEvent>
 #include <QtGui/QMessageBox>
 #include <QtGui/QPushButton>
-
-//Icons
-#include "../VISUAL/ICONS/cursor_measure.xpm"
-#include "../VISUAL/ICONS/cursor_zoom.xpm"
-#include "../VISUAL/ICONS/cursor_move.xpm"
+#include <QtGui/QFontMetrics>
+#include <QtGui/QFontMetrics>
 
 #include <iostream>
 
@@ -72,7 +69,9 @@ namespace OpenMS
 			rubber_band_(QRubberBand::Rectangle,this),
 			watcher_(0),
 			context_add_(0),
-			show_timing_(false)
+			show_timing_(false),
+			selected_peak_(),
+			measurement_start_()
 	{		
 		//Prevent filling background
 		setAttribute(Qt::WA_OpaquePaintEvent);
@@ -149,11 +148,6 @@ namespace OpenMS
 		recalculateSnapFactor_();
 		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);
-	}
-
-	bool SpectrumCanvas::isMzToXAxis() 
-	{ 
-		return mz_to_x_axis_; 
 	}
 	
 	void SpectrumCanvas::mzToXAxis(bool mz_to_x_axis)
@@ -520,10 +514,6 @@ namespace OpenMS
 		update();
 	}
 	
-	void SpectrumCanvas::currentLayerParamtersChanged_()
-	{
-	}
-
 	void SpectrumCanvas::fileChanged_(const String& filename)
   {
 		//look up all layers that contain data of the file
@@ -567,7 +557,8 @@ namespace OpenMS
   		watcher_->removeFile(filename);
   	}  			
 	}
-
+	
+	//this does not work anymore, probably due to Qt::StrongFocus :(
 	void SpectrumCanvas::focusOutEvent(QFocusEvent* /*e*/)
 	{
 		// Alt/Shift pressed and focus lost => change back action mode
@@ -577,7 +568,13 @@ namespace OpenMS
 			emit actionModeChange();
 		}
 		
-		//release Keyboard when loosing focus
+		//reset peaks
+		selected_peak_.clear();
+		measurement_start_.clear();
+		
+		//update
+		update_buffer_ = true;
+		update_(__PRETTY_FUNCTION__);
 	}
 
 	void SpectrumCanvas::leaveEvent(QEvent* /*e*/)
@@ -662,8 +659,8 @@ namespace OpenMS
 			resetZoom();
 		}
 
-		// CTRL+ALT+T
-		if ((e->modifiers() & (Qt::ControlModifier|Qt::AltModifier)) && (e->key()==Qt::Key_T))
+		// CTRL+ALT+T => activate timing mode
+		if ((e->modifiers() & Qt::ControlModifier) && (e->modifiers() & Qt::AltModifier) && (e->key()==Qt::Key_T))
 		{
 			e->accept();
 			show_timing_ = !show_timing_;
@@ -729,7 +726,7 @@ namespace OpenMS
 				spectrum.setMSLevel(it->getMSLevel());
 				spectrum.setPrecursors(it->getPrecursors());
 				//copy peak information
-				if (!is_1d && it->getMSLevel()>1) //MS^n (n>1) spectra are copied if their precursor is in the m/z range
+				if (!is_1d && it->getMSLevel()>1 && !it->getPrecursors().empty()) //MS^n (n>1) spectra are copied if their precursor is in the m/z range
 				{
 					if (it->getPrecursors()[0].getMZ()>=area.min()[0] && it->getPrecursors()[0].getMZ()<= area.max()[0])
 					{
@@ -824,7 +821,7 @@ namespace OpenMS
 			//Exception for Spectrum1DCanvas, here we add the meta data of the one spectrum
 			if (getName()=="Spectrum1DCanvas")
 			{
-				dlg.add(layer.peaks[0]);
+				dlg.add(layer.peaks[layer.current_spectrum]);
 			}
   	}
   	else if (layer.type==LayerData::DT_FEATURE)
@@ -848,13 +845,13 @@ namespace OpenMS
 		switch(action_mode_)
 		{
 			case AM_TRANSLATE:
-				setCursor(QCursor(QPixmap(cursor_move),0,0));
+				setCursor(QCursor(QPixmap(":/cursor_move.png"),0,0));
 				break;
 			case AM_ZOOM:
-				setCursor(QCursor(QPixmap(cursor_zoom),0,0));
+				setCursor(QCursor(QPixmap(":/cursor_zoom.png"),0,0));
 				break;
 			case AM_MEASURE:
-				setCursor(QCursor(QPixmap(cursor_measure),0,0));
+				setCursor(QCursor(QPixmap(":/cursor_measure.png"),0,0));
 				break;
 		}
 	}
@@ -867,6 +864,116 @@ namespace OpenMS
 			layer.modified = modified;
 			emit layerModficationChange(activeLayerIndex(), modified);
 		}
+	}
+
+
+	void SpectrumCanvas::drawCoordinates_(QPainter& painter, const PeakIndex& peak, bool print_rt)
+	{
+		if (!peak.isValid()) return;
+		
+		//determine coordinates;
+		DoubleReal mz = 0.0;
+		DoubleReal rt = 0.0;
+		Real it = 0.0;
+		if (getCurrentLayer().type==LayerData::DT_FEATURE)
+		{
+			mz = peak.getFeature(getCurrentLayer().features).getMZ();
+			rt = peak.getFeature(getCurrentLayer().features).getRT();
+			it = peak.getFeature(getCurrentLayer().features).getIntensity();
+		}
+		else if (getCurrentLayer().type==LayerData::DT_PEAK)
+		{
+			mz = peak.getPeak(getCurrentLayer().peaks).getMZ();
+			rt = peak.getSpectrum(getCurrentLayer().peaks).getRT();
+			it = peak.getPeak(getCurrentLayer().peaks).getIntensity();
+		}
+		else
+		{
+			mz = peak.getFeature(getCurrentLayer().consensus).getMZ();
+			rt = peak.getFeature(getCurrentLayer().consensus).getRT();
+			it = peak.getFeature(getCurrentLayer().consensus).getIntensity();
+		}
+				
+		//draw text			
+		QStringList lines;
+		if (print_rt) lines.push_back("RT : " + QString::number(rt,'f',2));
+		lines.push_back("m/z: " + QString::number(mz,'f',6));
+		lines.push_back("int: " + QString::number(it,'f',2));
+		drawText_(painter, lines);
+	}
+
+	void SpectrumCanvas::drawDeltas_(QPainter& painter, const PeakIndex& start, const PeakIndex& end, bool print_rt)
+	{
+		if (!start.isValid()) return;
+		if (!end.isValid()) return;
+		
+		//determine coordinates;
+		DoubleReal mz = 0.0;
+		DoubleReal rt = 0.0;
+		Real it = 0.0;
+		if (getCurrentLayer().type==LayerData::DT_FEATURE)
+		{
+			mz = end.getFeature(getCurrentLayer().features).getMZ() - start.getFeature(getCurrentLayer().features).getMZ();
+			rt = end.getFeature(getCurrentLayer().features).getRT() - start.getFeature(getCurrentLayer().features).getRT();
+			it = end.getFeature(getCurrentLayer().features).getIntensity() / start.getFeature(getCurrentLayer().features).getIntensity();
+		}
+		else if (getCurrentLayer().type==LayerData::DT_PEAK)
+		{
+			mz = end.getPeak(getCurrentLayer().peaks).getMZ() - start.getPeak(getCurrentLayer().peaks).getMZ();
+			rt = end.getSpectrum(getCurrentLayer().peaks).getRT() - start.getSpectrum(getCurrentLayer().peaks).getRT();
+			it = end.getPeak(getCurrentLayer().peaks).getIntensity() / start.getPeak(getCurrentLayer().peaks).getIntensity();
+		}
+		else
+		{
+			mz = end.getFeature(getCurrentLayer().consensus).getMZ() - start.getFeature(getCurrentLayer().consensus).getMZ();
+			rt = end.getFeature(getCurrentLayer().consensus).getRT() - start.getFeature(getCurrentLayer().consensus).getRT();
+			it = end.getFeature(getCurrentLayer().consensus).getIntensity() / start.getFeature(getCurrentLayer().consensus).getIntensity();
+		}
+				
+		//draw text			
+		QStringList lines;
+		if (print_rt) lines.push_back("RT delta : " + QString::number(rt,'f',2));
+		lines.push_back("m/z delta: " + QString::number(mz,'f',6));
+		if (isinf(rt) || isnan(rt))
+		{
+			lines.push_back("int ratio: n/a");
+		}
+		else
+		{
+			lines.push_back("int ratio: " + QString::number(it,'f',2));			
+		}
+		drawText_(painter, lines);
+	}
+
+	void SpectrumCanvas::drawText_(QPainter& painter, QStringList text)
+	{
+		painter.save();
+		
+		//font
+		QFont font("Courier");
+		painter.setFont(font);
+		
+		//determine width and height of the box we need
+		QFontMetrics metrics(painter.font());
+		int line_spacing = metrics.lineSpacing();
+		int height = 6 + text.size() * line_spacing;
+		int width = 4;
+		for (int i=0;i<text.size(); ++i)
+		{
+			width = std::max(width, 4 + metrics.width(text[i]));
+		}
+		
+		//draw backgrond for text
+		painter.fillRect(2,3,width, height, QColor(255,255,255,200));
+		
+		//draw text
+		painter.setPen(Qt::black);
+		for (int i=0;i<text.size(); ++i)
+		{
+			painter.drawText(3, 3 + (i+1) * line_spacing, text[i]);
+		}
+		
+		painter.restore();
 	}
 
 } //namespace

@@ -82,7 +82,6 @@ namespace OpenMS
     }
 
 		exp.reset();
-		exp.setNativeIDType(ExperimentalSettings::MULTIPLE_PEAK_LISTS);
 
 		//set DocumentIdentifier
 		exp.setLoadedFileType(filename);
@@ -332,6 +331,7 @@ namespace OpenMS
 				out << endl;
 			}
 		}
+		out.close();
 	}
 
 }// namespace OpenMS

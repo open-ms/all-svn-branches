@@ -28,20 +28,23 @@
 #ifndef OPENMS_APPLICATIONS_TOPPBASE_H
 #define OPENMS_APPLICATIONS_TOPPBASE_H
 
-#include <OpenMS/DATASTRUCTURES/Param.h>
 #include <OpenMS/CONCEPT/Exception.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
+#include <OpenMS/CONCEPT/VersionInfo.h>
+#include <OpenMS/DATASTRUCTURES/Param.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
 #include <OpenMS/DATASTRUCTURES/IntList.h>
 #include <OpenMS/DATASTRUCTURES/DoubleList.h>
+#include <OpenMS/DATASTRUCTURES/Map.h>
 #include <OpenMS/METADATA/DataProcessing.h>
-#include <OpenMS/CONCEPT/VersionInfo.h>
+#include <OpenMS/METADATA/IDTagger.h>
 
 #include <iostream>
 #include <fstream>
 #include <limits>
 class QStringList;
+
 
 namespace OpenMS
 {
@@ -93,11 +96,11 @@ namespace OpenMS
 
   	If you want to create a new TOPP tool, please take care of the following:
   	- derive a new class from this class
-  	- impelment the registerOptionsAndFlags_ and main_ methods
+  	- implement the registerOptionsAndFlags_ and main_ methods
   	- add a doxygen page for the tool and add the page to TOPP.doxygen
-  	- hide the derived class in the OpenMS documentation by using doxygen codition macros.
+  	- hide the derived class in the OpenMS documentation by using doxygen condition macros.
   
-    @todo Add 'threads' parameter (Marc, Andreas)
+    @todo Add 'instr' parameter for instrument defaults (Marc, Andreas)
   */
   class OPENMS_DLLAPI TOPPBase
   {
@@ -128,9 +131,11 @@ namespace OpenMS
       	@param description Short description of the tool (one line).
       	@param official If this is an official TOPP tool contained in the OpenMS/TOPP release.
       	                If @em true the tool name is checked against the list of TOPP tools and a warning printed if missing.
+				@param id_tag_support Does the TOPP tool support unique DocumentIdentifier assignment?! The default is false.
+							 In the default case you cannot use the -id_pool argument when calling the TOPP tool (it will terminate during init)
       	@param version Optional version of the tools (if empty, the version of OpenMS/TOPP is used).
       */
-      TOPPBase(const String& name, const String& description, bool official=true, const String& version="");
+      TOPPBase(const String& name, const String& description, bool official=true, bool id_tag_support=false, const String& version="");
 
       /// Destructor
       virtual ~TOPPBase();
@@ -139,9 +144,57 @@ namespace OpenMS
       ExitCodes main(int argc, const char** argv);
 			
 			/// Returns the list of official TOPP tools contained in the OpenMS/TOPP release.
-			static StringList getToolList()
+			static Map<String,StringList> getToolList()
 			{
-				return StringList::create("AdditiveSeries,BaselineFilter,ConsensusID,DBExporter,DBImporter,DTAExtractor,Decharger,FalseDiscoveryRate,FeatureFinder,FeatureLinker,FileConverter,FileFilter,FileInfo,FileMerger,IDDecoyProbability,IDFilter,IDMapper,IDMerger,IDRTCalibration,ITRAQAnalyzer,InspectAdapter,InternalCalibration,MapAligner,MapNormalizer,MascotAdapter,MascotAdapterOnline,NoiseFilter,OMSSAAdapter,PILISIdentification,PILISModel,PTModel,PTPredict,PeakPicker,PepNovoAdapter,RTModel,RTPredict,Resampler,SILACAnalyzer,SequestAdapter,SpectraFilter,TOFCalibration,TextExporter,XTandemAdapter,PrecursorIonSelector");
+				Map<String,StringList> tools_map;
+				
+				tools_map["AdditiveSeries"] = StringList::create("");
+				tools_map["BaselineFilter"] = StringList::create("");
+				tools_map["ConsensusID"] = StringList::create("");
+				tools_map["DBExporter"] = StringList::create("");
+				tools_map["DBImporter"] = StringList::create("");
+				tools_map["DTAExtractor"] = StringList::create("");
+				tools_map["Decharger"] = StringList::create("");
+				tools_map["FalseDiscoveryRate"] = StringList::create("");
+				tools_map["FeatureFinder"] = StringList::create("MRM,centroided,isotope_wavelet,isotope_wavelet_nofit,simple,simplest");
+				tools_map["FeatureLinker"] = StringList::create("labeled,unlabeled");
+				tools_map["FileConverter"] = StringList::create("");
+				tools_map["FileFilter"] = StringList::create("");
+				tools_map["FileInfo"] = StringList::create("");
+				tools_map["FileMerger"] = StringList::create("");
+				tools_map["IDDecoyProbability"] = StringList::create("");
+				tools_map["IDFilter"] = StringList::create("");
+				tools_map["IDMapper"] = StringList::create("");
+				tools_map["IDMerger"] = StringList::create("");
+				tools_map["IDRTCalibration"] = StringList::create("");
+				tools_map["ITRAQAnalyzer"] = StringList::create("4plex,8plex");
+				tools_map["InspectAdapter"] = StringList::create("");
+				tools_map["InternalCalibration"] = StringList::create("");
+				tools_map["MapAligner"] = StringList::create("apply_given_trafo,pose_clustering_affine,spectrum_alignment");
+				tools_map["MapNormalizer"] = StringList::create("");
+				tools_map["MascotAdapter"] = StringList::create("");
+				tools_map["MascotAdapterOnline"] = StringList::create("");
+				tools_map["NoiseFilter"] = StringList::create("sgolay,gaussian");
+				tools_map["OMSSAAdapter"] = StringList::create("");
+				tools_map["PILISIdentification"] = StringList::create("");
+				tools_map["PILISModel"] = StringList::create("");
+				tools_map["PTModel"] = StringList::create("");
+				tools_map["PTPredict"] = StringList::create("");
+				tools_map["PeakPicker"] = StringList::create("high_res,wavelet");
+				tools_map["PepNovoAdapter"] = StringList::create("");
+				tools_map["RTModel"] = StringList::create("");
+				tools_map["RTPredict"] = StringList::create("");
+				tools_map["Resampler"] = StringList::create("");
+				tools_map["SILACAnalyzer"] = StringList::create("");
+				tools_map["SequestAdapter"] = StringList::create("");
+				tools_map["SpectraFilter"] = StringList::create("BernNorm,MarkerMower,NLargest,Normalizer,ParentPeakMower,Scaler,SqrtMower,ThresholdMower,WindowMower");
+				tools_map["TOFCalibration"] = StringList::create("");
+				tools_map["TextExporter"] = StringList::create("");
+				tools_map["TextImporter"] = StringList::create("");
+				tools_map["XTandemAdapter"] = StringList::create("");
+				tools_map["PrecursorIonSelector"] = StringList::create("");
+				
+				return tools_map;
 			}
 			
       ///Stuct that captures all information of a parameter
@@ -251,6 +304,12 @@ namespace OpenMS
 
       /// Tool description. This is assigned once and for all in the constructor.
       String const tool_description_;
+
+			/// Tool indicates it supports assignment of unique DocumentID from IDPool
+			bool id_tag_support_;
+
+			/// Instance of IDTagger, which can be accessed using getIDTagger_()
+			IDTagger id_tagger_;
 
       ///Instance number
       Int const instance_number_;
@@ -817,6 +876,9 @@ namespace OpenMS
         addDataProcessing_(map, actions);
       }
       
+			/// get IDTagger to assign DocumentIDs to maps
+			const IDTagger& getIDTagger_() const;
+
   };
 
 } // namespace OpenMS

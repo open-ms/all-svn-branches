@@ -74,6 +74,7 @@ namespace OpenMS
 	class SpectrumSettings;
 	class Tagging;
 	class DocumentIdentifier;
+	class Product;
 
 	/**
 		@brief A meta data visualization widget
@@ -202,7 +203,7 @@ namespace OpenMS
 			void visualize_(Tagging& meta, QTreeWidgetItem* parent=0);
 			void visualize_(Gradient& meta, QTreeWidgetItem* parent=0);
 			void visualize_(Software& meta, QTreeWidgetItem* parent=0);
-			void visualize_(InstrumentSettings::ScanWindow& meta, QTreeWidgetItem* parent=0);
+			void visualize_(ScanWindow& meta, QTreeWidgetItem* parent=0);
 			void visualize_(SourceFile& meta, QTreeWidgetItem* parent=0);
 			void visualize_(ContactPerson& meta, QTreeWidgetItem* parent=0);
 			void visualize_(Instrument& meta, QTreeWidgetItem* parent=0);
@@ -217,6 +218,7 @@ namespace OpenMS
 			void visualize_(AcquisitionInfo& meta, QTreeWidgetItem* parent=0);
 			void visualize_(MetaInfoDescription& meta,  QTreeWidgetItem* parent=0);
 			void visualize_(Precursor& meta, QTreeWidgetItem* parent=0);
+			void visualize_(Product& meta, QTreeWidgetItem* parent=0);
 			void visualize_(InstrumentSettings& meta, QTreeWidgetItem* parent=0);
 			void visualize_(PeptideIdentification& meta, QTreeWidgetItem* parent=0);
 			void visualize_(DocumentIdentifier& meta, QTreeWidgetItem* parent=0);

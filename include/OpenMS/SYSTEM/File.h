@@ -29,8 +29,7 @@
 #ifndef OPENMS_SYSTEM_FILE_H
 #define OPENMS_SYSTEM_FILE_H
 
-#include <vector>
-#include <OpenMS/CONCEPT/Types.h>
+#include <OpenMS/DATASTRUCTURES/StringList.h>
 #include <OpenMS/config.h>
 
 #ifdef OPENMS_WINDOWSPLATFORM  
@@ -90,64 +89,18 @@ namespace OpenMS
 				
 				@exception FileNotFound is thrown, if the file is not found
 			*/
-			static String find(const String& filename, std::vector<String> directories = std::vector<String>());
+			static String find(const String& filename, StringList directories = StringList());
 			
 			/**
 				@brief Retrieves a list of files matching @p file_pattern in directory @p dir
 				
 				@return true => there are matching files
 			*/
-			static bool fileList(const String& dir, const String& file_pattern, std::vector<String>& output);
+			static bool fileList(const String& dir, const String& file_pattern, StringList& output);
 
 			/// Returns a string, consisting of date, time, hostname, process id, and a incrementing number.  This can be used for temporary files.
 			static String getUniqueName();
 
-			/**
-				@brief Creates a sparse file @p filename of size @p filesize bytes
-				
-      	Creates a sparse* file @p filename (*requires Filesystem support!) of size @p filesize bytes using platform specific fileIO
-      	The function is using 64-bit fileoffsets automatically (and is therefore independent of compiler flags)
-			*/
-      static bool createSparseFile(const String& filename, const Int64& filesize);
-
-      /**
-				@brief Extends a sparse file with handle @p hFile to size @p filesize bytes
-			
-				Extends a sparse* file with handle @p hFile (*requires Filesystem support!) to size @p filesize bytes using platform specific fileIO
-      	The function is using 64-bit fileoffsets automatically (and is therefore independent of compiler flags)
-			*/
-			#ifdef OPENMS_WINDOWSPLATFORM
-			static bool extendSparseFile(const HANDLE& hFile, const Int64& filesize);
-			#else
-			static bool extendSparseFile(const int& hFile, const Int64& filesize);
-			#endif
-						    
-			/**
-				@brief get a handle to a sparse file @p filename with size @p filesize to used for swap
-				
-				The file can be created (@p create) if necessary
-				  
-      	@return handle to a file (which is created if necessary)
-      	
-				@throws Exception::UnableToCreateFile or Exception::FileNotFound on failure to acquire the handle (to make cross platform error handling easy)
-      	
-				@note implementation is platform dependent, as handles in Windows are void* vs. int in Unix
-			*/
-      #ifdef OPENMS_WINDOWSPLATFORM
-      static HANDLE getSwapFileHandle(const String& filename, const Int64& filesize, const bool& create);
-      #else
-      static    int getSwapFileHandle(const String& filename, const Int64& filesize, const bool& create);
-      #endif
-  	
-			/**
-				@brief close handle to a swap file
-			*/
-      #ifdef OPENMS_WINDOWSPLATFORM
-      static void closeSwapFileHandle(const HANDLE & f_handle);
-      #else
-      static void closeSwapFileHandle(const int & f_handle);
-      #endif
-    
 	};
 
 }

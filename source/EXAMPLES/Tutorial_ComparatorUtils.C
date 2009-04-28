@@ -61,10 +61,10 @@ struct LessByString
 Int main()
 {
   IntRealStringVector vec;
-  vec.push_back(IntRealString(1, 4.5, "paul"));
-  vec.push_back(IntRealString(2, 4.5, "josie"));
-  vec.push_back(IntRealString(1, 4.5, "john"));
-  vec.push_back(IntRealString(2, 3.9, "kim"));
+  vec.push_back(IntRealString(1, 4.5f, "paul"));
+  vec.push_back(IntRealString(2, 4.5f, "josie"));
+  vec.push_back(IntRealString(1, 4.5f, "john"));
+  vec.push_back(IntRealString(2, 3.9f, "kim"));
   
   std::cout << "After initialization:" << std::endl;
   vec.print();
@@ -87,15 +87,15 @@ Int main()
 
   std::cout << "Sorted using lexicographic order: 1. reversed LessByInt, 2. LessByReal, 3. LessByString" << std::endl;
   std::sort(vec.begin(),vec.end(),
-	    OpenMS::lexicographicComparator
-	    ( OpenMS::lexicographicComparator
-	      (
-	       OpenMS::reverseComparator(LessByInt()),
-	       LessByReal()
-	      ),
-	      LessByString()
-	    )
-	   );
+      OpenMS::lexicographicComparator
+      ( OpenMS::lexicographicComparator
+        (
+         OpenMS::reverseComparator(LessByInt()),
+         LessByReal()
+        ),
+        LessByString()
+      )
+     );
   vec.print();
 
   // vector of pointers into vec

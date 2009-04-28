@@ -22,9 +22,8 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche$
-// $Authors: $
+// $Authors: Ole Schulz-Trieglaff$
 // --------------------------------------------------------------------------
-// Author:  Ole Schulz-Trieglaff
 
 #include <OpenMS/SIMULATION/IsotopeModelGeneral.h>
 
@@ -141,9 +140,9 @@ namespace OpenMS
 
     // we loop backwards because then the small products tend to come first
     // (for better numerics)
-    for ( Int i = left.size() - 1; i >= 0; --i )
+    for ( SignedSize i = left.size() - 1; i >= 0; --i )
     {
-      for ( Int j = std::min ( rMax - i, int ( right.size() ) ) - 1; j >= 0 ; --j )
+      for ( SignedSize j = std::min<SignedSize>( rMax - i, right.size() ) - 1; j >= 0 ; --j )
       {
         result[i+j] += left[i] * right[j];
       }

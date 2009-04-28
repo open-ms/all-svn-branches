@@ -50,8 +50,11 @@ namespace OpenMS
   	
     It can be used to create objects from the DB or store them in the DB.
 		
-		@todo Check if METADATA implementation is complete - all members and MetaInfoInterface (HiWi)
-		@todo Check Precursor implementation, it has changed (Hiwi)
+		@todo Precursor implementation has changed and multiple precursors are allowed now (Hiwi)
+		@todo NativeIDType was moved from ExperimentalSettings to SourceFile (Hiwi)
+		@todo MetaInfoInterface was added to ScanWindow (Hiwi)
+		@todo Product list was added to SpectrumSettings (Hiwi) 
+		
     @ingroup DatabaseIO
   */
  
@@ -657,7 +660,7 @@ namespace OpenMS
 			//-------------------------------------- PRECURSOR --------------------------------------- 
 			//----------------------------------------------------------------------------------------
 			
-			if (exp_it->getMSLevel()>1)
+			if (exp_it->getMSLevel()>1 && exp_it->getPrecursors().size()!=0)
 			{
 				query.str("");
 				if (new_entry)
@@ -693,7 +696,6 @@ namespace OpenMS
 				result = db_con_.executeQuery(query.str());
 				if (new_entry) parent_id = db_con_.getAutoId();
 				storeMetaInfo_("DATA_Precursor",parent_id, exp_it->getPrecursors()[0]);
-				//TODO store persistence ID => Precusor class a persistent object
 			}
 			
 			//----------------------------------------------------------------------------------------
@@ -1233,7 +1235,7 @@ namespace OpenMS
 		result = db_con_.executeQuery(query.str());
 		result.first();
 
-		InstrumentSettings::ScanWindow window;
+		ScanWindow window;
 		window.begin = result.value(0).toDouble();
 		window.end = result.value(1).toDouble();
 		settings.getScanWindows().push_back(window);
@@ -1347,13 +1349,17 @@ namespace OpenMS
 			query.str("");
 			query << "SELECT mz,Intensity,Charge,ActivationMethod-1,ActivationEnergy,WindowSize,fid_MetaInfo FROM DATA_Precursor WHERE fid_Spectrum='" << id << "'";
 			result = db_con_.executeQuery(query.str());
-			result.first();
-			spec.getPrecursors()[0].setMZ(result.value(0).toDouble());
-			spec.getPrecursors()[0].setIntensity(result.value(1).toDouble());
-			spec.getPrecursors()[0].setCharge(result.value(2).toInt());
-			spec.getPrecursors()[0].setActivationMethod((Precursor::ActivationMethod)(result.value(3).toInt()));
-			spec.getPrecursors()[0].setActivationEnergy(result.value(5).toDouble());
-			loadMetaInfo_(result.value(7).toInt(),spec.getPrecursors()[0]);
+			if (result.size()!=0)
+			{
+				result.first();
+				spec.getPrecursors().resize(1);
+				spec.getPrecursors()[0].setMZ(result.value(0).toDouble());
+				spec.getPrecursors()[0].setIntensity(result.value(1).toDouble());
+				spec.getPrecursors()[0].setCharge(result.value(2).toInt());
+				spec.getPrecursors()[0].setActivationMethod((Precursor::ActivationMethod)(result.value(3).toInt()));
+				spec.getPrecursors()[0].setActivationEnergy(result.value(5).toDouble());
+				loadMetaInfo_(result.value(6).toInt(),spec.getPrecursors()[0]);
+			}
 		}
 		
 		// Peaks/MetaDataArrays

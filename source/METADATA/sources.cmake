@@ -12,6 +12,7 @@ DocumentIdentifier.C
 ExperimentalSettings.C
 Gradient.C
 HPLC.C
+IDTagger.C
 Instrument.C
 InstrumentSettings.C
 IonDetector.C
@@ -33,6 +34,8 @@ Software.C
 SourceFile.C
 SpectrumSettings.C
 Tagging.C
+ScanWindow.C
+Product.C
 )
 
 ### add path to the filenames

@@ -4,13 +4,13 @@ saved-by: David Sparkman
 auto-generated-by: OBO-Edit 1.101
 default-namespace: MS
 remark: namespace: MS
-remark: version: 1.16.0
-remark: release date: 2009-02-13
+remark: version: 1.18.2
+remark: release date: 2009-03-25
 remark: coverage: Mass spectrometer output files
 remark: creator: Matt Chambers <matt.chambers <-at-> vanderbilt.edu>
 remark: publisher: HUPO Proteomics Standards Initiative Mass Spectrometry Standards Working Group
 remark: When appropriate the definition and synonyms of a term are reported exactly as in the chapter 12 of IUPAC orange book. See http://www.iupac.org/projects/2003/2003-056-2-500.html.
-import: http://obo.cvs.sourceforge.net/*checkout*/obo/obo/ontology/phenotype/unit.obo?revision=1.15
+import: http://obo.cvs.sourceforge.net/*checkout*/obo/obo/ontology/phenotype/unit.obo?revision=1.20
 
 [Term]
 id: MS:0000000
@@ -123,8 +123,8 @@ relationship: has_units MS:1000807 ! Th/s
 
 [Term]
 id: MS:1000016
-name: scan time
-def: "The time that an analyzer started a scan, relative to the start of the run." [PSI:MS]
+name: scan start time
+def: "The time that an analyzer started a scan, relative to the start of the MS run." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000503 ! scan attribute
 relationship: has_units UO:0000010 ! second
@@ -2068,6 +2068,7 @@ name: electric field strength
 def: "The magnitude of the force per unit charge at a given point in space." [PSI:MS]
 is_a: MS:1000487 ! ion optics attribute
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
+relationship: has_units UO:0000268 ! volt per meter
 
 [Term]
 id: MS:1000309
@@ -3276,7 +3277,7 @@ name: dwell time
 def: "The time spent gathering data across a peak." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 synonym: "Scan Duration" RELATED []
-is_a: MS:1000549 ! selection window attribute
+is_a: MS:1000503 ! scan attribute
 relationship: has_units UO:0000010 ! second
 relationship: has_units UO:0000031 ! minute
 
@@ -3370,6 +3371,8 @@ id: MS:1000515
 name: intensity array
 def: "A data array of intensity values." [PSI:MS]
 is_a: MS:1000513 ! binary data array
+relationship: has_units MS:1000131 ! number of counts
+relationship: has_units MS:1000814 ! counts per second
 
 [Term]
 id: MS:1000516
@@ -3386,21 +3389,23 @@ is_a: MS:1000513 ! binary data array
 [Term]
 id: MS:1000518
 name: binary data type
-def: "Binary Data type. 16-bit integer, 32-bit integer, 32-bit float 64-bit integer 64-bit float." [PSI:MS]
+def: "Encoding type of binary data, e.g. 64-bit float." [PSI:MS]
 relationship: part_of MS:1000442 ! spectrum
 relationship: part_of MS:1000625 ! chromatogram
 
 [Term]
 id: MS:1000519
 name: 32-bit integer
-def: "Signed 32-bit integer." [PSI:MS]
+def: "OBSOLETE Signed 32-bit integer." [PSI:MS]
 is_a: MS:1000518 ! binary data type
+is_obsolete: true
 
 [Term]
 id: MS:1000520
 name: 16-bit float
-def: "Signed 16-bit float." [PSI:MS]
+def: "OBSOLETE Signed 16-bit float." [PSI:MS]
 is_a: MS:1000518 ! binary data type
+is_obsolete: true
 
 [Term]
 id: MS:1000521
@@ -3411,8 +3416,9 @@ is_a: MS:1000518 ! binary data type
 [Term]
 id: MS:1000522
 name: 64-bit integer
-def: "Signed 64-bit integer." [PSI:MS]
+def: "OBSOLETE Signed 64-bit integer." [PSI:MS]
 is_a: MS:1000518 ! binary data type
+is_obsolete: true
 
 [Term]
 id: MS:1000523
@@ -3434,8 +3440,8 @@ relationship: part_of MS:1000442 ! spectrum
 
 [Term]
 id: MS:1000526
-name: MassLynx raw format
-def: "MassLynx raw file format, which is actually a directory/folder containing several files for each ms run." [PSI:MS]
+name: Waters raw file
+def: "Waters data file found in a Waters RAW directory, generated from an MS acquisition." [PSI:MS]
 is_a: MS:1000560 ! source file type
 
 [Term]
@@ -3662,38 +3668,38 @@ relationship: part_of MS:1000577 ! data file
 
 [Term]
 id: MS:1000562
-name: wiff file
-def: "Applied Biosystems wiff file format." [PSI:MS]
+name: ABI WIFF file
+def: "Applied Biosystems WIFF file format." [PSI:MS]
 is_a: MS:1000560 ! source file type
 
 [Term]
 id: MS:1000563
-name: Xcalibur RAW file
-def: "Thermo Finnigan RAW file format." [PSI:MS]
+name: Thermo RAW file
+def: "Thermo Scientific RAW file format." [PSI:MS]
 is_a: MS:1000560 ! source file type
 
 [Term]
 id: MS:1000564
-name: mzData file
+name: PSI mzData file
 def: "Proteomics Standards Inititative mzData file format." [PSI:MS]
 is_a: MS:1000560 ! source file type
 
 [Term]
 id: MS:1000565
-name: pkl file
-def: "Micromass pkl file format." [PSI:MS]
+name: Micromass PKL file
+def: "Micromass PKL file format." [PSI:MS]
 is_a: MS:1000560 ! source file type
 
 [Term]
 id: MS:1000566
-name: mzXML file
+name: ISB mzXML file
 def: "Institute of Systems Biology mzXML file format." [PSI:MS]
 is_a: MS:1000560 ! source file type
 
 [Term]
 id: MS:1000567
-name: yep file
-def: "Bruker yep file format." [PSI:MS]
+name: Bruker/Agilent YEP file
+def: "Bruker/Agilent YEP file format." [PSI:MS]
 is_a: MS:1000560 ! source file type
 
 [Term]
@@ -4004,8 +4010,8 @@ is_a: MS:1000602 ! Shimadzu Biotech instrument model
 
 [Term]
 id: MS:1000613
-name: dta file
-def: "Peak list file format that should be better defined FIXME." [PSI:MS]
+name: DTA file
+def: "Sequest DTA file format." [PSI:MS]
 is_a: MS:1000560 ! source file type
 
 [Term]
@@ -4037,8 +4043,8 @@ relationship: has_units UO:0000018 ! nanometer
 
 [Term]
 id: MS:1000618
-name: highest wavelength value
-def: "Highest wavelength value observed in the uv/vis spectrum." [PSI:MS]
+name: highest observed wavelength
+def: "Highest wavelength observed in an EMR spectrum." [PSI:MS]
 is_a: MS:1000499 ! spectrum attribute
 is_a: MS:1000808 ! chromatogram attribute
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
@@ -4046,8 +4052,8 @@ relationship: has_units UO:0000018 ! nanometer
 
 [Term]
 id: MS:1000619
-name: lowest wavelength value
-def: "Lowest wavelength value observed in the uv/vis spectrum." [PSI:MS]
+name: lowest observed wavelength
+def: "Lowest wavelength observed in an EMR spectrum." [PSI:MS]
 is_a: MS:1000499 ! spectrum attribute
 is_a: MS:1000808 ! chromatogram attribute
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
@@ -4129,7 +4135,6 @@ relationship: has_units MS:1000814 ! counts per second
 id: MS:1000630
 name: data processing parameter
 def: "Data processing parameter used in the data processing performed on the data file." [PSI:MS]
-is_a: MS:1000452 ! data transformation
 
 [Term]
 id: MS:1000631
@@ -5134,18 +5139,22 @@ relationship: part_of MS:1000441 ! scan
 [Term]
 id: MS:1000793
 name: isolation window upper limit
-def: "The highest m/z being isolated in an isolation window." [PSI:MS]
+def: "OBSOLETE The highest m/z being isolated in an isolation window." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000792 ! isolation window attribute
 relationship: has_units MS:1000040 ! m/z
+is_obsolete: true
+comment: This term was obsoleted in favor of using a target, lower, upper offset scheme. See terms 1000827-1000829
 
 [Term]
 id: MS:1000794
 name: isolation window lower limit
-def: "The lowest m/z being isolated in an isolation window." [PSI:MS]
+def: "OBSOLETE The lowest m/z being isolated in an isolation window." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000792 ! isolation window attribute
 relationship: has_units MS:1000040 ! m/z
+is_obsolete: true
+comment: This term was obsoleted in favor of using a target, lower, upper offset scheme. See terms 1000827-1000829
 
 [Term]
 id: MS:1000795
@@ -5291,6 +5300,106 @@ name: counts per second
 def: "The number of counted events observed per second in one or a group of elements of a detector." [PSI:MS]
 is_a: MS:1000043 ! intensity unit
 
+[Term]
+id: MS:1000815
+name: Bruker BAF file
+def: "Bruker BAF raw file format." [PSI:MS]
+is_a: MS:1000560 ! source file type
+
+[Term]
+id: MS:1000816
+name: Bruker U2 file
+def: "Bruker HyStar U2 file format." [PSI:MS]
+is_a: MS:1000560 ! source file type
+
+[Term]
+id: MS:1000817
+name: HyStar
+def: "Bruker software for hyphenated experiments." [PSI:MS]
+is_a: MS:1000692 ! Bruker software
+
+[Term]
+id: MS:1000818
+name: Acquity UPLC PDA
+def: "Acquity UPLC Photodiode Array Detector." [PSI:MS]
+is_a: MS:1000126 ! Waters instrument model
+
+[Term]
+id: MS:1000819
+name: Acquity UPLC FLR
+def: "Acquity UPLC Fluorescence Detector." [PSI:MS]
+is_a: MS:1000126 ! Waters instrument model
+
+[Term]
+id: MS:1000820
+name: flow rate array
+def: "A data array of flow rate measurements." [PSI:MS]
+is_a: MS:1000513 ! binary data array (needs a unit, but must get it added to unit.obo first)
+
+[Term]
+id: MS:1000821
+name: pressure array
+def: "A data array of pressure measurements." [PSI:MS]
+is_a: MS:1000513 ! binary data array
+relationship: has_units UO:0000110 ! pascal
+
+[Term]
+id: MS:1000822
+name: temperature array
+def: "A data array of temperature measurements." [PSI:MS]
+is_a: MS:1000513 ! binary data array
+relationship: has_units UO:0000012 ! kelvin
+
+[Term]
+id: MS:1000823
+name: Bruker U2 nativeID format
+def: "declaration=xsd:nonNegativeInteger collection=xsd:nonNegativeInteger scan=xsd:nonNegativeInteger." [PSI:MS]
+is_a: MS:1000767 ! native spectrum identifier format
+
+[Term]
+id: MS:1000824
+name: no nativeID format
+def: "No nativeID format indicates that the file tagged with this term does not contain spectra that can have a nativeID format." [PSI:MS]
+is_a: MS:1000767 ! native spectrum identifier format
+
+[Term]
+id: MS:1000825
+name: Bruker FID file
+def: "Bruker FID file format." [PSI:MS]
+is_a: MS:1000560 ! source file type
+
+[Term]
+id: MS:1000826
+name: elution time
+def: "The time of elution from a chromatographic column, relative to the start of the chromatography." [PSI:MS]
+xref: value-type:xsd\:float "The allowed value-type for this CV term."
+is_a: MS:1000503 ! scan attribute
+relationship: has_units UO:0000010 ! second
+relationship: has_units UO:0000031 ! minute
+
+[Term]
+id: MS:1000827
+name: isolation window target m/z
+def: "The primary or reference m/z about which the isolation window is defined." [PSI:MS]
+xref: value-type:xsd\:float "The allowed value-type for this CV term."
+is_a: MS:1000792 ! isolation window attribute
+relationship: has_units MS:1000040 ! m/z
+
+[Term]
+id: MS:1000828
+name: isolation window lower offset
+def: "The extent of the isolation window in m/z below the isolation window target m/z. The lower and upper offsets may be asymetric about the target m/z." [PSI:MS]
+xref: value-type:xsd\:float "The allowed value-type for this CV term."
+is_a: MS:1000792 ! isolation window attribute
+relationship: has_units MS:1000040 ! m/z
+
+[Term]
+id: MS:1000829
+name: isolation window upper offset
+def: "The extent of the isolation window in m/z above the isolation window target m/z. The lower and upper offsets may be asymetric about the target m/z." [PSI:MS]
+xref: value-type:xsd\:float "The allowed value-type for this CV term."
+is_a: MS:1000792 ! isolation window attribute
+relationship: has_units MS:1000040 ! m/z
 
 [Typedef]
 id: has_units

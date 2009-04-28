@@ -79,11 +79,8 @@ class TestModel : public LevMarqFitter1D
     return "success";
   }
 
-  QualityType fit1d(const RawDataArrayType& range, InterpolationModel*& model)
+  QualityType fit1d(const RawDataArrayType& /*range*/, InterpolationModel*& model)
   {
-    UInt N = 0;
-    N = range.size();
-
     DoubleReal center = 0.0;
     center = model->getCenter();
 

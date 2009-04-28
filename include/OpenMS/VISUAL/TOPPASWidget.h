@@ -52,16 +52,10 @@ namespace OpenMS
       /// Destructor
       virtual ~TOPPASWidget();
       
-      enum ActionMode
-      {
-      	AM_NEW_EDGE,
-      	AM_MOVE
-      };
-      
       /// Widget id used as identifier
 			Int window_id;
 			
-			/// Returns the scene TODO (public..)
+			/// Returns the scene
 			TOPPASScene* getScene();
 		
 		signals:
@@ -83,6 +77,13 @@ namespace OpenMS
 			void dragEnterEvent(QDragEnterEvent* event);
 			void dragMoveEvent(QDragMoveEvent* event);
 			void dropEvent(QDropEvent* event);
+			
+			///@name reimplemented QT events
+			//@{
+			void wheelEvent(QWheelEvent* event);
+			void keyPressEvent(QKeyEvent* e);
+			void keyReleaseEvent(QKeyEvent* e);
+			//@}
   };
 }
 

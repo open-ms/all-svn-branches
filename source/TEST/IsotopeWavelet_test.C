@@ -27,6 +27,7 @@
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeWaveletConstants.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeWavelet.h>
 
 using namespace OpenMS;
@@ -45,12 +46,12 @@ START_SECTION(static UInt getMaxCharge())
 	TEST_EQUAL(IsotopeWavelet::getMaxCharge(), 1)
 END_SECTION
 
-START_SECTION(static Int getGammaTableMaxIndex())
-	TEST_EQUAL(IsotopeWavelet::getGammaTableMaxIndex(), -1)
+START_SECTION(static Size getGammaTableMaxIndex())
+	TEST_EQUAL(IsotopeWavelet::getGammaTableMaxIndex(), 0)
 END_SECTION
 
-START_SECTION(static Int getExpTableMaxIndex())
-	TEST_EQUAL(IsotopeWavelet::getExpTableMaxIndex(), -1)
+START_SECTION(static Size getExpTableMaxIndex())
+	TEST_EQUAL(IsotopeWavelet::getExpTableMaxIndex(), 0)
 END_SECTION
 
 START_SECTION((static void setMaxCharge(const UInt max_charge))) 
@@ -73,12 +74,7 @@ START_SECTION((static DoubleReal getInvTableSteps()))
 END_SECTION
 
 START_SECTION((static DoubleReal getLambdaL(const DoubleReal m)))
-	TEST_REAL_SIMILAR(IsotopeWavelet::getLambdaL(1000), 0.69628)
-END_SECTION
-
-
-START_SECTION((static DoubleReal getLambdaQ(const DoubleReal m)))
-	TEST_REAL_SIMILAR(IsotopeWavelet::getLambdaQ(1000), 0.685792)
+	TEST_REAL_SIMILAR(IsotopeWavelet::getLambdaL(1000), 0.75632)
 END_SECTION
 
 
@@ -93,7 +89,7 @@ END_SECTION
 UInt size=0;
 START_SECTION((static const IsotopeDistribution::ContainerType& getAveragine (const DoubleReal m, UInt* size=NULL)))
 	IsotopeWavelet::getAveragine (1000, &size);
-	TEST_EQUAL (size, 3)	 
+	TEST_EQUAL (size, 4)	 
 END_SECTION
 
 
@@ -102,7 +98,7 @@ START_SECTION((static DoubleReal getValueByMass (const DoubleReal t, const Doubl
 	TOLERANCE_ABSOLUTE (1e-4)
 	for (Size c=0; c<iw->getMaxCharge(); ++c)
 	{
-		v=iw->getValueByMass (HALF_NEUTRON_MASS/(c+1.), 1000, c+1, 1);
+		v=iw->getValueByMass (Constants::IW_HALF_NEUTRON_MASS/((UInt)(c)+1.), 1000, c+1, 1);
 		TEST_REAL_SIMILAR(v, 0)
 	};
 END_SECTION
@@ -110,7 +106,7 @@ END_SECTION
 START_SECTION((static DoubleReal getValueByLambda (const DoubleReal lambda, const DoubleReal tz1))) 
 	for (Size c=0; c<iw->getMaxCharge(); ++c)
 	{
-		v=iw->getValueByLambda (iw->getLambdaQ(1000*(c+1)-(c+1)*PROTON_MASS), HALF_NEUTRON_MASS*(c+1)+1);
+		v=iw->getValueByLambda (iw->getLambdaL(1000*(c+1)-(c+1)*Constants::IW_PROTON_MASS), Constants::IW_HALF_NEUTRON_MASS*(c+1)+1);
 		TOLERANCE_ABSOLUTE (1e-4)
 		TEST_REAL_SIMILAR(v, 0)
 	};
@@ -119,7 +115,7 @@ END_SECTION
 START_SECTION((static DoubleReal getValueByLambdaExtrapol (const DoubleReal lambda, const DoubleReal tz1))) 
 	for (Size c=0; c<iw->getMaxCharge(); ++c)
 	{
-		v=iw->getValueByLambdaExtrapol (iw->getLambdaQ(1000*(c+1)-(c+1)*PROTON_MASS), HALF_NEUTRON_MASS*(c+1)+1);
+		v=iw->getValueByLambdaExtrapol (iw->getLambdaL(1000*(c+1)-(c+1)*Constants::IW_PROTON_MASS), Constants::IW_HALF_NEUTRON_MASS*(c+1)+1);
 		TOLERANCE_ABSOLUTE (1e-4)
 		TEST_REAL_SIMILAR(v, 0)
 	};
@@ -129,14 +125,5 @@ END_SECTION
 START_SECTION(static float myPow(float a, float b))
 	TEST_EQUAL (int(IsotopeWavelet::myPow(1.1, 3)*10), 13);
 END_SECTION
-
-
-START_SECTION((virtual ~IsotopeWavelet()))
-	delete (iw);
-	TEST_EQUAL (IsotopeWavelet::getInstance(), 0)
-	TEST_EQUAL (IsotopeWavelet::getMaxCharge(), 1)
-END_SECTION
-
-
 
 END_TEST

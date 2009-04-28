@@ -22,9 +22,8 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche$
-// $Authors: $
+// $Authors: Ole Schulz-Trieglaff $
 // --------------------------------------------------------------------------
-// Author: Ole Schulz-Trieglaff 
 
 #include <iostream>
 #include <string>
@@ -47,7 +46,7 @@ class TOPPMapSimulator
 {
 	public:
 		TOPPMapSimulator()
-			: TOPPBase("MapSimulator","This application simulates an LC-MS run.")
+			: TOPPBase("MapSimulator","This application simulates an LC-MS run.",false)
 		{ }
 
 	protected:

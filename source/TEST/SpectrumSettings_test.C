@@ -51,12 +51,12 @@ START_SECTION((~SpectrumSettings()))
 	delete ptr;
 END_SECTION
 
-START_SECTION(const String& getNativeID() const)
+START_SECTION((const String& getNativeID() const))
 	SpectrumSettings tmp;
 	TEST_STRING_EQUAL(tmp.getNativeID(),"");
 END_SECTION
 
-START_SECTION(void setNativeID(const String& native_id))
+START_SECTION((void setNativeID(const String& native_id)))
 	SpectrumSettings tmp;
 	tmp.setNativeID("nid");
 	TEST_STRING_EQUAL(tmp.getNativeID(),"nid");
@@ -119,7 +119,7 @@ START_SECTION((InstrumentSettings& getInstrumentSettings()))
 	TEST_EQUAL(tmp.getInstrumentSettings()==InstrumentSettings(), false);	
 END_SECTION
 
-START_SECTION((const std::vector<Precursor>& getPrecursors()[0]. const))
+START_SECTION((const std::vector<Precursor>& getPrecursors() const ))
 	SpectrumSettings tmp;
 	TEST_EQUAL(tmp.getPrecursors().size(),0);	  
 END_SECTION
@@ -130,10 +130,27 @@ START_SECTION((void setPrecursors(const std::vector<Precursor>& precursors)))
 	TEST_EQUAL(tmp.getPrecursors().size(), 2);
 END_SECTION
 
-START_SECTION((std::vector<Precursor>& getPrecursors()[0].))
+START_SECTION((std::vector<Precursor>& getPrecursors()))
 	SpectrumSettings tmp;
 	tmp.getPrecursors().resize(4);
 	TEST_EQUAL(tmp.getPrecursors().size(), 4);	
+END_SECTION
+
+START_SECTION((const std::vector<Product>& getProducts() const ))
+	SpectrumSettings tmp;
+	TEST_EQUAL(tmp.getProducts().size(),0);	  
+END_SECTION
+
+START_SECTION((void setProducts(const std::vector<Product>& products)))
+	SpectrumSettings tmp;
+	tmp.setProducts(vector<Product>(2));
+	TEST_EQUAL(tmp.getProducts().size(), 2);
+END_SECTION
+
+START_SECTION((std::vector<Product>& getProducts()))
+	SpectrumSettings tmp;
+	tmp.getProducts().resize(4);
+	TEST_EQUAL(tmp.getProducts().size(), 4);	
 END_SECTION
 
 START_SECTION((SpectrumType getType() const))
@@ -190,6 +207,7 @@ START_SECTION((SpectrumSettings& operator= (const SpectrumSettings& source)))
 	tmp.getAcquisitionInfo().setMethodOfCombination("test");
 	tmp.getInstrumentSettings().getScanWindows().resize(1);
 	tmp.getPrecursors().resize(1);
+	tmp.getProducts().resize(1);
 	tmp.getPeptideIdentifications().resize(1);
 	tmp.setType(SpectrumSettings::PEAKS);
 	tmp.setComment("bla");
@@ -200,6 +218,7 @@ START_SECTION((SpectrumSettings& operator= (const SpectrumSettings& source)))
 	TEST_EQUAL(tmp2.getType(), SpectrumSettings::PEAKS);
 	TEST_EQUAL(tmp2.getPeptideIdentifications().size(), 1);	
 	TEST_EQUAL(tmp2.getPrecursors().size(),1);	
+	TEST_EQUAL(tmp2.getProducts().size(),1);	
 	TEST_EQUAL(tmp2.getInstrumentSettings()==InstrumentSettings(), false);
 	TEST_EQUAL(tmp2.getAcquisitionInfo()==AcquisitionInfo(), false);  
 	TEST_STRING_EQUAL(tmp2.getNativeID(),"nid");
@@ -210,6 +229,7 @@ START_SECTION((SpectrumSettings(const SpectrumSettings& source)))
 	tmp.getAcquisitionInfo().setMethodOfCombination("test");
 	tmp.getInstrumentSettings().getScanWindows().resize(1);
 	tmp.getPrecursors().resize(1);
+	tmp.getProducts().resize(1);
 	tmp.setType(SpectrumSettings::PEAKS);
 	tmp.setComment("bla");
 	tmp.getPeptideIdentifications().resize(1);
@@ -220,6 +240,7 @@ START_SECTION((SpectrumSettings(const SpectrumSettings& source)))
 	TEST_EQUAL(tmp2.getComment(), "bla");
 	TEST_EQUAL(tmp2.getType(), SpectrumSettings::PEAKS);
 	TEST_EQUAL(tmp2.getPrecursors().size(), 1);
+	TEST_EQUAL(tmp2.getProducts().size(),1);	
 	TEST_EQUAL(tmp2.getInstrumentSettings()==InstrumentSettings(), false);	
 	TEST_EQUAL(tmp2.getAcquisitionInfo()==AcquisitionInfo(), false);
 	TEST_EQUAL(tmp2.getPeptideIdentifications().size(), 1);	
@@ -229,6 +250,7 @@ START_SECTION((SpectrumSettings(const SpectrumSettings& source)))
 	TEST_EQUAL(tmp2.getComment(), "");
 	TEST_EQUAL(tmp2.getType(), SpectrumSettings::UNKNOWN);
 	TEST_EQUAL(tmp2.getPrecursors().size(),0);	
+	TEST_EQUAL(tmp2.getProducts().size(),0);	
 	TEST_EQUAL(tmp2.getInstrumentSettings()==InstrumentSettings(), true);	
 	TEST_EQUAL(tmp2.getAcquisitionInfo()==AcquisitionInfo(), true);
 	TEST_EQUAL(tmp2.getPeptideIdentifications().size(), 0);	
@@ -265,6 +287,14 @@ START_SECTION((bool operator== (const SpectrumSettings& rhs) const))
 	TEST_EQUAL(edit==empty, false);
 
 	edit = empty;
+	edit.getPrecursors().resize(1);
+	TEST_EQUAL(edit==empty, false);
+
+	edit = empty;
+	edit.getProducts().resize(1);
+	TEST_EQUAL(edit==empty, false);
+	
+	edit = empty;
 	edit.getPeptideIdentifications().resize(1);
 	TEST_EQUAL(edit==empty, false);
 END_SECTION
@@ -296,7 +326,15 @@ START_SECTION((bool operator!= (const SpectrumSettings& rhs) const))
 	edit = empty;
 	edit.setComment("bla");
 	TEST_EQUAL(edit!=empty, true);
-	
+
+	edit = empty;
+	edit.getPrecursors().resize(1);
+	TEST_EQUAL(edit!=empty, true);
+
+	edit = empty;
+	edit.getProducts().resize(1);
+	TEST_EQUAL(edit!=empty, true);
+
 	edit = empty;
 	edit.getPeptideIdentifications().resize(1);
 	TEST_EQUAL(edit!=empty, true);

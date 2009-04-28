@@ -31,6 +31,8 @@
 #include <OpenMS/FILTERING/NOISEESTIMATION/SignalToNoiseEstimatorMeanIterative.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/TwoDOptimization.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/OptimizePick.h>
+#include <OpenMS/FILTERING/TRANSFORMERS/TICFilter.h>
+
 
 #ifdef _OPENMP 
 #ifdef OPENMS_WINDOWSPLATFORM
@@ -73,6 +75,12 @@ namespace OpenMS
 		defaults_.setMaxFloat("thresholds:correlation",1.0);
   	defaults_.setValue("peak_width",0.15,"Approximate fwhm of the peaks.");
 		defaults_.setMinFloat("peak_width",0.0);
+		defaults_.setValue("estimate_peak_width","false","Flag if the average peak width shall be estimated. Attention: when this flag is set, the peak_width is ignored.");
+		std::vector<String> valid_opts;
+		valid_opts.push_back("true");
+		valid_opts.push_back("false");
+		defaults_.setValidStrings("estimate_peak_width",valid_opts);
+
   	defaults_.setValue("fwhm_bound_factor",0.7,"Factor that calculates the minimal fwhm value from the peak_width.",StringList::create("advanced"));
 		defaults_.setMinFloat("fwhm_bound_factor",0.0);
 
@@ -87,7 +95,7 @@ namespace OpenMS
 		//Optimization parameters
   	defaults_.setValue("optimization","no","If the peak parameters position, intensity and left/right width"\
 											 "shall be optimized set optimization to one_dimensional or two_dimensional.", StringList::create("advanced"));
-		std::vector<String> valid_opts;
+		valid_opts.clear();
 		valid_opts.push_back("no");
 		valid_opts.push_back("one_dimensional");
 		valid_opts.push_back("two_dimensional");
@@ -1201,6 +1209,18 @@ namespace OpenMS
 
 	void PeakPickerCWT::pickExperiment(const MSExperiment<>& input, MSExperiment<>& output)
 	{
+			// if estimatePeakWidth-flag is set estimate it
+			if(param_.getValue("estimate_peak_width")=="true") 
+			{
+				DoubleReal p_w = estimatePeakWidth(input);
+				if(p_w == 0.)
+					{
+						std::cout<< "Aborting!"<<std::endl;
+						return;
+					}
+				else param_.setValue("peak_width",p_w);
+			}
+
 		//clear output container
 		output.clear();
 		
@@ -1577,5 +1597,117 @@ namespace OpenMS
 			}
 		} // if (peak_shapes.size() > 0)		
 	}
+
+
+		DoubleReal PeakPickerCWT::estimatePeakWidth(const MSExperiment<>& input)
+		{
+				// the peak widths that are tested
+				//DoubleList widths = DoubleList::create("0.5,0.4,0.3,0.25,0.2,0.15,0.1,0.075,0.05,0.025,0.0125,0.01,0.005,0.0025,0.00125,0.0005,0.0001");
+				DoubleList widths = DoubleList::create("0.5,0.25,0.125,0.1,0.05,0.025,0.0125,0.01,0.005,0.0025,0.00125,0.0005,0.0001");
+#ifdef DEBUG_PEAK_PICKING
+				std::cout << "calculating max tic"<<std::endl;
+#endif
+				// determine spectrum used for estimation
+				// used the one with the highest tic
+				TICFilter tic_filter;
+				DoubleReal max_tic = 0.;
+				Size index = 0;
+				std::vector<std::pair<Size,DoubleReal> > index_tic_vec;
+				for(Size s = 0; s < input.size(); ++s)
+				{
+						DoubleReal tmp_tic = tic_filter.apply(input[s]);
+						index_tic_vec.push_back(make_pair(s,tmp_tic));
+						if(tmp_tic > max_tic)
+						{
+								max_tic = tmp_tic;
+								index = s;
+						}
+				}
+				// now sort the index_tic_vec according to tic and get the 3 highest spectra:
+				sort(index_tic_vec.begin(),index_tic_vec.end(),TICLess_());
+#ifdef DEBUG_PEK_PICKING
+				std::cout << input[(index_tic_vec.end()-1)->first].getRT() << " "
+									<<  input[(index_tic_vec.end()-2)->first].getRT() << " "
+									<<  input[ (index_tic_vec.end()-3)->first].getRT() << std::endl;
+#endif
+				std::vector<DoubleReal> estimated_widths;
+				for(Size s = 0; s < input.size()&& s < 3;++s)
+					{
+					  index  = (index_tic_vec.end()-1-s)->first; 
+						// now pick this spectrum with the different peak widths
+						MSExperiment<> exp;
+						for(Size w = 0; w < widths.size(); ++w)
+							{
+								MSSpectrum<> spec;
+								param_.setValue("peak_width",widths[w]);
+								fwhm_bound_ = widths[w] *(DoubleReal) param_.getValue("fwhm_bound_factor");
+#ifdef DEBUG_PEAK_PICKING
+								std::cout << "peak_width "<<param_.getValue("peak_width")<<"\tfwhm_bound_ "<<fwhm_bound_<<"\t";
+#endif
+								pick(input[index],spec);
+#ifdef DEBUG_PEAK_PICKING
+								DoubleReal fwhm = 0.;
+								for(Size p = 0; p < spec.size();++p)
+									{
+										fwhm += spec.getMetaDataArrays()[2][p];
+									}
+								fwhm /= (DoubleReal) spec.size();
+
+								std::cout << spec.size() << "\t"<<fwhm<<std::endl;
+#endif
+								exp.push_back(spec);
+							}
+						
+						// determine slope
+						std::vector<DoubleReal> slopes;
+						DoubleReal m_max = 0.;
+						for(Size i = 0; i < exp.size()-1; ++i)
+							{
+#ifdef DEBUG_PEAK_PICKING
+								std::cout << ((SignedSize)exp[i].size()-(SignedSize)exp[i+1].size()) << "/"<<(widths[i]-widths[i+1])<<"\t";
+#endif
+								DoubleReal m = (DoubleReal)((SignedSize)exp[i].size()-(SignedSize)exp[i+1].size())/(widths[i]-widths[i+1]);
+								slopes.push_back(m);
+								if(fabs(m) > m_max) m_max = fabs(m);
+#ifdef DEBUG_PEAK_PICKING
+								std::cout << (widths[i]+widths[i+1])/2 << "\t"<< m << std::endl;
+#endif
+							}
+						// determine point where slope is decreasing again, there the plateau should begin
+						bool max_found = false;
+						for(Size s = 0; s < slopes.size(); ++s)
+							{
+#ifdef DEBUG_PEAK_PICKING
+								std::cout << slopes[s]/m_max << std::endl;
+#endif
+								if(fabs(fabs(slopes[s])- m_max) < 0.01) max_found = true;
+								if(max_found && fabs(slopes[s]/m_max) <= 0.75)
+									{
+#ifdef DEBUG_PEAK_PICKING
+										std::cout << "peak_width = "<< (widths[s]+widths[s+1])/2 <<std::endl;
+#endif
+										estimated_widths.push_back((widths[s]+widths[s+1])/2);
+										break;
+									}
+							}
+					}
+				// average width over the three tested spectra
+				DoubleReal avg_width = 0.;
+				if(estimated_widths.size() == 0)
+					{
+						std::cout <<"Couldn't estimate peak width!"<<std::endl;
+						return 0.;
+					}
+				for(Size s = 0; s < estimated_widths.size();++s)
+					{
+						std::cout << "width"<<s<< " = "<<estimated_widths[s]<<std::endl;
+						avg_width += estimated_widths[s];
+					}
+				std::cout <<"average estimated width "<<avg_width/(DoubleReal)estimated_widths.size()<<std::endl;
+				return avg_width/(DoubleReal)estimated_widths.size();
+				
+		}
 	
 }
+
+

@@ -42,8 +42,10 @@ set(metadata_executables_list
   MetaInfoRegistry_test
   MetaInfo_test
   MetaInfoInterface_test
+  ScanWindow_test
   IonSource_test
   IonDetector_test
+	IDTagger_test
   MassAnalyzer_test
   Instrument_test
   ProteinHit_test
@@ -58,6 +60,7 @@ set(metadata_executables_list
   PeptideIdentification_test
   AcquisitionInfo_test
   Precursor_test
+  Product_test
   ContactPerson_test
   SourceFile_test
   Software_test
@@ -74,6 +77,7 @@ set(metadata_executables_list
 set(system_executables_list
 	StopWatch_test
   File_test
+  FileWatcher_test
 )
 
 set(kernel_executables_list
@@ -104,6 +108,7 @@ set(visual_executables_list
 )
 
 set(format_executables_list
+	CsvFile_test
   XMLValidator_test
   TextFile_test
   XMLFile_test
@@ -146,6 +151,7 @@ set(format_executables_list
   ControlledVocabulary_test
   TransformationXMLFile_test
   SemanticValidator_test
+  MzMLValidator_test
   MS2File_test
 )
 
@@ -267,6 +273,7 @@ set(analysis_executables_list
   BaseGroupFinder_test
   DelaunayPairFinder_test
   SimplePairFinder_test
+  StablePairFinder_test
   BaseSuperimposer_test
   PoseClusteringAffineSuperimposer_test
   PoseClusteringShiftSuperimposer_test
@@ -284,9 +291,9 @@ set(analysis_executables_list
   IDMapper_test
   PrecursorIonSelectionPreprocessing_test
   PrecursorIonSelection_test
-  CaapEvalAlgorithm_test
-  CaapEvalAlgorithmPrecision_test
-  CaapEvalAlgorithmRecall_test
+  MapAlignmentEvaluationAlgorithm_test
+  MapAlignmentEvaluationAlgorithmPrecision_test
+  MapAlignmentEvaluationAlgorithmRecall_test
 )
 
 set(applications_executables_list
@@ -312,7 +319,7 @@ set(transformations_executables_list
   FeatureFinderAlgorithmSimplest_test
   FeatureFinderAlgorithmSimple_test
   FeatureFinderAlgorithmWavelet_test
-  FeatureFinderAlgorithmIsotopeWavelet_test
+	#FeatureFinderAlgorithmIsotopeWavelet_test
   FeatureFinderAlgorithmWatershed_test
   SimpleSeeder_test
   SimpleExtender_test
@@ -338,3 +345,36 @@ set(transformations_executables_list
   TwoDOptimization_test
 )
 
+set(simulation_executables_list
+	ElutionModel_test
+	IsotopeModelGeneral_test
+	LCMSSample_test
+	LCMSSim_test
+	MixtureModel_test
+)
+
+### collect test executables
+set(TEST_executables
+		${concept_executables_list}
+		${system_executables_list}
+		${datastructures_executables_list}
+		${kernel_executables_list}
+		${metadata_executables_list}
+		${visual_executables_list}
+		${format_executables_list}
+		${math_executables_list}
+		${filtering_executables_list}
+		${comparison_executables_list}
+		${chemistry_executables_list}
+		${analysis_executables_list}
+		${applications_executables_list}
+		${transformations_executables_list}
+		${simulation_executables_list})
+		
+
+### add filenames to Visual Studio solution tree
+set(sources_VS)
+foreach(i ${TEST_executables})
+	list(APPEND sources_VS "${i}.C")
+endforeach(i)
+source_group("" FILES ${sources_VS})

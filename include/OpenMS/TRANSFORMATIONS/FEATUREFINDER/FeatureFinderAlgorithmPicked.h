@@ -56,7 +56,7 @@ namespace OpenMS
     @htmlinclude OpenMS_FeatureFinderAlgorithmPicked.parameters
 
 		@improvement RT model with tailing/fronting (Marc)
-		@improvement More general MZ model not based on averagenes - e.g. based on co-elution (Marc)
+		@improvement More general MZ model - e.g. based on co-elution or with sulphur-averagines (Marc)
 		
 		@ingroup FeatureFinder
 	*/
@@ -341,15 +341,15 @@ namespace OpenMS
 				defaults_.setValue("debug","false","When debug mode is activated, several files with intermediate results are written to the folder 'debug'.");
 				defaults_.setValidStrings("debug",StringList::create("true,false"));
 				//intensity
-				defaults_.setValue("intensity:bins",10,"Number of bins per dimension (RT and m/z).");
+				defaults_.setValue("intensity:bins",10,"Number of bins per dimension (RT and m/z). The higher this value, the more local the intensity significance score is.");
 				defaults_.setMinInt("intensity:bins",1);
 				defaults_.setSectionDescription("intensity","Settings for the calculation of a score indicating if a peak's intensity is significant in the local environment (between 0 and 1)");
 				//mass trace search parameters
 				defaults_.setValue("mass_trace:mz_tolerance",0.03,"m/z difference tolerance of peaks belonging to the same mass trace.\n This value must be smaller than that 1/charge_high!");
 				defaults_.setMinFloat("mass_trace:mz_tolerance",0.0);
-				defaults_.setValue("mass_trace:min_spectra",14,"Number of spectra the have to show the same peak mass for a mass trace.");
+				defaults_.setValue("mass_trace:min_spectra",10,"Number of spectra the have to show the same peak mass for a mass trace.");
 				defaults_.setMinInt("mass_trace:min_spectra",1);
-				defaults_.setValue("mass_trace:max_missing",4,"Number of spectra where a high mass deviation or missing peak is acceptable.\n This parameter should be well below 'min_spectra'!");
+				defaults_.setValue("mass_trace:max_missing",1,"Number of spectra where a high mass deviation or missing peak is acceptable.\n This parameter should be well below 'min_spectra'!");
 				defaults_.setMinInt("mass_trace:max_missing",0);
 				defaults_.setValue("mass_trace:slope_bound",0.1,"The maximum slope of mass trace intensities when extending from the highest peak", StringList::create("advanced"));
 				defaults_.setMinFloat("mass_trace:slope_bound",0.0);
@@ -408,7 +408,9 @@ namespace OpenMS
 				defaults_.setValue("feature:report_rt_apex_spectrum","false", "If 'true' the spectrum  number of the RT apex is reported as the meta data value 'rt_apex_spectrum'.",StringList::create("advanced"));
 				defaults_.setValidStrings("feature:report_rt_apex_spectrum",StringList::create("true,false"));
 				defaults_.setSectionDescription("feature","Settings for the features (intensity, quality assessment, ...)");
-				
+				//debug settings
+				defaults_.setValue("debug:pseudo_rt_shift",500.0,"Pseudo RT shift used when .", StringList::create("advanced"));
+				defaults_.setMinFloat("debug:pseudo_rt_shift",1.0);
 				this->defaultsToParam_();
 			}
 			
@@ -728,7 +730,7 @@ namespace OpenMS
 						}
 						
 						//----------------------------------------------------------------
-						//Find best fitting isotope pattern for this charge (using averagene)
+						//Find best fitting isotope pattern for this charge (using averagine)
 						IsotopePattern best_pattern(0);
 						DoubleReal isotope_fit_quality = findBestIsotopeFit_(seeds[i], c, best_pattern);
 						if (isotope_fit_quality<min_isotope_fit_)
@@ -955,6 +957,7 @@ namespace OpenMS
 						//write debug output of feature
 						if (debug)
 						{
+							DoubleReal pseudo_rt_shift = param_.getValue("debug:pseudo_rt_shift");
 							TextFile tf;
 							//gnuplot script	
 							String script = String("plot \"debug/features/") + plot_nr + ".dta\" title 'before fit (RT: " +  String::number(x0,2) + " m/z: " +  String::number(peak.getMZ(),4) + ")' with points 1";
@@ -963,7 +966,7 @@ namespace OpenMS
 							{
 								for (Size j=0; j<traces[k].peaks.size(); ++j)
 								{
-									tf.push_back(String(500.0*k+traces[k].peaks[j].first) + "	" + traces[k].peaks[j].second->getIntensity());
+									tf.push_back(String(pseudo_rt_shift*k+traces[k].peaks[j].first) + "	" + traces[k].peaks[j].second->getIntensity());
 								}
 							}
 							tf.store(String("debug/features/") + plot_nr + ".dta");
@@ -975,7 +978,7 @@ namespace OpenMS
 								{
 									for (Size j=0; j<new_traces[k].peaks.size(); ++j)
 									{
-										tf.push_back(String(500.0*k+new_traces[k].peaks[j].first) + "	" + new_traces[k].peaks[j].second->getIntensity());
+										tf.push_back(String(pseudo_rt_shift*k+new_traces[k].peaks[j].first) + "	" + new_traces[k].peaks[j].second->getIntensity());
 									}
 								}
 								tf.store(String("debug/features/") + plot_nr + "_cropped.dta");
@@ -996,7 +999,7 @@ namespace OpenMS
 							{
 								char fun = 'f';
 								fun += (char)k;
-								tf.push_back(String(fun)+"(x)= " + traces.baseline + " + " + (traces[k].theoretical_int*height) + " * exp(-0.5*(x-" + (500.0*k+x0) + ")**2/(" + sigma + ")**2)");
+								tf.push_back(String(fun)+"(x)= " + traces.baseline + " + " + (traces[k].theoretical_int*height) + " * exp(-0.5*(x-" + (pseudo_rt_shift*k+x0) + ")**2/(" + sigma + ")**2)");
 								script =  script + ", " + fun + "(x) title 'Trace " + k + " (m/z: " + String::number(traces[k].getAvgMZ(),4) + ")'";
 							}
 							//output

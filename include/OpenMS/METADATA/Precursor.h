@@ -94,15 +94,15 @@ namespace OpenMS
       /// sets the activation energy (in electronvolt)
       void setActivationEnergy(DoubleReal activation_energy);
       
-      /// returns the lower bound of the isolation window
-      DoubleReal getIsolationWindowLowerBound() const;
-      /// sets the lower bound of the isolation window
-      void setIsolationWindowLowerBound(DoubleReal bound);
+      /// returns the lower offset from the target m/z
+      DoubleReal getIsolationWindowLowerOffset() const;
+      /// sets the lower offset from the target m/z
+      void setIsolationWindowLowerOffset(DoubleReal bound);
       
-      /// returns the upper bound of the isolation window
-      DoubleReal getIsolationWindowUpperBound() const;
-      /// sets the upper bound of the isolation window
-      void setIsolationWindowUpperBound(DoubleReal bound);
+      /// returns the upper offset from the target m/z
+      DoubleReal getIsolationWindowUpperOffset() const;
+      /// sets the upper offset from the target m/z
+      void setIsolationWindowUpperOffset(DoubleReal bound);
       
       /// Non-mutable access to the charge
       Int getCharge() const;

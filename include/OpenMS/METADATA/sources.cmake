@@ -12,6 +12,7 @@ DocumentIdentifier.h
 ExperimentalSettings.h
 Gradient.h
 HPLC.h
+IDTagger.h
 Instrument.h
 InstrumentSettings.h
 IonDetector.h
@@ -33,6 +34,8 @@ Software.h
 SourceFile.h
 SpectrumSettings.h
 Tagging.h
+ScanWindow.h
+Product.h
 )
 
 ### add path to the filenames

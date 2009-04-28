@@ -49,8 +49,7 @@ namespace OpenMS
 		
 		@htmlinclude OpenMS_Spectrum1DCanvas.parameters
 		
-		@bug Make update of spectrum bar faster (Johannes)
-		@bug Make sure the right spectrum is selected when applying TOPP tools - wait for next Qt release (Johannes)
+		@bug Measuring does not work for rotated spectra (projections view)
 		
 		@ingroup SpectrumWidgets
 	*/
@@ -152,7 +151,12 @@ namespace OpenMS
 			void setVisibleArea(DRange<2> range); //Do not change this to AreaType the signal needs QT needs the exact type...
 			// Docu in base class
 			virtual void horizontalScrollBarChange(int value);
-		
+
+  	protected slots:
+  		
+			/// Reacts on changed layer paramters
+			void currentLayerParamtersChanged_();
+
 		protected:
 			// Docu in base class
 			bool finishAdding_();
@@ -182,8 +186,6 @@ namespace OpenMS
 			*/
 			virtual void changeVisibleArea_(const AreaType& new_area, bool repaint = true, bool add_to_stack = false);
 			// Docu in base class
-			virtual void currentLayerParamtersChanged_();
-			// Docu in base class
 			virtual void recalculateSnapFactor_();
 			// Docu in base class
 			virtual void updateScrollbars_();
@@ -192,10 +194,6 @@ namespace OpenMS
 
 			/// Draw modes (for each spectrum)
 			std::vector<DrawModes> draw_modes_; 
-			/// Iterator on peak next to mouse position
-			PeakIndex selected_peak_;
-			/// start peak of measuring mode
-      PeakIndex measurement_start_;
       /// start point of "ruler" for measure mode
       QPoint measurement_start_point_;
       /// Indicates whether this widget is currently in mirror mode

@@ -220,7 +220,7 @@
 		{
 			print "Rebuilding doxygen XML output\n";
 		}
-		exec("cd $bin_path && make idoc");
+		exec("cd $bin_path && make doc_internal");
 		if ($debug>0)
 		{
 			print "Done\n";
@@ -235,7 +235,7 @@
 	if (trim($out[0]) < 100)
 	{
 		print "Error: For this script, doxygen XML output is needed!\n";
-		print "       Please execute 'make idoc' first!.\n";
+		print "       Please execute 'make doc_internal' first!.\n";
 		$abort = true;
 	}
 	if (in_array("doxygen_errors",$tests))
@@ -243,7 +243,7 @@
 		if (!file_exists("$bin_path/doc/doxygen/doxygen-error.log"))
 		{
 			print "Error: For the 'doxygen_errors' test, the file '$bin_path/doc/doxygen/doxygen-error.log' is needed!\n";
-			print "       Please execute 'make idoc' first!'.\n";
+			print "       Please execute 'make doc_internal' first!'.\n";
 			$abort = true;
 		}
 	}
@@ -763,8 +763,14 @@
 			foreach($class_info["non-public"] as $tmp)
 			{
 				//print "NP: '".$tmp."'\n";
-				# constructor, destructor, serialize methods, QT events and Xerces-C parser methods are allowed
-				if ( endswith($tmp,'Event') || endsWith($tmp,'load')  || endsWith($tmp,'save') || endsWith($tmp,'serialize') || $tmp==$class_info["classname"] || $tmp=='~'.$class_info["classname"] || $tmp=="operator=" || $tmp=="startElement" || $tmp=="endElement" || $tmp=="characters")
+				//Allow special methods to conflict with the coding convention
+				if ( endswith($tmp,'Event') || //Qt events
+				     endsWith($tmp,'load')  || endsWith($tmp,'save') || endsWith($tmp,'serialize') || //serialize methods
+				     $tmp==$class_info["classname"] || $tmp=='~'.$class_info["classname"] || //constructor or destructor
+				     $tmp=="operator=" || //assignment
+				     $tmp=="startElement" || $tmp=="endElement" || $tmp=="characters" || //Xerces data handler
+				     $tmp=="warning" || $tmp=="error" || $tmp=="fatalError" || $tmp=="resetErrors" //Xerces error handler
+				   )
 				{
 					continue;
 				}

@@ -159,7 +159,7 @@ namespace OpenMS
 		
 		if(system(call.c_str())!=0)
 		{
-			QMessageBox::critical(this,"Error",(String("Could not execute '")+call+"'!\n\nMake sure the TOPP tools are in your $PATH variable and that you have write permission in the temporary file path!").c_str());
+			QMessageBox::critical(this,"Error",(String("Could not execute '")+call+"'!\n\nMake sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
 		}
 		else if(!File::exists(ini_file_))
 		{
@@ -294,7 +294,7 @@ namespace OpenMS
 		}
 		else if (tool=="PeakPicker")
 		{
-			StringList list2 = StringList::create("wavelet,righ_res");
+			StringList list2 = StringList::create("wavelet,high_res");
 			for (Size i=0; i<list2.size(); ++i)
 			{
 				list << list2[i].toQString();			

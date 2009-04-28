@@ -232,7 +232,7 @@ class TOPPBaseTestNOP
 /////////////////////////////////////////////////////////////
 
 TOPPBaseTest* ptr = 0;
-START_SECTION((TOPPBase(const String &name, const String &description, bool official=true, const String &version="")))
+START_SECTION((TOPPBase(const String &name, const String &description, bool official=true, bool id_tag_support=false, const String &version="")))
 	ptr = new TOPPBaseTest();
 	TEST_NOT_EQUAL(ptr, 0)
 END_SECTION
@@ -241,9 +241,12 @@ START_SECTION((virtual ~TOPPBase()))
 	delete ptr;
 END_SECTION
 
-START_SECTION((static StringList getToolList()))
-	TEST_EQUAL(TOPPBaseTest::getToolList().contains("FileInfo"),true)
-	TEST_EQUAL(TOPPBaseTest::getToolList().contains("ImaginaryTool"),false)
+START_SECTION((static Map<String,StringList> getToolList()))
+	TEST_EQUAL(TOPPBaseTest::getToolList().has("FileInfo"),true)
+	TEST_EQUAL(TOPPBaseTest::getToolList().has("ImaginaryTool"),false)
+	TEST_EQUAL(TOPPBaseTest::getToolList()["FileInfo"].empty(),true)
+	TEST_EQUAL(TOPPBaseTest::getToolList()["FeatureFinder"].empty(),false)
+
 END_SECTION
 
 START_SECTION((ExitCodes main(int argc, const char**argv)))
@@ -361,6 +364,8 @@ START_SECTION(([EXTRA]String getStringOption_(const String& name) const))
 	TOPPBaseTest tmp9(3, write_ini);
 	Param p1, p2;
 	p1.load(filename);
+	//remove id pool (the path is dependent on the installation path)
+	p1.remove("TOPPBaseTest:1:id_pool");
 
 	//every parameter except for help,ini.instance, write_ini and write_wsdl
 	//toolname : TOPPBaseTest
@@ -373,22 +378,23 @@ START_SECTION(([EXTRA]String getStringOption_(const String& name) const))
 	p2.setValue("TOPPBaseTest:1:flag","false","flag description");
 	p2.setValue("TOPPBaseTest:1:log","TOPP.log","Location of the log file");
 	p2.setValue("TOPPBaseTest:1:debug",0,"Sets the debug level");
+	p2.setValue("TOPPBaseTest:1:threads",1, "Sets the number of threads allowed to be used by the TOPP tool");
 	p2.setValue("TOPPBaseTest:1:no_progress","false","Disables progress logging to command line");
 	//with restriction
 	p2.setValue("TOPPBaseTest:1:stringlist2",StringList::create("1,2,3"),"stringlist with restrictions");
-		vector<String> rest;
-		rest.push_back("hopla");
-		rest.push_back("dude");
-		String stringlist2 = "TOPPBaseTest:1:stringlist2";
+	vector<String> rest;
+	rest.push_back("hopla");
+	rest.push_back("dude");
+	String stringlist2 = "TOPPBaseTest:1:stringlist2";
 	p2.setValidStrings(stringlist2,rest);
 	String intlist2 = "TOPPBaseTest:1:intlist2";
 	String doublelist2 = "TOPPBaseTest:1:doublelist2";
 	p2.setValue(intlist2,IntList::create("3,4,5"),"intlist with restriction");
-		p2.setMinInt(intlist2,2);
-		p2.setMaxInt(intlist2,6);
+	p2.setMinInt(intlist2,2);
+	p2.setMaxInt(intlist2,6);
 	p2.setValue(doublelist2,DoubleList::create("1.2,2.33"),"doubelist with restrictions");
-		p2.setMinFloat(doublelist2,0.2);
-		p2.setMaxFloat(doublelist2,5.4);
+	p2.setMinFloat(doublelist2,0.2);
+	p2.setMaxFloat(doublelist2,5.4);
 
 	TEST_EQUAL(p1,p2)
 

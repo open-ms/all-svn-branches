@@ -1,4 +1,4 @@
-### the directory name
+## the directory name
 set(directory source/TEST)
 
 set(concept_executables_list
@@ -36,6 +36,10 @@ set(datastructures_executables_list
 	SuffixArrayPeptideFinder_test
 	SparseVector_test
 	DistanceMatrix_test
+	Adduct_test
+	ChargePair_test
+	Compomer_test
+	MassExplainer_test
 )
 
 set(metadata_executables_list
@@ -45,7 +49,7 @@ set(metadata_executables_list
   ScanWindow_test
   IonSource_test
   IonDetector_test
-	IDTagger_test
+  IDTagger_test
   MassAnalyzer_test
   Instrument_test
   ProteinHit_test
@@ -75,13 +79,13 @@ set(metadata_executables_list
 )
 
 set(system_executables_list
-	StopWatch_test
+  StopWatch_test
   File_test
   FileWatcher_test
 )
 
 set(kernel_executables_list
-PeakIndex_test
+  PeakIndex_test
   Peak1D_test
   Peak2D_test
   DPeak_test
@@ -153,8 +157,8 @@ set(format_executables_list
   SemanticValidator_test
   MzMLValidator_test
   MS2File_test
-	AnalysisXMLFile_test
-	AnalysisXMLValidator_test
+	MzIdentMLFile_test
+	MzIdentMLValidator_test
 )
 
 if (USE_ANDIMS)
@@ -178,7 +182,7 @@ set(math_executables_list
 )
 
 set(filtering_executables_list
-	LinearResampler_test
+  LinearResampler_test
   MorphologicalFilter_test
   SignalToNoiseEstimator_test
   SignalToNoiseEstimatorMedian_test
@@ -213,7 +217,7 @@ set(filtering_executables_list
 )
 
 set(comparison_executables_list
-	SpectrumCheapDPCorr_test
+  SpectrumCheapDPCorr_test
   HierarchicalClustering_test
   PeakSpectrumCompareFunctor_test
   SpectrumPrecursorComparator_test
@@ -234,7 +238,7 @@ set(comparison_executables_list
   PeakAlignment_test
   ClusterHierarchical_test
   ClusterAnalyzer_test
-	EuclideanSimilarity_test
+  EuclideanSimilarity_test
 )
 
 set(chemistry_executables_list
@@ -283,6 +287,7 @@ set(analysis_executables_list
   FeatureGroupingAlgorithmLabeled_test
   FeatureGroupingAlgorithmUnlabeled_test
   FeatureDecharger_test
+  FeatureDeconvolution_test
   ConsensusID_test
   ProteinInference_test
   PILISScoring_test
@@ -299,7 +304,7 @@ set(analysis_executables_list
 )
 
 set(applications_executables_list
-	TOPPBase_test
+  TOPPBase_test
 )
 
 set(transformations_executables_list
@@ -321,7 +326,7 @@ set(transformations_executables_list
   FeatureFinderAlgorithmSimplest_test
   FeatureFinderAlgorithmSimple_test
   FeatureFinderAlgorithmWavelet_test
-	FeatureFinderAlgorithmIsotopeWavelet_test
+  FeatureFinderAlgorithmIsotopeWavelet_test
   FeatureFinderAlgorithmWatershed_test
   SimpleSeeder_test
   SimpleExtender_test
@@ -349,11 +354,18 @@ set(transformations_executables_list
 )
 
 set(simulation_executables_list
-	ElutionModel_test
-	IsotopeModelGeneral_test
-	LCMSSample_test
-	LCMSSim_test
-	MixtureModel_test
+  DigestSimulation_test
+  PTMSimulation_test
+  IonizationSimulation_test
+  DetectabilitySimulation_test
+  RTSimulation_test
+  RawSignalSimulation_test
+  MSSim_test
+  ElutionModel_test
+  IsotopeModelGeneral_test
+  LCMSSample_test
+  LCMSSim_test
+  MixtureModel_test
 )
 
 ### collect test executables

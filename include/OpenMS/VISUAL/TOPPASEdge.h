@@ -22,18 +22,20 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Johannes Junker $
-// $Authors: $
+// $Authors: Johannes Junker $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_VISUAL_TOPPASEDGE_H
 #define OPENMS_VISUAL_TOPPASEDGE_H
 
-#include <OpenMS/VISUAL/TOPPASVertex.h>
+#include <OpenMS/config.h>
 
 #include <QtGui/QGraphicsItem>
 
 namespace OpenMS
 {
+	class TOPPASVertex;
+	
 	class OPENMS_DLLAPI TOPPASEdge
 		: public QObject,
 			public QGraphicsItem
@@ -42,11 +44,17 @@ namespace OpenMS
 		
 		public:
 			
+			
+			/// Standard constructor
+			TOPPASEdge();
 			/// Constructor
 			TOPPASEdge(TOPPASVertex* from, const QPointF& hover_pos);
-			
+			/// Copy constructor
+			TOPPASEdge(const TOPPASEdge& rhs);
 			/// Destructor
 			virtual ~TOPPASEdge();
+			/// Assignment operator
+			TOPPASEdge& operator= (const TOPPASEdge& rhs);
 			
 			/// Returns the bounding rectangle of this item
 			QRectF boundingRect() const;
@@ -60,10 +68,23 @@ namespace OpenMS
 			QPointF endPos() const;
 			/// Sets the position of the hovering end while edge is being created
 			void setHoverPos(const QPointF& pos);
+			/// Sets the source vertex of this edge
+			void setSourceVertex(TOPPASVertex* tv);
 			/// Sets the target vertex of this edge
 			void setTargetVertex(TOPPASVertex* tv);
+			/// Returns the source vertex
+			TOPPASVertex* getSourceVertex();
+			/// Returns the target vertex
+			TOPPASVertex* getTargetVertex();
+			/// Call this before changing the item geometry
+			void prepareResize();
+			/// Sets the color
+			void setColor(const QColor& color);
 			
 		protected:
+		
+			/// Returns the point in the @p list that is nearest to @p origin
+			QPointF nearestPoint_(const QPointF& origin, const QList<QPointF>& list) const;
 		
 			/// Pointer to the source of this edge
 			TOPPASVertex* from_;
@@ -71,6 +92,8 @@ namespace OpenMS
 			TOPPASVertex* to_;
 			/// Position of hovering end while edge is being created
 			QPointF hover_pos_;
+			/// The color
+			QColor color_;
 	};
 }
 

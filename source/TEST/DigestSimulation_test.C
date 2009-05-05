@@ -21,57 +21,105 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Chris Bielow $
 // $Authors: $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-
-#include <OpenMS/FORMAT/AnalysisXMLFile.h>
-#include <OpenMS/FORMAT/FileHandler.h>
+#include <OpenMS/SIMULATION/DigestSimulation.h>
+///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(AnalysisXMLFile, "$Id")
+START_TEST(DigestSimulation, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-
-AnalysisXMLFile* ptr = 0;
-START_SECTION((AnalysisXMLFile()))
-	ptr = new AnalysisXMLFile;
+DigestSimulation* ptr = 0;
+START_SECTION(DigestSimulation())
+{
+	ptr = new DigestSimulation();
 	TEST_NOT_EQUAL(ptr, 0)
+}
 END_SECTION
 
-START_SECTION((~AnalysisXMLFile()))
+START_SECTION(~DigestSimulation())
+{
 	delete ptr;
+}
 END_SECTION
 
-START_SECTION((template <typename MapType> void load(const String& filename, MapType& map)))
-	AnalysisXMLFile file;
-	// TODO
+START_SECTION((DigestSimulation(const DigestSimulation &source)))
+{
+  DigestSimulation a;
+	Param p = a.getParameters();
+	p.setValue("enzyme","none");
+	a.setParameters(p);
+	DigestSimulation b(a);
+
+	TEST_EQUAL(b.getParameters(),a.getParameters());
+}
 END_SECTION
 
-START_SECTION((template <typename MapType> void store(const String& filename, const MapType& map) const))
-	AnalysisXMLFile file;
-
-	// TODO
+START_SECTION((virtual ~DigestSimulation()))
+{
+  NOT_TESTABLE;
+}
 END_SECTION
 
-START_SECTION(bool isValid(const String& filename, std::ostream& os = std::cerr))
-  AnalysisXMLFile file;
-	// TODO
+START_SECTION((DigestSimulation& operator=(const DigestSimulation &source)))
+{
+  DigestSimulation a,b;
+	Param p = a.getParameters();
+	p.setValue("enzyme","none");
+	a.setParameters(p);
+
+	TEST_NOT_EQUAL(b.getParameters(),a.getParameters());
+	b = a;
+	TEST_EQUAL(b.getParameters(),a.getParameters());
+}
 END_SECTION
 
-START_SECTION(bool isSemanticallyValid(const String& filename, StringList& errors, StringList& warnings))
-	// TODO
+
+START_SECTION((void digest(const SampleProteins &proteins, SamplePeptides &peptides)))
+{
+  SampleProteins in,out;
+	in["ACDKDDLDDFRLNN"] = 100;
+	in["ACDKDDLASSRL"] = 50;
+
+	// test if "out" is deleted
+	out["AALA"] = 10000;
+
+	DigestSimulation a;
+	a.digest(in,out);
+
+	TEST_REAL_SIMILAR(out["ACDK"], 107.143);
+	TEST_REAL_SIMILAR(out["ACDKDDLASSR"], 35.7143);
+	TEST_REAL_SIMILAR(out["ACDKDDLDDFR"], 71.4286);
+	TEST_REAL_SIMILAR(out["DDLASSR"], 35.7143);
+	TEST_REAL_SIMILAR(out["DDLASSRL"], 35.7143);
+	TEST_REAL_SIMILAR(out["DDLDDFR"], 71.4286);
+	TEST_REAL_SIMILAR(out["DDLDDFRLNN"], 71.4286);
+	TEST_REAL_SIMILAR(out["LNN"], 71.4286);
+
+ //for (SampleProteins::const_iterator protein = out.begin();
+ //        protein != out.end();
+ //        ++protein)
+ //{
+ //  std::cout << protein->first.toString() << " " << protein->second << "\n";
+ //}
+
+}
 END_SECTION
+
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST
+
+
 

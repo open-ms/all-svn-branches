@@ -120,6 +120,10 @@ namespace OpenMS
 		{
 			return FileTypes::PEPXML;
 		}
+		else if (tmp == "MZIDENTML")
+		{
+			return FileTypes::MZIDENTML;
+		}
 
 		return FileTypes::UNKNOWN;
 
@@ -181,6 +185,8 @@ namespace OpenMS
 			return true;
 		case FileTypes::MS2:
 			return true;
+		case FileTypes::MZIDENTML:
+			return true;
 		default:
 			return false;
 		}
@@ -203,6 +209,9 @@ namespace OpenMS
 
     //mzML (all lines)
     if (all_simple.hasSubstring("<mzML")) return FileTypes::MZML;
+
+		//analysisXML (all lines)
+		if (all_simple.hasSubstring("<mzIdentML")) return FileTypes::MZIDENTML;
 
     //feature map (all lines)
     if (all_simple.hasSubstring("<featureMap")) return FileTypes::FEATUREXML;

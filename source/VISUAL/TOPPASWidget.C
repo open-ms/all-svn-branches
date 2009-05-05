@@ -22,10 +22,12 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Johannes Junker $
-// $Authors: $
+// $Authors: Johannes Junker $
 // --------------------------------------------------------------------------
 
 // OpenMS
+#include <OpenMS/CONCEPT/Types.h>
+#include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/VISUAL/TOPPASWidget.h>
 #include <OpenMS/VISUAL/TOPPASVertex.h>
 #include <OpenMS/VISUAL/TOPPASEdge.h>
@@ -95,12 +97,7 @@ namespace OpenMS
 	
 	void TOPPASWidget::keyPressEvent(QKeyEvent* e)
 	{
-		if (e->key() == Qt::Key_Shift)
-		{
-			getScene()->setActionMode(TOPPASScene::AM_NEW_EDGE);
-			e->accept();
-		}
-		else if (e->key() == Qt::Key_Control)
+		if (e->key() == Qt::Key_Control)
 		{
 			setDragMode(QGraphicsView::RubberBandDrag);
 			e->accept();
@@ -110,12 +107,7 @@ namespace OpenMS
 	
 	void TOPPASWidget::keyReleaseEvent(QKeyEvent* e)
 	{
-		if (e->key() == Qt::Key_Shift)
-		{
-			getScene()->setActionMode(TOPPASScene::AM_MOVE);
-			e->accept();
-		}
-		else if (e->key() == Qt::Key_Control)
+		if (e->key() == Qt::Key_Control)
 		{
 			setDragMode(QGraphicsView::ScrollHandDrag);
 			e->accept();

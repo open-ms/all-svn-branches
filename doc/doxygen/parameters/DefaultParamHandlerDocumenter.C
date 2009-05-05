@@ -33,6 +33,14 @@
 #include <OpenMS/ANALYSIS/ID/FalseDiscoveryRate.h>
 #include <OpenMS/ANALYSIS/ID/ProtonDistributionModel.h>
 #include <OpenMS/ANALYSIS/ID/IDDecoyProbability.h>
+#include <OpenMS/ANALYSIS/ID/PrecursorIonSelection.h>
+#include <OpenMS/ANALYSIS/ID/PrecursorIonSelectionPreprocessing.h>
+#include <OpenMS/ANALYSIS/DECHARGING/FeatureDecharger.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/DelaunayPairFinder.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringAffineSuperimposer.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringShiftSuperimposer.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/SimplePairFinder.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/StablePairFinder.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmSpectrumAlignment.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmPoseClustering.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmApplyGivenTrafo.h>
@@ -96,12 +104,6 @@
 #include <OpenMS/COMPARISON/SPECTRA/BinnedSumAgreeingIntensities.h>
 #include <OpenMS/COMPARISON/SPECTRA/BinnedSpectralContrastAngle.h>
 #include <OpenMS/COMPARISON/SPECTRA/PeakAlignment.h>
-#include <OpenMS/ANALYSIS/DECHARGING/FeatureDecharger.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/DelaunayPairFinder.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringAffineSuperimposer.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringShiftSuperimposer.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/SimplePairFinder.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/StablePairFinder.h>
 #include <OpenMS/COMPARISON/CLUSTERING/HierarchicalClustering.h>
 #include <OpenMS/COMPARISON/SPECTRA/CompareFouriertransform.h>
 #include <OpenMS/FILTERING/NOISEESTIMATION/SignalToNoiseEstimatorMeanIterative.h>
@@ -116,8 +118,12 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmWavelet.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/InterpolationModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ProductModel.h>
-#include <OpenMS/ANALYSIS/ID/PrecursorIonSelection.h>
-#include <OpenMS/ANALYSIS/ID/PrecursorIonSelectionPreprocessing.h>
+#include<OpenMS/SIMULATION/DigestSimulation.h>
+#include<OpenMS/SIMULATION/PTMSimulation.h>
+#include<OpenMS/SIMULATION/IonizationSimulation.h>
+#include<OpenMS/SIMULATION/DetectabilitySimulation.h>
+#include<OpenMS/SIMULATION/RawSignalSimulation.h>
+#include<OpenMS/SIMULATION/MSSim.h>
 
 using namespace std;
 using namespace OpenMS;
@@ -281,6 +287,8 @@ int main (int argc , char** argv)
 	DOCME(ComplementMarker);
 	DOCME(ConsensusID);
 	DOCME(DelaunayPairFinder);
+  DOCME(DetectabilitySimulation);
+	DOCME(DigestSimulation);
 	DOCME(EmgFitter1D);
 	DOCME(EmgModel);
 	DOCME(ExtendedIsotopeFitter1D);
@@ -307,6 +315,7 @@ int main (int argc , char** argv)
 	DOCME(LmaIsotopeFitter1D);
 	DOCME(LmaIsotopeModel);
 	DOCME(MSPFile);
+  DOCME(MSSim);
 	DOCME(MapAlignmentAlgorithmPoseClustering);
 	DOCME(MapAlignmentAlgorithmSpectrumAlignment);
 	DOCME(MapAlignmentAlgorithmApplyGivenTrafo);
@@ -365,6 +374,9 @@ int main (int argc , char** argv)
 	DOCME2(Spectrum1DCanvas,Spectrum1DCanvas(Param(),0));
 	DOCME2(Spectrum2DCanvas,Spectrum2DCanvas(Param(),0));
 	DOCME2(Spectrum3DCanvas,Spectrum3DCanvas(Param(),0));
-
+	DOCME2(PTMSimulation, PTMSimulation(NULL));
+  DOCME2(IonizationSimulation, IonizationSimulation(NULL));
+  DOCME2(RawSignalSimulation, RawSignalSimulation(NULL));
+  
   return 0;
 }

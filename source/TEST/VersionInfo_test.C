@@ -46,8 +46,8 @@ using namespace std;
 START_SECTION(static String getVersionAndTime())
 {
 	STATUS(VersionInfo::getVersionAndTime());
-	STATUS(PACKAGE_VERSION);
-	TEST_EQUAL(VersionInfo::getVersionAndTime().hasPrefix(String(PACKAGE_VERSION).trim()),true);
+	STATUS(OPENMS_PACKAGE_VERSION);
+	TEST_EQUAL(VersionInfo::getVersionAndTime().hasPrefix(String(OPENMS_PACKAGE_VERSION).trim()),true);
 }
 END_SECTION
 
@@ -63,7 +63,7 @@ END_SECTION
 
 START_SECTION(static String getVersion() )
 {
-	TEST_STRING_EQUAL(VersionInfo::getVersion(),String(PACKAGE_VERSION).trim());
+	TEST_STRING_EQUAL(VersionInfo::getVersion(),String(OPENMS_PACKAGE_VERSION).trim());
 }
 END_SECTION
 

@@ -21,14 +21,13 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Johannes Junker $
+// $Authors: Johannes Junker $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_VISUAL_ANNOTATIONS1DCONTAINER_H
 #define OPENMS_VISUAL_ANNOTATIONS1DCONTAINER_H
 
-#include <OpenMS/VISUAL/Annotation1DItem.h>
 #include <OpenMS/DATASTRUCTURES/DPosition.h>
 
 #include <list>
@@ -42,6 +41,8 @@ class QPainter;
 
 namespace OpenMS
 {
+	class Annotation1DItem;
+
 	/// Container for annotations to content of Spectrum1DCanvas
 	class Annotations1DContainer
 		: public std::list<Annotation1DItem*>

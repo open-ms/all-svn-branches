@@ -42,7 +42,6 @@
 #include <OpenMS/VISUAL/Spectrum1DWidget.h>
 #include <OpenMS/VISUAL/Spectrum2DWidget.h>
 #include <OpenMS/VISUAL/Spectrum3DWidget.h>
-#include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FileTypes.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
@@ -66,6 +65,9 @@
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/VISUAL/DIALOGS/DemoDialog.h>
+#include <OpenMS/VISUAL/EnhancedTabBar.h>
+#include <OpenMS/VISUAL/EnhancedWorkspace.h>
+#include <OpenMS/FORMAT/FileHandler.h>
 
 //Qt
 #include <QtGui/QToolBar>
@@ -1478,30 +1480,24 @@ namespace OpenMS
 
 	void TOPPViewBase::spectrumDoubleClicked(QTreeWidgetItem* current, int /*col*/)
 	{
-		if (current == 0)
+		//do nothing if (1) no item is selected or (2) this is already a 1D view
+		if (current==0 || active1DWindow_()) return;
+		
+		//store spectrum index
+		int index = current->text(3).toInt();
+		
+		//add a copy of the current data as 1D view
+		LayerData cl = activeCanvas_()->getCurrentLayer();
+		addData_(cl.features, cl.consensus, cl.peaks, false, true, true, false, cl.filename, cl.name);
+		
+		//set properties for the new 1D view
+		if (active1DWindow_())
 		{
-			return;
+			active1DWindow_()->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
+			active1DWindow_()->canvas()->activateSpectrum(index);
 		}
-
-		if (!active1DWindow_())
-		{
-			SpectrumCanvas* cc = activeCanvas_();
-			const LayerData& cl = cc->getCurrentLayer();
-
-			int index = current->text(3).toInt();
-
-			FeatureMapType f_dummy;
-			ConsensusMapType c_dummy;
-			ExperimentType exp = cl.peaks;
-			addData_(f_dummy, c_dummy, exp, false, true, true, false, cl.filename, cl.name);
-
-			if (active1DWindow_())
-			{
-				active1DWindow_()->canvas()->activateSpectrum(index);
-			}
-
-			updateSpectrumBar();
-		}
+		updateToolBar();
+		updateSpectrumBar();
 	}
 
 	void TOPPViewBase::layerContextMenu(const QPoint & pos)

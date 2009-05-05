@@ -25,7 +25,10 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
+#include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/VALIDATORS/MzDataValidator.h>
+#include <OpenMS/FORMAT/CVMappingFile.h>
 
 namespace OpenMS
 {
@@ -49,5 +52,22 @@ namespace OpenMS
   	return options_;
   }
 
+	bool MzDataFile::isSemanticallyValid(const String& filename, StringList& errors, StringList& warnings)
+	{
+		//load mapping
+		CVMappings mapping;
+		CVMappingFile().load(File::find("/MAPPING/mzdata-mapping.xml"),mapping);
+		
+		//load cvs
+		ControlledVocabulary cv;
+		cv.loadFromOBO("PSI",File::find("/CV/psi-mzdata.obo"));
+		
+		//validate
+		Internal::MzDataValidator v(mapping, cv);
+		bool result = v.validate(filename, errors, warnings);
+		
+		return result;
+	}
+	
 }// namespace OpenMS
 

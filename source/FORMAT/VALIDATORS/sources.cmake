@@ -5,7 +5,9 @@ set(directory source/FORMAT/VALIDATORS)
 set(sources_list
 XMLValidator.C
 MzMLValidator.C
+MzDataValidator.C
 SemanticValidator.C
+MzIdentMLValidator.C
 )
 
 ### add path to the filenames

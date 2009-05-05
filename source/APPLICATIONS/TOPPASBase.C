@@ -30,7 +30,12 @@
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/DATASTRUCTURES/DateTime.h> 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
-#include <OpenMS/VISUAL/TOPPASVertex.h>
+#include <OpenMS/VISUAL/TOPPASScene.h>
+#include <OpenMS/VISUAL/TOPPASWidget.h>
+#include <OpenMS/VISUAL/TOPPASToolVertex.h>
+#include <OpenMS/VISUAL/TOPPASInputVertex.h>
+#include <OpenMS/VISUAL/TOPPASOutputVertex.h>
+#include <OpenMS/VISUAL/EnhancedTabBar.h>
 
 //Qt
 #include <QtGui/QToolBar>
@@ -144,10 +149,9 @@ namespace OpenMS
     addDockWidget(Qt::LeftDockWidgetArea, topp_tools_bar);
     tools_tree_view_ = new QTreeWidget(topp_tools_bar);
     tools_tree_view_->setWhatsThis("TOPP tools list<BR><BR>All available TOPP tools are shown here.");
-    tools_tree_view_->setColumnCount(2);
+    tools_tree_view_->setColumnCount(1);
   	QStringList header_labels;
   	header_labels.append(QString("Tool"));
-  	header_labels.append(QString("Type"));
   	tools_tree_view_->setHeaderLabels(header_labels);
     topp_tools_bar->setWidget(tools_tree_view_);
     
@@ -171,7 +175,7 @@ namespace OpenMS
    		for (StringList::iterator types_it = types.begin(); types_it != types.end(); ++types_it)
    		{
    			item = new QTreeWidgetItem(parent_item);
-   			item->setText(1, types_it->toQString());
+   			item->setText(0, types_it->toQString());
    		}
     }
     tools_tree_view_->setDragEnabled(true);
@@ -556,7 +560,7 @@ namespace OpenMS
 			if (current_tool->parent() != 0)
 			{
 				// selected item is a type
-				tool_type = String(current_tool->text(1));
+				tool_type = String(current_tool->text(0));
 				tool_name = String(current_tool->parent()->text(0));
 			}
 			else

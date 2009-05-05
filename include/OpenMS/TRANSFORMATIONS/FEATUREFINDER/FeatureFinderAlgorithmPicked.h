@@ -33,10 +33,8 @@
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/CHEMISTRY/IsotopeDistribution.h>
-#include <OpenMS/MATH/STATISTICS/Histogram.h>
 #include <OpenMS/MATH/STATISTICS/StatisticFunctions.h>
-#include <OpenMS/CHEMISTRY/ElementDB.h>
-#include <OpenMS/CHEMISTRY/Element.h>
+#include <OpenMS/MATH/MISC/MathFunctions.h>
 
 #include <numeric>
 #include <fstream>
@@ -320,7 +318,7 @@ namespace OpenMS
 				
 				/// Constructor that resizes the internal vectors
 				IsotopePattern(Size size)
-					: peak(size),
+					: peak(size,-1),
 						spectrum(size),
 						intensity(size),
 						mz_score(size),
@@ -1802,6 +1800,7 @@ namespace OpenMS
 					pos_score += mz_score;
 					++matches;
 				}
+				
 				//previous spectrum
 				if (spectrum_index!=0 && map_[spectrum_index-1].size()>0)
 				{

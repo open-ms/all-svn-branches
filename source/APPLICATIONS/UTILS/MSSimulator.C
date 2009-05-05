@@ -30,6 +30,7 @@
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/FORMAT/FileHandler.h>
+#include <OpenMS/FORMAT/FASTAFile.h>
 
 #include <OpenMS/SYSTEM/StopWatch.h>
 
@@ -94,7 +95,7 @@ class TOPPMSSimulator
            
       // add data from file to protein storage
       String::size_type index;
-      int relativeQuantity;
+      SimIntensityType relativeQuantity;
       for (FASTAdata::iterator it = fastadata.begin(); it != fastadata.end(); ++it)
       {
         // remove all ambiguous characters from FASTA entry

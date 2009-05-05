@@ -13,6 +13,7 @@ ParamXMLHandler.h
 UnimodXMLHandler.h
 XMLHandler.h
 XTandemInfileXMLHandler.h
+MzIdentMLHandler.h
 )
 
 ### add path to the filenames

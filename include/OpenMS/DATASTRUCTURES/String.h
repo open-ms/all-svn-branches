@@ -373,11 +373,16 @@ namespace OpenMS
 			
 			If the @p splitter is not found, @p substrings is empty.
 			
+			@p quote_protect (default: false) can be used to split only between quoted
+			blocks e.g. ' "a string" , "another string with , in it" '
+			results in only two substrings (with double quotation marks @em removed).
+			Every returned substring is trimmed and then (if present) has surrounding quotation marks removed.
+			
 			@return if the splitter was found (once or multiple times) in the string
 
 			@see concatenate().
 		*/
-		bool split(char splitter, std::vector<String>& substrings) const;
+		bool split(char splitter, std::vector<String>& substrings, bool quote_protect=false) const;
 		
 		
 		/**

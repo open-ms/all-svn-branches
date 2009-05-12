@@ -36,6 +36,7 @@
 #include <iostream>
 
 #include <vector>
+#include <cmath>
 using namespace OpenMS;
 using namespace std;
 
@@ -62,14 +63,14 @@ class TOPPSpecLibCreator
 	{
 	public:
 		TOPPSpecLibCreator()
-		: TOPPBase("SpecLibCreator","Creates a MSP foramted library.")
+		: TOPPBase("SpecLibCreator","Creates an MSP foramted spectral library.")
 		{
 		}
 		
 	protected:
 		void registerOptionsAndFlags_()
 		{
-			registerInputFile_("info","<file>","","Holds id, peptid, retention time etc.");
+			registerInputFile_("info","<file>","","Holds id, peptide, retention time etc.");
 			//setValidFormats_("info",StringList::create("csv"));
 			registerStringOption_("itemseperator","<char>",","," Seperator between items. e.g. ',' or ';'");
 			registerStringOption_("itemenclosed","<bool>","false","'true' or 'false' if true every item is enclosed e.g. '$peptid$,$run$...");
@@ -118,8 +119,9 @@ class TOPPSpecLibCreator
 			//-------------------------------------------------------------
 			Int retention_time = -1 ;
 			Int peptide =-1;
-			UInt first_scan;
-			UInt last_scan, measured_weight, charge_state, Experimental_id;//, 
+			Int measured_weight = -1;
+			//UInt first_scan;
+			UInt last_scan, charge_state, Experimental_id,//, 
 			modification;//,found_by, track, comment, vaccination_peptid,epitope, confident, hlaallele;
 			const char* sepi = itemseperator.c_str();
 			char sepo = *sepi;
@@ -139,7 +141,7 @@ class TOPPSpecLibCreator
 				{
 					retention_time = i;
 				}
-				else if(list[0][i].toLower().compare("id") == 0)
+				else if(list[0][i].toLower().hasSubstring("_id"))
 				{
 					Experimental_id = i;
 				}
@@ -159,7 +161,7 @@ class TOPPSpecLibCreator
 				{
 					peptide = i; 
 				}
-				else if(list[0][i].toLower().removeWhitespaces().compare("measured weight")== 0  || list[0][i].toLower().removeWhitespaces().compare("measured weight [M+nH]n+") == 0)
+				else if(list[0][i].toLower().removeWhitespaces().hasSubstring("measuredweight")  || list[0][i].removeWhitespaces().compare("measuredweight[M+nH]n+") == 0)
 				{
 					measured_weight = i;
 				}
@@ -172,7 +174,10 @@ class TOPPSpecLibCreator
 			{
 				throw Exception::RequiredParameterNotGiven(__FILE__,__LINE__,__PRETTY_FUNCTION__,"unclear which parameter is peptide");
 			}
-			
+			if(measured_weight  == -1)
+			{
+				throw Exception::RequiredParameterNotGiven(__FILE__,__LINE__,__PRETTY_FUNCTION__,"unclear which parameter is measured weight");
+			}
 			FileHandler fh;
 			FileTypes::Type in_type = fh.getType(spec);
 			/*MSExperiment<>*/PeakMap msexperiment;
@@ -205,10 +210,13 @@ class TOPPSpecLibCreator
 					for(MSExperiment<>::Iterator it=msexperiment.begin(); it < msexperiment.end(); ++it)
 					{
 						DoubleReal rt =  (60* (list[i][retention_time].toFloat())); // from minutes to seconds
-						if(abs(rt - it->getRT()) < 0.1) && abs(measured_weight - it->MZ()) < 0.1 )
+						//cout<<"i =" <<i<<endl; 
+					//	cout<<rt <<" (rt) - " << it->getRT()<<" (getRT) = "<<(rt - it->getRT())<<endl;
+
+						if((abs(rt - it->getRT()) < 0.1))// && (abs(measured_weight - it->getPrecursors()[0].getMZ()) < 0.1 ))
 						//if ( ceil(rt) == ceil(it->getRT()) || ceil(rt) == floor(it->getRT()) || floor(rt) == ceil(it->getRT()) || floor(rt) == floor(it->getRT()))
 						{
-						cout<<"Found Peptide " <<list[i][peptide] << " with id: " << list[i][Experimental_id]<<"\n";
+							cout<<"Found Peptide " <<list[i][peptide] << " with id: " << list[i][Experimental_id]<<"\n";
 						
 						//		MSSpectrum<RichPeak1D> spec;
 						//	for(UInt k = 0; k < it->size(); ++k)
@@ -216,18 +224,21 @@ class TOPPSpecLibCreator
 						//	spec.push_back(it->operator[](k));
 						//			
 						//		}
-						MSSpectrum<RichPeak1D> speci;
-						for(UInt j=0 ;j < it->size()	;++j)
-						{
+							MSSpectrum<RichPeak1D> speci;
+							speci.setRT(it->getRT());
+							speci.setMSLevel(2);
+							speci.setPrecursors(it->getPrecursors());
+							for(UInt j=0 ;j < it->size()	;++j)
+							{
 							
-							RichPeak1D richy;
-							//richy.setIntensity(it->operator[](j).getIntensity());
-							//richy.setPosition(it->operator[](j).getPosition());
-							//richy.setMZ(it->operator[](j).getMZ());
-							//richy.setPos(it->operator[](j).getPos());
+								RichPeak1D richy;
+								richy.setIntensity(it->operator[](j).getIntensity());
+								richy.setPosition(it->operator[](j).getPosition());
+								richy.setMZ(it->operator[](j).getMZ());
+								richy.setPos(it->operator[](j).getPos());//ALIAS for setMZ??? 
 							
-							speci.push_back(richy);
-						}
+								speci.push_back(richy);
+							}
 							PeptideHit hit;// = *it->getPeptideIdentifications().begin()->getHits().begin();
 							AASequence aa(list[i][peptide]);
 							hit.setSequence(aa);
@@ -252,6 +263,9 @@ class TOPPSpecLibCreator
 			
 			MSPFile MSP_file;
 			MSP_file.store(out, library);
+			
+			MzDataFile test;
+			test.store("/Users/david/Studium/neueForm.mzData",library);
 			
 			return EXECUTION_OK;
 		}

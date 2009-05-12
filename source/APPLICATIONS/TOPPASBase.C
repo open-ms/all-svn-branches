@@ -156,10 +156,10 @@ namespace OpenMS
     topp_tools_bar->setWidget(tools_tree_view_);
     
     QTreeWidgetItem* item = new QTreeWidgetItem((QTreeWidget*)0);
-    item->setText(0, "<< Input file >>");
+    item->setText(0, "<< Input files >>");
     tools_tree_view_->addTopLevelItem(item);
     item = new QTreeWidgetItem((QTreeWidget*)0);
-    item->setText(0, "<< Output file >>");
+    item->setText(0, "<< Output files >>");
     tools_tree_view_->addTopLevelItem(item);
     
     
@@ -178,6 +178,7 @@ namespace OpenMS
    			item->setText(0, types_it->toQString());
    		}
     }
+    tools_tree_view_->resizeColumnToContents(0);
     tools_tree_view_->setDragEnabled(true);
     
     //Blocks window
@@ -541,13 +542,13 @@ namespace OpenMS
 		String tool_name = String(current_tool->text(0));
 		TOPPASVertex* tv = 0;
 		
-		if (tool_name == "<< Input file >>")
+		if (tool_name == "<< Input files >>")
 		{
-			tv = new TOPPASVertex(tool_name, String(""), TOPPASVertex::VT_SOURCE);
+			tv = new TOPPASInputVertex(tool_name, String(""));
 		}
-		else if (tool_name == "<< Output file >>")
+		else if (tool_name == "<< Output files >>")
 		{
-			tv = new TOPPASVertex(tool_name, String(""), TOPPASVertex::VT_TARGET);
+			tv = new TOPPASOutputVertex(tool_name, String(""));
 		}
 		else // node is a TOPP tool
 		{	
@@ -570,7 +571,7 @@ namespace OpenMS
 				tool_type = "";
 			}
 			
-			tv = new TOPPASVertex(tool_name, tool_type);
+			tv = new TOPPASToolVertex(tool_name, tool_type);
 		}
 		
 		tv->setPos(x,y);
@@ -580,6 +581,7 @@ namespace OpenMS
 		connect(tv,SIGNAL(doubleClicked()),activeWindow_()->getScene(),SLOT(itemDoubleClicked()));
 		connect(tv,SIGNAL(hoveringEdgePosChanged(const QPointF&)),activeWindow_()->getScene(),SLOT(updateHoveringEdgePos(const QPointF&)));
 		connect(tv,SIGNAL(newHoveringEdge(const QPointF&)),activeWindow_()->getScene(),SLOT(addHoveringEdge(const QPointF&)));
+		connect(tv,SIGNAL(finishHoveringEdge()),activeWindow_()->getScene(),SLOT(finishHoveringEdge()));
 	}
 
 } //namespace OpenMS

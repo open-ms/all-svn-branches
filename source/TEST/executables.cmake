@@ -218,7 +218,6 @@ set(filtering_executables_list
 
 set(comparison_executables_list
   SpectrumCheapDPCorr_test
-  HierarchicalClustering_test
   PeakSpectrumCompareFunctor_test
   SpectrumPrecursorComparator_test
   ZhangSimilarityScore_test
@@ -286,7 +285,6 @@ set(analysis_executables_list
   FeatureGroupingAlgorithm_test
   FeatureGroupingAlgorithmLabeled_test
   FeatureGroupingAlgorithmUnlabeled_test
-  FeatureDecharger_test
   FeatureDeconvolution_test
   ConsensusID_test
   ProteinInference_test

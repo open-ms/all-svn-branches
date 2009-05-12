@@ -35,7 +35,7 @@ using namespace std;
 namespace OpenMS
 {
 
-	const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML"};
+	const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML", "analysisXML"};
 
 	FileTypes::Type FileHandler::getType(const String& filename)
 	{

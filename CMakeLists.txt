@@ -23,7 +23,10 @@ PROJECT("OpenMS")
 ###    manual entries (edit this for new release)    ###
 ########################################################
 
-set(CF_PACKAGE_VERSION "1.3" CACHE INTERNAL "OpenMS VERSION" FORCE)
+
+set(CF_OPENMS_PACKAGE_VERSION "1.4" CACHE INTERNAL "OpenMS VERSION" FORCE)
+
+
 
 ########################################################
 ###    end manual																	   ###
@@ -251,13 +254,13 @@ MACRO (OPENMS_CHECKLIB varname libnames libnames_d human_libname)
 	if ("${varname}_OPT" STREQUAL "${varname}_OPT-NOTFOUND")
 		MESSAGE(FATAL_ERROR "Unable to find ${human_libname} library! Searched names are: [${libnames}] Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 	else()
-		MESSAGE(STATUS "Found ${human_libname} library at: " ${${varname}_OPT})
+		MESSAGE(STATUS "Found ${human_libname} library (Release) at: " ${${varname}_OPT})
 	endif()
 	FIND_LIBRARY(${varname}_DBG NAMES ${libnames_d} PATHS ${CONTRIB_LIB_DIR} DOC "${human_libname} (Debug) library dir" NO_DEFAULT_PATH)
 	if ("${varname}_DBG" STREQUAL "${varname}_DBG-NOTFOUND")
 		MESSAGE(FATAL_ERROR "Unable to find ${human_libname} (Debug) library! Searched names are: [${libnames}] Please make sure it is part of the contrib (which we assume to be at: ${CONTRIB_DIR}")
 	else()
-		MESSAGE(STATUS "Found ${human_libname} library at: " ${${varname}_DBG})
+		MESSAGE(STATUS "Found ${human_libname} library (Debug) at: " ${${varname}_DBG})
 	endif()
 	## combine result and include "optimized" and "debug" keywords which are essential for target_link_libraries()
 	set(${varname} optimized ${${varname}_OPT} debug ${${varname}_DBG})
@@ -268,6 +271,10 @@ if(NOT MSVC)
 	set(CMAKE_FIND_LIBRARY_SUFFIXES ".so;.a")
 endif()
 
+if (APPLE)
+	set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib;.a")
+endif()
+
 OPENMS_CHECKLIB(CONTRIB_XERCESC "xerces-c_3;xerces-c_static_3;libxerces-c;xerces-c" "xerces-c_3D;xerces-c_static_3D;libxerces-c;xerces-c" "xerces_c")
 
 OPENMS_CHECKLIB(CONTRIB_GSL "libgsl_dll;gsl" "libgsl_dll_d;gsl" "GSL")
@@ -275,6 +282,15 @@ OPENMS_CHECKLIB(CONTRIB_GSL "libgsl_dll;gsl" "libgsl_dll_d;gsl" "GSL")
 OPENMS_CHECKLIB(CONTRIB_GSLCBLAS "libgslcblas_dll;gslcblas" "libgslcblas_dll_d;gslcblas" "GSL-CBLAS")
 
 OPENMS_CHECKLIB(CONTRIB_CGAL "cgal-vc80-mt;cgal-vc90-mt;CGAL" "cgal-vc80-mt-gd;cgal-vc90-mt-gd;CGAL" "CGAL")
+
+OPENMS_CHECKLIB(CONTRIB_CBC1 "libCbc;Cbc" "libCbcd;Cbc" "COIN-OR Cbc")
+OPENMS_CHECKLIB(CONTRIB_CBC2 "libCgl;Cgl" "libCgld;Cgl" "COIN-OR Cgl")
+OPENMS_CHECKLIB(CONTRIB_CBC3 "libClp;Clp" "libClpd;Clp" "COIN-OR Clp")
+OPENMS_CHECKLIB(CONTRIB_CBC4 "libCoinUtils;CoinUtils" "libCoinUtilsd;CoinUtils" "COIN-OR Utils")
+OPENMS_CHECKLIB(CONTRIB_CBC5 "libOsi;Osi" "libOsid;Osi" "COIN-OR Osi")
+OPENMS_CHECKLIB(CONTRIB_CBC6 "libOsiClp;OsiClp" "libOsiClpd;OsiClp" "COIN-OR OsiClp")
+
+set(CONTRIB_CBC ${CONTRIB_CBC1} ${CONTRIB_CBC2} ${CONTRIB_CBC3} ${CONTRIB_CBC4} ${CONTRIB_CBC5} ${CONTRIB_CBC6} )
 
 if (NOT MSVC AND USE_ANDIMS)
 	OPENMS_CHECKLIB(CONTRIB_ANDIMS "ms10lib.a" "ms10lib.a" "ms10lib")
@@ -284,8 +300,7 @@ if (NOT MSVC AND USE_ANDIMS)
 	set(CONTRIB_NETCDF ${CONTRIB_NETCDF_CPP} ${CONTRIB_NETCDF_C})
 endif()
 
-#libSVM support
-
+## libSVM support
 if (MSVC) 
 	## we created a lib here, because we cannot just add an object..
 	OPENMS_CHECKLIB(SVM_LIBRARY "svm" "svmd" "LibSVM")
@@ -543,7 +558,7 @@ endif()
 
 
 ## all the dependency libraries are linked into libOpenMS.so, except Qt and CUDA which are still dynamic
-set(OPENMS_DEP_LIBRARIES ${CONTRIB_CGAL} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF} ${CONTRIB_BOOST_IO})
+set(OPENMS_DEP_LIBRARIES ${CONTRIB_CBC} ${CONTRIB_CGAL} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF} ${CONTRIB_BOOST_IO})
 if (TBB_FOUND)
 	set (OPENMS_DEP_LIBRARIES ${OPENMS_DEP_LIBRARIES} ${TBB_LIBRARIES})
 endif()

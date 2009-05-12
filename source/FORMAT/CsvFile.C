@@ -58,12 +58,12 @@ namespace OpenMS
 	
 	void CsvFile::fload(const String& filename)
 	{
-		load(filename,true,first_n);
+		load(filename,true);
 	}
 
 	bool CsvFile::getRow(UInt row,StringList &list)
 	{
-		if(row > this->size() || row < 0)
+		if(row > this->size())
 		{
 			throw Exception::InvalidIterator(__FILE__, __LINE__,__PRETTY_FUNCTION__);
 		}

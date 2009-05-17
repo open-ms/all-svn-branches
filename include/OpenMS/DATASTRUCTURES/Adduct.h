@@ -38,6 +38,8 @@ class OPENMS_DLLAPI Adduct
 {
 public:
 
+		typedef std::vector< Adduct > AdductsType;
+
     Adduct()
     : charge_(0),
     amount_(0),
@@ -56,7 +58,7 @@ public:
     {
     }
 
-    Adduct(Int charge, Int amount, float singleMass, String formula, float log_prob)
+    Adduct(Int charge, Int amount, DoubleReal singleMass, String formula, DoubleReal log_prob)
     : charge_(charge),
     amount_(amount),
     singleMass_(singleMass),
@@ -114,22 +116,22 @@ public:
       amount_ = amount;
     }    
  
-    const float& getSingleMass() const
+    const DoubleReal& getSingleMass() const
     {
       return singleMass_;
     }
     
-    void setSingleMass(const float& singleMass)
+    void setSingleMass(const DoubleReal& singleMass)
     {
       singleMass_ = singleMass;
     }       
 
-    const float& getLogProb() const
+    const DoubleReal& getLogProb() const
     {
       return log_prob_;
     }
     
-    void setLogProb(const float& log_prob)
+    void setLogProb(const DoubleReal& log_prob)
     {
       log_prob_ = log_prob;
     }  
@@ -147,8 +149,8 @@ public:
 private:
     Int charge_; //usually +1
     Int amount_; // number of entities (can be negative!)
-    float singleMass_; //mass of a single entity
-    float log_prob_;   // log probability of observing a single entity of this adduct
+    DoubleReal singleMass_; //mass of a single entity
+    DoubleReal log_prob_;   // log probability of observing a single entity of this adduct
     String formula_;   // chemical formula (parsable by EmpiricalFormula)
 
 };

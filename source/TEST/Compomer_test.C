@@ -52,7 +52,7 @@ START_SECTION(~Compomer())
 }
 END_SECTION
 
-START_SECTION((Compomer(Int net_charge, float mass, float log_p)))
+START_SECTION((Compomer(Int net_charge, DoubleReal mass, DoubleReal log_p)))
 {
 	Compomer c(34, 45.32f, 12.34f);
 	TEST_EQUAL(c.getNetCharge(), 34);
@@ -63,7 +63,7 @@ END_SECTION
 
 START_SECTION((void add(const Adduct &a)))
 {
-	//Adduct(Int charge, Int amount, float singleMass, String formula, float log_prob
+	//Adduct(Int charge, Int amount, DoubleReal singleMass, String formula, DoubleReal log_prob
 	Adduct a1(123, 43, 123.456f, "SECRET", -0.3453f);
 	Adduct a2(123,  3, 123.456f, "SECRET", -0.3453f);
 
@@ -99,7 +99,7 @@ END_SECTION
 START_SECTION((bool isConflicting(const Compomer &cmp, bool left_this, bool left_other) const))
 {
 	EmpiricalFormula ef("H");
-	Adduct default_adduct(1, 1, ef.getMonoWeight(), ef.getString(), log(0.7));
+	Adduct default_adduct(1, 1, ef.getMonoWeight(), ef.getString(), log(0.7f));
 
 	{
 	Adduct a1(1, 2, 123.456f, "NH4", -0.3453f);
@@ -154,79 +154,61 @@ START_SECTION((const Size& getID() const))
 }
 END_SECTION
 
-START_SECTION((void setNetCharge(const Int &net_charge)))
-{
-  NOT_TESTABLE //well.. tested below...	
-}
-END_SECTION
-
 START_SECTION((const Int& getNetCharge() const))
 {
-  Compomer c;
-	c.setNetCharge(-123);
+  Compomer c(-123,1.23,-0.12);
 	TEST_EQUAL(c.getNetCharge(), -123)
 }
 END_SECTION
 
-START_SECTION((void setMass(const float &mass)))
+START_SECTION((const DoubleReal& getMass() const))
 {
-  NOT_TESTABLE //well.. tested below...	
-}
-END_SECTION
-
-START_SECTION((const float& getMass() const))
-{
-  Compomer c;
-	c.setMass(-123.12f);
+  Compomer c(1,-123.12, 0.23);
 	TEST_REAL_SIMILAR(c.getMass(), -123.12)
 }
 END_SECTION
 
-START_SECTION((void setPositiveCharges(const Int &pos_charges)))
-{
-  NOT_TESTABLE //well.. tested below...	
-}
-END_SECTION
 
 START_SECTION((const Int& getPositiveCharges() const))
 {
   Compomer c;
-	c.setPositiveCharges(32);
-	TEST_EQUAL(c.getPositiveCharges(), 32)
-}
-END_SECTION
+	Adduct a1(3, -2, 123.456f, "NH4", -0.3453f);
+	Adduct a2(6, 1, 1.007f, "H1", -0.13f);
 
-START_SECTION((void setNegativeCharges(const Int &neg_charges)))
-{
-  NOT_TESTABLE //well.. tested below...	
+	c.add(a1);
+	c.add(a2);
+	TEST_EQUAL(c.getPositiveCharges(), 6)
 }
 END_SECTION
 
 START_SECTION((const Int& getNegativeCharges() const))
 {
   Compomer c;
-	c.setNegativeCharges(43);
-	TEST_EQUAL(c.getNegativeCharges(), 43)
+	Adduct a1(3, -2, 123.456f, "NH4", -0.3453f);
+	Adduct a2(6, 1, 1.007f, "H1", -0.13f);
+
+	c.add(a1);
+	c.add(a2);
+	TEST_EQUAL(c.getNegativeCharges(), 6)
 }
 END_SECTION
 
-START_SECTION((void setLogP(const float &log_p)))
-{
-  NOT_TESTABLE //well.. tested below...	
-}
-END_SECTION
 
-START_SECTION((const float& getLogP() const))
+START_SECTION((const DoubleReal& getLogP() const))
 {
-  Compomer c;
-	c.setLogP(-123.12f);
+  Compomer c(1,1,-123.12);
 	TEST_REAL_SIMILAR(c.getLogP(), -123.12)
 }
 END_SECTION
 
-START_SECTION((void setFinal(const bool &final)))
+START_SECTION((String getAdductsAsString()))
 {
-  NOT_TESTABLE //well.. tested below...	
+  Adduct a1(1, 2, 123.456f, "NH4", -0.3453f);
+	Adduct a2(1, -1, 1.007f, "H1", -0.13f);
+	Compomer c;
+	c.add(a1);
+	c.add(a2);
+	TEST_EQUAL(c.getAdductsAsString(), "-1(H1) 2(NH4)");
 }
 END_SECTION
 

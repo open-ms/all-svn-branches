@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Stephan Aiche$
-// $Authors: Ole Schulz-Trieglaff $
+// $Authors: Ole Schulz-Trieglaff, Stephan Aiche, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <iostream>
@@ -49,7 +49,7 @@
 #include <OpenMS/FORMAT/MzXMLFile.h>
 #include <OpenMS/FORMAT/MzDataFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
-
+#include <OpenMS/FORMAT/ConsensusXMLFile.h>
 using namespace OpenMS;
 using namespace std;
 
@@ -67,8 +67,10 @@ class TOPPMSSimulator
     void registerOptionsAndFlags_()
     {
       // I/O settings
-      registerStringOption_("in","<file>","","input protein sequences in FASTA format",true);
-      registerStringOption_("out","<file>","","output (simulated MS map) in mzData format",true);
+      registerInputFile_("in","<file>","","Input protein sequences in FASTA format",true);
+      registerOutputFile_("out","<file>","","output (simulated MS map) in mzData format",true);
+      registerOutputFile_("out_fm","<file>","","output (simulated MS map) in featureXML format",false);
+      registerOutputFile_("out_cm","<file>","","output (simulated MS map) in consensusXML format",false);
 
       registerSubsection_("algorithm","Algorithm parameters section");    
     }
@@ -110,14 +112,16 @@ class TOPPMSSimulator
         if (index != string::npos)
         {
           stringstream strm ((it->identifier).substr(0, index));
+          // we clean the identifier for later use
+          it->identifier = (it->identifier).suffix('#');
           strm >> relativeQuantity;
         }
         else
         {
-          relativeQuantity = 1;
+          relativeQuantity = 100;
         }
         AASequence aaseq(it->sequence);
-        proteins.insert(make_pair(aaseq, relativeQuantity));
+        proteins.push_back(make_pair(*it, relativeQuantity ));
       }
       
       writeLog_(String("done (") + fastadata.size() + String(" protein(s) loaded)"));
@@ -139,7 +143,6 @@ class TOPPMSSimulator
       loadFASTA(inputfile_name,proteins);
       
       // initialize the random number generator
-      // initialize random generator
       gsl_rng_default_seed = time(0);
       gsl_rng* rnd_gen_ = gsl_rng_alloc(gsl_rng_mt19937);
       
@@ -161,70 +164,19 @@ class TOPPMSSimulator
       writeLog_(String("Storing simulated map in: ") + outputfile_name);
       MzDataFile().store(outputfile_name, ms_simulation.getExperiment());
       
-      Size i = outputfile_name.rfind(".");
-      String xml_out = outputfile_name;
-      xml_out.replace(i,xml_out.size(),"_feature_list.featureXML");
-      writeLog_(String("Storing simulated features in: ") + xml_out);
-      FeatureXMLFile().store(xml_out, ms_simulation.getSimulatedFeatures());
-      
-      /*
-			String rtmodel_file = getStringOption_("rt_model");
-      if(rtmodel_file != "none" && rtmodel_file != "1D")
-      {
-        inputFileReadable_(rtmodel_file);
-      }
-			
-			String pdmodel_file = getStringOption_("pd_model");
-			inputFileReadable_(pdmodel_file);
-      
-			writeLog_(String("Reading from file: ") + inputfile_name);
-			//-------------------------------------------------------------
-			// Init simulation
-			//-------------------------------------------------------------
-			
-			LCMSSim sim;
-      
-			Param const& sim_param = getParam_().copy("simulation:",true);
-			sim.setParameters(sim_param);
-			sim.setRTModelFile(rtmodel_file);
-			
-			StopWatch w;
-			{			
-        w.start();
-        LCMSSample sample;
-        Param const& digest_param = getParam_().copy("sample:",true);
-        sample.setParameters(digest_param);
-        sample.setPdModelFile(pdmodel_file);
-        sample.loadFASTA(inputfile_name);
-        sample.digest();
-        sample.clearProteins();
-        
-        writeLog_(String("Peptides: ") + String(sample.size()) );
-        
-        // debug output
-        // 			sample.printProteins();
-        // 			sample.printPeptides();
-        sim.setSample(sample);
-        w.stop();
-        writeLog_(String("Pre-processing took ") + String(w.getClockTime()) + String(" seconds"));   	  	
+      String fxml_out = getStringOption_("out_fm");
+			if (File::writable(fxml_out))
+			{
+				writeLog_(String("Storing simulated features in: ") + fxml_out);
+				FeatureXMLFile().store(fxml_out, ms_simulation.getSimulatedFeatures());
 			}
-			
-			//-------------------------------------------------------------
-			// Run simulation
-			//-------------------------------------------------------------
-			w.reset();
-			w.start();			
-			sim.run();
-			w.stop();
-			writeLog_(String("Simulation took ") + String(w.getClockTime()) + String(" seconds"));   	  	
-			//-------------------------------------------------------------
-			// output
-			//-------------------------------------------------------------
-			writeLog_(String("Writing LC-MS map and feature lists.. "));
-			
-			sim.exportMzData(outputfile_name);
-			sim.exportFeatureMap(outputfile_name);		
-			*/
+
+      String cxml_out = getStringOption_("out_cm");
+			if (File::writable(cxml_out))
+			{
+				writeLog_(String("Storing simulated consensus features in: ") + cxml_out);
+				ConsensusXMLFile().store(cxml_out, ms_simulation.getSimulatedConsensus());
+			}
       
       // free random number generator
       gsl_rng_free(rnd_gen_);

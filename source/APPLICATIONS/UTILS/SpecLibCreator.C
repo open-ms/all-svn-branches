@@ -205,19 +205,25 @@ class TOPPSpecLibCreator
 			//-------------------------------------------------------------
 			// creating library
 			//-------------------------------------------------------------
+			UInt found_counter = 0;
+
 				for(UInt i = 1; i < list.size(); ++i)
 				{
+					bool no_peptide = true;
+					DoubleReal rt =  (60* (list[i][retention_time].toFloat())); // from minutes to seconds
+					DoubleReal mz = list[i][measured_weight].toFloat();
 					for(MSExperiment<>::Iterator it=msexperiment.begin(); it < msexperiment.end(); ++it)
 					{
-						DoubleReal rt =  (60* (list[i][retention_time].toFloat())); // from minutes to seconds
 						//cout<<"i =" <<i<<endl; 
-					//	cout<<rt <<" (rt) - " << it->getRT()<<" (getRT) = "<<(rt - it->getRT())<<endl;
-
-						if((abs(rt - it->getRT()) < 0.1))// && (abs(measured_weight - it->getPrecursors()[0].getMZ()) < 0.1 ))
+						//cout<<rt <<" (rt) - " << it->getRT()<<" (getRT) = "<<(rt - it->getRT())<<endl;
+						if((abs(rt - it->getRT()) < 5) && (abs(mz - it->getPrecursors()[0].getMZ()) < 0.1 ))
 						//if ( ceil(rt) == ceil(it->getRT()) || ceil(rt) == floor(it->getRT()) || floor(rt) == ceil(it->getRT()) || floor(rt) == floor(it->getRT()))
 						{
+							++found_counter;
+							no_peptide = false;
 							cout<<"Found Peptide " <<list[i][peptide] << " with id: " << list[i][Experimental_id]<<"\n";
-						
+							cout<<"rt: "<<it->getRT()<<" and mz: "<<it->getPrecursors()[0].getMZ()<<"\n";
+							
 						//		MSSpectrum<RichPeak1D> spec;
 						//	for(UInt k = 0; k < it->size(); ++k)
 						//		{
@@ -254,7 +260,12 @@ class TOPPSpecLibCreator
 							library.push_back(speci);
 						}
 					}
+						if(no_peptide)
+						{
+							cout<<"Peptide: "<<list[i][peptide] <<" not found\n";
+						}
 				}
+			cout<<"Found "<<found_counter <<" peptides\n";
 			//library = static_cast<MSExperiment<MSSpectrum<RichPeak1D> > >(msexperiment);
 
 			//-------------------------------------------------------------

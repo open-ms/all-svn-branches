@@ -149,6 +149,8 @@ class TOPPSpecLibSearcher
 						pep_id.insertHit(hit);
 					}
 				}
+				pep_id.setHigherScoreBetter(true);
+				pep_id.sort();
 				peptide_ids.push_back(pep_id);
 				protein_ids.push_back(prot_id);
 			}

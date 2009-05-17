@@ -97,6 +97,8 @@
 #include <QtCore/QUrl>
 #include <QtGui/QSplashScreen>
 
+#include <boost/math/special_functions/fpclassify.hpp>
+
 #include <algorithm>
 #include <utility>
 
@@ -1091,7 +1093,7 @@ namespace OpenMS
     {
       mz_label_->setText("m/z: ");
     }
-    else if (isinf(mz) || isnan(mz))
+    else if (boost::math::isinf(mz) || boost::math::isnan(mz))
 		{
       mz_label_->setText("m/z: n/a");
 		}
@@ -1103,7 +1105,7 @@ namespace OpenMS
     {
       rt_label_->setText("RT: ");
     }
-    else if (isinf(rt) || isnan(rt))
+    else if (boost::math::isinf(rt) || boost::math::isnan(rt))
 		{
       rt_label_->setText("RT: n/a");
 		}

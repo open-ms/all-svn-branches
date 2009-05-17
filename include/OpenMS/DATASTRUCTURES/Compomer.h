@@ -57,7 +57,7 @@ public:
 	}
 
 	/// Constructor with net-charge and mass
-	Compomer(Int net_charge, float mass, float log_p)
+	Compomer(Int net_charge, DoubleReal mass, DoubleReal log_p)
 		: cmp_(),
 		net_charge_(net_charge),
 		mass_(mass),
@@ -123,60 +123,47 @@ public:
 			return id_;
 	}
 
-	void setNetCharge(const Int& net_charge)
-	{
-			net_charge_ = net_charge;
-	}
 	const Int& getNetCharge() const
 	{
 			return net_charge_;
 	}
 
-	void setMass(const float& mass)
-	{
-			mass_ = mass;
-	}
-	const float& getMass() const
+	/// mass of all contained adducts
+	const DoubleReal& getMass() const
 	{
 			return mass_;
 	}
 
-	void setPositiveCharges(const Int& pos_charges)
-	{
-			pos_charges_ = pos_charges;
-	}
+	/// summed positive charges of contained adducts
 	const Int& getPositiveCharges() const
 	{
 			return pos_charges_;
 	}
 	
-	void setNegativeCharges(const Int& neg_charges)
-	{
-			neg_charges_ = neg_charges;
-	}
+	/// summed negative charges of contained adducts
 	const Int& getNegativeCharges() const
 	{
 			return neg_charges_;
 	}
 	
-	void setLogP(const float& log_p)
-	{
-			log_p_ = log_p;
-	}
-	const float& getLogP() const
+	/// return log probability
+	const DoubleReal& getLogP() const
 	{
 			return log_p_;
 	}	
 
-//	void setFinal(const bool& final)
-//	{
-//			final_ = final;
-//	}
-//	const bool& getFinal() const
-//	{
-//			return final_;
-//	}
-//
+	/// get adducts with their abundance as compact string
+	String getAdductsAsString() const
+	{
+		String r;
+		std::map<String,Adduct>::const_iterator it=cmp_.begin();
+		for (; it!=cmp_.end(); ++it)
+		{
+			if (it!=cmp_.begin()) r+= " ";
+			r += String(it->second.getAmount()) + "(" + it->first + ")";
+		}
+		return r;
+	}
 	
 	/// sort compomer by (in order of importance): net-charge, mass, probability
 	friend OPENMS_DLLAPI bool operator< (const Compomer &c1, const Compomer &c2); 
@@ -232,10 +219,10 @@ private:
 	
 	CompomerComponents cmp_;
 	Int net_charge_;
-	float mass_;
+	DoubleReal mass_;
 	Int pos_charges_;
 	Int neg_charges_;
-	float log_p_;   // log probability of compomer
+	DoubleReal log_p_;   // log probability of compomer
 	Size id_;
 	//bool final_;
 

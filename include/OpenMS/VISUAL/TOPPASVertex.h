@@ -30,6 +30,9 @@
 
 #include <OpenMS/DATASTRUCTURES/String.h>
 
+#include <QtGui/QPainter>
+#include <QtGui/QPainterPath>
+#include <QtGui/QGraphicsSceneMouseEvent>
 #include <QtGui/QGraphicsItem>
 
 namespace OpenMS
@@ -43,15 +46,8 @@ namespace OpenMS
 		Q_OBJECT
 		
 		public:
-			
-			enum VertexType
-			{
-				VT_SOURCE,
-				VT_TARGET,
-				VT_TOOL
-			};
-			
-			typedef std::vector<TOPPASEdge*> EdgeContainer;
+		
+			typedef QList<TOPPASEdge*> EdgeContainer;
 			typedef EdgeContainer::iterator EdgeIterator;
 			typedef EdgeContainer::const_iterator ConstEdgeIterator;
 			
@@ -62,14 +58,21 @@ namespace OpenMS
 				DFS_BLACK
 			};
 			
+			/// Default Constructor
+			TOPPASVertex();
 			/// Constructor
-			TOPPASVertex(const String& name, const String& type = "", VertexType vt = VT_TOOL);
-			
+			TOPPASVertex(const String& name, const String& type = "");
+			/// Copy constructor
+			TOPPASVertex(const TOPPASVertex& rhs);
 			/// Destructor
 			virtual ~TOPPASVertex();
+			/// Assignment operator
+			TOPPASVertex& operator= (const TOPPASVertex& rhs);
 			
 			/// Returns the name of the tool
 			const String& getName();
+			/// Returns the type of the tool
+			const String& getType();
 			/// Returns the bounding rectangle of this item
 			QRectF boundingRect() const;
 			/// Returns a more precise shape
@@ -84,6 +87,14 @@ namespace OpenMS
 			EdgeIterator inEdgesBegin();
 			/// Returns end() iterator of incoming edges
 			EdgeIterator inEdgesEnd();
+			/// Adds an incoming edge
+			void addInEdge(TOPPASEdge* edge);
+			/// Adds an outgoing edge
+			void addOutEdge(TOPPASEdge* edge);
+			/// Removes an incoming edge
+			void removeInEdge(TOPPASEdge* edge);
+			/// Removes an outedge
+			void removeOutEdge(TOPPASEdge* edge);
 			/// Returns the DFS color of this node
 			DFS_COLOR getDFSColor();
 			/// Sets the DFS color of this node
@@ -103,6 +114,8 @@ namespace OpenMS
 			void hoveringEdgePosChanged(const QPointF& new_pos);
 			/// Emitted when a new out edge is supposed to be created
 			void newHoveringEdge(const QPointF& pos);
+			/// Emitted when the mouse is released after having dragged a new edge somewhere
+			void finishHoveringEdge();
 			
 		protected:
 			
@@ -110,12 +123,10 @@ namespace OpenMS
 			String name_;
 			/// The type of the tool, or "" if it does not have a type
 			String type_;
-			/// The type of this vertex
-			VertexType vertex_type_;
-			/// The list of outgoing edges
-			EdgeContainer out_edges_;
 			/// The list of incoming edges
 			EdgeContainer in_edges_;
+			/// The list of outgoing edges
+			EdgeContainer out_edges_;
 			/// Indicates whether a new out edge is currently being created
 			bool edge_being_created_;
 			/// The color of the pen
@@ -134,6 +145,9 @@ namespace OpenMS
       void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
       void mouseMoveEvent(QGraphicsSceneMouseEvent* e);
 			//@}
+			
+			/// Moves the target pos of the edge which is just being created to @p pos
+			virtual void moveNewEdgeTo_(const QPointF& pos);
 			
 	};
 }

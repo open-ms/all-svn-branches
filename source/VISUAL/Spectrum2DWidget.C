@@ -110,9 +110,6 @@ namespace OpenMS
 		projections_timer_->setSingleShot(true);
 		projections_timer_->setInterval(1000);		
 		connect(projections_timer_, SIGNAL(timeout()), this, SLOT(updateProjections()));
-		
-		//increase minimum size due to projections
-		setMinimumSize(500,500);		
 	}
 
 	Spectrum2DWidget::~Spectrum2DWidget()
@@ -268,6 +265,7 @@ namespace OpenMS
 	{
 		if (projectionsVisible())
 		{
+			setMinimumSize(250,250);
 			projection_box_->hide();
 			projection_horz_->hide();
 			projection_vert_->hide();
@@ -276,6 +274,7 @@ namespace OpenMS
 		}
 		else
 		{
+			setMinimumSize(500,500);
 			updateProjections();
 		}
 	}
@@ -284,10 +283,21 @@ namespace OpenMS
 	{
 		projection_horz_->showLegend(false);
 		projection_horz_->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
-		projection_horz_->canvas()->removeLayer(0);
-		ExperimentType tmp = exp;
-		projection_horz_->canvas()->addLayer(tmp);
-		projection_horz_->canvas()->setDrawMode(mode);
+		if (!projectionsVisible() || projection_horz_->canvas()->getLayerCount()==0) //set draw mode
+		{
+			projection_horz_->canvas()->removeLayer(0);
+			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
+			projection_horz_->canvas()->addLayer(tmp);
+			projection_horz_->canvas()->setDrawMode(mode);
+		}
+		else //keep draw mode
+		{
+			Spectrum1DCanvas::DrawModes previous_mode = projection_horz_->canvas()->getDrawMode();
+			projection_horz_->canvas()->removeLayer(0);
+			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
+			projection_horz_->canvas()->addLayer(tmp);
+			projection_horz_->canvas()->setDrawMode(previous_mode);
+		}
 		grid_->setColumnStretch(3,2);
 		projection_horz_->show();
 		projection_box_->show();
@@ -298,10 +308,21 @@ namespace OpenMS
 		projection_vert_->canvas()->mzToXAxis(false);
 		projection_vert_->showLegend(false);
 		projection_vert_->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
-		projection_vert_->canvas()->removeLayer(0);
-		ExperimentType tmp = exp;
-		projection_vert_->canvas()->addLayer(tmp);
-		projection_vert_->canvas()->setDrawMode(mode);
+		if (!projectionsVisible() || projection_vert_->canvas()->getLayerCount()==0) //set draw mode
+		{
+			projection_vert_->canvas()->removeLayer(0);
+			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
+			projection_vert_->canvas()->addLayer(tmp);
+			projection_vert_->canvas()->setDrawMode(mode);
+		}
+		else //keep draw mode
+		{
+			Spectrum1DCanvas::DrawModes previous_mode = projection_vert_->canvas()->getDrawMode();
+			projection_vert_->canvas()->removeLayer(0);
+			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
+			projection_vert_->canvas()->addLayer(tmp);
+			projection_vert_->canvas()->setDrawMode(previous_mode);
+		}
 		grid_->setRowStretch(0,2);
 		projection_vert_->show();
 		projection_box_->show();

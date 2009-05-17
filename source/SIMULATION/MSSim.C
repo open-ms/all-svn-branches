@@ -29,28 +29,62 @@
 
 #include<OpenMS/SIMULATION/DigestSimulation.h>
 #include<OpenMS/SIMULATION/DetectabilitySimulation.h>
-#include <OpenMS/SIMULATION/RawSignalSimulation.h>
+#include <OpenMS/SIMULATION/RawMSSignalSimulation.h>
 #include <OpenMS/SIMULATION/IonizationSimulation.h>
 #include <OpenMS/SIMULATION/PTMSimulation.h>
 #include <OpenMS/SIMULATION/RTSimulation.h>
 
-#define _VFeature(feat) std::cout << __LINE__ << " RT: " << (feat).getRT() << " MZ: " << (feat).getMZ() << " INT: " << (feat).getIntensity() << " CHARGE: " << (feat).getCharge() << " Det: " << (feat).getMetaValue("detectibility") << ::std::endl; 
-
 namespace OpenMS {
 
+  void verbosePrintFeatureMap(FeatureMapSim feature_map)
+  {
+    std::cout << "############## DEBUG -- FEATURE MAP ##############" << std::endl;
+
+    std::cout << "contained proteins" << std::endl;
+    ProteinIdentification protIdent = feature_map.getProteinIdentifications()[0];
+    for(std::vector<ProteinHit>::iterator proteinHit = protIdent.getHits().begin();
+        proteinHit != protIdent.getHits().end();
+        ++proteinHit)
+    {
+      std::cout << "- " << proteinHit->getAccession() << std::endl;
+    }
+    std::cout << "----------------------------------------------" << std::endl;
+    for(FeatureMapSim::const_iterator feat = feature_map.begin();
+        feat != feature_map.end();
+        ++feat)
+    {
+      std::cout << " RT: " << (*feat).getRT() << " MZ: " << (*feat).getMZ() << " INT: " << (*feat).getIntensity() << " CHARGE: " << (*feat).getCharge() << " Det: " << (*feat).getMetaValue("detectibility") << ::std::endl;
+      std::cout << "derived from protein(s): ";
+      for(std::vector<String>::const_iterator it = (*feat).getPeptideIdentifications()[0].getHits()[0].getProteinAccessions().begin();
+          it != (*feat).getPeptideIdentifications()[0].getHits()[0].getProteinAccessions().end();
+          ++it)
+      {
+        std::cout << (*it) << " ";
+      }
+      std::cout << std::endl << "----------------------------------------------" << std::endl;
+    }
+
+    std::cout << "############## DEBUG -- FEATURE MAP ##############" << std::endl;
+  }
+
   MSSim::MSSim()
-    : DefaultParamHandler("MSSim"), experiment_(), features_()
+    : DefaultParamHandler("MSSim"),
+			experiment_(),
+			features_(),
+			consensus_map_()
   {
     setDefaultParams_();
   }
 
   MSSim::MSSim(const MSSim& source)
-    : DefaultParamHandler(source)
+    : DefaultParamHandler(source),
+			experiment_(source.experiment_),
+			features_(source.features_),
+			consensus_map_(source.consensus_map_)
   {
     setParameters( source.getParameters() );
-    experiment_ = source.experiment_;
-    features_ = source.features_;
-    updateMembers_();  
+
+    updateMembers_();
   }
 
   MSSim& MSSim::operator = (const MSSim& source)
@@ -58,89 +92,86 @@ namespace OpenMS {
     setParameters( source.getParameters() );
     experiment_ = source.experiment_;
     features_ = source.features_;
-    updateMembers_();    
+		consensus_map_ = source.consensus_map_;
+    updateMembers_();
     return *this;
   }
-  
+
   MSSim::~MSSim()
   {}
-  
+
   void MSSim::simulate(const gsl_rng* rnd_gen, const SampleProteins& proteins)
   {
     // TODO: add method to read contaminants
     // TODO: add method to select contaminants
-    
+
     /*
-      General progress should be 
+      General progress should be
         1. Digest Proteins
-        2. add Post Translational modifications 
+        2. add Post Translational modifications
         3. Predict retention times
-        4. predict detectibility 
+        4. predict detectibility
         5. simulate ionization
         6. simulate the (lc)ms signal -> TODO: integrate parameter for signal in lc direction
         7. select features for MS2
         8. generate MS2 signals for selected features
      */
-    
+
+    // convert sample proteins into an empty FeatureMap with ProteinHits
+    // convert
+    createFeatureMap_(proteins, features_);
+
 		// digest
     DigestSimulation digest_sim;
-    digest_sim.setParameters(param_.copy("Digestion:",true)); 
-    
-    // read proteins from protein file  
-		SamplePeptides peptides;
-		digest_sim.digest(proteins, peptides);
-		
-    // debug
-    for (SamplePeptides::const_iterator peptide = peptides.begin();
-         peptide != peptides.end();
-         ++peptide)
-    {
-      std::cout << "Generated " << (*peptide).first << " with abundance " << (*peptide).second << " via tryptic digestion" << std::endl; 
-    }
-      
-    
-		// convert
-    createFeatureMap_(peptides);
+    digest_sim.setParameters(param_.copy("Digestion:",true));
+    digest_sim.digest(features_);
 
     // debug
-		for(FeatureMapSim::const_iterator feature = features_.begin();
-        feature != features_.end();
-        ++feature)
-    {
-      _VFeature(*feature)
-    }
-    
+    std::cout << "digested" << std::endl;
+    verbosePrintFeatureMap(features_);
+
 		// add PTM's
 		PTMSimulation ptm_sim(rnd_gen);
-		ptm_sim.setParameters(param_.copy("PostTranslationalModifications:",true));
+    
+    std::cout << param_.copy("PostTranslationalModifications:",true) << std::endl;
+		
+    ptm_sim.setParameters(param_.copy("PostTranslationalModifications:",true));
 		ptm_sim.predict_ptms(features_);
+
+    // debug
+    std::cout << "ptms added" << std::endl;
+    verbosePrintFeatureMap(features_);
 
 		// RT prediction
 		RTSimulation rt_sim(rnd_gen);
 		rt_sim.setParameters(param_.copy("RTSimulation:",true));
 		rt_sim.predict_rt(features_);
-       
+
+    // debug
+    std::cout << "rt simulated" << std::endl;
+    verbosePrintFeatureMap(features_);
+
 		// Detectability prediction
 		DetectabilitySimulation dt_sim;
 		dt_sim.setParameters(param_.copy("PeptideDetectibilitySimulation:",true));
 		dt_sim.filterDetectability(features_);
-    
+
+    // debug
+    std::cout << "pd filtered" << std::endl;
+    verbosePrintFeatureMap(features_);
+
     IonizationSimulation ion_sim(rnd_gen);
     ion_sim.setParameters(param_.copy("Ionization:", true));
-    ion_sim.ionize(features_);
-    
+    ion_sim.ionize(features_, consensus_map_);
+
     // debug
-		for(FeatureMapSim::const_iterator feature = features_.begin();
-        feature != features_.end();
-        ++feature)
-    {
-      _VFeature(*feature)
-    }
-    
-    RawSignalSimulation raw_sim(rnd_gen);
+    std::cout << "ionized" << std::endl;
+    verbosePrintFeatureMap(features_);
+
+    RawMSSignalSimulation raw_sim(rnd_gen);
     raw_sim.setParameters(param_.copy("RawSignal:", true));
-    createExperiment_(rt_sim.getGradientTime(), raw_sim.getRTSamplingRate());
-    
+    createExperiment_(rt_sim.getGradientTime(), rt_sim.isRTColumnOn(),raw_sim.getRTSamplingRate(), experiment_);
+
     raw_sim.generateRawSignals(features_, experiment_);
 
 /**
@@ -149,56 +180,72 @@ namespace OpenMS {
         8. generate MS2 signals for selected features
 **/
 
-    
-    
+
+
   }
 
-	void MSSim::createFeatureMap_(const SamplePeptides& peptides)
+	void MSSim::createFeatureMap_(const SampleProteins& proteins, FeatureMapSim& feature_map)
 	{
-    features_.clear();
-		features_.reserve(peptides.size());
+    // clear feature map
+    feature_map.clear();
+    ProteinIdentification protIdent;
 
-		for (SamplePeptides::const_iterator it=peptides.begin(); it!=peptides.end(); ++it)
+    // TODO: currently the protein sequence is the ProteinAccession -> think of something better?
+		for (SampleProteins::const_iterator it=proteins.begin(); it!=proteins.end(); ++it)
 		{
-			Feature f;
-			PeptideIdentification pep_id;
-			pep_id.insertHit(PeptideHit(1.0, 1, 1, it->first));
-			f.getPeptideIdentifications().push_back(pep_id);
-			f.setIntensity(it->second);
-			features_.push_back(f);
+      //std::cout << (it->first).identifier << " " << (it->first).sequence << " " << (it->second) << ::std::endl;
+      // add new ProteinHit to ProteinIdentification
+      ProteinHit protHit(0.0, 1, (it->first).identifier, (it->first).sequence);
+      protHit.setMetaValue("intensity", it->second);
+      protHit.setMetaValue("description", it->first.description);
+      protIdent.insertHit(protHit);
+
 		}
+    std::vector<ProteinIdentification> vec_protIdent;
+    vec_protIdent.push_back(protIdent);
+    feature_map.setProteinIdentifications(vec_protIdent);
 	}
 
-  void MSSim::createExperiment_(const DoubleReal gradient_time, const DoubleReal rt_sampling_rate)
+  void MSSim::createExperiment_(const DoubleReal& gradient_time, bool is_rt_column_on, const DoubleReal& rt_sampling_rate, MSSimExperiment& experiment)
   {
-    experiment_.clear();
-    Size number_of_scans = static_cast<Size>(gradient_time / rt_sampling_rate);
-    experiment_.resize(number_of_scans);
-    
-    DoubleReal current_scan_rt = rt_sampling_rate;
-    for(MSSimExperiment::iterator exp_it = experiment_.begin();
-        exp_it != experiment_.end();
-        ++exp_it)
+    std::cout << "create experiment .. ";
+    experiment.clear();
+    if(is_rt_column_on)
     {
-      // TODO: maybe we should also apply an error here like Ole did it in the original MapSimulator
-      // double n = gsl_ran_gaussian(rand_gen_, 0.05);
-      (*exp_it).setRT(current_scan_rt);
-      current_scan_rt += rt_sampling_rate;
+      Size number_of_scans = Size(gradient_time / rt_sampling_rate);
+      experiment.resize(number_of_scans);
+
+      DoubleReal current_scan_rt = rt_sampling_rate;
+      for(MSSimExperiment::iterator exp_it = experiment.begin();
+          exp_it != experiment.end();
+          ++exp_it)
+      {
+        // TODO: maybe we should also apply an error here like Ole did it in the original MapSimulator
+        // double n = gsl_ran_gaussian(rand_gen_, 0.05);
+        (*exp_it).setRT(current_scan_rt);
+        current_scan_rt += rt_sampling_rate;
+      }
     }
+    else
+    {
+      experiment.resize(1);
+      experiment[0].setRT(-1);
+    }
+    std::cout << "done";
   }
-  
+
   void MSSim::setDefaultParams_()
-  {   
-    defaults_.insert("Digestion:", DigestSimulation().getDefaults());  
+  {
+    defaults_.insert("Digestion:", DigestSimulation().getDefaults());
     defaults_.insert("PostTranslationalModifications:",PTMSimulation(NULL).getDefaults());
     defaults_.insert("RTSimulation:",RTSimulation(NULL).getDefaults());
     defaults_.insert("PeptideDetectibilitySimulation:",DetectabilitySimulation().getDefaults());
     defaults_.insert("Ionization:",IonizationSimulation(NULL).getDefaults());
-    defaults_.insert("RawSignal:",RawSignalSimulation(NULL).getDefaults());
-    
-    defaultsToParam_();  
+    defaults_.insert("RawSignal:",RawMSSignalSimulation(NULL).getDefaults());
+
+    defaultsToParam_();
   }
-  
+
   void MSSim::updateMembers_()
   {}
 
@@ -206,10 +253,15 @@ namespace OpenMS {
   {
     return experiment_;
   }
-  
+
   FeatureMapSim const & MSSim::getSimulatedFeatures() const
   {
     return features_;
   }
-  
+
+  ConsensusMap const & MSSim::getSimulatedConsensus() const
+  {
+		return consensus_map_;
+  }
+
 }

@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Stephan Aiche$
+// $Maintainer: Chris Bielow$
 // $Authors: Stephan Aiche, Chris Bielow$
 // --------------------------------------------------------------------------
 
@@ -73,7 +73,7 @@ namespace OpenMS {
 		ptms_.clear();
 
 		// test if modification exists; will throw exception otherwise
-		StringList mods = (StringList) defaults_.getValue("potential_modifications");
+		StringList mods = (StringList) param_.getValue("potential_modifications");
 		StringList mod_info;
 		ProbabilityType p;
 
@@ -114,7 +114,7 @@ namespace OpenMS {
   {
 		if (ptms_.size()==0) return;
 
-		Size max_mod_count = (UInt) defaults_.getValue("modification_bound");
+		Size max_mod_count = (UInt) param_.getValue("modification_bound");
 		if (max_mod_count == 0) return;
 
 		FeatureMapSim map_ptm;
@@ -144,7 +144,7 @@ namespace OpenMS {
 				// dice how many are modified
 				ptms_[it_aa->first].rnd_amount = gsl_ran_binomial (rnd_gen_, 1-ptms_[it_aa->first].probability_none, (UInt)aa_table[it_aa->first]);
 
-				// map index to AA name
+				// map AA index to AA name
 				index2AA[index] = it_aa->first;
 				// add AA indizes for later shuffling
 				AAcandidates.insert(AAcandidates.end(), ptms_[it_aa->first].rnd_amount, index);

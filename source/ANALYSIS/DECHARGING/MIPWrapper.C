@@ -37,6 +37,8 @@
 #ifdef _MSC_VER // disable some COIN-OR warnings that distract from ours
 #	pragma warning( push ) // save warning state
 #	pragma warning( disable : 4267 )
+#else
+# pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
 // useful docu: https://projects.coin-or.org/Cbc
 // useful example: https://projects.coin-or.org/Cbc/browser/trunk/Cbc/examples/sample5.cpp
@@ -60,6 +62,8 @@
 #include "coin/CoinTime.hpp"
 #ifdef _MSC_VER
 #	pragma warning( pop )  // restore old warning state
+#else
+# pragma GCC diagnostic warning "-Wunused-parameter"
 #endif
 
 
@@ -86,17 +90,15 @@ namespace OpenMS {
 			std::cout << "slice (" << i << "-" << (i+allowedPairs) << ")score: " << scorel << std::endl; 
 		}
     #endif
-    score = compute_slice(me, pairs, 0, pairs.size(), 0,0);
+    score = compute_slice_(me, pairs, 0, pairs.size());
 
 		return score;
 	}
 		
-	DoubleReal MIPWrapper::compute_slice(const MassExplainer& me, 
+	DoubleReal MIPWrapper::compute_slice_(const MassExplainer& me, 
 																				PairsType& pairs, 
 																				const PairsIndex margin_left, 
-																				const PairsIndex margin_right, 
-																				const PairsIndex safety_margin_left, 
-																				const PairsIndex safety_margin_right)
+																				const PairsIndex margin_right)
 	{
 
 		std::cout << "compute .." << std::endl;

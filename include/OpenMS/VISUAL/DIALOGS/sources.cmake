@@ -20,6 +20,8 @@ TOPPViewPrefDialog.h
 ToolsDialog.h
 SpectrumAlignmentDialog.h
 TheoreticalSpectrumGenerationDialog.h
+TOPPASInputFilesDialog.h
+TOPPASToolConfigDialog.h
 )
 
 ### add path to the filenames
@@ -55,6 +57,8 @@ TOPPViewPrefDialog.h
 ToolsDialog.h
 SpectrumAlignmentDialog.h
 TheoreticalSpectrumGenerationDialog.h
+TOPPASInputFilesDialog.h
+TOPPASToolConfigDialog.h
 )
 
 ### add path to the filenames

@@ -50,16 +50,16 @@ namespace OpenMS
       	AM_MOVE
       };
       
-      typedef std::vector<TOPPASEdge*> EdgeContainer;
+      typedef QList<TOPPASEdge*> EdgeContainer;
 			typedef EdgeContainer::iterator EdgeIterator;
 			typedef EdgeContainer::const_iterator ConstEdgeIterator;
-			typedef std::vector<TOPPASVertex*> VertexContainer;
+			typedef QList<TOPPASVertex*> VertexContainer;
 			typedef VertexContainer::iterator VertexIterator;
 			typedef VertexContainer::const_iterator ConstVertexIterator;
 			
-			/// Standard constructor
-			TOPPASScene();
-		
+			/// Constructor
+			TOPPASScene(QObject* parent);
+			
 			/// Destructor
 			virtual ~TOPPASScene();
 			
@@ -79,6 +79,8 @@ namespace OpenMS
 			EdgeIterator edgesBegin();
 			/// Returns end() iterator of all edges
 			EdgeIterator edgesEnd();
+			/// Removes all currently selected edges and vertices
+			void removeSelected();
 			
 		public slots:
 		
@@ -90,6 +92,8 @@ namespace OpenMS
 			void updateHoveringEdgePos(const QPointF& new_pos);
 			/// Called when a new out edge is supposed to be created
 			void addHoveringEdge(const QPointF& pos);
+			/// Called when the new edge is being "released"
+			void finishHoveringEdge();
 			
 		protected:
 			

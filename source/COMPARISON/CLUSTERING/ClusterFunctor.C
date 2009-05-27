@@ -36,13 +36,11 @@ using namespace std;
 
 namespace OpenMS
 {
-  	ClusterFunctor::ClusterFunctor()
-		: FactoryProduct(ClusterFunctor::getProductName())
+  ClusterFunctor::ClusterFunctor()
 	{
 	}
   
-	ClusterFunctor::ClusterFunctor(const ClusterFunctor& source)
-		: FactoryProduct(source)
+	ClusterFunctor::ClusterFunctor(const ClusterFunctor& /*source*/)
 	{
 	}
  
@@ -50,12 +48,8 @@ namespace OpenMS
 	{
 	}
  
-	ClusterFunctor& ClusterFunctor::operator=(const ClusterFunctor& source)
+	ClusterFunctor& ClusterFunctor::operator=(const ClusterFunctor& /*source*/)
 	{
-		if (this != &source)
-		{
- 			FactoryProduct::operator=(source);
-		}
 		return *this;
 	}
  

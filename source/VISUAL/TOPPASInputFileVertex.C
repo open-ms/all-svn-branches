@@ -25,49 +25,55 @@
 // $Authors: Johannes Junker $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_VISUAL_TOPPASTOOLVERTEX_H
-#define OPENMS_VISUAL_TOPPASTOOLVERTEX_H
-
-#include <OpenMS/VISUAL/TOPPASVertex.h>
-
-#include <OpenMS/DATASTRUCTURES/Param.h>
-
+#include <OpenMS/VISUAL/TOPPASInputFileVertex.h>
+#include <OpenMS/VISUAL/DIALOGS/TOPPASInputFileDialog.h>
 
 namespace OpenMS
 {
-	class OPENMS_DLLAPI TOPPASToolVertex
-		: public TOPPASVertex
+	TOPPASInputFileVertex::TOPPASInputFileVertex()
+		:	TOPPASVertex(),
+			file_()
 	{
-		Q_OBJECT
+		pen_color_ = Qt::black;
+		brush_color_ = Qt::lightGray;
+	}
+	
+	TOPPASInputFileVertex::TOPPASInputFileVertex(const String& name, const String& type)
+		: TOPPASVertex(name, type),
+			file_()
+	{
+		pen_color_ = Qt::black;
+		brush_color_ = Qt::lightGray;
+	}
+	
+	TOPPASInputFileVertex::TOPPASInputFileVertex(const TOPPASInputFileVertex& rhs)
+		:	TOPPASVertex(rhs),
+			file_(rhs.file_)
+	{
+		pen_color_ = Qt::black;
+		brush_color_ = Qt::lightGray;
+	}
+	
+	TOPPASInputFileVertex::~TOPPASInputFileVertex()
+	{
+	
+	}
+	
+	TOPPASInputFileVertex& TOPPASInputFileVertex::operator= (const TOPPASInputFileVertex& rhs)
+	{
+		TOPPASVertex::operator=(rhs);
 		
-		public:
-			
-			/// Default constructor
-			TOPPASToolVertex();
-			/// Constructor
-			TOPPASToolVertex(const String& name, const String& type = "");
-			/// Copy constructor
-			TOPPASToolVertex(const TOPPASToolVertex& rhs);
-			/// Destructor
-			virtual ~TOPPASToolVertex();
-			/// Assignment operator
-			TOPPASToolVertex& operator= (const TOPPASToolVertex& rhs);
-			
-			/// The static instance counter (for unique instance numbers)
-			static UInt id_counter;
-			
-		protected:
+		file_ = rhs.file_;
 		
-			///@name reimplemented Qt events
-      //@{
-      void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
-			//@}
-			
-			/// The parameters of the tool
-			Param param_;
-			/// The unique ID
-			UInt id_;
-	};
+		return *this;
+	}
+	
+	void TOPPASInputFileVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
+	{
+		TOPPASInputFileDialog tifd(file_);
+		if (tifd.exec())
+		{
+			file_ = tifd.getFilename();
+		}
+	}
 }
-
-#endif

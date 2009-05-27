@@ -1,4 +1,4 @@
-// -*- mode: C++; tab-width: 2; -*-
+// -*- Mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -21,51 +21,44 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
+// $Maintainer: Marc Sturm$
 // $Authors: $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/FORMAT/PersistentObject.h>
+// OpenMS includes
+#include <OpenMS/VISUAL/DIALOGS/TOPPASInputFileDialog.h>
+
+#include <QtGui/QFileDialog>
+
+#include <iostream>
 
 namespace OpenMS
 {
-
-	PersistentObject::PersistentObject():persistence_id_(0)
+	TOPPASInputFileDialog::TOPPASInputFileDialog(const QString& file)
 	{
+		setupUi(this);
 		
-	}
-
-	PersistentObject::~PersistentObject()
-	{
-			
-	}
-
-	PersistentObject& PersistentObject::operator=(const PersistentObject& rhs)
-	{
-		if (&rhs==this) return *this;
+		line_edit->setText(file);
 		
-		persistence_id_ = rhs.persistence_id_;
-		
-		return *this;
+		connect (browse_button,SIGNAL(clicked()),this,SLOT(showFileDialog()));
+		connect (ok_button,SIGNAL(clicked()),this,SLOT(accept()));
+		connect (cancel_button,SIGNAL(clicked()),this,SLOT(reject()));
 	}
 	
-  const UID& PersistentObject::getPersistenceId() const
+	void TOPPASInputFileDialog::showFileDialog()
 	{
-		return persistence_id_;
+		QFileDialog fd;
+		fd.setFileMode(QFileDialog::ExistingFile);
+		//fd.setFilter("*.mzData;*.mzML;*.dta; .....");
+		if (fd.exec() && !fd.selectedFiles().empty())
+		{
+			line_edit->setText(fd.selectedFiles().first());
+		}
 	}
 	
-  void PersistentObject::setPersistenceId(const UID& persistence_id)
+	QString TOPPASInputFileDialog::getFilename()
 	{
-		persistence_id_ = persistence_id;
+		return line_edit->text();
 	}
-
-	void PersistentObject::clearId(bool deep)
-  {
-    persistence_id_ = 0;
-    if (deep == true)
-    {
-      clearChildIds_();
-    }
-  }
-
-}
+	
+} // namespace

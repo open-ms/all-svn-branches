@@ -18,7 +18,6 @@ MetaDataBrowser.C
 MultiGradient.C
 MultiGradientSelector.C
 ParamEditor.C
-PeakIcon.C
 Spectrum1DCanvas.C
 Spectrum1DWidget.C
 Spectrum2DCanvas.C
@@ -33,8 +32,10 @@ TOPPASWidget.C
 TOPPASScene.C
 TOPPASVertex.C
 TOPPASToolVertex.C
-TOPPASInputVertex.C
-TOPPASOutputVertex.C
+TOPPASInputFileVertex.C
+TOPPASInputFileListVertex.C
+TOPPASOutputFileVertex.C
+TOPPASOutputFileListVertex.C
 TOPPASEdge.C
 EnhancedWorkspace.C
 )

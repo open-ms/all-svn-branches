@@ -1,8 +1,8 @@
-// -*- mode: C++; tab-width: 2; -*-
+// -*- Mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework 
+//                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
 //  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
 //
@@ -21,43 +21,42 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Johannes Junker $
-// $Authors: Johannes Junker $
+// $Maintainer: Marc Sturm$
+// $Authors: $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_VISUAL_TOPPASOUTPUTVERTEX_H
-#define OPENMS_VISUAL_TOPPASOUTPUTVERTEX_H
 
-#include <OpenMS/VISUAL/TOPPASVertex.h>
+#ifndef OPENMS_VISUAL_DIALOGS_TOPPASINPUTFILEDIALOG_H
+#define OPENMS_VISUAL_DIALOGS_TOPPASINPUTFILEDIALOG_H
 
-namespace OpenMS
+#include <OpenMS/VISUAL/DIALOGS/UIC/ui_TOPPASInputFileDialog.h>
+
+namespace OpenMS 
 {
-	class OPENMS_DLLAPI TOPPASOutputVertex
-		: public TOPPASVertex
+	/**
+		@brief Dialog which allows to specify a list of input files
+		
+		@ingroup Dialogs
+	*/
+	class TOPPASInputFileDialog
+		: public QDialog,
+			public Ui::TOPPASInputFileDialogTemplate
 	{
 		Q_OBJECT
-		
+				
 		public:
 			
-			
-			/// Default constructor
-			TOPPASOutputVertex();
 			/// Constructor
-			TOPPASOutputVertex(const String& name, const String& type = "");
-			/// Copy constructor
-			TOPPASOutputVertex(const TOPPASOutputVertex& rhs);
-			/// Destructor
-			virtual ~TOPPASOutputVertex();
-			/// Assignment operator
-			TOPPASOutputVertex& operator= (const TOPPASOutputVertex& rhs);
+			TOPPASInputFileDialog(const QString& file);
 			
-		protected:
+			/// Returns the filename
+			QString getFilename();
+			
+		public slots:
 		
-			///@name reimplemented Qt events
-      //@{
-      void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
-			//@}
+			/// Lets the user select the file via a file dialog
+			void showFileDialog();
 	};
+	
 }
-
-#endif
+#endif // OPENMS_VISUAL_DIALOGS_TOPPASINPUTFILESDIALOG_H

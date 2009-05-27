@@ -2,9 +2,9 @@
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2008 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,36 +21,45 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Johannes Junker $
+// $Authors: Johannes Junker $
 // --------------------------------------------------------------------------
 
-/**
+#ifndef OPENMS_VISUAL_TOPPASINPUTFILEVERTEX_H
+#define OPENMS_VISUAL_TOPPASINPUTFILEVERTEX_H
 
-	@page OpenMS_tutorial OpenMS tutorial
+#include <OpenMS/VISUAL/TOPPASVertex.h>
 
-	First, we give a small introduction to this tutorial and %OpenMS:
-	- @subpage tutorial_general
-	- @subpage tutorial_structure
-	- @subpage tutorial_terms
+namespace OpenMS
+{
+	class OPENMS_DLLAPI TOPPASInputFileVertex
+		: public TOPPASVertex
+	{
+		Q_OBJECT
+		
+		public:
+			
+			/// Default constructor
+			TOPPASInputFileVertex();
+			/// Constructor
+			TOPPASInputFileVertex(const String& name, const String& type = "");
+			/// Copy constructor
+			TOPPASInputFileVertex(const TOPPASInputFileVertex& rhs);
+			/// Destructor
+			virtual ~TOPPASInputFileVertex();
+			/// Assignment operator
+			TOPPASInputFileVertex& operator= (const TOPPASInputFileVertex& rhs);
+			
+		protected:
+		
+			QString file_;
+		
+			///@name reimplemented Qt events
+      //@{
+      void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
+			//@}
+			
+	};
+}
 
-	Then you should read about the basic classes and concepts of %OpenMS:
-	- @subpage tutorial_concept
-	- @subpage tutorial_datastructures
-	- @subpage tutorial_kernel
-	- @subpage tutorial_metadata
-	- @subpage tutorial_chemistry
-	- @subpage tutorial_format
-
-	The more advanced tutorials cover the algorithms provided by %OpenMS:
-	- @subpage tutorial_filtering
-	- @subpage tutorial_transformations
-	- @subpage tutorial_mapalignment
-	- @subpage tutorial_featuregrouping
-
-	Other advanced tutorials:
-	- @subpage tutorial_visual
-	- @subpage tutorial_clustering
-	- @subpage tutorial_pip
-	- @subpage tutorial_howto
-*/
+#endif

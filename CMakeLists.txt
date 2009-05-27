@@ -60,11 +60,16 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 		add_definitions(-fmessage-length=0)
 	endif()
 
+	## CGAL needs extra definitions to avoid pre and postconditions 
+	## (see mails on open-ms-general of Hendrik Weisser. Thx very much!)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCGAL_NO_PRECONDITIONS -DCGAL_NO_POSTCONDITIONS -DCGAL_NO_ASSERTIONS")
+
+
 elseif (MSVC)
 	#add_definitions(/Wall) ## disable for now.. its just too much!
 
 	## disable dll-interface warning
-	add_definitions(/wd4251)
+	add_definitions(/wd4251 /wd4275)
 	
 	## disable deprecated functions warning (e.g. for POSIX functions)
 	add_definitions(/wd4996)
@@ -74,7 +79,7 @@ elseif (MSVC)
 
 	
 	## don't warn about unchecked std::copy()
-	add_definitions(/D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE /D_SECURE_SCL=0)
+	add_definitions(/D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 
 	## disable min and max macros by default
 	## see CGAL and BOOST configs for more elaborate explanations
@@ -307,12 +312,9 @@ else()
 	set(SVM_LIBRARY general ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library") # do not distinguish between optimized and debug
 endif()
 
-# Boost support
 if (MSVC)
 	## needed to locate libs (put this above ADD_LIBRARY() - otherwise it will not work)
 	link_directories(${CONTRIB_LIB_DIR})
-else()
-	## nothing to do for unix, currently we need those boost parts only which work with the headers
 endif()
 
 
@@ -574,8 +576,17 @@ endif()
 
 ## OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables
 set(OPENMS_LIBRARIES OpenMS)
-if (NOT APPLE)
-	set(OPENMS_LIBRARIES OpenMS ${QT_LIBRARIES})
+if (MSVC) ## Windows
+	## somehow the link dependencies of cmake are broken such that when using POSTFIX names for libs the dependencies are not forwarded...
+	## we fix this by adding the dependencies of OpenMS directly to the executables as well.
+	set(OPENMS_LIBRARIES optimized OpenMS${CMAKE_RELEASE_POSTFIX} debug OpenMS${CMAKE_DEBUG_POSTFIX} ${QT_LIBRARIES} ${OPENMS_DEP_LIBRARIES})
+elseif (NOT APPLE) ## Linux
+	set(OPENMS_LIBRARIES optimized OpenMS${CMAKE_RELEASE_POSTFIX} debug OpenMS${CMAKE_DEBUG_POSTFIX} ${QT_LIBRARIES})
+endif()
+
+## directory for OpenMS(d).lib (required for linking executables)
+if (MSVC)
+	link_directories(${PROJECT_BINARY_DIR})
 endif()
 
 ####### TOPP #########
@@ -696,10 +707,6 @@ configure_file(
 	@ONLY
 )
 
-include(CMakeExportBuildSettings)
-cmake_export_build_settings(${PROJECT_BINARY_DIR}/OpenMSBuildSettings.cmake)
-export_library_dependencies(${PROJECT_BINARY_DIR}/OpenMSLibraryDepends.cmake)
-## TODO install these files to a specific location to have a standard way to be used with external code
 
 ##### targets list #####
 if (MSVC)
@@ -897,7 +904,20 @@ if (NOT "${PACKAGE_TYPE}" STREQUAL "none")
 	endif()
 
 else()
-
-	CMAKE_EXPORT_BUILD_SETTINGS(cmake/OpenMSBuildSettings.cmake)
-
+	## grep definitions that were set using 'add_definitions()'
+	get_property(OPENMS_CMP_DEFS DIRECTORY . PROPERTY COMPILE_DEFINITIONS)
+	
+	## convert to CXX flags
+	set(OPENMS_ADDCXX_FLAGS)
+	#
+	foreach(i ${OPENMS_CMP_DEFS})
+		set(OPENMS_ADDCXX_FLAGS "${OPENMS_ADDCXX_FLAGS} -D${i}")
+	endforeach(i)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPENMS_ADDCXX_FLAGS}")
+	Message(STATUS "Definitions: ${OPENMS_ADDCXX_FLAGS}")
+	
+	# build settings and  configs for external code
+	include(CMakeExportBuildSettings)
+	cmake_export_build_settings(${PROJECT_BINARY_DIR}/cmake/OpenMSBuildSettings.cmake)
+	export_library_dependencies(${PROJECT_BINARY_DIR}/cmake/OpenMSLibraryDepends.cmake)
 endif()

@@ -24,8 +24,10 @@ TOPPASWidget.h
 TOPPASScene.h
 TOPPASVertex.h
 TOPPASToolVertex.h
-TOPPASInputVertex.h
-TOPPASOutputVertex.h
+TOPPASInputFileVertex.h
+TOPPASInputFileListVertex.h
+TOPPASOutputFileVertex.h
+TOPPASOutputFileListVertex.h
 TOPPASEdge.h
 EnhancedWorkspace.h
 )
@@ -61,7 +63,6 @@ MetaDataBrowser.h
 MultiGradient.h
 MultiGradientSelector.h
 ParamEditor.h
-PeakIcon.h
 Spectrum1DCanvas.h
 Spectrum1DWidget.h
 Spectrum2DCanvas.h

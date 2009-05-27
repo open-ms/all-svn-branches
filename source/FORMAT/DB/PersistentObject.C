@@ -2,9 +2,9 @@
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework
+//                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2008 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -25,32 +25,47 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-/**
+#include <OpenMS/FORMAT/DB/PersistentObject.h>
 
-	@page OpenMS_tutorial OpenMS tutorial
+namespace OpenMS
+{
 
-	First, we give a small introduction to this tutorial and %OpenMS:
-	- @subpage tutorial_general
-	- @subpage tutorial_structure
-	- @subpage tutorial_terms
+	PersistentObject::PersistentObject():persistence_id_(0)
+	{
+		
+	}
 
-	Then you should read about the basic classes and concepts of %OpenMS:
-	- @subpage tutorial_concept
-	- @subpage tutorial_datastructures
-	- @subpage tutorial_kernel
-	- @subpage tutorial_metadata
-	- @subpage tutorial_chemistry
-	- @subpage tutorial_format
+	PersistentObject::~PersistentObject()
+	{
+			
+	}
 
-	The more advanced tutorials cover the algorithms provided by %OpenMS:
-	- @subpage tutorial_filtering
-	- @subpage tutorial_transformations
-	- @subpage tutorial_mapalignment
-	- @subpage tutorial_featuregrouping
+	PersistentObject& PersistentObject::operator=(const PersistentObject& rhs)
+	{
+		if (&rhs==this) return *this;
+		
+		persistence_id_ = rhs.persistence_id_;
+		
+		return *this;
+	}
+	
+  const UID& PersistentObject::getPersistenceId() const
+	{
+		return persistence_id_;
+	}
+	
+  void PersistentObject::setPersistenceId(const UID& persistence_id)
+	{
+		persistence_id_ = persistence_id;
+	}
 
-	Other advanced tutorials:
-	- @subpage tutorial_visual
-	- @subpage tutorial_clustering
-	- @subpage tutorial_pip
-	- @subpage tutorial_howto
-*/
+	void PersistentObject::clearId(bool deep)
+  {
+    persistence_id_ = 0;
+    if (deep == true)
+    {
+      clearChildIds_();
+    }
+  }
+
+}

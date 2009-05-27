@@ -40,7 +40,8 @@
 		print "- the internal documentation was built,\n";
 		print "- all tests were executed.\n";
 		print "\n";
-		print "If no user name is given, the tests are performed for all users.\n";
+		print "The user name given with the '-u' option is matched against the maintainers in the\n";
+		print "file headers. If no user name is given, the tests are performed for all users.\n";
 		print "\n";
 		print "tests:\n";
 		foreach ($GLOBALS["all_tests"] as $name => $desc)

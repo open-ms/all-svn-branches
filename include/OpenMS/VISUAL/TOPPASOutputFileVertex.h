@@ -25,55 +25,39 @@
 // $Authors: Johannes Junker $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/VISUAL/TOPPASInputVertex.h>
-#include <OpenMS/VISUAL/DIALOGS/TOPPASInputFilesDialog.h>
+#ifndef OPENMS_VISUAL_TOPPASOUTPUTFILEVERTEX_H
+#define OPENMS_VISUAL_TOPPASOUTPUTFILEVERTEX_H
+
+#include <OpenMS/VISUAL/TOPPASVertex.h>
 
 namespace OpenMS
 {
-	TOPPASInputVertex::TOPPASInputVertex()
-		:	TOPPASVertex(),
-			files_()
+	class OPENMS_DLLAPI TOPPASOutputFileVertex
+		: public TOPPASVertex
 	{
-		pen_color_ = Qt::black;
-		brush_color_ = Qt::lightGray;
-	}
-	
-	TOPPASInputVertex::TOPPASInputVertex(const String& name, const String& type)
-		: TOPPASVertex(name, type),
-			files_()
-	{
-		pen_color_ = Qt::black;
-		brush_color_ = Qt::lightGray;
-	}
-	
-	TOPPASInputVertex::TOPPASInputVertex(const TOPPASInputVertex& rhs)
-		:	TOPPASVertex(rhs),
-			files_(rhs.files_)
-	{
-		pen_color_ = Qt::black;
-		brush_color_ = Qt::lightGray;
-	}
-	
-	TOPPASInputVertex::~TOPPASInputVertex()
-	{
-	
-	}
-	
-	TOPPASInputVertex& TOPPASInputVertex::operator= (const TOPPASInputVertex& rhs)
-	{
-		TOPPASVertex::operator=(rhs);
+		Q_OBJECT
 		
-		files_ = rhs.files_;
+		public:
+			
+			
+			/// Default constructor
+			TOPPASOutputFileVertex();
+			/// Constructor
+			TOPPASOutputFileVertex(const String& name, const String& type = "");
+			/// Copy constructor
+			TOPPASOutputFileVertex(const TOPPASOutputFileVertex& rhs);
+			/// Destructor
+			virtual ~TOPPASOutputFileVertex();
+			/// Assignment operator
+			TOPPASOutputFileVertex& operator= (const TOPPASOutputFileVertex& rhs);
+			
+		protected:
 		
-		return *this;
-	}
-	
-	void TOPPASInputVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
-	{
-		TOPPASInputFilesDialog tifd(files_);
-		if (tifd.exec())
-		{
-			tifd.getFilenames(files_);
-		}
-	}
+			///@name reimplemented Qt events
+      //@{
+      void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
+			//@}
+	};
 }
+
+#endif

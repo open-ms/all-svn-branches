@@ -39,8 +39,8 @@ namespace OpenMS
   	@brief Base class for all persistent objects.
   	
   	Interface for all classes that can be stored persistently in the OpenMS DB.
-  	
-  	@ingroup Format
+
+  	@ingroup DatabaseIO
   */
   class OPENMS_DLLAPI PersistentObject
   {

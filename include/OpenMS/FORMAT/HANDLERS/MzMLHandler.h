@@ -44,7 +44,7 @@
 //TODO:
 // - scanSettingsList - what is to do?
 // - DataProcessing of binaryDataArray - simply assign to spectrum / chromatogram data processing
-// - InstrumentConfiguration of Scan - that's that?
+// - InstrumentConfiguration of Scan - what's that?
 //
 //MISSING:
 // - more than one selected ion per precursor (warning if more than one)
@@ -72,7 +72,7 @@ namespace OpenMS
 			@brief XML handler for MzMLFile
 			
 			MapType has to be a MSExperiment or have the same interface.
-
+			
 			@note Do not use this class. It is only needed in MzMLFile.
 		*/
 		template <typename MapType>
@@ -971,6 +971,10 @@ namespace OpenMS
 				{
 					spec_.setType(SpectrumSettings::RAWDATA);
 				}
+				else if (accession=="MS:1000525") //spectrum representation
+				{
+					spec_.setType(SpectrumSettings::UNKNOWN);
+				}
 				
 				//spectrum attribute
 				else if (accession=="MS:1000511") //ms level
@@ -1099,15 +1103,11 @@ namespace OpenMS
 			//------------------------- activation ----------------------------
 			else if(parent_tag=="activation")
 			{
+				//precursor activation attribute
 				if (accession=="MS:1000245") //charge stripping
 				{
 					//No member => meta data
 					spec_.getPrecursors().back().setMetaValue("charge stripping",String("true"));
-				}
-				else if (accession=="MS:1000246") //delayed extraction
-				{
-					//No member => meta data
-					spec_.getPrecursors().back().setMetaValue("delayed extraction",String("true"));
 				}
 				else if (accession=="MS:1000045") //collision energy (ev)
 				{
@@ -1127,6 +1127,21 @@ namespace OpenMS
 				else if (accession=="MS:1000509") //activation energy (ev)
 				{
 					spec_.getPrecursors().back().setActivationEnergy(value.toDouble());
+				}
+				else if (accession=="MS:1000138") //percent collision energy
+				{
+					//No member => meta data
+					spec_.getPrecursors().back().setMetaValue("percent collision energy",value);
+				}
+				else if (accession=="MS:1000869") //collision gas pressure
+				{
+					//No member => meta data
+					spec_.getPrecursors().back().setMetaValue("collision gas pressure",value);
+				}
+				//dissociation method
+				else if (accession=="MS:1000044") //dissociation method
+				{
+					//nothing to do here
 				}
 				else if (accession=="MS:1000133") //collision-induced dissociation
 				{
@@ -1292,7 +1307,12 @@ namespace OpenMS
 					//No member => meta data
 					spec_.setMetaValue("mass resolving power",value);
 				}
-				
+				else if (accession=="MS:1000880")//interchannel delay
+				{
+					//No member => meta data
+					spec_.setMetaValue("interchannel delay",value);
+				}
+
 				//scan direction
 				else if (accession=="MS:1000092")//decreasing m/z scan
 				{
@@ -1484,7 +1504,11 @@ namespace OpenMS
 			else if (parent_tag=="instrumentConfiguration")
 			{
 				//instrument model
-				if (cv_.isChildOf(accession,"MS:1000031")) //instrument name as string
+				if (accession=="MS:1000031")
+				{
+					//unknown instrument => notthing to do
+				}
+				else if (cv_.isChildOf(accession,"MS:1000031")) //instrument name as string
 				{
 					instruments_[current_id_].setName(cv_.getTerm(accession).name);
 				}
@@ -1504,6 +1528,10 @@ namespace OpenMS
 					instruments_[current_id_].setMetaValue("transmission",value);
 				}
 				//ion optics type
+				else if (accession=="MS:1000246") //delayed extraction
+				{
+					instruments_[current_id_].setIonOptics(Instrument::DELAYED_EXTRACTION);
+				}
 				else if (accession=="MS:1000221") //magnetic deflection
 				{
 					instruments_[current_id_].setIonOptics(Instrument::MAGNETIC_DEFLECTION);
@@ -1839,6 +1867,115 @@ namespace OpenMS
 					//No member => meta data
 					instruments_[current_id_].getIonSources().back().setMetaValue("source potential",value);
 				}
+				else if (accession=="MS:1000875") // declustering potential
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("declustering potential",value);
+				}
+				else if (accession=="MS:1000876") // cone voltage
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("cone voltage",value);
+				}
+				else if (accession=="MS:1000877") // tube lens
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("tube lens",value);
+				}
+				
+				//laser attribute
+				else if (accession=="MS:1000843") // wavelength
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("wavelength",value);
+				}
+				else if (accession=="MS:1000844") // focus diameter x
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("focus diameter x",value);
+				}
+				else if (accession=="MS:1000845") // focus diameter y
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("focus diameter y",value);
+				}
+				else if (accession=="MS:1000846") // pulse energy
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("pulse energy",value);
+				}
+				else if (accession=="MS:1000847") // pulse duration
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("pulse duration",value);
+				}
+				else if (accession=="MS:1000848") // attenuation
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("attenuation",value);
+				}
+				else if (accession=="MS:1000849") // impact angle
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("impact angle",value);
+				}
+				
+				//laser type
+				else if (accession=="MS:1000850") // gas laser
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("laser type","gas laser");
+				}
+				else if (accession=="MS:1000851") // solid-state laser
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("laser type","solid-state laser");
+				}
+				else if (accession=="MS:1000852") // dye-laser
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("laser type","dye-laser");
+				}
+				else if (accession=="MS:1000853") // free electron laser
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("laser type","free electron laser");
+				}
+				
+				//MALDI matrix application
+				else if (accession=="MS:1000834") // matrix solution
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("matrix solution",value);
+				}
+				else if (accession=="MS:1000835") // matrix solution concentration
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("matrix solution concentration",value);
+				}
+
+				// matrix application type
+				else if (accession=="MS:1000836") // dried dropplet
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("matrix application type","dried dropplet");
+				}
+				else if (accession=="MS:1000837") // printed
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("matrix application type","printed");
+				}
+				else if (accession=="MS:1000838") // sprayed
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("matrix application type","sprayed");
+				}
+				else if (accession=="MS:1000839") //  precoated plate
+				{
+					//No member => meta data
+					instruments_[current_id_].getIonSources().back().setMetaValue("matrix application type"," precoated plate");
+				}
+				
 				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
 			}
 			else if (parent_tag=="analyzer")
@@ -2103,15 +2240,15 @@ namespace OpenMS
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::PEAK_PICKING_MAX);
 				}
-				else if (accession=="MS:1000592" || cv_.isChildOf(accession,"MS:1000592")) //smoothing (or child terms, we make no difference
+				else if (accession=="MS:1000592" || cv_.isChildOf(accession,"MS:1000592")) //smoothing (or child terms, we make no difference)
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::SMOOTHING);
 				}
-				else if (accession=="MS:1000778" || cv_.isChildOf(accession,"MS:1000778")) //charge state calculation (or child terms, we make no difference
+				else if (accession=="MS:1000778" || cv_.isChildOf(accession,"MS:1000778")) //charge state calculation (or child terms, we make no difference)
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::CHARGE_CALCULATION);
 				}
-				else if (accession=="MS:1000780" || cv_.isChildOf(accession,"MS:1000780")) //precursor recalculation (or child terms, we make no difference
+				else if (accession=="MS:1000780" || cv_.isChildOf(accession,"MS:1000780")) //precursor recalculation (or child terms, we make no difference)
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::PRECURSOR_RECALCULATION);
 				}
@@ -2136,6 +2273,10 @@ namespace OpenMS
 			else if (parent_tag=="fileContent")
 			{
 				if (cv_.isChildOf(accession,"MS:1000524")) //data file content
+				{
+					//ignored
+				}
+				else if (cv_.isChildOf(accession,"MS:1000525")) //spectrum representation
 				{
 					//ignored
 				}
@@ -2318,7 +2459,7 @@ namespace OpenMS
 		{
 			os  << "		<software id=\"" << id << "\" version=\"" << software.getVersion() << "\" >\n";
 			ControlledVocabulary::CVTerm so_term = getChildWithName_("MS:1000531",software.getName());
-			if (so_term.id!="")
+			if (so_term.id!="" && software.getName()!="custom unreleased software tool")
 			{
 				os  << "			<cvParam cvRef=\"MS\" accession=\"" << so_term.id << "\" name=\"" << so_term.name << "\" />\n";
 			}
@@ -3335,353 +3476,370 @@ namespace OpenMS
 			
 			writeUserParam_(os, exp, 2);
 
-			os	<< "		<spectrumList count=\"" << exp.size() << "\" defaultDataProcessingRef=\"dp_sp_0\">\n"; 
 			//--------------------------------------------------------------------------------------------
 			//spectrum
-			//--------------------------------------------------------------------------------------------
-			for (Size s=0; s<exp.size(); ++s)
+			//--------------------------------------------------------------------------------------------			
+			if (exp.size()!=0)
 			{
-				const SpectrumType& spec = exp[s];
-				os	<< "			<spectrum id=\"" << spec.getNativeID() << "\" index=\"" << s << "\" defaultArrayLength=\"" << spec.size() << "\"";
-				if (spec.getSourceFile()!=SourceFile())
-				{
-					os << " sourceFileRef=\"sf_sp_" << s << "\"";
-				}
-				//the data processing info of the first spectrum is the default
-				if (s==0 || spec.getDataProcessing()!=exp[0].getDataProcessing())
-				{
-					os << " dataProcessingRef=\"dp_sp_" << s << "\"";
-				}
-				os  << ">\n";
-				
-				//spectrum representation
-				if (spec.getType()==SpectrumSettings::PEAKS)
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000127\" name=\"centroid spectrum\" />\n";
-				}
-				else if (spec.getType()==SpectrumSettings::RAWDATA)
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000128\" name=\"profile spectrum\" />\n";
-				}
-				else
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000525\" name=\"spectrum representation\" />\n";
-				}
+				os	<< "		<spectrumList count=\"" << exp.size() << "\" defaultDataProcessingRef=\"dp_sp_0\">\n"; 
 
-				//spectrum attributes		
-				if (spec.getMSLevel()!=0)
+				//check native ids
+				bool renew_native_ids = false;
+				for (Size s=0; s<exp.size(); ++s)
 				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000511\" name=\"ms level\" value=\"" << spec.getMSLevel() << "\" />\n";	
+					if (!exp[s].getNativeID().has('='))
+					{
+						renew_native_ids = true;
+						break;
+					}
 				}
-				if (spec.getInstrumentSettings().getZoomScan())
+				//issue warning if something is wrong
+				if (renew_native_ids)
 				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000497\" name=\"zoom scan\" />\n";
-				}
-
-				//spectrum type
-				if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::MASSSPECTRUM)
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000294\" name=\"mass spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::SIM)
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000582\" name=\"SIM spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::SRM)
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000583\" name=\"SRM spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::CRM)
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000581\" name=\"CRM spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::PRECURSOR)
-				{
-					os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000341\" name=\"precursor ion spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::CNG)
-				{
-					os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000325\" name=\"constant neutral gain spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::CNL)
-				{
-					os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000326\" name=\"constant neutral loss spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::EMR)
-				{
-					os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000804\" name=\"electromagnetic radiation spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::EMISSION)
-				{
-					os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000805\" name=\"emission spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::ABSORBTION)
-				{
-					os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000806\" name=\"absorption spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::EMC)
-				{
-					os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000789\" name=\"enhanced multiply charged spectrum\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::TDF)
-				{
-					os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000789\" name=\"time-delayed fragmentation spectrum\" />\n";
-				}
-				else //FORCED
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000294\" name=\"mass spectrum\" />\n";
+					warning(STORE, String("Invalid native IDs detected. Using spectrum identifier nativeID format (spectrum=xsd:nonNegativeInteger) for all spectra."));
 				}
 				
-				//scan polarity
-				if (spec.getInstrumentSettings().getPolarity()==IonSource::NEGATIVE)
+				//write actual data
+				for (Size s=0; s<exp.size(); ++s)
 				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000129\" name=\"negative scan\" />\n";
-				}
-				else if (spec.getInstrumentSettings().getPolarity()==IonSource::POSITIVE)
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000130\" name=\"positive scan\" />\n";
-				}
-				
-				writeUserParam_(os, spec, 5);
-				//--------------------------------------------------------------------------------------------
-				//scan list
-				//--------------------------------------------------------------------------------------------
-				os	<< "				<scanList count=\"" << std::max((Size)1,spec.getAcquisitionInfo().size()) << "\">\n";
-				ControlledVocabulary::CVTerm ai_term = getChildWithName_("MS:1000570",spec.getAcquisitionInfo().getMethodOfCombination());
-				if (ai_term.id!="")
-				{
-					os  << "					<cvParam cvRef=\"MS\" accession=\"" << ai_term.id <<"\" name=\"" << ai_term.name << "\" />\n";
-				}
-				else
-				{
-					os  << "					<cvParam cvRef=\"MS\" accession=\"MS:1000795\" name=\"no combination\" />\n";
-				}
-				writeUserParam_(os, spec.getAcquisitionInfo(), 5);
-				//--------------------------------------------------------------------------------------------
-				//scan
-				//--------------------------------------------------------------------------------------------
-				for (Size j=0; j<spec.getAcquisitionInfo().size(); ++j)
-				{
-					const Acquisition& ac = spec.getAcquisitionInfo()[j];
-					os	<< "					<scan externalSpectrumID=\"" << ac.getIdentifier() << "\">\n";
-					if (j==0)
+					const SpectrumType& spec = exp[s];
+					
+					//native id
+					String native_id = spec.getNativeID();
+					if (renew_native_ids) native_id = String("spectrum=") + s;
+					
+					os	<< "			<spectrum id=\"" << native_id << "\" index=\"" << s << "\" defaultArrayLength=\"" << spec.size() << "\"";
+					if (spec.getSourceFile()!=SourceFile())
 					{
-						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan start time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
+						os << " sourceFileRef=\"sf_sp_" << s << "\"";
 					}
-					writeUserParam_(os, ac, 6);
-					//scan windows
-					if (j==0 && spec.getInstrumentSettings().getScanWindows().size()!=0)
+					//the data processing info of the first spectrum is the default
+					if (s==0 || spec.getDataProcessing()!=exp[0].getDataProcessing())
 					{
-						os	<< "					<scanWindowList count=\"" << spec.getInstrumentSettings().getScanWindows().size() << "\">\n";
-						for (Size j=0; j<spec.getInstrumentSettings().getScanWindows().size(); ++j)
-						{
-							os	<< "						<scanWindow>\n";
-							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000501\" name=\"scan window lower limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].begin << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000500\" name=\"scan window upper limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].end << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-							writeUserParam_(os, spec.getInstrumentSettings().getScanWindows()[j], 8);
-							os	<< "						</scanWindow>\n";
-						}
-						os	<< "						</scanWindowList>\n";
+						os << " dataProcessingRef=\"dp_sp_" << s << "\"";
 					}
-					os	<< "					</scan>\n";
-				}
-				if (spec.getAcquisitionInfo().size()==0)
-				{
-					os	<< "					<scan externalSpectrumID=\"0\">\n";
-					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan start time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
-				
-					//scan windows
-					if (spec.getInstrumentSettings().getScanWindows().size()!=0)
+					os  << ">\n";
+					
+					//spectrum representation
+					if (spec.getType()==SpectrumSettings::PEAKS)
 					{
-						os	<< "					<scanWindowList count=\"" << spec.getInstrumentSettings().getScanWindows().size() << "\">\n";
-						for (Size j=0; j<spec.getInstrumentSettings().getScanWindows().size(); ++j)
-						{
-							os	<< "						<scanWindow>\n";
-							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000501\" name=\"scan window lower limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].begin << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000500\" name=\"scan window upper limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].end << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-							writeUserParam_(os, spec.getInstrumentSettings().getScanWindows()[j], 8);
-							os	<< "						</scanWindow>\n";
-						}
-						os	<< "						</scanWindowList>\n";
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000127\" name=\"centroid spectrum\" />\n";
 					}
-					os	<< "					</scan>\n";
-				}
-				os	<< "				</scanList>\n";
-				//--------------------------------------------------------------------------------------------
-				//precursor list
-				//--------------------------------------------------------------------------------------------
-				if (spec.getPrecursors().size()!=0)
-				{
-					os	<< "				<precursorList count=\"" << spec.getPrecursors().size() << "\">\n";
-					for (Size p=0; p<spec.getPrecursors().size(); ++p)
+					else if (spec.getType()==SpectrumSettings::RAWDATA)
 					{
-						const Precursor& precursor = spec.getPrecursors()[p];
-						os	<< "					<precursor>\n";
-						//--------------------------------------------------------------------------------------------
-						//isolation window
-						//--------------------------------------------------------------------------------------------
-						os	<< "						<isolationWindow>\n";
-						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000827\" name=\"isolation window target m/z\" value=\"" << precursor.getMZ() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000828\" name=\"isolation window lower offset\" value=\"" << precursor.getIsolationWindowLowerOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000829\" name=\"isolation window upper offset\" value=\"" << precursor.getIsolationWindowUpperOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-						os	<< "						</isolationWindow>\n";
-						//userParam: no extra object for it => no user paramters
-						
-						//--------------------------------------------------------------------------------------------
-						//selected ion list
-						//--------------------------------------------------------------------------------------------
-						os	<< "						<selectedIonList count=\"1\">\n";
-						os	<< "							<selectedIon>\n";
-						os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000744\" name=\"selected ion m/z\" value=\"" << precursor.getMZ() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-						os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000041\" name=\"charge state\" value=\"" << precursor.getCharge() << "\" />\n";
-						os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000042\" name=\"intensity\" value=\"" << precursor.getIntensity() << "\" />\n";
-						for (Size j=0; j<precursor.getPossibleChargeStates().size(); ++j)
-						{
-							os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000633\" name=\"possible charge state\" value=\"" << precursor.getPossibleChargeStates()[j] << "\" />\n";
-						}
-						//userParam: no extra object for it => no user paramters
-						os	<< "							</selectedIon>\n";					
-						os	<< "						</selectedIonList>\n";
-
-						//--------------------------------------------------------------------------------------------
-						//activation
-						//--------------------------------------------------------------------------------------------
-						os	<< "						<activation>\n";
-						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000509\" name=\"activation energy\" value=\"" << precursor.getActivationEnergy() << "\" unitAccession=\"UO:0000266\" unitName=\"electronvolt\" unitCvRef=\"UO\" />\n";
-						if (precursor.getActivationMethods().count(Precursor::CID)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000133\" name=\"collision-induced dissociation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::PD)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000134\" name=\"plasma desorption\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::PSD)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000135\" name=\"post-source decay\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::SID)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000136\" name=\"surface-induced dissociation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::BIRD)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000242\" name=\"blackbody infrared radiative dissociation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::ECD)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000250\" name=\"electron capture dissociation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::IMD)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000262\" name=\"infrared multiphoton dissociation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::SORI)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000282\" name=\"sustained off-resonance irradiation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::HCID)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000422\" name=\"high-energy collision-induced dissociation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::LCID)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000433\" name=\"low-energy collision-induced dissociation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::PHD)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000435\" name=\"photodissociation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::ETD)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000598\" name=\"electron transfer dissociation\" />\n";
-						}
-						if (precursor.getActivationMethods().count(Precursor::PQD)!=0)
-						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000599\" name=\"pulsed q dissociation\" />\n";
-						}
-						//as "precursor" has no own user param its userParam is stored here
-						writeUserParam_(os, precursor, 6);
-						os	<< "					</activation>\n";
-						os	<< "				</precursor>\n";
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000128\" name=\"profile spectrum\" />\n";
 					}
-					os	<< "			</precursorList>\n";
-				}
-				//--------------------------------------------------------------------------------------------
-				//product list
-				//--------------------------------------------------------------------------------------------
-				if (spec.getProducts().size()!=0)
-				{
-					os	<< "				<productList count=\"" << spec.getProducts().size() << "\">\n";
-					for (Size p=0; p<spec.getProducts().size(); ++p)
+					else
 					{
-						os	<< "					<product>\n";
-						os	<< "						<isolationWindow>\n";
-						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000827\" name=\"isolation window target m/z\" value=\"" << spec.getProducts()[p].getMZ() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000828\" name=\"isolation window lower offset\" value=\"" << spec.getProducts()[p].getIsolationWindowLowerOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-						os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000829\" name=\"isolation window upper offset\" value=\"" << spec.getProducts()[p].getIsolationWindowUpperOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-						writeUserParam_(os, spec.getProducts()[p], 7);
-						os	<< "						</isolationWindow>\n";
-						os	<< "				</product>\n";
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000525\" name=\"spectrum representation\" />\n";
 					}
-					os	<< "			</productList>\n";
-				}
-				//--------------------------------------------------------------------------------------------
-				//binary data array list
-				//--------------------------------------------------------------------------------------------
-				if (spec.size()!=0)
-				{
-					String encoded_string;
-					std::vector<DoubleReal> data_to_encode;
-					os	<< "				<binaryDataArrayList count=\"" << (spec.getMetaDataArrays().size()+2) << "\">\n";
-					//write m/z array
-					data_to_encode.resize(spec.size());
-					for (Size p=0; p<spec.size(); ++p) data_to_encode[p] = spec[p].getMZ();
-					decoder_.encode(data_to_encode, Base64::BYTEORDER_LITTLEENDIAN, encoded_string);
-					os	<< "					<binaryDataArray encodedLength=\"" << encoded_string.size() << "\">\n";
-					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000514\" name=\"m/z array\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000523\" name=\"64-bit float\" />\n";
-					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000576\" name=\"no compression\" />\n";
-					os	<< "						<binary>" << encoded_string << "</binary>\n";
-					os	<< "					</binaryDataArray>\n";
-					//write intensity array
-					for (Size p=0; p<spec.size(); ++p) data_to_encode[p] = spec[p].getIntensity();
-					decoder_.encode(data_to_encode, Base64::BYTEORDER_LITTLEENDIAN, encoded_string);
-					os	<< "					<binaryDataArray encodedLength=\"" << encoded_string.size() << "\">\n";
-					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000515\" name=\"intensity array\" unitAccession=\"MS:1000131\" unitName=\"number of counts\" unitCvRef=\"MS\"/>\n";
-					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000523\" name=\"64-bit float\" />\n";
-					os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000576\" name=\"no compression\" />\n";
-					os	<< "						<binary>" << encoded_string << "</binary>\n";
-					os	<< "					</binaryDataArray>\n";
-					//write meta data array
-					for (Size m=0; m<spec.getMetaDataArrays().size(); ++m)
+	
+					//spectrum attributes		
+					if (spec.getMSLevel()!=0)
 					{
-						const typename SpectrumType::MetaDataArray& array = spec.getMetaDataArrays()[m];
-						data_to_encode.resize(array.size());
-						for (Size p=0; p<array.size(); ++p) data_to_encode[p] = array[p];
-						decoder_.encode(data_to_encode, Base64::BYTEORDER_LITTLEENDIAN, encoded_string);
-						os	<< "					<binaryDataArray arrayLength=\"" << array.size() << "\" encodedLength=\"" << encoded_string.size() << "\">\n";
-						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000523\" name=\"64-bit float\" />\n";
-						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000576\" name=\"no compression\" />\n";
-						ControlledVocabulary::CVTerm bi_term = getChildWithName_("MS:1000513",array.getName());
-						if (bi_term.id!="")
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000511\" name=\"ms level\" value=\"" << spec.getMSLevel() << "\" />\n";	
+					}
+					if (spec.getInstrumentSettings().getZoomScan())
+					{
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000497\" name=\"zoom scan\" />\n";
+					}
+	
+					//spectrum type
+					if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::MASSSPECTRUM)
+					{
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000294\" name=\"mass spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::SIM)
+					{
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000582\" name=\"SIM spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::SRM)
+					{
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000583\" name=\"SRM spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::CRM)
+					{
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000581\" name=\"CRM spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::PRECURSOR)
+					{
+						os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000341\" name=\"precursor ion spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::CNG)
+					{
+						os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000325\" name=\"constant neutral gain spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::CNL)
+					{
+						os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000326\" name=\"constant neutral loss spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::EMR)
+					{
+						os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000804\" name=\"electromagnetic radiation spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::EMISSION)
+					{
+						os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000805\" name=\"emission spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::ABSORBTION)
+					{
+						os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000806\" name=\"absorption spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::EMC)
+					{
+						os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000789\" name=\"enhanced multiply charged spectrum\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::TDF)
+					{
+						os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000789\" name=\"time-delayed fragmentation spectrum\" />\n";
+					}
+					else //FORCED
+					{
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000294\" name=\"mass spectrum\" />\n";
+					}
+					
+					//scan polarity
+					if (spec.getInstrumentSettings().getPolarity()==IonSource::NEGATIVE)
+					{
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000129\" name=\"negative scan\" />\n";
+					}
+					else if (spec.getInstrumentSettings().getPolarity()==IonSource::POSITIVE)
+					{
+						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000130\" name=\"positive scan\" />\n";
+					}
+					
+					writeUserParam_(os, spec, 5);
+					//--------------------------------------------------------------------------------------------
+					//scan list
+					//--------------------------------------------------------------------------------------------
+					if (spec.getAcquisitionInfo().size()!=0)
+					{
+						os	<< "				<scanList count=\"" << spec.getAcquisitionInfo().size() << "\">\n";
+						ControlledVocabulary::CVTerm ai_term = getChildWithName_("MS:1000570",spec.getAcquisitionInfo().getMethodOfCombination());
+						if (ai_term.id!="")
 						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"" << bi_term.id <<"\" name=\"" << bi_term.name << "\" />\n";
+							os  << "					<cvParam cvRef=\"MS\" accession=\"" << ai_term.id <<"\" name=\"" << ai_term.name << "\" />\n";
 						}
 						else
 						{
-							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000786\" name=\"non-standard data array\" value=\"" << array.getName() << "\" />\n";
+							os  << "					<cvParam cvRef=\"MS\" accession=\"MS:1000795\" name=\"no combination\" />\n";
 						}
-						writeUserParam_(os, array, 8);
+						writeUserParam_(os, spec.getAcquisitionInfo(), 5);
+						
+						//--------------------------------------------------------------------------------------------
+						//scan
+						//--------------------------------------------------------------------------------------------
+						for (Size j=0; j<spec.getAcquisitionInfo().size(); ++j)
+						{
+							const Acquisition& ac = spec.getAcquisitionInfo()[j];
+							os	<< "					<scan externalSpectrumID=\"" << ac.getIdentifier() << "\">\n";
+							if (j==0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan start time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
+							}
+							writeUserParam_(os, ac, 6);
+							//scan windows
+							if (j==0 && spec.getInstrumentSettings().getScanWindows().size()!=0)
+							{
+								os	<< "						<scanWindowList count=\"" << spec.getInstrumentSettings().getScanWindows().size() << "\">\n";
+								for (Size j=0; j<spec.getInstrumentSettings().getScanWindows().size(); ++j)
+								{
+									os	<< "							<scanWindow>\n";
+									os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000501\" name=\"scan window lower limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].begin << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+									os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000500\" name=\"scan window upper limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].end << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+									writeUserParam_(os, spec.getInstrumentSettings().getScanWindows()[j], 8);
+									os	<< "							</scanWindow>\n";
+								}
+								os	<< "						</scanWindowList>\n";
+							}
+							os	<< "					</scan>\n";
+						}
+						os	<< "				</scanList>\n";
+					}
+					//--------------------------------------------------------------------------------------------
+					//precursor list
+					//--------------------------------------------------------------------------------------------
+					if (spec.getPrecursors().size()!=0)
+					{
+						os	<< "				<precursorList count=\"" << spec.getPrecursors().size() << "\">\n";
+						for (Size p=0; p<spec.getPrecursors().size(); ++p)
+						{
+							const Precursor& precursor = spec.getPrecursors()[p];
+							os	<< "					<precursor>\n";
+							//--------------------------------------------------------------------------------------------
+							//isolation window
+							//--------------------------------------------------------------------------------------------
+							os	<< "						<isolationWindow>\n";
+							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000827\" name=\"isolation window target m/z\" value=\"" << precursor.getMZ() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000828\" name=\"isolation window lower offset\" value=\"" << precursor.getIsolationWindowLowerOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000829\" name=\"isolation window upper offset\" value=\"" << precursor.getIsolationWindowUpperOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+							os	<< "						</isolationWindow>\n";
+							//userParam: no extra object for it => no user paramters
+							
+							//--------------------------------------------------------------------------------------------
+							//selected ion list
+							//--------------------------------------------------------------------------------------------
+							os	<< "						<selectedIonList count=\"1\">\n";
+							os	<< "							<selectedIon>\n";
+							os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000744\" name=\"selected ion m/z\" value=\"" << precursor.getMZ() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+							os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000041\" name=\"charge state\" value=\"" << precursor.getCharge() << "\" />\n";
+							os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000042\" name=\"intensity\" value=\"" << precursor.getIntensity() << "\" />\n";
+							for (Size j=0; j<precursor.getPossibleChargeStates().size(); ++j)
+							{
+								os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000633\" name=\"possible charge state\" value=\"" << precursor.getPossibleChargeStates()[j] << "\" />\n";
+							}
+							//userParam: no extra object for it => no user paramters
+							os	<< "							</selectedIon>\n";					
+							os	<< "						</selectedIonList>\n";
+	
+							//--------------------------------------------------------------------------------------------
+							//activation
+							//--------------------------------------------------------------------------------------------
+							os	<< "						<activation>\n";
+							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000509\" name=\"activation energy\" value=\"" << precursor.getActivationEnergy() << "\" unitAccession=\"UO:0000266\" unitName=\"electronvolt\" unitCvRef=\"UO\" />\n";
+							if (precursor.getActivationMethods().count(Precursor::CID)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000133\" name=\"collision-induced dissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::PD)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000134\" name=\"plasma desorption\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::PSD)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000135\" name=\"post-source decay\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::SID)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000136\" name=\"surface-induced dissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::BIRD)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000242\" name=\"blackbody infrared radiative dissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::ECD)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000250\" name=\"electron capture dissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::IMD)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000262\" name=\"infrared multiphoton dissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::SORI)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000282\" name=\"sustained off-resonance irradiation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::HCID)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000422\" name=\"high-energy collision-induced dissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::LCID)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000433\" name=\"low-energy collision-induced dissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::PHD)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000435\" name=\"photodissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::ETD)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000598\" name=\"electron transfer dissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().count(Precursor::PQD)!=0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000599\" name=\"pulsed q dissociation\" />\n";
+							}
+							if (precursor.getActivationMethods().size()==0)
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000044\" name=\"dissociation method\" />\n";
+							}
+							//as "precursor" has no own user param its userParam is stored here
+							writeUserParam_(os, precursor, 6);
+							os	<< "					</activation>\n";
+							os	<< "				</precursor>\n";
+						}
+						os	<< "			</precursorList>\n";
+					}
+					//--------------------------------------------------------------------------------------------
+					//product list
+					//--------------------------------------------------------------------------------------------
+					if (spec.getProducts().size()!=0)
+					{
+						os	<< "				<productList count=\"" << spec.getProducts().size() << "\">\n";
+						for (Size p=0; p<spec.getProducts().size(); ++p)
+						{
+							os	<< "					<product>\n";
+							os	<< "						<isolationWindow>\n";
+							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000827\" name=\"isolation window target m/z\" value=\"" << spec.getProducts()[p].getMZ() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000828\" name=\"isolation window lower offset\" value=\"" << spec.getProducts()[p].getIsolationWindowLowerOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+							os  << "							<cvParam cvRef=\"MS\" accession=\"MS:1000829\" name=\"isolation window upper offset\" value=\"" << spec.getProducts()[p].getIsolationWindowUpperOffset() << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+							writeUserParam_(os, spec.getProducts()[p], 7);
+							os	<< "						</isolationWindow>\n";
+							os	<< "				</product>\n";
+						}
+						os	<< "			</productList>\n";
+					}
+					//--------------------------------------------------------------------------------------------
+					//binary data array list
+					//--------------------------------------------------------------------------------------------
+					if (spec.size()!=0)
+					{
+						String encoded_string;
+						std::vector<DoubleReal> data64_to_encode;
+						os	<< "				<binaryDataArrayList count=\"" << (spec.getMetaDataArrays().size()+2) << "\">\n";
+						//write m/z array
+						data64_to_encode.resize(spec.size());
+						for (Size p=0; p<spec.size(); ++p) data64_to_encode[p] = spec[p].getMZ();
+						decoder_.encode(data64_to_encode, Base64::BYTEORDER_LITTLEENDIAN, encoded_string);
+						os	<< "					<binaryDataArray encodedLength=\"" << encoded_string.size() << "\">\n";
+						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000514\" name=\"m/z array\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000523\" name=\"64-bit float\" />\n";
+						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000576\" name=\"no compression\" />\n";
 						os	<< "						<binary>" << encoded_string << "</binary>\n";
 						os	<< "					</binaryDataArray>\n";
+						//write intensity array
+						{
+							std::vector<Real> data32_to_encode;
+							data32_to_encode.resize(spec.size());
+							for (Size p=0; p<spec.size(); ++p) data32_to_encode[p] = spec[p].getIntensity();
+							decoder_.encode(data32_to_encode, Base64::BYTEORDER_LITTLEENDIAN, encoded_string);
+							os	<< "					<binaryDataArray encodedLength=\"" << encoded_string.size() << "\">\n";
+							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000515\" name=\"intensity array\" unitAccession=\"MS:1000131\" unitName=\"number of counts\" unitCvRef=\"MS\"/>\n";
+							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000521\" name=\"32-bit float\" />\n";
+							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000576\" name=\"no compression\" />\n";
+							os	<< "						<binary>" << encoded_string << "</binary>\n";
+							os	<< "					</binaryDataArray>\n";
+						}
+						//write meta data array
+						for (Size m=0; m<spec.getMetaDataArrays().size(); ++m)
+						{
+							const typename SpectrumType::MetaDataArray& array = spec.getMetaDataArrays()[m];
+							data64_to_encode.resize(array.size());
+							for (Size p=0; p<array.size(); ++p) data64_to_encode[p] = array[p];
+							decoder_.encode(data64_to_encode, Base64::BYTEORDER_LITTLEENDIAN, encoded_string);
+							os	<< "					<binaryDataArray arrayLength=\"" << array.size() << "\" encodedLength=\"" << encoded_string.size() << "\">\n";
+							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000523\" name=\"64-bit float\" />\n";
+							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000576\" name=\"no compression\" />\n";
+							ControlledVocabulary::CVTerm bi_term = getChildWithName_("MS:1000513",array.getName());
+							if (bi_term.id!="")
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"" << bi_term.id <<"\" name=\"" << bi_term.name << "\" />\n";
+							}
+							else
+							{
+								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000786\" name=\"non-standard data array\" value=\"" << array.getName() << "\" />\n";
+							}
+							writeUserParam_(os, array, 8);
+							os	<< "						<binary>" << encoded_string << "</binary>\n";
+							os	<< "					</binaryDataArray>\n";
+						}
+						os	<< "				</binaryDataArrayList>\n";
 					}
-					os	<< "				</binaryDataArrayList>\n";
+					
+					os	<< "			</spectrum>\n";
 				}
-				
-				os	<< "			</spectrum>\n";
+				os	<< "		</spectrumList>\n";
 			}
-			os	<< "		</spectrumList>\n";
 			os  << "	</run>\n";		
 			
 			os	<< "</mzML>";

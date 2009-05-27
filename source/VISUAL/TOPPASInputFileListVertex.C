@@ -21,54 +21,59 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Johannes Junker $
+// $Authors: Johannes Junker $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_VISUAL_PEAKICON_H
-#define OPENMS_VISUAL_PEAKICON_H
+#include <OpenMS/VISUAL/TOPPASInputFileListVertex.h>
+#include <OpenMS/VISUAL/DIALOGS/TOPPASInputFilesDialog.h>
 
-#include <OpenMS/config.h>
-
-class QPainter;
-class QRect;
-
-namespace OpenMS 
+namespace OpenMS
 {
-	/**
-		@brief Class for drawing icons with a QPainter.
-		
-		
-		
-		@ingroup Visual
-	*/
-	class OPENMS_DLLAPI PeakIcon
+	TOPPASInputFileListVertex::TOPPASInputFileListVertex()
+		:	TOPPASVertex(),
+			files_()
 	{
-		public:
-			/// Icon names
-			enum Icon
-			{
-				IT_NOICON,
-				IT_ELLIPSE,
-				IT_TRIANGLE,
-				IT_ASTERIX, 
-				IT_SQUARE
-			};
-			
-			/// Draws an icon into a boundingbox
-      static void drawIcon(Icon icon, QPainter& painter, const QRect& r);
-			/// Draws an ellipse into a boundingbox
-      static void drawEllipse(QPainter& painter, const QRect& r);
-      /// Draws a triangle into a boundingbox
-      static void drawTriangle(QPainter& painter, const QRect& r);
-      /// Draws an asterix into a boundingbox
-      static void drawAsterix(QPainter& painter, const QRect& r);
-      /// Draws a rectangle into a boundingbox
-      static void drawRectangle(QPainter& painter, const QRect& r);   
-        
-		protected:
-			/// Constructor is protexcted as all methods are static
-			PeakIcon();				
-	};
+		pen_color_ = Qt::black;
+		brush_color_ = Qt::lightGray;
+	}
+	
+	TOPPASInputFileListVertex::TOPPASInputFileListVertex(const String& name, const String& type)
+		: TOPPASVertex(name, type),
+			files_()
+	{
+		pen_color_ = Qt::black;
+		brush_color_ = Qt::lightGray;
+	}
+	
+	TOPPASInputFileListVertex::TOPPASInputFileListVertex(const TOPPASInputFileListVertex& rhs)
+		:	TOPPASVertex(rhs),
+			files_(rhs.files_)
+	{
+		pen_color_ = Qt::black;
+		brush_color_ = Qt::lightGray;
+	}
+	
+	TOPPASInputFileListVertex::~TOPPASInputFileListVertex()
+	{
+	
+	}
+	
+	TOPPASInputFileListVertex& TOPPASInputFileListVertex::operator= (const TOPPASInputFileListVertex& rhs)
+	{
+		TOPPASVertex::operator=(rhs);
+		
+		files_ = rhs.files_;
+		
+		return *this;
+	}
+	
+	void TOPPASInputFileListVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
+	{
+		TOPPASInputFilesDialog tifd(files_);
+		if (tifd.exec())
+		{
+			tifd.getFilenames(files_);
+		}
+	}
 }
-#endif

@@ -103,18 +103,21 @@ namespace OpenMS
 	
 	QPainterPath TOPPASEdge::shape () const
 	{
-		// this is not quite correct..
-		QPainterPath shape;
-		shape.setFillRule(Qt::WindingFill);
-		shape.moveTo(startPos());
-		shape.lineTo(startPos() - QPointF(10,10));
-		shape.lineTo(endPos() - QPointF(10,10));
-		shape.lineTo(endPos() + QPointF(10,10));
-		shape.lineTo(startPos() + QPointF(10,10));
-		shape.closeSubpath();
-		shape.addEllipse(endPos().x() - 10, endPos().y() - 10, 20, 20);
+		QPainterPath shape_1;				
+		shape_1.moveTo(startPos() + QPointF(-10,-10));
+		shape_1.lineTo(endPos() + QPointF(-10,-10));
+		shape_1.lineTo(endPos() + QPointF(10,10));
+		shape_1.lineTo(startPos() + QPointF(10,10));
+		shape_1.closeSubpath();
 		
-		return shape;
+		QPainterPath shape_2;
+		shape_2.moveTo(startPos() + QPointF(-10,10));
+		shape_2.lineTo(endPos() + QPointF(-10,10));
+		shape_2.lineTo(endPos() + QPointF(10,-10));
+		shape_2.lineTo(startPos() + QPointF(10,-10));
+		shape_2.closeSubpath();
+				
+		return shape_1.united(shape_2);
 	}
 	
 	void TOPPASEdge::paint(QPainter* painter, const QStyleOptionGraphicsItem* /*option*/, QWidget* /*widget*/)

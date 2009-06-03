@@ -1,0 +1,218 @@
+// -*- mode: C++; tab-width: 2; -*-
+// vi: set ts=2:
+//
+// --------------------------------------------------------------------------
+//                   OpenMS Mass Spectrometry Framework
+// --------------------------------------------------------------------------
+//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//
+//  This library is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU Lesser General Public
+//  License as published by the Free Software Foundation; either
+//  version 2.1 of the License, or (at your option) any later version.
+//
+//  This library is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//  Lesser General Public License for more details.
+//
+//  You should have received a copy of the GNU Lesser General Public
+//  License along with this library; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+// --------------------------------------------------------------------------
+// $Maintainer: David Wojnar $
+// $Authors: David Wojnar $ 
+// --------------------------------------------------------------------------
+
+#include <OpenMS/APPLICATIONS/TOPPBase.h>
+#include <OpenMS/MATH/STATISTICS/ROCCurve.h>
+#include <OpenMS/FORMAT/FASTAFile.h>
+#include <OpenMS/FORMAT/MSPFile.h>
+#include <OpenMS/FORMAT/IdXMLFile.h>
+#include <OpenMS/FORMAT/TextFile.h>
+#include <OpenMS/KERNEL/MSExperiment.h>
+
+#include <map>
+#include <list>
+#include <algorithm>
+using namespace OpenMS;
+using namespace std;
+using namespace OpenMS::Math;
+
+//-------------------------------------------------------------
+//Doxygen docu
+//-------------------------------------------------------------
+
+/**
+ @page TOPP_DataForROCCurve DataForROCCurve
+ 
+ @brief generates an File prepared for ROC curves. At the moment only for spectral matching
+ 
+ Hier noch Beschreibung
+
+ */
+
+// We do not want this class to show up in the docu:
+/// @cond TOPPCLASSES
+
+class TOPPDataForROCCurve
+	: public TOPPBase
+	{
+	public:
+		TOPPDataForROCCurve()
+		: TOPPBase("DataForROCCurve","cret")
+		{
+		}
+		
+	protected:
+		void registerOptionsAndFlags_()
+		{
+			registerInputFile_("fasta","<file>","","fasta file with already identified peptides");
+		//	registerInputFile_("MSP","<file>","","spectral library which was used for matching");
+			registerInputFile_("IdXML","<file>","","file which stores scores of the last search");
+			registerOutputFile_("out","<file>","","Output file");			
+			addEmptyLine_();
+			addText_("");
+		}
+		ExitCodes main_(int , const char**)
+		{
+			//-------------------------------------------------------------
+			// parameter handling
+			//-------------------------------------------------------------
+			String fasta = getStringOption_("fasta");
+		//	String MSP = getStringOption_("MSP");
+			String IdXML = getStringOption_("IdXML");
+			String out = getStringOption_("out");
+			//-------------------------------------------------------------
+			// loading input
+			//-------------------------------------------------------------
+			FASTAFile fasta_file;
+			vector<FASTAFile::FASTAEntry> fasta_entries;
+			fasta_file.load(fasta,fasta_entries);
+			
+			IdXMLFile id_xml_file;
+			vector<ProteinIdentification> idxml_proteinIdentification;
+			vector<PeptideIdentification> idxml_peptideIdentification;
+			id_xml_file.load(IdXML, idxml_proteinIdentification, idxml_peptideIdentification);
+			
+		//	MSPFile msp_file;
+		//	RichPeakMap msp_mspexperiment;
+		//	vector<PeptideIdentification> msp_peptideIdentification;
+		//	msp_file.load(MSP, msp_peptideIdentification,msp_mspexperiment);
+			
+			
+			//-------------------------------------------------------------
+			// prepare for calculations
+			//-------------------------------------------------------------
+			//map containing peptides with highest score
+			map<String, DoubleReal> IdXMLPeptides;
+			//list containing peptides which are in MSPFile but not in IdXML
+			//list<String> MSPPeptides;
+			//first these which wher scored
+			for(vector<PeptideIdentification>::iterator it = idxml_peptideIdentification.begin(); it< idxml_peptideIdentification.end();++it)
+			{
+				if(!it->empty())
+				{
+					for(vector<PeptideHit>::const_iterator iter = it->getHits().begin(); iter < it->getHits().end();++iter)
+					{
+						map<String, DoubleReal>::iterator sequence;
+						sequence = IdXMLPeptides.find(iter->getSequence().toString());
+						if(sequence != IdXMLPeptides.end() && sequence->second > iter->getScore())
+						{
+							//DO NOTHING
+						}
+						else
+						{
+							IdXMLPeptides.insert(pair<String,DoubleReal>(iter->getSequence().toString(),iter->getScore()));
+						}
+					}
+				}
+			}
+			//now those which are in the library but nowhere else
+	/*		for(vector<PeptideIdentification>::iterator it = msp_peptideIdentification.begin(); it < msp_peptideIdentification.end(); ++it)
+			{
+				if(!it->empty())
+				{
+					for(vector<PeptideHit>::iterator iter = it->getHits().begin(); iter < it->getHits().end();++it)
+					{
+						if(IdXMLPeptides.find(iter->getSequence().toString()) == IdXMLPeptides.end())
+						{
+							MSPPeptides.push_back(iter->getSequence().toString());
+						}
+					}
+				}
+			}*/
+			//-------------------------------------------------------------
+			// calculations
+			//-------------------------------------------------------------
+			//generate ROC Curve
+			
+			ROCCurve ROC;
+			
+			for(map<String,DoubleReal>::iterator idxmliter = IdXMLPeptides.begin(); idxmliter != IdXMLPeptides.end(); ++idxmliter)
+			{
+				
+				bool exists  = false;
+				for(vector<FASTAFile::FASTAEntry>::iterator fastaiter = fasta_entries.begin(); fastaiter < fasta_entries.end();++fastaiter)
+				{
+					if(fastaiter->sequence.hasSubstring(idxmliter->first))
+					{
+						exists  = true;
+						continue;
+					}
+				}
+				if(exists)
+				{
+					ROC.insertPair(idxmliter->second,true);
+				}
+				else
+				{
+					ROC.insertPair(idxmliter->second,false);
+				}
+				
+			}
+
+			
+			//-------------------------------------------------------------
+			// writing output
+			//-------------------------------------------------------------
+					TextFile file;
+					String temp(ROC.AUC());
+					file.push_back(temp);
+					
+					String temp2(ROC.cutoffPos(0.99));
+					file.push_back(temp2);
+					
+					String temp3( ROC.cutoffNeg(0.99));
+					file.push_back(temp3);
+					file.push_back(" ");
+			
+			vector<pair<double,double> > curve = ROC.curve();
+			
+			for(vector<pair<double,double> >::iterator it = curve.begin(); it < curve.end(); ++it)
+			{
+				String temp1(it->first);
+				String temp2(it->second);
+				file.push_back(temp1);
+				file.push_back(temp2);
+			}
+
+			file.store(out);
+			
+			
+			
+			return EXECUTION_OK;
+		}
+	};			
+			
+int main( int argc, const char** argv )
+{
+    TOPPDataForROCCurve tool;
+    return tool.main(argc,argv);
+}
+
+/// @endcond
+
+			
+			

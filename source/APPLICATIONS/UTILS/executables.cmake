@@ -21,6 +21,7 @@ IdXMLEvaluation
 DecoyDatabase
 SpecLibCreator
 IDMassAccuracy
+DataForROCCurve
 )
 
 ### pass source file list to the upper instance

@@ -32,6 +32,11 @@
 
 namespace OpenMS
 {
+	/**
+		@brief A vertex representing an input file list
+	
+		@ingroup TOPPAS_elements
+	*/
 	class OPENMS_DLLAPI TOPPASInputFileListVertex
 		: public TOPPASVertex
 	{
@@ -49,6 +54,8 @@ namespace OpenMS
 			virtual ~TOPPASInputFileListVertex();
 			/// Assignment operator
 			TOPPASInputFileListVertex& operator= (const TOPPASInputFileListVertex& rhs);
+			/// Returns the list of files
+			const QStringList& getFilenames();
 			
 		protected:
 		

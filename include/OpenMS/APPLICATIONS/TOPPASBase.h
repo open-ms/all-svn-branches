@@ -38,20 +38,21 @@
 #include <QtCore/QProcess>
 
 class QToolBar;
-class QTreeWidget;
 class QListWidget;
 class QTextEdit;
 class QWorkspace;
 class QLabel;
 class QWidget;
+class QTreeWidget;
+class QTreeWidgetItem;
 
 namespace OpenMS
 {
 	class TOPPASWidget;
 	class EnhancedTabBar;
-
+	
   /**
-  	@brief Main window of TOPPAS tool
+  	@brief Main window of the TOPPAS tool
   
     @ingroup TOPPAS_elements
   */
@@ -128,6 +129,8 @@ namespace OpenMS
     	void showAsWindow_(TOPPASWidget* sw, const String& caption);
 			/// Inserts a new TOPP tool vertex in the current window
 			void insertNewVertex_(double x, double y);
+			/// Is called when an item in the tools tree view is pressed
+			void treeViewItemPressed_(QTreeWidgetItem* item, int /*column*/);
 			
     protected:
 

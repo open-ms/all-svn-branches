@@ -42,9 +42,10 @@ namespace OpenMS
 	/**
 		@brief Dialog which allows to specify a list of input files
 		
+		@ingroup TOPPAS_elements
 		@ingroup Dialogs
 	*/
-	class TOPPASIOMappingDialog
+	class OPENMS_DLLAPI TOPPASIOMappingDialog
 		: public QDialog,
 			public Ui::TOPPASIOMappingDialogTemplate
 	{
@@ -59,33 +60,20 @@ namespace OpenMS
 		
 		protected:
 		
-		enum EdgeType_
-		{
-			ET_FILE_TO_TOOL,
-			ET_LIST_TO_TOOL,
-			ET_TOOL_TO_FILE,
-			ET_TOOL_TO_LIST,
-			ET_TOOL_TO_TOOL,
-			ET_INVALID
-		};
+			/// Fills the table
+			void fillComboBoxes_();
+			
+			/// The edge we are configuring
+			TOPPASEdge* edge_;
+			/// The output parameters of the source tool
+			QVector<TOPPASToolVertex::IOInfo> source_output_files_;
+			/// The input parameters of the target tool
+			QVector<TOPPASToolVertex::IOInfo> target_input_files_;
 		
-		///@name reimplemented Qt events
-		//@{
-		void resizeEvent(QResizeEvent* /*event*/);
+		protected slots:
 		
-		/// Determines the type of this edge
-		void determineEdgeType_();
-		/// Fills the table
-		void fillTable_();
-		
-		/// The edge we are configuring
-		TOPPASEdge* edge_;
-		/// The type of this edge
-		EdgeType_ edge_type_;
-		/// The output parameters of the source tool
-		QVector<TOPPASToolVertex::IOInfo> source_output_files_;
-		/// The input parameters of the target tool
-		QVector<TOPPASToolVertex::IOInfo> target_input_files_;
+			/// Called when OK is pressed; checks if the selected parameters are valid
+			void checkValidity_();
 		
 	};
 	

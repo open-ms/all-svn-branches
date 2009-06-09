@@ -112,6 +112,18 @@ namespace OpenMS
 		///returns the set MS levels
 		const std::vector<Int>& getMSLevels() const;
 		//@}
+
+		/**
+			@name Compression options
+
+			@note This option is ignored if the format does not support compression
+		*/
+		//@{
+		//Sets if data should be compressed when writing
+		void setCompression(bool compress);
+		//returns @c true, if data should be compressed when writing
+		bool getCompression();
+		//@}
 		
 	private:
 		bool metadata_only_;
@@ -123,6 +135,7 @@ namespace OpenMS
 		DRange<1> mz_range_;
 		DRange<1> intensity_range_;
 		std::vector<Int> ms_levels_;
+		bool zlib_compression_;
 	};
 
 } // namespace OpenMS

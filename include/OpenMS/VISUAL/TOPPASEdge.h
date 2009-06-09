@@ -36,6 +36,11 @@ namespace OpenMS
 {
 	class TOPPASVertex;
 	
+	/**
+		@brief An edge representing a data flow in TOPPAS
+	
+		@ingroup TOPPAS_elements
+	*/
 	class OPENMS_DLLAPI TOPPASEdge
 		: public QObject,
 			public QGraphicsItem
@@ -43,6 +48,17 @@ namespace OpenMS
 		Q_OBJECT
 		
 		public:
+			
+			/// The type of this edge
+			enum EdgeType
+			{
+				ET_FILE_TO_TOOL,
+				ET_LIST_TO_TOOL,
+				ET_TOOL_TO_FILE,
+				ET_TOOL_TO_LIST,
+				ET_TOOL_TO_TOOL,
+				ET_INVALID
+			};
 			
 			/// Is a hypothetical edge valid or not? Does something have to be configured?
 			enum EdgeValidity
@@ -87,6 +103,10 @@ namespace OpenMS
 			void prepareResize();
 			/// Sets the color
 			void setColor(const QColor& color);
+			/// Determines the type of this edge
+			void determineEdgeType();
+			/// Returns the type of this edge
+			EdgeType getEdgeType();
 			
 		protected:
 			
@@ -97,7 +117,6 @@ namespace OpenMS
 			
 			/// Returns the point in the @p list that is nearest to @p origin
 			QPointF nearestPoint_(const QPointF& origin, const QList<QPointF>& list) const;
-		
 			/// Pointer to the source of this edge
 			TOPPASVertex* from_;
 			/// Pointer to the target of this edge
@@ -106,6 +125,8 @@ namespace OpenMS
 			QPointF hover_pos_;
 			/// The color
 			QColor color_;
+			/// The type of this edge
+			EdgeType edge_type_;
 	};
 }
 

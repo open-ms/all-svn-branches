@@ -72,8 +72,8 @@ class TOPPSpecLibCreator
 		{
 			registerInputFile_("info","<file>","","Holds id, peptide, retention time etc.");
 			//setValidFormats_("info",StringList::create("csv"));
-			registerStringOption_("itemseperator","<char>",","," Seperator between items. e.g. ',' or ';'");
-			registerStringOption_("itemenclosed","<bool>","false","'true' or 'false' if true every item is enclosed e.g. '$peptid$,$run$...");
+			registerStringOption_("itemseperator","<char>",","," Seperator between items. e.g. ',' or ';'",false);
+			registerStringOption_("itemenclosed","<bool>","false","'true' or 'false' if true every item is enclosed e.g. '$peptid$,$run$...",false);
 			//setValidFormats_("itemenclosed",StringList::create("true,false"));
 			registerInputFile_("spec","<file>","","spectra");
 			setValidFormats_("spec",StringList::create("mzData,mzXML"));
@@ -271,12 +271,21 @@ class TOPPSpecLibCreator
 			//-------------------------------------------------------------
 			// writing output
 			//-------------------------------------------------------------
-			
-			MSPFile MSP_file;
-			MSP_file.store(out, library);
-			
-			MzDataFile test;
-			test.store("/Users/david/Studium/neueForm.mzData",library);
+			 in_type = fh.getType(out);
+			if(in_type == FileTypes::UNKNOWN)
+			{
+							writeLog_("Warning: Could not determine output file type!");
+			}			
+			else if(in_type == FileTypes::MZDATA)
+			{
+				MzDataFile mzData;
+				mzData.store(out,library);
+			}
+			else if(in_type == FileTypes::MZXML)
+			{
+				MzXMLFile mzXML;
+				mzXML.store(out,library);
+			}
 			
 			return EXECUTION_OK;
 		}

@@ -36,6 +36,7 @@
 #include <map>
 #include <list>
 #include <algorithm>
+#include <cmath> // needed to check whether a score is nan  =not a number
 using namespace OpenMS;
 using namespace std;
 using namespace OpenMS::Math;
@@ -72,6 +73,7 @@ class TOPPDataForROCCurve
 		//	registerInputFile_("MSP","<file>","","spectral library which was used for matching");
 			registerInputFile_("IdXML","<file>","","file which stores scores of the last search");
 			registerOutputFile_("out","<file>","","Output file");			
+			registerIntOption_("curve_resolution","<number>",10,"points which represent the ROCCurve",false);
 			addEmptyLine_();
 			addText_("");
 		}
@@ -84,6 +86,7 @@ class TOPPDataForROCCurve
 		//	String MSP = getStringOption_("MSP");
 			String IdXML = getStringOption_("IdXML");
 			String out = getStringOption_("out");
+			Int curve_resolution = getIntOption_("curve_resolution");
 			//-------------------------------------------------------------
 			// loading input
 			//-------------------------------------------------------------
@@ -118,7 +121,7 @@ class TOPPDataForROCCurve
 					{
 						map<String, DoubleReal>::iterator sequence;
 						sequence = IdXMLPeptides.find(iter->getSequence().toString());
-						if(sequence != IdXMLPeptides.end() && sequence->second > iter->getScore())
+						if(sequence != IdXMLPeptides.end() || isnan(iter->getScore()) || sequence->second > iter->getScore())
 						{
 							//DO NOTHING
 						}
@@ -170,7 +173,6 @@ class TOPPDataForROCCurve
 				{
 					ROC.insertPair(idxmliter->second,false);
 				}
-				
 			}
 
 			
@@ -181,21 +183,23 @@ class TOPPDataForROCCurve
 					String temp(ROC.AUC());
 					file.push_back(temp);
 					
-					String temp2(ROC.cutoffPos(0.99));
+					String temp2(ROC.cutoffPos(0.95));
 					file.push_back(temp2);
 					
-					String temp3( ROC.cutoffNeg(0.99));
+					String temp3( ROC.cutoffNeg(0.95));
 					file.push_back(temp3);
 					file.push_back(" ");
 			
-			vector<pair<double,double> > curve = ROC.curve();
+			vector<pair<double,double> > curve = ROC.curve(curve_resolution);
 			
 			for(vector<pair<double,double> >::iterator it = curve.begin(); it < curve.end(); ++it)
 			{
 				String temp1(it->first);
 				String temp2(it->second);
+				temp1.append("\t");
+				temp1.append(temp2);
 				file.push_back(temp1);
-				file.push_back(temp2);
+				//file.push_back(temp2);
 			}
 
 			file.store(out);

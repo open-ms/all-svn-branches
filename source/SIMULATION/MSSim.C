@@ -30,6 +30,7 @@
 #include<OpenMS/SIMULATION/DigestSimulation.h>
 #include<OpenMS/SIMULATION/DetectabilitySimulation.h>
 #include <OpenMS/SIMULATION/RawMSSignalSimulation.h>
+#include <OpenMS/SIMULATION/RawTandemMSSignalSimulation.h>
 #include <OpenMS/SIMULATION/IonizationSimulation.h>
 #include <OpenMS/SIMULATION/PTMSimulation.h>
 #include <OpenMS/SIMULATION/RTSimulation.h>
@@ -117,8 +118,11 @@ namespace OpenMS {
         8. generate MS2 signals for selected features
      */
 
+		// re-distribute synced parameters:
+		syncParams_(param_, false);
+		//param_.store("c:/mssim_param.ini"); // test reconstruction
+
     // convert sample proteins into an empty FeatureMap with ProteinHits
-    // convert
     createFeatureMap_(proteins, features_);
 
 		// digest
@@ -171,15 +175,15 @@ namespace OpenMS {
     RawMSSignalSimulation raw_sim(rnd_gen);
     raw_sim.setParameters(param_.copy("RawSignal:", true));
     createExperiment_(rt_sim.getGradientTime(), rt_sim.isRTColumnOn(),raw_sim.getRTSamplingRate(), experiment_);
-
     raw_sim.generateRawSignals(features_, experiment_);
 
-/**
-			...
-        7. select features for MS2
-        8. generate MS2 signals for selected features
-**/
+    // debug
+    std::cout << "ionized" << std::endl;
+    verbosePrintFeatureMap(features_);
 
+    RawTandemMSSignalSimulation raw_tandemsim(rnd_gen);
+    raw_tandemsim.setParameters(param_.copy("RawTandemSignal:", true));
+    raw_tandemsim.generateRawTandemSignals(features_, experiment_);
 
 
   }
@@ -190,14 +194,17 @@ namespace OpenMS {
     feature_map.clear();
     ProteinIdentification protIdent;
 
-    // TODO: currently the protein sequence is the ProteinAccession -> think of something better?
 		for (SampleProteins::const_iterator it=proteins.begin(); it!=proteins.end(); ++it)
 		{
-      //std::cout << (it->first).identifier << " " << (it->first).sequence << " " << (it->second) << ::std::endl;
+      std::cout << (it->first).identifier << " " << (it->first).sequence << " " << (it->second["intensity"]) << ::std::endl;
       // add new ProteinHit to ProteinIdentification
       ProteinHit protHit(0.0, 1, (it->first).identifier, (it->first).sequence);
-      protHit.setMetaValue("intensity", it->second);
       protHit.setMetaValue("description", it->first.description);
+      // add intensity (global, iTRAQ,...) to Protein
+			for (FASTAEntryEnhanced::const_iterator it_q = it->second.begin(); it_q!=it->second.end(); ++it_q)
+			{
+				protHit.setMetaValue(it_q->first, it_q->second);
+			}
       protIdent.insertHit(protHit);
 
 		}
@@ -236,18 +243,67 @@ namespace OpenMS {
 
   void MSSim::setDefaultParams_()
   {
+		// section params
     defaults_.insert("Digestion:", DigestSimulation().getDefaults());
     defaults_.insert("PostTranslationalModifications:",PTMSimulation(NULL).getDefaults());
     defaults_.insert("RTSimulation:",RTSimulation(NULL).getDefaults());
     defaults_.insert("PeptideDetectibilitySimulation:",DetectabilitySimulation().getDefaults());
     defaults_.insert("Ionization:",IonizationSimulation(NULL).getDefaults());
     defaults_.insert("RawSignal:",RawMSSignalSimulation(NULL).getDefaults());
+		defaults_.insert("RawTandemSignal:",RawTandemMSSignalSimulation(NULL).getDefaults());
+
+		//sync params (remove duplicates from modules and put them in a global module)
+		syncParams_(defaults_, true);
 
     defaultsToParam_();
   }
+  
+  void MSSim::syncParams_(Param& p, bool to_outer)
+  {
+		std::vector<StringList> globals;
+		// here the globals params are listed that require to be in sync across several modules
+		// - first the global param name and following that the module names where this param occurs
+		// - Warning: the module params must have unchanged names and restrictions! (descriptions can differ though)
+		globals.push_back(StringList::create("iTRAQ,PostTranslationalModifications,RawTandemSignal:iTRAQ"));
+		globals.push_back(StringList::create("ionization_type,Ionization,RawTandemSignal"));
+		
+		String global_prefix = "Global";
+		// remove or add local params
+		if (to_outer)
+		{	// remove local params and merge to global
+			for (Size i = 0; i < globals.size(); ++i)
+			{
+				// set the global param:
+				OPENMS_PRECONDITION(globals[i].size()>=2, "Param synchronisation aborting due to missing local parameters!");
+				p.insert(global_prefix+":"+globals[i][0], p.copy(globals[i][1]+":"+globals[i][0],true));
+				// remove local params
+				for (Size i_local=1;i_local<globals[i].size(); ++i_local)
+				{
+					p.remove(globals[i][i_local]+":"+globals[i][0]);
+				}
+			}
+		}
+		else // restore local params from global one
+		{
+			for (Size i = 0; i < globals.size(); ++i)
+			{
+				// get the global param:
+				OPENMS_PRECONDITION(globals[i].size()>=2, "Param synchronisation aborting due to missing local parameters!");
+
+				Param p_global = p.copy(global_prefix + ":" + globals[i][0],true);
+				// insert into local params
+				for (Size i_local=1;i_local<globals[i].size(); ++i_local)
+				{
+					p.insert(globals[i][i_local]+":"+globals[i][0], p_global);
+				}
+			}		
+		}
+		
+  }
 
   void MSSim::updateMembers_()
-  {}
+  {
+  }
 
   MSSimExperiment const & MSSim::getExperiment() const
   {
@@ -263,5 +319,7 @@ namespace OpenMS {
   {
 		return consensus_map_;
   }
+  
+ 
 
 }

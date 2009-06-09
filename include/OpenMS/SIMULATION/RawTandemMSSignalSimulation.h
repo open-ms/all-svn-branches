@@ -29,7 +29,6 @@
 #define OPENMS_SIMULATION_RAWTANDEMMSSIGNALSIMULATION_H
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
-#include <OpenMS/ANALYSIS/QUANTITATION/ItraqConstants.h>
 #include <OpenMS/SIMULATION/SimTypes.h>
 
 // GSL includes (random number generation)
@@ -78,7 +77,7 @@ namespace OpenMS {
     void generateRawTandemSignals(FeatureMapSim &, MSSimExperiment &);
 
   private:
-    /// Default constructor
+		/// Default constructor (hidden)
     RawTandemMSSignalSimulation();
 
 		/// init object (members, defaults etc)
@@ -89,6 +88,9 @@ namespace OpenMS {
 
     /// Set default parameters
     void setDefaultParams_();
+
+		/// convert meta information from feature into intensity values for iTRAQ
+		Matrix<SimIntensityType> getItraqIntensity_(const Feature & f) const;
 
 		// Members:
 

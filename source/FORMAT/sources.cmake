@@ -47,6 +47,7 @@ XTandemInfile.C
 XTandemXMLFile.C
 CsvFile.C
 MzIdentMLFile.C
+TraMLFile.C
 )
 
 if (USE_ANDIMS) 	 

@@ -76,7 +76,7 @@ class TOPPSpecLibSearcher
 			setValidFormats_("out",StringList::create("IdXML"));
 			//registerDoubleOption_("precursor_mass","<mass>",-1, "Precursor mass",false,true);
 			registerDoubleOption_("precursor_mass_tolerance","<tolerance>",1.5,"Precursor mass tolerance",false);
-			registerIntOption_("precursor_mass_multiplier","<number>",-1,"multipling this number with precursor_mass creates an integer",false,true);
+			registerIntOption_("precursor_mass_multiplier","<number>",10,"multipling this number with precursor_mass creates an integer",false,true);
 			registerDoubleOption_("fragment_mass_tolerance","<tolerance>",0.3,"Fragment mass error",false);
 			
       registerStringOption_("precursor_error_units", "<unit>", "Da", "parent monoisotopic mass error units", false);
@@ -135,7 +135,7 @@ class TOPPSpecLibSearcher
 			{
 				Size pm = precursor_mass_multiplier * (*s).getPrecursors()[0].getMZ();
 				pm = floor(pm);
-				cout<<"pm: "<< pm<<endl;
+				//cout<<"pm: "<< pm<<endl;
 				if(MSLibrary.find(pm)!= MSLibrary.end())
 				{
 					(*s).getPeptideIdentifications().push_back(*i);
@@ -149,8 +149,8 @@ class TOPPSpecLibSearcher
 					MSLibrary.insert(make_pair(pm,tmp));
 				}
 			}
-			cout<<"Erstellung lief durch"<<endl;
-			cout<<"MSLibrary.size(): " <<(int) MSLibrary.size()<<endl;
+			//cout<<"Erstellung lief durch"<<endl;
+			//cout<<"MSLibrary.size(): " <<(int) MSLibrary.size()<<endl;
 
 			//compare function
 			PeakSpectrumCompareFunctor* comparor = Factory<PeakSpectrumCompareFunctor>::create(compare_function);
@@ -162,15 +162,14 @@ class TOPPSpecLibSearcher
 			vector<PeptideIdentification> peptide_ids;
 			vector<ProteinIdentification> protein_ids;
 			Real min_pm,max_pm;
-			ProteinIdentification prot_id;
-			prot_id.setIdentifier(2);
+
 			for(UInt j = 0; j < query.size(); ++j)
 			{
-			cout<<"j: "<<j <<endl;
+			//cout<<"j: "<<j <<endl;
 				PeptideIdentification pep_id;
-
-				pep_id.setIdentifier(2);
-
+				pep_id.setIdentifier(j);
+							ProteinIdentification prot_id;
+			prot_id.setIdentifier(j);
 				
 				min_pm = query[j].getPrecursors()[0].getMZ() - precursor_mass_tolerance;
 				max_pm = query[j].getPrecursors()[0].getMZ() + precursor_mass_tolerance;
@@ -180,7 +179,7 @@ class TOPPSpecLibSearcher
 				PeakSpectrum quer;
 				for(UInt k = 0; k < query[j].size(); ++k)
 				{
-					cout<<"k" <<k<<endl;
+				//	cout<<"k" <<k<<endl;
 					Peak1D peak;
 					peak.setIntensity(query[j][k].getIntensity());
 					peak.setMZ(query[j][k].getMZ());
@@ -190,45 +189,45 @@ class TOPPSpecLibSearcher
 				//SEARCH
 				for(Size pm = floor(min_pm); pm < ceil(max_pm)-1; ++pm)
 				{
-				cout<<"pm: "<<pm<<endl;
+				//cout<<"pm: "<<pm<<endl;
 					if(MSLibrary.find(pm)!= MSLibrary.end())
 					{
 						RichPeakMap library = MSLibrary.find(pm)->second;
 						for(Size i = 0; i < library.size(); ++i)
 						{
-						cout<<"i: "<<i<<endl;
+				//		cout<<"i: "<<i<<endl;
 							PeakSpectrum librar;
 							//library entry transformation 
-							cout<<"library[i].size(): "<<library[i].size()<<endl;
+				//			cout<<"library[i].size(): "<<library[i].size()<<endl;
 							for(UInt l = 0; l< library[i].size(); ++l)
 							{
-							cout<<"l: "<<l<<endl;
+			//				cout<<"l: "<<l<<endl;
 								Peak1D peak;
 								peak.setIntensity(library[i][l].getIntensity());
 								peak.setMZ(library[i][l].getMZ());
 								peak.setPosition(library[i][l].getPosition());
 								librar.push_back(peak);
 							}
-							cout<<"1"<<endl;
+			//				cout<<"1"<<endl;
 							score = (*comparor)(quer,librar);
-							cout<<"2"<<endl;
-							cout<<"gro§e des dings"<<library[i].getPeptideIdentifications().size()<<endl;
+				//			cout<<"2"<<endl;
+					//		cout<<"gro§e des dings"<<library[i].getPeptideIdentifications().size()<<endl;
 							PeptideHit hit(library[i].getPeptideIdentifications()[0].getHits()[0]);
-							cout<<"3"<<endl;
+				//			cout<<"3"<<endl;
 							hit.setScore(score);
-							cout<<"4"<<endl;
+				//			cout<<"4"<<endl;
 							pep_id.insertHit(hit);
-							cout<<"5"<<endl;
+				//			cout<<"5"<<endl;
 						}
 					}
 				}
-				cout<<"hinterm score"<<endl;
+			//	cout<<"hinterm score"<<endl;
 				pep_id.setHigherScoreBetter(true);
 				pep_id.sort();
 				peptide_ids.push_back(pep_id);
-
+				protein_ids.push_back(prot_id);
 			}
-			protein_ids.push_back(prot_id);
+
 				//!!!old
 				/*for(UInt i =0; i< library.size();++i)
 				{

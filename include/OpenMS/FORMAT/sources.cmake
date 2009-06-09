@@ -68,6 +68,7 @@ XTandemXMLFile.h
 FileTypes.h
 CsvFile.h
 MzIdentMLFile.h
+TraMLFile.h
 )
 
 ### add path to the filenames

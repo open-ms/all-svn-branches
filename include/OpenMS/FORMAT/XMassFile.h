@@ -38,7 +38,7 @@ namespace OpenMS
 {
  	/**
  		@brief File adapter for 'XMass Analysis (fid)' files.
- 		
+ 		test commit
  		MZ calculs are based on article :
       A database application for pre-processing, storage and comparison of mass spectra derived from patients and controls
       Mark K Titulaer, Ivar Siccama, Lennard J Dekker, Angelique LCT van Rijswijk, Ron MA Heeren, Peter A Sillevis Smitt, and Theo M Luider

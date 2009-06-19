@@ -74,6 +74,7 @@ class TOPPDataForROCCurve
 			registerInputFile_("IdXML","<file>","","file which stores scores of the last search");
 			registerOutputFile_("out","<file>","","Output file");			
 			registerIntOption_("curve_resolution","<number>",10,"points which represent the ROCCurve",false);
+			registerIntOption_("highest","<number>",1,"1 if only the highest value should be taken into account",false);
 			addEmptyLine_();
 			addText_("");
 		}
@@ -87,6 +88,7 @@ class TOPPDataForROCCurve
 			String IdXML = getStringOption_("IdXML");
 			String out = getStringOption_("out");
 			Int curve_resolution = getIntOption_("curve_resolution");
+			Int highest = getIntOption_("highest");
 			//-------------------------------------------------------------
 			// loading input
 			//-------------------------------------------------------------
@@ -115,19 +117,42 @@ class TOPPDataForROCCurve
 			//first these which wher scored
 			for(vector<PeptideIdentification>::iterator it = idxml_peptideIdentification.begin(); it< idxml_peptideIdentification.end();++it)
 			{
-				if(!it->empty())
+				if(!highest)
 				{
-					for(vector<PeptideHit>::const_iterator iter = it->getHits().begin(); iter < it->getHits().end();++iter)
+					if(!it->empty())
 					{
-						map<String, DoubleReal>::iterator sequence;
-						sequence = IdXMLPeptides.find(iter->getSequence().toString());
-						if(sequence != IdXMLPeptides.end() || isnan(iter->getScore()) || sequence->second > iter->getScore())
+						for(vector<PeptideHit>::const_iterator iter = it->getHits().begin(); iter < it->getHits().end();++iter)
 						{
-							//DO NOTHING
+							map<String, DoubleReal>::iterator sequence;
+							sequence = IdXMLPeptides.find(iter->getSequence().toUnmodifiedString());
+							if(sequence != IdXMLPeptides.end() || isnan(iter->getScore()) || sequence->second > iter->getScore())
+							{
+								//DO NOTHING
+							}
+							else
+							{
+								IdXMLPeptides.insert(pair<String,DoubleReal>(iter->getSequence().toUnmodifiedString(),iter->getScore()));
+							}
+						}
+					}
+				}
+				else
+				{
+					if(!it->empty())
+					{
+						
+						
+						it->setHigherScoreBetter(true);
+						it->sort();
+						map<String, DoubleReal>::iterator sequence;
+						sequence = IdXMLPeptides.find(it->getHits()[0].getSequence().toUnmodifiedString());
+						if(sequence != IdXMLPeptides.end() && sequence->second < it->getHits()[0].getScore())
+						{
+							IdXMLPeptides[it->getHits()[0].getSequence().toUnmodifiedString()] = it->getHits()[0].getScore();						
 						}
 						else
 						{
-							IdXMLPeptides.insert(pair<String,DoubleReal>(iter->getSequence().toString(),iter->getScore()));
+							IdXMLPeptides.insert(pair<String,DoubleReal>(it->getHits()[0].getSequence().toUnmodifiedString(),it->getHits()[0].getScore()));
 						}
 					}
 				}
@@ -152,13 +177,18 @@ class TOPPDataForROCCurve
 			//generate ROC Curve
 			
 			ROCCurve ROC;
-			
+			Int true_count = 0;
+			Int false_count = 0;
+			cout<<"False:"<<endl;
 			for(map<String,DoubleReal>::iterator idxmliter = IdXMLPeptides.begin(); idxmliter != IdXMLPeptides.end(); ++idxmliter)
 			{
 				
 				bool exists  = false;
 				for(vector<FASTAFile::FASTAEntry>::iterator fastaiter = fasta_entries.begin(); fastaiter < fasta_entries.end();++fastaiter)
 				{
+					
+
+
 					if(fastaiter->sequence.hasSubstring(idxmliter->first))
 					{
 						exists  = true;
@@ -168,10 +198,13 @@ class TOPPDataForROCCurve
 				if(exists)
 				{
 					ROC.insertPair(idxmliter->second,true);
+					++true_count;
 				}
 				else
 				{
 					ROC.insertPair(idxmliter->second,false);
+					cout<<idxmliter->first<<"\n";
+					++false_count;
 				}
 			}
 
@@ -203,8 +236,8 @@ class TOPPDataForROCCurve
 			}
 
 			file.store(out);
-			
-			
+			cout<<"Gesamt: "<<true_count+false_count<<", true: "<<true_count<<", false: "<<false_count<<endl;
+			cout<<"AUC: "<<ROC.AUC()<<endl;
 			
 			return EXECUTION_OK;
 		}

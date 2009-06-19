@@ -35,7 +35,7 @@
 //#include <OpenMS/FORMAT/AnalysisXMLFile.h>
 
 
-
+#include <ctime>
 #include <vector>
 #include <map>
 using namespace OpenMS;
@@ -74,23 +74,24 @@ class TOPPSpecLibSearcher
 			registerInputFile_("lib","<file>","","searchable spectral library(MSP formated)");
 			registerOutputFile_("out","<file>","","Output File");
 			setValidFormats_("out",StringList::create("IdXML"));
-			//registerDoubleOption_("precursor_mass","<mass>",-1, "Precursor mass",false,true);
-			registerDoubleOption_("precursor_mass_tolerance","<tolerance>",1.5,"Precursor mass tolerance",false);
-			registerIntOption_("precursor_mass_multiplier","<number>",10,"multipling this number with precursor_mass creates an integer",false,true);
-			registerDoubleOption_("fragment_mass_tolerance","<tolerance>",0.3,"Fragment mass error",false);
+			registerDoubleOption_("precursor_mass_tolerance","<tolerance>",1.5,"Precursor mass tolerance, (Th)",false);
+			registerIntOption_("precursor_mass_multiplier","<number>",100,"multipling this number with precursor_mass creates an integer",false,true);
+		//	registerDoubleOption_("fragment_mass_tolerance","<tolerance>",0.3,"Fragment mass error",false);
 			
       registerStringOption_("precursor_error_units", "<unit>", "Da", "parent monoisotopic mass error units", false);
-      registerStringOption_("fragment_error_units", "<unit>", "Da", "fragment monoisotopic mass error units", false);
+     // registerStringOption_("fragment_error_units", "<unit>", "Da", "fragment monoisotopic mass error units", false);
       vector<String> valid_strings;
-      valid_strings.push_back("ppm"); 
       valid_strings.push_back("Da");
       setValidStrings_("precursor_error_units", valid_strings);
-      setValidStrings_("fragment_error_units", valid_strings);
+     // setValidStrings_("fragment_error_units", valid_strings);
 			registerIntOption_("min_precursor_charge", "<charge>", 1, "minimum precursor ion charge", false);
       registerIntOption_("max_precursor_charge", "<charge>", 3, "maximum precursor ion charge", false);
      	registerStringOption_("compare_function","<string>","ZhangSimilarityScore","function for similarity comparisson",false);
      PeakSpectrumCompareFunctor::registerChildren();
      setValidStrings_("compare_function",Factory<PeakSpectrumCompareFunctor>::registeredProducts());
+     registerDoubleOption_("remove_peak_intensity_threshold","<threshold>",2.01,"All peaks of a query spectrum with intensities below <threshold> will be zeroed.",false);
+     registerIntOption_("min_peak_number","<number>",5, "required mininum number of peaks for a query spectrum",false);
+     registerDoubleOption_("filter_all_peaks_below_mz","<threshold>",520,"Remove spectra with almost no peaks above a certain m/z value. All query spectra with 95%+ of the total intensity below <m/z> will be removed.",false);	
      //registerStringOption_("fixed_modifications", "<mods>", "", "fixed modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048 currently no effect", false);
      // registerStringOption_("variable_modifications", "<mods>", "", "variable modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048", false);
 		//	vielleicht des noch später??
@@ -110,9 +111,16 @@ class TOPPSpecLibSearcher
 			String compare_function = getStringOption_("compare_function");
 			Int precursor_mass_multiplier = getIntOption_("precursor_mass_multiplier");
 			Real precursor_mass_tolerance = getDoubleOption_("precursor_mass_tolerance");
+			Int min_precursor_charge = getIntOption_("min_precursor_charge");
+			Int max_precursor_charge = getIntOption_("max_precursor_charge");
+			Real remove_peak_intensity_threshold = getDoubleOption_("remove_peak_intensity_threshold");
+			UInt min_peak_number = getIntOption_("min_peak_number");
+			Real filter_all_peaks_below_mz = getDoubleOption_("filter_all_peaks_below_mz");
 			//-------------------------------------------------------------
 			// loading input
 			//-------------------------------------------------------------
+			//time counter
+			time_t start_time = time(NULL);
 			MzDataFile spectra;
 			MSPFile spectral_library;
 			vector< PeptideIdentification > ids;
@@ -127,25 +135,36 @@ class TOPPSpecLibSearcher
 			//library containing already identified peptide spectra
 			spectral_library.load(in_lib,ids,library);
 			
+			//*******
 			//building hashmap for precursor mass search
-			map<Size, RichPeakMap> MSLibrary;
+			//*******
+			
+			map<Size, vector<RichPeakSpectrum*> > MSLibrary;
 			RichPeakMap::iterator s;
 			vector<PeptideIdentification>::iterator i;
 			for( s = library.begin(), i = ids.begin() ; s < library.end();++s,++i)
 			{
-				Size pm = precursor_mass_multiplier * (*s).getPrecursors()[0].getMZ();
-				pm = floor(pm);
-				//cout<<"pm: "<< pm<<endl;
-				if(MSLibrary.find(pm)!= MSLibrary.end())
+			//	cout<<"ohne multiplier: "<< (*s).getPrecursors()[0].getMZ();
+				Size pm = (Size)(*i).getHits()[0].getSequence().getMonoWeight()*precursor_mass_multiplier;
+			//	cout<<" , pm: "<<pm;
+		//		pm = floor(pm);
+		//		cout<<" , floor(pm): "<< pm<<endl;
+				map<Size,vector<RichPeakSpectrum*> >::iterator found;
+				found = MSLibrary.find(pm);
+				if(found != MSLibrary.end())
 				{
-					(*s).getPeptideIdentifications().push_back(*i);
-					MSLibrary.find(pm)->second.push_back(*s);
+					PeptideIdentification& translocate_id = (*i);
+					(*s).getPeptideIdentifications().push_back(translocate_id);
+					RichPeakSpectrum* translocate_s = &(*s);
+					found->second.push_back(translocate_s);
 				}
 				else
 				{
-					RichPeakMap tmp;
-					(*s).getPeptideIdentifications().push_back(*i);
-					tmp.push_back(*s);
+					vector<RichPeakSpectrum*> tmp;
+					PeptideIdentification& translocate_id = (*i);
+					RichPeakSpectrum* translocate_s = &(*s);
+					(*s).getPeptideIdentifications().push_back(translocate_id);
+					tmp.push_back(translocate_s);
 					MSLibrary.insert(make_pair(pm,tmp));
 				}
 			}
@@ -166,62 +185,91 @@ class TOPPSpecLibSearcher
 			for(UInt j = 0; j < query.size(); ++j)
 			{
 			//cout<<"j: "<<j <<endl;
+			//Set identifier to be the same
 				PeptideIdentification pep_id;
 				pep_id.setIdentifier(j);
-							ProteinIdentification prot_id;
-			prot_id.setIdentifier(j);
+				ProteinIdentification prot_id;
+				prot_id.setIdentifier(j);
 				
-				min_pm = query[j].getPrecursors()[0].getMZ() - precursor_mass_tolerance;
-				max_pm = query[j].getPrecursors()[0].getMZ() + precursor_mass_tolerance;
-				min_pm *= precursor_mass_multiplier;
-				max_pm *= precursor_mass_multiplier;
-				//RichPeak1D to Peak1D transformation for the compare function query 
+				Real total_intensity = 0;
+				Real intensity_below_mz = 0;
+					//RichPeak1D to Peak1D transformation for the compare function query 
 				PeakSpectrum quer;
+				bool peak_ok = true;
 				for(UInt k = 0; k < query[j].size(); ++k)
 				{
-				//	cout<<"k" <<k<<endl;
 					Peak1D peak;
-					peak.setIntensity(query[j][k].getIntensity());
-					peak.setMZ(query[j][k].getMZ());
-					peak.setPosition(query[j][k].getPosition());
-					quer.push_back(peak);
-				}
-				//SEARCH
-				for(Size pm = floor(min_pm); pm < ceil(max_pm)-1; ++pm)
-				{
-				//cout<<"pm: "<<pm<<endl;
-					if(MSLibrary.find(pm)!= MSLibrary.end())
+					if(query[j][k].getIntensity() >  remove_peak_intensity_threshold)
 					{
-						RichPeakMap library = MSLibrary.find(pm)->second;
-						for(Size i = 0; i < library.size(); ++i)
+						total_intensity +=  query[j][k].getIntensity();
+						peak.setIntensity(query[j][k].getIntensity());
+						peak.setMZ(query[j][k].getMZ());
+						if (peak.getMZ() < filter_all_peaks_below_mz) 
 						{
-				//		cout<<"i: "<<i<<endl;
-							PeakSpectrum librar;
-							//library entry transformation 
-				//			cout<<"library[i].size(): "<<library[i].size()<<endl;
-							for(UInt l = 0; l< library[i].size(); ++l)
+        			intensity_below_mz += peak.getIntensity();
+      			}
+						peak.setPosition(query[j][k].getPosition());
+						quer.push_back(peak);
+					}
+				}
+				//if not enough peaks in the specturm pass that one
+				//or querys 95% of total intensity is lower than allpeaks below m/z 
+				if(quer.size() < min_peak_number || intensity_below_mz < 0.95 * total_intensity)
+				{
+					peak_ok = false;
+				}
+				if(peak_ok)
+				{
+					for(Int charge = min_precursor_charge; charge <= max_precursor_charge; ++charge)
+					{
+						min_pm = ((query[j].getPrecursors()[0].getMZ() - precursor_mass_tolerance)*charge-(charge*1.00728)) *precursor_mass_multiplier;
+						max_pm = ((query[j].getPrecursors()[0].getMZ() + precursor_mass_tolerance)*charge-(charge*1.00728))*precursor_mass_multiplier;
+					//min_pm *= precursor_mass_multiplier;
+					//max_pm *= precursor_mass_multiplier;
+				
+					//SEARCH
+						cout<<"precursor"<<query[j].getPrecursors()[0].getMZ()<<endl;
+						cout<<"min "<<min_pm<<" " <<(Size) min_pm<<endl;
+						cout<<"max "<<max_pm<<" "<<(Size)max_pm<<endl;
+						for(Size pm = (Size)min_pm; pm <= ((Size)max_pm)+1; ++pm)
+						{
+					//cout<<"pm: "<<pm<<endl;
+							map<Size, vector<RichPeakSpectrum*> >::iterator found;
+							found = MSLibrary.find(pm);
+							if(found != MSLibrary.end())
 							{
-			//				cout<<"l: "<<l<<endl;
-								Peak1D peak;
-								peak.setIntensity(library[i][l].getIntensity());
-								peak.setMZ(library[i][l].getMZ());
-								peak.setPosition(library[i][l].getPosition());
-								librar.push_back(peak);
+								vector<RichPeakSpectrum*>& library = found->second;
+								for(Size i = 0; i < library.size(); ++i)
+								{
+									Real this_pm  = library[i]->getPeptideIdentifications()[0].getHits()[0].getSequence().getMonoWeight()*precursor_mass_multiplier;
+							//	cout<<"this_pm - min_pm = ?"<<this_pm << " - " <<min_pm << " = "<<this_pm-min_pm<<endl;
+							//	cout<<"max_pm - this_pm = ?"<<max_pm << " - " <<this_pm << " = "<<max_pm-this_pm<<endl;
+							//	cout<<charge<<"und " << i <<" und "<<library[i]->getPeptideIdentifications()[0].getHits()[0].getCharge()<<endl ;
+									if(this_pm >= min_pm && max_pm >= this_pm)
+									{
+										PeakSpectrum librar;
+										//library entry transformation 
+										for(UInt l = 0; l< library[i]->size(); ++l)
+										{
+											Peak1D peak;
+											if((*library[i])[l].getIntensity() >  remove_peak_intensity_threshold)
+											{
+												peak.setIntensity((*library[i])[l].getIntensity());									
+												peak.setMZ((*library[i])[l].getMZ());
+												peak.setPosition((*library[i])[l].getPosition());
+												librar.push_back(peak);
+											}
+										}
+										score = (*comparor)(quer,librar);
+											PeptideHit hit(library[i]->getPeptideIdentifications()[0].getHits()[0]);
+											hit.setScore(score);
+											pep_id.insertHit(hit);
+									}
+								}
 							}
-			//				cout<<"1"<<endl;
-							score = (*comparor)(quer,librar);
-				//			cout<<"2"<<endl;
-					//		cout<<"große des dings"<<library[i].getPeptideIdentifications().size()<<endl;
-							PeptideHit hit(library[i].getPeptideIdentifications()[0].getHits()[0]);
-				//			cout<<"3"<<endl;
-							hit.setScore(score);
-				//			cout<<"4"<<endl;
-							pep_id.insertHit(hit);
-				//			cout<<"5"<<endl;
 						}
 					}
 				}
-			//	cout<<"hinterm score"<<endl;
 				pep_id.setHigherScoreBetter(true);
 				pep_id.sort();
 				peptide_ids.push_back(pep_id);
@@ -271,7 +319,8 @@ class TOPPSpecLibSearcher
 			//-------------------------------------------------------------
 			IdXMLFile id_xml_file;
 			id_xml_file.store(out,protein_ids,peptide_ids);
-			
+			time_t end_time = time(NULL);
+			cout<<"Time needed: "<<difftime(end_time,start_time)<<"\n";  
 			return EXECUTION_OK;
 		}
 		

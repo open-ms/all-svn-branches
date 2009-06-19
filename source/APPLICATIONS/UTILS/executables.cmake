@@ -22,6 +22,7 @@ DecoyDatabase
 SpecLibCreator
 IDMassAccuracy
 DataForROCCurve
+Nonbinder
 )
 
 ### pass source file list to the upper instance

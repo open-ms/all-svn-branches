@@ -35,11 +35,12 @@
 #include <OpenMS/KERNEL/ConsensusMap.h>
 #include <OpenMS/KERNEL/ConsensusFeature.h>
 #include <OpenMS/DATASTRUCTURES/ChargePair.h>
+#include <OpenMS/DATASTRUCTURES/Compomer.h>
 #include <OpenMS/DATASTRUCTURES/DPosition.h>
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/DATASTRUCTURES/MassExplainer.h>
 #include <OpenMS/ANALYSIS/DECHARGING/MIPWrapper.h>
-
+#include <OpenMS/CHEMISTRY/EmpiricalFormula.h>
 // STL
 #include <vector>
 
@@ -83,7 +84,10 @@ namespace OpenMS
         defaults_.setValue("retention_max_diff", 0.1, "maximum allowed RT difference between between two co-features");
 				/// TODO should be m/z difference?!
         defaults_.setValue("mass_max_diff", 0.5, "maximum allowed mass difference between between two co-features");
-        defaults_.setValue("potential_adducts", StringList::create("H;1;0.7,K;1;0.1,NH4;1;0.1,Na;1;0.1"), "default adducts used to explain mass differences");
+        defaults_.setValue("potential_adducts", StringList::create("H+:0.7,K+:0.1,NH4+:0.1,Na+:0.1"), "Adducts used to explain mass differences in format: 'Element(+)*:Probablity', i.e. the number of '+' indicate the charge, e.g. 'Ca++:0.5' indicates +2. Probabilites are normalized to one.");
+        
+        defaults_.setValue("max_minority_bound", 2, "maximum count of the least probable adduct (according to 'potential_adducts' param) within a charge variant. E.g. setting this to 2 will not allow an adduct composition of '1(H+),3(Na+)' if Na+ is the least probable adduct");
+        defaults_.setMinInt("max_minority_bound", 0);
         
         defaultsToParam_();
       }
@@ -92,29 +96,43 @@ namespace OpenMS
       void updateMembers_()
       {
         StringList potential_adducts_s = param_.getValue("potential_adducts");
-				MassExplainer::AdductsType potential_adducts_;
+        potential_adducts_.clear();
+				
+				float prob_sum=0;
+				
         for (StringList::const_iterator it=potential_adducts_s.begin(); it != potential_adducts_s.end(); ++it)
         {
           StringList adduct;
-          it->split(';', adduct);
-          if (adduct.size()!=3)
+          it->split(':', adduct);
+          if (adduct.size()!=2)
           {
-            String error = "FeatureDeconvolution::potential_adducts (" + (*it) + ") does not have three entries!";
+            String error = "FeatureDeconvolution::potential_adducts (" + (*it) + ") does not have two entries ('Element:Probability')!";
             throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, error);
           }
           String adduct_formula = adduct[0];
-          Int charge = adduct[1].toInt();
-          float prob = adduct[2].toFloat();
+					// determine charge of adduct (by # of '+')
+					Size l_charge = adduct[0].size();
+					l_charge -= adduct[0].remove('+').size();
+					// determine probability
+          float prob = adduct[1].toFloat();
           if (prob > 1.0 || prob<0.0)
 					{
             String error = "FeatureDeconvolution::potential_adducts (" + (*it) + ") does not have a proper probablity (" + String(prob) + ") in [0,1]!";
             throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, error);
           }
           EmpiricalFormula ef(adduct_formula);
-          Adduct a(charge, 1, ef.getMonoWeight(), ef.getString(), log(prob));
-          //std::cout << "FeatureDeconvolution: inserting potential adduct " << ef.getString() << "[q:" << charge << ", pr:" << prob << "]\n";
+          Adduct a((Int)l_charge, 1, ef.getMonoWeight(), ef.getString(), log(prob));
+          prob_sum += prob;
+          //std::cout << "FeatureDeconvolution: inserting potential adduct " << ef.getString() << "[q:" << l_charge << ", pr:" << prob << "(" << a.getLogProb() << ")" << "]\n";
           potential_adducts_.push_back(a);
         }
+        
+        // normalize probablity to 1
+        for (Size i=0; i<potential_adducts_.size(); ++i)
+        {
+					potential_adducts_[i].setLogProb(log(exp(potential_adducts_[i].getLogProb()) / prob_sum));
+        }
+        
       }
       /// Copy constructor
       inline FeatureDeconvolution(const FeatureDeconvolution& source)
@@ -145,9 +163,10 @@ namespace OpenMS
 
       /// compute a zero-charge feature map from a set of charged features (@p map)
 			/// i.e. find putative ChargePairs, then score them and hand over to ILP
-			/// @param map [in] Input feature-map
+			/// @param map Input feature-map
+			/// @param map Output feature-map (sorted by position and augmented with user params)
 			/// @param cons_map [out] Output of grouped features belonging to a charge group
-      void compute(FeatureMapType &map, ConsensusMap &cons_map, ConsensusMap &cons_map_p) 
+      void compute(const FeatureMapType &fm_in, FeatureMapType &fm_out, ConsensusMap &cons_map, ConsensusMap &cons_map_p) 
       {
         Int q_min = param_.getValue("charge_min");
 				Int q_max = param_.getValue("charge_max");
@@ -157,22 +176,33 @@ namespace OpenMS
 				DoubleReal mz_diff_max = param_.getValue("mass_max_diff");
 				
 				// sort by RT and then m/z
-				map.sortByPosition();
+				fm_out = fm_in;
+				fm_out.sortByPosition();
 
-        //TODO: make this accessibile from INI file
-				float thresh_logp = log(0.3)*2 + log(0.7)*std::max(q_max-2, 0);
-				//create mass difference list
+        
+        // search for most & least probable adduct to fix p threshold
+        DoubleReal adduct_lowest_log_p = log(1.0);
+        DoubleReal adduct_highest_log_p = log(0.0000000001);
+        for (Size i=0; i<potential_adducts_.size(); ++i)
+        {
+					adduct_lowest_log_p  = std::min(adduct_lowest_log_p , potential_adducts_[i].getLogProb() );
+					adduct_highest_log_p = std::max(adduct_highest_log_p, potential_adducts_[i].getLogProb() );
+        }
+        Int max_minority_bound = param_.getValue("max_minority_bound");
+				DoubleReal thresh_logp = adduct_lowest_log_p * max_minority_bound +
+																 adduct_highest_log_p * std::max(q_max - max_minority_bound, 0);
 
 
+				// create mass difference list
 
 				std::cout << "Generating Masses with threshold: " << thresh_logp << " ...\n";
-				//MassExplainer me(adduct_base, q_min, q_max, q_span, thresh_logp);
         MassExplainer me(potential_adducts_, q_min, q_max, q_span, thresh_logp);
 				me.compute();
 				std::cout << "done\n";
 				
-				//holds query results for a mass difference
-				MassExplainer::CompomerIterator md_s, md_e, md_tmp;
+				// holds query results for a mass difference
+				MassExplainer::CompomerIterator md_s, md_e;
+				Compomer null_compomer(0,0,-std::numeric_limits<DoubleReal>::max());
 				SignedSize hits = 0;
 				
 				CoordinateType mz1,mz2, m1;
@@ -181,28 +211,33 @@ namespace OpenMS
 				
 				PairsType feature_relation;
 				
-        for (UInt i_RT = 0; i_RT < map.size(); ++i_RT)
+        for (Size i_RT = 0; i_RT < fm_out.size(); ++i_RT)
         { // ** RT-sweepline
 					
-					mz1 = map[i_RT].getMZ();
+					mz1 = fm_out[i_RT].getMZ();
 					
-					for (UInt i_RT_window = i_RT + 1
-							 ; (i_RT_window < map.size())
-							   &&((map[i_RT_window].getRT() - map[i_RT].getRT()) < rt_diff_max) 
+					for (Size i_RT_window = i_RT + 1
+							 ; (i_RT_window < fm_out.size())
+							   &&((fm_out[i_RT_window].getRT() - fm_out[i_RT].getRT()) < rt_diff_max) 
 							 ; ++i_RT_window)
 					{ // ** RT-window
 							
-						mz2 = map[i_RT_window].getMZ();
+						mz2 = fm_out[i_RT_window].getMZ();
 						
 						//@improvement TODO only check for charges which approx have the same quotient as mz1/mz2
 						for (Int q1=q_min; q1<=q_max; ++q1)
 						{ // ** q1
 
                 //DEBUG:
-              if (map[i_RT_window].getRT()>1777.08 && map[i_RT_window].getRT()<1777.2 && mz1>216 && mz2>432)
+              if (fm_out[i_RT_window].getRT()>1777.08 && fm_out[i_RT_window].getRT()<1777.2 && mz1>216 && mz2>432)
               {
-                std::cout << "we are at debug location\n" << map[i_RT_window].getRT() <<"   : " << mz1 << "; " << mz2 << "\n";
+                std::cout << "we are at debug location\n" << fm_out[i_RT_window].getRT() <<"   : " << mz1 << "; " << mz2 << "\n";
               }
+              if (i_RT == 0 && i_RT_window == 1)
+              {
+                std::cout << "we are at debug location\n" << fm_out[i_RT_window].getRT() <<"   : " << mz1 << "; " << mz2 << "\n";
+              }
+              // \DEBUG
 
 								m1 = mz1*q1;
 								// additionally: forbid q1 and q2 with distance greater than q_span
@@ -222,21 +257,33 @@ namespace OpenMS
 									// for now, we take the one that has highest p in terms of the compomer structure
 									if (hits>0)
 									{
+											//std::cout << "q2: " << q2 << " (mass to explain: " << (mz2*q2-m1) << ")\n";
 											CoordinateType naive_mass_diff = mz2*q2-m1;
-											md_tmp = md_s;
+											Compomer best_hit = null_compomer;
 											for (; md_s!=md_e; ++md_s)
 											{
-													if (md_tmp->getLogP() < md_s->getLogP()) md_tmp = md_s;
+												//std::cout << "neg: " << md_s->getNegativeCharges() << " pos: " << md_s->getPositiveCharges() << " p: " << md_s->getLogP() << " \n";
+												if (
+														// compomer has better probability
+														(best_hit.getLogP() < md_s->getLogP())
+													 	&&
+													 	// compomer fits charge assignment of left & right feature
+													 	(q1 >= abs(md_s->getNegativeCharges()) && q2 >= abs(md_s->getPositiveCharges()))
+													 )
+												{
+													best_hit = *md_s;
+												}
 											}
-											ChargePair cp(i_RT, i_RT_window, q1, q2, md_tmp->getID(), naive_mass_diff - md_tmp->getMass(), false);
-											if (q1 < abs(md_tmp->getNegativeCharges()) || q2 < abs(md_tmp->getPositiveCharges()))
+											if (best_hit == null_compomer)
 											{	
-												// this should not happen!!! because we assume the compomer to fit the charge assumption
-												std::cout << "FeatureDeconvolution.h! compomer does not fit chargePair\n" << (*md_tmp) << "\n" << cp << "\n";
-												exit(0);
+												std::cout << "FeatureDeconvolution.h:: could not find a compomer which complies with assumed q1 and q2 values!\n with q1: " << q1 << " q2: " << q2 << "\n";
 											}
-											//std::cout << "CP # "<< feature_relation.size() << " :" << i_RT << " " << i_RT_window<< " " << q1<< " " << q2 << "\n";
-											feature_relation.push_back(cp);
+											else
+											{
+												ChargePair cp(i_RT, i_RT_window, q1, q2, best_hit.getID(), naive_mass_diff - best_hit.getMass(), false);
+												//std::cout << "CP # "<< feature_relation.size() << " :" << i_RT << " " << i_RT_window<< " " << q1<< " " << q2 << "\n";
+												feature_relation.push_back(cp);
+											}
 									}
 									
 								} // q2
@@ -257,101 +304,52 @@ namespace OpenMS
 				DoubleReal ilp_score = lp_wrapper.compute(me, feature_relation);
 				std::cout << "score is: " << ilp_score << std::endl;
 				
+				// prepare output consensusMaps
+				cons_map.setProteinIdentifications( fm_out.getProteinIdentifications() );
+				cons_map_p.setProteinIdentifications( fm_out.getProteinIdentifications() );
 				
-				// print all compomers that were assigned to a feature:
-//				std::ofstream myfile;
-//				myfile.open ("compomer_association.info");
-//				UInt i0,i1;
-//        //          feature ID   --> (CompomerID, left?)
-//				std::map < UInt, std::set < std::pair < UInt, bool > > > feat_to_comp;
-//				for (UInt i=0; i<feature_relation.size(); ++i)
-//				{
-//          if (!feature_relation[i].isActive()) continue;
-//
-//          if(i==962)
-//          {
-//            ChargePair t =  feature_relation[i];
-//          }
-//
-//          i0 = feature_relation[i].getElementIndex(0);
-//          i1 = feature_relation[i].getElementIndex(1);
-//
-//          feat_to_comp[i0].insert( std::make_pair<UInt, bool>(feature_relation[i].getCompomerId() , true) );
-//          feat_to_comp[i1].insert( std::make_pair<UInt, bool>(feature_relation[i].getCompomerId() , false) );
-//
-//          //THINK!!! hack: store assigned feature charge in feature
-//          //map[i0].setCharge(feature_relation[i].getCharge(0));
-//          //map[i1].setCharge(feature_relation[i].getCharge(1));
-//				}
-//
-//				// print each feature's compomers
-//				for (std::map < UInt, std::set < std::pair < UInt, bool > > >::iterator it= feat_to_comp.begin();
-//						 it!= feat_to_comp.end(); ++it)
-//				{
-//
-//					myfile << "--------------\nFeature #" << it->first << " q=" << map[it->first].getCharge() << std::endl;
-//					for (std::set < std::pair < UInt, bool > >::iterator it_set = it->second.begin();
-//							 it_set != it->second.end(); ++it_set)
-//					{
-//						myfile << "    left? " << it_set->second << "\n";
-//						myfile << "    " << me.getCompomerById(it_set->first) << "\n";
-//					}
-//
-//				}
-//
-//				myfile.close();
-				
-				//some statistics about compomers used
+				// some statistics about compomers used
 				std::map < ChargePair, Int > compomer_stats;
 				
 				UInt agreeing_fcharge = 0;
-				UInt f0,f1, aedges=0;
-//				myfile.open ("pairs.info");
-				//write related features
-				for (UInt i=0; i<feature_relation.size(); ++i)
+				Size f0, f1, aedges=0;
+
+				// write related features
+				for (Size i=0; i<feature_relation.size(); ++i)
 				{
           if (!feature_relation[i].isActive()) continue;
+					
+					//std::cout << "active charge_pair #" << i << "\n";
 
           f0 = feature_relation[i].getElementIndex(0);
           f1 = feature_relation[i].getElementIndex(1);
           ++aedges;
 
-//          myfile << map[f0].getRT() << " " << map[f1].getRT() << " "
-//                 << map[f0].getMZ() << " " << map[f1].getMZ() << " "
-//                 << map[f0].getCharge() << " " << map[f1].getCharge()  << " "
-//                 << me.getCompomerById(feature_relation[i].getCompomerId()).getMass() << "\n";
-
-
           // check if the local feature charges agree
-          if (map[f0].getCharge() == feature_relation[i].getCharge(0))
+          if (fm_out[f0].getCharge() == feature_relation[i].getCharge(0))
           {
             ++agreeing_fcharge;
           }
           else
           {
-            std::cout << "conflict in Q:: RT:" << map[f0].getRT() << " MZ:" << map[f0].getMZ() << " Q:" << map[f0].getCharge() << " PredictedQ:" << feature_relation[i].getCharge(0) << "\n";
+            std::cout << "conflict in Q:: RT:" << fm_out[f0].getRT() << " MZ:" << fm_out[f0].getMZ() << " Q:" << fm_out[f0].getCharge() << " PredictedQ:" << feature_relation[i].getCharge(0) << "\n";
           }
-          if (map[f1].getCharge() == feature_relation[i].getCharge(1))
+          if (fm_out[f1].getCharge() == feature_relation[i].getCharge(1))
           {
             ++agreeing_fcharge;
           }
           else
           {
-            std::cout << "conflict in Q:: RT:" << map[f1].getRT() << " MZ:" << map[f1].getMZ() << " Q:" << map[f1].getCharge() << " PredictedQ:" << feature_relation[i].getCharge(1) << "\n";
+            std::cout << "conflict in Q:: RT:" << fm_out[f1].getRT() << " MZ:" << fm_out[f1].getMZ() << " Q:" << fm_out[f1].getCharge() << " PredictedQ:" << feature_relation[i].getCharge(1) << "\n";
           }
 				}
 				std::cout << "agreeing charges: " << agreeing_fcharge << "/" << (aedges*2) << std::endl;
 
-//			  myfile.close();
-//				myfile.open ("feature.info");
-//				for (UInt i=0; i< map.size(); ++i)
-//				{
-//						myfile << map[i].getRT() << " " << map[i].getMZ() << " " << map[i].getCharge() << "\n";
-//				}
-//			  myfile.close();
-				
-				
-				
+				// fresh start for meta annotation
+				for (Size i=0;i<fm_out.size(); ++i)
+				{
+					if (fm_out[i].metaValueExists("dc_charge_adducts")) fm_out[i].removeMetaValue("dc_charge_adducts");
+				}
 				
 				// write groups to consensusXML (with type="charge_groups")
 
@@ -363,15 +361,49 @@ namespace OpenMS
 				typedef Map::const_iterator MapCI;
 				Map clique_register; 
 				MapCI clique_it;
+				
 				for (Size i=0; i<feature_relation.size(); ++i)
 				{
           if (feature_relation[i].isActive())
           {
-            SignedSize target_cf0 = -1, target_cf1 = -1;
+            //std::cout << "feature #" << f0_idx << " #" << f1_idx << " ACTIVE with RT: " << fm_out[f1_idx].getRT() << "\n";
             Size f0_idx = feature_relation[i].getElementIndex(0);
             Size f1_idx = feature_relation[i].getElementIndex(1);
-
-            //std::cout << "feature #" << f0_idx << " #" << f1_idx << " ACTIVE with RT: " << map[f1_idx].getRT() << "\n";
+            
+            //
+						// annotate the affected features
+						// ... and check consistency
+						//
+						Compomer c = me.getCompomerById( feature_relation[i].getCompomerId());
+						// - left
+						EmpiricalFormula ef_l(c.getAdductsAsString(-1));
+						ef_l += "H" + String(feature_relation[i].getCharge(0) - c.getNegativeCharges());
+						if (fm_out[f0_idx].metaValueExists("dc_charge_adducts"))
+    				{
+    					OPENMS_POSTCONDITION (ef_l.getString() == fm_out[f0_idx].getMetaValue("dc_charge_adducts"), "Decharging produced inconsistent adduct annotation!");
+    				}
+    				else
+    				{
+    					fm_out[f0_idx].setMetaValue("dc_charge_adducts", ef_l.getString());
+    				}
+						fm_out[f0_idx].setMetaValue("dc_charge_adduct_mass", ef_l.getMonoWeight());						
+						// - right
+						EmpiricalFormula ef_r(c.getAdductsAsString(+1));
+						ef_r += "H" + String(feature_relation[i].getCharge(1) - c.getPositiveCharges());
+						if (fm_out[f1_idx].metaValueExists("dc_charge_adducts"))
+    				{
+    					OPENMS_POSTCONDITION (ef_r.getString() == fm_out[f1_idx].getMetaValue("dc_charge_adducts"), "Decharging produced inconsistent adduct annotation!");
+    				}
+    				else
+    				{
+    					fm_out[f1_idx].setMetaValue("dc_charge_adducts", ef_r.getString());
+    				}
+						fm_out[f1_idx].setMetaValue("dc_charge_adduct_mass", ef_r.getMonoWeight());		
+						
+						//
+						// create cliques
+						//
+            SignedSize target_cf0 = -1, target_cf1 = -1;
 
             // find the index of the ConsensusFeatures for the current pair
             if (clique_register.count(f0_idx) > 0)
@@ -383,23 +415,20 @@ namespace OpenMS
               target_cf1 = clique_register[f1_idx];
             }
 
-            Peak2D peak;
-            peak.setRT( (map[f0_idx].getRT() +  map[f1_idx].getRT() )/2);
-            peak.setMZ( (map[f0_idx].getMZ() +  map[f1_idx].getMZ() )/2);
-            peak.setIntensity( (map[f0_idx].getIntensity() +  map[f1_idx].getIntensity() ));
-            ConsensusFeature cf(peak);
-            cf.insert(0,f0_idx, map[f0_idx]);
-            cf.insert(0,f1_idx, map[f1_idx]);
+            ConsensusFeature cf;
+            cf.insert(0,f0_idx, fm_out[f0_idx]);
+            cf.insert(0,f1_idx, fm_out[f1_idx]);
+            cf.computeDechargeConsensus(fm_out);
             #if 1
             // print pairs only
                 cons_map_p.push_back(cf);
-                cons_map_p.getFileDescriptions()[0].size = map.size();
+                cons_map_p.getFileDescriptions()[0].size = fm_out.size();
                 cons_map_p.getFileDescriptions()[0].label = "charged features pairs";
             #endif
 
-            //seen both features for the first time
-            if ((target_cf0 == target_cf1) &&
-                (target_cf0 == -1))
+            // seen both features for the first time
+            if ((target_cf0 == -1) &&
+                (target_cf1 == -1))
             {//** new ConsensusFeature required
                 cons_map.push_back(cf);
                 clique_register[f0_idx] = cons_map.size()-1;
@@ -410,13 +439,13 @@ namespace OpenMS
             {
               if (target_cf0 == -1)
               {//** add f0 to the already existing cf of f1
-                cons_map[target_cf1].insert(0,f0_idx, map[f0_idx]);
+                cons_map[target_cf1].insert(0,f0_idx, fm_out[f0_idx]);
                 clique_register[f0_idx] = target_cf1;
                 //std::cout << "add: F" << f0_idx << " to " <<target_cf1 << " dueto F" << f1_idx << "\n";
               }
               else if (target_cf1 == -1)
               {//** add f1 to the already existing cf of f0
-                cons_map[target_cf0].insert(0,f1_idx, map[f1_idx]);
+                cons_map[target_cf0].insert(0,f1_idx, fm_out[f1_idx]);
                 clique_register[f1_idx] = target_cf0;
                 //std::cout << "add: F" << f1_idx << " to " <<target_cf0 << " dueto F" << f0_idx << "\n";
               } else
@@ -444,33 +473,31 @@ namespace OpenMS
         } // !for
 
 				// remove empty ConsensusFeatures from map
-				ConsensusMap cons_map_tmp;
-				cons_map_tmp.reserve(cons_map.size());
-				for(ConsensusMap::ConstIterator it = cons_map.begin(); it!=cons_map.end(); ++it)
+				ConsensusMap cons_map_tmp(cons_map);
+				cons_map_tmp.clear(); // keep other meta information (like ProteinIDs & Map)
+				for (ConsensusMap::ConstIterator it = cons_map.begin(); it!=cons_map.end(); ++it)
 				{
 					// skip if empty
 					if (it->getFeatures().size()==0) continue;
 					cons_map_tmp.push_back(*it);					
 					// set a centroid
-					cons_map_tmp.back().setRT(map[it->getFeatures().begin()->getElementIndex()].getRT());
-					cons_map_tmp.back().setMZ(map[it->getFeatures().begin()->getElementIndex()].getMZ());
-					cons_map_tmp.back().setIntensity(map[it->getFeatures().begin()->getElementIndex()].getIntensity());
+					cons_map_tmp.back().computeDechargeConsensus(fm_out);
 
 				}
 				cons_map_tmp.swap(cons_map);
 
         // include single features without a buddy!
-        for (UInt i=0; i<map.size(); ++i)
+        for (Size i=0; i<fm_out.size(); ++i)
 				{
           // find the index of the ConsensusFeature for the current feature
           if (clique_register.count(i) > 0) continue;
 
           Peak2D peak;
-          peak.setRT( map[i].getRT() );
-          peak.setMZ( map[i].getMZ() );
-          peak.setIntensity( map[i].getIntensity() );
+          peak.setRT( fm_out[i].getRT() );
+          peak.setMZ( fm_out[i].getMZ() );
+          peak.setIntensity( fm_out[i].getIntensity() );
           ConsensusFeature cf(peak);
-          cf.insert(0, i, map[i]);
+          cf.insert(0, i, fm_out[i]);
 
           cons_map.push_back(cf);
         }
@@ -479,7 +506,7 @@ namespace OpenMS
 				//cons_map.setMetaValue("meta",String("value"));
 				//cons_map.setIdentifier("some lsid");
 				cons_map.getFileDescriptions()[0].filename = "TODO - take from FeatureMAP.getLoadedFilePath () ";
-				cons_map.getFileDescriptions()[0].size = map.size();
+				cons_map.getFileDescriptions()[0].size = fm_out.size();
 				cons_map.getFileDescriptions()[0].label = "charged features";
 				//cons_map.getFileDescriptions()[0].setMetaValue("meta",String("meta"));
 				

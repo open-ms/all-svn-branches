@@ -421,7 +421,7 @@ namespace OpenMS
 			}
 			else if (current_tag == "nameOfFile" && parent_tag == "supSourceFile")
 			{
-				meta_id_descs_.back().second.getSourceFile().setNameOfFile( transcoded_chars );
+				//ignored
 			}
 			else if (current_tag=="pathToFile" && parent_tag == "sourceFile")
 			{
@@ -429,7 +429,7 @@ namespace OpenMS
 			}
 			else if (current_tag == "pathToFile" && parent_tag == "supSourceFile")
 			{
-				meta_id_descs_.back().second.getSourceFile().setPathToFile( transcoded_chars );
+				//ignored
 			}
 			else if (current_tag=="fileType" && parent_tag == "sourceFile")
 			{
@@ -437,7 +437,7 @@ namespace OpenMS
 			}
 			else if (current_tag == "fileType" && parent_tag == "supSourceFile")
 			{
-				meta_id_descs_.back().second.getSourceFile().setFileType( transcoded_chars );
+				//ignored
 			}
 			else
 			{
@@ -526,8 +526,10 @@ namespace OpenMS
 			else if (tag=="supDataDesc")
 			{
 				String comment;
-				optionalAttributeAsString_(comment, attributes, s_comment);
-				meta_id_descs_.back().second.setComment(comment);
+				if (optionalAttributeAsString_(comment, attributes, s_comment))
+				{
+					meta_id_descs_.back().second.setMetaValue("comment",comment);
+				}
 			}
 			else if (tag=="userParam")
 			{
@@ -920,7 +922,7 @@ namespace OpenMS
 					os << "\t\t\t\t<analyzer>\n";
 					const MassAnalyzer& ana = inst.getMassAnalyzers()[i];
 					writeCVS_(os, ana.getType(), 14, "1000010", "AnalyzerType",5);
-					writeCVS_(os, ana.getResolution(), "1000011", "Resolution",5);
+					writeCVS_(os, ana.getResolution(), "1000011", "MassResolution",5);
 					writeCVS_(os, ana.getResolutionMethod(), 2,"1000012", "ResolutionMethod",5);
 					writeCVS_(os, ana.getResolutionType(), 3, "1000013", "ResolutionType",5);
 					writeCVS_(os, ana.getAccuracy(), "1000014", "Accuracy",5);
@@ -945,7 +947,7 @@ namespace OpenMS
 				writeCVS_(os, inst.getIonDetectors()[0].getType(), 13, "1000026", "DetectorType");
 				writeCVS_(os, inst.getIonDetectors()[0].getAcquisitionMode(), 9, "1000027", "DetectorAcquisitionMode");
 				writeCVS_(os, inst.getIonDetectors()[0].getResolution(), "1000028", "DetectorResolution");
-				writeCVS_(os, inst.getIonDetectors()[0].getADCSamplingFrequency(), "1000029", "ADCSamplingFrequency");
+				writeCVS_(os, inst.getIonDetectors()[0].getADCSamplingFrequency(), "1000029", "SamplingFrequency");
 				writeUserParam_(os, inst.getIonDetectors()[0]);
 			}
 			if (inst.getIonDetectors().size()>1)
@@ -1188,7 +1190,7 @@ namespace OpenMS
 								writeCVS_(os, precursor.getMZ(), "1000040", "MassToChargeRatio",7);
 								writeCVS_(os, precursor.getCharge(), "1000041", "ChargeState",7);
 								writeCVS_(os, precursor.getIntensity(), "1000042", "Intensity",7);
-								os << "\t\t\t\t\t\t\t<cvParam cvLabel=\"psi\" accession=\"PSI:1000043\" name=\"IntensityUnits\" value=\"NumberOfCounts\"/>\n";
+								os << "\t\t\t\t\t\t\t<cvParam cvLabel=\"psi\" accession=\"PSI:1000043\" name=\"IntensityUnit\" value=\"NumberOfCounts\"/>\n";
 								writeUserParam_(os, precursor, 7);
 							}
 							os << "\t\t\t\t\t\t</ionSelection>\n";
@@ -1197,10 +1199,10 @@ namespace OpenMS
 							{
 								if (precursor.getActivationMethods().size()>0)
 								{
-									writeCVS_(os, *(precursor.getActivationMethods().begin()), 18, "1000044", "Method",7);
+									writeCVS_(os, *(precursor.getActivationMethods().begin()), 18, "1000044", "ActivationMethod",7);
 								}
 								writeCVS_(os, precursor.getActivationEnergy(), "1000045", "CollisionEnergy",7);
-								os << "\t\t\t\t\t\t\t<cvParam cvLabel=\"psi\" accession=\"PSI:1000046\" name=\"EnergyUnits\" value=\"eV\"/>\n";
+								os << "\t\t\t\t\t\t\t<cvParam cvLabel=\"psi\" accession=\"PSI:1000046\" name=\"EnergyUnit\" value=\"eV\"/>\n";
 							}
 							os << "\t\t\t\t\t\t</activation>\n";
 							os << "\t\t\t\t\t</precursor>\n";
@@ -1219,25 +1221,9 @@ namespace OpenMS
 							os << "\t\t\t<supDesc supDataArrayRef=\"" << (i+1) << "\">\n";
 							if (!desc.isMetaEmpty())
 							{
-								os << "\t\t\t\t<supDataDesc";
-								if (desc.getComment()!="")
-								{
-									os << " comment=\"" << desc.getComment() << "\"";
-								}
-								os << ">\n";
+								os << "\t\t\t\t<supDataDesc>\n";
 								writeUserParam_(os, desc, 5);
 								os << "\t\t\t\t</supDataDesc>\n";
-							}
-							if (desc.getSourceFile()!=SourceFile())
-							{
-								os << "\t\t\t\t<supSourceFile>\n"
-						 				<< "\t\t\t\t\t<nameOfFile>" << desc.getSourceFile().getNameOfFile()
-										<< "</nameOfFile>\n"
-						 				<< "\t\t\t\t\t<pathToFile>" << desc.getSourceFile().getPathToFile()
-										<< "</pathToFile>\n";
-								if (desc.getSourceFile().getFileType()!="")	os << "\t\t\t\t\t<fileType>"
-									<< desc.getSourceFile().getFileType()	<< "</fileType>\n";
-								os << "\t\t\t\t</supSourceFile>\n";
 							}
 							os << "\t\t\t</supDesc>\n";
 						}
@@ -1429,7 +1415,7 @@ namespace OpenMS
 			}
 			else if (parent_tag=="activation") 
 			{
-				if (accession=="PSI:1000044") //Method
+				if (accession=="PSI:1000044") //activationmethod
 				{
 					spec_.getPrecursors().back().getActivationMethods().insert((Precursor::ActivationMethod)cvStringToEnum_(18, value,"activation method"));
 				}

@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 <featureMap version="1.3" xsi:noNamespaceSchemaLocation="http://open-ms.sourceforge.net/schemas/FeatureXML_1_3.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<dataProcessing completion_time="1999-12-31T23:59:59">
+		<software name="FeatureFinder" version="version_string" />
+		<processingAction name="File format conversion" />
+		<userParam type="string" name="parameter: mode" value="test_mode"/>
+	</dataProcessing>
 	<featureList count="3">
 		<feature id="f_0">
 			<position dim="0">1623.68755681818</position>
@@ -9,6 +14,23 @@
 			<quality dim="1">0</quality>
 			<overallquality>0.965176743998265</overallquality>
 			<charge>0</charge>
+			<model name="ProductModel2D">
+				<param name="cutoff" value="0"/>
+				<param name="RT" value="EmgModel"/>
+				<param name="MZ" value="GaussModel"/>
+				<param name="intensity_scaling" value="1"/>
+				<param name="RT:cutoff" value="0"/>
+				<param name="RT:interpolation_step" value="0.1"/>
+				<param name="RT:intensity_scaling" value="1"/>
+				<param name="RT:bounding_box:min" value="1589.59"/>
+				<param name="RT:bounding_box:max" value="1659.64"/>
+				<param name="RT:statistics:variance" value="1"/>
+				<param name="RT:statistics:mean" value="1"/>
+				<param name="RT:emg:height" value="19469.3856202367"/>
+				<param name="RT:emg:width" value="11.251330374544"/>
+				<param name="RT:emg:symmetry" value="10.4129716930987"/>
+				<param name="RT:emg:retention" value="1617.83756487515"/>
+			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">1592.59</hposition>
@@ -19,16 +41,33 @@
 					<hposition dim="1">656.356</hposition>
 				</hullpoint>
 			</convexhull>
-			<userParam type="float" name="MZ" value="443.706"/>
+			<userParam type="float" name="MZ" value="443.707"/>
 		</feature>
 		<feature id="f_1">
 			<position dim="0">2165.87950310559</position>
 			<position dim="1">722.403</position>
 			<intensity>1.50286e+07</intensity>
-			<quality dim="0">0.992970614798272</quality>
+			<quality dim="0">0.992970614798271</quality>
 			<quality dim="1">0</quality>
-			<overallquality>0.992970614798272</overallquality>
+			<overallquality>0.992970614798271</overallquality>
 			<charge>0</charge>
+			<model name="ProductModel2D">
+				<param name="cutoff" value="0"/>
+				<param name="RT" value="EmgModel"/>
+				<param name="MZ" value="GaussModel"/>
+				<param name="intensity_scaling" value="1"/>
+				<param name="RT:cutoff" value="0"/>
+				<param name="RT:interpolation_step" value="0.1"/>
+				<param name="RT:intensity_scaling" value="1"/>
+				<param name="RT:bounding_box:min" value="2136.18"/>
+				<param name="RT:bounding_box:max" value="2198.14"/>
+				<param name="RT:statistics:variance" value="1"/>
+				<param name="RT:statistics:mean" value="1"/>
+				<param name="RT:emg:height" value="140608.486846538"/>
+				<param name="RT:emg:width" value="7.26713560371381"/>
+				<param name="RT:emg:symmetry" value="10.5321645595717"/>
+				<param name="RT:emg:retention" value="2152.36604971214"/>
+			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">2139.18</hposition>
@@ -39,7 +78,7 @@
 					<hposition dim="1">722.403</hposition>
 				</hullpoint>
 			</convexhull>
-			<userParam type="float" name="MZ" value="461.742"/>
+			<userParam type="float" name="MZ" value="461.743"/>
 		</feature>
 		<feature id="f_2">
 			<position dim="0">2310.60907590759</position>
@@ -49,6 +88,23 @@
 			<quality dim="1">0</quality>
 			<overallquality>0.969432180824566</overallquality>
 			<charge>0</charge>
+			<model name="ProductModel2D">
+				<param name="cutoff" value="0"/>
+				<param name="RT" value="EmgModel"/>
+				<param name="MZ" value="GaussModel"/>
+				<param name="intensity_scaling" value="1"/>
+				<param name="RT:cutoff" value="0"/>
+				<param name="RT:interpolation_step" value="0.1"/>
+				<param name="RT:intensity_scaling" value="1"/>
+				<param name="RT:bounding_box:min" value="2281.01"/>
+				<param name="RT:bounding_box:max" value="2342.97"/>
+				<param name="RT:statistics:variance" value="1"/>
+				<param name="RT:statistics:mean" value="1"/>
+				<param name="RT:emg:height" value="20649.9189848473"/>
+				<param name="RT:emg:width" value="10.13963168232"/>
+				<param name="RT:emg:symmetry" value="11.5727746080402"/>
+				<param name="RT:emg:retention" value="2299.86458075305"/>
+			</model>
 			<convexhull nr="0">
 				<hullpoint>
 					<hposition dim="0">2284.01</hposition>
@@ -59,7 +115,7 @@
 					<hposition dim="1">600.33</hposition>
 				</hullpoint>
 			</convexhull>
-			<userParam type="float" name="MZ" value="554.255"/>
+			<userParam type="float" name="MZ" value="554.256"/>
 		</feature>
 	</featureList>
 </featureMap>

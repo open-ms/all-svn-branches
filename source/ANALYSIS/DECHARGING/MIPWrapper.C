@@ -184,10 +184,10 @@ namespace OpenMS {
 				}
 
 
-          if(i==2796 && j==2797) // every conflict involving the missing edge...
-          {
-            std::cout << "debug point";
-          }
+        if(i==2796 && j==2797) // every conflict involving the missing edge...
+        {
+          std::cout << "debug point";
+        }
 
 				//outgoing edges (from one feature)
 				if (pairs[i].getElementIndex(0) == pairs[j].getElementIndex(0))
@@ -240,16 +240,23 @@ namespace OpenMS {
           {
             ChargePair ti =  pairs[i];
             ChargePair tj =  pairs[j];
+            
             std::cout << "conflicting egde!";
           }
 
 					namebuf.str("");
-					namebuf<<"x1#"<<i<<"x2#"<<j;
+					//namebuf <<"cp"<<i<<"("<<pairs[i].getElementIndex(0)<<"[q"<<pairs[i].getCharge(0)<<"]-"<<pairs[i].getElementIndex(1)<<"[q"<<pairs[i].getCharge(1)<<"]"<<") vs. "
+					//				<<"cp"<<j<<"("<<pairs[j].getElementIndex(0)<<"[q"<<pairs[j].getCharge(0)<<"]-"<<pairs[j].getElementIndex(1)<<"[q"<<pairs[j].getCharge(1)<<"]"<<")";
+					namebuf << "C" << i << "." << j;
+					String s = namebuf.str();
+					//std::cout << "<-- conflict between " << s << "\n\n";
+
 
 					double element[] = {1.0,1.0};
 					int columns[] = {int(i-margin_left),int(j-margin_left)};
 					// Now build rows: two variables, with indices 'columns', factors '1', and 0-1 bounds.
-					build.addRow(2, columns, element, 0, 1);
+
+					build.addRow(2, columns, element, 0, 1, s.c_str());
 
 					//std::cout << "Added row#" << i << " " << j << std::endl;
 				}
@@ -260,6 +267,9 @@ namespace OpenMS {
 
 		std::cout << " CONSTRAINTS count: " << conflict_idx[0] << " + " << conflict_idx[1] << " + " << conflict_idx[2] << " + " << conflict_idx[3] << "(0!) \n";
 
+		// write the model (for debug)
+		//build.writeMps ("Y:/datasets/simulated/coinor.mps");
+
 		//---------------------------------------------------------------------------------------------------------
 		//----------------------------------------Solving and querying result--------------------------------------
 		//---------------------------------------------------------------------------------------------------------
@@ -268,7 +278,7 @@ namespace OpenMS {
 		// Pass to solver
 		CbcModel model(solver);
 		model.setObjSense(-1); // -1 = maximize, 1=minimize
-		model.solver()->setHintParam(OsiDoReducePrint,true,OsiHintTry);
+		model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
 
 		// Output details
 		model.messageHandler()->setLogLevel(2);
@@ -278,42 +288,35 @@ namespace OpenMS {
 		CglProbing generator1;
 		generator1.setUsingObjective(true);
 		CglGomory generator2;
-		// try larger limit
 		generator2.setLimit(300);
 		CglKnapsackCover generator3;
 		CglOddHole generator4;
 		generator4.setMinimumViolation(0.005);
 		generator4.setMinimumViolationPer(0.00002);
-		// try larger limit
 		generator4.setMaximumEntries(200);
 		CglClique generator5;
 		generator5.setStarCliqueReport(false);
 		generator5.setRowCliqueReport(false);
 		CglMixedIntegerRounding mixedGen;
 		CglFlowCover flowGen;
-		// Add in generators
-		model.addCutGenerator(&generator1,-1,"Probing");
-		model.addCutGenerator(&generator2,-1,"Gomory");
-		model.addCutGenerator(&generator3,-1,"Knapsack");
-		model.addCutGenerator(&generator4,-1,"OddHole");
-		model.addCutGenerator(&generator5,-1,"Clique");
-		model.addCutGenerator(&flowGen,-1,"FlowCover");
-		model.addCutGenerator(&mixedGen,-1,"MixedIntegerRounding");
+		
+		// Add in generators (you should prefer the ones used often and disable the others as they increase solution time)
+		//model.addCutGenerator(&generator1,-1,"Probing");
+		//model.addCutGenerator(&generator2,-1,"Gomory");
+		//model.addCutGenerator(&generator3,-1,"Knapsack");
+		//model.addCutGenerator(&generator4,-1,"OddHole");
+		model.addCutGenerator(&generator5,-10,"Clique");
+		//model.addCutGenerator(&flowGen,-1,"FlowCover");
+		//model.addCutGenerator(&mixedGen,-1,"MixedIntegerRounding");
 
+		// Heuristics
 		CbcRounding heuristic1(model);
 		model.addHeuristic(&heuristic1);
-
-		// And local search when new solution found
 		CbcHeuristicLocal heuristic2(model);
 		model.addHeuristic(&heuristic2);
-		// Redundant definition of default branching (as Default == User)
-//		CbcBranchUserDecision branch;
-//		model.setBranchingMethod(&branch);
-		// Definition of node choice
-//		CbcCompareUser compare;
-//		model.setNodeComparison(compare);
 
-		model.setDblParam(CbcModel::CbcMaximumSeconds,60.0*1);
+		// set maximum allowed CPU time before forced stop (dangerous!)
+		//model.setDblParam(CbcModel::CbcMaximumSeconds,60.0*1);
 
 		// Do initial solve to continuous
 		model.initialSolve();

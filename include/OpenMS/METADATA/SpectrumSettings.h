@@ -54,7 +54,8 @@ namespace OpenMS
 	
 		@ingroup Metadata
 	*/
-  class OPENMS_DLLAPI SpectrumSettings 
+  class OPENMS_DLLAPI SpectrumSettings
+  	: public MetaInfoInterface
   {
   	
     public:
@@ -147,7 +148,7 @@ namespace OpenMS
       /// returns a mutable reference to the description of the applied processing
       std::vector<DataProcessing>& getDataProcessing();
       /// sets the description of the applied processing
-      void setDataProcessing(const std::vector<DataProcessing>& processing_method);
+      void setDataProcessing(const std::vector<DataProcessing>& data_processing);
 
     protected:
     	

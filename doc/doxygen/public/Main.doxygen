@@ -65,6 +65,7 @@
 				<UL>
 				  <LI> @subpage UTILS
 					<LI> @subpage FAQ
+					<LI> @subpage Contributing
 				</UL>
 			</TD>
 				
@@ -83,6 +84,12 @@
 				  <LI> @subpage OpenMS_tutorial
 				  <LI> @subpage coding_conventions
 					<LI> @subpage external_code
+				</UL>
+				
+				Misc:
+				<UL>
+					<LI> @subpage FAQ
+					<LI> @subpage Contributing
 				</UL>
 				
 				@if INTERNAL_INFO

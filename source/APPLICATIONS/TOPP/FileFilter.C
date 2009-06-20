@@ -28,7 +28,7 @@
 #include <OpenMS/KERNEL/RangeUtils.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FileTypes.h>
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/FILTERING/NOISEESTIMATION/SignalToNoiseEstimatorMedian.h>
@@ -47,13 +47,13 @@ using namespace std;
 /**
 	@page TOPP_FileFilter FileFilter
 
-	@brief Extracts portions of the data from an mzData, featureXML or consensusXML file.
+	@brief Extracts portions of the data from an mzML, featureXML or consensusXML file.
 
 	With this tool it is possible to extract m/z, retention time and intensity ranges from an input file
 	and to write all data that lies within the given ranges to an output file.
 
 	Depending on the input file type, additional specific operations are possible:
-	- mzData
+	- mzML
 		- extract spectra of a certain MS level
 		- filter by signal-to-noise estimation
 		- filter by scan mode of the spectra
@@ -90,10 +90,10 @@ class TOPPFileFilter
 		void registerOptionsAndFlags_()
 		{
       registerInputFile_("in","<file>","","input file ");
-   		setValidFormats_("in",StringList::create("mzData,featureXML,consensusXML"));
+   		setValidFormats_("in",StringList::create("mzML,featureXML,consensusXML"));
 
       registerOutputFile_("out","<file>","","output file");
-	  	setValidFormats_("out",StringList::create("mzData,featureXML,consensusXML"));
+	  	setValidFormats_("out",StringList::create("mzML,featureXML,consensusXML"));
 
 			registerStringOption_("mz","[min]:[max]",":","m/z range to extract", false);
 			registerStringOption_("rt","[min]:[max]",":","retention time range to extract", false);
@@ -120,8 +120,7 @@ class TOPPFileFilter
 			setValidStrings_("remove_activation",activation_list);
 			
 			registerFlag_("remove_zoom","Remove zoom (enhanced resolution) scans");
-      registerFlag_("sort","sorts the output data according to RT and m/z."
-      										 "\nNote: Spectrum meta data arrays are erased, as they would be invalid after sorting by m/z.");
+      registerFlag_("sort","sorts the output data according to RT and m/z.");
 
       addText_("feature data options:");
       registerStringOption_("charge","[min]:[max]",":","charge range to extract", false);
@@ -219,14 +218,14 @@ class TOPPFileFilter
  			bool sort = getFlag_("sort");
 			writeDebug_(String("Sorting output data: ") + String(sort),3);
 
-      if (in_type == FileTypes::MZDATA)
+      if (in_type == FileTypes::MZML)
       {
   			//-------------------------------------------------------------
   			// loading input
   			//-------------------------------------------------------------
 
   			MapType exp;
-  			MzDataFile f;
+  			MzMLFile f;
   			f.setLogType(log_type_);
   			f.getOptions().setRTRange(DRange<1>(rt_l,rt_u));
   			f.getOptions().setMZRange(DRange<1>(mz_l,mz_u));
@@ -236,7 +235,7 @@ class TOPPFileFilter
   			//-------------------------------------------------------------
   			// calculations
   			//-------------------------------------------------------------
-
+				
   			//remove ms level first (might be a lot of spectra)
   			exp.erase(remove_if(exp.begin(), exp.end(), InMSLevelRange<MapType::SpectrumType>(levels, true)), exp.end());
 
@@ -283,17 +282,7 @@ class TOPPFileFilter
   			//remove empty scans
   			exp.erase(remove_if(exp.begin(), exp.end(), IsEmptySpectrum<MapType::SpectrumType>()), exp.end());
 
-  			if (sort)
-  			{
-  				//if meta data arrays are present, remove them and warn
-  				if (exp.clearMetaDataArrays())
-  				{
-  					writeLog_("Warning: Spectrum meta data arrays cannot be sorted. They are deleted.");
-  				}
-
-  				//sort
-  				exp.sortSpectra(true);
-  			}
+  			if (sort) exp.sortSpectra(true);
 
 				// calculate S/N values and write them instead
 				if (sn > 0)
@@ -315,6 +304,9 @@ class TOPPFileFilter
   			//-------------------------------------------------------------
   			// writing output
   			//-------------------------------------------------------------
+
+				//annotate output with data processing info
+				addDataProcessing_(exp, getProcessingInfo_(DataProcessing::FILTERING));
 
   			f.store(out,exp);
       }
@@ -373,6 +365,9 @@ class TOPPFileFilter
         // writing output
         //-------------------------------------------------------------
 
+				//annotate output with data processing info
+				addDataProcessing_(map_sm, getProcessingInfo_(DataProcessing::FILTERING));
+
         f.store(out,map_sm);
       }
       else if (out_type == FileTypes::CONSENSUSXML)
@@ -418,6 +413,9 @@ class TOPPFileFilter
         //-------------------------------------------------------------
         // writing output
         //-------------------------------------------------------------
+
+				//annotate output with data processing info
+				addDataProcessing_(consensus_map_filtered, getProcessingInfo_(DataProcessing::FILTERING));
 
         f.store(out,consensus_map_filtered);
       }

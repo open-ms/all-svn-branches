@@ -51,7 +51,9 @@ namespace OpenMS
 
     It can be used to create objects from the DB or store them in the DB.
 
-			@todo Check if test is really complete (Hiwi)
+		@todo Add DataProcessing to MetaInfoDescription (Hiwi)
+		@todo Check if test is really complete (Hiwi)
+		@todo Check that all values are quoted (Hiwi)
 
     @ingroup DatabaseIO
   */
@@ -692,7 +694,6 @@ namespace OpenMS
 			//----------------------------------------------------------------------------------------
 			//------------------------------------ store PRECURSOR -----------------------------------
 			//----------------------------------------------------------------------------------------
-			std::vector<Precursor> precs = exp_it->getPrecursors();
 
 			// first delete all old values, no matter whether we're updating or not
 			// do we have to delete the MetaInfo as well?
@@ -702,7 +703,7 @@ namespace OpenMS
 			result = db_con_.executeQuery(query.str());
 
 
-			for (Size precs_it = 0; precs_it < precs.size(); precs_it++)
+			for (Size precs_it = 0; precs_it < exp_it->getPrecursors().size(); precs_it++)
 			{
 				query.str("");
 				query << "INSERT INTO DATA_Precursor SET ";
@@ -750,7 +751,6 @@ namespace OpenMS
 			//----------------------------------------------------------------------------------------
 			//------------------------------------- store PRODUCTS -----------------------------------
 			//----------------------------------------------------------------------------------------
-			std::vector<Product> prods = exp_it->getProducts();
 
 			// first delete all old values, no matter whether we're updating or not
 			// do we have to delete the MetaInfo as well?
@@ -759,21 +759,21 @@ namespace OpenMS
 			query << exp_it->getPersistenceId() << "'";
 			result = db_con_.executeQuery(query.str());
 
-			for (Size precs_it = 0; precs_it < precs.size(); precs_it++)
+			for (Size precs_it = 0; precs_it < exp_it->getProducts().size(); precs_it++)
 			{
 				query.str("");
 				query << "INSERT INTO DATA_Products SET ";
 				query << "fid_Spectrum='"+ String(exp_it->getPersistenceId()) + "'";
 				//mz
-				query << ",WindowMz='" << exp_it->getProducts()[0].getMZ() << "'";
+				query << ",WindowMz='" << exp_it->getProducts()[precs_it].getMZ() << "'";
 				//IsolationWindowLow
-				query << ",WindowLow='" << exp_it->getProducts()[0].getIsolationWindowLowerOffset() << "'";
+				query << ",WindowLow='" << exp_it->getProducts()[precs_it].getIsolationWindowLowerOffset() << "'";
 				//IsolationWindowUp
-				query << ",WindowUp='" << exp_it->getProducts()[0].getIsolationWindowUpperOffset() << "'";
+				query << ",WindowUp='" << exp_it->getProducts()[precs_it].getIsolationWindowUpperOffset() << "'";
 
 				result = db_con_.executeQuery(query.str());
 				parent_id = db_con_.getAutoId();
-				storeMetaInfo_("DATA_Products",parent_id, exp_it->getPrecursors()[precs_it]);
+				storeMetaInfo_("DATA_Products",parent_id, exp_it->getProducts()[precs_it]);
 			}
 
 			//----------------------------------------------------------------------------------------
@@ -821,7 +821,6 @@ namespace OpenMS
 				query << "SELECT id FROM META_MetaInfoDescription WHERE fid_Spectrum=";
 				query << exp_it->getPersistenceId();
 				query << " AND Name='" << mdarrays_it->getName() << "'";
-
 				result = db_con_.executeQuery(query.str());
 
 				query.str("");
@@ -831,6 +830,7 @@ namespace OpenMS
 					parent_id = result.value(0).toInt();
 					new_entry = false;
 					query << "UPDATE META_MetaInfoDescription SET ";
+					query << "Name='" + mdarrays_it->getName() + "' "; //TODO
 					end  = " WHERE fid_Spectrum=" + String(exp_it->getPersistenceId());
 					end += " AND Name='" + mdarrays_it->getName() + "'";
 				}
@@ -839,11 +839,10 @@ namespace OpenMS
 					new_entry = true;
 					query << "INSERT INTO META_MetaInfoDescription SET ";
 					query << "fid_Spectrum=" << exp_it->getPersistenceId() << ", ";
-					query << "Name='" << mdarrays_it->getName() << "',";
+					query << "Name='" << mdarrays_it->getName() << "'";
 					end = "";
 				}
 
-				query << "Description='" << mdarrays_it->getComment() << "'";
 				query << end;
 
 				result = db_con_.executeQuery(query.str());
@@ -852,7 +851,6 @@ namespace OpenMS
 					parent_id = db_con_.getAutoId();
 				}
 
-				storeFile_("META_MetaInfoDescription", parent_id, mdarrays_it->getSourceFile());
 				storeMetaInfo_("META_MetaInfoDescription", parent_id, *mdarrays_it);
 
 				// store meta data contained in the MetaDataArrays
@@ -955,7 +953,7 @@ namespace OpenMS
 
 			if (new_entry)
 			{
-				query << "INSERT INTO META_AcquisitionInfo SET fid_Spectrum=" << exp_it->getPersistenceId() << ",";
+				query << "INSERT INTO META_AcquisitionInfo SET fid_Spectrum='" << exp_it->getPersistenceId() << "',";
 				end = "";
 			}
 			else
@@ -984,15 +982,15 @@ namespace OpenMS
 			//----------------------------------------------------------------------------------------
 
 			query.str("");
-			deleteMetaInfo_("META_Acquisition", "fid_AcquisitionInfo=" + String(parent_id));
-			query << "DELETE FROM META_Acquisition WHERE fid_AcquisitionInfo=" << parent_id;
+			deleteMetaInfo_("META_Acquisition", "fid_AcquisitionInfo='" + String(parent_id) + "'");
+			query << "DELETE FROM META_Acquisition WHERE fid_AcquisitionInfo='" << parent_id << "'";
 			result = db_con_.executeQuery(query.str());
 
 			for (std::vector<Acquisition>::const_iterator info_it = info.begin(); info_it != info.end(); info_it++)
 			{
 				query.str("");
-				query << "INSERT INTO META_Acquisition SET fid_AcquisitionInfo=" << acquisition_info_id << ",";
-				query << "Number=" << info_it->getIdentifier();
+				query << "INSERT INTO META_Acquisition SET fid_AcquisitionInfo='" << acquisition_info_id << "',";
+				query << "Number='" << info_it->getIdentifier() << "'";
 
 				result = db_con_.executeQuery(query.str());
 				parent_id = db_con_.getAutoId();
@@ -1074,13 +1072,17 @@ namespace OpenMS
 		query << "SELECT Date,fid_MetaInfo,Description,FractionIdentifier FROM META_MSExperiment WHERE id='" << id << "'";
 		result = db_con_.executeQuery(query.str());
 		result.first();
-
+		
 		//Experiment meta info
-		if (result.value(0).toDate().isValid())
+		try
 		{
 			DateTime d;
 			d.set(result.value(0).toDateTime().toString(Qt::ISODate));
 			exp.setDateTime(d);
+		}
+		catch(Exception::ParseError& )
+		{
+			//no nothing, the date is simply unset
 		}
 		exp.setComment(result.value(2).toString());
 		exp.setFractionIdentifier(result.value(3).toString());
@@ -1437,11 +1439,13 @@ namespace OpenMS
 			++i;
 			result.next();
 		}
+		
 	}
 
 	template <class SpectrumType>
 	void DBAdapter::loadSpectrum(UID id, SpectrumType& spec)
 	{
+		
 		//----------------------------------------------------------------------------------------
 		//------------------------------- CHECK DB VERSION ---------------------------------------
 		//----------------------------------------------------------------------------------------
@@ -1600,7 +1604,17 @@ namespace OpenMS
 		{
 			DataProcessing processings;
 
-			processings.setCompletionTime(result.value(0).toString());
+			try
+			{
+				DateTime d;
+				d.set(result.value(0).toDateTime().toString(Qt::ISODate));
+				processings.setCompletionTime(d);
+			}
+			catch(Exception::ParseError& )
+			{
+				//no nothing, the date is simply unset
+			}
+
 			loadMetaInfo_(result.value(1).toInt(),processings);
 
 			query.str("");
@@ -1638,8 +1652,7 @@ namespace OpenMS
 		//----------------------------------------------------------------------------------------
 
 		query.str("");
-		query << "SELECT Name, Description, fid_MetaInfo, fid_File ";
-		query << "FROM META_MetaInfoDescription WHERE fid_Spectrum=" << id;
+		query << "SELECT Name, fid_MetaInfo FROM META_MetaInfoDescription WHERE fid_Spectrum=" << id;
 
 		result = db_con_.executeQuery(query.str());
 		result.first();
@@ -1648,10 +1661,8 @@ namespace OpenMS
 		{
 			typename SpectrumType::MetaDataArray meta_array;
 			meta_array.setName(result.value(0).toString());
-			meta_array.setComment(result.value(1).toString());
-			loadMetaInfo_(result.value(2).toInt(), meta_array);
-			loadFile_(result.value(3).toInt(),meta_array.getSourceFile());
-
+			loadMetaInfo_(result.value(1).toInt(), meta_array);
+			
 			spec.getMetaDataArrays().push_back(meta_array);
 			result.next();
 		}
@@ -1732,7 +1743,7 @@ namespace OpenMS
 				loadMetaInfo_(result.value(3).toInt(),spec.getProducts()[res]);
 				result.next();
 			}
-
+		
 		//----------------------------------------------------------------------------------------
 		//--------------------------- load PEAKS/METADATAARRAYS	----------------------------------
 		//----------------------------------------------------------------------------------------

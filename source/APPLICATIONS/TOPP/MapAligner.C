@@ -24,7 +24,7 @@
 // $Maintainer: Marc Sturm, Clemens Groepl $
 // $Authors: $
 // --------------------------------------------------------------------------
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/IdXMLFile.h>
 #include <OpenMS/FORMAT/FileHandler.h>
@@ -71,9 +71,9 @@ protected:
 	void registerOptionsAndFlags_()
 	{
 		registerInputFileList_("in","<files>",StringList(),"input files separated by blanks",true);
-		setValidFormats_("in",StringList::create("mzData,featureXML,idXML"));
+		setValidFormats_("in",StringList::create("mzML,featureXML,idXML"));
 		registerOutputFileList_("out","<files>",StringList(),"output files separated by blanks",false);
-		setValidFormats_("out",StringList::create("mzData,featureXML,idXML"));
+		setValidFormats_("out",StringList::create("mzML,featureXML,idXML"));
 		registerOutputFileList_("transformations","<files>",StringList(),"transformation output files separated by blanks",false);
 		registerStringOption_("type","<name>","","Map alignment algorithm type",true);
 		setValidStrings_("type",Factory<MapAlignmentAlgorithm>::registeredProducts());
@@ -167,11 +167,11 @@ protected:
     // perform peak alignment
     //-------------------------------------------------------------
 		std::vector<TransformationDescription> transformations;
-		if (in_type == FileTypes::MZDATA)
+		if (in_type == FileTypes::MZML)
 		{
 			// load input
 			std::vector< MSExperiment<> > peak_maps(ins.size());
-			MzDataFile f;
+			MzMLFile f;
 			f.setLogType(log_type_);
 			for (Size i=0; i<ins.size(); ++i)
 			{
@@ -190,10 +190,17 @@ protected:
 			}
 
 			// write output
+			progresslogger.startProgress(0,outs.size(),"writing output files");
 			for (Size i=0; i<outs.size(); ++i)
 			{
+				progresslogger.setProgress(i);
+				
+				//annotate output with data processing info
+				addDataProcessing_(peak_maps[i], getProcessingInfo_(DataProcessing::ALIGNMENT));
+
 		    f.store(outs[i], peak_maps[i]);
 			}
+			progresslogger.endProgress();
 		}
     //-------------------------------------------------------------
     // perform feature alignment
@@ -204,13 +211,12 @@ protected:
 			std::vector< FeatureMap<> > feat_maps(ins.size());
 			FeatureXMLFile f;
 			// f.setLogType(log_type_); // TODO
-			progresslogger.startProgress(0,ins.size(),"loading input files (data)");
+			progresslogger.startProgress(0,ins.size(),"loading input files");
 			for (Size i=0; i<ins.size(); ++i)
 			{
 				progresslogger.setProgress(i);
 		    f.load(ins[i], feat_maps[i]);
 			}
-			progresslogger.setProgress(ins.size());
 			progresslogger.endProgress();
 
 			// try to align
@@ -225,13 +231,16 @@ protected:
 			}
 
 			// write output
-			progresslogger.startProgress(0,outs.size(),"writing output files (data)");
+			progresslogger.startProgress(0,outs.size(),"writing output files");
 			for (Size i=0; i<outs.size(); ++i)
 			{
 				progresslogger.setProgress(i);
+				
+				//annotate output with data processing info
+				addDataProcessing_(feat_maps[i], getProcessingInfo_(DataProcessing::ALIGNMENT));
+
 		    f.store(outs[i], feat_maps[i]);
 			}
-			progresslogger.setProgress(outs.size());
 			progresslogger.endProgress();
 		}
     //-------------------------------------------------------------
@@ -246,14 +255,13 @@ protected:
 			IdXMLFile f;
 			// f.setLogType_(log_type_);
 
-			progresslogger.startProgress(0,ins.size(),"loading input files (data)");
+			progresslogger.startProgress(0,ins.size(),"loading input files");
 			for (Size i=0; i<ins.size(); ++i)
 			{
 				progresslogger.setProgress(i);
 				String document_id;
 		    f.load( ins[i], protein_ids_vec[i], peptide_ids_vec[i], document_id);
 			}
-			progresslogger.setProgress(ins.size());
 			progresslogger.endProgress();
 
 			// try to align
@@ -268,13 +276,12 @@ protected:
 			}
 
 			// write output
-			progresslogger.startProgress(0,outs.size(),"writing output files (data)");
+			progresslogger.startProgress(0,outs.size(),"writing output files");
 			for (Size i=0; i<outs.size(); ++i)
 			{
 				progresslogger.setProgress(i);
 		    f.store( outs[i], protein_ids_vec[i], peptide_ids_vec[i] );
 			}
-			progresslogger.setProgress(outs.size());
 			progresslogger.endProgress();
 		}
 		else
@@ -288,14 +295,10 @@ protected:
 
 		if (trafos.size()!=0)
 		{
-			progresslogger.startProgress(0,transformations.size(),"writing output files (transformations)");
 			for (Size i=0; i<transformations.size(); ++i)
 			{
-				progresslogger.setProgress(i);
 				TransformationXMLFile().store(trafos[i],transformations[i]);
 			}
-			progresslogger.setProgress(transformations.size());
-			progresslogger.endProgress();
 		}
 
 		return EXECUTION_OK;

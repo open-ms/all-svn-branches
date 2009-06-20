@@ -82,7 +82,6 @@ namespace OpenMS
 			new_mods.insert((*it)->getId());
 		}
 		return new_mods;
-		
 	}
 
 	const ResidueModification& ModificationsDB::getModification(const String& mod_name) const
@@ -311,6 +310,7 @@ namespace OpenMS
 				{
 					vector<String> tmp_split;
 					line.split('"', tmp_split);
+					tmp_split[1].removeWhitespaces();
 					mod.setDiffFormula(tmp_split[1]);
 				}
 				else if (val.hasPrefix("DiffMono:"))

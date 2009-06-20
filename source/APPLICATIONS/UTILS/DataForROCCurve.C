@@ -146,9 +146,12 @@ class TOPPDataForROCCurve
 						it->sort();
 						map<String, DoubleReal>::iterator sequence;
 						sequence = IdXMLPeptides.find(it->getHits()[0].getSequence().toUnmodifiedString());
-						if(sequence != IdXMLPeptides.end() && sequence->second < it->getHits()[0].getScore())
+						if(sequence != IdXMLPeptides.end()) 
 						{
-							IdXMLPeptides[it->getHits()[0].getSequence().toUnmodifiedString()] = it->getHits()[0].getScore();						
+							if(sequence->second < it->getHits()[0].getScore())
+							{
+								IdXMLPeptides[it->getHits()[0].getSequence().toUnmodifiedString()] = it->getHits()[0].getScore();		
+							}
 						}
 						else
 						{
@@ -179,16 +182,13 @@ class TOPPDataForROCCurve
 			ROCCurve ROC;
 			Int true_count = 0;
 			Int false_count = 0;
-			cout<<"False:"<<endl;
+	//		cout<<"False:"<<endl;
 			for(map<String,DoubleReal>::iterator idxmliter = IdXMLPeptides.begin(); idxmliter != IdXMLPeptides.end(); ++idxmliter)
 			{
 				
 				bool exists  = false;
 				for(vector<FASTAFile::FASTAEntry>::iterator fastaiter = fasta_entries.begin(); fastaiter < fasta_entries.end();++fastaiter)
 				{
-					
-
-
 					if(fastaiter->sequence.hasSubstring(idxmliter->first))
 					{
 						exists  = true;
@@ -203,7 +203,7 @@ class TOPPDataForROCCurve
 				else
 				{
 					ROC.insertPair(idxmliter->second,false);
-					cout<<idxmliter->first<<"\n";
+					//cout<<idxmliter->first<<"\n";
 					++false_count;
 				}
 			}
@@ -236,8 +236,42 @@ class TOPPDataForROCCurve
 			}
 
 			file.store(out);
-			cout<<"Gesamt: "<<true_count+false_count<<", true: "<<true_count<<", false: "<<false_count<<endl;
+			cout<<"Unique Peptides with highest score: "<<endl;
+			cout<<"All counts: "<<true_count+false_count<<", true: "<<true_count<<", false: "<<false_count<<endl;
 			cout<<"AUC: "<<ROC.AUC()<<endl;
+			
+			ROCCurve ROC1;
+			true_count = 0;
+			false_count = 0;
+		//	cout<<"False:"<<endl;
+			for(vector<PeptideIdentification>::iterator idxmliter = idxml_peptideIdentification.begin(); idxmliter != idxml_peptideIdentification.end(); ++idxmliter)
+			{
+				bool exists  = false;
+				for(vector<FASTAFile::FASTAEntry>::iterator fastaiter = fasta_entries.begin(); fastaiter < fasta_entries.end();++fastaiter)
+				{
+					if(fastaiter->sequence.hasSubstring(idxmliter->getHits()[0].getSequence().toUnmodifiedString()))
+					{
+						exists  = true;
+						continue;
+					}
+				}
+				if(exists)
+				{
+					ROC1.insertPair(idxmliter->getHits()[0].getScore(),true);
+					++true_count;
+				}
+				else
+				{
+					ROC1.insertPair(idxmliter->getHits()[0].getScore(),false);
+			//		cout<<idxmliter->first<<"\n";
+					++false_count;
+				}
+			}
+			
+			cout<<"All top hits are count:"<<endl;
+			cout<<"All counts: "<<true_count+false_count<<", true: "<<true_count<<", false: "<<false_count<<endl;
+			cout<<"AUC: "<<ROC1.AUC()<<endl;
+			
 			
 			return EXECUTION_OK;
 		}

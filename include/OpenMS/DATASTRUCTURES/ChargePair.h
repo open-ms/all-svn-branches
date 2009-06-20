@@ -33,17 +33,19 @@
 
 #include <OpenMS/KERNEL/FeatureMap.h>
 
+
 namespace OpenMS
 {
 
   /**
     @brief Representation of a (putative) link between two Features, which stem from the same compound
-	 *but have different charge (including different adduct ions (H+, Na+, ..)
+	  but have different charge (including different adduct ions (H+, Na+, ..)
     
-    Only the referenced features are stored in the base class Peak2D.
-    The original datapoint is referenced by the map and element index.
+    A ChargePair represents an edge between two Features and specifies their respective charge and adducts,
+    so that when decharged they can be explained as stemming from the same compound.
+    
   	
-  	@ingroup Kernel
+  	@ingroup Datastructures
   */
   class OPENMS_DLLAPI ChargePair
   {
@@ -63,8 +65,8 @@ namespace OpenMS
 		{
 		}
 		/// Constructor from map index, element index and Feature
-		ChargePair(const UInt& index0,
-							 const UInt& index1,
+		ChargePair(const Size& index0,
+							 const Size& index1,
 							 const Int& charge0,
 							 const Int& charge1,
 							 const Size& compomer_id, 
@@ -128,13 +130,13 @@ namespace OpenMS
 		}
 				
 		/// Returns the element index (for element 0 or 1)
-		UInt getElementIndex(UInt pairID) const
+		Size getElementIndex(UInt pairID) const
 		{
 			if (pairID == 0) return feature0_index_;
 			else return feature1_index_;
 		}
 		/// Set the element index (for element 0 or 1)
-		void setElementIndex(UInt pairID, UInt e)
+		void setElementIndex(UInt pairID, Size e)
 		{
 			if (pairID == 0) feature0_index_ = e;
 			else feature1_index_ = e;
@@ -200,9 +202,9 @@ namespace OpenMS
 	 protected:
     	
 		/// Int of the first element within the FeatureMap
-		UInt feature0_index_;
+		Size feature0_index_;
 		/// Int of the second element within the FeatureMap
-		UInt feature1_index_;
+		Size feature1_index_;
 		/// Assumed charge of the first feature
 		Int feature0_charge_;
 		/// Assumed charge of the second feature

@@ -25,7 +25,7 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinder_impl.h>
@@ -114,7 +114,7 @@ class TOPPFeatureFinder
 	void registerOptionsAndFlags_()
 	{
 		registerInputFile_("in","<file>","","input file ");
-		setValidFormats_("in",StringList::create("mzData"));
+		setValidFormats_("in",StringList::create("mzML"));
 		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("featureXML"));
 		registerStringOption_("type","<name>","","FeatureFinder algorithm type\n",true);
@@ -150,7 +150,7 @@ class TOPPFeatureFinder
 		
 		//reading input data
 		PeakMap exp;
-		MzDataFile f;
+		MzMLFile f;
 		f.setLogType(log_type_);
 		PeakFileOptions options;
 
@@ -189,6 +189,10 @@ class TOPPFeatureFinder
 		//-------------------------------------------------------------
 		// writing files
 		//-------------------------------------------------------------
+
+		//annotate output with data processing info
+		addDataProcessing_(features, getProcessingInfo_(DataProcessing::QUANTITATION));
+
 		FeatureXMLFile map_file;
 		map_file.store(out,features);			
 			

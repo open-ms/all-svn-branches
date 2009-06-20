@@ -34,7 +34,6 @@
 #include <OpenMS/FORMAT/IdXMLFile.h>
 //#include <OpenMS/FORMAT/AnalysisXMLFile.h>
 
-
 #include <ctime>
 #include <vector>
 #include <map>
@@ -74,7 +73,7 @@ class TOPPSpecLibSearcher
 			registerInputFile_("lib","<file>","","searchable spectral library(MSP formated)");
 			registerOutputFile_("out","<file>","","Output File");
 			setValidFormats_("out",StringList::create("IdXML"));
-			registerDoubleOption_("precursor_mass_tolerance","<tolerance>",1.5,"Precursor mass tolerance, (Th)",false);
+			registerDoubleOption_("precursor_mass_tolerance","<tolerance>",3,"Precursor mass tolerance, (Th)",false);
 			registerIntOption_("precursor_mass_multiplier","<number>",100,"multipling this number with precursor_mass creates an integer",false,true);
 		//	registerDoubleOption_("fragment_mass_tolerance","<tolerance>",0.3,"Fragment mass error",false);
 			
@@ -121,9 +120,9 @@ class TOPPSpecLibSearcher
 			//-------------------------------------------------------------
 			//time counter
 			time_t start_time = time(NULL);
+			
 			MzDataFile spectra;
 			MSPFile spectral_library;
-			vector< PeptideIdentification > ids;
 			
 			RichPeakMap query, library;
 			
@@ -133,24 +132,20 @@ class TOPPSpecLibSearcher
 			spectra.load(in_spec,query);
 			
 			//library containing already identified peptide spectra
+			vector< PeptideIdentification > ids;			
 			spectral_library.load(in_lib,ids,library);
 			
 			//*******
-			//building hashmap for precursor mass search
+			//building map for precursor mass search
 			//*******
-			
 			map<Size, vector<RichPeakSpectrum*> > MSLibrary;
 			RichPeakMap::iterator s;
 			vector<PeptideIdentification>::iterator i;
 			for( s = library.begin(), i = ids.begin() ; s < library.end();++s,++i)
 			{
-			//	cout<<"ohne multiplier: "<< (*s).getPrecursors()[0].getMZ();
 				Size pm = (Size)(*i).getHits()[0].getSequence().getMonoWeight()*precursor_mass_multiplier;
-			//	cout<<" , pm: "<<pm;
-		//		pm = floor(pm);
-		//		cout<<" , floor(pm): "<< pm<<endl;
 				map<Size,vector<RichPeakSpectrum*> >::iterator found;
-				found = MSLibrary.find(pm);
+				found = MSLibrary.find(pm);				
 				if(found != MSLibrary.end())
 				{
 					PeptideIdentification& translocate_id = (*i);
@@ -168,9 +163,6 @@ class TOPPSpecLibSearcher
 					MSLibrary.insert(make_pair(pm,tmp));
 				}
 			}
-			//cout<<"Erstellung lief durch"<<endl;
-			//cout<<"MSLibrary.size(): " <<(int) MSLibrary.size()<<endl;
-
 			//compare function
 			PeakSpectrumCompareFunctor* comparor = Factory<PeakSpectrumCompareFunctor>::create(compare_function);
 			//-------------------------------------------------------------
@@ -181,19 +173,33 @@ class TOPPSpecLibSearcher
 			vector<PeptideIdentification> peptide_ids;
 			vector<ProteinIdentification> protein_ids;
 			Real min_pm,max_pm;
-
+			
+			ProteinIdentification prot_id;
+			//Parameters of identificaion
+			prot_id.setIdentifier("test");
+			prot_id.setSearchEngineVersion("SpecLibSearcher");
+			prot_id.setDateTime(DateTime::now());
+			prot_id.setScoreType(compare_function);
+			ProteinIdentification::SearchParameters searchparam;
+			searchparam.charges += (min_precursor_charge);
+			searchparam.charges += " - ";
+			searchparam.charges += (max_precursor_charge);
+			searchparam.precursor_tolerance = precursor_mass_tolerance;
+			prot_id.setSearchParameters(searchparam);
 			for(UInt j = 0; j < query.size(); ++j)
 			{
-			//cout<<"j: "<<j <<endl;
-			//Set identifier to be the same
+			//Set identifier for each identifications
 				PeptideIdentification pep_id;
-				pep_id.setIdentifier(j);
-				ProteinIdentification prot_id;
-				prot_id.setIdentifier(j);
+				pep_id.setIdentifier("test");
+				pep_id.setScoreType(compare_function);
+				ProteinHit pr_hit;
+				pr_hit.setAccession(j);
+				prot_id.insertHit(pr_hit);
 				
 				Real total_intensity = 0;
 				Real intensity_below_mz = 0;
-					//RichPeak1D to Peak1D transformation for the compare function query 
+				
+				//RichPeak1D to Peak1D transformation for the compare function query 
 				PeakSpectrum quer;
 				bool peak_ok = true;
 				for(UInt k = 0; k < query[j].size(); ++k)
@@ -212,9 +218,14 @@ class TOPPSpecLibSearcher
 						quer.push_back(peak);
 					}
 				}
-				//if not enough peaks in the specturm pass that one
-				//or querys 95% of total intensity is lower than allpeaks below m/z 
-				if(quer.size() < min_peak_number || intensity_below_mz < 0.95 * total_intensity)
+				//if not enough peaks in the specturm pass that one out
+				//Remove spectra with almost no peaks above a certain m/z value. 
+				//All query spectra with 95%+ of the total intensity below <m/z> will be removed.
+				if(quer.size() >= min_peak_number && intensity_below_mz < 0.95 * total_intensity)
+				{
+					peak_ok = true;
+				}
+				else
 				{
 					peak_ok = false;
 				}
@@ -224,16 +235,10 @@ class TOPPSpecLibSearcher
 					{
 						min_pm = ((query[j].getPrecursors()[0].getMZ() - precursor_mass_tolerance)*charge-(charge*1.00728)) *precursor_mass_multiplier;
 						max_pm = ((query[j].getPrecursors()[0].getMZ() + precursor_mass_tolerance)*charge-(charge*1.00728))*precursor_mass_multiplier;
-					//min_pm *= precursor_mass_multiplier;
-					//max_pm *= precursor_mass_multiplier;
 				
 					//SEARCH
-						cout<<"precursor"<<query[j].getPrecursors()[0].getMZ()<<endl;
-						cout<<"min "<<min_pm<<" " <<(Size) min_pm<<endl;
-						cout<<"max "<<max_pm<<" "<<(Size)max_pm<<endl;
 						for(Size pm = (Size)min_pm; pm <= ((Size)max_pm)+1; ++pm)
 						{
-					//cout<<"pm: "<<pm<<endl;
 							map<Size, vector<RichPeakSpectrum*> >::iterator found;
 							found = MSLibrary.find(pm);
 							if(found != MSLibrary.end())
@@ -242,9 +247,6 @@ class TOPPSpecLibSearcher
 								for(Size i = 0; i < library.size(); ++i)
 								{
 									Real this_pm  = library[i]->getPeptideIdentifications()[0].getHits()[0].getSequence().getMonoWeight()*precursor_mass_multiplier;
-							//	cout<<"this_pm - min_pm = ?"<<this_pm << " - " <<min_pm << " = "<<this_pm-min_pm<<endl;
-							//	cout<<"max_pm - this_pm = ?"<<max_pm << " - " <<this_pm << " = "<<max_pm-this_pm<<endl;
-							//	cout<<charge<<"und " << i <<" und "<<library[i]->getPeptideIdentifications()[0].getHits()[0].getCharge()<<endl ;
 									if(this_pm >= min_pm && max_pm >= this_pm)
 									{
 										PeakSpectrum librar;
@@ -262,7 +264,12 @@ class TOPPSpecLibSearcher
 										}
 										score = (*comparor)(quer,librar);
 											PeptideHit hit(library[i]->getPeptideIdentifications()[0].getHits()[0]);
+											DataValue RT(library[i]->getRT());
+											DataValue MZ(library[i]->getPrecursors()[0].getMZ());
+											hit.setMetaValue("RT",RT);
+											hit.setMetaValue("MZ",MZ);
 											hit.setScore(score);
+											hit.addProteinAccession(pr_hit.getAccession());
 											pep_id.insertHit(hit);
 									}
 								}
@@ -273,54 +280,15 @@ class TOPPSpecLibSearcher
 				pep_id.setHigherScoreBetter(true);
 				pep_id.sort();
 				peptide_ids.push_back(pep_id);
-				protein_ids.push_back(prot_id);
 			}
-
-				//!!!old
-				/*for(UInt i =0; i< library.size();++i)
-				{
-					PeakSpectrum quer;
-					PeakSpectrum librar;
-					//RichPeak1D to Peak1D transformation for the compare function
-					//query 
-					for(UInt k = 0; k < query[j].size(); ++k)
-					{
-						Peak1D peak;
-						peak.setIntensity(query[j][k].getIntensity());
-						peak.setMZ(query[j][k].getMZ());
-						peak.setPosition(query[j][k].getPosition());
-						quer.push_back(peak);
-					}
-					//library 
-					for(UInt l = 0; l< library[i].size(); ++l)
-					{
-						Peak1D peak;
-						peak.setIntensity(library[i][l].getIntensity());
-						peak.setMZ(library[i][l].getMZ());
-						peak.setPosition(library[i][l].getPosition());
-						librar.push_back(peak);
-					}
-					//write hits down
-					score = (*comparor)(quer,librar);
-						PeptideHit hit(ids[i].getHits()[0]);
-						hit.setScore(score);
-						pep_id.insertHit(hit);
-				}
-				pep_id.setHigherScoreBetter(true);
-				pep_id.sort();
-				peptide_ids.push_back(pep_id);
-				protein_ids.push_back(prot_id);
-			}*/
-			
-			
-			
+			protein_ids.push_back(prot_id);			
 			//-------------------------------------------------------------
 			// writing output
 			//-------------------------------------------------------------
 			IdXMLFile id_xml_file;
 			id_xml_file.store(out,protein_ids,peptide_ids);
 			time_t end_time = time(NULL);
-			cout<<"Time needed: "<<difftime(end_time,start_time)<<"\n";  
+			cout<<"Time needed: "<<difftime(end_time,start_time)<<" seconds"<<"\n";  
 			return EXECUTION_OK;
 		}
 		

@@ -52,6 +52,7 @@ IDRTCalibration
 SILACAnalyzer
 PrecursorIonSelector
 SpecLibSearcher
+SlowSearcher
 )
 
 ### add filenames to Visual Studio solution tree

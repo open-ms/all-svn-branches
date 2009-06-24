@@ -172,6 +172,13 @@ namespace OpenMS
 		//store old zoom state
 		if (add_to_stack)
 		{
+			// if we scrolled in between zooming we want to store the last position before zomming as well
+			if (	 (zoom_stack_.size()>0)
+					&& (zoom_stack_.back()!=visible_area_))
+			{
+				zoomAdd_(visible_area_);
+			}
+			// add current zoom
 			zoomAdd_(new_area);
 		}
 		
@@ -979,5 +986,4 @@ namespace OpenMS
 	}
 
 } //namespace
-
 

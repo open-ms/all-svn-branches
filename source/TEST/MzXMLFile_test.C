@@ -314,6 +314,13 @@ START_SECTION((template<typename MapType> void load(const String& filename, MapT
 	//test if it works with different peak types
 	MSExperiment<RichPeak1D> e_rich;
   file.load(OPENMS_GET_TEST_DATA_PATH("MzXMLFile_1.mzXML"),e_rich);
+
+	//zllib funcionality
+	MSExperiment<> zlib;
+	MSExperiment<> none;
+	file.load(OPENMS_GET_TEST_DATA_PATH("MzXMLFile_1.mzXML"),none);
+	file.load(OPENMS_GET_TEST_DATA_PATH("MzXMLFile_1_compressed.mzXML"),zlib);
+	TEST_EQUAL(zlib==none,true)
 END_SECTION
 
 START_SECTION(([EXTRA] load with metadata only flag))
@@ -452,6 +459,10 @@ START_SECTION(([EXTRA] load with intensity range))
 	TEST_REAL_SIMILAR(e[2][1].getIntensity(), 300)
 	TEST_REAL_SIMILAR(e[2][2].getPosition()[0], 130)
 	TEST_REAL_SIMILAR(e[2][2].getIntensity(), 200)
+	
+	
+
+	
 END_SECTION
 
 START_SECTION(([EXTRA] load/store for nested scans))
@@ -534,6 +545,7 @@ START_SECTION((template<typename MapType> void store(const String& filename, con
 	f.store(tmp_filename,e1);
 	f.load(tmp_filename,e2);
 	TEST_EQUAL(e1==e2, true);
+	
 END_SECTION
 
 START_SECTION([EXTRA] static bool isValid(const String& filename))

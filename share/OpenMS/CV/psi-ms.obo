@@ -4,8 +4,8 @@ saved-by: abertsch
 auto-generated-by: OBO-Edit 1.101
 default-namespace: MS
 remark: namespace: MS
-remark: version: 2.14.2
-remark: release date: 2009-06-17
+remark: version: 2.14.4
+remark: release date: 2009-06-23
 remark: coverage: Mass spectrometer output files and spectra interpretation
 remark: creator: Matt Chambers <matt.chambers <-at-> vanderbilt.edu>
 remark: publisher: HUPO Proteomics Standards Initiative Mass Spectrometry Standards Working Group and HUPO Proteomics Standards Initiative Proteomics Informatics Working Group 
@@ -5568,7 +5568,7 @@ name: matrix solution concentration
 def: "Concentration of the chemical solution used as matrix." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000832 ! MALDI matrix application
-relationship: has_units UO:0000051 ! Concentration Unit
+relationship: has_units UO:0000175 ! gram per liter 
 
 [Term]
 id: MS:1000836
@@ -5618,7 +5618,7 @@ name: wavelength
 def: "The distance between two peaks of the emitted laser beam." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000841 ! laser attribute
-relationship: has_units UO:0000001 ! length unit
+relationship: has_units UO:0000018 ! nanometer
 
 [Term]
 id: MS:1000844
@@ -5626,7 +5626,7 @@ name: focus diameter x
 def: "Describes the diameter of the laser beam in x direction." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000841 ! laser attribute
-relationship: has_units UO:0000001 ! length unit
+relationship: has_units UO:0000017 ! micrometer
 
 [Term]
 id: MS:1000845
@@ -5634,7 +5634,7 @@ name: focus diameter y
 def: "Describes the diameter of the laser beam in y direction." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000841 ! laser attribute
-relationship: has_units UO:0000001 ! length unit
+relationship: has_units UO:0000017 ! micrometer
 
 [Term]
 id: MS:1000846
@@ -5642,7 +5642,7 @@ name: pulse energy
 def: "Describes output energy of the laser system. May be attenuated by filters or other means." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000841 ! laser attribute
-relationship: has_units UO:0000111 ! Energy Unit
+relationship: has_units UO:0000112 ! joule
 
 [Term]
 id: MS:1000847
@@ -5650,7 +5650,7 @@ name: pulse duration
 def: "Describes how long the laser beam was emitted from the laser device." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000841 ! laser attribute
-relationship: has_units UO:0000003 ! Time Unit
+relationship: has_units UO:0000150 ! nanosecond
 
 [Term]
 id: MS:1000848
@@ -5658,7 +5658,7 @@ name: attenuation
 def: "Describes the reduction of the intensity of the laser beam energy." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000841 ! laser attribute
-relationship: has_units UO:0000003 ! Time Unit
+relationship: has_units UO:0000187 ! percent
 
 [Term]
 id: MS:1000849
@@ -5666,7 +5666,7 @@ name: impact angle
 def: "Describes the angle between the laser beam and the sample target." [PSI:MS]
 xref: value-type:xsd\:float "The allowed value-type for this CV term."
 is_a: MS:1000841 ! laser attribute
-relationship: has_units UO:0000121 ! Angle Unit
+relationship: has_units UO:0000185 ! degree
 
 [Term]
 id: MS:1000850
@@ -6313,6 +6313,7 @@ name: molecule taxonomy
 def: "The taxonomy of the resultant molecule from the search." [PSI:PI]
 xref: value-type:xsd\:string "The allowed value-type for this CV term."
 is_a: MS:1001085 ! protein result details
+is_a: MS:1001342 ! database sequence details
 
 [Term]
 id: MS:1001090
@@ -6961,8 +6962,8 @@ is_a: MS:1001450 ! decoy DB details
 
 [Term]
 id: MS:1001197
-name: DB composition forward+decoy
-def: "Decoy database composition: database contains original (forward) and decoy entries." [PSI:PI]
+name: DB composition target+decoy
+def: "Decoy database composition: database contains original (target) and decoy entries." [PSI:PI]
 is_a: MS:1001450 ! decoy DB details
 
 [Term]
@@ -7047,6 +7048,7 @@ is_obsolete: true
 id: MS:1001214
 name: prot:global FDR
 def: "Estimation of global false discovery rate of the proteins." [PSI:PI]
+xref: value-type:xsd\:double "The allowed value-type for this CV term."
 is_a: MS:1001405 ! spectrum identification result details
 
 [Term]
@@ -8657,12 +8659,14 @@ id: MS:1001491
 name: percolator:Q value
 def: "percolator:Q value." [PSI:MS]
 is_a: MS:1001153 ! search engine specific score 
+xref: value-type:xsd\:double "The allowed value-type for this CV term."
 is_a: MS:1001143 ! search engine specific score for peptides    
 
 [Term]
 id: MS:1001492
 name: percolator:score 
 def: "percolator:score." [PSI:MS]
+xref: value-type:xsd\:double "The allowed value-type for this CV term."
 is_a: MS:1001153 ! search engine specific score 
 is_a: MS:1001143 ! search engine specific score for peptides    
 
@@ -8670,6 +8674,7 @@ is_a: MS:1001143 ! search engine specific score for peptides
 id: MS:1001493
 name: percolaror:PEP 
 def: "Posterior error probability." [PSI:MS]
+xref: value-type:xsd\:double "The allowed value-type for this CV term."
 is_a: MS:1001153 ! search engine specific score 
 is_a: MS:1001143 ! search engine specific score for peptides    
 

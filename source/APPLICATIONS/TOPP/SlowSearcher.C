@@ -32,14 +32,11 @@
 #include <OpenMS/CONCEPT/Factory.h>
 #include <OpenMS/FORMAT/MSPFile.h>
 #include <OpenMS/FORMAT/IdXMLFile.h>
-#include <OpenMS/COMPARISON/SPECTRA/BinnedSpectrum.h>
-#include <OpenMS/COMPARISON/SPECTRA/SpectraSTSimilarityScore.h>
 //#include <OpenMS/FORMAT/AnalysisXMLFile.h>
 
 #include <ctime>
 #include <vector>
 #include <map>
-#include <cmath>
 using namespace OpenMS;
 using namespace std;
 
@@ -96,7 +93,7 @@ class TOPPSpecLibSearcher
      registerDoubleOption_("filter_all_peaks_below_mz","<threshold>",520,"Remove spectra with almost no peaks above a certain m/z value. All query spectra with 95%+ of the total intensity below <m/z> will be removed.",false);	
      //registerStringOption_("fixed_modifications", "<mods>", "", "fixed modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048 currently no effect", false);
      // registerStringOption_("variable_modifications", "<mods>", "", "variable modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048", false);
-		//	vielleicht des noch später??
+		//	vielleicht des noch sp√§ter??
 			addEmptyLine_();
 			addText_("");
 		}
@@ -111,7 +108,7 @@ class TOPPSpecLibSearcher
 			String out = getStringOption_("out");
 			String in_lib = getStringOption_("lib");
 			String compare_function = getStringOption_("compare_function");
-			Int precursor_mass_multiplier = getIntOption_("precursor_mass_multiplier");
+	//		Int precursor_mass_multiplier = getIntOption_("precursor_mass_multiplier");
 			Real precursor_mass_tolerance = getDoubleOption_("precursor_mass_tolerance");
 			Int min_precursor_charge = getIntOption_("min_precursor_charge");
 			Int max_precursor_charge = getIntOption_("max_precursor_charge");
@@ -138,34 +135,6 @@ class TOPPSpecLibSearcher
 			vector< PeptideIdentification > ids;			
 			spectral_library.load(in_lib,ids,library);
 			
-			//*******
-			//building map for precursor mass search
-			//*******
-			map<Size, vector<RichPeakSpectrum*> > MSLibrary;
-			RichPeakMap::iterator s;
-			vector<PeptideIdentification>::iterator i;
-			for( s = library.begin(), i = ids.begin() ; s < library.end();++s,++i)
-			{
-				Size pm = (Size)(*i).getHits()[0].getSequence().getMonoWeight()*precursor_mass_multiplier;
-				map<Size,vector<RichPeakSpectrum*> >::iterator found;
-				found = MSLibrary.find(pm);				
-				if(found != MSLibrary.end())
-				{
-					PeptideIdentification& translocate_id = (*i);
-					(*s).getPeptideIdentifications().push_back(translocate_id);
-					RichPeakSpectrum* translocate_s = &(*s);
-					found->second.push_back(translocate_s);
-				}
-				else
-				{
-					vector<RichPeakSpectrum*> tmp;
-					PeptideIdentification& translocate_id = (*i);
-					RichPeakSpectrum* translocate_s = &(*s);
-					(*s).getPeptideIdentifications().push_back(translocate_id);
-					tmp.push_back(translocate_s);
-					MSLibrary.insert(make_pair(pm,tmp));
-				}
-			}
 			//compare function
 			PeakSpectrumCompareFunctor* comparor = Factory<PeakSpectrumCompareFunctor>::create(compare_function);
 			//-------------------------------------------------------------
@@ -211,7 +180,7 @@ class TOPPSpecLibSearcher
 					if(query[j][k].getIntensity() >  remove_peak_intensity_threshold)
 					{
 						total_intensity +=  query[j][k].getIntensity();
-						peak.setIntensity(sqrt(query[j][k].getIntensity()));
+						peak.setIntensity(query[j][k].getIntensity());
 						peak.setMZ(query[j][k].getMZ());
 						if (peak.getMZ() < filter_all_peaks_below_mz) 
 						{
@@ -234,89 +203,48 @@ class TOPPSpecLibSearcher
 				}
 				if(peak_ok)
 				{
-					for(Int charge = min_precursor_charge; charge <= max_precursor_charge; ++charge)
-					{
-						min_pm = ((query[j].getPrecursors()[0].getMZ() - precursor_mass_tolerance)*charge-(charge*1.00728)) *precursor_mass_multiplier;
-						max_pm = ((query[j].getPrecursors()[0].getMZ() + precursor_mass_tolerance)*charge-(charge*1.00728))*precursor_mass_multiplier;
+		//			for(Int charge = min_precursor_charge; charge <= max_precursor_charge; ++charge)
+		//			{
+						min_pm = (query[j].getPrecursors()[0].getMZ() - precursor_mass_tolerance);
+						max_pm = (query[j].getPrecursors()[0].getMZ() + precursor_mass_tolerance);
 				
 					//SEARCH
-						for(Size pm = (Size)min_pm; pm <= ((Size)max_pm)+1; ++pm)
+						vector<PeptideIdentification>::iterator pep;
+						RichPeakMap::iterator it;
+						for( it = library.begin(), pep = ids.begin(); it < library.end(); ++it,++pep)
 						{
-							map<Size, vector<RichPeakSpectrum*> >::iterator found;
-							found = MSLibrary.find(pm);
-							if(found != MSLibrary.end())
+							if(it->getPrecursors()[0].getMZ() >= min_pm && it->getPrecursors()[0].getMZ() <= max_pm)
 							{
-								vector<RichPeakSpectrum*>& library = found->second;
-								for(Size i = 0; i < library.size(); ++i)
-								{
-									Real this_pm  = library[i]->getPeptideIdentifications()[0].getHits()[0].getSequence().getMonoWeight()*precursor_mass_multiplier;
-									if(this_pm >= min_pm && max_pm >= this_pm)
-									{
 										PeakSpectrum librar;
 										//library entry transformation 
-										for(UInt l = 0; l< library[i]->size(); ++l)
+										for(UInt l = 0; l < it->size(); ++l)
 										{
 											Peak1D peak;
-											if((*library[i])[l].getIntensity() >  remove_peak_intensity_threshold)
+											if((*it)[l].getIntensity() >  remove_peak_intensity_threshold)
 											{
-												peak.setIntensity(sqrt((*library[i])[l].getIntensity()));
-												peak.setMZ((*library[i])[l].getMZ());
-												peak.setPosition((*library[i])[l].getPosition());
+												peak.setIntensity((*it)[l].getIntensity());									
+												peak.setMZ((*it)[l].getMZ());
+												peak.setPosition((*it)[l].getPosition());
 												librar.push_back(peak);
 											}
 										}
-										PeptideHit hit(library[i]->getPeptideIdentifications()[0].getHits()[0]);
-										if(compare_function == "SpectraSTSimilarityScore")
-										{
-											SpectraSTSimilarityScore* sp= static_cast<SpectraSTSimilarityScore*>(comparor);
-											BinnedSpectrum quer_bin = sp->transform(quer);
-											BinnedSpectrum librar_bin = sp->transform(librar);
-											score = (*sp)(quer_bin,librar_bin);
-											double dot_bias = sp->dot_bias(quer_bin,librar_bin,score);
-											hit.setMetaValue("DB",dot_bias);
-										}
-										else
-										{
-											score = (*comparor)(quer,librar);
-										}
-										
-										DataValue RT(library[i]->getRT());
-										DataValue MZ(library[i]->getPrecursors()[0].getMZ());
-										hit.setMetaValue("RT",RT);
-										hit.setMetaValue("MZ",MZ);
-										hit.setScore(score);
-										hit.addProteinAccession(pr_hit.getAccession());
-										pep_id.insertHit(hit);
-									}
+										score = (*comparor)(quer,librar);
+											PeptideHit hit((*pep).getHits()[0]);
+											DataValue RT(it->getRT());
+											DataValue MZ(it->getPrecursors()[0].getMZ());
+											hit.setMetaValue("RT",RT);
+											hit.setMetaValue("MZ",MZ);
+											hit.setScore(score);
+											hit.addProteinAccession(pr_hit.getAccession());
+											pep_id.insertHit(hit);
 								}
 							}
 						}
-					}
-				}
+				
+				pep_id.setMetaValue("RT",query[j].getRT());
+				pep_id.setMetaValue("MZ",query[j].getPrecursors()[0].getMZ());
 				pep_id.setHigherScoreBetter(true);
 				pep_id.sort();
-
-				if(compare_function =="SpectraSTSimilarityScore")
-				{
-
-					if(!pep_id.empty() && !pep_id.getHits().empty())
-					{
-						vector<PeptideHit> final_hits;					
-						final_hits.resize(pep_id.getHits().size());
-						SpectraSTSimilarityScore* sp= static_cast<SpectraSTSimilarityScore*>(comparor);
-						double delta_D = sp->delta_D(pep_id.getHits()[0].getScore(), pep_id.getHits()[1].getScore());
-						for(Size s = 0; s < pep_id.getHits().size();++s)
-						{
-							final_hits[s] = pep_id.getHits()[s];
-							final_hits[s].setScore(sp->compute_F(pep_id.getHits()[s].getScore(),delta_D,pep_id.getHits()[s].getMetaValue("DB")));
-							final_hits[s].removeMetaValue("DB");
-						}
-						pep_id.setHits(final_hits);
-						pep_id.sort();
-						pep_id.setMetaValue("MZ",query[j].getPrecursors()[0].getMZ());
-						pep_id.setMetaValue("RT",query[j].getRT());
-					}
-				}
 				peptide_ids.push_back(pep_id);
 			}
 			protein_ids.push_back(prot_id);			

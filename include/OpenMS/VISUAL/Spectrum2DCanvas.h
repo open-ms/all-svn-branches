@@ -54,6 +54,8 @@ namespace OpenMS
     @improvement Support different peak icons - cross, star, square - and sizes (HiWi)
     @improvement Add log mode (Marc)
 		
+		@improvement Snap also to min intensity (Hiwi)
+		
   	@ingroup SpectrumWidgets
   */
   class OPENMS_DLLAPI Spectrum2DCanvas 

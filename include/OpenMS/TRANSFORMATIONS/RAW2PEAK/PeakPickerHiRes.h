@@ -48,6 +48,13 @@ namespace OpenMS
 		 
 		 @htmlinclude OpenMS_PeakPickerCWT.parameters
 		 
+<<<<<<< .working
+=======
+		 @htmlinclude OpenMS_PeakPickerHiRes.parameters
+
+		 @note The peaks must be sorted according to ascending m/z!
+		 
+>>>>>>> .merge-right.r5428
 		 @ingroup PeakPicking
   */
   class OPENMS_DLLAPI PeakPickerHiRes

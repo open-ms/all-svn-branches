@@ -73,10 +73,10 @@ class TOPPFFEVal
 		setValidFormats_("abort_reasons", StringList::create("featureXML"));
 		registerDoubleOption_("rt_tol","<double>",0.15,"Allowed tolerance of RT relative to average feature RT span.", false);
 		setMinFloat_("rt_tol",0);
-		setMaxFloat_("rt_tol",1);
+		registerDoubleOption_("rt_tol_abs","<double>",-1.0,"Allowed absolute tolerance of RT (overwrites 'rt_tol' if set above zero).", false);
+		setMinFloat_("rt_tol_abs",-1);
 		registerDoubleOption_("mz_tol","<double>",0.25,"Allowed tolerance in m/z (is divided by charge).", false);
 		setMinFloat_("mz_tol",0);
-		setMaxFloat_("mz_tol",1);
 	}
 	
 	/// Counts the number of features with meta value @p name equal to @p value
@@ -129,16 +129,34 @@ class TOPPFFEVal
 			FeatureXMLFile().load(getStringOption_("abort_reasons"),abort_reasons);
 		}
 		DoubleReal mz_tol = getDoubleOption_("mz_tol");
+		writeDebug_(String("Final MZ tolerance: ") + mz_tol, 1);
 		
 		//determine average RT tolerance:
 		//median feature RT span times given factor
 		vector<DoubleReal> rt_spans;
 		for (Size t=0; t<features_in.size(); ++t)
 		{
-			rt_spans.push_back(features_in[t].getConvexHull().getBoundingBox().width());
+			if (features_in[t].getConvexHulls().size()!=0)
+			{
+				rt_spans.push_back(features_in[t].getConvexHull().getBoundingBox().width());
+			}
 		}
-		sort(rt_spans.begin(), rt_spans.end());
-		DoubleReal rt_tol = getDoubleOption_("rt_tol")*rt_spans[rt_spans.size()/2];
+		//feature convex hulls are available => relative RT span
+		DoubleReal rt_tol = getDoubleOption_("rt_tol_abs");
+		if (rt_tol<0.0)
+		{
+			if (rt_spans.size()!=0)
+			{
+				sort(rt_spans.begin(), rt_spans.end());
+				rt_tol = getDoubleOption_("rt_tol")*rt_spans[rt_spans.size()/2];
+			}
+			else
+			{
+				writeLog_("Error: Input features do not have convex hulls. You have to set 'rt_tol_abs'!");
+				return ILLEGAL_PARAMETERS;
+			}
+		}
+		writeDebug_(String("Final RT tolerance: ") + rt_tol, 1);
 		
 		//general statistics
 		std::vector<DoubleReal> ints_t;
@@ -285,9 +303,18 @@ class TOPPFFEVal
 		cout << endl;
 		cout << "intensity statistics:" << endl;
 		cout << "=====================" << endl;
-		cout << "correlation of found features: " << pearsonCorrelationCoefficient(ints_i.begin(),ints_i.end(),ints_t.begin(),ints_t.end()) << endl;
-		cout << "intensity distribution of found: " << fiveNumbers(ints_found,1) << endl;
-		cout << "intensity distribution of missed: " << fiveNumbers(ints_missed,1) << endl;
+		if (ints_i.size()==0)
+		{
+			cout << "correlation of found features: nan" << endl;
+			cout << "intensity distribution of found: 0.0 0.0 0.0 0.0 0.0" << endl;
+			cout << "intensity distribution of missed: 0.0 0.0 0.0 0.0 0.0" << endl;
+		}
+		else
+		{
+			cout << "correlation of found features: " << pearsonCorrelationCoefficient(ints_i.begin(),ints_i.end(),ints_t.begin(),ints_t.end()) << endl;
+			cout << "intensity distribution of found: " << fiveNumbers(ints_found,1) << endl;
+			cout << "intensity distribution of missed: " << fiveNumbers(ints_missed,1) << endl;
+		}
 		
 		//------------------------ charges ------------------------
 		cout << endl;

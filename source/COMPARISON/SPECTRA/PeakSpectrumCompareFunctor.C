@@ -34,6 +34,7 @@
 #include <OpenMS/COMPARISON/SPECTRA/SteinScottImproveScore.h>
 #include <OpenMS/COMPARISON/SPECTRA/CompareFouriertransform.h>
 #include <OpenMS/COMPARISON/SPECTRA/PeakAlignment.h>
+#include <OpenMS/COMPARISON/SPECTRA/SpectraSTSimilarityScore.h>
 #include <OpenMS/CONCEPT/Factory.h>
 
 #include <cmath>
@@ -75,6 +76,7 @@ namespace OpenMS
 		Factory<PeakSpectrumCompareFunctor>::registerProduct(SteinScottImproveScore::getProductName(), &SteinScottImproveScore::create);
 		Factory<PeakSpectrumCompareFunctor>::registerProduct(CompareFouriertransform::getProductName(), &CompareFouriertransform::create);
 		Factory<PeakSpectrumCompareFunctor>::registerProduct(PeakAlignment::getProductName(), &PeakAlignment::create);
+		Factory<PeakSpectrumCompareFunctor>::registerProduct(SpectraSTSimilarityScore::getProductName(), &SpectraSTSimilarityScore::create);
 	}
 
 }

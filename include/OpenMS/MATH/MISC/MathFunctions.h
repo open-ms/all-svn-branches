@@ -52,7 +52,7 @@ namespace OpenMS
 
 			@ingroup MathFunctionsMisc
 		*/
-		inline static double ceil_decimal(double x, int decPow)
+		inline static double ceilDecimal(double x, int decPow)
 		{
 			return (ceil(x/pow(10.0,decPow)))*pow(10.0,decPow); // decimal shift right, ceiling, decimal shift left
 		}
@@ -67,7 +67,7 @@ namespace OpenMS
 
 			@ingroup MathFunctionsMisc
 		*/
-		inline static double round_decimal(double x, int decPow)
+		inline static double roundDecimal(double x, int decPow)
 		{
 			if (x>0) return (floor(0.5+x/pow(10.0,decPow)))*pow(10.0,decPow);
 			return -((floor(0.5+fabs(x)/pow(10.0,decPow)))*pow(10.0,decPow));
@@ -133,6 +133,16 @@ namespace OpenMS
 			{
 				return T(ceil(x-T(0.5)));
 			}
+		}
+		
+		/**
+			@brief Returns if @p a is approximately equal @p, allowing a tolerance of @p tol
+		
+			@ingroup MathFunctionsMisc
+		*/
+		inline static bool approximatelyEqual(DoubleReal a, DoubleReal b, DoubleReal tol)
+		{
+			return std::abs(a - b) <= tol;
 		}
 
 	} // namespace Math

@@ -37,6 +37,8 @@ PeakTypeEstimator.C
 PepNovoInfile.C
 PepNovoOutfile.C
 PepXMLFile.C
+PepXMLFileMascot.C
+ProtXMLFile.C
 SequestInfile.C
 SequestOutfile.C
 TextFile.C

@@ -53,6 +53,7 @@ SILACAnalyzer
 PrecursorIonSelector
 SpecLibSearcher
 SlowSearcher
+IDFileConverter
 )
 
 ### add filenames to Visual Studio solution tree

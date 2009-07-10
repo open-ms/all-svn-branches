@@ -87,6 +87,8 @@ namespace OpenMS
 			EdgeIterator edgesEnd();
 			/// Removes all currently selected edges and vertices
 			void removeSelected();
+			/// Updates all edge colors (color of green and yellow edges can change when edges are added/removed)
+			void updateEdgeColors();
 			
 		public slots:
 		
@@ -116,10 +118,8 @@ namespace OpenMS
 			
 			/// Returns the vertex in the foreground at position @p pos , if existent, otherwise 0.
 			TOPPASVertex* getVertexAt_(const QPointF& pos);
-			/// Returns if edge (u,v) would be a valid edge if inserted into the graph
-			TOPPASEdge::EdgeValidity getEdgeValidity_(TOPPASVertex* u, TOPPASVertex* v);
-			/// Updates all edge colors (color of green and yellow edges can change when edges are added/removed)
-			void updateEdgeColors_();
+			/// Returns whether an edge between node u and v would be allowed
+			bool isEdgeAllowed_(TOPPASVertex* u, TOPPASVertex* v);
 			/// DFS helper method. Returns true, if a back edge has been discovered
 			bool dfsVisit_(TOPPASVertex* vertex);
 	};

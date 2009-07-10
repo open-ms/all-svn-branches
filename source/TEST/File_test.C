@@ -73,7 +73,10 @@ START_SECTION((static bool readable(const String &file)))
 END_SECTION
 
 START_SECTION((static bool writable(const String &file)))
-	TEST_EQUAL(File::writable("/this/file/cannot/be/written/does_not_exists.txt"), false)
+	TEST_EQUAL(File::writable("/this/file/cannot/be/written.txt"), false)
+	TEST_EQUAL(File::writable(OPENMS_GET_TEST_DATA_PATH("File_test_empty.txt")), true)
+	TEST_EQUAL(File::writable(OPENMS_GET_TEST_DATA_PATH("File_test_imaginary.txt")), true)
+		
 	String filename;
 	NEW_TMP_FILE(filename);
 	TEST_EQUAL(File::writable(filename), true)
@@ -115,6 +118,20 @@ START_SECTION((static String getOpenMSDataPath()))
 	NOT_TESTABLE
 END_SECTION
 
+START_SECTION(static String removeExtension(const String& file))
+	TEST_STRING_EQUAL(File::removeExtension(""),"")
+	TEST_STRING_EQUAL(File::removeExtension("/home/doe/file"),"/home/doe/file")
+	TEST_STRING_EQUAL(File::removeExtension("/home/doe/file.txt"),"/home/doe/file")
+	TEST_STRING_EQUAL(File::removeExtension("/home/doe/file.txt.tgz"),"/home/doe/file.txt")
+END_SECTION
+
+START_SECTION(static bool isDirectory(const String& path))
+	TEST_EQUAL(File::isDirectory(""),false)
+	TEST_EQUAL(File::isDirectory("."),true)
+	TEST_EQUAL(File::isDirectory(OPENMS_GET_TEST_DATA_PATH("")),true)
+	TEST_EQUAL(File::isDirectory(OPENMS_GET_TEST_DATA_PATH("does_not_exists.txt")),false)
+	TEST_EQUAL(File::isDirectory(OPENMS_GET_TEST_DATA_PATH("File_test_text.txt")),false)
+END_SECTION
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

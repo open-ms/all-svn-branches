@@ -27,19 +27,12 @@
 
 #include <OpenMS/VISUAL/TOPPASInputFileVertex.h>
 #include <OpenMS/VISUAL/DIALOGS/TOPPASInputFileDialog.h>
+#include <OpenMS/VISUAL/TOPPASScene.h>
 
 namespace OpenMS
 {
 	TOPPASInputFileVertex::TOPPASInputFileVertex()
 		:	TOPPASVertex(),
-			file_()
-	{
-		pen_color_ = Qt::black;
-		brush_color_ = Qt::lightGray;
-	}
-	
-	TOPPASInputFileVertex::TOPPASInputFileVertex(const String& name, const String& type)
-		: TOPPASVertex(name, type),
 			file_()
 	{
 		pen_color_ = Qt::black;
@@ -75,10 +68,46 @@ namespace OpenMS
 		{
 			file_ = tifd.getFilename();
 		}
+		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
 	}
 	
 	const QString& TOPPASInputFileVertex::getFilename()
 	{
 		return file_;
+	}
+	
+	void TOPPASInputFileVertex::paint(QPainter* painter, const QStyleOptionGraphicsItem* /*option*/, QWidget* /*widget*/)
+	{
+		QPen pen(pen_color_, 1, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
+		if (isSelected())
+		{
+			pen.setWidth(2);
+			painter->setBrush(brush_color_.darker(130));
+		}
+		else
+		{
+			painter->setBrush(brush_color_);
+		}
+		painter->setPen(pen);
+	
+		QPainterPath path;
+		path.addRoundRect(-70.0, -40.0, 140.0, 80.0, 20, 20);		
+ 		painter->drawPath(path);
+ 		
+		QString text = "Input file";
+		QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, text);
+		painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), text);
+	}
+	
+	QRectF TOPPASInputFileVertex::boundingRect() const
+	{
+		return QRectF(-71,-41,142,82);
+	}
+	
+	QPainterPath TOPPASInputFileVertex::shape () const
+	{
+		QPainterPath shape;
+		shape.addRoundRect(-71.0, -41.0, 142.0, 81.0, 20, 20);
+		return shape;
 	}
 }

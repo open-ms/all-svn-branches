@@ -76,7 +76,11 @@ namespace OpenMS
 		  - Pressing the @em Backspace key resets the zoom (and stack)
     - Measure mode
       - Activated using the SHIFT key
-      
+    
+    @improvement Add log mode (Hiwi)
+
+    @todo Allow reordering the layer list by drag-and-drop (Hiwi, Johannes)
+
 		@ingroup SpectrumWidgets
 	*/
 	class OPENMS_DLLAPI SpectrumCanvas 
@@ -226,8 +230,6 @@ namespace OpenMS
 			{
 				case LayerData::F_HULLS:
 					return layers_[current_layer_].f1;
-				case LayerData::F_NUMBERS:
-					return layers_[current_layer_].f2;
 				case LayerData::F_HULL:
 					return layers_[current_layer_].f3;
 				case LayerData::P_PRECURSORS:
@@ -252,9 +254,6 @@ namespace OpenMS
 			{
 				case LayerData::F_HULLS:
 					layers_[current_layer_].f1 = value;
-					break;
-				case LayerData::F_NUMBERS:
-					layers_[current_layer_].f2 = value;
 					break;
 				case LayerData::F_HULL:
 					layers_[current_layer_].f3 = value;
@@ -281,8 +280,6 @@ namespace OpenMS
 			{
 				case LayerData::F_HULLS:
 					return layers_[layer].f1;
-				case LayerData::F_NUMBERS:
-					return layers_[layer].f2;
 				case LayerData::F_HULL:
 					return layers_[layer].f3;
 				case LayerData::P_PRECURSORS:
@@ -295,7 +292,7 @@ namespace OpenMS
 			std::cout << "Error: SpectrumCanvas::getLayerFlag -- unknown flag '" << f << "'!" << std::endl;
 			return false;
 		}
-
+		
 		/// sets a layer flag of the layer @p layer
 		void setLayerFlag(Size layer, LayerData::Flags f, bool value)
 		{
@@ -307,9 +304,6 @@ namespace OpenMS
 			{
 				case LayerData::F_HULLS:
 					layers_[layer].f1 = value;
-					break;
-				case LayerData::F_NUMBERS:
-					layers_[layer].f2 = value;
 					break;
 				case LayerData::F_HULL:
 					layers_[layer].f3 = value;
@@ -328,6 +322,18 @@ namespace OpenMS
 			update();
 		}
 
+		inline void setLabel(LayerData::LabelType label)
+		{
+			//abort if there are no layers
+			if (layers_.empty()) return;
+			
+			OPENMS_PRECONDITION(current_layer_ < layers_.size(), "SpectrumCanvas::setLabel() index overflow");
+			layers_[current_layer_].label = label;
+			
+			update_buffer_ = true;
+			update();
+		}
+		
 		/**
 			@brief Returns the currently visible area
 			
@@ -500,8 +506,13 @@ namespace OpenMS
 		/// Shows the preferences dialog of the active layer
 		virtual void showCurrentLayerPreferences() = 0;
 
-		/// Shows a dialog with the meta data, which can be @p modifiable or not
-		virtual void showMetaData(bool modifiable=false);
+		/**
+			@rief Shows a dialog with the meta data
+			
+			@param modifiable indicates if the data can be modified.
+			@param index If given, the meta data of the corresponding element (spectrum, feature, consensus feature) is shown instead of the layer meta data.
+		*/
+		virtual void showMetaData(bool modifiable=false, Int index = -1);
 
 		/**
 			@brief Saves the current layer data.

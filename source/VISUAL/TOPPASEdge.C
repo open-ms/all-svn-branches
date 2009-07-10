@@ -34,6 +34,7 @@
 
 #include <QtGui/QPainter>
 #include <QtGui/QPainterPath>
+#include <QtGui/QMessageBox>
 
 namespace OpenMS
 {	
@@ -376,7 +377,7 @@ namespace OpenMS
 		return edge_type_;
 	}
 	
-	bool TOPPASEdge::getValidity()
+	TOPPASEdge::EdgeStatus TOPPASEdge::getEdgeStatus()
 	{
 		TOPPASVertex* source = getSourceVertex();
 		TOPPASVertex* target = getTargetVertex();
@@ -408,7 +409,13 @@ namespace OpenMS
 		{
 			if (target_param_has_list_type)
 			{
-				return false;
+				// source gives file, target takes list
+				return ES_MISMATCH_FILE_LIST;
+			}
+			else if (target_in_param_ == -1)
+			{
+				// no param selected
+				return ES_NO_TARGET_PARAM;
 			}
 			else if (target_param_types.empty())
 			{
@@ -431,13 +438,29 @@ namespace OpenMS
 						}
 					}
 				}
+				else if (file_name == "")
+				{
+					// file name is not specified yet
+					return ES_NOT_READY_YET;
+				}
+				
+				if (!valid)
+				{
+					return ES_FILE_EXT_MISMATCH;
+				}
 			}
 		}
 		else if (edge_type_ == ET_LIST_TO_TOOL)
 		{
 			if (!target_param_has_list_type)
 			{
-				return false;
+				// source gives list, target takes file
+				return ES_MISMATCH_LIST_FILE;
+			}
+			else if (target_in_param_ == -1)
+			{
+				// no param selected
+				return ES_NO_TARGET_PARAM;
 			}
 			else if (target_param_types.empty())
 			{
@@ -447,21 +470,39 @@ namespace OpenMS
 			else
 			{
 				const QStringList& file_names = qobject_cast<TOPPASInputFileListVertex*>(source)->getFilenames();
-				foreach (const QString& q_file_name, file_names)
+				
+				if (file_names.empty())
 				{
-					const String& file_name = String(q_file_name);
-					String::SizeType extension_start_index = file_name.rfind(".");
-					if (extension_start_index != String::npos)
+					// file names are not specified yet
+					return ES_NOT_READY_YET;
+				}
+				else
+				{
+					bool type_mismatch = false;
+					foreach (const QString& q_file_name, file_names)
 					{
-						const String& extension = file_name.substr(extension_start_index+1);
-						for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
+						const String& file_name = String(q_file_name);
+						String::SizeType extension_start_index = file_name.rfind(".");
+						if (extension_start_index != String::npos)
 						{
-							if (*it == extension)
+							const String& extension = file_name.substr(extension_start_index+1);
+							for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
 							{
-								valid = true;
-								break;
+								if (*it != extension)
+								{
+									type_mismatch = true;
+									break;
+								}
 							}
 						}
+					}
+					if (!type_mismatch)
+					{
+						valid = true;
+					}
+					else
+					{
+						return ES_FILE_EXT_MISMATCH;
 					}
 				}
 			}
@@ -470,7 +511,13 @@ namespace OpenMS
 		{
 			if (source_param_has_list_type)
 			{
-				return false;
+				// source gives list, target takes file
+				return ES_MISMATCH_LIST_FILE;
+			}
+			else if (source_out_param_ == -1)
+			{
+				// no param selected
+				return ES_NO_SOURCE_PARAM;
 			}
 			
 			valid = true;
@@ -479,23 +526,42 @@ namespace OpenMS
 		{
 			if (!source_param_has_list_type)
 			{
-				return false;
+				// source gives file, target takes list
+				return ES_MISMATCH_FILE_LIST;
+			}
+			else if (source_out_param_ == -1)
+			{
+				// no param selected
+				return ES_NO_SOURCE_PARAM;
 			}
 			
 			valid = true;
 		}
 		else if (edge_type_ == ET_TOOL_TO_TOOL)
 		{
-			// check
+			if (source_out_param_ == -1)
+			{
+				// no param selected
+				return ES_NO_SOURCE_PARAM;
+			}
+			if (target_in_param_ == -1)
+			{
+				// no param selected
+				return ES_NO_TARGET_PARAM;
+			}
+			
+			// TODO: check everything else..
 			valid = true;
+		}
+		
+		if (valid)
+		{
+			return ES_VALID;
 		}
 		else
 		{
-			// should not happen
-			return false;
+			return ES_UNKNOWN;
 		}
-		
-		return valid;
 	}
 	
 	void TOPPASEdge::setSourceOutParam(int out)
@@ -516,6 +582,50 @@ namespace OpenMS
 	int TOPPASEdge::getTargetInParam()
 	{
 		return target_in_param_;
+	}
+	
+	void TOPPASEdge::updateColor()
+	{
+		EdgeStatus es = getEdgeStatus();
+		
+		if (es == ES_VALID)
+		{
+			setColor(Qt::green);
+		}
+		else if (es == ES_NOT_READY_YET)
+		{
+			setColor(QColor(255,165,0));
+		}
+		else
+		{
+			setColor(Qt::red);
+			
+			if (es == ES_MISMATCH_FILE_LIST)
+			{
+				QMessageBox::warning(0,"Invalid selection","The source output parameter is a file, but the target expects a list!");
+			}
+			else if (es == ES_MISMATCH_LIST_FILE)
+			{
+				QMessageBox::warning(0,"Invalid selection","The source output parameter is a list, but the target expects a file!");
+			}
+			else if (es == ES_NO_TARGET_PARAM)
+			{
+				QMessageBox::warning(0,"Invalid selection","You must specify the target input parameter!");
+			}
+			else if (es == ES_NO_SOURCE_PARAM)
+			{
+				QMessageBox::warning(0,"Invalid selection","You must specify the source output parameter!");
+			}
+			else if (es == ES_FILE_EXT_MISMATCH)
+			{
+				QMessageBox::warning(0,"Invalid selection","The file types of source output and target input parameter do not match!");
+			}
+			else
+			{
+				QMessageBox::warning(0,"Ooops","This should not have happened. Please contact the OpenMS mailing list and report this bug.");
+			}
+		}
+		update(boundingRect());
 	}
 	
 } //namespace

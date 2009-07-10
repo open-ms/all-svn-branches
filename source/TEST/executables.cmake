@@ -150,6 +150,7 @@ set(format_executables_list
   XTandemInfile_test
   UnimodXMLFile_test
   PepXMLFile_test
+  PepXMLFileMascot_test
   ControlledVocabulary_test
   TransformationXMLFile_test
   SemanticValidator_test

@@ -54,6 +54,11 @@ namespace OpenMS
     @improvement Support different peak icons - cross, star, square - and sizes (HiWi)
     @improvement Add log mode (Marc)
 		
+    @todo Support different peak icons - cross, star, square - and sizes (HiWi)
+    
+		@improvement Add RT interpolation mode for high zoom in 2D View (Hiwi)
+
+
 		@improvement Snap also to min intensity (Hiwi)
 		
   	@ingroup SpectrumWidgets

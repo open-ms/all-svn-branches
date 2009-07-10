@@ -54,14 +54,18 @@ namespace OpenMS
 	{
 		TOPPASVertex* source = edge_->getSourceVertex();
 		TOPPASVertex* target = edge_->getTargetVertex();
-		if (qobject_cast<TOPPASToolVertex*>(source))
+		
+		TOPPASToolVertex* source_tool = qobject_cast<TOPPASToolVertex*>(source);
+		TOPPASToolVertex* target_tool = qobject_cast<TOPPASToolVertex*>(target);
+		
+		if (source_tool)
 		{
 			QVector<TOPPASToolVertex::IOInfo> source_output_files;
-			qobject_cast<TOPPASToolVertex*>(source)->getOutputFiles(source_output_files);
-			source_label->setText(source->getName().toQString());
-			if (source->getType() != "")
+			source_tool->getOutputFiles(source_output_files);
+			source_label->setText(source_tool->getName().toQString());
+			if (source_tool->getType() != "")
 			{
-				source_type_label->setText("(" + source->getType().toQString() + ")");
+				source_type_label->setText("(" + source_tool->getType().toQString() + ")");
 			}
 			else
 			{
@@ -102,14 +106,14 @@ namespace OpenMS
 			source_parameter_label->setVisible(false);
 		}
 		
-		if (qobject_cast<TOPPASToolVertex*>(target))
+		if (target_tool)
 		{
 			QVector<TOPPASToolVertex::IOInfo> target_input_files;
-			qobject_cast<TOPPASToolVertex*>(target)->getInputFiles(target_input_files);
-			target_label->setText(target->getName().toQString());
-			if (target->getType() != "")
+			target_tool->getInputFiles(target_input_files);
+			target_label->setText(target_tool->getName().toQString());
+			if (target_tool->getType() != "")
 			{
-				target_type_label->setText("(" + target->getType().toQString() + ")");
+				target_type_label->setText("(" + target_tool->getType().toQString() + ")");
 			}
 			else
 			{
@@ -149,6 +153,18 @@ namespace OpenMS
 			target_combo->setVisible(false);
 			target_parameter_label->setVisible(false);
 		}
+		
+		int source_out = edge_->getSourceOutParam();
+		int target_in = edge_->getTargetInParam();
+		if (source_out != -1)
+		{
+			source_combo->setCurrentIndex(source_out + 1);
+		}
+		if (target_in != -1)
+		{
+			target_combo->setCurrentIndex(target_in + 1);
+		}
+		
 		resize(width(),0);
 	}
 	
@@ -157,22 +173,26 @@ namespace OpenMS
 		const QString& source_text = source_combo->currentText();
 		const QString& target_text = target_combo->currentText();
 
-		if (source_text == "<select>" || target_text == "<select>")
+		if (source_text == "<select>")
 		{
-			QMessageBox::warning(0,"Invalid selection","You must specify the source output and target input parameter!");
+			QMessageBox::warning(0,"Invalid selection","You must specify the source output parameter!");
+			return;
+		}
+		if (target_text == "<select>")
+		{
+			QMessageBox::warning(0,"Invalid selection","You must specify the target input parameter!");
 			return;
 		}
 		
 		edge_->setSourceOutParam(source_combo->currentIndex()-1);
 		edge_->setTargetInParam(target_combo->currentIndex()-1);
-		if (!edge_->getValidity())
-		{
-			edge_->setSourceOutParam(-1);
-			edge_->setTargetInParam(-1);
-			QMessageBox::warning(0,"Invalid selection","The types of source output and target input parameters do not match!");
-			return;
-		}
 		
-		accept();
+		edge_->updateColor();
+		
+		if (edge_->getEdgeStatus() == TOPPASEdge::ES_VALID ||
+				edge_->getEdgeStatus() == TOPPASEdge::ES_NOT_READY_YET)
+		{
+			accept();
+		}
 	}
 } // namespace

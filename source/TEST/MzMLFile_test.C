@@ -498,19 +498,51 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_5_long.mzML"),exp4);
 	TEST_EQUAL(exp4.size(),1)
 	TEST_EQUAL(exp4[0].size(),997530)
-
-	//load 32 bit data
+	
+	//TEST 32 bit data, zlib compression, 32/64 bit integer, Null terminated strings
+	MSExperiment<> uncompressed;
+	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML"),uncompressed);
 	MSExperiment<> exp5;
-	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_32bit.mzML"),exp5);
-	TEST_EQUAL(exp5.size(),4)
+	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6.mzML"),exp5);
+	//load 32 bit data
+	TEST_EQUAL(exp5.size(),8)
 	TEST_EQUAL(exp5[0].size(),15)
 	TEST_EQUAL(exp5[1].size(),10)
 	TEST_EQUAL(exp5[2].size(),15)
-	TEST_EQUAL(exp5[3].size(),0)
 	TEST_REAL_SIMILAR(exp5[0].getRT(),5.1)
 	TEST_REAL_SIMILAR(exp5[1].getRT(),5.2)
 	TEST_REAL_SIMILAR(exp5[2].getRT(),5.3)
-	TEST_REAL_SIMILAR(exp5[3].getRT(),5.4)
+	//load zlib compressed data
+	for(Size s = 0 ; s < uncompressed[0].size(); ++s)
+	{
+		TEST_EQUAL(exp5[3][s] == uncompressed[0][s],true)
+	}
+	for(Size s = 0 ; s < uncompressed[1].size(); ++s)
+	{
+		TEST_EQUAL(exp5[4][s] == uncompressed[1][s],true)
+	}
+	for(Size s = 0 ; s < uncompressed[2].size(); ++s)
+	{
+		TEST_EQUAL(exp5[5][s] == uncompressed[2][s],true)
+	}
+	//32bit Integer (intensity)
+	TEST_EQUAL(exp5[6].size(),99)
+	TEST_EQUAL(exp5[6].getFloatDataArrays().size(),1)
+	TEST_EQUAL(exp5[6].getFloatDataArrays()[0].size(),99)
+	TEST_STRING_EQUAL(exp5[6].getFloatDataArrays()[0].getName(),"charge array")
+	for(Size i = 0; i < exp5[6].getFloatDataArrays()[0].size(); ++i)
+	{
+		TEST_REAL_SIMILAR(exp5[6].getFloatDataArrays()[0][i], (Int)i)
+	}
+	//64bit Integer (intensity)
+	TEST_EQUAL(exp5[7].size(),99)
+	TEST_EQUAL(exp5[7].getFloatDataArrays().size(),1)
+	TEST_EQUAL(exp5[7].getFloatDataArrays()[0].size(),99)
+	TEST_STRING_EQUAL(exp5[7].getFloatDataArrays()[0].getName(),"charge array")
+	for(Size i = 0; i < exp5[7].getFloatDataArrays()[0].size(); ++i)
+	{
+		TEST_REAL_SIMILAR(exp5[7].getFloatDataArrays()[0][i], (Int)i)
+	}
 
 	//test if it works with different peak types
 	MSExperiment<RichPeak1D> e_rich;
@@ -595,16 +627,6 @@ START_SECTION([EXTRA] load intensity range)
 	TEST_EQUAL(exp[3].size(),0)
 END_SECTION
 
-START_SECTION([EXTRA] load with zlib functionality)
-	MzMLFile file;
-	MSExperiment<> compressed, uncompressed;
-	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_7_compressed.mzML"),compressed);
-	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_7_uncompressed.mzML"),uncompressed);
-	TEST_EQUAL(compressed==uncompressed,true);
-END_SECTION
-
-
-
 START_SECTION((template <typename MapType> void store(const String& filename, const MapType& map) const))
 	MzMLFile file;
 	
@@ -678,7 +700,7 @@ START_SECTION((template <typename MapType> void store(const String& filename, co
 	{
 		//load map
 		MSExperiment<> exp_original;
-		file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML"),exp_original);
+		file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6.mzML"),exp_original);
 	 	//store map
 		std::string tmp_filename;
 	 	NEW_TMP_FILE(tmp_filename);
@@ -689,6 +711,13 @@ START_SECTION((template <typename MapType> void store(const String& filename, co
 		file.load(tmp_filename,exp);
 		//test if everything worked
 		TEST_EQUAL(exp==exp_original,true)
+		//NOTE: If it does not work, use this code to find out where the difference is
+		TEST_EQUAL(exp[3].size(),exp_original[3].size())
+		for (Size i=0; i<exp[3].size(); ++i)
+		{
+			TEST_REAL_SIMILAR(exp[3][i].getIntensity(),exp_original[3][i].getIntensity())
+			TEST_REAL_SIMILAR(exp[3][i].getMZ(),exp_original[3][i].getMZ())
+		}
 	}
 
 END_SECTION

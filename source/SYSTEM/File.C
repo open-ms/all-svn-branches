@@ -160,15 +160,15 @@ namespace OpenMS
 		//this is never reached, but needs to be there to avoid compiler warnings
 		return "";
 	}
-	
-	bool File::fileList(const String& dir, const String& file_pattern, StringList& output)
+
+	bool File::fileList(const String& dir, const String& file_pattern, StringList& output, bool full_path)
 	{
 		QDir d(dir.toQString(), file_pattern.toQString(), QDir::Name, QDir::Files);
-		QStringList list = d.entryList();
+		QFileInfoList list = d.entryInfoList();
 
 		//clear and check if empty
 		output.clear();
-		if (list.size()==0)
+		if (list.empty())
 		{
 			return false;
 		}
@@ -178,14 +178,15 @@ namespace OpenMS
 		
 		//fill output
 		UInt i = 0;
-		for ( QStringList::const_iterator it = list.constBegin(); it != list.constEnd(); ++it )
+		for (QFileInfoList::const_iterator it = list.constBegin(); it != list.constEnd(); ++it)
 		{
-			output[i++] = (*it);
+			output[i++] = full_path ? it->filePath() : it->fileName();
 		}
 		
 		return true;
 	}
 
+	
 	String File::getUniqueName()
 	{
 		DateTime now = DateTime::now();

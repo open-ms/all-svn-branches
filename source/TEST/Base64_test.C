@@ -215,7 +215,7 @@ START_SECTION([EXTRA] zlib functionality)
 	TEST_REAL_SIMILAR(data[0], 300.15f)
 	TEST_REAL_SIMILAR(data[1], 303.998f)
 	TEST_REAL_SIMILAR(data[2], 304.6f)	
-
+	
 END_SECTION
 
 START_SECTION([EXTRA] decode integers)
@@ -230,7 +230,7 @@ START_SECTION([EXTRA] decode integers)
 	
 	for(Size i = 0 ; i < res.size();++i)
 	{
-			TEST_REAL_SIMILAR(res[i],i)
+			TEST_REAL_SIMILAR(res[i], (Real)i)
 	}
 	
 	src="eJwtxdciAgAAAMDMZBWyiUrZLdlkZJRC9l79/0f04O7lAoF/bW53hzvd5W4H3eOQe93nfg940GFHPORhjzjqUY953BOe9JSnPeNZxzznecedcNILTjntRS952Ste9ZrXnXHWOedd8IaL3vSWt73jXe953wc+dMlHPvaJT132mc994UtXXPWVa6772je+dcN3vveDH/3kZ7/41W9+94c//eVv//jXf266BcFVEvQ=";
@@ -238,14 +238,14 @@ START_SECTION([EXTRA] decode integers)
 	
 	for(Size i = 0 ; i < double_res.size();++i)
 	{
-			TEST_REAL_SIMILAR(double_res[i],i)
+			TEST_REAL_SIMILAR(double_res[i], (DoubleReal)i)
 	}
 	
 	src="eJxjZGBgYAJiZiAGAAA0AAc=";
 	b64.decode(src,Base64::BYTEORDER_BIGENDIAN,res,true,Base64::INTEGER);
-	TEST_REAL_SIMILAR(res[0],16777215)
-	TEST_REAL_SIMILAR(res[1],33554432 )
-	TEST_REAL_SIMILAR(res[2],50331648 )
+	TEST_REAL_SIMILAR(res[0], 16777215)
+	TEST_REAL_SIMILAR(res[1], 33554432)
+	TEST_REAL_SIMILAR(res[2], 50331648)
 	
 	//without zlib compression
 	src = "AAAAAQAAAAUAAAAGAAAABwAAAAgAAAAJAAACCg==";
@@ -276,19 +276,6 @@ START_SECTION([EXTRA] decode integers)
 	TEST_REAL_SIMILAR(res[4],8)
 	TEST_REAL_SIMILAR(res[5],9)
 	TEST_REAL_SIMILAR(res[6],522)
-					
-				vector<int> rese;		
-				rese.push_back(1);
-				rese.push_back(2);
-				rese.push_back(3);
-			
-				QByteArray original = QByteArray::fromRawData(reinterpret_cast<const char*>(&rese[0]), (int) rese.size()*4);
-			QByteArray compressed = qCompress((uchar*)original.data(),original.size());
-			QByteArray extern_compressed = compressed.right(compressed.size() - 4);			
-			QByteArray base64_compressed = extern_compressed.toBase64();
-			String out;
-			out = QString(base64_compressed).toStdString();
-		cout<<"out: "<<out<<endl;
 END_SECTION
 
 /////////////////////////////////////////////////////////////

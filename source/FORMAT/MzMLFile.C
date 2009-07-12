@@ -36,7 +36,7 @@ namespace OpenMS
 {
 
 	MzMLFile::MzMLFile()
-		: XMLFile("/SCHEMAS/mzML_1_10.xsd","1.10"),
+		: XMLFile("/SCHEMAS/mzML_1_10.xsd","1.1.0"),
 			indexed_schema_location_("/SCHEMAS/mzML_idx_1_10.xsd")
 	{
 	}
@@ -61,7 +61,7 @@ namespace OpenMS
 		//determine if this is indexed mzML or not
 		bool indexed = false;
 		TextFile file(filename,true,4);
-		if (file.asString().hasSubstring("<indexedmzML"))
+		if (file.concatenate().hasSubstring("<indexedmzML"))
 		{
 			indexed = true;
 		}

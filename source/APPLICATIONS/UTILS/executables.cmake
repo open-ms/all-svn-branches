@@ -22,6 +22,7 @@ DecoyDatabase
 SpecLibCreator
 IDMassAccuracy
 DataForROCCurve
+PeptideIndexer
 )
 
 ### pass source file list to the upper instance

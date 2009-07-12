@@ -26,6 +26,9 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/TOPPASToolVertex.h>
+#include <OpenMS/VISUAL/TOPPASInputFileVertex.h>
+#include <OpenMS/VISUAL/TOPPASInputFileListVertex.h>
+
 #include <OpenMS/VISUAL/DIALOGS/TOPPASToolConfigDialog.h>
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
@@ -42,19 +45,22 @@ namespace OpenMS
 			name_(),
 			type_(),
 			param_(),
-			id_(id_counter++)
+			id_(id_counter++),
+			finished_(false)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
 		initParam_();
 	}
 	
-	TOPPASToolVertex::TOPPASToolVertex(const String& name, const String& type)
+	TOPPASToolVertex::TOPPASToolVertex(const String& name, const String& type, const String& tmp_path)
 		: TOPPASVertex(),
 			name_(name),
 			type_(type),
+			tmp_path_(tmp_path),
 			param_(),
-			id_(id_counter++)
+			id_(id_counter++),
+			finished_(false)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
@@ -65,8 +71,10 @@ namespace OpenMS
 		:	TOPPASVertex(rhs),
 			name_(rhs.name_),
 			type_(rhs.type_),
+			tmp_path_(rhs.tmp_path_),
 			param_(rhs.param_),
-			id_(id_counter++)
+			id_(rhs.id_),
+			finished_(rhs.finished_)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
@@ -84,6 +92,9 @@ namespace OpenMS
 		param_ = rhs.param_;
 		name_ = rhs.name_;
 		type_ = rhs.type_;
+		tmp_path_ = rhs.tmp_path_;
+		id_ = rhs.id_;
+		finished_ = rhs.finished_;
 		
 		return *this;
 	}
@@ -91,12 +102,12 @@ namespace OpenMS
 	void TOPPASToolVertex::initParam_()
 	{
 		Param tmp_param;
-		String ini_file = "TOPPAS_" + name_ + "_";
+		String ini_file = tmp_path_ + "TOPPAS_" + name_ + "_";
 		if (type_ != "")
 		{
 			ini_file += type_ + "_";
 		}
-		ini_file += QString::number(id_) + ".tmp.ini";
+		ini_file += File::getUniqueName() + "_tmp.ini";
 		
 		String call = name_ + " -write_ini " + ini_file + " -log " + ini_file + ".log";
 		if (type_ != "")
@@ -120,6 +131,9 @@ namespace OpenMS
 		param_.remove("log");
 		param_.remove("no_progress");
 		param_.remove("debug");
+		
+		// handled by TOPPAS anyway:
+		param_.remove("type");
 	}
 	
 	void TOPPASToolVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
@@ -127,24 +141,74 @@ namespace OpenMS
 		QWidget* parent_widget = qobject_cast<QWidget*>(scene()->parent());
 		String default_dir = "";
 		
+		// remove entries that are handled by edges already, user should not see them
+		QVector<Param::ParamEntry> hidden_entries;
+		QVector<IOInfo> input_infos;
+		getInputParameters(input_infos);
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			int index = (*it)->getTargetInParam();
+			if (index < 0)
+			{
+				continue;
+			}
+			
+			const String& name = input_infos[index].param_name;
+			if (param_.exists(name))
+			{
+				hidden_entries.push_back(param_.getEntry(name));
+				param_.remove(name);
+			}
+		}
+		
+		QVector<IOInfo> output_infos;
+		getOutputParameters(output_infos);
+		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
+		{
+			int index = (*it)->getSourceOutParam();
+			if (index < 0)
+			{
+				continue;
+			}
+			
+			const String& name = output_infos[index].param_name;
+			if (param_.exists(name))
+			{
+				hidden_entries.push_back(param_.getEntry(name));
+				param_.remove(name);
+			}
+		}
+		
 		TOPPASToolConfigDialog dialog(parent_widget, param_, default_dir, name_, type_);
 		dialog.exec();
+		
+		// restore the removed entries
+		foreach (const Param::ParamEntry& pe, hidden_entries)
+		{
+			StringList tags;
+			for (std::set<String>::const_iterator it = pe.tags.begin(); it != pe.tags.end(); ++it)
+			{
+				tags.push_back(*it);
+			}
+			param_.setValue(pe.name, pe.value, pe.description, tags);
+		}
+		
 		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
 	}
 	
-	void TOPPASToolVertex::getInputFiles(QVector<IOInfo>& input_infos)
+	void TOPPASToolVertex::getInputParameters(QVector<IOInfo>& input_infos)
 	{
-		getFiles_(input_infos,true);
+		getParameters_(input_infos,true);
 	}
 	
-	void TOPPASToolVertex::getOutputFiles(QVector<IOInfo>& output_infos)
+	void TOPPASToolVertex::getOutputParameters(QVector<IOInfo>& output_infos)
 	{
-		getFiles_(output_infos,false);
+		getParameters_(output_infos,false);
 	}
 	
-	void TOPPASToolVertex::getFiles_(QVector<IOInfo>& io_infos, bool input_files)
+	void TOPPASToolVertex::getParameters_(QVector<IOInfo>& io_infos, bool input_params)
 	{
-		String search_tag = input_files ? "input file" : "output file";
+		String search_tag = input_params ? "input file" : "output file";
 		
 		io_infos.clear();
 		
@@ -244,5 +308,121 @@ namespace OpenMS
 	{
 		return type_;
 	}
+	
+	void TOPPASToolVertex::compute()
+	{
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
+			if (tv && !(tv->isFinished()))
+			{
+				tv->compute();
+			}
+		}
+		
+		// all inputs ready now --> write param to ini file and run tool
+		String ini_file_name = tmp_path_+"TOPPAS_" + name_ + "_" + type_ + "_" + File::getUniqueName() + ".ini";
+		param_.store(ini_file_name);
+		
+		String call = name_+" -ini "+ini_file_name+" -log "+ini_file_name+".log";
+		if (type_ != "")
+		{
+			call += " -type "+type_;
+		}
+		
+		// add all input file parameters
+		QVector<IOInfo> in_params;
+		getInputParameters(in_params);
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			int param_index = (*it)->getTargetInParam();
+			if (param_index < 0)
+			{
+				std::cerr << "blub" << std::endl;
+				continue;
+			}
+			call += " -" + in_params[param_index].param_name;
+			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
+			if (tv)
+			{
+				int out_param_index = (*it)->getSourceOutParam();
+				if (out_param_index < 0)
+				{
+					std::cerr << "blub" << std::endl;
+					continue;
+				}
+				call += " " + String(tv->output_file_names_[out_param_index].join(" "));
+				continue;
+			}
+			TOPPASInputFileVertex* ifv = qobject_cast<TOPPASInputFileVertex*>((*it)->getSourceVertex());
+			if (ifv)
+			{
+				call += " " + String(ifv->getFilename());
+				continue;
+			}
+			TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
+			if (iflv)
+			{
+				call += " " + String(iflv->getFilenames().join(" "));
+				continue;
+			}
+		}
+		
+		// add all output file parameters
+		QVector<IOInfo> out_params;
+		getOutputParameters(out_params);
+		
+		output_file_names_.clear();
+		output_file_names_.resize(out_params.size()); // TODO: better solution?
+		
+		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
+		{
+			int param_index = (*it)->getSourceOutParam();
+			if (param_index < 0)
+			{
+				std::cerr << "blub" << std::endl;
+				continue;
+			}
+			call += " -" + out_params[param_index].param_name;
+			
+			if (out_params[param_index].param_name == "out" && out_params[param_index].type == IOInfo::IOT_LIST)
+			{
+				// TODO think about how to determine number of output arguments for output params with list type!
+				// for now, use this workaround for "out" (as many as for "in")... what about the others?!
+				for (int i = 0; i < in_params.size(); ++i)
+				{
+					output_file_names_[param_index].push_back((tmp_path_ + name_ + "_" + type_ + "_" + File::getUniqueName() + ".out").toQString());
+				}
+				call += " " + String(output_file_names_[param_index].join(" "));
+			}
+			else if (out_params[param_index].type == IOInfo::IOT_FILE)
+			{
+				output_file_names_[param_index].push_back((tmp_path_ + name_ + "_" + type_ + "_" + File::getUniqueName() + ".out").toQString());
+				call += " " + String(output_file_names_[param_index].join(" "));
+			}
+			else // IOT_LIST
+			{
+				std::cerr << "I don't know what to do in this situation, yet." << std::endl;
+			}
+		}
+		
+		if(system(call.c_str())!=0)
+		{
+			QMessageBox::critical(0,"Error",("Something went wrong!\n\nCheck the log file " + ini_file_name + ".log for possible reasons. If it does not exist, make sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
+		}
+		
+		finished_ = true;
+	}
+	
+	bool TOPPASToolVertex::isFinished()
+	{
+		return finished_;
+	}
+	
+	void TOPPASToolVertex::setFinished(bool b)
+	{
+		finished_ = b;
+	}
+	
 }
 

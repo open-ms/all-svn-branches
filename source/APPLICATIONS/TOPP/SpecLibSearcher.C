@@ -91,12 +91,17 @@ class TOPPSpecLibSearcher
      	registerStringOption_("compare_function","<string>","ZhangSimilarityScore","function for similarity comparisson",false);
      PeakSpectrumCompareFunctor::registerChildren();
      setValidStrings_("compare_function",Factory<PeakSpectrumCompareFunctor>::registeredProducts());
-     registerDoubleOption_("remove_peak_intensity_threshold","<threshold>",2.01,"All peaks of a query spectrum with intensities below <threshold> will be zeroed.",false);
      registerIntOption_("min_peak_number","<number>",5, "required mininum number of peaks for a query spectrum",false);
+     addEmptyLine_();
+     addText_("Filtering options. Especially useful when the query spectra are raw.");
+     registerDoubleOption_("remove_peak_intensity_threshold","<threshold>",2.01,"All peaks of a query spectrum with intensities below <threshold> will be zeroed.",false);    
      registerDoubleOption_("filter_all_peaks_below_mz","<threshold>",520,"Remove spectra with almost no peaks above a certain m/z value. All query spectra with 95%+ of the total intensity below <m/z> will be removed.",false);	
+     registerIntOption_("max_peaks_used","<number>",150,"Use only the top <number> of peaks.",false);
+     registerIntOption_("filter_range","<number>",1000,"Remove all peaks which are lower than 1/<number> of the highest peaks",false);
+     
      //registerStringOption_("fixed_modifications", "<mods>", "", "fixed modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048 currently no effect", false);
      // registerStringOption_("variable_modifications", "<mods>", "", "variable modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048", false);
-		//	vielleicht des noch später??
+		 //	vielleicht des noch später??
 			addEmptyLine_();
 			addText_("");
 		}
@@ -118,6 +123,8 @@ class TOPPSpecLibSearcher
 			Real remove_peak_intensity_threshold = getDoubleOption_("remove_peak_intensity_threshold");
 			UInt min_peak_number = getIntOption_("min_peak_number");
 			Real filter_all_peaks_below_mz = getDoubleOption_("filter_all_peaks_below_mz");
+			Int max_peaks_used = getIntOption_("max_peaks_used");
+			Int filter_range = getIntOption_("filter_range");
 			//-------------------------------------------------------------
 			// loading input
 			//-------------------------------------------------------------
@@ -205,11 +212,15 @@ class TOPPSpecLibSearcher
 				//RichPeak1D to Peak1D transformation for the compare function query 
 				PeakSpectrum quer;
 				bool peak_ok = true;
-				for(UInt k = 0; k < query[j].size(); ++k)
+				query[j].sortByIntensity(true);
+				DoubleReal min_high_intensity = (1/filter_range)*query[j][0].getIntensity();
+				query[j].sortByPosition();
+
+				for(UInt k = 0; k < query[j].size() && k < max_peaks_used; ++k)
 				{
-					Peak1D peak;
-					if(query[j][k].getIntensity() >  remove_peak_intensity_threshold)
+					if(query[j][k].getIntensity() >  remove_peak_intensity_threshold && query[j][k].getIntensity() >= min_high_intensity)
 					{
+						Peak1D peak;
 						total_intensity +=  query[j][k].getIntensity();
 						peak.setIntensity(sqrt(query[j][k].getIntensity()));
 						peak.setMZ(query[j][k].getMZ());
@@ -221,6 +232,7 @@ class TOPPSpecLibSearcher
 						quer.push_back(peak);
 					}
 				}
+				quer.sortByPosition();
 				//if not enough peaks in the specturm pass that one out
 				//Remove spectra with almost no peaks above a certain m/z value. 
 				//All query spectra with 95%+ of the total intensity below <m/z> will be removed.
@@ -273,7 +285,7 @@ class TOPPSpecLibSearcher
 											BinnedSpectrum librar_bin = sp->transform(librar);
 											score = (*sp)(quer_bin,librar_bin);
 											double dot_bias = sp->dot_bias(quer_bin,librar_bin,score);
-											hit.setMetaValue("DB",dot_bias);
+											hit.setMetaValue("DOTBIAS",dot_bias);
 										}
 										else
 										{
@@ -308,8 +320,8 @@ class TOPPSpecLibSearcher
 						for(Size s = 0; s < pep_id.getHits().size();++s)
 						{
 							final_hits[s] = pep_id.getHits()[s];
-							final_hits[s].setScore(sp->compute_F(pep_id.getHits()[s].getScore(),delta_D,pep_id.getHits()[s].getMetaValue("DB")));
-							final_hits[s].removeMetaValue("DB");
+							final_hits[s].setScore(sp->compute_F(pep_id.getHits()[s].getScore(),delta_D,pep_id.getHits()[s].getMetaValue("DOTBIAS")));
+							final_hits[s].removeMetaValue("DOTBIAS");
 						}
 						pep_id.setHits(final_hits);
 						pep_id.sort();

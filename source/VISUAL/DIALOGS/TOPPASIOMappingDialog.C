@@ -61,7 +61,7 @@ namespace OpenMS
 		if (source_tool)
 		{
 			QVector<TOPPASToolVertex::IOInfo> source_output_files;
-			source_tool->getOutputFiles(source_output_files);
+			source_tool->getOutputParameters(source_output_files);
 			source_label->setText(source_tool->getName().toQString());
 			if (source_tool->getType() != "")
 			{
@@ -109,7 +109,7 @@ namespace OpenMS
 		if (target_tool)
 		{
 			QVector<TOPPASToolVertex::IOInfo> target_input_files;
-			target_tool->getInputFiles(target_input_files);
+			target_tool->getInputParameters(target_input_files);
 			target_label->setText(target_tool->getName().toQString());
 			if (target_tool->getType() != "")
 			{
@@ -122,6 +122,25 @@ namespace OpenMS
 			target_combo->addItem("<select>");
 			foreach (TOPPASToolVertex::IOInfo info, target_input_files)
 			{
+				// check if parameter occupied by another edge already
+				bool occupied = false;
+				for (TOPPASVertex::EdgeIterator it = target->inEdgesBegin(); it != target->inEdgesEnd(); ++it)
+				{
+					int param_index = (*it)->getTargetInParam();
+					if (param_index >= 0)
+					{
+						if (info.param_name == target_input_files[param_index].param_name)
+						{
+							occupied = true;
+							break;
+						}
+					}
+				}
+				if (occupied)
+				{
+					continue;
+				}
+
 				String item_name;
 				if (info.type == TOPPASToolVertex::IOInfo::IOT_FILE)
 				{

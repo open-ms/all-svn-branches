@@ -184,7 +184,7 @@ class TOPPSpecLibCreator
 			
 			if(in_type == FileTypes::UNKNOWN)
 			{
-							writeLog_("Warning: Could not determine input file type!");
+				writeLog_("Warning: Could not determine input file type!");
 			}			
 			else if(in_type == FileTypes::MZDATA)
 			{

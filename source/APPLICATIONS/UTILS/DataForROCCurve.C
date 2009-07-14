@@ -32,6 +32,9 @@
 #include <OpenMS/FORMAT/IdXMLFile.h>
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
+#include <OpenMS/FORMAT/FileTypes.h>
+#include <OpenMS/FORMAT/PepXMLFile.h>
+#include <OpenMS/FORMAT/FileHandler.h>
 
 #include <map>
 #include <list>
@@ -71,7 +74,7 @@ class TOPPDataForROCCurve
 		{
 			registerInputFile_("fasta","<file>","","fasta file with already identified peptides");
 		//	registerInputFile_("MSP","<file>","","spectral library which was used for matching");
-			registerInputFile_("IdXML","<file>","","file which stores scores of the last search");
+			registerInputFile_("in","<file>","","file which stores scores of the last search,IdXML or pepXML");
 			registerOutputFile_("out","<file>","","Output file");			
 			registerIntOption_("curve_resolution","<number>",10,"points which represent the ROCCurve",false);
 			registerIntOption_("highest","<number>",1,"1 if only the highest value should be taken into account",false);
@@ -85,7 +88,7 @@ class TOPPDataForROCCurve
 			//-------------------------------------------------------------
 			String fasta = getStringOption_("fasta");
 		//	String MSP = getStringOption_("MSP");
-			String IdXML = getStringOption_("IdXML");
+			String in = getStringOption_("in");
 			String out = getStringOption_("out");
 			Int curve_resolution = getIntOption_("curve_resolution");
 			Int highest = getIntOption_("highest");
@@ -96,10 +99,31 @@ class TOPPDataForROCCurve
 			vector<FASTAFile::FASTAEntry> fasta_entries;
 			fasta_file.load(fasta,fasta_entries);
 			
-			IdXMLFile id_xml_file;
 			vector<ProteinIdentification> idxml_proteinIdentification;
 			vector<PeptideIdentification> idxml_peptideIdentification;
-			id_xml_file.load(IdXML, idxml_proteinIdentification, idxml_peptideIdentification);
+			FileHandler fh;
+			FileTypes::Type in_type = fh.getType(in);
+			if(in_type == FileTypes::UNKNOWN)
+			{
+				writeLog_("Warning: Could not determine input file type!");
+			}
+			else if(in_type == FileTypes::PEPXML)
+			{
+				cout<<"Spectrast ROC-Curve\n";
+				PepXMLFile pepxml_file;
+				String name;
+				MSExperiment<> exp;
+				ProteinIdentification pi;
+				pepxml_file.load(in,pi,idxml_peptideIdentification,name,exp);
+			
+			}
+			else if(in_type == FileTypes::IDXML)
+			{
+				cout<<"SpecLibSearcher ROC-Curve\n";
+				IdXMLFile id_xml_file;
+				id_xml_file.load(in, idxml_proteinIdentification, idxml_peptideIdentification);
+			}
+
 			
 		//	MSPFile msp_file;
 		//	RichPeakMap msp_mspexperiment;
@@ -213,11 +237,22 @@ class TOPPDataForROCCurve
 			// writing output
 			//-------------------------------------------------------------
 					TextFile file;
-					String temp(ROC.AUC());
+					String temp;
+					temp = "All counts: ";
+					temp += String(true_count+false_count);
+					temp += " , true: ";
+					temp += String(true_count);
+					temp += " , false: ";
+					temp += String(false_count);
+					String temp2;
+					temp2 = "AUC: ";
+					temp2 += ROC.AUC(); 
+					file.push_back("Unique Peptides with highest score: ");
 					file.push_back(temp);
-					
-					String temp2(ROC.cutoffPos(0.95));
 					file.push_back(temp2);
+					
+					String temp21(ROC.cutoffPos(0.95));
+					file.push_back(temp21);
 					
 					String temp3( ROC.cutoffNeg(0.95));
 					file.push_back(temp3);
@@ -267,7 +302,41 @@ class TOPPDataForROCCurve
 					++false_count;
 				}
 			}
+					
+					String temp5;
+					temp5 = "All counts: ";
+					temp5 += String(true_count+false_count);
+					temp5 += " , true: ";
+					temp5 += String(true_count);
+					temp5 += " , false: ";
+					temp5 += String(false_count);
+					String temp6;
+					temp6 = "AUC: ";
+					temp6 += ROC.AUC(); 
+					file.push_back("\nUnique Peptides with highest score: ");
+					file.push_back(temp5);
+					file.push_back(temp6);
+					
+					String temp8(ROC.cutoffPos(0.95));
+					file.push_back(temp8);
+					
+					String temp9( ROC.cutoffNeg(0.95));
+					file.push_back(temp9);
+					file.push_back(" ");
 			
+			vector<pair<double,double> > curve2 = ROC.curve(curve_resolution);
+			
+			for(vector<pair<double,double> >::iterator it = curve2.begin(); it < curve2.end(); ++it)
+			{
+				String temp1(it->first);
+				String temp2(it->second);
+				temp1.append("\t");
+				temp1.append(temp2);
+				file.push_back(temp1);
+				//file.push_back(temp2);
+			}
+
+			file.store(out);			
 			cout<<"All top hits are count:"<<endl;
 			cout<<"All counts: "<<true_count+false_count<<", true: "<<true_count<<", false: "<<false_count<<endl;
 			cout<<"AUC: "<<ROC1.AUC()<<endl;

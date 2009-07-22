@@ -46,6 +46,8 @@ namespace OpenMS
 			
 			/// Default constructor
 			TOPPASOutputFileVertex();
+			/// Constructor
+			TOPPASOutputFileVertex(const QString& file);
 			/// Copy constructor
 			TOPPASOutputFileVertex(const TOPPASOutputFileVertex& rhs);
 			/// Destructor
@@ -60,8 +62,13 @@ namespace OpenMS
 			virtual QPainterPath shape () const;
 			/// Starts the workflow ending in this node
 			void startComputation();
+			/// Returns the file name
+			const QString& getFilename();
 			
 		protected:
+			
+			/// The file name
+			QString file_;
 		
 			///@name reimplemented Qt events
       //@{

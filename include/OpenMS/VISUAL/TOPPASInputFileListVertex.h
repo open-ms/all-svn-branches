@@ -46,6 +46,8 @@ namespace OpenMS
 			
 			/// Default constructor
 			TOPPASInputFileListVertex();
+			/// Constructor
+			TOPPASInputFileListVertex(const QStringList& files);
 			/// Copy constructor
 			TOPPASInputFileListVertex(const TOPPASInputFileListVertex& rhs);
 			/// Destructor
@@ -63,6 +65,7 @@ namespace OpenMS
 			
 		protected:
 		
+			/// The file names
 			QStringList files_;
 		
 			///@name reimplemented Qt events

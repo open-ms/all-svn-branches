@@ -40,7 +40,8 @@ namespace OpenMS
 			pen_color_(),
 			brush_color_(),
 			dfs_color_(DFS_WHITE),
-			dfs_parent_(0)
+			dfs_parent_(0),
+			id_(0)
 	{
 		setFlag(QGraphicsItem::ItemIsSelectable, true);
 		setZValue(42);
@@ -55,7 +56,8 @@ namespace OpenMS
 			pen_color_(rhs.pen_color_),
 			brush_color_(rhs.brush_color_),
 			dfs_color_(rhs.dfs_color_),
-			dfs_parent_(rhs.dfs_parent_)
+			dfs_parent_(rhs.dfs_parent_),
+			id_(rhs.id_)
 	{
 		setFlag(QGraphicsItem::ItemIsSelectable, true);
 		setZValue(42);	
@@ -82,6 +84,7 @@ namespace OpenMS
 		brush_color_ = rhs.brush_color_;
 		dfs_color_ = rhs.dfs_color_;
 		dfs_parent_ = rhs.dfs_parent_;
+		id_ = rhs.id_;
 		
 		return *this;
 	}
@@ -222,4 +225,15 @@ namespace OpenMS
 	{
 		return out_edges_.size();
 	}
+	
+	UInt TOPPASVertex::getID()
+	{
+		return id_;
+	}
+	
+	void TOPPASVertex::setID(UInt id)
+	{
+		id_ = id;
+	}
+
 }

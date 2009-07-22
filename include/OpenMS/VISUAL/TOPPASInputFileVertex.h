@@ -46,6 +46,8 @@ namespace OpenMS
 			
 			/// Default constructor
 			TOPPASInputFileVertex();
+			/// Constructor
+			TOPPASInputFileVertex(const QString& file);
 			/// Copy constructor
 			TOPPASInputFileVertex(const TOPPASInputFileVertex& rhs);
 			/// Destructor
@@ -63,6 +65,7 @@ namespace OpenMS
 			
 		protected:
 		
+			/// The file name
 			QString file_;
 		
 			///@name reimplemented Qt events

@@ -174,6 +174,23 @@ class TOPPSpecLibSearcher
 				//RichPeak1D to Peak1D transformation for the compare function query 
 				PeakSpectrum quer;
 				bool peak_ok = true;
+				query[j].sortByIntensity(true);
+				
+				DoubleReal mz = query[j][0].getMZ()-1;
+				DoubleReal mz_2 = mz-2;
+				for(MSSpectrum<RichPeak1D>::iterator it = query[j].begin(); it < query[j].end();++it)
+				{
+					if(it->getMZ() < mz && it->getMZ() > mz_2)
+					{
+						it = query[j].erase(it);
+					}
+					else
+					{
+						mz = it->getMZ()-1;
+						mz_2 = mz - 1;
+					}
+				}
+				query[j].sortByPosition();				
 				for(UInt k = 0; k < query[j].size(); ++k)
 				{
 					Peak1D peak;
@@ -203,11 +220,11 @@ class TOPPSpecLibSearcher
 				}
 				if(peak_ok)
 				{
-		//			for(Int charge = min_precursor_charge; charge <= max_precursor_charge; ++charge)
-		//			{
+			//		for(Int charge = min_precursor_charge; charge <= max_precursor_charge; ++charge)
+			//		{
 						min_pm = (query[j].getPrecursors()[0].getMZ() - precursor_mass_tolerance);
 						max_pm = (query[j].getPrecursors()[0].getMZ() + precursor_mass_tolerance);
-				
+
 					//SEARCH
 						vector<PeptideIdentification>::iterator pep;
 						RichPeakMap::iterator it;
@@ -239,8 +256,8 @@ class TOPPSpecLibSearcher
 											pep_id.insertHit(hit);
 								}
 							}
-						}
-				
+					//	}
+					}
 				pep_id.setMetaValue("RT",query[j].getRT());
 				pep_id.setMetaValue("MZ",query[j].getPrecursors()[0].getMZ());
 				pep_id.setHigherScoreBetter(true);

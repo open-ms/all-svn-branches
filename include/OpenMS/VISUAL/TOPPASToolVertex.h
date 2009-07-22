@@ -92,8 +92,10 @@ namespace OpenMS
 			bool isFinished();
 			/// Set whether this node has already been processed during the current pipeline execution
 			void setFinished(bool b);
-			/// The static instance counter (for unique instance numbers)
-			static UInt id_counter;
+			/// Sets the Param object of this tool
+			void setParam(const Param& param);
+			/// Returns the Param object of this tool
+			const Param& getParam();
 			
 		protected:
 		
@@ -114,8 +116,6 @@ namespace OpenMS
 			String tmp_path_;
 			/// The parameters of the tool
 			Param param_;
-			/// The unique ID
-			UInt id_;
 			/// Stores whether this node has already been processed during the current pipeline execution
 			bool finished_;
 			/// Stores the file names of the different output parameters

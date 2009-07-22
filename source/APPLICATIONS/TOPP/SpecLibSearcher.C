@@ -127,7 +127,7 @@ class TOPPSpecLibSearcher
 			//-------------------------------------------------------------
 			// loading input
 			//-------------------------------------------------------------
-			
+			time_t prog_time = time(NULL);
 			MzDataFile spectra;
 			MSPFile spectral_library;
 			
@@ -236,7 +236,6 @@ class TOPPSpecLibSearcher
 			}
 			}
 			time_t end_build_time = time(NULL);
-			cout<<"Time needed for preprocessing data: "<<(end_build_time - start_build_time)<<"\n";
 			//compare function
 			PeakSpectrumCompareFunctor* comparor = Factory<PeakSpectrumCompareFunctor>::create(compare_function);
 			//-------------------------------------------------------------
@@ -379,7 +378,9 @@ class TOPPSpecLibSearcher
 			IdXMLFile id_xml_file;
 			id_xml_file.store(out,protein_ids,peptide_ids);
 			time_t end_time = time(NULL);
-			cout<<"Search time: "<<difftime(end_time,start_time)<<" seconds"<<"\n";  
+		  cout<<"Time needed for preprocessing data: "<<(end_build_time - start_build_time)<<"\n";
+			cout<<"Search time: "<<difftime(end_time,start_time)<<" seconds"<<"\n";
+			cout<<"Total time: "<<difftime(end_time,prog_time)<<" secconds"<<"\n";
 			return EXECUTION_OK;
 		}
 		

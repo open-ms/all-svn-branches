@@ -255,13 +255,15 @@ class TOPPSpecLibSearcher
 				ProteinHit pr_hit;
 				pr_hit.setAccession(j);
 				prot_id.insertHit(pr_hit);
-				
-				
 				//RichPeak1D to Peak1D transformation for the compare function query 
 				PeakSpectrum quer;
 				bool peak_ok = true;
 				query[j].sortByIntensity(true);
-				DoubleReal min_high_intensity = (1/cut_peaks_below)*query[j][0].getIntensity();
+				DoubleReal min_high_intensity = 0;
+				if(!query[j].empty())
+				{
+					min_high_intensity = (1/cut_peaks_below)*query[j][0].getIntensity();
+				}
 				query[j].sortByPosition();
 				for(UInt k = 0; k < query[j].size() && k < max_peaks; ++k)
 				{
@@ -282,8 +284,7 @@ class TOPPSpecLibSearcher
 						quer.push_back(peak);
 					}
 				}
-				quer.sortByPosition();
-
+				quer.sortByPosition();	
 				if(quer.size() >= min_peaks)
 				{
 					peak_ok = true;
@@ -309,7 +310,6 @@ class TOPPSpecLibSearcher
 									Real this_MZ  = library[i].getPrecursors()[0].getMZ()*precursor_mass_multiplier;
 									if(this_MZ >= min_MZ && max_MZ >= this_MZ )
 									{
-
 										PeptideHit hit = library[i].getPeptideIdentifications()[0].getHits()[0];
 										PeakSpectrum& librar = library[i];
 										//Special treatment for SpectraST score as it computes a score based on the whole library
@@ -347,7 +347,6 @@ class TOPPSpecLibSearcher
 					}
 				pid.setHigherScoreBetter(true);
 				pid.sort();
-
 				if(compare_function =="SpectraSTSimilarityScore")
 				{
 

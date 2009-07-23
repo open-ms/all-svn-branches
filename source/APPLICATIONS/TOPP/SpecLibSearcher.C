@@ -154,10 +154,50 @@ class TOPPSpecLibSearcher
 			RichPeakMap::iterator s;
 			vector<PeptideIdentification>::iterator i;
 			ModificationsDB* mdb = ModificationsDB::getInstance();
-											
+											Size FP = 0; 
+						Size TP = 0;
+						Size FN = 0; 
+						Size TN = 0;	
+						Size zwei = 0;
+						Size one  = 0;
 			for(s = library.begin(), i = ids.begin() ; s < library.end();++s,++i)
 			{
 				DoubleReal precursor_MZ = (*s).getPrecursors()[0].getMZ();
+
+						Int percent = round(((*s).size()/100) * 5);
+						Int margin  = round(((*s).size()/100)* 1);
+						for(vector<RichPeak1D>::iterator peak = (*s).end()-1; percent >= 0; --peak , --percent)
+						{
+							if(peak->getMZ() < (*s).getPrecursors()[0].getMZ())
+							{
+								break;
+							}
+						}
+						if(percent > margin && (*i).getHits()[0].getCharge() == 1)
+						{
+							TP++;
+							
+						}
+						else if(percent > margin &&  (*i).getHits()[0].getCharge()> 1)
+						{
+							FP++;
+						}
+						else if(percent < 0 &&  (*i).getHits()[0].getCharge() == 1)
+						{
+							FN++;
+						}
+							else if(percent < 0 &&  (*i).getHits()[0].getCharge()> 1)
+						{
+							TN++;
+						}
+							else if((*i).getHits()[0].getCharge()> 1)
+						{
+							zwei++;
+						}
+						else if((*i).getHits()[0].getCharge() == 1)
+						{
+							one++;
+						}
 				Size MZ_multi = (Size)precursor_MZ*precursor_mass_multiplier;
 				map<Size,vector<PeakSpectrum> >::iterator found;
 				found = MSLibrary.find(MZ_multi);
@@ -222,6 +262,9 @@ class TOPPSpecLibSearcher
 					}
 				}
 			}
+									cout<<"Gesamt: "<<TP + FP + FN + TN+ zwei + one<<"TP: "<<TP<<", FP: "<<FP<<", FN: "<<FN<<", TN: "<<TN<<",zwei: "<<zwei<<",one: "<<one<<endl;
+									cout<<"library: "<<library.size();
+						return ILLEGAL_PARAMETERS;
 			}
 			time_t end_build_time = time(NULL);
 		  cout<<"Time needed for preprocessing data: "<<(end_build_time - start_build_time)<<"\n";
@@ -282,7 +325,6 @@ class TOPPSpecLibSearcher
 							quer.push_back(peak);
 						}
 					}
-					quer.sortByPosition();	
 					if(quer.size() >= min_peaks)
 					{
 						peak_ok = true;
@@ -291,10 +333,24 @@ class TOPPSpecLibSearcher
 					{
 						peak_ok = false;
 					}
+					DoubleReal query_MZ = query[j].getPrecursors()[0].getMZ();
 					if(peak_ok)
-					{
-						Real min_MZ = (query[j].getPrecursors()[0].getMZ() - precursor_mass_tolerance) *precursor_mass_multiplier;
-						Real max_MZ = (query[j].getPrecursors()[0].getMZ() + precursor_mass_tolerance) *precursor_mass_multiplier;
+					{	
+						bool charge_one = false; 
+						Size percent = round((query[j].size()/100) * 5);
+						for(vector<Peak1D>::iterator peak = quer.end()-1; percent != 0; --peak , --percent)
+						{
+							if(peak->getMZ() < query_MZ)
+							{
+								break;
+							}
+						}
+						if(percent > 0)
+						{
+							charge_one = true;
+						}
+						Real min_MZ = (query_MZ - precursor_mass_tolerance) *precursor_mass_multiplier;
+						Real max_MZ = (query_MZ + precursor_mass_tolerance) *precursor_mass_multiplier;
 						for(Size mz = (Size)min_MZ; mz <= ((Size)max_MZ)+1; ++mz)
 						{
 							map<Size, vector<PeakSpectrum> >::iterator found;
@@ -305,7 +361,7 @@ class TOPPSpecLibSearcher
 									for(Size i = 0; i < library.size(); ++i)
 									{
 										Real this_MZ  = library[i].getPrecursors()[0].getMZ()*precursor_mass_multiplier;
-										if(this_MZ >= min_MZ && max_MZ >= this_MZ )
+										if(this_MZ >= min_MZ && max_MZ >= this_MZ && ((charge_one = true && library[i].getPrecursors()[0].getCharge() == 1) ||(charge_one = false && library[i].getPrecursors()[0].getCharge() > 1)))
 										{
 											PeptideHit hit = library[i].getPeptideIdentifications()[0].getHits()[0];
 											PeakSpectrum& librar = library[i];
@@ -361,7 +417,7 @@ class TOPPSpecLibSearcher
 							pid.setHits(final_hits);
 							pid.sort();
 							pid.setMetaValue("MZ",query[j].getPrecursors()[0].getMZ());
-							pid.setMetaValue("RT",query[j].getRT());
+							pid.setMetaValue("RT",query_MZ);
 						}
 					}
 					peptide_ids.push_back(pid);

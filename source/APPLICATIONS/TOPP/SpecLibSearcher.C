@@ -209,14 +209,14 @@ class TOPPSpecLibSearcher
 						Peak1D peak;
 						if((*s)[l].getIntensity() >  remove_peaks_below_threshold)
 						{
-							if((*s)[l].getMZ() > precursor_MZ || (*s)[l].getMZ() < precursor_MZ - 1 )
-							{
+						//	if((*s)[l].getMZ() > precursor_MZ || (*s)[l].getMZ() < precursor_MZ - 1 )
+						//	{
 								peak.setIntensity(sqrt((*s)[l].getIntensity()));
-							}
-							else
-							{
-								peak.setIntensity(sqrt(0.2*(*s)[l].getIntensity()));
-							}
+						//	}
+						//	else
+						//	{
+						//		peak.setIntensity(sqrt(0.2*(*s)[l].getIntensity()));
+						//	}
 							peak.setMZ((*s)[l].getMZ());
 							peak.setPosition((*s)[l].getPosition());
 							librar.push_back(peak);
@@ -270,14 +270,14 @@ class TOPPSpecLibSearcher
 					if(query[j][k].getIntensity() >  remove_peaks_below_threshold && query[j][k].getIntensity() >= min_high_intensity )
 					{
 						Peak1D peak;
-						if(query[j][k].getMZ() > query[j].getPrecursors()[0].getMZ() ||query[j][k].getMZ() < query[j].getPrecursors()[0].getMZ()-14 )
-						{
+			//			if(query[j][k].getMZ() > query[j].getPrecursors()[0].getMZ() ||query[j][k].getMZ() < query[j].getPrecursors()[0].getMZ()-14 )
+				//		{
 							peak.setIntensity(sqrt(query[j][k].getIntensity()));
-						}
-						else
-						{
-							peak.setIntensity(sqrt(0.2*query[j][k].getIntensity()));
-						}
+			//			}
+				//		else
+				//		{
+				//			peak.setIntensity(sqrt(0.2*query[j][k].getIntensity()));
+					//	}
 						peak.setMZ(query[j][k].getMZ());
 
 						peak.setPosition(query[j][k].getPosition());

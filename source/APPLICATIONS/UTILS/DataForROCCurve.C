@@ -312,19 +312,19 @@ class TOPPDataForROCCurve
 					temp5 += String(false_count);
 					String temp6;
 					temp6 = "AUC: ";
-					temp6 += ROC.AUC(); 
+					temp6 += ROC1.AUC(); 
 					file.push_back("\nUnique Peptides with highest score: ");
 					file.push_back(temp5);
 					file.push_back(temp6);
 					
-					String temp8(ROC.cutoffPos(0.95));
+					String temp8(ROC1.cutoffPos(0.95));
 					file.push_back(temp8);
 					
-					String temp9( ROC.cutoffNeg(0.95));
+					String temp9( ROC1.cutoffNeg(0.95));
 					file.push_back(temp9);
 					file.push_back(" ");
 			
-			vector<pair<double,double> > curve2 = ROC.curve(curve_resolution);
+			vector<pair<double,double> > curve2 = ROC1.curve(curve_resolution);
 			
 			for(vector<pair<double,double> >::iterator it = curve2.begin(); it < curve2.end(); ++it)
 			{

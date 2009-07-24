@@ -257,7 +257,7 @@ class TOPPDataForROCCurve
 					String temp3( ROC.cutoffNeg(0.95));
 					file.push_back(temp3);
 					file.push_back(" ");
-			
+			TextFile uniques;
 			vector<pair<double,double> > curve = ROC.curve(curve_resolution);
 			
 			for(vector<pair<double,double> >::iterator it = curve.begin(); it < curve.end(); ++it)
@@ -266,11 +266,11 @@ class TOPPDataForROCCurve
 				String temp2(it->second);
 				temp1.append("\t");
 				temp1.append(temp2);
-				file.push_back(temp1);
+				uniques.push_back(temp1);
 				//file.push_back(temp2);
 			}
 
-			file.store(out);
+			uniques.store(out+"uniques.dat");
 			cout<<"Unique Peptides with highest score: "<<endl;
 			cout<<"All counts: "<<true_count+false_count<<", true: "<<true_count<<", false: "<<false_count<<endl;
 			cout<<"AUC: "<<ROC.AUC()<<endl;
@@ -313,7 +313,7 @@ class TOPPDataForROCCurve
 					String temp6;
 					temp6 = "AUC: ";
 					temp6 += ROC1.AUC(); 
-					file.push_back("\nUnique Peptides with highest score: ");
+					file.push_back("\nAll Top hits: ");
 					file.push_back(temp5);
 					file.push_back(temp6);
 					
@@ -325,17 +325,17 @@ class TOPPDataForROCCurve
 					file.push_back(" ");
 			
 			vector<pair<double,double> > curve2 = ROC1.curve(curve_resolution);
-			
+			TextFile all;
 			for(vector<pair<double,double> >::iterator it = curve2.begin(); it < curve2.end(); ++it)
 			{
 				String temp1(it->first);
 				String temp2(it->second);
 				temp1.append("\t");
 				temp1.append(temp2);
-				file.push_back(temp1);
+				all.push_back(temp1);
 				//file.push_back(temp2);
 			}
-
+			all.store(out+"all.dat");
 			file.store(out);			
 			cout<<"All top hits are count:"<<endl;
 			cout<<"All counts: "<<true_count+false_count<<", true: "<<true_count<<", false: "<<false_count<<endl;

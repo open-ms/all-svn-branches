@@ -177,9 +177,17 @@ cout << "BBB: " << strings.size() << endl;
                 resizeList_(precursorsList, value.toInt());
               else if(command.hasPrefix("SpectrumSettings.Precursors.Index"))
                 setIndex_(indexPrecursor, value.toInt()-1, precursorsList);
-              else /*if(command.hasPrefix("SpectrumSettings.Precursors.ActivationMethod"))
-                precursorsList[indexPrecursor].setActivationMethod(findIndex_(value, Precursor::NamesOfActivationMethod, Precursor::SIZE_OF_ACTIVATIONMETHOD));
-              else*/ if(command.hasPrefix("SpectrumSettings.Precursors.ActivationEnergy"))
+              else if(command.hasPrefix("SpectrumSettings.Precursors.ActivationMethod"))
+              {
+                std::vector<String> activationMethodStrings;
+                std::set<Precursor::ActivationMethod>& activationMethodList = precursorsList[indexPrecursor].getActivationMethod();
+
+                value.split(',', activationMethodStrings);
+                for(Size index=0; index<activationMethodStrings.size(); ++index)
+                  activationMethodList.insert((Precursor::ActivationMethod) findIndex_(
+                    activationMethodStrings[index], Precursor::NamesOfActivationMethod, Precursor::SIZE_OF_ACTIVATIONMETHOD));
+              }    
+              else if(command.hasPrefix("SpectrumSettings.Precursors.ActivationEnergy"))
                 precursorsList[indexPrecursor].setActivationEnergy(value.toDouble());
               else if(command.hasPrefix("SpectrumSettings.Precursors.IsolationWindowLowerOffset"))
                 precursorsList[indexPrecursor].setIsolationWindowLowerOffset(value.toDouble());

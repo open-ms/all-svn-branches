@@ -286,8 +286,8 @@ class TOPPSpecLibSearcher
 					if(peak_ok)
 					{	
 						bool charge_one = false; 
-						Int percent = round((query[j].size()/100) * 3);
-						Int margin  = round((query[j].size()/100)* 1);
+						Int percent = (Int)round((query[j].size()/100) * 3);
+						Int margin  = (Int)round((query[j].size()/100)* 1);
 						for(vector<RichPeak1D>::iterator peak = query[j].end()-1; percent >= 0; --peak , --percent)
 						{
 							if(peak->getMZ() < query_MZ)

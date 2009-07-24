@@ -80,11 +80,12 @@ class TOPPResampler
 		setValidFormats_("in",StringList::create("mzData"));
 		registerOutputFile_("out", "<file>", "", "output file in mzData format or png format");
 		registerFlag_("image", "Activates image mode (a png is written instead of a mzData file.");
-
+													
 		addEmptyLine_();
 		addText_("Parameters affecting the MzData file:");
-		registerDoubleOption_("sampling_rate", "<rate>", 0.1, "New sampling rate in m/z dimension", false);
+		registerDoubleOption_("sampling_rate", "<rate>", 0.1, "New sampling rate in m/z dimension", false);		
 		setMinFloat_("sampling_rate",0.0);
+		registerStringOption_("method", "<method>", "", "'raster' or 'shape' method.", false);
 
 		addEmptyLine_();
 		addText_("Parameters affecting the PNG file:");
@@ -236,18 +237,32 @@ class TOPPResampler
 		else
 		{
 			DoubleReal sampling_rate = getDoubleOption_("sampling_rate");
+			String method = getStringOption_("method");
 
 			LinearResampler lin_resampler;
 			Param resampler_param;
 			resampler_param.setValue("spacing",sampling_rate);
+			resampler_param.setValue("method", method);
 			lin_resampler.setParameters(resampler_param);
 
       // resample every scan
-      for (Size i = 0; i < exp.size(); ++i)
+      if(method == "raster")
       {
-        lin_resampler.raster(exp[i]);
-        //clear meta data because they are no longer meaningful
-        exp[i].getMetaDataArrays().clear();
+        for (Size i = 0; i < exp.size(); ++i)
+        {
+          lin_resampler.raster(exp[i]);
+          //clear meta data because they are no longer meaningful
+          exp[i].getMetaDataArrays().clear();
+        }
+      }
+      else
+      {
+        for (Size i = 0; i < exp.size(); ++i)
+        {
+          lin_resampler.shape(exp[i]);
+          //clear meta data because they are no longer meaningful
+          exp[i].getMetaDataArrays().clear();
+        }
       }
 			MzDataFile f;
 			f.setLogType(log_type_);

@@ -30,6 +30,9 @@
 
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
+#include <OpenMS/FORMAT/XMassFile.h>
+#include <OpenMS/KERNEL/MSSpectrum.h>
+
 #include <fstream>
 using namespace std;
 
@@ -45,29 +48,57 @@ namespace OpenMS
   
   class OPENMS_DLLAPI AutoExecuteFile
   {
-// 	  private:
-//		  PeakFileOptions options_;
-
     public:
       /// Default constructor
       AutoExecuteFile();
+      ~AutoExecuteFile();     
       
+      template <typename MapType>
+		  void load(const String& filename, MapType& map)
+      {
+        StringList file_list;
+        try
+				{
+					file_list = getFileList(filename);
+cout << "list size : " << file_list.size() << endl;					
+				}
+				catch(Exception::FileNotFound)
+				{
+					throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, String("'AutoExecute' file not writable."));
+				}
+				map.reset();
+				map.resize(file_list.size());
+				for(Size index = 0; index < file_list.size(); ++index)
+				{
+				  typename MapType::SpectrumType spectrum;
+					XMassFile().load(file_list[index], spectrum);
+          spectrum.setRT(index);
+          spectrum.setMSLevel(1);					
+				  map.push_back(spectrum);
+				}
+				XMassFile().importExperimentalSettings(file_list[0], map);
+      }
+
+      template <typename SpectrumType>
+      void store(const String& filename, const SpectrumType& spectrum)
+      {
+        throw Exception::FileNotWritable(__FILE__, __LINE__, __PRETTY_FUNCTION__, String("'AutoExecute' file not writable."));
+      }      
+      
+ 	      
+	  private:
+						
       /// Import file list
       StringList getFileList(
 	      const String & filename,  
-	      const bool isAutoExecute = false,
-	      const unsigned int begin = 0,
-	      const unsigned int end = 0,
-	      const String src_dir = "");
-	      
-	  private:
+	      const bool isAutoExecute = false);
+	    String autoExecuteToFilename(const String & line);
+      void readAutoExecuteHeader(std::ifstream & is_);
+
 	    unsigned int PosOnScout_; // position on chip, format [A-P]:[1-24]
 	    unsigned int SpectrumDirectory_; // spectrum directory
 	    unsigned int SpectrumFilename_; // spectrum filename
 	    unsigned int ChipOnScout_; // normal or calibrant position, "0" or "1"
-
-      String autoExecuteToFilename(const String & line, const String & src_dir);
-      void readAutoExecuteHeader(std::ifstream & is_);
   };
 } // namespace OpenMS
 

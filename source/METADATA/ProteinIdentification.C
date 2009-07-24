@@ -243,4 +243,9 @@ namespace OpenMS
 		return search_parameters_;
 	}
 
+	ProteinIdentification::SearchParameters& ProteinIdentification::getSearchParameters()
+	{
+		return search_parameters_;
+	}
+
 }// namespace OpenMS

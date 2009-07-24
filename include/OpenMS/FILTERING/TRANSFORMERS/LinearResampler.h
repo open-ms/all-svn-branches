@@ -63,6 +63,7 @@ namespace OpenMS
       	: DefaultParamHandler("LinearResampler")
       {
         defaults_.setValue("spacing",0.05,"Spacing of the resampled output peaks.");
+        defaults_.setValue("method","raster","'raster' or 'shape' method.");
         defaultsToParam_();
 	    }
 		
@@ -133,19 +134,93 @@ namespace OpenMS
         
         resampled_peak_container.swap(spectrum);
 	    }
-	
+
+	    /** 
+	    	@brief Resample MSSpectrum with max values.
+	    */
+	    template < typename PeakType >
+	    void shape(MSSpectrum<PeakType>& spectrum)
+      {
+      	//return if nothing to do
+      	if (spectrum.size()==0) return;
+      	
+      	typename MSSpectrum<PeakType>::iterator first = spectrum.begin();
+      	typename MSSpectrum<PeakType>::iterator last = spectrum.end();
+      	
+        double end_pos = (last-1)->getMZ();
+        double start_pos = first->getMZ();
+        int number_raw_points = (int)spectrum.size();
+        int number_resampled_points = (int)(ceil((end_pos -start_pos) / spacing_ + 1));
+        
+        if(number_raw_points <= (2*number_resampled_points)) return;
+
+        typename std::vector<PeakType> resampled_peak_container;
+        resampled_peak_container.resize(number_resampled_points);
+
+        // generate the resampled peaks at positions origin+i*spacing_
+        typename std::vector<PeakType>::iterator it = resampled_peak_container.begin();
+        for (int i=0; i < number_resampled_points; ++i)
+        {
+            it->setMZ( start_pos + i*spacing_);
+            ++it;
+        }
+
+        // spread the intensity h of the data point at position x to the left and right
+        // adjacent resampled peaks
+        typename MSSpectrum<PeakType>::iterator it_spectrum = first;
+        typename MSSpectrum<PeakType>::iterator it_resampled = resampled_peak_container.begin();
+        double left = it_resampled->getMZ() - (spacing_ / 2);
+        double right = it_resampled->getMZ() + (spacing_ / 2);
+        
+        for(; it_spectrum!=last; ++it_spectrum)
+        {
+          if(it_spectrum->getMZ() >= left)
+          {
+            if(it_spectrum->getMZ() < right)
+            {
+              if(it_spectrum->getIntensity() > it_resampled->getIntensity())
+                it_resampled->setIntensity(it_spectrum->getIntensity());
+            }
+            else
+            {
+              ++it_resampled;
+              left = it_resampled->getMZ() - (spacing_ / 2);
+              right = it_resampled->getMZ() + (spacing_ / 2);
+              it_resampled->setIntensity(it_spectrum->getIntensity());
+            }
+          }
+          else
+          {
+            // nothing
+          }
+        }
+        
+        resampled_peak_container.swap(spectrum);
+	    }
+	    	
 	    /**
 	    	@brief Resamples the data in an MSExperiment.
 	    */
 	    template <typename PeakType >
 	    void rasterExperiment(MSExperiment<PeakType>& exp)
 			{
-				startProgress(0,exp.size(),"resampling of data");
-				for (Size i = 0; i < exp.size(); ++i)
+				startProgress(0,exp.size(),"resampling of data");		
+				if(param_.getValue("method") == "raster")
 				{
-					raster(exp[i]);
-					setProgress(i);
+				  for (Size i = 0; i < exp.size(); ++i)
+				  {
+					  raster(exp[i]);
+					  setProgress(i);
+				  }
 				}
+				else if(param_.getValue("method") == "shape")
+				{
+				  for (Size i = 0; i < exp.size(); ++i)
+				  {
+					  shape(exp[i]);
+					  setProgress(i);
+				  }
+				}				
 				endProgress();
 			}
 	

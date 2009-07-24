@@ -635,7 +635,6 @@ namespace OpenMS
 
 	void Param::store(const String& filename) const
 	{
-
 		//open file
 		ofstream os_;
 		ostream* os_ptr;
@@ -854,7 +853,7 @@ namespace OpenMS
 	}
 	
 	void Param::load(const String& filename)
-	{
+	{	
 		Internal::ParamXMLHandler handler(*this, filename, schema_version_);
 		parse_(filename, &handler);
 	}

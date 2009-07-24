@@ -28,11 +28,9 @@
 #ifndef OPENMS_FORMAT_XMASSFILE_H
 #define OPENMS_FORMAT_XMASSFILE_H
 
-#include <OpenMS/DATASTRUCTURES/String.h>
-#include <OpenMS/CONCEPT/Exception.h>
-// #include <OpenMS/FORMAT/PeakFileOptions.h>
 #include <OpenMS/FORMAT/HANDLERS/AcqusHandler.h>
 #include <OpenMS/FORMAT/HANDLERS/FidHandler.h>
+#include <OpenMS/KERNEL/MSExperiment.h>
 
 namespace OpenMS
 {
@@ -57,9 +55,9 @@ namespace OpenMS
       /// Default constructor
       XMassFile();
       
-      template <typename SpectrumType>
-      void load(const String& filename, SpectrumType& spectrum)
-      {
+      template <class PeakType>
+      void load(const String& filename, MSSpectrum<PeakType>& spectrum)
+      {					        
         Internal::AcqusHandler acqus(filename.prefix(filename.length()-3) + String("acqus"));
 
         Internal::FidHandler fid(filename);
@@ -72,18 +70,113 @@ namespace OpenMS
 				spectrum.clear();
 				
 				//temporary variables
-				typename SpectrumType::PeakType p;
-				
-// http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS-release/html/classOpenMS_1_1SpectrumSettings.html#5b198c3f5fab186ee03efe07e39a11dd
-				
+				PeakType p;
+							
         while( spectrum.size() < acqus.getSize() )
         {
 				  //fill peak
-				  p.setPosition( (typename SpectrumType::PeakType::PositionType) acqus.getPosition(fid.getIndex()) );
-				  p.setIntensity( (typename SpectrumType::PeakType::IntensityType) fid.getIntensity() );
+				  p.setPosition( (typename PeakType::PositionType) acqus.getPosition(fid.getIndex()) );
+				  p.setIntensity( (typename PeakType::IntensityType) fid.getIntensity() );
 				  spectrum.push_back(p);
         }
         fid.close();
+        
+        // import metadata
+        spectrum.setType(SpectrumSettings::RAWDATA);
+        spectrum.setNativeID(acqus.getParam("ID_raw"));
+        
+        InstrumentSettings& instrumentSettings = spectrum.getInstrumentSettings();
+          instrumentSettings.setScanMode(InstrumentSettings::MASSSPECTRUM);
+          instrumentSettings.setZoomScan(false);
+          if(acqus.getParam(".IONIZATION MODE") == "LD+")      
+            instrumentSettings.setPolarity(IonSource::POSITIVE);
+          else if(acqus.getParam(".IONIZATION MODE") == "LD-")      
+            instrumentSettings.setPolarity(IonSource::NEGATIVE);
+          else 
+            instrumentSettings.setPolarity(IonSource::POLNULL);     
+            
+        // AcquisitionInfo& acquisitionInfo = spectrum.getAcquisitionInfo();
+          
+        SourceFile& sourceFile = spectrum.getSourceFile();
+          sourceFile.setNameOfFile("fid");
+          sourceFile.setPathToFile(filename.prefix(filename.length()-3));
+          sourceFile.setFileSize(100.0);
+          sourceFile.setFileType("Xmass analysis file (fid)");
+          // sourceFile.setChecksum(const String &checksum, ChecksumType type);
+          sourceFile.setNativeIDType(SourceFile::BRUKER_FID);
+        
+        // std::vector<Product>& product = spectrum.getProducts();
+        // std::vector<Precursor>& precursor = spectrum.getPrecursors();
+        // std::vector<PeptideIdentification>& peptideIdentification = spectrum.getPeptideIdentifications();
+      }
+        
+      template <class PeakType>
+      void importExperimentalSettings(const String& filename, MSExperiment<PeakType>& exp)
+      {		        
+        Internal::AcqusHandler acqus(filename.prefix(filename.length()-3) + String("acqus"));
+        ExperimentalSettings& experimentalSettings = exp.getExperimentalSettings();
+        
+        Sample& sample = experimentalSettings.getSample();
+          sample.setName("unknow");
+          sample.setOrganism("unknow");
+          sample.setNumber("unknow");
+          sample.setComment("none");
+          sample.setState(Sample::SAMPLENULL);          
+          sample.setMass(0.0);
+          sample.setVolume(0.0);
+          sample.setConcentration(0.0);
+        
+        std::vector<SourceFile>& sourceFileList = experimentalSettings.getSourceFiles();
+          sourceFileList.clear();
+          for(typename MSExperiment<PeakType>::Iterator it=exp.begin(); it!=exp.end(); ++it)
+          {
+            sourceFileList.push_back(it->getSourceFile());
+          }
+                
+        std::vector<ContactPerson>& contactPerson = experimentalSettings.getContacts();
+          contactPerson.clear();
+        
+        Instrument& instrument = experimentalSettings.getInstrument();
+          instrument.setName(acqus.getParam("SPECTROMETER/DATASYSTEM"));
+          instrument.setVendor(acqus.getParam("ORIGIN"));
+          instrument.setModel(acqus.getParam("$InstrID"));
+          
+          std::vector<IonSource>& ionSourceList = instrument.getIonSources();
+            ionSourceList.clear();
+            ionSourceList.resize(1);
+            if(acqus.getParam(".INLET") == "DIRECT")
+              ionSourceList[0].setInletType(IonSource::DIRECT);
+            else
+              ionSourceList[0].setInletType(IonSource::INLETNULL);
+            ionSourceList[0].setIonizationMethod(IonSource::MALDI);
+            if(acqus.getParam(".IONIZATION MODE") == "LD+")      
+              ionSourceList[0].setPolarity(IonSource::POSITIVE);
+            else if(acqus.getParam(".IONIZATION MODE") == "LD-")      
+              ionSourceList[0].setPolarity(IonSource::NEGATIVE);
+            else 
+              ionSourceList[0].setPolarity(IonSource::POLNULL);
+            ionSourceList[0].setOrder(0);
+            
+          std::vector<MassAnalyzer>& massAnalyzerList = instrument.getMassAnalyzers();
+            massAnalyzerList.clear();
+            massAnalyzerList.resize(1);  
+            if(acqus.getParam(".SPECTROMETER TYPE") == "TOF")
+              massAnalyzerList[0].setType(MassAnalyzer::TOF);
+            else
+              massAnalyzerList[0].setType(MassAnalyzer::ANALYZERNULL);
+                               
+        // HPLC& hplc = experimentalSettings.getHPLC();
+        
+        DateTime date;
+          date.set(acqus.getParam("$AQ_DATE").remove('<').remove('>') );
+          experimentalSettings.setDateTime(date);
+        
+        String comment("comment");
+          experimentalSettings.setComment(comment);
+        
+        // std::vector<ProteinIdentification>& proteinIdentification = experimentalSettings.getProteinIdentifications();
+        
+
       }
 
       template <typename SpectrumType>

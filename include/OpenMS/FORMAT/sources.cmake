@@ -37,6 +37,7 @@ FastaIteratorIntern.h
 FeatureXMLFile.h
 FileHandler.h
 IdXMLFile.h
+SettingsParser.h
 InspectInfile.h
 InspectOutfile.h
 LibSVMEncoder.h

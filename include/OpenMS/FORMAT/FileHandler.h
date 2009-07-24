@@ -39,6 +39,7 @@
 #include <OpenMS/FORMAT/MascotInfile2.h>
 #include <OpenMS/FORMAT/MS2File.h>
 #include <OpenMS/FORMAT/XMassFile.h>
+#include <OpenMS/FORMAT/AutoExecuteFile.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 
 #ifdef USE_ANDIMS
@@ -136,11 +137,19 @@ namespace OpenMS
 			//load right file
 			switch(type)
 			{
-				case FileTypes::XMASS:
+				case FileTypes::AUTOEXECUTE:
 					{
 					  exp.reset();
-					  exp.resize(1);
-					  XMassFile().load(filename,exp[0]);
+					  AutoExecuteFile().load(filename, exp);
+						return true;
+					}
+					break;	
+				case FileTypes::XMASS:
+					{
+			      exp.reset();
+			      exp.resize(1);					
+					  XMassFile().load(filename, exp[0]);
+					  XMassFile().importExperimentalSettings(filename, exp);
 						return true;
 					}
 					break;			

@@ -155,9 +155,11 @@ set(format_executables_list
   SemanticValidator_test
   MzMLValidator_test
   MS2File_test
-	MzIdentMLFile_test
-	MzIdentMLValidator_test
-	TraMLFile_test
+  MzIdentMLFile_test
+  MzIdentMLValidator_test
+  TraMLFile_test
+  XMassFile_test
+  AutoExecuteFile_test	
 )
 
 if (USE_ANDIMS)

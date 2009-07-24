@@ -28,7 +28,7 @@
 #include <OpenMS/FORMAT/AutoExecuteFile.h>
 
 using namespace std;
-
+                                        
 namespace OpenMS
 {
 
@@ -39,14 +39,14 @@ namespace OpenMS
     SpectrumFilename_ = 0;
     ChipOnScout_ = 0;
 	}
-	
-	
+
+	AutoExecuteFile::~AutoExecuteFile()
+	{
+	}
+		
 	StringList AutoExecuteFile::getFileList(
 	      const String & filename,  
-	      const bool isAutoExecute,
-	      const unsigned int begin,
-	      const unsigned int end,
-	      const String src_dir)
+	      const bool isAutoExecute)
 	{
     std::ifstream is(filename.c_str());
     if (!is)
@@ -60,50 +60,34 @@ namespace OpenMS
 
     if(isAutoExecute)
     {
-cout << "isAutoExecute" << endl;    
       // read headers
       readAutoExecuteHeader(is);
     }
-cout << "readAutoExecuteHeader ok" << endl;
-    // skip first lines
-    unsigned int index = 0;
-    for(; index<begin; index++)
-    {
-cout << "1 line skip" << endl;
-      getline(is, line, '\n');
-    }
     
     //read lines
-    while(getline(is, line, '\n') && index<end)
+    while(getline(is, line, '\n'))
     {
-cout << "line " << index << " : " << line << endl;    
+cout << "line : " << line << endl;    
       if(isAutoExecute)
       {
-        String file = autoExecuteToFilename(line, src_dir);
+        String file = autoExecuteToFilename(line);
         list.push_back(file);
       }
       else
         list.push_back(line);
-      
-      index++; 
     }
     
     return list;
 	}
 	
 	
-	String AutoExecuteFile::autoExecuteToFilename(const String & line, const String & src_dir)
+	String AutoExecuteFile::autoExecuteToFilename(const String & line)
 	{
 	  vector<String> cells;
 	  String filename;
 	  
 	  line.split('\t', cells);
-	  
-	  if(src_dir == String(""))
-	    filename = cells[SpectrumDirectory_];
-	  else
-	    filename = src_dir;
-	    
+	  filename = cells[SpectrumDirectory_];
 	  filename += cells[SpectrumFilename_] + String("/");
 	  
 	  // '1' read only first spectrum
@@ -111,7 +95,6 @@ cout << "line " << index << " : " << line << endl;
 	  filename += cells[ChipOnScout_] + String("_") + cells[PosOnScout_].remove(':') + String("/1/1SLin/fid");
 	  
 	  cells.clear();
-cout << "autoExecuteToFilename : " << filename << endl; 	  
 	  return filename;
 	}
 	
@@ -136,8 +119,6 @@ cout << "autoExecuteToFilename : " << filename << endl;
         ChipOnScout_ = index;
     }
     headers.clear();
-cout << "headers : " << line << endl;
-cout << "PosOnScout : " << PosOnScout_ << " ; SpectrumDirectory : " << SpectrumDirectory_ << " ; SpectrumFilename : " << SpectrumFilename_ << " ; ChipOnScout : " << ChipOnScout_ << endl;
 	  
 	  // read '************' line
 	  getline(is, line, '\n');

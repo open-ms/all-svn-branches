@@ -141,6 +141,12 @@ namespace OpenMS
 		  	
 		  	@exception Exception::IndexOverflow is thrown if the position is invalid.
 		  */
+
+		 	/// returns a const reference to the SampleTreatment list
+		 	const std::list<SampleTreatment*>& getTreatments() const;
+		 	/// returns a mutable reference to the SampleTreatment list
+		  std::list<SampleTreatment*> & getTreatments();	  
+		  
 			void removeTreatment(UInt position);
 			/// returns the number of sample treatments
 			Int countTreatments() const;

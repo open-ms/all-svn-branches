@@ -25,10 +25,9 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-
 #include <OpenMS/VISUAL/Spectrum3DOpenGLCanvas.h>
-#include <OpenMS/VISUAL/Spectrum3DCanvas.h>
 #include <OpenMS/VISUAL/AxisTickCalculator.h>
+//#include <OpenMS/CONCEPT/Exception.h>
 
 #include <QtGui/QMouseEvent>
 #include <QtGui/QKeyEvent>
@@ -451,83 +450,224 @@ namespace OpenMS
 	
 	GLuint Spectrum3DOpenGLCanvas::makeDataAsStick()
 	{
+	  String pMode = "surface"; // point, barplot, line, surface, line and surface
+	  String pAspect = "map"; // spectrum, map, pseudogel
+    bool pSimple = true;
+    Size cols = 500;
+    Size rows = 100;
+	   
 		GLuint list = glGenLists(1);
-		glNewList(list,GL_COMPILE);
-	
-		for (Size i =0;i<canvas_3d_.getLayerCount();i++)
-		{	
-			const LayerData& layer = canvas_3d_.getLayer(i);
-			if(layer.visible)
-			{	
-				recalculateDotGradient_(i);
-				
-				if((Int)layer.param.getValue("dot:shade_mode"))
-				{
-					glShadeModel(GL_SMOOTH); 
-				}
-				else
-				{
-					glShadeModel(GL_FLAT); 
-				}
-	
-				glLineWidth(layer.param.getValue("dot:line_width"));
-					
-				for (Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.peaks.areaBeginConst(canvas_3d_.visible_area_.min_[1],canvas_3d_.visible_area_.max_[1],canvas_3d_.visible_area_.min_[0],canvas_3d_.visible_area_.max_[0]); 
-						 it != layer.peaks.areaEndConst(); 
-						 ++it)
-				{
-					PeakIndex pi = it.getPeakIndex();
-					if (layer.filters.passes(layer.peaks[pi.spectrum],pi.peak))
-					{
-						glBegin(GL_LINES);
-						double intensity = 0;
-						switch (canvas_3d_.intensity_mode_)
-						{
+	  glNewList(list,GL_COMPILE);
+
+    try
+    {	   
+		  for(Size iLayer=0; iLayer<canvas_3d_.getLayerCount(); iLayer++)
+		  {
+			  const LayerData& layer = canvas_3d_.getLayer(iLayer);
+			  if(layer.visible)
+			  {
+			    recalculateDotGradient_(iLayer);
+			     
+			    if((Int)layer.param.getValue("dot:shade_mode"))
+					  glShadeModel(GL_SMOOTH); 
+				  else
+					  glShadeModel(GL_FLAT); 
+			
+			    if(pSimple)
+			    {			  
+			      map2d map(cols, layer.peaks.size(), this, iLayer);
+			      map.importData(
+			        layer.peaks.areaBeginConst(
+			          canvas_3d_.visible_area_.min_[1],
+			          canvas_3d_.visible_area_.max_[1],
+			          canvas_3d_.visible_area_.min_[0],
+			          canvas_3d_.visible_area_.max_[0]),
+						  layer.peaks.areaEndConst());
 							
-							case SpectrumCanvas::IM_PERCENTAGE:	
-								
-								intensity = it->getIntensity() * 100.0 /canvas_3d_.getMaxIntensity(i);
-								qglColor( layer.gradient.precalculatedColorAt(0));
-								glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()), 
-													 -corner_,
-													 -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-								qglColor( layer.gradient.precalculatedColorAt(intensity ));
-								glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()),
-													 -corner_+(GLfloat)scaledIntensity(it->getIntensity(),i),
-													 -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-								break;
+				    if(pMode == "point")
+				    {
+				      glBegin(GL_POINTS);
+				      glPointSize(10.0);
+				      map.setDrawingMode(map2d::POINTS);
+			      
+				      for(Size ii=0; ii<cols; ++ii)
+				      {
+				        for(Size jj=0; jj<rows; ++jj)
+				        {				    
+				          vertexList vertex = map.getVertex(ii,jj);  
+				          qglColor(vertex.color1);
+				          glVertex3d(vertex.x1, vertex.y1, vertex.z1);		        
+if(map.get(ii,jj)>10000.0)				          
+{
+cout << "A x1: " << vertex.x1 << " y1: " << vertex.y1 << " z1: " << vertex.z1 << " x2: " << vertex.x2 << " y2: " << vertex.y2 << " z2: " << vertex.z2 << endl;				          
+cout << "mz: " << map.indexToMz(ii) << " - rt: " << map.indexToRt(jj) << " int: " << map.get(ii,jj) << " scalint: " << scaledIntensity(map.get(ii,jj),iLayer) << " sal2: " << map.scaledIntensity(map.get(ii,jj)) << " - x1: " << -corner_+(GLfloat)scaledMZ(map.indexToMz(ii)) << " y1: " << -corner_ << " z1: " << -near_-2*corner_-(GLfloat)scaledRT(map.indexToRt(jj)) << " - x2: " << -corner_+(GLfloat)scaledMZ(map.indexToMz(ii)) << " y2: " << -corner_+(GLfloat)scaledIntensity(map.get(ii,jj),iLayer) << " z2: " << -near_-2*corner_-(GLfloat)scaledRT(map.indexToRt(jj)) << endl;
+}
+				        }
+				      }
+				      glEnd();				    						    
+				    }
+				    
+				    else if(pMode == "barplot")
+				    {
+				      glBegin(GL_LINES);
+				      glLineWidth(layer.param.getValue("dot:line_width"));
+				      map.setDrawingMode(map2d::BARPLOTS);
+				      
+				      for(Size ii=0; ii<cols; ++ii)
+				      {
+				        for(Size jj=0; jj<rows; ++jj)
+				        {
+				          vertexList vertex = map.getVertex(ii,jj);  
+				          qglColor(vertex.color1);
+				          glVertex3d(vertex.x1, vertex.y1-1, vertex.z1);
+				          qglColor(vertex.color2);
+				          glVertex3d(vertex.x2, vertex.y2+1, vertex.z2);
+if(map.get(ii,jj)>10000.0)			          
+{
+cout << "A x1: " << vertex.x1 << " y1: " << vertex.y1 << " z1: " << vertex.z1 << " x2: " << vertex.x2 << " y2: " << vertex.y2 << " z2: " << vertex.z2 << endl;				          
+cout << "mz: " << map.indexToMz(ii) << " - rt: " << map.indexToRt(jj) << " int: " << map.get(ii,jj) << " - x1: " << -corner_+(GLfloat)scaledMZ(map.indexToMz(ii)) << " y1: " << -corner_ << " z1: " << -near_-2*corner_-(GLfloat)scaledRT(map.indexToRt(jj)) << " - x2: " << -corner_+(GLfloat)scaledMZ(map.indexToMz(ii)) << " y2: " << -corner_+(GLfloat)scaledIntensity(map.get(ii,jj),iLayer) << " z2: " << -near_-2*corner_-(GLfloat)scaledRT(map.indexToRt(jj)) << endl;
+}
+				        }
+				      }
+				      glEnd();
+				    }
+				    
+				    else if(pAspect=="map")
+				    {
+				      for(Size jj=0; jj<rows-1; ++jj)
+				      {
+				        map.setDrawingMode(map2d::POINTS);
+				        
+				        if(pMode == "surface")
+    				      glBegin(GL_TRIANGLE_STRIP);
+    				    else
+	    			      glBegin(GL_LINE_STRIP);
+
+                vertexList vertex = map.getVertex(Size(0), jj);
+                qglColor(vertex.color1);
+                glVertex3d(vertex.x1, vertex.y1, vertex.z1);
+                //vertexList normal = map.getNormals(0, jj);
+                //glNormal3d(normal.x1, normal.y1, normal.z1);
+                
+                vertex = map.getVertex(Size(0), jj+1);
+                qglColor(vertex.color1);
+                glVertex3d(vertex.x1, vertex.y1, vertex.z1);
+                //normal = map.getNormals(0, jj+1);
+                //glNormal3d(normal.x1, normal.y1, normal.z1);              	        
+				          
+				        for(Size ii=0; ii<cols-1; ++ii)
+				        {
+                  vertex = map.getVertex(ii+1, jj);
+                  qglColor(vertex.color1);
+                  glVertex3d(vertex.x1, vertex.y1, vertex.z1);
+                  //vertexList normal = map.getNormals(ii+1, jj);
+                  //glNormal3d(normal.x1, normal.y1, normal.z1);                
+                  
+                  vertex = map.getVertex(ii+1, jj+1);
+                  qglColor(vertex.color1);
+                  glVertex3d(vertex.x1, vertex.y1, vertex.z1);					
+                  //normal = map.getNormals(ii+1, jj+1);
+                  //glNormal3d(normal.x1, normal.y1, normal.z1);                   		        
+				        }
+				        glEnd();
+				      }
+				    }
+            
+            else if(pAspect=="pseudogel")
+				    {
+				      glLineWidth(layer.param.getValue("dot:line_width"));
+				      for(Size jj=0; jj<rows-1; ++jj)
+				      {
+				        glBegin(GL_LINE_STRIP);
+				        
+                vertexList vertex = map.getVertex(Size(0), jj);
+                qglColor(vertex.color1);
+                glVertex3d(vertex.x1, vertex.y1, vertex.z1);
+                
+                vertex = map.getVertex(Size(0), jj+1);
+                qglColor(vertex.color1);
+                glVertex3d(vertex.x1, vertex.y1, vertex.z1);				        
+				          
+				        for(Size ii=0; ii<cols-1; ++ii)
+				        {
+                  vertex = map.getVertex(ii+1, jj);
+                  qglColor(vertex.color1);
+                  glVertex3d(vertex.x1, vertex.y1, vertex.z1);
+                  
+                  vertex = map.getVertex(ii+1, jj+1);
+                  qglColor(vertex.color1);
+                  glVertex3d(vertex.x1, vertex.y1, vertex.z1);					  		        
+				        }
+				        glEnd();
+				      }
+				    }
+			    }
+			    else
+			    {
+            glLineWidth(layer.param.getValue("dot:line_width"));
+				    for(
+				      Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.peaks.areaBeginConst(
+				        canvas_3d_.visible_area_.min_[1],
+				        canvas_3d_.visible_area_.max_[1],
+				        canvas_3d_.visible_area_.min_[0],
+				        canvas_3d_.visible_area_.max_[0]); 
+						  it != layer.peaks.areaEndConst(); 
+						  ++it)
+				    {
+					    PeakIndex pi = it.getPeakIndex();
+					    if (layer.filters.passes(layer.peaks[pi.spectrum],pi.peak))
+					    {
+						    glBegin(GL_LINES);
+						    switch (canvas_3d_.intensity_mode_)
+						    {
+							    case SpectrumCanvas::IM_PERCENTAGE:	
+								    qglColor( layer.gradient.precalculatedColorAt(0));
+								    glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()), 
+													     -corner_,
+													     -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
+								    qglColor( layer.gradient.precalculatedColorAt(it->getIntensity() * 100.0 /canvas_3d_.getMaxIntensity(iLayer)) );
+								    glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()),
+													     -corner_+(GLfloat)scaledIntensity(it->getIntensity(),iLayer),
+													     -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
+								    break;
 							
-							case SpectrumCanvas::IM_NONE:
+							    case SpectrumCanvas::IM_NONE:
 							
-								qglColor( layer.gradient.precalculatedColorAt(canvas_3d_.overall_data_range_.min_[2]));
-								glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()), 
-													 -corner_,
-													 -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-								qglColor( layer.gradient.precalculatedColorAt(it->getIntensity()));
-								glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()),
-													 -corner_+(GLfloat)scaledIntensity(it->getIntensity(),i),
-													 -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-								break;
+								    qglColor( layer.gradient.precalculatedColorAt(canvas_3d_.overall_data_range_.min_[2]));
+								    glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()), 
+													     -corner_,
+													     -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
+								    qglColor( layer.gradient.precalculatedColorAt(it->getIntensity()));
+								    glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()),
+													     -corner_+(GLfloat)scaledIntensity(it->getIntensity(),iLayer),
+													     -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
+								    break;
 							
-							case SpectrumCanvas::IM_SNAP:
+							    case SpectrumCanvas::IM_SNAP:
 								
-								qglColor(layer.gradient.precalculatedColorAt(int_scale_.min_[0]));
-								glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()), 
-													 -corner_,
-													 -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-								qglColor(layer.gradient.precalculatedColorAt(it->getIntensity()));
-								glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()),
-													 -corner_+(GLfloat)scaledIntensity(it->getIntensity(),i),
-													 -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
+								    qglColor(layer.gradient.precalculatedColorAt(int_scale_.min_[0]));
+								    glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()), 
+													     -corner_,
+													     -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
+								    qglColor(layer.gradient.precalculatedColorAt(it->getIntensity()));
+								    glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()),
+													     -corner_+(GLfloat)scaledIntensity(it->getIntensity(),iLayer),
+													     -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
 								
-								break;
+								    break;
 								
-						}
-						glEnd();
-					}
-				}
-			}
-		}
+						    }
+						    glEnd();
+					    }
+				    }			  
+			    }	
+        }
+      }
+    }
+    catch(const std::exception& e)
+    {
+      cout << "erreur:" << e.what() << endl;
+    }
 		glEndList();
 		return list; 
 	}

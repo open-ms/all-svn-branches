@@ -196,8 +196,10 @@ namespace OpenMS
 			const String& getSearchEngineVersion() const;
 			/// sets the search parameters
 			void setSearchParameters(const SearchParameters& search_parameters);
-			/// returns the search parameters 
-			const SearchParameters& getSearchParameters() const; 
+			/// returns a const reference to the search parameters 
+			const SearchParameters& getSearchParameters() const;
+			/// returns a mutable reference to the search parameters 
+			SearchParameters& getSearchParameters(); 			
 	    /// returns the identifier
 	    const String& getIdentifier() const;
 	    /// sets the indentifier

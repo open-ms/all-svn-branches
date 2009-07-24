@@ -61,6 +61,7 @@ namespace OpenMS
         
           if(line.split('=', strings))
           {
+cout << "AAA: " << strings.size() << endl;          
             if( strings.size() != 2 )
             {
               //throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" , filename);
@@ -68,8 +69,9 @@ namespace OpenMS
             params_[ strings[0].substr(2) ] = strings[1].trim();
           } 
         }
-				catch (...)
+				catch(const std::exception& e)
 				{
+cout << "excep: " << e.what() << endl;				
 					//throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" ,filename);
 				}        
       }

@@ -282,7 +282,17 @@ namespace OpenMS
 		}
 		return **it;
 	}
-		
+		  	
+	const list<SampleTreatment*>& Sample::getTreatments() const
+ 	{
+  	return treatments_;	   		
+ 	}	
+ 		    	
+  list<SampleTreatment*>& Sample::getTreatments()
+  {
+  	return treatments_;	
+  }
+  
 	void Sample::removeTreatment(UInt position)
 	{
 		if (position >= treatments_.size())

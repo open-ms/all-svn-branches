@@ -17,6 +17,7 @@ FastaIteratorIntern.C
 FeatureXMLFile.C
 FileHandler.C
 IdXMLFile.C
+SettingsParser.C
 InspectInfile.C
 InspectOutfile.C
 LibSVMEncoder.C

@@ -272,6 +272,8 @@ namespace OpenMS
 			template <typename PeakType>
 			void filter(MSSpectrum<PeakType>& spectrum)
 			{
+			  DateTime begin = DateTime::now();
+			  			
 				//make sure the right peak type is set
 				spectrum.setType(SpectrumSettings::RAWDATA);
 				
@@ -311,6 +313,29 @@ namespace OpenMS
 				{
 					spectrum[i].setIntensity(output[i]);
 				}
+				
+        // Add DataProcessing informations
+        {
+          DataProcessing dataProcessing;
+          {        
+            Software software;
+            software.setName(OPENMS_NAME);
+            software.setVersion(OPENMS_PACKAGE_VERSION);
+            dataProcessing.setSoftware(software);
+          }
+          {
+            std::set<DataProcessing::ProcessingAction> processingActionsList;
+            processingActionsList.insert(DataProcessing::BASELINE_REDUCTION);
+            dataProcessing.setProcessingActions(processingActionsList);
+          }
+          dataProcessing.setCompletionTime(begin.secsTo(DateTime::now()));
+          dataProcessing.setMetaValue("Length of the structuring element", (DoubleReal)param_.getValue("struc_elem_length"));
+          dataProcessing.setMetaValue("Unit of the structuring element", (String)param_.getValue("struc_elem_unit"));
+          dataProcessing.setMetaValue("Method to use", (String)param_.getValue("method"));
+          
+          std::vector<DataProcessing> dataProcessingList = spectrum.getDataProcessing();
+          dataProcessingList.push_back(dataProcessing);
+        }				
 			}
 	
 	
@@ -324,10 +349,10 @@ namespace OpenMS
 			void filterExperiment(MSExperiment<PeakType>& exp)
 			{
 				startProgress(0,exp.size(),"filtering baseline");
-				for ( UInt i = 0; i < exp.size(); ++i )
+				for ( UInt iSpectrum = 0; iSpectrum < exp.size(); ++iSpectrum )
 				{
-					filter(exp[i]);
-					setProgress(i);
+					filter(exp[iSpectrum]);
+					setProgress(iSpectrum);
 				}
 				endProgress();
 			}

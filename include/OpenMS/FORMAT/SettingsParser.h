@@ -45,8 +45,9 @@ namespace OpenMS
   class OPENMS_DLLAPI SettingsParser
   {
     private:
-      int findIndex_(const String value, const std::string* table, const Size tableSize) const;
-      void stringToIntVector_(const String str, std::vector<Int>& list) const;
+      int findIndex_(const String& value, const std::string* table, const Size tableSize) const;
+      void stringToIntVector_(const String& str, std::vector<Int>& list) const;
+      void addMetaInfo_(MetaInfoInterface& metaInfo, const String& name, const String& value) const;
       
       template <class T>
       void resizeList_(std::vector<T>& list, const int size) const
@@ -133,6 +134,8 @@ cout << "BBB: " << strings.size() << endl;
                   scanWindowsList[indexScanWindows].begin = value.toDouble();
                 else if(command.hasPrefix("SpectrumSettings.InstrumentSettings.ScanWindows.End"))
                   scanWindowsList[indexScanWindows].end = value.toDouble();
+                else
+                  addMetaInfo_(/*(MetaInfoInterface&)*/ scanWindowsList[indexScanWindows], command, value);
               }                    
             }
             else if(command.hasPrefix("SpectrumSettings.AcquisitionInfo.MethodOfCombination"))
@@ -206,6 +209,36 @@ cout << "BBB: " << strings.size() << endl;
               else if(command.hasPrefix("SpectrumSettings.Products.IsolationWindowUpperOffset"))
                 productsList[indexProduct].setIsolationWindowUpperOffset(value.toDouble());
             }
+            else if(command.hasPrefix("SpectrumSettings.DataProcessing."))
+            {
+              std::vector<DataProcessing>& dataProcessingList = spectrum.getDataProcessing();
+
+              if(command.hasPrefix("SpectrumSettings.DataProcessing.Size"))
+                resizeList_(dataProcessingList, value.toInt());
+              else if(command.hasPrefix("SpectrumSettings.DataProcessing.Index"))
+                setIndex_(indexDataProcessing, value.toInt()-1, dataProcessingList);                
+              else if(command.hasPrefix("SpectrumSettings.DataProcessing.Software."))
+              {
+                Software& software = dataProcessingList[indexDataProcessing].getSoftware();
+
+                if(command.hasPrefix("SpectrumSettings.DataProcessing.Software.Name"))
+                 software.setName(value);
+                else if(command.hasPrefix("SpectrumSettings.DataProcessing.Software.Version"))
+                 software.setVersion(value);
+              }                  
+              else if(command.hasPrefix("SpectrumSettings.DataProcessing.ProcessingActions"))
+              {
+                std::vector<String> processingActionsStrings;
+                std::set<DataProcessing::ProcessingAction>& processingActionsList = dataProcessingList[indexDataProcessing].getProcessingActions();
+
+                value.split(',', processingActionsStrings);
+                for(Size index=0; index<processingActionsStrings.size(); ++index)
+                  processingActionsList.insert((DataProcessing::ProcessingAction) findIndex_(
+                    processingActionsStrings[index], DataProcessing::NamesOfProcessingAction, DataProcessing::SIZE_OF_PROCESSINGACTION));
+              }
+              else if(command.hasPrefix("SpectrumSettings.DataProcessing.CompletionTime"))
+                dataProcessingList[indexDataProcessing].setCompletionTime(DateTime(value));
+            }              
             else if(command.prefix(26) == "SpectrumSettings.PeptideIdentification.")
             {
               std::vector<PeptideIdentification>& peptideIdentificationsList = spectrum.getPeptideIdentifications();
@@ -225,7 +258,7 @@ cout << "BBB: " << strings.size() << endl;
                 else if(command.hasPrefix("SpectrumSettings.PeptideIdentification.PeptideHit.ProteinAccessions"))
                 {
                   std::vector<String> accessions;
-                  value.split(';', accessions);
+                  value.split(',', accessions);
                   peptideHitList[indexPeptideHit].setProteinAccessions(accessions);
                 }  
                 else if(command.hasPrefix("SpectrumSettings.PeptideIdentification.PeptideHit.Score"))
@@ -240,7 +273,7 @@ cout << "BBB: " << strings.size() << endl;
                 else if(command.hasPrefix("SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.Modification"))
                 {
                   std::vector<String> modification;
-                  value.split(';', modification);
+                  value.split(',', modification);
                   if(modification.size() == 2)
                   {
                     aaSequence_.setModification((Size) modification[0], modification[1]);
@@ -590,37 +623,7 @@ cout << "BBB: " << strings.size() << endl;
               else if(command.hasPrefix("ExperimentalSettings.Instrument.IonOptics"))
                 instrument.setIonOptics((Instrument::IonOpticsType) findIndex_(
                   value, Instrument::NamesOfIonOpticsType, Instrument::SIZE_OF_IONOPTICSTYPE));
-            }
-            else if(command.hasPrefix("ExperimentalSettings.DataProcessing."))
-            {
-              std::vector<DataProcessing>& dataProcessingList = exp.getDataProcessing();
-
-              if(command.hasPrefix("ExperimentalSettings.DataProcessing.Size"))
-                resizeList_(dataProcessingList, value.toInt());
-              else if(command.hasPrefix("ExperimentalSettings.DataProcessing.Index"))
-                setIndex_(indexDataProcessing, value.toInt()-1, dataProcessingList);                
-              else if(command.hasPrefix("ExperimentalSettings.DataProcessing.Software."))
-              {
-                Software& software = dataProcessingList[indexDataProcessing].getSoftware();
-
-                if(command.hasPrefix("ExperimentalSettings.DataProcessing.Software.Name"))
-                 software.setName(value);
-                else if(command.hasPrefix("ExperimentalSettings.DataProcessing.Software.Version"))
-                 software.setVersion(value);
-              }                  
-              else if(command.hasPrefix("ExperimentalSettings.DataProcessing.ProcessingActions"))
-              {
-                std::vector<String> processingActionsStrings;
-                std::set<DataProcessing::ProcessingAction>& processingActionsList = dataProcessingList[indexDataProcessing].getProcessingActions();
-
-                value.split(';', processingActionsStrings);
-                for(Size index=0; index<processingActionsStrings.size(); ++index)
-                  processingActionsList.insert((DataProcessing::ProcessingAction) findIndex_(
-                    processingActionsStrings[index], DataProcessing::NamesOfProcessingAction, DataProcessing::SIZE_OF_PROCESSINGACTION));
-              }
-              else if(command.hasPrefix("ExperimentalSettings.DataProcessing.CompletionTime"))
-                dataProcessingList[indexDataProcessing].setCompletionTime(DateTime(value));
-            }    
+            }  
             else if(command.hasPrefix("ExperimentalSettings.HPLC."))
             {
               HPLC& hplc = exp.getHPLC();
@@ -648,7 +651,7 @@ cout << "BBB: " << strings.size() << endl;
                 else if(command.hasPrefix("ExperimentalSettings.HPLC.Gradient.Percentage"))
                 {
                   std::vector<String> percentageInfo;
-                  value.split(';', percentageInfo);
+                  value.split(',', percentageInfo);
                   if(percentageInfo.size() == 3)
                     gradient.setPercentage(percentageInfo[0], percentageInfo[1].toInt(), (UInt) percentageInfo[2].toInt());
                 }
@@ -709,9 +712,9 @@ cout << "BBB: " << strings.size() << endl;
                   searchParameters.mass_type = (ProteinIdentification::PeakMassType) findIndex_(
                     value, ProteinIdentification::NamesOfPeakMassType, ProteinIdentification::SIZE_OF_PEAKMASSTYPE);
                 else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.SearchParameters.FixedModifications"))
-                  value.split(';', searchParameters.fixed_modifications);
+                  value.split(',', searchParameters.fixed_modifications);
                 else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.SearchParameters.VariableModifications"))
-                  value.split(';', searchParameters.variable_modifications);
+                  value.split(',', searchParameters.variable_modifications);
                 else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.SearchParameters.Enzyme"))
                   searchParameters.enzyme = (ProteinIdentification::DigestionEnzyme) findIndex_(
                     value, ProteinIdentification::NamesOfDigestionEnzyme, ProteinIdentification::SIZE_OF_DIGESTIONENZYME);

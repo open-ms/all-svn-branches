@@ -34,7 +34,7 @@ namespace OpenMS
 	{
 	}
 
-	int SettingsParser::findIndex_(const String value, const std::string* table, const Size tableSize) const
+	int SettingsParser::findIndex_(const String& value, const std::string* table, const Size tableSize) const
 	{
 	  int index = tableSize;
 	  for(; index!=0 && table[index]!=value; --index)
@@ -44,7 +44,7 @@ cout << "String: " << value << " - return: " << index << endl;
 	  return index;
 	}
 		
-	void SettingsParser::stringToIntVector_(const String str, std::vector<Int>& list) const
+	void SettingsParser::stringToIntVector_(const String& str, std::vector<Int>& list) const
 	{
 	  std::vector<String> strings;
 	  str.split(',', strings);
@@ -54,6 +54,14 @@ cout << "String: " << value << " - return: " << index << endl;
 	  for(Size index=0; index<strings.size(); ++index)
 	    list[index] = strings[index].toInt();
 	}
-
+	
+  void SettingsParser::addMetaInfo_(MetaInfoInterface& metaInfo, const String& name, const String& value) const
+  {
+    std::vector<String> strings;
+    name.split('.', strings);
+    if(strings.size() > 1)
+      metaInfo.setMetaValue(strings[strings.size()-1], value);
+  }    	
+  
 } // namespace OpenMS
 

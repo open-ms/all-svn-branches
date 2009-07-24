@@ -223,10 +223,10 @@ class TOPPSpecLibSearcher
 			// calculations
 			//-------------------------------------------------------------
 			DoubleReal score;
-			time_t start_time = time(NULL);
 			StringList::iterator in, out_file;
 			for(in  = in_spec.begin() , out_file  = out.begin(); in < in_spec.end(); ++in,++out_file)
 			{
+				time_t start_time = time(NULL);
 				spectra.load(*in,query);
 				//Will hold valuable hits
 				vector<PeptideIdentification> peptide_ids;
@@ -286,7 +286,7 @@ class TOPPSpecLibSearcher
 					if(peak_ok)
 					{	
 						bool charge_one = false; 
-						Int percent = round((query[j].size()/100) * 3.5);
+						Int percent = round((query[j].size()/100) * 3);
 						Int margin  = round((query[j].size()/100)* 1);
 						for(vector<RichPeak1D>::iterator peak = query[j].end()-1; percent >= 0; --peak , --percent)
 						{

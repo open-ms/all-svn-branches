@@ -34,6 +34,7 @@
 #include <OpenMS/COMPARISON/SPECTRA/BinnedSpectrum.h>
 #include <OpenMS/COMPARISON/SPECTRA/SpectraSTSimilarityScore.h>
 #include <OpenMS/COMPARISON/SPECTRA/CompareFouriertransform.h>
+#include <OpenMS/COMPARISON/SPECTRA/ZhangSimilarityScore.h>
 #include <OpenMS/CHEMISTRY/ModificationsDB.h>
 
 #include <ctime>
@@ -77,7 +78,7 @@ class TOPPSpecLibSearcher
 			registerOutputFileList_("out","<files>",StringList::create(""),"Output files. Have to be as many as input files");
 			setValidFormats_("out",StringList::create("IdXML"));
 			registerDoubleOption_("precursor_mass_tolerance","<tolerance>",3,"Precursor mass tolerance, (Th)",false);
-		//	registerIntOption_("precursor_mass_multiplier","<number>",10,"multipling this number with precursor_mass creates an integer",false,true);
+			registerIntOption_("round_precursor_to_integer","<number>",10,"many precursor m/z multipling number lead to the same number; are packed in the same vector for faster search.Should be higher for high-resolution data",false,true);
 		//	registerDoubleOption_("fragment_mass_tolerance","<tolerance>",0.3,"Fragment mass error",false);
 			
    //   registerStringOption_("precursor_error_units", "<unit>", "Da", "parent monoisotopic mass error units", false);
@@ -86,9 +87,9 @@ class TOPPSpecLibSearcher
      // valid_strings.push_back("Da");
      // setValidStrings_("precursor_error_units", valid_strings);
      // setValidStrings_("fragment_error_units", valid_strings);
-			//registerIntOption_("min_precursor_charge", "<charge>", 1, "minimum precursor ion charge", false);
-    //  registerIntOption_("max_precursor_charge", "<charge>", 3, "maximum precursor ion charge", false);
-     	registerStringOption_("compare_function","<string>","ZhangSimilarityScore","function for similarity comparisson",false);
+		//	registerIntOption_("min_precursor_charge", "<charge>", 1, "minimum precursor ion charge", false);
+     // registerIntOption_("max_precursor_charge", "<charge>", 3, "maximum precursor ion charge", false);
+     registerStringOption_("compare_function","<string>","ZhangSimilarityScore","function for similarity comparisson",false);
      PeakSpectrumCompareFunctor::registerChildren();
      setValidStrings_("compare_function",Factory<PeakSpectrumCompareFunctor>::registeredProducts());
 
@@ -99,9 +100,9 @@ class TOPPSpecLibSearcher
      registerIntOption_("max_peaks","<number>",150,"Use only the top <number> of peaks.",false);
      registerIntOption_("cut_peaks_below","<number>",1000,"Remove all peaks which are lower than 1/<number> of the highest peaks. Default equals all peaks which are lower than 0.001 of the maximum intensity peak",false);
      
-     //registerStringOption_("fixed_modifications", "<mods>", "", "fixed modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048 currently no effect", false);
-     registerStringList_("variable_modifications", "<mods>", StringList::create(""), "variable modifications, specified using PSI-MOD terms, e.g. MOD:01214 MOD:00048", false);
-			addEmptyLine_();
+     registerStringList_("fixed_modifications", "<mods>", StringList::create(""), "fixed modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048 currently no effect", false);
+     registerStringList_("variable_modifications", "<mods>", StringList::create(""), "variable modifications, specified using PSI-MOD terms, e.g. MOD:01214 MOD:00048", false);	
+		addEmptyLine_();
 			addText_("");
 		}
 		
@@ -115,7 +116,7 @@ class TOPPSpecLibSearcher
 			StringList out = getStringList_("out");
 			String in_lib = getStringOption_("lib");
 			String compare_function = getStringOption_("compare_function");
-			Int precursor_mass_multiplier = 10;//getIntOption_("precursor_mass_multiplier");
+			Int precursor_mass_multiplier = getIntOption_("round_precursor_to_integer");
 			Real precursor_mass_tolerance = getDoubleOption_("precursor_mass_tolerance");
 			//Int min_precursor_charge = getIntOption_("min_precursor_charge");
 			//Int max_precursor_charge = getIntOption_("max_precursor_charge");
@@ -123,6 +124,7 @@ class TOPPSpecLibSearcher
 			UInt min_peaks = getIntOption_("min_peaks");
 			UInt max_peaks= getIntOption_("max_peaks");
 			Int cut_peaks_below = getIntOption_("cut_peaks_below");
+			StringList fixed_modifications = getStringList_("fixed_modifications");
 			StringList variable_modifications = getStringList_("variable_modifications");
 			//-------------------------------------------------------------
 			// loading input
@@ -163,17 +165,32 @@ class TOPPSpecLibSearcher
 				
 				PeakSpectrum librar;
 				bool variable_modifications_ok = true;
+				bool fixed_modifications_ok = true;
 				const AASequence& aaseq= i->getHits()[0].getSequence();
-				//variable Modification
-				
-				if(aaseq.isModified() && !variable_modifications.empty())
+				//variable fixed modifications
+				if(!fixed_modifications.empty())
+				{
+					for(Size i = 0; i< aaseq.size(); ++i)
+					{
+						const	Residue& mod  = aaseq.getResidue(i);					
+						for(Size s = 0; s < fixed_modifications.size();++s)
+						{
+						 if(mod.getOneLetterCode() ==mdb->getModification(fixed_modifications[s]).getOrigin() && fixed_modifications[s] != mod.getModification())
+						 {
+							 fixed_modifications_ok = false;
+								break;
+							}	
+						}
+					}
+				}
+				//variable modifications
+				if(aaseq.isModified() && (!variable_modifications.empty()))
 				{
 					for(Size i = 0; i< aaseq.size(); ++i)
 					{
 						if(aaseq.isModified(i))
 						{
-							const	Residue& mod  = aaseq.getResidue(i);
-							
+							const	Residue& mod  = aaseq.getResidue(i);			
 							for(Size s = 0; s < variable_modifications.size();++s)
 							{
 								if(mod.getOneLetterCode() ==mdb->getModification(variable_modifications[s]).getOrigin() && variable_modifications[s] != mod.getModification())
@@ -185,7 +202,7 @@ class TOPPSpecLibSearcher
 						}
 					}
 				}
-				if(variable_modifications_ok)
+				if(variable_modifications_ok && fixed_modifications_ok)
 				{
 					PeptideIdentification& translocate_pid = *i;
 					librar.getPeptideIdentifications().push_back(translocate_pid);		
@@ -196,7 +213,15 @@ class TOPPSpecLibSearcher
 						Peak1D peak;
 						if((*s)[l].getIntensity() >  remove_peaks_below_threshold)
 						{
-							peak.setIntensity(sqrt((*s)[l].getIntensity()));
+							if((*s)[l].getMetaValue("MSPPeakInfo").toString()[0] == '?')
+							{
+								peak.setIntensity(sqrt(0.2*(*s)[l].getIntensity()));
+							}
+							else
+							{
+								peak.setIntensity(sqrt((*s)[l].getIntensity()));
+							}
+
 							peak.setMZ((*s)[l].getMZ());
 							peak.setPosition((*s)[l].getPosition());
 							librar.push_back(peak);

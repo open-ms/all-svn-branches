@@ -213,7 +213,8 @@ class TOPPSpecLibSearcher
 						Peak1D peak;
 						if((*s)[l].getIntensity() >  remove_peaks_below_threshold)
 						{
-							if((*s)[l].getMetaValue("MSPPeakInfo").toString()[0] == '?')
+							const String& info = (*s)[l].getMetaValue("MSPPeakInfo");
+							if(info[0] == '?')
 							{
 								peak.setIntensity(sqrt(0.2*(*s)[l].getIntensity()));
 							}

@@ -37,7 +37,6 @@ FastaIteratorIntern.h
 FeatureXMLFile.h
 FileHandler.h
 IdXMLFile.h
-SettingsParser.h
 InspectInfile.h
 InspectOutfile.h
 LibSVMEncoder.h
@@ -59,9 +58,11 @@ PeakTypeEstimator.h
 PepNovoInfile.h
 PepNovoOutfile.h
 PepXMLFile.h
+PepXMLFileMascot.h
 ProtXMLFile.h
 SequestInfile.h
 SequestOutfile.h
+SettingsParser.h
 TextFile.h
 TransformationXMLFile.h
 UnimodXMLFile.h

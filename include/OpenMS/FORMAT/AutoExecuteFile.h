@@ -59,20 +59,20 @@ namespace OpenMS
         StringList file_list;
         try
 				{
-					file_list = getFileList(filename);
-cout << "list size : " << file_list.size() << endl;					
+					file_list = getFileList(filename);					
 				}
 				catch(Exception::FileNotFound)
 				{
 					throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, String("'AutoExecute' file not writable."));
 				}
 				map.reset();
-				map.resize(file_list.size());
-				for(Size index = 0; index < file_list.size(); ++index)
+				map.reserve(file_list.size());
+
+				for(Size iSpectrum = 0; iSpectrum < file_list.size(); ++iSpectrum)
 				{
 				  typename MapType::SpectrumType spectrum;
-					XMassFile().load(file_list[index], spectrum);
-          spectrum.setRT(index);
+					XMassFile().load(file_list[iSpectrum], spectrum);
+          spectrum.setRT(iSpectrum);
           spectrum.setMSLevel(1);					
 				  map.push_back(spectrum);
 				}

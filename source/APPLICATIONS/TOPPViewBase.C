@@ -318,39 +318,56 @@ namespace OpenMS
     connect(draw_group_1d_,SIGNAL(buttonClicked(int)),this,SLOT(setDrawMode1D(int)));
     tool_bar_->addSeparator();
 
-    //--2D toolbar--
-    tool_bar_2d_ = addToolBar("2D tool bar");
+    //--2D peak toolbar--
+    tool_bar_2d_peak_ = addToolBar("2D peak tool bar");
 
-    dm_precursors_2d_ = tool_bar_2d_->addAction(QIcon(":/precursors.png"),"Show fragment scan precursors");
+    dm_precursors_2d_ = tool_bar_2d_peak_->addAction(QIcon(":/precursors.png"),"Show fragment scan precursors");
     dm_precursors_2d_->setCheckable(true);
     dm_precursors_2d_->setWhatsThis("2D peak draw mode: Precursors<BR><BR>fragment scan precursor peaks are marked.<BR>(Hotkey: 1)");
 		dm_precursors_2d_->setShortcut(Qt::Key_1);
 
     connect(dm_precursors_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
-    projections_2d_ = tool_bar_2d_->addAction(QIcon(":/projections.png"), "Show Projections" ,this, SLOT(toggleProjections()));
+    projections_2d_ = tool_bar_2d_peak_->addAction(QIcon(":/projections.png"), "Show Projections" ,this, SLOT(toggleProjections()));
     projections_2d_->setWhatsThis("Projections: Shows projections of peak data along RT and MZ axis.<BR>(Hotkey: 2)");
 		projections_2d_->setShortcut(Qt::Key_2);
-
-    dm_hull_2d_ = tool_bar_2d_->addAction(QIcon(":/convexhull.png"),"Show feature convex hull");
+		
+		//--2D feature toolbar--
+    tool_bar_2d_feat_ = addToolBar("2D peak tool bar");
+		
+    dm_hull_2d_ = tool_bar_2d_feat_->addAction(QIcon(":/convexhull.png"),"Show feature convex hull");
     dm_hull_2d_->setCheckable(true);
     dm_hull_2d_->setWhatsThis("2D feature draw mode: Convex hull<BR><BR>The convex hull of the feature is displayed.<BR>(Hotkey: 5)");
 		dm_hull_2d_->setShortcut(Qt::Key_5);
     connect(dm_hull_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
-    dm_hulls_2d_ = tool_bar_2d_->addAction(QIcon(":/convexhulls.png"),"Show feature convex hulls");
+    dm_hulls_2d_ = tool_bar_2d_feat_->addAction(QIcon(":/convexhulls.png"),"Show feature convex hulls");
     dm_hulls_2d_->setCheckable(true);
     dm_hulls_2d_->setWhatsThis("2D feature draw mode: Convex hulls<BR><BR>The convex hulls of the feature are displayed: One for each mass trace.<BR>(Hotkey: 6)");
 		dm_hulls_2d_->setShortcut(Qt::Key_6);
     connect(dm_hulls_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
+		
+		dm_label_2d_ = new QToolButton(tool_bar_2d_feat_);
+		dm_label_2d_->setPopupMode(QToolButton::MenuButtonPopup);	
+		QAction* action2 = new QAction(QIcon(":/labels.png"), "Show feature label", dm_label_2d_);
+    action2->setCheckable(true);
+    action2->setWhatsThis("2D feature draw mode: Labels<BR><BR>The feature label is displayed next to the feature. <BR>(Hotkey: 7)");
+		action2->setShortcut(Qt::Key_7);
+		dm_label_2d_->setDefaultAction(action2);
+		tool_bar_2d_feat_->addWidget(dm_label_2d_);
+    connect(dm_label_2d_, SIGNAL(triggered(QAction*)), this, SLOT(changeLabel(QAction*)));
+		//button menu
+		QMenu* menu = new QMenu(dm_label_2d_);
+		for (Size i=0; i<LayerData::SIZE_OF_LABEL_TYPE; ++i)
+		{
+			menu->addAction(QString(LayerData::NamesOfLabelType[i].c_str()));
+		} 
+		dm_label_2d_->setMenu(menu);
 
-    dm_numbers_2d_ = tool_bar_2d_->addAction(QIcon(":/numbers.png"),"Show feature identifiers");
-    dm_numbers_2d_->setCheckable(true);
-    dm_numbers_2d_->setWhatsThis("2D feature draw mode: Numbers/labels<BR><BR>The feature number is displayed next to the feature. If the meta data value 'label' is set, it is displayed in brackets after the number.<BR>(Hotkey: 7)");
-		dm_numbers_2d_->setShortcut(Qt::Key_7);
-    connect(dm_numbers_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
-
-    dm_elements_2d_ = tool_bar_2d_->addAction(QIcon(":/elements.png"),"Show consensus feature element positions");
+		//--2D feature toolbar--
+    tool_bar_2d_cons_ = addToolBar("2D peak tool bar");
+    
+    dm_elements_2d_ = tool_bar_2d_cons_->addAction(QIcon(":/elements.png"),"Show consensus feature element positions");
     dm_elements_2d_->setCheckable(true);
     dm_elements_2d_->setWhatsThis("2D consensus feature draw mode: Elements<BR><BR>The individual elements that make up the  consensus feature are drawn.<BR>(Hotkey: 9)");
 		dm_elements_2d_->setShortcut(Qt::Key_9);
@@ -383,14 +400,16 @@ namespace OpenMS
   	QStringList header_labels;
   	header_labels.append(QString("MS level"));
   	header_labels.append(QString("RT"));
-  	header_labels.append(QString("m/z"));
+  	header_labels.append(QString("precursor m/z"));
   	spectrum_selection_->setHeaderLabels(header_labels);
     spectrum_bar_->setWidget(spectrum_selection_);
     spectrum_selection_->setDragEnabled(true);
+    spectrum_selection_->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(spectrum_selection_,SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,SLOT(spectrumSelectionChange(QTreeWidgetItem*, QTreeWidgetItem*)));
 		connect(spectrum_selection_,SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)),this,SLOT(spectrumDoubleClicked(QTreeWidgetItem*, int)));
-    windows->addAction(spectrum_bar_->toggleViewAction());
-
+    connect(spectrum_selection_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(spectrumContextMenu(const QPoint&)));
+		windows->addAction(spectrum_bar_->toggleViewAction());
+		
     //data filters
     QDockWidget* filter_bar = new QDockWidget("Data filters", this);
     addDockWidget(Qt::RightDockWidgetArea, filter_bar);
@@ -1145,6 +1164,36 @@ namespace OpenMS
   	}
   }
 
+	void TOPPViewBase::changeLabel(QAction* action)
+	{
+		bool set=false;
+		
+		//label type is selected
+		for (Size i=0; i<LayerData::SIZE_OF_LABEL_TYPE; ++i)
+		{
+			if (action->text().toStdString()==LayerData::NamesOfLabelType[i])
+			{
+				active2DWindow_()->canvas()->setLabel(LayerData::LabelType(i));
+				set = true;
+			}
+		}
+		
+		//button is simply pressed
+		if (!set)
+		{  
+			if (active2DWindow_()->canvas()->getCurrentLayer().label == LayerData::L_NONE)
+			{
+				active2DWindow_()->canvas()->setLabel(LayerData::L_INDEX);
+			}
+			else
+			{
+				active2DWindow_()->canvas()->setLabel(LayerData::L_NONE);
+			}
+		}
+		
+		updateToolBar();
+	}
+	
   void TOPPViewBase::changeLayerFlag(bool on)
   {
 		QAction* action = qobject_cast<QAction *>(sender());
@@ -1163,10 +1212,6 @@ namespace OpenMS
 			else if (action == dm_hull_2d_)
 			{
 		    win->canvas()->setLayerFlag(LayerData::F_HULL,on);
-			}
-			else if (action == dm_numbers_2d_)
-			{
-		    win->canvas()->setLayerFlag(LayerData::F_NUMBERS,on);
 			}
 			//consensus features
 			else if (action == dm_elements_2d_)
@@ -1195,51 +1240,42 @@ namespace OpenMS
 
       //show/hide toolbars and buttons
       tool_bar_1d_->show();
-      tool_bar_2d_->hide();
+      tool_bar_2d_peak_->hide();
+      tool_bar_2d_feat_->hide();
+      tool_bar_2d_cons_->hide();
     }
 
     //2d
     Spectrum2DWidget* w2 = active2DWindow_();
     if (w2)
     {
+      tool_bar_1d_->hide();
       //peak draw modes
       if (w2->canvas()->getCurrentLayer().type == LayerData::DT_PEAK)
       {
-      	dm_precursors_2d_->setVisible(true);
-      	projections_2d_->setVisible(true);
-      	dm_hulls_2d_->setVisible(false);
-      	dm_hull_2d_->setVisible(false);
-      	dm_numbers_2d_->setVisible(false);
-      	dm_elements_2d_->setVisible(false);
 				dm_precursors_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::P_PRECURSORS));
+	      tool_bar_2d_peak_->show();
+ 	    	tool_bar_2d_feat_->hide();
+	      tool_bar_2d_cons_->hide();
 			}
 			//feature draw modes
 			else if (w2->canvas()->getCurrentLayer().type == LayerData::DT_FEATURE)
 			{
-      	dm_precursors_2d_->setVisible(false);
-      	projections_2d_->setVisible(false);
-      	dm_hulls_2d_->setVisible(true);
-      	dm_hull_2d_->setVisible(true);
-      	dm_numbers_2d_->setVisible(true);
-      	dm_elements_2d_->setVisible(false);
       	dm_hulls_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::F_HULLS));
       	dm_hull_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::F_HULL));
-      	dm_numbers_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::F_NUMBERS));
+      	dm_label_2d_->setChecked(w2->canvas()->getCurrentLayer().label!=LayerData::L_NONE);
+	      tool_bar_2d_peak_->hide();
+	      tool_bar_2d_feat_->show();
+	      tool_bar_2d_cons_->hide();
 			}
 			//consensus feature draw modes
 			else
 			{
-      	dm_precursors_2d_->setVisible(false);
-      	projections_2d_->setVisible(false);
-      	dm_hulls_2d_->setVisible(false);
-      	dm_hull_2d_->setVisible(false);
-      	dm_numbers_2d_->setVisible(false);
-      	dm_elements_2d_->setVisible(true);
-      	dm_hulls_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::C_ELEMENTS));
+      	dm_elements_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::C_ELEMENTS));
+	      tool_bar_2d_peak_->hide();
+	      tool_bar_2d_feat_->hide();
+	      tool_bar_2d_cons_->show();
 			}
-      //show/hide toolbars and buttons
-      tool_bar_1d_->hide();
-      tool_bar_2d_->show();
     }
 
     //1D
@@ -1248,7 +1284,9 @@ namespace OpenMS
     {
       //show/hide toolbars and buttons
       tool_bar_1d_->hide();
-      tool_bar_2d_->hide();
+      tool_bar_2d_peak_->hide();
+      tool_bar_2d_feat_->hide();
+      tool_bar_2d_cons_->hide();
     }
   }
 
@@ -1391,9 +1429,14 @@ namespace OpenMS
 
 				item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
 				item->setText(1, QString::number(cl.peaks[i].getRT()));
-				DoubleReal mz_pos = 0.0;
-				if (!cl.peaks[i].getPrecursors().empty()) mz_pos = cl.peaks[i].getPrecursors()[0].getMZ();
-				item->setText(2, QString::number(mz_pos));
+				if (!cl.peaks[i].getPrecursors().empty())
+				{
+					item->setText(2,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
+				}
+				else
+				{
+					item->setText(2, "-");
+				}
 				item->setText(3, QString::number(i));
 
 				if (i == cl.current_spectrum)
@@ -1418,9 +1461,14 @@ namespace OpenMS
 					item = new QTreeWidgetItem((QTreeWidget*)0);
 					item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
 					item->setText(1, QString::number(cl.peaks[i].getRT()));
-					DoubleReal mz_pos = 0.0;
-					if (!cl.peaks[i].getPrecursors().empty()) mz_pos = cl.peaks[i].getPrecursors()[0].getMZ();
-					item->setText(2, QString::number(mz_pos));
+					if (!cl.peaks[i].getPrecursors().empty())
+					{
+						item->setText(2,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
+					}
+					else
+					{
+						item->setText(2, "-");
+					}
 					item->setText(3, QString::number(i));
 					toplevel_items.push_back(item);
 					if (i == cl.current_spectrum)
@@ -1441,7 +1489,7 @@ namespace OpenMS
   	else
   	{
   		item = new QTreeWidgetItem((QTreeWidget*)0);
-  		item->setText(0, QString("Feature map"));
+  		item->setText(0, QString("No peak map"));
   		item->setText(1, QString("-"));
   		item->setText(2, QString("-"));
   		item->setText(3, QString::number(0));
@@ -1532,6 +1580,10 @@ namespace OpenMS
 			{
 				new_action->setEnabled(false);
 			}
+			
+			context_menu->addSeparator();
+			context_menu->addAction("Preferences");
+			
 			QAction* selected = context_menu->exec(layer_manager_->mapToGlobal(pos));
 			//delete layer
 			if (selected!=0 && selected->text()=="Delete")
@@ -1559,7 +1611,11 @@ namespace OpenMS
 				bool b = active1DWindow_()->canvas()->flippedLayersExist();
 				active1DWindow_()->canvas()->setMirrorModeActive(b);
 			}
-
+			else if (selected != 0 && selected->text() == "Preferences")
+			{
+				activeCanvas_()->showCurrentLayerPreferences();
+			}
+			
 			//Update tab bar and window title
 			if (activeCanvas_()->getLayerCount()!=0)
 			{
@@ -1577,6 +1633,44 @@ namespace OpenMS
 			updateSpectrumBar();
 			updateFilterBar();
 			updateMenu();
+
+			delete (context_menu);
+		}
+	}
+
+	void TOPPViewBase::spectrumContextMenu(const QPoint & pos)
+	{
+		QTreeWidgetItem* item = spectrum_selection_->itemAt(pos);
+		if (item)
+		{
+			//create menu
+			int spectrum_index = item->text(3).toInt();
+			QMenu* context_menu = new QMenu(spectrum_selection_);
+			context_menu->addAction("Show in 1D view");
+			context_menu->addAction("Meta data");
+
+			QAction* selected = context_menu->exec(spectrum_selection_->mapToGlobal(pos));
+			
+			if (selected!=0 && selected->text()=="Show in 1D view")
+			{
+				//add a copy of the current data as 1D view
+				LayerData cl = activeCanvas_()->getCurrentLayer();
+				addData_(cl.features, cl.consensus, cl.peaks, false, true, true, false, cl.filename, cl.name);
+				
+				//set properties for the new 1D view
+				if (active1DWindow_())
+				{
+					active1DWindow_()->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
+					active1DWindow_()->canvas()->activateSpectrum(spectrum_index);
+				}
+				updateToolBar();
+				updateSpectrumBar();
+			}
+			
+			else if (selected!=0 && selected->text()=="Meta data")
+			{
+				activeCanvas_()->showMetaData(true, spectrum_index);
+			}
 
 			delete (context_menu);
 		}
@@ -2128,7 +2222,7 @@ namespace OpenMS
 		topp_.spectrum_id = layer.current_spectrum;
 		if (layer.type==LayerData::DT_PEAK)
 		{
-			MzDataFile f;
+			MzMLFile f;
 			f.setLogType(ProgressLogger::GUI);
 			if (topp_.visible)
 			{
@@ -2787,7 +2881,6 @@ namespace OpenMS
 	      return;
 			}
 			MetaDataBrowser dlg(false, this);
-			dlg.setWindowTitle("Meta data");
 			dlg.add(exp);
 	 	 	dlg.exec();
 		}
@@ -2818,7 +2911,6 @@ namespace OpenMS
 			      return;
 					}
 					MetaDataBrowser dlg(false, this);
-					dlg.setWindowTitle("Meta data");
 					dlg.add(exp);
 			 	 	dlg.exec();
 				}

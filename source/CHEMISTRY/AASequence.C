@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 //
 
@@ -136,7 +136,7 @@ namespace OpenMS
 	{
 		if (!valid_)
 		{
-			if (!rhs.valid_)
+		if (!rhs.valid_)
 			{
 				return sequence_string_ < rhs.sequence_string_;
 			}
@@ -169,7 +169,26 @@ namespace OpenMS
 		{
 			ef += H;
 		}
-	
+
+
+    // terminal modifications
+    if (n_term_mod_ != "" && 
+				(type == Residue::Full || type == Residue::AIon || type == Residue::BIon || type == Residue::CIon || type == Residue::NTerminal)
+			 )
+    {
+      ef += ModificationsDB::getInstance()->getModification(n_term_mod_).getDiffFormula();
+    }
+
+
+    if (c_term_mod_ != "" &&
+				(type == Residue::Full || type == Residue::XIon || type == Residue::YIon || type == Residue::ZIon || type == Residue::CTerminal)
+			 )
+    {
+      ef += ModificationsDB::getInstance()->getModification(c_term_mod_).getDiffFormula();
+    }
+
+
+
 		if (peptide_.size() > 0)
 		{
 			if (peptide_.size() == 1)
@@ -211,6 +230,7 @@ namespace OpenMS
 				}
 			}			
 		}
+
 		return ef;
 	}
 	
@@ -561,12 +581,6 @@ namespace OpenMS
 	
 	bool AASequence::operator == (const AASequence& peptide) const
 	{
-#ifdef CHEMISTRY_AASEQUENCE_DEBUG
-		cerr << "Valid:  " << valid_ << " " << peptide.valid_ << endl;
-		cerr << "#aa:    " << peptide_.size()  << " " << peptide.peptide_.size() << endl;
-		cerr << "N-term: '" << n_term_mod_ << "' '" << peptide.n_term_mod_ << "'" << endl;
-		cerr << "C-term: '" << c_term_mod_ << "' '" << peptide.c_term_mod_ << "'" << endl;
-#endif
 		if (!valid_)
 		{
 			if (peptide.valid_)
@@ -778,7 +792,7 @@ namespace OpenMS
 		
 		// push_back last residue
 		split.push_back(peptide.substr(pos, peptide.size()-pos));
-		
+
 		if (split.size() > 0 && split[0].size() > 0 && split[0][0] == '(')
 		{
 			String mod = split[0];
@@ -892,8 +906,8 @@ namespace OpenMS
 					if (res_ptr == 0)
 					{
 						Residue res(tag, String(""), String(""), EmpiricalFormula(""));
-						res.setMonoWeight(tag.toFloat(), Residue::Internal);
-						res.setAverageWeight(tag.toFloat(), Residue::Internal);
+						res.setMonoWeight(tag.toDouble(), Residue::Internal);
+						res.setAverageWeight(tag.toDouble(), Residue::Internal);
 						getResidueDB_()->addResidue(res);
 						sequence.push_back(getResidueDB_()->getResidue(tag));
 					}

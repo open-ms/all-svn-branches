@@ -38,7 +38,7 @@ namespace OpenMS
 	{
 	
     AcqusHandler::AcqusHandler(const String& filename)
-    {
+    {  
       params_.clear();
       
       std::ifstream is(filename.c_str());
@@ -54,26 +54,16 @@ namespace OpenMS
       //read lines
       while (getline(is, line, '\n'))
       {
-        try
-        {        
-          if( line.empty() ) continue;
-          if( line.prefix(2) != String("##") ) continue; 
-        
-          if(line.split('=', strings))
+        if( line.size() < 5 ) continue; // minimal string = "##x=x"
+        if( line.prefix(2) != String("##") ) continue; 
+      
+        if(line.split('=', strings))
+        {       
+          if( strings.size() == 2 )
           {
-cout << "AAA: " << strings.size() << endl;          
-            if( strings.size() != 2 )
-            {
-              //throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" , filename);
-            }
             params_[ strings[0].substr(2) ] = strings[1].trim();
-          } 
-        }
-				catch(const std::exception& e)
-				{
-cout << "excep: " << e.what() << endl;				
-					//throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" ,filename);
-				}        
+          }
+        }      
       }
      
       // TOF calibration params

@@ -39,15 +39,19 @@
 #include <OpenMS/DATASTRUCTURES/Map.h>
 #include <OpenMS/METADATA/DataProcessing.h>
 #include <OpenMS/METADATA/IDTagger.h>
+#include <OpenMS/KERNEL/MSExperiment.h>
+#include <OpenMS/KERNEL/FeatureMap.h>
 
 #include <iostream>
 #include <fstream>
 #include <limits>
+
 class QStringList;
 
 
 namespace OpenMS
 {
+	class ConsensusMap;
 
   namespace Exception
   {
@@ -101,6 +105,7 @@ namespace OpenMS
   	- hide the derived class in the OpenMS documentation by using doxygen condition macros.
   
     @todo Add 'instr' parameter for instrument defaults (Marc, Andreas)
+		@todo write subsections if type was given or if no type is used see MascotAdapterOnline (Andreas)
   */
   class OPENMS_DLLAPI TOPPBase
   {
@@ -796,44 +801,54 @@ namespace OpenMS
 
       ///Type of progress logging
       ProgressLogger::LogType log_type_;
+
+			///@name Data processing auxilary functions
+      //@{
       
-      ///Convenience function that adds a set of processing actions to a peak, feature or consensus map
-      template<typename MapType>
-      void addDataProcessing_(MapType& map, const std::set<DataProcessing::ProcessingAction>& actions) const
+      ///Data processing setter for consensus maps
+      void addDataProcessing_(ConsensusMap& map, const DataProcessing& dp) const;
+
+      ///Data processing setter for feature maps
+      template<typename FeatureType>
+      void addDataProcessing_(FeatureMap<FeatureType>& map, const DataProcessing& dp) const
       {
-        DataProcessing p;
-        //actions
-        p.setProcessingActions(actions);
-        //software
-        p.getSoftware().setName(tool_name_);
-        p.getSoftware().setVersion(VersionInfo::getVersion());
-        //time
-        p.setCompletionTime(DateTime::now());
-        //parameters
-        const Param& param = getParam_();
-        for (Param::ParamIterator it=param.begin(); it!=param.end(); ++it)
-        {
-           p.setMetaValue(String("parameter: ") + it.getName() , it->value);
-        }
-        //add processing to each spectrum
+        map.getDataProcessing().push_back(dp);          
+      }
+			
+			///Data processing setter for peak maps
+      template<typename PeakType>
+      void addDataProcessing_(MSExperiment<PeakType>& map, const DataProcessing& dp) const
+      {
         for (Size i=0; i<map.size(); ++i)
         {
-          map[i].getDataProcessing().push_back(p);          
-        }
+        	map[i].getDataProcessing().push_back(dp);          
+      	}
       }
+      
+      ///Returns the the data processing information 
+      DataProcessing getProcessingInfo_(DataProcessing::ProcessingAction action) const;
 
-      ///Convenience function that add a single processing action to a peak, feature or consensus map
-      template<typename MapType>
-      void addDataProcessing_(MapType& map, DataProcessing::ProcessingAction action) const
-      {
-        std::set<DataProcessing::ProcessingAction> actions;
-        actions.insert(action);
-        addDataProcessing_(map, actions);
-      }
+      ///Returns the the data processing information 
+      DataProcessing getProcessingInfo_(const std::set<DataProcessing::ProcessingAction>& actions) const;
+
+      //@}
       
 			/// get IDTagger to assign DocumentIDs to maps
 			const IDTagger& getIDTagger_() const;
-
+			
+			/**
+				@brief Test mode 
+			
+				Test mode is enabled using the command line parameter @em -test .
+				
+				It disables writing of data, which would corrupt tests:
+				- abolute paths (e.g. in consensus maps)
+				- processing parameters (input/output files contain abolute paths as well)
+				- current date
+				- current OpenMS version
+			*/
+			bool test_mode_;
+			
   };
 
 } // namespace OpenMS

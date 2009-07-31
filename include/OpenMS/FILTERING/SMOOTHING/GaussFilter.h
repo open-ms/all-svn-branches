@@ -54,6 +54,8 @@ namespace OpenMS
           Use a gaussian filter kernel which has approximately the same width as your mass peaks,
           whereas the gaussian peak width corresponds approximately to 8*sigma.
 
+		@note The data must be sorted according to ascending m/z!
+
 		@htmlinclude OpenMS_GaussFilter.parameters
 
     @ingroup SignalProcessing
@@ -111,22 +113,26 @@ namespace OpenMS
         	String error_message = "Found no signal. The gaussian width is probably smaller than the spacing in your profile data. Try to use a bigger width.";
         	if (spectrum.getRT()>0.0)
         	{
-        		error_message += String(" The error occured in the spectrum with retention time ") + spectrum.getRT() + ".";
+        		error_message += String(" The error occured in the spectrum with retention time ") + spectrum.getRT() + ".\n";
         	}
-          throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__, error_message);
+          std::cerr << error_message;
         }
-
-				// copy the new data into the spectrum
-        for (Size p=0; p<spectrum.size(); ++p)
-        {
-        	spectrum[p].setIntensity(output[p]);
+				else
+				{
+					// copy the new data into the spectrum
+					for (Size p=0; p<spectrum.size(); ++p)
+					{
+        		spectrum[p].setIntensity(output[p]);
+					}
 				}
       }
 
 
       /**
       	@brief Smoothes an MSExperiment containing profile data.
-      */
+ 
+	      @exception Exception::IllegalArgument is thrown, if the @em gaussian_width parameter is too small.
+			*/
       template <typename PeakType>
       void filterExperiment(MSExperiment<PeakType>& map)
       {

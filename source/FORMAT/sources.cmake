@@ -17,7 +17,6 @@ FastaIteratorIntern.C
 FeatureXMLFile.C
 FileHandler.C
 IdXMLFile.C
-SettingsParser.C
 InspectInfile.C
 InspectOutfile.C
 LibSVMEncoder.C
@@ -39,9 +38,11 @@ PeakTypeEstimator.C
 PepNovoInfile.C
 PepNovoOutfile.C
 PepXMLFile.C
+PepXMLFileMascot.C
 ProtXMLFile.C
 SequestInfile.C
 SequestOutfile.C
+SettingsParser.C
 TextFile.C
 TransformationXMLFile.C
 UnimodXMLFile.C

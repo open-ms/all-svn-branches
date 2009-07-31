@@ -25,11 +25,10 @@
 // $Authors: Andreas Bertsch, Daniel Jameson$
 // --------------------------------------------------------------------------
 
-#include <OpenMS/FORMAT/MzDataFile.h>
 #include <OpenMS/FORMAT/IdXMLFile.h>
 #include <OpenMS/FORMAT/MascotXMLFile.h>
 #include <OpenMS/FORMAT/MascotInfile.h>
-#include <OpenMS/FORMAT/PepXMLFile.h>
+#include <OpenMS/FORMAT/PepXMLFileMascot.h>
 #include <OpenMS/FORMAT/MascotRemoteQuery.h>
 #include <OpenMS/FORMAT/MascotInfile2.h>
 #include <OpenMS/KERNEL/StandardTypes.h>

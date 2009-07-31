@@ -41,14 +41,14 @@
 #include <sstream>
 #include <iostream>
 
-//TODO:
-// - scanSettingsList - what is to do?
-// - DataProcessing of binaryDataArray - simply assign to spectrum / chromatogram data processing
-// - InstrumentConfiguration of Scan - what's that?
-//
+
+#include <QtCore/QRegExp>
+
 //MISSING:
 // - more than one selected ion per precursor (warning if more than one)
 // - scanWindowList for each acquisition separately (currently for the whole spectrum only)
+// - instrumentConfigurationRef attribute for scan (why should the instrument change between scans? - warning if used)
+// - scanSettingsRef attribute for instrumentConfiguration tag (currently no information there because of missing mapping file entry - warning if used)
 
 // xs:id/xs:idref prefix list
 // - sf_ru : sourceFile (run)
@@ -152,12 +152,12 @@ namespace OpenMS
 			{
 				String base64;
 				String precision;
-				String name;
 				UInt size;
 				String compression;
+				Base64::DataType data_type;
 				std::vector<Real> decoded_32;
 				std::vector<DoubleReal> decoded_64;
-				MetaInfo meta;
+				MetaInfoDescription meta;
 			};
 			
 			/// map pointer for reading
@@ -233,7 +233,7 @@ namespace OpenMS
 			void writeSourceFile_(std::ostream& os, const String& id, const SourceFile& software);
 
 			/// Helper method that writes a data processing list
-			void writeDataProcessing_(std::ostream& os, Size spectrum_index, const std::vector<DataProcessing>& dps);
+			void writeDataProcessing_(std::ostream& os, const String& id, const std::vector<DataProcessing>& dps);
 		};
 
 		//--------------------------------------------------------------------------------
@@ -288,11 +288,13 @@ namespace OpenMS
 			static const XMLCh* s_software_ref = xercesc::XMLString::transcode("softwareRef");
 			static const XMLCh* s_source_file_ref = xercesc::XMLString::transcode("sourceFileRef");
 			static const XMLCh* s_default_instrument_configuration_ref = xercesc::XMLString::transcode("defaultInstrumentConfigurationRef");
+			static const XMLCh* s_instrument_configuration_ref = xercesc::XMLString::transcode("instrumentConfigurationRef");
 			static const XMLCh* s_default_data_processing_ref = xercesc::XMLString::transcode("defaultDataProcessingRef");
 			static const XMLCh* s_data_processing_ref = xercesc::XMLString::transcode("dataProcessingRef");
 			static const XMLCh* s_start_time_stamp = xercesc::XMLString::transcode("startTimeStamp");
 			static const XMLCh* s_external_spectrum_id = xercesc::XMLString::transcode("externalSpectrumID");
 			static const XMLCh* s_default_source_file_ref = xercesc::XMLString::transcode("defaultSourceFileRef");
+			static const XMLCh* s_scan_settings_ref = xercesc::XMLString::transcode("scanSettingsRef");
 			
 			String tag = sm_.convert(qname);
 			open_tags_.push_back(tag);
@@ -356,10 +358,22 @@ namespace OpenMS
 			else if (tag=="binaryDataArray" && in_spectrum_list_)
 			{
 				data_.push_back(BinaryData());
-				//set array length
+				
+				//array length
 				Int array_length = default_array_length_;
 				optionalAttributeAsInt_(array_length, attributes, s_array_length);
 				data_.back().size = array_length;
+				
+				//data processing
+				String data_processing_ref;
+				if(optionalAttributeAsString_(data_processing_ref,attributes, s_data_processing_ref))
+				{
+					data_.back().meta.setDataProcessing(processing_[data_processing_ref]);
+				}
+				else
+				{
+					data_.back().meta.setDataProcessing(processing_[data_processing_ref]);
+				}
 			}
 			else if (tag=="cvParam")
 			{
@@ -413,28 +427,42 @@ namespace OpenMS
 					tmp.setIdentifier(external_spectrum_id);
 				}
 				
+				//spectrumRef - not really needed
+				
+				//instrumentConfigurationRef - not really needed: why should a scan have a different instrument?
+				String instrument_configuration_ref;
+				if(optionalAttributeAsString_(instrument_configuration_ref, attributes, s_instrument_configuration_ref))
+				{
+					warning(LOAD, "Unhandled attribute 'instrumentConfigurationRef' in 'scan' tag.");
+				}
+				
 				spec_.getAcquisitionInfo().push_back(tmp);
 			}
 			else if (tag=="mzML")
 			{
 				//check file version against schema version
 				String file_version = attributeAsString_(attributes, s_version);
-				DoubleReal double_version = 1.0;
+				if (!file_version.toQString().contains(QRegExp("^1.\\d+.\\d+$")))
+				{
+					warning(LOAD, String("Invalid mzML version string '") + file_version + "'. Assuming mzML version " + version_ + "!");
+				}
+				
+				DoubleReal double_version = 0.0;
 				try
 				{
 					double_version = file_version.toDouble();
 				}
 				catch(...)
 				{
-					warning(LOAD, "Could not convert the mzML version string '" + file_version +"' to a double.");
+					//nothing to do here
 				}
-				if (double_version<1.1)
+				if (double_version>=1.0 && double_version<1.1)
 				{
-					fatalError(LOAD, "MzML 1.0 is not supported!");
+					fatalError(LOAD, String("Only mzML 1.1.0 or higher is supported! This file has version '") + file_version + "'.");
 				}
 				else if (double_version>version_.toDouble())
 				{
-					warning(LOAD, "The XML file (" + file_version +") is newer than the parser (" + version_ + "). This might lead to undefinded program behaviour.");
+					warning(LOAD, "The mzML file version (" + file_version +") is newer than the parser version (" + version_ + "). This might lead to undefinded behaviour.");
 				}
 				//handle file accession
 				String accession;
@@ -491,11 +519,6 @@ namespace OpenMS
 				current_id_ = attributeAsString_(attributes, s_id);
 				software_[current_id_].setVersion(attributeAsString_(attributes, s_version));
 			}
-			else if (tag=="dataProcessingRef")
-			{
-			  //"spectrum", "chromatogram" and "binaryDataArray" can have a DataProcessing too
-			  //Currently this is not implemented
-			}
 			else if (tag=="dataProcessing")
 			{
 				current_id_ = attributeAsString_(attributes, s_id);
@@ -510,6 +533,13 @@ namespace OpenMS
 			else if (tag=="instrumentConfiguration")
 			{
 				current_id_ = attributeAsString_(attributes, s_id);
+				
+				//scan settings
+				String scan_settings_ref;
+				if(optionalAttributeAsString_(scan_settings_ref, attributes, s_scan_settings_ref))
+				{
+					warning(LOAD, "Unhandled attribute 'scanSettingsRef' in 'instrumentConfiguration' tag.");
+				}
 			}
 			else if (tag=="softwareRef")
 			{
@@ -637,19 +667,19 @@ namespace OpenMS
 
 				if (data_[i].precision=="64" && data_[i].compression =="zlib")
 				{
-					decoder_.decode(data_[i].base64, Base64::BYTEORDER_LITTLEENDIAN, data_[i].decoded_64,true);
+					decoder_.decode(data_[i].base64, Base64::BYTEORDER_LITTLEENDIAN, data_[i].decoded_64,true,data_[i].data_type);
 				}
 				else if(data_[i].precision=="64")
 				{
-					decoder_.decode(data_[i].base64, Base64::BYTEORDER_LITTLEENDIAN, data_[i].decoded_64);
+					decoder_.decode(data_[i].base64, Base64::BYTEORDER_LITTLEENDIAN, data_[i].decoded_64,false,data_[i].data_type);
 				}
 				else if (data_[i].precision=="32" && data_[i].compression =="zlib")
 				{
-					decoder_.decode(data_[i].base64, Base64::BYTEORDER_LITTLEENDIAN, data_[i].decoded_32,true);
+					decoder_.decode(data_[i].base64, Base64::BYTEORDER_LITTLEENDIAN, data_[i].decoded_32,true,data_[i].data_type);
 				}
 				else if(data_[i].precision =="32")
 				{
-					decoder_.decode(data_[i].base64, Base64::BYTEORDER_LITTLEENDIAN, data_[i].decoded_32);
+					decoder_.decode(data_[i].base64, Base64::BYTEORDER_LITTLEENDIAN, data_[i].decoded_32,false,data_[i].data_type);
 				}
 			}
 
@@ -660,12 +690,12 @@ namespace OpenMS
 			SignedSize int_index = -1;
 			for (Size i=0; i<data_.size(); i++)
 			{
-				if (data_[i].name=="m/z array")
+				if (data_[i].meta.getName()=="m/z array")
 				{
 					mz_index = i;
 					mz_precision_64 = (data_[i].precision=="64");
 				}
-				if (data_[i].name=="intensity array")
+				if (data_[i].meta.getName()=="intensity array")
 				{
 					int_index = i;
 					int_precision_64 = (data_[i].precision=="64");
@@ -699,21 +729,15 @@ namespace OpenMS
 			if (data_.size()>2)
 			{
 				//create meta data arrays and assign meta data
-				spec_.getMetaDataArrays().resize(data_.size()-2);
+				spec_.getFloatDataArrays().resize(data_.size()-2);
 				UInt meta_array_index = 0;
 				for (Size i=0; i<data_.size(); i++)
 				{
-					if (data_[i].name!="m/z array" && data_[i].name!="intensity array")
+					if (data_[i].meta.getName()!="m/z array" && data_[i].meta.getName()!="intensity array")
 					{
-						spec_.getMetaDataArrays()[meta_array_index].setName(data_[i].name);
-						spec_.getMetaDataArrays()[meta_array_index].reserve(data_[i].size);
+						spec_.getFloatDataArrays()[meta_array_index].reserve(data_[i].size);
 						//copy meta info into MetaInfoDescription
-						std::vector<UInt> keys;
-						data_[i].meta.getKeys(keys);
-						for (Size k=0;k<keys.size(); ++k)
-						{
-							spec_.getMetaDataArrays()[meta_array_index].setMetaValue(keys[k],data_[i].meta.getValue(keys[k]));
-						}
+						spec_.getFloatDataArrays()[meta_array_index].MetaInfoDescription::operator=(data_[i].meta);
 						//go to next meta data array
 						++meta_array_index;
 					}
@@ -724,13 +748,13 @@ namespace OpenMS
 			//We don't have this as a separate location => store it in spectrum
 			for (Size i=0; i<data_.size(); i++)
 			{
-				if (data_[i].name=="m/z array" || data_[i].name=="intensity array")
+				if (data_[i].meta.getName()=="m/z array" || data_[i].meta.getName()=="intensity array")
 				{
 					std::vector<UInt> keys;
 					data_[i].meta.getKeys(keys);
 					for (Size k=0;k<keys.size(); ++k)
 					{
-						spec_.setMetaValue(keys[k],data_[i].meta.getValue(keys[k]));
+						spec_.setMetaValue(keys[k],data_[i].meta.getMetaValue(keys[k]));
 					}
 				}
 			}
@@ -754,10 +778,10 @@ namespace OpenMS
 					UInt meta_array_index = 0;
 					for (Size i=0; i<data_.size(); i++)
 					{
-						if (n<data_[i].size && data_[i].name!="m/z array" && data_[i].name!="intensity array")
+						if (n<data_[i].size && data_[i].meta.getName()!="m/z array" && data_[i].meta.getName()!="intensity array")
 						{
 							DoubleReal value = (data_[i].precision=="64") ? data_[i].decoded_64[n] : data_[i].decoded_32[n];
-							spec_.getMetaDataArrays()[meta_array_index].push_back(value);
+							spec_.getFloatDataArrays()[meta_array_index].push_back(value);
 							++meta_array_index;
 						}
 					}
@@ -768,8 +792,17 @@ namespace OpenMS
 		template <typename MapType>
 		void MzMLHandler<MapType>::handleCVParam_(const String& parent_parent_tag, const String& parent_tag, const String& accession, const String& name, const String& value, const String& unit_accession)
 		{
-			//Error checks of CV values
-			if (cv_.exists(accession))
+			//Abort on unknown terms
+			if (!cv_.exists(accession))
+			{
+				//in 'sample' several external CVs are used (Brenda, GO, ...). Do not warn then.
+				if (parent_tag!="sample")
+				{
+					warning(LOAD, String("Unknown cvParam '") + accession + "' in tag '" + parent_tag + "'.");
+					return;
+				}
+			}
+			else
 			{
 				const ControlledVocabulary::CVTerm& term = cv_.getTerm(accession);
 				//obsolete CV terms
@@ -862,7 +895,7 @@ namespace OpenMS
 					return;
 	   		}
 			}
-
+			
 			//------------------------- run ----------------------------
 			if (parent_tag=="run")
 			{
@@ -871,7 +904,7 @@ namespace OpenMS
 				{
 					exp_->setFractionIdentifier(value);
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- binaryDataArray ----------------------------
 			else if (parent_tag=="binaryDataArray")
@@ -882,19 +915,31 @@ namespace OpenMS
 					if (accession=="MS:1000523") //64-bit float
 					{
 						data_.back().precision = "64";
+						data_.back().data_type = Base64::FLOAT;
 					}
 					else if (accession=="MS:1000521") //32-bit float
 					{
 						data_.back().precision = "32";
+						data_.back().data_type = Base64::FLOAT;
 					}
+					else if(accession=="MS:1000519") //32-bit integer
+					{
+						data_.back().precision = "32";
+						data_.back().data_type = Base64::INTEGER;						
+					}
+					else if(accession=="MS:1000522") //64-bit integer
+					{
+						data_.back().precision = "64";
+						data_.back().data_type = Base64::INTEGER;						
+					}					
 					//MS:1000513 ! binary data array
 					else if (accession=="MS:1000786") // non-standard binary data array (with name as value)
 					{
-						data_.back().name = value;
+						data_.back().meta.setName(value);
 					}
 					else if (cv_.isChildOf(accession,"MS:1000513")) //other array names as string
 					{
-						data_.back().name = cv_.getTerm(accession).name;
+						data_.back().meta.setName(cv_.getTerm(accession).name);
 					}
 					//MS:1000572 ! binary data compression type
 					else if (accession=="MS:1000574")//zlib compression
@@ -905,7 +950,7 @@ namespace OpenMS
 					{
 						data_.back().compression = "none";
 					}
-					else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+					else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 				}
 			}
 			//------------------------- spectrum ----------------------------
@@ -1057,7 +1102,7 @@ namespace OpenMS
 				{
 					spec_.getInstrumentSettings().setPolarity(IonSource::POSITIVE);
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- scanWindow ----------------------------
 			else if(parent_tag=="scanWindow")
@@ -1070,7 +1115,7 @@ namespace OpenMS
 				{
 					spec_.getInstrumentSettings().getScanWindows().back().end = value.toDouble();
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- referenceableParamGroup ----------------------------
 			else if(parent_tag=="referenceableParamGroup")
@@ -1105,7 +1150,7 @@ namespace OpenMS
 				{
 					spec_.getPrecursors().back().getPossibleChargeStates().push_back(value.toInt());
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- activation ----------------------------
 			else if(parent_tag=="activation")
@@ -1202,7 +1247,7 @@ namespace OpenMS
 				{
 					spec_.getPrecursors().back().getActivationMethods().insert(Precursor::PQD);
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- isolationWindow ----------------------------
 			else if(parent_tag=="isolationWindow")
@@ -1221,7 +1266,7 @@ namespace OpenMS
 					{
 						spec_.getPrecursors().back().setIsolationWindowUpperOffset(value.toDouble());
 					}
-					else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+					else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 				}
 				else if (parent_parent_tag=="product")
 				{
@@ -1237,7 +1282,7 @@ namespace OpenMS
 					{
 						spec_.getProducts().back().setIsolationWindowLowerOffset(value.toDouble());
 					}
-					else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+					else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 				}
 			}
 			//------------------------- scanList ----------------------------
@@ -1247,7 +1292,7 @@ namespace OpenMS
 				{
 					spec_.getAcquisitionInfo().setMethodOfCombination(cv_.getTerm(accession).name);
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- scan ----------------------------
 			else if (parent_tag=="scan")
@@ -1349,7 +1394,7 @@ namespace OpenMS
 					spec_.setMetaValue("scan law",String("quadratic"));
 				}
 				
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- contact ----------------------------
 			else if (parent_tag=="contact")
@@ -1374,7 +1419,7 @@ namespace OpenMS
 				{
 					exp_->getContacts().back().setInstitution(value);
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- sourceFile ----------------------------
 			else if (parent_tag=="sourceFile")
@@ -1440,7 +1485,15 @@ namespace OpenMS
 				{
 					source_files_[current_id_].setNativeIDType(SourceFile::UNKNOWN_NATIVEID);
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else if (accession=="MS:1001480") //AB SCIEX TOF/TOF nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::AB_SCIEX);
+				}
+				else if (accession=="MS:1001508") //Agilent MassHunter nativeID format
+				{
+					source_files_[current_id_].setNativeIDType(SourceFile::AGILENT_MASSHUNTER);
+				}
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- sample ----------------------------
 			else if (parent_tag=="sample")
@@ -1505,7 +1558,7 @@ namespace OpenMS
 					//No member => meta data
 					samples_[current_id_].setMetaValue("brenda source tissue",String(name));
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			//------------------------- instrumentConfiguration ----------------------------
 			else if (parent_tag=="instrumentConfiguration")
@@ -1600,7 +1653,7 @@ namespace OpenMS
 					//No member => metadata
 					instruments_[current_id_].setMetaValue("space charge effect",String("true"));
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			else if (parent_tag=="source")
 			{
@@ -1983,7 +2036,7 @@ namespace OpenMS
 					instruments_[current_id_].getIonSources().back().setMetaValue("matrix application type"," precoated plate");
 				}
 				
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			else if (parent_tag=="analyzer")
 			{
@@ -2069,7 +2122,7 @@ namespace OpenMS
 				{
 					instruments_[current_id_].getMassAnalyzers().back().setReflectronState(MassAnalyzer::ON);
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			else if (parent_tag=="detector")
 			{
@@ -2184,7 +2237,7 @@ namespace OpenMS
 				{
 					instruments_[current_id_].getIonDetectors().back().setAcquisitionMode(IonDetector::TRANSIENTRECORDER);
 				} 
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			else if (parent_tag=="processingMethod")
 			{
@@ -2210,6 +2263,10 @@ namespace OpenMS
 					processing_[current_id_].back().setCompletionTime(asDateTime_(value));
 				}
 				//file format conversion
+				else if (accession=="MS:1000530") //file format conversion
+				{
+					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::FORMAT_CONVERSION);
+				}
 				else if (accession=="MS:1000544") //Conversion to mzML
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::CONVERSION_MZML);
@@ -2227,6 +2284,10 @@ namespace OpenMS
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::CONVERSION_DTA);
 				}
 				//data processing action
+				else if (accession=="MS:1000543") //data processing action
+				{
+					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::DATA_PROCESSING);
+				}
 				else if (accession=="MS:1000033") //deisotoping
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::DEISOTOPING);
@@ -2235,17 +2296,9 @@ namespace OpenMS
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::CHARGE_DECONVOLUTION);
 				}
-				else if (accession=="MS:1000035") //peak picking
+				else if (accession=="MS:1000035" || cv_.isChildOf(accession,"MS:1000035"))  //peak picking (or child terms, we make no difference)
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::PEAK_PICKING);
-				}
-				else if (accession=="MS:1000801") //area peak picking
-				{
-					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::PEAK_PICKING_SUM);
-				}
-				else if (accession=="MS:1000802") //height peak picking
-				{
-					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::PEAK_PICKING_MAX);
 				}
 				else if (accession=="MS:1000592" || cv_.isChildOf(accession,"MS:1000592")) //smoothing (or child terms, we make no difference)
 				{
@@ -2263,19 +2316,23 @@ namespace OpenMS
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::BASELINE_REDUCTION);
 				}
-				else if (accession=="MS:1000594") //low intensity data point removal
-				{
-					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::LOW_INTENSITY_REMOVAL);
-				}
 				else if (accession=="MS:1000745") //retention time alignment
 				{
 					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::ALIGNMENT);
 				}
-				else if (accession=="MS:1000746") //high intensity data point removal
+				else if (accession=="MS:1001484") //intensity normalization
 				{
-					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::HIGH_INTENSITY_REMOVAL);
+					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::NORMALIZATION);
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else if (accession=="MS:1001485") //m/z calibration
+				{
+					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::CALIBRATION);
+				}
+				else if (accession=="MS:1001486" || cv_.isChildOf(accession,"MS:1001486")) //data filtering (or child terms, we make no difference)
+				{
+					processing_[current_id_].back().getProcessingActions().insert(DataProcessing::FILTERING);
+				}
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			else if (parent_tag=="fileContent")
 			{
@@ -2287,21 +2344,28 @@ namespace OpenMS
 				{
 					//ignored
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			else if (parent_tag=="software")
 			{
 				if (cv_.isChildOf(accession,"MS:1000531")) //software as string
 				{
-					software_[current_id_].setName(name);
+					if (accession=="MS:1000799") //custom unreleased software tool => use value as name
+					{
+						software_[current_id_].setName(value);					
+					}
+					else //use name as name
+					{
+						software_[current_id_].setName(name);
+					}
 				}
-				else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}
 			else if (parent_tag=="chromatogram" || parent_tag=="target")
 			{
 				//allowed but, not needed
 			}
-			else warning(LOAD, String("Unhandled cvParam '") + accession + " in tag '" + parent_tag + "'.");
+			else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 		}
 
 		template <typename MapType>
@@ -2364,7 +2428,7 @@ namespace OpenMS
 			}
 			else if (parent_tag=="binaryDataArray")
 			{
-				data_.back().meta.setValue(name,data_value);
+				data_.back().meta.setMetaValue(name,data_value);
 			}
 			else if (parent_tag=="spectrum")
 			{
@@ -2415,7 +2479,7 @@ namespace OpenMS
 			{
 				//currently ignored
 			}
-			else warning(LOAD, String("Unhandled userParam '") + name + " in tag '" + parent_tag + "'.");
+			else warning(LOAD, String("Unhandled userParam '") + name + "' in tag '" + parent_tag + "'.");
 		}
 	
 		template <typename MapType>
@@ -2466,9 +2530,13 @@ namespace OpenMS
 		{
 			os  << "		<software id=\"" << id << "\" version=\"" << software.getVersion() << "\" >\n";
 			ControlledVocabulary::CVTerm so_term = getChildWithName_("MS:1000531",software.getName());
-			if (so_term.id!="" && software.getName()!="custom unreleased software tool")
+			if (so_term.id=="MS:1000799")
 			{
-				os  << "			<cvParam cvRef=\"MS\" accession=\"" << so_term.id << "\" name=\"" << so_term.name << "\" />\n";
+				os  << "			<cvParam cvRef=\"MS\" accession=\"MS:1000799\" name=\"custom unreleased software tool\" value=\"\" />\n";				
+			}
+			else if (so_term.id!="")
+			{
+					os  << "			<cvParam cvRef=\"MS\" accession=\"" << so_term.id << "\" name=\"" << so_term.name << "\" />\n";
 			}
 			else
 			{
@@ -2550,6 +2618,14 @@ namespace OpenMS
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000823\" name=\"Bruker U2 nativeID format\" />\n";
 			}
+			else if (source_file.getNativeIDType()==SourceFile::AB_SCIEX)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1001480\" name=\"AB SCIEX TOF/TOF nativeID format\" />\n";
+			}
+			else if (source_file.getNativeIDType()==SourceFile::AGILENT_MASSHUNTER)
+			{
+				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1001508\" name=\"Agilent MassHunter nativeID format\" />\n";
+			}
 			else
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000824\" name=\"no nativeID format\" />\n";
@@ -2559,9 +2635,9 @@ namespace OpenMS
 		}
 
 		template <typename MapType>
-		void MzMLHandler<MapType>::writeDataProcessing_(std::ostream& os, Size spectrum_index, const std::vector<DataProcessing>& dps)
+		void MzMLHandler<MapType>::writeDataProcessing_(std::ostream& os, const String& id, const std::vector<DataProcessing>& dps)
 		{
-			os  << "		<dataProcessing id=\"dp_sp_" << spectrum_index << "\">\n";
+			os  << "		<dataProcessing id=\"" << id << "\">\n";
 			
 			//FORCED
 			if (dps.size()==0)
@@ -2572,77 +2648,102 @@ namespace OpenMS
 				os  << "			</processingMethod>\n";
 			}
 			
+			bool written = false;
 			for (Size i=0; i<dps.size(); ++i)
 			{
-				os  << "			<processingMethod order=\"0\" softwareRef=\"so_dp_" << spectrum_index << "_pm_" << i << "\">\n";
+				//data processing action
+				os  << "			<processingMethod order=\"0\" softwareRef=\"so_" << id << "_pm_" << i << "\">\n";
+				if (dps[i].getProcessingActions().count(DataProcessing::DATA_PROCESSING)==1)
+				{
+					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000543\" name=\"data processing action\" />\n";
+					written = true;
+				}
 				if (dps[i].getProcessingActions().count(DataProcessing::CHARGE_DECONVOLUTION)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000034\" name=\"charge deconvolution\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::DEISOTOPING)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000033\" name=\"deisotoping\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::SMOOTHING)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000592\" name=\"smoothing\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::CHARGE_CALCULATION)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000778\" name=\"charge state calculation\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::PRECURSOR_RECALCULATION)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000780\" name=\"precursor recalculation\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::BASELINE_REDUCTION)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000593\" name=\"baseline reduction\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::PEAK_PICKING)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000035\" name=\"peak picking\" />\n";
-				}
-				if (dps[i].getProcessingActions().count(DataProcessing::PEAK_PICKING_SUM)==1)
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000801\" name=\"area peak picking\" />\n";
-				}
-				if (dps[i].getProcessingActions().count(DataProcessing::PEAK_PICKING_MAX)==1)
-				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000802\" name=\"height peak picking\" />\n";
-				}
-				if (dps[i].getProcessingActions().count(DataProcessing::FEATURE_FINDING)==1)
-				{
-					//no CV term for this
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::ALIGNMENT)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000745\" name=\"retention time alignment\" />\n";
+					written = true;
 				}
-				if (dps[i].getProcessingActions().count(DataProcessing::LOW_INTENSITY_REMOVAL)==1)
+				if (dps[i].getProcessingActions().count(DataProcessing::CALIBRATION)==1)
 				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000594\" name=\"low intensity data point removal\" />\n";
+					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1001485\" name=\"m/z calibration\" />\n";
+					written = true;
 				}
-				if (dps[i].getProcessingActions().count(DataProcessing::HIGH_INTENSITY_REMOVAL)==1)
+				if (dps[i].getProcessingActions().count(DataProcessing::NORMALIZATION)==1)
 				{
-					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000746\" name=\"high intensity data point removal\" />\n";
+					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1001484\" name=\"intensity normalization\" />\n";
+					written = true;
+				}
+				if (dps[i].getProcessingActions().count(DataProcessing::FILTERING)==1)
+				{
+					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1001486\" name=\"data filtering\" />\n";
+					written = true;
+				}
+				//file format conversion
+				if (dps[i].getProcessingActions().count(DataProcessing::FORMAT_CONVERSION)==1)
+				{
+					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000530\" name=\"file format conversion\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::CONVERSION_MZDATA)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000546\" name=\"Conversion to mzData\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::CONVERSION_MZML)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000544\" name=\"Conversion to mzML\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::CONVERSION_MZXML)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000545\" name=\"Conversion to mzXML\" />\n";
+					written = true;
 				}
 				if (dps[i].getProcessingActions().count(DataProcessing::CONVERSION_DTA)==1)
 				{
 					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000741\" name=\"Conversion to dta\" />\n";
+					written = true;
 				}
+				if (!written)
+				{
+					os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000543\" name=\"data processing action\" />\n";
+				}
+				
 				//data processing attribute
 				if (dps[i].getCompletionTime().isValid())
 				{
@@ -2663,7 +2764,7 @@ namespace OpenMS
 			logger_.startProgress(0,exp.size(),"storing mzML file");
 			
 			os	<< "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n"
-					<< "<mzML xmlns=\"http://psi.hupo.org/ms/mzml\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0.xsd\" accession=\"" << exp.getIdentifier() << "\" version=\"1.1\">\n";
+					<< "<mzML xmlns=\"http://psi.hupo.org/ms/mzml\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0.xsd\" accession=\"" << exp.getIdentifier() << "\" version=\"" << version_ << "\">\n";
 			//--------------------------------------------------------------------------------------------
 			// CV list
 			//--------------------------------------------------------------------------------------------
@@ -2808,10 +2909,6 @@ namespace OpenMS
 			os  << "			<cvParam cvRef=\"MS\" accession=\"MS:1000004\" name=\"sample mass\" value=\"" << sa.getMass() << "\"  unitAccession=\"UO:0000021\" unitName=\"gram\" unitCvRef=\"UO\" />\n";
 			os  << "			<cvParam cvRef=\"MS\" accession=\"MS:1000005\" name=\"sample volume\" value=\"" << sa.getVolume() << "\" unitAccession=\"UO:0000098\" unitName=\"milliliter\" unitCvRef=\"UO\" />\n";
 			os  << "			<cvParam cvRef=\"MS\" accession=\"MS:1000006\" name=\"sample concentration\" value=\"" << sa.getConcentration() << "\" unitAccession=\"UO:0000175\" unitName=\"gram per liter\" unitCvRef=\"UO\" />\n";
-			if (sa.getComment()!="")
-			{
-				os  << "			<userParam name=\"comment\" type=\"xsd:string\" value=\"" << sa.getComment() << "\" />\n";
-			}
 			if (sa.getState()==Sample::EMULSION)
 			{
 				os  << "			<cvParam cvRef=\"MS\" accession=\"MS:1000047\" name=\"emulsion\" />\n";
@@ -2836,7 +2933,10 @@ namespace OpenMS
 			{
 				os  << "			<cvParam cvRef=\"MS\" accession=\"MS:1000052\" name=\"suspension\" />\n";
 			}
-
+			if (sa.getComment()!="")
+			{
+				os  << "			<userParam name=\"comment\" type=\"xsd:string\" value=\"" << sa.getComment() << "\" />\n";
+			}
 			writeUserParam_(os, sa, 3);
 			os  << "		</sample>\n";
 			os  << "	</sampleList>\n";
@@ -2844,7 +2944,7 @@ namespace OpenMS
 			//--------------------------------------------------------------------------------------------
 			// software
 			//--------------------------------------------------------------------------------------------
-			os  << "	<softwareList count=\"" << (2+exp.size()) << "\">\n"; //TODO fix this number when everyting works			
+			os  << "	<softwareList count=\"" << (2+exp.size()) << "\">\n"; //TODO fix this number			
 			//write instrument software
 			writeSoftware_(os, "so_in_0", exp.getInstrument().getSoftware());
 			//write fallback software
@@ -2857,7 +2957,18 @@ namespace OpenMS
 				{
 					for (Size i=0; i<exp[s].getDataProcessing().size(); ++i)
 					{
-						writeSoftware_(os, String("so_dp_") + s + "_pm_" + i, exp[s].getDataProcessing()[i].getSoftware());
+						writeSoftware_(os, String("so_dp_sp_") + s + "_pm_" + i, exp[s].getDataProcessing()[i].getSoftware());
+					}
+				}
+			}
+			//write data processing (for each binary data array)
+			for (Size s=0; s<exp.size(); ++s)
+			{
+				for (Size m=0; m<exp[s].getFloatDataArrays().size(); ++m)
+				{
+					for (Size i=0; i<exp[s].getFloatDataArrays()[m].getDataProcessing().size(); ++i)
+					{
+						writeSoftware_(os, String("so_dp_sp_") + s + "_bi_" + m + "_pm_" + i, exp[s].getFloatDataArrays()[m].getDataProcessing()[i].getSoftware());
 					}
 				}
 			}
@@ -3436,23 +3547,32 @@ namespace OpenMS
 			//--------------------------------------------------------------------------------------------
 			// data processing
 			//--------------------------------------------------------------------------------------------
-			os  << "	<dataProcessingList count=\"" << std::max((Size)1,exp.size()) << "\">\n";
+			os  << "	<dataProcessingList count=\"" << std::max((Size)1,exp.size()) << "\">\n"; //TODO fix this number
 			//default (first spectrum data or fictional data)
 			if (exp.size()==0)
 			{
 				std::vector<DataProcessing> dummy;
-				writeDataProcessing_(os, 0 , dummy);
+				writeDataProcessing_(os, "dp_sp_0" , dummy);
 			}
 			else
 			{
-				writeDataProcessing_(os, 0 , exp[0].getDataProcessing());
+				writeDataProcessing_(os, "dp_sp_0" , exp[0].getDataProcessing());
 			}
 			//for each spectrum
 			for (Size s=1; s<exp.size(); ++s)
 			{
 				if (exp[s].getDataProcessing()!=exp[0].getDataProcessing())
 				{
-					writeDataProcessing_(os, s, exp[s].getDataProcessing());
+					writeDataProcessing_(os, String("dp_sp_") + s, exp[s].getDataProcessing());
+				}
+			}
+
+			//for each binary data array
+			for (Size s=0; s<exp.size(); ++s)
+			{
+				for (Size m=0; m<exp[s].getFloatDataArrays().size(); ++m)
+				{
+					writeDataProcessing_(os, String("dp_sp_") + s + "_bi_" + m, exp[s].getFloatDataArrays()[m].getDataProcessing());
 				}
 			}
 
@@ -3619,50 +3739,70 @@ namespace OpenMS
 					//--------------------------------------------------------------------------------------------
 					//scan list
 					//--------------------------------------------------------------------------------------------
-					if (spec.getAcquisitionInfo().size()!=0)
+					os	<< "				<scanList count=\"" << std::max((Size)1,spec.getAcquisitionInfo().size()) << "\">\n";
+					ControlledVocabulary::CVTerm ai_term = getChildWithName_("MS:1000570",spec.getAcquisitionInfo().getMethodOfCombination());
+					if (ai_term.id!="")
 					{
-						os	<< "				<scanList count=\"" << spec.getAcquisitionInfo().size() << "\">\n";
-						ControlledVocabulary::CVTerm ai_term = getChildWithName_("MS:1000570",spec.getAcquisitionInfo().getMethodOfCombination());
-						if (ai_term.id!="")
-						{
-							os  << "					<cvParam cvRef=\"MS\" accession=\"" << ai_term.id <<"\" name=\"" << ai_term.name << "\" />\n";
-						}
-						else
-						{
-							os  << "					<cvParam cvRef=\"MS\" accession=\"MS:1000795\" name=\"no combination\" />\n";
-						}
-						writeUserParam_(os, spec.getAcquisitionInfo(), 5);
-						
-						//--------------------------------------------------------------------------------------------
-						//scan
-						//--------------------------------------------------------------------------------------------
-						for (Size j=0; j<spec.getAcquisitionInfo().size(); ++j)
-						{
-							const Acquisition& ac = spec.getAcquisitionInfo()[j];
-							os	<< "					<scan externalSpectrumID=\"" << ac.getIdentifier() << "\">\n";
-							if (j==0)
-							{
-								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan start time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
-							}
-							writeUserParam_(os, ac, 6);
-							//scan windows
-							if (j==0 && spec.getInstrumentSettings().getScanWindows().size()!=0)
-							{
-								os	<< "						<scanWindowList count=\"" << spec.getInstrumentSettings().getScanWindows().size() << "\">\n";
-								for (Size j=0; j<spec.getInstrumentSettings().getScanWindows().size(); ++j)
-								{
-									os	<< "							<scanWindow>\n";
-									os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000501\" name=\"scan window lower limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].begin << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-									os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000500\" name=\"scan window upper limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].end << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
-									writeUserParam_(os, spec.getInstrumentSettings().getScanWindows()[j], 8);
-									os	<< "							</scanWindow>\n";
-								}
-								os	<< "						</scanWindowList>\n";
-							}
-							os	<< "					</scan>\n";
-						}
-						os	<< "				</scanList>\n";
+						os  << "					<cvParam cvRef=\"MS\" accession=\"" << ai_term.id <<"\" name=\"" << ai_term.name << "\" />\n";
 					}
+					else
+					{
+						os  << "					<cvParam cvRef=\"MS\" accession=\"MS:1000795\" name=\"no combination\" />\n";
+					}
+					writeUserParam_(os, spec.getAcquisitionInfo(), 5);
+					
+					//--------------------------------------------------------------------------------------------
+					//scan
+					//--------------------------------------------------------------------------------------------
+					for (Size j=0; j<spec.getAcquisitionInfo().size(); ++j)
+					{
+						const Acquisition& ac = spec.getAcquisitionInfo()[j];
+						os << "					<scan ";
+						if (ac.getIdentifier()!="") os << "externalSpectrumID=\"" << ac.getIdentifier() << "\"";
+						os << ">\n";
+						if (j==0)
+						{
+							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan start time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
+						}
+						writeUserParam_(os, ac, 6);
+						//scan windows
+						if (j==0 && spec.getInstrumentSettings().getScanWindows().size()!=0)
+						{
+							os	<< "						<scanWindowList count=\"" << spec.getInstrumentSettings().getScanWindows().size() << "\">\n";
+							for (Size j=0; j<spec.getInstrumentSettings().getScanWindows().size(); ++j)
+							{
+								os	<< "							<scanWindow>\n";
+								os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000501\" name=\"scan window lower limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].begin << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+								os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000500\" name=\"scan window upper limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].end << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+								writeUserParam_(os, spec.getInstrumentSettings().getScanWindows()[j], 8);
+								os	<< "							</scanWindow>\n";
+							}
+							os	<< "						</scanWindowList>\n";
+						}
+						os	<< "					</scan>\n";
+					}
+					//fallback if we have no acquisition information (a dummy scan is created for RT and so on)
+					if (spec.getAcquisitionInfo().size()==0)
+					{
+						os	<< "					<scan>\n";
+						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan start time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
+						//scan windows
+						if (spec.getInstrumentSettings().getScanWindows().size()!=0)
+						{
+							os	<< "						<scanWindowList count=\"" << spec.getInstrumentSettings().getScanWindows().size() << "\">\n";
+							for (Size j=0; j<spec.getInstrumentSettings().getScanWindows().size(); ++j)
+							{
+								os	<< "							<scanWindow>\n";
+								os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000501\" name=\"scan window lower limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].begin << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+								os  << "								<cvParam cvRef=\"MS\" accession=\"MS:1000500\" name=\"scan window upper limit\" value=\"" << spec.getInstrumentSettings().getScanWindows()[j].end << "\" unitAccession=\"MS:1000040\" unitName=\"m/z\" unitCvRef=\"MS\" />\n";
+								writeUserParam_(os, spec.getInstrumentSettings().getScanWindows()[j], 8);
+								os	<< "							</scanWindow>\n";
+							}
+							os	<< "						</scanWindowList>\n";
+						}
+						os	<< "					</scan>\n";
+					}
+					os	<< "				</scanList>\n";
 					//--------------------------------------------------------------------------------------------
 					//precursor list
 					//--------------------------------------------------------------------------------------------
@@ -3802,7 +3942,7 @@ namespace OpenMS
 						}
 						String encoded_string;
 						std::vector<DoubleReal> data64_to_encode;
-						os	<< "				<binaryDataArrayList count=\"" << (spec.getMetaDataArrays().size()+2) << "\">\n";
+						os	<< "				<binaryDataArrayList count=\"" << (spec.getFloatDataArrays().size()+2) << "\">\n";
 						//write m/z array
 						data64_to_encode.resize(spec.size());
 						for (Size p=0; p<spec.size(); ++p) data64_to_encode[p] = spec[p].getMZ();
@@ -3827,13 +3967,18 @@ namespace OpenMS
 							os	<< "					</binaryDataArray>\n";
 						}
 						//write meta data array
-						for (Size m=0; m<spec.getMetaDataArrays().size(); ++m)
+						for (Size m=0; m<spec.getFloatDataArrays().size(); ++m)
 						{
-							const typename SpectrumType::MetaDataArray& array = spec.getMetaDataArrays()[m];
+							const typename SpectrumType::FloatDataArray& array = spec.getFloatDataArrays()[m];
 							data64_to_encode.resize(array.size());
 							for (Size p=0; p<array.size(); ++p) data64_to_encode[p] = array[p];
 							decoder_.encode(data64_to_encode, Base64::BYTEORDER_LITTLEENDIAN, encoded_string, options_.getCompression());
-							os	<< "					<binaryDataArray arrayLength=\"" << array.size() << "\" encodedLength=\"" << encoded_string.size() << "\">\n";
+							String data_processing_ref_string = "";
+							if (array.getDataProcessing().size()!=0)
+							{
+								data_processing_ref_string = String("dataProcessingRef=\"dp_sp_") + s + "_bi_" + m + "\"";
+							}
+							os	<< "					<binaryDataArray arrayLength=\"" << array.size() << "\" encodedLength=\"" << encoded_string.size() << "\" " << data_processing_ref_string << ">\n";
 							os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000523\" name=\"64-bit float\" />\n";
 							os  << "						" << compression_term << "\n";
 							ControlledVocabulary::CVTerm bi_term = getChildWithName_("MS:1000513",array.getName());

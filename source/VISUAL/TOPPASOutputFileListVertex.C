@@ -26,25 +26,30 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/TOPPASOutputFileListVertex.h>
+#include <OpenMS/VISUAL/TOPPASToolVertex.h>
+#include <OpenMS/VISUAL/TOPPASEdge.h>
 
 namespace OpenMS
 {
 	TOPPASOutputFileListVertex::TOPPASOutputFileListVertex()
-		:	TOPPASVertex()
+		:	TOPPASVertex(),
+			files_()
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = Qt::lightGray;
 	}
 	
-	TOPPASOutputFileListVertex::TOPPASOutputFileListVertex(const String& name, const String& type)
-		: TOPPASVertex(name, type)
+	TOPPASOutputFileListVertex::TOPPASOutputFileListVertex(const QStringList& files)
+		:	TOPPASVertex(),
+			files_(files)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = Qt::lightGray;
 	}
 	
 	TOPPASOutputFileListVertex::TOPPASOutputFileListVertex(const TOPPASOutputFileListVertex& rhs)
-		:	TOPPASVertex(rhs)
+		:	TOPPASVertex(rhs),
+			files_(rhs.files_)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = Qt::lightGray;
@@ -59,6 +64,8 @@ namespace OpenMS
 	{
 		TOPPASVertex::operator=(rhs);		
 		
+		files_ = rhs.files_;
+		
 		return *this;
 	}
 	
@@ -66,5 +73,58 @@ namespace OpenMS
 	{
 		// ...
 	}
+	
+	void TOPPASOutputFileListVertex::paint(QPainter* painter, const QStyleOptionGraphicsItem* /*option*/, QWidget* /*widget*/)
+	{
+		QPen pen(pen_color_, 1, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin);
+		if (isSelected())
+		{
+			pen.setWidth(2);
+			painter->setBrush(brush_color_.darker(130));
+		}
+		else
+		{
+			painter->setBrush(brush_color_);
+		}
+		painter->setPen(pen);
+	
+		QPainterPath path;
+		path.addRoundRect(-70.0, -40.0, 140.0, 80.0, 20, 20);		
+ 		painter->drawPath(path);
+ 		
+		QString text = "Output file list";
+		QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, text);
+		painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), text);
+	}
+	
+	QRectF TOPPASOutputFileListVertex::boundingRect() const
+	{
+		return QRectF(-71,-41,142,82);
+	}
+	
+	QPainterPath TOPPASOutputFileListVertex::shape () const
+	{
+		QPainterPath shape;
+		shape.addRoundRect(-71.0, -41.0, 142.0, 81.0, 20, 20);
+		return shape;
+	}
+	
+	void TOPPASOutputFileListVertex::startComputation()
+	{
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
+			if (ttv)
+			{
+				ttv->compute();
+			}
+		}
+	}
+	
+	const QStringList& TOPPASOutputFileListVertex::getFilenames()
+	{
+		return files_;
+	}
+	
 }
 

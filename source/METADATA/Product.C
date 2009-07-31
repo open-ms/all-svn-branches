@@ -32,11 +32,11 @@ using namespace std;
 namespace OpenMS
 {
 
-	Product::Product()
-		: MetaInfoInterface(),
-			mz_(0.0),
-			window_low_(0.0),
-			window_up_(0.0)
+	Product::Product():
+		MetaInfoInterface(),
+		mz_(0.0),
+	  window_low_(0.0),
+		window_up_(0.0)
 	{
 	}
 	

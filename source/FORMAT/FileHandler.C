@@ -35,7 +35,7 @@ using namespace std;
 namespace OpenMS
 {
 
-	const std::string FileHandler::NamesOfTypes[] = {"txt", "fid", "Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML", "mzIdentML", "GelML", "TraML"};
+	const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML", "mzIdentML", "GelML", "TraML", "MSP", "txt", "fid"};
 
 	FileTypes::Type FileHandler::getType(const String& filename)
 	{
@@ -43,7 +43,7 @@ namespace OpenMS
 		if (type==FileTypes::UNKNOWN)
 		{
 			type = getTypeByContent(filename);
-		}
+		}		
 		return type;
 	}
 
@@ -144,6 +144,10 @@ namespace OpenMS
 		{
 			return FileTypes::TRAML;
 		}
+		else if (tmp == "MSP")
+		{
+			return FileTypes::MSP;
+		}
 
 		return FileTypes::UNKNOWN;
 
@@ -211,6 +215,8 @@ namespace OpenMS
 			return true;
 		case FileTypes::MZIDENTML:
 			return true;
+		case FileTypes::PEPXML:
+			return true;
 		case FileTypes::GELML:
 			return true;
 		case FileTypes::TRAML:
@@ -240,6 +246,9 @@ namespace OpenMS
 		//analysisXML (all lines)
 		if (all_simple.hasSubstring("<mzIdentML")) return FileTypes::MZIDENTML;
 
+		//pepXML (all lines)
+		if (all_simple.hasSubstring("xmlns=\"http://regis-web.systemsbiology.net/pepXML\"")) return FileTypes::PEPXML;
+
     //feature map (all lines)
     if (all_simple.hasSubstring("<featureMap")) return FileTypes::FEATUREXML;
 
@@ -264,6 +273,19 @@ namespace OpenMS
 
 		//traML (all lines)
 		if (all_simple.hasSubstring("<TraML")) return FileTypes::TRAML;
+	
+		//MSP (all lines)
+		for (Size i = 0; i != file.size(); ++i)
+		{
+			if (file[i].hasPrefix("Name: ") && file[i].hasSubstring("/"))
+			{
+				return FileTypes::MSP;
+			}
+			if (file[i].hasPrefix("Num peaks: "))
+			{
+				return FileTypes::MSP;
+			}
+		}
 
 		//tokenize lines two to five
 		vector<String> parts;
@@ -331,9 +353,6 @@ namespace OpenMS
 				return FileTypes::MS2;
 			}
 		}
-
-		// pep XML
-		// we cannot read it .. so no need to check
 
 		return FileTypes::UNKNOWN;
 	}

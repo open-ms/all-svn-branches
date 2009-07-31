@@ -40,8 +40,6 @@ namespace OpenMS
 		//if you change here, do not forget to change FileHandler::NameOfTypes[]
 		enum Type
 		{
-			AUTOEXECUTE,     		///< AutoExecute file (.txt)
-			XMASS,           		///< XMass Analysis file (fid)
 			UNKNOWN,        		///< Unknown file extension
 			DTA,            		///< DTA file (.dta)
 			DTA2D,          		///< DTA2D file (.dta2d)
@@ -60,6 +58,9 @@ namespace OpenMS
 			MZIDENTML,				  ///< mzIdentML (HUPO PSI AnalysisXML format) (.mzIdentML)
 			GELML,							///< GelML (HUPO PSI format) (.GelML)
 			TRAML,							///< TraML (HUPO PSI format) for transitions (.TraML)
+			MSP,								///< NIST spectra library file format (.msp)
+			AUTOEXECUTE,     		///< AutoExecute file (.txt)
+			XMASS,           		///< XMass Analysis file (fid)			
 			SIZE_OF_TYPE    		///< No file type. Simply stores the number of types
 		};
 	}; //struct

@@ -33,6 +33,7 @@ namespace OpenMS
 {
   HPLC::HPLC():
 //  	PersistentObject(),
+		MetaInfoInterface(),
     instrument_(),
     column_(),
     temperature_(21),
@@ -46,6 +47,7 @@ namespace OpenMS
   
   HPLC::HPLC(const HPLC& source):
 //    PersistentObject(source),
+		MetaInfoInterface(source),
     instrument_(source.instrument_),
     column_(source.column_),
     temperature_(source.temperature_),

@@ -92,7 +92,6 @@ set(kernel_executables_list
   RichPeak2D_test
   DRichPeak_test
   ConstRefVector_test
-  DSpectrum_test
   ComparatorUtils_test
   StandardTypes_test
   Feature_test
@@ -150,6 +149,7 @@ set(format_executables_list
   XTandemInfile_test
   UnimodXMLFile_test
   PepXMLFile_test
+  PepXMLFileMascot_test
   ControlledVocabulary_test
   TransformationXMLFile_test
   SemanticValidator_test
@@ -160,6 +160,7 @@ set(format_executables_list
   TraMLFile_test
   XMassFile_test
   AutoExecuteFile_test	
+  SettingsParser_test
 )
 
 if (USE_ANDIMS)
@@ -286,7 +287,7 @@ set(analysis_executables_list
   FeatureGroupingAlgorithm_test
   FeatureGroupingAlgorithmLabeled_test
   FeatureGroupingAlgorithmUnlabeled_test
-  FeatureDeconvolution_test
+#  FeatureDeconvolution_test
   ConsensusID_test
   ProteinInference_test
   PILISScoring_test
@@ -300,6 +301,7 @@ set(analysis_executables_list
   MapAlignmentEvaluationAlgorithm_test
   MapAlignmentEvaluationAlgorithmPrecision_test
   MapAlignmentEvaluationAlgorithmRecall_test
+  OfflinePrecursorIonSelection_test
 )
 
 set(applications_executables_list
@@ -326,7 +328,6 @@ set(transformations_executables_list
   FeatureFinderAlgorithmSimple_test
   FeatureFinderAlgorithmWavelet_test
   FeatureFinderAlgorithmIsotopeWavelet_test
-  FeatureFinderAlgorithmWatershed_test
   SimpleSeeder_test
   SimpleExtender_test
   GaussFitter1D_test
@@ -353,17 +354,15 @@ set(transformations_executables_list
 )
 
 set(simulation_executables_list
+  MSSim_test
   DigestSimulation_test
   PTMSimulation_test
-  IonizationSimulation_test
   DetectabilitySimulation_test
   RTSimulation_test
+  IonizationSimulation_test
   RawMSSignalSimulation_test
-  MSSim_test
   ElutionModel_test
   IsotopeModelGeneral_test
-  LCMSSample_test
-  LCMSSim_test
   MixtureModel_test
 )
 

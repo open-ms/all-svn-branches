@@ -33,17 +33,19 @@
 
 #include <OpenMS/KERNEL/FeatureMap.h>
 
+
 namespace OpenMS
 {
 
   /**
     @brief Representation of a (putative) link between two Features, which stem from the same compound
-	 *but have different charge (including different adduct ions (H+, Na+, ..)
+	  but have different charge (including different adduct ions (H+, Na+, ..)
     
-    Only the referenced features are stored in the base class Peak2D.
-    The original datapoint is referenced by the map and element index.
+    A ChargePair represents an edge between two Features and specifies their respective charge and adducts,
+    so that when decharged they can be explained as stemming from the same compound.
+    
   	
-  	@ingroup Kernel
+  	@ingroup Datastructures
   */
   class OPENMS_DLLAPI ChargePair
   {
@@ -59,12 +61,13 @@ namespace OpenMS
 				feature1_charge_(0),
 				compomer_id_(),
 				mass_diff_(0),
+				score_(0),
 				is_active_(false)
 		{
 		}
 		/// Constructor from map index, element index and Feature
-		ChargePair(const UInt& index0,
-							 const UInt& index1,
+		ChargePair(const Size& index0,
+							 const Size& index1,
 							 const Int& charge0,
 							 const Int& charge1,
 							 const Size& compomer_id, 
@@ -76,6 +79,7 @@ namespace OpenMS
 				feature1_charge_(charge1),
 				compomer_id_(compomer_id),
 				mass_diff_(mass_diff),
+				score_(0),
 				is_active_(active)
 		{
 		}
@@ -87,6 +91,7 @@ namespace OpenMS
 				feature1_charge_(rhs.feature1_charge_),
 				compomer_id_(rhs.compomer_id_),
 				mass_diff_(rhs.mass_diff_),
+				score_(rhs.score_),
 				is_active_(rhs.is_active_)
 		{
 		}
@@ -101,6 +106,7 @@ namespace OpenMS
 				feature1_charge_ = rhs.feature1_charge_;
 				compomer_id_ = rhs.compomer_id_;
 				mass_diff_ = rhs.mass_diff_;
+				score_ = rhs.score_;
 				is_active_ = rhs.is_active_;
 
 				return *this;
@@ -128,13 +134,13 @@ namespace OpenMS
 		}
 				
 		/// Returns the element index (for element 0 or 1)
-		UInt getElementIndex(UInt pairID) const
+		Size getElementIndex(UInt pairID) const
 		{
 			if (pairID == 0) return feature0_index_;
 			else return feature1_index_;
 		}
 		/// Set the element index (for element 0 or 1)
-		void setElementIndex(UInt pairID, UInt e)
+		void setElementIndex(UInt pairID, Size e)
 		{
 			if (pairID == 0) feature0_index_ = e;
 			else feature1_index_ = e;
@@ -164,6 +170,17 @@ namespace OpenMS
 		{
 			mass_diff_ = mass_diff;
 		}
+		
+		/// Returns the ILP edge score
+		Real getEdgeScore() const
+		{
+			return score_;
+		}
+		/// Sets the ILP edge score
+		void setEdgeScore(Real score)
+		{
+			score_ = score;
+		}		
 
 		/// is this pair realized?
 		bool isActive() const
@@ -200,9 +217,9 @@ namespace OpenMS
 	 protected:
     	
 		/// Int of the first element within the FeatureMap
-		UInt feature0_index_;
+		Size feature0_index_;
 		/// Int of the second element within the FeatureMap
-		UInt feature1_index_;
+		Size feature1_index_;
 		/// Assumed charge of the first feature
 		Int feature0_charge_;
 		/// Assumed charge of the second feature
@@ -211,6 +228,8 @@ namespace OpenMS
 		Size compomer_id_;
 		/// mass difference (after explanation by compomer)
 		DoubleReal mass_diff_;
+		/// Score of this edge used in ILP
+		Real score_;
 		/// was this pair realized by ILP?
 		bool is_active_;
   };

@@ -47,6 +47,8 @@ using namespace std;
 	
 	Currently only featureXML can we written.
 	
+	@todo Add import of msInspect and SpecArray feature data (Marc)
+	
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_TextImporter.cli
 */
@@ -126,7 +128,7 @@ namespace OpenMS
         // processing
         //-------------------------------------------------------------
 				if (out_type==FileTypes::FEATUREXML)
-					{
+				{
 					//-------------------------------------------------------------
 					// parsing header line
 					//-------------------------------------------------------------
@@ -228,6 +230,10 @@ namespace OpenMS
 					//-------------------------------------------------------------
 					// write output
 					//-------------------------------------------------------------
+					
+					//annotate output with data processing info
+					addDataProcessing_(feature_map, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+					
 					FeatureXMLFile().store(out, feature_map);
 				}
 				else // PARAM

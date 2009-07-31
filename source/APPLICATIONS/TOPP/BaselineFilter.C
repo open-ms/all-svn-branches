@@ -25,7 +25,7 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 #include <OpenMS/KERNEL/MSExperiment.h>
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FILTERING/BASELINE/MorphologicalFilter.h>
 #include <OpenMS/FORMAT/PeakTypeEstimator.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
@@ -76,9 +76,9 @@ class TOPPBaselineFilter
 	void registerOptionsAndFlags_()
 	{
 	  	registerInputFile_("in","<file>","","input raw data file ");
-			setValidFormats_("in",StringList::create("mzData"));
+			setValidFormats_("in",StringList::create("mzML"));
 			registerOutputFile_("out","<file>","","output raw data file ");
-	  	setValidFormats_("out",StringList::create("mzData"));
+	  	setValidFormats_("out",StringList::create("mzML"));
       registerDoubleOption_("struc_elem_length","<size>",3,"Length of the structuring element.",false);
       registerStringOption_("struc_elem_unit","<unit>","Thomson","Unit of 'struc_elem_length' parameter.",false);
 			setValidStrings_("struc_elem_unit",StringList::create("Thomson,DataPoints"));
@@ -100,7 +100,7 @@ class TOPPBaselineFilter
 		// loading input
 		//-------------------------------------------------------------
 
-		MzDataFile mz_data_file;
+		MzMLFile mz_data_file;
 		MSExperiment<Peak1D > ms_exp;
 		mz_data_file.setLogType(log_type_);
 		mz_data_file.load(in,ms_exp);
@@ -109,6 +109,16 @@ class TOPPBaselineFilter
 		if (PeakTypeEstimator().estimateType(ms_exp[0].begin(),ms_exp[0].end())==SpectrumSettings::PEAKS)
 		{
 			writeLog_("Warning: OpenMS peak type estimation indicates that this is not raw data!");
+		}
+
+		//check if spectra are sorted
+		for (Size i=0; i< ms_exp.size(); ++i)
+		{
+			if (!ms_exp[i].isSorted())
+			{
+				writeLog_("Error: Not all spectra are sorted according to peak m/z positions. Use FileFilter to sort the input!");
+				return INCOMPATIBLE_INPUT_DATA;
+			}
 		}
 
 		//-------------------------------------------------------------
@@ -129,6 +139,9 @@ class TOPPBaselineFilter
 		// writing output
 		//-------------------------------------------------------------
 		
+		//annotate output with data processing info
+		addDataProcessing_(ms_exp, getProcessingInfo_(DataProcessing::BASELINE_REDUCTION));
+
 		mz_data_file.store(out,ms_exp);
 
 		return EXECUTION_OK;

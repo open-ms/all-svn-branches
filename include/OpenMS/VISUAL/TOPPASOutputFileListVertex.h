@@ -48,15 +48,28 @@ namespace OpenMS
 			/// Default constructor
 			TOPPASOutputFileListVertex();
 			/// Constructor
-			TOPPASOutputFileListVertex(const String& name, const String& type = "");
+			TOPPASOutputFileListVertex(const QStringList& files);
 			/// Copy constructor
 			TOPPASOutputFileListVertex(const TOPPASOutputFileListVertex& rhs);
 			/// Destructor
 			virtual ~TOPPASOutputFileListVertex();
 			/// Assignment operator
 			TOPPASOutputFileListVertex& operator= (const TOPPASOutputFileListVertex& rhs);
+			// documented in base class
+			virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
+			// documented in base class
+			virtual QRectF boundingRect() const;
+			// documented in base class
+			virtual QPainterPath shape () const;
+			/// Starts the workflow ending in this node
+			void startComputation();
+			/// Returns the list of files
+			const QStringList& getFilenames();
 			
 		protected:
+		
+			/// The file names
+			QStringList files_;
 		
 			///@name reimplemented Qt events
       //@{

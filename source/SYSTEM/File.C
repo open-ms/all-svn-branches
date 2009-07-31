@@ -59,13 +59,13 @@ namespace OpenMS
 	
 	bool File::exists(const String& file)
 	{
-		QFileInfo fi(file.c_str());
+		QFileInfo fi(file.toQString());
 		return fi.exists();
 	}
 
 	bool File::empty(const String& file)
 	{
-		QFileInfo fi(file.c_str());
+		QFileInfo fi(file.toQString());
 		return (!fi.exists() || fi.size()==0);
 	}
 
@@ -79,44 +79,44 @@ namespace OpenMS
 	
 	String File::absolutePath(const String& file)
 	{
-		QFileInfo fi(file.c_str());
+		QFileInfo fi(file.toQString());
 		return fi.absoluteFilePath();
 	}
 
 	String File::basename(const String& file)
 	{
-		QFileInfo fi(file.c_str());
+		QFileInfo fi(file.toQString());
 		return fi.fileName();
 	}
 
 	String File::path(const String& file)
 	{
-		QFileInfo fi(file.c_str());
+		QFileInfo fi(file.toQString());
 		return fi.path();
 	}
 
 	bool File::readable(const String& file)
 	{
-		QFileInfo fi(file.c_str());
+		QFileInfo fi(file.toQString());
 		return (fi.exists() && fi.isReadable());
 	}
 
 	bool File::writable(const String& file)
 	{
-		QFileInfo fi(file.c_str());
+		QFileInfo fi(file.toQString());
 		
-		bool tmp(false);
-		if (!fi.exists())
+		bool tmp = false ;
+		if (fi.exists())
 		{
-			QFile f;
-			f.setFileName(file.c_str());
-			f.open(QIODevice::WriteOnly);
-			tmp = f.isWritable();
-			f.close();
+			tmp = fi.isWritable();
 		}
 		else
 		{
-			tmp = fi.isWritable();
+			QFile f;
+			f.setFileName(file.toQString());
+			f.open(QIODevice::WriteOnly);
+			tmp = f.isWritable();
+			f.remove();
 		}
 		
 		return tmp;
@@ -160,15 +160,15 @@ namespace OpenMS
 		//this is never reached, but needs to be there to avoid compiler warnings
 		return "";
 	}
-	
-	bool File::fileList(const String& dir, const String& file_pattern, StringList& output)
+
+	bool File::fileList(const String& dir, const String& file_pattern, StringList& output, bool full_path)
 	{
-		QDir d(dir.c_str(), file_pattern.c_str(), QDir::Name, QDir::Files);
-		QStringList list = d.entryList();
+		QDir d(dir.toQString(), file_pattern.toQString(), QDir::Name, QDir::Files);
+		QFileInfoList list = d.entryInfoList();
 
 		//clear and check if empty
 		output.clear();
-		if (list.size()==0)
+		if (list.empty())
 		{
 			return false;
 		}
@@ -178,14 +178,15 @@ namespace OpenMS
 		
 		//fill output
 		UInt i = 0;
-		for ( QStringList::const_iterator it = list.constBegin(); it != list.constEnd(); ++it )
+		for (QFileInfoList::const_iterator it = list.constBegin(); it != list.constEnd(); ++it)
 		{
-			output[i++] = (*it);
+			output[i++] = full_path ? it->filePath() : it->fileName();
 		}
 		
 		return true;
 	}
 
+	
 	String File::getUniqueName()
 	{
 		DateTime now = DateTime::now();
@@ -208,4 +209,19 @@ namespace OpenMS
 		
 		return OPENMS_DATA_PATH;
   }
+
+	String File::removeExtension(const OpenMS::String& file) 
+	{
+		if (!file.has('.')) return file;
+		
+		SignedSize ext_length = file.suffix('.').size() + 1;
+		return file.substr(0, - ext_length);
+	}
+
+	bool File::isDirectory(const String& path)
+	{
+		QFileInfo fi(path.toQString());
+		return fi.isDir();
+	}
+
 } // namespace OpenMS

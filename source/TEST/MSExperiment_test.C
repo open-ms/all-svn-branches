@@ -723,6 +723,50 @@ START_SECTION((void sortSpectra(bool sort_mz = true)))
 	TEST_REAL_SIMILAR(exp[1][1].getMZ(),14.0);
 END_SECTION
 
+START_SECTION(bool isSorted(bool check_mz = true ) const)
+	//make test dataset
+	MSExperiment<> exp;
+	exp.resize(2);
+	exp[0].setRT(1.0);
+	exp[1].setRT(2.0);
+	
+	Peak1D p;
+	p.setIntensity(1.0);
+	p.setMZ(1000.0);
+	exp[0].push_back(p);
+	exp[1].push_back(p);
+	
+	p.setIntensity(1.0);
+	p.setMZ(1001.0);
+	exp[0].push_back(p);
+	exp[1].push_back(p);
+	
+	p.setIntensity(1.0);
+	p.setMZ(1002.0);
+	exp[0].push_back(p);
+	exp[1].push_back(p);
+	
+	//test with identical RTs
+	TEST_EQUAL(exp.isSorted(false),true)
+	TEST_EQUAL(exp.isSorted(),true)
+	
+	//test with acending RTs
+	exp[0].setRT(1.0);
+	exp[1].setRT(2.0);
+	TEST_EQUAL(exp.isSorted(false),true)
+	TEST_EQUAL(exp.isSorted(),true)
+
+	//test with a reversed spectrum
+	reverse(exp[0].begin(),exp[0].end());
+	TEST_EQUAL(exp.isSorted(false),true)
+	TEST_EQUAL(exp.isSorted(),false)
+
+	//test with reversed RTs
+	reverse(exp.begin(),exp.end());
+	TEST_EQUAL(exp.isSorted(false),false)
+	TEST_EQUAL(exp.isSorted(),false)
+END_SECTION
+
 START_SECTION((void reset()))
 	std::vector< Peak2D> plist;
 
@@ -793,13 +837,13 @@ START_SECTION((ConstIterator getPrecursorSpectrum(ConstIterator iterator) const)
 
 END_SECTION
 
-START_SECTION((bool clearMetaDataArrays()))
+START_SECTION((bool clearFloatDataArrays()))
 	MSExperiment<> exp;
 	exp.resize(5);
-	exp[0].getMetaDataArrays().resize(5);
-	TEST_EQUAL(exp[0].getMetaDataArrays().size(),5)
-	exp.clearMetaDataArrays();
-	TEST_EQUAL(exp[0].getMetaDataArrays().size(),0)
+	exp[0].getFloatDataArrays().resize(5);
+	TEST_EQUAL(exp[0].getFloatDataArrays().size(),5)
+	exp.clearFloatDataArrays();
+	TEST_EQUAL(exp[0].getFloatDataArrays().size(),0)
 END_SECTION
 
 START_SECTION((void swap(MSExperiment &from)))

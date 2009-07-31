@@ -30,10 +30,11 @@
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/ANALYSIS/ID/IDMapper.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignment.h>
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 
+#include <gsl/gsl_statistics.h>
 
 using namespace OpenMS;
 using namespace std;
@@ -86,7 +87,7 @@ class TOPPIDMassAccuracy
 	protected:
 		void registerOptionsAndFlags_()
 		{
-			registerInputFileList_("in","<file list>", StringList(), "Input mzData file list, containing the spectra.");
+			registerInputFileList_("in","<file list>", StringList(), "Input mzML file list, containing the spectra.");
 			registerInputFileList_("id_in", "<file list>", StringList(), "Input idXML file list, containing the identifications.");
 
 			registerOutputFile_("precursor_out","<file>","","Output file which contains the deviations from the precursors", false, false);
@@ -126,7 +127,7 @@ class TOPPIDMassAccuracy
     		idxmlfile.load(id_in[i], prot_ids[i], pep_ids[i], doc_id);
   		}
 
-  		// read mzData files
+  		// read mzML files
   		vector<RichPeakMap> maps;
   		maps.resize(in.size());
 
@@ -136,10 +137,10 @@ class TOPPIDMassAccuracy
     		return ILLEGAL_PARAMETERS;
   		}
 
-  		MzDataFile mzdata_file;
+  		MzMLFile mzml_file;
   		for (Size i = 0; i != in.size(); ++i)
   		{
-    		mzdata_file.load(in[i], maps[i]);
+    		mzml_file.load(in[i], maps[i]);
   		}
 
 			//-------------------------------------------------------------
@@ -168,6 +169,10 @@ class TOPPIDMassAccuracy
 						if (it->getHits().size() > 0)
 						{
 							PeptideHit hit = *it->getHits().begin();
+							if (!hit.getSequence().isValid())
+							{
+								continue;
+							}
 							MassDifference md;
 							Int charge = hit.getCharge();
 							if (charge == 0)
@@ -206,6 +211,11 @@ class TOPPIDMassAccuracy
 						if (it->getHits().size() > 0)
 						{
 							PeptideHit hit = *it->getHits().begin();
+
+							if (!hit.getSequence().isValid())
+							{
+								continue;
+							}
 							RichPeakSpectrum theo_spec;
 							tsg.addPeaks(theo_spec, hit.getSequence(), Residue::YIon);
 							tsg.addPeaks(theo_spec, hit.getSequence(), Residue::BIon);
@@ -238,23 +248,34 @@ class TOPPIDMassAccuracy
 			String precursor_out_file(getStringOption_("precursor_out"));
 			if (precursor_out_file != "")
 			{
+				vector<DoubleReal> errors;
 				ofstream precursor_out(precursor_out_file.c_str());
 				for (Size i = 0; i != precursor_diffs.size(); ++i)
 				{
 					precursor_out << precursor_diffs[i].exp_mz - precursor_diffs[i].theo_mz << endl;
+					errors.push_back(precursor_diffs[i].exp_mz - precursor_diffs[i].theo_mz);
 				}
 				precursor_out.close();
+
+				cout << "Precursor mean error: " << gsl_stats_mean(&errors.front(), 1, errors.size()) << endl;
+				cout << "Precursor abs. dev.:  " << gsl_stats_absdev(&errors.front(), 1, errors.size()) << endl;
+				cout << "Precursor std. dev.:  " << gsl_stats_sd(&errors.front(), 1, errors.size()) << endl;
 			}
 
 			String fragment_out_file(getStringOption_("fragment_out"));
 			if (fragment_out_file != "")
 			{
+				vector<DoubleReal> errors;
 				ofstream fragment_out(fragment_out_file.c_str());
 				for (Size i = 0; i != fragment_diffs.size(); ++i)
 				{
 					fragment_out << fragment_diffs[i].exp_mz - fragment_diffs[i].theo_mz << endl;
+					errors.push_back(fragment_diffs[i].exp_mz - fragment_diffs[i].theo_mz);
 				}
 				fragment_out.close();
+				cout << "Fragment mean error:  " << gsl_stats_mean(&errors.front(), 1, errors.size()) << endl;
+				cout << "Fragment abs. dev.:   " << gsl_stats_absdev(&errors.front(), 1, errors.size()) << endl;
+				cout << "Fragment std. dev.:   " << gsl_stats_sd(&errors.front(), 1, errors.size()) << endl;
 			}
 	
 			return EXECUTION_OK;

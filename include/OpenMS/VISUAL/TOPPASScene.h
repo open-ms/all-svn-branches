@@ -30,6 +30,7 @@
 
 #include <OpenMS/config.h>
 #include <OpenMS/VISUAL/TOPPASEdge.h>
+#include <OpenMS/DATASTRUCTURES/String.h>
 
 #include <QtGui/QGraphicsScene>
 
@@ -64,7 +65,7 @@ namespace OpenMS
 			typedef VertexContainer::const_iterator ConstVertexIterator;
 			
 			/// Constructor
-			TOPPASScene(QObject* parent);
+			TOPPASScene(QObject* parent, const String& tmp_path = "");
 			
 			/// Destructor
 			virtual ~TOPPASScene();
@@ -87,6 +88,18 @@ namespace OpenMS
 			EdgeIterator edgesEnd();
 			/// Removes all currently selected edges and vertices
 			void removeSelected();
+			/// Updates all edge colors (color of green and yellow edges can change when edges are added/removed)
+			void updateEdgeColors();
+			/// Runs the pipeline
+			void runPipeline();
+			/// Stores the pipeline to @p file
+			void store(const String& file);
+			/// Loads the pipeline from @p file
+			void load(const String& file);
+			/// Returns the file name
+			const String& getSaveFileName();
+			/// Sets the file name
+			void setSaveFileName(const String& name);
 			
 		public slots:
 		
@@ -113,13 +126,15 @@ namespace OpenMS
 			TOPPASEdge* hover_edge_;
 			/// The current potential target vertex of the hovering edge
 			TOPPASVertex* potential_target_;
+			/// The file name of this pipeline
+			String file_name_;
+			/// The path for temporary files
+			String tmp_path_;
 			
 			/// Returns the vertex in the foreground at position @p pos , if existent, otherwise 0.
 			TOPPASVertex* getVertexAt_(const QPointF& pos);
-			/// Returns if edge (u,v) would be a valid edge if inserted into the graph
-			TOPPASEdge::EdgeValidity getEdgeValidity_(TOPPASVertex* u, TOPPASVertex* v);
-			/// Updates all edge colors (color of green and yellow edges can change when edges are added/removed)
-			void updateEdgeColors_();
+			/// Returns whether an edge between node u and v would be allowed
+			bool isEdgeAllowed_(TOPPASVertex* u, TOPPASVertex* v);
 			/// DFS helper method. Returns true, if a back edge has been discovered
 			bool dfsVisit_(TOPPASVertex* vertex);
 	};

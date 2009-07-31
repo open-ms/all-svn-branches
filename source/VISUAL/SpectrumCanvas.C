@@ -172,6 +172,13 @@ namespace OpenMS
 		//store old zoom state
 		if (add_to_stack)
 		{
+			// if we scrolled in between zooming we want to store the last position before zomming as well
+			if (	 (zoom_stack_.size()>0)
+					&& (zoom_stack_.back()!=visible_area_))
+			{
+				zoomAdd_(visible_area_);
+			}
+			// add current zoom
 			zoomAdd_(new_area);
 		}
 		
@@ -811,29 +818,46 @@ namespace OpenMS
 		}
 	}
 
-	void SpectrumCanvas::showMetaData(bool modifiable)
+	void SpectrumCanvas::showMetaData(bool modifiable, Int index)
   {
 		LayerData& layer = getCurrentLayer_();
 		
 		MetaDataBrowser dlg(modifiable, this);
-    dlg.setWindowTitle("Layer meta data");
-		if (layer.type==LayerData::DT_PEAK)
-  	{
-  		dlg.add(layer.peaks);
-			//Exception for Spectrum1DCanvas, here we add the meta data of the one spectrum
-			if (getName()=="Spectrum1DCanvas")
+		if (index==-1)
+		{
+			if (layer.type==LayerData::DT_PEAK)
 			{
-				dlg.add(layer.peaks[layer.current_spectrum]);
+				dlg.add(layer.peaks);
+				//Exception for Spectrum1DCanvas, here we add the meta data of the one spectrum
+				if (getName()=="Spectrum1DCanvas")
+				{
+					dlg.add(layer.peaks[layer.current_spectrum]);
+				}
 			}
-  	}
-  	else if (layer.type==LayerData::DT_FEATURE)
-  	{
-  		dlg.add(layer.features);
-  	}
-  	else if (layer.type==LayerData::DT_CONSENSUS)
-  	{
-  		dlg.add(layer.consensus);
-  	}
+			else if (layer.type==LayerData::DT_FEATURE)
+			{
+				dlg.add(layer.features);
+			}
+			else if (layer.type==LayerData::DT_CONSENSUS)
+			{
+				dlg.add(layer.consensus);
+			}
+		}
+		else //show element meta data
+		{
+			if (layer.type==LayerData::DT_PEAK)
+			{
+					dlg.add(layer.peaks[index]);
+			}
+			else if (layer.type==LayerData::DT_FEATURE)
+			{
+				dlg.add(layer.features[index]);
+			}
+			else if (layer.type==LayerData::DT_CONSENSUS)
+			{
+				dlg.add(layer.consensus[index]);
+			}
+		}
   	
   	//if the meta data was modified, set the flag
     if (modifiable && dlg.exec())
@@ -877,11 +901,13 @@ namespace OpenMS
 		DoubleReal mz = 0.0;
 		DoubleReal rt = 0.0;
 		Real it = 0.0;
+		Int q = 0;
 		if (getCurrentLayer().type==LayerData::DT_FEATURE)
 		{
 			mz = peak.getFeature(getCurrentLayer().features).getMZ();
 			rt = peak.getFeature(getCurrentLayer().features).getRT();
 			it = peak.getFeature(getCurrentLayer().features).getIntensity();
+			q  = peak.getFeature(getCurrentLayer().features).getCharge();
 		}
 		else if (getCurrentLayer().type==LayerData::DT_PEAK)
 		{
@@ -894,13 +920,15 @@ namespace OpenMS
 			mz = peak.getFeature(getCurrentLayer().consensus).getMZ();
 			rt = peak.getFeature(getCurrentLayer().consensus).getRT();
 			it = peak.getFeature(getCurrentLayer().consensus).getIntensity();
+			q  = peak.getFeature(getCurrentLayer().consensus).getCharge();
 		}
 				
 		//draw text			
 		QStringList lines;
 		if (print_rt) lines.push_back("RT : " + QString::number(rt,'f',2));
 		lines.push_back("m/z: " + QString::number(mz,'f',6));
-		lines.push_back("int: " + QString::number(it,'f',2));
+		lines.push_back("Int: " + QString::number(it,'f',2));
+		if (getCurrentLayer().type==LayerData::DT_FEATURE || getCurrentLayer().type==LayerData::DT_CONSENSUS) lines.push_back("Charge : " + QString::number(q));
 		drawText_(painter, lines);
 	}
 
@@ -979,5 +1007,4 @@ namespace OpenMS
 	}
 
 } //namespace
-
 

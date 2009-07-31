@@ -67,7 +67,6 @@ namespace OpenMS
     //read lines
     while(getline(is, line, '\n'))
     {
-cout << "line : " << line << endl;    
       if(isAutoExecute)
       {
         String file = autoExecuteToFilename(line);

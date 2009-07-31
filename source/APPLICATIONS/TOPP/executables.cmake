@@ -17,6 +17,7 @@ FileConverter
 FileFilter
 FileInfo
 FileMerger
+FileSettings
 IDDecoyProbability
 IDFilter
 IDMerger
@@ -51,6 +52,7 @@ IDMapper
 IDRTCalibration
 SILACAnalyzer
 PrecursorIonSelector
+IDFileConverter
 )
 
 ### add filenames to Visual Studio solution tree

@@ -60,12 +60,17 @@ namespace OpenMS
 				ET_INVALID
 			};
 			
-			/// Is a hypothetical edge valid or not? Does something have to be configured?
-			enum EdgeValidity
+			/// The status of this edge
+			enum EdgeStatus
 			{
-				EV_RED,			// not allowed
-				EV_YELLOW,	// allowed, but must be configured first
-				EV_GREEN		// allowed and unambiguous
+				ES_VALID,
+				ES_MISMATCH_FILE_LIST,
+				ES_MISMATCH_LIST_FILE,
+				ES_NO_TARGET_PARAM,
+				ES_NO_SOURCE_PARAM,
+				ES_FILE_EXT_MISMATCH,
+				ES_NOT_READY_YET,
+				ES_UNKNOWN
 			};
 			
 			/// Standard constructor
@@ -107,7 +112,19 @@ namespace OpenMS
 			void determineEdgeType();
 			/// Returns the type of this edge
 			EdgeType getEdgeType();
-			
+			/// Returns the status of this edge
+			EdgeStatus getEdgeStatus();
+			/// Sets the source output parameter index
+			void setSourceOutParam(int out);
+			/// Returns the source output parameter index
+			int getSourceOutParam();
+			/// Sets the target input parameter index
+			void setTargetInParam(int in);
+			/// Returns the target input parameter index
+			int getTargetInParam();
+			/// Updates the edge color
+			void updateColor();
+
 		protected:
 			
 			///@name reimplemented Qt events
@@ -127,6 +144,10 @@ namespace OpenMS
 			QColor color_;
 			/// The type of this edge
 			EdgeType edge_type_;
+			/// The source output parameter index
+			int source_out_param_;
+			/// The target input parameter index
+			int target_in_param_;
 	};
 }
 

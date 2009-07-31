@@ -1,17 +1,18 @@
 ## Settings exemple for ImportSettings
 ##
 ## Spectrum settings
-SpectrumSettings.Type=PEAKS;RAWDATA
+SpectrumSettings.Type=PEAKS,RAWDATA
 SpectrumSettings.NativeID=spectrum id
 SpectrumSettings.Comment=no comment
 
-SpectrumSettings.InstrumentSettings.ScanMode=MASSSPECTRUM;SIM;SRM;CRM;CNG;CNL;PRECURSOR;EMC;TDF;EMR;EMISSION;ABSORBTION
-SpectrumSettings.InstrumentSettings.ZoomScan=TRUE;FALSE
-SpectrumSettings.InstrumentSettings.Polarity=POSITIVE;NEGATIVE
+
+SpectrumSettings.InstrumentSettings.ScanMode=MASSSPECTRUM,SIM,SRM,CRM,CNG,CNL,PRECURSOR,EMC,TDF,EMR,EMISSION,ABSORBTION
+SpectrumSettings.InstrumentSettings.ZoomScan=TRUE,FALSE
+SpectrumSettings.InstrumentSettings.Polarity=POSITIVE,NEGATIVE
 SpectrumSettings.InstrumentSettings.ScanWindows.Size=4
 SpectrumSettings.InstrumentSettings.ScanWindows.Index=1
 SpectrumSettings.InstrumentSettings.ScanWindows.Begin=100.0
-SpectrumSettings.InstrumentSettings.ScanWindows.End=200.0
+SpectrumSettings.InstrumentSettings.ScanWindows.End=210.0
 SpectrumSettings.InstrumentSettings.ScanWindows.Index=2
 SpectrumSettings.InstrumentSettings.ScanWindows.Begin=500.0
 SpectrumSettings.InstrumentSettings.ScanWindows.End=600.0
@@ -28,10 +29,10 @@ SpectrumSettings.SourceFile.NameOfFile=filename
 SpectrumSettings.SourceFile.PathToFile=/path/to/file
 SpectrumSettings.SourceFile.FileSize=100.0
 SpectrumSettings.SourceFile.FileType=type
-SpectrumSettings.SourceFile.ChecksumType=SHA1;MD5
+SpectrumSettings.SourceFile.ChecksumType=SHA1,MD5
 SpectrumSettings.SourceFile.Checksum=0000000
 SpectrumSettings.SourceFile.NameOfFile=filename
-SpectrumSettings.SourceFile.NativeIDType=THERMO;WATERS;WIFF;BRUKER_AGILENT;BRUKER_BAF;BRUKER_FID;BRUKER_U2;MULTIPLE_PEAK_LISTS;SINGLE_PEAK_LIST;SCAN_NUMBER;SPECTRUM_IDENTIFIER
+SpectrumSettings.SourceFile.NativeIDType=THERMO,WATERS,WIFF,BRUKER_AGILENT,BRUKER_BAF,BRUKER_FID,BRUKER_U2,MULTIPLE_PEAK_LISTS,SINGLE_PEAK_LIST,SCAN_NUMBER,SPECTRUM_IDENTIFIER
 
 SpectrumSettings.Precursors.Size=2
 SpectrumSettings.Precursors.Index=1
@@ -39,13 +40,13 @@ SpectrumSettings.Precursors.ActivationEnergy=102.0
 SpectrumSettings.Precursors.IsolationWindowLowerOffset=2510.0
 SpectrumSettings.Precursors.IsolationWindowUpperOffset=3510.0
 SpectrumSettings.Precursors.Charge=10
-SpectrumSettings.Precursors.PossibleChargeStates=2;3;4;5;6;7;8;9
+SpectrumSettings.Precursors.PossibleChargeStates=2,3,4,5,6,7,8,9
 SpectrumSettings.Precursors.Index=2
 SpectrumSettings.Precursors.ActivationEnergy=512.4
 SpectrumSettings.Precursors.IsolationWindowLowerOffset=1245.1
 SpectrumSettings.Precursors.IsolationWindowUpperOffset=1451.2
 SpectrumSettings.Precursors.Charge=12
-SpectrumSettings.Precursors.PossibleChargeStates=5;6;7;8;9;10;11;12
+SpectrumSettings.Precursors.PossibleChargeStates=5,6,7,8,9,10,11,12
 
 SpectrumSettings.Products.Size=1
 SpectrumSettings.Products.Index=1
@@ -53,16 +54,23 @@ SpectrumSettings.Products.MZ=1245.1
 SpectrumSettings.Products.IsolationWindowLowerOffset=-2.7
 SpectrumSettings.Products.IsolationWindowUpperOffset=2.4
 
+SpectrumSettings.DataProcessing.Size
+SpectrumSettings.DataProcessing.Index
+SpectrumSettings.DataProcessing.Software.Name
+SpectrumSettings.DataProcessing.Software.Version
+SpectrumSettings.DataProcessing.ProcessingActions=CHARGE_DECONVOLUTION, DEISOTOPING, SMOOTHING, CHARGE_CALCULATION, PRECURSOR_RECALCULATION, BASELINE_REDUCTION, PEAK_PICKING, PEAK_PICKING_SUM, PEAK_PICKING_MAX, FEATURE_FINDING, ALIGNMENT, LOW_INTENSITY_REMOVAL, HIGH_INTENSITY_REMOVAL, CONVERSION_MZDATA, CONVERSION_MZML, CONVERSION_MZXML, CONVERSION_DTA, CONVERSION_FEATUREXML, CONVERSION_CONSENSUSXML
+SpectrumSettings.DataProcessing.CompletionTime
+
 SpectrumSettings.PeptideIdentification.Size=1
 SpectrumSettings.PeptideIdentification.Index=1
 
 SpectrumSettings.PeptideIdentification.PeptideHit.Size=2
 SpectrumSettings.PeptideIdentification.PeptideHit.Index=1
-SpectrumSettings.PeptideIdentification.PeptideHit.ProteinAccessions=AGDYEVS25145;JGSIOZ548741;KSIZHS26514
+SpectrumSettings.PeptideIdentification.PeptideHit.ProteinAccessions=AGDYEVS25145,JGSIOZ548741,KSIZHS26514
 SpectrumSettings.PeptideIdentification.PeptideHit.Score=124.1
 SpectrumSettings.PeptideIdentification.PeptideHit.Rank=12
 SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.StringSequence=GYSLGNWVCAAK
-SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.Modification=124;oxydation
+SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.Modification=124,oxydation
 SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.NTerminalModification=methylation
 SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.CTerminalModification=hydroxylation
 SpectrumSettings.PeptideIdentification.PeptideHit.Charge=-5
@@ -70,11 +78,11 @@ SpectrumSettings.PeptideIdentification.PeptideHit.AABefore=K
 SpectrumSettings.PeptideIdentification.PeptideHit.AAAfter=C
 
 SpectrumSettings.PeptideIdentification.PeptideHit.Index=2
-SpectrumSettings.PeptideIdentification.PeptideHit.ProteinAccessions=SGZTFE15484;HSGYTEZ25148
+SpectrumSettings.PeptideIdentification.PeptideHit.ProteinAccessions=SGZTFE15484,HSGYTEZ25148
 SpectrumSettings.PeptideIdentification.PeptideHit.Score=248.1
 SpectrumSettings.PeptideIdentification.PeptideHit.Rank=24
 SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.StringSequence=NTDGSTDYGILQINSR
-SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.Modification=36;oxydation
+SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.Modification=36,oxydation
 SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.NTerminalModification=methylation
 SpectrumSettings.PeptideIdentification.PeptideHit.AASequence.CTerminalModification=hydroxylation
 SpectrumSettings.PeptideIdentification.PeptideHit.Charge=4
@@ -84,7 +92,7 @@ SpectrumSettings.PeptideIdentification.PeptideHit.AAAfter=M
 SpectrumSettings.PeptideIdentification.SignificanceThreshold=FALSE
 SpectrumSettings.PeptideIdentification.ScoreType=Mowse score
 SpectrumSettings.PeptideIdentification.HigherScoreBetter=1241.4
-SpectrumSettings.PeptideIdentification.Identifier=lysozyme (EC 3.2.1.17) mutant (D18A);chain C - chicken
+SpectrumSettings.PeptideIdentification.Identifier=lysozyme (EC 3.2.1.17) mutant (D18A),chain C - chicken
 
 ## Experimental settings
 
@@ -92,12 +100,12 @@ ExperimentalSettings.Sample.Name=cytosol extract
 ExperimentalSettings.Sample.Organism=human
 ExperimentalSettings.Sample.Number=lyma1542
 ExperimentalSettings.Sample.Comment=sample from phrc 2007 prostate
-ExperimentalSettings.Sample.State=SOLID;LIQUID;GAS;SOLUTION;EMULSION;SUSPENSION
+ExperimentalSettings.Sample.State=SOLID,LIQUID,GAS,SOLUTION,EMULSION,SUSPENSION
 ExperimentalSettings.Sample.Mass=12.14
 ExperimentalSettings.Sample.Volume=120.1
 ExperimentalSettings.Sample.Concentration=101.08
 ExperimentalSettings.Sample.Subsample.
-ExperimentalSettings.Sample.Treatment.Type=Digestion;Modification;Tagging
+ExperimentalSettings.Sample.Treatment.Type=Digestion,Modification,Tagging
 ExperimentalSettings.Sample.Treatment.Comment=Treatement realised
 # Digestion
 ExperimentalSettings.Sample.Treatment.Enzyme=trypsin
@@ -107,19 +115,19 @@ ExperimentalSettings.Sample.Treatment.pH
 # Modification & Tagging
 ExperimentalSettings.Sample.Treatment.ReagentName=ITRAQ
 ExperimentalSettings.Sample.Treatment.Mass=12.0
-ExperimentalSettings.Sample.Treatment.SpecificityType=AA;AA_AT_CTERM;AA_AT_NTERM;CTERM;NTERM
+ExperimentalSettings.Sample.Treatment.SpecificityType=AA,AA_AT_CTERM,AA_AT_NTERM,CTERM,NTERM
 ExperimentalSettings.Sample.Treatment.AffectedAminoAcids=KLRFGHTUG
 # Tagging
 ExperimentalSettings.Sample.Treatment.MassShift=12.0
-ExperimentalSettings.Sample.Treatment.IsotopeVariant=LIGHT;HEAVY
+ExperimentalSettings.Sample.Treatment.IsotopeVariant=LIGHT,HEAVY
 
 ExperimentalSettings.SourceFile.NameOfFile
 ExperimentalSettings.SourceFile.PathToFile
 ExperimentalSettings.SourceFile.FileSize
 ExperimentalSettings.SourceFile.FileType
-ExperimentalSettings.SourceFile.ChecksumType=SHA1;MD5
+ExperimentalSettings.SourceFile.ChecksumType=SHA1,MD5
 ExperimentalSettings.SourceFile.Checksum
-ExperimentalSettings.SourceFile.NativeIDType=THERMO;WATERS;WIFF;BRUKER_AGILENT;BRUKER_BAF;BRUKER_FID;BRUKER_U2;MULTIPLE_PEAK_LISTS;SINGLE_PEAK_LIST;SCAN_NUMBER;SPECTRUM_IDENTIFIER
+ExperimentalSettings.SourceFile.NativeIDType=THERMO,WATERS,WIFF,BRUKER_AGILENT,BRUKER_BAF,BRUKER_FID,BRUKER_U2,MULTIPLE_PEAK_LISTS,SINGLE_PEAK_LIST,SCAN_NUMBER,SPECTRUM_IDENTIFIER
 
 ExperimentalSettings.Contacts.FirstName
 ExperimentalSettings.Contacts.LastName
@@ -174,13 +182,6 @@ ExperimentalSettings.Instrument.Software.Name
 ExperimentalSettings.Instrument.Software.Version
 ExperimentalSettings.Instrument.IonOptics=MAGNETIC_DEFLECTION, DELAYED_EXTRACTION, COLLISION_QUADRUPOLE, SELECTED_ION_FLOW_TUBE, TIME_LAG_FOCUSING, REFLECTRON, EINZEL_LENS, FIRST_STABILITY_REGION, FRINGING_FIELD, KINETIC_ENERGY_ANALYZER, STATIC_FIELD
 
-ExperimentalSettings.DataProcessing.Size
-ExperimentalSettings.DataProcessing.Index
-ExperimentalSettings.DataProcessing.Software.Name
-ExperimentalSettings.DataProcessing.Software.Version
-ExperimentalSettings.DataProcessing.ProcessingActions=CHARGE_DECONVOLUTION, DEISOTOPING, SMOOTHING, CHARGE_CALCULATION, PRECURSOR_RECALCULATION, BASELINE_REDUCTION, PEAK_PICKING, PEAK_PICKING_SUM, PEAK_PICKING_MAX, FEATURE_FINDING, ALIGNMENT, LOW_INTENSITY_REMOVAL, HIGH_INTENSITY_REMOVAL, CONVERSION_MZDATA, CONVERSION_MZML, CONVERSION_MZXML, CONVERSION_DTA, CONVERSION_FEATUREXML, CONVERSION_CONSENSUSXML
-ExperimentalSettings.DataProcessing.CompletionTime
-
 ExperimentalSettings.HPLC.Instrument
 ExperimentalSettings.HPLC.Column
 ExperimentalSettings.HPLC.Temperature
@@ -189,7 +190,7 @@ ExperimentalSettings.HPLC.Flux
 ExperimentalSettings.HPLC.Comment
 ExperimentalSettings.HPLC.Gradient.Eluent
 ExperimentalSettings.HPLC.Gradient.Timepoint
-ExperimentalSettings.HPLC.Gradient.Percentage=eluent;time;percentage
+ExperimentalSettings.HPLC.Gradient.Percentage=eluent,time,percentage
                     
 ExperimentalSettings.DateTime
 

@@ -62,6 +62,6 @@ cout << "String: " << value << " - return: " << index << endl;
     if(strings.size() > 1)
       metaInfo.setMetaValue(strings[strings.size()-1], value);
   }    	
-  
+    
 } // namespace OpenMS
 

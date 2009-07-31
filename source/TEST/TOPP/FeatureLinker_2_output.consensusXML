@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<?xml-stylesheet type="text/xsl" href="file:////home/groepl/OpenMS/share/OpenMS/XSL/ConsensusXML.xsl"?>
+<?xml-stylesheet type="text/xsl" href="file:///OpenMS/share/OpenMS/XSL/ConsensusXML.xsl"?>
 <consensusXML version="1.3" xsi:noNamespaceSchemaLocation="http://open-ms.sourceforge.net/schemas/ConsensusXML_1_3.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<dataProcessing completion_time="1999-12-31T23:59:59">
+		<software name="FeatureLinker" version="version_string" />
+		<processingAction name="Feature grouping" />
+		<userParam type="string" name="parameter: mode" value="test_mode"/>
+	</dataProcessing>
 	<IdentificationRun id="PI_0" date="2006-03-09T13:13:13" search_engine="Mascot" search_engine_version="">
 		<SearchParameters db="" db_version="" taxonomy="" mass_type="monoisotopic" charges="" enzyme="unknown_enzyme" missed_cleavages="0" precursor_peak_tolerance="0" peak_mass_tolerance="0" >
 		</SearchParameters>
@@ -44,11 +49,11 @@
 		</PeptideHit>
 	</UnassignedPeptideIdentification>
 	<mapList count="3">
-		<map id="0" name="/home/groepl/OpenMS/source/TEST/TOPP/FeatureLinker_2_input1.featureXML" label="" size="21">
+		<map id="0" name="FeatureLinker_2_input1.featureXML" label="" size="21">
 		</map>
-		<map id="1" name="/home/groepl/OpenMS/source/TEST/TOPP/FeatureLinker_2_input2.featureXML" label="" size="20">
+		<map id="1" name="FeatureLinker_2_input2.featureXML" label="" size="20">
 		</map>
-		<map id="2" name="/home/groepl/OpenMS/source/TEST/TOPP/FeatureLinker_2_input3.featureXML" label="" size="24">
+		<map id="2" name="FeatureLinker_2_input3.featureXML" label="" size="24">
 		</map>
 	</mapList>
 	<consensusElementList>

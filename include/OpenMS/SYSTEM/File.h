@@ -72,12 +72,24 @@ namespace OpenMS
 
 			/// Returns the path of the file (without the file name).
 			static String path(const String& file);
+
+			/**
+				Returns the file name without the extension
+				
+				The extension is the suffix of the string upto and including the last dot.
+				
+				If no extension is found, the whole file name is returned
+			*/
+			static String removeExtension(const String& file);
 			
 			/// Return true if the file exists and is readable
 			static bool readable(const String& file);
 
 			/// Return true if the file is writable
 			static bool writable(const String& file);
+
+			/// Return true if the given path specifies a directory
+			static bool isDirectory(const String& path);
 
 			/**
 				@brief Looks up the location of the file @p filename
@@ -92,11 +104,11 @@ namespace OpenMS
 			static String find(const String& filename, StringList directories = StringList());
 			
 			/**
-				@brief Retrieves a list of files matching @p file_pattern in directory @p dir
+				@brief Retrieves a list of files matching @p file_pattern in directory @p dir (returns filenames without paths unless @p full_path is true)
 				
 				@return true => there are matching files
 			*/
-			static bool fileList(const String& dir, const String& file_pattern, StringList& output);
+			static bool fileList(const String& dir, const String& file_pattern, StringList& output, bool full_path = false);
 
 			/// Returns a string, consisting of date, time, hostname, process id, and a incrementing number.  This can be used for temporary files.
 			static String getUniqueName();

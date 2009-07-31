@@ -27,7 +27,7 @@
 
 #include <OpenMS/config.h>
 
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/MATH/MISC/BilinearInterpolation.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
@@ -48,7 +48,7 @@ using namespace std;
 
 	@brief Resampler can be used to transform an LC/MS map into a resampled map or a png image.
 
-	When writing an mzData file, all spectra are resampled with a new sampling
+	When writing an peak file, all spectra are resampled with a new sampling
 	rate.  The number of spectra does not change.
 
 	When writing an image, the input is first resampled into a matrix using
@@ -77,13 +77,13 @@ class TOPPResampler
 	void registerOptionsAndFlags_()
 	{
 		registerInputFile_("in", "<file>", "", "input file ");
-		setValidFormats_("in",StringList::create("mzData"));
-		registerOutputFile_("out", "<file>", "", "output file in mzData format or png format");
-		registerFlag_("image", "Activates image mode (a png is written instead of a mzData file.");
-													
+		setValidFormats_("in",StringList::create("mzML"));
+		registerOutputFile_("out", "<file>", "", "output file in mzML format or png format");
+		registerFlag_("image", "Activates image mode (a png is written instead of a mzML file.");
+
 		addEmptyLine_();
-		addText_("Parameters affecting the MzData file:");
-		registerDoubleOption_("sampling_rate", "<rate>", 0.1, "New sampling rate in m/z dimension", false);		
+		addText_("Parameters affecting the mzML file:");
+		registerDoubleOption_("sampling_rate", "<rate>", 0.1, "New sampling rate in m/z dimension", false);
 		setMinFloat_("sampling_rate",0.0);
 		registerStringOption_("method", "<method>", "", "'raster' or 'shape' method.", false);
 
@@ -111,7 +111,7 @@ class TOPPResampler
 		String in = getStringOption_("in");
 		String out = getStringOption_("out");
 		MSExperiment<> exp;
-		MzDataFile f;
+		MzMLFile f;
 		f.setLogType(log_type_);
 		f.load(in, exp);
 
@@ -232,7 +232,7 @@ class TOPPResampler
 			image.save(out.toQString(), "PNG");
 		}
 		//----------------------------------------------------------------
-		// MzData file
+		// peak file
 		//----------------------------------------------------------------
 		else
 		{
@@ -246,25 +246,22 @@ class TOPPResampler
 			lin_resampler.setParameters(resampler_param);
 
       // resample every scan
-      if(method == "raster")
+
+      for (Size iSpectrum = 0; iSpectrum < exp.size(); ++iSpectrum)
       {
-        for (Size i = 0; i < exp.size(); ++i)
-        {
-          lin_resampler.raster(exp[i]);
-          //clear meta data because they are no longer meaningful
-          exp[i].getMetaDataArrays().clear();
-        }
+        if(method == "raster")
+          lin_resampler.raster(exp[iSpectrum]);
+        else
+          lin_resampler.shape(exp[iSpectrum]);
+        //clear meta data because they are no longer meaningful
+        exp[iSpectrum].getFloatDataArrays().clear();
       }
-      else
-      {
-        for (Size i = 0; i < exp.size(); ++i)
-        {
-          lin_resampler.shape(exp[i]);
-          //clear meta data because they are no longer meaningful
-          exp[i].getMetaDataArrays().clear();
-        }
-      }
-			MzDataFile f;
+
+      //annotate output with data processing info
+			addDataProcessing_(exp, getProcessingInfo_(DataProcessing::DATA_PROCESSING));
+      
+      //store output
+			MzMLFile f;
 			f.setLogType(log_type_);
 			f.store(out, exp);
 		}

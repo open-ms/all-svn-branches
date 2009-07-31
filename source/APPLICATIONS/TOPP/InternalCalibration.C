@@ -25,15 +25,13 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/FILTERING/CALIBRATION/InternalCalibration.h>
 
 using namespace OpenMS;
 using namespace std;
-
-
 
 //-------------------------------------------------------------
 //Doxygen docu
@@ -73,9 +71,9 @@ class TOPPInternalCalibration
 	 void registerOptionsAndFlags_()
 	 {
 		 registerInputFile_("in","<file>","","input raw data or peak file ");
-		 setValidFormats_("in",StringList::create("mzData"));
+		 setValidFormats_("in",StringList::create("mzML"));
 		 registerOutputFile_("out","<file>","","output file ");
-	   setValidFormats_("out",StringList::create("mzData"));
+	   setValidFormats_("out",StringList::create("mzML"));
 		 registerInputFile_("ref_masses","<file>","","input file containing reference masses (one per line)",true);
 		 registerFlag_("peak_data","set this flag, if you have peak data, not raw data");
 		 addEmptyLine_();
@@ -96,58 +94,60 @@ class TOPPInternalCalibration
 	 
 	 ExitCodes main_(int , const char**)
 	 {
-
-	  //-------------------------------------------------------------
-	  // parameter handling
-	  //-------------------------------------------------------------
-
-	  String in = getStringOption_("in");
-	  String out = getStringOption_("out");
-	  String ref = getStringOption_("ref_masses");
-	  //-------------------------------------------------------------
-	  // init InternalCalibration
-	  //-------------------------------------------------------------
-
-	  InternalCalibration calib;
-	  Param param = getParam_().copy("algorithm:",true);
-	  calib.setParameters(param);
-	
-	  //-------------------------------------------------------------
-	  // loading input
-	  //-------------------------------------------------------------
-	  MSExperiment<Peak1D > ms_exp_raw;
-	
-	  MzDataFile mz_data_file;
-	  mz_data_file.setLogType(log_type_);
-	  mz_data_file.load(in,ms_exp_raw);
-
-
-	
-	  vector<double> ref_masses;
-	  TextFile ref_file;
-
-
-	  ref_file.load(ref,true);
-
-	  for(TextFile::Iterator iter = ref_file.begin(); iter != ref_file.end(); ++iter)
-	    {
-		  ref_masses.push_back(atof(iter->c_str()));
+		//-------------------------------------------------------------
+		// parameter handling
+		//-------------------------------------------------------------
+		
+		String in = getStringOption_("in");
+		String out = getStringOption_("out");
+		String ref = getStringOption_("ref_masses");
+		//-------------------------------------------------------------
+		// init InternalCalibration
+		//-------------------------------------------------------------
+		
+		InternalCalibration calib;
+		Param param = getParam_().copy("algorithm:",true);
+		calib.setParameters(param);
+		
+		//-------------------------------------------------------------
+		// loading input
+		//-------------------------------------------------------------
+		MSExperiment<Peak1D > ms_exp_raw;
+		
+		MzMLFile mz_data_file;
+		mz_data_file.setLogType(log_type_);
+		mz_data_file.load(in,ms_exp_raw);
+		
+		
+		
+		vector<double> ref_masses;
+		TextFile ref_file;
+		
+		
+		ref_file.load(ref,true);
+		
+		for(TextFile::Iterator iter = ref_file.begin(); iter != ref_file.end(); ++iter)
+		{
+			ref_masses.push_back(atof(iter->c_str()));
 		}
 		
-	  //-------------------------------------------------------------
-	  // perform calibration
-	  //-------------------------------------------------------------
+		//-------------------------------------------------------------
+		// perform calibration
+		//-------------------------------------------------------------
 		
-	  calib.calibrate(ms_exp_raw,ref_masses,getFlag_("peak_data"));
-	
-	  //-------------------------------------------------------------
-	  // writing output
-	  //-------------------------------------------------------------
-	  mz_data_file.store(out,ms_exp_raw);
-
+		calib.calibrate(ms_exp_raw,ref_masses,getFlag_("peak_data"));
 		
-	  return EXECUTION_OK;
-    }
+		//-------------------------------------------------------------
+		// writing output
+		//-------------------------------------------------------------
+		
+		//annotate output with data processing info
+		addDataProcessing_(ms_exp_raw, getProcessingInfo_(DataProcessing::CALIBRATION));
+		
+		mz_data_file.store(out,ms_exp_raw);
+		
+		return EXECUTION_OK;
+  }
 
 };
 

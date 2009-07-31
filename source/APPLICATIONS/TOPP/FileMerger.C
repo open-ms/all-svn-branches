@@ -25,10 +25,9 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FileTypes.h>
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/AutoExecuteFile.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
 
@@ -44,7 +43,7 @@ using namespace std;
 /**
 	@page TOPP_FileMerger FileMerger
 
-	@brief Merges several files into an mzData file.
+	@brief Merges several files into an mzML file.
 
 	The meta information that is valid for the whole experiment (e.g. MS instrument and sample)
 	is taken from the first file.
@@ -65,7 +64,7 @@ class TOPPFileMerger
  public:
 
 	TOPPFileMerger()
-		: TOPPBase("FileMerger","Merges several MS files into one file.")
+		: TOPPBase("FileMerger", "Merges several MS files into one file.")
 	{
 	}
 
@@ -78,9 +77,11 @@ class TOPPFileMerger
 		registerStringOption_("in_type","<type>","","input file type (default: determined from file extension or content)\n", false);
 		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,fid,txt"));
 		registerOutputFile_("out","<file>","","output file");
-		setValidFormats_("out",StringList::create("mzData"));
+		setValidFormats_("out",StringList::create("mzML"));
 
 		registerFlag_("rt_auto","Assign retention times automatically (integers starting at 1)");
+		registerDoubleOption_("rt_begin","<rt>",1.0,"Begin value for automated assign retention times.", false);
+		registerDoubleOption_("rt_step","<rt>",1.0,"Step value for automated assign retention times.", false);		                                		
 		registerDoubleList_("rt_custom","<rt>",DoubleList(),"List of custom retention times that are assigned to the files.\n"
 		                                "The number of given retention times must be equal to the number of given input file.", false);
 		registerFlag_("rt_filename", "If this flag is set FileMerger tries to guess the rt of the file name.\n"
@@ -112,6 +113,8 @@ class TOPPFileMerger
 
 		//rt
 		bool rt_auto_number = getFlag_("rt_auto");
+		Real rt_begin_number_ = (Real) getDoubleOption_("rt_begin");
+		Real rt_step_number_ = (Real) getDoubleOption_("rt_step");		
 		bool rt_filename = getFlag_("rt_filename");
 		bool rt_custom = false;
 		DoubleList custom_rts = getDoubleList_("rt_custom");
@@ -135,39 +138,39 @@ class TOPPFileMerger
 
 		MSExperiment<> out;
 		out.reserve(file_list.size());
-		UInt rt_auto = 0;
 		UInt native_id = 0;
-		for (Size i = 0; i < file_list.size();++i)
+		for(Size iFile=0; iFile<file_list.size(); ++iFile)
 		{
-			String filename = file_list[i];
+			String filename = file_list[iFile];
 
 			//load file
 			MSExperiment<> in;
-			fh.loadExperiment(filename,in,force_type,log_type_);
+			fh.loadExperiment(filename, in, force_type, log_type_);
 			if (in.size()==0)
 			{
-				writeLog_(String("Warning: Empty file '") + filename +"'!");
+				writeLog_(String("Warning: Empty file '") + filename + "'!");
 				continue;
 			}
-			out.reserve(out.size()+in.size());
+			out.reserve(out.size() + in.size());
 
 			//warn if custom RT and more than one scan in input file
 			if (rt_custom && in.size()>1)
 			{
-				writeLog_(String("Warning: More than one scan in file '") + filename +"'! All scans will have the same retention time!");
+				writeLog_(String("Warning: More than one scan in file '") + filename + "'! All scans will have the same retention time!");
 			}
 
-			for (MSExperiment<>::const_iterator it2 = in.begin(); it2!=in.end(); ++it2)
+			for (MSExperiment<>::const_iterator it = in.begin(); it!=in.end(); ++it)
 			{
 				//handle rt
-				Real rt_final = it2->getRT();
+				Real rt_final = it->getRT();
 				if (rt_auto_number)
 				{
-					rt_final = ++rt_auto;
+					rt_final = rt_begin_number_;
+					rt_begin_number_ += rt_step_number_;
 				}
 				else if (rt_custom)
 				{
-					rt_final = custom_rts[i];
+					rt_final = custom_rts[iFile];
 				}
 				else if (rt_filename)
 				{
@@ -175,19 +178,18 @@ class TOPPFileMerger
 					{
 						writeLog_(String("Warning: cannot guess retention time from filename as it does not contain 'rt'"));
 					}
-					for (Size i = 0; i < filename.size(); ++i)
+					for(Size iChar=0; iChar<filename.size(); ++iChar)
 					{
-						if (filename[i] == 'r' && ++i != filename.size() && filename[i] == 't' && ++i != filename.size() && isdigit(filename[i]))
+						if (filename[iChar]=='r' && ++iChar!=filename.size() && filename[iChar]=='t' && ++iChar!=filename.size() && isdigit(filename[iChar]))
 						{
 							String rt;
-							while (i != filename.size() && (filename[i] == '.' || isdigit(filename[i])))
+							while (iChar != filename.size() && (filename[iChar] == '.' || isdigit(filename[iChar])))
 							{
-								rt += filename[i++];
+								rt += filename[iChar++];
 							}
 							if (rt.size() > 0)
 							{
 								// remove dot from rt3892.98.dta
-								//                          ^
 								if (rt[rt.size() - 1] == '.')
 								{
 									// remove last character
@@ -208,12 +210,12 @@ class TOPPFileMerger
 				}
 
 				// none of the rt methods were successful
-        if(rt_final == -1)
+        if(rt_final < 0.0)
 				{
-					writeLog_(String("Warning: No valid retention time for output scan '") + rt_auto +"' from file '" + filename + "'");
+					writeLog_("Warning: No valid retention time for output scan from file '" + filename + "'");
 				}
 
-				out.push_back(*it2);
+				out.push_back(*it);
 				out.back().setRT(rt_final);
 				out.back().setNativeID(native_id);
 				if (user_ms_level)
@@ -224,7 +226,7 @@ class TOPPFileMerger
 			}
 
 			// copy experimental settings from first file
-			if (i==0)
+			if (iFile==0)
 			{
 				out.ExperimentalSettings::operator=(in);
 			}
@@ -234,7 +236,10 @@ class TOPPFileMerger
 		// writing output
 		//-------------------------------------------------------------
 
-		MzDataFile f;
+		//annotate output with data processing info
+		addDataProcessing_(out, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+
+		MzMLFile f;
 		f.setLogType(log_type_);
 		f.store(out_file,out);
 

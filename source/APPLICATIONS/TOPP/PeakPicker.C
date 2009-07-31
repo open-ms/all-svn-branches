@@ -24,7 +24,7 @@
 // $Maintainer: Eva Lange $
 // $Authors: $
 // --------------------------------------------------------------------------
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerCWT.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerHiRes.h>
@@ -105,9 +105,9 @@ class TOPPPeakPicker
   void registerOptionsAndFlags_()
   {
   	registerInputFile_("in","<file>","","input profile data file ");
-		setValidFormats_("in",StringList::create("mzData"));
+		setValidFormats_("in",StringList::create("mzML"));
 		registerOutputFile_("out","<file>","","output peak file ");
-	  setValidFormats_("out",StringList::create("mzData"));
+	  setValidFormats_("out",StringList::create("mzML"));
 		registerStringOption_("type","<name>","","peak detection algorithm type",true);
 		setValidStrings_("type", getToolList()[toolName_()] );
 		addEmptyLine_();
@@ -145,7 +145,7 @@ class TOPPPeakPicker
     //-------------------------------------------------------------
     // loading input
     //-------------------------------------------------------------
-    MzDataFile mz_data_file;
+    MzMLFile mz_data_file;
     mz_data_file.setLogType(log_type_);
     MSExperiment<Peak1D > ms_exp_raw;
     mz_data_file.load(in,ms_exp_raw);
@@ -155,16 +155,22 @@ class TOPPPeakPicker
 		{
 			writeLog_("Warning: OpenMS peak type estimation indicates that this is not profile data!");
 		}
-		
-    //-------------------------------------------------------------
-    // init output
-    //-------------------------------------------------------------
 
-    MSExperiment<> ms_exp_peaks;
+		//check if spectra are sorted
+		for (Size i=0; i<ms_exp_raw.size(); ++i)
+		{
+			if (!ms_exp_raw[i].isSorted())
+			{
+				writeLog_("Error: Not all spectra are sorted according to peak m/z positions. Use FileFilter to sort the input!");
+				return INCOMPATIBLE_INPUT_DATA;
+			}
+		}
 
     //-------------------------------------------------------------
     // pick
     //-------------------------------------------------------------
+    MSExperiment<> ms_exp_peaks;
+    
 		Param pepi_param = getParam_().copy("algorithm:",true);		
 		writeDebug_("Parameters passed to PeakPicker", pepi_param,3);
 		
@@ -187,6 +193,10 @@ class TOPPPeakPicker
 		//-------------------------------------------------------------
 		// writing output
 		//-------------------------------------------------------------
+		
+		//annotate output with data processing info
+		addDataProcessing_(ms_exp_peaks, getProcessingInfo_(DataProcessing::PEAK_PICKING));
+
 		mz_data_file.store(out,ms_exp_peaks);
 		
 		return EXECUTION_OK;

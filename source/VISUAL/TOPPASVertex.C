@@ -34,32 +34,14 @@ namespace OpenMS
 	TOPPASVertex::TOPPASVertex()
 		:	QObject(),
 			QGraphicsItem(),
-			name_(),
-			type_(),
 			in_edges_(),
 			out_edges_(),
 			edge_being_created_(false),
 			pen_color_(),
 			brush_color_(),
 			dfs_color_(DFS_WHITE),
-			dfs_parent_(0)
-	{
-		setFlag(QGraphicsItem::ItemIsSelectable, true);
-		setZValue(42);
-	}
-	
-	TOPPASVertex::TOPPASVertex(const String& name, const String& type)
-		: QObject(),
-			QGraphicsItem(),
-			name_(name),
-			type_(type),
-			in_edges_(),
-			out_edges_(),
-			edge_being_created_(false),
-			pen_color_(),
-			brush_color_(),
-			dfs_color_(DFS_WHITE),
-			dfs_parent_(0)
+			dfs_parent_(0),
+			id_(0)
 	{
 		setFlag(QGraphicsItem::ItemIsSelectable, true);
 		setZValue(42);
@@ -68,15 +50,14 @@ namespace OpenMS
 	TOPPASVertex::TOPPASVertex(const TOPPASVertex& rhs)
 		:	QObject(),
 			QGraphicsItem(),
-			name_(rhs.name_),
-			type_(rhs.type_),
 			in_edges_(rhs.in_edges_),
 			out_edges_(rhs.out_edges_),
 			edge_being_created_(rhs.edge_being_created_),
 			pen_color_(rhs.pen_color_),
 			brush_color_(rhs.brush_color_),
 			dfs_color_(rhs.dfs_color_),
-			dfs_parent_(rhs.dfs_parent_)
+			dfs_parent_(rhs.dfs_parent_),
+			id_(rhs.id_)
 	{
 		setFlag(QGraphicsItem::ItemIsSelectable, true);
 		setZValue(42);	
@@ -96,8 +77,6 @@ namespace OpenMS
 	
 	TOPPASVertex& TOPPASVertex::operator= (const TOPPASVertex& rhs)
 	{
-		name_ = rhs.name_;
-		type_ = rhs.type_;
 		in_edges_ = rhs.in_edges_;
 		out_edges_ = rhs.out_edges_;
 		edge_being_created_ = rhs.edge_being_created_;
@@ -105,61 +84,9 @@ namespace OpenMS
 		brush_color_ = rhs.brush_color_;
 		dfs_color_ = rhs.dfs_color_;
 		dfs_parent_ = rhs.dfs_parent_;
+		id_ = rhs.id_;
 		
 		return *this;
-	}
-	
-	const String& TOPPASVertex::getName()
-	{
-		return name_;
-	}
-	
-	const String& TOPPASVertex::getType()
-	{
-		return type_;
-	}
-	
-	QRectF TOPPASVertex::boundingRect() const
-	{
-		return QRectF(-71,-41,142,82);
-	}
-	
-	QPainterPath TOPPASVertex::shape () const
-	{
-		QPainterPath shape;
-		shape.addRoundRect(-70.0, -40.0, 140.0, 80.0, 20, 20);
-		
-		return shape;
-	}
-	
-	void TOPPASVertex::paint(QPainter* painter, const QStyleOptionGraphicsItem* /*option*/, QWidget* /*widget*/)
-	{
-		painter->setPen(QPen(pen_color_, 1, Qt::SolidLine, Qt::FlatCap, Qt::MiterJoin));
-		if (isSelected())
-		{
-			painter->setBrush(brush_color_.darker(170));
-		}
-		else
-		{
-			painter->setBrush(brush_color_);
-		}
-	
-		QPainterPath path;
-		path.addRoundRect(-70.0, -40.0, 140.0, 80.0, 20, 20);		
- 		painter->drawPath(path);
- 		
-		if (type_ == "")
-		{
-			QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, name_.toQString());
-			painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), name_.toQString());
-		}
-		else
-		{
-			QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, name_.toQString());
-			painter->drawText(-(int)(text_boundings.width()/2.0), -(int)(text_boundings.height()/4.0), name_.toQString());
-			text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, type_.toQString());
-			painter->drawText(-(int)(text_boundings.width()/2.0), +(int)(text_boundings.height()/1.5), type_.toQString());
-		}
 	}
 	
 	void TOPPASVertex::mousePressEvent(QGraphicsSceneMouseEvent* e)
@@ -298,4 +225,15 @@ namespace OpenMS
 	{
 		return out_edges_.size();
 	}
+	
+	UInt TOPPASVertex::getID()
+	{
+		return id_;
+	}
+	
+	void TOPPASVertex::setID(UInt id)
+	{
+		id_ = id;
+	}
+
 }

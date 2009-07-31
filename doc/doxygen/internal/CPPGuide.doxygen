@@ -67,6 +67,18 @@ on prominent 32bit systems, they are usually different types on 64bit systems, w
 Size is an unsigned type!If you need a signed type (e.g. when comparing length of vectors) use SignedSize (also defined in types.h)<br>
 </p>
 
+Use SignedSize if you require loop variables with negative values:
+@code
+std::vector<String> myVec;
+myVec.push_back("hello");
+for (SignedSize i=0; i<(SignedSize)myVec.size() - 1; ++i)
+// never use Size here, because if myVec.size()==0 then Size x = 0 - 1; gives some really BIG number!
+{
+  std::cout << "Index: " << i << " Value: " << myVec[i] << std::endl;
+}
+@endcode
+
+
 <H2 style="margin-top:20px; border-top:1px solid grey;">Math functions</H2>
 
 Using GCC a lot of common math functions are available (e.g. trunc(), round(), log2(), isnan() or isinf() etc). However, this is <b>not</b> required by the C++Standard,
@@ -147,9 +159,27 @@ OPENMS_DLLAPI is also required for structs, global variables and global function
 Never prefix templates with OPENMS_DLLAPI!<br>
 The only exeption to this rule is when a template is fully specialized (i.e. it can be instantiated).
 
-A prominent global function is "operator <<", which is overloaded quite often for OpenMS classes.
+A prominent global function is "operator <<", which is overloaded quite often for %OpenMS classes.
 Unless it is templatized, prefix it with OPENMS_DLLAPI. If the operator is declared a friend of some class, also make sure the
-friend statement also contains the OPENMS_DLLAPI keyword. Otherwise you will get inconsistent DLL-linkage.
+friend statement also contains the OPENMS_DLLAPI keyword. Otherwise you will get inconsistent DLL-linkage, e.g use:
+@code
+// Adduct.h
+class OPENMS_DLLAPI Adduct
+{ 
+	...
+	friend OPENMS_DLLAPI std::ostream& operator << (std::ostream& os, const Adduct& a);
+	...
+}
+
+// Adduct.C
+namespace OpenMS
+{
+	OPENMS_DLLAPI std::ostream& operator << (std::ostream& os, const Adduct& a)
+	{
+		...
+	}
+}
+@endcode
 
 If you forget the OPENMS_DLLAPI keyword, the DLL will have missing symbols and executables might not be able to link against it!
 

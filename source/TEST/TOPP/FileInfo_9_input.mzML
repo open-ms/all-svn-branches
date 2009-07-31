@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<mzML xmlns="http://psi.hupo.org/ms/mzml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0.xsd" accession="OpenMS_document_id" version="1.1">
+<mzML xmlns="http://psi.hupo.org/ms/mzml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://psi.hupo.org/ms/mzml http://psidev.info/files/ms/mzML/xsd/mzML1.1.0.xsd" accession="OpenMS_document_id" version="1.1.0">
   <cvList count="2">
     <cv id="MS" fullName="Proteomics Standards Initiative Mass Spectrometry Ontology" version="2.0.2" URI="http://psidev.sourceforge.net/ms/xml/mzdata/psi-ms.2.0.2.obo"/>
     <cv id="UO" fullName="Unit Ontology" version="unknown" URI="http://obo.cvs.sourceforge.net/obo/obo/ontology/phenotype/unit.obo"/>
@@ -14,16 +14,19 @@
       <sourceFile id="sf1" name="tiny1.RAW" location="file:///F:/data/Exp01">
         <cvParam cvRef="MS" accession="MS:1000563" name="Thermo RAW file" value=""/>
         <cvParam cvRef="MS" accession="MS:1000569" name="SHA-1" value="71be39fb2700ab2f3c8b2234b91274968b6899b1"/>
+      	<cvParam cvRef="MS" accession="MS:1000774" name="multiple peak list nativeID format"/>
 				<userParam name="name" value="sourcefile1"/>
       </sourceFile>
       <sourceFile id="sf_parameters" name="parameters.par" location="file:///C:/settings/">
         <cvParam cvRef="MS" accession="MS:1000563" name="Thermo RAW file" value=""/>
         <cvParam cvRef="MS" accession="MS:1000569" name="SHA-1" value="61be39fb2700ab2f3c8b2234b91274968b6899b1"/>
+      	<cvParam cvRef="MS" accession="MS:1000774" name="multiple peak list nativeID format"/>
 				<userParam name="name" value="sourcefile3"/>
       </sourceFile>
       <sourceFile id="sf_spectrum_2" name="tiny1.dta" location="file:///F:/data/Exp01">
         <cvParam cvRef="MS" accession="MS:1000613" name="DTA file" value=""/>
         <cvParam cvRef="MS" accession="MS:1000569" name="SHA-1" value="81be39fb2700ab2f3c8b2234b91274968b6899b1"/>
+      	<cvParam cvRef="MS" accession="MS:1000774" name="multiple peak list nativeID format"/>
 				<userParam name="name" value="sourcefile4"/>
       </sourceFile>
     </sourceFileList>

@@ -10,6 +10,11 @@
 		<processingAction name="Smoothing" />
 		<processingAction name="Baseline reduction" />
 	</dataProcessing>
+	<dataProcessing completion_time="1999-12-31T23:59:59">
+		<software name="MapAligner" version="version_string" />
+		<processingAction name="Retention time alignment" />
+		<userParam type="string" name="parameter: mode" value="test_mode"/>
+	</dataProcessing>
 	<featureList count="3">
 		<feature id="f_0">
 			<position dim="0">25</position>

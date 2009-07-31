@@ -64,7 +64,7 @@ namespace OpenMS
 			/// Default constructor
 			TOPPASToolVertex();
 			/// Constructor
-			TOPPASToolVertex(const String& name, const String& type = "");
+			TOPPASToolVertex(const String& name, const String& type = "", const String& tmp_path = "");
 			/// Copy constructor
 			TOPPASToolVertex(const TOPPASToolVertex& rhs);
 			/// Destructor
@@ -72,13 +72,30 @@ namespace OpenMS
 			/// Assignment operator
 			TOPPASToolVertex& operator= (const TOPPASToolVertex& rhs);
 			
-			/// Fills @p input_infos with the required input files/lists together with their valid types.
-			void getRequiredInputFiles(QVector<IOInfo>& input_infos);
-			/// Fills @p output_infos with the required output files/lists together with their valid types.
-			void getRequiredOutputFiles(QVector<IOInfo>& output_infos);
-			
-			/// The static instance counter (for unique instance numbers)
-			static UInt id_counter;
+			/// Returns the name of the tool
+			const String& getName();
+			/// Returns the type of the tool
+			const String& getType();
+			/// Fills @p input_infos with the required input file/list parameters together with their valid types.
+			void getInputParameters(QVector<IOInfo>& input_infos);
+			/// Fills @p output_infos with the required output file/list parameters together with their valid types.
+			void getOutputParameters(QVector<IOInfo>& output_infos);
+			// documented in base class
+			virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
+			// documented in base class
+			virtual QRectF boundingRect() const;
+			// documented in base class
+			virtual QPainterPath shape () const;
+			/// Runs the tool
+			void compute();
+			/// Returns whether this node has already been processed during the current pipeline execution
+			bool isFinished();
+			/// Set whether this node has already been processed during the current pipeline execution
+			void setFinished(bool b);
+			/// Sets the Param object of this tool
+			void setParam(const Param& param);
+			/// Returns the Param object of this tool
+			const Param& getParam();
 			
 		protected:
 		
@@ -88,13 +105,22 @@ namespace OpenMS
 			//@}
 			/// Initializes the parameters with standard values (from -write_ini)
 			void initParam_();
-			/// Fills @p io_infos with the required input/output files/lists. If @p input_files is true, input files are returned, otherwise output files.
-			void getRequiredFiles_(QVector<IOInfo>& io_infos, bool input_files);
+			/// Fills @p io_infos with the required input/output file/list parameters. If @p input_params is true, input params are returned, otherwise output params.
+			void getParameters_(QVector<IOInfo>& io_infos, bool input_params);
 			
+			/// The name of the tool
+			String name_;
+			/// The type of the tool, or "" if it does not have a type
+			String type_;
+			/// The temporary path
+			String tmp_path_;
 			/// The parameters of the tool
 			Param param_;
-			/// The unique ID
-			UInt id_;
+			/// Stores whether this node has already been processed during the current pipeline execution
+			bool finished_;
+			/// Stores the file names of the different output parameters
+			QVector<QStringList> output_file_names_;
+			
 	};
 }
 

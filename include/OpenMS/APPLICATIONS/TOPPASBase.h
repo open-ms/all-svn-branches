@@ -86,6 +86,8 @@ namespace OpenMS
       void newFileDialog();
       /// shows the dialog for saving the current file
       void saveFileDialog();
+			/// shows the dialog for saving the current file as new file
+      void saveAsFileDialog();
       /// shows the preferences dialog
       void preferencesDialog();
     	/// changes the current path according to the currently active window/layer
@@ -111,7 +113,9 @@ namespace OpenMS
       void closeFile();
       /// updates the toolbar
       void updateToolBar();
-    	
+    	/// Runs the pipeline of the current window
+			void runPipeline();
+			
     protected slots:
 		
 			/** @name Tabbar slots
@@ -168,6 +172,9 @@ namespace OpenMS
       /// The current path (used for loading and storing).
       /// Depending on the preferences this is static or changes with the current window/layer.
       String current_path_;
+			
+			/// The path for temporary files
+			String tmp_path_;
       
       ///returns a pointer to the active SpectrumWidget (0 if none is active)
       TOPPASWidget* activeWindow_() const;

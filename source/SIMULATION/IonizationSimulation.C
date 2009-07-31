@@ -81,7 +81,7 @@ namespace OpenMS {
   IonizationSimulation::~IonizationSimulation()
   {}
 
-  void IonizationSimulation::ionize(FeatureMapSim & features, ConsensusMap & charge_consensus)
+  void IonizationSimulation::ionize(FeatureMapSim & features, ConsensusMap & charge_consensus, MSSimExperiment & experiment)
   {
 		// clear the consensus map
 		charge_consensus = ConsensusMap();
@@ -97,6 +97,15 @@ namespace OpenMS {
         break;
     }
 
+		// add params for subsequent modules
+		ScanWindow sw;
+		sw.begin = minimal_mz_measurement_limit_;
+		sw.end = maximal_mz_measurement_limit_;
+		for (Size i=0;i<experiment.size();++i)
+		{
+			experiment[i].getInstrumentSettings().getScanWindows().push_back(sw);
+		}
+
 		ConsensusMap::FileDescription map_description;
 		map_description.label = "Simulation";
 		map_description.size = features.size();
@@ -111,13 +120,18 @@ namespace OpenMS {
     defaults_.setValue("esi:ionized_residues", StringList::create("Arg,Lys,His"), "List of residues (as three letter code) that will be considered during ESI ionization. This parameter will be ignored during MALDI ionization.");
     StringList valid_ionized_residues = StringList::create("Ala,Cys,Asp,Glu,Phe,Gly,His,Ile,Lys,Leu,Met,Asn,Pro,Gln,Arg,Sec,Ser,Thr,Val,Trp,Tyr");
     defaults_.setValidStrings("esi:ionized_residues", valid_ionized_residues);
-		defaults_.setValue("esi:charge_impurity", StringList::create("H+:1,NH4+:0.2,Ca++:0.1"), "List of charged ions that contribute to charge with adjacent probability of occurence (which must sum to 1), e.g. ['H:1'] is valid, or ['H:0.7' 'Na:0.3']");
+		defaults_.setValue("esi:charge_impurity", StringList::create("H+:1,NH4+:0.2,Ca++:0.1"), "List of charged ions that contribute to charge with weight of occurence (which must not sum to 1), e.g. ['H:1'] or ['H:0.7' 'Na:0.3']");
 
 		defaults_.setValue("esi:max_impurity_set_size", 3, "Maximal #combinations of charge impurities allowed (each generating one feature) per charge state. E.g. assuming charge=3 and this parameter is 2, then we could choose to allow '3H+, 2H+Na+' features (given certain 'charge_impurity' constaints), but no '3H+, 2H+Na+, 3Na+'", StringList::create("advanced"));
 
     // ionization probabilities
     defaults_.setValue("esi:ionization_probability",0.8, "Probability for the binomial distribution of the ESI charge states");
     defaults_.setValue("maldi:ionization_probabilities", DoubleList::create("0.9,0.1") , "List of probabilities for the different charge states during MALDI ionization (the list must sum up to 1.0)");
+    
+    // maximal size of map in mz dimension
+    defaults_.setValue("mz:upper_measurement_limit",2500.0,"Upper m/z detecter limit.");
+    defaults_.setValue("mz:lower_measurement_limit",200.0,"Lower m/z detecter limit.");
+    
     defaultsToParam_();
   }
   
@@ -155,6 +169,7 @@ namespace OpenMS {
     {
 			esi_charge_impurity[i].split(':',components);
 			if (components.size() != 2) throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__, String("IonizationSimulation got invalid esi:charge_impurity (") + esi_charge_impurity[i] + ")with " + components.size() + " components instead of 2.");
+			// determine charge of adduct (by # of '+')
 			Size l_charge = components[0].size();
 			l_charge -= components[0].remove('+').size();
 			EmpiricalFormula ef(components[0]);
@@ -169,6 +184,11 @@ namespace OpenMS {
 		maldi_probabilities_ = param_.getValue("maldi:ionization_probabilities");
     
     esi_probability_ = param_.getValue("esi:ionization_probability");
+    
+    // detector ranges
+    maximal_mz_measurement_limit_ = param_.getValue("mz:upper_measurement_limit");
+    minimal_mz_measurement_limit_ = param_.getValue("mz:lower_measurement_limit");
+    
   }
   
   void IonizationSimulation::ionizeEsi_(FeatureMapSim & features, ConsensusMap & charge_consensus)
@@ -186,6 +206,9 @@ namespace OpenMS {
 			UInt feature_index=0;
 			// features which are not ionized
 			Size uncharged_feature_count = 0;
+			// features discarded - out of mz detection range
+			Size undetected_features_count = 0;
+			
 			// iterate over all features
 			for(FeatureMapSim::iterator feature_it = features.begin();
 					feature_it != features.end();
@@ -194,7 +217,7 @@ namespace OpenMS {
 				ConsensusFeature cf;
 
 				// iterate on abundance
-				Int abundance = ceil( (*feature_it).getIntensity() );
+				Int abundance = (Int) ceil( (*feature_it).getIntensity() );
 				UInt basic_residues_c = countIonizedResidues_((*feature_it).getPeptideIdentifications()[0].getHits()[0].getSequence());
 	      
 				// assumption: each basic residue can hold one charged adduct
@@ -254,7 +277,12 @@ namespace OpenMS {
 						Feature chargedFeature((*feature_it));
 						EmpiricalFormula feature_ef = chargedFeature.getPeptideIdentifications()[0].getHits()[0].getSequence().getFormula();
 
-						chargedFeature.setMZ( (feature_ef.getMonoWeight() + it_s->second.getMass() ) / charge) ;
+						chargedFeature.setMZ( (feature_ef.getMonoWeight() + it_s->second.getMass() ) / charge);
+						if (!isFeatureValid_(chargedFeature))
+						{
+							++undetected_features_count;
+							continue;
+						}
 						chargedFeature.setCharge(charge);
 						
 						// adapt "other" intensities (iTRAQ...) by the factor we just decreased real abundance
@@ -271,7 +299,7 @@ namespace OpenMS {
 						
 						// add meta information on compomer (mass)
 						chargedFeature.setMetaValue("charge_adduct_mass", it_s->second.getMass() );
-						chargedFeature.setMetaValue("charge_adducts", it_s->second.getAdductsAsString() );
+						chargedFeature.setMetaValue("charge_adducts", it_s->second.getAdductsAsString(1) );
 						chargedFeature.setMetaValue("parent_feature_number", feature_index);
 
 						copy_map.push_back(chargedFeature);
@@ -284,13 +312,14 @@ namespace OpenMS {
 				}
 
 				// add consensus element containing all charge variants just created
-				cf.computeConsensus();
+				cf.computeDechargeConsensus(copy_map);
 				charge_consensus.push_back(cf);
 
 				++feature_index;
 			} // ! feature iterator
 	    
 	    std::cout << "#Peptides not ionized: " << uncharged_feature_count << "\n";
+	    std::cout << "#Peptides outside mz range: " << undetected_features_count << "\n";
 	    
 			// swap feature maps
 			features.swap(copy_map);
@@ -329,6 +358,9 @@ namespace OpenMS {
 
 		try
 		{
+			// features discarded - out of mz detection range
+			Size undetected_features_count = 0;
+					
 			FeatureMapSim copy_map = features;
       copy_map.clear();
       EmpiricalFormula h_ef("H");
@@ -338,7 +370,7 @@ namespace OpenMS {
 					feature_it != features.end();
 					++feature_it)
 			{
-				Int abundance = ceil( (*feature_it).getIntensity() );
+				Int abundance = (Int) ceil( (*feature_it).getIntensity() );
 				std::vector<UInt> charge_states(((DoubleList) param_.getValue("maldi:ionization_probabilities")).size() + 1);
 				// sample different charge states
 				for(Int j = 0; j < abundance ; ++j)
@@ -361,7 +393,12 @@ namespace OpenMS {
 						Feature chargedFeature((*feature_it));
 						EmpiricalFormula feature_ef = chargedFeature.getPeptideIdentifications()[0].getHits()[0].getSequence().getFormula();
            
-						chargedFeature.setMZ( (feature_ef.getMonoWeight() + h_mono_weight ) / c) ;
+						chargedFeature.setMZ( (feature_ef.getMonoWeight() + h_mono_weight ) / c);
+						if (!isFeatureValid_(chargedFeature))
+						{
+							++undetected_features_count;
+							continue;
+						}
 						chargedFeature.setCharge(c);
 						chargedFeature.setIntensity(charge_states[c]);
 						copy_map.push_back(chargedFeature);
@@ -376,7 +413,8 @@ namespace OpenMS {
 	    
 			// swap feature maps
 			features.swap(copy_map);
-
+			
+	    std::cout << "#Peptides outside mz range: " << undetected_features_count << "\n";
 		}
 		catch (std::exception& e)
 		{
@@ -387,5 +425,19 @@ namespace OpenMS {
 		// all ok: free
 		gsl_ran_discrete_free (gsl_ran_lookup_maldi);
   }
+  
+
+  bool IonizationSimulation::isFeatureValid_(const Feature & feature)
+	{
+		if (feature.getMZ() > maximal_mz_measurement_limit_ || feature.getMZ() < minimal_mz_measurement_limit_)
+		{ // remove feature
+			return false;
+		}
+		else
+		{
+			return true;
+		}
+	}
+
 }
 

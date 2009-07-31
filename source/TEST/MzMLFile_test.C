@@ -168,7 +168,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),1)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
-		TEST_EQUAL(spec.getMetaDataArrays().size(),0)
+		TEST_EQUAL(spec.getFloatDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
 		TEST_REAL_SIMILAR(spec.getRT(),5.1)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanWindows().size(),1)
@@ -232,11 +232,18 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		TEST_EQUAL(spec.getAcquisitionInfo().size(),1)
 		TEST_EQUAL(spec.getAcquisitionInfo()[0].getIdentifier(),"0")
 		//meta data arrays
-		TEST_EQUAL(spec.getMetaDataArrays().size(),2)
-		TEST_STRING_EQUAL(spec.getMetaDataArrays()[0].getName(),"signal to noise array")
-		TEST_EQUAL(spec.getMetaDataArrays()[0].size(),10)
-		TEST_STRING_EQUAL(spec.getMetaDataArrays()[1].getName(),"user-defined name")
-		TEST_EQUAL(spec.getMetaDataArrays()[1].size(),10)
+		TEST_EQUAL(spec.getFloatDataArrays().size(),2)
+		TEST_STRING_EQUAL(spec.getFloatDataArrays()[0].getName(),"signal to noise array")
+		TEST_EQUAL(spec.getFloatDataArrays()[0].size(),10)
+		TEST_EQUAL(spec.getFloatDataArrays()[0].getDataProcessing().size(),1)
+		TEST_EQUAL(spec.getFloatDataArrays()[0].getDataProcessing()[0].getSoftware().getName(), "FileFilter")
+		TEST_EQUAL(spec.getFloatDataArrays()[0].getDataProcessing()[0].getSoftware().getVersion(), "1.6.1")
+		TEST_EQUAL(spec.getFloatDataArrays()[0].getDataProcessing()[0].getProcessingActions().size(), 1)
+		TEST_EQUAL(spec.getFloatDataArrays()[0].getDataProcessing()[0].getProcessingActions().count(DataProcessing::CHARGE_CALCULATION), 1)
+		TEST_STRING_EQUAL(spec.getFloatDataArrays()[0].getDataProcessing()[0].getCompletionTime().get(),"2001-02-03 04:15:00")
+		TEST_STRING_EQUAL(spec.getFloatDataArrays()[1].getName(),"user-defined name")
+		TEST_EQUAL(spec.getFloatDataArrays()[1].getDataProcessing().size(),0)
+		TEST_EQUAL(spec.getFloatDataArrays()[1].size(),10)
 		//precursors
 		TEST_EQUAL(spec.getPrecursors().size(),2)
 		TEST_REAL_SIMILAR(spec.getPrecursors()[0].getIntensity(),120053)
@@ -303,7 +310,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),1)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
-		TEST_EQUAL(spec.getMetaDataArrays().size(),0)
+		TEST_EQUAL(spec.getFloatDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
 		TEST_REAL_SIMILAR(spec.getRT(),5.3)
 		TEST_EQUAL(spec.getInstrumentSettings().getPolarity(),IonSource::POSITIVE)
@@ -352,7 +359,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		TEST_REAL_SIMILAR(spec.getRT(),5.4)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
 		TEST_EQUAL(spec.getInstrumentSettings().getZoomScan(),true)
-		TEST_EQUAL(spec.getMetaDataArrays().size(),0)
+		TEST_EQUAL(spec.getFloatDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::RAWDATA)
 		TEST_EQUAL(spec.getInstrumentSettings().getScanWindows().size(),1)
 		TEST_REAL_SIMILAR(spec.getInstrumentSettings().getScanWindows()[0].begin,110.0)
@@ -414,10 +421,10 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 	TEST_STRING_EQUAL((String)exp[1].getMetaValue("mzname"),"mzarray2")
 	TEST_STRING_EQUAL((String)exp[1].getMetaValue("itname"),"itarray2")
 	//binaryDataArray
-	TEST_STRING_EQUAL((String)exp[1].getMetaDataArrays()[0].getMetaValue("name"),"binaryDataArray_sn")
-	TEST_STRING_EQUAL((String)exp[1].getMetaDataArrays()[0].getMetaValue("name2"),"binaryDataArray_sn2")
-	TEST_STRING_EQUAL((String)exp[1].getMetaDataArrays()[1].getMetaValue("name"),"binaryDataArray_c")
-	TEST_STRING_EQUAL((String)exp[1].getMetaDataArrays()[1].getMetaValue("name2"),"")
+	TEST_STRING_EQUAL((String)exp[1].getFloatDataArrays()[0].getMetaValue("name"),"binaryDataArray_sn")
+	TEST_STRING_EQUAL((String)exp[1].getFloatDataArrays()[0].getMetaValue("name2"),"binaryDataArray_sn2")
+	TEST_STRING_EQUAL((String)exp[1].getFloatDataArrays()[1].getMetaValue("name"),"binaryDataArray_c")
+	TEST_STRING_EQUAL((String)exp[1].getFloatDataArrays()[1].getMetaValue("name2"),"")
 	//acquisition list
 	TEST_STRING_EQUAL((String)exp[0].getAcquisitionInfo().getMetaValue("name"),"acquisition_list")
 	//acquisition
@@ -433,6 +440,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 	TEST_STRING_EQUAL(exp[1].getDataProcessing()[1].getMetaValue("p2").toString(),"value2")
 	TEST_STRING_EQUAL(exp[2].getDataProcessing()[0].getMetaValue("p1").toString(),"value1")
 	TEST_STRING_EQUAL(exp[3].getDataProcessing()[0].getMetaValue("p2").toString(),"value2")
+	TEST_STRING_EQUAL(exp[1].getFloatDataArrays()[0].getDataProcessing()[0].getMetaValue("p3").toString(),"value3")
 	//precursor
 	TEST_STRING_EQUAL(exp[1].getPrecursors()[0].getMetaValue("iwname").toString(),"isolationwindow1")
 	TEST_STRING_EQUAL(exp[1].getPrecursors()[0].getMetaValue("siname").toString(),"selectedion1")
@@ -490,19 +498,51 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_5_long.mzML"),exp4);
 	TEST_EQUAL(exp4.size(),1)
 	TEST_EQUAL(exp4[0].size(),997530)
-
-	//load 32 bit data
+	
+	//TEST 32 bit data, zlib compression, 32/64 bit integer, Null terminated strings
+	MSExperiment<> uncompressed;
+	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML"),uncompressed);
 	MSExperiment<> exp5;
-	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_32bit.mzML"),exp5);
-	TEST_EQUAL(exp5.size(),4)
+	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6.mzML"),exp5);
+	//load 32 bit data
+	TEST_EQUAL(exp5.size(),8)
 	TEST_EQUAL(exp5[0].size(),15)
 	TEST_EQUAL(exp5[1].size(),10)
 	TEST_EQUAL(exp5[2].size(),15)
-	TEST_EQUAL(exp5[3].size(),0)
 	TEST_REAL_SIMILAR(exp5[0].getRT(),5.1)
 	TEST_REAL_SIMILAR(exp5[1].getRT(),5.2)
 	TEST_REAL_SIMILAR(exp5[2].getRT(),5.3)
-	TEST_REAL_SIMILAR(exp5[3].getRT(),5.4)
+	//load zlib compressed data
+	for(Size s = 0 ; s < uncompressed[0].size(); ++s)
+	{
+		TEST_EQUAL(exp5[3][s] == uncompressed[0][s],true)
+	}
+	for(Size s = 0 ; s < uncompressed[1].size(); ++s)
+	{
+		TEST_EQUAL(exp5[4][s] == uncompressed[1][s],true)
+	}
+	for(Size s = 0 ; s < uncompressed[2].size(); ++s)
+	{
+		TEST_EQUAL(exp5[5][s] == uncompressed[2][s],true)
+	}
+	//32bit Integer (intensity)
+	TEST_EQUAL(exp5[6].size(),99)
+	TEST_EQUAL(exp5[6].getFloatDataArrays().size(),1)
+	TEST_EQUAL(exp5[6].getFloatDataArrays()[0].size(),99)
+	TEST_STRING_EQUAL(exp5[6].getFloatDataArrays()[0].getName(),"charge array")
+	for(Size i = 0; i < exp5[6].getFloatDataArrays()[0].size(); ++i)
+	{
+		TEST_REAL_SIMILAR(exp5[6].getFloatDataArrays()[0][i], (Int)i)
+	}
+	//64bit Integer (intensity)
+	TEST_EQUAL(exp5[7].size(),99)
+	TEST_EQUAL(exp5[7].getFloatDataArrays().size(),1)
+	TEST_EQUAL(exp5[7].getFloatDataArrays()[0].size(),99)
+	TEST_STRING_EQUAL(exp5[7].getFloatDataArrays()[0].getName(),"charge array")
+	for(Size i = 0; i < exp5[7].getFloatDataArrays()[0].size(); ++i)
+	{
+		TEST_REAL_SIMILAR(exp5[7].getFloatDataArrays()[0][i], (Int)i)
+	}
 
 	//test if it works with different peak types
 	MSExperiment<RichPeak1D> e_rich;
@@ -587,16 +627,6 @@ START_SECTION([EXTRA] load intensity range)
 	TEST_EQUAL(exp[3].size(),0)
 END_SECTION
 
-START_SECTION([EXTRA] load with zlib functionality)
-	MzMLFile file;
-	MSExperiment<> compressed, uncompressed;
-	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_7_compressed.mzML"),compressed);
-	file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_7_uncompressed.mzML"),uncompressed);
-	TEST_EQUAL(compressed==uncompressed,true);
-END_SECTION
-
-
-
 START_SECTION((template <typename MapType> void store(const String& filename, const MapType& map) const))
 	MzMLFile file;
 	
@@ -631,10 +661,7 @@ START_SECTION((template <typename MapType> void store(const String& filename, co
 	{
 		
 		MSExperiment<> empty, exp;
-		
-		//this will be set when writing (forced by mzML)
-		empty.getInstrument().getSoftware().setName("custom unreleased software tool");
-		
+				
 		std::string tmp_filename;
 		NEW_TMP_FILE(tmp_filename);
 		file.store(tmp_filename,empty);
@@ -646,32 +673,34 @@ START_SECTION((template <typename MapType> void store(const String& filename, co
 	{
 		MSExperiment<> empty, exp;
 		empty.resize(1);
+		empty[0].setRT(17.1234);
 		
 		//this will be set when writing (forced by mzML)
-		empty.getInstrument().getSoftware().setName("custom unreleased software tool");
 		empty[0].setNativeID("spectrum=0");
 		empty[0].getInstrumentSettings().setScanMode(InstrumentSettings::MASSSPECTRUM);
 		empty[0].getDataProcessing().resize(1);
 		empty[0].getDataProcessing()[0].getProcessingActions().insert(DataProcessing::CONVERSION_MZML);
-		empty[0].getDataProcessing()[0].getSoftware().setName("custom unreleased software tool");
+		empty[0].getAcquisitionInfo().setMethodOfCombination("no combination");
+		empty[0].getAcquisitionInfo().resize(1);
 		
 		std::string tmp_filename;
 		NEW_TMP_FILE(tmp_filename);
 		file.store(tmp_filename,empty);
 		file.load(tmp_filename,exp);
 		TEST_EQUAL(exp==empty,true)
-
-		TEST_EQUAL(exp.size()==empty.size(),true)
-		TEST_EQUAL(exp.ExperimentalSettings::operator==(empty),true)
-		TEST_EQUAL(exp[0].SpectrumSettings::operator==(empty[0]),true)
-		TEST_EQUAL(exp[0]==empty[0],true);
+		
+		//NOTE: If it does not work, use this code to find out where the difference is
+//		TEST_EQUAL(exp.size()==empty.size(),true)
+//		TEST_EQUAL(exp.ExperimentalSettings::operator==(empty),true)
+//		TEST_EQUAL(exp[0].SpectrumSettings::operator==(empty[0]),true)
+//		TEST_EQUAL(exp[0]==empty[0],true);
 	}
 
 	//test with compression 
 	{
 		//load map
 		MSExperiment<> exp_original;
-		file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML"),exp_original);
+		file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6.mzML"),exp_original);
 	 	//store map
 		std::string tmp_filename;
 	 	NEW_TMP_FILE(tmp_filename);
@@ -682,6 +711,13 @@ START_SECTION((template <typename MapType> void store(const String& filename, co
 		file.load(tmp_filename,exp);
 		//test if everything worked
 		TEST_EQUAL(exp==exp_original,true)
+		//NOTE: If it does not work, use this code to find out where the difference is
+		TEST_EQUAL(exp[3].size(),exp_original[3].size())
+		for (Size i=0; i<exp[3].size(); ++i)
+		{
+			TEST_REAL_SIMILAR(exp[3][i].getIntensity(),exp_original[3][i].getIntensity())
+			TEST_REAL_SIMILAR(exp[3][i].getMZ(),exp_original[3][i].getMZ())
+		}
 	}
 
 END_SECTION

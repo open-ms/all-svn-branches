@@ -41,6 +41,12 @@ namespace OpenMS
 		
 	}
 
+	DateTime::DateTime(const String& date): 
+		QDateTime()
+	{
+		set(date);
+	}
+	
 	DateTime::DateTime(const DateTime& date): 
 		QDateTime(date)
 	{

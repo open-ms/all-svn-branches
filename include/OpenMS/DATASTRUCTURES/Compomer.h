@@ -31,8 +31,11 @@
 #include <vector>
 #include <map>
 #include <set>
+#include <cstdlib>
 
 #include <OpenMS/DATASTRUCTURES/Adduct.h>
+#include <OpenMS/CONCEPT/Macros.h>
+#include <OpenMS/CHEMISTRY/EmpiricalFormula.h>
 
 namespace OpenMS {
 
@@ -67,8 +70,20 @@ public:
 		id_(0)
 	{
 	}
+	
+	/// Copy C'tor
+	Compomer(const Compomer& p)
+		: cmp_(p.cmp_),
+			net_charge_(p.net_charge_),
+			mass_(p.mass_),
+			pos_charges_(p.pos_charges_),
+			neg_charges_(p.neg_charges_),
+			log_p_(p.log_p_),
+			id_(p.id_)
+	{
+	}
 
-	/// add a.amount of Adduct @param a to Compomer and update its properties
+	/// Add a.amount of Adduct @param a to Compomer and update its properties
 	void add(const Adduct& a)
 	{
     if (cmp_.count(a.getFormula())==0)
@@ -108,69 +123,86 @@ public:
 		}
     //
 		std::cout << "found conflict!! between \n" << (*this) << "and\n" << cmp << " at sides i:" << (left_this?"left":"right") << " and j:" << (left_other?"left":"right") << "\n"
-							<< "with implicits  i:" << implicit_this.getAmount() << " && j: " << implicit_other.getAmount() << "\n\n";
+							<< "with implicits  i:" << implicit_this.getAmount() << " && j: " << implicit_other.getAmount() << "\n";
 		return true; 
 	}
 
 	/// set an Id which allows unique identification of a compomer
 	void setID(const Size& id)
 	{
-			id_ = id;
+		id_ = id;
 	}
 	/// return Id which allows unique identification of this compomer
 	const Size& getID() const
 	{
-			return id_;
+		return id_;
 	}
 
 	const Int& getNetCharge() const
 	{
-			return net_charge_;
+		return net_charge_;
 	}
 
 	/// mass of all contained adducts
 	const DoubleReal& getMass() const
 	{
-			return mass_;
+		return mass_;
 	}
 
 	/// summed positive charges of contained adducts
 	const Int& getPositiveCharges() const
 	{
-			return pos_charges_;
+		return pos_charges_;
 	}
 	
 	/// summed negative charges of contained adducts
 	const Int& getNegativeCharges() const
 	{
-			return neg_charges_;
+		return neg_charges_;
 	}
 	
 	/// return log probability
 	const DoubleReal& getLogP() const
 	{
-			return log_p_;
+		return log_p_;
 	}	
 
-	/// get adducts with their abundance as compact string
-	String getAdductsAsString() const
+	/// get adducts with their abundance as compact string (amounts are absolute unless side=0)
+	/// @param side Use -1 for left, +1 for right and 0 for both
+	String getAdductsAsString(Int side=0) const
 	{
 		String r;
 		std::map<String,Adduct>::const_iterator it=cmp_.begin();
 		for (; it!=cmp_.end(); ++it)
 		{
-			if (it!=cmp_.begin()) r+= " ";
-			r += String(it->second.getAmount()) + "(" + it->first + ")";
+			Int f = it->second.getAmount();
+			//if (it!=cmp_.begin()) r+= " ";
+			EmpiricalFormula ef(it->first);
+			ef = ef * std::abs(f);
+
+			if ( (f < 0 && side==-1) ||
+					 (f > 0 && side==+1))
+			{
+			  r += ef.getString();
+			}
+			else if (side==0)
+			{
+				r += String(it->second.getAmount()) + "(" + it->first + ")";
+			}
 		}
+
 		return r;
 	}
 	
-	/// sort compomer by (in order of importance): net-charge, mass, probability
+	/// Sort compomer by (in order of importance): net-charge, mass, probability
 	friend OPENMS_DLLAPI bool operator< (const Compomer &c1, const Compomer &c2); 
 
-	///Print the contents of a Compomer to a stream.
+	/// Print the contents of a Compomer to a stream.
 	friend OPENMS_DLLAPI std::ostream& operator << (std::ostream& os, const Compomer & cmp);
 
+	/// Comparator
+	friend OPENMS_DLLAPI bool operator==(const Compomer& a, const  Compomer& b);
+	
 private:	
 	
 	/// get the left(negative amount) or right(positive amount) side subset of the compomers adduct set
@@ -186,11 +218,7 @@ private:
 			if (it->first == implicit.getFormula())
 			{
 				extra_amount = implicit.getAmount();
-        if (extra_amount<0)
-        {
-          std::cout << "Compomer: implicit H+ is negative!!\n)";
-					//TODO - replace by exception!? - exit(0);
-        }
+        OPENMS_POSTCONDITION(extra_amount >= 0, "Compomer.h::getCompomerSide_() has invalid implicit adduct!");
 			}
 			else extra_amount=0;
 				
@@ -205,12 +233,13 @@ private:
 			}
       else if(it->second.getAmount()==0)
       {
-        std::cout << "This should not happen, amount of an adduct is 0\n";
-				//TODO - replace by exception!? - exit(0);
+        OPENMS_POSTCONDITION(extra_amount > 0, "Compomer.h::getCompomerSide_() has invalid adduct amount of 0!");
       }
 
       if (normal_amount + extra_amount > 0)
-      side.insert(std::make_pair<String, Int>(it->first, normal_amount + extra_amount));
+      {
+				side.insert(std::make_pair(it->first, normal_amount + extra_amount));
+			}
 
 		}
 
@@ -224,7 +253,6 @@ private:
 	Int neg_charges_;
 	DoubleReal log_p_;   // log probability of compomer
 	Size id_;
-	//bool final_;
 
 }; // \Compomer
 

@@ -25,7 +25,7 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/DB/DBConnection.h>
 #include <OpenMS/FORMAT/DB/DBAdapter.h>
 
@@ -75,7 +75,7 @@ class TOPPDBExporter
 			registerStringOption_("db", "<name>", "", "DB name");
 			registerIntOption_("id", "<DB id>", 0, "id of the the map to export", false);
 			registerStringOption_("query", "<query>", "", "a SQL query that returns one or several DB ids of the MSExperiment table", false);
-			registerStringOption_("out", "<file>", "", "output file in mzData format (prefixed with DB id and '_' if several files are exported)");
+			registerStringOption_("out", "<file>", "", "output file in mzML format (prefixed with DB id and '_' if several files are exported)");
 			addEmptyLine_();
 			addText_("In order to create a new OpenMS database, please use the 'init' flag of the DBImporter.");
 		}
@@ -140,7 +140,7 @@ class TOPPDBExporter
 				con.connect(db, user, password, host, port);
 				DBAdapter a(con);
 				
-				MzDataFile f;
+				MzMLFile f;
 				f.setLogType(log_type_);
 				
 				MSExperiment<Peak1D> exp;
@@ -150,7 +150,10 @@ class TOPPDBExporter
 					writeDebug_("Writing single file...",1);	
 					//load from db
 					a.loadExperiment(*(ids.begin()),exp);
-					
+
+					//annotate output with data processing info
+					addDataProcessing_(exp, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+
 					//write to file
 					f.store(out, exp);
 				}
@@ -161,7 +164,10 @@ class TOPPDBExporter
 					{
 						//load from db
 						a.loadExperiment(*it,exp);
-					
+						
+						//annotate output with data processing info
+						addDataProcessing_(exp, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+						
 						//write to file
 						stringstream ss;
 						ss << *it;

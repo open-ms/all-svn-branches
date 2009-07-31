@@ -59,12 +59,14 @@
 				<UL>
 				  <LI> @subpage TOPP_tutorial 
 				  <LI> @subpage TOPP_documentation
+				  <LI> @subpage UTILS
 				</UL>
 				
 				Misc:
 				<UL>
-				  <LI> @subpage UTILS
 					<LI> @subpage FAQ
+					<LI> @subpage Contributing
+					<LI> @subpage ChangeLog
 				</UL>
 			</TD>
 				
@@ -88,6 +90,8 @@
 				Misc:
 				<UL>
 					<LI> @subpage FAQ
+					<LI> @subpage Contributing
+					<LI> @subpage ChangeLog
 				</UL>
 				
 				@if INTERNAL_INFO

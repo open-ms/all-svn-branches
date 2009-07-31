@@ -46,7 +46,9 @@ namespace OpenMS
   {
     private:
       int findIndex_(const String& value, const std::string* table, const Size tableSize) const;
+      
       void stringToIntVector_(const String& str, std::vector<Int>& list) const;
+      
       void addMetaInfo_(MetaInfoInterface& metaInfo, const String& name, const String& value) const;
       
       template <class T>
@@ -61,14 +63,14 @@ namespace OpenMS
         index = value<1 ? Size(0) : Size(value-1);
         if(index >= list.size())
           list.resize(index + 1);
-      }
+      }  
       
     public:
       /// Default constructor
       SettingsParser();
-      
+ 
       template <class PeakType>
-      void importSpectrumSettings(const String& line, MSSpectrum<PeakType>& spectrum) const
+      void settingsCommand(const String& line, MSSpectrum<PeakType>& spectrum) const
       {
         //temporary variables
         String command = "";
@@ -81,6 +83,7 @@ namespace OpenMS
         Size indexProduct = 0;
         Size indexPeptideIdentification = 0;
         Size indexPeptideHit = 0;
+        Size indexDataProcessing = 0;
 
         try
         {            
@@ -91,7 +94,7 @@ namespace OpenMS
               
             if( strings.size() != 2 )
             {
-cout << "BBB: " << strings.size() << endl;
+    cout << "BBB: " << strings.size() << endl;
               throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" );
             }
               
@@ -135,8 +138,10 @@ cout << "BBB: " << strings.size() << endl;
                 else if(command.hasPrefix("SpectrumSettings.InstrumentSettings.ScanWindows.End"))
                   scanWindowsList[indexScanWindows].end = value.toDouble();
                 else
-                  addMetaInfo_(/*(MetaInfoInterface&)*/ scanWindowsList[indexScanWindows], command, value);
-              }                    
+                  addMetaInfo_(scanWindowsList[indexScanWindows], command, value);
+              }
+              else
+                addMetaInfo_(instrumentSettings, command, value);                                
             }
             else if(command.hasPrefix("SpectrumSettings.AcquisitionInfo.MethodOfCombination"))
             {
@@ -168,6 +173,8 @@ cout << "BBB: " << strings.size() << endl;
               else if(command.hasPrefix("SpectrumSettings.SourceFile.NativeIDType"))
                 sourceFile.setNativeIDType((SourceFile::NativeIDType) findIndex_(
                   value, SourceFile::NamesOfNativeIDType, SourceFile::SIZE_OF_NATIVEIDTYPE));
+              else
+                addMetaInfo_(sourceFile, command, value);                  
             }
             else if(command.hasPrefix("SpectrumSettings.Precursors."))
             {
@@ -180,7 +187,7 @@ cout << "BBB: " << strings.size() << endl;
               else if(command.hasPrefix("SpectrumSettings.Precursors.ActivationMethod"))
               {
                 std::vector<String> activationMethodStrings;
-                std::set<Precursor::ActivationMethod>& activationMethodList = precursorsList[indexPrecursor].getActivationMethod();
+                std::set<Precursor::ActivationMethod>& activationMethodList = precursorsList[indexPrecursor].getActivationMethods();
 
                 value.split(',', activationMethodStrings);
                 for(Size index=0; index<activationMethodStrings.size(); ++index)
@@ -201,6 +208,8 @@ cout << "BBB: " << strings.size() << endl;
                 stringToIntVector_(value, intVector);
                	precursorsList[indexPrecursor].setPossibleChargeStates(intVector);
               }
+              else
+                addMetaInfo_(precursorsList[indexPrecursor], command, value);              
             }    
             else if(command.hasPrefix("SpectrumSettings.Products."))
             {
@@ -216,6 +225,8 @@ cout << "BBB: " << strings.size() << endl;
                 productsList[indexProduct].setIsolationWindowLowerOffset(value.toDouble());
               else if(command.hasPrefix("SpectrumSettings.Products.IsolationWindowUpperOffset"))
                 productsList[indexProduct].setIsolationWindowUpperOffset(value.toDouble());
+              else
+                addMetaInfo_(productsList[indexProduct], command, value);                
             }
             else if(command.hasPrefix("SpectrumSettings.DataProcessing."))
             {
@@ -233,6 +244,8 @@ cout << "BBB: " << strings.size() << endl;
                  software.setName(value);
                 else if(command.hasPrefix("SpectrumSettings.DataProcessing.Software.Version"))
                  software.setVersion(value);
+                else
+                  addMetaInfo_(software, command, value);                 
               }                  
               else if(command.hasPrefix("SpectrumSettings.DataProcessing.ProcessingActions"))
               {
@@ -246,8 +259,10 @@ cout << "BBB: " << strings.size() << endl;
               }
               else if(command.hasPrefix("SpectrumSettings.DataProcessing.CompletionTime"))
                 dataProcessingList[indexDataProcessing].setCompletionTime(DateTime(value));
+              else
+                addMetaInfo_(dataProcessingList[indexDataProcessing], command, value);                
             }              
-            else if(command.prefix(26) == "SpectrumSettings.PeptideIdentification.")
+            else if(command.hasPrefix("SpectrumSettings.PeptideIdentification."))
             {
               std::vector<PeptideIdentification>& peptideIdentificationsList = spectrum.getPeptideIdentifications();
               
@@ -304,6 +319,8 @@ cout << "BBB: " << strings.size() << endl;
                   peptideHitList[indexPeptideHit].setAABefore(value[0]);  
                 else if(command.hasPrefix("SpectrumSettings.PeptideIdentification.PeptideHit.AAAfter"))
                   peptideHitList[indexPeptideHit].setAAAfter(value[0]);
+                else
+                  addMetaInfo_(peptideHitList[indexPeptideHit], command, value);                   
               }
               else if(command.hasPrefix("SpectrumSettings.PeptideIdentification.SignificanceThreshold"))
                 peptideIdentificationsList[indexPeptideIdentification].setSignificanceThreshold(value.toDouble());
@@ -313,18 +330,22 @@ cout << "BBB: " << strings.size() << endl;
                 peptideIdentificationsList[indexPeptideIdentification].setHigherScoreBetter(value=="TRUE" ? true : false);                       
               else if(command.hasPrefix("SpectrumSettings.PeptideIdentification.Identifier"))
                 peptideIdentificationsList[indexPeptideIdentification].setIdentifier(value);
+              else
+                addMetaInfo_(peptideIdentificationsList[indexPeptideIdentification], command, value);                 
             }                                                              
           }
+          else
+            addMetaInfo_(spectrum, command, value);
         } 
-			  catch(const std::exception& e)
-			  {
-cout << "excep: " << e.what() << endl;					  
-				  throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"");       
+	      catch(const std::exception& e)
+	      {
+    cout << "excep: " << e.what() << endl;					  
+		      throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"");       
         }
       }
 
       template <class PeakType>
-      void importSpectrumSettingsFromFile(const String& filename, MSSpectrum<PeakType>& spectrum) const
+      void settingsFile(const String& filename, MSSpectrum<PeakType>& spectrum) const
       {					        
         std::ifstream is(filename.c_str());
         if (!is)
@@ -338,14 +359,14 @@ cout << "excep: " << e.what() << endl;
         //read lines
         while (getline(is, line, '\n'))
         {
-          importSpectrumSettings(filename, spectrum);
+          settingsCommand(filename, spectrum);
         }
         
         is.close();
       }
               
       template <class PeakType>
-      void importExperimentalSettings(const String& line, MSExperiment<PeakType>& exp) const
+      void settingsCommand(const String& line, MSExperiment<PeakType>& exp) const
       {				        
         //temporary variables
         SourceFile::ChecksumType checksum_type_ = SourceFile::UNKNOWN_CHECKSUM;
@@ -355,7 +376,6 @@ cout << "excep: " << e.what() << endl;
         Size indexTreatment = 0;
         Size indexSourceFiles = 0;
         Size indexContacts = 0;
-        Size indexDataProcessing = 0;
         Size indexIonSource = 0;
         Size indexMassAnalyzer = 0;
         Size indexIonDetector = 0;
@@ -371,12 +391,12 @@ cout << "excep: " << e.what() << endl;
           {
             std::vector<String> strings;
             if(!line.split('=', strings))
-              throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" );
+              throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"", "");
               
             if( strings.size() != 2 )
             {
-cout << "BBB: " << strings.size() << endl;
-              throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" );
+    cout << "BBB: " << strings.size() << endl;
+              throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"", "");
             }
               
             command = strings[0].trim();
@@ -439,7 +459,7 @@ cout << "BBB: " << strings.size() << endl;
                     else if(command.hasPrefix("ExperimentalSettings.Sample.Treatment.Temperature"))
                       digestion->setTemperature(value.toDouble());
                     else if(command.hasPrefix("ExperimentalSettings.Sample.Treatment.pH"))
-                      digestion->setPh(value.toDouble());                                                        
+                      digestion->setPh(value.toDouble());                    
                   }
                   else if(treatment_->getType() == "Modification" || treatment_->getType() == "Tagging")
                   {
@@ -453,7 +473,7 @@ cout << "BBB: " << strings.size() << endl;
                       modification->setSpecificityType((Modification::SpecificityType) findIndex_(
                         value, Modification::NamesOfSpecificityType, Modification::SIZE_OF_SPECIFICITYTYPE));
                     else if(command.hasPrefix("ExperimentalSettings.Sample.Treatment.AffectedAminoAcids"))
-                      modification->setAffectedAminoAcids(value);                         
+                      modification->setAffectedAminoAcids(value);                                              
                   }
                   else if(treatment_->getType() == "Tagging")
                   {
@@ -463,10 +483,14 @@ cout << "BBB: " << strings.size() << endl;
                       tagging->setMassShift(value.toDouble());
                     else if(command.hasPrefix("ExperimentalSettings.Sample.Treatment.IsotopeVariant"))
                       tagging->setVariant((Tagging::IsotopeVariant) findIndex_(
-                        value, Tagging::NamesOfIsotopeVariant, Tagging::SIZE_OF_ISOTOPEVARIANT));                                                      
-                  }     
-                }                 
+                        value, Tagging::NamesOfIsotopeVariant, Tagging::SIZE_OF_ISOTOPEVARIANT));                                                                         
+                  }  
+                  else
+                    addMetaInfo_(*treatment_, command, value);                       
+                }               
               }
+              else
+                addMetaInfo_(sample, command, value);                
             }
             else if(command.hasPrefix("ExperimentalSettings.SourceFiles."))
             {
@@ -486,7 +510,7 @@ cout << "BBB: " << strings.size() << endl;
                 sourceFilesList[indexSourceFiles].setFileType(value);
               else if(command.hasPrefix("ExperimentalSettings.SourceFile.ChecksumType"))
               {
-                checksum_type_ = findIndex_(value, SourceFile::NamesOfChecksumType, SourceFile::SIZE_OF_CHECKSUMTYPE);
+                checksum_type_ = (SourceFile::ChecksumType)findIndex_(value, SourceFile::NamesOfChecksumType, SourceFile::SIZE_OF_CHECKSUMTYPE);
                 sourceFilesList[indexSourceFiles].setChecksum(checksum_, checksum_type_);
               }
               else if(command.hasPrefix("ExperimentalSettings.SourceFile.Checksum"))
@@ -497,6 +521,8 @@ cout << "BBB: " << strings.size() << endl;
               else if(command.hasPrefix("ExperimentalSettings.SourceFile.NativeIDType"))
                 sourceFilesList[indexSourceFiles].setNativeIDType((SourceFile::NativeIDType) findIndex_(
                   value, SourceFile::NamesOfNativeIDType, SourceFile::SIZE_OF_NATIVEIDTYPE));
+              else
+                addMetaInfo_(sourceFilesList[indexSourceFiles], command, value);                   
             } 
             else if(command.hasPrefix("ExperimentalSettings.Contacts."))
             {
@@ -520,6 +546,8 @@ cout << "BBB: " << strings.size() << endl;
                 contactsList[indexContacts].setAddress(value);
               else if(command.hasPrefix("ExperimentalSettings.Contacts.ContactInfo"))
                 contactsList[indexContacts].setContactInfo(value);
+              else
+                addMetaInfo_(contactsList[indexContacts], command, value);                
             }    
             else if(command.hasPrefix("ExperimentalSettings.Instrument."))
             {
@@ -551,7 +579,9 @@ cout << "BBB: " << strings.size() << endl;
                   ionSourceList[indexIonSource].setPolarity((IonSource::Polarity) findIndex_(
                     value, IonSource::NamesOfPolarity, IonSource::SIZE_OF_POLARITY));
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.IonSources.Order"))
-                  ionSourceList[indexIonSource].setOrder(value.toInt());               
+                  ionSourceList[indexIonSource].setOrder(value.toInt());   
+                else
+                  addMetaInfo_(ionSourceList[indexIonSource], command, value);                               
               }
               else if(command.hasPrefix("ExperimentalSettings.Instrument.MassAnalyzers."))
               {
@@ -596,28 +626,32 @@ cout << "BBB: " << strings.size() << endl;
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.MassAnalyzers.MagneticFieldStrength"))
                   massAnalyzerList[indexMassAnalyzer].setMagneticFieldStrength(value.toDouble());
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.MassAnalyzers.Order"))
-                  massAnalyzerList[indexMassAnalyzer].setOrder(value.toInt());                
+                  massAnalyzerList[indexMassAnalyzer].setOrder(value.toInt());      
+                else
+                  addMetaInfo_(massAnalyzerList[indexMassAnalyzer], command, value);                              
               }
               else if(command.hasPrefix("ExperimentalSettings.Instrument.IonDetectors."))
               {
-                std::vector<IonDetector>& IonDetectorList = instrument.getIonDetectors();
+                std::vector<IonDetector>& ionDetectorList = instrument.getIonDetectors();
 
                 if(command.hasPrefix("ExperimentalSettings.Instrument.IonDetector.Size"))
-                  resizeList_(IonDetectorList, value.toInt());
+                  resizeList_(ionDetectorList, value.toInt());
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.IonDetector.Index"))
-                  setIndex_(indexIonDetector, value.toInt()-1, IonDetectorList);                
+                  setIndex_(indexIonDetector, value.toInt()-1, ionDetectorList);                
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.IonDetector.Type"))
-                  IonDetectorList[indexIonDetector].setType((IonDetector::Type) findIndex_(
+                  ionDetectorList[indexIonDetector].setType((IonDetector::Type) findIndex_(
                     value, IonDetector::NamesOfType, IonDetector::SIZE_OF_TYPE));  
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.IonDetector.AcquisitionMode"))
-                  IonDetectorList[indexIonDetector].setAcquisitionMode((IonDetector::AcquisitionMode) findIndex_(
+                  ionDetectorList[indexIonDetector].setAcquisitionMode((IonDetector::AcquisitionMode) findIndex_(
                     value, IonDetector::NamesOfAcquisitionMode, IonDetector::SIZE_OF_ACQUISITIONMODE));  
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.IonDetector.Resolution"))
-                  IonDetectorList[indexIonDetector].setResolution(value.toDouble());  
+                  ionDetectorList[indexIonDetector].setResolution(value.toDouble());  
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.IonDetector.ADCSamplingFrequency"))
-                  IonDetectorList[indexIonDetector].setADCSamplingFrequency(value.toDouble());  
+                  ionDetectorList[indexIonDetector].setADCSamplingFrequency(value.toDouble());  
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.IonDetector.Order"))
-                  IonDetectorList[indexIonDetector].setOrder(value.toInt());              
+                  ionDetectorList[indexIonDetector].setOrder(value.toInt());        
+                else
+                  addMetaInfo_(ionDetectorList[indexIonDetector], command, value);                          
               }
               else if(command.hasPrefix("ExperimentalSettings.Instrument.Software."))
               {
@@ -627,10 +661,14 @@ cout << "BBB: " << strings.size() << endl;
                  software.setName(value);
                 else if(command.hasPrefix("ExperimentalSettings.Instrument.Software.Version"))
                  software.setVersion(value);
+                else
+                  addMetaInfo_(software, command, value);                 
               }
               else if(command.hasPrefix("ExperimentalSettings.Instrument.IonOptics"))
                 instrument.setIonOptics((Instrument::IonOpticsType) findIndex_(
                   value, Instrument::NamesOfIonOpticsType, Instrument::SIZE_OF_IONOPTICSTYPE));
+              else
+                addMetaInfo_(instrument, command, value);                          
             }  
             else if(command.hasPrefix("ExperimentalSettings.HPLC."))
             {
@@ -663,50 +701,56 @@ cout << "BBB: " << strings.size() << endl;
                   if(percentageInfo.size() == 3)
                     gradient.setPercentage(percentageInfo[0], percentageInfo[1].toInt(), (UInt) percentageInfo[2].toInt());
                 }
+                else
+                  addMetaInfo_(gradient, command, value);                      
               }
+              else
+                addMetaInfo_(hplc, command, value);               
             }    
             else if(command.hasPrefix("ExperimentalSettings.DateTime"))
               exp.setDateTime(DateTime(value));
             else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification."))
             {
-              std::vector<ProteinIdentification>& ProteinIdentificationsList = exp.getProteinIdentifications();
+              std::vector<ProteinIdentification>& proteinIdentificationsList = exp.getProteinIdentifications();
               
               if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.Size"))
-                resizeList_(ProteinIdentificationsList, value.toInt());
+                resizeList_(proteinIdentificationsList, value.toInt());
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.Index"))
-                setIndex_(indexProteinIdentification, value.toInt()-1, ProteinIdentificationsList);
+                setIndex_(indexProteinIdentification, value.toInt()-1, proteinIdentificationsList);
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.ProteinHit."))
               {
-                std::vector<ProteinHit>& ProteinHitList = ProteinIdentificationsList[indexProteinIdentification].getHits();
+                std::vector<ProteinHit>& proteinHitList = proteinIdentificationsList[indexProteinIdentification].getHits();
                 
                 if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.ProteinHit.Size"))
-                  resizeList_(ProteinHitList, value.toInt());
+                  resizeList_(proteinHitList, value.toInt());
                 else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.ProteinHit.Index"))
-                  setIndex_(indexProteinHit, value.toInt()-1, ProteinHitList);
+                  setIndex_(indexProteinHit, value.toInt()-1, proteinHitList);
                 else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.ProteinHit.Score"))
-                  ProteinHitList[indexProteinHit].setScore(value.toDouble());
+                  proteinHitList[indexProteinHit].setScore(value.toDouble());
                 else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.ProteinHit.Rank"))
-                  ProteinHitList[indexProteinHit].setRank((UInt) value.toInt());
+                  proteinHitList[indexProteinHit].setRank((UInt) value.toInt());
                 else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.ProteinHit.Accession"))
-                  ProteinHitList[indexProteinHit].setAccession(value);                  
+                  proteinHitList[indexProteinHit].setAccession(value);                  
                 else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.ProteinHit.Sequence"))
-                  ProteinHitList[indexProteinHit].setSequence(value);
+                  proteinHitList[indexProteinHit].setSequence(value);
+                else
+                  addMetaInfo_(proteinHitList[indexProteinHit], command, value);                  
               }
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.SignificanceThreshold"))
-                ProteinIdentificationsList[indexProteinIdentification].setSignificanceThreshold(value.toDouble());
+                proteinIdentificationsList[indexProteinIdentification].setSignificanceThreshold(value.toDouble());
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.ScoreType"))
-                ProteinIdentificationsList[indexProteinIdentification].setScoreType(value);                  
+                proteinIdentificationsList[indexProteinIdentification].setScoreType(value);                  
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.HigherScoreBetter"))
-                ProteinIdentificationsList[indexProteinIdentification].setHigherScoreBetter(value=="TRUE" ? true : false);                       
+                proteinIdentificationsList[indexProteinIdentification].setHigherScoreBetter(value=="TRUE" ? true : false);                       
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.DateTime"))
-                ProteinIdentificationsList[indexProteinIdentification].setDateTime(DateTime(value));
+                proteinIdentificationsList[indexProteinIdentification].setDateTime(DateTime(value));
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.SearchEngine"))
-                ProteinIdentificationsList[indexProteinIdentification].setSearchEngine(value);
+                proteinIdentificationsList[indexProteinIdentification].setSearchEngine(value);
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.SearchEngineVersion"))
-                ProteinIdentificationsList[indexProteinIdentification].setSearchEngineVersion(value);
+                proteinIdentificationsList[indexProteinIdentification].setSearchEngineVersion(value);
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.SearchParameters."))
               {
-                ProteinIdentification::SearchParameters& searchParameters = ProteinIdentificationsList[indexProteinIdentification].getSearchParameters();
+                ProteinIdentification::SearchParameters& searchParameters = proteinIdentificationsList[indexProteinIdentification].getSearchParameters();
                 
                 if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.SearchParameters.Database"))
                   searchParameters.db = value;
@@ -730,21 +774,25 @@ cout << "BBB: " << strings.size() << endl;
                   searchParameters.missed_cleavages = (UInt) value.toInt();
                 else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.SearchParameters.PeakMassTolerance"))
                   searchParameters.peak_mass_tolerance = value.toDouble();
+                else
+                  addMetaInfo_(searchParameters, command, value);                  
               } 
               else if(command.hasPrefix("ExperimentalSettings.ProteinIdentification.Identifier"))
-                ProteinIdentificationsList[indexProteinIdentification].setIdentifier(value);                                  
+                proteinIdentificationsList[indexProteinIdentification].setIdentifier(value);       
+              else
+                addMetaInfo_(proteinIdentificationsList[indexProteinIdentification], command, value);                                            
             }
           }
         }
-			  catch(const std::exception& e)
-			  {
-cout << "excep: " << e.what() << endl;					  
-				  throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" );
-			  }        
+	      catch(const std::exception& e)
+	      {
+    cout << "excep: " << e.what() << endl;					  
+		      throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"", "");
+	      }        
       }
 
       template <class PeakType>
-      void importExperimentalSettingsFromFile(const String& filename, MSExperiment<PeakType>& exp) const
+      void settingsFile(const String& filename, MSExperiment<PeakType>& exp) const
       {				        
         std::ifstream is(filename.c_str());
         if (!is)
@@ -758,10 +806,11 @@ cout << "excep: " << e.what() << endl;
         //read lines
         while (getline(is, line, '\n'))
         {
-          importExperimentalSettingsFromFile(filename, exp);
+          settingsCommand(filename, exp);
         }
         is.close();
-      }
+      }  
+
   };
 } // namespace OpenMS
 

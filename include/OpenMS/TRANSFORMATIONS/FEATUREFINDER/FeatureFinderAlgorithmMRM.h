@@ -29,12 +29,19 @@
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_FEATUREFINDERALGORITHMMRM_H
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithm.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ProductModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgFitter1D.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgModel.h>
+#include <OpenMS/FILTERING/SMOOTHING/SavitzkyGolayFilter.h>
 #include <OpenMS/DATASTRUCTURES/Map.h>
 #include <OpenMS/FILTERING/NOISEESTIMATION/SignalToNoiseEstimatorMeanIterative.h>
+#include <OpenMS/FILTERING/TRANSFORMERS/LinearResampler.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 
 #include <boost/math/special_functions/fpclassify.hpp>
+
+#include <fstream>
+#include <limits>
 
 namespace OpenMS
 {
@@ -60,7 +67,7 @@ namespace OpenMS
 			//@{
 			typedef typename FeatureFinderAlgorithm<PeakType, FeatureType>::MapType MapType;
 			typedef typename MapType::SpectrumType SpectrumType;
-			typedef typename SpectrumType::MetaDataArrays MetaDataArrays;
+			typedef typename SpectrumType::FloatDataArrays FloatDataArrays;
 			//@}
 			
 			using FeatureFinderAlgorithm<PeakType, FeatureType>::param_;
@@ -69,7 +76,15 @@ namespace OpenMS
 			using FeatureFinderAlgorithm<PeakType, FeatureType>::defaults_;
 			using FeatureFinderAlgorithm<PeakType, FeatureType>::map_;
 				
-		public:			
+		public:
+
+			enum
+      {
+        RT = Peak2D::RT,
+        MZ = Peak2D::MZ
+      };
+
+
 			/// default constructor 
 			FeatureFinderAlgorithmMRM() 
 				: FeatureFinderAlgorithm<PeakType,FeatureType>()
@@ -81,7 +96,9 @@ namespace OpenMS
 				defaults_.setValue("min_num_peaks_per_feature", 5, "Minimal number of peaks which are needed for a single feature", StringList::create("advanced"));
 				defaults_.setMinInt("min_num_peaks_per_feature", 1);
 				defaults_.setValue("min_signal_to_noise_ratio", 2.0, "Minimal S/N ratio a peak must have to be taken into account.");
-				defaults_.setMinFloat("min_signal_to_noise_ratio", 1.0);
+				//defaults_.setMinFloat("min_signal_to_noise_ratio", 1.0);
+				defaults_.setValue("write_debuginfo", "false", "If set to true, for each feature a plot will be created, in the subdirectory 'debug'", StringList::create("advanced"));
+				defaults_.setValidStrings("write_debuginfo", StringList::create("true,false"));
 				
 				this->defaultsToParam_();
 			}
@@ -93,14 +110,14 @@ namespace OpenMS
 				//General initialization
 				//-------------------------------------------------------------------------
 
-				Map<Size, Map<Size, std::vector<std::pair<double, PeakType> > > > traces;
-				double binning_factor(param_.getValue("binning_factor"));
+				Map<Size, Map<Size, std::vector<std::pair<DoubleReal, PeakType> > > > traces;
+				DoubleReal binning_factor(param_.getValue("binning_factor"));
 
 				ff_->startProgress(0, map_->size(), "Finding MRM traces.");	
 				for (Size i = 0; i != map_->size(); ++i)
 				{
-					double prec_mz(0.0);
-					double rt((*map_)[i].getRT());
+					DoubleReal prec_mz(0.0);
+					DoubleReal rt((*map_)[i].getRT());
 					if ((*map_)[i].getPrecursors().size() != 0)
 					{
 						prec_mz = (*map_)[i].getPrecursors().begin()->getMZ();
@@ -116,15 +133,18 @@ namespace OpenMS
 				ff_->endProgress();
 				
 				SignalToNoiseEstimatorMeanIterative<RichPeakSpectrum> sne;
+				LinearResampler resampler;
 
 				// Split the whole map into traces (== MRM transitions)
 				ff_->startProgress(0, traces.size(), "Finding features in traces.");
 				Size counter(0);
-				typename Map<Size, Map<Size, std::vector<std::pair<double, PeakType> > > >::const_iterator it1 = traces.begin();
-				typename Map<Size, std::vector<std::pair<double, PeakType> > >::const_iterator it2;
-				double min_rt_distance(param_.getValue("min_rt_distance"));
-				double min_signal_to_noise_ratio(param_.getValue("min_signal_to_noise_ratio"));
+				typename Map<Size, Map<Size, std::vector<std::pair<DoubleReal, PeakType> > > >::const_iterator it1 = traces.begin();
+				typename Map<Size, std::vector<std::pair<DoubleReal, PeakType> > >::const_iterator it2;
+				DoubleReal min_rt_distance(param_.getValue("min_rt_distance"));
+				DoubleReal min_signal_to_noise_ratio(param_.getValue("min_signal_to_noise_ratio"));
 				Size min_num_peaks_per_feature((UInt)param_.getValue("min_num_peaks_per_feature"));
+				Size feature_id(0);
+				//bool write_debuginfo(param_.getValue("write_debuginfo").toBool());
 				for (; it1 != traces.end(); ++it1)
 				{
 					for (it2 = it1->second.begin(); it2 != it1->second.end(); ++it2)
@@ -133,7 +153,7 @@ namespace OpenMS
 
 						// throw the peaks into a "spectrum" where the m/z values are RTs in reality (more a chromatogram)
 						RichPeakSpectrum chromatogram;
-						typename std::vector<std::pair<double, PeakType> >::const_iterator it3 = it2->second.begin();
+						typename std::vector<std::pair<DoubleReal, PeakType> >::const_iterator it3 = it2->second.begin();
 						for (; it3 != it2->second.end(); ++it3)
 						{
 							RichPeak1D peak;
@@ -141,15 +161,68 @@ namespace OpenMS
 							peak.setIntensity(it3->second.getIntensity());
 							chromatogram.push_back(peak);
 						}
+				
+						// TODO
+						// find presection of separated RTs of peaks;
+						// resampling to min distance?
+						// for each of the section, try to estimate S/N
+						// find core regions and fit them
+						// report features
+						//
+						/*
+						// resample the chromatogram, first find minimal distance and use this as resampling distance
+						DoubleReal min_distance(std::numeric_limits<DoubleReal>::max()), old_rt(0);
+						for (RichPeakSpectrum::ConstIterator it = chromatogram.begin(); it != chromatogram.end(); ++it)
+						{
+							std::cerr << "CHROMATOGRAM: " << it->getMZ() << " " << it->getIntensity() << std::endl;
+							DoubleReal rt_diff = it->getMZ() - old_rt;
+							if (rt_diff < min_distance && rt_diff > 0)
+							{
+								min_distance = rt_diff;
+							}
+							old_rt = it->getMZ();
+						}
 						
+						std::cerr << "Min_distance=" << min_distance << std::endl;
+
+						if (min_distance > 50 || chromatogram.size() < min_num_peaks_per_feature)
+						{
+							continue;
+						}
+
+						Param resampler_param(resampler.getParameters());
+						resampler_param.setValue("spacing", min_distance);
+						resampler.setParameters(resampler_param);
+						resampler.raster(chromatogram);
+						*/
+
+						// now smooth the data
+						SavitzkyGolayFilter filter;
+						Param filter_param(filter.getParameters());
+						filter_param.setValue("frame_length", 5);
+						filter.setParameters(filter_param);
+						filter.filter(chromatogram);
+
 						// calculate signal to noise levels
 						RichPeakSpectrum sn_chrom;
+						Param sne_param(sne.getParameters());
+						// set window length to whole range, we expect only at most one signal
+						//std::cerr << "win_len m/z: " <<  (chromatogram.end()-1)->getMZ() << " " << chromatogram.begin()->getMZ() << std::endl;
+						sne_param.setValue("win_len", (chromatogram.end()-1)->getMZ() - chromatogram.begin()->getMZ());
+
+						if ((DoubleReal)sne_param.getValue("win_len") < 10e-4)
+						{
+							continue;
+						}
+						sne.setParameters(sne_param);
 						sne.init(chromatogram.begin(), chromatogram.end());
+
+						//std::cerr << (DoubleReal)it1->first  / (DoubleReal)binning_factor << " " << (DoubleReal)it2->first / (DoubleReal)binning_factor << " ";
 						for (RichPeakSpectrum::Iterator sit = chromatogram.begin(); sit != chromatogram.end(); ++sit)
 						{
-							double sn(sne.getSignalToNoise(sit));
+							DoubleReal sn(sne.getSignalToNoise(sit));
 							sit->setMetaValue("SN", sn);
-							////std::cerr << sit->getMZ() << " " << sit->getIntensity() << " " << sn << std::endl;
+							std::cerr << sit->getMZ() << " " << sit->getIntensity() << " " << sn << std::endl;
 							if (sn > min_signal_to_noise_ratio)
 							{
 								sn_chrom.push_back(*sit);
@@ -157,10 +230,11 @@ namespace OpenMS
 						}
 
 						// now find sections in the chromatogram which have high s/n value
-						double last_rt(0), this_rt(0);
+						DoubleReal last_rt(0), this_rt(0);
 						std::vector<std::vector<DPosition<2> > > sections;
 						for (RichPeakSpectrum::Iterator sit = sn_chrom.begin(); sit != sn_chrom.end(); ++sit)
 						{
+							//std::cerr << "SECTIONS: " << sit->getMZ() << " " << sit->getIntensity() << std::endl;
 							this_rt = sit->getMZ();
 							//std::cerr << this_rt << " " << last_rt << std::endl;
 							if (sections.size() == 0 || (this_rt - last_rt) > min_rt_distance)
@@ -178,7 +252,6 @@ namespace OpenMS
 						}
 
 						// for each section estimate the rt min/max and add up the intensities
-						// TODO do some fitting
 						for (Size i = 0; i != sections.size(); ++i)
 						{
 							if (sections[i].size() > min_num_peaks_per_feature)
@@ -192,28 +265,78 @@ namespace OpenMS
 									data_to_fit.push_back(p);
 								}
 								InterpolationModel* model_rt = 0;
-								double quality = fitRT_(data_to_fit, model_rt);
+								DoubleReal quality = fitRT_(data_to_fit, model_rt);
 
 								Feature f;
 								f.setQuality(0, quality);
 								f.setOverallQuality(quality);
 
 								ConvexHull2D::PointArrayType hull_points(sections[i].size());
-								double intensity_sum(0.0), rt_sum(0.0);
+								DoubleReal intensity_sum(0.0), rt_sum(0.0);
 			          for (Size j = 0; j < sections[i].size(); ++j)
 			          {
 			            hull_points[j][0] = sections[i][j].getX();
-									hull_points[j][1] = (double)it2->first / binning_factor;
+									hull_points[j][1] = (DoubleReal)it2->first / (DoubleReal)binning_factor;
 
 									rt_sum += sections[i][j].getX();
 									intensity_sum += sections[i][j].getY();
 			          }
 
-								f.setRT(rt_sum / (double)sections[i].size());
-								f.setMZ((double)it2->first / binning_factor);
+								f.setRT(rt_sum / (DoubleReal)sections[i].size());
+								f.setMZ((DoubleReal)it2->first / (DoubleReal)binning_factor);
 								f.setIntensity(intensity_sum);
 								f.getConvexHulls().push_back(hull_points);
-								f.setMetaValue("MZ", (double)it1->first / binning_factor);
+								f.setMetaValue("MZ", (DoubleReal)it1->first / (DoubleReal)binning_factor);
+
+
+								// add the model to the feature
+								ProductModel<2> prod_model;
+								prod_model.setModel(RT, model_rt);
+								f.setModelDescription(ModelDescription<2>(&prod_model));
+
+								
+								feature_id++;
+								//if (write_debuginfo)
+								//{
+									String base_name = "debug/" + String((DoubleReal)f.getMetaValue("MZ")) + "_id" + String(feature_id) + "_RT" + String(f.getRT()) + "_Q3" + String(f.getMZ());
+									std::ofstream data_out(String(base_name + "_data.dat").c_str());
+									for (Size j = 0; j < sections[i].size(); ++j)
+									{
+										// RT intensity
+										DoubleReal rt = sections[i][j].getX();
+										DoubleReal intensity = sections[i][j].getY();
+										data_out << rt << " " << intensity << std::endl;
+									}
+
+									data_out.close();
+
+									std::ofstream fit_out(String(base_name + "_rt_fit.dat").c_str());
+									EmgModel emg_model;
+									emg_model.setParameters(model_rt->getParameters());
+									emg_model.setSamples();
+									DoubleReal bb_min((DoubleReal)emg_model.getParameters().getValue("bounding_box:min"));
+									DoubleReal bb_max((DoubleReal)emg_model.getParameters().getValue("bounding_box:max"));
+									DoubleReal int_step((DoubleReal)emg_model.getParameters().getValue("interpolation_step"));
+								  for (DoubleReal pos = bb_min; pos < bb_max; pos += int_step)
+								  {
+										// RT intensity
+								    fit_out << pos << " " << emg_model.getIntensity(pos) << std::endl;
+									}
+									fit_out.close();
+
+									std::ofstream gnuplot_out(String(base_name + "_gnuplot.gpl").c_str());
+									gnuplot_out << "set terminal png" << std::endl;
+									gnuplot_out << "set output \"" << base_name << ".png\"" << std::endl;
+									gnuplot_out << "plot '" << base_name << "_data.dat' w i, '" << base_name << "_rt_fit.dat' w lp title 'quality=" << f.getOverallQuality() << "'" << std::endl;
+									gnuplot_out.close();
+									String gnuplot_call = "gnuplot " + base_name + "_gnuplot.gpl";
+									int error = system(gnuplot_call.c_str());
+									if (error != 0)
+									{
+										std::cerr << "An error occurred during the gnuplot execution" << std::endl;
+									}
+								//}
+
 								features_->push_back(f);
 							}
 						}

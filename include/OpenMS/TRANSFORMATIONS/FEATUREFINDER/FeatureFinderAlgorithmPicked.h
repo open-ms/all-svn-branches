@@ -29,7 +29,7 @@
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_FEATUREFINDERALGORITHMPICKED_H
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithm.h>
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/CHEMISTRY/IsotopeDistribution.h>
@@ -69,7 +69,7 @@ namespace OpenMS
 			//@{
 			typedef typename FeatureFinderAlgorithm<PeakType, FeatureType>::MapType MapType;
 			typedef typename MapType::SpectrumType SpectrumType;
-			typedef typename SpectrumType::MetaDataArrays MetaDataArrays;
+			typedef typename SpectrumType::FloatDataArrays FloatDataArrays;
 			//@}
 			
 			using FeatureFinderAlgorithm<PeakType, FeatureType>::param_;
@@ -397,16 +397,16 @@ namespace OpenMS
 				defaults_.setValue("feature:min_trace_score",0.5, "Trace score threshold.\nTraces below this threshold are removed after the model fitting.", StringList::create("advanced"));
 				defaults_.setMinFloat("feature:min_trace_score",0.0);
 				defaults_.setMaxFloat("feature:min_trace_score",1.0);
-				defaults_.setValue("feature:min_rt_span",0.333, "Mimum RT span in relation to extended area that has to remain after model fitting.", StringList::create("advanced"));
+				defaults_.setValue("feature:min_rt_span",0.333, "Minimum RT span in relation to extended area that has to remain after model fitting.", StringList::create("advanced"));
 				defaults_.setMinFloat("feature:min_rt_span",0.0);
 				defaults_.setMaxFloat("feature:min_rt_span",1.0);
+				defaults_.setValue("feature:max_rt_span",2.5, "Maximum RT span in relation to extended area that the model is allowed to have.", StringList::create("advanced"));
+				defaults_.setMinFloat("feature:max_rt_span",0.5);
 				defaults_.setValue("feature:max_intersection",0.35, "Maximum allowed intersection of features.", StringList::create("advanced"));
 				defaults_.setMinFloat("feature:max_intersection",0.0);
 				defaults_.setMaxFloat("feature:max_intersection",1.0);
 				defaults_.setValue("feature:reported_mz","maximum", "The mass type that is reported for features.\n'maximum' returns the m/z value of the highest mass trace.\n'average' returns the intensity-weighted average m/z value of all contained peaks.\n'monoisotopic' returns the monoisotopic m/z value derived from the fitted isotope model.");
 				defaults_.setValidStrings("feature:reported_mz",StringList::create("maximum,average,monoisotopic"));
-				defaults_.setValue("feature:report_rt_apex_spectrum","false", "If 'true' the spectrum  number of the RT apex is reported as the meta data value 'rt_apex_spectrum'.",StringList::create("advanced"));
-				defaults_.setValidStrings("feature:report_rt_apex_spectrum",StringList::create("true,false"));
 				defaults_.setSectionDescription("feature","Settings for the features (intensity, quality assessment, ...)");
 				//debug settings
 				defaults_.setValue("debug:pseudo_rt_shift",500.0,"Pseudo RT shift used when .", StringList::create("advanced"));
@@ -439,20 +439,20 @@ namespace OpenMS
 				for (Size s=0; s<map_.size(); ++s)
 				{
 					Size scan_size = map_[s].size();
-					map_[s].getMetaDataArrays().resize(meta_array_count);
-					map_[s].getMetaDataArrays()[0].setName("trace_score");
-					map_[s].getMetaDataArrays()[0].assign(scan_size,0.0);
-					map_[s].getMetaDataArrays()[1].setName("intensity_score");
-					map_[s].getMetaDataArrays()[1].assign(scan_size,0.0);
-					map_[s].getMetaDataArrays()[2].setName("overall_score");
-					map_[s].getMetaDataArrays()[2].assign(scan_size,0.0);
-					map_[s].getMetaDataArrays()[3].setName("local_max");
-					map_[s].getMetaDataArrays()[3].assign(scan_size,0.0);
+					map_[s].getFloatDataArrays().resize(meta_array_count);
+					map_[s].getFloatDataArrays()[0].setName("trace_score");
+					map_[s].getFloatDataArrays()[0].assign(scan_size,0.0);
+					map_[s].getFloatDataArrays()[1].setName("intensity_score");
+					map_[s].getFloatDataArrays()[1].assign(scan_size,0.0);
+					map_[s].getFloatDataArrays()[2].setName("overall_score");
+					map_[s].getFloatDataArrays()[2].assign(scan_size,0.0);
+					map_[s].getFloatDataArrays()[3].setName("local_max");
+					map_[s].getFloatDataArrays()[3].assign(scan_size,0.0);
 					UInt charge = charge_low;
 					for (Size i = 4; i< meta_array_count; ++i)
 					{
-						map_[s].getMetaDataArrays()[i].setName(String("pattern_score_")+charge);
-						map_[s].getMetaDataArrays()[i].assign(scan_size,0.0);
+						map_[s].getFloatDataArrays()[i].setName(String("pattern_score_")+charge);
+						map_[s].getFloatDataArrays()[i].assign(scan_size,0.0);
 						++charge;
 					}
 				}
@@ -521,7 +521,7 @@ namespace OpenMS
 					{
 						for (Size p=0; p<map_[s].size(); ++p)
 						{
-							map_[s].getMetaDataArrays()[1][p] = intensityScore_(s,p);
+							map_[s].getFloatDataArrays()[1][p] = intensityScore_(s,p);
 						}
 					}
 					ff_->endProgress();
@@ -587,8 +587,8 @@ namespace OpenMS
 							DoubleReal trace_score = std::accumulate(scores.begin(), scores.end(),0.0) / scores.size();
 							
 							//store final score for later use
-							map_[s].getMetaDataArrays()[0][p] = trace_score;
-							map_[s].getMetaDataArrays()[3][p] = is_max_peak;
+							map_[s].getFloatDataArrays()[0][p] = trace_score;
+							map_[s].getFloatDataArrays()[3][p] = is_max_peak;
 						}
 					}
 					ff_->endProgress();
@@ -636,9 +636,9 @@ namespace OpenMS
 							{
 								for (Size i=0; i<pattern.peak.size(); ++i)
 								{
-									if (pattern.peak[i]>=0 && pattern_score>map_[pattern.spectrum[i]].getMetaDataArrays()[charge_index_meta][pattern.peak[i]])
+									if (pattern.peak[i]>=0 && pattern_score>map_[pattern.spectrum[i]].getFloatDataArrays()[charge_index_meta][pattern.peak[i]])
 									{
-										map_[pattern.spectrum[i]].getMetaDataArrays()[charge_index_meta][pattern.peak[i]] = pattern_score;
+										map_[pattern.spectrum[i]].getFloatDataArrays()[charge_index_meta][pattern.peak[i]] = pattern_score;
 									}
 								}
 							}
@@ -663,7 +663,7 @@ namespace OpenMS
 						//iterate over peaks
 						for (Size p=0; p<map_[s].size(); ++p)
 						{	
-							MetaDataArrays& meta = map_[s].getMetaDataArrays();
+							FloatDataArrays& meta = map_[s].getFloatDataArrays();
 							meta[2][p] = std::pow(meta[0][p]*meta[1][p]*meta[charge_index_meta][p], 1.0f/3.0f);
 							//add seed to vector if certain conditions are fullfilled
 							if (meta[3][p]!=0.0 && meta[2][p]>min_seed_score)
@@ -688,7 +688,7 @@ namespace OpenMS
 						{
 							Size spectrum = seeds[i].spectrum;
 							Size peak = seeds[i].peak;
-							const MetaDataArrays& meta = map_[spectrum].getMetaDataArrays();
+							const FloatDataArrays& meta = map_[spectrum].getFloatDataArrays();
 							Feature tmp;
 							tmp.setIntensity(seeds[i].intensity);
 							tmp.setOverallQuality(meta[2][peak]);
@@ -766,7 +766,7 @@ namespace OpenMS
 						const size_t data_count = traces.getPeakCount();
 					  gsl_multifit_function_fdf func;
 
-						//TODO try baseline fit once more
+						//TODO fit with baseline term once more
 						//baseline estimate
 						traces.updateBaseline();
 						traces.baseline = 0.75 * traces.baseline;
@@ -775,7 +775,8 @@ namespace OpenMS
 						traces[traces.max_trace].updateMaximum();
 						DoubleReal height = traces[traces.max_trace].max_peak->getIntensity() - traces.baseline;
 						DoubleReal x0 = traces[traces.max_trace].max_rt;
-						DoubleReal sigma = (traces[traces.max_trace].peaks.back().first-traces[traces.max_trace].peaks[0].first)/10.0;
+						const DoubleReal region_rt_span = traces[traces.max_trace].peaks.back().first-traces[traces.max_trace].peaks[0].first;
+						DoubleReal sigma = region_rt_span/20.0;
 					  double x_init[param_count] = {height, x0, sigma};
 						log_ << " - estimates - height: " << height << " x0: " << x0 <<  " sigma: " << sigma  << std::endl;
 						
@@ -892,11 +893,20 @@ namespace OpenMS
 						//------------------------------------------------------------------
 					  bool feature_ok = true;
 					  String error_msg = "";
+						//check if the sigma fit was ok (if it is larger than 'max_rt_span')
+						if (feature_ok)
+						{
+							if (5.0*sigma > max_rt_span_*region_rt_span )
+							{
+						  	feature_ok = false;
+						  	error_msg = "Invalid fit: Fitted model is bigger than 'max_rt_span'";
+							}
+						}
 					  //check if the feature is valid
 					  if (!new_traces.isValid(seed_mz, trace_tolerance_))
 					  {
 					  	feature_ok = false;
-					  	error_msg = "Invalid feature after fit";
+					  	error_msg = "Invalid feature after fit - too few traces or peaks left";
 					  }
 						//check if x0 is inside feature bounds
 						if (feature_ok)
@@ -912,7 +922,7 @@ namespace OpenMS
 						if (feature_ok)
 						{
 							std::pair<DoubleReal,DoubleReal> rt_bounds = new_traces.getRTBounds();
-							if ((rt_bounds.second-rt_bounds.first)<min_rt_span_*(2.0*2.5)*sigma )
+							if ((rt_bounds.second-rt_bounds.first) < min_rt_span_*5.0*sigma )
 							{
 						  	feature_ok = false;
 						  	error_msg = "Invalid fit: Less than 'min_rt_span' left after fit";
@@ -1199,17 +1209,6 @@ namespace OpenMS
 				std::cout << "Removed " << removed << " overlapping features." << std::endl;
 				std::cout << features_->size() << " features left." << std::endl;
 				
-				//report RT apex spectrum if wished by the user
-				if((String)(param_.getValue("feature:report_rt_apex_spectrum"))=="true")
-				{
-					for (Size i=0; i<features_->size(); ++i)
-					{
-						Feature& f = features_->operator[](i);
-						Size apex_spectrum = map_.RTBegin(f.getRT()) - map_.begin();
-						f.setMetaValue("rt_apex_spectrum",map_[apex_spectrum].getNativeID());
-					}
-				}
-				
 				//Abort reasons 
 				std::cout << std::endl;
 				std::cout << "Abort reasons during feature construction:" << std::endl;
@@ -1236,9 +1235,9 @@ namespace OpenMS
 					//store input map with calculated scores (without overall score)
 					for (Size s=0; s<map_.size(); ++s)
 					{
-						map_[s].getMetaDataArrays().erase(map_[s].getMetaDataArrays().begin()+2);
+						map_[s].getFloatDataArrays().erase(map_[s].getFloatDataArrays().begin()+2);
 					}					
-					MzDataFile().store("debug/input.mzData", map_);
+					MzMLFile().store("debug/input.mzML", map_);
 				}
 
 				//Execution time
@@ -1281,7 +1280,8 @@ namespace OpenMS
 			UInt intensity_bins_; ///< Number of bins (in RT and MZ) for intensity significance estimation
 			DoubleReal min_isotope_fit_; ///< Mimimum isotope pattern fit for a feature
 			DoubleReal min_trace_score_; ///< Minimum quality of a traces
-			DoubleReal min_rt_span_; ///< Mimum RT range that has to be left after the fit
+			DoubleReal min_rt_span_; ///< Minimum RT range that has to be left after the fit
+			DoubleReal max_rt_span_; ///< Maximum RT range the model is allowed to span
 			DoubleReal max_feature_intersection_; ///< Maximum allowed feature intersection (if larger, that one of the feature is removed)
 			//@}
 
@@ -1314,6 +1314,7 @@ namespace OpenMS
 				min_isotope_fit_ = param_.getValue("feature:min_isotope_fit");
 				min_trace_score_ = param_.getValue("feature:min_trace_score");
 				min_rt_span_ = param_.getValue("feature:min_rt_span");
+				max_rt_span_ = param_.getValue("feature:max_rt_span");
 				max_feature_intersection_ = param_.getValue("feature:max_intersection");
 			}
 			
@@ -1712,7 +1713,7 @@ namespace OpenMS
 					{
 						peak_index=-1;
 					}
-					if (peak_index<0 || map_[spectrum_index].getMetaDataArrays()[2][peak_index]<0.01 || positionScore_( mz, map_[spectrum_index][peak_index].getMZ(), trace_tolerance_)==0.0)
+					if (peak_index<0 || map_[spectrum_index].getFloatDataArrays()[2][peak_index]<0.01 || positionScore_( mz, map_[spectrum_index][peak_index].getMZ(), trace_tolerance_)==0.0)
 					{
 						++missing_peaks;
 						if(missing_peaks>max_missing_trace_peaks_)

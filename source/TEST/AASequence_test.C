@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 //
 
@@ -169,6 +169,14 @@ START_SECTION((DoubleReal getMonoWeight(Residue::ResidueType type = Residue::Ful
 	TOLERANCE_ABSOLUTE(0.01)
 	TEST_REAL_SIMILAR(seq.getMonoWeight(), double(1017.49))
 	TEST_REAL_SIMILAR(seq.getMonoWeight(Residue::YIon, 1), double(1018.5))
+
+	// test N-term modification
+	AASequence seq2("(MOD:09998)DFPIANGER");
+	TEST_REAL_SIMILAR(seq2.getMonoWeight(), double(1122.51));
+
+	// test heavy modification
+	AASequence seq3("(MOD:09999)DFPIANGER");
+	TEST_REAL_SIMILAR(seq3.getMonoWeight(), double(1126.51));
 END_SECTION
 
 START_SECTION(const Residue& operator [] (SignedSize index) const)
@@ -431,7 +439,7 @@ START_SECTION(void setCTerminalModification(const String &modification))
 
 	AASequence seq5("DABCDER(MOD:00177)");
 	AASequence seq6("DABCDER(MOD:00177)(ArgN)");
-	TEST_EQUAL(seq5.isModified(), false)
+	TEST_EQUAL(seq5.isModified(), true)
 	TEST_EQUAL(seq6.isModified(), true)
 	seq5.setCTerminalModification("ArgN");	
 	TEST_EQUAL(seq5 == seq6, true)
@@ -485,10 +493,16 @@ START_SECTION(bool isValid() const)
 	AASequence seq3("(MOD:00051)DFPIANGER");
 	AASequence seq4("DFPIANGER");
 
-	TEST_EQUAL(seq1.isValid(), false)
-	TEST_EQUAL(seq2.isValid(), false)
+	TEST_EQUAL(seq1.isValid(), true)
+	TEST_EQUAL(seq2.isValid(), true)
 	TEST_EQUAL(seq3.isValid(), true)
 	TEST_EQUAL(seq4.isValid(), true)
+
+
+	AASequence seq5("blDABCDEF");
+	AASequence seq6("a");
+	TEST_EQUAL(seq5.isValid(), false)
+	TEST_EQUAL(seq6.isValid(), false)
 END_SECTION
 
 START_SECTION(bool hasNTerminalModification() const)

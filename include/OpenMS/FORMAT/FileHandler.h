@@ -72,7 +72,7 @@ namespace OpenMS
 			@brief Tries to determine the file type (by name or content)
 
 			First the type is determined from the file name.
-			It this fails, the type is determined from the file content.
+			If this fails, the type is determined from the file content.
 
 			@exception Exception::FileNotFound is thrown if the file is not present
 		*/
@@ -105,14 +105,17 @@ namespace OpenMS
     const PeakFileOptions& getOptions() const;
 
 		/**
-			 @brief Loads a file into an MSExperiment
-
-			 @param filename the Filename of the file to load.
-			 @param exp The MSExperiment to load the data into.
-			 @param force_type Forces to load the file with that file type. If no type is forced, it is determined from the extention ( or from the content if that fails).
-			 @param log Progress logging mode
-
-			 @return true if the file could be loaded, false otherwise
+			@brief Loads a file into an MSExperiment
+			
+			@param filename the Filename of the file to load.
+			@param exp The MSExperiment to load the data into.
+			@param force_type Forces to load the file with that file type. If no type is forced, it is determined from the extention ( or from the content if that fails).
+			@param log Progress logging mode
+			
+			@return true if the file could be loaded, false otherwise
+			
+			@exception Exception::FileNotFound is thrown if the file could not be opened
+			@exception Exception::ParseError is thrown if an error occurs during parsing
 		*/
 		template <class PeakType> bool loadExperiment(const String& filename, MSExperiment<PeakType>& exp, FileTypes::Type force_type = FileTypes::UNKNOWN, ProgressLogger::LogType log = ProgressLogger::NONE)
 		{
@@ -133,7 +136,7 @@ namespace OpenMS
 					return false;
 				}
 			}
-
+cout << "filename: " << filename << " - file type: " << typeToName(type) << endl;
 			//load right file
 			switch(type)
 			{
@@ -227,13 +230,16 @@ namespace OpenMS
 		}
 
 		/**
-			 @brief Loads a file into a FeatureMap
-
-			 @param filename the Filename of the file to load.
-			 @param map The FeatureMap to load the data into.
-			 @param force_type Forces to load the file with that file type. If no type is forced, it is determined from the extention ( or from the content if that fails).
-
-			 @return true if the file could be loaded, false otherwise
+			@brief Loads a file into a FeatureMap
+			
+			@param filename the Filename of the file to load.
+			@param map The FeatureMap to load the data into.
+			@param force_type Forces to load the file with that file type. If no type is forced, it is determined from the extention ( or from the content if that fails).
+			
+			@return true if the file could be loaded, false otherwise
+			
+			@exception Exception::FileNotFound is thrown if the file could not be opened
+			@exception Exception::ParseError is thrown if an error occurs during parsing
 		*/
 		template <class FeatureType> bool loadFeatures(const String& filename, FeatureMap<FeatureType>& map, FileTypes::Type force_type = FileTypes::UNKNOWN)
 		{

@@ -35,6 +35,7 @@ namespace OpenMS
 {
   Gradient::Gradient(): 
  //   //PersistentObject(),
+		MetaInfoInterface(), 
     eluents_(),
     times_(),
     percentages_()
@@ -44,6 +45,7 @@ namespace OpenMS
   
   Gradient::Gradient(const Gradient& source):
     //PersistentObject(source),
+		MetaInfoInterface(source),    
     eluents_(source.eluents_),
     times_(source.times_),
     percentages_(source.percentages_)

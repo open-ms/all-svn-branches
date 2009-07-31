@@ -5,9 +5,10 @@ file name: FileInfo_3_input.featureXML
 file type: FeatureXML
 Number of features: 10
 
-retention time range: 537.11 / 539.532
-m/z range: 407.281 / 648.688
-intensity range: 1376 / 6712
+Ranges:
+  retention time:  537.1101 : 539.5316
+  mass-to-charge:  407.281 : 648.688
+  intensity:       1376 : 6712
 
 Charge distribution
 charge 2: 4
@@ -15,7 +16,17 @@ charge 3: 6
 
 -- Meta information --
 
-Document id      : feat
+Document id       : feat
+
+
+-- Data processing information --
+
+Processing 1:
+  Software name    : FileFilter
+  Software version : 1.4
+  Completion time  : 2009-06-19 10:31:17
+  Actions          : Data filtering
+
 
 -- Statistics --
 
@@ -26,7 +37,7 @@ Intensities:
   median: 3049
   upper quartile: 4930.25
   max: 6712
-  variance: 3.49692e+06
+  variance: 3.49692e+006
 
 Overall qualities:
   mean: 0.79855

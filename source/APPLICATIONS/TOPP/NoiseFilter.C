@@ -27,7 +27,7 @@
 #include <OpenMS/config.h>
 
 #include <OpenMS/FILTERING/SMOOTHING/SavitzkyGolayFilter.h>
-#include <OpenMS/FORMAT/MzDataFile.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/FILTERING/SMOOTHING/GaussFilter.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
@@ -78,9 +78,9 @@ class TOPPNoiseFilter
     void registerOptionsAndFlags_()
     {
 	  	registerInputFile_("in","<file>","","input raw data file ");
-			setValidFormats_("in",StringList::create("mzData"));
+			setValidFormats_("in",StringList::create("mzML"));
 			registerOutputFile_("out","<file>","","output raw data file ");
-	  	setValidFormats_("out",StringList::create("mzData"));
+	  	setValidFormats_("out",StringList::create("mzML"));
       registerStringOption_("type","<type>","","smoothing filter type", true);
 			setValidStrings_("type", StringList::create("sgolay,gaussian"));
 			addEmptyLine_();
@@ -120,16 +120,25 @@ class TOPPNoiseFilter
       //-------------------------------------------------------------
       // loading input
       //-------------------------------------------------------------
-
-      MzDataFile mz_data_file;
+      MzMLFile mz_data_file;
       mz_data_file.setLogType(log_type_);
       MSExperiment<Peak1D> exp;
       mz_data_file.load(in,exp);
 
-			//check for peak type (raw data required)
+			//check for peak type (profile data required)
 			if (PeakTypeEstimator().estimateType(exp[0].begin(),exp[0].end())==SpectrumSettings::PEAKS)
 			{
-				writeLog_("Warning: OpenMS peak type estimation indicates that this is not raw data!");
+				writeLog_("Warning: OpenMS peak type estimation indicates that this is not profile data!");
+			}
+			
+			//check if spectra are sorted
+			for (Size i=0; i< exp.size(); ++i)
+			{
+				if (!exp[i].isSorted())
+				{
+					writeLog_("Error: Not all spectra are sorted according to peak m/z positions. Use FileFilter to sort the input!");
+					return INCOMPATIBLE_INPUT_DATA;
+				}
 			}
 
       //-------------------------------------------------------------
@@ -164,6 +173,9 @@ class TOPPNoiseFilter
       // writing output
       //-------------------------------------------------------------
       mz_data_file.store(out,exp);
+
+			//annotate output with data processing info
+			addDataProcessing_(exp, getProcessingInfo_(DataProcessing::SMOOTHING));
 
       return EXECUTION_OK;
     }

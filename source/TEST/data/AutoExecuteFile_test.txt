@@ -1,4 +1,3 @@
-/XMassFile_test/fid
-/XMassFile_test/fid
-/XMassFile_test/fid
-
+/home/guillaume/Bureau/OpenMS-svn/bruker_fid/source/TEST/data/XMassFile_test/fid
+/home/guillaume/Bureau/OpenMS-svn/bruker_fid/source/TEST/data/XMassFile_test/fid
+/home/guillaume/Bureau/OpenMS-svn/bruker_fid/source/TEST/data/XMassFile_test/fid

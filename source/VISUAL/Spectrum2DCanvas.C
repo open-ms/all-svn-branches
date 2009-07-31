@@ -32,7 +32,6 @@
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
-#include <OpenMS/VISUAL/MetaDataBrowser.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum2DPrefDialog.h>
 #include <OpenMS/VISUAL/ColorSelector.h>
 #include <OpenMS/VISUAL/MultiGradientSelector.h>
@@ -292,8 +291,8 @@ namespace OpenMS
 						}
 						if (map[i].getMSLevel()==1 && map[i].size()>0)
 						{
-							scan_indices.push_back(scan_index);
-							peak_indices.push_back(0);
+							scan_indices.push_back(i);
+							peak_indices.push_back(map[i].MZBegin(mz_min) - map[i].begin());
 						}
 						//set the scan index past the end. Otherwise the last scan will be repeated for all following RTs
 						if (i==map.size()-1) scan_index=i+1;
@@ -309,7 +308,7 @@ namespace OpenMS
 						DoubleReal mz_end = mz_start + mz_step_size; 
 						
 						//iterate over all relevant peaks in all relevant scans
-						DoubleReal max = -1.0;
+						Real max = -1.0;
 						for (Size i=0; i<scan_indices.size(); ++i)
 						{
 							Size s = scan_indices[i];
@@ -391,7 +390,7 @@ namespace OpenMS
 		}
 		else if (layer.type==LayerData::DT_FEATURE) //features
 		{
-			bool numbers = getLayerFlag(layer_index,LayerData::F_NUMBERS);
+			bool show_label = (layer.label!=LayerData::L_NONE);
 			UInt num=0;
 			for (FeatureMapType::ConstIterator i = layer.features.begin();
 				   i != layer.features.end();
@@ -407,7 +406,7 @@ namespace OpenMS
 					QRgb color;
 					if (i->metaValueExists(5))
 					{
-						color = QColor(i->getMetaValue(5).toString().c_str()).rgb();
+						color = QColor(i->getMetaValue(5).toQString()).rgb();
 					}
 					else
 					{
@@ -424,16 +423,24 @@ namespace OpenMS
 						buffer_.setPixel(pos.x()   ,pos.y()-1 ,color);
 						buffer_.setPixel(pos.x()   ,pos.y()+1 ,color);
 					}
-					//number and label
-					if (numbers)
+					//labels
+					if (show_label)
 					{
-						//paint label of feature number
-						QString label = QString::number(num);
-						if (i->metaValueExists(3))
+						if (layer.label==LayerData::L_INDEX)
 						{
-							label.append(" (").append(i->getMetaValue(3).toString().c_str()).append(")");
+							painter.drawText(pos.x()+10,pos.y()+10,QString::number(num));
 						}
-						painter.drawText(pos.x()+10,pos.y()+10,label);
+						else if (layer.label==LayerData::L_ID)
+						{
+							if (i->getPeptideIdentifications().size() && i->getPeptideIdentifications()[0].getHits().size())
+							{
+								painter.drawText(pos.x()+10,pos.y()+10,i->getPeptideIdentifications()[0].getHits()[0].getSequence().toString().toQString());
+							}
+						}
+						else if (layer.label==LayerData::L_META_LABEL)
+						{
+							painter.drawText(pos.x()+10,pos.y()+10,i->getMetaValue(3).toQString());
+						}
 					}
 				}
 				++num;
@@ -817,10 +824,14 @@ namespace OpenMS
 			}
 		}
 
+		//Warn if negative intensities are contained
+		if (getMinIntensity(current_layer_)<0.0)
+		{
+			QMessageBox::warning(this,"Warning","This dataset contains negative intensities. Use it at your own risk!");
+		}
+
 		//overall values update
 		recalculateRanges_(0,1,2);
-		//cout << "New data range: " << overall_data_range_ << endl;
-
 		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
 
 		if (getLayerCount()==2)
@@ -1156,7 +1167,7 @@ namespace OpenMS
 			highlightPeak_(painter, measurement_start_);
 		}
 		
-		//draw convex hulls or consensus feeature elements
+		//draw convex hulls or consensus feature elements
 		if (selected_peak_.isValid())
 		{
 			if (getCurrentLayer().type==LayerData::DT_FEATURE)
@@ -1269,13 +1280,17 @@ namespace OpenMS
 					//meta info
 					String status;
 					const ExperimentType::SpectrumType& s = selected_peak_.getSpectrum(getCurrentLayer().peaks);
-					for (Size m=0; m<s.getMetaDataArrays().size();++m)
+					for (Size m=0; m<s.getFloatDataArrays().size();++m)
 					{
-						status += s.getMetaDataArrays()[m].getName() + ": " + s.getMetaDataArrays()[m][selected_peak_.peak] + " ";
+						status += s.getFloatDataArrays()[m].getName() + ": " + s.getFloatDataArrays()[m][selected_peak_.peak] + " ";
+					}
+					for (Size m=0; m<s.getStringDataArrays().size();++m)
+					{
+						status += s.getStringDataArrays()[m].getName() + ": " + s.getStringDataArrays()[m][selected_peak_.peak] + " ";
 					}
 					emit sendStatusMessage(status, 0);
 				}
-				else
+				else // ConsensusFeature
 				{
 					//additional feature info
 					const ConsensusFeature& f = selected_peak_.getFeature(getCurrentLayer().consensus);
@@ -1285,13 +1300,20 @@ namespace OpenMS
 					{
 						status = status + " Charge: " + f.getCharge();
 					}
+					//add meta info
+					std::vector<String> keys;
+					f.getKeys(keys);
+					for (Size m=0; m<keys.size(); ++m)
+					{
+						status = status + " " + keys[m] + ": " + (String)(f.getMetaValue(keys[m]));
+					}
 					emit sendStatusMessage(status, 0);
 				}
 			}
 		}
 		else if (action_mode_==AM_ZOOM)
 		{
-			//Zoom mode => no peak should be select
+			//Zoom mode => no peak should be selected
 			selected_peak_.clear();
 			update_(__PRETTY_FUNCTION__);
 		}
@@ -1542,11 +1564,7 @@ namespace OpenMS
 				}
 				else if (result->parent()==ms1_meta || result->parent()==msn_meta)
 				{
-					SpectrumType& spec = currentPeakData_()[result->data().toInt()];
-					MetaDataBrowser dlg(true, this);
-		      dlg.setWindowTitle("View/Edit meta data");
-		    	dlg.add(spec);
-		      dlg.exec();
+					showMetaData(true, result->data().toInt());
 				}
 			}
 		}
@@ -1593,10 +1611,7 @@ namespace OpenMS
 			{
 				if (result->text().left(3)=="RT:")
 				{
-					MetaDataBrowser dlg(true, this);
-		      dlg.setWindowTitle("View/Edit meta data");
-		      dlg.add(features[result->data().toInt()]);
-		      dlg.exec();
+					showMetaData(true,result->data().toInt());
 				}
 			}
 		}
@@ -1641,10 +1656,7 @@ namespace OpenMS
 			{
 				if (result->text().left(3)=="RT:")
 				{
-					MetaDataBrowser dlg(true, this);
-					dlg.setWindowTitle("View/Edit meta data");
-					dlg.add(features[result->data().toInt()]);
-					dlg.exec();
+					showMetaData(true, result->data().toInt());
 				}
 			}
 		}
@@ -1690,7 +1702,14 @@ namespace OpenMS
 			}
 			else if (result->text()=="Show/hide numbers/labels")
 			{
-				setLayerFlag(LayerData::F_NUMBERS,!getLayerFlag(LayerData::F_NUMBERS));
+				if (layer.label==LayerData::L_NONE) 
+				{
+					getCurrentLayer_().label=LayerData::L_META_LABEL;
+				}
+				else 
+				{
+					getCurrentLayer_().label=LayerData::L_NONE;
+				}
 			}
 			else if (result->text()=="Show/hide elements")
 			{
@@ -1786,17 +1805,18 @@ namespace OpenMS
 
 		if (layer.type==LayerData::DT_PEAK) //peak data
 		{
-    	QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzData files (*.mzData);;All files (*)");
+    	QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzML files (*.mzML);;All files (*)");
 			if (!file_name.isEmpty())
 			{
 				//set up file adapter
-				MzDataFile f;
+				MzMLFile f;
 				f.setLogType(ProgressLogger::GUI);
 
 	    	if (visible) //only visible data
 	    	{
 					ExperimentType out;
 					getVisiblePeakData(out);
+					addDataProcessing_(out, DataProcessing::FILTERING);
 					f.store(file_name,out);
 				}
 				else //all data

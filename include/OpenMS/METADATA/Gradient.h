@@ -28,6 +28,7 @@
 #ifndef OPENMS_METADATA_GRADIENT_H
 #define OPENMS_METADATA_GRADIENT_H
 
+#include <OpenMS/METADATA/MetaInfoInterface.h>
 #include <OpenMS/CONCEPT/Exception.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 
@@ -44,6 +45,7 @@ namespace OpenMS
 		@ingroup Metadata
   */
   class OPENMS_DLLAPI Gradient
+  	: public MetaInfoInterface  
   {
 		public:
       /// Constructor

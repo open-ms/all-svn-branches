@@ -156,6 +156,7 @@ namespace OpenMS
 				Base64 decoder_;
 				UInt peak_count_;
 				String precision_;
+				String compressionType_;
 				String char_rest_;
 				//@}
 				
@@ -202,6 +203,7 @@ namespace OpenMS
 	  		static const XMLCh* s_precision_;
 	  		static const XMLCh* s_byteorder_;
 	  		static const XMLCh* s_pairorder_;
+				static const XMLCh* s_compressionType_;
 	  		static const XMLCh* s_precursorintensity_;
 	  		static const XMLCh* s_precursorcharge_;
 	  		static const XMLCh* s_windowwideness_;
@@ -241,6 +243,7 @@ namespace OpenMS
 		      s_precision_ = xercesc::XMLString::transcode("precision");
 		      s_byteorder_ = xercesc::XMLString::transcode("byteOrder");
 		      s_pairorder_ = xercesc::XMLString::transcode("pairOrder");
+					s_compressionType_ = xercesc::XMLString::transcode("compressionType");
 		      s_precursorintensity_ = xercesc::XMLString::transcode("precursorIntensity");
 		      s_precursorcharge_ = xercesc::XMLString::transcode("precursorCharge");
 		      s_windowwideness_ = xercesc::XMLString::transcode("windowWideness");
@@ -284,6 +287,7 @@ namespace OpenMS
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_precision_ = 0;
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_byteorder_ = 0;
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_pairorder_ = 0;
+		template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_compressionType_ = 0;
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_precursorintensity_ = 0;
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_precursorcharge_ = 0;
   	template <typename MapType> const XMLCh* MzXMLHandler<MapType>::s_windowwideness_ = 0;
@@ -362,22 +366,33 @@ namespace OpenMS
 			}
 			else if (tag=="peaks")
 			{
-				precision_ = attributeAsString_(attributes, s_precision_);
+				//precision
+				precision_ = "32";
+				optionalAttributeAsString_(precision_, attributes, s_precision_);
 				if (precision_!="32" && precision_!="64")
 				{
 					error(LOAD, String("Invalid precision '") + precision_ + "' in element 'peaks'");
 				}
-				String byte_order;
+				//byte order
+				String byte_order="network";
 				optionalAttributeAsString_(byte_order, attributes, s_byteorder_);
 				if (byte_order!="network")
 				{
 					error(LOAD, String("Invalid or missing byte order '") + byte_order + "' in element 'peaks'. Must be 'network'!");
 				}
-				String pair_order;
+				//pair order
+				String pair_order="m/z-int";
 				optionalAttributeAsString_(pair_order, attributes, s_pairorder_);
 				if (pair_order!="m/z-int")
 				{
 					error(LOAD, String("Invalid or missing pair order '") + pair_order + "' in element 'peaks'. Must be 'm/z-int'!");
+				}
+				//compressionType
+				compressionType_ = "none";
+				optionalAttributeAsString_(compressionType_,attributes,s_compressionType_);
+				if(compressionType_!="none" && compressionType_ != "zlib")
+				{
+					 error(LOAD,String("Invalid compression type ")+  compressionType_ + "in elements 'peaks'. Must be 'none' or 'zlib'! "); 
 				}
 			}
 			else if (tag=="precursorMz")
@@ -414,6 +429,12 @@ namespace OpenMS
 				
 				// check if the scan is in the desired MS / RT range
 				UInt ms_level = attributeAsInt_(attributes, s_mslevel_);
+				if (ms_level==0)
+				{
+						warning(LOAD,String("Invalid 'msLevel' attribute with value '0' in 'scan' element found. Assuming ms level 1!"));
+						ms_level = 1;
+				}
+				
 				//parse retention time and convert it from xs:duration to seconds
 				DoubleReal retention_time = 0.0;
 				String time_string = "";
@@ -686,7 +707,14 @@ namespace OpenMS
 				if (precision_=="64")
 				{
 					std::vector<DoubleReal> data;
-					decoder_.decode(char_rest_, Base64::BYTEORDER_BIGENDIAN, data);
+					if(compressionType_ =="zlib")
+					{
+						decoder_.decode(char_rest_, Base64::BYTEORDER_BIGENDIAN, data,true);
+					}
+					else
+					{
+						decoder_.decode(char_rest_, Base64::BYTEORDER_BIGENDIAN, data);
+					}
 					char_rest_ = "";
 					PeakType peak;
 					//push_back the peaks into the container
@@ -705,7 +733,14 @@ namespace OpenMS
 				else	//precision 32
 				{
 					std::vector<Real> data;
-					decoder_.decode(char_rest_, Base64::BYTEORDER_BIGENDIAN, data);
+					if(compressionType_ =="zlib")
+					{
+						decoder_.decode(char_rest_, Base64::BYTEORDER_BIGENDIAN, data,true);
+					}
+					else
+					{
+						decoder_.decode(char_rest_, Base64::BYTEORDER_BIGENDIAN, data);
+					}
 					char_rest_ = "";
 					PeakType peak;
 					//push_back the peaks into the container
@@ -762,7 +797,7 @@ namespace OpenMS
 					
 				if (parent_tag=="msInstrument")
 				{
-					exp_->getInstrument().setMetaValue("#Comment" , String(transcoded_chars));
+					exp_->getInstrument().setMetaValue("#comment" , String(transcoded_chars));
 				}
 				else if (parent_tag=="dataProcessing")
 				{
@@ -908,15 +943,12 @@ namespace OpenMS
 					os << "/>\n";
 				}
 				writeUserParam_(os,inst,3);
-				try
+				
+				if (inst.metaValueExists("#comment"))
 				{
-					DataValue com = inst.getMetaValue("#Comment");
-					if (!com.isEmpty()) os << "\t\t\t<comment>" << com << "</comment>\n";
+					os << "\t\t\t<comment>" << inst.getMetaValue("#comment") << "</comment>\n";
 				}
-				catch(Exception::InvalidValue exception)
-				{
-	
-				}
+				
 				os << "\t\t</msInstrument>\n";
 			}
 			

@@ -52,7 +52,7 @@ START_SECTION(~ChargePair())
 }
 END_SECTION
 
-START_SECTION((ChargePair(const UInt &index0, const UInt &index1, const Int &charge0, const Int &charge1, const UInt &compomer_id, const DoubleReal &mass_diff, const bool active)))
+START_SECTION((ChargePair(const Size &index0, const Size &index1, const Int &charge0, const Int &charge1, const Size &compomer_id, const DoubleReal &mass_diff, const bool active)))
 {
 	ChargePair cp(34,45, 4,5, 99, 12.34, false);
 	TEST_EQUAL(cp.getElementIndex(0), 34);
@@ -74,7 +74,8 @@ START_SECTION((ChargePair(const ChargePair &rhs)))
 	TEST_EQUAL(cp.getCharge(0), 4);
 	TEST_EQUAL(cp.getCharge(1), 5);	
 	TEST_EQUAL(cp.getCompomerId(), 99);
-	TEST_REAL_SIMILAR(cp.getMassDiff(), 12.34);	
+	TEST_REAL_SIMILAR(cp.getMassDiff(), 12.34);
+	TEST_EQUAL(cp.getEdgeScore(), 0);	
 	TEST_EQUAL(cp.isActive(), false);	
 }
 END_SECTION
@@ -88,7 +89,8 @@ START_SECTION((ChargePair& operator=(const ChargePair &rhs)))
 	TEST_EQUAL(cp.getCharge(0), 4);
 	TEST_EQUAL(cp.getCharge(1), 5);	
 	TEST_EQUAL(cp.getCompomerId(), 99);
-	TEST_REAL_SIMILAR(cp.getMassDiff(), 12.34);	
+	TEST_REAL_SIMILAR(cp.getMassDiff(), 12.34);
+	TEST_EQUAL(cp.getEdgeScore(), 0);
 	TEST_EQUAL(cp.isActive(), false);	
 }
 END_SECTION
@@ -115,13 +117,13 @@ START_SECTION((void setCharge(UInt pairID, Int e)))
 }
 END_SECTION
 
-START_SECTION((UInt getElementIndex(UInt pairID) const ))
+START_SECTION((Size getElementIndex(UInt pairID) const ))
 {
 	NOT_TESTABLE //well.. tested below...
 }
 END_SECTION
 
-START_SECTION((void setElementIndex(UInt pairID, UInt e)))
+START_SECTION((void setElementIndex(UInt pairID, Size e)))
 {
   ChargePair cp;
 	cp.setElementIndex(0,123);
@@ -158,6 +160,21 @@ START_SECTION((void setMassDiff(DoubleReal mass_diff)))
 	TEST_REAL_SIMILAR(cp.getMassDiff(), 123.432)
 }
 END_SECTION
+
+START_SECTION((Real getEdgeScore() const))
+{
+	NOT_TESTABLE //well.. tested below...
+}
+END_SECTION
+
+START_SECTION((void setEdgeScore(Real score)))
+{
+  ChargePair cp;
+	cp.setEdgeScore(1123.432f);
+	TEST_REAL_SIMILAR(cp.getEdgeScore(), 1123.432)
+}
+END_SECTION
+		
 
 START_SECTION((bool isActive() const))
 {

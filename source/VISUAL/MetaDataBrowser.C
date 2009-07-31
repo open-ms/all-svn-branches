@@ -80,6 +80,8 @@ namespace OpenMS
 	: QDialog(parent),
 		editable_(editable)
 	{
+		setWindowTitle("Meta data");
+		
 	  setModal(modal);
 
 	  //splitter to hold treewidget and the right part (on a dummy widget)
@@ -604,8 +606,8 @@ namespace OpenMS
 			item = new QTreeWidgetItem(parent, labels );
 		}
 
-		//source file
-		visualize_(meta.getSourceFile(), item);
+		//check for DataProcessing
+		visualizeAll_(meta.getDataProcessing(), item);
 
 		visualize_(dynamic_cast<MetaInfoInterface&>(meta), item);
 

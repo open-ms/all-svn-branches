@@ -119,9 +119,14 @@ namespace OpenMS
 		}
 		
 		recalculateRanges_(0,1,2);
-	
 		resetZoom(false);
 		
+		//Warn if negative intensities are contained
+		if (getMinIntensity(current_layer_)<0.0)
+		{
+			QMessageBox::warning(this,"Warning","This dataset contains negative intensities. Use it at your own risk!");
+		}
+			
 		emit layerActivated(this);
 		openglwidget()->recalculateDotGradient_(current_layer_);
 		update_buffer_ = true;
@@ -314,22 +319,23 @@ namespace OpenMS
     	proposed_name = layer.filename;
     }
     
-  	QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzData files (*.mzData);;All files (*)");
+  	QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzML files (*.mzML);;All files (*)");
 		if (!file_name.isEmpty())
 		{
 			//set up file adapter
-			MzDataFile f;
+			MzMLFile f;
 			f.setLogType(ProgressLogger::GUI);
 		
 	  	if (visible) //only visible data
 	  	{
 				ExperimentType out;
 				getVisiblePeakData(out);
+				addDataProcessing_(out, DataProcessing::FILTERING);
 			  f.store(file_name,out);
 			}
 			else //all data
 			{
-				MzDataFile().store(file_name,layer.peaks);
+				f.store(file_name,layer.peaks);
 			}
 		}
 	}

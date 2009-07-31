@@ -42,6 +42,7 @@ namespace OpenMS
 		@ingroup Metadata
   */
   class OPENMS_DLLAPI HPLC
+  	: public MetaInfoInterface  
   {
 		public:
       /// Constructor

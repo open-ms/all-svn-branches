@@ -42,7 +42,7 @@ namespace OpenMS
 	{
 	}
 
-	void MapAlignmentEvaluationAlgorithmPrecision::evaluate(const ConsensusMap& consensus_map_in, const ConsensusMap& consensus_map_gt, const DoubleReal& rt_dev, const DoubleReal& mz_dev, const Int& int_dev, DoubleReal& out)
+	void MapAlignmentEvaluationAlgorithmPrecision::evaluate(const ConsensusMap& consensus_map_in, const ConsensusMap& consensus_map_gt, const DoubleReal& rt_dev, const DoubleReal& mz_dev, const Peak2D::IntensityType& int_dev, const bool use_charge, DoubleReal& out)
 	{
 		//Precision = 1/N * sum ( gt_subtend_tilde_tool_i / tilde_tool_i )
 
@@ -85,21 +85,22 @@ namespace OpenMS
 			for (Size j = 0; j < cons_map_tool.size(); ++j)
 			{
 				ConsensusFeature& tool_elem = cons_map_tool[j];
+				cons_tool_size = cons_map_tool[j].size();
+
 				gt_i_subtend_tool_j = 0;
 
 				//loop over all features in the ith consensus feature of the gt
 				for (HandleIterator gt_it = gt_elem.begin(); gt_it != gt_elem.end(); ++gt_it)
 				{
-					cons_tool_size = cons_map_tool[j].size();
-
 					//loop over all features in the jth consensus feature of the tool's map
 					for (HandleIterator tool_it = tool_elem.begin(); tool_it != tool_elem.end(); ++tool_it)
 					{
 						//++cons_tool_size;
 
-						if (isSameHandle(*tool_it, *gt_it, rt_dev, mz_dev, int_dev))
+						if (isSameHandle(*tool_it, *gt_it, rt_dev, mz_dev, int_dev, use_charge))
 						{
 							++gt_i_subtend_tool_j;
+							break;
 						}
 					}
 

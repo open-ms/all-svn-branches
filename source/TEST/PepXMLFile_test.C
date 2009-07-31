@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Nico Pfeifer $ 
-// $Authors: $
+// $Maintainer: Chris Bielow, Hendrik Weisser $ 
+// $Authors: Chris Bielow, Hendrik Weisser $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -42,80 +42,71 @@ START_TEST(PepXMLFile, "$Id$")
 PepXMLFile* ptr = 0;
 PepXMLFile file;
 START_SECTION(PepXMLFile())
-{
-        ptr = new PepXMLFile();
-        TEST_NOT_EQUAL(ptr, 0)
-}
+	ptr = new PepXMLFile();
+	TEST_NOT_EQUAL(ptr, 0)
 END_SECTION
 
 START_SECTION(~PepXMLFile())
-{
-        delete ptr;
-}
+	delete ptr;
 END_SECTION
 
-START_SECTION(void load(const String& filename,  std::map<String, std::vector<AASequence> >& peptides))
-{
-	std::map<String, std::vector<AASequence> > peptides;
-	std::map<String, std::vector<AASequence> >::iterator it;
-	std::vector<AASequence> temp_sequences;
-	String filename = OPENMS_GET_TEST_DATA_PATH("PepXMLFile_test.pepXML");
-	
-	file.load(filename, peptides);
-	it = peptides.begin();
-	
-	TEST_EQUAL(peptides.size(), 3)
+START_SECTION(void load(const String& filename, ProteinIdentification& protein, std::vector<PeptideIdentification>& peptides, const String& experiment_name))
+//TODO Hendrik
+ProteinIdentification protein;
+std::vector<PeptideIdentification> peptides;
+String filename = OPENMS_GET_TEST_DATA_PATH("PepXMLFile_test.pepxml"),
+	exp_name = "B08-08318";
+file.load(filename, protein, peptides, exp_name);
 
-	TEST_EQUAL(it->first, "402.42_14_3688.53")
-	temp_sequences = it->second;
-	TEST_EQUAL(temp_sequences.size(), 4)
-	TEST_EQUAL(temp_sequences[0].toUnmodifiedString(), "LAPSAAEDGAFR")
-	TEST_EQUAL(temp_sequences[0].toString(), "LAPSAAEDGAFR")
-	TEST_EQUAL(temp_sequences[1].toUnmodifiedString(), "GQPLGQLEAHR")			
-	TEST_EQUAL(temp_sequences[1].toString(), "GQPLGQLEAHR")
-	TEST_EQUAL(temp_sequences[2].toUnmodifiedString(), "SPAPLVPVRLR")			
-	TEST_EQUAL(temp_sequences[2].toString(), "SPAPLVPVRLR")
-	TEST_EQUAL(temp_sequences[3].toUnmodifiedString(), "QPYLHPSFSK")
-	TEST_EQUAL(temp_sequences[3].toString(), "Q(MOD:00137)PYLHPSFSK")
-	++it;
-	TEST_EQUAL(it->first, "404.875_14_333.442")			
-	temp_sequences = it->second;
-	TEST_EQUAL(temp_sequences.size(), 7)			
-	TEST_EQUAL(temp_sequences[0].toUnmodifiedString(), "AQAVAAEIRER")			
-	TEST_EQUAL(temp_sequences[0].toString(), "AQAVAAEIRER")
-	TEST_EQUAL(temp_sequences[1].toUnmodifiedString(), "AALNAADIVTVR")			
-	TEST_EQUAL(temp_sequences[1].toString(), "AALNAADIVTVR")
-	TEST_EQUAL(temp_sequences[2].toUnmodifiedString(), "AEPAAELALEAK")			
-	TEST_EQUAL(temp_sequences[2].toString(), "AEPAAELALEAK")
-	TEST_EQUAL(temp_sequences[3].toUnmodifiedString(), "LANAASPAITQR")			
-	TEST_EQUAL(temp_sequences[3].toString(), "LANAASPAITQ(MOD:00137)R")
-	TEST_EQUAL(temp_sequences[4].toUnmodifiedString(), "SGHSAVLLQDGK")			
-	TEST_EQUAL(temp_sequences[4].toString(), "SGHSAVLLQ(MOD:00137)DGK")
-	TEST_EQUAL(temp_sequences[5].toUnmodifiedString(), "AGAGIANVQAAIR")			
-	TEST_EQUAL(temp_sequences[5].toString(), "AGAGIAN(MOD:00565)VQ(MOD:00137)AAIR")
-	TEST_EQUAL(temp_sequences[6].toUnmodifiedString(), "VTAPAARSAALGK")
-	TEST_EQUAL(temp_sequences[6].toString(), "VTAPAARSAALGK")
-	++it;
-	TEST_EQUAL(it->first, "411.766_14_3724.98")			
-	temp_sequences = it->second;
-	TEST_EQUAL(temp_sequences.size(), 7)
-	TEST_EQUAL(temp_sequences[0].toUnmodifiedString(), "LLAWMGRTER")
-	TEST_EQUAL(temp_sequences[0].toString(), "LLAWMGRTER")
-	TEST_EQUAL(temp_sequences[1].toUnmodifiedString(), "VLALYRAAQAR")
-	TEST_EQUAL(temp_sequences[1].toString(), "VLALYRAAQ(MOD:00137)AR")			
-	TEST_EQUAL(temp_sequences[2].toUnmodifiedString(), "RTLLMSLTGLK")
-	TEST_EQUAL(temp_sequences[2].toString(), "RTLLMSLTGLK")			
-	TEST_EQUAL(temp_sequences[3].toUnmodifiedString(), "LLGLSRFGLQK")
-	TEST_EQUAL(temp_sequences[3].toString(), "LLGLSRFGLQ(MOD:00137)K")			
-	TEST_EQUAL(temp_sequences[4].toUnmodifiedString(), "MGGIALLDEIGK")
-	TEST_EQUAL(temp_sequences[4].toString(), "M(MOD:00425)GGIALLDEIGK")			
-	TEST_EQUAL(temp_sequences[5].toUnmodifiedString(), "DQMDNALRIR")
-	TEST_EQUAL(temp_sequences[5].toString(), "DQMDN(MOD:00565)ALRIR")			
-	TEST_EQUAL(temp_sequences[6].toUnmodifiedString(), "QTLAGRMVVQK")
-	TEST_EQUAL(temp_sequences[6].toString(), "Q(MOD:00137)TLAGRMVVQ(MOD:00137)K")				
+// peptide IDs:
+TEST_EQUAL(peptides.size(), 3);
+PeptideIdentification first = peptides[0], last = peptides[2];
+TEST_REAL_SIMILAR(first.getMetaValue("RT"), 7.6514);
+TEST_REAL_SIMILAR(first.getMetaValue("MZ"), 609.835525);
+TEST_EQUAL(first.getHits().size(), 1);
+PeptideHit pep_hit = first.getHits()[0];
+TEST_EQUAL(pep_hit.getSequence().toString(), "KRGYVPAEGNK");
+TEST_EQUAL(pep_hit.getRank(), 1);
+// no use checking score, because implementation may still change
+TEST_EQUAL(pep_hit.getCharge(), 2);
+TEST_EQUAL(pep_hit.getProteinAccessions().size(), 1);
+TEST_EQUAL(pep_hit.getProteinAccessions()[0], "ddb000324841");
+TEST_EQUAL(pep_hit.getAABefore(), 'K');
+TEST_EQUAL(pep_hit.getAAAfter(), 'K');
+TEST_EQUAL(first.getIdentifier(), last.getIdentifier());
+pep_hit = last.getHits()[0];
+TEST_EQUAL(pep_hit.getProteinAccessions().size(), 2);
+// TODO: check handling of modifications on 2nd peptide ID ("peptides[1]")
+
+// protein ID:
+TEST_EQUAL(protein.getIdentifier(), first.getIdentifier());
+TEST_NOT_EQUAL(protein.getIdentifier(), "");
+TEST_EQUAL(protein.getSearchEngine(), "X! Tandem");
+std::vector<ProteinHit> prot_hits = protein.getHits();
+TEST_EQUAL(prot_hits.size(), 4);
+StringList accessions;
+for (std::vector<ProteinHit>::iterator it = prot_hits.begin();
+		 it != prot_hits.end(); ++it)
+{
+	accessions << it->getAccession();
 }
+TEST_EQUAL(accessions.contains("ddb000324841"), true);
+TEST_EQUAL(accessions.contains("ddb000014895"), true);
+TEST_EQUAL(accessions.contains("ddb000000416"), true);
+TEST_EQUAL(accessions.contains("ddb000630664"), true);
+
+// search parameters:
+ProteinIdentification::SearchParameters params = protein.getSearchParameters();
+TEST_EQUAL(params.db, "./current.fasta");
+TEST_EQUAL(params.mass_type, ProteinIdentification::MONOISOTOPIC);
+TEST_EQUAL(params.enzyme, ProteinIdentification::TRYPSIN);
+// TODO: check handling of modification info
+
 END_SECTION
 
+START_SECTION(void store(const String& filename, std::vector<ProteinIdentification>& protein_ids, std::vector<PeptideIdentification>& peptide_ids))
+	//TODO Chris
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

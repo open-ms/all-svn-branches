@@ -47,7 +47,7 @@ namespace OpenMS
 			/// Default constructor
 			TOPPASInputFileVertex();
 			/// Constructor
-			TOPPASInputFileVertex(const String& name, const String& type = "");
+			TOPPASInputFileVertex(const QString& file);
 			/// Copy constructor
 			TOPPASInputFileVertex(const TOPPASInputFileVertex& rhs);
 			/// Destructor
@@ -56,9 +56,16 @@ namespace OpenMS
 			TOPPASInputFileVertex& operator= (const TOPPASInputFileVertex& rhs);
 			/// Returns the file name
 			const QString& getFilename();
+			// documented in base class
+			virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
+			// documented in base class
+			virtual QRectF boundingRect() const;
+			// documented in base class
+			virtual QPainterPath shape () const;
 			
 		protected:
 		
+			/// The file name
 			QString file_;
 		
 			///@name reimplemented Qt events

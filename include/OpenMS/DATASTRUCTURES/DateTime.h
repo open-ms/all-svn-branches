@@ -56,6 +56,20 @@ namespace OpenMS
 				Fills the object with an undefined date: 00/00/0000
 			*/
 			DateTime();
+			/**
+				@brief Constructor with date and time
+			 	
+			 	The following formats are supported:
+			 	- MM/dd/yyyy hh:mm:ss
+			 	- dd.MM.yyyy hh:mm:ss
+			 	- yyyy-MM-dd hh:mm:ss
+			 	- yyyy-MM-ddThh:mm:ss (ISO 8601 format)
+			 	- yyyy-MM-ddZ (ISO 8601 format)
+			 	- yyyy-MM-dd+hh:mm (ISO 8601 format)
+
+				@exception Exception::ParseError
+			*/
+			DateTime(const String& date);
 			/// Copy constructor
 			DateTime(const DateTime& date);
 			/// Copy constructor from Qt base class

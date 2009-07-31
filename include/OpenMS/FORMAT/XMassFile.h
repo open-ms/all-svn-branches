@@ -36,12 +36,13 @@ namespace OpenMS
 {
  	/**
  		@brief File adapter for 'XMass Analysis (fid)' files.
- 		test commit
- 		MZ calculs are based on article :
-      A database application for pre-processing, storage and comparison of mass spectra derived from patients and controls
-      Mark K Titulaer, Ivar Siccama, Lennard J Dekker, Angelique LCT van Rijswijk, Ron MA Heeren, Peter A Sillevis Smitt, and Theo M Luider
-      BMC Bioinformatics. 2006; 7: 403
-      http://www.pubmedcentral.nih.gov/picrender.fcgi?artid=1594579&blobtype=pdf
+ 		
+ 		test commit<br />
+ 		MZ calculs are based on article :<br />
+      A database application for pre-processing, storage and comparison of mass spectra derived from patients and controls<br />
+      Mark K Titulaer, Ivar Siccama, Lennard J Dekker, Angelique LCT van Rijswijk, Ron MA Heeren, Peter A Sillevis Smitt, and Theo M Luider<br />
+      BMC Bioinformatics. 2006; 7: 403<br />
+      http://www.pubmedcentral.nih.gov/picrender.fcgi?artid=1594579&blobtype=pdf<br />
   	
   	@ingroup FileIO
   */
@@ -54,10 +55,17 @@ namespace OpenMS
     public:
       /// Default constructor
       XMassFile();
-      
+
+			/**
+				@brief Loads a map from a XMass file.
+
+				@p map has to be a MSSpectrum or have the same interface.
+
+				@exception Exception::FileNotFound is thrown if the file could not be opened
+			*/      
       template <class PeakType>
       void load(const String& filename, MSSpectrum<PeakType>& spectrum)
-      {					        
+      {
         Internal::AcqusHandler acqus(filename.prefix(filename.length()-3) + String("acqus"));
 
         Internal::FidHandler fid(filename);
@@ -83,7 +91,7 @@ namespace OpenMS
         
         // import metadata
         spectrum.setType(SpectrumSettings::RAWDATA);
-        spectrum.setNativeID(acqus.getParam("ID_raw"));
+        spectrum.setNativeID("spectrum=xsd:" + acqus.getParam("ID_raw"));
         
         InstrumentSettings& instrumentSettings = spectrum.getInstrumentSettings();
           instrumentSettings.setScanMode(InstrumentSettings::MASSSPECTRUM);
@@ -104,37 +112,20 @@ namespace OpenMS
           sourceFile.setFileType("Xmass analysis file (fid)");
           // sourceFile.setChecksum(const String &checksum, ChecksumType type);
           sourceFile.setNativeIDType(SourceFile::BRUKER_FID);
-        
-        // std::vector<Product>& product = spectrum.getProducts();
-        // std::vector<Precursor>& precursor = spectrum.getPrecursors();
-        // std::vector<PeptideIdentification>& peptideIdentification = spectrum.getPeptideIdentifications();
       }
-        
+
+			/**
+				@brief Import settings from a XMass file.
+
+				@p map has to be a MSSpectrum or have the same interface.
+
+				@exception Exception::FileNotFound is thrown if the file could not be opened
+			*/              
       template <class PeakType>
       void importExperimentalSettings(const String& filename, MSExperiment<PeakType>& exp)
-      {		        
+      {           
         Internal::AcqusHandler acqus(filename.prefix(filename.length()-3) + String("acqus"));
         ExperimentalSettings& experimentalSettings = exp.getExperimentalSettings();
-        
-        Sample& sample = experimentalSettings.getSample();
-          sample.setName("unknow");
-          sample.setOrganism("unknow");
-          sample.setNumber("unknow");
-          sample.setComment("none");
-          sample.setState(Sample::SAMPLENULL);          
-          sample.setMass(0.0);
-          sample.setVolume(0.0);
-          sample.setConcentration(0.0);
-        
-        std::vector<SourceFile>& sourceFileList = experimentalSettings.getSourceFiles();
-          sourceFileList.clear();
-          for(typename MSExperiment<PeakType>::Iterator it=exp.begin(); it!=exp.end(); ++it)
-          {
-            sourceFileList.push_back(it->getSourceFile());
-          }
-                
-        std::vector<ContactPerson>& contactPerson = experimentalSettings.getContacts();
-          contactPerson.clear();
         
         Instrument& instrument = experimentalSettings.getInstrument();
           instrument.setName(acqus.getParam("SPECTROMETER/DATASYSTEM"));
@@ -164,21 +155,17 @@ namespace OpenMS
               massAnalyzerList[0].setType(MassAnalyzer::TOF);
             else
               massAnalyzerList[0].setType(MassAnalyzer::ANALYZERNULL);
-                               
-        // HPLC& hplc = experimentalSettings.getHPLC();
         
         DateTime date;
           date.set(acqus.getParam("$AQ_DATE").remove('<').remove('>') );
           experimentalSettings.setDateTime(date);
-        
-        String comment("comment");
-          experimentalSettings.setComment(comment);
-        
-        // std::vector<ProteinIdentification>& proteinIdentification = experimentalSettings.getProteinIdentifications();
-        
-
       }
 
+			/**
+				@brief Stores a map in a XMass file (not avaible)
+
+				@exception Exception::FileNotWritable is thrown
+			*/
       template <typename SpectrumType>
       void store(const String& filename, const SpectrumType& spectrum)
       {

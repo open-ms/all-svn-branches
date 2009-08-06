@@ -140,11 +140,21 @@ namespace OpenMS
 		
 			@ingroup MathFunctionsMisc
 		*/
-		inline static bool approximatelyEqual(DoubleReal a, DoubleReal b, DoubleReal tol)
+		inline static bool approximatelyEqual(DoubleReal a, DoubleReal b, DoubleReal tol = 1e-10)
 		{
 			return std::abs(a - b) <= tol;
 		}
-
+		
+		/**
+			@brief Returns if @p a is approximately equal to 0, allowing a tolerance of @p tol
+		
+			@ingroup MathFunctionsMisc
+		*/
+		inline static bool approximatelyNul(DoubleReal a, DoubleReal tol = 1e-10)		
+		{
+			return approximatelyEqual(a, 0.0, tol);
+		}
+		
 	} // namespace Math
 } // namespace OpenMS
 

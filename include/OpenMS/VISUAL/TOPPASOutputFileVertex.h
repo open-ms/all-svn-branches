@@ -64,7 +64,20 @@ namespace OpenMS
 			void startComputation();
 			/// Returns the file name
 			const QString& getFilename();
+			/// Called when the parent node has finished execution
+			void finished();
+			/// Checks if the given file name is valid
+			bool fileNameValid(const QString& file);
 			
+		public slots:
+		
+			//documented in base class
+			virtual void inEdgeHasChanged();
+		
+		signals:
+			
+			void outputFileWritten(const String& file);
+		
 		protected:
 			
 			/// The file name
@@ -74,6 +87,7 @@ namespace OpenMS
       //@{
       void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
 			//@}
+			
 	};
 }
 

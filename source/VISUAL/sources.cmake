@@ -8,10 +8,13 @@ Annotation1DItem.C
 Annotation1DPeakItem.C
 Annotation1DTextItem.C
 Annotations1DContainer.C
+Arrow3d.C
 AxisTickCalculator.C
 AxisWidget.C
+ColorRGBA.C
 ColorSelector.C
 EnhancedTabBar.C
+GridData.C
 HistogramWidget.C
 LayerData.C
 MetaDataBrowser.C

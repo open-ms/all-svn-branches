@@ -32,9 +32,12 @@
 #include <OpenMS/VISUAL/DIALOGS/TOPPASToolConfigDialog.h>
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
+#include <OpenMS/VISUAL/TOPPASOutputFileVertex.h>
+#include <OpenMS/VISUAL/TOPPASOutputFileListVertex.h>
 
 #include <QtGui/QGraphicsScene>
 #include <QtGui/QMessageBox>
+#include <QtCore/QFile>
 
 namespace OpenMS
 {
@@ -43,7 +46,8 @@ namespace OpenMS
 			name_(),
 			type_(),
 			param_(),
-			finished_(false)
+			finished_(false),
+			started_here_(false)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
@@ -56,7 +60,8 @@ namespace OpenMS
 			type_(type),
 			tmp_path_(tmp_path),
 			param_(),
-			finished_(false)
+			finished_(false),
+			started_here_(false)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
@@ -69,7 +74,8 @@ namespace OpenMS
 			type_(rhs.type_),
 			tmp_path_(rhs.tmp_path_),
 			param_(rhs.param_),
-			finished_(rhs.finished_)
+			finished_(rhs.finished_),
+			started_here_(rhs.started_here_)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
@@ -89,6 +95,7 @@ namespace OpenMS
 		type_ = rhs.type_;
 		tmp_path_ = rhs.tmp_path_;
 		finished_ = rhs.finished_;
+		started_here_ = rhs.started_here_;
 		
 		return *this;
 	}
@@ -96,14 +103,14 @@ namespace OpenMS
 	void TOPPASToolVertex::initParam_()
 	{
 		Param tmp_param;
-		String ini_file = tmp_path_ + "TOPPAS_" + name_ + "_";
+		ini_file_ = tmp_path_ + "TOPPAS_" + name_ + "_";
 		if (type_ != "")
 		{
-			ini_file += type_ + "_";
+			ini_file_ += type_ + "_";
 		}
-		ini_file += File::getUniqueName() + "_tmp.ini";
+		ini_file_ += File::getUniqueName() + "_tmp.ini";
 		
-		String call = name_ + " -write_ini " + ini_file + " -log " + ini_file + ".log";
+		String call = name_ + " -write_ini " + ini_file_ + " -log " + ini_file_ + ".log";
 		if (type_ != "")
 		{
 			call += " -type " + type_;
@@ -114,13 +121,13 @@ namespace OpenMS
 			QMessageBox::critical(0,"Error",(String("Could not execute '")+call+"'!\n\nMake sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
 			return;
 		}
-		else if(!File::exists(ini_file))
+		else if(!File::exists(ini_file_))
 		{
-			QMessageBox::critical(0,"Error",(String("Could not open '")+ini_file+"'!").c_str());
+			QMessageBox::critical(0,"Error",(String("Could not open '")+ini_file_+"'!").c_str());
 			return;
 		}
 		
-		tmp_param.load((ini_file).c_str());
+		tmp_param.load((ini_file_).c_str());
 		param_=tmp_param.copy(name_+":1:",true);
 		param_.remove("log");
 		param_.remove("no_progress");
@@ -128,6 +135,9 @@ namespace OpenMS
 		
 		// handled by TOPPAS anyway:
 		param_.remove("type");
+		
+		// remove tmp ini file
+		QFile::remove(ini_file_.toQString());
 	}
 	
 	void TOPPASToolVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
@@ -187,6 +197,7 @@ namespace OpenMS
 			param_.setValue(pe.name, pe.value, pe.description, tags);
 		}
 		
+		//emit somethingHasChanged();
 		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
 	}
 	
@@ -242,11 +253,13 @@ namespace OpenMS
 				}
 				else
 				{
-					std::cerr << "this should not happen\n" << std::endl;
+					std::cerr << "Unexpected parameter value!" << std::endl;
 				}
 				io_infos.push_back(io_info);
 			}
 		}
+		// order in param can change --> sort
+		qSort(io_infos);
 	}
 
 	void TOPPASToolVertex::paint(QPainter* painter, const QStyleOptionGraphicsItem* /*option*/, QWidget* /*widget*/)
@@ -303,25 +316,56 @@ namespace OpenMS
 		return type_;
 	}
 	
-	void TOPPASToolVertex::compute()
+	void TOPPASToolVertex::runRecursively()
 	{
+		if (started_here_)
+		{
+			// make sure pipelines are not run multiple times
+			return;
+		}
+		
+		bool we_depend_on_other_tools = false;
+		// recursive execution of all parent nodes that are tools
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 		{
 			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-			if (tv && !(tv->isFinished()))
+			if (tv)
 			{
-				tv->compute();
+				we_depend_on_other_tools = true;
+				tv->runRecursively();
+			}
+		}
+		if (!we_depend_on_other_tools)
+		{
+			// start actual pipeline execution here
+			started_here_ = true;
+			runToolIfInputReady();
+		}
+	}
+	
+	void TOPPASToolVertex::runToolIfInputReady()
+	{
+		//check if everything ready
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
+			if (tv && !tv->isFinished())
+			{
+				// some tool that we depend on has not finished execution yet --> do not start yet
+				return;
 			}
 		}
 		
-		// all inputs ready now --> write param to ini file and run tool
-		String ini_file_name = tmp_path_+"TOPPAS_" + name_ + "_" + type_ + "_" + File::getUniqueName() + ".ini";
-		param_.store(ini_file_name);
+		// all inputs are ready --> GO!
+		param_.store(ini_file_);
 		
-		String call = name_+" -ini "+ini_file_name+" -log "+ini_file_name+".log";
+		QStringList args;
+		args	<< "-ini"
+					<< ini_file_.toQString()
+					<< "-no_progress";
 		if (type_ != "")
 		{
-			call += " -type "+type_;
+			args << "-type" << type_.toQString();
 		}
 		
 		// add all input file parameters
@@ -332,32 +376,35 @@ namespace OpenMS
 			int param_index = (*it)->getTargetInParam();
 			if (param_index < 0)
 			{
-				std::cerr << "blub" << std::endl;
-				continue;
+				std::cerr << "Input parameter index out of bounds!" << std::endl;
+				break;
 			}
-			call += " -" + in_params[param_index].param_name;
+			args << "-"+(in_params[param_index].param_name).toQString();
+			
 			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
 			if (tv)
 			{
 				int out_param_index = (*it)->getSourceOutParam();
 				if (out_param_index < 0)
 				{
-					std::cerr << "blub" << std::endl;
-					continue;
+					std::cerr << "Output parameter index out of bounds!" << std::endl;
+					break;
 				}
-				call += " " + String(tv->output_file_names_[out_param_index].join(" "));
+				args << tv->output_file_names_[out_param_index];
 				continue;
 			}
+			
 			TOPPASInputFileVertex* ifv = qobject_cast<TOPPASInputFileVertex*>((*it)->getSourceVertex());
 			if (ifv)
 			{
-				call += " " + String(ifv->getFilename());
+				args << ifv->getFilename();
 				continue;
 			}
+			
 			TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
 			if (iflv)
 			{
-				call += " " + String(iflv->getFilenames().join(" "));
+				args << iflv->getFilenames();
 				continue;
 			}
 		}
@@ -366,46 +413,83 @@ namespace OpenMS
 		QVector<IOInfo> out_params;
 		getOutputParameters(out_params);
 		
-		output_file_names_.clear();
-		output_file_names_.resize(out_params.size()); // TODO: better solution?
-		
-		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
+		for (int i = 0; i < out_params.size(); ++i)
 		{
-			int param_index = (*it)->getSourceOutParam();
-			if (param_index < 0)
+			// search for an out edge for this parameter
+			for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
 			{
-				std::cerr << "blub" << std::endl;
-				continue;
-			}
-			call += " -" + out_params[param_index].param_name;
-			
-			if (out_params[param_index].param_name == "out" && out_params[param_index].type == IOInfo::IOT_LIST)
-			{
-				// TODO think about how to determine number of output arguments for output params with list type!
-				// for now, use this workaround for "out" (as many as for "in")... what about the others?!
-				for (int i = 0; i < in_params.size(); ++i)
+				int param_index = (*it)->getSourceOutParam();
+				
+				if (i == param_index)
 				{
-					output_file_names_[param_index].push_back((tmp_path_ + name_ + "_" + type_ + "_" + File::getUniqueName() + ".out").toQString());
+					args	<< "-"+(out_params[param_index].param_name).toQString()
+								<< output_file_names_[param_index]; // can be single file name or list
+					break; // (regardless of the number of out edges, every argument must appear only once)
 				}
-				call += " " + String(output_file_names_[param_index].join(" "));
-			}
-			else if (out_params[param_index].type == IOInfo::IOT_FILE)
-			{
-				output_file_names_[param_index].push_back((tmp_path_ + name_ + "_" + type_ + "_" + File::getUniqueName() + ".out").toQString());
-				call += " " + String(output_file_names_[param_index].join(" "));
-			}
-			else // IOT_LIST
-			{
-				std::cerr << "I don't know what to do in this situation, yet." << std::endl;
 			}
 		}
 		
-		if(system(call.c_str())!=0)
+		//start process
+		QProcess* p = new QProcess();
+		p->setProcessChannelMode(QProcess::MergedChannels);
+		connect(p,SIGNAL(finished(int,QProcess::ExitStatus)),this,SLOT(executionFinished(int,QProcess::ExitStatus)));
+		
+		//start process
+		p->start(name_.toQString(), args);
+		p->waitForStarted();
+		emit toolStarted();
+	}
+	
+	void TOPPASToolVertex::executionFinished(int ec, QProcess::ExitStatus es)
+	{
+		// remove tmp ini file
+		QFile::remove(ini_file_.toQString());
+		
+		if (es != QProcess::NormalExit)
 		{
-			QMessageBox::critical(0,"Error",("Something went wrong!\n\nCheck the log file " + ini_file_name + ".log for possible reasons. If it does not exist, make sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
+			std::cerr << "TOPP tool crashed!" << std::endl;
+			emit toolCrashed();
+			return;
+		}
+		
+		if (ec != 0)
+		{
+			std::cerr << "TOPP tool execution failed! (Exit code: " << ec << ")" << std::endl;
+			emit toolFailed();
+			return;
 		}
 		
 		finished_ = true;
+		// notify all childs that we are finished
+		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
+		{
+			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getTargetVertex());
+			if (tv)
+			{
+				tv->runToolIfInputReady();
+				continue;
+			}
+			TOPPASOutputFileVertex* ofv = qobject_cast<TOPPASOutputFileVertex*>((*it)->getTargetVertex());
+			if (ofv)
+			{
+				ofv->finished();
+				continue;
+			}
+			TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>((*it)->getTargetVertex());
+			if (oflv)
+			{
+				oflv->finished();
+				continue;
+			}
+		}
+		
+		QProcess* p = qobject_cast<QProcess*>(QObject::sender());
+		if (p)
+		{
+			delete p;
+		}
+		
+		emit toolFinished();
 	}
 	
 	bool TOPPASToolVertex::isFinished()
@@ -426,6 +510,107 @@ namespace OpenMS
 	void TOPPASToolVertex::setParam(const Param& param)
 	{
 		param_ = param;
+	}
+	
+	const QVector<QStringList>& TOPPASToolVertex::getOutputFileNames()
+	{
+		return output_file_names_;
+	}
+	
+	void TOPPASToolVertex::updateOutputFileNames()
+	{
+		// recurse
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
+			if (tv)
+			{
+				tv->updateOutputFileNames();
+			}
+		}
+		
+		// now, parents are up-to-date --> update ourself:
+		
+		/*	first, determine (expected) number of elements of
+				output parameters with list type (see HACK below) */
+		QVector<IOInfo> in_params;
+		int in_list_element_count = 0;
+		getInputParameters(in_params);
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			int param_index = (*it)->getTargetInParam();
+			if (param_index < 0)
+			{
+				std::cerr << "Input parameter index out of bounds!" << std::endl;
+				break;
+			}
+			
+			if (in_params[param_index].param_name == "in")
+			{
+				TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
+				if (iflv)
+				{
+					in_list_element_count = (iflv->getFilenames()).count();
+					break;
+				}
+				
+				TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
+				if (tv)
+				{
+					int out_param_index = (*it)->getSourceOutParam();
+					if (out_param_index < 0)
+					{
+						std::cerr << "Output parameter index out of bounds!" << std::endl;
+						break;
+					}
+					in_list_element_count = tv->output_file_names_[out_param_index].count();
+					break;
+				}
+			}
+		}
+		
+		// now, update the output file names:
+		QVector<IOInfo> out_params;
+		getOutputParameters(out_params);
+		
+		output_file_names_.clear();
+		output_file_names_.resize(out_params.size());
+		
+		for (int i = 0; i < out_params.size(); ++i)
+		{
+			// search for an out edge for this parameter
+			for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
+			{
+				int param_index = (*it)->getSourceOutParam();
+				
+				if (i == param_index)
+				{
+					// corresponding out edge found
+					if (out_params[param_index].type == IOInfo::IOT_FILE)
+					{
+						output_file_names_[param_index].push_back((tmp_path_ + "TOPPAS_" + name_ + "_" + type_ + "_" + File::getUniqueName() + "__tmp.out").toQString());
+					}
+					else if (out_params[param_index].type == IOInfo::IOT_LIST)
+					{
+						/*	HACK: for output parameters with list type, we expect
+								the number of elements to be the same as the number of
+								elements of the "in" input list (thus, we also assume that there is
+								an input parameter "in" with list type) */
+						for (int j = 0; j < in_list_element_count; ++j)
+						{
+							output_file_names_[param_index].push_back((tmp_path_ + "TOPPAS_" + name_ + "_" + type_ + "_" + File::getUniqueName() + "__tmp.out").toQString());
+						}
+					}
+					
+					break; // we are done, don't push_back further file names for this parameter
+				}
+			}
+		}
+	}
+	
+	void TOPPASToolVertex::setStartedHere(bool b)
+	{
+		started_here_ = b;
 	}
 
 }

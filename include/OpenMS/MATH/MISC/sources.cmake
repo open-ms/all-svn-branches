@@ -7,6 +7,7 @@ BilinearInterpolation.h
 LinearInterpolation.h
 MathFunctions.h
 NonNegativeLeastSquaresSolver.h
+Struct3d.h
 )
 
 ### add path to the filenames

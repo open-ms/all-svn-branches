@@ -27,13 +27,9 @@
 
 #include <OpenMS/VISUAL/Spectrum3DOpenGLCanvas.h>
 #include <OpenMS/VISUAL/AxisTickCalculator.h>
-//#include <OpenMS/CONCEPT/Exception.h>
 
 #include <QtGui/QMouseEvent>
 #include <QtGui/QKeyEvent>
-
-using std::cout;
-using std::endl;
 
 namespace OpenMS
 {
@@ -57,6 +53,10 @@ namespace OpenMS
 	  zrot_=0;
 	  trans_x_ =0.0;
 	  trans_y_ = 0.0;
+	  
+	  map_ = new MapData();
+	  connect(map_, SIGNAL(complete()), this, SLOT(redraw()));
+	  iClick_ = 0;
 	}
 	  
 	Spectrum3DOpenGLCanvas::~Spectrum3DOpenGLCanvas()
@@ -96,7 +96,7 @@ namespace OpenMS
 	}
 	
 	void Spectrum3DOpenGLCanvas::initializeGL()
-	{
+	{	
 	  QColor color(canvas_3d_.param_.getValue("background_color").toQString());
 	  qglClearColor(color);
 	  glEnable(GL_DEPTH_TEST);
@@ -449,15 +449,47 @@ namespace OpenMS
 	}
 	
 	GLuint Spectrum3DOpenGLCanvas::makeDataAsStick()
-	{
+	{            
 	  String pMode = "surface"; // point, barplot, line, surface, line and surface
 	  String pAspect = "map"; // spectrum, map, pseudogel
     bool pSimple = true;
-    Size cols = 500;
-    Size rows = 100;
 	   
 		GLuint list = glGenLists(1);
 	  glNewList(list,GL_COMPILE);
+	  
+cout << "iClick : " << iClick_ << endl;	  
+	  switch(iClick_)
+	  {
+	    case 0 :
+	      pSimple = true;
+	      pMode = "point";
+	      break;
+	    case 1 :
+	    	map_->setInterpolationMode(MapData::MAP);
+	    	break;
+	    case 2 :
+        map_->setInterpolationMode(MapData::LINE);
+        break;
+      case 3 :
+        map_->setInterpolationMode(MapData::BARPLOT);       
+        break;
+      case 4 :
+        map_->setInterpolationMode(MapData::PSEUDOGEL);     	      
+        break;
+      case 5 :
+        pSimple = true;
+        pMode = "surface";
+        pAspect = "map";
+        break;
+      case 6 :
+        pSimple = true;
+        pMode = "barplot";
+        break;
+      default :
+        pSimple = false;
+        iClick_ = 0;
+        break;
+	  }
 
     try
     {	   
@@ -466,6 +498,29 @@ namespace OpenMS
 			  const LayerData& layer = canvas_3d_.getLayer(iLayer);
 			  if(layer.visible)
 			  {
+		      Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);
+          if(rows < 6)
+            pAspect = "spectrum";
+            
+          Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
+          if(cols > 500) 
+            cols = 500;
+              			  
+          map_->setDataSize(cols, rows);
+          map_->setRange(
+              canvas_3d_.visible_area_.min_[1],
+              canvas_3d_.visible_area_.max_[1],
+              canvas_3d_.visible_area_.min_[0],
+              canvas_3d_.visible_area_.max_[0]);
+          map_->setData(
+            layer.peaks.areaBeginConst(
+              canvas_3d_.visible_area_.min_[1],
+              canvas_3d_.visible_area_.max_[1],
+              canvas_3d_.visible_area_.min_[0],
+              canvas_3d_.visible_area_.max_[0]),
+	          layer.peaks.areaEndConst());
+          map_->setGradient(&layer.gradient);
+    			  
 			    recalculateDotGradient_(iLayer);
 			     
 			    if((Int)layer.param.getValue("dot:shade_mode"))
@@ -474,8 +529,8 @@ namespace OpenMS
 					  glShadeModel(GL_FLAT); 
 			
 			    if(pSimple)
-			    {			  
-			      map2d map(cols, layer.peaks.size(), this, iLayer);
+			    {			  			      
+			      map2d map(cols, rows, this, iLayer);
 			      map.importData(
 			        layer.peaks.areaBeginConst(
 			          canvas_3d_.visible_area_.min_[1],
@@ -496,12 +551,7 @@ namespace OpenMS
 				        {				    
 				          vertexList vertex = map.getVertex(ii,jj);  
 				          qglColor(vertex.color1);
-				          glVertex3d(vertex.x1, vertex.y1, vertex.z1);		        
-if(map.get(ii,jj)>10000.0)				          
-{
-cout << "A x1: " << vertex.x1 << " y1: " << vertex.y1 << " z1: " << vertex.z1 << " x2: " << vertex.x2 << " y2: " << vertex.y2 << " z2: " << vertex.z2 << endl;				          
-cout << "mz: " << map.indexToMz(ii) << " - rt: " << map.indexToRt(jj) << " int: " << map.get(ii,jj) << " scalint: " << scaledIntensity(map.get(ii,jj),iLayer) << " sal2: " << map.scaledIntensity(map.get(ii,jj)) << " - x1: " << -corner_+(GLfloat)scaledMZ(map.indexToMz(ii)) << " y1: " << -corner_ << " z1: " << -near_-2*corner_-(GLfloat)scaledRT(map.indexToRt(jj)) << " - x2: " << -corner_+(GLfloat)scaledMZ(map.indexToMz(ii)) << " y2: " << -corner_+(GLfloat)scaledIntensity(map.get(ii,jj),iLayer) << " z2: " << -near_-2*corner_-(GLfloat)scaledRT(map.indexToRt(jj)) << endl;
-}
+				          glVertex3d(vertex.x1, vertex.y1, vertex.z1);
 				        }
 				      }
 				      glEnd();				    						    
@@ -522,11 +572,6 @@ cout << "mz: " << map.indexToMz(ii) << " - rt: " << map.indexToRt(jj) << " int: 
 				          glVertex3d(vertex.x1, vertex.y1-1, vertex.z1);
 				          qglColor(vertex.color2);
 				          glVertex3d(vertex.x2, vertex.y2+1, vertex.z2);
-if(map.get(ii,jj)>10000.0)			          
-{
-cout << "A x1: " << vertex.x1 << " y1: " << vertex.y1 << " z1: " << vertex.z1 << " x2: " << vertex.x2 << " y2: " << vertex.y2 << " z2: " << vertex.z2 << endl;				          
-cout << "mz: " << map.indexToMz(ii) << " - rt: " << map.indexToRt(jj) << " int: " << map.get(ii,jj) << " - x1: " << -corner_+(GLfloat)scaledMZ(map.indexToMz(ii)) << " y1: " << -corner_ << " z1: " << -near_-2*corner_-(GLfloat)scaledRT(map.indexToRt(jj)) << " - x2: " << -corner_+(GLfloat)scaledMZ(map.indexToMz(ii)) << " y2: " << -corner_+(GLfloat)scaledIntensity(map.get(ii,jj),iLayer) << " z2: " << -near_-2*corner_-(GLfloat)scaledRT(map.indexToRt(jj)) << endl;
-}
 				        }
 				      }
 				      glEnd();
@@ -546,28 +591,28 @@ cout << "mz: " << map.indexToMz(ii) << " - rt: " << map.indexToRt(jj) << " int: 
                 vertexList vertex = map.getVertex(Size(0), jj);
                 qglColor(vertex.color1);
                 glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                //vertexList normal = map.getNormals(0, jj);
-                //glNormal3d(normal.x1, normal.y1, normal.z1);
+                vertexList normal = map.getNormals(0, jj);
+                glNormal3d(normal.x1, normal.y1, normal.z1);
                 
                 vertex = map.getVertex(Size(0), jj+1);
                 qglColor(vertex.color1);
                 glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                //normal = map.getNormals(0, jj+1);
-                //glNormal3d(normal.x1, normal.y1, normal.z1);              	        
+                normal = map.getNormals(0, jj+1);
+                glNormal3d(normal.x1, normal.y1, normal.z1);              	        
 				          
 				        for(Size ii=0; ii<cols-1; ++ii)
 				        {
                   vertex = map.getVertex(ii+1, jj);
                   qglColor(vertex.color1);
                   glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                  //vertexList normal = map.getNormals(ii+1, jj);
-                  //glNormal3d(normal.x1, normal.y1, normal.z1);                
+                  vertexList normal = map.getNormals(ii+1, jj);
+                  glNormal3d(normal.x1, normal.y1, normal.z1);                
                   
                   vertex = map.getVertex(ii+1, jj+1);
                   qglColor(vertex.color1);
                   glVertex3d(vertex.x1, vertex.y1, vertex.z1);					
-                  //normal = map.getNormals(ii+1, jj+1);
-                  //glNormal3d(normal.x1, normal.y1, normal.z1);                   		        
+                  normal = map.getNormals(ii+1, jj+1);
+                  glNormal3d(normal.x1, normal.y1, normal.z1);                   		        
 				        }
 				        glEnd();
 				      }
@@ -862,7 +907,7 @@ cout << "mz: " << map.indexToMz(ii) << " - rt: " << map.indexToRt(jj) << " int: 
 	double Spectrum3DOpenGLCanvas::scaledMZ(double mz)
 	{
 		double scaledmz = mz - canvas_3d_.visible_area_.min_[0];
-		scaledmz = scaledmz * 2.0 * corner_/(canvas_3d_.visible_area_.max_[0]-canvas_3d_.visible_area_.min_[0])/*dis_mz_*/;
+		scaledmz = scaledmz * 2.0 * corner_/(canvas_3d_.visible_area_.max_[0]-canvas_3d_.visible_area_.min_[0]);
 		return scaledmz;
 	}
 	
@@ -911,6 +956,8 @@ cout << "mz: " << map.indexToMz(ii) << " - rt: " << map.indexToRt(jj) << " int: 
 
 	void Spectrum3DOpenGLCanvas::actionModeChange()
 	{
+	  ++iClick_;
+		
 		//change from translate to zoom
 		if (canvas_3d_.action_mode_== SpectrumCanvas::AM_ZOOM)
 		{
@@ -1071,6 +1118,11 @@ cout << "mz: " << map.indexToMz(ii) << " - rt: " << map.indexToRt(jj) << " int: 
 				canvas_3d_.getLayer_(layer).gradient.activatePrecalculationMode(0.0, 100.0, UInt(canvas_3d_.param_.getValue("dot:interpolation_steps")));
 				break;
 		}
+	}
+	
+	void Spectrum3DOpenGLCanvas::redraw()
+	{
+	  paintGL();
 	}
 
 }//end of namespace

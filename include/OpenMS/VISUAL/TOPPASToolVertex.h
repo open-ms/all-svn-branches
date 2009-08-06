@@ -56,6 +56,18 @@ namespace OpenMS
 					IOT_LIST
 				};
 				
+				bool operator< (const IOInfo& rhs) const
+				{
+					if (type != rhs.type)
+					{
+						return type == IOT_FILE;
+					}
+					else
+					{
+						return param_name.compare(rhs.param_name) < 0;
+					}
+				}
+				
 				IOType type;
 				String param_name;
 				StringList valid_types;
@@ -86,8 +98,6 @@ namespace OpenMS
 			virtual QRectF boundingRect() const;
 			// documented in base class
 			virtual QPainterPath shape () const;
-			/// Runs the tool
-			void compute();
 			/// Returns whether this node has already been processed during the current pipeline execution
 			bool isFinished();
 			/// Set whether this node has already been processed during the current pipeline execution
@@ -96,7 +106,33 @@ namespace OpenMS
 			void setParam(const Param& param);
 			/// Returns the Param object of this tool
 			const Param& getParam();
+			/// Starts the pipeline execution recursively
+			void runRecursively();
+			/// Checks if all parent nodes have finished the tool execution and, if so, runs the tool
+			void runToolIfInputReady();
+			/// Returns a vector containing the lists of output files for all output parameters
+			const QVector<QStringList>& getOutputFileNames();
+			/// Updates the vector containing the lists of output files for all output parameters
+			void updateOutputFileNames();
+			/// Sets whether the currently running pipeline has already been started at this vertex
+			void setStartedHere(bool b);
 			
+		public slots:
+		
+			/// Called when the execution of this tool has finished
+			void executionFinished(int ec, QProcess::ExitStatus es);
+		
+		signals:
+		
+			/// Emitted when the tool is started
+			void toolStarted();
+			/// Emitted when the tool is finished
+			void toolFinished();
+			/// Emitted when the tool crashes
+			void toolCrashed();
+			/// Emitted when the tool execution fails
+			void toolFailed();
+		
 		protected:
 		
 			///@name reimplemented Qt events
@@ -114,10 +150,14 @@ namespace OpenMS
 			String type_;
 			/// The temporary path
 			String tmp_path_;
+			/// The temporary ini file
+			String ini_file_;
 			/// The parameters of the tool
 			Param param_;
 			/// Stores whether this node has already been processed during the current pipeline execution
 			bool finished_;
+			/// Stores whether the currently running pipeline has already been started at this vertex
+			bool started_here_;
 			/// Stores the file names of the different output parameters
 			QVector<QStringList> output_file_names_;
 			

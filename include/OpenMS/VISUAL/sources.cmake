@@ -5,7 +5,9 @@ set(directory include/OpenMS/VISUAL)
 set(sources_list
 AxisWidget.h
 ColorSelector.h
+ColorRGBA.h
 EnhancedTabBar.h
+GridData.h
 HistogramWidget.h
 MetaDataBrowser.h
 MultiGradientSelector.h
@@ -53,10 +55,12 @@ Annotation1DItem.h
 Annotation1DPeakItem.h
 Annotation1DTextItem.h
 Annotations1DContainer.h
+Arrow3d.h
 AxisTickCalculator.h
 AxisWidget.h
 ColorSelector.h
 EnhancedTabBar.h
+GridData.h
 HistogramWidget.h
 LayerData.h
 MetaDataBrowser.h

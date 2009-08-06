@@ -53,6 +53,7 @@ IDRTCalibration
 SILACAnalyzer
 PrecursorIonSelector
 IDFileConverter
+CompNovo
 )
 
 ### add filenames to Visual Studio solution tree

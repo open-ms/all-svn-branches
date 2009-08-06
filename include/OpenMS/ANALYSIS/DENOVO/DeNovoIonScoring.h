@@ -56,10 +56,10 @@ namespace OpenMS
 			class IonScore
 			{
         /// score 
-        double score;
+        DoubleReal score;
 
         /// position of the ion
-        double position;
+        DoubleReal position;
 
         /// index of peak in the spectrum, -1 if not in spectrum
         SignedSize index;
@@ -120,4 +120,4 @@ namespace OpenMS
  
 } // namespace OpenMS
 
-#endif // OPENMS_ANALYSIS_ID_DENOVOIONSCORING_H
+#endif // OPENMS_ANALYSIS_DENOVO_DENOVOIONSCORING_H

@@ -101,10 +101,12 @@ namespace OpenMS
 		if (from_)
 		{
 			from_->removeOutEdge(this);
+			disconnect (from_, SIGNAL(somethingHasChanged()), this, SLOT(sourceHasChanged()));
 		}
 		if (to_)
 		{
 			to_->removeInEdge(this);
+			disconnect (this, SIGNAL(somethingHasChanged()), to_, SLOT(inEdgeHasChanged()));
 		}
 	}
 	
@@ -315,6 +317,8 @@ namespace OpenMS
 	{
 		TOPPASIOMappingDialog dialog(this);
 		dialog.exec();
+		
+		emit somethingHasChanged();
 	}
 	
 	void TOPPASEdge::determineEdgeType()
@@ -478,9 +482,10 @@ namespace OpenMS
 				}
 				else
 				{
-					bool type_mismatch = false;
+					bool mismatch_exists = false;
 					foreach (const QString& q_file_name, file_names)
 					{
+						bool type_mismatch = true;
 						const String& file_name = String(q_file_name);
 						String::SizeType extension_start_index = file_name.rfind(".");
 						if (extension_start_index != String::npos)
@@ -488,15 +493,20 @@ namespace OpenMS
 							const String& extension = file_name.substr(extension_start_index+1);
 							for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
 							{
-								if (*it != extension)
+								if (*it == extension)
 								{
-									type_mismatch = true;
+									type_mismatch = false;
 									break;
 								}
 							}
+							if (type_mismatch)
+							{
+								mismatch_exists = true;
+								break;
+							}
 						}
 					}
-					if (!type_mismatch)
+					if (!mismatch_exists)
 					{
 						valid = true;
 					}
@@ -533,6 +543,11 @@ namespace OpenMS
 			{
 				// no param selected
 				return ES_NO_SOURCE_PARAM;
+			}
+			else if (!qobject_cast<TOPPASOutputFileListVertex*>(target)->isReady())
+			{
+				// number of specified output file names not correct
+				return ES_NOT_READY_YET;
 			}
 			
 			valid = true;
@@ -626,6 +641,18 @@ namespace OpenMS
 			}
 		}
 		update(boundingRect());
+	}
+	
+	void TOPPASEdge::sourceHasChanged()
+	{
+		// what else TODO?
+		
+		emit somethingHasChanged();
+	}
+	
+	void TOPPASEdge::emitChanged()
+	{
+		emit somethingHasChanged();
 	}
 	
 } //namespace

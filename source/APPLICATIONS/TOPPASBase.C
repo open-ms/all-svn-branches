@@ -64,6 +64,8 @@
 #include <QtGui/QVBoxLayout>
 #include <QtGui/QApplication>
 #include <QtGui/QLabel>
+#include <QtCore/QFile>
+#include <QtCore/QDir>
 
 using namespace std;
 
@@ -239,6 +241,14 @@ namespace OpenMS
   TOPPASBase::~TOPPASBase()
   {
   	savePreferences();
+  	
+  	//remove all temporary files
+		QDir tmp_dir(tmp_path_.toQString());
+    QStringList tmp_files = tmp_dir.entryList(QStringList("TOPPAS_*__tmp.out"), QDir::Files);
+		foreach (const QString& tmp_file, tmp_files)
+		{
+			QFile::remove(tmp_path_.toQString()+tmp_file);
+		}
   }
 
 	void TOPPASBase::refreshDefinitions()
@@ -253,7 +263,35 @@ namespace OpenMS
 		if (file_name != "")
 		{
 			TOPPASWidget* tw = new TOPPASWidget(Param(), ws_, tmp_path_);
-			tw->getScene()->load(file_name);
+			TOPPASScene* scene = tw->getScene();
+			scene->load(file_name);
+			
+			//connect signals/slots for log messages
+			for (TOPPASScene::VertexIterator it = scene->verticesBegin(); it != scene->verticesEnd(); ++it)
+			{
+				TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(*it);
+				if (tv)
+				{
+					connect (tv, SIGNAL(toolStarted()), this, SLOT(toolStarted()));
+					connect (tv, SIGNAL(toolFinished()), this, SLOT(toolFinished()));
+					connect (tv, SIGNAL(toolCrashed()), this, SLOT(toolCrashed()));
+					connect (tv, SIGNAL(toolFailed()), this, SLOT(toolFailed()));
+					continue;
+				}
+				TOPPASOutputFileVertex* ofv = qobject_cast<TOPPASOutputFileVertex*>(*it);
+				if (ofv)
+				{
+					connect (ofv, SIGNAL(outputFileWritten(const String&)), this, SLOT(outputVertexFinished(const String&)));
+					continue;
+				}
+				TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(*it);
+				if (oflv)
+				{
+					connect (oflv, SIGNAL(outputFileWritten(const String&)), this, SLOT(outputVertexFinished(const String&)));
+					continue;
+				}
+			}
+			
 			showAsWindow_(tw, File::basename(file_name));
 		}
   }
@@ -601,16 +639,18 @@ namespace OpenMS
 		else if (tool_name == "<Output file list>")
 		{
 			tv = new TOPPASOutputFileListVertex();
+			connect (qobject_cast<TOPPASOutputFileListVertex*>(tv), SIGNAL(outputFileWritten(const String&)), this, SLOT(outputVertexFinished(const String&)));
 		}
 		else if (tool_name == "<Output file>")
 		{
 			tv = new TOPPASOutputFileVertex();
+			connect (qobject_cast<TOPPASOutputFileVertex*>(tv), SIGNAL(outputFileWritten(const String&)), this, SLOT(outputVertexFinished(const String&)));
 		}
 		else // node is a TOPP tool
 		{	
 			if (current_tool->childCount() > 0)
 			{
-				// tool has a type, but is selected itself (instead of type)
+				// tool has types, but tool name is selected (instead of type)
 				return;
 			}
 			String tool_type;
@@ -628,6 +668,11 @@ namespace OpenMS
 			}
 			
 			tv = new TOPPASToolVertex(tool_name, tool_type, tmp_path_);
+			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>(tv);
+			connect (ttv, SIGNAL(toolStarted()), this, SLOT(toolStarted()));
+			connect (ttv, SIGNAL(toolFinished()), this, SLOT(toolFinished()));
+			connect (ttv, SIGNAL(toolCrashed()), this, SLOT(toolCrashed()));
+			connect (ttv, SIGNAL(toolFailed()), this, SLOT(toolFailed()));
 		}
 		
 		tv->setPos(x,y);
@@ -666,7 +711,80 @@ namespace OpenMS
 			w->getScene()->runPipeline();
 		}
 	}
-
+	
+	void TOPPASBase::toolStarted()
+	{
+		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(QObject::sender());
+		if (tv)
+		{
+			String text = tv->getName();
+			String type = tv->getType();
+			if (type != "")
+			{
+				text += " ("+type+")";
+			}
+			text += " started. Processing ...";
+			
+			showLogMessage_(LS_NOTICE, text, "");
+		}
+	}
+	
+	void TOPPASBase::toolFinished()
+	{
+		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(QObject::sender());
+		if (tv)
+		{
+			String text = tv->getName();
+			String type = tv->getType();
+			if (type != "")
+			{
+				text += " ("+type+")";
+			}
+			text += " finished!";
+			
+			showLogMessage_(LS_NOTICE, text, "");
+		}
+	}
+	
+	void TOPPASBase::toolCrashed()
+	{
+		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(QObject::sender());
+		if (tv)
+		{
+			String text = tv->getName();
+			String type = tv->getType();
+			if (type != "")
+			{
+				text += " ("+type+")";
+			}
+			text += " crashed!";
+			
+			showLogMessage_(LS_ERROR, text, "");
+		}
+	}
+	
+	void TOPPASBase::toolFailed()
+	{
+		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(QObject::sender());
+		if (tv)
+		{
+			String text = tv->getName();
+			String type = tv->getType();
+			if (type != "")
+			{
+				text += " ("+type+")";
+			}
+			text += " failed!";
+			
+			showLogMessage_(LS_ERROR, text, "");
+		}
+	}
+	
+	void TOPPASBase::outputVertexFinished(const String& file)
+	{
+		String text = "Output file '"+file+"' written.";
+		showLogMessage_(LS_NOTICE, text, "");
+	}
 
 } //namespace OpenMS
 

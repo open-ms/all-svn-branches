@@ -22,13 +22,14 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 #include <OpenMS/DATASTRUCTURES/Map.h>
 #include <OpenMS/CHEMISTRY/IsotopeDistribution.h>
 #include <OpenMS/CONCEPT/Exception.h>
+#include <OpenMS/CONCEPT/Constants.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 
 using namespace std;
@@ -114,7 +115,7 @@ namespace OpenMS
 				for (Size i = 1; i != peptide.size(); ++i)
 				{
 					ion = peptide.getPrefix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::AIon, charge) / charge;
+					DoubleReal pos = ion.getMonoWeight(Residue::AIon, charge) / (DoubleReal)charge;
 					ions[pos] = ion;
 					names[pos] = "a"+String(i) + String(charge, '+');
 				}
@@ -125,7 +126,7 @@ namespace OpenMS
 				for (Size i = 1; i != peptide.size(); ++i)
 				{
 					ion = peptide.getPrefix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::BIon, charge) / charge;
+					DoubleReal pos = ion.getMonoWeight(Residue::BIon, charge) / (DoubleReal)charge;
 					ions[pos] = ion;
 					names[pos] = "b"+String(i) + String(charge, '+');
 				}
@@ -136,7 +137,7 @@ namespace OpenMS
 				for (Size i = 1; i != peptide.size(); ++i)
 				{
 					ion = peptide.getPrefix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::CIon, charge) / charge;
+					DoubleReal pos = ion.getMonoWeight(Residue::CIon, charge) / (DoubleReal)charge;
 					ions[pos] = ion;
 					names[pos] = "c"+String(i) + String(charge, '+');
 				}
@@ -147,7 +148,7 @@ namespace OpenMS
 				for (Size i = 1; i != peptide.size(); ++i)
 				{
 					ion = peptide.getSuffix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::XIon, charge) / charge;
+					DoubleReal pos = ion.getMonoWeight(Residue::XIon, charge) / (DoubleReal)charge;
 					ions[pos] = ion;
 					names[pos] = "x"+String(i) + String(charge, '+');
 				}
@@ -158,7 +159,7 @@ namespace OpenMS
 				for (Size i = 1; i != peptide.size(); ++i)
 				{
 					ion = peptide.getSuffix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::YIon, charge) / charge;
+					DoubleReal pos = ion.getMonoWeight(Residue::YIon, charge) / (DoubleReal)charge;
 					ions[pos] = ion;
 					names[pos] = "y"+String(i) + String(charge, '+');
 				}
@@ -169,7 +170,7 @@ namespace OpenMS
 				for (Size i = 1; i != peptide.size(); ++i)
 				{
 					ion = peptide.getSuffix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::ZIon, charge) / charge;
+					DoubleReal pos = ion.getMonoWeight(Residue::ZIon, charge) / (DoubleReal)charge;
 					ions[pos] = ion;
 					names[pos] = "z" + String(i) + String(charge, '+');
 				}
@@ -198,7 +199,7 @@ namespace OpenMS
 				UInt j(0);
 				for (IsotopeDistribution::ConstIterator it=dist.begin(); it!=dist.end(); ++it, ++j)
 				{
-					p_.setMZ(pos+j/charge);
+					p_.setMZ((DoubleReal)(pos + (DoubleReal)j * Constants::NEUTRON_MASS_U)/(DoubleReal)charge);
 					p_.setIntensity(intensity * it->second);
 					if (add_metainfo && j == 0)
 					{
@@ -242,7 +243,7 @@ namespace OpenMS
 				for (set<String>::const_iterator it=losses.begin(); it!=losses.end(); ++it)
 				{
 					EmpiricalFormula loss_ion = ion.getFormula(res_type, charge) - EmpiricalFormula(*it);
-					DoubleReal loss_pos = loss_ion.getMonoWeight() / charge;
+					DoubleReal loss_pos = loss_ion.getMonoWeight() / (DoubleReal)charge;
 					String loss_name = *it;
 					
 					if (add_isotopes)
@@ -251,7 +252,7 @@ namespace OpenMS
 						UInt j(0);
 						for (IsotopeDistribution::ConstIterator iso=dist.begin(); iso!=dist.end(); ++iso)
 						{
-							p_.setMZ(loss_pos + j / charge);
+							p_.setMZ((DoubleReal)(loss_pos + j) / (DoubleReal)charge);
 							p_.setIntensity(intensity * rel_loss_intensity * iso->second);
 							if (add_metainfo && j == 0)
 							{
@@ -300,7 +301,7 @@ namespace OpenMS
 		else
 		{
 			// precursor peak
-			p_.setMZ(peptide.getAverageWeight(Residue::Full, charge)/DoubleReal(charge));
+			p_.setMZ(peptide.getMonoWeight(Residue::Full, charge)/DoubleReal(charge));
 			p_.setIntensity(pre_int);
 			if (add_metainfo)
 			{
@@ -315,8 +316,8 @@ namespace OpenMS
 			spec.push_back(p_);
 
 			// loss peaks of the precursor
-			static const DoubleReal h2o_weight = EmpiricalFormula("H2O").getAverageWeight();
-			p_.setMZ((peptide.getAverageWeight(Residue::Full, charge) - h2o_weight)/DoubleReal(charge));
+			static const DoubleReal h2o_weight = EmpiricalFormula("H2O").getMonoWeight();
+			p_.setMZ((peptide.getMonoWeight(Residue::Full, charge) - h2o_weight)/DoubleReal(charge));
 			p_.setIntensity(pre_int_H2O);
 			
 			if (add_metainfo)
@@ -330,8 +331,8 @@ namespace OpenMS
 			}
 			spec.push_back(p_);
 
-			static const DoubleReal nh3_weight = EmpiricalFormula("NH3").getAverageWeight();
-      p_.setMZ((peptide.getAverageWeight(Residue::Full, charge) - nh3_weight)/DoubleReal(charge));
+			static const DoubleReal nh3_weight = EmpiricalFormula("NH3").getMonoWeight();
+      p_.setMZ((peptide.getMonoWeight(Residue::Full, charge) - nh3_weight)/DoubleReal(charge));
       p_.setIntensity(pre_int_NH3);
 
       if (add_metainfo)

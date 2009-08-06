@@ -28,6 +28,8 @@
 #include <OpenMS/VISUAL/TOPPASInputFileVertex.h>
 #include <OpenMS/VISUAL/DIALOGS/TOPPASInputFileDialog.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
+#include <OpenMS/SYSTEM/File.h>
+
 
 namespace OpenMS
 {
@@ -71,12 +73,14 @@ namespace OpenMS
 	
 	void TOPPASInputFileVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
 	{
-		TOPPASInputFileDialog tifd(file_);
+		TOPPASInputFileDialog tifd(this);
 		if (tifd.exec())
 		{
 			file_ = tifd.getFilename();
 		}
 		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
+		
+		//emit somethingHasChanged();
 	}
 	
 	const QString& TOPPASInputFileVertex::getFilename()
@@ -117,5 +121,10 @@ namespace OpenMS
 		QPainterPath shape;
 		shape.addRoundRect(-71.0, -41.0, 142.0, 81.0, 20, 20);
 		return shape;
+	}
+	
+	bool TOPPASInputFileVertex::fileNameValid(const QString& file)
+	{
+		return File::exists(String(file));
 	}
 }

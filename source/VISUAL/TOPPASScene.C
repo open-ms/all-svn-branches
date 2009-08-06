@@ -47,11 +47,29 @@ namespace OpenMS
 			file_name_(),
 			tmp_path_(tmp_path)
 	{
+		/*	ATTENTION!
+			 
+				The following line is important! Without it, we get
+				hard-to-reproduce segmentation faults and
+				"pure virtual method calls" due to a bug in Qt!
+				
+				(http://lists.trolltech.com/qt4-preview-feedback/2006-09/thread00124-0.html)
+		*/
+		setItemIndexMethod(QGraphicsScene::NoIndex);
 	}
 	
 	TOPPASScene::~TOPPASScene()
 	{
-		// Qt should clean up for us..
+		// Delete all items in a controlled way:
+		foreach (TOPPASVertex* vertex, vertices_)
+		{
+			vertex->setSelected(true);
+		}
+		foreach (TOPPASEdge* edge, edges_)
+		{
+			edge->setSelected(true);
+		}
+		removeSelected();
 	}
 	
 	void TOPPASScene::setActionMode(ActionMode mode)
@@ -113,7 +131,7 @@ namespace OpenMS
 	
 	void TOPPASScene::itemDoubleClicked()
 	{
-		std::cout << "double click!" << std::endl;
+		
 	}
 	
 	void TOPPASScene::updateHoveringEdgePos(const QPointF& new_pos)
@@ -174,20 +192,21 @@ namespace OpenMS
 			source->addOutEdge(hover_edge_);
 			target->addInEdge(hover_edge_);
 			hover_edge_->determineEdgeType();
-			
 			hover_edge_->setColor(QColor(255,165,0));
+			connect (source, SIGNAL(somethingHasChanged()), hover_edge_, SLOT(sourceHasChanged()));
+			connect (hover_edge_, SIGNAL(somethingHasChanged()), target, SLOT(inEdgeHasChanged()));
+			
 			TOPPASIOMappingDialog dialog(hover_edge_);
 			dialog.exec();
+			
+			hover_edge_->emitChanged();
 		}
 		else
 		{
-			if (hover_edge_ != 0)
-			{
-				edges_.removeAll(hover_edge_);
-				removeItem(hover_edge_);
-				delete hover_edge_;
-				hover_edge_ = 0;
-			}
+			edges_.removeAll(hover_edge_);
+			removeItem(hover_edge_);
+			delete hover_edge_;
+			hover_edge_ = 0;
 		}
 		
 		updateEdgeColors();
@@ -262,12 +281,18 @@ namespace OpenMS
 		if (u == 0 ||
 				v == 0 ||
 				u == v ||
+				// edges leading to input files make no sense:
 				qobject_cast<TOPPASInputFileVertex*>(v) ||
 				qobject_cast<TOPPASInputFileListVertex*>(v) ||
+				// neither do edges coming from output files:
 				qobject_cast<TOPPASOutputFileVertex*>(u) ||
 				qobject_cast<TOPPASOutputFileListVertex*>(u) ||
-				((qobject_cast<TOPPASInputFileVertex*>(u) || qobject_cast<TOPPASInputFileListVertex*>(u)) &&
-					(qobject_cast<TOPPASOutputFileVertex*>(v) || qobject_cast<TOPPASOutputFileListVertex*>(v))))
+				// nor edges from input to output without a tool in between:
+				((qobject_cast<TOPPASInputFileVertex*>(u) || qobject_cast<TOPPASInputFileListVertex*>(u))
+					&& (qobject_cast<TOPPASOutputFileVertex*>(v) || qobject_cast<TOPPASOutputFileListVertex*>(v))) ||
+				// nor multiple incoming edges for a single output file/list node
+				((qobject_cast<TOPPASOutputFileVertex*>(v) || qobject_cast<TOPPASOutputFileListVertex*>(v))
+					&& v->inEdgesBegin() != v->inEdgesEnd()))
 		{
 			return false;
 		}
@@ -306,6 +331,7 @@ namespace OpenMS
 				}
 			}
 		}
+		
 		// remove priorly inserted edge
 		edges_.removeAll(test_edge);
 		removeItem(test_edge);
@@ -350,6 +376,9 @@ namespace OpenMS
 
 	void TOPPASScene::runPipeline()
 	{
+		// make sure all output file names are updated, first:
+		updateOutputFileNames();
+		
 		// unset the finished flag for all TOPP tool nodes
 		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
 		{
@@ -357,6 +386,7 @@ namespace OpenMS
 			if (tv)
 			{
 				tv->setFinished(false);
+				tv->setStartedHere(false);
 			}
 		}
 		
@@ -367,14 +397,13 @@ namespace OpenMS
 			if (ofv)
 			{
 				ofv->startComputation();
+				continue;
 			}
-			else
+			
+			TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(*it);
+			if (oflv)
 			{
-				TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(*it);
-				if (oflv)
-				{
-					oflv->startComputation();
-				}
+				oflv->startComputation();
 			}
 		}
 	}
@@ -407,8 +436,14 @@ namespace OpenMS
 			TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>(tv);
 			if (iflv)
 			{
+				const QStringList& files_qt = iflv->getFilenames();
+				StringList files;
+				foreach (QString file_qt, files_qt)
+				{
+					files.push_back(String(file_qt));
+				}
 				save_param.setValue("vertices:"+id+":type", DataValue("input file list"));
-				save_param.setValue("vertices:"+id+":file_names", DataValue(String((iflv->getFilenames()).join("(#_#)"))));
+				save_param.setValue("vertices:"+id+":file_names", DataValue(files));
 				save_param.setValue("vertices:"+id+":x_pos", DataValue(tv->x()));
 				save_param.setValue("vertices:"+id+":y_pos", DataValue(tv->y()));
 				continue;
@@ -427,8 +462,14 @@ namespace OpenMS
 			TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(tv);
 			if (oflv)
 			{
+				const QStringList& files_qt = oflv->getFilenames();
+				StringList files;
+				foreach (QString file_qt, files_qt)
+				{
+					files.push_back(String(file_qt));
+				}
 				save_param.setValue("vertices:"+id+":type", DataValue("output file list"));
-				save_param.setValue("vertices:"+id+":file_names", DataValue(String((oflv->getFilenames()).join("(#_#)"))));
+				save_param.setValue("vertices:"+id+":file_names", DataValue(files));
 				save_param.setValue("vertices:"+id+":x_pos", DataValue(tv->x()));
 				save_param.setValue("vertices:"+id+":y_pos", DataValue(tv->y()));
 				continue;
@@ -458,6 +499,8 @@ namespace OpenMS
 			}
 			
 			save_param.setValue("edges:"+String(counter)+":source/target:", DataValue(String(te->getSourceVertex()->getID()) + "/" + String(te->getTargetVertex()->getID())));
+			save_param.setValue("edges:"+String(counter)+":source_out_param:", DataValue(te->getSourceOutParam()));
+			save_param.setValue("edges:"+String(counter)+":target_in_param:", DataValue(te->getTargetInParam()));
 			
 			counter++;
 		}
@@ -497,8 +540,13 @@ namespace OpenMS
 				}
 				else if (current_type == "input file list")
 				{
-					QStringList file_names = vertices_param.getValue(current_id + ":file_names").toQString().split("(#_#)");
-					TOPPASInputFileListVertex* iflv = new TOPPASInputFileListVertex(file_names);
+					StringList file_names = vertices_param.getValue(current_id + ":file_names");
+					QStringList file_names_qt;
+					for (StringList::const_iterator str_it = file_names.begin(); str_it != file_names.end(); ++str_it)
+					{
+						file_names_qt.push_back(str_it->toQString());
+					}
+					TOPPASInputFileListVertex* iflv = new TOPPASInputFileListVertex(file_names_qt);
 					current_vertex = iflv;
 				}
 				else if (current_type == "output file")
@@ -509,8 +557,13 @@ namespace OpenMS
 				}
 				else if (current_type == "output file list")
 				{
-					QStringList file_names = vertices_param.getValue(current_id + ":file_names").toQString().split("(#_#)");
-					TOPPASOutputFileListVertex* oflv = new TOPPASOutputFileListVertex(file_names);
+					StringList file_names = vertices_param.getValue(current_id + ":file_names");
+					QStringList file_names_qt;
+					for (StringList::const_iterator str_it = file_names.begin(); str_it != file_names.end(); ++str_it)
+					{
+						file_names_qt.push_back(str_it->toQString());
+					}
+					TOPPASOutputFileListVertex* oflv = new TOPPASOutputFileListVertex(file_names_qt);
 					current_vertex = oflv;
 				}
 				else if (current_type == "tool")
@@ -518,7 +571,7 @@ namespace OpenMS
 					String tool_name = vertices_param.getValue(current_id + ":tool_name");
 					String tool_type = vertices_param.getValue(current_id + ":tool_type");
 					Param param_param = vertices_param.copy(current_id + ":parameters:", true);
-					TOPPASToolVertex* tv = new TOPPASToolVertex(tool_name, tool_type);
+					TOPPASToolVertex* tv = new TOPPASToolVertex(tool_name, tool_type, tmp_path_);
 					tv->setParam(param_param);
 					current_vertex = tv;
 				}
@@ -536,6 +589,12 @@ namespace OpenMS
 					current_vertex->setID((UInt)(current_id.toInt()));
 					
 					addVertex(current_vertex);
+					
+					connect(current_vertex,SIGNAL(clicked()),this,SLOT(itemClicked()));
+					connect(current_vertex,SIGNAL(doubleClicked()),this,SLOT(itemDoubleClicked()));
+					connect(current_vertex,SIGNAL(hoveringEdgePosChanged(const QPointF&)),this,SLOT(updateHoveringEdgePos(const QPointF&)));
+					connect(current_vertex,SIGNAL(newHoveringEdge(const QPointF&)),this,SLOT(addHoveringEdge(const QPointF&)));
+					connect(current_vertex,SIGNAL(finishHoveringEdge()),this,SLOT(finishHoveringEdge()));
 					
 					if (index >= vertex_vector.size())
 					{
@@ -588,10 +647,29 @@ namespace OpenMS
       	edge->setTargetVertex(tv_2);
       	tv_1->addOutEdge(edge);
       	tv_2->addInEdge(edge);
-      	
+      	edge->determineEdgeType();	
       	addEdge(edge);
+      	connect (tv_1, SIGNAL(somethingHasChanged()), edge, SLOT(sourceHasChanged()));
+				connect (edge, SIGNAL(somethingHasChanged()), tv_2, SLOT(inEdgeHasChanged()));
+				
+      	int source_out_param = (++it)->value;
+      	int target_in_param = (++it)->value;
+      	edge->setSourceOutParam(source_out_param);
+      	edge->setTargetInParam(target_in_param);
       }
     }
+    
+    // update status of output file list vertices (depends on input)
+    foreach (TOPPASVertex* v, vertices_)
+    {
+    	TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(v);
+    	if (oflv)
+    	{
+    		oflv->updateStatus();
+    	}
+    }
+    
+    updateEdgeColors();
   }
 
 	
@@ -603,6 +681,30 @@ namespace OpenMS
 	void TOPPASScene::setSaveFileName(const String& name)
 	{
 		file_name_ = name;
+	}
+	
+	void TOPPASScene::updateOutputFileNames()
+	{
+		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
+		{
+			TOPPASOutputFileVertex* ofv = qobject_cast<TOPPASOutputFileVertex*>(*it);
+			if (ofv && ofv->inEdgesBegin() != ofv->inEdgesEnd())
+			{
+				TOPPASEdge* in_edge = *(ofv->inEdgesBegin());
+				TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(in_edge->getSourceVertex());
+				tv->updateOutputFileNames();
+				
+				continue;
+			}
+			
+			TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(*it);
+			if (oflv && oflv->inEdgesBegin() != oflv->inEdgesEnd())
+			{
+				TOPPASEdge* in_edge = *(oflv->inEdgesBegin());
+				TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(in_edge->getSourceVertex());
+				tv->updateOutputFileNames();
+			}
+		}
 	}
 	
 } //namespace OpenMS

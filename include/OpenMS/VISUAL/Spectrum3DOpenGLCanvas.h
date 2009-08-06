@@ -25,15 +25,15 @@
 // $Authors: Cornelia Friedle $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_VISUAL_SPECTRUM3DOPENGLCANVAS_H
-#define OPENMS_VISUAL_SPECTRUM3DOPENGLCANVAS_H
+#ifndef OPENMS_VISUAL_Spectrum3DOpenGLCanvas_H
+#define OPENMS_VISUAL_Spectrum3DOpenGLCanvas_H
 
-#include <float.h>
 #include <QtOpenGL/QGLWidget>
 
 // OpenMS
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <OpenMS/VISUAL/Spectrum3DCanvas.h>
+#include <OpenMS/VISUAL/GridData.h>
 
 using std::cout;
 using std::endl;
@@ -178,8 +178,6 @@ namespace OpenMS
 			int yrot_tmp_;
 			/// member z-variable that stores the original angle during zoom mode 
 	    int zrot_tmp_;
-	    
-	    
 	
 			/// member variables fot the zoom-modus
 	    QPoint mouse_move_end_, mouse_move_begin_;    
@@ -221,10 +219,14 @@ namespace OpenMS
 			double trans_x_;
 			/// y_translation
 			double trans_y_;
+			
+			MapData* map_;
+			Size iClick_;
 		  
 		protected slots:
 			/// Slot that reacts on action mode changes
 			void actionModeChange();
+			void redraw();
 	};
 
   struct vertexList
@@ -307,22 +309,12 @@ cout << "rt: " << rt_min_ << " / " << rt_max_ << " - width: " << rt_width_ << en
       }
       
       double indexToMz(const Size col) const
-      {
-if(col>cols_)
-{
-cout << "1 col: " << col << " / " << cols_ << endl;
-return 100.0;
-}        
+      { 
         return (mz_min_ + (col<cols_ ? col : cols_-1) * mz_width_);
       }
       
       double indexToRt(const Size row) const
       {
-if(row>rows_)
-{
-cout << "2 row: " << row << " / " << rows_ << endl;
-return 100.0;
-}      
         return (rt_min_ + (row<rows_ ? row : rows_-1) * rt_width_);
       }
       
@@ -331,12 +323,6 @@ return 100.0;
         if(mz < mz_min_) return 0;
         if(mz > mz_max_) return (cols_-1);
 
-Size col = (Size) floor(0.5 + (mz-mz_min_) / mz_width_);
-if(col>cols_)
-{
-cout << "3 col: " << col << " / " << cols_ << endl;
-return 1;
-}
         return (Size) floor(0.5 + (mz-mz_min_) / mz_width_);
       }
       
@@ -344,24 +330,12 @@ return 1;
       {
         if(rt < rt_min_) return 0;
         if(rt > rt_max_) return (rows_-1);
-        
-Size row = (Size) floor(0.5 + (rt-rt_min_) / rt_width_);
-if(row>rows_)
-{
-cout << "4 row: " << row << " / " << rows_ << endl;
-return 1;
-}        
+           
         return (Size) floor(0.5 + (rt-rt_min_) / rt_width_);
       }
       
       void set(const double value, const Size col, const Size row)
-      { 
-if(col>cols_ || row>rows_)
-{
-cout << "5 col: " << col << " / " << cols_ << " - row: " << row << " / " << rows_ << endl;
-return;
-}  
-      
+      {   
         if(col<cols_ && row<rows_)
         {
           at(position_(col, row)) = value;
@@ -370,11 +344,6 @@ return;
       
       double get(const Size col, const Size row) const
       { 
-if(col>cols_ || row>rows_)
-{
-cout << "6 col: " << col << " / " << cols_ << " - row: " << row << " / " << rows_ << endl;
-return 100.0;
-}  
         return at(position_(col, row));
       }
     
@@ -393,20 +362,8 @@ return 100.0;
       
       void importData(AreaIt begin, AreaIt end)
       {
-        time_t start_t,end_t;
-        time (&start_t);
-double mz1, mz2, rt1, rt2, int1, int2;
-        
 		    for(AreaIt it=begin; it!=end; ++it)
 		    {
-//cout << "7 mz: " << it->getMZ() << " - rt: " << it.getRT() << endl;		    
-mz1 = mz1 > it->getMZ() ? it->getMZ() : mz1;
-mz2 = mz2 < it->getMZ() ? it->getMZ() : mz2;
-rt1 = rt1 > it.getRT() ?  it.getRT() : rt1;
-rt2 = rt2 < it.getRT() ?  it.getRT() : rt2;
-int1 = int1 > it->getIntensity() ? it->getIntensity() : int1;
-int2 = int2 < it->getIntensity() ? it->getIntensity() : int2;
-
 		      if(it->getMZ()>=mz_min_ && it->getMZ()<=mz_max_ && it.getRT()>=rt_min_ && it.getRT()<=rt_max_)
 		      {		      
 		        if(it->getIntensity() > get(it->getMZ(), it.getRT()))
@@ -415,12 +372,6 @@ int2 = int2 < it->getIntensity() ? it->getIntensity() : int2;
 		        }
 		      }
 		    }
-
-cout << "ZZ mz: " << mz1 << " / " << mz2 << " rt: " << rt1 << " / " << rt2 << " int: " << int1 << " / " << int2 << endl;
-
-		    time (&end_t);
-		    double diff = difftime (end_t,start_t);
-		    std::cout << "time:" << diff << std::endl;
       }
 
     // private:
@@ -468,11 +419,6 @@ cout << "ZZ mz: " << mz1 << " / " << mz2 << " rt: " << rt1 << " / " << rt2 << " 
     public:
       vertexList getVertex(const Size col, const Size row)
       {
-if(col>cols_ || row>rows_)
-{
-cout << "8 col: " << col << " / " << cols_ << " - row: " << row << " / " << rows_ << endl;
-}        
-        
         vertexList vertex;
         const MultiGradient& gradient = parent_->canvas_3d_.getLayer(layer_index_).gradient;
         
@@ -563,11 +509,7 @@ cout << "8 col: " << col << " / " << cols_ << " - row: " << row << " / " << rows
       }
       
       vertexList getVertex(const int col, const int row)
-      {
-if(col>(int)cols_ || row>(int)rows_ || col<0 || row<0)
-{
-cout << "10 col: " << col << " / " << cols_ << " - row: " << row << " / " << rows_ << endl;
-}   
+      {  
         Size col_ = col<0 ? 0 : (Size) col;
         Size row_ = row<0 ? 0 : (Size) row;
         return getVertex(col_, row_);               
@@ -603,11 +545,7 @@ cout << "10 col: " << col << " / " << cols_ << " - row: " << row << " / " << row
     
     public:
       vertexList getNormals(const Size col, const Size row)
-      {
-if(col>cols_ || row>rows_)
-{
-cout << "9 col: " << col << " / " << cols_ << " - row: " << row << " / " << rows_ << endl;
-}         
+      {      
         vertexList vertex;
         vertex.x1 = 0.0;
         vertex.y1 = 0.0;

@@ -27,7 +27,12 @@
 
 #include <OpenMS/VISUAL/TOPPASOutputFileVertex.h>
 #include <OpenMS/VISUAL/TOPPASToolVertex.h>
+#include <OpenMS/VISUAL/DIALOGS/TOPPASOutputFileDialog.h>
+#include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/VISUAL/TOPPASEdge.h>
+#include <OpenMS/SYSTEM/File.h>
+
+#include <QtCore/QFile>
 
 namespace OpenMS
 {
@@ -71,7 +76,12 @@ namespace OpenMS
 	
 	void TOPPASOutputFileVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
 	{
-		// ...
+		TOPPASOutputFileDialog tofd(this);
+		if (tofd.exec())
+		{
+			file_ = tofd.getFilename();
+		}
+		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
 	}
 	
 	void TOPPASOutputFileVertex::paint(QPainter* painter, const QStyleOptionGraphicsItem* /*option*/, QWidget* /*widget*/)
@@ -116,7 +126,7 @@ namespace OpenMS
 			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
 			if (ttv)
 			{
-				ttv->compute();
+				ttv->runRecursively();
 			}
 		}
 	}
@@ -124,6 +134,48 @@ namespace OpenMS
 	const QString& TOPPASOutputFileVertex::getFilename()
 	{
 		return file_;
+	}
+	
+	void TOPPASOutputFileVertex::finished()
+	{
+		// rename tmp out file if a file name was specified
+		if (file_ != "")
+		{
+			TOPPASEdge* e = *inEdgesBegin();
+			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(e->getSourceVertex());
+			const QVector<QStringList>& output_files = tv->getOutputFileNames();
+			int param_index = e->getSourceOutParam();
+			QString tmp_file_name = output_files[param_index].first();
+			
+			if (QFile::exists(file_))
+			{
+				QFile::remove(file_);
+			}
+			QFile::rename(tmp_file_name, file_);
+			
+			emit outputFileWritten(String(file_));
+		}
+	}
+	
+	void TOPPASOutputFileVertex::inEdgeHasChanged()
+	{
+		// we do not need to forward the change (we have no childs)
+	}
+	
+	bool TOPPASOutputFileVertex::fileNameValid(const QString& file)
+	{
+		//file name specified?
+		if (File::basename(String(file)) == "")
+		{
+			return false;
+		}
+		//directory exists?
+		if (!File::exists(File::path(String(file))))
+		{
+			return false;
+		}
+		
+		return true;
 	}
 }
 

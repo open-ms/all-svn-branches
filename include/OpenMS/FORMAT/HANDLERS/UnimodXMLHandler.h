@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_HANDLERS_UNIMODXMLHANDLER_H
@@ -76,7 +76,7 @@ namespace OpenMS
 			
 			std::vector<ResidueModification*>& modifications_;
 
-			std::vector<ResidueModification*> new_mods_;
+			std::vector<String> sites_;
   };
 
 	} // namespace Internal

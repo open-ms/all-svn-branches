@@ -71,6 +71,7 @@ namespace OpenMS
 				IOType type;
 				String param_name;
 				StringList valid_types;
+				bool listified;
 			};
 			
 			/// Default constructor
@@ -116,11 +117,29 @@ namespace OpenMS
 			void updateOutputFileNames();
 			/// Sets whether the currently running pipeline has already been started at this vertex
 			void setStartedHere(bool b);
+			/// Sets the progress color
+			void setProgressColor(const QColor& c);
+			/// Lets the user edit the parameters of the tool
+			void editParam();
+			/// Returns the number of iterations this tool has to perform
+			int numIterations();
+			/// Returns whether the list iteration mode is enabled
+			bool listModeActive();
+			/// (Un)sets the list iteration mode
+			void setListModeActive(bool b);
 			
 		public slots:
 		
 			/// Called when the execution of this tool has finished
 			void executionFinished(int ec, QProcess::ExitStatus es);
+			/// Called when the running TOPP tool produces output
+			void forwardTOPPOutput();
+			/// Called when the tool is started
+			void toolStartedSlot();
+			/// Called when the tool has finished
+			void toolFinishedSlot();
+			/// Called by an incoming edge when it has changed
+			virtual void inEdgeHasChanged();
 		
 		signals:
 		
@@ -132,13 +151,17 @@ namespace OpenMS
 			void toolCrashed();
 			/// Emitted when the tool execution fails
 			void toolFailed();
+			/// Emitted from showTOPPOutput() to forward the signal outside
+			void toppOutputReady(const QString& out);
 		
 		protected:
 		
 			///@name reimplemented Qt events
       //@{
       void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
+      void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
 			//@}
+			
 			/// Initializes the parameters with standard values (from -write_ini)
 			void initParam_();
 			/// Fills @p io_infos with the required input/output file/list parameters. If @p input_params is true, input params are returned, otherwise output params.
@@ -160,7 +183,16 @@ namespace OpenMS
 			bool started_here_;
 			/// Stores the file names of the different output parameters
 			QVector<QStringList> output_file_names_;
-			
+			/// Color representing the progress (red = waiting, yellow = processing, green = finished, else: gray)
+			QColor progress_color_;
+			/// Stores whether we are currently in list mode
+			bool list_mode_;
+			/// The symbol for the list mode
+			static QImage symbol_image_;
+			/// The number of the current iteration
+			int iteration_nr_;
+			/// The length of (all) input lists
+			int input_list_length_;
 	};
 }
 

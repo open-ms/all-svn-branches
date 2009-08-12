@@ -27,6 +27,7 @@
 
 #include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/VISUAL/TOPPASVertex.h>
+#include <OpenMS/VISUAL/TOPPASWidget.h>
 #include <OpenMS/VISUAL/TOPPASInputFileVertex.h>
 #include <OpenMS/VISUAL/TOPPASOutputFileVertex.h>
 #include <OpenMS/VISUAL/TOPPASInputFileListVertex.h>
@@ -122,10 +123,7 @@ namespace OpenMS
 			return;
 		}
 		bool was_selected = sender->isSelected();
-		foreach (QGraphicsItem* item, items())
-		{
-			item->setSelected(false);
-		}
+		unselectAll();
 		sender->setSelected(was_selected);
 	}
 	
@@ -379,7 +377,7 @@ namespace OpenMS
 		// make sure all output file names are updated, first:
 		updateOutputFileNames();
 		
-		// unset the finished flag for all TOPP tool nodes
+		// unset the finished flag and set progress color = red for all TOPP tool nodes
 		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
 		{
 			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(*it);
@@ -387,8 +385,10 @@ namespace OpenMS
 			{
 				tv->setFinished(false);
 				tv->setStartedHere(false);
+				tv->setProgressColor(Qt::red);
 			}
 		}
+		update(sceneRect());
 		
 		// start recursive execution at every output node
 		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
@@ -484,9 +484,16 @@ namespace OpenMS
 				save_param.insert("vertices:"+id+":parameters:", ttv->getParam());
 				save_param.setValue("vertices:"+id+":x_pos", DataValue(tv->x()));
 				save_param.setValue("vertices:"+id+":y_pos", DataValue(tv->y()));
+				if (ttv->listModeActive())
+				{
+					save_param.setValue("vertices:"+id+":list_mode", DataValue("true"));
+				}
+				else
+				{
+					save_param.setValue("vertices:"+id+":list_mode", DataValue("false"));
+				}
 				continue;
 			}
-			// NO CODE HERE BECAUSE OF THE "continue"s
 		}
 		
 		//store all edges
@@ -553,6 +560,7 @@ namespace OpenMS
 				{
 					QString file_name = vertices_param.getValue(current_id + ":file_name").toQString();
 					TOPPASOutputFileVertex* ofv = new TOPPASOutputFileVertex(file_name);
+					connect (ofv, SIGNAL(iAmDone()), this, SLOT(checkIfWeAreDone()));
 					current_vertex = ofv;
 				}
 				else if (current_type == "output file list")
@@ -564,6 +572,7 @@ namespace OpenMS
 						file_names_qt.push_back(str_it->toQString());
 					}
 					TOPPASOutputFileListVertex* oflv = new TOPPASOutputFileListVertex(file_names_qt);
+					connect (oflv, SIGNAL(iAmDone()), this, SLOT(checkIfWeAreDone()));
 					current_vertex = oflv;
 				}
 				else if (current_type == "tool")
@@ -573,6 +582,17 @@ namespace OpenMS
 					Param param_param = vertices_param.copy(current_id + ":parameters:", true);
 					TOPPASToolVertex* tv = new TOPPASToolVertex(tool_name, tool_type, tmp_path_);
 					tv->setParam(param_param);
+					if (vertices_param.getValue(current_id + ":list_mode") == "true")
+					{
+						tv->setListModeActive(true);
+					}
+					else
+					{
+						tv->setListModeActive(false);
+					}
+					connect(tv,SIGNAL(toolFailed()),this,SLOT(pipelineErrorSlot()));
+					connect(tv,SIGNAL(toolCrashed()),this,SLOT(pipelineErrorSlot()));
+					
 					current_vertex = tv;
 				}
 				else
@@ -584,7 +604,7 @@ namespace OpenMS
 				{
 					float x = vertices_param.getValue(current_id + ":x_pos");
 					float y = vertices_param.getValue(current_id + ":y_pos");
-				
+					
 					current_vertex->setPos(QPointF(x,y));
 					current_vertex->setID((UInt)(current_id.toInt()));
 					
@@ -669,6 +689,19 @@ namespace OpenMS
     	}
     }
     
+    if (!views().empty())
+		{
+			TOPPASWidget* tw = qobject_cast<TOPPASWidget*>(views().first());
+			if (tw)
+			{
+				QRectF scene_rect = itemsBoundingRect();
+				setSceneRect(scene_rect);
+								
+				tw->fitInView(scene_rect, Qt::KeepAspectRatioByExpanding);
+				tw->scale(3.0,3.0); // find better way of doing this..
+			}
+		}
+    
     updateEdgeColors();
   }
 
@@ -705,6 +738,41 @@ namespace OpenMS
 				tv->updateOutputFileNames();
 			}
 		}
+	}
+	
+	void TOPPASScene::unselectAll()
+	{
+		const QList<QGraphicsItem*>& all_items = items();	
+		foreach (QGraphicsItem* item, all_items)
+		{
+			item->setSelected(false);
+		}
+		update(sceneRect());
+	}
+	
+	void TOPPASScene::checkIfWeAreDone()
+	{
+		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
+		{
+			TOPPASOutputFileVertex* ofv = qobject_cast<TOPPASOutputFileVertex*>(*it);
+			if (ofv && !ofv->isFinished())
+			{
+				return;
+			}
+			
+			TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(*it);
+			if (oflv && !oflv->isFinished())
+			{
+				return;
+			}
+		}
+		
+		emit entirePipelineFinished();
+	}
+	
+	void TOPPASScene::pipelineErrorSlot()
+	{
+		emit pipelineExecutionFailed();
 	}
 	
 } //namespace OpenMS

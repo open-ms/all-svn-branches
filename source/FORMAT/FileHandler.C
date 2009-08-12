@@ -34,8 +34,7 @@ using namespace std;
 
 namespace OpenMS
 {
-
-	const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML", "mzIdentML", "GelML", "TraML", "MSP", "txt", "fid"};
+	const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML", "mzIdentML", "GelML", "TraML", "MSP", "txt", "fid", "OMSSAXML"};
 
 	FileTypes::Type FileHandler::getType(const String& filename)
 	{
@@ -219,6 +218,8 @@ namespace OpenMS
 			return true;
 		case FileTypes::GELML:
 			return true;
+		case FileTypes::OMSSAXML:
+			return true;
 		case FileTypes::TRAML:
 		default:
 			return false;
@@ -274,6 +275,9 @@ namespace OpenMS
 		//traML (all lines)
 		if (all_simple.hasSubstring("<TraML")) return FileTypes::TRAML;
 	
+		//OMSSAXML file
+		if (all_simple.hasSubstring("<MSResponse")) return FileTypes::OMSSAXML;
+
 		//MSP (all lines)
 		for (Size i = 0; i != file.size(); ++i)
 		{

@@ -74,6 +74,8 @@ namespace OpenMS
 				ANYWHERE = 0,
 				C_TERM = 1,
 				N_TERM =2,
+				PROTEIN_C_TERM = 3,
+				PROTEIN_N_TERM = 4,
 				NUMBER_OF_TERM_SPECIFICITY
 			};
 
@@ -117,8 +119,20 @@ namespace OpenMS
 			/// set the identifier of the modification
 			void setId(const String& id);
 
-			/// returns the identifier the modification
+			/// returns the identifier of the modification
 			const String& getId() const;
+
+			/// sets the unimod accession
+			void setUniModAccession(const String& id);
+
+			/// returns the unimod accession if available
+			const String& getUniModAccession() const;
+
+			/// set the MOD:XXXXX accession of PSI-MOD
+			void setPSIMODAccession(const String& id);
+
+			/// returns the PSI-MOD accession if available
+			const String& getPSIMODAccession() const;
 
 			/// sets the full name of the modification
 			void setFullName(const String& full_name);
@@ -163,28 +177,28 @@ namespace OpenMS
 			String getSourceClassificationName(Source_Classification classification = NUMBER_OF_SOURCE_CLASSIFICATIONS) const;
 			
 			/// sets the average mass
-			void setAverageMass(double mass);
+			void setAverageMass(DoubleReal mass);
 
 			/// returns the average mass if set 
-			double getAverageMass() const;
+			DoubleReal getAverageMass() const;
 
 			/// sets the monoisotopic mass
-			void setMonoMass(double mass);
+			void setMonoMass(DoubleReal mass);
 
 			/// return the monoisotopic mass, if set
-			double getMonoMass() const;
+			DoubleReal getMonoMass() const;
 
 			/// set the difference average mass
-			void setDiffAverageMass(double mass);
+			void setDiffAverageMass(DoubleReal mass);
 
 			/// returns the difference average mass if set
-			double getDiffAverageMass() const;
+			DoubleReal getDiffAverageMass() const;
 
 			/// sets the difference monoisotopic mass 
-			void setDiffMonoMass(double mass);
+			void setDiffMonoMass(DoubleReal mass);
 
 			/// returns the diff monoisotopic mass if set
-			double getDiffMonoMass() const;
+			DoubleReal getDiffMonoMass() const;
 			
 			/// set the formula 
 			void setFormula(const String& composition);
@@ -206,11 +220,32 @@ namespace OpenMS
 
 			/// returns the set of synonyms
 			const std::set<String>& getSynonyms() const;
+
+			/// sets the neutral loss formula
+			void setNeutralLossDiffFormula(const EmpiricalFormula& loss);
+
+			/// returns the neutral loss diff formula (if available)
+			const EmpiricalFormula& getNeutralLossDiffFormula() const;
+
+			/// set the neutral loss mono weight 
+			void setNeutralLossMonoMass(DoubleReal mono_mass);
+
+			/// returns the neutral loss mono weight
+			DoubleReal getNeutralLossMonoMass() const;
+
+			/// set the neutral loss average weight
+			void setNeutralLossAverageMass(DoubleReal average_mass);
+
+			/// returns the neutral loss average weight
+			DoubleReal getNeutralLossAverageMass() const;
 			//@}
 
 			/** @name Predicates
 			*/
 			//@{
+			/// returns true if a neutral loss formula is set
+			bool hasNeutralLoss() const;
+			
 			/// equality operator
 			bool operator == (const ResidueModification& modification) const;
 
@@ -222,6 +257,10 @@ namespace OpenMS
 
 			String id_;
 
+			String psi_mod_accession_;
+
+			String unimod_accession_;
+
 			String full_name_;
 
 			String name_;
@@ -232,21 +271,25 @@ namespace OpenMS
 
 			Source_Classification classification_;
 
-			double average_mass_;
+			DoubleReal average_mass_;
 			
-			double mono_mass_;
+			DoubleReal mono_mass_;
 			
-			double diff_average_mass_;
+			DoubleReal diff_average_mass_;
 
-			double diff_mono_mass_;
+			DoubleReal diff_mono_mass_;
 			
 			String formula_;
 
 			EmpiricalFormula diff_formula_;
 
-			//std::vector<String> valid_residues_;
-
 			std::set<String> synonyms_;
+
+			EmpiricalFormula neutral_loss_diff_formula_;
+
+			DoubleReal neutral_loss_mono_mass_;
+
+			DoubleReal neutral_loss_average_mass_;
 	};
 }
 

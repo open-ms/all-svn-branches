@@ -88,6 +88,8 @@ namespace OpenMS
 			EdgeIterator edgesEnd();
 			/// Removes all currently selected edges and vertices
 			void removeSelected();
+			/// Unselects all items
+			void unselectAll();
 			/// Updates all edge colors (color of green and yellow edges can change when edges are added/removed)
 			void updateEdgeColors();
 			/// Runs the pipeline
@@ -115,6 +117,17 @@ namespace OpenMS
 			void addHoveringEdge(const QPointF& pos);
 			/// Called when the new edge is being "released"
 			void finishHoveringEdge();
+			/// Checks whether all output vertices are finished, and if yes, emits entirePipelineFinished() (called by finished output vertices)
+			void checkIfWeAreDone();
+			/// Called by vertices at which an error occured during pipeline execution
+			void pipelineErrorSlot();
+			
+		signals:
+			
+			/// Emitted when the entire pipeline execution is finished
+			void entirePipelineFinished();
+			/// Emitted when the pipeline execution has failed
+			void pipelineExecutionFailed();
 			
 		protected:
 			

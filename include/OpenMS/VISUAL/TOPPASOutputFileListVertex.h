@@ -73,6 +73,10 @@ namespace OpenMS
 			bool isReady();
 			/// Updates the status (if ready or not)
 			void updateStatus();
+			/// Shows the dialog for editing the files
+			void showFilesDialog();
+			/// Returns whether we are finished
+			bool isFinished();
 			
 		public slots:
 		
@@ -83,17 +87,22 @@ namespace OpenMS
 			
 			/// Emitted when an output file was written
 			void outputFileWritten(const String& file);
-		
+			/// Emitted when the pipeline ending in this vertex is finished
+			void iAmDone();
+			
 		protected:
 		
 			/// The file names
 			QStringList files_;
 			/// Stores whether this vertex is ready (ready iff for every element of the list a name has been specified)
 			bool ready_;
+			/// Stores whether the pipeline ending in this vertex has finished already
+			bool finished_;
 		
 			///@name reimplemented Qt events
       //@{
       void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
+      void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
 			//@}
 	};
 }

@@ -62,8 +62,8 @@ namespace OpenMS
 			virtual QRectF boundingRect() const;
 			// documented in base class
 			virtual QPainterPath shape () const;
-			/// Checks if the given file name is valid
-			bool fileNameValid(const QString& file);
+			/// Shows the dialog for editing the file name
+			void showFileDialog();
 			
 		protected:
 		
@@ -73,6 +73,7 @@ namespace OpenMS
 			///@name reimplemented Qt events
       //@{
       void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
+      void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
 			//@}
 			
 	};

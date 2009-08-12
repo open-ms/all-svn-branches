@@ -85,7 +85,7 @@ namespace OpenMS
 			*/
 			template <typename FromType>
 			void encode(std::vector<FromType>& in, ByteOrder to_byte_order, std::string& out, bool zlib_compression= false);
-	
+			
 			/**
 				@brief Decodes a Base64 string to a vector of floating point numbers
 	
@@ -95,7 +95,24 @@ namespace OpenMS
 			*/
 			template <typename ToType>
 			void decode(const std::string& in, ByteOrder from_byte_order, std::vector<ToType>& out, bool zlib_compression = false,DataType data_type= FLOAT);
+
+			/**
+				@brief Encodes a vector of strings to a Base64 string
+				
+				You can specify  zlib-compresseion-
+				
+				@note @p in will be emtpy after this method
+			*/
+			void encodeStrings(std::vector<String>& in, std::string& out, bool zlib_compression= false);
 			
+			/**
+				@brief Decodes a Base64 string to a vector of (null-terminated) strings
+	
+				You have to specify whether the Base64 string is zlib-compressed.
+	
+				@note @p in will be emtpy after this method
+			*/		
+			void decodeStrings(const std::string& in, std::vector<String>& out, bool zlib_compression = false);
 		private:
 			
 			///Internal class needed for type-punning
@@ -125,9 +142,12 @@ namespace OpenMS
 			///Decodes a compressed Base64 string to a vector of floating point numbers 
 			template <typename ToType>
 			void decodeCompressed_(const std::string& in, ByteOrder from_byte_order, std::vector<ToType>& out,DataType data_type);
+
+			///Decodes a compressed Base64 string to a vector of floating point numbers representing integers
+			template <typename ToType>
+			void decodeUncompressedInteger_(const std::string& in, ByteOrder from_byte_order, std::vector<ToType>& out);			
   };
-	
-	///Endianizes a 32 bit type from big endian to litte endian and vice versa
+			///Endianizes a 32 bit type from big endian to litte endian and vice versa
 	inline Int32 endianize32(Int32& n)
 	{
 		return ((n&0xff)<<24) | ((n&0xff00)<<8) | ((n&0xff0000)>>8) | ((n&0xff000000)>>24);
@@ -144,6 +164,7 @@ namespace OpenMS
 		((n&0x00ff000000000000ll)>>40) | 
 		((n&0xff00000000000000ll)>>56);
 	}
+
 	
 	template <typename FromType>
 	void Base64::encode(std::vector<FromType>& in, ByteOrder to_byte_order, std::string& out, bool zlib_compression )
@@ -262,29 +283,29 @@ namespace OpenMS
 		
 		String decompressed;
 
-		QByteArray herewego = QByteArray::fromRawData(in.c_str(), (int) in.size());
-		QByteArray bazip = QByteArray::fromBase64(herewego);
-		QByteArray czip;
-		czip.resize(4);
-		czip[0] = (bazip.size() & 0xff000000) >> 24;
-		czip[1] = (bazip.size() & 0x00ff0000) >> 16;
-		czip[2] = (bazip.size() & 0x0000ff00) >> 8;
-		czip[3] = (bazip.size()& 0x000000ff);
-		czip += bazip;
-		QByteArray base64_uncompressed = qUncompress(czip);
-		
-		if(base64_uncompressed.isEmpty())
-		{
-			throw Exception::ConversionError (__FILE__,__LINE__,__PRETTY_FUNCTION__,"Decompression error?");
-		}
-		decompressed.resize(base64_uncompressed.size());
-		
-		std::copy(base64_uncompressed.begin(),base64_uncompressed.end(),decompressed.begin());
+			QByteArray herewego = QByteArray::fromRawData(in.c_str(), (int) in.size());
+			QByteArray bazip = QByteArray::fromBase64(herewego);
+			QByteArray czip;
+			czip.resize(4);
+			czip[0] = (bazip.size() & 0xff000000) >> 24;
+			czip[1] = (bazip.size() & 0x00ff0000) >> 16;
+			czip[2] = (bazip.size() & 0x0000ff00) >> 8;
+			czip[3] = (bazip.size()& 0x000000ff);
+			czip += bazip;
+			QByteArray base64_uncompressed = qUncompress(czip);
+			
+			if(base64_uncompressed.isEmpty())
+			{
+				throw Exception::ConversionError (__FILE__,__LINE__,__PRETTY_FUNCTION__,"Decompression error?");
+			}
+			decompressed.resize(base64_uncompressed.size());
+			
+			std::copy(base64_uncompressed.begin(),base64_uncompressed.end(),decompressed.begin());
 
-		byte_buffer = reinterpret_cast<void*>(&decompressed[0]);
-		buffer_size = decompressed.size();
+			byte_buffer = reinterpret_cast<void*>(&decompressed[0]);
+			buffer_size = decompressed.size();
 		
-		// change endianness if necessary
+		//change endianness if necessary
 		if ((OPENMS_IS_BIG_ENDIAN && from_byte_order == Base64::BYTEORDER_LITTLEENDIAN) || (!OPENMS_IS_BIG_ENDIAN && from_byte_order == Base64::BYTEORDER_BIGENDIAN))
 		{
 			if(element_size==4 && data_type == FLOAT)
@@ -568,6 +589,7 @@ namespace OpenMS
 			}
 		}
 	}	
+	
 } //namespace OpenMS
 
 #endif /* OPENMS_FORMAT_BASE64_H */

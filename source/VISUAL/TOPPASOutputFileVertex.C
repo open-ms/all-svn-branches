@@ -76,7 +76,12 @@ namespace OpenMS
 	
 	void TOPPASOutputFileVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
 	{
-		TOPPASOutputFileDialog tofd(this);
+		showFileDialog();
+	}
+	
+	void TOPPASOutputFileVertex::showFileDialog()
+	{
+		TOPPASOutputFileDialog tofd(file_);
 		if (tofd.exec())
 		{
 			file_ = tofd.getFilename();
@@ -91,6 +96,7 @@ namespace OpenMS
 		{
 			pen.setWidth(2);
 			painter->setBrush(brush_color_.darker(130));
+			pen.setColor(Qt::darkBlue);
 		}
 		else
 		{
@@ -102,6 +108,8 @@ namespace OpenMS
 		path.addRoundRect(-70.0, -40.0, 140.0, 80.0, 20, 20);		
  		painter->drawPath(path);
  		
+ 		pen.setColor(pen_color_);
+ 		painter->setPen(pen);
 		QString text = "Output file";
 		QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, text);
 		painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), text);
@@ -121,6 +129,7 @@ namespace OpenMS
 	
 	void TOPPASOutputFileVertex::startComputation()
 	{
+		finished_ = false;
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 		{
 			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
@@ -155,6 +164,8 @@ namespace OpenMS
 			
 			emit outputFileWritten(String(file_));
 		}
+		finished_ = true;
+		emit iAmDone();
 	}
 	
 	void TOPPASOutputFileVertex::inEdgeHasChanged()
@@ -162,20 +173,39 @@ namespace OpenMS
 		// we do not need to forward the change (we have no childs)
 	}
 	
-	bool TOPPASOutputFileVertex::fileNameValid(const QString& file)
+	void TOPPASOutputFileVertex::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
 	{
-		//file name specified?
-		if (File::basename(String(file)) == "")
-		{
-			return false;
-		}
-		//directory exists?
-		if (!File::exists(File::path(String(file))))
-		{
-			return false;
-		}
+		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
+		ts->unselectAll();
+		setSelected(true);
 		
-		return true;
+		QMenu menu;
+		menu.addAction("Change file");
+		menu.addAction("Remove");
+		
+		QAction* selected_action = menu.exec(event->screenPos());
+		if (selected_action)
+		{
+			QString text = selected_action->text();
+			if (text == "Change file")
+			{
+				showFileDialog();
+			}
+			else if (text == "Remove")
+			{
+				ts->removeSelected();
+			}
+			event->accept();
+		}
+		else
+		{
+			event->ignore();	
+		}
+	}
+	
+	bool TOPPASOutputFileVertex::isFinished()
+	{
+		return finished_;
 	}
 }
 

@@ -66,8 +66,10 @@ namespace OpenMS
 			const QString& getFilename();
 			/// Called when the parent node has finished execution
 			void finished();
-			/// Checks if the given file name is valid
-			bool fileNameValid(const QString& file);
+			/// Shows the dialog for editing the file name
+			void showFileDialog();
+			/// Returns whether we are finished
+			bool isFinished();
 			
 		public slots:
 		
@@ -76,16 +78,22 @@ namespace OpenMS
 		
 		signals:
 			
+			/// Emitted when an output file was written
 			void outputFileWritten(const String& file);
+			/// Emitted when the pipeline ending in this vertex is finished
+			void iAmDone();
 		
 		protected:
 			
 			/// The file name
 			QString file_;
+			/// Stores whether the pipeline ending in this vertex has finished already
+			bool finished_;
 		
 			///@name reimplemented Qt events
       //@{
       void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);
+      void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
 			//@}
 			
 	};

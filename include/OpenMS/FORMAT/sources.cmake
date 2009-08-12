@@ -29,6 +29,7 @@ CVMappingFile.h
 CVMappings.h
 ConsensusXMLFile.h
 ControlledVocabulary.h
+CsvFile.h
 DTA2DFile.h
 DTAFile.h
 FASTAFile.h

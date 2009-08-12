@@ -82,6 +82,11 @@ namespace OpenMS
 	
 	void TOPPASOutputFileListVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
 	{
+		showFilesDialog();
+	}
+	
+	void TOPPASOutputFileListVertex::showFilesDialog()
+	{
 		bool go = true;
 		if (inEdgesBegin() == inEdgesEnd())
 		{
@@ -108,7 +113,37 @@ namespace OpenMS
 			return;
 		}
 		
-		TOPPASOutputFilesDialog tofd(this);
+		QStringList list;
+		TOPPASEdge* in_edge = *inEdgesBegin();
+		TOPPASToolVertex* in_tool = qobject_cast<TOPPASToolVertex*>(in_edge->getSourceVertex());
+		const QVector<QStringList>& files_vector = in_tool->getOutputFileNames();
+		int param_index = in_edge->getSourceOutParam();
+		if (param_index != -1)
+		{
+			const QStringList& files = files_vector[param_index];
+			
+			int specified_files_count = files_.size();
+			int tmp_files_count = files.size();
+			if (specified_files_count <= tmp_files_count)
+			{
+				list = files_;
+				// if too few file names specified, fill the rest
+				for (int i = specified_files_count; i < tmp_files_count; ++i)
+				{
+					list.push_back("<edit filename>");
+				}
+			}
+			else
+			{
+				// too many file names specified, only show as many as needed
+				for (int i = 0; i < tmp_files_count; ++i)
+				{
+					list.push_back(files_[i]);
+				}
+			}
+		}
+		
+		TOPPASOutputFilesDialog tofd(list);
 		if (tofd.exec())
 		{
 			tofd.getFilenames(files_);
@@ -124,6 +159,7 @@ namespace OpenMS
 		{
 			pen.setWidth(2);
 			painter->setBrush(brush_color_.darker(130));
+			pen.setColor(Qt::darkBlue);
 		}
 		else
 		{
@@ -135,6 +171,8 @@ namespace OpenMS
 		path.addRoundRect(-70.0, -40.0, 140.0, 80.0, 20, 20);		
  		painter->drawPath(path);
  		
+ 		pen.setColor(pen_color_);
+ 		painter->setPen(pen);
 		QString text = "Output file list";
 		QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, text);
 		painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), text);
@@ -154,6 +192,7 @@ namespace OpenMS
 	
 	void TOPPASOutputFileListVertex::startComputation()
 	{
+		finished_ = false;
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 		{
 			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
@@ -193,6 +232,8 @@ namespace OpenMS
 				emit outputFileWritten(String(save_name));
 			}
 		}
+		finished_ = true;
+		emit iAmDone();
 	}
 	
 	void TOPPASOutputFileListVertex::inEdgeHasChanged()
@@ -253,6 +294,41 @@ namespace OpenMS
 	bool TOPPASOutputFileListVertex::isReady()
 	{
 		return ready_;
+	}
+	
+	void TOPPASOutputFileListVertex::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+	{
+		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
+		ts->unselectAll();
+		setSelected(true);
+		
+		QMenu menu;
+		menu.addAction("Change files");
+		menu.addAction("Remove");
+		
+		QAction* selected_action = menu.exec(event->screenPos());
+		if (selected_action)
+		{
+			QString text = selected_action->text();
+			if (text == "Change files")
+			{
+				showFilesDialog();
+			}
+			else if (text == "Remove")
+			{
+				ts->removeSelected();
+			}
+			event->accept();
+		}
+		else
+		{
+			event->ignore();	
+		}
+	}
+	
+	bool TOPPASOutputFileListVertex::isFinished()
+	{
+		return finished_;
 	}
 }
 

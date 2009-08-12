@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CHEMISTRY/ResidueModification.h>
@@ -51,7 +51,7 @@ namespace OpenMS
   {
     
   }
-  
+ 
   void UnimodXMLHandler::startElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname, const Attributes& attributes)
 	{
 
@@ -60,12 +60,16 @@ namespace OpenMS
 		// new modification?
 		if (tag_ == "umod:mod" || tag_ == "mod")
 		{
+			sites_.clear();
 			modification_ = new ResidueModification();
-			String title(sm_.convert(attributes.getValue(attributes.getIndex(sm_.convert("title")))));
+			String title(attributeAsString_(attributes, "title"));
 			modification_->setId(title);
 
-			String full_name(sm_.convert(attributes.getValue(attributes.getIndex(sm_.convert("full_name")))));
+			String full_name(attributeAsString_(attributes, "full_name"));
 			modification_->setFullName(full_name);
+
+			String record_id(attributeAsString_(attributes, "record_id"));
+			modification_->setUniModAccession("UniMod:" + record_id);
 			return;
 		}
 
@@ -73,13 +77,12 @@ namespace OpenMS
 		if (tag_ == "umod:specificity" || tag_ == "specificity")
 		{
 			// classification of mod
-			//String classification(sm_.convert(attributes.getValue(attributes.getIndex(sm_.convert("classification")))));
-			//modification_->setSourceClassification(classification);
-			//TODO
+			String classification(attributeAsString_(attributes, "classification"));
+			modification_->setSourceClassification(classification);
 
 			// allowed site
-			String site(sm_.convert(attributes.getValue(attributes.getIndex(sm_.convert("site")))));
-			modification_->setOrigin(site);
+			String site(attributeAsString_(attributes, "site"));
+			sites_.push_back(site);
 
 			// allowed positions
 			ResidueModification::Term_Specificity position = ResidueModification::ANYWHERE;
@@ -92,13 +95,13 @@ namespace OpenMS
 			{
 				if (pos == "Protein N-term")
 				{
-					position = ResidueModification::N_TERM;
+					position = ResidueModification::PROTEIN_N_TERM;
 				}
 				else
 				{
 					if (pos == "Protein C-term")
 					{
-						position = ResidueModification::C_TERM;
+						position = ResidueModification::PROTEIN_C_TERM;
 					}
 					else
 					{
@@ -122,14 +125,14 @@ namespace OpenMS
 			}
 			modification_->setTermSpecificity(position);
 
-			new_mods_.push_back(modification_);
 			return;
 		}
 	
 
 		if (tag_ == "umod:NeutralLoss" || tag_ == "NeutralLoss")
 		{
-			
+			// mono_mass="97.976896" avge_mass="97.9952" flag="false"
+			//                               composition="H(3) O(4) P">
 
 		}
 		
@@ -182,58 +185,34 @@ namespace OpenMS
 		// write the modifications to vector
 		if (tag_ == "umod:mod" || tag_ == "mod")
 		{
-			for (vector<ResidueModification*>::iterator it = new_mods_.begin(); it != new_mods_.end(); ++it)
+			modification_->setAverageMass(avge_mass_);
+			modification_->setMonoMass(mono_mass_);
+			modification_->setDiffFormula(diff_formula_);
+
+			for (vector<String>::const_iterator it = sites_.begin(); it != sites_.end(); ++it)
 			{
-				(*it)->setAverageMass(avge_mass_);
-				(*it)->setMonoMass(mono_mass_);
-/*
-				// O(-2) 18O(2)
-				EmpiricalFormula ef;
-				vector<String> split;
-				composition_.split(' ', split);
-				for (Size i = 0; i != split.size(); ++i)
-				{
-					String tmp = split[i];
-					String symbol;
-					Size num;
-					if (tmp.has('('))
-					{
-						symbol = tmp.prefix('(');
-						num = ((String)tmp.suffix('(').prefix(')')).toInt();
-					}
-					String isotope;
-					String tmp_symbol;
-					for (Size j = 0; j != symbol.size(); ++j)
-					{
-						if (isdigit(symbol[j]))
-						{
-							isotope += symbol[i];
-						}
-						else
-						{
-							tmp_symbol += symbol[i];
-						}
-					}
-					
-					String formula;
-					if (isotope != "")
-					{
-						formula = '(' + isotope + ')' + tmp_symbol + String(num);
-					}
-					else
-					{
-						formula = tmp_symbol + String(num);
-					}
-					ef += formula;
-				}*/
-				(*it)->setDiffFormula(diff_formula_);
-				modifications_.push_back(*it);
+				ResidueModification* new_mod = new ResidueModification(*modification_);
+				new_mod->setOrigin(*it);
+				modifications_.push_back(new_mod);
 			}
 			
 			avge_mass_ = 0.0;
 			mono_mass_ = 0.0;
 			diff_formula_ = EmpiricalFormula();
-			new_mods_.clear();
+
+			delete modification_;
+			return;
+		}
+
+		if (tag_ == "umod:NeutralLoss" || tag_ == "NeutralLoss")
+		{
+			// now diff_formula_ contains the neutral loss diff formula
+			modification_->setNeutralLossDiffFormula(diff_formula_);
+			modification_->setNeutralLossMonoMass(mono_mass_);
+			modification_->setNeutralLossAverageMass(avge_mass_);
+			avge_mass_ = 0.0;
+			mono_mass_ = 0.0;
+			diff_formula_ = EmpiricalFormula();
 		}
  	} 
 

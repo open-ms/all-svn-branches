@@ -110,6 +110,7 @@ set(visual_executables_list
 )
 
 set(format_executables_list
+  CsvFile_test
   XMLValidator_test
   TextFile_test
   XMLFile_test
@@ -225,6 +226,7 @@ set(comparison_executables_list
   ZhangSimilarityScore_test
   SpectrumAlignment_test
   SpectrumAlignmentScore_test
+  SpectraSTSimilarityScore_test
   SteinScottImproveScore_test
   CompareFouriertransform_test
   BinnedSpectrum_test
@@ -254,6 +256,7 @@ set(chemistry_executables_list
   AAIndex_test
   EnzymaticDigestion_test
   TheoreticalSpectrumGenerator_test
+  AdvancedTheoreticalSpectrumGenerator_test
   ModifierRep_test
   FastaIterator_test
   FastaIteratorIntern_test

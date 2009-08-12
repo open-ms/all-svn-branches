@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_CHEMISTRY_MODIFICATIONSDB_H
@@ -73,6 +73,9 @@ namespace OpenMS
 
 			/// returns all modifications which have the given name as synonym
 			std::set<String> searchModifications(const String& name) const;
+
+			/// returns all modification which have the given name as synonym and the given origin
+			std::set<String> searchModifications(const String& name, const String& origin) const;
 			
 			/** @brief returns the modifications of the given name
 
@@ -104,13 +107,16 @@ namespace OpenMS
 			/// adds modifications from a given file in Unimod XML format
 			void readFromUnimodXMLFile(const String& filename);
 			
+			/// get all modifications that can be used for identification searches
+			void getAllSearchModifications(std::vector<String>& modifications);
+
 		protected:
 
 			/// stores the modifications
 			std::vector<ResidueModification*> mods_;
 
 			/// stores the mappings of (unique) names to the modifications
-			Map<String, std::set<const ResidueModification*>  > modification_names_;
+			Map<String, std::set<const ResidueModification*> > modification_names_;
 			
 			
 		private:

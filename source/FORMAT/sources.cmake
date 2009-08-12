@@ -9,6 +9,7 @@ CVMappingFile.C
 CVMappings.C
 ConsensusXMLFile.C
 ControlledVocabulary.C
+CsvFile.C
 DTA2DFile.C
 DTAFile.C
 FASTAFile.C

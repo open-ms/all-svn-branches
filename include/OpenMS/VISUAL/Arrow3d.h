@@ -51,6 +51,8 @@ namespace OpenMS
 
       void draw(const Struct3d& pos, const Struct3d& dir, const double sizeFactor = 1.0) const;
       void setColor(ColorRGBA color);
+      void setColor(double rr, double gg, double bb, double aa);
+      void setColor(QColor color);
 
     private:
 	    double rotate_(Struct3d& axis, const Struct3d& vector) const;

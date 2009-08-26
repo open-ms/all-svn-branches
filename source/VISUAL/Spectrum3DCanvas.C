@@ -391,6 +391,16 @@ namespace OpenMS
 		openglwidget()->trans_y_ -= 10;
 		update_(__PRETTY_FUNCTION__);		
 	}
+	
+  void Spectrum3DCanvas::setDrawMode(Spectrum3DCanvas::DrawModes mode)
+  { 
+    openglwidget()->setDrawMode(mode); 
+  }	
+  
+  Spectrum3DCanvas::DrawModes Spectrum3DCanvas::getDrawMode()
+  { 
+    return openglwidget()->getDrawMode();
+  }	  
 
 }//namspace
 

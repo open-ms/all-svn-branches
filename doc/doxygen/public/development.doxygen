@@ -52,6 +52,253 @@ endif(OpenMS_FOUND)
 
 	The command @em project defines the name of the project. The variable @em OpenMS_DIR must be set to the root directory of your %OpenMS installation. If it is set correctly CMake will recognize it. To be able to compile your program you just need to append it to the @em my_executables list. If you use also Object files, classes which do not contain a main program this can be down by appending the @em my_sources list. In the next step CMake creates a statically linked library of the object files, listed in my_sources. At the end a for loop is used to link all the executables against %OpenMS and against your own custom lib. This simple CMakeLists.txt example can be extended to also build shared libraries, include other external libraries and so on. For more information visit the website of cmake at cmake.org and consult the documentation.
 	<br>
+	
+	@section new_file_format How to create new file format in OpenMS
+
+I) First, we create the class that can read and write file in new format and translate informations and data in internal container. Usually, this class contient 3 functions : the default constructor, the load function and strore function.
+
+	@code
+	
+// file : /include/OpenMS/FORMAT/ExampleFile.h
+//
+// -*- mode: C++; tab-width: 2; -*- 
+// vi: set ts=2: 
+// 
+// -------------------------------------------------------------------------- 
+//                    Format description
+// -------------------------------------------------------------------------- 
+//  Copyright (C) 2009
+// 
+//  This library is free software; you can redistribute it and/or 
+//  modify it under the terms of the GNU Lesser General Public 
+//  License as published by the Free Software Foundation; either 
+//  version 2.1 of the License, or (at your option) any later version. 
+// 
+//  This library is distributed in the hope that it will be useful, 
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+//  Lesser General Public License for more details. 
+// 
+//  You should have received a copy of the GNU Lesser General Public 
+//  License along with this library; if not, write to the Free Software 
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+// 
+// -------------------------------------------------------------------------- 
+// $Maintainer: maintainer
+// $Authors: authors
+// -------------------------------------------------------------------------- 
+
+#ifndef OPENMS_FORMAT_EXAMPLEFILE_H 
+#define OPENMS_FORMAT_EXAMPLEFILE_H 
+
+#include <OpenMS/DATASTRUCTURES/String.h> 
+#include <OpenMS/CONCEPT/Exception.h> 
+
+namespace OpenMS 
+{ 
+	/** 
+		@brief brief desription of format
+		 
+		@ingroup FileIO 
+	*/ 
+
+	class OPENMS_DLLAPI ExampleFile 
+	{ 
+		public: 
+			/// Default constructor 
+			ExampleFile();
+
+			template <typename SpectrumType> 
+			void load(const String& filename, SpectrumType& spectrum) 
+			{ 
+				/// code here
+			} 
+
+			template <typename SpectrumType> 
+			void store(const String& filename, const SpectrumType& spectrum) 
+			{ 
+				/// code here
+			} 
+	}; 
+} // namespace OpenMS 
+
+#endif // OPENMS_FORMAT_EXAMPLEFILE_H
+	@endcode
+
+Every .h file must be accompanied by a .C file :
+
+	@code
+// file : /source/FORMAT/ExampleFile.C
+//
+// -*- mode: C++; tab-width: 2; -*- 
+// vi: set ts=2: 
+// 
+// -------------------------------------------------------------------------- 
+//                    Format description
+// -------------------------------------------------------------------------- 
+//  Copyright (C) 2009
+// 
+//  This library is free software; you can redistribute it and/or 
+//  modify it under the terms of the GNU Lesser General Public 
+//  License as published by the Free Software Foundation; either 
+//  version 2.1 of the License, or (at your option) any later version. 
+// 
+//  This library is distributed in the hope that it will be useful, 
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of 
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+//  Lesser General Public License for more details. 
+// 
+//  You should have received a copy of the GNU Lesser General Public 
+//  License along with this library; if not, write to the Free Software 
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
+// 
+// -------------------------------------------------------------------------- 
+// $Maintainer: maintainer
+// $Authors: authors
+// -------------------------------------------------------------------------- 
+#include <OpenMS/FORMAT/ExampleFile .h> 
+
+namespace OpenMS 
+{ 
+
+	ExampleFile::ExampleFile() 
+	{ 
+	} 
+
+} // namespace OpenMS
+	@endcode
+
+II) Then, we must add this format to list of enabled format.
+In file /include/OpenMS/FORMAT/FileTypes.h, add line for the new format :
+	@code
+(...)
+		enum Type 
+		{ 
+			NEWFORMAT,     		///< New format (.extension)
+			UNKNOWN,        		///< Unknown file extension 
+			DTA,            		///< DTA file (.dta) 
+			DTA2D,          		///< DTA2D file (.dta2d) 
+			MZDATA,         		///< MzData file (.MzData) 
+			(...)
+		};
+(...)
+	@endcode
+	
+In file /include/OpenMS/FORMAT/FileHandler.h :
+	@code
+(...)
+#include <OpenMS/config.h> 
+#include <OpenMS/FORMAT/FileTypes.h> 
+#include <OpenMS/FORMAT/DTAFile.h> 
+#include <OpenMS/FORMAT/DTA2DFile.h> 
+#include <OpenMS/FORMAT/MzXMLFile.h> 
+#include <OpenMS/FORMAT/MzMLFile.h> 
+#include <OpenMS/FORMAT/FeatureXMLFile.h> 
+#include <OpenMS/FORMAT/MzDataFile.h> 
+#include <OpenMS/FORMAT/MascotInfile2.h> 
+#include <OpenMS/FORMAT/MS2File.h> 
+#include <OpenMS/FORMAT/ExampleFile.h> // include header for new format
+#include <OpenMS/CONCEPT/ProgressLogger.h> 
+
+#ifdef USE_ANDIMS 
+#include <OpenMS/FORMAT/ANDIFile.h> 
+#endif 
+(...)
+(line 136)
+			//load right file 
+			switch(type) 
+			{ 
+				case FileTypes::NEWFORMAT: // add 'case' for new format
+					{ 
+					  // import data in 'exp' variable defined as 'MSExperiment<PeakType>'
+					  ExampleFile().load(filename, exp); 
+					  return true; 
+					} 
+					break; 
+				case FileTypes::DTA: 
+					{ 
+					  exp.reset(); 
+					  exp.resize(1); 
+					  DTAFile().load(filename,exp[0]); 
+					  return true; 
+					} 
+					break; 
+(...)
+	@endcode
+
+In file /source/FORMAT/FileHandler.C :
+	@code
+(...)
+	const std::string FileHandler::NamesOfTypes[] = {"extension", "Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML"}; // add new extension
+(...)
+(in function getTypeByFileName)
+		catch (Exception::ElementNotFound&) 
+		{ 
+			return FileTypes::UNKNOWN; 
+		} 
+		tmp.toUpper(); 
+
+		if (tmp == "EXTENSION") 
+		{ 
+			return FileTypes::NEWFORMAT; 
+		} 
+		else if (tmp == "MZDATA") 
+		{ 
+			return FileTypes::MZDATA; 
+		} 
+(...)
+(in function isSupported)
+	bool FileHandler::isSupported(FileTypes::Type type) 
+	{ 
+		switch (type) 
+		{ 
+		case FileTypes::NEWFORMAT: 
+			return true;		 
+		case FileTypes::DTA: 
+			return true; 
+		case FileTypes::DTA2D: 
+			return true;
+(...)
+	@endcode
+
+III) Finally, we add this new format in applications we want to use it.
+For example in TOPPView application, in file /source/APPLICATIONS/TOPPViewBase.C :
+	@code
+(...)
+(line 1973)
+  QStringList TOPPViewBase::getFileList_(const String& path_overwrite) 
+  { 
+		String filter_all = "readable files (*.dta *.dta2d"; 
+		String filter_single = "dta files (*.dta);;dta2d files (*.dta2d)"; 
+#ifdef USE_ANDIMS 
+		filter_all +=" *.cdf"; 
+		filter_single += ";;ANDI/MS files (*.cdf)"; 
+#endif 
+		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML *.extension);;" ; 
+		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;XML files (*.xml);;My new format (*.extension);;all files (*)"; 
+(...)
+
+Other example in FileInfo application, in file /source/APPLICATIONS/TOPP/FileInfo.C :
+(...)
+(in function registerOptionsAndFlags)
+	virtual void registerOptionsAndFlags_() 
+	{ 
+		registerInputFile_("in","<file>","","input file "); 
+		setValidFormats_("in", StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML,extention")); 
+
+		registerStringOption_("in_type","<type>","","input file type -- default: determined from file extension or content\n", false); 
+		setValidStrings_("in_type", StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,extension")); 
+
+		registerOutputFile_("out","<file>","","Optional output file. If '-' or left out, the output is written to the command line.", false); 
+		registerFlag_("m","Show meta information about the whole experiment"); 
+		registerFlag_("s","Computes a five-number statistics of intensities and qualities"); 
+		registerFlag_("d","Show detailed listing of all spectra (peak files only)"); 
+		registerFlag_("c","Check for corrupt data in the file (peak files only)"); 
+		registerFlag_("v","Validate the file only (for mzData, mzXML, featureXML, IdXML, consensusXML)"); 
+	}
+(...)
+	@endcode
+
 	<b>Have fun coding with OpenMS!</b>
 
 

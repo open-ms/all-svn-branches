@@ -5,7 +5,6 @@ set(directory include/OpenMS/VISUAL)
 set(sources_list
 AxisWidget.h
 ColorSelector.h
-ColorRGBA.h
 EnhancedTabBar.h
 GridData.h
 HistogramWidget.h

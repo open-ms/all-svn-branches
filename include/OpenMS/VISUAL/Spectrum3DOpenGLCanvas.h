@@ -41,6 +41,8 @@ using std::endl;
 namespace OpenMS
 {
 	class Spectrum3DCanvas;
+	class Arrow3d;
+	class map2d;
 	
 	/**
 		@brief OpenGL Canvas for 3D-visualization of map data
@@ -95,7 +97,7 @@ namespace OpenMS
 			GLuint makeGridLines();
 			/// Draws the axis texts (since Qt 4.3 these cannot be put into display lists anymore...)
 			void drawAxesLegend();
-	
+			
       /** @name Reimplemented QT events */
       //@{
 	    void mouseMoveEvent(QMouseEvent* e);
@@ -123,7 +125,11 @@ namespace OpenMS
 			double scaledInversMZ(double mz);
 	    /// returns the BB-intensity -coordinate :  values --> BB-coordinates
 			double scaledIntensity(Real intensity,Size layer_index);
-	
+      /// Set draw mode of the current layer
+			void setDrawMode(Spectrum3DCanvas::DrawModes mode);			
+      /// Get draw mode of the current layer
+			Spectrum3DCanvas::DrawModes getDrawMode() const;
+				
 			/// recalculates the dot gradient inerpolation values.
 			void recalculateDotGradient_(Size layer);
 			///calculate the ticks for the gridlines
@@ -220,8 +226,9 @@ namespace OpenMS
 			/// y_translation
 			double trans_y_;
 			
-			MapData* map_;
-			Size iClick_;
+			MapData* mapData_;
+			map2d* map_;
+			Arrow3d* arrow_;
 		  
 		protected slots:
 			/// Slot that reacts on action mode changes
@@ -239,9 +246,6 @@ namespace OpenMS
     : std::vector<double>
   {
     friend class Spectrum3DOpenGLCanvas;
-    
-    public:
-      enum drawingMode { POINTS, BARPLOTS, PSEUDOGEL };
           
     private:        
       Size cols_;
@@ -252,7 +256,7 @@ namespace OpenMS
       double rt_min_;
       double rt_max_;
       double rt_width_;
-      drawingMode drawing_mode_;
+      Spectrum3DCanvas::DrawModes draw_mode_;
       Spectrum3DOpenGLCanvas* parent_;
       Size layer_index_;
       
@@ -280,11 +284,21 @@ namespace OpenMS
     public:
       typedef Spectrum3DCanvas::ExperimentType::ConstAreaIterator AreaIt;
             
-      map2d(const Size cols, const Size rows, Spectrum3DOpenGLCanvas* parent, const Size layer_index)
+      map2d()
+        : cols_(0), rows_(0), 
+          mz_min_(0.0), mz_max_(0.0), mz_width_(0.0),
+          rt_min_(0.0), rt_max_(0.0), rt_width_(0.0),
+          draw_mode_(Spectrum3DCanvas::DM_POINTS),
+          parent_(NULL),
+          layer_index_(0)
+      {
+      }
+      
+      void init(const Size cols, const Size rows, Spectrum3DOpenGLCanvas* parent, const Size layer_index)
       {
         parent_ = parent;
         layer_index_ = layer_index;
-        drawing_mode_ = POINTS;
+
         cols_ = cols;
         rows_ = rows;
         
@@ -297,17 +311,18 @@ namespace OpenMS
         rt_min_ = parent_->canvas_3d_.getVisibleArea().min_[1];
         rt_max_ = parent_->canvas_3d_.getVisibleArea().max_[1];
         rt_width_ = (rt_max_ - rt_min_) / (rows-1);
-cout << "constructeur" << endl;
-cout << "cols: " << cols_ << " - rows: " << rows_ << endl;
-cout << "mz: " << mz_min_ << " / " << mz_max_ << " - width: " << mz_width_ << endl;
-cout << "rt: " << rt_min_ << " / " << rt_max_ << " - width: " << rt_width_ << endl;
-      }
+      }      
       
-      void setDrawingMode(const drawingMode mode)
+      void setDrawMode(const Spectrum3DCanvas::DrawModes mode)
       {
-        drawing_mode_ = mode;
+        draw_mode_ = mode;
       }
-      
+
+      Spectrum3DCanvas::DrawModes getDrawMode() const
+      {   
+        return draw_mode_;
+      }
+            
       double indexToMz(const Size col) const
       { 
         return (mz_min_ + (col<cols_ ? col : cols_-1) * mz_width_);
@@ -422,9 +437,9 @@ cout << "rt: " << rt_min_ << " / " << rt_max_ << " - width: " << rt_width_ << en
         vertexList vertex;
         const MultiGradient& gradient = parent_->canvas_3d_.getLayer(layer_index_).gradient;
         
-        switch(drawing_mode_)
+        switch(draw_mode_)
         {
-          case BARPLOTS:
+          case Spectrum3DCanvas::DM_PEAKS:
           {
 				    switch (parent_->canvas_3d_.getIntensityMode())
 			      {
@@ -451,7 +466,7 @@ cout << "rt: " << rt_min_ << " / " << rt_max_ << " - width: " << rt_width_ << en
 		        vertex.z2 = -parent_->near_ - 2 * parent_->corner_ - (GLfloat) scaledRT(indexToRt(row));	
 		      }
 		        			              
-          case POINTS:
+          case Spectrum3DCanvas::DM_POINTS:
           {
 				    switch (parent_->canvas_3d_.getIntensityMode())
 			      {
@@ -473,8 +488,9 @@ cout << "rt: " << rt_min_ << " / " << rt_max_ << " - width: " << rt_width_ << en
 		        vertex.z1 = -parent_->near_ - 2 * parent_->corner_ - (GLfloat) scaledRT(indexToRt(row));			         
             break;
           }
-            
-          case PSEUDOGEL:
+
+          case Spectrum3DCanvas::DM_LINES:            
+          case Spectrum3DCanvas::DM_MAP:
           {
 				    switch (parent_->canvas_3d_.getIntensityMode())
 			      {
@@ -553,10 +569,10 @@ cout << "rt: " << rt_min_ << " / " << rt_max_ << " - width: " << rt_width_ << en
         
         vertexList mainVertex = getVertex(col,row);
       
-        switch(drawing_mode_)
+        switch(draw_mode_)
         {
-          case BARPLOTS:  
-          case POINTS:
+          case Spectrum3DCanvas::DM_PEAKS:  
+          case Spectrum3DCanvas::DM_POINTS:
           {
             int cc[] = {-1,  0, +1, +1, +1,  0, -1, -1, -1};
             int rr[] = {-1, -1, -1,  0, +1, +1, +1,  0, -1};
@@ -568,9 +584,10 @@ cout << "rt: " << rt_min_ << " / " << rt_max_ << " - width: " << rt_width_ << en
                 vertexToVector_(mainVertex, getVertex(col+cc[index+1],row+rr[index+1]))));
             }
             break;
+
           }
-             
-          case PSEUDOGEL:
+          case Spectrum3DCanvas::DM_LINES:
+          case Spectrum3DCanvas::DM_MAP:
           {
             vertexList v;
             v.x1 = 0.0;

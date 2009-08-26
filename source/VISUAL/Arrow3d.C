@@ -92,6 +92,16 @@ namespace OpenMS
     color_ = color;
   }
 
+  void Arrow3d::setColor(double rr, double gg, double bb, double aa)
+  {
+    color_ = ColorRGBA(rr, gg, bb, aa);
+  }
+
+  void Arrow3d::setColor(QColor color)
+  {
+    color_ = ColorRGBA(color);
+  }
+
   double Arrow3d::rotate_(Struct3d& axis, const Struct3d& vector) const
   {
 	  axis = normalCrossProduct(Struct3d(0.0, 0.0, 1.0), vector);

@@ -73,6 +73,15 @@ namespace OpenMS
 				SHADE_SMOOTH = 1         
 	    };
 	    
+			///Enumerate all avaiable paint styles
+			enum DrawModes 
+			{
+				DM_POINTS,	//< draw data as points
+				DM_PEAKS,   //< draw data as peaks
+				DM_LINES,   //< draw as lines
+				DM_MAP      //< draw data as map
+			};	    
+	    
 	    ///returns the Spectrum3DOpenGLcanvas     
 	    Spectrum3DOpenGLCanvas* openglwidget();
 	    
@@ -93,7 +102,13 @@ namespace OpenMS
 			
 			// Docu in base class
 			virtual void saveCurrentLayer(bool visible);
+			
+			/// Set draw mode of the current layer
+			void setDrawMode(DrawModes mode);
 
+			/// Get draw mode of the current layer
+			DrawModes getDrawMode();
+			
 		public slots:
 			
 	    // Docu in base class

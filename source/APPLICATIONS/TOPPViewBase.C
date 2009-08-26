@@ -373,7 +373,52 @@ namespace OpenMS
 		dm_elements_2d_->setShortcut(Qt::Key_9);
     connect(dm_elements_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
+    //--3D toolbar--
+    tool_bar_3d_ = addToolBar("3D tool bar");
 
+    //draw modes 3D
+    draw_group_3d_ = new QButtonGroup(tool_bar_3d_);
+    draw_group_3d_->setExclusive(true);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/points.png"));
+    b->setToolTip("Points mode");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("3D Draw mode: Points<BR><BR>Peaks are diplayed as points.");
+    draw_group_3d_->addButton(b, Spectrum3DCanvas::DM_POINTS);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/peaks.png"));
+    b->setToolTip("Peaks mode");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("3D Draw mode: Peaks<BR><BR>Peaks are diplayed as sticks.");
+    draw_group_3d_->addButton(b, Spectrum3DCanvas::DM_PEAKS);
+		tool_bar_3d_->addWidget(b);
+		
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/lines.png"));
+    b->setToolTip("Lines mode");
+    //b->setShortcut(Qt::Key_R);
+    b->setCheckable(true);
+    b->setWhatsThis("3D Draw mode: Lines<BR><BR>Peaks are diplayed as a continous line.");
+    draw_group_3d_->addButton(b, Spectrum3DCanvas::DM_LINES);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/map.png"));
+    b->setToolTip("Map mode");
+    //b->setShortcut(Qt::Key_R);
+    b->setCheckable(true);
+    b->setWhatsThis("3D Draw mode: Map<BR><BR>Peaks are diplayed as a map.");
+    draw_group_3d_->addButton(b, Spectrum3DCanvas::DM_MAP);
+		tool_bar_3d_->addWidget(b);
+		
+    connect(draw_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setDrawMode3D(int)));
+    //tool_bar_->addSeparator();
+    
 		//################## Dock widgets #################
     //layer window
     QDockWidget* layer_bar = new QDockWidget("Layers", this);
@@ -1163,6 +1208,15 @@ namespace OpenMS
     	w->canvas()->setDrawMode((OpenMS::Spectrum1DCanvas::DrawModes)index);
   	}
   }
+  
+  void TOPPViewBase::setDrawMode3D(int index)
+  {
+    Spectrum3DWidget* w = active3DWindow_();
+    if (w)
+    {
+    	w->canvas()->setDrawMode((OpenMS::Spectrum3DCanvas::DrawModes) index);
+  	}
+  }  
 
 	void TOPPViewBase::changeLabel(QAction* action)
 	{
@@ -1243,6 +1297,7 @@ namespace OpenMS
       tool_bar_2d_peak_->hide();
       tool_bar_2d_feat_->hide();
       tool_bar_2d_cons_->hide();
+      tool_bar_3d_->hide();
     }
 
     //2d
@@ -1250,6 +1305,7 @@ namespace OpenMS
     if (w2)
     {
       tool_bar_1d_->hide();
+      tool_bar_3d_->hide();
       //peak draw modes
       if (w2->canvas()->getCurrentLayer().type == LayerData::DT_PEAK)
       {
@@ -1278,15 +1334,17 @@ namespace OpenMS
 			}
     }
 
-    //1D
+    //3D
     Spectrum3DWidget* w3 = active3DWindow_();
     if (w3)
     {
+      draw_group_3d_->button(w3->canvas()->getDrawMode())->setChecked(true);
       //show/hide toolbars and buttons
       tool_bar_1d_->hide();
       tool_bar_2d_peak_->hide();
       tool_bar_2d_feat_->hide();
       tool_bar_2d_cons_->hide();
+      tool_bar_3d_->show();
     }
   }
 

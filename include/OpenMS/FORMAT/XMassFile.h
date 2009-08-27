@@ -110,8 +110,6 @@ namespace OpenMS
           sourceFile.setPathToFile(filename.prefix(filename.length()-3));
           sourceFile.setFileSize(100.0);
           sourceFile.setFileType("Xmass analysis file (fid)");
-          // sourceFile.setChecksum(const String &checksum, ChecksumType type);
-          sourceFile.setNativeIDType(SourceFile::BRUKER_FID);
       }
 
 			/**

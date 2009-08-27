@@ -34,9 +34,6 @@
 #include <OpenMS/METADATA/Tagging.h>
 #include <fstream>
 
-using std::cout;
-using std::endl;
-
 namespace OpenMS
 {
  	/**
@@ -94,7 +91,6 @@ namespace OpenMS
               
             if( strings.size() != 2 )
             {
-    cout << "BBB: " << strings.size() << endl;
               throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" );
             }
               
@@ -170,9 +166,6 @@ namespace OpenMS
                 checksum_ = value;
                 sourceFile.setChecksum(checksum_, checksum_type_);
               }
-              else if(command.hasPrefix("SpectrumSettings.SourceFile.NativeIDType"))
-                sourceFile.setNativeIDType((SourceFile::NativeIDType) findIndex_(
-                  value, SourceFile::NamesOfNativeIDType, SourceFile::SIZE_OF_NATIVEIDTYPE));
               else
                 addMetaInfo_(sourceFile, command, value);                  
             }
@@ -338,8 +331,7 @@ namespace OpenMS
             addMetaInfo_(spectrum, command, value);
         } 
 	      catch(const std::exception& e)
-	      {
-    cout << "excep: " << e.what() << endl;					  
+	      {					  
 		      throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"");       
         }
       }
@@ -395,7 +387,6 @@ namespace OpenMS
               
             if( strings.size() != 2 )
             {
-    cout << "BBB: " << strings.size() << endl;
               throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"", "");
             }
               
@@ -518,9 +509,6 @@ namespace OpenMS
                 checksum_ = value;
                 sourceFilesList[indexSourceFiles].setChecksum(checksum_, checksum_type_);
               }
-              else if(command.hasPrefix("ExperimentalSettings.SourceFile.NativeIDType"))
-                sourceFilesList[indexSourceFiles].setNativeIDType((SourceFile::NativeIDType) findIndex_(
-                  value, SourceFile::NamesOfNativeIDType, SourceFile::SIZE_OF_NATIVEIDTYPE));
               else
                 addMetaInfo_(sourceFilesList[indexSourceFiles], command, value);                   
             } 
@@ -785,8 +773,7 @@ namespace OpenMS
           }
         }
 	      catch(const std::exception& e)
-	      {
-    cout << "excep: " << e.what() << endl;					  
+	      {				  
 		      throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"", "");
 	      }        
       }

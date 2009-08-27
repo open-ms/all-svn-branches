@@ -39,8 +39,7 @@ namespace OpenMS
 	  int index = tableSize;
 	  for(; index!=0 && table[index]!=value; --index)
 	  {
-	  }
-cout << "String: " << value << " - return: " << index << endl;	  
+	  }  
 	  return index;
 	}
 		

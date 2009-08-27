@@ -253,8 +253,6 @@ class TOPPResampler
           lin_resampler.raster(exp[iSpectrum]);
         else
           lin_resampler.shape(exp[iSpectrum]);
-        //clear meta data because they are no longer meaningful
-        exp[iSpectrum].getFloatDataArrays().clear();
       }
 
       //annotate output with data processing info

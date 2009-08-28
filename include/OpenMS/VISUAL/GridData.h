@@ -38,29 +38,6 @@ namespace OpenMS
   class MultiGradient;
   class Struct3d;
   class ColorRGBA;
-  /*appelant.cpp
-    MyWidget::MyWidget()
-    {
-      map = new MapData();
-      map->setData(...);
-      map->need(vertex=true, normal=true, colors=true);
-
-      // connect Spectrum3DOpenGLWidget signal to mapData slot
-      // connect(bouton, SIGNAL(clicked()), thread, SLOT(update()));
-      connect(thread, SIGNAL(complete()), this, SLOT(redraw()));
-
-      map.start();    
-    }
-      
-    void MyWidget::redraw()
-    {
-      // redraw widgets
-    }
-    
-  appelant.h
-   public slots :
-    void redraw();*/
-  
   
   class MapData
     : public QThread  
@@ -68,7 +45,7 @@ namespace OpenMS
     Q_OBJECT
       
     public:
-      typedef Spectrum3DCanvas::ExperimentType ExperimentType;
+      typedef SpectrumCanvas::ExperimentType ExperimentType;
       typedef ExperimentType::ConstAreaIterator AreaIt;
       
       enum interpolationMode { NONE, LINE, BARPLOT, MAP, PSEUDOGEL };
@@ -111,7 +88,8 @@ namespace OpenMS
         
       void needVertex();
       void needNormals();
-      void needColors();       
+      void needColors();
+      void draw();
 
     private:              
       void clearAll_();

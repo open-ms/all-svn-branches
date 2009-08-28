@@ -29,6 +29,7 @@
 #include <OpenMS/VISUAL/MultiGradient.h>
 #include <OpenMS/MATH/MISC/Struct3d.h>
 #include <OpenMS/VISUAL/ColorRGBA.h>
+#include <OpenMS/VISUAL/Arrow3d.h>
 
 namespace OpenMS
 {
@@ -47,11 +48,16 @@ namespace OpenMS
   
   MapData::~MapData()
   {
+    exit();
+    wait();
+
+cout << "thread delete" << endl;  
     clearAll_();
   }
 
   void MapData::run()
   {
+cout << "begin run..." << endl;  
     while(continue_)
     {
       if(updateRequest_)
@@ -72,6 +78,8 @@ namespace OpenMS
         emit complete();
       }
     }
+    exec();
+cout << "end run" << endl;    
   }
   
   void MapData::update()
@@ -216,19 +224,34 @@ namespace OpenMS
 
   void MapData::needVertex()
   {
+cout << "need vertex..." << endl;    
     needVertex_ = true;
   }
   
   void MapData::needNormals()
   {
+cout << "need normals..." << endl;    
     needNormals_ = true;
   }
   
   void MapData::needColors()
   {
+cout << "need colors..." << endl;  
     needColors_ = true;
   }
   
+  void MapData::draw()
+  { 
+    if(valideVertex_)
+    {
+      Arrow3d arrow;
+      for(vector<Struct3d>::iterator itVertex=vertex_.begin(); itVertex!=vertex_.end(); ++itVertex)
+      {
+        arrow.draw(*itVertex, Struct3d(0.0, 1.0, 0.0), 50.0);                                    		        
+      }
+    }
+  }  
+    
   // privates members
 
   void MapData::clearAll_()
@@ -248,6 +271,7 @@ namespace OpenMS
 
   void MapData::updateData_()
   {  
+cout << "update data...";    
     valideVertex_ = false;
     valideNormals_ = false;
     valideColors_ = false;
@@ -269,10 +293,12 @@ namespace OpenMS
       }
     }
     valideData_ = true;
+cout << " done" << endl;     
   }
   
   void MapData::updateVertex_()
   {
+cout << "update vertex...";  
     if(!data_.empty() && vertex_.empty())
     {
       // update vertex
@@ -364,10 +390,12 @@ namespace OpenMS
     }
     valideVertex_ = true;
     needVertex_ = false;
+cout << " done" << endl;     
   }
   
   void MapData::updateNormals_()
   {
+cout << "update normals...";  
     if(!data_.empty() && normals_.empty())
     {
       // update vertex
@@ -420,10 +448,12 @@ namespace OpenMS
     }
     valideNormals_ = true;
     needNormals_ = false;
+cout << " done" << endl;     
   }
     
   void MapData::updateColors_()
   {
+cout << "update colors...";  
     if(!data_.empty() && colors_.empty())
     {
       if(!valideVertex_)
@@ -436,6 +466,7 @@ namespace OpenMS
     }
     valideColors_ = true;
     needColors_ = false;
+cout << " done" << endl;    
   }  
                     
   Size MapData::getPosition_(const int col, const int row) const

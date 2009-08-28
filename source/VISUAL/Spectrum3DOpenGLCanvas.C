@@ -45,22 +45,19 @@ namespace OpenMS
 		setMouseTracking(TRUE);
 		setFocusPolicy(Qt::StrongFocus);
 	  
-	  corner_=100.0;  
-	  near_=0.0;  
-	  far_=600.0;
-	  zoom_= 1.5;
-	  xrot_=220;
+	  corner_ = 100.0;  
+	  near_ = 0.0;  
+	  far_ = 600.0;
+	  zoom_ = 1.5;
+	  xrot_ = 220;
 	  yrot_ = 220;
-	  zrot_=0;
-	  trans_x_ =0.0;
+	  zrot_ = 0;
+	  trans_x_ = 0.0;
 	  trans_y_ = 0.0;
 	  
 	  map_ = new map2d();
-	  mapData_ = new MapData();
 	  arrow_ = new Arrow3d();
 	  arrow_->setColor(1.0, 0.0, 0.0, 1.0);
-	  
-	  connect(mapData_, SIGNAL(complete()), this, SLOT(redraw()));
 	}
 	  
 	Spectrum3DOpenGLCanvas::~Spectrum3DOpenGLCanvas()
@@ -480,7 +477,7 @@ namespace OpenMS
     {	   
 		  for(Size iLayer=0; iLayer<canvas_3d_.getLayerCount(); iLayer++)
 		  {
-			  const LayerData& layer = canvas_3d_.getLayer(iLayer);
+			  LayerData& layer = canvas_3d_.getLayer(iLayer);
 			  if(layer.visible)
 			  {
           glPointSize(layer.param.getValue("dot:line_width"));
@@ -491,23 +488,34 @@ namespace OpenMS
             pAspect = "spectrum";
             
           Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
-          if(cols > 200) 
-            cols = 200;
-              			  
-          mapData_->setDataSize(cols, rows);
-          mapData_->setRange(
+          if(cols > 300) 
+            cols = 300;
+              		  
+          if(layer.map == NULL)
+          {
+            layer.map = new MapData();
+            connect(layer.map, SIGNAL(complete()), this, SLOT(redraw()));
+            layer.map->start();
+cout << "map" << endl;            
+          }
+          
+          MapData* map = layer.map;
+          map->setDataSize(cols, rows);
+          map->setRange(
               canvas_3d_.visible_area_.min_[1],
               canvas_3d_.visible_area_.max_[1],
               canvas_3d_.visible_area_.min_[0],
               canvas_3d_.visible_area_.max_[0]);
-          mapData_->setData(
+          map->setData(
             layer.peaks.areaBeginConst(
               canvas_3d_.visible_area_.min_[1],
               canvas_3d_.visible_area_.max_[1],
               canvas_3d_.visible_area_.min_[0],
               canvas_3d_.visible_area_.max_[0]),
 	          layer.peaks.areaEndConst());
-          mapData_->setGradient(&layer.gradient);
+          map->setGradient(&layer.gradient);
+          map->needVertex();
+          map->draw();
     			  
 			    recalculateDotGradient_(iLayer);
 			     
@@ -596,15 +604,7 @@ namespace OpenMS
                     //normal = map_->getNormals(ii+1, jj+1);
                     //glNormal3d(normal.x1, normal.y1, normal.z1);   
                   }
-				          glEnd();              
-                 
-			            for(Size ii=0; ii<cols; ++ii)
-			            {                   
-			              vertexList vertex = map_->getVertex(ii, jj); 
-		                Struct3d pos(vertex.x1, vertex.y1, vertex.z1);
-		                Struct3d dir(0.0, 1.0, 0.0);
-		                arrow_->draw(pos, dir, 10.0);                                    		        
-			            }
+				          glEnd();
 				        }
 
 				        {

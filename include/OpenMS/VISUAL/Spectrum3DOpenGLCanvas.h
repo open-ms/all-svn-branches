@@ -226,7 +226,6 @@ namespace OpenMS
 			/// y_translation
 			double trans_y_;
 			
-			MapData* mapData_;
 			map2d* map_;
 			Arrow3d* arrow_;
 		  

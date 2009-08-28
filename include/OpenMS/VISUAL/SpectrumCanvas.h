@@ -208,6 +208,7 @@ namespace OpenMS
 		{ 
 			return show_grid_; 
 		}
+		
 		/// returns the layer data with index @p index
 		inline const LayerData& getLayer(Size index) const
 		{
@@ -215,6 +216,13 @@ namespace OpenMS
 			return layers_[index];
 		}
 		
+		/// returns mutable layer data with index @p index
+		inline LayerData& getLayer(Size index) const
+		{
+			OPENMS_PRECONDITION(index < layers_.size(), "SpectrumCanvas::getLayer(index) index overflow");
+			return layers_[index];
+		}
+				
 		/// returns the layer data of the active layer
 		inline const LayerData& getCurrentLayer() const
 		{

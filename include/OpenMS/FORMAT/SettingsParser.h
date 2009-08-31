@@ -364,8 +364,7 @@ namespace OpenMS
         SourceFile::ChecksumType checksum_type_ = SourceFile::UNKNOWN_CHECKSUM;
         String checksum_ = "";
         Size indexProteinIdentification = 0;
-        Size indexProteinHit = 0;        
-        Size indexTreatment = 0;
+        Size indexProteinHit = 0;
         Size indexSourceFiles = 0;
         Size indexContacts = 0;
         Size indexIonSource = 0;

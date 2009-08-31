@@ -217,7 +217,7 @@ namespace OpenMS
 		}
 		
 		/// returns mutable layer data with index @p index
-		inline LayerData& getLayer(Size index) const
+		inline LayerData& getLayer(Size index)
 		{
 			OPENMS_PRECONDITION(index < layers_.size(), "SpectrumCanvas::getLayer(index) index overflow");
 			return layers_[index];

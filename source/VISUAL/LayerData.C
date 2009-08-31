@@ -26,6 +26,7 @@
 // -------------------------------------------------------------------------- 
 
 #include <OpenMS/VISUAL/LayerData.h>
+#include <OpenMS/VISUAL/GridData.h>
 
 using namespace std;
 

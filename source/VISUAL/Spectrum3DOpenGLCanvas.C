@@ -490,32 +490,25 @@ namespace OpenMS
           Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
           if(cols > 300) 
             cols = 300;
-              		  
-          if(layer.map == NULL)
-          {
-            layer.map = new MapData();
-            connect(layer.map, SIGNAL(complete()), this, SLOT(redraw()));
-            layer.map->start();
-cout << "map" << endl;            
-          }
-          
-          MapData* map = layer.map;
-          map->setDataSize(cols, rows);
-          map->setRange(
+cout << "1" << endl;
+          layer.map->setDataSize(cols, rows);
+          layer.map->setRange(
               canvas_3d_.visible_area_.min_[1],
               canvas_3d_.visible_area_.max_[1],
               canvas_3d_.visible_area_.min_[0],
               canvas_3d_.visible_area_.max_[0]);
-          map->setData(
+          layer.map->setData(
             layer.peaks.areaBeginConst(
               canvas_3d_.visible_area_.min_[1],
               canvas_3d_.visible_area_.max_[1],
               canvas_3d_.visible_area_.min_[0],
               canvas_3d_.visible_area_.max_[0]),
 	          layer.peaks.areaEndConst());
-          map->setGradient(&layer.gradient);
-          map->needVertex();
-          map->draw();
+          layer.map->setGradient(&layer.gradient);
+          layer.map->needVertex();
+cout << "2" << endl;          
+          layer.map->start();
+cout << "3" << endl;
     			  
 			    recalculateDotGradient_(iLayer);
 			     
@@ -546,7 +539,7 @@ cout << "map" << endl;
 				        {				    
 				          vertexList vertex = map_->getVertex(ii,jj);  
 				          qglColor(vertex.color1);
-				          glVertex3d(vertex.x1, vertex.y1, vertex.z1);
+				          //glVertex3d(vertex.x1, vertex.y1, vertex.z1);
 				        }
 				      }
 				      glEnd();				    						    

@@ -36,73 +36,51 @@ namespace OpenMS
   // publics membres
   
   MapData::MapData()
-    : valideData_(false), valideVertex_(false), valideNormals_(false), valideColors_(false),
-      needVertex_(false), needNormals_(false), needColors_(false), updateRequest_(false), continue_(true), interrupt_(false),
+    : QThread(),
+      valideData_(false), valideVertex_(false), valideNormals_(false), valideColors_(false),
+      needVertex_(false), needNormals_(false), needColors_(false),
       mode_(MAP),       
       cols_(0), rows_(0), 
       mz_min_(0.0), mz_max_(0.0), mz_width_(0.0),
       rt_min_(0.0), rt_max_(0.0), rt_width_(0.0),
       begin_(), end_(), gradient_(NULL)
   {
+cout << "MapData constructor" << endl;  
   }
   
   MapData::~MapData()
   {
-    exit();
-    wait();
-
-cout << "thread delete" << endl;  
+cout << "MapData delete" << endl;  
     clearAll_();
   }
 
   void MapData::run()
   {
 cout << "begin run..." << endl;  
-    while(continue_)
+    
+    // update data
+    if(!valideData_)
+      updateData_();
+      
+    if(!valideVertex_ && needVertex_)
     {
-      if(updateRequest_)
+      updateVertex_();
+cout << "data: " << data_.size() << " - vertex:" << vertex_.size() << endl;
+      // draw    
+      Arrow3d arrow;
+      for(vector<Struct3d>::iterator itVertex=vertex_.begin(); itVertex!=vertex_.end(); ++itVertex)
       {
-        if(!valideData_)
-          updateData_();
-        
-        if(needVertex_ && !valideVertex_)
-          updateVertex_();
-          
-        if(needNormals_ && !valideNormals_)
-          updateNormals_();
-        
-        if(needColors_ && ! valideColors_)
-          updateColors_();
-        
-        updateRequest_ = false;
-        emit complete();
+        //arrow.draw(*itVertex, Struct3d(0.0, 1.0, 0.0), 50.0);                                    		        
       }
     }
-    exec();
-cout << "end run" << endl;    
-  }
-  
-  void MapData::update()
-  {
-    updateRequest_ = true;
-  }
-  
-  void MapData::stop()
-  {
-    continue_ = false;
-  }
-  
-  void MapData::interrupt()
-  {
-    valideData_ = false;
-    valideVertex_ = false;
-    valideNormals_ = false;
-    valideColors_ = false;
-    needVertex_ = false;
-    needNormals_ = false;
-    needColors_ = false;
-    updateRequest_ = false;
-    interrupt_ = true;
+    
+    if(!valideNormals_ && needNormals_)
+      updateNormals_();
+      
+    if(!valideColors_ && needColors_)
+      updateColors_();
+
+cout << "end run..." << endl;       
   }
   
   // get and set membres
@@ -115,6 +93,7 @@ cout << "end run" << endl;
 
   void MapData::setDataSize(const Size cols,const Size rows)
   {
+cout << "set data size" << endl;    
     cols_ = cols;
     rows_ = rows;
     invalidate(false);
@@ -122,6 +101,7 @@ cout << "end run" << endl;
   
   void MapData::setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max)
   {
+cout << "set range" << endl;    
     mz_min_ = mz_min;
     mz_max_ = mz_max;
     rt_min_ = rt_min;
@@ -131,11 +111,13 @@ cout << "end run" << endl;
   
   void MapData::setGradient(const MultiGradient* gradient)
   {
+cout << "set gradient" << endl;    
     gradient_ = gradient;
   }
   
   void MapData::setData(const AreaIt begin, const AreaIt end)
   {
+cout << "set data" << endl;  
     begin_ = begin;
     end_ = end;
     invalidate();
@@ -240,18 +222,6 @@ cout << "need colors..." << endl;
     needColors_ = true;
   }
   
-  void MapData::draw()
-  { 
-    if(valideVertex_)
-    {
-      Arrow3d arrow;
-      for(vector<Struct3d>::iterator itVertex=vertex_.begin(); itVertex!=vertex_.end(); ++itVertex)
-      {
-        arrow.draw(*itVertex, Struct3d(0.0, 1.0, 0.0), 50.0);                                    		        
-      }
-    }
-  }  
-    
   // privates members
 
   void MapData::clearAll_()
@@ -282,7 +252,7 @@ cout << "update data...";
 
     data_.resize(cols_*rows_, 0.0);
               
-    for(AreaIt it=begin_; it!=end_ && !interrupt_; ++it)
+    for(AreaIt it=begin_; it!=end_; ++it)
     {
       if(it->getMZ()>=mz_min_ && it->getMZ()<=mz_max_ && it.getRT()>=rt_min_ && it.getRT()<=rt_max_)
       {		      
@@ -306,10 +276,10 @@ cout << "update vertex...";
 	    {
 		    case LINE :    
 		    {
-		      for(Size iRow=0; iRow<rows_ && !interrupt_; ++iRow)
+		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
 		        double rt = indexToRt_(iRow);
-		        for(Size iCol=0; iCol<cols_ && !interrupt_; ++iCol)
+		        for(Size iCol=0; iCol<cols_; ++iCol)
 		        {
 		          double mz = indexToMz_(iCol);
 		          double intensity = getData_(iCol, iRow);
@@ -321,10 +291,10 @@ cout << "update vertex...";
 		    
 		    case BARPLOT :
 		    {
-		      for(Size iRow=0; iRow<rows_ && !interrupt_; ++iRow)
+		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
 		        double rt = indexToRt_(iRow);
-		        for(Size iCol=0; iCol<cols_ && !interrupt_; ++iCol)
+		        for(Size iCol=0; iCol<cols_; ++iCol)
 		        {
 		          double mz = indexToMz_(iCol);
 		          double intensity = getData_(iCol, iRow);
@@ -337,11 +307,11 @@ cout << "update vertex...";
 		    
 		    case MAP :
 		    {
-		      for(Size iRow=0; iRow<(rows_-1) && !interrupt_; ++iRow)
+		      for(Size iRow=0; iRow<(rows_-1); ++iRow)
 		      {
 		        double rt1 = indexToRt_(iRow);
 		        double rt2 = indexToRt_(iRow+1);
-		        for(Size iCol=0; iCol<cols_ && !interrupt_; ++iCol)
+		        for(Size iCol=0; iCol<cols_; ++iCol)
 		        {
 		          double mz = indexToMz_(iCol);
 		          double intensity1 = getData_(iCol, iRow);
@@ -355,11 +325,11 @@ cout << "update vertex...";
 		    
 		    case PSEUDOGEL :
 		    {
-		      for(Size iRow=0; iRow<rows_ && !interrupt_; ++iRow)
+		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
 		        double rt = indexToRt_(iRow);
 
-		        for(Size iCol=0; iCol<cols_ && !interrupt_; ++iCol)
+		        for(Size iCol=0; iCol<cols_; ++iCol)
 		        {
 		          double mz = indexToMz_(iCol);
 		          double intensity = getData_(iCol, iRow);
@@ -369,7 +339,7 @@ cout << "update vertex...";
 		        
 		        if(iRow < (rows_ - 1))
 		        {
-		          for(Size iCol=0; iCol<cols_ && !interrupt_; ++iCol)
+		          for(Size iCol=0; iCol<cols_; ++iCol)
 		          {
 		            double mz = indexToMz_(iCol);
 		            double intensity1 = getData_(iCol, iRow);
@@ -389,7 +359,6 @@ cout << "update vertex...";
 		  }
     }
     valideVertex_ = true;
-    needVertex_ = false;
 cout << " done" << endl;     
   }
   
@@ -407,9 +376,9 @@ cout << "update normals...";
 
 		    case MAP :
 		    {
-		      for(Size iRow=0; iRow<(rows_-1) && !interrupt_; ++iRow)
+		      for(Size iRow=0; iRow<(rows_-1); ++iRow)
 		      {
-		        for(Size iCol=0; iCol<cols_ && !interrupt_; ++iCol)
+		        for(Size iCol=0; iCol<cols_; ++iCol)
 		        {
 		          normals_.push_back(Struct3d(0.0, 0.0, 1.0));
 		          normals_.push_back(Struct3d(0.0, 0.0, 1.0));
@@ -420,9 +389,9 @@ cout << "update normals...";
 		    
 		    case PSEUDOGEL :
 		    {
-		      for(Size iRow=0; iRow<rows_ && !interrupt_; ++iRow)
+		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
-		        for(Size iCol=0; iCol<cols_ && !interrupt_; ++iCol)
+		        for(Size iCol=0; iCol<cols_; ++iCol)
 		        {
 		          normals_.push_back(Struct3d(0.0, 0.0, 1.0));
 		          normals_.push_back(Struct3d(0.0, 0.0, 1.0));
@@ -430,7 +399,7 @@ cout << "update normals...";
 		        
 		        if(iRow < (rows_ - 1))
 		        {
-		          for(Size iCol=0; iCol<cols_ && !interrupt_; ++iCol)
+		          for(Size iCol=0; iCol<cols_; ++iCol)
 		          {
 		          normals_.push_back(Struct3d(0.0, 0.0, 1.0));
 		          normals_.push_back(Struct3d(0.0, 0.0, 1.0));
@@ -447,7 +416,6 @@ cout << "update normals...";
 		  }
     }
     valideNormals_ = true;
-    needNormals_ = false;
 cout << " done" << endl;     
   }
     
@@ -459,13 +427,12 @@ cout << "update colors...";
       if(!valideVertex_)
         updateVertex_();
         
-      for(vector<Struct3d>::iterator it=vertex_.begin(); it!=vertex_.end() && !interrupt_; ++it)
+      for(vector<Struct3d>::iterator it=vertex_.begin(); it!=vertex_.end(); ++it)
       {
         colors_.push_back(ColorRGBA(gradient_->interpolatedColorAt(it->z)));
       }
     }
     valideColors_ = true;
-    needColors_ = false;
 cout << " done" << endl;    
   }  
                     

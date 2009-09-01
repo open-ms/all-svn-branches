@@ -32,10 +32,38 @@ using namespace std;
 
 namespace OpenMS
 {
+  LayerData::LayerData()
+	  : visible(true),
+		  flipped(false),
+		  type(DT_UNKNOWN),
+		  name(),
+		  filename(),
+		  peaks(),
+		  features(),
+		  consensus(),
+		  current_spectrum(0),
+		  f1(false),
+		  f2(false),
+		  f3(false),
+		  param(),
+		  gradient(),
+		  filters(),
+		  annotations_1d(),
+		  modifiable(false),
+		  modified(false),
+		  label(L_NONE)
+  {
+cout << "LayerData constructor" << endl;  
+	  annotations_1d.resize(1);
+
+    map = new MapData();  
+cout << "B" << endl;
+  }
+		  
   LayerData::~LayerData()
 	{
-	  if(map != NULL)
-	    delete map;
+cout << "LayerData delete" << endl;  
+	  delete map;
 	}
 		
 	const std::string LayerData::NamesOfLabelType[] = {"None","Index","Label meta data","Peptide identification"};

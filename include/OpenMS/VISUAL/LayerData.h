@@ -90,32 +90,8 @@ namespace OpenMS
 		  typedef ConsensusMap ConsensusMapType;
 		  //@}
 		
-		  /// Default constructor
-		  LayerData()
-			  : visible(true),
-				  flipped(false),
-				  type(DT_UNKNOWN),
-				  name(),
-				  filename(),
-				  peaks(),
-				  features(),
-				  consensus(),
-				  current_spectrum(0),
-				  f1(false),
-				  f2(false),
-				  f3(false),
-				  param(),
-				  gradient(),
-				  filters(),
-				  annotations_1d(),
-				  modifiable(false),
-				  modified(false),
-				  label(L_NONE),
-				  map(NULL)
-		  {
-			  annotations_1d.resize(1);
-		  }
-		
+		  /// Default constructor & destructor
+		  LayerData();
 		  ~LayerData();
 			
 		  /// Returns a const reference to the current spectrum (1d view)

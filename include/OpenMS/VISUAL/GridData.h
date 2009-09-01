@@ -49,16 +49,8 @@ namespace OpenMS
       typedef ExperimentType::ConstAreaIterator AreaIt;
       
       enum interpolationMode { NONE, LINE, BARPLOT, MAP, PSEUDOGEL };
-      
-    public slots :
-        void update();
-        void stop();
-        void interrupt();
         
-           signals :
-        void complete();
-        
-    public:      
+    public:
       MapData();
       ~MapData();
       void run();
@@ -68,7 +60,12 @@ namespace OpenMS
       void setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max);
       void setData(const AreaIt begin, const AreaIt end);
       void setGradient(const MultiGradient* gradient);
-            
+
+      void needVertex();
+      void needNormals();
+      void needColors();
+      
+    private:            
       Size getRowSize();
       Size getColSize();
             
@@ -84,13 +81,8 @@ namespace OpenMS
 
       bool isValidVertex();
       bool isValidNormals();
-      bool isValidColors();
+      bool isValidColors();        
         
-      void needVertex();
-      void needNormals();
-      void needColors();
-      void draw();
-
     private:              
       void clearAll_();
 
@@ -127,9 +119,6 @@ namespace OpenMS
       bool needVertex_; // no set ; get
       bool needNormals_; // no set ; get
       bool needColors_; // no set ; get
-      bool updateRequest_;
-      bool continue_;
-      bool interrupt_;
 
       interpolationMode mode_; // set and get            
       Size cols_;
@@ -143,7 +132,6 @@ namespace OpenMS
       AreaIt begin_;
       AreaIt end_;
       const MultiGradient* gradient_;
-      
   };
 
 } // namespace OpenMS

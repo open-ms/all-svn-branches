@@ -367,33 +367,39 @@ namespace OpenMS
 	}
 
 	bool SpectrumCanvas::addLayer(ExperimentType& map, const String& filename)
-	{	
-		layers_.resize(layers_.size()+1);
-		layers_.back().param = param_;
-		layers_.back().filename = filename;
-		layers_.back().peaks.swap(map);
-		layers_.back().type = LayerData::DT_PEAK;
+	{
+ cout << "addLayer: " << layers_.size() << endl;	
+    LayerData layer;
+		layer.param = param_;
+		layer.filename = filename;
+		layer.peaks.swap(map);
+		layer.type = LayerData::DT_PEAK;
+		layers_.push_back(layer);
 		return finishAdding_();
 	}
 
 	bool SpectrumCanvas::addLayer(FeatureMapType& map, const String& filename)
 	{
-		layers_.resize(layers_.size()+1);
-		layers_.back().param = param_;
-		layers_.back().filename = filename;
-		layers_.back().features.swap(map);
-		layers_.back().type = LayerData::DT_FEATURE;
+cout << "BB1" << endl;		
+    LayerData layer;
+		layer.param = param_;
+		layer.filename = filename;
+		layer.features.swap(map);
+		layer.type = LayerData::DT_FEATURE;
+		layers_.push_back(layer);
 
 		return finishAdding_();
 	}
 
 	bool SpectrumCanvas::addLayer(ConsensusMapType& map, const String& filename)
 	{
-		layers_.resize(layers_.size()+1);
-		layers_.back().param = param_;
-		layers_.back().filename = filename;
-		layers_.back().consensus.swap(map);
-		layers_.back().type = LayerData::DT_CONSENSUS;
+cout << "CC1" << endl;		
+    LayerData layer;
+		layer.param = param_;
+		layer.filename = filename;
+		layer.consensus.swap(map);
+		layer.type = LayerData::DT_CONSENSUS;
+		layers_.push_back(layer);
 
 		return finishAdding_();
 	}

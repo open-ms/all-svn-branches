@@ -80,6 +80,8 @@ cout << "data: " << data_.size() << " - vertex:" << vertex_.size() << endl;
     if(!valideColors_ && needColors_)
       updateColors_();
 
+cout << "wait" << endl;
+sleep(5);
 cout << "end run..." << endl;       
   }
   

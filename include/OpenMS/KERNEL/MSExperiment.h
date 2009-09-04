@@ -105,7 +105,7 @@ namespace OpenMS
 				PersistentObject(),
 				ms_levels_(),
 				total_size_(0)
-			{
+			{	
 			}
 
 			/// Copy constructor
@@ -117,9 +117,9 @@ namespace OpenMS
 				ms_levels_(source.ms_levels_),
 				total_size_(source.total_size_),
 				chromatograms_(source.chromatograms_)
-			{
+			{				
 			}
-
+			
 			/// Assignment operator
 			MSExperiment& operator= (const MSExperiment& source)
 			{
@@ -551,7 +551,10 @@ namespace OpenMS
 				tmp.PersistentObject::operator=(*this);
 				this->PersistentObject::operator=(from);
 				from.PersistentObject::operator=(tmp);
-							
+			
+				// swap chromatograms
+				std::swap(chromatograms_, from.chromatograms_);
+
 				//swap peaks
 				Base::swap(from);
 

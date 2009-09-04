@@ -368,13 +368,39 @@ namespace OpenMS
 
 	bool SpectrumCanvas::addLayer(ExperimentType& map, const String& filename)
 	{
- cout << "addLayer: " << layers_.size() << endl;	
-    LayerData layer;
-		layer.param = param_;
-		layer.filename = filename;
-		layer.peaks.swap(map);
-		layer.type = LayerData::DT_PEAK;
-		layers_.push_back(layer);
+cout << "addLayer: " << layers_.size() << endl;
+
+{
+LayerData layer;
+cout << "aaaaaaaaaaaaa" << endl;
+layers_.push_back(layer);
+cout << "bbbbbbbbbbbbbb" << endl;
+		layers_.back().param = param_;
+		layers_.back().filename = filename;
+		layers_.back().peaks.swap(map);
+		layers_.back().type = LayerData::DT_PEAK;
+} 
+cout << "addLayer: " << layers_.size() << endl;
+{
+cout << "cccccccccccccccc" << endl;
+layers_.push_back(LayerData());
+cout << "dddddddddddd" << endl;	
+}
+cout << "addLayer: " << layers_.size() << endl;
+{
+cout << "fffffffffffffff" << endl;
+layers_.resize(layers_.size()+5);
+cout << "ggggggggggggggg" << endl;
+}
+cout << "addLayer: " << layers_.size() << endl;
+cout << "file: " << layers_.back().filename << endl;
+/*cout << "AAAAAAAAAA" << endl;    
+
+		layers_.back().param = param_;
+		layers_.back().filename = filename;
+		layers_.back().peaks.swap(map);
+		layers_.back().type = LayerData::DT_PEAK;
+cout << "addLayer: " << layers_.size() << endl;	*/
 		return finishAdding_();
 	}
 

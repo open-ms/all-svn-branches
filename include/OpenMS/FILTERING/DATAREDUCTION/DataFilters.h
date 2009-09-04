@@ -46,11 +46,20 @@ namespace OpenMS
 	class OPENMS_DLLAPI DataFilters
 	{
 		public:
+		  /// Default constructor. 
 			DataFilters()
 			 : filters_(),
 			   meta_indices_(),
 			   is_active_(false)
 			{
+			}
+			
+			/// Copy constructor.
+			DataFilters(const DataFilters & filters)
+			 : filters_(filters.filters_),
+			   meta_indices_(filters.meta_indices_),
+			   is_active_(filters.is_active_)			
+      { 
 			}
 			
 			///Information to filter
@@ -84,6 +93,16 @@ namespace OpenMS
 						value_is_numerical(false)
 				{	
 				}
+				/// Copy constructor.
+				DataFilter(const DataFilter& filter)
+					: field(filter.field),
+						op(filter.op),
+						value(filter.value),
+						value_string(filter.value_string),
+						meta_name(filter.meta_name),
+						value_is_numerical(filter.value_is_numerical)
+				{	
+				}				
 				///Field to filter
 				FilterType field;
 				///Filter operation

@@ -46,6 +46,7 @@ namespace OpenMS
 		
 		@ingroup SpectrumWidgets
 	*/
+
   class LayerData
 	{
 	  public:
@@ -90,9 +91,17 @@ namespace OpenMS
 		  typedef ConsensusMap ConsensusMapType;
 		  //@}
 		
-		  /// Default constructor & destructor
-		  LayerData();
+		  /// Default constructor.
+		  LayerData(const int i = 0);
+		  
+		  /// Copy constructor.
+		  LayerData(const LayerData& layer);
+		  
+		  /// Destructor.
 		  ~LayerData();
+			
+			/// Assignment operator. 
+			LayerData& operator= (const LayerData& layer);
 			
 		  /// Returns a const reference to the current spectrum (1d view)
 		  inline const ExperimentType::SpectrumType& getCurrentSpectrum() const
@@ -161,7 +170,9 @@ namespace OpenMS
 		  ///Label type
 		  LabelType label;
 		
+		  // data mapping
 		  MapData* map;
+		  int ii;
 	};
 
 	///Print the contents to a stream.

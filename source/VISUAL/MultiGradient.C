@@ -43,17 +43,24 @@ namespace OpenMS
 		pos_col_[100] = Qt::black;		
 	}
 	
+	MultiGradient::MultiGradient(const MultiGradient& gradient)
+		: pos_col_(gradient.pos_col_), 
+			interpolation_mode_(gradient.interpolation_mode_),
+			pre_min_(gradient.pre_min_),
+			pre_size_(gradient.pre_size_),
+			pre_steps_(gradient.pre_steps_)
+	{
+	}	
+	
 	MultiGradient::~MultiGradient()
 	{
-		
 	}
-
+	
 	Size MultiGradient::size() const
 	{
 		return pos_col_.size();
 	}
 	
-
 	void MultiGradient::insert (Int position, QColor color)
 	{
 		if (position >= 0 || position <=100 )

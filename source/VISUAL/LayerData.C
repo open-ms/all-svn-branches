@@ -32,7 +32,9 @@ using namespace std;
 
 namespace OpenMS
 {
-  LayerData::LayerData()
+  static int LDindex = 0;
+  
+  LayerData::LayerData(const int i)
 	  : visible(true),
 		  flipped(false),
 		  type(DT_UNKNOWN),
@@ -51,19 +53,81 @@ namespace OpenMS
 		  annotations_1d(),
 		  modifiable(false),
 		  modified(false),
-		  label(L_NONE)
+		  label(L_NONE),
+		  map(NULL)
   {
-cout << "LayerData constructor" << endl;  
+  LDindex++;
+  if(i != 0)
+    ii = i;
+  else
+    ii=LDindex;
+cout << endl << "**************" << endl << "LayerData constructor: " << ii << endl;  
 	  annotations_1d.resize(1);
 
     map = new MapData();  
 cout << "B" << endl;
   }
+
+  LayerData::LayerData(const LayerData& layer)
+	  : visible(layer.visible),
+		  flipped(layer.flipped),
+		  type(layer.type),
+		  name(layer.name),
+		  filename(layer.filename),
+		  peaks(layer.peaks),
+		  features(layer.features),
+		  consensus(layer.consensus),
+		  current_spectrum(layer.current_spectrum),
+		  f1(layer.f1),
+		  f2(layer.f2),
+		  f3(layer.f3),
+		  param(layer.param),
+		  gradient(layer.gradient),
+		  filters(layer.filters),
+		  annotations_1d(layer.annotations_1d),
+		  modifiable(layer.modifiable),
+		  modified(layer.modified),
+		  label(layer.label)
+  {
+  LDindex++;
+  ii = LDindex;
+  map = new MapData();
+cout << endl << "**************" << endl << "LayerData copy constructor: " << ii << endl; 
+  }  
 		  
   LayerData::~LayerData()
 	{
-cout << "LayerData delete" << endl;  
+cout << "LayerData delete: " << ii << endl << "**************" << endl << endl;  
 	  delete map;
+	}
+	
+	LayerData& LayerData::operator= (const LayerData& layer)
+	{
+cout << "LayerData::operator= " << ii << endl;
+	  if (&layer == this) return *this;
+	  
+	  visible = layer.visible;
+	  flipped = layer.flipped;
+	  type = layer.type;
+	  name = layer.name;
+	  filename = layer.filename;
+	  peaks = layer.peaks;
+	  features = layer.features;
+	  consensus = layer.consensus;
+	  current_spectrum = layer.current_spectrum;
+	  f1 = layer.f1;
+	  f2 = layer.f2;
+	  f3 = layer.f3;
+	  param = layer.param;
+	  gradient = layer.gradient;
+	  filters = layer.filters;
+	  annotations_1d = layer.annotations_1d;
+	  modifiable = layer.modifiable;
+	  modified = layer.modified;
+	  label = layer.label;
+	  map = layer.map;
+	  
+	  return *this;	
 	}
 		
 	const std::string LayerData::NamesOfLabelType[] = {"None","Index","Label meta data","Peptide identification"};

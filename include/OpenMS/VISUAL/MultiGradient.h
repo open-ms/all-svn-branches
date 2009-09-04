@@ -66,9 +66,13 @@ namespace OpenMS
 			IM_STAIRS   ///< IM_STAIRS returns the color of the next lower position
 		};
 		
-		///Constructor
+		/// Default Constructor.
 		MultiGradient();
-		///Destructor
+		
+		/// Copy constructor.
+		MultiGradient(const MultiGradient& gradient);
+		
+		/// Destructor.
 		~MultiGradient();
 	
 		/// sets or replaces the color at position @p position

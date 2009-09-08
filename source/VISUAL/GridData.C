@@ -27,8 +27,6 @@
 
 #include <OpenMS/VISUAL/GridData.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
-#include <OpenMS/MATH/MISC/Struct3d.h>
-#include <OpenMS/VISUAL/ColorRGBA.h>
 #include <OpenMS/VISUAL/Arrow3d.h>
 
 namespace OpenMS
@@ -43,46 +41,33 @@ namespace OpenMS
       cols_(0), rows_(0), 
       mz_min_(0.0), mz_max_(0.0), mz_width_(0.0),
       rt_min_(0.0), rt_max_(0.0), rt_width_(0.0),
-      begin_(), end_(), gradient_(NULL)
-  {
-cout << "MapData constructor" << endl;  
+      gradient_(NULL)
+  { 
   }
   
   MapData::~MapData()
   {
-cout << "MapData delete" << endl;  
     clearAll_();
   }
 
   void MapData::run()
-  {
-cout << "begin run..." << endl;  
-    
+  { 
     // update data
     if(!valideData_)
       updateData_();
       
     if(!valideVertex_ && needVertex_)
-    {
       updateVertex_();
-cout << "data: " << data_.size() << " - vertex:" << vertex_.size() << endl;
-      // draw    
-      Arrow3d arrow;
-      for(vector<Struct3d>::iterator itVertex=vertex_.begin(); itVertex!=vertex_.end(); ++itVertex)
-      {
-        //arrow.draw(*itVertex, Struct3d(0.0, 1.0, 0.0), 50.0);                                    		        
-      }
-    }
     
     if(!valideNormals_ && needNormals_)
       updateNormals_();
       
     if(!valideColors_ && needColors_)
       updateColors_();
-
-cout << "wait" << endl;
-sleep(5);
-cout << "end run..." << endl;       
+cout << "sleep...";      
+    sleep(10);
+cout << "end!";    
+    emit(finish());
   }
   
   // get and set membres
@@ -94,16 +79,14 @@ cout << "end run..." << endl;
   }
 
   void MapData::setDataSize(const Size cols,const Size rows)
-  {
-cout << "set data size" << endl;    
+  {  
     cols_ = cols;
     rows_ = rows;
     invalidate(false);
   }
   
   void MapData::setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max)
-  {
-cout << "set range" << endl;    
+  { 
     mz_min_ = mz_min;
     mz_max_ = mz_max;
     rt_min_ = rt_min;
@@ -112,14 +95,12 @@ cout << "set range" << endl;
   }
   
   void MapData::setGradient(const MultiGradient* gradient)
-  {
-cout << "set gradient" << endl;    
+  {    
     gradient_ = gradient;
   }
   
   void MapData::setData(const AreaIt begin, const AreaIt end)
   {
-cout << "set data" << endl;  
     begin_ = begin;
     end_ = end;
     invalidate();
@@ -127,7 +108,7 @@ cout << "set data" << endl;
       
   Size MapData::getRowSize()
   {
-    if(isValidVertex() || isValidNormals() || isValidColors())
+    if(valideVertex_ || valideNormals_ || valideColors_)
     {
       switch(mode_)
       {
@@ -149,7 +130,7 @@ cout << "set data" << endl;
   
   Size MapData::getColSize()
   {
-    if(isValidVertex() || isValidNormals() || isValidColors())
+    if(valideVertex_ || valideNormals_ || valideColors_)
     {  
       switch(mode_)
       {
@@ -168,17 +149,17 @@ cout << "set data" << endl;
       return 0;
   }
       
-  const vector<Struct3d>& MapData::getVertex()
+  const Vector3d& MapData::getVertex()
   {
     return vertex_;
   }
   
-  const vector<Struct3d>& MapData::getNormals()
+  const Vector3d& MapData::getNormals()
   {
     return normals_; 
   }
   
-  const vector<ColorRGBA>& MapData::getColors()
+  const VectorRGBA& MapData::getColors()
   {
     return colors_;
   }
@@ -191,36 +172,33 @@ cout << "set data" << endl;
     valideColors_ = !colors;
   }
   
-  bool MapData::isValidVertex()
+  bool MapData::isValideVertex()
   {
     return valideVertex_;
   }
   
-  bool MapData::isValidNormals()
+  bool MapData::isValideNormals()
   {
     return valideNormals_;
   }
   
-  bool MapData::isValidColors()
+  bool MapData::isValideColors()
   {
     return valideColors_;
   }  
 
   void MapData::needVertex()
-  {
-cout << "need vertex..." << endl;    
+  { 
     needVertex_ = true;
   }
   
   void MapData::needNormals()
-  {
-cout << "need normals..." << endl;    
+  {   
     needNormals_ = true;
   }
   
   void MapData::needColors()
-  {
-cout << "need colors..." << endl;  
+  {  
     needColors_ = true;
   }
   
@@ -242,8 +220,7 @@ cout << "need colors..." << endl;
   }
 
   void MapData::updateData_()
-  {  
-cout << "update data...";    
+  {
     valideVertex_ = false;
     valideNormals_ = false;
     valideColors_ = false;
@@ -264,13 +241,11 @@ cout << "update data...";
         }
       }
     }
-    valideData_ = true;
-cout << " done" << endl;     
+    valideData_ = true;  
   }
   
   void MapData::updateVertex_()
   {
-cout << "update vertex...";  
     if(!data_.empty() && vertex_.empty())
     {
       // update vertex
@@ -360,13 +335,11 @@ cout << "update vertex...";
 		      break;
 		  }
     }
-    valideVertex_ = true;
-cout << " done" << endl;     
+    valideVertex_ = true; 
   }
   
   void MapData::updateNormals_()
   {
-cout << "update normals...";  
     if(!data_.empty() && normals_.empty())
     {
       // update vertex
@@ -417,25 +390,22 @@ cout << "update normals...";
 		      break;		    
 		  }
     }
-    valideNormals_ = true;
-cout << " done" << endl;     
+    valideNormals_ = true; 
   }
     
   void MapData::updateColors_()
-  {
-cout << "update colors...";  
+  { 
     if(!data_.empty() && colors_.empty())
     {
       if(!valideVertex_)
         updateVertex_();
         
-      for(vector<Struct3d>::iterator it=vertex_.begin(); it!=vertex_.end(); ++it)
+      for(Iterator3d it=vertex_.begin(); it!=vertex_.end(); ++it)
       {
         colors_.push_back(ColorRGBA(gradient_->interpolatedColorAt(it->z)));
       }
     }
-    valideColors_ = true;
-cout << " done" << endl;    
+    valideColors_ = true;   
   }  
                     
   Size MapData::getPosition_(const int col, const int row) const

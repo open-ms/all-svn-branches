@@ -29,6 +29,7 @@
 #define OPENMS_VISUAL_COLORRGBA_H
 
 #include <QColor>
+#include <vector>
     
 namespace OpenMS
 {
@@ -39,6 +40,8 @@ namespace OpenMS
 		
 		@ingroup SpectrumWidgets
 	*/
+  
+  using namespace std;
   
   class ColorRGBA
   {
@@ -54,6 +57,9 @@ namespace OpenMS
     private:
       double r, g, b, a;
   };
+  
+  typedef vector<ColorRGBA> VectorRGBA;
+  typedef VectorRGBA::iterator IteratorRGBA;
   
 }
 #endif

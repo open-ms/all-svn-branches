@@ -27,7 +27,6 @@
 
 #include <OpenMS/VISUAL/Spectrum3DOpenGLCanvas.h>
 #include <OpenMS/VISUAL/AxisTickCalculator.h>
-#include <OpenMS/VISUAL/Arrow3d.h>
 
 #include <QtGui/QMouseEvent>
 #include <QtGui/QKeyEvent>
@@ -56,8 +55,6 @@ namespace OpenMS
 	  trans_y_ = 0.0;
 	  
 	  map_ = new map2d();
-	  arrow_ = new Arrow3d();
-	  arrow_->setColor(1.0, 0.0, 0.0, 1.0);
 	}
 	  
 	Spectrum3DOpenGLCanvas::~Spectrum3DOpenGLCanvas()
@@ -140,7 +137,7 @@ namespace OpenMS
       y_2_ = 0.0;
       stickdata_ =  makeDataAsStick();
       axes_ticks_ = makeAxesTicks();
-      drawAxesLegend();	  	
+      drawAxesLegend();
 	  }
 	}
 	
@@ -460,18 +457,19 @@ namespace OpenMS
 	Spectrum3DCanvas::DrawModes Spectrum3DOpenGLCanvas::getDrawMode() const
 	{	
 	  return map_->getDrawMode();	 	  
-	}			
+	}
 	
 	GLuint Spectrum3DOpenGLCanvas::makeDataAsStick()
-	{            
+	{     
+cout << "Spectrum3DOpenGLCanvas::makeDataAsStick()" << endl;
 	  String pAspect = "map"; // spectrum, map, pseudogel
     bool pSimple = true;
 
     glEnable(GL_POINT_SMOOTH);
     glEnable(GL_LINE_SMOOTH);
-	   
+    
 		GLuint list = glGenLists(1);
-	  glNewList(list,GL_COMPILE);
+	  glNewList(list, GL_COMPILE);
 	  
     try
     {	   
@@ -490,26 +488,63 @@ namespace OpenMS
           Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
           if(cols > 300) 
             cols = 300;
-cout << "1" << endl;
-          layer.map->setDataSize(cols, rows);
-          layer.map->setRange(
-              canvas_3d_.visible_area_.min_[1],
-              canvas_3d_.visible_area_.max_[1],
-              canvas_3d_.visible_area_.min_[0],
-              canvas_3d_.visible_area_.max_[0]);
-          layer.map->setData(
-            layer.peaks.areaBeginConst(
-              canvas_3d_.visible_area_.min_[1],
-              canvas_3d_.visible_area_.max_[1],
-              canvas_3d_.visible_area_.min_[0],
-              canvas_3d_.visible_area_.max_[0]),
-	          layer.peaks.areaEndConst());
-          layer.map->setGradient(&layer.gradient);
-          layer.map->needVertex();
-cout << "2" << endl;          
-          layer.map->start();
-cout << "3" << endl;
+          
+          if(layer.getMapData()->isValideVertex() && layer.getMapData()->isValideColors())
+          {
+cout << "data ok" << endl;          
+		        recalculateDotGradient_(iLayer);
+		         
+		        if((Int)layer.param.getValue("dot:shade_mode"))
+				      glShadeModel(GL_SMOOTH); 
+			      else
+				      glShadeModel(GL_FLAT);      
+
+					  if(Spectrum3DCanvas::DM_POINTS == getDrawMode())
+				    {			    
+				      glBegin(GL_POINTS);
+				      glPointSize(layer.param.getValue("dot:line_width"));
+			      
+			        Vector3d vertexList = layer.getMapData()->getVertex();
+			        VectorRGBA colorsList = layer.getMapData()->getColors();
+			        Iterator3d itVertex = vertexList.begin();
+			        IteratorRGBA itColor = colorsList.begin();
+			       
+			        for(; itVertex!=vertexList.end() && itColor!=colorsList.end(); ++itVertex, ++itColor)
+			        {
+			          qglColor(itColor->toQColor());
+						    glVertex3d(- corner_ + (GLfloat) scaledMZ(itVertex->x),
+											     - corner_ + (GLfloat) scaledIntensity(itVertex->z, iLayer),
+											     - near_ - 2 * corner_ - (GLfloat) scaledRT(itVertex->y));
+			        }
+
+				      glEnd();				    						    
+				    }				           
+          }
+          else
+          {
+cout << "data failed" << endl;          
+            layer.getMapData()->setDataSize(cols, rows);
+            layer.getMapData()->setRange(
+                canvas_3d_.visible_area_.min_[1],
+                canvas_3d_.visible_area_.max_[1],
+                canvas_3d_.visible_area_.min_[0],
+                canvas_3d_.visible_area_.max_[0]);
+            layer.getMapData()->setData(
+              layer.peaks.areaBeginConst(
+                canvas_3d_.visible_area_.min_[1],
+                canvas_3d_.visible_area_.max_[1],
+                canvas_3d_.visible_area_.min_[0],
+                canvas_3d_.visible_area_.max_[0]),
+	            layer.peaks.areaEndConst());
+            layer.getMapData()->setGradient(&layer.gradient);
+            layer.getMapData()->needVertex(); 
+            layer.getMapData()->needColors();
+            connect(layer.getMapData(), SIGNAL(finish()), this, SLOT(actionModeChange()));
+            layer.getMapData()->start();
+          }
     			  
+    			  
+    		/*	  
 			    recalculateDotGradient_(iLayer);
 			     
 			    if((Int)layer.param.getValue("dot:shade_mode"))
@@ -722,7 +757,7 @@ cout << "4" << endl;
 						    glEnd();
 					    }
 				    }			  
-			    }	
+			    }*/
         }
       }
     }
@@ -1133,11 +1168,6 @@ cout << "4" << endl;
 				canvas_3d_.getLayer_(layer).gradient.activatePrecalculationMode(0.0, 100.0, UInt(canvas_3d_.param_.getValue("dot:interpolation_steps")));
 				break;
 		}
-	}
-	
-	void Spectrum3DOpenGLCanvas::redraw()
-	{
-	  paintGL();
 	}
 
 }//end of namespace

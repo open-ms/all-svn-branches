@@ -31,10 +31,8 @@
 using namespace std;
 
 namespace OpenMS
-{
-  static int LDindex = 0;
-  
-  LayerData::LayerData(const int i)
+{ 
+  LayerData::LayerData()
 	  : visible(true),
 		  flipped(false),
 		  type(DT_UNKNOWN),
@@ -56,16 +54,6 @@ namespace OpenMS
 		  label(L_NONE),
 		  map(NULL)
   {
-  LDindex++;
-  if(i != 0)
-    ii = i;
-  else
-    ii=LDindex;
-cout << endl << "**************" << endl << "LayerData constructor: " << ii << endl;  
-	  annotations_1d.resize(1);
-
-    map = new MapData();  
-cout << "B" << endl;
   }
 
   LayerData::LayerData(const LayerData& layer)
@@ -87,23 +75,19 @@ cout << "B" << endl;
 		  annotations_1d(layer.annotations_1d),
 		  modifiable(layer.modifiable),
 		  modified(layer.modified),
-		  label(layer.label)
+		  label(layer.label),
+		  map(NULL)
   {
-  LDindex++;
-  ii = LDindex;
-  map = new MapData();
-cout << endl << "**************" << endl << "LayerData copy constructor: " << ii << endl; 
   }  
 		  
   LayerData::~LayerData()
 	{
-cout << "LayerData delete: " << ii << endl << "**************" << endl << endl;  
-	  delete map;
+	  if(NULL != map)
+	    delete map;
 	}
 	
 	LayerData& LayerData::operator= (const LayerData& layer)
 	{
-cout << "LayerData::operator= " << ii << endl;
 	  if (&layer == this) return *this;
 	  
 	  visible = layer.visible;
@@ -125,9 +109,16 @@ cout << "LayerData::operator= " << ii << endl;
 	  modifiable = layer.modifiable;
 	  modified = layer.modified;
 	  label = layer.label;
-	  map = layer.map;
+	  map = NULL;
 	  
 	  return *this;	
+	}
+	
+	MapData* LayerData::getMapData()
+	{
+	  if(NULL == map)
+	    map = new MapData();
+	  return map;
 	}
 		
 	const std::string LayerData::NamesOfLabelType[] = {"None","Index","Label meta data","Peptide identification"};

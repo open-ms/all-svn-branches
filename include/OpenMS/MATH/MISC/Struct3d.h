@@ -29,6 +29,7 @@
 #define OPENMS_MATH_MISC_STRUCT3D_H
 
 #include <OpenMS/MATH/MISC/MathFunctions.h>
+#include <vector>
     
 namespace OpenMS
 {
@@ -45,6 +46,7 @@ namespace OpenMS
 	*/
 	
 	using namespace Math;
+	using namespace std;
 	
   class Struct3d
   {    
@@ -86,6 +88,9 @@ namespace OpenMS
   {
 	  return u.x*v.x + u.y*v.y + u.z*v.z;
   }  
+  
+  typedef vector<Struct3d> Vector3d;
+  typedef Vector3d::iterator Iterator3d;
       
 } // namespace OpenMS
 

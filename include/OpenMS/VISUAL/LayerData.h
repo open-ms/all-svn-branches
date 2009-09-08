@@ -92,7 +92,7 @@ namespace OpenMS
 		  //@}
 		
 		  /// Default constructor.
-		  LayerData(const int i = 0);
+		  LayerData();
 		  
 		  /// Copy constructor.
 		  LayerData(const LayerData& layer);
@@ -123,6 +123,8 @@ namespace OpenMS
 		  {
 			  return annotations_1d[current_spectrum];
 		  }
+		  
+		  MapData* getMapData();
 		
 		  /// if this layer is visible
 		  bool visible;
@@ -170,9 +172,9 @@ namespace OpenMS
 		  ///Label type
 		  LabelType label;
 		
+		private:
 		  // data mapping
 		  MapData* map;
-		  int ii;
 	};
 
 	///Print the contents to a stream.

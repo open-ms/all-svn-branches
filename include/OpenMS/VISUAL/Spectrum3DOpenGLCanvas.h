@@ -227,12 +227,10 @@ namespace OpenMS
 			double trans_y_;
 			
 			map2d* map_;
-			Arrow3d* arrow_;
 		  
 		protected slots:
 			/// Slot that reacts on action mode changes
 			void actionModeChange();
-			void redraw();
 	};
 
   struct vertexList

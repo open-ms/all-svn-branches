@@ -368,64 +368,33 @@ namespace OpenMS
 
 	bool SpectrumCanvas::addLayer(ExperimentType& map, const String& filename)
 	{
-cout << "addLayer: " << layers_.size() << endl;
-
-{
-LayerData layer;
-cout << "aaaaaaaaaaaaa" << endl;
-layers_.push_back(layer);
-cout << "bbbbbbbbbbbbbb" << endl;
+    layers_.push_back(LayerData());
 		layers_.back().param = param_;
 		layers_.back().filename = filename;
 		layers_.back().peaks.swap(map);
 		layers_.back().type = LayerData::DT_PEAK;
-} 
-cout << "addLayer: " << layers_.size() << endl;
-{
-cout << "cccccccccccccccc" << endl;
-layers_.push_back(LayerData());
-cout << "dddddddddddd" << endl;	
-}
-cout << "addLayer: " << layers_.size() << endl;
-{
-cout << "fffffffffffffff" << endl;
-layers_.resize(layers_.size()+5);
-cout << "ggggggggggggggg" << endl;
-}
-cout << "addLayer: " << layers_.size() << endl;
-cout << "file: " << layers_.back().filename << endl;
-/*cout << "AAAAAAAAAA" << endl;    
-
-		layers_.back().param = param_;
-		layers_.back().filename = filename;
-		layers_.back().peaks.swap(map);
-		layers_.back().type = LayerData::DT_PEAK;
-cout << "addLayer: " << layers_.size() << endl;	*/
+		
 		return finishAdding_();
 	}
 
 	bool SpectrumCanvas::addLayer(FeatureMapType& map, const String& filename)
-	{
-cout << "BB1" << endl;		
-    LayerData layer;
-		layer.param = param_;
-		layer.filename = filename;
-		layer.features.swap(map);
-		layer.type = LayerData::DT_FEATURE;
-		layers_.push_back(layer);
+	{	
+    layers_.push_back(LayerData());
+		layers_.back().param = param_;
+		layers_.back().filename = filename;
+		layers_.back().features.swap(map);
+		layers_.back().type = LayerData::DT_FEATURE;
 
 		return finishAdding_();
 	}
 
 	bool SpectrumCanvas::addLayer(ConsensusMapType& map, const String& filename)
 	{
-cout << "CC1" << endl;		
-    LayerData layer;
-		layer.param = param_;
-		layer.filename = filename;
-		layer.consensus.swap(map);
-		layer.type = LayerData::DT_CONSENSUS;
-		layers_.push_back(layer);
+    layers_.push_back(LayerData());
+		layers_.back().param = param_;
+		layers_.back().filename = filename;
+		layers_.back().consensus.swap(map);
+		layers_.back().type = LayerData::DT_CONSENSUS;
 
 		return finishAdding_();
 	}
@@ -823,7 +792,7 @@ cout << "CC1" << endl;
 	void SpectrumCanvas::getVisibleConsensusData(ConsensusMapType& map) const
 	{		
 		//clear output experiment
-		map.clear();
+		map.clear(true);
 		
     const LayerData& layer = getCurrentLayer();
   	if (layer.type==LayerData::DT_CONSENSUS)

@@ -29,6 +29,8 @@
 #define OPENMS_VISUAL_GRIDDATA_H
 
 #include <OpenMS/VISUAL/Spectrum3DCanvas.h>
+#include <OpenMS/MATH/MISC/Struct3d.h>
+#include <OpenMS/VISUAL/ColorRGBA.h>
 #include <QThread>
 
 using namespace std;
@@ -36,8 +38,6 @@ using namespace std;
 namespace OpenMS
 {
   class MultiGradient;
-  class Struct3d;
-  class ColorRGBA;
   
   class MapData
     : public QThread  
@@ -64,13 +64,12 @@ namespace OpenMS
       void needVertex();
       void needNormals();
       void needColors();
-      
-    private:            
+                 
       Size getRowSize();
       Size getColSize();
             
-      const vector<Struct3d>& getVertex();
-      const vector<Struct3d>& getNormals();
+      const Vector3d& getVertex();
+      const Vector3d& getNormals();
       const vector<ColorRGBA>& getColors();
       
       void invalidate(
@@ -79,10 +78,13 @@ namespace OpenMS
         const bool normals = true,
         const bool colors = true);
 
-      bool isValidVertex();
-      bool isValidNormals();
-      bool isValidColors();        
-        
+      bool isValideVertex();
+      bool isValideNormals();
+      bool isValideColors();        
+
+    signals:
+      void finish();
+              
     private:              
       void clearAll_();
 
@@ -107,8 +109,8 @@ namespace OpenMS
       
     private:                    
       vector<double> data_; // set with AreaIT ; no get
-      vector<Struct3d> vertex_; // no set ; get
-      vector<Struct3d> normals_; // no set ; get
+      Vector3d vertex_; // no set ; get
+      Vector3d normals_; // no set ; get
       vector<ColorRGBA> colors_; // no set ; get
       
       bool valideData_;

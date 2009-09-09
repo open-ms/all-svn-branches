@@ -41,7 +41,7 @@ namespace OpenMS
       cols_(0), rows_(0), 
       mz_min_(0.0), mz_max_(0.0), mz_width_(0.0),
       rt_min_(0.0), rt_max_(0.0), rt_width_(0.0),
-      gradient_(NULL)
+      begin_(), end_(), experiment_(NULL), gradient_(NULL)
   { 
   }
   
@@ -51,7 +51,8 @@ namespace OpenMS
   }
 
   void MapData::run()
-  { 
+  {
+cout << "start..." << endl;  
     // update data
     if(!valideData_)
       updateData_();
@@ -64,9 +65,7 @@ namespace OpenMS
       
     if(!valideColors_ && needColors_)
       updateColors_();
-cout << "sleep...";      
-    sleep(10);
-cout << "end!";    
+      
     emit(finish());
   }
   
@@ -75,14 +74,16 @@ cout << "end!";
   void MapData::setInterpolationMode(const MapData::interpolationMode mode)
   {
     mode_ = mode;
-    invalidate(false);
+    valideVertex_ = false;
+    valideNormals_ = false;
+    valideColors_ = false;
   }
 
   void MapData::setDataSize(const Size cols,const Size rows)
   {  
     cols_ = cols;
     rows_ = rows;
-    invalidate(false);
+    invalidate();
   }
   
   void MapData::setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max)
@@ -91,7 +92,7 @@ cout << "end!";
     mz_max_ = mz_max;
     rt_min_ = rt_min;
     rt_max_ = rt_max;
-    invalidate(false);
+    invalidate();
   }
   
   void MapData::setGradient(const MultiGradient* gradient)
@@ -103,6 +104,12 @@ cout << "end!";
   {
     begin_ = begin;
     end_ = end;
+    invalidate();
+  }
+
+  void MapData::setData(const ExperimentType* experiment)
+  {
+    experiment_ = experiment;
     invalidate();
   }
       
@@ -216,32 +223,47 @@ cout << "end!";
       normals_.clear();
       
     if(!colors_.empty())
-      colors_.clear();                  
+      colors_.clear();    
+      
+    valideData_ = false;   
+    valideVertex_ = false;
+    valideNormals_ = false;
+    valideColors_ = false;                   
   }
 
   void MapData::updateData_()
   {
-    valideVertex_ = false;
-    valideNormals_ = false;
-    valideColors_ = false;
     clearAll_();
        
     mz_width_ = (mz_max_ - mz_min_) / (cols_ - 1);
     rt_width_ = (rt_max_ - rt_min_) / (rows_ - 1);
 
     data_.resize(cols_*rows_, 0.0);
+          
+    AreaIt begin;
+    AreaIt end;    
+    if(NULL == experiment_)
+    {
+      begin = begin_;
+      end_ = end;
+    }
+    else
+    {
+      begin = experiment_->areaBeginConst(rt_min_, rt_max_, mz_min_, mz_max_);
+      end = experiment_->areaEndConst();
+    }
               
-    for(AreaIt it=begin_; it!=end_; ++it)
+    for(AreaIt it=begin; it!=end; ++it)
     {
       if(it->getMZ()>=mz_min_ && it->getMZ()<=mz_max_ && it.getRT()>=rt_min_ && it.getRT()<=rt_max_)
       {		      
         if(it->getIntensity() > getData_(it->getMZ(), it.getRT()))
         {
-          setData_(it->getIntensity(), it->getMZ(), it.getRT());
+          setData_(it->getMZ(), it.getRT(), it->getIntensity());
         }
       }
     }
-    valideData_ = true;  
+    valideData_ = true;
   }
   
   void MapData::updateVertex_()
@@ -402,7 +424,7 @@ cout << "end!";
         
       for(Iterator3d it=vertex_.begin(); it!=vertex_.end(); ++it)
       {
-        colors_.push_back(ColorRGBA(gradient_->interpolatedColorAt(it->z)));
+        colors_.push_back(ColorRGBA(gradient_->interpolatedColorAt(it->intensity)));
       }
     }
     valideColors_ = true;   
@@ -455,11 +477,11 @@ cout << "end!";
     return (Size) floor(0.5 + (rt-rt_min_) / rt_width_);
   }
 
-  void MapData::setData_(const double value, const Size col, const Size row)
+  void MapData::setData_(const Size col, const Size row, const double intensity)
   {   
     if(col<cols_ && row<rows_)
     {
-      data_[getPosition_(col, row)] = value;
+      data_[getPosition_(col, row)] = intensity;
     }
   }
   
@@ -468,11 +490,11 @@ cout << "end!";
     return data_[getPosition_(col, row)];
   }
 
-  void MapData::setData_(const double value, const double mz, const double rt)
+  void MapData::setData_(const double mz, const double rt, const double intensity)
   { 
     if(mz>=mz_min_ && mz<=mz_max_ && rt>=rt_min_ && rt<=rt_max_)
     {
-      data_[getPosition_(mz, rt)] = value;
+      data_[getPosition_(mz, rt)] = intensity;
     }
   }
   

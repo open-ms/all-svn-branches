@@ -51,7 +51,7 @@ namespace OpenMS
   class Struct3d
   {    
     public:    
-      Struct3d(double xx = 0.0, double yy = 0.0, double zz = 0.0);
+      Struct3d(double mzValue = 0.0, double rtValue = 0.0, double intensityValue = 0.0);
       Struct3d(const Struct3d& value);
       Struct3d(const Struct3d& p1, const Struct3d& p2);
       
@@ -71,22 +71,22 @@ namespace OpenMS
       void glTranslate() const;
       void glRotate(const double phi) const;
         
-	    double x,y,z;       
+	    double mz, rt, intensity;       
   };
   
   inline Struct3d normalCrossProduct(Struct3d const& u, Struct3d const& v)
   {
 	  Struct3d n;
-    n.x = u.y * v.z - u.z * v.y;
-    n.y = u.z * v.x - u.x * v.z;
-    n.z = u.x * v.y - u.y * v.x;	
+    n.mz = u.rt * v.intensity - u.intensity * v.rt;
+    n.rt = u.intensity * v.mz - u.mz * v.intensity;
+    n.intensity = u.mz * v.rt - u.rt * v.mz;	
     n.normalize();
 	  return n;
   }
 
   inline double dotProduct(Struct3d const& u, Struct3d const& v)
   {
-	  return u.x*v.x + u.y*v.y + u.z*v.z;
+	  return u.mz*v.mz + u.rt*v.rt + u.intensity*v.intensity;
   }  
   
   typedef vector<Struct3d> Vector3d;

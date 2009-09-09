@@ -59,6 +59,7 @@ namespace OpenMS
       void setDataSize(const Size cols, const Size rows);
       void setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max);
       void setData(const AreaIt begin, const AreaIt end);
+      void setData(const ExperimentType* experiment);
       void setGradient(const MultiGradient* gradient);
 
       void needVertex();
@@ -102,9 +103,9 @@ namespace OpenMS
       Size mzToIndex_(const double mz) const;
       Size rtToIndex_(const double rt) const;
 
-      void setData_(const double value, const Size col, const Size row);
+      void setData_(const Size col, const Size row, const double intensity);
       double getData_(const Size col, const Size row) const;
-      void setData_(const double value, const double mz, const double rt);
+      void setData_(const double mz, const double rt, const double intensity);
       double getData_(const double mz, const double rt) const;
       
     private:                    
@@ -133,6 +134,7 @@ namespace OpenMS
       double rt_width_;
       AreaIt begin_;
       AreaIt end_;
+      const ExperimentType* experiment_;
       const MultiGradient* gradient_;
   };
 

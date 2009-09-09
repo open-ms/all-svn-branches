@@ -31,8 +31,8 @@
 namespace OpenMS
 {
 
-  Struct3d::Struct3d(double xx, double yy, double zz)
-    : x(xx), y(yy), z(zz)
+  Struct3d::Struct3d(double mzValue, double rtValue, double intensityValue)
+    : mz(mzValue), rt(rtValue), intensity(intensityValue)
   {
   }
 
@@ -40,13 +40,13 @@ namespace OpenMS
   {
     if (&value == this)
        return;
-    x = value.x;
-    y = value.y;
-    z = value.z;
+    mz = value.mz;
+    rt = value.rt;
+    intensity = value.intensity;
   }
   
   Struct3d::Struct3d(const Struct3d& p1, const Struct3d& p2)
-    : x(p2.x-p1.x), y(p2.y-p1.y), z(p2.z-p1.z)        
+    : mz(p2.mz-p1.mz), rt(p2.rt-p1.rt), intensity(p2.intensity-p1.intensity)        
   {
   }
   
@@ -54,33 +54,33 @@ namespace OpenMS
   {
     if (&value == this)
       return *this;
-    x = value.x;
-    y = value.y;
-    z = value.z;
+    mz = value.mz;
+    rt = value.rt;
+    intensity = value.intensity;
     return *this;
   }
 
   Struct3d& Struct3d::operator+=(Struct3d value)
   {
-    x += value.x;
-    y += value.y;
-    z += value.z;
+    mz += value.mz;
+    rt += value.rt;
+    intensity += value.intensity;
     return *this;
   }
 
   Struct3d& Struct3d::operator-=(Struct3d value)
   {
-    x -= value.x;
-    y -= value.y;
-    z -= value.z;
+    mz -= value.mz;
+    rt -= value.rt;
+    intensity -= value.intensity;
     return *this;
   }
   
   Struct3d& Struct3d::operator*=(double value)
   {
-    x *= value;
-    y *= value;
-    z *= value;
+    mz *= value;
+    rt *= value;
+    intensity *= value;
     return *this;
   }
   
@@ -88,9 +88,9 @@ namespace OpenMS
   {
     if(!approximatelyNul(value))
     {
-      x /= value;
-      y /= value;
-      z /= value;
+      mz /= value;
+      rt /= value;
+      intensity /= value;
     }
     else
       *this = Struct3d();
@@ -99,25 +99,25 @@ namespace OpenMS
   
   Struct3d& Struct3d::operator*=(Struct3d value)
   {
-    x *= value.x;
-    y *= value.y;
-    z *= value.z;
+    mz *= value.mz;
+    rt *= value.rt;
+    intensity *= value.intensity;
     return *this;
   }
 
   bool Struct3d::operator==(Struct3d value) const
   {
-    return approximatelyEqual(x, value.x) && approximatelyEqual(y, value.y) && approximatelyEqual(z, value.z);
+    return approximatelyEqual(mz, value.mz) && approximatelyEqual(rt, value.rt) && approximatelyEqual(intensity,value.intensity);
   }
   
   bool Struct3d::operator!=(Struct3d value) const
   {
-    return !approximatelyEqual(x, value.x) || !approximatelyEqual(y, value.y) || !approximatelyEqual(z, value.z);
+    return !approximatelyEqual(mz, value.mz) || !approximatelyEqual(rt, value.rt) || !approximatelyEqual(intensity,value.intensity);
   }
 
   double Struct3d::length() const
   {
-    double l = x*x + y*y + z*z;
+    double l = mz*mz + rt*rt + intensity*intensity;
     return (approximatelyNul(l)) ? 0.0 : sqrt(l);
   }
   	
@@ -126,9 +126,9 @@ namespace OpenMS
     double l = length();
     if(!approximatelyNul(l))
     {
-      x /= l;
-      y /= l;
-      z /= l;
+      mz /= l;
+      rt /= l;
+      intensity /= l;
     }
     else
       *this = Struct3d();
@@ -143,12 +143,12 @@ namespace OpenMS
   
   void Struct3d::glTranslate() const
   {
-    glTranslatef(x, y, z);
+    glTranslatef(mz, rt, intensity);
   }
   
   void Struct3d::glRotate(const double phi) const
   {
-    glRotatef(phi, x, y, z);
+    glRotatef(phi, mz, rt, intensity);
   }
     
 } // namespace OpenMS

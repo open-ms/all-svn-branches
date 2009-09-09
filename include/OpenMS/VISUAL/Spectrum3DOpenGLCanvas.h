@@ -231,6 +231,7 @@ namespace OpenMS
 		protected slots:
 			/// Slot that reacts on action mode changes
 			void actionModeChange();
+			void redraw();
 	};
 
   struct vertexList

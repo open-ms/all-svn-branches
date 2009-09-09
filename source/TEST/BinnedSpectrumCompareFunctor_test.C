@@ -65,13 +65,13 @@ START_SECTION((BinnedSpectrumCompareFunctor& operator=(const BinnedSpectrumCompa
 }
 END_SECTION
 
-START_SECTION((virtual double operator()(const BinnedSpectrum &spec1, const BinnedSpectrum &spec2) const =0))
+START_SECTION((virtual double operator()(const BinnedSpectrum<> &spec1, const BinnedSpectrum<> &spec2) const =0))
 {
   NOT_TESTABLE
 }
 END_SECTION
 
-START_SECTION((virtual double operator()(const BinnedSpectrum &spec) const =0))
+START_SECTION((virtual double operator()(const BinnedSpectrum<> &spec) const =0))
 {
   NOT_TESTABLE
 }

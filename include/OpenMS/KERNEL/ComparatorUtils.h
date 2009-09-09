@@ -33,15 +33,15 @@
 
 /**
 	@defgroup ComparatorUtils ComparatorUtils
-	
+
 	@brief A collection of utilities for comparators.
-	
+
 	@ingroup Kernel
-	
+
 	@code
 	#include <OpenMS/KERNEL/ComparatorUtils.h>
 	@endcode
-	
+
 	This file contains some lightweight class templates
 	which simplify the (re-)usage and composition of <b>comparator classes</b>:
 	- ReverseComparator (reverse the direction of comparison)
@@ -50,24 +50,24 @@
 	.
 	We provide corresponding "make-functions" so that you will not need to write
 	out the type names in the template instantiation.
-	
+
 	We explain this with a simple example.  First a few prerequisites.
-	
+
 	@dontinclude Tutorial_ComparatorUtils.C
 	@until String;
-	
+
 	The class IntRealString has three data members.  The class
 	IntRealStringVector is a vector of IntRealString.
 	We add some print() methods for convenience.
 	@until };
 	@until };
-	
+
 	Now we will exercise various ways of sorting such a vector.
-	
+
 	Of course, we could use the std::sort algorithm with a comparison function
 	like the following.
 	@until }
-	
+
 	This is straightforward but does not generalize well.  Instead we introduce
 	three <b>comparator classes</b>:
 	@until };
@@ -75,7 +75,7 @@
 	@until };
 	Note how the std::binary_function template provides the necessary type
 	information (sometimes this is called "reflection").
-	
+
 	Now we show various uses of the reverseComparator and lexicographicComparator
 	function templates.
 	@until vec.print();
@@ -84,10 +84,10 @@
 	@until vec.print();
 	@until vec.print();
 	@until vec.print();
-	
+
 	And here is an application of the pointerComparator function template:
 	@until main
-	
+
 	The output of the example program is:
 	@code
 	After initialization:
@@ -95,54 +95,54 @@
 	(2, 4.5, josie)
 	(1, 4.5, john)
 	(2, 3.9, kim)
-	
+
 	Sorted using lessByInt function:
 	(1, 4.5, paul)
 	(1, 4.5, john)
 	(2, 4.5, josie)
 	(2, 3.9, kim)
-	
+
 	Sorted using LessByInt comparator class:
 	(1, 4.5, paul)
 	(1, 4.5, john)
 	(2, 4.5, josie)
 	(2, 3.9, kim)
-	
+
 	Sorted using reversed LessByInt comparator class:
 	(2, 4.5, josie)
 	(2, 3.9, kim)
 	(1, 4.5, paul)
 	(1, 4.5, john)
-	
+
 	Sorted using lexicographic order: 1. LessByInt, 2. LessByReal
 	(1, 4.5, paul)
 	(1, 4.5, john)
 	(2, 3.9, kim)
 	(2, 4.5, josie)
-	
+
 	Sorted using lexicographic order: 1. reversed LessByInt, 2. LessByReal, 3. LessByString
 	(2, 3.9, kim)
 	(2, 4.5, josie)
 	(1, 4.5, john)
 	(1, 4.5, paul)
-	
+
 	ptr_vec before sorting
 	(2, 3.9, kim)
 	(2, 4.5, josie)
 	(1, 4.5, john)
 	(1, 4.5, paul)
-	
+
 	ptr_vec after sorting with pointerComparator(LessByString())
 	(1, 4.5, john)
 	(2, 4.5, josie)
 	(2, 3.9, kim)
 	(1, 4.5, paul)
-	
+
 	@endcode
-	
+
 	Note that pointerComparator can also be used with full-blown iterator classes.
 	(It should work with everything that provides an operator*(), but the typedefs will always be pointers.)
-	
+
 	Note that these templates can also be used with different types for "left" and "right".
 */
 
@@ -182,7 +182,7 @@ namespace OpenMS
 
 	/**
 		@brief  Make-function to create a PointerComparator from another comparator without the need to specify the template arguments.
-		
+
 		@relatesalso PointerComparator
 
 		For example,
@@ -234,7 +234,7 @@ namespace OpenMS
 
 	/**
 		@brief  Make-function to create a ReverseComparator from another comparator without the need to specify the template arguments.
-		
+
 		@relatesalso ReverseComparator
 
 		For example,
@@ -298,7 +298,7 @@ namespace OpenMS
 
 	/**
 		@brief  Make-function to create a LexicographicComparator from two other comparators without the need to specify the template arguments.
-		
+
 		@relatesalso LexicographicComparator
 
 		The usage is similar to pointerComparator() or reverseComparator(), which see.
@@ -308,8 +308,6 @@ namespace OpenMS
 	{ return LexicographicComparator < Cmp1, Cmp2 > ( cmp1, cmp2 ); }
 
 	//======================================================================
-
-
 
 	/**
 		@brief Class for comparison of std::pair using first ONLY e.g. for use with std::sort
@@ -326,7 +324,7 @@ namespace OpenMS
 	};
 
 	/**
-		@brief Class for comparison of std::pair using second ONLY e.g. for use with std::sort
+		@brief Struct for comparison of std::pair using second ONLY e.g. for use with std::sort
 	*/
 	template<typename PairType>
 	struct PairComparatorSecondElement
@@ -338,6 +336,8 @@ namespace OpenMS
 			}
 
 	};
+
+	//======================================================================
 
 
 }

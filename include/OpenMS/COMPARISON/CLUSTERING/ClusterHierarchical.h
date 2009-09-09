@@ -133,14 +133,14 @@ namespace OpenMS
 		void cluster(std::vector<PeakSpectrum>& data, const BinnedSpectrumCompareFunctor& comparator, double sz, UInt sp, const ClusterFunctor& clusterer, std::vector<BinaryTreeNode>& cluster_tree, DistanceMatrix<Real>& original_distance)
 		{
 
-			std::vector<BinnedSpectrum> binned_data;
+			std::vector<BinnedSpectrum<> > binned_data;
 			binned_data.reserve(data.size());
 
 			//transform each PeakSpectrum to a corresponding BinnedSpectrum with given settings of size and spread
 			for (Size i=0; i < data.size(); i++)
 			{
 				//double sz(2), UInt sp(1);
-				binned_data.push_back(BinnedSpectrum(sz,sp,data[i]));
+				binned_data.push_back(BinnedSpectrum<> (sz,sp,data[i]));
 			}
 
 			//create distancematrix for data with comparator

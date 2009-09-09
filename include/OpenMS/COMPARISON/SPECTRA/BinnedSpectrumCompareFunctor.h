@@ -38,26 +38,26 @@ namespace OpenMS
 {
 
   /**
-	
+
 		@brief Base class for compare functors of BinnedSpectra
-	
+
   		BinnedSpectrumCompareFunctor classes return a value for a pair of BinnedSpectrum objects (or a single one with itself).
-  		Ideally the value should reflect the similarity of the pair. For methods of computing the similarity see the 
+  		Ideally the value should reflect the similarity of the pair. For methods of computing the similarity see the
   		documetation of the concrete functors.
   		Functors normalized in the range [0,1] are identifiable at the set "normalized" parameter of the ParameterHandler
-		
+
 		@ingroup SpectraComparison
   */
   class OPENMS_DLLAPI BinnedSpectrumCompareFunctor : public DefaultParamHandler
   {
-	  
+
   private:
 
   public:
-    
+
     /** @brief Exception thrown if compared spectra are incompatible
-	
-		    the compared spectra have different settings in binsize and/or binspread 
+
+		    the compared spectra have different settings in binsize and/or binspread
 		    due to which comparison would fail
     */
     class OPENMS_DLLAPI IncompatibleBinning
@@ -68,7 +68,7 @@ namespace OpenMS
           = "compared spectra have different settings in binsize and/or binspread")  throw();
       virtual ~IncompatibleBinning() throw();
     };
-	
+
     /// default constructor
     BinnedSpectrumCompareFunctor();
 
@@ -82,12 +82,12 @@ namespace OpenMS
     BinnedSpectrumCompareFunctor& operator = (const BinnedSpectrumCompareFunctor& source);
 
     /// function call operator, calculates the similarity of the given arguments
-    virtual double operator () (const BinnedSpectrum& spec1, const BinnedSpectrum& spec2) const = 0;
+    virtual double operator () (const BinnedSpectrum<>& spec1, const BinnedSpectrum<>& spec2) const = 0;
 
 	/// function call operator, calculates self similarity
-	virtual double operator () (const BinnedSpectrum& spec) const = 0;
+	virtual double operator () (const BinnedSpectrum<>& spec) const = 0;
 
-	/// registers all derived products 
+	/// registers all derived products
 	static void registerChildren();
 
 	/// get the identifier for a DefaultParamHandler
@@ -95,9 +95,9 @@ namespace OpenMS
 	{
 		return "BinnedSpectrumCompareFunctor";
 	}
-	
+
   };
-  
+
 
 }
 #endif // OPENMS_COMPARISON_SPECTRA_BINNEDSPECTRUMCOMPAREFUNCTOR_H

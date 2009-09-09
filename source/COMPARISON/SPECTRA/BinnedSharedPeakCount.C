@@ -40,16 +40,16 @@ namespace OpenMS
 			defaults_.setValue("precursor_mass_tolerance", 3.0, "Mass tolerance of the precursor peak, defines the distance of two PrecursorPeaks for which they are supposed to be from different peptides");
 			defaultsToParam_();
 	}
-	
+
 	BinnedSharedPeakCount::BinnedSharedPeakCount(const BinnedSharedPeakCount& source)
 	  : BinnedSpectrumCompareFunctor(source)
 	{
 	}
-	
+
 	BinnedSharedPeakCount::~BinnedSharedPeakCount()
 	{
 	}
-	
+
 	BinnedSharedPeakCount& BinnedSharedPeakCount::operator = (const BinnedSharedPeakCount& source)
 	{
 		if (this != &source)
@@ -59,12 +59,12 @@ namespace OpenMS
 	  	return *this;
 	}
 
-	double BinnedSharedPeakCount::operator () (const BinnedSpectrum& spec) const
+	double BinnedSharedPeakCount::operator () (const BinnedSpectrum<>& spec) const
 	{
 		return operator () (spec, spec);
 	}
-	
-	double BinnedSharedPeakCount::operator () (const BinnedSpectrum& spec1, const BinnedSpectrum& spec2) const
+
+	double BinnedSharedPeakCount::operator () (const BinnedSpectrum<>& spec1, const BinnedSpectrum<>& spec2) const
 	{
 		if(!spec1.checkCompliance(spec2))
 		{
@@ -81,24 +81,24 @@ namespace OpenMS
 		{
 			return 0;
 		}
-	  	
+
 		double score(0), sum(0);
 		UInt denominator(max(spec1.getFilledBinNumber(),spec2.getFilledBinNumber())), shared_Bins(min(spec1.getBinNumber(),spec2.getBinNumber()));
-			
+
 		// all bins at equal position that have both intensity > 0 contribute positively to score
 		for (Size i = 0; i < shared_Bins; ++i)
-		{			
-			if(spec1.getBins()[i]>0 && spec2.getBins()[i]>0) 
+		{
+			if(spec1.getBins()[i]>0 && spec2.getBins()[i]>0)
 			{
 				sum++;
 			}
 		}
-						
+
 		// resulting score normalized to interval [0,1]
 	    score = sum / denominator;
-	
+
 	    return score;
-	
+
 	}
 
 }

@@ -40,19 +40,19 @@ namespace OpenMS
 	  			 the dot poduct seems to be an effective method for scoring on its own. For calculating the Spectrast score,
 	  			 first preprocess the spectra if not already done. Transform them and calculate the dot product and the dot bias.
 	  			 Afterwards get the best two hits and calculate delta_D. Now for every spectrum from the library you can calculate the final score.
-	  			 
+
 
 		The details of the score can be found in:
 		H. Lam et al., Development and validation of a spectral library searching method for peptide identification from MS/MS,
 		Proteomics, 7 , 655-667, 2007
-		
+
 		@ingroup SpectraComparison
   */
-	
+
   class OPENMS_DLLAPI SpectraSTSimilarityScore : public PeakSpectrumCompareFunctor
   {
   public:
-	
+
 		// @name Constructors and Destructors
 		// @{
     /// default constructor
@@ -69,31 +69,31 @@ namespace OpenMS
 		// @{
     /// assignment operator
     SpectraSTSimilarityScore& operator = (const SpectraSTSimilarityScore& source);
-	
+
 		/**
 			@brief: this function calculates only the dot product of the two spectrum like in SpectraST
 		*/
 		DoubleReal operator () (const PeakSpectrum& spec1, const PeakSpectrum& spec2) const;
-		
-		DoubleReal operator() (const BinnedSpectrum& bin1,const BinnedSpectrum& bin2)	const;
+
+		DoubleReal operator() (const BinnedSpectrum<>& bin1,const BinnedSpectrum<>& bin2)	const;
 
 		DoubleReal operator () (const PeakSpectrum& spec) const;
-		
+
 		/**
 			@return true if spectrum passes filtering
 		*/
 		bool preprocess(PeakSpectrum& spec, Real remove_peak_intensity_threshold = 2.01, UInt cut_peaks_below = 1000, Size min_peak_number = 5, Size max_peak_number = 150);
-		
-		BinnedSpectrum transform(const PeakSpectrum& spec);
+
+		BinnedSpectrum<> transform(const PeakSpectrum& spec);
 		/**
 			@param dot_prdouct if -1 this value will be calculated as well.
 		*/
-		DoubleReal dot_bias(const BinnedSpectrum& bin1, const BinnedSpectrum& bin2, DoubleReal dot_product = -1) const;
-		
+		DoubleReal dot_bias(const BinnedSpectrum<>& bin1, const BinnedSpectrum<>& bin2, DoubleReal dot_product = -1) const;
+
 		DoubleReal delta_D(DoubleReal top_hit, DoubleReal runner_up);
-		
+
 		DoubleReal compute_F(DoubleReal dot_product, DoubleReal delta_D, DoubleReal delta_bias);
-		
+
 		/**
 			@brief: measures how much of the dot prudct is dominated by a few peaks
 		*/

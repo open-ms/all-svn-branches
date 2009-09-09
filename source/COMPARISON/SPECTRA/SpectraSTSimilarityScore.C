@@ -60,15 +60,15 @@ namespace OpenMS
 	{
 		return operator () (spec, spec);
 	}
-	
+
   DoubleReal SpectraSTSimilarityScore::operator () (const PeakSpectrum& s1, const PeakSpectrum& s2) const
   {
 		DoubleReal score(0);
-		BinnedSpectrum bin1(1,1,s1);
-		BinnedSpectrum bin2(1,1,s2);
-		
+		BinnedSpectrum<> bin1(1,1,s1);
+		BinnedSpectrum<> bin2(1,1,s2);
+
 		//normalize bins
-		
+
 		//magnitute of the spectral vector
 		Real magnitude1(0);
 		Real magnitude2(0);
@@ -82,7 +82,7 @@ namespace OpenMS
 		{
 			*iter1 = (Real)*iter1/magnitude1;
 		}
-		
+
 		for(SparseVector<Real>::SparseVectorIterator iter2 = bin2.getBins().begin(); iter2 < bin2.getBins().end(); ++iter2)
 		{
 			magnitude2 += pow((DoubleReal)*iter2,2);
@@ -92,8 +92,8 @@ namespace OpenMS
 		for(SparseVector<Real>::SparseVectorIterator iter2 = bin2.getBins().begin(); iter2 < bin2.getBins().end(); ++iter2)
 		{
 			*iter2 = (Real)*iter2/magnitude2;
-		}		
-		
+		}
+
 		Size shared_bins = min(bin1.getBinNumber(),bin2.getBinNumber());
 		for(Size s = 0; s < shared_bins; ++s)
 		{
@@ -101,16 +101,16 @@ namespace OpenMS
 			{
 				score += ((DoubleReal)bin1.getBins()[s]*(DoubleReal)bin2.getBins()[s]);
 			}
-		}	
-		
+		}
+
     return score;
-	
+
 	}
-	
-	DoubleReal SpectraSTSimilarityScore::operator() (const BinnedSpectrum& bin1,const BinnedSpectrum& bin2)	const
+
+	DoubleReal SpectraSTSimilarityScore::operator() (const BinnedSpectrum<>& bin1,const BinnedSpectrum<>& bin2)	const
 	{
 		DoubleReal score(0);
-		
+
 		Size shared_bins = min(bin1.getBinNumber(),bin2.getBinNumber());
 		for(Size s = 0; s < shared_bins; ++s)
 		{
@@ -118,11 +118,11 @@ namespace OpenMS
 			{
 				score += (bin1.getBins()[s]*bin2.getBins()[s]);
 			}
-		}	
-		
-    return score;	
+		}
+
+    return score;
 	}
-	
+
 	bool SpectraSTSimilarityScore::preprocess(PeakSpectrum& spec, Real remove_peak_intensity_threshold, UInt cut_peaks_below, Size min_peak_number, Size max_peak_number)
 	{
 		spec.sortByIntensity(true);
@@ -144,7 +144,7 @@ namespace OpenMS
 				peak.setPosition(k->getPosition());
 				tmp.push_back(peak);
 			}
-			
+
 		}
 		spec = tmp;
 		//if not enough peaks in the specturm pass that one out
@@ -157,10 +157,10 @@ namespace OpenMS
 			return false;
 		}
 	}
-	
-	BinnedSpectrum SpectraSTSimilarityScore::transform(const PeakSpectrum& spec)
+
+	BinnedSpectrum<> SpectraSTSimilarityScore::transform(const PeakSpectrum& spec)
 	{
-		BinnedSpectrum bin(1,1,spec);
+		BinnedSpectrum<> bin(1,1,spec);
 		Real magnitude(0);
 		for(SparseVector<Real>::SparseVectorIterator iter = bin.getBins().begin(); iter < bin.getBins().end(); ++iter)
 		{
@@ -171,11 +171,11 @@ namespace OpenMS
 		for(SparseVector<Real>::SparseVectorIterator iter = bin.getBins().begin(); iter < bin.getBins().end(); ++iter)
 		{
 			*iter = (Real)*iter/magnitude;
-		}	
+		}
 		return bin;
 	}
-	
-	DoubleReal SpectraSTSimilarityScore::dot_bias(const BinnedSpectrum& bin1, const BinnedSpectrum& bin2, DoubleReal dot_product) const
+
+	DoubleReal SpectraSTSimilarityScore::dot_bias(const BinnedSpectrum<>& bin1, const BinnedSpectrum<>& bin2, DoubleReal dot_product) const
 	{
 		DoubleReal numerator(0);
 
@@ -186,9 +186,9 @@ namespace OpenMS
 			{
 				numerator += (pow(bin1.getBins()[s],2)*pow(bin2.getBins()[s],2));
 			}
-		}			
+		}
 		numerator = sqrt(numerator);
-		
+
 		if(dot_product)
 		{
 			return (DoubleReal)numerator/dot_product;
@@ -198,12 +198,12 @@ namespace OpenMS
 			return (DoubleReal)numerator/(*this)(bin1,bin2);
 		}
 	}
-	
+
 	DoubleReal SpectraSTSimilarityScore::delta_D(DoubleReal top_hit, DoubleReal runner_up)
 	{
 		return (DoubleReal)(top_hit - runner_up)/top_hit;
 	}
-	
+
 	DoubleReal SpectraSTSimilarityScore::compute_F(DoubleReal dot_product, DoubleReal delta_D,DoubleReal dot_bias)
 	{
 		DoubleReal b(0);
@@ -222,5 +222,5 @@ namespace OpenMS
 		return 0.6*dot_product + 0.4*delta_D - b;
 	}
 
-	
+
 }

@@ -32,13 +32,16 @@
 #include <OpenMS/KERNEL/MSSpectrum.h>
 #include <OpenMS/DATASTRUCTURES/SparseVector.h>
 #include <OpenMS/CONCEPT/Exception.h>
+#include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 
+#include <boost/math/distributions/binomial.hpp> // for binomial distribution
 
 #include <cmath>
 
 namespace OpenMS
 {
 
+	class Peak1D;
 	/**
 	@brief This is a binned representation of a PeakSpectrum
 
@@ -55,8 +58,10 @@ namespace OpenMS
 
 		@ingroup SpectraComparison
 	*/
-
-	class OPENMS_DLLAPI BinnedSpectrum : public MSSpectrum<>
+	template <typename PeakT = Peak1D>
+	class BinnedSpectrum
+	: /* public DefaultParamHandler, */
+		public MSSpectrum<PeakT>
 	{
 
 	private:
@@ -71,29 +76,142 @@ namespace OpenMS
 		@brief 	Exception which is thrown if BinnedSpectrum bins are accessed and no PeakSpektrum has been
 				integrated yet i.e. bins_ is empty
 	*/
-	class OPENMS_DLLAPI NoSpectrumIntegrated 
+	class OPENMS_DLLAPI NoSpectrumIntegrated
 		: public Exception::BaseException
 	{
 	public:
-		NoSpectrumIntegrated(const char* file, int line, const char* function, const char* message ="BinnedSpectrum hasn't got a PeakSpectrum to base on yet") throw();
+		NoSpectrumIntegrated(const char* file, int line, const char* function, const char* message ="BinnedSpectrum hasn't got a PeakSpectrum to base on yet") throw()
+          : BaseException(file, line, function, "BinnedSpectrum::NoSpectrumIntegrated", message)
+	{
+	}
 
-		virtual ~NoSpectrumIntegrated() throw();
+		~NoSpectrumIntegrated() throw()
+	{
+	}
+
 	};
 
 	typedef SparseVector<Real>::const_iterator const_bin_iterator;
 	typedef SparseVector<Real>::iterator bin_iterator;
 
 	/// default constructor
-	BinnedSpectrum();
+	BinnedSpectrum()
+	   : MSSpectrum<PeakT>(), /* DefaultParamHandler("BinnedSpectrum"), */ bin_spread_(1), bin_size_(2.0), bins_()
+	{
+	}
 
 	/// detailed constructor
-	BinnedSpectrum(Real size, UInt spread, PeakSpectrum ps);
+	BinnedSpectrum(Real size, UInt spread, const PeakSpectrum& ps)
+	   : MSSpectrum<PeakT>(ps), /* DefaultParamHandler("BinnedSpectrum"), */ bin_spread_(spread), bin_size_(size), bins_()
+	{
+		setBinning();
+	}
+
+	/// detailed constructor
+	BinnedSpectrum(Real size, UInt spread, std::vector< MSSpectrum<PeakT> >& unmerged)
+	   : MSSpectrum<PeakT>(), /* DefaultParamHandler("BinnedSpectrum"), */ bin_spread_(spread), bin_size_(size), bins_()
+	{
+		// find largest mz in given spectra
+		DoubleReal max_size(max_element(unmerged.begin(),unmerged.end(),MSSpectrum<PeakT>::PMLess())->getPrecursors().first().getMZ());
+		// set sparsevector size accordingly
+		bins_ = SparseVector<Real>((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // aka overall intensity of peaks in corresponding bins
+		std::vector< SparseVector<Real> > binned(unmerged.size(),bins_); // aka each spectrums binned version
+		SparseVector<Real> overall_number((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // overall number of peaks in corresponding bins
+		SparseVector<Real> overall_center((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // overall m/z center of peaks in corresponding bins
+		for(Size i = 0; i < unmerged.size(); ++i)
+		{
+			//put all peaks into bins
+			UInt bin_number;
+			for (Size j = 0; j < unmerged[i].size(); ++j)
+			{
+				if(max_size > unmerged[i][j].getMZ())
+				{
+					break;
+				}
+
+				//bin_number counted form 0 -> floor
+				bin_number = (UInt)floor(unmerged[i][j].getMZ()/bin_size_);
+				//e.g. bin_size_ = 1.5: first bin covers range [0,1.5] so peak at 1.5 falls in first bin (index 0)
+				if(unmerged[i][j].getMZ()/bin_size_ == (DoubleReal)bin_number)
+				{
+					--bin_number;
+				}
+
+				// add peak to corresponding bin
+				binned[i][bin_number] = binned[i].at(bin_number) + unmerged[i][j].getIntensity();
+				overall_number[bin_number] = overall_number.at(bin_number) + 1;
+				overall_center[bin_number] = overall_center.at(bin_number) + unmerged[i][j].getMZ();
+
+				// add peak to neighboring binspread many
+				for (Size k = 0; k < bin_spread_; ++k)
+				{
+					binned[i][bin_number+k+1] = binned[i].at(bin_number+k+1) + unmerged[i][j].getIntensity();
+					overall_number[bin_number] = overall_number.at(bin_number) + 1;
+					overall_center[bin_number] = overall_center.at(bin_number) + unmerged[i][j].getMZ();
+					// we are not in one of the first bins (0 to bin_spread)
+					// not working:  if (bin_number-k-1 >= 0)
+					if (bin_number >= k+1)
+					{
+						binned[i][bin_number-k-1] = binned[i].at(bin_number-k-1) + unmerged[i][j].getIntensity();
+						overall_number[bin_number] = overall_number.at(bin_number) + 1;
+						overall_center[bin_number] = overall_center.at(bin_number) + unmerged[i][j].getMZ();
+					}
+				}
+			}
+		}
+
+		//~ merge down all bins according to given statistical hypothesis
+		Real noise_propability(0.001);
+		Real propability(0.99);
+		int trials(unmerged.size());
+		Real success(1-(pow(1-noise_propability,(1+2*spread))));
+			//~ from boost docu: The smallest number of successes that may be observed from n (or 'trials') trials with success fraction p (or ('success'), at probability P (or 'propability'). Note that the value returned is a real-number, and not an integer. Depending on the use case you may want to take either the floor or ceiling of the result. For example:
+		int min_peak_concurrence = floor(boost::math::quantile(boost::math::complement(boost::math::binomial(trials, success), propability))); /// @improvement find out whether to ceil or to floor;
+//~ boost::math::binomial::
+		/// @improvement run over the SparseVector with Iterators to speed up
+		for(Size n = 0; n < overall_number.size(); ++n)
+		{
+			if(overall_number.at(n) >= (Real)min_peak_concurrence)
+			{
+				for(Size y = 0; y < binned.size(); ++y)
+				{
+					bins_[n] = bins_.at(n) + binned[y].at(n);
+				}
+			}
+		}
+		for(Size n = 0; n < overall_number.size(); ++n)
+		{
+			if(overall_number.at(n) >= min_peak_concurrence)
+			{
+				bins_[n] = bins_.at(n) / overall_number.at(n);
+				overall_center[n] = overall_center.at(n) / overall_number.at(n);
+			}
+		}
+
+		//~ from merged bins fill peaks in integrated MSSpectrum
+		for(Size n = 0; n < bins_.size(); ++n)
+		{
+			if(overall_number.at(n) >= min_peak_concurrence)
+			{
+				PeakT tmp;
+				tmp.setIntensity(bins_[n]);
+				tmp.setMZ(overall_center[n]);
+				this->push_back(tmp);
+			}
+			this->sortByPosition();
+		}
+	}
 
 	/// copy constructor
-	BinnedSpectrum(const BinnedSpectrum& source);
+	BinnedSpectrum(const BinnedSpectrum& source)
+		: MSSpectrum<PeakT>(source), /* DefaultParamHandler(source), */ bin_spread_(source.getBinSpread()), bin_size_(source.getBinSize()), bins_(source.getBins())
+	{
+	}
 
 	/// destructor
-	virtual ~BinnedSpectrum();
+	~BinnedSpectrum()
+	{
+	}
 
 	/// assignment operator
 	BinnedSpectrum& operator= (const BinnedSpectrum& source)
@@ -103,7 +221,7 @@ namespace OpenMS
 			setBinSize(source.getBinSize());
 			setBinSpread(source.getBinSpread());
 			bins_ = source.getBins();
-			MSSpectrum<>::operator=(source);
+			MSSpectrum<PeakT>::operator=(source);
 		}
 		return *this;
 	}
@@ -111,9 +229,9 @@ namespace OpenMS
 	/// assignment operator for PeakSpectra
 	BinnedSpectrum& operator= (const PeakSpectrum& source)
 	{
-		if (!MSSpectrum<>::operator==(source))
+		if (!MSSpectrum<PeakT>::operator==(source))
 		{
-			MSSpectrum<>::operator=(source);
+			MSSpectrum<PeakT>::operator=(source);
 			setBinning();
 		}
 		return *this;
@@ -123,7 +241,7 @@ namespace OpenMS
 	bool operator== (const BinnedSpectrum& rhs) const
 	{
 		return
-			(MSSpectrum<>::operator==(rhs) &&
+			(MSSpectrum<PeakT>::operator==(rhs) &&
 			rhs.getBinSize()==this->bin_size_ &&
 			rhs.getBinSpread()==this->bin_spread_)
 			;
@@ -138,7 +256,7 @@ namespace OpenMS
 	/// equality operator for PeakSpectra
 	bool operator== (const PeakSpectrum& rhs) const
 	{
-		return MSSpectrum<>::operator==(rhs);
+		return MSSpectrum<PeakT>::operator==(rhs);
 	}
 
 	/// inequality operator for PeakSpectra
@@ -179,7 +297,7 @@ namespace OpenMS
 	{
 		if(bins_.size() == 0)
 		{
-			throw BinnedSpectrum::NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+			throw NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 		}
 		return bins_;
 	}
@@ -198,7 +316,7 @@ namespace OpenMS
 			}
 			catch(...)
 			{
-				throw BinnedSpectrum::NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+				throw NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 			}
 		}
 		return bins_;
@@ -242,7 +360,7 @@ namespace OpenMS
 			}
 			catch(...)
 			{
-				throw BinnedSpectrum::NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+				throw NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 			}
 		}
 	}
@@ -264,7 +382,7 @@ namespace OpenMS
 			}
 			catch(...)
 			{
-				throw BinnedSpectrum::NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+				throw NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 			}
 		}
 	}
@@ -274,17 +392,56 @@ namespace OpenMS
 
 			@throw NoSpectrumIntegrated is thrown if no spectrum was integrated before
 	*/
-	void setBinning();
+	void setBinning()
+	{
+	 	if (this->MSSpectrum<PeakT>::empty())
+	 	{
+		 	throw NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
+		}
+		bins_.clear();
+
+	 	//make all necessary bins accessible
+		this->sortByPosition();
+	 	bins_ = SparseVector<Real>((UInt)ceil(this->back().getMZ()/bin_size_) + bin_spread_ ,0,0);
+
+		//put all peaks into bins
+		UInt bin_number;
+		for (Size i = 0; i < this->size(); ++i)
+		{
+			//bin_number counted form 0 -> floor
+			bin_number = (UInt)floor(this->operator[](i).getMZ()/bin_size_);
+			//e.g. bin_size_ = 1.5: first bin covers range [0,1.5] so peak at 1.5 falls in first bin (index 0)
+
+			if(this->operator[](i).getMZ()/bin_size_ == (DoubleReal)bin_number)
+			{
+				--bin_number;
+			}
+
+			//add peak to corresponding bin
+			bins_[bin_number] = bins_.at(bin_number) + this->operator[](i).getIntensity();
+
+			//add peak to neighboring binspread many
+			for (Size j = 0; j < bin_spread_; ++j)
+			{
+				bins_[bin_number+j+1] = bins_.at(bin_number+j+1) + this->operator[](i).getIntensity();
+				// we are not in one of the first bins (0 to bin_spread)
+				//not working:  if (bin_number-j-1 >= 0)
+				if (bin_number >= j+1)
+				{
+					bins_[bin_number-j-1] = bins_.at(bin_number-j-1) + this->operator[](i).getIntensity();
+				}
+			}
+		}
+
+	}
 
 	/// function to check comparability of two BinnedSpectrum objects, i.e. if they have equal bin size and spread
-	bool checkCompliance(const BinnedSpectrum& bs) const;
-
-
-  protected:
-	// docu in base class
-	virtual void clearChildIds_()
+		//yields false if given BinnedSpectrum size or spread differs from this one (comparing those might crash)
+	bool checkCompliance(const BinnedSpectrum<PeakT>& bs) const
 	{
-		//TODO Persistence
+		return
+			(this->bin_size_ == bs.getBinSize()) &&
+			(this->bin_spread_ == bs.getBinSpread());
 	}
 
   };

@@ -40,16 +40,16 @@ namespace OpenMS
 			defaults_.setValue("precursor_mass_tolerance", 3.0, "Mass tolerance of the precursor peak, defines the distance of two PrecursorPeaks for which they are supposed to be from different peptides");
 			defaultsToParam_();
 	}
-	
+
 	BinnedSpectralContrastAngle::BinnedSpectralContrastAngle(const BinnedSpectralContrastAngle& source)
 	  : BinnedSpectrumCompareFunctor(source)
 	{
 	}
-	
+
 	BinnedSpectralContrastAngle::~BinnedSpectralContrastAngle()
 	{
 	}
-	
+
 	BinnedSpectralContrastAngle& BinnedSpectralContrastAngle::operator = (const BinnedSpectralContrastAngle& source)
 	{
 		if (this != &source)
@@ -59,18 +59,18 @@ namespace OpenMS
 	  	return *this;
 	}
 
-	double BinnedSpectralContrastAngle::operator () (const BinnedSpectrum& spec) const
+	double BinnedSpectralContrastAngle::operator () (const BinnedSpectrum<>& spec) const
 	{
 		return operator () (spec, spec);
 	}
-	
-	double BinnedSpectralContrastAngle::operator () (const BinnedSpectrum& spec1, const BinnedSpectrum& spec2) const
+
+	double BinnedSpectralContrastAngle::operator () (const BinnedSpectrum<>& spec1, const BinnedSpectrum<>& spec2) const
 	{
 		if(!spec1.checkCompliance(spec2))
 		{
 			throw IncompatibleBinning(__FILE__, __LINE__, __PRETTY_FUNCTION__, "");
 		}
-		
+
 		// shortcut similarity calculation by comparing PrecursorPeaks (PrecursorPeaks more than delta away from each other are supposed to be from another peptide)
 		DoubleReal pre_mz1 = 0.0;
 		if (!spec1.getPrecursors().empty()) pre_mz1 = spec1.getPrecursors()[0].getMZ();
@@ -80,9 +80,9 @@ namespace OpenMS
 		{
 			return 0;
 		}
-	  			
+
 		double score(0), numerator(0), sharedBins(min(spec1.getBinNumber(),spec2.getBinNumber())), sum1(0), sum2(0);
-				
+
 		// all bins at equal position that have both intensity > 0 contribute positively to score
 		for (Size i = 0; i < sharedBins; ++i)
 		{
@@ -90,12 +90,12 @@ namespace OpenMS
 			sum2 += spec2.getBins()[i]*spec2.getBins()[i];
 			numerator += (spec1.getBins()[i] * spec2.getBins()[i]);
 		}
-		
+
 		// resulting score standardized to interval [0,1]
 		score = numerator / (sqrt(sum1 * sum2));
-		
+
 		return score;
-	
+
 	}
 
 }

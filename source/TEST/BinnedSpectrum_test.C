@@ -40,12 +40,12 @@ START_TEST(BinnedSpectrum, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-BinnedSpectrum* ptr = 0;
+BinnedSpectrum<>* ptr = 0;
 START_SECTION(BinnedSpectrum())
 {
-	ptr = new BinnedSpectrum();
+	ptr = new BinnedSpectrum<>();
 	TEST_NOT_EQUAL(ptr, 0)
-  TEST_EXCEPTION(BinnedSpectrum::NoSpectrumIntegrated,ptr->setBinning();)
+  TEST_EXCEPTION(BinnedSpectrum<>::NoSpectrumIntegrated,ptr->setBinning();)
 }
 END_SECTION
 
@@ -55,21 +55,26 @@ START_SECTION(~BinnedSpectrum())
 }
 END_SECTION
 
-  BinnedSpectrum* bs1;
+  BinnedSpectrum<>* bs1;
   DTAFile dtafile;
   PeakSpectrum s1;
   DTAFile().load(OPENMS_GET_TEST_DATA_PATH("PILISSequenceDB_DFPIANGER_1.dta"), s1);
 
 START_SECTION((BinnedSpectrum(Real size, UInt spread, PeakSpectrum ps)))
 {
-  bs1 = new BinnedSpectrum(1.5,2,s1);
+  bs1 = new BinnedSpectrum<>(1.5,2,s1);
   TEST_NOT_EQUAL(bs1,0)
 }
 END_SECTION
 
+START_SECTION((BinnedSpectrum(Real size, UInt spread, std::vector< MSSpectrum< PeakT > > &unmerged)))
+{
+  // TODO
+}
+
 START_SECTION((BinnedSpectrum(const BinnedSpectrum &source)))
 {
-  BinnedSpectrum copy(*bs1);
+  BinnedSpectrum<> copy(*bs1);
   TEST_EQUAL(copy.getName(), bs1->getName());
   TEST_EQUAL(copy.getBinSize(), bs1->getBinSize());
   TEST_EQUAL((UInt)copy.getPrecursors()[0].getMZ(),(UInt)bs1->getPrecursors()[0].getMZ());
@@ -78,8 +83,8 @@ END_SECTION
 
 START_SECTION((BinnedSpectrum& operator=(const BinnedSpectrum &source)))
 {
-  BinnedSpectrum copy(*bs1);
-  bs1 = new BinnedSpectrum(1.5,2,s1);
+  BinnedSpectrum<> copy(*bs1);
+  bs1 = new BinnedSpectrum<>(1.5,2,s1);
   TEST_EQUAL(copy.getName(), bs1->getName());
   TEST_EQUAL(copy.getBinSize(), bs1->getBinSize());
   TEST_EQUAL((UInt)copy.getPrecursors()[0].getMZ(),(UInt)bs1->getPrecursors()[0].getMZ());
@@ -88,7 +93,7 @@ END_SECTION
 
 START_SECTION((BinnedSpectrum& operator=(const PeakSpectrum &source)))
 {
-  bs1 = new BinnedSpectrum();
+  bs1 = new BinnedSpectrum<>();
   *bs1 = s1;
   TEST_EQUAL(bs1->getPrecursors()[0].getMZ(),s1.getPrecursors()[0].getMZ());
   bs1->setBinSize(1.5);
@@ -98,14 +103,14 @@ END_SECTION
 
 START_SECTION((bool operator==(const BinnedSpectrum &rhs) const ))
 {
-	BinnedSpectrum copy = *bs1;
+	BinnedSpectrum<> copy = *bs1;
 	TEST_EQUAL((*bs1==copy),true)
 }
 END_SECTION
 
 START_SECTION((bool operator!=(const BinnedSpectrum &rhs) const ))
 {
-	BinnedSpectrum copy = *bs1;
+	BinnedSpectrum<> copy = *bs1;
 	TEST_EQUAL((*bs1!=copy),false)
 }
 END_SECTION
@@ -118,7 +123,7 @@ END_SECTION
 
 START_SECTION((bool operator!=(const PeakSpectrum &rhs) const ))
 {
-	BinnedSpectrum copy = *bs1;
+	BinnedSpectrum<> copy = *bs1;
 	TEST_EQUAL((*bs1!=s1),false)
 }
 END_SECTION
@@ -162,7 +167,7 @@ END_SECTION
 START_SECTION((const_bin_iterator begin() const ))
 {
 	UInt c(0);
-	for (BinnedSpectrum::const_bin_iterator it1 = bs1->begin(); it1 != bs1->end(); ++it1)
+	for (BinnedSpectrum<>::const_bin_iterator it1 = bs1->begin(); it1 != bs1->end(); ++it1)
 	{
 		++c;
 	}
@@ -180,7 +185,7 @@ END_SECTION
 START_SECTION((bin_iterator begin()))
 {
 	UInt c(0);
-	for (BinnedSpectrum::bin_iterator it1 = bs1->begin(); it1 != bs1->end(); ++it1)
+	for (BinnedSpectrum<>::bin_iterator it1 = bs1->begin(); it1 != bs1->end(); ++it1)
 	{
 		++c;
 	}
@@ -216,10 +221,9 @@ END_SECTION
 
 START_SECTION((bool checkCompliance(const BinnedSpectrum &bs) const ))
 {
-	TEST_EQUAL(bs1->checkCompliance(BinnedSpectrum()),false)
+	TEST_EQUAL(bs1->checkCompliance(BinnedSpectrum<>()),false)
 }
 END_SECTION
-
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

@@ -18,6 +18,7 @@ SpectrumCheapDPCorr.h
 SpectrumPrecursorComparator.h
 SteinScottImproveScore.h
 ZhangSimilarityScore.h
+XCorrelation.h
 )
 
 ### add path to the filenames

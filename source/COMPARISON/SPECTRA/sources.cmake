@@ -18,6 +18,7 @@ SpectrumCheapDPCorr.C
 SpectrumPrecursorComparator.C
 SteinScottImproveScore.C
 ZhangSimilarityScore.C
+XCorrelation.C
 )
 
 ### add path to the filenames

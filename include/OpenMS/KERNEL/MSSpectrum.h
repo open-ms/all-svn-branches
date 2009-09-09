@@ -95,7 +95,6 @@ namespace OpenMS
 				}
 			};
 
-
 			///comparator for precursormass
 			struct PMLess
 				: public std::binary_function <MSSpectrum, MSSpectrum, bool>

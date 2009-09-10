@@ -376,6 +376,31 @@ namespace OpenMS
     //--3D toolbar--
     tool_bar_3d_ = addToolBar("3D tool bar");
 
+    // View 2D & 3D modes
+    view_group_3d_ = new QButtonGroup(tool_bar_3d_);
+    view_group_3d_->setExclusive(true);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/view2d.png"));
+    b->setToolTip("2d view");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Switch to 2d view.");
+    view_group_3d_->addButton(b, Spectrum3DCanvas::VM_2D);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/view3d.png"));
+    b->setToolTip("3d view");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Switch to 3d view.");
+    view_group_3d_->addButton(b, Spectrum3DCanvas::VM_3D);
+		tool_bar_3d_->addWidget(b);
+		
+    connect(view_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setViewMode3D(int)));
+    tool_bar_->addSeparator();
+    
     //draw modes 3D
     draw_group_3d_ = new QButtonGroup(tool_bar_3d_);
     draw_group_3d_->setExclusive(true);
@@ -386,7 +411,7 @@ namespace OpenMS
     //b->setShortcut(Qt::Key_I);
     b->setCheckable(true);
     b->setWhatsThis("3D Draw mode: Points<BR><BR>Peaks are diplayed as points.");
-    draw_group_3d_->addButton(b, Spectrum3DCanvas::DM_POINTS);
+    draw_group_3d_->addButton(b, LayerData::DM_POINTS);
 		tool_bar_3d_->addWidget(b);
 
     b = new QToolButton(tool_bar_3d_);
@@ -395,7 +420,7 @@ namespace OpenMS
     //b->setShortcut(Qt::Key_I);
     b->setCheckable(true);
     b->setWhatsThis("3D Draw mode: Peaks<BR><BR>Peaks are diplayed as sticks.");
-    draw_group_3d_->addButton(b, Spectrum3DCanvas::DM_PEAKS);
+    draw_group_3d_->addButton(b, LayerData::DM_PEAKS);
 		tool_bar_3d_->addWidget(b);
 		
     b = new QToolButton(tool_bar_3d_);
@@ -404,7 +429,7 @@ namespace OpenMS
     //b->setShortcut(Qt::Key_R);
     b->setCheckable(true);
     b->setWhatsThis("3D Draw mode: Lines<BR><BR>Peaks are diplayed as a continous line.");
-    draw_group_3d_->addButton(b, Spectrum3DCanvas::DM_LINES);
+    draw_group_3d_->addButton(b, LayerData::DM_LINES);
 		tool_bar_3d_->addWidget(b);
 
     b = new QToolButton(tool_bar_3d_);
@@ -413,12 +438,225 @@ namespace OpenMS
     //b->setShortcut(Qt::Key_R);
     b->setCheckable(true);
     b->setWhatsThis("3D Draw mode: Map<BR><BR>Peaks are diplayed as a map.");
-    draw_group_3d_->addButton(b, Spectrum3DCanvas::DM_MAP);
+    draw_group_3d_->addButton(b, LayerData::DM_MAP);
 		tool_bar_3d_->addWidget(b);
 		
     connect(draw_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setDrawMode3D(int)));
-    //tool_bar_->addSeparator();
+    tool_bar_->addSeparator();
     
+    // Primitive mode
+    primitive_group_3d_ = new QButtonGroup(tool_bar_3d_);
+    primitive_group_3d_->setExclusive(true);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/glPoints.png"));
+    b->setToolTip("glPoints");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Use glPoints primitive.");
+    primitive_group_3d_->addButton(b, LayerData::PM_POINTS);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/glLines.png"));
+    b->setToolTip("glLines");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Use glLines primitive.");
+    primitive_group_3d_->addButton(b, LayerData::PM_LINES);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/glLineStrip.png"));
+    b->setToolTip("glLineStrip");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Use glLineStrip primitive.");
+    primitive_group_3d_->addButton(b, LayerData::PM_LINESTRIP);
+		tool_bar_3d_->addWidget(b);
+				
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/glTriangles.png"));
+    b->setToolTip("glTriangles");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Use glTriangles primitive.");
+    primitive_group_3d_->addButton(b, LayerData::PM_TRIANGLES);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/glTriangleStrip.png"));
+    b->setToolTip("glTriangleStrip");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Use glTriangleStrip primitive.");
+    primitive_group_3d_->addButton(b, LayerData::PM_TRIANGLESTRIP);
+		tool_bar_3d_->addWidget(b);
+		
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/glQuads.png"));
+    b->setToolTip("glQuads");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Use glQuads primitive.");
+    primitive_group_3d_->addButton(b, LayerData::PM_QUADS);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/glQuadStrip.png"));
+    b->setToolTip("glQuadStrip");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Use glQuadStrip primitive.");
+    primitive_group_3d_->addButton(b, LayerData::PM_QUADSTRIP);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/glPolygon.png"));
+    b->setToolTip("glPolygon");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("Use glPolygon primitive.");
+    primitive_group_3d_->addButton(b, LayerData::PM_POLYGON);
+		tool_bar_3d_->addWidget(b);
+		
+    connect(primitive_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setPrimitiveMode3D(int)));
+    tool_bar_->addSeparator();
+    
+    // Move actions
+    action_group_3d_ = new QButtonGroup(tool_bar_3d_);
+    action_group_3d_->setExclusive(true);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/cameraReset.png"));
+    b->setToolTip("CameraReset");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("CameraReset.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_CAMERA_RESET);
+		tool_bar_3d_->addWidget(b);
+		
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/cameraMoveUp.png"));
+    b->setToolTip("CameraMoveUp");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("CameraMoveUp.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_CAMERA_MOVEUP);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/cameraMoveDown.png"));
+    b->setToolTip("CameraMoveDown");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("CameraMoveDown.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_CAMERA_MOVEDOWN);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/cameraMoveLeft.png"));
+    b->setToolTip("CameraMoveLeft");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("CameraMoveLeft.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_CAMERA_MOVELEFT);
+		tool_bar_3d_->addWidget(b);
+				
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/cameraMoveRight.png"));
+    b->setToolTip("CameraMoveRight");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("CameraMoveRight.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_CAMERA_MOVERIGHT);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/cameraZoomIn.png"));
+    b->setToolTip("CameraZoomIn");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("CameraZoomIn.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_CAMERA_ZOOMIN);
+		tool_bar_3d_->addWidget(b);
+		
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/cameraZoomOut.png"));
+    b->setToolTip("CameraZoomOut");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("CameraZoomOut.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_CAMERA_ZOOMOUT);
+		tool_bar_3d_->addWidget(b);
+
+    tool_bar_->addSeparator();
+    
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/dataReset.png"));
+    b->setToolTip("DataReset");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("DataReset.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_DATA_RESET);
+		tool_bar_3d_->addWidget(b);
+		
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/dataMoveUp.png"));
+    b->setToolTip("DataMoveUp");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("DataMoveUp.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_DATA_MOVEUP);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/dataMoveDown.png"));
+    b->setToolTip("DataMoveDown");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("DataMoveDown.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_DATA_MOVEDOWN);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/dataMoveLeft.png"));
+    b->setToolTip("DataMoveLeft");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("DataMoveLeft.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_DATA_MOVELEFT);
+		tool_bar_3d_->addWidget(b);
+				
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/dataMoveRight.png"));
+    b->setToolTip("DataMoveRight");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("DataMoveRight.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_DATA_MOVERIGHT);
+		tool_bar_3d_->addWidget(b);
+
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/dataZoomIn.png"));
+    b->setToolTip("DataZoomIn");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("DataZoomIn.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_DATA_ZOOMIN);
+		tool_bar_3d_->addWidget(b);
+		
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/dataZoomOut.png"));
+    b->setToolTip("DataZoomOut");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(false);
+    b->setWhatsThis("DataZoomOut.");
+    action_group_3d_->addButton(b, Spectrum3DCanvas::A_DATA_ZOOMOUT);
+		tool_bar_3d_->addWidget(b);
+		
+    connect(primitive_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setAction3D(int)));
+        
 		//################## Dock widgets #################
     //layer window
     QDockWidget* layer_bar = new QDockWidget("Layers", this);
@@ -1196,7 +1434,7 @@ namespace OpenMS
     SpectrumWidget* w = activeWindow_();
     if (w)
     {
-    	w->setIntensityMode((OpenMS::SpectrumCanvas::IntensityModes)index);
+    	w->setIntensityMode((SpectrumCanvas::IntensityModes)index);
   	}
   }
 
@@ -1205,7 +1443,16 @@ namespace OpenMS
     Spectrum1DWidget* w = active1DWindow_();
     if (w)
     {
-    	w->canvas()->setDrawMode((OpenMS::Spectrum1DCanvas::DrawModes)index);
+    	w->canvas()->setDrawMode((Spectrum1DCanvas::DrawModes)index);
+  	}
+  }
+  
+  void TOPPViewBase::setViewMode3D(int index)
+  {
+    Spectrum3DWidget* w = active3DWindow_();
+    if (w)
+    {
+    	w->canvas()->setViewMode((Spectrum3DCanvas::ViewModes) index);
   	}
   }
   
@@ -1214,10 +1461,28 @@ namespace OpenMS
     Spectrum3DWidget* w = active3DWindow_();
     if (w)
     {
-    	w->canvas()->setDrawMode((OpenMS::Spectrum3DCanvas::DrawModes) index);
+    	w->canvas()->setDrawMode((LayerData::DrawModes) index);
   	}
-  }  
+  }
 
+  void TOPPViewBase::setPrimitiveMode3D(int index)
+  {
+    Spectrum3DWidget* w = active3DWindow_();
+    if (w)
+    {
+    	w->canvas()->setPrimitiveMode((LayerData::PrimitiveModes) index);
+  	}
+  }
+  
+  void TOPPViewBase::setAction3D(int index)
+  {
+    Spectrum3DWidget* w = active3DWindow_();
+    if (w)
+    {
+    	w->canvas()->setAction((OpenMS::Spectrum3DCanvas::Actions) index);
+  	}
+  }
+  
 	void TOPPViewBase::changeLabel(QAction* action)
 	{
 		bool set=false;
@@ -1338,7 +1603,10 @@ namespace OpenMS
     Spectrum3DWidget* w3 = active3DWindow_();
     if (w3)
     {
+      view_group_3d_->button(w3->canvas()->getViewMode())->setChecked(true);
       draw_group_3d_->button(w3->canvas()->getDrawMode())->setChecked(true);
+      primitive_group_3d_->button(w3->canvas()->getPrimitiveMode())->setChecked(true);
+      
       //show/hide toolbars and buttons
       tool_bar_1d_->hide();
       tool_bar_2d_peak_->hide();

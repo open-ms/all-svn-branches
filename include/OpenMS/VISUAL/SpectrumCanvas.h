@@ -113,11 +113,11 @@ namespace OpenMS
 		///Types of Ranges/Areas
 		typedef DRange<2> AreaType;
 		
-		
 		///Mouse action modes
 		enum ActionModes 
 		{
 			AM_TRANSLATE, ///< translate
+			AM_ROTATE,    ///< rotate
 			AM_ZOOM, 			///< zoom
 			AM_MEASURE    ///< measure
 		};
@@ -230,6 +230,13 @@ namespace OpenMS
 			return layers_[current_layer_];
 		}
 
+		/// returns mutable layer data of the active layer
+		inline LayerData& getCurrentLayer()
+		{
+			OPENMS_PRECONDITION(current_layer_ < layers_.size(), "SpectrumCanvas::getCurrentLayer() index overflow");
+			return layers_[current_layer_];
+		}
+		
 		/// returns a layer flag of the current layer
 		bool getLayerFlag(LayerData::Flags f) const
 		{

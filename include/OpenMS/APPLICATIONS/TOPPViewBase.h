@@ -272,7 +272,10 @@ namespace OpenMS
       */
       //@{
       void setDrawMode1D(int);
+      void setViewMode3D(int);
       void setDrawMode3D(int);
+      void setPrimitiveMode3D(int);
+      void setAction3D(int);
       void setIntensityMode(int);
       void changeLayerFlag(bool);
       void changeLabel(QAction*);
@@ -368,7 +371,10 @@ namespace OpenMS
       QAction* projections_2d_;
       //3D specific stuff
       QToolBar* tool_bar_3d_;
+      QButtonGroup* view_group_3d_;
       QButtonGroup* draw_group_3d_;
+      QButtonGroup* primitive_group_3d_;
+      QButtonGroup* action_group_3d_;
       //@}
 
       /// Main workspace

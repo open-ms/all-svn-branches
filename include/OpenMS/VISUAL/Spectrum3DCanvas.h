@@ -72,19 +72,37 @@ namespace OpenMS
 				SHADE_FLAT = 0,            
 				SHADE_SMOOTH = 1         
 	    };
-	    
+			
 			///Enumerate all avaiable paint styles
-			enum DrawModes 
+			enum ViewModes 
 			{
-				DM_POINTS,	//< draw data as points
-				DM_PEAKS,   //< draw data as peaks
-				DM_LINES,   //< draw as lines
-				DM_MAP      //< draw data as map
-			};	    
-	    
+				VM_2D,
+				VM_3D
+			};
+
+			///Enumerate all avaiable actions
+			enum Actions 
+			{
+			  A_CAMERA_RESET,
+				A_CAMERA_MOVEUP,
+				A_CAMERA_MOVEDOWN,
+				A_CAMERA_MOVELEFT,
+				A_CAMERA_MOVERIGHT,
+				A_CAMERA_ZOOMIN,
+				A_CAMERA_ZOOMOUT,
+			  A_DATA_RESET,
+				A_DATA_MOVEUP,
+				A_DATA_MOVEDOWN,
+				A_DATA_MOVELEFT,
+				A_DATA_MOVERIGHT,
+				A_DATA_ZOOMIN,
+				A_DATA_ZOOMOUT
+			};
+			
 	    ///returns the Spectrum3DOpenGLcanvas     
 	    Spectrum3DOpenGLCanvas* openglwidget();
-	    
+	    Spectrum3DOpenGLCanvas* openglwidget() const;
+	    	    
 	    ///@name Remplemented Qt events
 	    //@{
 	    void resizeEvent(QResizeEvent* e);
@@ -103,12 +121,27 @@ namespace OpenMS
 			// Docu in base class
 			virtual void saveCurrentLayer(bool visible);
 			
+			/// Set view mode of the current layer
+			void setViewMode(const ViewModes mode);
+
 			/// Set draw mode of the current layer
-			void setDrawMode(DrawModes mode);
+			void setDrawMode(const LayerData::DrawModes mode);
+
+			/// Set primitive mode of the current layer
+			void setPrimitiveMode(const LayerData::PrimitiveModes mode);
+
+			/// Set action of the current layer
+			void setAction(const Actions action);
 
 			/// Get draw mode of the current layer
-			DrawModes getDrawMode();
-			
+			ViewModes getViewMode() const;
+												
+			/// Get draw mode of the current layer
+			LayerData::DrawModes getDrawMode() const;
+
+			/// Get draw mode of the current layer
+			LayerData::PrimitiveModes getPrimitiveMode() const;
+						
 		public slots:
 			
 	    // Docu in base class

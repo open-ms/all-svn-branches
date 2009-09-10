@@ -47,18 +47,15 @@ namespace OpenMS
     public:
       typedef SpectrumCanvas::ExperimentType ExperimentType;
       typedef ExperimentType::ConstAreaIterator AreaIt;
-      
-      enum interpolationMode { NONE, LINE, BARPLOT, MAP, PSEUDOGEL };
         
     public:
       MapData();
       ~MapData();
       void run();
         
-      void setInterpolationMode(const interpolationMode mode);
+      void setDrawMode(const LayerData::DrawModes mode);
       void setDataSize(const Size cols, const Size rows);
       void setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max);
-      void setData(const AreaIt begin, const AreaIt end);
       void setData(const ExperimentType* experiment);
       void setGradient(const MultiGradient* gradient);
 
@@ -123,7 +120,7 @@ namespace OpenMS
       bool needNormals_; // no set ; get
       bool needColors_; // no set ; get
 
-      interpolationMode mode_; // set and get            
+      LayerData::DrawModes mode_; // set and get            
       Size cols_;
       Size rows_;
       double mz_min_;
@@ -132,8 +129,6 @@ namespace OpenMS
       double rt_min_;
       double rt_max_;
       double rt_width_;
-      AreaIt begin_;
-      AreaIt end_;
       const ExperimentType* experiment_;
       const MultiGradient* gradient_;
   };

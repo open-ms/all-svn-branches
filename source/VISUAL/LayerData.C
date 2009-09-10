@@ -52,7 +52,9 @@ namespace OpenMS
 		  modifiable(false),
 		  modified(false),
 		  label(L_NONE),
-		  map(NULL)
+		  map_(NULL),
+		  draw_mode_(DM_POINTS),
+		  primitive_mode_(PM_POINTS)
   {
   }
 
@@ -76,14 +78,16 @@ namespace OpenMS
 		  modifiable(layer.modifiable),
 		  modified(layer.modified),
 		  label(layer.label),
-		  map(NULL)
+		  map_(NULL),
+		  draw_mode_(layer.draw_mode_),
+		  primitive_mode_(layer.primitive_mode_)
   {
   }  
 		  
   LayerData::~LayerData()
 	{
-	  if(NULL != map)
-	    delete map;
+	  if(NULL != map_)
+	    delete map_;
 	}
 	
 	LayerData& LayerData::operator= (const LayerData& layer)
@@ -109,18 +113,43 @@ namespace OpenMS
 	  modifiable = layer.modifiable;
 	  modified = layer.modified;
 	  label = layer.label;
-	  map = NULL;
+	  map_ = NULL;
+	  draw_mode_ = layer.draw_mode_;
+	  primitive_mode_ = layer.primitive_mode_;
 	  
 	  return *this;	
 	}
 	
 	MapData* LayerData::getMapData()
 	{
-	  if(NULL == map)
-	    map = new MapData();
-	  return map;
+	  if(NULL == map_)
+	    map_ = new MapData();
+	  map_->setDrawMode(draw_mode_);
+	  return map_;
 	}
-		
+
+  void LayerData::setDrawMode(const LayerData::DrawModes mode)
+  {
+    draw_mode_ = mode;
+    if(NULL != map_)
+      map_->setDrawMode(draw_mode_);
+  }
+  
+  void LayerData::setPrimitiveMode(const LayerData::PrimitiveModes mode)
+  {
+    primitive_mode_ = mode;
+  }	
+	
+	LayerData::DrawModes LayerData::getDrawMode() const
+  {
+    return draw_mode_;
+  }
+  
+  LayerData::PrimitiveModes LayerData::getPrimitiveMode() const
+  {
+    return primitive_mode_;
+  }	
+  
 	const std::string LayerData::NamesOfLabelType[] = {"None","Index","Label meta data","Peptide identification"};
 	
 	std::ostream& operator << (std::ostream& os, const LayerData& rhs)

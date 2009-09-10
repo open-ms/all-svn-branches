@@ -80,6 +80,29 @@ namespace OpenMS
 			  L_ID,								///< The best peptide hit of the first identification run is used
 			  SIZE_OF_LABEL_TYPE
 		  };
+
+			///Enumerate all avaiable paint styles
+			enum DrawModes 
+			{
+				DM_POINTS,	//< draw data as points
+				DM_PEAKS,   //< draw data as peaks
+				DM_LINES,   //< draw as lines
+				DM_MAP      //< draw data as map
+			};	    
+
+			///Enumerate all avaiable paint styles
+			enum PrimitiveModes 
+			{
+				PM_POINTS,
+				PM_LINES,
+				PM_LINESTRIP,
+				PM_TRIANGLES,
+				PM_TRIANGLESTRIP,
+				PM_QUADS,
+				PM_QUADSTRIP,
+				PM_POLYGON
+			};
+				  
 		  //Label names
 		  static const std::string NamesOfLabelType[SIZE_OF_LABEL_TYPE];
 		
@@ -124,8 +147,21 @@ namespace OpenMS
 			  return annotations_1d[current_spectrum];
 		  }
 		  
+		  /// Returns reference to calcul thread
 		  MapData* getMapData();
-		
+		  
+		  /// Set draw mode
+		  void setDrawMode(const DrawModes mode);
+		  
+		  /// Set primitive mode
+		  void setPrimitiveMode(const PrimitiveModes mode);
+		  
+		  /// Get draw mode
+		  DrawModes getDrawMode() const;
+		  
+		  /// Set primitive mode
+		  PrimitiveModes getPrimitiveMode() const;
+		  		  
 		  /// if this layer is visible
 		  bool visible;
 		  /// if this layer is flipped (1d mirror view)
@@ -174,7 +210,13 @@ namespace OpenMS
 		
 		private:
 		  // data mapping
-		  MapData* map;
+		  MapData* map_;
+		  
+		  // draw mode
+		  DrawModes draw_mode_;
+		  
+		  // primitive mode
+		  PrimitiveModes primitive_mode_;
 	};
 
 	///Print the contents to a stream.

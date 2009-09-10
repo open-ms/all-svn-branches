@@ -27,7 +27,6 @@
 
 #include <OpenMS/VISUAL/GridData.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
-#include <OpenMS/VISUAL/Arrow3d.h>
 
 namespace OpenMS
 {
@@ -37,11 +36,11 @@ namespace OpenMS
     : QThread(),
       valideData_(false), valideVertex_(false), valideNormals_(false), valideColors_(false),
       needVertex_(false), needNormals_(false), needColors_(false),
-      mode_(MAP),       
+      mode_(LayerData::DM_POINTS),       
       cols_(0), rows_(0), 
       mz_min_(0.0), mz_max_(0.0), mz_width_(0.0),
       rt_min_(0.0), rt_max_(0.0), rt_width_(0.0),
-      begin_(), end_(), experiment_(NULL), gradient_(NULL)
+      experiment_(NULL), gradient_(NULL)
   { 
   }
   
@@ -51,8 +50,7 @@ namespace OpenMS
   }
 
   void MapData::run()
-  {
-cout << "start..." << endl;  
+  { 
     // update data
     if(!valideData_)
       updateData_();
@@ -71,7 +69,7 @@ cout << "start..." << endl;
   
   // get and set membres
     
-  void MapData::setInterpolationMode(const MapData::interpolationMode mode)
+  void MapData::setDrawMode(const LayerData::DrawModes mode)
   {
     mode_ = mode;
     valideVertex_ = false;
@@ -99,13 +97,6 @@ cout << "start..." << endl;
   {    
     gradient_ = gradient;
   }
-  
-  void MapData::setData(const AreaIt begin, const AreaIt end)
-  {
-    begin_ = begin;
-    end_ = end;
-    invalidate();
-  }
 
   void MapData::setData(const ExperimentType* experiment)
   {
@@ -119,14 +110,13 @@ cout << "start..." << endl;
     {
       switch(mode_)
       {
-	      case LINE :
-	      case BARPLOT :	    
+	      case LayerData::DM_POINTS :
+	      case LayerData::DM_PEAKS :	    
 	        return rows_;
-	      case MAP :
+	      case LayerData::DM_LINES :
 	        return rows_ - 1;
-	      case PSEUDOGEL :
+	      case LayerData::DM_MAP :
           return (rows_ * 2) - 1;
-	      case NONE :
 	      default : 
 	        return 0;	        
       }
@@ -141,13 +131,12 @@ cout << "start..." << endl;
     {  
       switch(mode_)
       {
-	      case LINE :
+	      case LayerData::DM_POINTS :
 	        return rows_;
-	      case BARPLOT :
-	      case MAP :
-	      case PSEUDOGEL :
+	      case LayerData::DM_PEAKS :
+	      case LayerData::DM_LINES :
+	      case LayerData::DM_MAP :
 	        return rows_ * 2;
-	      case NONE :
 	      default : 
 	        return 0;		      
       }
@@ -239,21 +228,10 @@ cout << "start..." << endl;
     rt_width_ = (rt_max_ - rt_min_) / (rows_ - 1);
 
     data_.resize(cols_*rows_, 0.0);
-          
-    AreaIt begin;
-    AreaIt end;    
-    if(NULL == experiment_)
-    {
-      begin = begin_;
-      end_ = end;
-    }
-    else
-    {
-      begin = experiment_->areaBeginConst(rt_min_, rt_max_, mz_min_, mz_max_);
-      end = experiment_->areaEndConst();
-    }
-              
-    for(AreaIt it=begin; it!=end; ++it)
+
+    for(AreaIt it=experiment_->areaBeginConst(rt_min_, rt_max_, mz_min_, mz_max_);
+        it!=experiment_->areaEndConst();
+        ++it)
     {
       if(it->getMZ()>=mz_min_ && it->getMZ()<=mz_max_ && it.getRT()>=rt_min_ && it.getRT()<=rt_max_)
       {		      
@@ -273,7 +251,7 @@ cout << "start..." << endl;
       // update vertex
 	    switch(mode_)
 	    {
-		    case LINE :    
+		    case LayerData::DM_POINTS :    
 		    {
 		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
@@ -288,7 +266,7 @@ cout << "start..." << endl;
 		      break;
 		    }
 		    
-		    case BARPLOT :
+		    case LayerData::DM_PEAKS :
 		    {
 		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
@@ -304,7 +282,7 @@ cout << "start..." << endl;
 		      break;
 		    }
 		    
-		    case MAP :
+		    case LayerData::DM_LINES :
 		    {
 		      for(Size iRow=0; iRow<(rows_-1); ++iRow)
 		      {
@@ -322,7 +300,7 @@ cout << "start..." << endl;
 		      break;
 		    }
 		    
-		    case PSEUDOGEL :
+		    case LayerData::DM_MAP :
 		    {
 		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
@@ -351,8 +329,6 @@ cout << "start..." << endl;
 		      break;
 		    }
 		    
-		    case NONE :
-		      break;
 		    default : 
 		      break;
 		  }
@@ -367,11 +343,11 @@ cout << "start..." << endl;
       // update vertex
 	    switch(mode_)
 	    {
-		    case LINE :    
-		    case BARPLOT :
+		    case LayerData::DM_POINTS :    
+		    case LayerData::DM_PEAKS :
 		      break;
 
-		    case MAP :
+		    case LayerData::DM_LINES :
 		    {
 		      for(Size iRow=0; iRow<(rows_-1); ++iRow)
 		      {
@@ -384,7 +360,7 @@ cout << "start..." << endl;
 		      break;
 		    }
 		    
-		    case PSEUDOGEL :
+		    case LayerData::DM_MAP :
 		    {
 		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
@@ -406,8 +382,6 @@ cout << "start..." << endl;
 		      break;
 		    }
 
-		    case NONE :
-		      break;
 		    default : 
 		      break;		    
 		  }

@@ -182,6 +182,11 @@ namespace OpenMS
 		return static_cast<Spectrum3DOpenGLCanvas*>(openglcanvas_);
 	}
 	
+  Spectrum3DOpenGLCanvas* Spectrum3DCanvas::openglwidget() const
+	{
+		return static_cast<Spectrum3DOpenGLCanvas*>(openglcanvas_);
+	}
+	
 	void Spectrum3DCanvas::update_(const char*
 #ifdef DEBUG_UPDATE_
 			caller_name)
@@ -388,15 +393,39 @@ namespace OpenMS
 		update_(__PRETTY_FUNCTION__);		
 	}
 	
-  void Spectrum3DCanvas::setDrawMode(Spectrum3DCanvas::DrawModes mode)
+  void Spectrum3DCanvas::setViewMode(const Spectrum3DCanvas::ViewModes mode)
+  { 
+    openglwidget()->setViewMode(mode); 
+  }	
+  
+  void Spectrum3DCanvas::setDrawMode(const LayerData::DrawModes mode)
   { 
     openglwidget()->setDrawMode(mode); 
   }	
   
-  Spectrum3DCanvas::DrawModes Spectrum3DCanvas::getDrawMode()
+  void Spectrum3DCanvas::setPrimitiveMode(const LayerData::PrimitiveModes mode)
+  { 
+    openglwidget()->setPrimitiveMode(mode); 
+  }	
+
+  void Spectrum3DCanvas::setAction(const Spectrum3DCanvas::Actions action)
+  { 
+    openglwidget()->setAction(action); 
+  }	
+    
+  Spectrum3DCanvas::ViewModes Spectrum3DCanvas::getViewMode() const
+  { 
+    return openglwidget()->getViewMode();
+  }	  
+
+  LayerData::DrawModes Spectrum3DCanvas::getDrawMode() const
   { 
     return openglwidget()->getDrawMode();
   }	  
 
+  LayerData::PrimitiveModes Spectrum3DCanvas::getPrimitiveMode() const
+  { 
+    return openglwidget()->getPrimitiveMode();
+  }	    
 }//namspace
 

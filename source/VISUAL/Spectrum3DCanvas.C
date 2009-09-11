@@ -398,9 +398,9 @@ namespace OpenMS
     openglwidget()->setViewMode(mode); 
   }	
   
-  void Spectrum3DCanvas::setDrawMode(const LayerData::DrawModes mode)
+  void Spectrum3DCanvas::setMappingMode(const MappingThread::MappingModes mode)
   { 
-    openglwidget()->setDrawMode(mode); 
+    openglwidget()->setMappingMode(mode); 
   }	
   
   void Spectrum3DCanvas::setPrimitiveMode(const LayerData::PrimitiveModes mode)
@@ -418,9 +418,9 @@ namespace OpenMS
     return openglwidget()->getViewMode();
   }	  
 
-  LayerData::DrawModes Spectrum3DCanvas::getDrawMode() const
+  MappingThread::MappingModes Spectrum3DCanvas::getMappingMode() const
   { 
-    return openglwidget()->getDrawMode();
+    return openglwidget()->getMappingMode();
   }	  
 
   LayerData::PrimitiveModes Spectrum3DCanvas::getPrimitiveMode() const

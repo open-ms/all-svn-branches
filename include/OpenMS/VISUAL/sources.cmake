@@ -6,8 +6,8 @@ set(sources_list
 AxisWidget.h
 ColorSelector.h
 EnhancedTabBar.h
-GridData.h
 HistogramWidget.h
+MappingThread.h
 MetaDataBrowser.h
 MultiGradientSelector.h
 ParamEditor.h
@@ -61,9 +61,9 @@ AxisTickCalculator.h
 AxisWidget.h
 ColorSelector.h
 EnhancedTabBar.h
-GridData.h
 HistogramWidget.h
 LayerData.h
+MappingThread.h
 MetaDataBrowser.h
 MultiGradient.h
 MultiGradientSelector.h

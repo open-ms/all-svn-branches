@@ -33,7 +33,7 @@
 // OpenMS
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <OpenMS/VISUAL/Spectrum3DCanvas.h>
-#include <OpenMS/VISUAL/GridData.h>
+#include <OpenMS/VISUAL/MappingThread.h>
 
 using std::cout;
 using std::endl;
@@ -128,7 +128,7 @@ namespace OpenMS
       /// Set view mode of the current layer
 			void setViewMode(const Spectrum3DCanvas::ViewModes mode);
       /// Set draw mode of the current layer
-			void setDrawMode(const LayerData::DrawModes mode);	
+			void setMappingMode(const MappingThread::MappingModes mode);	
       /// Set primitive mode of the current layer
 			void setPrimitiveMode(const LayerData::PrimitiveModes mode);	
       /// Set action
@@ -137,7 +137,7 @@ namespace OpenMS
       /// Get view mode of the current layer
 			Spectrum3DCanvas::ViewModes getViewMode() const;
       /// Get draw mode of the current layer
-			LayerData::DrawModes getDrawMode() const;
+			MappingThread::MappingModes getMappingMode() const;
       /// Get primitive mode of the current layer
 			LayerData::PrimitiveModes getPrimitiveMode() const;
 										

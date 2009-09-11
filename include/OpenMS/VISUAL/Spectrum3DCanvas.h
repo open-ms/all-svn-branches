@@ -125,7 +125,7 @@ namespace OpenMS
 			void setViewMode(const ViewModes mode);
 
 			/// Set draw mode of the current layer
-			void setDrawMode(const LayerData::DrawModes mode);
+			void setMappingMode(const MappingThread::MappingModes mode);
 
 			/// Set primitive mode of the current layer
 			void setPrimitiveMode(const LayerData::PrimitiveModes mode);
@@ -137,7 +137,7 @@ namespace OpenMS
 			ViewModes getViewMode() const;
 												
 			/// Get draw mode of the current layer
-			LayerData::DrawModes getDrawMode() const;
+			MappingThread::MappingModes getMappingMode() const;
 
 			/// Get draw mode of the current layer
 			LayerData::PrimitiveModes getPrimitiveMode() const;

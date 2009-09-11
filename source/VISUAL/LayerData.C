@@ -26,7 +26,7 @@
 // -------------------------------------------------------------------------- 
 
 #include <OpenMS/VISUAL/LayerData.h>
-#include <OpenMS/VISUAL/GridData.h>
+#include <OpenMS/VISUAL/MappingThread.h>
 
 using namespace std;
 
@@ -52,10 +52,10 @@ namespace OpenMS
 		  modifiable(false),
 		  modified(false),
 		  label(L_NONE),
-		  map_(NULL),
-		  draw_mode_(DM_POINTS),
+		  mapping_thread_(NULL),
 		  primitive_mode_(PM_POINTS)
   {
+    mapping_thread_ = new MappingThread(this);
   }
 
   LayerData::LayerData(const LayerData& layer)
@@ -78,16 +78,15 @@ namespace OpenMS
 		  modifiable(layer.modifiable),
 		  modified(layer.modified),
 		  label(layer.label),
-		  map_(NULL),
-		  draw_mode_(layer.draw_mode_),
+		  mapping_thread_(NULL),
 		  primitive_mode_(layer.primitive_mode_)
   {
+    mapping_thread_ = new MappingThread(this);
   }  
 		  
   LayerData::~LayerData()
 	{
-	  if(NULL != map_)
-	    delete map_;
+	  delete mapping_thread_;
 	}
 	
 	LayerData& LayerData::operator= (const LayerData& layer)
@@ -113,26 +112,25 @@ namespace OpenMS
 	  modifiable = layer.modifiable;
 	  modified = layer.modified;
 	  label = layer.label;
-	  map_ = NULL;
-	  draw_mode_ = layer.draw_mode_;
+	  mapping_thread_ = new MappingThread(this);
 	  primitive_mode_ = layer.primitive_mode_;
 	  
 	  return *this;	
 	}
 	
-	MapData* LayerData::getMapData()
+	MappingThread* LayerData::getMappingThread()
 	{
-	  if(NULL == map_)
-	    map_ = new MapData();
-	  map_->setDrawMode(draw_mode_);
-	  return map_;
+	  return mapping_thread_;
 	}
 
-  void LayerData::setDrawMode(const LayerData::DrawModes mode)
+	const MappingThread* LayerData::getMappingThread() const
+	{
+	  return mapping_thread_;
+	}
+
+  void LayerData::setMappingMode(const MappingThread::MappingModes mode)
   {
-    draw_mode_ = mode;
-    if(NULL != map_)
-      map_->setDrawMode(draw_mode_);
+    mapping_thread_->setMappingMode(mode);
   }
   
   void LayerData::setPrimitiveMode(const LayerData::PrimitiveModes mode)
@@ -140,9 +138,9 @@ namespace OpenMS
     primitive_mode_ = mode;
   }	
 	
-	LayerData::DrawModes LayerData::getDrawMode() const
+	MappingThread::MappingModes LayerData::getMappingMode() const
   {
-    return draw_mode_;
+    return getMappingThread()->getMappingMode();
   }
   
   LayerData::PrimitiveModes LayerData::getPrimitiveMode() const

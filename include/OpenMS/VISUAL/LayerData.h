@@ -34,13 +34,13 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
 #include <OpenMS/VISUAL/Annotations1DContainer.h>
+#include <OpenMS/VISUAL/MappingThread.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/DataFilters.h>
 
 #include <vector>
 
 namespace OpenMS 
 {
-  class MapData;
 	/**
 		@brief Struct that stores the data for one layer
 		
@@ -80,15 +80,6 @@ namespace OpenMS
 			  L_ID,								///< The best peptide hit of the first identification run is used
 			  SIZE_OF_LABEL_TYPE
 		  };
-
-			///Enumerate all avaiable paint styles
-			enum DrawModes 
-			{
-				DM_POINTS,	//< draw data as points
-				DM_PEAKS,   //< draw data as peaks
-				DM_LINES,   //< draw as lines
-				DM_MAP      //< draw data as map
-			};	    
 
 			///Enumerate all avaiable paint styles
 			enum PrimitiveModes 
@@ -148,16 +139,17 @@ namespace OpenMS
 		  }
 		  
 		  /// Returns reference to calcul thread
-		  MapData* getMapData();
+		  MappingThread* getMappingThread();
+		  const MappingThread* getMappingThread() const;
 		  
 		  /// Set draw mode
-		  void setDrawMode(const DrawModes mode);
+		  void setMappingMode(const MappingThread::MappingModes mode);
 		  
 		  /// Set primitive mode
 		  void setPrimitiveMode(const PrimitiveModes mode);
 		  
 		  /// Get draw mode
-		  DrawModes getDrawMode() const;
+		  MappingThread::MappingModes getMappingMode() const;
 		  
 		  /// Set primitive mode
 		  PrimitiveModes getPrimitiveMode() const;
@@ -210,10 +202,7 @@ namespace OpenMS
 		
 		private:
 		  // data mapping
-		  MapData* map_;
-		  
-		  // draw mode
-		  DrawModes draw_mode_;
+		  MappingThread* mapping_thread_;
 		  
 		  // primitive mode
 		  PrimitiveModes primitive_mode_;

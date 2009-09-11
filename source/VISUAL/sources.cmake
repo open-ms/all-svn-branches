@@ -14,9 +14,9 @@ AxisWidget.C
 ColorRGBA.C
 ColorSelector.C
 EnhancedTabBar.C
-GridData.C
 HistogramWidget.C
 LayerData.C
+MappingThread.C
 MetaDataBrowser.C
 MultiGradient.C
 MultiGradientSelector.C

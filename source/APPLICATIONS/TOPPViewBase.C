@@ -399,19 +399,28 @@ namespace OpenMS
 		tool_bar_3d_->addWidget(b);
 		
     connect(view_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setViewMode3D(int)));
-    tool_bar_->addSeparator();
+    tool_bar_3d_->addSeparator();
     
-    //draw modes 3D
-    draw_group_3d_ = new QButtonGroup(tool_bar_3d_);
-    draw_group_3d_->setExclusive(true);
+    //mapping modes 3D
+    mapping_group_3d_ = new QButtonGroup(tool_bar_3d_);
+    mapping_group_3d_->setExclusive(true);
 
+    b = new QToolButton(tool_bar_3d_);
+    b->setIcon(QIcon(":/none.png"));
+    b->setToolTip("No mapping");
+    //b->setShortcut(Qt::Key_I);
+    b->setCheckable(true);
+    b->setWhatsThis("No mapping.");
+    mapping_group_3d_->addButton(b, MappingThread::MM_POINTS);
+		tool_bar_3d_->addWidget(b);
+		
     b = new QToolButton(tool_bar_3d_);
     b->setIcon(QIcon(":/points.png"));
     b->setToolTip("Points mode");
     //b->setShortcut(Qt::Key_I);
     b->setCheckable(true);
-    b->setWhatsThis("3D Draw mode: Points<BR><BR>Peaks are diplayed as points.");
-    draw_group_3d_->addButton(b, LayerData::DM_POINTS);
+    b->setWhatsThis("3D mapping mode: Points<BR><BR>Peaks are diplayed as points.");
+    mapping_group_3d_->addButton(b, MappingThread::MM_POINTS);
 		tool_bar_3d_->addWidget(b);
 
     b = new QToolButton(tool_bar_3d_);
@@ -419,8 +428,8 @@ namespace OpenMS
     b->setToolTip("Peaks mode");
     //b->setShortcut(Qt::Key_I);
     b->setCheckable(true);
-    b->setWhatsThis("3D Draw mode: Peaks<BR><BR>Peaks are diplayed as sticks.");
-    draw_group_3d_->addButton(b, LayerData::DM_PEAKS);
+    b->setWhatsThis("3D mapping mode: Peaks<BR><BR>Peaks are diplayed as sticks.");
+    mapping_group_3d_->addButton(b, MappingThread::MM_PEAKS);
 		tool_bar_3d_->addWidget(b);
 		
     b = new QToolButton(tool_bar_3d_);
@@ -428,8 +437,8 @@ namespace OpenMS
     b->setToolTip("Lines mode");
     //b->setShortcut(Qt::Key_R);
     b->setCheckable(true);
-    b->setWhatsThis("3D Draw mode: Lines<BR><BR>Peaks are diplayed as a continous line.");
-    draw_group_3d_->addButton(b, LayerData::DM_LINES);
+    b->setWhatsThis("3D mapping mode: Lines<BR><BR>Peaks are diplayed as a continous line.");
+    mapping_group_3d_->addButton(b, MappingThread::MM_MAP);
 		tool_bar_3d_->addWidget(b);
 
     b = new QToolButton(tool_bar_3d_);
@@ -437,12 +446,12 @@ namespace OpenMS
     b->setToolTip("Map mode");
     //b->setShortcut(Qt::Key_R);
     b->setCheckable(true);
-    b->setWhatsThis("3D Draw mode: Map<BR><BR>Peaks are diplayed as a map.");
-    draw_group_3d_->addButton(b, LayerData::DM_MAP);
+    b->setWhatsThis("3D mapping mode: Map<BR><BR>Peaks are diplayed as a map.");
+    mapping_group_3d_->addButton(b, MappingThread::MM_PSEUDOGEL);
 		tool_bar_3d_->addWidget(b);
 		
-    connect(draw_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setDrawMode3D(int)));
-    tool_bar_->addSeparator();
+    connect(mapping_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setMappingMode3D(int)));
+    tool_bar_3d_->addSeparator();
     
     // Primitive mode
     primitive_group_3d_ = new QButtonGroup(tool_bar_3d_);
@@ -521,7 +530,7 @@ namespace OpenMS
 		tool_bar_3d_->addWidget(b);
 		
     connect(primitive_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setPrimitiveMode3D(int)));
-    tool_bar_->addSeparator();
+    tool_bar_3d_->addSeparator();
     
     // Move actions
     action_group_3d_ = new QButtonGroup(tool_bar_3d_);
@@ -590,7 +599,7 @@ namespace OpenMS
     action_group_3d_->addButton(b, Spectrum3DCanvas::A_CAMERA_ZOOMOUT);
 		tool_bar_3d_->addWidget(b);
 
-    tool_bar_->addSeparator();
+    tool_bar_3d_->addSeparator();
     
     b = new QToolButton(tool_bar_3d_);
     b->setIcon(QIcon(":/dataReset.png"));
@@ -1456,12 +1465,12 @@ namespace OpenMS
   	}
   }
   
-  void TOPPViewBase::setDrawMode3D(int index)
+  void TOPPViewBase::setMappingMode3D(int index)
   {
     Spectrum3DWidget* w = active3DWindow_();
     if (w)
     {
-    	w->canvas()->setDrawMode((LayerData::DrawModes) index);
+    	w->canvas()->setMappingMode((MappingThread::MappingModes) index);
   	}
   }
 
@@ -1604,7 +1613,7 @@ namespace OpenMS
     if (w3)
     {
       view_group_3d_->button(w3->canvas()->getViewMode())->setChecked(true);
-      draw_group_3d_->button(w3->canvas()->getDrawMode())->setChecked(true);
+      mapping_group_3d_->button(w3->canvas()->getMappingMode())->setChecked(true);
       primitive_group_3d_->button(w3->canvas()->getPrimitiveMode())->setChecked(true);
       
       //show/hide toolbars and buttons

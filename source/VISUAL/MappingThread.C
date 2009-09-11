@@ -25,66 +25,66 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/VISUAL/GridData.h>
-#include <OpenMS/VISUAL/MultiGradient.h>
+#include <OpenMS/VISUAL/Spectrum3DCanvas.h>
+#include <OpenMS/VISUAL/MappingThread.h>
 
 namespace OpenMS
 {
   // publics membres
   
-  MapData::MapData()
+  MappingThread::MappingThread(LayerData* parent)
     : QThread(),
-      valideData_(false), valideVertex_(false), valideNormals_(false), valideColors_(false),
-      needVertex_(false), needNormals_(false), needColors_(false),
-      mode_(LayerData::DM_POINTS),       
+      valideData_(false), valideVertex_(false), valideNormals_(false),
+      mapping_mode_(MM_POINTS),       
       cols_(0), rows_(0), 
       mz_min_(0.0), mz_max_(0.0), mz_width_(0.0),
       rt_min_(0.0), rt_max_(0.0), rt_width_(0.0),
-      experiment_(NULL), gradient_(NULL)
+      parent_(parent)
   { 
   }
   
-  MapData::~MapData()
+  MappingThread::~MappingThread()
   {
     clearAll_();
   }
 
-  void MapData::run()
+  void MappingThread::run()
   { 
     // update data
     if(!valideData_)
       updateData_();
       
-    if(!valideVertex_ && needVertex_)
+    if(!valideVertex_)
       updateVertex_();
     
-    if(!valideNormals_ && needNormals_)
+    if(!valideNormals_)
       updateNormals_();
-      
-    if(!valideColors_ && needColors_)
-      updateColors_();
       
     emit(finish());
   }
   
   // get and set membres
     
-  void MapData::setDrawMode(const LayerData::DrawModes mode)
+  void MappingThread::setMappingMode(const MappingModes mode)
   {
-    mode_ = mode;
+    mapping_mode_ = mode;
     valideVertex_ = false;
     valideNormals_ = false;
-    valideColors_ = false;
+  }
+  
+  MappingThread::MappingModes MappingThread::getMappingMode() const
+  {
+    return mapping_mode_;
   }
 
-  void MapData::setDataSize(const Size cols,const Size rows)
+  void MappingThread::setDataSize(const Size cols,const Size rows)
   {  
     cols_ = cols;
     rows_ = rows;
     invalidate();
   }
   
-  void MapData::setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max)
+  void MappingThread::setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max)
   { 
     mz_min_ = mz_min;
     mz_max_ = mz_max;
@@ -92,30 +92,21 @@ namespace OpenMS
     rt_max_ = rt_max;
     invalidate();
   }
-  
-  void MapData::setGradient(const MultiGradient* gradient)
-  {    
-    gradient_ = gradient;
-  }
-
-  void MapData::setData(const ExperimentType* experiment)
-  {
-    experiment_ = experiment;
-    invalidate();
-  }
       
-  Size MapData::getRowSize()
+  Size MappingThread::getRowSize()
   {
-    if(valideVertex_ || valideNormals_ || valideColors_)
+    if(valideVertex_ || valideNormals_)
     {
-      switch(mode_)
+      switch(mapping_mode_)
       {
-	      case LayerData::DM_POINTS :
-	      case LayerData::DM_PEAKS :	    
+        case MM_NONE :
+          return 0;
+	      case MM_POINTS :
+	      case MM_PEAKS :	    
 	        return rows_;
-	      case LayerData::DM_LINES :
+	      case MM_MAP :
 	        return rows_ - 1;
-	      case LayerData::DM_MAP :
+	      case MM_PSEUDOGEL :
           return (rows_ * 2) - 1;
 	      default : 
 	        return 0;	        
@@ -125,17 +116,19 @@ namespace OpenMS
       return 0;
   }
   
-  Size MapData::getColSize()
+  Size MappingThread::getColSize()
   {
-    if(valideVertex_ || valideNormals_ || valideColors_)
+    if(valideVertex_ || valideNormals_)
     {  
-      switch(mode_)
+      switch(mapping_mode_)
       {
-	      case LayerData::DM_POINTS :
+        case MM_NONE :
+          return 0;
+	      case MM_POINTS :
 	        return rows_;
-	      case LayerData::DM_PEAKS :
-	      case LayerData::DM_LINES :
-	      case LayerData::DM_MAP :
+	      case MM_PEAKS :
+	      case MM_MAP :
+	      case MM_PSEUDOGEL :
 	        return rows_ * 2;
 	      default : 
 	        return 0;		      
@@ -145,62 +138,31 @@ namespace OpenMS
       return 0;
   }
       
-  const Vector3d& MapData::getVertex()
+  const Vector3d& MappingThread::getVertex()
   {
     return vertex_;
   }
   
-  const Vector3d& MapData::getNormals()
+  const Vector3d& MappingThread::getNormals()
   {
     return normals_; 
   }
   
-  const VectorRGBA& MapData::getColors()
-  {
-    return colors_;
-  }
-  
-  void MapData::invalidate(const bool data, const bool vertex, const bool normals, const bool colors)
+  void MappingThread::invalidate(const bool data, const bool vertex, const bool normals)
   {
     valideData_ = !data;
     valideVertex_ = !vertex;
     valideNormals_ = !normals;
-    valideColors_ = !colors;
   }
   
-  bool MapData::isValideVertex()
+  bool MappingThread::isValide()
   {
-    return valideVertex_;
-  }
-  
-  bool MapData::isValideNormals()
-  {
-    return valideNormals_;
-  }
-  
-  bool MapData::isValideColors()
-  {
-    return valideColors_;
-  }  
-
-  void MapData::needVertex()
-  { 
-    needVertex_ = true;
-  }
-  
-  void MapData::needNormals()
-  {   
-    needNormals_ = true;
-  }
-  
-  void MapData::needColors()
-  {  
-    needColors_ = true;
+    return (valideData_ && valideVertex_ && valideNormals_);
   }
   
   // privates members
 
-  void MapData::clearAll_()
+  void MappingThread::clearAll_()
   {
     if(!data_.empty())
       data_.clear();
@@ -211,26 +173,25 @@ namespace OpenMS
     if(!normals_.empty())
       normals_.clear();
       
-    if(!colors_.empty())
-      colors_.clear();    
-      
     valideData_ = false;   
     valideVertex_ = false;
-    valideNormals_ = false;
-    valideColors_ = false;                   
+    valideNormals_ = false;          
   }
 
-  void MapData::updateData_()
+  void MappingThread::updateData_()
   {
     clearAll_();
+      
+    if(MM_NONE == mapping_mode_)
+      return;
        
     mz_width_ = (mz_max_ - mz_min_) / (cols_ - 1);
     rt_width_ = (rt_max_ - rt_min_) / (rows_ - 1);
 
     data_.resize(cols_*rows_, 0.0);
 
-    for(AreaIt it=experiment_->areaBeginConst(rt_min_, rt_max_, mz_min_, mz_max_);
-        it!=experiment_->areaEndConst();
+    for(Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = parent_->peaks.areaBeginConst(rt_min_, rt_max_, mz_min_, mz_max_);
+        it != parent_->peaks.areaEndConst();
         ++it)
     {
       if(it->getMZ()>=mz_min_ && it->getMZ()<=mz_max_ && it.getRT()>=rt_min_ && it.getRT()<=rt_max_)
@@ -244,14 +205,17 @@ namespace OpenMS
     valideData_ = true;
   }
   
-  void MapData::updateVertex_()
+  void MappingThread::updateVertex_()
   {
     if(!data_.empty() && vertex_.empty())
     {
       // update vertex
-	    switch(mode_)
+	    switch(mapping_mode_)
 	    {
-		    case LayerData::DM_POINTS :    
+	      case MM_NONE :
+	        return;
+	        
+		    case MM_POINTS :    
 		    {
 		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
@@ -266,7 +230,7 @@ namespace OpenMS
 		      break;
 		    }
 		    
-		    case LayerData::DM_PEAKS :
+		    case MM_PEAKS :
 		    {
 		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
@@ -282,7 +246,7 @@ namespace OpenMS
 		      break;
 		    }
 		    
-		    case LayerData::DM_LINES :
+		    case MM_MAP :
 		    {
 		      for(Size iRow=0; iRow<(rows_-1); ++iRow)
 		      {
@@ -300,7 +264,7 @@ namespace OpenMS
 		      break;
 		    }
 		    
-		    case LayerData::DM_MAP :
+		    case MM_PSEUDOGEL :
 		    {
 		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
@@ -336,18 +300,21 @@ namespace OpenMS
     valideVertex_ = true; 
   }
   
-  void MapData::updateNormals_()
+  void MappingThread::updateNormals_()
   {
     if(!data_.empty() && normals_.empty())
     {
       // update vertex
-	    switch(mode_)
+	    switch(mapping_mode_)
 	    {
-		    case LayerData::DM_POINTS :    
-		    case LayerData::DM_PEAKS :
+	      case MM_NONE :
+	        return;
+	        	    
+		    case MM_POINTS :    
+		    case MM_PEAKS :
 		      break;
 
-		    case LayerData::DM_LINES :
+		    case MM_MAP :
 		    {
 		      for(Size iRow=0; iRow<(rows_-1); ++iRow)
 		      {
@@ -360,7 +327,7 @@ namespace OpenMS
 		      break;
 		    }
 		    
-		    case LayerData::DM_MAP :
+		    case MM_PSEUDOGEL :
 		    {
 		      for(Size iRow=0; iRow<rows_; ++iRow)
 		      {
@@ -388,23 +355,8 @@ namespace OpenMS
     }
     valideNormals_ = true; 
   }
-    
-  void MapData::updateColors_()
-  { 
-    if(!data_.empty() && colors_.empty())
-    {
-      if(!valideVertex_)
-        updateVertex_();
-        
-      for(Iterator3d it=vertex_.begin(); it!=vertex_.end(); ++it)
-      {
-        colors_.push_back(ColorRGBA(gradient_->interpolatedColorAt(it->intensity)));
-      }
-    }
-    valideColors_ = true;   
-  }  
-                    
-  Size MapData::getPosition_(const int col, const int row) const
+                
+  Size MappingThread::getPosition_(const int col, const int row) const
   {
     int col_ = col < 0 ? 0 : col;
     col_ = col < (int) cols_ ? col : (int) cols_-1;
@@ -415,27 +367,27 @@ namespace OpenMS
     return (Size) (col_ + cols_ * row_); 
   }
 
-  Size MapData::getPosition_(const double mz, const double rt) const
+  Size MappingThread::getPosition_(const double mz, const double rt) const
   {
     return getPosition_(mzToIndex_(mz), rtToIndex_(rt));
   }
 
-  Size MapData::getPosition_(const Size col, const Size row) const
+  Size MappingThread::getPosition_(const Size col, const Size row) const
   {
     return getPosition_((int) col, (int) row);
   }
 
-  double MapData::indexToMz_(const Size col) const
+  double MappingThread::indexToMz_(const Size col) const
   { 
     return (mz_min_ + (col<cols_ ? col : cols_-1) * mz_width_);
   }
   
-  double MapData::indexToRt_(const Size row) const
+  double MappingThread::indexToRt_(const Size row) const
   {
     return (rt_min_ + (row<rows_ ? row : rows_-1) * rt_width_);
   }
   
-  Size MapData::mzToIndex_(const double mz) const
+  Size MappingThread::mzToIndex_(const double mz) const
   {
     if(mz < mz_min_) return 0;
     if(mz > mz_max_) return (cols_-1);
@@ -443,7 +395,7 @@ namespace OpenMS
     return (Size) floor(0.5 + (mz-mz_min_) / mz_width_);
   }
   
-  Size MapData::rtToIndex_(const double rt) const
+  Size MappingThread::rtToIndex_(const double rt) const
   {
     if(rt < rt_min_) return 0;
     if(rt > rt_max_) return (rows_-1);
@@ -451,7 +403,7 @@ namespace OpenMS
     return (Size) floor(0.5 + (rt-rt_min_) / rt_width_);
   }
 
-  void MapData::setData_(const Size col, const Size row, const double intensity)
+  void MappingThread::setData_(const Size col, const Size row, const double intensity)
   {   
     if(col<cols_ && row<rows_)
     {
@@ -459,12 +411,12 @@ namespace OpenMS
     }
   }
   
-  double MapData::getData_(const Size col, const Size row) const
+  double MappingThread::getData_(const Size col, const Size row) const
   { 
     return data_[getPosition_(col, row)];
   }
 
-  void MapData::setData_(const double mz, const double rt, const double intensity)
+  void MappingThread::setData_(const double mz, const double rt, const double intensity)
   { 
     if(mz>=mz_min_ && mz<=mz_max_ && rt>=rt_min_ && rt<=rt_max_)
     {
@@ -472,7 +424,7 @@ namespace OpenMS
     }
   }
   
-  double MapData::getData_(const double mz, const double rt) const
+  double MappingThread::getData_(const double mz, const double rt) const
   { 
     return data_[getPosition_(mz, rt)];
   }

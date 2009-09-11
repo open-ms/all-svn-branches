@@ -871,13 +871,16 @@ namespace OpenMS
 	{
 		switch(action_mode_)
 		{
-			case AM_TRANSLATE:
+			case AM_ROTATE :
+				setCursor(QCursor(QPixmap(":/cursor_rotate.png"),0,0));			
+			  break;
+			case AM_TRANSLATE :
 				setCursor(QCursor(QPixmap(":/cursor_move.png"),0,0));
 				break;
-			case AM_ZOOM:
+			case AM_ZOOM :
 				setCursor(QCursor(QPixmap(":/cursor_zoom.png"),0,0));
 				break;
-			case AM_MEASURE:
+			case AM_MEASURE :
 				setCursor(QCursor(QPixmap(":/cursor_measure.png"),0,0));
 				break;
 		}

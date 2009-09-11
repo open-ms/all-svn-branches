@@ -28,58 +28,52 @@
 #ifndef OPENMS_VISUAL_GRIDDATA_H
 #define OPENMS_VISUAL_GRIDDATA_H
 
-#include <OpenMS/VISUAL/Spectrum3DCanvas.h>
 #include <OpenMS/MATH/MISC/Struct3d.h>
-#include <OpenMS/VISUAL/ColorRGBA.h>
 #include <QThread>
-
-using namespace std;
 
 namespace OpenMS
 {
-  class MultiGradient;
+  class LayerData;
   
-  class MapData
+  class MappingThread
     : public QThread  
   {
     Q_OBJECT
       
     public:
-      typedef SpectrumCanvas::ExperimentType ExperimentType;
-      typedef ExperimentType::ConstAreaIterator AreaIt;
+			///Enumerate all avaiable mapping modes
+			enum MappingModes 
+			{
+			  MM_NONE,
+				MM_POINTS,
+				MM_PEAKS,
+				MM_MAP,
+				MM_PSEUDOGEL
+			};
         
     public:
-      MapData();
-      ~MapData();
+      MappingThread(LayerData* parent);
+      ~MappingThread();
       void run();
         
-      void setDrawMode(const LayerData::DrawModes mode);
+      void setMappingMode(const MappingModes mode);
+      MappingModes getMappingMode() const;
+      
       void setDataSize(const Size cols, const Size rows);
       void setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max);
-      void setData(const ExperimentType* experiment);
-      void setGradient(const MultiGradient* gradient);
 
-      void needVertex();
-      void needNormals();
-      void needColors();
-                 
       Size getRowSize();
       Size getColSize();
             
       const Vector3d& getVertex();
       const Vector3d& getNormals();
-      const vector<ColorRGBA>& getColors();
       
       void invalidate(
         const bool data = true, 
         const bool vertex = true, 
-        const bool normals = true,
-        const bool colors = true);
-
-      bool isValideVertex();
-      bool isValideNormals();
-      bool isValideColors();        
-
+        const bool normals = true);
+      bool isValide();
+        
     signals:
       void finish();
               
@@ -89,7 +83,6 @@ namespace OpenMS
       void updateData_();      
       void updateVertex_();
       void updateNormals_();
-      void updateColors_();
       
       Size getPosition_(const int col, const int row) const;
       Size getPosition_(const Size col, const Size row) const;      
@@ -106,21 +99,15 @@ namespace OpenMS
       double getData_(const double mz, const double rt) const;
       
     private:                    
-      vector<double> data_; // set with AreaIT ; no get
-      Vector3d vertex_; // no set ; get
-      Vector3d normals_; // no set ; get
-      vector<ColorRGBA> colors_; // no set ; get
+      vector<double> data_;
+      Vector3d vertex_;
+      Vector3d normals_;
       
       bool valideData_;
-      bool valideVertex_; // no set ; get
-      bool valideNormals_; // no set ; get
-      bool valideColors_; // no set ; get
+      bool valideVertex_;
+      bool valideNormals_;
 
-      bool needVertex_; // no set ; get
-      bool needNormals_; // no set ; get
-      bool needColors_; // no set ; get
-
-      LayerData::DrawModes mode_; // set and get            
+      MappingModes mapping_mode_; // set and get            
       Size cols_;
       Size rows_;
       double mz_min_;
@@ -129,8 +116,7 @@ namespace OpenMS
       double rt_min_;
       double rt_max_;
       double rt_width_;
-      const ExperimentType* experiment_;
-      const MultiGradient* gradient_;
+      LayerData* parent_;
   };
 
 } // namespace OpenMS

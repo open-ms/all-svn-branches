@@ -32,15 +32,16 @@
 #include <QThread>
 
 namespace OpenMS
-{
-  class LayerData;
-  
+{ 
+	class LayerData;
+
   class MappingThread
     : public QThread  
   {
     Q_OBJECT
       
     public:
+
 			///Enumerate all avaiable mapping modes
 			enum MappingModes 
 			{
@@ -50,14 +51,10 @@ namespace OpenMS
 				MM_MAP,
 				MM_PSEUDOGEL
 			};
-        
-    public:
+
       MappingThread(LayerData* parent);
       ~MappingThread();
       void run();
-        
-      void setMappingMode(const MappingModes mode);
-      MappingModes getMappingMode() const;
       
       void setDataSize(const Size cols, const Size rows);
       void setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max);
@@ -67,19 +64,13 @@ namespace OpenMS
             
       const Vector3d& getVertex();
       const Vector3d& getNormals();
-      
-      void invalidate(
-        const bool data = true, 
-        const bool vertex = true, 
-        const bool normals = true);
+
       bool isValide();
         
     signals:
       void finish();
               
     private:              
-      void clearAll_();
-
       void updateData_();      
       void updateVertex_();
       void updateNormals_();
@@ -102,12 +93,7 @@ namespace OpenMS
       vector<double> data_;
       Vector3d vertex_;
       Vector3d normals_;
-      
-      bool valideData_;
-      bool valideVertex_;
-      bool valideNormals_;
-
-      MappingModes mapping_mode_; // set and get            
+   
       Size cols_;
       Size rows_;
       double mz_min_;
@@ -117,6 +103,7 @@ namespace OpenMS
       double rt_max_;
       double rt_width_;
       LayerData* parent_;
+int iRef_;
   };
 
 } // namespace OpenMS

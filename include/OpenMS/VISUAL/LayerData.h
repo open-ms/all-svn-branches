@@ -107,53 +107,44 @@ namespace OpenMS
 		
 		  /// Default constructor.
 		  LayerData();
-		  
+
 		  /// Copy constructor.
 		  LayerData(const LayerData& layer);
 		  
 		  /// Destructor.
 		  ~LayerData();
-			
+
 			/// Assignment operator. 
 			LayerData& operator= (const LayerData& layer);
-			
+
+		public:			
 		  /// Returns a const reference to the current spectrum (1d view)
-		  inline const ExperimentType::SpectrumType& getCurrentSpectrum() const
-		  {
-			  return peaks[current_spectrum];
-		  }
+		  const ExperimentType::SpectrumType& getCurrentSpectrum() const;
+
 		  /// Returns a const reference to the annotations of the current spectrum (1d view)
-		  inline const Annotations1DContainer& getCurrentAnnotations() const
-		  {
-			  return annotations_1d[current_spectrum];
-		  }
+		  const Annotations1DContainer& getCurrentAnnotations() const;
+
 		  /// Returns a mutable reference to the current spectrum (1d view)
-		  inline ExperimentType::SpectrumType& getCurrentSpectrum()
-		  {
-			  return peaks[current_spectrum];
-		  }
+		  ExperimentType::SpectrumType& getCurrentSpectrum();
+
 		  /// Returns a mutable reference to the annotations of the current spectrum (1d view)
-		  inline Annotations1DContainer& getCurrentAnnotations()
-		  {
-			  return annotations_1d[current_spectrum];
-		  }
+		  Annotations1DContainer& getCurrentAnnotations();
 		  
-		  /// Returns reference to calcul thread
+		  /// Returns mutable reference to calcul thread
 		  MappingThread* getMappingThread();
-		  const MappingThread* getMappingThread() const;
 		  
-		  /// Set draw mode
+		  /// Set mapping mode
 		  void setMappingMode(const MappingThread::MappingModes mode);
 		  
 		  /// Set primitive mode
 		  void setPrimitiveMode(const PrimitiveModes mode);
 		  
-		  /// Get draw mode
+		  /// Get mapping mode
 		  MappingThread::MappingModes getMappingMode() const;
 		  
 		  /// Set primitive mode
 		  PrimitiveModes getPrimitiveMode() const;
-		  		  
+		  
 		  /// if this layer is visible
 		  bool visible;
 		  /// if this layer is flipped (1d mirror view)
@@ -182,7 +173,7 @@ namespace OpenMS
 		
 		  ///Layer parameters
 		  Param param;
-		
+
 		  ///Gradient for 2D and 3D views
 		  MultiGradient gradient;
 		
@@ -201,9 +192,12 @@ namespace OpenMS
 		  LabelType label;
 		
 		private:
-		  // data mapping
+		  // mapping thread
 		  MappingThread* mapping_thread_;
 		  
+			// mapping mode
+			MappingThread::MappingModes mapping_mode_;
+
 		  // primitive mode
 		  PrimitiveModes primitive_mode_;
 	};

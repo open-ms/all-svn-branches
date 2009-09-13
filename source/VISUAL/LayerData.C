@@ -53,10 +53,16 @@ namespace OpenMS
 		  modified(false),
 		  label(L_NONE),
 		  mapping_thread_(NULL),
+			mapping_mode_(MappingThread::MM_NONE),
 		  primitive_mode_(PM_POINTS)
   {
-    mapping_thread_ = new MappingThread(this);
   }
+
+  LayerData::~LayerData()
+	{
+		if(NULL != mapping_thread_)	  
+			delete mapping_thread_;
+	}
 
   LayerData::LayerData(const LayerData& layer)
 	  : visible(layer.visible),
@@ -79,15 +85,10 @@ namespace OpenMS
 		  modified(layer.modified),
 		  label(layer.label),
 		  mapping_thread_(NULL),
+			mapping_mode_(layer.mapping_mode_),
 		  primitive_mode_(layer.primitive_mode_)
   {
-    mapping_thread_ = new MappingThread(this);
-  }  
-		  
-  LayerData::~LayerData()
-	{
-	  delete mapping_thread_;
-	}
+  }
 	
 	LayerData& LayerData::operator= (const LayerData& layer)
 	{
@@ -112,25 +113,45 @@ namespace OpenMS
 	  modifiable = layer.modifiable;
 	  modified = layer.modified;
 	  label = layer.label;
-	  mapping_thread_ = new MappingThread(this);
+	  mapping_thread_ = NULL;
+		mapping_mode_ = layer.mapping_mode_;
 	  primitive_mode_ = layer.primitive_mode_;
 	  
-	  return *this;	
+	  return *this;
 	}
 	
+  const LayerData::ExperimentType::SpectrumType& LayerData::getCurrentSpectrum() const
+  {
+	  return peaks[current_spectrum];
+  }
+
+  const Annotations1DContainer& LayerData::getCurrentAnnotations() const
+  {
+	  return annotations_1d[current_spectrum];
+  }
+
+  LayerData::ExperimentType::SpectrumType& LayerData::getCurrentSpectrum()
+  {
+	  return peaks[current_spectrum];
+  }
+
+  Annotations1DContainer& LayerData::getCurrentAnnotations()
+  {
+	  return annotations_1d[current_spectrum];
+  }
+
 	MappingThread* LayerData::getMappingThread()
 	{
-	  return mapping_thread_;
-	}
-
-	const MappingThread* LayerData::getMappingThread() const
-	{
+		if(NULL == mapping_thread_)
+		{
+			mapping_thread_ = new MappingThread(this);
+		}
 	  return mapping_thread_;
 	}
 
   void LayerData::setMappingMode(const MappingThread::MappingModes mode)
   {
-    mapping_thread_->setMappingMode(mode);
+    mapping_mode_ = mode;
   }
   
   void LayerData::setPrimitiveMode(const LayerData::PrimitiveModes mode)
@@ -140,7 +161,7 @@ namespace OpenMS
 	
 	MappingThread::MappingModes LayerData::getMappingMode() const
   {
-    return getMappingThread()->getMappingMode();
+    return mapping_mode_;
   }
   
   LayerData::PrimitiveModes LayerData::getPrimitiveMode() const

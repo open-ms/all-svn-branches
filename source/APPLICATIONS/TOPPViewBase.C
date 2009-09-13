@@ -411,7 +411,7 @@ namespace OpenMS
     //b->setShortcut(Qt::Key_I);
     b->setCheckable(true);
     b->setWhatsThis("No mapping.");
-    mapping_group_3d_->addButton(b, MappingThread::MM_POINTS);
+    mapping_group_3d_->addButton(b, MappingThread::MM_NONE);
 		tool_bar_3d_->addWidget(b);
 		
     b = new QToolButton(tool_bar_3d_);
@@ -664,7 +664,7 @@ namespace OpenMS
     action_group_3d_->addButton(b, Spectrum3DCanvas::A_DATA_ZOOMOUT);
 		tool_bar_3d_->addWidget(b);
 		
-    connect(primitive_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setAction3D(int)));
+    connect(action_group_3d_, SIGNAL(buttonClicked(int)), this, SLOT(setAction3D(int)));
         
 		//################## Dock widgets #################
     //layer window
@@ -1470,6 +1470,7 @@ namespace OpenMS
     Spectrum3DWidget* w = active3DWindow_();
     if (w)
     {
+cout << "TOPPViewBase::setMappingMode3D(int index) : " << (int) index << endl;
     	w->canvas()->setMappingMode((MappingThread::MappingModes) index);
   	}
   }
@@ -1479,6 +1480,7 @@ namespace OpenMS
     Spectrum3DWidget* w = active3DWindow_();
     if (w)
     {
+cout << "TOPPViewBase::setPrimitiveMode3D(int index) : " << (int) index << endl;
     	w->canvas()->setPrimitiveMode((LayerData::PrimitiveModes) index);
   	}
   }
@@ -1488,7 +1490,8 @@ namespace OpenMS
     Spectrum3DWidget* w = active3DWindow_();
     if (w)
     {
-    	w->canvas()->setAction((OpenMS::Spectrum3DCanvas::Actions) index);
+cout << "TOPPViewBase::setAction3D(int index) : " << (int) index << endl;
+    	w->canvas()->setAction((Spectrum3DCanvas::Actions) index);
   	}
   }
   

@@ -53,6 +53,7 @@ namespace OpenMS
 	  zrot_ = 0;
 	  trans_x_ = 0.0;
 	  trans_y_ = 0.0;
+		view_mode_ = Spectrum3DCanvas::VM_3D;
 	}
 	  
 	Spectrum3DOpenGLCanvas::~Spectrum3DOpenGLCanvas()
@@ -446,6 +447,7 @@ namespace OpenMS
 
   void Spectrum3DOpenGLCanvas::redraw()
   {
+cout << "10" << endl;
 	  //update the content
 		canvas_3d_.update_buffer_ = true;
 		canvas_3d_.update_(__PRETTY_FUNCTION__);  
@@ -453,45 +455,54 @@ namespace OpenMS
   
 	void Spectrum3DOpenGLCanvas::setViewMode(const Spectrum3DCanvas::ViewModes mode)
 	{ 
+cout << "view: " << (int) mode << endl;
 	  view_mode_ = mode;
 	  redraw();
 	}
 	
 	void Spectrum3DOpenGLCanvas::setMappingMode(const MappingThread::MappingModes mode)
-	{ 
+	{
+cout << "setMappingMode: " << (int) mode << endl;
 	  canvas_3d_.getCurrentLayer().setMappingMode(mode);
 	  redraw();
 	}
 	
 	void Spectrum3DOpenGLCanvas::setPrimitiveMode(const LayerData::PrimitiveModes mode)
 	{ 
+cout << "setPrimitiveMode: " << (int) mode << endl;
 	  canvas_3d_.getCurrentLayer().setPrimitiveMode(mode);
 	  redraw();
 	}
 	
 	void Spectrum3DOpenGLCanvas::setAction(const Spectrum3DCanvas::Actions action)
 	{
-cout << "action: " << (int) action << endl;
+cout << "setAction: " << (int) action << endl;
 	  redraw();
 	}
 	
 	Spectrum3DCanvas::ViewModes Spectrum3DOpenGLCanvas::getViewMode() const
 	{	
+cout << "getViewMode: " << (int) view_mode_ << endl;
 	  return view_mode_;	 	  
 	}
 
 	MappingThread::MappingModes Spectrum3DOpenGLCanvas::getMappingMode() const
-	{	
+	{
+cout << "getMappingMode: ";
+cout << (int) canvas_3d_.getCurrentLayer().getMappingMode() << endl;
 	  return canvas_3d_.getCurrentLayer().getMappingMode();
 	}
 	
 	LayerData::PrimitiveModes Spectrum3DOpenGLCanvas::getPrimitiveMode() const
 	{	
+cout << "getPrimitiveMode: ";
+cout << (int) canvas_3d_.getCurrentLayer().getPrimitiveMode() << endl;
 	  return canvas_3d_.getCurrentLayer().getPrimitiveMode();
 	}
 			
 	GLuint Spectrum3DOpenGLCanvas::makeData()
 	{
+cout << "Spectrum3DOpenGLCanvas::makeData()" << endl;
 	  // init gl
 		GLuint list = glGenLists(1);
 	  glNewList(list, GL_COMPILE);
@@ -499,7 +510,7 @@ cout << "action: " << (int) action << endl;
     for(Size iLayer=0; iLayer<canvas_3d_.getLayerCount(); ++iLayer)
     {
 	    LayerData& layer = canvas_3d_.getLayer(iLayer);
-	    if(layer.visible)
+	    if(layer.visible && (MappingThread::MM_NONE != layer.getMappingMode()))
 	    {
 	      // set drawing width
         glPointSize(layer.param.getValue("dot:line_width"));
@@ -518,9 +529,10 @@ cout << "action: " << (int) action << endl;
           glDisable(GL_POINT_SMOOTH);
           glDisable(GL_LINE_SMOOTH);
         }			      
-        
+cout << "12" << endl;
         if(layer.getMappingThread()->isValide())
         {
+cout << "13" << endl;
           recalculateDotGradient_(iLayer);
 
 			    if(MappingThread::MM_POINTS == getMappingMode())
@@ -530,6 +542,7 @@ cout << "action: " << (int) action << endl;
 	          Vector3d vertexList = layer.getMappingThread()->getVertex();
 	          for(Iterator3d it = vertexList.begin(); it!=vertexList.end(); ++it)
 	          {
+
 				      switch (canvas_3d_.intensity_mode_)
 				      {
 					      case SpectrumCanvas::IM_PERCENTAGE :	
@@ -551,22 +564,39 @@ cout << "action: " << (int) action << endl;
         }
         else
         {
-          Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);
-            
-          Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
-          if(cols > 300) 
-            cols = 300;
-                  
-          layer.getMappingThread()->setDataSize(cols, rows);
-          layer.getMappingThread()->setRange(
-              canvas_3d_.visible_area_.min_[0],
-              canvas_3d_.visible_area_.max_[0],
-              canvas_3d_.visible_area_.min_[1],
-              canvas_3d_.visible_area_.max_[1]);
-          connect(layer.getMappingThread(), SIGNAL(finish()), this, SLOT(redraw()));
-          layer.getMappingThread()->start();
+cout << "14" << endl;
+					if( !layer.getMappingThread()->isRunning() )
+					{
+		        Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);
+	cout << "15" << endl;            
+		        Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
+		        if(cols > 300) 
+		          cols = 300;
+	cout << "16" << endl;
+		        layer.getMappingThread()->setDataSize(cols, rows);
+		        layer.getMappingThread()->setRange(
+		            canvas_3d_.visible_area_.min_[0],
+		            canvas_3d_.visible_area_.max_[0],
+		            canvas_3d_.visible_area_.min_[1],
+		            canvas_3d_.visible_area_.max_[1]);
+		        connect(layer.getMappingThread(), SIGNAL(finish()), this, SLOT(redraw()));
+	cout << "17" << endl;
+		        layer.getMappingThread()->start();
+	cout << "18" << endl;
+					}
+	cout << "19" << endl;
         }
-			    
+      }
+			else
+			{
+cout << "getMappingMode: ";
+cout << (int) canvas_3d_.getCurrentLayer().getMappingMode() << endl;
+			}
+    }
+
+		glEndList();
+		return list; 
+	}   
 			    
 		  /*	  
 	      recalculateDotGradient_(iLayer);
@@ -782,12 +812,6 @@ cout << "action: " << (int) action << endl;
 			      }
 		      }			  
 	      }*/
-      }
-    }
-
-		glEndList();
-		return list; 
-	}
 	
 	GLuint Spectrum3DOpenGLCanvas::makeGridLines()
 	{

@@ -13,16 +13,39 @@
 		<!-- TOPPView -->
 		<file>TOPPView.png</file>
 		<file>TOPPView_Splashscreen.png</file>
+		<file>cameraMoveUp.png</file>
+		<file>cameraMoveDown.png</file>
+		<file>cameraMoveRight.png</file>
+		<file>cameraMoveLeft.png</file>
+		<file>cameraZoomIn.png</file>
+		<file>cameraZoomOut.png</file>
+		<file>cameraReset.png</file>
 		<file>convexhull.png</file>
 		<file>convexhulls.png</file>
 		<file>cursor_measure.png</file>
 		<file>cursor_move.png</file>
 		<file>cursor_zoom.png</file>
+		<file>dataMoveUp.png</file>
+		<file>dataMoveDown.png</file>
+		<file>dataMoveRight.png</file>
+		<file>dataMoveLeft.png</file>
+		<file>dataZoomIn.png</file>
+		<file>dataZoomOut.png</file>
+		<file>dataReset.png</file>
 		<file>elements.png</file>
+		<file>glLines.png</file>
+		<file>glLineStrip.png</file>
+		<file>glPoints.png</file>
+		<file>glPolygon.png</file>
+		<file>glQuads.png</file>
+		<file>glQuadStrip.png</file>
+		<file>glTriangles.png</file>
+		<file>glTriangleStrip.png</file>
 		<file>lin.png</file>
 		<file>lines.png</file>
 		<file>labels.png</file>
 		<file>map.png</file>
+		<file>none.png</file>
 		<file>peaks.png</file>
 		<file>percentage.png</file>
 		<file>points.png</file>
@@ -32,6 +55,8 @@
 		<file>snap.png</file>
 		<file>tile_horizontal.png</file>
 		<file>tile_vertical.png</file>
+		<file>view2d.png</file>
+		<file>view3d.png</file>
 		
 		<!-- shared -->
 		<file>TOPP_about.png</file>

@@ -10,6 +10,7 @@ ClusterHierarchical.h
 CompleteLinkage.h
 EuclideanSimilarity.h
 SingleLinkage.h
+StarClusters.h
 )
 
 ### add path to the filenames

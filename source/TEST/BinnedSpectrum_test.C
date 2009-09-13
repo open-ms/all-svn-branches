@@ -71,6 +71,7 @@ START_SECTION((BinnedSpectrum(Real size, UInt spread, std::vector< MSSpectrum< P
 {
   // TODO
 }
+END_SECTION
 
 START_SECTION((BinnedSpectrum(const BinnedSpectrum &source)))
 {

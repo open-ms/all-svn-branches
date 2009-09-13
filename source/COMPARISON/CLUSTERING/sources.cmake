@@ -10,6 +10,7 @@ ClusterHierarchical.C
 CompleteLinkage.C
 EuclideanSimilarity.C
 SingleLinkage.C
+StarClusters.C
 )
 
 ### add path to the filenames

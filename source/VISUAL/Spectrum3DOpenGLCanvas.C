@@ -27,6 +27,7 @@
 
 #include <OpenMS/VISUAL/Spectrum3DOpenGLCanvas.h>
 #include <OpenMS/VISUAL/AxisTickCalculator.h>
+#include <OpenMS/MATH/MISC/Struct3d.h>
 
 #include <QtGui/QMouseEvent>
 #include <QtGui/QKeyEvent>
@@ -454,144 +455,330 @@ cout << "10" << endl;
   }
   
 	void Spectrum3DOpenGLCanvas::setViewMode(const Spectrum3DCanvas::ViewModes mode)
-	{ 
-cout << "view: " << (int) mode << endl;
+	{
 	  view_mode_ = mode;
 	  redraw();
 	}
 	
 	void Spectrum3DOpenGLCanvas::setMappingMode(const MappingThread::MappingModes mode)
 	{
-cout << "setMappingMode: " << (int) mode << endl;
 	  canvas_3d_.getCurrentLayer().setMappingMode(mode);
 	  redraw();
 	}
 	
 	void Spectrum3DOpenGLCanvas::setPrimitiveMode(const LayerData::PrimitiveModes mode)
-	{ 
-cout << "setPrimitiveMode: " << (int) mode << endl;
+	{
 	  canvas_3d_.getCurrentLayer().setPrimitiveMode(mode);
 	  redraw();
 	}
 	
 	void Spectrum3DOpenGLCanvas::setAction(const Spectrum3DCanvas::Actions action)
 	{
-cout << "setAction: " << (int) action << endl;
+    switch(action)
+    {                  
+      case Spectrum3DCanvas::A_CAMERA_RESET :	
+	      corner_ = 100.0;  
+	      near_ = 0.0;  
+	      far_ = 600.0;
+	      zoom_ = 1.5;
+	      xrot_ = 220;
+	      yrot_ = 220;
+	      zrot_ = 0;
+	      trans_x_ = 0.0;
+	      trans_y_ = 0.0;
+	      break;
+      case Spectrum3DCanvas::A_CAMERA_MOVEUP :
+        corner_ += 20.0;
+        break;
+      case Spectrum3DCanvas::A_CAMERA_MOVEDOWN :
+        corner_ -= 20.0;
+        break;
+      case Spectrum3DCanvas::A_CAMERA_MOVELEFT :
+        near_ += 10.0;
+        break;
+      case Spectrum3DCanvas::A_CAMERA_MOVERIGHT :
+        near_ -= 10.0;
+        break;
+      case Spectrum3DCanvas::A_CAMERA_ZOOMIN :
+	      zoom_ += 0.2;
+	      break;
+      case Spectrum3DCanvas::A_CAMERA_ZOOMOUT :
+      	zoom_ -= 0.2;
+      	break;
+      case Spectrum3DCanvas::A_DATA_RESET :
+        far_ += 20.0;
+        break;
+      case Spectrum3DCanvas::A_DATA_MOVEUP :
+        far_ -= 20.0;
+        break;
+      case Spectrum3DCanvas::A_DATA_MOVEDOWN :
+        xrot_ += 20;
+        break;      
+      case Spectrum3DCanvas::A_DATA_MOVELEFT :
+        yrot_ += 20;
+        break;      
+      case Spectrum3DCanvas::A_DATA_MOVERIGHT :
+        zrot_ += 20;
+        break;      
+      case Spectrum3DCanvas::A_DATA_ZOOMIN :
+        trans_x_ += 20.0;
+        break;      
+      case Spectrum3DCanvas::A_DATA_ZOOMOUT :
+        trans_y_ += 20.0;
+        break;      
+    }
 	  redraw();
 	}
 	
 	Spectrum3DCanvas::ViewModes Spectrum3DOpenGLCanvas::getViewMode() const
-	{	
-cout << "getViewMode: " << (int) view_mode_ << endl;
+	{
 	  return view_mode_;	 	  
 	}
 
 	MappingThread::MappingModes Spectrum3DOpenGLCanvas::getMappingMode() const
 	{
-cout << "getMappingMode: ";
-cout << (int) canvas_3d_.getCurrentLayer().getMappingMode() << endl;
 	  return canvas_3d_.getCurrentLayer().getMappingMode();
 	}
 	
 	LayerData::PrimitiveModes Spectrum3DOpenGLCanvas::getPrimitiveMode() const
-	{	
-cout << "getPrimitiveMode: ";
-cout << (int) canvas_3d_.getCurrentLayer().getPrimitiveMode() << endl;
+	{
 	  return canvas_3d_.getCurrentLayer().getPrimitiveMode();
 	}
 			
 	GLuint Spectrum3DOpenGLCanvas::makeData()
 	{
 cout << "Spectrum3DOpenGLCanvas::makeData()" << endl;
+cout << "corner_: " << corner_ << " near_: " << near_ << " far_: " << far_ << " zoom_: " << zoom_ << endl;
+cout << "xrot_: " << xrot_ << " yrot_: " << yrot_ << " zrot_: " << zrot_ << " trans_x_: " << trans_x_ << " trans_y_: " << trans_y_ << endl;
+
 	  // init gl
 		GLuint list = glGenLists(1);
 	  glNewList(list, GL_COMPILE);
 
+    if(Spectrum3DCanvas::VM_2D == getViewMode())
+    {
+      setAngels(220,220,0);
+    }
+				        
     for(Size iLayer=0; iLayer<canvas_3d_.getLayerCount(); ++iLayer)
     {
 	    LayerData& layer = canvas_3d_.getLayer(iLayer);
-	    if(layer.visible && (MappingThread::MM_NONE != layer.getMappingMode()))
+	    if(layer.visible)
 	    {
-	      // set drawing width
+        // set drawing width
         glPointSize(layer.param.getValue("dot:line_width"));
         glLineWidth(layer.param.getValue("dot:line_width"));
         
         // set shade mode
         if((Int) layer.param.getValue("dot:shade_mode"))
         {
-	        glShadeModel(GL_SMOOTH);
+          glShadeModel(GL_SMOOTH);
           glEnable(GL_POINT_SMOOTH);
           glEnable(GL_LINE_SMOOTH);
         }
         else
         {
-	        glShadeModel(GL_FLAT);
+          glShadeModel(GL_FLAT);
           glDisable(GL_POINT_SMOOTH);
           glDisable(GL_LINE_SMOOTH);
-        }			      
-cout << "12" << endl;
-        if(layer.getMappingThread()->isValide())
-        {
-cout << "13" << endl;
-          recalculateDotGradient_(iLayer);
+        }			    
 
-			    if(MappingThread::MM_POINTS == getMappingMode())
-		      {			    	    
-		        glBegin(GL_POINTS);
-		        
-	          Vector3d vertexList = layer.getMappingThread()->getVertex();
-	          for(Iterator3d it = vertexList.begin(); it!=vertexList.end(); ++it)
-	          {
-
+        recalculateDotGradient_(iLayer);
+            
+	      if(MappingThread::MM_NONE == layer.getMappingMode())
+	      {
+	        double currentRT = 0.0;
+          glBegin(GL_POINTS);
+                  	        
+          for(Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.peaks.areaBeginConst(
+		          canvas_3d_.visible_area_.min_[1],
+		          canvas_3d_.visible_area_.max_[1],
+		          canvas_3d_.visible_area_.min_[0],
+		          canvas_3d_.visible_area_.max_[0]); 
+				    it != layer.peaks.areaEndConst(); 
+				    ++it)
+		      {
+			      PeakIndex pi = it.getPeakIndex();
+			      if (layer.filters.passes(layer.peaks[pi.spectrum],pi.peak))
+			      {
+			        Struct3d baseVertex(- corner_ + (GLfloat) scaledMZ(it->getMZ()),
+			                            - near_ - 2 * corner_ - (GLfloat) scaledRT(it.getRT()),
+											            - corner_);
+			        Struct3d topVertex(- corner_ + (GLfloat) scaledMZ(it->getMZ()),
+			                            - near_ - 2 * corner_ - (GLfloat) scaledRT(it.getRT()),
+											            - corner_ + (GLfloat) scaledIntensity(it->getIntensity(), iLayer));
+									         
+							QColor baseColor, topColor;
 				      switch (canvas_3d_.intensity_mode_)
 				      {
-					      case SpectrumCanvas::IM_PERCENTAGE :	
-					        qglColor( layer.gradient.precalculatedColorAt(it->intensity * 100.0 / canvas_3d_.getMaxIntensity(iLayer)) );
-					        break;
-					      case SpectrumCanvas::IM_NONE :	
-					        qglColor( layer.gradient.precalculatedColorAt(it->intensity) );
-					        break;
-					      case SpectrumCanvas::IM_SNAP :	
-					        qglColor( layer.gradient.precalculatedColorAt(it->intensity) );
-					        break;
-					    }
-				      glVertex3d(- corner_ + (GLfloat) scaledMZ(it->mz),
-									       - corner_ + (GLfloat) scaledIntensity(it->intensity, iLayer),
-									       - near_ - 2 * corner_ - (GLfloat) scaledRT(it->rt));
-	          }
-		        glEnd();				    						    
+					      case SpectrumCanvas::IM_NONE:
+						      baseColor = QColor( layer.gradient.precalculatedColorAt(canvas_3d_.overall_data_range_.min_[2]));
+						      topColor = QColor( layer.gradient.precalculatedColorAt(it->getIntensity()));
+						      break;				      
+					      case SpectrumCanvas::IM_PERCENTAGE:	
+						      baseColor = QColor( layer.gradient.precalculatedColorAt(0));
+						      topColor = QColor( layer.gradient.precalculatedColorAt(it->getIntensity() * 100.0 /canvas_3d_.getMaxIntensity(iLayer)) );
+						      break;
+					      case SpectrumCanvas::IM_SNAP:
+						      baseColor = QColor(layer.gradient.precalculatedColorAt(int_scale_.min_[0]));
+						      topColor = QColor(layer.gradient.precalculatedColorAt(it->getIntensity()));
+						      break;
+				      }
+				      
+				      switch(getPrimitiveMode())
+              {                  
+                case LayerData::PM_LINES :
+                  if(it.getRT() != currentRT)
+                  {
+                    glEnd();
+                    glBegin(GL_LINES);
+                    currentRT = it.getRT();
+                  }
+                  qglColor(baseColor);
+                  glVertex3d(baseVertex.mz, baseVertex.intensity, baseVertex.rt);
+                  qglColor(topColor);
+                  glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
+                  break;
+                  
+                case LayerData::PM_LINESTRIP :
+                  if(it.getRT() != currentRT)
+                  {
+                    glEnd();
+                    glBegin(GL_LINES);
+                    currentRT = it.getRT();
+                  }
+                  qglColor(topColor);
+                  glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
+                  break;
+                  
+                case LayerData::PM_TRIANGLES :
+                  if(it.getRT() != currentRT)
+                  {
+                    glEnd();
+                    glBegin(GL_TRIANGLE_STRIP);
+                    currentRT = it.getRT();
+                  }
+                  qglColor(baseColor);
+                  glVertex3d(baseVertex.mz, baseVertex.intensity, baseVertex.rt);
+                  qglColor(topColor);
+                  glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
+                  break;
+
+                case LayerData::PM_POINTS :
+                default :
+                  if(it.getRT() != currentRT)
+                  {
+                    glEnd();
+                    glBegin(GL_POINTS);
+                    currentRT = it.getRT();
+                  }
+                  qglColor(topColor);
+                  glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
+                  break;             
+              }
+				      glEnd();
+			      }
 		      }
+	      }
+	      else
+	      {
+          if(layer.getMappingThread()->isValide())
+          {
+            switch(getPrimitiveMode())
+            {
+              case LayerData::PM_POINTS :
+                glBegin(GL_POINTS);
+                break;
+              case LayerData::PM_LINES :
+                glBegin(GL_LINES);
+                break;
+              case LayerData::PM_LINESTRIP :
+                glBegin(GL_LINE_STRIP);
+                break;
+              case LayerData::PM_TRIANGLES :
+                glBegin(GL_TRIANGLES);
+                break;
+              case LayerData::PM_TRIANGLESTRIP :
+                glBegin(GL_TRIANGLE_STRIP);
+                break;
+              case LayerData::PM_QUADS :
+                glBegin(GL_QUADS);
+                break;
+              case LayerData::PM_QUADSTRIP :
+                glBegin(GL_QUAD_STRIP);
+                break;
+              case LayerData::PM_POLYGON :
+                glBegin(GL_POLYGON);
+                break;
+	            default :
+                glBegin(GL_POINTS);	            
+	              break;                
+            }
+		          
+            Vector3d vertexList = layer.getMappingThread()->getVertex();
+            Vector3d normalsList = layer.getMappingThread()->getNormals();
+            Iterator3d vertexIt = vertexList.begin();
+            Iterator3d normalIt = normalsList.begin();
+            for(; vertexIt!=vertexList.end(); ++vertexIt)
+            {
+			        switch (canvas_3d_.intensity_mode_)
+			        {
+				        case SpectrumCanvas::IM_PERCENTAGE :	
+				          qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity * 100.0 / canvas_3d_.getMaxIntensity(iLayer)) );
+				          break;
+				        case SpectrumCanvas::IM_NONE :	
+				          qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity) );
+				          break;
+				        case SpectrumCanvas::IM_SNAP :	
+				          qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity) );
+				          break;
+				      }
+				      if(Spectrum3DCanvas::VM_2D == getViewMode())
+				      {
+			          glVertex3d(- corner_ + (GLfloat) scaledMZ(vertexIt->mz),
+								           - corner_,
+								           - near_ - 2 * corner_ - (GLfloat) scaledRT(vertexIt->rt));
+						  }
+						  else
+						  {
+			          glVertex3d(- corner_ + (GLfloat) scaledMZ(vertexIt->mz),
+								           - corner_ + (GLfloat) scaledIntensity(vertexIt->intensity, iLayer),
+								           - near_ - 2 * corner_ - (GLfloat) scaledRT(vertexIt->rt));
+								if(!normalsList.empty())
+								{
+								  // add normals
+								  // glNormal3d(normal.x1, normal.y1, normal.z1);    
+								}
+						  }
+            }
+	          glEnd();
+          }
+          else
+          {
+  cout << "14" << endl;
+					  if( !layer.getMappingThread()->isRunning() )
+					  {
+		          Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);
+	  cout << "15" << endl;            
+		          Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
+		          if(cols > 300) 
+		            cols = 300;
+	  cout << "16" << endl;
+		          layer.getMappingThread()->setDataSize(cols, rows);
+		          layer.getMappingThread()->setRange(
+		              canvas_3d_.visible_area_.min_[0],
+		              canvas_3d_.visible_area_.max_[0],
+		              canvas_3d_.visible_area_.min_[1],
+		              canvas_3d_.visible_area_.max_[1]);
+		          connect(layer.getMappingThread(), SIGNAL(finish()), this, SLOT(redraw()));
+	  cout << "17" << endl;
+		          layer.getMappingThread()->start();
+	  cout << "18" << endl;
+					  }
+	  cout << "19" << endl;
+          }
         }
-        else
-        {
-cout << "14" << endl;
-					if( !layer.getMappingThread()->isRunning() )
-					{
-		        Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);
-	cout << "15" << endl;            
-		        Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
-		        if(cols > 300) 
-		          cols = 300;
-	cout << "16" << endl;
-		        layer.getMappingThread()->setDataSize(cols, rows);
-		        layer.getMappingThread()->setRange(
-		            canvas_3d_.visible_area_.min_[0],
-		            canvas_3d_.visible_area_.max_[0],
-		            canvas_3d_.visible_area_.min_[1],
-		            canvas_3d_.visible_area_.max_[1]);
-		        connect(layer.getMappingThread(), SIGNAL(finish()), this, SLOT(redraw()));
-	cout << "17" << endl;
-		        layer.getMappingThread()->start();
-	cout << "18" << endl;
-					}
-	cout << "19" << endl;
-        }
-      }
-			else
-			{
-cout << "getMappingMode: ";
-cout << (int) canvas_3d_.getCurrentLayer().getMappingMode() << endl;
-			}
+      }		
     }
 
 		glEndList();

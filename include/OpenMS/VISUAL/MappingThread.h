@@ -64,7 +64,8 @@ namespace OpenMS
             
       const Vector3d& getVertex();
       const Vector3d& getNormals();
-
+      
+      void clearData();
       bool isValide();
         
     signals:

@@ -131,11 +131,28 @@ cout << "set range" << endl;
   {
     return normals_; 
   }
+  
+  void MappingThread::clearData()
+  {
+    data_.clear();
+  }
 
   bool MappingThread::isValide()
   {
-cout << "isValide: " << (data_.empty() ? 0 : data_.size()) << " " << (normals_.empty() ? 0 : normals_.size()) << " " << (vertex_.empty() ? 0 : vertex_.size());
-    return (!data_.empty() && !vertex_.empty() && normals_.empty());
+    bool valide = !data_.empty() && !vertex_.empty();
+    switch(parent_->getMappingMode())
+    {
+      case MappingThread::MM_NONE :
+	    case MappingThread::MM_POINTS :    
+	    case MappingThread::MM_PEAKS :
+	      break;
+	    case MappingThread::MM_MAP :
+	    case MappingThread::MM_PSEUDOGEL :
+	      valide &= !normals_.empty();
+	  }
+	      
+cout << "isValide: " << (data_.empty() ? 0 : data_.size()) << " " << (normals_.empty() ? 0 : normals_.size()) << " " << (vertex_.empty() ? 0 : vertex_.size()) << endl;
+	  return valide;
   }
   
   // privates members

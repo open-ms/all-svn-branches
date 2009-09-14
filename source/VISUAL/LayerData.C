@@ -53,7 +53,7 @@ namespace OpenMS
 		  modified(false),
 		  label(L_NONE),
 		  mapping_thread_(NULL),
-			mapping_mode_(MappingThread::MM_NONE),
+			mapping_mode_(MappingThread::MM_POINTS),
 		  primitive_mode_(PM_POINTS)
   {
   }
@@ -152,6 +152,7 @@ namespace OpenMS
   void LayerData::setMappingMode(const MappingThread::MappingModes mode)
   {
     mapping_mode_ = mode;
+    getMappingThread()->clearData();
   }
   
   void LayerData::setPrimitiveMode(const LayerData::PrimitiveModes mode)

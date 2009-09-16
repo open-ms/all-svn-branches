@@ -66,7 +66,7 @@
 #include <OpenMS/VISUAL/DIALOGS/DemoDialog.h>
 #include <OpenMS/VISUAL/EnhancedTabBar.h>
 #include <OpenMS/VISUAL/EnhancedWorkspace.h>
-#include <OpenMS/FORMAT/FileHandler.h>
+#include <OpenMS/FORMAT/FileHandlerThread.h>
 
 //Qt
 #include <QtGui/QToolBar>
@@ -797,6 +797,7 @@ namespace OpenMS
 		add_2d_context_->addAction("Show layer in 3D",this,SLOT(showCurrentPeaksAs3D()));
 
 		topp_.process = 0;
+		fhThread_ = NULL;
 	}
 
   TOPPViewBase::~TOPPViewBase()
@@ -1030,98 +1031,46 @@ namespace OpenMS
 		}
   }
 
-  void TOPPViewBase::addDataFile(const String& filename,bool show_options, bool add_to_recent, String caption, UInt window_id, Size spectrum_id)
+  void TOPPViewBase::addDataFile(const String& filename, bool show_options, bool add_to_recent, String caption, UInt window_id, Size spectrum_id)
   {
-    setCursor(Qt::WaitCursor);
-
-  	String abs_filename = File::absolutePath(filename);
-
-  	//check if the file exists
-    if (!File::exists(abs_filename))
+    if(NULL == fhThread_)
     {
-    	showLogMessage_(LS_ERROR,"Open file error",String("The file '")+abs_filename+"' does not exist!");
-    	setCursor(Qt::ArrowCursor);
-      return;
+      fhThread_ = new FileHandlerThread(filename, show_options, add_to_recent, caption, window_id, spectrum_id);
+      connect(fhThread_, SIGNAL(fileLoaded(bool)), this, SLOT(fileLoaded(bool)));
+      fhThread_->start();   
     }
-
-		//determine file type
-  	FileHandler fh;
-		FileTypes::Type file_type = fh.getType(abs_filename);
-		if (file_type==FileTypes::UNKNOWN)
-		{
-			showLogMessage_(LS_ERROR,"Open file error",String("Could not determine file type of '")+abs_filename+"'!");
-    	setCursor(Qt::ArrowCursor);
-      return;
-		}
-		//abort if file type unsupported
-		if (file_type==FileTypes::INI || file_type==FileTypes::IDXML)
-		{
-			showLogMessage_(LS_ERROR,"Open file error",String("The type '")+fh.typeToName(file_type)+"' is not supported!");
-   		setCursor(Qt::ArrowCursor);
-      return;
-		}
-		
-		//try to load data and determine if it is 1D or 2D data
-		FeatureMapType feature_map;
-		ExperimentType peak_map;
-		ConsensusMapType consensus_map;
-
-		bool is_2D = false;
-		bool is_feature = false;
-    try
+  }
+  
+  void TOPPViewBase::fileLoaded(bool success)
+  {
+    if(success)
     {
-	    if (file_type==FileTypes::FEATUREXML)
-	    {
-        FeatureXMLFile().load(abs_filename,feature_map);
-        is_2D = true;
-        is_feature = true;
-      }
-      else if (file_type==FileTypes::CONSENSUSXML)
-	    {
-        ConsensusXMLFile().load(abs_filename,consensus_map);
-        is_2D = true;
-        is_feature = true;
-      }
-      else
-      {
-      	fh.loadExperiment(abs_filename,peak_map, file_type,ProgressLogger::GUI);
-      	UInt ms1_scans = 0;
-      	for (Size i=0; i<peak_map.size();++i)
-      	{
-      		if (peak_map[i].getMSLevel()==1) ++ms1_scans;
-      		if (ms1_scans>1)
-      		{
-      			is_2D = true;
-      			break;
-      		}
-      	}
-      }
-    }
-    catch(Exception::BaseException& e)
-    {
-    	showLogMessage_(LS_ERROR,"Error while loading file",e.what());
-    	setCursor(Qt::ArrowCursor);
-      return;
-    }
+      addData_(
+        fhThread_->feature_map_, 
+        fhThread_->consensus_map_, 
+        fhThread_->peak_map_, 
+        fhThread_->is_feature_, 
+        fhThread_->is_2D_, 
+        false, 
+        fhThread_->show_options_,
+        fhThread_->abs_filename_, 
+        fhThread_->caption_, 
+        fhThread_->window_id_, 
+        fhThread_->spectrum_id_);
 
-    //try to add the data
-		if (caption=="")
-		{
-			caption = File::basename(abs_filename);
+    	//add to recent file
+    	if(fhThread_->add_to_recent_) 
+    	  addRecentFile_(fhThread_->filename_);
     }
     else
     {
-    	abs_filename = "";
+      showLogMessage_(LS_ERROR, "Open file error", fhThread_->msg_);
     }
-    addData_(feature_map, consensus_map, peak_map, is_feature, is_2D, false, show_options, abs_filename, caption, window_id, spectrum_id);
-
-  	//add to recent file
-  	if (add_to_recent) addRecentFile_(filename);
-
-    //reset cursor
-    setCursor(Qt::ArrowCursor);
+  	  
+  	delete fhThread_;
+  	fhThread_ = NULL;
   }
-
+  
   void TOPPViewBase::addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_as_1d, bool show_options, const String& filename, const String& caption, UInt window_id, Size spectrum_id)
   {
   	//initialize flags with defaults from the parameters

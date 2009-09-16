@@ -27,7 +27,7 @@
 
 #include <OpenMS/VISUAL/Spectrum3DCanvas.h>
 #include <OpenMS/VISUAL/MappingThread.h>
-static int iRefTh = 0;
+
 namespace OpenMS
 {
   // publics membres
@@ -39,33 +39,22 @@ namespace OpenMS
       rt_min_(0.0), rt_max_(0.0), rt_width_(0.0),
       parent_(parent)
   {
-cout << "mapping thread constructor" << endl;
-iRef_ = ++iRefTh;
-  }
-  
-  MappingThread::~MappingThread()
-  {
-cout << "mapping thread desconstructor " << iRef_ << endl;
   }
 
   void MappingThread::run()
   {
-cout << "20 " << iRef_ << endl;
+cout << "run() " << endl;
     // update data
     if(data_.empty())
       updateData_();
-cout << "21" << endl;
 
     if(vertex_.empty())
       updateVertex_();
-cout << "22" << endl;
 
     if(normals_.empty())
       updateNormals_();
 
-cout << "23" << endl;
     emit(finish());
-cout << "24" << data_.size() << " " << vertex_.size() << " " << normals_.size() << endl;
   }
   
   // get and set membres
@@ -78,8 +67,7 @@ cout << "24" << data_.size() << " " << vertex_.size() << " " << normals_.size() 
   }
   
   void MappingThread::setRange(const double& mz_min, const double& mz_max, const double& rt_min, const double& rt_max)
-  { 
-cout << "set range" << endl;
+  {
     mz_min_ = mz_min;
     mz_max_ = mz_max;
     rt_min_ = rt_min;
@@ -150,8 +138,7 @@ cout << "set range" << endl;
 	    case MappingThread::MM_PSEUDOGEL :
 	      valide &= !normals_.empty();
 	  }
-	      
-cout << "isValide: " << (data_.empty() ? 0 : data_.size()) << " " << (normals_.empty() ? 0 : normals_.size()) << " " << (vertex_.empty() ? 0 : vertex_.size()) << endl;
+
 	  return valide;
   }
   
@@ -159,7 +146,6 @@ cout << "isValide: " << (data_.empty() ? 0 : data_.size()) << " " << (normals_.e
 
   void MappingThread::updateData_()
   {
-cout << "update data " << iRef_ << endl;
     data_.clear();
 
     if(MappingThread::MM_NONE == parent_->getMappingMode())
@@ -169,14 +155,10 @@ cout << "update data " << iRef_ << endl;
     rt_width_ = (rt_max_ - rt_min_) / (rows_ - 1);
 
     data_.resize(cols_*rows_, 0.0);
-cout << "30 c:" << cols_ << " r:" << rows_ << endl;
-cout << rt_min_ << " " << rt_max_ << " " << mz_min_ << " " << mz_max_ << endl;
-int ii = 0;
     for(Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = parent_->peaks.areaBeginConst(rt_min_, rt_max_, mz_min_, mz_max_);
         it != parent_->peaks.areaEndConst();
         ++it)
     {
-++ii;
       if(it->getMZ()>=mz_min_ && it->getMZ()<=mz_max_ && it.getRT()>=rt_min_ && it.getRT()<=rt_max_)
       {		      
         if( it->getIntensity() > getData_(it->getMZ(), it.getRT()) )
@@ -185,7 +167,6 @@ int ii = 0;
         }
       }
     }
-cout << "ii " << ii << endl;
 
 		vertex_.clear();
 		normals_.clear();

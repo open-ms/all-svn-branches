@@ -181,7 +181,7 @@ protected:
 			// try to align
 			try
 			{
-				alignment->alignPeakMaps(peak_maps,transformations);
+				alignment->alignPeakMaps(peak_maps, transformations);
 			}
 			catch (Exception::NotImplemented&)
 			{

@@ -63,15 +63,16 @@ namespace OpenMS
 		delete c1_;
 	}
 	
-	void MapAlignmentAlgorithmSpectrumAlignment::alignPeakMaps(std::vector< MSExperiment<> >& peakmaps, std::vector<TransformationDescription>& transformation)
+	void MapAlignmentAlgorithmSpectrumAlignment::alignPeakMaps(std::vector< MSExperiment<> >& peakmaps,
+	  std::vector<TransformationDescription>& transformation)
 	{
 		try
-		{ 	
-			std::vector<MSSpectrum<>* >spectrum_pointers;
-			msFilter_(peakmaps[0],spectrum_pointers);
+		{
+			std::vector< MSSpectrum<>* > spectrum_pointers;
+			msFilter_(peakmaps[0], spectrum_pointers);
 			fourierActivation_(spectrum_pointers);
-			startProgress(0,(peakmaps.size()-1),"Alignment");
-			for (Size i = 1 ; i < peakmaps.size();++i )
+			startProgress(0, (peakmaps.size()-1), "Alignment");
+			for(Size i=1; i<peakmaps.size(); ++i)
 			{									
 				prepareAlign_(spectrum_pointers,peakmaps[i],transformation);
 				setProgress(i);
@@ -88,7 +89,7 @@ namespace OpenMS
 
 	void MapAlignmentAlgorithmSpectrumAlignment::prepareAlign_(const std::vector<MSSpectrum<>* >& pattern, MSExperiment<>& aligned,std::vector<TransformationDescription>& transformation)
 	{
-		//tempalign ->container for holding only MSSpectrums with MS-Level 1
+		//tempalign -> container for holding only MSSpectrums with MS-Level 1
 		std::vector<MSSpectrum<>*> tempalign;
 		msFilter_(aligned,tempalign);
 		fourierActivation_(tempalign);
@@ -98,20 +99,20 @@ namespace OpenMS
 		//saving the first cordinates
 		alignpoint.push_back(0); 
 		alignpoint.push_back(0);
-		//4 blocks : 0-0.25 ,0.25-50,0.50-0.75,1 The data points must have a high similarity score
-		for(Real i = 0.25; i<=0.75;i+=0.25)
+		//4 blocks : 0-0.25, 0.25-50, 0.50-0.75, 1 The data points must have a high similarity score
+		for(Real i=0.25; i<=0.75; i+=0.25)
 		{	
-			Size y= (Size)(tempalign.size() * i);
-			Size x=0;
-			Real maxi=-999.0;
+			Size y = (Size) (tempalign.size() * i);
+			Size x = 0;
+			Real maxi = -999.0;
 			
-			for (Size k = 0; k<pattern.size(); ++k)
+			for(Size k=0; k<pattern.size(); ++k)
 			{
 				Real s =	scoring_(*pattern[k],*(tempalign[y]));
-				if(s > maxi && s > cutoffScore_)
+				if( (s > maxi) && (s > cutoffScore_) )
 				{
-					x=k;
-					maxi=s;
+					x = k;
+					maxi = s;
 				}			
 			}
 			if(x >= alignpoint[alignpoint.size()-2]+3 && y >= alignpoint[alignpoint.size()-1]+3)
@@ -419,36 +420,36 @@ namespace OpenMS
 		endProgress();
 	}
 
-		
-	void MapAlignmentAlgorithmSpectrumAlignment::msFilter_(MSExperiment<>& peakmap,std::vector<MSSpectrum<>* >& spectrum_pointer_container)
+	void MapAlignmentAlgorithmSpectrumAlignment::msFilter_(MSExperiment<>& peakmap, 
+	  std::vector< MSSpectrum<>* >& spectrum_pointer_container)
 	{
 		std::vector<UInt> pattern;
 		peakmap.updateRanges(-1);
-		pattern=peakmap.getMSLevels();
+		pattern = peakmap.getMSLevels();
 		
-		if(pattern.size()!=0)
+		if(!pattern.empty())
 		{	
-			for (Size i=0; i< peakmap.size();++i)
+			for(Size iSpectrum=0; iSpectrum<peakmap.size(); ++iSpectrum)
 			{
-				if(peakmap[i].getMSLevel()==1)
+				if(1 == peakmap[iSpectrum].getMSLevel())
 				{ 
-					spectrum_pointer_container.push_back(&(peakmap[i]));							
+					spectrum_pointer_container.push_back( &(peakmap[iSpectrum]) );
 				}
 			}
 		}
 		else
 		{
-			throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"No spectra contained");
+			throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "No spectra contained");
 		}
 	}
 		
-	inline void MapAlignmentAlgorithmSpectrumAlignment::fourierActivation_(std::vector<MSSpectrum<>* >& spectrum_pointer_container)
+	inline void MapAlignmentAlgorithmSpectrumAlignment::fourierActivation_(std::vector< MSSpectrum<>* >& spectrum_pointer_container)
 	{
-		if(c1_->getName()=="CompareFouriertransform")
+		if("CompareFouriertransform" == c1_->getName())
 		{
-			for (Size i=0; i< spectrum_pointer_container.size();++i)
+			for(Size iSpectrum=0; iSpectrum<spectrum_pointer_container.size(); ++iSpectrum)
 			{
-				transform_(*spectrum_pointer_container[i]);
+				transform_( *spectrum_pointer_container[iSpectrum] );
 			}
 		}
 	}
@@ -478,15 +479,16 @@ namespace OpenMS
 		}
 	}
 		
-	void MapAlignmentAlgorithmSpectrumAlignment::transform_(MSSpectrum<> & spec)
+	void MapAlignmentAlgorithmSpectrumAlignment::transform_(MSSpectrum<>& spec)
 	{
 		MSSpectrum<>::FloatDataArrays& temp = spec.getFloatDataArrays();
-		Size i=0;
+		Size i = 0;
+		
 		if(temp.size()>0)
 		{
-			while(i< temp.size())
+			while(i < temp.size())
 			{
-				if(temp[i].getName()=="Fouriertransformation")
+				if(temp[i].getName() == "Fouriertransformation")
 				{
 					break;
 				}
@@ -496,32 +498,35 @@ namespace OpenMS
 				}
 			}
 		}
-		if(i == temp.size() || i==0||temp[i].getName()!= "Fouriertransformation" )
+		
+		if(i == temp.size() || i==0 || temp[i].getName()!= "Fouriertransformation" )
 		{
 			//a copy have to be made
-			double* data=  new double [spec.size()<<1];
+			double* data =  new double [spec.size()<<1];
 			bool aflag = false;
 			bool iflag = true;
-			Real sum=0;
+			Real sum = 0;
+			
 			//normalize first the intensity!!!
-			for (Size k = 0 ;k<spec.size(); ++k)
+			for(Size k=0; k<spec.size(); ++k)
 			{
-				sum+=spec[k].getIntensity();
+				sum += spec[k].getIntensity();
 			}
-			i =0;
+			i = 0;
+			
 			//copy spectrum to the array, and after that mirrow the data, FFT needs perodic function
 			while(!aflag)
 			{	
-				if(i== (spec.size()<<1))	
+				if( i == (spec.size()<<1) )	
 				{
-					aflag=true;
+					aflag = true;
 					break;
 				}
 				if(iflag)
 				{
-					if(i< spec.size())
+					if(i < spec.size())
 					{
-						data[i]= spec[i].getIntensity()/sum;
+						data[i] = spec[i].getIntensity() / sum;
 						++i;
 					}
 					else
@@ -531,21 +536,23 @@ namespace OpenMS
 				}
 				else
 				{
-					data[i] =spec[(spec.size()<<1)-i].getIntensity()/sum;
+					data[i] = spec[ (spec.size()<<1) - i ].getIntensity() / sum;
 					++i;
 				}
 			}
+			
 			//calculate the fft by using gsl
-			gsl_fft_real_wavetable * real;
-			gsl_fft_real_workspace * work;
-			work = gsl_fft_real_workspace_alloc (spec.size());
-			real = gsl_fft_real_wavetable_alloc (spec.size());
-			gsl_fft_real_transform (data,1,spec.size(),real, work);
-			gsl_fft_real_wavetable_free (real);
-			gsl_fft_real_workspace_free (work);
+			gsl_fft_real_wavetable* real;
+			gsl_fft_real_workspace* work;
+			work = gsl_fft_real_workspace_alloc( spec.size() );
+			real = gsl_fft_real_wavetable_alloc( spec.size() );
+			gsl_fft_real_transform (data, 1, spec.size(), real, work);
+			gsl_fft_real_wavetable_free( real );
+			gsl_fft_real_workspace_free( work );
+			
 			//saving the transformation, but only the real part
-			i= temp.size();
-			temp.resize(i+1);
+			i = temp.size();
+			temp.resize(i + 1);
 			temp[i].setName("Fouriertransformation");
 			Size j=0;
 			while(j < spec.size())

@@ -68,6 +68,7 @@ namespace OpenMS
   class ToolsDialog;
   class DBConnection;
   class EnhancedTabBar;
+  class FileHandlerThread;
 
   /**
     @brief Main window of TOPPView tool
@@ -98,6 +99,14 @@ namespace OpenMS
     	///Peak spectrum type
     	typedef ExperimentType::SpectrumType SpectrumType;
     	//@}
+    	
+      ///Log message states
+			enum LogState
+			{ 
+				LS_NOTICE,   ///< Notice
+				LS_WARNING,  ///< Warning
+				LS_ERROR     ///< Fatal error
+			};
     	
       ///Constructor
       TOPPViewBase(QWidget* parent=0);
@@ -143,7 +152,7 @@ namespace OpenMS
 			
 			/// Returns the active Layer data (0 if no layer is active)
 			const LayerData* getCurrentLayer() const;
-			
+      			
     public slots:
       /// changes the current path according to the currently active window/layer
       void updateCurrentPath();
@@ -220,7 +229,9 @@ namespace OpenMS
 			void spectrumSelectionChange(QTreeWidgetItem* current, QTreeWidgetItem* previous);
 			/// Opens a new 1D window and shows the spectrum, if not already in 1D
 			void spectrumDoubleClicked(QTreeWidgetItem* current, int /*col*/);
-
+			/// Finalize file loading.
+			void fileLoaded(bool success = false);
+			
     protected slots:
       /** @name Layer manager and filter manager slots
       */
@@ -332,7 +343,9 @@ namespace OpenMS
       Spectrum3DWidget* active3DWindow_() const;
       ///Estimates the noise by evaluating 10 random scans of MS level 1
       float estimateNoise_(const ExperimentType& exp);
-
+			/// Shows a log message in the log_ window 
+      void showLogMessage_(LogState state, const String& heading, const String& body); 
+      
       /// Layer managment widget
       QListWidget* layer_manager_;
 
@@ -434,16 +447,6 @@ namespace OpenMS
       void closeEvent(QCloseEvent* event);
 			void keyPressEvent(QKeyEvent* e);
 			//@}
-			
-			///Log message states
-			enum LogState
-			{ 
-				LS_NOTICE,   ///< Notice
-				LS_WARNING,  ///< Warning
-				LS_ERROR     ///< Fatal error
-			};
-			/// Shows a log message in the log_ window 
-      void showLogMessage_(LogState state, const String& heading, const String& body); 
       
       ///Additional context menu for 2D layers
       QMenu* add_2d_context_;
@@ -454,6 +457,9 @@ namespace OpenMS
       /// The current path (used for loading and storing).
       /// Depending on the preferences this is static or changes with the current window/layer.
       String current_path_;
+      
+      /// Thread for loading file.
+      FileHandlerThread* fhThread_;
   }
   ; //class
 

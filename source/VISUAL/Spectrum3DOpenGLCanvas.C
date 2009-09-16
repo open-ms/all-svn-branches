@@ -448,7 +448,6 @@ namespace OpenMS
 
   void Spectrum3DOpenGLCanvas::redraw()
   {
-cout << "10" << endl;
 	  //update the content
 		canvas_3d_.update_buffer_ = true;
 		canvas_3d_.update_(__PRETTY_FUNCTION__);  
@@ -457,6 +456,14 @@ cout << "10" << endl;
 	void Spectrum3DOpenGLCanvas::setViewMode(const Spectrum3DCanvas::ViewModes mode)
 	{
 	  view_mode_ = mode;
+	  switch(mode)
+	  {
+	    case Spectrum3DCanvas::VM_2D :
+	      setAngels(0, 0, 0);
+	      break;
+	    case Spectrum3DCanvas::VM_3D :
+	      break;
+	  }
 	  redraw();
 	}
 	
@@ -554,11 +561,6 @@ cout << "xrot_: " << xrot_ << " yrot_: " << yrot_ << " zrot_: " << zrot_ << " tr
 	  // init gl
 		GLuint list = glGenLists(1);
 	  glNewList(list, GL_COMPILE);
-
-    if(Spectrum3DCanvas::VM_2D == getViewMode())
-    {
-      setAngels(220,220,0);
-    }
 				        
     for(Size iLayer=0; iLayer<canvas_3d_.getLayerCount(); ++iLayer)
     {
@@ -755,15 +757,13 @@ cout << "xrot_: " << xrot_ << " yrot_: " << yrot_ << " zrot_: " << zrot_ << " tr
           }
           else
           {
-  cout << "14" << endl;
 					  if( !layer.getMappingThread()->isRunning() )
 					  {
-		          Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);
-	  cout << "15" << endl;            
+		          Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);     
 		          Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
 		          if(cols > 300) 
 		            cols = 300;
-	  cout << "16" << endl;
+
 		          layer.getMappingThread()->setDataSize(cols, rows);
 		          layer.getMappingThread()->setRange(
 		              canvas_3d_.visible_area_.min_[0],
@@ -771,11 +771,9 @@ cout << "xrot_: " << xrot_ << " yrot_: " << yrot_ << " zrot_: " << zrot_ << " tr
 		              canvas_3d_.visible_area_.min_[1],
 		              canvas_3d_.visible_area_.max_[1]);
 		          connect(layer.getMappingThread(), SIGNAL(finish()), this, SLOT(redraw()));
-	  cout << "17" << endl;
+
 		          layer.getMappingThread()->start();
-	  cout << "18" << endl;
 					  }
-	  cout << "19" << endl;
           }
         }
       }		

@@ -16,6 +16,7 @@ FastaIterator.C
 FastaIteratorIntern.C
 FeatureXMLFile.C
 FileHandler.C
+FileHandlerThread.C
 IdXMLFile.C
 InspectInfile.C
 InspectOutfile.C

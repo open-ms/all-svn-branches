@@ -136,7 +136,7 @@ namespace OpenMS
 					return false;
 				}
 			}
-cout << "filename: " << filename << " - file type: " << typeToName(type) << endl;
+cout << "filename to load: " << filename << " - file type: " << typeToName(type) << endl;
 			//load right file
 			switch(type)
 			{
@@ -242,6 +242,7 @@ cout << "filename: " << filename << " - file type: " << typeToName(type) << endl
 		*/
 		template <class PeakType> void storeExperiment(const String& filename, const MSExperiment<PeakType>& exp, ProgressLogger::LogType log = ProgressLogger::NONE)
 		{
+cout << "filename to store: " << filename << " - file type: " << typeToName(getTypeByFileName(filename)) << endl;
 			//load right file
 			switch(getTypeByFileName(filename))
 			{

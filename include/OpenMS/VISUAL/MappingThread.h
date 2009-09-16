@@ -25,8 +25,8 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_VISUAL_GRIDDATA_H
-#define OPENMS_VISUAL_GRIDDATA_H
+#ifndef OPENMS_VISUAL_MAPPINGTHREAD_H
+#define OPENMS_VISUAL_MAPPINGTHREAD_H
 
 #include <OpenMS/MATH/MISC/Struct3d.h>
 #include <QThread>
@@ -35,7 +35,7 @@ namespace OpenMS
 { 
 	class LayerData;
 
-  class MappingThread
+  class OPENMS_DLLAPI MappingThread
     : public QThread  
   {
     Q_OBJECT
@@ -53,7 +53,6 @@ namespace OpenMS
 			};
 
       MappingThread(LayerData* parent);
-      ~MappingThread();
       void run();
       
       void setDataSize(const Size cols, const Size rows);
@@ -104,9 +103,8 @@ namespace OpenMS
       double rt_max_;
       double rt_width_;
       LayerData* parent_;
-int iRef_;
   };
 
 } // namespace OpenMS
 
-#endif // OPENMS_VISUAL_GRIDDATA_H
+#endif // OPENMS_VISUAL_MAPPINGTHREAD_H

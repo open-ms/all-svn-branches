@@ -4,6 +4,7 @@ set(directory include/OpenMS/FORMAT)
 ### list all MOC filenames of the directory here
 set(sources_list
 MascotRemoteQuery.h
+FileHandlerThread.h
 )
 
 ### add path to the filenames
@@ -36,6 +37,7 @@ FastaIterator.h
 FastaIteratorIntern.h
 FeatureXMLFile.h
 FileHandler.h
+FileHandlerThread.h
 IdXMLFile.h
 InspectInfile.h
 InspectOutfile.h

@@ -18,6 +18,7 @@ FeatureXMLFile.C
 FileHandler.C
 FileHandlerThread.C
 IdXMLFile.C
+ImageFile.C
 InspectInfile.C
 InspectOutfile.C
 LibSVMEncoder.C

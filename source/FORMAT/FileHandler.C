@@ -34,7 +34,7 @@ using namespace std;
 
 namespace OpenMS
 {
-	const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML", "mzIdentML", "GelML", "TraML", "MSP", "txt", "fid", "OMSSAXML"};
+	const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML", "mzIdentML", "GelML", "TraML", "MSP", "txt", "fid", "OMSSAXML", "BMP", "GIF", "JPG", "JPEG", "PNG", "PBM", "PGM", "PPM", "TIFF", "XBM", "XPM"};
 
 	FileTypes::Type FileHandler::getType(const String& filename)
 	{
@@ -63,7 +63,51 @@ namespace OpenMS
 		}
 		tmp.toUpper();
 		
-		if (tmp == "TXT")
+		if (tmp == "BMP")
+		{
+			return FileTypes::BMP;
+		}
+		else if (tmp == "GIF")
+		{
+			return FileTypes::GIF;
+		}
+		else if (tmp == "JPG")
+		{
+			return FileTypes::JPG;
+		}
+		else if (tmp == "JPEG")
+		{
+			return FileTypes::JPEG;
+		}
+		else if (tmp == "PNG")
+		{
+			return FileTypes::PNG;
+		}
+		else if (tmp == "PBM")
+		{
+			return FileTypes::PBM;
+		}
+		else if (tmp == "PGM")
+		{
+			return FileTypes::PGM;
+		}
+		else if (tmp == "PPM")
+		{
+			return FileTypes::PPM;
+		}
+		else if (tmp == "TIFF")
+		{
+			return FileTypes::TIFF;
+		}
+		else if (tmp == "XBM")
+		{
+			return FileTypes::XBM;
+		}
+		else if (tmp == "XPM")
+		{
+			return FileTypes::XPM;
+		}
+		else if (tmp == "TXT")
 		{
 			return FileTypes::AUTOEXECUTE;
 		}
@@ -180,6 +224,28 @@ namespace OpenMS
 	{
 		switch (type)
 		{
+		case FileTypes::BMP:
+			return true;
+		case FileTypes::GIF:
+			return true;
+		case FileTypes::JPG:
+			return true;
+		case FileTypes::JPEG:
+			return true;
+		case FileTypes::PNG:
+			return true;
+		case FileTypes::PBM:
+			return true;
+		case FileTypes::PGM:
+			return true;
+		case FileTypes::PPM:
+			return true;
+		case FileTypes::TIFF:
+			return true;
+		case FileTypes::XBM:
+			return true;
+		case FileTypes::XPM:
+			return true;
 		case FileTypes::AUTOEXECUTE:
 			return true;		
 		case FileTypes::XMASS:

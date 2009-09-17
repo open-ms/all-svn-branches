@@ -3,8 +3,8 @@ set(directory include/OpenMS/FORMAT)
 
 ### list all MOC filenames of the directory here
 set(sources_list
-MascotRemoteQuery.h
 FileHandlerThread.h
+MascotRemoteQuery.h
 )
 
 ### add path to the filenames
@@ -39,6 +39,7 @@ FeatureXMLFile.h
 FileHandler.h
 FileHandlerThread.h
 IdXMLFile.h
+ImageFile.h
 InspectInfile.h
 InspectOutfile.h
 LibSVMEncoder.h

@@ -554,10 +554,6 @@ namespace OpenMS
 			
 	GLuint Spectrum3DOpenGLCanvas::makeData()
 	{
-cout << "Spectrum3DOpenGLCanvas::makeData()" << endl;
-cout << "corner_: " << corner_ << " near_: " << near_ << " far_: " << far_ << " zoom_: " << zoom_ << endl;
-cout << "xrot_: " << xrot_ << " yrot_: " << yrot_ << " zrot_: " << zrot_ << " trans_x_: " << trans_x_ << " trans_y_: " << trans_y_ << endl;
-
 	  // init gl
 		GLuint list = glGenLists(1);
 	  glNewList(list, GL_COMPILE);
@@ -565,6 +561,7 @@ cout << "xrot_: " << xrot_ << " yrot_: " << yrot_ << " zrot_: " << zrot_ << " tr
     for(Size iLayer=0; iLayer<canvas_3d_.getLayerCount(); ++iLayer)
     {
 	    LayerData& layer = canvas_3d_.getLayer(iLayer);
+cout << "map size: " << layer.peaks.getSize() << " x: " << layer.peaks.begin()->size() << " y: " << layer.peaks.size() << endl;		    
 	    if(layer.visible)
 	    {
         // set drawing width
@@ -584,103 +581,109 @@ cout << "xrot_: " << xrot_ << " yrot_: " << yrot_ << " zrot_: " << zrot_ << " tr
           glDisable(GL_POINT_SMOOTH);
           glDisable(GL_LINE_SMOOTH);
         }			    
-
         recalculateDotGradient_(iLayer);
             
 	      if(MappingThread::MM_NONE == layer.getMappingMode())
 	      {
 	        double currentRT = 0.0;
           glBegin(GL_POINTS);
-                  	        
-          for(Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.peaks.areaBeginConst(
-		          canvas_3d_.visible_area_.min_[1],
-		          canvas_3d_.visible_area_.max_[1],
-		          canvas_3d_.visible_area_.min_[0],
-		          canvas_3d_.visible_area_.max_[0]); 
-				    it != layer.peaks.areaEndConst(); 
-				    ++it)
-		      {
-			      PeakIndex pi = it.getPeakIndex();
-			      if (layer.filters.passes(layer.peaks[pi.spectrum],pi.peak))
-			      {
-			        Struct3d baseVertex(- corner_ + (GLfloat) scaledMZ(it->getMZ()),
-			                            - near_ - 2 * corner_ - (GLfloat) scaledRT(it.getRT()),
-											            - corner_);
-			        Struct3d topVertex(- corner_ + (GLfloat) scaledMZ(it->getMZ()),
-			                            - near_ - 2 * corner_ - (GLfloat) scaledRT(it.getRT()),
-											            - corner_ + (GLfloat) scaledIntensity(it->getIntensity(), iLayer));
-									         
-							QColor baseColor, topColor;
-				      switch (canvas_3d_.intensity_mode_)
-				      {
-					      case SpectrumCanvas::IM_NONE:
-						      baseColor = QColor( layer.gradient.precalculatedColorAt(canvas_3d_.overall_data_range_.min_[2]));
-						      topColor = QColor( layer.gradient.precalculatedColorAt(it->getIntensity()));
-						      break;				      
-					      case SpectrumCanvas::IM_PERCENTAGE:	
-						      baseColor = QColor( layer.gradient.precalculatedColorAt(0));
-						      topColor = QColor( layer.gradient.precalculatedColorAt(it->getIntensity() * 100.0 /canvas_3d_.getMaxIntensity(iLayer)) );
-						      break;
-					      case SpectrumCanvas::IM_SNAP:
-						      baseColor = QColor(layer.gradient.precalculatedColorAt(int_scale_.min_[0]));
-						      topColor = QColor(layer.gradient.precalculatedColorAt(it->getIntensity()));
-						      break;
-				      }
-				      
-				      switch(getPrimitiveMode())
-              {                  
-                case LayerData::PM_LINES :
-                  if(it.getRT() != currentRT)
-                  {
-                    glEnd();
-                    glBegin(GL_LINES);
-                    currentRT = it.getRT();
-                  }
-                  qglColor(baseColor);
-                  glVertex3d(baseVertex.mz, baseVertex.intensity, baseVertex.rt);
-                  qglColor(topColor);
-                  glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
-                  break;
-                  
-                case LayerData::PM_LINESTRIP :
-                  if(it.getRT() != currentRT)
-                  {
-                    glEnd();
-                    glBegin(GL_LINES);
-                    currentRT = it.getRT();
-                  }
-                  qglColor(topColor);
-                  glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
-                  break;
-                  
-                case LayerData::PM_TRIANGLES :
-                  if(it.getRT() != currentRT)
-                  {
-                    glEnd();
-                    glBegin(GL_TRIANGLE_STRIP);
-                    currentRT = it.getRT();
-                  }
-                  qglColor(baseColor);
-                  glVertex3d(baseVertex.mz, baseVertex.intensity, baseVertex.rt);
-                  qglColor(topColor);
-                  glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
-                  break;
+              
+          try
+          {
+            for(Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.peaks.areaBeginConst(
+		            canvas_3d_.visible_area_.min_[1],
+		            canvas_3d_.visible_area_.max_[1],
+		            canvas_3d_.visible_area_.min_[0],
+		            canvas_3d_.visible_area_.max_[0]); 
+				      it != layer.peaks.areaEndConst(); 
+				      ++it)
+		        {
+			        PeakIndex pi = it.getPeakIndex();
+			        if (layer.filters.passes(layer.peaks[pi.spectrum],pi.peak))
+			        {
+			          Struct3d baseVertex(- corner_ + (GLfloat) scaledMZ(it->getMZ()),
+			                              - near_ - 2 * corner_ - (GLfloat) scaledRT(it.getRT()),
+											              - corner_);
+			          Struct3d topVertex(- corner_ + (GLfloat) scaledMZ(it->getMZ()),
+			                              - near_ - 2 * corner_ - (GLfloat) scaledRT(it.getRT()),
+											              - corner_ + (GLfloat) scaledIntensity(it->getIntensity(), iLayer));
+									           
+							  QColor baseColor, topColor;
 
-                case LayerData::PM_POINTS :
-                default :
-                  if(it.getRT() != currentRT)
-                  {
-                    glEnd();
-                    glBegin(GL_POINTS);
-                    currentRT = it.getRT();
-                  }
-                  qglColor(topColor);
-                  glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
-                  break;             
-              }
-				      glEnd();
-			      }
+			          switch (canvas_3d_.intensity_mode_)
+			          {
+				          case SpectrumCanvas::IM_NONE:
+					          baseColor = QColor( layer.gradient.precalculatedColorAt(canvas_3d_.overall_data_range_.min_[2]));
+					          topColor = QColor( layer.gradient.precalculatedColorAt(it->getIntensity()));
+					          break;				      
+				          case SpectrumCanvas::IM_PERCENTAGE:	
+					          baseColor = QColor( layer.gradient.precalculatedColorAt(0));
+					          topColor = QColor( layer.gradient.precalculatedColorAt(it->getIntensity() * 100.0 /canvas_3d_.getMaxIntensity(iLayer)) );
+					          break;
+				          case SpectrumCanvas::IM_SNAP:
+					          baseColor = QColor(layer.gradient.precalculatedColorAt(int_scale_.min_[0]));
+					          topColor = QColor(layer.gradient.precalculatedColorAt(it->getIntensity()));
+					          break;
+			          }
+				        
+				        switch(getPrimitiveMode())
+                {                  
+                  case LayerData::PM_LINES :
+                    if(it.getRT() != currentRT)
+                    {
+                      glEnd();
+                      glBegin(GL_LINES);
+                      currentRT = it.getRT();
+                    }
+                    qglColor(baseColor);
+                    glVertex3d(baseVertex.mz, baseVertex.intensity, baseVertex.rt);
+                    qglColor(topColor);
+                    glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
+                    break;
+                    
+                  case LayerData::PM_LINESTRIP :
+                    if(it.getRT() != currentRT)
+                    {
+                      glEnd();
+                      glBegin(GL_LINES);
+                      currentRT = it.getRT();
+                    }
+                    qglColor(topColor);
+                    glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
+                    break;
+                    
+                  case LayerData::PM_TRIANGLES :
+                    if(it.getRT() != currentRT)
+                    {
+                      glEnd();
+                      glBegin(GL_TRIANGLE_STRIP);
+                      currentRT = it.getRT();
+                    }
+                    qglColor(baseColor);
+                    glVertex3d(baseVertex.mz, baseVertex.intensity, baseVertex.rt);
+                    qglColor(topColor);
+                    glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
+                    break;
+
+                  case LayerData::PM_POINTS :
+                  default :
+                    if(it.getRT() != currentRT)
+                    {
+                      glEnd();
+                      glBegin(GL_POINTS);
+                      currentRT = it.getRT();
+                    }
+                    qglColor(topColor);
+                    glVertex3d(topVertex.mz, topVertex.intensity, topVertex.rt);
+                    break;             
+                }
+				        glEnd();
+			        }
+			      }			      
 		      }
+		      catch(...)
+		      {
+		      }		      
 	      }
 	      else
 	      {
@@ -721,59 +724,80 @@ cout << "xrot_: " << xrot_ << " yrot_: " << yrot_ << " zrot_: " << zrot_ << " tr
             Vector3d normalsList = layer.getMappingThread()->getNormals();
             Iterator3d vertexIt = vertexList.begin();
             Iterator3d normalIt = normalsList.begin();
-            for(; vertexIt!=vertexList.end(); ++vertexIt)
+            
+            try
             {
-			        switch (canvas_3d_.intensity_mode_)
-			        {
-				        case SpectrumCanvas::IM_PERCENTAGE :	
-				          qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity * 100.0 / canvas_3d_.getMaxIntensity(iLayer)) );
-				          break;
-				        case SpectrumCanvas::IM_NONE :	
-				          qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity) );
-				          break;
-				        case SpectrumCanvas::IM_SNAP :	
-				          qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity) );
-				          break;
-				      }
-				      if(Spectrum3DCanvas::VM_2D == getViewMode())
-				      {
-			          glVertex3d(- corner_ + (GLfloat) scaledMZ(vertexIt->mz),
-								           - corner_,
-								           - near_ - 2 * corner_ - (GLfloat) scaledRT(vertexIt->rt));
-						  }
-						  else
-						  {
-			          glVertex3d(- corner_ + (GLfloat) scaledMZ(vertexIt->mz),
-								           - corner_ + (GLfloat) scaledIntensity(vertexIt->intensity, iLayer),
-								           - near_ - 2 * corner_ - (GLfloat) scaledRT(vertexIt->rt));
-								if(!normalsList.empty())
-								{
-								  // add normals
-								  // glNormal3d(normal.x1, normal.y1, normal.z1);    
-								}
-						  }
+              for(; vertexIt!=vertexList.end(); ++vertexIt)
+              {
+
+		            switch (canvas_3d_.intensity_mode_)
+		            {
+			            case SpectrumCanvas::IM_PERCENTAGE :
+                    qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity * 100.0 / canvas_3d_.getMaxIntensity(iLayer)) );
+			              break;
+			            case SpectrumCanvas::IM_NONE :	
+                    qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity) );
+			              break;
+			            case SpectrumCanvas::IM_SNAP :	
+			              qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity) );
+			              break;
+			          }		      
+                    				      
+				        if(Spectrum3DCanvas::VM_2D == getViewMode())
+				        {
+			            glVertex3d(- corner_ + (GLfloat) scaledMZ(vertexIt->mz),
+								             - corner_,
+								             - near_ - 2 * corner_ - (GLfloat) scaledRT(vertexIt->rt));
+						    }
+						    else
+						    {
+			            glVertex3d(- corner_ + (GLfloat) scaledMZ(vertexIt->mz),
+								             - corner_ + (GLfloat) scaledIntensity(vertexIt->intensity, iLayer),
+								             - near_ - 2 * corner_ - (GLfloat) scaledRT(vertexIt->rt));
+								  if(!normalsList.empty())
+								  {
+								    // add normals
+								    // glNormal3d(normal.x1, normal.y1, normal.z1);    
+								  }
+						    }
+              }
             }
+            catch(...)
+            {
+            }		    
 	          glEnd();
           }
           else
           {
-					  if( !layer.getMappingThread()->isRunning() )
-					  {
-		          Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);     
-		          Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);
-		          if(cols > 300) 
-		            cols = 300;
+				    if( !layer.getMappingThread()->isRunning() )
+				    {
+/*	            Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);     
+	            Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);*/
+Size cols = layer.peaks.size();
+Spectrum3DCanvas::ExperimentType::Iterator it = layer.peaks.begin();
+Size rows	= it->size();
+cout << "Dim: ";
+for(; it!=layer.peaks.end(); ++it)
+  if(it->size() > rows)
+  {
+    cout << " " << it->size();
+    rows = it-> size();
+  }
+cout << endl << "rows: " << rows << " cols: " << cols << endl;
+	            
+	            if(cols > 500) 
+	              cols = 500;
 
-		          layer.getMappingThread()->setDataSize(cols, rows);
-		          layer.getMappingThread()->setRange(
-		              canvas_3d_.visible_area_.min_[0],
-		              canvas_3d_.visible_area_.max_[0],
-		              canvas_3d_.visible_area_.min_[1],
-		              canvas_3d_.visible_area_.max_[1]);
-		          connect(layer.getMappingThread(), SIGNAL(finish()), this, SLOT(redraw()));
+	            layer.getMappingThread()->setDataSize(cols, rows);
+	            layer.getMappingThread()->setRange(
+	                canvas_3d_.visible_area_.min_[0],
+	                canvas_3d_.visible_area_.max_[0],
+	                canvas_3d_.visible_area_.min_[1],
+	                canvas_3d_.visible_area_.max_[1]);
+	            connect(layer.getMappingThread(), SIGNAL(finish()), this, SLOT(redraw()));
 
-		          layer.getMappingThread()->start();
-					  }
+	            layer.getMappingThread()->start();
+				    }
           }
         }
       }		

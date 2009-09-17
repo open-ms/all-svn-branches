@@ -1419,7 +1419,6 @@ namespace OpenMS
     Spectrum3DWidget* w = active3DWindow_();
     if (w)
     {
-cout << "TOPPViewBase::setMappingMode3D(int index) : " << (int) index << endl;
     	w->canvas()->setMappingMode((MappingThread::MappingModes) index);
   	}
   }
@@ -1429,7 +1428,6 @@ cout << "TOPPViewBase::setMappingMode3D(int index) : " << (int) index << endl;
     Spectrum3DWidget* w = active3DWindow_();
     if (w)
     {
-cout << "TOPPViewBase::setPrimitiveMode3D(int index) : " << (int) index << endl;
     	w->canvas()->setPrimitiveMode((LayerData::PrimitiveModes) index);
   	}
   }
@@ -1439,7 +1437,6 @@ cout << "TOPPViewBase::setPrimitiveMode3D(int index) : " << (int) index << endl;
     Spectrum3DWidget* w = active3DWindow_();
     if (w)
     {
-cout << "TOPPViewBase::setAction3D(int index) : " << (int) index << endl;
     	w->canvas()->setAction((Spectrum3DCanvas::Actions) index);
   	}
   }
@@ -2357,8 +2354,8 @@ cout << "TOPPViewBase::setAction3D(int index) : " << (int) index << endl;
 		filter_all +=" *.cdf";
 		filter_single += ";;ANDI/MS files (*.cdf)";
 #endif
-		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML fid *.txt);;" ;
-		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;XML files (*.xml);;XMass Analysis (fid);;AutoExecute files (*.txt);;all files (*)";
+		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML fid *.txt *.bmp *.gif *.jpg *.jpeg *.png *.pbm *.pgm *.ppm *.tiff *.xbm *.xpm);;" ;
+		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;XML files (*.xml);;XMass Analysis (fid);;AutoExecute files (*.txt);;Windows Bitmap (*.bmp);;Graphic Interchange Format (*.gif);;Joint Photographic Experts Group (*.jpg *.jpeg);;Portable Network Graphics (*.png);;Portable Bitmap (*.pbm);;Portable Graymap (*.pgm);;Portable Pixmap (*.ppm);;Tagged Image File Format (*.tiff);;X11 Bitmap (*.xbm *.xpm);;all files (*)";
 		
 		QString open_path = current_path_.toQString();
 		if (path_overwrite!="")

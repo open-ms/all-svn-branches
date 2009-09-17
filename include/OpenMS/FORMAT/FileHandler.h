@@ -32,6 +32,7 @@
 #include <OpenMS/FORMAT/FileTypes.h>
 #include <OpenMS/FORMAT/DTAFile.h>
 #include <OpenMS/FORMAT/DTA2DFile.h>
+#include <OpenMS/FORMAT/ImageFile.h>
 #include <OpenMS/FORMAT/MzXMLFile.h>
 #include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
@@ -140,6 +141,23 @@ cout << "filename to load: " << filename << " - file type: " << typeToName(type)
 			//load right file
 			switch(type)
 			{
+			  case FileTypes::BMP:
+			  case FileTypes::GIF:
+			  case FileTypes::JPG:
+			  case FileTypes::JPEG:
+			  case FileTypes::PNG:
+			  case FileTypes::PBM:
+			  case FileTypes::PGM:
+			  case FileTypes::PPM:
+			  case FileTypes::TIFF:
+			  case FileTypes::XBM:
+			  case FileTypes::XPM:
+			    {
+				    exp.reset();
+				    ImageFile().load(filename, exp);
+					  return true;
+			    }
+			    break;
 				case FileTypes::AUTOEXECUTE:
 					{
 					  exp.reset();

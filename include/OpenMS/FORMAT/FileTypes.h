@@ -66,6 +66,17 @@ namespace OpenMS
 			AUTOEXECUTE,     		///< AutoExecute file (.txt)
 			XMASS,           		///< XMass Analysis file (fid)			
 			OMSSAXML,						///< OMSSA XML file format for peptide identifications (.xml)
+			BMP,                ///< Windows Bitmap
+      GIF,                ///< Graphic Interchange Format
+      JPG,                ///< Joint Photographic Experts Group
+      JPEG,               ///< Joint Photographic Experts Group
+      PNG,                ///< Portable Network Graphics
+      PBM,                ///< Portable Bitmap
+      PGM,                ///< Portable Graymap
+      PPM,                ///< Portable Pixmap
+      TIFF,               ///< Tagged Image File Format
+      XBM,                ///< X11 Bitmap
+      XPM,                ///< X11 Pixmap
 			SIZE_OF_TYPE    		///< No file type. Simply stores the number of types
 		};
 	};

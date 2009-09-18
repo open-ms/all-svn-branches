@@ -145,6 +145,9 @@ namespace OpenMS
 		  /// Set primitive mode
 		  PrimitiveModes getPrimitiveMode() const;
 		  
+		  /// Reset mapping data
+		  void resetMapping();
+		  
 		  /// if this layer is visible
 		  bool visible;
 		  /// if this layer is flipped (1d mirror view)

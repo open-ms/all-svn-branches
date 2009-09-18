@@ -170,6 +170,14 @@ namespace OpenMS
     return primitive_mode_;
   }	
   
+  void LayerData::resetMapping()
+  {
+		if(NULL != mapping_thread_)
+		{
+      mapping_thread_->clearData();
+    }
+  }  
+  
 	const std::string LayerData::NamesOfLabelType[] = {"None","Index","Label meta data","Peptide identification"};
 	
 	std::ostream& operator << (std::ostream& os, const LayerData& rhs)

@@ -264,12 +264,21 @@ cout << "filename to store: " << filename << " - file type: " << typeToName(getT
 			//load right file
 			switch(getTypeByFileName(filename))
 			{
+			  case FileTypes::DTA:
 				case FileTypes::DTA2D:
 					{
-						DTA2DFile f;
-						f.getOptions() = options_;
-						f.setLogType(log);
-						f.store(filename,exp);
+					  if(exp.size() == 1)
+					  {
+						  DTAFile f;
+						  f.store(filename, exp[0]);
+						}
+						else
+						{
+						  DTA2DFile f;
+						  f.getOptions() = options_;
+						  f.setLogType(log);
+						  f.store(filename, exp);						
+						}
 					}
 					break;
 				case FileTypes::MZXML:

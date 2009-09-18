@@ -1809,7 +1809,7 @@ namespace OpenMS
 
 		if (layer.type==LayerData::DT_PEAK) //peak data
 		{
-    	QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzML files (*.mzML);;mzData files (*.mzData);;mzXML files (*.mzXML);;All files (*)");
+    	QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"DTA files (*.DTA *.DTA2D);;mzML files (*.mzML);;mzData files (*.mzData);;mzXML files (*.mzXML);;All files (*)");
 			if (!file_name.isEmpty())
 			{
 	    	if (visible) //only visible data

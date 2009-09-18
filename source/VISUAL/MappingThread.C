@@ -43,7 +43,6 @@ namespace OpenMS
 
   void MappingThread::run()
   {
-cout << "run() " << endl;
     // update data
     if(data_.empty())
       updateData_();
@@ -62,7 +61,13 @@ cout << "run() " << endl;
   void MappingThread::setDataSize(const Size cols,const Size rows)
   {  
     cols_ = cols;
+    if(cols_ < 10)
+      cols_ = 10;
+      
     rows_ = rows;
+    if(rows_ < 10)
+      rows_ = 10;
+      
     data_.clear();
   }
   
@@ -100,15 +105,47 @@ cout << "run() " << endl;
       case MappingThread::MM_NONE :
         return 0;
       case MappingThread::MM_POINTS :
-        return rows_;
+        return cols_;
       case MappingThread::MM_PEAKS :
       case MappingThread::MM_MAP :
       case MappingThread::MM_PSEUDOGEL :
-        return rows_ * 2;
+        return cols_ * 2;
       default : 
         return 0;		      
     }
   }
+
+  double MappingThread::getRtMin()
+  {
+    switch(parent_->getMappingMode())
+    {
+      case MappingThread::MM_POINTS :
+      case MappingThread::MM_PEAKS :
+      case MappingThread::MM_MAP :
+        return rt_min_;
+      case MappingThread::MM_PSEUDOGEL :
+        return rt_min_ - (rt_width_ / 2.0);
+      case MappingThread::MM_NONE :        
+      default : 
+        return 0.0;	        
+    }
+  }
+  
+  double MappingThread::getRtMax()
+  {
+    switch(parent_->getMappingMode())
+    {
+      case MappingThread::MM_POINTS :
+      case MappingThread::MM_PEAKS :
+      case MappingThread::MM_MAP :
+        return rt_max_;
+      case MappingThread::MM_PSEUDOGEL :
+        return rt_max_ + (rt_width_ / 2.0);
+      case MappingThread::MM_NONE :        
+      default : 
+        return 0.0;	        
+    }
+  }  
       
   const Vector3d& MappingThread::getVertex()
   {

@@ -82,14 +82,12 @@ namespace OpenMS
           for(int x=0; x<w; ++x)
           {
             typename MapType::SpectrumType::PeakType p;
-					  p.setIntensity(256.0 - 1.0 * qGray(img.pixel(x, y)));
+					  p.setIntensity(256.0 - 1.0 * qGray(img.pixel(x, h-y-1)));
 					  p.setMZ(1.0 + 1.0 * x);
 					  spectrum.push_back(p);            
-          }
-std::cout << " #### " << y << " size: " << spectrum.size();          
+          }   
           map.push_back(spectrum);
         }
-std::cout << "map size: " << map.size() << std::endl;        
       }
 
 			/**

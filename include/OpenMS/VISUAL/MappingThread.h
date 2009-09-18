@@ -60,7 +60,9 @@ namespace OpenMS
 
       Size getRowSize();
       Size getColSize();
-            
+      double getRtMin();
+      double getRtMax();            
+      
       const Vector3d& getVertex();
       const Vector3d& getNormals();
       

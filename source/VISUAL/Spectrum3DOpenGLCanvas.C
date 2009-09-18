@@ -31,6 +31,7 @@
 
 #include <QtGui/QMouseEvent>
 #include <QtGui/QKeyEvent>
+#include <map>
 
 namespace OpenMS
 {
@@ -560,8 +561,7 @@ namespace OpenMS
 				        
     for(Size iLayer=0; iLayer<canvas_3d_.getLayerCount(); ++iLayer)
     {
-	    LayerData& layer = canvas_3d_.getLayer(iLayer);
-cout << "map size: " << layer.peaks.getSize() << " x: " << layer.peaks.begin()->size() << " y: " << layer.peaks.size() << endl;		    
+	    LayerData& layer = canvas_3d_.getLayer(iLayer);	    
 	    if(layer.visible)
 	    {
         // set drawing width
@@ -683,54 +683,65 @@ cout << "map size: " << layer.peaks.getSize() << " x: " << layer.peaks.begin()->
 		      }
 		      catch(...)
 		      {
+            cout << "Error: " << __FILE__ << endl <<__LINE__ << endl <<__PRETTY_FUNCTION__ << endl;
 		      }		      
 	      }
 	      else
 	      {
           if(layer.getMappingThread()->isValide())
-          {
-            switch(getPrimitiveMode())
-            {
-              case LayerData::PM_POINTS :
-                glBegin(GL_POINTS);
-                break;
-              case LayerData::PM_LINES :
-                glBegin(GL_LINES);
-                break;
-              case LayerData::PM_LINESTRIP :
-                glBegin(GL_LINE_STRIP);
-                break;
-              case LayerData::PM_TRIANGLES :
-                glBegin(GL_TRIANGLES);
-                break;
-              case LayerData::PM_TRIANGLESTRIP :
-                glBegin(GL_TRIANGLE_STRIP);
-                break;
-              case LayerData::PM_QUADS :
-                glBegin(GL_QUADS);
-                break;
-              case LayerData::PM_QUADSTRIP :
-                glBegin(GL_QUAD_STRIP);
-                break;
-              case LayerData::PM_POLYGON :
-                glBegin(GL_POLYGON);
-                break;
-	            default :
-                glBegin(GL_POINTS);	            
-	              break;                
-            }
-		          
+          {		          
             Vector3d vertexList = layer.getMappingThread()->getVertex();
             Vector3d normalsList = layer.getMappingThread()->getNormals();
             Iterator3d vertexIt = vertexList.begin();
             Iterator3d normalIt = normalsList.begin();
+            Size colIndex = 0;
             
             try
             {
               for(; vertexIt!=vertexList.end(); ++vertexIt)
               {
-
-		            switch (canvas_3d_.intensity_mode_)
+                if( colIndex == layer.getMappingThread()->getColSize() )
+                {
+                  glEnd();
+                  colIndex = 0;
+                }
+                
+                if( colIndex == 0 )
+                {
+                  switch(getPrimitiveMode())
+                  {
+                    case LayerData::PM_POINTS :
+                      glBegin(GL_POINTS);
+                      break;
+                    case LayerData::PM_LINES :
+                      glBegin(GL_LINES);
+                      break;
+                    case LayerData::PM_LINESTRIP :
+                      glBegin(GL_LINE_STRIP);
+                      break;
+                    case LayerData::PM_TRIANGLES :
+                      glBegin(GL_TRIANGLES);
+                      break;
+                    case LayerData::PM_TRIANGLESTRIP :
+                      glBegin(GL_TRIANGLE_STRIP);
+                      break;
+                    case LayerData::PM_QUADS :
+                      glBegin(GL_QUADS);
+                      break;
+                    case LayerData::PM_QUADSTRIP :
+                      glBegin(GL_QUAD_STRIP);
+                      break;
+                    case LayerData::PM_POLYGON :
+                      glBegin(GL_POLYGON);
+                      break;
+	                  default :
+                      glBegin(GL_POINTS);	            
+	                    break;                
+                  }                
+                }
+                ++colIndex;
+                
+		            switch(canvas_3d_.intensity_mode_)
 		            {
 			            case SpectrumCanvas::IM_PERCENTAGE :
                     qglColor( layer.gradient.precalculatedColorAt(vertexIt->intensity * 100.0 / canvas_3d_.getMaxIntensity(iLayer)) );
@@ -764,29 +775,31 @@ cout << "map size: " << layer.peaks.getSize() << " x: " << layer.peaks.begin()->
             }
             catch(...)
             {
+              cout << "Error: " << __FILE__ << endl <<__LINE__ << endl <<__PRETTY_FUNCTION__ << endl;
             }		    
 	          glEnd();
           }
           else
-          {
+          {  
 				    if( !layer.getMappingThread()->isRunning() )
 				    {
-/*	            Size rows = layer.peaks.RTEnd(canvas_3d_.visible_area_.max_[1]) - layer.peaks.RTBegin(canvas_3d_.visible_area_.min_[1]);     
-	            Size cols = (Size) ceil((canvas_3d_.visible_area_.max_[0] - canvas_3d_.visible_area_.min_[0]) / 0.5);*/
-Size cols = layer.peaks.size();
-Spectrum3DCanvas::ExperimentType::Iterator it = layer.peaks.begin();
-Size rows	= it->size();
-cout << "Dim: ";
-for(; it!=layer.peaks.end(); ++it)
-  if(it->size() > rows)
-  {
-    cout << " " << it->size();
-    rows = it-> size();
-  }
-cout << endl << "rows: " << rows << " cols: " << cols << endl;
-	            
-	            if(cols > 500) 
-	              cols = 500;
+              Size cols	= 0;
+              {
+                Spectrum3DCanvas::ExperimentType::SpectrumType spectrum = *layer.peaks.RTBegin(0.0);
+                cols = distance(spectrum.MZBegin(canvas_3d_.visible_area_.min_[0]), 
+                  spectrum.MZEnd(canvas_3d_.visible_area_.max_[0]));
+                if(cols > 500) 
+                  cols = 500;
+              }
+
+              Size rows	= 0;
+              {
+                Spectrum3DCanvas::ExperimentType::Iterator it = layer.peaks.begin();
+                for(; it!=layer.peaks.end() && it->getRT()<canvas_3d_.visible_area_.min_[1]; ++it)
+                  {}
+                for(; it!=layer.peaks.end() && it->getRT()<canvas_3d_.visible_area_.max_[1]; ++it, ++rows)
+                  {}
+              }
 
 	            layer.getMappingThread()->setDataSize(cols, rows);
 	            layer.getMappingThread()->setRange(
@@ -802,226 +815,10 @@ cout << endl << "rows: " << rows << " cols: " << cols << endl;
         }
       }		
     }
-
 		glEndList();
 		return list; 
 	}   
-			    
-		  /*	  
-	      recalculateDotGradient_(iLayer);
-	       
-	      if((Int)layer.param.getValue("dot:shade_mode"))
-			    glShadeModel(GL_SMOOTH); 
-		    else
-			    glShadeModel(GL_FLAT); 
-	
-	      if(pSimple)
-	      {			  			      
-	        map_->init(cols, rows, this, iLayer);
-	        map_->importData(
-	          layer.peaks.areaBeginConst(
-	            canvas_3d_.visible_area_.min_[1],
-	            canvas_3d_.visible_area_.max_[1],
-	            canvas_3d_.visible_area_.min_[0],
-	            canvas_3d_.visible_area_.max_[0]),
-				    layer.peaks.areaEndConst());
-					
-			    if(getMappingMode() == Spectrum3DCanvas::DM_POINTS)
-		      {			    
-		        glBegin(GL_POINTS);
-		        glPointSize(10.0);
-	        
-		        for(Size ii=0; ii<cols; ++ii)
-		        {
-		          for(Size jj=0; jj<rows; ++jj)
-		          {				    
-		            vertexList vertex = map_->getVertex(ii,jj);  
-		            qglColor(vertex.color1);
-		            //glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-		          }
-		        }
-		        glEnd();				    						    
-		      }
-		      
-			    if(getMappingMode() == Spectrum3DCanvas::DM_PEAKS)
-		      {				    
-		        glBegin(GL_LINES);
-		        
-		        for(Size ii=0; ii<cols; ++ii)
-		        {
-		          for(Size jj=0; jj<rows; ++jj)
-		          {
-		            vertexList vertex = map_->getVertex(ii,jj);  
-		            qglColor(vertex.color1);
-		            glVertex3d(vertex.x1, vertex.y1-1, vertex.z1);
-		            qglColor(vertex.color2);
-		            glVertex3d(vertex.x2, vertex.y2+1, vertex.z2);
-		          }
-		        }
-		        glEnd();
-		      }
-		      
-		      if(getMappingMode() == Spectrum3DCanvas::DM_LINES || getMappingMode() == Spectrum3DCanvas::DM_MAP)
-		      {
-		        for(Size jj=0; jj<rows-1; ++jj)
-		        {
-		          if(getMappingMode() == Spectrum3DCanvas::DM_MAP)
-		          {
-    			      glBegin(GL_TRIANGLE_STRIP);
-
-                vertexList vertex = map_->getVertex(Size(0), jj);
-                qglColor(vertex.color1);
-                glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                //vertexList normal = map_->getNormals(0, jj);
-                //glNormal3d(normal.x1, normal.y1, normal.z1);
-                
-                vertex = map_->getVertex(Size(0), jj+1);
-                qglColor(vertex.color1);
-                glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                //normal = map_->getNormals(0, jj+1);
-                //glNormal3d(normal.x1, normal.y1, normal.z1);              	        
-		              
-		            for(Size ii=0; ii<cols-1; ++ii)
-		            {
-                  vertex = map_->getVertex(ii+1, jj);
-                  qglColor(vertex.color1);
-                  glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                  //vertexList normal = map_->getNormals(ii+1, jj);
-                  //glNormal3d(normal.x1, normal.y1, normal.z1);                
-                  
-                  vertex = map_->getVertex(ii+1, jj+1);
-                  qglColor(vertex.color1);
-                  glVertex3d(vertex.x1, vertex.y1, vertex.z1);					
-                  //normal = map_->getNormals(ii+1, jj+1);
-                  //glNormal3d(normal.x1, normal.y1, normal.z1);   
-                }
-		            glEnd();
-		          }
-
-		          {
-				        glBegin(GL_LINE_STRIP);
-
-                vertexList vertex = map_->getVertex(Size(0), jj);
-                qglColor(vertex.color1);
-                glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                //vertexList normal = map_->getNormals(0, jj);
-                //glNormal3d(normal.x1, normal.y1, normal.z1);
-                
-                vertex = map_->getVertex(Size(0), jj+1);
-                qglColor(vertex.color1);
-                glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                //normal = map_->getNormals(0, jj+1);
-                //glNormal3d(normal.x1, normal.y1, normal.z1);              	        
-		              
-		            for(Size ii=0; ii<cols-1; ++ii)
-		            {
-                  vertex = map_->getVertex(ii+1, jj);
-                  qglColor(vertex.color1);
-                  glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                  //vertexList normal = map_->getNormals(ii+1, jj);
-                  //glNormal3d(normal.x1, normal.y1, normal.z1);                
-                  
-                  vertex = map_->getVertex(ii+1, jj+1);
-                  qglColor(vertex.color1);
-                  glVertex3d(vertex.x1, vertex.y1, vertex.z1);					
-                  //normal = map_->getNormals(ii+1, jj+1);
-                  //glNormal3d(normal.x1, normal.y1, normal.z1);                   		        
-		            }
-		            glEnd();
-		          }				        
-		        }
-		      }
-          
-          else if(pAspect=="pseudogel")
-		      {
-  cout << "4" << endl;				    
-		        // glLineWidth(layer.param.getValue("dot:line_width"));
-		        for(Size jj=0; jj<rows-1; ++jj)
-		        {
-		          glBegin(GL_LINE_STRIP);
-		          
-              vertexList vertex = map_->getVertex(Size(0), jj);
-              qglColor(vertex.color1);
-              glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-              
-              vertex = map_->getVertex(Size(0), jj+1);
-              qglColor(vertex.color1);
-              glVertex3d(vertex.x1, vertex.y1, vertex.z1);				        
-		            
-		          for(Size ii=0; ii<cols-1; ++ii)
-		          {
-                vertex = map_->getVertex(ii+1, jj);
-                qglColor(vertex.color1);
-                glVertex3d(vertex.x1, vertex.y1, vertex.z1);
-                
-                vertex = map_->getVertex(ii+1, jj+1);
-                qglColor(vertex.color1);
-                glVertex3d(vertex.x1, vertex.y1, vertex.z1);					  		        
-		          }
-		          glEnd();
-		        }
-		      }
-	      }
-	      else
-	      {
-          // glLineWidth(layer.param.getValue("dot:line_width"));
-		      for(
-		        Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.peaks.areaBeginConst(
-		          canvas_3d_.visible_area_.min_[1],
-		          canvas_3d_.visible_area_.max_[1],
-		          canvas_3d_.visible_area_.min_[0],
-		          canvas_3d_.visible_area_.max_[0]); 
-				    it != layer.peaks.areaEndConst(); 
-				    ++it)
-		      {
-			      PeakIndex pi = it.getPeakIndex();
-			      if (layer.filters.passes(layer.peaks[pi.spectrum],pi.peak))
-			      {
-				      glBegin(GL_LINES);
-				      switch (canvas_3d_.intensity_mode_)
-				      {
-					      case SpectrumCanvas::IM_PERCENTAGE:	
-						      qglColor( layer.gradient.precalculatedColorAt(0));
-						      glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()), 
-											       -corner_,
-											       -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-						      qglColor( layer.gradient.precalculatedColorAt(it->getIntensity() * 100.0 /canvas_3d_.getMaxIntensity(iLayer)) );
-						      glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()),
-											       -corner_+(GLfloat)scaledIntensity(it->getIntensity(),iLayer),
-											       -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-						      break;
-					
-					      case SpectrumCanvas::IM_NONE:
-					
-						      qglColor( layer.gradient.precalculatedColorAt(canvas_3d_.overall_data_range_.min_[2]));
-						      glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()), 
-											       -corner_,
-											       -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-						      qglColor( layer.gradient.precalculatedColorAt(it->getIntensity()));
-						      glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()),
-											       -corner_+(GLfloat)scaledIntensity(it->getIntensity(),iLayer),
-											       -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-						      break;
-					
-					      case SpectrumCanvas::IM_SNAP:
-						
-						      qglColor(layer.gradient.precalculatedColorAt(int_scale_.min_[0]));
-						      glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()), 
-											       -corner_,
-											       -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-						      qglColor(layer.gradient.precalculatedColorAt(it->getIntensity()));
-						      glVertex3d(-corner_+(GLfloat)scaledMZ(it->getMZ()),
-											       -corner_+(GLfloat)scaledIntensity(it->getIntensity(),iLayer),
-											       -near_-2*corner_-(GLfloat)scaledRT(it.getRT()));
-						
-						      break;
-						
-				      }
-				      glEnd();
-			      }
-		      }			  
-	      }*/
-	
+			
 	GLuint Spectrum3DOpenGLCanvas::makeGridLines()
 	{
 		GLuint list = glGenLists(1);
@@ -1278,6 +1075,8 @@ cout << endl << "rows: " << rows << " cols: " << cols << endl;
 				computeSelection();
 			}
 			restoreRotationAndZoom();
+      for(Size iLayer=0; iLayer<canvas_3d_.getLayerCount(); ++iLayer)
+        canvas_3d_.getLayer(iLayer).resetMapping();
 			canvas_3d_.update_buffer_ = true;
 			canvas_3d_.update_(__PRETTY_FUNCTION__);
 		}

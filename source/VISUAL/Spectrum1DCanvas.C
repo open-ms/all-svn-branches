@@ -1382,7 +1382,7 @@ namespace OpenMS
     	proposed_name = layer.filename;
     }
 		
-		QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzML files (*.mzML);;mzData files (*.mzData);;mzXML files (*.mzXML);;All files (*)");
+		QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"DTA files (*.DTA *.DTA2D);;mzML files (*.mzML);;mzData files (*.mzData);;mzXML files (*.mzXML);;All files (*)");
 
 		if (!file_name.isEmpty())
 		{

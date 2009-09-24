@@ -75,7 +75,7 @@ namespace OpenMS
 				}      
 				
         //  Delete old spectrum
-				spectrum.clear();
+				spectrum.clear(true);
 				
 				//temporary variables
 				PeakType p;

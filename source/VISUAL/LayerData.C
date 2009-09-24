@@ -31,6 +31,7 @@
 using namespace std;
 
 namespace OpenMS
+
 { 
   LayerData::LayerData()
 	  : visible(true),
@@ -89,6 +90,8 @@ namespace OpenMS
 		  primitive_mode_(layer.primitive_mode_)
   {
   }
+
+	const std::string LayerData::NamesOfLabelType[] = {"None","Index","Label meta data","Peptide identification","All peptide identifications"};
 	
 	LayerData& LayerData::operator= (const LayerData& layer)
 	{
@@ -177,8 +180,6 @@ namespace OpenMS
       mapping_thread_->clearData();
     }
   }  
-  
-	const std::string LayerData::NamesOfLabelType[] = {"None","Index","Label meta data","Peptide identification"};
 	
 	std::ostream& operator << (std::ostream& os, const LayerData& rhs)
 	{

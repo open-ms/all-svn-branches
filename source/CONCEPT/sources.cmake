@@ -10,6 +10,8 @@ FuzzyStringComparator.C
 ProgressLogger.C
 SingletonRegistry.C
 VersionInfo.C
+LogStream.C
+UniqueIdGenerator.C
 )
 
 ### add path to the filenames

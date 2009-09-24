@@ -85,7 +85,7 @@ void print_usage()
        << tool_name << " -- An assistant for GUI-driven TOPP workflow design." << endl
        << endl
        << "Usage:" << endl
-			 << " " << tool_name << " [options] " << endl
+			 << " " << tool_name << " [options] [files]" << endl
 			 << endl
 			 << "Options are:" << endl
 			 << "  --help           Shows this help" << endl
@@ -196,7 +196,7 @@ int main( int argc, const char** argv )
 	  mw->show();
 
 		// Create the splashscreen that is displayed while the application loads
-		QSplashScreen* splash_screen = new QSplashScreen(QPixmap(":/TOPPAS_Splashscreen.png"),Qt::WindowStaysOnTopHint | Qt::X11BypassWindowManagerHint);
+		QSplashScreen* splash_screen = new QSplashScreen(QPixmap(":/TOPPAS_Splashscreen.png"));
 		splash_screen->show();
 		splash_screen->showMessage("Loading parameters");
 		QApplication::processEvents();
@@ -208,11 +208,14 @@ int main( int argc, const char** argv )
 	  	mw->loadPreferences((String)param.getValue("ini"));
 	  }
 
-	  //load command line files TODO
-// 	  if (param.exists("misc"))
-// 	  {
-// 	  	mw->loadFiles((StringList)(param.getValue("misc")), splash_screen);
-// 	  }
+ 	  if (param.exists("misc"))
+ 	  {
+ 	  	mw->loadFiles((StringList)(param.getValue("misc")), splash_screen);
+ 	  }
+		else
+		{
+			mw->newFileDialog();
+		}
 
 		// We are about to show the application. 
 		// Proper time to  remove the splashscreen, if at least 1.5 seconds have passed...

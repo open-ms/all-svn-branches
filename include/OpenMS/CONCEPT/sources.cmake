@@ -14,6 +14,8 @@ ProgressLogger.h
 SingletonRegistry.h
 Types.h
 VersionInfo.h
+LogStream.h
+UniqueIdGenerator.h
 )
 
 ### add path to the filenames

@@ -69,13 +69,13 @@ namespace OpenMS
 		    int h = img.height();
 		    
 		    map.reset();
-		    map.clear();
+		    map.clear(true);
 				map.reserve(h);
         typename MapType::SpectrumType spectrum;
           
         for(int y=0; y<h; ++y)
         {
-          spectrum.clear();
+          spectrum.clear(true);
           spectrum.reserve(w);
           spectrum.setRT(1.0 + 1.0 * y);
           

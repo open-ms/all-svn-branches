@@ -299,9 +299,9 @@ START_SECTION((operator float() const))
 END_SECTION
 
 START_SECTION((operator int() const ))
-	DataValue d((Int) 55);
+	DataValue d((Int) -55);
 	int k = d;
-	TEST_EQUAL(k,55)
+	TEST_EQUAL(k,-55)
 
   TEST_EXCEPTION(Exception::ConversionError, (int)DataValue(55.4))
 END_SECTION
@@ -316,9 +316,9 @@ START_SECTION((operator unsigned int() const ))
 END_SECTION
 
 START_SECTION((operator short int() const))
-	DataValue d((short int) 55);
+	DataValue d((short int) -55);
 	short int k = d;
-	TEST_EQUAL(k,55)
+	TEST_EQUAL(k,-55)
 
   TEST_EXCEPTION(Exception::ConversionError, (short int)DataValue(55.4))
 END_SECTION
@@ -333,9 +333,9 @@ START_SECTION((operator unsigned short int() const))
 END_SECTION
 
 START_SECTION((operator long int() const))
-	DataValue d((long int) 55);
+	DataValue d((long int) -55);
 	long int k = d;
-	TEST_EQUAL(k,55)
+	TEST_EQUAL(k,-55)
 
   TEST_EXCEPTION(Exception::ConversionError, (long int)DataValue(55.4))
 END_SECTION
@@ -344,6 +344,42 @@ START_SECTION((operator unsigned long int() const))
 	DataValue d((long int) 55);
 	unsigned long int k = d;
 	TEST_EQUAL(k,55)
+
+  TEST_EXCEPTION(Exception::ConversionError, (unsigned long int)DataValue(-55))
+  TEST_EXCEPTION(Exception::ConversionError, (unsigned long int)DataValue(55.4))
+END_SECTION
+
+START_SECTION((operator long long() const))
+	{
+	DataValue d((long long) 55);
+	long long k = d;
+	TEST_EQUAL(k,55)
+	}
+	{
+	DataValue d((long long) -1);
+	long long k = d;
+	TEST_EQUAL(k,-1)
+	}
+	{
+	DataValue d((SignedSize) -55);
+	SignedSize k = d;
+	TEST_EQUAL(k,-55)
+	}
+	
+	TEST_EXCEPTION(Exception::ConversionError, (long int)DataValue(55.4))
+END_SECTION
+
+START_SECTION((operator unsigned long long() const))
+	{
+	DataValue d((unsigned long long) 55);
+	unsigned long long k = d;
+	TEST_EQUAL(k,55)
+	}
+	{
+	DataValue d((Size) 55);
+	Size k = d;
+	TEST_EQUAL(k,55)
+	}
 
   TEST_EXCEPTION(Exception::ConversionError, (unsigned long int)DataValue(-55))
   TEST_EXCEPTION(Exception::ConversionError, (unsigned long int)DataValue(55.4))

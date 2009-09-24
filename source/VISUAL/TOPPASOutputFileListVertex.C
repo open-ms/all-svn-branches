@@ -27,6 +27,7 @@
 
 #include <OpenMS/VISUAL/TOPPASOutputFileListVertex.h>
 #include <OpenMS/VISUAL/TOPPASToolVertex.h>
+#include <OpenMS/VISUAL/TOPPASMergerVertex.h>
 #include <OpenMS/VISUAL/TOPPASEdge.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/SYSTEM/File.h>
@@ -86,7 +87,7 @@ namespace OpenMS
  		
  		pen.setColor(pen_color_);
  		painter->setPen(pen);
-		QString text = "Output file list";
+		QString text = "Output files";
 		QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, text);
 		painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), text);
 		
@@ -117,6 +118,12 @@ namespace OpenMS
 			if (ttv)
 			{
 				ttv->runRecursively();
+				continue;
+			}
+			TOPPASMergerVertex* tmv = qobject_cast<TOPPASMergerVertex*>((*it)->getSourceVertex());
+			if (tmv)
+			{
+				tmv->runRecursively();
 			}
 		}
 	}

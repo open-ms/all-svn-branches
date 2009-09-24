@@ -80,7 +80,7 @@ namespace OpenMS
       emit(fileLoaded());			
       return;
 		}
-		
+
 		//try to load data and determine if it is 1D or 2D data
     try
     {
@@ -110,6 +110,8 @@ namespace OpenMS
       			break;
       		}
       	}
+      	if (peak_map_.getChromatograms().size() > 1) 
+      	  is_2D_ = true;
       }
     }
     catch(Exception::BaseException& e)

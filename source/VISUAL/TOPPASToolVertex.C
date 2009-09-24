@@ -26,13 +26,11 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/TOPPASToolVertex.h>
-#include <OpenMS/VISUAL/TOPPASInputFileVertex.h>
+#include <OpenMS/VISUAL/TOPPASMergerVertex.h>
 #include <OpenMS/VISUAL/TOPPASInputFileListVertex.h>
-
 #include <OpenMS/VISUAL/DIALOGS/TOPPASToolConfigDialog.h>
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
-#include <OpenMS/VISUAL/TOPPASOutputFileVertex.h>
 #include <OpenMS/VISUAL/TOPPASOutputFileListVertex.h>
 
 #include <QtGui/QGraphicsScene>
@@ -63,6 +61,8 @@ namespace OpenMS
 		initParam_();
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
+		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
+		connect (this, SIGNAL(toolCrashed()), this, SLOT(toolCrashedSlot()));
 	}
 	
 	TOPPASToolVertex::TOPPASToolVertex(const String& name, const String& type, const String& tmp_path)
@@ -83,6 +83,8 @@ namespace OpenMS
 		initParam_();
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
+		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
+		connect (this, SIGNAL(toolCrashed()), this, SLOT(toolCrashedSlot()));
 	}
 	
 	TOPPASToolVertex::TOPPASToolVertex(const TOPPASToolVertex& rhs)
@@ -102,6 +104,8 @@ namespace OpenMS
 		brush_color_ = QColor(245,245,245);
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
+		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
+		connect (this, SIGNAL(toolCrashed()), this, SLOT(toolCrashedSlot()));
 	}
 
 	TOPPASToolVertex::~TOPPASToolVertex()
@@ -393,18 +397,26 @@ namespace OpenMS
 			return;
 		}
 		
-		bool we_depend_on_other_tools = false;
+		bool we_have_dependencies = false;
 		// recursive execution of all parent nodes that are tools
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 		{
-			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-			if (tv)
+			TOPPASVertex* tv = qobject_cast<TOPPASVertex*>((*it)->getSourceVertex());
+			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>(tv);
+			if (ttv)
 			{
-				we_depend_on_other_tools = true;
-				tv->runRecursively();
+				we_have_dependencies = true;
+				ttv->runRecursively();
+				continue;
+			}
+			TOPPASMergerVertex* tmv = qobject_cast<TOPPASMergerVertex*>(tv);
+			if (tmv)
+			{
+				we_have_dependencies = true;
+				tmv->runRecursively();
 			}
 		}
-		if (!we_depend_on_other_tools)
+		if (!we_have_dependencies)
 		{
 			// start actual pipeline execution here
 			started_here_ = true;
@@ -502,14 +514,26 @@ namespace OpenMS
 					}
 				}
 				
-				TOPPASInputFileVertex* ifv = qobject_cast<TOPPASInputFileVertex*>((*it)->getSourceVertex());
-				if (ifv)
+				TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>((*it)->getSourceVertex());
+				if (mv)
 				{
-					// list mode cannot be active in this case
-					args << ifv->getFilename();
-					continue;
+					const QStringList& input_files = mv->getOutputList();
+					if (list_mode_ && in_params[param_index].listified) // only possible for (actual) single file parameters
+					{
+						if (input_files.size() <= i)
+						{
+							std::cerr << "Listified parameter index out of bounds!" << std::endl;
+							break;
+						}
+						args << input_files[i];
+					}
+					else
+					{
+						args << input_files;
+						continue;
+					}
 				}
-				
+
 				TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
 				if (iflv)
 				{
@@ -525,7 +549,7 @@ namespace OpenMS
 					}
 					else
 					{
-						args << iflv->getFilenames();
+						args << input_files;
 						continue;
 					}
 				}
@@ -614,7 +638,7 @@ namespace OpenMS
 		if (iteration_nr_ == numIterations()) // all iterations performed --> proceed in pipeline
 		{
 			finished_ = true;
-			ts->setPipelineRunning(false);
+			//ts->setPipelineRunning(false);
 			emit toolFinished();
 			
 			// notify all childs that we are finished
@@ -626,10 +650,10 @@ namespace OpenMS
 					tv->runToolIfInputReady();
 					continue;
 				}
-				TOPPASOutputFileVertex* ofv = qobject_cast<TOPPASOutputFileVertex*>((*it)->getTargetVertex());
-				if (ofv)
+				TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>((*it)->getTargetVertex());
+				if (mv)
 				{
-					ofv->finished();
+					mv->forwardPipelineExecution();
 					continue;
 				}
 				TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>((*it)->getTargetVertex());
@@ -683,6 +707,12 @@ namespace OpenMS
 			if (tv)
 			{
 				tv->updateOutputFileNames();
+				continue;
+			}
+			TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>((*it)->getSourceVertex());
+			if (mv)
+			{
+				mv->updateOutputFileNames();
 			}
 		}
 		
@@ -737,16 +767,22 @@ namespace OpenMS
 						}
 						break;
 					}
+
+					TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>((*it)->getSourceVertex());
+					if (mv)
+					{
+						const QStringList& files = mv->getOutputList();
+						input_list_length_ = files.count();
+
+						foreach (const QString& str, files)
+						{
+							input_file_basenames.push_back(File::basename(str).toQString());
+						}
+						break;
+					}
 				}
 				else // IOT_FILE
 				{
-					TOPPASInputFileVertex* ifv = qobject_cast<TOPPASInputFileVertex*>((*it)->getSourceVertex());
-					if (ifv)
-					{
-						input_file_basenames.push_back(File::basename(ifv->getFilename()).toQString());
-						break;
-					}
-					
 					TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
 					if (tv)
 					{
@@ -865,6 +901,18 @@ namespace OpenMS
 		update(boundingRect());
 	}
 	
+	void TOPPASToolVertex::toolFailedSlot()
+	{
+		progress_color_ = Qt::red;
+		update(boundingRect());
+	}
+
+	void TOPPASToolVertex::toolCrashedSlot()
+	{
+		progress_color_ = Qt::red;
+		update(boundingRect());
+	}
+
 	void TOPPASToolVertex::inEdgeHasChanged()
 	{
 		// something has changed --> remove invalidated tmp files, if existent

@@ -33,7 +33,7 @@ namespace OpenMS
 	/**
 		@brief Centralizes the file types recognized by FileHandler.
 		
-		FileType seperate from FileHandler to avoid circular inclusions by DocumentIdentifier, ExperimentalSettings and FileHandler and respective fileclasses (e.g. DTA2DFile). See also: FileHandler::nameToType, FileHandler::typeToName and FileHandler::NameOfTypes .
+		FileType separate from FileHandler to avoid circular inclusions by DocumentIdentifier, ExperimentalSettings and FileHandler and respective fileclasses (e.g. DTA2DFile). See also: FileHandler::nameToType, FileHandler::typeToName and FileHandler::NameOfTypes .
 
 		@ingroup FileIO
 	*/

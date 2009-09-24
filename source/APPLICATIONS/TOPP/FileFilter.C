@@ -254,7 +254,7 @@ class TOPPFileFilter
 					// convert the spectra chromatograms to real chromatograms
 					ChromatogramTools chrom_tools;
 					vector<MSChromatogram<> > chromatograms;
-					chrom_tools.convertSpectraToChromatograms(chromatograms, exp, true);
+					chrom_tools.convertSpectraToChromatograms(exp, true);
 					exp.setChromatograms(chromatograms);
 				}
 
@@ -409,7 +409,7 @@ class TOPPFileFilter
         //copy all properties
         FeatureMapType map_sm = feature_map;
         //.. but delete feature information
-        map_sm.clear();
+        map_sm.clear(false);
 
         bool rt_ok, mz_ok, int_ok, charge_ok, size_ok, q_ok;
 

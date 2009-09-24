@@ -58,6 +58,7 @@ START_SECTION((static String typeToName(FileTypes::Type type)))
 	TEST_EQUAL(tmp.typeToName(FileTypes::INI),"ini");
 	TEST_EQUAL(tmp.typeToName(FileTypes::AUTOEXECUTE),"txt");
 	TEST_EQUAL(tmp.typeToName(FileTypes::XMASS),"fid");
+	TEST_EQUAL(tmp.typeToName(FileTypes::PNG),"PNG");
 END_SECTION
 
 START_SECTION((static FileTypes::Type nameToType(const String &name)))
@@ -77,6 +78,8 @@ START_SECTION((static FileTypes::Type nameToType(const String &name)))
 	TEST_EQUAL(FileTypes::TRANSFORMATIONXML, tmp.nameToType("TrafoXML"));
   TEST_EQUAL(FileTypes::AUTOEXECUTE, tmp.nameToType("txt"));
 	TEST_EQUAL(FileTypes::XMASS, tmp.nameToType("fid"));
+	TEST_EQUAL(FileTypes::PNG, tmp.nameToType("PNG"));
+>>>>>>> .fusion-droit.r6019
 END_SECTION
 
 START_SECTION((static FileTypes::Type getTypeByFileName(const String &filename)))
@@ -96,6 +99,8 @@ START_SECTION((static FileTypes::Type getTypeByFileName(const String &filename))
 	TEST_EQUAL(tmp.getTypeByFileName("test.ini"), FileTypes::INI)
 	TEST_EQUAL(tmp.getTypeByFileName("test.txt"), FileTypes::AUTOEXECUTE)
 	TEST_EQUAL(tmp.getTypeByFileName("fid"), FileTypes::XMASS)
+	TEST_EQUAL(tmp.getTypeByFileName("test.png"), FileTypes::PNG)
+>>>>>>> .fusion-droit.r6019
 END_SECTION
 
 START_SECTION((static FileTypes::Type getTypeByContent(const String &filename)))

@@ -247,6 +247,8 @@ namespace OpenMS
 					return layers_[current_layer_].f1;
 				case LayerData::F_HULL:
 					return layers_[current_layer_].f3;
+				case LayerData::F_UNASSIGNED:
+					return layers_[current_layer_].f2;
 				case LayerData::P_PRECURSORS:
 					return layers_[current_layer_].f1;
 				case LayerData::P_PROJECTIONS:
@@ -273,6 +275,9 @@ namespace OpenMS
 				case LayerData::F_HULL:
 					layers_[current_layer_].f3 = value;
 					break;
+				case LayerData::F_UNASSIGNED:
+					layers_[current_layer_].f2 = value;
+					break;
 				case LayerData::P_PRECURSORS:
 					layers_[current_layer_].f1 = value;
 					break;
@@ -297,6 +302,8 @@ namespace OpenMS
 					return layers_[layer].f1;
 				case LayerData::F_HULL:
 					return layers_[layer].f3;
+				case LayerData::F_UNASSIGNED:
+					return layers_[layer].f2;
 				case LayerData::P_PRECURSORS:
 					return layers_[layer].f1;
 				case LayerData::P_PROJECTIONS:
@@ -322,6 +329,9 @@ namespace OpenMS
 					break;
 				case LayerData::F_HULL:
 					layers_[layer].f3 = value;
+					break;
+				case LayerData::F_UNASSIGNED:
+					layers_[layer].f2 = value;
 					break;
 				case LayerData::P_PRECURSORS:
 					layers_[layer].f1 = value;
@@ -393,7 +403,9 @@ namespace OpenMS
 		virtual void removeLayer(Size layer_index)=0;
 		/**
 			@brief Add a peak data layer
-			
+				
+			If chromatograms are present, a chromatogram layer is shown. Otherwise a peak layer is shown. Make sure to remove chromatograms from peak data and vice versa.
+		
 			@param map Input map, which has to be mutable and will be empty after adding. Swapping is used to insert the data. It can be performed in constant time and does not double the required memory. 
 			@param filename This @em absolute filename is used to monitor changes in the file and reload the data
 
@@ -425,7 +437,7 @@ namespace OpenMS
 		/// Returns the minimum intensity of the active layer
 		inline Real getCurrentMinIntensity() const 
 		{ 
-			if (getCurrentLayer().type==LayerData::DT_PEAK)
+			if (getCurrentLayer().type==LayerData::DT_PEAK || getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 			{
 				return getCurrentLayer().peaks.getMinInt(); 
 			}
@@ -442,7 +454,7 @@ namespace OpenMS
 		/// Returns the maximum intensity of the active layer
 		inline Real getCurrentMaxIntensity() const 
 		{ 
-			if (getCurrentLayer().type==LayerData::DT_PEAK)
+			if (getCurrentLayer().type==LayerData::DT_PEAK || getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 			{
 				return getCurrentLayer().peaks.getMaxInt();
 			}
@@ -454,13 +466,12 @@ namespace OpenMS
 			{
 				return getCurrentLayer().consensus.getMaxInt();
 			}
-			
 		}
 
 		/// Returns the minimum intensity of the layer with index @p index
 		inline Real getMinIntensity(Size index) const 
 		{ 
-			if (getLayer(index).type==LayerData::DT_PEAK)
+			if (getLayer(index).type==LayerData::DT_PEAK || getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 			{
 				return getLayer(index).peaks.getMinInt();
 			}
@@ -477,7 +488,7 @@ namespace OpenMS
 		/// Returns the maximum intensity of the layer with index @p index
 		inline Real getMaxIntensity(Size index) const 
 		{ 
-			if (getLayer(index).type==LayerData::DT_PEAK)
+			if (getLayer(index).type==LayerData::DT_PEAK || getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 			{
 				return getLayer(index).peaks.getMaxInt();
 			}

@@ -25,19 +25,19 @@
 // $Authors: Johannes Junker $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_VISUAL_TOPPASINPUTFILEVERTEX_H
-#define OPENMS_VISUAL_TOPPASINPUTFILEVERTEX_H
+#ifndef OPENMS_VISUAL_TOPPASMERGERVERTEX_H
+#define OPENMS_VISUAL_TOPPASMERGERVERTEX_H
 
 #include <OpenMS/VISUAL/TOPPASVertex.h>
 
 namespace OpenMS
 {
 	/**
-		@brief A vertex representing an input file
+		@brief A special vertex that allows to merge several inputs into a single output file list
 	
 		@ingroup TOPPAS_elements
 	*/
-	class OPENMS_DLLAPI TOPPASInputFileVertex
+	class OPENMS_DLLAPI TOPPASMergerVertex
 		: public TOPPASVertex
 	{
 		Q_OBJECT
@@ -45,31 +45,37 @@ namespace OpenMS
 		public:
 			
 			/// Default constructor
-			TOPPASInputFileVertex();
-			/// Constructor
-			TOPPASInputFileVertex(const QString& file);
+			TOPPASMergerVertex();
 			/// Copy constructor
-			TOPPASInputFileVertex(const TOPPASInputFileVertex& rhs);
+			TOPPASMergerVertex(const TOPPASMergerVertex& rhs);
 			/// Destructor
-			virtual ~TOPPASInputFileVertex();
+			virtual ~TOPPASMergerVertex();
 			/// Assignment operator
-			TOPPASInputFileVertex& operator= (const TOPPASInputFileVertex& rhs);
-			/// Returns the file name
-			const QString& getFilename();
+			TOPPASMergerVertex& operator= (const TOPPASMergerVertex& rhs);
+			/// Returns the list of output files
+			QStringList getOutputList();
+			/// Starts the pipeline execution recursively	
+			void runRecursively();
+			/// Forwards the pipeline execution downstream
+			void forwardPipelineExecution();
+			/// Determines whether all inputs are ready
+			bool allInputsReady();
+			/// Updates all temporary output file names
+			void updateOutputFileNames();
+			/// Sets whether the currently running pipeline has already been started at this vertex
+      void setStartedHere(bool b);
 			// documented in base class
 			virtual void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget);
 			// documented in base class
 			virtual QRectF boundingRect() const;
 			// documented in base class
 			virtual QPainterPath shape () const;
-			/// Shows the dialog for editing the file name
-			void showFileDialog();
 			
 		protected:
-		
-			/// The file name
-			QString file_;
-		
+
+			// Stores whether the currently running pipeline has already been started at this vertex
+			bool started_here_;
+
 			///@name reimplemented Qt events
       //@{
       void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e);

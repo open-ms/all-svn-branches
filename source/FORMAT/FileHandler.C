@@ -191,7 +191,7 @@ namespace OpenMS
 		{
 			return FileTypes::MSP;
 		}
-
+		
 		return FileTypes::UNKNOWN;
 
 	}
@@ -343,6 +343,10 @@ namespace OpenMS
 	
 		//OMSSAXML file
 		if (all_simple.hasSubstring("<MSResponse")) return FileTypes::OMSSAXML;
+
+		// PNG file (to be really correct, the first eight bytes of the file would
+		// have to be checked; see e.g. the wikipedia article)
+		if (file[0].substr(1, 3) == "PNG") return FileTypes::PNG;
 
 		//MSP (all lines)
 		for (Size i = 0; i != file.size(); ++i)

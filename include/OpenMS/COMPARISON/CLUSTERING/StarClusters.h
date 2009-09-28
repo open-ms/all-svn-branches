@@ -250,6 +250,7 @@ namespace OpenMS
 				std::vector<Size> newly_annotated; /// @improvement reserve potential_propagation_targets.size() space
 				for(std::list<Size>::const_iterator it_potential = potential_propagation_targets.begin(); it_potential != potential_propagation_targets.end(); ++it_potential)
 				{
+					const MSSpectrum<PeakType>& current_spectrum  = (experiment_original_[*it_potential]);
 					PeptideIdentification annotating_neighbors;
 					for(std::set<Size>::const_iterator it_neighbors = stars_[*it_potential].begin(); it_neighbors != stars_[*it_potential].end(); ++it_neighbors)
 					{
@@ -258,11 +259,18 @@ namespace OpenMS
 							if(it_annotated->first == *it_neighbors)
 							{
 								/// @todo annotate and create PeptideHit: score shift mod from which neighbor
-									/// @todo find pair with (potential_propagation_targets[j]) and (it_annotated->first == *it_neighbors) or annotate with original_experiment_ spectrum
-								DoubleReal score; /// @todo span theor spec from it_annotated->first onto neighbor spec and score and find mod
-								AASequence sequence_mod; /// @todo see above
+									/// @todo find pair with (potential_propagation_targets[j]) and (it_annotated->first == *it_neighbors) or annotate with original_experiment_ spectrum if! you have modification mass
+								/// @todo span theor spec from it_annotated->first onto neighbor spec and score and find mod
+								AASequence sequence(it_annotated->second.getHits().front().getSequence()),sequence_mod;
 
-								//~ getPropagationHit(it_annotated->second.getHits.first(), ...);
+								std::pair<Size,Size> current_pair;
+								DoubleReal current_mod_pos;
+								*it_potential<*it_neighbors ? current_pair=std::pair<Size,Size>(*it_potential,*it_neighbors) : current_pair=std::pair<Size,Size>(*it_neighbors,*it_potential);
+								std::vector< std::pair<Size,Size> >::iterator current_pair_it = std::find(aligned_.begin(),aligned_.end(),current_pair);
+								Size current_pair_index = current_pair_it - aligned_.begin();
+
+								DoubleReal score;
+								//~ getPropagation(sequence, current_spectrum, mod_pos, sequence_mod, score); //@ todo siehe blatt im block
 
 								UInt rank = it_annotated->second.getHits().front().getRank() +1; /// @attention rank is reflecting the hop-distance to the originating db-hit! so do not assignRanks() in PeptideIdentification!!!
 								int charge = it_annotated->second.getHits().front().getCharge(); /// @improvement also remember from which neighbor the annotation came
@@ -275,7 +283,6 @@ namespace OpenMS
 					{
 						annotations[*it_potential].insertHit(annotating_neighbors.getHits()[k]);
 					}
-
 				}
 
 				/// @improvement for dense networks this! will! suck! ... bigtime
@@ -407,7 +414,7 @@ namespace OpenMS
 					//find matches to rev_base in -parentmass_tolerance:peakmass_tolerance:+parentmass_tolerance shifts
 					DoubleReal best_score_rev_base = matchFromAligns(rev_base, current, parentmass_tolerance , 0.5);
 
-					//take best, possibly reverse, and do binning
+					//take best, possibly reverse
 					if(best_score_base < best_score_rev_base)
 					{
 						reverseSpectrum(current);
@@ -421,6 +428,11 @@ namespace OpenMS
 					consensuses_indices_.push_back(it->first);
 			}
 			/// @improvement doublettes optimization?! - only possible if spectra are not partially reversed because participating spectra migtht be equal, but orientation of base spectrum differs
+		}
+
+		void getPropagation(AASequence& template_sequence, MSSpectrum<PeakType>& current_spectrum, DoubleReal mod_pos, MSSpectrum<PeakType>& modified_sequence, DoubleReal& score)
+		{
+
 		}
 
 	};

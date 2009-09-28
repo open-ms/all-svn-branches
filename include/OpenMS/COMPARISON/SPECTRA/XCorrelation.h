@@ -101,7 +101,7 @@ namespace OpenMS
 
 		// @}
 
-		void getXCorrelation(const SpectrumType& s1, const SpectrumType& s2, DoubleReal& best_score1 , DoubleReal& best_score2, DoubleReal& best_shift, std::list<std::pair<Size,Size> >& best_matches) const
+		void getXCorrelation(SpectrumType& s1, SpectrumType& s2, DoubleReal& best_score1 , DoubleReal& best_score2, DoubleReal& best_shift, std::list<std::pair<Size,Size> >& best_matches) const
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal parentmass_tolerance = (double)param_.getValue("parentmass_tolerance");
@@ -117,13 +117,13 @@ namespace OpenMS
 			s1.sortByPosition();
 			s2.sortByPosition();
 
-			if(s2.getPrecursors().front()->getMZ() < s1.getPrecursors().front()->getMZ())
+			if(s2.getPrecursors().front().getMZ() < s1.getPrecursors().front().getMZ())
 			{
 				/// @improvement throw error? else maybe no range to cover because pm_diff is positive
 			}
-			DoubleReal pm_diff(s1.getPrecursors().front()->getMZ() - s2.getPrecursors().front()->getMZ());
+			DoubleReal pm_diff(s1.getPrecursors().front().getMZ() - s2.getPrecursors().front().getMZ());
 
-			if(pm_diff>max_shift || s1.getPrecursors().front()->getCharge()>2 || s2.getPrecursors().front()->getCharge()>2)
+			if(pm_diff>max_shift || s1.getPrecursors().front().getCharge()>2 || s2.getPrecursors().front().getCharge()>2)
 			{
 				//~ the above criteria disqualify s1 and s2 as (useful) spectral pairs from the start
 				/// @improvement throw error?
@@ -149,7 +149,7 @@ namespace OpenMS
 						DoubleReal mz = s1[i].getMZ() + shift;
 						ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
 						ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance));
-						for(SpectrumIterator it = start; it != end; ++it)
+						for(ConstSpectrumIterator it = start; it != end; ++it)
 						{
 							Size j = it - s2.begin();
 							matches_unshift_all.push_back(std::pair<Size,Size>(i,j));
@@ -171,7 +171,7 @@ namespace OpenMS
 							DoubleReal mz = s1[i].getMZ() + shift;
 							ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
 							ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance));
-							for(SpectrumIterator it = start; it != end; ++it)
+							for(ConstSpectrumIterator it = start; it != end; ++it)
 							{
 								Size j = it - s2.begin();
 								matches_shift_all.push_back(std::pair<Size,Size>(i,j));
@@ -212,7 +212,7 @@ namespace OpenMS
 			DoubleReal min_dist = (double)param_.getValue("min_dist");
 
 			DoubleReal twocol [2] = { 0,0 };
-			std::vector< Size[] > dp_table(all_matches.size()+1, twocol); // [predecessor, predecessor score], size+1 due to DP initialization in 0
+			std::vector< DoubleReal[] > dp_table(all_matches.size()+1, twocol); // [predecessor, predecessor score], size+1 due to DP initialization in 0
 			Size next_too_close;		// Index for the match (in dp_table and all_matches) that is next BEHIND i and too close
 			Size max_index;					// Index for best match BEHIND next_too_close with the highest score (already cumulated) in the dp_table
 
@@ -262,8 +262,13 @@ namespace OpenMS
 			}
 		}
 
+		//~ struct compareByFirst
+  //~ : std::binary_function<const std::pair<Size,Size>,const std::pair<Size,Size>,bool>
+//~ {
+  //~ bool operator() (IntRealString left, IntRealString right ) const { return left.i_ < right.i_; }
+//~ };
 		// a binary predicate (as function) for the unique function of a list:
-		bool matchPredicate (std::pair<Size,Size> first, std::pair<Size,Size> second)
+		bool matchPredicate (const std::pair<Size,Size>& first, const std::pair<Size,Size>& second) const
 		{
 			return ( first.first == second.first );
 		}

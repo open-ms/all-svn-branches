@@ -180,6 +180,7 @@ using namespace std;
 
 		 #-----*/
 
+		/// @improvement catch no ion species chosen
 
 		//read ms2 sequences of the experiment
 		for(Size i = 0; i < fastadata.size(); ++i)

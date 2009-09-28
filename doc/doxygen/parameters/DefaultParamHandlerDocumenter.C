@@ -66,6 +66,8 @@
 #include <OpenMS/COMPARISON/SPECTRA/SteinScottImproveScore.h>
 #include <OpenMS/COMPARISON/SPECTRA/ZhangSimilarityScore.h>
 #include <OpenMS/COMPARISON/SPECTRA/CompareFouriertransform.h>
+#include <OpenMS/COMPARISON/SPECTRA/XCorrelation.h>
+#include <OpenMS/COMPARISON/CLUSTERING/StarClusters.h>
 #include <OpenMS/FILTERING/CALIBRATION/InternalCalibration.h>
 #include <OpenMS/FILTERING/SMOOTHING/SavitzkyGolayFilter.h>
 #include <OpenMS/FILTERING/BASELINE/MorphologicalFilter.h>
@@ -368,7 +370,7 @@ int main (int argc , char** argv)
 	DOCME(MRMFragmentSelection)
 	DOCME(PILISCrossValidation)
 	DOCME(ProtonDistributionModel)
-	
+
 	//////////////////////////////////
 	// More complicated cases
 	//////////////////////////////////
@@ -388,9 +390,11 @@ int main (int argc , char** argv)
 	DOCME2(Spectrum1DCanvas,Spectrum1DCanvas(Param(),0));
 	DOCME2(Spectrum2DCanvas,Spectrum2DCanvas(Param(),0));
 	DOCME2(Spectrum3DCanvas,Spectrum3DCanvas(Param(),0));
+	DOCME2(StarClusters,(StarClusters<Peak1D>(MSExperiment<Peak1D>()*,MSExperiment<Peak1D>()*,std::vector<std::pair<Size,Size> >()&,std::list<DoubleReal>()&)));
 	DOCME2(PTMSimulation, PTMSimulation(NULL));
   DOCME2(IonizationSimulation, IonizationSimulation(NULL));
   DOCME2(RawMSSignalSimulation, RawMSSignalSimulation(NULL));
-  
+	DOCME2(XCorrelation,(XCorrelation<Peak1D>()));
+
   return 0;
 }

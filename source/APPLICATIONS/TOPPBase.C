@@ -1944,6 +1944,7 @@ namespace OpenMS
 		tools_map["PeptideIndexer"] = StringList::create("");
 		tools_map["PeptideIndexer"] = StringList::create("");
 		tools_map["CompNovo"] = StringList::create("CompNovo,CompNovoCID");
+    tools_map["SILACAnalyzer"] = StringList::create("double,triple");
 
 		return tools_map;
 	}

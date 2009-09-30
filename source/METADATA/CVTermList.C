@@ -22,82 +22,74 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: Marc Sturm $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/METADATA/Software.h>
+#include <OpenMS/METADATA/CVTermList.h>
 
 using namespace std;
 
 namespace OpenMS
 {
-
-	Software::Software()
-		: MetaInfoInterface(),
-			CVTermList(),
-	  	name_(),
-	  	version_()
+	// CV term implementation
+	CVTermList::CVTermList()
 	{
-	}
-	
-	Software::Software(const Software& rhs)
-		: MetaInfoInterface(rhs),
-			CVTermList(rhs),
-	  	name_(rhs.name_),
-	  	version_(rhs.version_)
-	{
-	}
-	
-	Software::~Software()
-	{
-	}
-	
-	Software& Software::operator = (const Software& rhs)
-	{
-	  if (&rhs == this) return *this;
-	  
-	  MetaInfoInterface::operator=(rhs);
-		CVTermList::operator = (rhs);
-	  name_ = rhs.name_;
-	  version_ = rhs.version_;
-	  
-	  return *this;
-	}
-	
-	bool Software::operator== (const Software& rhs) const
-	{
-		return
-			MetaInfoInterface::operator==(rhs) &&
-			CVTermList::operator == (rhs) &&
-	    name_ == rhs.name_ &&
-	    version_ == rhs.version_
-	    ;
-	}
-	
-	bool Software::operator!= (const Software& rhs) const
-	{
-		return !(operator==(rhs));
-	}
-	 	
-	const String& Software::getName() const 
-	{
-	  return name_; 
-	}
-	
-	void Software::setName(const String& name)
-	{
-	  name_ = name; 
-	}
-	
-	const String& Software::getVersion() const 
-	{
-	  return version_; 
-	}
-	
-	void Software::setVersion(const String& version)
-	{
-	  version_ = version; 
 	}
 
-}
+	CVTermList::CVTermList(const CVTermList& rhs)
+  	:	cv_terms_(rhs.cv_terms_)
+	{
+	}
+
+	CVTermList::~CVTermList()
+	{
+	}
+	
+	CVTermList& CVTermList::operator = (const CVTermList& rhs)
+	{
+		if (this != &rhs)
+		{
+			cv_terms_ = rhs.cv_terms_;
+		}
+		return *this;
+	}
+
+  void CVTermList::addCVTerm(const CVTerm& cv_term)
+	{
+		// TODO exception if empty
+		cv_terms_[cv_term.getAccession()].push_back(cv_term);
+	}
+
+	void CVTermList::setCVTerms(const vector<CVTerm>& cv_terms)
+	{
+		for (vector<CVTerm>::const_iterator it = cv_terms.begin(); it != cv_terms.end(); ++it)
+		{
+			addCVTerm(*it);
+		}
+		return;
+	}
+
+	const Map<String, vector<CVTerm> >& CVTermList::getCVTerms() const
+	{
+		return cv_terms_;
+	}
+
+	bool CVTermList::hasCVTerm(const String& accession) const
+	{
+		return cv_terms_.has(accession);
+	}
+
+	bool CVTermList::operator == (const CVTermList& cv_term_list) const
+	{
+		return cv_terms_ == cv_term_list.cv_terms_;
+	}
+
+	bool CVTermList::operator != (const CVTermList& cv_term_list) const
+	{
+		return !(*this == cv_term_list);
+	}
+
+} // namespace OpenMS
+
+
 

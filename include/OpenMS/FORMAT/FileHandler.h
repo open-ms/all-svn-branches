@@ -196,7 +196,6 @@ cout << "filename to load: " << filename << " - file type: " << typeToName(type)
 						f.getOptions() = options_;
 						f.setLogType(log);
 						f.load(filename,exp);
-						ChromatogramTools().convertSpectraToChromatograms<MSExperiment<PeakType> >(exp);
 						return true;
 					}
 					break;
@@ -206,7 +205,6 @@ cout << "filename to load: " << filename << " - file type: " << typeToName(type)
 						f.getOptions() = options_;
 						f.setLogType(log);
 						f.load(filename,exp);
-						ChromatogramTools().convertSpectraToChromatograms<MSExperiment<PeakType> >(exp);
 						return true;
 					}
 					break;
@@ -216,7 +214,7 @@ cout << "filename to load: " << filename << " - file type: " << typeToName(type)
 						f.getOptions() = options_;
 						f.setLogType(log);
 						f.load(filename,exp);
-						ChromatogramTools().convertSpectraToChromatograms<MSExperiment<PeakType> >(exp);
+						ChromatogramTools().convertSpectraToChromatograms<MSExperiment<PeakType> >(exp, true);
 						return true;
 					}
 					break;
@@ -290,9 +288,16 @@ cout << "filename to store: " << filename << " - file type: " << typeToName(getT
 						MzXMLFile f;
 						f.getOptions() = options_;
 						f.setLogType(log);
-						MSExperiment<PeakType> exp2 = exp;
-						ChromatogramTools().convertChromatogramsToSpectra<MSExperiment<PeakType> >(exp2);
-						f.store(filename,exp2);
+						if (exp.getChromatograms().size() != 0)
+						{
+							MSExperiment<PeakType> exp2 = exp;
+							ChromatogramTools().convertChromatogramsToSpectra<MSExperiment<PeakType> >(exp2);
+							f.store(filename,exp2);
+						}
+						else
+						{
+							f.store(filename, exp);
+						}
 					}
 					break;
 				case FileTypes::MZDATA:
@@ -300,9 +305,16 @@ cout << "filename to store: " << filename << " - file type: " << typeToName(getT
 						MzDataFile f;
 						f.getOptions() = options_;
 						f.setLogType(log);
-						MSExperiment<PeakType> exp2 = exp;
-						ChromatogramTools().convertChromatogramsToSpectra<MSExperiment<PeakType> >(exp2);
-						f.store(filename,exp2);
+						if (exp.getChromatograms().size() != 0)
+						{
+							MSExperiment<PeakType> exp2 = exp;
+							ChromatogramTools().convertChromatogramsToSpectra<MSExperiment<PeakType> >(exp2);
+							f.store(filename,exp2);
+						}
+						else
+						{
+							f.store(filename, exp);
+						}
 					}
 					break;
 				default:

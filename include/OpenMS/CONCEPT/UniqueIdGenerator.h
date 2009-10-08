@@ -32,8 +32,6 @@
 #include <OpenMS/DATASTRUCTURES/DateTime.h>
 #include <OpenMS/DATASTRUCTURES/Param.h>
 
-#include <gsl/gsl_rng.h>
-
 #include <iostream>
 
 namespace OpenMS
@@ -55,33 +53,33 @@ namespace OpenMS
 class OPENMS_DLLAPI UniqueIdGenerator
 {
 
-public:
+  public:
 
-  typedef UInt64 UniqueId;
+    /// Returns a new unique id
+    static UInt64
+    getUniqueId();
 
-  /// Returns a new unique id
-  static UniqueId
-  getUID();
+    /// Initializes random generator using the given DateTime instead of DateTime::now().  This is intended for debugging and testing.
+    static void
+    setSeed(const DateTime&);
 
-  /// Initializes random generator using the given DateTime instead of DateTime::now().  This is intended for debugging and testing.
-  static void setSeed(const DateTime&);
+    /// Returns a summary of internal status
+    static Param const&
+    getInfo();
 
-  /// Returns a summary of internal status
-  static Param const& getInfo();
+  private:
 
-private:
+    UniqueIdGenerator();
 
-  UniqueIdGenerator();
+    ~UniqueIdGenerator();
 
-  ~UniqueIdGenerator();
+    static UniqueIdGenerator&
+    getInstance_();
 
-  static UniqueIdGenerator& getInstance_();
+    void
+    init_(const DateTime& date_time);
 
-  void init_( const DateTime& date_time );
-
-  gsl_rng * random_number_generator_;
-  Param info_;
-  DateTime initialization_date_time_;
+    Param info_;
 
 };
 

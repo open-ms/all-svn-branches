@@ -129,7 +129,8 @@ namespace OpenMS
           which can be stored much more efficiently than spectra based chromatograms.
           However, most other file formats do not support chromatograms.
 
-					If @param remove_spectra is set to true, the chromatogram spectra are removed from the experiment
+					@param  exp the experiment to be converted
+					@param  remove_spectra if set to true, the chromatogram spectra are removed from the experiment
       */
 			template<typename ExperimentType>
       void convertSpectraToChromatograms(ExperimentType& exp, bool remove_spectra = false)
@@ -148,8 +149,16 @@ namespace OpenMS
 						}
 						else
 						{
-							// TODO
+							std::cerr << "ChromatogramTools: need exactly one precursor (given " << it->getPrecursors().size() << 
+											") and one product (" << it->getProducts().size() << "), skipping conversion of this spectrum to chromatogram." << std::endl;
 						}
+					}
+					else
+					{
+						// This does not makes sense to warn here, because it would also warn on simple mass spectra...
+						// TODO think what to to here
+						//std::cerr << "ChromatogramTools: cannot convert other chromatrogram spectra types than 'Selected Reaction Monitoring', skipping conversion." << std::endl;
+						//
 					}
 				}
 

@@ -450,7 +450,8 @@
 			"Constants.h",
 			"IsotopeWaveletConstants.h",
 			"IsotopeWaveletCudaKernel.h",
-			"IsotopeWaveletParallelFor.h"
+			"IsotopeWaveletParallelFor.h",
+			"svn_revision.h"
 			);
 
 		if (!endsWith($f,"_impl.h") && endsWith($f,".h") && !in_array($basename,$dont_load))
@@ -560,6 +561,8 @@
 				"include/OpenMS/APPLICATIONS/TOPPASBase.h",
 				"include/OpenMS/APPLICATIONS/INIFileEditorWindow.h",
 				"include/OpenMS/DATASTRUCTURES/SeqanIncludeWrapper.h",
+				"include/OpenMS/ANALYSIS/DENOVO/CompNovoIdentificationBase.h",
+				"include/OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringBase.h",
 				"_registerChildren.h",
 				"DataReducer.h",
 				"SchemaFile.h",
@@ -568,7 +571,8 @@
 				"Param.h",
 				"IsotopeWaveletCudaKernel.h",
 				"IsotopeWaveletConstants.h",
-				"IsotopeWaveletParallelFor.h"
+				"IsotopeWaveletParallelFor.h",
+				"include/OpenMS/svn_revision.h"
 				);
 
 			if (endsWith($f,".h") && !endsWith($f,"_impl.h"))

@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: David Wojnar $
-// $Authors: $
+// $Authors: David Wojnar $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_CSVFILE_H
@@ -54,27 +54,27 @@ namespace OpenMS
     	/**
     		@brief Constructor with filename
     	
-    		@param filename The input file name.
-    		@param is character which seperates the items.
-    		@param ie Whether or not every item is enclosed.
-    		@param irst_n If set, only first_n lines the lines from the beginning of the file are read.
+    		@param  filename The input file name.
+    		@param  is character which seperates the items.
+    		@param  ie Whether or not every item is enclosed.
+    		@param  first_n  Only the given number of lines are read, starting from the beginning of the file.
 
 
 				@exception Exception::FileNotFound is thrown if the file could not be opened.
     	*/
-			CsvFile(const String& filename, char is = ',',bool ie = false, Int first_n=-1);
+			CsvFile(const String& filename, char is = ',',bool ie = false, Int first_n = -1);
 
     	/**
     		@brief Loads data from a text file.
     	
-    		@param filename The input file name.
-    		@param is character which seperates the items.
-    		@param ie Whether or not every item is enclosed.
-    		@param irst_n If set, only first_n lines the lines from the beginning of the file are read.
+    		@param  filename The input file name.
+    		@param  is character which seperates the items.
+    		@param  ie Whether or not every item is enclosed.
+    		@param  first_n  Only the given number of lines are read, starting from the beginning of the file.
 
 				@exception Exception::FileNotFound is thrown if the file could not be opened.
     	*/
-			void fload(const String& filename, char is = ',',bool ie = false, Int first_n=-1);
+			void fload(const String& filename, char is = ',', bool ie = false, Int first_n = -1);
 			
     	/**
     		@brief writes all items from a row to list
@@ -84,11 +84,10 @@ namespace OpenMS
     		
     		@exception Exception::InvalidIterator is thrown if the row is not existing
     		
-    		@return
-    			returns false if the given row could not be seperated into items
+    		@return  returns false if the given row could not be seperated into items
     		
     	*/
-    	bool getRow(UInt row,StringList &list);
+    	bool getRow(Size row, StringList& list);
 			
 		private:
 			char itemseperator;

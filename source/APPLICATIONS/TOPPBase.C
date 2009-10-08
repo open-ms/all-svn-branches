@@ -108,8 +108,8 @@ namespace OpenMS
 		registerIntOption_("instance","<n>",1,"Instance number for the TOPP INI file",false);
 		registerIntOption_("debug","<n>",0,"Sets the debug level",false, true);
 		registerIntOption_("threads", "<n>", 1, "Sets the number of threads allowed to be used by the TOPP tool", false);
-		registerStringOption_("write_ini","<file>","","Writes an example configuration file",false);
-		registerStringOption_("write_wsdl","<file>","","Writes an example WSDL file",false);
+		registerStringOption_("write_ini","<file>","","Writes the default configuration file",false);
+		registerStringOption_("write_wsdl","<file>","","Writes the default WSDL file",false);
 		registerFlag_("no_progress","Disables progress logging to command line");
 		if (id_tag_support_)
 		{
@@ -183,6 +183,11 @@ namespace OpenMS
 		if (param_cmdline_.exists("test"))
 		{
 			test_mode_ = true;
+
+			// initialize the random generator as early as possible!
+      DateTime date_time;
+      date_time.set("1999-12-31 23:59:59");
+			UniqueIdGenerator::setSeed(date_time);
 		}
 
 		// test if unknown options were given
@@ -1942,6 +1947,7 @@ namespace OpenMS
 		tools_map["PrecursorIonSelector"] = StringList::create("");
 		tools_map["PeptideIndexer"] = StringList::create("");
 		tools_map["CompNovo"] = StringList::create("CompNovo,CompNovoCID");
+    tools_map["SILACAnalyzer"] = StringList::create("double,triple");
 
 		return tools_map;
 	}

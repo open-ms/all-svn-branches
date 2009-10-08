@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_METADATA_SOFTWARE_H
@@ -30,6 +30,7 @@
 
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/METADATA/MetaInfoInterface.h>
+#include <OpenMS/METADATA/CVTermList.h>
 
 namespace OpenMS 
 {
@@ -39,7 +40,7 @@ namespace OpenMS
 		@ingroup Metadata
 	*/
   class OPENMS_DLLAPI Software
-  	: public MetaInfoInterface
+  	: public CVTermList
   {
     public:
     	/// Constructor
@@ -47,7 +48,7 @@ namespace OpenMS
       /// Copy constructor
       Software(const Software& source);
       /// Destructor
-      ~Software();
+      virtual ~Software();
  			
  			/// Assignment operator
       Software& operator= (const Software& source);

@@ -65,7 +65,7 @@ class TOPPCompNovo
 {
 	public:
 		TOPPCompNovo()
-			: TOPPBase("CompNovo", "Performs a peptide/protein identification with the CompNovo engine.")
+			: TOPPBase("CompNovo", "Performs a de novo peptide identification using the CompNovo engine.")
 		{
 		}
 	
@@ -124,7 +124,6 @@ class TOPPCompNovo
       options.clearMSLevels();
 			options.addMSLevel(2);
       f.getOptions() = options;
-
       f.load(in, exp);
 
 			writeDebug_("Data set contains " + String(exp.size()) + " spectra", 1);

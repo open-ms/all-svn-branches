@@ -30,7 +30,11 @@
 
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/ANALYSIS/MRM/ReactionMonitoringTransition.h>
+#include <OpenMS/METADATA/CVTerm.h>
+#include <OpenMS/METADATA/CVTermList.h>
 #include <OpenMS/METADATA/Software.h>
+
+#include <vector>
 
 namespace OpenMS
 {
@@ -69,25 +73,20 @@ namespace OpenMS
 		};
 
 		struct Protein
+			: public CVTermList
 		{
 			Protein()
+				: CVTermList()
 			{
 			}
 
 			String id;
-			String accession;
-			String name;
-			String description;
-			String comment;
 			String sequence;
 
 			bool operator == (const Protein& rhs) const
 			{
-				return  id == rhs.id &&
-								accession == rhs.accession &&
-								name == rhs.name &&
-								description == rhs.description &&
-								comment == rhs.comment && 
+				return  CVTermList::operator == (rhs) &&
+								id == rhs.id &&
 								sequence == rhs.sequence;
 			}
 
@@ -95,11 +94,8 @@ namespace OpenMS
       {
 				if (&rhs != this)
 				{
+					CVTermList::operator = (rhs);
         	id = rhs.id;
-          accession = rhs.accession;
-          name = rhs.name;
-          description = rhs.description;
-          comment = rhs.comment;
           sequence = rhs.sequence;
 				}
 				return *this;
@@ -108,23 +104,18 @@ namespace OpenMS
 		};
 
 		class OPENMS_DLLAPI RetentionTime
+			: public CVTermList
 		{
 			public: 
 
 			RetentionTime()
-				: local_retention_time(0),
-					normalized_retention_time(0),
-					predicted_retention_time(0)
+				: CVTermList()
 			{
 			}
 
 			RetentionTime(const RetentionTime& rhs)
-        : local_retention_time(rhs.local_retention_time),
-					normalization_standard(rhs.normalization_standard),
-					normalized_retention_time(rhs.normalized_retention_time),
-					predicted_retention_time(rhs.predicted_retention_time),
-					predicted_retention_time_software_ref(rhs.predicted_retention_time_software_ref),
-					cvs(rhs.cvs)
+        : CVTermList(rhs),
+					predicted_retention_time_software_ref(rhs.predicted_retention_time_software_ref)
       {
       }
 
@@ -136,47 +127,36 @@ namespace OpenMS
 			{
 				if (&rhs != this)
 				{
-					local_retention_time = rhs.local_retention_time;
-					normalization_standard = rhs.normalization_standard;
-					normalized_retention_time = rhs.normalized_retention_time;
-					predicted_retention_time = rhs.predicted_retention_time;
+					CVTermList::operator = (rhs);
 					predicted_retention_time_software_ref = rhs.predicted_retention_time_software_ref;
-					cvs = rhs.cvs;
 				}
 				return *this;
 			}
 
       bool operator == (const RetentionTime& rhs) const
       {
-				return	local_retention_time == rhs.local_retention_time &&
-			          normalization_standard == rhs.normalization_standard &&
-          			normalized_retention_time == rhs.normalized_retention_time &&
-          			predicted_retention_time == rhs.predicted_retention_time &&
-          			predicted_retention_time_software_ref == rhs.predicted_retention_time_software_ref &&
-          			cvs == rhs.cvs;
+				return	CVTermList::operator == (rhs) && 
+          			predicted_retention_time_software_ref == rhs.predicted_retention_time_software_ref;
       }
 
 
-			DoubleReal local_retention_time;
-			String normalization_standard;
-			DoubleReal normalized_retention_time;
-			DoubleReal predicted_retention_time;
 			String predicted_retention_time_software_ref;
-			std::vector<MetaInfoInterface> cvs;
 		};
 
 		class OPENMS_DLLAPI Compound
+			: public CVTermList
 		{
 			public:
 				
 			Compound()
+				: CVTermList()
 			{
 			}
 
 			Compound(const Compound& rhs)
-				:	id(rhs.id),
-					rts(rhs.rts),
-					cvs(rhs.cvs)
+				:	CVTermList(rhs),
+					id(rhs.id),
+					rts(rhs.rts)
 			{
 			}
 			
@@ -184,44 +164,41 @@ namespace OpenMS
 			{
 				if (this != &rhs)
 				{
+					CVTermList::operator = (rhs);
 					id = rhs.id;
 					rts = rhs.rts;
-					cvs = rhs.cvs;
 				}
 				return *this;
 			}
 
       bool operator == (const Compound& rhs) const
       {
-				return	id == rhs.id &&
-			         	rts == rhs.rts &&
-			          cvs == rhs.cvs;
+				return	CVTermList::operator == (rhs) && 
+								id == rhs.id &&
+			         	rts == rhs.rts;
       }
 
 			String id;
 			std::vector<RetentionTime> rts;
-			std::vector<MetaInfoInterface> cvs;
 		};
 		
 
     class OPENMS_DLLAPI Peptide
+			: public CVTermList
     {
       public:
 
       Peptide()
+				: CVTermList()
       {
       }
 
       Peptide(const Peptide& rhs)
-        : rts(rhs.rts),
+        : CVTermList(rhs),
+					rts(rhs.rts),
 					id(rhs.id),
-					group_label(rhs.group_label),
-					labeling_category(rhs.labeling_category),
-					modified_sequence(rhs.modified_sequence),
-					unmodified_sequence(rhs.unmodified_sequence),
 					protein_ref(rhs.protein_ref),
-					evidence(rhs.evidence),
-					cvs(rhs.cvs)
+					evidence(rhs.evidence)
       {
       }
 
@@ -229,45 +206,31 @@ namespace OpenMS
       {
         if (this != &rhs)
         {
+					CVTermList::operator = (rhs);
           rts = rhs.rts;
 					id = rhs.id;
-					group_label = rhs.group_label;
-					labeling_category = rhs.labeling_category;
-					modified_sequence = rhs.modified_sequence;
-					unmodified_sequence = rhs.unmodified_sequence;
 					protein_ref = rhs.protein_ref;
 					evidence = rhs.evidence;
-					cvs = rhs.cvs;
         }
         return *this;
       }
 
       bool operator == (const Peptide& rhs) const
       {
-				return	rts == rhs.rts &&
+				return	CVTermList::operator == (rhs) && 
+								rts == rhs.rts &&
           			id == rhs.id &&
-          			group_label == rhs.group_label &&
-          			labeling_category == rhs.labeling_category &&
-          			modified_sequence == rhs.modified_sequence &&
-          			unmodified_sequence == rhs.unmodified_sequence &&
           			protein_ref == rhs.protein_ref &&
-          			evidence == rhs.evidence &&
-          			cvs == rhs.cvs;
+          			evidence == rhs.evidence;
       }
 
 
 
       std::vector<RetentionTime> rts;
 			String id;
-			String group_label;
-			String labeling_category;
-			String modified_sequence;
-			String unmodified_sequence;
 			String protein_ref;
-			std::vector<MetaInfoInterface> evidence;
-			std::vector<MetaInfoInterface> cvs;
+			CVTermList evidence;
     };
-
 
 
 		/** @name Constructors and destructors
@@ -303,25 +266,25 @@ namespace OpenMS
 		void addCV(const CV& cv);
 
 		// contact list
-		void setContacts(const std::vector<MetaInfoInterface>& contacts);
+		void setContacts(const std::vector<CVTermList>& contacts);
 
-		const std::vector<MetaInfoInterface>& getContacts() const;
+		const std::vector<CVTermList>& getContacts() const;
 
-		void addContact(const MetaInfoInterface& contact);
+		void addContact(const CVTermList& contact);
 
 		// publication list
-    void setPublications(const std::vector<MetaInfoInterface>& publications);
+    void setPublications(const std::vector<CVTermList>& publications);
 
-    const std::vector<MetaInfoInterface>& getPublications() const;
+    const std::vector<CVTermList>& getPublications() const;
 
-    void addPublication(const MetaInfoInterface& publication);
+    void addPublication(const CVTermList& publication);
 
 		// instrument list
-		void setInstruments(const std::vector<MetaInfoInterface>& instruments);
+		void setInstruments(const std::vector<CVTermList>& instruments);
 
-		const std::vector<MetaInfoInterface>& getInstruments() const;
+		const std::vector<CVTermList>& getInstruments() const;
 
-		void addInstrument(const MetaInfoInterface& instrument);
+		void addInstrument(const CVTermList& instrument);
 
 		// software list
 		void setSoftware(const std::vector<Software>& software);
@@ -358,17 +321,30 @@ namespace OpenMS
 
 		/// adds a transition to the list
 		void addTransition(const ReactionMonitoringTransition& transition);
+
+		//void setTargetLists(const TargetLists& target_lists);
+
+		//const TargetLists& getTargetLists() const;
+
+		/// sets the source files
+		void setSourceFiles(const std::vector<SourceFile>& source_files);
+
+		/// returns the source file list
+		const std::vector<SourceFile>& getSourceFiles() const;
+
+		/// adds a source file to the list
+		void addSourceFile(const SourceFile& source_file);
 		//@}
 
 		protected:
 
 		std::vector<CV> cvs_;
 
-		std::vector<MetaInfoInterface> contacts_;
+		std::vector<CVTermList> contacts_;
 
-		std::vector<MetaInfoInterface> publications_;
+		std::vector<CVTermList> publications_;
 
-		std::vector<MetaInfoInterface> instruments_;
+		std::vector<CVTermList> instruments_;
 
 		std::vector<Software> software_;
 
@@ -379,6 +355,8 @@ namespace OpenMS
 		std::vector<Peptide> peptides_;
 
 		std::vector<ReactionMonitoringTransition> transitions_;
+
+		std::vector<SourceFile> source_files_;
 
 	};
 }

@@ -28,9 +28,8 @@
 #ifndef OPENMS_ANALYSIS_MRM_REACTIONMONITORINGTRANSITION_H
 #define OPENMS_ANALYSIS_MRM_REACTIONMONITORINGTRANSITION_H
 
-#include <OpenMS/METADATA/MetaInfoInterface.h>
-#include <OpenMS/ANALYSIS/MRM/TransitionInterpretation.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
+#include <OpenMS/METADATA/CVTermList.h>
 
 #include <vector>
 
@@ -43,48 +42,27 @@ namespace OpenMS
 		set to numeric_limits<DoubleReal>::max(). Default values for 
 		precursor an product charge is set to numeric_limits<Int>::max().
 	*/
-	class OPENMS_DLLAPI ReactionMonitoringTransition : public MetaInfoInterface
+	class OPENMS_DLLAPI ReactionMonitoringTransition 
+		: public CVTermList
 	{
 
 		public:
 
-		struct Validation
-		{
-			String transition_source;
-			DoubleReal relative_intensity;
-			Size recommended_transition_rank;
-			Size intensity_rank;
-			std::vector<MetaInfoInterface> cvs;
-
-			Validation& operator = (const Validation& rhs)
-			{
-				if (this != &rhs)
-				{
-					transition_source = rhs.transition_source;
-					relative_intensity = rhs.relative_intensity;
-					recommended_transition_rank = rhs.recommended_transition_rank;
-					intensity_rank = rhs.intensity_rank;
-					cvs = rhs.cvs;
-				}
-				return *this;
-			}
-		};
-
 		struct Configuration
+			: public CVTermList
 		{
 			String contact_ref;
 			String instrument_ref;
-			std::vector<Validation> validations;
-			std::vector<MetaInfoInterface> cvs;
+			std::vector<CVTermList> validations;
 
 			Configuration& operator = (const Configuration& rhs)
 			{
 				if (this != &rhs)
 				{
+					CVTermList::operator = (rhs);
 					contact_ref = rhs.contact_ref;
 					instrument_ref = rhs.instrument_ref;
 					validations = rhs.validations;
-					cvs = rhs.cvs;
 				}
 				return *this;
 			}
@@ -126,29 +104,49 @@ namespace OpenMS
 
 		DoubleReal getPrecursorMZ() const;
 
-		void setPrecursorCharge(Int mz);
+		void setPrecursorCVTermList(const CVTermList& list);
 
-		Int getPrecursorCharge() const;
+		void addPrecursorCVTerm(const CVTerm& cv_term);
 
+		const CVTermList& getPrecursorCVTermList() const;
+		
 		void setProductMZ(DoubleReal mz);
 
 		DoubleReal getProductMZ() const;
 
-		void setProductCharge(Int mz);
+		void setProductCVTermList(const CVTermList& list);
 
-		Int getProductCharge() const;
+		void addProductCVTerm(const CVTerm& cv_term);
 
-		void setInterpretations(const std::vector<TransitionInterpretation>& interpretations);
+		const CVTermList& getProductCVTermList() const;
 
-		const std::vector<TransitionInterpretation>& getInterpretations() const;
+		void setInterpretations(const std::vector<CVTermList>& interpretations);
 
-		void addInterpretation(const TransitionInterpretation& interpretation);
+		const std::vector<CVTermList>& getInterpretations() const;
+
+		void addInterpretation(const CVTermList& interpretation);
 
 		void setConfigurations(const std::vector<Configuration>& configuration);
 		
 		const std::vector<Configuration>& getConfigurations() const;
 
 		void addConfiguration(const Configuration& configuration);
+
+		void setPrediction(const CVTermList& prediction);
+
+		void addPredictionTerm(const CVTerm& prediction);
+
+		const CVTermList& getPrediction() const;
+		//@}
+
+		/** @name Predicates
+		*/
+		//@{
+		/// equality operator
+		bool operator == (const ReactionMonitoringTransition& rhs) const;
+		
+		/// inequality operator
+		bool operator != (const ReactionMonitoringTransition& rhs) const;
 		//@}
 
 		protected:
@@ -159,21 +157,21 @@ namespace OpenMS
 
 		DoubleReal precursor_mz_;
 
-		Int precursor_charge_;
+		CVTermList precursor_cv_terms_;
 
 		DoubleReal product_mz_;
 
-		Int product_charge_;
+		CVTermList product_cv_terms_;
 
-		std::vector<TransitionInterpretation> interpretation_list_;
+		std::vector<CVTermList> interpretation_list_;
 	
-		//vector<Configuration> configurations_list_; why multiple configuration per transition????
-
 		String peptide_ref_;
 
 		String compound_ref_;
 
 		std::vector<Configuration> configurations_;
+
+		CVTermList prediction_;
 	};
 }
 

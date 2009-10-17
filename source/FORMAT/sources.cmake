@@ -4,6 +4,9 @@ set(directory source/FORMAT)
 ### list all filenames of the directory here
 set(sources_list
 Base64.C
+Bzip2Ifstream.C
+CompressedInputSource.C
+CompressedInputStream.C
 CVMappingFile.C
 ConsensusXMLFile.C
 ControlledVocabulary.C

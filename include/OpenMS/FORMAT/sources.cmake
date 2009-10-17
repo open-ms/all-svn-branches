@@ -24,6 +24,9 @@ source_group("Source Files\\OpenMS\\FORMAT" FILES ${mocced_sources})
 set(sources_list_h
 ANDIFile.h
 Base64.h
+Bzip2Ifstream.h
+CompressedInputSource.h
+CompressedInputStream.h
 CVMappingFile.h
 ConsensusXMLFile.h
 ControlledVocabulary.h

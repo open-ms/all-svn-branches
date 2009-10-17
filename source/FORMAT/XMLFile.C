@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/XMLFile.h>
@@ -30,10 +30,12 @@
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/FORMAT/VALIDATORS/XMLValidator.h>
 
+#include <OpenMS/FORMAT/CompressedInputSource.h>
+
 #include <xercesc/sax2/SAX2XMLReader.hpp>
 #include <xercesc/framework/LocalFileInputSource.hpp>
 #include <xercesc/sax2/XMLReaderFactory.hpp>
-
+#include <iostream>
 #include <fstream>
 #include <iomanip> // setprecision etc.
 
@@ -80,13 +82,26 @@ namespace OpenMS
 			parser->setContentHandler(handler);
 			parser->setErrorHandler(handler);
 			
-			// try to parse file
-			xercesc::LocalFileInputSource source(StringManager().convert(filename.c_str()));
-				
+			//is it bzip2 compressed?
+			std::ifstream file(filename.c_str());
+			char bz[2];
+			file.read(bz,2);
+			xercesc::InputSource *source;
+			if(bz[0] == 'B' && bz[1] =='Z')
+			{
+				std::cout<<"IST BZ FILE:"<<filename.c_str()<<std::endl;
+				source = new CompressedInputSource(StringManager().convert(filename.c_str()));
+			}
+			else
+			{
+				source = new xercesc::LocalFileInputSource(StringManager().convert(filename.c_str()));
+			}	
+			// try to parse file	
 			try 
 			{
-				parser->parse(source);
+				parser->parse(*source);
 				delete(parser);
+				delete source;
 			}
 			catch (const xercesc::XMLException& toCatch) 
 			{

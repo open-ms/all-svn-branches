@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -64,6 +64,53 @@ START_SECTION(([EXTRA] Param::ParamEntry(const String& n, const DataValue& v, co
 	TEST_EQUAL(pe.description,"d1")
 	TEST_EQUAL(pe.value,"v1")
 	TEST_EQUAL(pe.tags.count("advanced")==1,false)
+END_SECTION
+
+START_SECTION(([EXTRA] bool isValid(String& message) const))
+
+	Param p;
+	String m;
+	p.setValue("int",5);
+	TEST_EQUAL(p.getEntry("int").isValid(m),true);
+	p.setMinInt("int",5);
+	TEST_EQUAL(p.getEntry("int").isValid(m),true);
+	p.setMaxInt("int",8);
+	TEST_EQUAL(p.getEntry("int").isValid(m),true);
+	p.setValue("int",10);
+	TEST_EQUAL(p.getEntry("int").isValid(m),false);
+
+	p.setValue("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMinFloat("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMaxFloat("float",8.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setValue("float",10.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),false);
+
+	p.setValue("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMinFloat("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMaxFloat("float",8.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setValue("float",10.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),false);
+
+
+	vector<String> strings;
+	strings.push_back("bla");
+	strings.push_back("bluff");
+	p.setValue("string","bli");
+	TEST_EQUAL(p.getEntry("string").isValid(m),true);
+	p.setValidStrings("string",strings);
+	TEST_EQUAL(p.getEntry("string").isValid(m),false);
+	
+	p.setValue("string_2","bla");
+	TEST_EQUAL(p.getEntry("string_2").isValid(m),true);
+	p.setValidStrings("string_2",strings);
+	TEST_EQUAL(p.getEntry("string_2").isValid(m),true);
+	
 END_SECTION
 
 START_SECTION(([EXTRA] bool operator==(const Param::ParamEntry& rhs) const))

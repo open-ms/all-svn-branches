@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Chris Bielow, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Chris Bielow, Clemens Groepl $
+// $Authors: Marc Sturm, Chris Bielow, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_FEATUREXMLFILE_H
@@ -41,6 +41,8 @@ namespace OpenMS
   	@brief This class provides Input/Output functionality for feature maps
 
 		A documented schema for this format can be found at http://open-ms.sourceforge.net/schemas/.
+
+    @todo take care that unique ids are assigned properly by TOPP tools before calling store().
 
   	@note This format will eventually be replaced by the HUPO-PSI AnalysisXML (mzIdentML and mzQuantML) formats!
 
@@ -94,7 +96,7 @@ namespace OpenMS
       virtual void characters(const XMLCh* const chars, const XMLSize_t length);
 
 			/// Writes a feature to a stream
-			void writeFeature_(const String& filename, std::ostream& os, const Feature& feat, const String& identifier_prefix, Size identifier, UInt indentation_level);
+			void writeFeature_(const String& filename, std::ostream& os, const Feature& feat, const String& identifier_prefix, UInt64 identifier, UInt indentation_level);
 
 			/// Writes a peptide identification to a stream (for assigned/unassigned peptide identifications)
 			void writePeptideIdentification_(const String& filename, std::ostream& os, const PeptideIdentification& id, const String& tag_name, UInt indentation_level);

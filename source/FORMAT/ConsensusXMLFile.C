@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Marc Sturm $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Clemens Groepl, Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
@@ -529,8 +529,11 @@ namespace OpenMS
 
     if ( Size invalid_unique_ids = consensus_map.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId) > 0 )
     {
+
+      // TODO Take care outside that this does not happen.  We cannot fix this here due to constness.
+
       // throw Exception::Precondition(__FILE__,__LINE__,__PRETTY_FUNCTION__,String("found ")+invalid_unique_ids+" invalid unique ids");
-      std::cout<<String("\nfound ")+invalid_unique_ids+" invalid unique ids"<<std::endl;
+      // std::cout<<String("\nfound ")+invalid_unique_ids+" invalid unique ids"<<std::endl;
     }
 
     //open stream

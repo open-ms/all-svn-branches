@@ -22,8 +22,8 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# $Authors: $
+# $Maintainer:$
+# $Authors: Marc Sturm $
 # --------------------------------------------------------------------------
 	
 	error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
@@ -451,7 +451,8 @@
 			"IsotopeWaveletConstants.h",
 			"IsotopeWaveletCudaKernel.h",
 			"IsotopeWaveletParallelFor.h",
-			"svn_revision.h"
+			"openms_svn_revision.h",
+			"openms_package_version.h"
 			);
 
 		if (!endsWith($f,"_impl.h") && endsWith($f,".h") && !in_array($basename,$dont_load))
@@ -572,7 +573,8 @@
 				"IsotopeWaveletCudaKernel.h",
 				"IsotopeWaveletConstants.h",
 				"IsotopeWaveletParallelFor.h",
-				"include/OpenMS/svn_revision.h"
+				"include/OpenMS/openms_svn_revision.h",
+				"include/OpenMS/openms_package_version.h"
 				);
 
 			if (endsWith($f,".h") && !endsWith($f,"_impl.h"))

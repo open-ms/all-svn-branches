@@ -28,6 +28,8 @@
 #ifndef OPENMS_FORMAT_COMPRESSEDINPUTSOURCE_H
 #define OPENMS_FORMAT_COMPRESSEDINPUTSOURCE_H
 
+#include <OpenMS/DATASTRUCTURES/String.h>
+
 #include <xercesc/sax/InputSource.hpp>
 
 
@@ -38,13 +40,19 @@ namespace OpenMS
 	{
 		public:
 			//based on LocalInputSource
-			CompressedInputSource(const   XMLCh* const   basePath, const XMLCh* const   relativePath, xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
-		  CompressedInputSource(const   XMLCh* const   filePath, xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
-		   ~CompressedInputSource();
+			CompressedInputSource(const   String& file_path, xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
+			CompressedInputSource(const   XMLCh* const file_path, xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
+		  ~CompressedInputSource();
 		  // ---------------------------------------------------------------------------
 			//  CompressedInputSource: InputSource interface implementation
 			// ---------------------------------------------------------------------------
 		  virtual xercesc::BinInputStream* makeStream() const;
+		  
+		private:
+		  //not implemented
+		  CompressedInputSource();
+		  CompressedInputSource(const CompressedInputSource& source);
+		  CompressedInputSource& operator=(const CompressedInputSource& source);
 	};
 	
 } // namespace OpenMS

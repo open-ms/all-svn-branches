@@ -33,6 +33,8 @@
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 
+#include <QtCore/QTime>
+
 using namespace OpenMS;
 using namespace std;
 
@@ -722,10 +724,20 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 			}
 		}
 	}
+/*QTime time;
+MSExperiment<> exp_original3,exp31;
+					time.start();
+				file.load("/Users/david/Studium/OpenMS/OpttestMzMl/vm_070118_mix.mzML",exp_original3);
+				int ohne = time.elapsed();
+				time.restart();
+				file.load("/Users/david/Studium/OpenMS/OpttestMzMl/vm_070118_mix.mzML.bz2",exp31);
+				int mit = time.elapsed();
+		TEST_EQUAL(exp31 == exp_original3, true)
+		TEST_EQUAL(ohne,mit)
 	
 	//test if it works with different peak types
 	MSExperiment<RichPeak1D> e_rich;
-  file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML"),e_rich);
+  file.load(OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML"),e_rich);*/
 
 END_SECTION
 /*

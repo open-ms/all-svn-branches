@@ -32,16 +32,22 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #include <OpenMS/FORMAT/Bzip2Ifstream.h>
 
+
 namespace OpenMS
 {
+	class String;
+	
 	class CompressedInputStream
 		:	public xercesc::BinInputStream
 	{
 		public:
 			//based on LocalInputSource
-			CompressedInputStream(const   XMLCh* const    fileName, xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
+			CompressedInputStream(const   String& file_name);
 
-   		CompressedInputStream(const   char* const     fileName, xercesc::MemoryManager* const  manager = xercesc::XMLPlatformUtils::fgMemoryManager);	 
+   		CompressedInputStream(const   char* const     file_name);	 
+   		
+   		
+   		
    		~CompressedInputStream();
    		
    		 bool getIsOpen() const;
@@ -50,19 +56,24 @@ namespace OpenMS
     	// -----------------------------------------------------------------------
     	virtual XMLFilePos curPos() const;
 
-   	 	virtual XMLSize_t readBytes(XMLByte* const  toFill, const XMLSize_t maxToRead);
+   	 	virtual XMLSize_t readBytes(XMLByte* const  to_fill, const XMLSize_t max_to_read);
 
 	    virtual const XMLCh* getContentType() const;
 
    		
     private:
     	Bzip2Ifstream* 	bzip2_;
-    	XMLSize_t       fCurIndex;
+    	XMLSize_t       file_current_index;
+    	
+    	//not implemented
+    	CompressedInputStream();
+    	CompressedInputStream(const CompressedInputStream& stream);
+    	CompressedInputStream& operator=(const CompressedInputStream& stream);
 	};
 	
 	inline XMLFilePos CompressedInputStream::curPos() const
 	{
-    return fCurIndex;
+    return file_current_index;
 	}
 	
 	inline bool CompressedInputStream::getIsOpen() const

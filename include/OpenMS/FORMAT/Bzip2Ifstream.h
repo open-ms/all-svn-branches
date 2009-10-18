@@ -37,24 +37,30 @@ namespace OpenMS
 	{
 		public: 
 			Bzip2Ifstream(const char * filename);
+			Bzip2Ifstream();
+			~Bzip2Ifstream();
+			
 			//operator>>();
 			size_t read(char* s, size_t n);
 			bool streamEnd() const;
 			bool isOpen() const;
-			
+			void open(const char* filename);
+			void close();
 		protected:
-			FILE*   f;
-			BZFILE* b;
-			size_t     nBuf;
-			//char    buf[ 1024 ];
+			FILE*   file;
+			BZFILE* bzip2file;
+			size_t     n_buffer;
 			int     bzerror;
-			int     nWritten;
 			bool stream_at_end;
+			
+			//not implemented
+			Bzip2Ifstream(const Bzip2Ifstream& bzip2);
+			Bzip2Ifstream& operator=(const Bzip2Ifstream& bzip2);
 	};
 	
 	inline bool Bzip2Ifstream::isOpen() const
 	{
-		return (f);
+		return (file);
 	}
 	
 		inline bool Bzip2Ifstream::streamEnd() const

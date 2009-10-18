@@ -26,59 +26,112 @@
 // --------------------------------------------------------------------------
 #include <iostream>
 #include <OpenMS/FORMAT/Bzip2Ifstream.h>
+#include <OpenMS/CONCEPT/Exception.h>
 #include <cstdlib>
 using namespace std;
 namespace OpenMS
 {
-	Bzip2Ifstream::Bzip2Ifstream(const char * filename) : stream_at_end(false)
+	Bzip2Ifstream::Bzip2Ifstream(const char * filename) : n_buffer(0),stream_at_end(false)
 	{
-		f = fopen( filename, "rb" ); //read binary: always open in binary mode because windows and mac open in text mode
+		file = fopen( filename, "rb" ); //read binary: always open in binary mode because windows and mac open in text mode
 		
 		//aborting, ahhh!
-		if( !f ) 
+		if( !file ) 
 		{
-  		cout<<"FEHLER in Datei!"<<endl;
-  		exit(1);
-  		/* handle error */
+			throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
 		}
 		
-		b = BZ2_bzReadOpen ( &bzerror, f, 0, 0, NULL, 0 );
+		bzip2file = BZ2_bzReadOpen ( &bzerror, file, 0, 0, NULL, 0 );
 		if ( bzerror != BZ_OK ) 
 		{
-	  	BZ2_bzReadClose ( &bzerror, b );
-	  	cout<<"FEHLER!in ReadOpen"<<endl;
-	  	exit(1);
-	  	/* handle error */
+	  	BZ2_bzReadClose ( &bzerror, bzip2file );
+	  	throw Exception::ConversionError(__FILE__,__LINE__,__PRETTY_FUNCTION__,"bzip2 compression failed: ");
 		}
+	}
+	
+	Bzip2Ifstream::Bzip2Ifstream()
+		: file(NULL),bzip2file(NULL),n_buffer(0),bzerror(0),stream_at_end(true)
+	{
+	}
+	
+	Bzip2Ifstream::~Bzip2Ifstream()
+	{
+		BZ2_bzReadClose(&bzerror,bzip2file);
+		fclose(file);
 	}
 	
 	size_t Bzip2Ifstream::read(char* s, size_t n)
 	{
-		bzerror = BZ_OK;
-	//while is just needed if the whole file should be read at once
-	//	while ( bzerror == BZ_OK && /* arbitrary other conditions */) 
-	//	{
-  		nBuf = BZ2_bzRead ( &bzerror, b, s, n/* size of buf */ );		
-	  	if ( bzerror == BZ_OK ) 
-	  	{
-    		return nBuf;
-    		/* do something with buf[0 .. nBuf-1] */
-  		}
+		if(bzip2file != NULL)
+		{
+			bzerror = BZ_OK;
+		//while is just needed if the whole file should be read at once
+		//while ( bzerror == BZ_OK && /* arbitrary other conditions */) 
+		//{
+  			n_buffer = BZ2_bzRead ( &bzerror, bzip2file, s, n/* size of buf */ );		
+	  		if ( bzerror == BZ_OK ) 
+	  		{
+    			return n_buffer;
+    			/* do something with buf[0 .. nBuf-1] */
+  			}
 		//}
-		if ( bzerror != BZ_STREAM_END ) 
+			if ( bzerror != BZ_STREAM_END ) 
+			{
+   			BZ2_bzReadClose ( &bzerror, bzip2file );
+   			throw Exception::ConversionError(__FILE__,__LINE__,__PRETTY_FUNCTION__,"bzip2 compression failed: ");
+			} 
+			else 
+			{
+   			BZ2_bzReadClose ( &bzerror, bzip2file);
+   			stream_at_end = true;
+   			bzip2file = NULL;
+   			return n_buffer;
+			}
+		}
+		else
 		{
-   		BZ2_bzReadClose ( &bzerror, b );
-   		cout<<"Fehler beim decompressen;"<<endl;
-   		exit(1);
-   		/* handle error */
-		} 
-		else 
-		{
-   		BZ2_bzReadClose ( &bzerror, b );
-   		stream_at_end = true;
-   		return nBuf;
+			throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"no file for decompression initialized");
 		}
 	}
 	
+	void Bzip2Ifstream::open(const char* filename)
+	{
+		if(file != NULL)
+		{
+			fclose(file);
+		}
+		if(bzip2file != NULL)
+		{
+			BZ2_bzReadClose(&bzerror,bzip2file);
+		}
+		file = fopen( filename, "rb" ); //read binary: always open in binary mode because windows and mac open in text mode
+		
+		//aborting, ahhh!
+		if( !file ) 
+		{
+			throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
+		}
+		
+		bzip2file = BZ2_bzReadOpen ( &bzerror, file, 0, 0, NULL, 0 );
+		if ( bzerror != BZ_OK ) 
+		{
+	  	BZ2_bzReadClose ( &bzerror, bzip2file );
+	  	throw Exception::ConversionError(__FILE__,__LINE__,__PRETTY_FUNCTION__,"bzip2 compression failed: ");
+		}
+	}
+	
+	void Bzip2Ifstream::close()
+	{
+		if(file != NULL)
+		{
+			fclose(file);
+		}
+		if(bzip2file != NULL)
+		{
+			BZ2_bzReadClose(&bzerror,bzip2file);
+		}
+		file = NULL;
+		bzip2file = NULL;
+	}	
 
 } //namespace OpenMS

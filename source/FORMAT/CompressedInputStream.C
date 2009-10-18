@@ -26,27 +26,34 @@
 // --------------------------------------------------------------------------
 
 
-//#include <xercesc/util/CompressedInputStream.h>
 #include <OpenMS/FORMAT/CompressedInputStream.h>
+#include <OpenMS/DATASTRUCTURES/String.h>
+
 using namespace xercesc;
 
 namespace OpenMS
 {
-	CompressedInputStream::CompressedInputStream(const   XMLCh* const    fileName, xercesc::MemoryManager* const manager)
-	:bzip2_(new Bzip2Ifstream("/Users/david/Studium/OpenMS/FileCompress2/source/TEST/data/MzMLFile_6_uncompressed.mzML.bz2"))
+	CompressedInputStream::CompressedInputStream(const   String&   file_name)
+	:bzip2_(new Bzip2Ifstream(file_name.c_str())),file_current_index(0)
 	{
 	}
 
-	CompressedInputStream::CompressedInputStream(const   char* const     fileName, xercesc::MemoryManager* const  manager)
-	:bzip2_(new Bzip2Ifstream(static_cast<const char*>(fileName)))
+	CompressedInputStream::CompressedInputStream(const   char* file_name)
+	:bzip2_(new Bzip2Ifstream(file_name)),file_current_index(0)
   {
   }
+	
+/*	CompressedInputStream::CompressedInputStream()
+	:bzip2_(NULL)
+	{
+	
+	}*/
 	
 	CompressedInputStream::~CompressedInputStream()
 	{
 		delete bzip2_;
 	}
-	XMLSize_t CompressedInputStream::readBytes(XMLByte* const  toFill, const XMLSize_t  maxToRead)
+	XMLSize_t CompressedInputStream::readBytes(XMLByte* const  to_fill, const XMLSize_t  max_to_read)
 	{
     //  Figure out whether we can really read. 
    if(bzip2_->streamEnd())
@@ -54,9 +61,10 @@ namespace OpenMS
    	return 0;
    }
    
-   unsigned char* fill_it = static_cast<unsigned char*>(toFill);
-   XMLSize_t actualRead = (XMLSize_t) bzip2_->read((char*)fill_it, static_cast<const size_t>(maxToRead));
-    return actualRead;
+   unsigned char* fill_it = static_cast<unsigned char*>(to_fill);
+   XMLSize_t actual_read = (XMLSize_t) bzip2_->read((char*)fill_it, static_cast<const size_t>(max_to_read));
+   file_current_index += actual_read;
+   return actual_read;
 	}
 
 	const XMLCh* CompressedInputStream::getContentType() const

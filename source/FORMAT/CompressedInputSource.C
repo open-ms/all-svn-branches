@@ -26,6 +26,7 @@
 // --------------------------------------------------------------------------
 #include <OpenMS/FORMAT/CompressedInputSource.h>
 #include <OpenMS/FORMAT/CompressedInputStream.h>
+#include <OpenMS/FORMAT/HANDLERS/XMLHandler.h>
 
 #include <xercesc/internal/MemoryManagerImpl.hpp>
 #include <xercesc/util/XMLString.hpp>
@@ -36,45 +37,23 @@
 using namespace xercesc;
 namespace OpenMS
 {
-	CompressedInputSource::CompressedInputSource( const XMLCh* const basePath, const XMLCh* const relativePath, xercesc::MemoryManager* const manager)
-    : xercesc::InputSource(manager)
+
+	CompressedInputSource::CompressedInputSource(const String& file_path, MemoryManager* const manager)
+   : xercesc::InputSource(manager)
 	{
-	    //
-	    //  If the relative part is really relative, then weave it together
-  	  //  with the base path. If not, just take the relative path as the
-   	 //  entire path.
-   	 //
-   	 if(xercesc::XMLPlatformUtils::isRelative(relativePath, manager))
-   	 {
-   	 	XMLCh* tmpBuf = xercesc::XMLPlatformUtils::weavePaths(basePath, relativePath, manager);
-   	  setSystemId(tmpBuf);
-      manager->deallocate(tmpBuf); //delete [] tmpBuf;
-    	}
-    	else
-    	{
-    	  XMLCh* tmpBuf = xercesc::XMLString::replicate(relativePath, manager);
-        xercesc::XMLPlatformUtils::removeDotSlash(tmpBuf, manager);
-        setSystemId(tmpBuf);
-        manager->deallocate(tmpBuf);//delete [] tmpBuf;
-    	}
-
-	}
-
-	CompressedInputSource::CompressedInputSource(const XMLCh* const filePath, MemoryManager* const manager)
-    : xercesc::InputSource(manager)
-	{
-
     	//
     	//  If the path is relative, then complete it acording to the current
     	//  working directory rules of the current platform. Else, just take
     	//  it as is.
     	//
-    	if (xercesc::XMLPlatformUtils::isRelative(filePath, manager))
+    	Internal::StringManager strman;
+    	XMLCh* file = strman.convert(file_path.c_str());
+    	if (xercesc::XMLPlatformUtils::isRelative(file, manager))
     	{
         XMLCh* curDir = xercesc::XMLPlatformUtils::getCurrentDirectory(manager);
 
         XMLSize_t curDirLen = XMLString::stringLen(curDir);
-        XMLSize_t filePathLen = XMLString::stringLen(filePath);
+        XMLSize_t filePathLen = XMLString::stringLen(file);
         XMLCh* fullDir = (XMLCh*) manager->allocate
         (
             (curDirLen + filePathLen + 2) * sizeof(XMLCh)
@@ -82,7 +61,7 @@ namespace OpenMS
 
         XMLString::copyString(fullDir, curDir);
         fullDir[curDirLen] = chForwardSlash;
-        XMLString::copyString(&fullDir[curDirLen+1], filePath);
+        XMLString::copyString(&fullDir[curDirLen+1], file);
         
         XMLPlatformUtils::removeDotSlash(fullDir, manager);
         XMLPlatformUtils::removeDotDotSlash(fullDir, manager);
@@ -94,12 +73,51 @@ namespace OpenMS
     	}
      	else
     	{
-        XMLCh* tmpBuf = XMLString::replicate(filePath, manager);
+        XMLCh* tmpBuf = XMLString::replicate(file, manager);
         XMLPlatformUtils::removeDotSlash(tmpBuf, manager);
         setSystemId(tmpBuf);
       	manager->deallocate(tmpBuf);//delete [] tmpBuf;
   	  }
+	}
 
+	CompressedInputSource::CompressedInputSource(const XMLCh* const file, MemoryManager* const manager)
+   : xercesc::InputSource(manager)
+	{
+    	//
+    	//  If the path is relative, then complete it acording to the current
+    	//  working directory rules of the current platform. Else, just take
+    	//  it as is.
+    	//
+    	if (xercesc::XMLPlatformUtils::isRelative(file, manager))
+    	{
+        XMLCh* curDir = xercesc::XMLPlatformUtils::getCurrentDirectory(manager);
+
+        XMLSize_t curDirLen = XMLString::stringLen(curDir);
+        XMLSize_t filePathLen = XMLString::stringLen(file);
+        XMLCh* fullDir = (XMLCh*) manager->allocate
+        (
+            (curDirLen + filePathLen + 2) * sizeof(XMLCh)
+        );//new XMLCh [ curDirLen + filePathLen + 2];
+
+        XMLString::copyString(fullDir, curDir);
+        fullDir[curDirLen] = chForwardSlash;
+        XMLString::copyString(&fullDir[curDirLen+1], file);
+        
+        XMLPlatformUtils::removeDotSlash(fullDir, manager);
+        XMLPlatformUtils::removeDotDotSlash(fullDir, manager);
+
+        setSystemId(fullDir);
+
+        manager->deallocate(curDir);//delete [] curDir;
+        manager->deallocate(fullDir);//delete [] fullDir;
+    	}
+     	else
+    	{
+        XMLCh* tmpBuf = XMLString::replicate(file, manager);
+        XMLPlatformUtils::removeDotSlash(tmpBuf, manager);
+        setSystemId(tmpBuf);
+      	manager->deallocate(tmpBuf);//delete [] tmpBuf;
+  	  }
 	}
 
 	CompressedInputSource::~CompressedInputSource()
@@ -109,7 +127,7 @@ namespace OpenMS
 
 BinInputStream* CompressedInputSource::makeStream() const
 {
-    CompressedInputStream* retStrm = new CompressedInputStream(getSystemId(), getMemoryManager());
+    CompressedInputStream* retStrm = new CompressedInputStream(Internal::StringManager().convert(getSystemId()));
     if (!retStrm->getIsOpen())
     {
        delete retStrm;

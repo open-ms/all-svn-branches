@@ -89,7 +89,6 @@ namespace OpenMS
 			xercesc::InputSource *source;
 			if(bz[0] == 'B' && bz[1] =='Z')
 			{
-				std::cout<<"IST BZ FILE:"<<filename.c_str()<<std::endl;
 				source = new CompressedInputSource(StringManager().convert(filename.c_str()));
 			}
 			else

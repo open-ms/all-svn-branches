@@ -67,10 +67,12 @@ namespace OpenMS
 			bool isFinished();
 			/// Returns the directory where the output files are stored
 			String getOutputDir();
-			/// Creates all necessary directories (called by the scene before the pipeline is run)
-			void createDirs(const QString& out_dir);
+			/// Creates all necessary directories
+			void createDirs();
 			/// Sets the topological sort number and removes invalidated tmp files
 			virtual void setTopoNr(UInt nr);
+			/// Opens the files in TOPPView
+			void openInTOPPView();
 			
 		public slots:
 		
@@ -90,11 +92,6 @@ namespace OpenMS
 			bool finished_;
 			/// The output file names
 			QStringList files_;
-		
-			///@name reimplemented Qt events
-      //@{
-      void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
-			//@}
 	};
 }
 

@@ -39,6 +39,7 @@
 #include <QtCore/QDir>
 #include <QtCore/QFileInfo>
 #include <QtGui/QMessageBox>
+#include <QtCore/QSet>
 
 namespace OpenMS
 {
@@ -402,12 +403,6 @@ namespace OpenMS
 			return;
 		}
 		
-		// make sure all output file names are updated
-		updateOutputFileNames();
-		
-		// create all directories
-		createDirs();
-		
 		//unset the finished flag and set progress color = red for all TOPP tool nodes
 		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
 		{
@@ -716,32 +711,6 @@ namespace OpenMS
 		file_name_ = name;
 	}
 	
-	void TOPPASScene::updateOutputFileNames()
-	{
-		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
-		{
-			TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(*it);
-			if (oflv)
-			{
-				for (TOPPASVertex::EdgeIterator e_it = oflv->inEdgesBegin(); e_it != oflv->inEdgesEnd(); ++e_it)
-				{
-					TOPPASEdge* in_edge = *e_it;
-					TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(in_edge->getSourceVertex());
-					if (tv)
-					{
-						tv->updateOutputFileNames();
-						continue;
-					}
-					TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>(in_edge->getSourceVertex());
-					if (mv)
-					{
-						mv->updateOutputFileNames();
-					}
-				}
-			}
-		}
-	}
-	
 	void TOPPASScene::unselectAll()
 	{
 		const QList<QGraphicsItem*>& all_items = items();	
@@ -934,26 +903,6 @@ namespace OpenMS
 		user_specified_out_dir_ = true;
 	}
 	
-	void TOPPASScene::createDirs()
-	{
-		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
-		{
-			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(*it);
-			if (tv)
-			{
-				tv->createDirs(out_dir_);
-				continue;
-			}
-			
-			TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(*it);
-			if (oflv)
-			{
-				oflv->createDirs(out_dir_);
-				continue;
-			}
-		}
-	}
-	
 	void TOPPASScene::moveSelectedItems(qreal dx, qreal dy)
 	{
 		setActionMode(AM_MOVE);
@@ -1074,6 +1023,208 @@ namespace OpenMS
 		}
 		
 		return true;
+	}
+	
+	void TOPPASScene::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+	{
+		QPointF scene_pos = event->scenePos();
+		QGraphicsItem* clicked_item = itemAt(scene_pos);
+		
+		if (clicked_item == 0)
+		{
+			return;
+		}
+		
+		if (!clicked_item->isSelected())
+		{
+			unselectAll();
+		}
+		
+		clicked_item->setSelected(true);
+		
+		// check which kinds of items are selected and display a context menu containing only actions compatible with all of them
+		bool found_tool = false;
+		bool found_input = false;
+		bool found_output = false;
+		bool found_edge = false;
+		bool disable_resume = false;
+		//bool disable_toppview = true;
+		
+		foreach (TOPPASEdge* edge, edges_)
+		{
+			if (edge->isSelected())
+			{
+				found_edge = true;
+				break;
+			}
+		}
+		
+		foreach (TOPPASVertex* tv, vertices_)
+		{
+			if (!tv->isSelected())
+			{
+				continue;
+			}
+			
+			if (qobject_cast<TOPPASToolVertex*>(tv))
+			{
+				found_tool = true;
+				// all predecessor nodes finished successfully? if not, disable resuming
+				for (EdgeIterator it = tv->inEdgesBegin(); it != tv->inEdgesEnd(); ++it)
+				{
+					TOPPASToolVertex* pred_ttv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
+					if (pred_ttv && (pred_ttv->getProgressColor() != Qt::green || !pred_ttv->isFinished()))
+					{
+						disable_resume = true;
+						break;
+					}
+				}
+				continue;
+			}
+			if (qobject_cast<TOPPASInputFileListVertex*>(tv))
+			{
+				found_input = true;
+				continue;
+			}
+			if (qobject_cast<TOPPASOutputFileListVertex*>(tv))
+			{
+				found_output = true;
+				continue;
+			}
+		}
+		
+		QMenu menu;
+		QList<QSet<QString> > all_actions;
+		
+		if (found_tool)
+		{
+			QSet<QString> tool_actions;
+			tool_actions.insert("Edit parameters");
+			tool_actions.insert("Resume");
+			tool_actions.insert("Open files in TOPPView");
+			tool_actions.insert("Remove");
+			all_actions.push_back(tool_actions);
+		}
+		
+		if (found_input)
+		{
+			QSet<QString> input_actions;
+			input_actions.insert("Change files");
+			input_actions.insert("Open files in TOPPView");
+			input_actions.insert("Remove");
+			all_actions.push_back(input_actions);
+		}
+		
+		if (found_output)
+		{
+			QSet<QString> output_actions;
+			output_actions.insert("Open files in TOPPView");
+			output_actions.insert("Remove");
+			all_actions.push_back(output_actions);
+		}
+		
+		if (found_edge)
+		{
+			QSet<QString> edge_actions;
+			edge_actions.insert("Edit I/O mapping");
+			edge_actions.insert("Remove");
+			all_actions.push_back(edge_actions);
+		}
+		
+		QSet<QString> supported_actions_set = all_actions.first();
+		foreach (const QSet<QString>& action_set, all_actions)
+		{
+			supported_actions_set.intersect(action_set);
+		}
+		QList<QString> supported_actions = supported_actions_set.toList();
+		
+		foreach (const QString& supported_action, supported_actions)
+		{
+			QAction* new_action = menu.addAction(supported_action);
+			if (supported_action == "Resume" && disable_resume)
+			{
+				new_action->setEnabled(false);
+			}
+		}
+		
+		// ------ execute action on all selected items ------
+		
+		QAction* selected_action = menu.exec(event->screenPos());
+		if (selected_action)
+		{
+			QString text = selected_action->text();
+			
+			if (text == "Remove")
+			{
+				removeSelected();
+				event->accept();
+				return;
+			}
+			
+			foreach (QGraphicsItem* gi, selectedItems())
+			{
+				TOPPASEdge* edge = dynamic_cast<TOPPASEdge*>(gi);
+				if (edge)
+				{
+					if (text == "Edit I/O mapping")
+					{
+						edge->showIOMappingDialog();
+					}
+					
+					continue;
+				}
+				
+				TOPPASToolVertex* ttv = dynamic_cast<TOPPASToolVertex*>(gi);
+				if (ttv)
+				{
+					if (text == "Edit parameters")
+					{
+						ttv->editParam();
+					}
+					else if (text == "Resume")
+					{
+						if (askForOutputDir(false))
+						{
+							ttv->runToolIfInputReady();
+						}
+					}
+					else if (text == "Open files in TOPPView")
+					{
+						ttv->openInTOPPView();
+					}
+					
+					continue;
+				}
+				
+				TOPPASInputFileListVertex* ifv = dynamic_cast<TOPPASInputFileListVertex*>(gi);
+				if (ifv)
+				{
+					if (text == "Open files in TOPPView")
+					{
+						ifv->openInTOPPView();
+					}
+					else if (text == "Change files")
+					{
+						ifv->showFilesDialog();
+					}
+					
+					continue;
+				}
+				
+				TOPPASOutputFileListVertex* ofv = dynamic_cast<TOPPASOutputFileListVertex*>(gi);
+				if (ofv)
+				{
+					if (text == "Open files in TOPPView")
+					{
+						ofv->openInTOPPView();
+					}
+					
+					continue;
+				}
+			}
+		}
+		
+		event->accept();
 	}
 	
 } //namespace OpenMS

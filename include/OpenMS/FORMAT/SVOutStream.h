@@ -21,12 +21,12 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Hendrik Weisser $
 // $Authors: Hendrik Weisser $
 // --------------------------------------------------------------------------
 
-#ifndef SVOUTSTREAM_H
-#define SVOUTSTREAM_H
+#ifndef OPENMS_FORMAT_SVOUTSTREAM_H
+#define OPENMS_FORMAT_SVOUTSTREAM_H
 
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <ostream>
@@ -120,7 +120,7 @@ namespace OpenMS
 		template <typename NumericT>
 		SVOutStream& writeValueOrNan(NumericT thing)
 			{
-				if (!boost::math::isnan(thing)) return operator<<(thing);
+				if (!(boost::math::isnan)(thing)) return operator<<(thing);
 				bool old = modifyStrings(false);
 				operator<<(nan_);
 				modifyStrings(old);

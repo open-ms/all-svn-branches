@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Marc Sturm $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Clemens Groepl, Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_CONSENSUSXMLFILE_H
@@ -44,6 +44,8 @@ namespace OpenMS
 	or to save the content of an ConsensusMap object into an XML file.
 
 	A documented schema for this format can be found at http://open-ms.sourceforge.net/schemas/.
+
+  @todo take care that unique ids are assigned properly by TOPP tools before calling store().
 
 	@ingroup FileIO
   */

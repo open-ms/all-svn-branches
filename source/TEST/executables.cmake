@@ -8,6 +8,8 @@ set(concept_executables_list
 	FuzzyStringComparator_test
   LogStream_test
   UniqueIdGenerator_test
+  UniqueIdInterface_test
+  UniqueIdIndexer_test
 )
 
 set(datastructures_executables_list
@@ -79,6 +81,8 @@ set(metadata_executables_list
   ExperimentalSettings_test
   DocumentIdentifier_test
 	ChromatogramSettings_test
+	CVTerm_test
+	CVTermList_test
 )
 
 set(system_executables_list
@@ -170,6 +174,7 @@ set(format_executables_list
   XMassFile_test
   AutoExecuteFile_test	
   SettingsParser_test	
+	SVOutStream_test
 )
 
 if (DB_TEST)
@@ -337,6 +342,8 @@ set(analysis_executables_list
 	HiddenMarkovModel_test
 	PILISModel_test
 	PILISModelGenerator_test
+	ReactionMonitoringTransition_test
+	MRMExperiment_test
 )
 
 set(applications_executables_list

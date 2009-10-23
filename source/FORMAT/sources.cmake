@@ -45,6 +45,7 @@ ProtXMLFile.C
 SequestInfile.C
 SequestOutfile.C
 SettingsParser.C
+SVOutStream.C
 TextFile.C
 TransformationXMLFile.C
 UnimodXMLFile.C

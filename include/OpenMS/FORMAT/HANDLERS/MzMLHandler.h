@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_HANDLERS_MZMLHANDLER_H
@@ -2912,6 +2912,10 @@ namespace OpenMS
 				else if (accession == "MS:1000813")
 				{
 					chromatogram_.setChromatogramType(ChromatogramSettings::EMISSION_CHROMATOGRAM);
+				}
+				else if (accession == "MS:1000809")
+				{
+					chromatogram_.setName(value);
 				}
 				else warning(LOAD, String("Unhandled cvParam '") + accession + "' in tag '" + parent_tag + "'.");
 			}

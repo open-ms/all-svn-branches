@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Stephan Aiche$
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 
@@ -32,14 +32,13 @@
 
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 
-///////////////////////////
+/////////////////////////////////////////////////////////////
+
+using namespace OpenMS;
 
 START_TEST(DRange<D>, "$id$")
 
 /////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
-
-using namespace OpenMS;
 
 //do not modify these points, they are used in many tests
 DPosition<2> p1,p2,p3,one,two;

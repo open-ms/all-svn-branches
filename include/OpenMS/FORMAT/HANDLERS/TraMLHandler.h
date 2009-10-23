@@ -94,6 +94,8 @@ namespace OpenMS
 
 			CVTermList actual_instrument_;
 
+			CVTermList actual_prediction_;
+			
 			Software actual_software_;
 
 			MRMExperiment::Protein actual_protein_;
@@ -105,8 +107,14 @@ namespace OpenMS
 			MRMExperiment::Compound actual_compound_;
 			
 			ReactionMonitoringTransition actual_transition_;
+
+			CVTermList actual_validation_;
 	
-			TransitionInterpretation actual_interpretation_;
+			CVTermList actual_interpretation_;
+			
+			ReactionMonitoringTransition::Configuration actual_configuration_;
+
+			SourceFile actual_sourcefile_;
 
 			/// Handles CV terms
 			void handleCVParam_(const String& parent_parent_tag, const String& parent_tag, const CVTerm& cv_term);

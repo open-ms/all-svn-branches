@@ -22,8 +22,8 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# $Authors: $
+# $Maintainer:$
+# $Authors: Marc Sturm $
 # --------------------------------------------------------------------------
 	
 	error_reporting(E_ERROR | E_WARNING | E_PARSE | E_NOTICE);
@@ -450,7 +450,9 @@
 			"Constants.h",
 			"IsotopeWaveletConstants.h",
 			"IsotopeWaveletCudaKernel.h",
-			"IsotopeWaveletParallelFor.h"
+			"IsotopeWaveletParallelFor.h",
+			"openms_svn_revision.h",
+			"openms_package_version.h"
 			);
 
 		if (!endsWith($f,"_impl.h") && endsWith($f,".h") && !in_array($basename,$dont_load))
@@ -560,6 +562,8 @@
 				"include/OpenMS/APPLICATIONS/TOPPASBase.h",
 				"include/OpenMS/APPLICATIONS/INIFileEditorWindow.h",
 				"include/OpenMS/DATASTRUCTURES/SeqanIncludeWrapper.h",
+				"include/OpenMS/ANALYSIS/DENOVO/CompNovoIdentificationBase.h",
+				"include/OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringBase.h",
 				"_registerChildren.h",
 				"DataReducer.h",
 				"SchemaFile.h",
@@ -568,7 +572,9 @@
 				"Param.h",
 				"IsotopeWaveletCudaKernel.h",
 				"IsotopeWaveletConstants.h",
-				"IsotopeWaveletParallelFor.h"
+				"IsotopeWaveletParallelFor.h",
+				"include/OpenMS/openms_svn_revision.h",
+				"include/OpenMS/openms_package_version.h"
 				);
 
 			if (endsWith($f,".h") && !endsWith($f,"_impl.h"))
@@ -858,8 +864,30 @@
 		########################### DefaultParamHandler  #################################
 		if (in_array("defaults",$tests))
 		{
-			if (endsWith($f,".h") && !endsWith($f,"_impl.h"))
+			// don't report e.g. abstract base classes
+			$dont_report = array(
+				"include/OpenMS/VISUAL/SpectrumCanvas.h",
+        "include/OpenMS/APPLICATIONS/TOPPViewBase.h",
+        "include/OpenMS/APPLICATIONS/TOPPASBase.h",
+        "include/OpenMS/ANALYSIS/DENOVO/CompNovoIdentificationBase.h",
+        "include/OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringBase.h",
+				"include/OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseModel.h",
+				"include/OpenMS/TRANSFORMATIONS/FEATUREFINDER/LevMarqFitter1D.h"
+        );
+
+			$ignore = false;
+      foreach ($dont_report as $i)
+      {
+        if (strpos($f,$i)!==FALSE)
+        {
+          $ignore = true;
+        }
+      }
+
+			if (endsWith($f,".h") && !endsWith($f,"_impl.h") && !$ignore)
 			{
+
+
 				//check if defaults are set in .h file
 				$is_dph = false;
 				$output = array();

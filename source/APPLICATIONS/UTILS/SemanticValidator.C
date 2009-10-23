@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Andreas Bertsch $
+// $Maintainer: Andreas Bertsch $
 // $Authors: Marc Sturm, Andreas Bertsch $
 // --------------------------------------------------------------------------
 
@@ -71,7 +71,7 @@ class TOPPSemanticValidator
 	void registerOptionsAndFlags_()
 	{
 		registerInputFile_("in", "<file>", "", "Input file, either analysisXML or mzML.");
-		registerInputFile_("mapping_file", "<file>", "", "Mapping file which is used to semantically validate the given XML file against this mapping file.", false);
+		registerInputFile_("mapping_file", "<file>", "", "Mapping file which is used to semantically validate the given XML file against this mapping file (see 'share/OpenMS/MAPPING' for templates).");
 	}	
 	
 	ExitCodes main_(int , const char**)

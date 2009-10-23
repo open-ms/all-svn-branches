@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -64,6 +64,53 @@ START_SECTION(([EXTRA] Param::ParamEntry(const String& n, const DataValue& v, co
 	TEST_EQUAL(pe.description,"d1")
 	TEST_EQUAL(pe.value,"v1")
 	TEST_EQUAL(pe.tags.count("advanced")==1,false)
+END_SECTION
+
+START_SECTION(([EXTRA] bool isValid(String& message) const))
+
+	Param p;
+	String m;
+	p.setValue("int",5);
+	TEST_EQUAL(p.getEntry("int").isValid(m),true);
+	p.setMinInt("int",5);
+	TEST_EQUAL(p.getEntry("int").isValid(m),true);
+	p.setMaxInt("int",8);
+	TEST_EQUAL(p.getEntry("int").isValid(m),true);
+	p.setValue("int",10);
+	TEST_EQUAL(p.getEntry("int").isValid(m),false);
+
+	p.setValue("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMinFloat("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMaxFloat("float",8.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setValue("float",10.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),false);
+
+	p.setValue("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMinFloat("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMaxFloat("float",8.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setValue("float",10.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),false);
+
+
+	vector<String> strings;
+	strings.push_back("bla");
+	strings.push_back("bluff");
+	p.setValue("string","bli");
+	TEST_EQUAL(p.getEntry("string").isValid(m),true);
+	p.setValidStrings("string",strings);
+	TEST_EQUAL(p.getEntry("string").isValid(m),false);
+	
+	p.setValue("string_2","bla");
+	TEST_EQUAL(p.getEntry("string_2").isValid(m),true);
+	p.setValidStrings("string_2",strings);
+	TEST_EQUAL(p.getEntry("string_2").isValid(m),true);
+	
 END_SECTION
 
 START_SECTION(([EXTRA] bool operator==(const Param::ParamEntry& rhs) const))
@@ -782,7 +829,7 @@ START_SECTION([EXTRA](friend std::ostream& operator << (std::ostream& os, const 
 	TEST_EQUAL(ss.str(), "\"tree|key\" -> \"17.5\"\n")
 END_SECTION
 
-START_SECTION((void insert(String prefix, const Param &param)))
+START_SECTION((void insert(const String& prefix, const Param &param)))
 	Param p;
 	p.setValue("a",17,"intdesc");
 	p.setValue("n1:b",17.4f,"floatdesc");
@@ -1181,7 +1228,7 @@ START_SECTION((void store(const String& filename) const))
 END_SECTION
 
 
-START_SECTION((void setDefaults(const Param& defaults, String prefix="", bool showMessage=false)))
+START_SECTION((void setDefaults(const Param& defaults, const String& prefix="", bool showMessage=false)))
 	Param defaults;
 	defaults.setValue("float",1.0f,"float");	
 	defaults.setValue("float2",2.0f,"float2");
@@ -1302,7 +1349,7 @@ command_line4[7] = a8;
 command_line4[8] = a9;
 command_line4[9] = a10;
 
-START_SECTION((void parseCommandLine(const int argc, const char **argv, String prefix="")))
+START_SECTION((void parseCommandLine(const int argc, const char **argv, const String& prefix="")))
 	Param p2,p3;
 	p2.parseCommandLine(9,command_line,"test4");
 	p3.setValue("test4:-a","av");
@@ -1483,7 +1530,7 @@ START_SECTION((void setMaxFloat(const String &key, DoubleReal max)))
 END_SECTION
 
 
-START_SECTION((void checkDefaults(const String &name, const Param &defaults, String prefix="", std::ostream &os=std::cout) const))
+START_SECTION((void checkDefaults(const String &name, const Param &defaults, const String& prefix="", std::ostream &os=std::cout) const))
 	//warnings for unknown parameters
 	ostringstream os;
 	Param p,d;

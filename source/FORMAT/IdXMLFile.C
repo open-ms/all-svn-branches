@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/IdXMLFile.h>
@@ -41,7 +41,8 @@ namespace OpenMS
 		: XMLHandler("","1.2"),
 			XMLFile("/SCHEMAS/IdXML_1_2.xsd","1.2"),
 			last_meta_(0),
-			document_id_()
+			document_id_(),
+			prot_id_in_run_(false)
 	{
 	}
 
@@ -364,6 +365,8 @@ namespace OpenMS
 		{
 			//check file version against schema version
 			String file_version="";
+			prot_id_in_run_ = false;
+
 			optionalAttributeAsString_(file_version,attributes,"version");
 			if (file_version=="") file_version="1.0"; //default version is 1.0
 			if (file_version.toDouble()>version_.toDouble())
@@ -511,6 +514,12 @@ namespace OpenMS
 		//PEPTIDES
 		else if (tag =="PeptideIdentification")
 		{
+			// check whether a prot id has been given, add "empty" one to list else
+			if (!prot_id_in_run_)
+			{
+				prot_ids_->push_back(prot_id_);
+				prot_id_in_run_ = true; // set to true, cause we have created one; will be reset for next run
+			}
 			
 			//set identifier
 			pep_id_.setIdentifier(prot_ids_->back().getIdentifier());
@@ -627,7 +636,7 @@ namespace OpenMS
 			}
 			else if (*type==*s_float)
 			{
-				last_meta_->setMetaValue(name, atof(sm_.convert(value)) );
+				last_meta_->setMetaValue(name, String(sm_.convert(value)).toDouble());
 			}
 			else if (*type==*s_string)
 			{
@@ -647,6 +656,7 @@ namespace OpenMS
 		//START
 		if (tag =="IdXML")
 		{
+			prot_id_in_run_ = false;
 		}
 		///SEARCH PARAMETERS
 		else if (tag =="SearchParameters")
@@ -663,26 +673,25 @@ namespace OpenMS
 			
 			last_meta_ = &param_;
 		}
-		
-		// RUN
-		else if (tag =="IdentificationRun")
-		{
-
-		}
-		
 		//PROTE IDENTIFICATIONS
 		else if (tag =="ProteinIdentification")
 		{
 			prot_ids_->push_back(prot_id_);
 			prot_id_ = ProteinIdentification();
 			last_meta_  = 0;		
+			prot_id_in_run_ = true;
+		}
+		else if (tag == "IdentificationRun")
+		{
+			prot_id_ = ProteinIdentification();
+			last_meta_ = 0;
+			prot_id_in_run_ = false;
 		}
 		else if (tag =="ProteinHit")
 		{
 			prot_id_.insertHit(prot_hit_);
 			last_meta_ = &prot_id_;
-		}
-		
+		}	
 		//PEPTIDES
 		else if (tag =="PeptideIdentification")
 		{

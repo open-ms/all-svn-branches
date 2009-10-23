@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_IDXMLFILE_H
@@ -128,6 +128,8 @@ namespace OpenMS
 			std::map<String,String> proteinid_to_accession_;
 			/// Document identitifier
 			String* document_id_;
+			/// true if a prot id is contained in the current run
+			bool prot_id_in_run_;
 			//@}
   };
  

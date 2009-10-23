@@ -22,8 +22,8 @@
 #  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 #
 # --------------------------------------------------------------------------
-# $Maintainer: Marc Sturm $
-# $Authors: $
+# $Maintainer: $
+# $Authors: Marc Sturm $
 # --------------------------------------------------------------------------
 
 ///write array to file line by line
@@ -212,6 +212,7 @@ function getClassInfo($bin_path,$header, $debug)
 		"",
 		"Internal_1_1",
 		"Math_1_1",
+		"Logger_1_1"
 		);
 	
 	$found = false;

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Stephan Aiche$
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_CONCEPT_EXCEPTION_H
@@ -606,7 +606,7 @@ namespace OpenMS
 		};
 		
     /**
-			@brief A method or algorithm argument contains is values
+			@brief A method or algorithm argument contains illegal values
 			
 			@ingroup Exceptions
 		*/

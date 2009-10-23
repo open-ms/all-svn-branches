@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_HANDLERS_XMLHANDLER_H
@@ -340,7 +340,7 @@ namespace OpenMS
 			{
 				const XMLCh* val = a.getValue(sm_.convert(name));
 				if (val==0) fatalError(LOAD, String("Required attribute '") + name + "' not present!");
-				return atof(sm_.convert(val));
+				return String(sm_.convert(val)).toDouble();
 			}
 			
 			/**
@@ -401,7 +401,7 @@ namespace OpenMS
 				const XMLCh* val = a.getValue(sm_.convert(name));
 				if (val!=0)
 				{
-					value = atof(sm_.convert(val));
+					value = String(sm_.convert(val)).toDouble();
 					return true;
 				}
 				return false;
@@ -428,7 +428,7 @@ namespace OpenMS
 			{
 				const XMLCh* val = a.getValue(name);
 				if (val==0) fatalError(LOAD, String("Required attribute '") + sm_.convert(name) + "' not present!");
-				return atof(sm_.convert(val));
+				return String(sm_.convert(val)).toDouble();
 			}
 			
 			/// Assigns the attribute content to the String @a value if the attribute is present
@@ -477,7 +477,7 @@ namespace OpenMS
 				const XMLCh* val = a.getValue(name);
 				if (val!=0)
 				{
-					value = atof(sm_.convert(val));
+					value = String(sm_.convert(val)).toDouble();
 					return true;
 				}
 				return false;

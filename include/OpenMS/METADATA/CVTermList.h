@@ -25,10 +25,11 @@
 // $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_DATASTRUCTURES_CVTERMLIST_H
-#define OPENMS_DATASTRUCTURES_CVTERMLIST_H
+#ifndef OPENMS_METADATA_CVTERMLIST_H
+#define OPENMS_METADATA_CVTERMLIST_H
 
 #include <OpenMS/METADATA/CVTerm.h>
+#include <OpenMS/METADATA/MetaInfoInterface.h>
 #include <OpenMS/DATASTRUCTURES/CVMappingRule.h>
 #include <OpenMS/FORMAT/ControlledVocabulary.h>
 
@@ -44,6 +45,7 @@ namespace OpenMS
 	*/
 			///Represenation of a CV term used by CVMappings
 			class OPENMS_DLLAPI CVTermList
+				:	public MetaInfoInterface
 			{
 				public:
 			
@@ -92,6 +94,9 @@ namespace OpenMS
 				
 				/// checks whether the stored terms fullfil a given CVMappingRule
 				bool checkCVTerms(const CVMappingRule& rule, const ControlledVocabulary& cv) const;
+
+				/// return true if no terms are available
+				bool empty() const;
 				//}
 
 				protected:

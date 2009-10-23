@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <fstream>
@@ -31,17 +31,21 @@
 #include <OpenMS/ANALYSIS/ID/ConsensusID.h>
 #include <OpenMS/ANALYSIS/ID/PILISScoring.h>
 #include <OpenMS/ANALYSIS/ID/PILISModel.h>
+#include <OpenMS/ANALYSIS/ID/PILISModelGenerator.h>
+#include <OpenMS/ANALYSIS/ID/PILISNeutralLossModel.h>
 #include <OpenMS/ANALYSIS/ID/PILISCrossValidation.h>
 #include <OpenMS/ANALYSIS/ID/ProtonDistributionModel.h>
 #include <OpenMS/ANALYSIS/ID/FalseDiscoveryRate.h>
 #include <OpenMS/ANALYSIS/ID/IDDecoyProbability.h>
 #include <OpenMS/ANALYSIS/ID/PrecursorIonSelection.h>
 #include <OpenMS/ANALYSIS/ID/PrecursorIonSelectionPreprocessing.h>
+#include <OpenMS/ANALYSIS/ID/OfflinePrecursorIonSelection.h>
 #include <OpenMS/ANALYSIS/DECHARGING/FeatureDeconvolution.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIdentification.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIdentificationCID.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoring.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringCID.h>
+#include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringBase.h>
 #include <OpenMS/ANALYSIS/DENOVO/MassDecompositionAlgorithm.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/DelaunayPairFinder.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringAffineSuperimposer.h>
@@ -54,11 +58,13 @@
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmLabeled.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmUnlabeled.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/LabeledPairFinder.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmIdentification.h>
 #include <OpenMS/ANALYSIS/MRM/MRMFragmentSelection.h>
 #include <OpenMS/ANALYSIS/QUANTITATION/ItraqChannelExtractor.h>
 #include <OpenMS/ANALYSIS/QUANTITATION/ItraqQuantifier.h>
 #include <OpenMS/FORMAT/MSPFile.h>
 #include <OpenMS/FORMAT/MascotGenericFile.h>
+#include <OpenMS/FORMAT/MascotRemoteQuery.h>
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 #include <OpenMS/CHEMISTRY/AdvancedTheoreticalSpectrumGenerator.h>
 #include <OpenMS/COMPARISON/SPECTRA/PeakSpectrumCompareFunctor.h>
@@ -128,6 +134,7 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmWavelet.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/InterpolationModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ProductModel.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/Fitter1D.h>
 #include <OpenMS/SIMULATION/DigestSimulation.h>
 #include <OpenMS/SIMULATION/PTMSimulation.h>
 #include <OpenMS/SIMULATION/IonizationSimulation.h>
@@ -135,6 +142,11 @@
 #include <OpenMS/SIMULATION/RawMSSignalSimulation.h>
 #include <OpenMS/SIMULATION/MSSim.h>
 #include <OpenMS/SIMULATION/ElutionModel.h>
+#include <OpenMS/SIMULATION/RawTandemMSSignalSimulation.h>
+#include <OpenMS/SIMULATION/RTSimulation.h>
+#include <OpenMS/APPLICATIONS/TOPPASBase.h>
+#include <OpenMS/APPLICATIONS/TOPPViewBase.h>
+
 //#include <OpenMS/SIMULATION/MixtureModel.h>
 
 
@@ -374,6 +386,16 @@ int main (int argc , char** argv)
 	DOCME(MRMFragmentSelection)
 	DOCME(PILISCrossValidation)
 	DOCME(ProtonDistributionModel)
+	DOCME(MascotRemoteQuery)
+	DOCME(MascotGenericFile)
+	DOCME(PILISNeutralLossModel)
+	DOCME(PILISModelGenerator)
+	DOCME(AdvancedTheoreticalSpectrumGenerator)
+	DOCME(FeatureGroupingAlgorithmIdentification)
+	DOCME(OfflinePrecursorIonSelection)
+	DOCME(TOPPViewBase)
+	DOCME(TOPPASBase)
+	DOCME(Fitter1D)
 	
 	//////////////////////////////////
 	// More complicated cases
@@ -397,6 +419,8 @@ int main (int argc , char** argv)
 	DOCME2(PTMSimulation, PTMSimulation(NULL));
   DOCME2(IonizationSimulation, IonizationSimulation(NULL));
   DOCME2(RawMSSignalSimulation, RawMSSignalSimulation(NULL));
+	DOCME2(RawTandemMSSignalSimulation, RawTandemMSSignalSimulation(NULL))
+	DOCME2(RTSimulation, RTSimulation(NULL))
   
   return 0;
 }

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Marc Sturm $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors:  Clemens Groepl, Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/MzMLFile.h>
@@ -189,6 +189,8 @@ class TOPPFeatureFinder
 
 		//running algorithm
 		ff.run(type, exp, features, feafi_param, seeds);
+
+    features.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
 		//-------------------------------------------------------------
 		// writing files

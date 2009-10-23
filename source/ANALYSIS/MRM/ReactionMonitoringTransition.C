@@ -35,27 +35,24 @@ using namespace std;
 namespace OpenMS
 {
 	ReactionMonitoringTransition::ReactionMonitoringTransition()
-		:	MetaInfoInterface(),
-			CVTermList(),
+		:	CVTermList(),
 			precursor_mz_(numeric_limits<DoubleReal>::max()),
-			precursor_charge_(numeric_limits<Int>::max()),
-			product_mz_(numeric_limits<DoubleReal>::max()),
-			product_charge_(numeric_limits<Int>::max())
+			product_mz_(numeric_limits<DoubleReal>::max())
 	{
 	}
 
   ReactionMonitoringTransition::ReactionMonitoringTransition(const ReactionMonitoringTransition& rhs)
-		:	MetaInfoInterface(rhs),
-			CVTermList(rhs),
+		: CVTermList(rhs),
 			name_(rhs.name_),
 			precursor_mz_(rhs.precursor_mz_),
-      precursor_charge_(rhs.precursor_charge_),
+      precursor_cv_terms_(rhs.precursor_cv_terms_),
       product_mz_(rhs.product_mz_),
-      product_charge_(rhs.product_charge_),
+      product_cv_terms_(rhs.product_cv_terms_),
       interpretation_list_(rhs.interpretation_list_),
 			peptide_ref_(rhs.peptide_ref_),
 			compound_ref_(rhs.compound_ref_),
-			configurations_(rhs.configurations_)
+			configurations_(rhs.configurations_),
+			prediction_(rhs.prediction_)
 	{
 	}
 
@@ -67,34 +64,34 @@ namespace OpenMS
 	{
 		if (&rhs != this)
 		{
-			MetaInfoInterface::operator = (rhs);
 			CVTermList::operator = (rhs);
 			name_ = rhs.name_;
 			precursor_mz_ = rhs.precursor_mz_;
-			precursor_charge_ = rhs.precursor_charge_;
+			precursor_cv_terms_ = rhs.precursor_cv_terms_;
 			product_mz_ = rhs.product_mz_;
-			product_charge_ = rhs.product_charge_;
+			product_cv_terms_ = rhs.product_cv_terms_;
 			interpretation_list_ = rhs.interpretation_list_;
 			peptide_ref_ = rhs.peptide_ref_;
 			compound_ref_ = rhs.compound_ref_;
 			configurations_ = rhs.configurations_;
+			prediction_ = rhs.prediction_;
 		}
 		return *this;
 	}
 
 	bool ReactionMonitoringTransition::operator == (const ReactionMonitoringTransition& rhs) const
 	{
-		return  MetaInfoInterface::operator == (rhs) &&
-			      CVTermList::operator == (rhs) &&
+		return  CVTermList::operator == (rhs) &&
 			      name_ == rhs.name_ &&
 			      precursor_mz_ == rhs.precursor_mz_ &&
-			      precursor_charge_ == rhs.precursor_charge_ &&
+			      precursor_cv_terms_ == rhs.precursor_cv_terms_ &&
 			      product_mz_ == rhs.product_mz_ &&
-			      product_charge_ == rhs.product_charge_ &&
+			      product_cv_terms_ == rhs.product_cv_terms_ &&
 			      interpretation_list_ == rhs.interpretation_list_ &&
 			      peptide_ref_ == rhs.peptide_ref_ &&
 			      compound_ref_ == rhs.compound_ref_ &&
-			      configurations_ == rhs.configurations_;
+			      configurations_ == rhs.configurations_ &&
+						prediction_ == rhs.prediction_;
 	}
 
 	bool ReactionMonitoringTransition::operator != (const ReactionMonitoringTransition& rhs) const
@@ -142,15 +139,21 @@ namespace OpenMS
 		return precursor_mz_;
 	}
 
-	void ReactionMonitoringTransition::setPrecursorCharge(Int charge)
+	void ReactionMonitoringTransition::setPrecursorCVTermList(const CVTermList& list)
 	{
-		precursor_charge_ = charge;
+		precursor_cv_terms_ = list;
 	}
 
-	Int ReactionMonitoringTransition::getPrecursorCharge() const
+	void ReactionMonitoringTransition::addPrecursorCVTerm(const CVTerm& cv_term)
 	{
-		return precursor_charge_;
+		precursor_cv_terms_.addCVTerm(cv_term);
 	}
+
+	const CVTermList& ReactionMonitoringTransition::getPrecursorCVTermList() const
+	{
+		return precursor_cv_terms_;
+	}
+
 
   void ReactionMonitoringTransition::setProductMZ(DoubleReal mz)
   {
@@ -162,27 +165,32 @@ namespace OpenMS
     return product_mz_;
   }
 
-  void ReactionMonitoringTransition::setProductCharge(Int charge)
+  void ReactionMonitoringTransition::setProductCVTermList(const CVTermList& list)
   {
-    product_charge_ = charge;
+    product_cv_terms_ = list;
   }
 
-  Int ReactionMonitoringTransition::getProductCharge() const
+	void ReactionMonitoringTransition::addProductCVTerm(const CVTerm& cv_term)
+	{
+		product_cv_terms_.addCVTerm(cv_term);
+	}
+
+  const CVTermList& ReactionMonitoringTransition::getProductCVTermList() const
   {
-    return product_charge_;
+    return product_cv_terms_;
   }
 
-	void ReactionMonitoringTransition::setInterpretations(const vector<TransitionInterpretation>& interpretations)
+	void ReactionMonitoringTransition::setInterpretations(const vector<CVTermList>& interpretations)
 	{
 		interpretation_list_ = interpretations;
 	}
 
-	const vector<TransitionInterpretation>& ReactionMonitoringTransition::getInterpretations() const
+	const vector<CVTermList>& ReactionMonitoringTransition::getInterpretations() const
 	{
 		return interpretation_list_;
 	}
 
-	void ReactionMonitoringTransition::addInterpretation(const TransitionInterpretation& interpretation)
+	void ReactionMonitoringTransition::addInterpretation(const CVTermList& interpretation)
 	{
 		interpretation_list_.push_back(interpretation);
 	}
@@ -201,6 +209,22 @@ namespace OpenMS
 	{
 		configurations_.push_back(configuration);
 	}
+
+	void ReactionMonitoringTransition::setPrediction(const CVTermList& prediction)
+	{
+		prediction_ = prediction;
+	}
+
+	const CVTermList& ReactionMonitoringTransition::getPrediction() const
+	{
+		return prediction_;
+	}
+
+	void ReactionMonitoringTransition::addPredictionTerm(const CVTerm& term)
+	{
+		prediction_.addCVTerm(term);
+	}
+	
 
   void ReactionMonitoringTransition::updateMembers_()
 	{

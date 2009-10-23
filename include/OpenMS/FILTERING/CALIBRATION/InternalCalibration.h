@@ -33,6 +33,7 @@
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/TransformationDescription.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 
  #include <gsl/gsl_fit.h>
 
@@ -93,18 +94,8 @@ namespace OpenMS
     template<typename InputPeakType>
 		void calibrateMapList(std::vector<MSExperiment<InputPeakType> >& exp_list,std::vector<MSExperiment<InputPeakType> >& calibrated_exp_list, std::vector<DoubleReal>& ref_masses, std::vector<DoubleReal>& detected_background_masses);
 
-		/// Non-mutable access to the monoisotopic peaks
-		inline const std::vector<std::vector<UInt> >& getMonoisotopicPeaks() const {return monoiso_peaks_;}
-		/// Mutable access to the monoisotopic peaks
-		inline void setMonoisotopicPeaks(const std::vector<std::vector<UInt> >& monoiso_peaks) {monoiso_peaks_ = monoiso_peaks;}
 
   protected:
-
-		std::vector<std::vector<UInt> > monoiso_peaks_;
-		
-    /// Determines the monoisotopic peaks
-		template<typename InputPeakType>    
-		void getMonoisotopicPeaks_(MSExperiment<InputPeakType>& exp);
 
 		// the actual calibration function
 		void makeLinearRegression_(std::vector<DoubleReal>& observed_masses, std::vector<DoubleReal>& theoretical_masses);
@@ -133,15 +124,13 @@ namespace OpenMS
 				std::cout << "Attention: this function is assuming peak data."<<std::endl;
 			}
 		calibrated_exp = exp;
-    // get monoisotopic peaks
-    getMonoisotopicPeaks_(calibrated_exp);
 		
     Size num_ref_peaks = ref_masses.size();
     bool use_ppm = (param_.getValue("mz_tolerance_unit") == "ppm" ) ? true : false;
 		DoubleReal mz_tol = param_.getValue("mz_tolerance");
-    startProgress(0,monoiso_peaks_.size(),"calibrate spectra");    
+    startProgress(0,exp.size(),"calibrate spectra");    
     // for each spectrum
-    for(Size spec=0;spec <  monoiso_peaks_.size(); ++spec)
+    for(Size spec=0;spec <  exp.size(); ++spec)
       {
 				// calibrate only MS1 spectra
 				if(exp[spec].getMSLevel() != 1)
@@ -152,21 +141,21 @@ namespace OpenMS
 				
 				std::vector<DoubleReal> corr_masses,rel_errors,found_ref_masses;
 				UInt corr_peaks=0;
-				for(Size peak=0;peak <  monoiso_peaks_[spec].size(); ++peak)
+				for(Size peak=0;peak <  exp[spec].size(); ++peak)
 					{
 						for(Size ref_peak=0; ref_peak < num_ref_peaks;++ref_peak)
 							{
-									if(!use_ppm &&  fabs(calibrated_exp[spec][monoiso_peaks_[spec][peak]].getMZ() - ref_masses[ref_peak]) <  mz_tol)
+									if(!use_ppm &&  fabs(exp[spec][peak].getMZ() - ref_masses[ref_peak]) <  mz_tol)
 									{
 										found_ref_masses.push_back(ref_masses[ref_peak]);
-										corr_masses.push_back(calibrated_exp[spec][monoiso_peaks_[spec][peak]].getMZ());
+										corr_masses.push_back(exp[spec][peak].getMZ());
 										++corr_peaks;
 										break;
 									}
-									else if(use_ppm &&  fabs(calibrated_exp[spec][monoiso_peaks_[spec][peak]].getMZ() - ref_masses[ref_peak]) / ref_masses[ref_peak] * 1e6<  mz_tol)
+									else if(use_ppm &&  fabs(exp[spec][peak].getMZ() - ref_masses[ref_peak]) / ref_masses[ref_peak] * 1e6<  mz_tol)
 									{
 										found_ref_masses.push_back(ref_masses[ref_peak]);
-										corr_masses.push_back(calibrated_exp[spec][monoiso_peaks_[spec][peak]].getMZ());
+										corr_masses.push_back(exp[spec][peak].getMZ());
 										++corr_peaks;
 										break;
 									}
@@ -203,7 +192,7 @@ namespace OpenMS
 
 					}
 				setProgress(spec);
-      }// for(Size spec=0;spec <  monoiso_peaks.size(); ++spec)
+      }// for(Size spec=0;spec <  exp.size(); ++spec)
 		endProgress();
 	}
 
@@ -212,6 +201,8 @@ namespace OpenMS
   void InternalCalibration::calibrateMapGlobally(const MSExperiment<InputPeakType>& exp, MSExperiment<InputPeakType>& calibrated_exp,
 																								 std::vector<PeptideIdentification>& ref_ids)
 	{
+		bool use_ppm = param_.getValue("mz_tolerance_unit") == "ppm" ? true : false;
+		DoubleReal mz_tolerance = param_.getValue("mz_tolerance");
 		if(exp.empty())
 			{
 				std::cout << "Input is empty."<<std::endl;
@@ -224,7 +215,7 @@ namespace OpenMS
 			}
 		// check if the ids contain meta information about the peak positions
 		checkReferenceIds_(ref_ids);
-		
+
 		std::vector<DoubleReal> theoretical_masses,observed_masses;
 		for(Size p_id = 0; p_id < ref_ids.size();++p_id)
 			{
@@ -240,21 +231,51 @@ namespace OpenMS
 							}
 						// now find closest peak
 						typename MSSpectrum<InputPeakType>::ConstIterator mz_iter = rt_iter->MZBegin(ref_ids[p_id].getMetaValue("MZ"));
-						std::cout << mz_iter->getMZ() <<" "<<(DoubleReal)ref_ids[p_id].getMetaValue("MZ")<<"\t";
+						//					std::cout << mz_iter->getMZ() <<" "<<(DoubleReal)ref_ids[p_id].getMetaValue("MZ")<<"\t";
 						DoubleReal dist = (DoubleReal)ref_ids[p_id].getMetaValue("MZ") - mz_iter->getMZ();
-						std::cout << dist << "\t";
-						if((mz_iter +1) != rt_iter->end() && fabs((mz_iter +1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) < fabs(dist))
+						//					std::cout << dist << "\t";
+						if((mz_iter +1) != rt_iter->end()
+							 && fabs((mz_iter +1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) < fabs(dist)
+							 && mz_iter != rt_iter->begin()
+							 && fabs((mz_iter -1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) < fabs((mz_iter +1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ"))) // if mz_iter +1 has smaller dist than mz_iter and mz_iter-1
 							{
-								std::cout <<(mz_iter +1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")<<std::endl;
-								observed_masses.push_back((mz_iter +1)->getMZ());
-								theoretical_masses.push_back(theo_mass);
-								std::cout << (mz_iter +1)->getMZ() << " ~ "<<theo_mass << " charge: "<<ref_ids[p_id].getHits()[p_h].getCharge()<< std::endl;
+								if((use_ppm &&
+									 fabs((mz_iter +1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) / (DoubleReal)ref_ids[p_id].getMetaValue("MZ") *1e06< mz_tolerance) ||
+									 (!use_ppm && fabs((mz_iter+1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) < mz_tolerance))
+									{
+										//		std::cout <<(mz_iter +1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")<<"\t";
+										observed_masses.push_back((mz_iter +1)->getMZ());
+										theoretical_masses.push_back(theo_mass);
+										//									std::cout << (mz_iter +1)->getMZ() << " ~ "<<theo_mass << " charge: "<<ref_ids[p_id].getHits()[p_h].getCharge()
+										//			<< "\tplus 1"<< std::endl;
+									}
+							}
+						else if(mz_iter != rt_iter->begin()
+										&& fabs((mz_iter -1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) < fabs(dist)) // if mz_iter-1 has smaller dist than mz_iter
+							{
+								if((use_ppm &&
+									 fabs((mz_iter -1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) / (DoubleReal)ref_ids[p_id].getMetaValue("MZ") *1e06< mz_tolerance) ||
+									 (!use_ppm && fabs((mz_iter-1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) < mz_tolerance))
+									{
+										//									std::cout <<(mz_iter -1)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")<<"\t";
+										observed_masses.push_back((mz_iter -1)->getMZ());
+										theoretical_masses.push_back(theo_mass);
+										//									std::cout << (mz_iter -1)->getMZ() << " ~ "<<theo_mass << " charge: "<<ref_ids[p_id].getHits()[p_h].getCharge()
+										//			<< "\tminus 1"<< std::endl;
+									}
 							}
 						else
-							{	
-								observed_masses.push_back(mz_iter->getMZ());
-								theoretical_masses.push_back(theo_mass);
-								std::cout <<"\n"<< mz_iter->getMZ() << " ~ "<<theo_mass<< " charge: "<<ref_ids[p_id].getHits()[p_h].getCharge() << std::endl;
+							{
+								if((use_ppm &&
+										fabs((mz_iter)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) / (DoubleReal)ref_ids[p_id].getMetaValue("MZ") *1e06< mz_tolerance) ||
+									 (!use_ppm && fabs((mz_iter)->getMZ() - (DoubleReal)ref_ids[p_id].getMetaValue("MZ")) < mz_tolerance))
+									{
+										
+										observed_masses.push_back(mz_iter->getMZ());
+										theoretical_masses.push_back(theo_mass);
+// 										std::cout <<"\t"<< mz_iter->getMZ() << " ~ "<<theo_mass<< " charge: "<<ref_ids[p_id].getHits()[p_h].getCharge()
+// 															<< "\tat mz_iter"<< std::endl;
+									}
 							}
 					}
 			}
@@ -264,7 +285,7 @@ namespace OpenMS
 		calibrated_exp.resize(exp.size());
 
 		// for each spectrum
-		for(Size spec=0;spec <  calibrated_exp.size(); ++spec)
+		for(Size spec=0;spec <  exp.size(); ++spec)
       {
 				// calibrate only MS1 spectra
 				if(exp[spec].getMSLevel() != 1)
@@ -273,24 +294,14 @@ namespace OpenMS
 						continue;
 					}
 				// copy the spectrum meta data
-				calibrated_exp[spec].resize(exp[spec].size());
-				calibrated_exp[spec].SpectrumSettings::operator=(exp[spec]);
-				calibrated_exp[spec].MetaInfoInterface::operator=(exp[spec]);
-				calibrated_exp[spec].setRT(exp[spec].getRT());
-				calibrated_exp[spec].setMSLevel(exp[spec].getMSLevel());
-				calibrated_exp[spec].setName(exp[spec].getName());
-				calibrated_exp[spec].getFloatDataArrays() = exp[spec].getFloatDataArrays();
-				calibrated_exp[spec].getStringDataArrays() = exp[spec].getStringDataArrays();
-				calibrated_exp[spec].getIntegerDataArrays() = exp[spec].getIntegerDataArrays();
-				//make sure the data type is set correctly
-				calibrated_exp[spec].setType(SpectrumSettings::PEAKS);
+				calibrated_exp[spec] = exp[spec];
 
-				for(unsigned int peak=0;peak <  calibrated_exp[spec].size(); ++peak)
+				for(unsigned int peak=0;peak <  exp[spec].size(); ++peak)
 					{
 #ifdef DEBUG_CALIBRATION
-						std::cout << calibrated_exp[spec][peak].getMZ()<< "\t";
+						std::cout << exp[spec][peak].getMZ()<< "\t";
 #endif
-						DoubleReal mz = calibrated_exp[spec][peak].getMZ();
+						DoubleReal mz = exp[spec][peak].getMZ();
 						trafo_.apply(mz);
 						calibrated_exp[spec][peak].setMZ(mz);
 #ifdef DEBUG_CALIBRATION
@@ -316,35 +327,33 @@ namespace OpenMS
 				std::cout << "Attention: this function is assuming peak data."<<std::endl;
 			}
 
-		// get monoisotopic peaks TODO: really??????
-    getMonoisotopicPeaks_(calibrated_exp);
 
     Size num_ref_peaks = ref_masses.size();
     bool use_ppm = (param_.getValue("mz_tolerance_unit") == "ppm" ) ? true : false;
 		DoubleReal mz_tol = param_.getValue("mz_tolerance");
-    startProgress(0,monoiso_peaks_.size(),"calibrate spectra");    
+    startProgress(0,exp.size(),"calibrate spectra");    
 		std::vector<DoubleReal> corr_masses,rel_errors,found_ref_masses;
 		UInt corr_peaks=0;
     // for each spectrum
-    for(Size spec=0;spec <  monoiso_peaks_.size(); ++spec)
+    for(Size spec=0;spec <  exp.size(); ++spec)
       {
         // calibrate only MS1 spectra
 				if(exp[spec].getMSLevel() != 1) continue;
-				for(Size peak=0;peak <  monoiso_peaks_[spec].size(); ++peak)
+				for(Size peak=0;peak <  exp[spec].size(); ++peak)
 					{
 						for(Size ref_peak=0; ref_peak < num_ref_peaks;++ref_peak)
 							{
-								if(!use_ppm &&  fabs(exp[spec][monoiso_peaks_[spec][peak]].getMZ() - ref_masses[ref_peak]) <  mz_tol)
+								if(!use_ppm &&  fabs(exp[spec][peak].getMZ() - ref_masses[ref_peak]) <  mz_tol)
 									{
 										found_ref_masses.push_back(ref_masses[ref_peak]);
-										corr_masses.push_back(exp[spec][monoiso_peaks_[spec][peak]].getMZ());
+										corr_masses.push_back(exp[spec][peak].getMZ());
 										++corr_peaks;
 										break;
 									}
-								else if(use_ppm &&  fabs(exp[spec][monoiso_peaks_[spec][peak]].getMZ() - ref_masses[ref_peak]) / ref_masses[ref_peak] * 1e6<  mz_tol)
+								else if(use_ppm &&  fabs(exp[spec][peak].getMZ() - ref_masses[ref_peak]) / ref_masses[ref_peak] * 1e6<  mz_tol)
 									{
 										found_ref_masses.push_back(ref_masses[ref_peak]);
-										corr_masses.push_back(exp[spec][monoiso_peaks_[spec][peak]].getMZ());
+										corr_masses.push_back(exp[spec][peak].getMZ());
 										++corr_peaks;
 										break;
 									}
@@ -373,18 +382,8 @@ namespace OpenMS
 						continue;
 					}
 
-				// copy the spectrum meta data
-				calibrated_exp[spec].resize(exp[spec].size());
-				calibrated_exp[spec].SpectrumSettings::operator=(exp[spec]);
-				calibrated_exp[spec].MetaInfoInterface::operator=(exp[spec]);
-				calibrated_exp[spec].setRT(exp[spec].getRT());
-				calibrated_exp[spec].setMSLevel(exp[spec].getMSLevel());
-				calibrated_exp[spec].setName(exp[spec].getName());
-				calibrated_exp[spec].getFloatDataArrays() = exp[spec].getFloatDataArrays();
-				calibrated_exp[spec].getStringDataArrays() = exp[spec].getStringDataArrays();
-				calibrated_exp[spec].getIntegerDataArrays() = exp[spec].getIntegerDataArrays();
-				//make sure the data type is set correctly
-				calibrated_exp[spec].setType(SpectrumSettings::PEAKS);
+				// copy the spectrum data
+				calibrated_exp[spec] = exp[spec];
 
 				for(unsigned int peak=0;peak <  exp[spec].size(); ++peak)
 					{
@@ -401,75 +400,9 @@ namespace OpenMS
 
 					}
 				setProgress(spec);
-      }// for(Size spec=0;spec <  monoiso_peaks.size(); ++spec)
+      }// for(Size spec=0;spec <  exp.size(); ++spec)
 		endProgress();
 	}
-
-
-	template<typename InputPeakType>  
-	void InternalCalibration::getMonoisotopicPeaks_(MSExperiment<InputPeakType>& exp)
-	{
-			
-			MSExperiment<>::iterator spec_iter = exp.begin();
-			MSExperiment<>::SpectrumType::iterator peak_iter, help_iter;
-#ifdef DEBUG_CALIBRATION
-			spec_iter = exp.begin();
-			std::cout << "\n\nbefore---------\n\n";
-			// iterate through all spectra
-			for(;spec_iter != exp.end();++spec_iter)
-			{
-					peak_iter = spec_iter->begin();
-					// go through current scan
-					for(;peak_iter != spec_iter->end();++peak_iter)
-					{
-							std::cout << peak_iter->getMZ() << std::endl;
-					}
-			}
-			
-#endif
-			spec_iter = exp.begin();
-			// iterate through all spectra
-			for(;spec_iter != exp.end();++spec_iter)
-			{
-					peak_iter = spec_iter->begin();
-					help_iter = peak_iter;
-					std::vector<unsigned int> vec;
-					// go through current scan
-					while(peak_iter < spec_iter->end())
-					{
-							while(peak_iter+1 < spec_iter->end() && ( (peak_iter+1)->getMZ() - peak_iter->getMZ() < 1.2) )
-							{
-									++peak_iter;
-							}
-							
-							vec.push_back(distance(spec_iter->begin(),help_iter));
-							
-							help_iter = peak_iter+1;
-							++peak_iter;
-							
-					}
-					monoiso_peaks_.push_back(vec);
-					
-			}
-			
-#ifdef DEBUG_CALIBRATION
-			
-			
-			std::cout << "\n\nafter---------\n\n";
-			
-			for(unsigned int i=0;i<monoiso_peaks_.size();++i)
-			{
-					for(unsigned int j=0;j<monoiso_peaks_[i].size();++j)
-					{
-							std::cout << ( (exp.begin() + +i)->begin() + (monoiso_peaks_[i])[j])->getMZ() << std::endl;
-					}
-					std::cout << "--------------\n";
-					
-			}
-			std::cout << "--------------\n\n\n";
-#endif
-	}
-
 
 
 } // namespace OpenMS

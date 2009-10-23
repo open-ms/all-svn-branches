@@ -46,8 +46,7 @@ namespace OpenMS
 	
   InternalCalibration::InternalCalibration(InternalCalibration& obj)
 		: DefaultParamHandler(obj),
-			ProgressLogger(obj),
-			monoiso_peaks_(obj.monoiso_peaks_)
+			ProgressLogger(obj)
   {}
   
   InternalCalibration& InternalCalibration::operator=(const InternalCalibration& obj)
@@ -55,7 +54,6 @@ namespace OpenMS
 		// take care of self assignments
     if (this == &obj)		return *this;
 		DefaultParamHandler::operator=(obj);
-		monoiso_peaks_=obj.monoiso_peaks_;
     return *this;
   }
 
@@ -96,24 +94,32 @@ namespace OpenMS
 #ifdef DEBUG_CALIBRATION
 				out << observed_masses[ref_peak] << "\t"<< rel_errors[ref_peak] << "\n";
 #endif
+				//				std::cout << observed_masses[ref_peak]<<"\t"<<rel_errors[ref_peak]<<std::endl;
 			}
 
 			DoubleReal cov00, cov01, cov11, sumsq, slope,intercept;
 			// TODO: what exactly is stride?? used 1 here as in the gsl-example :)
-			gsl_fit_linear (&(observed_masses[0]), 1, &(rel_errors[0]), 1, observed_masses.size(), &intercept,&slope,&cov00,&cov01,&cov11,&sumsq);
-			
-
+			gsl_fit_linear (&(observed_masses[0]), 1, &(theoretical_masses[0]), 1, observed_masses.size(), &intercept,&slope,&cov00,&cov01,&cov11,&sumsq);
+			// 			std::cout <<"\n\n---------------------------------\n\n"<< "after calibration "<<std::endl;
 			trafo_.setName("linear");
 			trafo_.setParam("slope",slope);
 			trafo_.setParam("intercept",intercept);
-
-//#ifdef DEBUG_CALIBRATION
+			for(Size i = 0; i < observed_masses.size();++i)
+				{
+					DoubleReal new_mass = observed_masses[i];
+					trafo_.apply(new_mass);
+					DoubleReal rel_error = (theoretical_masses[i]-(new_mass))/theoretical_masses[i] * 1e6;
+					//	std::cout << observed_masses[i]<<"\t"<<rel_error<<std::endl;
+				}
+			
+			
+#ifdef DEBUG_CALIBRATION
   	  printf ("# best fit: Y = %g + %g X\n", intercept, slope);
       printf ("# covariance matrix:\n");
       printf ("# [ %g, %g\n#   %g, %g]\n", 
                cov00, cov01, cov01, cov11);
       printf ("# sumsq = %g\n", sumsq);
-//#endif
+#endif
 	}
 
 }

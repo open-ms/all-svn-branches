@@ -21,14 +21,14 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_METADATA_PRODUCT_H
 #define OPENMS_METADATA_PRODUCT_H
 
-#include <OpenMS/METADATA/MetaInfoInterface.h>
+#include <OpenMS/METADATA/CVTermList.h>
 
 namespace OpenMS 
 {
@@ -40,7 +40,7 @@ namespace OpenMS
 		@ingroup Metadata
 	*/  
   class OPENMS_DLLAPI Product
-  	: public MetaInfoInterface
+  	: public CVTermList
   {
     
     public:

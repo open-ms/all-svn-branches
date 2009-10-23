@@ -66,6 +66,7 @@ ProtXMLFile.h
 SequestInfile.h
 SequestOutfile.h
 SettingsParser.h
+SVOutStream.h
 TextFile.h
 TransformationXMLFile.h
 UnimodXMLFile.h

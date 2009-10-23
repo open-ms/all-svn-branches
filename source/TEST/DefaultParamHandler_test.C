@@ -21,8 +21,13 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+<<<<<<< .courant
+// $Maintainer: $
+// $Authors: Marc Sturm $
+=======
+// $Maintainer: Stephan Aiche$
+// $Authors: Marc Sturm $
+>>>>>>> .fusion-droit.r6139
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>

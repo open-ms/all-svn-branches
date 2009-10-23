@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors:  Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_DATASTRUCTURES_PARAM_H
@@ -71,6 +71,8 @@ namespace OpenMS
 				ParamEntry();
 				/// Constructor with name, description, value and advanced flag
 				ParamEntry(const String& n, const DataValue& v, const String& d, const StringList& t=StringList());
+				/// Check if 'value' fulfills restrictions
+				bool isValid(String& message) const;
 				/// Equality operator (only name and value are compared)
 				bool operator==(const ParamEntry& rhs) const;
 				

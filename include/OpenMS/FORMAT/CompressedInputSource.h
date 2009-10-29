@@ -35,20 +35,27 @@
 
 namespace OpenMS
 {
+	/**
+		@brief This class is based on xercesc::LocalFileInputSource
+	*/
 	class CompressedInputSource 
 		:	public xercesc::InputSource
 	{
 		public:
-			//based on LocalInputSource
-			CompressedInputSource(const   String& file_path, xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
-			CompressedInputSource(const   XMLCh* const file_path, xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
+			///Constructor
+			CompressedInputSource(const   String& file_path, const char * header,xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
+			///Constructor
+			CompressedInputSource(const   XMLCh* const file_path,const char* header, xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
+		  ///Constructor
 		  ~CompressedInputSource();
-		  // ---------------------------------------------------------------------------
-			//  CompressedInputSource: InputSource interface implementation
-			// ---------------------------------------------------------------------------
+		  /**
+		  	@brief returns a CompressionInputStream object
+			  @note InputSource interface implementation
+			*/
 		  virtual xercesc::BinInputStream* makeStream() const;
 		  
 		private:
+			 char head[2];
 		  //not implemented
 		  CompressedInputSource();
 		  CompressedInputSource(const CompressedInputSource& source);

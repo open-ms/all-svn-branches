@@ -35,9 +35,10 @@
 #include <xercesc/sax2/SAX2XMLReader.hpp>
 #include <xercesc/framework/LocalFileInputSource.hpp>
 #include <xercesc/sax2/XMLReaderFactory.hpp>
-#include <iostream>
 #include <fstream>
 #include <iomanip> // setprecision etc.
+
+using namespace std;
 
 namespace OpenMS
 {
@@ -82,14 +83,16 @@ namespace OpenMS
 			parser->setContentHandler(handler);
 			parser->setErrorHandler(handler);
 			
-			//is it bzip2 compressed?
+			//is it bzip2 or gzip compressed?
 			std::ifstream file(filename.c_str());
 			char bz[2];
 			file.read(bz,2);
 			xercesc::InputSource *source;
-			if(bz[0] == 'B' && bz[1] =='Z')
+			char g1 = 0x1f;
+			char g2 = 0x8b;
+			if((bz[0] == 'B' && bz[1] =='Z' ) || 	(bz[0] == g1 && bz[1] == g2))
 			{
-				source = new CompressedInputSource(StringManager().convert(filename.c_str()));
+				source = new CompressedInputSource(StringManager().convert(filename.c_str()), bz);
 			}
 			else
 			{
@@ -131,6 +134,27 @@ namespace OpenMS
 			// write data and close stream
 			handler->writeTo(os);
 			os.close();
+		}
+
+		void writeXMLEscape(const String& to_escape, ostream& os)
+		{
+			XMLCh* xmlch = xercesc::XMLString::transcode(to_escape.c_str());
+
+			std::string out;
+    	OpenMSXMLFormatTarget ft(out);
+    	xercesc::XMLFormatter f("UTF-8", /* XMLUni::fgVersion1_1 */ "1.1", &ft);
+  	  f << xercesc::XMLFormatter::StdEscapes << xmlch;
+			os << out;
+			xercesc::XMLString::release(&xmlch);
+			return;
+
+		}
+
+		String writeXMLEscape(const String& to_escape)
+		{
+			stringstream ss;
+			writeXMLEscape(to_escape, ss);
+			return String(ss.str());
 		}
 
 		bool XMLFile::isValid(const String& filename, std::ostream& os) 

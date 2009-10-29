@@ -25,7 +25,8 @@
 // $Authors: David Wojnar $
 // --------------------------------------------------------------------------
 #include <OpenMS/FORMAT/CompressedInputSource.h>
-#include <OpenMS/FORMAT/CompressedInputStream.h>
+#include <OpenMS/FORMAT/GzipInputStream.h>
+#include <OpenMS/FORMAT/Bzip2InputStream.h>
 #include <OpenMS/FORMAT/HANDLERS/XMLHandler.h>
 
 #include <xercesc/internal/MemoryManagerImpl.hpp>
@@ -38,9 +39,12 @@ using namespace xercesc;
 namespace OpenMS
 {
 
-	CompressedInputSource::CompressedInputSource(const String& file_path, MemoryManager* const manager)
+	CompressedInputSource::CompressedInputSource(const String& file_path,const char* header, MemoryManager* const manager)
    : xercesc::InputSource(manager)
 	{
+    	head[0] = header[0];
+    	head[1] = header[1];
+    	
     	//
     	//  If the path is relative, then complete it acording to the current
     	//  working directory rules of the current platform. Else, just take
@@ -80,9 +84,11 @@ namespace OpenMS
   	  }
 	}
 
-	CompressedInputSource::CompressedInputSource(const XMLCh* const file, MemoryManager* const manager)
+	CompressedInputSource::CompressedInputSource(const XMLCh* const file,const char* header, MemoryManager* const manager)
    : xercesc::InputSource(manager)
 	{
+    head[0] = header[0];
+    head[1] = header[1];
     	//
     	//  If the path is relative, then complete it acording to the current
     	//  working directory rules of the current platform. Else, just take
@@ -127,13 +133,27 @@ namespace OpenMS
 
 BinInputStream* CompressedInputSource::makeStream() const
 {
-    CompressedInputStream* retStrm = new CompressedInputStream(Internal::StringManager().convert(getSystemId()));
-    if (!retStrm->getIsOpen())
+		if(head[0] == 'B' && head[1] =='Z' )
+    {
+    	Bzip2InputStream* retStrm = new Bzip2InputStream(Internal::StringManager().convert(getSystemId()));
+    	    if (!retStrm->getIsOpen())
     {
        delete retStrm;
         return 0;
     }
     return retStrm;
+    }
+    else /* 	(bz[0] == g1 && bz[1] == g2), where char g1 = 0x1f and char g2 = 0x8b */
+    {
+    	GzipInputStream* retStrm = new GzipInputStream(Internal::StringManager().convert(getSystemId()));
+     if(!retStrm->getIsOpen())
+  	  {
+ 	      delete retStrm;
+  	     return 0;
+	    }
+   	 return retStrm;
+    }
+
 }	
 	
 	

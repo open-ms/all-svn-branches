@@ -25,61 +25,80 @@
 // $Authors: David Wojnar $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_FORMAT_COMPRESSEDINPUTSTREAM_H
-#define OPENMS_FORMAT_COMPRESSEDINPUTSTREAM_H
+#ifndef OPENMS_FORMAT_GZIPInputStream_H
+#define OPENMS_FORMAT_GZIPInputStream_H
 
 #include <xercesc/util/BinInputStream.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
-#include <OpenMS/FORMAT/Bzip2Ifstream.h>
+#include <OpenMS/FORMAT/GzipIfstream.h>
 
 
 namespace OpenMS
 {
 	class String;
-	
-	class CompressedInputStream
+	/**
+		@brief Implements the BinInputStream class of the xerces-c library in order to read gzip compressed XML files.
+		
+	*/
+	class GzipInputStream
 		:	public xercesc::BinInputStream
 	{
 		public:
-			//based on LocalInputSource
-			CompressedInputStream(const   String& file_name);
+			///Constructor
+			GzipInputStream(const   String& file_name);
 
-   		CompressedInputStream(const   char* const     file_name);	 
+   		GzipInputStream(const   char* const     file_name);	 
    		
    		
-   		
-   		~CompressedInputStream();
-   		
+   		///Destructor
+   		~GzipInputStream();
+   		///returns true if file is open
    		 bool getIsOpen() const;
-    	// -----------------------------------------------------------------------
-    	//  Implementation of the input stream interface
-    	// -----------------------------------------------------------------------
+    	/**
+    	@brief returns the current position in the file
+    	@note Implementation of the xerces-c input stream interface
+    	*/
     	virtual XMLFilePos curPos() const;
-
+			
+			/**
+				@brief writes bytes into buffer from file
+				@note Implementation of the xerces-c input stream interface
+				
+				@param to_fill is the buffer which is written to
+				@param max_to_read is the size of the buffer
+				
+				@ret returns the number of bytes which were actually read
+			
+			*/
    	 	virtual XMLSize_t readBytes(XMLByte* const  to_fill, const XMLSize_t max_to_read);
-
+			/**
+				@brief returns 0
+    		@note Implementation of the xerces-c input stream interface				
+			*/
 	    virtual const XMLCh* getContentType() const;
 
    		
     private:
-    	Bzip2Ifstream* 	bzip2_;
+    ///pointer to an compression stream
+    	GzipIfstream* 	gzip_;
+    	///current index of the actual file
     	XMLSize_t       file_current_index;
     	
     	//not implemented
-    	CompressedInputStream();
-    	CompressedInputStream(const CompressedInputStream& stream);
-    	CompressedInputStream& operator=(const CompressedInputStream& stream);
+    	GzipInputStream();
+    	GzipInputStream(const GzipInputStream& stream);
+    	GzipInputStream& operator=(const GzipInputStream& stream);
 	};
 	
-	inline XMLFilePos CompressedInputStream::curPos() const
+	inline XMLFilePos GzipInputStream::curPos() const
 	{
     return file_current_index;
 	}
 	
-	inline bool CompressedInputStream::getIsOpen() const
+	inline bool GzipInputStream::getIsOpen() const
 	{
-			return bzip2_->isOpen();
+			return gzip_->isOpen();
 	}
 } // namespace OpenMS
 
-#endif // OPENMS_FORMAT_COMPRESSEDINPUTSTREAM_H
+#endif // OPENMS_FORMAT_GZIPInputStream_H

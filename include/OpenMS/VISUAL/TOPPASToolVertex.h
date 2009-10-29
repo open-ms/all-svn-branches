@@ -134,24 +134,24 @@ namespace OpenMS
 			virtual QRectF boundingRect() const;
 			// documented in base class
 			virtual QPainterPath shape () const;
+			// documented in base class
+			virtual void setTopoNr(UInt nr);
+			// documented in base class
+			virtual void reset(bool reset_all_files = false);
 			/// Returns whether this node has already been processed during the current pipeline execution
 			bool isFinished();
-			/// Set whether this node has already been processed during the current pipeline execution
-			void setFinished(bool b);
 			/// Sets the Param object of this tool
 			void setParam(const Param& param);
 			/// Returns the Param object of this tool
 			const Param& getParam();
-			/// Starts the pipeline execution recursively
-			void runRecursively();
 			/// Checks if all parent nodes have finished the tool execution and, if so, runs the tool
 			void runToolIfInputReady();
-			/// Returns a vector containing the lists of output files for all output parameters
-			const QVector<QStringList>& getOutputFileNames();
-			/// Updates the vector containing the lists of output files for all output parameters
-			void updateOutputFileNames();
-			/// Sets whether the currently running pipeline has already been started at this vertex
-			void setStartedHere(bool b);
+			/// Returns a vector containing the lists of current output files for all output parameters
+			const QVector<QStringList>& getCurrentOutputFileNames();
+			/// Returns a vector of output files that have already been written (during all merging rounds)
+			const QVector<QStringList>& getAllWrittenOutputFileNames();
+			/// Updates the vector containing the lists of current output files for all output parameters
+			void updateCurrentOutputFileNames();
 			/// Sets the progress color
 			void setProgressColor(const QColor& c);
 			/// Returns the progress color
@@ -163,12 +163,10 @@ namespace OpenMS
 			/// Returns the directory where this tool stores its output files
 			String getOutputDir();
 			/// Creates all necessary directories
-			void createDirs();
-			/// Sets the topological sort number and removes invalidated tmp files
-			virtual void setTopoNr(UInt nr);
+			void createDirs();			
 			/// Opens the files in TOPPView
 			void openInTOPPView();
-		
+
 		public slots:
 		
 			/// Called when the execution of this tool has finished
@@ -221,14 +219,12 @@ namespace OpenMS
 			Param param_;
 			/// Stores whether this node has already been processed during the current pipeline execution
 			bool finished_;
-			/// Stores whether the currently running pipeline has already been started at this vertex
-			bool started_here_;
-			/// Stores the file names of the different output parameters
-			QVector<QStringList> output_file_names_;
+			/// Stores the current output file names for each output parameter
+			QVector<QStringList> current_output_files_;
+			/// Stores all output files that have already been written (during all merging rounds)
+			QVector<QStringList> all_written_output_files_;
 			/// Color representing the progress (red = failed, yellow = processing, green = finished, else: gray)
 			QColor progress_color_;
-			/// The symbol for the list mode
-			static QImage symbol_image_;
 			/// The number of the current iteration
 			int iteration_nr_;
 			/// The overall number of iterations to perform within the current call

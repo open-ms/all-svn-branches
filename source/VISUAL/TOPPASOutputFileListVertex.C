@@ -109,45 +109,25 @@ namespace OpenMS
 		return shape;
 	}
 	
-	void TOPPASOutputFileListVertex::startComputation()
+	void TOPPASOutputFileListVertex::finish()
 	{
-		finished_ = false;
-		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
-		{
-			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-			if (ttv)
-			{
-				ttv->runRecursively();
-				continue;
-			}
-			TOPPASMergerVertex* tmv = qobject_cast<TOPPASMergerVertex*>((*it)->getSourceVertex());
-			if (tmv)
-			{
-				tmv->runRecursively();
-			}
-		}
-	}
-	
-	void TOPPASOutputFileListVertex::finished()
-	{
-		createDirs();
-		
 		// copy tmp files to output dir
+		
 		TOPPASEdge* e = *inEdgesBegin();
 		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(e->getSourceVertex());
-		const QVector<QStringList>& output_files = tv->getOutputFileNames();
+		const QVector<QStringList>& output_files = tv->getCurrentOutputFileNames();
 		int param_index = e->getSourceOutParam();
 		const QStringList& tmp_file_names = output_files[param_index];
 		QString parent_dir = qobject_cast<TOPPASScene*>(scene())->getOutDir();
 		
-		files_.clear();
+		createDirs();
+
 		if (!tmp_file_names.isEmpty())
 		{
-			QString dir = File::path(tmp_file_names.first()).toQString();
-			QStringList files = QDir(dir).entryList(QDir::Files | QDir::NoDotAndDotDot);
-			foreach (const QString& relative_f, files)
+			//QString dir = File::path(tmp_file_names.first()).toQString();
+			//QStringList files = QDir(dir).entryList(QDir::Files | QDir::NoDotAndDotDot);
+			foreach (const QString& f, tmp_file_names)
 			{
-				QString f = dir + QDir::separator() + relative_f;
 				if (!File::exists(f))
 				{
 					std::cerr << "The file '" << String(f) << "' does not exist!" << std::endl;
@@ -182,12 +162,13 @@ namespace OpenMS
 		}
 		
 		finished_ = true;
+		propagateUpwardsSubtreeFinished();
 		emit iAmDone();
 	}
 	
 	void TOPPASOutputFileListVertex::inEdgeHasChanged()
 	{
-		files_.clear();
+		reset(true);
 		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
 		TOPPASVertex::inEdgeHasChanged();
 	}
@@ -230,7 +211,21 @@ namespace OpenMS
 	{
 		if (topo_nr_ != nr)
 		{
+			// topological number changes --> output dir changes --> reset
+			reset(true);
 			topo_nr_ = nr;
+		}
+	}
+	
+	void TOPPASOutputFileListVertex::reset(bool reset_all_files)
+	{
+		TOPPASVertex::reset();
+		finished_ = false;
+		
+		if (reset_all_files)
+		{
+			files_.clear();
+			// do not actually delete the output files here
 		}
 	}
 }

@@ -5,8 +5,8 @@ set(directory source/FORMAT)
 set(sources_list
 Base64.C
 Bzip2Ifstream.C
+Bzip2InputStream.C
 CompressedInputSource.C
-CompressedInputStream.C
 CVMappingFile.C
 ConsensusXMLFile.C
 ControlledVocabulary.C
@@ -18,6 +18,8 @@ FastaIterator.C
 FastaIteratorIntern.C
 FeatureXMLFile.C
 FileHandler.C
+GzipIfstream.C
+GzipInputStream.C
 IdXMLFile.C
 InspectInfile.C
 InspectOutfile.C

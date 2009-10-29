@@ -33,24 +33,65 @@
 
 namespace OpenMS
 {
+/**
+	@brief Decompresses files which are compressed in the bzip2 format (*.bz2)
+*/
 	class Bzip2Ifstream 
 	{
 		public: 
-			Bzip2Ifstream(const char * filename);
+			///Default Constructor
 			Bzip2Ifstream();
+			/// 
+			Bzip2Ifstream(const char * filename);
+			///Destructor
 			~Bzip2Ifstream();
 			
 			//operator>>();
+			/**
+					@brief reads n bytes from the bzip2 compressed file into buffer s
+					
+					@param s will be filled with bytes
+					@param n is the size of the buffer s
+					@ret the number of actually read bytes. If it is 0 the end of the file was reached and the stream is closed
+					
+					@exception Exception::ConversionError is thrown if decompression fails
+					@exception Exception::IllegalArgument is thrwon if no file for decompression is given. This can happen even happen if a file was already open but read until the end.
+					@note it is undefined what will happen if parameter n is bigger than the length of the buffer
+			*/
 			size_t read(char* s, size_t n);
+			
+			/**
+				@brief indicates whether the read function can be used safely
+				
+				@ret true if end of file was reached. Otherwise false.
+			*/
 			bool streamEnd() const;
+			
+			/**
+				@brief returns whether a file is open. 
+			*/
 			bool isOpen() const;
+			
+			/**
+				@brief opens a file for reading (decompression)
+				@note any previous open files will be closed first!
+			*/
 			void open(const char* filename);
+			
+			/**
+				@brief closes current file.
+			*/
 			void close();
 		protected:
+			/// pointer to a FILE object. Necessary for opening the file
 			FILE*   file;
+			/// a pointer to a BZFILE object. Necessary for decompression
 			BZFILE* bzip2file;
+			///counts the last read bufffer
 			size_t     n_buffer;
+			///saves the last returned error by the read function
 			int     bzerror;
+			///true if end of file is reached
 			bool stream_at_end;
 			
 			//not implemented
@@ -58,12 +99,13 @@ namespace OpenMS
 			Bzip2Ifstream& operator=(const Bzip2Ifstream& bzip2);
 	};
 	
+	//return bzip2file???!!!!????
 	inline bool Bzip2Ifstream::isOpen() const
 	{
 		return (file);
 	}
 	
-		inline bool Bzip2Ifstream::streamEnd() const
+	inline bool Bzip2Ifstream::streamEnd() const
 	{
 		return stream_at_end;
 	}

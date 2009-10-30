@@ -28,9 +28,8 @@
 #ifndef OPENMS_FORMAT_GZIP_IFSTREAM_H
 #define	OPENMS_FORMAT_GZIP_IFSTREAM_H
 
-#include "/opt/local/var/macports/software/zlib/1.2.3_2/opt/local/include/zlib.h"
-#include <istream>
-#include <iostream>
+#include <zlib.h>
+
 namespace OpenMS
 {
 /**

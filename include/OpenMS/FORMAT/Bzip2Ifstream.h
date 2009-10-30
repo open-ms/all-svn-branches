@@ -28,7 +28,7 @@
 #ifndef OPENMS_FORMAT_BZIP2_IFSTREAM_H
 #define	OPENMS_FORMAT_BZIP2_IFSTREAM_H
 
-#include "/opt/local/var/macports/software/bzip2/1.0.5_2/opt/local/include/bzlib.h"
+#include <bzlib.h>
 #include <istream>
 
 namespace OpenMS

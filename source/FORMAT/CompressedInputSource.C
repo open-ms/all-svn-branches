@@ -42,9 +42,16 @@ namespace OpenMS
 	CompressedInputSource::CompressedInputSource(const String& file_path,const char* header, MemoryManager* const manager)
    : xercesc::InputSource(manager)
 	{
-    	head[0] = header[0];
-    	head[1] = header[1];
-    	
+    	if(sizeof(header)/sizeof(char)  > 1)
+    	{
+    		head[0] = header[0];
+    		head[1] = header[1];
+    	}
+    	else
+    	{
+    		head[0] = '\0';
+    		head[1] = '\0';
+    	}
     	//
     	//  If the path is relative, then complete it acording to the current
     	//  working directory rules of the current platform. Else, just take
@@ -87,8 +94,16 @@ namespace OpenMS
 	CompressedInputSource::CompressedInputSource(const XMLCh* const file,const char* header, MemoryManager* const manager)
    : xercesc::InputSource(manager)
 	{
-    head[0] = header[0];
-    head[1] = header[1];
+    	if(sizeof(header)/sizeof(char) > 1)
+    	{
+    		head[0] = header[0];
+    		head[1] = header[1];
+    	}
+    	else
+    	{
+    		head[0] = '\0';
+    		head[1] = '\0';
+    	}
     	//
     	//  If the path is relative, then complete it acording to the current
     	//  working directory rules of the current platform. Else, just take

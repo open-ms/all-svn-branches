@@ -32,7 +32,6 @@
 
 #include <xercesc/sax/InputSource.hpp>
 
-
 namespace OpenMS
 {
 	/**
@@ -43,13 +42,14 @@ namespace OpenMS
 	{
 		public:
 			///Constructor
-			CompressedInputSource(const   String& file_path, const char * header,xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
+			CompressedInputSource(const   String& file_path,const char* header , xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
 			///Constructor
 			CompressedInputSource(const   XMLCh* const file_path,const char* header, xercesc::MemoryManager* const manager = xercesc::XMLPlatformUtils::fgMemoryManager);
 		  ///Constructor
 		  ~CompressedInputSource();
-		  /**
-		  	@brief returns a CompressionInputStream object
+		 
+		 /**
+		  	@brief Depending on the header in the Constructor a Bzip2InputStream or a GzipInputStream object is returned
 			  @note InputSource interface implementation
 			*/
 		  virtual xercesc::BinInputStream* makeStream() const;

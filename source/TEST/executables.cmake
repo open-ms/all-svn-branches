@@ -124,7 +124,9 @@ set(format_executables_list
   Base64_test
   BigString_test
   Bzip2Ifstream_test
+  Bzip2InputStream_test
   CVMappingFile_test
+  CompressedInputSource_test
   ConsensusXMLFile_test
   ControlledVocabulary_test
   CsvFile_test
@@ -134,6 +136,7 @@ set(format_executables_list
   FeatureXMLFile_test
   FileHandler_test
   GzipIfstream_test
+  GzipInputStream_test
   IdXMLFile_test
   InspectInfile_test
   InspectOutfile_test
@@ -162,7 +165,6 @@ set(format_executables_list
   PepXMLFileMascot_test
   PepXMLFile_test
   PersistentObject_test
-#  SVInStream_test (not present!)
   SVOutStream_test
   SemanticValidator_test
   SequestInfile_test
@@ -392,6 +394,7 @@ set(transformations_executables_list
   PeakPickerHiRes_test
   PeakShape_test
   ProductModel_test
+  SeedListGenerator_test
   SimpleExtender_test
   SimpleSeeder_test
   TwoDOptimization_test

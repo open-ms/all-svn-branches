@@ -236,7 +236,7 @@ else()
 	message(STATUS "Using user defined contrib directory: ${CONTRIB_DIR}")
 endif()
 
-FIND_PATH(CONTRIB_CONFIRM_DIR README_contrib1.5.txt PATHS ${CONTRIB_DIR} NO_DEFAULT_PATH)
+FIND_PATH(CONTRIB_CONFIRM_DIR README_contrib1.6.txt PATHS ${CONTRIB_DIR} NO_DEFAULT_PATH)
 
 if ("${CONTRIB_CONFIRM_DIR}" STREQUAL "CONTRIB_CONFIRM_DIR-NOTFOUND")
 	message(FATAL_ERROR "The path to the Contrib directory (${CONTRIB_DIR}) is not correct or you need to update your contrib!")
@@ -276,22 +276,26 @@ OPENMS_CHECKLIB(CONTRIB_CBC3 "libClp;Clp" "libClpd;Clp" "COIN-OR Clp")
 OPENMS_CHECKLIB(CONTRIB_CBC4 "libCoinUtils;CoinUtils" "libCoinUtilsd;CoinUtils" "COIN-OR Utils")
 OPENMS_CHECKLIB(CONTRIB_CBC5 "libOsi;Osi" "libOsid;Osi" "COIN-OR Osi")
 OPENMS_CHECKLIB(CONTRIB_CBC6 "libOsiClp;OsiClp" "libOsiClpd;OsiClp" "COIN-OR OsiClp")
+set(CONTRIB_CBC ${CONTRIB_CBC1} ${CONTRIB_CBC2} ${CONTRIB_CBC3} ${CONTRIB_CBC4} ${CONTRIB_CBC5} ${CONTRIB_CBC6} )
 
-# if enabled stl-debug we need a imslib which is also built with stl-debug
-# "normal" debug mode is only supported manually
-if (STL_DEBUG)
-	OPENMS_CHECKLIB(CONTRIB_IMSLIB "imsd" "imsd" "imslib")
+OPENMS_CHECKLIB(CONTRIB_ZLIB "zlib;z" "zlib_d;z" "ZLIB")
+OPENMS_CHECKLIB(CONTRIB_BZIP2 "libbz2;bz2" "libbz2d;bz2" "BZIP2")
+
+## IMS
+if (MSVC)
+	OPENMS_CHECKLIB(CONTRIB_IMSLIB "ims" "imsd" "imslib")
 else()
-	if (MSVC)
-		OPENMS_CHECKLIB(CONTRIB_IMSLIB "ims" "imsd" "imslib")
+	# if enabled stl-debug we need a imslib which is also built with stl-debug
+	# "normal" debug mode is only supported manually
+	if (STL_DEBUG)
+		OPENMS_CHECKLIB(CONTRIB_IMSLIB "imsd" "imsd" "imslib")
 	else()
 		OPENMS_CHECKLIB(CONTRIB_IMSLIB "ims" "ims" "imslib")
 	endif()
 endif()
 
-set(CONTRIB_CBC ${CONTRIB_CBC1} ${CONTRIB_CBC2} ${CONTRIB_CBC3} ${CONTRIB_CBC4} ${CONTRIB_CBC5} ${CONTRIB_CBC6} )
-
-if (NOT MSVC AND USE_ANDIMS)
+## ANDIMS
+if (USE_ANDIMS)
 	OPENMS_CHECKLIB(CONTRIB_ANDIMS "ms10lib.a" "ms10lib.a" "ms10lib")
 
 	OPENMS_CHECKLIB(CONTRIB_NETCDF_CPP "libnetcdf_c++.a" "libnetcdf_c++.a" "netCDF_c++")
@@ -299,12 +303,12 @@ if (NOT MSVC AND USE_ANDIMS)
 	set(CONTRIB_NETCDF ${CONTRIB_NETCDF_CPP} ${CONTRIB_NETCDF_C})
 endif()
 
-## libSVM support
+## libSVM
 if (MSVC) 
-	## we created a lib here, because we cannot just add an object..
+	## we created a lib here, because we cannot just add an object ...
 	OPENMS_CHECKLIB(SVM_LIBRARY "svm" "svmd" "LibSVM")
 else()
-	## there is no FIND_OBJECT.. so just hard-code it (FIND_LIBRARY won't work)
+	## there is no FIND_OBJECT ... so just hard-code it (FIND_LIBRARY won't work)
 	set(SVM_LIBRARY general ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library") # do not distinguish between optimized and debug
 endif()
 
@@ -574,7 +578,8 @@ endif()
 
 
 ## all the dependency libraries are linked into libOpenMS.so, except Qt and CUDA which are still dynamic
-set(OPENMS_DEP_LIBRARIES ${CONTRIB_CBC} ${CONTRIB_CGAL} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF} ${CONTRIB_BOOST_IO} ${CONTRIB_IMSLIB} "/opt/local/var/macports/software/bzip2/1.0.5_2/opt/local/lib/libbz2.a" "/opt/local/var/macports/software/zlib/1.2.3_2/opt/local/lib/libz.a")
+set(OPENMS_DEP_LIBRARIES ${CONTRIB_CBC} ${CONTRIB_CGAL} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF} ${CONTRIB_BOOST_IO} ${CONTRIB_IMSLIB} ${CONTRIB_BZIP2} ${CONTRIB_ZLIB})
+
 if (TBB_FOUND)
 	set (OPENMS_DEP_LIBRARIES ${OPENMS_DEP_LIBRARIES} ${TBB_LIBRARIES})
 endif()
@@ -623,10 +628,10 @@ foreach(i ${TOPP_executables})
 
     add_executable(${i} MACOSX_BUNDLE ${TOPP_DIR}${i}.C ${resource_dir}/${i}.icns)         
     ## transform TOPPView and INIFileEditor to real Mac OS X applications
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_INFO_STRING "${i} - Version 1.5")
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "1.5")
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_VERSION "1.5")
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "1.5")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_INFO_STRING "${i} - Version 1.6")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "1.6")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_VERSION "1.6")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "1.6")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_ICON_FILE "${i}.icns")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_GUI_IDENTIFIER "de.openms.${i}")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "${i}") 

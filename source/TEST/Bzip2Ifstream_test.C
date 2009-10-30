@@ -37,7 +37,7 @@ using namespace std;
 
 ///////////////////////////
 
-START_TEST(MzMLFile, "$Id: MzMLFile_test.C 6174 2009-10-23 09:48:00Z davidwojnar $")
+START_TEST(Bzip2Ifstream_test, "$Id: MzMLFile_test.C 6174 2009-10-23 09:48:00Z davidwojnar $")
 
 Bzip2Ifstream* ptr = 0;
 START_SECTION((Bzip2Ifstream()))

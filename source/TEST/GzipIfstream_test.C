@@ -28,16 +28,14 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/FORMAT/GzipIfstream.h>
-#include <iostream>
 using namespace OpenMS;
-using namespace std;
+
 
 
 ///////////////////////////
 
-START_TEST(MzMLFile, "$Id: MzMLFile_test.C 6174 2009-10-23 09:48:00Z davidwojnar $")
+START_TEST(GzipIfstream, "$Id:$")
 
 GzipIfstream* ptr = 0;
 START_SECTION((GzipIfstream()))

@@ -26,7 +26,6 @@ ERPairFinder
 MRMPairFinder
 OpenMSInfo
 TheoreticalMSMSGenerator
-net_pipe
 )
 
 ### pass source file list to the upper instance

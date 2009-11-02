@@ -106,7 +106,7 @@ namespace OpenMS
 						throw Exception::Precondition(__FILE__,__LINE__,__PRETTY_FUNCTION__,"There must be at least one precursor in each Spectrum to compare the precursormass");
 					}
 					/// @improvement consider all precursor available
-					return (a.getPrecursors().first().getMZ() < b.getPrecursors().first().getMZ());
+					return (a.getPrecursors().front().getMZ() < b.getPrecursors().front().getMZ());
 				}
 			};
 
@@ -316,7 +316,7 @@ namespace OpenMS
 			*/
 			void sortByIntensity(bool reverse=false)
 			{
-				if(float_data_arrays_.size() == 0 && string_data_arrays_.size() && integer_data_arrays_.size())
+				if(float_data_arrays_.size() == 0 && string_data_arrays_.size() == 0  && integer_data_arrays_.size() == 0 )
 				{
 					if (reverse)
 					{
@@ -392,7 +392,7 @@ namespace OpenMS
 			*/
 			void sortByPosition()
 			{
-				if(float_data_arrays_.size() == 0)
+				if(float_data_arrays_.size() == 0 && string_data_arrays_.size() == 0  && integer_data_arrays_.size() == 0 )
 				{
 					std::sort(ContainerType::begin(), ContainerType::end(), typename PeakType::PositionLess());
 				}
@@ -409,6 +409,7 @@ namespace OpenMS
 
 					//apply sorting to ContainerType and to metadataarrays
 					ContainerType tmp;
+					tmp.reserve(ContainerType::size());
 					for (Size i=0; i < sorted_indices.size(); ++i)
 					{
 						tmp.push_back(*(ContainerType::begin()+(sorted_indices[i].second)));
@@ -418,6 +419,7 @@ namespace OpenMS
 					for (Size i=0; i < float_data_arrays_.size(); ++i)
 					{
 						std::vector<Real> mda_tmp;
+						mda_tmp.reserve(ContainerType::size());
 						for (Size j=0; j < float_data_arrays_[i].size(); ++j)
 						{
 							mda_tmp.push_back(*(float_data_arrays_[i].begin()+(sorted_indices[j].second)));
@@ -428,6 +430,7 @@ namespace OpenMS
 					for (Size i=0; i < string_data_arrays_.size(); ++i)
 					{
 						std::vector<String> mda_tmp;
+						mda_tmp.reserve(ContainerType::size());
 						for (Size j=0; j < string_data_arrays_[i].size(); ++j)
 						{
 							mda_tmp.push_back(*(string_data_arrays_[i].begin()+(sorted_indices[j].second)));

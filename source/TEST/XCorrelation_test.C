@@ -1,6 +1,3 @@
-X-Powered-By: PHP/5.1.2
-Content-type: text/html
-
 // -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
@@ -24,14 +21,14 @@ Content-type: text/html
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Mathias Walzer $
 // $Authors: $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/TODO/XCorrelation.h>
+#include <OpenMS/COMPARISON/SPECTRA/XCorrelation.h>
 ///////////////////////////
 
 using namespace OpenMS;
@@ -42,10 +39,10 @@ START_TEST(XCorrelation, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-XCorrelation* ptr = 0;
+XCorrelation<Peak1D>* ptr = 0;
 START_SECTION(XCorrelation())
 {
-	ptr = new XCorrelation();
+	ptr = new XCorrelation<Peak1D>();
 	TEST_NOT_EQUAL(ptr, 0)
 }
 END_SECTION
@@ -74,7 +71,7 @@ START_SECTION((XCorrelation& operator=(const XCorrelation &source)))
 }
 END_SECTION
 
-START_SECTION((void getXCorrelation(const SpectrumType &s1, const SpectrumType &s2, DoubleReal &best_score1, DoubleReal &best_score2, DoubleReal &best_shift, std::list< std::pair< Size, Size > > &best_matches) const ))
+START_SECTION((void getXCorrelation(const SpectrumType &s1, const SpectrumType &s2, DoubleReal &best_score1, DoubleReal &best_score2, DoubleReal &best_shift, std::list< std::pair< Size, Size > > &best_matches, bool pm_diff_shift = false) const ))
 {
   // TODO
 }
@@ -88,7 +85,9 @@ END_SECTION
 
 START_SECTION((bool matchPredicate(std::pair< Size, Size > first, std::pair< Size, Size > second)))
 {
-  // TODO
+  std::pair< Size, Size > one(1,1),two(1,2),three(2,1);
+  TEST_EQUAL (ptr->matchPredicate(one,two),true);
+  TEST_EQUAL (ptr->matchPredicate(one,three),false);
 }
 END_SECTION
 
@@ -96,3 +95,6 @@ END_SECTION
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST
+
+
+

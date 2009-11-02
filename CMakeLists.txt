@@ -60,7 +60,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 		add_definitions(-fmessage-length=0)
 	endif()
 
-	## CGAL needs extra definitions to avoid pre and postconditions 
+	## CGAL needs extra definitions to avoid pre and postconditions
 	## (see mails on open-ms-general of Hendrik Weisser. Thx very much!)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCGAL_NO_PRECONDITIONS -DCGAL_NO_POSTCONDITIONS -DCGAL_NO_ASSERTIONS")
 
@@ -70,14 +70,14 @@ elseif (MSVC)
 
 	## disable dll-interface warning
 	add_definitions(/wd4251 /wd4275)
-	
+
 	## disable deprecated functions warning (e.g. for POSIX functions)
 	add_definitions(/wd4996)
 
 	## disable explicit template instantiation request for partially defined classes
 	add_definitions(/wd4661)
 
-	
+
 	## don't warn about unchecked std::copy()
 	add_definitions(/D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 
@@ -87,13 +87,13 @@ elseif (MSVC)
 
 	## xerces bug workaround
 	add_definitions(/DOPENMS_XERCESDLL)
-	
+
 	## compile such that GSL is in DLL mode
 	add_definitions(/DGSL_DLL)
 
 	## FeatureFinder.obj is huge and won't compile in VS2008 debug otherwise:
 	add_definitions(/bigobj)
-	
+
 	## minimal code rebuild
 	#add_definitions(/Gm /Zi)
 
@@ -121,7 +121,7 @@ endif()
 if (FOUND_CUDART AND MT_ENABLE_CUDA) #CUDART and not CUDA!!!
 	add_definitions(/DOPENMS_HAS_CUDA)
 	MESSAGE (STATUS "Found CUDA header files in: ${FOUND_CUDA_NVCC_INCLUDE}") #Not CUDA_INCLUDE_DIR
-	MESSAGE (STATUS "Found CUDA library at: ${FOUND_CUDART}") 
+	MESSAGE (STATUS "Found CUDA library at: ${FOUND_CUDART}")
 	INCLUDE_DIRECTORIES(${FOUND_CUDA_NVCC_INCLUDE})
   set (CUDA_NVCC_INCLUDE_ARGS ${CUDA_NVCC_INCLUDE_ARGS} -I ${PROJECT_BINARY_DIR}/include/)
 endif()
@@ -254,7 +254,7 @@ message(STATUS "Contrib lib dir: ${CONTRIB_LIB_DIR}")
 ## @param varname Name of the variable which will hold the result string (e.g. "optimized myLib.so debug myLibDebug.so")
 ## @param libnames   List of library names which are searched (release libs)
 ## @param libnames_d List of library names which are searched (debug libs)
-## @param human_libname Name of the library (for display only) 
+## @param human_libname Name of the library (for display only)
 MACRO (OPENMS_CHECKLIB varname libnames libnames_d human_libname)
 	FIND_LIBRARY(${varname}_OPT NAMES ${libnames} PATHS ${CONTRIB_LIB_DIR} DOC "${human_libname} library dir" NO_DEFAULT_PATH)
 	if ("${varname}_OPT" STREQUAL "${varname}_OPT-NOTFOUND")
@@ -319,7 +319,7 @@ if (NOT MSVC AND USE_ANDIMS)
 endif()
 
 ## libSVM support
-if (MSVC) 
+if (MSVC)
 	## we created a lib here, because we cannot just add an object..
 	OPENMS_CHECKLIB(SVM_LIBRARY "svm" "svmd" "LibSVM")
 else()
@@ -633,12 +633,12 @@ foreach(i ${TOPP_executables})
 	if (MSVC AND EXISTS ${resource_file})
 		Message(STATUS "Setting resource file ${resource_file} for ${i}")
 		add_executable(${i} ${TOPP_DIR}${i}.C ${resource_file})
-  elseif(APPLE AND EXISTS ${resource_dir}) 
-    set_source_files_properties(${resource_dir}/${i}.icns 
+  elseif(APPLE AND EXISTS ${resource_dir})
+    set_source_files_properties(${resource_dir}/${i}.icns
       PROPERTIES
       MACOSX_PACKAGE_LOCATION Resources)
 
-    add_executable(${i} MACOSX_BUNDLE ${TOPP_DIR}${i}.C ${resource_dir}/${i}.icns)         
+    add_executable(${i} MACOSX_BUNDLE ${TOPP_DIR}${i}.C ${resource_dir}/${i}.icns)
     ## transform TOPPView and INIFileEditor to real Mac OS X applications
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_INFO_STRING "${i} - Version 1.5")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "1.5")
@@ -646,11 +646,11 @@ foreach(i ${TOPP_executables})
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "1.5")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_ICON_FILE "${i}.icns")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_GUI_IDENTIFIER "de.openms.${i}")
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "${i}") 
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "${i}")
   else()
 		add_executable(${i} ${TOPP_DIR}${i}.C)
 	endif()
-	
+
 	target_link_libraries(${i} ${OPENMS_LIBRARIES})
 	if (OPENMP_FOUND AND NOT MSVC)
 		set_target_properties(${i} PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})
@@ -693,18 +693,18 @@ if ("${PACKAGE_TYPE}" STREQUAL "none")
 	endforeach(i)
 	add_custom_target(EXAMPLES)
 	add_dependencies(EXAMPLES ${EXAMPLES_executables})
-	
+
 	## Create target the executes all examples
 	add_custom_target(EXAMPLES_exec
 			COMMENT "Executes all examples"
 	)
-	
+
 	if (MSVC_IDE)
 		set(EXAMPLES_EXE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$(OutDir))
 	else()
 		set(EXAMPLES_EXE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 	endif()
-	
+
 	## Create single target for each example, add it as a dependency to the main target
 	foreach(i ${EXAMPLES_executables})
 		add_custom_target(EXAMPLES_exec_${i}
@@ -713,6 +713,41 @@ if ("${PACKAGE_TYPE}" STREQUAL "none")
 		)
 	  add_dependencies(EXAMPLES_exec_${i} ${i})
 	  add_dependencies(EXAMPLES_exec EXAMPLES_exec_${i})
+	endforeach(i)
+
+endif()
+
+##### Workbench #####
+if ("${PACKAGE_TYPE}" STREQUAL "none")
+	set(workbench_executables)
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/workbench)
+	include(workbench/executables.cmake)
+	foreach(i ${workbench_executables})
+	  add_executable(${i} workbench/${i}.C)
+	  target_link_libraries(${i} ${OPENMS_LIBRARIES})
+	endforeach(i)
+	add_custom_target(workbench)
+	add_dependencies(workbench ${workbench_executables})
+
+	## Create target the executes all workbench
+	add_custom_target(workbench_exec
+			COMMENT "Executes all in workbench"
+	)
+
+	if (MSVC_IDE)
+		set(workbench_EXE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$(OutDir))
+	else()
+		set(workbench_EXE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+	endif()
+
+	## Create single target for each workbench, add it as a dependency to the main target
+	foreach(i ${workbench_executables})
+		add_custom_target(workbench_exec_${i}
+			COMMAND ${CMAKE_COMMAND} -E  chdir ${PROJECT_SOURCE_DIR}/workbench ${workbench_EXE_DIR}/${i}
+			COMMENT "Executes the workbench ${i}"
+		)
+	  add_dependencies(workbench_exec_${i} ${i})
+	  add_dependencies(workbench_exec workbench_exec_${i})
 	endforeach(i)
 
 endif()
@@ -797,7 +832,7 @@ else()
 										VERBATIM
 		)
 endif()
-	
+
 ##### Message after OpenMS has been built #####
 if (MSVC)
   add_custom_command(TARGET OpenMS
@@ -920,7 +955,7 @@ if (NOT "${PACKAGE_TYPE}" STREQUAL "none")
 	endif()
 	set(CPACK_RESOURCE_FILE_WELCOME ${PROJECT_SOURCE_DIR}/cmake/OpenMSPackageResourceWelomeFile.txt)
 	set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/cmake/OpenMSPackageResourceReadme.txt)
-	
+
 	# install routines for MacOSX
 	if("${PACKAGE_TYPE}" STREQUAL "dmg")
 		#include(cmake/package_dmg.cmake)
@@ -938,7 +973,7 @@ if (NOT "${PACKAGE_TYPE}" STREQUAL "none")
 else()
 	## grep definitions that were set using 'add_definitions()'
 	get_property(OPENMS_CMP_DEFS DIRECTORY . PROPERTY COMPILE_DEFINITIONS)
-	
+
 	## convert to CXX flags
 	set(OPENMS_ADDCXX_FLAGS)
 	#
@@ -947,7 +982,7 @@ else()
 	endforeach(i)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPENMS_ADDCXX_FLAGS}")
 	Message(STATUS "Definitions: ${OPENMS_ADDCXX_FLAGS}")
-	
+
 	# build settings and  configs for external code
 	include(CMakeExportBuildSettings)
 	cmake_export_build_settings(${PROJECT_BINARY_DIR}/cmake/OpenMSBuildSettings.cmake)

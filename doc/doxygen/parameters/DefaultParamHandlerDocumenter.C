@@ -390,7 +390,8 @@ int main (int argc , char** argv)
 	DOCME2(Spectrum1DCanvas,Spectrum1DCanvas(Param(),0));
 	DOCME2(Spectrum2DCanvas,Spectrum2DCanvas(Param(),0));
 	DOCME2(Spectrum3DCanvas,Spectrum3DCanvas(Param(),0));
-	DOCME2(StarClusters,(StarClusters<Peak1D>(MSExperiment<Peak1D>()*,MSExperiment<Peak1D>()*,std::vector<std::pair<Size,Size> >()&,std::list<DoubleReal>()&)));
+	PeakMap nothing; std::vector< std::pair<Size,Size> > list_pairs; std::list<DoubleReal> list_doubles;
+	DOCME2(StarClusters,(StarClusters<Peak1D>(nothing,nothing,list_pairs,list_doubles)));
 	DOCME2(PTMSimulation, PTMSimulation(NULL));
   DOCME2(IonizationSimulation, IonizationSimulation(NULL));
   DOCME2(RawMSSignalSimulation, RawMSSignalSimulation(NULL));

@@ -337,6 +337,56 @@ namespace OpenMS
 
 	};
 
+	/**
+		@brief Class for comparison of std::pair using first ONLY e.g. for use with std::sort
+	*/
+	template<typename PairType>
+	struct PairMatcherFirstElement
+	: std::binary_function<PairType, PairType, bool >
+	{
+			bool operator() (const PairType& left, const PairType& right)const
+			{
+					return ( left.first == right.first ) ;
+			}
+
+	};
+
+	/**
+		@brief Struct for comparison of std::pair using second ONLY e.g. for use with std::sort
+	*/
+	template<typename PairType>
+	struct PairMatcherSecondElement
+	: std::binary_function<PairType, PairType, bool >
+	{
+			bool operator() (const PairType& left, const PairType& right)const
+			{
+					return ( left.second == right.second ) ;
+			}
+
+	};
+
+	//======================================================================
+
+	/**
+		@brief Struct for binary predicate to consider equality with a certain tolerance
+
+		@param i first value
+		@param i second value
+		@return bool if the two parameters are in tolerance close to each other
+	*/
+	template<typename CompareType>
+	struct EqualInTolerance
+	: public std::binary_function<CompareType, CompareType, bool>
+	{
+		CompareType& tolerance;
+		EqualInTolerance( CompareType& c ) : tolerance(c) {}
+		bool operator()(CompareType i, CompareType j)
+		{
+			CompareType diff = std::fabs(i-j);
+			return (diff <= tolerance);
+		}
+	};
+
 	//======================================================================
 
 

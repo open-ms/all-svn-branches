@@ -30,6 +30,7 @@
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/KERNEL/MSSpectrum.h>
+#include <OpenMS/KERNEL/ComparatorUtils.h>
 
 #include <vector>
 #include <list>
@@ -44,6 +45,12 @@ namespace OpenMS
 {
 	class Peak1D;
 
+		//~ struct compareByFirst
+  //~ : std::binary_function<const std::pair<Size,Size>,const std::pair<Size,Size>,bool>
+//~ {
+  //~ bool operator() (IntRealString left, IntRealString right ) const { return left.i_ < right.i_; }
+//~ };
+
 	/**
 		@brief compares the correlation of two spectra
 
@@ -55,6 +62,9 @@ namespace OpenMS
 	class XCorrelation
 		: public DefaultParamHandler
 	{
+
+
+
 	public:
 
 		typedef PeakT PeakType;
@@ -72,7 +82,7 @@ namespace OpenMS
 			defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
 			defaults_.setValue("min_shift", 0.0, "Defines the minimal absolut (in Da) shift between the two spectra");
 			defaults_.setValue("max_shift", 150.0, "Defines the maximal absolut (in Da) shift between the two spectra");
-			defaults_.setValue("min_dist", 57.0, "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
+			defaults_.setValue("min_dist", 57.0214637230, "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
 			defaults_.setValue("correlation_scoring", "intensity", "If intensity, correlation scores on basis of matched intensity values, if matchnumber correlation scores solely on basis of the number of matches");
 			defaults_.setValidStrings("correlation_scoring", StringList::create("intensity,matchnumber"));
 			defaultsToParam_();
@@ -101,76 +111,144 @@ namespace OpenMS
 
 		// @}
 
-		void getXCorrelation(SpectrumType& s1, SpectrumType& s2, DoubleReal& best_score1 , DoubleReal& best_score2, DoubleReal& best_shift, std::list<std::pair<Size,Size> >& best_matches) const
+		void maxSparseMatches(const SpectrumType& s1, const SpectrumType& s2, std::vector<std::pair<Size,Size> >& all_matches, std::list<std::pair<Size,Size> >& best_matches) const
+		{
+			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
+			DoubleReal min_dist = (double)param_.getValue("min_dist");
+
+			//~ initialization:
+			/// @attention indices here are indices in the dp-table and to get from these to indices in all_matches you have to decrease once;
+			std::pair<Size,DoubleReal> best_dp_col(0.0,0.0); //will hold index of the last in the best path so far and the corresponding score
+			std::vector< std::pair<Size,DoubleReal> > dp_table(all_matches.size()+1, best_dp_col); // [predecessor, predecessor score], size+1 due to DP initialization in 0
+			Size next_too_close = 1;		// Index for the match (in dp_table and all_matches) that is next BEHIND i and too close
+			Size max_index = 0;					// Index for best match BEHIND next_too_close with the highest score (already cumulated) in the dp_table
+
+			//~ "recursion":
+			for (Size i=1; i< dp_table.size(); ++i)
+			{
+				while(next_too_close < i and
+							s1[all_matches[next_too_close-1].first].getMZ() <= (s1[all_matches[i-1].first].getMZ()-min_dist+2*peak_tolerance) and
+							s2[all_matches[next_too_close-1].second].getMZ() <= (s2[all_matches[i-1].second].getMZ()-min_dist+2*peak_tolerance))
+				/// @improvement find out if not better only to add one time the peak_tolerance
+				{
+					// This is executed only when next_too_close is advanced (then there may be a new max_index?)
+					if (dp_table[next_too_close].second > dp_table[max_index].second)
+					{
+						max_index = next_too_close;
+					}
+					++next_too_close;
+				}
+				dp_table[i].first = max_index;
+				dp_table[i].second = dp_table[max_index].second + s1[all_matches[i-1].first].getIntensity() + s2[all_matches[i-1].second].getIntensity(); //path score with intensities!
+				/*debug std::cout << "dp table (" << i << "): " << dp_table[i].first << " | " << dp_table[i].second;*/
+
+				//~ for traceback: best path ends in best_dp_col.first
+				if (dp_table[i].second>best_dp_col.second)
+				{
+					best_dp_col.second=dp_table[i].second;
+					best_dp_col.first=i;
+					/*debug std::cout << " - new best ";*/
+				}
+				/*debug std::cout << std::endl;*/
+			}
+
+			//~ traceback:
+			std::list<Size> best_path;
+			while (best_dp_col.first>0)
+			{
+				best_path.push_back(best_dp_col.first-1);
+				best_dp_col.first=dp_table[best_dp_col.first].first;
+			}
+			while(best_path.size()>0)
+			{
+				best_matches.push_back(all_matches[best_path.back()]);
+				best_path.pop_back();
+			}
+		}
+		///
+
+		void getXCorrelation(SpectrumType& s1, SpectrumType& s2, DoubleReal& best_score1 , DoubleReal& best_score2, DoubleReal& best_shift, std::list<std::pair<Size,Size> >& best_matches, bool pm_diff_shift = false) const
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal parentmass_tolerance = (double)param_.getValue("parentmass_tolerance");
 			DoubleReal max_shift = (double)param_.getValue("max_shift");
 			DoubleReal shift_step = 2 * peak_tolerance;
-			DoubleReal shift = 0;
 
 			// reset the correlation values
 			best_score1 = 0;
 			best_score2 = 0;
-			best_shift = 0;
+			best_shift = std::numeric_limits<double>::min();
 			best_matches.clear();
 			s1.sortByPosition();
 			s2.sortByPosition();
 
 			if(s2.getPrecursors().front().getMZ() < s1.getPrecursors().front().getMZ())
 			{
-				/// @improvement throw error? else maybe no range to cover because pm_diff is positive
+				/// @improvement throw error
 			}
-			DoubleReal pm_diff(s1.getPrecursors().front().getMZ() - s2.getPrecursors().front().getMZ());
+			DoubleReal pm_diff(s2.getPrecursors().front().getMZ() - s1.getPrecursors().front().getMZ());
+			if(!pm_diff_shift)
+			{
+				pm_diff = 0.0;
+			}
 
-			if(pm_diff>max_shift || s1.getPrecursors().front().getCharge()>2 || s2.getPrecursors().front().getCharge()>2)
+			if(pm_diff>max_shift or s1.getPrecursors().front().getCharge()>2 or s2.getPrecursors().front().getCharge()>2)
 			{
 				//~ the above criteria disqualify s1 and s2 as (useful) spectral pairs from the start
 				/// @improvement throw error?
 				return;
 			}
 
-
-			shift = -parentmass_tolerance;
-			DoubleReal range(parentmass_tolerance);
-			for(; shift<=range; shift+=shift_step)
+			if((String)param_.getValue("correlation_scoring")=="intensity")
 			{
-				DoubleReal score1 = std::numeric_limits<double>::min();
-				DoubleReal score2 = std::numeric_limits<double>::min();
-				std::list<std::pair<Size,Size> > matches;
-
-				/// @improvement add a correlation_scoring method matches that optimizes only the matchnumber (new max_sparse_overlap)
-				if((String)param_.getValue("correlation_scoring")=="intensity")
+				//~ find matches in unshifted s1 to s2
+				std::vector<std::pair<Size, Size> > matches_unshift_all;
+				for(Size i = 0; i < s1.size(); ++i)
 				{
-					//~ find matches in unshifted s1 to s2
-					std::vector<std::pair<Size, Size> > matches_unshift_all;
-					for(Size i = 0; i < s1.size(); ++i)
+					DoubleReal mz = s1[i].getMZ() + pm_diff;
+					ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
+					ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance+0.00001));
+					for(ConstSpectrumIterator it = start; it != end; ++it)
 					{
-						DoubleReal mz = s1[i].getMZ() + shift;
-						ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
-						ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance));
-						for(ConstSpectrumIterator it = start; it != end; ++it)
-						{
-							Size j = it - s2.begin();
-							matches_unshift_all.push_back(std::pair<Size,Size>(i,j));
-						}
+						Size j = it - s2.begin();
+						matches_unshift_all.push_back(std::pair<Size,Size>(i,j));
 					}
-					//~ max sparses matches with DP
-					std::list<std::pair<Size, Size> > matches_unshift;
-					maxSparseMatches(s1,s2,matches_unshift_all,matches_unshift);
+				}
+				//~ max sparses matches with DP
+				std::list<std::pair<Size, Size> > matches_unshift;
+				maxSparseMatches(s1,s2,matches_unshift_all,matches_unshift);
+				/*debug std::cout << "matches_unshift.size(): " << matches_unshift.size() << std::endl;*/
 
+				best_matches = matches_unshift;
+				//~ calc score
+				for(std::list<std::pair<Size,Size> >::iterator it = best_matches.begin(); it != best_matches.end(); ++it)
+				{
+					best_score1 += s1[it->first].getIntensity();
+					best_score2 += s2[it->second].getIntensity();
+				}
 
-					if(abs(pm_diff)>parentmass_tolerance)
+				//~ XCorr shifts:
+				if(pm_diff>parentmass_tolerance or !pm_diff_shift)
+				{
+					DoubleReal shift(pm_diff-parentmass_tolerance);
+					DoubleReal range(pm_diff+parentmass_tolerance);
+					for(; shift<=range; shift+=shift_step)
 					{
-						shift = pm_diff-parentmass_tolerance;
-						range = pm_diff+parentmass_tolerance;
+						DoubleReal close_to_unshift(fabs(pm_diff - fabs(shift))+0.00001);
+						/// @improvement some situation 0.3 < 0.3 = true pops up if not +0.00001 added
+						if(close_to_unshift<peak_tolerance)
+						{
+							continue;
+						}
+
+						/// @improvement add a correlation_scoring method matches that optimizes only the matchnumber (new max_sparse_overlap)
 						//~ find matches in shifted s1 to s2
 						std::vector<std::pair<Size, Size> > matches_shift_all;
 						for(Size i = 0; i < s1.size(); ++i)
 						{
 							DoubleReal mz = s1[i].getMZ() + shift;
 							ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
-							ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance));
+							ConstSpectrumIterator end(s2.MZEnd(mz+peak_tolerance+0.00001));
 							for(ConstSpectrumIterator it = start; it != end; ++it)
 							{
 								Size j = it - s2.begin();
@@ -180,97 +258,76 @@ namespace OpenMS
 						//~ max sparses matches with DP
 						std::list<std::pair<Size, Size> > matches_shift;
 						maxSparseMatches(s1,s2,matches_shift_all,matches_shift);
-						//~ unite matches
-						set_union(matches_unshift.begin(),matches_unshift.end(),matches_shift.begin(),matches_shift.end(),matches.begin());	//thanks to Size it will sort correctly
-						matches.unique(matchPredicate); // dirty: takes only the match with higher index in s2 - but a overlap HERE is highly unlikely
-					}
-					else
-					{
-						matches = matches_unshift;
-					}
+						/*debug*/ std::cout << "matches_shift.size(): " << matches_shift.size() << " shift: " << shift << std::endl;
 
-					//~ calc score
-					for(std::list<std::pair<Size,Size> >::iterator it = matches.begin(); it != matches.end(); ++it)
-					{
-						score1 += s1[it->first].getIntensity();
-						score2 += s2[it->second].getIntensity();
-					}
-					if((score1+score2 > best_score1 + best_score2) || (score1+score2 == best_score1+best_score2 && abs(shift)<abs(best_shift)))
-		      {
-						best_score1=score1;
-						best_score2=score2;
-						best_shift=shift;
-						best_matches = matches;
+						DoubleReal score1 = std::numeric_limits<double>::min();
+						DoubleReal score2 = std::numeric_limits<double>::min();
+						std::list<std::pair<Size,Size> > matches;
+
+						if(matches_shift.size() > 0)
+						{
+							/*debug for(std::vector<std::pair<Size,Size> >::iterator it = matches_unshift_all.begin(); it != matches_unshift_all.end(); ++it)
+											{
+												std::cout << it->first << " | " << it->second << std::endl;
+											}*/
+							/*debug for(std::vector<std::pair<Size,Size> >::iterator it = matches_shift_all.begin(); it != matches_shift_all.end(); ++it)
+											{
+												std::cout << it->first << " / " << it->second << std::endl;
+											}*/
+							/*debug for(std::list<std::pair<Size,Size> >::iterator it = matches_unshift.begin(); it != matches_unshift.end(); ++it)
+											{
+												std::cout << it->first << " * " << it->second << std::endl;
+											}*/
+							/*debug for(std::list<std::pair<Size,Size> >::iterator it = matches_shift.begin(); it != matches_shift.end(); ++it)
+											{
+												std::cout << it->first << " # " << it->second << std::endl;
+											}*/
+
+							//~ unite matches
+							if(matches_unshift.size() > 0)
+							{
+								//~ both matches are > 0
+								if(shift<pm_diff)
+								{
+									//~ prevent matches_unshift from being emptied in merge
+									matches = matches_unshift;
+									matches_shift.merge(matches,PairComparatorFirstElement< std::pair<Size,Size> >());
+									matches = matches_shift;
+								}
+								else
+								{
+									matches = matches_unshift;
+									matches.merge(matches_shift,PairComparatorFirstElement< std::pair<Size,Size> >());
+								}
+							}
+							else
+							{
+								matches = matches_shift;
+							}
+							matches.unique(PairMatcherFirstElement< std::pair<Size,Size> >()); // dirty: takes only the match from the one where the other has been merged into - overlap HERE is highly unlikely
+							//~ also this behaviour is partly wanted as a unshifted match is always?(maybe only in -shift) to be considered better than a shifted one
+
+							//~ calc score
+							for(std::list<std::pair<Size,Size> >::iterator it = matches.begin(); it != matches.end(); ++it)
+							{
+								score1 += s1[it->first].getIntensity();
+								score2 += s2[it->second].getIntensity();
+							}
+							if((score1+score2 > best_score1 + best_score2) || (score1+score2 == best_score1+best_score2 && fabs(shift)<fabs(best_shift)))
+							{
+								best_score1=score1;
+								best_score2=score2;
+								best_shift=shift;
+								best_matches = matches;
+							}
+						}
 					}
 				}
-			}
-		}
-
-		void maxSparseMatches(const SpectrumType& s1, const SpectrumType& s2, std::vector<std::pair<Size,Size> >& all_matches, std::list<std::pair<Size,Size> >& best_matches) const
-		{
-			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
-			DoubleReal min_dist = (double)param_.getValue("min_dist");
-
-			DoubleReal twocol [2] = { 0,0 };
-			std::vector< DoubleReal[] > dp_table(all_matches.size()+1, twocol); // [predecessor, predecessor score], size+1 due to DP initialization in 0
-			Size next_too_close;		// Index for the match (in dp_table and all_matches) that is next BEHIND i and too close
-			Size max_index;					// Index for best match BEHIND next_too_close with the highest score (already cumulated) in the dp_table
-
-			float best_match;     // Best path score so far
-			int best_match_index;  // Index of the last in the best path so far
-
-			max_index = 0;       next_too_close = 1;
-			best_match = 0;    best_match_index = 0;
-			for (Size i=1; i< dp_table.size(); ++i)
-			{
-				while(next_too_close < i and
-							s1[all_matches[next_too_close-1].first].getMZ() <= (s1[all_matches[i-1].first].getMZ()-min_dist+2*peak_tolerance) and
-							s2[all_matches[next_too_close-1].second].getMZ() <= (s2[all_matches[i-1].second].getMZ()-min_dist+2*peak_tolerance))
+				if(best_shift==std::numeric_limits<double>::min())
 				{
-					// This is executed only when next_too_close is advanced (then there may be a new max_index?)
-					if (dp_table[next_too_close][1] > dp_table[max_index][1])
-					{
-						max_index = next_too_close;
-					}
-					next_too_close++;
-				}
-				dp_table[i][0] = max_index;
-				dp_table[i][1] = dp_table[max_index][1] + s1[all_matches[i-1].first][1] + s2[all_matches[i-1].second][1]; //path score with intensities!
-
-				// for traceback: best path ends in best_match_index
-				if (dp_table[i][1]>best_match)
-				{
-					best_match=dp_table[i][1];
-					best_match_index=i;
+					best_shift=pm_diff;
 				}
 			}
-
-			std::list<Size> best_path;
-			while (best_match_index>0)
-			{
-				best_path.push_back(best_match_index-1);
-				best_match_index=(Size)dp_table[best_match_index][0];
-			}
-
-			Size best_path_size = best_path.size();
-			//~ best_matches.reserve(best_path_size); not for lists
-
-			for(Size i=0; i < best_path.size(); ++i)
-			{
-				best_matches.push_back(std::pair<Size,Size> (all_matches[best_path.back()].first,all_matches[best_path.back()].second));
-				best_path.pop_back();
-			}
-		}
-
-		//~ struct compareByFirst
-  //~ : std::binary_function<const std::pair<Size,Size>,const std::pair<Size,Size>,bool>
-//~ {
-  //~ bool operator() (IntRealString left, IntRealString right ) const { return left.i_ < right.i_; }
-//~ };
-		// a binary predicate (as function) for the unique function of a list:
-		bool matchPredicate (const std::pair<Size,Size>& first, const std::pair<Size,Size>& second) const
-		{
-			return ( first.first == second.first );
 		}
 
 	};

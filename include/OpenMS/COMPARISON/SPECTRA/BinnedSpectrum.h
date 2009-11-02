@@ -112,11 +112,12 @@ namespace OpenMS
 	   : MSSpectrum<PeakT>(), /* DefaultParamHandler("BinnedSpectrum"), */ bin_spread_(spread), bin_size_(size), bins_()
 	{
 		// find largest mz in given spectra
-		DoubleReal max_size(max_element(unmerged.begin(),unmerged.end(),MSSpectrum<PeakT>::PMLess())->getPrecursors().first().getMZ());
+		DoubleReal max_size(max_element(unmerged.begin(),unmerged.end(),typename MSSpectrum<PeakT>::PMLess())->getPrecursors().front().getMZ());
 		// set sparsevector size accordingly
 		bins_ = SparseVector<Real>((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // aka overall intensity of peaks in corresponding bins
 		std::vector< SparseVector<Real> > binned(unmerged.size(),bins_); // aka each spectrums binned version
-		SparseVector<Real> overall_number((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // overall number of peaks in corresponding bins
+		SparseVector<int> synthetic_peaks((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // additional for number of sythetic peaks in each bin
+		SparseVector<int> overall_number((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // overall number of peaks in corresponding bins
 		SparseVector<Real> overall_center((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // overall m/z center of peaks in corresponding bins
 		for(Size i = 0; i < unmerged.size(); ++i)
 		{
@@ -124,7 +125,7 @@ namespace OpenMS
 			UInt bin_number;
 			for (Size j = 0; j < unmerged[i].size(); ++j)
 			{
-				if(max_size > unmerged[i][j].getMZ())
+				if(unmerged[i][j].getMZ() > max_size)
 				{
 					break;
 				}
@@ -132,15 +133,21 @@ namespace OpenMS
 				//bin_number counted form 0 -> floor
 				bin_number = (UInt)floor(unmerged[i][j].getMZ()/bin_size_);
 				//e.g. bin_size_ = 1.5: first bin covers range [0,1.5] so peak at 1.5 falls in first bin (index 0)
-				if(unmerged[i][j].getMZ()/bin_size_ == (DoubleReal)bin_number)
+				if(unmerged[i][j].getMZ()/bin_size_ == (DoubleReal)bin_number and unmerged[i][j].getMZ() != 0)
 				{
 					--bin_number;
 				}
 
 				// add peak to corresponding bin
+				/*debug std::cout << "bin_number " <<  bin_number << std::endl;*/
 				binned[i][bin_number] = binned[i].at(bin_number) + unmerged[i][j].getIntensity();
+
 				overall_number[bin_number] = overall_number.at(bin_number) + 1;
 				overall_center[bin_number] = overall_center.at(bin_number) + unmerged[i][j].getMZ();
+				if(!unmerged[i].getIntegerDataArrays().empty() and unmerged[i].getIntegerDataArrays().front().getName()=="synthetic peaks")
+				{
+					synthetic_peaks[bin_number] = synthetic_peaks.at(bin_number) + unmerged[i].getIntegerDataArrays().front()[j];
+				}
 
 				// add peak to neighboring binspread many
 				for (Size k = 0; k < bin_spread_; ++k)
@@ -148,6 +155,10 @@ namespace OpenMS
 					binned[i][bin_number+k+1] = binned[i].at(bin_number+k+1) + unmerged[i][j].getIntensity();
 					overall_number[bin_number] = overall_number.at(bin_number) + 1;
 					overall_center[bin_number] = overall_center.at(bin_number) + unmerged[i][j].getMZ();
+					if(!unmerged[i].getIntegerDataArrays().empty() and unmerged[i].getIntegerDataArrays().front().getName()=="synthetic peaks")
+					{
+						synthetic_peaks[bin_number] = synthetic_peaks.at(bin_number) + unmerged[i].getIntegerDataArrays().front()[j];
+					}
 					// we are not in one of the first bins (0 to bin_spread)
 					// not working:  if (bin_number-k-1 >= 0)
 					if (bin_number >= k+1)
@@ -155,19 +166,24 @@ namespace OpenMS
 						binned[i][bin_number-k-1] = binned[i].at(bin_number-k-1) + unmerged[i][j].getIntensity();
 						overall_number[bin_number] = overall_number.at(bin_number) + 1;
 						overall_center[bin_number] = overall_center.at(bin_number) + unmerged[i][j].getMZ();
+						if(!unmerged[i].getIntegerDataArrays().empty() and unmerged[i].getIntegerDataArrays().front().getName()=="synthetic peaks")
+						{
+							synthetic_peaks[bin_number] = synthetic_peaks.at(bin_number) + unmerged[i].getIntegerDataArrays().front()[j];
+						}
 					}
 				}
 			}
 		}
 
 		//~ merge down all bins according to given statistical hypothesis
-		Real noise_propability(0.001);
-		Real propability(0.99);
+		Real noise_propability(0.001); // noise prob. for bernoulli trial nois peak generation
+		//~ trial number n, to succeed k times in a bernoulli trial follows a "negativen Binomialverteilung" but number of r successful trials out of n follows a normal "Binomialverteilung"
+		Real propability(0.99); // prob. seeing k in n trials by chance is 0.01
 		int trials(unmerged.size());
-		Real success(1-(pow(1-noise_propability,(1+2*spread))));
+		//~afaik not right like that for boost: Real success(1-(pow(1-noise_propability,(1+2*spread))));
+		Real success(pow(1-noise_propability,(1+2*spread)));
 			//~ from boost docu: The smallest number of successes that may be observed from n (or 'trials') trials with success fraction p (or ('success'), at probability P (or 'propability'). Note that the value returned is a real-number, and not an integer. Depending on the use case you may want to take either the floor or ceiling of the result. For example:
 		int min_peak_concurrence = floor(boost::math::quantile(boost::math::complement(boost::math::binomial(trials, success), propability))); /// @improvement find out whether to ceil or to floor;
-//~ boost::math::binomial::
 		/// @improvement run over the SparseVector with Iterators to speed up
 		for(Size n = 0; n < overall_number.size(); ++n)
 		{
@@ -181,25 +197,33 @@ namespace OpenMS
 		}
 		for(Size n = 0; n < overall_number.size(); ++n)
 		{
-			if(overall_number.at(n) >= min_peak_concurrence)
+			if((int)overall_number.at(n) >= min_peak_concurrence)
 			{
 				bins_[n] = bins_.at(n) / overall_number.at(n);
 				overall_center[n] = overall_center.at(n) / overall_number.at(n);
 			}
 		}
 
+		MSSpectrum<>::FloatDataArray synthetics;
+		synthetics.setName("synthetic consensus peaks");
+
 		//~ from merged bins fill peaks in integrated MSSpectrum
 		for(Size n = 0; n < bins_.size(); ++n)
 		{
-			if(overall_number.at(n) >= min_peak_concurrence)
+			if((int)overall_number.at(n) >= min_peak_concurrence)
 			{
 				PeakT tmp;
 				tmp.setIntensity(bins_[n]);
 				tmp.setMZ(overall_center[n]);
 				this->push_back(tmp);
+				synthetics.push_back((Real)synthetic_peaks.at(n)/(Real)overall_number.at(n));
 			}
-			this->sortByPosition();
 		}
+		this->setRT(unmerged.front().getRT());
+		this->setPrecursors(unmerged.front().getPrecursors());
+		this->setMSLevel(unmerged.front().getMSLevel());
+		this->getFloatDataArrays().insert(this->getFloatDataArrays().begin(), synthetics); // imperative that inserted befor sorting
+		this->sortByPosition();
 	}
 
 	/// copy constructor
@@ -412,7 +436,7 @@ namespace OpenMS
 			bin_number = (UInt)floor(this->operator[](i).getMZ()/bin_size_);
 			//e.g. bin_size_ = 1.5: first bin covers range [0,1.5] so peak at 1.5 falls in first bin (index 0)
 
-			if(this->operator[](i).getMZ()/bin_size_ == (DoubleReal)bin_number)
+			if(this->operator[](i).getMZ()/bin_size_ == (DoubleReal)bin_number and this->operator[](i).getMZ() != 0)
 			{
 				--bin_number;
 			}

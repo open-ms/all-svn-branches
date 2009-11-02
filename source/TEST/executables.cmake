@@ -249,6 +249,7 @@ set(comparison_executables_list
   ClusterHierarchical_test
   ClusterAnalyzer_test
   EuclideanSimilarity_test
+  XCorrelation_test
 )
 
 set(chemistry_executables_list
@@ -319,7 +320,7 @@ set(analysis_executables_list
 	DeNovoPostScoring_test
 	MassDecomposition_test
 	MassDecompositionAlgorithm_test
-	CompNovoIdentificationBase_test 
+	CompNovoIdentificationBase_test
 	CompNovoIdentification_test
 	CompNovoIonScoringCID_test
 	CompNovoIdentificationCID_test
@@ -412,7 +413,7 @@ set(TEST_executables
 		${applications_executables_list}
 		${transformations_executables_list}
 		${simulation_executables_list})
-		
+
 
 ### add filenames to Visual Studio solution tree
 set(sources_VS)

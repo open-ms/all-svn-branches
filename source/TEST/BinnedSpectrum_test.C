@@ -69,7 +69,46 @@ END_SECTION
 
 START_SECTION((BinnedSpectrum(Real size, UInt spread, std::vector< MSSpectrum< PeakT > > &unmerged)))
 {
-  // TODO
+	MSSpectrum<> consensus_test;
+	Precursor pr;
+	pr.setMZ(15);
+	pr.setIntensity(1);
+	consensus_test.getPrecursors().insert(consensus_test.getPrecursors().begin(),pr);
+	std::vector< MSSpectrum<> > unmerged(11,consensus_test);
+	DoubleReal devi(0);
+	for(Size i = 0; i < unmerged.size(); ++i)
+	{
+		devi = -1* (i/1000.0);
+		Peak1D t;
+		t.setMZ(i+1+devi);
+		t.setIntensity(1);
+		for(Size j = i; j < unmerged.size(); ++j)
+		{
+			unmerged[j].push_back(t);
+		}
+	}
+
+  MSSpectrum<>::IntegerDataArray ida;
+	ida.setName("synthetic peaks");
+	for(Size i = 0; i < unmerged.back().size(); ++i)
+	{
+		ida.push_back(1);
+	}
+	unmerged.back().getIntegerDataArrays().insert(unmerged.back().getIntegerDataArrays().begin(),ida);
+
+	DoubleReal refMZ[3] = {1,1.999,2.998};
+	DoubleReal refSyn[3] = {0.0909091,0.1,0.111111};
+
+	BinnedSpectrum<> merged(0.5, 0, unmerged);
+	TEST_REAL_SIMILAR(merged.getPrecursors().front().getMZ(),15)
+	TEST_REAL_SIMILAR(merged.getPrecursors().front().getIntensity(),1)
+	TEST_EQUAL(merged.size(),3)
+	for(Size i = 0; i < merged.size(); ++i)
+	{
+		TEST_REAL_SIMILAR(merged[i].getMZ(),refMZ[i])
+		TEST_REAL_SIMILAR(merged[i].getIntensity(),1)
+		TEST_REAL_SIMILAR(merged.getFloatDataArrays().front()[i],refSyn[i])
+	}
 }
 END_SECTION
 

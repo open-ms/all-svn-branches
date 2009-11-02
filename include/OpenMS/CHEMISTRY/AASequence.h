@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: Andreas Bertsch $
+// $Authors: Andreas Bertsch, Mathias Walzer $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_CHEMISTRY_AASEQUENCE_H
@@ -41,16 +41,16 @@
 namespace OpenMS
 {
 	class ResidueDB;
-	/** 
+	/**
 		@brief Representation of a peptide/protein sequence
-		
+
 		This class represents amino acid sequences in @OpenMS. Basically a AASequence instance
-		consists of a sequence of residues. The residues are represented as instances of 
+		consists of a sequence of residues. The residues are represented as instances of
 		Residue. Each amino acid has only one instance which is accessible using the ResidueDB instance (singleton).
 
-		A critical property of amino acid sequence is that they can be modified. Which means that one or more 
+		A critical property of amino acid sequence is that they can be modified. Which means that one or more
 		amino acids are chemically modified, e.g. oxidized. This is represented via Residue instances which carry
-		a ResidueModification object. This is also handled in the ResidueDB. 
+		a ResidueModification object. This is also handled in the ResidueDB.
 
 		If one wants to specify a AASequence the easiest way is simply writing the amino acid sequence. For example
 		AASequence seq("DFPIANGER") is sufficient to create a instance of AASequence with DFPIANGER as peptide.
@@ -58,32 +58,32 @@ namespace OpenMS
 		Modifications are specified using a unique string identifier present in the ModificationsDB in brackets
 		after the modified amino acid. For example AASequence seq("DFPIAM(Oxidation)GER") creates an instance
 		of the peptide DFPIAMGER with an oxidized methionine. N-terminal modifications are specified by writing
-		the modification as prefix to the sequence. C-terminal modifications are specified by writing the 
-		modification as suffix. C-terminal modifications are distinguished from modifications of the last amino 
+		the modification as prefix to the sequence. C-terminal modifications are specified by writing the
+		modification as suffix. C-terminal modifications are distinguished from modifications of the last amino
 		acid by considering the specificity of the modification as stored in ModificationsDB.
-	
+
 		If a string cannot be converted into a valid instance of AASequence, the valid flag is false. The flag
-		can be read using the isValid() predicate. However, instances of AASequence which are not valid report 
+		can be read using the isValid() predicate. However, instances of AASequence which are not valid report
 		wrong weights, because the weight cannot be calculated then. Also other operations might fail.
-		
+
 		@ingroup Chemistry
 	*/
 	class OPENMS_DLLAPI AASequence
 	{
-					
+
 		public:
 			class Iterator;
-						
+
 			/** @brief ConstIterator for AASequence
-			
+
 					AASequence constant iterator
 			*/
 			class OPENMS_DLLAPI ConstIterator
 			{
-				public: 
-				
+				public:
+
 				// TODO Iterator constructor for ConstIterator
-								
+
 				typedef const Residue& 	const_reference;
 				typedef Residue& 				reference;
 				typedef const Residue* 	const_pointer;
@@ -124,7 +124,7 @@ namespace OpenMS
 				}
 				//@}
 
-				/// assignment operator 
+				/// assignment operator
 				ConstIterator& operator = (const ConstIterator& rhs)
 				{
 					if (this != &rhs)
@@ -154,7 +154,7 @@ namespace OpenMS
 				const ConstIterator operator + (difference_type diff) const
 				{
 					return ConstIterator(vector_, position_ + diff);
-				}			
+				}
 
 				difference_type operator - (ConstIterator rhs) const
 				{
@@ -205,15 +205,15 @@ namespace OpenMS
 
 
 			/** @brief Iterator class for AASequence
-			
+
 					Mutable iterator for AASequence
 			*/
 			class OPENMS_DLLAPI Iterator
 			{
-				public: 
+				public:
 
 				friend class AASequence::ConstIterator;
-								
+
 				typedef const Residue& const_reference;
 				typedef Residue& reference;
 				typedef const Residue* const_pointer;
@@ -248,7 +248,7 @@ namespace OpenMS
 				}
 				//@}
 
-				/// assignment operator 
+				/// assignment operator
 				Iterator& operator = (const Iterator& rhs)
 				{
 					if (this != &rhs)
@@ -284,7 +284,7 @@ namespace OpenMS
 				const Iterator operator + (difference_type diff) const
 				{
 					return Iterator(vector_, position_ + diff);
-				}			
+				}
 
 				difference_type operator - (Iterator rhs) const
 				{
@@ -334,13 +334,13 @@ namespace OpenMS
 			};
 
 
-			
+
 			/** @name Constructors and Destructors
 			*/
 			//@{
 			/// default constructor
 			AASequence();
-	
+
 			/// copy constructor
 			AASequence(const AASequence& rhs);
 
@@ -352,47 +352,53 @@ namespace OpenMS
 
 			/// constructor with given a residue range
 			AASequence(ConstIterator begin, ConstIterator end);
-			
+
 			/// destructor
 			virtual ~AASequence();
 			//@}
 
 			/// assignment operator
 			AASequence& operator = (const AASequence& rhs);
-			
+
 			/** @name Accessors
 			*/
 			//@{
 			/// returns the peptide as string with modifications embedded in brackets
 			String toString() const;
 
-			/// returns the peptide as string without any modifications 
+			/// returns the peptide as string without any modifications
 			String toUnmodifiedString() const;
-			
+
 			/// set the modification of the residue at position index
 			void setModification(Size index, const String& modification);
+
+			/// set the indesignated modification of the residue at position index
+			void setIndesignatedModification(Size index, const DoubleReal& modification);
+
+			/// get the indesignated modification of the residue at position index
+			const DoubleReal& getIndesignatedModification(Size index);
 
 			/// sets the N-terminal modification
 			void setNTerminalModification(const String& modification);
 
 			/// returns the Id of the N-term modification; an empty string is returned if none was set
 			const String& getNTerminalModification() const;
-			
-			/// sets the C-terminal modification 
+
+			/// sets the C-terminal modification
 			void setCTerminalModification(const String& modification);
 
 			/// returns the Id of the C-term modification; an empty string is returned if none was set
 			const String& getCTerminalModification() const;
-			
+
 			/// sets the string of the sequence; returns true if the conversion to real AASequence was successful, false otherwise
 			bool setStringSequence(const String& sequence);
-		
+
 			/// returns a pointer to the residue, which is at position index
 			const Residue& getResidue(SignedSize index) const;
-			
+
 			/// returns a pointer to the residue, which is at position index
 			const Residue& getResidue(Size index) const;
-			
+
 			/// returns the formula of the peptide
 			EmpiricalFormula getFormula(Residue::ResidueType type = Residue::Full, Int charge = 0) const;
 
@@ -404,10 +410,10 @@ namespace OpenMS
 
 			/// returns a pointer to the residue at given position
 			const Residue& operator [] (SignedSize index) const;
-			
+
 			/// returns a pointer to the residue at given position
 			const Residue& operator [] (Size index) const;
-			
+
 			/// adds the residues of the peptide
 			AASequence operator + (const AASequence& peptide) const;
 
@@ -419,7 +425,7 @@ namespace OpenMS
 
 			/// adds the residue to the peptide; the residue must be a valid residue of the ResidueDB
 			AASequence operator + (const Residue* residue) const;
-			
+
 			/// adds the residues of a peptide
 			AASequence& operator += (const AASequence&);
 
@@ -431,7 +437,7 @@ namespace OpenMS
 
 			/// adds the residue to the peptide; the residue must be a valid residue of the ResidueDB
 			AASequence& operator += (const Residue* residue);
-			
+
 			/// returns the number of residues
 			Size size() const;
 
@@ -456,34 +462,34 @@ namespace OpenMS
 			*/
 			//@{
 			/** @brief return true if the instance is valid
-			 
+
 			 		Valid means that a possible given sequence as string was successful
 					converted into a real amino acid sequence which meaningful amino acids
 					and modifications associated with it.
 			*/
 			bool isValid() const;
-			
+
 			/// returns true if the peptude contains the given residue
 			bool has(const Residue& residue) const;
 
 			/// returns true if the peptide contains the given residue
 			bool has(const String& name) const;
-			
+
 			/// returns true if the peptide contains the given peptide
 			bool hasSubsequence(const AASequence& peptide) const;
 
 			/// returns true if the peptide contains the given peptide
 			bool hasSubsequence(const String& peptide) const;
-			
+
 			/// returns true if the peptide has the given prefix
 			bool hasPrefix(const AASequence& peptide) const;
-			
+
 			/// returns true if the peptide has the given prefix
 			bool hasPrefix(const String& peptide) const;
 
 			/// returns true if the peptide has the given suffix
 			bool hasSuffix(const AASequence& peptide) const;
-			
+
 			/// returns true if the peptide has the given suffix
 			bool hasSuffix(const String& peptide) const;
 
@@ -492,13 +498,13 @@ namespace OpenMS
 
 			/// predicate which is true if the peptide is C-term modified
 			bool hasCTerminalModification() const;
-			
+
 			// returns true if any of the residues is modified
 			bool isModified() const;
-			
+
 			/// returns true if the residue at the position is modified
 			bool isModified(Size index) const;
-			
+
 			/// equality operator
 			bool operator == (const AASequence& rhs) const;
 
@@ -511,7 +517,7 @@ namespace OpenMS
 			/// lesser than operator which compares the C-term mods, sequence and N-term mods; can be used for maps
 			bool operator < (const AASequence& rhs) const;
 
-			/// inequality operator 
+			/// inequality operator
 			bool operator != (const AASequence& rhs) const;
 
 			/// inequality operator given the peptide as a string
@@ -538,17 +544,19 @@ namespace OpenMS
 			//@{
 			/// writes a peptide to an output stream
 			friend OPENMS_DLLAPI std::ostream& operator << (std::ostream& os, const AASequence& peptide);
-			
+
 			/// reads a peptide from an input stream
 			friend OPENMS_DLLAPI std::istream& operator >> (std::istream& is, const AASequence& peptide);
 			//@}
-			
+
 		protected:
+
+			std::map<Size,DoubleReal> indesignated_modifications_;
 
 			std::vector<const Residue*> peptide_;
 
 			String sequence_string_;
-			
+
 			void parseString_(std::vector<const Residue*>& sequence, const String& peptide);
 
 			ResidueDB* getResidueDB_() const;
@@ -558,12 +566,12 @@ namespace OpenMS
 			const ResidueModification* n_term_mod_;
 
 			const ResidueModification* c_term_mod_;
-	};			
+	};
 
 	OPENMS_DLLAPI std::ostream& operator << (std::ostream& os, const AASequence& peptide);
 
 	OPENMS_DLLAPI std::istream& operator >> (std::istream& os, const AASequence& peptide);
-	
+
 } // namespace OpenMS
 
 #endif

@@ -482,6 +482,18 @@ namespace OpenMS
 				}
 
 				/// cast operator for implicit casting in case of reading in the vector
+				operator float() const
+				{
+					float value = vec_.sparse_element_;
+					map_const_iterator cmit = vec_.values_.find(index_);
+					if ( cmit != vec_.values_.end() )
+					{
+						value = cmit->second;
+					}
+					return value;
+				}
+
+				/// cast operator for implicit casting in case of reading in the vector
 				operator int() const
 					{
 					int value = vec_.sparse_element_;
@@ -494,16 +506,29 @@ namespace OpenMS
 				}
 
 				/// cast operator for implicit casting in case of reading in the vector
-				operator float() const
-				{
-					float value = vec_.sparse_element_;
+				operator unsigned int() const
+					{
+					unsigned int value = vec_.sparse_element_;
 					map_const_iterator cmit = vec_.values_.find(index_);
 					if ( cmit != vec_.values_.end() )
 					{
 						value = cmit->second;
 					}
-					return value;
+				return value;
 				}
+
+				/// cast operator for implicit casting in case of reading in the vector
+				operator size_t() const
+					{
+					size_t value = vec_.sparse_element_;
+					map_const_iterator cmit = vec_.values_.find(index_);
+					if ( cmit != vec_.values_.end() )
+					{
+						value = cmit->second;
+					}
+				return value;
+				}
+
 
 				// maybe more cast-operators for other types
 

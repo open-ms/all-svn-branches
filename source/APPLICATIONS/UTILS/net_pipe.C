@@ -8,6 +8,8 @@
 #include <OpenMS/FILTERING/TRANSFORMERS/ParentPeakMower.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 
+#include <boost/math/distributions/normal.hpp> // for binomial distribution
+
 #include <iostream>
 #include <fstream>
 
@@ -284,20 +286,13 @@ Int main()
 
 	DoubleReal max_pm;
 	DoubleReal pm_tol;
-
-	std::vector<Size> selected_specs; //where indices to not-to-bad-to-be-filtered-out-spectra's (or ms1) indices come; only spectra to those will be considered
-
-	std::vector< std::pair<Size,Size> > pot_pairs; // name is program; will be reduced in run of the program
-
-
-	std::vector< Size > means_num(selected_specs.size()), variations_num(selected_specs.size());
-	std::vector< DoubleReal > means(selected_specs.size()), variations(selected_specs.size()); // name is program; will be reduced in run of the program
+	DoubleReal min_intensity_coverage_ratio;
+	DoubleReal p_value;
 
 	  //input
 	MzMLFile mzml;
 	PeakMap experiment; //MSExperiment<Peak1D> see StandardTypes
-	// convert MzXML to MzData
-	mzml.load("spectra/test.mzML",experiment);
+	mzml.load("test.mzML",experiment);
 
   //~ // maybe a mgf too
   //~ //load a mgf
@@ -311,17 +306,30 @@ Int main()
   //~ }
   //~ fh.loadExperiment(filename_pairs, pairs_experiment, file_type);
 
+	std::vector<Size> selected_specs; //where indices to not-to-bad-to-be-filtered-out-spectra's (or ms1) indices come; only spectra to those will be considered
+	std::vector< DoubleReal > total_intensity; // total intensity of the selected spectra (for intensity-coverage ratio with matches)
+	std::vector< std::pair<Size,Size> > pot_pairs; // name is program; will be reduced in run of the program
+
 	for(Size i = 0; i < experiment.size(); ++i)
 	{
 		//select specs
 			//filter criteria: has no valid front() precursor in getPrecursors(), is MS1, ...
-
-		//modify specs
-			// remove isotope peaks, remove low peaks, remove peaks > .getPrecursors().front().getMZ(), ...
+      if( (!experiment[i].getPrecursors().empty()) and (experiment[i].getMSLevel()==2) )
+      {
+        selected_specs.push_back(i);
+      }
 	}
 
+	//~ for(Size i = 0; i < experiment.size(); ++i)
+	//~ {
+    //modify selected specs
+			// remove isotope peaks, remove low peaks, remove peaks > .getPrecursors().front().getMZ(),
+	//~ }
+
+  total_intensity.reserve(selected_specs.size());
 	for(Size i = 0; i < selected_specs.size()-1; ++i)
 	{
+    //fill pot_pairs
 		for(Size j = i+1; j < selected_specs.size(); ++j)
 		{
 			if( !(abs(experiment[j].getPrecursors().front().getMZ()-experiment[i].getPrecursors().front().getMZ()) > max_pm+pm_tol) )
@@ -329,22 +337,72 @@ Int main()
 				pot_pairs.push_back(std::pair<Size,Size>(i,j));
 			}
 		}
+    //fill total_intensity
+    DoubleReal intens;
+    for(Size j = 0; j < experiment[i].size(); ++j)
+    {
+      intens += experiment[i][j].getIntensity();
+    }
 	}
 
+	std::vector< std::pair<DoubleReal,DoubleReal> > pot_pairs_xcs; // the pairs xcorrelation scores
+	std::vector< Size > stats_num(selected_specs.size()); // the number of scores for respective spec (for online calc of the var)
+	std::vector< DoubleReal > means(selected_specs.size()), variances(selected_specs.size()), stddevs(selected_specs.size()); // the selected specs xcorrelation means, variation and std. deviation (unbiased gaussian)
+
+  std::cout << pot_pairs.size() << std::endl;
+
+  pot_pairs_xcs.reserve(pot_pairs.size());
 	XCorrelation<Peak1D> x_corr;
 	for(Size i = 0; i < pot_pairs.size(); ++i)
 	{
 		DoubleReal best_score1, best_score2, best_shift;
 		std::list<std::pair<Size,Size> > best_matches;
-		x_corr.getXCorrelation(experiment[pot_pairs[i].first], experiment[pot_pairs[i].second], best_score1, best_score2, best_shift, best_matches);
+		//~ x_corr.getXCorrelation(experiment[pot_pairs[i].first], experiment[pot_pairs[i].second], best_score1, best_score2, best_shift, best_matches);
 		//calc mean and variation
+
+			/* means[spec1][0]=(means[spec1][0]*means[spec1][1]+curResult.score1)/(means[spec1][1]+1);
+			means[spec2][0]=(means[spec2][0]*means[spec2][1]+curResult.score2)/(means[spec2][1]+1);
+			means[spec1][1]++;    means[spec2][1]++;
+			float updateRatio = (means[spec1][1]-1)/means[spec1][1];  // Update variance terms
+			varTerms[spec1] = updateRatio*varTerms[spec1]+(curResult.score1*curResult.score1)/means[spec1][1];
+			updateRatio = (means[spec2][1]-1)/means[spec2][1];
+			varTerms[spec2] = updateRatio*varTerms[spec2]+(curResult.score2*curResult.score2)/means[spec2][1]; */
+
+    means[pot_pairs[i].first] = ( means[pot_pairs[i].first]*stats_num[pot_pairs[i].first] + best_score1 )/ (1+stats_num[pot_pairs[i].first]);
+    means[pot_pairs[i].second] = ( means[pot_pairs[i].second]*stats_num[pot_pairs[i].second] + best_score2 )/ (1+stats_num[pot_pairs[i].second]);
+    variances[pot_pairs[i].first] = ( variances[pot_pairs[i].first]*stats_num[pot_pairs[i].first] + (best_score1*best_score1) )/ (1+stats_num[pot_pairs[i].first]);
+    variances[pot_pairs[i].second] = ( variances[pot_pairs[i].second]*stats_num[pot_pairs[i].second] + (best_score1*best_score2) )/ (1+stats_num[pot_pairs[i].second]);
+    ++stats_num[pot_pairs[i].first];
+    ++stats_num[pot_pairs[i].second];
 	}
 
-	//calc std.dev. sigma
+	//calc std.dev. sigma as sqrt of variance
+	for(Size i = 0; i < selected_specs.size(); ++i)
+	{
+    stddevs[i]= sqrt( (means[i]/(means[i]-1)) * (variances[i]-means[i]*means[i]) );
+  }
+
 	//filter pairs not fitting ratio or gcdf
+    std::vector< std::pair<Size,Size> >::iterator it_pairs = pot_pairs.begin();
+    std::vector< std::pair<DoubleReal,DoubleReal> >::iterator it_pairs_xcs = pot_pairs_xcs.begin();
+		while(it_pairs != pot_pairs.end())
+    {
+			if( boost::math::cdf(boost::math::normal(means[it_pairs->first],stddevs[it_pairs->first]), it_pairs_xcs->first) >= 1-p_value and
+          boost::math::cdf(boost::math::normal(means[it_pairs->second],stddevs[it_pairs->second]), it_pairs_xcs->second) >= 1-p_value and
+          it_pairs_xcs->first/total_intensity[it_pairs->first] >= min_intensity_coverage_ratio and
+          it_pairs_xcs->second/total_intensity[it_pairs->second] >= min_intensity_coverage_ratio)
+			{
+        ++it_pairs;
+        ++it_pairs_xcs;
+      }
+			else
+      {
+        it_pairs = pot_pairs.erase(it_pairs);
+        it_pairs_xcs = pot_pairs_xcs.erase(it_pairs_xcs);
+      }
+		}
 
-
-
+    std::cout << pot_pairs.size() << std::endl;
 
 
   return EXIT_SUCCESS;

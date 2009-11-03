@@ -31,11 +31,15 @@
 #include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
+#include <OpenMS/FORMAT/CsvFile.h>
 #include <OpenMS/FILTERING/NOISEESTIMATION/SignalToNoiseEstimatorMedian.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
+#include <OpenMS/CONCEPT/Exception.h>
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
+
+#include <list>
 
 using namespace OpenMS;
 using namespace std;
@@ -89,23 +93,25 @@ class TOPPFileFilter
 
 		void registerOptionsAndFlags_()
 		{
-      registerInputFile_("in","<file>","","input file ");
-   		setValidFormats_("in",StringList::create("mzML,featureXML,consensusXML"));
+			registerInputFile_("in","<file>","","input file ");
+			setValidFormats_("in",StringList::create("mzML,featureXML,consensusXML"));
 
-      registerOutputFile_("out","<file>","","output file");
-	  	setValidFormats_("out",StringList::create("mzML,featureXML,consensusXML"));
+			registerOutputFile_("out","<file>","","output file");
+			setValidFormats_("out",StringList::create("mzML,featureXML,consensusXML"));
+
+			registerInputFile_("exclusion","<file>","","input indices list",false);
 
 			registerStringOption_("mz","[min]:[max]",":","m/z range to extract", false);
 			registerStringOption_("rt","[min]:[max]",":","retention time range to extract", false);
 			registerStringOption_("int","[min]:[max]",":","intensity range to extract", false);
 
       registerFlag_("sort","sorts the output according to RT and m/z.");
-      
+
 			addText_("peak data options:");
       registerDoubleOption_("sn", "<s/n ratio>", 0, "write peaks with S/N > 'sn' values only", false);
 			registerIntList_("level","i j...",IntList::create("1,2,3"),"MS levels to extract", false);
       registerFlag_("sort_peaks","sorts the peaks according to m/z.");
-			
+
 			addEmptyLine_();
 			addText_("Remove spectra: ");
 			registerFlag_("remove_zoom","Remove zoom (enhanced resolution) scans");
@@ -151,7 +157,7 @@ class TOPPFileFilter
 			registerSubsection_("algorithm","S/N algorithm section");
 
 		}
-
+		///
 		Param getSubsectionDefaults_(const String& /*section*/) const
 		{
 			SignalToNoiseEstimatorMedian<  MapType::SpectrumType > sn;
@@ -159,7 +165,36 @@ class TOPPFileFilter
 			tmp.insert("SignalToNoise:",sn.getParameters());
 			return tmp;
 		}
+		///
+		void loadCSVList_(const String& filename, std::list<Size>& indices_list, Size max_index)
+		{
+			//~ start
+			writeLog_(String("Loading indices data from ") + filename +  String(" .. ") );
 
+			indices_list.clear();
+			CsvFile csv(filename);
+			StringList index_strings;
+			csv.getRow(0, index_strings);
+			StringList::ConstIterator it_index_strings = index_strings.begin();
+			while(it_index_strings != index_strings.end())
+			{
+				Size i = (Size)(it_index_strings->toInt());
+				if(max_index>i)
+				{
+					indices_list.push_back(i);
+				}
+				else
+				{
+					throw Exception::IndexOverflow(__FILE__, __LINE__, __PRETTY_FUNCTION__,i,max_index);
+				}
+				++it_index_strings;
+			}
+			indices_list.sort();
+
+			//~ done
+			writeLog_(String("done."));
+		}
+		///
 		ExitCodes main_(int , const char**)
 		{
 
@@ -169,6 +204,7 @@ class TOPPFileFilter
 
 			String in = getStringOption_("in");
 			String out = getStringOption_("out");
+			String exclusion = getStringOption_("exclusion");
 
       //input file type
       FileTypes::Type in_type = FileHandler::getType(in);
@@ -246,10 +282,40 @@ class TOPPFileFilter
   			f.getOptions().setIntensityRange(DRange<1>(it_l,it_u));
   			f.load(in,exp);
 
+				inputFileReadable_(exclusion);
+				std::list<Size> exclusion_list;
+				try
+				{
+					loadCSVList_(exclusion, exclusion_list, exp.size()-1);
+				}
+				catch(...)
+				{
+					writeLog_("Aborting ... incorrect exclusion indices list");
+					return INTERNAL_ERROR;
+				}
+
+				//-------------------------------------------------------------
+				// prune
+				//-------------------------------------------------------------
+				writeLog_("pruning .. ");
+
+				//~ StopWatch w;
+				//~ w.start();
+
+				while(exclusion_list.size()>0)
+				{
+					exp.erase(exp.begin()+exclusion_list.back());
+					exclusion_list.pop_back();
+				}
+
+				//~ w.stop();
+				//~ writeLog_(String("done. Pruning took ") + String(w.getClockTime()) + String(" seconds"));
+
+				writeLog_("done.");
   			//-------------------------------------------------------------
   			// calculations
   			//-------------------------------------------------------------
-				
+
   			//remove ms level first (might be a lot of spectra)
   			exp.erase(remove_if(exp.begin(), exp.end(), InMSLevelRange<MapType::SpectrumType>(levels, true)), exp.end());
 
@@ -284,7 +350,7 @@ class TOPPFileFilter
             }
           }
         }
-	
+
 
 
   			//remove by activation mode (might be a lot of spectra)
@@ -318,7 +384,7 @@ class TOPPFileFilter
 						}
 					}
 				}
-				
+
 
 				//remove zoom scans (might be a lot of spectra)
   			if (getFlag_("remove_zoom"))
@@ -335,7 +401,7 @@ class TOPPFileFilter
 
   			//remove empty scans
   			exp.erase(remove_if(exp.begin(), exp.end(), IsEmptySpectrum<MapType::SpectrumType>()), exp.end());
-				
+
 				//sort
   			if (sort) exp.sortSpectra(true);
 				if (getFlag_("sort_peaks"))
@@ -422,7 +488,7 @@ class TOPPFileFilter
 
 				// sort if desired
 				if (sort) map_sm.sortByPosition();
-        
+
 				//-------------------------------------------------------------
         // writing output
         //-------------------------------------------------------------

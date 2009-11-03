@@ -31,6 +31,7 @@
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/KERNEL/MSSpectrum.h>
 #include <OpenMS/KERNEL/ComparatorUtils.h>
+#include <OpenMS/CONCEPT/Constants.h>
 
 #include <vector>
 #include <list>
@@ -171,22 +172,21 @@ namespace OpenMS
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal parentmass_tolerance = (double)param_.getValue("parentmass_tolerance");
-			DoubleReal max_shift = (double)param_.getValue("max_shift");
+			DoubleReal max_shift = (Real)param_.getValue("max_shift");
 			DoubleReal shift_step = 2 * peak_tolerance;
-
-			// reset the correlation values
-			best_score1 = 0;
-			best_score2 = 0;
-			best_shift = std::numeric_limits<double>::min();
-			best_matches.clear();
-			s1.sortByPosition();
-			s2.sortByPosition();
 
 			if(s2.getPrecursors().front().getMZ() < s1.getPrecursors().front().getMZ())
 			{
+				//~ s1 precursor mass is expected to be <= s2 precursor mass
 				/// @improvement throw error
 			}
-			DoubleReal pm_diff(s2.getPrecursors().front().getMZ() - s1.getPrecursors().front().getMZ());
+
+			DoubleReal pm_s1 = s1.getPrecursors().front().getMZ();
+			int c_s1 = s1.getPrecursors().front().getCharge();
+			DoubleReal pm_s2 = s2.getPrecursors().front().getMZ();
+			int c_s2 = s2.getPrecursors().front().getCharge();
+			/// @important singly charged mass difference!
+			Real pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
 			if(!pm_diff_shift)
 			{
 				pm_diff = 0.0;
@@ -196,8 +196,15 @@ namespace OpenMS
 			{
 				//~ the above criteria disqualify s1 and s2 as (useful) spectral pairs from the start
 				/// @improvement throw error?
-				return;
 			}
+
+			// reset the correlation values
+			best_score1 = 0;
+			best_score2 = 0;
+			best_shift = std::numeric_limits<double>::min();
+			best_matches.clear();
+			s1.sortByPosition();
+			s2.sortByPosition();
 
 			if((String)param_.getValue("correlation_scoring")=="intensity")
 			{
@@ -258,7 +265,7 @@ namespace OpenMS
 						//~ max sparses matches with DP
 						std::list<std::pair<Size, Size> > matches_shift;
 						maxSparseMatches(s1,s2,matches_shift_all,matches_shift);
-						/*debug*/ std::cout << "matches_shift.size(): " << matches_shift.size() << " shift: " << shift << std::endl;
+						/*debug std::cout << "matches_shift.size(): " << matches_shift.size() << " shift: " << shift << std::endl;*/
 
 						DoubleReal score1 = std::numeric_limits<double>::min();
 						DoubleReal score2 = std::numeric_limits<double>::min();

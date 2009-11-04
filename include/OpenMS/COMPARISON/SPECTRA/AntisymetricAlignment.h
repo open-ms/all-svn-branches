@@ -34,6 +34,7 @@
 #include <OpenMS/KERNEL/ComparatorUtils.h>
 #include <OpenMS/CHEMISTRY/EmpiricalFormula.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
+#include <OpenMS/CHEMISTRY/ResidueDB.h>
 
 #include <vector>
 #include <map>

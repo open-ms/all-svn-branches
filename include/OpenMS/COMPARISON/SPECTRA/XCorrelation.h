@@ -214,7 +214,7 @@ namespace OpenMS
 				{
 					DoubleReal mz = s1[i].getMZ() + pm_diff;
 					ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
-					ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance+0.00001));
+					ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance/* +0.00001 */));
 					for(ConstSpectrumIterator it = start; it != end; ++it)
 					{
 						Size j = it - s2.begin();
@@ -255,7 +255,7 @@ namespace OpenMS
 						{
 							DoubleReal mz = s1[i].getMZ() + shift;
 							ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
-							ConstSpectrumIterator end(s2.MZEnd(mz+peak_tolerance+0.00001));
+							ConstSpectrumIterator end(s2.MZEnd(mz+peak_tolerance/* +0.00001 */));
 							for(ConstSpectrumIterator it = start; it != end; ++it)
 							{
 								Size j = it - s2.begin();

@@ -187,6 +187,7 @@ namespace OpenMS
 			int c_s2 = s2.getPrecursors().front().getCharge();
 			/// @important singly charged mass difference!
 			Real pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
+			/* debug std::cout << pm_diff << std::endl; */
 			if(!pm_diff_shift)
 			{
 				pm_diff = 0.0;

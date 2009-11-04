@@ -79,6 +79,7 @@ START_SECTION((void getXCorrelation(const SpectrumType &s1, const SpectrumType &
   Precursor p;
   p.setMZ(252.2);
   p.setIntensity(1);
+  p.setCharge(1);
   s1.getPrecursors().push_back(p);
 
   DoubleReal mzs_oripeaks[6] = {1.5, 59.5, 70, 119, 130, 178.5};
@@ -93,9 +94,9 @@ START_SECTION((void getXCorrelation(const SpectrumType &s1, const SpectrumType &
 		s1.push_back(t);
 	}
 
-  std::vector< MSSpectrum<Peak1D> > test_specs(7,s1);
+  std::vector< MSSpectrum<Peak1D> > test_specs(8,s1);
 
-  for(Size i = 1; i < test_specs.size(); ++i)
+  for(Size i = 1; i < test_specs.size()-1; ++i)
 	{
     test_specs[i].getPrecursors().front().setMZ(test_specs[i].getPrecursors().front().getMZ() + mzs_shifts[i-1]);
     for(Size j = 1; j < test_specs[i].size(); ++j)
@@ -104,91 +105,92 @@ START_SECTION((void getXCorrelation(const SpectrumType &s1, const SpectrumType &
     }
     test_specs[i].sortByPosition();
   }
+  test_specs[7].getPrecursors().front().setMZ(test_specs[7].getPrecursors().front().getMZ() + 66.6);
+  for(Size j = 1; j < test_specs[7].size(); ++j)
+  {
+    test_specs[7][j].setMZ(test_specs[7][j].getMZ() + 66.6);
+  }
+  test_specs[7].sortByPosition();
 
-  //~ std::cout << "s1: " << std::endl;
-  //~ for(Size i = 0; i < s1.size(); ++i)
-  //~ {
-    //~ std::cout << i <<") " << s1[i].getMZ() << " , " << s1[i].getIntensity() << std::endl;
-  //~ }
-  //~ std::cout << "test_specs[3]: " << std::endl;
-  //~ for(Size i = 0; i < test_specs[3].size(); ++i)
-  //~ {
-    //~ std::cout << i <<") " << test_specs[3][i].getMZ() << " , " << test_specs[3][i].getIntensity() << std::endl;
-  //~ }
+  std::cout << "s1: " << std::endl;
+  for(Size i = 0; i < s1.size(); ++i)
+  {
+    std::cout << i <<") " << s1[i].getMZ() << " , " << s1[i].getIntensity() << std::endl;
+  }
+  std::cout << "test_specs[7]: " << std::endl;
+  for(Size i = 0; i < test_specs[7].size(); ++i)
+  {
+    std::cout << i <<") " << test_specs[7][i].getMZ() << " , " << test_specs[7][i].getIntensity() << std::endl;
+  }
 
   //parameter setting see above!
 
   DoubleReal best_score1, best_score2, best_shift;
   std::list<std::pair<Size,Size> > best_matches;
   ptr->getXCorrelation(test_specs[0], test_specs[0], best_score1 , best_score2, best_shift, best_matches, false);
-  //~ std::cout << "best shift: " << best_shift << std::endl;
   for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)
 	{
-    //~ std::cout << "-> " << it->first << ", " << it->second << std::endl;
     TEST_EQUAL(it->first, it->second)
   }
   TEST_EQUAL(best_matches.size(), 4)
   TEST_EQUAL(best_shift, 0)
 
   ptr->getXCorrelation(test_specs[0], test_specs[1], best_score1 , best_score2, best_shift, best_matches, false);
-  //~ std::cout << "best shift: " << best_shift << std::endl;
   for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)
 	{
-    //~ std::cout << "-> " << it->first << ", " << it->second << std::endl;
     TEST_EQUAL(it->first, it->second)
   }
   TEST_EQUAL(best_matches.size(), 4)
   TEST_EQUAL(best_shift, 0)
 
   ptr->getXCorrelation(test_specs[0], test_specs[2], best_score1 , best_score2, best_shift, best_matches, false);
-  //~ std::cout << "best shift: " << best_shift << std::endl;
   for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)
 	{
-    //~ std::cout << "-> " << it->first << ", " << it->second << std::endl;
     TEST_EQUAL(it->first, it->second)
   }
   TEST_EQUAL(best_matches.size(), 4)
   TEST_EQUAL(best_shift, 0)
 
   ptr->getXCorrelation(test_specs[0], test_specs[3], best_score1 , best_score2, best_shift, best_matches, false);
-  //~ std::cout << "best shift: " << best_shift << std::endl;
   for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)
 	{
-    //~ std::cout << "-> " << it->first << ", " << it->second << std::endl;
     TEST_EQUAL(it->first, it->second)
   }
   TEST_EQUAL(best_matches.size(), 4)
-  TEST_EQUAL(best_shift, 0.3)
+  TEST_EQUAL(best_shift, 0.3f)
 
   ptr->getXCorrelation(test_specs[0], test_specs[4], best_score1 , best_score2, best_shift, best_matches, false);
-  //~ std::cout << "best shift: " << best_shift << std::endl;
   for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)
 	{
-    //~ std::cout << "-> " << it->first << ", " << it->second << std::endl;
     TEST_EQUAL(it->first, it->second)
   }
   TEST_EQUAL(best_matches.size(), 4)
-  TEST_EQUAL(best_shift, -0.3)
+  TEST_EQUAL(best_shift, -0.3f)
 
   ptr->getXCorrelation(test_specs[0], test_specs[5], best_score1 , best_score2, best_shift, best_matches, false);
-  //~ std::cout << "best shift: " << best_shift << std::endl;
   for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)
 	{
-    //~ std::cout << "-> " << it->first << ", " << it->second << std::endl;
     TEST_EQUAL(it->first, it->second)
   }
   TEST_EQUAL(best_matches.size(), 1)
   TEST_EQUAL(best_shift, 0)
 
   ptr->getXCorrelation(test_specs[0], test_specs[6], best_score1 , best_score2, best_shift, best_matches, false);
-  //~ std::cout << "best shift: " << best_shift << std::endl;
   for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)
 	{
-    //~ std::cout << "-> " << it->first << ", " << it->second << std::endl;
     TEST_EQUAL(it->first, it->second)
   }
   TEST_EQUAL(best_matches.size(), 1)
   TEST_EQUAL(best_shift, 0)
+
+  ptr->getXCorrelation(test_specs[0], test_specs[7], best_score1 , best_score2, best_shift, best_matches, true);
+  for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)
+	{
+    TEST_EQUAL(it->first, it->second)
+  }
+  TEST_EQUAL(best_matches.size(), 3)
+  //only 3 because first peak in test_specs[7] wasn't shifted at all!
+  TEST_EQUAL(best_shift, 66.6f)
 
 }
 END_SECTION

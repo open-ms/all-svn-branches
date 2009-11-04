@@ -250,6 +250,7 @@ set(comparison_executables_list
   ClusterAnalyzer_test
   EuclideanSimilarity_test
   XCorrelation_test
+  AntisymetricAlignment_test
 )
 
 set(chemistry_executables_list

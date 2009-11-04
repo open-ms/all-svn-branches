@@ -1448,6 +1448,8 @@ namespace OpenMS
 		@htmlinclude OpenMS_AntisymetricAlignment.parameters
 
 		@ingroup SpectraComparison
+
+	/// @todo debug output in macro
 	*/
 	template <typename PeakT = Peak1D>
 	class AntisymetricAlignment

@@ -30,6 +30,7 @@
 #define OPENMS_KERNEL_COMPARATORUTILS_H
 
 #include <functional>
+#include <cmath>
 
 /**
 	@defgroup ComparatorUtils ComparatorUtils
@@ -366,7 +367,6 @@ namespace OpenMS
 	};
 
 	//======================================================================
-
 	/**
 		@brief Struct for binary predicate to consider equality with a certain tolerance
 
@@ -382,7 +382,7 @@ namespace OpenMS
 		EqualInTolerance( CompareType& c ) : tolerance(c) {}
 		bool operator()(CompareType i, CompareType j)
 		{
-			CompareType diff = std::fabs(i-j);
+			CompareType diff = fabs(i-j);
 			return (diff <= tolerance);
 		}
 	};

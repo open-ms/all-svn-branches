@@ -291,7 +291,8 @@ class TOPPFileFilter
 				catch(...)
 				{
 					writeLog_("Aborting ... incorrect exclusion indices list");
-					return INTERNAL_ERROR;
+					//~ return INTERNAL_ERROR;
+					return PARSE_ERROR;
 				}
 
 				//-------------------------------------------------------------

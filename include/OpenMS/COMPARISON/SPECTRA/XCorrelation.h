@@ -46,12 +46,6 @@ namespace OpenMS
 {
 	class Peak1D;
 
-		//~ struct compareByFirst
-  //~ : std::binary_function<const std::pair<Size,Size>,const std::pair<Size,Size>,bool>
-//~ {
-  //~ bool operator() (IntRealString left, IntRealString right ) const { return left.i_ < right.i_; }
-//~ };
-
 	/**
 		@brief compares the correlation of two spectra
 
@@ -64,9 +58,7 @@ namespace OpenMS
 		: public DefaultParamHandler
 	{
 
-
-
-	public:
+		public:
 
 		typedef PeakT PeakType;
 		typedef MSSpectrum<PeakType> SpectrumType;
@@ -82,8 +74,9 @@ namespace OpenMS
 			defaults_.setValue("peak_tolerance", 0.3, "Defines the absolut (in Da) peak tolerance");
 			defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
 			defaults_.setValue("min_shift", 0.0, "Defines the minimal absolut (in Da) shift between the two spectra");
-			defaults_.setValue("max_shift", 150.0, "Defines the maximal absolut (in Da) shift between the two spectra");
+			defaults_.setValue("max_pm_diff", 150.0, "Defines the maximal absolut (in Da) shift between the two spectra");
 			defaults_.setValue("min_dist", 57.0214637230, "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
+			defaults_.setValue("scan_resolution", 0.1 , "Defines the resolution of the instrument used to create the spectra");
 			defaults_.setValue("correlation_scoring", "intensity", "If intensity, correlation scores on basis of matched intensity values, if matchnumber correlation scores solely on basis of the number of matches");
 			defaults_.setValidStrings("correlation_scoring", StringList::create("intensity,matchnumber"));
 			defaultsToParam_();
@@ -112,6 +105,108 @@ namespace OpenMS
 
 		// @}
 
+
+		/**
+			@brief Method to calculate best sum of intensities from matching by mapping s1 onto s2
+
+			@param ...
+			@param ...
+			@return ...
+
+			...
+			@see ...
+		*/
+		DoubleReal bestMatchIntensity(MSSpectrum<PeakType>& s1, MSSpectrum<PeakType>& s2) const
+		{
+			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
+			DoubleReal shiftwindow = (double)param_.getValue("parentmass_tolerance");
+			DoubleReal stepsize = (double)param_.getValue("scan_resolution");
+			/// @improvement for prms score initialization with 0 is no good use numeric_limits<int>::min() o.s.
+			/// @improvement depend stepsize from resolution( stepsize = resolution??)
+
+
+			DoubleReal best_score(0);
+			for(DoubleReal shift = -shiftwindow; shift <= shiftwindow; shift+=stepsize)
+			{
+				DoubleReal cur_score(0);
+
+				std::vector<std::pair<Size, Size> > matches_unshift_all;
+				for(Size i = 0; i < s1.size(); ++i) /// @improvement not that i and i+1 matches still overlap ...
+				{
+					DoubleReal mz = s1[i].getMZ() + shift;
+					ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
+					ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance));
+					DoubleReal best_pair_score(0);
+					for(ConstSpectrumIterator it = start; it != end; ++it)
+					{
+						Size j = it - s2.begin();
+						DoubleReal cur_pair_score(s1[i].getIntensity()+s2[j].getIntensity());
+						if(cur_pair_score>best_pair_score)
+						{
+							best_pair_score = cur_pair_score;
+						}
+					}
+					cur_score += best_pair_score;
+				}
+
+				if(cur_score>best_score)
+				{
+					best_score = cur_score;
+				}
+			}
+			return best_score;
+		}
+		///
+
+		/**
+			@brief Method to calculate best sum of distances from matching by mapping s1 onto s2
+
+			@param ...
+			@param ...
+			@return ...
+
+			...
+			@see ...
+		*/
+		DoubleReal bestMatchDistance(MSSpectrum<PeakType>& s1, MSSpectrum<PeakType>& s2) const
+		{
+			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
+			DoubleReal shiftwindow = (double)param_.getValue("parentmass_tolerance");
+			DoubleReal stepsize = (double)param_.getValue("scan_resolution");
+
+			DoubleReal best_score(0);
+			for(DoubleReal shift = -shiftwindow; shift <= shiftwindow; shift+=stepsize)
+			{
+				DoubleReal cur_score(0);
+
+				std::vector<std::pair<Size, Size> > matches_unshift_all;
+				for(Size i = 0; i < s1.size(); ++i) /// @improvement not that i and i+1 matches still overlap ...
+				{
+					DoubleReal mz = s1[i].getMZ() + shift;
+					ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
+					ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance));
+					DoubleReal best_pair_score(0);
+					for(ConstSpectrumIterator it = start; it != end; ++it)
+					{
+						Size j = it - s2.begin();
+						DoubleReal cur_pair_score(fabs(s1[i].getMZ()-s2[j].getMZ()));
+						if(cur_pair_score<best_pair_score)
+						{
+							best_pair_score = cur_pair_score;
+						}
+					}
+					cur_score += best_pair_score;
+				}
+
+				if(cur_score<best_score)
+				{
+					best_score = cur_score;
+				}
+			}
+			return best_score;
+		}
+		///
+
 		void maxSparseMatches(const SpectrumType& s1, const SpectrumType& s2, std::vector<std::pair<Size,Size> >& all_matches, std::list<std::pair<Size,Size> >& best_matches) const
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
@@ -125,7 +220,7 @@ namespace OpenMS
 			Size max_index = 0;					// Index for best match BEHIND next_too_close with the highest score (already cumulated) in the dp_table
 
 			//~ "recursion":
-			for (Size i=1; i< dp_table.size(); ++i)
+			for(Size i=1; i< dp_table.size(); ++i)
 			{
 				while(next_too_close < i and
 							s1[all_matches[next_too_close-1].first].getMZ() <= (s1[all_matches[i-1].first].getMZ()-min_dist+2*peak_tolerance) and
@@ -172,7 +267,7 @@ namespace OpenMS
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal parentmass_tolerance = (double)param_.getValue("parentmass_tolerance");
-			DoubleReal max_shift = (Real)param_.getValue("max_shift");
+			DoubleReal max_pm_diff = (Real)param_.getValue("max_pm_diff");
 			DoubleReal shift_step = 2 * peak_tolerance;
 
 			if(s2.getPrecursors().front().getMZ() < s1.getPrecursors().front().getMZ())
@@ -193,7 +288,7 @@ namespace OpenMS
 				pm_diff = 0.0;
 			}
 
-			if(pm_diff>max_shift or s1.getPrecursors().front().getCharge()>2 or s2.getPrecursors().front().getCharge()>2)
+			if(pm_diff>max_pm_diff or s1.getPrecursors().front().getCharge()>2 or s2.getPrecursors().front().getCharge()>2)
 			{
 				//~ the above criteria disqualify s1 and s2 as (useful) spectral pairs from the start
 				/// @improvement throw error?
@@ -235,7 +330,7 @@ namespace OpenMS
 					best_score2 += s2[it->second].getIntensity();
 				}
 
-				//~ XCorr shifts:
+				//~ shifts only neccessary if spectra reasonable apart or explicitly called:
 				if(pm_diff>parentmass_tolerance or !pm_diff_shift)
 				{
 					DoubleReal shift(pm_diff-parentmass_tolerance);

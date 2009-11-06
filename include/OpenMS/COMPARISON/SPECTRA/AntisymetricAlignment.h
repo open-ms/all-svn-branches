@@ -1466,12 +1466,8 @@ namespace OpenMS
 		: DefaultParamHandler("AntisymetricAlignment")
 		{
 				defaults_.setValue("peak_tolerance", 0.3, "Defines the absolut (in Da) peak tolerance");
-				defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
-				defaults_.setValue("min_shift", 0.0, "Defines the minimal absolut (in Da) shift between the two spectra");
-				defaults_.setValue("max_shift", 150.0, "Defines the maximal absolut (in Da) shift between the two spectra");
 				defaults_.setValue("min_dist", 57.0214637230 , "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
-				defaults_.setValue("correlation_scoring", "intensity", "If intensity, correlation scores on basis of matched intensity values, if matchnumber correlation scores solely on basis of the number of matches");
-				defaults_.setValidStrings("correlation_scoring", StringList::create("intensity,matchnumber"));
+				/// @improvement DP penalty scores here
 				defaultsToParam_();
 		}
 
@@ -1538,17 +1534,17 @@ namespace OpenMS
 				for(;it_lo1 != it_lo2; ++it_lo1)
 				{
 					current_diff = s1sym[index].getMZ()-it_lo1->getMZ();
-					/*debug*/ std::cout << " current diff: " << current_diff;
+					/*debug  std::cout << " current diff: " << current_diff; */
 					//~ difference will only grow so we can advance the pivot
 					jm_left_pivot = std::lower_bound(jm_left_pivot, jump_masses.end(), (Real)current_diff-pt_plus);
 
 					if(jm_left_pivot!=jump_masses.end() and EqualInTolerance<Real>(pt_plus)((Real)current_diff,*jm_left_pivot))
 					{
 						leftMatches[match_counter++]=(s1sym.size()-1)-(it_lo1-s1sym.rbegin());
-						/*debug*/ std::cout << " -left jo " ;
+						/*debug  std::cout << " -left jo " ;*/
 					}
 				}
-				/*debug */ std::cout << '\n';
+				/*debug  std::cout << '\n';*/
 				leftMatches.resize(match_counter);
 			}
 
@@ -1568,17 +1564,17 @@ namespace OpenMS
 				for(;it_hi1 != it_hi2; ++it_hi1)
 				{
 					current_diff = it_hi1->getMZ()-s1sym[index].getMZ();
-					/*debug*/ std::cout << " current diff: " << current_diff;
+					/*debug  std::cout << " current diff: " << current_diff;*/
 					//~ difference will only grow so we can advance the pivot
 					jm_right_pivot = std::lower_bound(jm_right_pivot, jump_masses.end(), (Real)current_diff-pt_plus);
 
 					if(jm_right_pivot!=jump_masses.end() and EqualInTolerance<Real>(pt_plus)((Real)current_diff,*jm_right_pivot))
 					{
 						rightMatches[match_counter++]=it_hi1-s1sym.begin();
-						/*debug*/ std::cout << " -right jo " ;
+						/*debug  std::cout << " -right jo " ;*/
 					}
 				}
-				/*debug */ std::cout << '\n';
+				/*debug  std::cout << '\n';*/
 				rightMatches.resize(match_counter);
 			}
 		}
@@ -1737,14 +1733,14 @@ namespace OpenMS
 			jumps_supremum = jump_masses.back()+2*peak_tolerance+0.00001;
 			for(Size w = 0; w < jump_masses.size(); ++w)
 			{
-				/* debug */ std::cout << jump_masses[w] << ", ";
+				/* debug  std::cout << jump_masses[w] << ", ";*/
 			}
-			/* debug */ std::cout << '\n';
+			/* debug  std::cout << '\n';*/
 
 			//~ change s1 to align antisymetrical into res_1
 			res_1 = getSymetricSpectrum(s1);
 			//~ indices in s2 for normal matches
-			/* debug */	std::cout << "symetric size is: " << res_1.size() << std::endl;
+			/* debug  std::cout << "symetric size is: " << res_1.size() << std::endl;*/
 
 			typename SpectrumType::IntegerDataArray ida_matches; ida_matches.resize(res_1.size(),-1);
 			res_1.getIntegerDataArrays().insert(res_1.getIntegerDataArrays().begin()+1, ida_matches);
@@ -1799,7 +1795,7 @@ namespace OpenMS
 				}
 			}
 
-			/* debug */
+			/* debug
 			std::cout << "§ " ;
 			for(Size i = 0; i < res_1.getIntegerDataArrays()[1].size(); ++i)
 			{
@@ -1811,6 +1807,7 @@ namespace OpenMS
 				std::cout << res_1.getIntegerDataArrays()[2][i];
 			}
 			std::cout << std::endl;
+			*/
 
 			//~ number of complementing peaks in res_1 that both do not match the right peaks in s2
 			Size removed_pairs = 0;
@@ -1863,16 +1860,16 @@ namespace OpenMS
 				if(res_1.getIntegerDataArrays()[1][i]>-1)
 				{
 					common[i] = res_1.getIntegerDataArrays()[1][i];
-					/* debug */ std::cout << "common "<< i << " = " << common[i] << std::endl;
+					/* debug  std::cout << "common "<< i << " = " << common[i] << std::endl;*/
 					common_scores[i] = res_1[i].getIntensity()+s2[common[i]].getIntensity();
-					/* debug */ std::cout << "common_scores "<< i << " = " << common_scores[i] << std::endl;
+					/* debug  std::cout << "common_scores "<< i << " = " << common_scores[i] << std::endl;*/
 				}
 				else if(res_1.getIntegerDataArrays()[2][i]>-1)
 				{
 					common2[i] = res_1.getIntegerDataArrays()[2][i];
-					/* debug */ std::cout << "common2 "<< i << " = " << common2[i] << std::endl;
+					/* debug  std::cout << "common2 "<< i << " = " << common2[i] << std::endl;*/
 					common2_scores[i] = res_1[i].getIntensity()+s2[common2[i]].getIntensity();
-					/* debug */ std::cout << "common2_scores "<< i << " = " << common2_scores[i] << std::endl;
+					/* debug  std::cout << "common2_scores "<< i << " = " << common2_scores[i] << std::endl;*/
 				}
 			}
 
@@ -1890,13 +1887,13 @@ namespace OpenMS
 			float delta = std::min(std::max(min_dist-peak_tolerance,pm_diff+peak_tolerance),min_dist-peak_tolerance*2.0f);
 			float delta2 = jumps_supremum-peak_tolerance;
 
-			/* debug */ std::cout << "delta "<< delta << " delta2 " << delta2 << std::endl;
+			/* debug  std::cout << "delta "<< delta << " delta2 " << delta2 << std::endl;*/
 
 			//~ fill the above from res_1/peaks
-			/* debug */ std::cout << " * "<< res_1.size() << std::endl;
+			/* debug  std::cout << " * "<< res_1.size() << std::endl;*/
 			for(Size i = 0; i < res_1.size(); ++i)
 			{
-				/* debug */ std::cout << " i: "<< i << std::endl;
+				/* debug  std::cout << " i: "<< i << std::endl;*/
 				DoubleReal lo1 = res_1[i].getMZ()-delta2;
 				if(lo1<=0)
 				{
@@ -1939,25 +1936,25 @@ namespace OpenMS
 					it_hi2!=res_1.end()?next2[i]=(it_hi2-res_1.begin()):next2[i]=-1;
 				}
 
-				/* debug */ std::cout << " prev: "<< prev[i] << " prev2: " << prev2[i] << std::endl;
-				/* debug */ std::cout << " next: "<< next[i] << " next2: " << next2[i] << std::endl;
+				/* debug  std::cout << " prev: "<< prev[i] << " prev2: " << prev2[i] << std::endl;*/
+				/* debug  std::cout << " next: "<< next[i] << " next2: " << next2[i] << std::endl;*/
 
 				findMatchingJumps(i, res_1, jump_masses, left_jumps[i], right_jumps[i]);
 				Size neighbor_count=0, jumps_count=0;
 				left_neighbors[i].resize(left_jumps[i].size());
 				left_jumps2[i].resize(left_jumps[i].size());
-				/* debug */ std::cout << "left jumps size "<< left_jumps[i].size() << " ";
+				/* debug  std::cout << "left jumps size "<< left_jumps[i].size() << " ";*/
 				for(Size j=0; j<left_jumps[i].size(); ++j)
 				{
 					if(peaks[i]-peaks[left_jumps[i][j]]<=delta)
 					{
 						left_neighbors[i][neighbor_count++]=left_jumps[i][j];
-						/* debug */ std::cout << " ln] "<< left_jumps[i][j] << " ";
+						/* debug  std::cout << " ln] "<< left_jumps[i][j] << " ";*/
 					}
 					if(peaks[i]-peaks[left_jumps[i][j]]>=delta)
 					{
 						left_jumps2[i][jumps_count++]=left_jumps[i][j];
-						/* debug */ std::cout << " lj] "<< left_jumps[i][j] << " ";
+						/* debug  std::cout << " lj] "<< left_jumps[i][j] << " ";*/
 					}
 				}
 				left_neighbors[i].resize(neighbor_count);
@@ -1967,23 +1964,23 @@ namespace OpenMS
 				neighbor_count=0, jumps_count=0;
 				right_neighbors[i].resize(right_jumps[i].size());
 				right_jumps2[i].resize(right_jumps[i].size());
-				/* debug */ std::cout << "right jumps size "<< right_jumps[i].size() << " ";
+				/* debug  std::cout << "right jumps size "<< right_jumps[i].size() << " ";*/
 				for(Size j=0; j<right_jumps[i].size(); ++j)
 				{
 					if(peaks[right_jumps[i][j]]-peaks[i]<=delta)
 					{
 						right_neighbors[i][neighbor_count++]=right_jumps[i][j];
-						/* debug */ std::cout << " rn] "<< right_jumps[i][j] << " ";
+						/* debug  std::cout << " rn] "<< right_jumps[i][j] << " ";*/
 					}
 					if(peaks[right_jumps[i][j]]-peaks[i]>=delta)
 					{
 						right_jumps2[i][jumps_count++]=right_jumps[i][j];
-						/* debug */ std::cout << " rj] "<< right_jumps[i][j] << " ";
+						/* debug  std::cout << " rj] "<< right_jumps[i][j] << " ";*/
 					}
 				}
 				right_neighbors[i].resize(neighbor_count);
 				right_jumps2[i].resize(jumps_count);
-				/* debug */ std::cout << std::endl;
+				/* debug  std::cout << std::endl;*/
 			}
 
 			res_1.clear();
@@ -1992,15 +1989,16 @@ namespace OpenMS
 			//~ implicitly copied (and not erased):
 			//~ Precursors,RT,MSLevel, MetaDataArrays
 
+			/* debug  std::cout << " aligning" << std::endl;*/
+
 			/// @improvement btw is this right with massMH = H2O + Constants::PROTON_MASS_U?!?!?!
 			//~ static const double massMH = EmpiricalFormula("H2O").getMonoWeight() + Constants::PROTON_MASS_U;
-
+			/// @improvement find a good penalty adjustment
 			DoubleReal sameVertexPenalty = -5, ptmPenalty = -5;
 			//~ DoubleReal sameVertexPenalty = -1000000, ptmPenalty = -200;
 			//~ DoubleReal sameVertexPenalty = 0, ptmPenalty = 0;
-			std::pair<double, std::pair< std::vector<int>,std::vector<int> > > asym_align;
 
-			/* debug */ std::cout << " aligning" << std::endl;
+			std::pair<double, std::pair< std::vector<int>,std::vector<int> > > asym_align;
 
 			AntisymetricDP dp;
 			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U), peaks, peaks2, common, common2, common_scores, common2_scores, prev, next, prev2, next2, left_jumps, right_jumps, left_jumps2, right_jumps2, left_neighbors, right_neighbors, peak_tolerance, sameVertexPenalty, ptmPenalty);
@@ -2009,7 +2007,7 @@ namespace OpenMS
 
 			Size num_aligned_peaks = asym_align.second.first.size()+asym_align.second.second.size();
 
-			/* debug */ std::cout << " aligned: "<< asym_align.second.first.size() << " + " << asym_align.second.second.size() << std::endl;
+			/* debug  std::cout << " aligned: "<< asym_align.second.first.size() << " + " << asym_align.second.second.size() << std::endl;*/
 
 			typename SpectrumType::IntegerDataArray ida_synthetic; ida_synthetic.resize(num_aligned_peaks,0);
 			res_1.getIntegerDataArrays().insert(res_1.getIntegerDataArrays().begin(),ida_synthetic);
@@ -2021,7 +2019,7 @@ namespace OpenMS
 			res_2.getIntegerDataArrays().insert(res_2.getIntegerDataArrays().begin()+1, ida_synthetic);
 			(res_2.getIntegerDataArrays().begin()+1)->setName("modification position");
 
-			/* debug */ std::cout << " determine mod_pos: ";
+			/* debug  std::cout << " determine mod_pos: ";*/
 			if(asym_align.second.first.size()==0)
 			{
 				mod_pos=0;  // No peaks in idx1 => mod at the start
@@ -2043,9 +2041,9 @@ namespace OpenMS
 					(res_2.getIntegerDataArrays().begin()+1)->at(asym_align.second.first.size())=1;
 				}
 			}
-			/* debug */ std::cout << mod_pos << std::endl;
+			/* debug  std::cout << mod_pos << std::endl;*/
 
-			/* debug */ std::cout << " creating spectra: ";
+			/* debug  std::cout << " creating spectra: ";*/
 			typename SpectrumType::IntegerDataArray& ida_ref = *(res_1.getIntegerDataArrays().begin()+2);
 			for(Size i=0; i<asym_align.second.first.size(); ++i)
 			{

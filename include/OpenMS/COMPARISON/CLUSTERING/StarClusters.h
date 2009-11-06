@@ -137,55 +137,6 @@ namespace OpenMS
 		///
 
 		/**
-			@brief Method to calculate ...
-
-			@param ...
-			@param ...
-			@return ...
-
-			...
-			@see ...
-		*/
-		DoubleReal matchFromAligns(MSSpectrum<PeakType>& s1, MSSpectrum<PeakType>& s2, DoubleReal shiftwindow, DoubleReal stepsize) const
-		{
-			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
-
-			/// @improvement for prms score initialization with 0 is no good use numeric_limits<int>::min() o.s.
-
-			DoubleReal best_score(0);
-			for(DoubleReal shift = -shiftwindow; shift <= shiftwindow; shift+=stepsize)
-			{
-				DoubleReal cur_score(0);
-
-				std::vector<std::pair<Size, Size> > matches_unshift_all;
-				for(Size i = 0; i < s1.size(); ++i) /// @improvement not that i and i+1 matches still overlap ...
-				{
-					DoubleReal mz = s1[i].getMZ() + shift;
-					ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
-					ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance));
-					DoubleReal best_pair_score(0);
-					for(ConstSpectrumIterator it = start; it != end; ++it)
-					{
-						Size j = it - s2.begin();
-						DoubleReal cur_pair_score(s1[i].getIntensity()+s2[j].getIntensity());
-						if(cur_pair_score>best_pair_score)
-						{
-							best_pair_score = cur_pair_score;
-						}
-					}
-					cur_score += best_pair_score;
-				}
-
-				if(cur_score>best_score)
-				{
-					best_score = cur_score;
-				}
-			}
-			return best_score;
-		}
-		///
-
-		/**
 			@brief will clamp the annotation of a pair partner onto the current spectrum (includes possible introduction of a modification)
 
 			@param ...

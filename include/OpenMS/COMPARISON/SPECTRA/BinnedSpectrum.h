@@ -111,14 +111,30 @@ namespace OpenMS
 	BinnedSpectrum(Real size, UInt spread, std::vector< MSSpectrum<PeakT> >& unmerged)
 	   : MSSpectrum<PeakT>(), /* DefaultParamHandler("BinnedSpectrum"), */ bin_spread_(spread), bin_size_(size), bins_()
 	{
-		// find largest mz in given spectra
+		//~  find largest mz in given spectra
 		DoubleReal max_size(max_element(unmerged.begin(),unmerged.end(),typename MSSpectrum<PeakT>::PMLess())->getPrecursors().front().getMZ());
-		// set sparsevector size accordingly
+		//~ set sparsevector size accordingly
 		bins_ = SparseVector<Real>((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // aka overall intensity of peaks in corresponding bins
 		std::vector< SparseVector<Real> > binned(unmerged.size(),bins_); // aka each spectrums binned version
 		SparseVector<int> synthetic_peaks((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // additional for number of sythetic peaks in each bin
 		SparseVector<int> overall_number((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // overall number of peaks in corresponding bins
 		SparseVector<Real> overall_center((UInt)ceil(max_size/bin_size_) + bin_spread_ ,0,0); // overall m/z center of peaks in corresponding bins
+
+		if(unmerged.empty())
+		{
+			throw Exception::IllegalArgument (__FILE__, __LINE__, __PRETTY_FUNCTION__, "no spectra to merge given");
+		}
+
+		//~ will point to the integerdataarray named "synthetic peaks"
+		Size ida_spa = 0;
+		for(; ida_spa < unmerged.front().getIntegerDataArrays().size(); ++ida_spa)
+		{
+			if(unmerged.front().getIntegerDataArrays()[ida_spa].getName()=="synthetic peaks")
+			{
+				break;
+			}
+		}
+
 		for(Size i = 0; i < unmerged.size(); ++i)
 		{
 			//put all peaks into bins
@@ -144,9 +160,10 @@ namespace OpenMS
 
 				overall_number[bin_number] = overall_number.at(bin_number) + 1;
 				overall_center[bin_number] = overall_center.at(bin_number) + unmerged[i][j].getMZ();
-				if(!unmerged[i].getIntegerDataArrays().empty() and unmerged[i].getIntegerDataArrays().front().getName()=="synthetic peaks")
+
+				if(unmerged[i].getIntegerDataArrays().size()>ida_spa and unmerged[i].getIntegerDataArrays()[ida_spa].getName()=="synthetic peaks")
 				{
-					synthetic_peaks[bin_number] = synthetic_peaks.at(bin_number) + unmerged[i].getIntegerDataArrays().front()[j];
+					synthetic_peaks[bin_number] = synthetic_peaks.at(bin_number) + unmerged[i].getIntegerDataArrays()[ida_spa][j];
 				}
 
 				// add peak to neighboring binspread many
@@ -155,9 +172,9 @@ namespace OpenMS
 					binned[i][bin_number+k+1] = binned[i].at(bin_number+k+1) + unmerged[i][j].getIntensity();
 					overall_number[bin_number] = overall_number.at(bin_number) + 1;
 					overall_center[bin_number] = overall_center.at(bin_number) + unmerged[i][j].getMZ();
-					if(!unmerged[i].getIntegerDataArrays().empty() and unmerged[i].getIntegerDataArrays().front().getName()=="synthetic peaks")
+					if(unmerged[i].getIntegerDataArrays().size()>ida_spa and unmerged[i].getIntegerDataArrays()[ida_spa].getName()=="synthetic peaks")
 					{
-						synthetic_peaks[bin_number] = synthetic_peaks.at(bin_number) + unmerged[i].getIntegerDataArrays().front()[j];
+						synthetic_peaks[bin_number] = synthetic_peaks.at(bin_number) + unmerged[i].getIntegerDataArrays()[ida_spa][j];
 					}
 					// we are not in one of the first bins (0 to bin_spread)
 					// not working:  if (bin_number-k-1 >= 0)
@@ -166,9 +183,9 @@ namespace OpenMS
 						binned[i][bin_number-k-1] = binned[i].at(bin_number-k-1) + unmerged[i][j].getIntensity();
 						overall_number[bin_number] = overall_number.at(bin_number) + 1;
 						overall_center[bin_number] = overall_center.at(bin_number) + unmerged[i][j].getMZ();
-						if(!unmerged[i].getIntegerDataArrays().empty() and unmerged[i].getIntegerDataArrays().front().getName()=="synthetic peaks")
+						if(unmerged[i].getIntegerDataArrays().size()>ida_spa and unmerged[i].getIntegerDataArrays()[ida_spa].getName()=="synthetic peaks")
 						{
-							synthetic_peaks[bin_number] = synthetic_peaks.at(bin_number) + unmerged[i].getIntegerDataArrays().front()[j];
+							synthetic_peaks[bin_number] = synthetic_peaks.at(bin_number) + unmerged[i].getIntegerDataArrays()[ida_spa][j];
 						}
 					}
 				}

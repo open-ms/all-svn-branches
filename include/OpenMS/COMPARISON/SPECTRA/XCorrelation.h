@@ -32,6 +32,7 @@
 #include <OpenMS/KERNEL/MSSpectrum.h>
 #include <OpenMS/KERNEL/ComparatorUtils.h>
 #include <OpenMS/CONCEPT/Constants.h>
+#include <OpenMS/CONCEPT/Exception.h>
 
 #include <vector>
 #include <list>
@@ -207,7 +208,7 @@ namespace OpenMS
 		}
 		///
 
-		void maxSparseMatches(const SpectrumType& s1, const SpectrumType& s2, std::vector<std::pair<Size,Size> >& all_matches, std::list<std::pair<Size,Size> >& best_matches) const
+		void maxSparseMatch(const SpectrumType& s1, const SpectrumType& s2, std::vector<std::pair<Size,Size> >& all_matches, std::list<std::pair<Size,Size> >& best_matches) const
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal min_dist = (double)param_.getValue("min_dist");
@@ -272,8 +273,7 @@ namespace OpenMS
 
 			if(s2.getPrecursors().front().getMZ() < s1.getPrecursors().front().getMZ())
 			{
-				//~ s1 precursor mass is expected to be <= s2 precursor mass
-				/// @improvement throw error
+				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite is the s1-precursor mz is not greater than s2-precursor mz");
 			}
 
 			DoubleReal pm_s1 = s1.getPrecursors().front().getMZ();
@@ -288,10 +288,13 @@ namespace OpenMS
 				pm_diff = 0.0;
 			}
 
-			if(pm_diff>max_pm_diff or s1.getPrecursors().front().getCharge()>2 or s2.getPrecursors().front().getCharge()>2)
+			if(s1.getPrecursors().front().getCharge()>2 or s2.getPrecursors().front().getCharge()>2)
 			{
-				//~ the above criteria disqualify s1 and s2 as (useful) spectral pairs from the start
-				/// @improvement throw error?
+				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite are spectra from chargestate 2 or lower");
+			}
+			if(pm_diff>max_pm_diff+peak_tolerance)
+			{
+				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "input does not agree given parameter max_pm_diff");
 			}
 
 			// reset the correlation values
@@ -319,7 +322,7 @@ namespace OpenMS
 				}
 				//~ max sparses matches with DP
 				std::list<std::pair<Size, Size> > matches_unshift;
-				maxSparseMatches(s1,s2,matches_unshift_all,matches_unshift);
+				maxSparseMatch(s1,s2,matches_unshift_all,matches_unshift);
 				/*debug std::cout << "matches_unshift.size(): " << matches_unshift.size() << std::endl;*/
 
 				best_matches = matches_unshift;
@@ -360,7 +363,7 @@ namespace OpenMS
 						}
 						//~ max sparses matches with DP
 						std::list<std::pair<Size, Size> > matches_shift;
-						maxSparseMatches(s1,s2,matches_shift_all,matches_shift);
+						maxSparseMatch(s1,s2,matches_shift_all,matches_shift);
 						/*debug std::cout << "matches_shift.size(): " << matches_shift.size() << " shift: " << shift << std::endl;*/
 
 						DoubleReal score1 = std::numeric_limits<double>::min();

@@ -13,6 +13,8 @@
 #include <OpenMS/ANALYSIS/ID/IDMapper.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
 #include <OpenMS/DATASTRUCTURES/Param.h>
+#include <OpenMS/DATASTRUCTURES/DataValue.h>
+#include <OpenMS/FORMAT/ConsensusXMLFile.h>
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
@@ -41,7 +43,7 @@ using namespace std;
 	{
 	 public:
 		SpectralNetworking()
-			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "0.2beta")
+			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "0.3beta")
 		{
 
 		}
@@ -68,6 +70,7 @@ using namespace std;
 		registerDoubleOption_("consensus_sz", "<limit>", 0.3, "Defines the bin size (in Da) while makeing a consensus from two or more spectra", false);
 		registerDoubleOption_("pair_filter_p_value", "<limit>", 0.05, "Defines the p_value while filtering optential spectral pairs", false);
 		registerDoubleOption_("pair_filter_min_ratio", "<limit>", 0.4, "Defines the minimal matchratio while filtering optential spectral pairs", false);
+		registerIntOption_("propagation_max_hops", "<limit>", 3, "Defines the maximal number of hops a identification may be propagated (saves time and space)", false);
 
 		//~ addEmptyLine_();
 		//~ addText_("Parameters for the filter can only be fiven in the INI file.");
@@ -103,7 +106,7 @@ using namespace std;
 			{
 				if(fabs(experiment[j].getPrecursors().front().getMZ()-experiment[i].getPrecursors().front().getMZ()) < max_pm_diff+pm_tol+0.00001 )
 				{
-					if(fabs(experiment[i].getPrecursors().front().getMZ()-experiment[j].getPrecursors().front().getMZ()) > 0)
+					if(fabs(experiment[i].getPrecursors().front().getMZ() > experiment[j].getPrecursors().front().getMZ()))
 					{
 						pot_pairs.push_back(std::pair<Size,Size>(j,i));
 					}
@@ -220,7 +223,6 @@ using namespace std;
 		StarClusters<Peak1D> stars;
 		stars.setParameters(param);
 
-		PeakMap consensuses; // the spectra that are taking part in the selected pairs
 		std::map< Size, std::set<Size> > indices_of_i_in_aligned_spectra; // map key is index i to spec s in original experiment, map value is all indices to s' in aligned_spectra (s' is a subset of peaks from s - the aligned ones )
 		for(Size i = 0; i < aligned_pairs.size(); ++i)
 		{
@@ -257,19 +259,19 @@ using namespace std;
 			}
 
 			//consensus building
-			consensuses.push_back(BinnedSpectrum<Peak1D>(consensus_sz, consensus_sp,unmerged));
-			consensuses.back().setNativeID(String(it->first));
+			experiment[it->first] = BinnedSpectrum<Peak1D>(consensus_sz, consensus_sp,unmerged);
+			experiment[it->first].setMetaValue("consensus", DataValue::EMPTY_VALUE);
 		}
 
 		w.stop();
-		writeLog_(String(" done .. took") + String(w.getClockTime()) + String(" seconds, made ") + String(consensuses.size()) + String(" consensuses"));
+		writeLog_(String(" done .. took") + String(w.getClockTime()) + String(" seconds, made ") + String(experiment.size()) + String(" consensuses"));
 		writeLog_(String("all done"));
 		w.reset();
 
 		//~ save consensuses
 		writeLog_(String("writing consensuses"));
 		MzMLFile mzml;
-		mzml.store(outputfile_name_consensus, consensuses);
+		mzml.store(outputfile_name_consensus, experiment);
 
 		/*-----------------------------/
 		// save star edges and modpos
@@ -285,25 +287,32 @@ using namespace std;
 
 		stars_txt.store(outputfile_name_edges);
 		//~ reading see TextFile_test
+		return;
 	}
 	///
 
-	void propagateNetwork_(MSExperiment<Peak1D>& experiment, Param& param, ConsensusMap& ids, std::vector< std::pair<Size,Size> >& aligned_pairs, std::vector< DoubleReal > mod_positions, String& outputfile_name_specnet)
+	void propagateNetwork_(MSExperiment<Peak1D>& experiment, Param& param, ConsensusMap& ids, std::vector< std::pair<Size,Size> >& aligned_pairs, std::vector< DoubleReal > mod_positions)
 	{
 
 		/*----------------------/
-		// adopt identification
+		// calc. max hop number
 		/----------------------*/
+		int max_hops = param.getValue("propagation_max_hops");
 
 		/*--------------------/
 		// build propagation
 		/--------------------*/
+		StarClusters<Peak1D> sc;
+		sc.setParameters(param);
+		sc.propagateNetwork(experiment, ids, aligned_pairs, mod_positions, max_hops);
 
 		/*---------------------------/
 		// score and export network
 		/---------------------------*/
 		/// @improvement dont punish to hard if spectrum does cover only a part of/or more than the sequence - e.g maybe mod that shortened the pep
 
+
+		return;
 	}
 	///
 
@@ -340,6 +349,7 @@ using namespace std;
 			MzMLFile mzml;
 			MSExperiment<Peak1D> experiment; //MSExperiment<Peak1D>= PeakMap see StandardTypes
 			mzml.load(inputfile_name,experiment);
+			experiment.sortSpectra();
 			w.stop();
 			writeLog_(String("done  .. took") + String(w.getClockTime()) + String(" seconds, loaded ") + String(experiment.size()) + String(" spectra"));
 			w.reset();
@@ -402,6 +412,7 @@ using namespace std;
 			w.start();
 			writeLog_(String("Loading identifications to nodes from ") + ids_file +  String(" ..") );
 
+			//~ adopt identification
 			ConsensusMap ids;
 			try
 			{
@@ -424,7 +435,9 @@ using namespace std;
 
 
 			//~ start propagation
-			propagateNetwork_(experiment, param, ids, aligned_pairs, mod_positions, outputfile_name_specnet);
+			propagateNetwork_(experiment, param, ids, aligned_pairs, mod_positions);
+			ConsensusXMLFile cxml;
+			cxml.store(outputfile_name_specnet, ids);
 		}
 		else
 		{

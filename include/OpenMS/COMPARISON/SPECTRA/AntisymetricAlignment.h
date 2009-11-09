@@ -35,6 +35,7 @@
 #include <OpenMS/CHEMISTRY/EmpiricalFormula.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
+#include <OpenMS/CONCEPT/Exception.h>
 
 #include <vector>
 #include <map>
@@ -1684,7 +1685,7 @@ namespace OpenMS
 
 			if (s1.getPrecursors().front().getMZ() > s2.getPrecursors().front().getMZ())
 			{
-				/// @todo throw error: prerequisite is the s1-precursor mz is not greater than s2-precursor mz!!
+				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite is the s1-precursor mz is not greater than s2-precursor mz");
 			}
 
 			//~ res_1.clear(true);

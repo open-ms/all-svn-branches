@@ -157,7 +157,7 @@ START_SECTION((void getXCorrelation(const SpectrumType &s1, const SpectrumType &
     TEST_EQUAL(it->first, it->second)
   }
   TEST_EQUAL(best_matches.size(), 4)
-  TEST_EQUAL(best_shift, 0.3f)
+  TEST_EQUAL(best_shift, 0.3)
 
   ptr->getXCorrelation(test_specs[0], test_specs[4], best_score1 , best_score2, best_shift, best_matches, false);
   for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)
@@ -165,7 +165,7 @@ START_SECTION((void getXCorrelation(const SpectrumType &s1, const SpectrumType &
     TEST_EQUAL(it->first, it->second)
   }
   TEST_EQUAL(best_matches.size(), 4)
-  TEST_EQUAL(best_shift, -0.3f)
+  TEST_EQUAL(best_shift, -0.3)
 
   ptr->getXCorrelation(test_specs[0], test_specs[5], best_score1 , best_score2, best_shift, best_matches, false);
   for(std::list<std::pair<Size,Size> >::const_iterator it = best_matches.begin(); it !=  best_matches.end(); ++it)

@@ -271,10 +271,11 @@ namespace OpenMS
 			DoubleReal max_pm_diff = (Real)param_.getValue("max_pm_diff");
 			DoubleReal shift_step = 2 * peak_tolerance;
 
-			if(s2.getPrecursors().front().getMZ() < s1.getPrecursors().front().getMZ())
-			{
-				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite is the s1-precursor mz is not greater than s2-precursor mz");
-			}
+			//~ can also deal with neg. shifts!
+			//~ if(s2.getPrecursors().front().getMZ() < s1.getPrecursors().front().getMZ())
+			//~ {
+				//~ throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite is the s1-precursor mz is not greater than s2-precursor mz");
+			//~ }
 
 			DoubleReal pm_s1 = s1.getPrecursors().front().getMZ();
 			int c_s1 = s1.getPrecursors().front().getCharge();
@@ -292,7 +293,7 @@ namespace OpenMS
 			{
 				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite are spectra from chargestate 2 or lower");
 			}
-			if(pm_diff>max_pm_diff+peak_tolerance)
+			if(fabs(pm_diff)>max_pm_diff+peak_tolerance)
 			{
 				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "input does not agree given parameter max_pm_diff");
 			}
@@ -334,13 +335,13 @@ namespace OpenMS
 				}
 
 				//~ shifts only neccessary if spectra reasonable apart or explicitly called:
-				if(pm_diff>parentmass_tolerance or !pm_diff_shift)
+				if(fabs(pm_diff)>parentmass_tolerance or !pm_diff_shift)
 				{
 					DoubleReal shift(pm_diff-parentmass_tolerance);
 					DoubleReal range(pm_diff+parentmass_tolerance);
 					for(; shift<=range; shift+=shift_step)
 					{
-						DoubleReal close_to_unshift(fabs(pm_diff - fabs(shift))+0.00001);
+						DoubleReal close_to_unshift(fabs(fabs(pm_diff) - fabs(shift))+0.00001);
 						/// @improvement some situation 0.3 < 0.3 = true pops up if not +0.00001 added
 						if(close_to_unshift<peak_tolerance)
 						{

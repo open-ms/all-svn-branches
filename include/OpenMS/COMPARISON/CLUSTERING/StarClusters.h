@@ -407,6 +407,12 @@ namespace OpenMS
 								hit.setMetaValue("annotator RT", experiment[*it_neighbors].getRT());
 								hit.setMetaValue("annotated in hop no.", i+1);
 								hit.setMetaValue("annotated with ionspecies", mod_found_with_ions);
+								DoubleReal pc(0),ic(0);
+								annotationCoverage(current_spectrum, modified_sequence, pc, ic);
+								hit.setMetaValue("annotated with peak coverage", pc);
+								hit.setMetaValue("annotated with intensity coverage", ic);
+								/// @improvement factorized linear combination of pc and ic
+								hit.setScore(((pc+ic)/2.0));
 								FeatureHandle annotator;
 								annotator.setElementIndex(*it_neighbors);
 								annotator.setMZ(experiment[*it_neighbors].getPrecursors().front().getMZ());
@@ -442,6 +448,8 @@ namespace OpenMS
 
 					if(!current_annotations.getPeptideIdentifications().front().getHits().empty())
 					{
+						current_annotations.getPeptideIdentifications().front().sort();
+
 						std::vector<Size>::iterator yet_annotated = std::find(all_annotations.begin(),all_annotations.end(),*it_potential);
 						if(yet_annotated!=all_annotations.end())
 						{
@@ -461,8 +469,6 @@ namespace OpenMS
 							all_annotations.push_back(*it_potential);
 						}
 
-						/// @improvement score the annotations online and sort because next only the top annotations is taken for propagation
-						current_annotations.getPeptideIdentifications().front().sort();
 					}
 				}
 
@@ -544,7 +550,7 @@ namespace OpenMS
 					ids_it->setMetaValue("color", colors[(Size)ids_it->getMetaValue("network id")%colors.size()]);
 				}
 			}
-			ids.sortByPosition(); //invalidates consensus indices but each feature has its spectrum in consensus covered
+			//~ ids.sortByPosition(); //invalidates consensus indices but each feature has its spectrum in consensus covered
 		}
 		///
 

@@ -158,6 +158,7 @@ class TOPPFileFilter
 
 		}
 		///
+
 		Param getSubsectionDefaults_(const String& /*section*/) const
 		{
 			SignalToNoiseEstimatorMedian<  MapType::SpectrumType > sn;
@@ -166,6 +167,7 @@ class TOPPFileFilter
 			return tmp;
 		}
 		///
+
 		void loadCSVList_(const String& filename, std::list<Size>& indices_list, Size max_index)
 		{
 			//~ start
@@ -195,6 +197,7 @@ class TOPPFileFilter
 			writeLog_(String("done."));
 		}
 		///
+
 		ExitCodes main_(int , const char**)
 		{
 
@@ -282,37 +285,40 @@ class TOPPFileFilter
   			f.getOptions().setIntensityRange(DRange<1>(it_l,it_u));
   			f.load(in,exp);
 
-				inputFileReadable_(exclusion);
-				std::list<Size> exclusion_list;
-				try
+				if(exclusion!="")
 				{
-					loadCSVList_(exclusion, exclusion_list, exp.size()-1);
+					inputFileReadable_(exclusion);
+					std::list<Size> exclusion_list;
+					try
+					{
+						loadCSVList_(exclusion, exclusion_list, exp.size()-1);
+					}
+					catch(...)
+					{
+						writeLog_("Aborting ... incorrect exclusion indices list");
+						//~ return INTERNAL_ERROR;
+						return PARSE_ERROR;
+					}
+
+					//-------------------------------------------------------------
+					// prune
+					//-------------------------------------------------------------
+					writeLog_("pruning .. ");
+
+					//~ StopWatch w;
+					//~ w.start();
+
+					while(exclusion_list.size()>0)
+					{
+						exp.erase(exp.begin()+exclusion_list.back());
+						exclusion_list.pop_back();
+					}
+
+					//~ w.stop();
+					//~ writeLog_(String("done. Pruning took ") + String(w.getClockTime()) + String(" seconds"));
+
+					writeLog_("done.");
 				}
-				catch(...)
-				{
-					writeLog_("Aborting ... incorrect exclusion indices list");
-					//~ return INTERNAL_ERROR;
-					return PARSE_ERROR;
-				}
-
-				//-------------------------------------------------------------
-				// prune
-				//-------------------------------------------------------------
-				writeLog_("pruning .. ");
-
-				//~ StopWatch w;
-				//~ w.start();
-
-				while(exclusion_list.size()>0)
-				{
-					exp.erase(exp.begin()+exclusion_list.back());
-					exclusion_list.pop_back();
-				}
-
-				//~ w.stop();
-				//~ writeLog_(String("done. Pruning took ") + String(w.getClockTime()) + String(" seconds"));
-
-				writeLog_("done.");
   			//-------------------------------------------------------------
   			// calculations
   			//-------------------------------------------------------------

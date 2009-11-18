@@ -444,6 +444,7 @@ namespace OpenMS
 	 	//make all necessary bins accessible
 		this->sortByPosition();
 	 	bins_ = SparseVector<Real>((UInt)ceil(this->back().getMZ()/bin_size_) + bin_spread_ ,0,0);
+	 	//~ bins_ = SparseVector<Real>((UInt)ceil(this->getPrecursors().front().getMZ()/bin_size_) + bin_spread_ ,0,0);
 
 		//put all peaks into bins
 		UInt bin_number;

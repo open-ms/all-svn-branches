@@ -73,7 +73,7 @@ START_SECTION((BinnedSharedPeakCount& operator=(const BinnedSharedPeakCount &sou
 }
 END_SECTION
 
-START_SECTION((double operator()(const BinnedSpectrum<> &spec1, const BinnedSpectrum<> &spec2) const))
+START_SECTION((double operator()(const BinnedSpectrum<> &spec1, const BinnedSpectrum<> &spec2, const bool lookahead) const))
 {
   PeakSpectrum s1, s2;
   DTAFile().load(OPENMS_GET_TEST_DATA_PATH("PILISSequenceDB_DFPIANGER_1.dta"), s1);
@@ -84,6 +84,20 @@ START_SECTION((double operator()(const BinnedSpectrum<> &spec1, const BinnedSpec
 
   double score = (*ptr)(bs1, bs2);
   TEST_REAL_SIMILAR(score,0.997118)
+
+	PeakSpectrum s3(s2);
+	//~ depending on the m/z offset some otherwise similar peaks will fall in different bins!!
+	s3.getPrecursors().front().setMZ(s3.getPrecursors().front().getMZ() + 66.2);
+  for(Size j = 0; j < s3.size(); ++j)
+  {
+    s3[j].setMZ(s3[j].getMZ() + 66.2);
+  }
+  s3.sortByPosition();
+  BinnedSpectrum<> bs3 (1.5,2,s3);
+
+  score = (*ptr)(bs1, bs3,true);
+  TEST_REAL_SIMILAR(score,0.985632)
+
 }
 END_SECTION
 

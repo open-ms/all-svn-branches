@@ -178,15 +178,18 @@ class TOPPFileFilter
 			StringList index_strings;
 			csv.getRow(0, index_strings);
 			StringList::ConstIterator it_index_strings = index_strings.begin();
+			/* debug */ std::cout << "csvfile with " <<  index_strings.size() << std::endl;
 			while(it_index_strings != index_strings.end())
 			{
-				Size i = (Size)(it_index_strings->toInt());
-				if(max_index>i)
+				//indices in csv start from 1!
+				Size i = (Size)(it_index_strings->toInt())-1;
+				if(max_index>=i)
 				{
 					indices_list.push_back(i);
 				}
 				else
 				{
+					/* debug */ std::cout << "illegal index " <<  i << std::endl;
 					throw Exception::IndexOverflow(__FILE__, __LINE__, __PRETTY_FUNCTION__,i,max_index);
 				}
 				++it_index_strings;
@@ -308,6 +311,7 @@ class TOPPFileFilter
 					//~ StopWatch w;
 					//~ w.start();
 
+					//~ c'n p w/o exclusion_list indices might be faster!!!!
 					while(exclusion_list.size()>0)
 					{
 						exp.erase(exp.begin()+exclusion_list.back());

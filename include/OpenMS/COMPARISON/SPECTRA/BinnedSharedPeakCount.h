@@ -29,6 +29,7 @@
 #define OPENMS_COMPARISON_SPECTRA_BINNEDSHAREDPEAKCOUNT_H
 
 #include <OpenMS/COMPARISON/SPECTRA/BinnedSpectrumCompareFunctor.h>
+#include <OpenMS/CONCEPT/Constants.h>
 
 #include <cfloat>
 #include <cmath>
@@ -36,8 +37,8 @@
 namespace OpenMS
 {
 
-  /**
-	  @brief Compare functor scoring the shared peaks for similarity measurement
+	/**
+		@brief Compare functor scoring the shared peaks for similarity measurement
 
 		The details of the score can be found in:
 		K. Wan, I. Vidavsky, and M. Gross. Comparing similar spectra: from
@@ -49,45 +50,45 @@ namespace OpenMS
 		@see BinnedSpectrumCompareFunctor @see BinnedSpectrum
 
 		@ingroup SpectraComparison
-  */
+	*/
 
-  class OPENMS_DLLAPI BinnedSharedPeakCount : public BinnedSpectrumCompareFunctor
-  {
-  public:
+	class OPENMS_DLLAPI BinnedSharedPeakCount : public BinnedSpectrumCompareFunctor
+	{
+		public:
 
-    /// default constructor
-    BinnedSharedPeakCount();
+		/// default constructor
+		BinnedSharedPeakCount();
 
-    /// copy constructor
-    BinnedSharedPeakCount(const BinnedSharedPeakCount& source);
+		/// copy constructor
+		BinnedSharedPeakCount(const BinnedSharedPeakCount& source);
 
-    /// destructor
-    virtual ~BinnedSharedPeakCount();
+		/// destructor
+		virtual ~BinnedSharedPeakCount();
 
-    /// assignment operator
-    BinnedSharedPeakCount& operator = (const BinnedSharedPeakCount& source);
+		/// assignment operator
+		BinnedSharedPeakCount& operator = (const BinnedSharedPeakCount& source);
 
-    /** function call operator, calculates the similarity of the given arguments
+		/** function call operator, calculates the similarity of the given arguments
 
 				@param spec1 First spectrum given as a binned representation
 				@param spec2 Second spectrum given as a binned representation
 				@throw IncompatibleBinning is thrown if the binning of the two input spectra are not the same
 		*/
-		double operator () (const BinnedSpectrum<>& spec1, const BinnedSpectrum<>& spec2) const;
+		double operator () (const BinnedSpectrum<>& spec1, const BinnedSpectrum<>& spec2, const bool lookahead = false) const;
 
-	/// function call operator, calculates self similarity
-	double operator () (const BinnedSpectrum<>& spec) const;
+		/// function call operator, calculates self similarity
+		double operator () (const BinnedSpectrum<>& spec) const;
 
-	///
-    static BinnedSpectrumCompareFunctor* create() { return new BinnedSharedPeakCount(); }
+		///
+		static BinnedSpectrumCompareFunctor* create() { return new BinnedSharedPeakCount(); }
 
-	/// get the identifier for this DefaultParamHandler
-	static const String getProductName()
-	{
-		return "BinnedSharedPeakCount";
-	}
+		/// get the identifier for this DefaultParamHandler
+		static const String getProductName()
+		{
+			return "BinnedSharedPeakCount";
+		}
 
-  };
+	};
 
 }
 #endif //OPENMS_COMPARISON_SPECTRA_BINNEDSHAREDPEAKCOUNT_H

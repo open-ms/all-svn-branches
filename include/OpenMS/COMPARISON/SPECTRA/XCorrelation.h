@@ -75,9 +75,7 @@ namespace OpenMS
 			defaults_.setValue("peak_tolerance", 0.3, "Defines the absolut (in Da) peak tolerance");
 			defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
 			defaults_.setValue("min_shift", 0.0, "Defines the minimal absolut (in Da) shift between the two spectra");
-			defaults_.setValue("max_pm_diff", 150.0, "Defines the maximal absolut (in Da) shift between the two spectra");
 			defaults_.setValue("min_dist", 57.0214637230, "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
-			defaults_.setValue("scan_resolution", 0.1 , "Defines the resolution of the instrument used to create the spectra");
 			defaults_.setValue("correlation_scoring", "intensity", "If intensity, correlation scores on basis of matched intensity values, if matchnumber correlation scores solely on basis of the number of matches");
 			defaults_.setValidStrings("correlation_scoring", StringList::create("intensity,matchnumber"));
 			defaultsToParam_();
@@ -108,7 +106,7 @@ namespace OpenMS
 
 
 		/**
-			@brief Method to calculate best sum of intensities from matching by mapping s1 onto s2
+			@brief Method to calculate best sum of intensities from matching by mapping s1 onto s2 (bigger is better)
 
 			@param ...
 			@param ...
@@ -121,7 +119,9 @@ namespace OpenMS
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal shiftwindow = (double)param_.getValue("parentmass_tolerance");
-			DoubleReal stepsize = (double)param_.getValue("scan_resolution");
+
+			//~ DoubleReal stepsize = (double)param_.getValue("scan_resolution");
+			DoubleReal stepsize = 2*peak_tolerance;
 			/// @improvement for prms score initialization with 0 is no good use numeric_limits<int>::min() o.s.
 			/// @improvement depend stepsize from resolution( stepsize = resolution??)
 
@@ -160,7 +160,7 @@ namespace OpenMS
 		///
 
 		/**
-			@brief Method to calculate best sum of distances from matching by mapping s1 onto s2
+			@brief Method to calculate best sum of distances from matching by mapping s1 onto s2 (smaller is better)
 
 			@param ...
 			@param ...
@@ -173,7 +173,7 @@ namespace OpenMS
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal shiftwindow = (double)param_.getValue("parentmass_tolerance");
-			DoubleReal stepsize = (double)param_.getValue("scan_resolution");
+			DoubleReal stepsize = 2*peak_tolerance;
 
 			DoubleReal best_score(0);
 			for(DoubleReal shift = -shiftwindow; shift <= shiftwindow; shift+=stepsize)
@@ -181,11 +181,13 @@ namespace OpenMS
 				DoubleReal cur_score(0);
 
 				std::vector<std::pair<Size, Size> > matches_unshift_all;
+				ConstSpectrumIterator pivot = s2.begin();
 				for(Size i = 0; i < s1.size(); ++i) /// @improvement not that i and i+1 matches still overlap ...
 				{
 					DoubleReal mz = s1[i].getMZ() + shift;
-					ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
-					ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance));
+					ConstSpectrumIterator start(s2.MZBegin(pivot,mz-peak_tolerance,s2.end()));
+					pivot = start;
+					ConstSpectrumIterator end = (s2.MZEnd(pivot,mz+peak_tolerance,s2.end()));
 					DoubleReal best_pair_score(0);
 					for(ConstSpectrumIterator it = start; it != end; ++it)
 					{
@@ -208,10 +210,36 @@ namespace OpenMS
 		}
 		///
 
-		void maxSparseMatch(const SpectrumType& s1, const SpectrumType& s2, std::vector<std::pair<Size,Size> >& all_matches, std::list<std::pair<Size,Size> >& best_matches) const
+		/**
+			@brief Method to find the maximal long set of sparse matchings by mapping s1 onto s2
+
+			@param ...
+			@param ...
+			@return ...
+
+			...
+			@see ...
+		*/
+		void maxSparseMatch(const SpectrumType& s1, const SpectrumType& s2, std::list<std::pair<Size,Size> >& best_matches, DoubleReal& shift) const
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal min_dist = (double)param_.getValue("min_dist");
+
+			//~ find best with DP from all matches(mapping s1 to s2)
+			std::vector<std::pair<Size, Size> > all_matches;
+			ConstSpectrumIterator pivot = s2.begin();
+			for(Size i = 0; i < s1.size(); ++i)
+			{
+				DoubleReal mz = s1[i].getMZ() + shift;
+				ConstSpectrumIterator start = (s2.MZBegin(pivot,mz-peak_tolerance,s2.end()));
+				pivot = start;
+				ConstSpectrumIterator end = (s2.MZEnd(pivot,mz+peak_tolerance/* +0.00001 */,s2.end()));
+				for(ConstSpectrumIterator it = start; it != end; ++it)
+				{
+					Size j = it - s2.begin();
+					all_matches.push_back(std::pair<Size,Size>(i,j));
+				}
+			}
 
 			//~ initialization:
 			/// @attention indices here are indices in the dp-table and to get from these to indices in all_matches you have to decrease once;
@@ -264,11 +292,20 @@ namespace OpenMS
 		}
 		///
 
+		/**
+			@brief Method to find best correlation of s1 and s2 by shifting around
+
+			@param ...
+			@param pm_diff_shift boolean indicates if s2 is considered shifted by pm difference or not
+			@return ...
+
+			...
+			@see ...
+		*/
 		void getXCorrelation(SpectrumType& s1, SpectrumType& s2, DoubleReal& best_score1 , DoubleReal& best_score2, DoubleReal& best_shift, std::list<std::pair<Size,Size> >& best_matches, bool pm_diff_shift = false) const
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal parentmass_tolerance = (double)param_.getValue("parentmass_tolerance");
-			DoubleReal max_pm_diff = (Real)param_.getValue("max_pm_diff");
 			DoubleReal shift_step = 2 * peak_tolerance;
 
 			//~ can also deal with neg. shifts!
@@ -281,8 +318,11 @@ namespace OpenMS
 			int c_s1 = s1.getPrecursors().front().getCharge();
 			DoubleReal pm_s2 = s2.getPrecursors().front().getMZ();
 			int c_s2 = s2.getPrecursors().front().getCharge();
-			/// @important singly charged mass difference!
-			Real pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
+			/// @attention if the precursor charge is unknown, i.e. 0 best guess is its doubly charged
+			(c_s1==0)?c_s1=2:c_s1=c_s1;
+			(c_s2==0)?c_s2=2:c_s2=c_s2;
+			/// @attention singly charged mass difference!
+			DoubleReal pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
 			/* debug std::cout << pm_diff << std::endl; */
 			if(!pm_diff_shift)
 			{
@@ -292,10 +332,6 @@ namespace OpenMS
 			if(s1.getPrecursors().front().getCharge()>2 or s2.getPrecursors().front().getCharge()>2)
 			{
 				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite are spectra from chargestate 2 or lower");
-			}
-			if(fabs(pm_diff)>max_pm_diff+peak_tolerance)
-			{
-				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "input does not agree given parameter max_pm_diff");
 			}
 
 			// reset the correlation values
@@ -308,22 +344,9 @@ namespace OpenMS
 
 			if((String)param_.getValue("correlation_scoring")=="intensity")
 			{
-				//~ find matches in unshifted s1 to s2
-				std::vector<std::pair<Size, Size> > matches_unshift_all;
-				for(Size i = 0; i < s1.size(); ++i)
-				{
-					DoubleReal mz = s1[i].getMZ() + pm_diff;
-					ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
-					ConstSpectrumIterator end = (s2.MZEnd(mz+peak_tolerance/* +0.00001 */));
-					for(ConstSpectrumIterator it = start; it != end; ++it)
-					{
-						Size j = it - s2.begin();
-						matches_unshift_all.push_back(std::pair<Size,Size>(i,j));
-					}
-				}
-				//~ max sparses matches with DP
+				//~ find matches in unshifted s1 to s2 max sparses matches with DP
 				std::list<std::pair<Size, Size> > matches_unshift;
-				maxSparseMatch(s1,s2,matches_unshift_all,matches_unshift);
+				maxSparseMatch(s1,s2,matches_unshift, pm_diff);
 				/*debug std::cout << "matches_unshift.size(): " << matches_unshift.size() << std::endl;*/
 
 				best_matches = matches_unshift;
@@ -349,22 +372,9 @@ namespace OpenMS
 						}
 
 						/// @improvement add a correlation_scoring method matches that optimizes only the matchnumber (new max_sparse_overlap)
-						//~ find matches in shifted s1 to s2
-						std::vector<std::pair<Size, Size> > matches_shift_all;
-						for(Size i = 0; i < s1.size(); ++i)
-						{
-							DoubleReal mz = s1[i].getMZ() + shift;
-							ConstSpectrumIterator start(s2.MZBegin(mz-peak_tolerance));
-							ConstSpectrumIterator end(s2.MZEnd(mz+peak_tolerance/* +0.00001 */));
-							for(ConstSpectrumIterator it = start; it != end; ++it)
-							{
-								Size j = it - s2.begin();
-								matches_shift_all.push_back(std::pair<Size,Size>(i,j));
-							}
-						}
-						//~ max sparses matches with DP
+						//~ find max sparse matches in shifted s1 to s2 with DP
 						std::list<std::pair<Size, Size> > matches_shift;
-						maxSparseMatch(s1,s2,matches_shift_all,matches_shift);
+						maxSparseMatch(s1,s2,matches_shift,shift);
 						/*debug std::cout << "matches_shift.size(): " << matches_shift.size() << " shift: " << shift << std::endl;*/
 
 						DoubleReal score1 = std::numeric_limits<double>::min();
@@ -436,6 +446,7 @@ namespace OpenMS
 				}
 			}
 		}
+		///
 
 	};
 }

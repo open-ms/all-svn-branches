@@ -80,11 +80,8 @@ namespace OpenMS
 		{
 			defaults_.setValue("peak_tolerance", 0.3, "Defines the absolut (in Da) peak tolerance");
 			defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
-			defaults_.setValue("min_shift", 0.0, "Defines the minimal absolut (in Da) shift between the two spectra");
-			defaults_.setValue("max_shift", 150.0, "Defines the maximal absolut (in Da) shift between the two spectra");
-			defaults_.setValue("min_dist", 57.0214637230, "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
-			defaults_.setValue("correlation_scoring", "intensity", "If intensity, correlation scores on basis of matched intensity values, if matchnumber correlation scores solely on basis of the number of matches");
-			defaults_.setValidStrings("correlation_scoring", StringList::create("intensity,matchnumber"));
+			defaults_.setValue("min_hop", 0, "Defines the minimal number hops a identification can be propagated");
+			defaults_.setValue("max_hop", 10, "Defines the maximal number hops a identification can be propagated");
 			defaultsToParam_();
 		}
 
@@ -190,12 +187,12 @@ namespace OpenMS
 
 			star network will be represented by indices 0 to n from the participating spectra as seen in consensus_indices, not as in aligned_pairs (these indices belong to the original dataset)
 		*/
-		void annotationCoverage(MSSpectrum<PeakT>& spectrum, PeptideHit& id, DoubleReal& peak_coverage, DoubleReal& intensity_coverage) const
+		void annotationCoverage(MSSpectrum<PeakT>& spectrum, AASequence& id, DoubleReal& peak_coverage, DoubleReal& intensity_coverage) const
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			TheoreticalSpectrumGenerator tsg;
 			RichPeakSpectrum ts;
-			tsg.getSpectrum(ts, id.getSequence(), 1);
+			tsg.getSpectrum(ts, id, 1);
 			ts.sortByPosition();
 			DoubleReal covered_intensity,total_intensity;
 			Size covered(0), last_in_ts(0);
@@ -408,7 +405,9 @@ namespace OpenMS
 								hit.setMetaValue("annotated in hop no.", i+1);
 								hit.setMetaValue("annotated with ionspecies", mod_found_with_ions);
 								DoubleReal pc(0),ic(0);
-								annotationCoverage(current_spectrum, modified_sequence, pc, ic);
+								//~ annotationCoverage(MSSpectrum<PeakT>& spectrum, PeptideHit& id, DoubleReal& peak_coverage, DoubleReal& intensity_coverage)
+								//~ annotationCoverage(current_spectrum, modified_sequence, pc, ic);
+								annotationCoverage(experiment[*it_potential], modified_sequence, pc, ic);
 								hit.setMetaValue("annotated with peak coverage", pc);
 								hit.setMetaValue("annotated with intensity coverage", ic);
 								/// @improvement factorized linear combination of pc and ic
@@ -458,6 +457,7 @@ namespace OpenMS
 							for(Size l = 0; l < current_annotations.getPeptideIdentifications().front().getHits().size(); ++l)
 							{
 								ids[yet_annotated_index].getPeptideIdentifications().front().insertHit(current_annotations.getPeptideIdentifications().front().getHits()[l]);
+								ids[yet_annotated_index].getPeptideIdentifications().front().sort();
 							}
 							//~ ids[yet_annotated_index].getPeptideIdentifications().front().setHits(hits);
 						}

@@ -29,6 +29,7 @@
 #define OPENMS_COMPARISON_SPECTRA_BINNEDSPECTRALCONTRASTANGLE_H
 
 #include <OpenMS/COMPARISON/SPECTRA/BinnedSpectrumCompareFunctor.h>
+#include <OpenMS/CONCEPT/Constants.h>
 
 #include <cmath>
 #include <cfloat>
@@ -74,7 +75,7 @@ namespace OpenMS
 			@param spec2 Second spectrum ginve in a binned representation
 			@throw IncompatibleBinning is thrown if the binnings of the spectra are not the same
 		*/
-		double operator () (const BinnedSpectrum<>& spec1, const BinnedSpectrum<>& spec2) const;
+		double operator () (const BinnedSpectrum<>& spec1, const BinnedSpectrum<>& spec2, const bool lookahead = false) const;
 
 		/// function call operator, calculates self similarity
 		double operator () (const BinnedSpectrum<>& spec) const;

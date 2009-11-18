@@ -1467,6 +1467,7 @@ namespace OpenMS
 		: DefaultParamHandler("AntisymetricAlignment")
 		{
 				defaults_.setValue("peak_tolerance", 0.3, "Defines the absolut (in Da) peak tolerance");
+				defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
 				defaults_.setValue("min_dist", 57.0214637230 , "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
 				/// @improvement DP penalty scores here
 				defaultsToParam_();
@@ -1683,7 +1684,21 @@ namespace OpenMS
 		{
 			//~ float sameVertexPenalty=-5, float ptmPenalty=-5, bool forceSymmetry=true, bool addZPMmatches=false
 
-			if (s1.getPrecursors().front().getMZ() > s2.getPrecursors().front().getMZ())
+			Real peak_tolerance = (double)param_.getValue("peak_tolerance");
+			DoubleReal min_dist = (double)param_.getValue("min_dist");
+
+			DoubleReal pm_s1 = s1.getPrecursors().front().getMZ();
+			int c_s1 = s1.getPrecursors().front().getCharge();
+			DoubleReal pm_s2 = s2.getPrecursors().front().getMZ();
+			int c_s2 = s2.getPrecursors().front().getCharge();
+			/// @attention if the precursor charge is unknown, i.e. 0 best guess is its doubly charged
+			(c_s1==0)?c_s1=2:c_s1=c_s1;
+			(c_s2==0)?c_s2=2:c_s2=c_s2;
+			/// @attention singly charged mass difference!
+			DoubleReal pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
+			/* debug std::cout << pm_diff << std::endl; */
+
+			if(pm_diff < 0)
 			{
 				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite is the s1-precursor mz is not greater than s2-precursor mz");
 			}
@@ -1692,7 +1707,7 @@ namespace OpenMS
 			//~ res_2.clear(true);
 			res_1.clear(); res_1.getFloatDataArrays().clear();res_1.getIntegerDataArrays().clear();res_1.getStringDataArrays().clear();
 			res_2.clear(); res_2.getFloatDataArrays().clear();res_2.getIntegerDataArrays().clear();res_2.getStringDataArrays().clear();
-
+			score = -1; mod_pos = -1;
 
 			if(s1.empty() or s2.empty())
 			{
@@ -1701,19 +1716,7 @@ namespace OpenMS
 
 			//~ attention: max. number of AA jumped is always 1
 
-			Real peak_tolerance = (Real)param_.getValue("peak_tolerance");
-			//~ Real parentmass_tolerance = (Real)param_.getValue("parentmass_tolerance");
-			//~ Real max_shift = (Real)param_.getValue("max_shift");
-			Real min_dist = (Real)param_.getValue("min_dist");
-			DoubleReal pm_s1 = s1.getPrecursors().front().getMZ();
-			int c_s1 = s1.getPrecursors().front().getCharge();
-			DoubleReal pm_s2 = s2.getPrecursors().front().getMZ();
-			int c_s2 = s2.getPrecursors().front().getCharge();
-			/// @important singly charged mass difference!
-			Real pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
-
 			//jump_masses[i] holds internal mass of aa i
-			//sort jump_masses
 			//make unique in resolution tolerance (e.g. cause of Q & K)
 			const ResidueDB* res_db = ResidueDB::getInstance();
 			std::vector<Real> jump_masses;
@@ -1726,20 +1729,22 @@ namespace OpenMS
 					jump_masses.push_back(w);
 				}
 			}
-
+			//sort jump_masses
 			std::sort(jump_masses.begin(),jump_masses.end());
 			std::vector<Real>::iterator end_new = std::unique(jump_masses.begin(),jump_masses.end(), EqualInTolerance<Real>(peak_tolerance));
 			jump_masses.resize( end_new - jump_masses.begin() );
 			DoubleReal jumps_supremum=0;
 			jumps_supremum = jump_masses.back()+2*peak_tolerance+0.00001;
-			for(Size w = 0; w < jump_masses.size(); ++w)
+
+			/* debug for(Size w = 0; w < jump_masses.size(); ++w)
 			{
-				/* debug  std::cout << jump_masses[w] << ", ";*/
+				std::cout << jump_masses[w] << ", ";
 			}
-			/* debug  std::cout << '\n';*/
+			std::cout << '\n';*/
 
 			//~ change s1 to align antisymetrical into res_1
 			res_1 = getSymetricSpectrum(s1);
+
 			//~ indices in s2 for normal matches
 			/* debug  std::cout << "symetric size is: " << res_1.size() << std::endl;*/
 
@@ -1796,6 +1801,7 @@ namespace OpenMS
 				}
 			}
 
+
 			/* debug
 			std::cout << "§ " ;
 			for(Size i = 0; i < res_1.getIntegerDataArrays()[1].size(); ++i)
@@ -1814,7 +1820,7 @@ namespace OpenMS
 			Size removed_pairs = 0;
 			//~ remove the peak pairs mentioned above
 			Size res_1_index = 0;
-			while((Size)res_1_index < (Size)((res_1.size()/2) - removed_pairs) )
+			while(res_1_index < res_1.size() and (Size)res_1_index < (Size)((res_1.size()/2) - removed_pairs) )
 			{
 				if(res_1[res_1_index].getIntensity() == 0)
 				{
@@ -1828,7 +1834,7 @@ namespace OpenMS
 						}
 						for(Size i = 0; i < 3; ++i)
 						{
-							typename SpectrumType::IntegerDataArray::iterator it_ida = res_1.getIntegerDataArrays().front().begin()+res_1_index;
+							typename SpectrumType::IntegerDataArray::iterator it_ida = res_1.getIntegerDataArrays()[i].begin()+res_1_index;
 							res_1.getIntegerDataArrays()[i].erase(it_ida);
 						}
 						typename SpectrumType::Iterator res_mirror_it = res_1.begin() + res_mirror_index;
@@ -1847,6 +1853,8 @@ namespace OpenMS
 					++res_1_index;
 				}
 			}
+
+
 
 			std::vector<DoubleReal> peaks(res_1.size());  for(Size i=0;i<res_1.size();++i) peaks[i]=res_1[i].getMZ();
 			std::vector<DoubleReal> peaks2(s2.size());   for(Size i=0;i<s2.size();++i) peaks2[i]=s2[i].getMZ();
@@ -1960,7 +1968,7 @@ namespace OpenMS
 				}
 				left_neighbors[i].resize(neighbor_count);
 				left_jumps2[i].resize(jumps_count);
-				/* debug */ std::cout << std::endl;
+				/* debug std::cout << std::endl; */
 
 				neighbor_count=0, jumps_count=0;
 				right_neighbors[i].resize(right_jumps[i].size());
@@ -2009,6 +2017,14 @@ namespace OpenMS
 			Size num_aligned_peaks = asym_align.second.first.size()+asym_align.second.second.size();
 
 			/* debug  std::cout << " aligned: "<< asym_align.second.first.size() << " + " << asym_align.second.second.size() << std::endl;*/
+
+			if(num_aligned_peaks==0)
+			{
+				score = -1; mod_pos = -1;
+				res_1.clear(); res_1.getFloatDataArrays().clear();res_1.getIntegerDataArrays().clear();res_1.getStringDataArrays().clear();
+				res_2.clear(); res_2.getFloatDataArrays().clear();res_2.getIntegerDataArrays().clear();res_2.getStringDataArrays().clear();
+				return;
+			}
 
 			typename SpectrumType::IntegerDataArray ida_synthetic; ida_synthetic.resize(num_aligned_peaks,0);
 			res_1.getIntegerDataArrays().insert(res_1.getIntegerDataArrays().begin(),ida_synthetic);
@@ -2089,6 +2105,7 @@ namespace OpenMS
 				res_1.push_back(tmp_1);
 				res_2.push_back(tmp_2);
 			}
+
 		}
 		///
 	};

@@ -51,52 +51,52 @@ namespace OpenMS
   class OPENMS_DLLAPI BinnedSpectrumCompareFunctor : public DefaultParamHandler
   {
 
-  private:
+		private:
 
-  public:
+		public:
 
-    /** @brief Exception thrown if compared spectra are incompatible
+			/** @brief Exception thrown if compared spectra are incompatible
 
-		    the compared spectra have different settings in binsize and/or binspread
-		    due to which comparison would fail
-    */
-    class OPENMS_DLLAPI IncompatibleBinning
-			: public Exception::BaseException
-    {
-    public:
-      IncompatibleBinning(const char* file, int line, const char* function, const char* message
-          = "compared spectra have different settings in binsize and/or binspread")  throw();
-      virtual ~IncompatibleBinning() throw();
-    };
+					the compared spectra have different settings in binsize and/or binspread
+					due to which comparison would fail
+			*/
+			class OPENMS_DLLAPI IncompatibleBinning
+				: public Exception::BaseException
+			{
+				public:
+					IncompatibleBinning(const char* file, int line, const char* function, const char* message
+							= "compared spectra have different settings in binsize and/or binspread")  throw();
+					virtual ~IncompatibleBinning() throw();
+			};
 
-    /// default constructor
-    BinnedSpectrumCompareFunctor();
+			/// default constructor
+			BinnedSpectrumCompareFunctor();
 
-    /// copy constructor
-    BinnedSpectrumCompareFunctor(const BinnedSpectrumCompareFunctor& source);
+			/// copy constructor
+			BinnedSpectrumCompareFunctor(const BinnedSpectrumCompareFunctor& source);
 
-    /// destructor
-    virtual ~BinnedSpectrumCompareFunctor();
+			/// destructor
+			virtual ~BinnedSpectrumCompareFunctor();
 
-    /// assignment operator
-    BinnedSpectrumCompareFunctor& operator = (const BinnedSpectrumCompareFunctor& source);
+			/// assignment operator
+			BinnedSpectrumCompareFunctor& operator = (const BinnedSpectrumCompareFunctor& source);
 
-    /// function call operator, calculates the similarity of the given arguments
-    virtual double operator () (const BinnedSpectrum<>& spec1, const BinnedSpectrum<>& spec2) const = 0;
+			/// function call operator, calculates the similarity of the given arguments
+			virtual double operator () (const BinnedSpectrum<>& spec1, const BinnedSpectrum<>& spec2, const bool lookahead = false) const = 0;
 
-	/// function call operator, calculates self similarity
-	virtual double operator () (const BinnedSpectrum<>& spec) const = 0;
+			/// function call operator, calculates self similarity
+			virtual double operator () (const BinnedSpectrum<>& spec) const = 0;
 
-	/// registers all derived products
-	static void registerChildren();
+			/// registers all derived products
+			static void registerChildren();
 
-	/// get the identifier for a DefaultParamHandler
-	static const String getProductName()
-	{
-		return "BinnedSpectrumCompareFunctor";
-	}
+			/// get the identifier for a DefaultParamHandler
+			static const String getProductName()
+			{
+				return "BinnedSpectrumCompareFunctor";
+			}
 
-  };
+	};
 
 
 }

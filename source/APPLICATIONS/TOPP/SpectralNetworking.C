@@ -20,6 +20,11 @@
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
 #include <boost/math/distributions/normal.hpp> // for binomial distribution
+#include <boost/accumulators/accumulators.hpp>
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/mean.hpp>
+#include <boost/accumulators/statistics/variance.hpp>
+
 #include <iostream>
 #include <cmath>
 #include <exception>
@@ -45,7 +50,7 @@ using namespace std;
 	{
 	 public:
 		SpectralNetworking()
-			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "0.4beta")
+			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "0.5beta")
 		{
 
 		}
@@ -178,12 +183,9 @@ using namespace std;
 			total_intensity.push_back(intens);
 		}
 		logger.endProgress();
-		writeLog_(String(" .. preselected ") + pot_pairs.size() + String(" edges ..") );
+		writeLog_(String(".. preselected ") + pot_pairs.size() + String(" edges ..") );
 
 		std::vector< std::pair<DoubleReal,DoubleReal> > pot_pairs_xcs; // the pairs xcorrelation scores
-		std::vector< Size > stats_num(experiment.size()); // the number of scores for respective spec (for online calc of the var)
-		std::vector< DoubleReal > means(experiment.size()), squared_value_means(experiment.size()), std_devs(experiment.size()); // the selected specs xcorrelation means, variation and std. deviation (unbiased gaussian)
-
 		pot_pairs_xcs.reserve(pot_pairs.size());
 
 		std::vector<String> prefixes;
@@ -194,32 +196,38 @@ using namespace std;
 		xcorr_param.insert("",getParam_().copy(prefixes[1],true));
 		XCorrelation<Peak1D> x_corr;
 		x_corr.setParameters(xcorr_param);
-		logger.startProgress(0,pot_pairs.size()+experiment.size(),"evaluating selected edges");
+
+		std::vector< boost::accumulators::accumulator_set<DoubleReal, boost::accumulators::stats<boost::accumulators::tag::variance> > > xcorr_accumulators(experiment.size());
+		std::vector<Size> edge_selection;
+		logger.startProgress(0,pot_pairs.size() + experiment.size(),"evaluating selected edges");
 		for(Size i = 0; i < pot_pairs.size(); ++i)
 		{
 			logger.setProgress(i);
 			DoubleReal best_score1, best_score2, best_shift;
 			std::list<std::pair<Size,Size> > best_matches;
 			x_corr.getXCorrelation(experiment[pot_pairs[i].first], experiment[pot_pairs[i].second], best_score1, best_score2, best_shift, best_matches);
-
-			//calc mean and variation
-			means[pot_pairs[i].first] = ( means[pot_pairs[i].first]*stats_num[pot_pairs[i].first] + best_score1 )/ (1+stats_num[pot_pairs[i].first]);
-			means[pot_pairs[i].second] = ( means[pot_pairs[i].second]*stats_num[pot_pairs[i].second] + best_score2 )/ (1+stats_num[pot_pairs[i].second]);
-			squared_value_means[pot_pairs[i].first] = ( squared_value_means[pot_pairs[i].first]*stats_num[pot_pairs[i].first] + (best_score1*best_score1) )/ (1+stats_num[pot_pairs[i].first]);
-			squared_value_means[pot_pairs[i].second] = ( squared_value_means[pot_pairs[i].second]*stats_num[pot_pairs[i].second] + (best_score1*best_score2) )/ (1+stats_num[pot_pairs[i].second]);
-			++stats_num[pot_pairs[i].first];
-			++stats_num[pot_pairs[i].second];
-
-			pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(best_score1,best_score2));
+			if(best_score1/total_intensity[pot_pairs[i].first >= pairfilter_min_ratio and best_score2/total_intensity[pot_pairs[i].second] >= pairfilter_min_ratio)
+			{
+				xcorr_accumulators[pot_pairs[i].first](best_score1);
+				xcorr_accumulators[pot_pairs[i].second](best_score2);
+				pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(best_score1,best_score2));
+				edge_selection.push_back(i);
+			}
 		}
+		for(Size i = 0; i < edge_selection.size(); ++i)
+		{
+			//~ edge_selection indices are alwas >= the ones to pot_pairs so no collision expected
+			pot_pairs[i] = pot_pairs[edge_selection[i]];
+		}
+		pot_pairs.resize(edge_selection.size());
+		writeLog_(String(".. ") + pot_pairs.size() + String(" edges passed minimum ratio evaluation ..") );
 
-		//calc std.dev. sigma as sqrt of variance
+		std::vector<DoubleReal> means(experiment.size()), stddevs(experiment.size());
 		for(Size i = 0; i < experiment.size(); ++i)
 		{
 			logger.setProgress(pot_pairs.size()+i);
-			/* debug std::cout << ((stats_num[i]/(stats_num[i]-1)) * (squared_value_means[i]-means[i]*means[i])) << std::endl; */
-			std_devs[i]= sqrt( ((stats_num[i]/(stats_num[i]-1)) * (squared_value_means[i]-means[i]*means[i])) );
-			/* debug std::cout << std_devs[i] << std::endl; */
+			means[i] = boost::accumulators::mean(xcorr_accumulators[i]);
+			stddevs[i] = sqrt(boost::accumulators::variance(xcorr_accumulators[i]));
 		}
 		logger.endProgress();
 
@@ -227,28 +235,28 @@ using namespace std;
 		std::vector< std::pair<Size,Size> >::iterator it_pairs = pot_pairs.begin();
 		std::vector< std::pair<DoubleReal,DoubleReal> >::iterator it_pairs_xcs = pot_pairs_xcs.begin();
 		logger.startProgress(0,pot_pairs.size(),"refining edge selection");
-		while(it_pairs != pot_pairs.end())
+		edge_selection.clear();
+		for(Size i = 0; i < pot_pairs.size(); ++i)
 		{
-			logger.setProgress(it_pairs - pot_pairs.begin());
-			/// @improvement : not erase but copy and reassign
-			if(  boost::math::cdf(boost::math::normal(means[it_pairs->first],std_devs[it_pairs->first]), it_pairs_xcs->first) >= 1-pairfilter_p_value and
-					 boost::math::cdf(boost::math::normal(means[it_pairs->second],std_devs[it_pairs->second]), it_pairs_xcs->second) >= 1-pairfilter_p_value and
-					 it_pairs_xcs->first/total_intensity[it_pairs->first] >= pairfilter_min_ratio and
-					 it_pairs_xcs->second/total_intensity[it_pairs->second] >= pairfilter_min_ratio )
+			logger.setProgress(i);
+			if(  boost::math::cdf(boost::math::normal(means[pot_pairs[i].first] ,stddevs[pot_pairs[i].first]), pot_pairs_xcs[i].first) >= 1-pairfilter_p_value and
+					 boost::math::cdf(boost::math::normal(means[pot_pairs[i].second] ,stddevs[pot_pairs[i].second]), pot_pairs_xcs[i].second) >= 1-pairfilter_p_value /* and
+					 pot_pairs_xcs[i].first/total_intensity[pot_pairs[i].first] >= pairfilter_min_ratio and
+					 pot_pairs_xcs[i].second/total_intensity[pot_pairs[i].second] >= pairfilter_min_ratio  */)
 			{
-				++it_pairs;
-				++it_pairs_xcs;
-			}
-			else
-			{
-				 it_pairs = pot_pairs.erase(it_pairs);
-				 it_pairs_xcs = pot_pairs_xcs.erase(it_pairs_xcs);
+				edge_selection.push_back(i);
 			}
 		}
+		for(Size i = 0; i < edge_selection.size(); ++i)
+		{
+			//~ edge_selection indices are alwas >= the ones to pot_pairs so no collision expected
+			pot_pairs[i] = pot_pairs[edge_selection[i]];
+		}
+		pot_pairs.resize(edge_selection.size());
 		logger.endProgress();
 
 		w.stop();
-		writeLog_(String(" .. done, took ") + String(w.getClockTime()) + String(" seconds, selected ") + pot_pairs.size() + String(" edges.") );
+		writeLog_(String(".. done, took ") + String(w.getClockTime()) + String(" seconds, selected ") + pot_pairs.size() + String(" edges.") );
 		w.reset();
 
 		/*-------------------/
@@ -289,7 +297,7 @@ using namespace std;
 
 
 		w.stop();
-		writeLog_(String(" .. done, took") + String(w.getClockTime()) + String(" seconds, defined ") + String(aligned_pairs.size()) + String(" edges."));
+		writeLog_(String(".. done, took") + String(w.getClockTime()) + String(" seconds, defined ") + String(aligned_pairs.size()) + String(" edges."));
 		w.reset();
 
 		/*-------------------------------------------------------/
@@ -354,7 +362,7 @@ using namespace std;
 		logger.endProgress();
 
 		w.stop();
-		writeLog_(String(" .. done, took ") + String(w.getClockTime()) + String(" seconds, made ") + String(experiment.size()) + String(" consensuses."));
+		writeLog_(String(".. done, took ") + String(w.getClockTime()) + String(" seconds, made ") + String(experiment.size()) + String(" consensuses."));
 		w.reset();
 
 		//~ save consensuses
@@ -366,16 +374,22 @@ using namespace std;
 		// save star edges and modpos
 		/-----------------------------*/
 		TextFile stars_txt;
-		writeLog_(String("Writing edges."));
 
-		for(Size i = 0; i < aligned_pairs.size()-1; ++i)
+		if(aligned_pairs.size()>0)
 		{
-			stars_txt.push_back(String(aligned_pairs[i].first) +String('-') +String(aligned_pairs[i].second) +String('-') +String(mod_positions[i]) +String('\n'));
+			writeLog_(String("Writing edges."));
+			for(Size i = 0; i < aligned_pairs.size()-1; ++i)
+			{
+				stars_txt.push_back(String(aligned_pairs[i].first) +String('-') +String(aligned_pairs[i].second) +String('-') +String(mod_positions[i]) +String('\n'));
+			}
+			stars_txt.push_back(String(aligned_pairs[aligned_pairs.size()-1].first) +String('-') +String(aligned_pairs[aligned_pairs.size()-1].second) +String('-') +String(mod_positions[aligned_pairs.size()-1]) +String("\r\n"));
+
+			stars_txt.store(outputfile_name_edges);
 		}
-		stars_txt.push_back(String(aligned_pairs[aligned_pairs.size()-1].first) +String('-') +String(aligned_pairs[aligned_pairs.size()-1].second) +String('-') +String(mod_positions[aligned_pairs.size()-1]) +String("\r\n"));
-
-		stars_txt.store(outputfile_name_edges);
-
+		else
+		{
+			writeLog_(String("No edges."));
+		}
 		writeLog_(String("All done. Please proceed with SpectralNetworking after identification of the consensuses."));
 		return;
 	}

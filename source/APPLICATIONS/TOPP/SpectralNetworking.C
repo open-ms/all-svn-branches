@@ -50,7 +50,7 @@ using namespace std;
 	{
 	 public:
 		SpectralNetworking()
-			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "0.5beta")
+			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "0.6beta")
 		{
 
 		}
@@ -206,7 +206,8 @@ using namespace std;
 			DoubleReal best_score1, best_score2, best_shift;
 			std::list<std::pair<Size,Size> > best_matches;
 			x_corr.getXCorrelation(experiment[pot_pairs[i].first], experiment[pot_pairs[i].second], best_score1, best_score2, best_shift, best_matches);
-			if(best_score1/total_intensity[pot_pairs[i].first >= pairfilter_min_ratio and best_score2/total_intensity[pot_pairs[i].second] >= pairfilter_min_ratio)
+			//~ half the peaks number of average size of the two spectra times the given ratio is the minimum match number
+			if(best_matches.size() >= ((DoubleReal)(experiment[pot_pairs[i].first].size()+experiment[pot_pairs[i].second].size())/4.0 * pairfilter_min_ratio)
 			{
 				xcorr_accumulators[pot_pairs[i].first](best_score1);
 				xcorr_accumulators[pot_pairs[i].second](best_score2);
@@ -240,9 +241,7 @@ using namespace std;
 		{
 			logger.setProgress(i);
 			if(  boost::math::cdf(boost::math::normal(means[pot_pairs[i].first] ,stddevs[pot_pairs[i].first]), pot_pairs_xcs[i].first) >= 1-pairfilter_p_value and
-					 boost::math::cdf(boost::math::normal(means[pot_pairs[i].second] ,stddevs[pot_pairs[i].second]), pot_pairs_xcs[i].second) >= 1-pairfilter_p_value /* and
-					 pot_pairs_xcs[i].first/total_intensity[pot_pairs[i].first] >= pairfilter_min_ratio and
-					 pot_pairs_xcs[i].second/total_intensity[pot_pairs[i].second] >= pairfilter_min_ratio  */)
+					 boost::math::cdf(boost::math::normal(means[pot_pairs[i].second] ,stddevs[pot_pairs[i].second]), pot_pairs_xcs[i].second) >= 1-pairfilter_p_value )
 			{
 				edge_selection.push_back(i);
 			}

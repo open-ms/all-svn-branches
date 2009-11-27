@@ -55,7 +55,7 @@ namespace OpenMS
 		defaults_.setValue("z_intensity", 1.0, "Intensity of the z-ions");
 
 		defaults_.setValue("relative_loss_intensity", 0.1, "Intensity of loss ions, in relation to the intact ion intensity");
-		
+
 		// precursor intensity
 		defaults_.setValue("precursor_intensity", 1.0, "Intensity of the precursor peak");
 		defaults_.setValue("precursor_H2O_intensity", 1.0, "Intensity of the H2O loss peak of the precursor");
@@ -80,7 +80,7 @@ namespace OpenMS
 		}
 		return *this;
 	}
-	
+
 	TheoreticalSpectrumGenerator::~TheoreticalSpectrumGenerator()
 	{
 	}
@@ -107,78 +107,85 @@ namespace OpenMS
 		Map<DoubleReal, String> names;
 		AASequence ion;
 		DoubleReal intensity(0);
-		
-		// generate the ion peaks
-		switch(res_type)
+
+		if(peptide.size()>0)
 		{
-			case Residue::AIon:
-				for (Size i = 1; i != peptide.size(); ++i)
-				{
-					ion = peptide.getPrefix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::AIon, charge) / (DoubleReal)charge;
-					ions[pos] = ion;
-					names[pos] = "a"+String(i) + String(charge, '+');
-				}
-				intensity = (DoubleReal)param_.getValue("a_intensity");
-				break;
-				
-			case Residue::BIon:
-				for (Size i = 1; i != peptide.size(); ++i)
-				{
-					ion = peptide.getPrefix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::BIon, charge) / (DoubleReal)charge;
-					ions[pos] = ion;
-					names[pos] = "b"+String(i) + String(charge, '+');
-				}
-				intensity = (DoubleReal)param_.getValue("b_intensity");
-				break;
-				
-			case Residue::CIon:
-				for (Size i = 1; i != peptide.size(); ++i)
-				{
-					ion = peptide.getPrefix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::CIon, charge) / (DoubleReal)charge;
-					ions[pos] = ion;
-					names[pos] = "c"+String(i) + String(charge, '+');
-				}
-				intensity = (DoubleReal)param_.getValue("c_intensity");
-				break;
-				
-			case Residue::XIon:
-				for (Size i = 1; i != peptide.size(); ++i)
-				{
-					ion = peptide.getSuffix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::XIon, charge) / (DoubleReal)charge;
-					ions[pos] = ion;
-					names[pos] = "x"+String(i) + String(charge, '+');
-				}
-				intensity = (DoubleReal)param_.getValue("x_intensity");
-				break;
-				
-			case Residue::YIon:
-				for (Size i = 1; i != peptide.size(); ++i)
-				{
-					ion = peptide.getSuffix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::YIon, charge) / (DoubleReal)charge;
-					ions[pos] = ion;
-					names[pos] = "y"+String(i) + String(charge, '+');
-				}
-				intensity = (DoubleReal)param_.getValue("y_intensity");
-				break;
-				
-			case Residue::ZIon:
-				for (Size i = 1; i != peptide.size(); ++i)
-				{
-					ion = peptide.getSuffix(i);
-					DoubleReal pos = ion.getMonoWeight(Residue::ZIon, charge) / (DoubleReal)charge;
-					ions[pos] = ion;
-					names[pos] = "z" + String(i) + String(charge, '+');
-				}
-				intensity = (DoubleReal)param_.getValue("z_intensity");
-				break;
-				
-			default:
-				cerr << "Cannot create peaks of that ion type" << endl;
+			// generate the ion peaks
+			switch(res_type)
+			{
+				case Residue::AIon:
+					for (Size i = 1; i != peptide.size(); ++i)
+					{
+						ion = peptide.getPrefix(i);
+						DoubleReal pos = ion.getMonoWeight(Residue::AIon, charge) / (DoubleReal)charge;
+						ions[pos] = ion;
+						names[pos] = "a"+String(i) + String(charge, '+');
+					}
+					intensity = (DoubleReal)param_.getValue("a_intensity");
+					break;
+
+				case Residue::BIon:
+					for (Size i = 1; i != peptide.size(); ++i)
+					{
+						ion = peptide.getPrefix(i);
+						DoubleReal pos = ion.getMonoWeight(Residue::BIon, charge) / (DoubleReal)charge;
+						ions[pos] = ion;
+						names[pos] = "b"+String(i) + String(charge, '+');
+					}
+					intensity = (DoubleReal)param_.getValue("b_intensity");
+					break;
+
+				case Residue::CIon:
+					for (Size i = 1; i != peptide.size(); ++i)
+					{
+						ion = peptide.getPrefix(i);
+						DoubleReal pos = ion.getMonoWeight(Residue::CIon, charge) / (DoubleReal)charge;
+						ions[pos] = ion;
+						names[pos] = "c"+String(i) + String(charge, '+');
+					}
+					intensity = (DoubleReal)param_.getValue("c_intensity");
+					break;
+
+				case Residue::XIon:
+					for (Size i = 1; i != peptide.size(); ++i)
+					{
+						ion = peptide.getSuffix(i);
+						DoubleReal pos = ion.getMonoWeight(Residue::XIon, charge) / (DoubleReal)charge;
+						ions[pos] = ion;
+						names[pos] = "x"+String(i) + String(charge, '+');
+					}
+					intensity = (DoubleReal)param_.getValue("x_intensity");
+					break;
+
+				case Residue::YIon:
+					for (Size i = 1; i != peptide.size(); ++i)
+					{
+						ion = peptide.getSuffix(i);
+						DoubleReal pos = ion.getMonoWeight(Residue::YIon, charge) / (DoubleReal)charge;
+						ions[pos] = ion;
+						names[pos] = "y"+String(i) + String(charge, '+');
+					}
+					intensity = (DoubleReal)param_.getValue("y_intensity");
+					break;
+
+				case Residue::ZIon:
+					for (Size i = 1; i != peptide.size(); ++i)
+					{
+						ion = peptide.getSuffix(i);
+						DoubleReal pos = ion.getMonoWeight(Residue::ZIon, charge) / (DoubleReal)charge;
+						ions[pos] = ion;
+						names[pos] = "z" + String(i) + String(charge, '+');
+					}
+					intensity = (DoubleReal)param_.getValue("z_intensity");
+					break;
+
+				default:
+					cerr << "Cannot create peaks of that ion type" << endl;
+			}
+		}
+		else
+		{
+			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "given sequence is empty");
 		}
 
 		// get the params
@@ -186,7 +193,7 @@ namespace OpenMS
 		bool add_metainfo((int)param_.getValue("add_metainfo"));
 		bool add_isotopes((int)param_.getValue("add_isotopes"));
 		int max_isotope((int)param_.getValue("max_isotope"));
-		DoubleReal rel_loss_intensity((DoubleReal)param_.getValue("relative_loss_intensity"));		
+		DoubleReal rel_loss_intensity((DoubleReal)param_.getValue("relative_loss_intensity"));
 
 		for (Map<DoubleReal, AASequence>::ConstIterator cit = ions.begin(); cit != ions.end(); ++cit)
 		{
@@ -218,7 +225,7 @@ namespace OpenMS
 				}
 				spectrum.push_back(p_);
 			}
-			
+
 			if (add_losses)
 			{
 				set<String> losses;
@@ -239,13 +246,13 @@ namespace OpenMS
 				{
 					p_.setIntensity(intensity * rel_loss_intensity);
 				}
-				
+
 				for (set<String>::const_iterator it=losses.begin(); it!=losses.end(); ++it)
 				{
 					EmpiricalFormula loss_ion = ion.getFormula(res_type, charge) - EmpiricalFormula(*it);
 					DoubleReal loss_pos = loss_ion.getMonoWeight() / (DoubleReal)charge;
 					String loss_name = *it;
-					
+
 					if (add_isotopes)
 					{
 						IsotopeDistribution dist = loss_ion.getIsotopeDistribution(max_isotope);
@@ -278,7 +285,7 @@ namespace OpenMS
 		{
 			p_.setMetaValue("IonName", String(""));
 		}
-		
+
 		spectrum.sortByPosition();
 
 		return;
@@ -293,7 +300,7 @@ namespace OpenMS
 		DoubleReal pre_int_NH3((DoubleReal)param_.getValue("precursor_NH3_intensity"));
 		bool add_isotopes((int)param_.getValue("add_isotopes"));
     //int max_isotope((int)param_.getValue("max_isotope"));
-		
+
 		if (add_isotopes)
 		{
 			// TODO
@@ -312,14 +319,14 @@ namespace OpenMS
 				}
 				p_.setMetaValue("IonName", name);
 			}
-			
+
 			spec.push_back(p_);
 
 			// loss peaks of the precursor
 			static const DoubleReal h2o_weight = EmpiricalFormula("H2O").getMonoWeight();
 			p_.setMZ((peptide.getMonoWeight(Residue::Full, charge) - h2o_weight)/DoubleReal(charge));
 			p_.setIntensity(pre_int_H2O);
-			
+
 			if (add_metainfo)
 			{
 				String name("[M+H]-H2O+");
@@ -347,6 +354,6 @@ namespace OpenMS
       spec.push_back(p_);
 
 		}
-		
+
 	}
 }

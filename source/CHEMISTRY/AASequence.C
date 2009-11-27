@@ -49,7 +49,8 @@ namespace OpenMS
 			sequence_string_(rhs.sequence_string_),
 			valid_(rhs.valid_),
 			n_term_mod_(rhs.n_term_mod_),
-			c_term_mod_(rhs.c_term_mod_)
+			c_term_mod_(rhs.c_term_mod_),
+			indesignated_modifications_(rhs.indesignated_modifications_)
 	{
 	}
 
@@ -417,6 +418,11 @@ namespace OpenMS
 		{
 			seq.peptide_.push_back(peptide_[i]);
 		}
+		std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.find(index);
+		if(it != indesignated_modifications_.end())
+		{
+			seq.indesignated_modifications_.insert(indesignated_modifications_.begin(),++it);
+		}
 		return seq;
 	}
 
@@ -430,6 +436,11 @@ namespace OpenMS
 		for (Size i=size()-index;i!=size();++i)
 		{
 			seq.peptide_.push_back(peptide_[i]);
+		}
+		std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.find(index);
+		if(it != indesignated_modifications_.end())
+		{
+			seq.indesignated_modifications_.insert(it,indesignated_modifications_.end());
 		}
 		return seq;
 	}
@@ -1084,7 +1095,7 @@ namespace OpenMS
 		c_term_mod_ = &ModificationsDB::getInstance()->getTerminalModification(modification, ResidueModification::C_TERM);
 	}
 
-	void AASequence::setIndesignatedModification(Size index, const DoubleReal& modification)
+	void AASequence::setIndesignatedModification(Size index, const DoubleReal modification)
 	{
 		if (index >= peptide_.size())
 		{
@@ -1103,7 +1114,7 @@ namespace OpenMS
 		indesignated_modifications_[index] += modification;
 	}
 
-	const DoubleReal& AASequence::getIndesignatedModification(Size index)
+	DoubleReal AASequence::getIndesignatedModification(Size index)
 	{
 		if (index >= peptide_.size())
 		{
@@ -1116,7 +1127,7 @@ namespace OpenMS
 				cerr << "AASequence: Warning: cannot get modification at position '"
 						 << index << "' because sequence '" << sequence_string_
 						 << "' could not be parsed!" << endl;
-				return -1.0;
+				return DoubleReal(-1.0);
 			}
 		}
 		std::map<Size,DoubleReal>::iterator it = indesignated_modifications_.find(index);
@@ -1124,7 +1135,7 @@ namespace OpenMS
 		{
 			return indesignated_modifications_[index];
 		}
-		return 0.0;
+		return DoubleReal(0.0);
 	}
 
 

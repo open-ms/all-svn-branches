@@ -10,7 +10,6 @@
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/FORMAT/CsvFile.h>
 #include <OpenMS/FORMAT/IdXMLFile.h>
-#include <OpenMS/ANALYSIS/ID/IDMapper.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
 #include <OpenMS/DATASTRUCTURES/Param.h>
 #include <OpenMS/DATASTRUCTURES/DataValue.h>
@@ -50,7 +49,7 @@ using namespace std;
 	{
 	 public:
 		SpectralNetworking()
-			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "0.6beta")
+			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "1.0beta")
 		{
 
 		}
@@ -71,9 +70,16 @@ using namespace std;
 			Param p;
 			p.setValue("scan_resolution", 0.1, "Defines the resolution of the instrument used to create the spectra");
 			p.setValue("max_pm_diff", 150.0, "Defines the maximal absolut (in Da) shift between the two spectra");
-			p.setValue("consensus_bins", 0.3, "Defines the bin size (in Da) while makeing a consensus from two or more spectra");
-			p.setValue("pairfilter_p_value", 0.05, "Defines the p_value while filtering optential spectral pairs");
-			p.setValue("pairfilter_min_ratio", 0.4, "Defines the minimal matchratio while filtering optential spectral pairs");
+			p.setValue("pairs_p_value", 0.05, "Defines the p_value while filtering optential spectral pairs");
+			p.setValue("pairs_min_ratio", 0.4, "Defines the minimal match ratio while filtering potential spectral pairs");
+			p.setValue("pairs_min_matches", 4, "Defines the minimum number of matched peaks while filtering potential spectral pairs");
+			return p;
+		}
+		if (section == "consensus")
+		{
+			Param p;
+			p.setValue("bin_size", 0.3, "Defines the bin size (in Da) while makeing a consensus from two or more spectra");
+			p.setValue("set_min_size", 3, "Defines the minimum size of a spectra set to make a consensus from");
 			return p;
 		}
 		if (section == "spectra")
@@ -91,7 +97,6 @@ using namespace std;
 			return p;
 		}
 
-		//~ std::cout << section << std::endl;
 		Param p;
 		return p;
 	}
@@ -110,9 +115,10 @@ using namespace std;
 		registerInputFile_("network","<file>","","Input of network edges for propagation",false);
 
 		registerSubsection_("general","General section");
-		registerSubsection_("filter","Filter section");
+		registerSubsection_("filter","Filtering spectra pairs section");
 		registerSubsection_("spectra","Spectra comparison section");
 		registerSubsection_("network","Network section");
+		registerSubsection_("consensus","Consensus makeing section");
 
 		//~ addEmptyLine_();
 		//~ addText_("Parameters for the sections can only be given in the INI file.");
@@ -124,16 +130,20 @@ using namespace std;
 	{
 		//~ parameters
 		DoubleReal pm_tol = getParam_().getValue("general:parentmass_tolerance");
+		//~ DoubleReal peak_tol = getParam_().getValue("general:peak_tolerance");
 		DoubleReal max_pm_diff = getParam_().getValue("filter:max_pm_diff");
-		DoubleReal pairfilter_p_value = getParam_().getValue("filter:pairfilter_p_value");
-		DoubleReal pairfilter_min_ratio = getParam_().getValue("filter:pairfilter_min_ratio");
+		DoubleReal pairs_p_value = getParam_().getValue("filter:pairs_p_value");
+		DoubleReal pairs_min_ratio = getParam_().getValue("filter:pairs_min_ratio");
+		Size pairs_min_matches = getParam_().getValue("filter:pairs_min_matches");
 		DoubleReal scan_resolution = getParam_().getValue("filter:scan_resolution");
-		Real consensus_sz = getParam_().getValue("filter:consensus_bins"); /* e.g. peak_tolerance */;
+		Real consensus_sz = getParam_().getValue("consensus:bin_size"); /* e.g. peak_tolerance */;
 		/// @improvement is floor or round more appropriate?
 		UInt consensus_sp = (UInt)ceil(consensus_sz/scan_resolution);
+		Size consensus_min_size = getParam_().getValue("consensus:set_min_size");
 
 		writeLog_(String("Determining network edges .. ") );
 
+		MzMLFile mzml;
 		StopWatch w;
 		w.start();
 
@@ -144,6 +154,7 @@ using namespace std;
 		std::vector< std::pair<Size,Size> > pot_pairs; // name is program; will be reduced in run of the program
 		total_intensity.reserve(experiment.size());
 		pot_pairs.reserve((Size)(experiment.size()*(experiment.size()+1)/2));
+		DoubleReal average_peak_num(0);
 		logger.startProgress(0,experiment.size(),"preselecting edges");
 		for(Size i = 0; i < experiment.size(); ++i) //can run up to size-1 because 2nd for-loop wont be exec so no harm done but total intensity filled for all
 		{
@@ -162,7 +173,12 @@ using namespace std;
 				Real pm_diff = (pm_j*c_j + (c_j-1)*Constants::PROTON_MASS_U)-(pm_i*c_i + (c_i-1)*Constants::PROTON_MASS_U);
 				if(fabs(pm_diff) < max_pm_diff+pm_tol+0.00001 )
 				{
-					if(pm_diff < 0)
+					if(fabs(pm_diff)<pm_tol)
+					{
+						//~ pm_i = pm_j
+						pot_pairs.push_back(std::pair<Size,Size>(i,j));
+					}
+					else if(pm_diff < 0)
 					{
 						//~ pm_i > pm_j
 						pot_pairs.push_back(std::pair<Size,Size>(j,i));
@@ -181,8 +197,11 @@ using namespace std;
 				intens += experiment[i][j].getIntensity();
 			}
 			total_intensity.push_back(intens);
+			average_peak_num += experiment[i].size();
 		}
+		average_peak_num /= (DoubleReal)experiment.size();
 		logger.endProgress();
+		writeLog_(String(".. dataset with average peak number of ") + String(average_peak_num) + String(" per spectrum ..") );
 		writeLog_(String(".. preselected ") + pot_pairs.size() + String(" edges ..") );
 
 		std::vector< std::pair<DoubleReal,DoubleReal> > pot_pairs_xcs; // the pairs xcorrelation scores
@@ -199,15 +218,19 @@ using namespace std;
 
 		std::vector< boost::accumulators::accumulator_set<DoubleReal, boost::accumulators::stats<boost::accumulators::tag::variance> > > xcorr_accumulators(experiment.size());
 		std::vector<Size> edge_selection;
-		logger.startProgress(0,pot_pairs.size() + experiment.size(),"evaluating selected edges");
+		logger.startProgress(0,pot_pairs.size(),"evaluating selected edges");
+		DoubleReal average_best_matches(0);
 		for(Size i = 0; i < pot_pairs.size(); ++i)
 		{
 			logger.setProgress(i);
 			DoubleReal best_score1, best_score2, best_shift;
 			std::list<std::pair<Size,Size> > best_matches;
+			/// @improvement use xcorr with AND without shift, accept only those with sufficient combined match numbers
 			x_corr.getXCorrelation(experiment[pot_pairs[i].first], experiment[pot_pairs[i].second], best_score1, best_score2, best_shift, best_matches);
+			average_best_matches += (DoubleReal)best_matches.size();
 			//~ half the peaks number of average size of the two spectra times the given ratio is the minimum match number
-			if(best_matches.size() >= ((DoubleReal)(experiment[pot_pairs[i].first].size()+experiment[pot_pairs[i].second].size())/4.0 * pairfilter_min_ratio)
+			/// @improvement make pairs_min_ratio an advanced parameter
+			if((DoubleReal)best_matches.size()/((DoubleReal)(experiment[pot_pairs[i].first].size()+experiment[pot_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio)
 			{
 				xcorr_accumulators[pot_pairs[i].first](best_score1);
 				xcorr_accumulators[pot_pairs[i].second](best_score2);
@@ -220,32 +243,38 @@ using namespace std;
 			//~ edge_selection indices are alwas >= the ones to pot_pairs so no collision expected
 			pot_pairs[i] = pot_pairs[edge_selection[i]];
 		}
+		average_best_matches /= (DoubleReal)pot_pairs.size();
 		pot_pairs.resize(edge_selection.size());
+		logger.endProgress();
+		writeLog_(String(".. preselected edges having a average match size of ") + String(average_best_matches) + String(" ..") );
 		writeLog_(String(".. ") + pot_pairs.size() + String(" edges passed minimum ratio evaluation ..") );
 
+		//filter pairs not gcdf
+		logger.startProgress(0,pot_pairs.size() + experiment.size(),"refining edge selection");
 		std::vector<DoubleReal> means(experiment.size()), stddevs(experiment.size());
 		for(Size i = 0; i < experiment.size(); ++i)
 		{
-			logger.setProgress(pot_pairs.size()+i);
+			logger.setProgress(i);
+			/// @improvement make nicer than try/catch!
 			means[i] = boost::accumulators::mean(xcorr_accumulators[i]);
 			stddevs[i] = sqrt(boost::accumulators::variance(xcorr_accumulators[i]));
 		}
-		logger.endProgress();
-
-		//filter pairs not fitting ratio or gcdf
-		std::vector< std::pair<Size,Size> >::iterator it_pairs = pot_pairs.begin();
-		std::vector< std::pair<DoubleReal,DoubleReal> >::iterator it_pairs_xcs = pot_pairs_xcs.begin();
-		logger.startProgress(0,pot_pairs.size(),"refining edge selection");
+		//~ std::vector< std::pair<Size,Size> >::iterator it_pairs = pot_pairs.begin();
+		//~ std::vector< std::pair<DoubleReal,DoubleReal> >::iterator it_pairs_xcs = pot_pairs_xcs.begin();
 		edge_selection.clear();
+		Size edge_without_stddev(0);
 		for(Size i = 0; i < pot_pairs.size(); ++i)
 		{
-			logger.setProgress(i);
-			if(  boost::math::cdf(boost::math::normal(means[pot_pairs[i].first] ,stddevs[pot_pairs[i].first]), pot_pairs_xcs[i].first) >= 1-pairfilter_p_value and
-					 boost::math::cdf(boost::math::normal(means[pot_pairs[i].second] ,stddevs[pot_pairs[i].second]), pot_pairs_xcs[i].second) >= 1-pairfilter_p_value )
-			{
-				edge_selection.push_back(i);
-			}
+			logger.setProgress(i+experiment.size());
+			try{
+				if(  boost::math::cdf(boost::math::normal(means[pot_pairs[i].first] ,stddevs[pot_pairs[i].first]), pot_pairs_xcs[i].first) >= 1-pairs_p_value and
+						 boost::math::cdf(boost::math::normal(means[pot_pairs[i].second] ,stddevs[pot_pairs[i].second]), pot_pairs_xcs[i].second) >= 1-pairs_p_value )
+				{
+					edge_selection.push_back(i);
+				}
+			}catch(...){ ++edge_without_stddev; }
 		}
+		writeLog_(String(edge_without_stddev) + String(" edges had a spec without stddev anyway ..") );
 		for(Size i = 0; i < edge_selection.size(); ++i)
 		{
 			//~ edge_selection indices are alwas >= the ones to pot_pairs so no collision expected
@@ -253,7 +282,6 @@ using namespace std;
 		}
 		pot_pairs.resize(edge_selection.size());
 		logger.endProgress();
-
 		w.stop();
 		writeLog_(String(".. done, took ") + String(w.getClockTime()) + String(" seconds, selected ") + pot_pairs.size() + String(" edges.") );
 		w.reset();
@@ -273,30 +301,46 @@ using namespace std;
 		AntisymetricAlignment<Peak1D> asa;
 		asa.setParameters(asa_param);
 
-		PeakMap aligned_spectra; // aligned_spectra (s' is a subset of peaks from s - the aligned ones )
+		MSExperiment<Peak1D> aligned_spectra; // aligned_spectra (s' is a subset of peaks from s - the aligned ones )
 		std::vector<DoubleReal> mod_positions; // aligned_spectra (s' is a subset of peaks from s - the aligned ones )
 		std::vector< std::pair<Size,Size> >& aligned_pairs = pot_pairs; // indices of aligned_spectra in original experiment
 		logger.startProgress(0,aligned_pairs.size(),"finding putative modification positions");
+		edge_selection.clear();
 		for(Size i = 0; i < aligned_pairs.size(); ++i)
 		{
 			logger.setProgress(i);
 			MSSpectrum<Peak1D> res_1, res_2;
 			DoubleReal mod_pos, score;
 			asa.getAntisymetricAlignment(res_1, res_2, score, mod_pos, experiment[aligned_pairs[i].first], experiment[aligned_pairs[i].second]);
-			res_1.setMetaValue("original index", aligned_pairs[i].first);
-			res_1.setMetaValue("paired with index", aligned_pairs[i].second);
-			res_2.setMetaValue("original index", aligned_pairs[i].second);
-			res_2.setMetaValue("paired with index", aligned_pairs[i].first);
-			aligned_spectra.push_back(res_1);
-			aligned_spectra.push_back(res_2);
-			mod_positions.push_back(mod_pos);
-			/// @improvement scoring? what to do with scoring? thin out network??
+			/// @improvement make pairs_min_matches an advanced parameter
+			if((DoubleReal)res_1.size()/((DoubleReal)(experiment[aligned_pairs[i].first].size()+experiment[aligned_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio and res_1.size() >= pairs_min_matches)
+			{
+				edge_selection.push_back(i);
+				/// @improvement pot. speedup by removing MetaValues ?!
+				res_1.setMetaValue("original index", aligned_pairs[i].first);
+				res_1.setMetaValue("paired with index", aligned_pairs[i].second);
+				res_2.setMetaValue("original index", aligned_pairs[i].second);
+				res_2.setMetaValue("paired with index", aligned_pairs[i].first);
+				aligned_spectra.push_back(res_1);
+				aligned_spectra.push_back(res_2);
+				mod_positions.push_back(mod_pos);
+			}
 		}
+		for(Size i = 0; i < edge_selection.size(); ++i)
+		{
+			//~ edge_selection indices are alwas >= the ones to aligned_pairs so no collision expected
+			aligned_pairs[i] = aligned_pairs[edge_selection[i]];
+		}
+		aligned_pairs.resize(edge_selection.size());
 		logger.endProgress();
 
+		try{
+		String alignments(outputfile_name_edges + String(".alignmentspecs.mzML"));
+		mzml.store(alignments , aligned_spectra);
+		}catch(...){writeLog_(String(".. aligned spectra not separately saved .."));}
 
 		w.stop();
-		writeLog_(String(".. done, took") + String(w.getClockTime()) + String(" seconds, defined ") + String(aligned_pairs.size()) + String(" edges."));
+		writeLog_(String(".. done, took ") + String(w.getClockTime()) + String(" seconds, defined ") + String(aligned_pairs.size()) + String(" edges."));
 		w.reset();
 
 		/*-------------------------------------------------------/
@@ -324,49 +368,56 @@ using namespace std;
 
 		//orientate the specs - only neccessary if the spectra in pairs came from antisymmetric path alignment
 		logger.startProgress(0,indices_of_i_in_aligned_spectra.size(),"building consensuses");
-		Size progr(0);
+		Size progr(0), made_consensuses(0);
 		for(std::map< Size, std::set<Size> >::const_iterator it = indices_of_i_in_aligned_spectra.begin(); it != indices_of_i_in_aligned_spectra.end(); ++it)
 		{
 			logger.setProgress(progr);
-			std::vector< MSSpectrum<Peak1D> > unmerged;
-			unmerged.push_back(aligned_spectra[*(it->second.begin())]);
-
-			MSSpectrum<Peak1D> base(aligned_spectra[*(it->second.begin())]), rev_base(aligned_spectra[*(it->second.begin())]);
-			stars.reverseSpectrum(rev_base);
-
-			std::set<Size>::const_iterator others = it->second.begin();
-			++others;
-			for(; others != it->second.end(); ++others)
+			/// @improvement make consensus_min_size an advanced parameter
+			if(it->second.size()>=consensus_min_size and it->second.size()>1)
 			{
-				MSSpectrum<Peak1D> current(aligned_spectra[*others]);
-				//find matches to base in -parentmass_tolerance:peakmass_tolerance:+parentmass_tolerance shifts
-				DoubleReal best_score_base = x_corr.bestMatchIntensity(base, current); /// @improvement replace bestmatchintensity by something faster and cleverer
+				std::vector< MSSpectrum<Peak1D> > unmerged;
+				unmerged.push_back(aligned_spectra[*(it->second.begin())]);
 
-				//find matches to rev_base in -parentmass_tolerance:peakmass_tolerance:+parentmass_tolerance shifts
-				DoubleReal best_score_rev_base = x_corr.bestMatchIntensity(rev_base, current);
+				MSSpectrum<Peak1D> base(aligned_spectra[*(it->second.begin())]), rev_base(aligned_spectra[*(it->second.begin())]);
+				stars.reverseSpectrum(rev_base);
 
-				//take best, possibly reverse
-				if(best_score_base < best_score_rev_base)
+				std::set<Size>::const_iterator others = it->second.begin();
+				++others;
+				for(; others != it->second.end(); ++others)
 				{
-					stars.reverseSpectrum(current);
-				}
-				unmerged.push_back(current);
-			}
+					MSSpectrum<Peak1D> current(aligned_spectra[*others]);
+					/// @improvement replace bestmatchintensity by something cleverer (and maybe faster? but this is hard!)
+					//find matches to base in -parentmass_tolerance:peakmass_tolerance:+parentmass_tolerance shifts
+					DoubleReal best_score_base = x_corr.bestMatchIntensity(base, current);
 
-			//consensus building
-			experiment[it->first] = BinnedSpectrum<Peak1D>(consensus_sz, consensus_sp,unmerged);
-			experiment[it->first].setMetaValue("consensus", DataValue::EMPTY_VALUE);
+					//find matches to rev_base in -parentmass_tolerance:peakmass_tolerance:+parentmass_tolerance shifts
+					DoubleReal best_score_rev_base = x_corr.bestMatchIntensity(rev_base, current);
+
+					//take best, possibly reverse
+					if(best_score_base < best_score_rev_base)
+					{
+						stars.reverseSpectrum(current);
+					}
+					unmerged.push_back(current);
+				}
+
+				//consensus building
+				String nat_id(experiment[it->first].getNativeID());
+				experiment[it->first] = BinnedSpectrum<Peak1D>(consensus_sz, consensus_sp,unmerged);
+				experiment[it->first].setMetaValue("consensus", DataValue::EMPTY_VALUE);
+				experiment[it->first].setNativeID(nat_id);
+				++made_consensuses;
+			}
 			++progr;
 		}
 		logger.endProgress();
 
 		w.stop();
-		writeLog_(String(".. done, took ") + String(w.getClockTime()) + String(" seconds, made ") + String(experiment.size()) + String(" consensuses."));
+		writeLog_(String(".. done, took ") + String(w.getClockTime()) + String(" seconds, made ") + String(made_consensuses) + String(" consensuses."));
 		w.reset();
 
 		//~ save consensuses
 		writeLog_(String("Writing consensuses."));
-		MzMLFile mzml;
 		mzml.store(outputfile_name_consensus, experiment);
 
 		/*-----------------------------/
@@ -379,9 +430,10 @@ using namespace std;
 			writeLog_(String("Writing edges."));
 			for(Size i = 0; i < aligned_pairs.size()-1; ++i)
 			{
-				stars_txt.push_back(String(aligned_pairs[i].first) +String('-') +String(aligned_pairs[i].second) +String('-') +String(mod_positions[i]) +String('\n'));
+				/// @improvement save also the edges relation (i.e. equal/modified/ladder)
+				stars_txt.push_back(String(aligned_pairs[i].first) +String('#') +String(aligned_pairs[i].second) +String('#') +String(mod_positions[i]) +String('\n'));
 			}
-			stars_txt.push_back(String(aligned_pairs[aligned_pairs.size()-1].first) +String('-') +String(aligned_pairs[aligned_pairs.size()-1].second) +String('-') +String(mod_positions[aligned_pairs.size()-1]) +String("\r\n"));
+			stars_txt.push_back(String(aligned_pairs[aligned_pairs.size()-1].first) +String('#') +String(aligned_pairs[aligned_pairs.size()-1].second) +String('#') +String(mod_positions[aligned_pairs.size()-1]) +String("\r\n"));
 
 			stars_txt.store(outputfile_name_edges);
 		}
@@ -394,17 +446,8 @@ using namespace std;
 	}
 	///
 
-	void propagateNetwork_(MSExperiment<Peak1D>& experiment, ConsensusMap& ids, std::vector< std::pair<Size,Size> >& aligned_pairs, std::vector< DoubleReal > mod_positions)
+	void propagateNetwork_(MSExperiment<Peak1D>& experiment, std::vector< PeptideIdentification > peptide_ids, std::vector< ProteinIdentification > protein_ids, std::vector< std::pair<Size,Size> >& aligned_pairs, std::vector< DoubleReal > mod_positions, ConsensusMap& ids )
 	{
-
-		/*----------------------/
-		// calc. max hop number
-		/----------------------*/
-		int max_hops = 3 /* param.getValue("propagation_max_hops") */;
-
-		/*--------------------/
-		// build propagation
-		/--------------------*/
 		std::vector<String> prefixes;
 		prefixes.push_back("general:");
 		prefixes.push_back("network:");
@@ -412,15 +455,62 @@ using namespace std;
 		star_param.insert("",getParam_().copy(prefixes[0],true));
 		star_param.insert("",getParam_().copy(prefixes[1],true));
 
+		/*----------------------/
+		// calc. max hop number
+		/----------------------*/
+		/// @improvement calc max hop(from average connectivity) and set in star_param and make boolean use intelligent hop_calc an advanced parameter
+		//~ int max_hops = param.getValue("network:max_hops");
+
+		/*--------------------/
+		// build propagation
+		/--------------------*/
 		StarClusters<Peak1D> sc;
 		sc.setParameters(star_param);
-		sc.propagateNetwork(experiment, ids, aligned_pairs, mod_positions, max_hops);
+		sc.propagateNetwork(experiment, peptide_ids, protein_ids, aligned_pairs, mod_positions, ids);
 
-		/*---------------------------/
-		// score and export network
-		/---------------------------*/
+		/*------------/
+		// score etc.
+		/------------*/
+		/// @improvement add featurehandles for those edges with fabs(pm_diff) < pm_tol and sufficient match and copy peptidehits if no id
 		/// @improvement dont punish to hard if spectrum does cover only a part of/or more than the sequence - e.g maybe mod that shortened the pep
+		/// @improvement txt output of peptide laddering sequences
+		/// @improvement prepare featurehandles(metainfo?!) for colorization/different linestyle
+		Size c(0);
+		for(ConsensusMap::Iterator ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
+		{
+			if(ids_it->getPeptideIdentifications().front().empty())
+			{
+				ids_it->getPeptideIdentifications().clear();
+				++c;
+			}
+		}
+		writeLog_(String("unknowns ") + String(c));
 
+		std::vector<String> colors;
+		colors.push_back("#00FFFF");
+		colors.push_back("#000000");
+		colors.push_back("#0000FF");
+		colors.push_back("#FF00FF");
+		colors.push_back("#008000");
+		colors.push_back("#808080");
+		colors.push_back("#00FF00");
+		colors.push_back("#800000");
+		colors.push_back("#000080");
+		colors.push_back("#808000");
+		colors.push_back("#800080");
+		colors.push_back("#FF0000");
+		colors.push_back("#C0C0C0");
+		colors.push_back("#008080");
+		colors.push_back("#FFFF00");
+		for(ConsensusMap::Iterator ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
+		{
+			if(ids_it->metaValueExists("network id"))
+			{
+				ids_it->setMetaValue("color", colors[(Size)ids_it->getMetaValue("network id")%colors.size()]);
+				//~ set intensity for coloration
+				ids_it->setIntensity(1000*((Size)ids_it->getMetaValue("network id"))%colors.size());
+			}
+		}
 
 		return;
 	}
@@ -505,7 +595,7 @@ using namespace std;
 			}
 
 			w.stop();
-			writeLog_(String("done  .. took") + String(w.getClockTime()) + String(" seconds, loaded ") + String(experiment.size()) + String(" spectra"));
+			writeLog_(String("done  .. took ") + String(w.getClockTime()) + String(" seconds, loaded ") + String(experiment.size()) + String(" spectra"));
 			w.reset();
 
 			w.start();
@@ -514,11 +604,11 @@ using namespace std;
 			std::vector< std::pair<Size,Size> > aligned_pairs;
 			std::vector< DoubleReal > mod_positions;
 			TextFile stars_txt;
-			stars_txt.store(network_file);
+			stars_txt.load(network_file);
 			for(Size i = 0; i < stars_txt.size(); ++i)
 			{
 				std::vector< String > splits;
-				stars_txt[i].split('-',splits);
+				stars_txt[i].split('#',splits);
 				if(splits.size()!=3)
 				{
 					writeLog_(String("Invalid input, aborting!"));
@@ -537,38 +627,38 @@ using namespace std;
 			}
 
 			w.stop();
-			writeLog_(String(" done  .. took") + String(w.getClockTime()) + String(" seconds, loaded ") + String(aligned_pairs.size()) + String(" edges"));
+			writeLog_(String("done  .. took ") + String(w.getClockTime()) + String(" seconds, loaded ") + String(aligned_pairs.size()) + String(" edges"));
 			w.reset();
 
 			w.start();
 			writeLog_(String("Loading identifications to nodes from ") + ids_file +  String(" ..") );
 
-			//~ adopt identification
-			ConsensusMap ids;
-			try
-			{
-				IdXMLFile idxml;
-				IDMapper idm;
-				std::vector< ProteinIdentification > protein_ids;
-				std::vector< PeptideIdentification > peptide_ids;
+			IdXMLFile idxml;
+			std::vector< ProteinIdentification > protein_ids;
+			std::vector< PeptideIdentification > peptide_ids;
+			try{
 				idxml.load(ids_file, protein_ids, peptide_ids);
-				idm.annotate(ids,peptide_ids,protein_ids);
-			}
-			catch(...)
-			{
+			}catch(...){
 				writeLog_(String("Invalid input, aborting!"));
 				return PARSE_ERROR;
 			}
 
 			w.stop();
-			writeLog_(String(" done  .. took") + String(w.getClockTime()) + String(" seconds, loaded ") + String(ids.size()) + String(" ids"));
+			writeLog_(String(" done  .. took ") + String(w.getClockTime()) + String(" seconds, loaded ") + String(peptide_ids.size()) + String(" ids"));
 			w.reset();
 
+			w.start();
 
 			//~ start propagation
-			propagateNetwork_(experiment, ids, aligned_pairs, mod_positions);
+			ConsensusMap ids;
+			propagateNetwork_(experiment, peptide_ids, protein_ids, aligned_pairs, mod_positions, ids);
 			ConsensusXMLFile cxml;
+			writeLog_(String("Saving propagated network ..") );
 			cxml.store(outputfile_name_specnet, ids);
+
+			w.stop();
+			writeLog_(String("All done. Saving took ") + String(w.getClockTime()) + String(" seconds. Ready to investigate in TOPPView."));
+			w.reset();
 		}
 		else
 		{

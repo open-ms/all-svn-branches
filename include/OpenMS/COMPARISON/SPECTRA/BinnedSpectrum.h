@@ -216,18 +216,16 @@ namespace OpenMS
 		{
 			if((int)overall_number.at(n) >= min_peak_concurrence)
 			{
-				bins_[n] = bins_.at(n) / overall_number.at(n);
-				overall_center[n] = overall_center.at(n) / overall_number.at(n);
+				bins_[n] = bins_.at(n) / (Real)overall_number.at(n);
+				overall_center[n] = overall_center.at(n) / (Real)overall_number.at(n);
 			}
 		}
 
-		MSSpectrum<>::FloatDataArray synthetics;
-		synthetics.setName("synthetic consensus peaks");
-
+		std::vector<Real> synthetics;
 		//~ from merged bins fill peaks in integrated MSSpectrum
 		for(Size n = 0; n < bins_.size(); ++n)
 		{
-			if((int)overall_number.at(n) >= min_peak_concurrence)
+			if((int)overall_number.at(n) >= min_peak_concurrence and (int)overall_number.at(n) > 0)
 			{
 				PeakT tmp;
 				tmp.setIntensity(bins_[n]);
@@ -239,7 +237,9 @@ namespace OpenMS
 		this->setRT(unmerged.front().getRT());
 		this->setPrecursors(unmerged.front().getPrecursors());
 		this->setMSLevel(unmerged.front().getMSLevel());
-		this->getFloatDataArrays().insert(this->getFloatDataArrays().begin(), synthetics); // imperative that inserted befor sorting
+		this->getFloatDataArrays().resize(1); // imperative that we have one
+		std::swap(this->getFloatDataArrays().front(), synthetics); // imperative that inserted befor sorting
+		this->getFloatDataArrays().front().setName("synthetic consensus peaks");
 		this->sortByPosition();
 	}
 

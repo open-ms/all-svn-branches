@@ -1505,7 +1505,7 @@ namespace OpenMS
 			@param left_matches will contain the valid match jumps to the left of index
 			@param right_matches will contain the valid match jumps to the right of index
 		*/
-		void findMatchingJumps(Size& index, SpectrumType& s1sym, std::vector<Real>& jump_masses,
+		void getAASteps(Size& index, SpectrumType& s1sym, std::vector<Real>& jump_masses,
 						std::vector<int>& leftMatches, std::vector<int>& rightMatches) const
 		{
 			Real peak_tolerance = (Real)param_.getValue("peak_tolerance");
@@ -1684,8 +1684,9 @@ namespace OpenMS
 		{
 			//~ float sameVertexPenalty=-5, float ptmPenalty=-5, bool forceSymmetry=true, bool addZPMmatches=false
 
-			Real peak_tolerance = (double)param_.getValue("peak_tolerance");
-			DoubleReal min_dist = (double)param_.getValue("min_dist");
+			Real peak_tolerance = param_.getValue("peak_tolerance");
+			DoubleReal pm_tolerance = param_.getValue("parentmass_tolerance");
+			DoubleReal min_dist = param_.getValue("min_dist");
 
 			DoubleReal pm_s1 = s1.getPrecursors().front().getMZ();
 			int c_s1 = s1.getPrecursors().front().getCharge();
@@ -1698,7 +1699,7 @@ namespace OpenMS
 			DoubleReal pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
 			/* debug std::cout << pm_diff << std::endl; */
 
-			if(pm_diff < 0)
+			if(pm_diff <= -pm_tolerance)
 			{
 				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite is the s1-precursor mz is not greater than s2-precursor mz");
 			}
@@ -1948,7 +1949,7 @@ namespace OpenMS
 				/* debug  std::cout << " prev: "<< prev[i] << " prev2: " << prev2[i] << std::endl;*/
 				/* debug  std::cout << " next: "<< next[i] << " next2: " << next2[i] << std::endl;*/
 
-				findMatchingJumps(i, res_1, jump_masses, left_jumps[i], right_jumps[i]);
+				getAASteps(i, res_1, jump_masses, left_jumps[i], right_jumps[i]);
 				Size neighbor_count=0, jumps_count=0;
 				left_neighbors[i].resize(left_jumps[i].size());
 				left_jumps2[i].resize(left_jumps[i].size());
@@ -2047,7 +2048,7 @@ namespace OpenMS
 			{
 				if(asym_align.second.second.size()==0)
 				{
-					mod_pos = pm_s1;  // No peaks in idx2 => mod at the end
+					mod_pos = /* pm_s1 */-1;  // No peaks in idx2 => mod at the end
 					(res_1.getIntegerDataArrays().begin()+1)->at(num_aligned_peaks-1)=-1;
 					(res_2.getIntegerDataArrays().begin()+1)->at(num_aligned_peaks-1)=-1;
 				}

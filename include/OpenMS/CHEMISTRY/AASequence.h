@@ -373,10 +373,10 @@ namespace OpenMS
 			void setModification(Size index, const String& modification);
 
 			/// set the indesignated modification of the residue at position index
-			void setIndesignatedModification(Size index, const DoubleReal& modification);
+			void setIndesignatedModification(Size index, const DoubleReal modification);
 
 			/// get the indesignated modification of the residue at position index
-			const DoubleReal& getIndesignatedModification(Size index);
+			DoubleReal getIndesignatedModification(Size index);
 
 			/// sets the N-terminal modification
 			void setNTerminalModification(const String& modification);
@@ -551,8 +551,6 @@ namespace OpenMS
 
 		protected:
 
-			std::map<Size,DoubleReal> indesignated_modifications_;
-
 			std::vector<const Residue*> peptide_;
 
 			String sequence_string_;
@@ -566,6 +564,8 @@ namespace OpenMS
 			const ResidueModification* n_term_mod_;
 
 			const ResidueModification* c_term_mod_;
+
+			std::map<Size,DoubleReal> indesignated_modifications_;
 	};
 
 	OPENMS_DLLAPI std::ostream& operator << (std::ostream& os, const AASequence& peptide);

@@ -354,34 +354,47 @@ namespace OpenMS
 					}
 					ContainerType::swap(tmp);
 
+
 					for (Size i=0; i < float_data_arrays_.size(); ++i)
 					{
-						std::vector<Real> mda_tmp;
-						for (Size j=0; j < float_data_arrays_[i].size(); ++j)
+						if(float_data_arrays_[i].size() == ContainerType::size())
 						{
-							mda_tmp.push_back(*(float_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							std::vector<Real> mda_tmp;
+							mda_tmp.reserve(ContainerType::size());
+							for (Size j=0; j < float_data_arrays_[i].size(); ++j)
+							{
+								mda_tmp.push_back(*(float_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							}
+							std::swap(float_data_arrays_[i],mda_tmp);
 						}
-						float_data_arrays_[i].swap(mda_tmp);
 					}
 
 					for (Size i=0; i < string_data_arrays_.size(); ++i)
 					{
-						std::vector<String> mda_tmp;
-						for (Size j=0; j < string_data_arrays_[i].size(); ++j)
+						if(string_data_arrays_[i].size() == ContainerType::size())
 						{
-							mda_tmp.push_back(*(string_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							std::vector<String> mda_tmp;
+							mda_tmp.reserve(ContainerType::size());
+							for (Size j=0; j < string_data_arrays_[i].size(); ++j)
+							{
+								mda_tmp.push_back(*(string_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							}
+							std::swap(string_data_arrays_[i],mda_tmp);
 						}
-						string_data_arrays_[i].swap(mda_tmp);
 					}
 
 					for (Size i=0; i < integer_data_arrays_.size(); ++i)
 					{
-						std::vector<Int> mda_tmp;
-						for (Size j=0; j < integer_data_arrays_[i].size(); ++j)
+						if(integer_data_arrays_[i].size() == ContainerType::size())
 						{
-							mda_tmp.push_back(*(integer_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							std::vector<Int> mda_tmp;
+							mda_tmp.reserve(ContainerType::size());
+							for (Size j=0; j < integer_data_arrays_[i].size(); ++j)
+							{
+								mda_tmp.push_back(*(integer_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							}
+							std::swap(integer_data_arrays_[i],mda_tmp);
 						}
-						integer_data_arrays_[i].swap(mda_tmp);
 					}
 				}
 			}
@@ -418,34 +431,44 @@ namespace OpenMS
 
 					for (Size i=0; i < float_data_arrays_.size(); ++i)
 					{
-						std::vector<Real> mda_tmp;
-						mda_tmp.reserve(ContainerType::size());
-						for (Size j=0; j < float_data_arrays_[i].size(); ++j)
+						if(float_data_arrays_[i].size() == ContainerType::size())
 						{
-							mda_tmp.push_back(*(float_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							std::vector<Real> mda_tmp;
+							mda_tmp.reserve(ContainerType::size());
+							for (Size j=0; j < float_data_arrays_[i].size(); ++j)
+							{
+								mda_tmp.push_back(*(float_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							}
+							std::swap(float_data_arrays_[i],mda_tmp);
 						}
-						std::swap(float_data_arrays_[i],mda_tmp);
 					}
 
 					for (Size i=0; i < string_data_arrays_.size(); ++i)
 					{
-						std::vector<String> mda_tmp;
-						mda_tmp.reserve(ContainerType::size());
-						for (Size j=0; j < string_data_arrays_[i].size(); ++j)
+						if(string_data_arrays_[i].size() == ContainerType::size())
 						{
-							mda_tmp.push_back(*(string_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							std::vector<String> mda_tmp;
+							mda_tmp.reserve(ContainerType::size());
+							for (Size j=0; j < string_data_arrays_[i].size(); ++j)
+							{
+								mda_tmp.push_back(*(string_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							}
+							std::swap(string_data_arrays_[i],mda_tmp);
 						}
-						std::swap(string_data_arrays_[i],mda_tmp);
 					}
 
 					for (Size i=0; i < integer_data_arrays_.size(); ++i)
 					{
-						std::vector<Int> mda_tmp;
-						for (Size j=0; j < integer_data_arrays_[i].size(); ++j)
+						if(integer_data_arrays_[i].size() == ContainerType::size())
 						{
-							mda_tmp.push_back(*(integer_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							std::vector<Int> mda_tmp;
+							mda_tmp.reserve(ContainerType::size());
+							for (Size j=0; j < integer_data_arrays_[i].size(); ++j)
+							{
+								mda_tmp.push_back(*(integer_data_arrays_[i].begin()+(sorted_indices[j].second)));
+							}
+							std::swap(integer_data_arrays_[i],mda_tmp);
 						}
-						std::swap(integer_data_arrays_[i],mda_tmp);
 					}
 				}
 			}

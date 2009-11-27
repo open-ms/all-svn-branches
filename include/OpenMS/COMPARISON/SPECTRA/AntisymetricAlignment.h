@@ -2057,9 +2057,9 @@ namespace OpenMS
 					mod_pos=peaks[asym_align.second.second[0]];  // Otherwise mod was placed at the first mass of res
 					(res_1.getIntegerDataArrays().begin()+1)->at(asym_align.second.first.size())=1;
 					(res_2.getIntegerDataArrays().begin()+1)->at(asym_align.second.first.size())=1;
+					/* debug */ std::cout << mod_pos << std::endl;
 				}
 			}
-			/* debug  std::cout << mod_pos << std::endl;*/
 
 			/* debug  std::cout << " creating spectra: ";*/
 			typename SpectrumType::IntegerDataArray& ida_ref = *(res_1.getIntegerDataArrays().begin()+2);

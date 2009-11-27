@@ -421,7 +421,7 @@ namespace OpenMS
 				if(!ids_it->getPeptideIdentifications().front().getHits().empty())
 				{
 					ids_it->getPeptideIdentifications().front().sort();
-					ids_it->getPeptideIdentifications().front().assignRanks();
+					//~ ids_it->getPeptideIdentifications().front().assignRanks();
 
 					ids_it->setMetaValue("network id", net_ids);
 					++net_ids;
@@ -527,7 +527,7 @@ namespace OpenMS
 
 							/* debug */std::cout << " attempting annotation from spec" << (*it_neighbors) << " on mod_pos " << mod_pos << " and mod_shift " << -pm_diff;
 
-							for(Size k = 0; k < ids[*it_neighbors].getPeptideIdentifications().front().getHits().size(); ++k)
+							for(Size k = 0; k < ids[*it_neighbors].getPeptideIdentifications().front().getHits().size() and k < hops; ++k)
 							{
 								AASequence template_sequence(ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].getSequence()), modified_sequence; /// @improvement find out if annotate with _all_ hits from annotating_neighbor is better
 
@@ -540,7 +540,7 @@ namespace OpenMS
 									int charge = ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].getCharge();
 									PeptideHit hit(0,0,charge,modified_sequence); /// @attention score and rank have to be set after intensity and peakmatch coverage evaluation (own step)
 
-									current_annotations.getPeptideIdentifications().front().setIdentifier(ids[*it_neighbors].getPeptideIdentifications().front().getIdentifier());
+									hit.setMetaValue("IdentificationIdentifier", ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].getMetaValue("IdentificationIdentifier"));
 
 									FeatureHandle annotator;
 									//~ define edge
@@ -689,8 +689,6 @@ namespace OpenMS
 				++conflict_map_it;
 			}
 
-			/* debug */std::cout << "duudt" << std::endl;
-
 			std::map< Size, Size > conter_conflict_map;
 			for(std::map< Size, std::set<Size> >::iterator conflict_map_it = conflict_map.begin(); conflict_map_it != conflict_map.end(); ++conflict_map_it)
 			{
@@ -704,11 +702,15 @@ namespace OpenMS
 				if(ids_it->metaValueExists("network id"))
 				{
 					ids_it->setQuality( ids_it->getPeptideIdentifications().front().getHits().front().getScore() );
+
 					std::map< Size, Size >::iterator cur_it = conter_conflict_map.find((Size)ids_it->getMetaValue("network id"));
 					if(cur_it != conter_conflict_map.end())
 					{
 						ids_it->setMetaValue("network id", cur_it->second);
 					}
+
+					/// @todo this makes the annotations stay and not viewable at the moment in toppview - adapt toppview to indesignated modifications
+					ids_it->getPeptideIdentifications().front().setIdentifier(ids_it->getPeptideIdentifications().front().getHits().front().getMetaValue("IdentificationIdentifier"));
 				}
 			}
 

@@ -84,7 +84,7 @@ namespace OpenMS
 		{
 			mzToXAxis(false);
 		}
-		
+
 		//connect preferences change to the right slot
 		connect(this,SIGNAL(preferencesChange()),this,SLOT(currentLayerParamtersChanged_()));
 	}
@@ -96,7 +96,7 @@ namespace OpenMS
 	void Spectrum2DCanvas::highlightPeak_(QPainter& painter, const PeakIndex& peak)
 	{
 		if (!peak.isValid()) return;
-		
+
 		//determine coordinates;
 		QPoint pos;
 		if (getCurrentLayer().type==LayerData::DT_FEATURE)
@@ -111,12 +111,12 @@ namespace OpenMS
 		{
 			dataToWidget_(peak.getFeature(getCurrentLayer().consensus).getMZ(), peak.getFeature(getCurrentLayer().consensus).getRT(), pos);
 		}
-		
+
 		//paint highlighed peak
 		painter.save();
 		painter.setPen(QPen(Qt::red, 2));
 		painter.drawEllipse(pos.x() - 5, pos.y() - 5, 10, 10);
-		
+
 		//restore painter
 		painter.restore();
 	}
@@ -194,7 +194,7 @@ namespace OpenMS
 	void Spectrum2DCanvas::paintDots_(Size layer_index, QPainter& painter)
 	{
 		const LayerData& layer = getLayer(layer_index);
-		
+
 		//update factors (snap and percentage)
 		DoubleReal snap_factor = snap_factors_[layer_index];
 		percentage_factor_ = 1.0;
@@ -220,7 +220,7 @@ namespace OpenMS
 		//temporary variables
 		Int image_width = buffer_.width();
 		Int image_height = buffer_.height();
-		
+
 		if (layer.type==LayerData::DT_PEAK) //peaks
 		{
 			//renaming some values for readability
@@ -238,7 +238,7 @@ namespace OpenMS
 				rt_pixel_count = image_width;
 				mz_pixel_count = image_height;
 			}
-			
+
 			//-----------------------------------------------------------------------------------------------
 			//determine if we want to draw dots or crosses (this also influences the way the data is painted)
 			//determine number of shown scans
@@ -263,7 +263,7 @@ namespace OpenMS
 					}
 				}
 			}
-			
+
 			//-----------------------------------------------------------------------------------------------
 			//paint dots (many data points): we paint the maximum shown intensity per pixel
 			if (peaks*scans>0.25*mz_pixel_count*rt_pixel_count)
@@ -271,15 +271,15 @@ namespace OpenMS
 				//calculate pixel size in data coordinates
 				DoubleReal rt_step_size = (rt_max - rt_min) / rt_pixel_count;
 				DoubleReal mz_step_size = (mz_max - mz_min) / mz_pixel_count;
-				
+
 				//iterate over all pixels (RT dimension)
 				Size scan_index = 0;
 				for (Int rt=0; rt<rt_pixel_count; ++rt)
 				{
-					DoubleReal rt_start = rt_min + rt_step_size * rt; 
-					DoubleReal rt_end = rt_start + rt_step_size; 
+					DoubleReal rt_start = rt_min + rt_step_size * rt;
+					DoubleReal rt_end = rt_start + rt_step_size;
 					//cout << "rt: " << rt << " (" << rt_start << " - " << rt_end << ")" << endl;
-					
+
 					//determine the relevant spectra and reserve an array for the peak indices
 					vector<Size> scan_indices, peak_indices;
 					for (Size i=scan_index; i<map.size(); ++i)
@@ -300,13 +300,13 @@ namespace OpenMS
 					//cout << "  scans: " << scan_indices.size() << endl;
 
 					if (scan_indices.size()==0) continue;
-					
+
 					//iterate over all pixels (m/z dimension)
 					for (Int mz=0; mz<mz_pixel_count; ++mz)
 					{
 						DoubleReal mz_start = mz_min + mz_step_size * mz;
-						DoubleReal mz_end = mz_start + mz_step_size; 
-						
+						DoubleReal mz_end = mz_start + mz_step_size;
+
 						//iterate over all relevant peaks in all relevant scans
 						Real max = -1.0;
 						for (Size i=0; i<scan_indices.size(); ++i)
@@ -323,7 +323,7 @@ namespace OpenMS
 							}
 							peak_indices[i] = p; //store last peak index for next m/z pixel
 						}
-						
+
 						//draw to buffer
 						if (max>=0.0)
 						{
@@ -465,12 +465,33 @@ namespace OpenMS
 					dataToWidget_(i->getMZ(),i->getRT(),pos);
 					if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
 					{
-						buffer_.setPixel(pos.x()   ,pos.y()   ,color);
-						buffer_.setPixel(pos.x()-1 ,pos.y()   ,color);
-						buffer_.setPixel(pos.x()+1 ,pos.y()   ,color);
-						buffer_.setPixel(pos.x()   ,pos.y()-1 ,color);
-						buffer_.setPixel(pos.x()   ,pos.y()+1 ,color);
+							painter.save();
+							painter.setPen(color);
+							painter.setBrush(QBrush(QColor(color),Qt::SolidPattern));
+							int s = 6;
+							int s_half = (int)s/2;
+							painter.drawEllipse(QRectF(pos.x()-s_half,pos.y()-s_half,s,s));
+							painter.restore();
 					}
+					//~ paint outer ring if its a dbid
+					if(i->metaValueExists("DBid"))
+					{
+						QRgb color = Qt::darkGreen;
+						//paint
+						QPoint pos;
+						dataToWidget_(i->getMZ(),i->getRT(),pos);
+						if (pos.x()>6 && pos.y()>6 && pos.x()<image_width-1 && pos.y()<image_height-1)
+						{
+							painter.save();
+							painter.setPen(color);
+							painter.setBrush(QBrush(QColor(color),Qt::DiagCrossPattern));
+							int s = 6;
+							int s_half = (int)s/2;
+							painter.drawEllipse(QRectF(pos.x()-s_half,pos.y()-s_half,s,s));
+							painter.restore();
+						}
+					}
+
 				}
 			}
 		}
@@ -1040,7 +1061,7 @@ namespace OpenMS
 	  cout << "  Visible area -- m/z: " << visible_area_.minX() << " - " << visible_area_.maxX() << " rt: " << visible_area_.minY() << " - " << visible_area_.maxY() << endl;
 	  cout << "  Overall area -- m/z: " << overall_data_range_.min()[0] << " - " << overall_data_range_.max()[0] << " rt: " << overall_data_range_.min()[1] << " - " << overall_data_range_.max()[1] << endl;
 #endif
-		
+
 		//timing
 		QTime overall_timer;
 		if (show_timing_)
@@ -1048,14 +1069,14 @@ namespace OpenMS
 			overall_timer.start();
 			if (update_buffer_)
 			{
-				cout << "Updating buffer:" << endl;				
+				cout << "Updating buffer:" << endl;
 			}
 			else
 			{
-				cout << "Copying buffer:" << endl;				
+				cout << "Copying buffer:" << endl;
 			}
 		}
-		
+
 		QPainter painter;
 		if (update_buffer_)
 		{
@@ -1067,7 +1088,7 @@ namespace OpenMS
 			buffer_.fill(QColor(param_.getValue("background_color").toQString()).rgb());
 			painter.begin(&buffer_);
 			QTime layer_timer;
-			
+
 			for (Size i=0; i<getLayerCount(); i++)
 			{
 				//timing
@@ -1075,7 +1096,7 @@ namespace OpenMS
 				{
 					layer_timer.start();
 				}
-				
+
 				if (getLayer(i).visible)
 				{
 					if (getLayer(i).type==LayerData::DT_PEAK)
@@ -1166,7 +1187,7 @@ namespace OpenMS
 
 			highlightPeak_(painter, measurement_start_);
 		}
-		
+
 		//draw convex hulls or consensus feature elements
 		if (selected_peak_.isValid())
 		{
@@ -1186,7 +1207,7 @@ namespace OpenMS
 		{
 			highlightPeak_(painter, selected_peak_);
 		}
-		
+
 		//draw delta for measuring
 		if (action_mode_==AM_MEASURE && measurement_start_.isValid() && selected_peak_.isValid())
 		{
@@ -1242,7 +1263,7 @@ namespace OpenMS
 		QPoint pos = e->pos();
 		PointType data_pos = widgetToData_(pos);
 		emit sendCursorStatus( data_pos[0], data_pos[1]);
-					
+
 	  PeakIndex near_peak = findNearestPeak_(pos);
 
 		//highlight current peak and display peak coordinates
@@ -1599,7 +1620,7 @@ namespace OpenMS
 				context_menu->addMenu(meta);
 				context_menu->addSeparator();
 			}
-			
+
 			//add modifiable flag
 			settings_menu->addSeparator();
  			settings_menu->addAction("Toggle edit/view mode");
@@ -1702,11 +1723,11 @@ namespace OpenMS
 			}
 			else if (result->text()=="Show/hide numbers/labels")
 			{
-				if (layer.label==LayerData::L_NONE) 
+				if (layer.label==LayerData::L_NONE)
 				{
 					getCurrentLayer_().label=LayerData::L_META_LABEL;
 				}
-				else 
+				else
 				{
 					getCurrentLayer_().label=LayerData::L_NONE;
 				}
@@ -1998,7 +2019,7 @@ namespace OpenMS
 				}
 				cout << "peaks: " << getLayer(i).peaks.getSize() << " time: " << timer.elapsed() / 10.0 << endl;
 			}
-			
+
 			//Scaling with resolution
 			for (UInt i=250; i<3001; i+=250)
 			{
@@ -2059,7 +2080,7 @@ namespace OpenMS
 	void Spectrum2DCanvas::mouseDoubleClickEvent(QMouseEvent* e)
 	{
 		LayerData& current_layer = getCurrentLayer_();
-		
+
 		if (current_layer.modifiable && current_layer.type==LayerData::DT_FEATURE)
 		{
 			Feature tmp;
@@ -2085,7 +2106,7 @@ namespace OpenMS
 					current_layer.features.push_back(tmp);
 				}
 			}
-			
+
 			//update gradient if the min/max intensity changes
 			if (tmp.getIntensity()<current_layer.features.getMinInt() || tmp.getIntensity()>current_layer.features.getMaxInt())
 			{
@@ -2098,7 +2119,7 @@ namespace OpenMS
 				update_buffer_ = true;
 				update_(__PRETTY_FUNCTION__);
 			}
-			
+
 			modificationStatus_(activeLayerIndex(), true);
 		}
 	}

@@ -21,14 +21,15 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Stephan Aiche$
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_KERNEL_MSEXPERIMENT_H
 #define OPENMS_KERNEL_MSEXPERIMENT_H
 
 #include <OpenMS/KERNEL/MSSpectrum.h>
+#include <OpenMS/KERNEL/MSChromatogram.h>
 #include <OpenMS/METADATA/ExperimentalSettings.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <OpenMS/FORMAT/DB/PersistentObject.h>
@@ -56,7 +57,7 @@ namespace OpenMS
 
 		@ingroup Kernel
 	*/
-	template <typename PeakT = Peak1D>
+	template <typename PeakT = Peak1D, typename ChromatogramPeakT = ChromatogramPeak>
 	class MSExperiment
 		:	public std::vector<MSSpectrum<PeakT> >,
 			public RangeManager<2>,
@@ -68,6 +69,8 @@ namespace OpenMS
 			//@{
 			/// Peak type
 			typedef PeakT PeakType;
+			/// Chromatogram peak type
+			typedef ChromatogramPeakT ChromatogramPeakType;
 			/// Area type
 			typedef DRange<2> AreaType;
 			/// Coordinate type of peak positions
@@ -78,6 +81,8 @@ namespace OpenMS
 			typedef RangeManager<2> RangeManagerType;
 			/// Spectrum Type
 			typedef MSSpectrum<PeakType> SpectrumType;
+			/// Chromatogram type
+			typedef MSChromatogram<ChromatogramPeakType> ChromatogramType;
 			/// STL base class type
 			typedef std::vector<SpectrumType> Base;
 			//@}
@@ -112,7 +117,8 @@ namespace OpenMS
 				ExperimentalSettings(source),
 				PersistentObject(source),
 				ms_levels_(source.ms_levels_),
-				total_size_(source.total_size_)
+				total_size_(source.total_size_),
+				chromatograms_(source.chromatograms_)
 			{
 			}
 
@@ -128,6 +134,7 @@ namespace OpenMS
 
 				ms_levels_           = source.ms_levels_;
 				total_size_					 = source.total_size_;
+				chromatograms_       = source.chromatograms_;
         
         //no need to copy the alloc?!
         //alloc_
@@ -146,7 +153,7 @@ namespace OpenMS
 			/// Equality operator
 			bool operator== (const MSExperiment& rhs) const
 			{
-				return ExperimentalSettings::operator==(rhs) && std::operator==(rhs,*this);
+				return ExperimentalSettings::operator==(rhs) && std::operator==(rhs,*this) && chromatograms_ == rhs.chromatograms_;
 			}
 			/// Equality operator
 			bool operator!= (const MSExperiment& rhs) const
@@ -330,7 +337,7 @@ namespace OpenMS
 				total_size_ = 0;
 
 				//empty
-				if (this->size()==0)
+				if (this->size()==0 && chromatograms_.size() == 0)
 				{
 					return;
 				}
@@ -369,6 +376,36 @@ namespace OpenMS
 					}
 				}
 				std::sort(ms_levels_.begin(), ms_levels_.end());
+
+				if (this->chromatograms_.size() == 0)
+				{
+					return;
+				}				
+
+				//TODO CHROM update intensity, m/z and RT according to chromatograms as well! (done????)
+
+				for (typename std::vector<ChromatogramType>::iterator it = chromatograms_.begin(); it != chromatograms_.end(); ++it)
+				{
+					// update MZ
+					if (it->getMZ() < RangeManagerType::pos_range_.minY()) RangeManagerType::pos_range_.setMinY(it->getMZ());
+					if (it->getMZ() > RangeManagerType::pos_range_.maxY()) RangeManagerType::pos_range_.setMaxY(it->getMZ());
+
+					// do not update RT and in if the specturm is empty
+					if (it->size() == 0) continue;
+
+					total_size_ += it->size();
+
+					it->updateRanges();
+
+					// RT
+					if (it->getMin()[0] < RangeManagerType::pos_range_.minX()) RangeManagerType::pos_range_.setMinX(it->getMin()[0]);
+					if (it->getMax()[0] > RangeManagerType::pos_range_.maxX()) RangeManagerType::pos_range_.setMaxX(it->getMax()[0]);
+
+					// int
+					if (it->getMinInt() < RangeManagerType::int_range_.minX()) RangeManagerType::int_range_.setMinX(it->getMinInt());
+          if (it->getMaxInt() > RangeManagerType::int_range_.maxX()) RangeManagerType::int_range_.setMaxX(it->getMaxInt());
+					
+				}
 			}
 
 			/// returns the minimal m/z value
@@ -438,6 +475,26 @@ namespace OpenMS
 					}
 				}
 			}
+
+			/** 
+				@brief Sorts the data points of the chromatograms by m/z
+
+				@param sort_rt if @em true, chromatograms are sorted by rt position as well
+			*/
+			void sortChromatograms(bool sort_rt = true)
+			{
+				// sort the chromatograms according to their product m/z
+				std::sort(chromatograms_.begin(), chromatograms_.end(), typename ChromatogramType::MZLess());
+
+				if (sort_rt)
+				{
+					for (typename std::vector<ChromatogramType>::iterator it = chromatograms_.begin(); it != chromatograms_.end(); ++it)
+					{
+						it->sortByPosition();
+					}
+				}
+			}
+			
 			/**
 				@brief Checks if all spectra are sorted with respect to ascending RT
 				
@@ -458,6 +515,7 @@ namespace OpenMS
 						if (!this->operator[](i).isSorted()) return false;
 					}
 				}
+				// TODO CHROM
 				return true;
 			}
 			//@}
@@ -546,13 +604,54 @@ namespace OpenMS
 				tmp.PersistentObject::operator=(*this);
 				this->PersistentObject::operator=(from);
 				from.PersistentObject::operator=(tmp);
-							
+			
+				// swap chromatograms
+				std::swap(chromatograms_, from.chromatograms_);
+
 				//swap peaks
 				Base::swap(from);
 
 				//swap remaining members
 				ms_levels_.swap(from.ms_levels_);
 				std::swap(total_size_,from.total_size_);
+			}
+
+			/// sets the chromatogram list
+			void setChromatograms(const std::vector<MSChromatogram<ChromatogramPeakType> >& chromatograms)
+			{
+				chromatograms_ = chromatograms;
+			}
+
+			/// adds a chromatogram to the list
+			void addChromatogram(const MSChromatogram<ChromatogramPeakType> & chromatogram)
+			{
+				chromatograms_.push_back(chromatogram);
+			}
+
+			/// returns the chromatogram list
+			const std::vector<MSChromatogram<ChromatogramPeakType> >& getChromatograms() const
+			{
+				return chromatograms_;
+			}
+			
+			/**
+				@brief Clears all data and meta data
+				
+				@param clear_meta_data If @em true, all meta data is cleared in addition to the data.
+			*/ 
+			void clear(bool clear_meta_data)
+			{
+				Base::clear();
+				
+				if (clear_meta_data)
+				{
+					clearRanges();
+					clearId();
+					this->ExperimentalSettings::operator=(ExperimentalSettings()); // no "clear" method
+					chromatograms_.clear();
+					ms_levels_.clear();
+					total_size_ = 0;
+				}
 			}
 			
 		protected:
@@ -570,11 +669,14 @@ namespace OpenMS
 	    std::vector<UInt> ms_levels_;
 	    /// Number of all data points
 	    UInt64 total_size_;
+
+			/// chromatograms 
+			std::vector<MSChromatogram<ChromatogramPeakType> > chromatograms_;
 	};
 	
 	///Print the contents to a stream.
-	template <typename PeakT>
-	std::ostream& operator << (std::ostream& os, const MSExperiment<PeakT>& exp)
+	template <typename PeakT, typename ChromatogramPeakT>
+	std::ostream& operator << (std::ostream& os, const MSExperiment<PeakT, ChromatogramPeakT>& exp)
 	{
 	    os << "-- MSEXPERIMENT BEGIN --"<<std::endl;
 	
@@ -584,9 +686,15 @@ namespace OpenMS
 	    //spectra
 	    for (typename MSExperiment<PeakT>::const_iterator it=exp.begin(); it!=exp.end(); ++it)
 	    {
-	        os << *it;
+	      os << *it;
 	    }
-	
+
+			//chromatograms
+			for (typename std::vector<MSChromatogram<ChromatogramPeakT> >::const_iterator it = exp.getChromatograms().begin(); it != exp.getChromatograms().end(); ++it)
+			{
+				os << *it;
+			}
+
 	    os << "-- MSEXPERIMENT END --"<<std::endl;
 	
 	    return os;

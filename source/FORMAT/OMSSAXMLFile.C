@@ -172,12 +172,23 @@ namespace OpenMS
 					warning(LOAD, String("Cannot determine exact type of modification of position ") + actual_mod_site_ + " in sequence " + actual_peptide_hit_.getSequence().toString() + " using modification " + actual_mod_type_ + " - using first possibility!");
 				}
 				AASequence pep = actual_peptide_hit_.getSequence();
-				pep.setModification(actual_mod_site_, mods_map_[actual_mod_type_.toInt()].begin()->getFullName());
+				if (mods_map_[actual_mod_type_.toInt()].begin()->getTermSpecificity() == ResidueModification::N_TERM)
+				{
+					pep.setNTerminalModification(mods_map_[actual_mod_type_.toInt()].begin()->getFullId());
+				}
+				else if (mods_map_[actual_mod_type_.toInt()].begin()->getTermSpecificity() == ResidueModification::C_TERM)
+				{
+					pep.setCTerminalModification(mods_map_[actual_mod_type_.toInt()].begin()->getFullId());
+				}
+				else
+				{
+					pep.setModification(actual_mod_site_, mods_map_[actual_mod_type_.toInt()].begin()->getFullId());
+				}
 				actual_peptide_hit_.setSequence(pep);
 			}
 			else
 			{
-				warning(LOAD, String("Cannot find PSI-MOD mapping for mod -  ingoring '") + actual_mod_type_ + "'");
+				warning(LOAD, String("Cannot find PSI-MOD mapping for mod -  ignoring '") + actual_mod_type_ + "'");
 			}
 		}
 		
@@ -352,7 +363,7 @@ namespace OpenMS
 					}
 					catch (...)
 					{
-						// if exception happens to occur here, s.th. went wrong, e.g. the value does not contains numbers
+						// if exception happens to occur here, s.th. went wrong, e.g. the value does not contain numbers
 					}
 				}
 			}
@@ -371,6 +382,7 @@ namespace OpenMS
 
 			if (it->size() > 0 && (*it)[0] != '#')
 			{
+				Int omssa_mod_num = split[0].trim().toInt();
 				if (split.size() < 2)
 				{
 					fatalError(LOAD, String("Invalid mapping file line: '") + *it + "'");
@@ -381,10 +393,12 @@ namespace OpenMS
 					String tmp(split[i].trim());
 					if (tmp.size() != 0)
 					{
-						mods.push_back(ModificationsDB::getInstance()->getModification(tmp));
+						ResidueModification mod = ModificationsDB::getInstance()->getModification(tmp);
+						mods.push_back(mod);
+						mods_to_num_[mod.getFullId()] = omssa_mod_num;
 					}
 				}
-				mods_map_[split[0].trim().toInt()] = mods;
+				mods_map_[omssa_mod_num] = mods;
 			}
 		}
 	}
@@ -392,6 +406,17 @@ namespace OpenMS
 	void OMSSAXMLFile::setModificationDefinitionsSet(const ModificationDefinitionsSet& mod_set)
 	{
 		mod_def_set_ = mod_set;
+		UInt omssa_mod_num(119);
+		set<String> mod_names = mod_set.getVariableModificationNames();
+		for (set<String>::const_iterator it = mod_names.begin(); it != mod_names.end(); ++it)
+		{
+			if (!mods_to_num_.has(*it))
+			{
+				mods_map_[omssa_mod_num].push_back(ModificationsDB::getInstance()->getModification(*it));
+				mods_to_num_[*it] = omssa_mod_num;
+				++omssa_mod_num;
+			}
+		}
 	}
 	
 } // namespace OpenMS

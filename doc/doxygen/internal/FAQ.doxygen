@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer:  $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 // ATTENTION:
@@ -39,7 +39,7 @@
 	<H2 style="border-top:2px solid grey;">General information</H2>
 		<UL>
 
-			<LI><B>I am new to %OpenMS. What should i do first?</B><BR>
+			<LI><B>I am new to %OpenMS. What should I do first?</B><BR>
 				<OL>
 					<LI> Check out the developement version of %OpenMS (see website).
 					<LI> (Linux) Build the internal documentation (use 'make doc_internal' instead of 'make doc').
@@ -92,6 +92,10 @@
 
 			<LI><b>Can the START_SECTION-macro not handle template methods that have two or more arguments?</b><BR>
 				Put round brackets around the method declaration. Then it should work.
+
+			<LI><b>Are there binary installers created from the SVN HEAD?</b><BR>
+			Currently binary installers from the HEAD are available only for Windows:
+			@n http://ftp.mi.fu-berlin.de/bielow/OpenMS/
 
 		</UL>
 	<H2 style="border-top:2px solid grey;">Build system</H2>
@@ -178,7 +182,9 @@ svn propset svn:eol-style native MyClass.C
           <LI>Add the new directory to <%OpenMS>/includes.cmake (you should add two lines - one for /source and one for /include).
           <LI>Create two new sources.cmake files (one for %OpenMS/source/MYDIR, one for %OpenMS/include/MYDIR), using existing sources.cmake files as template
 					<LI>Add the new sources.cmake file from %OpenMS/source/MYDIR to %OpenMS/cmake/includes.cmake.
-					<LI>If you created a new directory directly under %OpenMS/source, then have a look at %OpenMS/source/TEST/CMakeLists.txt and add a new section.
+					<LI>If you created a new directory directly under %OpenMS/source, then have a look at %OpenMS/source/TEST/executables.cmake (1. add a new section that
+							makes the unit testing system aware of the new (upcoming) tests, 2. look at the very bottom and augment "TEST_executables").
+							Add a new group target to %OpenMS/source/TEST/CMakeLists.txt
         </OL>
 
 	    <LI><b>How do I add a new test for the class <TT>MyClass</TT>?</b><BR>
@@ -189,7 +195,7 @@ svn propset svn:eol-style native MyClass.C
 
 	    <LI><b>How do I add a new TOPP test?</b><BR>
         <OL>
-          <LI> Add commands to @em %OpenMS/source/TEST/TOPP/CTestTestfile.cmake
+          <LI> Add commands to @em %OpenMS/source/TEST/TOPP/CMakeLists.txt
         </OL>
 
 		</UL>
@@ -205,7 +211,7 @@ svn propset svn:eol-style native MyClass.C
 				in in several threads using the @a make option @a -j:
 				- <code>make -j8 %OpenMS</code>
 				- <code>make -j8 TOPP</code>
-				- <code>make -j8 TEST</code>
+				- <code>make -j8 test_build</code>
 		
 		</UL>
 	<H2 style="border-top:2px solid grey;">Working in IDE's</H2>
@@ -222,34 +228,29 @@ svn propset svn:eol-style native MyClass.C
 			<LI><b>[Eclipse CDT] The indexer gets stuck at some file which \#includes seqan</b><br>
 				It seems that SeqAn code is just too confusing for older eclipse C++ indexers.
 				You should upgrade to eclipse galileo (CDT 6.0.x).
-				Also, increase the available memory limit in eclipse.ini, e.g. -Xmx1000m for one gig.
+				Also, increase the available memory limit in eclipse.ini, e.g. -Xmx1024m for one gig.
 			<LI><b>[Eclipse CDT] The parser is confused after OPENMS_DLLAPI and does not recognize standard C++ headers</b><br>
-				Go to Project -> Properties -> C/C++ Include Paths and Preprocessor Symbols -> Add Preprocessor symbol -> "OPENMMS_DLL=".
+				Go to Project -> Properties -> C/C++ Include Paths and Preprocessor Symbols -> Add Preprocessor symbol -> "OPENMS_DLLAPI=".
 			 	This tells eclipse that the macro is defined empty.<br>
 				In the same dialog you can also add an external include path to e.g. /usr/include/c++/4.3.3/, etc.
-				[Hints to resolve these issues using the cmake generator are welcome!]
+				The issue with C++ headers was fixed in the latest galileo release.
+				Hints to resolve the OPENMS_DLLAPI issue using the cmake generator are welcome!
 		</UL>
 	<H2 style="border-top:2px solid grey;">Debugging</H2>
 		<UL>
 		
 			<LI><b>How do I run a single test?</b><BR>
 			
-				You can list all tests with numbers using the command
-				<code>&gt; ctest -N</code>
+				You can can execute an %OpenMS class test using the CTest regular expressions:
+				@n <code>&gt; ctest -V -R "^<class>_test"</code>
+				@n To build a class test, you simply call the respective make target in ./source/TEST:
+				@n <code>&gt; make &lt;class&gt;_test</code>
 				
-				You can run a test by specifying its name using the <TT>-R</TT> flag.
-				E.g. to call all tests which contain the substring <TT>File</TT> use:
+				To run a TOPP test, you can use:
+				@n <code>&gt; ctest -V -R "TOPP_<tool>"</code>
+				@n To build the tool, use:
+				@n <code>&gt; make &lt;tool&gt;</code>
 				
-				<code>&gt; ctest -R File</code>
-			
-				You can only run single tests (or a range of tests), if you know the test number.
-				For the test 45, you would use the same start and end test number:
-				
-				<code>&gt; ctest -V -I 45,45</code>
-				
-				You can also select test using a regular expressions.
-				Have a look at the CTest help!
-
 	    <LI><b>How do I debug uncaught exceptions?</b><BR>
 	      There is a mechanism to have a core dumped if an uncaught
 	      exception occurs.
@@ -323,33 +324,44 @@ svn propset svn:eol-style native MyClass.C
 
 
 	    <LI><b>How do I create a branch?</b><BR>
-	      <TT>svn copy https://open-ms.svn.sourceforge.net/svnroot/open-ms/OpenMS https://open-ms.svn.sourceforge.net/svnroot/open-ms/branches/ReleaseX.Y/</TT>
+	      <TT>svn copy https://open-ms.svn.sourceforge.net/svnroot/open-ms/OpenMS https://open-ms.svn.sourceforge.net/svnroot/open-ms/branches/[name]/</TT>
 
-			 <LI><b>How do I merge the changes i made to the HEAD into the release branch?</b><BR>
-			  Suppose you want to merge the changes you made in revision 2325 of the HEAD (/OpenMS) into the current
-			  revision of the release branch for Release X.Y (/branches/ReleasesX.Y - see http://open-ms.svn.sourceforge.net/viewvc/open-ms for the actual name of the branch).
+			<LI><b>How does merging branches work?</b><BR>
+				To merge changes from the <tt>source</tt> branch into the <tt>target</tt> branch, do the following:<BR>
+			  <OL>
+			  	<LI> Check out the <tt>target</tt> branch.
+			  	<LI> Merge the desired revisions into the branch:<br>
+							 <TT>svn merge -r [from]:[to] https://open-ms.svn.sourceforge.net/svnroot/open-ms/[source]</tt>
+					<LI> Resolve conflicts and make sure all tests run
+					<LI> Commit the changes
+				</OL>
+				
+				<b>Example 1: From HEAD to release branch</b><br>
+			  Suppose you want to merge the changes you made in revision 2325 of the 
+			  HEAD (/OpenMS) into the current revision of the release branch for target branch
+			  (see http://open-ms.svn.sourceforge.net/viewvc/open-ms for the actual names of branches).
 			  <OL>
 			  	<LI> Check out the release branch:<BR>
-			  			 <TT>svn co https://open-ms.svn.sourceforge.net/svnroot/open-ms/branches/ReleaseX.Y/</TT>
+			  			 <TT>svn co https://open-ms.svn.sourceforge.net/svnroot/open-ms/branches/[target]/</TT>
 			  	<LI> Merge the changes into the the branch (where the <TT>rv</TT> in <TT>(rv-1):rv</TT> corresponds to your svn-revision number you just committed)<BR>
 			  			 <TT>svn merge -r 2324:2325 https://open-ms.svn.sourceforge.net/svnroot/open-ms/OpenMS/</TT>
-			  	<LI> Resolve conflicts and make sure all tests run
-			  	<LI> Commit the changes to the release branch
+			  	<LI> Resolve conflicts and run tests
+			  	<LI> Commit
 			  </OL>
-
-	 		<LI><b>How do I merge a branch into the trunk?</b><BR>
-	 			Imagine the current revision is 25 and you added the branch in revision 10.
+	
+	 			<b>Example 2: Merge branch into HEAD</b><BR>
+	 			Suppose you want to merge the changes you made to a branch into the HEAD. 
+	 			The current revision is 25 and you added the branch in revision 10.
 	 			<OL>
-	 				<LI>Merge the changes in the trunk since the branching into the branch:<BR>
-	 					<TT>cd OpenMS/</TT> (branch)<BR>
-	      		<TT>svn merge -r11:25 https://open-ms.svn.sourceforge.net/svnroot/open-ms/OpenMS</TT>
-	 				<LI>Commit the changes into the branch:<BR>
-	 					<TT>svn commit -m 'merged -r11:25 of trunk into branch'</TT>
-					<LI>Merge the branch into the trunk:<BR>
-						<TT>cd OpenMS/</TT> (trunk)<BR>
-	      		<TT>svn merge https://open-ms.svn.sourceforge.net/svnroot/open-ms/OpenMS https://open-ms.svn.sourceforge.net/svnroot/open-ms/branches/BranchName/</TT>
+					<LI>Go to the HEAD and update it:<BR>
+						<TT>cd OpenMS/</TT> (HEAD)<br>
+						<TT>svn update<br>
+					<LI>Merge the changes in the branch into the HEAD:
+	      		<TT>svn merge -r 10:25 https://open-ms.svn.sourceforge.net/svnroot/open-ms/branches/[source]/</TT>
+	      	<LI> Resolve conflicts and run tests
+	      	<LI> Commit
 				</OL>
-
+				
 		</UL>
 	<H2 style="border-top:2px solid grey;">Doxygen documentation</H2>
 		<UL>
@@ -367,7 +379,7 @@ svn propset svn:eol-style native MyClass.C
 				@code
 @htmlinclude OpenMS_<class name>.parameters
 				@endcode
-				You can test if everything worked by calling @a make @a paramdoc .
+				You can test if everything worked by calling @a make @a doc_param_internal .
 				The parameters documentation is written to @a OpenMS/doc/doxygen/parameters/output/.
 
 	    <LI><b>How is the command line documentation for TOPP/UTILS tools created?</b><BR>
@@ -377,7 +389,7 @@ svn propset svn:eol-style native MyClass.C
 				@code
 @verbinclude TOPP_<tool name>.cli
 				@endcode
-				You can test if everything worked by calling @a make @a paramdoc .
+				You can test if everything worked by calling @a make @a doc_param_internal .
 				The comand line documentation is written to @a OpenMS/doc/doxygen/parameters/output/.
 
 	    <LI><b>What are the important files for adding a new tutorial section?</b><BR>
@@ -448,7 +460,7 @@ svn propset svn:eol-style native MyClass.C
 						<OL>
 							<LI> Login in the @a Admin section and create a folder for the new release
 							<LI> Upload to sourceforge, e.g. with
-							  <BR><TT>scp &lt;file&gt; &lt;login&gt;,fooproject@frs.sourceforge.net:/home/frs/project/o/op/openms/OpenMS/OpenMS-&lt;version&gt;/</TT>
+							  <BR><TT>scp &lt;file&gt; &lt;login&gt;,open-ms@frs.sourceforge.net:/home/frs/project/o/op/openms/OpenMS/OpenMS-&lt;version&gt;/</TT>
 						</OL>
 					<LI> Copy the HTML documentation and PDF tutorials of the release to @a /share/www/ApacheRoot/html/extern/OpenMS-release/.
 					<LI> Check the function of the public search engine at @a http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS-release/search.php
@@ -458,12 +470,21 @@ svn propset svn:eol-style native MyClass.C
 
 				<LI><B>How is the platform-independent source release package created?</B>
 					<OL>
-						<LI> Update version number of contrib README file in CMakeLists.txt of contrib and %OpenMS.
-						<LI> Update version number of TOPPView and TOPPAS splash screen <TT>source/VISUAL/ICONS/</TT>.@n
-						     The PhotoShop files can be found in the @em images SVN module.
-						<LI> Update version number in <TT>CMakeLists.txt</TT> (CF_OPENMS_PACKAGE_VERSION variable)
+						<LI> Year numbers update in:
+							<OL>
+								<LI> License.txt
+								<LI> All headers
+							</OL>	
+						<LI> Version Number update in:
+							<OL>
+								<LI> <TT>CMakeLists.txt</TT> of contrib.
+								<LI> <TT>CMakeLists.txt</TT> of %OpenMS (three OPENMS_PACKAGE_VERSION_* variables, and the contrib version check)
+								<LI> <TT>source/TEST/VersionInfo_test.C</TT>
+								<LI> TOPPView and TOPPAS splash screen <TT>source/VISUAL/ICONS/</TT>.@n
+									 The GIMP/PhotoShop files can be found in the @em images SVN module.
+							</OL>
 						<LI> Run cmake
-						<LI> Make sure that the tutorial examples in <TT>sources/EXAMPLES/</TT> can be compiled and executed (target 'EXAMPLES_exec')
+						<LI> Make sure that the tutorial examples in <TT>sources/EXAMPLES/</TT> can be compiled and executed (target 'Tutorials_build' and 'Tutorials_exec')
 						<LI> Commit the changes to the SVN repository
 						<LI> Build the documentation that is needed for the release
 							<OL>
@@ -522,7 +543,7 @@ svn propset svn:eol-style native MyClass.C
           </OL>
 				</UL>
 
-			<LI><B>(Linux) How do i check my code for memory leaks?</B>
+			<LI><B>(Linux) How do I check my code for memory leaks?</B>
 				<OL>
 					<LI>build %OpenMS in debug mode (set OPENMS_BUILD_TYPE to 'Debug')
 					<LI> call the executable with valgrind: <TT>'valgrind --leak-check=full &lt;executable&gt; &lt;parameters&gt;'</TT>
@@ -625,7 +646,6 @@ svn propset svn:eol-style native MyClass.C
 	         <LI>Commit everything, send an email do developers mentioning revision numbers (for %OpenMS, contrib, SeqAn)
 	         <LI>Consider updating this FAQ entry.
 	      </OL>
-	      
 		</UL>
 */
 

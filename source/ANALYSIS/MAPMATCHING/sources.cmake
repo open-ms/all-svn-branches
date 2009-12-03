@@ -7,10 +7,12 @@ BaseGroupFinder.C
 BaseSuperimposer.C
 DelaunayPairFinder.C
 FeatureGroupingAlgorithm.C
+FeatureGroupingAlgorithmIdentification.C
 FeatureGroupingAlgorithmLabeled.C
 FeatureGroupingAlgorithmUnlabeled.C
 LabeledPairFinder.C
 MapAlignmentAlgorithm.C
+MapAlignmentAlgorithmIdentification.C
 MapAlignmentAlgorithmPoseClustering.C
 MapAlignmentAlgorithmSpectrumAlignment.C
 MapAlignmentAlgorithmApplyGivenTrafo.C

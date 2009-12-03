@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_APPLICATIONS_TOPPVIEWBASE_H
@@ -164,10 +164,10 @@ namespace OpenMS
       void layerStatistics();
       /// lets the user edit the meta data of a layer
       void editMetadata();
+      /// chooses searched spectrum
+      void chooseSpectrumByUser(const QString& text);
       /// closes the active window
       void closeFile();
-      /// chooses searched spectrum
-      void chooseSpectrumByRT(const QString& text);
       /// updates the toolbar
       void updateToolBar();
       /// adapts the layer bar to the active window
@@ -236,6 +236,8 @@ namespace OpenMS
     	void layerContextMenu(const QPoint& pos);
     	/// slot for spectrum manager context menu
     	void spectrumContextMenu(const QPoint& pos);
+    	/// slot for spectrum browser column header context menu
+    	void spectrumBrowserHeaderContextMenu(const QPoint& pos);
     	/// slot for log window context menu
     	void logContextMenu(const QPoint& pos);
     	/// slot for layer manager visibility change (check box)
@@ -335,12 +337,13 @@ namespace OpenMS
       /// Layer managment widget
       QListWidget* layer_manager_;
 
-			/// Spectrum selection widget
+      ///@name Spectrum selection widgets
+      //@{
       QTreeWidget* spectrum_selection_;
-      /// Spectrum dock widget
       QDockWidget* spectrum_bar_;
       QLineEdit* spectrum_search_box_;
       QComboBox* spectrum_combo_box_;
+      //@}
 
       ///@name Data filter widgets
       //@{
@@ -368,6 +371,7 @@ namespace OpenMS
       QAction* dm_hull_2d_;
       QAction* dm_hulls_2d_;
       QToolButton* dm_label_2d_;
+      QAction* dm_unassigned_2d_;
       QAction* dm_elements_2d_;
       QAction* projections_2d_;
       //@}

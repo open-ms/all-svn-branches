@@ -79,7 +79,7 @@ class TOPPITRAQAnalyzer
 		registerOutputFile_("out","<file>","","output consensusXML file with quantitative information");
 		setValidFormats_("out",StringList::create("consensusXML"));
 
-		registerStringOption_ ("idxml", "<file>", "", "!not supported yet! idXML file with peptide identifications from tandemMS of the -in file", false, false);
+		registerInputFile_ ("idxml", "<file>", "", "!not supported yet! idXML file with peptide identifications from tandemMS of the -in file", false, false);
 		
 		addEmptyLine_();
 		//addText_("Note: We highly recommend providing an idXML file with identifications. This enables ITRAQAnalyzer to report protein ratios!");
@@ -152,7 +152,7 @@ class TOPPITRAQAnalyzer
 		
 
 		// assign unique ID to output file (this might throw an exception.. but thats ok, as we want the programm to quit then)
-		if (getStringOption_("id_pool").trim().length()>0) getIDTagger_().tag(consensus_map_raw);
+		if (getStringOption_("id_pool").trim().length()>0) getDocumentIDTagger_().tag(consensus_map_raw);
 
 		// annotate output file with MetaInformation
 		Param metainfo_param(getParam_().copy("algorithm:MetaInformation:",true));

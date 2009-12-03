@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_HANDLERS_ANDIHANDLER_H
@@ -220,7 +220,7 @@ namespace OpenMS
 
 			if (ms_read_instrument( file_id, &ms_inst) == MS_ERROR)
 			{
-				std::cerr << "Warning: could not read instrument data of ANDI/MS file '" << file <<"'." << std::endl;
+				std::cerr << "Warning: could not read instrument data of ANDI/MS file '" << file <<"'." << "\n";
 			}
 			else
 			{
@@ -253,7 +253,7 @@ namespace OpenMS
 			
 			if (err_code == MS_ERROR)
 			{
-				std::cerr << "Warning: could not read scan " << index << " of ANDI/MS file '" << file << "'." << std::endl;
+				std::cerr << "Warning: could not read scan " << index << " of ANDI/MS file '" << file << "'." << "\n";
 			}
 			else
 			{

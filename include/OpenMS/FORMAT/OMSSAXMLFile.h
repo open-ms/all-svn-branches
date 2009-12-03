@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_OMSSAXMLFILE_H
@@ -102,9 +102,6 @@ namespace OpenMS
 			/// reads the mapping file needed for modifications
 			void readMappingFile_();
 			
-			/// the protein identifications
-    	//ProteinIdentification* protein_identification_; TODO needed any more?
-
 			/// the identifications (storing the peptide hits)
       std::vector<PeptideIdentification>* peptide_identifications_;
 
@@ -130,8 +127,11 @@ namespace OpenMS
 			/// should protein hits be read from the file?
 			bool load_proteins_;
 
-			/// modifications mapping file from OMSSA mod num to PSI-MOD onotology number
+			/// modifications mapping file from OMSSA mod num to UniMod accession
 			Map<UInt, std::vector<ResidueModification> > mods_map_;
+
+			/// modification mapping reverse, from the modification to the mod_num
+			Map<String, UInt> mods_to_num_;
 
 			/// modification definitions set of the search, needed to annotate fixed modifications
 			ModificationDefinitionsSet mod_def_set_;

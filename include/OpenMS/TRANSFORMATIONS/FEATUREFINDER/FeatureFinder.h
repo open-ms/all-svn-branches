@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_TRANSFORMATIONS_FEATUREFINDER_FEATUREFINDER_H
@@ -42,7 +42,7 @@ namespace OpenMS
 		- Stores the flags for (indices of) data points ("used", "unused")
 		- The algorithm itself is a factory product (derived from FeatureFinderAlgorithm)
 		- The main method is run(), which is a template so that we can deal with different types of input and output
-		- The run() method takes 4 arguments: algorithm_name, input_map, output, parameters
+		- The run() method takes five arguments: algorithm_name, input_map, output, parameters, seeds
 		.	
 
 		@ingroup FeatureFinder
@@ -70,11 +70,12 @@ namespace OpenMS
 				@param input_map Input peak map
 				@param features Output feature map
 				@param param Algorithm parameters
+				@param seeds List of seeds to use
 
 				Implemented in FeatureFinder_impl.h
 			*/
 			template<class PeakType, class FeatureType>
-			void run(const String& algorithm_name, MSExperiment<PeakType> const & input_map, FeatureMap<FeatureType> & features, const Param& param);
+			void run(const String& algorithm_name, MSExperiment<PeakType> const & input_map, FeatureMap<FeatureType> & features, const Param& param, const FeatureMap<FeatureType>& seeds);
 
 			/// Returns a non-mutable reference to a peak flag
 			const Flag& getPeakFlag(const IndexPair& index) const

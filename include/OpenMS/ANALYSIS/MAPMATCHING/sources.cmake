@@ -7,10 +7,12 @@ BaseGroupFinder.h
 BaseSuperimposer.h
 DelaunayPairFinder.h
 FeatureGroupingAlgorithm.h
+FeatureGroupingAlgorithmIdentification.h
 FeatureGroupingAlgorithmLabeled.h
 FeatureGroupingAlgorithmUnlabeled.h
 LabeledPairFinder.h
 MapAlignmentAlgorithm.h
+MapAlignmentAlgorithmIdentification.h
 MapAlignmentAlgorithmPoseClustering.h
 MapAlignmentAlgorithmSpectrumAlignment.h
 MapAlignmentAlgorithmApplyGivenTrafo.h

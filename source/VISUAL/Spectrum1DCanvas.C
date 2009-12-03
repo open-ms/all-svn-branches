@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 // Qt
@@ -874,7 +874,7 @@ namespace OpenMS
 		drawHighlightedPeak_(current_layer_, selected_peak_, painter, with_elongation);
 		
 		//draw delta for measuring
-		if (action_mode_==AM_MEASURE && measurement_start_.isValid() && selected_peak_.isValid())
+		if (action_mode_==AM_MEASURE && measurement_start_.isValid())
 		{
 			drawDeltas_(painter, measurement_start_, selected_peak_, false);
 		}
@@ -1158,6 +1158,7 @@ namespace OpenMS
 	void Spectrum1DCanvas::showCurrentLayerPreferences()
 	{
 		Internal::Spectrum1DPrefDialog dlg(this);
+		LayerData& layer = getCurrentLayer_();
 		
 		ColorSelector* peak_color = dlg.findChild<ColorSelector*>("peak_color");
 		ColorSelector* icon_color = dlg.findChild<ColorSelector*>("icon_color");
@@ -1166,18 +1167,18 @@ namespace OpenMS
 		ColorSelector* selected_color = dlg.findChild<ColorSelector*>("selected_color");
 		QComboBox* on_file_change = dlg.findChild<QComboBox*>("on_file_change");
 		
-		peak_color->setColor(QColor(getCurrentLayer_().param.getValue("peak_color").toQString()));
-		icon_color->setColor(QColor(getCurrentLayer_().param.getValue("icon_color").toQString()));
-		annotation_color->setColor(QColor(getCurrentLayer_().param.getValue("annotation_color").toQString()));
+		peak_color->setColor(QColor(layer.param.getValue("peak_color").toQString()));
+		icon_color->setColor(QColor(layer.param.getValue("icon_color").toQString()));
+		annotation_color->setColor(QColor(layer.param.getValue("annotation_color").toQString()));
 		bg_color->setColor(QColor(param_.getValue("background_color").toQString()));
 		selected_color->setColor(QColor(param_.getValue("highlighted_peak_color").toQString()));
 		on_file_change->setCurrentIndex(on_file_change->findText(param_.getValue("on_file_change").toQString()));		
 		
 		if (dlg.exec())
 		{
-			getCurrentLayer_().param.setValue("peak_color",peak_color->getColor().name());
-			getCurrentLayer_().param.setValue("icon_color",icon_color->getColor().name());
-			getCurrentLayer_().param.setValue("annotation_color",annotation_color->getColor().name());
+			layer.param.setValue("peak_color",peak_color->getColor().name());
+			layer.param.setValue("icon_color",icon_color->getColor().name());
+			layer.param.setValue("annotation_color",annotation_color->getColor().name());
 			param_.setValue("background_color",bg_color->getColor().name());
 			param_.setValue("highlighted_peak_color",selected_color->getColor().name());
 			param_.setValue("on_file_change", on_file_change->currentText());
@@ -1382,20 +1383,48 @@ namespace OpenMS
     	proposed_name = layer.filename;
     }
 		
-		QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzML files (*.mzML);;All files (*)");
+		QString selected_filter = "";
+    QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzML files (*.mzML);;mzData files (*.mzData);;mzXML files (*.mzXML);;All files (*)", &selected_filter);
+    if (!file_name.isEmpty())
+    {
+      // check whether a file type suffix has been given
+      // first check mzData and mzXML then mzML
+      // if the setting is at "All files"
+      // mzML will be used
+      String upper_filename = file_name;
+      upper_filename.toUpper();
+	    if (selected_filter == "mzData files (*.mzData)")
+      {
+        if (!upper_filename.hasSuffix(".MZDATA"))
+        {
+  	      file_name += ".mzData";
+        }
+      }
+      else if (selected_filter == "mzXML files (*.mzXML)")
+      {
+        if (!upper_filename.hasSuffix(".MZXML"))
+        {
+          file_name += ".mzXML";
+        }
+      }
+      else
+      {
+        if (!upper_filename.hasSuffix(".MZML"))
+        {
+          file_name += ".mzML";
+        }
+      }
 
-		if (!file_name.isEmpty())
-		{
 			if (visible)
 			{
 				ExperimentType out;
 				getVisiblePeakData(out);
 				addDataProcessing_(out, DataProcessing::FILTERING);
-				MzMLFile().store(file_name,out);
+				FileHandler().storeExperiment(file_name,out);
 		  }
 		  else
 		  {
-				MzMLFile().store(file_name,layer.peaks);
+				FileHandler().storeExperiment(file_name,layer.peaks);
 		  }
 		}
 	}
@@ -1424,7 +1453,7 @@ namespace OpenMS
 		catch(Exception::BaseException& e)
 		{
 			QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-			layer.peaks.clear();
+			layer.peaks.clear(true);
 		}		
 		layer.peaks.resize(1);
 		layer.peaks.sortSpectra();

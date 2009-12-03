@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Stephan Aiche$
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/DATASTRUCTURES/StringList.h>
@@ -76,10 +76,7 @@ namespace OpenMS
 	StringList StringList::create(const String& list, const char splitter)
 	{
 		StringList out;
-		if (!list.split(splitter,out) && list!="")
-		{
-			out.push_back(list);
-		}
+		list.split(splitter,out);
 		return out;
 	}
 	

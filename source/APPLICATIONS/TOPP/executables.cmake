@@ -39,6 +39,7 @@ RTPredict
 Resampler
 PILISModel
 PILISIdentification
+SeedListGenerator
 SequestAdapter
 SpecLibSearcher
 SpectraFilter
@@ -55,6 +56,8 @@ PrecursorIonSelector
 IDFileConverter
 CompNovo
 SpectralNetworking
+PeptideIndexer
+PrecursorMassCorrector
 )
 
 ### add filenames to Visual Studio solution tree
@@ -63,5 +66,3 @@ foreach(i ${TOPP_executables})
 	list(APPEND sources_VS "${i}.C")
 endforeach(i)
 source_group("" FILES ${sources_VS})
-
-

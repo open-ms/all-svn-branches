@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_DTA2DFILE_H
@@ -156,8 +156,8 @@ namespace OpenMS
 					{
 						if ( strings[i]=="RT" || strings[i]=="RETENTION_TIME" || strings[i]=="MASS-TO-CHARGE" || strings[i]=="IT" || strings[i]=="INTENSITY")
 						{
-							std::cerr << "Warning: This file contains the deprecated keyword '" << strings[i] << "'." << std::endl;
-							std::cerr << "         Please use only the new keywords SEC/MIN, MZ, INT." << std::endl;
+							std::cerr << "Warning: This file contains the deprecated keyword '" << strings[i] << "'." << "\n";
+							std::cerr << "         Please use only the new keywords SEC/MIN, MZ, INT." << "\n";
 						}
 						if ( ( strings[i]=="SEC" || strings[i]=="RT" || strings[i]=="RETENTION_TIME" ) && rt_set==false)
 						{
@@ -215,7 +215,7 @@ namespace OpenMS
 						map.push_back(spec);
 					}
 					setProgress(0);
-					spec.clear();
+					spec.clear(true);
 					spec.setRT(rt);
 					spec.setNativeID(String("index=")+native_id);
 					++native_id;
@@ -273,7 +273,7 @@ namespace OpenMS
 				for (typename MapType::SpectrumType::ConstIterator it = spec->begin(); it != spec->end(); ++it)
 				{
 					// Write rt, m/z and intensity.
-					os	<< precisionWrapper(spec->getRT()) << " " << precisionWrapper(it->getPos()) << " "<< precisionWrapper(it->getIntensity()) << std::endl;
+					os	<< precisionWrapper(spec->getRT()) << " " << precisionWrapper(it->getPos()) << " "<< precisionWrapper(it->getIntensity()) << "\n";
 				}
 
 			}

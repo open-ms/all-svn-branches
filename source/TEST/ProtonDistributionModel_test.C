@@ -95,7 +95,7 @@ START_SECTION((void setPeptideProtonDistribution(const std::vector< DoubleReal >
 	NOT_TESTABLE
 END_SECTION
 
-START_SECTION((void getChargeStateIntensities(const AASequence &peptide, const AASequence &n_term_ion, const AASequence &c_term_ion, int charge, Residue::ResidueType n_term_type, std::vector< DoubleReal > &n_term_intensities, std::vector< DoubleReal > &c_term_intensities, FragmentationType type)))
+START_SECTION((void getChargeStateIntensities(const AASequence &peptide, const AASequence &n_term_ion, const AASequence &c_term_ion, Int charge, Residue::ResidueType n_term_type, std::vector< DoubleReal > &n_term_intensities, std::vector< DoubleReal > &c_term_intensities, FragmentationType type)))
 	vector<DoubleReal> bb_charges, sc_charges;
 	AASequence peptide("DFPIANGER");
 	ptr->getProtonDistribution(bb_charges, sc_charges, peptide, 1);
@@ -103,15 +103,25 @@ START_SECTION((void getChargeStateIntensities(const AASequence &peptide, const A
 	// set the full proton distribution
 	ptr->setPeptideProtonDistribution(bb_charges, sc_charges);
 
-	//DoubleReal n_term1(0), n_term2(0), c_term1(0), c_term2(0);
 	AASequence pre1("DFP"), suf1("IANGER");
 	vector<DoubleReal> pre_ints, suf_ints;
 	ptr->getChargeStateIntensities(peptide, pre1, suf1, 1, Residue::YIon, pre_ints, suf_ints, ProtonDistributionModel::ChargeDirected);
 
-	//TEST_REAL_SIMILAR(n_term1, 0.0);
-	//TEST_REAL_SIMILAR(n_term2, 0.0);
-	//TEST_REAL_SIMILAR(c_term1, 1.0);
-	//TEST_REAL_SIMILAR(c_term2, 0.0);
+	TEST_EQUAL(pre_ints.size(), 1)
+	TEST_EQUAL(suf_ints.size(), 1)
+	TEST_REAL_SIMILAR(pre_ints[0], 0.0);
+	TEST_REAL_SIMILAR(suf_ints[0], 1.0);
+
+	pre_ints.clear();
+	suf_ints.clear();
+	ptr->getChargeStateIntensities(peptide, pre1, suf1, 2, Residue::YIon, pre_ints, suf_ints, ProtonDistributionModel::ChargeDirected);
+	TEST_EQUAL(pre_ints.size(), 2)
+	TEST_EQUAL(suf_ints.size(), 2)
+	TOLERANCE_ABSOLUTE(0.01)
+	TEST_REAL_SIMILAR(pre_ints[0], 0.40526)
+	TEST_REAL_SIMILAR(pre_ints[1], 0.0)
+	TEST_REAL_SIMILAR(suf_ints[0], 0.4922)
+	TEST_REAL_SIMILAR(suf_ints[1], 0.1025)
 
 END_SECTION
 

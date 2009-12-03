@@ -468,18 +468,16 @@ namespace OpenMS
 		{
 			String temp_string = (((String) sm_.convert(chars)).trim());
 			temp_string.split(',', search_parameters_.fixed_modifications);
-			if (search_parameters_.fixed_modifications.size() == 0 && temp_string != "")
-			{
-				search_parameters_.fixed_modifications.push_back(temp_string);
-			}
 		}
 		else if (tag_ == "IT_MODS")
 		{
-			String temp_string = (((String) sm_.convert(chars)).trim());
-			temp_string.split(',', search_parameters_.variable_modifications);
-			if (search_parameters_.variable_modifications.size() == 0 && temp_string != "")
+			// if the modifications are listed in the variable_modifications section, read
+			// from there, because sometimes mods are forced to be variable (from user set fixed)
+			if (search_parameters_.variable_modifications.size() == 0)
 			{
-				search_parameters_.variable_modifications.push_back(temp_string);
+				String temp_string = (((String) sm_.convert(chars)).trim());
+			
+				temp_string.split(',', search_parameters_.variable_modifications);
 			}
 		}
 		else if (tag_ == "CLE")
@@ -514,7 +512,18 @@ namespace OpenMS
 		{
 			search_parameters_.peak_mass_tolerance = (((String) sm_.convert(chars)).trim()).toDouble();
 		}
+		else if (tag_ == "warning")
+		{
+			// e.g. if a fixed modification is forced to a variable modification
+			// <warning number="0">&apos;Oxidation (M)&apos; can only be used as a variable modification; setting it to variable</warning>
+			warning(LOAD, String("Warnings were present: '") + sm_.convert(chars) + String("'"));
+		}
+		else if (tag_ == "name")
+		{
+			search_parameters_.variable_modifications.push_back(((String)sm_.convert(chars)).trim());
+		}
   }
 
 	} // namespace Internal
 } // namespace OpenMS
+

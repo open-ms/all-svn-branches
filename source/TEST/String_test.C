@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Stephan Aiche$
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -158,7 +158,7 @@ START_SECTION((String(long long unsigned int i)))
 	TEST_EQUAL(s,"12345678")
 END_SECTION
 
-START_SECTION(String(long long signed int i))
+START_SECTION((String(long long signed int i)))
 	String s((long long signed int)(-12345678));
 	TEST_EQUAL(s,"-12345678")
 END_SECTION
@@ -269,7 +269,7 @@ END_SECTION
 START_SECTION((String prefix(char delim) const))
 	TEST_EQUAL(s.prefix('F'), "ACDE");
 	TEST_EQUAL(s.prefix('A'), "");
-	TEST_EXCEPTION(Exception::ElementNotFound, s.suffix('Z'));
+	TEST_EXCEPTION(Exception::ElementNotFound, s.prefix('Z'));
 END_SECTION
 
 START_SECTION((String suffix(char delim) const))
@@ -354,6 +354,42 @@ START_SECTION((String& trim()))
 	TEST_EQUAL(s,"");
 END_SECTION
 
+START_SECTION((String& quote(char q = '"', QuotingMethod method = ESCAPE)))
+  String s;
+  s.quote('\'', String::NONE);
+  TEST_EQUAL(s, "''");
+  s.quote('\'', String::ESCAPE);
+  TEST_EQUAL(s, "'\\'\\''");
+  s = "ab\"cd\\ef";
+  s.quote('"', String::NONE);
+  TEST_EQUAL(s, "\"ab\"cd\\ef\"");
+  s.quote('"', String::ESCAPE);
+  TEST_EQUAL(s, "\"\\\"ab\\\"cd\\\\ef\\\"\"");
+  s = "ab\"cd\\ef";
+  s.quote('"', String::DOUBLE);
+  TEST_EQUAL(s, "\"ab\"\"cd\\ef\"");
+END_SECTION
+
+START_SECTION((String& unquote(char q = '"', QuotingMethod method = ESCAPE)))
+  String s;
+  TEST_EXCEPTION(Exception::ConversionError, s.unquote());
+  s = "''";
+  s.unquote('\'', String::NONE);
+  TEST_EQUAL(s, "");
+  s = "'\\'\\''";
+  s.unquote('\'', String::ESCAPE);
+  TEST_EQUAL(s, "''");
+  s = "\"ab\"cd\\ef\"";
+  s.unquote('"', String::NONE);
+  TEST_EQUAL(s, "ab\"cd\\ef");
+  s = "\"\\\"ab\\\"cd\\\\ef\\\"\"";
+  s.unquote('"', String::ESCAPE);
+  TEST_EQUAL(s, "\"ab\"cd\\ef\"");
+  s = "\"ab\"\"cd\\ef\"";
+  s.unquote('"', String::DOUBLE);
+  TEST_EQUAL(s, "ab\"cd\\ef");
+END_SECTION
+
 START_SECTION((String& simplify()))
 	String s("\n\r\t te\tst \n\r\t");
 	s.simplify();
@@ -373,7 +409,6 @@ START_SECTION((String& simplify()))
 	s.simplify();
 	TEST_EQUAL(s," ");
 END_SECTION
-
 
 START_SECTION((String& fillLeft(char c, UInt size)))
 	String s("TEST");
@@ -470,6 +505,11 @@ START_SECTION((bool split(const char splitter, std::vector<String>& substrings, 
 	TEST_EQUAL(split[3],String("4"));
 	TEST_EQUAL(split[4],String("5"));
 
+  s = "";
+  result = s.split(',', split);
+  TEST_EQUAL(result, false);
+  TEST_EQUAL(split.size(), 0);
+
 	s = ";";
 	result = s.split(';', split);
 	TEST_EQUAL(result,true);
@@ -479,12 +519,12 @@ START_SECTION((bool split(const char splitter, std::vector<String>& substrings, 
 
 	result = s.split(',', split);
 	TEST_EQUAL(result,false);
-	TEST_EQUAL(split.size(),0);
+	TEST_EQUAL(split.size(),1);
 
 	s = "nodelim";
 	result = s.split(';', split);
 	TEST_EQUAL(result,false);
-	TEST_EQUAL(split.size(),0);
+	TEST_EQUAL(split.size(),1);
 
 	// testing quoting behaviour
 	s=" \"hello\", world, 23.3";
@@ -522,12 +562,91 @@ START_SECTION((bool split(const char splitter, std::vector<String>& substrings, 
 	s = " \"nodelim \"";
 	result = s.split(';', split, true);
 	TEST_EQUAL(result,false);
-	TEST_EQUAL(split.size(),0);
+	TEST_EQUAL(split.size(),1);
 
 	// testing invalid quoting...
 	s = " \"first\", \"seconds\"<thisshouldnotbehere>, third";
 	TEST_EXCEPTION(Exception::ConversionError, s.split(',', split, true));
+END_SECTION
 
+START_SECTION((bool split(const String& splitter, std::vector<String>& substrings) const))
+String s = "abcdebcfghbc";
+vector<String> substrings;
+bool result = s.split("bc", substrings);
+TEST_EQUAL(result, true);
+TEST_EQUAL(substrings.size(), 4);
+TEST_EQUAL(substrings[0], "a");
+TEST_EQUAL(substrings[1], "de");
+TEST_EQUAL(substrings[2], "fgh");
+TEST_EQUAL(substrings[3], "");
+
+s = "abcdabcdabcd";
+result = s.split("abcd", substrings);
+TEST_EQUAL(result, true);
+TEST_EQUAL(substrings.size(), 4);
+TEST_EQUAL(substrings[0], "");
+TEST_EQUAL(substrings[1], "");
+TEST_EQUAL(substrings[2], "");
+TEST_EQUAL(substrings[3], "");
+
+result = s.split("xy", substrings);
+TEST_EQUAL(result, false);
+TEST_EQUAL(substrings.size(), 1);
+TEST_EQUAL(substrings[0], s);
+
+result = s.split("", substrings);
+TEST_EQUAL(result, true);
+TEST_EQUAL(s.size(), substrings.size());
+TEST_EQUAL(substrings[0], "a");
+TEST_EQUAL(substrings[substrings.size() - 1], "d");
+
+result = String("").split(",", substrings);
+TEST_EQUAL(result, false);
+TEST_EQUAL(substrings.size(), 0);
+END_SECTION
+
+START_SECTION((bool split_quoted(const String& splitter,	std::vector<String>& substrings, char q = '"', QuotingMethod method = ESCAPE) const))
+String s = "abcdebcfghbc";
+vector<String> substrings;
+bool result = s.split_quoted("bc", substrings);
+TEST_EQUAL(result, true);
+TEST_EQUAL(substrings.size(), 4);
+TEST_EQUAL(substrings[0], "a");
+TEST_EQUAL(substrings[1], "de");
+TEST_EQUAL(substrings[2], "fgh");
+TEST_EQUAL(substrings[3], "");
+
+s = "abcdabcdabcd";
+result = s.split_quoted("abcd", substrings);
+TEST_EQUAL(result, true);
+TEST_EQUAL(substrings.size(), 4);
+TEST_EQUAL(substrings[0], "");
+TEST_EQUAL(substrings[1], "");
+TEST_EQUAL(substrings[2], "");
+TEST_EQUAL(substrings[3], "");
+
+result = s.split_quoted("xy", substrings);
+TEST_EQUAL(result, false);
+TEST_EQUAL(substrings.size(), 1);
+TEST_EQUAL(substrings[0], s);
+
+s = "\"a,b,c\",\"d,\\\",f\",\"\"";
+result = s.split_quoted(",", substrings, '"', String::ESCAPE);
+TEST_EQUAL(result, true);
+TEST_EQUAL(substrings.size(), 3);
+TEST_EQUAL(substrings[0], "\"a,b,c\"");
+TEST_EQUAL(substrings[1], "\"d,\\\",f\"");
+TEST_EQUAL(substrings[2], "\"\"");
+
+s = "\"a,\"b\"";
+TEST_EXCEPTION(Exception::ConversionError, s.split_quoted(",", substrings, '"',
+																													String::ESCAPE));
+s = "\"ab\"___\"cd\"\"ef\"";
+result = s.split_quoted("___", substrings, '"', String::DOUBLE);
+TEST_EQUAL(result, true);
+TEST_EQUAL(substrings.size(), 2);
+TEST_EQUAL(substrings[0], "\"ab\"");
+TEST_EQUAL(substrings[1], "\"cd\"\"ef\"");
 END_SECTION
 
 START_SECTION((template<class StringIterator> void concatenate(StringIterator first, StringIterator last, const String& glue = "")))

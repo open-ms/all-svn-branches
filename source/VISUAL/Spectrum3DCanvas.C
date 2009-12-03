@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 //OpenMS
@@ -207,6 +207,7 @@ namespace OpenMS
 	void Spectrum3DCanvas::showCurrentLayerPreferences()
 	{
 		Internal::Spectrum3DPrefDialog dlg(this);
+		LayerData& layer = getCurrentLayer_();
 
 //		cout << "IN: " << param_ << endl;
 
@@ -217,17 +218,17 @@ namespace OpenMS
 		QComboBox* on_file_change = dlg.findChild<QComboBox*>("on_file_change");
 		
 		bg_color->setColor(QColor(param_.getValue("background_color").toQString()));		
-		shade->setCurrentIndex(getCurrentLayer().param.getValue("dot:shade_mode"));
-		gradient->gradient().fromString(getCurrentLayer().param.getValue("dot:gradient"));
-		width->setValue(UInt(getCurrentLayer().param.getValue("dot:line_width")));
+		shade->setCurrentIndex(layer.param.getValue("dot:shade_mode"));
+		gradient->gradient().fromString(layer.param.getValue("dot:gradient"));
+		width->setValue(UInt(layer.param.getValue("dot:line_width")));
 		on_file_change->setCurrentIndex(on_file_change->findText(param_.getValue("on_file_change").toQString()));	
 
 		if (dlg.exec())
 		{
 			param_.setValue("background_color",bg_color->getColor().name());
-			getCurrentLayer_().param.setValue("dot:shade_mode",shade->currentIndex());
-			getCurrentLayer_().param.setValue("dot:gradient",gradient->gradient().toString());
-			getCurrentLayer_().param.setValue("dot:line_width",width->value());
+			layer.param.setValue("dot:shade_mode",shade->currentIndex());
+			layer.param.setValue("dot:gradient",gradient->gradient().toString());
+			layer.param.setValue("dot:line_width",width->value());
 			param_.setValue("on_file_change", on_file_change->currentText());
 			
 		  emit preferencesChange();
@@ -319,23 +320,48 @@ namespace OpenMS
     	proposed_name = layer.filename;
     }
     
-  	QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzML files (*.mzML);;All files (*)");
-		if (!file_name.isEmpty())
-		{
-			//set up file adapter
-			MzMLFile f;
-			f.setLogType(ProgressLogger::GUI);
-		
-	  	if (visible) //only visible data
-	  	{
+		QString selected_filter = "";
+    QString file_name = QFileDialog::getSaveFileName(this, "Save file", proposed_name.toQString(),"mzML files (*.mzML);;mzData files (*.mzData);;mzXML files (*.mzXML);;All files (*)", &selected_filter);
+    if (!file_name.isEmpty())
+    {
+      // check whether a file type suffix has been given
+      // first check mzData and mzXML then mzML
+      // if the setting is at "All files"
+      // mzML will be used
+    	String upper_filename = file_name;
+      upper_filename.toUpper();
+      if (selected_filter == "mzData files (*.mzData)")
+      {
+        if (!upper_filename.hasSuffix(".MZDATA"))
+        {
+          file_name += ".mzData";
+        }
+      }
+      else if (selected_filter == "mzXML files (*.mzXML)")
+      {
+        if (!upper_filename.hasSuffix(".MZXML"))
+        {
+          file_name += ".mzXML";
+        }
+      }
+      else
+      {
+        if (!upper_filename.hasSuffix(".MZML"))
+        {
+          file_name += ".mzML";
+        }
+      }
+
+    	if (visible) //only visible data
+    	{
 				ExperimentType out;
 				getVisiblePeakData(out);
 				addDataProcessing_(out, DataProcessing::FILTERING);
-			  f.store(file_name,out);
+				FileHandler().storeExperiment(file_name,out,ProgressLogger::GUI);
 			}
 			else //all data
 			{
-				f.store(file_name,layer.peaks);
+				FileHandler().storeExperiment(file_name,layer.peaks,ProgressLogger::GUI);
 			}
 		}
 	}
@@ -353,7 +379,7 @@ namespace OpenMS
 		catch(Exception::BaseException& e)
 		{
 			QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-			layer.peaks.clear();
+			layer.peaks.clear(true);
 		}
 		layer.peaks.sortSpectra(true);
 		layer.peaks.updateRanges(1);

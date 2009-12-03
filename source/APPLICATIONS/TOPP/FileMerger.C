@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/TextFile.h>
@@ -73,9 +73,17 @@ class TOPPFileMerger
 	void registerOptionsAndFlags_()
 	{
 		registerInputFileList_("in","<files>",StringList(),"Input files separated by blank");
+#ifdef USE_ANDIMS
 		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf"));
+#else
+		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf"));
+#endif
 		registerStringOption_("in_type","<type>","","input file type (default: determined from file extension or content)\n", false);
+#ifdef USE_ANDIMS
 		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf"));
+#else
+		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf"));
+#endif
 		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("mzML"));
 

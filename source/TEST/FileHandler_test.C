@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -56,6 +56,7 @@ START_SECTION((static String typeToName(FileTypes::Type type)))
 	TEST_EQUAL(tmp.typeToName(FileTypes::CONSENSUSXML),"ConsensusXML");
 	TEST_EQUAL(tmp.typeToName(FileTypes::TRANSFORMATIONXML),"TrafoXML");
 	TEST_EQUAL(tmp.typeToName(FileTypes::INI),"ini");
+	TEST_EQUAL(tmp.typeToName(FileTypes::PNG),"PNG");
 END_SECTION
 
 START_SECTION((static FileTypes::Type nameToType(const String &name)))
@@ -73,6 +74,7 @@ START_SECTION((static FileTypes::Type nameToType(const String &name)))
 	TEST_EQUAL(FileTypes::CONSENSUSXML, tmp.nameToType("ConsensusXMl"));
 	TEST_EQUAL(FileTypes::INI, tmp.nameToType("ini"));
 	TEST_EQUAL(FileTypes::TRANSFORMATIONXML, tmp.nameToType("TrafoXML"));
+	TEST_EQUAL(FileTypes::PNG, tmp.nameToType("PNG"));
 END_SECTION
 
 START_SECTION((static FileTypes::Type getTypeByFileName(const String &filename)))
@@ -81,6 +83,8 @@ START_SECTION((static FileTypes::Type getTypeByFileName(const String &filename))
 	TEST_EQUAL(tmp.getTypeByFileName("test.dta"), FileTypes::DTA)
 	TEST_EQUAL(tmp.getTypeByFileName("test.MzData"), FileTypes::MZDATA)
 	TEST_EQUAL(tmp.getTypeByFileName("test.MzML"), FileTypes::MZML)
+	TEST_EQUAL(tmp.getTypeByFileName(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML.bz2")), FileTypes::MZML)
+	TEST_EQUAL(tmp.getTypeByFileName(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML.gz")), FileTypes::MZML)
 	TEST_EQUAL(tmp.getTypeByFileName("test.DTA2D"), FileTypes::DTA2D)
 	TEST_EQUAL(tmp.getTypeByFileName("test.featureXML"), FileTypes::FEATUREXML)
 	TEST_EQUAL(tmp.getTypeByFileName("test.MZXML"), FileTypes::MZXML)
@@ -90,6 +94,7 @@ START_SECTION((static FileTypes::Type getTypeByFileName(const String &filename))
 	TEST_EQUAL(tmp.getTypeByFileName("test.consensusXML"), FileTypes::CONSENSUSXML)
 	TEST_EQUAL(tmp.getTypeByFileName("test.TraFoXML"), FileTypes::TRANSFORMATIONXML)
 	TEST_EQUAL(tmp.getTypeByFileName("test.ini"), FileTypes::INI)
+	TEST_EQUAL(tmp.getTypeByFileName("test.png"), FileTypes::PNG)
 END_SECTION
 
 START_SECTION((static FileTypes::Type getTypeByContent(const String &filename)))
@@ -98,6 +103,8 @@ START_SECTION((static FileTypes::Type getTypeByContent(const String &filename)))
 	TEST_EQUAL(tmp.getTypeByContent(OPENMS_GET_TEST_DATA_PATH("FeatureXMLFile_1.featureXML")), FileTypes::FEATUREXML)
 	TEST_EQUAL(tmp.getTypeByContent(OPENMS_GET_TEST_DATA_PATH("MzXMLFile_1.mzXML")), FileTypes::MZXML)
 	TEST_EQUAL(tmp.getTypeByContent(OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML")), FileTypes::MZML)
+	TEST_EQUAL(tmp.getTypeByContent(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML.bz2")), FileTypes::MZML)
+	TEST_EQUAL(tmp.getTypeByContent(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML.gz")), FileTypes::MZML)
 	TEST_EQUAL(tmp.getTypeByContent(OPENMS_GET_TEST_DATA_PATH("DTAFile_test.dta")), FileTypes::DTA)
 	TEST_EQUAL(tmp.getTypeByContent(OPENMS_GET_TEST_DATA_PATH("DTA2DFile_test_1.dta2d")), FileTypes::DTA2D)
 	TEST_EQUAL(tmp.getTypeByContent(OPENMS_GET_TEST_DATA_PATH("DTA2DFile_test_2.dta2d")), FileTypes::DTA2D)
@@ -208,8 +215,22 @@ START_SECTION((template < class FeatureType > bool loadFeatures(const String &fi
 	TEST_EQUAL(map.size(),7);
 	TEST_EQUAL(tmp.loadFeatures(OPENMS_GET_TEST_DATA_PATH("FeatureXMLFile_2_options.featureXML"),map), true)
 	TEST_EQUAL(map.size(),7);
-
 END_SECTION
+
+START_SECTION((template <class PeakType> void storeExperiment(const String& filename, const MSExperiment<PeakType>& exp, ProgressLogger::LogType log = ProgressLogger::NONE)))
+	FileHandler fh;
+	MSExperiment<> exp;
+	fh.loadExperiment(OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML"),exp);
+	
+	//test mzML
+	String filename;
+	NEW_TMP_FILE(filename)
+	fh.storeExperiment(filename,exp);
+	TEST_EQUAL(fh.getTypeByContent(filename),FileTypes::MZML)
+		
+	//other types cannot be tested, because the NEW_TMP_FILE template does not support file extensions...
+END_SECTION
+
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

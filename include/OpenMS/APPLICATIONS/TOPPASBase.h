@@ -36,6 +36,7 @@
 #include <QtGui/QWorkspace>
 #include <QtGui/QButtonGroup>
 #include <QtCore/QProcess>
+#include <QtGui/QSplashScreen>
 
 class QToolBar;
 class QListWidget;
@@ -77,11 +78,17 @@ namespace OpenMS
       void loadPreferences(String filename="");
       /// stores the preferences (used when this window is closed)
       void savePreferences();
-			
+			/// loads the files and updates the splashscreen
+			void loadFiles(const StringList& list, QSplashScreen* splash_screen);
+			/// opens the file in a new window
+			void openFile(const String& file_name);
+
     public slots:
     	
     	/// shows the dialog for opening files
       void openFileDialog();
+			/// shows the dialog for opening example files
+			void openExampleDialog();
       /// shows the dialog for creating a new file
       void newFileDialog();
       /// shows the dialog for saving the current file
@@ -147,8 +154,10 @@ namespace OpenMS
     	void updateMenu();
     	/// Shows the widget as window in the workspace
     	void showAsWindow_(TOPPASWidget* sw, const String& caption);
-			/// Inserts a new TOPP tool vertex in the current window
-			void insertNewVertex_(double x, double y);
+			/// Inserts a new TOPP tool in the current window at (x,y)
+			void insertNewVertex_(double x, double y, QTreeWidgetItem* item = 0);
+			/// Inserts the @p item in the middle of the current window
+			void insertNewVertexInCenter_(QTreeWidgetItem* item);
 			
     protected:
 

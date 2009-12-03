@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -64,6 +64,53 @@ START_SECTION(([EXTRA] Param::ParamEntry(const String& n, const DataValue& v, co
 	TEST_EQUAL(pe.description,"d1")
 	TEST_EQUAL(pe.value,"v1")
 	TEST_EQUAL(pe.tags.count("advanced")==1,false)
+END_SECTION
+
+START_SECTION(([EXTRA] bool isValid(String& message) const))
+
+	Param p;
+	String m;
+	p.setValue("int",5);
+	TEST_EQUAL(p.getEntry("int").isValid(m),true);
+	p.setMinInt("int",5);
+	TEST_EQUAL(p.getEntry("int").isValid(m),true);
+	p.setMaxInt("int",8);
+	TEST_EQUAL(p.getEntry("int").isValid(m),true);
+	p.setValue("int",10);
+	TEST_EQUAL(p.getEntry("int").isValid(m),false);
+
+	p.setValue("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMinFloat("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMaxFloat("float",8.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setValue("float",10.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),false);
+
+	p.setValue("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMinFloat("float",5.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setMaxFloat("float",8.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),true);
+	p.setValue("float",10.1);
+	TEST_EQUAL(p.getEntry("float").isValid(m),false);
+
+
+	vector<String> strings;
+	strings.push_back("bla");
+	strings.push_back("bluff");
+	p.setValue("string","bli");
+	TEST_EQUAL(p.getEntry("string").isValid(m),true);
+	p.setValidStrings("string",strings);
+	TEST_EQUAL(p.getEntry("string").isValid(m),false);
+	
+	p.setValue("string_2","bla");
+	TEST_EQUAL(p.getEntry("string_2").isValid(m),true);
+	p.setValidStrings("string_2",strings);
+	TEST_EQUAL(p.getEntry("string_2").isValid(m),true);
+	
 END_SECTION
 
 START_SECTION(([EXTRA] bool operator==(const Param::ParamEntry& rhs) const))
@@ -782,6 +829,66 @@ START_SECTION([EXTRA](friend std::ostream& operator << (std::ostream& os, const 
 	TEST_EQUAL(ss.str(), "\"tree|key\" -> \"17.5\"\n")
 END_SECTION
 
+START_SECTION((void insert(const String& prefix, const Param &param)))
+	Param p;
+	p.setValue("a",17,"intdesc");
+	p.setValue("n1:b",17.4f,"floatdesc");
+	p.setValue("n1:c","test,test,test","stringdesc");
+	p.setValue("n2:d",17.5f);
+	p.setSectionDescription("n1","sectiondesc");
+
+	Param p2;
+	
+	p2.insert("prefix",p);
+	TEST_EQUAL(p2.size(),4)
+	TEST_EQUAL(Int(p2.getValue("prefixa")), 17)
+	TEST_STRING_EQUAL(p2.getDescription("prefixa"), "intdesc")
+	TEST_REAL_SIMILAR(float(p2.getValue("prefixn1:b")), 17.4)
+	TEST_STRING_EQUAL(p2.getDescription("prefixn1:b"), "floatdesc")
+	TEST_EQUAL(p2.getValue("prefixn1:c"), "test,test,test")
+	TEST_STRING_EQUAL(p2.getDescription("prefixn1:c"), "stringdesc")
+	TEST_REAL_SIMILAR(float(p2.getValue("prefixn2:d")), 17.5)
+	TEST_STRING_EQUAL(p2.getDescription("prefixn2:d"), String::EMPTY)
+	TEST_EQUAL(p2.getSectionDescription("prefixn1"),"sectiondesc")
+		
+	p2.insert("",p);
+	TEST_EQUAL(p2.size(),8)
+	TEST_EQUAL(Int(p2.getValue("a")), 17)
+	TEST_STRING_EQUAL(p2.getDescription("a"), "intdesc")
+	TEST_REAL_SIMILAR(float(p2.getValue("n1:b")), 17.4)
+	TEST_STRING_EQUAL(p2.getDescription("n1:b"), "floatdesc")
+	TEST_EQUAL(p2.getValue("n1:c"), "test,test,test")
+	TEST_STRING_EQUAL(p2.getDescription("n1:c"), "stringdesc")
+	TEST_REAL_SIMILAR(float(p2.getValue("n2:d")), 17.5)
+	TEST_STRING_EQUAL(p2.getDescription("n2:d"), String::EMPTY)
+	TEST_EQUAL(p2.getSectionDescription("n1"),"sectiondesc")
+
+	p2.insert("n3:",p);
+	TEST_EQUAL(p2.size(),12)
+	TEST_EQUAL(Int(p2.getValue("n3:a")), 17)
+	TEST_STRING_EQUAL(p2.getDescription("n3:a"), "intdesc")
+	TEST_REAL_SIMILAR(float(p2.getValue("n3:n1:b")), 17.4)
+	TEST_STRING_EQUAL(p2.getDescription("n3:n1:b"), "floatdesc")
+	TEST_EQUAL(p2.getValue("n3:n1:c"), "test,test,test")
+	TEST_STRING_EQUAL(p2.getDescription("n3:n1:c"), "stringdesc")
+	TEST_REAL_SIMILAR(float(p2.getValue("n3:n2:d")), 17.5)
+	TEST_STRING_EQUAL(p2.getDescription("n3:n2:d"), String::EMPTY)
+	TEST_EQUAL(p2.getSectionDescription("n3:n1"),"sectiondesc")
+	
+	p.clear();
+	p.setValue("a",18,"intdesc");
+	p.setValue("n1:b",17.7f,"floatdesc");
+	p.setValue("n1:c","test,test,test,test","stringdesc");
+	p.setValue("n2:d",17.8f);
+	
+	p2.insert("",p);
+	TEST_EQUAL(p2.size(),12)
+	TEST_EQUAL(Int(p2.getValue("a")), 18)
+	TEST_REAL_SIMILAR(float(p2.getValue("n1:b")), 17.7)
+	TEST_EQUAL(p2.getValue("n1:c"), "test,test,test,test")
+	TEST_REAL_SIMILAR(float(p2.getValue("n2:d")), 17.8)
+END_SECTION
+
 Param p;
 p.setValue("test:float",17.4f,"floatdesc");
 p.setValue("test:string","test,test,test","stringdesc");
@@ -790,71 +897,7 @@ p.setValue("test2:float",17.5f);
 p.setValue("test2:string","test2");
 p.setValue("test2:int",18);
 p.setSectionDescription("test","sectiondesc");
-
-START_SECTION((void insert(String prefix, const Param &param)))
-	Param p2;
-	p2.insert("test3",p);
-	
-	TEST_REAL_SIMILAR(float(p2.getValue("test3test:float")), 17.4)
-	TEST_STRING_EQUAL(p2.getDescription("test3test:float"), "floatdesc")
-	TEST_EQUAL(p2.getValue("test3test:string"), "test,test,test")
-	TEST_STRING_EQUAL(p2.getDescription("test3test:string"), "stringdesc")
-	TEST_EQUAL(Int(p2.getValue("test3test:int")), 17)
-	TEST_STRING_EQUAL(p2.getDescription("test3test:int"), "intdesc")
-	TEST_REAL_SIMILAR(float(p2.getValue("test3test2:float")), 17.5)
-	TEST_STRING_EQUAL(p2.getDescription("test3test2:float"), String::EMPTY)
-	TEST_EQUAL(p2.getValue("test3test2:string"), "test2")
-	TEST_STRING_EQUAL(p2.getDescription("test3test2:string"), String::EMPTY)
-	TEST_EQUAL(Int(p2.getValue("test3test2:int")), 18)
-	TEST_STRING_EQUAL(p2.getDescription("test3test2:int"), String::EMPTY)
-	TEST_EQUAL(p2.getSectionDescription("test3test"),"sectiondesc")
-		
-	p2.insert("",p);
-	TEST_REAL_SIMILAR(float(p2.getValue("test:float")), 17.4)
-	TEST_STRING_EQUAL(p2.getDescription("test:float"), "floatdesc")
-	TEST_EQUAL(p2.getValue("test:string"), "test,test,test")
-	TEST_STRING_EQUAL(p2.getDescription("test:int"), "intdesc")
-	TEST_EQUAL(Int(p2.getValue("test:int")), 17)
-	TEST_STRING_EQUAL(p2.getDescription("test:string"), "stringdesc")
-	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), 17.5)
-	TEST_STRING_EQUAL(p2.getDescription("test2:float"), String::EMPTY)
-	TEST_EQUAL(p2.getValue("test2:string"), "test2")
-	TEST_STRING_EQUAL(p2.getDescription("test2:string"), String::EMPTY)
-	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)	
-	TEST_STRING_EQUAL(p2.getDescription("test2:int"), String::EMPTY)
-	TEST_EQUAL(p2.getSectionDescription("test"),"sectiondesc")
-
-	p2.insert("test3:",p);
-	
-	TEST_REAL_SIMILAR(float(p2.getValue("test3:test:float")), 17.4)
-	TEST_STRING_EQUAL(p2.getDescription("test3:test:float"), "floatdesc")
-	TEST_EQUAL(p2.getValue("test3:test:string"), "test,test,test")
-	TEST_STRING_EQUAL(p2.getDescription("test3:test:string"), "stringdesc")
-	TEST_EQUAL(Int(p2.getValue("test3:test:int")), 17)
-	TEST_STRING_EQUAL(p2.getDescription("test3:test:int"), "intdesc")
-	TEST_REAL_SIMILAR(float(p2.getValue("test3:test2:float")), 17.5)
-	TEST_STRING_EQUAL(p2.getDescription("test3:test2:float"), String::EMPTY)
-	TEST_EQUAL(p2.getValue("test3:test2:string"), "test2")
-	TEST_STRING_EQUAL(p2.getDescription("test3:test2:string"), String::EMPTY)
-	TEST_EQUAL(Int(p2.getValue("test3:test2:int")), 18)
-	TEST_STRING_EQUAL(p2.getDescription("test3:test2:int"), String::EMPTY)
-	TEST_EQUAL(p2.getSectionDescription("test3:test"),"sectiondesc")
-		
-	p2.insert("",p);
-	TEST_REAL_SIMILAR(float(p2.getValue("test:float")), 17.4)
-	TEST_STRING_EQUAL(p2.getDescription("test:float"), "floatdesc")
-	TEST_EQUAL(p2.getValue("test:string"), "test,test,test")
-	TEST_STRING_EQUAL(p2.getDescription("test:int"), "intdesc")
-	TEST_EQUAL(Int(p2.getValue("test:int")), 17)
-	TEST_STRING_EQUAL(p2.getDescription("test:string"), "stringdesc")
-	TEST_REAL_SIMILAR(float(p2.getValue("test2:float")), 17.5)
-	TEST_STRING_EQUAL(p2.getDescription("test2:float"), String::EMPTY)
-	TEST_EQUAL(p2.getValue("test2:string"), "test2")
-	TEST_STRING_EQUAL(p2.getDescription("test2:string"), String::EMPTY)
-	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)	
-	TEST_STRING_EQUAL(p2.getDescription("test2:int"), String::EMPTY)
-	TEST_EQUAL(p2.getSectionDescription("test"),"sectiondesc")
-END_SECTION
+p.addTags("test:float", StringList::create("a,b,c"));
 
 START_SECTION((Param(const Param& rhs)))
 	Param p2(p);
@@ -871,6 +914,8 @@ START_SECTION((Param(const Param& rhs)))
 	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)
 	TEST_STRING_EQUAL(p2.getDescription("test2:int"), String::EMPTY)
 	TEST_EQUAL(p2.getSectionDescription("test"),"sectiondesc")
+	TEST_EQUAL(p2.getTags("test:float").size(), 3)
+	TEST_EQUAL(p2.getTags("test:float") == StringList::create("a,b,c"), true)
 END_SECTION
 
 START_SECTION((Param& operator = (const Param& rhs)))
@@ -889,6 +934,8 @@ START_SECTION((Param& operator = (const Param& rhs)))
 	TEST_EQUAL(Int(p2.getValue("test2:int")), 18)
 	TEST_STRING_EQUAL(p2.getDescription("test2:int"), String::EMPTY)
 	TEST_EQUAL(p2.getSectionDescription("test"),"sectiondesc")
+	TEST_EQUAL(p2.getTags("test:float").size(), 3)
+	TEST_EQUAL(p2.getTags("test:float") == StringList::create("a,b,c"), true)
 END_SECTION
 
 START_SECTION((Param copy(const String &prefix, bool remove_prefix=false) const))
@@ -1048,8 +1095,8 @@ START_SECTION((void store(const String& filename) const))
 	TEST_STRING_EQUAL(p2.getDescription("test:string"), p3.getDescription("test:string"))
 	TEST_STRING_EQUAL(p2.getDescription("test:int"), p3.getDescription("test:int"))
 	TEST_EQUAL(p3.getSectionDescription("test"),"sectiondesc")
-	TEST_EQUAL(p3.getDescription("test:a:a1"),"a1desc'<>\nnewline")
-	TEST_EQUAL(p3.getSectionDescription("test:b"),"bdesc'<>\nnewline")
+	TEST_EQUAL(p3.getDescription("test:a:a1"),"a1desc\"<>\nnewline")
+	TEST_EQUAL(p3.getSectionDescription("test:b"),"bdesc\"<>\nnewline")
 	TEST_EQUAL(p3.getSectionDescription("test2:a"),"adesc")
 	TEST_EQUAL(p3.hasTag("test2:b:b1","advanced"),true)
 	TEST_EQUAL(p3.hasTag("test2:a:a1","advanced"),false)
@@ -1186,7 +1233,7 @@ START_SECTION((void store(const String& filename) const))
 END_SECTION
 
 
-START_SECTION((void setDefaults(const Param& defaults, String prefix="", bool showMessage=false)))
+START_SECTION((void setDefaults(const Param& defaults, const String& prefix="", bool showMessage=false)))
 	Param defaults;
 	defaults.setValue("float",1.0f,"float");	
 	defaults.setValue("float2",2.0f,"float2");
@@ -1307,7 +1354,7 @@ command_line4[7] = a8;
 command_line4[8] = a9;
 command_line4[9] = a10;
 
-START_SECTION((void parseCommandLine(const int argc, const char **argv, String prefix="")))
+START_SECTION((void parseCommandLine(const int argc, const char **argv, const String& prefix="")))
 	Param p2,p3;
 	p2.parseCommandLine(9,command_line,"test4");
 	p3.setValue("test4:-a","av");
@@ -1488,7 +1535,7 @@ START_SECTION((void setMaxFloat(const String &key, DoubleReal max)))
 END_SECTION
 
 
-START_SECTION((void checkDefaults(const String &name, const Param &defaults, String prefix="", std::ostream &os=std::cout) const))
+START_SECTION((void checkDefaults(const String &name, const Param &defaults, const String& prefix="", std::ostream &os=std::cout) const))
 	//warnings for unknown parameters
 	ostringstream os;
 	Param p,d;
@@ -1709,6 +1756,32 @@ START_SECTION([EXTRA] loading and storing of lists)
 	
 END_SECTION
 
+
+START_SECTION(([EXTRA] Escapingi of characters))
+	Param p;
+	p.setValue("string",String("bla"),"string");
+	p.setValue("string_with_ampersand", String("bla2&blubb"), "string with ampersand");
+	p.setValue("string_with_ampersand_in_descr", String("blaxx"), "String with & in description");
+	p.setValue("string_with_single_quote", String("bla'xxx"), "String with single quotes");
+	p.setValue("string_with_single_quote_in_descr", String("blaxxx"), "String with ' quote in description");
+	p.setValue("string_with_double_quote", String("bla\"xxx"), "String with double quote");
+	p.setValue("string_with_double_quote_in_descr", String("bla\"xxx"), "String with \" description");
+	p.setValue("string_with_greater_sign", String("bla>xxx"), "String with greater sign");
+	p.setValue("string_with_greater_sign_in_descr", String("bla greater xxx"), "String with >");
+	p.setValue("string_with_less_sign", String("bla<xxx"), "String with less sign");
+	p.setValue("string_with_less_sign_in_descr", String("bla less sign_xxx"), "String with less sign <");
+
+
+	String filename;
+	NEW_TMP_FILE(filename)
+	p.store(filename);
+
+	Param p2;
+	p2.load(filename);
+
+	TEST_STRING_EQUAL(p2.getDescription("string"), "string")
+
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_CONCEPT_TYPES_H
@@ -194,7 +194,7 @@ namespace OpenMS
   std::cout << writtenDigits(r) << ": " << r << '\n'; // writes: 6: 12345.7
 
   long double l = NUMBER;
-  std::cout.precision(writtenDigits(1L); // argument is not used, but L suffix indicates a long double
+  std::cout.precision(writtenDigits(1L)); // argument is not used, but L suffix indicates a long double
   std::cout << writtenDigits(1L) << ": " << l << '\n'; // writes: 18: 12345.6789012345671
 
   DoubleReal x = 88.99;

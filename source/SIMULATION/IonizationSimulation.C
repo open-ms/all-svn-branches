@@ -204,7 +204,7 @@ namespace OpenMS {
 			// map for charged features
 			FeatureMapSim copy_map = features;
 			// but leave meta information & other stuff intact
-			copy_map.clear();
+			copy_map.clear(false);
 
 			UInt feature_index=0;
 			// features which are not ionized
@@ -349,7 +349,7 @@ namespace OpenMS {
 			Size feature_index = 0;
 					
 			FeatureMapSim copy_map(features);
-      copy_map.clear();
+      copy_map.clear(false);
       DoubleReal h_mono_weight = Constants::PROTON_MASS_U;
       
 			for(FeatureMap< >::iterator feature_it = features.begin();
@@ -429,7 +429,7 @@ namespace OpenMS {
 		// add meta information on compomer (mass)
 		f.setMetaValue("charge_adduct_mass", adduct_mass );
 		f.setMetaValue("charge_adducts", adduct_formula );
-		f.setMetaValue("parent_feature_number", (UInt) parent_index );
+		f.setMetaValue("parent_feature_number", parent_index );
 
 		// set "main" intensity
 		SimIntensityType old_intensity = f.getIntensity();

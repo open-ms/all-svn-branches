@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
 
@@ -78,28 +78,19 @@ namespace OpenMS
 			*/
 			//@{
 			/// performs a training step; needs as parameters a spectrum with annotated sequence and charge; returns the intensity sum of the matched peaks
-			double train(const RichPeakSpectrum&, const AASequence& peptide, double ion_weight, UInt charge, double peptide_weight);
+			DoubleReal train(const RichPeakSpectrum& spec, const AASequence& peptide, DoubleReal ion_weight, UInt charge, DoubleReal peptide_weight);
 
-			/** reads the model parameters from the given files
-			    @param filename filename of the model
-			*/ 
-			//void readFromFile(const String& filename);
+			/// given a peptide (a ion) the model returns the peaks with intensities relative to initial_prob
+			void getIons(std::vector<RichPeak1D>& peaks, const AASequence& peptide, DoubleReal initial_prob);
 
-			/// 
-			void getIons(std::vector<RichPeak1D>& peaks, const AASequence& peptide, double initial_prob);
-
-			///
+			/// sets the hidden markov model
 			void setHMM(const HiddenMarkovModel& model);
+			
 			/// writes the HMM to the given file in the GraphML format. A detailed description of the GraphML format can be found under http://graphml.graphdrawing.org/
 			const HiddenMarkovModel& getHMM() const;
-			//void writeGraphMLFile(const String& filename);
-
-			/** writes the model parameters into the given files
-			    @param filename filename of the base model
-			*/			 
-			//void writeToFile(const String& filename);
-			void generateModel();
 			
+			/// generates the models
+			void generateModel();
 			
 			/// this method evaluates the model after training; it should be called after all training steps with train
 			void evaluate();
@@ -108,13 +99,13 @@ namespace OpenMS
 		protected:
 
 			/// extracts the precursor and related intensities of a training spectrum
-			double getIntensitiesFromSpectrum_(const RichPeakSpectrum& train_spec, Map<String, double>& pre_ints, double ion_weight, const AASequence& peptide, UInt charge);
+			DoubleReal getIntensitiesFromSpectrum_(const RichPeakSpectrum& train_spec, Map<String, DoubleReal>& pre_ints, DoubleReal ion_weight, const AASequence& peptide, UInt charge);
 
 			/// trains precursor and related peaks
-			void trainIons_(double initial_probability, const Map<String, double>& intensities, const AASequence& peptide);
+			void trainIons_(DoubleReal initial_probability, const Map<String, DoubleReal>& intensities, const AASequence& peptide);
 			
 			/// estimates the precursor intensities 
-			void getIons_(Map<String, double>& intensities, double initial_probability, const AASequence& precursor);
+			void getIons_(Map<String, DoubleReal>& intensities, DoubleReal initial_probability, const AASequence& precursor);
 
 			/// enables the states needed for precursor training/simulation
 			void enableIonStates_(const AASequence& peptide);

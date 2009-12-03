@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 // OpenMS includes
@@ -76,8 +76,12 @@ namespace OpenMS
 			e->ignore();
 			return;
 	  } 	
-		color_ = QColorDialog::getColor(color_,this);
-		repaint();
+		QColor tmp = QColorDialog::getColor(color_,this);
+		if (tmp.isValid())
+		{
+			color_ = tmp;
+			repaint();
+		}
 	}	
 	
 	const QColor& ColorSelector::getColor()

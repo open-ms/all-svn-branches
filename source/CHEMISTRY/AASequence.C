@@ -57,17 +57,19 @@ namespace OpenMS
 	AASequence::AASequence(const String& peptide)
 		:	valid_(true),
 			n_term_mod_(0),
-			c_term_mod_(0)
+			c_term_mod_(0),
+			indesignated_modifications_()
 	{
-		parseString_(peptide_, peptide);
+		parseString_(peptide_, indesignated_modifications_, peptide);
 	}
 
 	AASequence::AASequence(const char* peptide)
 		: valid_(true),
 			n_term_mod_(0),
-			c_term_mod_(0)
+			c_term_mod_(0),
+			indesignated_modifications_()
 	{
-		parseString_(peptide_, String(peptide));
+		parseString_(peptide_, indesignated_modifications_, String(peptide));
 	}
 
 	AASequence::~AASequence()
@@ -235,32 +237,52 @@ namespace OpenMS
 
 	DoubleReal AASequence::getAverageWeight(Residue::ResidueType type, Int charge) const
 	{
+
+		// check whether tags are present
+		DoubleReal tag_offset(0);
+		for (ConstIterator it = this->begin(); it != this->end(); ++it)
+		{
+			if (it->getOneLetterCode() == "")
+			{
+				tag_offset += it->getMonoWeight();
+			}
+		}
+
 		/// @important changed due to introduction of indesignated modifications that must be taken into account too.
 		/// @important indesignated modifications: the modification mass is written into the sequence (n- to c-terminal) after the residue that is to be modified in square brackets
-		DoubleReal w = getFormula(type, charge).getAverageWeight();
-		DoubleReal mods = 0;
-
+		// check whether indesignated mods are present
+		DoubleReal mods (0);
 		for(std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.begin(); it != indesignated_modifications_.end(); ++it)
 		{
 			mods += it->second;
 		}
 
-		return w+mods;
+		return tag_offset + getFormula(type, charge).getAverageWeight() + mods;
 	}
 
 	DoubleReal AASequence::getMonoWeight(Residue::ResidueType type, Int charge) const
 	{
+
+		// check whether tags are present
+		DoubleReal tag_offset(0);
+		for (ConstIterator it = this->begin(); it != this->end(); ++it)
+    {
+      if (it->getOneLetterCode() == "")
+      {
+        tag_offset += it->getMonoWeight();
+      }
+    }
+
 		/// @important changed due to introduction of indesignated modifications that must be taken into account too.
 		/// @important indesignated modifications: the modification mass is written into the sequence (n- to c-terminal) after the residue that is to be modified in square brackets
-		DoubleReal w = getFormula(type, charge).getMonoWeight();
-		DoubleReal mods = 0;
-
+		// check whether indesignated mods are present
+		DoubleReal mods (0);
 		for(std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.begin(); it != indesignated_modifications_.end(); ++it)
 		{
 			mods += it->second;
 		}
 
-		return w+mods;
+		return tag_offset + getFormula(type, charge).getMonoWeight() + mods;
 	}
 
 	/*void AASequence::getNeutralLosses(Map<const EmpiricalFormula, UInt) const
@@ -336,10 +358,16 @@ namespace OpenMS
 	{
 		AASequence seq;
 		seq.peptide_ = peptide_;
+		seq.indesignated_modifications_ = indesignated_modifications_;
 		for (Size i=0;i!=sequence.peptide_.size();++i)
 		{
 			seq.peptide_.push_back(sequence.peptide_[i]);
 		}
+		for (std::map<Size,DoubleReal>::const_iterator it = sequence.indesignated_modifications_.begin(); it!=sequence.indesignated_modifications_.end(); ++it)
+		{
+			seq.indesignated_modifications_.insert(std::pair<Size,DoubleReal>(it->first+peptide_.size(),it->second));
+		}
+
 		return seq;
 	}
 
@@ -367,21 +395,34 @@ namespace OpenMS
 
 	AASequence& AASequence::operator += (const AASequence& sequence)
 	{
+		Size old_size(peptide_.size());
 		for (Size i=0;i!=sequence.peptide_.size();++i)
 		{
 			peptide_.push_back(sequence.peptide_[i]);
 		}
+		for (std::map<Size,DoubleReal>::const_iterator it = sequence.indesignated_modifications_.begin(); it!=sequence.indesignated_modifications_.end(); ++it)
+		{
+			indesignated_modifications_.insert(std::pair<Size,DoubleReal>(it->first+old_size,it->second));
+		}
+
 		return *this;
 	}
 
 	AASequence& AASequence::operator += (const String& peptide)
 	{
 		vector<const Residue*> vec;
-		parseString_(vec, peptide);
+		std::map<Size,DoubleReal> imods;
+		parseString_(vec, imods, peptide);
+		Size old_size(peptide_.size());
 		for (Size i=0;i!=vec.size();++i)
 		{
 			peptide_.push_back(vec[i]);
 		}
+		for (std::map<Size,DoubleReal>::const_iterator it = imods.begin(); it!=imods.end(); ++it)
+		{
+			indesignated_modifications_.insert(std::pair<Size,DoubleReal>(it->first+old_size,it->second));
+		}
+
 		return *this;
 	}
 
@@ -679,6 +720,10 @@ namespace OpenMS
 		{
 			return true;
 		}
+		if(!indesignated_modifications_.empty())
+		{
+			return true;
+		}
 		for (vector<const Residue*>::const_iterator it = peptide_.begin(); it != peptide_.end(); ++it)
 		{
 			if ((*it)->isModified())
@@ -695,6 +740,13 @@ namespace OpenMS
     {
       throw Exception::IndexOverflow(__FILE__, __LINE__, __PRETTY_FUNCTION__, peptide_.size(), position);
     }
+
+		/// @attention might cause trouble because isModified yields true BUT mod is not in ResidueDB !!!
+		std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.find(position);
+		if(it != indesignated_modifications_.end())
+		{
+			return true;
+		}
 
 		return peptide_[position]->isModified();
 	}
@@ -713,8 +765,7 @@ namespace OpenMS
 
 		for (Size i = 0; i != peptide.size(); ++i)
 		{
-			std::map<Size,DoubleReal>::const_iterator it = peptide.indesignated_modifications_.find(i);
-			if(it != peptide.indesignated_modifications_.end())
+			if (peptide.peptide_[i]->isModified())
 			{
 				if (peptide.peptide_[i]->getOneLetterCode() != "")
 				{
@@ -722,49 +773,44 @@ namespace OpenMS
 				}
 				else
 				{
-					os << "[" << peptide.peptide_[i]->getMonoWeight() << "]";
+					os << "[" << precisionWrapper(peptide.peptide_[i]->getMonoWeight()) << "]";
 				}
-				os << "([" << it->second << "])";
-			}
-			else
-			{
-				if (peptide.peptide_[i]->isModified())
+				String id = ModificationsDB::getInstance()->getModification(peptide.peptide_[i]->getOneLetterCode(), peptide.peptide_[i]->getModification(), ResidueModification::ANYWHERE).getId();
+				if (id != "")
 				{
-					if (peptide.peptide_[i]->getOneLetterCode() != "")
-					{
-						os << peptide.peptide_[i]->getOneLetterCode();
-					}
-					else
-					{
-						os << "[" << peptide.peptide_[i]->getMonoWeight() << "]";
-					}
-					String id = ModificationsDB::getInstance()->getModification(peptide.peptide_[i]->getOneLetterCode(), peptide.peptide_[i]->getModification(), ResidueModification::ANYWHERE).getId();
-					if (id != "")
-					{
-						os << "(" << id << ")";
-					}
-					else
-					{
-						os << "([" << ModificationsDB::getInstance()->getModification(peptide.peptide_[i]->getOneLetterCode(), peptide.peptide_[i]->getModification(), ResidueModification::ANYWHERE).getDiffMonoMass() << "])";
-					}
+					os << "(" << id << ")";
 				}
 				else
 				{
-					if (peptide.peptide_[i]->getOneLetterCode() != "")
+					os << "([" << precisionWrapper(ModificationsDB::getInstance()->getModification(peptide.peptide_[i]->getOneLetterCode(), peptide.peptide_[i]->getModification(), ResidueModification::ANYWHERE).getDiffMonoMass()) << "])";
+				}
+				std::map<Size,DoubleReal>::const_iterator it = peptide.indesignated_modifications_.find(i);
+				if(it != peptide.indesignated_modifications_.end())
+				{
+					os << "([" << precisionWrapper(it->second) << "])";
+				}
+			}
+			else
+			{
+				if (peptide.peptide_[i]->getOneLetterCode() != "")
+				{
+					os << peptide.peptide_[i]->getOneLetterCode();
+				}
+				else
+				{
+					if (peptide.peptide_[i]->getShortName() != "")
 					{
-						os << peptide.peptide_[i]->getOneLetterCode();
+						os << peptide.peptide_[i]->getShortName();
 					}
 					else
 					{
-						if (peptide.peptide_[i]->getShortName() != "")
-						{
-							os << peptide.peptide_[i]->getShortName();
-						}
-						else
-						{
-							os << "[" << peptide.peptide_[i]->getMonoWeight() << "]";
-						}
+						os << "[" << precisionWrapper(peptide.peptide_[i]->getMonoWeight()) << "]";
 					}
+				}
+				std::map<Size,DoubleReal>::const_iterator it = peptide.indesignated_modifications_.find(i);
+				if(it != peptide.indesignated_modifications_.end())
+				{
+					os << "([" << it->second << "])";
 				}
 			}
 		}
@@ -776,8 +822,7 @@ namespace OpenMS
 		return os;
 	}
 
-
-	void AASequence::parseString_(vector<const Residue*>& sequence, const String& pep)
+	void AASequence::parseString_(vector<const Residue*>& sequence, std::map<Size,DoubleReal>& imods, const String& pep)
 	{
 		sequence.clear();
 		String peptide(pep);
@@ -804,7 +849,7 @@ namespace OpenMS
 		for (Size i = 1; i < peptide.size(); ++i)
 		{
 			if ((isalpha(peptide[i]) && isupper(peptide[i]) && !mod_open) ||
-					(peptide[i] == '[' && !mod_open))
+					(peptide[i] == '[' && !mod_open)) // i.e. if next is residue or tag-begin and we are not inside ()
 			{
 				split.push_back(peptide.substr(pos, i-pos));
 				pos = i;
@@ -813,7 +858,7 @@ namespace OpenMS
 					mod_open = false;
 				}
 			}
-			if (peptide[i] == '(')
+			if (peptide[i] == '(') // i.e. we get inside a () or are yet inside another, anyways these characters are skipped
 			{
 				if (mod_open)
 				{
@@ -823,7 +868,7 @@ namespace OpenMS
 				mod_open = true;
 				continue;
 			}
-			if (peptide[i] == ')')
+			if (peptide[i] == ')') // i.e. we get out of a () or are yet inside another, anyways these characters are skipped
 			{
 				if (num_brackets != 0)
 				{
@@ -890,7 +935,7 @@ namespace OpenMS
 		for (Size i = 0; i != split.size(); ++i)
 		{
 			String res = split[i];
-			String name, mod, tag;
+			String name, mod, tag, imod;
 			for (Size j = 0; j != res.size(); ++j)
 			{
 				if (isalpha(res[j]))
@@ -901,17 +946,38 @@ namespace OpenMS
 				{
 					if (res[j] == '(')
 					{
-						for (Size k = j + 1; res[k] != ')';++k)
+						if (res[res.size() - 1] != ')')
 						{
-							if (k == res.size())
+							valid_ = false;
+							sequence_string_.concatenate(split.begin(), split.end());
+							sequence.clear();
+							cerr << "AASequence: cannot convert string '" << peptide << "' into meaningful amino acid sequence, missing ')'!" << endl;
+							return;
+						}
+						if (res.size() > 4 and res[j+1] == '[')
+						{
+							if(res[res.size() - 2] == ']')
+							{
+								for (Size k = j + 2; k < res.size() - 2; ++k) // skip last '])'
+								{
+									imod += res[k];
+								}
+							}
+							else
 							{
 								valid_ = false;
 								sequence_string_.concatenate(split.begin(), split.end());
 								sequence.clear();
-								cerr << "AASequence: cannot convert string '" << peptide << "' into meaningful amino acid sequence, missing ')'!" << endl;
+								cerr << "AASequence: cannot convert string '" << peptide << "' into meaningful amino acid sequence, missing ']'!" << endl;
 								return;
 							}
-							mod += res[k];
+						}
+						else
+						{
+							for (Size k = j + 1; k < res.size() - 1; ++k) // skip last ')'
+							{
+								mod += res[k];
+							}
 						}
 						break;
 					}
@@ -955,6 +1021,23 @@ namespace OpenMS
 				cerr << "AASequence: cannot parse residue with name: '" << name << "' from sequence '" << peptide << "'" << endl;
 				return;
 			}
+			if (imod != "")
+			{
+				DoubleReal imod_weight(0);
+				try
+				{
+					imod_weight = imod.toDouble();
+				}
+				catch (Exception::ConversionError& /* e */)
+				{
+					valid_ = false;
+					sequence_string_.concatenate(split.begin(), split.end());
+					sequence.clear();
+					cerr << "AASequence: cannot parse indesignated modification: ([" << imod << "]) from sequence '" << peptide << "'" << endl;
+					return;
+				}
+				imods.insert(std::pair<Size,DoubleReal>(i,imod_weight));
+			}
 			if (mod != "")
 			{
 				sequence.push_back(ResidueDB::getInstance()->getModifiedResidue(res_ptr, mod));
@@ -967,8 +1050,8 @@ namespace OpenMS
 					if (res_ptr == 0)
 					{
 						Residue res(tag, String(""), String(""), EmpiricalFormula(""));
-						res.setMonoWeight(tag.toDouble(), Residue::Internal);
-						res.setAverageWeight(tag.toDouble(), Residue::Internal);
+						res.setMonoWeight(tag.toDouble());
+						res.setAverageWeight(tag.toDouble());
 						getResidueDB_()->addResidue(res);
 						sequence.push_back(getResidueDB_()->getResidue(tag));
 					}
@@ -1174,7 +1257,7 @@ namespace OpenMS
 		c_term_mod_ = 0;
 		n_term_mod_ = 0;
 		indesignated_modifications_.clear();
-		parseString_(peptide_, sequence);
+		parseString_(peptide_, indesignated_modifications_, sequence);
 		return valid_;
 	}
 }

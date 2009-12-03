@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/METADATA/Software.h>
@@ -33,14 +33,14 @@ namespace OpenMS
 {
 
 	Software::Software()
-		: MetaInfoInterface(),
+		: CVTermList(),
 	  	name_(),
 	  	version_()
 	{
 	}
 	
 	Software::Software(const Software& rhs)
-		: MetaInfoInterface(rhs),
+		: CVTermList(rhs),
 	  	name_(rhs.name_),
 	  	version_(rhs.version_)
 	{
@@ -54,7 +54,7 @@ namespace OpenMS
 	{
 	  if (&rhs == this) return *this;
 	  
-	  MetaInfoInterface::operator=(rhs);
+		CVTermList::operator = (rhs);
 	  name_ = rhs.name_;
 	  version_ = rhs.version_;
 	  
@@ -64,7 +64,7 @@ namespace OpenMS
 	bool Software::operator== (const Software& rhs) const
 	{
 		return
-			MetaInfoInterface::operator==(rhs) &&
+			CVTermList::operator == (rhs) &&
 	    name_ == rhs.name_ &&
 	    version_ == rhs.version_
 	    ;

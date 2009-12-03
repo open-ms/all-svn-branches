@@ -37,11 +37,12 @@ namespace OpenMS
 {
 	// This is documented in the declaration, see FeatureFinder.h
 	template<class PeakType, class FeatureType>
-	void FeatureFinder::run(const String& algorithm_name, MSExperiment<PeakType> const & input_map, FeatureMap<FeatureType> & features, const Param& param)
+	void FeatureFinder::run(const String& algorithm_name, MSExperiment<PeakType> const & input_map, FeatureMap<FeatureType> & features, const Param& param, const FeatureMap<FeatureType>& seeds)
 	{
 		// Nothing to do if there is no data
-		if (input_map.size()==0)
+		if ((algorithm_name != "mrm" && input_map.size()==0) || (algorithm_name == "mrm" && input_map.getChromatograms().size() == 0))
 		{
+		  features.clear(true);
 			return;
 		}
 	
@@ -76,6 +77,7 @@ namespace OpenMS
 		}
 
 		// initialize
+		if (algorithm_name!="mrm" && algorithm_name!="centroided")
 		{
 			// Resize peak flag vector
 			flags_.resize(input_map.size());
@@ -91,6 +93,7 @@ namespace OpenMS
 			FeatureFinderAlgorithm<PeakType, FeatureType>* algorithm = Factory<FeatureFinderAlgorithm<PeakType, FeatureType> >::create(algorithm_name);
 			algorithm->setParameters(param);
 			algorithm->setData(input_map,features,*this);
+			algorithm->setSeeds(seeds);
 			algorithm->run();
 			delete(algorithm);
 		}
@@ -100,7 +103,7 @@ namespace OpenMS
 		{
 			//index
 			Size spectrum_index = input_map.RTBegin(features[i].getRT()) - input_map.begin();
-			features[i].setMetaValue("spectrum_index",(UInt) spectrum_index);
+			features[i].setMetaValue("spectrum_index", spectrum_index);
 			//native id
 			if (spectrum_index < input_map.size())
 			{
@@ -109,7 +112,7 @@ namespace OpenMS
 			}
 			else
 			{
-				// @todo that happens sometimes using IsotopeWaveletFeatureFinder (Rene, Marc, Andreas, Clemens)
+				/// @todo that happens sometimes using IsotopeWaveletFeatureFinder (Rene, Marc, Andreas, Clemens)
 				std::cerr << "FeatureFinderAlgorithm_impl, line=" << __LINE__ << "; FixMe this cannot be, but happens" << std::endl;
 			}
 		}

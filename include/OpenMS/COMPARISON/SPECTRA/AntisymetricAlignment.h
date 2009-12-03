@@ -50,7 +50,7 @@ namespace OpenMS
 
 	//~ warning: unused parameter 'parent_mass2'
 	//~ warning: unused parameter 'common_scores'
-	//~ warning: unused parameter 'common2_scores'
+	//~ warning: unused parameter 'common_shifted_scores'
 
 	struct AntisymetricDP
 	{
@@ -61,7 +61,7 @@ namespace OpenMS
 							cell_M1_L, cell_M1_R, cell_M2_L, cell_M2_R,
 							cell_M3_L, cell_M3_R, INVALID};
 
-		std::pair<double, std::pair< std::vector<int>,std::vector<int> > > calculateAlignementPath(double parent_mass1,  double parent_mass2, std::vector<double> peaks, std::vector<double> peaks2, std::vector<int> & common, std::vector<int> & common2, std::vector<double> & common_scores, std::vector<double> & common2_scores, std::vector<int> & prev, std::vector<int> & next, std::vector<int> & prev2, std::vector<int> & next2, std::vector<std::vector<int> > & left_jumps, std::vector<std::vector<int> > & right_jumps, std::vector<std::vector<int> > & left_jumps2, std::vector<std::vector<int> > &right_jumps2, std::vector<std::vector<int> > & left_neighbors, std::vector<std::vector<int> > & right_neighbors, Real peak_tolerance, double same_vertex_penalty, double ptm_penalty)
+		std::pair<double, std::pair< std::vector<int>,std::vector<int> > > calculateAlignementPath(double parent_mass1,  double parent_mass2, std::vector<double> peaks, std::vector<double> peaks2, std::vector<int> & common, std::vector<int> & common_shifted, std::vector<double> & common_scores, std::vector<double> & common_shifted_scores, std::vector<int> & prev, std::vector<int> & next, std::vector<int> & prev_shifted, std::vector<int> & next_shifted, std::vector<std::vector<int> > & left_jumps, std::vector<std::vector<int> > & right_jumps, std::vector<std::vector<int> > & left_jumps_shifted, std::vector<std::vector<int> > &right_jumps_shifted, std::vector<std::vector<int> > & left_neighbors, std::vector<std::vector<int> > & right_neighbors, Real peak_tolerance, double same_vertex_penalty, double ptm_penalty)
 		{
 
 			const DoubleReal infinity = std::numeric_limits<DoubleReal>::max();
@@ -141,11 +141,11 @@ namespace OpenMS
 					{
 						next_score = std::max(next_score, suffix2_R[N-j2]+ptm_penalty);
 					}
-					for(std::vector<int>::const_iterator it = right_jumps2[N-j].begin(); it != right_jumps2[N-j].end(); ++it)
+					for(std::vector<int>::const_iterator it = right_jumps_shifted[N-j].begin(); it != right_jumps_shifted[N-j].end(); ++it)
 					{
 						next_score = std::max(next_score, suffix1max[N-*it]);
 					}
-					j2 = next2[N-j];
+					j2 = next_shifted[N-j];
 					if(j2 != -1)
 					{
 						next_score = std::max(next_score, suffix1_R[N-j2]);
@@ -186,7 +186,7 @@ namespace OpenMS
 				int l = left_neighbors[i].size();
 				prefix2[i].resize(l+1 ,-infinity);
 
-				if (common2[i] != -1)
+				if (common_shifted[i] != -1)
 				{// s = 0
 					double prev_score = 0.0;
 					for (std::vector<int>::const_iterator it = left_jumps[i].begin();it != left_jumps[i].end(); ++it)
@@ -198,33 +198,33 @@ namespace OpenMS
 					{
 						prev_score = std::max(prev_score, prefix1_L[i2]+ptm_penalty);
 					}
-					for(std::vector<int>::const_iterator it = left_jumps2[i].begin(); it != left_jumps2[i].end(); ++it)
+					for(std::vector<int>::const_iterator it = left_jumps_shifted[i].begin(); it != left_jumps_shifted[i].end(); ++it)
 					{
 						prev_score = std::max(prev_score, prefix2max[*it]);
 					}
-					i2 = prev2[i];
+					i2 = prev_shifted[i];
 					if (i2 != -1)
 					{
 						prev_score = std::max(prev_score, prefix2_L[i2]);
 					}
-					prefix2[i][0] = common2_scores[i] + prev_score;
+					prefix2[i][0] = common_shifted_scores[i] + prev_score;
 
 					// s > 0
 					for (int s = 0; s < l; ++s)
 					{
 						int i2 = left_neighbors[i][s];
-						if(common2[i2] == -1)
+						if(common_shifted[i2] == -1)
 						{
 							continue;
 						}
 						double penalty = 0.0;
-						double y = peaks2[common2[i]]+peaks2[common2[i2]];
+						double y = peaks2[common_shifted[i]]+peaks2[common_shifted[i2]];
 						if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
 						{
 							penalty = same_vertex_penalty;
 						}
 						prev_score = prefix2max[i2];
-						prefix2[i][s+1] = common2_scores[i] + prev_score + penalty;
+						prefix2[i][s+1] = common_shifted_scores[i] + prev_score + penalty;
 					}
 				}
 
@@ -242,7 +242,7 @@ namespace OpenMS
 			// compute suffix2
 			for(int j = 0; j < n; ++j)
 			{
-				if(common2[N-j] != -1)
+				if(common_shifted[N-j] != -1)
 				{
 					double next_score = 0.0;
 					for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
@@ -254,7 +254,7 @@ namespace OpenMS
 					{
 						next_score = std::max(next_score, suffix2_R[N-j2]);
 					}
-					suffix2[j] = common2_scores[N-j] + next_score;
+					suffix2[j] = common_shifted_scores[N-j] + next_score;
 				}
 				if(j != 0)
 				{
@@ -280,7 +280,7 @@ namespace OpenMS
 
 				for(int j = 0; j < n; ++j)
 				{
-					if(common2[N-j] == -1)
+					if(common_shifted[N-j] == -1)
 					{
 						if(i != 0)
 						{
@@ -295,7 +295,7 @@ namespace OpenMS
 
 					double penalty = 0.0;
 					double x = peaks[i]+peaks[N-j];
-					double y = peaks2[common[i]]+peaks2[common2[N-j]];
+					double y = peaks2[common[i]]+peaks2[common_shifted[N-j]];
 					if(fabs(x-(parent_mass1/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance || fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
 					{
 						penalty = same_vertex_penalty;
@@ -328,7 +328,7 @@ namespace OpenMS
 						{
 							next_score = std::max(next_score, M1_R[i][N-j2]);
 						}
-						D1[i][j] = common2_scores[N-j] + next_score + penalty;
+						D1[i][j] = common_shifted_scores[N-j] + next_score + penalty;
 					}
 
 					// Compute M1_L
@@ -362,7 +362,7 @@ namespace OpenMS
 					D2[i][j].resize(l+1, -infinity);
 					M2_R[i][j].resize(l+1, -infinity);
 				}
-				if(common2[i] == -1)
+				if(common_shifted[i] == -1)
 				{
 					if (i > 0)
 					{
@@ -373,7 +373,7 @@ namespace OpenMS
 
 				for(int j = 0; j < n; ++j)
 				{
-					if(common2[N-j] == -1)
+					if(common_shifted[N-j] == -1)
 					{
 						if(i != 0)
 						{
@@ -388,7 +388,7 @@ namespace OpenMS
 
 					double penalty = 0.0;
 					double x = peaks[i]+peaks[N-j];
-					double y = peaks2[common2[i]]+peaks2[common2[N-j]];
+					double y = peaks2[common_shifted[i]]+peaks2[common_shifted[N-j]];
 					if(fabs(x-(parent_mass1/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance || fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
 					{
 						penalty = same_vertex_penalty;
@@ -406,33 +406,33 @@ namespace OpenMS
 						{
 							prev_score = std::max(prev_score, M1_L[i2][j]);
 						}
-						for(std::vector<int>::const_iterator it = left_jumps2[i].begin(); it != left_jumps2[i].end(); ++it)
+						for(std::vector<int>::const_iterator it = left_jumps_shifted[i].begin(); it != left_jumps_shifted[i].end(); ++it)
 						{
 							prev_score = std::max(prev_score, D2max[*it][j]);
 						}
-						i2 = prev2[i];
+						i2 = prev_shifted[i];
 						if (i2 != -1)
 						{
 							prev_score = std::max(prev_score, M2_L[i2][j]);
 						}
-						D2[i][j][0] = common2_scores[i] + prev_score + penalty;
+						D2[i][j][0] = common_shifted_scores[i] + prev_score + penalty;
 
 						// s > 0
 						for(int s = 0; s < l; ++s)
 						{
 							int i2 = left_neighbors[i][s];
-							if(common2[i2] == -1)
+							if(common_shifted[i2] == -1)
 							{
 								continue;
 							}
 							double penalty2 = penalty;
-							double y = peaks2[common2[i]]+peaks2[common2[i2]];
+							double y = peaks2[common_shifted[i]]+peaks2[common_shifted[i2]];
 							if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
 							{
 								penalty2 += same_vertex_penalty;
 							}
 							prev_score = D2max[i2][j];
-							D2[i][j][s+1] = common2_scores[i] + prev_score + penalty2;
+							D2[i][j][s+1] = common_shifted_scores[i] + prev_score + penalty2;
 						}
 					}
 					else
@@ -448,18 +448,18 @@ namespace OpenMS
 						{
 							next_score = std::max(next_score, M2_R[i][N-j2][0]);
 						}
-						D2[i][j][0] = common2_scores[N-j] + next_score + penalty;
+						D2[i][j][0] = common_shifted_scores[N-j] + next_score + penalty;
 
 						// s > 0
 						for(int s = 0; s < l; ++s)
 						{
 							int i2 = left_neighbors[i][s];
-							if(common2[i2] == -1)
+							if(common_shifted[i2] == -1)
 							{
 								continue;
 							}
 							double penalty2 = penalty;
-							double y = peaks2[common2[i2]]+peaks2[common2[N-j]];
+							double y = peaks2[common_shifted[i2]]+peaks2[common_shifted[N-j]];
 							if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
 							{
 								penalty2 += same_vertex_penalty;
@@ -474,7 +474,7 @@ namespace OpenMS
 							{
 								next_score = std::max(next_score, M2_R[i][N-j2][s+1]);
 							}
-							D2[i][j][s+1] = common2_scores[N-j] + next_score + penalty2;
+							D2[i][j][s+1] = common_shifted_scores[N-j] + next_score + penalty2;
 						}
 					}
 
@@ -601,11 +601,11 @@ namespace OpenMS
 						{
 							next_score = std::max(next_score, M1_R[i][N-j2]);
 						}
-						for(std::vector<int>::const_iterator it = right_jumps2[N-j].begin(); it != right_jumps2[N-j].end(); ++it)
+						for(std::vector<int>::const_iterator it = right_jumps_shifted[N-j].begin(); it != right_jumps_shifted[N-j].end(); ++it)
 						{
 							next_score = std::max(next_score, D3max[i][N-*it]);
 						}
-						j2 = next2[N-j];
+						j2 = next_shifted[N-j];
 						if (j2 != -1)
 						{
 							next_score = std::max(next_score, M3_R[i][N-j2]);
@@ -769,11 +769,11 @@ namespace OpenMS
 				}
 			}
 
-			return traceback(parent_mass1, ptm_penalty, prev, next, prev2, next2, left_jumps, right_jumps, left_jumps2, right_jumps2, left_neighbors, right_neighbors, best_i, best_j, best_s, best_t, best_score, D1, D2, D3, D2max, D3max, M1_L, M1_R, M2_L, M2_R, M3_L, M3_R, prefix1, suffix1, prefix2, suffix2, prefix1_L, suffix1max, suffix1_R, prefix2max, prefix2_L, suffix2_R);
+			return traceback(parent_mass1, ptm_penalty, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, best_i, best_j, best_s, best_t, best_score, D1, D2, D3, D2max, D3max, M1_L, M1_R, M2_L, M2_R, M3_L, M3_R, prefix1, suffix1, prefix2, suffix2, prefix1_L, suffix1max, suffix1_R, prefix2max, prefix2_L, suffix2_R);
 		}
 		///
 
-		std::pair<double, std::pair< std::vector<int>,std::vector<int> > > traceback(double parent_mass1, double ptm_penalty, std::vector<int> & prev, std::vector<int> & next, std::vector<int> & prev2, std::vector<int> & next2, std::vector<std::vector<int> > & left_jumps, std::vector<std::vector<int> > & right_jumps, std::vector<std::vector<int> > & left_jumps2, std::vector<std::vector<int> > & right_jumps2, std::vector<std::vector<int> > & left_neighbors, std::vector<std::vector<int> > & right_neighbors, int best_i, int best_j, int best_s, celltype best_t, double best_score, std::vector<std::vector<double> > & D1, std::vector<std::vector<std::vector<double> > > & D2, std::vector<std::vector<std::vector<double> > > & D3, std::vector<std::vector<double> > & D2max, std::vector<std::vector<double> > & D3max, std::vector<std::vector<double> > & M1_L, std::vector<std::vector<double> > & M1_R, std::vector<std::vector<double> > & M2_L, std::vector<std::vector<std::vector<double> > > & M2_R, std::vector<std::vector<std::vector<double> > > & M3_L, std::vector<std::vector<double> > & M3_R, std::vector<double> & prefix1, std::vector<std::vector<double> > & suffix1, std::vector<std::vector<double> > & prefix2, std::vector<double> & suffix2, std::vector<double> & prefix1_L, std::vector<double> & suffix1max, std::vector<double> & suffix1_R, std::vector<double> & prefix2max, std::vector<double> & prefix2_L, std::vector<double> & suffix2_R)
+		std::pair<double, std::pair< std::vector<int>,std::vector<int> > > traceback(double parent_mass1, double ptm_penalty, std::vector<int> & prev, std::vector<int> & next, std::vector<int> & prev_shifted, std::vector<int> & next_shifted, std::vector<std::vector<int> > & left_jumps, std::vector<std::vector<int> > & right_jumps, std::vector<std::vector<int> > & left_jumps_shifted, std::vector<std::vector<int> > & right_jumps_shifted, std::vector<std::vector<int> > & left_neighbors, std::vector<std::vector<int> > & right_neighbors, int best_i, int best_j, int best_s, celltype best_t, double best_score, std::vector<std::vector<double> > & D1, std::vector<std::vector<std::vector<double> > > & D2, std::vector<std::vector<std::vector<double> > > & D3, std::vector<std::vector<double> > & D2max, std::vector<std::vector<double> > & D3max, std::vector<std::vector<double> > & M1_L, std::vector<std::vector<double> > & M1_R, std::vector<std::vector<double> > & M2_L, std::vector<std::vector<std::vector<double> > > & M2_R, std::vector<std::vector<std::vector<double> > > & M3_L, std::vector<std::vector<double> > & M3_R, std::vector<double> & prefix1, std::vector<std::vector<double> > & suffix1, std::vector<std::vector<double> > & prefix2, std::vector<double> & suffix2, std::vector<double> & prefix1_L, std::vector<double> & suffix1max, std::vector<double> & suffix1_R, std::vector<double> & prefix2max, std::vector<double> & prefix2_L, std::vector<double> & suffix2_R)
 		{
 			int n0 = prev.size();
 			int N = n0-1;
@@ -855,7 +855,7 @@ namespace OpenMS
 							index = 2;
 							next_j = N-j2;
 						}
-						for(std::vector<int>::const_iterator it = right_jumps2[N-j].begin(); it != right_jumps2[N-j].end(); ++it)
+						for(std::vector<int>::const_iterator it = right_jumps_shifted[N-j].begin(); it != right_jumps_shifted[N-j].end(); ++it)
 						{
 							int j2 = *it;
 							if(suffix1max[N-j2] > next_score)
@@ -865,7 +865,7 @@ namespace OpenMS
 								next_j = N-j2;
 							}
 						}
-						j2 = next2[N-j];
+						j2 = next_shifted[N-j];
 						if(j2 != -1 && suffix1_R[N-j2] > next_score)
 						{
 							next_score = suffix1_R[N-j2];
@@ -929,7 +929,7 @@ namespace OpenMS
 							index = 2;
 							next_i = i2;
 						}
-						for(std::vector<int>::const_iterator it = left_jumps2[i].begin(); it != left_jumps2[i].end(); ++it)
+						for(std::vector<int>::const_iterator it = left_jumps_shifted[i].begin(); it != left_jumps_shifted[i].end(); ++it)
 						{
 							int i2 = *it;
 							if(prefix2max[i2] > prev_score)
@@ -939,7 +939,7 @@ namespace OpenMS
 								next_i = i2;
 							}
 						}
-						i2 = prev2[i];
+						i2 = prev_shifted[i];
 						if(i2 != -1 && prefix2_L[i2] > prev_score)
 						{
 							prev_score = prefix2_L[i2];
@@ -1167,7 +1167,7 @@ namespace OpenMS
 								index = 2;
 								next_i = i2;
 							}
-							for(std::vector<int>::const_iterator it = left_jumps2[i].begin(); it != left_jumps2[i].end(); ++it)
+							for(std::vector<int>::const_iterator it = left_jumps_shifted[i].begin(); it != left_jumps_shifted[i].end(); ++it)
 							{
 								int i2 = *it;
 								if(D2max[i2][j] > prev_score)
@@ -1177,7 +1177,7 @@ namespace OpenMS
 									next_i = i2;
 								}
 							}
-							i2 = prev2[i];
+							i2 = prev_shifted[i];
 							if(i2 != -1 && M2_L[i2][j] > prev_score)
 							{
 								prev_score = M2_L[i2][j];
@@ -1317,7 +1317,7 @@ namespace OpenMS
 								index = 2;
 								next_j = N-j2;
 							}
-							for(std::vector<int>::const_iterator it = right_jumps2[N-j].begin(); it != right_jumps2[N-j].end(); ++it)
+							for(std::vector<int>::const_iterator it = right_jumps_shifted[N-j].begin(); it != right_jumps_shifted[N-j].end(); ++it)
 							{
 								int j2 = *it;
 								if(D3max[i][N-j2] > next_score)
@@ -1327,7 +1327,7 @@ namespace OpenMS
 									next_j = N-j2;
 								}
 							}
-							j2 = next2[N-j];
+							j2 = next_shifted[N-j];
 							if(j2 != -1 && M3_R[i][N-j2] > next_score)
 							{
 								next_score = M3_R[i][N-j2];
@@ -1697,17 +1697,16 @@ namespace OpenMS
 			(c_s2==0)?c_s2=2:c_s2=c_s2;
 			/// @attention singly charged mass difference!
 			DoubleReal pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
-			/* debug std::cout << pm_diff << std::endl; */
 
 			if(pm_diff <= -pm_tolerance)
 			{
 				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite is the s1-precursor mz is not greater than s2-precursor mz");
 			}
 
-			//~ res_1.clear(true);
-			//~ res_2.clear(true);
-			res_1.clear(); res_1.getFloatDataArrays().clear();res_1.getIntegerDataArrays().clear();res_1.getStringDataArrays().clear();
-			res_2.clear(); res_2.getFloatDataArrays().clear();res_2.getIntegerDataArrays().clear();res_2.getStringDataArrays().clear();
+			res_1.clear(true);
+			res_2.clear(true);
+			//~ res_1.clear(); res_1.getFloatDataArrays().clear();res_1.getIntegerDataArrays().clear();res_1.getStringDataArrays().clear();
+			//~ res_2.clear(); res_2.getFloatDataArrays().clear();res_2.getIntegerDataArrays().clear();res_2.getStringDataArrays().clear();
 			score = -1; mod_pos = -1;
 
 			if(s1.empty() or s2.empty())
@@ -1756,7 +1755,8 @@ namespace OpenMS
 			res_1.getIntegerDataArrays().insert(res_1.getIntegerDataArrays().begin()+2, ida_matches);
 			res_1.getIntegerDataArrays()[2].setName("shift match indices");
 
-			//~ calculate common/common2 (StringDataArrays) and common_scores/common2_scores (intensities)
+			//~ calculate common/common_shifted (StringDataArrays) and common_scores/common_shifted_scores (intensities)
+			//~ zero intensity in res_1 for unmatching peaks (if both of a pair dont fit to any in s2)
 			for(typename SpectrumType::Iterator it_res = res_1.begin(); it_res != res_1.end(); ++it_res)
 			{
 				bool no_match_normal = false;
@@ -1802,21 +1802,6 @@ namespace OpenMS
 				}
 			}
 
-
-			/* debug
-			std::cout << "§ " ;
-			for(Size i = 0; i < res_1.getIntegerDataArrays()[1].size(); ++i)
-			{
-				std::cout << res_1.getIntegerDataArrays()[1][i];
-			}
-			std::cout << "$ ";
-			for(Size i = 0; i < res_1.getIntegerDataArrays()[2].size(); ++i)
-			{
-				std::cout << res_1.getIntegerDataArrays()[2][i];
-			}
-			std::cout << std::endl;
-			*/
-
 			//~ number of complementing peaks in res_1 that both do not match the right peaks in s2
 			Size removed_pairs = 0;
 			//~ remove the peak pairs mentioned above
@@ -1855,14 +1840,28 @@ namespace OpenMS
 				}
 			}
 
+			/* debug			*/
+			std::cout << "§ " ;
+			for(Size i = 0; i < res_1.getIntegerDataArrays()[1].size(); ++i)
+			{
+				std::cout << res_1.getIntegerDataArrays()[1][i];
+			}
+			std::cout << "$ ";
+			for(Size i = 0; i < res_1.getIntegerDataArrays()[2].size(); ++i)
+			{
+				std::cout << res_1.getIntegerDataArrays()[2][i];
+			}
+			std::cout << std::endl;
 
 
-			std::vector<DoubleReal> peaks(res_1.size());  for(Size i=0;i<res_1.size();++i) peaks[i]=res_1[i].getMZ();
-			std::vector<DoubleReal> peaks2(s2.size());   for(Size i=0;i<s2.size();++i) peaks2[i]=s2[i].getMZ();
+			std::vector<DoubleReal> peaks(res_1.size());
+			for(Size i=0;i<res_1.size();++i) peaks[i]=res_1[i].getMZ();
+			std::vector<DoubleReal> peaks2(s2.size());
+			for(Size i=0;i<s2.size();++i) peaks2[i]=s2[i].getMZ();
 			std::vector<int> common(res_1.size(),-1);
-			std::vector<int> common2(res_1.size(),-1);
+			std::vector<int> common_shifted(res_1.size(),-1);
 			std::vector<double> common_scores(res_1.size(),0);
-			std::vector<double> common2_scores(res_1.size(),0);
+			std::vector<double> common_shifted_scores(res_1.size(),0);
 
 			//~ fill the above from res
 			for(Size i=0;i<res_1.size();++i)
@@ -1876,21 +1875,21 @@ namespace OpenMS
 				}
 				else if(res_1.getIntegerDataArrays()[2][i]>-1)
 				{
-					common2[i] = res_1.getIntegerDataArrays()[2][i];
-					/* debug  std::cout << "common2 "<< i << " = " << common2[i] << std::endl;*/
-					common2_scores[i] = res_1[i].getIntensity()+s2[common2[i]].getIntensity();
-					/* debug  std::cout << "common2_scores "<< i << " = " << common2_scores[i] << std::endl;*/
+					common_shifted[i] = res_1.getIntegerDataArrays()[2][i];
+					/* debug  std::cout << "common_shifted "<< i << " = " << common_shifted[i] << std::endl;*/
+					common_shifted_scores[i] = res_1[i].getIntensity()+s2[common_shifted[i]].getIntensity();
+					/* debug  std::cout << "common_shifted_scores "<< i << " = " << common_shifted_scores[i] << std::endl;*/
 				}
 			}
 
-			std::vector<int> prev;      prev.resize(res_1.size(), -1);
-			std::vector<int> next;      next.resize(res_1.size(),-1);
-			std::vector<int> prev2;     prev2.resize(res_1.size(),-1);
-			std::vector<int> next2;     next2.resize(res_1.size(),-1);
+			std::vector<int> prev(res_1.size(), -1);
+			std::vector<int> next(res_1.size(),-1);
+			std::vector<int> prev_shifted(res_1.size(),-1);
+			std::vector<int> next_shifted(res_1.size(),-1);
 			std::vector<std::vector<int> > left_jumps(res_1.size());
-			std::vector<std::vector<int> > left_jumps2(res_1.size());
+			std::vector<std::vector<int> > left_jumps_shifted(res_1.size());
 			std::vector<std::vector<int> > right_jumps(res_1.size());
-			std::vector<std::vector<int> > right_jumps2(res_1.size());
+			std::vector<std::vector<int> > right_jumps_shifted(res_1.size());
 			std::vector<std::vector<int> > left_neighbors(res_1.size());
 			std::vector<std::vector<int> > right_neighbors(res_1.size());
 
@@ -1917,12 +1916,12 @@ namespace OpenMS
 				DoubleReal lo2 = res_1[i].getMZ()-std::max(delta,delta2);
 				if(lo2<=0)
 				{
-					prev2[i] = -1;
+					prev_shifted[i] = -1;
 				}
 				else
 				{
 					typename SpectrumType::Iterator it_lo2 = res_1.MZEnd(lo2);
-					it_lo2!=res_1.begin()?prev2[i]=((it_lo2-res_1.begin())-1):prev2[i]=-1;
+					it_lo2!=res_1.begin()?prev_shifted[i]=((it_lo2-res_1.begin())-1):prev_shifted[i]=-1;
 				}
 
 				DoubleReal hi1 = res_1[i].getMZ()+ delta2;
@@ -1938,21 +1937,21 @@ namespace OpenMS
 				DoubleReal hi2 = res_1[i].getMZ()+std::max(delta,delta2);
 				if(hi2>=res_1.rbegin()->getMZ())
 				{
-					next2[i] = -1;
+					next_shifted[i] = -1;
 				}
 				else
 				{
 					typename SpectrumType::Iterator it_hi2 = res_1.MZBegin(res_1.begin()+i,hi2,res_1.end());
-					it_hi2!=res_1.end()?next2[i]=(it_hi2-res_1.begin()):next2[i]=-1;
+					it_hi2!=res_1.end()?next_shifted[i]=(it_hi2-res_1.begin()):next_shifted[i]=-1;
 				}
 
-				/* debug  std::cout << " prev: "<< prev[i] << " prev2: " << prev2[i] << std::endl;*/
-				/* debug  std::cout << " next: "<< next[i] << " next2: " << next2[i] << std::endl;*/
+				/* debug  std::cout << " prev: "<< prev[i] << " prev_shifted: " << prev_shifted[i] << std::endl;*/
+				/* debug  std::cout << " next: "<< next[i] << " next_shifted: " << next_shifted[i] << std::endl;*/
 
 				getAASteps(i, res_1, jump_masses, left_jumps[i], right_jumps[i]);
 				Size neighbor_count=0, jumps_count=0;
 				left_neighbors[i].resize(left_jumps[i].size());
-				left_jumps2[i].resize(left_jumps[i].size());
+				left_jumps_shifted[i].resize(left_jumps[i].size());
 				/* debug  std::cout << "left jumps size "<< left_jumps[i].size() << " ";*/
 				for(Size j=0; j<left_jumps[i].size(); ++j)
 				{
@@ -1963,17 +1962,17 @@ namespace OpenMS
 					}
 					if(peaks[i]-peaks[left_jumps[i][j]]>=delta)
 					{
-						left_jumps2[i][jumps_count++]=left_jumps[i][j];
+						left_jumps_shifted[i][jumps_count++]=left_jumps[i][j];
 						/* debug  std::cout << " lj] "<< left_jumps[i][j] << " ";*/
 					}
 				}
 				left_neighbors[i].resize(neighbor_count);
-				left_jumps2[i].resize(jumps_count);
+				left_jumps_shifted[i].resize(jumps_count);
 				/* debug std::cout << std::endl; */
 
 				neighbor_count=0, jumps_count=0;
 				right_neighbors[i].resize(right_jumps[i].size());
-				right_jumps2[i].resize(right_jumps[i].size());
+				right_jumps_shifted[i].resize(right_jumps[i].size());
 				/* debug  std::cout << "right jumps size "<< right_jumps[i].size() << " ";*/
 				for(Size j=0; j<right_jumps[i].size(); ++j)
 				{
@@ -1984,18 +1983,18 @@ namespace OpenMS
 					}
 					if(peaks[right_jumps[i][j]]-peaks[i]>=delta)
 					{
-						right_jumps2[i][jumps_count++]=right_jumps[i][j];
+						right_jumps_shifted[i][jumps_count++]=right_jumps[i][j];
 						/* debug  std::cout << " rj] "<< right_jumps[i][j] << " ";*/
 					}
 				}
 				right_neighbors[i].resize(neighbor_count);
-				right_jumps2[i].resize(jumps_count);
+				right_jumps_shifted[i].resize(jumps_count);
 				/* debug  std::cout << std::endl;*/
 			}
 
-			res_1.clear();
+			res_1.clear(false);
 			res_2 = s2;
-			res_2.clear();
+			res_2.clear(false);
 			//~ implicitly copied (and not erased):
 			//~ Precursors,RT,MSLevel, MetaDataArrays
 
@@ -2011,7 +2010,7 @@ namespace OpenMS
 			std::pair<double, std::pair< std::vector<int>,std::vector<int> > > asym_align;
 
 			AntisymetricDP dp;
-			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U), peaks, peaks2, common, common2, common_scores, common2_scores, prev, next, prev2, next2, left_jumps, right_jumps, left_jumps2, right_jumps2, left_neighbors, right_neighbors, peak_tolerance, sameVertexPenalty, ptmPenalty);
+			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U), peaks, peaks2, common, common_shifted, common_scores, common_shifted_scores, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, peak_tolerance, sameVertexPenalty, ptmPenalty);
 
 			score = asym_align.first;
 
@@ -2022,8 +2021,10 @@ namespace OpenMS
 			if(num_aligned_peaks==0)
 			{
 				score = -1; mod_pos = -1;
-				res_1.clear(); res_1.getFloatDataArrays().clear();res_1.getIntegerDataArrays().clear();res_1.getStringDataArrays().clear();
-				res_2.clear(); res_2.getFloatDataArrays().clear();res_2.getIntegerDataArrays().clear();res_2.getStringDataArrays().clear();
+				res_1.clear(true);
+				res_2.clear(true);
+				//~ res_1.clear(); res_1.getFloatDataArrays().clear();res_1.getIntegerDataArrays().clear();res_1.getStringDataArrays().clear();
+				//~ res_2.clear(); res_2.getFloatDataArrays().clear();res_2.getIntegerDataArrays().clear();res_2.getStringDataArrays().clear();
 				return;
 			}
 
@@ -2057,7 +2058,7 @@ namespace OpenMS
 					mod_pos=peaks[asym_align.second.second[0]];  // Otherwise mod was placed at the first mass of res
 					(res_1.getIntegerDataArrays().begin()+1)->at(asym_align.second.first.size())=1;
 					(res_2.getIntegerDataArrays().begin()+1)->at(asym_align.second.first.size())=1;
-					/* debug */ std::cout << mod_pos << std::endl;
+					/* debug std::cout << mod_pos << std::endl; */
 				}
 			}
 
@@ -2089,10 +2090,10 @@ namespace OpenMS
 			{
 				PeakT tmp_1, tmp_2;
 				tmp_1.setMZ( peaks[asym_align.second.second[i]] );
-				if(common2[asym_align.second.second[i]]>=0)
+				if(common_shifted[asym_align.second.second[i]]>=0)
 				{
-					tmp_2.setMZ( peaks2[common2[asym_align.second.second[i]]] );
-					tmp_2.setIntensity( s2[common2[asym_align.second.second[i]]].getIntensity() );
+					tmp_2.setMZ( peaks2[common_shifted[asym_align.second.second[i]]] );
+					tmp_2.setIntensity( s2[common_shifted[asym_align.second.second[i]]].getIntensity() );
 					res_2.getIntegerDataArrays().front().push_back(0);
 				}
 				else
@@ -2101,7 +2102,7 @@ namespace OpenMS
 					//~ intensity stays default constructed 0
 					res_2.getIntegerDataArrays().front().push_back(1);
 				}
-				tmp_1.setIntensity( common2_scores[asym_align.second.second[i]] - tmp_2.getIntensity());
+				tmp_1.setIntensity( common_shifted_scores[asym_align.second.second[i]] - tmp_2.getIntensity());
 				(ida_ref[asym_align.second.second[i]]>0)?res_2.getIntegerDataArrays().front()[asym_align.second.first.size()+i]=1:res_2.getIntegerDataArrays().front()[asym_align.second.first.size()+i]=0;
 				res_1.push_back(tmp_1);
 				res_2.push_back(tmp_2);

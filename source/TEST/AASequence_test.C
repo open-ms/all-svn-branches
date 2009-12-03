@@ -2,7 +2,7 @@
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework 
+//                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
 //  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
 //
@@ -81,6 +81,24 @@ START_SECTION(AASequence(ConstIterator begin, ConstIterator end))
 	TEST_EQUAL(seq2, seq3);
 END_SECTION
 
+START_SECTION(([EXTRA]Test modifications with brackets))
+	AASequence seq1("ANLVFK(Label:13C(6)15N(2))EIEK(Label:2H(4))");
+	TEST_EQUAL(seq1.isValid(), true)
+	TEST_EQUAL(seq1.hasNTerminalModification(), false)
+	TEST_EQUAL(seq1.hasCTerminalModification(), false)
+	TEST_EQUAL(seq1.isModified(), true)
+	AASequence seq2("ANLVFK(Label:13C(6)15N(2))EIEK(Label:2H(4))(Amidated)");
+	TEST_EQUAL(seq2.isValid(), true)
+	TEST_EQUAL(seq2.hasNTerminalModification(), false)
+	TEST_EQUAL(seq2.hasCTerminalModification(), true)
+	TEST_EQUAL(seq2.isModified(), true)
+	AASequence seq3("A([123])AA");
+	TEST_EQUAL(seq3.isValid(), true)
+	TEST_EQUAL(seq3.isModified(), true)
+	TEST_EQUAL(seq3.toString(), "A([123])AA")
+
+END_SECTION
+
 START_SECTION(bool operator == (const char* rhs) const)
   AASequence seq1("(Acetyl)DFPIANGER");
   AASequence seq2("DFPIANGER");
@@ -96,7 +114,7 @@ START_SECTION(bool operator == (const char* rhs) const)
 
   AASequence seq5("DFBIANGER");
   TEST_EQUAL(seq5 == "DFPIANGER", false)
-  TEST_EQUAL(seq5 == "DFBIANGER", true)	
+  TEST_EQUAL(seq5 == "DFBIANGER", true)
 END_SECTION
 
 START_SECTION(bool operator == (const String& rhs) const)
@@ -185,7 +203,7 @@ START_SECTION((DoubleReal getMonoWeight(Residue::ResidueType type = Residue::Ful
 	// test old OpenMS dNIC definition
 	AASequence seq3a("(MOD:09999)DFPIANGER");
 	TEST_EQUAL(seq3 == seq3a, true)
-	
+
 
 END_SECTION
 
@@ -213,7 +231,7 @@ START_SECTION(AASequence operator + (const AASequence& peptide) const)
 END_SECTION
 
 START_SECTION(AASequence operator + (const String& peptide) const)
-  AASequence seq1("DFPIANGER"), seq2("DFP"); 
+  AASequence seq1("DFPIANGER"), seq2("DFP");
 	String seq3("IANGER"), seq4("BLUBB");
 	TEST_EQUAL(seq1, seq2 + seq3)
 END_SECTION
@@ -313,7 +331,7 @@ END_SECTION
 START_SECTION(bool hasSuffix(const AASequence& peptide) const)
   AASequence seq1("DFPIANGER"), seq2("GER"), seq3("AIN");
   TEST_EQUAL(seq1.hasSuffix(seq2), true)
-  TEST_EQUAL(seq1.hasSuffix(seq3), false) 
+  TEST_EQUAL(seq1.hasSuffix(seq3), false)
 END_SECTION
 
 START_SECTION(bool hasSuffix(const String& peptide) const)
@@ -346,7 +364,7 @@ START_SECTION(Iterator begin())
     TEST_EQUAL((*it).getOneLetterCode(), result[i])
   }
 END_SECTION
-		  
+
 START_SECTION(Iterator end())
 	NOT_TESTABLE
 END_SECTION
@@ -408,7 +426,7 @@ START_SECTION(void setNTerminalModification(const String &modification))
 	TEST_EQUAL(seq1 == seq2, false)
 	seq1.setNTerminalModification("MOD:00051");
 	TEST_EQUAL(seq1 == seq2, true)
-	
+
 	AASequence seq3("DABCDEF");
 	AASequence seq4("(MOD:00051)DABCDEF");
 	TEST_EQUAL(seq3 == seq4, false)
@@ -451,7 +469,7 @@ START_SECTION(void setCTerminalModification(const String &modification))
 	AASequence seq6("DABCDER(MOD:00177)(Amidated)");
 	TEST_EQUAL(seq5.isModified(), true)
 	TEST_EQUAL(seq6.isModified(), true)
-	seq5.setCTerminalModification("Amidated");	
+	seq5.setCTerminalModification("Amidated");
 	TEST_EQUAL(seq5 == seq6, true)
 
 	AASequence seq7("DFPIANGER(MOD:00177)");
@@ -467,7 +485,7 @@ START_SECTION(const String& getCTerminalModification() const)
   TEST_EQUAL(seq1.getCTerminalModification(), "Amidated")
 
   AASequence seq2("DFPIANGER");
-  TEST_EQUAL(seq2.getCTerminalModification(), "")	
+  TEST_EQUAL(seq2.getCTerminalModification(), "")
 END_SECTION
 
 START_SECTION(bool setStringSequence(const String &sequence))
@@ -477,12 +495,12 @@ START_SECTION(bool setStringSequence(const String &sequence))
 	AASequence seq3 = seq1;
 
 	TEST_EQUAL(seq1 == seq3, true)
-	
+
 	seq3.setStringSequence("(MOD:00051)DFPIAK");
 	TEST_EQUAL(seq2 == seq3, true)
 
 	seq3.setStringSequence("DFPIANGER");
-	TEST_EQUAL(seq1 == seq3, true)	
+	TEST_EQUAL(seq1 == seq3, true)
 END_SECTION
 
 START_SECTION(AASequence operator + (const char *rhs) const)
@@ -521,13 +539,13 @@ START_SECTION(bool hasNTerminalModification() const)
 
 	TEST_EQUAL(seq1.hasNTerminalModification(), true)
 	TEST_EQUAL(seq2.hasNTerminalModification(), false)
-	
+
 	AASequence seq3("(MOD:00051)DFPIANGER");
 	AASequence seq4("DFPIANGER");
 	TEST_EQUAL(seq3.hasNTerminalModification(), true)
 	TEST_EQUAL(seq4.hasNTerminalModification(), false)
 END_SECTION
- 
+
 START_SECTION(bool hasCTerminalModification() const)
 	AASequence seq1("DFPIANGER(Amidated)");
 	AASequence seq2("DFPIANGER");
@@ -566,7 +584,7 @@ START_SECTION(bool operator<(const AASequence &rhs) const)
 	AASequence seq3("DFPIANGFR");
 	TEST_EQUAL(seq3 < seq1, false)
 END_SECTION
- 
+
 START_SECTION(bool operator!=(const AASequence& rhs) const)
   AASequence seq1("(MOD:00051)DFPIANGER");
   AASequence seq2("DFPIANGER");
@@ -644,7 +662,24 @@ START_SECTION(void getAAFrequencies(Map<String, Size>& frequency_table) const)
 
 	TEST_EQUAL(table.size()==8, true);
 
-	END_SECTION
+END_SECTION
+
+
+START_SECTION([EXTRA] Tag in peptides)
+	String I_weight = String(ResidueDB::getInstance()->getResidue("I")->getMonoWeight(Residue::Internal));
+  AASequence aa1("DFPIANGER");
+  AASequence aa2("DPF[" + I_weight + "]ANGER");
+  AASequence aa3("[" + I_weight + "]DFPANGER");
+  AASequence aa4("DFPANGER[" + I_weight + "]");
+	TEST_REAL_SIMILAR(aa1.getMonoWeight(), 1017.487958568)
+	TEST_EQUAL(aa2.isModified(), false)
+	TEST_EQUAL(aa3.hasNTerminalModification(), false)
+	TEST_EQUAL(aa4.hasCTerminalModification(), false)
+	TEST_REAL_SIMILAR(aa2.getMonoWeight(), 1017.487958568)
+	TEST_REAL_SIMILAR(aa3.getMonoWeight(), 1017.487958568)
+	TEST_REAL_SIMILAR(aa4.getMonoWeight(), 1017.487958568)
+
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

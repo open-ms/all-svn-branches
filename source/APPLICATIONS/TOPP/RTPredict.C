@@ -47,7 +47,19 @@ using namespace std;
 	
 	@brief This application is used to predict retention times 
 				 for peptides or peptide separation.
-	
+
+  This methods and applications of this model are described 
+  in several publications:
+
+  Nico Pfeifer, Andreas Leinenbach, Christian G. Huber and Oliver Kohlbacher
+  Statistical learning of peptide retention behavior in chromatographic separations: A new kernel-based approach for computational proteomics.
+  BMC Bioinformatics 2007, 8:468 
+
+  Nico Pfeifer, Andreas Leinenbach, Christian G. Huber and Oliver Kohlbacher
+  Improving Peptide Identification in Proteome Analysis by a Two-Dimensional Retention Time Filtering Approach
+  J. Proteome Res. 2009, 8(8):4109-15
+
+
 	The input of this application 
 	is an svm model and an IdXML
 	file with peptide identifications. The svm model file is specified
@@ -85,16 +97,16 @@ class TOPPRTPredict
 	protected:
 		void registerOptionsAndFlags_()
 		{
-			registerInputFile_("in","<file>","","input file ");
-			//			setValidFormats_("in",StringList::create("IdXML"));
-			registerOutputFile_("out","<file>","","output file (peptide RT prediction)\n", false);
-			setValidFormats_("out",StringList::create("IdXML"));
-			registerFlag_("textfile_input", "if this flag is set, RTPredict expects a textfile instead of an IdXML file as input which contains one peptide sequence per line output as a textfile is switched on as well");
+			registerInputFile_("in","<file>","","input file (valid formats: \"idXML\" or textfile [see below])");
+			//setValidFormats_("in",StringList::create("idXML"));
+			registerOutputFile_("out","<file>","","output file with peptide RT prediction (valid formats: \"idXML\" or textfile [see below])\n", false);
+			//setValidFormats_("out",StringList::create("idXML"));
+			registerFlag_("textfile_input", "if this flag is set, RTPredict expects a textfile instead of an IdXML file as input which contains one peptide sequence per line; output as a textfile is switched on as well");
 			registerFlag_("textfile_output", "if this flag is set, RTPredict just writes a peptide sequence with the corresponding predicted retention time per line");
 			registerOutputFile_("out_positive","<file>","","output file in IdXML format containing positive predictions (peptide separation prediction)\n", false);
-			setValidFormats_("out_positive",StringList::create("IdXML"));
+			setValidFormats_("out_positive",StringList::create("idXML"));
 			registerOutputFile_("out_negative","<file>","","output file in IdXML format containing negative predictions (peptide separation prediction)\n", false);
-			setValidFormats_("out_negative",StringList::create("IdXML"));
+			setValidFormats_("out_negative",StringList::create("idXML"));
 			registerInputFile_("svm_model","<file>","","svm model in libsvm format (can be produced by RTModel)");
 			registerDoubleOption_("total_gradient_time","<time>",1.0,"the time (in seconds) of the gradient (peptide RT prediction)", false);
 			setMinFloat_("total_gradient_time", 0.00001);

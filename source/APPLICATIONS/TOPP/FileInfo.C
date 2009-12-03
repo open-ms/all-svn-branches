@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/config.h>
@@ -32,6 +32,7 @@
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/IdXMLFile.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
+#include <OpenMS/FORMAT/PepXMLFile.h>
 #include <OpenMS/FORMAT/PeakTypeEstimator.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
@@ -129,16 +130,24 @@ class TOPPFileInfo
 	virtual void registerOptionsAndFlags_()
 	{
 		registerInputFile_("in","<file>","","input file ");
-		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML"));
+#ifdef USE_ANDIMS
+		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML,pepXML"));
+#else
+		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML"));
+#endif
 		registerStringOption_("in_type","<type>","","input file type -- default: determined from file extension or content", false);
-		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML"));
+#ifdef USE_ANDIMS
+		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML,pepXML"));
+#else
+		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML"));
+#endif
 		registerOutputFile_("out","<file>","","Optional output file. If '-' or left out, the output is written to the command line.", false);
 		registerFlag_("m","Show meta information about the whole experiment");
 		registerFlag_("p","Shows data processing information");
 		registerFlag_("s","Computes a five-number statistics of intensities and qualities");
 		registerFlag_("d","Show detailed listing of all spectra (peak files only)");
 		registerFlag_("c","Check for corrupt data in the file (peak files only)");
-		registerFlag_("v","Validate the file only (for mzData, mzXML, featureXML, IdXML, consensusXML)");
+		registerFlag_("v","Validate the file only (for mzML, mzData, mzXML, featureXML, idXML, consensusXML, pepXML)");
 	}
 
 	ExitCodes outputTo(ostream& os)
@@ -186,33 +195,37 @@ class TOPPFileInfo
 			os << endl << "Validating " << fh.typeToName(in_type) << " file";
 			switch(in_type)
 			{
-				case FileTypes::MZDATA :
-					os << " against XML schema version " << MzDataFile().getVersion() << endl;
-					valid = MzDataFile().isValid(in,os);
-					break;
-				case FileTypes::MZML :
-					os << " against XML schema version " << MzMLFile().getVersion() << endl;
-					valid = MzMLFile().isValid(in,os);
-					break;
-				case FileTypes::FEATUREXML :
-					os << " against XML schema version " << FeatureXMLFile().getVersion() << endl;
-					valid = FeatureXMLFile().isValid(in,os);
-					break;
-				case FileTypes::IDXML :
-					os << " against XML schema version " << IdXMLFile().getVersion() << endl;
-					valid = IdXMLFile().isValid(in,os);
-					break;
-				case FileTypes::CONSENSUSXML :
-					os << " against XML schema version " << ConsensusXMLFile().getVersion() << endl;
-					valid = ConsensusXMLFile().isValid(in,os);
-					break;
-				case FileTypes::MZXML :
-					os << " against XML schema version " << MzXMLFile().getVersion() << endl;
-					valid = MzXMLFile().isValid(in,os);
-					break;
-				default:
-					os << endl << "Aborted: Validation of this file type is not supported!" << endl;
-					return EXECUTION_OK;
+			case FileTypes::MZDATA :
+				os << " against XML schema version " << MzDataFile().getVersion() << endl;
+				valid = MzDataFile().isValid(in,os);
+				break;
+			case FileTypes::MZML :
+				os << " against XML schema version " << MzMLFile().getVersion() << endl;
+				valid = MzMLFile().isValid(in,os);
+				break;
+			case FileTypes::FEATUREXML :
+				os << " against XML schema version " << FeatureXMLFile().getVersion() << endl;
+				valid = FeatureXMLFile().isValid(in,os);
+				break;
+			case FileTypes::IDXML :
+				os << " against XML schema version " << IdXMLFile().getVersion() << endl;
+				valid = IdXMLFile().isValid(in,os);
+				break;
+			case FileTypes::CONSENSUSXML :
+				os << " against XML schema version " << ConsensusXMLFile().getVersion() << endl;
+				valid = ConsensusXMLFile().isValid(in,os);
+				break;
+			case FileTypes::MZXML :
+				os << " against XML schema version " << MzXMLFile().getVersion() << endl;
+				valid = MzXMLFile().isValid(in,os);
+				break;
+			case FileTypes::PEPXML:
+				os << " against XML schema version " << PepXMLFile().getVersion() << endl;
+				valid = PepXMLFile().isValid(in, os);
+				break;
+			default:
+				os << endl << "Aborted: Validation of this file type is not supported!" << endl;
+				return EXECUTION_OK;
 			};
 
 			if (valid)
@@ -398,14 +411,20 @@ class TOPPFileInfo
 				}
 			}
 			
-			cout << "Number of runs: " << runs_count << endl;
-			cout << "Number of protein hits: " << protein_hit_count << endl;
-			cout << "Number of unique protein hits: " << proteins.size() << endl;
-			cout << endl;
-			cout << "Number of spectra: " << spectrum_count << endl;
-			cout << "Number of peptide hits: " << peptide_hit_count << endl;
-			cout << "Number of unique peptide hits: " << peptides.size() << endl;
+			os << "Number of runs: " << runs_count << endl;
+			os << "Number of protein hits: " << protein_hit_count << endl;
+			os << "Number of unique protein hits: " << proteins.size() << endl;
+			os << endl;
+			os << "Number of spectra: " << spectrum_count << endl;
+			os << "Number of peptide hits: " << peptide_hit_count << endl;
+			os << "Number of unique peptide hits: " << peptides.size() << endl;
 		}
+		
+		else if (in_type == FileTypes::PEPXML)
+		{
+			os << "\nFor pepXML files, only validation against the XML schema is implemented at this point." << endl;
+		}
+		
 		else //peaks
 		{
 			if (! fh.loadExperiment(in,exp,in_type,log_type_) )
@@ -454,8 +473,9 @@ class TOPPFileInfo
 			//basic info
 			exp.updateRanges();
 			vector<UInt> levels = exp.getMSLevels();
-			
-			os << "Number of peaks: " << exp.getSize() << endl
+		
+			os << "Number of spectra: "	<< exp.size() << endl;
+			os << "Number of peaks:   " << exp.getSize() << endl
 				 << endl
 				 << "Ranges:" << endl
 				 << "  retention time:  " << String::number(exp.getMinRT(),2) << " : " << String::number(exp.getMaxRT(),2) << endl
@@ -538,6 +558,48 @@ class TOPPFileInfo
 				}
 				os << endl;
 			}
+
+			// some chromatogram information
+			if (exp.getChromatograms().size() != 0)
+			{
+				os << "Number of chromatograms: "	<< exp.getChromatograms().size() << endl;
+				
+				Size num_chrom_peaks(0);
+				Map<ChromatogramSettings::ChromatogramType, Size> chrom_types;
+				for (vector<MSChromatogram<> >::const_iterator it = exp.getChromatograms().begin(); it != exp.getChromatograms().end(); ++it)
+				{
+					num_chrom_peaks += it->size();
+					if (chrom_types.has(it->getChromatogramType()))
+					{
+						chrom_types[it->getChromatogramType()]++;
+					}
+					else
+					{
+						chrom_types[it->getChromatogramType()] = 1;
+					}
+				}
+				os << "Number of chrom. peaks: " << num_chrom_peaks << endl << endl;
+
+				os << "#Chromatograms of types: " << endl;
+				for (Map<ChromatogramSettings::ChromatogramType, Size>::const_iterator it = chrom_types.begin(); it != chrom_types.end(); ++it)
+				{
+					switch (it->first)
+					{
+						case ChromatogramSettings::MASS_CHROMATOGRAM:                         os << "   Mass chromatogram:                         " << it->second << endl; break;
+						case ChromatogramSettings::TOTAL_ION_CURRENT_CHROMATOGRAM:            os << "   Total ion current chromatogram:            " << it->second << endl; break;
+						case ChromatogramSettings::SELECTED_ION_CURRENT_CHROMATOGRAM:         os << "   Selected ion current chromatogram:         " << it->second << endl; break;
+						case ChromatogramSettings::BASEPEAK_CHROMATOGRAM:                     os << "   Basepeak chromaogram:                      " << it->second << endl; break;
+						case ChromatogramSettings::SELECTED_ION_MONITORING_CHROMATOGRAM:      os << "   Selected ion monitoring chromatogram:      " << it->second << endl; break;
+						case ChromatogramSettings::SELECTED_REACTION_MONITORING_CHROMATOGRAM: os << "   Selected reaction monitoring chromatogram: " << it->second << endl; break;
+						case ChromatogramSettings::ELECTROMAGNETIC_RADIATION_CHROMATOGRAM:    os << "   Electromagnetic radiation chromatogram:    " << it->second << endl; break;
+						case ChromatogramSettings::ABSORPTION_CHROMATOGRAM:                   os << "   Absorption chromatogram:                   " << it->second << endl; break;
+						case ChromatogramSettings::EMISSION_CHROMATOGRAM:                     os << "   Emission chromatogram:                     " << it->second << endl; break;
+						default: 								                                              os << "   Unknown chromatogram:                      " << it->second << endl;
+					
+					}
+				}
+			}
+
 
 			// Detailed listing of scans
 			if (getFlag_("d"))
@@ -682,6 +744,10 @@ class TOPPFileInfo
 			{
 				os << "Document id       : " << id_data.identifier << endl << endl;
 			}
+			else if (in_type == FileTypes::PEPXML)
+			{
+				// TODO
+			}
 			else //peaks
 			{
 
@@ -757,6 +823,10 @@ class TOPPFileInfo
 			else if (in_type==FileTypes::IDXML) //identifications
 			{
 			}
+			else if (in_type == FileTypes::PEPXML)
+			{
+				// TODO
+			}		
 			else //peaks
 			{
 				if (exp.size()!=0)
@@ -932,6 +1002,10 @@ class TOPPFileInfo
 			else if (in_type==FileTypes::IDXML) //identifications
 			{
 				//TODO
+			}
+			else if (in_type == FileTypes::PEPXML)
+			{
+				// TODO
 			}
 			else //peaks
 			{

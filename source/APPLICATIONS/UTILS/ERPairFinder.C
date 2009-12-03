@@ -339,15 +339,15 @@ class TOPPERPairFinder
 					new_exp_light.updateRanges();
 					new_exp_heavy.updateRanges();
 
-					FeatureMap<> feature_map_light, feature_map_heavy;
+					FeatureMap<> feature_map_light, feature_map_heavy, seeds;
 					if (light_spec.size() > 0)
 					{
-						ff.run("isotope_wavelet", new_exp_light, feature_map_light, ff_param);
+						ff.run("isotope_wavelet", new_exp_light, feature_map_light, ff_param, seeds);
 					}
 					writeDebug_("#light_features=" + String(feature_map_light.size()), 1);
 					if (heavy_spec.size() > 0)
 					{
-						ff.run("isotope_wavelet", new_exp_heavy, feature_map_heavy, ff_param);
+						ff.run("isotope_wavelet", new_exp_heavy, feature_map_heavy, ff_param, seeds);
 					}
 					writeDebug_("#heavy_features=" + String(feature_map_heavy.size()), 1);
 
@@ -403,11 +403,7 @@ class TOPPERPairFinder
 	    			SILAC_feature.insert(0, feature_counter, best_light);
 	    			SILAC_feature.insert(1, feature_counter++, best_heavy);
   	  			results_map.push_back(SILAC_feature);
-
 						quantlets.push_back(SILACQuantitation(best_light.getIntensity(), best_heavy.getIntensity(), best_idx));
-
-
-
 					}
 				}
 			}

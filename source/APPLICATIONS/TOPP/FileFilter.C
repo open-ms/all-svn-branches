@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/KERNEL/RangeUtils.h>
@@ -36,6 +36,7 @@
 #include <OpenMS/DATASTRUCTURES/StringList.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
 #include <OpenMS/CONCEPT/Exception.h>
+#include <OpenMS/KERNEL/ChromatogramTools.h>
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
@@ -83,7 +84,7 @@ class TOPPFileFilter
 {
 	public:
 		TOPPFileFilter()
-			: TOPPBase("FileFilter","Extracts or manipulates portions of data from peak, feature or consensus feature files.")
+			: TOPPBase("FileFilter","Extracts or manipulates portions of data from peak, feature or consensus-feature files.")
 		{
 		}
 
@@ -109,8 +110,10 @@ class TOPPFileFilter
 
 			addText_("peak data options:");
       registerDoubleOption_("sn", "<s/n ratio>", 0, "write peaks with S/N > 'sn' values only", false);
-			registerIntList_("level","i j...",IntList::create("1,2,3"),"MS levels to extract", false);
+			registerIntList_("level","\"i,j,...\"",IntList::create("1,2,3"),"MS levels to extract", false);
       registerFlag_("sort_peaks","sorts the peaks according to m/z.");
+			registerFlag_("no_chromatograms", "No conversion to space-saving real chromatograms, e.g. from SRM scans.");
+			registerFlag_("remove_chromatograms", "Removes chromatograms stored in a file.");
 
 			addEmptyLine_();
 			addText_("Remove spectra: ");
@@ -211,6 +214,7 @@ class TOPPFileFilter
 			String in = getStringOption_("in");
 			String out = getStringOption_("out");
 			String exclusion = getStringOption_("exclusion");
+			bool no_chromatograms(getFlag_("no_chromatograms"));
 
       //input file type
       FileTypes::Type in_type = FileHandler::getType(in);
@@ -323,6 +327,20 @@ class TOPPFileFilter
 
 					writeLog_("done.");
 				}
+
+				if (!no_chromatograms)
+				{
+					// convert the spectra chromatograms to real chromatograms
+					ChromatogramTools chrom_tools;
+					chrom_tools.convertSpectraToChromatograms(exp, true);
+				}
+
+				bool remove_chromatograms(getFlag_("remove_chromatograms"));
+				if (remove_chromatograms)
+				{
+					exp.setChromatograms(vector<MSChromatogram<> >());
+				}
+
   			//-------------------------------------------------------------
   			// calculations
   			//-------------------------------------------------------------
@@ -474,7 +492,7 @@ class TOPPFileFilter
         //copy all properties
         FeatureMapType map_sm = feature_map;
         //.. but delete feature information
-        map_sm.clear();
+        map_sm.clear(false);
 
         bool rt_ok, mz_ok, int_ok, charge_ok, size_ok, q_ok;
 
@@ -528,7 +546,7 @@ class TOPPFileFilter
         // copy all properties
         ConsensusMap consensus_map_filtered = consensus_map;
         //.. but delete feature information
-        consensus_map_filtered.clear();
+        consensus_map_filtered.resize(0);
 
 				for ( ConsensusMap::const_iterator citer = consensus_map.begin();
 							citer != consensus_map.end();

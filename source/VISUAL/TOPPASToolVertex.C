@@ -26,13 +26,11 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/TOPPASToolVertex.h>
-#include <OpenMS/VISUAL/TOPPASInputFileVertex.h>
+#include <OpenMS/VISUAL/TOPPASMergerVertex.h>
 #include <OpenMS/VISUAL/TOPPASInputFileListVertex.h>
-
 #include <OpenMS/VISUAL/DIALOGS/TOPPASToolConfigDialog.h>
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
-#include <OpenMS/VISUAL/TOPPASOutputFileVertex.h>
 #include <OpenMS/VISUAL/TOPPASOutputFileListVertex.h>
 
 #include <QtGui/QGraphicsScene>
@@ -43,18 +41,14 @@
 #include <QtGui/QImage>
 
 namespace OpenMS
-{
-	QImage TOPPASToolVertex::symbol_image_ = QImage(":/circle_arrow.png");
-	
+{	
 	TOPPASToolVertex::TOPPASToolVertex()
 		:	TOPPASVertex(),
 			name_(),
 			type_(),
 			param_(),
 			finished_(false),
-			started_here_(false),
 			progress_color_(Qt::gray),
-			list_mode_(false),
 			iteration_nr_(0),
 			input_list_length_(1)
 	{
@@ -63,6 +57,8 @@ namespace OpenMS
 		initParam_();
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
+		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
+		connect (this, SIGNAL(toolCrashed()), this, SLOT(toolCrashedSlot()));
 	}
 	
 	TOPPASToolVertex::TOPPASToolVertex(const String& name, const String& type, const String& tmp_path)
@@ -72,9 +68,7 @@ namespace OpenMS
 			tmp_path_(tmp_path),
 			param_(),
 			finished_(false),
-			started_here_(false),
 			progress_color_(Qt::gray),
-			list_mode_(false),
 			iteration_nr_(0),
 			input_list_length_(1)
 	{
@@ -83,6 +77,8 @@ namespace OpenMS
 		initParam_();
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
+		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
+		connect (this, SIGNAL(toolCrashed()), this, SLOT(toolCrashedSlot()));
 	}
 	
 	TOPPASToolVertex::TOPPASToolVertex(const TOPPASToolVertex& rhs)
@@ -92,9 +88,7 @@ namespace OpenMS
 			tmp_path_(rhs.tmp_path_),
 			param_(rhs.param_),
 			finished_(rhs.finished_),
-			started_here_(rhs.started_here_),
 			progress_color_(rhs.progress_color_),
-			list_mode_(rhs.list_mode_),
 			iteration_nr_(rhs.iteration_nr_),
 			input_list_length_(rhs.input_list_length_)
 	{
@@ -102,6 +96,8 @@ namespace OpenMS
 		brush_color_ = QColor(245,245,245);
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
+		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
+		connect (this, SIGNAL(toolCrashed()), this, SLOT(toolCrashedSlot()));
 	}
 
 	TOPPASToolVertex::~TOPPASToolVertex()
@@ -118,9 +114,7 @@ namespace OpenMS
 		type_ = rhs.type_;
 		tmp_path_ = rhs.tmp_path_;
 		finished_ = rhs.finished_;
-		started_here_ = rhs.started_here_;
 		progress_color_ = rhs.progress_color_;
-		list_mode_ = rhs.list_mode_;
 		iteration_nr_ = rhs.iteration_nr_;
 		input_list_length_ = rhs.input_list_length_;
 		
@@ -282,13 +276,7 @@ namespace OpenMS
 				IOInfo io_info;
 				io_info.param_name = it->name;
 				io_info.valid_types = valid_types;
-				io_info.listified = false;
-				if (list_mode_ && it->value.valueType() == DataValue::STRING_VALUE)
-				{
-					io_info.type = IOInfo::IOT_LIST;
-					io_info.listified = true;
-				}
-				else if (it->value.valueType() == DataValue::STRING_LIST)	
+				if (it->value.valueType() == DataValue::STRING_LIST)	
 				{
 					io_info.type = IOInfo::IOT_LIST;
 				}
@@ -345,22 +333,28 @@ namespace OpenMS
 		// progress light
 		painter->setPen(Qt::black);
 		painter->setBrush(progress_color_);
-		painter->drawEllipse(QPointF(55.0,-45.0), 7.0, 7.0);
-		
-		//list mode symbol
-		if (list_mode_)
-		{
-			qreal symbol_width = 20.0;
-			qreal x_pos = -63.0;
-			qreal y_pos = -54.0;
-			QRectF symbol_rect(QPointF(x_pos, y_pos), QSizeF(symbol_width, symbol_width));
-			painter->drawImage(symbol_rect, symbol_image_);
-		}
+		painter->drawEllipse(46,-52, 14, 14);
 		
 		//topo sort number
-		qreal x_pos = -62.0;
-		qreal y_pos = 48.0; 
+		qreal x_pos = -64.0;
+		qreal y_pos = -41.0; 
 		painter->drawText(x_pos, y_pos, QString::number(topo_nr_));
+		
+		if (progress_color_ != Qt::gray)
+		{
+			QString text;
+			if (in_parameter_has_list_type_)
+			{
+				text = QString::number(iteration_nr_ == 1 ? input_list_length_ : 0);
+				text += QString(" / ") + QString::number(input_list_length_); 
+			}
+			else
+			{
+				text = QString::number(iteration_nr_)+" / "+QString::number(num_iterations_);
+			}
+			QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, text);
+			painter->drawText((int)(62.0-text_boundings.width()), 48, text);
+		}
 	}
 	
 	QRectF TOPPASToolVertex::boundingRect() const
@@ -385,35 +379,10 @@ namespace OpenMS
 		return type_;
 	}
 	
-	void TOPPASToolVertex::runRecursively()
-	{
-		if (started_here_)
-		{
-			// make sure pipelines are not run multiple times
-			return;
-		}
-		
-		bool we_depend_on_other_tools = false;
-		// recursive execution of all parent nodes that are tools
-		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
-		{
-			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-			if (tv)
-			{
-				we_depend_on_other_tools = true;
-				tv->runRecursively();
-			}
-		}
-		if (!we_depend_on_other_tools)
-		{
-			// start actual pipeline execution here
-			started_here_ = true;
-			runToolIfInputReady();
-		}
-	}
-	
 	void TOPPASToolVertex::runToolIfInputReady()
 	{
+		__DEBUG_BEGIN_METHOD__
+		
 		//check if everything ready
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 		{
@@ -421,11 +390,18 @@ namespace OpenMS
 			if (tv && !tv->isFinished())
 			{
 				// some tool that we depend on has not finished execution yet --> do not start yet
+				debugOut_("Not run (parent not finished)");
+				
+				__DEBUG_END_METHOD__
 				return;
 			}
 		}
 		
 		// all inputs are ready --> GO!
+		updateCurrentOutputFileNames();
+		
+		createDirs();
+		
 		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
 		QString ini_file = ts->getOutDir()
 							+QDir::separator()
@@ -456,9 +432,15 @@ namespace OpenMS
 		
 		ts->setPipelineRunning(true);
 		emit toolStarted();
+		
+		/* Decide whether or not to iterate over the single files of the incoming lists
+		 * depending on the type of the input parameter "-in" (file or list). */
+		num_iterations_ = in_parameter_has_list_type_ ? 1 : input_list_length_;
 		iteration_nr_ = 0; // needed in executionFinished()
-		for (int i = 0; i < numIterations(); ++i)
+		
+		for (int i = 0; i < num_iterations_; ++i)
 		{
+			debugOut_(String("Enqueueing process nr ")+i);
 			QStringList args = shared_args;
 			
 			// add all input file parameters
@@ -483,51 +465,63 @@ namespace OpenMS
 						std::cerr << "Output parameter index out of bounds!" << std::endl;
 						break;
 					}
-					const QStringList& source_out_files = tv->output_file_names_[out_param_index];
-					if (list_mode_ && in_params[param_index].listified) // only possible for (actual) single file parameters
+					const QStringList& source_out_files = tv->current_output_files_[out_param_index];
+					
+					if (in_parameter_has_list_type_)
 					{
-						if (source_out_files.size() <= i)
-						{
-							std::cerr << "Listified parameter index out of bounds!" << std::endl;
-							break;
-						}
-						args << source_out_files[i];
-						continue;
+						args << source_out_files;
 					}
 					else
 					{
-						// either the whole list (for list params) or the single file for non-listified single file params
-						args << source_out_files;
-						continue;
+						if (i >= source_out_files.size())
+						{
+							std::cerr << "Input list too short!" << std::endl;
+							break;
+						}
+						args << source_out_files[i];
 					}
-				}
-				
-				TOPPASInputFileVertex* ifv = qobject_cast<TOPPASInputFileVertex*>((*it)->getSourceVertex());
-				if (ifv)
-				{
-					// list mode cannot be active in this case
-					args << ifv->getFilename();
 					continue;
 				}
 				
-				TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
-				if (iflv)
+				TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>((*it)->getSourceVertex());
+				if (mv)
 				{
-					const QStringList& input_files = iflv->getFilenames();
-					if (list_mode_ && in_params[param_index].listified) // only possible for (actual) single file parameters
+					const QStringList& input_files = mv->getCurrentOutputList();
+
+					if (in_parameter_has_list_type_)
 					{
-						if (input_files.size() <= i)
+						args << input_files;
+					}
+					else
+					{
+						if (i >= input_files.size())
 						{
-							std::cerr << "Listified parameter index out of bounds!" << std::endl;
+							std::cerr << "Input list too short!" << std::endl;
 							break;
 						}
 						args << input_files[i];
 					}
+					continue;
+				}
+
+				TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
+				if (iflv)
+				{
+					const QStringList& input_files = iflv->getFilenames();
+					if (in_parameter_has_list_type_)
+					{
+						args << input_files;
+					}
 					else
 					{
-						args << iflv->getFilenames();
-						continue;
+						if (i >= input_files.size())
+						{
+							std::cerr << "Input list too short!" << std::endl;
+							break;
+						}
+						args << input_files[i];
 					}
+					continue;
 				}
 			}
 			
@@ -545,20 +539,19 @@ namespace OpenMS
 					if (j == param_index)
 					{
 						args << "-"+(out_params[param_index].param_name).toQString();
-						const QStringList& output_files = output_file_names_[param_index];
-						
-						if (list_mode_ && out_params[param_index].listified)
+						const QStringList& output_files = current_output_files_[param_index];
+						if (in_parameter_has_list_type_)
 						{
-							if (output_files.size() <= i)
-							{
-								std::cerr << "Listified parameter index out of bounds!" << std::endl;
-								break;
-							}
-							args << output_files[i];
+							args << output_files;
 						}
 						else
 						{
-							args << output_files; // can be single file name or list
+							if (i >= output_files.size())
+							{
+								std::cerr << "Output list too short!" << std::endl;
+								break;
+							}
+							args << output_files[i];
 						}
 						
 						break; // (regardless of the number of out edges, every argument must appear only once)
@@ -566,25 +559,25 @@ namespace OpenMS
 				}
 			}
 			
-			//start process
+			//create process
 			QProcess* p = new QProcess();
 			p->setProcessChannelMode(QProcess::MergedChannels);
 			connect(p,SIGNAL(finished(int,QProcess::ExitStatus)),this,SLOT(executionFinished(int,QProcess::ExitStatus)));
 			connect(p,SIGNAL(readyReadStandardOutput()),this,SLOT(forwardTOPPOutput()));
 			connect(ts,SIGNAL(terminateCurrentPipeline()),p,SLOT(kill()));
 			
-			//start process
-			p->start(name_.toQString(), args);
-			p->waitForStarted();
+			//enqueue process
+			ts->enqueueProcess(p, name_.toQString(), args);
 		}
+		
+		__DEBUG_END_METHOD__
 	}
 	
 	void TOPPASToolVertex::executionFinished(int ec, QProcess::ExitStatus es)
 	{
-		iteration_nr_++;
+		__DEBUG_BEGIN_METHOD__
 		
 		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
-		
 		if (es != QProcess::NormalExit)
 		{
 			ts->setPipelineRunning(false);
@@ -595,6 +588,7 @@ namespace OpenMS
 			{
 				delete p;
 			}
+			__DEBUG_END_METHOD__
 			return;
 		}
 		
@@ -608,37 +602,60 @@ namespace OpenMS
 			{
 				delete p;
 			}
+			__DEBUG_END_METHOD__
 			return;
 		}
 		
-		if (iteration_nr_ == numIterations()) // all iterations performed --> proceed in pipeline
+		++iteration_nr_;
+		update(boundingRect());
+		debugOut_(String("Increased iteration_nr_ to ")+iteration_nr_+" / "+num_iterations_);
+		
+		// notify the scene that this process has finished (so the next pending one can run)
+		ts->runNextProcess();
+		
+		if (iteration_nr_ == num_iterations_) // all iterations performed --> proceed in pipeline
 		{
+			debugOut_("All iterations finished!");
+			
 			finished_ = true;
-			ts->setPipelineRunning(false);
 			emit toolFinished();
 			
-			// notify all childs that we are finished
+			if (all_written_output_files_.size() != current_output_files_.size())
+			{
+				all_written_output_files_.resize(current_output_files_.size());
+			}
+			for (int i = 0; i < current_output_files_.size(); ++i)
+			{
+				all_written_output_files_[i] << current_output_files_[i];
+			}
+			
+			// notify all childs that we are finished, proceed in pipeline
 			for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
 			{
-				TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getTargetVertex());
-				if (tv)
+				TOPPASVertex* tv = (*it)->getTargetVertex();
+				debugOut_(String("Starting child ")+tv->getTopoNr());
+				
+				TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>(tv);
+				if (ttv)
 				{
-					tv->runToolIfInputReady();
+					ttv->runToolIfInputReady();
 					continue;
 				}
-				TOPPASOutputFileVertex* ofv = qobject_cast<TOPPASOutputFileVertex*>((*it)->getTargetVertex());
-				if (ofv)
+				TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>(tv);
+				if (mv)
 				{
-					ofv->finished();
+					mv->forwardPipelineExecution();
 					continue;
 				}
-				TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>((*it)->getTargetVertex());
+				TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(tv);
 				if (oflv)
 				{
-					oflv->finished();
+					oflv->finish();
 					continue;
 				}
 			}
+			
+			debugOut_("All children started!");
 		}
 		
 		//clean up
@@ -647,16 +664,13 @@ namespace OpenMS
 		{
 			delete p;
 		}
+		
+		__DEBUG_END_METHOD__
 	}
 	
 	bool TOPPASToolVertex::isFinished()
 	{
 		return finished_;
-	}
-	
-	void TOPPASToolVertex::setFinished(bool b)
-	{
-		finished_ = b;
 	}
 	
 	const Param& TOPPASToolVertex::getParam()
@@ -669,26 +683,18 @@ namespace OpenMS
 		param_ = param;
 	}
 	
-	const QVector<QStringList>& TOPPASToolVertex::getOutputFileNames()
+	const QVector<QStringList>& TOPPASToolVertex::getCurrentOutputFileNames()
 	{
-		return output_file_names_;
+		return current_output_files_;
 	}
 	
-	void TOPPASToolVertex::updateOutputFileNames()
+	const QVector<QStringList>& TOPPASToolVertex::getAllWrittenOutputFileNames()
 	{
-		// recurse until we depend only on input vertices
-		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
-		{
-			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-			if (tv)
-			{
-				tv->updateOutputFileNames();
-			}
-		}
-		
-		/*	Now, all parent vertices are up to date:
-				First, determine base names of input files (-in parameter) and store number
-				of input files in input_list_length_ (needed in executionFinished()) */ 
+		return all_written_output_files_;
+	}
+	
+	void TOPPASToolVertex::updateCurrentOutputFileNames()
+	{
 		QVector<IOInfo> in_params;
 		input_list_length_ = 1; // stays like that if -in param is not a list
 		getInputParameters(in_params);
@@ -706,65 +712,49 @@ namespace OpenMS
 			
 			if (in_params[param_index].param_name == "in")
 			{
-				if (in_params[param_index].type == IOInfo::IOT_LIST)
+				in_parameter_has_list_type_ = (in_params[param_index].type == IOInfo::IOT_LIST);
+				
+				TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
+				if (iflv)
 				{
-					TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
-					if (iflv)
+					const QStringList& input_files = iflv->getFilenames();
+					input_list_length_ = input_files.count();
+					foreach (const QString& str, input_files)
 					{
-						const QStringList& input_files = iflv->getFilenames();
-						input_list_length_ = input_files.count();
-						foreach (const QString& str, input_files)
-						{
-							input_file_basenames.push_back(File::basename(str).toQString());
-						}
-						break;
+						input_file_basenames.push_back(File::basename(str).toQString());
 					}
-					
-					TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-					if (tv)
-					{
-						int out_param_index = (*it)->getSourceOutParam();
-						if (out_param_index < 0)
-						{
-							std::cerr << "Output parameter index out of bounds!" << std::endl;
-							break;
-						}
-						const QStringList& input_files = tv->output_file_names_[out_param_index];
-						input_list_length_ = input_files.count();
-						foreach (const QString& str, input_files)
-						{
-							input_file_basenames.push_back(File::basename(str).toQString());
-						}
-						break;
-					}
+					break;
 				}
-				else // IOT_FILE
+
+				TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
+				if (tv)
 				{
-					TOPPASInputFileVertex* ifv = qobject_cast<TOPPASInputFileVertex*>((*it)->getSourceVertex());
-					if (ifv)
+					int out_param_index = (*it)->getSourceOutParam();
+					if (out_param_index < 0)
 					{
-						input_file_basenames.push_back(File::basename(ifv->getFilename()).toQString());
+						std::cerr << "Output parameter index out of bounds!" << std::endl;
 						break;
 					}
-					
-					TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-					if (tv)
+					const QStringList& input_files = tv->current_output_files_[out_param_index];
+					input_list_length_ = input_files.count();
+					foreach (const QString& str, input_files)
 					{
-						int out_param_index = (*it)->getSourceOutParam();
-						if (out_param_index < 0)
-						{
-							std::cerr << "Output parameter index out of bounds!" << std::endl;
-							break;
-						}
-						const QStringList& input_files = tv->output_file_names_[out_param_index];
-						if (input_files.size() != 1)
-						{
-							std::cerr << "Number of input files for single file parameter != 1" << std::endl;
-							break;
-						}
-						input_file_basenames.push_back(File::basename(input_files.first()).toQString());
-						break;
+						input_file_basenames.push_back(File::basename(str).toQString());
 					}
+					break;
+				}
+
+				TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>((*it)->getSourceVertex());
+				if (mv)
+				{
+					const QStringList& files = mv->getCurrentOutputList();
+					input_list_length_ = files.count();
+
+					foreach (const QString& str, files)
+					{
+						input_file_basenames.push_back(File::basename(str).toQString());
+					}
+					break;
 				}
 			}
 		}
@@ -773,8 +763,8 @@ namespace OpenMS
 		QVector<IOInfo> out_params;
 		getOutputParameters(out_params);
 		
-		output_file_names_.clear();
-		output_file_names_.resize(out_params.size());
+		current_output_files_.clear();
+		current_output_files_.resize(out_params.size());
 		
 		for (int i = 0; i < out_params.size(); ++i)
 		{
@@ -783,10 +773,10 @@ namespace OpenMS
 			{
 				int param_index = (*it)->getSourceOutParam();
 				
-				if (i == param_index)
+				if (i == param_index) // corresponding out edge found
 				{
-					// corresponding out edge found
-					if (out_params[param_index].type == IOInfo::IOT_FILE)
+					// check if tool consumes list and outputs single file (such as IDMerger or FileMerger)
+					if (in_parameter_has_list_type_ && out_params[param_index].type == IOInfo::IOT_FILE)
 					{
 						QString f = ts->getOutDir()
 							+QDir::separator()
@@ -794,41 +784,35 @@ namespace OpenMS
 							+QDir::separator()
 							+out_params[param_index].param_name.toQString()
 							+QDir::separator()
-							+input_file_basenames.first();
-						if (!f.endsWith("_tmp"))
-						{
-							f += "_tmp";
-						}
-						output_file_names_[param_index].push_back(f);
+							+input_file_basenames.first()
+							+"_to_"
+							+input_file_basenames.last()
+							+"_merged_tmp";
+						current_output_files_[param_index].push_back(f);
 					}
-					else if (out_params[param_index].type == IOInfo::IOT_LIST)
+					else
 					{
 						foreach (const QString& str, input_file_basenames)
 						{
 							QString f = ts->getOutDir()
-							+QDir::separator()
-							+getOutputDir().toQString()
-							+QDir::separator()
-							+out_params[param_index].param_name.toQString()
-							+QDir::separator()
-							+str;
+								+QDir::separator()
+								+getOutputDir().toQString()
+								+QDir::separator()
+								+out_params[param_index].param_name.toQString()
+								+QDir::separator()
+								+str;
 							if (!f.endsWith("_tmp"))
 							{
 								f += "_tmp";
 							}
-							output_file_names_[param_index].push_back(f);
+							current_output_files_[param_index].push_back(f);
 						}
 					}
-					
+
 					break; // we are done, don't push_back further file names for this parameter
 				}
 			}
 		}
-	}
-	
-	void TOPPASToolVertex::setStartedHere(bool b)
-	{
-		started_here_ = b;
 	}
 
 	void TOPPASToolVertex::forwardTOPPOutput()
@@ -865,143 +849,42 @@ namespace OpenMS
 		update(boundingRect());
 	}
 	
+	void TOPPASToolVertex::toolFailedSlot()
+	{
+		progress_color_ = Qt::red;
+		update(boundingRect());
+	}
+
+	void TOPPASToolVertex::toolCrashedSlot()
+	{
+		progress_color_ = Qt::red;
+		update(boundingRect());
+	}
+
 	void TOPPASToolVertex::inEdgeHasChanged()
 	{
-		// something has changed --> remove invalidated tmp files, if existent
-		QString remove_dir = qobject_cast<TOPPASScene*>(scene())->getOutDir() + QDir::separator() + getOutputDir().toQString();
-		if (File::exists(remove_dir))
-		{
-			removeDirRecursively_(remove_dir);
-		}
-		
-		progress_color_ = Qt::gray;
-		update(boundingRect());
+		// something has changed --> tmp files might be invalid --> reset
+		reset(true);
 		
 		TOPPASVertex::inEdgeHasChanged();
 	}
 	
-	void TOPPASToolVertex::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+	void TOPPASToolVertex::openInTOPPView()
 	{
-		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
-		ts->unselectAll();
-		setSelected(true);
+		QVector<IOInfo> out_infos;
+		getOutputParameters(out_infos);
 		
-		QMenu menu;
-		
-		menu.addAction("Edit parameters");
-		
-		if (!list_mode_)
+		if (out_infos.size() == all_written_output_files_.size())
 		{
-			menu.addAction("Enable list iteration");
-		}
-		else
-		{
-			menu.addAction("Disable list iteration");
-		}
-		
-		bool allow_resume = true;
-		// all predecessor nodes finished successfully?
-		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
-		{
-			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-			if (tv && (tv->progress_color_ != Qt::green || !tv->isFinished()))
+			foreach (const QStringList& files, all_written_output_files_)
 			{
-				allow_resume = false;
-				break;
-			}
-			// input nodes are always ready -> no further checks
-		}
-		QAction* resume_action = menu.addAction("Resume");
-		if (!allow_resume)
-		{
-			resume_action->setEnabled(false);
-		}
-		
-		QAction* open_action = menu.addAction("Open output in TOPPView");
-		if (progress_color_ != Qt::green)
-		{
-			open_action->setEnabled(false);
-		}
-		
-		menu.addAction("Remove");
-		
-		QAction* selected_action = menu.exec(event->screenPos());
-		if (selected_action)
-		{
-			QString text = selected_action->text();
-			if (text == "Edit parameters")
-			{
-				editParam();
-			}
-			else if (text == "Enable list iteration")
-			{
-				setListModeActive(true);
-			}
-			else if (text == "Disable list iteration")
-			{
-				setListModeActive(false);
-			}
-			else if (text == "Resume")
-			{
-				if(ts->askForOutputDir(false))
+				if (files.size() > 0)
 				{
-					ts->updateOutputFileNames();
-					ts->createDirs();
-					runToolIfInputReady();
+					QProcess* p = new QProcess();
+					p->setProcessChannelMode(QProcess::ForwardedChannels);
+					p->start("TOPPView", files);
 				}
 			}
-			else if (text == "Open output in TOPPView")
-			{
-				QVector<IOInfo> out_infos;
-				getOutputParameters(out_infos);
-				if (out_infos.size() == output_file_names_.size())
-				{
-					foreach (const QStringList& files, output_file_names_)
-					{
-						if (files.size() > 0)
-						{
-							QProcess* p = new QProcess();
-							p->setProcessChannelMode(QProcess::ForwardedChannels);
-							p->start("TOPPView", files);
-						}
-					}
-				}
-			}
-			else if (text == "Remove")
-			{
-				ts->removeSelected();
-			}
-			event->accept();
-		}
-		else
-		{
-			event->ignore();	
-		}
-	}
-	
-	int TOPPASToolVertex::numIterations()
-	{
-		return list_mode_ ? input_list_length_ : 1;
-	}
-	
-	bool TOPPASToolVertex::listModeActive()
-	{
-		return list_mode_;
-	}
-	
-	void TOPPASToolVertex::setListModeActive(bool b)
-	{
-		list_mode_ = b;
-		
-		update(boundingRect());
-		
-		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
-		{
-			(*it)->updateColor();
-		}
-		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
-		{
-			(*it)->updateColor();
 		}
 	}
 	
@@ -1016,10 +899,17 @@ namespace OpenMS
 		return dir;
 	}
 	
-	void TOPPASToolVertex::createDirs(const QString& out_dir)
+	void TOPPASToolVertex::createDirs()
 	{
-		QDir current_dir(out_dir);
-		foreach (const QStringList& files, output_file_names_)
+		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
+		QDir current_dir(ts->getOutDir());
+		
+		if (!current_dir.mkpath(getOutputDir().toQString()))
+		{
+			std::cerr << "Could not create path " << getOutputDir() << std::endl;
+		}
+		
+		foreach (const QStringList& files, current_output_files_)
 		{
 			if (!files.isEmpty())
 			{
@@ -1039,19 +929,106 @@ namespace OpenMS
 	{
 		if (topo_nr_ != nr)
 		{
+			// topological number changes --> output dir changes --> reset
+			reset(true);
 			topo_nr_ = nr;
-			
-			// topological number changed --> remove invalidated tmp files, if existent
+			emit somethingHasChanged();
+		}
+	}
+	
+	void TOPPASToolVertex::reset(bool reset_all_files)
+	{
+		__DEBUG_BEGIN_METHOD__
+		
+		finished_ = false;
+		current_output_files_.clear();
+		progress_color_ = Qt::gray;
+		
+		if (reset_all_files)
+		{
+			all_written_output_files_.clear();
 			QString remove_dir = qobject_cast<TOPPASScene*>(scene())->getOutDir() + QDir::separator() + getOutputDir().toQString();
 			if (File::exists(remove_dir))
 			{
 				removeDirRecursively_(remove_dir);
 			}
-			setProgressColor(Qt::gray);
-			update(boundingRect());
-			
-			emit somethingHasChanged();
 		}
+		
+		TOPPASVertex::reset(reset_all_files);
+		
+		__DEBUG_END_METHOD__
 	}
+	
+	void TOPPASToolVertex::checkListLengths(QStringList& unequal_per_round, QStringList& unequal_over_entire_run)
+	{
+		__DEBUG_BEGIN_METHOD__
+		
+		//all parents checked?
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			if (!((*it)->getSourceVertex()->isScListLengthChecked()))
+			{
+				__DEBUG_END_METHOD__
+				return;
+			}
+		}
+		
+		// do all input lists have equal length?
+		int parent_per_round = (*inEdgesBegin())->getSourceVertex()->getScFilesPerRound();
+		int parent_total = (*inEdgesBegin())->getSourceVertex()->getScFilesTotal();		
+		
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			if ((*it)->getSourceVertex()->getScFilesPerRound() != parent_per_round)
+			{
+				unequal_per_round.push_back(QString::number(topo_nr_));
+				break;
+			}
+		}
+		
+		// n:1 tool? --> files per round = 1
+		QVector<IOInfo> input_infos;
+		getInputParameters(input_infos);
+		QVector<IOInfo> output_infos;
+		getOutputParameters(output_infos);
+		bool in_param_list_type = false;
+		bool out_param_file_type = false;
+		foreach (const IOInfo& io, input_infos)
+		{
+			if (io.param_name == "in" && io.type == IOInfo::IOT_LIST)
+			{
+				in_param_list_type = true;
+			}
+		}
+		foreach (const IOInfo& io, output_infos)
+		{
+			if (io.param_name == "out" && io.type == IOInfo::IOT_FILE)
+			{
+				out_param_file_type = true;
+			}
+		}
+		
+		if (in_param_list_type && out_param_file_type)
+		{
+			sc_files_per_round_ = 1;
+			sc_files_total_ = parent_total / parent_per_round;
+		}
+		else
+		{
+			sc_files_per_round_ = parent_per_round;
+			sc_files_total_ = parent_total;
+		}
+		
+		sc_list_length_checked_ = true;
+		
+		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
+		{
+			TOPPASVertex* tv = (*it)->getTargetVertex();
+			tv->checkListLengths(unequal_per_round, unequal_over_entire_run);
+		}
+		
+		__DEBUG_END_METHOD__
+	}
+	
 }
 

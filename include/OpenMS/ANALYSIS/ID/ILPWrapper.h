@@ -114,7 +114,7 @@ namespace OpenMS
 			}
 		};
 		
-	private:
+	protected:
 		
 		template <typename InputPeakType>
 		void getXIC_(std::vector<std::pair<Size,Size> >& end_points,
@@ -143,9 +143,9 @@ namespace OpenMS
      *	@brief Solve the ILP.
      *	
      */
-    void solveILP_(CoinModel& model,std::vector<int>& solution_indices);
+    void solveILP_(std::vector<int>& solution_indices);
 
-
+		CoinModel* cmodel_;
 		
   };
 

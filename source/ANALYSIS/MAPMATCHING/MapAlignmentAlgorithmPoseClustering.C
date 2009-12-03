@@ -48,6 +48,8 @@ namespace OpenMS
 		defaults_.setValidStrings("symmetric_regression",StringList::create("true,false"));
 		defaults_.setValue("max_num_peaks_considered",400,"The maximal number of peaks to be considered per map.  This cutoff is only applied to peak maps.  For using all peaks, set this to -1.");
 		defaults_.setMinInt("max_num_peaks_considered",-1);
+    defaults_.setValue("reference_map_index",-1,"The index of the reference map, in the range [0:#maps-1].  If set to -1, the map with the most peaks/features is automatically taken as the reference map.");
+    defaults_.setMinInt("reference_map_index",-1);
 		//TODO 'max_num_peaks_considered' should apply to peaks and features!! (Clemens)
 		defaultsToParam_();
 	}
@@ -62,7 +64,7 @@ namespace OpenMS
 		transformations.clear();
 		transformations.resize(maps.size());
 
-		const UInt max_num_peaks_considered = param_.getValue("max_num_peaks_considered");
+		const Int max_num_peaks_considered = param_.getValue("max_num_peaks_considered");
 		const bool symmetric_regression = param_.getValue("symmetric_regression").toBool();
 
 		//define reference map (the one with most peaks)
@@ -134,8 +136,8 @@ namespace OpenMS
 
 				// combine the two transformations
 				transformations[i].setName("linear");
-				transformations[i].setParam("slope",si_trafos[0].getParam("slope")*trafo.getParam("slope"));
-				transformations[i].setParam("intercept",trafo.getParam("slope")*si_trafos[0].getParam("intercept")+trafo.getParam("intercept"));
+				transformations[i].setParam("slope",(DoubleReal)si_trafos[0].getParam("slope")*(DoubleReal)trafo.getParam("slope"));
+				transformations[i].setParam("intercept",(DoubleReal)trafo.getParam("slope")*(DoubleReal)si_trafos[0].getParam("intercept")+(DoubleReal)trafo.getParam("intercept"));
 
 				// apply transformation to all scans
 				for (Size j=0; j< maps[i].size(); ++j)
@@ -162,16 +164,33 @@ namespace OpenMS
 		const bool symmetric_regression = param_.getValue("symmetric_regression").toBool();
 
 		// define reference map (the one with most peaks)
+    const Int reference_map_index_signed = param_.getValue("reference_map_index");
 		Size reference_map_index = 0;
-		Size max_count = 0;
-		for (Size m=0; m<maps.size(); ++m)
-		{
-			if (maps[m].size()>max_count)
-			{
-				max_count = maps[m].size();
-				reference_map_index = m;
-			}
-		}
+    if ( reference_map_index_signed == -1 )
+    {
+      // compute reference_map_index
+      Size max_count = 0;
+      for ( Size m = 0; m < maps.size(); ++m )
+      {
+        if ( maps[m].size() > max_count )
+        {
+          max_count = maps[m].size();
+          reference_map_index = m;
+        }
+      }
+    }
+    else
+    {
+      if ( reference_map_index_signed >= 0 && reference_map_index_signed < (Int) maps.size() )
+      {
+        reference_map_index = (Size) reference_map_index_signed;
+      }
+      else
+      {
+        throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,String("reference_map_index ")+reference_map_index+" must be in the range [-1:#maps-1]");
+      }
+    }
+
 
     // build a consensus map of the elements of the reference map (contains only singleton consensus elements)
     std::vector<ConsensusMap> input(2);
@@ -233,8 +252,8 @@ namespace OpenMS
 
 				// combine the two transformations
 				transformations[i].setName("linear");
-				transformations[i].setParam("slope",si_trafos[0].getParam("slope")*trafo.getParam("slope"));
-				transformations[i].setParam("intercept",trafo.getParam("slope")*si_trafos[0].getParam("intercept")+trafo.getParam("intercept"));
+				transformations[i].setParam("slope",(DoubleReal)si_trafos[0].getParam("slope")*(DoubleReal)trafo.getParam("slope"));
+				transformations[i].setParam("intercept",(DoubleReal)trafo.getParam("slope")*(DoubleReal)si_trafos[0].getParam("intercept")+(DoubleReal)trafo.getParam("intercept"));
 
 				// apply transformation (global and local)
 #if 1 // do it the new way - "deep"

@@ -415,7 +415,7 @@ namespace OpenMS
 					/* debug */std::cout << " average "<< (hits_no/pi_no) << " hits per " << pi_no << " PeptideIdentifications." << std::endl;
 					ids_it->getPeptideIdentifications().resize(1);
 					ids_it->getPeptideIdentifications().front().setHits(new_hits);
-					ids_it->getPeptideIdentifications().front().setIdentifier("from SpectralNetworking");
+					//~ ids_it->getPeptideIdentifications().front().setIdentifier("from SpectralNetworking");
 				}
 
 				if(!ids_it->getPeptideIdentifications().front().getHits().empty())
@@ -629,7 +629,7 @@ namespace OpenMS
 								}
 								/* debug */else
 								{
-
+									/* debug */std::cout << " no propagation ";
 								}
 								/* debug */std::cout << std::endl;
 							}
@@ -710,7 +710,9 @@ namespace OpenMS
 					}
 
 					/// @todo this makes the annotations stay and not viewable at the moment in toppview - adapt toppview to indesignated modifications
-					ids_it->getPeptideIdentifications().front().setIdentifier(ids_it->getPeptideIdentifications().front().getHits().front().getMetaValue("IdentificationIdentifier"));
+					ids_it->getPeptideIdentifications().front().setIdentifier((String)ids_it->getPeptideIdentifications().front().getHits().front().getMetaValue("IdentificationIdentifier"));
+					/* debug if((String)ids_it->getPeptideIdentifications().front().getHits().front().getMetaValue("IdentificationIdentifier") != String("from SpectralNetworking")){ std::cout << " tadaa " ;}*/
+
 				}
 			}
 

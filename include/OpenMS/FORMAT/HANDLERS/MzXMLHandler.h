@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_HANDLERS_MZXMLHANDLER_H
@@ -68,19 +68,7 @@ namespace OpenMS
 					spec_write_counter_(1),
 					logger_(logger)
 	  		{
-	  			cv_terms_.resize(6);
-	  			//Polarity
-					String("any;+;-").split(';',cv_terms_[0]);
-					//Scan type
-					// is no longer used cv_terms_[1] is empty now
-					//Ionization method
-					String(";ESI;EI;CI;FAB;TSP;MALDI;FD;FI;PD;SI;TI;API;ISI;CID;CAD;HN;APCI;APPI;ICP").split(';',cv_terms_[2]);
-					//Mass analyzer
-					String(";Quadrupole;Quadrupole Ion Trap;;;TOF;Magnetic Sector;FT-ICR;").split(';',cv_terms_[3]);
-					//Detector
-					String(";EMT;Daly;;Faraday Cup;;;;Channeltron").split(';',cv_terms_[4]);
-					//Resolution method
-					String(";FWHM;TenPercentValley;Baseline").split(';',cv_terms_[5]);
+					init_();
 				}
 	
 	      /// Constructor for a write-only handler
@@ -95,19 +83,7 @@ namespace OpenMS
 					spec_write_counter_(1),
 					logger_(logger)
 	  		{
-	  			cv_terms_.resize(6);
-	  			//Polarity
-					String("any;+;-").split(';',cv_terms_[0]);
-					//Scan type
-					// is no longer used cv_terms_[1] is empty now
-					//Ionization method
-					String(";ESI;EI;CI;FAB;TSP;MALDI;FD;FI;PD;SI;TI;API;ISI;CID;CAD;HN;APCI;APPI;ICP").split(';',cv_terms_[2]);
-					//Mass analyzer
-					String(";Quadrupole;Quadrupole Ion Trap;;;TOF;Magnetic Sector;FT-ICR;").split(';',cv_terms_[3]);
-					//Detector
-					String(";EMT;Daly;;Faraday Cup;;;;Channeltron").split(';',cv_terms_[4]);
-					//Resolution method
-					String(";FWHM;TenPercentValley;Baseline").split(';',cv_terms_[5]);
+					init_();
 				}
 
 	  		/// Destructor
@@ -133,6 +109,44 @@ namespace OpenMS
 				{
 					options_ = options; 
 				}
+			
+			private:
+				// initialize members (call from C'tor)
+				void init_()
+				{
+					cv_terms_.resize(6);
+					//Polarity
+					String("any;+;-").split(';',cv_terms_[0]);
+					//Scan type
+					// is no longer used cv_terms_[1] is empty now
+					//Ionization method
+					String(";ESI;EI;CI;FAB;;;;;;;;;;;;;APCI;;;;;;;;MALDI").split(';',cv_terms_[2]);
+					cv_terms_[2].resize(IonSource::SIZE_OF_IONIZATIONMETHOD);
+					//Mass analyzer
+					String(";Quadrupole;Quadrupole Ion Trap;;;TOF;Magnetic Sector;FT-ICR;").split(';',cv_terms_[3]);
+					cv_terms_[3].resize(MassAnalyzer::SIZE_OF_ANALYZERTYPE);
+					//Detector
+					String(";EMT;;;Faraday Cup;;;;;Channeltron;Daly;Microchannel plate").split(';',cv_terms_[4]);
+					cv_terms_[4].resize(IonDetector::SIZE_OF_TYPE);
+					//Resolution method
+					String(";FWHM;TenPercentValley;Baseline").split(';',cv_terms_[5]);
+					cv_terms_[5].resize(MassAnalyzer::SIZE_OF_RESOLUTIONMETHOD);
+				/* // OLD:
+					cv_terms_.resize(6);
+					//Polarity
+					String("any;+;-").split(';',cv_terms_[0]);
+					//Scan type
+					// is no longer used cv_terms_[1] is empty now
+					//Ionization method
+					String(";ESI;EI;CI;FAB;TSP;MALDI;FD;FI;PD;SI;TI;API;ISI;CID;CAD;HN;APCI;APPI;ICP").split(';',cv_terms_[2]);
+					//Mass analyzer
+					String(";Quadrupole;Quadrupole Ion Trap;;;TOF;Magnetic Sector;FT-ICR;").split(';',cv_terms_[3]);
+					//Detector
+					String(";EMT;Daly;;Faraday Cup;;;;Channeltron").split(';',cv_terms_[4]);
+					//Resolution method
+					String(";FWHM;TenPercentValley;Baseline").split(';',cv_terms_[5]);				
+					*/
+				}			
 	
 	    protected:
 				
@@ -151,7 +165,7 @@ namespace OpenMS
 				/// Options for loading and storing
 				PeakFileOptions options_;
 				
-				/**@name temporary datastructures to hold parsed data */
+				/**@name temporary data structures to hold parsed data */
 		    //@{
 				Base64 decoder_;
 				UInt peak_count_;
@@ -322,7 +336,7 @@ namespace OpenMS
 	  	
 	  	String tag = sm_.convert(qname);
 	  	open_tags_.push_back(tag);
-	  	//std::cout << " -- Start -- "<< tag << " -- " << std::endl;
+	  	//std::cout << " -- Start -- "<< tag << " -- " << "\n";
 	  	
 	  	//Skip all tags until the the next scan
 	  	if (skip_spectrum_ && tag!="scan") return;
@@ -441,24 +455,24 @@ namespace OpenMS
 				if (optionalAttributeAsString_(time_string, attributes, s_retentiontime_))
 				{
 					time_string = time_string.suffix('T');
-					//std::cout << "Initial trim: " << time_string << std::endl;
+					//std::cout << "Initial trim: " << time_string << "\n";
 					if (time_string.has('H'))
 					{
 						retention_time += 3600*asDouble_(time_string.prefix('H'));
 						time_string = time_string.suffix('H');
-						//std::cout << "After H: " << time_string << std::endl;
+						//std::cout << "After H: " << time_string << "\n";
 					}
 					if (time_string.has('M'))
 					{
 						retention_time += 60*asDouble_(time_string.prefix('M'));
 						time_string = time_string.suffix('M');
-						//std::cout << "After M: " << time_string << std::endl;
+						//std::cout << "After M: " << time_string << "\n";
 					}
 					if (time_string.has('S'))
 					{
 						retention_time += asDouble_(time_string.prefix('S'));
 						time_string = time_string.suffix('S');
-						//std::cout << "After S: " << time_string << std::endl;
+						//std::cout << "After S: " << time_string << "\n";
 					}
 				}
 
@@ -656,7 +670,7 @@ namespace OpenMS
 				}
 				else
 				{
-					std::cout << " Warning: Unexpected tag 'nameValue' in tag '" << parent_tag << "'" << std::endl;
+					std::cout << " Warning: Unexpected tag 'nameValue' in tag '" << parent_tag << "'" << "\n";
 				}
 			}
 			else if (tag=="processingOperation")
@@ -671,14 +685,14 @@ namespace OpenMS
 				data_processing_.back().setMetaValue(name, value);
 			}
 			
-			//std::cout << " -- !Start -- " << std::endl;
+			//std::cout << " -- !Start -- " << "\n";
 		}
 	
 	
 		template <typename MapType>
 		void MzXMLHandler<MapType>::endElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname)
 	  {
-	  	//std::cout << " -- End -- " << sm_.convert(qname) << " -- " << std::endl;
+	  	//std::cout << " -- End -- " << sm_.convert(qname) << " -- " << "\n";
 	  	
 	  	static const XMLCh* s_mzxml = xercesc::XMLString::transcode("mzXML");
 	  	static const XMLCh* s_peaks = xercesc::XMLString::transcode("peaks");
@@ -694,7 +708,7 @@ namespace OpenMS
 			}
 			else if (equal_(qname,s_peaks))
 			{
-				//std::cout << "reading scan" << std::endl;
+				//std::cout << "reading scan" << "\n";
 				if (char_rest_=="") // no peaks
 				{
 					return;
@@ -756,7 +770,7 @@ namespace OpenMS
 					}
 				}
 			}
-			//std::cout << " -- End -- " << std::endl;
+			//std::cout << " -- End -- " << "\n";
 			sm_.clear();
 	  }
 	
@@ -793,7 +807,7 @@ namespace OpenMS
 			else if (	open_tags_.back()=="comment")
 			{
 				String parent_tag = *(open_tags_.end()-2);
-				//std::cout << "- Comment of parent " << parent_tag << std::endl;
+				//std::cout << "- Comment of parent " << parent_tag << "\n";
 					
 				if (parent_tag=="msInstrument")
 				{
@@ -1135,7 +1149,7 @@ namespace OpenMS
 				{
 					os << String(ms_level+2,'\t') << "<peaks precision=\"32\"" << " byteOrder=\"network\" pairOrder=\"m/z-int\">";
 					
-					//std::cout << "Writing scan " << s << std::endl;
+					//std::cout << "Writing scan " << s << "\n";
 					std::vector<Real> tmp;
 					for (Size i=0; i<spec.size(); i++)
 					{
@@ -1164,7 +1178,7 @@ namespace OpenMS
 				{
 					next_ms_level = ((*cexp_)[s+1]).getMSLevel();
 				}
-				//std::cout << "scan: " << s << " this: " << ms_level << " next: " << next_ms_level << std::endl;
+				//std::cout << "scan: " << s << " this: " << ms_level << " next: " << next_ms_level << "\n";
 				if (next_ms_level <= ms_level)
 				{
 					for (Size i = 0; i<= ms_level-next_ms_level && !open_scans.empty(); ++i)
@@ -1188,3 +1202,4 @@ namespace OpenMS
 } // namespace OpenMS
 
 #endif
+

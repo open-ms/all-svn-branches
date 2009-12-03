@@ -33,6 +33,7 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 
 #include <QtGui/QGraphicsScene>
+#include <QtCore/QProcess>
 
 namespace OpenMS
 {
@@ -59,6 +60,25 @@ namespace OpenMS
 		Q_OBJECT
 		
 		public:
+			
+			/// Stores the information for a TOPP process
+			struct TOPPProcess
+			{
+				///Constructor
+				TOPPProcess(QProcess* p, const QString& cmd, const QStringList& arg)
+					:	proc(p),
+						command(cmd),
+						args(arg)
+				{
+				}
+				
+				///The process
+				QProcess* proc;
+				///The command
+				QString command;
+				///The arguments
+				QStringList args;
+			};
 			
 			/// The current action mode (creation of a new edge, or panning of the widget)
 			enum ActionMode
@@ -118,16 +138,12 @@ namespace OpenMS
 			const String& getSaveFileName();
 			/// Sets the file name
 			void setSaveFileName(const String& name);
-			/// Updates all output file names
-			void updateOutputFileNames();
 			/// Performs a topological sort of all vertices
 			void topoSort();
 			/// Returns the name of the directory for output files
 			const QString& getOutDir();
 			/// Sets the name of the directory for output files
 			void setOutDir(const QString& dir);
-			/// Creates the necessary output directories
-			void createDirs();
 			/// Saves the pipeline if it has been changed since the last save.
 			bool saveIfChanged();
 			/// Sets the changed flag
@@ -138,6 +154,12 @@ namespace OpenMS
 			void abortPipeline();
 			/// Shows a dialog that allows to specify the output directory. If @p always_ask == false, the dialog won't be shown if a directory has been set, already.
 			bool askForOutputDir(bool always_ask = true);
+			/// Enqueues the process, it will be run when the currently pending processes have finished
+			void enqueueProcess(QProcess* p, const QString& command, const QStringList& args);
+			/// Runs the next process in the queue, if any
+			void runNextProcess();
+			/// Resets the processes queue
+			void resetProcessesQueue();
 			
 		public slots:
 		
@@ -157,6 +179,8 @@ namespace OpenMS
 			void pipelineErrorSlot();
 			/// Moves all selected items by dx, dy
 			void moveSelectedItems(qreal dx, qreal dy);
+			/// Makes all vertices snap to the grid
+			void snapToGrid();
 			/// Sets if the running_ flag to true
 			void setPipelineRunning(bool b = true);
 			
@@ -213,6 +237,8 @@ namespace OpenMS
 			bool running_;
 			/// Indicates if the output directory has been specified by the user already
 			bool user_specified_out_dir_;
+			/// The queue of pending TOPP processes
+			QList<TOPPProcess> topp_processes_queue_;
 			
 			/// Returns the vertex in the foreground at position @p pos , if existent, otherwise 0.
 			TOPPASVertex* getVertexAt_(const QPointF& pos);
@@ -220,6 +246,13 @@ namespace OpenMS
 			bool isEdgeAllowed_(TOPPASVertex* u, TOPPASVertex* v);
 			/// DFS helper method. Returns true, if a back edge has been discovered
 			bool dfsVisit_(TOPPASVertex* vertex);
+			/// Performs a sanity check of the pipeline and notifies user when it finds something strange. Returns if pipeline OK.
+			bool sanityCheck();
+			
+			///@name reimplemented Qt events
+      //@{
+      void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
+			//@}
 	};
 
 }

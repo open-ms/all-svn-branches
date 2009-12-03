@@ -29,7 +29,7 @@
 #include <stack>
 #include <fstream>
 #include <cmath>
-#include <cstring> // aaaah
+#include <cstring>
 #include <algorithm>
 
 #include <OpenMS/CHEMISTRY/ModifierRep.h>
@@ -38,8 +38,10 @@
 
 #include <OpenMS/CHEMISTRY/AASequence.h>
 
-using namespace OpenMS;
 using namespace std;
+
+namespace OpenMS
+{
 
 /**
 @brief comperator for two substings represented as pair of ints
@@ -769,4 +771,6 @@ bool SuffixArrayTrypticCompressed::hasMoreOutgoings_ (SignedSize start_index, Si
 	}
 	return false;
 }
+
+} // namespace OpenMS
 

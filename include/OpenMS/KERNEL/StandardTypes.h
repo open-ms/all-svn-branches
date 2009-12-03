@@ -63,6 +63,13 @@ namespace OpenMS
 	*/
 	typedef MSExperiment<RichPeak1D> RichPeakMap;
 
+
+	/**
+		@brief Chromatogram consisting of raw data points or peaks
+
+		@ingroup Kernel
+	*/
+	typedef MSChromatogram<ChromatogramPeak> Chromatogram;
 	//@}
 
 }

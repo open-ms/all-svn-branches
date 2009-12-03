@@ -224,7 +224,7 @@ namespace OpenMS
 			// get the peptide information and insert it
 			if (p_value != pvalues.end() && (*p_value) <= p_value_threshold)
 			{
-				peptide_hit.setScore(atof(substrings[score_column].c_str()));
+				peptide_hit.setScore(String(substrings[score_column].c_str()).toDouble());
 
 				{
           if ( rank_sp_column != (-1) )
@@ -237,23 +237,23 @@ namespace OpenMS
           }
           if ( mh_column != (-1) )
           {
-            peptide_hit.setMetaValue("MH", atof(substrings [mh_column].c_str()));
+            peptide_hit.setMetaValue("MH", String(substrings [mh_column].c_str()).toDouble());
           }
           if ( delta_cn_column != (-1) )
           {
-            peptide_hit.setMetaValue("DeltCn", atof(substrings [delta_cn_column].c_str()));
+            peptide_hit.setMetaValue("DeltCn", String(substrings [delta_cn_column].c_str()).toDouble());
           }
           if ( xcorr_column != (-1) )
           {
-            peptide_hit.setMetaValue("XCorr", atof(substrings [xcorr_column].c_str()));
+            peptide_hit.setMetaValue("XCorr", String(substrings [xcorr_column].c_str()).toDouble());
           }
           if ( sp_column != (-1) )
           {
-            peptide_hit.setMetaValue("Sp", atof(substrings [sp_column].c_str()));
+            peptide_hit.setMetaValue("Sp", String(substrings [sp_column].c_str()).toDouble());
           }
           if ( sf_column != (-1) )
           {
-            peptide_hit.setMetaValue("Sf", atof(substrings [sf_column].c_str()));
+            peptide_hit.setMetaValue("Sf", String(substrings [sf_column].c_str()).toDouble());
           }
           if ( ions_column != (-1) )
           {
@@ -702,7 +702,7 @@ namespace OpenMS
 				precursor_mass_type = ( substrings[0] == "MONO" ) ? 1 : 0;
 				ion_mass_type = ( substrings[1] == "MONO" ) ? 1 : 0;
 			}
-			else if ( (!substrings.empty()) && substrings[0].length() > 5 && (substrings[0].size() == 10) && (substrings[0][2] == '/') && (substrings[0][5] == '/') )
+			else if ( (!substrings.empty()) && (substrings[0].size() == 10) && (substrings[0][2] == '/') && (substrings[0][5] == '/') )
 			{
 				datetime.setDate(substrings[0]);
 				buffer = substrings[1];

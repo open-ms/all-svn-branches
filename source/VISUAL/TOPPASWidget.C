@@ -51,7 +51,7 @@ namespace OpenMS
 		setRenderHint(QPainter::Antialiasing);
 		setScene(scene_);
 		setAcceptDrops(true);
-		setDragMode(QGraphicsView::ScrollHandDrag);
+		setDragMode(QGraphicsView::RubberBandDrag);
 		setFocusPolicy(Qt::StrongFocus);
 	}
 	
@@ -65,10 +65,10 @@ namespace OpenMS
 		return scene_;
 	}
 	
-	void TOPPASWidget::wheelEvent(QWheelEvent* event)
+	void TOPPASWidget::zoom(bool zoom_in)
 	{
 		qreal factor = 1.2;
-		if (event->delta() < 0)
+		if (zoom_in)
 		{
 			factor = 1.0 / factor;
 		}
@@ -76,6 +76,11 @@ namespace OpenMS
 		
 		QRectF items_rect = scene_->itemsBoundingRect();
 		scene_->setSceneRect(items_rect.united(mapToScene(rect()).boundingRect()));
+	}
+	
+	void TOPPASWidget::wheelEvent(QWheelEvent* event)
+	{
+		zoom(event->delta() < 0);
 	}
 
 	
@@ -103,21 +108,32 @@ namespace OpenMS
 	{
 		if (e->key() == Qt::Key_Control)
 		{
-			setDragMode(QGraphicsView::RubberBandDrag);
+			setDragMode(QGraphicsView::ScrollHandDrag);
 			e->accept();
 		}
 		else if (e->key() == Qt::Key_Delete || e->key() == Qt::Key_Backspace)
 		{
 			scene_->removeSelected();
 		}
-		//e->ignore(); how does this work again?
+		else if (e->key() == Qt::Key_F5)
+		{
+			scene_->runPipeline();
+		}
+		else if (e->key() == Qt::Key_Plus)
+		{
+			zoom(false);
+		}
+		else if (e->key() == Qt::Key_Minus)
+		{
+			zoom(true);
+		}
 	}
 	
 	void TOPPASWidget::keyReleaseEvent(QKeyEvent* e)
 	{
 		if (e->key() == Qt::Key_Control)
 		{
-			setDragMode(QGraphicsView::ScrollHandDrag);
+			setDragMode(QGraphicsView::RubberBandDrag);
 			e->accept();
 		}
 		//e->ignore(); how does this work again?

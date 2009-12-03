@@ -93,13 +93,13 @@ class TOPPOMSSAAdapter
 			registerInputFile_("in", "<file>", "", "input file ");
 			setValidFormats_("in",StringList::create("mzML"));
 			registerOutputFile_("out", "<file>", "", "output file ");
-	  	setValidFormats_("out",StringList::create("IdXML"));
+	  	setValidFormats_("out",StringList::create("idXML"));
 		
 			registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "precursor mass tolerance", false);
       registerDoubleOption_("fragment_mass_tolerance", "<tolerance>", 0.3, "fragment mass error", false);
       registerStringOption_("precursor_error_units", "<unit>", "Da", "parent monoisotopic mass error units", false);
       registerStringOption_("fragment_error_units", "<unit>", "Da", "fragment monoisotopic mass error units", false);
-      registerStringOption_("database", "<file>", "", "NCBI formated fasta files. Only the basename should be given without .p* extensions, e.g. SwissProt.fasta");
+      registerInputFile_("database", "<fasta-file>", "", "NCBI formated fasta files. Only the basename should be given without .p* extensions, e.g. 'SwissProt.fasta'");
       vector<String> valid_strings;
       //valid_strings.push_back("ppm"); // ppm disabled, as OMSSA does not support this feature
       valid_strings.push_back("Da");
@@ -109,9 +109,9 @@ class TOPPOMSSAAdapter
       registerIntOption_("max_precursor_charge", "<charge>", 3, "maximum precursor ion charge", false);
 			vector<String> all_mods;
 			ModificationsDB::getInstance()->getAllSearchModifications(all_mods);
-      registerStringList_("fixed_modifications", "<mods>", StringList::create(""), "fixed modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048", false);
+      registerStringList_("fixed_modifications", "<mods>", StringList::create(""), "fixed modifications, specified using UniMod (www.unimod.org) terms, e.g. 'Carbamidomethyl (C)' or 'Oxidation (M)'", false);
 			setValidStrings_("fixed_modifications", all_mods);
-      registerStringList_("variable_modifications", "<mods>", StringList::create(""), "variable modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048", false);
+      registerStringList_("variable_modifications", "<mods>", StringList::create(""), "variable modifications, specified using UniMod (www.unimod.org) terms, e.g. 'Carbamidomethyl (C)' or 'Oxidation (M)'", false);
 			setValidStrings_("variable_modifications", all_mods);
 				
 			
@@ -122,7 +122,7 @@ class TOPPOMSSAAdapter
 			//-d <String> Blast sequence library to search.  Do not include .p* filename suffixes.
 			//-pc <Integer> The number of pseudocounts to add to each precursor mass bin.
 			//registerStringOption_("d", "<file>", "", "Blast sequence library to search.  Do not include .p* filename suffixes", true);
-			registerStringOption_("omssa_dir", "<Directory>", "", "The directory of the OMSSA installation", true);
+			registerInputFile_("omssa_executable", "", "The 'omssacl' executable of the OMSSA installation", true);
 			registerIntOption_("pc", "<Integer>", 1, "The number of pseudocounts to add to each precursor mass bin", false, true);
 			
 			//registerFlag_("omssa_out", "If this flag is set, the parameter 'in' is considered as an output file of OMSSA and will be converted to IdXML");
@@ -291,7 +291,7 @@ class TOPPOMSSAAdapter
 			String ini_location;
 			// path to the log file
 			String logfile(getStringOption_("log"));
-			String omssa_dir(getStringOption_("omssa_dir"));
+			String omssa_executable(getStringOption_("omssa_executable"));
 			String inputfile_name;
 			String outputfile_name;
 			PeakMap map;
@@ -309,8 +309,7 @@ class TOPPOMSSAAdapter
 			//-------------------------------------------------------------
 		
 			// get version of OMSSA
-			// @todo translate call to windows
-			String version_call = omssa_dir + "/omssacl -version > " + unique_version_name;
+			String version_call = omssa_executable + " -version > " + unique_version_name;
 			int status = system(version_call.c_str());
 			if (status != 0)
 			{
@@ -456,6 +455,7 @@ class TOPPOMSSAAdapter
 
 						// add this to the usermods
 						user_mods.push_back(make_pair(user_mod_num++, *it));
+            writeDebug_("Inserting unknown fixed modification: '" + *it + "' into OMSSA", 1);
 					}
 				}
 				if (mod_list != "")
@@ -489,7 +489,7 @@ class TOPPOMSSAAdapter
 
             // add this to the usermods
             user_mods.push_back(make_pair(user_mod_num++, *it));
-            //cerr << "OMSSAAdapter: knows nothing about modification: '" << *it << "', ignoring it!" <<  endl;
+            writeDebug_("Inserting unknown variable modification: '" + *it + "' into OMSSA", 1);
           }
         }
 
@@ -499,10 +499,10 @@ class TOPPOMSSAAdapter
 				}				
 			}
 
-			writeDebug_("Writing usermod file to " + unique_usermod_name, 1);
 			// write unknown modifications to user mods file	
 			if (user_mods.size() != 0)
 			{
+				writeDebug_("Writing usermod file to " + unique_usermod_name, 1);
 				parameters += " -mux " + File::absolutePath(unique_usermod_name);
 				ofstream out(unique_usermod_name.c_str());
 				out << "<?xml version=\"1.0\"?>" << endl;
@@ -599,8 +599,7 @@ class TOPPOMSSAAdapter
 			MascotInfile omssa_infile;
 			omssa_infile.store(unique_input_name, map, "OMSSA search tmp file");
 
-			// @todo translate call to windows
-			String call = omssa_dir + "/omssacl " + parameters;
+			String call = omssa_executable + " " + parameters;
 
 			writeDebug_(call, 5);
 			status = system(call.c_str());
@@ -628,6 +627,7 @@ class TOPPOMSSAAdapter
 			set<String> fixed_mod_names = mod_set.getFixedModificationNames();
 			vector<String> fixed_nterm_mods, fixed_cterm_mods;
 			Map<String, String> fixed_residue_mods;
+			writeDebug_("Splitting modification into N-Term, C-Term and anywhere specificity", 1);
 			for (set<String>::const_iterator it = fixed_mod_names.begin(); it != fixed_mod_names.end(); ++it)
 			{
 				ResidueModification::Term_Specificity ts = ModificationsDB::getInstance()->getModification(*it).getTermSpecificity();
@@ -644,6 +644,7 @@ class TOPPOMSSAAdapter
 					fixed_nterm_mods.push_back(*it);
 				}
 			}
+			writeDebug_("Assigning modifications to peptides", 1);
 			for (vector<PeptideIdentification>::iterator it = peptide_ids.begin(); it != peptide_ids.end(); ++it)
 			{
 				vector<PeptideHit> hits = it->getHits();

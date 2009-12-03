@@ -22,8 +22,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/APPLICATIONS/TOPPViewBase.h>
@@ -67,34 +67,35 @@
 #include <OpenMS/VISUAL/EnhancedTabBar.h>
 #include <OpenMS/VISUAL/EnhancedWorkspace.h>
 #include <OpenMS/FORMAT/FileHandler.h>
+#include <OpenMS/METADATA/Precursor.h>
 
 //Qt
-#include <QtGui/QToolBar>
-#include <QtGui/QDockWidget>
-#include <QtGui/QListWidget>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QTreeWidget>
-#include <QtGui/QTreeWidgetItem>
-#include <QtGui/QMenu>
-#include <QtGui/QMenuBar>
-#include <QtGui/QStatusBar>
-#include <QtGui/QToolButton>
-#include <QtGui/QMessageBox>
-#include <QtGui/QListWidgetItem>
-#include <QtGui/QToolTip>
-#include <QtGui/QFileDialog>
-#include <QtGui/QPainter>
-#include <QtCore/QDir>
 #include <QtCore/QDate>
+#include <QtCore/QDir>
 #include <QtCore/QTime>
-#include <QtGui/QWhatsThis>
-#include <QtGui/QInputDialog>
-#include <QtGui/QTextEdit>
+#include <QtCore/QUrl>
 #include <QtGui/QCheckBox>
 #include <QtGui/QCloseEvent>
 #include <QtGui/QDesktopServices>
-#include <QtCore/QUrl>
+#include <QtGui/QDockWidget>
+#include <QtGui/QFileDialog>
+#include <QtGui/QHeaderView>
+#include <QtGui/QInputDialog>
+#include <QtGui/QListWidget>
+#include <QtGui/QListWidgetItem>
+#include <QtGui/QMenu>
+#include <QtGui/QMenuBar>
+#include <QtGui/QMessageBox>
+#include <QtGui/QPainter>
 #include <QtGui/QSplashScreen>
+#include <QtGui/QStatusBar>
+#include <QtGui/QTextEdit>
+#include <QtGui/QToolBar>
+#include <QtGui/QToolTip>
+#include <QtGui/QToolButton>
+#include <QtGui/QTreeWidget>
+#include <QtGui/QTreeWidgetItem>
+#include <QtGui/QWhatsThis>
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
@@ -364,6 +365,12 @@ namespace OpenMS
 		}
 		dm_label_2d_->setMenu(menu);
 
+		dm_unassigned_2d_ = tool_bar_2d_feat_->addAction(QIcon(":/unassigned.png"),"Show unassigned peptide identifications");
+    dm_unassigned_2d_->setCheckable(true);
+    dm_unassigned_2d_->setWhatsThis("2D feature draw mode: Unassigned peptides<BR><BR>Unassigned peptide identifications are displayed. <BR>(Hotkey: 8)");
+		dm_unassigned_2d_->setShortcut(Qt::Key_8);
+    connect(dm_unassigned_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
+
 		//--2D feature toolbar--
     tool_bar_2d_cons_ = addToolBar("2D peak tool bar");
 
@@ -392,55 +399,77 @@ namespace OpenMS
     windows->addAction(layer_bar->toggleViewAction());
 
     //spectrum selection
-    spectrum_bar_ = new QDockWidget("Spectra", this);
-    addDockWidget(Qt::RightDockWidgetArea, spectrum_bar_);
+	spectrum_bar_ = new QDockWidget("Spectra", this);
+	addDockWidget(Qt::RightDockWidgetArea, spectrum_bar_);
 
-    QWidget* tmp_widget_spec_selec = new QWidget(); //dummy widget as QDockWidget takes only one widget
-    spectrum_bar_->setWidget(tmp_widget_spec_selec);
+	QWidget* tmp_widget_spec_browser = new QWidget(); //dummy widget as QDockWidget takes only one widget
+	QVBoxLayout* tmp_widget_spec_browser_layout = new QVBoxLayout(tmp_widget_spec_browser);
 
-    QBoxLayout* gbl_spec_selec = new QBoxLayout(QBoxLayout::TopToBottom,tmp_widget_spec_selec);
-    QBoxLayout* vbl_spec_selec = new QBoxLayout(QBoxLayout::TopToBottom,tmp_widget_spec_selec);
-    QBoxLayout* hbl_spec_selec = new QBoxLayout(QBoxLayout::RightToLeft,tmp_widget_spec_selec);
-    spectrum_selection_ = new QTreeWidget(tmp_widget_spec_selec);
-    spectrum_selection_->setWhatsThis("Spectrum selection bar<BR><BR>Here all spectra of the current experiment are shown. Left-click on a spectrum to open it.");
-	spectrum_selection_->setColumnCount(6);
-	QStringList header_labels;
+	spectrum_selection_ = new QTreeWidget(tmp_widget_spec_browser);
+	spectrum_selection_->setWhatsThis("Spectrum selection bar<BR><BR>Here all spectra of the current experiment are shown. Left-click on a spectrum to open it.");
+
+	//~ no good for huge experiments - omitted:
+	//~ spectrum_selection_->setSortingEnabled(true);
+	//~ spectrum_selection_->sortByColumn ( 1, Qt::AscendingOrder);
+
+	spectrum_selection_->setColumnCount(7);/// @improvement make dependend from global "header_labels" to change only once (otherwise changes must be applied in several slots too!)
+
+	spectrum_selection_->setColumnWidth(0,65);
+	spectrum_selection_->setColumnWidth(1,45);
+	spectrum_selection_->setColumnWidth(2,50);
+	spectrum_selection_->setColumnWidth(3,55);
+	spectrum_selection_->setColumnWidth(4,55);
+	spectrum_selection_->setColumnWidth(5,45);
+	spectrum_selection_->setColumnWidth(6,45);
+
+	///@improvement write the visibility-status of the columns in toppview.ini and read at start
+
+	QStringList header_labels; /// @improvement make this global to change only once (otherwise changes must be applied in several slots too!)
 	header_labels.append(QString("MS level"));
+	header_labels.append(QString("index"));
 	header_labels.append(QString("RT"));
 	header_labels.append(QString("precursor m/z"));
-	header_labels.append(QString("scantype"));
+	header_labels.append(QString("dissociation"));
+	header_labels.append(QString("scan type"));
 	header_labels.append(QString("zoom"));
 	spectrum_selection_->setHeaderLabels(header_labels);
 
 	spectrum_selection_->setDragEnabled(true);
 	spectrum_selection_->setContextMenuPolicy(Qt::CustomContextMenu);
+	spectrum_selection_->header()->setContextMenuPolicy(Qt::CustomContextMenu);
 	connect(spectrum_selection_,SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,SLOT(spectrumSelectionChange(QTreeWidgetItem*, QTreeWidgetItem*)));
 	connect(spectrum_selection_,SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)),this,SLOT(spectrumDoubleClicked(QTreeWidgetItem*, int)));
 	connect(spectrum_selection_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(spectrumContextMenu(const QPoint&)));
-		windows->addAction(spectrum_bar_->toggleViewAction());
+	connect(spectrum_selection_->header(),SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(spectrumBrowserHeaderContextMenu(const QPoint&)));
 
-	spectrum_search_box_ = new QLineEdit("Find ...", tmp_widget_spec_selec);
-	connect(spectrum_search_box_,SIGNAL(textEdited ( const QString &)),this,SLOT(chooseSpectrumByRT(const QString&)));
+	tmp_widget_spec_browser_layout->addWidget(spectrum_selection_);
+
+	QHBoxLayout* tmp_hbox_layout = new QHBoxLayout();
+
+	spectrum_search_box_ = new QLineEdit("", tmp_widget_spec_browser);
 
 	QStringList qsl;
+	qsl.push_back("index");
 	qsl.push_back("RT");
 	qsl.push_back("MZ");
+	qsl.push_back("dissociation");
 	qsl.push_back("scan");
 	qsl.push_back("zoom");
-	spectrum_combo_box_ = new QComboBox(tmp_widget_spec_selec);
+	spectrum_combo_box_ = new QComboBox(tmp_widget_spec_browser);
 	spectrum_combo_box_->addItems(qsl);
-	vbl_spec_selec->addWidget(spectrum_selection_);
-	hbl_spec_selec->addWidget(spectrum_combo_box_);
-	hbl_spec_selec->addWidget(spectrum_search_box_);
-	gbl_spec_selec->insertLayout(0,vbl_spec_selec);
-	gbl_spec_selec->insertLayout(1,hbl_spec_selec);
 
-	spectrum_bar_->setWidget(tmp_widget_spec_selec);
+	connect(spectrum_search_box_,SIGNAL(textEdited ( const QString &)),this,SLOT(chooseSpectrumByUser(const QString&)));
+
+	tmp_hbox_layout->addWidget(spectrum_search_box_);
+	tmp_hbox_layout->addWidget(spectrum_combo_box_);
+	tmp_widget_spec_browser_layout->addLayout(tmp_hbox_layout);
+
+	spectrum_bar_->setWidget(tmp_widget_spec_browser);
+	windows->addAction(spectrum_bar_->toggleViewAction());
 
     //data filters
     QDockWidget* filter_bar = new QDockWidget("Data filters", this);
     addDockWidget(Qt::RightDockWidgetArea, filter_bar);
-
     QWidget* tmp_widget = new QWidget(); //dummy widget as QDockWidget takes only one widget
     filter_bar->setWidget(tmp_widget);
 
@@ -470,7 +499,7 @@ namespace OpenMS
 		connect(log_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(logContextMenu(const QPoint&)));
 		log_bar->setWidget(log_);
 		log_bar->hide();
-    windows->addAction(log_bar->toggleViewAction());
+		windows->addAction(log_bar->toggleViewAction());
 
 		//################## DEFAULTS #################
     //general
@@ -689,6 +718,8 @@ namespace OpenMS
 
 		MultiGradientSelector* peak_2D = dlg.findChild<MultiGradientSelector*>("peak_2D");
 		QComboBox* mapping_2D = dlg.findChild<QComboBox*>("mapping_2D");
+		QComboBox* feature_icon_2D = dlg.findChild<QComboBox*>("feature_icon_2D");
+		QSpinBox* feature_icon_size_2D = dlg.findChild<QSpinBox*>("feature_icon_size_2D");
 
 		MultiGradientSelector* peak_3D = dlg.findChild<MultiGradientSelector*>("peak_3D");
 		QComboBox* shade_3D = dlg.findChild<QComboBox*>("shade_3D");
@@ -722,6 +753,8 @@ namespace OpenMS
 
 		peak_2D->gradient().fromString(param_.getValue("preferences:2d:dot:gradient"));
 		mapping_2D->setCurrentIndex(mapping_2D->findText(param_.getValue("preferences:2d:mapping_of_mz_to").toQString()));
+		feature_icon_2D->setCurrentIndex(feature_icon_2D->findText(param_.getValue("preferences:2d:dot:feature_icon").toQString()));
+		feature_icon_size_2D->setValue((Int)param_.getValue("preferences:2d:dot:feature_icon_size"));
 
 		peak_3D->gradient().fromString(param_.getValue("preferences:3d:dot:gradient"));
 		shade_3D->setCurrentIndex((Int)param_.getValue("preferences:3d:dot:shade_mode"));
@@ -757,6 +790,8 @@ namespace OpenMS
 
 			param_.setValue("preferences:2d:dot:gradient",peak_2D->gradient().toString());
 			param_.setValue("preferences:2d:mapping_of_mz_to",mapping_2D->currentText());
+			param_.setValue("preferences:2d:dot:feature_icon",feature_icon_2D->currentText());
+			param_.setValue("preferences:2d:dot:feature_icon_size",feature_icon_size_2D->value());
 
 			param_.setValue("preferences:3d:dot:gradient",peak_3D->gradient().toString());
 			param_.setValue("preferences:3d:dot:shade_mode", shade_3D->currentIndex());
@@ -1241,6 +1276,10 @@ namespace OpenMS
 			{
 		    win->canvas()->setLayerFlag(LayerData::F_HULL,on);
 			}
+			else if (action == dm_unassigned_2d_)
+			{
+		    win->canvas()->setLayerFlag(LayerData::F_UNASSIGNED,on);
+			}
 			//consensus features
 			else if (action == dm_elements_2d_)
 			{
@@ -1291,6 +1330,7 @@ namespace OpenMS
 			{
       	dm_hulls_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::F_HULLS));
       	dm_hull_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::F_HULL));
+      	dm_unassigned_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::F_UNASSIGNED));
       	dm_label_2d_->setChecked(w2->canvas()->getCurrentLayer().label!=LayerData::L_NONE);
 	      tool_bar_2d_peak_->hide();
 	      tool_bar_2d_feat_->show();
@@ -1456,32 +1496,52 @@ namespace OpenMS
 				}
 
 				item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
-				item->setText(1, QString::number(cl.peaks[i].getRT()));
+				item->setText(1, QString::number(i));
+				item->setText(2, QString::number(cl.peaks[i].getRT()));
 				if (!cl.peaks[i].getPrecursors().empty())
 				{
-					item->setText(2,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
+					item->setText(3,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
+
+					if (!cl.peaks[i].getPrecursors().front().getActivationMethods().empty())
+					{
+						QString t;
+						for(std::set<Precursor::ActivationMethod>::const_iterator it = cl.peaks[i].getPrecursors().front().getActivationMethods().begin(); it != cl.peaks[i].getPrecursors().front().getActivationMethods().end(); ++it)
+						{
+							if(!t.isEmpty())
+							{
+								t.append(",");
+							}
+							t.append(QString::fromStdString(cl.peaks[i].getPrecursors().front().NamesOfActivationMethod[*(cl.peaks[i].getPrecursors().front().getActivationMethods().begin())]));
+						}
+						item->setText(4,t);
+					}
+					else
+					{
+						item->setText(4, "-");
+					}
 				}
 				else
 				{
-					item->setText(2, "-");
+					item->setText(3, "-");
+					item->setText(4, "-");
 				}
 				if (cl.peaks[i].getInstrumentSettings().getScanMode()>0)
 				{
-					item->setText(3,QString::number(cl.peaks[i].getInstrumentSettings().getScanMode()));
+					item->setText(5,QString::fromStdString(cl.peaks[i].getInstrumentSettings().NamesOfScanMode[cl.peaks[i].getInstrumentSettings().getScanMode()]));
 				}
 				else
 				{
-					item->setText(3, "unknown");
+					item->setText(5, "-");
 				}
 				if (cl.peaks[i].getInstrumentSettings().getZoomScan())
 				{
-					item->setText(4,"yes");
+					item->setText(6,"yes");
 				}
 				else
 				{
-					item->setText(4, "no");
+					item->setText(6, "no");
 				}
-				item->setText(5, QString::number(i));
+
 
 				if (i == cl.current_spectrum)
 				{
@@ -1504,32 +1564,50 @@ namespace OpenMS
 				{
 					item = new QTreeWidgetItem((QTreeWidget*)0);
 					item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
-					item->setText(1, QString::number(cl.peaks[i].getRT()));
+					item->setText(1, QString::number(i));
+					item->setText(2, QString::number(cl.peaks[i].getRT()));
 					if (!cl.peaks[i].getPrecursors().empty())
 					{
-						item->setText(2,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
+						item->setText(3,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
+
+						if (!cl.peaks[i].getPrecursors().front().getActivationMethods().empty())
+						{
+							QString t;
+							for(std::set<Precursor::ActivationMethod>::const_iterator it = cl.peaks[i].getPrecursors().front().getActivationMethods().begin(); it != cl.peaks[i].getPrecursors().front().getActivationMethods().end(); ++it)
+							{
+								if(!t.isEmpty()){
+									t.append(",");
+								}
+								t.append(QString::fromStdString(cl.peaks[i].getPrecursors().front().NamesOfActivationMethod[*(cl.peaks[i].getPrecursors().front().getActivationMethods().begin())]));
+							}
+							item->setText(4,t);
+						}
+						else
+						{
+							item->setText(4, "-");
+						}
 					}
 					else
 					{
-						item->setText(2, "-");
+						item->setText(3, "-");
+						item->setText(4, "-");
 					}
-				if (cl.peaks[i].getInstrumentSettings().getScanMode()>0)
-				{
-					item->setText(3,QString::number(cl.peaks[i].getInstrumentSettings().getScanMode()));
-				}
-				else
-				{
-					item->setText(3, "unknown");
-				}
-				if (cl.peaks[i].getInstrumentSettings().getZoomScan())
-				{
-					item->setText(4,"yes");
-				}
-				else
-				{
-					item->setText(4, "no");
-				}
-				item->setText(5, QString::number(i));
+					if (cl.peaks[i].getInstrumentSettings().getScanMode()>0)
+					{
+						item->setText(5,QString::fromStdString(cl.peaks[i].getInstrumentSettings().NamesOfScanMode[cl.peaks[i].getInstrumentSettings().getScanMode()]));
+					}
+					else
+					{
+						item->setText(5, "-");
+					}
+					if (cl.peaks[i].getInstrumentSettings().getZoomScan())
+					{
+						item->setText(6,"yes");
+					}
+					else
+					{
+						item->setText(6, "no");
+					}
 					toplevel_items.push_back(item);
 					if (i == cl.current_spectrum)
 					{
@@ -1590,7 +1668,7 @@ namespace OpenMS
 		Spectrum1DWidget* widget_1d = active1DWindow_();
 		if (widget_1d)
 		{
-			int index = current->text(3).toInt();
+			int index = current->text(1).toInt();
 			widget_1d->canvas()->activateSpectrum(index);
 		}
 	}
@@ -1601,7 +1679,7 @@ namespace OpenMS
 		if (current==0 || active1DWindow_()) return;
 
 		//store spectrum index
-		int index = current->text(3).toInt();
+		int index = current->text(1).toInt();
 
 		//add a copy of the current data as 1D view
 		LayerData cl = activeCanvas_()->getCurrentLayer();
@@ -1704,7 +1782,7 @@ namespace OpenMS
 		if (item)
 		{
 			//create menu
-			int spectrum_index = item->text(3).toInt();
+			int spectrum_index = item->text(1).toInt();
 			QMenu* context_menu = new QMenu(spectrum_selection_);
 			context_menu->addAction("Show in 1D view");
 			context_menu->addAction("Meta data");
@@ -1734,6 +1812,42 @@ namespace OpenMS
 
 			delete (context_menu);
 		}
+	}
+
+	void TOPPViewBase::spectrumBrowserHeaderContextMenu(const QPoint & pos)
+	{
+		//create menu
+		QMenu* context_menu = new QMenu(spectrum_selection_->header());
+		QStringList header_labels;
+		header_labels.append(QString("MS level"));
+		header_labels.append(QString("index"));
+		header_labels.append(QString("RT"));
+		header_labels.append(QString("precursor m/z"));
+		header_labels.append(QString("dissociation"));
+		header_labels.append(QString("scan type"));
+		header_labels.append(QString("zoom"));
+		for(int i = 0; i < header_labels.size(); ++i)
+		{
+			QAction* tmp = new QAction(header_labels[i],context_menu);
+			tmp->setCheckable(true);
+			tmp->setChecked(!spectrum_selection_->isColumnHidden(i));
+			context_menu->addAction(tmp);
+		}
+
+		//(show and) execute menu
+		QAction* selected = context_menu->exec(spectrum_selection_->mapToGlobal(pos));
+		if (selected!=0)
+		{
+			for(int i = 0; i < header_labels.size(); ++i)
+			{
+				if(selected->text()==header_labels[i])
+				{
+					selected->isChecked()?spectrum_selection_->setColumnHidden(i,false):spectrum_selection_->setColumnHidden(i,true);
+				}
+			}
+			updateSpectrumBar();
+		}
+		delete (context_menu);
 	}
 
 	void TOPPViewBase::logContextMenu(const QPoint & pos)
@@ -1969,7 +2083,7 @@ namespace OpenMS
 
     //connect slots and sigals for removing the widget from the bar, when it is closed
     //- through the menu entry
-    //- through the tab bar                                       spectrum_selection_
+    //- through the tab bar
     //- thourgh the MDI close button
     connect(sw,SIGNAL(aboutToBeDestroyed(int)),tab_bar_,SLOT(removeId(int)));
 
@@ -1991,14 +2105,14 @@ namespace OpenMS
   	activeWindow_()->showGoToDialog();
   }
 
-  void TOPPViewBase::chooseSpectrumByRT(const QString& text)
+  void TOPPViewBase::chooseSpectrumByUser(const QString& text)
   {
 	if(text.size() > 0)
 	{
 		int col(spectrum_combo_box_->currentIndex()+1);
-		if(col>4)
+		if(col>5)
 		{
-			col = 0;
+			col = 1;
 		}
 		QList<QTreeWidgetItem *>  searched =  spectrum_selection_->findItems(text, Qt::MatchFixedString /* matchflag exact match */, col );
 		QList<QTreeWidgetItem *>  selected =  spectrum_selection_->selectedItems();
@@ -2011,23 +2125,27 @@ namespace OpenMS
 			}
 			spectrum_selection_->update();
 
-			int index = searched.first()->text(5).toInt();
+			int index = searched.first()->text(1).toInt();
 			searched.first()->setSelected(true);
 			spectrum_selection_->update();
+
+			spectrum_selection_->scrollToItem(searched.first());
+
 			Spectrum1DWidget* widget_1d = active1DWindow_();
 			if (widget_1d)
 			{
 				widget_1d->canvas()->activateSpectrum(index);
 			}
 		}
+		//~ for coloring if nothing found
 		//~ else
 		//~ {
 			//~ QPalette p = spectrum_search_box_->palette();
 			//~ spectrum_search_box_->setPalette(p);
 		//~ }
 	}
-
   }
+
 
   SpectrumWidget*  TOPPViewBase::activeWindow_() const
   {
@@ -2679,7 +2797,7 @@ namespace OpenMS
 
 		//image
 		QLabel* label = new QLabel(dlg);
-		label->setPixmap(QPixmap(":/TOPPView_about.png"));
+		label->setPixmap(QPixmap(":/TOPP_about.png"));
 		grid->addWidget(label,0,0);
 
 		//text

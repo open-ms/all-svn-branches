@@ -33,10 +33,9 @@
 #include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/VISUAL/TOPPASWidget.h>
 #include <OpenMS/VISUAL/TOPPASToolVertex.h>
-#include <OpenMS/VISUAL/TOPPASInputFileVertex.h>
-#include <OpenMS/VISUAL/TOPPASOutputFileVertex.h>
 #include <OpenMS/VISUAL/TOPPASInputFileListVertex.h>
 #include <OpenMS/VISUAL/TOPPASOutputFileListVertex.h>
+#include <OpenMS/VISUAL/TOPPASMergerVertex.h>
 #include <OpenMS/VISUAL/TOPPASTabBar.h>
 #include <OpenMS/VISUAL/TOPPASTreeView.h>
 
@@ -67,6 +66,8 @@
 #include <QtGui/QLabel>
 #include <QtCore/QFile>
 #include <QtCore/QDir>
+#include <QtCore/QSet>
+#include <QtCore/QMap>
 
 using namespace std;
 
@@ -109,7 +110,8 @@ namespace OpenMS
     QMenu* file = new QMenu("&File",this);
     menuBar()->addMenu(file);
     file->addAction("&New",this,SLOT(newFileDialog()), Qt::CTRL+Qt::Key_N);
-    file->addAction("&Open",this,SLOT(openFileDialog()), Qt::CTRL+Qt::Key_O);
+		file->addAction("Open &example file",this,SLOT(openExampleDialog()));
+		file->addAction("&Open",this,SLOT(openFileDialog()), Qt::CTRL+Qt::Key_O);
     file->addAction("&Save",this,SLOT(saveFileDialog()), Qt::CTRL+Qt::Key_S);
 		file->addAction("Save &As",this,SLOT(saveAsFileDialog()), Qt::CTRL+Qt::SHIFT+Qt::Key_S);
     file->addAction("&Close",this,SLOT(closeFile()), Qt::CTRL+Qt::Key_W);
@@ -127,7 +129,7 @@ namespace OpenMS
 		//Pipeline menu
 		QMenu* pipeline = new QMenu("&Pipeline", this);
 		menuBar()->addMenu(pipeline);
-		pipeline->addAction("&Run",this,SLOT(runPipeline()));
+		pipeline->addAction("&Run (F5)",this,SLOT(runPipeline()));
 		pipeline->addAction("&Abort",this,SLOT(abortPipeline()));
 
 		//Windows menu
@@ -137,13 +139,14 @@ namespace OpenMS
 		//Help menu
 		QMenu* help = new QMenu("&Help", this);
 		menuBar()->addMenu(help);
-		//help->addAction(QWhatsThis::createAction(help));
-		//help->addSeparator();
 		QAction* action = help->addAction("OpenMS website",this,SLOT(showURL()));
 		action->setData("http://www.OpenMS.de");
+		action = help->addAction("TOPPAS tutorial (online)",this,SLOT(showURL()), Qt::Key_F1);
+		action->setData("http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS-release/html/TOPP_tutorial.html");
 		help->addSeparator();
 		help->addAction("&About",this,SLOT(showAboutDialog()));
-
+		
+		
     //create status bar
     message_label_ = new QLabel(statusBar());
     statusBar()->addWidget(message_label_,1);
@@ -155,6 +158,71 @@ namespace OpenMS
     //tool_bar_ = addToolBar("Basic tool bar");
     //tool_bar_->show();
 
+		//################## DEFAULTS #################
+    //general
+   	defaults_.setValue("preferences:default_path", ".", "Default path for loading and storing files.");
+    defaults_.setValue("preferences:default_path_current", "true", "If the current path is preferred over the default path.");
+		defaults_.setValidStrings("preferences:default_path_current",StringList::create("true,false"));
+		defaults_.setValue("preferences:version","none","OpenMS version, used to check if the TOPPAS.ini is up-to-date");
+		
+		//tool categories
+		defaults_.setValue("tool_categories:AdditiveSeries", "Quantitation", "The category of the tool");
+		defaults_.setValue("tool_categories:BaselineFilter", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:ConsensusID", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:DBExporter", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:DBImporter", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:DTAExtractor", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:Decharger", "Quantitation", "The category of the tool");
+		defaults_.setValue("tool_categories:FalseDiscoveryRate", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:FeatureFinder", "Quantitation", "The category of the tool");
+		defaults_.setValue("tool_categories:FeatureLinker", "Quantitation", "The category of the tool");
+		defaults_.setValue("tool_categories:FileConverter", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:FileFilter", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:FileInfo", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:FileMerger", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:IDDecoyProbability", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:IDFileConverter", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:IDFilter", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:IDMapper", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:IDMerger", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:IDRTCalibration", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:ITRAQAnalyzer", "Quantitation", "The category of the tool");
+		defaults_.setValue("tool_categories:InspectAdapter", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:InternalCalibration", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:MapAligner", "Quantitation", "The category of the tool");
+		defaults_.setValue("tool_categories:MapNormalizer", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:MascotAdapter", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:MascotAdapterOnline", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:NoiseFilter", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:OMSSAAdapter", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:PILISModel", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:PILISIdentification", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:PTModel", "Peptide property prediction", "The category of the tool");
+		defaults_.setValue("tool_categories:PTPredict", "Peptide property prediction", "The category of the tool");
+		defaults_.setValue("tool_categories:PeakPicker", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:PepNovoAdapter", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:RTModel", "Peptide property prediction", "The category of the tool");
+		defaults_.setValue("tool_categories:RTPredict", "Peptide property prediction", "The category of the tool");
+		defaults_.setValue("tool_categories:Resampler", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:SILACAnalyzer", "Quantitation", "The category of the tool");
+		defaults_.setValue("tool_categories:SequestAdapter", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:SpectraFilter", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:SpecLibSearcher", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:TOFCalibration", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:TextExporter", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:TextImporter", "File Handling", "The category of the tool");
+		defaults_.setValue("tool_categories:XTandemAdapter", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:PrecursorIonSelector", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:PeptideIndexer", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:CompNovo", "Protein/peptide Identification", "The category of the tool");
+		defaults_.setValue("tool_categories:PrecursorMassCorrector", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:SeedListGenerator", "Quantitation", "The category of the tool");
+		
+  	defaultsToParam_();
+
+  	//load param file
+    loadPreferences();
+
 		//################## Dock widgets #################
     
     //TOPP tools window
@@ -164,31 +232,55 @@ namespace OpenMS
     tools_tree_view_->setWhatsThis("TOPP tools list<BR><BR>All available TOPP tools are shown here.");
     tools_tree_view_->setColumnCount(1);
   	QStringList header_labels;
-  	header_labels.append(QString("Tool"));
+  	header_labels.append(QString("TOPP tools"));
   	tools_tree_view_->setHeaderLabels(header_labels);
     topp_tools_bar->setWidget(tools_tree_view_);
     
     QTreeWidgetItem* item = new QTreeWidgetItem((QTreeWidget*)0);
-    item->setText(0, "<Input file>");
+    item->setText(0, "<Input files>");
     tools_tree_view_->addTopLevelItem(item);
     item = new QTreeWidgetItem((QTreeWidget*)0);
-    item->setText(0, "<Input file list>");
+    item->setText(0, "<Output files>");
     tools_tree_view_->addTopLevelItem(item);
     item = new QTreeWidgetItem((QTreeWidget*)0);
-    item->setText(0, "<Output file>");
-    tools_tree_view_->addTopLevelItem(item);
-    item = new QTreeWidgetItem((QTreeWidget*)0);
-    item->setText(0, "<Output file list>");
+    item->setText(0, "<Merger>");
     tools_tree_view_->addTopLevelItem(item);
     
+    Param category_param = param_.copy("tool_categories:", true);
+    
+    QSet<QString> category_set;
+    for (Param::ParamIterator it = category_param.begin(); it != category_param.end(); ++it)
+    {
+    	category_set << String(it->value).toQString();
+    }
+    
+    Map<QString,QTreeWidgetItem*> category_map;
+    
+    foreach (const QString& category, category_set)
+    {
+    	item = new QTreeWidgetItem((QTreeWidget*)0);
+    	item->setText(0, category);
+    	tools_tree_view_->addTopLevelItem(item);
+    	category_map[category] = item;
+    }
+    item = new QTreeWidgetItem((QTreeWidget*)0);
+		item->setText(0, "Misc");
+		tools_tree_view_->addTopLevelItem(item);
+		category_map["Misc"] = item;
     
     Map<String,StringList> tools_list = TOPPBase::getToolList();
     QTreeWidgetItem* parent_item;
     for (Map<String,StringList>::Iterator it = tools_list.begin(); it != tools_list.end(); ++it)
     {
-    	item = new QTreeWidgetItem((QTreeWidget*)0);
+    	if (category_param.exists(it->first))
+    	{
+    		item = new QTreeWidgetItem(category_map[String(category_param.getValue(it->first)).toQString()]);
+    	}
+    	else
+    	{
+    		item = new QTreeWidgetItem(category_map["Misc"]);
+    	}
     	item->setText(0, it->first.toQString());
-    	tools_tree_view_->addTopLevelItem(item);
    		parent_item = item;
    		StringList types = it->second;
    		for (StringList::iterator types_it = types.begin(); types_it != types.end(); ++types_it)
@@ -197,6 +289,13 @@ namespace OpenMS
    			item->setText(0, types_it->toQString());
    		}
     }
+    
+    if (category_map["Misc"]->childCount() == 0)
+    {
+    	int index = tools_tree_view_->indexOfTopLevelItem(category_map["Misc"]);
+    	tools_tree_view_->takeTopLevelItem(index);
+    }
+    
     tools_tree_view_->resizeColumnToContents(0);
     
 		windows->addAction(topp_tools_bar->toggleViewAction());
@@ -217,17 +316,6 @@ namespace OpenMS
 		log_bar->hide();
     //windows->addAction("&Show log window",log_bar,SLOT(show()));
 		windows->addAction(log_bar->toggleViewAction());
-		//################## DEFAULTS #################
-    //general
-   	defaults_.setValue("preferences:default_path", ".", "Default path for loading and storing files.");
-    defaults_.setValue("preferences:default_path_current", "true", "If the current path is preferred over the default path.");
-		defaults_.setValidStrings("preferences:default_path_current",StringList::create("true,false"));
-		defaults_.setValue("preferences:version","none","OpenMS version, used to check if the TOPPAS.ini is up-to-date");
-		
-  	defaultsToParam_();
-
-  	//load param file
-    loadPreferences();
 		
 		//set current path
 		current_path_ = param_.getValue("preferences:default_path");
@@ -244,21 +332,63 @@ namespace OpenMS
   	savePreferences();
   }
 
+	void TOPPASBase::loadFiles(const StringList& list, QSplashScreen* splash_screen)
+  {
+    for (StringList::const_iterator it=list.begin(); it!=list.end(); ++it)
+    {
+			splash_screen->showMessage((String("Loading file: ") + *it).toQString());
+			splash_screen->repaint();
+			QApplication::processEvents();
+			openFile(*it);
+    }
+  }
+
 	void TOPPASBase::refreshDefinitions()
 	{
 	
+	}
+	
+	void TOPPASBase::openExampleDialog()
+	{
+		QString file_name = QFileDialog::getOpenFileName(this, tr("Open File"),
+													File::getOpenMSDataPath().toQString()
+													+QDir::separator()+"examples"+QDir::separator()
+													+"TOPPAS"+QDir::separator(),
+													tr("TOPPAS pipelines (*.toppas)"));
+		
+		openFile(file_name);
 	}
 	
 	void TOPPASBase::openFileDialog()
   {
 		QString file_name = QFileDialog::getOpenFileName(this, tr("Open File"), current_path_.toQString(), tr("TOPPAS pipelines (*.toppas)"));
 		
+		openFile(file_name);
+  }
+ 
+	void TOPPASBase::openFile(const String& file_name)
+	{
 		if (file_name != "")
 		{
+			String::SizeType dot_index = file_name.rfind(".");
+			if (dot_index == String::npos)
+			{
+				std::cerr << "The file '" << file_name << "' is not a .toppas file" << std::endl;
+				return;
+			}
+
+			String extension = file_name.substr(dot_index+1);
+			extension.toLower();
+			if (extension != "toppas")
+			{
+				std::cerr << "The file '" << file_name << "' is not a .toppas file" << std::endl;
+				return;
+			}
+
 			TOPPASWidget* tw = new TOPPASWidget(Param(), ws_, tmp_path_);
 			showAsWindow_(tw, File::basename(file_name));
+			connect (tools_tree_view_, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(insertNewVertexInCenter_(QTreeWidgetItem*)));
 			TOPPASScene* scene = tw->getScene();
-			
 			connect (scene, SIGNAL(saveMe()), this, SLOT(saveFileDialog()));
 			scene->load(file_name);
 			
@@ -275,12 +405,6 @@ namespace OpenMS
 					connect (tv, SIGNAL(toppOutputReady(const QString&)), this, SLOT(updateTOPPOutputLog(const QString&)));
 					continue;
 				}
-				TOPPASOutputFileVertex* ofv = qobject_cast<TOPPASOutputFileVertex*>(*it);
-				if (ofv)
-				{
-					connect (ofv, SIGNAL(outputFileWritten(const String&)), this, SLOT(outputVertexFinished(const String&)));
-					continue;
-				}
 				TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(*it);
 				if (oflv)
 				{
@@ -290,11 +414,12 @@ namespace OpenMS
 			}
 			scene->update(scene->sceneRect());
 		}
-  }
-  
+	}
+
   void TOPPASBase::newFileDialog()
   {
   	TOPPASWidget* tw = new TOPPASWidget(Param(), ws_, tmp_path_);
+		connect (tools_tree_view_, SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)), this, SLOT(insertNewVertexInCenter_(QTreeWidgetItem*)));
 		TOPPASScene* ts = tw->getScene();
 		connect (ts, SIGNAL(saveMe()), this, SLOT(saveFileDialog()));
   	showAsWindow_(tw, "(Untitled)");
@@ -581,10 +706,12 @@ namespace OpenMS
 		//set version
 		param_.setValue("preferences:version",VersionInfo::getVersion());
 
-    //save only the subsection that begins with "preferences:"
+    Param save_param = param_.copy("preferences:");
+    save_param.insert("",param_.copy("tool_categories:"));
+    
     try
     {
-      param_.copy("preferences:").store(string(param_.getValue("PreferencesFile")));
+      save_param.store(string(param_.getValue("PreferencesFile")));
     }
     catch(Exception::UnableToCreateFile& /*e*/)
     {
@@ -600,7 +727,7 @@ namespace OpenMS
 		dlg->setWindowTitle("About TOPPAS");
 
 		QLabel* label = new QLabel(dlg);
-		label->setPixmap(QPixmap(":/TOPPView_about.png"));
+		label->setPixmap(QPixmap(":/TOPP_about.png"));
 		grid->addWidget(label,0,0);
 
 		//text
@@ -641,7 +768,7 @@ namespace OpenMS
 		{
 			QString text = actions[i]->text();
 			
-			if (text=="&Run")
+			if (text=="&Run (F5)")
 			{
 				bool show = false;
 				if (tw && ts && !(ts->isPipelineRunning()))
@@ -705,44 +832,42 @@ namespace OpenMS
 		//}
 	}
 	
-	void TOPPASBase::insertNewVertex_(double x, double y)
+	void TOPPASBase::insertNewVertex_(double x, double y, QTreeWidgetItem* item)
 	{
+		if (!activeWindow_() || !activeWindow_()->getScene() || !tools_tree_view_)
+		{
+			return;
+		}
+		
 		TOPPASScene* scene = activeWindow_()->getScene();
-		QTreeWidgetItem* current_tool = tools_tree_view_->currentItem();
+		QTreeWidgetItem* current_tool = item ? item : tools_tree_view_->currentItem();
 		String tool_name = String(current_tool->text(0));
 		TOPPASVertex* tv = 0;
 		
-		if (tool_name == "<Input file list>")
+		if (tool_name == "<Input files>")
 		{
 			tv = new TOPPASInputFileListVertex();
 		}
-		else if (tool_name == "<Input file>")
-		{
-			tv = new TOPPASInputFileVertex();
-		}
-		else if (tool_name == "<Output file list>")
+		else if (tool_name == "<Output files>")
 		{
 			tv = new TOPPASOutputFileListVertex();
 			TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(tv);
 			connect (oflv, SIGNAL(outputFileWritten(const String&)), this, SLOT(outputVertexFinished(const String&)));
 			connect (oflv, SIGNAL(iAmDone()), scene, SLOT(checkIfWeAreDone()));
 		}
-		else if (tool_name == "<Output file>")
+		else if (tool_name == "<Merger>")
 		{
-			tv = new TOPPASOutputFileVertex();
-			TOPPASOutputFileVertex* ofv = qobject_cast<TOPPASOutputFileVertex*>(tv);
-			connect (ofv, SIGNAL(outputFileWritten(const String&)), this, SLOT(outputVertexFinished(const String&)));
-			connect (ofv, SIGNAL(iAmDone()), scene, SLOT(checkIfWeAreDone()));
+			tv = new TOPPASMergerVertex();
 		}
 		else // node is a TOPP tool
 		{	
 			if (current_tool->childCount() > 0)
 			{
-				// tool has types, but tool name is selected (instead of type)
+				// category or tool name with types is selected (instead of a concrete type)
 				return;
 			}
 			String tool_type;
-			if (current_tool->parent() != 0)
+			if (current_tool->parent() != 0 && current_tool->parent()->parent() != 0)
 			{
 				// selected item is a type
 				tool_type = String(current_tool->text(0));
@@ -764,8 +889,8 @@ namespace OpenMS
 			connect (ttv, SIGNAL(toppOutputReady(const QString&)), this, SLOT(updateTOPPOutputLog(const QString&)));
 			
 			connect (ttv,SIGNAL(toolStarted()),scene,SLOT(setPipelineRunning()));
-			connect(ttv,SIGNAL(toolFailed()),scene,SLOT(pipelineErrorSlot()));
-			connect(ttv,SIGNAL(toolCrashed()),scene,SLOT(pipelineErrorSlot()));
+			connect (ttv,SIGNAL(toolFailed()),scene,SLOT(pipelineErrorSlot()));
+			connect (ttv,SIGNAL(toolCrashed()),scene,SLOT(pipelineErrorSlot()));
 		}
 		
 		tv->setPos(x,y);
@@ -779,6 +904,7 @@ namespace OpenMS
 		connect(tv,SIGNAL(itemDragged(qreal,qreal)),scene,SLOT(moveSelectedItems(qreal,qreal)));
 		
 		scene->topoSort();
+		scene->snapToGrid();
 		scene->setChanged(true);
 	}
 	
@@ -798,6 +924,7 @@ namespace OpenMS
 		{
 			w->getScene()->abortPipeline();
 		}
+		updateMenu();
 	}
 	
 	void TOPPASBase::toolStarted()
@@ -904,6 +1031,17 @@ namespace OpenMS
 	void TOPPASBase::showSuccessLogMessage()
 	{
 		showLogMessage_(LS_NOTICE, "Entire pipeline execution finished!", "");
+	}
+	
+	void TOPPASBase::insertNewVertexInCenter_(QTreeWidgetItem* item)
+	{
+		if (!activeWindow_() || !activeWindow_()->getScene() || !tools_tree_view_ || !tools_tree_view_->currentItem())
+		{
+			return;
+		}
+		
+		QPointF center = activeWindow_()->mapToScene(QPoint(activeWindow_()->width()/2.0,activeWindow_()->height()/2.0));
+		insertNewVertex_(center.x(), center.y(), item);
 	}
 
 } //namespace OpenMS

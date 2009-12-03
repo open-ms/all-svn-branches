@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/DATASTRUCTURES/Param.h>
@@ -36,6 +36,7 @@
 
 using namespace std;
 using namespace OpenMS::Exception;
+using namespace OpenMS::Internal;
 
 namespace OpenMS
 {
@@ -75,6 +76,84 @@ namespace OpenMS
 		{
 			cerr << "Error ParamEntry name must not contain ':' characters!" << endl;
 		}
+	}
+	
+	bool Param::ParamEntry::isValid(String& message) const
+	{
+			if (value.valueType()==DataValue::STRING_VALUE)
+			{
+				if (valid_strings.size()!=0 && std::find(valid_strings.begin(),valid_strings.end(), value) == valid_strings.end())
+				{
+					String valid;
+					valid.concatenate(valid_strings.begin(),valid_strings.end(),",");
+					message = "Invalid string parameter value '"+(String)value+"' for parameter '"+name+"' given! Valid values are: '"+valid+"'.";
+					return false;
+				}
+			}
+			else if(value.valueType()==DataValue::STRING_LIST)
+			{
+				String str_value;
+				StringList ls_value = (StringList) value;
+				for (Size i = 0; i < ls_value.size(); ++i)
+				{
+					str_value = ls_value[i];
+					
+					if (valid_strings.size()!=0 && std::find(valid_strings.begin(),valid_strings.end(), str_value) == valid_strings.end())
+					{
+						String valid;
+						valid.concatenate(valid_strings.begin(),valid_strings.end(),",");
+						message = String("Invalid string parameter value '")+str_value+"' for parameter '"+name+"' given! Valid values are: '"+valid+"'.";
+						return false;
+					}
+				}	
+			}
+			else if (value.valueType()==DataValue::INT_VALUE)
+			{
+				Int tmp = value;
+				if ((min_int != -std::numeric_limits<Int>::max() && tmp < min_int) || (max_int!=std::numeric_limits<Int>::max() && tmp > max_int))
+				{
+					message = String("Invalid integer parameter value '")+String(tmp)+"' for parameter '"+name+"' given! The valid range is: ["+min_int+":"+max_int+"].";
+					return false;
+				}
+			}
+			else if(value.valueType()==DataValue::INT_LIST)
+			{
+				Int int_value;
+				IntList ls_value =(IntList) value;
+				for (Size i = 0; i < ls_value.size(); ++i)
+				{
+					int_value = ls_value[i];
+					if ((min_int != -std::numeric_limits<Int>::max() && int_value < min_int) || (max_int!=std::numeric_limits<Int>::max() && int_value > max_int))
+					{
+						message = String("Invalid integer parameter value '")+int_value+"' for parameter '"+name+"' given! The valid range is: ["+min_int+":"+max_int+"].";
+						return false;
+					}
+				}
+			}
+			else if (value.valueType()==DataValue::DOUBLE_VALUE)
+			{
+				DoubleReal tmp = value;
+				if ((min_float!=-std::numeric_limits<DoubleReal>::max() && tmp < min_float) || (max_float!=std::numeric_limits<DoubleReal>::max() && tmp > max_float))
+				{
+					message = String("Invalid double parameter value '")+tmp+"' for parameter '"+name+"' given! The valid range is: ["+min_int+":"+max_int+"].";
+					return false;
+			}
+			}
+			else if(value.valueType()==DataValue::DOUBLE_LIST)
+			{
+				DoubleReal dou_value; 
+				DoubleList ls_value = (DoubleList)value;
+				for (Size i = 0; i < ls_value.size(); ++i)
+				{
+					dou_value = ls_value[i];
+					if ((min_float!=-std::numeric_limits<DoubleReal>::max() && dou_value < min_float) || (max_float!=std::numeric_limits<DoubleReal>::max() && dou_value > max_float))
+					{
+						message = String("Invalid double parameter value '")+dou_value+"' for parameter '"+name+"' given! The valid range is: ["+min_int+":"+max_int+"].";
+						return false;
+					}	
+				}
+			}	
+			return true;
 	}
 	
 	bool Param::ParamEntry::operator==(const ParamEntry& rhs) const
@@ -195,6 +274,7 @@ namespace OpenMS
 	
 	void Param::ParamNode::insert(const ParamNode& node, const String& prefix)
 	{
+		//cerr << "INSERT NODE  " << node.name << " (" << prefix << ")" << endl;
 		String prefix2 = prefix + node.name;
 		
 		ParamNode* insert_node = this;
@@ -221,8 +301,14 @@ namespace OpenMS
 		NodeIterator it = insert_node->findNode(prefix2);
 		if (it!=insert_node->nodes.end()) //append nodes and entries
 		{
-			it->nodes.insert(it->nodes.end(), node.nodes.begin(), node.nodes.end());
-			it->entries.insert(it->entries.end(), node.entries.begin(), node.entries.end());
+			for (ConstNodeIterator it2=node.nodes.begin(); it2!=node.nodes.end(); ++it2)
+			{
+				it->insert(*it2);
+			}
+			for (ConstEntryIterator it2=node.entries.begin(); it2!=node.entries.end(); ++it2)
+			{
+				it->insert(*it2);
+			}
 			if (it->description=="" || node.description!="") //replace description if not empty in new node
 			{
 				it->description = node.description;
@@ -238,7 +324,7 @@ namespace OpenMS
 
 	void Param::ParamNode::insert(const ParamEntry& entry, const String& prefix)
 	{
-		//cerr << "ParamEntry::Insert(ParamEntry)" << endl;
+		//cerr << "INSERT ENTRY " << entry.name << " (" << prefix << ")" << endl;
 		String prefix2 = prefix + entry.name;
 		//cerr << " - inserting: " << prefix2 << endl;
 		
@@ -429,8 +515,9 @@ namespace OpenMS
 		return it->description;
 	}
 	
-	void Param::insert(String prefix, const Param& param)
+	void Param::insert(const String& prefix, const Param& param)
 	{
+		//cerr << "INSERT PARAM (" << prefix << ")" << endl;
 		for (Param::ParamNode::NodeIterator it=param.root_.nodes.begin(); it!=param.root_.nodes.end(); ++it)
 		{
 			root_.insert(*it,prefix);
@@ -441,19 +528,21 @@ namespace OpenMS
 		}
 	}
 
-	void Param::setDefaults(const Param& defaults, String prefix, bool showMessage)
+	void Param::setDefaults(const Param& defaults, const String& prefix, bool showMessage)
 	{
-		if ( !prefix.empty() )
+		String prefix2 = prefix;
+		if (prefix2!="")
 		{
-			prefix.ensureLastChar(':');
-		}	
+			prefix2.ensureLastChar(':');
+		}
+		
 		String pathname;
 		for(Param::ParamIterator it = defaults.begin(); it != defaults.end();++it)
 		{
-			if (!exists(prefix + it.getName()))
+			if (!exists(prefix2 + it.getName()))
 			{
-				if (showMessage) cerr << "Setting " << prefix+it.getName() << " to " << it->value << endl;
-				String name = prefix+it.getName();
+				if (showMessage) cerr << "Setting " << prefix2+it.getName() << " to " << it->value << endl;
+				String name = prefix2+it.getName();
 				root_.insert(ParamEntry("", it->value, it->description), name);
 				//copy tags
 				for (set<String>::const_iterator tag_it=it->tags.begin(); tag_it!=it->tags.end(); ++tag_it)
@@ -501,7 +590,7 @@ namespace OpenMS
 					{
 						//cerr << "## Setting description of " << prefix+real_pathname << " to"<< endl;
 						//cerr << "## " << description_new << endl;
-						setSectionDescription(prefix+real_pathname, description_new);
+						setSectionDescription(prefix2+real_pathname, description_new);
 					}
 				}
 			}
@@ -673,11 +762,11 @@ namespace OpenMS
 				if (it2->opened) //opened node
 				{
 					String d = it2->description;
-					d.substitute('"','\'');
+					//d.substitute('"','\'');
 					d.substitute("\n","#br#");
-					d.substitute("<","&lt;");
-					d.substitute(">","&gt;");
-					os << indentation  << "<NODE name=\"" << it2->name << "\" description=\"" << d << "\">" << endl;
+					//d.substitute("<","&lt;");
+					//d.substitute(">","&gt;");
+					os << indentation  << "<NODE name=\"" << writeXMLEscape(it2->name) << "\" description=\"" << writeXMLEscape(d) << "\">" << endl;
 					indentation += "  ";
 				}
 				else //closed node
@@ -695,22 +784,22 @@ namespace OpenMS
 				switch(value_type)
 				{
 					case DataValue::INT_VALUE:
-						os << indentation << "<ITEM name=\"" << it->name << "\" value=\"" << it->value.toString() << "\" type=\"int\"";
+						os << indentation << "<ITEM name=\"" << writeXMLEscape(it->name) << "\" value=\"" << it->value.toString() << "\" type=\"int\"";
 						break;
 					case DataValue::DOUBLE_VALUE:
-						os << indentation << "<ITEM name=\"" << it->name << "\" value=\"" << it->value.toString() << "\" type=\"float\"";
+						os << indentation << "<ITEM name=\"" << writeXMLEscape(it->name) << "\" value=\"" << it->value.toString() << "\" type=\"float\"";
 						break;
 					case DataValue::STRING_VALUE:
-						os << indentation << "<ITEM name=\"" << it->name << "\" value=\"" << it->value.toString() << "\" type=\"string\"";
+						os << indentation << "<ITEM name=\"" << writeXMLEscape(it->name) << "\" value=\"" << writeXMLEscape(it->value.toString()) << "\" type=\"string\"";
 						break;
 					case DataValue::STRING_LIST:
-						os << indentation << "<ITEMLIST name=\"" << it->name << "\" type=\"string\"";
+						os << indentation << "<ITEMLIST name=\"" << writeXMLEscape(it->name) << "\" type=\"string\"";
 						break;
 					case DataValue::INT_LIST:
-						os << indentation << " <ITEMLIST name=\"" << it->name << "\" type=\"int\"";
+						os << indentation << " <ITEMLIST name=\"" << writeXMLEscape(it->name) << "\" type=\"int\"";
 						break;
 					case DataValue::DOUBLE_LIST:
-						os << indentation << " <ITEMLIST name=\"" << it->name << "\" type=\"float\"";
+						os << indentation << " <ITEMLIST name=\"" << writeXMLEscape(it->name) << "\" type=\"float\"";
 						break;
 					default:
 						break;
@@ -718,11 +807,11 @@ namespace OpenMS
 				
 				//replace all critical characters in description
 				String d = it->description;
-				d.substitute("\"","'");
+				//d.substitute("\"","'");
 				d.substitute("\n","#br#");
-				d.substitute("<","&lt;");
-				d.substitute(">","&gt;");
-				os << " description=\"" << d << "\"";
+				//d.substitute("<","&lt;");
+				//d.substitute(">","&gt;");
+				os << " description=\"" << writeXMLEscape(d) << "\"";
 				
 				//tags
 				if (!it->tags.empty())
@@ -733,7 +822,7 @@ namespace OpenMS
 						if (!list.empty()) list += ",";
 						list += *tag_it;
 					}
-					os << " tags=\"" << list << "\"";
+					os << " tags=\"" << writeXMLEscape(list) << "\"";
 				}
 
 				//restrictions
@@ -790,7 +879,7 @@ namespace OpenMS
 				};
 				if (restrictions!="")
 				{
-					os << " restrictions=\"" << restrictions << "\"";
+					os << " restrictions=\"" << writeXMLEscape(restrictions) << "\"";
 				}
 				
 				//finish opening tag
@@ -807,7 +896,7 @@ namespace OpenMS
 							const StringList& list = it->value;
 							for (Size i=0; i<list.size();++i)
 							{
-								os << indentation << "  <LISTITEM value=\"" << list[i] << "\"/>" << endl;	
+								os << indentation << "  <LISTITEM value=\"" << writeXMLEscape(list[i]) << "\"/>" << endl;	
 							}
 							os << indentation << "</ITEMLIST>" << endl;	
 						}
@@ -860,12 +949,13 @@ namespace OpenMS
 	}
 
 
-	void Param::parseCommandLine(const int argc , const char** argv, String prefix)
+	void Param::parseCommandLine(const int argc , const char** argv, const String& prefix)
 	{
 		//determine prefix
-		if (prefix!="")
+		String prefix2 = prefix;
+		if (prefix2!="")
 		{
-			prefix.ensureLastChar(':');
+			prefix2.ensureLastChar(':');
 		}
 		
 		//parse arguments
@@ -891,25 +981,25 @@ namespace OpenMS
       //flag (option without text argument)
       if(arg_is_option && arg1_is_option)
       {
-	    	root_.insert(ParamEntry(arg,String(),""),prefix);
+	    	root_.insert(ParamEntry(arg,String(),""),prefix2);
       }
       //option with argument
       else if(arg_is_option && !arg1_is_option)
       {
-      	root_.insert(ParamEntry(arg,arg1,""),prefix);
+      	root_.insert(ParamEntry(arg,arg1,""),prefix2);
       	++i;
       }      
       //just text arguments (not preceded by an option)
       else
       {
 
-      	ParamEntry* misc_entry = root_.findEntryRecursive(prefix+"misc");
+      	ParamEntry* misc_entry = root_.findEntryRecursive(prefix2+"misc");
       	if (misc_entry==0)
       	{
       		StringList sl;
       		sl << arg;
 					// create "misc"-Node: 
-      		root_.insert(ParamEntry("misc",sl,""),prefix);
+      		root_.insert(ParamEntry("misc",sl,""),prefix2);
       	}
       	else
       	{
@@ -1069,14 +1159,15 @@ namespace OpenMS
 		root_ = ParamNode("ROOT","");
 	}
 
-	void Param::checkDefaults(const String& name, const Param& defaults, String prefix, std::ostream& os) const
+	void Param::checkDefaults(const String& name, const Param& defaults, const String& prefix, std::ostream& os) const
 	{
 		//Extract right parameters
-		if ( !prefix.empty() )
+		String prefix2 = prefix;
+		if (prefix2!="")
 		{
-			prefix.ensureLastChar(':');
-		}	
-		Param check_values = copy(prefix,true);
+			prefix2.ensureLastChar(':');
+		}
+		Param check_values = copy(prefix2,true);
 		
 		//check
 		for(ParamIterator it = check_values.begin(); it != check_values.end();++it)
@@ -1085,12 +1176,12 @@ namespace OpenMS
 			if (!defaults.exists(it.getName()))
 			{
 				os << "Warning: " << name << " received the unknown parameter '" << it.getName() << "'";
-				if (!prefix.empty()) os << " in '" << prefix << "'";
+				if (!prefix2.empty()) os << " in '" << prefix2 << "'";
 				os << "!" << endl;
 			}
 
 			//different types
-			ParamEntry* default_value = defaults.root_.findEntryRecursive(prefix+it.getName());
+			ParamEntry* default_value = defaults.root_.findEntryRecursive(prefix2+it.getName());
 			if (default_value==0) continue;
 			if (default_value->value.valueType()!=it->value.valueType())
 			{
@@ -1108,73 +1199,10 @@ namespace OpenMS
 				throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": Wrong parameter type '"+p_type+"' for "+d_type+" parameter '"+it.getName()+"' given!");
 			}
 			//parameter restrictions
-			if (it->value.valueType()==DataValue::STRING_VALUE)
-			{
-				if (default_value->valid_strings.size()!=0 && std::find(default_value->valid_strings.begin(),default_value->valid_strings.end(), it->value) == default_value->valid_strings.end())
-				{
-					String valid;
-					valid.concatenate(default_value->valid_strings.begin(),default_value->valid_strings.end(),",");
-					throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": Invalid string parameter value '"+(String)it->value+"' for parameter '"+it.getName()+"' given! Valid values are: '"+valid+"'.");
-				}
-			}
-			else if(it->value.valueType()==DataValue::STRING_LIST)
-			{
-				String str_value;
-				StringList ls_value = (StringList) it->value;
-				for (Size i = 0; i < ls_value.size(); ++i)
-				{
-						str_value = ls_value[i];
-					
-					if (default_value->valid_strings.size()!=0 && std::find(default_value->valid_strings.begin(),default_value->valid_strings.end(), str_value) == default_value->valid_strings.end())
-					{
-						String valid;
-						valid.concatenate(default_value->valid_strings.begin(),default_value->valid_strings.end(),",");
-						throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": Invalid string parameter value '"+str_value+"' for parameter '"+it.getName()+"' given! Valid values are: '"+valid+"'.");
-					}
-				}	
-			}
-			else if (it->value.valueType()==DataValue::INT_VALUE)
-			{
-				Int tmp = it->value;
-				if ((default_value->min_int != -std::numeric_limits<Int>::max() && tmp < default_value->min_int) || (default_value->max_int!=std::numeric_limits<Int>::max() && tmp > default_value->max_int))
-				{
-					throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": Invalid integer parameter value '"+(Int)it->value+"' for parameter '"+it.getName()+"' given! The valid range is: ["+default_value->min_int+":"+default_value->max_int+"].");
-				}
-			}
-			else if(it->value.valueType()==DataValue::INT_LIST)
-			{
-				Int int_value;
-				IntList ls_value =(IntList) it->value;
-				for (Size i = 0; i < ls_value.size(); ++i)
-				{
-					int_value = ls_value[i];
-					if ((default_value->min_int != -std::numeric_limits<Int>::max() && int_value < default_value->min_int) || (default_value->max_int!=std::numeric_limits<Int>::max() && int_value > default_value->max_int))
-					{
-						throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": Invalid integer parameter value '"+int_value+"' for parameter '"+it.getName()+"' given! The valid range is: ["+default_value->min_int+":"+default_value->max_int+"].");
-					}
-				}
-			}
-			else if (it->value.valueType()==DataValue::DOUBLE_VALUE)
-			{
-				DoubleReal tmp = it->value;
-				if ((default_value->min_float!=-std::numeric_limits<DoubleReal>::max() && tmp < default_value->min_float) || (default_value->max_float!=std::numeric_limits<DoubleReal>::max() && tmp > default_value->max_float))
-				{
-					throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": Invalid double parameter value '"+(DoubleReal)it->value+"' for parameter '"+it.getName()+"' given! The valid range is: ["+default_value->min_int+":"+default_value->max_int+"].");
-				}
-			}
-			else if(it->value.valueType()==DataValue::DOUBLE_LIST)
-			{
-				DoubleReal dou_value; 
-				DoubleList ls_value = (DoubleList)it->value;
-				for (Size i = 0; i < ls_value.size(); ++i)
-				{
-					dou_value = ls_value[i];
-					if ((default_value->min_float!=-std::numeric_limits<DoubleReal>::max() && dou_value < default_value->min_float) || (default_value->max_float!=std::numeric_limits<DoubleReal>::max() && dou_value > default_value->max_float))
-					{
-						throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": Invalid double parameter value '"+dou_value+"' for parameter '"+it.getName()+"' given! The valid range is: ["+default_value->min_int+":"+default_value->max_int+"].");
-					}	
-				}
-			}
+			ParamEntry pe= *default_value;
+			pe.value = it->value;
+			String s;
+			if (!	pe.isValid(s))	throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": "+s);
 		}
 	}
 

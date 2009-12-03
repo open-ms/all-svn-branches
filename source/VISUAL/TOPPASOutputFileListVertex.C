@@ -27,6 +27,7 @@
 
 #include <OpenMS/VISUAL/TOPPASOutputFileListVertex.h>
 #include <OpenMS/VISUAL/TOPPASToolVertex.h>
+#include <OpenMS/VISUAL/TOPPASMergerVertex.h>
 #include <OpenMS/VISUAL/TOPPASEdge.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/SYSTEM/File.h>
@@ -86,13 +87,14 @@ namespace OpenMS
  		
  		pen.setColor(pen_color_);
  		painter->setPen(pen);
-		QString text = "Output file list";
+		QString text = QString::number(files_.size())+" output file"
+										+(files_.size() == 1 ? "" : "s");
 		QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, text);
 		painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), text);
 		
 		//topo sort number
-		qreal x_pos = -62.0;
-		qreal y_pos = 28.0; 
+		qreal x_pos = -63.0;
+		qreal y_pos = -19.0; 
 		painter->drawText(x_pos, y_pos, QString::number(topo_nr_));
 	}
 	
@@ -108,37 +110,31 @@ namespace OpenMS
 		return shape;
 	}
 	
-	void TOPPASOutputFileListVertex::startComputation()
+	void TOPPASOutputFileListVertex::finish()
 	{
-		finished_ = false;
-		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
-		{
-			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-			if (ttv)
-			{
-				ttv->runRecursively();
-			}
-		}
-	}
-	
-	void TOPPASOutputFileListVertex::finished()
-	{
+		__DEBUG_BEGIN_METHOD__
+		
 		// copy tmp files to output dir
+		
 		TOPPASEdge* e = *inEdgesBegin();
 		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(e->getSourceVertex());
-		const QVector<QStringList>& output_files = tv->getOutputFileNames();
+		const QVector<QStringList>& output_files = tv->getCurrentOutputFileNames();
 		int param_index = e->getSourceOutParam();
+		if (output_files.size() <= param_index)
+		{
+			std::cerr << "Parent tool has no output files. This is a bug, please report it!" << std::endl;
+			__DEBUG_END_METHOD__
+			return;
+		}
 		const QStringList& tmp_file_names = output_files[param_index];
 		QString parent_dir = qobject_cast<TOPPASScene*>(scene())->getOutDir();
 		
-		files_.clear();
+		createDirs();
+
 		if (!tmp_file_names.isEmpty())
 		{
-			QString dir = File::path(tmp_file_names.first()).toQString();
-			QStringList files = QDir(dir).entryList(QDir::Files | QDir::NoDotAndDotDot);
-			foreach (const QString& relative_f, files)
+			foreach (const QString& f, tmp_file_names)
 			{
-				QString f = dir + QDir::separator() + relative_f;
 				if (!File::exists(f))
 				{
 					std::cerr << "The file '" << String(f) << "' does not exist!" << std::endl;
@@ -172,54 +168,27 @@ namespace OpenMS
 			}
 		}
 		
+		update(boundingRect());
+		
 		finished_ = true;
+		checkIfSubtreeFinished();
 		emit iAmDone();
+		
+		__DEBUG_END_METHOD__
 	}
 	
 	void TOPPASOutputFileListVertex::inEdgeHasChanged()
 	{
-		files_.clear();
+		reset(true);
 		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
 		TOPPASVertex::inEdgeHasChanged();
 	}
 	
-	void TOPPASOutputFileListVertex::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+	void TOPPASOutputFileListVertex::openInTOPPView()
 	{
-		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
-		ts->unselectAll();
-		setSelected(true);
-		
-		QMenu menu;
-		QAction* open_action = menu.addAction("Open files in TOPPView");
-		open_action->setEnabled(false);
-		if (!files_.empty())
-		{
-			open_action->setEnabled(true);
-		}
-		
-		menu.addAction("Remove");
-		
-		QAction* selected_action = menu.exec(event->screenPos());
-		if (selected_action)
-		{
-			QString text = selected_action->text();
-			if (text == "Remove")
-			{
-				ts->removeSelected();
-			}
-			else if (text == "Open files in TOPPView")
-			{
-				QProcess* p = new QProcess();
-				p->setProcessChannelMode(QProcess::ForwardedChannels);
-				p->start("TOPPView", files_);
-			}
-			
-			event->accept();
-		}
-		else
-		{
-			event->ignore();
-		}
+		QProcess* p = new QProcess();
+		p->setProcessChannelMode(QProcess::ForwardedChannels);
+		p->start("TOPPView", files_);
 	}
 	
 	bool TOPPASOutputFileListVertex::isFinished()
@@ -234,11 +203,13 @@ namespace OpenMS
 		return dir;
 	}
 	
-	void TOPPASOutputFileListVertex::createDirs(const QString& out_dir)
+	void TOPPASOutputFileListVertex::createDirs()
 	{
+		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
+		QString out_dir = ts->getOutDir();
 		QDir current_dir(out_dir);
 		String new_dir = getOutputDir();
-		if (!File::exists(new_dir))
+		if (!File::exists(String(out_dir)+String(QDir::separator())+new_dir))
 		{
 			if (!current_dir.mkpath(new_dir.toQString()))
 			{
@@ -251,8 +222,26 @@ namespace OpenMS
 	{
 		if (topo_nr_ != nr)
 		{
+			// topological number changes --> output dir changes --> reset
+			reset(true);
 			topo_nr_ = nr;
 		}
+	}
+	
+	void TOPPASOutputFileListVertex::reset(bool reset_all_files)
+	{
+		__DEBUG_BEGIN_METHOD__
+		
+		TOPPASVertex::reset();
+		finished_ = false;
+		
+		if (reset_all_files)
+		{
+			files_.clear();
+			// do not actually delete the output files here
+		}
+		
+		__DEBUG_END_METHOD__
 	}
 }
 

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -379,6 +379,7 @@ START_SECTION(([EXTRA]String getStringOption_(const String& name) const))
 
 	//every parameter except for help,ini.instance, write_ini and write_wsdl
 	//toolname : TOPPBaseTest
+	p2.setValue("TOPPBaseTest:version",VersionInfo::getVersion());
 	p2.setValue("TOPPBaseTest:1:stringoption","string default","string description");
 	p2.setValue("TOPPBaseTest:1:intoption",4711,"int description");
 	p2.setValue("TOPPBaseTest:1:doubleoption",0.4711,"double description");
@@ -405,10 +406,8 @@ START_SECTION(([EXTRA]String getStringOption_(const String& name) const))
 	p2.setMaxInt(intlist2,6);
 	p2.setValue(doublelist2,DoubleList::create("1.2,2.33"),"doubelist with restrictions");
 	p2.setMinFloat(doublelist2,0.2);
-	p2.setMaxFloat(doublelist2,5.4);
-
+	p2.setMaxFloat(doublelist2,5.4);	
 	TEST_EQUAL(p1,p2)
-
 END_SECTION
 
 START_SECTION(([EXTRA]String getIntOption_(const String& name) const))

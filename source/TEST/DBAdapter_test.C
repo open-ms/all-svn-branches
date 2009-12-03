@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -401,7 +401,7 @@ END_SECTION
 		exp_original.push_back(spec);
 
 		//MSMS spectrum
-		spec.clear();
+		spec.clear(false);
 		p.setIntensity(210.0f);
 		p.getPosition()[0] = 100.155;
 		spec.push_back(p);

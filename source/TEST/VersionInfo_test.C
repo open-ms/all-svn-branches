@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl, Chris Bielow $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -30,18 +30,18 @@
 ///////////////////////////
 
 #include <OpenMS/CONCEPT/VersionInfo.h>
+#include <OpenMS/openms_package_version.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 
 
-///////////////////////////
-
-START_TEST(VersionInfo, "$Id$")
-
-/////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
 using namespace OpenMS;
 using namespace std;
+
+START_TEST(VersionInfo, "$Id$")
+
+/////////////////////////////////////////////////////////////
 
 START_SECTION(static String getTime())
 {
@@ -75,7 +75,7 @@ END_SECTION
 START_SECTION(static Int getMinorVersion())
 {
 	STATUS("We might need to update this for a new release, oops!");
-	TEST_EQUAL(VersionInfo::getMinorVersion(), 5);
+	TEST_EQUAL(VersionInfo::getMinorVersion(), 7);
 }
 END_SECTION
 

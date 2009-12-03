@@ -54,7 +54,7 @@ using namespace std;
 
   @brief Identifies peptide MS/MS spectra by spectral matching with a searchable spectral library.
 
-	@experimental This TOPP-tool is not well tested and not all feature might be properly implemented.
+	@experimental This TOPP-tool is not well tested and not all features might be properly implemented and tested.
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_SpecLibSearcher.cli
@@ -79,7 +79,7 @@ class TOPPSpecLibSearcher
 			setValidFormats_("in",StringList::create("mzData"));
 			registerInputFile_("lib","<file>","","searchable spectral library(MSP format)");
 			registerOutputFileList_("out","<files>",StringList::create(""),"Output files. Have to be as many as input files");
-			setValidFormats_("out",StringList::create("IdXML"));
+			setValidFormats_("out",StringList::create("idXML"));
 			registerDoubleOption_("precursor_mass_tolerance","<tolerance>",3,"Precursor mass tolerance, (Th)",false);
 			registerIntOption_("round_precursor_to_integer","<number>",10,"many precursor m/z multipling number lead to the same number; are packed in the same vector for faster search.Should be higher for high-resolution data",false,true);
 		//	registerDoubleOption_("fragment_mass_tolerance","<tolerance>",0.3,"Fragment mass error",false);
@@ -103,9 +103,14 @@ class TOPPSpecLibSearcher
      registerIntOption_("max_peaks","<number>",150,"Use only the top <number> of peaks.",false);
      registerIntOption_("cut_peaks_below","<number>",1000,"Remove all peaks which are lower than 1/<number> of the highest peaks. Default equals all peaks which are lower than 0.001 of the maximum intensity peak",false);
 
-     registerStringList_("fixed_modifications", "<mods>", StringList::create(""), "fixed modifications, specified using PSI-MOD terms, e.g. MOD:01214,MOD:00048 currently no effect", false);
-     registerStringList_("variable_modifications", "<mods>", StringList::create(""), "variable modifications, specified using PSI-MOD terms, e.g. MOD:01214 MOD:00048", false);
-		addEmptyLine_();
+			vector<String> all_mods;
+			ModificationsDB::getInstance()->getAllSearchModifications(all_mods);
+     	registerStringList_("fixed_modifications", "<mods>", StringList::create(""), "fixed modifications, specified using UniMod (www.unimod.org) terms, e.g. 'Carbamidomethyl (C)' or 'Oxidation (M)'", false);
+			setValidStrings_("fixed_modifications", all_mods);
+
+			registerStringList_("variable_modifications", "<mods>", StringList::create(""), "variable modifications, specified using UniMod (www.unimod.org) terms, e.g. 'Carbamidomethyl (C)' or 'Oxidation (M)'", false);
+			setValidStrings_("variable_modifications", all_mods);
+			addEmptyLine_();
 			addText_("");
 		}
 

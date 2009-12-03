@@ -342,6 +342,32 @@ namespace OpenMS
 		@brief Class for comparison of std::pair using first ONLY e.g. for use with std::sort
 	*/
 	template<typename PairType>
+	struct PairComparatorFirstElementMore
+	: std::binary_function<PairType, PairType, bool >
+	{
+			bool operator() (const PairType& left, const PairType& right)const
+			{
+					return ( left.first > right.first ) ;
+			}
+	};
+
+/**
+		@brief Class for comparison of std::pair using second ONLY e.g. for use with std::sort
+	*/
+	template<typename PairType>
+	struct PairComparatorSecondElementMore
+	: std::binary_function<PairType, PairType, bool >
+	{
+			bool operator() (const PairType& left, const PairType& right)const
+			{
+					return ( left.second > right.second ) ;
+			}
+	};
+
+	/**
+		@brief Class for comparison of std::pair using first ONLY e.g. for use with std::sort
+	*/
+	template<typename PairType>
 	struct PairMatcherFirstElement
 	: std::binary_function<PairType, PairType, bool >
 	{
@@ -349,7 +375,6 @@ namespace OpenMS
 			{
 					return ( left.first == right.first ) ;
 			}
-
 	};
 
 	/**
@@ -363,10 +388,10 @@ namespace OpenMS
 			{
 					return ( left.second == right.second ) ;
 			}
-
 	};
 
 	//======================================================================
+
 	/**
 		@brief Struct for binary predicate to consider equality with a certain tolerance
 
@@ -386,9 +411,6 @@ namespace OpenMS
 			return (diff <= tolerance);
 		}
 	};
-
-	//======================================================================
-
 
 }
 

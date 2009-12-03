@@ -44,7 +44,7 @@ namespace OpenMS
 	/**
 		@brief Representation of a peptide/protein sequence
 
-		This class represents amino acid sequences in @OpenMS. Basically a AASequence instance
+		This class represents amino acid sequences in %OpenMS. Basically a AASequence instance
 		consists of a sequence of residues. The residues are represented as instances of
 		Residue. Each amino acid has only one instance which is accessible using the ResidueDB instance (singleton).
 
@@ -555,7 +555,7 @@ namespace OpenMS
 
 			String sequence_string_;
 
-			void parseString_(std::vector<const Residue*>& sequence, const String& peptide);
+			void parseString_(std::vector<const Residue*>& sequence, std::map<Size,DoubleReal>& imods, const String& peptide);
 
 			ResidueDB* getResidueDB_() const;
 

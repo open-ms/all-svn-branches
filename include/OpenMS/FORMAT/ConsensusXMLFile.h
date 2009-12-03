@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Marc Sturm $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Clemens Groepl, Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_CONSENSUSXMLFILE_H
@@ -45,6 +45,8 @@ namespace OpenMS
 
 	A documented schema for this format can be found at http://open-ms.sourceforge.net/schemas/.
 
+  @todo Take care that unique ids are assigned properly by TOPP tools before calling ConsensusXMLFile::store().  There will be a message on LOG_INFO but we will make no attempt to fix the problem in this class.  (all developers)
+
 	@ingroup FileIO
   */
   class OPENMS_DLLAPI ConsensusXMLFile
@@ -60,7 +62,7 @@ namespace OpenMS
 
 
 			/**
-			@brief Loads a consenus map from file
+			@brief Loads a consensus map from file
 
 			@exception Exception::FileNotFound is thrown if the file could not be opened
 			@exception Exception::ParseError is thrown if an error occurs during parsing
@@ -68,7 +70,7 @@ namespace OpenMS
 			void load(const String& filename, ConsensusMap& map);
 
 			/**
-			@brief Stores a consenus map to file
+			@brief Stores a consensus map to file
 
 			@exception Exception::UnableToCreateFile is thrown if the file name is not writable
 			@exception Exception::IllegalArgument is thrown if the consensus map is not valid
@@ -122,7 +124,7 @@ namespace OpenMS
 			/// Map from protein id to accession
 			Map<String,String> proteinid_to_accession_;
 			/// Map from search identifier concatenated with protein accession to id
-			Map<String,UInt> accession_to_id_;
+			Map<String,Size> accession_to_id_;
 			/// Map from identification run identifier to file xs:id (for linking peptide identifications to the corresponding run)
 			Map<String,String> identifier_id_;
 			/// Map from file xs:id to identification run identifier (for linking peptide identifications to the corresponding run)

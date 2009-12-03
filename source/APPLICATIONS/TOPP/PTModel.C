@@ -52,6 +52,12 @@ using namespace std;
 	are proteotypic) and one file contains the negative peptides
 	(the non proteotypic peptides).
 	
+	Parts of this model has been described in the publication
+
+	Ole Schulz-Trieglaff, Nico Pfeifer, Clemens Gr&ouml;pl, Oliver Kohlbacher and Knut Reinert
+	LC-MSsim - a simulation software for Liquid ChromatographyMass Spectrometry data
+	BMC Bioinformatics 2008, 9:423.
+
 	There are a number of parameters which
 	can be changed for the svm (specified in the ini file):
 	<ul>
@@ -154,9 +160,9 @@ class TOPPPTModel
 		void registerOptionsAndFlags_()
 		{
 			registerInputFile_("in_positive","<file>","","input file with positive examples\n");
-			setValidFormats_("in_positive",StringList::create("IdXML"));
+			setValidFormats_("in_positive",StringList::create("idXML"));
 			registerInputFile_("in_negative","<file>","","input file with negative examples\n");
-			setValidFormats_("in_negative",StringList::create("IdXML"));
+			setValidFormats_("in_negative",StringList::create("idXML"));
 			registerOutputFile_("out","<file>","","output file: the model in libsvm format");
 			registerDoubleOption_("c","<float>",1,"the penalty parameter of the svm",false);
 			registerStringOption_("svm_type","<type>","C_SVC","the type of the svm (NU_SVC or C_SVC)\n",false);

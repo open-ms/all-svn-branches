@@ -31,6 +31,7 @@
 
 #include <OpenMS/FILTERING/SMOOTHING/SavitzkyGolayFilter.h>
 #include <OpenMS/KERNEL/Peak2D.h>
+#include <OpenMS/KERNEL/RichPeak1D.h>
 
 ///////////////////////////
 
@@ -55,7 +56,7 @@ Param param;
 param.setValue("polynomial_order",2);
 param.setValue("frame_length",3);
 
-START_SECTION((template <typename InputPeakIterator, typename OutputPeakContainer> void filter(InputPeakIterator first, InputPeakIterator last, OutputPeakContainer &smoothed_data_container)))
+START_SECTION((template < typename PeakType > void filter(MSSpectrum< PeakType > &spectrum)))
   MSSpectrum<Peak1D> spectrum;
   spectrum.resize(5);
   MSSpectrum<Peak1D>::Iterator it = spectrum.begin();

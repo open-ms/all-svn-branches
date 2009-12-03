@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Stephan Aiche$
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_CONCEPT_EXCEPTION_H
@@ -606,7 +606,7 @@ namespace OpenMS
 		};
 		
     /**
-			@brief A method or algorithm argument contains is values
+			@brief A method or algorithm argument contains illegal values
 			
 			@ingroup Exceptions
 		*/
@@ -696,7 +696,7 @@ namespace OpenMS
 						exception that is not allowed by its exception specification. Both
 						functions are replaced by a function of GlobalExceptionHandler that
 						tries to determine the last exception thrown. This mechanism only
-						works, if all exceptions are defrived from Base.
+						works, if all exceptions are derived from Base.
 
 						The default <tt>new_handler</tt> is replaced by #newHandler and
 						throws an exception of type OutOfMemory instead of

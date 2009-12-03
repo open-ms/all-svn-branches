@@ -22,8 +22,9 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: David Wojnar $
-// $Authors: $
+// $Authors: David Wojnar $
 // --------------------------------------------------------------------------
+
 #include <OpenMS/FORMAT/CsvFile.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
 
@@ -33,7 +34,7 @@ namespace OpenMS
 {
 	
 	CsvFile::CsvFile()
-		: TextFile(),itemseperator(','),itemenclosed(false)
+		: TextFile(),itemseperator_(','),itemenclosed_(false)
 	{
 		
 	}
@@ -43,7 +44,7 @@ namespace OpenMS
 	}
 	
 	CsvFile::CsvFile(const String& filename, char is,bool ie, Int first_n)
-		: TextFile(),itemseperator(is),itemenclosed(ie)
+		: TextFile(),itemseperator_(is),itemenclosed_(ie)
 	{
 		load(filename, false, first_n);
 	}
@@ -51,25 +52,25 @@ namespace OpenMS
   
 	void CsvFile::fload(const String& filename, char is,bool ie, Int first_n)
 	{
-		itemseperator = is;
-		itemenclosed = ie;
+		itemseperator_ = is;
+		itemenclosed_ = ie;
 		load(filename,true,first_n);
 	}
 
-	bool CsvFile::getRow(UInt row,StringList &list)
+	bool CsvFile::getRow(Size row,StringList &list)
 	{
 		if(row > this->size())
 		{
 			throw Exception::InvalidIterator(__FILE__, __LINE__,__PRETTY_FUNCTION__);
 		}
-		bool splitted = this->operator[](row).split(itemseperator, list);
+		bool splitted = this->operator[](row).split(itemseperator_, list);
 		if(!splitted)
 		{
 			return splitted;
 		}
-		for(UInt i = 0; i< list.size(); i++)
+		for(Size i = 0; i< list.size(); i++)
 		{
-			if(itemenclosed)
+			if(itemenclosed_)
 			{
 				list[i] = list[i].substr(1, list[i].size()-2);
 			}

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_DTAFILE_H
@@ -30,6 +30,7 @@
 
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/METADATA/Precursor.h>
+#include <OpenMS/SYSTEM/File.h>
 
 #include <fstream>
 #include <vector>
@@ -52,7 +53,7 @@ namespace OpenMS
       /// Default constructor
       DTAFile();
 			/// Destructor
-      ~DTAFile();
+      virtual ~DTAFile();
       
       /**
  				@brief Loads a DTA file to a spectrum.
@@ -73,7 +74,7 @@ namespace OpenMS
 				}
 		
 				//  Delete old spectrum
-				spectrum.clear();
+				spectrum.clear(true);
 				
 				//temporary variables
 				String line;
@@ -154,7 +155,8 @@ namespace OpenMS
 					}
 					spectrum.push_back(p);
 				}
-				
+			
+				spectrum.setName(File::basename(filename));	
 				is.close();  	
       }
 
@@ -184,7 +186,7 @@ namespace OpenMS
 				}
 				if (spectrum.getPrecursors().size()>1)
 				{
-					std::cerr << "Warning: The spectrum written to the DTA file '" << filename << "' has more than one precursor. The first precursor is used!" << std::endl;
+					std::cerr << "Warning: The spectrum written to the DTA file '" << filename << "' has more than one precursor. The first precursor is used!" << "\n";
 				}
 				//unknown charge
 				if (precursor.getCharge()==0)
@@ -197,7 +199,7 @@ namespace OpenMS
 					os << ((precursor.getMZ() - 1.0) * precursor.getCharge() +1.0);
 				}
 				//charge
-				os << " " << precursor.getCharge() << std::endl;
+				os << " " << precursor.getCharge() << "\n";
 
 				// Iterate over all peaks of the spectrum and
 				// write one line for each peak of the spectrum.
@@ -205,7 +207,7 @@ namespace OpenMS
 				for (; it != spectrum.end(); ++it)
 				{
 					// Write m/z and intensity.
-					os << it->getPosition() << " " << it->getIntensity() << std::endl;
+					os << it->getPosition() << " " << it->getIntensity() << "\n";
 				}
 		
 				// Done.

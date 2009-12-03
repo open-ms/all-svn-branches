@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Chris Bielow, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Chris Bielow, Clemens Groepl $
+// $Authors: Marc Sturm, Chris Bielow, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_FEATUREXMLFILE_H
@@ -41,6 +41,8 @@ namespace OpenMS
   	@brief This class provides Input/Output functionality for feature maps
 
 		A documented schema for this format can be found at http://open-ms.sourceforge.net/schemas/.
+
+    @todo Take care that unique ids are assigned properly by TOPP tools before calling FeatureXMLFile::store().  There will be a message on LOG_INFO but we will make no attempt to fix the problem in this class.  (all developers)
 
   	@note This format will eventually be replaced by the HUPO-PSI AnalysisXML (mzIdentML and mzQuantML) formats!
 
@@ -94,7 +96,7 @@ namespace OpenMS
       virtual void characters(const XMLCh* const chars, const XMLSize_t length);
 
 			/// Writes a feature to a stream
-			void writeFeature_(const String& filename, std::ostream& os, const Feature& feat, const String& identifier_prefix, Size identifier, UInt indentation_level);
+			void writeFeature_(const String& filename, std::ostream& os, const Feature& feat, const String& identifier_prefix, UInt64 identifier, UInt indentation_level);
 
 			/// Writes a peptide identification to a stream (for assigned/unassigned peptide identifications)
 			void writePeptideIdentification_(const String& filename, std::ostream& os, const PeptideIdentification& id, const String& tag_name, UInt indentation_level);
@@ -145,7 +147,7 @@ namespace OpenMS
 			/// Map from protein id to accession
 			Map<String,String> proteinid_to_accession_;
 			/// Map from search identifier concatenated with protein accession to id
-			Map<String,UInt> accession_to_id_;
+			Map<String,Size> accession_to_id_;
 			/// Map from identification run identifier to file xs:id (for linking peptide identifications to the corresponding run)
 			Map<String,String> identifier_id_;
 			/// Map from file xs:id to identification run identifier (for linking peptide identifications to the corresponding run)

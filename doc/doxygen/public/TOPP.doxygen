@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer:  $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 /**
@@ -56,6 +56,7 @@
   - @subpage TOPP_MapNormalizer - Normalizes peak intensities in an MS run.
 	- @subpage TOPP_InternalCalibration - Applies an internal calibration.
 	- @subpage TOPP_TOFCalibration - Applies time of flight calibration.
+	- @subpage TOPP_PrecursorMassCorrector - Correct the precursor entries of tandem MS scans.
 
   <b>Quantitation</b>
  	- @subpage TOPP_FeatureFinder - Detects two-dimensional features in LC-MS data.
@@ -64,10 +65,12 @@
 	- @subpage TOPP_FeatureLinker - Groups corresponding features in one map or across maps.
 	- @subpage TOPP_SILACAnalyzer - Determines the ratio of peak pairs in LC-MS data.
 	- @subpage TOPP_ITRAQAnalyzer - Extracts and normalizes iTRAQ information from an MS experiment.
+	- @subpage TOPP_SeedListGenerator - Generates seed lists for feature detection.
 
   <b>Protein/peptide Identification</b>
   - @subpage TOPP_IDFileConverter - Converts identification engine file formats.
   - @subpage TOPP_IDFilter - Filters results from protein or peptide identification engines based on different criteria.
+  - @subpage TOPP_PeptideIndexer - Refreshes the protein references for all peptide hits.
   - @subpage TOPP_ConsensusID - Computes a consensus identification from peptide identifications of several identification engines.
   - @subpage TOPP_InspectAdapter - Annotates MS/MS spectra using Inspect.
   - @subpage TOPP_MascotAdapter - Annotates MS/MS spectra using Mascot.
@@ -81,8 +84,6 @@
  	- @subpage TOPP_IDRTCalibration - Can be used to calibrate RTs of peptide hits linearly to standards.
 	- @subpage TOPP_PrecursorIonSelector - A tool for precursor ion selection based on identification results.
 	- @subpage TOPP_PILISModel - Trains the PILIS model using a given set of spectra and identifications. 	 
-	- @subpage TOPP_PILISIdentification - Performs a peptide/protein identification using the PILIS engine.
-	- @subpage TOPP_SequestAdapter - Annotates MS/MS spectra using spectral libraray search methods.
   - @subpage TOPP_SpecLibSearcher - Identifies peptide MS/MS spectra by spectral matching with a searchable spectral library.
 	- @subpage TOPP_CompNovo - Performs a peptide/protein identification with the CompNovo engine.
 	

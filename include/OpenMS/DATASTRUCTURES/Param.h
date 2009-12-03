@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors:  Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_DATASTRUCTURES_PARAM_H
@@ -71,6 +71,8 @@ namespace OpenMS
 				ParamEntry();
 				/// Constructor with name, description, value and advanced flag
 				ParamEntry(const String& n, const DataValue& v, const String& d, const StringList& t=StringList());
+				/// Check if 'value' fulfills restrictions
+				bool isValid(String& message) const;
 				/// Equality operator (only name and value are compared)
 				bool operator==(const ParamEntry& rhs) const;
 				
@@ -99,6 +101,10 @@ namespace OpenMS
 				typedef std::vector<ParamNode>::iterator NodeIterator;
 				///Iterator for entries
 				typedef std::vector<ParamEntry>::iterator EntryIterator;
+				///Iterator for child nodes
+				typedef std::vector<ParamNode>::const_iterator ConstNodeIterator;
+				///Iterator for entries
+				typedef std::vector<ParamEntry>::const_iterator ConstEntryIterator;
 	
 				///Default constructor
 				ParamNode();						
@@ -330,7 +336,7 @@ namespace OpenMS
 			/// Deletes all entries
 			void clear();
 			///Insert all values of @p param and adds the prefix @p prefix.
-			void insert(String prefix, const Param& param);
+			void insert(const String& prefix, const Param& param);
 			/**
 				@brief Remove the entry @p key
 				@note This method does not remove subnodes. Use removeAll() to do that.
@@ -359,7 +365,7 @@ namespace OpenMS
 				
 				@see checkDefaults
 			*/
-			void setDefaults(const Param& defaults, String prefix="", bool showMessage=false);
+			void setDefaults(const Param& defaults, const String& prefix="", bool showMessage=false);
 			/**
 				@brief Checks the current parameter entries against given @p defaults
 				
@@ -378,7 +384,7 @@ namespace OpenMS
 				
 				@exception Exception::InvalidParameter is thrown if errors occur during the check
 			*/
-			void checkDefaults(const String& name, const Param& defaults, String prefix="", std::ostream& os = std::cout) const;	
+			void checkDefaults(const String& name, const Param& defaults, const String& prefix="", std::ostream& os = std::cout) const;	
 			//@}
 			
 			///@name Restriction handling
@@ -446,7 +452,7 @@ namespace OpenMS
 				 @param argv argv varaible from command line
 				 @param prefix prefix for all options
 			*/
-			void parseCommandLine(const int argc , const char** argv, String prefix = "");
+			void parseCommandLine(const int argc , const char** argv, const String& prefix = "");
 			/**
 				 @brief Parses command line arguments to specified key locations.
 				

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Chris Bielow $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_ANALYSIS_ID_IDMAPPER_H
@@ -35,30 +35,34 @@
 namespace OpenMS 
 {
   /**
-    @brief Annotates a MSExperiment, FeatureMap or ConsensusMap with peptide identifications
+    @brief Annotates an MSExperiment, FeatureMap or ConsensusMap with peptide identifications
  		
 	  ProteinIdentifications are assigned to the whole map.
 	  
  		The retention time and mass-to-charge ratio of the PeptideIdentification have to 
  		be given in the MetaInfoInterface as the values 'MZ' and 'RT'.
+ 		
+ 		m/z-Matching on the peptide side can be done either with the precursor m/z value of the peptideIdentification or
+ 		the masses of the peptideHits (see 'mz_reference' parameter).
+ 		
+ 		@htmlinclude OpenMS_IDMapper.parameters
+ 		
   */
   class OPENMS_DLLAPI IDMapper
+		: public DefaultParamHandler
   {
     public:
-
+			enum Measure {MEASURE_PPM=0, MEASURE_DA};
+			
       /// Default constructor
       IDMapper();
+      
+      /// Copy C'Tor	
+      IDMapper(const IDMapper& cp);
+      
+      /// Assignment
+      IDMapper& operator = (const IDMapper& rhs);
 			
-			/// Returns the allowed RT deviation (default: 0.5)
-			DoubleReal getRTDelta() const;
-			/// Sets the allowed RT deviation
-			void setRTDelta(DoubleReal rt_delta);
-			
-			/// Returns the allowed RT deviation (default: 0.05)
-			DoubleReal getMZDelta() const;
-			/// Sets the allowed RT deviation
-			void setMZDelta(DoubleReal mz_delta);
-
 			/**
 				@brief Mapping method for peak maps
 				
@@ -125,8 +129,8 @@ namespace OpenMS
 			/**
 				@brief Mapping method for feature maps
 
-		 		If @em all features have at least one convex hull, the identification are mapped to the contex hull.
-		 		If not, the allowed m/z and RT deviation from the feature centroid position is checked.
+		 		If @em all features have at least one convex hull, the identifications are mapped to the convex hull.
+		 		If not, the allowed m/z and RT deviation from the feature centroid (RT,MZ) position is checked.
 		
 			  If several features lie inside the allowed deviation, the peptide identifications
 			  are mapped to all the features.
@@ -134,12 +138,12 @@ namespace OpenMS
 				@param map FeatureMap to receive the identifications
 			  @param ids PeptideIdentification for the ConsensusFeatures
 			  @param protein_ids ProteinIdentification for the ConsensusMap
-			  @param use_delta If @em true, the m/z and RT deviation parameters are used even if convex hulls are present
+			  @param use_centroids If @em true, the feature centroids (RT,MZ position) are used, even if convex hulls are present
 			
 				@exception Exception::MissingInformation is thrown if the MetaInfoInterface of @p ids does not contain 'MZ' and 'RT'
 			*/
 			template <typename FeatureType>
-		  void annotate(FeatureMap<FeatureType>& map, const std::vector<PeptideIdentification>& ids, const std::vector<ProteinIdentification>& protein_ids, bool use_delta=false)
+		  void annotate(FeatureMap<FeatureType>& map, const std::vector<PeptideIdentification>& ids, const std::vector<ProteinIdentification>& protein_ids, bool use_centroids=false)
 			{
 				checkHits_(ids);
 				
@@ -147,22 +151,42 @@ namespace OpenMS
 				map.getProteinIdentifications().insert(map.getProteinIdentifications().end(),protein_ids.begin(),protein_ids.end());
 
 				//check if all feature have at least one convex hull
-				//if not, use the controid and the given deltas
-				if (!use_delta)
+				//if not, use the centroid and the given deltas
+				if (!use_centroids)
 				{
 					for(typename FeatureMap<FeatureType>::Iterator f_it = map.begin(); f_it!=map.end(); ++f_it)
 					{
 						if (f_it->getConvexHulls().size()==0)
 						{
-							use_delta = true;
+							use_centroids = true;
+							std::cout << "IDMapper warning: at least one feature has no convex hull => using centroids!" << std::endl;
 							break;
 						}
 					}
 				}
 				
-				//keep track of assigned/unassigned peptide identifications
-				std::set<Size> assigned;
+				//precalculate feature bounding boxes
+				std::vector< DBoundingBox<2> > bbs;
+				if (!use_centroids)
+				{
+					bbs.reserve(map.size());
+					for(typename FeatureMap<FeatureType>::Iterator f_it = map.begin(); f_it!=map.end(); ++f_it)
+					{
+						DBoundingBox<2> bb = f_it->getConvexHull().getBoundingBox();
+						bb.setMin(bb.min() - DPosition<2>(rt_delta_, getAbsoluteMZDelta_(bb.min().getY())));
+						bb.setMax(bb.max() + DPosition<2>(rt_delta_, getAbsoluteMZDelta_(bb.max().getY())));
+						bbs.push_back(bb);
+					}
+				}
 				
+				//keep track of assigned/unassigned peptide identifications
+				std::map<Size, Size> assigned;
+				
+				std::vector<DoubleReal> mz_values;
+				DoubleReal rt_pep;
+			
+				// features...
+				std::vector< DBoundingBox<2> >::const_iterator bb_it = bbs.begin();
 				for(typename FeatureMap<FeatureType>::Iterator f_it = map.begin(); f_it!=map.end(); ++f_it)
 				{
 					//iterate over the IDs
@@ -170,45 +194,84 @@ namespace OpenMS
 					{
 						if (ids[i].getHits().size()==0) continue;
 
-						if (use_delta)
+						getRTandMZofID_(ids[i], rt_pep, mz_values);
+						// if set to TRUE, we leave the i_mz-loop as we added the whole ID with all hits
+						bool was_added=false; // was current pep-m/z matched?!
+
+						// iterate over m/z values of pepIds
+						for (Size i_mz=0;i_mz<mz_values.size();++i_mz)
 						{
-							if ( (fabs((DoubleReal)ids[i].getMetaValue("RT")-f_it->getRT()) <= rt_delta_) 
-								&& (fabs((DoubleReal)ids[i].getMetaValue("MZ")-f_it->getMZ()) <= mz_delta_)  )
+							DoubleReal mz_pep = mz_values[i_mz];
+
+							if (use_centroids)
 							{
-								f_it->getPeptideIdentifications().push_back(ids[i]);
-								assigned.insert(i);
-							}
-						}
-						else
-						{
-							DPosition<2> id_pos(ids[i].getMetaValue("RT"),ids[i].getMetaValue("MZ"));
 							
-							//check if the ID lies within the bounding box
-							if (f_it->getConvexHull().getBoundingBox().encloses(id_pos))
-							{
-								// iterate over all convex hulls
-								for(std::vector<ConvexHull2D>::iterator ch_it = f_it->getConvexHulls().begin(); ch_it!=f_it->getConvexHulls().end(); ++ch_it)
+
+								if ( isMatch_(rt_pep - f_it->getRT(), mz_pep, f_it->getMZ()) )
 								{
-									if (ch_it->encloses(id_pos))
-									{
-										f_it->getPeptideIdentifications().push_back(ids[i]);
-										assigned.insert(i);
-										break;
-									}
+									was_added = true;
+									f_it->getPeptideIdentifications().push_back(ids[i]);
+									assigned[i]++;
 								}
 							}
-						}
-					}
-				}
+							else
+							{
+								DPosition<2> id_pos(rt_pep, mz_pep);
+								//check if the ID lies within the bounding box
+
+								if (bb_it->encloses(id_pos))
+								{
+									// iterate over all convex hulls
+									for(std::vector<ConvexHull2D>::iterator ch_it = f_it->getConvexHulls().begin(); ch_it!=f_it->getConvexHulls().end(); ++ch_it)
+									{
+										DBoundingBox<2> bb = ch_it->getBoundingBox();
+										bb.setMin(bb.min() - DPosition<2>(rt_delta_, getAbsoluteMZDelta_(bb.min().getY())));
+										bb.setMax(bb.max() + DPosition<2>(rt_delta_, getAbsoluteMZDelta_(bb.max().getY())));
+										if (bb.encloses(id_pos))
+										{
+											was_added = true;
+											f_it->getPeptideIdentifications().push_back(ids[i]);
+											assigned[i]++;
+											break;
+										}
+									}
+								} 
+							} // !centroids
+							
+							if (was_added) break;
+						} // m/z values to check
+
+					} // ID's
+					if(!use_centroids)	++bb_it;
+				} // features
+				
+				Size matches_none = 0;
+				Size matches_single = 0;
+				Size matches_multi = 0;
 				
 				//append unassigned peptide identifications
 				for (Size i=0; i<ids.size(); ++i)
 				{
-					if (assigned.count(i)==0)
+					Size matches = assigned[i];
+					if (matches==0)
 					{
 						map.getUnassignedPeptideIdentifications().push_back(ids[i]);
+						matches_none++;
+					}
+					else if (matches==1)
+					{
+						matches_single++;
+					}
+					else
+					{
+						matches_multi++;
 					}
 				}
+				
+				//some statistics output
+				std::cout << "Unassigned peptides: " << matches_none << std::endl;
+				std::cout << "Peptides assigned to exactly one features: " << matches_single << std::endl;
+				std::cout << "Peptides assigned to multiple features: " << matches_multi << std::endl;
 			}
 			
 			/**
@@ -227,28 +290,30 @@ namespace OpenMS
 		  void annotate(ConsensusMap& map, const std::vector<PeptideIdentification>& ids, const std::vector<ProteinIdentification>& protein_ids, bool measure_from_subelements=false);     
 		
 		protected:
-			
+			void updateMembers_();
+						
 			///Allowed RT deviation
 			DoubleReal rt_delta_;
 			///Allowed m/z deviation
 			DoubleReal mz_delta_;
+			///Measure used for m/z
+			Measure measure_;
+			
+			/// compute absolute Da delta, for a given m/z,
+			/// when @p measure is MEASURE_DA, the value is unchanged,
+			/// for MEASURE_PPM it is computed according to currently allowed ppm delta
+			DoubleReal getAbsoluteMZDelta_(const DoubleReal mz) const;
+			
+			/// check if distance constraint is fulfilled (using @p rt_delta_, @p mz_delta_ and @p measure_)
+			bool isMatch_(const DoubleReal rt_distance, const DoubleReal mz_theoretical, const DoubleReal mz_observed) const;
 			
 			///Helper function that checks if all peptide hits are annotated with RT and MZ meta values
-			void checkHits_(const std::vector<PeptideIdentification>& ids)
-			{
-				for (Size i=0; i<ids.size(); ++i)
-				{
-					if (!ids[i].metaValueExists("RT"))
-					{
-						throw Exception::MissingInformation(__FILE__,__LINE__,__PRETTY_FUNCTION__, "IDMapper: meta data value 'RT' missing for peptide identification!"); 
-					}
-					if (!ids[i].metaValueExists("MZ"))
-					{
-						throw Exception::MissingInformation(__FILE__,__LINE__,__PRETTY_FUNCTION__, "IDMapper: meta data value 'MZ' missing for peptide identification!"); 
-					}
-				}
-			}
+			void checkHits_(const std::vector<PeptideIdentification>& ids) const;
 			
+			///get RT and M/Z value(s) of a peptideIdentification
+			/// - multiple m/z values are returned if "mz_reference" is set to "PeptideMass" (one for each PeptideHit)
+			/// - one m/z value is returned if "mz_reference" is set to "PrecursorMZ"
+			void getRTandMZofID_(const PeptideIdentification& id, DoubleReal& rt_pep, std::vector<DoubleReal>& mz_values) const;
   };
  
 } // namespace OpenMS

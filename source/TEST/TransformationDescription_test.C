@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Clemens Groepl $
-// $Authors: $
+// $Authors: Hendrik Weisser $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -71,16 +71,29 @@ START_SECTION((const Param& getParameters() const))
 	TEST_EQUAL(td.getParameters(),Param())
 END_SECTION
 
-START_SECTION((DoubleReal getParam(const String& name) const))
+START_SECTION((const DataValue& getParam(const String &name) const))
 	TransformationDescription td;
 	TEST_EXCEPTION(Exception::ElementNotFound, td.getParam("bla"))
 END_SECTION
 
 START_SECTION((void setParam(const String& name, DoubleReal value)))
-	TransformationDescription td;
-	td.setParam("bla",4.5);
-	TEST_REAL_SIMILAR(td.getParam("bla"),4.5)
+  TransformationDescription td;
+  td.setParam("bla",4.5);
+  TEST_REAL_SIMILAR(td.getParam("bla"),4.5)
 END_SECTION
+
+START_SECTION((void setParam(const String& name, Int value)))
+  TransformationDescription td;
+  td.setParam("bla",17);
+  TEST_EQUAL(td.getParam("bla"),17)
+END_SECTION
+
+START_SECTION((void setParam(const String& name, const String& value)))
+  TransformationDescription td;
+  td.setParam("bla","yummyummmmyummmmmy");
+  TEST_EQUAL(td.getParam("bla"),"yummyummmmyummmmmy")
+END_SECTION
+
 
 START_SECTION((void setParameters(const Param& param)))
 	TransformationDescription td;
@@ -93,9 +106,9 @@ END_SECTION
 
 
 TransformationDescription::PairVector pairs;
-pairs.push_back(make_pair(1.2f,5.2f));
-pairs.push_back(make_pair(3.2f,7.3f));
-pairs.push_back(make_pair(2.2f,6.25f));
+pairs.push_back(make_pair(1.2,5.2));
+pairs.push_back(make_pair(3.2,7.3));
+pairs.push_back(make_pair(2.2,6.25));
 
 START_SECTION((const PairVector& getPairs() const))
 	TransformationDescription td;
@@ -106,9 +119,9 @@ START_SECTION((PairVector& getPairs()))
 {
   TransformationDescription td;
   TEST_EQUAL(td.getPairs().size(),0)
-  td.getPairs().push_back(make_pair(12.34f,56.78f));
+  td.getPairs().push_back(make_pair(12.34,56.78));
   TEST_EQUAL(td.getPairs().size(),1)
-  TEST_EQUAL(td.getPairs()[0].first,12.34);
+  TEST_EQUAL(td.getPairs()[0].first,12.34); // not TEST_REAL_SIMILAR!  I want to see an alert when someone messes up float vs. double!
   TEST_EQUAL(td.getPairs()[0].second,56.78);
   TEST_NOT_EQUAL(td.getPairs().empty(),true);
   td.getPairs().clear();
@@ -267,6 +280,68 @@ START_SECTION((void apply(DoubleReal &value) const))
 	value = 4.2;
 	td.apply(value);
 	TEST_REAL_SIMILAR(value,8.35);
+
+	//--------------------------
+
+	td.clear();
+	td.setName("b_spline");
+	td.setParam("num_breakpoints", 4);
+
+	TEST_EXCEPTION(Exception::IllegalArgument,td.apply(value));
+
+	pairs.clear();
+  pairs.push_back(make_pair(1.2,5.2));
+  pairs.push_back(make_pair(3.2,7.3));
+  pairs.push_back(make_pair(2.2,6.25));
+  pairs.push_back(make_pair(2.2,3.1));
+  pairs.push_back(make_pair(2.2,7.25));
+  pairs.push_back(make_pair(3.0,8.5));
+  pairs.push_back(make_pair(3.1,4.7));
+  pairs.push_back(make_pair(1.7,6.0));
+  pairs.push_back(make_pair(2.9,4.7));
+  pairs.push_back(make_pair(4.2,5.0));
+  pairs.push_back(make_pair(3.7,-2.4));
+
+  td.setPairs(pairs);
+
+
+#if 0
+    // Since the numbers in this test were verified by manual (in fact, visual) inspection...
+    // Here is a recipe how this was done:
+    //
+    // To grep for output, "pairs:" and "spline:", you might use a command line like this:
+    // make TransformationDescription_test && ctest -V -R TransformationDescription_test &&  ctest -V -R TransformationDescription_test | grep pairs: > points.dat && ctest -V -R TransformationDescription_test | grep spline: > bla.dat
+    // To have a look at the results using gnuplot:
+    // gnuplot -  # (to start gnuplot)
+    // plot './bla.dat' u 5:6, './points.dat' u 5:6
+
+    for ( UInt i = 0; i < pairs.size(); ++i )
+    {
+      STATUS("pairs: " << pairs[i].first << " " << pairs[i].second);
+    }
+
+    for ( Int i = -10; i <= 60; i+=5 )
+    {
+      DoubleReal value = i;
+      value /= 10;
+      DoubleReal image = value;
+      td.apply(image);
+      STATUS("spline: " << value << " " << image);
+    }
+#endif
+
+    DoubleReal sample_values[] =
+        { -1, -0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6 };
+    DoubleReal sample_images[] =
+        { -14.3519415123977, -9.91557518507088, -5.4792088577441, -1.04284253041731, 3.39352379690948, 6.4561466812738, 5.4858954730427,
+            6.14659387774751, 6.77299727168147, 0.646024122587505, -1.13062259235381, 18.3842099268184, 40.7826815802615, 63.1811532337045,
+            85.5796248871476 };
+    for ( Size i = 0; i < sizeof(sample_values)/sizeof(*sample_values); ++i)
+    {
+      DoubleReal x = sample_values[i];
+      td.apply(x);
+      TEST_REAL_SIMILAR(x,sample_images[i]);
+    }
 
 }
 END_SECTION

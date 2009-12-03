@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/TextFile.h>
@@ -98,16 +98,16 @@ namespace OpenMS
 			{
 				if (it->hasSuffix("\r\n"))
 				{
-					os << it->substr(0,-2)<< endl;
+					os << it->substr(0,-2)<< "\n";
 				}
 				else
 				{
-					os << it->substr(0,-1) << endl;
+					os << it->substr(0,-1) << "\n";
 				}
 			}
 			else
 			{
-				os << *it << endl;
+				os << *it << "\n";
 			}
 		}
 		os.close();

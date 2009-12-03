@@ -56,7 +56,7 @@ namespace OpenMS
 {
   /** 
     @brief An algorithm to decharge features (i.e. as found by FeatureFinder).
-    
+
     @htmlinclude OpenMS_FeatureDeconvolution.parameters	
     
     @ingroup Analysis
@@ -172,9 +172,10 @@ namespace OpenMS
 
       /// compute a zero-charge feature map from a set of charged features (@p map)
 			/// i.e. find putative ChargePairs, then score them and hand over to ILP
-			/// @param map Input feature-map
-			/// @param map Output feature-map (sorted by position and augmented with user params)
-			/// @param cons_map [out] Output of grouped features belonging to a charge group
+			/// @param fm_in  Input feature-map
+			/// @param fm_out Output feature-map (sorted by position and augmented with user params)
+			/// @param cons_map   [out] Output of grouped features belonging to a charge group
+			/// @param cons_map_p [out] Output of paired features connected by an egde
       void compute(const FeatureMapType &fm_in, FeatureMapType &fm_out, ConsensusMap &cons_map, ConsensusMap &cons_map_p) 
       {
       
@@ -601,6 +602,7 @@ namespace OpenMS
             }
 
             ConsensusFeature cf(fm_out[f0_idx]);
+            cf.setUniqueId();
             cf.insert(0,f0_idx, fm_out[f0_idx]);
             cf.insert(0,f1_idx, fm_out[f1_idx]);
             cf.setMetaValue("Local", String(old_q0)+":"+String(old_q1));
@@ -699,7 +701,7 @@ namespace OpenMS
 
 				// remove empty ConsensusFeatures from map
 				ConsensusMap cons_map_tmp(cons_map);
-				cons_map_tmp.clear(); // keep other meta information (like ProteinIDs & Map)
+				cons_map_tmp.clear(false); // keep other meta information (like ProteinIDs & Map)
 				for (ConsensusMap::ConstIterator it = cons_map.begin(); it!=cons_map.end(); ++it)
 				{
 					// skip if empty
@@ -720,6 +722,7 @@ namespace OpenMS
           if (clique_register.count(i) > 0) continue;
 
           ConsensusFeature cf(fm_out[i]);
+          cf.setUniqueId();
           cf.insert(0, i, fm_out[i]);
 
           cons_map.push_back(cf);
@@ -743,11 +746,16 @@ namespace OpenMS
 
     protected:
 
+			/**
+				@brief 1-sided Compomer for a feature
+				
+				Holds information on an explicit (with H+) 1-sided Compomer of a feature.
+			**/
 			struct CmpInfo_
 			{
-				String s_comp;
-				Size idx_cp;
-				UInt side_cp;
+				String s_comp; //< formula as String
+				Size idx_cp;	 //< index into compomer vector
+				UInt side_cp;	 //< side of parent compomer (LEFT or RIGHT)
 				
 				// C'tor
 				CmpInfo_(): s_comp(), idx_cp(), side_cp() {}

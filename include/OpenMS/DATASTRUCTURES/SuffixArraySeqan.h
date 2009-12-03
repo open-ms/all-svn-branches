@@ -33,21 +33,9 @@
 #include <vector>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/DATASTRUCTURES/SuffixArray.h>
+#include <OpenMS/DATASTRUCTURES/SeqanIncludeWrapper.h>
 #include <OpenMS/CHEMISTRY/WeightWrapper.h>
 
-#ifdef _MSC_VER // disable some seqan warnings that distract from ours
-#	pragma warning( push ) // save warning state
-#	pragma warning( disable : 4244 )
-#	pragma warning( disable : 4267 )
-#	pragma warning( disable : 4390 )
-#	pragma warning( disable : 4521 )
-#	pragma warning( disable : 4522 )
-#	pragma warning( disable : 4800 )
-#endif
-#include <seqan/index.h>
-#ifdef _MSC_VER
-#	pragma warning( pop )  // restore old warning state
-#endif
 
 
 namespace OpenMS
@@ -77,6 +65,7 @@ namespace OpenMS
 		@brief constructor
 		@param st const string reference with the string for which the suffix array should be build
 		@param filename const string reference with filename for opening or saving the suffix array
+		@param weight_mode if not monoistopic weight should be used, this parameters can be set to AVERAGE
 		@throw FileNotFound is thrown if the given file is not found
 		@throw InvalidValue if the given suffix array string is invalid
 		*/

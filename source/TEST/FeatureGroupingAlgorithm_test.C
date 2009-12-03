@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -33,6 +33,7 @@
 
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmLabeled.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmUnlabeled.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmIdentification.h>
 
 using namespace OpenMS;
 using namespace std;
@@ -76,9 +77,10 @@ END_SECTION
 
 START_SECTION((static void registerChildren()))
 {
-	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[0],FeatureGroupingAlgorithmLabeled::getProductName());
-	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[1],FeatureGroupingAlgorithmUnlabeled::getProductName());
-	TEST_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts().size(),2)
+	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[0],FeatureGroupingAlgorithmIdentification::getProductName());
+	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[1],FeatureGroupingAlgorithmLabeled::getProductName());
+	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[2],FeatureGroupingAlgorithmUnlabeled::getProductName());
+	TEST_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts().size(),3)
 }
 END_SECTION
 

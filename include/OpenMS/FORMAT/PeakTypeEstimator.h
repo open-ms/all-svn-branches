@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_PEAKTYPEESTIMATOR_H
@@ -76,10 +76,10 @@ namespace OpenMS
 	    		}
 	    	}
 	
-	    	//std::cout << "Min  : " << min << std::endl;
-	    	//std::cout << "Max  : " << max << std::endl;
-	    	//std::cout << "Left : " << left << std::endl;
-	    	//std::cout << "Right: " << right << std::endl;
+	    	//std::cout << "Min  : " << min << "\n";
+	    	//std::cout << "Max  : " << max << "\n";
+	    	//std::cout << "Left : " << left << "\n";
+	    	//std::cout << "Right: " << right << "\n";
 	    	
 	    	//raw data with zeros
 	    	if ((max-min)<0.5)

@@ -21,11 +21,11 @@ IdXMLEvaluation
 DecoyDatabase
 IDMassAccuracy
 SpectrumGeneratorNetworkTrainer
-PeptideIndexer
 ERPairFinder
 MRMPairFinder
 OpenMSInfo
-TheoreticalMSMSGenerator
+DeMeanderize
+UniqueIdAssigner
 )
 
 ### pass source file list to the upper instance

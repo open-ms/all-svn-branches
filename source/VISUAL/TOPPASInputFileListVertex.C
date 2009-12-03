@@ -26,6 +26,8 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/TOPPASInputFileListVertex.h>
+#include <OpenMS/VISUAL/TOPPASToolVertex.h>
+#include <OpenMS/VISUAL/TOPPASMergerVertex.h>
 #include <OpenMS/VISUAL/DIALOGS/TOPPASInputFilesDialog.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/SYSTEM/File.h>
@@ -114,7 +116,8 @@ namespace OpenMS
  		
  		pen.setColor(pen_color_);
  		painter->setPen(pen);
-		QString text = "Input file list";
+		QString text = QString::number(files_.size())+" input file"
+										+(files_.size() == 1 ? "" : "s");
 		QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, text);
 		painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), text);
 	}
@@ -137,44 +140,61 @@ namespace OpenMS
 		return true;
 	}
 	
-	void TOPPASInputFileListVertex::contextMenuEvent(QGraphicsSceneContextMenuEvent* event)
+	void TOPPASInputFileListVertex::openInTOPPView()
 	{
-		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
-		ts->unselectAll();
-		setSelected(true);
-		
-		QMenu menu;
-		menu.addAction("Change files");
-		QAction* open_action = menu.addAction("Open files in TOPPView");
-		if (files_.size() == 0)
+		QProcess* p = new QProcess();
+		p->setProcessChannelMode(QProcess::ForwardedChannels);
+		p->start("TOPPView", files_);
+	}
+	
+	void TOPPASInputFileListVertex::startPipeline()
+	{
+		if (files_.empty())
 		{
-			open_action->setEnabled(false);
+			return;
 		}
-		menu.addAction("Remove");
 		
-		QAction* selected_action = menu.exec(event->screenPos());
-		if (selected_action)
+		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
 		{
-			QString text = selected_action->text();
-			if (text == "Change files")
+			TOPPASVertex* tv = (*it)->getTargetVertex();
+			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>(tv);
+			if (ttv)
 			{
-				showFilesDialog();
+				if (!ttv->isAlreadyStarted())
+				{
+					ttv->runToolIfInputReady();
+					ttv->setAlreadyStarted(true);
+				}
+				continue;
 			}
-			else if (text == "Open files in TOPPView")
+			TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>(tv);
+			if (mv)
 			{
-				QProcess* p = new QProcess();
-				p->setProcessChannelMode(QProcess::ForwardedChannels);
-				p->start("TOPPView", files_);
+				if (!mv->isAlreadyStarted())
+				{
+					mv->forwardPipelineExecution();
+					mv->setAlreadyStarted(true);
+				}
+				continue;
 			}
-			else if (text == "Remove")
-			{
-				ts->removeSelected();
-			}
-			event->accept();
-		}
-		else
-		{
-			event->ignore();	
 		}
 	}
+	
+	void TOPPASInputFileListVertex::checkListLengths(QStringList& unequal_per_round, QStringList& unequal_over_entire_run)
+	{
+		__DEBUG_BEGIN_METHOD__
+		
+		sc_files_per_round_ = files_.size();
+		sc_files_total_ = sc_files_per_round_;
+		sc_list_length_checked_ = true;
+		
+		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
+		{
+			TOPPASVertex* tv = (*it)->getTargetVertex();
+			tv->checkListLengths(unequal_per_round, unequal_over_entire_run);
+		}
+		
+		__DEBUG_END_METHOD__
+	}
+	
 }

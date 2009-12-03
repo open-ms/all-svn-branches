@@ -20,7 +20,7 @@
 			<cvParam cvRef="MS" accession="MS:1000006" name="sample concentration" value="0" unitAccession="UO:0000175" unitName="gram per liter" unitCvRef="UO" />
 		</sample>
 	</sampleList>
-	<softwareList count="3">
+	<softwareList count="5">
 		<software id="so_in_0" version="" >
 			<cvParam cvRef="MS" accession="MS:1000799" name="custom unreleased software tool" value="" />
 		</software>
@@ -60,7 +60,7 @@
 			<softwareRef ref="so_in_0" />
 		</instrumentConfiguration>
 	</instrumentConfigurationList>
-	<dataProcessingList count="1">
+	<dataProcessingList count="8">
 		<dataProcessing id="dp_sp_0">
 			<processingMethod order="0" softwareRef="so_dp_sp_0_pm_0">
 				<cvParam cvRef="MS" accession="MS:1000543" name="data processing action" />
@@ -142,7 +142,7 @@
 						<cvParam cvRef="MS" accession="MS:1000515" name="intensity array" unitAccession="MS:1000131" unitName="number of counts" unitCvRef="MS"/>
 						<cvParam cvRef="MS" accession="MS:1000521" name="32-bit float" />
 						<cvParam cvRef="MS" accession="MS:1000576" name="no compression" />
-						<binary>n2NASAQI7keLKi9H</binary>
+						<binary>i1mxR4xsW0cheaFG</binary>
 					</binaryDataArray>
 					<binaryDataArray arrayLength="3" encodedLength="32" >
 						<cvParam cvRef="MS" accession="MS:1000523" name="64-bit float" />
@@ -154,7 +154,7 @@
 						<cvParam cvRef="MS" accession="MS:1000523" name="64-bit float" />
 						<cvParam cvRef="MS" accession="MS:1000576" name="no compression" />
 						<cvParam cvRef="MS" accession="MS:1000786" name="non-standard data array" value="maximumIntensity" />
-						<binary>AAAAYDEr9kAAAACAkW3rQAAAACAkL9RA</binary>
+						<binary>AAAA4HMMCEEAAACAAMH9QAAAAGBR5eVA</binary>
 					</binaryDataArray>
 					<binaryDataArray arrayLength="3" encodedLength="32" >
 						<cvParam cvRef="MS" accession="MS:1000523" name="64-bit float" />

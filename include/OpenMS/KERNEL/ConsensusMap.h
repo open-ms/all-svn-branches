@@ -35,6 +35,7 @@
 #include <OpenMS/KERNEL/ComparatorUtils.h>
 #include <OpenMS/METADATA/ProteinIdentification.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
+#include <OpenMS/CONCEPT/UniqueIdIndexer.h>
 
 namespace OpenMS
 {
@@ -53,7 +54,9 @@ namespace OpenMS
 		: public std::vector<ConsensusFeature>,
 			public MetaInfoInterface,
 			public RangeManager<2>,
-			public DocumentIdentifier
+			public DocumentIdentifier,
+			public UniqueIdInterface,
+			public UniqueIdIndexer<ConsensusMap>
 	{
 
 		public:
@@ -67,24 +70,27 @@ namespace OpenMS
 					: MetaInfoInterface(),
 						filename(),
 						label(),
-						size(0)
+						size(0),
+						unique_id(UniqueIdInterface::INVALID)
 				{
 				}
 
-				/// file name of the file
+				/// File name of the file
 				String filename;
 				/// Label e.g. 'heavy' and 'light' for ICAT, or 'sample1' and 'sample2' for label-free quantitation
 				String label;
 				/// @brief Number of elements (features, peaks, ...).
 				/// This is e.g. used to check for correct element indices when writing a consensus map
 				Size size;
+				/// Unique id of the file
+				UInt64 unique_id;
 			};
 
 			///@name Type definitions
 			//@{
 			typedef std::vector<ConsensusFeature > Base;
 			typedef RangeManager<2> RangeManagerType;
-			typedef Map<Size,FileDescription> FileDescriptions;
+			typedef Map<UInt64,FileDescription> FileDescriptions;
 			/// Mutable iterator
 			typedef std::vector<ConsensusFeature>::iterator Iterator;
 			/// Non-mutable iterator
@@ -101,6 +107,8 @@ namespace OpenMS
 					MetaInfoInterface(),
 					RangeManagerType(),
 					DocumentIdentifier(),
+					UniqueIdInterface(),
+					UniqueIdIndexer<ConsensusMap>(),
 					file_description_(),
 					experiment_type_(),
 					protein_identifications_(),
@@ -115,6 +123,8 @@ namespace OpenMS
 					MetaInfoInterface(source),
 					RangeManagerType(source),
 					DocumentIdentifier(source),
+					UniqueIdInterface(source),
+					UniqueIdIndexer<ConsensusMap>(source),
 					file_description_(source.file_description_),
 					experiment_type_(source.experiment_type_),
 					protein_identifications_(source.protein_identifications_),
@@ -134,6 +144,7 @@ namespace OpenMS
 					MetaInfoInterface(),
 					RangeManagerType(),
 					DocumentIdentifier(),
+					UniqueIdInterface(),
 					file_description_(),
 					experiment_type_(),
 					protein_identifications_(),
@@ -151,6 +162,7 @@ namespace OpenMS
 				MetaInfoInterface::operator=(source);
 				RangeManagerType::operator=(source);
 				DocumentIdentifier::operator=(source);
+        UniqueIdInterface::operator=(source);
 				file_description_ = source.file_description_;
 				experiment_type_ = source.experiment_type_;
 				protein_identifications_ = source.protein_identifications_;
@@ -159,6 +171,29 @@ namespace OpenMS
 
 				return *this;
 			}
+
+			/**
+				@brief Clears all data and meta data
+				
+				@param clear_meta_data If @em true, all meta data is cleared in addition to the data.
+			*/ 
+			void clear(bool clear_meta_data)
+			{
+				Base::clear();
+					
+				if (clear_meta_data)
+				{
+					clearMetaInfo();
+					clearRanges();
+					this->DocumentIdentifier::operator=(DocumentIdentifier()); // no "clear" method
+					clearUniqueId();
+					file_description_.clear();
+					experiment_type_.clear();
+					protein_identifications_.clear();
+					unassigned_peptide_identifications_.clear();
+					data_processing_.clear();
+				}
+			}		
 
 			/// Non-mutable access to the file descriptions
 			inline const FileDescriptions& getFileDescriptions() const
@@ -184,6 +219,10 @@ namespace OpenMS
 				experiment_type_ = experiment_type;
 			}
 
+#if 0
+
+      // OBSOLETE and BROKEN since we are using unique ids now - the results will be wrong!  (namely, almost always negative)
+
 			/**
 				@brief Checks if all map identifiers in FeatureHandles have a filename associated
 
@@ -191,6 +230,7 @@ namespace OpenMS
 				@return if the map is valid
 			*/
 			bool isValid(String& error_message) const;
+#endif
 
 			/**
 				@name Sorting.
@@ -260,47 +300,59 @@ namespace OpenMS
 				@brief Convert a FeatureMap (of any feature type) to a ConsensusMap.  Each
 				ConsensusFeature contains a map index, so this has to be given as well.
 				The previous content of output_map is cleared.
+				An arguable design decision is that the unique id of the FeatureMap is copied (!) to the ConsensusMap,
+				because that is the way it is meant to be used in the algorithms.
 
 				@param input_map_index The index of the input map.
 				@param input_map The container to be converted.  (Must support size() and operator[].)
 				@param output_map The resulting ConsensusMap.
+
 			*/
 			template <typename FeatureT>
-			static void convert(Size const input_map_index, FeatureMap<FeatureT> const & input_map, ConsensusMap& output_map )
+			static void convert(UInt64 const input_map_index, FeatureMap<FeatureT> const & input_map, ConsensusMap& output_map )
       {
-				output_map.clear();
+				output_map.clear(true);
 				output_map.reserve(input_map.size());
-				for (Size element_index = 0; element_index < input_map.size(); ++element_index )
+				
+				// An arguable design decision, see above.
+        output_map.setUniqueId(input_map.getUniqueId());
+
+        for (UInt64 element_index = 0; element_index < input_map.size(); ++element_index )
 				{
-					output_map.push_back( ConsensusFeature( input_map_index, element_index, input_map[element_index] ) );
+					output_map.push_back( ConsensusFeature( input_map_index, input_map[element_index].getUniqueId(), input_map[element_index] ) );
 				}
 				output_map.getFileDescriptions()[input_map_index].size = (Size) input_map.size();
-				output_map.getProteinIdentifications().insert(output_map.getProteinIdentifications().end(),input_map.getProteinIdentifications().begin(), input_map.getProteinIdentifications().end());
-				output_map.getUnassignedPeptideIdentifications().insert(output_map.getUnassignedPeptideIdentifications().end(),input_map.getUnassignedPeptideIdentifications().begin(), input_map.getUnassignedPeptideIdentifications().end());
+        output_map.setProteinIdentifications(input_map.getProteinIdentifications());
+        output_map.setUnassignedPeptideIdentifications(input_map.getUnassignedPeptideIdentifications());
 				output_map.updateRanges();
-				return;
 			}
 
 			/**
 				@brief Similar to convert, but copies only the @p n most intense elements from an MSExperiment.
+        Currently MSExperiment<> does not have a unique id but ConsensusMap has one, so we assign a new one here.
 
 				@param input_map_index The index of the input map.
 				@param input_map The input map to be converted.
 				@param output_map The resulting ConsensusMap.
 				@param n The maximum number of elements to be copied.
+
 			*/
-			static void convert(Size const input_map_index, MSExperiment<> & input_map, ConsensusMap& output_map, Size n)
+			static void convert(UInt64 const input_map_index, MSExperiment<> & input_map, ConsensusMap& output_map, Size n)
 			{
+				output_map.clear(true);
+
+				// see @todo above
+        output_map.setUniqueId();
+
 				input_map.updateRanges(1);
 				if ( n > input_map.getSize() )
 				{
 					n = input_map.getSize();
 				}
-				output_map.clear();
 				output_map.reserve(n);
 				std::vector<Peak2D> tmp;
 				tmp.reserve(input_map.getSize());
-				input_map.get2DData(tmp); //Avoid tripling the memory consumption by this call
+				input_map.get2DData(tmp); // TODO Avoid tripling the memory consumption by this call
 				std::partial_sort( tmp.begin(), tmp.begin()+n, tmp.end(), reverseComparator(Peak2D::IntensityLess()) );
 				for (Size element_index = 0; element_index < n; ++element_index )
 				{
@@ -308,7 +360,6 @@ namespace OpenMS
 				}
 				output_map.getFileDescriptions()[input_map_index].size = n;
 				output_map.updateRanges();
-				return;
 			}
 
 			// Docu in base class
@@ -329,6 +380,12 @@ namespace OpenMS
 
 				// swap DocumentIdentifier
 				DocumentIdentifier::swap(from);
+
+				// swap unique id
+				UniqueIdInterface::swap(from);
+
+        // swap unique id index
+        UniqueIdIndexer<ConsensusMap>::swap(from);
 
 				// swap the remaining members
 				std::swap(file_description_, from.file_description_);
@@ -400,6 +457,7 @@ namespace OpenMS
 					MetaInfoInterface::operator==(rhs) &&
 					RangeManagerType::operator==(rhs) &&
 					DocumentIdentifier::operator==(rhs) &&
+					UniqueIdInterface::operator == (rhs) &&
 					file_description_ == rhs.file_description_ &&
 					experiment_type_ == rhs.experiment_type_ &&
 					protein_identifications_==rhs.protein_identifications_ &&
@@ -413,6 +471,42 @@ namespace OpenMS
 			{
 				return !(operator==(rhs));
 			}
+
+      /**@brief Applies a member function of Type to all consensus features.
+         The returned values are accumulated.
+
+         <b>Example:</b>  The following will print the number of features with invalid unique ids:
+         @code
+         ConsensusMap cm;
+         (...)
+         std::cout << cm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId) << std::endl;
+         @endcode
+         See e.g. UniqueIdInterface for what else can be done this way.
+      */
+      template < typename Type >
+      Size applyMemberFunction( Size (Type::*member_function)() )
+      {
+        Size assignments = 0;
+        assignments += ((*this).*member_function)();
+        for ( Iterator iter = this->begin(); iter != this->end(); ++iter)
+        {
+          assignments += ((*iter).*member_function)();
+        }
+        return assignments;
+      }
+
+      /// The "const" variant.
+      template < typename Type >
+      Size applyMemberFunction( Size (Type::*member_function)() const ) const
+      {
+        Size assignments = 0;
+        assignments += ((*this).*member_function)();
+        for ( ConstIterator iter = this->begin(); iter != this->end(); ++iter)
+        {
+          assignments += ((*iter).*member_function)();
+        }
+        return assignments;
+      }
 
 		protected:
 

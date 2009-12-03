@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 // OpenMS
@@ -172,7 +172,7 @@ namespace OpenMS
 		//store old zoom state
 		if (add_to_stack)
 		{
-			// if we scrolled in between zooming we want to store the last position before zomming as well
+			// if we scrolled in between zooming we want to store the last position before zooming as well
 			if (	 (zoom_stack_.size()>0)
 					&& (zoom_stack_.back()!=visible_area_))
 			{
@@ -372,7 +372,31 @@ namespace OpenMS
 		layers_.back().param = param_;
 		layers_.back().filename = filename;
 		layers_.back().peaks.swap(map);
-		layers_.back().type = LayerData::DT_PEAK;
+		if (layers_.back().peaks.getChromatograms().size()!=0)
+		{
+			Size num_chrom(0);
+			for (Size i = 0; i != layers_.back().peaks.getChromatograms().size(); ++i)
+			{
+				if (layers_.back().peaks.getChromatograms()[i].getChromatogramType() == ChromatogramSettings::SELECTED_ION_CURRENT_CHROMATOGRAM ||
+						layers_.back().peaks.getChromatograms()[i].getChromatogramType() == ChromatogramSettings::SELECTED_REACTION_MONITORING_CHROMATOGRAM)
+				{
+					++num_chrom;
+				}
+			}
+			
+			if (num_chrom > 0)
+			{
+				layers_.back().type = LayerData::DT_CHROMATOGRAM;
+			}
+			else
+			{
+				layers_.back().type = LayerData::DT_PEAK;
+			}
+		}
+		else
+		{
+			layers_.back().type = LayerData::DT_PEAK;
+		}
 		return finishAdding_();
 	}
 
@@ -442,7 +466,7 @@ namespace OpenMS
 		
 		for (Size layer_index=0; layer_index< getLayerCount(); ++layer_index)
 		{
-			if (getLayer(layer_index).type==LayerData::DT_PEAK)
+			if (getLayer(layer_index).type==LayerData::DT_PEAK || getLayer(layer_index).type==LayerData::DT_CHROMATOGRAM)
 			{
 				const ExperimentType& map = getLayer(layer_index).peaks;
 				if (map.getMinMZ() < min[mz_dim]) min[mz_dim] = map.getMinMZ();
@@ -703,7 +727,7 @@ namespace OpenMS
 	void SpectrumCanvas::getVisiblePeakData(ExperimentType& map) const
 	{		
 		//clear output experiment
-		map.clear();
+		map.clear(true);
 		
     const LayerData& layer = getCurrentLayer();
   	if (layer.type==LayerData::DT_PEAK)
@@ -755,12 +779,16 @@ namespace OpenMS
 				map.push_back(spectrum);
   		}
 		}
+		else if (layer.type==LayerData::DT_CHROMATOGRAM)
+		{
+			//TODO CHROM
+		}
 	}
 
 	void SpectrumCanvas::getVisibleFeatureData(FeatureMapType& map) const
 	{		
 		//clear output experiment
-		map.clear();
+		map.clear(true);
 		
     const LayerData& layer = getCurrentLayer();
   	if (layer.type==LayerData::DT_FEATURE)
@@ -791,7 +819,7 @@ namespace OpenMS
 	void SpectrumCanvas::getVisibleConsensusData(ConsensusMapType& map) const
 	{		
 		//clear output experiment
-		map.clear();
+		map.clear(true);
 		
     const LayerData& layer = getCurrentLayer();
   	if (layer.type==LayerData::DT_CONSENSUS)
@@ -842,6 +870,10 @@ namespace OpenMS
 			{
 				dlg.add(layer.consensus);
 			}
+			else if (layer.type==LayerData::DT_CHROMATOGRAM)
+			{
+				//TODO CHROM
+			}
 		}
 		else //show element meta data
 		{
@@ -856,6 +888,10 @@ namespace OpenMS
 			else if (layer.type==LayerData::DT_CONSENSUS)
 			{
 				dlg.add(layer.consensus[index]);
+			}
+			else if (layer.type==LayerData::DT_CHROMATOGRAM)
+			{
+				//TODO CHROM
 			}
 		}
   	
@@ -917,7 +953,7 @@ namespace OpenMS
 			rt = peak.getSpectrum(getCurrentLayer().peaks).getRT();
 			it = peak.getPeak(getCurrentLayer().peaks).getIntensity();
 		}
-		else
+		else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
 		{
 			mz = peak.getFeature(getCurrentLayer().consensus).getMZ();
 			rt = peak.getFeature(getCurrentLayer().consensus).getRT();
@@ -925,7 +961,11 @@ namespace OpenMS
 			charge  = peak.getFeature(getCurrentLayer().consensus).getCharge();
 			quality = peak.getFeature(getCurrentLayer().consensus).getQuality();
 		}
-				
+		else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
+		{
+			//TODO CHROM
+		}
+		
 		//draw text			
 		QStringList lines;
 		if (print_rt) lines.push_back("RT : " + QString::number(rt,'f',2));
@@ -942,7 +982,6 @@ namespace OpenMS
 	void SpectrumCanvas::drawDeltas_(QPainter& painter, const PeakIndex& start, const PeakIndex& end, bool print_rt)
 	{
 		if (!start.isValid()) return;
-		if (!end.isValid()) return;
 		
 		//determine coordinates;
 		DoubleReal mz = 0.0;
@@ -950,28 +989,62 @@ namespace OpenMS
 		Real it = 0.0;
 		if (getCurrentLayer().type==LayerData::DT_FEATURE)
 		{
-			mz = end.getFeature(getCurrentLayer().features).getMZ() - start.getFeature(getCurrentLayer().features).getMZ();
-			rt = end.getFeature(getCurrentLayer().features).getRT() - start.getFeature(getCurrentLayer().features).getRT();
-			it = end.getFeature(getCurrentLayer().features).getIntensity() / start.getFeature(getCurrentLayer().features).getIntensity();
+			if (end.isValid())
+			{
+				mz = end.getFeature(getCurrentLayer().features).getMZ() - start.getFeature(getCurrentLayer().features).getMZ();
+				rt = end.getFeature(getCurrentLayer().features).getRT() - start.getFeature(getCurrentLayer().features).getRT();
+				it = end.getFeature(getCurrentLayer().features).getIntensity() / start.getFeature(getCurrentLayer().features).getIntensity();
+			}
+			else
+			{
+				PointType point = widgetToData_(last_mouse_pos_);
+				mz = point[0] - start.getFeature(getCurrentLayer().features).getMZ();
+				rt = point[1] - start.getFeature(getCurrentLayer().features).getRT();
+				it = std::numeric_limits<DoubleReal>::quiet_NaN();
+			}
 		}
 		else if (getCurrentLayer().type==LayerData::DT_PEAK)
 		{
-			mz = end.getPeak(getCurrentLayer().peaks).getMZ() - start.getPeak(getCurrentLayer().peaks).getMZ();
-			rt = end.getSpectrum(getCurrentLayer().peaks).getRT() - start.getSpectrum(getCurrentLayer().peaks).getRT();
-			it = end.getPeak(getCurrentLayer().peaks).getIntensity() / start.getPeak(getCurrentLayer().peaks).getIntensity();
+			if (end.isValid())
+			{
+				mz = end.getPeak(getCurrentLayer().peaks).getMZ() - start.getPeak(getCurrentLayer().peaks).getMZ();
+				rt = end.getSpectrum(getCurrentLayer().peaks).getRT() - start.getSpectrum(getCurrentLayer().peaks).getRT();
+				it = end.getPeak(getCurrentLayer().peaks).getIntensity() / start.getPeak(getCurrentLayer().peaks).getIntensity();
+			}
+			else
+			{
+				PointType point = widgetToData_(last_mouse_pos_);
+				mz = point[0] - start.getPeak(getCurrentLayer().peaks).getMZ();
+				rt = point[1] - start.getSpectrum(getCurrentLayer().peaks).getRT();
+				it = std::numeric_limits<DoubleReal>::quiet_NaN();
+			}
 		}
-		else
+		else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
 		{
-			mz = end.getFeature(getCurrentLayer().consensus).getMZ() - start.getFeature(getCurrentLayer().consensus).getMZ();
-			rt = end.getFeature(getCurrentLayer().consensus).getRT() - start.getFeature(getCurrentLayer().consensus).getRT();
-			it = end.getFeature(getCurrentLayer().consensus).getIntensity() / start.getFeature(getCurrentLayer().consensus).getIntensity();
+			if (end.isValid())
+			{
+				mz = end.getFeature(getCurrentLayer().consensus).getMZ() - start.getFeature(getCurrentLayer().consensus).getMZ();
+				rt = end.getFeature(getCurrentLayer().consensus).getRT() - start.getFeature(getCurrentLayer().consensus).getRT();
+				it = end.getFeature(getCurrentLayer().consensus).getIntensity() / start.getFeature(getCurrentLayer().consensus).getIntensity();
+			}
+			else
+			{
+				PointType point = widgetToData_(last_mouse_pos_);
+				mz = point[0] - start.getFeature(getCurrentLayer().consensus).getMZ();
+				rt = point[1] - start.getFeature(getCurrentLayer().consensus).getRT();
+				it = std::numeric_limits<DoubleReal>::quiet_NaN();
+			}
 		}
-				
+		else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
+		{
+			//TODO CHROM
+		}
+		
 		//draw text			
 		QStringList lines;
 		if (print_rt) lines.push_back("RT delta : " + QString::number(rt,'f',2));
 		lines.push_back("m/z delta: " + QString::number(mz,'f',6));
-		if (boost::math::isinf(rt) || boost::math::isnan(rt))
+		if (boost::math::isinf(it) || boost::math::isnan(it))
 		{
 			lines.push_back("int ratio: n/a");
 		}

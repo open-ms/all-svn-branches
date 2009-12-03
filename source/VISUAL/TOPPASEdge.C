@@ -27,11 +27,10 @@
 
 #include <OpenMS/VISUAL/TOPPASEdge.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
-#include <OpenMS/VISUAL/TOPPASInputFileVertex.h>
 #include <OpenMS/VISUAL/TOPPASInputFileListVertex.h>
-#include <OpenMS/VISUAL/TOPPASOutputFileVertex.h>
 #include <OpenMS/VISUAL/TOPPASOutputFileListVertex.h>
 #include <OpenMS/VISUAL/DIALOGS/TOPPASIOMappingDialog.h>
+#include <OpenMS/VISUAL/TOPPASMergerVertex.h>
 
 #include <QtGui/QPainter>
 #include <QtGui/QPainterPath>
@@ -49,7 +48,6 @@ namespace OpenMS
 			to_(0),
 			hover_pos_(),
 			color_(),
-			edge_type_(ET_INVALID),
 			source_out_param_(-1),
 			target_in_param_(-1)
 	{
@@ -63,7 +61,6 @@ namespace OpenMS
 			to_(0),
 			hover_pos_(hover_pos),
 			color_(),
-			edge_type_(ET_INVALID),
 			source_out_param_(-1),
 			target_in_param_(-1)
 	{
@@ -77,7 +74,6 @@ namespace OpenMS
 			to_(rhs.to_),
 			hover_pos_(rhs.hover_pos_),
 			color_(rhs.color_),
-			edge_type_(rhs.edge_type_),
 			source_out_param_(rhs.source_out_param_),
 			target_in_param_(rhs.target_in_param_)
 	{
@@ -90,7 +86,6 @@ namespace OpenMS
 		to_ = rhs.to_;
 		hover_pos_ = rhs.hover_pos_;
 		color_ = rhs.color_;
-		edge_type_ = rhs.edge_type_;
 		source_out_param_ = rhs.source_out_param_;
 		target_in_param_ = rhs.target_in_param_;
 		
@@ -321,304 +316,238 @@ namespace OpenMS
 
 	void TOPPASEdge::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
 	{
+		showIOMappingDialog();
+	}
+
+	void TOPPASEdge::showIOMappingDialog()
+	{
 		TOPPASIOMappingDialog dialog(this);
 		if (dialog.exec())
 		{
 			emit somethingHasChanged();
 		}
 	}
-	
-	void TOPPASEdge::determineEdgeType()
+
+	TOPPASEdge::EdgeStatus TOPPASEdge::getToolToolStatus_(TOPPASToolVertex* source_tool, int source_param_index, TOPPASToolVertex* target_tool, int target_param_index)
 	{
-		bool source_vertex_is_a_tool = false;
-		bool source_vertex_is_a_list = false;
-		TOPPASVertex* source = getSourceVertex();
-		TOPPASVertex* target = getTargetVertex();
-		
-		if (source == 0 || target == 0)
-		{
-			return;
-		}
-		
-		if (qobject_cast<TOPPASToolVertex*>(source))
-		{
-			source_vertex_is_a_tool = true;
-		}
-		else if (qobject_cast<TOPPASInputFileListVertex*>(source))
-		{
-			source_vertex_is_a_list = true;
-			// fill that
-		}
-		if (source_vertex_is_a_tool)
-		{
-			if (qobject_cast<TOPPASToolVertex*>(target))
-			{
-				edge_type_ = ET_TOOL_TO_TOOL;
-			}
-			else if (qobject_cast<TOPPASOutputFileListVertex*>(target))
-			{
-				edge_type_ = ET_TOOL_TO_LIST;
-				// here too
-			}
-			else
-			{
-				edge_type_ = ET_TOOL_TO_FILE;
-				// and so on
-			}
-		}
-		else if (qobject_cast<TOPPASToolVertex*>(target))
-		{			
-			if (source_vertex_is_a_list)
-			{
-				edge_type_ = ET_LIST_TO_TOOL;
-			}
-			else
-			{
-				edge_type_ = ET_FILE_TO_TOOL;
-			}
-		}
-		else
-		{
-			edge_type_ = ET_INVALID;
-		}
-	}
-	
-	TOPPASEdge::EdgeType TOPPASEdge::getEdgeType()
-	{
-		return edge_type_;
-	}
-	
-	TOPPASEdge::EdgeStatus TOPPASEdge::getEdgeStatus()
-	{
-		TOPPASVertex* source = getSourceVertex();
-		TOPPASVertex* target = getTargetVertex();
 		QVector<TOPPASToolVertex::IOInfo> source_output_files;
 		QVector<TOPPASToolVertex::IOInfo> target_input_files;
-		StringList source_param_types;
-		StringList target_param_types;
-		bool source_param_has_list_type = false;
-		bool target_param_has_list_type = false;
-		bool valid = false;
+		source_tool->getOutputParameters(source_output_files);
+		const TOPPASToolVertex::IOInfo& source_param = source_output_files[source_param_index];
+		StringList source_param_types = source_param.valid_types;
+		target_tool->getInputParameters(target_input_files);
+		const TOPPASToolVertex::IOInfo& target_param = target_input_files[target_param_index];
+		StringList target_param_types = target_param.valid_types;
 		
-		TOPPASToolVertex* source_tool = qobject_cast<TOPPASToolVertex*>(source);
-		if (source_tool && source_out_param_ >= 0)
+		if (source_param_types.size() == 0 || target_param_types.size() == 0)
 		{
-			source_tool->getOutputParameters(source_output_files);
-			const TOPPASToolVertex::IOInfo& source_param = source_output_files[source_out_param_];
-			source_param_types = source_param.valid_types;
-			source_param_has_list_type = source_param.type == TOPPASToolVertex::IOInfo::IOT_LIST;
-		}
-				
-		TOPPASToolVertex* target_tool = qobject_cast<TOPPASToolVertex*>(target);
-		if (target_tool && target_in_param_ >= 0)
-		{
-			target_tool->getInputParameters(target_input_files);
-			const TOPPASToolVertex::IOInfo& target_param = target_input_files[target_in_param_];
-			target_param_types = target_param.valid_types;
-			target_param_has_list_type = target_param.type == TOPPASToolVertex::IOInfo::IOT_LIST;
-		}
-				
-		if (edge_type_ == ET_FILE_TO_TOOL)
-		{
-			if (target_param_has_list_type)
-			{
-				// source gives file, target takes list
-				return ES_MISMATCH_FILE_LIST;
-			}
-			else if (target_in_param_ == -1)
-			{
-				// no param selected
-				return ES_NO_TARGET_PARAM;
-			}
-			else if (target_param_types.empty())
-			{
-				// no restrictions specified
-				valid = true;
-			}
-			else
-			{
-				const String& file_name = String(qobject_cast<TOPPASInputFileVertex*>(source)->getFilename());
-				String::SizeType extension_start_index = file_name.rfind(".");
-				if (extension_start_index != String::npos)
-				{
-					const String& extension = file_name.substr(extension_start_index+1);
-					for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
-					{
-						if (*it == extension)
-						{
-							valid = true;
-							break;
-						}
-					}
-				}
-				else if (file_name == "")
-				{
-					// file name is not specified yet
-					return ES_NOT_READY_YET;
-				}
-				
-				if (!valid)
-				{
-					return ES_FILE_EXT_MISMATCH;
-				}
-			}
-		}
-		else if (edge_type_ == ET_LIST_TO_TOOL)
-		{
-			if (!target_param_has_list_type)
-			{
-				// source gives list, target takes file
-				return ES_MISMATCH_LIST_FILE;
-			}
-			else if (target_in_param_ == -1)
-			{
-				// no param selected
-				return ES_NO_TARGET_PARAM;
-			}
-			else if (target_param_types.empty())
-			{
-				// no restrictions specified
-				valid = true;
-			}
-			else
-			{
-				const QStringList& file_names = qobject_cast<TOPPASInputFileListVertex*>(source)->getFilenames();
-				
-				if (file_names.empty())
-				{
-					// file names are not specified yet
-					return ES_NOT_READY_YET;
-				}
-				else
-				{
-					bool mismatch_exists = false;
-					foreach (const QString& q_file_name, file_names)
-					{
-						bool type_mismatch = true;
-						const String& file_name = String(q_file_name);
-						String::SizeType extension_start_index = file_name.rfind(".");
-						if (extension_start_index != String::npos)
-						{
-							const String& extension = file_name.substr(extension_start_index+1);
-							for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
-							{
-								if (*it == extension)
-								{
-									type_mismatch = false;
-									break;
-								}
-							}
-							if (type_mismatch)
-							{
-								mismatch_exists = true;
-								break;
-							}
-						}
-					}
-					if (!mismatch_exists)
-					{
-						valid = true;
-					}
-					else
-					{
-						return ES_FILE_EXT_MISMATCH;
-					}
-				}
-			}
-		}
-		else if (edge_type_ == ET_TOOL_TO_FILE)
-		{
-			if (source_param_has_list_type)
-			{
-				// source gives list, target takes file
-				return ES_MISMATCH_LIST_FILE;
-			}
-			else if (source_out_param_ == -1)
-			{
-				// no param selected
-				return ES_NO_SOURCE_PARAM;
-			}
-			
-			valid = true;
-		}
-		else if (edge_type_ == ET_TOOL_TO_LIST)
-		{
-			if (!source_param_has_list_type)
-			{
-				// source gives file, target takes list
-				return ES_MISMATCH_FILE_LIST;
-			}
-			else if (source_out_param_ == -1)
-			{
-				// no param selected
-				return ES_NO_SOURCE_PARAM;
-			}
-			
-			valid = true;
-		}
-		else if (edge_type_ == ET_TOOL_TO_TOOL)
-		{
-			if (source_out_param_ == -1)
-			{
-				// no param selected
-				return ES_NO_SOURCE_PARAM;
-			}
-			if (target_in_param_ == -1)
-			{
-				// no param selected
-				return ES_NO_TARGET_PARAM;
-			}
-			if (source_param_has_list_type && !target_param_has_list_type)
-			{
-				return ES_MISMATCH_LIST_FILE;
-			}
-			if (!source_param_has_list_type && target_param_has_list_type)
-			{
-				return ES_MISMATCH_FILE_LIST;
-			}
-			
-			
-			if (source_param_types.size() == 0 || target_param_types.size() == 0)
-			{
-				valid = true;
-			}
-			else
-			{
-				bool types_ok = false;
-				for (StringList::iterator s_it = source_param_types.begin(); s_it != source_param_types.end(); ++s_it)
-				{
-					bool found_match = false;
-					for (StringList::iterator t_it = target_param_types.begin(); t_it != target_param_types.end(); ++t_it)
-					{
-						if (*s_it == *t_it)
-						{
-							found_match = true;
-							break;
-						}
-					}
-					if (found_match)
-					{
-						types_ok = true;
-						break;
-					}
-				}
-				
-				if (!types_ok)
-				{
-					return ES_FILE_EXT_MISMATCH;
-				}
-				valid = true;
-			}
-		}
-				
-		if (valid)
-		{
+			// no type specified --> allow edge
 			return ES_VALID;
 		}
 		else
 		{
-			return ES_UNKNOWN;
+			// check file type compatibility
+			bool found_match = false;
+			for (StringList::iterator s_it = source_param_types.begin(); s_it != source_param_types.end(); ++s_it)
+			{
+				String ext_1 = *s_it;
+				ext_1.toLower();
+				found_match = false;
+				for (StringList::iterator t_it = target_param_types.begin(); t_it != target_param_types.end(); ++t_it)
+				{
+					String ext_2 = *t_it;
+					ext_2.toLower();
+					if (ext_1 == ext_2)
+					{
+						found_match = true;
+						break;
+					}
+				}
+				if (found_match)
+				{
+					break;
+				}
+			}
+
+			if (!found_match)
+			{
+				return ES_FILE_EXT_MISMATCH;
+			}
+
+			return ES_VALID;
 		}
+	}
+
+	TOPPASEdge::EdgeStatus TOPPASEdge::getListToolStatus_(TOPPASInputFileListVertex* source_input_list, TOPPASToolVertex* target_tool, int target_param_index)
+	{
+		const QStringList& file_names = source_input_list->getFilenames();
+		if (file_names.empty())
+		{
+			// file names are not specified yet
+			return ES_NOT_READY_YET;
+		}
+
+		QVector<TOPPASToolVertex::IOInfo> target_input_files;
+		target_tool->getInputParameters(target_input_files);
+		const TOPPASToolVertex::IOInfo& target_param = target_input_files[target_param_index];
+		StringList target_param_types = target_param.valid_types;
+
+		if (target_param_types.empty())
+		{
+			// no file types specified --> allow
+			return ES_VALID;
+		}
+
+		// check file type compatibility
+		bool type_mismatch = false;
+		foreach (const QString& q_file_name, file_names)
+		{
+			type_mismatch = true;
+			const String& file_name = String(q_file_name);
+			String::SizeType extension_start_index = file_name.rfind(".");
+			if (extension_start_index != String::npos)
+			{
+				String extension = file_name.substr(extension_start_index+1);
+				extension.toLower();
+				for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
+				{
+					String other_ext = *it;
+					other_ext.toLower();
+					if (extension == other_ext)
+					{
+						type_mismatch = false;
+						break;
+					}
+				}
+			}
+
+			if (type_mismatch)
+			{
+				return ES_FILE_EXT_MISMATCH;
+			}
+		}
+
+		// all file types ok
+		return ES_VALID;
+	}
+		
+	TOPPASEdge::EdgeStatus TOPPASEdge::getEdgeStatus()
+	{
+		TOPPASVertex* source = getSourceVertex();
+		TOPPASVertex* target = getTargetVertex();
+		TOPPASMergerVertex* source_merger = qobject_cast<TOPPASMergerVertex*>(source);
+		TOPPASMergerVertex* target_merger = qobject_cast<TOPPASMergerVertex*>(target);
+		TOPPASInputFileListVertex* source_input_list = qobject_cast<TOPPASInputFileListVertex*>(source);
+		TOPPASOutputFileListVertex* target_output_list = qobject_cast<TOPPASOutputFileListVertex*>(target);
+		TOPPASToolVertex* source_tool = qobject_cast<TOPPASToolVertex*>(source);
+		TOPPASToolVertex* target_tool = qobject_cast<TOPPASToolVertex*>(target);
+		
+		if (target_output_list)
+		// edges to output vertices are always valid (if finishHoveringEdge_() allowed to construct them in the first place)
+		{
+			return ES_VALID;
+		}
+
+		if (source_tool && source_out_param_ < 0)
+		{
+			return ES_NO_SOURCE_PARAM;
+		}
+
+		if (target_tool && target_in_param_ < 0)
+		{
+			return ES_NO_TARGET_PARAM;
+		}
+		
+		if (source_tool && target_tool)
+		{
+			return getToolToolStatus_(source_tool, source_out_param_, target_tool, target_in_param_);
+		}
+		
+		if (source_input_list && target_tool)
+		{
+			return getListToolStatus_(source_input_list, target_tool, target_in_param_);
+		}
+
+		if (source_merger)
+		{
+			//check compatibility of source with all target nodes of merger
+			for (TOPPASVertex::EdgeIterator e_it = source_merger->inEdgesBegin(); e_it != source_merger->inEdgesEnd(); ++e_it)
+			{
+				TOPPASEdge* merger_in_edge = *e_it;
+				TOPPASToolVertex* merger_in_tool = qobject_cast<TOPPASToolVertex*>(merger_in_edge->getSourceVertex());
+				TOPPASInputFileListVertex* merger_in_list = qobject_cast<TOPPASInputFileListVertex*>(merger_in_edge->getSourceVertex());
+				
+				if (merger_in_tool && target_tool)
+				{
+					EdgeStatus es = getToolToolStatus_(merger_in_tool, merger_in_edge->getSourceOutParam(), target_tool, target_in_param_);
+					if (es != ES_VALID)
+					{
+						return es;
+					}
+				}
+				else if (merger_in_list)
+				{
+					if (target_output_list)
+					{
+						// [input] -> [merger] -> [output]) makes no sense
+						return ES_MERGER_WITHOUT_TOOL;
+					}
+					else if (target_tool)
+					{
+						EdgeStatus es = getListToolStatus_(merger_in_list, target_tool, target_in_param_);
+						if (es != ES_VALID)
+						{
+							return es;
+						}
+					}
+				}
+			}
+			// no incompatible merger target found
+			return ES_VALID;
+		}
+
+		if (target_merger)
+		{
+			//check compatibility of source with all target nodes of merger
+			for (TOPPASVertex::EdgeIterator e_it = target_merger->outEdgesBegin(); e_it != target_merger->outEdgesEnd(); ++e_it)
+			{
+				TOPPASEdge* merger_out_edge = *e_it;
+				TOPPASToolVertex* merger_out_tool = qobject_cast<TOPPASToolVertex*>(merger_out_edge->getTargetVertex());
+				TOPPASOutputFileListVertex* merger_out_output = qobject_cast<TOPPASOutputFileListVertex*>(merger_out_edge->getTargetVertex());
+				
+				if (source_tool)
+				{
+					if (merger_out_tool)
+					{
+						EdgeStatus es = getToolToolStatus_(source_tool, source_out_param_, merger_out_tool, merger_out_edge->getTargetInParam());
+						if (es != ES_VALID)
+						{
+							return es;
+						}
+					}
+				}
+				else if (source_input_list)
+				{
+					if (merger_out_tool)
+					{
+						EdgeStatus es = getListToolStatus_(source_input_list, merger_out_tool, merger_out_edge->getTargetInParam());
+						if (es != ES_VALID)
+						{
+							return es;
+						}
+					}	
+					else if (merger_out_output)
+					// [input] -> [merger] -> [output]) makes no sense
+					{
+						return ES_MERGER_WITHOUT_TOOL;
+					}
+				}
+			}
+			// no incompatible merger target found
+			return ES_VALID;
+		}
+
+		return ES_UNKNOWN;
 	}
 	
 	void TOPPASEdge::setSourceOutParam(int out)

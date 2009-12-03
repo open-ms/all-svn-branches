@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm$
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -32,6 +32,7 @@
 #include <OpenMS/MATH/MISC/MathFunctions.h>
 #include <OpenMS/FORMAT/MzDataFile.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmPicked.h>
+#include <OpenMS/KERNEL/RichPeak1D.h>
 
 ///////////////////////////
 
@@ -52,7 +53,7 @@ START_SECTION((FeatureFinderAlgorithmPicked()))
 	TEST_NOT_EQUAL(ptr,0)
 END_SECTION
 
-START_SECTION(~FeatureFinderAlgorithmPicked())
+START_SECTION((~FeatureFinderAlgorithmPicked()))
 	delete ptr;
 END_SECTION
 

@@ -75,7 +75,7 @@ namespace OpenMS
      @brief Predict retention times for given peptide features based on a SVM Model
      
      @param features Feature map for which the retention times will be predicted
-     @param features Experiment map which will be build from scratch
+     @param experiment Experiment map which will be build from scratch
      */
     void predictRT(FeatureMapSim & features, MSSimExperiment & experiment);
  
@@ -92,7 +92,9 @@ namespace OpenMS
 		/// Wrapper for the SVM RT Prediction (HPLC)
 		void wrapSVM(std::vector<String>& peptide_sequences,std::vector<DoubleReal>& predicted_retention_times);
 
-    
+		/// Wrapper for the SVM RT Prediction (HPLC) using AASequences (TODO: eventually remove other wrapper function??)
+		void wrapSVM(std::vector<AASequence>& peptide_sequences,std::vector<DoubleReal>& predicted_retention_times);
+
     SimCoordinateType getGradientTime() const;
 
   private:

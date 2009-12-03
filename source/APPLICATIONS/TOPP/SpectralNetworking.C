@@ -223,30 +223,50 @@ using namespace std;
 		for(Size i = 0; i < pot_pairs.size(); ++i)
 		{
 			logger.setProgress(i);
-			DoubleReal best_score1, best_score2, best_shift;
-			std::list<std::pair<Size,Size> > best_matches;
+			DoubleReal best_score1_sf, best_score2_sf, best_score1_st, best_score2_st, best_shift;
+			std::list<std::pair<Size,Size> > best_matches_sf, best_matches_st ;
 			/// @improvement use xcorr with AND without shift, accept only those with sufficient combined match numbers
-			x_corr.getXCorrelation(experiment[pot_pairs[i].first], experiment[pot_pairs[i].second], best_score1, best_score2, best_shift, best_matches);
-			average_best_matches += (DoubleReal)best_matches.size();
+			x_corr.getXCorrelation(experiment[pot_pairs[i].first], experiment[pot_pairs[i].second], best_score1_sf, best_score2_sf, best_shift, best_matches_sf,false);
+			x_corr.getXCorrelation(experiment[pot_pairs[i].first], experiment[pot_pairs[i].second], best_score1_st, best_score2_st, best_shift, best_matches_st,true);
 			//~ half the peaks number of average size of the two spectra times the given ratio is the minimum match number
 			/// @improvement make pairs_min_ratio an advanced parameter
-			if((DoubleReal)best_matches.size()/((DoubleReal)(experiment[pot_pairs[i].first].size()+experiment[pot_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio)
+			if(best_matches_sf > best_matches_st and (DoubleReal)best_matches_sf.size()/((DoubleReal)(experiment[pot_pairs[i].first].size()+experiment[pot_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio)
 			{
-				xcorr_accumulators[pot_pairs[i].first](best_score1);
-				xcorr_accumulators[pot_pairs[i].second](best_score2);
-				pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(best_score1,best_score2));
+				xcorr_accumulators[pot_pairs[i].first](best_score1_sf);
+				xcorr_accumulators[pot_pairs[i].second](best_score2_sf);
+				pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(best_score1_sf,best_score2_sf));
 				edge_selection.push_back(i);
 			}
+			else if((DoubleReal)best_matches_st.size()/((DoubleReal)(experiment[pot_pairs[i].first].size()+experiment[pot_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio)
+			{
+				xcorr_accumulators[pot_pairs[i].first](best_score1_st);
+				xcorr_accumulators[pot_pairs[i].second](best_score2_st);
+				pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(best_score1_st,best_score2_st));
+				edge_selection.push_back(i);
+			}
+			average_best_matches += std::max(best_matches_sf.size(),best_matches_st.size());
+
+			//~ DoubleReal cumulated_match_size(((DoubleReal)best_matches_st.size()+(DoubleReal)best_matches_sf.size())/2.0);
+			//~ DoubleReal cumulated_score1((best_score1_st+best_score1_sf)/2.0);
+			//~ DoubleReal cumulated_score2((best_score2_st+best_score2_sf)/2.0);
+			//~ if(/* (DoubleReal)best_matches.size() */ cumulated_match_size/((DoubleReal)(experiment[pot_pairs[i].first].size()+experiment[pot_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio)
+			//~ {
+				//~ xcorr_accumulators[pot_pairs[i].first](/* best_score1 */cumulated_score1);
+				//~ xcorr_accumulators[pot_pairs[i].second](/* best_score2 */cumulated_score2);
+				//~ pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(/* best_score1,best_score2 */cumulated_score1,cumulated_score2));
+				//~ edge_selection.push_back(i);
+			//~ }
+
 		}
 		for(Size i = 0; i < edge_selection.size(); ++i)
 		{
 			//~ edge_selection indices are alwas >= the ones to pot_pairs so no collision expected
 			pot_pairs[i] = pot_pairs[edge_selection[i]];
 		}
-		average_best_matches /= (DoubleReal)pot_pairs.size();
 		pot_pairs.resize(edge_selection.size());
 		logger.endProgress();
-		writeLog_(String(".. preselected edges having a average match size of ") + String(average_best_matches) + String(" ..") );
+		//~ average_best_matches /= (DoubleReal)pot_pairs.size();
+		//~ writeLog_(String(".. preselected edges having a average match size of ") + String(average_best_matches) + String(" ..") );
 		writeLog_(String(".. ") + pot_pairs.size() + String(" edges passed minimum ratio evaluation ..") );
 
 		//filter pairs not gcdf
@@ -487,28 +507,33 @@ using namespace std;
 		writeLog_(String("unknowns ") + String(c));
 
 		std::vector<String> colors;
-		colors.push_back("#00FFFF");
-		colors.push_back("#000000");
-		colors.push_back("#0000FF");
-		colors.push_back("#FF00FF");
-		colors.push_back("#008000");
-		colors.push_back("#808080");
-		colors.push_back("#00FF00");
-		colors.push_back("#800000");
-		colors.push_back("#000080");
-		colors.push_back("#808000");
-		colors.push_back("#800080");
-		colors.push_back("#FF0000");
-		colors.push_back("#C0C0C0");
-		colors.push_back("#008080");
-		colors.push_back("#FFFF00");
+		//~ colors interpretable by QColor(QString) see http://www.w3.org/TR/SVG/types.html#ColorKeywords
+		colors.push_back("blue				");
+		colors.push_back("brown				");
+		colors.push_back("cyan				");
+		colors.push_back("gold				");
+		colors.push_back("gray				");
+		colors.push_back("grey				");
+		colors.push_back("green				");
+		colors.push_back("magenta			");
+		colors.push_back("red					");
+		colors.push_back("violet			");
+		colors.push_back("darkblue		");
+		colors.push_back("darkcyan		");
+		colors.push_back("darkgray		");
+		colors.push_back("darkgreen		");
+		colors.push_back("darkgrey		");
+		colors.push_back("darkmagenta	");
+		colors.push_back("darkred			");
+		colors.push_back("darkviolet	");
+
 		for(ConsensusMap::Iterator ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
 		{
 			if(ids_it->metaValueExists("network id"))
 			{
 				ids_it->setMetaValue("color", colors[(Size)ids_it->getMetaValue("network id")%colors.size()]);
 				//~ set intensity for coloration
-				ids_it->setIntensity(1000*((Size)ids_it->getMetaValue("network id"))%colors.size());
+				//~ ids_it->setIntensity(1000*((Size)ids_it->getMetaValue("network id"))%colors.size());
 			}
 		}
 
@@ -652,6 +677,7 @@ using namespace std;
 			//~ start propagation
 			ConsensusMap ids;
 			propagateNetwork_(experiment, peptide_ids, protein_ids, aligned_pairs, mod_positions, ids);
+			ids.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 			ConsensusXMLFile cxml;
 			writeLog_(String("Saving propagated network ..") );
 			cxml.store(outputfile_name_specnet, ids);

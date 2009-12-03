@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Stephan Aiche$
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -31,14 +31,13 @@
 
 #include <OpenMS/DATASTRUCTURES/DPosition.h>
 
-///////////////////////////
+/////////////////////////////////////////////////////////////
+
+using namespace OpenMS;
 
 START_TEST(DPosition<D>, "$Id$")
 
 /////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
-
-using namespace OpenMS;
 
 std::cout.precision(writtenDigits<>(DoubleReal()));
 std::cerr.precision(writtenDigits<>(DoubleReal()));

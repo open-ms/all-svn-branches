@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
@@ -108,8 +108,8 @@ namespace OpenMS
 		registerIntOption_("instance","<n>",1,"Instance number for the TOPP INI file",false);
 		registerIntOption_("debug","<n>",0,"Sets the debug level",false, true);
 		registerIntOption_("threads", "<n>", 1, "Sets the number of threads allowed to be used by the TOPP tool", false);
-		registerStringOption_("write_ini","<file>","","Writes an example configuration file",false);
-		registerStringOption_("write_wsdl","<file>","","Writes an example WSDL file",false);
+		registerStringOption_("write_ini","<file>","","Writes the default configuration file",false);
+		registerStringOption_("write_wsdl","<file>","","Writes the default WSDL file",false);
 		registerFlag_("no_progress","Disables progress logging to command line");
 		if (id_tag_support_)
 		{
@@ -183,6 +183,11 @@ namespace OpenMS
 		if (param_cmdline_.exists("test"))
 		{
 			test_mode_ = true;
+
+			// initialize the random generator as early as possible!
+      DateTime date_time;
+      date_time.set("1999-12-31 23:59:59");
+			UniqueIdGenerator::setSeed(date_time);
 		}
 
 		// test if unknown options were given
@@ -209,12 +214,73 @@ namespace OpenMS
 #endif
 
 			// '-write_ini' given
-			String ini_file("");
-			if (param_cmdline_.exists("write_ini")) ini_file = param_cmdline_.getValue("write_ini");
-			if (ini_file != "")
+			String write_ini_file("");
+			if (param_cmdline_.exists("write_ini")) write_ini_file = param_cmdline_.getValue("write_ini");
+			if (write_ini_file != "")
 			{
-				outputFileWritable_(ini_file);
-				getDefaultParameters_().store(ini_file);
+				Param default_params = getDefaultParameters_();
+				// check if augmentation with -ini param is needed
+				DataValue in_ini;
+				if (param_cmdline_.exists("ini")) in_ini = param_cmdline_.getValue("ini");
+				if (!in_ini.isEmpty())
+				{
+					Param ini_params;
+					ini_params.load( (String)in_ini );
+					// augment
+					for(Param::ParamIterator it = ini_params.begin(); it != ini_params.end();++it)
+					{
+						if (default_params.exists(it.getName()))
+						{
+							// param 'type': do not override!
+							if (it.getName().hasSuffix(":type"))
+							{	
+								if (default_params.getValue(it.getName()) != it->value)
+								{
+									writeLog_("Warning: Augmented and Default Ini-File differ in value. Default value will not be altered!");
+									continue;
+								}
+							}
+							
+							// all other parameters:
+							Param::ParamEntry entry = default_params.getEntry (it.getName());
+							if (entry.value.valueType() == it->value.valueType())
+							{
+								if (entry.value != it->value)
+								{
+									// check entry for consistency (in case restrictions have changed)							
+									entry.value = it->value;
+									String s;
+									if (entry.isValid(s))
+									{
+										// overwrite default value
+										writeDebug_(String("Overriding Default-Parameter ") + it.getName() + " with new value "+String(it->value) ,10); 
+										default_params.setValue(it.getName(),it->value, entry.description, default_params.getTags(it.getName()));
+									}
+									else
+									{
+										writeDebug_(String("Parameter ") + it.getName() + " does not fit into new restriction settings! Ignoring...",10); 
+									}
+								}
+								else
+								{
+									// value stayed the same .. nothing to be done
+								}
+							}
+							else
+							{
+								writeDebug_(String("Parameter ") + it.getName() + " has changed value type! Ignoring...",10); 
+							}
+						}
+						else
+						{
+							writeDebug_(String("Deprecated Parameter ") + it.getName() + " given in -ini argument! Ignoring...",10); 
+						}
+					}
+				
+				}
+				outputFileWritable_(write_ini_file);
+				
+				default_params.store(write_ini_file);
 				return EXECUTION_OK;
 			}
 
@@ -370,7 +436,8 @@ namespace OpenMS
 				os << "  </wsdl:service>" << endl;
 				//end
 				os << "</wsdl:definitions>" << endl;
-
+				os.close();
+				
 				//validate written file
 				XMLValidator validator;
 				if (!validator.isValid(wsdl_file,File::find("SCHEMAS/WSDL_20030211.xsd")))
@@ -411,7 +478,18 @@ namespace OpenMS
 				// check if all parameters are registered and have the correct type
 				checkParam_(param_instance_, (String)value_ini, getIniLocation_());
 				checkParam_(param_common_tool_, (String)value_ini, "common:" + tool_name_ + "::");
-				checkParam_(param_common_, (String)value_ini, "common::" );
+				checkParam_(param_common_, (String)value_ini, "common:" );
+				
+				//check if the version of the parameters file matches the version of this tool
+				String file_version = "";
+				if (param_inifile_.exists(tool_name_ + ":version"))
+				{
+					file_version = param_inifile_.getValue(tool_name_ + ":version");
+					if (file_version!=VersionInfo::getVersion())
+					{
+						writeLog_(String("Warning: Parameters file version (") + file_version + ") does not match the version of this tool (" + VersionInfo::getVersion() + ").");
+					}
+				}
 			}
 
 			//-------------------------------------------------------------
@@ -611,7 +689,7 @@ namespace OpenMS
 						String tmp = it->default_value.toString();
 						if (tmp!="" && tmp!="[]")
 						{
-							addons.push_back(String("default: '") + tmp + "'");
+							addons.push_back(String("default: \"") + tmp + "\"");
 						}
 					}
 					break;
@@ -637,7 +715,7 @@ namespace OpenMS
 						if (it->type == ParameterInformation::INPUT_FILE || it->type == ParameterInformation::OUTPUT_FILE ||
 								it->type == ParameterInformation::INPUT_FILE_LIST || it->type == ParameterInformation::OUTPUT_FILE_LIST) add = " formats";
 
-						addons.push_back(String("valid") + add + ": '" + tmp + "'");
+						addons.push_back(String("valid") + add + ": \"" + tmp + "\"");
 					}
 					break;
 				case ParameterInformation::INT:
@@ -706,7 +784,7 @@ namespace OpenMS
 
 		if (subsections_.size()!=0)
 		{
-			//determin indentation of description
+			//determine indentation of description
 			UInt indent = 0;
 			for(map<String,String>::const_iterator it = subsections_.begin(); it!=subsections_.end(); ++it)
 			{
@@ -986,7 +1064,7 @@ namespace OpenMS
 					if (find(p.valid_strings.begin(),p.valid_strings.end(),tmp)==p.valid_strings.end())
 					{
 						String valid_strings = "";
-						valid_strings.concatenate(p.valid_strings.begin(),p.valid_strings.end(),"','");
+						valid_strings.concatenate(p.valid_strings.begin(),p.valid_strings.end(),"', '");
 						throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__, String("Invalid value '") + tmp + "' for string parameter '" + name + "' given. Valid strings are: '" + valid_strings + "'.");
 					}
 				}
@@ -1842,6 +1920,12 @@ namespace OpenMS
 				tmp.setSectionDescription(loc + it->first, it->second);
 			}
 		}
+		
+		//set tool version
+		tmp.setValue(tool_name_ + ":version", VersionInfo::getVersion(), "Version of the tool that generated this parameters file.", StringList::create("advanced"));
+		
+		//descriptions
+		tmp.setSectionDescription(tool_name_, tool_description_);
 		tmp.setSectionDescription(tool_name_ + ":1", String("Instance '1' section for '") + tool_name_ + "'");
 
 		// store "type" in INI-File (if given)
@@ -1851,7 +1935,7 @@ namespace OpenMS
 	}
 
 
-	const IDTagger& TOPPBase::getIDTagger_() const
+	const DocumentIDTagger& TOPPBase::getDocumentIDTagger_() const
 	{
 		if (!id_tag_support_)
 		{
@@ -1878,6 +1962,7 @@ namespace OpenMS
 
 		tools_map["AdditiveSeries"] = StringList::create("");
 		tools_map["BaselineFilter"] = StringList::create("");
+		tools_map["CompNovo"] = StringList::create("CompNovo,CompNovoCID");
 		tools_map["ConsensusID"] = StringList::create("");
 		tools_map["DBExporter"] = StringList::create("");
 		tools_map["DBImporter"] = StringList::create("");
@@ -1906,24 +1991,26 @@ namespace OpenMS
 		tools_map["NoiseFilter"] = StringList::create("sgolay,gaussian");
 		tools_map["OMSSAAdapter"] = StringList::create("");
 		tools_map["PILISModel"] = StringList::create("");
-		tools_map["PILISIdentification"] = StringList::create("");
 		tools_map["PTModel"] = StringList::create("");
 		tools_map["PTPredict"] = StringList::create("");
 		tools_map["PeakPicker"] = StringList::create("wavelet,high_res");
 		tools_map["PepNovoAdapter"] = StringList::create("");
+		tools_map["PeptideIndexer"] = StringList::create("");
+		tools_map["PrecursorIonSelector"] = StringList::create("");
 		tools_map["RTModel"] = StringList::create("");
 		tools_map["RTPredict"] = StringList::create("");
 		tools_map["Resampler"] = StringList::create("");
 		tools_map["SILACAnalyzer"] = StringList::create("");
+		tools_map["SeedListGenerator"] = StringList::create("");
 		tools_map["SequestAdapter"] = StringList::create("");
-		tools_map["SpectraFilter"] = Factory<PreprocessingFunctor>::registeredProducts();
 		tools_map["SpecLibSearcher"] = StringList::create("");
+		tools_map["SpectraFilter"] = Factory<PreprocessingFunctor>::registeredProducts();
 		tools_map["TOFCalibration"] = StringList::create("");
 		tools_map["TextExporter"] = StringList::create("");
 		tools_map["TextImporter"] = StringList::create("");
 		tools_map["XTandemAdapter"] = StringList::create("");
-		tools_map["PrecursorIonSelector"] = StringList::create("");
-		tools_map["CompNovo"] = StringList::create("CompNovo,CompNovoCID");
+    tools_map["SILACAnalyzer"] = StringList::create("double,triple");
+    tools_map["PrecursorMassCorrector"] = StringList::create("");
 
 		return tools_map;
 	}

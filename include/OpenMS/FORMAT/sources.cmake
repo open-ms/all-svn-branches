@@ -24,6 +24,9 @@ source_group("Source Files\\OpenMS\\FORMAT" FILES ${mocced_sources})
 set(sources_list_h
 ANDIFile.h
 Base64.h
+Bzip2Ifstream.h
+Bzip2InputStream.h
+CompressedInputSource.h
 CVMappingFile.h
 ConsensusXMLFile.h
 ControlledVocabulary.h
@@ -35,6 +38,8 @@ FastaIterator.h
 FastaIteratorIntern.h
 FeatureXMLFile.h
 FileHandler.h
+GzipIfstream.h
+GzipInputStream.h
 IdXMLFile.h
 InspectInfile.h
 InspectOutfile.h
@@ -61,6 +66,7 @@ PepXMLFileMascot.h
 ProtXMLFile.h
 SequestInfile.h
 SequestOutfile.h
+SVOutStream.h
 TextFile.h
 TransformationXMLFile.h
 UnimodXMLFile.h

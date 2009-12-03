@@ -21,14 +21,16 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Chris Bielow, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Chris Bielow, Clemens Groepl $
+// $Authors: Marc Sturm, Chris Bielow, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/KERNEL/Feature.h>
+
+#include <algorithm>
 #include <string>
 
 ///////////////////////////
@@ -40,7 +42,7 @@ using namespace OpenMS;
 
 /////////////////////////////////////////////////////////////
 
-START_TEST(FeatureMap<D>, "$Id$")
+START_TEST(FeatureMap, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -253,7 +255,7 @@ START_SECTION((bool operator == (const FeatureMap& rhs) const))
 	edit.push_back(feature1);
 	edit.push_back(feature2);
 	edit.updateRanges();
-	edit.clear();
+	edit.clear(false);
 	TEST_EQUAL(empty==edit, false);
 END_SECTION
 
@@ -286,7 +288,7 @@ START_SECTION((bool operator != (const FeatureMap& rhs) const))
 	edit.push_back(feature1);
 	edit.push_back(feature2);
 	edit.updateRanges();
-	edit.clear();
+	edit.clear(false);
 	TEST_EQUAL(empty!=edit, true);
 END_SECTION
 
@@ -460,6 +462,163 @@ START_SECTION((void sortByOverallQuality(bool reverse=false)))
 	TEST_EQUAL(to_be_sorted[1].getOverallQuality(),20);
 	TEST_EQUAL(to_be_sorted[2].getOverallQuality(),30);
 
+	to_be_sorted.sortByOverallQuality(true);
+
+	TEST_EQUAL(to_be_sorted[0].getPosition()[0],2);
+	TEST_EQUAL(to_be_sorted[1].getPosition()[0],3);
+	TEST_EQUAL(to_be_sorted[2].getPosition()[0],1);
+
+	TEST_EQUAL(to_be_sorted[0].getOverallQuality(),30);
+	TEST_EQUAL(to_be_sorted[1].getOverallQuality(),20);
+	TEST_EQUAL(to_be_sorted[2].getOverallQuality(),10);
+
+END_SECTION
+
+START_SECTION((void clear(bool clear_meta_data)))
+  FeatureMap<> map1;
+	map1.setIdentifier("stupid comment");
+	map1.push_back(feature1);
+	map1.push_back(feature2);
+	map1.updateRanges();
+	map1.getDataProcessing().resize(1);
+	map1.getProteinIdentifications().resize(1);
+	map1.getUnassignedPeptideIdentifications().resize(1);
+	
+	map1.clear(false);
+	TEST_EQUAL(map1.size(),0)
+	TEST_EQUAL(map1==FeatureMap<>(),false)
+
+	map1.clear(true);
+	TEST_EQUAL(map1==FeatureMap<>(),true)
+END_SECTION
+
+START_SECTION((template < typename Type > Size applyMemberFunction(Size(Type::*member_function)())))
+	FeatureMap<> fm;
+	fm.ensureUniqueId();
+	Feature f1;
+	f1.ensureUniqueId();
+	fm.push_back(f1);
+	Feature f2;
+	f2.ensureUniqueId();
+	fm.push_back(f2);	
+
+	Feature f3;
+	fm.push_back(f3);	
+	
+	Feature f4;
+	f4.ensureUniqueId();
+	fm.push_back(f4);	
+
+	TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId), 1);
+
+END_SECTION
+
+START_SECTION((template < typename Type > Size applyMemberFunction(Size(Type::*member_function)() const ) const))
+	FeatureMap<> fm;
+	fm.ensureUniqueId();
+	Feature f1;
+	f1.ensureUniqueId();
+	fm.push_back(f1);
+	Feature f2;
+	f2.ensureUniqueId();
+	fm.push_back(f2);	
+
+	Feature f3;
+	fm.push_back(f3);	
+	
+	Feature f4;
+	f4.ensureUniqueId();
+	fm.push_back(f4);	
+
+	TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId), 1);
+
+END_SECTION
+
+START_SECTION(([EXTRA] void uniqueIdToIndex()))
+{
+	  FeatureMap<> fm;
+	  Feature f;
+	  f.setMZ(23.9);
+	  std::vector< std::pair < Size, UInt64 > > pairs;
+	  const Size num_features = 4;
+	  for ( Size i = 0; i < num_features; ++i )
+	  {
+	    f.setRT(i*100);
+	    f.setUniqueId();
+	    pairs.push_back(make_pair(i,f.getUniqueId()));
+      fm.push_back(f);
+	  }
+    for ( Size i = 0; i < num_features; ++i )
+    {
+      TEST_EQUAL(fm.uniqueIdToIndex(pairs[i].second),pairs[i].first);
+    }
+    STATUS("shuffling ...");
+    std::random_shuffle(pairs.begin(),pairs.end());
+    std::random_shuffle(fm.begin(),fm.end());
+    for ( Size i = 0; i < num_features; ++i )
+    {
+      STATUS("pairs[i]:  " << pairs[i].first << ", " << pairs[i].second )
+      TEST_EQUAL(fm.uniqueIdToIndex(fm[pairs[i].first].getUniqueId()),pairs[i].first);
+      TEST_EQUAL(fm[fm.uniqueIdToIndex(pairs[i].second)].getUniqueId(),pairs[i].second);
+    }
+
+    f.setRT(98765421);
+    f.setUniqueId();
+    pairs.push_back(make_pair(987654321,f.getUniqueId()));
+
+    TEST_EQUAL(fm.uniqueIdToIndex(pairs.back().second),Size(-1));
+    fm.push_back(f);
+    TEST_EQUAL(fm.uniqueIdToIndex(pairs.back().second),fm.size()-1);
+
+    fm.push_back(Feature());
+    fm.push_back(f);
+    fm.push_back(Feature());
+    fm.push_back(Feature());
+    STATUS("fm: " << fm);
+    fm.erase(fm.begin()+1);
+    fm.erase(fm.begin()+2);
+    STATUS("fm: " << fm);
+    TEST_EXCEPTION_WITH_MESSAGE(Exception::Postcondition,fm.updateUniqueIdToIndex(),"Duplicate valid unique ids detected!   RandomAccessContainer has size()==7, num_valid_unique_id==4, uniqueid_to_index_.size()==3");
+}
+END_SECTION
+
+START_SECTION((template < typename Type > Size applyMemberFunction(Size(Type::*member_function)())))
+{
+  FeatureMap<> fm;
+  fm.push_back(Feature());
+  fm.push_back(Feature());
+  fm.back().getSubordinates().push_back(Feature());
+
+  TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),4);
+  fm.setUniqueId();
+  TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),3);
+  fm.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+  TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),4);
+  TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),0);
+  fm.front().clearUniqueId();
+  TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),3);
+  TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),1);
+}
+END_SECTION
+
+START_SECTION((template < typename Type > Size applyMemberFunction(Size(Type::*member_function)() const ) const ))
+{
+  FeatureMap<> fm;
+  FeatureMap<> const & fmc(fm);
+  fm.push_back(Feature());
+  fm.push_back(Feature());
+  fm.back().getSubordinates().push_back(Feature());
+
+  TEST_EQUAL(fmc.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),4);
+  fm.setUniqueId();
+  TEST_EQUAL(fmc.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),3);
+  fm.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+  TEST_EQUAL(fmc.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),4);
+  TEST_EQUAL(fm.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),0);
+  fm.front().clearUniqueId();
+  TEST_EQUAL(fmc.applyMemberFunction(&UniqueIdInterface::hasValidUniqueId),3);
+  TEST_EQUAL(fmc.applyMemberFunction(&UniqueIdInterface::hasInvalidUniqueId),1);
+}
 END_SECTION
 
 

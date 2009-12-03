@@ -61,13 +61,13 @@ START_SECTION((static const EmpiricalFormula& getInternalToFull()))
 	TEST_EQUAL(e_ptr->getInternalToFull(), h2o)
 END_SECTION
 
+TOLERANCE_ABSOLUTE(0.001)
 
 START_SECTION((static DoubleReal getInternalToFullAverageWeight()))
-	TEST_EQUAL(e_ptr->getInternalToFullAverageWeight(), h2o.getAverageWeight())
+	TEST_REAL_SIMILAR(e_ptr->getInternalToFullAverageWeight(), h2o.getAverageWeight())
 END_SECTION
 
 START_SECTION((static DoubleReal getInternalToFullMonoWeight()))
-	TOLERANCE_ABSOLUTE(0.001)
 	TEST_REAL_SIMILAR(e_ptr->getInternalToFullMonoWeight(), 18.0106)
 END_SECTION
 
@@ -132,15 +132,15 @@ START_SECTION((static DoubleReal getYIonToFullMonoWeight()))
 END_SECTION
 
 START_SECTION((static const EmpiricalFormula& getCIonToFull()))
-	TEST_EQUAL(e_ptr->getCIonToFull(), EmpiricalFormula(""))
+	TEST_EQUAL(e_ptr->getCIonToFull(), EmpiricalFormula("H-1"))
 END_SECTION
 
 START_SECTION((static DoubleReal getCIonToFullAverageWeight()))
-	TEST_EQUAL(e_ptr->getCIonToFullAverageWeight(), 0)
+	TEST_REAL_SIMILAR(e_ptr->getCIonToFullAverageWeight(), -1.00794)
 END_SECTION
 
 START_SECTION((static DoubleReal getCIonToFullMonoWeight()))
-	TEST_EQUAL(e_ptr->getCIonToFullMonoWeight(), 0)
+	TEST_REAL_SIMILAR(e_ptr->getCIonToFullMonoWeight(), -1.00782503)
 END_SECTION
 
 START_SECTION((static const EmpiricalFormula& getXIonToFull()))
@@ -165,6 +165,78 @@ END_SECTION
 
 START_SECTION((static DoubleReal getZIonToFullMonoWeight()))
 	TEST_REAL_SIMILAR(e_ptr->getZIonToFullMonoWeight(), 16.0187)
+END_SECTION
+
+START_SECTION((static const EmpiricalFormula& getZIonMinusOneToFull()))
+  TEST_EQUAL(e_ptr->getZIonMinusOneToFull(), EmpiricalFormula("N2"))
+END_SECTION
+
+START_SECTION((static DoubleReal getZIonMinusOneToFullAverageWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getZIonMinusOneToFullAverageWeight(), 28.0134)
+END_SECTION
+
+START_SECTION((static DoubleReal getZIonMinusOneToFullMonoWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getZIonMinusOneToFullMonoWeight(), 28.0061480148)
+END_SECTION
+
+START_SECTION((static const EmpiricalFormula& getZIonPlusOneToFull()))
+  TEST_EQUAL(e_ptr->getZIonPlusOneToFull(), EmpiricalFormula("H3N"))
+END_SECTION
+
+START_SECTION((static DoubleReal getZIonPlusOneToFullAverageWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getZIonPlusOneToFullAverageWeight(), 17.03052)
+END_SECTION
+
+START_SECTION((static DoubleReal getZIonPlusOneToFullMonoWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getZIonPlusOneToFullMonoWeight(), 17.0265491031)
+END_SECTION
+
+START_SECTION((static const EmpiricalFormula& getZIonPlusTwoToFull()))
+  TEST_EQUAL(e_ptr->getZIonPlusTwoToFull(), EmpiricalFormula("H4N"))
+END_SECTION
+
+START_SECTION((static DoubleReal getZIonPlusTwoToFullAverageWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getZIonPlusTwoToFullAverageWeight(), 18.03846)
+END_SECTION
+
+START_SECTION((static DoubleReal getZIonPlusTwoToFullMonoWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getZIonPlusTwoToFullMonoWeight(), 18.034374135)
+END_SECTION
+
+START_SECTION((static const EmpiricalFormula& getCIonMinusOneToFull()))
+  TEST_EQUAL(e_ptr->getCIonMinusOneToFull(), EmpiricalFormula("H-2"))
+END_SECTION
+  
+START_SECTION((static DoubleReal getCIonMinusOneToFullAverageWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getCIonMinusOneToFullAverageWeight(), -2.01588)
+END_SECTION
+
+START_SECTION((static DoubleReal getCIonMinusOneToFullMonoWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getCIonMinusOneToFullMonoWeight(), -2.0156500638)
+END_SECTION
+
+START_SECTION((static const EmpiricalFormula& getCIonPlusOneToFull()))
+  TEST_EQUAL(e_ptr->getCIonPlusOneToFull(), EmpiricalFormula(""))
+END_SECTION
+
+START_SECTION((static DoubleReal getCIonPlusOneToFullAverageWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getCIonPlusOneToFullAverageWeight(), 0)
+END_SECTION
+
+START_SECTION((static DoubleReal getCIonPlusOneToFullMonoWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getCIonPlusOneToFullMonoWeight(), 0)
+END_SECTION
+
+START_SECTION((static const EmpiricalFormula& getCIonPlusTwoToFull()))
+  TEST_EQUAL(e_ptr->getCIonPlusTwoToFull(), EmpiricalFormula("H2"))
+END_SECTION
+
+START_SECTION((static DoubleReal getCIonPlusTwoToFullAverageWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getCIonPlusTwoToFullAverageWeight(), 2.01588)
+END_SECTION
+
+START_SECTION((static DoubleReal getCIonPlusTwoToFullMonoWeight()))
+  TEST_REAL_SIMILAR(e_ptr->getCIonPlusTwoToFullMonoWeight(), 2.0156500638)
 END_SECTION
 
 START_SECTION(Residue(const Residue &residue))
@@ -341,7 +413,7 @@ START_SECTION(bool hasNTermNeutralLosses() const)
 	TEST_EQUAL(copy.hasNTermNeutralLosses(), false)
 END_SECTION
 
-START_SECTION(void setFormula(const EmpiricalFormula &formula, ResidueType res_type=Full))
+START_SECTION(void setFormula(const EmpiricalFormula &formula))
 	Residue copy(*e_ptr);
 	e_ptr->setFormula(EmpiricalFormula("C2H6O"));
 	TEST_NOT_EQUAL(*e_ptr, copy)
@@ -351,7 +423,7 @@ START_SECTION(EmpiricalFormula getFormula(ResidueType res_type=Full) const)
 	TEST_EQUAL(e_ptr->getFormula(), EmpiricalFormula("C2H6O"))
 END_SECTION
 
-START_SECTION(void setAverageWeight(DoubleReal weight, ResidueType res_type=Full))
+START_SECTION(void setAverageWeight(DoubleReal weight))
 	Residue copy(*e_ptr);
 	e_ptr->setAverageWeight(123.4);
 	TEST_NOT_EQUAL(*e_ptr, copy)
@@ -361,7 +433,7 @@ START_SECTION(DoubleReal getAverageWeight(ResidueType res_type=Full) const)
 	TEST_REAL_SIMILAR(e_ptr->getAverageWeight(), 123.4)
 END_SECTION
     
-START_SECTION(void setMonoWeight(DoubleReal weight, ResidueType res_type=Full))
+START_SECTION(void setMonoWeight(DoubleReal weight))
 	Residue copy(*e_ptr);
 	e_ptr->setMonoWeight(1234.5);
 	TEST_NOT_EQUAL(*e_ptr, copy)

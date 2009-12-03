@@ -66,7 +66,9 @@ START_SECTION((static const String getProductName()))
 END_SECTION
 
 START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::vector< TransformationDescription > &transformations)))
+
   std::vector<ConsensusMap> input(2);
+
   Feature feat1;
   Feature feat2;
   PositionType pos1(1,1);
@@ -78,7 +80,6 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
   input[0].push_back(feat1);
   input[0].push_back(feat2);
   
-  FeatureMap<> modell;
   Feature feat3;
   Feature feat4;
   PositionType pos3(21.4,1.02);
@@ -92,7 +93,13 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
 
   std::vector<TransformationDescription> transformations;
   PoseClusteringShiftSuperimposer pcat;
-  pcat.run(input,transformations);
+#if 0 // switch this on for debugging
+	Param params;
+  params.setValue("dump_buckets","tmp_PoseClusteringShiftSuperimposer_buckets");
+  params.setValue("dump_pairs","tmp_PoseClusteringShiftSuperimposer_pairs");
+  pcat.setParameters(params);
+#endif
+	pcat.run(input,transformations);
   
 	TEST_EQUAL(transformations.size(),1)
   TEST_STRING_EQUAL(transformations[0].getName(),"linear")

@@ -12,7 +12,7 @@ DocumentIdentifier.h
 ExperimentalSettings.h
 Gradient.h
 HPLC.h
-IDTagger.h
+DocumentIDTagger.h
 Instrument.h
 InstrumentSettings.h
 IonDetector.h
@@ -40,6 +40,9 @@ PeptideEvidence.h
 Identification.h
 SpectrumIdentification.h
 IdentificationHit.h
+ChromatogramSettings.h
+CVTerm.h
+CVTermList.h
 )
 
 ### add path to the filenames

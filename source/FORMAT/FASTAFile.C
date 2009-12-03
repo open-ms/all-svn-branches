@@ -87,6 +87,7 @@ namespace OpenMS
 							entry.description = tag.suffix(tag.size() - position - 1);
 						}
 						entry.sequence = seq;
+						entry.sequence.removeWhitespaces();
 						data.push_back(entry);
 						tag = "";
 						seq = "";
@@ -137,18 +138,18 @@ namespace OpenMS
 		for (vector<FASTAEntry>::const_iterator it = data.begin(); it!=data.end(); ++it)
 		{
 			
-			outfile << ">" << it->identifier << " " << it->description << endl;
+			outfile << ">" << it->identifier << " " << it->description << "\n";
 			
 			String tmp(it->sequence);
 			while (tmp.size() > 80)
 			{
-				outfile << tmp.prefix(80) << endl;
+				outfile << tmp.prefix(80) << "\n";
 				tmp.erase(0, 80);
 			}
 
 			if (tmp.size() > 0)
 			{
-				outfile << tmp << endl;
+				outfile << tmp << "\n";
 			}
 		}
 		outfile.close();

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Marc Sturm $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Clemens Groepl, Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -31,16 +31,15 @@
 
 #include <OpenMS/DATASTRUCTURES/DIntervalBase.h>
 
-///////////////////////////
-
-START_TEST(DIntervalBase, "$Id$")
-
-/////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
 using namespace OpenMS;
 using namespace OpenMS::Internal;
 using namespace std;
+
+START_TEST(DIntervalBase, "$Id$")
+
+/////////////////////////////////////////////////////////////
 	
 //1D check
 DIntervalBase<1>* ptr1 = 0;

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: $
+// $Authors: Marc Sturm $
 // -------------------------------------------------------------------------- 
 
 #include <OpenMS/VISUAL/LayerData.h>
@@ -31,7 +31,7 @@ using namespace std;
 
 namespace OpenMS
 {
-	const std::string LayerData::NamesOfLabelType[] = {"None","Index","Label meta data","Peptide identification"};
+	const std::string LayerData::NamesOfLabelType[] = {"None","Index","Label meta data","Peptide identification","All peptide identifications"};
 	
 	std::ostream& operator << (std::ostream& os, const LayerData& rhs)
 	{

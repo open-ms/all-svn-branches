@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm, Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl $
+// $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_CONCEPT_CLASSTEST_H
@@ -40,6 +40,8 @@
 // Includes in the C-file are ok...
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/CONCEPT/Exception.h>
+#include <OpenMS/CONCEPT/UniqueIdGenerator.h>
+#include <OpenMS/SYSTEM/File.h>
 
 #include <vector>
 #include <string>
@@ -388,24 +390,30 @@ namespace TEST = OpenMS::Internal::ClassTest;
 
  @hideinitializer
  */
-#define START_TEST(class_name, version)																					\
-int main(int argc, char **argv)																									\
-{																																								\
- 																																								\
- TEST::version_string = version;																								\
-																																								\
-																																								\
-	if (argc > 1)																																	\
-	{																																							\
-		std::cerr																																		\
-			<< "This is " << argv[0] << ", the test program for the\n"								\
-			<< #class_name " class.\n"																								\
-			"\n"																																			\
-			"On successful operation it returns PASSED,\n"											      \
-			"otherwise FAILED is printed.\n";																					\
-		return 1;																																		\
-	}																																							\
-																																								\
+#define START_TEST(class_name, version)														\
+int main(int argc, char **argv)																		\
+{																																	\
+																																	\
+	{																																\
+		/* initialize the random generator as early as possible! */		\
+		OpenMS::DateTime date_time;																		\
+		date_time.set("1999-12-31 23:59:59");													\
+		OpenMS::UniqueIdGenerator::setSeed(date_time);								\
+	}																																\
+																																	\
+	TEST::version_string = version;																	\
+																																	\
+	if (argc > 1)																										\
+	{																																\
+		std::cerr																											\
+			<< "This is " << argv[0] << ", the test program for the\n"	\
+			<< #class_name " class.\n"																	\
+			"\n"																												\
+			"On successful operation it returns PASSED,\n"							\
+			"otherwise FAILED is printed.\n";														\
+		return 1;																											\
+	}																																\
+																																	\
 	try {
 
 /**	@brief End of the test program for a class.  @sa #START_TEST.
@@ -481,6 +489,14 @@ int main(int argc, char **argv)																									\
 	}																																			\
 	else																																	\
 	{																																			\
+		/* remove temporary files	*/																				\
+		for (OpenMS::Size i=0;i<TEST::tmp_file_list.size();++i)														\
+		{																																		\
+			if (!OpenMS::File::remove(TEST::tmp_file_list[i]))															\
+			{																																	\
+				std__cout << "Warning: unable to remove temporary file '" << TEST::tmp_file_list[i] << "'" << std::endl;\
+			}																																	\
+		}																																		\
 		std__cout << "PASSED";																							\
 		if (TEST::add_message != "") std__cout << " (" << TEST::add_message << ")";	\
 		std__cout << std::endl;																							\
@@ -613,7 +629,7 @@ int main(int argc, char **argv)																									\
 				break;																																						\
 			}																																										\
 		}																																											\
-		if (!destructor) std::cerr << "Warning: no subtests performed in '" << TEST::test_name << "' (line " << __LINE__ << ")!" << std::endl;	\
+		if (!destructor) std__cout << "Warning: no subtests performed in '" << TEST::test_name << "' (line " << __LINE__ << ")!" << std::endl << std::flush;	\
 	}																																												\
 	std__cout << std::endl;
 

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Marc Sturm $
-// $Authors: $
+// $Maintainer: Andreas Bertsch $
+// $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/config.h>
@@ -74,9 +74,17 @@ class TOPPFileConverter
 	void registerOptionsAndFlags_()
 	{
 		registerInputFile_("in","<file>","","input file ");
+#ifdef USE_ANDIMS
 		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,ms2"));
+#else
+		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,ms2"));
+#endif
 		registerStringOption_("in_type", "<type>", "", "input file type -- default: determined from file extension or content\n", false);
+#ifdef USE_ANDIMS
 		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,ms2"));
+#else
+		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,ms2"));
+#endif
 
 		registerOutputFile_("out","<file>","","output file ");
 		setValidFormats_("out",StringList::create("mzData,mzXML,mzML,DTA2D,mgf,featureXML"));
@@ -137,6 +145,9 @@ class TOPPFileConverter
 
 		typedef FeatureMap<> FeatureMapType;
 
+    FeatureMapType fm;
+    ConsensusMap cm;
+
 		vector<ProteinIdentification> prot_ids;
 		vector<PeptideIdentification> pep_ids;
 
@@ -144,21 +155,25 @@ class TOPPFileConverter
 
 		if (in_type == FileTypes::FEATUREXML)
 		{
-			// You will lose information and waste memory. Enough reasons to issue a warning!
-			writeLog_("Warning: Converting features to peaks. You will lose information!");
-			FeatureMapType fm;
-			FeatureXMLFile().load(in,fm);
-			fm.sortByPosition();
-			exp.set2DData(fm);
+      FeatureXMLFile().load(in,fm);
+      fm.sortByPosition();
+		  if ( out_type != FileTypes::FEATUREXML )
+		  {
+	      // You will lose information and waste memory. Enough reasons to issue a warning!
+		    writeLog_("Warning: Converting features to peaks. You will lose information!");
+	      exp.set2DData(fm);
+		  }
 		}
 		else if (in_type == FileTypes::CONSENSUSXML)
 		{
-			// You you will lose information and waste memory. Enough reasons to issue a warning!
-			writeLog_("Warning: Converting consensus features to peaks. You will lose information!");
-			ConsensusMap cm;
 			ConsensusXMLFile().load(in,cm);
 			cm.sortByPosition();
-			exp.set2DData(cm);
+      if ( out_type != FileTypes::FEATUREXML )
+      {
+        // You you will lose information and waste memory. Enough reasons to issue a warning!
+        writeLog_("Warning: Converting consensus features to peaks. You will lose information!");
+        exp.set2DData(cm);
+      }
 		}
 		else
 		{
@@ -177,6 +192,7 @@ class TOPPFileConverter
 
 			MzMLFile f;
 			f.setLogType(log_type_);
+			ChromatogramTools().convertSpectraToChromatograms(exp, true);
 			f.store(out,exp);
 		}
 		else if (out_type == FileTypes::MZDATA)
@@ -186,6 +202,7 @@ class TOPPFileConverter
 			
 			MzDataFile f;
 			f.setLogType(log_type_);
+			ChromatogramTools().convertChromatogramsToSpectra<MSExperimentType>(exp);
 			f.store(out,exp);
 		}
 		else if (out_type == FileTypes::MZXML)
@@ -195,6 +212,7 @@ class TOPPFileConverter
 			
 			MzXMLFile f;
 			f.setLogType(log_type_);
+			ChromatogramTools().convertChromatogramsToSpectra<MSExperimentType>(exp);
 			f.store(out,exp);
 		}
 		else if (out_type == FileTypes::DTA2D)
@@ -204,41 +222,81 @@ class TOPPFileConverter
 			
 			DTA2DFile f;
 			f.setLogType(log_type_);
+			ChromatogramTools().convertChromatogramsToSpectra<MSExperimentType>(exp);
 			f.store(out,exp);
 		}
 		else if (out_type == FileTypes::FEATUREXML)
 		{
-			// The feature specific information is only defaulted. Enough reasons to issue a warning!
-			writeLog_("Warning: Converting peaks to features results in incomplete features!");
-			FeatureMapType feature_map;
-			feature_map.reserve(exp.getSize());
-			typedef FeatureMapType::FeatureType FeatureType;
-			FeatureType feature;
-			feature.setQuality(0,1); // override default
-			feature.setQuality(1,1); // override default
-			feature.setOverallQuality(1); // override default
-			for ( MSExperimentType::ConstIterator spec_iter = exp.begin();
-						spec_iter != exp.end();
-						++spec_iter
-					)
-			{
-				feature.setRT(spec_iter->getRT());
-				for ( SpectrumType::ConstIterator peak1_iter = spec_iter->begin();
-							peak1_iter != spec_iter->end();
-							++peak1_iter
-						)
-				{
-					feature.setMZ(peak1_iter->getMZ());
-					feature.setIntensity(peak1_iter->getIntensity());
-					feature_map.push_back(feature);
-				}
-			}
-			feature_map.updateRanges();
-			
-			//add data processing entry
-			addDataProcessing_(feature_map, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
-			
-			FeatureXMLFile().store(out,feature_map);
+		  if ( in_type == FileTypes::FEATUREXML )
+		  {
+		    fm.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+		    //add data processing entry
+        addDataProcessing_(fm, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+
+	      FeatureXMLFile().store(out,fm);
+		  }
+		  else if ( in_type == FileTypes::CONSENSUSXML )
+		  {
+		    fm.resize(cm.size());
+		    // fm.MetaInfoInterface::operator=(cm); // not available ...
+		    fm.DocumentIdentifier::operator=(cm);
+		    fm.UniqueIdInterface::operator=(cm);
+		    fm.setProteinIdentifications(cm.getProteinIdentifications());
+        fm.setUnassignedPeptideIdentifications(cm.getUnassignedPeptideIdentifications());
+		    for ( Size i = 0; i < cm.size(); ++i )
+		    {
+		      Feature & f = fm[i];
+		      const ConsensusFeature & c = cm[i];
+		      f.RichPeak2D::operator=(c);
+		      f.setCharge(c.getCharge());
+		      f.setOverallQuality(c.getQuality());
+		      f.setPeptideIdentifications(c.getPeptideIdentifications());
+		    }
+
+		    // TODO Discuss this: Arguably we do NOT want to assign new unique ids?
+		    // fm.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+        //add data processing entry
+        addDataProcessing_(fm, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+
+		    FeatureXMLFile().store(out,fm);
+		  }
+		  else
+		  {
+        // The feature specific information is only defaulted. Enough reasons to issue a warning!
+        writeLog_("Warning: Converting peaks to features results in incomplete features!");
+        FeatureMapType feature_map;
+        feature_map.reserve(exp.getSize());
+        typedef FeatureMapType::FeatureType FeatureType;
+        FeatureType feature;
+        feature.setQuality(0,1); // override default
+        feature.setQuality(1,1); // override default
+        feature.setOverallQuality(1); // override default
+        for ( MSExperimentType::ConstIterator spec_iter = exp.begin();
+              spec_iter != exp.end();
+              ++spec_iter
+            )
+        {
+          feature.setRT(spec_iter->getRT());
+          for ( SpectrumType::ConstIterator peak1_iter = spec_iter->begin();
+                peak1_iter != spec_iter->end();
+                ++peak1_iter
+              )
+          {
+            feature.setMZ(peak1_iter->getMZ());
+            feature.setIntensity(peak1_iter->getIntensity());
+            feature.setUniqueId();
+            feature_map.push_back(feature);
+          }
+        }
+        feature_map.updateRanges();
+
+        //add data processing entry
+        addDataProcessing_(feature_map, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
+
+        FeatureXMLFile().store(out,feature_map);
+		  }
 		}
 		else if (out_type == FileTypes::MGF)
 		{

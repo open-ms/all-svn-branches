@@ -48,7 +48,7 @@ using namespace std;
 	
 	@brief Used to train a prediction model for peptide retention 
 				 time prediction or peptide separation prediction.
-	
+
 	For retention time prediction, a support vector machine is 
 	trained with peptide sequences and their measured retention 
 	times.
@@ -57,6 +57,18 @@ using namespace std;
 	are collected) and one file contains the negative peptides
 	(the flowthrough peptides).
 	
+	This methods and applications of this model are described 
+	in several publications:
+
+	Nico Pfeifer, Andreas Leinenbach, Christian G. Huber and Oliver Kohlbacher
+	Statistical learning of peptide retention behavior in chromatographic separations: A new kernel-based approach for computational proteomics.
+	BMC Bioinformatics 2007, 8:468 
+
+	Nico Pfeifer, Andreas Leinenbach, Christian G. Huber and Oliver Kohlbacher
+	Improving Peptide Identification in Proteome Analysis by a Two-Dimensional Retention Time Filtering Approach
+	J. Proteome Res. 2009, 8(8):4109-15
+
+
 	There are a number of parameters which
 	can be changed for the svm (specified in the ini file):
 	<ul>
@@ -168,12 +180,12 @@ class TOPPRTModel
 		void registerOptionsAndFlags_()
 		{
 			registerInputFile_("in","<file>","","This is the name of the input file (RT prediction). It is assumed that the file type is IdXML. If it is just a textfile having a sequence and the corresponding rt per line, the 'textfile_input' flag has to be set.\n", false);
-			setValidFormats_("in",StringList::create("IdXML"));
+			setValidFormats_("in",StringList::create("idXML"));
 			registerFlag_("textfile_input", "Has to be set if the input file is a textfile contatining a sequence with corresponding rt per line (separated by space).");
 			registerInputFile_("in_positive","<file>","","input file with positive examples (peptide separation prediction)\n", false);
-			setValidFormats_("in_positive",StringList::create("IdXML"));
+			setValidFormats_("in_positive",StringList::create("idXML"));
 			registerInputFile_("in_negative","<file>","","input file with negative examples (peptide separation prediction)\n", false);
-			setValidFormats_("in_negative",StringList::create("IdXML"));
+			setValidFormats_("in_negative",StringList::create("idXML"));
 			registerOutputFile_("out","<file>","","output file: the model in libsvm format");
 			registerStringOption_("svm_type","<type>","NU_SVR","the type of the svm (NU_SVR or EPSILON_SVR for RT prediction, automatically set\nto C_SVC for separation prediction)\n",false);
 			setValidStrings_("svm_type",StringList::create("NU_SVR,NU_SVC,EPSILON_SVR,C_SVC"));

@@ -322,7 +322,7 @@ namespace OpenMS
 			(c_s1==0)?c_s1=2:c_s1=c_s1;
 			(c_s2==0)?c_s2=2:c_s2=c_s2;
 			/// @attention singly charged mass difference!
-			DoubleReal pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
+			DoubleReal pm_diff = (pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U);
 			/* debug std::cout << pm_diff << std::endl; */
 			if(!pm_diff_shift)
 			{

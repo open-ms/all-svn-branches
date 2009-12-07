@@ -88,14 +88,14 @@ START_SECTION((void getAntisymetricAlignment(MSSpectrum< PeakT > &res_1, MSSpect
   DoubleReal score, mod_pos;
   MSSpectrum<Peak1D> res_1, res_2, aacc, aawc;
   Precursor pr;
-  pr.setMZ(184.06);
+  pr.setMZ(184.06); // (2*|A|+2*|C|+H2O+2*prot)/2
   pr.setIntensity(1);
   pr.setCharge(2);
   aacc.getPrecursors().push_back(pr);
   aawc.getPrecursors().push_back(pr);
 
   //~ AACC peptide
-  DoubleReal mzs_peaks[6] = {73.05, 121.02, 144.09, 224.03, 247.10, 295.07};
+  DoubleReal mzs_peaks[6] = {73.06, 121.02, 144.09, 224.03, 247.10, 295.07};
   DoubleReal ints_peaks[6] = {10, 5, 10, 5, 10, 5};
   //~ DoubleReal ints_peaks[6] = {5, 10, 5, 10, 5, 10};
   //~ DoubleReal ints_peaks[6] = {10, 10, 10, 10, 10, 10};
@@ -109,7 +109,7 @@ START_SECTION((void getAntisymetricAlignment(MSSpectrum< PeakT > &res_1, MSSpect
 		aawc.push_back(t);
 	}
   aawc.getPrecursors().front().setMZ(225.60);
-  for(Size i = 3; i < 6; ++i)
+  for(Size i = 4; i < 6; ++i)
 	{
 		aawc[i].setMZ(aawc[i].getMZ()+83.07);
 	}
@@ -118,7 +118,7 @@ START_SECTION((void getAntisymetricAlignment(MSSpectrum< PeakT > &res_1, MSSpect
   asa.getAntisymetricAlignment(res_1, res_2, score, mod_pos, aacc, aacc);
   TEST_EQUAL(res_1.size(),res_2.size())
   TEST_EQUAL(res_1.size(),3)
-  TEST_EQUAL(mod_pos,184.06)
+  TEST_EQUAL(mod_pos,-1)
   for(Size i = 0; i < res_1.size(); ++i)
   {
     TEST_EQUAL(res_1[i].getMZ(),res_2[i].getMZ())
@@ -136,6 +136,44 @@ START_SECTION((void getAntisymetricAlignment(MSSpectrum< PeakT > &res_1, MSSpect
     else
       TEST_EQUAL(res_1[i].getMZ()+83.07,res_2[i].getMZ())
   }
+
+  aacc[5].setMZ(aacc[5].getMZ()+103.01-71.03);
+  Peak1D t;
+	t.setMZ(350.11);
+	t.setIntensity(ints_peaks[10]);
+  aacc.push_back(t);
+	t.setMZ(398.08);
+	t.setIntensity(ints_peaks[5]);
+  aacc.push_back(t);
+  aacc.getPrecursors().front().setMZ(235.57); // aacc is now aaccc
+
+  aawc[5].setMZ(aawc[5].getMZ()+103.01-71.03);
+	t.setMZ(433.18);
+ 	t.setIntensity(ints_peaks[10]);
+  aawc.push_back(t);
+	t.setMZ(481.15);
+	t.setIntensity(ints_peaks[5]);
+  aawc.push_back(t);
+  aawc.getPrecursors().front().setMZ(277.10);
+
+  for(Size i = 0; i < aacc.size(); ++i)
+  {
+    std::cout << aacc[i].getMZ() << " vs " << aawc[i].getMZ() << " vs " << (aacc[i].getMZ()+83.07) << std::endl;
+  }
+
+  asa.getAntisymetricAlignment(res_1, res_2, score, mod_pos, aacc, aawc);
+  TEST_EQUAL(res_1.size(),res_2.size())
+  TEST_EQUAL(res_1.size(),4)
+  TEST_EQUAL(mod_pos,247.1)
+  for(Size i = 0; i < res_1.size(); ++i)
+  {
+    if(res_1[i].getMZ()<mod_pos)
+      TEST_EQUAL(res_1[i].getMZ(),res_2[i].getMZ())
+    else
+      TEST_EQUAL(res_1[i].getMZ()+83.07,res_2[i].getMZ())
+  }
+
+
 }
 END_SECTION
 

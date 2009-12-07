@@ -1696,7 +1696,7 @@ namespace OpenMS
 			(c_s1==0)?c_s1=2:c_s1=c_s1;
 			(c_s2==0)?c_s2=2:c_s2=c_s2;
 			/// @attention singly charged mass difference!
-			DoubleReal pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U);
+			DoubleReal pm_diff = (pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U);
 
 			if(pm_diff <= -pm_tolerance)
 			{
@@ -2003,20 +2003,20 @@ namespace OpenMS
 			/// @improvement btw is this right with massMH = H2O + Constants::PROTON_MASS_U?!?!?!
 			//~ static const double massMH = EmpiricalFormula("H2O").getMonoWeight() + Constants::PROTON_MASS_U;
 			/// @improvement find a good penalty adjustment
-			DoubleReal sameVertexPenalty = -5, ptmPenalty = -5;
-			//~ DoubleReal sameVertexPenalty = -1000000, ptmPenalty = -200;
 			//~ DoubleReal sameVertexPenalty = 0, ptmPenalty = 0;
+			DoubleReal sameVertexPenalty = -5, ptmPenalty = -5;
+			//~ DoubleReal sameVertexPenalty = -1000000, ptmPenalty = -200; //makes the test fail!
 
 			std::pair<double, std::pair< std::vector<int>,std::vector<int> > > asym_align;
 
 			AntisymetricDP dp;
-			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U), peaks, peaks2, common, common_shifted, common_scores, common_shifted_scores, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, peak_tolerance, sameVertexPenalty, ptmPenalty);
+			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U), peaks, peaks2, common, common_shifted, common_scores, common_shifted_scores, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, peak_tolerance, sameVertexPenalty, ptmPenalty);
 
 			score = asym_align.first;
 
 			Size num_aligned_peaks = asym_align.second.first.size()+asym_align.second.second.size();
 
-			/* debug  std::cout << " aligned: "<< asym_align.second.first.size() << " + " << asym_align.second.second.size() << std::endl;*/
+			/* debug */ std::cout << " aligned: "<< asym_align.second.first.size() << " + " << asym_align.second.second.size() << std::endl;
 
 			if(num_aligned_peaks==0)
 			{

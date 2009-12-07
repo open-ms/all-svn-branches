@@ -278,8 +278,9 @@ namespace OpenMS
 				return true;
 			}
 
-			DoubleReal charge = 2;
+			DoubleReal charge = /* 2 */1;
 			Size best_pos(0);
+			/* debug */std::cout << " derp? " << std::endl;
 
 			DoubleReal best_diff = std::numeric_limits<DoubleReal>::max();
 			/// @improvement seeking for match consider symmetric peaks not contained! (take symmetric info from where? the specs metadata!)
@@ -324,6 +325,7 @@ namespace OpenMS
 
 			modified_sequence = template_sequence;
 			modified_sequence.setIndesignatedModification(best_pos, mod_shift);
+			/* debug */std::cout << " derp! " << std::endl;
 			/// @important AASequence::getmonoweight(does not use residue::getmonoweight!) changed so above additions get accounted for as indesignated modification
 			return true;
 		}
@@ -482,14 +484,14 @@ namespace OpenMS
 
 							DoubleReal pm_s1 = current_spectrum.getPrecursors().front().getMZ();
 							int c_s1 = current_spectrum.getPrecursors().front().getCharge();
-							DoubleReal current_pm((pm_s1*c_s1 + (c_s1-1)*Constants::PROTON_MASS_U));
+							DoubleReal current_pm((pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U));
 							DoubleReal pm_s2 = experiment[*it_neighbors].getPrecursors().front().getMZ();
 							int c_s2 = experiment[*it_neighbors].getPrecursors().front().getCharge();
 							/// @attention if the precursor charge is unknown, i.e. 0 best guess is its doubly charged
 							(c_s1==0)?c_s1=2:c_s1=c_s1;
 							(c_s2==0)?c_s2=2:c_s2=c_s2;
 							/// @attention singly charged mass difference!
-							DoubleReal pm_diff = (pm_s2*c_s2 + (c_s2-1)*Constants::PROTON_MASS_U)-current_pm;
+							DoubleReal pm_diff = (pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U)-current_pm;
 
 							std::pair<Size,Size> current_edge(*it_potential,*it_neighbors);
 

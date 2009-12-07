@@ -79,7 +79,7 @@ namespace OpenMS
 			int c_1= spec1.getPrecursors().front().getCharge();
 			/// @attention if the precursor charge is unknown, i.e. 0 best guess is its doubly charged
 			(c_1==0)?c_1=2:c_1=c_1;
-			pre_mz1 = (spec1.getPrecursors()[0].getMZ()*c_1 + (c_1-1)*Constants::PROTON_MASS_U);
+			pre_mz1 = (spec1.getPrecursors()[0].getMZ()*c_1 - (c_1-1)*Constants::PROTON_MASS_U);
 		}
 		DoubleReal pre_mz2 = 0.0;
 		if (!spec1.getPrecursors().empty())
@@ -87,7 +87,7 @@ namespace OpenMS
 			int c_2 = spec2.getPrecursors().front().getCharge();
 			/// @attention if the precursor charge is unknown, i.e. 0 best guess is its doubly charged
 			(c_2==0)?c_2=2:c_2=c_2;
-			pre_mz2 = (spec2.getPrecursors()[0].getMZ()*c_2 + (c_2-1)*Constants::PROTON_MASS_U);
+			pre_mz2 = (spec2.getPrecursors()[0].getMZ()*c_2 - (c_2-1)*Constants::PROTON_MASS_U);
 		}
 		/// @attention singly charged mass difference each!
 		DoubleReal pm_diff = pre_mz2-pre_mz1;

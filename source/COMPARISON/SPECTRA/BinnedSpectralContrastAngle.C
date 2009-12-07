@@ -76,13 +76,13 @@ namespace OpenMS
 		if (!spec1.getPrecursors().empty())
 		{
 			int c_1= spec1.getPrecursors().front().getCharge();
-			pre_mz1 = (spec1.getPrecursors()[0].getMZ()*c_1 + (c_1-1)*Constants::PROTON_MASS_U);
+			pre_mz1 = (spec1.getPrecursors()[0].getMZ()*c_1 - (c_1-1)*Constants::PROTON_MASS_U);
 		}
 		DoubleReal pre_mz2 = 0.0;
 		if (!spec1.getPrecursors().empty())
 		{
 			int c_2 = spec2.getPrecursors().front().getCharge();
-			pre_mz2 = (spec2.getPrecursors()[0].getMZ()*c_2 + (c_2-1)*Constants::PROTON_MASS_U);
+			pre_mz2 = (spec2.getPrecursors()[0].getMZ()*c_2 - (c_2-1)*Constants::PROTON_MASS_U);
 		}
 		/// @important singly charged mass difference each!
 		DoubleReal pm_diff = pre_mz2-pre_mz1;

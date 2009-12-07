@@ -170,7 +170,7 @@ using namespace std;
 				(c_i==0)?c_i=2:c_i=c_i;
 				(c_j==0)?c_j=2:c_j=c_j;
 			/// @attention singly charged mass difference!
-				Real pm_diff = (pm_j*c_j + (c_j-1)*Constants::PROTON_MASS_U)-(pm_i*c_i + (c_i-1)*Constants::PROTON_MASS_U);
+				Real pm_diff = (pm_j*c_j - (c_j-1)*Constants::PROTON_MASS_U)-(pm_i*c_i - (c_i-1)*Constants::PROTON_MASS_U);
 				if(fabs(pm_diff) < max_pm_diff+pm_tol+0.00001 )
 				{
 					if(fabs(pm_diff)<pm_tol)
@@ -265,8 +265,8 @@ using namespace std;
 		}
 		pot_pairs.resize(edge_selection.size());
 		logger.endProgress();
-		//~ average_best_matches /= (DoubleReal)pot_pairs.size();
-		//~ writeLog_(String(".. preselected edges having a average match size of ") + String(average_best_matches) + String(" ..") );
+		average_best_matches /= (DoubleReal)pot_pairs.size();
+		writeLog_(String(".. preselected edges having a average match size of ") + String(average_best_matches) + String(" ..") );
 		writeLog_(String(".. ") + pot_pairs.size() + String(" edges passed minimum ratio evaluation ..") );
 
 		//filter pairs not gcdf
@@ -333,6 +333,7 @@ using namespace std;
 			DoubleReal mod_pos, score;
 			asa.getAntisymetricAlignment(res_1, res_2, score, mod_pos, experiment[aligned_pairs[i].first], experiment[aligned_pairs[i].second]);
 			/// @improvement make pairs_min_matches an advanced parameter
+			/* debug */ std::cout << " with pair: "<< aligned_pairs[i].first << " + " << aligned_pairs[i].second << std::endl;
 			if((DoubleReal)res_1.size()/((DoubleReal)(experiment[aligned_pairs[i].first].size()+experiment[aligned_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio and res_1.size() >= pairs_min_matches)
 			{
 				edge_selection.push_back(i);
@@ -496,6 +497,7 @@ using namespace std;
 		/// @improvement txt output of peptide laddering sequences
 		/// @improvement prepare featurehandles(metainfo?!) for colorization/different linestyle
 		Size c(0);
+		//~ ConsensusMap::Iterator zero_to_delete;
 		for(ConsensusMap::Iterator ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
 		{
 			if(ids_it->getPeptideIdentifications().front().empty())
@@ -503,8 +505,14 @@ using namespace std;
 				ids_it->getPeptideIdentifications().clear();
 				++c;
 			}
+			//~ if(ids_it->getRT()==0 and ids_it->getMZ()==0)
+			//~ {
+				//~ zero_to_delete = ids_it;
+			//~ }
 		}
 		writeLog_(String("unknowns ") + String(c));
+		/// @improvement ahhrg!!! doeas not work - hardhack for the annoying 0,0 ConsensusFeature - find out where that comes from
+		//~ ids.erase(zero_to_delete);
 
 		std::vector<String> colors;
 		//~ colors interpretable by QColor(QString) see http://www.w3.org/TR/SVG/types.html#ColorKeywords

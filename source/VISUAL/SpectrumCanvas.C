@@ -2,7 +2,7 @@
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
-//                   OpenMS Mass Spectrometry Framework 
+//                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
 //  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
 //
@@ -49,7 +49,7 @@
 using namespace std;
 
 namespace OpenMS
-{	
+{
 	SpectrumCanvas::SpectrumCanvas(const Param& /*preferences*/, QWidget* parent)
 		: QWidget(parent),
 			DefaultParamHandler("SpectrumCanvas"),
@@ -74,37 +74,37 @@ namespace OpenMS
 			show_timing_(false),
 			selected_peak_(),
 			measurement_start_()
-	{		
+	{
 		//Prevent filling background
 		setAttribute(Qt::WA_OpaquePaintEvent);
 		// get mouse coordinates while mouse moves over diagramm and for focus handling
 		setMouseTracking(TRUE);
 		setFocusPolicy(Qt::StrongFocus);
-			
+
 		setMinimumSize(200,200);
 		setSizePolicy(QSizePolicy::MinimumExpanding,QSizePolicy::MinimumExpanding);
-	  
+
 	  //reserve enough space to avoid copying layer data
 	  layers_.reserve(10);
-	  
+
 	  //set common defaults for all canvases
     defaults_.setValue("default_path", ".", "Default path for loading/storing data.");
     defaults_.setValue("on_file_change", "ask", "What action to take, when a data file changes. Do nothing, update automatically or ask the user.");
     defaults_.setValidStrings("on_file_change",StringList::create("none,ask,update automatically"));
-    
+
     //create file system watcher
     watcher_ = new FileWatcher(this);
     connect(watcher_,SIGNAL(fileChanged(const String&)),this,SLOT(fileChanged_(const String&)));
-    
+
     //Set focus policy in order to get keyboard events
-	  
-	  
+
+
 	  //Set 'whats this' text
 	  setWhatsThis("Translate: Translate mode is activated by default. Hold down the left mouse key and move the mouse to translate. Arrow keys can be used for translation independent of the current mode.\n\n"
 	  						 "Zoom: Zoom mode is activated with the CTRL key. CTRL+/CTRL- are used to traverse the zoom stack (or mouse wheel). Pressing Backspace resets the zoom.\n\n"
 	  						 "Measure: Measure mode is activated with the SHIFT key. To measure the distace between data points, press the left mouse button on a point and drag the mouse to another point.\n\n"
 								 );
-		
+
 		//set move cursor and connect signal that updates the cursor automatically
 		updateCursor_();
 		connect(this,SIGNAL(actionModeChange()),this,SLOT(updateCursor_()));
@@ -137,36 +137,36 @@ namespace OpenMS
 		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);
 	}
-	
+
 	void SpectrumCanvas::showGridLines(bool show)
 	{
 		show_grid_ = show;
 		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);
 	}
-	
+
 	void SpectrumCanvas::intensityModeChange_()
 	{
 		recalculateSnapFactor_();
 		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);
 	}
-	
+
 	void SpectrumCanvas::mzToXAxis(bool mz_to_x_axis)
 	{
 		mz_to_x_axis_ = mz_to_x_axis;
-		
+
 		//swap axes if necessary
 		if (spectrum_widget_)
 		{
 			spectrum_widget_->updateAxes();
 		}
-		
+
 		updateScrollbars_();
 		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);
 	}
-	
+
 	void SpectrumCanvas::changeVisibleArea_(const AreaType& new_area, bool repaint, bool add_to_stack)
 	{
 		//store old zoom state
@@ -181,7 +181,7 @@ namespace OpenMS
 			// add current zoom
 			zoomAdd_(new_area);
 		}
-		
+
 		if (new_area!=visible_area_)
 		{
 			visible_area_ = new_area;
@@ -195,10 +195,10 @@ namespace OpenMS
 			update_(__PRETTY_FUNCTION__);
 		}
 	}
-	
+
 	void SpectrumCanvas::updateScrollbars_()
 	{
-		
+
 	}
 
 	void SpectrumCanvas::wheelEvent(QWheelEvent* e)
@@ -213,7 +213,7 @@ namespace OpenMS
 		}
 		e->accept();
 	}
-	
+
 	void SpectrumCanvas::zoomBack_()
 	{
 		//cout << "Zoom out" << endl;
@@ -239,7 +239,7 @@ namespace OpenMS
 		}
 		//cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 	}
-	
+
 	void SpectrumCanvas::zoomAdd_(const AreaType& area)
 	{
 		//cout << "Adding to stack" << endl;
@@ -256,13 +256,13 @@ namespace OpenMS
 		//cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 		//cout << " - size after:" << zoom_stack_.size() <<endl;
 	}
-	
+
 	void SpectrumCanvas::zoomClear_()
 	{
 		zoom_stack_.clear();
 		zoom_pos_ = zoom_stack_.end();
 	}
-	
+
 	void SpectrumCanvas::resetZoom(bool repaint)
 	{
 		AreaType tmp;
@@ -270,16 +270,16 @@ namespace OpenMS
 		zoomClear_();
 		changeVisibleArea_(tmp,repaint,true);
 	}
-	
+
 	void SpectrumCanvas::setVisibleArea(AreaType area)
 	{
 		//cout << __PRETTY_FUNCTION__ << endl;
 		changeVisibleArea_(area);
 	}
-	
-	
+
+
 	void SpectrumCanvas::paintGridLines_(QPainter& painter)
-	{	
+	{
 		if (!show_grid_ || !spectrum_widget_) return;
 
 		QPen p1(QColor(130,130,130));
@@ -288,24 +288,24 @@ namespace OpenMS
 		p2.setStyle(Qt::DashLine);
 		QPen p3(QColor(230,230,230));
 		p3.setStyle(Qt::DashLine);
-	
+
 		painter.save();
 
 		unsigned int xl, xh, yl, yh; //width/height of the diagram area, x, y coordinates of lo/hi x,y values
-	
+
 		xl = 0;
 		xh = width();
 
 		yl = height();
 		yh = 0;
-	
-		// drawing of grid lines and associated text	
-		for (Size j = 0; j != spectrum_widget_->xAxis()->gridLines().size() ; j++) 
+
+		// drawing of grid lines and associated text
+		for (Size j = 0; j != spectrum_widget_->xAxis()->gridLines().size() ; j++)
 		{
 			// style definitions
 			switch(j)
 			{
-				case 0:	// style settings for big intervals 
+				case 0:	// style settings for big intervals
 					painter.setPen(p1);
 					break;
 				case 1:	// style settings for small intervals
@@ -321,20 +321,20 @@ namespace OpenMS
 			}
 
 			int x;
-			for (std::vector<double>::const_iterator it = spectrum_widget_->xAxis()->gridLines()[j].begin(); it != spectrum_widget_->xAxis()->gridLines()[j].end(); it++) 
+			for (std::vector<double>::const_iterator it = spectrum_widget_->xAxis()->gridLines()[j].begin(); it != spectrum_widget_->xAxis()->gridLines()[j].end(); it++)
 			{
 				x = static_cast<int>(Math::intervalTransformation(*it, spectrum_widget_->xAxis()->getAxisMinimum(), spectrum_widget_->xAxis()->getAxisMaximum(), xl, xh));
 				painter.drawLine(x, yl, x, yh);
 			}
 		}
-		
-		for (Size j = 0; j != spectrum_widget_->yAxis()->gridLines().size() ; j++) 
+
+		for (Size j = 0; j != spectrum_widget_->yAxis()->gridLines().size() ; j++)
 		{
 
 			// style definitions
 			switch(j)
 			{
-				case 0:	// style settings for big intervals 
+				case 0:	// style settings for big intervals
 					painter.setPen(p1);
 					break;
 				case 1:	// style settings for small intervals
@@ -350,24 +350,24 @@ namespace OpenMS
 			}
 
 			int y;
-			for (std::vector<double>::const_iterator it = spectrum_widget_->yAxis()->gridLines()[j].begin(); it != spectrum_widget_->yAxis()->gridLines()[j].end(); it++) 
+			for (std::vector<double>::const_iterator it = spectrum_widget_->yAxis()->gridLines()[j].begin(); it != spectrum_widget_->yAxis()->gridLines()[j].end(); it++)
 			{
 				y = static_cast<int>(Math::intervalTransformation(*it, spectrum_widget_->yAxis()->getAxisMinimum(), spectrum_widget_->yAxis()->getAxisMaximum(), yl, yh));
-				
+
 				painter.drawLine(xl, y, xh, y);
 			}
 		}
-		
+
 		painter.restore();
 	}
-	
+
 	Size SpectrumCanvas::activeLayerIndex() const
 	{
-		return current_layer_;	
+		return current_layer_;
 	}
 
 	bool SpectrumCanvas::addLayer(ExperimentType& map, const String& filename)
-	{	
+	{
 		layers_.resize(layers_.size()+1);
 		layers_.back().param = param_;
 		layers_.back().filename = filename;
@@ -383,7 +383,7 @@ namespace OpenMS
 					++num_chrom;
 				}
 			}
-			
+
 			if (num_chrom > 0)
 			{
 				layers_.back().type = LayerData::DT_CHROMATOGRAM;
@@ -423,9 +423,9 @@ namespace OpenMS
 	}
 
 	void SpectrumCanvas::setLayerName(Size i, const String& name)
-	{ 
+	{
 		OPENMS_PRECONDITION(i < layers_.size(), "SpectrumCanvas::setLayerName(i,name) index overflow");
-	  getLayer_(i).name = name; 
+	  getLayer_(i).name = name;
 		if (i==0 && spectrum_widget_) spectrum_widget_->setWindowTitle(name.toQString());
 	}
 
@@ -457,13 +457,13 @@ namespace OpenMS
   {
   	return overall_data_range_;
   }
-	
+
 	void SpectrumCanvas::recalculateRanges_(UInt mz_dim, UInt rt_dim, UInt it_dim)
 	{
 		overall_data_range_ = DRange<3>::empty;
 		DRange<3>::PositionType min = overall_data_range_.min();
 		DRange<3>::PositionType max = overall_data_range_.max();
-		
+
 		for (Size layer_index=0; layer_index< getLayerCount(); ++layer_index)
 		{
 			if (getLayer(layer_index).type==LayerData::DT_PEAK || getLayer(layer_index).type==LayerData::DT_CHROMATOGRAM)
@@ -505,7 +505,7 @@ namespace OpenMS
 		margin = 0.01*std::max(1.0, max[mz_dim] - min[mz_dim]);
 		min[mz_dim] -= margin;
 		max[mz_dim] += margin;
-		
+
 		overall_data_range_.setMin(min);
 		overall_data_range_.setMax(max);
 	}
@@ -519,22 +519,22 @@ namespace OpenMS
 	{
 		return percentage_factor_;
 	}
-	
+
 	void SpectrumCanvas::recalculateSnapFactor_()
 	{
-		
+
 	}
 
 	void SpectrumCanvas::horizontalScrollBarChange(int /*value*/)
 	{
-		
+
 	}
 
 	void SpectrumCanvas::verticalScrollBarChange(int /*value*/)
 	{
-		
+
 	}
-	
+
 	void SpectrumCanvas::update_(const char*
 #ifdef DEBUG_UPDATE_
 			caller_name)
@@ -546,13 +546,13 @@ namespace OpenMS
 #endif
 		update();
 	}
-	
+
 	void SpectrumCanvas::fileChanged_(const String& filename)
   {
 		//look up all layers that contain data of the file
 		UInt updatable_layers = 0;
 		for (UInt j=0; j<getLayerCount(); ++j)
-		{	
+		{
 			//cout << "  Layer: " << j << " " << getLayer(j).filename << endl;
 			if (getLayer(j).filename == filename)
 			{
@@ -588,9 +588,9 @@ namespace OpenMS
   	if (updatable_layers==0)
   	{
   		watcher_->removeFile(filename);
-  	}  			
+  	}
 	}
-	
+
 	//this does not work anymore, probably due to Qt::StrongFocus :(
 	void SpectrumCanvas::focusOutEvent(QFocusEvent* /*e*/)
 	{
@@ -600,11 +600,11 @@ namespace OpenMS
 			action_mode_ = AM_TRANSLATE;
 			emit actionModeChange();
 		}
-		
+
 		//reset peaks
 		selected_peak_.clear();
 		measurement_start_.clear();
-		
+
 		//update
 		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);
@@ -650,7 +650,7 @@ namespace OpenMS
 			action_mode_ = AM_MEASURE;
 			emit actionModeChange();
 		}
-		
+
 		// CTRL+/CTRL- => Zoom stack
 		if ((e->modifiers() & Qt::ControlModifier) && (e->key()==Qt::Key_Plus))
 		{
@@ -662,7 +662,7 @@ namespace OpenMS
 			e->accept();
 			zoomBack_();
 		}
-		
+
 		// Arrow keys => translate
 		else if (e->key()==Qt::Key_Left)
 		{
@@ -684,7 +684,7 @@ namespace OpenMS
 			e->accept();
 			translateBackward_();
 		}
-		
+
 		//Backspace to reset zoom
 		else if (e->key()==Qt::Key_Backspace)
 		{
@@ -698,7 +698,7 @@ namespace OpenMS
 			e->accept();
 			show_timing_ = !show_timing_;
 		}
-		
+
 		releaseKeyboard();// ensure that the key event is passed on to parent widget
 		e->ignore();
 	}
@@ -706,15 +706,15 @@ namespace OpenMS
 	void SpectrumCanvas::translateLeft_()
 	{
 	}
-	
+
 	void SpectrumCanvas::translateRight_()
 	{
 	}
-	
+
 	void SpectrumCanvas::translateForward_()
 	{
 	}
-	
+
 	void SpectrumCanvas::translateBackward_()
 	{
 	}
@@ -723,12 +723,12 @@ namespace OpenMS
 	{
 	  context_add_ = menu;
 	}
-	
+
 	void SpectrumCanvas::getVisiblePeakData(ExperimentType& map) const
-	{		
+	{
 		//clear output experiment
 		map.clear(true);
-		
+
     const LayerData& layer = getCurrentLayer();
   	if (layer.type==LayerData::DT_PEAK)
   	{
@@ -739,7 +739,7 @@ namespace OpenMS
 			//reserve space for the correct number of spectra in RT range
 			ExperimentType::ConstIterator begin = layer.peaks.RTBegin(area.min()[1]);
 			ExperimentType::ConstIterator end = layer.peaks.RTEnd(area.max()[1]);
-			
+
 			//Exception for Spectrum1DCanvas, here we copy the currently visualized spectrum
 			bool is_1d = (getName()=="Spectrum1DCanvas");
 			if (is_1d)
@@ -786,10 +786,10 @@ namespace OpenMS
 	}
 
 	void SpectrumCanvas::getVisibleFeatureData(FeatureMapType& map) const
-	{		
+	{
 		//clear output experiment
 		map.clear(true);
-		
+
     const LayerData& layer = getCurrentLayer();
   	if (layer.type==LayerData::DT_FEATURE)
   	{
@@ -804,10 +804,10 @@ namespace OpenMS
 			//copy features
   		for (FeatureMapType::ConstIterator it=layer.features.begin(); it!=layer.features.end(); ++it)
   		{
-				if ( layer.filters.passes(*it) 
-					&& it->getRT() >= min_rt 
-					&& it->getRT() <= max_rt 
-					&& it->getMZ() >= min_mz 
+				if ( layer.filters.passes(*it)
+					&& it->getRT() >= min_rt
+					&& it->getRT() <= max_rt
+					&& it->getMZ() >= min_mz
 					&& it->getMZ() <= max_mz )
 				{
 					map.push_back(*it);
@@ -817,10 +817,10 @@ namespace OpenMS
 	}
 
 	void SpectrumCanvas::getVisibleConsensusData(ConsensusMapType& map) const
-	{		
+	{
 		//clear output experiment
 		map.clear(true);
-		
+
     const LayerData& layer = getCurrentLayer();
   	if (layer.type==LayerData::DT_CONSENSUS)
   	{
@@ -835,9 +835,9 @@ namespace OpenMS
   		for (ConsensusMapType::ConstIterator it=layer.consensus.begin(); it!=layer.consensus.end(); ++it)
   		{
 				if ( layer.filters.passes(*it)
-					&& it->getRT() >= min_rt 
-					&& it->getRT() <= max_rt 
-					&& it->getMZ() >= min_mz 
+					&& it->getRT() >= min_rt
+					&& it->getRT() <= max_rt
+					&& it->getMZ() >= min_mz
 					&& it->getMZ() <= max_mz )
 				{
 					map.push_back(*it);
@@ -849,7 +849,7 @@ namespace OpenMS
 	void SpectrumCanvas::showMetaData(bool modifiable, Int index)
   {
 		LayerData& layer = getCurrentLayer_();
-		
+
 		MetaDataBrowser dlg(modifiable, this);
 		if (index==-1)
 		{
@@ -894,14 +894,14 @@ namespace OpenMS
 				//TODO CHROM
 			}
 		}
-  	
+
   	//if the meta data was modified, set the flag
     if (modifiable && dlg.exec())
     {
 			modificationStatus_(activeLayerIndex(), true);
     }
   }
-	
+
 	void SpectrumCanvas::updateCursor_()
 	{
 		switch(action_mode_)
@@ -932,7 +932,7 @@ namespace OpenMS
 	void SpectrumCanvas::drawCoordinates_(QPainter& painter, const PeakIndex& peak, bool print_rt)
 	{
 		if (!peak.isValid()) return;
-		
+
 		//determine coordinates;
 		DoubleReal mz = 0.0;
 		DoubleReal rt = 0.0;
@@ -965,16 +965,33 @@ namespace OpenMS
 		{
 			//TODO CHROM
 		}
-		
-		//draw text			
+
+		//draw text
 		QStringList lines;
 		if (print_rt) lines.push_back("RT : " + QString::number(rt,'f',2));
 		lines.push_back("m/z: " + QString::number(mz,'f',6));
-		lines.push_back("Int: " + QString::number(it,'f',2));
-		if (getCurrentLayer().type==LayerData::DT_FEATURE || getCurrentLayer().type==LayerData::DT_CONSENSUS)
+		if(!(getCurrentLayer().type==LayerData::DT_CONSENSUS and peak.getFeature(getCurrentLayer().consensus).metaValueExists("network id")))
+		{
+			lines.push_back("Int: " + QString::number(it,'f',2));
+		}
+		if (getCurrentLayer().type==LayerData::DT_FEATURE)
 		{
 			lines.push_back("Charge: " + QString::number(charge));
 			lines.push_back("Quality: " + QString::number(quality,'f',4));
+		}
+		else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
+		{
+			if(peak.getFeature(getCurrentLayer().consensus).metaValueExists("network id"))
+			{
+				lines.push_back("Top-ID: " + peak.getFeature(getCurrentLayer().consensus).getPeptideIdentifications().front().getHits().front().getSequence().toString().toQString());
+				lines.push_back("Quality(coverage score): " + QString::number(peak.getFeature(getCurrentLayer().consensus).getPeptideIdentifications().front().getHits().front().getScore(),'f',4));
+				lines.push_back("Net-ID: " + (String((String)peak.getFeature(getCurrentLayer().consensus).getMetaValue("network id")).toQString()));
+			}
+			else
+			{
+				lines.push_back("Charge: " + QString::number(charge));
+				lines.push_back("Quality: " + QString::number(quality,'f',4));
+			}
 		}
 		drawText_(painter, lines);
 	}
@@ -982,7 +999,7 @@ namespace OpenMS
 	void SpectrumCanvas::drawDeltas_(QPainter& painter, const PeakIndex& start, const PeakIndex& end, bool print_rt)
 	{
 		if (!start.isValid()) return;
-		
+
 		//determine coordinates;
 		DoubleReal mz = 0.0;
 		DoubleReal rt = 0.0;
@@ -1039,8 +1056,8 @@ namespace OpenMS
 		{
 			//TODO CHROM
 		}
-		
-		//draw text			
+
+		//draw text
 		QStringList lines;
 		if (print_rt) lines.push_back("RT delta : " + QString::number(rt,'f',2));
 		lines.push_back("m/z delta: " + QString::number(mz,'f',6));
@@ -1050,7 +1067,7 @@ namespace OpenMS
 		}
 		else
 		{
-			lines.push_back("int ratio: " + QString::number(it,'f',2));			
+			lines.push_back("int ratio: " + QString::number(it,'f',2));
 		}
 		drawText_(painter, lines);
 	}
@@ -1058,11 +1075,11 @@ namespace OpenMS
 	void SpectrumCanvas::drawText_(QPainter& painter, QStringList text)
 	{
 		painter.save();
-		
+
 		//font
 		QFont font("Courier");
 		painter.setFont(font);
-		
+
 		//determine width and height of the box we need
 		QFontMetrics metrics(painter.font());
 		int line_spacing = metrics.lineSpacing();
@@ -1072,17 +1089,17 @@ namespace OpenMS
 		{
 			width = std::max(width, 4 + metrics.width(text[i]));
 		}
-		
+
 		//draw backgrond for text
 		painter.fillRect(2,3,width, height, QColor(255,255,255,200));
-		
+
 		//draw text
 		painter.setPen(Qt::black);
 		for (int i=0;i<text.size(); ++i)
 		{
 			painter.drawText(3, 3 + (i+1) * line_spacing, text[i]);
 		}
-		
+
 		painter.restore();
 	}
 

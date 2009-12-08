@@ -44,6 +44,7 @@ namespace OpenMS
 		defaults_.setValue("reduce_by_factor", 0, "Reduce the intensities of the precursor and related ions by a given factor (set 'set_to_zero' to 0).", StringList::create("advanced"));
 		defaults_.setValue("factor", 1000.0, "Factor which is used to reduce the intensities if 'reduce_by_factor' is selected.", StringList::create("advanced"));
 		defaults_.setValue("set_to_zero", 1, "Reduce the intensities of the precursor and related ions to zero.", StringList::create("advanced"));
+		defaults_.setValue("remove_big_outliners", 0, "Remove the peaks heavier than the singly charged precursor.");
 		defaultsToParam_();
   }
 

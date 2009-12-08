@@ -7,6 +7,8 @@
 #include <OpenMS/COMPARISON/SPECTRA/AntisymetricAlignment.h>
 #include <OpenMS/COMPARISON/CLUSTERING/StarClusters.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/ParentPeakMower.h>
+#include <OpenMS/FILTERING/TRANSFORMERS/Normalizer.h>
+#include <OpenMS/FILTERING/TRANSFORMERS/ThresholdMower.h>
 #include <OpenMS/FORMAT/TextFile.h>
 #include <OpenMS/FORMAT/CsvFile.h>
 #include <OpenMS/FORMAT/IdXMLFile.h>
@@ -14,7 +16,6 @@
 #include <OpenMS/DATASTRUCTURES/Param.h>
 #include <OpenMS/DATASTRUCTURES/DataValue.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
-#include <OpenMS/FILTERING/TRANSFORMERS/Normalizer.h>
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
@@ -49,7 +50,7 @@ using namespace std;
 	{
 	 public:
 		SpectralNetworking()
-			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "1.0beta")
+			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "1.1beta")
 		{
 
 		}
@@ -169,7 +170,7 @@ using namespace std;
 				/// @attention if the precursor charge is unknown, i.e. 0 best guess is its doubly charged
 				(c_i==0)?c_i=2:c_i=c_i;
 				(c_j==0)?c_j=2:c_j=c_j;
-			/// @attention singly charged mass difference!
+				/// @attention singly charged mass difference!
 				Real pm_diff = (pm_j*c_j - (c_j-1)*Constants::PROTON_MASS_U)-(pm_i*c_i - (c_i-1)*Constants::PROTON_MASS_U);
 				if(fabs(pm_diff) < max_pm_diff+pm_tol+0.00001 )
 				{
@@ -256,8 +257,8 @@ using namespace std;
 				//~ pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(/* best_score1,best_score2 */cumulated_score1,cumulated_score2));
 				//~ edge_selection.push_back(i);
 			//~ }
-
 		}
+
 		for(Size i = 0; i < edge_selection.size(); ++i)
 		{
 			//~ edge_selection indices are alwas >= the ones to pot_pairs so no collision expected
@@ -564,14 +565,6 @@ using namespace std;
 		String ids_file = getStringOption_("ids");
 		String network_file = getStringOption_("network");
 
-		if(ids_file.empty() and network_file.empty())
-		{
-			//~ make consensus case
-			String outputfile_name_consensus = dir+prefix+String("-consensus.mzML");
-			outputFileWritable_(outputfile_name_consensus);
-			String outputfile_name_edges = dir+prefix+String("-edges.txt");
-			outputFileWritable_(outputfile_name_edges);
-
 			StopWatch w;
 			w.start();
 
@@ -582,19 +575,60 @@ using namespace std;
 			mzml.load(inputfile_name,experiment);
 			//~ experiment.sortSpectra();
 
+			//~ parent peak mower
+			ParentPeakMower papemo;
+			Param p(papemo.getParameters());
+			p.setValue("remove_big_outliners", 1);
+			papemo.setParameters(p);
+			for(Size i = 0; i < experiment.size(); ++i)
+			{
+				papemo.filterSpectrum(experiment[i]);
+				experiment[i].sortByPosition();
+			}
+
 			//~ for scoring reasons this is mandatory
 			Normalizer normalizer;
-			Param p(normalizer.getParameters());
+			p = normalizer.getParameters();
 			p.setValue("method", "to_one");
 			normalizer.setParameters(p);
 			for(Size i = 0; i < experiment.size(); ++i)
 			{
 				normalizer.filterSpectrum(experiment[i]);
+				experiment[i].sortByPosition();
+			}
+
+			//~ threshold mower
+			ThresholdMower thremowe;
+			p = thremowe.getParameters();
+			p.setValue("threshold", 0.1);
+			thremowe.setParameters(p);
+			for(Size i = 0; i < experiment.size(); ++i)
+			{
+				thremowe.filterSpectrum(experiment[i]);
+				experiment[i].sortByPosition();
+			}
+
+			//~ normalizer to one
+			p = normalizer.getParameters();
+			p.setValue("method", "all_one");
+			normalizer.setParameters(p);
+			for(Size i = 0; i < experiment.size(); ++i)
+			{
+				normalizer.filterSpectrum(experiment[i]);
+				experiment[i].sortByPosition();
 			}
 
 			w.stop();
 			writeLog_(String("done  .. took ") + String(w.getClockTime()) + String(" seconds, loaded ") + String(experiment.size()) + String(" spectra"));
 			w.reset();
+
+		if(ids_file.empty() and network_file.empty())
+		{
+			//~ make consensus case
+			String outputfile_name_consensus = dir+prefix+String("-consensus.mzML");
+			outputFileWritable_(outputfile_name_consensus);
+			String outputfile_name_edges = dir+prefix+String("-edges.txt");
+			outputFileWritable_(outputfile_name_edges);
 
 			//~ start consensus making
 			spanNetwork_(experiment, outputfile_name_consensus, outputfile_name_edges);
@@ -607,29 +641,6 @@ using namespace std;
 
 			String outputfile_name_specnet = dir+prefix+String("-specnet.consensusXML");
 			outputFileWritable_(outputfile_name_specnet);
-
-			StopWatch w;
-			w.start();
-
-			writeLog_(String("Loading nodes from ") + inputfile_name +  String(" .. ") );
-			MzMLFile mzml;
-			//~ MSExperiment<Peak1D>= PeakMap see StandardTypes
-			MSExperiment<Peak1D> experiment;
-			mzml.load(inputfile_name,experiment);
-
-				//~ for scoring reasons this is mandatory
-			Normalizer normalizer;
-			Param p(normalizer.getParameters());
-			p.setValue("method", "to_one");
-			normalizer.setParameters(p);
-			for(Size i = 0; i < experiment.size(); ++i)
-			{
-				normalizer.filterSpectrum(experiment[i]);
-			}
-
-			w.stop();
-			writeLog_(String("done  .. took ") + String(w.getClockTime()) + String(" seconds, loaded ") + String(experiment.size()) + String(" spectra"));
-			w.reset();
 
 			w.start();
 			writeLog_(String("Loading network of stars from ") + network_file +  String(" ..") );

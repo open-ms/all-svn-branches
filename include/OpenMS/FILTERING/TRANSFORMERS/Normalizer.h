@@ -35,9 +35,9 @@ namespace OpenMS
 {
   /**
   	@brief Normalizer normalizes the peak intensities
-		 
+
 		@htmlinclude OpenMS_Normalizer.parameters
-		
+
 		@ingroup SpectraPreprocessers
   */
   class OPENMS_DLLAPI Normalizer
@@ -79,9 +79,9 @@ namespace OpenMS
 		{
 			typedef typename SpectrumType::Iterator Iterator;
 			typedef typename SpectrumType::ConstIterator ConstIterator;
-	
+
 			String method = param_.getValue("method");
-			
+
 			// normalizes the max peak to 1 and the rest of the peaks to values relative to max
 			if (method == "to_one")
 			{
@@ -115,11 +115,21 @@ namespace OpenMS
 				}
 				return;
 			}
-			
+
+			// equalizes the peak intensities to one
+			if (method == "all_one")
+			{
+				for (Iterator it = spectrum.begin(); it != spectrum.end(); ++it)
+				{
+					it->setIntensity(1);
+				}
+				return;
+			}
+
 			// method unknown
 			throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Method not known", method);
 			return;
-			
+
 		}
 
 		///

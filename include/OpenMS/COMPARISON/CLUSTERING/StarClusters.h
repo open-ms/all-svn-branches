@@ -125,17 +125,33 @@ namespace OpenMS
 		*/
 		void reverseSpectrum(MSSpectrum<PeakType>& spec, bool is_prm=false)
 		{
-			DoubleReal pm = spec.getPrecursors().front().getMZ(); /// @improvement throw error if no precursor
+			int c = spec.getPrecursors().front().getCharge();
+			/// @attention singly charged mass difference!
+			DoubleReal pm(( spec.getPrecursors().front().getMZ() *c - (c-1)*Constants::PROTON_MASS_U));
+
 			if(is_prm)
 			{
-				pm -= 1; /// @improvement check if peakspectra reversion needs subtraction too (charge ?!)
+				pm -= Constants::PROTON_MASS_U; /// @improvement check if peakspectra reversion needs subtraction too (charge ?!)
 			}
 
 			for(SpectrumIterator p = spec.begin(); p != spec.end(); ++p)
 			{
-				p->setMZ(pm - p->getMZ());
+				p->getMZ()<pm? p->setMZ(0) : p->setMZ(pm - p->getMZ());
 			}
 			spec.sortByPosition();
+
+			if(spec.begin()->getMZ()==0)
+			{
+				SpectrumIterator p = spec.begin();
+				for(; p != spec.end(); ++p)
+				{
+					if(p->getMZ()>0)
+					{
+						break;
+					}
+				}
+				spec.erase(spec.begin(),p);
+			}
 			return;
 		}
 		///
@@ -278,9 +294,8 @@ namespace OpenMS
 				return true;
 			}
 
-			DoubleReal charge = /* 2 */1;
+			DoubleReal charge = 2;
 			Size best_pos(0);
-			/* debug */std::cout << " derp? " << std::endl;
 
 			DoubleReal best_diff = std::numeric_limits<DoubleReal>::max();
 			/// @improvement seeking for match consider symmetric peaks not contained! (take symmetric info from where? the specs metadata!)
@@ -325,7 +340,6 @@ namespace OpenMS
 
 			modified_sequence = template_sequence;
 			modified_sequence.setIndesignatedModification(best_pos, mod_shift);
-			/* debug */std::cout << " derp! " << std::endl;
 			/// @important AASequence::getmonoweight(does not use residue::getmonoweight!) changed so above additions get accounted for as indesignated modification
 			return true;
 		}

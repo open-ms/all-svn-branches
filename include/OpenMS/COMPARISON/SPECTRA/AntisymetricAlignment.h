@@ -1469,6 +1469,8 @@ namespace OpenMS
 				defaults_.setValue("peak_tolerance", 0.3, "Defines the absolut (in Da) peak tolerance");
 				defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
 				defaults_.setValue("min_dist", 57.0214637230 , "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
+				defaults_.setValue("sv_penalty", -5.0 , "Defines the penalty for being in the same 'vertex' in DP");
+				defaults_.setValue("dif_penalty", -5.0 , "Defines the penalty for jumping the parentmass difference in DP");
 				/// @improvement DP penalty scores here
 				defaultsToParam_();
 		}
@@ -1683,6 +1685,8 @@ namespace OpenMS
 		void getAntisymetricAlignment(MSSpectrum<PeakT>& res_1, MSSpectrum<PeakT>& res_2, DoubleReal& score, DoubleReal& mod_pos, const MSSpectrum<PeakT>& s1, const MSSpectrum<PeakT>& s2) const
 		{
 			//~ float sameVertexPenalty=-5, float ptmPenalty=-5, bool forceSymmetry=true, bool addZPMmatches=false
+			//~ sameVertexPenalty = -1000000, ptmPenalty = -200; //makes the test fail!
+			//~ sameVertexPenalty = 0, ptmPenalty = 0;
 
 			Real peak_tolerance = param_.getValue("peak_tolerance");
 			DoubleReal pm_tolerance = param_.getValue("parentmass_tolerance");
@@ -2003,14 +2007,13 @@ namespace OpenMS
 			/// @improvement btw is this right with massMH = H2O + Constants::PROTON_MASS_U?!?!?!
 			//~ static const double massMH = EmpiricalFormula("H2O").getMonoWeight() + Constants::PROTON_MASS_U;
 			/// @improvement find a good penalty adjustment
-			//~ DoubleReal sameVertexPenalty = 0, ptmPenalty = 0;
-			DoubleReal sameVertexPenalty = -5, ptmPenalty = -5;
-			//~ DoubleReal sameVertexPenalty = -1000000, ptmPenalty = -200; //makes the test fail!
+			DoubleReal sv_penalty = (DoubleReal)param_.getValue("sv_penalty");
+			DoubleReal dif_penalty = (DoubleReal)param_.getValue("dif_penalty");
 
 			std::pair<double, std::pair< std::vector<int>,std::vector<int> > > asym_align;
 
 			AntisymetricDP dp;
-			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U), peaks, peaks2, common, common_shifted, common_scores, common_shifted_scores, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, peak_tolerance, sameVertexPenalty, ptmPenalty);
+			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U), peaks, peaks2, common, common_shifted, common_scores, common_shifted_scores, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, peak_tolerance, sv_penalty, dif_penalty);
 
 			score = asym_align.first;
 

@@ -145,6 +145,11 @@ namespace OpenMS
 				{
 					break;
 				}
+				if(!(unmerged[i][j].getMZ() > 0))
+				{
+					std::cerr << " spectrum has negative or zero m/z ratio(s) " << std::endl;
+					continue;
+				}
 
 				//bin_number counted form 0 -> floor
 				bin_number = (UInt)floor(unmerged[i][j].getMZ()/bin_size_);
@@ -191,6 +196,8 @@ namespace OpenMS
 				}
 			}
 		}
+
+
 
 		//~ merge down all bins according to given statistical hypothesis
 		Real noise_propability(0.001); // noise prob. for bernoulli trial nois peak generation

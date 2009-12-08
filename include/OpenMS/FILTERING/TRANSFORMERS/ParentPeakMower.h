@@ -29,6 +29,7 @@
 #define OPENMS_FILTERING_TRANSFORMERS_PARENTPEAKMOWER_H
 
 #include <OpenMS/FILTERING/TRANSFORMERS/PreprocessingFunctor.h>
+#include <OpenMS/CONCEPT/Constants.h>
 #include <vector>
 
 namespace OpenMS
@@ -36,7 +37,7 @@ namespace OpenMS
 
   /**
   	@brief ParentPeakMower gets rid of high peaks that could stem from unfragmented precursor ions
-		 
+
 		@htmlinclude OpenMS_ParentPeakMower.parameters
 
 		@ingroup SpectraPreprocessers
@@ -73,7 +74,7 @@ namespace OpenMS
 		{
 			typedef typename SpectrumType::ConstIterator ConstIterator;
 			typedef typename SpectrumType::Iterator Iterator;
-			
+
 			if (spectrum.getMSLevel() == 1)
 			{
 				std::cerr << "Error: ParenPeakMower cannot be applied to MS-level 1" << std::endl;
@@ -83,7 +84,7 @@ namespace OpenMS
     	//get precursor peak position precursorpeak
 	    double pre_pos = 0.0;
 			if (!spectrum.getPrecursors().empty()) pre_pos = spectrum.getPrecursors()[0].getMZ();
-		
+
 			if (pre_pos == 0)
 			{
 				std::cerr << "ParenPeakMower: Warning, Precursor Position not set" << std::endl;
@@ -99,8 +100,8 @@ namespace OpenMS
 			}
 
 			pre_pos *= pre_charge;
-			
-			// get all other parameters 
+
+			// get all other parameters
 			bool clean_all_charge_states = (Int)param_.getValue("clean_all_charge_states");
 			bool consider_NH3_loss = (Int)param_.getValue("consider_NH3_loss");
 			bool consider_H2O_loss = (Int)param_.getValue("consider_H2O_loss");
@@ -108,7 +109,21 @@ namespace OpenMS
 			bool reduce_by_factor = (Int)param_.getValue("reduce_by_factor");
 			double factor = (double)param_.getValue("factor");
 			bool set_to_zero = (Int)param_.getValue("set_to_zero");
-		
+			bool remove_big_outliners = (Int)param_.getValue("remove_big_outliners");
+
+			// prune 'unneccessary' peaks
+			if(remove_big_outliners)
+			{
+				DoubleReal pm = spectrum.getPrecursors().front().getMZ();
+				/// @attention singly charged mass difference!
+				DoubleReal pre_mass = (pm*pre_charge - (pre_charge-1)*Constants::PROTON_MASS_U);
+				Iterator it = spectrum.MZEnd(pre_mass);
+				if(it != spectrum.end())
+				{
+					spectrum.erase(it, spectrum.end());
+				}
+			}
+
 			// identify the ranges which are to be considered
 			std::vector<DRange<1> > ranges;
 			for (Size z = 1; z <= pre_charge; ++z)
@@ -118,12 +133,12 @@ namespace OpenMS
 					// no adjusting needed for this charge
 					DPosition<1> pre_z_pos, pos;
 					DRange<1> range;
-					
+
 					// adjust the m/z by weight of precursor and charge
 					pre_z_pos = DPosition<1>(pre_pos / double(z));
 					range = DRange<1>(pre_z_pos - window_size, pre_z_pos + window_size);
 					ranges.push_back(range);
-										
+
 					if (consider_NH3_loss)
 					{
 						pos = DPosition<1>(pre_z_pos - 17.0 / double(z));
@@ -139,11 +154,11 @@ namespace OpenMS
 				}
 			}
 
-			for (std::vector<DRange<1> >::const_iterator rit = ranges.begin(); rit != ranges.end(); ++rit)
-			{
-				std::cerr << *rit << std::endl;
-			}
-			
+			//~ for (std::vector<DRange<1> >::const_iterator rit = ranges.begin(); rit != ranges.end(); ++rit)
+			//~ {
+				//~ std::cerr << *rit << std::endl;
+			//~ }
+
 			// apply the intensity reduction to the collected ranges
 			for (Iterator it = spectrum.begin(); it != spectrum.end(); ++it)
 			{
@@ -165,7 +180,7 @@ namespace OpenMS
 					}
 				}
 			}
-			
+
 			return;
 		}
 

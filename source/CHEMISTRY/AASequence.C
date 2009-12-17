@@ -459,11 +459,9 @@ namespace OpenMS
 		{
 			seq.peptide_.push_back(peptide_[i]);
 		}
-		std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.find(index);
-		if(it != indesignated_modifications_.end())
-		{
-			seq.indesignated_modifications_.insert(indesignated_modifications_.begin(),++it);
-		}
+		std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.lower_bound(index);
+		seq.indesignated_modifications_.insert(indesignated_modifications_.begin(),it);
+
 		return seq;
 	}
 
@@ -478,11 +476,13 @@ namespace OpenMS
 		{
 			seq.peptide_.push_back(peptide_[i]);
 		}
-		std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.find(index);
-		if(it != indesignated_modifications_.end())
+
+		std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.lower_bound(size()-index);
+		for(;it != indesignated_modifications_.end(); ++it)
 		{
-			seq.indesignated_modifications_.insert(it,indesignated_modifications_.end());
+			seq.indesignated_modifications_[it->first-(size()-index)]=it->second;
 		}
+
 		return seq;
 	}
 
@@ -501,6 +501,14 @@ namespace OpenMS
 		{
 			seq.peptide_.push_back(peptide_[i]);
 		}
+
+		std::map<Size,DoubleReal>::const_iterator it = indesignated_modifications_.lower_bound(index);
+		std::map<Size,DoubleReal>::const_iterator stop_it = indesignated_modifications_.lower_bound(index + num);
+		for(;it != stop_it; ++it)
+		{
+			seq.indesignated_modifications_[it->first-(size()-index)]=it->second;
+		}
+
 		return seq;
 	}
 

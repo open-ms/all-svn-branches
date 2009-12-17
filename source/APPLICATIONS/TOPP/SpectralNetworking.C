@@ -50,7 +50,7 @@ using namespace std;
 	{
 	 public:
 		SpectralNetworking()
-			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "1.1beta")
+			: TOPPBase("SpectralNetworking","pipeline for spectral networking", false, "1.2beta")
 		{
 
 		}
@@ -123,6 +123,67 @@ using namespace std;
 
 		//~ addEmptyLine_();
 		//~ addText_("Parameters for the sections can only be given in the INI file.");
+	}
+	///
+
+	void addZeroIonPeaks_(MSExperiment<Peak1D>& experiment)
+	{
+		DoubleReal peak_tol = getParam_().getValue("general:peak_tolerance");
+		for(Size i = 0; i < experiment.size(); ++i)
+		{
+			DoubleReal pm = experiment[i].getPrecursors().front().getMZ();
+			int c = experiment[i].getPrecursors().front().getCharge();
+			(c==0)?c=2:c=c;
+			/// @attention singly charged mass
+			pm = pm*c - (c-1)*Constants::PROTON_MASS_U;
+
+			//~ b0 = |H|; bk = pm - |OH|; y0 = |H3O|; yk = pm - |H|
+			EmpiricalFormula f_H("H"), f_O("O");
+			DoubleReal b0(f_H.getMonoWeight()), bk(pm - f_H.getMonoWeight() - f_O.getMonoWeight()), y0(3*f_H.getMonoWeight() + f_O.getMonoWeight()), yk(pm - f_H.getMonoWeight());
+
+			//~ b0
+			MSSpectrum<Peak1D>::Iterator lo = experiment[i].MZBegin(b0-peak_tol);
+			MSSpectrum<Peak1D>::Iterator hi = experiment[i].MZEnd(lo,b0+peak_tol,experiment[i].end());
+			if(lo==hi)
+			{
+				Peak1D tmp;
+				tmp.setPosition(b0);
+				tmp.setIntensity(0.5);
+				experiment[i].push_back(tmp);
+			}
+			//~ bk
+			lo = experiment[i].MZBegin(bk-peak_tol);
+			hi = experiment[i].MZEnd(lo,bk+peak_tol,experiment[i].end());
+			if(lo==hi)
+			{
+				Peak1D tmp;
+				tmp.setPosition(bk);
+				tmp.setIntensity(0.5);
+				experiment[i].push_back(tmp);
+			}
+
+			//~ y0
+			lo = experiment[i].MZBegin(y0-peak_tol);
+			hi = experiment[i].MZEnd(lo,y0+peak_tol,experiment[i].end());
+			if(lo==hi)
+			{
+				Peak1D tmp;
+				tmp.setPosition(y0);
+				tmp.setIntensity(0.5);
+				experiment[i].push_back(tmp);
+			}
+			//~ yk
+			lo = experiment[i].MZBegin(yk-peak_tol);
+			hi = experiment[i].MZEnd(lo,yk+peak_tol,experiment[i].end());
+			if(lo==hi)
+			{
+				Peak1D tmp;
+				tmp.setPosition(yk);
+				tmp.setIntensity(0.5);
+				experiment[i].push_back(tmp);
+			}
+
+		}
 	}
 	///
 
@@ -237,6 +298,7 @@ using namespace std;
 				xcorr_accumulators[pot_pairs[i].second](best_score2_sf);
 				pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(best_score1_sf,best_score2_sf));
 				edge_selection.push_back(i);
+				average_best_matches += best_matches_sf.size();
 			}
 			else if((DoubleReal)best_matches_st.size()/((DoubleReal)(experiment[pot_pairs[i].first].size()+experiment[pot_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio)
 			{
@@ -244,19 +306,9 @@ using namespace std;
 				xcorr_accumulators[pot_pairs[i].second](best_score2_st);
 				pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(best_score1_st,best_score2_st));
 				edge_selection.push_back(i);
+				average_best_matches += best_matches_st.size();
 			}
-			average_best_matches += std::max(best_matches_sf.size(),best_matches_st.size());
 
-			//~ DoubleReal cumulated_match_size(((DoubleReal)best_matches_st.size()+(DoubleReal)best_matches_sf.size())/2.0);
-			//~ DoubleReal cumulated_score1((best_score1_st+best_score1_sf)/2.0);
-			//~ DoubleReal cumulated_score2((best_score2_st+best_score2_sf)/2.0);
-			//~ if(/* (DoubleReal)best_matches.size() */ cumulated_match_size/((DoubleReal)(experiment[pot_pairs[i].first].size()+experiment[pot_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio)
-			//~ {
-				//~ xcorr_accumulators[pot_pairs[i].first](/* best_score1 */cumulated_score1);
-				//~ xcorr_accumulators[pot_pairs[i].second](/* best_score2 */cumulated_score2);
-				//~ pot_pairs_xcs.push_back(std::make_pair<DoubleReal,DoubleReal>(/* best_score1,best_score2 */cumulated_score1,cumulated_score2));
-				//~ edge_selection.push_back(i);
-			//~ }
 		}
 
 		for(Size i = 0; i < edge_selection.size(); ++i)
@@ -334,7 +386,7 @@ using namespace std;
 			DoubleReal mod_pos, score;
 			asa.getAntisymetricAlignment(res_1, res_2, score, mod_pos, experiment[aligned_pairs[i].first], experiment[aligned_pairs[i].second]);
 			/// @improvement make pairs_min_matches an advanced parameter
-			/* debug */ std::cout << " with pair: "<< aligned_pairs[i].first << " + " << aligned_pairs[i].second << std::endl;
+			/* debug std::cout << " with pair: "<< aligned_pairs[i].first << " + " << aligned_pairs[i].second << std::endl; */
 			if((DoubleReal)res_1.size()/((DoubleReal)(experiment[aligned_pairs[i].first].size()+experiment[aligned_pairs[i].second].size())/DoubleReal(2)) >=  pairs_min_ratio and res_1.size() >= pairs_min_matches)
 			{
 				edge_selection.push_back(i);
@@ -511,7 +563,7 @@ using namespace std;
 				//~ zero_to_delete = ids_it;
 			//~ }
 		}
-		writeLog_(String("unknowns ") + String(c));
+		writeLog_(String("nodes without id: ") + String(c));
 		/// @improvement ahhrg!!! doeas not work - hardhack for the annoying 0,0 ConsensusFeature - find out where that comes from
 		//~ ids.erase(zero_to_delete);
 
@@ -536,6 +588,8 @@ using namespace std;
 		colors.push_back("darkred			");
 		colors.push_back("darkviolet	");
 
+		std::map< Size, std::vector<String> > cropped_ids;
+
 		for(ConsensusMap::Iterator ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
 		{
 			if(ids_it->metaValueExists("network id"))
@@ -543,6 +597,15 @@ using namespace std;
 				ids_it->setMetaValue("color", colors[(Size)ids_it->getMetaValue("network id")%colors.size()]);
 				//~ set intensity for coloration
 				//~ ids_it->setIntensity(1000*((Size)ids_it->getMetaValue("network id"))%colors.size());
+				cropped_ids[(Size)ids_it->getMetaValue("network id")].push_back(ids_it->getPeptideIdentifications().front().getHits().front().getSequence().toString());
+			}
+		}
+
+		for(std::map< Size, std::vector<String> >::iterator it = cropped_ids.begin(); it != cropped_ids.end(); ++it)
+		{
+			for(Size i = 0; i < it->second.size(); ++i)
+			{
+				std::cout << it->second[i] << std::endl;
 			}
 		}
 
@@ -600,21 +663,11 @@ using namespace std;
 			//~ threshold mower
 			ThresholdMower thremowe;
 			p = thremowe.getParameters();
-			p.setValue("threshold", 0.1);
+			p.setValue("threshold", 0.01);
 			thremowe.setParameters(p);
 			for(Size i = 0; i < experiment.size(); ++i)
 			{
 				thremowe.filterSpectrum(experiment[i]);
-				experiment[i].sortByPosition();
-			}
-
-			//~ normalizer to one
-			p = normalizer.getParameters();
-			p.setValue("method", "all_one");
-			normalizer.setParameters(p);
-			for(Size i = 0; i < experiment.size(); ++i)
-			{
-				normalizer.filterSpectrum(experiment[i]);
 				experiment[i].sortByPosition();
 			}
 
@@ -629,6 +682,20 @@ using namespace std;
 			outputFileWritable_(outputfile_name_consensus);
 			String outputfile_name_edges = dir+prefix+String("-edges.txt");
 			outputFileWritable_(outputfile_name_edges);
+
+			///@improvement find out if only the b ions or only the y ions suffice
+			addZeroIonPeaks_(experiment);
+
+			///@improvement find out if this distorts the alignment
+			// normalizer to one
+			p = normalizer.getParameters();
+			p.setValue("method", "all_one");
+			normalizer.setParameters(p);
+			for(Size i = 0; i < experiment.size(); ++i)
+			{
+				normalizer.filterSpectrum(experiment[i]);
+				experiment[i].sortByPosition();
+			}
 
 			//~ start consensus making
 			spanNetwork_(experiment, outputfile_name_consensus, outputfile_name_edges);
@@ -662,6 +729,7 @@ using namespace std;
 				{
 					aligned_pairs.push_back(std::make_pair<Size,Size>(splits[0].toDouble(),splits[1].toDouble()));
 					mod_positions.push_back(splits[2].toDouble());
+					/*debug if(splits[2].toDouble()>0){std::cout<<splits[2].toDouble()<<std::endl;}*/
 				}
 				catch(...)
 				{

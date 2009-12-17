@@ -163,7 +163,9 @@ namespace OpenMS
 						double penalty = 0.0;
 						double y = peaks2[common[N-j]]+peaks2[common[j2]];
 						if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-						penalty = same_vertex_penalty;
+						{
+							penalty = same_vertex_penalty;
+						}
 						double next_score = suffix1max[N-j2];
 						suffix1[j][s+1] = common_scores[N-j] + next_score + penalty;
 					}
@@ -1844,7 +1846,7 @@ namespace OpenMS
 				}
 			}
 
-			/* debug			*/
+			/* debug
 			std::cout << "§ " ;
 			for(Size i = 0; i < res_1.getIntegerDataArrays()[1].size(); ++i)
 			{
@@ -1856,7 +1858,7 @@ namespace OpenMS
 				std::cout << res_1.getIntegerDataArrays()[2][i];
 			}
 			std::cout << std::endl;
-
+			*/
 
 			std::vector<DoubleReal> peaks(res_1.size());
 			for(Size i=0;i<res_1.size();++i) peaks[i]=res_1[i].getMZ();
@@ -2019,7 +2021,7 @@ namespace OpenMS
 
 			Size num_aligned_peaks = asym_align.second.first.size()+asym_align.second.second.size();
 
-			/* debug */ std::cout << " aligned: "<< asym_align.second.first.size() << " + " << asym_align.second.second.size() << std::endl;
+			/* debug  std::cout << " aligned: "<< asym_align.second.first.size() << " + " << asym_align.second.second.size() << std::endl;*/
 
 			if(num_aligned_peaks==0)
 			{

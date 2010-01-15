@@ -5,17 +5,16 @@ PROJECT("OpenMS")
 
 # TODO LIST:
 # - test for contrib headers (CONTRIB_HEADER_DIR ccmake variable - test one header for each required library)
-# - parallel build of test executables
-# - target to execute all EXAMPLES
 
 ########################################################
 ### entries meant to be configured using CMake cache ###
-### - do NOT hardcode them here!										 ###
+### - do NOT hardcode them here!                     ###
 ### - edit them within CMakeCache.txt using ccmake	 ###
 ########################################################
 # OPENMS_BUILD_TYPE
 # CONTRIB_CUSTOM_DIR
 # STL_DEBUG
+# DB_TEST
 # QT_DB_PLUGIN
 # MT_CUDA_BUILD_TYPE
 
@@ -24,16 +23,23 @@ PROJECT("OpenMS")
 ########################################################
 
 set(OPENMS_PACKAGE_VERSION_MAJOR "1")
-set(OPENMS_PACKAGE_VERSION_MINOR "6")
+set(OPENMS_PACKAGE_VERSION_MINOR "7")
 set(OPENMS_PACKAGE_VERSION_PATCH "0")
 
 ########################################################
-###    end manual	entries													   ###
+###            end manual entries                    ###
 ########################################################
 
-# Heart of the BUILD system : only edit when you know what you´re doing (we don´t)
-# quick manual for most commands: http://www.cmake.org/cmake/help/cmake2.6docs.html
-# useful predefined variables: http://www.paraview.org/Wiki/CMake_Useful_Variables
+## Heart of the BUILD system : only edit when you know what you´re doing (we don´t)
+## quick manual for most commands: http://www.cmake.org/cmake/help
+## useful predefined variables: http://www.paraview.org/Wiki/CMake_Useful_Variables
+##
+## naming conventions:
+##
+## prefix a variable with 'CF_' if it is used to configure a file!
+## e.g., CF_LibOpenMSExport
+
+
 
 cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
@@ -51,6 +57,9 @@ include (cmake/macros.cmake)
 ########################################################
 ###    compiler flags																 ###
 ########################################################
+
+## fill this with compile flags that external projects should use as well
+set(CF_OPENMS_ADD_DEFINITIONS)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
 	if (MT_ENABLE_CUDA)
@@ -73,14 +82,13 @@ elseif (MSVC)
 	#add_definitions(/Wall) ## disable for now.. its just too much!
 
 	## disable dll-interface warning
-	add_definitions(/wd4251 /wd4275)
+	list(APPEND CF_OPENMS_ADD_DEFINITIONS "/wd4251 /wd4275")
 	
 	## disable deprecated functions warning (e.g. for POSIX functions)
-	add_definitions(/wd4996)
+	list(APPEND CF_OPENMS_ADD_DEFINITIONS "/wd4996")
 
 	## disable explicit template instantiation request for partially defined classes
-	add_definitions(/wd4661)
-
+	list(APPEND CF_OPENMS_ADD_DEFINITIONS "/wd4661")
 	
 	## don't warn about unchecked std::copy()
 	add_definitions(/D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
@@ -92,19 +100,21 @@ elseif (MSVC)
 	## xerces bug workaround
 	add_definitions(/DOPENMS_XERCESDLL)
 	
-	## compile such that GSL is in DLL mode
+	## removed: (GSL is static now) compile such that GSL is in DLL mode 
 	#add_definitions(/DGSL_DLL)
 
 	## FeatureFinder.obj is huge and won't compile in VS2008 debug otherwise:
 	add_definitions(/bigobj)
 	
 	## minimal code rebuild
-	#add_definitions(/Gm /Zi)
+	add_definitions(/Gm /Zi)
 
 else()
 	set(CMAKE_COMPILER_IS_INTELCXX true CACHE INTERNAL "Is Intel C++ compiler (icpc)")
 endif()
 
+
+add_definitions(${CF_OPENMS_ADD_DEFINITIONS})
 
 ##### Parallelization things
 #################################
@@ -230,13 +240,16 @@ set(CONTRIB_DIR ${PROJECT_SOURCE_DIR}/contrib/ CACHE INTERNAL "Final contrib pat
 
 if ("${CONTRIB_CUSTOM_DIR}" STREQUAL "")
 	message(STATUS "Using DEFAULT setting for contrib directory: ${CONTRIB_DIR}")
-  message(STATUS "If you want to set your own path to contrib use -D CONTRIB_CUSTOM_DIR:PATH=\"/my/path/to/contrib\"")
+  message(STATUS "If you want to set your own path to contrib use:")
+	message(STATUS "   cmake <..more options..> -D CONTRIB_CUSTOM_DIR:PATH=\"/my/path/to/contrib\" \"${PROJECT_SOURCE_DIR}\"")
 else()
-	set(CONTRIB_DIR ${CONTRIB_CUSTOM_DIR})
-	message(STATUS "Using user defined contrib directory: ${CONTRIB_DIR}")
+	file(TO_CMAKE_PATH ${CONTRIB_CUSTOM_DIR} CONTRIB_CUSTOM_DIR_PATH)
+	set(CONTRIB_DIR ${CONTRIB_CUSTOM_DIR_PATH})
+	message(STATUS "Using user defined contrib directory: ${CONTRIB_CUSTOM_DIR_PATH}")
 endif()
 
-FIND_PATH(CONTRIB_CONFIRM_DIR README_contrib1.5.txt PATHS ${CONTRIB_DIR} NO_DEFAULT_PATH)
+# maybe we should change this method to a more robust one
+FIND_PATH(CONTRIB_CONFIRM_DIR README_contrib1.7.txt PATHS ${CONTRIB_DIR} NO_DEFAULT_PATH)
 
 if ("${CONTRIB_CONFIRM_DIR}" STREQUAL "CONTRIB_CONFIRM_DIR-NOTFOUND")
 	message(FATAL_ERROR "The path to the Contrib directory (${CONTRIB_DIR}) is not correct or you need to update your contrib!")
@@ -276,22 +289,26 @@ OPENMS_CHECKLIB(CONTRIB_CBC3 "libClp;Clp" "libClpd;Clp" "COIN-OR Clp")
 OPENMS_CHECKLIB(CONTRIB_CBC4 "libCoinUtils;CoinUtils" "libCoinUtilsd;CoinUtils" "COIN-OR Utils")
 OPENMS_CHECKLIB(CONTRIB_CBC5 "libOsi;Osi" "libOsid;Osi" "COIN-OR Osi")
 OPENMS_CHECKLIB(CONTRIB_CBC6 "libOsiClp;OsiClp" "libOsiClpd;OsiClp" "COIN-OR OsiClp")
+set(CONTRIB_CBC ${CONTRIB_CBC1} ${CONTRIB_CBC2} ${CONTRIB_CBC3} ${CONTRIB_CBC4} ${CONTRIB_CBC5} ${CONTRIB_CBC6} )
 
-# if enabled stl-debug we need a imslib which is also built with stl-debug
-# "normal" debug mode is only supported manually
-if (STL_DEBUG)
-	OPENMS_CHECKLIB(CONTRIB_IMSLIB "imsd" "imsd" "imslib")
+OPENMS_CHECKLIB(CONTRIB_ZLIB "zlib;z" "zlib_d;z" "ZLIB")
+OPENMS_CHECKLIB(CONTRIB_BZIP2 "libbz2;bz2" "libbz2d;bz2" "BZIP2")
+
+## IMS
+if (MSVC)
+	OPENMS_CHECKLIB(CONTRIB_IMSLIB "ims" "imsd" "imslib")
 else()
-	if (MSVC)
-		OPENMS_CHECKLIB(CONTRIB_IMSLIB "ims" "imsd" "imslib")
+	# if enabled stl-debug we need a imslib which is also built with stl-debug
+	# "normal" debug mode is only supported manually
+	if (STL_DEBUG)
+		OPENMS_CHECKLIB(CONTRIB_IMSLIB "imsd" "imsd" "imslib")
 	else()
 		OPENMS_CHECKLIB(CONTRIB_IMSLIB "ims" "ims" "imslib")
 	endif()
 endif()
 
-set(CONTRIB_CBC ${CONTRIB_CBC1} ${CONTRIB_CBC2} ${CONTRIB_CBC3} ${CONTRIB_CBC4} ${CONTRIB_CBC5} ${CONTRIB_CBC6} )
-
-if (NOT MSVC AND USE_ANDIMS)
+## ANDIMS
+if (USE_ANDIMS)
 	OPENMS_CHECKLIB(CONTRIB_ANDIMS "ms10lib.a" "ms10lib.a" "ms10lib")
 
 	OPENMS_CHECKLIB(CONTRIB_NETCDF_CPP "libnetcdf_c++.a" "libnetcdf_c++.a" "netCDF_c++")
@@ -299,12 +316,12 @@ if (NOT MSVC AND USE_ANDIMS)
 	set(CONTRIB_NETCDF ${CONTRIB_NETCDF_CPP} ${CONTRIB_NETCDF_C})
 endif()
 
-## libSVM support
+## libSVM
 if (MSVC) 
-	## we created a lib here, because we cannot just add an object..
+	## we created a lib here, because we cannot just add an object ...
 	OPENMS_CHECKLIB(SVM_LIBRARY "svm" "svmd" "LibSVM")
 else()
-	## there is no FIND_OBJECT.. so just hard-code it (FIND_LIBRARY won't work)
+	## there is no FIND_OBJECT ... so just hard-code it (FIND_LIBRARY won't work)
 	set(SVM_LIBRARY general ${CONTRIB_LIB_DIR}svm.o CACHE INTERNAL "object file of svm library") # do not distinguish between optimized and debug
 endif()
 
@@ -488,22 +505,8 @@ endif()
 ## user flag with default "QMYSQL"
 set(QT_DB_PLUGIN "QMYSQL" CACHE STRING "User switch to change the Qt database plugin.")
 
-## DB test settings
-set(DB_TEST OFF CACHE BOOL "If true, the DB tests are enabled.")
-set(DB_TEST_HOST "localhost" CACHE STRING "Test database server name (only used if DB_TEST is true).")
-set(DB_TEST_PORT "3307" CACHE STRING "Test database server port (only used if DB_TEST is true).")
-set(DB_TEST_DB "OPENMS_TEST_DB" CACHE STRING "Test database name (only used for DB_TEST).")
-set(DB_TEST_USER "openms_test_user" CACHE STRING "Test database user name (only used for DB_TEST).")
-set(DB_TEST_PW "openms_test_password" CACHE STRING "Test database user password (only used for DB_TEST).")
-if (DB_TEST)
-	# output
-	message(STATUS "DB testing enabled")
-	message(STATUS "DB testing - creating credentials files ...")
-	# create assorted credentials files
-	configure_file(${PROJECT_SOURCE_DIR}/source/TEST/DB_credentials.txt.in ${PROJECT_BINARY_DIR}/source/TEST/DB_credentials.txt)
-	configure_file(${PROJECT_SOURCE_DIR}/source/TEST/TOPP/DBImporter.ini.in ${PROJECT_BINARY_DIR}/source/TEST/TOPP/DBImporter.ini)
-	configure_file(${PROJECT_SOURCE_DIR}/source/TEST/TOPP/DBExporter.ini.in ${PROJECT_BINARY_DIR}/source/TEST/TOPP/DBExporter.ini)
-endif()
+## Configures what is tested (DB-test, MS2-search engines)
+include(cmake/TestConfig.cmake)
 
 ## are we building a shared or static lib?! (BOTH within the same BUILD-tree is NOT possible with OpenMS!!)
 set(BUILD_SHARED_LIBS true)
@@ -520,13 +523,13 @@ configure_file(${PROJECT_SOURCE_DIR}/include/OpenMS/openms_package_version.h.in 
 set (OPENMS_CONFIGURED_FILES ${SVN_REVISION_FILE} ${CONFIGURED_CONFIG_H} ${CONFIGURED_OPENMS_PACKAGE_VERSION_H})
 
 ########################################################
-###    Documentation    														 ###
+###    Documentation                                 ###
 ########################################################
 
 include(cmake/doc.cmake)
 
 ########################################################
-###    BUILD the lib																 ###
+###    BUILD the lib                                 ###
 ########################################################
 
 #package type
@@ -574,7 +577,7 @@ endif()
 
 
 ## all the dependency libraries are linked into libOpenMS.so, except Qt and CUDA which are still dynamic
-set(OPENMS_DEP_LIBRARIES ${CONTRIB_CBC} ${CONTRIB_CGAL} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF} ${CONTRIB_BOOST_IO} ${CONTRIB_IMSLIB})
+set(OPENMS_DEP_LIBRARIES ${CONTRIB_CBC} ${CONTRIB_CGAL} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF} ${CONTRIB_BOOST_IO} ${CONTRIB_IMSLIB} ${CONTRIB_BZIP2} ${CONTRIB_ZLIB})
 if (TBB_FOUND)
 	set (OPENMS_DEP_LIBRARIES ${OPENMS_DEP_LIBRARIES} ${TBB_LIBRARIES})
 endif()
@@ -623,10 +626,10 @@ foreach(i ${TOPP_executables})
 
     add_executable(${i} MACOSX_BUNDLE ${TOPP_DIR}${i}.C ${resource_dir}/${i}.icns)         
     ## transform TOPPView and INIFileEditor to real Mac OS X applications
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_INFO_STRING "${i} - Version 1.5")
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "1.5")
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_VERSION "1.5")
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "1.5")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_INFO_STRING "${i} - Version ${OPENMS_PACKAGE_VERSION_MAJOR}.${OPENMS_PACKAGE_VERSION_MINOR}.${OPENMS_PACKAGE_VERSION_PATCH}")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "${OPENMS_PACKAGE_VERSION_MAJOR}.${OPENMS_PACKAGE_VERSION_MINOR}.${OPENMS_PACKAGE_VERSION_PATCH}")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_VERSION "${OPENMS_PACKAGE_VERSION_MAJOR}.${OPENMS_PACKAGE_VERSION_MINOR}.${OPENMS_PACKAGE_VERSION_PATCH}")
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "${OPENMS_PACKAGE_VERSION_MAJOR}.${OPENMS_PACKAGE_VERSION_MINOR}.${OPENMS_PACKAGE_VERSION_PATCH}")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_ICON_FILE "${i}.icns")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_GUI_IDENTIFIER "de.openms.${i}")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "${i}") 
@@ -705,14 +708,6 @@ if ("${PACKAGE_TYPE}" STREQUAL "none")
 	INCLUDE(Dart) ## for Nighlty Build log
 	add_subdirectory(source/TEST EXCLUDE_FROM_ALL) ## configure the Test project (but do not add it to OpenMS itself)
 endif()
-
-
-#### configs for external include files, e.g. to develop code with OpenMS
-configure_file(
-	"${PROJECT_SOURCE_DIR}/cmake/OpenMSConfig.cmake.in"
-	"${PROJECT_BINARY_DIR}/cmake/OpenMSConfig.cmake"
-	@ONLY
-)
 
 
 ##### targets list #####
@@ -796,7 +791,7 @@ if (MSVC)
                     COMMAND ${CMAKE_COMMAND} -E echo ""
                     COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/source/TEST/bin/$(OutDir)/"
 										COMMAND copy ${DLL_SOURCE} ${DLL_TARGET} /Y                    
-                    COMMENT "message after library is built & copy OpenMS(d).dll to test binary dir"
+                    COMMENT "Library build. Copying OpenMS(d).dll to test binary dir"
                     VERBATIM)
 else()
   add_custom_command(TARGET OpenMS
@@ -880,8 +875,6 @@ MESSAGE(STATUS "----------------------------------------------------------------
 MESSAGE(STATUS "")
 
 ##### install/copy (cpack mainly) #####
-## TODO:
-##  - this code breaks the windows cmake call (already code for win support added .. needs testing)
 
 if (NOT "${PACKAGE_TYPE}" STREQUAL "none")
 
@@ -900,12 +893,11 @@ if (NOT "${PACKAGE_TYPE}" STREQUAL "none")
 	else()
 		set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/License.txt)
 	endif()
-	set(CPACK_RESOURCE_FILE_WELCOME ${PROJECT_SOURCE_DIR}/cmake/OpenMSPackageResourceWelomeFile.txt)
+	set(CPACK_RESOURCE_FILE_WELCOME ${PROJECT_SOURCE_DIR}/cmake/OpenMSPackageResourceWelcomeFile.txt)
 	set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/cmake/OpenMSPackageResourceReadme.txt)
 	
 	# install routines for MacOSX
 	if("${PACKAGE_TYPE}" STREQUAL "dmg")
-		#include(cmake/package_dmg.cmake)
 		include(cmake/package_dragndrop_dmg.cmake)
 	endif()
 
@@ -922,16 +914,39 @@ else()
 	get_property(OPENMS_CMP_DEFS DIRECTORY . PROPERTY COMPILE_DEFINITIONS)
 	
 	## convert to CXX flags
-	set(OPENMS_ADDCXX_FLAGS)
+	set(CF_OPENMS_ADDCXX_FLAGS)
 	#
 	foreach(i ${OPENMS_CMP_DEFS})
-		set(OPENMS_ADDCXX_FLAGS "${OPENMS_ADDCXX_FLAGS} -D${i}")
+		set(CF_OPENMS_ADDCXX_FLAGS "${CF_OPENMS_ADDCXX_FLAGS} -D${i}")
 	endforeach(i)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OPENMS_ADDCXX_FLAGS}")
-	#Message(STATUS "Definitions: ${OPENMS_ADDCXX_FLAGS}")
+
 	
 	# build settings and  configs for external code
-	include(CMakeExportBuildSettings)
-	cmake_export_build_settings(${PROJECT_BINARY_DIR}/cmake/OpenMSBuildSettings.cmake)
-	export_library_dependencies(${PROJECT_BINARY_DIR}/cmake/OpenMSLibraryDepends.cmake)
+	## note: export_build_settings and
+	##       export_library_dependencies are deprecated and should not be used
+	set(CF_LibOpenMSExport ${PROJECT_BINARY_DIR}/cmake/OpenMSLibraryExport.cmake)
+	if ("${INSTALL_PREFIX}" STREQUAL ".")
+		string(COMPARE LESS ${CMAKE_MINOR_VERSION} "8" CMAKE_DEPRECATED_VERSION)
+		if (${CMAKE_DEPRECATED_VERSION})
+			message(STATUS "Cannot register OpenMS with CMake! For external code, set the path to OpenMS during find_package() manually.")
+		else()
+			## register OpenMS with CMake so that it can be found easily
+			export(PACKAGE OpenMS)
+		endif()
+		## export our lib
+		export(TARGETS OpenMS FILE ${CF_LibOpenMSExport})
+	else()
+		include(cmake/install.cmake)
+	endif()
+
+	
+	## create code that allows to call find_package()
+	## (must come after the above code!)
+	configure_file(
+		"${PROJECT_SOURCE_DIR}/cmake/OpenMSConfig.cmake.in"
+		"${PROJECT_BINARY_DIR}/cmake/OpenMSConfig.cmake"
+		@ONLY
+	)
+	
 endif()
+

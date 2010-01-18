@@ -3,17 +3,19 @@ set(directory source/FORMAT/HANDLERS)
 
 ### list all filenames of the directory here
 set(sources_list
+  AcqusHandler.C
+  FidHandler.C
 	MascotXMLHandler.C
 	MzDataHandler.C
+	MzIdentMLHandler.C
 	MzMLHandler.C
 	MzXMLHandler.C
-	PTMXMLHandler.C
 	ParamXMLHandler.C
+	PTMXMLHandler.C
+	TraMLHandler.C
 	UnimodXMLHandler.C
 	XMLHandler.C
 	XTandemInfileXMLHandler.C
-	MzIdentMLHandler.C
-	TraMLHandler.C
 )
 
 if (USE_ANDIMS) 	 

@@ -57,6 +57,7 @@ START_SECTION((static String typeToName(FileTypes::Type type)))
 	TEST_EQUAL(tmp.typeToName(FileTypes::TRANSFORMATIONXML),"TrafoXML");
 	TEST_EQUAL(tmp.typeToName(FileTypes::INI),"ini");
 	TEST_EQUAL(tmp.typeToName(FileTypes::PNG),"PNG");
+	TEST_EQUAL(tmp.typeToName(FileTypes::XMASS),"fid");
 END_SECTION
 
 START_SECTION((static FileTypes::Type nameToType(const String &name)))
@@ -75,6 +76,7 @@ START_SECTION((static FileTypes::Type nameToType(const String &name)))
 	TEST_EQUAL(FileTypes::INI, tmp.nameToType("ini"));
 	TEST_EQUAL(FileTypes::TRANSFORMATIONXML, tmp.nameToType("TrafoXML"));
 	TEST_EQUAL(FileTypes::PNG, tmp.nameToType("PNG"));
+	TEST_EQUAL(FileTypes::XMASS, tmp.nameToType("fid"));
 END_SECTION
 
 START_SECTION((static FileTypes::Type getTypeByFileName(const String &filename)))
@@ -95,6 +97,7 @@ START_SECTION((static FileTypes::Type getTypeByFileName(const String &filename))
 	TEST_EQUAL(tmp.getTypeByFileName("test.TraFoXML"), FileTypes::TRANSFORMATIONXML)
 	TEST_EQUAL(tmp.getTypeByFileName("test.ini"), FileTypes::INI)
 	TEST_EQUAL(tmp.getTypeByFileName("test.png"), FileTypes::PNG)
+	TEST_EQUAL(tmp.getTypeByFileName("fid"), FileTypes::XMASS)
 END_SECTION
 
 START_SECTION((static FileTypes::Type getTypeByContent(const String &filename)))
@@ -176,6 +179,8 @@ START_SECTION((template < class PeakType > bool loadExperiment(const String &fil
   TEST_EQUAL(tmp.loadExperiment(OPENMS_GET_TEST_DATA_PATH("DTA2DFile_test_1.dta2d"),exp), true)
 	TEST_REAL_SIMILAR(exp[0][0].getPosition()[0], 430.02)
 	TEST_REAL_SIMILAR(exp[0][1].getPosition()[0], 630.02)
+	
+	TEST_EQUAL(tmp.loadExperiment(OPENMS_GET_TEST_DATA_PATH("XMassFile_test/fid"),exp), true)
 
 	TEST_EXCEPTION(Exception::ParseError,tmp.loadExperiment(OPENMS_GET_TEST_DATA_PATH("DTAFile_test.dta"),exp, FileTypes::DTA2D))
 END_SECTION
@@ -189,6 +194,7 @@ START_SECTION((static bool isSupported(FileTypes::Type type)))
 	TEST_EQUAL(true, tmp.isSupported(FileTypes::MZML));
   TEST_EQUAL(true, tmp.isSupported(FileTypes::MZXML));
 	TEST_EQUAL(true, tmp.isSupported(FileTypes::FEATUREXML));
+	TEST_EQUAL(true, tmp.isSupported(FileTypes::XMASS));
 #ifdef USE_ANDIMS
   TEST_EQUAL(true, tmp.isSupported(FileTypes::ANDIMS));
 #else

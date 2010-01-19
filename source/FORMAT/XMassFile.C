@@ -34,5 +34,9 @@ namespace OpenMS
 	{
 	}
 
+	XMassFile::~XMassFile()
+	{
+	}
+	
 } // namespace OpenMS
 

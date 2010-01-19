@@ -30,6 +30,7 @@
 
 #include <OpenMS/FORMAT/HANDLERS/AcqusHandler.h>
 #include <OpenMS/FORMAT/HANDLERS/FidHandler.h>
+#include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 
 namespace OpenMS
@@ -37,37 +38,45 @@ namespace OpenMS
  	/**
  		@brief File adapter for 'XMass Analysis (fid)' files.
  		
- 		test commit<br />
- 		MZ calculs are based on article :<br />
-      A database application for pre-processing, storage and comparison of mass spectra derived from patients and controls<br />
-      Mark K Titulaer, Ivar Siccama, Lennard J Dekker, Angelique LCT van Rijswijk, Ron MA Heeren, Peter A Sillevis Smitt, and Theo M Luider<br />
-      BMC Bioinformatics. 2006; 7: 403<br />
-      http://www.pubmedcentral.nih.gov/picrender.fcgi?artid=1594579&blobtype=pdf<br />
+ 		XMass Analysis files is native format for Bruker spectrometer Flex Series.<br />
+ 		Each spectrum are saved in one directory. Each directory contains several files. 
+ 		We use 2 files for import in OpenMS :<br />
+ 		<b>acqus</b> : contains meta data about calibration (conversion for time to mz ratio), 
+ 		instrument specification and acquisition method.<br />
+ 		<b>fid</b> : contains intensity array. Intensity for each point are coded in 4 bytes integer.
+ 		
+ 		@note MZ ratio are calculed with forumla based on article :<br />
+    <i>A database application for pre-processing, storage and comparison of mass spectra 
+    derived from patients and controls</i><br />
+    <b>Mark K Titulaer, Ivar Siccama, Lennard J Dekker, Angelique LCT van Rijswijk, 
+    Ron MA Heeren, Peter A Sillevis Smitt, and Theo M Luider</b><br />
+    BMC Bioinformatics. 2006; 7: 403<br />
+    http://www.pubmedcentral.nih.gov/picrender.fcgi?artid=1594579&blobtype=pdf<br />
   	
   	@ingroup FileIO
   */
   
   class OPENMS_DLLAPI XMassFile
+ 	  :	public ProgressLogger
   {
-// 	  private:
-//		  PeakFileOptions options_;
-
     public:
       /// Default constructor
       XMassFile();
-
+      /// Destructor
+      ~XMassFile();
+      
 			/**
-				@brief Loads a map from a XMass file.
+				@brief Loads a spectrum from a XMass file.
 
-				@p map has to be a MSSpectrum or have the same interface.
+				@param spetrum has to be a MSSpectrum or have the same interface.
 
-				@exception Exception::FileNotFound is thrown if the file could not be opened
+				@exception Exception::FileNotFound is thrown if the file could not be read
 			*/      
       template <class PeakType>
       void load(const String& filename, MSSpectrum<PeakType>& spectrum)
       {
         Internal::AcqusHandler acqus(filename.prefix(filename.length()-3) + String("acqus"));
-
+        
         Internal::FidHandler fid(filename);
         if (!fid)
 				{
@@ -90,42 +99,69 @@ namespace OpenMS
         fid.close();
         
         // import metadata
+        spectrum.setRT(0.0);
+        spectrum.setMSLevel(1);
+        spectrum.setName("Xmass analysis file " + acqus.getParam("$ID_raw"));
         spectrum.setType(SpectrumSettings::RAWDATA);
-        spectrum.setNativeID("spectrum=xsd:" + acqus.getParam("ID_raw"));
+        spectrum.setNativeID("spectrum=xsd:" + acqus.getParam("$ID_raw"));
+        spectrum.setComment("no comment");
         
-        InstrumentSettings& instrumentSettings = spectrum.getInstrumentSettings();
-          instrumentSettings.setScanMode(InstrumentSettings::MASSSPECTRUM);
-          instrumentSettings.setZoomScan(false);
+        InstrumentSettings instrument_settings;
+          instrument_settings.setScanMode(InstrumentSettings::MASSSPECTRUM);
+          instrument_settings.setZoomScan(false);
           if(acqus.getParam(".IONIZATION MODE") == "LD+")      
-            instrumentSettings.setPolarity(IonSource::POSITIVE);
+            instrument_settings.setPolarity(IonSource::POSITIVE);
           else if(acqus.getParam(".IONIZATION MODE") == "LD-")      
-            instrumentSettings.setPolarity(IonSource::NEGATIVE);
+            instrument_settings.setPolarity(IonSource::NEGATIVE);
           else 
-            instrumentSettings.setPolarity(IonSource::POLNULL);     
-            
-        // AcquisitionInfo& acquisitionInfo = spectrum.getAcquisitionInfo();
+            instrument_settings.setPolarity(IonSource::POLNULL);     
+        spectrum.setInstrumentSettings(instrument_settings);
+        
+        AcquisitionInfo acquisition_info;
+          acquisition_info.setMethodOfCombination("Sum of " + acqus.getParam("$NoSHOTS") + " raw spectrum");
+        spectrum.setAcquisitionInfo(acquisition_info);
           
-        SourceFile& sourceFile = spectrum.getSourceFile();
-          sourceFile.setNameOfFile("fid");
-          sourceFile.setPathToFile(filename.prefix(filename.length()-3));
-          sourceFile.setFileSize(100.0);
-          sourceFile.setFileType("Xmass analysis file (fid)");
+        SourceFile source_file;
+          source_file.setNameOfFile("fid");
+          source_file.setPathToFile(filename.prefix(filename.length()-3));
+          source_file.setFileSize(4.0 * acqus.getSize() / 1024 / 1024); // 4 bytes / point
+          source_file.setFileType("Xmass analysis file (fid)");
+        spectrum.setSourceFile(source_file);
+        
+        DataProcessing data_processing;
+          Software software;
+            software.setName("FlexControl");
+            String FCVer = acqus.getParam("$FCVer"); // FlexControlVersion
+              if(FCVer.hasPrefix("<flexControl ")) FCVer = FCVer.suffix(' ');
+              if(FCVer.hasSuffix(">")) FCVer = FCVer.prefix('>');
+            software.setVersion(FCVer);
+            software.setMetaValue("Acquisition method", DataValue(acqus.getParam("$ACQMETH")));
+          data_processing.setSoftware(software);
+          std::set<DataProcessing::ProcessingAction> actions;
+            actions.insert(DataProcessing::SMOOTHING);
+            actions.insert(DataProcessing::BASELINE_REDUCTION);
+            actions.insert(DataProcessing::CALIBRATION);
+          data_processing.setProcessingActions(actions);
+        std::vector<DataProcessing> data_processing_vector;
+          data_processing_vector.push_back(data_processing);
+        spectrum.setDataProcessing(data_processing_vector);
       }
 
 			/**
 				@brief Import settings from a XMass file.
 
-				@p map has to be a MSSpectrum or have the same interface.
+				@param exp has to be a MSExperiment or have the same interface.
 
 				@exception Exception::FileNotFound is thrown if the file could not be opened
 			*/              
       template <class PeakType>
       void importExperimentalSettings(const String& filename, MSExperiment<PeakType>& exp)
-      {           
+      {
         Internal::AcqusHandler acqus(filename.prefix(filename.length()-3) + String("acqus"));
-        ExperimentalSettings& experimentalSettings = exp.getExperimentalSettings();
+                
+        ExperimentalSettings& experimental_settings = exp.getExperimentalSettings();
         
-        Instrument& instrument = experimentalSettings.getInstrument();
+        Instrument& instrument = experimental_settings.getInstrument();
           instrument.setName(acqus.getParam("SPECTROMETER/DATASYSTEM"));
           instrument.setVendor(acqus.getParam("ORIGIN"));
           instrument.setModel(acqus.getParam("$InstrID"));
@@ -144,6 +180,8 @@ namespace OpenMS
               ionSourceList[0].setPolarity(IonSource::NEGATIVE);
             else 
               ionSourceList[0].setPolarity(IonSource::POLNULL);
+            ionSourceList[0].setMetaValue("MALDI target reference", 
+              DataValue(acqus.getParam("$TgIDS").remove('<').remove('>')));
             ionSourceList[0].setOrder(0);
             
           std::vector<MassAnalyzer>& massAnalyzerList = instrument.getMassAnalyzers();
@@ -156,11 +194,11 @@ namespace OpenMS
         
         DateTime date;
           date.set(acqus.getParam("$AQ_DATE").remove('<').remove('>') );
-          experimentalSettings.setDateTime(date);
+          experimental_settings.setDateTime(date);
       }
 
 			/**
-				@brief Stores a map in a XMass file (not avaible)
+				@brief Stores a spectrum in a XMass file (not avaible)
 
 				@exception Exception::FileNotWritable is thrown
 			*/

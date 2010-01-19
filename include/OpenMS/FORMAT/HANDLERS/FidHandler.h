@@ -29,34 +29,47 @@
 #define OPENMS_FORMAT_HANDLERS_FIDHANDLER_H
 
 #include <OpenMS/DATASTRUCTURES/String.h>
-
 #include <fstream>
-
-using namespace std;
 
 namespace OpenMS
 {
 	namespace Internal
 	{
     /**
-	    @brief Base class for Fid file handler.
+	    @brief Read-only fid File handler for XMass Analysis.
+	    
+	    fid File contains intensity array. Intensity for each point are coded in 4 bytes integer.
+	    
+	    @note Do not use this class directly. It is only needed for XMassFile.
     */
     class OPENMS_DLLAPI FidHandler
-     : public ifstream
+     : public std::ifstream
     {
       public:
+        /**
+			    @brief Contructor with filename.
+
+          Open fid File as stream and initialize index.          
+          
+			    @param filename to fid File.
+		    */ 
         FidHandler(const String& filename);
+        
+        /// Destructor
+        ~FidHandler();
+        
+		    /// Get index of current position (without position moving).
         unsigned int getIndex();
+        
+        /// Get intensity of current position and move to next position.
         unsigned int getIntensity();
-        unsigned int getIntensityMin();
-        unsigned int getIntensityMax();
         
       private:
+        /// Private default constructor
         FidHandler();
         
+        /// Index of position
         unsigned int index_;
-        unsigned int intensityMin_;
-        unsigned int intensityMax_;
     };
 	
 	} // namespace Internal

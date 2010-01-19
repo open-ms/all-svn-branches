@@ -40,11 +40,13 @@ namespace OpenMS
         : ifstream(filename.c_str())
       {
         index_ = 0;
-        intensityMin_ = INT_MAX;
-        intensityMax_ = -INT_MAX;
         seekg(0, ios::beg);
 			}
 
+      FidHandler::~FidHandler()
+      {
+      }
+      
       unsigned int FidHandler::getIndex()
       {
         return index_;
@@ -66,23 +68,9 @@ namespace OpenMS
         value <<= 8;
         value |= c1;
     
-        if(value > intensityMax_) intensityMax_ = value;
-        if(value < intensityMin_) intensityMin_ = value;
-        
         index_++;
         
         return value;
       }
-      
-      unsigned int FidHandler::getIntensityMin()
-      {
-        return intensityMin_;
-      }
-
-      unsigned int FidHandler::getIntensityMax()
-      {
-        return intensityMax_;
-      }
-      	
 	} // namespace Internal
 } // namespace OpenMS

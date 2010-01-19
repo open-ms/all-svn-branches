@@ -29,39 +29,65 @@
 #define OPENMS_FORMAT_HANDLERS_ACQUSHANDLER_H
 
 #include <OpenMS/DATASTRUCTURES/String.h>
-
 #include <map>
-
-using namespace std;
 
 namespace OpenMS
 {
 	namespace Internal
 	{
-	  /**
-		  @brief Base class for Acqus file handler.
-	  */
+    /**
+	    @brief Read-only acqus File handler for XMass Analysis.
+	    
+	    acqus File contains meta data about calibration (conversion for time to mz ratio), 
+	    instrument specification and acquisition method.
+	    
+	    @note Do not use this class directly. It is only needed for XMassFile.
+    */
     class OPENMS_DLLAPI AcqusHandler
     {
       public:
+        /**
+			    @brief Contructor with filename.
+
+          Open acqus File as stream and import params.
+          
+			    @param filename to acqus File.
+			    
+			    @exception Exception::FileNotFound is thrown if the file could not be opened.
+			    @exception Exception::ConversionError is thrown if error conversion from String to calibration param.
+		    */ 
         AcqusHandler(const String& filename);
+        
+        /// Destructor
         ~AcqusHandler();
+
+        /// Conversion from index to MZ ratio using internal calibration params
         double getPosition(const unsigned int index);
+
+        /// Read param as string      
         String getParam(const String& param);
+
+        /// Get size of spectrum
         unsigned int getSize();
         
       private:
+        /// Private default constructor
         AcqusHandler();
         
-        map<String, String> params_;
+        /// Map for params saving
+        std::map<String, String> params_;
+        
+	      /**@name Internal params for calibration */
+	      //@{
+	      ///
         double DW_;
         unsigned int DELAY_;
         double ML1_;
         double ML2_;
         double ML3_;
         unsigned int TD_;
+        //@}
 	  };
-	
 	} // namespace Internal
 } // namespace OpenMS
 

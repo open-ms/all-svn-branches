@@ -31,7 +31,7 @@
 
 #include <OpenMS/FORMAT/XMassFile.h>
 #include <OpenMS/KERNEL/MSSpectrum.h>
-#include <data/XMassFile_test.h>
+#include "data/XMassFile_test.h"
 
 ///////////////////////////
 

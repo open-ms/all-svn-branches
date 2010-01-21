@@ -149,13 +149,13 @@ set(format_executables_list
   MascotRemoteQuery_test
   MascotXMLFile_test
   MzDataFile_test
-	MzIdentMLFile_test
-	MzDataValidator_test
+  MzIdentMLFile_test
+  MzDataValidator_test
   MzIdentMLValidator_test
   MzMLFile_test
   MzMLValidator_test
   MzXMLFile_test
-	TraMLValidator_test
+  TraMLValidator_test
   OMSSACSVFile_test
   OMSSAXMLFile_test
   PTMXMLFile_test
@@ -167,12 +167,13 @@ set(format_executables_list
   PepXMLFileMascot_test
   PepXMLFile_test
   PersistentObject_test
+  ProtXMLFile_test
   SVOutStream_test
   SemanticValidator_test
   SequestInfile_test
   SequestOutfile_test
   TextFile_test
-	TraMLFile_test
+  TraMLFile_test
   TransformationXMLFile_test
   UnimodXMLFile_test
   XMassFile_test
@@ -408,7 +409,8 @@ set(transformations_executables_list
 set(simulation_executables_list
   DetectabilitySimulation_test
   DigestSimulation_test
-  ElutionModel_test
+  EGHModel_test
+  EGHFitter1D_test
   IonizationSimulation_test
   IsotopeModelGeneral_test
   MSSim_test

@@ -103,7 +103,7 @@ namespace OpenMS
         spectrum.setMSLevel(1);
         spectrum.setName("Xmass analysis file " + acqus.getParam("$ID_raw"));
         spectrum.setType(SpectrumSettings::RAWDATA);
-        spectrum.setNativeID("spectrum=xsd:" + acqus.getParam("$ID_raw"));
+        spectrum.setNativeID("spectrum=xsd:" + acqus.getParam("$ID_raw").remove('<').remove('>'));
         spectrum.setComment("no comment");
         
         InstrumentSettings instrument_settings;
@@ -135,13 +135,15 @@ namespace OpenMS
               if(FCVer.hasPrefix("<flexControl ")) FCVer = FCVer.suffix(' ');
               if(FCVer.hasSuffix(">")) FCVer = FCVer.prefix('>');
             software.setVersion(FCVer);
-            software.setMetaValue("Acquisition method", DataValue(acqus.getParam("$ACQMETH")));
+            software.setMetaValue("Acquisition method", DataValue(acqus.getParam("$ACQMETH").remove('<').remove('>')));
           data_processing.setSoftware(software);
           std::set<DataProcessing::ProcessingAction> actions;
             actions.insert(DataProcessing::SMOOTHING);
             actions.insert(DataProcessing::BASELINE_REDUCTION);
             actions.insert(DataProcessing::CALIBRATION);
           data_processing.setProcessingActions(actions);
+          data_processing.setCompletionTime(DateTime::now());
+          
         std::vector<DataProcessing> data_processing_vector;
           data_processing_vector.push_back(data_processing);
         spectrum.setDataProcessing(data_processing_vector);
@@ -164,7 +166,7 @@ namespace OpenMS
         Instrument& instrument = experimental_settings.getInstrument();
           instrument.setName(acqus.getParam("SPECTROMETER/DATASYSTEM"));
           instrument.setVendor(acqus.getParam("ORIGIN"));
-          instrument.setModel(acqus.getParam("$InstrID"));
+          instrument.setModel(acqus.getParam("$InstrID").remove('<').remove('>'));
           
           std::vector<IonSource>& ionSourceList = instrument.getIonSources();
             ionSourceList.clear();

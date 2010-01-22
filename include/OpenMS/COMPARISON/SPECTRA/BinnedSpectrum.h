@@ -108,7 +108,7 @@ namespace OpenMS
 	}
 
 	/// detailed constructor
-	BinnedSpectrum(Real size, UInt spread, std::vector< MSSpectrum<PeakT> >& unmerged)
+	BinnedSpectrum(Real size, UInt spread, Real prob_noise, Real prob_chance, std::vector< MSSpectrum<PeakT> >& unmerged)
 	   : MSSpectrum<PeakT>(), /* DefaultParamHandler("BinnedSpectrum"), */ bin_spread_(spread), bin_size_(size), bins_()
 	{
 		//~  find largest mz in given spectra
@@ -197,17 +197,17 @@ namespace OpenMS
 			}
 		}
 
-
-
 		//~ merge down all bins according to given statistical hypothesis
-		Real noise_propability(0.001); // noise prob. for bernoulli trial nois peak generation
-		//~ trial number n, to succeed k times in a bernoulli trial follows a "negativen Binomialverteilung" but number of r successful trials out of n follows a normal "Binomialverteilung"
-		Real propability(0.99); // prob. seeing k in n trials by chance is 0.01
+		Real success(1-(pow(1.0-prob_noise,(1+2*spread)))); // success fraction p for bernoulli trial non-noise peak generation
+		Real q(1.0-prob_chance);
 		int trials(unmerged.size());
-		//~afaik not right like that for boost: Real success(1-(pow(1-noise_propability,(1+2*spread))));
-		Real success(pow(1-noise_propability,(1+2*spread)));
+		//~ this makes min of 6 out of 20 peaks to be 99 sure these are no noise peaks. btw:to succeed k times in a bernoulli trial follows a "negativen Binomialverteilung" but number of r successful trials out of n follows a normal "Binomialverteilung"
+
+
+		//~ see www.boost.org/doc/libs/1_35_0/libs/math/doc/sf_and_dist/html/math_toolkit/policy/pol_tutorial/understand_dis_quant.html
 			//~ from boost docu: The smallest number of successes that may be observed from n (or 'trials') trials with success fraction p (or ('success'), at probability P (or 'propability'). Note that the value returned is a real-number, and not an integer. Depending on the use case you may want to take either the floor or ceiling of the result. For example:
-		int min_peak_concurrence = floor(boost::math::quantile(boost::math::complement(boost::math::binomial(trials, success), propability))); /// @improvement find out whether to ceil or to floor;
+		int min_peak_concurrence = floor(boost::math::quantile(boost::math::complement(boost::math::binomial(trials, success), q))); /// @improvement find out whether to ceil or to floor;
+
 		/// @improvement run over the SparseVector with Iterators to speed up
 		for(Size n = 0; n < overall_number.size(); ++n)
 		{

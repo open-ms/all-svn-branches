@@ -76,8 +76,8 @@ namespace OpenMS
 			defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
 			defaults_.setValue("min_shift", 0.0, "Defines the minimal absolut (in Da) shift between the two spectra");
 			defaults_.setValue("min_dist", 57.0214637230, "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
-			defaults_.setValue("correlation_scoring", "intensity", "If intensity, correlation scores on basis of matched intensity values, if matchnumber correlation scores solely on basis of the number of matches");
-			defaults_.setValidStrings("correlation_scoring", StringList::create("intensity,matchnumber"));
+			defaults_.setValue("correlation_scoring", "distance", "If intensity, correlation scores on basis of matched intensity values, if distance correlation scores solely on basis of the number of matches");
+			defaults_.setValidStrings("correlation_scoring", StringList::create("intensity,relative,distance"));
 			defaultsToParam_();
 		}
 
@@ -225,6 +225,9 @@ namespace OpenMS
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal min_dist = (double)param_.getValue("min_dist");
 
+			DoubleReal max_dist(2 * peak_tolerance +0.00001);
+			bool dist_score((String)param_.getValue("correlation_scoring")=="distance" or (String)param_.getValue("correlation_scoring")=="relative");
+
 			//~ find best with DP from all matches(mapping s1 to s2)
 			std::vector<std::pair<Size, Size> > all_matches;
 			ConstSpectrumIterator pivot = s2.begin();
@@ -243,7 +246,7 @@ namespace OpenMS
 
 			//~ initialization:
 			/// @attention indices here are indices in the dp-table and to get from these to indices in all_matches you have to decrease once;
-			std::pair<Size,DoubleReal> best_dp_col(0.0,0.0); //will hold index of the last in the best path so far and the corresponding score
+			std::pair<Size,DoubleReal> best_dp_col(0,0.0); //will hold index of the last in the best path so far and the corresponding score
 			std::vector< std::pair<Size,DoubleReal> > dp_table(all_matches.size()+1, best_dp_col); // [predecessor, predecessor score], size+1 due to DP initialization in 0
 			Size next_too_close = 1;		// Index for the match (in dp_table and all_matches) that is next BEHIND i and too close
 			Size max_index = 0;					// Index for best match BEHIND next_too_close with the highest score (already cumulated) in the dp_table
@@ -264,7 +267,14 @@ namespace OpenMS
 					++next_too_close;
 				}
 				dp_table[i].first = max_index;
-				dp_table[i].second = dp_table[max_index].second + s1[all_matches[i-1].first].getIntensity() + s2[all_matches[i-1].second].getIntensity(); //path score with intensities!
+				if(dist_score)
+				{
+					dp_table[i].second = dp_table[max_index].second + std::fabs(max_dist - std::fabs(s1[all_matches[i-1].first].getMZ()-s2[all_matches[i-1].second].getMZ())); //path score with max-distance!
+				}
+				else
+				{
+					dp_table[i].second = dp_table[max_index].second + s1[all_matches[i-1].first].getIntensity() + s2[all_matches[i-1].second].getIntensity(); //path score with intensities!
+				}
 				/*debug std::cout << "dp table (" << i << "): " << dp_table[i].first << " | " << dp_table[i].second;*/
 
 				//~ for traceback: best path ends in best_dp_col.first
@@ -306,7 +316,8 @@ namespace OpenMS
 		{
 			DoubleReal peak_tolerance = (double)param_.getValue("peak_tolerance");
 			DoubleReal parentmass_tolerance = (double)param_.getValue("parentmass_tolerance");
-			DoubleReal shift_step = 2 * peak_tolerance;
+			DoubleReal shift_step(2 * peak_tolerance);
+			DoubleReal max_dist(2 * peak_tolerance +0.00001);
 
 			//~ can also deal with neg. shifts!
 			//~ if(s2.getPrecursors().front().getMZ() < s1.getPrecursors().front().getMZ())
@@ -314,25 +325,20 @@ namespace OpenMS
 				//~ throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite is the s1-precursor mz is not greater than s2-precursor mz");
 			//~ }
 
-			DoubleReal pm_s1 = s1.getPrecursors().front().getMZ();
-			int c_s1 = s1.getPrecursors().front().getCharge();
-			DoubleReal pm_s2 = s2.getPrecursors().front().getMZ();
-			int c_s2 = s2.getPrecursors().front().getCharge();
-			/// @attention if the precursor charge is unknown, i.e. 0 best guess is its doubly charged
-			(c_s1==0)?c_s1=2:c_s1=c_s1;
-			(c_s2==0)?c_s2=2:c_s2=c_s2;
 			/// @attention singly charged mass difference!
-			DoubleReal pm_diff = (pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U);
+			DoubleReal pm_s1 (s1.getPrecursors().front().getUnchargedMass());
+			DoubleReal pm_s2 (s2.getPrecursors().front().getUnchargedMass());
+			DoubleReal pm_diff (pm_s2-pm_s1);
 			/* debug std::cout << pm_diff << std::endl; */
 			if(!pm_diff_shift)
 			{
 				pm_diff = 0.0;
 			}
 
-			if(s1.getPrecursors().front().getCharge()>2 or s2.getPrecursors().front().getCharge()>2)
-			{
-				throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite are spectra from chargestate 2 or lower");
-			}
+			//~ if(s1.getPrecursors().front().getCharge()>2 or s2.getPrecursors().front().getCharge()>2)
+			//~ {
+				//~ throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite are spectra from chargestate 2 or lower");
+			//~ }
 
 			// reset the correlation values
 			best_score1 = 0;
@@ -344,6 +350,16 @@ namespace OpenMS
 
 			if((String)param_.getValue("correlation_scoring")=="intensity")
 			{
+				DoubleReal total_s1(0), total_s2(0);
+				for(Size i = 0; i < s1.size(); ++i)
+				{
+					total_s1 += s1[i].getIntensity();
+				}
+				for(Size i = 0; i < s2.size(); ++i)
+				{
+					total_s2 += s2[i].getIntensity();
+				}
+
 				//~ find matches in unshifted s1 to s2 max sparses matches with DP
 				std::list<std::pair<Size, Size> > matches_unshift;
 				maxSparseMatch(s1,s2,matches_unshift, pm_diff);
@@ -444,7 +460,128 @@ namespace OpenMS
 				{
 					best_shift=pm_diff;
 				}
+				best_score1= total_s1 / best_score1;
+				best_score2= total_s2 / best_score2;
 			}
+
+			if((String)param_.getValue("correlation_scoring")=="distance" or (String)param_.getValue("correlation_scoring")=="relative")
+			{
+				DoubleReal total_s1(0), total_s2(0);
+				bool relative((String)param_.getValue("correlation_scoring")=="relative");
+				if(relative)
+				{
+					for(Size i = 0; i < s1.size(); ++i)
+					{
+						total_s1 += s1[i].getIntensity();
+					}
+					for(Size i = 0; i < s2.size(); ++i)
+					{
+						total_s2 += s2[i].getIntensity();
+					}
+				}
+
+				//~ find matches in unshifted s1 to s2 max sparses matches with DP
+				std::list<std::pair<Size, Size> > matches_unshift;
+				maxSparseMatch(s1,s2,matches_unshift, pm_diff);
+				/*debug std::cout << "matches_unshift.size(): " << matches_unshift.size() << std::endl;*/
+
+				best_matches = matches_unshift;
+
+				//~ calc score
+				for(std::list<std::pair<Size,Size> >::iterator it = best_matches.begin(); it != best_matches.end(); ++it)
+				{
+					if(relative)
+					{
+						best_score1 += std::fabs(max_dist - std::fabs(s1[it->first].getMZ()-s2[it->second].getMZ()))*s1[it->first].getIntensity();
+						best_score2 += std::fabs(max_dist - std::fabs(s1[it->first].getMZ()-s2[it->second].getMZ()))*s2[it->second].getIntensity();
+					}
+					else
+					{
+						best_score1 += std::fabs(max_dist - std::fabs(s1[it->first].getMZ()-s2[it->second].getMZ()));
+						best_score2 += std::fabs(max_dist - std::fabs(s1[it->first].getMZ()-s2[it->second].getMZ()));
+					}
+				}
+
+				//~ shifts only neccessary if spectra reasonable apart or explicitly called:
+				if(fabs(pm_diff)>parentmass_tolerance or !pm_diff_shift)
+				{
+					DoubleReal shift(pm_diff-parentmass_tolerance);
+					DoubleReal range(pm_diff+parentmass_tolerance);
+					for(; shift<=range; shift+=shift_step)
+					{
+						DoubleReal close_to_unshift(fabs(fabs(pm_diff) - fabs(shift))+0.00001);
+						/// @improvement some situation 0.3 < 0.3 = true pops up if not +0.00001 added
+						if(close_to_unshift<peak_tolerance)
+						{
+							continue;
+						}
+
+						/// @improvement add a correlation_scoring method matches that optimizes only the matchnumber (new max_sparse_overlap)
+						//~ find max sparse matches in shifted s1 to s2 with DP
+						std::list<std::pair<Size, Size> > matches_shift;
+						maxSparseMatch(s1,s2,matches_shift,shift);
+						/*debug std::cout << "matches_shift.size(): " << matches_shift.size() << " shift: " << shift << std::endl;*/
+
+						DoubleReal score1 = std::numeric_limits<double>::min();
+						DoubleReal score2 = std::numeric_limits<double>::min();
+						std::list<std::pair<Size,Size> > matches;
+
+						if(matches_shift.size() > 0)
+						{
+							//~ unite matches
+							if(matches_unshift.size() > 0)
+							{
+								//~ both matches are > 0
+								if(shift<pm_diff)
+								{
+									//~ prevent matches_unshift from being emptied in merge
+									matches = matches_unshift;
+									matches_shift.merge(matches,PairComparatorFirstElement< std::pair<Size,Size> >());
+									matches = matches_shift;
+								}
+								else
+								{
+									matches = matches_unshift;
+									matches.merge(matches_shift,PairComparatorFirstElement< std::pair<Size,Size> >());
+								}
+							}
+							else
+							{
+								matches = matches_shift;
+							}
+							matches.unique(PairMatcherFirstElement< std::pair<Size,Size> >()); // dirty: takes only the match from the one where the other has been merged into - overlap HERE is highly unlikely
+							//~ also this behaviour is partly wanted as a unshifted match is always?(maybe only in -shift) to be considered better than a shifted one
+
+							//~ calc score
+							for(std::list<std::pair<Size,Size> >::iterator it = matches.begin(); it != matches.end(); ++it)
+							{
+								score1 += s1[it->first].getIntensity();
+								score2 += s2[it->second].getIntensity();
+							}
+							if((score1+score2 > best_score1 + best_score2) || (score1+score2 == best_score1+best_score2 && fabs(shift)<fabs(best_shift)))
+							{
+								best_score1=score1;
+								best_score2=score2;
+								best_shift=shift;
+								best_matches = matches;
+							}
+						}
+					}
+				}
+				if(best_shift==std::numeric_limits<double>::min())
+				{
+					best_shift=pm_diff;
+				}
+
+				if(relative)
+				{
+					//~ make relative
+					best_score1= (max_dist*total_s1) / best_score1;
+					best_score2= (max_dist*total_s2) / best_score2;
+				}
+
+			}
+
 		}
 		///
 

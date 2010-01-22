@@ -86,6 +86,8 @@ namespace OpenMS
 			defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
 			defaults_.setValue("min_hop", 0, "Defines the minimal number hops a identification can be propagated");
 			defaults_.setValue("max_hop", 6, "Defines the maximal number hops a identification can be propagated (see small-world-phenomena)");
+			defaults_.setValue("factor_pc", 1.0, "Defines the factorization for peak coverage of a id in the overall score", StringList::create("advanced"));
+			defaults_.setValue("factor_ic", 1.0, "Defines the factorization for intensity coverage of a id in the overall score", StringList::create("advanced"));
 			defaultsToParam_();
 		}
 
@@ -121,22 +123,24 @@ namespace OpenMS
 			@param spec the spectrum to reverse
 			@param is_prm if the spectrum is a prm spectrum
 
-			Each peak p is repositioned at pm - p->getMZ(), where pm is the precursor mass of spec (-1 if prm); spec is sortet by position afterwards
+			Each peak p is repositioned at pm - p + 2 protons, where pm is the uncharged precursor mass of spec;
+			spec is sorted by position afterwards
 		*/
 		void reverseSpectrum(MSSpectrum<PeakType>& spec, bool is_prm=false)
 		{
-			int c = spec.getPrecursors().front().getCharge();
 			/// @attention uncharged mass
-			DoubleReal pm(( spec.getPrecursors().front().getMZ()*c - c*Constants::PROTON_MASS_U));
-
-			if(is_prm)
-			{
-				pm -= Constants::PROTON_MASS_U; /// @improvement check if peakspectra reversion needs subtraction too (charge ?!)
-			}
+			DoubleReal pm(spec.getPrecursors().front().getUnchargedMass());
 
 			for(SpectrumIterator p = spec.begin(); p != spec.end(); ++p)
 			{
-				p->getMZ()<pm? p->setMZ(0) : p->setMZ(pm - p->getMZ() + 2*Constants::PROTON_MASS_U);
+				if(p->getMZ()>pm)
+				{
+					p->setMZ(0);
+				}
+				else
+				{
+					p->setMZ(pm - p->getMZ() + 2*Constants::PROTON_MASS_U);
+				}
 			}
 			spec.sortByPosition();
 
@@ -152,6 +156,51 @@ namespace OpenMS
 				}
 				spec.erase(spec.begin(),p);
 			}
+			return;
+		}
+		///
+
+
+		/**
+			@brief This prepares a spectrums ids for spectral networking
+
+			@param spec the spectrum to prepare
+
+			the spectrums id hits are put in a single PeptideIdentification container, origins stored in MetaData, scored and sorted with respect to annotation coverage
+		*/
+		void idPrepare(MSSpectrum<PeakType>& spec)
+		{
+			DoubleReal f_pc = (DoubleReal)param_.getValue("factor_pc");
+			DoubleReal f_ic = (DoubleReal)param_.getValue("factor_ic");
+			std::vector<PeptideHit> new_hits;
+			for(Size j = 0; j < spec.getPeptideIdentifications().size(); ++j)
+			{
+				for(Size k = 0; k < spec.getPeptideIdentifications()[j].getHits().size(); ++k)
+				{
+					bool yet_contained(false);
+					for(Size c = 0; c < new_hits.size(); ++c)
+					{
+						spec.getPeptideIdentifications()[j].getHits()[k].getSequence() == new_hits[c].getSequence() ? yet_contained = true : yet_contained = false;
+					}
+					if(!yet_contained)
+					{
+						new_hits.push_back(spec.getPeptideIdentifications()[j].getHits()[k]);
+						DoubleReal pc(0),ic(0);
+						annotationCoverage(spec, new_hits.back().getSequence(), pc, ic);
+						new_hits.back().setMetaValue("IdentificationIdentifier", String(spec.getPeptideIdentifications()[j].getIdentifier()));
+						new_hits.back().setMetaValue("annotated with peak coverage", pc);
+						new_hits.back().setMetaValue("annotated with intensity coverage", ic);
+						/// @improvement factorized linear combination of pc and ic for advanced parameter - @see below!
+						new_hits.back().setScore(((f_pc*pc)+(f_ic*ic))/2.0);
+					}
+				}
+			}
+			spec.getPeptideIdentifications().resize(1);
+			spec.getPeptideIdentifications().front().setHits(new_hits);
+			spec.getPeptideIdentifications().front().setIdentifier("from SpectralNetworking");
+			spec.getPeptideIdentifications().front().setHigherScoreBetter(true);
+			spec.getPeptideIdentifications().front().sort();
+
 			return;
 		}
 		///
@@ -328,16 +377,17 @@ namespace OpenMS
 				{
 					best_diff = diff;
 					sequence_correspondence = String(String("y") + String(i) + String(std::string((Size)charge, '+')));
-					best_pos = template_sequence.size()-i;
+					best_pos = template_sequence.size()-(i-1);
 				}
 				DoubleReal alt_diff = fabs(alt_mod_pos - pos);
 				if(/*diff < (peak_tolerance*2 + 0.00001) and*/ alt_diff < best_diff)
 				{
 					best_diff = alt_diff;
 					sequence_correspondence = String(String("y") + String(i) + String(std::string((Size)charge, '+')) + String("(via symetric)"));
-					best_pos = template_sequence.size()-i;
+					best_pos = template_sequence.size()-(i-1);
 				}
 			}
+			/// @improvement  stop here if best_diff is already under threshold?
 			// "B-ions"
 			for(Size i = 1; i != template_sequence.size(); ++i)
 			{
@@ -348,14 +398,14 @@ namespace OpenMS
 				{
 					best_diff = diff;
 					sequence_correspondence = String(String("b") + String(i) + String(std::string((Size)charge, '+')));
-					best_pos = i-1;
+					best_pos = i;
 				}
 				DoubleReal alt_diff = fabs(alt_mod_pos - pos);
 				if(/*diff < (peak_tolerance*2 + 0.00001) and*/ diff < best_diff)
 				{
 					best_diff = alt_diff;
 					sequence_correspondence = String(String("b") + String(i) + String(std::string((Size)charge, '+')) + String("(via symetric)"));
-					best_pos = i-1;
+					best_pos = i;
 				}
 			}
 
@@ -377,22 +427,21 @@ namespace OpenMS
 		///
 
 		/**
-			@brief Method to calculate ...
+			@brief Method to propagate annotations through a network
 
+			@param experiment - the spectras from the network of which at least one should be annotated and the ids prepared with idPrepare
 			@param ids - peptide identifications coming from external and arranged in consensuses corresponding order
-			@param consensuses - must correspond to the consensus_indices used in createNetwork()
 			@param aligned_pairs - they represent the network edges
 			@param mod_positions - must correspond to the aligned_pairs and represent the edges weight
 
-			at the moment only original ids do not get reannotated (i.e. hits added and re-sorted), possible would be a propagation by edge score?
+			possible would be a propagation by edge score?
 		*/
-		void propagateNetwork(MSExperiment<PeakT>& experiment, std::vector< PeptideIdentification > peptide_ids, std::vector< ProteinIdentification > protein_ids, std::vector< std::pair<Size,Size> >& aligned_pairs, std::vector< DoubleReal > mod_positions, ConsensusMap& ids) const
+		void propagateNetwork(MSExperiment<PeakT>& experiment, std::vector< std::pair<Size,Size> >& aligned_pairs, std::vector< DoubleReal > mod_positions, ConsensusMap& ids) const
 		{
+			DoubleReal f_pc = (DoubleReal)param_.getValue("factor_pc");
+			DoubleReal f_ic = (DoubleReal)param_.getValue("factor_ic");
+
 			Size hops = (Size)param_.getValue("max_hop");
-			if(peptide_ids.empty())
-			{
-				throw Exception::IllegalArgument (__FILE__, __LINE__, __PRETTY_FUNCTION__, "no identifications to propagate");
-			}
 
 			Real peak_tolerance = (Real)param_.getValue("peak_tolerance");
 			DoubleReal pm_tolerance = (DoubleReal)param_.getValue("parentmass_tolerance");
@@ -415,69 +464,33 @@ namespace OpenMS
 			std::vector<Real>::iterator end_new = std::unique(aa_masses.begin(),aa_masses.end(), EqualInTolerance<Real>(peak_tolerance));
 			aa_masses.resize( end_new - aa_masses.begin() );
 
+			//set initial anntoating indices, network id s and original annotation tag
+			std::vector<Size> original_annotations;
+			Size net_ids(0);
 			for(Size i = 0; i < experiment.size(); ++i)
 			{
 				ConsensusFeature cf;
 				cf.setMZ(experiment[i].getPrecursors().front().getMZ());
 				cf.setRT(experiment[i].getRT());
-				ids.push_back(cf);
-			}
 
-			IDMapper idm;
-			idm.annotate(ids,peptide_ids,protein_ids);
-
-			//~ set initial anntoating indices, network id s and original annotation tag
-			std::vector<Size> original_annotations;
-			Size net_ids(0);
-			for(ConsensusMap::Iterator ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
-			{
-				if(ids_it->getPeptideIdentifications().size()<1)
+				if(experiment[i].getPeptideIdentifications().size()<1)
 				{
-					ids_it->getPeptideIdentifications().resize(1); // make sure we have the one PeptideIdentification we need, n.b. not to be confused with the subsequent hits!
-					ids_it->getPeptideIdentifications().front().setIdentifier("from SpectralNetworking");
+					cf.getPeptideIdentifications().resize(1); // make sure we have the one PeptideIdentification we need, n.b. not to be confused with the subsequent hits!
+					cf.getPeptideIdentifications().front().setIdentifier("from SpectralNetworking");
 				}
 				else
 				{
-					/* debug */DoubleReal hits_no(0), pi_no(0);
-					std::vector<PeptideHit> new_hits;
-					/// @todo iterator varianten sind wohl schneller!
-					for(Size i = 0; i < ids_it->getPeptideIdentifications().size(); ++i)
-					{
-						/* debug */++pi_no;
-						/* debug */hits_no += ids_it->getPeptideIdentifications()[i].getHits().size();
-						//~ pi.getHits().insert(pi.getHits().end()-1,ids_it->getPeptideIdentifications()[i].getHits().begin(),ids_it->getPeptideIdentifications()[i].getHits().end());
-						//~ for(Size j = 0; j < ids_it->getPeptideIdentifications()[i].getHits().size(); ++j)
-						for(std::vector<PeptideHit>::const_iterator it_hits = ids_it->getPeptideIdentifications()[i].getHits().begin(); it_hits != ids_it->getPeptideIdentifications()[i].getHits().end(); ++it_hits)
-						{
-							new_hits.push_back(*it_hits);
-							DoubleReal pc(0),ic(0);
-							annotationCoverage(experiment[ids_it-ids.begin()], new_hits.back().getSequence(), pc, ic);
-							new_hits.back().setMetaValue("IdentificationIdentifier", String(ids_it->getPeptideIdentifications()[i].getIdentifier()));
-							new_hits.back().setMetaValue("annotated with peak coverage", pc);
-							new_hits.back().setMetaValue("annotated with intensity coverage", ic);
-							//~ /// @improvement factorized linear combination of pc and ic for advanced parameter - @see below!
-							new_hits.back().setScore(((pc+ic)/2.0));
-						}
-					}
-					/* debug std::cout << " average "<< (hits_no/pi_no) << " hits per " << pi_no << " PeptideIdentifications." << std::endl;*/
-					ids_it->getPeptideIdentifications().resize(1);
-					ids_it->getPeptideIdentifications().front().setHits(new_hits);
-					//~ ids_it->getPeptideIdentifications().front().setIdentifier("from SpectralNetworking");
-				}
-
-				if(!ids_it->getPeptideIdentifications().front().getHits().empty())
-				{
-					ids_it->getPeptideIdentifications().front().sort();
-					//~ ids_it->getPeptideIdentifications().front().assignRanks();
-
-					ids_it->setMetaValue("network id", net_ids);
+					cf.setPeptideIdentifications(experiment[i].getPeptideIdentifications());
+					cf.setMetaValue("DBid", DataValue::EMPTY_VALUE);
+					cf.setMetaValue("network id", net_ids);
 					++net_ids;
-					ids_it->setMetaValue("DBid", DataValue::EMPTY_VALUE);
-					original_annotations.push_back(ids_it - ids.begin());
+					original_annotations.push_back(i);
 				}
-
+				ids.push_back(cf);
 			}
-			/* debug std::cout << " consensusfeature annotated: " << net_ids-1 << std::endl; Size annots(0);*/
+
+			//~ set protein ids as well from experiment
+			ids.setProteinIdentifications(experiment.getProteinIdentifications());
 
 			std::map< Size, std::set<Size> > stars;
 			createNetwork(aligned_pairs, stars);
@@ -494,16 +507,16 @@ namespace OpenMS
 			potential_propagation_targets.sort();
 			potential_propagation_targets.unique();
 
-			//~ original ids dont need re-annotation!
-			for(Size i = 0; i < original_annotations.size(); ++i)
-			{
-				potential_propagation_targets.remove(original_annotations[i]);
-			}
+			//no re-annotation for original ids!
+			//~ for(Size i = 0; i < original_annotations.size(); ++i)
+			//~ {
+				//~ potential_propagation_targets.remove(original_annotations[i]);
+			//~ }
 
 			std::map< Size, std::set<Size> > conflict_map;
 			std::vector<Size> all_annotations(original_annotations);
 
-			//~ propagation in |hops| steps:
+			//propagation in |hops| steps:
 			for(Size i = 0; i < hops; ++i)
 			{
 				std::vector<Size> latest_annotated;
@@ -513,36 +526,18 @@ namespace OpenMS
 				{
 					const MSSpectrum<PeakType>& current_spectrum = (experiment[*it_potential]);
 					ConsensusFeature& current_annotations = (ids[*it_potential]);
-					/* debug std::cout << " at : " << *it_potential;*/
-					if(current_annotations.getPeptideIdentifications().front().getHits().empty())
-					{
-						//~ current spectrum not annotated yet
-						current_annotations.setMetaValue("SNid", DataValue::EMPTY_VALUE);
-					}
-
 					for(std::set<Size>::const_iterator it_neighbors = stars[*it_potential].begin(); it_neighbors != stars[*it_potential].end(); ++it_neighbors)
 					{
-						std::vector<Size>::iterator annotating_neighbor = std::find(all_annotations.begin(),all_annotations.end(),*it_neighbors);
 						if(!ids[*it_neighbors].getPeptideIdentifications().front().getHits().empty() and (*it_neighbors)!=(*it_potential))
 						{
-							//~ at this point we have a edge i,j from aligned_pairs:  i=*it_neighbors , j=*it_potential and if i>j: swap(i,j)
-
-							DoubleReal pm_s1 = current_spectrum.getPrecursors().front().getMZ();
-							DoubleReal pm_s2 = experiment[*it_neighbors].getPrecursors().front().getMZ();
-							int c_s1 = current_spectrum.getPrecursors().front().getCharge();
-							int c_s2 = experiment[*it_neighbors].getPrecursors().front().getCharge();
-							/// @attention if the precursor charge is unknown, i.e. 0 best guess is its doubly charged
-							(c_s1==0)?c_s1=2:c_s1=c_s1;
-							(c_s2==0)?c_s2=2:c_s2=c_s2;
-							/// @attention singly charged mass difference!
-							DoubleReal current_pm((pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U));
-							DoubleReal other_pm((pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U));
+							//at this point we have a edge i,j from aligned_pairs:  i=*it_neighbors , j=*it_potential and if i>j: swap(i,j)
+							/// @attention uncharged mass difference!
+							DoubleReal current_pm(current_spectrum.getPrecursors().front().getUnchargedMass());
+							DoubleReal other_pm(experiment[*it_neighbors].getPrecursors().front().getUnchargedMass());
 							DoubleReal pm_diff = other_pm-current_pm;
-
 							std::pair<Size,Size> current_edge(*it_potential,*it_neighbors);
-
 							bool current_is_heavyer(false);
-							if(fabs(pm_diff)<pm_tolerance)
+							if(pm_diff==0)
 							{
 								if(current_edge.first>current_edge.second)
 								{
@@ -550,15 +545,19 @@ namespace OpenMS
 									current_is_heavyer=true;
 								}
 							}
-							else if(pm_diff<0)
+							else
 							{
-								std::swap(current_edge.first,current_edge.second);
-								current_is_heavyer=true;
+								if(pm_diff<0)
+								{
+									std::swap(current_edge.first,current_edge.second);
+									current_is_heavyer=true;
+								}
 							}
 
-							//~ mod_pos shall point the position modified in *it_neighbors (annotated one) and alt mod pos the symetric position
-							DoubleReal mod_pos(0.0), alt_mod_pos(0.0);
+							//find the edge and therefor the mod_pos
 							std::vector< std::pair<Size,Size> >::iterator which_pair_it = std::find(aligned_pairs.begin(),aligned_pairs.end(),current_edge);
+							DoubleReal mod_pos(0.0), alt_mod_pos(0.0);
+							//~ mod_pos shall point the position modified in *it_neighbors (annotated one) and alt mod pos the symetric position
 							if(which_pair_it!=aligned_pairs.end())
 							{
 								mod_pos = mod_positions[which_pair_it-aligned_pairs.begin()];
@@ -570,24 +569,33 @@ namespace OpenMS
 									mod_pos += fabs(pm_diff);
 									//~ like this we get the modpos in current spectrum
 								}
-								alt_mod_pos = other_pm-mod_pos+Constants::PROTON_MASS_U;
+								alt_mod_pos = other_pm-mod_pos+2*Constants::PROTON_MASS_U;
 							}
 							else
 							{
-								String element(String(current_edge.first) + String("-") + String(current_edge.second));
+								String element(String(current_edge.first) + String("#") + String(current_edge.second));
 								throw Exception::ElementNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, element);
 							}
 
-							/// @improvement find out if annotate with _all_ hits from annotating_neighbor is better
+							/// @improvement find out if annotate with _all_ hits from annotating neighbor is better
 							for(Size k = 0; k < ids[*it_neighbors].getPeptideIdentifications().front().getHits().size() and k < hops; ++k)
 							{
+
+								//back-edges prohibited to remove circular propagation
+								if(ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].metaValueExists("annotator index") and (Size)ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].getMetaValue("annotator index") == *it_potential)
+								{
+									continue;
+								}
+
 								AASequence template_sequence(ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].getSequence()), modified_sequence;
 								String mod_found_with_ions; //which ion species helped to find mod
 								/// @attention sideeffect of function fills empty arguments if evaluated true
 								/// @attention pm_diff > 0 so we are propagating from heavy to light, so mod_shift must be negative, pm_diff<0 other way'round and mod_shift must be negative!
+
 								if(getPropagation(template_sequence, mod_pos, alt_mod_pos, -pm_diff, modified_sequence, mod_found_with_ions))
 								{
-									//~ make sure annotating neighbor is visible
+
+									//make sure annotating neighbor is visible
 									if(ids[*it_neighbors].getFeatures().empty())
 									{
 										FeatureHandle neighbor_feat;
@@ -605,72 +613,72 @@ namespace OpenMS
 									{
 										current_annotations.insert(annotator);
 									}
-									catch(Exception::InvalidValue& e){
-										/* debug std::cout << " again ";*/
-									}
+									catch(Exception::InvalidValue& e){/* debug std::cout << " again ";*/}
 
-									/* debug  ++annots;*/
-
-									int charge = ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].getCharge();
-									PeptideHit hit(0,0,charge,modified_sequence); /// @attention score and rank have to be set after intensity and peakmatch coverage evaluation (own step)
-
-									hit.setMetaValue("IdentificationIdentifier", ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].getMetaValue("IdentificationIdentifier"));
-
-									//~ define edge
-									if(fabs(pm_diff) <= pm_tolerance)
+									bool yet_contained(false);
+									for(Size c = 0; c < current_annotations.getPeptideIdentifications().front().getHits().size(); ++c)
 									{
-										hit.setMetaValue("annotation relation", "equal");
+										current_annotations.getPeptideIdentifications().front().getHits()[c].getSequence() == modified_sequence ? yet_contained = true : yet_contained = false;
 									}
-									else if(fabs(pm_diff) <= aa_masses.back()+pm_tolerance)
+									if(!yet_contained)
 									{
-										for(Size i = 0; i < aa_masses.size(); ++i)
+										int charge = ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].getCharge();
+										PeptideHit hit(0,0,charge,modified_sequence); /// @attention score and rank have to be set after intensity and peakmatch coverage evaluation (own step)
+										hit.setMetaValue("IdentificationIdentifier", ids[*it_neighbors].getPeptideIdentifications().front().getHits()[k].getMetaValue("IdentificationIdentifier"));
+										//describe edge
+										if(fabs(pm_diff) <= pm_tolerance)
 										{
-											if(fabs(fabs(pm_diff)-aa_masses[i]) <= pm_tolerance)
-											{
-												hit.setMetaValue("annotation relation", "ladder");
-												break;
-											}
+											hit.setMetaValue("annotation relation", "equal");
 										}
-									}
-									else
-									{
-										hit.setMetaValue("annotation relation", "modification");
-									}
-
-									DoubleReal pc(0),ic(0);
-									annotationCoverage(experiment[*it_potential], modified_sequence, pc, ic);
-									/// @improvement factorized linear combination of pc and ic for advanced parameter
-									hit.setScore(((pc+ic)/2.0));
-
-									//~ color, network id and metadata management
-									hit.setMetaValue("annotator index", *it_neighbors);
-									hit.setMetaValue("annotator MZ", experiment[*it_neighbors].getPrecursors().front().getMZ());
-									hit.setMetaValue("annotator RT", experiment[*it_neighbors].getRT());
-									hit.setMetaValue("annotated in hop no.", i+1);
-									hit.setMetaValue("annotated with ionspecies", mod_found_with_ions);
-									hit.setMetaValue("annotated with peak coverage", pc);
-									hit.setMetaValue("annotated with intensity coverage", ic);
-
-									current_annotations.getPeptideIdentifications().front().insertHit(hit);
-
-									if(!current_annotations.metaValueExists("network id"))
-									{
-										current_annotations.setMetaValue("network id", (Size)ids[*it_neighbors].getMetaValue("network id"));
-									}
-									else
-									{
-										Size old_id = (Size)current_annotations.getMetaValue("network id");
-										Size new_id = (Size)ids[*it_neighbors].getMetaValue("network id");
-										if(new_id < old_id)
+										else if(fabs(pm_diff) <= aa_masses.back()+pm_tolerance)
 										{
-											current_annotations.setMetaValue("network id", new_id);
-											conflict_map[old_id].insert(new_id);
+											for(Size i = 0; i < aa_masses.size(); ++i)
+											{
+												if(fabs(fabs(pm_diff)-aa_masses[i]) <= pm_tolerance)
+												{
+													hit.setMetaValue("annotation relation", "ladder");
+													break;
+												}
+											}
 										}
 										else
 										{
-											if(new_id != old_id)
+											hit.setMetaValue("annotation relation", "modification");
+										}
+										//set score
+										DoubleReal pc(0),ic(0);
+										annotationCoverage(experiment[*it_potential], modified_sequence, pc, ic);
+										/// @improvement factorized linear combination of pc and ic for advanced parameter
+										hit.setScore(((f_pc*pc)+(f_ic*ic))/2.0);
+										//set color, network id and metadata
+										hit.setMetaValue("annotated index", *it_potential);
+										hit.setMetaValue("annotator index", *it_neighbors);
+										hit.setMetaValue("annotator MZ", experiment[*it_neighbors].getPrecursors().front().getMZ());
+										hit.setMetaValue("annotator RT", experiment[*it_neighbors].getRT());
+										hit.setMetaValue("annotated in hop no.", i+1);
+										hit.setMetaValue("annotated with ionspecies", mod_found_with_ions);
+										hit.setMetaValue("annotated with peak coverage", pc);
+										hit.setMetaValue("annotated with intensity coverage", ic);
+										current_annotations.getPeptideIdentifications().front().insertHit(hit);
+										if(!current_annotations.metaValueExists("network id"))
+										{
+											current_annotations.setMetaValue("network id", (Size)ids[*it_neighbors].getMetaValue("network id"));
+										}
+										else
+										{
+											Size old_id = (Size)current_annotations.getMetaValue("network id");
+											Size new_id = (Size)ids[*it_neighbors].getMetaValue("network id");
+											if(new_id < old_id)
 											{
-												conflict_map[new_id].insert(old_id);
+												current_annotations.setMetaValue("network id", new_id);
+												conflict_map[old_id].insert(new_id);
+											}
+											else
+											{
+												if(new_id != old_id)
+												{
+													conflict_map[new_id].insert(old_id);
+												}
 											}
 										}
 									}
@@ -682,9 +690,9 @@ namespace OpenMS
 					{
 						latest_annotated.push_back(*it_potential);
 						all_annotations.push_back(*it_potential);
+						current_annotations.getPeptideIdentifications().front().setHigherScoreBetter(true);
 						current_annotations.getPeptideIdentifications().front().sort();
-						/// @improvement remove doublettes with lower score
-
+						current_annotations.setMetaValue("SNid", DataValue::EMPTY_VALUE);
 						/// @improvement make featurehandles  DataFilter-able (order same as hits?!)
 					}
 				}
@@ -717,7 +725,7 @@ namespace OpenMS
 			}
 			/// @improvement keep track of used edges and force annotation of 'good' edges (scores not yet available in here :( )
 
-			//~ concluding conflict resolving in network numbering
+			//concluding conflict resolving in network numbering
 			/// @improvements find if resolve conflicts in network id's and colorize correspondingly slows everything down
 			std::map< Size, std::set<Size> >::iterator conflict_map_it = conflict_map.begin();
 			while(conflict_map_it != conflict_map.end())
@@ -733,7 +741,6 @@ namespace OpenMS
 				}
 				++conflict_map_it;
 			}
-
 			std::map< Size, Size > conter_conflict_map;
 			for(std::map< Size, std::set<Size> >::iterator conflict_map_it = conflict_map.begin(); conflict_map_it != conflict_map.end(); ++conflict_map_it)
 			{
@@ -742,22 +749,21 @@ namespace OpenMS
 					conter_conflict_map[*conflicts_it] = conflict_map_it->first;
 				}
 			}
+
+			//prepare for clean write out of consensusmap
 			for(ConsensusMap::Iterator ids_it = ids.begin(); ids_it != ids.end(); ++ids_it)
 			{
 				if(ids_it->metaValueExists("network id"))
 				{
-					ids_it->setQuality( ids_it->getPeptideIdentifications().front().getHits().front().getScore() );
-
 					std::map< Size, Size >::iterator cur_it = conter_conflict_map.find((Size)ids_it->getMetaValue("network id"));
 					if(cur_it != conter_conflict_map.end())
 					{
 						ids_it->setMetaValue("network id", cur_it->second);
 					}
-
 					ids_it->getPeptideIdentifications().front().setIdentifier((String)ids_it->getPeptideIdentifications().front().getHits().front().getMetaValue("IdentificationIdentifier"));
+					ids_it->setQuality(ids_it->getPeptideIdentifications().front().getHits().front().getScore());
 				}
 			}
-
 		}
 		///
 

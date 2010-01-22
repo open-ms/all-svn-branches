@@ -36,6 +36,7 @@
 #include <OpenMS/CHEMISTRY/Residue.h>
 #include <OpenMS/CHEMISTRY/ResidueDB.h>
 #include <OpenMS/CONCEPT/Exception.h>
+#include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 
 #include <vector>
 #include <map>
@@ -1593,7 +1594,7 @@ namespace OpenMS
 
 			@return a symetric version of spectrum with a integer MetaDataArray, where x[i]>0 indicates a synthetic peak
 
-			result is spectrum with property sym[i].getMZ + sym[n-i-1].getMZ = parentMass-Constants::PROTON_MASS_U, adding entries setIntensity zero if necessary
+			result is spectrum with property sym[i].getMZ + sym[n-i-1].getMZ = parentMass, adding entries setIntensity zero if necessary
 		@important previous sortByPosition() of spectrum
 		@important is subtraction of a H enough?? how to decide between prm and exp!?
 		@important is the 0 and pm peak addition neccessary!?
@@ -1612,10 +1613,8 @@ namespace OpenMS
 
 			Real peak_tolerance = (Real)param_.getValue("peak_tolerance");
 
-			DoubleReal pm = sym.getPrecursors().front().getMZ();
-			int pm_charge = sym.getPrecursors().front().getCharge();
 			/// @important singly charged mass difference!
-			pm = pm * pm_charge - (pm_charge-1)*Constants::PROTON_MASS_U;
+			DoubleReal pm = sym.getPrecursors().front().getUnchargedMass();
 			/* debug std::cout << "Sym pm "<< pm << std::endl; */
 
 
@@ -1626,7 +1625,7 @@ namespace OpenMS
 				{
 					continue;
 				}
-				DoubleReal target = pm-sym[sym_index].getMZ()+Constants::PROTON_MASS_U;
+				DoubleReal target = pm-sym[sym_index].getMZ()+2*Constants::PROTON_MASS_U;
 
 				typename SpectrumType::Iterator lo = sym.MZBegin(target-peak_tolerance);
 				typename SpectrumType::Iterator hi = sym.MZEnd(lo,target+peak_tolerance,sym.begin()+sym_pasttheend_index);
@@ -1673,6 +1672,61 @@ namespace OpenMS
 		///
 
 		/**
+			@brief Will the spectrum s version without previously matching non-singly charged peaks
+
+			@param spectrum to be deconvoluted
+
+			@return a version of spectrum with charge deconvoluted peaks to charge one
+
+		@important works only if id is present
+		*/
+		void filterHighCharges(Size c, MSSpectrum<PeakT>& spectrum) const
+		{
+			Real peak_tolerance = param_.getValue("peak_tolerance");
+
+			if(spectrum.empty() or spectrum.getPeptideIdentifications().empty())
+			{
+				return;
+			}
+			///@improvement without id like denovo over isotopes?
+
+			TheoreticalSpectrumGenerator tsg;
+			RichPeakSpectrum ts;
+			tsg.getSpectrum(ts, spectrum.getPeptideIdentifications().front().getHits().front().getSequence(), c);
+			ts.sortByPosition();
+
+			typename MSSpectrum<PeakT>::Iterator lo = spectrum.begin();
+			typename MSSpectrum<PeakT>::Iterator hi = spectrum.end();
+			for(Size i = 0; i < ts.size(); ++i)
+			{
+				DoubleReal target(ts[i].getMZ());
+				lo = spectrum.MZBegin(lo,target-peak_tolerance-0.00001,spectrum.end());
+				hi = spectrum.MZEnd(lo,target+peak_tolerance+0.00001,spectrum.end());
+				for(; lo!=hi; ++lo)
+				{
+					lo->setIntensity(0);
+				}
+			}
+
+			lo = spectrum.begin();
+			while(lo!=spectrum.end())
+			{
+				if(lo->getIntensity() == 0)
+				{
+					lo = spectrum.erase(lo);
+					///@improvement is singly charged version yet contained? else this could be added synthetically
+				}
+				else
+				{
+					++lo;
+				}
+			}
+
+			return;
+		}
+		///
+
+		/**
 			@brief Method to calculate a antisymetric alignment
 
 			@param res_1 Spectrum containing the aligned peaks from s1
@@ -1686,7 +1740,7 @@ namespace OpenMS
 		*/
 		void getAntisymetricAlignment(MSSpectrum<PeakT>& res_1, MSSpectrum<PeakT>& res_2, DoubleReal& score, DoubleReal& mod_pos, const MSSpectrum<PeakT>& s1, const MSSpectrum<PeakT>& s2) const
 		{
-			//~ float sameVertexPenalty=-5, float ptmPenalty=-5, bool forceSymmetry=true, bool addZPMmatches=false
+			//~ float sameVertexPenalty=-5, float ptmPenalty=-5
 			//~ sameVertexPenalty = -1000000, ptmPenalty = -200; //makes the test fail!
 			//~ sameVertexPenalty = 0, ptmPenalty = 0;
 
@@ -1694,15 +1748,10 @@ namespace OpenMS
 			DoubleReal pm_tolerance = param_.getValue("parentmass_tolerance");
 			DoubleReal min_dist = param_.getValue("min_dist");
 
-			DoubleReal pm_s1 = s1.getPrecursors().front().getMZ();
-			int c_s1 = s1.getPrecursors().front().getCharge();
-			DoubleReal pm_s2 = s2.getPrecursors().front().getMZ();
-			int c_s2 = s2.getPrecursors().front().getCharge();
-			/// @attention if the precursor charge is unknown, i.e. 0 best guess is its doubly charged
-			(c_s1==0)?c_s1=2:c_s1=c_s1;
-			(c_s2==0)?c_s2=2:c_s2=c_s2;
-			/// @attention singly charged mass difference!
-			DoubleReal pm_diff = (pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U)-(pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U);
+			/// @attention uncharged mass!
+			DoubleReal pm_s1 (s1.getPrecursors().front().getUnchargedMass());
+			DoubleReal pm_s2 (s2.getPrecursors().front().getUnchargedMass());
+			DoubleReal pm_diff = (pm_s2-pm_s1);
 
 			if(pm_diff <= -pm_tolerance)
 			{
@@ -1748,8 +1797,12 @@ namespace OpenMS
 			}
 			std::cout << '\n';*/
 
+			//~ charge deconvolution to 'singly charged only' for identified spectra
+			res_1 = s1;
+			filterHighCharges(2,res_1);
+
 			//~ change s1 to align antisymetrical into res_1
-			res_1 = getSymetricSpectrum(s1);
+			res_1 = getSymetricSpectrum(res_1);
 
 			//~ indices in s2 for normal matches
 			/* debug  std::cout << "symetric size is: " << res_1.size() << std::endl;*/
@@ -2015,7 +2068,7 @@ namespace OpenMS
 			std::pair<double, std::pair< std::vector<int>,std::vector<int> > > asym_align;
 
 			AntisymetricDP dp;
-			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1*c_s1 - (c_s1-1)*Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2*c_s2 - (c_s2-1)*Constants::PROTON_MASS_U), peaks, peaks2, common, common_shifted, common_scores, common_shifted_scores, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, peak_tolerance, sv_penalty, dif_penalty);
+			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1+Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2+Constants::PROTON_MASS_U), peaks, peaks2, common, common_shifted, common_scores, common_shifted_scores, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, peak_tolerance, sv_penalty, dif_penalty);
 
 			score = asym_align.first;
 
@@ -2060,7 +2113,7 @@ namespace OpenMS
 				}
 				else
 				{
-					mod_pos=peaks[asym_align.second.second[0]];  // Otherwise mod was placed at the first mass of res
+					mod_pos=peaks[asym_align.second.second[0]];  // Otherwise mod was placed at the first mass shifted aligned pair (but unshifted version as value)
 					(res_1.getIntegerDataArrays().begin()+1)->at(asym_align.second.first.size())=1;
 					(res_2.getIntegerDataArrays().begin()+1)->at(asym_align.second.first.size())=1;
 					/* debug std::cout << mod_pos << std::endl; */

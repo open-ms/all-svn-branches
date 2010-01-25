@@ -31,6 +31,60 @@
 	<br>
 	<b>Have fun coding with %OpenMS!</b>
 
+<HR> 
 
+  @section development_qtcreator Using Qt Creator with OpenMS
+  
+  Tested with Ubuntu 9.10 / Qt Creator 1.3.1 / Qt 4.6 / OpenMS 1.7
 
+  <H2>Path variables</H2>
+  Qt Creator must access to OpenMS headers and lib.<br>
+  In linux, you can add <path_to_OpenMS>/lib/, <path_to_OpenMS>/include/ and 
+  <path_to_OpenMS>/contrib/include/ to the environment variable LD_LIBRARY_PATH. 
+  Or you can link libOpenMS.so from <path_to_OpenMS>/lib in /usr/lib, <path_to_OpenMS>/include 
+  to /usr/OpenMS/include and link <path_to_OpenMS>/contrib/include to /usr/OpenMS/contrib/inlcude.
+
+  <H2>Download Qt SDK</H2>
+  Find Qt in Google and go to Developer Zone -> Download the latest versions -> 
+  LGPL -> Download Qt SDK for Windows/Linux/Mac and install.
+
+  <H2>Create project</H2>
+  Start Qt Creator and create new Qt graphic application.<br>
+  Open *.pro file and add lines (and change <path_to_OpenMS>) :
+
+  @code
+  QT += opengl \
+      sql \
+      network
+  OPENMSDIR = <path_to_OpenMS>
+  INCLUDEPATH += $$OPENMSDIR/include \
+      $$OPENMSDIR/contrib/include
+  LIBS += -lOpenMS
+  @endcode
+
+  @note <i>QT</i> line add Qt options (opengl, sql and network), <i>INCLUDEPATH</i> 
+  add paths to include dirs and <i>LIBS</i> add OpenMS lib (libOpenMS.so).
+  
+  You can now use OpenMS lib in your own programs !
+  
+  <H2>Progam example</H2>
+  @code
+  #include <QApplication>
+  #include <OpenMS/KERNEL/MSExperiment.h>
+  #include <OpenMS/VISUAL/Spectrum1DWidget.h>
+  using namespace OpenMS;
+
+  int main(int argc, char *argv[])
+  {
+      QApplication app(argc, argv);
+
+      MSExperiment<> exp;
+      Spectrum1DWidget* widget = new Spectrum1DWidget(Param());
+      widget->show();
+
+      return app.exec();
+  }
+  @endcode
+  Compile and run with Ctrl+R.
+  
 */

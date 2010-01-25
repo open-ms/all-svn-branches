@@ -473,7 +473,7 @@ namespace OpenMS
 				cf.setMZ(experiment[i].getPrecursors().front().getMZ());
 				cf.setRT(experiment[i].getRT());
 
-				if(experiment[i].getPeptideIdentifications().size()<1)
+				if(experiment[i].getPeptideIdentifications().empty() or experiment[i].getPeptideIdentifications().front().getHits().empty())
 				{
 					cf.getPeptideIdentifications().resize(1); // make sure we have the one PeptideIdentification we need, n.b. not to be confused with the subsequent hits!
 					cf.getPeptideIdentifications().front().setIdentifier("from SpectralNetworking");

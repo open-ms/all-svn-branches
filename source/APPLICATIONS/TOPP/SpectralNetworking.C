@@ -479,8 +479,10 @@ using namespace std;
 			{
 				//~ edge_selection indices are alwas >= the ones to pot_pairs so no collision expected
 				pot_pairs[oi][i] = pot_pairs[oi][edge_selection[i]];
+				pot_pairs_xcs[oi][i] = pot_pairs_xcs[oi][edge_selection[i]];
 			}
 			pot_pairs[oi].resize(edge_selection.size());
+			pot_pairs_xcs[oi].resize(edge_selection.size());
 			edge_selection.clear();
 		}
 		writeLog_(String(edge_without_stddev) + String(" edges had a spec without stddev anyway ..") );
@@ -844,7 +846,19 @@ using namespace std;
 				{
 					scorer.idPrepare(experiment[i]);
 					//~ take over the charge from the best DB hit
-					experiment[i].getPrecursors().front().setCharge(experiment[i].getPeptideIdentifications().front().getHits().front().getCharge());
+					if(experiment[i].getPeptideIdentifications().front().getHits().size()!= 0)
+					{
+						experiment[i].getPrecursors().front().setCharge(experiment[i].getPeptideIdentifications().front().getHits().front().getCharge());
+					}
+					else
+					{
+						//~ by default a chargestate of 2 is assumed if not set
+						if(experiment[i].getPrecursors().front().getCharge()<1)
+						{
+							/// @improvement apply a chargestate enumeration (1-2-3) in edgeselection and adopt best charge
+							experiment[i].getPrecursors().front().setCharge(2);
+						}
+					}
 				}
 				else
 				{

@@ -1680,11 +1680,11 @@ namespace OpenMS
 
 		@important works only if id is present
 		*/
-		void filterHighCharges(Size c, MSSpectrum<PeakT>& spectrum) const
+		void filterHighCharges(MSSpectrum<PeakT>& spectrum,Size c_lo,Size c_hi) const
 		{
 			Real peak_tolerance = param_.getValue("peak_tolerance");
 
-			if(spectrum.empty() or spectrum.getPeptideIdentifications().empty())
+			if(spectrum.empty() or spectrum.getPeptideIdentifications().empty() or spectrum.getPeptideIdentifications().front().getHits().empty())
 			{
 				return;
 			}
@@ -1692,7 +1692,7 @@ namespace OpenMS
 
 			TheoreticalSpectrumGenerator tsg;
 			RichPeakSpectrum ts;
-			tsg.getSpectrum(ts, spectrum.getPeptideIdentifications().front().getHits().front().getSequence(), c);
+			tsg.getSpectrum(ts, spectrum.getPeptideIdentifications().front().getHits().front().getSequence(), c_lo, c_hi);
 			ts.sortByPosition();
 
 			typename MSSpectrum<PeakT>::Iterator lo = spectrum.begin();
@@ -1799,7 +1799,7 @@ namespace OpenMS
 
 			//~ charge deconvolution to 'singly charged only' for identified spectra
 			res_1 = s1;
-			filterHighCharges(2,res_1);
+			filterHighCharges(res_1,2,3);
 
 			//~ change s1 to align antisymetrical into res_1
 			res_1 = getSymetricSpectrum(res_1);

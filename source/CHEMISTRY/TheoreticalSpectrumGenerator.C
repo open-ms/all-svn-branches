@@ -87,6 +87,11 @@ namespace OpenMS
 
 	void TheoreticalSpectrumGenerator::getSpectrum(RichPeakSpectrum& spec, const AASequence& peptide, Int charge)
 	{
+		if(peptide.size()==0)
+		{
+			return;
+		}
+
 		for (Int z = 1; z <= charge; ++z)
 		{
 			addPeaks(spec, peptide, Residue::BIon, z);
@@ -97,6 +102,30 @@ namespace OpenMS
 		if (add_precursor_peaks)
 		{
 			addPrecursorPeaks(spec, peptide, charge);
+		}
+		return;
+	}
+
+	void TheoreticalSpectrumGenerator::getSpectrum(RichPeakSpectrum& spec, const AASequence& peptide, Int charge_lo, Int charge_hi)
+	{
+		if(peptide.size()==0 or charge_lo > charge_hi)
+		{
+			return;
+		}
+
+		for (Int z = charge_lo; z <= charge_hi; ++z)
+		{
+			addPeaks(spec, peptide, Residue::BIon, z);
+			addPeaks(spec, peptide, Residue::YIon, z);
+		}
+
+		bool add_precursor_peaks((int)param_.getValue("add_precursor_peaks"));
+		if (add_precursor_peaks)
+		{
+			for (Int z = charge_lo; z <= charge_hi; ++z)
+			{
+				addPrecursorPeaks(spec, peptide, z);
+			}
 		}
 		return;
 	}

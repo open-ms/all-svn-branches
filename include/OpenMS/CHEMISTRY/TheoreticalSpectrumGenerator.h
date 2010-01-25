@@ -69,6 +69,9 @@ namespace OpenMS
 			/// returns a spectrum with b and y peaks
 			virtual void getSpectrum(RichPeakSpectrum& spec, const AASequence& peptide, Int charge = 1);
 
+			/// returns a spectrum with b and y peaks of given charge range (closed interval)
+			virtual void getSpectrum(RichPeakSpectrum& spec, const AASequence& peptide, Int charge_lo, Int charge_hi);
+
 			/// adds peaks to a spectrum of the given ion-type, peptide, charge, and intensity
 			virtual void addPeaks(RichPeakSpectrum& spectrum, const AASequence& peptide, Residue::ResidueType res_type, Int charge = 1);
 

@@ -293,7 +293,7 @@ using namespace std;
 	}
 	///
 
-	//~ builds a spectral network ready for initial identification and subsequent propagation
+	//~ builds a spectral network ready for initial ification and subsequent propagation
 	void spanNetwork_(MSExperiment<Peak1D>& experiment, String& outputfile_name_consensus, String& outputfile_name_edges, std::set<Size>& no_edges)
 	{
 		//~ parameters

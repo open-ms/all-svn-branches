@@ -182,7 +182,7 @@ namespace OpenMS
 					{
 						spec.getPeptideIdentifications()[j].getHits()[k].getSequence() == new_hits[c].getSequence() ? yet_contained = true : yet_contained = false;
 					}
-					if(!yet_contained)
+					if((!yet_contained) and (!spec.getPeptideIdentifications()[j].getHits()[k].getSequence().isModified()))
 					{
 						new_hits.push_back(spec.getPeptideIdentifications()[j].getHits()[k]);
 						DoubleReal pc(0),ic(0);

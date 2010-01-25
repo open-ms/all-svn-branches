@@ -377,14 +377,14 @@ namespace OpenMS
 				{
 					best_diff = diff;
 					sequence_correspondence = String(String("y") + String(i) + String(std::string((Size)charge, '+')));
-					best_pos = template_sequence.size()-(i-1);
+					best_pos = template_sequence.size()-i;
 				}
 				DoubleReal alt_diff = fabs(alt_mod_pos - pos);
 				if(/*diff < (peak_tolerance*2 + 0.00001) and*/ alt_diff < best_diff)
 				{
 					best_diff = alt_diff;
 					sequence_correspondence = String(String("y") + String(i) + String(std::string((Size)charge, '+')) + String("(via symetric)"));
-					best_pos = template_sequence.size()-(i-1);
+					best_pos = template_sequence.size()-i;
 				}
 			}
 			/// @improvement  stop here if best_diff is already under threshold?
@@ -398,14 +398,14 @@ namespace OpenMS
 				{
 					best_diff = diff;
 					sequence_correspondence = String(String("b") + String(i) + String(std::string((Size)charge, '+')));
-					best_pos = i;
+					best_pos = (i-1);
 				}
 				DoubleReal alt_diff = fabs(alt_mod_pos - pos);
 				if(/*diff < (peak_tolerance*2 + 0.00001) and*/ diff < best_diff)
 				{
 					best_diff = alt_diff;
 					sequence_correspondence = String(String("b") + String(i) + String(std::string((Size)charge, '+')) + String("(via symetric)"));
-					best_pos = i;
+					best_pos = (i-1);
 				}
 			}
 

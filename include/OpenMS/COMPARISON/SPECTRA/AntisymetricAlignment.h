@@ -53,1398 +53,87 @@ namespace OpenMS
 	//~ warning: unused parameter 'common_scores'
 	//~ warning: unused parameter 'common_shifted_scores'
 
-	struct AntisymetricDP
+struct ASA_DP_Tables
+{
+	DoubleReal pm_s1, pm_s2;
+
+	std::vector<int> common;
+	std::vector<int> common_shifted;
+	std::vector<double> common_scores;
+	std::vector<double> common_shifted_scores;
+	std::vector<int> prev;
+	std::vector<int> next;
+	std::vector<int> prev_shifted;
+	std::vector<int> next_shifted;
+	std::vector<std::vector<int> > left_jumps;
+	std::vector<std::vector<int> > left_jumps_shifted;
+	std::vector<std::vector<int> > right_jumps;
+	std::vector<std::vector<int> > right_jumps_shifted;
+	std::vector<std::vector<int> > left_neighbors;
+	std::vector<std::vector<int> > right_neighbors;
+
+	std::vector<DoubleReal> peaks;
+	std::vector<DoubleReal> peaks2;
+	float delta;
+	float delta2;
+
+	std::vector<double> prefix1;
+	std::vector<std::vector<double> > suffix1;
+	std::vector<std::vector<double> > prefix2;
+	std::vector<double> suffix2;
+	std::vector<double> prefix1_L;
+	std::vector<double> suffix1max;
+	std::vector<double> suffix1_R;
+	std::vector<double> prefix2max;
+	std::vector<double> prefix2_L;
+	std::vector<double> suffix2_R;
+	std::vector<std::vector<double> > D1;
+	std::vector<std::vector<std::vector<double> > > D2;
+	std::vector<std::vector<std::vector<double> > > D3;
+	std::vector<std::vector<double> > D2max;
+	std::vector<std::vector<double> > D3max;
+	std::vector<std::vector<double> > M1_L;
+	std::vector<std::vector<double> > M1_R;
+	std::vector<std::vector<double> > M2_L;
+	std::vector<std::vector<std::vector<double> > > M2_R;
+	std::vector<std::vector<std::vector<double> > > M3_L;
+	std::vector<std::vector<double> > M3_R;
+
+	enum celltype {cell_prefix1, cell_suffix1, cell_prefix2, cell_suffix2,
+				cell_prefix1_L, cell_suffix1_R, cell_prefix2_L, cell_suffix2_R,
+				cell_D1, cell_D2, cell_D3,
+				cell_M1_L, cell_M1_R, cell_M2_L, cell_M2_R,
+				cell_M3_L, cell_M3_R, cell_Invalid};
+
+	double best_score;
+	int best_i;
+	int best_j;
+	int best_s;
+	celltype best_t;
+
+	ASA_DP_Tables(Size n, Size m, Size l, DoubleReal pm1, DoubleReal pm2) // n = res_1.size();  m = common.size()/2; l = res_2.size();
+				:pm_s1(pm1), pm_s2(pm2),best_score(0.0),best_i(-1),best_j(-1),best_s(-1),
+				peaks(n),peaks2(l),
+				common(n,-1), common_shifted(n,-1), common_scores(n,0), common_shifted_scores(n,0),
+				prev(n, -1), next(n,-1), prev_shifted(n,-1), next_shifted(n,-1),
+				left_jumps(n), left_jumps_shifted(n), right_jumps(n),right_jumps_shifted(n), left_neighbors(n), right_neighbors(n),
+				prefix1(m, std::numeric_limits<DoubleReal>::min()), suffix1(m),prefix2(m), suffix2(m, std::numeric_limits<DoubleReal>::min()), prefix1_L(m, std::numeric_limits<DoubleReal>::min()), suffix1max(m, std::numeric_limits<DoubleReal>::min()), suffix1_R(m, std::numeric_limits<DoubleReal>::min()), prefix2max(m, std::numeric_limits<DoubleReal>::min()), prefix2_L(m, std::numeric_limits<DoubleReal>::min()), suffix2_R(m, std::numeric_limits<DoubleReal>::min()),
+				D1(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),
+				D2(m,std::vector<std::vector<double> >(m)),
+				D3(m,std::vector<std::vector<double> >(m)),
+				D2max(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),
+				D3max(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),
+				M1_L(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),
+				M1_R(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),
+				M2_L(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),
+				M2_R(m,std::vector<std::vector<double> >(m)),
+				M3_L(m,std::vector<std::vector<double> >(m)),
+				M3_R(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),best_t(cell_Invalid)
 	{
-
-				enum celltype {cell_prefix1, cell_suffix1, cell_prefix2, cell_suffix2,
-							cell_prefix1_L, cell_suffix1_R, cell_prefix2_L, cell_suffix2_R,
-							cell_D1, cell_D2, cell_D3,
-							cell_M1_L, cell_M1_R, cell_M2_L, cell_M2_R,
-							cell_M3_L, cell_M3_R, INVALID};
-
-		std::pair<double, std::pair< std::vector<int>,std::vector<int> > > calculateAlignementPath(double parent_mass1,  double parent_mass2, std::vector<double> peaks, std::vector<double> peaks2, std::vector<int> & common, std::vector<int> & common_shifted, std::vector<double> & common_scores, std::vector<double> & common_shifted_scores, std::vector<int> & prev, std::vector<int> & next, std::vector<int> & prev_shifted, std::vector<int> & next_shifted, std::vector<std::vector<int> > & left_jumps, std::vector<std::vector<int> > & right_jumps, std::vector<std::vector<int> > & left_jumps_shifted, std::vector<std::vector<int> > &right_jumps_shifted, std::vector<std::vector<int> > & left_neighbors, std::vector<std::vector<int> > & right_neighbors, Real peak_tolerance, double same_vertex_penalty, double ptm_penalty)
-		{
-
-			const DoubleReal infinity = std::numeric_limits<DoubleReal>::max();
-
-			int n0 = common.size();
-			int N = n0-1;
-			int n = (n0+1)/2;
-
-			std::vector<double> prefix1(n, -infinity);
-			std::vector<std::vector<double> > suffix1(n);
-			std::vector<std::vector<double> > prefix2(n);
-			std::vector<double> suffix2(n, -infinity);
-
-			std::vector<double> prefix1_L(n, -infinity);
-			std::vector<double> suffix1max(n, -infinity);
-			std::vector<double> suffix1_R(n, -infinity);
-			std::vector<double> prefix2max(n, -infinity);
-			std::vector<double> prefix2_L(n, -infinity);
-			std::vector<double> suffix2_R(n, -infinity);
-
-			std::vector<std::vector<double> > D1(n,std::vector<double>(n, -infinity));
-			std::vector<std::vector<std::vector<double> > > D2(n,std::vector<std::vector<double> >(n));
-			std::vector<std::vector<std::vector<double> > > D3(n,std::vector<std::vector<double> >(n));
-			std::vector<std::vector<double> > D2max(n,std::vector<double>(n, -infinity));
-			std::vector<std::vector<double> > D3max(n,std::vector<double>(n, -infinity));
-			std::vector<std::vector<double> > M1_L(n,std::vector<double>(n, -infinity));
-			std::vector<std::vector<double> > M1_R(n,std::vector<double>(n, -infinity));
-			std::vector<std::vector<double> > M2_L(n,std::vector<double>(n, -infinity));
-			std::vector<std::vector<std::vector<double> > > M2_R(n,std::vector<std::vector<double> >(n));
-			std::vector<std::vector<std::vector<double> > > M3_L(n,std::vector<std::vector<double> >(n));
-			std::vector<std::vector<double> > M3_R(n,std::vector<double>(n, -infinity));
-
-			// compute prefix1
-			for(int i = 0; i < n; ++i)
-			{
-				if(common[i] != -1)
-				{
-					double prev_score = 0.0;
-					for(std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-					{
-						prev_score = std::max(prev_score, prefix1[*it]);
-					}
-					int i2 = prev[i];
-					if (i2 != -1)
-					{
-						prev_score = std::max(prev_score, prefix1_L[i2]);
-					}
-					prefix1[i] = common_scores[i] + prev_score;
-				}
-
-				if(i != 0)
-				{
-					prefix1_L[i] = std::max(prefix1_L[i-1], prefix1[i]);
-				}
-				else
-				{
-					prefix1_L[i] = prefix1[i];
-				}
-			}
-
-			// compute suffix1
-			for(int j = 0; j < n; ++j)
-			{
-				int l = right_neighbors[N-j].size();
-				suffix1[j].resize(l+1, -infinity);
-
-				if (common[N-j] != -1)
-				{ // s = 0
-					double next_score = 0.0;
-					for(std::vector<int>::const_iterator it = right_jumps[N-j].begin();
-					it != right_jumps[N-j].end(); ++it)
-					{
-						next_score = std::max(next_score, suffix2[N-*it]+ptm_penalty);
-					}
-					int j2 = next[N-j];
-					if(j2 != -1)
-					{
-						next_score = std::max(next_score, suffix2_R[N-j2]+ptm_penalty);
-					}
-					for(std::vector<int>::const_iterator it = right_jumps_shifted[N-j].begin(); it != right_jumps_shifted[N-j].end(); ++it)
-					{
-						next_score = std::max(next_score, suffix1max[N-*it]);
-					}
-					j2 = next_shifted[N-j];
-					if(j2 != -1)
-					{
-						next_score = std::max(next_score, suffix1_R[N-j2]);
-					}
-					suffix1[j][0] = common_scores[N-j] + next_score;
-
-					// s > 0
-					for(int s = 0; s < l; ++s)
-					{
-						int j2 = right_neighbors[N-j][s];
-						if (common[j2] == -1)
-						{
-							continue;
-						}
-						double penalty = 0.0;
-						double y = peaks2[common[N-j]]+peaks2[common[j2]];
-						if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-						{
-							penalty = same_vertex_penalty;
-						}
-						double next_score = suffix1max[N-j2];
-						suffix1[j][s+1] = common_scores[N-j] + next_score + penalty;
-					}
-				}
-
-				suffix1max[j] = *std::max_element(suffix1[j].begin(), suffix1[j].end());
-				if(j != 0)
-				{
-					suffix1_R[j] = std::max(suffix1_R[j-1], suffix1max[j]);
-				}
-				else
-				{
-					suffix1_R[j] = suffix1max[j];
-				}
-			}
-
-			// compute prefix2
-			for(int i = 0; i < n; ++i)
-			{
-				int l = left_neighbors[i].size();
-				prefix2[i].resize(l+1 ,-infinity);
-
-				if (common_shifted[i] != -1)
-				{// s = 0
-					double prev_score = 0.0;
-					for (std::vector<int>::const_iterator it = left_jumps[i].begin();it != left_jumps[i].end(); ++it)
-					{
-						prev_score = std::max(prev_score, prefix1[*it]+ptm_penalty);
-					}
-					int i2 = prev[i];
-					if (i2 != -1)
-					{
-						prev_score = std::max(prev_score, prefix1_L[i2]+ptm_penalty);
-					}
-					for(std::vector<int>::const_iterator it = left_jumps_shifted[i].begin(); it != left_jumps_shifted[i].end(); ++it)
-					{
-						prev_score = std::max(prev_score, prefix2max[*it]);
-					}
-					i2 = prev_shifted[i];
-					if (i2 != -1)
-					{
-						prev_score = std::max(prev_score, prefix2_L[i2]);
-					}
-					prefix2[i][0] = common_shifted_scores[i] + prev_score;
-
-					// s > 0
-					for (int s = 0; s < l; ++s)
-					{
-						int i2 = left_neighbors[i][s];
-						if(common_shifted[i2] == -1)
-						{
-							continue;
-						}
-						double penalty = 0.0;
-						double y = peaks2[common_shifted[i]]+peaks2[common_shifted[i2]];
-						if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-						{
-							penalty = same_vertex_penalty;
-						}
-						prev_score = prefix2max[i2];
-						prefix2[i][s+1] = common_shifted_scores[i] + prev_score + penalty;
-					}
-				}
-
-				prefix2max[i] = *std::max_element(prefix2[i].begin(), prefix2[i].end());
-				if (i != 0)
-				{
-					prefix2_L[i] = std::max(prefix2_L[i-1], prefix2max[i]);
-				}
-				else
-				{
-					prefix2_L[i] = prefix2max[i];
-				}
-			}
-
-			// compute suffix2
-			for(int j = 0; j < n; ++j)
-			{
-				if(common_shifted[N-j] != -1)
-				{
-					double next_score = 0.0;
-					for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-					{
-						next_score = std::max(next_score, suffix2[N-*it]);
-					}
-					int j2 = next[N-j];
-					if(j2 != -1)
-					{
-						next_score = std::max(next_score, suffix2_R[N-j2]);
-					}
-					suffix2[j] = common_shifted_scores[N-j] + next_score;
-				}
-				if(j != 0)
-				{
-					suffix2_R[j] = std::max(suffix2_R[j-1], suffix2[j]);
-				}
-				else
-				{
-					suffix2_R[j] = suffix2[j];
-				}
-			}
-
-			// compute D1/M1_R
-			for (int i = 0; i < n; ++i)
-			{
-				if (common[i] == -1)
-				{
-					if (i != 0)
-					{
-						M1_L[i] = M1_L[i-1];
-					}
-					continue;
-				}
-
-				for(int j = 0; j < n; ++j)
-				{
-					if(common_shifted[N-j] == -1)
-					{
-						if(i != 0)
-						{
-							M1_L[i][j] = M1_L[i-1][j];
-						}
-						if(j != 0)
-						{
-							M1_R[i][j] = M1_R[i][j-1];
-						}
-						continue;
-					}
-
-					double penalty = 0.0;
-					double x = peaks[i]+peaks[N-j];
-					double y = peaks2[common[i]]+peaks2[common_shifted[N-j]];
-					if(fabs(x-(parent_mass1/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance || fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-					{
-						penalty = same_vertex_penalty;
-					}
-
-					if(i >= j)
-					{
-						double prev_score = suffix2[j]+ptm_penalty;
-						// If we choose suffix2[j], then we pay the PTM penalty - the penalty is paid only once!
-						for(std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-						{
-							prev_score = std::max(prev_score, D1[*it][j]);
-						}
-						int i2 = prev[i];
-						if(i2 != -1)
-						{
-							prev_score = std::max(prev_score, M1_L[i2][j]);
-						}
-						D1[i][j] = common_scores[i] + prev_score + penalty;
-					}
-					else
-					{
-						double next_score = prefix1[i]+ptm_penalty;
-						for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-						{
-							next_score = std::max(next_score, D1[i][N-*it]);
-						}
-						int j2 = next[N-j];
-						if (j2 != -1)
-						{
-							next_score = std::max(next_score, M1_R[i][N-j2]);
-						}
-						D1[i][j] = common_shifted_scores[N-j] + next_score + penalty;
-					}
-
-					// Compute M1_L
-					if(i != 0)
-					{
-						M1_L[i][j] = std::max(M1_L[i-1][j], D1[i][j]);
-					}
-					else
-					{
-						M1_L[i][j] = D1[i][j];
-					}
-
-					// Compute M1_R
-					if(j != 0)
-					{
-						M1_R[i][j] = std::max(M1_R[i][j-1], D1[i][j]);
-					}
-					else
-					{
-						M1_R[i][j] = D1[i][j];
-					}
-				}
-			}
-
-			// compute D2/D2max/M2_L
-			for (int i = 0; i < n; ++i)
-			{
-				int l = left_neighbors[i].size();
-				for(int j = 0; j < n; ++j)
-				{
-					D2[i][j].resize(l+1, -infinity);
-					M2_R[i][j].resize(l+1, -infinity);
-				}
-				if(common_shifted[i] == -1)
-				{
-					if (i > 0)
-					{
-						M2_L[i] = M2_L[i-1];
-					}
-					continue;
-				}
-
-				for(int j = 0; j < n; ++j)
-				{
-					if(common_shifted[N-j] == -1)
-					{
-						if(i != 0)
-						{
-							M2_L[i][j] = M2_L[i-1][j];
-						}
-						if(j != 0)
-						{
-							M2_R[i][j] = M2_R[i][j-1];
-						}
-						continue;
-					}
-
-					double penalty = 0.0;
-					double x = peaks[i]+peaks[N-j];
-					double y = peaks2[common_shifted[i]]+peaks2[common_shifted[N-j]];
-					if(fabs(x-(parent_mass1/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance || fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-					{
-						penalty = same_vertex_penalty;
-					}
-
-					if (i > j)
-					{// s = 0
-						double prev_score = suffix2[j];
-						for(std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-						{
-							prev_score = std::max(prev_score, D1[*it][j]);
-						}
-						int i2 = prev[i];
-						if(i2 != -1)
-						{
-							prev_score = std::max(prev_score, M1_L[i2][j]);
-						}
-						for(std::vector<int>::const_iterator it = left_jumps_shifted[i].begin(); it != left_jumps_shifted[i].end(); ++it)
-						{
-							prev_score = std::max(prev_score, D2max[*it][j]);
-						}
-						i2 = prev_shifted[i];
-						if (i2 != -1)
-						{
-							prev_score = std::max(prev_score, M2_L[i2][j]);
-						}
-						D2[i][j][0] = common_shifted_scores[i] + prev_score + penalty;
-
-						// s > 0
-						for(int s = 0; s < l; ++s)
-						{
-							int i2 = left_neighbors[i][s];
-							if(common_shifted[i2] == -1)
-							{
-								continue;
-							}
-							double penalty2 = penalty;
-							double y = peaks2[common_shifted[i]]+peaks2[common_shifted[i2]];
-							if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-							{
-								penalty2 += same_vertex_penalty;
-							}
-							prev_score = D2max[i2][j];
-							D2[i][j][s+1] = common_shifted_scores[i] + prev_score + penalty2;
-						}
-					}
-					else
-					{// i <= j
-						// s = 0
-						double next_score = prefix2[i][0];
-						for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-						{
-							next_score = std::max(next_score, D2[i][N-*it][0]);
-						}
-						int j2 = next[N-j];
-						if (j2 != -1)
-						{
-							next_score = std::max(next_score, M2_R[i][N-j2][0]);
-						}
-						D2[i][j][0] = common_shifted_scores[N-j] + next_score + penalty;
-
-						// s > 0
-						for(int s = 0; s < l; ++s)
-						{
-							int i2 = left_neighbors[i][s];
-							if(common_shifted[i2] == -1)
-							{
-								continue;
-							}
-							double penalty2 = penalty;
-							double y = peaks2[common_shifted[i2]]+peaks2[common_shifted[N-j]];
-							if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-							{
-								penalty2 += same_vertex_penalty;
-							}
-							double next_score = prefix2[i][s+1];
-							for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-							{
-								next_score = std::max(next_score, D2[i][N-*it][s+1]);
-							}
-							int j2 = next[N-j];
-							if(j2 != -1)
-							{
-								next_score = std::max(next_score, M2_R[i][N-j2][s+1]);
-							}
-							D2[i][j][s+1] = common_shifted_scores[N-j] + next_score + penalty2;
-						}
-					}
-
-					// Compute D2max
-					D2max[i][j] = *std::max_element(D2[i][j].begin(), D2[i][j].end());
-
-					// Compute M2_L
-					if(i != 0)
-					{
-						M2_L[i][j] = std::max(M2_L[i-1][j], D2max[i][j]);
-					}
-					else
-					{
-						M2_L[i][j] = D2max[i][j];
-					}
-
-					// compute M2_R
-					if(j != 0)
-					{
-						for(int s = 0; s < l+1; ++s)
-						{
-							M2_R[i][j][s] = std::max(M2_R[i][j-1][s], D2[i][j][s]);
-						}
-					}
-					else
-					{
-						M2_R[i][j] = D2[i][j];
-					}
-				}
-			}
-
-			// compute D3/M3_R
-			for(int i = 0; i < n; ++i)
-			{
-				for(int j = 0; j < n; ++j)
-				{
-					int l = right_neighbors[N-j].size();
-					D3[i][j].resize(l+1, -infinity);
-					M3_L[i][j].resize(l+1, -infinity);
-				}
-				if(common[i] == -1)
-				{
-					if(i > 0)
-					{
-						M3_L[i] = M3_L[i-1];
-					}
-					continue;
-				}
-
-				for(int j = 0; j < n; ++j)
-				{
-					if(common[N-j] == -1)
-					{
-						if(i != 0)
-						{
-							M3_L[i][j] = M3_L[i-1][j];
-						}
-						if(j != 0)
-						{
-							M3_R[i][j] = M3_R[i][j-1];
-						}
-						continue;
-					}
-
-					int l = right_neighbors[N-j].size();
-					double penalty = 0.0;
-					double x = peaks[i]+peaks[N-j];
-					double y = peaks2[common[i]]+peaks2[common[N-j]];
-					if(fabs(x-(parent_mass1/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance || fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-					{
-						penalty = same_vertex_penalty;
-					}
-
-					if(i >= j)
-					{ // s = 0
-						double prev_score = suffix1[j][0];
-						for(std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-						{
-							prev_score = std::max(prev_score, D3[*it][j][0]);
-						}
-						int i2 = prev[i];
-						if(i2 != -1)
-						{
-							prev_score = std::max(prev_score, M3_L[i2][j][0]);
-						}
-						D3[i][j][0] = common_scores[i] + prev_score + penalty;
-
-						// s > 0
-						for(int s = 0; s < l; ++s)
-						{
-							int j2 = right_neighbors[N-j][s];
-							if(common[j2] == -1)
-							{
-								continue;
-							}
-							double penalty2 = penalty;
-							double y = peaks2[common[i]]+peaks2[common[j2]];
-							if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-							{
-								penalty2 += same_vertex_penalty;
-							}
-							double prev_score = suffix1[j][s+1];
-							for(std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-							{
-								prev_score = std::max(prev_score, D3[*it][j][s+1]);
-							}
-							int i2 = prev[i];
-							if(i2 != -1)
-							{
-								prev_score = std::max(prev_score, M3_L[i2][j][s+1]);
-							}
-							D3[i][j][s+1] = common_scores[i] + prev_score + penalty2;
-						}
-					}
-					else
-					{ // s = 0
-						double next_score = prefix1[i];
-						for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-						{
-							next_score = std::max(next_score, D1[i][N-*it]);
-						}
-						int j2 = next[N-j];
-						if (j2 != -1)
-						{
-							next_score = std::max(next_score, M1_R[i][N-j2]);
-						}
-						for(std::vector<int>::const_iterator it = right_jumps_shifted[N-j].begin(); it != right_jumps_shifted[N-j].end(); ++it)
-						{
-							next_score = std::max(next_score, D3max[i][N-*it]);
-						}
-						j2 = next_shifted[N-j];
-						if (j2 != -1)
-						{
-							next_score = std::max(next_score, M3_R[i][N-j2]);
-						}
-						D3[i][j][0] = common_scores[N-j] + next_score + penalty;
-
-						// s > 0
-						for(int s = 0; s < l; ++s)
-						{
-							int j2 = right_neighbors[N-j][s];
-							if(common[j2] == -1)
-							{
-								continue;
-							}
-							double penalty2 = penalty;
-							double y = peaks2[common[N-j]]+peaks2[common[j2]];
-							if(fabs(y-(parent_mass2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
-							{
-								penalty2 += same_vertex_penalty;
-							}
-							double next_score = D3max[i][N-j2];
-							D3[i][j][s+1] = common_scores[N-j] + next_score + penalty2;
-						}
-					}
-
-					// Compute D3max
-					D3max[i][j] = *std::max_element(D3[i][j].begin(), D3[i][j].end());
-
-					// Compute M3_L
-					if (i != 0)
-					{
-						for(int s = 0; s < l+1; ++s)
-						{
-							M3_L[i][j][s] = std::max(M3_L[i-1][j][s], D3[i][j][s]);
-						}
-					}
-					else
-					{
-						M3_L[i][j] = D3[i][j];
-					}
-
-					// Compute M3_R
-					if(j != 0)
-					{
-						M3_R[i][j] = std::max(M3_R[i][j-1], D3max[i][j]);
-					}
-					else
-					{
-						M3_R[i][j] = D3max[i][j];
-					}
-				}
-			}
-
-			// Find best score
-			double best_score = 0.0;
-			int best_i = -1;
-			int best_j = -1;
-			int best_s = -1;
-			celltype best_t = INVALID;
-			for(int i = 0; i < n; ++i)
-			{
-				for(std::vector<int>::const_iterator it = right_jumps[i].begin(); it != right_jumps[i].end(); ++it)
-				{
-					int j = N-*it;
-					if(j <= n-1)
-					{
-						if(best_score < D1[i][j])
-						{
-							best_score = D1[i][j];
-							best_i = i;
-							best_j = j;
-							best_s = 0;
-							best_t = cell_D1;
-						}
-						if(best_score < D2max[i][j])
-						{
-							best_score = D2max[i][j];
-							best_i = i;
-							best_j = j;
-							best_s = (std::max_element(D2[i][j].begin(),D2[i][j].end())-D2[i][j].begin());
-							best_t = cell_D2;
-						}
-						if(best_score < D3max[i][j])
-						{
-							best_score = D3max[i][j];
-							best_i = i;
-							best_j = j;
-							best_s = (std::max_element(D3[i][j].begin(),D3[i][j].end())-D3[i][j].begin());
-							best_t = cell_D3;
-						}
-					}
-				}
-
-				int j0 = next[i];
-				if(j0 != -1)
-				{
-					int j = std::min(n-1, N-j0);
-					if(best_score < M1_R[i][j])
-					{
-						best_score = M1_R[i][j];
-						best_i = i;
-						best_j = j;
-						best_s = 0;
-						best_t = cell_M1_R;
-					}
-
-					double tmp = *std::max_element(M2_R[i][j].begin(), M2_R[i][j].end());
-					if (best_score < tmp)
-					{
-						best_score = tmp;
-						best_i = i;
-						best_j = j;
-						best_s = (std::max_element(M2_R[i][j].begin(),M2_R[i][j].end())-M2_R[i][j].begin());
-						best_t = cell_M2_R;
-					}
-
-					if (best_score < M3_R[i][j])
-					{
-						best_score = M3_R[i][j];
-						best_i = i;
-						best_j = j;
-						best_s = 0;
-						best_t = cell_M3_R;
-					}
-				}
-
-				if(best_score < prefix1[i])
-				{
-					best_score = prefix1[i];
-					best_i = i;
-					best_j = 0;
-					best_s = 0;
-					best_t = cell_prefix1;
-				}
-
-				if(best_score < suffix1max[i])
-				{
-					best_score = suffix1max[i];
-					best_j = i;
-					best_i = 0;
-					best_s = (std::max_element(suffix1[i].begin(),suffix1[i].end())-suffix1[i].begin());
-					best_t = cell_suffix1;
-				}
-
-				if(best_score < prefix2max[i])
-				{
-					best_score = prefix2max[i];
-					best_i = i;
-					best_j = 0;
-					best_s = (std::max_element(prefix2[i].begin(),prefix2[i].end())-prefix2[i].begin());
-					best_t = cell_prefix2;
-				}
-
-				if(best_score < suffix2[i])
-				{
-					best_score = suffix2[i];
-					best_j = i;
-					best_i = 0;
-					best_s = 0;
-					best_t = cell_suffix2;
-				}
-			}
-
-			return traceback(parent_mass1, ptm_penalty, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, best_i, best_j, best_s, best_t, best_score, D1, D2, D3, D2max, D3max, M1_L, M1_R, M2_L, M2_R, M3_L, M3_R, prefix1, suffix1, prefix2, suffix2, prefix1_L, suffix1max, suffix1_R, prefix2max, prefix2_L, suffix2_R);
-		}
-		///
-
-		std::pair<double, std::pair< std::vector<int>,std::vector<int> > > traceback(double parent_mass1, double ptm_penalty, std::vector<int> & prev, std::vector<int> & next, std::vector<int> & prev_shifted, std::vector<int> & next_shifted, std::vector<std::vector<int> > & left_jumps, std::vector<std::vector<int> > & right_jumps, std::vector<std::vector<int> > & left_jumps_shifted, std::vector<std::vector<int> > & right_jumps_shifted, std::vector<std::vector<int> > & left_neighbors, std::vector<std::vector<int> > & right_neighbors, int best_i, int best_j, int best_s, celltype best_t, double best_score, std::vector<std::vector<double> > & D1, std::vector<std::vector<std::vector<double> > > & D2, std::vector<std::vector<std::vector<double> > > & D3, std::vector<std::vector<double> > & D2max, std::vector<std::vector<double> > & D3max, std::vector<std::vector<double> > & M1_L, std::vector<std::vector<double> > & M1_R, std::vector<std::vector<double> > & M2_L, std::vector<std::vector<std::vector<double> > > & M2_R, std::vector<std::vector<std::vector<double> > > & M3_L, std::vector<std::vector<double> > & M3_R, std::vector<double> & prefix1, std::vector<std::vector<double> > & suffix1, std::vector<std::vector<double> > & prefix2, std::vector<double> & suffix2, std::vector<double> & prefix1_L, std::vector<double> & suffix1max, std::vector<double> & suffix1_R, std::vector<double> & prefix2max, std::vector<double> & prefix2_L, std::vector<double> & suffix2_R)
-		{
-			int n0 = prev.size();
-			int N = n0-1;
-
-			std::vector<int> path1;
-			std::vector<int> path2;
-
-			if (best_i == -1)
-			{
-				return std::pair<double, std::pair< std::vector<int>,std::vector<int> > >(best_score/parent_mass1, std::pair<std::vector<int>,std::vector<int> >(path1, path2));
-			}
-
-			int i = best_i;
-			int j = best_j;
-			int s = best_s;
-			celltype t = best_t;
-			while(1)
-			{
-				if(t == cell_prefix1)
-				{
-					path1.insert(path1.begin(), i);
-					double prev_score = 0.0;
-					int index = 0;
-					int next_i = 0;
-					for(std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-					{
-						int i2 = *it;
-						if(prefix1[i2] > prev_score)
-						{
-							prev_score = prefix1[i2];
-							index = 1;
-							next_i = i2;
-						}
-					}
-					int i2 = prev[i];
-					if(i2 != -1 && prefix1_L[i2] > prev_score)
-					{
-						prev_score = prefix1_L[i2];
-						index = 2;
-						next_i = i2;
-					}
-
-					i = next_i;
-					if(index == 0)
-					{
-						break;
-					}
-					else if (index == 1)
-					{
-				// t is unchanged
-					}
-					else
-					{
-						t = cell_prefix1_L;
-					}
-				}
-				else if(t == cell_suffix1)
-				{
-					path1.push_back(N-j);
-					if (s == 0)
-					{
-						double next_score = 0.0;
-						int index = 0;
-						int next_j = 0;
-						for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-						{
-							int j2 = *it;
-							if(suffix2[N-j2]+ptm_penalty > next_score)
-							{
-								next_score = suffix2[N-j2]+ptm_penalty;
-								index = 1;
-								next_j = N-j2;
-							}
-						}
-						int j2 = next[N-j];
-						if(j2 != -1 && suffix2_R[N-j2]+ptm_penalty > next_score)
-						{
-							next_score = suffix2_R[N-j2]+ptm_penalty;
-							index = 2;
-							next_j = N-j2;
-						}
-						for(std::vector<int>::const_iterator it = right_jumps_shifted[N-j].begin(); it != right_jumps_shifted[N-j].end(); ++it)
-						{
-							int j2 = *it;
-							if(suffix1max[N-j2] > next_score)
-							{
-								next_score = suffix1max[N-j2];
-								index = 3;
-								next_j = N-j2;
-							}
-						}
-						j2 = next_shifted[N-j];
-						if(j2 != -1 && suffix1_R[N-j2] > next_score)
-						{
-							next_score = suffix1_R[N-j2];
-							index = 4;
-							next_j = N-j2;
-						}
-
-						j = next_j;
-						if(index == 0)
-						{
-							break;
-						}
-						else if(index == 1)
-						{
-							t = cell_suffix2;
-						}
-						else if(index == 2)
-						{
-							t = cell_suffix2_R;
-						}
-						else if(index == 3)
-						{
-							// t is unchanged
-							s = (std::max_element(suffix1[j].begin(),suffix1[j].end())-suffix1[j].begin());
-						}
-						else
-						{
-							t = cell_suffix1_R;
-						}
-					}
-					else
-					{
-						// t is unchanged
-						j = right_neighbors[N-j][s-1];
-						j = N-j;
-						s = (std::max_element(suffix1[j].begin(),suffix1[j].end())-suffix1[j].begin());
-					}
-				}
-				else if(t == cell_prefix2)
-				{
-					path2.insert(path2.begin(), i);
-					if(s == 0)
-					{
-						double prev_score = 0.0;
-						int index = 0;
-						int next_i = 0;
-						for(std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-						{
-							int i2 = *it;
-							if(prefix1[i2]+ptm_penalty > prev_score)
-							{
-								prev_score = prefix1[i2]+ptm_penalty;
-								index = 1;
-								next_i = i2;
-							}
-						}
-						int i2 = prev[i];
-						if(i2 != -1 && prefix1_L[i2]+ptm_penalty > prev_score)
-						{
-							prev_score = prefix1_L[i2]+ptm_penalty;
-							index = 2;
-							next_i = i2;
-						}
-						for(std::vector<int>::const_iterator it = left_jumps_shifted[i].begin(); it != left_jumps_shifted[i].end(); ++it)
-						{
-							int i2 = *it;
-							if(prefix2max[i2] > prev_score)
-							{
-								prev_score = prefix2max[i2];
-								index = 3;
-								next_i = i2;
-							}
-						}
-						i2 = prev_shifted[i];
-						if(i2 != -1 && prefix2_L[i2] > prev_score)
-						{
-							prev_score = prefix2_L[i2];
-							index = 4;
-							next_i = i2;
-						}
-
-						i = next_i;
-						if(index == 0)
-						{
-							break;
-						}
-						else if(index == 1)
-						{
-							t = cell_prefix1;
-						}
-						else if(index == 2)
-						{
-							t = cell_prefix1_L;
-						}
-						else if(index == 3)
-						{
-							// t is unchanged
-							s = (std::max_element(prefix2[i].begin(),prefix2[i].end())-prefix2[i].begin());
-						}
-						else
-						{
-							t = cell_prefix2_L;
-						}
-					}
-					else
-					{
-						// t is unchanged
-						i = left_neighbors[i][s-1];
-						s = (std::max_element(prefix2[i].begin(),prefix2[i].end())-prefix2[i].begin());
-					}
-				}
-				else if(t == cell_suffix2)
-				{
-					path2.push_back(N-j);
-					double next_score = 0.0;
-					int index = 0;
-					int next_j = 0;
-					for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-					{
-						int j2 = *it;
-						if (suffix2[N-j2] > next_score)
-						{
-							next_score = suffix2[N-j2];
-							index = 1;
-							next_j = N-j2;
-						}
-					}
-					int j2 = next[N-j];
-					if (j2 != -1 && suffix2_R[N-j2] > next_score) {
-					next_score = suffix2_R[N-j2];
-					index = 2;
-					next_j = N-j2;
-				}
-
-				j = next_j;
-				if(index == 0)
-				{
-					break;
-				}
-				else if(index == 1)
-				{
-					// t is unchanged
-				}
-				else
-				{
-					t = cell_suffix2_R;
-				}
-			}
-				else if(t == cell_prefix1_L)
-				{
-					if(prefix1_L[i] == prefix1[i])
-					{
-						t = cell_prefix1;
-					}
-					else
-					{
-						i -= 1;
-					}
-				}
-				else if(t == cell_prefix2_L)
-				{
-					if(prefix2_L[i] == prefix2max[i])
-					{
-						t = cell_prefix2;
-						s = (std::max_element(prefix2[i].begin(),prefix2[i].end())-prefix2[i].begin());
-					}
-					else
-					{
-						i -= 1;
-					}
-				}
-				else if(t == cell_suffix1_R)
-				{
-					if (suffix1_R[j] == suffix1max[j])
-					{
-						t = cell_suffix1;
-						s = (std::max_element(suffix1[j].begin(),suffix1[j].end())-suffix1[j].begin());
-					}
-					else
-					{
-						j -= 1;
-					}
-				}
-				else if(t == cell_suffix2_R)
-				{
-					if(suffix2_R[j] == suffix2[j])
-					{
-						t = cell_suffix2;
-					}
-					else
-					{
-						j -= 1;
-					}
-				}
-				else if(t == cell_D1)
-				{
-					if(i >= j)
-					{
-						path1.insert(path1.begin(), i);
-						double prev_score = suffix2[j]+ptm_penalty;
-						int index = 0;
-						int next_i = 0;
-						for(std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-						{
-							int i2 = *it;
-							if(D1[i2][j] > prev_score)
-							{
-								prev_score = D1[i2][j];
-								index = 1;
-								next_i = i2;
-							}
-						}
-						int i2 = prev[i];
-						if(i2 != -1 && M1_L[i2][j] > prev_score)
-						{
-							prev_score = M1_L[i2][j];
-							index = 2;
-							next_i = i2;
-						}
-
-						i = next_i;
-						// note that if index=0, then the value of i is irrelevant.
-						if(index == 0)
-						{
-							t = cell_suffix2;
-						}
-						else if(index == 1)
-						{
-							// t is unchanged
-						}
-						else
-						{
-							t = cell_M1_L;
-						}
-					}
-					else
-					{
-						path2.push_back(N-j);
-						double next_score = prefix1[i]+ptm_penalty;
-						int index = 0;
-						int next_j = 0;
-						for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-						{
-							int j2 = *it;
-							if (D1[i][N-j2] > next_score)
-							{
-								next_score = D1[i][N-j2];
-								index = 1;
-								next_j = N-j2;
-							}
-						}
-						int j2 = next[N-j];
-						if(j2 != -1 && M1_R[i][N-j2] > next_score)
-						{
-							next_score = M1_R[i][N-j2];
-							index = 2;
-							next_j = N-j2;
-						}
-
-						j = next_j;
-						if(index == 0)
-						{
-							t = cell_prefix1;
-						}
-						else if(index == 1)
-						{
-							// t is unchanged
-						}
-						else
-						{
-							t = cell_M1_R;
-						}
-					}
-				}
-				else if(t == cell_D2)
-				{
-					if (i > j)
-					{
-						path2.insert(path2.begin(), i);
-						if(s == 0)
-						{
-							double prev_score = suffix2[j];
-							int index = 0;
-							int next_i = 0;
-							for (std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-							{
-								int i2 = *it;
-								if(D1[i2][j] > prev_score)
-								{
-									prev_score = D1[i2][j];
-									index = 1;
-									next_i = i2;
-								}
-							}
-							int i2 = prev[i];
-							if(i2 != -1 && M1_L[i2][j] > prev_score)
-							{
-								prev_score = M1_L[i2][j];
-								index = 2;
-								next_i = i2;
-							}
-							for(std::vector<int>::const_iterator it = left_jumps_shifted[i].begin(); it != left_jumps_shifted[i].end(); ++it)
-							{
-								int i2 = *it;
-								if(D2max[i2][j] > prev_score)
-								{
-									prev_score = D2max[i2][j];
-									index = 3;
-									next_i = i2;
-								}
-							}
-							i2 = prev_shifted[i];
-							if(i2 != -1 && M2_L[i2][j] > prev_score)
-							{
-								prev_score = M2_L[i2][j];
-								index = 4;
-								next_i = i2;
-							}
-
-							i = next_i;
-							if(index == 0)
-							{
-								t = cell_suffix2;
-							}
-							else if(index == 1)
-							{
-								t = cell_D1;
-							}
-							else if(index == 2)
-							{
-								t = cell_M1_L;
-							}
-							else if(index == 3)
-							{
-								// t is unchanged
-								s = (std::max_element(D2[i][j].begin(),D2[i][j].end())-D2[i][j].begin());
-							}
-							else
-							{
-								t = cell_M2_L;
-							}
-						}
-						else
-						{
-							// t is unchanged
-							i = left_neighbors[i][s-1];
-							s = (std::max_element(D2[i][j].begin(),D2[i][j].end())-D2[i][j].begin());
-						}
-					}
-					else
-					{ // i <= j
-						path2.push_back(N-j);
-						double next_score = prefix2[i][s];
-						int index = 0;
-						int next_j = 0;
-						for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-						{
-							int j2 = *it;
-							if(D2[i][N-j2][s] > next_score)
-							{
-								next_score = D2[i][N-j2][s];
-								index = 1;
-								next_j = N-j2;
-							}
-						}
-						int j2 = next[N-j];
-						if(j2 != -1 && M2_R[i][N-j2][s] > next_score)
-						{
-							index = 2;
-							next_j = N-j2;
-						}
-
-						j = next_j;
-						if(index == 0)
-						{
-							t = cell_prefix2;
-						}
-						else if(index == 1)
-						{
-							// t is unchanged
-						}
-						else
-						{
-							t = cell_M2_R;
-						}
-					}
-				}
-				else if(t == cell_D3)
-				{
-					if(i >= j)
-					{
-						path1.insert(path1.begin(), i);
-						double prev_score = suffix1[j][s];
-						int index = 0;
-						int next_i = 0;
-						for(std::vector<int>::const_iterator it = left_jumps[i].begin(); it != left_jumps[i].end(); ++it)
-						{
-							int i2 = *it;
-							if(D3[i2][j][s] > prev_score)
-							{
-								prev_score = D3[i2][j][s];
-								index = 1;
-								next_i = i2;
-							}
-						}
-						int i2 = prev[i];
-						if(i2 != -1 && M3_L[i2][j][s] > prev_score)
-						{
-							index = 2;
-							next_i = i2;
-						}
-
-						i = next_i;
-						if(index == 0)
-						{
-							t = cell_suffix1;
-						}
-						else if (index == 1)
-						{
-							// t is unchanged
-						}
-						else
-						{
-							t = cell_M3_L;
-						}
-					}
-					else
-					{ // i < j
-						path1.push_back(N-j);
-						if(s == 0)
-						{
-							double next_score = prefix1[i];
-							int index = 0;
-							int next_j = 0;
-							for(std::vector<int>::const_iterator it = right_jumps[N-j].begin(); it != right_jumps[N-j].end(); ++it)
-							{
-								int j2 = *it;
-								if(D1[i][N-j2] > next_score)
-								{
-									next_score = D1[i][N-j2];
-									index = 1;
-									next_j = N-j2;
-								}
-							}
-							int j2 = next[N-j];
-							if(j2 != -1 && M1_R[i][N-j2] > next_score)
-							{
-								next_score = M1_R[i][N-j2];
-								index = 2;
-								next_j = N-j2;
-							}
-							for(std::vector<int>::const_iterator it = right_jumps_shifted[N-j].begin(); it != right_jumps_shifted[N-j].end(); ++it)
-							{
-								int j2 = *it;
-								if(D3max[i][N-j2] > next_score)
-								{
-									next_score = D3max[i][N-j2];
-									index = 3;
-									next_j = N-j2;
-								}
-							}
-							j2 = next_shifted[N-j];
-							if(j2 != -1 && M3_R[i][N-j2] > next_score)
-							{
-								next_score = M3_R[i][N-j2];
-								index = 4;
-								next_j = N-j2;
-							}
-
-							j = next_j;
-							if(index == 0)
-							{
-								t = cell_prefix1;
-							}
-							else if(index == 1)
-							{
-								t = cell_D1;
-							}
-							else if(index == 2)
-							{
-								t = cell_M1_R;
-							}
-							else if( index == 3)
-							{
-								// t is unchanged
-								s = (std::max_element(D3[i][j].begin(),D3[i][j].end())-D3[i][j].begin());
-							}
-							else
-							{
-								t = cell_M3_R;
-							}
-						}
-						else
-						{
-							// t is unchanged
-							j = right_neighbors[N-j][s-1];
-							j = N-j;
-							s = (std::max_element(D3[i][j].begin(),D3[i][j].end())-D3[i][j].begin());
-						}
-					}
-				}
-				else if(t == cell_M1_L)
-				{
-					if(M1_L[i][j] == D1[i][j])
-					{
-						t = cell_D1;
-					}
-					else
-					{
-						i -= 1;
-					}
-				}
-				else if(t == cell_M2_L)
-				{
-					if (M2_L[i][j] == D2max[i][j])
-					{
-						t = cell_D2;
-						s = (std::max_element(D2[i][j].begin(),D2[i][j].end())-D2[i][j].begin());
-					}
-					else
-					{
-						i -= 1;
-					}
-				}
-				else if(t == cell_M3_L)
-				{
-					if (M3_L[i][j][s] == D3[i][j][s])
-					{
-						t = cell_D3;
-					}
-					else
-					{
-						i -= 1;
-					}
-				}
-				else if(t == cell_M1_R)
-				{
-					if(M1_R[i][j] == D1[i][j])
-					{
-						t = cell_D1;
-					}
-					else
-					{
-						j -= 1;
-					}
-				}
-				else if(t == cell_M2_R)
-				{
-					if(M2_R[i][j][s] == D2[i][j][s])
-					{
-						t = cell_D2;
-					}
-					else
-					{
-						j -= 1;
-					}
-				}
-				else if(t == cell_M3_R)
-				{
-					if(M3_R[i][j] == D3max[i][j])
-					{
-						t = cell_D3;
-						s = (std::max_element(D3[i][j].begin(),D3[i][j].end())-D3[i][j].begin());
-					}
-					else
-					{
-						j -= 1;
-					}
-				}
-			}
-			return std::pair<double, std::pair<std::vector<int>,std::vector<int> > >(best_score/parent_mass1, std::pair<std::vector<int>,std::vector<int> >(path1, path2));
-		}
-		///
-
-	};
-	///
+		//~ celltype best_t = cell_Invalid;
+	}
+};
+///
 
 	/**
 		@brief Aligns the peaks of two spectra
@@ -1452,8 +141,6 @@ namespace OpenMS
 		@htmlinclude OpenMS_AntisymetricAlignment.parameters
 
 		@ingroup SpectraComparison
-
-	/// @todo debug output in macro
 	*/
 	template <typename PeakT = Peak1D>
 	class AntisymetricAlignment
@@ -1474,7 +161,6 @@ namespace OpenMS
 				defaults_.setValue("min_dist", 57.0214637230 , "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
 				defaults_.setValue("sv_penalty", -5.0 , "Defines the penalty for being in the same 'vertex' in DP");
 				defaults_.setValue("dif_penalty", -5.0 , "Defines the penalty for jumping the parentmass difference in DP");
-				/// @improvement DP penalty scores here
 				defaultsToParam_();
 		}
 
@@ -1502,13 +188,13 @@ namespace OpenMS
 		// @}
 
 		/**
-			@brief Will calculate valid match jumps left and right to a given peak in a given spectrum
+			@brief Will find valid (aa difference separated) consecutive peaks to the left and right of a given peak in a given spectrum
 
 			@param index to given peak
 			@param s1sym the given spectrum
 			@param jump_masses the valid mass jumps for the matches
-			@param left_matches will contain the valid match jumps to the left of index
-			@param right_matches will contain the valid match jumps to the right of index
+			@param left_matches will contain the valid peak indices to the left of index
+			@param right_matches will contain the valid peak indices to the right of index
 		*/
 		void getAASteps(Size& index, SpectrumType& s1sym, std::vector<Real>& jump_masses,
 						std::vector<int>& leftMatches, std::vector<int>& rightMatches) const
@@ -1524,7 +210,7 @@ namespace OpenMS
 			{
 				//~ max |index| left jumps possible
 				leftMatches.resize(index);
-				//~ but so far none
+				//~ but so far zero
 				match_counter=0;
 
 				//~ typename SpectrumType::Iterator it_lo1 = s1sym.begin()+index-1;
@@ -1535,23 +221,18 @@ namespace OpenMS
 				std::vector<Real>::iterator jm_left_pivot = jump_masses.begin();
 
 				/// @improvement posssible speedup or slowdown by comp if it_lo2.getMZ() <= it_lo1.getMZ() and only go on then ...
-				/*debug std::cout << " it_lo1: " << it_lo1->getMZ() << " reverse until incl. :  " << (it_lo2-1)->getMZ() << std::endl ; */
-
 				//~ iterate from lo1 to lo2(not included!) and find if mz diff between lo1(iterated) and index concurs with a entry in jump_masses +-peak_tolerance
 				for(;it_lo1 != it_lo2; ++it_lo1)
 				{
 					current_diff = s1sym[index].getMZ()-it_lo1->getMZ();
-					/*debug  std::cout << " current diff: " << current_diff; */
-					//~ difference will only grow so we can advance the pivot
+					//~ difference will only grow -> advance the pivot
 					jm_left_pivot = std::lower_bound(jm_left_pivot, jump_masses.end(), (Real)current_diff-pt_plus);
 
 					if(jm_left_pivot!=jump_masses.end() and EqualInTolerance<Real>(pt_plus)((Real)current_diff,*jm_left_pivot))
 					{
 						leftMatches[match_counter++]=(s1sym.size()-1)-(it_lo1-s1sym.rbegin());
-						/*debug  std::cout << " -left jo " ;*/
 					}
 				}
-				/*debug  std::cout << '\n';*/
 				leftMatches.resize(match_counter);
 			}
 
@@ -1559,44 +240,39 @@ namespace OpenMS
 			{
 				//~ max |s1sym|-|index| right jumps possible
 				rightMatches.resize(s1sym.size()-index);
-				//~ but so far none
+				//~ but so far zero
 				match_counter=0;
 
 				typename SpectrumType::Iterator it_hi1 = s1sym.begin()+index+1;
 				typename SpectrumType::Iterator it_hi2 = s1sym.MZEnd(s1sym[index].getMZ()+max_jump+.00001);
 				std::vector<Real>::iterator jm_right_pivot = jump_masses.begin();
-				/*debug std::cout << " it_hi1: " << it_hi1->getMZ() << " until incl. :  " << (it_hi2-1)->getMZ() << std::endl ; */
 
 				//~ iterate from hi1 to <hi2 and find if mz diff between it_hi1(iterated) and index concurs with a entry in jump_masses +-peak_tolerance
 				for(;it_hi1 != it_hi2; ++it_hi1)
 				{
 					current_diff = it_hi1->getMZ()-s1sym[index].getMZ();
-					/*debug  std::cout << " current diff: " << current_diff;*/
-					//~ difference will only grow so we can advance the pivot
+					//~ difference will only grow -> advance the pivot
 					jm_right_pivot = std::lower_bound(jm_right_pivot, jump_masses.end(), (Real)current_diff-pt_plus);
 
 					if(jm_right_pivot!=jump_masses.end() and EqualInTolerance<Real>(pt_plus)((Real)current_diff,*jm_right_pivot))
 					{
 						rightMatches[match_counter++]=it_hi1-s1sym.begin();
-						/*debug  std::cout << " -right jo " ;*/
 					}
 				}
-				/*debug  std::cout << '\n';*/
 				rightMatches.resize(match_counter);
 			}
 		}
 		///
 
 		/**
-			@brief Will yield a symetric spectrum
+			@brief Will yield a symmetric spectrum
 
-			@param spectrum to be made symetric
+			@param spectrum the peak spectrum to be made symmetric
 
-			@return a symetric version of spectrum with a integer MetaDataArray, where x[i]>0 indicates a synthetic peak
+			@return a symmetric version of spectrum with a integer MetaDataArray, where x[i]>0 indicates a synthetic peak.
 
-			result is spectrum with property sym[i].getMZ + sym[n-i-1].getMZ = parentMass, adding entries setIntensity zero if necessary
+			result is a spectrum with property sym[i].getMZ + sym[n-i-1].getMZ = parentMass. Synthetic peaks will be added with a inntensity of zero and in addition remarked in a metadataarray.
 		@important previous sortByPosition() of spectrum
-		@important is subtraction of a H enough?? how to decide between prm and exp!?
 		@important is the 0 and pm peak addition neccessary!?
 		*/
 		MSSpectrum<PeakT> getSymetricSpectrum(const MSSpectrum<PeakT>& spectrum) const
@@ -1613,10 +289,8 @@ namespace OpenMS
 
 			Real peak_tolerance = (Real)param_.getValue("peak_tolerance");
 
-			/// @important singly charged mass difference!
+			/// @important uncharged mass difference!
 			DoubleReal pm = sym.getPrecursors().front().getUnchargedMass();
-			/* debug std::cout << "Sym pm "<< pm << std::endl; */
-
 
 			Size sym_pasttheend_index = sym.size();
 			for(Size sym_index = 0; sym_index < sym_pasttheend_index; ++sym_index)
@@ -1629,7 +303,6 @@ namespace OpenMS
 
 				typename SpectrumType::Iterator lo = sym.MZBegin(target-peak_tolerance);
 				typename SpectrumType::Iterator hi = sym.MZEnd(lo,target+peak_tolerance,sym.begin()+sym_pasttheend_index);
-				/*debug std::cout << target-peak_tolerance << " - " << target+peak_tolerance << std::endl; */
 
 				//~ pairs get metadataarray entries -n/n where n is number of the pair (count from 1) and the lower mz peak has the negative pair number
 				int sign_it_mz = -1;
@@ -1672,9 +345,9 @@ namespace OpenMS
 		///
 
 		/**
-			@brief Will the spectrum s version without previously matching non-singly charged peaks
+			@brief Will prune the spectrum s into a version without non-singly charged peaks
 
-			@param spectrum to be deconvoluted
+			@param spectrum a spectrum to be deconvoluted
 
 			@return a version of spectrum with charge deconvoluted peaks to charge one
 
@@ -1727,6 +400,1484 @@ namespace OpenMS
 		///
 
 		/**
+			@brief Will prune the first spectrum with respect to matching/shift-matching peaks of the second spectrum
+
+			@param spectrum to be pruned
+			@param spectrum to be matched
+
+			metadata will contain matching information!
+		*/
+		void matchPrunePeaks(MSSpectrum<PeakT>& spec_1,MSSpectrum<PeakT>& spec_2, DoubleReal pm_diff) const
+		{
+			Real peak_tolerance = param_.getValue("peak_tolerance");
+
+			typename SpectrumType::IntegerDataArray ida_matches; ida_matches.resize(spec_1.size(),-1);
+			spec_1.getIntegerDataArrays().insert(spec_1.getIntegerDataArrays().begin()+1, ida_matches);
+			spec_1.getIntegerDataArrays()[1].setName("normal match indices");
+			//~ indices in spec_2 for pm_diff shift matches
+			spec_1.getIntegerDataArrays().insert(spec_1.getIntegerDataArrays().begin()+2, ida_matches);
+			spec_1.getIntegerDataArrays()[2].setName("shift match indices");
+
+			//~ remove peaks without a match or complement peak match: zero intensity in spec_1 for unmatching peaks (if both of a pair dont fit to any in spec_2)
+			for(typename SpectrumType::Iterator it_res = spec_1.begin(); it_res != spec_1.end(); ++it_res)
+			{
+				bool no_match_normal = false;
+				typename SpectrumType::ConstIterator lo = spec_2.MZBegin(it_res->getMZ()-peak_tolerance);
+				typename SpectrumType::ConstIterator hi = spec_2.MZEnd(it_res->getMZ()+peak_tolerance);
+				if(lo==hi)
+				{
+					no_match_normal = true;
+				}
+				else
+				{
+					//~ get best match in tolerance window
+					for(typename SpectrumType::ConstIterator it_match_mz = lo; it_match_mz != hi; ++it_match_mz)
+					{
+						if( fabs(it_match_mz->getMZ()-it_res->getMZ()) < fabs(lo->getMZ()-it_res->getMZ()) )
+						{
+							lo=it_match_mz;
+						}
+					}
+					spec_1.getIntegerDataArrays()[1][(it_res-spec_1.begin())] = lo-spec_2.begin();
+				}
+
+				lo = spec_2.MZBegin(it_res->getMZ()+pm_diff-peak_tolerance);
+				hi = spec_2.MZEnd(it_res->getMZ()+pm_diff+peak_tolerance);
+				if(lo==hi)
+				{
+					if(no_match_normal)
+					{
+						it_res->setIntensity(0);
+					}
+				}
+				else
+				{
+					//~ get best match in tolerance window
+					for(typename SpectrumType::ConstIterator it_match_mz = lo; it_match_mz != hi; ++it_match_mz)
+					{
+						if( fabs(it_match_mz->getMZ()-it_res->getMZ()) < fabs(lo->getMZ()-it_res->getMZ()) )
+						{
+							lo=it_match_mz;
+						}
+					}
+					spec_1.getIntegerDataArrays()[2][(it_res-spec_1.begin())] = lo-spec_2.begin();
+				}
+			}
+
+			//~ number of complementing peaks in spec_1 that both do not match the right peaks in spec_2
+			Size removed_pairs = 0;
+			//~ remove the peak pairs mentioned above
+			Size spec_1_index = 0;
+			while(spec_1_index < spec_1.size() and (Size)spec_1_index < (Size)((spec_1.size()/2) - removed_pairs) )
+			{
+				if(spec_1[spec_1_index].getIntensity() == 0)
+				{
+					Size res_mirror_index = spec_1.size() - 1 - spec_1_index;
+					if(spec_1[res_mirror_index].getIntensity() == 0 )
+					{
+						for(Size i = 0; i < 3; ++i)
+						{
+							typename SpectrumType::IntegerDataArray::iterator it_mirror_ida = spec_1.getIntegerDataArrays()[i].begin()+res_mirror_index;
+							spec_1.getIntegerDataArrays()[i].erase(it_mirror_ida);
+						}
+						for(Size i = 0; i < 3; ++i)
+						{
+							typename SpectrumType::IntegerDataArray::iterator it_ida = spec_1.getIntegerDataArrays()[i].begin()+spec_1_index;
+							spec_1.getIntegerDataArrays()[i].erase(it_ida);
+						}
+						typename SpectrumType::Iterator res_mirror_it = spec_1.begin() + res_mirror_index;
+						spec_1.erase(res_mirror_it);
+						typename SpectrumType::Iterator spec_1_it = spec_1.begin() + spec_1_index;
+						spec_1.erase(spec_1_it);
+						++removed_pairs;
+					}
+					else
+					{
+						++spec_1_index;
+					}
+				}
+				else
+				{
+					++spec_1_index;
+				}
+			}
+		}
+		///
+
+
+		/**
+			@brief will traceback the antisymmetric path of a found alignment
+
+			@param dp_tables the filled dynamic programming tables
+			@param dif_penalty the penalty score for using a peak in the alignment that might origin from the other ion species
+			@param score of the alignment
+
+			@return a pair of vectors of indices containing the path of aligned indices in a row
+
+			...
+		*/
+		std::pair< std::vector<int>,std::vector<int> > traceback(ASA_DP_Tables& dp_tables, DoubleReal& dif_penalty, DoubleReal& score) const
+		{
+			int n0 = dp_tables.prev.size();
+			int N = n0-1;
+
+			std::vector<int> path1;
+			std::vector<int> path2;
+
+			if (dp_tables.best_i == -1)
+			{
+				score = dp_tables.best_score/dp_tables.pm_s1;
+				return std::pair<std::vector<int>,std::vector<int> >(path1, path2);
+			}
+
+			int i = dp_tables.best_i;
+			int j = dp_tables.best_j;
+			int s = dp_tables.best_s;
+			ASA_DP_Tables::celltype t;
+			t = dp_tables.best_t;
+			while(1)
+			{
+				if(t == ASA_DP_Tables::cell_prefix1)
+				{
+					path1.insert(path1.begin(), i);
+					double prev_score = 0.0;
+					int index = 0;
+					int next_i = 0;
+					for(std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+					{
+						int i2 = *it;
+						if(dp_tables.prefix1[i2] > prev_score)
+						{
+							prev_score = dp_tables.prefix1[i2];
+							index = 1;
+							next_i = i2;
+						}
+					}
+					int i2 = dp_tables.prev[i];
+					if(i2 != -1 && dp_tables.prefix1_L[i2] > prev_score)
+					{
+						prev_score = dp_tables.prefix1_L[i2];
+						index = 2;
+						next_i = i2;
+					}
+
+					i = next_i;
+					if(index == 0)
+					{
+						break;
+					}
+					else if (index == 1)
+					{
+				// t is unchanged
+					}
+					else
+					{
+						t = ASA_DP_Tables::cell_prefix1_L;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_suffix1)
+				{
+					path1.push_back(N-j);
+					if (s == 0)
+					{
+						double next_score = 0.0;
+						int index = 0;
+						int next_j = 0;
+						for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+						{
+							int j2 = *it;
+							if(dp_tables.suffix2[N-j2]+dif_penalty > next_score)
+							{
+								next_score = dp_tables.suffix2[N-j2]+dif_penalty;
+								index = 1;
+								next_j = N-j2;
+							}
+						}
+						int j2 = dp_tables.next[N-j];
+						if(j2 != -1 && dp_tables.suffix2_R[N-j2]+dif_penalty > next_score)
+						{
+							next_score = dp_tables.suffix2_R[N-j2]+dif_penalty;
+							index = 2;
+							next_j = N-j2;
+						}
+						for(std::vector<int>::const_iterator it = dp_tables.right_jumps_shifted[N-j].begin(); it != dp_tables.right_jumps_shifted[N-j].end(); ++it)
+						{
+							int j2 = *it;
+							if(dp_tables.suffix1max[N-j2] > next_score)
+							{
+								next_score = dp_tables.suffix1max[N-j2];
+								index = 3;
+								next_j = N-j2;
+							}
+						}
+						j2 = dp_tables.next_shifted[N-j];
+						if(j2 != -1 && dp_tables.suffix1_R[N-j2] > next_score)
+						{
+							next_score = dp_tables.suffix1_R[N-j2];
+							index = 4;
+							next_j = N-j2;
+						}
+
+						j = next_j;
+						if(index == 0)
+						{
+							break;
+						}
+						else if(index == 1)
+						{
+							t = ASA_DP_Tables::cell_suffix2;
+						}
+						else if(index == 2)
+						{
+							t = ASA_DP_Tables::cell_suffix2_R;
+						}
+						else if(index == 3)
+						{
+							// t is unchanged
+							s = (std::max_element(dp_tables.suffix1[j].begin(),dp_tables.suffix1[j].end())-dp_tables.suffix1[j].begin());
+						}
+						else
+						{
+							t = ASA_DP_Tables::cell_suffix1_R;
+						}
+					}
+					else
+					{
+						// t is unchanged
+						j = dp_tables.right_neighbors[N-j][s-1];
+						j = N-j;
+						s = (std::max_element(dp_tables.suffix1[j].begin(),dp_tables.suffix1[j].end())-dp_tables.suffix1[j].begin());
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_prefix2)
+				{
+					path2.insert(path2.begin(), i);
+					if(s == 0)
+					{
+						double prev_score = 0.0;
+						int index = 0;
+						int next_i = 0;
+						for(std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+						{
+							int i2 = *it;
+							if(dp_tables.prefix1[i2]+dif_penalty > prev_score)
+							{
+								prev_score = dp_tables.prefix1[i2]+dif_penalty;
+								index = 1;
+								next_i = i2;
+							}
+						}
+						int i2 = dp_tables.prev[i];
+						if(i2 != -1 && dp_tables.prefix1_L[i2]+dif_penalty > prev_score)
+						{
+							prev_score = dp_tables.prefix1_L[i2]+dif_penalty;
+							index = 2;
+							next_i = i2;
+						}
+						for(std::vector<int>::const_iterator it = dp_tables.left_jumps_shifted[i].begin(); it != dp_tables.left_jumps_shifted[i].end(); ++it)
+						{
+							int i2 = *it;
+							if(dp_tables.prefix2max[i2] > prev_score)
+							{
+								prev_score = dp_tables.prefix2max[i2];
+								index = 3;
+								next_i = i2;
+							}
+						}
+						i2 = dp_tables.prev_shifted[i];
+						if(i2 != -1 && dp_tables.prefix2_L[i2] > prev_score)
+						{
+							prev_score = dp_tables.prefix2_L[i2];
+							index = 4;
+							next_i = i2;
+						}
+
+						i = next_i;
+						if(index == 0)
+						{
+							break;
+						}
+						else if(index == 1)
+						{
+							t = ASA_DP_Tables::cell_prefix1;
+						}
+						else if(index == 2)
+						{
+							t = ASA_DP_Tables::cell_prefix1_L;
+						}
+						else if(index == 3)
+						{
+							// t is unchanged
+							s = (std::max_element(dp_tables.prefix2[i].begin(),dp_tables.prefix2[i].end())-dp_tables.prefix2[i].begin());
+						}
+						else
+						{
+							t = ASA_DP_Tables::cell_prefix2_L;
+						}
+					}
+					else
+					{
+						// t is unchanged
+						i = dp_tables.left_neighbors[i][s-1];
+						s = (std::max_element(dp_tables.prefix2[i].begin(),dp_tables.prefix2[i].end())-dp_tables.prefix2[i].begin());
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_suffix2)
+				{
+					path2.push_back(N-j);
+					double next_score = 0.0;
+					int index = 0;
+					int next_j = 0;
+					for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+					{
+						int j2 = *it;
+						if (dp_tables.suffix2[N-j2] > next_score)
+						{
+							next_score = dp_tables.suffix2[N-j2];
+							index = 1;
+							next_j = N-j2;
+						}
+					}
+					int j2 = dp_tables.next[N-j];
+					if (j2 != -1 && dp_tables.suffix2_R[N-j2] > next_score) {
+					next_score = dp_tables.suffix2_R[N-j2];
+					index = 2;
+					next_j = N-j2;
+				}
+
+				j = next_j;
+				if(index == 0)
+				{
+					break;
+				}
+				else if(index == 1)
+				{
+					// t is unchanged
+				}
+				else
+				{
+					t = ASA_DP_Tables::cell_suffix2_R;
+				}
+			}
+				else if(t == ASA_DP_Tables::cell_prefix1_L)
+				{
+					if(dp_tables.prefix1_L[i] == dp_tables.prefix1[i])
+					{
+						t = ASA_DP_Tables::cell_prefix1;
+					}
+					else
+					{
+						i -= 1;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_prefix2_L)
+				{
+					if(dp_tables.prefix2_L[i] == dp_tables.prefix2max[i])
+					{
+						t = ASA_DP_Tables::cell_prefix2;
+						s = (std::max_element(dp_tables.prefix2[i].begin(),dp_tables.prefix2[i].end())-dp_tables.prefix2[i].begin());
+					}
+					else
+					{
+						i -= 1;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_suffix1_R)
+				{
+					if (dp_tables.suffix1_R[j] == dp_tables.suffix1max[j])
+					{
+						t = ASA_DP_Tables::cell_suffix1;
+						s = (std::max_element(dp_tables.suffix1[j].begin(),dp_tables.suffix1[j].end())-dp_tables.suffix1[j].begin());
+					}
+					else
+					{
+						j -= 1;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_suffix2_R)
+				{
+					if(dp_tables.suffix2_R[j] == dp_tables.suffix2[j])
+					{
+						t = ASA_DP_Tables::cell_suffix2;
+					}
+					else
+					{
+						j -= 1;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_D1)
+				{
+					if(i >= j)
+					{
+						path1.insert(path1.begin(), i);
+						double prev_score = dp_tables.suffix2[j]+dif_penalty;
+						int index = 0;
+						int next_i = 0;
+						for(std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+						{
+							int i2 = *it;
+							if(dp_tables.D1[i2][j] > prev_score)
+							{
+								prev_score = dp_tables.D1[i2][j];
+								index = 1;
+								next_i = i2;
+							}
+						}
+						int i2 = dp_tables.prev[i];
+						if(i2 != -1 && dp_tables.M1_L[i2][j] > prev_score)
+						{
+							prev_score = dp_tables.M1_L[i2][j];
+							index = 2;
+							next_i = i2;
+						}
+
+						i = next_i;
+						// note that if index=0, then the value of i is irrelevant.
+						if(index == 0)
+						{
+							t = ASA_DP_Tables::cell_suffix2;
+						}
+						else if(index == 1)
+						{
+							// t is unchanged
+						}
+						else
+						{
+							t = ASA_DP_Tables::cell_M1_L;
+						}
+					}
+					else
+					{
+						path2.push_back(N-j);
+						double next_score = dp_tables.prefix1[i]+dif_penalty;
+						int index = 0;
+						int next_j = 0;
+						for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+						{
+							int j2 = *it;
+							if (dp_tables.D1[i][N-j2] > next_score)
+							{
+								next_score = dp_tables.D1[i][N-j2];
+								index = 1;
+								next_j = N-j2;
+							}
+						}
+						int j2 = dp_tables.next[N-j];
+						if(j2 != -1 && dp_tables.M1_R[i][N-j2] > next_score)
+						{
+							next_score = dp_tables.M1_R[i][N-j2];
+							index = 2;
+							next_j = N-j2;
+						}
+
+						j = next_j;
+						if(index == 0)
+						{
+							t = ASA_DP_Tables::cell_prefix1;
+						}
+						else if(index == 1)
+						{
+							// t is unchanged
+						}
+						else
+						{
+							t = ASA_DP_Tables::cell_M1_R;
+						}
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_D2)
+				{
+					if (i > j)
+					{
+						path2.insert(path2.begin(), i);
+						if(s == 0)
+						{
+							double prev_score = dp_tables.suffix2[j];
+							int index = 0;
+							int next_i = 0;
+							for (std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+							{
+								int i2 = *it;
+								if(dp_tables.D1[i2][j] > prev_score)
+								{
+									prev_score = dp_tables.D1[i2][j];
+									index = 1;
+									next_i = i2;
+								}
+							}
+							int i2 = dp_tables.prev[i];
+							if(i2 != -1 && dp_tables.M1_L[i2][j] > prev_score)
+							{
+								prev_score = dp_tables.M1_L[i2][j];
+								index = 2;
+								next_i = i2;
+							}
+							for(std::vector<int>::const_iterator it = dp_tables.left_jumps_shifted[i].begin(); it != dp_tables.left_jumps_shifted[i].end(); ++it)
+							{
+								int i2 = *it;
+								if(dp_tables.D2max[i2][j] > prev_score)
+								{
+									prev_score = dp_tables.D2max[i2][j];
+									index = 3;
+									next_i = i2;
+								}
+							}
+							i2 = dp_tables.prev_shifted[i];
+							if(i2 != -1 && dp_tables.M2_L[i2][j] > prev_score)
+							{
+								prev_score = dp_tables.M2_L[i2][j];
+								index = 4;
+								next_i = i2;
+							}
+
+							i = next_i;
+							if(index == 0)
+							{
+								t = ASA_DP_Tables::cell_suffix2;
+							}
+							else if(index == 1)
+							{
+								t = ASA_DP_Tables::cell_D1;
+							}
+							else if(index == 2)
+							{
+								t = ASA_DP_Tables::cell_M1_L;
+							}
+							else if(index == 3)
+							{
+								// t is unchanged
+								s = (std::max_element(dp_tables.D2[i][j].begin(),dp_tables.D2[i][j].end())-dp_tables.D2[i][j].begin());
+							}
+							else
+							{
+								t = ASA_DP_Tables::cell_M2_L;
+							}
+						}
+						else
+						{
+							// t is unchanged
+							i = dp_tables.left_neighbors[i][s-1];
+							s = (std::max_element(dp_tables.D2[i][j].begin(),dp_tables.D2[i][j].end())-dp_tables.D2[i][j].begin());
+						}
+					}
+					else
+					{ // i <= j
+						path2.push_back(N-j);
+						double next_score = dp_tables.prefix2[i][s];
+						int index = 0;
+						int next_j = 0;
+						for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+						{
+							int j2 = *it;
+							if(dp_tables.D2[i][N-j2][s] > next_score)
+							{
+								next_score = dp_tables.D2[i][N-j2][s];
+								index = 1;
+								next_j = N-j2;
+							}
+						}
+						int j2 = dp_tables.next[N-j];
+						if(j2 != -1 && dp_tables.M2_R[i][N-j2][s] > next_score)
+						{
+							index = 2;
+							next_j = N-j2;
+						}
+
+						j = next_j;
+						if(index == 0)
+						{
+							t = ASA_DP_Tables::cell_prefix2;
+						}
+						else if(index == 1)
+						{
+							// t is unchanged
+						}
+						else
+						{
+							t = ASA_DP_Tables::cell_M2_R;
+						}
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_D3)
+				{
+					if(i >= j)
+					{
+						path1.insert(path1.begin(), i);
+						double prev_score = dp_tables.suffix1[j][s];
+						int index = 0;
+						int next_i = 0;
+						for(std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+						{
+							int i2 = *it;
+							if(dp_tables.D3[i2][j][s] > prev_score)
+							{
+								prev_score = dp_tables.D3[i2][j][s];
+								index = 1;
+								next_i = i2;
+							}
+						}
+						int i2 = dp_tables.prev[i];
+						if(i2 != -1 && dp_tables.M3_L[i2][j][s] > prev_score)
+						{
+							index = 2;
+							next_i = i2;
+						}
+
+						i = next_i;
+						if(index == 0)
+						{
+							t = ASA_DP_Tables::cell_suffix1;
+						}
+						else if (index == 1)
+						{
+							// t is unchanged
+						}
+						else
+						{
+							t = ASA_DP_Tables::cell_M3_L;
+						}
+					}
+					else
+					{ // i < j
+						path1.push_back(N-j);
+						if(s == 0)
+						{
+							double next_score = dp_tables.prefix1[i];
+							int index = 0;
+							int next_j = 0;
+							for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+							{
+								int j2 = *it;
+								if(dp_tables.D1[i][N-j2] > next_score)
+								{
+									next_score = dp_tables.D1[i][N-j2];
+									index = 1;
+									next_j = N-j2;
+								}
+							}
+							int j2 = dp_tables.next[N-j];
+							if(j2 != -1 && dp_tables.M1_R[i][N-j2] > next_score)
+							{
+								next_score = dp_tables.M1_R[i][N-j2];
+								index = 2;
+								next_j = N-j2;
+							}
+							for(std::vector<int>::const_iterator it = dp_tables.right_jumps_shifted[N-j].begin(); it != dp_tables.right_jumps_shifted[N-j].end(); ++it)
+							{
+								int j2 = *it;
+								if(dp_tables.D3max[i][N-j2] > next_score)
+								{
+									next_score = dp_tables.D3max[i][N-j2];
+									index = 3;
+									next_j = N-j2;
+								}
+							}
+							j2 = dp_tables.next_shifted[N-j];
+							if(j2 != -1 && dp_tables.M3_R[i][N-j2] > next_score)
+							{
+								next_score = dp_tables.M3_R[i][N-j2];
+								index = 4;
+								next_j = N-j2;
+							}
+
+							j = next_j;
+							if(index == 0)
+							{
+								t = ASA_DP_Tables::cell_prefix1;
+							}
+							else if(index == 1)
+							{
+								t = ASA_DP_Tables::cell_D1;
+							}
+							else if(index == 2)
+							{
+								t = ASA_DP_Tables::cell_M1_R;
+							}
+							else if( index == 3)
+							{
+								// t is unchanged
+								s = (std::max_element(dp_tables.D3[i][j].begin(),dp_tables.D3[i][j].end())-dp_tables.D3[i][j].begin());
+							}
+							else
+							{
+								t = ASA_DP_Tables::cell_M3_R;
+							}
+						}
+						else
+						{
+							// t is unchanged
+							j = dp_tables.right_neighbors[N-j][s-1];
+							j = N-j;
+							s = (std::max_element(dp_tables.D3[i][j].begin(),dp_tables.D3[i][j].end())-dp_tables.D3[i][j].begin());
+						}
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_M1_L)
+				{
+					if(dp_tables.M1_L[i][j] == dp_tables.D1[i][j])
+					{
+						t = ASA_DP_Tables::cell_D1;
+					}
+					else
+					{
+						i -= 1;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_M2_L)
+				{
+					if (dp_tables.M2_L[i][j] == dp_tables.D2max[i][j])
+					{
+						t = ASA_DP_Tables::cell_D2;
+						s = (std::max_element(dp_tables.D2[i][j].begin(),dp_tables.D2[i][j].end())-dp_tables.D2[i][j].begin());
+					}
+					else
+					{
+						i -= 1;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_M3_L)
+				{
+					if (dp_tables.M3_L[i][j][s] == dp_tables.D3[i][j][s])
+					{
+						t = ASA_DP_Tables::cell_D3;
+					}
+					else
+					{
+						i -= 1;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_M1_R)
+				{
+					if(dp_tables.M1_R[i][j] == dp_tables.D1[i][j])
+					{
+						t = ASA_DP_Tables::cell_D1;
+					}
+					else
+					{
+						j -= 1;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_M2_R)
+				{
+					if(dp_tables.M2_R[i][j][s] == dp_tables.D2[i][j][s])
+					{
+						t = ASA_DP_Tables::cell_D2;
+					}
+					else
+					{
+						j -= 1;
+					}
+				}
+				else if(t == ASA_DP_Tables::cell_M3_R)
+				{
+					if(dp_tables.M3_R[i][j] == dp_tables.D3max[i][j])
+					{
+						t = ASA_DP_Tables::cell_D3;
+						s = (std::max_element(dp_tables.D3[i][j].begin(),dp_tables.D3[i][j].end())-dp_tables.D3[i][j].begin());
+					}
+					else
+					{
+						j -= 1;
+					}
+				}
+			}
+
+			score = dp_tables.best_score/dp_tables.pm_s1;
+			return std::pair<std::vector<int>,std::vector<int> >(path1, path2);
+		}
+		///
+
+		/**
+			@brief ...
+
+			@param
+
+			...
+		*/
+		void calculateAlignementPath(ASA_DP_Tables& dp_tables, Real peak_tolerance, DoubleReal sv_penalty, DoubleReal dif_penalty) const
+		{
+			int n0 = dp_tables.common.size();
+			int N = n0-1;
+			int n = (n0+1)/2;
+
+			// fill prefix1
+			for(int i = 0; i < n; ++i)
+			{
+				if(dp_tables.common[i] != -1)
+				{
+					double prev_score = 0.0;
+					for(std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+					{
+						prev_score = std::max(prev_score, dp_tables.prefix1[*it]);
+					}
+					int i_prev = dp_tables.prev[i];
+					if (i_prev != -1)
+					{
+						prev_score = std::max(prev_score, dp_tables.prefix1_L[i_prev]);
+					}
+					dp_tables.prefix1[i] = dp_tables.common_scores[i] + prev_score;
+				}
+
+				if(i != 0)
+				{
+					dp_tables.prefix1_L[i] = std::max(dp_tables.prefix1_L[i-1], dp_tables.prefix1[i]);
+				}
+				else
+				{
+					dp_tables.prefix1_L[i] = dp_tables.prefix1[i];
+				}
+			}
+
+			// fill suffix1
+			for(int j = 0; j < n; ++j)
+			{
+				int l = dp_tables.right_neighbors[N-j].size();
+				dp_tables.suffix1[j].resize(l+1, std::numeric_limits<DoubleReal>::min());
+
+				if (dp_tables.common[N-j] != -1)
+				{
+					double next_score = 0.0;
+					for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin();
+					it != dp_tables.right_jumps[N-j].end(); ++it)
+					{
+						next_score = std::max(next_score, dp_tables.suffix2[N-*it]+dif_penalty);
+					}
+					int j_next = dp_tables.next[N-j];
+					if(j_next != -1)
+					{
+						next_score = std::max(next_score, dp_tables.suffix2_R[N-j_next]+dif_penalty);
+					}
+					for(std::vector<int>::const_iterator it = dp_tables.right_jumps_shifted[N-j].begin(); it != dp_tables.right_jumps_shifted[N-j].end(); ++it)
+					{
+						next_score = std::max(next_score, dp_tables.suffix1max[N-*it]);
+					}
+					j_next = dp_tables.next_shifted[N-j];
+					if(j_next != -1)
+					{
+						next_score = std::max(next_score, dp_tables.suffix1_R[N-j_next]);
+					}
+					dp_tables.suffix1[j][0] = dp_tables.common_scores[N-j] + next_score;
+
+					for(int s = 0; s < l; ++s)
+					{
+						int j_next = dp_tables.right_neighbors[N-j][s];
+						if (dp_tables.common[j_next] == -1)
+						{
+							continue;
+						}
+						double penalty = 0.0;
+						double y = dp_tables.peaks2[dp_tables.common[N-j]]+dp_tables.peaks2[dp_tables.common[j_next]];
+						if(fabs(y-(dp_tables.pm_s2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
+						{
+							penalty = sv_penalty;
+						}
+						double next_score = dp_tables.suffix1max[N-j_next];
+						dp_tables.suffix1[j][s+1] = dp_tables.common_scores[N-j] + next_score + penalty;
+					}
+				}
+
+				dp_tables.suffix1max[j] = *std::max_element(dp_tables.suffix1[j].begin(), dp_tables.suffix1[j].end());
+				if(j != 0)
+				{
+					dp_tables.suffix1_R[j] = std::max(dp_tables.suffix1_R[j-1], dp_tables.suffix1max[j]);
+				}
+				else
+				{
+					dp_tables.suffix1_R[j] = dp_tables.suffix1max[j];
+				}
+			}
+
+			// fill prefix2
+			for(int i = 0; i < n; ++i)
+			{
+				int l = dp_tables.left_neighbors[i].size();
+				dp_tables.prefix2[i].resize(l+1 ,std::numeric_limits<DoubleReal>::min());
+
+				if (dp_tables.common_shifted[i] != -1)
+				{// s = 0
+					double prev_score = 0.0;
+					for (std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin();it != dp_tables.left_jumps[i].end(); ++it)
+					{
+						prev_score = std::max(prev_score, dp_tables.prefix1[*it]+dif_penalty);
+					}
+					int i2 = dp_tables.prev[i];
+					if (i2 != -1)
+					{
+						prev_score = std::max(prev_score, dp_tables.prefix1_L[i2]+dif_penalty);
+					}
+					for(std::vector<int>::const_iterator it = dp_tables.left_jumps_shifted[i].begin(); it != dp_tables.left_jumps_shifted[i].end(); ++it)
+					{
+						prev_score = std::max(prev_score, dp_tables.prefix2max[*it]);
+					}
+					i2 = dp_tables.prev_shifted[i];
+					if (i2 != -1)
+					{
+						prev_score = std::max(prev_score, dp_tables.prefix2_L[i2]);
+					}
+					dp_tables.prefix2[i][0] = dp_tables.common_shifted_scores[i] + prev_score;
+
+					// s > 0
+					for (int s = 0; s < l; ++s)
+					{
+						int i2 = dp_tables.left_neighbors[i][s];
+						if(dp_tables.common_shifted[i2] == -1)
+						{
+							continue;
+						}
+						double penalty = 0.0;
+						double y = dp_tables.peaks2[dp_tables.common_shifted[i]]+dp_tables.peaks2[dp_tables.common_shifted[i2]];
+						if(fabs(y-(dp_tables.pm_s2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
+						{
+							penalty = sv_penalty;
+						}
+						prev_score = dp_tables.prefix2max[i2];
+						dp_tables.prefix2[i][s+1] = dp_tables.common_shifted_scores[i] + prev_score + penalty;
+					}
+				}
+
+				dp_tables.prefix2max[i] = *std::max_element(dp_tables.prefix2[i].begin(), dp_tables.prefix2[i].end());
+				if (i != 0)
+				{
+					dp_tables.prefix2_L[i] = std::max(dp_tables.prefix2_L[i-1], dp_tables.prefix2max[i]);
+				}
+				else
+				{
+					dp_tables.prefix2_L[i] = dp_tables.prefix2max[i];
+				}
+			}
+
+			// fill suffix2
+			for(int j = 0; j < n; ++j)
+			{
+				if(dp_tables.common_shifted[N-j] != -1)
+				{
+					double next_score = 0.0;
+					for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+					{
+						next_score = std::max(next_score, dp_tables.suffix2[N-*it]);
+					}
+					int j_next = dp_tables.next[N-j];
+					if(j_next != -1)
+					{
+						next_score = std::max(next_score, dp_tables.suffix2_R[N-j_next]);
+					}
+					dp_tables.suffix2[j] = dp_tables.common_shifted_scores[N-j] + next_score;
+				}
+				if(j != 0)
+				{
+					dp_tables.suffix2_R[j] = std::max(dp_tables.suffix2_R[j-1], dp_tables.suffix2[j]);
+				}
+				else
+				{
+					dp_tables.suffix2_R[j] = dp_tables.suffix2[j];
+				}
+			}
+
+			// fill D1/M1_R
+			for (int i = 0; i < n; ++i)
+			{
+				if (dp_tables.common[i] == -1)
+				{
+					if (i != 0)
+					{
+						dp_tables.M1_L[i] = dp_tables.M1_L[i-1];
+					}
+					continue;
+				}
+
+				for(int j = 0; j < n; ++j)
+				{
+					if(dp_tables.common_shifted[N-j] == -1)
+					{
+						if(i != 0)
+						{
+							dp_tables.M1_L[i][j] = dp_tables.M1_L[i-1][j];
+						}
+						if(j != 0)
+						{
+							dp_tables.M1_R[i][j] = dp_tables.M1_R[i][j-1];
+						}
+						continue;
+					}
+
+					double penalty = 0.0;
+					double x = dp_tables.peaks[i]+dp_tables.peaks[N-j];
+					double y = dp_tables.peaks2[dp_tables.common[i]]+dp_tables.peaks2[dp_tables.common_shifted[N-j]];
+					if(fabs(x-(dp_tables.pm_s1/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance || fabs(y-(dp_tables.pm_s2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
+					{
+						penalty = sv_penalty;
+					}
+
+					if(i >= j)
+					{
+						double prev_score = dp_tables.suffix2[j]+dif_penalty;
+						// If we choose suffix2[j], then we pay the PTM penalty - the penalty is paid only once!
+						for(std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+						{
+							prev_score = std::max(prev_score, dp_tables.D1[*it][j]);
+						}
+						int i2 = dp_tables.prev[i];
+						if(i2 != -1)
+						{
+							prev_score = std::max(prev_score, dp_tables.M1_L[i2][j]);
+						}
+						dp_tables.D1[i][j] = dp_tables.common_scores[i] + prev_score + penalty;
+					}
+					else
+					{
+						double next_score = dp_tables.prefix1[i]+dif_penalty;
+						for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+						{
+							next_score = std::max(next_score, dp_tables.D1[i][N-*it]);
+						}
+						int j2 = dp_tables.next[N-j];
+						if (j2 != -1)
+						{
+							next_score = std::max(next_score, dp_tables.M1_R[i][N-j2]);
+						}
+						dp_tables.D1[i][j] = dp_tables.common_shifted_scores[N-j] + next_score + penalty;
+					}
+
+					// Compute M1_L
+					if(i != 0)
+					{
+						dp_tables.M1_L[i][j] = std::max(dp_tables.M1_L[i-1][j], dp_tables.D1[i][j]);
+					}
+					else
+					{
+						dp_tables.M1_L[i][j] = dp_tables.D1[i][j];
+					}
+
+					// Compute M1_R
+					if(j != 0)
+					{
+						dp_tables.M1_R[i][j] = std::max(dp_tables.M1_R[i][j-1], dp_tables.D1[i][j]);
+					}
+					else
+					{
+						dp_tables.M1_R[i][j] = dp_tables.D1[i][j];
+					}
+				}
+			}
+
+			// fill D2/D2max/M2_L
+			for (int i = 0; i < n; ++i)
+			{
+				int l = dp_tables.left_neighbors[i].size();
+				for(int j = 0; j < n; ++j)
+				{
+					dp_tables.D2[i][j].resize(l+1, std::numeric_limits<DoubleReal>::min());
+					dp_tables.M2_R[i][j].resize(l+1, std::numeric_limits<DoubleReal>::min());
+				}
+				if(dp_tables.common_shifted[i] == -1)
+				{
+					if (i > 0)
+					{
+						dp_tables.M2_L[i] = dp_tables.M2_L[i-1];
+					}
+					continue;
+				}
+
+				for(int j = 0; j < n; ++j)
+				{
+					if(dp_tables.common_shifted[N-j] == -1)
+					{
+						if(i != 0)
+						{
+							dp_tables.M2_L[i][j] = dp_tables.M2_L[i-1][j];
+						}
+						if(j != 0)
+						{
+							dp_tables.M2_R[i][j] = dp_tables.M2_R[i][j-1];
+						}
+						continue;
+					}
+
+					double penalty = 0.0;
+					double x = dp_tables.peaks[i]+dp_tables.peaks[N-j];
+					double y = dp_tables.peaks2[dp_tables.common_shifted[i]]+dp_tables.peaks2[dp_tables.common_shifted[N-j]];
+					if(fabs(x-(dp_tables.pm_s1/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance || fabs(y-(dp_tables.pm_s2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
+					{
+						penalty = sv_penalty;
+					}
+
+					if (i > j)
+					{// s = 0
+						double prev_score = dp_tables.suffix2[j];
+						for(std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+						{
+							prev_score = std::max(prev_score, dp_tables.D1[*it][j]);
+						}
+						int i2 = dp_tables.prev[i];
+						if(i2 != -1)
+						{
+							prev_score = std::max(prev_score, dp_tables.M1_L[i2][j]);
+						}
+						for(std::vector<int>::const_iterator it = dp_tables.left_jumps_shifted[i].begin(); it != dp_tables.left_jumps_shifted[i].end(); ++it)
+						{
+							prev_score = std::max(prev_score, dp_tables.D2max[*it][j]);
+						}
+						i2 = dp_tables.prev_shifted[i];
+						if (i2 != -1)
+						{
+							prev_score = std::max(prev_score, dp_tables.M2_L[i2][j]);
+						}
+						dp_tables.D2[i][j][0] = dp_tables.common_shifted_scores[i] + prev_score + penalty;
+
+						// s > 0
+						for(int s = 0; s < l; ++s)
+						{
+							int i2 = dp_tables.left_neighbors[i][s];
+							if(dp_tables.common_shifted[i2] == -1)
+							{
+								continue;
+							}
+							double penalty2 = penalty;
+							double y = dp_tables.peaks2[dp_tables.common_shifted[i]]+dp_tables.peaks2[dp_tables.common_shifted[i2]];
+							if(fabs(y-(dp_tables.pm_s2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
+							{
+								penalty2 += sv_penalty;
+							}
+							prev_score = dp_tables.D2max[i2][j];
+							dp_tables.D2[i][j][s+1] = dp_tables.common_shifted_scores[i] + prev_score + penalty2;
+						}
+					}
+					else
+					{// i <= j
+						// s = 0
+						double next_score = dp_tables.prefix2[i][0];
+						for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+						{
+							next_score = std::max(next_score, dp_tables.D2[i][N-*it][0]);
+						}
+						int j2 = dp_tables.next[N-j];
+						if (j2 != -1)
+						{
+							next_score = std::max(next_score, dp_tables.M2_R[i][N-j2][0]);
+						}
+						dp_tables.D2[i][j][0] = dp_tables.common_shifted_scores[N-j] + next_score + penalty;
+
+						// s > 0
+						for(int s = 0; s < l; ++s)
+						{
+							int i2 = dp_tables.left_neighbors[i][s];
+							if(dp_tables.common_shifted[i2] == -1)
+							{
+								continue;
+							}
+							double penalty2 = penalty;
+							double y = dp_tables.peaks2[dp_tables.common_shifted[i2]]+dp_tables.peaks2[dp_tables.common_shifted[N-j]];
+							if(fabs(y-(dp_tables.pm_s2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
+							{
+								penalty2 += sv_penalty;
+							}
+							double next_score = dp_tables.prefix2[i][s+1];
+							for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+							{
+								next_score = std::max(next_score, dp_tables.D2[i][N-*it][s+1]);
+							}
+							int j2 = dp_tables.next[N-j];
+							if(j2 != -1)
+							{
+								next_score = std::max(next_score, dp_tables.M2_R[i][N-j2][s+1]);
+							}
+							dp_tables.D2[i][j][s+1] = dp_tables.common_shifted_scores[N-j] + next_score + penalty2;
+						}
+					}
+
+					// Compute D2max
+					dp_tables.D2max[i][j] = *std::max_element(dp_tables.D2[i][j].begin(), dp_tables.D2[i][j].end());
+
+					// Compute M2_L
+					if(i != 0)
+					{
+						dp_tables.M2_L[i][j] = std::max(dp_tables.M2_L[i-1][j], dp_tables.D2max[i][j]);
+					}
+					else
+					{
+						dp_tables.M2_L[i][j] = dp_tables.D2max[i][j];
+					}
+
+					// compute M2_R
+					if(j != 0)
+					{
+						for(int s = 0; s < l+1; ++s)
+						{
+							dp_tables.M2_R[i][j][s] = std::max(dp_tables.M2_R[i][j-1][s], dp_tables.D2[i][j][s]);
+						}
+					}
+					else
+					{
+						dp_tables.M2_R[i][j] = dp_tables.D2[i][j];
+					}
+				}
+			}
+
+			// fill D3/M3_R
+			for(int i = 0; i < n; ++i)
+			{
+				for(int j = 0; j < n; ++j)
+				{
+					int l = dp_tables.right_neighbors[N-j].size();
+					dp_tables.D3[i][j].resize(l+1, std::numeric_limits<DoubleReal>::min());
+					dp_tables.M3_L[i][j].resize(l+1, std::numeric_limits<DoubleReal>::min());
+				}
+				if(dp_tables.common[i] == -1)
+				{
+					if(i > 0)
+					{
+						dp_tables.M3_L[i] = dp_tables.M3_L[i-1];
+					}
+					continue;
+				}
+
+				for(int j = 0; j < n; ++j)
+				{
+					if(dp_tables.common[N-j] == -1)
+					{
+						if(i != 0)
+						{
+							dp_tables.M3_L[i][j] = dp_tables.M3_L[i-1][j];
+						}
+						if(j != 0)
+						{
+							dp_tables.M3_R[i][j] = dp_tables.M3_R[i][j-1];
+						}
+						continue;
+					}
+
+					int l = dp_tables.right_neighbors[N-j].size();
+					double penalty = 0.0;
+					double x = dp_tables.peaks[i]+dp_tables.peaks[N-j];
+					double y = dp_tables.peaks2[dp_tables.common[i]]+dp_tables.peaks2[dp_tables.common[N-j]];
+					if(fabs(x-(dp_tables.pm_s1/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance || fabs(y-(dp_tables.pm_s2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
+					{
+						penalty = sv_penalty;
+					}
+
+					if(i >= j)
+					{ // s = 0
+						double prev_score = dp_tables.suffix1[j][0];
+						for(std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+						{
+							prev_score = std::max(prev_score, dp_tables.D3[*it][j][0]);
+						}
+						int i2 = dp_tables.prev[i];
+						if(i2 != -1)
+						{
+							prev_score = std::max(prev_score, dp_tables.M3_L[i2][j][0]);
+						}
+						dp_tables.D3[i][j][0] = dp_tables.common_scores[i] + prev_score + penalty;
+
+						// s > 0
+						for(int s = 0; s < l; ++s)
+						{
+							int j2 = dp_tables.right_neighbors[N-j][s];
+							if(dp_tables.common[j2] == -1)
+							{
+								continue;
+							}
+							double penalty2 = penalty;
+							double y = dp_tables.peaks2[dp_tables.common[i]]+dp_tables.peaks2[dp_tables.common[j2]];
+							if(fabs(y-(dp_tables.pm_s2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
+							{
+								penalty2 += sv_penalty;
+							}
+							double prev_score = dp_tables.suffix1[j][s+1];
+							for(std::vector<int>::const_iterator it = dp_tables.left_jumps[i].begin(); it != dp_tables.left_jumps[i].end(); ++it)
+							{
+								prev_score = std::max(prev_score, dp_tables.D3[*it][j][s+1]);
+							}
+							int i2 = dp_tables.prev[i];
+							if(i2 != -1)
+							{
+								prev_score = std::max(prev_score, dp_tables.M3_L[i2][j][s+1]);
+							}
+							dp_tables.D3[i][j][s+1] = dp_tables.common_scores[i] + prev_score + penalty2;
+						}
+					}
+					else
+					{ // s = 0
+						double next_score = dp_tables.prefix1[i];
+						for(std::vector<int>::const_iterator it = dp_tables.right_jumps[N-j].begin(); it != dp_tables.right_jumps[N-j].end(); ++it)
+						{
+							next_score = std::max(next_score, dp_tables.D1[i][N-*it]);
+						}
+						int j2 = dp_tables.next[N-j];
+						if (j2 != -1)
+						{
+							next_score = std::max(next_score, dp_tables.M1_R[i][N-j2]);
+						}
+						for(std::vector<int>::const_iterator it = dp_tables.right_jumps_shifted[N-j].begin(); it != dp_tables.right_jumps_shifted[N-j].end(); ++it)
+						{
+							next_score = std::max(next_score, dp_tables.D3max[i][N-*it]);
+						}
+						j2 = dp_tables.next_shifted[N-j];
+						if (j2 != -1)
+						{
+							next_score = std::max(next_score, dp_tables.M3_R[i][N-j2]);
+						}
+						dp_tables.D3[i][j][0] = dp_tables.common_scores[N-j] + next_score + penalty;
+
+						// s > 0
+						for(int s = 0; s < l; ++s)
+						{
+							int j2 = dp_tables.right_neighbors[N-j][s];
+							if(dp_tables.common[j2] == -1)
+							{
+								continue;
+							}
+							double penalty2 = penalty;
+							double y = dp_tables.peaks2[dp_tables.common[N-j]]+dp_tables.peaks2[dp_tables.common[j2]];
+							if(fabs(y-(dp_tables.pm_s2/* +18 */+Constants::PROTON_MASS_U)) < peak_tolerance)
+							{
+								penalty2 += sv_penalty;
+							}
+							double next_score = dp_tables.D3max[i][N-j2];
+							dp_tables.D3[i][j][s+1] = dp_tables.common_scores[N-j] + next_score + penalty2;
+						}
+					}
+
+					// Compute D3max
+					dp_tables.D3max[i][j] = *std::max_element(dp_tables.D3[i][j].begin(), dp_tables.D3[i][j].end());
+
+					// Compute M3_L
+					if (i != 0)
+					{
+						for(int s = 0; s < l+1; ++s)
+						{
+							dp_tables.M3_L[i][j][s] = std::max(dp_tables.M3_L[i-1][j][s], dp_tables.D3[i][j][s]);
+						}
+					}
+					else
+					{
+						dp_tables.M3_L[i][j] = dp_tables.D3[i][j];
+					}
+
+					// Compute M3_R
+					if(j != 0)
+					{
+						dp_tables.M3_R[i][j] = std::max(dp_tables.M3_R[i][j-1], dp_tables.D3max[i][j]);
+					}
+					else
+					{
+						dp_tables.M3_R[i][j] = dp_tables.D3max[i][j];
+					}
+				}
+			}
+
+			// find best score
+			dp_tables.best_t = ASA_DP_Tables::cell_Invalid;
+			for(int i = 0; i < n; ++i)
+			{
+				for(std::vector<int>::const_iterator it = dp_tables.right_jumps[i].begin(); it != dp_tables.right_jumps[i].end(); ++it)
+				{
+					int j = N-*it;
+					if(j <= n-1)
+					{
+						if(dp_tables.best_score < dp_tables.D1[i][j])
+						{
+							dp_tables.best_score = dp_tables.D1[i][j];
+							dp_tables.best_i = i;
+							dp_tables.best_j = j;
+							dp_tables.best_s = 0;
+							dp_tables.best_t = ASA_DP_Tables::cell_D1;
+						}
+						if(dp_tables.best_score < dp_tables.D2max[i][j])
+						{
+							dp_tables.best_score = dp_tables.D2max[i][j];
+							dp_tables.best_i = i;
+							dp_tables.best_j = j;
+							dp_tables.best_s = (std::max_element(dp_tables.D2[i][j].begin(),dp_tables.D2[i][j].end())-dp_tables.D2[i][j].begin());
+							dp_tables.best_t = ASA_DP_Tables::cell_D2;
+						}
+						if(dp_tables.best_score < dp_tables.D3max[i][j])
+						{
+							dp_tables.best_score = dp_tables.D3max[i][j];
+							dp_tables.best_i = i;
+							dp_tables.best_j = j;
+							dp_tables.best_s = (std::max_element(dp_tables.D3[i][j].begin(),dp_tables.D3[i][j].end())-dp_tables.D3[i][j].begin());
+							dp_tables.best_t = ASA_DP_Tables::cell_D3;
+						}
+					}
+				}
+
+				int j0 = dp_tables.next[i];
+				if(j0 != -1)
+				{
+					int j = std::min(n-1, N-j0);
+					if(dp_tables.best_score < dp_tables.M1_R[i][j])
+					{
+						dp_tables.best_score = dp_tables.M1_R[i][j];
+						dp_tables.best_i = i;
+						dp_tables.best_j = j;
+						dp_tables.best_s = 0;
+						dp_tables.best_t =ASA_DP_Tables::cell_M1_R;
+					}
+
+					double tmp = *std::max_element(dp_tables.M2_R[i][j].begin(), dp_tables.M2_R[i][j].end());
+					if (dp_tables.best_score < tmp)
+					{
+						dp_tables.best_score = tmp;
+						dp_tables.best_i = i;
+						dp_tables.best_j = j;
+						dp_tables.best_s = (std::max_element(dp_tables.M2_R[i][j].begin(),dp_tables.M2_R[i][j].end())-dp_tables.M2_R[i][j].begin());
+						dp_tables.best_t = ASA_DP_Tables::cell_M2_R;
+					}
+
+					if (dp_tables.best_score < dp_tables.M3_R[i][j])
+					{
+						dp_tables.best_score = dp_tables.M3_R[i][j];
+						dp_tables.best_i = i;
+						dp_tables.best_j = j;
+						dp_tables.best_s = 0;
+						dp_tables.best_t = ASA_DP_Tables::cell_M3_R;
+					}
+				}
+
+				if(dp_tables.best_score < dp_tables.prefix1[i])
+				{
+					dp_tables.best_score = dp_tables.prefix1[i];
+					dp_tables.best_i = i;
+					dp_tables.best_j = 0;
+					dp_tables.best_s = 0;
+					dp_tables.best_t = ASA_DP_Tables::cell_prefix1;
+				}
+
+				if(dp_tables.best_score < dp_tables.suffix1max[i])
+				{
+					dp_tables.best_score = dp_tables.suffix1max[i];
+					dp_tables.best_j = i;
+					dp_tables.best_i = 0;
+					dp_tables.best_s = (std::max_element(dp_tables.suffix1[i].begin(),dp_tables.suffix1[i].end())-dp_tables.suffix1[i].begin());
+					dp_tables.best_t = ASA_DP_Tables::cell_suffix1;
+				}
+
+				if(dp_tables.best_score < dp_tables.prefix2max[i])
+				{
+					dp_tables.best_score = dp_tables.prefix2max[i];
+					dp_tables.best_i = i;
+					dp_tables.best_j = 0;
+					dp_tables.best_s = (std::max_element(dp_tables.prefix2[i].begin(),dp_tables.prefix2[i].end())-dp_tables.prefix2[i].begin());
+					dp_tables.best_t = ASA_DP_Tables::cell_prefix2;
+				}
+
+				if(dp_tables.best_score < dp_tables.suffix2[i])
+				{
+					dp_tables.best_score = dp_tables.suffix2[i];
+					dp_tables.best_j = i;
+					dp_tables.best_i = 0;
+					dp_tables.best_s = 0;
+					dp_tables.best_t = ASA_DP_Tables::cell_suffix2;
+				}
+			}
+
+			return;
+		}
+		///
+
+
+		/**
 			@brief Method to calculate a antisymetric alignment
 
 			@param res_1 Spectrum containing the aligned peaks from s1
@@ -1769,10 +1920,11 @@ namespace OpenMS
 				return;
 			}
 
-			//~ attention: max. number of AA jumped is always 1
+			res_1 = s1;
+			res_2 = s2;
 
-			//jump_masses[i] holds internal mass of aa i
-			//make unique in resolution tolerance (e.g. cause of Q & K)
+			/// @improvement rise max. number of AA jumped possible (now just one AA)
+			//jump_masses[i] holds internal mass of aa i - make unique in resolution tolerance (e.g. cause of Q & K)
 			const ResidueDB* res_db = ResidueDB::getInstance();
 			std::vector<Real> jump_masses;
 			for(ResidueDB::ResidueConstIterator it = res_db->beginResidue(); it != res_db->endResidue(); ++it)
@@ -1784,297 +1936,149 @@ namespace OpenMS
 					jump_masses.push_back(w);
 				}
 			}
-			//sort jump_masses
+			//~ sort jump_masses
 			std::sort(jump_masses.begin(),jump_masses.end());
 			std::vector<Real>::iterator end_new = std::unique(jump_masses.begin(),jump_masses.end(), EqualInTolerance<Real>(peak_tolerance));
 			jump_masses.resize( end_new - jump_masses.begin() );
 			DoubleReal jumps_supremum=0;
 			jumps_supremum = jump_masses.back()+2*peak_tolerance+0.00001;
 
-			/* debug for(Size w = 0; w < jump_masses.size(); ++w)
-			{
-				std::cout << jump_masses[w] << ", ";
-			}
-			std::cout << '\n';*/
-
+//~ remove unneccessary peaks
 			//~ charge deconvolution to 'singly charged only' for identified spectra
-			res_1 = s1;
 			filterHighCharges(res_1,2,3);
 
 			//~ change s1 to align antisymetrical into res_1
 			res_1 = getSymetricSpectrum(res_1);
 
-			//~ indices in s2 for normal matches
-			/* debug  std::cout << "symetric size is: " << res_1.size() << std::endl;*/
+			//~ prune to matching/ shift-matching peaks
+			matchPrunePeaks(res_1, res_2, pm_diff);
 
-			typename SpectrumType::IntegerDataArray ida_matches; ida_matches.resize(res_1.size(),-1);
-			res_1.getIntegerDataArrays().insert(res_1.getIntegerDataArrays().begin()+1, ida_matches);
-			res_1.getIntegerDataArrays()[1].setName("normal match indices");
-			//~ indices in s2 for pm_diff shift matches
-			res_1.getIntegerDataArrays().insert(res_1.getIntegerDataArrays().begin()+2, ida_matches);
-			res_1.getIntegerDataArrays()[2].setName("shift match indices");
+//~ fill the DP tables
+			//~ begin with information collection
+			Size m((Size)(((DoubleReal)res_1.getIntegerDataArrays()[1].size())/2.0));
+			ASA_DP_Tables dp_tables(res_1.size(), m+1, res_2.size(), (pm_s1+Constants::PROTON_MASS_U), (pm_s2+Constants::PROTON_MASS_U));
 
-			//~ calculate common/common_shifted (StringDataArrays) and common_scores/common_shifted_scores (intensities)
-			//~ zero intensity in res_1 for unmatching peaks (if both of a pair dont fit to any in s2)
-			for(typename SpectrumType::Iterator it_res = res_1.begin(); it_res != res_1.end(); ++it_res)
+			for(Size i=0;i<res_1.size();++i)
 			{
-				bool no_match_normal = false;
-				typename SpectrumType::ConstIterator lo = s2.MZBegin(it_res->getMZ()-peak_tolerance);
-				typename SpectrumType::ConstIterator hi = s2.MZEnd(it_res->getMZ()+peak_tolerance);
-				if(lo==hi)
-				{
-					no_match_normal = true;
-				}
-				else
-				{
-					//~ get best match in tolerance window
-					for(typename SpectrumType::ConstIterator it_match_mz = lo; it_match_mz != hi; ++it_match_mz)
-					{
-						if( fabs(it_match_mz->getMZ()-it_res->getMZ()) < fabs(lo->getMZ()-it_res->getMZ()) )
-						{
-							lo=it_match_mz;
-						}
-					}
-					res_1.getIntegerDataArrays()[1][(it_res-res_1.begin())] = lo-s2.begin();
-				}
-
-				lo = s2.MZBegin(it_res->getMZ()+pm_diff-peak_tolerance);
-				hi = s2.MZEnd(it_res->getMZ()+pm_diff+peak_tolerance);
-				if(lo==hi)
-				{
-					if(no_match_normal)
-					{
-						it_res->setIntensity(0);
-					}
-				}
-				else
-				{
-					//~ get best match in tolerance window
-					for(typename SpectrumType::ConstIterator it_match_mz = lo; it_match_mz != hi; ++it_match_mz)
-					{
-						if( fabs(it_match_mz->getMZ()-it_res->getMZ()) < fabs(lo->getMZ()-it_res->getMZ()) )
-						{
-							lo=it_match_mz;
-						}
-					}
-					res_1.getIntegerDataArrays()[2][(it_res-res_1.begin())] = lo-s2.begin();
-				}
+				dp_tables.peaks[i]=res_1[i].getMZ();
+			}
+			for(Size i=0;i<res_2.size();++i) ///@attention was only running up to res_1.size()
+			{
+				dp_tables.peaks2[i]=res_2[i].getMZ();
 			}
 
-			//~ number of complementing peaks in res_1 that both do not match the right peaks in s2
-			Size removed_pairs = 0;
-			//~ remove the peak pairs mentioned above
-			Size res_1_index = 0;
-			while(res_1_index < res_1.size() and (Size)res_1_index < (Size)((res_1.size()/2) - removed_pairs) )
-			{
-				if(res_1[res_1_index].getIntensity() == 0)
-				{
-					Size res_mirror_index = res_1.size() - 1 - res_1_index;
-					if(res_1[res_mirror_index].getIntensity() == 0 )
-					{
-						for(Size i = 0; i < 3; ++i)
-						{
-							typename SpectrumType::IntegerDataArray::iterator it_mirror_ida = res_1.getIntegerDataArrays()[i].begin()+res_mirror_index;
-							res_1.getIntegerDataArrays()[i].erase(it_mirror_ida);
-						}
-						for(Size i = 0; i < 3; ++i)
-						{
-							typename SpectrumType::IntegerDataArray::iterator it_ida = res_1.getIntegerDataArrays()[i].begin()+res_1_index;
-							res_1.getIntegerDataArrays()[i].erase(it_ida);
-						}
-						typename SpectrumType::Iterator res_mirror_it = res_1.begin() + res_mirror_index;
-						res_1.erase(res_mirror_it);
-						typename SpectrumType::Iterator res_1_it = res_1.begin() + res_1_index;
-						res_1.erase(res_1_it);
-						++removed_pairs;
-					}
-					else
-					{
-						++res_1_index;
-					}
-				}
-				else
-				{
-					++res_1_index;
-				}
-			}
-
-			/* debug
-			std::cout << "§ " ;
-			for(Size i = 0; i < res_1.getIntegerDataArrays()[1].size(); ++i)
-			{
-				std::cout << res_1.getIntegerDataArrays()[1][i];
-			}
-			std::cout << "$ ";
-			for(Size i = 0; i < res_1.getIntegerDataArrays()[2].size(); ++i)
-			{
-				std::cout << res_1.getIntegerDataArrays()[2][i];
-			}
-			std::cout << std::endl;
-			*/
-
-			std::vector<DoubleReal> peaks(res_1.size());
-			for(Size i=0;i<res_1.size();++i) peaks[i]=res_1[i].getMZ();
-			std::vector<DoubleReal> peaks2(s2.size());
-			for(Size i=0;i<s2.size();++i) peaks2[i]=s2[i].getMZ();
-			std::vector<int> common(res_1.size(),-1);
-			std::vector<int> common_shifted(res_1.size(),-1);
-			std::vector<double> common_scores(res_1.size(),0);
-			std::vector<double> common_shifted_scores(res_1.size(),0);
-
-			//~ fill the above from res
 			for(Size i=0;i<res_1.size();++i)
 			{
 				if(res_1.getIntegerDataArrays()[1][i]>-1)
 				{
-					common[i] = res_1.getIntegerDataArrays()[1][i];
-					/* debug  std::cout << "common "<< i << " = " << common[i] << std::endl;*/
-					common_scores[i] = res_1[i].getIntensity()+s2[common[i]].getIntensity();
-					/* debug  std::cout << "common_scores "<< i << " = " << common_scores[i] << std::endl;*/
+					dp_tables.common[i] = res_1.getIntegerDataArrays()[1][i];
+					dp_tables.common_scores[i] = res_1[i].getIntensity()+s2[dp_tables.common[i]].getIntensity();
 				}
 				else if(res_1.getIntegerDataArrays()[2][i]>-1)
 				{
-					common_shifted[i] = res_1.getIntegerDataArrays()[2][i];
-					/* debug  std::cout << "common_shifted "<< i << " = " << common_shifted[i] << std::endl;*/
-					common_shifted_scores[i] = res_1[i].getIntensity()+s2[common_shifted[i]].getIntensity();
-					/* debug  std::cout << "common_shifted_scores "<< i << " = " << common_shifted_scores[i] << std::endl;*/
+					dp_tables.common_shifted[i] = res_1.getIntegerDataArrays()[2][i];
+					dp_tables.common_shifted_scores[i] = res_1[i].getIntensity()+s2[dp_tables.common_shifted[i]].getIntensity();
 				}
 			}
 
-			std::vector<int> prev(res_1.size(), -1);
-			std::vector<int> next(res_1.size(),-1);
-			std::vector<int> prev_shifted(res_1.size(),-1);
-			std::vector<int> next_shifted(res_1.size(),-1);
-			std::vector<std::vector<int> > left_jumps(res_1.size());
-			std::vector<std::vector<int> > left_jumps_shifted(res_1.size());
-			std::vector<std::vector<int> > right_jumps(res_1.size());
-			std::vector<std::vector<int> > right_jumps_shifted(res_1.size());
-			std::vector<std::vector<int> > left_neighbors(res_1.size());
-			std::vector<std::vector<int> > right_neighbors(res_1.size());
+			dp_tables.delta = std::min(std::max(min_dist-peak_tolerance,pm_diff+peak_tolerance),min_dist-peak_tolerance*2.0f);
+			dp_tables.delta2 = jumps_supremum-peak_tolerance;
 
-			float delta = std::min(std::max(min_dist-peak_tolerance,pm_diff+peak_tolerance),min_dist-peak_tolerance*2.0f);
-			float delta2 = jumps_supremum-peak_tolerance;
-
-			/* debug  std::cout << "delta "<< delta << " delta2 " << delta2 << std::endl;*/
-
-			//~ fill the above from res_1/peaks
-			/* debug  std::cout << " * "<< res_1.size() << std::endl;*/
 			for(Size i = 0; i < res_1.size(); ++i)
 			{
-				/* debug  std::cout << " i: "<< i << std::endl;*/
-				DoubleReal lo1 = res_1[i].getMZ()-delta2;
+				DoubleReal lo1 = res_1[i].getMZ()-dp_tables.delta2;
 				if(lo1<=0)
 				{
-					prev[i] = -1;
+					dp_tables.prev[i] = -1;
 				}
 				else
 				{
 					typename SpectrumType::Iterator it_lo1 = res_1.MZEnd(res_1.begin(),lo1,res_1.begin()+i);
-					it_lo1!=res_1.begin()?prev[i]=((it_lo1-res_1.begin())-1):prev[i]=-1;
+					it_lo1!=res_1.begin()?dp_tables.prev[i]=((it_lo1-res_1.begin())-1):dp_tables.prev[i]=-1;
 				}
-				DoubleReal lo2 = res_1[i].getMZ()-std::max(delta,delta2);
+				DoubleReal lo2 = res_1[i].getMZ()-std::max(dp_tables.delta,dp_tables.delta2);
 				if(lo2<=0)
 				{
-					prev_shifted[i] = -1;
+					dp_tables.prev_shifted[i] = -1;
 				}
 				else
 				{
 					typename SpectrumType::Iterator it_lo2 = res_1.MZEnd(lo2);
-					it_lo2!=res_1.begin()?prev_shifted[i]=((it_lo2-res_1.begin())-1):prev_shifted[i]=-1;
+					it_lo2!=res_1.begin()?dp_tables.prev_shifted[i]=((it_lo2-res_1.begin())-1):dp_tables.prev_shifted[i]=-1;
 				}
 
-				DoubleReal hi1 = res_1[i].getMZ()+ delta2;
+				DoubleReal hi1 = res_1[i].getMZ()+ dp_tables.delta2;
 				if(hi1>=res_1.rbegin()->getMZ())
 				{
-					next[i] = -1;
+					dp_tables.next[i] = -1;
 				}
 				else
 				{
 					typename SpectrumType::Iterator it_hi1 = res_1.MZBegin(res_1.begin()+i,hi1,res_1.end());
-					it_hi1!=res_1.end()?next[i]=(it_hi1-res_1.begin()):next[i]=-1;
+					it_hi1!=res_1.end()?dp_tables.next[i]=(it_hi1-res_1.begin()):dp_tables.next[i]=-1;
 				}
-				DoubleReal hi2 = res_1[i].getMZ()+std::max(delta,delta2);
+				DoubleReal hi2 = res_1[i].getMZ()+std::max(dp_tables.delta,dp_tables.delta2);
 				if(hi2>=res_1.rbegin()->getMZ())
 				{
-					next_shifted[i] = -1;
+					dp_tables.next_shifted[i] = -1;
 				}
 				else
 				{
 					typename SpectrumType::Iterator it_hi2 = res_1.MZBegin(res_1.begin()+i,hi2,res_1.end());
-					it_hi2!=res_1.end()?next_shifted[i]=(it_hi2-res_1.begin()):next_shifted[i]=-1;
+					it_hi2!=res_1.end()?dp_tables.next_shifted[i]=(it_hi2-res_1.begin()):dp_tables.next_shifted[i]=-1;
 				}
 
-				/* debug  std::cout << " prev: "<< prev[i] << " prev_shifted: " << prev_shifted[i] << std::endl;*/
-				/* debug  std::cout << " next: "<< next[i] << " next_shifted: " << next_shifted[i] << std::endl;*/
-
-				getAASteps(i, res_1, jump_masses, left_jumps[i], right_jumps[i]);
+				getAASteps(i, res_1, jump_masses, dp_tables.left_jumps[i], dp_tables.right_jumps[i]);
 				Size neighbor_count=0, jumps_count=0;
-				left_neighbors[i].resize(left_jumps[i].size());
-				left_jumps_shifted[i].resize(left_jumps[i].size());
-				/* debug  std::cout << "left jumps size "<< left_jumps[i].size() << " ";*/
-				for(Size j=0; j<left_jumps[i].size(); ++j)
+				dp_tables.left_neighbors[i].resize(dp_tables.left_jumps[i].size());
+				dp_tables.left_jumps_shifted[i].resize(dp_tables.left_jumps[i].size());
+				for(Size j=0; j<dp_tables.left_jumps[i].size(); ++j)
 				{
-					if(peaks[i]-peaks[left_jumps[i][j]]<=delta)
+					if(dp_tables.peaks[i]-dp_tables.peaks[dp_tables.left_jumps[i][j]]<=dp_tables.delta)
 					{
-						left_neighbors[i][neighbor_count++]=left_jumps[i][j];
-						/* debug  std::cout << " ln] "<< left_jumps[i][j] << " ";*/
+						dp_tables.left_neighbors[i][neighbor_count++]=dp_tables.left_jumps[i][j];
 					}
-					if(peaks[i]-peaks[left_jumps[i][j]]>=delta)
+					if(dp_tables.peaks[i]-dp_tables.peaks[dp_tables.left_jumps[i][j]]>=dp_tables.delta)
 					{
-						left_jumps_shifted[i][jumps_count++]=left_jumps[i][j];
-						/* debug  std::cout << " lj] "<< left_jumps[i][j] << " ";*/
+						dp_tables.left_jumps_shifted[i][jumps_count++]=dp_tables.left_jumps[i][j];
 					}
 				}
-				left_neighbors[i].resize(neighbor_count);
-				left_jumps_shifted[i].resize(jumps_count);
-				/* debug std::cout << std::endl; */
+				dp_tables.left_neighbors[i].resize(neighbor_count);
+				dp_tables.left_jumps_shifted[i].resize(jumps_count);
 
 				neighbor_count=0, jumps_count=0;
-				right_neighbors[i].resize(right_jumps[i].size());
-				right_jumps_shifted[i].resize(right_jumps[i].size());
-				/* debug  std::cout << "right jumps size "<< right_jumps[i].size() << " ";*/
-				for(Size j=0; j<right_jumps[i].size(); ++j)
+				dp_tables.right_neighbors[i].resize(dp_tables.right_jumps[i].size());
+				dp_tables.right_jumps_shifted[i].resize(dp_tables.right_jumps[i].size());
+				for(Size j=0; j<dp_tables.right_jumps[i].size(); ++j)
 				{
-					if(peaks[right_jumps[i][j]]-peaks[i]<=delta)
+					if(dp_tables.peaks[dp_tables.right_jumps[i][j]]-dp_tables.peaks[i]<=dp_tables.delta)
 					{
-						right_neighbors[i][neighbor_count++]=right_jumps[i][j];
-						/* debug  std::cout << " rn] "<< right_jumps[i][j] << " ";*/
+						dp_tables.right_neighbors[i][neighbor_count++]=dp_tables.right_jumps[i][j];
 					}
-					if(peaks[right_jumps[i][j]]-peaks[i]>=delta)
+					if(dp_tables.peaks[dp_tables.right_jumps[i][j]]-dp_tables.peaks[i]>=dp_tables.delta)
 					{
-						right_jumps_shifted[i][jumps_count++]=right_jumps[i][j];
-						/* debug  std::cout << " rj] "<< right_jumps[i][j] << " ";*/
+						dp_tables.right_jumps_shifted[i][jumps_count++]=dp_tables.right_jumps[i][j];
 					}
 				}
-				right_neighbors[i].resize(neighbor_count);
-				right_jumps_shifted[i].resize(jumps_count);
-				/* debug  std::cout << std::endl;*/
+				dp_tables.right_neighbors[i].resize(neighbor_count);
+				dp_tables.right_jumps_shifted[i].resize(jumps_count);
 			}
 
 			res_1.clear(false);
-			res_2 = s2;
 			res_2.clear(false);
 			//~ implicitly copied (and not erased):
 			//~ Precursors,RT,MSLevel, MetaDataArrays
 
-			/* debug  std::cout << " aligning" << std::endl;*/
-
-			/// @improvement btw is this right with massMH = H2O + Constants::PROTON_MASS_U?!?!?!
-			//~ static const double massMH = EmpiricalFormula("H2O").getMonoWeight() + Constants::PROTON_MASS_U;
 			/// @improvement find a good penalty adjustment
 			DoubleReal sv_penalty = (DoubleReal)param_.getValue("sv_penalty");
 			DoubleReal dif_penalty = (DoubleReal)param_.getValue("dif_penalty");
 
-			std::pair<double, std::pair< std::vector<int>,std::vector<int> > > asym_align;
+			//~ go on with tables and traceback, result is aligned peaks list
+			calculateAlignementPath(dp_tables, peak_tolerance, sv_penalty, dif_penalty);
+			std::pair< std::vector<int>,std::vector<int> > asym_align;
+			asym_align = traceback(dp_tables, dif_penalty, score);
 
-			AntisymetricDP dp;
-			asym_align = dp.calculateAlignementPath(/* pm_s1 - massMH */ (pm_s1+Constants::PROTON_MASS_U), /* pm_s2 - massMH */(pm_s2+Constants::PROTON_MASS_U), peaks, peaks2, common, common_shifted, common_scores, common_shifted_scores, prev, next, prev_shifted, next_shifted, left_jumps, right_jumps, left_jumps_shifted, right_jumps_shifted, left_neighbors, right_neighbors, peak_tolerance, sv_penalty, dif_penalty);
-
-			score = asym_align.first;
-
-			Size num_aligned_peaks = asym_align.second.first.size()+asym_align.second.second.size();
-
-			/* debug  std::cout << " aligned: "<< asym_align.second.first.size() << " + " << asym_align.second.second.size() << std::endl;*/
+			Size num_aligned_peaks = asym_align.first.size()+asym_align.second.size();
 
 			if(num_aligned_peaks==0)
 			{
@@ -2096,8 +2100,7 @@ namespace OpenMS
 			res_2.getIntegerDataArrays().insert(res_2.getIntegerDataArrays().begin()+1, ida_synthetic);
 			(res_2.getIntegerDataArrays().begin()+1)->setName("modification position");
 
-			/* debug  std::cout << " determine mod_pos: ";*/
-			if(asym_align.second.first.size()==0)
+			if(asym_align.first.size()==0)
 			{
 				mod_pos=0;  // No peaks in idx1 => mod at the start
 				(res_1.getIntegerDataArrays().begin()+1)->at(0)=-1;
@@ -2105,7 +2108,7 @@ namespace OpenMS
 			}
 			else
 			{
-				if(asym_align.second.second.size()==0)
+				if(asym_align.second.size()==0)
 				{
 					mod_pos = /* pm_s1 */-1;  // No peaks in idx2 => mod at the end
 					(res_1.getIntegerDataArrays().begin()+1)->at(num_aligned_peaks-1)=-1;
@@ -2113,23 +2116,21 @@ namespace OpenMS
 				}
 				else
 				{
-					mod_pos=peaks[asym_align.second.second[0]];  // Otherwise mod was placed at the first mass shifted aligned pair (but unshifted version as value)
-					(res_1.getIntegerDataArrays().begin()+1)->at(asym_align.second.first.size())=1;
-					(res_2.getIntegerDataArrays().begin()+1)->at(asym_align.second.first.size())=1;
-					/* debug std::cout << mod_pos << std::endl; */
+					mod_pos=dp_tables.peaks[asym_align.second[0]];  // Otherwise mod was placed at the first mass shifted aligned pair (but unshifted version as value)
+					(res_1.getIntegerDataArrays().begin()+1)->at(asym_align.first.size())=1;
+					(res_2.getIntegerDataArrays().begin()+1)->at(asym_align.first.size())=1;
 				}
 			}
 
-			/* debug  std::cout << " creating spectra: ";*/
 			typename SpectrumType::IntegerDataArray& ida_ref = *(res_1.getIntegerDataArrays().begin()+2);
-			for(Size i=0; i<asym_align.second.first.size(); ++i)
+			for(Size i=0; i<asym_align.first.size(); ++i)
 			{
 				PeakT tmp_1, tmp_2;
-				tmp_1.setMZ( peaks[asym_align.second.first[i]] );
-				if(common[asym_align.second.first[i]]>=0)
+				tmp_1.setMZ( dp_tables.peaks[asym_align.first[i]] );
+				if(dp_tables.common[asym_align.first[i]]>=0)
 				{
-					tmp_2.setMZ(peaks2[common[asym_align.second.first[i]]]);
-					tmp_2.setIntensity(s2[common[asym_align.second.first[i]]].getIntensity());
+					tmp_2.setMZ(dp_tables.peaks2[dp_tables.common[asym_align.first[i]]]);
+					tmp_2.setIntensity(s2[dp_tables.common[asym_align.first[i]]].getIntensity());
 					res_2.getIntegerDataArrays().front().push_back(0);
 				}
 				else
@@ -2138,20 +2139,20 @@ namespace OpenMS
 					//~ intensity stays default constructed 0
 					res_2.getIntegerDataArrays().front().push_back(1);
 				}
-				tmp_1.setIntensity(common_scores[asym_align.second.first[i]] - tmp_2.getIntensity());
-				(ida_ref[asym_align.second.first[i]]>0)?res_2.getIntegerDataArrays().front()[i]=1:res_2.getIntegerDataArrays().front()[i]=0;
+				tmp_1.setIntensity(dp_tables.common_scores[asym_align.first[i]] - tmp_2.getIntensity());
+				(ida_ref[asym_align.first[i]]>0)?res_2.getIntegerDataArrays().front()[i]=1:res_2.getIntegerDataArrays().front()[i]=0;
 				res_1.push_back(tmp_1);
 				res_2.push_back(tmp_2);
 			}
 
-			for(Size i=0; i<asym_align.second.second.size(); ++i)
+			for(Size i=0; i<asym_align.second.size(); ++i)
 			{
 				PeakT tmp_1, tmp_2;
-				tmp_1.setMZ( peaks[asym_align.second.second[i]] );
-				if(common_shifted[asym_align.second.second[i]]>=0)
+				tmp_1.setMZ( dp_tables.peaks[asym_align.second[i]] );
+				if(dp_tables.common_shifted[asym_align.second[i]]>=0)
 				{
-					tmp_2.setMZ( peaks2[common_shifted[asym_align.second.second[i]]] );
-					tmp_2.setIntensity( s2[common_shifted[asym_align.second.second[i]]].getIntensity() );
+					tmp_2.setMZ( dp_tables.peaks2[dp_tables.common_shifted[asym_align.second[i]]] );
+					tmp_2.setIntensity( s2[dp_tables.common_shifted[asym_align.second[i]]].getIntensity() );
 					res_2.getIntegerDataArrays().front().push_back(0);
 				}
 				else
@@ -2160,8 +2161,8 @@ namespace OpenMS
 					//~ intensity stays default constructed 0
 					res_2.getIntegerDataArrays().front().push_back(1);
 				}
-				tmp_1.setIntensity( common_shifted_scores[asym_align.second.second[i]] - tmp_2.getIntensity());
-				(ida_ref[asym_align.second.second[i]]>0)?res_2.getIntegerDataArrays().front()[asym_align.second.first.size()+i]=1:res_2.getIntegerDataArrays().front()[asym_align.second.first.size()+i]=0;
+				tmp_1.setIntensity( dp_tables.common_shifted_scores[asym_align.second[i]] - tmp_2.getIntensity());
+				(ida_ref[asym_align.second[i]]>0)?res_2.getIntegerDataArrays().front()[asym_align.first.size()+i]=1:res_2.getIntegerDataArrays().front()[asym_align.first.size()+i]=0;
 				res_1.push_back(tmp_1);
 				res_2.push_back(tmp_2);
 			}

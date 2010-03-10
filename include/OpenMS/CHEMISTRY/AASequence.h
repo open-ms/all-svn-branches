@@ -61,6 +61,10 @@ namespace OpenMS
 		the modification as prefix to the sequence. C-terminal modifications are specified by writing the
 		modification as suffix. C-terminal modifications are distinguished from modifications of the last amino
 		acid by considering the specificity of the modification as stored in ModificationsDB.
+		If no unique string identifier is available for a certain modification in the ModificationsDB, the
+		modification can though be denoted by a indesignated modificational mass in parentheses and brackets after
+		the modified amino acid. For example AASequence seq("DFPIAM([18])GER") creates an instance of the
+		peptide DFPIAMGER with 18Da modified methionine.
 
 		If a string cannot be converted into a valid instance of AASequence, the valid flag is false. The flag
 		can be read using the isValid() predicate. However, instances of AASequence which are not valid report

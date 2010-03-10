@@ -57,7 +57,7 @@ namespace OpenMS
 	class Peak1D;
 
 	/**
-		@brief compares the correlation of two spectra
+		@brief develops extended spectrum information by tapping the spectrum information of related spectra
 
 		@htmlinclude OpenMS_StarClusters.parameters
 
@@ -118,15 +118,13 @@ namespace OpenMS
 		// @}
 
 		/**
-			@brief This reverses a spectrum
+			@brief reverses a spectrum
 
 			@param spec the spectrum to reverse
-			@param is_prm if the spectrum is a prm spectrum
 
-			Each peak p is repositioned at pm - p + 2 protons, where pm is the uncharged precursor mass of spec;
-			spec is sorted by position afterwards
+			Each peak p is repositioned at pm - p + 2 protons, where p is the current m/z and pm is the uncharged precursor mass of spec, so the peaks are assumed to from singly charged fragment ions. The spectrum is sorted by position afterwards.
 		*/
-		void reverseSpectrum(MSSpectrum<PeakType>& spec, bool is_prm=false)
+		void reverseSpectrum(MSSpectrum<PeakType>& spec)
 		{
 			/// @attention uncharged mass
 			DoubleReal pm(spec.getPrecursors().front().getUnchargedMass());
@@ -162,11 +160,11 @@ namespace OpenMS
 
 
 		/**
-			@brief This prepares a spectrums ids for spectral networking
+			@brief prepares a spectrums ids for spectral networking
 
 			@param spec the spectrum to prepare
 
-			the spectrums id hits are put in a single PeptideIdentification container, origins stored in MetaData, scored and sorted with respect to annotation coverage
+			The spectrums id hits are put in a single PeptideIdentification container, origins stored in MetaData, scored and sorted with respect to annotation coverage
 		*/
 		void idPrepare(MSSpectrum<PeakType>& spec)
 		{
@@ -206,16 +204,16 @@ namespace OpenMS
 		///
 
 		/**
-			@brief will create the network as a set of starsclusters which will most probabply overlay so its a network
+			@brief creates a set of starsclusters which will most probably overlay, forming a network
 
-			@param aligned_pairs the list of the pairs determined by an alignment (indices correspond to the original experiment)
-			@param consensuses_indices are the indices that participate in the network
+			@param related_pairs the list of the pairs determined to be related, e.g. by an alignment
+			@param stars the map of neighbors for each spectrum
 
-			star network will be represented by indices 0 to n from the participating spectra as seen in consensus_indices, not as in aligned_pairs (these indices belong to the original dataset)
+			The network will be represented by a map of indices. The indices will point to the neighboring spectra for a given spectrum.
 		*/
-		void createNetwork(std::vector< std::pair<Size,Size> >& aligned_pairs, std::map< Size, std::set<Size> >& stars) const
+		void createNetwork(std::vector< std::pair<Size,Size> >& related_pairs, std::map< Size, std::set<Size> >& stars) const
 		{
-			if(aligned_pairs.empty())
+			if(related_pairs.empty())
 			{
 				stars.clear();
 				throw Exception::IllegalArgument (__FILE__, __LINE__, __PRETTY_FUNCTION__, "no edges given");
@@ -223,10 +221,10 @@ namespace OpenMS
 
 			stars.clear();
 
-			for(Size i = 0; i < aligned_pairs.size(); ++i)
+			for(Size i = 0; i < related_pairs.size(); ++i)
 			{
-				stars[aligned_pairs[i].first].insert(aligned_pairs[i].second);
-				stars[aligned_pairs[i].second].insert(aligned_pairs[i].first);
+				stars[related_pairs[i].first].insert(related_pairs[i].second);
+				stars[related_pairs[i].second].insert(related_pairs[i].first);
 				/// @improvement write in metadata of consensuses[i] its pair partners indices from consensuses - this would replace stars (also in propagation), if metadata r/w speed is sufficient
 				/// @improvement maybe also add mod_pos in for each pair also in metadata?!
 			}
@@ -235,13 +233,15 @@ namespace OpenMS
 		///
 
 		/**
-			@brief ...
+			@brief calculates the annotationCoverage for review of the identification annotation
 
-			@param
-			@param
+			@param spectrum the annotated spectrum
+			@param id the identification annotated
+			@param peak_coverage giving a review over the number of id-explained peaks in the range of [0,1] where 1 is complete explanation
+			@param intensity_coverage giving a review over the id-explained peaks' intensity in the range of [0,1] where 1 is complete explanation
 
-			peak_coverage is the ratio of parameter spectrum explained peaks from ids theoretical spectrum to total amount of ids theoretical spectrum peaks.
-			intensity_coverage is the ratio of parameter spectrum explained peaks intensities from ids theoretical spectrum to total amount parameter spectrum peaks intensities.
+			The peak_coverage is the ratio of parameter spectrum explained peaks from ids theoretical spectrum to total amount of ids theoretical spectrum peaks.
+			The intensity_coverage is the ratio of parameter spectrum explained peaks intensities from ids theoretical spectrum to total amount parameter spectrum peaks intensities.
 		*/
 		void annotationCoverage(MSSpectrum<PeakT>& spectrum, const AASequence& id, DoubleReal& peak_coverage, DoubleReal& intensity_coverage) const
 		{
@@ -304,17 +304,17 @@ namespace OpenMS
 		///
 
 		/**
-			@brief will clamp the annotation of a pair partner onto the current spectrum (includes possible introduction of a modification)
+			@brief will clamp the annotation of a related spectrum onto the current spectrum (includes possible introduction of a modification)
 
-			@param template_sequence - the sequence to be clamped onto
-			@param mod_pos - the position that has to be found otherwise the clamping would be no good anyways
-			@param mod_shift - the mass shift introduced
-			@param modified_sequence - the clamped sequence with introduced mass shift
-			@param sequence_correspondence - which ion species the clamping is based on
+			@param template_sequence the sequence to be clamped onto
+			@param mod_pos the position of the modification explaining the mass shift, crucial for the annotation fitting
+			@param mod_shift the mass shift introduced between the two related spectra
+			@param modified_sequence the clamped sequence with introduced mass shift
+			@param sequence_correspondence the ion species the clamping is based on
 
-			@return true if clamping of annotation was successful(find a peak corresponding to mod_pos) false otherwise
+			@return true if clamping of annotation was successful(find a peak corresponding to mod_pos), false otherwise
 
-			initially looking for the peak fitting mod_pos m/z in template sequence generated y and b ions, finding is knowing the sequence position the modification took place thus a modified sequence can be constructed.
+			Initially looking for the peak fitting mod_pos position in template sequence generated y and b ions. From the found peak the sequence position the modification took place can be deduced. Thus a modified sequence can be constructed.
 		*/
 		bool getPropagation(AASequence& template_sequence, DoubleReal mod_pos, DoubleReal alt_mod_pos, DoubleReal mod_shift, AASequence& modified_sequence, String& sequence_correspondence) const
 		{
@@ -427,16 +427,16 @@ namespace OpenMS
 		///
 
 		/**
-			@brief Method to propagate annotations through a network
+			@brief propagate a set of annotations through a given network
 
-			@param experiment - the spectras from the network of which at least one should be annotated and the ids prepared with idPrepare
-			@param ids - peptide identifications coming from external and arranged in consensuses corresponding order
-			@param aligned_pairs - they represent the network edges
-			@param mod_positions - must correspond to the aligned_pairs and represent the edges weight
+			@param experiment the spectra of the network of which at least one should be annotated and all the ids prepared with idPrepare
+			@param related_pairs the related pairs, i.e. edge-connected spectra
+			@param mod_positions the corresponding modification positions according to related_pairs
+			@param ids the ConsensusMap used to represent the network formed
 
-			possible would be a propagation by edge score?
+			The present annotations are propagated along the network edges formed by the uncovered relation of a pair of spectra.
 		*/
-		void propagateNetwork(MSExperiment<PeakT>& experiment, std::vector< std::pair<Size,Size> >& aligned_pairs, std::vector< DoubleReal > mod_positions, ConsensusMap& ids) const
+		void propagateNetwork(MSExperiment<PeakT>& experiment, std::vector< std::pair<Size,Size> >& related_pairs, std::vector< DoubleReal > mod_positions, ConsensusMap& ids) const
 		{
 			DoubleReal f_pc = (DoubleReal)param_.getValue("factor_pc");
 			DoubleReal f_ic = (DoubleReal)param_.getValue("factor_ic");
@@ -493,7 +493,7 @@ namespace OpenMS
 			ids.setProteinIdentifications(experiment.getProteinIdentifications());
 
 			std::map< Size, std::set<Size> > stars;
-			createNetwork(aligned_pairs, stars);
+			createNetwork(related_pairs, stars);
 
 			//~ set potential targets
 			std::list<Size> potential_propagation_targets;
@@ -530,7 +530,7 @@ namespace OpenMS
 					{
 						if(!ids[*it_neighbors].getPeptideIdentifications().front().getHits().empty() and (*it_neighbors)!=(*it_potential))
 						{
-							//at this point we have a edge i,j from aligned_pairs:  i=*it_neighbors , j=*it_potential and if i>j: swap(i,j)
+							//at this point we have a edge i,j from related_pairs:  i=*it_neighbors , j=*it_potential and if i>j: swap(i,j)
 							/// @attention uncharged mass difference!
 							DoubleReal current_pm(current_spectrum.getPrecursors().front().getUnchargedMass());
 							DoubleReal other_pm(experiment[*it_neighbors].getPrecursors().front().getUnchargedMass());
@@ -555,14 +555,14 @@ namespace OpenMS
 							}
 
 							//find the edge and therefor the mod_pos
-							std::vector< std::pair<Size,Size> >::iterator which_pair_it = std::find(aligned_pairs.begin(),aligned_pairs.end(),current_edge);
+							std::vector< std::pair<Size,Size> >::iterator which_pair_it = std::find(related_pairs.begin(),related_pairs.end(),current_edge);
 							DoubleReal mod_pos(0.0), alt_mod_pos(0.0);
 							//~ mod_pos shall point the position modified in *it_neighbors (annotated one) and alt mod pos the symetric position
-							if(which_pair_it!=aligned_pairs.end())
+							if(which_pair_it!=related_pairs.end())
 							{
-								mod_pos = mod_positions[which_pair_it-aligned_pairs.begin()];
+								mod_pos = mod_positions[which_pair_it-related_pairs.begin()];
 								/// @attention simplify for getPropagation mod_pos so it has no need to know the current_spectrum
-								/// @attention mod_positions and aligned_pairs have to be of same size else a segfault might occur (if user of this function does not read the docu)
+								/// @attention mod_positions and related_pairs have to be of same size else a segfault might occur (if user of this function does not read the docu)
 								if(!current_is_heavyer and mod_pos != -1)
 								{
 									/// @attention we are propagating from light to heavy (modpos always in the first spectrum of a edge (the spectrum with lower mz) - edge was swapped before!, so adapt)

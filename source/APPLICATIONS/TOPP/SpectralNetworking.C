@@ -226,11 +226,11 @@ using namespace std;
 				if(fabs(pm_diff) < pm_tol)
 				{
 					/// @todo cut off at right score
-					DoubleReal auto_sj(0), sim(0), auto_mean(0), ratio(0), peak_mean(0);
+					//~ DoubleReal auto_sj(0), sim(0), auto_mean(0)
+					DoubleReal peak_mean(((DoubleReal)experiment[i].size()+(DoubleReal)experiment[j].size())/2), ratio(0);
 					//~ auto_sj == sas(experiment[j],experiment[j]);
 					//~ sim = sas(experiment[i],experiment[j]);
 					//~ auto_mean = (auto_si+auto_sj)/2;
-					peak_mean = ((DoubleReal)experiment[i].size()+(DoubleReal)experiment[j].size())/2;
 					std::vector< std::pair< Size, Size > > alignment;
 					sa.getSpectrumAlignment(alignment, experiment[i],experiment[j]);
 					//~ ratio = sim/auto_mean;

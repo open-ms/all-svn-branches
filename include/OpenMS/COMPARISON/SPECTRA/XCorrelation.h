@@ -106,14 +106,14 @@ namespace OpenMS
 
 
 		/**
-			@brief Method to calculate best sum of intensities from matching by mapping s1 onto s2 (bigger is better)
+			@brief Method to calculate best sum of intensities from the matches given by mapping s1 onto s2 (bigger is better)
 
-			@param ...
-			@param ...
-			@return ...
+			@param s1 the spectrum to be mapped on the other
+			@param s2 the spectrum to be mapped onto
+			@return the best sum of intensities from the matches
 
-			...
-			@see ...
+			Mapping is done inside a shift window, which is determined in size by twice the parentmass_tolerance parameter
+			and in stepwidth by twice the peak_tolerance parameter from the parameterhandler.
 		*/
 		DoubleReal bestMatchIntensity(MSSpectrum<PeakType>& s1, MSSpectrum<PeakType>& s2) const
 		{
@@ -162,12 +162,12 @@ namespace OpenMS
 		/**
 			@brief Method to calculate best sum of distances from matching by mapping s1 onto s2 (smaller is better)
 
-			@param ...
-			@param ...
-			@return ...
+			@param s1 the spectrum to be mapped on the other
+			@param s2 the spectrum to be mapped onto
+			@return the best sum of distances from the matches
 
-			...
-			@see ...
+			Mapping is done inside a shift window, which is determined in size by twice the parentmass_tolerance parameter
+			and in stepwidth by twice the peak_tolerance parameter from the parameterhandler.
 		*/
 		DoubleReal bestMatchDistance(MSSpectrum<PeakType>& s1, MSSpectrum<PeakType>& s2) const
 		{
@@ -211,14 +211,15 @@ namespace OpenMS
 		///
 
 		/**
-			@brief Method to find the maximal long set of sparse matchings by mapping s1 onto s2
+			@brief Finds the best set of sparse matchings by mapping s1 onto s2
 
-			@param ...
-			@param ...
-			@return ...
+			@param s1 the spectrum to be mapped on the other
+			@param s2 the spectrum to be mapped onto
+			@param best_matches the list of best matches as indices pairs (s1,s2)
+			@param shift if a mass shift between s1 and s2 is wanted to be compensated for (to find the matches of shifted peaks)
 
-			...
-			@see ...
+			Sparseness is defined by the min_dist parameter from the parameterhandler (the minimal distance between two consecutive matches).
+			Mapping is done inside a shift window and asessed matches summed intensity or matches proximity.
 		*/
 		void maxSparseMatch(const SpectrumType& s1, const SpectrumType& s2, std::list<std::pair<Size,Size> >& best_matches, DoubleReal& shift) const
 		{
@@ -245,7 +246,7 @@ namespace OpenMS
 			}
 
 			//~ initialization:
-			/// @attention indices here are indices in the dp-table and to get from these to indices in all_matches you have to decrease once;
+			/// @attention indices here are indices in the dp-table (-- to get from these to indices in all_matches)
 			std::pair<Size,DoubleReal> best_dp_col(0,0.0); //will hold index of the last in the best path so far and the corresponding score
 			std::vector< std::pair<Size,DoubleReal> > dp_table(all_matches.size()+1, best_dp_col); // [predecessor, predecessor score], size+1 due to DP initialization in 0
 			Size next_too_close = 1;		// Index for the match (in dp_table and all_matches) that is next BEHIND i and too close
@@ -275,16 +276,13 @@ namespace OpenMS
 				{
 					dp_table[i].second = dp_table[max_index].second + s1[all_matches[i-1].first].getIntensity() + s2[all_matches[i-1].second].getIntensity(); //path score with intensities!
 				}
-				/*debug std::cout << "dp table (" << i << "): " << dp_table[i].first << " | " << dp_table[i].second;*/
 
 				//~ for traceback: best path ends in best_dp_col.first
 				if (dp_table[i].second>best_dp_col.second)
 				{
 					best_dp_col.second=dp_table[i].second;
 					best_dp_col.first=i;
-					/*debug std::cout << " - new best ";*/
 				}
-				/*debug std::cout << std::endl;*/
 			}
 
 			//~ traceback:
@@ -303,14 +301,19 @@ namespace OpenMS
 		///
 
 		/**
-			@brief Method to find best correlation of s1 and s2 by shifting around
+			@brief Finds the best correlation of s1 and s2 by shifting around by small amounts - cross correlation two spectra
 
-			@param ...
-			@param pm_diff_shift boolean indicates if s2 is considered shifted by pm difference or not
-			@return ...
+			@param s1 the spectrum to correlated to the other
+			@param s2 the spectrum to correlated to the other
+			@param best_score1 the correlation score contributed by s1
+			@param best_score2 the correlation score contributed by s2
+			@param best_shift from shifting around in small steps
+			@param best_matches the correlations list of best matches as indices pairs (s1,s2)
+			@param shift if a mass shift (e.g. resulting from a modification) between s1 and s2 is wanted to be compensated for (to find the matches of shifted peaks) n.b.: not to be confused with the shifting around as one usually does in cross correlation
 
-			...
-			@see ...
+			Correlation is asessed by peak matching. Matching is done sparse. Sparseness is defined by the min_dist parameter from the parameterhandler
+			(the minimal distance between two consecutive matches). Mapping is done inside a shift window and asessed matches summed intensity or
+			matches proximity.
 		*/
 		void getXCorrelation(SpectrumType& s1, SpectrumType& s2, DoubleReal& best_score1 , DoubleReal& best_score2, DoubleReal& best_shift, std::list<std::pair<Size,Size> >& best_matches, bool pm_diff_shift = false) const
 		{
@@ -319,31 +322,20 @@ namespace OpenMS
 			DoubleReal shift_step(2 * peak_tolerance);
 			DoubleReal max_dist(2 * peak_tolerance +0.00001);
 
-			//~ can also deal with neg. shifts!
-			//~ if(s2.getPrecursors().front().getMZ() < s1.getPrecursors().front().getMZ())
-			//~ {
-				//~ throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite is the s1-precursor mz is not greater than s2-precursor mz");
-			//~ }
-
-			/// @attention singly charged mass difference!
+			/// @attention uncharged mass difference!
 			DoubleReal pm_s1 (s1.getPrecursors().front().getUnchargedMass());
 			DoubleReal pm_s2 (s2.getPrecursors().front().getUnchargedMass());
 			DoubleReal pm_diff (pm_s2-pm_s1);
-			/* debug std::cout << pm_diff << std::endl; */
 			if(!pm_diff_shift)
 			{
 				pm_diff = 0.0;
 			}
 
-			//~ if(s1.getPrecursors().front().getCharge()>2 or s2.getPrecursors().front().getCharge()>2)
-			//~ {
-				//~ throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "prerequisite are spectra from chargestate 2 or lower");
-			//~ }
-
 			// reset the correlation values
 			best_score1 = 0;
 			best_score2 = 0;
 			best_shift = std::numeric_limits<double>::min();
+			//~ best_shift = 0;
 			best_matches.clear();
 			s1.sortByPosition();
 			s2.sortByPosition();
@@ -374,7 +366,7 @@ namespace OpenMS
 				}
 
 				//~ shifts only neccessary if spectra reasonable apart or explicitly called:
-				if(fabs(pm_diff)>parentmass_tolerance or !pm_diff_shift)
+				if(fabs(pm_diff)>parentmass_tolerance || !pm_diff_shift)
 				{
 					DoubleReal shift(pm_diff-parentmass_tolerance);
 					DoubleReal range(pm_diff+parentmass_tolerance);
@@ -391,7 +383,6 @@ namespace OpenMS
 						//~ find max sparse matches in shifted s1 to s2 with DP
 						std::list<std::pair<Size, Size> > matches_shift;
 						maxSparseMatch(s1,s2,matches_shift,shift);
-						/*debug std::cout << "matches_shift.size(): " << matches_shift.size() << " shift: " << shift << std::endl;*/
 
 						DoubleReal score1 = std::numeric_limits<double>::min();
 						DoubleReal score2 = std::numeric_limits<double>::min();
@@ -483,7 +474,6 @@ namespace OpenMS
 				//~ find matches in unshifted s1 to s2 max sparses matches with DP
 				std::list<std::pair<Size, Size> > matches_unshift;
 				maxSparseMatch(s1,s2,matches_unshift, pm_diff);
-				/*debug std::cout << "matches_unshift.size(): " << matches_unshift.size() << std::endl;*/
 
 				best_matches = matches_unshift;
 
@@ -503,7 +493,7 @@ namespace OpenMS
 				}
 
 				//~ shifts only neccessary if spectra reasonable apart or explicitly called:
-				if(fabs(pm_diff)>parentmass_tolerance or !pm_diff_shift)
+				if(fabs(pm_diff)>parentmass_tolerance || !pm_diff_shift)
 				{
 					DoubleReal shift(pm_diff-parentmass_tolerance);
 					DoubleReal range(pm_diff+parentmass_tolerance);
@@ -520,7 +510,6 @@ namespace OpenMS
 						//~ find max sparse matches in shifted s1 to s2 with DP
 						std::list<std::pair<Size, Size> > matches_shift;
 						maxSparseMatch(s1,s2,matches_shift,shift);
-						/*debug std::cout << "matches_shift.size(): " << matches_shift.size() << " shift: " << shift << std::endl;*/
 
 						DoubleReal score1 = std::numeric_limits<double>::min();
 						DoubleReal score2 = std::numeric_limits<double>::min();

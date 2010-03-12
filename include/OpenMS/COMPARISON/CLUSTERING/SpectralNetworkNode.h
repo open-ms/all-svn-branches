@@ -388,7 +388,7 @@ namespace OpenMS
 				if(/*diff < (peak_tolerance*2 + 0.00001) and*/ alt_diff < best_diff)
 				{
 					best_diff = alt_diff;
-					sequence_correspondence = String(String("y") + String(i) + String(std::string((Size)charge, '+')) + String("(via symetric)"));
+					sequence_correspondence = String(String("y") + String(i) + String(std::string((Size)charge, '+')) + String("(via symmetric)"));
 					best_pos = template_sequence.size()-i;
 				}
 			}
@@ -409,7 +409,7 @@ namespace OpenMS
 				if(/*diff < (peak_tolerance*2 + 0.00001) and*/ diff < best_diff)
 				{
 					best_diff = alt_diff;
-					sequence_correspondence = String(String("b") + String(i) + String(std::string((Size)charge, '+')) + String("(via symetric)"));
+					sequence_correspondence = String(String("b") + String(i) + String(std::string((Size)charge, '+')) + String("(via symmetric)"));
 					best_pos = (i-1);
 				}
 			}
@@ -561,7 +561,7 @@ namespace OpenMS
 							//find the edge and therefor the mod_pos
 							std::vector< std::pair<Size,Size> >::iterator which_pair_it = std::find(related_pairs.begin(),related_pairs.end(),current_edge);
 							DoubleReal mod_pos(0.0), alt_mod_pos(0.0);
-							//~ mod_pos shall point the position modified in *it_neighbors (annotated one) and alt mod pos the symetric position
+							//~ mod_pos shall point the position modified in *it_neighbors (annotated one) and alt mod pos the symmetric position
 							if(which_pair_it!=related_pairs.end())
 							{
 								mod_pos = mod_positions[which_pair_it-related_pairs.begin()];

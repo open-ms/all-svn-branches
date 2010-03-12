@@ -4,7 +4,7 @@
 #include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignment.h>
 #include <OpenMS/COMPARISON/SPECTRA/BinnedSpectrum.h>
 #include <OpenMS/COMPARISON/SPECTRA/XCorrelation.h>
-#include <OpenMS/COMPARISON/SPECTRA/AntisymetricAlignment.h>
+#include <OpenMS/COMPARISON/SPECTRA/AntisymmetricAlignment.h>
 #include <OpenMS/COMPARISON/CLUSTERING/SpectralNetworkNode.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/ParentPeakMower.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/Normalizer.h>
@@ -91,8 +91,8 @@ using namespace std;
 		}
 		if (section == "spectra")
 		{
-			Param p(AntisymetricAlignment<Peak1D>().getDefaults());
-			//~ remove all AntisymetricAlignment unspecific i.e. all but parentmass and peak tolerance
+			Param p(AntisymmetricAlignment<Peak1D>().getDefaults());
+			//~ remove all AntisymmetricAlignment unspecific i.e. all but parentmass and peak tolerance
 			p.removeAll("p");
 			return p;
 		}
@@ -390,8 +390,8 @@ using namespace std;
 		Param xcorr_param;
 		xcorr_param.insert("",getParam_().copy(prefixes[0],true));
 		xcorr_param.insert("",getParam_().copy(prefixes[1],true));
-		xcorr_param.remove("sv_penalty");  // these are antisymetric alignment only
-		xcorr_param.remove("dif_penalty"); // these are antisymetric alignment only
+		xcorr_param.remove("sv_penalty");  // these are antisymmetric alignment only
+		xcorr_param.remove("dif_penalty"); // these are antisymmetric alignment only
 		XCorrelation<Peak1D> x_corr;
 		x_corr.setParameters(xcorr_param);
 		std::vector<Size> edge_selection;
@@ -508,7 +508,7 @@ using namespace std;
 		Param asa_param;
 		asa_param.insert("",getParam_().copy(prefixes[0],true));
 		asa_param.insert("",getParam_().copy(prefixes[1],true));
-		AntisymetricAlignment<Peak1D> asa;
+		AntisymmetricAlignment<Peak1D> asa;
 		asa.setParameters(asa_param);
 
 		MSExperiment<Peak1D> aligned_spectra; // aligned_spectra (s' is a subset of peaks from s - the aligned ones )
@@ -523,7 +523,7 @@ using namespace std;
 			{
 				MSSpectrum<Peak1D> res_1, res_2;
 				DoubleReal mod_pos, score;
-				asa.getAntisymetricAlignment(res_1, res_2, score, mod_pos, experiment[aligned_pairs[oi][i].first], experiment[aligned_pairs[oi][i].second]);
+				asa.getAntisymmetricAlignment(res_1, res_2, score, mod_pos, experiment[aligned_pairs[oi][i].first], experiment[aligned_pairs[oi][i].second]);
 				/// @improvement make pairs_min_matches an advanced parameter
 				/* debug std::cout << " with pair: "<< aligned_pairs[i].first << " + " << aligned_pairs[i].second << std::endl; */
 				if((DoubleReal)res_1.size()/((DoubleReal)(experiment[aligned_pairs[oi][i].first].size()+experiment[aligned_pairs[oi][i].second].size())/DoubleReal(2)) >=  pairs_min_ratio/*  and res_1.size() >= pairs_min_matches */)

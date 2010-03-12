@@ -28,44 +28,44 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/COMPARISON/SPECTRA/AntisymetricAlignment.h>
+#include <OpenMS/COMPARISON/SPECTRA/AntisymmetricAlignment.h>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(AntisymetricAlignment, "$Id$")
+START_TEST(AntisymmetricAlignment, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-AntisymetricAlignment<Peak1D>* ptr = 0;
-START_SECTION(AntisymetricAlignment())
+AntisymmetricAlignment<Peak1D>* ptr = 0;
+START_SECTION(AntisymmetricAlignment())
 {
-	ptr = new AntisymetricAlignment<Peak1D>();
+	ptr = new AntisymmetricAlignment<Peak1D>();
 	TEST_NOT_EQUAL(ptr, 0)
 }
 END_SECTION
 
-START_SECTION(~AntisymetricAlignment())
+START_SECTION(~AntisymmetricAlignment())
 {
 	delete ptr;
 }
 END_SECTION
 
-START_SECTION((AntisymetricAlignment(const AntisymetricAlignment &source)))
+START_SECTION((AntisymmetricAlignment(const AntisymmetricAlignment &source)))
 {
   // TODO
 }
 END_SECTION
 
-START_SECTION((virtual ~AntisymetricAlignment()))
+START_SECTION((virtual ~AntisymmetricAlignment()))
 {
   // TODO
 }
 END_SECTION
 
-START_SECTION((AntisymetricAlignment& operator=(const AntisymetricAlignment &source)))
+START_SECTION((AntisymmetricAlignment& operator=(const AntisymmetricAlignment &source)))
 {
   // TODO
 }
@@ -83,7 +83,7 @@ START_SECTION((MSSpectrum<PeakT> getSymetricSpectrum(const MSSpectrum< PeakT > &
 }
 END_SECTION
 
-START_SECTION((void getAntisymetricAlignment(MSSpectrum< PeakT > &res_1, MSSpectrum< PeakT > &res_2, DoubleReal &score, DoubleReal &mod_pos, const MSSpectrum< PeakT > &s1, const MSSpectrum< PeakT > &s2) const ))
+START_SECTION((void getAntisymmetricAlignment(MSSpectrum< PeakT > &res_1, MSSpectrum< PeakT > &res_2, DoubleReal &score, DoubleReal &mod_pos, const MSSpectrum< PeakT > &s1, const MSSpectrum< PeakT > &s2) const ))
 {
   DoubleReal score, mod_pos;
   MSSpectrum<Peak1D> res_1, res_2, aacc, aawc;
@@ -114,8 +114,8 @@ START_SECTION((void getAntisymetricAlignment(MSSpectrum< PeakT > &res_1, MSSpect
 		aawc[i].setMZ(aawc[i].getMZ()+83.07);
 	}
 
-  AntisymetricAlignment<Peak1D> asa;
-  asa.getAntisymetricAlignment(res_1, res_2, score, mod_pos, aacc, aacc);
+  AntisymmetricAlignment<Peak1D> asa;
+  asa.getAntisymmetricAlignment(res_1, res_2, score, mod_pos, aacc, aacc);
   TEST_EQUAL(res_1.size(),res_2.size())
   TEST_EQUAL(res_1.size(),3)
   TEST_EQUAL(mod_pos,-1)
@@ -125,7 +125,7 @@ START_SECTION((void getAntisymetricAlignment(MSSpectrum< PeakT > &res_1, MSSpect
     TEST_EQUAL(res_1[i].getMZ(), mzs_peaks[i*2])
   }
 
-  asa.getAntisymetricAlignment(res_1, res_2, score, mod_pos, aacc, aawc);
+  asa.getAntisymmetricAlignment(res_1, res_2, score, mod_pos, aacc, aawc);
   TEST_EQUAL(res_1.size(),res_2.size())
   TEST_EQUAL(res_1.size(),3)
   TEST_EQUAL(mod_pos,247.1)
@@ -161,7 +161,7 @@ START_SECTION((void getAntisymetricAlignment(MSSpectrum< PeakT > &res_1, MSSpect
     std::cout << aacc[i].getMZ() << " vs " << aawc[i].getMZ() << " vs " << (aacc[i].getMZ()+83.07) << std::endl;
   }
 
-  asa.getAntisymetricAlignment(res_1, res_2, score, mod_pos, aacc, aawc);
+  asa.getAntisymmetricAlignment(res_1, res_2, score, mod_pos, aacc, aawc);
   TEST_EQUAL(res_1.size(),res_2.size())
   TEST_EQUAL(res_1.size(),4)
   TEST_EQUAL(mod_pos,247.1)

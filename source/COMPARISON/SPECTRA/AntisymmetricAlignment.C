@@ -26,7 +26,7 @@
 // --------------------------------------------------------------------------
 //
 
-#include <OpenMS/COMPARISON/SPECTRA/AntisymetricAlignment.h>
+#include <OpenMS/COMPARISON/SPECTRA/AntisymmetricAlignment.h>
 
 using namespace std;
 

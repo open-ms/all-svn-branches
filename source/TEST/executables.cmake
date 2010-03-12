@@ -265,7 +265,7 @@ set(comparison_executables_list
   SteinScottImproveScore_test
   ZhangSimilarityScore_test
   XCorrelation_test
-  AntisymetricAlignment_test
+  AntisymmetricAlignment_test
   SpectralNetworkNode_test
 )
 

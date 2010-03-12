@@ -25,8 +25,8 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 //
-#ifndef OPENMS_COMPARISON_SPECTRA_ANTISYMETRICALIGNMENT_H
-#define OPENMS_COMPARISON_SPECTRA_ANTISYMETRICALIGNMENT_H
+#ifndef OPENMS_COMPARISON_SPECTRA_ANTISYMMETRICALIGNMENT_H
+#define OPENMS_COMPARISON_SPECTRA_ANTISYMMETRICALIGNMENT_H
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/CONCEPT/Constants.h>
@@ -138,12 +138,12 @@ struct ASA_DP_Tables
 	/**
 		@brief Aligns the peaks of two spectra
 
-		@htmlinclude OpenMS_AntisymetricAlignment.parameters
+		@htmlinclude OpenMS_AntisymmetricAlignment.parameters
 
 		@ingroup SpectraComparison
 	*/
 	template <typename PeakT = Peak1D>
-	class AntisymetricAlignment
+	class AntisymmetricAlignment
 		: public DefaultParamHandler
 	{
 		typedef MSSpectrum<PeakT> SpectrumType;
@@ -153,8 +153,8 @@ struct ASA_DP_Tables
 		// @name Constructors and Destructors
 		// @{
 		/// default constructor
-		AntisymetricAlignment()
-		: DefaultParamHandler("AntisymetricAlignment")
+		AntisymmetricAlignment()
+		: DefaultParamHandler("AntisymmetricAlignment")
 		{
 				defaults_.setValue("peak_tolerance", 0.3, "Defines the absolut (in Da) peak tolerance");
 				defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
@@ -165,18 +165,18 @@ struct ASA_DP_Tables
 		}
 
 		/// copy constructor
-		AntisymetricAlignment(const AntisymetricAlignment& source)
+		AntisymmetricAlignment(const AntisymmetricAlignment& source)
 			: DefaultParamHandler(source)
 		{
 		}
 
 		/// destructor
-		virtual ~AntisymetricAlignment()
+		virtual ~AntisymmetricAlignment()
 		{
 		}
 
 		/// assignment operator
-		AntisymetricAlignment& operator = (const AntisymetricAlignment& source)
+		AntisymmetricAlignment& operator = (const AntisymmetricAlignment& source)
 		{
 			if (this != &source)
 			{
@@ -283,9 +283,9 @@ struct ASA_DP_Tables
 				return sym;
 			}
 
-			typename SpectrumType::IntegerDataArray ida_symetric; ida_symetric.resize(sym.size(),0);
-			sym.getIntegerDataArrays().push_back(ida_symetric);
-			sym.getIntegerDataArrays().push_back(ida_symetric);
+			typename SpectrumType::IntegerDataArray ida_symmetric; ida_symmetric.resize(sym.size(),0);
+			sym.getIntegerDataArrays().push_back(ida_symmetric);
+			sym.getIntegerDataArrays().push_back(ida_symmetric);
 
 			Real peak_tolerance = (Real)param_.getValue("peak_tolerance");
 
@@ -1878,7 +1878,7 @@ struct ASA_DP_Tables
 
 
 		/**
-			@brief Method to calculate a antisymetric alignment
+			@brief Method to calculate a antisymmetric alignment
 
 			@param res_1 Spectrum containing the aligned peaks from s1
 			@param res_2 Spectrum containing the aligned peaks from s2
@@ -1887,9 +1887,9 @@ struct ASA_DP_Tables
 			@param s2 the first input spectrum
 			@param s2 the second input spectrum
 
-			This method must have the first spectrum have a lesser or equal parent mass than the second spectrum, else a error is thrown. Also the first spectrum must be symetric, so synthetic peaks with zero intensity might be inserted. Input does not. Also the resulting spectra are intended for consensus making which takes a list of spectra.
+			This method must have the first spectrum have a lesser or equal parent mass than the second spectrum, else a error is thrown. Also the first spectrum must be symmetric, so synthetic peaks with zero intensity might be inserted. Input does not. Also the resulting spectra are intended for consensus making which takes a list of spectra.
 		*/
-		void getAntisymetricAlignment(MSSpectrum<PeakT>& res_1, MSSpectrum<PeakT>& res_2, DoubleReal& score, DoubleReal& mod_pos, const MSSpectrum<PeakT>& s1, const MSSpectrum<PeakT>& s2) const
+		void getAntisymmetricAlignment(MSSpectrum<PeakT>& res_1, MSSpectrum<PeakT>& res_2, DoubleReal& score, DoubleReal& mod_pos, const MSSpectrum<PeakT>& s1, const MSSpectrum<PeakT>& s2) const
 		{
 			//~ float sameVertexPenalty=-5, float ptmPenalty=-5
 			//~ sameVertexPenalty = -1000000, ptmPenalty = -200; //makes the test fail!
@@ -1947,7 +1947,7 @@ struct ASA_DP_Tables
 			//~ charge deconvolution to 'singly charged only' for identified spectra
 			filterHighCharges(res_1,2,3);
 
-			//~ change s1 to align antisymetrical into res_1
+			//~ change s1 to align antisymmetrical into res_1
 			res_1 = getSymetricSpectrum(res_1);
 
 			//~ prune to matching/ shift-matching peaks
@@ -2173,4 +2173,4 @@ struct ASA_DP_Tables
 
 
 }
-#endif //OPENMS_COMPARISON_SPECTRA_ANTISYMETRICALIGNMENT_H
+#endif //OPENMS_COMPARISON_SPECTRA_ANTISYMMETRICALIGNMENT_H

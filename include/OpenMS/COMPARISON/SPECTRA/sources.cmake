@@ -19,7 +19,7 @@ SpectrumPrecursorComparator.h
 SteinScottImproveScore.h
 ZhangSimilarityScore.h
 XCorrelation.h
-AntisymetricAlignment.h
+AntisymmetricAlignment.h
 )
 
 ### add path to the filenames

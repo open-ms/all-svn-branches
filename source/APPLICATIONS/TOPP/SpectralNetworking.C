@@ -5,7 +5,7 @@
 #include <OpenMS/COMPARISON/SPECTRA/BinnedSpectrum.h>
 #include <OpenMS/COMPARISON/SPECTRA/XCorrelation.h>
 #include <OpenMS/COMPARISON/SPECTRA/AntisymetricAlignment.h>
-#include <OpenMS/COMPARISON/CLUSTERING/StarClusters.h>
+#include <OpenMS/COMPARISON/CLUSTERING/SpectralNetworkNode.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/ParentPeakMower.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/Normalizer.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/ThresholdMower.h>
@@ -65,7 +65,7 @@ using namespace std;
 	{
 		if (section == "general")
 		{
-			Param p(StarClusters<Peak1D>().getDefaults());
+			Param p(SpectralNetworkNode<Peak1D>().getDefaults());
 			//~ remove all starclusters specific i.e. all but parentmass and peak tolerance
 			p.removeAll("m");
 			p.removeAll("f");
@@ -98,7 +98,7 @@ using namespace std;
 		}
 		if (section == "network")
 		{
-			Param p(StarClusters<Peak1D>().getDefaults());
+			Param p(SpectralNetworkNode<Peak1D>().getDefaults());
 			//~ remove all starclusters unspecific i.e. parentmass and peak tolerance
 			p.removeAll("p");
 			return p;
@@ -580,7 +580,7 @@ using namespace std;
 		Param star_param;
 		star_param.insert("",getParam_().copy(prefixes[0],true));
 		star_param.insert("",getParam_().copy(prefixes[1],true));
-		StarClusters<Peak1D> stars;
+		SpectralNetworkNode<Peak1D> stars;
 		stars.setParameters(star_param);
 
 		std::map< Size, std::set<Size> > indices_of_i_in_aligned_spectra; // map key is index i to spec s in original experiment, map value is all indices to s' in aligned_spectra (s' is a subset of peaks from s - the aligned ones )
@@ -693,7 +693,7 @@ using namespace std;
 		/*--------------------/
 		// build propagation
 		/--------------------*/
-		StarClusters<Peak1D> sc;
+		SpectralNetworkNode<Peak1D> sc;
 		sc.setParameters(star_param);
 		sc.propagateNetwork(experiment, aligned_pairs, mod_positions, ids);
 
@@ -839,7 +839,7 @@ using namespace std;
 			IDMapper idm;
 			idm.annotate(experiment, peptide_ids, protein_ids);
 
-			StarClusters<Peak1D> scorer;
+			SpectralNetworkNode<Peak1D> scorer;
 			for(Size i = 0; i < experiment.size(); ++i)
 			{
 				if(experiment[i].getPeptideIdentifications().size()>0)

@@ -26,11 +26,11 @@
 // --------------------------------------------------------------------------
 //
 
-#include <OpenMS/COMPARISON/CLUSTERING/StarClusters.h>
+#include <OpenMS/COMPARISON/CLUSTERING/SpectralNetworkNode.h>
 
 using namespace std;
 
 namespace OpenMS
 {
-	//~ StarClusters<> default_starclusters_peak1d;
+	//~ SpectralNetworkNode<> default_starclusters_peak1d;
 }

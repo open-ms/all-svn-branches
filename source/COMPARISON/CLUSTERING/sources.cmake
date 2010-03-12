@@ -10,7 +10,7 @@ ClusterHierarchical.C
 CompleteLinkage.C
 EuclideanSimilarity.C
 SingleLinkage.C
-StarClusters.C
+SpectralNetworkNode.C
 )
 
 ### add path to the filenames

@@ -28,39 +28,39 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/COMPARISON/CLUSTERING/StarClusters.h>
+#include <OpenMS/COMPARISON/CLUSTERING/SpectralNetworkNode.h>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(StarClusters, "$Id$")
+START_TEST(SpectralNetworkNode, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-StarClusters<Peak1D>* ptr = 0;
-START_SECTION(StarClusters())
+SpectralNetworkNode<Peak1D>* ptr = 0;
+START_SECTION(SpectralNetworkNode())
 {
-	ptr = new StarClusters<Peak1D>();
+	ptr = new SpectralNetworkNode<Peak1D>();
 	TEST_NOT_EQUAL(ptr, 0)
 }
 END_SECTION
 
-START_SECTION(~StarClusters())
+START_SECTION(~SpectralNetworkNode())
 {
 	delete ptr;
 }
 END_SECTION
 
-START_SECTION((StarClusters(const StarClusters &source)))
+START_SECTION((SpectralNetworkNode(const SpectralNetworkNode &source)))
 {
-	ptr = new StarClusters<Peak1D>();
+	ptr = new SpectralNetworkNode<Peak1D>();
   Param param = ptr->getParameters();
 	param.setValue("peak_tolerance", 0.3);
 	param.setValue("parentmass_tolerance", 0.3);
 	ptr->setParameters(param);
-	StarClusters<Peak1D> copy(*ptr);
+	SpectralNetworkNode<Peak1D> copy(*ptr);
 	TEST_EQUAL(copy.getParameters(), ptr->getParameters());
 }
 END_SECTION

@@ -25,8 +25,8 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 //
-#ifndef OPENMS_COMPARISON_SPECTRA_STARCLUSTERS_H
-#define OPENMS_COMPARISON_SPECTRA_STARCLUSTERS_H
+#ifndef OPENMS_COMPARISON_SPECTRA_SPECTRALNETWORKNODES_H
+#define OPENMS_COMPARISON_SPECTRA_SPECTRALNETWORKNODES_H
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/KERNEL/MSSpectrum.h>
@@ -59,12 +59,12 @@ namespace OpenMS
 	/**
 		@brief develops extended spectrum information by tapping the spectrum information of related spectra
 
-		@htmlinclude OpenMS_StarClusters.parameters
+		@htmlinclude OpenMS_SpectralNetworkNode.parameters
 
 		@ingroup SpectraClustering
 	*/
 	template <typename PeakT = Peak1D>
-	class StarClusters
+	class SpectralNetworkNode
 		: public DefaultParamHandler
 	{
 	public:
@@ -79,8 +79,8 @@ namespace OpenMS
 		// @{
 
 		/// default constructor
-		StarClusters()
-				: DefaultParamHandler("StarClusters")
+		SpectralNetworkNode()
+				: DefaultParamHandler("SpectralNetworkNode")
 		{
 			defaults_.setValue("peak_tolerance", 0.3, "Defines the absolut (in Da) peak tolerance");
 			defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
@@ -92,20 +92,20 @@ namespace OpenMS
 		}
 
 		/// copy constructor
-		StarClusters(const StarClusters& source)
+		SpectralNetworkNode(const SpectralNetworkNode& source)
 			: DefaultParamHandler(source)
 		{
 		}
 		///
 
 		/// destructor
-		~StarClusters()
+		~SpectralNetworkNode()
 		{
 		}
 		///
 
 		/// assignment operator
-		StarClusters& operator = (const StarClusters& source)
+		SpectralNetworkNode& operator = (const SpectralNetworkNode& source)
 		{
 			if (this != &source)
 			{
@@ -773,4 +773,4 @@ namespace OpenMS
 
 	};
 }
-#endif //OPENMS_COMPARISON_SPECTRA_STARCLUSTERS_H
+#endif //OPENMS_COMPARISON_SPECTRA_SPECTRALNETWORKNODES_H

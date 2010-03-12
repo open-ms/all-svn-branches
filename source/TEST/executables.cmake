@@ -266,6 +266,7 @@ set(comparison_executables_list
   ZhangSimilarityScore_test
   XCorrelation_test
   AntisymetricAlignment_test
+  StarClusters_test
 )
 
 set(chemistry_executables_list
@@ -297,7 +298,7 @@ set(chemistry_executables_list
 set(analysis_executables_list
 	BaseGroupFinder_test
 	BaseSuperimposer_test
-	CompNovoIdentificationBase_test 
+	CompNovoIdentificationBase_test
 	CompNovoIdentificationCID_test
 	CompNovoIdentification_test
 	CompNovoIonScoringBase_test

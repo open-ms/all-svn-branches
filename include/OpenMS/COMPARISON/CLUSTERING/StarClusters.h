@@ -126,6 +126,11 @@ namespace OpenMS
 		*/
 		void reverseSpectrum(MSSpectrum<PeakType>& spec)
 		{
+			if(spec.empty())
+			{
+				throw Exception::IllegalArgument (__FILE__, __LINE__, __PRETTY_FUNCTION__, "no peaks");
+			}
+
 			/// @attention uncharged mass
 			DoubleReal pm(spec.getPrecursors().front().getUnchargedMass());
 
@@ -415,7 +420,6 @@ namespace OpenMS
 				mod_pos = 0;
 				mod_shift = 0;
 				sequence_correspondence.clear();
-				/* debug */std::cout << " exceeding tolerance by " << best_diff << std::endl;
 				return false;
 			}
 

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -185,8 +185,8 @@ namespace OpenMS
 			PositionType united_max;
 			DRange<D> united_range = DRange<D>::empty;
 			
-			PositionType other_min = other_range.min();
-			PositionType other_max = other_range.max();
+			PositionType other_min = other_range.minPosition();
+			PositionType other_max = other_range.maxPosition();
 			
 			for (Size i = 0; i != D; ++i)
 			{

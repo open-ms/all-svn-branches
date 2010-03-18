@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -206,10 +206,10 @@ namespace OpenMS
         if ( tmp_str != "" )
         {
           tmp_unique_id_interface.setUniqueId(tmp_str);
-          UInt64 element_index = tmp_unique_id_interface.getUniqueId();
+          UInt64 unique_id = tmp_unique_id_interface.getUniqueId();
 
           act_index_tuple.setMapIndex(map_index);
-          act_index_tuple.setElementIndex(element_index);
+          act_index_tuple.setUniqueId(unique_id);
 
           tmp_str = attributeAsString_(attributes, "rt");
           DPosition<2> pos;
@@ -760,7 +760,7 @@ namespace OpenMS
       {
         os << "\t\t\t\t<element"
           " map=\"" << it->getMapIndex() << "\""
-          " id=\"" << it->getElementIndex() << "\""
+          " id=\"" << it->getUniqueId() << "\""
           " rt=\"" << precisionWrapper(it->getRT()) << "\""
           " mz=\"" << precisionWrapper(it->getMZ()) << "\""
           " it=\"" << precisionWrapper(it->getIntensity()) << "\"";

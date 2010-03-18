@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Andreas Bertsch $
-// $Authors: $
+// $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_MZIDENTMLFILE_H
@@ -30,12 +30,11 @@
 
 #include <OpenMS/FORMAT/XMLFile.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
+#include <OpenMS/DATASTRUCTURES/StringList.h>
+#include <OpenMS/METADATA/Identification.h>
 
 namespace OpenMS
 {
-	class Identification;
-	class StringList;
-
 	/**
 		@brief File adapter for MzIdentML files
 

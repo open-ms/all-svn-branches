@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -195,6 +195,8 @@ class TOPPTOFCalibration
 		addDataProcessing_(ms_exp_raw, getProcessingInfo_(DataProcessing::CALIBRATION));
 
 		mz_data_file.store(out,ms_exp_raw);
+
+    std::cout << string::npos << "\n";
 
     return EXECUTION_OK;
   }

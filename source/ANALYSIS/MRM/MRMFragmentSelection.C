@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -37,7 +37,7 @@ namespace OpenMS
 	MRMFragmentSelection::MRMFragmentSelection()
 		: DefaultParamHandler("MRMFragmentSelection")
 	{
-		defaults_.setValue("num_top_peaks", 3, "Number of most intense peak to pick");
+		defaults_.setValue("num_top_peaks", 4, "Number of most intense peak to pick");
 		defaults_.setValue("min_pos_precursor_percentage", 80.0, "Minimal ion position the ion should have, relative to the precursor position");
 		defaults_.setValue("min_mz", 400.0, "Minimal m/z value that is allowed for selection.");
 		defaults_.setValue("max_mz", 1200.0, "Maximal m/z value that is allowed for selection.");
@@ -128,14 +128,16 @@ namespace OpenMS
 			if (type_found)
 			{
 				bool allow_loss_ions(param_.getValue("allow_loss_ions").toBool());
-				if (allow_loss_ions)
+				Size charges = count(name.begin(), name.end(), '+');
+				bool charges_ok = allowed_charges.contains(String(charges));
+				if (allow_loss_ions && charges_ok)
 				{
 					// TODO implement charges
 					return true;
 				}
 				else
 				{
-					if (!name.hasSubstring("-"))
+					if (! (name.hasSubstring("-H") || name.hasSubstring("-C") || name.hasSubstring("-N")))
 					{
 						Size c = count(name.begin(), name.end(), '+');
 						if (allowed_charges.contains(c))

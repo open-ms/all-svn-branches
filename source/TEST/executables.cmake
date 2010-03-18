@@ -149,13 +149,13 @@ set(format_executables_list
   MascotRemoteQuery_test
   MascotXMLFile_test
   MzDataFile_test
-	MzIdentMLFile_test
-	MzDataValidator_test
+  MzIdentMLFile_test
+  MzDataValidator_test
   MzIdentMLValidator_test
   MzMLFile_test
   MzMLValidator_test
   MzXMLFile_test
-	TraMLValidator_test
+  TraMLValidator_test
   OMSSACSVFile_test
   OMSSAXMLFile_test
   PTMXMLFile_test
@@ -167,14 +167,16 @@ set(format_executables_list
   PepXMLFileMascot_test
   PepXMLFile_test
   PersistentObject_test
+  ProtXMLFile_test
   SVOutStream_test
   SemanticValidator_test
   SequestInfile_test
   SequestOutfile_test
   TextFile_test
-	TraMLFile_test
+  TraMLFile_test
   TransformationXMLFile_test
   UnimodXMLFile_test
+	XMassFile_test
   XMLFile_test
   XMLValidator_test
   XTandemInfile_test
@@ -197,6 +199,7 @@ set(math_executables_list
   BilinearInterpolation_test
   GammaDistributionFitter_test
   GaussFitter_test
+  GumbelDistributionFitter_test
   Histogram_test
   LinearInterpolation_test
   LinearRegression_test
@@ -239,6 +242,7 @@ set(filtering_executables_list
   TOFCalibration_test
   ThresholdMower_test
   WindowMower_test
+	SpectraMerger_test
 )
 
 set(comparison_executables_list
@@ -325,7 +329,7 @@ set(analysis_executables_list
 	ItraqQuantifier_test
 	LabeledPairFinder_test
 	LocalLinearMap_test
-	MRMExperiment_test
+	TargetedExperiment_test
 	MRMFragmentSelection_test
 	MapAlignmentAlgorithmIdentification_test
 	MapAlignmentAlgorithmPoseClustering_test
@@ -409,13 +413,19 @@ set(transformations_executables_list
 set(simulation_executables_list
   DetectabilitySimulation_test
   DigestSimulation_test
-  ElutionModel_test
+  EGHModel_test
+  EGHFitter1D_test
   IonizationSimulation_test
   IsotopeModelGeneral_test
   MSSim_test
   PTMSimulation_test
   RTSimulation_test
   RawMSSignalSimulation_test
+)
+
+############### GUI executables (require MOC) ########
+set(GUI_executables_list
+	TOPPView_test
 )
 
 ### collect test executables
@@ -435,4 +445,5 @@ set(TEST_executables
 		${applications_executables_list}
 		${transformations_executables_list}
 		${simulation_executables_list}
+		## NO GUI lists here! (GUI is handled in source/TEST/CMakeLists.txt separately)
 		)

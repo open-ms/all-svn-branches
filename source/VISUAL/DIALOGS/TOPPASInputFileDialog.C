@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -56,12 +56,10 @@ namespace OpenMS
 	
 	void TOPPASInputFileDialog::showFileDialog()
 	{
-		QFileDialog fd;
-		fd.setFileMode(QFileDialog::ExistingFile);
-		//fd.setFilter("*.mzData;*.mzML;*.dta; .....");
-		if (fd.exec() && !fd.selectedFiles().empty())
+		QString file_name = QFileDialog::getOpenFileName(this, tr("Specify input file"), tr(""), tr(/*valid formats*/""));
+		if (file_name != "")
 		{
-			line_edit->setText(fd.selectedFiles().first());
+			line_edit->setText(file_name);
 		}
 	}
 	

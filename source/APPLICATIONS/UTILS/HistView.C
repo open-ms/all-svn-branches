@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -35,9 +35,9 @@
 */
 
 //QT
-#include <QtGui/QApplication>
-#include <QtGui/QMainWindow>
-#include <QtGui/QStyleFactory>
+#include <QApplication>
+#include <QMainWindow>
+#include <QStyleFactory>
 
 //OpenMS
 #include <OpenMS/DATASTRUCTURES/Param.h>
@@ -47,6 +47,7 @@
 //STL
 #include <iostream>
 #include <fstream>
+#include <string>
 
 using namespace OpenMS;
 using namespace OpenMS::Math;

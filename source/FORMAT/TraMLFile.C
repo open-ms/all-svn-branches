@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -39,7 +39,7 @@ namespace OpenMS
 {
 
 	TraMLFile::TraMLFile()
-		: XMLFile("/SCHEMAS/TraML0.9.0.xsd","0.9.0")
+		: XMLFile("/SCHEMAS/TraML0.9.3.xsd","0.9.3")
 	{
 	}
 
@@ -47,13 +47,13 @@ namespace OpenMS
 	{
 	}
 
-  void TraMLFile::load(const String& filename, MRMExperiment& exp)
+  void TraMLFile::load(const String& filename, TargetedExperiment& exp)
   {
   	Internal::TraMLHandler handler(exp, filename, schema_version_, *this);
     parse_(filename, &handler);
   }
 
-  void TraMLFile::store(const String& filename, const MRMExperiment& exp) const
+  void TraMLFile::store(const String& filename, const TargetedExperiment& exp) const
   {
   	Internal::TraMLHandler handler(exp, filename, schema_version_, *this);
     save_(filename, &handler);

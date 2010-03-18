@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -37,7 +37,7 @@ using namespace std;
 namespace OpenMS
 {
 
-	const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML", "mzIdentML", "GelML", "TraML", "MSP", "OMSSAXML", "PNG"};
+	const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "cdf", "IdXML", "ConsensusXML", "mgf", "ini", "TrafoXML", "mzML", "ms2", "pepXML", "protXML", "mzIdentML", "GelML", "TraML", "MSP", "OMSSAXML", "PNG", "fid"};
 
 	FileTypes::Type FileHandler::getType(const String& filename)
 	{
@@ -59,6 +59,11 @@ namespace OpenMS
 		// no '.' => unknown type
 		catch (Exception::ElementNotFound&)
 		{
+      // last chance, Bruker fid file
+      if (filename.size() >= 3 && filename.suffix(3) == "fid")
+      {
+        return FileTypes::XMASS;
+      }
 			return FileTypes::UNKNOWN;
 		}
 		tmp.toUpper();
@@ -121,6 +126,10 @@ namespace OpenMS
 		else if (tmp == "PEPXML") 
 		{
 			return FileTypes::PEPXML;
+		}
+		else if (tmp == "PROTXML") 
+		{
+			return FileTypes::PROTXML;
 		}
 		else if (tmp == "MZIDENTML")
 		{
@@ -211,6 +220,8 @@ namespace OpenMS
 			return true;
 		case FileTypes::PEPXML:
 			return true;
+		case FileTypes::PROTXML:
+			return true;
 		case FileTypes::GELML:
 			return true;
 		case FileTypes::OMSSAXML:
@@ -218,6 +229,9 @@ namespace OpenMS
 		case FileTypes::PNG:
 			return true;
 		case FileTypes::TRAML:
+			return true;
+		case FileTypes::XMASS:
+			return true;
 		default:
 			return false;
 		}
@@ -299,6 +313,9 @@ namespace OpenMS
 
 		//pepXML (all lines)
 		if (all_simple.hasSubstring("xmlns=\"http://regis-web.systemsbiology.net/pepXML\"")) return FileTypes::PEPXML;
+
+		//protXML (all lines)
+ 		if (all_simple.hasSubstring("xmlns=\"http://regis-web.systemsbiology.net/protXML\"")) return FileTypes::PROTXML;
 
     //feature map (all lines)
     if (all_simple.hasSubstring("<featureMap")) return FileTypes::FEATUREXML;

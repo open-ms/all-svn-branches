@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -135,6 +135,8 @@ class TOPPITRAQAnalyzer
 		// do normalization
 		Param quant_param(getParam_().copy("algorithm:Quantification:",true));
 		ItraqQuantifier itraq_quant(itraq_type, quant_param);
+
+		// TODO: allow multiple input files and do statistics on labelling efficiency etc...
 		
 		if (File::readable(idxml))
 		{

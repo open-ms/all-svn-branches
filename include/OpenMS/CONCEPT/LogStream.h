@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -290,10 +290,26 @@ namespace OpenMS
 
 
 	/**	Log Stream Class.
-			 \par
-			
-			 \par
+
+	Defines a log stream which features a cache and some formatting.
+	For the developer, however, only some macros are of interest which
+	will push the message that follows them into the
+	appropriate stream:
+	
+	Macros:
+		- LOG_FATAL_ERROR
+		- LOG_ERROR (non-fatal error are reported (processing continues))
+		- LOG_WARN  (warning, a piece of information which should be read by the user, should be logged)
+		- LOG_INFO (information, e.g. a status should be reported)
+		- LOG_DEBUG (general debugging information)
+				 
+			To use a specific logger of a log level simply
+			use it as cerr or cout: <br>
+			<code> LOG_ERROR << " A bad error occured ..."  </code> <br>
+			Which produces an error message in the log.
 	*/
+			 
+
 	class OPENMS_DLLAPI LogStream
 		: public std::ostream
 	{
@@ -432,18 +448,8 @@ namespace OpenMS
 
 	} // namespace Logger
 
-	/** @file Logstream */
-	/*@{ 
 	
-	/**@brief Macros to use the logger
-
-			To use a specific logger of a log level simply
-			use it as cerr or cout: <br>
-			<code> LOG_ERROR << " A bad error occured ..."  </code> <br>
-			Which produces an error message in the log. If the user does
-			not want to see warning, this error is still visible, for example.
-		**/
-	/** @def Macro to be used if fatal error are reported (processing stops) */
+	/// Macro to be used if fatal error are reported (processing stops)
 	#define LOG_FATAL_ERROR \
   Log_fatal << __FILE__ << "(" << __LINE__ << "): "
 	
@@ -463,43 +469,18 @@ namespace OpenMS
   #define LOG_DEBUG \
   Log_debug << __FILE__ << "(" << __LINE__ << "): "
 
-#ifndef OPENMS_RELEASE_MODE
-	/// Macro for verbose debugging information
-	#define LOG_DEBUG_INTENSE \
-  Log_debug_intense << __FILE__ << "(" << __LINE__ << "): "
 
-	/// Macro for development debugging messages
-	#define LOG_DEVELOPMENT \
-  Log_development << __FILE__ << "(" << __LINE__ << "): "
-#else
-  /// Macro for verbose debugging information
-  #define LOG_DEBUG_INTENSE \
-    if(0) cerr
-
-	/// Macro for development debugging messages
-  #define LOG_DEVELOPMENT \
-    if(0) cerr
-#endif
-	/*@}*/
-
-
-	/*@{
 	/**
  Global static instance of a logstream.
 			This instance of LogStream is by default bound to <b>cout</b> <b>cerr</b> by calling
 			the default constructor.
-	**/
+	*/
 
 	OPENMS_DLLAPI extern Logger::LogStream	Log_fatal;
 	OPENMS_DLLAPI extern Logger::LogStream  Log_error;
 	OPENMS_DLLAPI extern Logger::LogStream  Log_warn;
 	OPENMS_DLLAPI extern Logger::LogStream  Log_info;
 	OPENMS_DLLAPI extern Logger::LogStream  Log_debug;
-#ifndef OPENMS_RELEASE_MODE
-  OPENMS_DLLAPI extern Logger::LogStream  Log_debug_intense;
-  OPENMS_DLLAPI extern Logger::LogStream  Log_development;
-#endif
-	/*@}*/
 
 } // namespace OpenMS
 

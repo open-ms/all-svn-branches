@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -64,16 +64,11 @@ namespace OpenMS
 	
 	void TOPPASOutputFilesDialog::showFileDialog()
 	{
-		QFileDialog fd;
-		fd.setAcceptMode(QFileDialog::AcceptSave);
-		fd.setFileMode(QFileDialog::DirectoryOnly);
-		if (File::exists(File::path(line_edit->text())))
+		QString dir = File::exists(File::path(line_edit->text())) ? File::path(line_edit->text()).toQString() : "";
+		QString selected_dir = QFileDialog::getExistingDirectory(this, tr("Select output directory"), dir);
+		if (selected_dir != "")
 		{
-			fd.setDirectory(File::path(line_edit->text()).toQString());
-		}
-		if (fd.exec() && !fd.selectedFiles().empty())
-		{
-			line_edit->setText(fd.selectedFiles().first());
+			line_edit->setText(selected_dir);
 		}
 	}
 	

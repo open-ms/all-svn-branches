@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -40,11 +40,23 @@ namespace OpenMS
 	TheoreticalSpectrumGenerator::TheoreticalSpectrumGenerator()
 		:	DefaultParamHandler("TheoreticalSpectrumGenerator")
 	{
-		defaults_.setValue("add_isotopes", 0, "If set to 1 isotope peaks of the product ion peaks are added");
+		defaults_.setValue("add_isotopes", "false", "If set to 1 isotope peaks of the product ion peaks are added");
+		defaults_.setValidStrings("add_isotopes", StringList::create("true,false"));
+
 		defaults_.setValue("max_isotope", 2, "Defines the maximal isotopic peak which is added, add_isotopes must be set to 1");
-		defaults_.setValue("add_metainfo", 0, "Adds the type of peaks as metainfo to the peaks, like y8+, [M-H2O+2H]++");
-		defaults_.setValue("add_losses", 0, "Adds common losses to those ion expect to have them, only water and ammonia loss is considered");
-		defaults_.setValue("add_precursor_peaks", 0, "Adds peaks of the precursor to the spectrum, which happen to occur sometimes");
+
+		defaults_.setValue("add_metainfo", "false", "Adds the type of peaks as metainfo to the peaks, like y8+, [M-H2O+2H]++");
+		defaults_.setValidStrings("add_metainfo", StringList::create("true,false"));
+
+		defaults_.setValue("add_losses", "false", "Adds common losses to those ion expect to have them, only water and ammonia loss is considered");
+		defaults_.setValidStrings("add_losses", StringList::create("true,false"));
+
+		defaults_.setValue("add_precursor_peaks", "false", "Adds peaks of the precursor to the spectrum, which happen to occur sometimes");
+		defaults_.setValidStrings("add_precursor_peaks", StringList::create("true,false"));
+
+		defaults_.setValue("add_first_prefix_ion", "false", "If set to true e.g. b1 ions are added");
+		defaults_.setValidStrings("add_first_prefix_ion", StringList::create("true,false"));
+
 
 		// intensity options of the ions
 		defaults_.setValue("y_intensity", 1.0, "Intensity of the y-ions");
@@ -89,6 +101,8 @@ namespace OpenMS
 	{
 		if(peptide.size()==0)
 		{
+			spec.clear(true);
+			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "given sequence is empty");
 			return;
 		}
 
@@ -98,7 +112,7 @@ namespace OpenMS
 			addPeaks(spec, peptide, Residue::YIon, z);
 		}
 
-		bool add_precursor_peaks((int)param_.getValue("add_precursor_peaks"));
+		bool add_precursor_peaks(param_.getValue("add_precursor_peaks").toBool());
 		if (add_precursor_peaks)
 		{
 			addPrecursorPeaks(spec, peptide, charge);
@@ -110,6 +124,8 @@ namespace OpenMS
 	{
 		if(peptide.size()==0 or charge_lo > charge_hi)
 		{
+			spec.clear(true);
+			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "given sequence is empty");
 			return;
 		}
 
@@ -119,7 +135,7 @@ namespace OpenMS
 			addPeaks(spec, peptide, Residue::YIon, z);
 		}
 
-		bool add_precursor_peaks((int)param_.getValue("add_precursor_peaks"));
+		bool add_precursor_peaks(param_.getValue("add_precursor_peaks").toBool());
 		if (add_precursor_peaks)
 		{
 			for (Int z = charge_lo; z <= charge_hi; ++z)
@@ -132,96 +148,120 @@ namespace OpenMS
 
 	void TheoreticalSpectrumGenerator::addPeaks(RichPeakSpectrum& spectrum, const AASequence& peptide, Residue::ResidueType res_type, Int charge)
 	{
+		if (peptide.size() == 0)
+		{
+			spectrum.clear(true);
+			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "given sequence is empty");
+			return;
+		}
+
 		Map<DoubleReal, AASequence> ions;
 		Map<DoubleReal, String> names;
 		AASequence ion;
 		DoubleReal intensity(0);
 
-		if(peptide.size()>0)
+		bool add_first_prefix_ion(param_.getValue("add_first_prefix_ion").toBool());
+
+		// generate the ion peaks
+		switch(res_type)
 		{
-			// generate the ion peaks
-			switch(res_type)
+			case Residue::AIon:
 			{
-				case Residue::AIon:
-					for (Size i = 1; i != peptide.size(); ++i)
-					{
-						ion = peptide.getPrefix(i);
-						DoubleReal pos = ion.getMonoWeight(Residue::AIon, charge) / (DoubleReal)charge;
-						ions[pos] = ion;
-						names[pos] = "a"+String(i) + String(charge, '+');
-					}
-					intensity = (DoubleReal)param_.getValue("a_intensity");
-					break;
-
-				case Residue::BIon:
-					for (Size i = 1; i != peptide.size(); ++i)
-					{
-						ion = peptide.getPrefix(i);
-						DoubleReal pos = ion.getMonoWeight(Residue::BIon, charge) / (DoubleReal)charge;
-						ions[pos] = ion;
-						names[pos] = "b"+String(i) + String(charge, '+');
-					}
-					intensity = (DoubleReal)param_.getValue("b_intensity");
-					break;
-
-				case Residue::CIon:
-					for (Size i = 1; i != peptide.size(); ++i)
-					{
-						ion = peptide.getPrefix(i);
-						DoubleReal pos = ion.getMonoWeight(Residue::CIon, charge) / (DoubleReal)charge;
-						ions[pos] = ion;
-						names[pos] = "c"+String(i) + String(charge, '+');
-					}
-					intensity = (DoubleReal)param_.getValue("c_intensity");
-					break;
-
-				case Residue::XIon:
-					for (Size i = 1; i != peptide.size(); ++i)
-					{
-						ion = peptide.getSuffix(i);
-						DoubleReal pos = ion.getMonoWeight(Residue::XIon, charge) / (DoubleReal)charge;
-						ions[pos] = ion;
-						names[pos] = "x"+String(i) + String(charge, '+');
-					}
-					intensity = (DoubleReal)param_.getValue("x_intensity");
-					break;
-
-				case Residue::YIon:
-					for (Size i = 1; i != peptide.size(); ++i)
-					{
-						ion = peptide.getSuffix(i);
-						DoubleReal pos = ion.getMonoWeight(Residue::YIon, charge) / (DoubleReal)charge;
-						ions[pos] = ion;
-						names[pos] = "y"+String(i) + String(charge, '+');
-					}
-					intensity = (DoubleReal)param_.getValue("y_intensity");
-					break;
-
-				case Residue::ZIon:
-					for (Size i = 1; i != peptide.size(); ++i)
-					{
-						ion = peptide.getSuffix(i);
-						DoubleReal pos = ion.getMonoWeight(Residue::ZIon, charge) / (DoubleReal)charge;
-						ions[pos] = ion;
-						names[pos] = "z" + String(i) + String(charge, '+');
-					}
-					intensity = (DoubleReal)param_.getValue("z_intensity");
-					break;
-
-				default:
-					cerr << "Cannot create peaks of that ion type" << endl;
+				Size i = 1;
+				if (!add_first_prefix_ion)
+				{
+					i = 2;
+				}
+				for (; i < peptide.size(); ++i)
+				{
+					ion = peptide.getPrefix(i);
+					DoubleReal pos = ion.getMonoWeight(Residue::AIon, charge) / (DoubleReal)charge;
+					ions[pos] = ion;
+					names[pos] = "a"+String(i) + String(charge, '+');
+				}
+				intensity = (DoubleReal)param_.getValue("a_intensity");
+				break;
 			}
-		}
-		else
-		{
-			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "given sequence is empty");
-		}
+			case Residue::BIon:
+			{
+				Size i = 1;
+				if (!add_first_prefix_ion)
+				{
+				  i = 2;
+				}
+				for (; i < peptide.size(); ++i)
+				{
+					ion = peptide.getPrefix(i);
+					DoubleReal pos = ion.getMonoWeight(Residue::BIon, charge) / (DoubleReal)charge;
+					ions[pos] = ion;
+					names[pos] = "b"+String(i) + String(charge, '+');
+				}
+				intensity = (DoubleReal)param_.getValue("b_intensity");
+				break;
+			}
+			case Residue::CIon:
+			{
+				Size i = 1;
+				if (!add_first_prefix_ion)
+				{
+				  i = 2;
+				}
+				for (; i < peptide.size(); ++i)
+				{
+					ion = peptide.getPrefix(i);
+					DoubleReal pos = ion.getMonoWeight(Residue::CIon, charge) / (DoubleReal)charge;
+					ions[pos] = ion;
+					names[pos] = "c"+String(i) + String(charge, '+');
+				}
+				intensity = (DoubleReal)param_.getValue("c_intensity");
+				break;
+			}
+			case Residue::XIon:
+			{
+				for (Size i = 1; i < peptide.size(); ++i)
+				{
+					ion = peptide.getSuffix(i);
+					DoubleReal pos = ion.getMonoWeight(Residue::XIon, charge) / (DoubleReal)charge;
+					ions[pos] = ion;
+					names[pos] = "x"+String(i) + String(charge, '+');
+				}
+				intensity = (DoubleReal)param_.getValue("x_intensity");
+				break;
+			}
+			case Residue::YIon:
+			{
+				for (Size i = 1; i < peptide.size(); ++i)
+				{
+					ion = peptide.getSuffix(i);
+					DoubleReal pos = ion.getMonoWeight(Residue::YIon, charge) / (DoubleReal)charge;
+					ions[pos] = ion;
+					names[pos] = "y"+String(i) + String(charge, '+');
+				}
+				intensity = (DoubleReal)param_.getValue("y_intensity");
+				break;
+			}
+			case Residue::ZIon:
+			{
+				for (Size i = 1; i < peptide.size(); ++i)
+				{
+					ion = peptide.getSuffix(i);
+					DoubleReal pos = ion.getMonoWeight(Residue::ZIon, charge) / (DoubleReal)charge;
+					ions[pos] = ion;
+					names[pos] = "z" + String(i) + String(charge, '+');
+				}
+				intensity = (DoubleReal)param_.getValue("z_intensity");
+				break;
+			}
+
+			default:
+				cerr << "Cannot create peaks of that ion type" << endl;
+		}// end switch case
 
 		// get the params
-		bool add_losses((int)param_.getValue("add_losses"));
-		bool add_metainfo((int)param_.getValue("add_metainfo"));
-		bool add_isotopes((int)param_.getValue("add_isotopes"));
-		int max_isotope((int)param_.getValue("max_isotope"));
+		bool add_losses(param_.getValue("add_losses").toBool());
+		bool add_metainfo(param_.getValue("add_metainfo").toBool());
+		bool add_isotopes(param_.getValue("add_isotopes").toBool());
+		Int max_isotope((Int)param_.getValue("max_isotope"));
 		DoubleReal rel_loss_intensity((DoubleReal)param_.getValue("relative_loss_intensity"));
 
 		for (Map<DoubleReal, AASequence>::ConstIterator cit = ions.begin(); cit != ions.end(); ++cit)
@@ -338,11 +378,11 @@ namespace OpenMS
 
 	void TheoreticalSpectrumGenerator::addPrecursorPeaks(RichPeakSpectrum& spec, const AASequence& peptide, Int charge)
 	{
-		bool add_metainfo((int)param_.getValue("add_metainfo"));
+		bool add_metainfo(param_.getValue("add_metainfo").toBool());
 		DoubleReal pre_int((DoubleReal)param_.getValue("precursor_intensity"));
 		DoubleReal pre_int_H2O((DoubleReal)param_.getValue("precursor_H2O_intensity"));
 		DoubleReal pre_int_NH3((DoubleReal)param_.getValue("precursor_NH3_intensity"));
-		bool add_isotopes((int)param_.getValue("add_isotopes"));
+		bool add_isotopes(param_.getValue("add_isotopes").toBool());
     //int max_isotope((int)param_.getValue("max_isotope"));
 
 		if (add_isotopes)

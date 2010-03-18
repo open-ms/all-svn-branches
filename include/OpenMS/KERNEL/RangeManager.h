@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -106,23 +106,23 @@ namespace OpenMS
 			/// Returns the minimum position
 			const PositionType& getMin() const	
 			{ 
-				return pos_range_.min(); 
+				return pos_range_.minPosition(); 
 			}
 			/// Returns the maximum position
 		  const PositionType& getMax() const 
 		  { 
-		  	return pos_range_.max(); 
+		  	return pos_range_.maxPosition(); 
 		  }
 	
 			/// Returns the minimum intensity
 			DoubleReal getMinInt() const	
 			{ 
-				return int_range_.min()[0]; 
+				return int_range_.minPosition()[0]; 
 			}
 			/// Returns the maximum intensity
 		  DoubleReal getMaxInt() const 
 		  { 
-		  	return int_range_.max()[0]; 
+		  	return int_range_.maxPosition()[0]; 
 		  }
 			
 			/**
@@ -159,11 +159,11 @@ namespace OpenMS
 					return;
 				}
 				
-				PositionType min = pos_range_.min();
-				PositionType max = pos_range_.max();
+				PositionType min = pos_range_.minPosition();
+				PositionType max = pos_range_.maxPosition();
 				
-				DoubleReal it_min = int_range_.min()[0];
-				DoubleReal it_max = int_range_.max()[0];
+				DoubleReal it_min = int_range_.minPosition()[0];
+				DoubleReal it_max = int_range_.maxPosition()[0];
 				
 				for (PeakIteratorType it = begin; it != end; ++it)
 				{

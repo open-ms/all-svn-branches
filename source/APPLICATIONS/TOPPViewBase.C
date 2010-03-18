@@ -5,7 +5,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -801,7 +801,7 @@ namespace OpenMS
 		}
   }
 
-  void TOPPViewBase::addDataFile(const String& filename,bool show_options, bool add_to_recent, String caption, UInt window_id, Size spectrum_id)
+  void TOPPViewBase::addDataFile(const String& filename, bool show_options, bool add_to_recent, String caption, UInt window_id, Size spectrum_id)
   {
     setCursor(Qt::WaitCursor);
 
@@ -832,7 +832,7 @@ namespace OpenMS
       return;
 		}
 
-		//try to load data and determine if it is 1D or 2D data
+		//try to load data and determine if it's 1D or 2D data
 		FeatureMapType feature_map;
 		ExperimentType peak_map;
 		ConsensusMapType consensus_map;
@@ -1168,6 +1168,11 @@ namespace OpenMS
     {
       statusBar()->showMessage(msg.c_str(), time);
     }
+  }
+
+  void TOPPViewBase::showCursorStatusInvert(double mz, double rt)
+  { // swap rt vs mz (for vertical projection)
+    showCursorStatus(rt, mz);
   }
 
   void TOPPViewBase::showCursorStatus(double mz, double rt)
@@ -2069,7 +2074,7 @@ namespace OpenMS
   	if (sw2 != 0)
   	{
   		connect(sw2->getHorizontalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
-  		connect(sw2->getVerticalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
+  		connect(sw2->getVerticalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatusInvert(double,double)));
   		connect(sw2,SIGNAL(showSpectrumAs1D(int)),this,SLOT(showSpectrumAs1D(int)));
   	}
 
@@ -2286,15 +2291,22 @@ namespace OpenMS
 		filter_all +=" *.cdf";
 		filter_single += ";;ANDI/MS files (*.cdf)";
 #endif
-		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML);;" ;
-		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;XML files (*.xml);;all files (*)";
+		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML fid);;" ;
+		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;XML files (*.xml);;XMass Analysis (fid);;all files (*)";
 
 		QString open_path = current_path_.toQString();
 		if (path_overwrite!="")
 		{
 			open_path = path_overwrite.toQString();;
 		}
-	 	return QFileDialog::getOpenFileNames(this, "Open file(s)", open_path, (filter_all+ filter_single).toQString());
+		// we use the QT file dialog instead of using QFileDialog::getOpenFileNames(...)
+		// On Windows and Mac OS X, this static function will use the native file dialog and not a QFileDialog,
+		// which prevents us from doing GUI testing on it.
+		QFileDialog dialog(this, "Open file(s)", open_path, (filter_all+ filter_single).toQString());
+		dialog.setFileMode(QFileDialog::ExistingFiles);
+		QStringList file_names;
+		if (dialog.exec()) file_names = dialog.selectedFiles();
+		return file_names;
   }
 
   void TOPPViewBase::openFileDialog()
@@ -2627,9 +2639,11 @@ namespace OpenMS
 				Param p;
 
 				bool losses = (spec_gen_dialog.list_widget->item(7)->checkState() == Qt::Checked); // "Neutral losses"
-				p.setValue("add_losses", losses, "Adds common losses to those ion expect to have them, only water and ammonia loss is considered");
+				String losses_str = losses ? "true" : "false";
+				p.setValue("add_losses", losses_str, "Adds common losses to those ion expect to have them, only water and ammonia loss is considered");
 				bool isotopes = (spec_gen_dialog.list_widget->item(8)->checkState() == Qt::Checked); // "Isotope clusters"
-				p.setValue("add_isotopes", isotopes, "If set to 1 isotope peaks of the product ion peaks are added");
+				String iso_str = isotopes ? "true" : "false";
+				p.setValue("add_isotopes", iso_str, "If set to 1 isotope peaks of the product ion peaks are added");
 				p.setValue("a_intensity", spec_gen_dialog.a_intensity->value(), "Intensity of the a-ions");
 				p.setValue("b_intensity", spec_gen_dialog.b_intensity->value(), "Intensity of the b-ions");
 				p.setValue("c_intensity", spec_gen_dialog.c_intensity->value(), "Intensity of the c-ions");
@@ -2741,7 +2755,15 @@ namespace OpenMS
   		//copy data
   		ExperimentType exp;
 			activeCanvas_()->getVisiblePeakData(exp);
-
+  		
+  		// insert placeholder peaks
+  		const SpectrumCanvas::AreaType& area = activeCanvas_()->getVisibleArea();
+  		SpectrumType::PeakType p_left,p_right;
+  		p_left.setMZ(area.minPosition()[0]);
+  		exp.back().push_back(p_left);
+  		p_right.setMZ(area.maxPosition()[0]);
+  		exp.back().push_back(p_right);
+  		
 	    if (!w->canvas()->addLayer(exp))
 	  	{
 	  		return;
@@ -2835,7 +2857,7 @@ namespace OpenMS
 		qobject_cast<QWidget *>(log_->parent())->show();
 
 		//update log_
-		log_->textCursor().insertText(topp_.process->readAllStandardOutput());
+		log_->append(topp_.process->readAllStandardOutput());
 	}
 
 	Param TOPPViewBase::getSpectrumParameters_(UInt dim)

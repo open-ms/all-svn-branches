@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -291,9 +291,9 @@ namespace OpenMS
 
 DoubleReal CompNovoIonScoringBase::scoreIsotopes(const PeakSpectrum& spec, PeakSpectrum::ConstIterator it, Size charge)
 {
-//#ifdef ION_SCORING_DEBUG
+#ifdef ION_SCORING_DEBUG
 	cerr << "scoreIsotopes: " << spec.size() << " " << it->getPosition()[0] << " " << it->getIntensity() << " " << charge << endl;
-//#endif
+#endif
   DoubleReal it_pos(it->getMZ()); // ~ weight of the fragment
   DoubleReal actual_pos = it_pos;
 	UInt max_isotope_to_score = (UInt)param_.getValue("max_isotope_to_score");
@@ -311,9 +311,9 @@ DoubleReal CompNovoIonScoringBase::scoreIsotopes(const PeakSpectrum& spec, PeakS
 		
     if (fabs(fabs(actual_pos - it1_pos) - Constants::NEUTRON_MASS_U / (DoubleReal)charge) < fragment_mass_tolerance_ / (DoubleReal)charge)
     {
-//#ifdef ION_SCORING_DEBUG
+#ifdef ION_SCORING_DEBUG
 			cerr << actual_pos << " " << it1_pos << " " << charge << " " << fragment_mass_tolerance_ << endl;
-//#endif
+#endif
       iso_pattern.push_back(it1->getIntensity());
       actual_pos = it1_pos;
     }

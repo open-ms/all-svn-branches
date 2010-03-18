@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -58,6 +58,7 @@ map<String,String>keys_and_mods;
 fix_mods.push_back("Phospho (C)");
 var_mods.push_back("Phospho (D)");
 var_mods.push_back("Ethanolamine (C-term)");
+//var_mods.push_back("TMT6plex (N-term)");
 
 START_SECTION((bool operator==(const PepNovoInfile &pepnovo_infile) const))
   PepNovoInfile pepnovo_infile1;
@@ -93,14 +94,17 @@ START_SECTION(void getModifications(std::map<String,String>& modification_key_ma
 	pepnovo_infile.setModifications(fix_mods, var_mods);
 	pepnovo_infile.getModifications(keys_and_mods);
 
-	TEST_EQUAL(keys_and_mods.size(), 3)
+	//TEST_EQUAL(keys_and_mods.size(), 4)
+  TEST_EQUAL(keys_and_mods.size(), 3)
 
-  if(keys_and_mods.size()==3)
+
+  if(keys_and_mods.size()==4)
   {
     map<String, String>::iterator mod_it=keys_and_mods.begin();
     TEST_EQUAL((mod_it++)->first, "$+43")
     TEST_EQUAL((mod_it++)->first, "C+80")
-    TEST_EQUAL((mod_it)->first, "D+80")
+    TEST_EQUAL((mod_it++)->first, "D+80")
+//    TEST_EQUAL((mod_it)->first, "^+229")
   }
 END_SECTION
 
@@ -112,7 +116,12 @@ START_SECTION(void store(const String& filename))
 
 	// test actual program
 	pepnovo_infile.store(filename);
+//	pepnovo_infile.store("test_infile.txt");
+  
+
 	TEST_FILE_EQUAL(filename.c_str(), OPENMS_GET_TEST_DATA_PATH("PepNovoInfile_test_template.txt"));
+	// if the comparison fails because the unimod.xml has been replaced, remove non-ascii characters
+	// from the unimod.xml file. E.g. registrated trademark symbol
 END_SECTION
 
 

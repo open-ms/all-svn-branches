@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -75,7 +75,6 @@ namespace OpenMS
 		lambda.reserve(original_distance.dimensionsize());
 
 		startProgress(0,original_distance.dimensionsize(),"clustering data");
-
 
 		//initialize first pointer values
 		pi.push_back(0);
@@ -160,8 +159,27 @@ namespace OpenMS
 			}
 
 		}
-		endProgress();
+		//~ prepare to redo clustering to get all indices for binarytree in min index element representation
+		std::vector< std::set<Size> >clusters(original_distance.dimensionsize());
+		for (Size i = 0; i < original_distance.dimensionsize(); ++i)
+		{
+			clusters[i].insert(i);
+		}
+		for (Size cluster_step = 0; cluster_step < cluster_tree.size(); ++cluster_step)
+		{
+			Size new_left_child = *(clusters[cluster_tree[cluster_step].left_child].begin());
+			Size new_right_child = *(clusters[cluster_tree[cluster_step].right_child].begin());
+			clusters[cluster_tree[cluster_step].left_child].insert(clusters[cluster_tree[cluster_step].right_child].begin(),clusters[cluster_tree[cluster_step].right_child].end());
+			clusters.erase(clusters.begin()+cluster_tree[cluster_step].right_child);
+			std::swap(cluster_tree[cluster_step].left_child, new_left_child);
+			std::swap(cluster_tree[cluster_step].right_child, new_right_child);
+			if(cluster_tree[cluster_step].left_child > cluster_tree[cluster_step].right_child)
+			{
+				std::swap(cluster_tree[cluster_step].left_child , cluster_tree[cluster_step].right_child);
+			}
+		}
 
+		endProgress();
 	}
 
 }

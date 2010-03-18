@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -76,8 +76,8 @@ END_SECTION
 START_SECTION((void getIdentifications(std::vector<PeptideIdentification>& ids, const PeakMap& exp)))
   TheoreticalSpectrumGenerator tsg;
   Param tsg_param(tsg.getParameters());
-  tsg_param.setValue("add_losses", 1);
-  tsg_param.setValue("add_isotopes", 1);
+  tsg_param.setValue("add_losses", "true");
+  tsg_param.setValue("add_isotopes", "true");
   tsg.setParameters(tsg_param);
 
   RichPeakSpectrum rspec;
@@ -115,8 +115,8 @@ END_SECTION
 START_SECTION((void getIdentification(PeptideIdentification& id, const PeakSpectrum& CID_spec)))
   TheoreticalSpectrumGenerator tsg;
   Param tsg_param(tsg.getParameters());
-  tsg_param.setValue("add_losses", 1);
-  tsg_param.setValue("add_isotopes", 1);
+  tsg_param.setValue("add_losses", "true");
+  tsg_param.setValue("add_isotopes", "true");
   tsg.setParameters(tsg_param);
 
   RichPeakSpectrum rspec;

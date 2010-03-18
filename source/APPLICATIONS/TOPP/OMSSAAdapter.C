@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -122,7 +122,7 @@ class TOPPOMSSAAdapter
 			//-d <String> Blast sequence library to search.  Do not include .p* filename suffixes.
 			//-pc <Integer> The number of pseudocounts to add to each precursor mass bin.
 			//registerStringOption_("d", "<file>", "", "Blast sequence library to search.  Do not include .p* filename suffixes", true);
-			registerInputFile_("omssa_executable", "", "The 'omssacl' executable of the OMSSA installation", true);
+			registerInputFile_("omssa_executable", "", "", "The 'omssacl' executable of the OMSSA installation", true);
 			registerIntOption_("pc", "<Integer>", 1, "The number of pseudocounts to add to each precursor mass bin", false, true);
 			
 			//registerFlag_("omssa_out", "If this flag is set, the parameter 'in' is considered as an output file of OMSSA and will be converted to IdXML");
@@ -297,6 +297,7 @@ class TOPPOMSSAAdapter
 			PeakMap map;
 			
 			String parameters;
+      /// @todo This is not used! remove!
 			String temp_directory(getStringOption_("temp_directory"));
 			String unique_name = File::getUniqueName(); // body for the tmp files
 			String unique_input_name = unique_name + "_OMSSA.mgf";
@@ -309,7 +310,7 @@ class TOPPOMSSAAdapter
 			//-------------------------------------------------------------
 		
 			// get version of OMSSA
-			String version_call = omssa_executable + " -version > " + unique_version_name;
+			String version_call = "\"" + omssa_executable + "\"" + " -version > " + unique_version_name;
 			int status = system(version_call.c_str());
 			if (status != 0)
 			{
@@ -599,7 +600,7 @@ class TOPPOMSSAAdapter
 			MascotInfile omssa_infile;
 			omssa_infile.store(unique_input_name, map, "OMSSA search tmp file");
 
-			String call = omssa_executable + " " + parameters;
+			String call = "\"" + omssa_executable + "\"" + " " + parameters;
 
 			writeDebug_(call, 5);
 			status = system(call.c_str());

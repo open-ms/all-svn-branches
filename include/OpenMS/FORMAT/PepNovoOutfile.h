@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -73,24 +73,24 @@ namespace OpenMS
 				@param protein_identification the protein identification
 				@param score_threshold cutoff threshold for the PepNovo score (PnvScr)
 				@param id_rt_mz map the spectrum identifiers returned by PepNovo
-				to the rt and mz values of the spectrum (used to map the identifications back to the spectra). key= <PepNovo Id>, value= <pair<rt,mz> >.
+				to the rt and mz values of the spectrum (used to map the identifications back to the spectra). key= &lt;PepNovo Id&gt;, value= &lt;pair&lt;rt,mz&gt; &gt;.
 				For spectra not present in this map identifications cannot be mapped back.
-				@param mod_id_map map the OpenMS id for modifications (FullId) to the ids returned by PepNovo key= <PepNovo_key>, value= <OpenMS FullId>
+				@param mod_id_map map the OpenMS id for modifications (FullId) to the ids returned by PepNovo key= &lt;PepNovo_key&gt;, value= &lt;OpenMS FullId&gt;
 			*/
 			void load(const std::string& result_filename, std::vector< PeptideIdentification >& peptide_identifications,
 			    ProteinIdentification& protein_identification,
-			    const Real& score_threshold,
-			    const std::map< String, std::pair<Real,Real> >& id_rt_mz,
+			    const DoubleReal& score_threshold,
+			    const std::map< String, std::pair<DoubleReal,DoubleReal> >& id_rt_mz,
 			    const std::map<String, String> &mod_id_map);
 
 			/** @brief get the search engine version and search parameters from a PepNovo output file
 			 *
 			 * search parameters (precursor tolerance, peak mass tolerance, allowed modifications)are stored in the protein_identification.
 
-				@param pepnovo_output_filename
+				@param pepnovo_output_without_parameters_filename
 				@param protein_identification
 			*/
-			void getSearchEngineAndVersion(const String& pepnovo_output__filename, ProteinIdentification& protein_identification);
+			void getSearchEngineAndVersion(const String& pepnovo_output_without_parameters_filename, ProteinIdentification& protein_identification);
 
 	};
 

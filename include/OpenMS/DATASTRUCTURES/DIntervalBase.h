@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,8 +41,8 @@ namespace OpenMS
 
 			See DIntervalBase for a closed interval and DRange for a half-open interval class.
 
-			@invariant All methods maintain the invariant that min() is geometrically less or equal max() 
-			           i.e. min()[x] <= max()[x].
+			@invariant All methods maintain the invariant that minPosition() is geometrically less or equal maxPosition() 
+			           i.e. minPosition()[x] <= maxPosition()[x].
 		*/
 		template <UInt D>
 		class DIntervalBase
@@ -70,8 +70,8 @@ namespace OpenMS
 					Creates an empty interval with corners at infinity.
 				*/
 				DIntervalBase()
-					: min_(PositionType::max()),
-						max_(PositionType::min_negative())
+					: min_(PositionType::maxPositive()),
+						max_(PositionType::minNegative())
 				{
 				}
 				
@@ -111,13 +111,13 @@ namespace OpenMS
 				//@{
 				
 				/// Accessor to minimum position
-				inline PositionType const & min() const
+				inline PositionType const & minPosition() const
 				{
 					return min_;
 				}
 		
 				/// Accessor to maximum position
-				inline PositionType const & max() const
+				inline PositionType const & maxPosition() const
 				{
 					return max_;
 				}
@@ -125,8 +125,8 @@ namespace OpenMS
 				/**
 					@brief Mutator for minimum position
 				
-					@note The minimum position given here will be returned my min() after the method.
-					      If necessary the value returned by max() will be adjusted.					
+					@note The minimum position given here will be returned my minPosition() after the method.
+					      If necessary the value returned by maxPosition() will be adjusted.					
 				*/
 				void setMin(PositionType const & position)
 				{
@@ -140,8 +140,8 @@ namespace OpenMS
 				/**
 					@brief Mutator for maximum position
 				
-					@note The maximum position given here will be returned my max() after the method.
-					      If necessary the value returned by min() will be adjusted.
+					@note The maximum position given here will be returned my maxPosition() after the method.
+					      If necessary the value returned by minPosition() will be adjusted.
 				*/
 				void setMax(PositionType const & position)
 				{
@@ -172,8 +172,8 @@ namespace OpenMS
 				{
 					for (UInt i=0; i<std::min(D,D2); ++i)
 					{
-						min_[i] = rhs.min()[i];
-						max_[i] = rhs.max()[i];
+						min_[i] = rhs.minPosition()[i];
+						max_[i] = rhs.maxPosition()[i];
 					}
 				}
 				
@@ -331,15 +331,15 @@ namespace OpenMS
 			
 			template <UInt D>
 			DIntervalBase<D> const DIntervalBase<D>::empty 
-			= DIntervalBase<D>(std::make_pair(DIntervalBase<D>::PositionType::max(), DIntervalBase<D>::PositionType::min_negative()));
+			= DIntervalBase<D>(std::make_pair(DIntervalBase<D>::PositionType::maxPositive(), DIntervalBase<D>::PositionType::minNegative()));
 			
 			///Print the contents to a stream.
 			template <UInt D>
 			std::ostream& operator << (std::ostream& os, const DIntervalBase<D>& rhs)
 			{
 				os << "--DIntervalBase BEGIN--"<<std::endl;
-				os << "MIN --> " << rhs.min() << std::endl;
-				os << "MAX --> " << rhs.max() << std::endl;
+				os << "MIN --> " << rhs.minPosition() << std::endl;
+				os << "MAX --> " << rhs.maxPosition() << std::endl;
 				os << "--DIntervalBase END--"<<std::endl;
 				return os;
 			}

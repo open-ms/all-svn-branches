@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -47,8 +47,8 @@ RichPeakSpectrum spec1, spec2, spec3;
 
 TheoreticalSpectrumGenerator tsg;
 Param tsg_param(tsg.getParameters());
-tsg_param.setValue("add_metainfo", 1);
-tsg_param.setValue("add_losses", 1);
+tsg_param.setValue("add_metainfo", "true");
+tsg_param.setValue("add_losses", "true");
 tsg.setParameters(tsg_param);
 tsg.getSpectrum(spec1, AASequence("DFPIANGER"), 1);
 tsg.getSpectrum(spec2, AASequence("DFPIANGEK"), 1);

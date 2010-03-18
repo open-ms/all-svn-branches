@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -165,14 +165,14 @@ namespace OpenMS
 		DRange<3> data_range = canvas->getDataRange();
 		CoordinateType y_pos = start_point_.getY() * canvas->getPercentageFactor();
 		
-		if (y_pos < data_range.min()[1])
+		if (y_pos < data_range.minPosition()[1])
 		{
-			start_point_.setY(data_range.min()[1] / canvas->getPercentageFactor());
+			start_point_.setY(data_range.minPosition()[1] / canvas->getPercentageFactor());
 			end_point_.setY(start_point_.getY());
 		}
-		if (y_pos > data_range.max()[1])
+		if (y_pos > data_range.maxPosition()[1])
 		{
-			start_point_.setY(data_range.max()[1] / canvas->getPercentageFactor());
+			start_point_.setY(data_range.maxPosition()[1] / canvas->getPercentageFactor());
 			end_point_.setY(start_point_.getY());
 		}
 	}

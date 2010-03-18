@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -588,6 +588,15 @@ class TOPPPILISModel
 						}
 					}
 				}
+			}
+			else
+			{
+				model.setParameters(pilis_param);
+				for (vector<PILISCrossValidation::Peptide>::const_iterator it = peptides.begin(); it != peptides.end(); ++it)
+				{
+					model.train(it->spec, it->sequence, it->charge);
+				}
+				model.evaluate();
 			}
 
 			if (trained_model_file != "")

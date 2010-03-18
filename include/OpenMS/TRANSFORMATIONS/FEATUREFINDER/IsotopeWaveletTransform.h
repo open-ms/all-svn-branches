@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -39,6 +39,7 @@
 #include <cmath>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_statistics_double.h>
+#include <boost/math/special_functions/bessel.hpp>
 #include <math.h>
 #include <vector>
 #include <map>
@@ -352,27 +353,29 @@ namespace OpenMS
 				const DoubleReal seed_mz, const UInt c, const DoubleReal ampl_cutoff) ;	
 
 
-			/** @brief A ugly but necessary function to handle "off-by-1-Dalton predictions" due to idiosyncrasies of the data set
+			/** @brief An ugly but necessary function to handle "off-by-1-Dalton predictions" due to idiosyncrasies of the data set
  				* (in comparison to the averagine model)
  				* @param candidate The wavelet transformed spectrum containing the candidate.
  				* @param ref The original spectrum containing the candidate.
  				* @param seed_mz The m/z position of the candidate pattern.
  				* @param c The predicted charge state minus 1 (e.g. c=2 means charge state 3) of the candidate.
+ 				* @param intens Intensity 				
  				* @param scan_index The index of the scan under consideration (w.r.t. the original map). 
 				* @param check_PPMs Applies an additional filter removing peptide candidates whose masses deviate more than 200 ppm from the average peptide mass model. */
 			virtual bool checkPositionForPlausibility_ (const TransSpectrum& candidate, const MSSpectrum<PeakType>& ref, const DoubleReal seed_mz, 
-				const UInt c, const UInt scan_index, const bool check_PPMs) ;
+				const UInt c, const DoubleReal intens, const UInt scan_index, const bool check_PPMs) ;
 			
-			/** @brief A ugly but necessary function to handle "off-by-1-Dalton predictions" due to idiosyncrasies of the data set
+			/** @brief An ugly but necessary function to handle "off-by-1-Dalton predictions" due to idiosyncrasies of the data set
  				* (in comparison to the averagine model)
  				* @param candidate The wavelet transformed spectrum containing the candidate. 
  				* @param ref The original spectrum containing the candidate.
  				* @param seed_mz The m/z position of the candidate pattern.
  				* @param c The predicted charge state minus 1 (e.g. c=2 means charge state 3) of the candidate.
+ 				* @param intens Intensity
  				* @param scan_index The index of the scan under consideration (w.r.t. the original map). 
 				* @param check_PPMs Applies an additional filter removing peptide candidates whose masses deviate more than 200 ppm from the average peptide mass model. */
 			virtual bool checkPositionForPlausibility_ (const MSSpectrum<PeakType>& candidate, const MSSpectrum<PeakType>& ref, const DoubleReal seed_mz, 
-				const UInt c, const UInt scan_index, const bool check_PPMs) ;
+				const UInt c, const DoubleReal intens, const UInt scan_index, const bool check_PPMs) ;
 			
 			virtual std::pair<DoubleReal, DoubleReal> checkPPMTheoModel_ (const MSSpectrum<PeakType>& ref, const DoubleReal c_mz) ;
 
@@ -1523,7 +1526,7 @@ namespace OpenMS
 	
 			if (bwd_diffs[i]>0 && bwd_diffs[i+1]<0)
 			{	
-				checkPositionForPlausibility_ (candidate, ref, final_box[i].mz, final_box[i].c, scan_index, check_PPMs);	
+				checkPositionForPlausibility_ (candidate, ref, final_box[i].mz, final_box[i].c, final_box[i].intens, scan_index, check_PPMs);	
 				continue;
 			};
 		};
@@ -2085,7 +2088,7 @@ namespace OpenMS
 			
 			if (bwd_diffs[i]>0 && bwd_diffs[i+1]<0)
 			{					
-				checkPositionForPlausibility_ (candidates, ref, final_box[i].mz, final_box[i].c, scan_index, check_PPMs);	
+				checkPositionForPlausibility_ (candidates, ref, final_box[i].mz, final_box[i].c, final_box[i].intens, scan_index, check_PPMs);	
 				continue;
 			};
 		};
@@ -2102,7 +2105,7 @@ namespace OpenMS
 		typename std::multimap<DoubleReal, Box>::iterator iter;
 		typename Box::iterator box_iter;
 		UInt best_charge_index; DoubleReal best_charge_score, c_mz, c_RT; UInt c_charge;
-		DoubleReal av_intens=0, av_score=0, av_mz=0, av_RT=0, mz_cutoff;
+		DoubleReal av_intens=0, av_score=0, av_mz=0, av_RT=0, mz_cutoff, lambda;
 		ConvexHull2D c_conv_hull;
 
 		typename std::pair<DoubleReal, DoubleReal> c_extend;
@@ -2159,9 +2162,7 @@ namespace OpenMS
 				};
 				av_RT += c_RT;
 			};
-			av_intens /= (DoubleReal)charge_binary_votes[best_charge_index];
-
-			av_mz /= av_intens*(DoubleReal)charge_binary_votes[best_charge_index];
+			av_mz /= av_intens;
 			av_score /= (DoubleReal)charge_binary_votes[best_charge_index];
 			av_RT /= (DoubleReal)c_box.size();
 
@@ -2170,6 +2171,9 @@ namespace OpenMS
 			c_feature.setCharge (c_charge);
 			c_feature.setConvexHulls (std::vector<ConvexHull2D> (1, c_conv_hull));
 			
+			//This makes the intensity value independent of the m/z (the lambda) value (Skellam distribution)
+			lambda = IsotopeWavelet::getLambdaL(av_mz*c_charge);
+			av_intens /= exp(-2*lambda) * boost::math::cyl_bessel_i(0, 2*lambda);
 			c_feature.setMZ (av_mz);
 			c_feature.setIntensity (av_intens);
 			c_feature.setRT (av_RT);
@@ -2183,7 +2187,7 @@ namespace OpenMS
 
 	template <typename PeakType>
 	bool IsotopeWaveletTransform<PeakType>::checkPositionForPlausibility_ (const MSSpectrum<PeakType>& candidate,
-		const MSSpectrum<PeakType>& ref, const DoubleReal seed_mz, const UInt c, const UInt scan_index, const bool check_PPMs)
+		const MSSpectrum<PeakType>& ref, const DoubleReal seed_mz, const UInt c, const DoubleReal intens, const UInt scan_index, const bool check_PPMs)
 	{
 		typename MSSpectrum<PeakType>::const_iterator iter; 
 		UInt peak_cutoff;
@@ -2233,14 +2237,14 @@ namespace OpenMS
 		UInt real_mz_begin = distance (ref.begin(), real_l_MZ_iter);
 		UInt real_mz_end = distance (ref.begin(), real_r_MZ_iter);
 
-		push2Box_ (real_mz, scan_index, c, c_score, real_intens, ref.getRT(), real_mz_begin, real_mz_end);
+		push2Box_ (real_mz, scan_index, c, c_score, intens, ref.getRT(), real_mz_begin, real_mz_end);
 		return (true);
 	}
 
 
 	template <typename PeakType>
 	bool IsotopeWaveletTransform<PeakType>::checkPositionForPlausibility_ (const TransSpectrum& candidate,
-		const MSSpectrum<PeakType>& ref, const DoubleReal seed_mz, const UInt c, const UInt scan_index, const bool check_PPMs)
+		const MSSpectrum<PeakType>& ref, const DoubleReal seed_mz, const UInt c, const DoubleReal intens, const UInt scan_index, const bool check_PPMs)
 	{
 		typename MSSpectrum<PeakType>::const_iterator iter; 
 		UInt peak_cutoff;
@@ -2289,7 +2293,7 @@ namespace OpenMS
 		UInt real_mz_begin = distance (ref.begin(), real_l_MZ_iter);
 		UInt real_mz_end = distance (ref.begin(), real_r_MZ_iter);
 					
-		push2Box_ (real_mz, scan_index, c, c_score, real_intens, ref.getRT(), real_mz_begin, real_mz_end);
+		push2Box_ (real_mz, scan_index, c, c_score, intens, ref.getRT(), real_mz_begin, real_mz_end);
 		return (true);
 	}
 

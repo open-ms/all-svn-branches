@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2008 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,6 +43,7 @@
   - @subpage UTILS_XMLValidator - Validates XML files against an XSD schema.
 	- @subpage UTILS_SemanticValidator - SemanticValidator for analysisXML and mzML files.
   - @subpage UTILS_CVInspector - A tool for visualization and validation of PSI mapping and CV files.
+	- @subpage UTILS_IDSplitter - Splits protein/peptide identifications off of annotated data files.
   
   <b>Algorithm evaluation</b>
   - @subpage UTILS_FFEval - Evaluation tool for for feature detection algorithms.
@@ -65,6 +66,7 @@
 
 
 	<b>Misc</b>
+  - @subpage UTILS_ImageCreator - Creates images from MS1 data (with MS2 data points indicated as dots).
   - @subpage UTILS_HistView - A viewer for histograms.
   - @subpage UTILS_MSSimulator - A highly configurable simulator for mass spectrometry experiments.
   - @subpage UTILS_SpectrumGeneratorNetworkTrainer - Trainer for Probabilistic network as input for AdvancedSpectrumGenerator.

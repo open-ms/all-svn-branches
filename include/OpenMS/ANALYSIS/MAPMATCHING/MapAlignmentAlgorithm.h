@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -108,8 +108,7 @@ namespace OpenMS
 
 		/// for internal use only!
     static void applyToFeature_( const std::vector<Feature>::iterator &iter,
-                                 TransformationDescription::Trafo_ const& trafo
-                               );
+                                 const TransformationDescription& trafo );
 
 	 private:
 		/// Copy constructor is not implemented -> private

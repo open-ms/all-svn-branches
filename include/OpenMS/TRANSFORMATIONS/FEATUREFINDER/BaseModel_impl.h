@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -39,6 +39,7 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ProductModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LmaGaussModel.h>
+#include <OpenMS/SIMULATION/EGHModel.h>
 
 namespace OpenMS
 {
@@ -60,6 +61,7 @@ namespace OpenMS
         Factory< BaseModel<1> >::registerProduct(LmaIsotopeModel::getProductName(), &LmaIsotopeModel::create);
         Factory< BaseModel<1> >::registerProduct(EmgModel::getProductName(), &EmgModel::create);
         Factory< BaseModel<1> >::registerProduct(LmaGaussModel::getProductName(), &LmaGaussModel::create);
+        Factory< BaseModel<1> >::registerProduct(EGHModel::getProductName(), &EGHModel::create);
 
         return;
     }

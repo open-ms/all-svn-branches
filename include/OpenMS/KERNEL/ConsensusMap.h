@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -80,7 +80,7 @@ namespace OpenMS
 				/// Label e.g. 'heavy' and 'light' for ICAT, or 'sample1' and 'sample2' for label-free quantitation
 				String label;
 				/// @brief Number of elements (features, peaks, ...).
-				/// This is e.g. used to check for correct element indices when writing a consensus map
+				/// This is e.g. used to check for correct element indices when writing a consensus map TODO fix that
 				Size size;
 				/// Unique id of the file
 				UInt64 unique_id;
@@ -304,7 +304,7 @@ namespace OpenMS
 				because that is the way it is meant to be used in the algorithms.
 
 				@param input_map_index The index of the input map.
-				@param input_map The container to be converted.  (Must support size() and operator[].)
+				@param input_map The container to be converted.
 				@param output_map The resulting ConsensusMap.
 
 			*/
@@ -319,7 +319,7 @@ namespace OpenMS
 
         for (UInt64 element_index = 0; element_index < input_map.size(); ++element_index )
 				{
-					output_map.push_back( ConsensusFeature( input_map_index, input_map[element_index].getUniqueId(), input_map[element_index] ) );
+					output_map.push_back( ConsensusFeature( input_map_index, input_map[element_index] ) );
 				}
 				output_map.getFileDescriptions()[input_map_index].size = (Size) input_map.size();
         output_map.setProteinIdentifications(input_map.getProteinIdentifications());
@@ -356,7 +356,7 @@ namespace OpenMS
 				std::partial_sort( tmp.begin(), tmp.begin()+n, tmp.end(), reverseComparator(Peak2D::IntensityLess()) );
 				for (Size element_index = 0; element_index < n; ++element_index )
 				{
-					output_map.push_back( ConsensusFeature(input_map_index, element_index, tmp[element_index] ) );
+					output_map.push_back( ConsensusFeature(input_map_index, tmp[element_index], element_index ) );
 				}
 				output_map.getFileDescriptions()[input_map_index].size = n;
 				output_map.updateRanges();
@@ -472,10 +472,10 @@ namespace OpenMS
 				return !(operator==(rhs));
 			}
 
-      /**@brief Applies a member function of Type to all consensus features.
+      /**@brief Applies a member function of Type to the container itself and all consensus features.
          The returned values are accumulated.
 
-         <b>Example:</b>  The following will print the number of features with invalid unique ids:
+         <b>Example:</b>  The following will print the number of features with invalid unique ids (plus 1 if the container has an invalid UID as well):
          @code
          ConsensusMap cm;
          (...)

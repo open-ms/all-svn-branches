@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -66,6 +66,8 @@ namespace OpenMS
 			modification_->setId(title);
 
 			String full_name(attributeAsString_(attributes, "full_name"));
+			// full_name.substitute("®", ""); // remove damn character (will be interpreted differently across platforms)
+			// deleted this in the unimod.xml file
 			modification_->setFullName(full_name);
 
 			String record_id(attributeAsString_(attributes, "record_id"));

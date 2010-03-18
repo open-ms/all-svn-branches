@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -50,6 +50,7 @@ class QTreeWidgetItem;
 namespace OpenMS
 {
 	class TOPPASWidget;
+	class TOPPASScene;
 	class TOPPASTabBar;
 	
   /**
@@ -81,7 +82,7 @@ namespace OpenMS
 			/// loads the files and updates the splashscreen
 			void loadFiles(const StringList& list, QSplashScreen* splash_screen);
 			/// opens the file in a new window
-			void openFile(const String& file_name);
+			void openFile(const String& file_name, bool in_new_window = true);
 
     public slots:
     	
@@ -91,7 +92,9 @@ namespace OpenMS
 			void openExampleDialog();
       /// shows the dialog for creating a new file
       void newFileDialog();
-      /// shows the dialog for saving the current file
+      /// shows the dialog for including another workflow in the currently opened one
+			void includeWorkflowDialog();
+			/// shows the dialog for saving the current file
       void saveFileDialog();
 			/// shows the dialog for saving the current file as new file
       void saveAsFileDialog(TOPPASWidget* tw = 0);
@@ -138,6 +141,10 @@ namespace OpenMS
 			void updateTOPPOutputLog(const QString& out);
 			/// Called by the scene if the pipeline execution finishes successfully
 			void showSuccessLogMessage();
+			/// Saves @p scene to the clipboard
+			void saveToClipboard(TOPPASScene* scene);
+			/// Sends the clipboard content to the sender of the connected signal
+			void sendClipboardContent();
 			
     protected slots:
 		
@@ -198,7 +205,13 @@ namespace OpenMS
 			
 			/// The path for temporary files
 			String tmp_path_;
+			
+			/// Offset counter for new inserted nodes (to avoid invisible stacking)
+			static int node_offset_;
       
+			/// z-value counter for new inserted nodes (new nodes should be on top)
+			static qreal z_value_;
+
       ///returns a pointer to the active TOPPASWidget (0 if none is active)
       TOPPASWidget* activeWindow_() const;
       
@@ -217,6 +230,9 @@ namespace OpenMS
 			};
 			/// Shows a log message in the log_ window 
       void showLogMessage_(LogState state, const String& heading, const String& body);
+
+			/// The clipboard
+			TOPPASScene* clipboard_;
   }
   ; //class
 

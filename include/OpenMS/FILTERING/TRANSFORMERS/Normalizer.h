@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -99,7 +99,6 @@ namespace OpenMS
 				}
 				return;
 			}
-
 			// normalizes the peak intensities to the TIC
 			if (method == "to_TIC")
 			{
@@ -126,10 +125,9 @@ namespace OpenMS
 				return;
 			}
 
-			// method unknown
-			throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Method not known", method);
+ 			// method unknown
+  			throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Method not known", method);
 			return;
-
 		}
 
 		///

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -48,6 +48,39 @@ namespace OpenMS
   	: public MetaInfoInterface
   {
   	public:
+
+      /// @name Comparators ProteinHit
+      //@{
+      /// Greater predicate for scores of hits
+      class OPENMS_DLLAPI ScoreMore
+      {
+        public:
+          template<typename Arg>
+          bool operator()(const Arg& a, const Arg& b)
+          {
+						if (a.getScore() != b.getScore())
+						{
+            	return a.getScore() > b.getScore();
+						}
+						return a.getAccession() > b.getAccession();
+          }
+      };
+
+      /// Lesser predicate for scores of hits
+      class OPENMS_DLLAPI ScoreLess
+      {
+        public:
+          template<typename Arg>
+          bool operator()(const Arg& a, const Arg& b)
+          {
+						if (a.getScore() != b.getScore())
+						{
+            	return a.getScore() < b.getScore();
+						}
+						return a.getAccession() < b.getAccession();
+          }
+      };
+      //@}
 		
 			/**	@name Constructors and Destructor */
 			//@{
@@ -90,17 +123,24 @@ namespace OpenMS
 			/// returns the accession of the protein
 			const String& getAccession() const;
 	
+	    /// returns the coverage (in percent) of the protein hit based upon matched peptides
+	    DoubleReal getCoverage() const;
+
 	    /// sets the score of the protein hit 
-	    void setScore(DoubleReal score);
+	    void setScore(const DoubleReal score);
 			
 			/// sets the rank
 	    void setRank(UInt newrank);
-			
+
 			/// sets the protein sequence
 			void setSequence(const String& sequence);
 			
 			/// sets the accession of the protein
 			void setAccession(const String& accession);
+
+	    /// sets the coverage (in percent) of the protein hit based upon matched peptides
+	    void setCoverage(const DoubleReal coverage);
+
 	    //@}
 
 	  protected:
@@ -108,6 +148,7 @@ namespace OpenMS
 			UInt rank_;    				///< the position(rank) where the hit appeared in the hit list
 	    String accession_;	 	///< the protein identifier
 	    String sequence_;		 	///< the amino acid sequence of the protein hit
+			DoubleReal coverage_; ///< coverage of the protein based upon the matched peptide sequences
 
   };
 

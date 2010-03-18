@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -205,8 +205,8 @@ namespace OpenMS
 	std::ostream& operator << (std::ostream& os, const DBoundingBox<D>& bounding_box)
 	{
 		os << "--DBOUNDINGBOX BEGIN--"<<std::endl;
-		os << "MIN --> " << bounding_box.min() << std::endl;
-		os << "MAX --> " << bounding_box.max() << std::endl;
+		os << "MIN --> " << bounding_box.minPosition() << std::endl;
+		os << "MAX --> " << bounding_box.maxPosition() << std::endl;
 		os << "--DBOUNDINGBOX END--"<<std::endl;
 		return os;
 	}

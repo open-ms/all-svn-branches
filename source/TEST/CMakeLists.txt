@@ -76,11 +76,6 @@ add_dependencies(TRANSFORMATIONS_TEST ${transformations_executables_list})
 add_custom_target(SIMULATION_TEST)
 add_dependencies(SIMULATION_TEST ${simulation_executables_list})
 
-if (CMAKE_COMPILER_IS_INTELCXX OR CMAKE_COMPILER_IS_GNUCXX)
-	set(${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS_RELEASE_SAVED})
-endif()
-
-										
 ### tests
 foreach(i ${TEST_executables})
 	add_executable(${i} ${i}.C)
@@ -88,9 +83,42 @@ foreach(i ${TEST_executables})
 	add_test(${i} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${i})
 endforeach(i)
 
+## GUI tests special treatment
+### Apply MOC compiler to GUI
+set(GUI_executables_list_C)
+foreach(i ${GUI_executables_list})
+  list(APPEND GUI_executables_list_C GUI/${i}.C)
+endforeach(i)
+## create mocced files - they are included manually in the implementation files
+QT4_WRAP_CPP(mocced_GUI_executables_list_C ${GUI_executables_list_C})
+
+foreach(i ${GUI_executables_list})
+	SET_SOURCE_FILES_PROPERTIES(GUI/${i}.C PROPERTIES OBJECT_DEPENDS ${mocced_GUI_executables_list_C})
+	add_executable(${i} GUI/${i}.C)
+	target_link_libraries(${i} ${OPENMS_LIBRARIES})
+	add_test(${i} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${i})
+endforeach(i)
+
+### GUI tests
+add_custom_target(GUI_TEST)
+add_dependencies(GUI_TEST ${GUI_executables_list})
+
+### add gui tests to executables list
+set(TEST_executables ${TEST_executables} TOPPView_test)
+
+if (CMAKE_COMPILER_IS_INTELCXX OR CMAKE_COMPILER_IS_GNUCXX)
+	set(${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS_RELEASE_SAVED})
+endif()
+
 ### "test_build" target
-add_custom_target(test_build)
-add_dependencies(test_build ${TEST_executables} TOPP FuzzyDiff)
+add_custom_target(test_build ALL)
+add_dependencies(test_build ${TEST_executables} TOPP UTILS)
+
+### all target that we require to show up in the targets list
+### and in the nightly build log (to test if they can be build properly)
+add_custom_target(extra_targets ALL)
+add_dependencies(extra_targets Tutorials_build)
+
 
 ### add filenames to Visual Studio solution tree
 set(sources_VS)

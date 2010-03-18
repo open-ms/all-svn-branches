@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2008 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -170,6 +170,13 @@
 			In the @b INIFileEditor, the documentation of most parameters is displayed
 			as tooltip when you hover above the parameter name with the mouse pointer.
 
+		@subsection TOPP_parameter_creation Updating an INI file for a TOPP tool
+
+			If you have an old INI file which does not work for a newer OpenMS version 
+			(due to renamed/removed or new) parameters, you can rescue parameter's
+			whose name did not change into the new version by calling the corresponding TOPP tool
+			with '-ini <myini.ini> -write_ini <myini.ini>'. This will remove invalid parameters and
+			add new parameters (if available) while retaining values for unchanged parameters.
 */
 
 //##############################################################################
@@ -435,46 +442,6 @@ FileFilter -in infile.mzML -levels 2 -rt 100:1500 -out outfile.mzML
 	<TABLE border=1>
 	
 	<TR>
-		<TD> <b>Algorithm:</b> wavelet &nbsp;&nbsp; <b>Input data:</b> profile data </TD>
-	</TR>
-	<TR>
-		<TD>
-			@b Description: <br>
-			
-			This algorithm detects and quantifies peptide signals in a profile LC-MS map. We use
-			the wavelet transform to identify signal candidates. The transform uses a mother
-			wavelet which models the intensity pattern of peptide isotopic peaks. Isotopic
-			pattern of the same peptide ion in adjacent scans are clustered using a sweep-line
-			approach. Finally, we fit a two-dimensional model to the signals and use it to
-			compute a bounding box and to filter for false positives.
-			The (relative) abundance of the peptide is estimated by integration the signal.<br>
-
-			Details of the algorithms can be found in Schulz-Trieglaff and Hussong et al.:
-			"A Fast and Accurate Algorithm for the Quantification of Peptides from Mass Spectrometry Data"
-			Proceedings of RECOMB (2007) and Schulz-Trieglaff and Hussong et al. "Computational
-			Quantification of Peptides from LC-MS data" Journal of Computational Biology 2008.<br>
-
-			Details on the mother wavelet can be found in Hussong et al.: "Efficient Analysis of Mass Spectrometry Data Using the Isotope Wavelet" (2007). <BR>			
-			
-			<B>Seeding:</B>
-			<BR>Identification of regions of interest using the isotope wavelet. 
-
-			<B>Extension:</B>
-			<BR>
-			Clustering of isotopic signals using the sweep-line paradigm.
-			
-			<B>Modelling:</B>
-			<BR>
-			2D model based on averagine isotope pattern and elution profile.
-
-			See the FeatureFinderAlgorithmWavelet class documentation for a parameter list.
-		</TD>
-	</TR>
-	</TABLE>
-
-	<TABLE border=1>
-	
-	<TR>
 		<TD> <b>Algorithm:</b> isotope_wavelet &nbsp;&nbsp; <b>Input data:</b> profile data </TD>
 	</TR>
 	<TR>
@@ -482,7 +449,7 @@ FileFilter -in infile.mzML -levels 2 -rt 100:1500 -out outfile.mzML
 			@b Description: <br>
 			
 			The algorithm has been designed to detect features in raw MS data sets.
-			The current implementation is only able to handle MS1 scans. An extension handling also tandem MS spectra
+			The current implementation is only able to handle MS1 data. An extension handling also tandem MS spectra
 			is under development.
 			The method is based on the <I>isotope wavelet</I>, which has been tailored to the detection of isotopic 
 			patterns following the averagine model.
@@ -492,9 +459,7 @@ FileFilter -in infile.mzML -levels 2 -rt 100:1500 -out outfile.mzML
 			of the isotopic pattern is explicitly coded by the wavelet itself.  
 			The algorithm also works for 2D maps (in combination with the so-called <I>sweep-line</I> technique (Schulz-Trieglaff et al.:
 			"A Fast and Accurate Algorithm for the Quantification of Peptides from Mass Spectrometry Data" (2007))).
-			Please note that the "wavelet" algorithm (described above), which is also based on the isotope wavelet
-			transform, uses an additional fit as a final filtering step.  
-			In contrast to "wavelet", "isotope_wavelet" can be executed on (several) high-speed CUDA graphics cards. 
+			The algorithm can be executed on (several) high-speed CUDA graphics cards. 
 			Tests on real-world data sets revealed potential speedups beyond factors of 200 (using 2 NVIDIA Tesla cards in parallel).
 			Please refer to Hussong et al.: "Highly accelerated feature detection in proteomics data sets using modern graphics processing units" (2009)
 			for more details on the implementation.
@@ -510,7 +475,7 @@ FileFilter -in infile.mzML -levels 2 -rt 100:1500 -out outfile.mzML
 			
 			<B>Modelling:</B>
 			<BR>
-			None (explicitly done by the wavelet, in contrast cf.: the "wavelet" algorithm).
+			None (explicitly done by the wavelet).
 
 			See the FeatureFinderAlgorithmIsotopeWavelet class documentation for a parameter list.
 		</TD>

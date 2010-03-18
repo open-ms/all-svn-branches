@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -262,11 +262,11 @@ namespace OpenMS
 	}
 
 
-  void PepXMLFile::matchModification_(DoubleReal mass, String& modification_description, const String& origin)
+  void PepXMLFile::matchModification_(const DoubleReal mass, const String& origin, String& modification_description)
 	{
-		DoubleReal new_mass = mass - ResidueDB::getInstance()->getResidue(origin)->getMonoWeight(Residue::Internal);
+		DoubleReal mod_mass = mass - ResidueDB::getInstance()->getResidue(origin)->getMonoWeight(Residue::Internal);
 		vector<String> mods;
-		ModificationsDB::getInstance()->getModificationsByDiffMonoMass(mods, origin, new_mass, 0.001);
+		ModificationsDB::getInstance()->getModificationsByDiffMonoMass(mods, origin, mod_mass, 0.001);
 			
 		if (mods.size() == 1)
     {
@@ -274,11 +274,7 @@ namespace OpenMS
     }
     else
     {
-     	if (mods.size() == 0)
-      {
-      	error(LOAD, String("Cannot find modification '") + String(mass) + " " + String(origin) + "'");
-      }
-      else
+     	if (mods.size() > 0)
       {
        	String mod_str = mods[0];
         for (vector<String>::const_iterator mit = ++mods.begin(); mit != mods.end(); ++mit)
@@ -462,22 +458,26 @@ namespace OpenMS
 		else if (element == "search_score") // parent: "search_hit"
 		{
 			String name = attributeAsString_(attributes, "name");
-			DoubleReal value = attributeAsDouble_(attributes, "value");
+			DoubleReal value;
+
 			// TODO: deal with different scores
 			if (name == "hyperscore")
 			{ // X!Tandem score
+				value = attributeAsDouble_(attributes, "value");
 				peptide_hit_.setScore(value);
 				current_peptide_.setScoreType(name); // add "X!Tandem" to name?
 				current_peptide_.setHigherScoreBetter(true);
 			}
 			else if (name == "xcorr")
 			{ // Sequest score
+				value = attributeAsDouble_(attributes, "value");
 				peptide_hit_.setScore(value);
 				current_peptide_.setScoreType(name); // add "Sequest" to name?
 				current_peptide_.setHigherScoreBetter(true);
 			}
 			else if (name == "fval")
 			{ // SpectraST score
+				value = attributeAsDouble_(attributes, "value");
 				peptide_hit_.setScore(value);
 				current_peptide_.setScoreType(name);
 				current_peptide_.setHigherScoreBetter(true);
@@ -591,17 +591,22 @@ namespace OpenMS
 
 		else if (element == "mod_aminoacid_mass") // parent: "modification_info" (in "search_hit")
 		{
-			DoubleReal modification_mass = 0.;
-			Size 			 modification_position = 0;
+			DoubleReal modification_mass = attributeAsDouble_(attributes, "mass");
+			Size 			 modification_position = attributeAsInt_(attributes, "position");
+      String     origin = String(current_sequence_[modification_position - 1]);
 			String 		 temp_description = "";
 			
-			modification_position = attributeAsInt_(attributes, "position");
-			modification_mass = attributeAsDouble_(attributes, "mass");
+			matchModification_(modification_mass, origin, temp_description);
 			
-			matchModification_(modification_mass, temp_description, String(current_sequence_[modification_position - 1]));
-			
-			// the modification position is 1-based
-			current_modifications_.push_back(make_pair(temp_description, modification_position));
+      if (temp_description.size()>0)
+      {
+			  // the modification position is 1-based
+			  current_modifications_.push_back(make_pair(temp_description, modification_position));
+      }
+      else
+      {
+      	error(LOAD, String("Cannot find modification '") + String(modification_mass) + " " + String(origin) + "' @" + String(modification_position));
+      }
 		}
 
 		else if (element == "aminoacid_modification") // parent: "search_summary"
@@ -669,7 +674,11 @@ namespace OpenMS
 				aa_mod.description = description;
 			}
 			aa_mod.massdiff = attributeAsString_(attributes, "massdiff");
-      aa_mod.aminoacid = attributeAsString_(attributes, "aminoacid");
+			String aminoacid;
+			if (optionalAttributeAsString_(aminoacid, attributes, "aminoacid"))
+			{
+				aa_mod.aminoacid = aminoacid;
+			}
       aa_mod.mass = attributeAsDouble_(attributes, "mass");
 			aa_mod.terminus = attributeAsString_(attributes, "terminus");
       String is_variable = attributeAsString_(attributes, "variable");
@@ -835,24 +844,17 @@ namespace OpenMS
 				// e.g. Carboxymethyl (C)
 				vector<String> mod_split;
 				it->first.split(' ', mod_split);
-				if (mod_split.size() == 2)
+				if (it->first.hasSubstring("C-term"))
 				{
-					if (mod_split[1] == "(C-term)" || ModificationsDB::getInstance()->getModification(it->first).getTermSpecificity() == ResidueModification::C_TERM)
-					{
-						temp_aa_sequence.setCTerminalModification(mod_split[0]);
-					}
-					else
-					{
-						if (mod_split[1] == "(N-term)" || ModificationsDB::getInstance()->getModification(it->first).getTermSpecificity() == ResidueModification::N_TERM)
-						{
-							temp_aa_sequence.setNTerminalModification(mod_split[0]);
-						}
-						else
-						{
-							// search this mod, if not directly use a general one
-							temp_aa_sequence.setModification(it->second - 1, mod_split[0]);
-						}
-					}
+					temp_aa_sequence.setCTerminalModification(it->first);
+				}
+				else if (it->first.hasSubstring("N-term"))
+				{
+					temp_aa_sequence.setNTerminalModification(it->first);
+				}
+				else if (mod_split.size() == 2)
+				{
+					temp_aa_sequence.setModification(it->second - 1, mod_split[0]);
 				}
 				else
 				{
@@ -863,17 +865,6 @@ namespace OpenMS
 			// fixed modifications
 			for (vector<AminoAcidModification>::const_iterator it = fixed_modifications_.begin(); it != fixed_modifications_.end(); ++it)
 			{
-					/*if (mod_split[1] == "(C-term)")
-					{
-						temp_aa_sequence.setCTerminalModification(mod_split[0]);
-					}
-					else
-					{
-						if (mod_split[1] == "(N-term)")
-						{
-							temp_aa_sequence.setNTerminalModification(mod_split[0]);
-						}*/
-
 				const Residue* residue = ResidueDB::getInstance()->getResidue(it->aminoacid);
 				if (residue == 0)
 				{

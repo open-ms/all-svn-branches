@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -32,11 +32,6 @@
 #include <OpenMS/DATASTRUCTURES/StringList.h>
 #include <OpenMS/config.h>
 
-#ifdef OPENMS_WINDOWSPLATFORM  
-	#undef   _WIN32_WINNT        // avoid warning
-	#define  _WIN32_WINNT 0x0500
-	#include <Windows.h>
-#endif
 
 namespace OpenMS
 {

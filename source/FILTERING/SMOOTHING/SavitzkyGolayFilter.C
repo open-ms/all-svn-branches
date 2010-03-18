@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -35,7 +35,7 @@ namespace OpenMS
       DefaultParamHandler("SavitzkyGolayFilter"),
       coeffs_()
   {
-    defaults_.setValue("frame_length",11,"The number of subsequent peaks used for smoothing.\nThis number has to be uneven. If it is not, 1 will be added.");
+    defaults_.setValue("frame_length",11,"The number of subsequent data points used for smoothing.\nThis number has to be uneven. If it is not, 1 will be added.");
     defaults_.setValue("polynomial_order",4,"Order or the polynomial that is fitted.");
     
     defaultsToParam_();

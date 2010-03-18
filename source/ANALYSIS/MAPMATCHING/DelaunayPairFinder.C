@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -212,11 +212,11 @@ namespace OpenMS
 		DoubleReal const really_big_doublereal = 1E10;
 		Feature outlier_feature_1;
 		outlier_feature_1.setRT(-really_big_doublereal); outlier_feature_1.setMZ(-really_big_doublereal);
-		ConsensusFeature const outlier_consensusfeature_1( std::numeric_limits<UInt>::max(), std::numeric_limits<UInt>::max(), outlier_feature_1 );
+		ConsensusFeature const outlier_consensusfeature_1( std::numeric_limits<UInt>::max(), outlier_feature_1, std::numeric_limits<UInt>::max() );
 		Point const outlier_point_1( -really_big_doublereal, -really_big_doublereal, outlier_consensusfeature_1, -1 );
 		Feature outlier_feature_2;
 		outlier_feature_2.setRT(really_big_doublereal); outlier_feature_2.setMZ(really_big_doublereal);
-		ConsensusFeature const outlier_consensusfeature_2( std::numeric_limits<UInt>::max(), std::numeric_limits<UInt>::max(), outlier_feature_2 );
+		ConsensusFeature const outlier_consensusfeature_2( std::numeric_limits<UInt>::max(), outlier_feature_2, std::numeric_limits<UInt>::max() );
 		Point const outlier_point_2( really_big_doublereal, really_big_doublereal, outlier_consensusfeature_2, -1 );
 		PointArray2 const outlier_points( outlier_point_1, outlier_point_2 );
 

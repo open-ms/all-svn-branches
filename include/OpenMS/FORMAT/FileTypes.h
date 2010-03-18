@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -61,12 +61,14 @@ namespace OpenMS
 			MZML,								///< MzML file (.mzML)
 			MS2,								///< MS2 file (.ms2)
 			PEPXML,							///< TPP pepXML file (.pepXML)
+			PROTXML,						///< TPP protXML file (.protXML)
 			MZIDENTML,				  ///< mzIdentML (HUPO PSI AnalysisXML format) (.mzIdentML)
 			GELML,							///< GelML (HUPO PSI format) (.GelML)
 			TRAML,							///< TraML (HUPO PSI format) for transitions (.TraML)
 			MSP,								///< NIST spectra library file format (.msp)
 			OMSSAXML,						///< OMSSA XML file format for peptide identifications (.xml)
 			PNG,                ///< Portable Network Graphics (.png)
+			XMASS,              ///< XMass Analysis file (fid)
 			SIZE_OF_TYPE    		///< No file type. Simply stores the number of types
 		};
 	};

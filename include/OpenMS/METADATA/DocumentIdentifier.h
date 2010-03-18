@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -72,10 +72,10 @@ namespace OpenMS
        */
       //@{
 
-			/// retrieve computed zero-charge feature map
+			/// set document identifier (e.g. an LSID)
       void setIdentifier(const String& id);
 
-      /// retrieve computed zero-charge feature map
+      /// retrieve document identifier (e.g. an LSID)
       const String& getIdentifier() const;
 
 			/// exchange content with @p from

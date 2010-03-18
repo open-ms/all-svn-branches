@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -81,7 +81,7 @@ START_SECTION((void selectFragments(std::vector< RichPeak1D > &selected_peaks, c
 	RichPeakSpectrum spec;
 	TheoreticalSpectrumGenerator tsg;
 	Param tsg_param(tsg.getParameters());
-	tsg_param.setValue("add_metainfo", 1);
+	tsg_param.setValue("add_metainfo", "true");
 	tsg.setParameters(tsg_param);
 	tsg.addPeaks(spec, AASequence("DFPIANGER"), Residue::YIon, 1);
 	tsg.addPeaks(spec, AASequence("DFPIANGER"), Residue::BIon, 1);

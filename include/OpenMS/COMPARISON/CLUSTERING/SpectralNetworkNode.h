@@ -552,6 +552,7 @@ namespace OpenMS
 							else
 							{
 								if(pm_diff<0)
+								//~ if(pm_diff<peak_tolerance)
 								{
 									std::swap(current_edge.first,current_edge.second);
 									current_is_heavyer=true;
@@ -560,6 +561,12 @@ namespace OpenMS
 
 							//find the edge and therefor the mod_pos
 							std::vector< std::pair<Size,Size> >::iterator which_pair_it = std::find(related_pairs.begin(),related_pairs.end(),current_edge);
+							if(which_pair_it==related_pairs.end())
+							{
+								//~ std::cout << "wrong edge direction predicted" << related_pairs.size() << std::endl;
+								std::swap(current_edge.first,current_edge.second);
+								which_pair_it = std::find(related_pairs.begin(),related_pairs.end(),current_edge);
+							}
 							DoubleReal mod_pos(0.0), alt_mod_pos(0.0);
 							//~ mod_pos shall point the position modified in *it_neighbors (annotated one) and alt mod pos the symmetric position
 							if(which_pair_it!=related_pairs.end())
@@ -603,14 +610,14 @@ namespace OpenMS
 									if(ids[*it_neighbors].getFeatures().empty())
 									{
 										FeatureHandle neighbor_feat;
-										neighbor_feat.setElementIndex(*it_neighbors);
+										//~ neighbor_feat.setElementIndex(*it_neighbors);
 										neighbor_feat.setMZ(experiment[*it_neighbors].getPrecursors().front().getMZ());
 										neighbor_feat.setRT(experiment[*it_neighbors].getRT());
 										neighbor_feat.setIntensity(0);
 										ids[*it_neighbors].insert(neighbor_feat);
 									}
 									FeatureHandle annotator;
-									annotator.setElementIndex(*it_neighbors);
+									//~ annotator.setElementIndex(*it_neighbors);
 									annotator.setMZ(experiment[*it_neighbors].getPrecursors().front().getMZ());
 									annotator.setRT(experiment[*it_neighbors].getRT());
 									try

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -243,7 +243,7 @@ namespace OpenMS
 				if (channel_value.getIntensity() == 0) ++empty_channel[cm_it->second.name];
 
 				// add channel to ConsensusFeature
-				cf.insert (index++, element_index, channel_value);
+				cf.insert (index++, channel_value, element_index);
 
 			} // ! channel_iterator
 
@@ -263,11 +263,12 @@ namespace OpenMS
 			++element_index;
 		} // ! Experiment iterator
 
+		// TODO: put that into a statistics object and return it
 		std::cout <<   "iTRAQ: skipped " << emtpy_scans.size() << " of " << ms_exp_MS2.size() << " selected scans due to lack of iTRAQ information:\n  " << emtpy_scans.concatenate(", ") << "\n";
-		std::cout <<   "iTRAQ: emtpy channels\n";
+		std::cout <<   "iTRAQ: channels with signal\n";
 		for (Map<Int, Size>::ConstIterator it_ec=empty_channel.begin(); it_ec!=empty_channel.end();++it_ec)
 		{
-			std::cout << "      channel " << it_ec->first << ": " << it_ec->second << " / " <<  ms_exp_MS2.size() << "\n";
+			std::cout << "      channel " << it_ec->first << ": " << (ms_exp_MS2.size()-it_ec->second) << " / " <<  ms_exp_MS2.size() << " (" << ((ms_exp_MS2.size()-it_ec->second)*100/ms_exp_MS2.size()) << "%)\n";
 		}
 
 		#ifdef ITRAQ_DEBUG

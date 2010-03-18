@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -166,21 +166,32 @@ namespace OpenMS
 				}
 			}
 
-			*log_dest_ <<
-				prefix << "\n" <<
-				prefix << "Offending lines:\t\t\t(tab_width = " << tab_width_ << ", first_column = " << first_column_ << ")\n" <<
-				prefix << "\n" <<
-				prefix << "in1:  " << QDir::toNativeSeparators(File::absolutePath(input_1_name_).toQString()).toStdString() << "   (line: " << line_num_1_ << ", position/column: " << line_1_pos_ << '/' << line_1_col << ")\n" <<
-				prefix << pre1 << "!\n" <<
-				prefix << pre1_white << OpenMS::String(line_1_.str()).suffix(line_1_.str().size()-pre1.size()) << "\n" <<
-				prefix <<  "\n" <<
-				prefix << "in2:  " << QDir::toNativeSeparators(File::absolutePath(input_2_name_).toQString()).toStdString() << "   (line: " << line_num_2_ << ", position/column: " << line_2_pos_ << '/' << line_2_col << ")\n" <<
-				prefix << pre2 << "!\n" <<
-				prefix << pre2_white << OpenMS::String(line_2_.str()).suffix(line_2_.str().size()-pre2.size()) << "\n" <<
-				prefix << "\n" <<
-				QDir::toNativeSeparators(input_1_name_.c_str()).toStdString() << ':' << line_num_1_ << ":" << line_1_col << ":\n" <<
-				QDir::toNativeSeparators(input_2_name_.c_str()).toStdString() << ':' << line_num_2_ << ":" << line_2_col << ":\n" <<
-				std::endl;
+			*log_dest_
+				<< prefix << "\n"
+				<< prefix << "Offending lines:\t\t\t(tab_width = " << tab_width_ << ", first_column = " << first_column_ << ")\n"
+				<< prefix << "\n"
+				<< prefix << "in1:  " << QDir::toNativeSeparators(File::absolutePath(input_1_name_).toQString()).toStdString() << "   (line: " << line_num_1_ << ", position/column: " << line_1_pos_ << '/' << line_1_col << ")\n"
+				<< prefix << pre1 << "!\n"
+				<< prefix << pre1_white << OpenMS::String(line_1_.str()).suffix(line_1_.str().size()-pre1.size()) << "\n"
+				<< prefix <<  "\n"
+				<< prefix << "in2:  " << QDir::toNativeSeparators(File::absolutePath(input_2_name_).toQString()).toStdString() << "   (line: " << line_num_2_ << ", position/column: " << line_2_pos_ << '/' << line_2_col << ")\n"
+				<< prefix << pre2 << "!\n"
+				<< prefix << pre2_white << OpenMS::String(line_2_.str()).suffix(line_2_.str().size()-pre2.size()) << "\n"
+				<< prefix << "\n\n"
+        << "Easy Access:" << "\n"
+				<< QDir::toNativeSeparators(File::absolutePath(input_1_name_).toQString()).toStdString() << ':' << line_num_1_ << ":" << line_1_col << ":\n"
+				<< QDir::toNativeSeparators(File::absolutePath(input_2_name_).toQString()).toStdString() << ':' << line_num_2_ << ":" << line_2_col << ":\n"
+				<< "\n"
+#ifdef WIN32
+        << "TortoiseMerge"
+        << " /base:\"" << QDir::toNativeSeparators(File::absolutePath(input_1_name_).toQString()).toStdString() << "\""
+        << " /mine:\"" << QDir::toNativeSeparators(File::absolutePath(input_2_name_).toQString()).toStdString() << "\"" 
+#else
+        << "diff"
+        << " " << QDir::toNativeSeparators(File::absolutePath(input_1_name_).toQString()).toStdString() 
+        << " " << QDir::toNativeSeparators(File::absolutePath(input_2_name_).toQString()).toStdString() 
+#endif
+        << std::endl;
 		}
 
 		// If verbose level is low, report only the first error.
@@ -457,7 +468,11 @@ namespace OpenMS
 							{
                 if ( letter_1_ == ASCII__CARRIAGE_RETURN ) // should be 13 == ascii carriage return char
                 {
-                  reportFailure_("input_1 is carriage return, but input_2_ is not whitespace");
+									// we skip over '\r'
+									line_2_.clear(); // reset status
+									line_2_.seekg(line_2_pos_); // rewind to saved position
+                  continue;
+									//reportFailure_("input_1 is carriage return, but input_2_ is not whitespace");
                 }
                 else
                 {
@@ -472,7 +487,11 @@ namespace OpenMS
 							{
 							  if ( letter_2_ == ASCII__CARRIAGE_RETURN ) // should be 13 == ascii carriage return char
 							  {
-							    reportFailure_("input_1 is not whitespace, but input_2 is carriage return");
+									// we skip over '\r'
+									line_1_.clear(); // reset status
+									line_1_.seekg(line_1_pos_); // rewind to saved position
+									continue;
+							    //reportFailure_("input_1 is not whitespace, but input_2 is carriage return");
 							  }
 							  else
                 {
@@ -586,6 +605,7 @@ namespace OpenMS
 				for ( ; iter != line_str_1.end() && isspace((unsigned char)*iter); ++iter ) ; // skip over whitespace
 				if ( iter != line_str_1.end() ) break; // line is not empty or whitespace only
 			}
+			//std::cout << "eof: " << input_1.eof() << " failbit: " << input_1.fail() << " badbit: " << input_1.bad() << " reading " << input_1.tellg () << "chars\n";
 
 			for ( line_str_2.clear(); ++line_num_2_, std::getline(input_2,line_str_2); )
 			{
@@ -594,6 +614,7 @@ namespace OpenMS
 				for ( ; iter != line_str_2.end() && isspace((unsigned char)*iter); ++iter ) ; // skip over whitespace
 				if ( iter != line_str_2.end() ) break; // line is not empty or whitespace only
 			}
+			//std::cout << "eof: " << input_2.eof() << " failbit: " << input_2.fail() << " badbit: " << input_2.bad() << " reading " << input_2.tellg () << "chars\n";
 
 			// compare the two lines of input
 			if ( !compareLines_(line_str_1, line_str_2) && verbose_level_ < 3 ) break;
@@ -619,7 +640,7 @@ namespace OpenMS
 		}
 
 		std::ifstream  input_1_f;
-		input_1_f.open(input_1_name_.c_str());
+		input_1_f.open(input_1_name_.c_str(), std::ios::in | std::ios::binary);
 		if ( !input_1_f )
 		{
 			*log_dest_ << "Error opening first input file '" << input_1_name_ <<"'.\n";
@@ -628,7 +649,7 @@ namespace OpenMS
 		input_1_f.unsetf(std::ios::skipws);
 
 		std::ifstream  input_2_f;
-		input_2_f.open(input_2_name_.c_str());
+		input_2_f.open(input_2_name_.c_str(), std::ios::in | std::ios::binary);
 		if ( !input_2_f )
 		{
 			*log_dest_ << "Error opening second input file '" << input_2_name_ <<"'.\n";

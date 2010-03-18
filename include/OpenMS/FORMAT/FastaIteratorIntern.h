@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -29,6 +29,8 @@
 #define OPENMS_FORMAT_FASTAITERATORINTERN_H
 
 #include <OpenMS/CHEMISTRY/PepIterator.h>
+#include <OpenMS/CONCEPT/Exception.h>
+
 #include <vector>
 
 namespace OpenMS

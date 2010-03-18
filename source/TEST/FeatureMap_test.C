@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -53,8 +53,8 @@ START_SECTION((FeatureMap()))
 	pl_ptr = new FeatureMap<>();
 	TEST_NOT_EQUAL(pl_ptr, 0)
 
-	TEST_EQUAL(pl_ptr->getMin(), FeatureMap<>::PositionType::max())
-	TEST_EQUAL(pl_ptr->getMax(), FeatureMap<>::PositionType::min_negative())
+	TEST_EQUAL(pl_ptr->getMin(), FeatureMap<>::PositionType::maxPositive())
+	TEST_EQUAL(pl_ptr->getMax(), FeatureMap<>::PositionType::minNegative())
 	TEST_REAL_SIMILAR(pl_ptr->getMinInt(), numeric_limits<DoubleReal>::max())
 	TEST_REAL_SIMILAR(pl_ptr->getMaxInt(), -numeric_limits<DoubleReal>::max())
 END_SECTION
@@ -292,6 +292,60 @@ START_SECTION((bool operator != (const FeatureMap& rhs) const))
 	TEST_EQUAL(empty!=edit, true);
 END_SECTION
 
+START_SECTION((FeatureMap operator + (const FeatureMap& rhs) const))
+	// just some basic testing... most is done in operator +=()	
+	FeatureMap<> m1, m2, m3;
+	
+	TEST_EQUAL(m1+m2, m3);
+	
+	Feature f1;
+	f1.setMZ(100.12);
+	m1.push_back(f1);
+	m3 = m1;
+	TEST_EQUAL(m1+m2, m3);
+	
+END_SECTION
+
+START_SECTION((FeatureMap& operator+= (const FeatureMap& rhs)))
+	FeatureMap<> m1, m2, m3;
+	
+	// adding empty maps has no effect:
+	m1+=m2;
+	TEST_EQUAL(m1, m3);
+	
+	// with content:
+	Feature f1;
+	f1.setMZ(100.12);
+	m1.push_back(f1);
+	m3 = m1;
+	m1+=m2;
+	TEST_EQUAL(m1, m3);
+
+	// test basic classes
+	m1.setIdentifier ("123");
+	m1.getDataProcessing().resize(1);
+	m1.getProteinIdentifications().resize(1);
+	m1.getUnassignedPeptideIdentifications().resize(1);
+	m1.ensureUniqueId();
+
+	m2.setIdentifier ("321");
+	m2.getDataProcessing().resize(2);
+	m2.getProteinIdentifications().resize(2);
+	m2.getUnassignedPeptideIdentifications().resize(2);
+	m2.push_back(Feature());
+	m2.push_back(Feature());
+	
+
+	m1+=m2;
+	TEST_EQUAL(m1.getIdentifier(), "");
+	TEST_EQUAL(UniqueIdInterface::isValid(m1.getUniqueId()), false);
+	TEST_EQUAL(m1.getDataProcessing().size(), 3);
+	TEST_EQUAL(m1.getProteinIdentifications().size(),3);
+	TEST_EQUAL(m1.getUnassignedPeptideIdentifications().size(),3);
+	TEST_EQUAL(m1.size(),3);
+
+
+END_SECTION
 
 START_SECTION((void sortByIntensity(bool reverse=false)))
 
@@ -416,7 +470,7 @@ START_SECTION((void swap(FeatureMap& from)))
 
 	TEST_EQUAL(map1.getIdentifier(),"")
 	TEST_EQUAL(map1.size(),0)
-	TEST_REAL_SIMILAR(map1.getMinInt(),DRange<1>().min()[0])
+	TEST_REAL_SIMILAR(map1.getMinInt(),DRange<1>().minPosition()[0])
   TEST_EQUAL(map1.getDataProcessing().size(),0)
 	TEST_EQUAL(map1.getProteinIdentifications().size(),0);
 	TEST_EQUAL(map1.getUnassignedPeptideIdentifications().size(),0);

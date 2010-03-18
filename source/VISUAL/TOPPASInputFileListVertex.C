@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -120,6 +120,11 @@ namespace OpenMS
 										+(files_.size() == 1 ? "" : "s");
 		QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, text);
 		painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), text);
+
+		//topo sort number
+    qreal x_pos = -63.0;
+    qreal y_pos = -19.0;
+    painter->drawText(x_pos, y_pos, QString::number(topo_nr_));
 	}
 	
 	QRectF TOPPASInputFileListVertex::boundingRect() const

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -280,7 +280,28 @@ namespace OpenMS
 
     for (vector<ResidueModification*>::iterator it = new_mods.begin(); it != new_mods.end(); ++it)
     {
-			(*it)->setFullId((*it)->getId() + " (" + (*it)->getOrigin() + ")");
+			if ((*it)->getTermSpecificity() != ResidueModification::ANYWHERE && // Terminal specificity
+					(*it)->getOrigin().size() == 1) // single amino acids letter
+			{
+				String term_spec;
+				if ((*it)->getTermSpecificity() == ResidueModification::C_TERM)
+				{
+					term_spec = "C-term";
+				}
+				else if ((*it)->getTermSpecificity() == ResidueModification::N_TERM)
+				{
+					term_spec = "N-term";
+				}
+				else 
+				{
+					// TODO log message
+				}
+				(*it)->setFullId((*it)->getId() + " (" + term_spec + " " + (*it)->getOrigin() + ")");
+			}
+			else
+			{
+				(*it)->setFullId((*it)->getId() + " (" + (*it)->getOrigin() + ")");
+			}
 			// e.g. Oxidation (M)
 			modification_names_[(*it)->getFullId()].insert(*it);
 			// e.g. Oxidation

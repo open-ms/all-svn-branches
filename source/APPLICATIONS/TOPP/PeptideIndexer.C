@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -195,6 +195,21 @@ class TOPPPeptideIndexer
 						target_decoy = "target+decoy";
 					}
 					it2->setMetaValue("target_decoy", target_decoy);
+					if (it2->getProteinAccessions().size() == 1)
+					{
+						it2->setMetaValue("protein_references", "unique");
+					}
+					else
+					{
+						if (it2->getProteinAccessions().size() > 1)
+						{
+							it2->setMetaValue("protein_references", "non-unique");
+						}
+						else
+						{
+							it2->setMetaValue("protein_references", "unmatched");
+						}
+					}
 				}
 				it1->setHits(hits);
 			}

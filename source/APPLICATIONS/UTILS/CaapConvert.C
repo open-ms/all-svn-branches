@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -135,7 +135,7 @@ int main( int argc, const char** argv )
 				);
 			feature_handle.setMapIndex(map_id_num);
 			// We currently do not trace the element indices back to the original feature maps.
-			feature_handle.setElementIndex(0);
+			feature_handle.setUniqueId(0);
 			feature_handle.setIntensity(intensity);
 			feature_handle.setRT(retention_time);
 			feature_handle.setMZ(mass_to_charge);

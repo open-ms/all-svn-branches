@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -57,6 +57,8 @@ using namespace std;
 
 	@em X!Tandem must be installed before this wrapper can be used. This wrapper
 	has been successfully tested with several versions of X!Tandem. 
+  The last known version to work is 2009-04-01. We encountered problems with
+  later versions (namely 2010-01-01).
 
 	To speed up computations, fasta databases can be compressed using the fasta_pro.exe
 	tool of @em X!Tandem. It is contained in the "bin" folder of the @em X!Tandem installation.
@@ -105,7 +107,7 @@ class TOPPXTandemAdapter
 			
 			registerStringOption_("precursor_error_units", "<unit>", "ppm", "parent monoisotopic mass error units", false);
       registerStringOption_("fragment_error_units", "<unit>", "Da", "fragment monoisotopic mass error units", false);
-			registerStringOption_("database", "<file>", "", "FASTA file or related which contains the sequences");
+			registerInputFile_("database", "<file>", "", "FASTA file or related which contains the sequences", true);
       vector<String> valid_strings;
       valid_strings.push_back("ppm");
       valid_strings.push_back("Da");
@@ -274,7 +276,6 @@ class TOPPXTandemAdapter
 			// calculations
 			//-------------------------------------------------------------
 
-			String call = xtandem_executable + " " + input_filename;
 			int status = QProcess::execute(xtandem_executable.toQString(), QStringList(input_filename.toQString())); // does automatic escaping etc...
 			
 			if (status != 0)

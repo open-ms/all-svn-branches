@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -38,6 +38,8 @@
 namespace OpenMS
 {
 	class TOPPASVertex;
+	class TOPPASToolVertex;
+	class TOPPASOutputFileListVertex;
 	class TOPPASEdge;
 	
 	/**
@@ -122,6 +124,10 @@ namespace OpenMS
 			EdgeIterator edgesBegin();
 			/// Returns end() iterator of all edges
 			EdgeIterator edgesEnd();
+			/// Copies all currently selected edges and vertices
+			void copySelected();
+			/// Pastes the copied items
+			void paste(QPointF pos = QPointF());
 			/// Removes all currently selected edges and vertices
 			void removeSelected();
 			/// Unselects all items
@@ -134,6 +140,8 @@ namespace OpenMS
 			void store(const String& file);
 			/// Loads the pipeline from @p file
 			void load(const String& file);
+			/// Includes the pipeline @p scene
+			void include(TOPPASScene* new_scene, QPointF pos = QPointF());
 			/// Returns the file name
 			const String& getSaveFileName();
 			/// Sets the file name
@@ -160,6 +168,16 @@ namespace OpenMS
 			void runNextProcess();
 			/// Resets the processes queue
 			void resetProcessesQueue();
+			/// Sets the clipboard content
+			void setClipboard(TOPPASScene* clipboard);
+			///Connects the signals to slots
+			void connectVertexSignals(TOPPASVertex* tv);
+			///Connects the signals to slots
+			void connectToolVertexSignals(TOPPASToolVertex* ttv);
+			///Connects the signals to slots
+			void connectOutputVertexSignals(TOPPASOutputFileListVertex* oflv);
+			///Connects the signals to slots
+			void connectEdgeSignals(TOPPASEdge* e);
 			
 		public slots:
 		
@@ -186,18 +204,18 @@ namespace OpenMS
 			
 			///@name Slots for printing log/error output when no GUI is available
       //@{
-      /// Writes the TOPP tool output to standard output
-      void noGuiTOPPOutput(const QString& out);
-      /// Writes the "tool started" message to standard output
-      void noGuiToolStarted();
-      /// Writes the "tool finished" message to standard output
-      void noGuiToolFinished();
-      /// Writes the "tool failed" message to standard output
-      void noGuiToolFailed();
-      /// Writes the "tool crashed" message to standard output
-      void noGuiToolCrashed();
-      /// Writes the "output file written" message to standard output
-      void noGuiOutputFileWritten(const String& file);
+      /// Writes the TOPP tool output to the logfile (and to stdout if no gui available)
+      void logTOPPOutput(const QString& out);
+      /// Writes the "tool started" message to the logfile (and to stdout if no gui available)
+      void logToolStarted();
+      /// Writes the "tool finished" message to the logfile (and to stdout if no gui available)
+      void logToolFinished();
+      /// Writes the "tool failed" message to the logfile (and to stdout if no gui available)
+      void logToolFailed();
+      /// Writes the "tool crashed" message to the logfile (and to stdout if no gui available)
+      void logToolCrashed();
+      /// Writes the "output file written" message to the logfile (and to stdout if no gui available)
+      void logOutputFileWritten(const String& file);
 			//@}
 			
 		signals:
@@ -210,7 +228,11 @@ namespace OpenMS
 			void saveMe();
 			/// Kills all connected TOPP processes
 			void terminateCurrentPipeline();
-			
+			/// Emitted when a selection is copied to the clipboard
+			void selectionCopied(TOPPASScene* ts);
+			/// Requests the clipboard content from TOPPASBase, will be stored in clipboard_
+			void requestClipboardContent();
+
 		protected:
 			
 			/// The current action mode
@@ -239,6 +261,8 @@ namespace OpenMS
 			bool user_specified_out_dir_;
 			/// The queue of pending TOPP processes
 			QList<TOPPProcess> topp_processes_queue_;
+			/// Stores the clipboard content when requested from TOPPASBase
+			TOPPASScene* clipboard_;
 			
 			/// Returns the vertex in the foreground at position @p pos , if existent, otherwise 0.
 			TOPPASVertex* getVertexAt_(const QPointF& pos);
@@ -253,6 +277,10 @@ namespace OpenMS
       //@{
       void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
 			//@}
+			
+			///Writes the @p text to the logfile
+			void writeToLogFile_(const QString& text);
+			
 	};
 
 }

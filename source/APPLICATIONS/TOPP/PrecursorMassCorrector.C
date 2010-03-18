@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -30,6 +30,7 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmIsotopeWavelet.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinder_impl.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
+#include <OpenMS/FORMAT/FileHandler.h>
 
 #include <algorithm>
 
@@ -46,9 +47,15 @@ using namespace std;
 	
 	@brief Corrects the precursor entries of MS/MS spectra, by using MS1 information.
 
-	There is currently only one option implemented. The tool expects as input data produced from
-	an ABI/SCIEX QStar Pulsar I, or a similar instrument. It is a QTof instrument with 
-	a moderate resolution. 
+	This tool corrects the m/z entries of MS/MS spectra by using MS1 information. Therefore,
+	MS1 spectra must be supplied as profile mode spectra. The isotope distribution of the
+	peptide in the MS1 level information are then used to determine the exact position
+	of the monoisotopic peak. If no isotope distribution can be found the original 
+	entry is kept. As a side effect of determining the exact position of the monoisotopic
+	peak is that the charge state is also annotated. 
+
+	This implementation uses the isotopewavelet featurefinder and sets the monoisotopic
+	peak (and the charge) to the nearest feature.
 
 	@experimental This TOPP-tool is not well tested and not all features might be properly implemented and tested!
 
@@ -76,15 +83,16 @@ class TOPPPrecursorMassCorrector
 			setValidFormats_("in", StringList::create("mzML"));
 			registerOutputFile_("out","<file>","","Output mzML file.");
 			setValidFormats_("in", StringList::create("mzML"));
-			registerStringOption_("type", "<instrument_type>", "", "Type of instrument used");
-			setValidStrings_("type", StringList::create("QStarPulsarI"));
-			registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "Maximal deviation in Th which is acceptable to be corrected.", false);
+
+			registerInputFile_("feature_in", "<file>", "", "Input featureXML file, containing features; if set, the MS/MS spectra precursor entries \n"
+																										 "will be matched to the feature m/z values if possible.", false);
+
+			registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "Maximal deviation in Th which is acceptable to be corrected;\n"
+																																						"this value should be set to the instruments selection window.", false);
 			setMinFloat_("precursor_mass_tolerance", 0);
 
 			registerIntOption_("max_charge", "<charge>", 3, "Maximal charge that should be assumend for precursor peaks", false, true);
 			registerDoubleOption_("intensity_threshold", "<threshold>", -1.0, "Intensity threshold value for isotope wavelet feature finder, please look at the documentation of the class for details.", false, true);
-			/// @improvement add merging of spectra of the same precursor and feature
-
 		}
 
 		ExitCodes main_(int , const char**)
@@ -93,6 +101,7 @@ class TOPPPrecursorMassCorrector
 			// parsing parameters
 			//-------------------------------------------------------------
 			String in(getStringOption_("in"));
+			String feature_in(getStringOption_("feature_in"));
 			String out(getStringOption_("out"));
 			DoubleReal precursor_mass_tolerance(getDoubleOption_("precursor_mass_tolerance"));
 			
@@ -100,8 +109,19 @@ class TOPPPrecursorMassCorrector
 			// reading input
 			//-------------------------------------------------------------
 
-			PeakMap exp;
-			MzMLFile().load(in, exp);
+
+			FileHandler fh;
+      FileTypes::Type in_type = fh.getType(in);
+
+      PeakMap exp;
+      fh.loadExperiment(in, exp, in_type, log_type_);
+			exp.sortSpectra();
+
+			FeatureMap<> feature_map;
+			if (feature_in != "")
+			{
+				FeatureXMLFile().load(feature_in, feature_map);
+			}
 
 			//-------------------------------------------------------------
 			// calculations
@@ -136,9 +156,11 @@ class TOPPPrecursorMassCorrector
 			Size counter(0);
 			for (PeakMap::Iterator it = exp.begin(); it != exp.end(); ++it)
 			{
-				progresslogger.setProgress(++counter);
-				if (it->getMSLevel() == 2)
+				progresslogger.setProgress(exp.end() - it);
+				if (it->getMSLevel() != 2)
 				{
+					continue;
+				}
 					// find first MS1 scan of the MS/MS scan
 					PeakMap::Iterator ms1_it = it;
 					while (ms1_it != exp.begin() && ms1_it->getMSLevel() != 1)
@@ -155,24 +177,13 @@ class TOPPPrecursorMassCorrector
 						writeDebug_("No peaks in scan at RT=" + String(ms1_it->getRT()) + String(", skipping"), 1);
 						continue;
 					}
-
-					PeakMap new_exp;
-					new_exp.push_back(*ms1_it);
-					new_exp.updateRanges();
-          FeatureMap<> features, seeds;
-          ff.run("isotope_wavelet", new_exp, features, ff_param, seeds);
-
-					if (features.size() == 0)
-					{
-						writeDebug_("No features found for scan RT=" + String(ms1_it->getRT()), 1);
-						continue;
-					}
-
+					
 					PeakMap::Iterator ms2_it = ms1_it;
-					++ms2_it;
+          ++ms2_it;
 
 					while (ms2_it != exp.end() && ms2_it->getMSLevel() == 2)
 					{
+						// first: error checks
 						if (ms2_it->getPrecursors().size() == 0)
 						{
 							writeDebug_("Warning: found no precursors of spectrum RT=" + String(ms2_it->getRT()) + ", skipping it.", 1);
@@ -186,23 +197,49 @@ class TOPPPrecursorMassCorrector
 
 						Precursor prec = *ms2_it->getPrecursors().begin();
 						DoubleReal prec_pos = prec.getMZ();
-						
+				
+            PeakMap new_exp;
+						// now excise small region from the MS1 spec for the feature finder (isotope pattern must be covered...)
+						PeakSpectrum zoom_spec;
+						for (PeakSpectrum::ConstIterator pit = ms1_it->begin(); pit != ms1_it->end(); ++pit)
+						{
+							if (pit->getMZ() > prec_pos - 3 && pit->getMZ() < prec_pos + 3)
+							{
+								zoom_spec.push_back(*pit);
+							}
+						}
+            new_exp.push_back(zoom_spec);
+            new_exp.updateRanges();
+            FeatureMap<> features, seeds;
+            ff.run("isotope_wavelet", new_exp, features, ff_param, seeds);
+            if (features.size() == 0)
+            {
+              writeDebug_("No features found for scan RT=" + String(ms1_it->getRT()), 1);
+							++ms2_it;
+              continue;
+            }
+	
+						DoubleReal max_int(numeric_limits<DoubleReal>::min());
 						DoubleReal min_dist(numeric_limits<DoubleReal>::max());
-						Size min_feat_idx(0);
+						Size max_int_feat_idx(0);
+						
 						for (Size i = 0; i != features.size(); ++i)
 						{
-							if (fabs(features[i].getMZ() - prec_pos) < min_dist)
+							if (fabs(features[i].getMZ() - prec_pos) < precursor_mass_tolerance &&
+									features[i].getIntensity() > max_int)
 							{
-								min_feat_idx = i;
+								max_int_feat_idx = i;
+								max_int = features[i].getIntensity();
 								min_dist = fabs(features[i].getMZ() - prec_pos);
 							}
 						}
+						
 
-						writeDebug_(" min_dist=" + String(min_dist) + " mz=" + String(features[min_feat_idx].getMZ()) + " charge=" + String(features[min_feat_idx].getCharge()), 5);
+						writeDebug_(" max_int=" + String(max_int) + " mz=" + String(features[max_int_feat_idx].getMZ()) + " charge=" + String(features[max_int_feat_idx].getCharge()), 5);
 						if (min_dist < precursor_mass_tolerance)
 						{
-							prec.setMZ(features[min_feat_idx].getMZ());
-							prec.setCharge(features[min_feat_idx].getCharge());
+							prec.setMZ(features[max_int_feat_idx].getMZ());
+							prec.setCharge(features[max_int_feat_idx].getCharge());
 							vector<Precursor> precs;
 							precs.push_back(prec);
 							ms2_it->setPrecursors(precs);
@@ -211,7 +248,7 @@ class TOPPPrecursorMassCorrector
 						
 						++ms2_it;
 					}
-				}
+					it = --ms2_it;
 			}
 			progresslogger.endProgress();
 
@@ -219,7 +256,8 @@ class TOPPPrecursorMassCorrector
       // writing output
       //-------------------------------------------------------------
 		
-			MzMLFile().store(out, exp);
+
+			fh.storeExperiment(out, exp, log_type_);
 	
 			return EXECUTION_OK;
 		}

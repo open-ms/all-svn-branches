@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -141,7 +141,8 @@ class TOPPPeakPicker
 
     String in = getStringOption_("in");
     String out = getStringOption_("out");
-    
+		String type = getStringOption_("type");
+
     //-------------------------------------------------------------
     // loading input
     //-------------------------------------------------------------
@@ -174,7 +175,6 @@ class TOPPPeakPicker
 		Param pepi_param = getParam_().copy("algorithm:",true);		
 		writeDebug_("Parameters passed to PeakPicker", pepi_param,3);
 		
-		String type = getStringOption_("type");
     if (type == "wavelet")
     {	
     	PeakPickerCWT pp;

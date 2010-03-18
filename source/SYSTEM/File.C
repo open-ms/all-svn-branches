@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -39,6 +39,8 @@
 #include <cstdio>
 
 #ifdef OPENMS_WINDOWSPLATFORM
+#  define NOMINMAX
+#  include <Windows.h>
 #  include <Winioctl.h> // for DeviceIoControl and constants e.g. FSCTL_SET_SPARSE
 #else
 #  include <fcntl.h> // for O_RDWR etc
@@ -202,12 +204,23 @@ namespace OpenMS
   
   String File::getOpenMSDataPath()
   {
+		String path;
 		if (getenv("OPENMS_DATA_PATH") != 0)
 		{
-			return getenv("OPENMS_DATA_PATH");
+			path = getenv("OPENMS_DATA_PATH");
+		}
+		else
+		{
+			path = OPENMS_DATA_PATH;
 		}
 		
-		return OPENMS_DATA_PATH;
+		if (!exists(path))
+		{ // now we're in big trouble as './share' is not were its supposed to be...
+			std::cerr << "OpenMS FATAL ERROR!\nExpected shared data to be at '" << path << "'! OpenMS cannot function without it! Exiting ...\n";
+			exit(1);
+		}
+		
+		return path;
   }
 
 	String File::removeExtension(const OpenMS::String& file) 

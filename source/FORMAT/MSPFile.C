@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -123,8 +123,13 @@ namespace OpenMS
 		bool inst_type_correct(true);
 		Size spectrum_number = 0;
 
+		// line number counter
+		Size line_number = 0;
+				
 		while (getline(is, line))
     {
+			++line_number;
+			
       if (line.hasPrefix("Name:"))
       {
         vector<String> split, split2;
@@ -223,7 +228,7 @@ namespace OpenMS
 							}
 							else
 							{
-								cerr << "MSPFile: Error: ignoring modification: '" << line << "'" << "\n";
+								cerr << "MSPFile: Error: ignoring modification: '" << line << "' in line " << line_number << "\n";
 							}
             }
             vector<PeptideHit> hits(ids.back().getHits());
@@ -241,18 +246,18 @@ namespace OpenMS
 			{
 				if (!inst_type_correct)
 				{
-					while (getline(is, line) && line.size() > 0 && isdigit(line[0])) ;
+					while (getline(is, line) && ++line_number && line.size() > 0 && isdigit(line[0])) ;
 				}
 				else
 				{
-        	while (getline(is, line) && line.size() > 0 && isdigit(line[0]))
+        	while (getline(is, line) && ++line_number && line.size() > 0 && isdigit(line[0]))
         	{
           	vector<String> split;
           	line.split('\t', split);
           	RichPeak1D peak;
           	if (split.size() != 3)
           	{
-            	throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, line, "not <mz><tab><intensity><tab>\"<comment>\"");
+            	throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, line, "not <mz><tab><intensity><tab>\"<comment>\" in line " + String(line_number));
           	}
           	peak.setMZ(split[0].toFloat());
           	peak.setIntensity(split[1].toFloat());

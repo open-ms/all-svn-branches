@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -335,6 +335,7 @@ namespace OpenMS
 		projection_vert_->canvas()->mzToXAxis(false);
 		projection_vert_->showLegend(false);
 		projection_vert_->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
+    // todo: why would we want to retain the old draw mode (same in horizontalProjection)??
 		if (!projectionsVisible() || projection_vert_->canvas()->getLayerCount()==0) //set draw mode
 		{
 			projection_vert_->canvas()->removeLayer(0);
@@ -391,9 +392,9 @@ namespace OpenMS
 				}
 				//display feature with a margin
 				DBoundingBox<2> bb = canvas()->getCurrentLayer().features[feature_index].getConvexHull().getBoundingBox();
-				DoubleReal rt_margin = (bb.max()[0] - bb.min()[0])*0.5;
-				DoubleReal mz_margin = (bb.max()[1] - bb.min()[1])*2;
-				SpectrumCanvas::AreaType area(bb.min()[1]-mz_margin, bb.min()[0]-rt_margin, bb.max()[1]+mz_margin, bb.max()[0]+rt_margin);
+				DoubleReal rt_margin = (bb.maxPosition()[0] - bb.minPosition()[0])*0.5;
+				DoubleReal mz_margin = (bb.maxPosition()[1] - bb.minPosition()[1])*2;
+				SpectrumCanvas::AreaType area(bb.minPosition()[1]-mz_margin, bb.minPosition()[0]-rt_margin, bb.maxPosition()[1]+mz_margin, bb.maxPosition()[0]+rt_margin);
 				canvas()->setVisibleArea(area);
 			}
 		}

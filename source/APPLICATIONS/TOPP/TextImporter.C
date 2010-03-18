@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -84,6 +84,7 @@ namespace OpenMS
 				addText_("    Input text file containing the following columns: RT, m/z, intensity.");
 				addText_("    Additionally meta data columns may follow.");
 				addText_("    If meta data is used, meta data column names have to be specified in a header line.");
+				addText_("    If a meta column named 'charge' with numeric data exists, the charge of the features will be set accordingly.");
 				addText_("- msInspect");
 				addText_("    Imports an msInspect feature file.");
 				addText_("- SpecArray");
@@ -129,10 +130,12 @@ namespace OpenMS
 					// see if we have a header
 					try
 					{
-						rt = headers[0].toDouble();
+            if (headers.size()>3) throw Exception::BaseException(); // there is meta-data, so these must be their names
+            else if (headers.size()<3) throw Exception::BaseException(); // not enough data columns in first line...
+            // try to convert... if not: thats a header
+            rt = headers[0].toDouble();
 						mz = headers[1].toDouble();
 						it = headers[2].toDouble();
-						if (headers.size()>3) throw Exception::BaseException();
 					}
 					catch (Exception::BaseException&)
 					{
@@ -200,6 +203,17 @@ namespace OpenMS
 								}
 								//add meta value
 								f.setMetaValue(headers[j],part_trimmed);
+								if (headers[j] == "charge")
+								{
+									try
+									{
+										f.setCharge(part_trimmed.toInt());
+									}
+									catch (...)
+									{
+										writeLog_(String("Failed to convert metavalue 'charge' into integer (line '") + (i+1) + ")");
+									}
+								}
 							}
 
 						}
@@ -234,22 +248,47 @@ namespace OpenMS
 						
 						//create feature
 						Feature f;
-						f.setMZ(parts[2].toDouble());
-						f.setCharge(parts[6].toInt());
-						f.setRT(parts[1].toDouble());
-						f.setOverallQuality(parts[8].toDouble());
-						f.setIntensity(parts[5].toDouble());
-						f.setMetaValue("accurateMZ",parts[3]);
-						f.setMetaValue("mass",parts[4].toDouble());
-						f.setMetaValue("chargeStates",parts[7].toInt());
-						f.setMetaValue("background",parts[9].toDouble());
-						f.setMetaValue("median",parts[10].toDouble());
-						f.setMetaValue("peaks",parts[11].toInt());
-						f.setMetaValue("scanFirst",parts[12].toInt());
-						f.setMetaValue("scanLast",parts[13].toInt());
-						f.setMetaValue("scanCount",parts[14].toInt());
-						f.setMetaValue("totalIntensity",parts[15].toDouble());
-						f.setMetaValue("sumSquaresDist",parts[16].toDouble());
+						Size column_to_convert=0;
+						try
+						{
+							column_to_convert = 1;
+							f.setRT(parts[1].toDouble());
+							column_to_convert = 2;
+							f.setMZ(parts[2].toDouble());
+							column_to_convert = 5;
+							f.setIntensity(parts[5].toDouble());
+							column_to_convert = 6;
+							f.setCharge(parts[6].toInt());
+							column_to_convert = 8;
+							f.setOverallQuality(parts[8].toDouble());
+
+							column_to_convert = 3;
+							f.setMetaValue("accurateMZ",parts[3]);
+							column_to_convert = 4;
+							f.setMetaValue("mass",parts[4].toDouble());
+							column_to_convert = 7;
+							f.setMetaValue("chargeStates",parts[7].toInt());
+							column_to_convert = 9;
+							f.setMetaValue("background",parts[9].toDouble());
+							column_to_convert = 10;
+							f.setMetaValue("median",parts[10].toDouble());
+							column_to_convert = 11;
+							f.setMetaValue("peaks",parts[11].toInt());
+							column_to_convert = 12;
+							f.setMetaValue("scanFirst",parts[12].toInt());
+							column_to_convert = 13;
+							f.setMetaValue("scanLast",parts[13].toInt());
+							column_to_convert = 14;
+							f.setMetaValue("scanCount",parts[14].toInt());
+							column_to_convert = 15;
+							f.setMetaValue("totalIntensity",parts[15].toDouble());
+							column_to_convert = 16;
+							f.setMetaValue("sumSquaresDist",parts[16].toDouble());
+						}
+						catch (Exception::BaseException /*&e*/)
+						{
+							writeLog_(String("Failed to convert value in column ") + String(column_to_convert+1) + "into a number (line '" + (i+1) + ")");
+						}
 						f.setMetaValue("description",parts[17]);
 						feature_map.push_back(f);
 					}
@@ -264,11 +303,18 @@ namespace OpenMS
 						String line = input[i];
 						
 						Feature f;
-						f.setMZ(line.substr(0,12).toDouble());
-						f.setCharge(line.substr(36,12).toInt());
-						f.setRT(line.substr(12,12).toDouble() *60.0);
-						f.setIntensity(line.substr(48,12).toDouble());
-						f.setMetaValue("s/n",line.substr(24,12).toDouble());
+						try
+						{						
+							f.setMZ(line.substr(0,12).toDouble());
+							f.setCharge(line.substr(36,12).toInt());
+							f.setRT(line.substr(12,12).toDouble() *60.0);
+							f.setIntensity(line.substr(48,12).toDouble());
+							f.setMetaValue("s/n",line.substr(24,12).toDouble());
+						}
+						catch (Exception::BaseException /*&e*/)
+						{
+							writeLog_(String("Failed to convert value into a number (line '") + (i+1) + ")");
+						}
 						feature_map.push_back(f);
 					}
 				}
@@ -288,6 +334,7 @@ namespace OpenMS
 						if (parts.size() != 14)
 						{
 							std::cerr << "Line #" << (i+1) << " does not have the expected 14 tab-separated entries. Skipping this line!\n";
+							continue;
 						}
 						//create feature
 						Feature f;

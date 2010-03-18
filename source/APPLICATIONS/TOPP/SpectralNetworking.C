@@ -235,7 +235,7 @@ using namespace std;
 					sa.getSpectrumAlignment(alignment, experiment[i],experiment[j]);
 					//~ ratio = sim/auto_mean;
 					ratio = (DoubleReal)alignment.size()/peak_mean;
-					std::cout << "ratio" << ratio << std::endl;
+					//~ std::cout << "ratio" << ratio << std::endl;
 					if(ratio>min_ratio)
 					{
 						if(cluster_mirror[j]<cluster_mirror[i])
@@ -358,7 +358,7 @@ using namespace std;
 					else
 					{
 						//~ pm_i <= pm_j
-							pot_pairs[i].push_back(std::pair<Size,Size>(i,j));
+						pot_pairs[i].push_back(std::pair<Size,Size>(i,j));
 					}
 				}
 			}
@@ -385,7 +385,7 @@ using namespace std;
 		std::vector< std::vector< std::pair<DoubleReal,DoubleReal> > > pot_pairs_xcs(pot_pairs.size()); // the pairs xcorrelation scores
 
 		std::vector<String> prefixes;
-	prefixes.push_back("general:");
+		prefixes.push_back("general:");
 		prefixes.push_back("spectra:");
 		Param xcorr_param;
 		xcorr_param.insert("",getParam_().copy(prefixes[0],true));
@@ -719,7 +719,7 @@ using namespace std;
 			//~ }
 		}
 		writeLog_(String("nodes without id: ") + String(c));
-		/// @improvement ahhrg!!! doeas not work - hardhack for the annoying 0,0 ConsensusFeature - find out where that comes from
+		/// @improvement ahhrg!!! does not work - hardhack for the annoying 0,0 ConsensusFeature - find out where that comes from
 		//~ ids.erase(zero_to_delete);
 
 		std::vector<String> colors;
@@ -732,7 +732,7 @@ using namespace std;
 		colors.push_back("grey				");
 		colors.push_back("green				");
 		colors.push_back("magenta			");
-		colors.push_back("red					");
+		colors.push_back("red			");
 		colors.push_back("violet			");
 		colors.push_back("darkblue		");
 		colors.push_back("darkcyan		");
@@ -740,8 +740,8 @@ using namespace std;
 		colors.push_back("darkgreen		");
 		colors.push_back("darkgrey		");
 		colors.push_back("darkmagenta	");
-		colors.push_back("darkred			");
-		colors.push_back("darkviolet	");
+		colors.push_back("darkred		");
+		colors.push_back("darkviolet		");
 
 		std::map< Size, std::vector<String> > cropped_ids;
 
@@ -756,6 +756,8 @@ using namespace std;
 			}
 		}
 
+		//~ cropped id's are poi's - so output is potentially interesting
+		std::cout << "id's: " << std::endl;
 		for(std::map< Size, std::vector<String> >::iterator it = cropped_ids.begin(); it != cropped_ids.end(); ++it)
 		{
 			for(Size i = 0; i < it->second.size(); ++i)
@@ -763,7 +765,6 @@ using namespace std;
 				std::cout << it->second[i] << std::endl;
 			}
 		}
-
 		return;
 	}
 	///
@@ -997,6 +998,7 @@ using namespace std;
 			w.stop();
 			writeLog_(String("done  .. took ") + String(w.getClockTime()) + String(" seconds, loaded ") + String(aligned_pairs.size()) + String(" edges"));
 			w.reset();
+			//~ std::cout << aligned_pairs.front().first << " ... " << aligned_pairs.front().second << std::endl;
 
 			w.start();
 

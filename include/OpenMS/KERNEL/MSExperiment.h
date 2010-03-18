@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -411,25 +411,25 @@ namespace OpenMS
 			/// returns the minimal m/z value
 			CoordinateType getMinMZ() const
 			{
-				return RangeManagerType::pos_range_.min()[1];
+				return RangeManagerType::pos_range_.minPosition()[1];
 			}
 
 			/// returns the maximal m/z value
 			CoordinateType getMaxMZ() const
 			{
-				return RangeManagerType::pos_range_.max()[1];
+				return RangeManagerType::pos_range_.maxPosition()[1];
 			}
 
 			/// returns the minimal retention time value
 			CoordinateType getMinRT() const
 			{
-				return RangeManagerType::pos_range_.min()[0];
+				return RangeManagerType::pos_range_.minPosition()[0];
 			}
 
 			/// returns the maximal retention time value
 			CoordinateType getMaxRT() const
 			{
-				return RangeManagerType::pos_range_.max()[0];
+				return RangeManagerType::pos_range_.maxPosition()[0];
 			}
 
 			/**

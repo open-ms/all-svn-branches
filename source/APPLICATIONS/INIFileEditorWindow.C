@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/APPLICATIONS/INIFileEditorWindow.h>
+#include <OpenMS/CONCEPT/LogStream.h>
 #include <OpenMS/SYSTEM/File.h>
 
 #include <QtGui/QToolBar>
@@ -90,15 +91,21 @@ namespace OpenMS
 			if (File::readable(filename_.toStdString()))
 			{
 				param_.clear();
-				param_.load(filename_.toStdString());
-				editor_->load(param_);
-				updateWindowTitle(editor_->isModified());
-				return true;
+				try
+				{
+					param_.load(filename_.toStdString());
+					editor_->load(param_);
+					updateWindowTitle(editor_->isModified());
+					return true;
+				}
+				catch (Exception::BaseException &e)
+				{
+					LOG_ERROR << "Error while parsing file '" << filename_.toStdString() << "'\n";
+					LOG_ERROR << e << "\n";
+				}
 			}
-			else
-			{
-				QMessageBox::critical(this,"Error opening file",("The file '"+filename_.toStdString()+"' does not exist or is not readable!").c_str());		
-			}
+
+			QMessageBox::critical(this,"Error opening file",("The file '"+filename_.toStdString()+"' does not exist, is not readable or not a proper INI file!").c_str());		
 		}
 		return false;
 	}

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -124,8 +124,12 @@ namespace OpenMS
 			// native ID (numbers from 0)
 			UInt native_id = 0;
 
+			// line number counter
+			Size line_number = 0;
+
 			while (getline(is,line,'\n'))
 			{
+				++line_number;
 				line.trim();
 
 				if ( line.empty() ) continue;
@@ -193,7 +197,7 @@ namespace OpenMS
 					line.split(delimiter,strings);
 					if (strings.size()!=3)
 					{
-						throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" ,filename);
+						throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line (" + String(line_number) + "): \"")+line+"\" (got  " + String(strings.size()) + ", expected 3 entries)" ,filename);
 					}
 					p.setIntensity(strings[int_dim].toFloat());
 					p.setMZ(strings[mz_dim].toDouble());
@@ -202,7 +206,7 @@ namespace OpenMS
 				// conversion to double or something else could have gone wrong
 				catch ( Exception::BaseException & /*e*/ )
 				{
-					throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line: \"")+line+"\"" ,filename);
+					throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, std::string("Bad data line (" + String(line_number) + "): \"")+line+"\"" ,filename);
 				}
 
 				// Retention time changed -> new Spectrum

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -131,21 +131,21 @@ class TOPPFileInfo
 	{
 		registerInputFile_("in","<file>","","input file ");
 #ifdef USE_ANDIMS
-		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML,pepXML"));
+		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
 #else
-		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML"));
+		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
 #endif
 		registerStringOption_("in_type","<type>","","input file type -- default: determined from file extension or content", false);
 #ifdef USE_ANDIMS
-		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML,pepXML"));
+		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
 #else
-		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML"));
+		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
 #endif
 		registerOutputFile_("out","<file>","","Optional output file. If '-' or left out, the output is written to the command line.", false);
 		registerFlag_("m","Show meta information about the whole experiment");
 		registerFlag_("p","Shows data processing information");
 		registerFlag_("s","Computes a five-number statistics of intensities and qualities");
-		registerFlag_("d","Show detailed listing of all spectra (peak files only)");
+		registerFlag_("d","Show detailed listing of all spectra and chromatograms (peak files only)");
 		registerFlag_("c","Check for corrupt data in the file (peak files only)");
 		registerFlag_("v","Validate the file only (for mzML, mzData, mzXML, featureXML, idXML, consensusXML, pepXML)");
 	}
@@ -598,11 +598,24 @@ class TOPPFileInfo
 					
 					}
 				}
+				if (getFlag_("d") && chrom_types.has(ChromatogramSettings::SELECTED_REACTION_MONITORING_CHROMATOGRAM))
+				{
+					os << endl << " -- Detailed chromatogram listing -- " << endl;
+					os << "\n#Selected Reaction Monitoring Transitions:" << endl;
+					os << "#Q1 Q3 RT-begin RT-end name comment" << endl;
+					for (vector<MSChromatogram<> >::const_iterator it = exp.getChromatograms().begin(); it != exp.getChromatograms().end(); ++it)
+					{
+						if (it->getChromatogramType() == ChromatogramSettings::SELECTED_REACTION_MONITORING_CHROMATOGRAM)
+						{
+							os << it->getPrecursor().getMZ() << " " << it->getProduct().getMZ() << " " << it->front().getRT() << " " << it->back().getRT() << " " << it->getName() << " " << it->getComment() << endl;
+						}
+					}
+				}
 			}
 
 
 			// Detailed listing of scans
-			if (getFlag_("d"))
+			if (getFlag_("d") && exp.size() > 0)
 			{
 				os << endl
 						 << "-- Detailed spectrum listing --" << endl

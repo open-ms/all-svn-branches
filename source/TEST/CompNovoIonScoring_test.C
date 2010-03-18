@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -69,8 +69,8 @@ START_SECTION((void scoreSpectra(Map< DoubleReal, IonScore > &CID_ion_scores, Pe
 {
   TheoreticalSpectrumGenerator tsg;
   Param tsg_param(tsg.getParameters());
-  tsg_param.setValue("add_losses", 1);
-  tsg_param.setValue("add_isotopes", 1);
+  tsg_param.setValue("add_losses", "true");
+  tsg_param.setValue("add_isotopes", "true");
   tsg.setParameters(tsg_param);
 
   RichPeakSpectrum rspec;

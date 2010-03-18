@@ -366,6 +366,7 @@ struct ASA_DP_Tables
 			TheoreticalSpectrumGenerator tsg;
 			RichPeakSpectrum ts;
 			tsg.getSpectrum(ts, spectrum.getPeptideIdentifications().front().getHits().front().getSequence(), c_lo, c_hi);
+			//~ tsg.getSpectrum(ts, spectrum.getPeptideIdentifications().front().getHits().front().getSequence());
 			ts.sortByPosition();
 
 			typename MSSpectrum<PeakT>::Iterator lo = spectrum.begin();
@@ -1945,7 +1946,7 @@ struct ASA_DP_Tables
 
 //~ remove unneccessary peaks
 			//~ charge deconvolution to 'singly charged only' for identified spectra
-			filterHighCharges(res_1,2,3);
+			//~ filterHighCharges(res_1,2,3);
 
 			//~ change s1 to align antisymmetrical into res_1
 			res_1 = getSymetricSpectrum(res_1);
@@ -2064,10 +2065,13 @@ struct ASA_DP_Tables
 				dp_tables.right_jumps_shifted[i].resize(jumps_count);
 			}
 
+			//~ std::cout << "tic" << std::endl;
+
 			res_1.clear(false);
 			res_2.clear(false);
 			//~ implicitly copied (and not erased):
 			//~ Precursors,RT,MSLevel, MetaDataArrays
+
 
 			/// @improvement find a good penalty adjustment
 			DoubleReal sv_penalty = (DoubleReal)param_.getValue("sv_penalty");
@@ -2166,6 +2170,9 @@ struct ASA_DP_Tables
 				res_1.push_back(tmp_1);
 				res_2.push_back(tmp_2);
 			}
+
+			//~ std::cout << "toc" << std::endl;
+
 
 		}
 		///

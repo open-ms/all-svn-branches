@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,7 @@
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FileTypes.h>
+#include <OpenMS/SYSTEM/File.h>
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
@@ -123,6 +124,11 @@ class TOPPMascotAdapterOnline
 			if (temp_data_directory != "")
 			{
 				temp_data_directory.ensureLastChar('/');
+        if (!File::isDirectory(temp_data_directory))
+        {
+          writeLog_("The given temporary directory '" + temp_data_directory + "' does not exist! Please create it or select an existing directory (see 'temp_data_directory' parameter)!");
+          return CANNOT_WRITE_OUTPUT_FILE;
+        }
 			}
 			FileHandler fh;
 			FileTypes::Type in_type = fh.getType(in);

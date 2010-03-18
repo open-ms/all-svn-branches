@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -120,7 +120,7 @@ namespace OpenMS {
     defaults_.setValue("esi:ionized_residues", StringList::create("Arg,Lys,His"), "List of residues (as three letter code) that will be considered during ESI ionization. This parameter will be ignored during MALDI ionization.");
     StringList valid_ionized_residues = StringList::create("Ala,Cys,Asp,Glu,Phe,Gly,His,Ile,Lys,Leu,Met,Asn,Pro,Gln,Arg,Sec,Ser,Thr,Val,Trp,Tyr");
     defaults_.setValidStrings("esi:ionized_residues", valid_ionized_residues);
-		defaults_.setValue("esi:charge_impurity", StringList::create("H+:1,NH4+:0.2,Ca++:0.1"), "List of charged ions that contribute to charge with weight of occurence (which must not sum to 1), e.g. ['H:1'] or ['H:0.7' 'Na:0.3']");
+		defaults_.setValue("esi:charge_impurity", StringList::create("H+:1,NH4+:0.2"), "List of charged ions that contribute to charge with weight of occurence (which must not sum to 1), e.g. ['H:1'] or ['H:0.7' 'Na:0.3']");
 
 		defaults_.setValue("esi:max_impurity_set_size", 3, "Maximal #combinations of charge impurities allowed (each generating one feature) per charge state. E.g. assuming charge=3 and this parameter is 2, then we could choose to allow '3H+, 2H+Na+' features (given certain 'charge_impurity' constaints), but no '3H+, 2H+Na+, 3Na+'", StringList::create("advanced"));
 
@@ -164,6 +164,9 @@ namespace OpenMS {
     StringList esi_charge_impurity = param_.getValue("esi:charge_impurity");
 		StringList components;
 		max_adduct_charge_ = 0;
+		// reset internal state:
+		esi_impurity_probabilities_.clear();
+		esi_adducts_.clear();
     // cumulate probabilities in list
     for(Size i = 0 ; i < esi_charge_impurity.size() ; ++i )
     {
@@ -176,7 +179,7 @@ namespace OpenMS {
 			// effectively substract electrones
 			ef.setCharge(l_charge); ef -= String("H")+String(l_charge);
 			// create adduct
-			Adduct a((Int)l_charge, 1, ef.getMonoWeight(), components[0].remove('+'), log(components[1].toDouble()));
+			Adduct a((Int)l_charge, 1, ef.getMonoWeight(), components[0].remove('+'), log(components[1].toDouble()),0);
 			esi_adducts_.push_back(a);
 			esi_impurity_probabilities_.push_back(components[1].toDouble());
 
@@ -290,7 +293,7 @@ namespace OpenMS {
 						
 						copy_map.push_back(charged_feature);
 						// add to consensus
-						cf.insert(0, copy_map.size()-1, charged_feature);
+						cf.insert(0, charged_feature);
 
 						// decrease # of allowed compomers of current compomer's charge
 						--allowed_entities_of_charge[charge];
@@ -388,7 +391,7 @@ namespace OpenMS {
 						
 						copy_map.push_back(charged_feature);
 						
-						cf.insert(0, copy_map.size()-1, charged_feature);
+						cf.insert(0, charged_feature);
 					}
 				}
 				// add consensus element containing all charge variants just created
@@ -425,6 +428,7 @@ namespace OpenMS {
 
 		f.setMZ( (feature_ef.getMonoWeight() + adduct_mass ) / charge);
 		f.setCharge(charge);
+		f.ensureUniqueId();
 		
 		// add meta information on compomer (mass)
 		f.setMetaValue("charge_adduct_mass", adduct_mass );

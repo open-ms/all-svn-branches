@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -55,8 +55,6 @@ using namespace std;
 	- @p spectrum_alignment: An experimental algorithm based on spectrum alignment; applicable only to peak maps (mzML).
 
 	For more information on these algorithms, including their individual parameters, see also the documentation of the respective classes ("MapAlignmentAlgorithm...").
-
-  .
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_MapAligner.cli

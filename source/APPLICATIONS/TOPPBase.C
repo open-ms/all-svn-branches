@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -231,14 +231,22 @@ namespace OpenMS
 					{
 						if (default_params.exists(it.getName()))
 						{
-							// param 'type': do not override!
-							if (it.getName().hasSuffix(":type"))
+							if (it.getName().hasSuffix(":version"))
 							{	
 								if (default_params.getValue(it.getName()) != it->value)
 								{
-									writeLog_("Warning: Augmented and Default Ini-File differ in value. Default value will not be altered!");
-									continue;
+									writeLog_("Warning: for ':version' entry, augmented and Default Ini-File differ in value. Default value will not be altered!");
 								}
+								continue;
+							}
+							// param 'type': do not override!
+							else if (it.getName().hasSuffix(":type"))
+							{	
+								if (default_params.getValue(it.getName()) != it->value)
+								{
+									writeLog_("Warning: for ':type' entry, augmented and Default Ini-File differ in value. Default value will not be altered!");
+								}
+								continue;
 							}
 							
 							// all other parameters:
@@ -253,12 +261,12 @@ namespace OpenMS
 									if (entry.isValid(s))
 									{
 										// overwrite default value
-										writeDebug_(String("Overriding Default-Parameter ") + it.getName() + " with new value "+String(it->value) ,10); 
+										writeLog_(String("Overriding Default-Parameter ") + it.getName() + " with new value "+String(it->value)); 
 										default_params.setValue(it.getName(),it->value, entry.description, default_params.getTags(it.getName()));
 									}
 									else
 									{
-										writeDebug_(String("Parameter ") + it.getName() + " does not fit into new restriction settings! Ignoring...",10); 
+										writeLog_(String("Parameter ") + it.getName() + " does not fit into new restriction settings! Ignoring..."); 
 									}
 								}
 								else
@@ -268,12 +276,12 @@ namespace OpenMS
 							}
 							else
 							{
-								writeDebug_(String("Parameter ") + it.getName() + " has changed value type! Ignoring...",10); 
+								writeLog_(String("Parameter ") + it.getName() + " has changed value type! Ignoring..."); 
 							}
 						}
 						else
 						{
-							writeDebug_(String("Deprecated Parameter ") + it.getName() + " given in -ini argument! Ignoring...",10); 
+							writeLog_(String("Deprecated Parameter ") + it.getName() + " given in -ini argument! Ignoring..."); 
 						}
 					}
 				
@@ -849,9 +857,13 @@ namespace OpenMS
 		//check for commas
 		for (Size i=0; i<formats.size(); ++i)
 		{
-			if (FileHandler::getTypeByFileName(String(".")+formats[i])==FileTypes::UNKNOWN)
+			/// @todo Check whether this can be done more elegantly (Andreas)
+			if (formats[i] != "fid")
 			{
-				throw InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,"The file format '" + formats[i] + "' is invalid!");
+				if (FileHandler::getTypeByFileName(String(".")+formats[i])==FileTypes::UNKNOWN)
+				{
+					throw InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,"The file format '" + formats[i] + "' is invalid!");
+				}
 			}
 		}
 		//search the right parameter
@@ -1968,6 +1980,7 @@ namespace OpenMS
 		tools_map["DBImporter"] = StringList::create("");
 		tools_map["DTAExtractor"] = StringList::create("");
 		tools_map["Decharger"] = StringList::create("");
+		tools_map["ExecutePipeline"] = StringList::create("");
 		tools_map["FalseDiscoveryRate"] = StringList::create("");
 		tools_map["FeatureFinder"] = Factory<FeatureFinderAlgorithm<Peak1D,Feature> >::registeredProducts();
 		tools_map["FeatureLinker"] = Factory<FeatureGroupingAlgorithm>::registeredProducts();
@@ -1997,10 +2010,12 @@ namespace OpenMS
 		tools_map["PepNovoAdapter"] = StringList::create("");
 		tools_map["PeptideIndexer"] = StringList::create("");
 		tools_map["PrecursorIonSelector"] = StringList::create("");
+		tools_map["ProteinQuantifier"] = StringList::create("");
 		tools_map["RTModel"] = StringList::create("");
 		tools_map["RTPredict"] = StringList::create("");
 		tools_map["Resampler"] = StringList::create("");
 		tools_map["SILACAnalyzer"] = StringList::create("");
+		tools_map["SILACAnalyzer2"] = StringList::create("");
 		tools_map["SeedListGenerator"] = StringList::create("");
 		tools_map["SequestAdapter"] = StringList::create("");
 		tools_map["SpecLibSearcher"] = StringList::create("");
@@ -2009,10 +2024,47 @@ namespace OpenMS
 		tools_map["TextExporter"] = StringList::create("");
 		tools_map["TextImporter"] = StringList::create("");
 		tools_map["XTandemAdapter"] = StringList::create("");
-    tools_map["SILACAnalyzer"] = StringList::create("double,triple");
+		tools_map["SILACAnalyzer"] = StringList::create("double,triple");
+		tools_map["SILACAnalyzer2"] = StringList::create("double,triple");
     tools_map["PrecursorMassCorrector"] = StringList::create("");
+    tools_map["GenericWrapper"] = StringList::create("");
+    tools_map["ProteinInference"] = StringList::create("");
+    tools_map["InclusionExclusionlistCreator"] = StringList::create("");
 
 		return tools_map;
+	}
+
+	Map<String,StringList> TOPPBase::getUtilList()
+	{
+		Map<String,StringList> util_map;
+
+		util_map["IDMassAccuracy"] = StringList::create("");
+		util_map["DecoyDatabase"] = StringList::create("");
+		util_map["MapAlignmentEvaluation"] = StringList::create("");
+		util_map["CaapConvert"] = StringList::create("");
+		util_map["CVInspector"] = StringList::create("");
+		util_map["DecoyDatabase"] = StringList::create("");
+		util_map["Digestor"] = StringList::create("");
+		util_map["FFEval"] = StringList::create("");
+		util_map["FuzzyDiff"] = StringList::create("");
+		util_map["HistView"] = StringList::create("");
+		util_map["IDExtractor"] = StringList::create("");
+		util_map["LabeledEval"] = StringList::create("");
+		util_map["SemanticValidator"] = StringList::create("");
+		util_map["SequenceCoverageCalculator"] = StringList::create("");
+		util_map["XMLValidator"] = StringList::create("");
+		util_map["IdXMLEvaluation"] = StringList::create("");
+		util_map["MSSimulator"] = StringList::create("");
+		util_map["ERPairFinder"] = StringList::create("");
+		util_map["SpecLibCreator"] = StringList::create("");
+		util_map["SpectrumGeneratorNetworkTrainer"] = StringList::create("");
+		util_map["MRMPairFinder"] = StringList::create("");
+		util_map["DeMeanderize"] = StringList::create("");
+		util_map["UniqueIdAssigner"] = StringList::create("");
+		util_map["ImageCreator"] = StringList::create("");
+		util_map["IDSplitter"] = StringList::create("");
+		
+		return util_map;
 	}
 
   DataProcessing TOPPBase::getProcessingInfo_(DataProcessing::ProcessingAction action) const

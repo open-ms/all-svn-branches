@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -93,9 +93,13 @@ namespace OpenMS
 
 
 		if(variable)
+		{
 			type="OPTIONAL";
+		}
 		else
+		{
 			type="FIXED";
+		}
 
 		switch(ts)
 		{
@@ -116,16 +120,29 @@ namespace OpenMS
 		{
 			key="^";
 		}
+		
 		//cout<<"origin: "<<origin<<"    loc: "<<locations<<endl;
-		if(origin!="C-term" && origin!="N-Term")
+		if(origin=="C-term")
+		{
+		  origin="C_TERM";
+		}
+		else if(origin=="N-term")
+		{
+		  origin="N_TERM";
+		}
+		else
 		{
 			key=origin;
 		}
 
 		if(mass>=0)
+		{
 		  key+="+"+String(Math::round(mass));
+		}
 		else
+		{
 		  key+=String(Math::round(mass));
+		}
 
 		String line="";
 		line+=origin.toUpper();

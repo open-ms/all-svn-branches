@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -32,6 +32,7 @@
 #include <OpenMS/FORMAT/ControlledVocabulary.h>
 #include <OpenMS/METADATA/IdentificationHit.h>
 #include <OpenMS/METADATA/Identification.h>
+#include <OpenMS/METADATA/ProteinHit.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 
 namespace OpenMS
@@ -116,6 +117,9 @@ namespace OpenMS
 				MzIdentMLHandler& operator = (const MzIdentMLHandler& rhs);
 				Map<String, AASequence> pep_sequences_;
 				AASequence actual_peptide_;
+				Int current_mod_location_;
+				ProteinHit actual_protein_;
+				
 		};
 	} // namespace Internal
 } // namespace OpenMS

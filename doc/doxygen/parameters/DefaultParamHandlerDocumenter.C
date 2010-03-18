@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2008 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -77,8 +77,8 @@
 #include <OpenMS/COMPARISON/SPECTRA/SteinScottImproveScore.h>
 #include <OpenMS/COMPARISON/SPECTRA/ZhangSimilarityScore.h>
 #include <OpenMS/COMPARISON/SPECTRA/CompareFouriertransform.h>
-#include <OpenMS/COMPARISON/SPECTRA/XCorrelation.h>
-#include <OpenMS/COMPARISON/CLUSTERING/SpectralNetworkNode.h>
+//~ #include <OpenMS/COMPARISON/SPECTRA/XCorrelation.h>
+//~ #include <OpenMS/COMPARISON/CLUSTERING/SpectralNetworkNode.h>
 #include <OpenMS/FILTERING/CALIBRATION/InternalCalibration.h>
 #include <OpenMS/FILTERING/SMOOTHING/SavitzkyGolayFilter.h>
 #include <OpenMS/FILTERING/BASELINE/MorphologicalFilter.h>
@@ -145,7 +145,6 @@
 #include <OpenMS/SIMULATION/DetectabilitySimulation.h>
 #include <OpenMS/SIMULATION/RawMSSignalSimulation.h>
 #include <OpenMS/SIMULATION/MSSim.h>
-#include <OpenMS/SIMULATION/ElutionModel.h>
 #include <OpenMS/SIMULATION/RawTandemMSSignalSimulation.h>
 #include <OpenMS/SIMULATION/RTSimulation.h>
 #include <OpenMS/APPLICATIONS/TOPPASBase.h>
@@ -318,7 +317,6 @@ int main (int argc , char** argv)
 	DOCME(DelaunayPairFinder);
   DOCME(DetectabilitySimulation);
 	DOCME(DigestSimulation);
-	DOCME(ElutionModel);
 	DOCME(EmgFitter1D);
 	DOCME(EmgModel);
 	DOCME(ExtendedIsotopeFitter1D);
@@ -421,12 +419,11 @@ int main (int argc , char** argv)
 	DOCME2(Spectrum1DCanvas,Spectrum1DCanvas(Param(),0));
 	DOCME2(Spectrum2DCanvas,Spectrum2DCanvas(Param(),0));
 	DOCME2(Spectrum3DCanvas,Spectrum3DCanvas(Param(),0));
-	PeakMap nothing; std::vector< std::pair<Size,Size> > list_pairs; std::list<DoubleReal> list_doubles;
-	DOCME2(SpectralNetworkNode,(SpectralNetworkNode<Peak1D>(nothing,nothing,list_pairs,list_doubles)));
+	//~ DOCME2(SpectralNetworkNode,(SpectralNetworkNode<Peak1D>(nothing,nothing,list_pairs,list_doubles)));
+	//~ DOCME2(XCorrelation,(XCorrelation<Peak1D>()));
 	DOCME2(PTMSimulation, PTMSimulation(NULL));
-  DOCME2(IonizationSimulation, IonizationSimulation(NULL));
-  DOCME2(RawMSSignalSimulation, RawMSSignalSimulation(NULL));
-	DOCME2(XCorrelation,(XCorrelation<Peak1D>()));
+	DOCME2(IonizationSimulation, IonizationSimulation(NULL));
+	DOCME2(RawMSSignalSimulation, RawMSSignalSimulation(NULL));
 	DOCME2(RawTandemMSSignalSimulation, RawTandemMSSignalSimulation(NULL))
 	DOCME2(RTSimulation, RTSimulation(NULL))
 

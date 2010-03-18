@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -127,7 +127,7 @@ namespace OpenMS
 		{
 			DataFilters filters;
 			
-			if (dw.getLeftSplitter()>dist.min())
+			if (dw.getLeftSplitter()>dist.minBound())
 			{
 				DataFilters::DataFilter filter;
 				filter.value = dw.getLeftSplitter();
@@ -136,7 +136,7 @@ namespace OpenMS
 				filters.add(filter);
 			}
 			
-			if (dw.getRightSplitter()<dist.max())
+			if (dw.getRightSplitter()<dist.maxBound())
 			{
 				DataFilters::DataFilter filter;
 				filter.value = dw.getRightSplitter();
@@ -159,7 +159,7 @@ namespace OpenMS
 		{
 			DataFilters filters;
 			
-			if (dw.getLeftSplitter()>dist.min())
+			if (dw.getLeftSplitter()>dist.minBound())
 			{
 				DataFilters::DataFilter filter;
 				filter.value = dw.getLeftSplitter();
@@ -170,7 +170,7 @@ namespace OpenMS
 				filters.add(filter);
 			}
 			
-			if (dw.getRightSplitter()<dist.max())
+			if (dw.getRightSplitter()<dist.maxBound())
 			{
 				DataFilters::DataFilter filter;
 				filter.value = dw.getRightSplitter();
@@ -207,7 +207,7 @@ namespace OpenMS
 	
 	void SpectrumWidget::updateAxes()
 	{
-		//change axis lables if necessary
+		//change axis labels if necessary
 		if ((canvas()->isMzToXAxis()==true && x_axis_->getLegend().size()>=2 && x_axis_->getLegend().prefix(2)=="RT")
 		||( canvas()->isMzToXAxis()==false && y_axis_->getLegend().size()>=2 && y_axis_->getLegend().prefix(2)=="RT")) 
 		{

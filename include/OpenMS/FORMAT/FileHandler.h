@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -38,6 +38,7 @@
 #include <OpenMS/FORMAT/MzDataFile.h>
 #include <OpenMS/FORMAT/MascotGenericFile.h>
 #include <OpenMS/FORMAT/MS2File.h>
+#include <OpenMS/FORMAT/XMassFile.h>
 #include <OpenMS/KERNEL/ChromatogramTools.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 
@@ -206,6 +207,14 @@ namespace OpenMS
 						f.load(filename, exp);
 						return true;
 					}
+				case FileTypes::XMASS:
+				{
+					exp.reset();
+					exp.resize(1);
+					XMassFile().load(filename, exp[0]);
+					XMassFile().importExperimentalSettings(filename, exp);
+					return true;
+				}
 				default:
 					break;
 			}

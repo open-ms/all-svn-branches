@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -255,10 +255,10 @@ namespace OpenMS
 		}
 
 
-    /**@brief Applies a member function of Type to all features, including subordinates.
+    /**@brief Applies a member function of Type to the feature (including subordinates).
        The returned values are accumulated.
 
-       <b>Example:</b>  The following will print the number of features with invalid unique ids:
+       <b>Example:</b>  The following will print the number of features (parent feature and subordinates) with invalid unique ids:
        @code
        Feature f;
        (...)

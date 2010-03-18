@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -45,7 +45,7 @@ using namespace std;
 
 	@brief Groups corresponding features in one map or across maps.
 
-	This tool provides several algorithms for grouping correpsonding features in isotope-labeled
+	This tool provides several algorithms for grouping corresponding features in isotope-labeled
 	and label-free experiments.
 
 	It takes one or several feaure maps and stores the corresponding features in a ConsensusXML files.

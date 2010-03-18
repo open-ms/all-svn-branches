@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -361,21 +361,21 @@ namespace OpenMS
         }
         /// smallest positive
         inline static const DPosition
-        min()
+        minPositive()
         {
-          return DPosition(std::numeric_limits<typename DPosition::CoordinateType>::min());
+          return DPosition((std::numeric_limits<typename DPosition::CoordinateType>::min)());
         }
         /// smallest negative
         inline static const DPosition
-        min_negative()
+        minNegative()
         {
-          return DPosition(-std::numeric_limits<typename DPosition::CoordinateType>::max());
+          return DPosition(-(std::numeric_limits<typename DPosition::CoordinateType>::max)());
         }
         /// largest positive
         inline static const DPosition
-        max()
+        maxPositive()
         {
-          return DPosition(std::numeric_limits<typename DPosition::CoordinateType>::max());
+          return DPosition((std::numeric_limits<typename DPosition::CoordinateType>::max)());
         }
         //@}
 

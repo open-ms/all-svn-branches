@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -115,14 +115,14 @@ namespace OpenMS
 			}
 			//@}
 	
-			///returns to the lower bound
-			BinSizeType min() const
+			///returns the lower bound
+			BinSizeType minBound() const
 			{
 				return min_;
 			}
 	
 			///returns the upper bound
-			BinSizeType max() const
+			BinSizeType maxBound() const
 			{
 				return max_;
 			}

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -45,14 +45,14 @@ namespace OpenMS
 	{
 		/// Default constructor. Creates an invalid peak reference
 		inline PeakIndex()
-			: peak(std::numeric_limits<Size>::max()),
-			  spectrum(std::numeric_limits<Size>::max())
+			: peak((std::numeric_limits<Size>::max)()),
+			  spectrum((std::numeric_limits<Size>::max)())
 		{
 		}
 		/// Constructor that sets the peak index (for feaure maps)
 		inline PeakIndex(Size peak)
 			: peak(peak),
-			  spectrum(std::numeric_limits<Size>::max())
+			  spectrum((std::numeric_limits<Size>::max)())
 		{
 		}
 		///Constructor that sets the peak and spectrum index (for peak maps)
@@ -65,13 +65,13 @@ namespace OpenMS
 		/// returns if the current peak ref is valid
 		inline bool isValid() const
 		{
-		  return (peak != std::numeric_limits<Size>::max());
+		  return (peak != (std::numeric_limits<Size>::max)());
 	  }
 		///Invalidates the current index
 		inline void clear()
 		{
-		  peak = std::numeric_limits<Size>::max();
-      spectrum = std::numeric_limits<Size>::max();
+		  peak = (std::numeric_limits<Size>::max)();
+      spectrum = (std::numeric_limits<Size>::max)();
 	  }
 		
 		/**

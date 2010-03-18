@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -106,7 +106,23 @@ namespace OpenMS
 	
 	void TOPPASWidget::keyPressEvent(QKeyEvent* e)
 	{
-		if (e->key() == Qt::Key_Control)
+		if (e->key() == Qt::Key_C && e->modifiers() == Qt::ControlModifier)
+		{
+			scene_->copySelected();
+			e->accept();
+		}
+		else if (e->key() == Qt::Key_X && e->modifiers() == Qt::ControlModifier)
+		{
+			scene_->copySelected();
+			scene_->removeSelected();
+			e->accept();
+		}
+		else if (e->key() == Qt::Key_V && e->modifiers() == Qt::ControlModifier)
+		{
+			scene_->paste();
+			e->accept();
+		}
+		else if (e->key() == Qt::Key_Control)
 		{
 			setDragMode(QGraphicsView::ScrollHandDrag);
 			e->accept();
@@ -114,18 +130,22 @@ namespace OpenMS
 		else if (e->key() == Qt::Key_Delete || e->key() == Qt::Key_Backspace)
 		{
 			scene_->removeSelected();
+			e->accept();
 		}
 		else if (e->key() == Qt::Key_F5)
 		{
 			scene_->runPipeline();
+			e->accept();
 		}
 		else if (e->key() == Qt::Key_Plus)
 		{
 			zoom(false);
+			e->accept();
 		}
 		else if (e->key() == Qt::Key_Minus)
 		{
 			zoom(true);
+			e->accept();
 		}
 	}
 	
@@ -136,7 +156,6 @@ namespace OpenMS
 			setDragMode(QGraphicsView::RubberBandDrag);
 			e->accept();
 		}
-		//e->ignore(); how does this work again?
 	}
 	
 	void TOPPASWidget::leaveEvent(QEvent* /*e*/)
@@ -155,7 +174,7 @@ namespace OpenMS
 		if (scene_)
 		{
 			QRectF items_rect = scene_->itemsBoundingRect();
-			scene_->setSceneRect(items_rect.united(mapToScene(rect()).boundingRect()));
+			scene_->setSceneRect(items_rect.united(mapToScene(viewport()->rect()).boundingRect()));
 		}
 	}
 	

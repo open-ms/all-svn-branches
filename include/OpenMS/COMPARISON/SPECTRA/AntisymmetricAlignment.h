@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2009 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -112,11 +112,13 @@ struct ASA_DP_Tables
 	celltype best_t;
 
 	ASA_DP_Tables(Size n, Size m, Size l, DoubleReal pm1, DoubleReal pm2) // n = res_1.size();  m = common.size()/2; l = res_2.size();
-				:pm_s1(pm1), pm_s2(pm2),best_score(0.0),best_i(-1),best_j(-1),best_s(-1),
+				:pm_s1(pm1), pm_s2(pm2),
 				peaks(n),peaks2(l),
 				common(n,-1), common_shifted(n,-1), common_scores(n,0), common_shifted_scores(n,0),
 				prev(n, -1), next(n,-1), prev_shifted(n,-1), next_shifted(n,-1),
-				left_jumps(n), left_jumps_shifted(n), right_jumps(n),right_jumps_shifted(n), left_neighbors(n), right_neighbors(n),
+				left_jumps(n), left_jumps_shifted(n),
+				right_jumps(n),right_jumps_shifted(n),
+				left_neighbors(n), right_neighbors(n),
 				prefix1(m, std::numeric_limits<DoubleReal>::min()), suffix1(m),prefix2(m), suffix2(m, std::numeric_limits<DoubleReal>::min()), prefix1_L(m, std::numeric_limits<DoubleReal>::min()), suffix1max(m, std::numeric_limits<DoubleReal>::min()), suffix1_R(m, std::numeric_limits<DoubleReal>::min()), prefix2max(m, std::numeric_limits<DoubleReal>::min()), prefix2_L(m, std::numeric_limits<DoubleReal>::min()), suffix2_R(m, std::numeric_limits<DoubleReal>::min()),
 				D1(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),
 				D2(m,std::vector<std::vector<double> >(m)),
@@ -128,7 +130,8 @@ struct ASA_DP_Tables
 				M2_L(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),
 				M2_R(m,std::vector<std::vector<double> >(m)),
 				M3_L(m,std::vector<std::vector<double> >(m)),
-				M3_R(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),best_t(cell_Invalid)
+				M3_R(m,std::vector<double>(m, std::numeric_limits<DoubleReal>::min())),best_t(cell_Invalid),
+				best_score(0.0),best_i(-1),best_j(-1),best_s(-1)
 	{
 		//~ celltype best_t = cell_Invalid;
 	}
@@ -159,8 +162,8 @@ struct ASA_DP_Tables
 				defaults_.setValue("peak_tolerance", 0.3, "Defines the absolut (in Da) peak tolerance");
 				defaults_.setValue("parentmass_tolerance", 3.0, "Defines the absolut (in Da) parent mass tolerance");
 				defaults_.setValue("min_dist", 57.0214637230 , "Defines the minimal distance (in Da) between the two peaks of one sort that may be connected in a sparse matching");
-				defaults_.setValue("sv_penalty", -5.0 , "Defines the penalty for being in the same 'vertex' in DP");
-				defaults_.setValue("dif_penalty", -5.0 , "Defines the penalty for jumping the parentmass difference in DP");
+				defaults_.setValue("sv_penalty", -5.0 , "Defines the penalty for being in the same 'vertex' in DP",StringList::create("advanced"));
+				defaults_.setValue("dif_penalty", -5.0 , "Defines the penalty for jumping the parentmass difference in DP",StringList::create("advanced"));
 				defaultsToParam_();
 		}
 
@@ -514,8 +517,6 @@ struct ASA_DP_Tables
 			@param score of the alignment
 
 			@return a pair of vectors of indices containing the path of aligned indices in a row
-
-			...
 		*/
 		std::pair< std::vector<int>,std::vector<int> > traceback(ASA_DP_Tables& dp_tables, DoubleReal& dif_penalty, DoubleReal& score) const
 		{
@@ -1189,11 +1190,12 @@ struct ASA_DP_Tables
 		///
 
 		/**
-			@brief ...
+			@brief will fill the dynamic programing tables needed aligning the peaks
 
-			@param
+			@param dp_tables the filled dynamic programming tables
+			@param sv_penalty the penalty for aligning a peak that might origin from the other ion species
+			@param dif_penalty the penalty for aligning a peak that might origin from the other ion species
 
-			...
 		*/
 		void calculateAlignementPath(ASA_DP_Tables& dp_tables, Real peak_tolerance, DoubleReal sv_penalty, DoubleReal dif_penalty) const
 		{

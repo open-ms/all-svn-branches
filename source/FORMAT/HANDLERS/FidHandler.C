@@ -21,23 +21,39 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Guillaume Belz
-// $Authors: Guillaume Belz
+// $Maintainer: Guillaume Belz$
+// $Authors: Guillaume Belz$
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/HANDLERS/FidHandler.h>
 #include <OpenMS/CONCEPT/Exception.h>
 
-#include <limits.h>
+#include <climits>
 
 using namespace std;
 
+#ifdef OPENMS_BIG_ENDIAN
+  template<typename T> T ByteReverse(const T in)
+  {
+    T out;
+    const char* pin = (const char*) &in;
+    char* pout= (char*) (&out+1) - 1 ;
+
+    int i;
+    for(i= sizeof(T) ; i>0 ; --i)
+    {
+      *pout-- = *pin++ ;
+    }
+    return out ;
+  }
+#endif
+          
 namespace OpenMS
 {
 	namespace Internal
 	{
       FidHandler::FidHandler(const String& filename)
-        : ifstream(filename.c_str())
+        : ifstream(filename.c_str(), ios_base::binary | ios_base::in)
       {
         index_ = 0;
         seekg(0, ios::beg);
@@ -47,30 +63,21 @@ namespace OpenMS
       {
       }
       
-      unsigned int FidHandler::getIndex()
+      Size FidHandler::getIndex()
       {
         return index_;
       }
       
-      unsigned int FidHandler::getIntensity()
+      Int32 FidHandler::getIntensity()
       {
         // intensity is coded in 32 bits little-endian integer format
-        unsigned char c1 = get();
-        unsigned char c2 = get();
-        unsigned char c3 = get();
-        unsigned char c4 = get();
-             
-        unsigned int value = c4;
-        value <<= 8;
-        value |= c3;
-        value <<= 8;
-        value |= c2;
-        value <<= 8;
-        value |= c1;
-    
-        index_++;
-        
-        return value;
+        Int32 result = 0;
+        read( (char*) &result, 4);
+        #ifdef OPENMS_BIG_ENDIAN
+          result = ByteReverse<Int32>(result);
+        #endif
+        index_++;        
+        return result;
       }
 	} // namespace Internal
 } // namespace OpenMS

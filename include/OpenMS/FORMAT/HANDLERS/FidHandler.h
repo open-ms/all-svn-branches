@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Guillaume Belz
-// $Authors: Guillaume Belz
+// $Maintainer: Guillaume Belz$
+// $Authors: Guillaume Belz$
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_HANDLERS_FIDHANDLER_H
@@ -56,20 +56,20 @@ namespace OpenMS
         FidHandler(const String& filename);
         
         /// Destructor
-        ~FidHandler();
+        virtual ~FidHandler();
         
 		    /// Get index of current position (without position moving).
-        unsigned int getIndex();
+        Size getIndex();
         
         /// Get intensity of current position and move to next position.
-        unsigned int getIntensity();
+        Int32 getIntensity();
         
       private:
         /// Private default constructor
         FidHandler();
         
         /// Index of position
-        unsigned int index_;
+        Size index_;
     };
 	
 	} // namespace Internal

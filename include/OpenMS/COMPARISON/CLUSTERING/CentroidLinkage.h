@@ -25,59 +25,20 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
+#ifndef CENTROIDLINKAGE_H_
+#define CENTROIDLINKAGE_H_
 
-#include<map>
-#include<list>
-#include<set>
-#include<vector>
-#include<iostream>
-
-#include <OpenMS/DATASTRUCTURES/DataSubset.h>
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
-
-
-
-#ifndef HASHGRID_H_
-#define HASHGRID_H_
+#include <OpenMS/COMPARISON/CLUSTERING/ClusteringMethod.h>
 
 namespace OpenMS
 {
 
-class HashGrid {
-
-private:
-
-	DoubleReal rt_threshold;
-	DoubleReal mz_threshold;
-	DoubleReal hyp_threshold;
-	DoubleReal rt_scaling;
-	DoubleReal min_distance;
-	std::pair<DataSubset*,DataSubset*> min_distance_subsets;
-
+class CentroidLinkage : public ClusteringMethod {
 public:
-	DistanceSet distances;
-	int grid_size_x;
-	int grid_size_y;
-	std::map<std::pair<Int,Int>, std::list<GridElement*> > elements;
-	HashGrid();
-	HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_);
-	~HashGrid();
-	void setRTThreshold(DoubleReal threshold_);
-	void setMZThreshold(DoubleReal threshold_);
-	DoubleReal getDistance(DataSubset& element1,DataSubset& element2);
-	void removeElement(GridElement* element_,Int x,Int y);
-	void removeElement(GridElement* element_);
-	void insert(GridElement* element_);
-	void consoleOut();
-	int size();
-	int distanceSize();
-	DoubleReal getRT_threshold() const;
-	DoubleReal getMZ_threshold() const;
-
+	CentroidLinkage(DoubleReal rt_scaling_);
+	DoubleReal getDistance(DataSubset& subset1,DataSubset& subset2);
+	DoubleReal getDistance(DataPoint& point1,DataPoint& point2);
 };
 }
 
-
-
-
-#endif /* HASHGRID_H_ */
+#endif /* CENTROIDLINKAGE_H_ */

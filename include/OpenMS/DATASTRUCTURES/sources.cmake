@@ -5,6 +5,7 @@ set(directory include/OpenMS/DATASTRUCTURES)
 set(sources_list_h
 Adduct.h
 BigString.h
+BinaryTreeNode.h
 ChargePair.h
 Compomer.h
 ConstRefVector.h
@@ -13,12 +14,16 @@ DBoundingBox.h
 DIntervalBase.h
 DPosition.h
 DRange.h
+DataPoint.h
+DataSubset.h
 DataValue.h
 Date.h
 DateTime.h
 DefaultParamHandler.h
 DistanceMatrix.h
 DoubleList.h
+GridElement.h
+HashGrid.h
 IntList.h
 IsotopeCluster.h
 Map.h

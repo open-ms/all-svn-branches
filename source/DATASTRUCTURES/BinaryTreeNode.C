@@ -25,59 +25,32 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-
-#include<map>
-#include<list>
-#include<set>
-#include<vector>
-#include<iostream>
-
-#include <OpenMS/DATASTRUCTURES/DataSubset.h>
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
-
-
-
-#ifndef HASHGRID_H_
-#define HASHGRID_H_
+#include <OpenMS/DATASTRUCTURES/BinaryTreeNode.h>
+#include <cmath>
 
 namespace OpenMS
 {
-
-class HashGrid {
-
-private:
-
-	DoubleReal rt_threshold;
-	DoubleReal mz_threshold;
-	DoubleReal hyp_threshold;
-	DoubleReal rt_scaling;
-	DoubleReal min_distance;
-	std::pair<DataSubset*,DataSubset*> min_distance_subsets;
-
-public:
-	DistanceSet distances;
-	int grid_size_x;
-	int grid_size_y;
-	std::map<std::pair<Int,Int>, std::list<GridElement*> > elements;
-	HashGrid();
-	HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_);
-	~HashGrid();
-	void setRTThreshold(DoubleReal threshold_);
-	void setMZThreshold(DoubleReal threshold_);
-	DoubleReal getDistance(DataSubset& element1,DataSubset& element2);
-	void removeElement(GridElement* element_,Int x,Int y);
-	void removeElement(GridElement* element_);
-	void insert(GridElement* element_);
-	void consoleOut();
-	int size();
-	int distanceSize();
-	DoubleReal getRT_threshold() const;
-	DoubleReal getMZ_threshold() const;
-
-};
+BinaryTreeNode::BinaryTreeNode() {}
+BinaryTreeNode::BinaryTreeNode(DataPoint* data1_,DataPoint* data2_,DoubleReal distance_) {
+	data1=data1_;
+	data2=data2_;
+	distance=distance_;
 }
 
+bool BinaryTreeNode::operator==(const BinaryTreeNode &cp) const
+{
+	if( this->data1 != cp.data1) return false;
+	if( this->data2 != cp.data2) return false;
+	if( this->distance != cp.distance) return false;
+	return true;
+}
 
+bool BinaryTreeNode::operator<(const BinaryTreeNode &cp) const
+{
+	if (std::abs(this->distance - cp.distance) <= 0.00000001)
+		return *(this->data1) < *(cp.data1);
+	else
+		return this->distance < cp.distance;
+}
+}
 
-
-#endif /* HASHGRID_H_ */

@@ -26,58 +26,33 @@
 // --------------------------------------------------------------------------
 
 
-#include<map>
-#include<list>
-#include<set>
-#include<vector>
-#include<iostream>
+#ifndef DATAPOINT_H_
+#define DATAPOINT_H_
 
-#include <OpenMS/DATASTRUCTURES/DataSubset.h>
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
-
-
-
-#ifndef HASHGRID_H_
-#define HASHGRID_H_
+#include <OpenMS/DATASTRUCTURES/GridElement.h>
 
 namespace OpenMS
 {
 
-class HashGrid {
-
-private:
-
-	DoubleReal rt_threshold;
-	DoubleReal mz_threshold;
-	DoubleReal hyp_threshold;
-	DoubleReal rt_scaling;
-	DoubleReal min_distance;
-	std::pair<DataSubset*,DataSubset*> min_distance_subsets;
+class DataPoint : public GridElement {
 
 public:
-	DistanceSet distances;
-	int grid_size_x;
-	int grid_size_y;
-	std::map<std::pair<Int,Int>, std::list<GridElement*> > elements;
-	HashGrid();
-	HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_);
-	~HashGrid();
-	void setRTThreshold(DoubleReal threshold_);
-	void setMZThreshold(DoubleReal threshold_);
-	DoubleReal getDistance(DataSubset& element1,DataSubset& element2);
-	void removeElement(GridElement* element_,Int x,Int y);
-	void removeElement(GridElement* element_);
-	void insert(GridElement* element_);
-	void consoleOut();
-	int size();
-	int distanceSize();
-	DoubleReal getRT_threshold() const;
-	DoubleReal getMZ_threshold() const;
+	DoubleReal intensity; // intensity at RT and m/z
+	Int cluster_id; // ID number of the cluster the data point belongs to
+	Int cluster_size; // number of points in cluster 'cluster_id'
+	Int feature_id;
+	DataPoint();
+	DataPoint(const DataPoint &copyin);
+	DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_);
+	~DataPoint(){};
+	DataPoint& operator=(const DataPoint &rhs);
+	bool operator==(const DataPoint &rhs) const;
+	bool operator!=(const DataPoint &rhs) const;
+	bool operator<(const DataPoint &rhs) const;
+	Int getID();
 
 };
 }
 
 
-
-
-#endif /* HASHGRID_H_ */
+#endif /* DATAPOINT_H_ */

@@ -37,14 +37,14 @@
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/MATH/STATISTICS/LinearRegression.h>
+#include <OpenMS/KERNEL/RangeUtils.h>
+#include <OpenMS/KERNEL/ChromatogramTools.h>
 
 //clustering
 #include <OpenMS/DATASTRUCTURES/DistanceMatrix.h>
-#include <OpenMS/COMPARISON/CLUSTERING/AverageLinkage.h>
-#include <OpenMS/COMPARISON/CLUSTERING/CompleteLinkage.h>
-#include <OpenMS/COMPARISON/CLUSTERING/SingleLinkage.h>
-#include <OpenMS/COMPARISON/CLUSTERING/ClusterHierarchical.h>
-#include <OpenMS/COMPARISON/CLUSTERING/ClusterAnalyzer.h>
+#include <OpenMS/DATASTRUCTURES/HashGrid.h>
+#include <OpenMS/COMPARISON/CLUSTERING/HashClustering.h>
+#include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
 
 //Contrib includes
 #include <gsl/gsl_histogram.h>
@@ -64,7 +64,7 @@
 using namespace OpenMS;
 
 typedef std::vector<BinaryTreeNode> Tree;
-typedef std::vector<Size> Cluster;
+typedef std::vector<DataPoint*> Cluster;
 
 //-------------------------------------------------------------
 //Doxygen docu
@@ -132,139 +132,11 @@ typedef std::vector<Size> Cluster;
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
 
-struct SILACData
-{
-	DoubleReal rt; // retention time
-	DoubleReal mz; // m/Z mass charge ratio
-	DoubleReal int1; // intensity at RT and m/z
-	DoubleReal int2; // intensity at RT and m/z + isotope_distance
-	DoubleReal int3; // intensity at RT and m/z + 2*isotope_distance
-	DoubleReal int4; // intensity at RT and m/z + envelope_distance_light_medium
-	DoubleReal int5; // intensity at RT and m/z + envelope_distance_light_medium + isotope_distance
-	DoubleReal int6; // intensity at RT and m/z + envelope_distance_light_medium + 2*isotope_distance
-	DoubleReal int7; // intensity at RT and m/z + envelope_distance_light_heavy
-	DoubleReal int8; // intensity at RT and m/z + envelope_distance_light_heavy + isotope_distance
-	DoubleReal int9; // intensity at RT and m/z + envelope_distance_light_heavy + 2*isotope_distance
-	Int cluster_id; // ID number of the cluster the data point belongs to
-	Int cluster_size; // number of points in cluster 'cluster_id'
-
-	SILACData();
-	SILACData(const SILACData &);
-	SILACData(DoubleReal rt_, DoubleReal mz_, DoubleReal int1_, DoubleReal int2_, DoubleReal int3_, DoubleReal int4_, DoubleReal int5_, DoubleReal int6_, DoubleReal int7_, DoubleReal int8_, DoubleReal int9_);
-	~SILACData(){};
-	SILACData &operator=(const SILACData &rhs);
-	int operator==(const SILACData &rhs) const;
-	int operator<(const SILACData &rhs) const;
-};
-
-/// Default constructor
-inline SILACData::SILACData()
-{
-	rt = 0;
-	mz = 0;
-	int1 = 0;
-	int2 = 0;
-	int3 = 0;
-	int4 = 0;
-	int5 = 0;
-	int6 = 0;
-	int7 = 0;
-	int8 = 0;
-	int9 = 0;
-	cluster_id = 0;
-	cluster_size = 0;
-}
-/// Copy constructor
-inline SILACData::SILACData(const SILACData &copyin)
-{
-	rt = copyin.rt;
-	mz = copyin.mz;
-	int1 = copyin.int1;
-	int2 = copyin.int2;
-	int3 = copyin.int3;
-	int4 = copyin.int4;
-	int5 = copyin.int5;
-	int6 = copyin.int6;
-	int7 = copyin.int7;
-	int8 = copyin.int8;
-	int9 = copyin.int9;
-	cluster_id = copyin.cluster_id;
-	cluster_size = copyin.cluster_size;
-}
-/// Detailed constructor
-inline SILACData::SILACData(DoubleReal rt_, DoubleReal mz_, DoubleReal int1_, DoubleReal int2_, DoubleReal int3_, DoubleReal int4_, DoubleReal int5_, DoubleReal int6_, DoubleReal int7_, DoubleReal int8_, DoubleReal int9_)
-{
-	rt = rt_;
-	mz = mz_;
-	int1 = int1_;
-	int2 = int2_;
-	int3 = int3_;
-	int4 = int4_;
-	int5 = int5_;
-	int6 = int6_;
-	int7 = int7_;
-	int8 = int8_;
-	int9 = int9_;
-	cluster_id = 0;
-	cluster_size = 0;
-}
-
-SILACData& SILACData::operator=(const SILACData &rhs)
-{
-	this->rt = rhs.rt;
-	this->mz = rhs.mz;
-	this->int1 = rhs.int1;
-	this->int2 = rhs.int2;
-	this->int3 = rhs.int3;
-	this->int4 = rhs.int4;
-	this->int5 = rhs.int5;
-	this->int6 = rhs.int6;
-	this->int7 = rhs.int7;
-	this->int8 = rhs.int8;
-	this->int9 = rhs.int9;
-	this->cluster_id = rhs.cluster_id;
-	this->cluster_size = rhs.cluster_size;
-	return *this;
-}
-
-int SILACData::operator==(const SILACData &rhs) const
-{
-	if( this->rt != rhs.rt) return false;
-	if( this->mz != rhs.mz) return false;
-	if( this->int1 != rhs.int1) return false;
-	if( this->int2 != rhs.int2) return false;
-	if( this->int3 != rhs.int3) return false;
-	if( this->int4 != rhs.int4) return false;
-	if( this->int5 != rhs.int5) return false;
-	if( this->int6 != rhs.int6) return false;
-	if( this->int7 != rhs.int7) return false;
-	if( this->int8 != rhs.int8) return false;
-	if( this->int9 != rhs.int9) return false;
-	if( this->cluster_id != rhs.cluster_id) return false;
-	if( this->cluster_size != rhs.cluster_size) return false;
-	return true;
-}
-
-bool clusterCompare( Cluster a, Cluster b ) {
-	return a.size() > b.size();
-}
-
-int SILACData::operator<(const SILACData &rhs) const // required for built-in STL functions like sort
-{
-	if ( this->cluster_size == rhs.cluster_size && this->cluster_id < rhs.cluster_id) return true;
-	if ( this->cluster_size < rhs.cluster_size ) return true;
-	return false;
-}
-
-bool treeSort( BinaryTreeNode a, BinaryTreeNode b ) {
-	if (a.distance==b.distance)
-		return a.left_child < b.left_child;
-	else
-		return a.distance < b.distance;
-}
-
-
-
+bool clusterCmp( DataPoint a, DataPoint b ) {
+		if ( a.cluster_size == b.cluster_size && a.cluster_id < b.cluster_id) return true;
+		if ( a.cluster_size < b.cluster_size ) return true;
+		return false;
+	}
 
 class TOPPSILACAnalyzer2
 : public TOPPBase
@@ -278,7 +150,8 @@ private:
 	UInt charge_max;
 	DoubleReal mz_stepwidth;
 	DoubleReal intensity_cutoff;
-	DoubleReal distance_cutoff;
+	DoubleReal mz_threshold;
+	DoubleReal rt_threshold;
 	DoubleReal rt_scaling;
 	DoubleReal optimal_silhouette_tolerance;
 	DoubleReal cluster_number_scaling;
@@ -290,71 +163,6 @@ private:
 	ConsensusMap all_pairs;
 	FeatureMap<> all_cluster_points;
 
-
-/**
- * Check for all elements of the tree which have not distance=-1 to which
- * subtree they belong
- */
-
-	std::vector<Tree> extractSubtrees(Tree& tree)
-	{
-		std::map<Size,Tree> subtree_map;
-		std::set<Size> leafs;
-
-		for (Tree::iterator it=tree.begin();it!=tree.end();++it)
-		{
-			BinaryTreeNode node=*it;
-			if (node.distance!=-1)
-			{
-				leafs.insert(node.left_child);
-				leafs.insert(node.right_child);
-				subtree_map[node.left_child].push_back(node);
-				std::map<Size,Tree>::iterator child_tree=subtree_map.find(node.right_child);
-				if (child_tree!=subtree_map.end())
-				{
-					subtree_map[node.left_child].insert( subtree_map[node.left_child].begin(), (child_tree->second).begin(), (child_tree->second).end() );
-					subtree_map.erase(child_tree);
-				}
-			}
-		}
-		/**
-		 * Create correct tree structur:
-		 * sort the ascending, first by distance, second by the first element (see method "treeSort()")
-		 */
-		std::vector<Tree> subtrees;
-		subtrees.reserve(subtree_map.size());
-		for(std::map<Size,Tree>::iterator it=subtree_map.begin();it!=subtree_map.end();++it){
-			Tree actTree=it->second;
-			sort(actTree.begin(),actTree.end(),treeSort);
-			subtrees.push_back(actTree);
-		}
-		//Append elements of the tree with distance=-1 as subtrees with one element
-		for (Tree::iterator it=tree.begin();it!=tree.end();++it)
-		{
-			if (leafs.find(it->left_child)==leafs.end() && leafs.find(it->right_child)==leafs.end())
-			{
-				Tree t;
-				t.push_back(*it);
-				subtrees.push_back(t);
-			}
-		}
-		return subtrees;
-	}
-
-	DistanceMatrix<Real> generateDistanceMatrix(std::vector<SILACData>& data, DoubleReal rt_scaling)
-	{
-		DistanceMatrix<Real> distance_matrix;
-		distance_matrix.resize(data.size(),1);
-		for (Size i=0; i < data.size(); ++i)
-		{
-			for (Size j=0; j < i; ++j)
-			{
-				// shrink RT by factor rt_scaling in order to make clusters more symmetric
-				distance_matrix.setValueQuick(i,j, sqrt( (data[i].rt-data[j].rt)*(data[i].rt-data[j].rt)*rt_scaling*rt_scaling+(data[i].mz-data[j].mz)*(data[i].mz-data[j].mz) ) );
-			}
-		}
-		return distance_matrix;
-	}
 
 	void handleParameters()
 	{
@@ -368,9 +176,9 @@ private:
 		mass_separation_light_heavy = getParam_().getValue("algorithm:mass_separation_light_heavy");
 		charge_min = getParam_().getValue("algorithm:charge_min");
 		charge_max = getParam_().getValue("algorithm:charge_max");
-		mz_stepwidth = getParam_().getValue("algorithm:mz_stepwidth");
 		intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
-		distance_cutoff = getParam_().getValue("algorithm:distance_cutoff");
+		mz_threshold = getParam_().getValue("algorithm:mz_threshold");
+		rt_threshold = getParam_().getValue("algorithm:rt_threshold");
 		rt_scaling = getParam_().getValue("algorithm:rt_scaling");
 		optimal_silhouette_tolerance = getParam_().getValue("algorithm:optimal_silhouette_tolerance");
 		cluster_number_scaling = getParam_().getValue("algorithm:cluster_number_scaling");
@@ -390,16 +198,39 @@ private:
 
 	}
 
-	std::vector<SILACData> buildDataStructure(MSExperiment<Peak1D>& exp, int charge)
+
+
+	std::vector<DataPoint> buildDataStructure(MSExperiment<Peak1D>& exp, int charge)
 	{
 		ProgressLogger logger_;
-		std::vector<SILACData> data;
+		std::vector<DataPoint> data;
+		int id=0;
 
 		logger_.setLogType(log_type_);
 		logger_.startProgress(0,exp.size(),"reducing raw data");
 		DoubleReal envelope_distance_light_medium = mass_separation_light_medium / (DoubleReal)charge;
 		DoubleReal envelope_distance_light_heavy = mass_separation_light_heavy / (DoubleReal)charge;
 		DoubleReal isotope_distance = 1.0 / (DoubleReal)charge;
+
+		//Extract level 1 spectra
+		IntList levels=IntList::create("1");
+		exp.erase(remove_if(exp.begin(), exp.end(), InMSLevelRange<MSExperiment<Peak1D>::SpectrumType>(levels, true)), exp.end());
+
+		//Estimate m/z step width
+		UInt i=0;
+		while(i<exp.size() && exp[i].size()<5) ++i;
+		std::vector<Real> mz_spacing;
+		std::vector<Real> rt_spacing;
+		for (Size j=1; j<exp[i].size(); ++j)
+		{
+			mz_spacing.push_back(exp[i][j].getMZ()-exp[i][j-1].getMZ());
+//			rt_spacing.push_back(exp[i][j].getRT()-exp[i][j-1].getRT());
+		}
+		std::sort(mz_spacing.begin(),mz_spacing.end());
+		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
+//		std::sort(rt_spacing.begin(),rt_spacing.end());
+//		rt_stepwidth=rt_spacing[rt_spacing.size()/2];
+
 		// scan over the entire experiment and write to data structure
 		for (MSExperiment<>::Iterator rt_it=exp.begin(); rt_it!=exp.end(); ++rt_it)
 		{
@@ -458,7 +289,9 @@ private:
 					bool condTriple2 = (int_spline1 >= int_spline2) && (int_spline2 >= int_spline3) && (int_spline4 >= int_spline5) && (int_spline5 >= int_spline6) && (int_spline7 >= int_spline8) && (int_spline8 >= int_spline9); // isotopic peaks within one envelop decrease
 					if ((type=="double" && condDouble1 && condDouble2) || (type=="triple" && condTriple1 && condTriple2))
 					{
-						data.push_back(SILACData(rt_it->getRT(),mz,int_spline1,int_spline2,int_spline3,int_spline4,int_spline5,int_spline6,int_spline7,int_spline8,int_spline9));
+						data.push_back(DataPoint(rt_it->getRT(),mz,int_spline1,id));
+//						data.push_back(DataPoint(id,rt_it->getRT(),mz,int_spline1,int_spline2,int_spline3,int_spline4,int_spline5,int_spline6,int_spline7,int_spline8,int_spline9));
+						++id;
 					}
 				}
 
@@ -522,12 +355,12 @@ public:
 
 		tmp.setValue("intensity_cutoff", 5000.0, "intensity cutoff");
 		tmp.setMinFloat("intensity_cutoff", 0.0);
-		
-		tmp.setValue("distance_cutoff", 20.0, "distance cutoff");
-		tmp.setMinFloat("distance_cutoff", 0.0);
-		
-		tmp.setValue("mz_stepwidth", 0.01, "step width with which the (interpolated) spectrum is scanned, m/Z (Th)");
-		tmp.setMinFloat("mz_stepwidth",0.0);
+
+		tmp.setValue("mz_threshold", 50.0, "mz_threshold");
+		tmp.setMinFloat("mz_threshold", 0.0);
+
+		tmp.setValue("rt_threshold", 50.0, "rt_threshold");
+		tmp.setMinFloat("rt_threshold", 0.0);
 
 		tmp.setValue("rt_scaling",0.05,"scaling factor of retention times (Cluster height [s] an\ncluster width [Th] should be of the same order. The clustering algorithms work better for\nsymmetric clusters.)");
 		tmp.setMinFloat("rt_scaling", 0.0);
@@ -563,9 +396,6 @@ public:
 			debug_trunk = in.substr(0,-SignedSize(in.suffix('.').length())-1);
 		}
 
-		// number of clusters found for each charge state (filled with best_n, need to remember for gnuplot script)
-		//int cluster_number[] = {1,1,1,1,1,1,1,1,1,1}; // maybe though with a vector even if more that 10 charge states are doubtfull?
-
 		//iterate over all charge states
 		for (UInt charge=charge_min; charge<=charge_max; ++charge)
 		{
@@ -596,278 +426,101 @@ public:
 			// build SILACData structure
 			//-------------------------------------------------------------
 
-			std::vector<SILACData> data=buildDataStructure(exp,charge);
+			std::vector<DataPoint> data=buildDataStructure(exp, charge);
 
 			//-------------------------------------------------------------
-			// generate distance matrix and copy distance matrix
+			// Perform clustering
 			//-------------------------------------------------------------
 
-			DistanceMatrix<Real> distance_matrix = generateDistanceMatrix(data,rt_scaling);
-			DistanceMatrix<Real> distance_matrix_copy(distance_matrix); //clustering method will mess with input matrix
-
-			//-------------------------------------------------------------
-			// conduct clustering
-			//-------------------------------------------------------------
-			ClusterHierarchical ch;
-			AverageLinkage al;
-			al.setLogType(log_type_);
-			DistanceMatrix<Real> dist;
-			std::vector< BinaryTreeNode > tree;
-			//start clustering and deliver the cutoff value at which the clustering can be stopped
-			al(distance_matrix_copy,tree,distance_cutoff);
-
-			//create the subtree vector of the whole tree
-			std::vector<Tree> subtrees=extractSubtrees(tree);
-			//-----------------------------------------------------------------
-			// find number of clusters which maximizes average silhouette width
-			//-----------------------------------------------------------------
-
-			ClusterAnalyzer ca;
-
-
-
-			//create the vector for the final clusters
-			std::vector<Cluster> best_clusters;
-			best_clusters.reserve(distance_matrix.dimensionsize());
-
-			//std::cout << "Elements: " << distance_matrix.dimensionsize() << std::endl;
-			//std::cout << "Overall tree size: " << tree.size() << std::endl << "Overall tree:" << std::endl << ca.ClusterAnalyzer::newickTree(tree,true) << std::endl;
-
-			//create a vector for the best_n of every subtree and remember the sum of all best_ns
-			std::vector<int> best_ns;
-			int sum_best_n=0;
-
+			CentroidLinkage method(0.05);
+			HashClustering c(data,rt_threshold,mz_threshold,method);
+			c.setLogType(log_type_);
+			std::vector<Tree> subtrees=c.performClustering();
+			std::vector<std::vector<Real> > silhouettes;
+			Size cluster_id=0;
 
 			//run silhoutte optimization for all subtrees and find the appropriate best_n
-			for (std::vector<Tree>::iterator it=subtrees.begin();it!=subtrees.end();++it)
+			for ( std::vector<Tree>::iterator it=subtrees.begin();it!=subtrees.end();++it)
 			{
-				Tree actTree=*it;
-				std::set<Size> leafs;
-				for (Tree::iterator tit=actTree.begin();tit!=actTree.end();++tit)
+				Tree tree=*it;
+				std::vector< Real > asw = c.averageSilhouetteWidth(tree);
+				silhouettes.push_back(asw);
+				//Look only in the front area of the silhoutte values to avoid getting the wrong number
+				std::vector< Real >::iterator max_el(max_element((asw.end()-((int)it->size()/10) ),asw.end()));
+				Size best_n = (Size)tree.size();
+				//Silhouette method can not create a single cluster from one subtree. If silhouette values in the front area are very low, take the subtree as one cluster
+				if (*max_el< 0.7)
+					best_n=1;
+				else
 				{
-					leafs.insert(tit->left_child);
-					leafs.insert(tit->right_child);
-				}
-
-				//std::cout <<"Subtree: "<< ca.ClusterAnalyzer::newickTree(actTree) << std::endl << "Elements: " << leafs.size() << std::endl;
-
-				//choose asw that deviates at most the given percentage (optimal_silhouette_tolerance) from the max asw and contains the most clusters
-				std::vector< Real >asw = ca.averageSilhouetteWidth(actTree,distance_matrix);
-
-				std::vector< Real >::iterator max_el(max_element(asw.begin(),asw.end()));
-				int best_n = (int)actTree.size();
-				Real max_deviation((*max_el)*(optimal_silhouette_tolerance/100));
-				for (Size i = 0; i < asw.size(); ++i)
-				{
-					if(std::fabs(asw[i]-(*max_el))<=max_deviation)
+					for (Size i = 0; i < asw.size(); ++i)
 					{
-						best_n = int(actTree.size() - i);
-						break;
-					}
-				}
-
-				//best_n = int(cluster_number_scaling * best_n); // slightly increase cluster number
-				best_n = 1; //visualize subtrees
-
-				//std::cout << "Best n: " << best_n << std::endl;
-
-				std::vector<Cluster> act_clusters;
-				ca.cut(best_n,act_clusters,*it);
-				best_clusters.insert(best_clusters.end(),act_clusters.begin(),act_clusters.end());
-
-				best_ns.push_back(best_n);
-				sum_best_n+=best_n;
-			}
-
-			//std::cout << std::endl;
-
-
-
-			//-------------------------------------------------------------
-			// count data points in each cluster
-			//-------------------------------------------------------------
-
-
-			std::vector<SignedSize> cluster_size(best_clusters.size(),0); // number of points per cluster
-			for (Size i=0; i < cluster_size.size(); ++i)
-			{
-				cluster_size[i] = best_clusters[i].size();
-			}
-
-
-			//--------------------------------------------------------------
-			// fill in cluster_id and cluster_size in SILACData structure
-			//--------------------------------------------------------------
-			for (Size i=0; i < best_clusters.size(); ++i)
-			{
-				for (Size j=0; j < best_clusters[i].size(); ++j)
-				{
-					data[best_clusters[i][j]].cluster_id = (Int)i;
-					data[best_clusters[i][j]].cluster_size =(Int)best_clusters[i].size();
-				}
-			}
-
-			std::sort(data.begin(),data.end());
-			std::reverse(data.begin(),data.end()); // largest clusters first
-
-
-			//--------------------------------------------------------------
-			// update cluster_id
-			//--------------------------------------------------------------
-			Int k = -1;
-			Int new_id = (Int) distance_matrix.dimensionsize()-1;
-			for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
-			{
-				if (it->cluster_id != k) ++new_id;
-				k = it->cluster_id;
-				it->cluster_id = new_id;
-			}
-			for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
-			{
-				it->cluster_id -= (Int) distance_matrix.dimensionsize();
-			}
-
-			//--------------------------------------------------------------
-			// update cluster_size
-			//--------------------------------------------------------------
-			cluster_size = std::vector<SignedSize>(distance_matrix.dimensionsize(),0);
-			k = -1;
-			for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
-			{
-				++cluster_size[it->cluster_id];
-			}
-			//--------------------------------------------------------------
-			//create consensus features
-			//--------------------------------------------------------------
-			if (out!="")
-			{
-				for (Size i=0; i<best_clusters.size(); ++i)
-				{
-					DoubleReal rt = 0.0;
-					DoubleReal mz = 0.0;
-					DoubleReal int_l = 0.0;
-					DoubleReal int_m = 0.0;
-					DoubleReal int_h = 0.0;
-					// intensity vectors used for linear regression
-					std::vector<DoubleReal> i1(3*cluster_size[i]);
-					std::vector<DoubleReal> i2(3*cluster_size[i]);
-					std::vector<DoubleReal> i3(3*cluster_size[i]);
-					UInt j=0;
-					DoubleReal isotope_distance = 1.0 / (DoubleReal)charge;
-					for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
-					{
-						if ((Size)it->cluster_id==i)
+						if(std::fabs(asw[i]-(*max_el))<=0)
 						{
-							i1[3*j] = it->int1;
-							i2[3*j] = it->int4;
-							i3[3*j] = it->int7;
-							i1[3*j+1] = it->int2;
-							i2[3*j+1] = it->int5;
-							i3[3*j+1] = it->int8;
-							i1[3*j+2] = it->int3;
-							i2[3*j+2] = it->int6;
-							i3[3*j+2] = it->int9;
-
-							rt += it->rt;
-							if (it->int1>int_l)
-							{
-								int_l = it->int1;
-								mz = it->mz; // m/z of maximum intensity in the light cluster
-							}
-							if (it->int2>int_l)
-							{
-								int_l = it->int2;
-								mz = it->mz + isotope_distance;
-							}
-							if (it->int3>int_l)
-							{
-								int_l = it->int3;
-								mz = it->mz + 2.0 * isotope_distance;
-							}
-							if (it->int4>int_m)
-							{
-								int_m = it->int4;
-							}
-							if (it->int5>int_m)
-							{
-								int_m = it->int5;
-							}
-							if (it->int6>int_m)
-							{
-								int_m = it->int6;
-							}
-							if (it->int7>int_h)
-							{
-								int_h = it->int7;
-							}
-							if (it->int8>int_h)
-							{
-								int_h = it->int8;
-							}
-							if (it->int9>int_h)
-							{
-								int_h = it->int9;
-							}
-							++j;
+							best_n = Size(it->size() - i);
+							break;
 						}
 					}
-					rt /= (DoubleReal)(cluster_size[i]); // average retention time
-					Math::LinearRegression linear_reg_light_medium;
-					Math::LinearRegression linear_reg_light_heavy;
-					linear_reg_light_medium.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
-					linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i3.begin());
-					//create consensus feature for light medium SILAC pair
-					ConsensusFeature pair_light_medium;
-					pair_light_medium.setRT(rt);
-					pair_light_medium.setMZ(mz);
-					pair_light_medium.setIntensity(linear_reg_light_medium.getSlope());
-					pair_light_medium.setCharge(charge);
-					pair_light_medium.setQuality(linear_reg_light_medium.getRSquared());
-					FeatureHandle handle;
-					handle.setRT(rt);
-					handle.setMZ(mz);
-					handle.setIntensity(int_l);
-					handle.setCharge(charge);
-					handle.setMapIndex(0);
-					handle.setUniqueId(i);
-					pair_light_medium.insert(handle);
-					handle.setRT(rt);
-					DoubleReal envelope_distance_light_medium = mass_separation_light_medium / (DoubleReal)charge;
-					handle.setMZ(mz+envelope_distance_light_medium);
-					handle.setIntensity(int_m);
-					handle.setCharge(charge);
-					handle.setMapIndex(1);
-					handle.setUniqueId(i);
-					pair_light_medium.insert(handle);
-					if (type=="triple") {
-						all_pairs.push_back(pair_light_medium);
-					}
-					//create consensus feature for light heavy SILAC pair
-					ConsensusFeature pair_light_heavy;
-					pair_light_heavy.setRT(rt);
-					pair_light_heavy.setMZ(mz);
-					pair_light_heavy.setIntensity(linear_reg_light_heavy.getSlope());
-					pair_light_heavy.setCharge(charge);
-					pair_light_heavy.setQuality(linear_reg_light_heavy.getRSquared());
-					handle.setRT(rt);
-					handle.setMZ(mz);
-					handle.setIntensity(int_l);
-					handle.setCharge(charge);
-					handle.setMapIndex(0);
-					handle.setUniqueId(i);
-					pair_light_heavy.insert(handle);
-					handle.setRT(rt);
-					DoubleReal envelope_distance_light_heavy = mass_separation_light_heavy / (DoubleReal)charge;
-					handle.setMZ(mz+envelope_distance_light_heavy);
-					handle.setIntensity(int_h);
-					handle.setCharge(charge);
-					handle.setMapIndex(2);
-					handle.setUniqueId(i);
-					pair_light_heavy.insert(handle);
-					all_pairs.push_back(pair_light_heavy);
 				}
-			}
 
+				best_n = Size(cluster_number_scaling * best_n); // slightly increase cluster number
+				std::vector<Cluster> act_clusters;
+				//Get clusters from the subtree
+				c.cut(best_n,act_clusters,tree);
+				//Run through all elements in each cluster and update cluster number
+				for (std::vector<Cluster>::iterator cluster_it=act_clusters.begin();cluster_it!=act_clusters.end();++cluster_it)
+				{
+					Int rt=0;
+					Int mz=0;
+					Int intensity=0;
+					for (Cluster::iterator element_it=cluster_it->begin();element_it!=cluster_it->end();++element_it)
+					{
+						//Calculate center of consensus feature for output
+						if (out!="")
+						{
+							mz+=(*element_it)->mz;
+							rt+=(*element_it)->rt;
+							intensity+=(*element_it)->intensity;
+						}
+						(*element_it)->cluster_id=cluster_id;
+						(*element_it)->cluster_size=cluster_it->size();
+					}
+					//Prepare output
+					if (out!="")
+					{
+						mz/=cluster_it->size();
+						rt/=cluster_it->size();
+						intensity/=cluster_it->size();
+						ConsensusFeature pair_light_heavy;
+						pair_light_heavy.setRT(rt);
+						pair_light_heavy.setMZ(mz);
+						pair_light_heavy.setIntensity(intensity);
+						pair_light_heavy.setCharge(charge);
+						pair_light_heavy.setQuality(*max_el);
+						FeatureHandle handle;
+						handle.setRT(rt);
+						handle.setMZ(mz);
+						handle.setIntensity(intensity);
+						handle.setCharge(charge);
+						handle.setMapIndex(0);
+						handle.setUniqueId(cluster_id);
+						pair_light_heavy.insert(handle);
+						handle.setRT(rt);
+						DoubleReal envelope_distance_light_heavy = mass_separation_light_heavy / (DoubleReal)charge;
+						handle.setMZ(mz+envelope_distance_light_heavy);
+						handle.setIntensity(intensity);
+						handle.setCharge(charge);
+						handle.setMapIndex(2);
+						handle.setUniqueId(cluster_id);
+						pair_light_heavy.insert(handle);
+						all_pairs.push_back(pair_light_heavy);
+					}
+					++cluster_id;
+				}
+
+			}
+			//Sort data points: High cluster numbers first
+			std::sort(data.begin(),data.end(),clusterCmp);
 
 			//--------------------------------------------------------------
 			//create features (for visualization)
@@ -892,15 +545,13 @@ public:
 				colors.push_back("#008080");
 				colors.push_back("#FFFF00");
 
-				for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
+				for (std::vector<DataPoint>::iterator it=data.begin(); it!= data.end(); ++it)
 				{
 					//visualize the light variant
 					Feature cluster_point;
 					cluster_point.setRT(it->rt);
 					cluster_point.setMZ(it->mz);
-					DoubleReal intensity = std::max(it->int1,it->int2);
-					intensity = std::max(intensity,it->int3);
-					cluster_point.setIntensity(intensity);
+					cluster_point.setIntensity(it->intensity);
 					cluster_point.setCharge(charge);
 					cluster_point.setMetaValue("cluster_id",it->cluster_id);
 					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
@@ -914,139 +565,130 @@ public:
 
 
 
-			//-------------------------------------------------------------
-			// generate debug output
-			//-------------------------------------------------------------
-			// strings repeatedly used in debug output
-			String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5));
-			String light_heavy_string = String(0.01*floor(mass_separation_light_heavy*100+0.5));
-
-			if (getFlag_("silac_debug"))
-			{
-				String debug_suffix;
-				if (type=="double") {
-					debug_suffix = "_" + light_heavy_string + "Da_" + String(charge) +"+";
-				}
-				else {
-					debug_suffix = "_" + light_medium_string + "Da_" + light_heavy_string + "Da_" + String(charge) +"+";
-				}
-				// names of dat files
-				String debug_dat = debug_trunk + debug_suffix + ".dat";
-				String debug_clusters_dat = debug_trunk + debug_suffix + "_clusters.dat";
-
-				// write all cluster data points to *_clusters.dat
-				std::ofstream stream_clusters(debug_clusters_dat.c_str());
-				if (type=="double") {
-					stream_clusters << "cluster_id cluster_size rt mz int1 int2 int3 int7 int8 int9" << std::endl;
-				}
-				else {
-					stream_clusters << "cluster_id cluster_size rt mz int1 int2 int3 int4 int5 int6 int7 int8 int9" << std::endl;
-				}
-				Int current_id = -1;
-				for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
-				{
-					if (it->cluster_id != current_id) stream_clusters << std::endl << std::endl;
-					if (type=="double") {
-						stream_clusters << it->cluster_id << " " << it->cluster_size << " "<< it->rt << " " << it->mz << " " << it->int1 << " " << it->int2 << " " << it->int3 << " " << it->int7 << " " << it->int8 << " " << it->int9 << std::endl;
-					}
-					else {
-						stream_clusters << it->cluster_id << " " << it->cluster_size << " "<< it->rt << " " << it->mz << " " << it->int1 << " " << it->int2 << " " << it->int3 << " " << it->int4 << " " << it->int5 << " " << it->int6 << " " << it->int7 << " " << it->int8 << " " << it->int9 << std::endl;
-					}
-					current_id = it->cluster_id;
-				}
-				stream_clusters.close();
-
-				// write ratios of all cluster to *.dat
-				std::ofstream stream_ratios(debug_dat.c_str());
-				if (type=="double") {
-					stream_ratios << "cluster_id cluster_size rt mz ratio_light_heavy intensity" << std::endl;
-				}
-				else {
-					stream_ratios << "cluster_id cluster_size rt mz ratio_light_medium ratio_light_heavy intensity" << std::endl;
-				}
-				for (Size i=0; i<best_clusters.size();++i)
-				{
-					DoubleReal rt = 0.0;
-					DoubleReal mz = 0.0;
-					DoubleReal int_l = 0.0;
-					DoubleReal int_m = 0.0;
-					DoubleReal int_h = 0.0;
-					// intensity vectors used for linear regression
-					std::vector<DoubleReal> i1(3*cluster_size[i]);
-					std::vector<DoubleReal> i2(3*cluster_size[i]);
-					std::vector<DoubleReal> i3(3*cluster_size[i]);
-					UInt j=0;
-					DoubleReal isotope_distance = 1.0 / (DoubleReal)charge;
-					for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
-					{
-						if ((Size)it->cluster_id==i)
-						{
-							i1[3*j] = it->int1;
-							i2[3*j] = it->int4;
-							i3[3*j] = it->int7;
-							i1[3*j+1] = it->int2;
-							i2[3*j+1] = it->int5;
-							i3[3*j+1] = it->int8;
-							i1[3*j+2] = it->int3;
-							i2[3*j+2] = it->int6;
-							i3[3*j+2] = it->int9;
-
-							rt += it->rt;
-							if (it->int1>int_l)
-							{
-								int_l = it->int1;
-								mz = it->mz;
-							}
-							if (it->int2>int_l)
-							{
-								int_l = it->int2;
-								mz = it->mz + isotope_distance;
-							}
-							if (it->int3>int_l)
-							{
-								int_l = it->int3;
-								mz = it->mz + 2.0 * isotope_distance;
-							}
-							if (it->int4>int_m)
-							{
-								int_m = it->int4;
-							}
-							if (it->int5>int_m)
-							{
-								int_m = it->int5;
-							}
-							if (it->int6>int_m)
-							{
-								int_m = it->int6;
-							}
-							if (it->int7>int_h)
-							{
-								int_h = it->int7;
-							}
-							if (it->int8>int_h)
-							{
-								int_h = it->int8;
-							}
-							if (it->int9>int_h)
-							{
-								int_h = it->int9;
-							}
-							++j;
-						}
-					}
-					rt /= (DoubleReal)(cluster_size[i]); // average retention time
-					Math::LinearRegression linear_reg_light_medium;
-					Math::LinearRegression linear_reg_light_heavy;
-					linear_reg_light_medium.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
-					linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i3.begin());
-					if (type=="double") {
-						stream_ratios << i << " " << cluster_size[i] << " " << rt << " " << mz << " " << linear_reg_light_heavy.getSlope() << " " << *max_element(i1.begin(),i1.end()) + *max_element(i2.begin(),i2.end()) << std::endl;
-					}
-					else {
-						stream_ratios << i << " " << cluster_size[i] << " " << rt << " " << mz << " " << linear_reg_light_medium.getSlope() << " " << linear_reg_light_heavy.getSlope() << " " << *max_element(i1.begin(),i1.end()) + *max_element(i2.begin(),i2.end()) << std::endl;
-					}
-				}
-				stream_ratios.close();
+//			//-------------------------------------------------------------
+//			// generate debug output
+//			//-------------------------------------------------------------
+//			// strings repeatedly used in debug output
+//			String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5));
+//			String light_heavy_string = String(0.01*floor(mass_separation_light_heavy*100+0.5));
+//
+//			String debug_silhouettes_dat;
+//			if (getFlag_("silac_debug"))
+//			{
+//				String debug_suffix;
+//				if (type=="double") {
+//					debug_suffix = "_" + light_heavy_string + "Da_" + String(charge) +"+";
+//				}
+//				else {
+//					debug_suffix = "_" + light_medium_string + "Da_" + light_heavy_string + "Da_" + String(charge) +"+";
+//				}
+////				// names of dat files
+//				String debug_dat = debug_trunk + debug_suffix + ".dat";
+//				debug_silhouettes_dat = debug_trunk + debug_suffix + "_silhouettes.dat";
+////
+////				// write all cluster data points to *_clusters.dat
+//				std::ofstream stream_clusters(debug_clusters_dat.c_str());
+//				stream_clusters << "cluster_id cluster_size rt mz int" << std::endl;
+//				Int current_id = -1;
+//				for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
+//				{
+//					if (it->cluster_id != current_id) stream_clusters << std::endl << std::endl;
+//					stream_clusters << it->cluster_id << " " << it->cluster_size << " "<< it->rt << " " << it->mz << " " << it->intensity << std::endl;
+//					current_id = it->cluster_id;
+//				}
+//				stream_clusters.close();
+//
+//				// write ratios of all cluster to *.dat
+//				std::ofstream stream_ratios(debug_dat.c_str());
+//				if (type=="double") {
+//					stream_ratios << "cluster_id cluster_size rt mz ratio_light_heavy intensity" << std::endl;
+//				}
+//				else {
+//					stream_ratios << "cluster_id cluster_size rt mz ratio_light_medium ratio_light_heavy intensity" << std::endl;
+//				}
+//				for (Size i=0; i<best_clusters.size();++i)
+//				{
+//					DoubleReal rt = 0.0;
+//					DoubleReal mz = 0.0;
+//					DoubleReal int_l = 0.0;
+//					DoubleReal int_m = 0.0;
+//					DoubleReal int_h = 0.0;
+//					// intensity vectors used for linear regression
+//					std::vector<DoubleReal> i1(3*cluster_size[i]);
+//					std::vector<DoubleReal> i2(3*cluster_size[i]);
+//					std::vector<DoubleReal> i3(3*cluster_size[i]);
+//					UInt j=0;
+//					DoubleReal isotope_distance = 1.0 / (DoubleReal)charge;
+//					for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
+//					{
+//						if ((Size)it->cluster_id==i)
+//						{
+//							i1[3*j] = it->int1;
+//							i2[3*j] = it->int4;
+//							i3[3*j] = it->int7;
+//							i1[3*j+1] = it->int2;
+//							i2[3*j+1] = it->int5;
+//							i3[3*j+1] = it->int8;
+//							i1[3*j+2] = it->int3;
+//							i2[3*j+2] = it->int6;
+//							i3[3*j+2] = it->int9;
+//
+//							rt += it->rt;
+//							if (it->int1>int_l)
+//							{
+//								int_l = it->int1;
+//								mz = it->mz;
+//							}
+//							if (it->int2>int_l)
+//							{
+//								int_l = it->int2;
+//								mz = it->mz + isotope_distance;
+//							}
+//							if (it->int3>int_l)
+//							{
+//								int_l = it->int3;
+//								mz = it->mz + 2.0 * isotope_distance;
+//							}
+//							if (it->int4>int_m)
+//							{
+//								int_m = it->int4;
+//							}
+//							if (it->int5>int_m)
+//							{
+//								int_m = it->int5;
+//							}
+//							if (it->int6>int_m)
+//							{
+//								int_m = it->int6;
+//							}
+//							if (it->int7>int_h)
+//							{
+//								int_h = it->int7;
+//							}
+//							if (it->int8>int_h)
+//							{
+//								int_h = it->int8;
+//							}
+//							if (it->int9>int_h)
+//							{
+//								int_h = it->int9;
+//							}
+//							++j;
+//						}
+//					}
+//					rt /= (DoubleReal)(cluster_size[i]); // average retention time
+//					Math::LinearRegression linear_reg_light_medium;
+//					Math::LinearRegression linear_reg_light_heavy;
+//					linear_reg_light_medium.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
+//					linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i3.begin());
+//					if (type=="double") {
+//						stream_ratios << i << " " << cluster_size[i] << " " << rt << " " << mz << " " << linear_reg_light_heavy.getSlope() << " " << *max_element(i1.begin(),i1.end()) + *max_element(i2.begin(),i2.end()) << std::endl;
+//					}
+//					else {
+//						stream_ratios << i << " " << cluster_size[i] << " " << rt << " " << mz << " " << linear_reg_light_medium.getSlope() << " " << linear_reg_light_heavy.getSlope() << " " << *max_element(i1.begin(),i1.end()) + *max_element(i2.begin(),i2.end()) << std::endl;
+//					}
+//				}
+//				stream_ratios.close();
 			}
 
 		} //end iterate over all charge states
@@ -1076,165 +718,166 @@ public:
 			FeatureXMLFile f_file;
 			f_file.store(out_visual,all_cluster_points);
 		}
-
-		//--------------------------------------------------------------
-		//write gnuplot script
-		//--------------------------------------------------------------
-		// + silhoutte width in gnuplot
-		// strings repeatedly used in debug output
-		String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5));
-		String light_heavy_string = String(0.01*floor(mass_separation_light_heavy*100+0.5));
-		String rt_scaling_string = String(0.01*floor(rt_scaling*100+0.5));
-		String optimal_silhouette_tolerance_string = String(0.01*floor(optimal_silhouette_tolerance*100+0.5));
-		String cluster_number_scaling_string = String(0.01*floor(cluster_number_scaling*100+0.5));
-
-		if (getFlag_("silac_debug"))
-		{
-			// first lines of the gnuplot script
-			String debug_gnuplotscript = debug_trunk + ".input";
-			std::ofstream stream_gnuplotscript(debug_gnuplotscript.c_str());
-			stream_gnuplotscript << "set terminal postscript eps enhanced colour" << std::endl;
-			stream_gnuplotscript << "set size 2.0, 2.0" << std::endl;
-			stream_gnuplotscript << "set size square" << std::endl << std::endl;
-			//iterate over all charge states
-			for (Size charge=charge_min; charge<=charge_max; ++charge)
-			{
-				String debug_suffix;
-				if (type=="double") {
-					debug_suffix = "_" + light_heavy_string + "Da_" + String(charge) +"+";
-				}
-				else {
-					debug_suffix = "_" + light_medium_string + "Da_" + light_heavy_string + "Da_" + String(charge) +"+";
-				}
-				// names of dat files
-				String debug_dat = debug_trunk + debug_suffix + ".dat";
-				String debug_clusters_dat = debug_trunk + debug_suffix + "_clusters.dat";
-				// names of postscript files
-				String debug_ratios_light_medium_intensity = debug_trunk + debug_suffix + "_ratios_light_medium_intensity.eps";
-				String debug_ratios_light_medium = debug_trunk + debug_suffix + "_ratios_light_medium.eps";
-				String debug_ratios_light_heavy = debug_trunk + debug_suffix + "_ratios_light_heavy.eps";
-				String debug_sizes = debug_trunk + debug_suffix + "_sizes.eps";
-				String debug_clusters = debug_trunk + debug_suffix + "_clusters.eps";
-				String debug_clustersIntLightMedium = debug_trunk + debug_suffix + "_clustersIntLightMedium.eps";
-				String debug_clustersIntLightHeavy = debug_trunk + debug_suffix + "_clustersIntLightHeavy.eps";
-
-				// write *_clusters.eps
-				stream_gnuplotscript << "set output \"" + debug_clusters + "\"" << std::endl;
-				if (type=="double") {
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-				}
-				else {
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-				}
-				stream_gnuplotscript << "set xlabel \'m/Z (Th)\'" << std::endl;
-				stream_gnuplotscript << "set ylabel \'RT (s)\'" << std::endl;
-				stream_gnuplotscript << "plot";
-				for (int i = cluster_min; i <= cluster_max; i++)// iterate over clusters
-				{
-					if (i != cluster_min) stream_gnuplotscript << ",";
-					stream_gnuplotscript << " \'" + debug_clusters_dat + "\' index " + String(i+1) +" using 4:3 title \"cluster " + String(i) + "\"";
-				}
-				stream_gnuplotscript << std::endl;
-
-				// write *_clustersIntLightMedium.eps
-				if (type=="triple") {
-					stream_gnuplotscript << "set output \"" + debug_clustersIntLightMedium + "\"" << std::endl;
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-					stream_gnuplotscript << "set xlabel \'intensity at m/Z\'" << std::endl;
-					stream_gnuplotscript << "set ylabel \'intensity at m/Z + " + light_medium_string + "Th\'" << std::endl;
-					stream_gnuplotscript << "plot";
-					for (int i = cluster_min; i <= cluster_max; i++)// iterate over clusters
-					{
-						if (i != cluster_min) stream_gnuplotscript << ",";
-						stream_gnuplotscript << " \'" + debug_clusters_dat + "\' index " + String(i+1) +" using 5:8 title \"cluster " + String(i) + "\"";
-					}
-					stream_gnuplotscript << std::endl;
-				}
-
-				// write *_clustersIntLightHeavy.eps
-				stream_gnuplotscript << "set output \"" + debug_clustersIntLightHeavy + "\"" << std::endl;
-				if (type=="double") {
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-				}
-				else {
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-				}
-				stream_gnuplotscript << "set xlabel \'intensity at m/Z\'" << std::endl;
-				stream_gnuplotscript << "set ylabel \'intensity at m/Z + " + light_heavy_string + "Th\'" << std::endl;
-				stream_gnuplotscript << "plot";
-				for (int i = cluster_min; i <= cluster_max; i++)// iterate over clusters
-				{
-					if (i != cluster_min) stream_gnuplotscript << ",";
-					if (type=="double") {
-						stream_gnuplotscript << " \'" + debug_clusters_dat + "\' index " + String(i+1) +" using 5:8 title \"cluster " + String(i) + "\"";
-					}
-					else {
-						stream_gnuplotscript << " \'" + debug_clusters_dat + "\' index " + String(i+1) +" using 5:11 title \"cluster " + String(i) + "\"";
-					}
-				}
-				stream_gnuplotscript << std::endl;
-
-				// write *_ratios_light_heavy_intensity.eps
-				if (type=="double") {
-					stream_gnuplotscript << "set output \"" + debug_ratios_light_medium_intensity + "\"" << std::endl;
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-					stream_gnuplotscript << "set nokey" << std::endl;
-					stream_gnuplotscript << "set logscale x" << std::endl;
-					stream_gnuplotscript << "set logscale y" << std::endl;
-					stream_gnuplotscript << "set xlabel \'ratio light medium\'" << std::endl;
-					stream_gnuplotscript << "set ylabel \'intensity \'" << std::endl;
-					stream_gnuplotscript << "plot \'" + debug_dat + "\' using 5:6" << std::endl;
-					stream_gnuplotscript << "unset logscale x" << std::endl;
-					stream_gnuplotscript << "unset logscale y" << std::endl;
-					stream_gnuplotscript << std::endl;
-				}
-				
-				// write *_ratios_light_medium.eps
-				if (type=="triple") {
-					stream_gnuplotscript << "set output \"" + debug_ratios_light_medium + "\"" << std::endl;
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-					stream_gnuplotscript << "set nokey" << std::endl;
-					stream_gnuplotscript << "set xlabel \'m/Z\'" << std::endl;
-					stream_gnuplotscript << "set ylabel \'ratio light medium\'" << std::endl;
-					stream_gnuplotscript << "plot \'" + debug_dat + "\' using 4:5";
-					stream_gnuplotscript << std::endl;
-				}
-				
-				// write *_ratios_light_heavy.eps
-				stream_gnuplotscript << "set output \"" + debug_ratios_light_heavy + "\"" << std::endl;
-				if (type=="double") {
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-				}
-				else {
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-				}
-				stream_gnuplotscript << "set nokey" << std::endl;
-				stream_gnuplotscript << "set xlabel \'m/Z\'" << std::endl;
-				stream_gnuplotscript << "set ylabel \'ratio light heavy\'" << std::endl;
-				if (type=="double") {
-					stream_gnuplotscript << "plot \'" + debug_dat + "\' using 4:5";
-				}
-				else {
-					stream_gnuplotscript << "plot \'" + debug_dat + "\' using 4:6";
-				}
-				stream_gnuplotscript << std::endl;
-
-				// write *_sizes.eps
-				stream_gnuplotscript << "set output \"" + debug_sizes + "\"" << std::endl;
-				if (type=="double") {
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-				}
-				else {
-					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
-				}
-				stream_gnuplotscript << "set nokey" << std::endl;
-				stream_gnuplotscript << "set xlabel \'cluster ID\'" << std::endl;
-				stream_gnuplotscript << "set ylabel \'cluster size\'" << std::endl;
-				stream_gnuplotscript << "plot \'" + debug_dat + "\' using 1:2";
-				stream_gnuplotscript << std::endl;
-			}
-			stream_gnuplotscript.close();
-		}
+//
+//		//--------------------------------------------------------------
+//		//write gnuplot script
+//		//--------------------------------------------------------------
+//		// + silhoutte width in gnuplot
+//		// strings repeatedly used in debug output
+//		String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5));
+//		String light_heavy_string = String(0.01*floor(mass_separation_light_heavy*100+0.5));
+//		String rt_scaling_string = String(0.01*floor(rt_scaling*100+0.5));
+//		String optimal_silhouette_tolerance_string = String(0.01*floor(optimal_silhouette_tolerance*100+0.5));
+//		String cluster_number_scaling_string = String(0.01*floor(cluster_number_scaling*100+0.5));
+//
+//		if (getFlag_("silac_debug"))
+//		{
+//			// first lines of the gnuplot script
+//			String r_script = debug_trunk + ".input";
+//			std::ofstream stream_r_script(r_script.c_str());
+//			stream_r_script << "dat <- read.table(file=\""<<debug_silhouettes_dat<<"\")" << std::endl;
+//			stream_r_script << "for (k in 0:dim(dat)[1])" << std::endl;
+//			stream_gnuplotscript << "set size 2.0, 2.0" << std::endl;
+//			stream_gnuplotscript << "set size square" << std::endl << std::endl;
+//			//iterate over all charge states
+//			for (Size charge=charge_min; charge<=charge_max; ++charge)
+//			{
+//				String debug_suffix;
+//				if (type=="double") {
+//					debug_suffix = "_" + light_heavy_string + "Da_" + String(charge) +"+";
+//				}
+//				else {
+//					debug_suffix = "_" + light_medium_string + "Da_" + light_heavy_string + "Da_" + String(charge) +"+";
+//				}
+//				// names of dat files
+//				String debug_dat = debug_trunk + debug_suffix + ".dat";
+//				String debug_clusters_dat = debug_trunk + debug_suffix + "_clusters.dat";
+//				// names of postscript files
+//				String debug_ratios_light_medium_intensity = debug_trunk + debug_suffix + "_ratios_light_medium_intensity.eps";
+//				String debug_ratios_light_medium = debug_trunk + debug_suffix + "_ratios_light_medium.eps";
+//				String debug_ratios_light_heavy = debug_trunk + debug_suffix + "_ratios_light_heavy.eps";
+//				String debug_sizes = debug_trunk + debug_suffix + "_sizes.eps";
+//				String debug_clusters = debug_trunk + debug_suffix + "_clusters.eps";
+//				String debug_clustersIntLightMedium = debug_trunk + debug_suffix + "_clustersIntLightMedium.eps";
+//				String debug_clustersIntLightHeavy = debug_trunk + debug_suffix + "_clustersIntLightHeavy.eps";
+//
+//				// write *_clusters.eps
+//				stream_gnuplotscript << "set output \"" + debug_clusters + "\"" << std::endl;
+//				if (type=="double") {
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//				}
+//				else {
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//				}
+//				stream_gnuplotscript << "set xlabel \'m/Z (Th)\'" << std::endl;
+//				stream_gnuplotscript << "set ylabel \'RT (s)\'" << std::endl;
+//				stream_gnuplotscript << "plot";
+//				for (int i = cluster_min; i <= cluster_max; i++)// iterate over clusters
+//				{
+//					if (i != cluster_min) stream_gnuplotscript << ",";
+//					stream_gnuplotscript << " \'" + debug_clusters_dat + "\' index " + String(i+1) +" using 4:3 title \"cluster " + String(i) + "\"";
+//				}
+//				stream_gnuplotscript << std::endl;
+//
+//				// write *_clustersIntLightMedium.eps
+//				if (type=="triple") {
+//					stream_gnuplotscript << "set output \"" + debug_clustersIntLightMedium + "\"" << std::endl;
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//					stream_gnuplotscript << "set xlabel \'intensity at m/Z\'" << std::endl;
+//					stream_gnuplotscript << "set ylabel \'intensity at m/Z + " + light_medium_string + "Th\'" << std::endl;
+//					stream_gnuplotscript << "plot";
+//					for (int i = cluster_min; i <= cluster_max; i++)// iterate over clusters
+//					{
+//						if (i != cluster_min) stream_gnuplotscript << ",";
+//						stream_gnuplotscript << " \'" + debug_clusters_dat + "\' index " + String(i+1) +" using 5:8 title \"cluster " + String(i) + "\"";
+//					}
+//					stream_gnuplotscript << std::endl;
+//				}
+//
+//				// write *_clustersIntLightHeavy.eps
+//				stream_gnuplotscript << "set output \"" + debug_clustersIntLightHeavy + "\"" << std::endl;
+//				if (type=="double") {
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//				}
+//				else {
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//				}
+//				stream_gnuplotscript << "set xlabel \'intensity at m/Z\'" << std::endl;
+//				stream_gnuplotscript << "set ylabel \'intensity at m/Z + " + light_heavy_string + "Th\'" << std::endl;
+//				stream_gnuplotscript << "plot";
+//				for (int i = cluster_min; i <= cluster_max; i++)// iterate over clusters
+//				{
+//					if (i != cluster_min) stream_gnuplotscript << ",";
+//					if (type=="double") {
+//						stream_gnuplotscript << " \'" + debug_clusters_dat + "\' index " + String(i+1) +" using 5:8 title \"cluster " + String(i) + "\"";
+//					}
+//					else {
+//						stream_gnuplotscript << " \'" + debug_clusters_dat + "\' index " + String(i+1) +" using 5:11 title \"cluster " + String(i) + "\"";
+//					}
+//				}
+//				stream_gnuplotscript << std::endl;
+//
+//				// write *_ratios_light_heavy_intensity.eps
+//				if (type=="double") {
+//					stream_gnuplotscript << "set output \"" + debug_ratios_light_medium_intensity + "\"" << std::endl;
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//					stream_gnuplotscript << "set nokey" << std::endl;
+//					stream_gnuplotscript << "set logscale x" << std::endl;
+//					stream_gnuplotscript << "set logscale y" << std::endl;
+//					stream_gnuplotscript << "set xlabel \'ratio light medium\'" << std::endl;
+//					stream_gnuplotscript << "set ylabel \'intensity \'" << std::endl;
+//					stream_gnuplotscript << "plot \'" + debug_dat + "\' using 5:6" << std::endl;
+//					stream_gnuplotscript << "unset logscale x" << std::endl;
+//					stream_gnuplotscript << "unset logscale y" << std::endl;
+//					stream_gnuplotscript << std::endl;
+//				}
+//
+//				// write *_ratios_light_medium.eps
+//				if (type=="triple") {
+//					stream_gnuplotscript << "set output \"" + debug_ratios_light_medium + "\"" << std::endl;
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//					stream_gnuplotscript << "set nokey" << std::endl;
+//					stream_gnuplotscript << "set xlabel \'m/Z\'" << std::endl;
+//					stream_gnuplotscript << "set ylabel \'ratio light medium\'" << std::endl;
+//					stream_gnuplotscript << "plot \'" + debug_dat + "\' using 4:5";
+//					stream_gnuplotscript << std::endl;
+//				}
+//
+//				// write *_ratios_light_heavy.eps
+//				stream_gnuplotscript << "set output \"" + debug_ratios_light_heavy + "\"" << std::endl;
+//				if (type=="double") {
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//				}
+//				else {
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//				}
+//				stream_gnuplotscript << "set nokey" << std::endl;
+//				stream_gnuplotscript << "set xlabel \'m/Z\'" << std::endl;
+//				stream_gnuplotscript << "set ylabel \'ratio light heavy\'" << std::endl;
+//				if (type=="double") {
+//					stream_gnuplotscript << "plot \'" + debug_dat + "\' using 4:5";
+//				}
+//				else {
+//					stream_gnuplotscript << "plot \'" + debug_dat + "\' using 4:6";
+//				}
+//				stream_gnuplotscript << std::endl;
+//
+//				// write *_sizes.eps
+//				stream_gnuplotscript << "set output \"" + debug_sizes + "\"" << std::endl;
+//				if (type=="double") {
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//				}
+//				else {
+//					stream_gnuplotscript << "set title \"SILACAnalyzer2 " << version_ << ", sample = " << debug_trunk << "\\n mass separation light medium= " << light_medium_string << ", mass separation light heavy= " << light_heavy_string << " Da, charge = " << charge << "+\\n intensity cutoff = " << intensity_cutoff << ", rt scaling = " << rt_scaling_string << ", optimal silhouette tolerance = " << optimal_silhouette_tolerance_string << ", cluster number scaling = " << cluster_number_scaling_string << "\"" << std::endl;
+//				}
+//				stream_gnuplotscript << "set nokey" << std::endl;
+//				stream_gnuplotscript << "set xlabel \'cluster ID\'" << std::endl;
+//				stream_gnuplotscript << "set ylabel \'cluster size\'" << std::endl;
+//				stream_gnuplotscript << "plot \'" + debug_dat + "\' using 1:2";
+//				stream_gnuplotscript << std::endl;
+//			}
+//			stream_gnuplotscript.close();
+//		}
 
 
 		return EXECUTION_OK;

@@ -5,6 +5,7 @@ set(directory source/DATASTRUCTURES)
 set(sources_list
 Adduct.C
 BigString.C
+BinaryTreeNode.C
 ChargePair.C
 Compomer.C
 ConstRefVector.C
@@ -13,12 +14,16 @@ DBoundingBox.C
 DIntervalBase.C
 DPosition.C
 DRange.C
+DataPoint.C
+DataSubset.C
 DataValue.C
 Date.C
 DateTime.C
 DefaultParamHandler.C
 DistanceMatrix.C
 DoubleList.C
+GridElement.C
+HashGrid.C
 IntList.C
 Map.C
 MassExplainer.C

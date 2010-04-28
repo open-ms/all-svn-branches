@@ -49,11 +49,31 @@ class DataSubset;
 
 struct Dist{};
 
+/**
+ * @brief Element of a DistanceSet
+ * @see HashClustering
+ * @ingroup Datastructures
+ */
 struct DistanceEntry
 {
+	/**
+	 * @brief DataSubset to which the distance points
+	 */
 	DataSubset* data_point;
+	/**
+	 * @brief DataSubset from which the distance points, i.e which holds an iterator for the distance entry
+	 */
 	DataSubset* owner;
+	/**
+	 * @brief The distance
+	 */
 	DoubleReal distance;
+	/**
+	 * @brief detailed constructor
+	 * @param owner_ DataSubset to which the distance points
+	 * @param data_point_ ataSubset from which the distance points, i.e which holds an iterator for the distance entry
+	 * @param distance_ the distance
+	 */
 	DistanceEntry(DataSubset* owner_,DataSubset* data_point_,DoubleReal distance_)
 	{
 		owner=owner_;
@@ -80,20 +100,54 @@ boost::multi_index::ordered_non_unique< boost::multi_index::tag<Dist>,
 boost::multi_index::member<DistanceEntry,DoubleReal,&DistanceEntry::distance> > >
 > DistanceSet;
 
+/**
+ * @brief A DataSubset is a data structure used for hierarchical clustering based on geometric hashing.
+ * A DataSubset represents a subset of DataPoints from a hash grid, as well as an subtree of the hierarchical clustering tree.
+ * @see HashClustering
+ */
+
 
 class DataSubset : public GridElement
 {
 
 public:
+	/**
+	 * @brief Map of iterators to the distance set
+	 * @see HashClustering
+	 */
 	std::map<GridElement*,DistanceSet::iterator> distance_iterators;
+	/**
+	 * All data points contained in the subset
+	 */
 	std::list<DataPoint*> data_points;
+	/**
+	 * Subtree of the hierarchical clustering tree representing the data points
+	 */
 	std::vector<BinaryTreeNode> tree;
 
+	/**
+	 * @brief detailed constructor
+	 * @param data_point initial data point
+	 */
 	DataSubset(DataPoint& data_point);
+	/**
+	 * @brief copy constructor
+	 * @param copy this DataSubset will be copied
+	 */
 	DataSubset(const DataSubset& copy);
+	/**
+	 * @brief copy constructor
+	 * @param copy_ptr the DataSubset, to which the pointer points, will be copied
+	 */
 	DataSubset(const DataSubset* copy_ptr);
 	Int operator<(const DataSubset &el) const;
+	/**
+	 * @brief gets the number of DataPoints in the subset
+	 */
 	Int size();
+	/**
+	 * @brief gets the id of the DataSubset
+	 */
 	Int getID();
 	bool operator !=(const DataSubset &el) const;
 	bool operator ==(const DataSubset & el) const;

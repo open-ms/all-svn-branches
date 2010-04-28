@@ -37,18 +37,48 @@ namespace OpenMS
 class DataPoint : public GridElement {
 
 public:
-	DoubleReal intensity; // intensity at RT and m/z
-	Int cluster_id; // ID number of the cluster the data point belongs to
-	Int cluster_size; // number of points in cluster 'cluster_id'
+	/**
+	 * @brief intensity at RT and m/z
+	 */
+	DoubleReal intensity;
+	/**
+	 * @brief ID number of the cluster the data point belongs to
+	 */
+	Int cluster_id;
+	/**
+	 * @brief number of points in cluster 'cluster_id'
+	 */
+	Int cluster_size;
+	/**
+	 * @brief ID of the data point
+	 */
 	Int feature_id;
+	/**
+	 * @brief default constructor
+	 */
 	DataPoint();
+	/**
+	 * @brief copy constructor
+	 * @param this DataPoint will be copied
+	 */
 	DataPoint(const DataPoint &copyin);
+	/**
+	 * @brief detailed constructor
+	 * @param rt_ RT value of the data point
+	 * @param mz_ m/z value of the data point
+	 * @param intensity_ intensity of the data point
+	 * @param feature_id_ id of the data point
+	 */
 	DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_);
+	/// destructor
 	~DataPoint(){};
 	DataPoint& operator=(const DataPoint &rhs);
 	bool operator==(const DataPoint &rhs) const;
 	bool operator!=(const DataPoint &rhs) const;
 	bool operator<(const DataPoint &rhs) const;
+	/**
+	 * @brief gets the ID of the data point
+	 */
 	Int getID();
 
 };

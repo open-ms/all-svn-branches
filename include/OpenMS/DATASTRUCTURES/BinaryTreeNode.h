@@ -35,12 +35,35 @@
 namespace OpenMS
 {
 
+/**
+		@brief A node of an hierarchical clustering tree.
+		@ingroup Datastructures
+	*/
+
 class BinaryTreeNode {
 public:
+/** @brief the first data point of the node
+
+		*/
 	DataPoint* data1;
+/** @brief the second data point of the node
+
+		*/
 	DataPoint* data2;
+/** @brief distance between the two points
+
+		*/
 	DoubleReal distance;
+/** @brief default constructor
+
+		*/
 	BinaryTreeNode();
+/** @brief detailed constructor
+
+			@param data1_ first data point
+			@param data2_ second data point
+			@param distance_ distance between the data points
+		*/
 	BinaryTreeNode(DataPoint* data1_,DataPoint* data2_,DoubleReal distance_);
 	bool operator==(const BinaryTreeNode &cp) const;
 	bool operator<(const BinaryTreeNode &cp) const;

@@ -1,14 +1,36 @@
-/*
- * GeometricHashing.cpp
- *
- *  Created on: 24.03.2010
- *      Author: steffen
- */
+// -*- Mode: C++; tab-width: 2; -*-
+// vi: set ts=2:
+//
+// --------------------------------------------------------------------------
+//                   OpenMS Mass Spectrometry Framework
+// --------------------------------------------------------------------------
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//
+//  This library is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU Lesser General Public
+//  License as published by the Free Software Foundation; either
+//  version 2.1 of the License, or (at your option) any later version.
+//
+//  This library is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//  Lesser General Public License for more details.
+//
+//  You should have received a copy of the GNU Lesser General Public
+//  License along with this library; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+// --------------------------------------------------------------------------
+// $Maintainer: Steffen Sass $
+// $Authors: $
+// --------------------------------------------------------------------------
+
 
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
 
 namespace OpenMS
 {
+
 HashGrid::HashGrid()
 {
 }
@@ -20,6 +42,7 @@ HashGrid::HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_)
 	grid_size_x=-1;
 	grid_size_y=-1;
 }
+
 HashGrid::~HashGrid() {
 	for (std::map<std::pair<Int,Int>, std::list<GridElement*> >::iterator it=elements.begin();it!=elements.end();++it)
 	{
@@ -31,6 +54,7 @@ HashGrid::~HashGrid() {
 	}
 
 }
+
 void HashGrid::setRTThreshold(DoubleReal threshold_)
 {
 	rt_threshold=threshold_;
@@ -39,23 +63,6 @@ void HashGrid::setRTThreshold(DoubleReal threshold_)
 void HashGrid::setMZThreshold(DoubleReal threshold_)
 {
 	mz_threshold=threshold_;
-}
-
-DoubleReal HashGrid::getDistance(DataSubset& element1,DataSubset& element2)
-{
-	DistanceSet::iterator pos=distances.find(boost::make_tuple(&element1,&element2));
-	if (pos!=distances.end())
-	{
-		DistanceEntry el=*pos;
-		return el.distance;
-	}
-	pos=distances.find(boost::make_tuple(&element2,&element1));
-	if (pos!=distances.end())
-	{
-		DistanceEntry el=*pos;
-		return el.distance;
-	}
-	return -1;
 }
 
 void HashGrid::removeElement(GridElement* element_,Int x,Int y)
@@ -72,8 +79,6 @@ void HashGrid::removeElement(GridElement* element_)
 	int y = element_->rt / rt_threshold;
 	removeElement(element_,x,y);
 }
-
-
 
 void HashGrid::insert(GridElement* element_)
 {
@@ -110,11 +115,6 @@ int HashGrid::size()
 	return elements.size();
 }
 
-int HashGrid::distanceSize()
-{
-	return distances.size();
-}
-
 
 DoubleReal HashGrid::getRT_threshold() const
 {
@@ -124,5 +124,14 @@ DoubleReal HashGrid::getRT_threshold() const
 DoubleReal HashGrid::getMZ_threshold() const
 {
 	return mz_threshold;
+}
+Int HashGrid::getGridSizeX()
+{
+	return grid_size_x;
+}
+
+Int HashGrid::getGridSizeY()
+{
+	return grid_size_y;
 }
 }

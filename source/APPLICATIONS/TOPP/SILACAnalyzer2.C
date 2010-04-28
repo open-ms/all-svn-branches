@@ -689,7 +689,7 @@ public:
 //					}
 //				}
 //				stream_ratios.close();
-			}
+//			}
 
 		} //end iterate over all charge states
 

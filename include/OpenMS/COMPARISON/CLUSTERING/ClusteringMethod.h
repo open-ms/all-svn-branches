@@ -35,13 +35,40 @@
 
 namespace OpenMS
 {
+
+/**
+ * @brief Base class for all hierarchical clustering methods for computing distances, which are used in HashClustering.
+ * @see HashClustering
+ * @ingroup SpectraClustering
+ */
+
 class ClusteringMethod {
 
 public:
+	/**
+	 * @brief scale the distances in RT direction to get more oval clusters
+	 */
 	DoubleReal rt_scaling;
+	/**
+	 * @brief default constructor
+	 */
 	ClusteringMethod();
+	/**
+	 * @brief detailed constructor
+	 * @param rt_scaling value for scaling the distances in RT direction
+	 */
 	ClusteringMethod(DoubleReal rt_scaling_);
+	/**
+	 * @brief gets the distance between two DataSubsets (calculation may be different than distance calculation of two DataPoints)
+	 * @param subset1 first subset
+	 * @param subset2 second subset
+	 */
 	virtual DoubleReal getDistance(DataSubset& subset1,DataSubset& subset2) = 0;
+	/**
+	 * @brief gets the distance between two DataPoints
+	 * @param DataPoint1 first data point
+	 * @param DataPoint1 second data point
+	 */
 	virtual DoubleReal getDistance(DataPoint& point1,DataPoint& point2) = 0;
 };
 }

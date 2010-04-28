@@ -33,10 +33,29 @@
 namespace OpenMS
 {
 
+/**
+ * @brief Clustering method with computes the distances of two clusters as the distance of their cluster centroids (also known as Unweighted Pair-Group Method using Centroids, or UPGMC).
+ * @ingroup SpectraClustering
+ */
+
 class CentroidLinkage : public ClusteringMethod {
 public:
+	/**
+	 * @brief detailed constructor
+	 * @param rt_scaling_ value fpr sclaling distances in RT direction
+	 */
 	CentroidLinkage(DoubleReal rt_scaling_);
+	/**
+	 * @brief gets the distance between two DataSubsets
+	 * @param subset1 first subset
+	 * @param subset2 second subset
+	 */
 	DoubleReal getDistance(DataSubset& subset1,DataSubset& subset2);
+	/**
+	 * @brief gets the distance between two DataPoints
+	 * @param DataPoint1 first data point
+	 * @param DataPoint1 second data point
+	 */
 	DoubleReal getDistance(DataPoint& point1,DataPoint& point2);
 };
 }

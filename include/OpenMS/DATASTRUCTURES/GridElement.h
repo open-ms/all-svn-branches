@@ -33,13 +33,37 @@
 
 namespace OpenMS
 {
+
+/**
+		@brief Base class of all elements, which can be stored in a grid cell.
+		@see HashGrid
+		@ingroup Datastructures
+	*/
+
 class GridElement {
 public :
-	DoubleReal mz;
-	DoubleReal rt;
-	virtual Int getID() =0;
-	GridElement();
+/**
+		@brief default constructor
+	*/
+GridElement();
+/** @brief copy constructor
+
+			@param source  this GridElement will be copied
+		*/
 	GridElement(const GridElement& copy);
+/**
+		@brief m/z value of the element
+	*/
+	DoubleReal mz;
+/**
+		@brief RT value of the element
+	*/
+	DoubleReal rt;
+/**
+		@brief gets the id of the element
+	*/
+	virtual Int getID() =0;
+	
 };
 }
 

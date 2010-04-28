@@ -32,8 +32,7 @@
 #include<vector>
 #include<iostream>
 
-#include <OpenMS/DATASTRUCTURES/DataSubset.h>
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
+#include <OpenMS/DATASTRUCTURES/GridElement.h>
 
 
 
@@ -43,6 +42,15 @@
 namespace OpenMS
 {
 
+/**
+		@brief A datastructure, which allows the arrangement of data points with an RT and m/z value in a two-dimensional grid.
+		The size of each grid cell is determined by two values, namely <i>rt_threshold</i> and <i>mz_threshold</i>.
+		<i>rt_threshold</i> defines the height of a grid cell and <i>mz_threshold</i> the width.
+		The data points are stored in specific grid cells and are accessible via geometric hashing.
+		So the corresponding cell of each data point can be calculated by dividing the rt and m/z values by its corresponding threshold.
+		@ingroup Datastructures
+	*/
+
 class HashGrid {
 
 private:
@@ -51,29 +59,77 @@ private:
 	DoubleReal mz_threshold;
 	DoubleReal hyp_threshold;
 	DoubleReal rt_scaling;
-	DoubleReal min_distance;
-	std::pair<DataSubset*,DataSubset*> min_distance_subsets;
+	Int grid_size_x;
+	Int grid_size_y;
 
 public:
-	DistanceSet distances;
-	int grid_size_x;
-	int grid_size_y;
+	
 	std::map<std::pair<Int,Int>, std::list<GridElement*> > elements;
-	HashGrid();
-	HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_);
-	~HashGrid();
-	void setRTThreshold(DoubleReal threshold_);
-	void setMZThreshold(DoubleReal threshold_);
-	DoubleReal getDistance(DataSubset& element1,DataSubset& element2);
-	void removeElement(GridElement* element_,Int x,Int y);
-	void removeElement(GridElement* element_);
-	void insert(GridElement* element_);
-	void consoleOut();
-	int size();
-	int distanceSize();
-	DoubleReal getRT_threshold() const;
-	DoubleReal getMZ_threshold() const;
+/** @brief default constructor
 
+		*/
+	HashGrid();
+/** @brief detailed constructor
+
+	@param rt_threshold_ defines the height of each grid cell
+	@param mz_threshold_ defines the width of each grid cell
+*/
+	HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_);
+//Destructor
+	~HashGrid();
+/** @brief sets the value of rt_threshold:
+
+	@param rt_threshold_ defines the height of each grid cell
+*/
+	void setRTThreshold(DoubleReal threshold_);
+/** @brief sets the value of mz_threshold:
+
+	@param mz_threshold_ defines the width of each grid cell
+*/
+	void setMZThreshold(DoubleReal threshold_);
+
+/** @brief removes an element from the hash grid. The cell, in which the element may be contained, is specified:
+
+	@param element_ the element to remove
+	@param x x-value of the cell
+	@param y y-value of the cell
+*/
+	void removeElement(GridElement* element_,Int x,Int y);
+/** @brief removes an element from the hash grid. The cell, in which the element may be contained, is calculated out of the RT and m/z values of the element:
+
+	@param element_ the element to remove
+*/
+	void removeElement(GridElement* element_);
+/** @brief inserts a new element in the grid:
+
+	@param element_ the element to remove
+*/
+	void insert(GridElement* element_);
+/** @brief writes the content of the grid to the console:
+
+*/
+	void consoleOut();
+/** @brief gets the number of cells
+
+*/
+	int size();
+/** @brief gets the height of the cells
+
+*/
+	DoubleReal getRT_threshold() const;
+/** @brief gets the width of the cells
+
+*/
+	DoubleReal getMZ_threshold() const;
+/** @brief gets the number of grids in m/z-direction
+
+		*/
+	Int getGridSizeX();
+	
+/** @brief gets the number of grids in RT-direction
+
+		*/
+	Int getGridSizeY();
 };
 }
 

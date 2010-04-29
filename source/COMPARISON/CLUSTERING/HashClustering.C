@@ -37,9 +37,8 @@ namespace OpenMS {
 
 typedef std::map<std::pair<int,int>, std::list<GridElement*> > GridElements;
 
-HashClustering::HashClustering(std::vector<DataPoint>& data, int rt_threshold, int mz_threshold, ClusteringMethod& method_)
+HashClustering::HashClustering(std::vector<DataPoint>& data, int rt_threshold, int mz_threshold, ClusteringMethod& method_) : grid(HashGrid(rt_threshold,mz_threshold))
 {
-	grid=HashGrid(rt_threshold,mz_threshold);
 	method=&method_;
 
 	for (std::vector<DataPoint>::iterator it=data.begin();it!=data.end();++it)
@@ -121,8 +120,8 @@ typedef std::map<std::pair<int,int>, std::list<GridElement*> > ElementMap;
 void HashClustering::merge(DataSubset& subset1,DataSubset& subset2)
 {
 	//Remember old position
-	int x = subset1.mz / grid.getMZ_threshold();
-	int y = subset1.rt / grid.getRT_threshold();
+	int x = subset1.mz / grid.getMZThreshold();
+	int y = subset1.rt / grid.getRTThreshold();
 	//Calculate new centroid
 	DoubleReal mz_centroid=(subset1.mz*subset1.size())+(subset2.mz*subset2.size());
 	mz_centroid/=subset1.size()+subset2.size();
@@ -134,15 +133,15 @@ void HashClustering::merge(DataSubset& subset1,DataSubset& subset2)
 	subset1.data_points.insert(subset1.data_points.end(),subset2.data_points.begin(),subset2.data_points.end());
 	grid.removeElement(&subset2);
 	//Calculate new position
-	int x_new = subset1.mz / grid.getMZ_threshold();
-	int y_new = subset1.rt / grid.getRT_threshold();
+	int x_new = subset1.mz / grid.getMZThreshold();
+	int y_new = subset1.rt / grid.getRTThreshold();
 
 	//Iterate over all distances from subset1 and recalculate them
 	for (IteratorMap::iterator dist_it=subset1.distance_iterators.begin();dist_it!=subset1.distance_iterators.end();)
 	{
 		DistanceEntry entry=*(dist_it->second);
-		int n_x=entry.data_point->mz / grid.getMZ_threshold();
-		int n_y = entry.data_point->rt / grid.getRT_threshold();
+		int n_x=entry.data_point->mz / grid.getMZThreshold();
+		int n_y = entry.data_point->rt / grid.getRTThreshold();
 
 		DoubleReal new_distance=getDistance(subset1,*(entry.data_point));
 		//Check, if the distance is valid, i.e. the DataSubset, to which the distance points, lies in one of the four upper right cells and the distance does not point from subset1 to itself or subset2. Delete it instead.
@@ -162,8 +161,8 @@ void HashClustering::merge(DataSubset& subset1,DataSubset& subset2)
 	for (IteratorMap::iterator dist_it=subset2.distance_iterators.begin();dist_it!=subset2.distance_iterators.end();++dist_it)
 	{
 		DistanceEntry entry=*(dist_it->second);
-		int n_x=entry.data_point->mz /  grid.getMZ_threshold();
-		int n_y = entry.data_point->rt /  grid.getRT_threshold();
+		int n_x=entry.data_point->mz /  grid.getMZThreshold();
+		int n_y = entry.data_point->rt /  grid.getRTThreshold();
 
 		DoubleReal new_distance=getDistance(subset1,*(entry.data_point));
 		//Check, if the distance is valid, i.e. the DataSubset, to which the distance points, lies in one of the four upper right cells and the distance does not point from subset2 to itself or subset1. Delete it instead.
@@ -212,8 +211,8 @@ void HashClustering::merge(DataSubset& subset1,DataSubset& subset2)
 			traverse_set.insert(std::make_pair(i,j));
 		}
 	}
-	x = subset2.mz / grid.getMZ_threshold();
-	y = subset2.rt / grid.getRT_threshold();
+	x = subset2.mz / grid.getMZThreshold();
+	y = subset2.rt / grid.getRTThreshold();
 	for (int i=x-1;i<=x+1;++i)
 	{
 		if (i<0 || i>grid.getGridSizeX())
@@ -297,7 +296,7 @@ void HashClustering::updateMinElements()
 	}
 }
 
-std::vector<std::vector<BinaryTreeNode > > HashClustering::performClustering()
+void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > >& subtrees )
 {
 	Int distance_size=distances.size();
 	startProgress(0,distance_size,"clustering data");
@@ -331,22 +330,21 @@ std::vector<std::vector<BinaryTreeNode > > HashClustering::performClustering()
 	}
 	while(distances.size() > 0);
 	endProgress();
-	//Extract the subtrees and return them
-	std::vector<std::vector<BinaryTreeNode > > subtrees;
+	//Extract the subtrees and append them to the subtree vector
+//	subtrees.resize(grid.getNumberOfElements());
+
 	for (std::map<std::pair<int,int>, std::list<GridElement*> >::iterator it=grid.elements.begin();it!=grid.elements.end();++it)
 	{
 		std::list<GridElement*>& elements=it->second;
 		for (std::list<GridElement*>::iterator lit=elements.begin();lit!=elements.end();++lit)
 		{
 			DataSubset* subset_ptr = dynamic_cast<DataSubset*> (*lit);
-			//				DataSubset subset(subset_ptr);
-			std::vector<BinaryTreeNode> tree;;
+			std::vector<BinaryTreeNode> tree;
 			tree.insert(tree.begin(),subset_ptr->tree.begin(),subset_ptr->tree.end());
 			sort(tree.begin(), tree.end());
 			subtrees.push_back(tree);
 		}
 	}
-	return subtrees;
 }
 
 std::vector< Real > HashClustering::averageSilhouetteWidth(std::vector<BinaryTreeNode>& tree)

@@ -59,11 +59,19 @@ GridElement();
 		@brief RT value of the element
 	*/
 	DoubleReal rt;
+
+	/**
+	 * @brief detailed constructor
+	 * @param rt RT value of the element
+	 * @param mz m/z value of the element
+	 */
+	GridElement(DoubleReal rt_, DoubleReal mz_);
 /**
 		@brief gets the id of the element
 	*/
+
 	virtual Int getID() =0;
-	
+
 };
 }
 

@@ -48,10 +48,8 @@ DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 	cluster_id = copyin.cluster_id;
 	cluster_size = copyin.cluster_size;
 }
-DataPoint::DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_)
+DataPoint::DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_) :GridElement(rt_,mz_)
 {
-	rt = rt_;
-	mz = mz_;
 	feature_id=feature_id_;
 	intensity = intensity_;
 	cluster_id = 0;

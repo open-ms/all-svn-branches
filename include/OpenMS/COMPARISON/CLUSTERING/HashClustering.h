@@ -110,8 +110,9 @@ public:
 	void cut(int cluster_quantity, std::vector< std::vector<BinaryTreeNode> >& subtrees, std::vector<BinaryTreeNode>& tree);
 	/**
 	 * @brief Starts the clustering and returns a vector of subtrees when finished
+	 * @param subtrees vector of subtrees, which will be filled after the clustering process
 	 */
-	std::vector<std::vector<BinaryTreeNode> > performClustering();
+	void performClustering(std::vector<std::vector<BinaryTreeNode > >& subtrees );
 };
 }
 

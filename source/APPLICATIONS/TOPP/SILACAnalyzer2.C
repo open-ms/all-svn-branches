@@ -133,8 +133,8 @@ typedef std::vector<DataPoint*> Cluster;
 /// @cond TOPPCLASSES
 
 bool clusterCmp( DataPoint a, DataPoint b ) {
-		if ( a.cluster_size == b.cluster_size && a.cluster_id < b.cluster_id) return true;
-		if ( a.cluster_size < b.cluster_size ) return true;
+		if ( a.cluster_size == b.cluster_size && a.cluster_id > b.cluster_id) return true;
+		if ( a.cluster_size > b.cluster_size ) return true;
 		return false;
 	}
 
@@ -432,10 +432,11 @@ public:
 			// Perform clustering
 			//-------------------------------------------------------------
 
-			CentroidLinkage method(0.05);
+			CentroidLinkage method(rt_scaling);
 			HashClustering c(data,rt_threshold,mz_threshold,method);
 			c.setLogType(log_type_);
-			std::vector<Tree> subtrees=c.performClustering();
+			std::vector<Tree> subtrees;
+			c.performClustering(subtrees);
 			std::vector<std::vector<Real> > silhouettes;
 			Size cluster_id=0;
 
@@ -569,34 +570,66 @@ public:
 //			// generate debug output
 //			//-------------------------------------------------------------
 //			// strings repeatedly used in debug output
-//			String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5));
-//			String light_heavy_string = String(0.01*floor(mass_separation_light_heavy*100+0.5));
-//
-//			String debug_silhouettes_dat;
-//			if (getFlag_("silac_debug"))
-//			{
-//				String debug_suffix;
-//				if (type=="double") {
-//					debug_suffix = "_" + light_heavy_string + "Da_" + String(charge) +"+";
-//				}
-//				else {
-//					debug_suffix = "_" + light_medium_string + "Da_" + light_heavy_string + "Da_" + String(charge) +"+";
-//				}
-////				// names of dat files
-//				String debug_dat = debug_trunk + debug_suffix + ".dat";
-//				debug_silhouettes_dat = debug_trunk + debug_suffix + "_silhouettes.dat";
-////
-////				// write all cluster data points to *_clusters.dat
-//				std::ofstream stream_clusters(debug_clusters_dat.c_str());
-//				stream_clusters << "cluster_id cluster_size rt mz int" << std::endl;
-//				Int current_id = -1;
-//				for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
-//				{
-//					if (it->cluster_id != current_id) stream_clusters << std::endl << std::endl;
-//					stream_clusters << it->cluster_id << " " << it->cluster_size << " "<< it->rt << " " << it->mz << " " << it->intensity << std::endl;
-//					current_id = it->cluster_id;
-//				}
-//				stream_clusters.close();
+			String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5));
+			String light_heavy_string = String(0.01*floor(mass_separation_light_heavy*100+0.5));
+
+
+			if (getFlag_("silac_debug"))
+			{
+				String debug_suffix;
+				if (type=="double") {
+					debug_suffix = "_" + light_heavy_string + "Da_" + String(charge) +"+";
+				}
+				else {
+					debug_suffix = "_" + light_medium_string + "Da_" + light_heavy_string + "Da_" + String(charge) +"+";
+				}
+				// names of dat files
+				String debug_clusters_dat = debug_trunk + debug_suffix + "_clusters.dat";
+
+				// write all cluster data points to *_clusters.dat
+
+				std::ofstream stream_clusters(debug_clusters_dat.c_str());
+				stream_clusters << "cluster_id cluster_size rt mz int" << std::endl;
+				Int current_id = -1;
+				for (std::vector<DataPoint>::iterator it=data.begin(); it!= data.end(); ++it)
+				{
+					if (it->cluster_id != current_id) stream_clusters << std::endl << std::endl;
+					stream_clusters << it->cluster_id << " " << it->cluster_size << " "<< it->rt << " " << it->mz << " " << it->intensity << std::endl;
+					current_id = it->cluster_id;
+				}
+				stream_clusters.close();
+
+				String debug_silhouettes_dat = debug_trunk + debug_suffix + "_silhouettes.dat";
+				std::ofstream stream_silhouettes(debug_silhouettes_dat.c_str());
+
+				for (std::vector<std::vector<Real> >::iterator asw_vector_it=silhouettes.begin();asw_vector_it!=silhouettes.end();++asw_vector_it)
+				{
+					for (std::vector<Real>::iterator asw_it=asw_vector_it->begin();asw_it!=asw_vector_it->end();++asw_it)
+					{
+						stream_silhouettes << *asw_it << "\t";
+					}
+					stream_silhouettes << std::endl;
+				}
+				stream_silhouettes.close();
+
+				String debug_silhouettes_r = debug_trunk + debug_suffix + "_silhouettes.R";
+				std::ofstream stream_r(debug_silhouettes_r.c_str());
+				stream_r << "con <- file(\"" << debug_silhouettes_dat << "\",\"r\")" << std::endl;
+				stream_r << "lines <- readLines(con, n=-1)" << std::endl;
+				String pdf_name= debug_trunk + debug_suffix + "_silhouettes.pdf";
+				String pdf_title= debug_trunk + debug_suffix;
+				stream_r << "pdf(\""<< pdf_name << "\", paper=\"special\",width=13,height=(2*length(lines)),title = \"Silhoutte Plots for "<< pdf_title << "\")" << std::endl;
+				stream_r << "par(mfrow=c(ceiling(length(lines)/2),2))" << std::endl;
+				stream_r << "for (i in 1:length(lines))" << std::endl;
+				stream_r << "{" << std::endl;
+				stream_r << "text_vec <- strsplit(lines[i],\"\\t\")" << std::endl;
+				stream_r << "asw <- as.numeric(text_vec[[1]])" << std::endl;
+				stream_r << "aswrange <- asw[(length(asw)):(0)]" << std::endl;
+				stream_r << "plot (1:length(asw),aswrange,type=\"l\",xlab=\"# Cluster\",ylab=\"asw\",main=paste(\"Subtree \",i,\": max n \",which.max(aswrange)))" << std::endl;
+				stream_r << "}" << std::endl;
+				stream_r << "close(con)" << std::endl;
+				stream_r << "dev.off()" << std::endl;
+				stream_r.close();
 //
 //				// write ratios of all cluster to *.dat
 //				std::ofstream stream_ratios(debug_dat.c_str());
@@ -689,7 +722,7 @@ public:
 //					}
 //				}
 //				stream_ratios.close();
-//			}
+			}
 
 		} //end iterate over all charge states
 

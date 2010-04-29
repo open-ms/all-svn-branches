@@ -31,10 +31,6 @@
 namespace OpenMS
 {
 
-HashGrid::HashGrid()
-{
-}
-
 HashGrid::HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_)
 {
 	rt_threshold=rt_threshold_;
@@ -55,20 +51,14 @@ HashGrid::~HashGrid() {
 
 }
 
-void HashGrid::setRTThreshold(DoubleReal threshold_)
-{
-	rt_threshold=threshold_;
-}
-
-void HashGrid::setMZThreshold(DoubleReal threshold_)
-{
-	mz_threshold=threshold_;
-}
 
 void HashGrid::removeElement(GridElement* element_,Int x,Int y)
 {
 	std::list<GridElement*>& subsets = elements[std::make_pair(x,y)];
+	Size previous_size=subsets.size();
 	subsets.remove(element_);
+	if (subsets.size() < previous_size && number_of_elements>0)
+		--number_of_elements;
 	if (subsets.empty())
 		elements.erase(std::make_pair(x,y));
 }
@@ -90,6 +80,7 @@ void HashGrid::insert(GridElement* element_)
 		grid_size_y=y;
 
 	elements[std::make_pair(x,y)].push_back(element_);
+	++number_of_elements;
 }
 
 void HashGrid::consoleOut()
@@ -116,12 +107,12 @@ int HashGrid::size()
 }
 
 
-DoubleReal HashGrid::getRT_threshold() const
+DoubleReal HashGrid::getRTThreshold() const
 {
 	return rt_threshold;
 }
 
-DoubleReal HashGrid::getMZ_threshold() const
+DoubleReal HashGrid::getMZThreshold() const
 {
 	return mz_threshold;
 }
@@ -133,5 +124,9 @@ Int HashGrid::getGridSizeX()
 Int HashGrid::getGridSizeY()
 {
 	return grid_size_y;
+}
+Int  HashGrid::getNumberOfElements()
+{
+	return number_of_elements;
 }
 }

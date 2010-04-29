@@ -61,14 +61,12 @@ private:
 	DoubleReal rt_scaling;
 	Int grid_size_x;
 	Int grid_size_y;
+	Int number_of_elements;
 
 public:
-	
-	std::map<std::pair<Int,Int>, std::list<GridElement*> > elements;
-/** @brief default constructor
 
-		*/
-	HashGrid();
+	std::map<std::pair<Int,Int>, std::list<GridElement*> > elements;
+
 /** @brief detailed constructor
 
 	@param rt_threshold_ defines the height of each grid cell
@@ -77,16 +75,6 @@ public:
 	HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_);
 //Destructor
 	~HashGrid();
-/** @brief sets the value of rt_threshold:
-
-	@param rt_threshold_ defines the height of each grid cell
-*/
-	void setRTThreshold(DoubleReal threshold_);
-/** @brief sets the value of mz_threshold:
-
-	@param mz_threshold_ defines the width of each grid cell
-*/
-	void setMZThreshold(DoubleReal threshold_);
 
 /** @brief removes an element from the hash grid. The cell, in which the element may be contained, is specified:
 
@@ -116,20 +104,24 @@ public:
 /** @brief gets the height of the cells
 
 */
-	DoubleReal getRT_threshold() const;
+	DoubleReal getRTThreshold() const;
 /** @brief gets the width of the cells
 
 */
-	DoubleReal getMZ_threshold() const;
+	DoubleReal getMZThreshold() const;
 /** @brief gets the number of grids in m/z-direction
 
 		*/
 	Int getGridSizeX();
-	
+
 /** @brief gets the number of grids in RT-direction
 
 		*/
 	Int getGridSizeY();
+	/**
+	 * @brief gets the number of elements in the grid
+	 */
+	Int getNumberOfElements();
 };
 }
 

@@ -97,7 +97,7 @@ public:
 
 */
 	void consoleOut();
-/** @brief gets the number of cells
+/** @brief gets the number of element holding cells
 
 */
 	int size();

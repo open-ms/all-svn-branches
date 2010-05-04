@@ -31,6 +31,7 @@ set(datastructures_executables_list
 	DefaultParamHandler_test
 	DistanceMatrix_test
 	DoubleList_test
+	HashGrid_test
 	IntList_test
 	Map_test
 	MassExplainer_test
@@ -253,12 +254,14 @@ set(comparison_executables_list
   BinnedSpectrumCompareFunctor_test
   BinnedSpectrum_test
   BinnedSumAgreeingIntensities_test
+  CentroidLinkage_test
   ClusterAnalyzer_test
   ClusterFunctor_test
   ClusterHierarchical_test
   CompareFouriertransform_test
   CompleteLinkage_test
   EuclideanSimilarity_test
+  HashClustering_test
   PeakAlignment_test
   PeakSpectrumCompareFunctor_test
   SingleLinkage_test

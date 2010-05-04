@@ -37,6 +37,7 @@ HashGrid::HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_)
 	mz_threshold=mz_threshold_;
 	grid_size_x=-1;
 	grid_size_y=-1;
+	number_of_elements=0;
 }
 
 HashGrid::~HashGrid() {

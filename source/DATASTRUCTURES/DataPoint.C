@@ -38,22 +38,23 @@ DataPoint::DataPoint()
 	feature_id= 0;
 	cluster_id = 0;
 	cluster_size = 0;
+	real_rt=0;
 }
 DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 {
-	rt = copyin.rt;
-	mz = copyin.mz;
 	feature_id=copyin.feature_id;
 	intensity = copyin.intensity;
 	cluster_id = copyin.cluster_id;
 	cluster_size = copyin.cluster_size;
+	real_rt=copyin.real_rt;
 }
-DataPoint::DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_) :GridElement(rt_,mz_)
+DataPoint::DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_,DoubleReal real_rt_) :GridElement(rt_,mz_)
 {
 	feature_id=feature_id_;
 	intensity = intensity_;
 	cluster_id = 0;
 	cluster_size = 0;
+	real_rt=real_rt_;
 }
 
 DataPoint& DataPoint::operator=(const DataPoint &rhs)
@@ -64,6 +65,7 @@ DataPoint& DataPoint::operator=(const DataPoint &rhs)
 	this->feature_id=rhs.feature_id;
 	this->cluster_id = rhs.cluster_id;
 	this->cluster_size = rhs.cluster_size;
+	this->real_rt = rhs.real_rt;
 	return *this;
 }
 

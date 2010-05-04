@@ -53,7 +53,7 @@ private:
 	/**
 	 * @brief Merges two DataSubsets
 	 */
-	void merge(DataSubset& subset1,DataSubset& subset2);
+	void merge();
 	/**
 	 * @brief Finds the two DataSubsets with minimal distance
 	 * @param subset1 first DataSubset
@@ -97,17 +97,7 @@ public:
 			after call of this method the argument clusters is filled corresponding to the given @p cluster_quantity with the indices of the elements clustered
 	 */
 	void cut(int cluster_quantity, std::vector< std::vector<DataPoint*> >& clusters, std::vector<BinaryTreeNode>& tree);
-	/**
-			@brief Method to calculate subtrees from a given tree resulting from a certain step in clustering given by the number of clusters
 
-			@param cluster_quantity Size giving the number of clusters
-			@param tree vector of BinaryTreeNode's representing the clustering
-			@param subtrees vector of trees holding the trees, tree is composed of cut at given size
-			@see BinaryTreeNode
-
-			after call of this method the argument clusters is filled corresponding to the given @p cluster_quantity with the indices of the elements clustered
-		*/
-	void cut(int cluster_quantity, std::vector< std::vector<BinaryTreeNode> >& subtrees, std::vector<BinaryTreeNode>& tree);
 	/**
 	 * @brief Starts the clustering and returns a vector of subtrees when finished
 	 * @param subtrees vector of subtrees, which will be filled after the clustering process

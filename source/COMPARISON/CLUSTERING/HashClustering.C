@@ -117,8 +117,23 @@ void HashClustering::init()
 typedef std::map<GridElement*,DistanceSet::iterator> IteratorMap;
 typedef std::map<std::pair<int,int>, std::list<GridElement*> > ElementMap;
 
-void HashClustering::merge(DataSubset& subset1,DataSubset& subset2)
+void HashClustering::merge()
 {
+	//Merge the two subtrees of the minimal distance DataSubset, append a new node and insert it to the first DataSubset
+			//Determine that the id of the first element is always smaller than the id of the second element
+
+	if (min_distance_subsets.first->data_points.front()>min_distance_subsets.second->data_points.front())
+					std::swap(min_distance_subsets.first,min_distance_subsets.second);
+	std::vector<BinaryTreeNode>& tree1=min_distance_subsets.first->tree;
+	std::vector<BinaryTreeNode>& tree2=min_distance_subsets.second->tree;
+	tree1.insert(tree1.end(),tree2.begin(),tree2.end());
+	BinaryTreeNode act_node=BinaryTreeNode(min_distance_subsets.first->data_points.front(),min_distance_subsets.second->data_points.front(),min_distance);
+
+	//Append the new node
+	tree1.insert(tree1.end(),1,act_node);
+	DataSubset& subset1=*min_distance_subsets.first;
+	DataSubset& subset2=*min_distance_subsets.second;
+
 	//Remember old position
 	int x = subset1.mz / grid.getMZThreshold();
 	int y = subset1.rt / grid.getRTThreshold();
@@ -280,6 +295,7 @@ void HashClustering::merge(DataSubset& subset1,DataSubset& subset2)
 			}
 		}
 	}
+	delete(min_distance_subsets.second);
 }
 
 
@@ -302,25 +318,9 @@ void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > 
 	startProgress(0,distance_size,"clustering data");
 	do
 	{
-		//Merge the two subtrees of the minimal distance DataSubset, append a new node and insert it to the first DataSubset
-		//Determine that the id of the first element is always smaller than the id of the second element
-		if (min_distance_subsets.first->data_points.front()>min_distance_subsets.second->data_points.front())
-			std::swap(min_distance_subsets.first,min_distance_subsets.second);
-		std::vector<BinaryTreeNode>& tree1=min_distance_subsets.first->tree;
-		std::vector<BinaryTreeNode>& tree2=min_distance_subsets.second->tree;
-		tree1.insert(tree1.end(),tree2.begin(),tree2.end());
 
-		BinaryTreeNode act_node=BinaryTreeNode(min_distance_subsets.second->data_points.front(),min_distance_subsets.first->data_points.front(),min_distance);
-
-		//Determine that the id of the first element is always smaller than the id of the second element
-		if (act_node.data1>act_node.data2)
-			std::swap(act_node.data1,act_node.data2);
-		tree1.insert(tree1.end(),1,act_node);
-
-		DataSubset& subset1=*min_distance_subsets.first;
 		//Merge the two subsets
-		merge(subset1,*min_distance_subsets.second);
-		delete(min_distance_subsets.second);
+		merge();
 
 		//Find the two new minimal distance DataSubsets
 		updateMinElements();
@@ -330,9 +330,63 @@ void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > 
 	}
 	while(distances.size() > 0);
 	endProgress();
-	//Extract the subtrees and append them to the subtree vector
-//	subtrees.resize(grid.getNumberOfElements());
 
+//
+	//Average silhouette width method is not able to extract single clusters from one subtree. To overcome this issue, every subtree is merged with another
+	//to achieve that at least two clusters will be extracted from every subtree
+	if(grid.size()>1)
+	{
+
+		for (std::map<std::pair<int,int>, std::list<GridElement*> >::iterator it=grid.elements.begin();it!=grid.elements.end();++it)
+		{
+			DataSubset* subset_ptr = dynamic_cast<DataSubset*> (it->second.front());
+			int x = subset_ptr->mz / grid.getMZThreshold();
+			int y = subset_ptr->rt / grid.getRTThreshold();
+			DataSubset* neighbor_ptr;
+			bool found=false;
+			//Surrounding of every DataSubset is examined for the next nearest DataSubset
+			//Size of the surrounding will be increased successively
+			for (int k=2; k<std::max(grid.getGridSizeX(),grid.getGridSizeY()) && !found;++k)
+			{
+				for (int i=x-k;i<=x+k && !found;++i)
+				{
+					if (i<0 || i>grid.getGridSizeX())
+						continue;
+					for (int j=y-k;j<=y+k && !found ;++j)
+					{
+						if (j<0 || j>grid.getGridSizeY() || (std::abs(y-j) <k && std::abs(x-i) < k))
+							continue;
+						ElementMap::iterator act_pos=grid.elements.find(std::make_pair(i,j));
+						if (act_pos!=grid.elements.end())
+						{
+							std::list<GridElement*>& neighbor_elements=act_pos->second;
+							if (neighbor_elements.begin()!=neighbor_elements.end())
+							{
+								found=true;
+								neighbor_ptr=dynamic_cast<DataSubset*> (neighbor_elements.front());
+							}
+						}
+					}
+				}
+			}
+			if (found)
+			{
+				min_distance_subsets=std::make_pair(subset_ptr,neighbor_ptr);
+				min_distance=getDistance(*subset_ptr,*neighbor_ptr);
+				if (min_distance_subsets.first->data_points.front()>min_distance_subsets.second->data_points.front())
+				{
+					std::swap(min_distance_subsets.first,min_distance_subsets.second);
+					grid.elements.erase(it++);
+				}
+				else
+				{
+					++it;
+				}
+				merge();
+			}
+		}
+	}
+	//Extract the subtrees and append them to the subtree vector
 	for (std::map<std::pair<int,int>, std::list<GridElement*> >::iterator it=grid.elements.begin();it!=grid.elements.end();++it)
 	{
 		std::list<GridElement*>& elements=it->second;
@@ -587,6 +641,12 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(std::vector<BinaryTre
 	return average_silhouette_widths;
 }
 
+bool dataPointPtrCompare(DataPoint* d1,DataPoint* d2)
+{
+	return d1->getID() < d2->getID();
+}
+
+
 void HashClustering::cut(int cluster_quantity, std::vector< std::vector<DataPoint*> >& clusters, std::vector<BinaryTreeNode>& tree)
 {
 	std::set<DataPoint*> leafs;
@@ -629,7 +689,7 @@ void HashClustering::cut(int cluster_quantity, std::vector< std::vector<DataPoin
 	//~ sorts by first element contained!!
 	for (std::vector< std::vector<DataPoint*> >::iterator it=clusters.begin();it!=clusters.end();++it)
 	{
-		std::sort(it->begin(),it->end());
+		std::sort(it->begin(),it->end(),dataPointPtrCompare);
 	}
 	std::sort(clusters.begin(),clusters.end());
 	std::reverse(clusters.begin(),clusters.end());
@@ -637,46 +697,6 @@ void HashClustering::cut(int cluster_quantity, std::vector< std::vector<DataPoin
 	std::sort(clusters.begin(),clusters.end());
 }
 
-void HashClustering::cut(int cluster_quantity, std::vector< std::vector<BinaryTreeNode> >& subtrees, std::vector<BinaryTreeNode>& tree)
-{
-	/*if(cluster_quantity==0)
-			{
-				throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "minimal partition contains one cluster, not zero");
-			}
-			if(cluster_quantity>=tree.size()+1)
-			{
-				throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "maximal partition contains singleton clusters, further separation is not possible");
-			}*/
-	subtrees.clear();
-	subtrees.resize(cluster_quantity);
-
-	std::vector< std::vector<DataPoint*> > clusters;
-	cut(cluster_quantity, clusters, tree);
-
-	//~ unused nodes are discarded, (tree.begin()+tree.size()+1-cluster_quantity) is maximal tree.end() since cluster_quantity is always > 1! (tree.end()==tree.begin()+tree.size())
-	std::list<BinaryTreeNode> tc(tree.begin(), (tree.begin()+(tree.size()+1-cluster_quantity)));
-	int cluster=0;
-	for (std::vector< std::vector<DataPoint*> >::iterator vit=clusters.begin();vit!=clusters.end();++vit)
-	{
-		std::sort(vit->begin(),vit->end());
-		std::list<BinaryTreeNode>::iterator it = tc.begin();
-		while( it != tc.end() )
-		{
-			std::vector<DataPoint*>::iterator left = std::find(vit->begin(),vit->end(), it->data1);
-			std::vector<DataPoint*>::iterator right = std::find(vit->begin(),vit->end(), it->data2);
-			if((left != vit->end() || right != vit->end()))
-			{
-				subtrees[cluster].push_back(*it);
-				it = tc.erase(it);
-			}
-			else
-			{
-				++it;
-			}
-		}
-		++cluster;
-	}
-}
 }
 
 

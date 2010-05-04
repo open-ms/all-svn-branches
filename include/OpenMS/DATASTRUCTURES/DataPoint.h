@@ -41,6 +41,11 @@ public:
 	 * @brief intensity at RT and m/z
 	 */
 	DoubleReal intensity;
+
+	/**
+	 * @brief unscaled rt value
+	 */
+	DoubleReal real_rt;
 	/**
 	 * @brief ID number of the cluster the data point belongs to
 	 */
@@ -69,7 +74,7 @@ public:
 	 * @param intensity_ intensity of the data point
 	 * @param feature_id_ id of the data point
 	 */
-	DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_);
+	DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_,DoubleReal real_rt_);
 	/// destructor
 	~DataPoint(){};
 	DataPoint& operator=(const DataPoint &rhs);

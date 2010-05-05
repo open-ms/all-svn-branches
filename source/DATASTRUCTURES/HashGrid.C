@@ -71,6 +71,13 @@ void HashGrid::removeElement(GridElement* element_)
 	removeElement(element_,x,y);
 }
 
+void HashGrid::removeCell(GridCells::iterator loc)
+{
+	number_of_elements-=loc->second.size();
+	elements.erase(loc);
+}
+
+
 void HashGrid::insert(GridElement* element_)
 {
 	int x = element_->mz / mz_threshold;
@@ -130,4 +137,20 @@ Int  HashGrid::getNumberOfElements()
 {
 	return number_of_elements;
 }
+
+GridCells::iterator HashGrid::begin()
+{
+	return elements.begin();
+}
+
+GridCells::iterator HashGrid::end()
+{
+	return elements.end();
+}
+
+GridCells::iterator HashGrid::find(std::pair<Int,Int> loc)
+{
+	return elements.find(loc);
+}
+
 }

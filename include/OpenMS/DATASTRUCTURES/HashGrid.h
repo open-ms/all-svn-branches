@@ -42,6 +42,8 @@
 namespace OpenMS
 {
 
+typedef std::map<std::pair<Int,Int>, std::list<GridElement*> > GridCells;
+
 /**
 		@brief A datastructure, which allows the arrangement of data points with an RT and m/z value in a two-dimensional grid.
 		The size of each grid cell is determined by two values, namely <i>rt_threshold</i> and <i>mz_threshold</i>.
@@ -62,10 +64,10 @@ private:
 	Int grid_size_x;
 	Int grid_size_y;
 	Int number_of_elements;
+	GridCells elements;
+
 
 public:
-
-	std::map<std::pair<Int,Int>, std::list<GridElement*> > elements;
 
 /** @brief detailed constructor
 
@@ -75,6 +77,7 @@ public:
 	HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_);
 //Destructor
 	~HashGrid();
+
 
 /** @brief removes an element from the hash grid. The cell, in which the element may be contained, is specified:
 
@@ -88,6 +91,13 @@ public:
 	@param element_ the element to remove
 */
 	void removeElement(GridElement* element_);
+
+	/** @brief removes the cell at location loc from the hash grid :
+
+		@param loc location of the cell
+	*/
+		void removeCell(GridCells::iterator loc);
+
 /** @brief inserts a new element in the grid:
 
 	@param element_ the element to remove
@@ -122,6 +132,23 @@ public:
 	 * @brief gets the number of elements in the grid
 	 */
 	Int getNumberOfElements();
+
+	/**
+	 * @brief gets an iterator to the beginning of the GridCells map
+	 */
+	GridCells::iterator begin();
+
+	/**
+	 * @brief gets an iterator just past the end of the GridCells map
+	 */
+	GridCells::iterator end();
+
+	/**
+	 * @brief gets an iterator to the cell at location loc:
+	 * @param loc location of the cell
+	 */
+	GridCells::iterator find(std::pair<Int,Int> loc);
+
 };
 }
 

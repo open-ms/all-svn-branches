@@ -235,7 +235,7 @@ private:
 		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
 		std::sort(rt_spacing.begin(),rt_spacing.end());
 		rt_stepwidth=rt_spacing[rt_spacing.size()/2];
-		std::cout << mz_stepwidth << " " << rt_stepwidth << std::endl;
+//		std::cout << mz_stepwidth << " " << rt_stepwidth << std::endl;
 
 		DoubleReal rt=exp.begin()->getRT();
 		// scan over the entire experiment and write to data structure

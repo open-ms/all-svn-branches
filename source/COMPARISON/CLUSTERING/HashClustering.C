@@ -62,10 +62,9 @@ DoubleReal HashClustering::getDistance(DataPoint& point1,DataPoint& point2)
 void HashClustering::init()
 {
 	min_distance=std::numeric_limits<DoubleReal>::max();
-	GridElements& hashing_map=grid.elements;
 
 	//Iterate over all cells in the grid
-	for (GridElements::iterator it=hashing_map.begin();it!=hashing_map.end();++it)
+	for (GridElements::iterator it=grid.begin();it!=grid.end();++it)
 	{
 		std::pair<int,int> act_coords=it->first;
 		std::list<GridElement*>& elements=it->second;
@@ -80,8 +79,8 @@ void HashClustering::init()
 			{
 				if (j<0 || j>grid.getGridSizeY() || (i==x-1 && j==y))
 					continue;
-				GridElements::iterator act_pos=hashing_map.find(std::make_pair(i,j));
-				if (act_pos==hashing_map.end())
+				GridElements::iterator act_pos=grid.find(std::make_pair(i,j));
+				if (act_pos==grid.end())
 					continue;
 				std::list<GridElement*>& neighbor_elements=act_pos->second;
 				for (std::list<GridElement*>::iterator current_element=elements.begin();current_element!=elements.end();++current_element)
@@ -202,7 +201,7 @@ void HashClustering::merge()
 	if (x!=x_new || y!=y_new)
 	{
 		grid.removeElement(&subset1,x,y);
-		grid.elements[std::make_pair(x_new,y_new)].push_back(&subset1);
+		grid.insert(&subset1);
 		for (int i=x_new-1;i<=x_new+1;++i)
 		{
 			if (i<0 || i>grid.getGridSizeX())
@@ -246,8 +245,8 @@ void HashClustering::merge()
 	{
 		x= set_it->first;
 		y= set_it->second;
-		ElementMap::iterator act_pos=grid.elements.find(std::make_pair(x,y));
-		if (act_pos==grid.elements.end())
+		ElementMap::iterator act_pos=grid.find(std::make_pair(x,y));
+		if (act_pos==grid.end())
 			continue;
 		std::list<GridElement*>& neighbor_elements=act_pos->second;
 
@@ -337,12 +336,12 @@ void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > 
 	if(grid.size()>1)
 	{
 
-		for (std::map<std::pair<int,int>, std::list<GridElement*> >::iterator it=grid.elements.begin();it!=grid.elements.end();++it)
+		for (std::map<std::pair<int,int>, std::list<GridElement*> >::iterator it=grid.begin();it!=grid.end();++it)
 		{
 			DataSubset* subset_ptr = dynamic_cast<DataSubset*> (it->second.front());
 			int x = subset_ptr->mz / grid.getMZThreshold();
 			int y = subset_ptr->rt / grid.getRTThreshold();
-			DataSubset* neighbor_ptr;
+			DataSubset* neighbor_ptr=subset_ptr;
 			bool found=false;
 			//Surrounding of every DataSubset is examined for the next nearest DataSubset
 			//Size of the surrounding will be increased successively
@@ -356,8 +355,8 @@ void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > 
 					{
 						if (j<0 || j>grid.getGridSizeY() || (std::abs(y-j) <k && std::abs(x-i) < k))
 							continue;
-						ElementMap::iterator act_pos=grid.elements.find(std::make_pair(i,j));
-						if (act_pos!=grid.elements.end())
+						ElementMap::iterator act_pos=grid.find(std::make_pair(i,j));
+						if (act_pos!=grid.end())
 						{
 							std::list<GridElement*>& neighbor_elements=act_pos->second;
 							if (neighbor_elements.begin()!=neighbor_elements.end())
@@ -376,7 +375,7 @@ void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > 
 				if (min_distance_subsets.first->data_points.front()>min_distance_subsets.second->data_points.front())
 				{
 					std::swap(min_distance_subsets.first,min_distance_subsets.second);
-					grid.elements.erase(it++);
+					grid.removeCell(it++);
 				}
 				else
 				{
@@ -387,7 +386,7 @@ void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > 
 		}
 	}
 	//Extract the subtrees and append them to the subtree vector
-	for (std::map<std::pair<int,int>, std::list<GridElement*> >::iterator it=grid.elements.begin();it!=grid.elements.end();++it)
+	for (std::map<std::pair<int,int>, std::list<GridElement*> >::iterator it=grid.begin();it!=grid.end();++it)
 	{
 		std::list<GridElement*>& elements=it->second;
 		for (std::list<GridElement*>::iterator lit=elements.begin();lit!=elements.end();++lit)

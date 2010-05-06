@@ -36,8 +36,8 @@
 
 
 
-#ifndef HASHGRID_H_
-#define HASHGRID_H_
+#ifndef OPENMS_DATASTRUCTURES_HASHGRID_H
+#define OPENMS_DATASTRUCTURES_HASHGRID_H
 
 namespace OpenMS
 {
@@ -45,7 +45,9 @@ namespace OpenMS
 typedef std::map<std::pair<Int,Int>, std::list<GridElement*> > GridCells;
 
 /**
-		@brief A datastructure, which allows the arrangement of data points with an RT and m/z value in a two-dimensional grid.
+		@brief A data structure, which allows the arrangement of data points with an RT and m/z value in a two-dimensional grid.
+
+
 		The size of each grid cell is determined by two values, namely <i>rt_threshold</i> and <i>mz_threshold</i>.
 		<i>rt_threshold</i> defines the height of a grid cell and <i>mz_threshold</i> the width.
 		The data points are stored in specific grid cells and are accessible via geometric hashing.
@@ -53,7 +55,7 @@ typedef std::map<std::pair<Int,Int>, std::list<GridElement*> > GridCells;
 		@ingroup Datastructures
 	*/
 
-class HashGrid {
+class OPENMS_DLLAPI HashGrid {
 
 private:
 

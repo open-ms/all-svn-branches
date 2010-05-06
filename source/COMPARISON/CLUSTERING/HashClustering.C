@@ -39,6 +39,11 @@ typedef std::map<std::pair<int,int>, std::list<GridElement*> > GridElements;
 
 HashClustering::HashClustering(std::vector<DataPoint>& data, int rt_threshold, int mz_threshold, ClusteringMethod& method_) : grid(HashGrid(rt_threshold,mz_threshold))
 {
+	if(data.size()<2)
+	{
+		throw InsufficientInput(__FILE__, __LINE__, __PRETTY_FUNCTION__, "The data set contains not enough elements");
+	}
+
 	method=&method_;
 
 	for (std::vector<DataPoint>::iterator it=data.begin();it!=data.end();++it)
@@ -313,6 +318,9 @@ void HashClustering::updateMinElements()
 
 void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > >& subtrees )
 {
+
+
+
 	Int distance_size=distances.size();
 	startProgress(0,distance_size,"clustering data");
 	do
@@ -695,6 +703,16 @@ void HashClustering::cut(int cluster_quantity, std::vector< std::vector<DataPoin
 	clusters.resize(cluster_quantity);
 	std::sort(clusters.begin(),clusters.end());
 }
+
+HashClustering::InsufficientInput::InsufficientInput(const char* file, int line, const char* function, const char* message) throw()
+: BaseException(file, line, function, "ClusterFunctor::InsufficentInput", message)
+{
+}
+
+HashClustering::InsufficientInput::~InsufficientInput() throw()
+{
+}
+
 
 }
 

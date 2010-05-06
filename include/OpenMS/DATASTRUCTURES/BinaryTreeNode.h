@@ -26,8 +26,8 @@
 // --------------------------------------------------------------------------
 
 
-#ifndef BINARYTREENODE_H_
-#define BINARYTREENODE_H_
+#ifndef OPENMS_DATASTRUCTURES_BINARYTREENODE_H
+#define OPENMS_DATASTRUCTURES_BINARYTREENODE_H
 
 #include <OpenMS/DATASTRUCTURES/DataPoint.h>
 
@@ -40,7 +40,7 @@ namespace OpenMS
 		@ingroup Datastructures
 	*/
 
-class BinaryTreeNode {
+class OPENMS_DLLAPI BinaryTreeNode {
 public:
 /** @brief the first data point of the node
 

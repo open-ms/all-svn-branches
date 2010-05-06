@@ -26,15 +26,21 @@
 // --------------------------------------------------------------------------
 
 
-#ifndef DATAPOINT_H_
-#define DATAPOINT_H_
+#ifndef OPENMS_DATASTRUCTURES_DATAPOINT_H
+#define OPENMS_DATASTRUCTURES_DATAPOINT_H
 
 #include <OpenMS/DATASTRUCTURES/GridElement.h>
 
 namespace OpenMS
 {
 
-class DataPoint : public GridElement {
+/**
+ * @brief A single data point, which can be stored in a HashGrid.
+ * @see HashGrid
+ * @ingroup Datastructures
+ */
+
+class OPENMS_DLLAPI DataPoint : public GridElement {
 
 public:
 	/**

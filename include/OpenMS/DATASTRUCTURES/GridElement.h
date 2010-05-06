@@ -26,8 +26,8 @@
 // --------------------------------------------------------------------------
 
 
-#ifndef GRIDELEMENT_H_
-#define GRIDELEMENT_H_
+#ifndef OPENMS_DATASTRUCTURES_GRIDELEMENT_H
+#define OPENMS_DATASTRUCTURES_GRIDELEMENT_H
 
 #include <OpenMS/KERNEL/StandardTypes.h>
 
@@ -35,12 +35,14 @@ namespace OpenMS
 {
 
 /**
-		@brief Base class of all elements, which can be stored in a grid cell.
+		@brief Base class of all elements, which can be stored in a HashGrid.
+
+		All GridElements must have an m/z and RT value, as well as an unique identifier.
 		@see HashGrid
 		@ingroup Datastructures
 	*/
 
-class GridElement {
+class OPENMS_DLLAPI GridElement {
 public :
 /**
 		@brief default constructor

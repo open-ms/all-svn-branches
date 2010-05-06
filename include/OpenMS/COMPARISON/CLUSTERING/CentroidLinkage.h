@@ -25,8 +25,8 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-#ifndef CENTROIDLINKAGE_H_
-#define CENTROIDLINKAGE_H_
+#ifndef OPENMS_COMPARISON_CLUSTERING_CENTROIDLINKAGE_H
+#define OPENMS_COMPARISON_CLUSTERING_CENTROIDLINKAGE_H
 
 #include <OpenMS/COMPARISON/CLUSTERING/ClusteringMethod.h>
 
@@ -34,11 +34,13 @@ namespace OpenMS
 {
 
 /**
- * @brief Clustering method with computes the distances of two clusters as the distance of their cluster centroids (also known as Unweighted Pair-Group Method using Centroids, or UPGMC).
+ * @brief Clustering method with computes the distances of two clusters as the distance of their cluster centroids.
+ *
+ * Also known as <i>Unweighted Pair-Group Method using Centroids</i>, or UPGMC.
  * @ingroup SpectraClustering
  */
 
-class CentroidLinkage : public ClusteringMethod {
+class OPENMS_DLLAPI CentroidLinkage : public ClusteringMethod {
 public:
 	/**
 	 * @brief detailed constructor

@@ -5,26 +5,28 @@
  *      Author: steffen
  */
 
-#ifndef HASHCLUSTERING_H_
-#define HASHCLUSTERING_H_
+#ifndef  OPENMS_COMPARISON_CLUSTERING_HASHCLUSTERING_H
+#define  OPENMS_COMPARISON_CLUSTERING_HASHCLUSTERING_H
 
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
 #include <OpenMS/DATASTRUCTURES/DataSubset.h>
 #include <OpenMS/COMPARISON/CLUSTERING/ClusteringMethod.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
+#include <OpenMS/CONCEPT/Exception.h>
 
 namespace OpenMS
 {
-
 /**
-		@brief Hierarchical clustering based on geometric hashing. Only elemens in the surrounding are clustered.
+		@brief Hierarchical clustering based on geometric hashing.
+
+		Only elements in the surrounding are clustered.
 		So it is not more necessary to calculate all distances which leads to a linear runtime instead of quadratic.
 
 		@see ClusterHierarchical
 		@ingroup SpectraClustering
 	*/
 
-class HashClustering : public ProgressLogger{
+class OPENMS_DLLAPI HashClustering : public ProgressLogger{
 private:
 	/**
 	 * @brief current minimal distance
@@ -73,6 +75,20 @@ private:
 	 */
 	DoubleReal getDistance(DataPoint& point1,DataPoint& point2);
 public:
+
+	/**
+		@brief Exception thrown if not enough data (<2) is used
+
+		If the set of data to be clustered contains only one data point,
+		clustering algorithms would fail for obvious reasons.
+	 */
+	class OPENMS_DLLAPI InsufficientInput : public Exception::BaseException
+	{
+	public:
+		InsufficientInput(const char* file, int line, const char* function, const char* message= "not enough data points to cluster anything") throw();
+		virtual ~InsufficientInput() throw();
+	};
+
 	/**
 	 * @brief Detailed constructor
 	 * @param data this data points will be clustered

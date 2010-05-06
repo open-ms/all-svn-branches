@@ -26,8 +26,8 @@
 // --------------------------------------------------------------------------
 
 
-#ifndef CLUSTERINGMETHOD_H_
-#define CLUSTERINGMETHOD_H_
+#ifndef OPENMS_COMPARISON_CLUSTERING_CLUSTERINGMETHOD_H
+#define OPENMS_COMPARISON_CLUSTERING_CLUSTERINGMETHOD_H
 
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/DATASTRUCTURES/DataSubset.h>
@@ -37,12 +37,12 @@ namespace OpenMS
 {
 
 /**
- * @brief Base class for all hierarchical clustering methods for computing distances, which are used in HashClustering.
+ * @brief Base class for all distance computing hierarchical clustering methods, which are used in HashClustering.
  * @see HashClustering
  * @ingroup SpectraClustering
  */
 
-class ClusteringMethod {
+class OPENMS_DLLAPI ClusteringMethod {
 
 public:
 	/**

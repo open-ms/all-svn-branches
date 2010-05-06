@@ -26,8 +26,8 @@
 // --------------------------------------------------------------------------
 
 
-#ifndef DATASUBSET_H_
-#define DATASUBSET_H_
+#ifndef OPENMS_DATASTRUCTURES_DATASUBSET_H
+#define OPENMS_DATASTRUCTURES_DATASUBSET_H
 
 #include <OpenMS/DATASTRUCTURES/DataPoint.h>
 #include <OpenMS/DATASTRUCTURES/BinaryTreeNode.h>
@@ -102,12 +102,15 @@ boost::multi_index::member<DistanceEntry,DoubleReal,&DistanceEntry::distance> > 
 
 /**
  * @brief A DataSubset is a data structure used for hierarchical clustering based on geometric hashing.
+ *
+ *
  * A DataSubset represents a subset of DataPoints from a hash grid, as well as an subtree of the hierarchical clustering tree.
  * @see HashClustering
+ * @ingroup Datastructures
  */
 
 
-class DataSubset : public GridElement
+class OPENMS_DLLAPI DataSubset : public GridElement
 {
 
 public:

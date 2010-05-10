@@ -316,11 +316,8 @@ void HashClustering::updateMinElements()
 	}
 }
 
-void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > >& subtrees )
+void HashClustering::performClustering()
 {
-
-
-
 	Int distance_size=distances.size();
 	startProgress(0,distance_size,"clustering data");
 	do
@@ -337,29 +334,30 @@ void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > 
 	}
 	while(distances.size() > 0);
 	endProgress();
+}
 
-//
-	//Average silhouette width method is not able to extract single clusters from one subtree. To overcome this issue, every subtree is merged with another
-	//to achieve that at least two clusters will be extracted from every subtree
-	if(grid.size()>1)
-	{
+std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
+{
+	std::vector<BinaryTreeNode>& tree=subset.tree;
+	//throw exception if cannot be legal clustering
 
-		for (std::map<std::pair<int,int>, std::list<GridElement*> >::iterator it=grid.begin();it!=grid.end();++it)
+	std::list<DataSubset*> neighbors;
+		bool neighbor_found=false;
+		if(grid.size()>1)
 		{
-			DataSubset* subset_ptr = dynamic_cast<DataSubset*> (it->second.front());
-			int x = subset_ptr->mz / grid.getMZThreshold();
-			int y = subset_ptr->rt / grid.getRTThreshold();
-			DataSubset* neighbor_ptr=subset_ptr;
-			bool found=false;
+			int x = subset.mz / grid.getMZThreshold();
+			int y = subset.rt / grid.getRTThreshold();
+
+
 			//Surrounding of every DataSubset is examined for the next nearest DataSubset
 			//Size of the surrounding will be increased successively
-			for (int k=2; k<std::max(grid.getGridSizeX(),grid.getGridSizeY()) && !found;++k)
+			for (int k=2; k<std::max(grid.getGridSizeX(),grid.getGridSizeY()) && !neighbor_found;++k)
 			{
-				for (int i=x-k;i<=x+k && !found;++i)
+				for (int i=x-k;i<=x+k && !neighbor_found;++i)
 				{
 					if (i<0 || i>grid.getGridSizeX())
 						continue;
-					for (int j=y-k;j<=y+k && !found ;++j)
+					for (int j=y-k;j<=y+k && !neighbor_found ;++j)
 					{
 						if (j<0 || j>grid.getGridSizeY() || (std::abs(y-j) <k && std::abs(x-i) < k))
 							continue;
@@ -369,48 +367,16 @@ void HashClustering::performClustering(std::vector<std::vector<BinaryTreeNode > 
 							std::list<GridElement*>& neighbor_elements=act_pos->second;
 							if (neighbor_elements.begin()!=neighbor_elements.end())
 							{
-								found=true;
-								neighbor_ptr=dynamic_cast<DataSubset*> (neighbor_elements.front());
+								DataSubset* neighbor_ptr=dynamic_cast<DataSubset*> (neighbor_elements.front());
+								neighbors.push_back(neighbor_ptr);
+								if (neighbors.size()==3)
+									neighbor_found=true;
 							}
 						}
 					}
 				}
 			}
-			if (found)
-			{
-				min_distance_subsets=std::make_pair(subset_ptr,neighbor_ptr);
-				min_distance=getDistance(*subset_ptr,*neighbor_ptr);
-				if (min_distance_subsets.first->data_points.front()>min_distance_subsets.second->data_points.front())
-				{
-					std::swap(min_distance_subsets.first,min_distance_subsets.second);
-					grid.removeCell(it++);
-				}
-				else
-				{
-					++it;
-				}
-				merge();
-			}
 		}
-	}
-	//Extract the subtrees and append them to the subtree vector
-	for (std::map<std::pair<int,int>, std::list<GridElement*> >::iterator it=grid.begin();it!=grid.end();++it)
-	{
-		std::list<GridElement*>& elements=it->second;
-		for (std::list<GridElement*>::iterator lit=elements.begin();lit!=elements.end();++lit)
-		{
-			DataSubset* subset_ptr = dynamic_cast<DataSubset*> (*lit);
-			std::vector<BinaryTreeNode> tree;
-			tree.insert(tree.begin(),subset_ptr->tree.begin(),subset_ptr->tree.end());
-			sort(tree.begin(), tree.end());
-			subtrees.push_back(tree);
-		}
-	}
-}
-
-std::vector< Real > HashClustering::averageSilhouetteWidth(std::vector<BinaryTreeNode>& tree)
-{
-	//throw exception if cannot be legal clustering
 
 	std::vector< Real > average_silhouette_widths; //for each step from the average silhouette widths of the clusters
 	std::map<DataPoint*, Real > interdist_i; //for each element i holds the min. average intercluster distance in cluster containing i
@@ -475,8 +441,8 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(std::vector<BinaryTre
 	for (std::vector<BinaryTreeNode>::iterator tree_it=tree.begin();tree_it!=tree.end();++tree_it)
 	{
 
-		if (*tree_it==tree.back()) //last steps silhouettes would be all 0 respectively not defined
-			break;
+//		if (*tree_it==tree.back()) //last steps silhouettes would be all 0 respectively not defined
+//			break;
 		for (std::set<DataPoint*>::iterator it = leafs.begin(); it != leafs.end(); ++it)
 		{
 			std::vector<DataPoint*>::iterator in_left = std::find(clusters[tree_it->data1].begin(),clusters[tree_it->data1].end(),*it);
@@ -498,7 +464,7 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(std::vector<BinaryTre
 					{
 						interdist_merged += getDistance(**it,*clusters[tree_it->data2][j]);
 					}
-					interdist_merged /= (Real)(clusters[tree_it->data1].size()+clusters[tree_it->data2].size());
+					interdist_merged /= (Real)(clusters[tree_it->data1].size()+clusters[tree_it->data2].size()/*+neighbor_points.size()*/);
 
 					if (interdist_merged < interdist_i[*it])
 					{
@@ -524,7 +490,8 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(std::vector<BinaryTre
 						interdist_merged += getDistance(**it,*clusters[k][j]);
 					}
 					interdist_merged += (clusters[cluster_with_interdist[*it]].size()*interdist_i[*it]);
-					interdist_merged /= (Real)(clusters[k].size()+clusters[cluster_with_interdist[*it]].size());
+
+					interdist_merged /= (Real)(clusters[k].size()+clusters[cluster_with_interdist[*it]].size()/*+neighbor_points.size()*/);
 					//if new inderdist is smaller that old min. nothing else has to be done
 					if (interdist_merged <= interdist_i[*it])
 					{
@@ -546,7 +513,7 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(std::vector<BinaryTre
 								{
 									min_interdist_i += getDistance(*uit->second[v],**it);
 								}
-								min_interdist_i /= (Real)uit->second.size();
+								min_interdist_i /= (Real)(uit->second.size());
 								if (min_interdist_i < interdist_i[*it])
 								{
 									interdist_i[*it]=min_interdist_i;
@@ -600,7 +567,7 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(std::vector<BinaryTre
 							{
 								av_interdist_i += getDistance(*uit->second[v],**it);
 							}
-							av_interdist_i /= (Real)uit->second.size();
+							av_interdist_i /= (Real)(uit->second.size());
 							if (av_interdist_i < interdist_i[*it])
 							{
 								interdist_i[*it]=av_interdist_i;
@@ -626,25 +593,46 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(std::vector<BinaryTre
 
 		//calculate average silhouette width for clusters and then overall average silhouette width for cluster step
 		Real average_overall_silhouette=0; // from cluster step
-
 		for (std::map<DataPoint*, std::vector < DataPoint* > >::iterator git=clusters.begin();git!=clusters.end();++git)
 		{
+
 			if(git->second.size()>1)
 			{
 				//collect silhouettes clusterwise so that average cluster silhouettes will be easily accessible
 				for (unsigned int h = 0; h < git->second.size(); ++h)
 				{
-					if(interdist_i[git->second[h]]!=0)
+					Real av_interdist_i=0;
+					Int cluster_size=0;
+					if (interdist_i[git->second[h]] < std::numeric_limits<Real>::max())
 					{
-						average_overall_silhouette += (interdist_i[git->second[h]] - intradist_i[git->second[h]]) / std::max(interdist_i[git->second[h]],intradist_i[git->second[h]]);
-
+						av_interdist_i=interdist_i[git->second[h]];
+						cluster_size=git->second.size();
 					}
+					av_interdist_i*=git->second.size();
+					Size overall_neighbor_size=0;
+					for (std::list<DataSubset*>::iterator neighbor_it = neighbors.begin();neighbor_it!=neighbors.end();++neighbor_it)
+					{
+						std::list<DataPoint*>& neighbor_points=(*neighbor_it)->data_points;
+						Size neighbor_size=std::max((Int)neighbor_points.size(),30);
+						overall_neighbor_size+=neighbor_size;
+						Size neighbor_i=0;
+						for (std::list<DataPoint*>::iterator neighbor_it=neighbor_points.begin(); neighbor_it!=neighbor_points.end() && neighbor_i<30; ++neighbor_it)
+						{
+							av_interdist_i += getDistance(*(git->second[h]),**neighbor_it);
+							++neighbor_i;
+						}
+					}
+					av_interdist_i/=(Real)(cluster_size+overall_neighbor_size);
+					if (av_interdist_i < interdist_i[git->second[h]])
+					{
+						interdist_i[git->second[h]]=av_interdist_i;
+					}
+					average_overall_silhouette += (interdist_i[git->second[h]] - intradist_i[git->second[h]]) / std::max(interdist_i[git->second[h]],intradist_i[git->second[h]]);
 				}
 			}
 		}
 		average_silhouette_widths.push_back(average_overall_silhouette/(Real)(tree.size()+1));
 	}
-	average_silhouette_widths.push_back(0.0);
 	return average_silhouette_widths;
 }
 
@@ -702,6 +690,93 @@ void HashClustering::cut(int cluster_quantity, std::vector< std::vector<DataPoin
 	std::reverse(clusters.begin(),clusters.end());
 	clusters.resize(cluster_quantity);
 	std::sort(clusters.begin(),clusters.end());
+}
+
+void HashClustering::getSubtrees(std::vector<std::vector<BinaryTreeNode> >& subtrees)
+{
+	//Extract the subtrees and append them to the subtree vector
+	for (ElementMap::iterator it=grid.begin();it!=grid.end();++it)
+	{
+		std::list<GridElement*>& elements=it->second;
+		for (std::list<GridElement*>::iterator lit=elements.begin();lit!=elements.end();++lit)
+		{
+			DataSubset* subset_ptr = dynamic_cast<DataSubset*> (*lit);
+			if (subset_ptr->size() < 2)
+				continue;
+			std::vector<BinaryTreeNode> tree;
+			tree.insert(tree.begin(),subset_ptr->tree.begin(),subset_ptr->tree.end());
+			sort(tree.begin(), tree.end());
+			subtrees.push_back(tree);
+		}
+	}
+}
+
+
+
+typedef std::vector<DataPoint*> Cluster;
+
+void HashClustering::createClusters(std::vector<std::vector<std::vector<DataPoint*> > >& clusters)
+{
+	Size cluster_id=0;
+
+	//run silhoutte optimization for all subtrees and find the appropriate best_n
+	for (ElementMap::iterator it=grid.begin();it!=grid.end();++it)
+	{
+		std::list<GridElement*>& elements=it->second;
+		for (std::list<GridElement*>::iterator lit=elements.begin();lit!=elements.end();++lit)
+		{
+			DataSubset* subset_ptr = dynamic_cast<DataSubset*> (*lit);
+			if (subset_ptr->size()<2)
+			{
+				if (subset_ptr->data_points.begin()!=subset_ptr->data_points.end())
+				{
+					std::vector<Cluster> act_clusters;
+					std::vector<DataPoint*> act_points;
+					DataPoint* act_element=subset_ptr->data_points.front();
+					act_element->cluster_id=cluster_id++;
+					act_element->cluster_size=1;
+					act_points.push_back(act_element);
+					act_clusters.push_back(act_points);
+					clusters.push_back(act_clusters);
+				}
+				continue;
+			}
+			sort(subset_ptr->tree.begin(), subset_ptr->tree.end());
+			std::vector< Real > asw = averageSilhouetteWidth(*subset_ptr);
+			silhouettes.push_back(asw);
+			//Look only in the front area of the silhoutte values to avoid getting the wrong number
+			std::vector< Real >::iterator max_el(max_element((asw.end()-((int)subset_ptr->size()/10) ),asw.end()));
+			Size best_n = (Size)subset_ptr->tree.size();
+			for (Size i = 0; i < asw.size(); ++i)
+			{
+				if(std::fabs(asw[i]-(*max_el))<=0)
+				{
+					best_n = Size(subset_ptr->tree.size() - i);
+					break;
+				}
+			}
+			std::vector<Cluster> act_clusters;
+			//Get clusters from the subtree
+			cut(best_n,act_clusters,subset_ptr->tree);
+			//Run through all elements in each cluster and update cluster number
+			for (std::vector<Cluster>::iterator cluster_it=act_clusters.begin();cluster_it!=act_clusters.end();++cluster_it)
+			{
+				for (Cluster::iterator element_it=cluster_it->begin();element_it!=cluster_it->end();++element_it)
+				{
+					(*element_it)->cluster_id=cluster_id;
+					(*element_it)->cluster_size=cluster_it->size();
+				}
+				++cluster_id;
+			}
+			clusters.push_back(act_clusters);
+		}
+	}
+
+}
+
+std::vector<std::vector<Real> > HashClustering::getSilhouetteValues()
+{
+	return silhouettes;
 }
 
 HashClustering::InsufficientInput::InsufficientInput(const char* file, int line, const char* function, const char* message) throw()

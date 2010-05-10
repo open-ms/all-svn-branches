@@ -66,6 +66,7 @@ public:
 		*/
 	BinaryTreeNode(DataPoint* data1_,DataPoint* data2_,DoubleReal distance_);
 	bool operator==(const BinaryTreeNode &cp) const;
+	bool operator!=(const BinaryTreeNode &cp) const;
 	bool operator<(const BinaryTreeNode &cp) const;
 
 };

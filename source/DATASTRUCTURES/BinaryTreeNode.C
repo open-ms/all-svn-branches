@@ -45,6 +45,11 @@ bool BinaryTreeNode::operator==(const BinaryTreeNode &cp) const
 	return true;
 }
 
+bool BinaryTreeNode::operator!=(const BinaryTreeNode &cp) const
+{
+	return !(*this==cp);
+}
+
 bool BinaryTreeNode::operator<(const BinaryTreeNode &cp) const
 {
 	if (std::abs(this->distance - cp.distance) <= 0.00000001)

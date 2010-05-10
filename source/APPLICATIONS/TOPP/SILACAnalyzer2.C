@@ -133,10 +133,10 @@ typedef std::vector<DataPoint*> Cluster;
 /// @cond TOPPCLASSES
 
 bool clusterCmp( DataPoint a, DataPoint b ) {
-		if ( a.cluster_size == b.cluster_size && a.cluster_id > b.cluster_id) return true;
-		if ( a.cluster_size > b.cluster_size ) return true;
-		return false;
-	}
+	if ( a.cluster_size == b.cluster_size && a.cluster_id > b.cluster_id) return true;
+	if ( a.cluster_size > b.cluster_size ) return true;
+	return false;
+}
 
 class TOPPSILACAnalyzer2
 : public TOPPBase
@@ -163,6 +163,7 @@ private:
 	String out_visual;
 	ConsensusMap all_pairs;
 	FeatureMap<> all_cluster_points;
+	FeatureMap<> subtree_points;
 
 
 	void handleParameters()
@@ -225,9 +226,8 @@ private:
 		for (Size j=1; j<exp[i].size(); ++j)
 		{
 			mz_spacing.push_back(exp[i][j].getMZ()-exp[i][j-1].getMZ());
-//			rt_spacing.push_back(exp[i][j].getRT()-exp[i][j-1].getRT());
 		}
-		for (i=1; i < 10 && i<exp.size(); ++i)
+		for (i=1; i<exp.size(); ++i)
 		{
 			rt_spacing.push_back(exp[i].getRT()-exp[i-1].getRT());
 		}
@@ -235,7 +235,8 @@ private:
 		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
 		std::sort(rt_spacing.begin(),rt_spacing.end());
 		rt_stepwidth=rt_spacing[rt_spacing.size()/2];
-//		std::cout << mz_stepwidth << " " << rt_stepwidth << std::endl;
+
+		rt_scaling=(mz_stepwidth/rt_stepwidth)*10;
 
 		DoubleReal rt=exp.begin()->getRT();
 		// scan over the entire experiment and write to data structure
@@ -443,92 +444,101 @@ public:
 			HashClustering c(data,rt_threshold,mz_threshold,method);
 			c.setLogType(log_type_);
 			std::vector<Tree> subtrees;
-			c.performClustering(subtrees);
-			std::vector<std::vector<Real> > silhouettes;
-			Size cluster_id=0;
+			c.performClustering();
+			c.getSubtrees(subtrees);
+			std::vector<std::vector<Cluster> > clusters;
+			c.createClusters(clusters);
+			std::vector<std::vector<Real> > silhouettes =c.getSilhouetteValues();
 
-			//run silhoutte optimization for all subtrees and find the appropriate best_n
-			for ( std::vector<Tree>::iterator it=subtrees.begin();it!=subtrees.end();++it)
+			if (getFlag_("silac_debug"))
 			{
-				Tree tree=*it;
-				std::vector< Real > asw = c.averageSilhouetteWidth(tree);
-				silhouettes.push_back(asw);
-				//Look only in the front area of the silhoutte values to avoid getting the wrong number
-				std::vector< Real >::iterator max_el(max_element((asw.end()-((int)it->size()/10) ),asw.end()));
-				Size best_n = (Size)tree.size();
-				//Silhouette method can not create a single cluster from one subtree. If silhouette values in the front area are very low, take the subtree as one cluster
-//				if (*max_el< 0.7)
-//					best_n=1;
-//				else
+				std::vector<String> colors;
+				// 16 HTML colors
+				colors.push_back("#00FFFF");
+				colors.push_back("#000000");
+				colors.push_back("#0000FF");
+				colors.push_back("#FF00FF");
+				colors.push_back("#008000");
+				colors.push_back("#808080");
+				colors.push_back("#00FF00");
+				colors.push_back("#800000");
+				colors.push_back("#000080");
+				colors.push_back("#808000");
+				colors.push_back("#800080");
+				colors.push_back("#FF0000");
+				colors.push_back("#C0C0C0");
+				colors.push_back("#008080");
+				colors.push_back("#FFFF00");
+				Size subtree_number=1;
+				for (std::vector<std::vector<BinaryTreeNode> >::iterator subtree_it=subtrees.begin();subtree_it!=subtrees.end();++subtree_it)
 				{
-					for (Size i = 0; i < asw.size(); ++i)
+					std::set<DataPoint*> leafs;
+					for (std::vector<BinaryTreeNode>::iterator tree_it=subtree_it->begin(); tree_it!= subtree_it->end(); ++tree_it)
 					{
-						if(std::fabs(asw[i]-(*max_el))<=0)
-						{
-							best_n = Size(it->size() - i);
-							break;
-						}
+						leafs.insert(tree_it->data1);
+						leafs.insert(tree_it->data2);
 					}
+					for (std::set<DataPoint*>::iterator leafs_it=leafs.begin();leafs_it!=leafs.end();++leafs_it)
+					{
+						//visualize the light variant
+						Feature tree_point;
+						tree_point.setRT((*leafs_it)->real_rt);
+						tree_point.setMZ((*leafs_it)->mz);
+						tree_point.setIntensity((*leafs_it)->intensity);
+						tree_point.setCharge(charge);
+						tree_point.setMetaValue("subtree",subtree_number);
+						tree_point.setMetaValue("color",colors[subtree_number%colors.size()]);
+						subtree_points.push_back(tree_point);
+					}
+					++subtree_number;
 				}
 
-				best_n = Size(cluster_number_scaling * best_n); // slightly increase cluster number
-				std::vector<Cluster> act_clusters;
-				//Get clusters from the subtree
-				c.cut(best_n,act_clusters,tree);
-				//Run through all elements in each cluster and update cluster number
-				for (std::vector<Cluster>::iterator cluster_it=act_clusters.begin();cluster_it!=act_clusters.end();++cluster_it)
-				{
-					Int rt=0;
-					Int mz=0;
-					Int intensity=0;
-					for (Cluster::iterator element_it=cluster_it->begin();element_it!=cluster_it->end();++element_it)
-					{
-						//Calculate center of consensus feature for output
-						if (out!="")
-						{
-							mz+=(*element_it)->mz;
-							rt+=(*element_it)->rt;
-							intensity+=(*element_it)->intensity;
-						}
-						(*element_it)->cluster_id=cluster_id;
-						(*element_it)->cluster_size=cluster_it->size();
-					}
-					//Prepare output
-					if (out!="")
-					{
-						mz/=cluster_it->size();
-						rt/=cluster_it->size();
-						intensity/=cluster_it->size();
-						ConsensusFeature pair_light_heavy;
-						pair_light_heavy.setRT(rt);
-						pair_light_heavy.setMZ(mz);
-						pair_light_heavy.setIntensity(intensity);
-						pair_light_heavy.setCharge(charge);
-						pair_light_heavy.setQuality(*max_el);
-						FeatureHandle handle;
-						handle.setRT(rt);
-						handle.setMZ(mz);
-						handle.setIntensity(intensity);
-						handle.setCharge(charge);
-						handle.setMapIndex(0);
-						handle.setUniqueId(cluster_id);
-						pair_light_heavy.insert(handle);
-						handle.setRT(rt);
-						DoubleReal envelope_distance_light_heavy = mass_separation_light_heavy / (DoubleReal)charge;
-						handle.setMZ(mz+envelope_distance_light_heavy);
-						handle.setIntensity(intensity);
-						handle.setCharge(charge);
-						handle.setMapIndex(2);
-						handle.setUniqueId(cluster_id);
-						pair_light_heavy.insert(handle);
-						all_pairs.push_back(pair_light_heavy);
-					}
-					++cluster_id;
-				}
-
+				// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
+				subtree_points.sortByPosition();
 			}
+
 			//Sort data points: High cluster numbers first
 			std::sort(data.begin(),data.end(),clusterCmp);
+
+			//Calculate center of consensus feature for output
+//			if (out!="")
+//			{
+//				mz+=(*element_it)->mz;
+//				rt+=(*element_it)->rt;
+//				intensity+=(*element_it)->intensity;
+//			}
+
+			//Prepare output
+//			if (out!="")
+//			{
+//				mz/=cluster_it->size();
+//				rt/=cluster_it->size();
+//				intensity/=cluster_it->size();
+//				ConsensusFeature pair_light_heavy;
+//				pair_light_heavy.setRT(rt);
+//				pair_light_heavy.setMZ(mz);
+//				pair_light_heavy.setIntensity(intensity);
+//				pair_light_heavy.setCharge(charge);
+//				pair_light_heavy.setQuality(*max_el);
+//				FeatureHandle handle;
+//				handle.setRT(rt);
+//				handle.setMZ(mz);
+//				handle.setIntensity(intensity);
+//				handle.setCharge(charge);
+//				handle.setMapIndex(0);
+//				handle.setUniqueId(cluster_id);
+//				pair_light_heavy.insert(handle);
+//				handle.setRT(rt);
+//				DoubleReal envelope_distance_light_heavy = mass_separation_light_heavy / (DoubleReal)charge;
+//				handle.setMZ(mz+envelope_distance_light_heavy);
+//				handle.setIntensity(intensity);
+//				handle.setCharge(charge);
+//				handle.setMapIndex(2);
+//				handle.setUniqueId(cluster_id);
+//				pair_light_heavy.insert(handle);
+//				all_pairs.push_back(pair_light_heavy);
+//			}
+
 
 			//--------------------------------------------------------------
 			//create features (for visualization)
@@ -563,6 +573,8 @@ public:
 					cluster_point.setCharge(charge);
 					cluster_point.setMetaValue("cluster_id",it->cluster_id);
 					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
+					if (getFlag_("silac_debug"))
+						cluster_point.setMetaValue("feature_id",it->feature_id);
 					all_cluster_points.push_back(cluster_point);
 				}
 				// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
@@ -637,7 +649,7 @@ public:
 				stream_r << "close(con)" << std::endl;
 				stream_r << "dev.off()" << std::endl;
 				stream_r.close();
-//
+
 //				// write ratios of all cluster to *.dat
 //				std::ofstream stream_ratios(debug_dat.c_str());
 //				if (type=="double") {
@@ -757,6 +769,14 @@ public:
 
 			FeatureXMLFile f_file;
 			f_file.store(out_visual,all_cluster_points);
+		}
+		if (getFlag_("silac_debug"))
+		{
+			// assign unique ids
+			subtree_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+			FeatureXMLFile t_file;
+			t_file.store(debug_trunk+ "_subtrees.featureXML",subtree_points);
 		}
 		return EXECUTION_OK;
 	}

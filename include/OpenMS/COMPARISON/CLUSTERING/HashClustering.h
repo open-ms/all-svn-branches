@@ -1,9 +1,30 @@
-/*
- * HashClustering.h
- *
- *  Created on: 26.04.2010
- *      Author: steffen
- */
+// -*- Mode: C++; tab-width: 2; -*-
+// vi: set ts=2:
+//
+// --------------------------------------------------------------------------
+//                   OpenMS Mass Spectrometry Framework
+// --------------------------------------------------------------------------
+//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//
+//  This library is free software; you can redistribute it and/or
+//  modify it under the terms of the GNU Lesser General Public
+//  License as published by the Free Software Foundation; either
+//  version 2.1 of the License, or (at your option) any later version.
+//
+//  This library is distributed in the hope that it will be useful,
+//  but WITHOUT ANY WARRANTY; without even the implied warranty of
+//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+//  Lesser General Public License for more details.
+//
+//  You should have received a copy of the GNU Lesser General Public
+//  License along with this library; if not, write to the Free Software
+//  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//
+// --------------------------------------------------------------------------
+// $Maintainer: Steffen Sass $
+// $Authors: $
+// --------------------------------------------------------------------------
+
 
 #ifndef  OPENMS_COMPARISON_CLUSTERING_HASHCLUSTERING_H
 #define  OPENMS_COMPARISON_CLUSTERING_HASHCLUSTERING_H
@@ -48,6 +69,12 @@ private:
 	 * @brief the grid for geometric hashing
 	 */
 	HashGrid grid;
+
+	/**
+	 * @brief average silhoutte widths for each subtree
+	 */
+	std::vector<std::vector<Real> > silhouettes;
+
 	/**
 	 * @brief Calculates initial distances
 	 */
@@ -74,6 +101,24 @@ private:
 	 * @param point2 second DataPoint
 	 */
 	DoubleReal getDistance(DataPoint& point1,DataPoint& point2);
+
+	/**
+	 * @brief Calculates the silhouette values for any possible cluster number
+	 * @param tree hierarchical clustering tree
+	 */
+	std::vector< Real > averageSilhouetteWidth(DataSubset& subset);
+	/**
+			@brief Method to calculate a partition resulting from a certain step in clustering given by the number of clusters
+
+			@param cluster_quantity Size giving the number of clusters
+			@param tree vector of BinaryTreeNodes representing the clustering
+			@param clusters vector of vectors holding the clusters
+			@see BinaryTreeNode
+
+			after call of this method the argument clusters is filled corresponding to the given @p cluster_quantity with the indices of the elements clustered
+	 */
+	void cut(int cluster_quantity, std::vector< std::vector<DataPoint*> >& clusters, std::vector<BinaryTreeNode>& tree);
+
 public:
 
 	/**
@@ -97,28 +142,28 @@ public:
 	 * @param method_ method to use for calculating distances
 	 */
 	HashClustering(std::vector<DataPoint>& data, int rt_threshold, int mz_threshold, ClusteringMethod& method_);
-	/**
-	 * @brief Calculates the silhouette values for any possible cluster number
-	 * @param tree hierarchical clustering tree
-	 */
-	std::vector< Real > averageSilhouetteWidth(std::vector<BinaryTreeNode>& tree);
-	/**
-			@brief Method to calculate a partition resulting from a certain step in clustering given by the number of clusters
-
-			@param cluster_quantity Size giving the number of clusters
-			@param tree vector of BinaryTreeNodes representing the clustering
-			@param clusters vector of vectors holding the clusters
-			@see BinaryTreeNode
-
-			after call of this method the argument clusters is filled corresponding to the given @p cluster_quantity with the indices of the elements clustered
-	 */
-	void cut(int cluster_quantity, std::vector< std::vector<DataPoint*> >& clusters, std::vector<BinaryTreeNode>& tree);
 
 	/**
 	 * @brief Starts the clustering and returns a vector of subtrees when finished
+	 */
+	void performClustering();
+
+	/**
+	 * @brief Gets the hierarchical clustering subtrees after clustering has been performed. If the data has not been clustered yet, the method returns an empty vector
 	 * @param subtrees vector of subtrees, which will be filled after the clustering process
 	 */
-	void performClustering(std::vector<std::vector<BinaryTreeNode > >& subtrees );
+	void getSubtrees(std::vector<std::vector<BinaryTreeNode> >& subtrees);
+
+	/**
+		 * @brief Extracts the clusters out of the subtrees using average silhoutte widths. If the data has not been clustered yet, the method returns an empty vector
+		 * @param clusters vector of clusters, which will be filled after the extraction of the clusters
+		 */
+		void createClusters(std::vector<std::vector<std::vector<DataPoint*> > >& clusters);
+
+		/**
+		 * @brief gets the average silhoutte widths for each subtree
+		 */
+		std::vector<std::vector<Real> > getSilhouetteValues();
 };
 }
 

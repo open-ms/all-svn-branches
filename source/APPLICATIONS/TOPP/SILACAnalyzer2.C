@@ -446,7 +446,7 @@ public:
 			std::vector<Tree> subtrees;
 			c.performClustering();
 			c.getSubtrees(subtrees);
-			std::vector<std::vector<Cluster> > clusters;
+			std::vector<Cluster> clusters;
 			c.createClusters(clusters);
 			std::vector<std::vector<Real> > silhouettes =c.getSilhouetteValues();
 

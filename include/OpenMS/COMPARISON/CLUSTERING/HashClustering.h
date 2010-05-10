@@ -158,7 +158,7 @@ public:
 		 * @brief Extracts the clusters out of the subtrees using average silhoutte widths. If the data has not been clustered yet, the method returns an empty vector
 		 * @param clusters vector of clusters, which will be filled after the extraction of the clusters
 		 */
-		void createClusters(std::vector<std::vector<std::vector<DataPoint*> > >& clusters);
+		void createClusters(std::vector<std::vector<DataPoint*> >& clusters);
 
 		/**
 		 * @brief gets the average silhoutte widths for each subtree

@@ -715,7 +715,7 @@ void HashClustering::getSubtrees(std::vector<std::vector<BinaryTreeNode> >& subt
 
 typedef std::vector<DataPoint*> Cluster;
 
-void HashClustering::createClusters(std::vector<std::vector<std::vector<DataPoint*> > >& clusters)
+void HashClustering::createClusters(std::vector<Cluster>& clusters)
 {
 	Size cluster_id=0;
 
@@ -730,14 +730,12 @@ void HashClustering::createClusters(std::vector<std::vector<std::vector<DataPoin
 			{
 				if (subset_ptr->data_points.begin()!=subset_ptr->data_points.end())
 				{
-					std::vector<Cluster> act_clusters;
-					std::vector<DataPoint*> act_points;
+					Cluster act_cluster;
 					DataPoint* act_element=subset_ptr->data_points.front();
 					act_element->cluster_id=cluster_id++;
 					act_element->cluster_size=1;
-					act_points.push_back(act_element);
-					act_clusters.push_back(act_points);
-					clusters.push_back(act_clusters);
+					act_cluster.push_back(act_element);
+					clusters.push_back(act_cluster);
 				}
 				continue;
 			}
@@ -767,8 +765,9 @@ void HashClustering::createClusters(std::vector<std::vector<std::vector<DataPoin
 					(*element_it)->cluster_size=cluster_it->size();
 				}
 				++cluster_id;
+				clusters.push_back(*cluster_it);
 			}
-			clusters.push_back(act_clusters);
+
 		}
 	}
 

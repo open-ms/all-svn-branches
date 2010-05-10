@@ -77,10 +77,14 @@ START_SECTION((void insert(GridElement *element_)))
 	grid.insert(el3);
 	grid.insert(el4);
 	grid.insert(el5);
-	TEST_EQUAL(grid.elements[make_pair(5,6)].size(),2)
-	TEST_EQUAL(grid.elements[make_pair(9,1)].size(),1)
-	TEST_EQUAL(grid.elements[make_pair(3,5)].size(),1)
-	TEST_EQUAL(grid.elements[make_pair(19,0)].size(),1)
+	GridCells::iterator pos=grid.find(make_pair(5,6));
+	TEST_EQUAL(pos->second.size(),2)
+	 pos=grid.find(make_pair(9,1));
+	TEST_EQUAL(pos->second.size(),1)
+	 pos=grid.find(make_pair(3,5));
+	TEST_EQUAL(pos->second.size(),1)
+	 pos=grid.find(make_pair(19,0));
+	TEST_EQUAL(pos->second.size(),1)
 }
 END_SECTION
 
@@ -90,8 +94,10 @@ START_SECTION((void removeElement(GridElement *element_, Int x, Int y)))
 	grid.removeElement(el1,5,6);
 	//This should not work
 	grid.removeElement(el2,0,0);
-	TEST_EQUAL(grid.elements[make_pair(5,6)].size(),1)
-	TEST_EQUAL(grid.elements[make_pair(9,1)].size(),1)
+	GridCells::iterator pos=grid.find(make_pair(5,6));
+	TEST_EQUAL(pos->second.size(),1)
+	pos=grid.find(make_pair(9,1));
+	TEST_EQUAL(pos->second.size(),1)
 }
 END_SECTION
 
@@ -99,15 +105,17 @@ START_SECTION((void removeElement(GridElement *element_)))
 {
   grid.removeElement(el2);
   grid.removeElement(el3);
-  TEST_EQUAL(grid.elements[make_pair(9,1)].size(),0)
-  TEST_EQUAL(grid.elements[make_pair(3,5)].size(),0)
+  GridCells::iterator pos=grid.find(make_pair(9,1));
+  TEST_EQUAL(pos==grid.end(),true);
+  pos=grid.find(make_pair(3,5));
+  TEST_EQUAL(pos==grid.end(),true)
 }
 END_SECTION
 
 
 START_SECTION((int size()))
 {
-	TEST_EQUAL(grid.size(),4)
+	TEST_EQUAL(grid.size(),2)
 }
 END_SECTION
 

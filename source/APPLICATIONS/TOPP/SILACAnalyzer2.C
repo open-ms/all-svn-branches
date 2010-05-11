@@ -497,48 +497,51 @@ public:
 				subtree_points.sortByPosition();
 			}
 
-			//Sort data points: High cluster numbers first
-			std::sort(data.begin(),data.end(),clusterCmp);
-
-			//Calculate center of consensus feature for output
-//			if (out!="")
-//			{
-//				mz+=(*element_it)->mz;
-//				rt+=(*element_it)->rt;
-//				intensity+=(*element_it)->intensity;
-//			}
-
-			//Prepare output
-//			if (out!="")
-//			{
-//				mz/=cluster_it->size();
-//				rt/=cluster_it->size();
-//				intensity/=cluster_it->size();
-//				ConsensusFeature pair_light_heavy;
-//				pair_light_heavy.setRT(rt);
-//				pair_light_heavy.setMZ(mz);
-//				pair_light_heavy.setIntensity(intensity);
-//				pair_light_heavy.setCharge(charge);
-//				pair_light_heavy.setQuality(*max_el);
-//				FeatureHandle handle;
-//				handle.setRT(rt);
-//				handle.setMZ(mz);
-//				handle.setIntensity(intensity);
-//				handle.setCharge(charge);
-//				handle.setMapIndex(0);
-//				handle.setUniqueId(cluster_id);
-//				pair_light_heavy.insert(handle);
-//				handle.setRT(rt);
-//				DoubleReal envelope_distance_light_heavy = mass_separation_light_heavy / (DoubleReal)charge;
-//				handle.setMZ(mz+envelope_distance_light_heavy);
-//				handle.setIntensity(intensity);
-//				handle.setCharge(charge);
-//				handle.setMapIndex(2);
-//				handle.setUniqueId(cluster_id);
-//				pair_light_heavy.insert(handle);
-//				all_pairs.push_back(pair_light_heavy);
-//			}
-
+			if (out!="")
+			{
+				Size cluster_id=0;
+				for(std::vector<Cluster>::iterator cluster_it=clusters.begin();cluster_it!=clusters.end();++cluster_it)
+				{
+					DoubleReal mz=0;
+					DoubleReal rt=0;
+					DoubleReal intensity=0;
+					//Calculate center of consensus feature for output
+					for (Cluster::iterator el_it=cluster_it->begin();el_it!=cluster_it->end();++el_it)
+					{
+						mz+=(*el_it)->mz;
+						rt+=(*el_it)->rt;
+						intensity+=(*el_it)->intensity;
+					}
+					//Prepare output
+					mz/=cluster_it->size();
+					rt/=cluster_it->size();
+					intensity/=cluster_it->size();
+					ConsensusFeature pair_light_heavy;
+					pair_light_heavy.setRT(rt);
+					pair_light_heavy.setMZ(mz);
+					pair_light_heavy.setIntensity(intensity);
+					pair_light_heavy.setCharge(charge);
+//					pair_light_heavy.setQuality(*max_el);
+					FeatureHandle handle;
+					handle.setRT(rt);
+					handle.setMZ(mz);
+					handle.setIntensity(intensity);
+					handle.setCharge(charge);
+					handle.setMapIndex(0);
+					handle.setUniqueId(cluster_id);
+					pair_light_heavy.insert(handle);
+					handle.setRT(rt);
+					DoubleReal envelope_distance_light_heavy = mass_separation_light_heavy / (DoubleReal)charge;
+					handle.setMZ(mz+envelope_distance_light_heavy);
+					handle.setIntensity(intensity);
+					handle.setCharge(charge);
+					handle.setMapIndex(2);
+					handle.setUniqueId(cluster_id);
+					pair_light_heavy.insert(handle);
+					all_pairs.push_back(pair_light_heavy);
+					++cluster_id;
+				}
+			}
 
 			//--------------------------------------------------------------
 			//create features (for visualization)
@@ -582,7 +585,8 @@ public:
 			}
 
 
-
+			//Sort data points: High cluster numbers first
+						std::sort(data.begin(),data.end(),clusterCmp);
 
 
 //			//-------------------------------------------------------------

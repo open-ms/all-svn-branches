@@ -200,7 +200,6 @@ void HashClustering::merge()
 				distances.erase(dist_it->second);
 		}
 	}
-
 	//Make a set of all coordinates of the five lower left cells (including the current cell itself) of subset1 centroid, subset2 centroid and new calculated centroid
 	std::set<std::pair<int,int> > traverse_set;
 	if (x!=x_new || y!=y_new)
@@ -243,8 +242,6 @@ void HashClustering::merge()
 			traverse_set.insert(std::make_pair(i,j));
 		}
 	}
-
-
 	//Iterate over all possible neighbor cells and insert/delete/recalculate distances
 	for (std::set<std::pair<int,int> >::iterator set_it=traverse_set.begin();set_it!=traverse_set.end();++set_it)
 	{
@@ -260,19 +257,14 @@ void HashClustering::merge()
 		{
 			if (*lit==&subset1)
 				continue;
-
 			DataSubset* neighbor_ptr = dynamic_cast<DataSubset*> (*lit);
-
 			DoubleReal act_distance=getDistance(subset1,*neighbor_ptr);
-
-
 			IteratorMap::iterator pos=neighbor_ptr->distance_iterators.find(&subset2);
 			if (pos!=neighbor_ptr->distance_iterators.end())
 			{
 				distances.erase(pos->second);
 				neighbor_ptr->distance_iterators.erase(pos);
 			}
-
 			pos=neighbor_ptr->distance_iterators.find(&subset1);
 
 			//Check, if the distance is valid, i.e. the DataSubset, to which the distance points(in this case subset1), lies in one of the four upper right cells of the neighbor element and the distance does not point from subset1 to itself. Delete it instead.
@@ -322,7 +314,6 @@ void HashClustering::performClustering()
 	startProgress(0,distance_size,"clustering data");
 	do
 	{
-
 		//Merge the two subsets
 		merge();
 
@@ -348,8 +339,7 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 			int x = subset.mz / grid.getMZThreshold();
 			int y = subset.rt / grid.getRTThreshold();
 
-
-			//Surrounding of every DataSubset is examined for the next nearest DataSubset
+			//Surrounding of every DataSubset is examined for the next nearest DataSubsets
 			//Size of the surrounding will be increased successively
 			for (int k=2; k<std::max(grid.getGridSizeX(),grid.getGridSizeY()) && !neighbor_found;++k)
 			{
@@ -400,8 +390,6 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 			break;
 		}
 	}
-
-
 	//inital values for interdis_i and cluster_with_interdist
 	std::set<DataPoint*>::iterator it = leafs.begin();
 	++it;
@@ -610,6 +598,8 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 					}
 					av_interdist_i*=git->second.size();
 					Size overall_neighbor_size=0;
+					//Since the silhouette value of n=1 is not defined because of the missing interdist value,
+					//we have to take points of subsets in the surrounding into account
 					for (std::list<DataSubset*>::iterator neighbor_it = neighbors.begin();neighbor_it!=neighbors.end();++neighbor_it)
 					{
 						std::list<DataPoint*>& neighbor_points=(*neighbor_it)->data_points;
@@ -628,6 +618,8 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 						interdist_i[git->second[h]]=av_interdist_i;
 					}
 					average_overall_silhouette += (interdist_i[git->second[h]] - intradist_i[git->second[h]]) / std::max(interdist_i[git->second[h]],intradist_i[git->second[h]]);
+					if (*tree_it==tree.back())
+						std::cout << intradist_i[git->second[h]] << std::endl;
 				}
 			}
 		}
@@ -718,6 +710,7 @@ typedef std::vector<DataPoint*> Cluster;
 void HashClustering::createClusters(std::vector<Cluster>& clusters)
 {
 	Size cluster_id=0;
+	Size subtree_number=0;
 
 	//run silhoutte optimization for all subtrees and find the appropriate best_n
 	for (ElementMap::iterator it=grid.begin();it!=grid.end();++it)
@@ -740,10 +733,11 @@ void HashClustering::createClusters(std::vector<Cluster>& clusters)
 				continue;
 			}
 			sort(subset_ptr->tree.begin(), subset_ptr->tree.end());
+			std::cout<< "subtree " << subtree_number++ << ": ";
 			std::vector< Real > asw = averageSilhouetteWidth(*subset_ptr);
 			silhouettes.push_back(asw);
 			//Look only in the front area of the silhoutte values to avoid getting the wrong number
-			std::vector< Real >::iterator max_el(max_element((asw.end()-((int)subset_ptr->size()/10) ),asw.end()));
+			std::vector< Real >::iterator max_el(max_element(asw.begin(),asw.end()));
 			Size best_n = (Size)subset_ptr->tree.size();
 			for (Size i = 0; i < asw.size(); ++i)
 			{

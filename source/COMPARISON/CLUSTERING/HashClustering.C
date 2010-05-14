@@ -618,8 +618,6 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 						interdist_i[git->second[h]]=av_interdist_i;
 					}
 					average_overall_silhouette += (interdist_i[git->second[h]] - intradist_i[git->second[h]]) / std::max(interdist_i[git->second[h]],intradist_i[git->second[h]]);
-					if (*tree_it==tree.back())
-						std::cout << intradist_i[git->second[h]] << std::endl;
 				}
 			}
 		}
@@ -710,7 +708,6 @@ typedef std::vector<DataPoint*> Cluster;
 void HashClustering::createClusters(std::vector<Cluster>& clusters)
 {
 	Size cluster_id=0;
-	Size subtree_number=0;
 
 	//run silhoutte optimization for all subtrees and find the appropriate best_n
 	for (ElementMap::iterator it=grid.begin();it!=grid.end();++it)
@@ -733,7 +730,6 @@ void HashClustering::createClusters(std::vector<Cluster>& clusters)
 				continue;
 			}
 			sort(subset_ptr->tree.begin(), subset_ptr->tree.end());
-			std::cout<< "subtree " << subtree_number++ << ": ";
 			std::vector< Real > asw = averageSilhouetteWidth(*subset_ptr);
 			silhouettes.push_back(asw);
 			//Look only in the front area of the silhoutte values to avoid getting the wrong number

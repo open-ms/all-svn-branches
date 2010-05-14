@@ -64,20 +64,20 @@ END_SECTION
 
 CentroidLinkage cl(0.05);
 vector<DataPoint> points;
-points.push_back(DataPoint(10,30,5,0,1));
-points.push_back(DataPoint(40,20,5,1,1));
+points.push_back(DataPoint(10,30,5,0));
+points.push_back(DataPoint(40,20,5,1));
 
 START_SECTION((DoubleReal getDistance(DataSubset &subset1, DataSubset &subset2)))
 {
   DataSubset subset1(points[0]);
   DataSubset subset2(points[1]);
-  TEST_EQUAL((cl.getDistance(subset1,subset2)-10.111874)<0.0001,true);
+  TEST_REAL_SIMILAR(cl.getDistance(subset1,subset2),10.111874);
 }
 END_SECTION
 
 START_SECTION((DoubleReal getDistance(DataPoint &point1, DataPoint &point2)))
 {
-	TEST_EQUAL((cl.getDistance(points[0],points[1])-10.111874)<0.0001,true);
+	TEST_REAL_SIMILAR(cl.getDistance(points[0],points[1]),10.111874);
 }
 END_SECTION
 

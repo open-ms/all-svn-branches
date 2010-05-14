@@ -14,6 +14,7 @@ set(concept_executables_list
 
 set(datastructures_executables_list
 	Adduct_test
+	BinaryTreeNode_test
 	CVMappingRule_test
 	CVMappingTerm_test
 	CVMappings_test
@@ -21,6 +22,8 @@ set(datastructures_executables_list
 	ChargePair_test
 	Compomer_test
 	ConvexHull2D_test
+	DataPoint_test
+	DataSubset_test
 	DBoundingBox_test
 	DIntervalBase_test
 	DPosition_test

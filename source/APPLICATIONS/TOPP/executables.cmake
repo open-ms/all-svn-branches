@@ -13,7 +13,7 @@ DTAExtractor
 Decharger
 ExecutePipeline
 FalseDiscoveryRate
-###FeatureFinder
+FeatureFinder
 FeatureLinker
 FileConverter
 FileFilter
@@ -45,7 +45,7 @@ PeakPicker
 PepNovoAdapter
 PeptideIndexer
 PrecursorIonSelector
-###PrecursorMassCorrector
+PrecursorMassCorrector
 ProteinInference
 ProteinQuantifier
 RTModel

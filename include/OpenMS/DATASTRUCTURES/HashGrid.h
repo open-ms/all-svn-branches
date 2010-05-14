@@ -52,6 +52,9 @@ typedef std::map<std::pair<Int,Int>, std::list<GridElement*> > GridCells;
 		<i>rt_threshold</i> defines the height of a grid cell and <i>mz_threshold</i> the width.
 		The data points are stored in specific grid cells and are accessible via geometric hashing.
 		So the corresponding cell of each data point can be calculated by dividing the rt and m/z values by its corresponding threshold.
+
+		@image html HashGrid.png
+
 		@ingroup Datastructures
 	*/
 

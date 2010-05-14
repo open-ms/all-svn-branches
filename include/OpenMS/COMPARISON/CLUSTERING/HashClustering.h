@@ -41,7 +41,8 @@ namespace OpenMS
 		@brief Hierarchical clustering based on geometric hashing.
 
 		Only elements in the surrounding are clustered.
-		So it is not more necessary to calculate all distances which leads to a linear runtime instead of quadratic.
+		So it is not more necessary to calculate all distances, which leads to a linear runtime instead of quadratic.
+		Instead of creating a hierarchical clustering tree of the whole data set, a vector of subtrees of this tree will be created containing only data points, which lie within the range defined by the two thresholds.
 
 		@see ClusterHierarchical
 		@ingroup SpectraClustering

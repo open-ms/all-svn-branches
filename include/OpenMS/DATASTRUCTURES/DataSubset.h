@@ -104,7 +104,9 @@ boost::multi_index::member<DistanceEntry,DoubleReal,&DistanceEntry::distance> > 
  * @brief A DataSubset is a data structure used for hierarchical clustering based on geometric hashing.
  *
  *
- * A DataSubset represents a subset of DataPoints from a hash grid, as well as an subtree of the hierarchical clustering tree.
+ * A DataSubset represents a subset of DataPoints arranged in a HashGrid, as well as an subtree of the hierarchical clustering tree.
+ * @image html DataSubset.png
+ *
  * @see HashClustering
  * @ingroup Datastructures
  */

@@ -297,7 +297,7 @@ private:
 					bool condTriple2 = (int_spline1 >= int_spline2) && (int_spline2 >= int_spline3) && (int_spline4 >= int_spline5) && (int_spline5 >= int_spline6) && (int_spline7 >= int_spline8) && (int_spline8 >= int_spline9); // isotopic peaks within one envelop decrease
 					if ((type=="double" && condDouble1 && condDouble2) || (type=="triple" && condTriple1 && condTriple2))
 					{
-						data.push_back(DataPoint(rt_it->getRT(),mz,int_spline1,id,rt_it->getRT()));
+						data.push_back(DataPoint(rt_it->getRT(),mz,int_spline1,id));
 //						data.push_back(DataPoint(id,rt_it->getRT(),mz,int_spline1,int_spline2,int_spline3,int_spline4,int_spline5,int_spline6,int_spline7,int_spline8,int_spline9));
 						++id;
 					}
@@ -401,7 +401,7 @@ public:
 		String debug_trunk = in;
 		if (in.has('.'))
 		{
-			debug_trunk = in.substr(0,-SignedSize(in.suffix('.').length())-1);
+			debug_trunk = in.substr(0,in.find_first_of('.'));
 		}
 
 		//iterate over all charge states
@@ -482,7 +482,7 @@ public:
 					{
 						//visualize the light variant
 						Feature tree_point;
-						tree_point.setRT((*leafs_it)->real_rt);
+						tree_point.setRT((*leafs_it)->rt);
 						tree_point.setMZ((*leafs_it)->mz);
 						tree_point.setIntensity((*leafs_it)->intensity);
 						tree_point.setCharge(charge);
@@ -570,7 +570,7 @@ public:
 				{
 					//visualize the light variant
 					Feature cluster_point;
-					cluster_point.setRT(it->real_rt);
+					cluster_point.setRT(it->rt);
 					cluster_point.setMZ(it->mz);
 					cluster_point.setIntensity(it->intensity);
 					cluster_point.setCharge(charge);

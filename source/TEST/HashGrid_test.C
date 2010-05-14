@@ -63,11 +63,11 @@ START_SECTION((HashGrid(DoubleReal rt_threshold_, DoubleReal mz_threshold_)))
 }
 END_SECTION
 
-DataPoint* el1=new DataPoint(550.5,270.2,1.,1,1.);
-DataPoint* el2=new DataPoint(130.7,460.6,1.,2,1.);
-DataPoint* el3=new DataPoint(435.2,160.6,1.,3,1.);
-DataPoint* el4=new DataPoint(32.3,960.1,1.,4,1.);
-DataPoint* el5=new DataPoint(551.5,271.2,1.,5,1.);
+DataPoint* el1=new DataPoint(550.5,270.2,1.,1);
+DataPoint* el2=new DataPoint(130.7,460.6,1.,2);
+DataPoint* el3=new DataPoint(435.2,160.6,1.,3);
+DataPoint* el4=new DataPoint(32.3,960.1,1.,4);
+DataPoint* el5=new DataPoint(551.5,271.2,1.,5);
 
 
 START_SECTION((void insert(GridElement *element_)))

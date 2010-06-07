@@ -43,10 +43,20 @@ namespace OpenMS
 class OPENMS_DLLAPI DataPoint : public GridElement {
 
 public:
+	static const Int DOUBLE_TRIPLE = 1;
+	static const Int DOUBLE = 2;
+	static const Int TRIPLE = 3;
 	/**
 	 * @brief intensity at RT and m/z
 	 */
-	DoubleReal intensity;
+	std::vector<DoubleReal> intensities;
+
+	Int silac_type;
+	Int charge;
+	DoubleReal envelope_distance_light_medium;
+	DoubleReal envelope_distance_light_heavy;
+
+
 
 	/**
 	 * @brief ID number of the cluster the data point belongs to
@@ -69,14 +79,6 @@ public:
 	 * @param this DataPoint will be copied
 	 */
 	DataPoint(const DataPoint &copyin);
-	/**
-	 * @brief detailed constructor
-	 * @param rt_ RT value of the data point
-	 * @param mz_ m/z value of the data point
-	 * @param intensity_ intensity of the data point
-	 * @param feature_id_ id of the data point
-	 */
-	DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_);
 	/// destructor
 	~DataPoint(){};
 	DataPoint& operator=(const DataPoint &rhs);

@@ -34,31 +34,30 @@ DataPoint::DataPoint()
 {
 	rt = 0;
 	mz = 0;
-	intensity = 0;
 	feature_id= 0;
 	cluster_id = 0;
-	cluster_size = 0;
+	silac_type= DOUBLE;
+	charge=1;
+	envelope_distance_light_medium=0;
+	envelope_distance_light_heavy=0;
+
 }
 DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 {
 	feature_id=copyin.feature_id;
-	intensity = copyin.intensity;
+	intensities = copyin.intensities;
 	cluster_id = copyin.cluster_id;
-	cluster_size = copyin.cluster_size;
-}
-DataPoint::DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_) :GridElement(rt_,mz_)
-{
-	feature_id=feature_id_;
-	intensity = intensity_;
-	cluster_id = 0;
-	cluster_size = 0;
+	silac_type= copyin.silac_type;
+	charge=copyin.charge;
+	envelope_distance_light_medium=copyin.envelope_distance_light_medium;
+	envelope_distance_light_heavy=copyin.envelope_distance_light_heavy;
 }
 
 DataPoint& DataPoint::operator=(const DataPoint &rhs)
 {
 	this->rt = rhs.rt;
 	this->mz = rhs.mz;
-	this->intensity = rhs.intensity;
+	this->intensities = rhs.intensities;
 	this->feature_id=rhs.feature_id;
 	this->cluster_id = rhs.cluster_id;
 	this->cluster_size = rhs.cluster_size;
@@ -70,7 +69,7 @@ bool DataPoint::operator==(const DataPoint &rhs) const
 	if( this->feature_id != rhs.feature_id) return false;
 	if( this->rt != rhs.rt) return false;
 	if( this->mz != rhs.mz) return false;
-	if( this->intensity != rhs.intensity) return false;
+	if( this->intensities != rhs.intensities) return false;
 	//if( this->cluster_id != rhs.cluster_id) return false;
 	//if( this->cluster_size != rhs.cluster_size) return false;
 	return true;

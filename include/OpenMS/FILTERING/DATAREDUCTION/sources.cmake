@@ -4,6 +4,8 @@ set(directory include/OpenMS/FILTERING/DATAREDUCTION)
 ### list all header files of the directory here
 set(sources_list_h
 DataFilters.h
+SILACFilter
+SILACFiltering
 )
 
 ### add path to the filenames

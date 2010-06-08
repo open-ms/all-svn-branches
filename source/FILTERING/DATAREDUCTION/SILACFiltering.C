@@ -58,7 +58,7 @@ void SILACFiltering::blockValue(DoubleReal value,SILACFilter* source)
 {
 	for (std::set<SILACFilter*>::iterator it=filters.begin();it!=filters.end();++it)
 	{
-//		if (*it!=source)
+		if (*it!=source)
 			(*it)->blockValue(value);
 	}
 }
@@ -112,15 +112,18 @@ void SILACFiltering::filterDataPoints()
 			DoubleReal mz_min = mz_vec[0];
 			DoubleReal mz_max = mz_vec[number_data_points-9];
 			DoubleReal rt=rt_it->getRT();
-			//for (std::vector<DoubleReal>::iterator mz_it=mz_vec.begin();mz_it!=mz_vec.end();++mz_it/*DoubleReal mz=mz_min; mz<mz_max; mz+=mz_stepwidth*/)
-			for (Size i=1;i<mz_vec.size()-9;++i)
+//			for (std::vector<DoubleReal>::iterator mz_it=mz_vec.begin();mz_it!=mz_vec.end();++mz_it/*DoubleReal mz=mz_min; mz<mz_max; mz+=mz_stepwidth*/)
+//			for (Size i=1;i<mz_vec.size()-9;++i)
+			for (DoubleReal mz=mz_min; mz<mz_max; mz+=mz_stepwidth)
 			{
 				for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 				{
 					SILACFilter* filter_ptr=*filter_it;
-					if (intensity_vec[i-1]>intensity_vec[i] || intensity_vec[i+1]>intensity_vec[i])
-						continue;
-					if (filter_ptr->isFeature(rt,mz_vec[i]))
+//					if (intensity_vec[i-1]>intensity_vec[i] || intensity_vec[i+1]>intensity_vec[i])
+//						continue;
+//					if (gsl_spline_eval (spline_spl, mz_vec[i]-mz_stepwidth, acc_spl) > gsl_spline_eval (spline_spl, mz_vec[i], acc_spl) || gsl_spline_eval (spline_spl, mz_vec[i]+mz_stepwidth, acc_spl) > gsl_spline_eval (spline_spl, mz_vec[i], acc_spl))
+//						continue;
+					if (filter_ptr->isFeature(rt,mz))
 					{
 						const std::vector<DoubleReal>& peak_values=filter_ptr->getPeakValues();
 						for (std::vector<DoubleReal>::const_iterator peak_it=peak_values.begin();peak_it!=peak_values.end();++peak_it)

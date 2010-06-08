@@ -102,7 +102,7 @@ private:
      * @param intensity interpolation
      * @param spline function of the interpolation
      */
-    std::vector<DoubleReal> getIntensities(DoubleReal act_mz,gsl_interp_accel *acc, gsl_spline *spline);
+    std::pair<bool,std::vector<DoubleReal> > getIntensities(DoubleReal act_mz,gsl_interp_accel *acc, gsl_spline *spline);
 public:
 	/**
 	 * @brief double identifier (2)

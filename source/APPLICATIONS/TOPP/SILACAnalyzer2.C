@@ -230,7 +230,8 @@ private:
 			rt_spacing.push_back(exp[i].getRT()-exp[i-1].getRT());
 		}
 		std::sort(mz_spacing.begin(),mz_spacing.end());
-		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
+//		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
+		mz_stepwidth=0.01;
 		std::sort(rt_spacing.begin(),rt_spacing.end());
 		rt_stepwidth=rt_spacing[rt_spacing.size()/2];
 
@@ -245,7 +246,7 @@ private:
 					if (pos==labels.end())
 						throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*heavy_label_it);
 					DoubleReal mass_shift=pos->second;
-					std::cout << mass_shift << " " << charge << std::endl;
+//					std::cout << mass_shift << " " << charge << std::endl;
 					filters.push_back(SILACFilter(mass_shift,charge));
 				}
 				else
@@ -288,6 +289,7 @@ private:
 		filtering.setLogType(log_type_);
 		for (std::list<SILACFilter>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 		{
+
 			filtering.addFilter(*filter_it);
 		}
 
@@ -295,7 +297,8 @@ private:
 		std::vector<std::vector<DataPoint> > data;
 		for (std::list<SILACFilter>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 		{
-			data.push_back(filter_it->getElements());
+//			if (filter_it==filters.begin())
+				data.push_back(filter_it->getElements());
 		}
 		exp.clear(true);
 		return data;
@@ -584,6 +587,8 @@ public:
 						cluster_point.setMZ(it->mz);
 						cluster_point.setIntensity(it->intensities[0]);
 						cluster_point.setCharge(it->charge);
+						cluster_point.setOverallQuality(it->quality);
+						cluster_point.setQuality(0,it->quality);
 						if (it->silac_type==2)
 							cluster_point.setMetaValue("SILAC type","double");
 						else if (it->silac_type==3)

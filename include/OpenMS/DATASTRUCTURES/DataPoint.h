@@ -55,6 +55,7 @@ public:
 	Int charge;
 	DoubleReal envelope_distance_light_medium;
 	DoubleReal envelope_distance_light_heavy;
+	DoubleReal quality;
 
 
 

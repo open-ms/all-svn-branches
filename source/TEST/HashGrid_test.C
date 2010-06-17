@@ -63,11 +63,26 @@ START_SECTION((HashGrid(DoubleReal rt_threshold_, DoubleReal mz_threshold_)))
 }
 END_SECTION
 
-DataPoint* el1=new DataPoint(550.5,270.2,1.,1);
-DataPoint* el2=new DataPoint(130.7,460.6,1.,2);
-DataPoint* el3=new DataPoint(435.2,160.6,1.,3);
-DataPoint* el4=new DataPoint(32.3,960.1,1.,4);
-DataPoint* el5=new DataPoint(551.5,271.2,1.,5);
+DataPoint* el1=new DataPoint;
+el1->mz=270.2;
+el1->rt=550.5;
+el1->feature_id=1;
+DataPoint* el2=new DataPoint;
+el2->mz=130.7;
+el2->rt=460.6;
+el2->feature_id=2;
+DataPoint* el3=new DataPoint;
+el3->mz=160.6;
+el3->rt=435.2;
+el3->feature_id=3;
+DataPoint* el4=new DataPoint;
+el4->mz=960.1;
+el4->rt=32.3;
+el4->feature_id=4;
+DataPoint* el5=new DataPoint;
+el5->mz=271.2;
+el5->rt=551.5;
+el5->feature_id=5;
 
 
 START_SECTION((void insert(GridElement *element_)))
@@ -79,7 +94,7 @@ START_SECTION((void insert(GridElement *element_)))
 	grid.insert(el5);
 	GridCells::iterator pos=grid.find(make_pair(5,6));
 	TEST_EQUAL(pos->second.size(),2)
-	 pos=grid.find(make_pair(9,1));
+	 pos=grid.find(make_pair(2,5));
 	TEST_EQUAL(pos->second.size(),1)
 	 pos=grid.find(make_pair(3,5));
 	TEST_EQUAL(pos->second.size(),1)
@@ -96,7 +111,7 @@ START_SECTION((void removeElement(GridElement *element_, Int x, Int y)))
 	grid.removeElement(el2,0,0);
 	GridCells::iterator pos=grid.find(make_pair(5,6));
 	TEST_EQUAL(pos->second.size(),1)
-	pos=grid.find(make_pair(9,1));
+	pos=grid.find(make_pair(2,5));
 	TEST_EQUAL(pos->second.size(),1)
 }
 END_SECTION
@@ -105,7 +120,7 @@ START_SECTION((void removeElement(GridElement *element_)))
 {
   grid.removeElement(el2);
   grid.removeElement(el3);
-  GridCells::iterator pos=grid.find(make_pair(9,1));
+  GridCells::iterator pos=grid.find(make_pair(2,5));
   TEST_EQUAL(pos==grid.end(),true);
   pos=grid.find(make_pair(3,5));
   TEST_EQUAL(pos==grid.end(),true)

@@ -27,6 +27,8 @@
 
 
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeFitter1D.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeModel.h>
 #include <cmath>
 
 namespace OpenMS
@@ -39,7 +41,7 @@ SILACFilter::SILACFilter(DoubleReal mass_separation_light_heavy, Int charge_) {
 	envelope_distance_light_medium=0;
 	charge=charge_;
 	envelope_distance_light_heavy=mass_separation_light_heavy/(DoubleReal)charge;
-	isotope_distance=1.0/(DoubleReal) charge;
+	isotope_distance=1.000495/(DoubleReal) charge;
 }
 
 SILACFilter::SILACFilter(DoubleReal mass_separation_light_medium,DoubleReal mass_separation_light_heavy,Int charge_) {
@@ -47,7 +49,7 @@ SILACFilter::SILACFilter(DoubleReal mass_separation_light_medium,DoubleReal mass
 	charge=charge_;
 	envelope_distance_light_medium=mass_separation_light_medium/(DoubleReal)charge;
 	envelope_distance_light_heavy=mass_separation_light_heavy/(DoubleReal)charge;
-	isotope_distance=1.0/(DoubleReal) charge;
+	isotope_distance=1.000495/(DoubleReal) charge;
 }
 
 SILACFilter::~SILACFilter() {
@@ -75,11 +77,8 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 {
 	if (!blacklisted(act_mz) /*&& !blacklisted(act_mz+isotope_distance) && !blacklisted(act_mz+2*isotope_distance) && !blacklisted(act_mz+envelope_distance_light_heavy) && !blacklisted(act_mz+envelope_distance_light_heavy+isotope_distance) && !blacklisted(act_mz+envelope_distance_light_heavy+2*isotope_distance)*/)
 	{
-		std::pair<bool,std::vector<DoubleReal> > val=getIntensities(act_mz,SILACFiltering::acc_spl,SILACFiltering::spline_spl);
-		if (!val.first)
-			return false;
-		std::vector<DoubleReal> intensities_spl =val.second;
-		std::vector<DoubleReal> intensities_lin = getIntensities(act_mz,SILACFiltering::acc_lin,SILACFiltering::spline_lin).second;
+		std::vector<DoubleReal> intensities_spl = getIntensities(act_mz,SILACFiltering::acc_spl,SILACFiltering::spline_spl);
+		std::vector<DoubleReal> intensities_lin = getIntensities(act_mz,SILACFiltering::acc_lin,SILACFiltering::spline_lin);
 		bool condDouble1=false;
 		bool condDouble2=false;
 		bool condDouble3=false;
@@ -100,12 +99,19 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 		}
 		if (condTriple1 && condTriple2 && condTriple3 && silac_type==TRIPLE)
 		{
+			DoubleReal quality_light=getQuality(act_mz);
+			DoubleReal quality_medium=getQuality(act_mz+envelope_distance_light_medium);
+			DoubleReal quality_heavy=getQuality(act_mz+envelope_distance_light_heavy);
+			if (quality_light < 0.1 || quality_medium < 0.1 || quality_heavy < 0.1)
+				return false;
+			DoubleReal quality = (quality_light+quality_medium+quality_heavy)/3;
 			DataPoint next_element;
 			next_element.feature_id=SILACFiltering::feature_id;
 			next_element.rt=act_rt;
 			next_element.mz=act_mz;
 			next_element.silac_type=TRIPLE;
 			next_element.charge=charge;
+			next_element.quality=quality;
 			next_element.envelope_distance_light_heavy=envelope_distance_light_heavy;
 			next_element.intensities.push_back(intensities_spl[1]);
 			next_element.intensities.push_back(intensities_spl[2]);
@@ -131,10 +137,11 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 		}
 		if (condDouble1 && condDouble2 && condDouble3 && silac_type==DOUBLE)
 		{
-//			if (SILACFiltering::feature_id==1512)
-//			{
-//				std::vout << intensities_spl[1] << " " << intensities_spl[2] << " " << intensities_spl[3] << " "<< intensities_spl[] << " "
-//			}
+			DoubleReal quality_light=getQuality(act_mz);
+			DoubleReal quality_heavy=getQuality(act_mz+envelope_distance_light_heavy);
+			if (quality_light < 0.1 || quality_heavy < 0.1)
+				return false;
+			DoubleReal quality = (quality_light+quality_heavy)/2;
 			DataPoint next_element;
 			next_element.feature_id=SILACFiltering::feature_id;
 			next_element.rt=act_rt;
@@ -142,6 +149,7 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 			next_element.silac_type=DOUBLE;
 			next_element.charge=charge;
 			next_element.envelope_distance_light_heavy=envelope_distance_light_heavy;
+			next_element.quality=quality;
 			next_element.intensities.push_back(intensities_spl[1]);
 			next_element.intensities.push_back(intensities_spl[2]);
 			next_element.intensities.push_back(intensities_spl[3]);
@@ -170,30 +178,57 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 	return false;
 }
 
+DoubleReal SILACFilter::getQuality(DoubleReal act_mz)
+{
+	InterpolationModel* model=new ExtendedIsotopeModel;
+	ExtendedIsotopeFitter1D fitter;
+	std::vector<Peak1D> real_data;
+	for (DoubleReal position=act_mz-0.04;position<=act_mz+2*isotope_distance+0.04;position+=0.05)
+	{
+		Peak1D peak;
+		peak.setPosition(position);
 
-std::pair<bool,std::vector<DoubleReal> > SILACFilter::getIntensities(DoubleReal act_mz, gsl_interp_accel* acc,gsl_spline* spline)
+		DoubleReal intensity=gsl_spline_eval (SILACFiltering::spline_spl, position, SILACFiltering::acc_spl);
+		if ((position > act_mz-getPeakWidth(act_mz) && position < act_mz+getPeakWidth(act_mz)) || (position > act_mz+isotope_distance-getPeakWidth(act_mz) && position < act_mz+isotope_distance+getPeakWidth(act_mz)) || (position > act_mz+2*isotope_distance-getPeakWidth(act_mz) && position < act_mz+2*isotope_distance+getPeakWidth(act_mz)))
+			peak.setIntensity(intensity);
+		else
+			peak.setIntensity(0.0);
+		real_data.push_back(peak);
+	}
+	Param tmp;
+	tmp.setValue( "isotope:monoisotopic_mz", act_mz );
+	tmp.setValue("charge",charge);
+	fitter.setParameters( tmp );
+	Param tmp1;
+	tmp1.setValue( "isotope:monoisotopic_mz", act_mz );
+	tmp1.setValue( "interpolation_step", 0.05 );
+	tmp1.setValue("charge",charge);
+	tmp1.setValue("isotope:stdev",0.01);
+	model->setParameters( tmp1 );
+	std::vector<Peak1D> model_data;
+	model->getSamples(model_data);
+	DoubleReal quality=fitter.fit1d(real_data,model);
+	//			if (SILACFiltering::feature_id==542 || SILACFiltering::feature_id==1095)
+	//			{
+	//				std::cout << act_mz << "/" << act_rt << " " << 0.5*SILACFilter::getPeakWidth(act_mz) << std::endl;
+	//				for (Size i=0;i<std::min(model_data.size(),real_data.size());++i)
+	//				{
+	//					std::cout << real_data[i].getIntensity() << "\t" << model_data[i].getIntensity() << std::endl;
+	//				}
+	//				std::cout << quality << std::endl;
+	//			}
+	delete model;
+	return quality;
+}
+
+
+std::vector<DoubleReal> SILACFilter::getIntensities(DoubleReal act_mz, gsl_interp_accel* acc,gsl_spline* spline)
 {
 	std::vector<DoubleReal> splines;
-	double isMaximum=true;
 	splines.push_back(gsl_spline_eval (spline, act_mz-isotope_distance, acc));
-	DoubleReal value1=gsl_spline_eval (spline, act_mz-0.01, acc);
-	DoubleReal value=gsl_spline_eval (spline, act_mz, acc);
-	DoubleReal value2=gsl_spline_eval (spline, act_mz+0.01, acc);
-	if (value1>value || value2>value)
-		isMaximum=false;
-	splines.push_back(value);
-	value1=gsl_spline_eval (spline, act_mz+isotope_distance-0.01, acc);
-	value=gsl_spline_eval (spline, act_mz+isotope_distance, acc);
-	value2=gsl_spline_eval (spline, act_mz+isotope_distance+0.01, acc);
-	if (value1>value || value2>value)
-		isMaximum=false;
-	splines.push_back(value);
-	value1=gsl_spline_eval (spline, act_mz+2*isotope_distance-0.01, acc);
-	value=gsl_spline_eval (spline, act_mz+2*isotope_distance, acc);
-	value2=gsl_spline_eval (spline, act_mz+2*isotope_distance+0.01, acc);
-	if (value1>value || value2>value)
-		isMaximum=false;
-	splines.push_back(value);
+	splines.push_back(gsl_spline_eval (spline, act_mz, acc));
+	splines.push_back(gsl_spline_eval (spline, act_mz+isotope_distance, acc));
+	splines.push_back(gsl_spline_eval (spline, act_mz+2*isotope_distance, acc));
 	if (silac_type==TRIPLE)
 	{
 		splines.push_back(gsl_spline_eval (spline, act_mz-isotope_distance, acc));
@@ -202,30 +237,16 @@ std::pair<bool,std::vector<DoubleReal> > SILACFilter::getIntensities(DoubleReal 
 		splines.push_back(gsl_spline_eval (spline, act_mz+envelope_distance_light_medium+0.01, acc));
 	}
 	splines.push_back(gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy-isotope_distance, acc));
-	value1=gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy-0.01, acc);
-	value=gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy, acc);
-	value2=gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy+0.01, acc);
-	if (value1>value || value2>value)
-		isMaximum=false;
-	splines.push_back(value);
-	value1=gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy+isotope_distance-0.01, acc);
-	value=gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy+isotope_distance, acc);
-	value2=gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy+isotope_distance+0.01, acc);
-	if (value1>value || value2>value)
-		isMaximum=false;
-	splines.push_back(value);
-	value1=gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy+2*isotope_distance-0.01, acc);
-	value=gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy+2*isotope_distance, acc);
-	value2=gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy+2*isotope_distance+0.01, acc);
-	if (value1>value || value2>value)
-		isMaximum=false;
-	splines.push_back(value);
-	return std::make_pair(isMaximum,splines);
+	splines.push_back(gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy, acc));
+	splines.push_back(gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy+isotope_distance, acc));
+	splines.push_back(gsl_spline_eval (spline, act_mz+envelope_distance_light_heavy+2*isotope_distance, acc));
+	return splines;
 }
 
 bool SILACFilter::doubleCmp::operator()(DoubleReal a, DoubleReal b) const
 {
-	if ( fabs(a-b) < 0.022/*2*SILACFiltering::mz_stepwidth*/)
+	DoubleReal peak_width=SILACFilter::getPeakWidth((a+b)/2);
+	if ( fabs(a-b) < peak_width/*2*SILACFiltering::mz_stepwidth*/)
 	{
 		return false;
 	}
@@ -233,6 +254,11 @@ bool SILACFilter::doubleCmp::operator()(DoubleReal a, DoubleReal b) const
 	{
 		return a<b;
 	}
+}
+
+DoubleReal SILACFilter::getPeakWidth(DoubleReal mz)
+{
+	return 11*(1.828e-007*pow(mz,1.504));
 }
 
 Int SILACFilter::getSILACType()

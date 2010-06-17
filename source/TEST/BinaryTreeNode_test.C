@@ -55,9 +55,18 @@ START_SECTION(~BinaryTreeNode())
 }
 END_SECTION
 
-DataPoint* p1 = new DataPoint(20,30,5,1);
-DataPoint* p2 = new DataPoint(15.5,2.3,10.5,2);
-DataPoint* p3 = new DataPoint(6.6,8.8,3.6,3);
+DataPoint* p1 = new DataPoint;
+p1->mz=20;
+p1->rt=30;
+p1->feature_id=1;
+DataPoint* p2 = new DataPoint;
+p2->mz=15.5;
+p2->rt=2.3;
+p2->feature_id=2;
+DataPoint* p3 = new DataPoint;
+p3->mz=6.6;
+p3->rt=8.8;
+p3->feature_id=3;
 BinaryTreeNode node(p1,p2,123.45);
 
 START_SECTION((BinaryTreeNode(DataPoint *data1_, DataPoint *data2_, DoubleReal distance_)))

@@ -40,6 +40,7 @@ DataPoint::DataPoint()
 	charge=1;
 	envelope_distance_light_medium=0;
 	envelope_distance_light_heavy=0;
+	quality=0;
 
 }
 DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
@@ -51,6 +52,7 @@ DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 	charge=copyin.charge;
 	envelope_distance_light_medium=copyin.envelope_distance_light_medium;
 	envelope_distance_light_heavy=copyin.envelope_distance_light_heavy;
+	quality=copyin.quality;
 }
 
 DataPoint& DataPoint::operator=(const DataPoint &rhs)

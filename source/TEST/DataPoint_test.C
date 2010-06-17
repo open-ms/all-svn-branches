@@ -55,73 +55,102 @@ END_SECTION
 
 START_SECTION((DataPoint(const DataPoint &copyin)))
 {
-  DataPoint p(12.123,124.12,11.22,1);
-  DataPoint copy(p);
+  DataPoint p1;
+  p1.mz=124.12;
+  p1.rt=12.123;
+  p1.feature_id=1;
+  DataPoint copy(p1);
   TEST_REAL_SIMILAR(copy.rt,12.123);
   TEST_REAL_SIMILAR(copy.mz,124.12);
-  TEST_REAL_SIMILAR(copy.intensity,11.22);
   TEST_EQUAL(copy.getID(),1);
 }
 END_SECTION
 
-START_SECTION((DataPoint(DoubleReal rt_, DoubleReal mz_, DoubleReal intensity_, Int feature_id_, DoubleReal real_rt_)))
+START_SECTION((DataPoint()))
 {
-	DataPoint p(12.123,124.12,11.22,1);
-	  TEST_REAL_SIMILAR(p.rt,12.123);
-	  TEST_REAL_SIMILAR(p.mz,124.12);
-	  TEST_REAL_SIMILAR(p.intensity,11.22);
-	  TEST_EQUAL(p.getID(),1);
+	DataPoint p1;
+	  p1.mz=124.12;
+	  p1.rt=12.123;
+	  p1.feature_id=1;
+	  TEST_REAL_SIMILAR(p1.rt,12.123);
+	  TEST_REAL_SIMILAR(p1.mz,124.12);
+	  TEST_EQUAL(p1.getID(),1);
 }
 END_SECTION
 
 
 START_SECTION((DataPoint& operator=(const DataPoint &rhs)))
 {
-	DataPoint p(12.123,124.12,11.22,1);
-	  DataPoint copy=p;
+	DataPoint p1;
+	  p1.mz=124.12;
+	  p1.rt=12.123;
+	  p1.feature_id=1;
+	  DataPoint copy=p1;
 	  TEST_REAL_SIMILAR(copy.rt,12.123);
 	  TEST_REAL_SIMILAR(copy.mz,124.12);
-	  TEST_REAL_SIMILAR(copy.intensity,11.22);
 	  TEST_EQUAL(copy.getID(),1);
 }
 END_SECTION
 
 START_SECTION((bool operator==(const DataPoint &rhs) const ))
 {
-	DataPoint p1(12.123,124.12,11.22,1);
-	DataPoint p2(12.123,124.12,11.22,1);
+	DataPoint p1;
+	  p1.mz=124.12;
+	  p1.rt=12.123;
+	  p1.feature_id=1;
+	  DataPoint p2;
+	    p2.mz=124.12;
+	    p2.rt=12.123;
+	    p2.feature_id=1;
 	TEST_EQUAL(p1==p2,true);
 }
 END_SECTION
 
 START_SECTION((bool operator!=(const DataPoint &rhs) const ))
 {
-	DataPoint p1(12.123,124.12,11.22,1);
-		DataPoint p2(112.123,124.12,11.22,1);
-		TEST_EQUAL(p1!=p2,true);
-		DataPoint p3(12.123,1214.12,11.22,1);
-		TEST_EQUAL(p1!=p3,true);
-		DataPoint p4(12.123,124.12,131.22,1);
-		TEST_EQUAL(p1!=p4,true);
-		DataPoint p5(12.123,124.12,11.22,2);
-		TEST_EQUAL(p1!=p5,true);
+	DataPoint p1;
+	p1.mz=124.12;
+	p1.rt=12.123;
+	p1.feature_id=1;
+	DataPoint p2;
+	p2.mz=124.12;
+	p2.rt=112.123;
+	p2.feature_id=1;
+	TEST_EQUAL(p1!=p2,true);
+	DataPoint p3;
+	p3.mz=1124.12;
+	p3.rt=12.123;
+	p3.feature_id=1;
+	TEST_EQUAL(p1!=p3,true);
+	DataPoint p5;
+	p5.mz=124.12;
+	p5.rt=12.123;
+	p5.feature_id=2;
+	TEST_EQUAL(p1!=p5,true);
 }
 END_SECTION
 
 START_SECTION((bool operator<(const DataPoint &rhs) const ))
 {
-	DataPoint p1(12.123,124.12,131.22,1);
-	DataPoint p2(12.123,124.12,11.22,2);
+	DataPoint p1;
+	p1.mz=124.12;
+	p1.rt=12.123;
+	p1.feature_id=1;
+	DataPoint p2;
+	p2.mz=124.12;
+	p2.rt=112.123;
+	p2.feature_id=2;
 	TEST_EQUAL(p1<p2,true);
-	DataPoint p3(12.123,124.12,11.22,1);
-	TEST_NOT_EQUAL(p1<p3,true);
 }
 END_SECTION
 
 START_SECTION((Int getID()))
 {
-	DataPoint p(12.123,124.12,11.22,2);
-	TEST_EQUAL(p.getID(),2);
+	DataPoint p1;
+		p1.mz=124.12;
+		p1.rt=12.123;
+		p1.feature_id=2;
+	TEST_EQUAL(p1.getID(),2);
 }
 END_SECTION
 

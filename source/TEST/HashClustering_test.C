@@ -44,12 +44,30 @@ START_TEST(HashClustering, "$Id$")
 CentroidLinkage cl(1);
 
 
-DataPoint* el0=new DataPoint(1.5,1.2,1.,0);
-  DataPoint* el1=new DataPoint(2.5,2.2,1.,1);
-  DataPoint* el2=new DataPoint(10.7,10.6,1.,2);
-  DataPoint* el3=new DataPoint(10.2,10.6,1.,3);
-  DataPoint* el4=new DataPoint(20.3,20.1,1.,4);
-  DataPoint* el5=new DataPoint(20.5,20.2,1.,5);
+DataPoint* el0=new DataPoint;
+el0->mz=270.2;
+el0->rt=1.5;
+el0->feature_id=0;
+  DataPoint* el1=new DataPoint;
+  el1->mz=2.2;
+  el1->rt=2.5;
+  el1->feature_id=1;
+  DataPoint* el2=new DataPoint;
+  el2->mz=10.6;
+  el2->rt=10.7;
+  el2->feature_id=2;
+  DataPoint* el3=new DataPoint;
+  el3->mz=10.6;
+  el3->rt=10.2;
+  el3->feature_id=3;
+  DataPoint* el4=new DataPoint;
+  el4->mz=20.1;
+  el4->rt=20.3;
+  el4->feature_id=4;
+  DataPoint* el5=new DataPoint;
+  el4->mz=20.2;
+  el4->rt=20.5;
+  el4->feature_id=5;
   vector<DataPoint> v;
   	v.push_back(*el0);
   	v.push_back(*el1);

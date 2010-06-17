@@ -412,6 +412,11 @@ add_test("TOPP_SILACAnalyzer_2" ${TOPP_BIN_PATH}/SILACAnalyzer -test -ini ${DATA
 add_test("TOPP_SILACAnalyzer_2_out1" ${DIFF} -in1 SILACAnalyzer.tmp -in2 ${DATA_DIR_TOPP}/SILACAnalyzer_triple.consensusXML)
 add_test("TOPP_SILACAnalyzer_2_out2" ${DIFF} -in1 SILACAnalyzer_vis.tmp -in2 ${DATA_DIR_TOPP}/SILACAnalyzer_triple.featureXML)
 
+### SILACAnalyzer2 tests
+add_test("TOPP_SILACAnalyzer2_1" ${TOPP_BIN_PATH}/SILACAnalyzer2 -test -ini ${DATA_DIR_TOPP}/SILACAnalyzer2.ini -in ${DATA_DIR_TOPP}/SILACAnalyzer2.mzML -out SILACAnalyzer2.tmp -out_visual SILACAnalyzer2_vis.tmp)
+add_test("TOPP_SILACAnalyzer2_1_out1" ${DIFF} -in1 SILACAnalyzer2.tmp -in2 ${DATA_DIR_TOPP}/SILACAnalyzer2.consensusXML)
+add_test("TOPP_SILACAnalyzer2_1_out2" ${DIFF} -in1 SILACAnalyzer2_vis.tmp -in2 ${DATA_DIR_TOPP}/SILACAnalyzer2.featureXML)
+
 ### FeatureLinker tests
 add_test("TOPP_FeatureLinker_1" ${TOPP_BIN_PATH}/FeatureLinker -test -ini ${DATA_DIR_TOPP}/FeatureLinker_1_parameters.ini -in ${DATA_DIR_TOPP}/FeatureLinker_1_input.featureXML)
 add_test("TOPP_FeatureLinker_1_out1" ${DIFF} -in1 FeatureLinker_1_output.tmp -in2 ${DATA_DIR_TOPP}/FeatureLinker_1_output.consensusXML)

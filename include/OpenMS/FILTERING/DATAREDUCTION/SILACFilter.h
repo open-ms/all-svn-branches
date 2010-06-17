@@ -91,18 +91,27 @@ private:
      * @brief holds the m/z values of the last identified feature. These values will be blacklisted in other filters
      */
     std::vector<DoubleReal> peak_values;
-    /**
-     * @brief returns if the given values is on the blacklist
-     * @param value m/z value to look up in the blacklist
-     */
-    bool blacklisted(DoubleReal value);
+
     /**
      * @brief returns the intensities of all peaks used in the identification of one SILAC feature
      * @param act_mz m/z value of the first peak
      * @param intensity interpolation
      * @param spline function of the interpolation
      */
-    std::pair<bool,std::vector<DoubleReal> > getIntensities(DoubleReal act_mz,gsl_interp_accel *acc, gsl_spline *spline);
+    std::vector<DoubleReal> getIntensities(DoubleReal act_mz,gsl_interp_accel *acc, gsl_spline *spline);
+
+
+    /**
+     * @brief returns the predicted peak width at position mz
+     * @param mz position of the peak
+     */
+    static DoubleReal getPeakWidth(DoubleReal mz);
+
+    /**
+     * @brief returns the quality of a potential feature at position act_mz by fitting the data to the isotope model
+     * @param act_mz position of the potential feature
+     */
+    DoubleReal getQuality(DoubleReal act_mz);
 public:
 	/**
 	 * @brief double identifier (2)
@@ -138,6 +147,13 @@ public:
 	 * @param the m/z value to add to the blacklist
 	 */
 	void blockValue(DoubleReal value);
+
+	/**
+	     * @brief returns if the given values is on the blacklist
+	     * @param value m/z value to look up in the blacklist
+	     */
+	 bool blacklisted(DoubleReal value);
+
 	/**
 	 * @brief clears the blacklist
 	 */

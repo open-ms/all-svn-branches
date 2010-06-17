@@ -42,7 +42,10 @@ START_TEST(DataSubset, "$Id$")
 DataSubset* ptr = 0;
 START_SECTION(DataSubset())
 {
-	DataPoint p(23.13,444.2,15.2,1);
+	DataPoint p;
+		p.mz=444.2;
+		p.rt=23.13;
+		p.feature_id=1;
 	ptr = new DataSubset(p);
 	TEST_NOT_EQUAL(ptr, 0)
 }
@@ -57,7 +60,10 @@ END_SECTION
 
 START_SECTION((DataSubset(DataPoint &data_point)))
 {
-  DataPoint p(23.13,444.2,15.2,1);
+  DataPoint p;
+  		p.mz=444.2;
+  		p.rt=23.13;
+  		p.feature_id=1;
   DataSubset subset(p);
   TEST_REAL_SIMILAR(subset.rt,23.13);
   TEST_REAL_SIMILAR(subset.mz,444.2);
@@ -67,7 +73,10 @@ END_SECTION
 
 START_SECTION((DataSubset(const DataSubset &copy)))
 {
-	DataPoint p(23.13,444.2,15.2,1);
+	DataPoint p;
+			p.mz=444.2;
+			p.rt=23.13;
+			p.feature_id=1;
 	DataSubset subset(p);
 	DataSubset copy(subset);
 	TEST_REAL_SIMILAR(copy.rt,23.13);
@@ -78,7 +87,10 @@ END_SECTION
 
 START_SECTION((DataSubset(const DataSubset *copy_ptr)))
 {
-	DataPoint p(23.13,444.2,15.2,1);
+	DataPoint p;
+			p.mz=444.2;
+			p.rt=23.13;
+			p.feature_id=1;
 	DataSubset subset(p);
 	DataSubset copy(&subset);
 	TEST_REAL_SIMILAR(copy.rt,23.13);
@@ -89,9 +101,18 @@ END_SECTION
 
 START_SECTION((Int getID()))
 {
-	DataPoint p1(23.13,444.2,15.2,4);
-	DataPoint p2(223.13,144.2,15.2,5);
-	DataPoint p3(223.13,144.2,15.2,6);
+	DataPoint p1;
+	p1.mz=444.2;
+	p1.rt=23.13;
+	p1.feature_id=4;
+	DataPoint p2;
+	p2.mz=144.2;
+	p2.rt=223.13;
+	p2.feature_id=5;
+	DataPoint p3;
+	p3.mz=144.2;
+	p3.rt=223.13;
+	p3.feature_id=6;
 	DataSubset subset(p1);
 	subset.data_points.push_back(&p2);
 	subset.data_points.push_back(&p3);
@@ -101,9 +122,18 @@ END_SECTION
 
 START_SECTION((Int operator<(const DataSubset &el) const ))
 {
-	DataPoint p1(23.13,444.2,15.2,4);
-	DataPoint p2(223.13,144.2,15.2,5);
-	DataPoint p3(223.13,144.2,15.2,6);
+		DataPoint p1;
+		p1.mz=444.2;
+		p1.rt=23.13;
+		p1.feature_id=4;
+		DataPoint p2;
+		p2.mz=144.2;
+		p2.rt=223.13;
+		p2.feature_id=5;
+		DataPoint p3;
+		p3.mz=144.2;
+		p3.rt=223.13;
+		p3.feature_id=6;
 	DataSubset subset(p1);
 	subset.data_points.push_back(&p2);
 	subset.data_points.push_back(&p3);
@@ -114,9 +144,18 @@ END_SECTION
 
 START_SECTION((Int size()))
 {
-	DataPoint p1(23.13,444.2,15.2,4);
-	DataPoint p2(223.13,144.2,15.2,5);
-	DataPoint p3(223.13,144.2,15.2,6);
+		DataPoint p1;
+		p1.mz=444.2;
+		p1.rt=23.13;
+		p1.feature_id=4;
+		DataPoint p2;
+		p2.mz=144.2;
+		p2.rt=223.13;
+		p2.feature_id=5;
+		DataPoint p3;
+		p3.mz=144.2;
+		p3.rt=223.13;
+		p3.feature_id=6;
 	DataSubset subset(p1);
 	subset.data_points.push_back(&p2);
 	subset.data_points.push_back(&p3);
@@ -126,11 +165,22 @@ END_SECTION
 
 START_SECTION((bool operator!=(const DataSubset &el) const ))
 {
-	DataPoint p1(23.13,444.2,15.2,4);
+	DataPoint p1;
+	p1.mz=444.2;
+	p1.rt=23.13;
+	p1.feature_id=4;
+
 	DataSubset subset(p1);
-	DataPoint p2(223.13,144.2,15.2,5);
+	DataPoint p2;
+	p2.mz=144.2;
+	p2.rt=223.13;
+	p2.feature_id=5;
+
 	subset.data_points.push_back(&p2);
-	DataPoint p3(223.13,144.2,15.2,6);
+	DataPoint p3;
+	p3.mz=144.2;
+	p3.rt=223.13;
+	p3.feature_id=6;
 	DataSubset subset1(p3);
 	subset1.data_points.push_back(&p2);
 	TEST_EQUAL(subset!=subset1,true);
@@ -139,8 +189,14 @@ END_SECTION
 
 START_SECTION((bool operator==(const DataSubset &el) const ))
 {
-	DataPoint p1(23.13,444.2,15.2,4);
-	DataPoint p2(223.13,144.2,15.2,5);
+	DataPoint p1;
+	p1.mz=444.2;
+	p1.rt=23.13;
+	p1.feature_id=4;
+	DataPoint p2;
+	p2.mz=144.2;
+	p2.rt=223.13;
+	p2.feature_id=5;
 	DataSubset subset(p1);
 	subset.data_points.push_back(&p2);
 	DataSubset subset1(p1);

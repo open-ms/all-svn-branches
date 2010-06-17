@@ -28,64 +28,58 @@
 #include <OpenMS/CONCEPT/ClassTest.h>
 
 ///////////////////////////
-#include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
+#include <OpenMS/TODO/SILACFiltering.h>
 ///////////////////////////
 
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(CentroidLinkage, "$Id$")
+START_TEST(SILACFiltering, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-CentroidLinkage* ptr = 0;
-START_SECTION(CentroidLinkage())
+SILACFiltering* ptr = 0;
+START_SECTION(SILACFiltering())
 {
-	ptr = new CentroidLinkage(0.1);
+	ptr = new SILACFiltering();
 	TEST_NOT_EQUAL(ptr, 0)
 }
 END_SECTION
 
-START_SECTION(~CentroidLinkage())
+START_SECTION(~SILACFiltering())
 {
 	delete ptr;
 }
 END_SECTION
 
-
-
-START_SECTION((CentroidLinkage(DoubleReal rt_scaling_)))
+START_SECTION((SILACFiltering(MSExperiment< Peak1D > &exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_)))
 {
-	CentroidLinkage cl_temp(0.05);
-  TEST_EQUAL(cl_temp.rt_scaling,0.05)
+  // TODO
 }
 END_SECTION
 
-CentroidLinkage cl(0.05);
-vector<DataPoint> points;
-DataPoint p1;
-p1.rt=10;
-p1.mz=30;
-p1.feature_id=0;
-DataPoint p2;
-p2.rt=40;
-p2.mz=20;
-p2.feature_id=1;
-points.push_back(p1);
-points.push_back(p2);
-
-START_SECTION((DoubleReal getDistance(DataSubset &subset1, DataSubset &subset2)))
+START_SECTION((virtual ~SILACFiltering()))
 {
-  DataSubset subset1(points[0]);
-  DataSubset subset2(points[1]);
-  TEST_REAL_SIMILAR(cl.getDistance(subset1,subset2),10.111874);
+  // TODO
 }
 END_SECTION
 
-START_SECTION((DoubleReal getDistance(DataPoint &point1, DataPoint &point2)))
+START_SECTION((void addFilter(SILACFilter &filter)))
 {
-	TEST_REAL_SIMILAR(cl.getDistance(points[0],points[1]),10.111874);
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void filterDataPoints()))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((void blockValue(DoubleReal value, SILACFilter *source)))
+{
+  // TODO
 }
 END_SECTION
 

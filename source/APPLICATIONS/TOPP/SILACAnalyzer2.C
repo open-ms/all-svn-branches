@@ -230,8 +230,8 @@ private:
 			rt_spacing.push_back(exp[i].getRT()-exp[i-1].getRT());
 		}
 		std::sort(mz_spacing.begin(),mz_spacing.end());
-//		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
-		mz_stepwidth=0.01;
+		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
+//		mz_stepwidth=0.01;
 		std::sort(rt_spacing.begin(),rt_spacing.end());
 		rt_stepwidth=rt_spacing[rt_spacing.size()/2];
 
@@ -389,6 +389,29 @@ public:
 		return tmp;
 	}
 
+	std::pair<DoubleReal,DoubleReal> clusterMaximum(DataPoint& element,Size pos1,Size pos2,Size pos3)
+	{
+		std::vector<DoubleReal>& intensities=element.intensities;
+		DoubleReal max_intensity=0.0;
+		DoubleReal max_mz=0.0;
+
+		if (intensities[pos1] > max_intensity)
+		{
+			max_intensity = intensities[pos1];
+			max_mz = element.mz; // m/z of maximum intensity in the light cluster
+		}
+		if (intensities[pos2] > max_intensity)
+		{
+			max_intensity = intensities[pos2];
+			max_mz = element.mz + 1 / element.charge;
+		}
+		if (intensities[pos3] > max_intensity)
+		{
+			max_intensity = intensities[pos3];
+			max_mz = element.mz + 2.0 * (1 / element.charge);
+		}
+		return std::make_pair(max_mz,max_intensity);
+	}
 
 
 	ExitCodes main_(int , const char**)
@@ -403,417 +426,461 @@ public:
 			debug_trunk = in.substr(0,in.find_first_of('.'));
 		}
 
-		//iterate over all charge states
-		for (UInt charge=charge_min; charge<=charge_min; ++charge)
+		//-------------------------------------------------------------
+		// loading input
+		//-------------------------------------------------------------
+		MzMLFile file;
+		MSExperiment<Peak1D> exp;
+
+		file.setLogType(log_type_);
+		//			file.getOptions().setIntensityRange(DRange<1>(intensity_cutoff,std::numeric_limits<DoubleReal>::max()));
+		file.load(in,exp);
+
+		//set input map size (only once)
+
+		exp.updateRanges();
+		all_pairs.getFileDescriptions()[0].size = exp.getSize();
+		all_pairs.getFileDescriptions()[1].size = exp.getSize();
+		all_pairs.getFileDescriptions()[2].size = exp.getSize();
+
+		//-------------------------------------------------------------
+		// build SILACData structure
+		//-------------------------------------------------------------
+
+		std::vector<std::vector<DataPoint> > data=buildDataStructure(exp);
+
+		//-------------------------------------------------------------
+		// Perform clustering
+		//-------------------------------------------------------------
+
+		std::vector<std::vector<Real> > silhouettes;
+		std::vector<Cluster> clusters;
+		std::vector<Tree> subtrees;
+		for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin();data_it!=data.end();++data_it)
 		{
-			std::cout << "charge state: " << charge << "+" << std::endl;
+			CentroidLinkage method(rt_scaling);
+			HashClustering c(*data_it,rt_threshold,mz_threshold,method);
+			c.setLogType(log_type_);
+			c.performClustering();
+			std::vector<Tree> act_subtrees;
+			c.getSubtrees(subtrees);
+			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
+			std::vector<Cluster> act_clusters;
+			c.createClusters(act_clusters);
+			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
+			const std::vector<std::vector<Real> >& act_silhouettes=c.getSilhouetteValues();
+			silhouettes.insert(silhouettes.end(),act_silhouettes.begin(),act_silhouettes.end());
+		}
 
 
-			// For each charge state run the experimental data (exp) are loaded again. Either the raw data (exp) or the distance matrix (distance_matrix) are in memory which keeps the memory footprint low.
-
-			//-------------------------------------------------------------
-			// loading input
-			//-------------------------------------------------------------
-			MzMLFile file;
-			MSExperiment<Peak1D> exp;
-
-			file.setLogType(log_type_);
-//			file.getOptions().setIntensityRange(DRange<1>(intensity_cutoff,std::numeric_limits<DoubleReal>::max()));
-			file.load(in,exp);
-
-			//set input map size (only once)
-			if (charge==charge_min)
+		if (getFlag_("silac_debug"))
+		{
+			std::vector<String> colors;
+			// 16 HTML colors
+			colors.push_back("#00FFFF");
+			colors.push_back("#000000");
+			colors.push_back("#0000FF");
+			colors.push_back("#FF00FF");
+			colors.push_back("#008000");
+			colors.push_back("#808080");
+			colors.push_back("#00FF00");
+			colors.push_back("#800000");
+			colors.push_back("#000080");
+			colors.push_back("#808000");
+			colors.push_back("#800080");
+			colors.push_back("#FF0000");
+			colors.push_back("#C0C0C0");
+			colors.push_back("#008080");
+			colors.push_back("#FFFF00");
+			Size subtree_number=1;
+			for (std::vector<std::vector<BinaryTreeNode> >::iterator subtree_it=subtrees.begin();subtree_it!=subtrees.end();++subtree_it)
 			{
-				exp.updateRanges();
-				all_pairs.getFileDescriptions()[0].size = exp.getSize();
-				all_pairs.getFileDescriptions()[1].size = exp.getSize();
-				all_pairs.getFileDescriptions()[2].size = exp.getSize();
-			}
-
-			//-------------------------------------------------------------
-			// build SILACData structure
-			//-------------------------------------------------------------
-
-			std::vector<std::vector<DataPoint> > data=buildDataStructure(exp);
-
-			//-------------------------------------------------------------
-			// Perform clustering
-			//-------------------------------------------------------------
-
-			std::vector<std::vector<Real> > silhouettes;
-			std::vector<Cluster> clusters;
-			std::vector<Tree> subtrees;
-			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin();data_it!=data.end();++data_it)
-			{
-				CentroidLinkage method(rt_scaling);
-				HashClustering c(*data_it,rt_threshold,mz_threshold,method);
-				c.setLogType(log_type_);
-				c.performClustering();
-				std::vector<Tree> act_subtrees;
-				c.getSubtrees(subtrees);
-				subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
-				std::vector<Cluster> act_clusters;
-				c.createClusters(act_clusters);
-				clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
-				const std::vector<std::vector<Real> >& act_silhouettes=c.getSilhouetteValues();
-				silhouettes.insert(silhouettes.end(),act_silhouettes.begin(),act_silhouettes.end());
-			}
-
-
-			if (getFlag_("silac_debug"))
-			{
-				std::vector<String> colors;
-				// 16 HTML colors
-				colors.push_back("#00FFFF");
-				colors.push_back("#000000");
-				colors.push_back("#0000FF");
-				colors.push_back("#FF00FF");
-				colors.push_back("#008000");
-				colors.push_back("#808080");
-				colors.push_back("#00FF00");
-				colors.push_back("#800000");
-				colors.push_back("#000080");
-				colors.push_back("#808000");
-				colors.push_back("#800080");
-				colors.push_back("#FF0000");
-				colors.push_back("#C0C0C0");
-				colors.push_back("#008080");
-				colors.push_back("#FFFF00");
-				Size subtree_number=1;
-				for (std::vector<std::vector<BinaryTreeNode> >::iterator subtree_it=subtrees.begin();subtree_it!=subtrees.end();++subtree_it)
+				std::set<DataPoint*> leafs;
+				for (std::vector<BinaryTreeNode>::iterator tree_it=subtree_it->begin(); tree_it!= subtree_it->end(); ++tree_it)
 				{
-					std::set<DataPoint*> leafs;
-					for (std::vector<BinaryTreeNode>::iterator tree_it=subtree_it->begin(); tree_it!= subtree_it->end(); ++tree_it)
-					{
-						leafs.insert(tree_it->data1);
-						leafs.insert(tree_it->data2);
-					}
-					for (std::set<DataPoint*>::iterator leafs_it=leafs.begin();leafs_it!=leafs.end();++leafs_it)
-					{
-						//visualize the light variant
-						Feature tree_point;
-						tree_point.setRT((*leafs_it)->rt);
-						tree_point.setMZ((*leafs_it)->mz);
-						tree_point.setIntensity((*leafs_it)->intensities[0]);
-						tree_point.setCharge(charge);
-						tree_point.setMetaValue("subtree",subtree_number);
-						tree_point.setMetaValue("color",colors[subtree_number%colors.size()]);
-						subtree_points.push_back(tree_point);
-					}
-					++subtree_number;
+					leafs.insert(tree_it->data1);
+					leafs.insert(tree_it->data2);
 				}
-
-				// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
-				subtree_points.sortByPosition();
+				for (std::set<DataPoint*>::iterator leafs_it=leafs.begin();leafs_it!=leafs.end();++leafs_it)
+				{
+					//visualize the light variant
+					Feature tree_point;
+					tree_point.setRT((*leafs_it)->rt);
+					tree_point.setMZ((*leafs_it)->mz);
+					tree_point.setIntensity((*leafs_it)->intensities[0]);
+					tree_point.setCharge((*leafs_it)->charge);
+					tree_point.setMetaValue("subtree",subtree_number);
+					tree_point.setMetaValue("color",colors[subtree_number%colors.size()]);
+					subtree_points.push_back(tree_point);
+				}
+				++subtree_number;
 			}
 
-			if (out!="")
+			// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
+			subtree_points.sortByPosition();
+		}
+
+		if (out!="")
+		{
+			Size i=0;
+			for(std::vector<Cluster>::iterator cluster_it=clusters.begin();cluster_it!=clusters.end();++cluster_it)
 			{
-				Size cluster_id=0;
-				for(std::vector<Cluster>::iterator cluster_it=clusters.begin();cluster_it!=clusters.end();++cluster_it)
+				DoubleReal rt = 0.0;
+				DoubleReal mz = 0.0;
+				DoubleReal int_l = 0.0;
+				DoubleReal int_m = 0.0;
+				DoubleReal int_h = 0.0;
+				Int silac_type=(*(cluster_it->begin()))->silac_type;
+				Int charge=(*(cluster_it->begin()))->charge;
+				DoubleReal envelope_distance_light_heavy=(*(cluster_it->begin()))->envelope_distance_light_heavy;
+				DoubleReal envelope_distance_light_medium=(*(cluster_it->begin()))->envelope_distance_light_medium;
+				// intensity vectors used for linear regression
+				std::vector<DoubleReal> i1(3*cluster_it->size());
+				std::vector<DoubleReal> i2(3*cluster_it->size());
+				std::vector<DoubleReal> i3(3*cluster_it->size());
+				UInt j=0;
+				for (Cluster::iterator el_it=cluster_it->begin();el_it!=cluster_it->end();++el_it)
 				{
-					DoubleReal mz=0;
-					DoubleReal mz_handle=0;
-					DoubleReal rt=0;
-					DoubleReal intensity=0;
-					//Calculate center of consensus feature for output
-					for (Cluster::iterator el_it=cluster_it->begin();el_it!=cluster_it->end();++el_it)
+					std::vector<DoubleReal> intensities=(*el_it)->intensities;
+					rt += (*el_it)->rt;
+					i1[3*j] = intensities[0];
+					i1[3*j+1] = intensities[1];
+					i1[3*j+2] = intensities[2];
+					i2[3*j] = intensities[3];
+					i2[3*j+1] = intensities[4];
+					i2[3*j+2] = intensities[5];
+					if ((*el_it)->silac_type == DataPoint::TRIPLE)
 					{
-						mz+=(*el_it)->mz;
-						mz_handle+=(*el_it)->mz+(*el_it)->envelope_distance_light_heavy;
-						rt+=(*el_it)->rt;
-						intensity+=(*el_it)->intensities[0];
+						i3[3*j] = intensities[6];
+						i3[3*j+1] = intensities[7];
+						i3[3*j+2] = intensities[8];
 					}
-					//Prepare output
-					mz/=cluster_it->size();
-					rt/=cluster_it->size();
-					mz_handle/=cluster_it->size();
-					intensity/=cluster_it->size();
-					ConsensusFeature pair_light_heavy;
-					pair_light_heavy.setRT(rt);
-					pair_light_heavy.setMZ(mz);
-					pair_light_heavy.setIntensity(intensity);
-					pair_light_heavy.setCharge(charge);
-//					pair_light_heavy.setQuality(*max_el);
-					FeatureHandle handle;
+
+					std::pair<DoubleReal,DoubleReal> low_maximum=clusterMaximum(**el_it,0,1,2);
+					if (low_maximum.second > int_l)
+					{
+						int_l=low_maximum.second;
+						mz=low_maximum.first;
+					}
+
+					if ((*el_it)->silac_type == DataPoint::DOUBLE)
+					{
+						std::pair<DoubleReal,DoubleReal> heavy_maximum=clusterMaximum(**el_it,3,4,5);
+						if (low_maximum.second > int_l)
+						{
+							int_h=low_maximum.second;
+							mz=low_maximum.first;
+						}
+					}
+					else
+					{
+						std::pair<DoubleReal,DoubleReal> medium_maximum=clusterMaximum(**el_it,3,4,5);
+						if (medium_maximum.second > int_l)
+						{
+							int_m=medium_maximum.second;
+							mz=medium_maximum.first;
+						}
+						std::pair<DoubleReal,DoubleReal> heavy_maximum=clusterMaximum(**el_it,6,7,8);
+						if (heavy_maximum.second > int_l)
+						{
+							int_h=heavy_maximum.second;
+							mz=heavy_maximum.first;
+						}
+					}
+					++j;
+				}
+				rt /= (DoubleReal)(cluster_it->size()); // average retention time
+
+				Math::LinearRegression linear_reg_light_heavy;
+				FeatureHandle handle;
+				if (silac_type==DataPoint::TRIPLE)
+				{
+					linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i3.begin());
+					Math::LinearRegression linear_reg_light_medium;
+					linear_reg_light_medium.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
+					//create consensus feature for light medium SILAC pair
+					ConsensusFeature pair_light_medium;
+					pair_light_medium.setRT(rt);
+					pair_light_medium.setMZ(mz);
+					pair_light_medium.setIntensity(linear_reg_light_medium.getSlope());
+					pair_light_medium.setCharge(charge);
+					pair_light_medium.setQuality(linear_reg_light_medium.getRSquared());
 					handle.setRT(rt);
 					handle.setMZ(mz);
-					handle.setIntensity(intensity);
+					handle.setIntensity(int_l);
 					handle.setCharge(charge);
 					handle.setMapIndex(0);
-					handle.setUniqueId(cluster_id);
-					pair_light_heavy.insert(handle);
+					handle.setUniqueId(i);
+					pair_light_medium.insert(handle);
 					handle.setRT(rt);
-					handle.setMZ(mz_handle);
-					handle.setIntensity(intensity);
+					handle.setMZ(mz+envelope_distance_light_medium);
+					handle.setIntensity(int_m);
 					handle.setCharge(charge);
-					handle.setMapIndex(2);
-					handle.setUniqueId(cluster_id);
-					pair_light_heavy.insert(handle);
-					all_pairs.push_back(pair_light_heavy);
-					++cluster_id;
+					handle.setMapIndex(1);
+					handle.setUniqueId(i);
+					pair_light_medium.insert(handle);
+					all_pairs.push_back(pair_light_medium);
 				}
+				else
+				{
+					linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
+				}
+				//create consensus feature for light heavy SILAC pair
+				ConsensusFeature pair_light_heavy;
+				pair_light_heavy.setRT(rt);
+				pair_light_heavy.setMZ(mz);
+				pair_light_heavy.setIntensity(linear_reg_light_heavy.getSlope());
+				pair_light_heavy.setCharge(charge);
+				pair_light_heavy.setQuality(linear_reg_light_heavy.getRSquared());
+				handle.setRT(rt);
+				handle.setMZ(mz);
+				handle.setIntensity(int_l);
+				handle.setCharge(charge);
+				handle.setMapIndex(0);
+				handle.setUniqueId(i);
+				pair_light_heavy.insert(handle);
+				handle.setRT(rt);
+				handle.setMZ(mz+envelope_distance_light_heavy);
+				handle.setIntensity(int_h);
+				handle.setCharge(charge);
+				handle.setMapIndex(2);
+				handle.setUniqueId(i);
+				pair_light_heavy.insert(handle);
+				all_pairs.push_back(pair_light_heavy);
+				++i;
 			}
+		}
 
-			//--------------------------------------------------------------
-			//create features (for visualization)
-			//--------------------------------------------------------------
-			if (out_visual!="")
+		//--------------------------------------------------------------
+		//create features (for visualization)
+		//--------------------------------------------------------------
+		if (out_visual!="")
+		{
+			std::vector<String> colors;
+			// 16 HTML colors
+			colors.push_back("#00FFFF");
+			colors.push_back("#000000");
+			colors.push_back("#0000FF");
+			colors.push_back("#FF00FF");
+			colors.push_back("#008000");
+			colors.push_back("#808080");
+			colors.push_back("#00FF00");
+			colors.push_back("#800000");
+			colors.push_back("#000080");
+			colors.push_back("#808000");
+			colors.push_back("#800080");
+			colors.push_back("#FF0000");
+			colors.push_back("#C0C0C0");
+			colors.push_back("#008080");
+			colors.push_back("#FFFF00");
+			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
 			{
-				std::vector<String> colors;
-				// 16 HTML colors
-				colors.push_back("#00FFFF");
-				colors.push_back("#000000");
-				colors.push_back("#0000FF");
-				colors.push_back("#FF00FF");
-				colors.push_back("#008000");
-				colors.push_back("#808080");
-				colors.push_back("#00FF00");
-				colors.push_back("#800000");
-				colors.push_back("#000080");
-				colors.push_back("#808000");
-				colors.push_back("#800080");
-				colors.push_back("#FF0000");
-				colors.push_back("#C0C0C0");
-				colors.push_back("#008080");
-				colors.push_back("#FFFF00");
-				for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
+				for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
 				{
-					for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
-					{
-						//visualize the light variant
-						Feature cluster_point;
-						cluster_point.setRT(it->rt);
-						cluster_point.setMZ(it->mz);
-						cluster_point.setIntensity(it->intensities[0]);
-						cluster_point.setCharge(it->charge);
-						cluster_point.setOverallQuality(it->quality);
-						cluster_point.setQuality(0,it->quality);
-						if (it->silac_type==2)
-							cluster_point.setMetaValue("SILAC type","double");
-						else if (it->silac_type==3)
-							cluster_point.setMetaValue("SILAC type","triple");
-						cluster_point.setMetaValue("Mass shift (l/h)",it->envelope_distance_light_heavy);
-						cluster_point.setMetaValue("Cluster id",it->cluster_id);
-						cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
-						if (getFlag_("silac_debug"))
-							cluster_point.setMetaValue("feature_id",it->feature_id);
-						all_cluster_points.push_back(cluster_point);
-					}
+					//visualize the light variant
+					Feature cluster_point;
+					cluster_point.setRT(it->rt);
+					cluster_point.setMZ(it->mz);
+					cluster_point.setIntensity(it->intensities[0]);
+					cluster_point.setCharge(it->charge);
+					cluster_point.setOverallQuality(it->quality);
+					cluster_point.setQuality(0,it->quality);
+					if (it->silac_type==2)
+						cluster_point.setMetaValue("SILAC type","double");
+					else if (it->silac_type==3)
+						cluster_point.setMetaValue("SILAC type","triple");
+					cluster_point.setMetaValue("Mass shift (l/h)",it->envelope_distance_light_heavy);
+					cluster_point.setMetaValue("Cluster id",it->cluster_id);
+					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
+					if (getFlag_("silac_debug"))
+						cluster_point.setMetaValue("feature_id",it->feature_id);
+					all_cluster_points.push_back(cluster_point);
 				}
-				// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
-				all_cluster_points.sortByPosition();
 			}
-
-//			if (getFlag_("silac_debug"))
-//			{
-//				std::vector<String> colors;
-//				// 16 HTML colors
-//				colors.push_back("#00FFFF");
-//				colors.push_back("#000000");
-//				colors.push_back("#0000FF");
-//				colors.push_back("#FF00FF");
-//				colors.push_back("#008000");
-//				colors.push_back("#808080");
-//				colors.push_back("#00FF00");
-//				colors.push_back("#800000");
-//				colors.push_back("#000080");
-//				colors.push_back("#808000");
-//				colors.push_back("#800080");
-//				colors.push_back("#FF0000");
-//				colors.push_back("#C0C0C0");
-//				colors.push_back("#008080");
-//				colors.push_back("#FFFF00");
-//
-//				for (std::vector<DataPoint>::iterator it=data.begin(); it!= data.end(); ++it)
-//				{
-//					//visualize the light variant
-//					Feature cluster_point;
-//					cluster_point.setRT(it->rt);
-//					cluster_point.setMZ(it->mz);
-//					cluster_point.setIntensity(it->intensities[0]);
-//					cluster_point.setCharge(it->charge);
-//					if (it->silac_type==2)
-//						cluster_point.setMetaValue("SILAC type","double");
-//					else if (it->silac_type==3)
-//						cluster_point.setMetaValue("SILAC type","triple");
-//					cluster_point.setMetaValue("Mass shift (l/h)",it->envelope_distance_light_heavy);
-//					cluster_point.setMetaValue("Cluster id",it->cluster_id);
-//					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
-//					if (getFlag_("silac_debug"))
-//						cluster_point.setMetaValue("feature_id",it->feature_id);
-//					all_cluster_points.push_back(cluster_point);
-//				}
-//				// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
-//				all_cluster_points.sortByPosition();
-//			}
+			// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
+			all_cluster_points.sortByPosition();
+		}
 
 
-			//Sort data points: High cluster numbers first
-//						std::sort(data.begin(),data.end(),clusterCmp);
+		//Sort data points: High cluster numbers first
+		//						std::sort(data.begin(),data.end(),clusterCmp);
 
 
-//			//-------------------------------------------------------------
-//			// generate debug output
-//			//-------------------------------------------------------------
-//			// strings repeatedly used in debug output
+		//-------------------------------------------------------------
+		// generate debug output
+		//-------------------------------------------------------------
+		// strings repeatedly used in debug output
 
-			if (getFlag_("silac_debug"))
+		if (getFlag_("silac_debug"))
+		{
+			// names of dat files
+			String debug_clusters_dat = debug_trunk + "_clusters.dat";
+
+			// write all cluster data points to *_clusters.dat
+
+			std::ofstream stream_clusters(debug_clusters_dat.c_str());
+			stream_clusters << "cluster_id cluster_size rt mz int" << std::endl;
+			Int current_id = -1;
+			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
 			{
-				String debug_suffix;
-				if (type=="double") {
-					debug_suffix = "_" + String(charge) +"+";
-				}
-				else {
-					debug_suffix = "_" + String(charge) +"+";
-				}
-				// names of dat files
-				String debug_clusters_dat = debug_trunk + debug_suffix + "_clusters.dat";
-
-				// write all cluster data points to *_clusters.dat
-
-				std::ofstream stream_clusters(debug_clusters_dat.c_str());
-				stream_clusters << "cluster_id cluster_size rt mz int" << std::endl;
-				Int current_id = -1;
-				for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
+				for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
 				{
-					for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
-					{
-						if (it->cluster_id != current_id) stream_clusters << std::endl << std::endl;
-						stream_clusters << it->cluster_id << " " << it->cluster_size << " "<< it->rt << " " << it->mz << " " << it->intensities[0] << std::endl;
-						current_id = it->cluster_id;
-					}
+					if (it->cluster_id != current_id) stream_clusters << std::endl << std::endl;
+					stream_clusters << it->cluster_id << " " << it->cluster_size << " "<< it->rt << " " << it->mz << " " << it->intensities[0] << std::endl;
+					current_id = it->cluster_id;
 				}
-				stream_clusters.close();
+			}
+			stream_clusters.close();
 
-				String debug_silhouettes_dat = debug_trunk + debug_suffix + "_silhouettes.dat";
-				std::ofstream stream_silhouettes(debug_silhouettes_dat.c_str());
+			String debug_silhouettes_dat = debug_trunk + "_silhouettes.dat";
+			std::ofstream stream_silhouettes(debug_silhouettes_dat.c_str());
 
-				for (std::vector<std::vector<Real> >::iterator asw_vector_it=silhouettes.begin();asw_vector_it!=silhouettes.end();++asw_vector_it)
+			for (std::vector<std::vector<Real> >::iterator asw_vector_it=silhouettes.begin();asw_vector_it!=silhouettes.end();++asw_vector_it)
+			{
+				for (std::vector<Real>::iterator asw_it=asw_vector_it->begin();asw_it!=asw_vector_it->end();++asw_it)
 				{
-					for (std::vector<Real>::iterator asw_it=asw_vector_it->begin();asw_it!=asw_vector_it->end();++asw_it)
-					{
-						stream_silhouettes << *asw_it << "\t";
-					}
-					stream_silhouettes << std::endl;
+					stream_silhouettes << *asw_it << "\t";
 				}
-				stream_silhouettes.close();
+				stream_silhouettes << std::endl;
+			}
+			stream_silhouettes.close();
 
-				String debug_silhouettes_r = debug_trunk + debug_suffix + "_silhouettes.R";
-				std::ofstream stream_r(debug_silhouettes_r.c_str());
-				stream_r << "# SILACAnalyzer debug script to run in R, which creates a pdf file containing a silhouette plot for every clustered subtree"<<std::endl;
-				stream_r << "# This script can be executed from the command line using 'Rscript "<<debug_silhouettes_r<<"'"<<std::endl;
-				stream_r << "con <- file(\"" << debug_silhouettes_dat << "\",\"r\")" << std::endl;
-				stream_r << "lines <- readLines(con, n=-1)" << std::endl;
-				String pdf_name= debug_trunk + debug_suffix + "_silhouettes.pdf";
-				String pdf_title= debug_trunk + debug_suffix;
-				stream_r << "pdf(\""<< pdf_name << "\", paper=\"special\",width=13,height=(2*length(lines)),title = \"Silhoutte Plots for "<< pdf_title << "\")" << std::endl;
-				stream_r << "par(mfrow=c(ceiling(length(lines)/2),2))" << std::endl;
-				stream_r << "for (i in 1:length(lines))" << std::endl;
-				stream_r << "{" << std::endl;
-				stream_r << "text_vec <- strsplit(lines[i],\"\\t\")" << std::endl;
-				stream_r << "asw <- as.numeric(text_vec[[1]])" << std::endl;
-				stream_r << "aswrange <- asw[(length(asw)):(0)]" << std::endl;
-				stream_r << "plot (1:length(asw),aswrange,type=\"l\",xlab=\"# Cluster\",ylab=\"asw\",main=paste(\"Subtree \",i,\": max n \",which.max(aswrange)))" << std::endl;
-				stream_r << "}" << std::endl;
-				stream_r << "close(con)" << std::endl;
-				stream_r << "dev.off()" << std::endl;
-				stream_r.close();
+			String debug_intensities_dat = debug_trunk + "_intensities.dat";
+			std::ofstream stream_intensities(debug_intensities_dat.c_str());
+			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
+			{
+				for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
+				{
+					std::vector<DoubleReal> intensities=it->intensities;
+					stream_intensities << intensities[0] << "\t" << intensities[3] << std::endl;
+				}
+			}
+			stream_intensities.close();
 
-//				// write ratios of all cluster to *.dat
-//				std::ofstream stream_ratios(debug_dat.c_str());
-//				if (type=="double") {
-//					stream_ratios << "cluster_id cluster_size rt mz ratio_light_heavy intensity" << std::endl;
-//				}
-//				else {
-//					stream_ratios << "cluster_id cluster_size rt mz ratio_light_medium ratio_light_heavy intensity" << std::endl;
-//				}
-//				for (Size i=0; i<best_clusters.size();++i)
-//				{
-//					DoubleReal rt = 0.0;
-//					DoubleReal mz = 0.0;
-//					DoubleReal int_l = 0.0;
-//					DoubleReal int_m = 0.0;
-//					DoubleReal int_h = 0.0;
-//					// intensity vectors used for linear regression
-//					std::vector<DoubleReal> i1(3*cluster_size[i]);
-//					std::vector<DoubleReal> i2(3*cluster_size[i]);
-//					std::vector<DoubleReal> i3(3*cluster_size[i]);
-//					UInt j=0;
-//					DoubleReal isotope_distance = 1.0 / (DoubleReal)charge;
-//					for (std::vector<SILACData>::iterator it=data.begin(); it!= data.end(); ++it)
-//					{
-//						if ((Size)it->cluster_id==i)
-//						{
-//							i1[3*j] = it->int1;
-//							i2[3*j] = it->int4;
-//							i3[3*j] = it->int7;
-//							i1[3*j+1] = it->int2;
-//							i2[3*j+1] = it->int5;
-//							i3[3*j+1] = it->int8;
-//							i1[3*j+2] = it->int3;
-//							i2[3*j+2] = it->int6;
-//							i3[3*j+2] = it->int9;
-//
-//							rt += it->rt;
-//							if (it->int1>int_l)
-//							{
-//								int_l = it->int1;
-//								mz = it->mz;
-//							}
-//							if (it->int2>int_l)
-//							{
-//								int_l = it->int2;
-//								mz = it->mz + isotope_distance;
-//							}
-//							if (it->int3>int_l)
-//							{
-//								int_l = it->int3;
-//								mz = it->mz + 2.0 * isotope_distance;
-//							}
-//							if (it->int4>int_m)
-//							{
-//								int_m = it->int4;
-//							}
-//							if (it->int5>int_m)
-//							{
-//								int_m = it->int5;
-//							}
-//							if (it->int6>int_m)
-//							{
-//								int_m = it->int6;
-//							}
-//							if (it->int7>int_h)
-//							{
-//								int_h = it->int7;
-//							}
-//							if (it->int8>int_h)
-//							{
-//								int_h = it->int8;
-//							}
-//							if (it->int9>int_h)
-//							{
-//								int_h = it->int9;
-//							}
-//							++j;
-//						}
-//					}
-//					rt /= (DoubleReal)(cluster_size[i]); // average retention time
-//					Math::LinearRegression linear_reg_light_medium;
-//					Math::LinearRegression linear_reg_light_heavy;
-//					linear_reg_light_medium.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
-//					linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i3.begin());
-//					if (type=="double") {
-//						stream_ratios << i << " " << cluster_size[i] << " " << rt << " " << mz << " " << linear_reg_light_heavy.getSlope() << " " << *max_element(i1.begin(),i1.end()) + *max_element(i2.begin(),i2.end()) << std::endl;
-//					}
-//					else {
-//						stream_ratios << i << " " << cluster_size[i] << " " << rt << " " << mz << " " << linear_reg_light_medium.getSlope() << " " << linear_reg_light_heavy.getSlope() << " " << *max_element(i1.begin(),i1.end()) + *max_element(i2.begin(),i2.end()) << std::endl;
-//					}
-//				}
-//				stream_ratios.close();
+			Size data_size=0;
+			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
+			{
+				data_size+=data_it->size();
 			}
 
-		} //end iterate over all charge states
+			String debug_silhouettes_r = debug_trunk + "_silhouettes.R";
+			std::ofstream stream_r(debug_silhouettes_r.c_str());
+			stream_r << "# SILACAnalyzer debug script to run in R, which creates a pdf file containing a silhouette plot for every clustered subtree"<<std::endl;
+			stream_r << "# This script can be executed from the command line using 'Rscript "<<debug_silhouettes_r<<"'"<<std::endl;
+			stream_r << "con <- file(\"" << debug_silhouettes_dat << "\",\"r\")" << std::endl;
+			stream_r << "lines <- readLines(con, n=-1)" << std::endl;
+			String pdf_name= debug_trunk + "_silhouettes.pdf";
+			String pdf_title= debug_trunk;
+			stream_r << "pdf(\""<< pdf_name << "\", paper=\"special\",width=13,height=(2*length(lines)),title = \"Silhoutte Plots for "<< pdf_title << "\")" << std::endl;
+			stream_r << "par(mfrow=c(ceiling(length(lines)/2),2))" << std::endl;
+			stream_r << "for (i in 1:length(lines))" << std::endl;
+			stream_r << "{" << std::endl;
+			stream_r << "text_vec <- strsplit(lines[i],\"\\t\")" << std::endl;
+			stream_r << "asw <- as.numeric(text_vec[[1]])" << std::endl;
+			stream_r << "aswrange <- asw[(length(asw)):(0)]" << std::endl;
+			stream_r << "plot (1:length(asw),aswrange,type=\"l\",xlab=\"# Cluster\",ylab=\"asw\",main=paste(\"Subtree \",i,\": max n \",which.max(aswrange)))" << std::endl;
+			stream_r << "}" << std::endl;
+			stream_r << "close(con)" << std::endl;
+			stream_r << "dev.off()" << std::endl;
+			stream_r << "#The following part creates an intensity vs intensity plot" << std::endl;
+			stream_r << "data<-read.table(file=\"" << debug_intensities_dat << "\")" << std::endl;
+			pdf_name= debug_trunk + "_intensities.pdf";
+			stream_r << "pdf(file=\""<< pdf_name <<"\")" << std::endl;
+			stream_r << "plot(data,pch=20,xlab=\"Heavy intensity\",ylab=\"Light Intensity\",main=\"Intensity vs. Intensity plot ("<< data_size <<" features)\")" << std::endl;
+			stream_r << "dev.off()" << std::endl;
+			stream_r.close();
+
+			//				// write ratios of all cluster to *.dat
+			String debug_dat = debug_trunk + ".dat";
+			std::ofstream stream_ratios(debug_dat.c_str());
+			if (type=="double") {
+				stream_ratios << "cluster_id cluster_size rt mz ratio_light_heavy intensity" << std::endl;
+			}
+			else {
+				stream_ratios << "cluster_id cluster_size rt mz ratio_light_medium ratio_light_heavy intensity" << std::endl;
+			}
+			Size i=0;
+			for(std::vector<Cluster>::iterator cluster_it=clusters.begin();cluster_it!=clusters.end();++cluster_it)
+			{
+				DoubleReal rt = 0.0;
+				DoubleReal mz = 0.0;
+				DoubleReal int_l = 0.0;
+				DoubleReal int_m = 0.0;
+				DoubleReal int_h = 0.0;
+				Int silac_type=(*(cluster_it->begin()))->silac_type;
+				// intensity vectors used for linear regression
+				std::vector<DoubleReal> i1(3*cluster_it->size());
+				std::vector<DoubleReal> i2(3*cluster_it->size());
+				std::vector<DoubleReal> i3(3*cluster_it->size());
+				UInt j=0;
+				for (Cluster::iterator el_it=cluster_it->begin();el_it!=cluster_it->end();++el_it)
+				{
+					std::vector<DoubleReal> intensities=(*el_it)->intensities;
+					rt += (*el_it)->rt;
+					i1[3*j] = intensities[0];
+					i1[3*j+1] = intensities[1];
+					i1[3*j+2] = intensities[2];
+					i2[3*j] = intensities[3];
+					i2[3*j+1] = intensities[4];
+					i2[3*j+2] = intensities[5];
+					if ((*el_it)->silac_type == DataPoint::TRIPLE)
+					{
+						i3[3*j] = intensities[6];
+						i3[3*j+1] = intensities[7];
+						i3[3*j+2] = intensities[8];
+					}
+
+					std::pair<DoubleReal,DoubleReal> low_maximum=clusterMaximum(**el_it,0,1,2);
+					if (low_maximum.second > int_l)
+					{
+						int_l=low_maximum.second;
+						mz=low_maximum.first;
+					}
+
+					if ((*el_it)->silac_type == DataPoint::DOUBLE)
+					{
+						std::pair<DoubleReal,DoubleReal> heavy_maximum=clusterMaximum(**el_it,3,4,5);
+						if (low_maximum.second > int_l)
+						{
+							int_h=low_maximum.second;
+							mz=low_maximum.first;
+						}
+					}
+					else
+					{
+						std::pair<DoubleReal,DoubleReal> medium_maximum=clusterMaximum(**el_it,3,4,5);
+						if (medium_maximum.second > int_l)
+						{
+							int_m=medium_maximum.second;
+							mz=medium_maximum.first;
+						}
+						std::pair<DoubleReal,DoubleReal> heavy_maximum=clusterMaximum(**el_it,6,7,8);
+						if (heavy_maximum.second > int_l)
+						{
+							int_h=heavy_maximum.second;
+							mz=heavy_maximum.first;
+						}
+					}
+					++j;
+				}
+				rt /= (DoubleReal)(cluster_it->size()); // average retention time
+				if (silac_type==DataPoint::TRIPLE)
+				{
+					Math::LinearRegression linear_reg_light_heavy;
+					linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i3.begin());
+					Math::LinearRegression linear_reg_light_medium;
+					linear_reg_light_medium.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
+					stream_ratios << i << " " << cluster_it->size() << " " << rt << " " << mz << " " << linear_reg_light_medium.getSlope() << " " << linear_reg_light_heavy.getSlope() << " " << *max_element(i1.begin(),i1.end()) + *max_element(i2.begin(),i2.end()) << std::endl;
+				}
+				else
+				{
+					Math::LinearRegression linear_reg_light_heavy;
+					linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
+					stream_ratios << i << " " << cluster_it->size() << " " << rt << " " << mz << " " << linear_reg_light_heavy.getSlope() << " " << *max_element(i1.begin(),i1.end()) + *max_element(i2.begin(),i2.end()) << std::endl;
+				}
+				++i;
+			}
+		}
 
 
 		//--------------------------------------------------------------

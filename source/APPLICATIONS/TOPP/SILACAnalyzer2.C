@@ -747,13 +747,22 @@ public:
 
 			String debug_intensities_dat = debug_trunk + "_intensities.dat";
 			std::ofstream stream_intensities(debug_intensities_dat.c_str());
-			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
+//			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
+//			{
+//				for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
+//				{
+//					std::vector<DoubleReal> intensities=it->intensities;
+//					stream_intensities << intensities[0] << "\t" << intensities[3] << std::endl;
+//				}
+//			}
+			for(std::vector<Cluster>::iterator cluster_it=clusters.begin();cluster_it!=clusters.end();++cluster_it)
 			{
-				for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
+				for (Cluster::iterator el_it=cluster_it->begin();el_it!=cluster_it->end();++el_it)
 				{
-					std::vector<DoubleReal> intensities=it->intensities;
+					std::vector<DoubleReal> intensities=(*el_it)->intensities;
 					stream_intensities << intensities[0] << "\t" << intensities[3] << std::endl;
 				}
+				stream_intensities << "*" << std::endl;
 			}
 			stream_intensities.close();
 

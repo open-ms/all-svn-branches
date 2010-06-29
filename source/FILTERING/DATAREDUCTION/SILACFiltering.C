@@ -39,12 +39,8 @@ gsl_spline* SILACFiltering::spline_spl=0;
 Int SILACFiltering::feature_id=0;
 
 
-SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_,DoubleReal mz_stepwidth_,DoubleReal intensity_cutoff_) : exp(exp_) {
-//	MSExperiment<Peak1D>::Iterator rt_it=exp.begin();
-//	for (MSSpectrum<>::Iterator mz_it=rt_it->begin(); mz_it!=rt_it->end(); ++mz_it)
-//	{
-//		std::cout << mz_it->getMZ() << "\t" << mz_it->getIntensity() <<std::endl;
-//	}
+SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_,DoubleReal mz_stepwidth_,DoubleReal intensity_cutoff_) : exp(exp_)
+{
 	mz_stepwidth=mz_stepwidth_;
 	intensity_cutoff=intensity_cutoff_;
 }
@@ -64,7 +60,7 @@ void SILACFiltering::blockValue(DoubleReal value,SILACFilter* source)
 {
 	for (std::set<SILACFilter*>::iterator it=filters.begin();it!=filters.end();++it)
 	{
-//		if (*it!=source)
+		if (*it!=source)
 			(*it)->blockValue(value);
 	}
 }
@@ -107,7 +103,7 @@ void SILACFiltering::filterDataPoints()
 			// spline interpolation
 			// used for exact ratio calculation (more accurate when real peak pairs are present)
 			acc_spl = gsl_interp_accel_alloc();
-			spline_spl = gsl_spline_alloc(gsl_interp_akima, number_data_points);
+			spline_spl = gsl_spline_alloc(gsl_interp_cspline, number_data_points);
 			gsl_spline_init(spline_spl, &*mz_vec.begin(), &*intensity_vec.begin(), number_data_points);
 
 			for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
@@ -118,13 +114,8 @@ void SILACFiltering::filterDataPoints()
 			DoubleReal mz_min = mz_vec[0];
 			DoubleReal mz_max = mz_vec[number_data_points-9];
 			DoubleReal rt=rt_it->getRT();
-//			for (std::vector<DoubleReal>::iterator mz_it=mz_vec.begin();mz_it!=mz_vec.end();++mz_it/*DoubleReal mz=mz_min; mz<mz_max; mz+=mz_stepwidth*/)
-//			for (Size i=1;i<mz_vec.size()-9;++i)
 			for (DoubleReal mz=mz_min; mz<mz_max; mz+=mz_stepwidth)
 			{
-//				DoubleReal mz=*mz_it;
-//				if (rt_it==exp.begin())
-//					std::cout << mz << "\t" << gsl_spline_eval (spline_spl, mz, acc_spl) << std::endl;
 				for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 				{
 					SILACFilter* filter_ptr=*filter_it;

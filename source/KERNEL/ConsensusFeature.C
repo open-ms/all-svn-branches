@@ -31,6 +31,8 @@
 #include <OpenMS/CHEMISTRY/Element.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/CONCEPT/Constants.h>
+#include <limits>
+
 
 namespace OpenMS
 {
@@ -125,7 +127,7 @@ namespace OpenMS
 	ConsensusFeature::~ConsensusFeature()
 	{
 	}
-		
+
 	void ConsensusFeature::insert(const FeatureHandle& handle)
 	{
 		if (!(HandleSetType::insert(handle).second))
@@ -174,17 +176,17 @@ namespace OpenMS
 	{
 		quality_ = quality;
 	}
-	
+
 	void ConsensusFeature::setCharge(Int charge)
 	{
 		charge_ = charge;
 	}
-	
+
 	Int ConsensusFeature::getCharge() const
 	{
 		return charge_;
 	}
-	
+
 	DRange<2> ConsensusFeature::getPositionRange() const
 	{
 		DPosition<2> min = DPosition<2>::maxPositive();
@@ -198,7 +200,7 @@ namespace OpenMS
 		}
 		return DRange<2>(min,max);
 	}
-	
+
 	DRange<1> ConsensusFeature::getIntensityRange() const
 	{
 		DPosition<1> min = DPosition<1>::maxPositive();
@@ -215,7 +217,7 @@ namespace OpenMS
   {
   	// for computing average position and intensity
   	DoubleReal rt=0.0;
-  	DoubleReal mz=0.0;
+  	DoubleReal mz=std::numeric_limits<DoubleReal>::max();
   	DoubleReal intensity=0.0;
 
   	// The most frequent charge state wins.  Tie breaking prefers smaller charge.
@@ -226,7 +228,8 @@ namespace OpenMS
     for (ConsensusFeature::HandleSetType::const_iterator it = begin(); it != end(); ++it)
     {
     	rt += it->getRT();
-    	mz += it->getMZ();
+    	if (it->getMZ() < mz)
+    		mz=it->getMZ();
     	intensity += it->getIntensity();
     	const Int it_charge = it->getCharge();
     	const UInt it_charge_occ = ++charge_occ[it_charge];
@@ -246,19 +249,19 @@ namespace OpenMS
 
     // compute the average position and intensity
     setRT(rt / size());
-    setMZ(mz / size());
+    setMZ(mz);
     setIntensity(intensity / size());
     setCharge(charge_most_frequent);
     return;
   }
-  
+
   void ConsensusFeature::computeDechargeConsensus(const FeatureMap<>& fm, bool intensity_weighted_averaging)
   {
   	// for computing average position and intensity
   	DoubleReal rt=0.0;
   	DoubleReal m=0.0;
   	DoubleReal intensity=0.0;
-		
+
 		DoubleReal proton_mass = Constants::PROTON_MASS_U;
 
 		// intensity sum (for weighting)
@@ -271,7 +274,7 @@ namespace OpenMS
 		// TODO: add outlier removal
 		// TODO: split cluster for each channel (in FD.C)
 		DoubleReal weighting_factor = 1.0/size();
-		
+
 		// RT and Mass
     for (ConsensusFeature::HandleSetType::const_iterator it = begin(); it != end(); ++it)
     {
@@ -300,7 +303,7 @@ namespace OpenMS
     setIntensity(intensity);
     setCharge(0);
     return;
-  }  
+  }
 
 	const std::vector<PeptideIdentification>& ConsensusFeature::getPeptideIdentifications() const
 	{

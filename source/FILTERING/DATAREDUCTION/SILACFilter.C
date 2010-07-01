@@ -129,7 +129,7 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 			peak_values.push_back(act_mz+envelope_distance_light_heavy+2*isotope_distance);
 			return true;
 		}
-		if (condDouble1 /*&& condDouble2 && condDouble3*/ && silac_type==DOUBLE)
+		if (condDouble1/* && condDouble2 */&& condDouble3 && silac_type==DOUBLE)
 		{
 			ExtendedIsotopeModel model_light;
 			Param tmp;
@@ -140,19 +140,11 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 			model_light.setParameters( tmp );
 			std::vector<Peak1D> model_data;
 			model_light.getSamples(model_data);
-//			std::cout << act_mz <<  std::endl;
-//			for (DoubleReal position=act_mz;position<=act_mz+2*isotope_distance;position+=0.01)
-//				{
-//					DoubleReal intensity=gsl_spline_eval (SILACFiltering::spline_spl, position, SILACFiltering::acc_spl);
-//					if ((position > act_mz-getPeakWidth(act_mz) && position < act_mz+getPeakWidth(act_mz)) || (position > act_mz+isotope_distance-getPeakWidth(act_mz) && position < act_mz+isotope_distance+getPeakWidth(act_mz)) || (position > act_mz+2*isotope_distance-getPeakWidth(act_mz) && position < act_mz+2*isotope_distance+getPeakWidth(act_mz)))
-//						std::cout << intensity << "\t" << model_light.getIntensity(position) << std::endl;
-//					else
-//						std::cout << 0.0 << "\t" << model_light.getIntensity(position) << std::endl;
-//				}
-//			std::cout << std::endl;
+
 
 			DoubleReal quality_l1=(intensities_spl[1]*model_light.getIntensity(act_mz+isotope_distance))/(intensities_spl[2]*model_light.getIntensity(act_mz));
 			DoubleReal quality_l2=(intensities_spl[2]*model_light.getIntensity(act_mz+2*isotope_distance))/(intensities_spl[3]*model_light.getIntensity(act_mz+isotope_distance));
+			DoubleReal quality_light=(quality_l1+quality_l2)/2;
 
 			ExtendedIsotopeModel model_heavy;
 			Param tmp1;
@@ -164,7 +156,9 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 
 			DoubleReal quality_h1=(intensities_spl[5]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy+isotope_distance))/(intensities_spl[6]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy));
 			DoubleReal quality_h2=(intensities_spl[6]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy+2*isotope_distance))/(intensities_spl[7]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy+isotope_distance));
-			if ((quality_l1 >= 1.005 || quality_l1 <= 0.995) && (quality_h1 >= 1.005 || quality_h1 <= 0.995) && (quality_l2 >= 1.005 || quality_l2 <= 0.995) && ((quality_h2 >= 1.005 || quality_h2 <= 0.995)))
+			DoubleReal quality_heavy=(quality_h1+quality_h2)/2;
+
+			if ((quality_light >= 1.1 || quality_light <= 0.9) || (quality_heavy >= 1.1 || quality_heavy <= 0.9))
 				return false;
 
 			DoubleReal quality=(quality_l1+quality_l2+quality_h1+quality_h2)/4;
@@ -226,15 +220,6 @@ DoubleReal SILACFilter::getQuality(DoubleReal act_mz)
 	std::vector<Peak1D> model_data;
 	model->getSamples(model_data);
 	DoubleReal quality=fitter.fit1d(real_data,model);
-	//			if (SILACFiltering::feature_id==542 || SILACFiltering::feature_id==1095)
-	//			{
-	//				std::cout << act_mz << "/" << act_rt << " " << 0.5*SILACFilter::getPeakWidth(act_mz) << std::endl;
-	//				for (Size i=0;i<std::min(model_data.size(),real_data.size());++i)
-	//				{
-	//					std::cout << real_data[i].getIntensity() << "\t" << model_data[i].getIntensity() << std::endl;
-	//				}
-	//				std::cout << quality << std::endl;
-	//			}
 	delete model;
 	return quality;
 }

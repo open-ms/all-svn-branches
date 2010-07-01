@@ -78,10 +78,12 @@ void SILACFiltering::filterDataPoints()
 	std::vector<DoubleReal> intensity_vec;
 
 	std::vector<DataPoint> data;
-	for (MSExperiment<Peak1D>::Iterator rt_it=exp.begin(); rt_it!=exp.end(); ++rt_it)
+
+	for (MSExperiment<Peak1D>::Iterator rt_it=exp.begin(); rt_it!=exp.end();++rt_it)
 	{
 		setProgress(rt_it-exp.begin());
 		Size number_data_points = rt_it->size();
+//		std::cout << peak_it->getRT() << " " << rt_it->getRT() << std::endl;
 		// spectra with less than 10 data points are being ignored
 		if (number_data_points>=10) { //filter MS1 spectra (
 			// read one OpenMS spectrum into GSL structure
@@ -119,14 +121,16 @@ void SILACFiltering::filterDataPoints()
 				for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 				{
 					SILACFilter* filter_ptr=*filter_it;
-					if (filter_ptr->isFeature(rt,mz))
 					{
-						const std::vector<DoubleReal>& peak_values=filter_ptr->getPeakValues();
-						for (std::vector<DoubleReal>::const_iterator peak_it=peak_values.begin();peak_it!=peak_values.end();++peak_it)
+						if (filter_ptr->isFeature(rt,mz))
 						{
-							blockValue(*peak_it,filter_ptr);
+							const std::vector<DoubleReal>& peak_values=filter_ptr->getPeakValues();
+							for (std::vector<DoubleReal>::const_iterator peak_it=peak_values.begin();peak_it!=peak_values.end();++peak_it)
+							{
+								blockValue(mz,filter_ptr);
+							}
+							++feature_id;
 						}
-						++feature_id;
 					}
 				}
 			}

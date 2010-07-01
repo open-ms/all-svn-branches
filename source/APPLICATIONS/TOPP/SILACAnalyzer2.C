@@ -231,7 +231,7 @@ private:
 		}
 		std::sort(mz_spacing.begin(),mz_spacing.end());
 		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
-//		mz_stepwidth=0.01;
+//		mz_stepwidth=0.0005;
 		std::sort(rt_spacing.begin(),rt_spacing.end());
 		rt_stepwidth=rt_spacing[rt_spacing.size()/2];
 
@@ -435,6 +435,7 @@ public:
 		file.setLogType(log_type_);
 		//			file.getOptions().setIntensityRange(DRange<1>(intensity_cutoff,std::numeric_limits<DoubleReal>::max()));
 		file.load(in,exp);
+
 
 		//set input map size (only once)
 

@@ -157,13 +157,10 @@ private:
 	DoubleReal mz_threshold;
 	DoubleReal rt_threshold;
 	DoubleReal rt_scaling;
-	DoubleReal optimal_silhouette_tolerance;
-	DoubleReal cluster_number_scaling;
+	DoubleReal model_deviation;
 	std::map<String,DoubleReal> labels;
 	StringList heavy_labels;
 	StringList medium_labels;
-	int cluster_min;
-	int cluster_max;
 	String in;
 	String out;
 	String out_visual;
@@ -181,10 +178,7 @@ private:
 		mz_threshold = getParam_().getValue("algorithm:mz_threshold");
 		rt_threshold = getParam_().getValue("algorithm:rt_threshold");
 		rt_scaling = getParam_().getValue("algorithm:rt_scaling");
-		optimal_silhouette_tolerance = getParam_().getValue("algorithm:optimal_silhouette_tolerance");
-		cluster_number_scaling = getParam_().getValue("algorithm:cluster_number_scaling");
-		cluster_min = getParam_().getValue("algorithm:cluster_min");
-		cluster_max = getParam_().getValue("algorithm:cluster_max");
+		model_deviation = getParam_().getValue("algorithm:maximum_model_deviation");
 		labels.insert(std::make_pair("arg6",getParam_().getValue("labels:arg6")));
 		labels.insert(std::make_pair("arg10",getParam_().getValue("labels:arg10")));
 		labels.insert(std::make_pair("lys4",getParam_().getValue("labels:lys4")));
@@ -247,7 +241,7 @@ private:
 						throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*heavy_label_it);
 					DoubleReal mass_shift=pos->second;
 //					std::cout << mass_shift << " " << charge << std::endl;
-					filters.push_back(SILACFilter(mass_shift,charge));
+					filters.push_back(SILACFilter(mass_shift,charge,model_deviation));
 				}
 				else
 				{
@@ -263,7 +257,7 @@ private:
 							if (pos==labels.end())
 								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*medium_label_it);
 							DoubleReal mass_shift2=pos->second;
-							filters.push_back(SILACFilter(std::min(mass_shift1,mass_shift2),std::max(mass_shift1,mass_shift2),charge));
+							filters.push_back(SILACFilter(std::min(mass_shift1,mass_shift2),std::max(mass_shift1,mass_shift2),charge,model_deviation));
 						}
 						else if (type == "double_triple")
 						{
@@ -275,9 +269,9 @@ private:
 							if (pos==labels.end())
 								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*medium_label_it);
 							DoubleReal mass_shift2=pos->second;
-							filters.push_back(SILACFilter(mass_shift1,charge));
-							filters.push_back(SILACFilter(mass_shift2,charge));
-							filters.push_back(SILACFilter(std::min(mass_shift1,mass_shift2),std::max(mass_shift1,mass_shift2),charge));
+							filters.push_back(SILACFilter(mass_shift1,charge,model_deviation));
+							filters.push_back(SILACFilter(mass_shift2,charge,model_deviation));
+							filters.push_back(SILACFilter(std::min(mass_shift1,mass_shift2),std::max(mass_shift1,mass_shift2),charge,model_deviation));
 						}
 					}
 				}
@@ -372,18 +366,8 @@ public:
 			tmp.setValue("rt_scaling",0.05,"scaling factor of retention times (Cluster height [s] an\ncluster width [Th] should be of the same order. The clustering algorithms work better for\nsymmetric clusters.)");
 			tmp.setMinFloat("rt_scaling", 0.0);
 
-			tmp.setValue("optimal_silhouette_tolerance",0.0,"The partition with most clusters is chosen, which deviates from the optimal silhouette width at most by this percentage.");
-			tmp.setMinFloat("optimal_silhouette_tolerance",0.0);
-			tmp.setMaxFloat("optimal_silhouette_tolerance",100.0);
-
-			tmp.setValue("cluster_number_scaling", 1.0, "scaling factor of the number of clusters (The average-silhouette-width\nalgorithm returns an 'optimal' number of clusters. This number might need\nto be adjusted by this factor.)");
-			tmp.setMinFloat("cluster_number_scaling", 0.0);
-
-			tmp.setValue("cluster_min", 0, "Start of the clusters range to be plotted by the gnuplot script");
-			tmp.setMinInt("cluster_min", 0);
-
-			tmp.setValue("cluster_max", 2, "End of the clusters range to be plotted by the gnuplot script");
-			tmp.setMinInt("cluster_max", 0);
+			tmp.setValue("maximum_model_deviation",0.1,"Maximal value of which a predicted SILAC feature may deviate from the averagine model.");
+			tmp.setMinFloat("maximum_model_deviation",0.0);
 
 		}
 		return tmp;

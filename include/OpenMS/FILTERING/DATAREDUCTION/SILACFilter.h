@@ -76,6 +76,12 @@ private:
      * @brief holds the recognized features
      */
     std::vector<DataPoint> elements;
+
+    /**
+     * @brief maximal value of which a predicted SILAC feature may deviate from the averagine model
+     */
+    DoubleReal model_deviation;
+
     /**
      * @brief helper structure to compare double values
      */
@@ -112,6 +118,8 @@ private:
      * @param act_mz position of the potential feature
      */
     DoubleReal getQuality(DoubleReal act_mz);
+
+
 public:
 	/**
 	 * @brief double identifier (2)
@@ -130,14 +138,14 @@ public:
      * @param mass_separation_light_heavy distance between light and heavy peaks
      * @param charge_ charge of the ions to search for
      */
-    SILACFilter(DoubleReal mass_separation_light_heavy,Int charge_);
+    SILACFilter(DoubleReal mass_separation_light_heavy,Int charge_,DoubleReal model_deviation_);
     /**
      * @brief detailed constructor for triple filtering
      * @param mass_separation_light_medium distance between light and medium peaks
      * @param mass_separation_light_heavy distance between light and heavy peaks
      * @param charge_ charge of the ions to search for
      */
-	SILACFilter(DoubleReal mass_separation_light_medium,DoubleReal mass_separation_light_heavy,Int charge_);
+	SILACFilter(DoubleReal mass_separation_light_medium,DoubleReal mass_separation_light_heavy,Int charge_,DoubleReal model_deviation_);
 	/**
 	 * @brief destructor
 	 */

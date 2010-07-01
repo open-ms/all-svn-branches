@@ -36,20 +36,22 @@ namespace OpenMS
 
 
 
-SILACFilter::SILACFilter(DoubleReal mass_separation_light_heavy, Int charge_) {
+SILACFilter::SILACFilter(DoubleReal mass_separation_light_heavy, Int charge_,DoubleReal model_deviation_) {
 	silac_type=DOUBLE;
 	envelope_distance_light_medium=0;
 	charge=charge_;
 	envelope_distance_light_heavy=mass_separation_light_heavy/(DoubleReal)charge;
 	isotope_distance=1.000495/(DoubleReal) charge;
+	model_deviation=model_deviation_;
 }
 
-SILACFilter::SILACFilter(DoubleReal mass_separation_light_medium,DoubleReal mass_separation_light_heavy,Int charge_) {
+SILACFilter::SILACFilter(DoubleReal mass_separation_light_medium,DoubleReal mass_separation_light_heavy,Int charge_,DoubleReal model_deviation_) {
 	silac_type=TRIPLE;
 	charge=charge_;
 	envelope_distance_light_medium=mass_separation_light_medium/(DoubleReal)charge;
 	envelope_distance_light_heavy=mass_separation_light_heavy/(DoubleReal)charge;
 	isotope_distance=1.000495/(DoubleReal) charge;
+	model_deviation=model_deviation_;
 }
 
 SILACFilter::~SILACFilter() {
@@ -158,7 +160,7 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 			DoubleReal quality_h2=(intensities_spl[6]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy+2*isotope_distance))/(intensities_spl[7]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy+isotope_distance));
 			DoubleReal quality_heavy=(quality_h1+quality_h2)/2;
 
-			if ((quality_light >= 1.1 || quality_light <= 0.9) || (quality_heavy >= 1.1 || quality_heavy <= 0.9))
+			if ((quality_light >= 1+model_deviation || quality_light <= 1-model_deviation) || (quality_heavy >= 1+model_deviation || quality_heavy <= 1-model_deviation))
 				return false;
 
 			DoubleReal quality=(quality_l1+quality_l2+quality_h1+quality_h2)/4;

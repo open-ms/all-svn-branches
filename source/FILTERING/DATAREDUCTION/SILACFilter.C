@@ -75,6 +75,30 @@ void SILACFilter::reset()
 	blacklist.clear();
 }
 
+DoubleReal mean(std::vector<DoubleReal>& values)
+{
+	DoubleReal mean= 0.0;
+	for ( Size i = 0; i < values.size(); i++ )
+	{
+		mean+=values[i];
+	}
+	return mean/values.size();
+}
+
+DoubleReal standardDeviation(std::vector<DoubleReal>& values)
+{
+	DoubleReal sd = 0.0;
+	DoubleReal mv=mean(values);
+
+	for( Size i = 0; i < values.size(); i++ )
+	{
+		sd += pow((values[i] - mv),2);
+
+	}
+	sd /= values.size();
+	return std::sqrt(sd);
+}
+
 bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 {
 	if (!blacklisted(act_mz) &&  !blacklisted(act_mz+isotope_distance) && !blacklisted(act_mz+2*isotope_distance) && !blacklisted(act_mz+envelope_distance_light_heavy) && !blacklisted(act_mz+envelope_distance_light_heavy+isotope_distance) && !blacklisted(act_mz+envelope_distance_light_heavy+2*isotope_distance))
@@ -143,12 +167,9 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 			std::vector<Peak1D> model_data;
 			model_light.getSamples(model_data);
 
-
 			DoubleReal quality_l1=(intensities_spl[1]*model_light.getIntensity(act_mz+isotope_distance))/(intensities_spl[2]*model_light.getIntensity(act_mz));
 			DoubleReal quality_l2=(intensities_spl[2]*model_light.getIntensity(act_mz+2*isotope_distance))/(intensities_spl[3]*model_light.getIntensity(act_mz+isotope_distance));
 			DoubleReal quality_light=(quality_l1+quality_l2)/2;
-
-
 
 			ExtendedIsotopeModel model_heavy;
 			Param tmp1;
@@ -177,20 +198,58 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 //				std::cout << std::endl;
 //			}
 
-			if ((quality_light >= 1+model_deviation || quality_light <= 1-model_deviation) || (std::abs(quality_l1-1) > model_deviation && std::abs(quality_l2-1) > model_deviation))
-							return false;
 
-			if ((quality_heavy >= 1+model_deviation || quality_heavy <= 1-model_deviation)  || (std::abs(quality_h1-1) > model_deviation && std::abs(quality_h2-1) > model_deviation))
+			DoubleReal correlation=0.0;
+
+			for (DoubleReal mz=act_mz; mz<=act_mz+isotope_distance; mz+=isotope_distance)
+			{
+				std::vector<DoubleReal> light_values;
+				std::vector<DoubleReal> heavy_values;
+				for (DoubleReal pos=mz-2*SILACFiltering::mz_stepwidth;pos<=mz+2*SILACFiltering::mz_stepwidth;pos+=SILACFiltering::mz_stepwidth)
+				{
+					DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl);
+					DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+isotope_distance, SILACFiltering::acc_spl);
+					//				values.push_back(log2(intensity1/intensity2));
+					light_values.push_back(intensity1);
+					heavy_values.push_back(intensity2);
+				}
+				correlation += Math::pearsonCorrelationCoefficient(light_values.begin(), light_values.end(), heavy_values.begin(), heavy_values.end());
+			}
+			for (DoubleReal mz=act_mz+envelope_distance_light_heavy; mz<=act_mz+envelope_distance_light_heavy+isotope_distance; mz+=isotope_distance)
+			{
+				std::vector<DoubleReal> light_values;
+				std::vector<DoubleReal> heavy_values;
+				for (DoubleReal pos=mz-2*SILACFiltering::mz_stepwidth;pos<=mz+2*SILACFiltering::mz_stepwidth;pos+=SILACFiltering::mz_stepwidth)
+				{
+					DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl);
+					DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+isotope_distance, SILACFiltering::acc_spl);
+					light_values.push_back(intensity1);
+					heavy_values.push_back(intensity2);
+				}
+				correlation += Math::pearsonCorrelationCoefficient(light_values.begin(), light_values.end(), heavy_values.begin(), heavy_values.end());
+			}
+			correlation/=4;
+
+
+//			DoubleReal mv=mean(values);
+//			DoubleReal sd=standardDeviation(values);
+			if (std::abs(quality_l1-1) > model_deviation || std::abs(quality_l2-1) > model_deviation)
+				return false;
+
+			if (std::abs(quality_h1-1) > model_deviation ||std::abs(quality_h2-1) > model_deviation)
+				return false;
+
+			if (correlation < 0.85)
 				return false;
 
 			//False positive debug output
-//			if (SILACFiltering::feature_id == 168)
+//			if (SILACFiltering::feature_id == 166)
 //			{
 //				std::cout << std::endl << "mz: " << act_mz << " rt: " << act_rt << std::endl;
 //				std::cout << "light structure/model: " << intensities_spl[1] << "/" << model_light.getIntensity(act_mz)  << " " << intensities_spl[2] << "/" << model_light.getIntensity(act_mz+isotope_distance) << " " << intensities_spl[3] << "/" << model_light.getIntensity(act_mz+2*isotope_distance) << std::endl;
 //				std::cout << "heavy structure/model: " << intensities_spl[5] << "/" << model_heavy.getIntensity(act_mz+envelope_distance_light_heavy)  << " " << intensities_spl[6] << "/" << model_heavy.getIntensity(act_mz+isotope_distance+envelope_distance_light_heavy) << " " << intensities_spl[7] << "/" << model_heavy.getIntensity(act_mz+2*isotope_distance+envelope_distance_light_heavy) << std::endl;
 //				std::cout << "intensity values (light value vs. model value):" << std::endl;
-//				for (DoubleReal position=act_mz-0.1;position<=act_mz+2*isotope_distance+0.1;position+=0.01)
+//				for (DoubleReal position=act_mz-0.1;position<=act_mz+2*isotope_distance+0.1;position+=0.0001)
 //				{
 //					DoubleReal intensity=gsl_spline_eval (SILACFiltering::spline_spl, position, SILACFiltering::acc_spl);
 //					std::cout << intensity << "\t" << model_light.getIntensity(position) << std::endl;
@@ -198,7 +257,8 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 //				std::cout << std::endl;
 //			}
 
-			DoubleReal quality=(quality_l1+quality_l2+quality_h1+quality_h2)/4;
+//			DoubleReal quality=(quality_l1+quality_l2+quality_h1+quality_h2)/4;
+			DoubleReal quality= correlation;
 			DataPoint next_element;
 			next_element.feature_id=SILACFiltering::feature_id;
 			next_element.rt=act_rt;
@@ -214,6 +274,12 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 			next_element.intensities.push_back(intensities_spl[5]);
 			next_element.intensities.push_back(intensities_spl[6]);
 			next_element.intensities.push_back(intensities_spl[7]);
+			next_element.qualities.clear();
+//			next_element.qualities.push_back(values[0]);
+//			next_element.qualities.push_back(values[1]);
+//			next_element.qualities.push_back(values[2]);
+//			next_element.qualities.push_back(values[3]);
+//			next_element.qualities.push_back(values[4]);
 			elements.push_back(next_element);
 			peak_values.clear();
 			peak_values.push_back(act_mz);

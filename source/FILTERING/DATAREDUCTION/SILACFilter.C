@@ -169,7 +169,6 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 
 			DoubleReal quality_l1=(intensities_spl[1]*model_light.getIntensity(act_mz+isotope_distance))/(intensities_spl[2]*model_light.getIntensity(act_mz));
 			DoubleReal quality_l2=(intensities_spl[2]*model_light.getIntensity(act_mz+2*isotope_distance))/(intensities_spl[3]*model_light.getIntensity(act_mz+isotope_distance));
-			DoubleReal quality_light=(quality_l1+quality_l2)/2;
 
 			ExtendedIsotopeModel model_heavy;
 			Param tmp1;
@@ -181,7 +180,6 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 
 			DoubleReal quality_h1=(intensities_spl[5]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy+isotope_distance))/(intensities_spl[6]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy));
 			DoubleReal quality_h2=(intensities_spl[6]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy+2*isotope_distance))/(intensities_spl[7]*model_heavy.getIntensity(act_mz+envelope_distance_light_heavy+isotope_distance));
-			DoubleReal quality_heavy=(quality_h1+quality_h2)/2;
 
 			//False negative debug output
 //			if (act_rt < 2627.2 && act_rt > 2627.0 && act_mz > 426.0 && act_mz < 430.0)
@@ -257,7 +255,6 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 //				std::cout << std::endl;
 //			}
 
-//			DoubleReal quality=(quality_l1+quality_l2+quality_h1+quality_h2)/4;
 			DoubleReal quality= correlation;
 			DataPoint next_element;
 			next_element.feature_id=SILACFiltering::feature_id;
@@ -274,12 +271,6 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 			next_element.intensities.push_back(intensities_spl[5]);
 			next_element.intensities.push_back(intensities_spl[6]);
 			next_element.intensities.push_back(intensities_spl[7]);
-			next_element.qualities.clear();
-//			next_element.qualities.push_back(values[0]);
-//			next_element.qualities.push_back(values[1]);
-//			next_element.qualities.push_back(values[2]);
-//			next_element.qualities.push_back(values[3]);
-//			next_element.qualities.push_back(values[4]);
 			elements.push_back(next_element);
 			peak_values.clear();
 			peak_values.push_back(act_mz);

@@ -512,6 +512,7 @@ public:
 			{
 				DoubleReal rt = 0.0;
 				DoubleReal mz = 0.0;
+				DoubleReal total_intensity = 0.0;
 				DoubleReal int_l = 0.0;
 				DoubleReal int_m = 0.0;
 				DoubleReal int_h = 0.0;
@@ -527,7 +528,8 @@ public:
 				for (Cluster::iterator el_it=cluster_it->begin();el_it!=cluster_it->end();++el_it)
 				{
 					std::vector<DoubleReal> intensities=(*el_it)->intensities;
-					rt += (*el_it)->rt;
+					total_intensity+=intensities[0];
+					rt += intensities[0]*(*el_it)->rt;
 					i1[3*j] = intensities[0];
 					i1[3*j+1] = intensities[1];
 					i1[3*j+2] = intensities[2];
@@ -574,7 +576,7 @@ public:
 					}
 					++j;
 				}
-				rt /= (DoubleReal)(cluster_it->size()); // average retention time
+				rt /= total_intensity; // average retention time
 
 				Math::LinearRegression linear_reg_light_heavy;
 				FeatureHandle handle;

@@ -67,7 +67,7 @@ void SILACFiltering::blockValue(DoubleReal value,SILACFilter* source)
 
 bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* b) const
 {
-	return (a->getEnvelopeDistanceLightHeavy() > b->getEnvelopeDistanceLightHeavy());
+	return (a->getEnvelopeDistanceLightHeavy() < b->getEnvelopeDistanceLightHeavy());
 }
 
 void SILACFiltering::filterDataPoints()

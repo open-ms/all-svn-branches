@@ -72,6 +72,9 @@ private:
      * @brief distance between isotope peaks
      */
     DoubleReal isotope_distance;
+
+    DataPoint next_element;
+
     /**
      * @brief holds the recognized features
      */
@@ -117,7 +120,8 @@ private:
      * @brief returns the quality of a potential feature at position act_mz by fitting the data to the isotope model
      * @param act_mz position of the potential feature
      */
-    DoubleReal getQuality(DoubleReal act_mz);
+    DoubleReal getPeakCorrelation(DoubleReal act_mz);
+
 
 
 public:

@@ -74,8 +74,7 @@ void SILACFiltering::filterDataPoints()
 {
 	startProgress(0,exp.size(),"filtering raw data");
 
-	std::vector<DoubleReal> mz_vec;
-	std::vector<DoubleReal> intensity_vec;
+
 
 	std::vector<DataPoint> data;
 
@@ -87,26 +86,38 @@ void SILACFiltering::filterDataPoints()
 		// spectra with less than 10 data points are being ignored
 		if (number_data_points>=10) { //filter MS1 spectra (
 			// read one OpenMS spectrum into GSL structure
-			mz_vec.clear();
-			mz_vec.resize(number_data_points);
-			intensity_vec.clear();
-			intensity_vec.resize(number_data_points);
+			std::vector<DoubleReal> mz_vec;
+			std::vector<DoubleReal> intensity_vec;
 			Int j = 0;
+			DoubleReal last_mz=rt_it->begin()->getMZ();
 			for (MSSpectrum<>::Iterator mz_it=rt_it->begin(); mz_it!=rt_it->end(); ++mz_it)
 			{
-				mz_vec[j] = mz_it->getMZ();
-				intensity_vec[j] = mz_it->getIntensity();
-				++j;
+				if (mz_it->getMZ() > last_mz+2*mz_stepwidth)
+				{
+					DoubleReal stepwidth=(mz_it->getMZ()-last_mz)/2;
+					for (DoubleReal act_mz=last_mz+2*mz_stepwidth; act_mz < mz_it->getMZ()-2*mz_stepwidth; act_mz+=stepwidth)
+					{
+						mz_vec.push_back(act_mz);
+						intensity_vec.push_back(0.0);
+					}
+				}
+				mz_vec.push_back(mz_it->getMZ());
+				intensity_vec.push_back(mz_it->getIntensity());
+				last_mz=mz_it->getMZ();
 			}
+//			for (std::vector<DoubleReal>::iterator it=mz_vec.begin();it!=mz_vec.end();++it)
+//			{
+//				std::cout << *it << std::endl;
+//			}
 
 			acc_lin = gsl_interp_accel_alloc();
-			spline_lin = gsl_spline_alloc(gsl_interp_linear, number_data_points);
-			gsl_spline_init(spline_lin, &*mz_vec.begin(), &*intensity_vec.begin(), number_data_points);
+			spline_lin = gsl_spline_alloc(gsl_interp_linear, mz_vec.size());
+			gsl_spline_init(spline_lin, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 			// spline interpolation
 			// used for exact ratio calculation (more accurate when real peak pairs are present)
 			acc_spl = gsl_interp_accel_alloc();
-			spline_spl = gsl_spline_alloc(gsl_interp_cspline, number_data_points);
-			gsl_spline_init(spline_spl, &*mz_vec.begin(), &*intensity_vec.begin(), number_data_points);
+			spline_spl = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
+			gsl_spline_init(spline_spl, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
 			for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 			{
@@ -114,10 +125,12 @@ void SILACFiltering::filterDataPoints()
 				filter_ptr->reset();
 			}
 			DoubleReal mz_min = mz_vec[0];
-			DoubleReal mz_max = mz_vec[number_data_points-9];
+			DoubleReal mz_max = mz_vec[mz_vec.size()-9];
 			DoubleReal rt=rt_it->getRT();
 			for (DoubleReal mz=mz_min; mz<mz_max; mz+=mz_stepwidth)
 			{
+				if (gsl_spline_eval (spline_spl, mz, acc_spl) < 0.0)
+					continue;
 				for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 				{
 					SILACFilter* filter_ptr=*filter_it;

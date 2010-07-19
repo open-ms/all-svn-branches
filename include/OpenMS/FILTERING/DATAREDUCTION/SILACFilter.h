@@ -61,16 +61,10 @@ private:
      */
     Int charge;
     /**
-     * @brief distance between light and medium peaks. Used for triplet filtering
+     * @brief envelope distances within one feature
      */
-    DoubleReal envelope_distance_light_medium;
-    /**
-     * @brief distance between light and heavy peaks
-     */
-    DoubleReal envelope_distance_light_heavy;
-    /**
-     * @brief distance between isotope peaks
-     */
+    std::set<DoubleReal> envelope_distances;
+
     DoubleReal isotope_distance;
 
     DataPoint next_element;
@@ -99,7 +93,7 @@ private:
     /**
      * @brief holds the m/z values of the last identified feature. These values will be blacklisted in other filters
      */
-    std::vector<DoubleReal> peak_values;
+    std::vector<DoubleReal> peak_positions;
 
     /**
      * @brief returns the intensities of all peaks used in the identification of one SILAC feature
@@ -107,6 +101,7 @@ private:
      * @param intensity interpolation
      * @param spline function of the interpolation
      */
+
     std::vector<DoubleReal> getIntensities(DoubleReal act_mz,gsl_interp_accel *acc, gsl_spline *spline);
 
 
@@ -122,6 +117,7 @@ private:
      */
     DoubleReal getPeakCorrelation(DoubleReal act_mz);
 
+    bool checkArea(DoubleReal act_mz, DoubleReal envelope_distance,std::vector<DoubleReal>& intensities_spl, std::vector<DoubleReal>& intensities_lin);
 
 
 public:
@@ -142,14 +138,9 @@ public:
      * @param mass_separation_light_heavy distance between light and heavy peaks
      * @param charge_ charge of the ions to search for
      */
-    SILACFilter(DoubleReal mass_separation_light_heavy,Int charge_,DoubleReal model_deviation_);
-    /**
-     * @brief detailed constructor for triple filtering
-     * @param mass_separation_light_medium distance between light and medium peaks
-     * @param mass_separation_light_heavy distance between light and heavy peaks
-     * @param charge_ charge of the ions to search for
-     */
-	SILACFilter(DoubleReal mass_separation_light_medium,DoubleReal mass_separation_light_heavy,Int charge_,DoubleReal model_deviation_);
+    SILACFilter(std::vector<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_);
+
+    SILACFilter(DoubleReal mass_separation_light_medium,DoubleReal mass_separation_light_heavy,Int charge_,DoubleReal model_deviation_);
 	/**
 	 * @brief destructor
 	 */
@@ -179,15 +170,13 @@ public:
 	/**
 	 * @brief gets the m/z values of all peaks , which belong the last identiefied feature
 	 */
-	std::vector<DoubleReal> getPeakValues();
-	/**
-	 * @brief returns the distance between light and medium peaks
-	 */
-	DoubleReal getEnvelopeDistanceLightMedium();
+	std::vector<DoubleReal> getPeakPositions();
+
+
 	/**
 	 * @brief returns the distance between light and heavy peaks
 	 */
-	DoubleReal getEnvelopeDistanceLightHeavy();
+	std::set<DoubleReal> getEnvelopeDistances();
 	/**
 	 * @brief returns the distance between two isotope peaks
 	 */

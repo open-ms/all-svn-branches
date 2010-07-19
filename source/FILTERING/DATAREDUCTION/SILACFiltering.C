@@ -67,7 +67,7 @@ void SILACFiltering::blockValue(DoubleReal value,SILACFilter* source)
 
 bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* b) const
 {
-	return (a->getEnvelopeDistanceLightHeavy() < b->getEnvelopeDistanceLightHeavy());
+	return (*(a->getEnvelopeDistances()).rbegin() < *(b->getEnvelopeDistances()).rbegin());
 }
 
 void SILACFiltering::filterDataPoints()
@@ -88,7 +88,6 @@ void SILACFiltering::filterDataPoints()
 			// read one OpenMS spectrum into GSL structure
 			std::vector<DoubleReal> mz_vec;
 			std::vector<DoubleReal> intensity_vec;
-			Int j = 0;
 			DoubleReal last_mz=rt_it->begin()->getMZ();
 			for (MSSpectrum<>::Iterator mz_it=rt_it->begin(); mz_it!=rt_it->end(); ++mz_it)
 			{
@@ -137,8 +136,8 @@ void SILACFiltering::filterDataPoints()
 					{
 						if (filter_ptr->isFeature(rt,mz))
 						{
-							const std::vector<DoubleReal>& peak_values=filter_ptr->getPeakValues();
-							for (std::vector<DoubleReal>::const_iterator peak_it=peak_values.begin();peak_it!=peak_values.end();++peak_it)
+							const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
+							for (std::vector<DoubleReal>::const_iterator peak_it=peak_positions.begin();peak_it!=peak_positions.end();++peak_it)
 							{
 								blockValue(mz,filter_ptr);
 							}

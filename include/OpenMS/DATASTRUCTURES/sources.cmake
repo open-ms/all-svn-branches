@@ -30,6 +30,7 @@ Map.h
 MassExplainer.h
 Matrix.h
 Param.h
+QTCluster.h
 SeqanIncludeWrapper.h
 SparseVector.h
 String.h

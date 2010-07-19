@@ -333,7 +333,7 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 	//throw exception if cannot be legal clustering
 
 	std::list<DataSubset*> neighbors;
-		bool neighbor_found=false;
+		Int neighbor_size=0;
 		if(grid.size()>1)
 		{
 			int x = subset.mz / grid.getMZThreshold();
@@ -341,13 +341,13 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 
 			//Surrounding of every DataSubset is examined for the next nearest DataSubsets
 			//Size of the surrounding will be increased successively
-			for (int k=2; k<std::max(grid.getGridSizeX(),grid.getGridSizeY()) && !neighbor_found;++k)
+			for (int k=2; k<std::max(grid.getGridSizeX(),grid.getGridSizeY()) && neighbor_size < subset.size();++k)
 			{
-				for (int i=x-k;i<=x+k && !neighbor_found;++i)
+				for (int i=x-k;i<=x+k && neighbor_size < subset.size();++i)
 				{
 					if (i<0 || i>grid.getGridSizeX())
 						continue;
-					for (int j=y-k;j<=y+k && !neighbor_found ;++j)
+					for (int j=y-k;j<=y+k && neighbor_size < subset.size() ;++j)
 					{
 						if (j<0 || j>grid.getGridSizeY() || (std::abs(y-j) <k && std::abs(x-i) < k))
 							continue;
@@ -359,14 +359,14 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 							{
 								DataSubset* neighbor_ptr=dynamic_cast<DataSubset*> (neighbor_elements.front());
 								neighbors.push_back(neighbor_ptr);
-								if (neighbors.size()==3)
-									neighbor_found=true;
+								neighbor_size+=neighbor_ptr->size();
 							}
 						}
 					}
 				}
 			}
 		}
+//		std::cout << subset.size() << " " << neighbor_size << " " << neighbors.size() << std::endl;
 
 	std::vector< Real > average_silhouette_widths; //for each step from the average silhouette widths of the clusters
 	std::map<DataPoint*, Real > interdist_i; //for each element i holds the min. average intercluster distance in cluster containing i
@@ -597,22 +597,17 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 						cluster_size=git->second.size();
 					}
 					av_interdist_i*=git->second.size();
-					Size overall_neighbor_size=0;
 					//Since the silhouette value of n=1 is not defined because of the missing interdist value,
 					//we have to take points of subsets in the surrounding into account
 					for (std::list<DataSubset*>::iterator neighbor_it = neighbors.begin();neighbor_it!=neighbors.end();++neighbor_it)
 					{
 						std::list<DataPoint*>& neighbor_points=(*neighbor_it)->data_points;
-						Size neighbor_size=std::max((Int)neighbor_points.size(),30);
-						overall_neighbor_size+=neighbor_size;
-						Size neighbor_i=0;
-						for (std::list<DataPoint*>::iterator neighbor_it=neighbor_points.begin(); neighbor_it!=neighbor_points.end() && neighbor_i<30; ++neighbor_it)
+						for (std::list<DataPoint*>::iterator neighbor_element_it=neighbor_points.begin(); neighbor_element_it!=neighbor_points.end(); ++neighbor_element_it)
 						{
-							av_interdist_i += getDistance(*(git->second[h]),**neighbor_it);
-							++neighbor_i;
+							av_interdist_i += getDistance(*(git->second[h]),**neighbor_element_it);
 						}
 					}
-					av_interdist_i/=(Real)(cluster_size+overall_neighbor_size);
+					av_interdist_i/=(Real)(cluster_size+neighbor_size);
 					if (av_interdist_i < interdist_i[git->second[h]])
 					{
 						interdist_i[git->second[h]]=av_interdist_i;

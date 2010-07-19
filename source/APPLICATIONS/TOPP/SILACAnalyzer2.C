@@ -48,6 +48,7 @@
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
 #include <OpenMS/COMPARISON/CLUSTERING/HashClustering.h>
 #include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
+#include <OpenMS/COMPARISON/CLUSTERING/QTClustering.h>
 
 //Contrib includes
 #include <gsl/gsl_histogram.h>
@@ -239,9 +240,10 @@ private:
 					std::map<String,DoubleReal>::iterator pos = labels.find(*heavy_label_it);
 					if (pos==labels.end())
 						throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*heavy_label_it);
-					DoubleReal mass_shift=pos->second;
+					std::vector<DoubleReal> mass_shifts;
+					mass_shifts.push_back(pos->second);
 //					std::cout << mass_shift << " " << charge << std::endl;
-					filters.push_back(SILACFilter(mass_shift,charge,model_deviation));
+					filters.push_back(SILACFilter(mass_shifts,charge,model_deviation));
 				}
 				else
 				{
@@ -249,29 +251,33 @@ private:
 					{
 						if (type == "triple")
 						{
+							std::vector<DoubleReal> mass_shifts;
 							std::map<String,DoubleReal>::iterator pos = labels.find(*heavy_label_it);
 							if (pos==labels.end())
 								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*heavy_label_it);
-							DoubleReal mass_shift1=pos->second;
+							mass_shifts.push_back(pos->second);
 							pos = labels.find(*medium_label_it);
 							if (pos==labels.end())
 								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*medium_label_it);
-							DoubleReal mass_shift2=pos->second;
-							filters.push_back(SILACFilter(std::min(mass_shift1,mass_shift2),std::max(mass_shift1,mass_shift2),charge,model_deviation));
+							mass_shifts.push_back(pos->second);
+							filters.push_back(SILACFilter(mass_shifts,charge,model_deviation));
 						}
 						else if (type == "double_triple")
 						{
 							std::map<String,DoubleReal>::iterator pos = labels.find(*heavy_label_it);
 							if (pos==labels.end())
 								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*heavy_label_it);
-							DoubleReal mass_shift1=pos->second;
+							std::vector<DoubleReal> mass_shifts1;
+							mass_shifts1.push_back(pos->second);
 							pos = labels.find(*medium_label_it);
 							if (pos==labels.end())
 								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*medium_label_it);
-							DoubleReal mass_shift2=pos->second;
-							filters.push_back(SILACFilter(mass_shift1,charge,model_deviation));
-							filters.push_back(SILACFilter(mass_shift2,charge,model_deviation));
-							filters.push_back(SILACFilter(std::min(mass_shift1,mass_shift2),std::max(mass_shift1,mass_shift2),charge,model_deviation));
+							std::vector<DoubleReal> mass_shifts2;
+							mass_shifts2.push_back(pos->second);
+							filters.push_back(SILACFilter(mass_shifts1,charge,model_deviation));
+							filters.push_back(SILACFilter(mass_shifts2,charge,model_deviation));
+							mass_shifts1.push_back(pos->second);
+							filters.push_back(SILACFilter(mass_shifts1,charge,model_deviation));
 						}
 					}
 				}
@@ -450,6 +456,9 @@ public:
 			std::vector<Tree> act_subtrees;
 			c.getSubtrees(subtrees);
 			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
+//			QTClustering c(*data_it,rt_threshold, mz_threshold);
+//			c.setLogType(log_type_);
+//			std::vector<Cluster> act_clusters=c.performClustering();
 			std::vector<Cluster> act_clusters;
 			c.createClusters(act_clusters);
 			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());

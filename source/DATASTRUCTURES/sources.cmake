@@ -29,6 +29,7 @@ Map.C
 MassExplainer.C
 Matrix.C
 Param.C
+QTCluster.C
 SparseVector.C
 String.C
 StringList.C

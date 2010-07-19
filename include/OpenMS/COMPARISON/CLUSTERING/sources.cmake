@@ -12,6 +12,7 @@ ClusteringMethod.h
 CompleteLinkage.h
 EuclideanSimilarity.h
 HashClustering.h
+QTClustering.h
 SingleLinkage.h
 )
 

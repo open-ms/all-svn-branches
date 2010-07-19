@@ -40,6 +40,7 @@
 #include <OpenMS/MATH/MISC/MathFunctions.h>
 //STL
 #include <algorithm>
+#include <math.h>
 
 //QT
 #include <QtGui/QMouseEvent>
@@ -57,6 +58,9 @@ using namespace std;
 namespace OpenMS
 {
 	using namespace Internal;
+	QPoint _pos; //Markus
+	vector<MSChromatogram<> >::const_iterator crom_; //Markus
+	MSChromatogram<>::const_iterator cp_; //Markus
 
 	Spectrum2DCanvas::Spectrum2DCanvas(const Param& preferences, QWidget* parent)
 		: SpectrumCanvas(preferences, parent)
@@ -112,21 +116,42 @@ namespace OpenMS
 		if (getCurrentLayer().type==LayerData::DT_FEATURE)
 		{
 			dataToWidget_(peak.getFeature(getCurrentLayer().features).getMZ(),  peak.getFeature(getCurrentLayer().features).getRT(), pos);
+			// Testkommentar
+			std::cout << "Test...Feature Feature \n";
 		}
 		else if (getCurrentLayer().type==LayerData::DT_PEAK)
 		{
 			dataToWidget_(peak.getPeak(getCurrentLayer().peaks).getMZ(), peak.getSpectrum(getCurrentLayer().peaks).getRT(), pos);
+			// Testkommentar
+			//float a = peak.getPeak(getCurrentLayer().peaks).getMZ();
+			//float b = peak.getSpectrum(getCurrentLayer().peaks).getRT();
+			//std::cout << "Peak: " << a << " , " << b << "  \n";
 		}
 		else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
 		{
 			dataToWidget_(peak.getFeature(getCurrentLayer().consensus).getMZ(), peak.getFeature(getCurrentLayer().consensus).getRT(), pos);
+			// Testkommentar
+			std::cout << "Test...Feature Consensus \n";
 		}
 		else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 		{
 			//TODO CHROM
+			// Testkommentar
+			pos = _pos;
+
+			const LayerData& layer = getCurrentLayer();
+			const ExperimentType& map = layer.peaks;
+			vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
+			MSChromatogram<>::const_iterator cp = crom->begin();
+
+			crom = crom_;
+			cp = cp_;
+
+			dataToWidget_(crom->getMZ(), cp->getRT(), pos);
+
 		}
 		
-		//paint highlighed peak
+		//paint highlighted peak
 		painter.save();
 		painter.setPen(QPen(Qt::red, 2));
 		painter.drawEllipse(pos.x() - 5, pos.y() - 5, 10, 10);
@@ -196,7 +221,6 @@ namespace OpenMS
 					if (i->getIntensity() > max_int)
 					{
 						max_int = i->getIntensity();
-
 						return PeakIndex(i-getCurrentLayer().consensus.begin());
 					}
 				}
@@ -205,6 +229,45 @@ namespace OpenMS
 		else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 		{
 			//TODO CHROM
+			const LayerData& layer = getCurrentLayer();
+			const ExperimentType& map = layer.peaks;
+
+			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
+					crom != map.getChromatograms().end();
+					++crom)
+					{
+
+						for (MSChromatogram<>::const_iterator cp = crom->begin();
+								 cp != crom->end();
+								 ++cp)
+							{
+
+							if ( cp->getRT() >= area.minPosition()[1] &&
+								 cp->getRT() <= area.maxPosition()[1] &&
+								 crom->getMZ() >= area.minPosition()[0] &&
+								 crom->getMZ() <= area.maxPosition()[0] /*&&
+								 getCurrentLayer().filters.passes(*cp)*/ )
+							{
+
+								//if (cp->getIntensity() > max_int)
+									//{
+									//cout << "new max: " << cp->getRT() << " " << crom->getMZ() << endl;
+
+									//max_int = cp->getIntensity();
+									crom_ = crom;
+									cp_ = cp;
+
+									//return PeakIndex(cp-crom->begin());
+									return PeakIndex(crom-map.getChromatograms().begin(), cp-crom->begin());
+									//return PeakIndex(cp-(crom-map.getChromatograms().begin()));
+									//return PeakIndex(); // keine Anzeige; nur zum testen
+									//}
+
+							}
+						}
+
+					}
+
 		}
 		return PeakIndex();
 	}
@@ -233,7 +296,7 @@ namespace OpenMS
 			else if (layer.type != LayerData::DT_CHROMATOGRAM && layer.consensus.getMaxInt()>0.0)
 			{
 				//TODO CHROM
-				//percentage_factor_ = overall_data_range_.maxPosition()[2]/layer.peaks.getMaxInt();
+				percentage_factor_ = overall_data_range_.maxPosition()[2]/layer.peaks.getMaxInt();
 			}
 		}
 
@@ -510,6 +573,13 @@ namespace OpenMS
 			const ExperimentType& map = layer.peaks;
 			//TODO CHROM implement layer filters
 			//TODO CHROM implement faster painting
+
+			//Testvariable ob Ausgabe gleich der vorherigen
+			double testMZ = 0.0;
+			double maxIntensity = 0.0;
+			double minIntensity = 99999.9;
+
+
 			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin(); 
 					 crom != map.getChromatograms().end();
 					 ++crom)
@@ -520,16 +590,60 @@ namespace OpenMS
 				{
 					QPoint pos;
 					dataToWidget_(crom->getMZ(), cp->getRT(), pos);
+
+					//Ausgabe-Test
+					if (testMZ != crom->getMZ())
+					{
+						if (maxIntensity != 0.0)
+						{
+						cout << "\n maxIntensity: " << maxIntensity ;
+						cout << "\n minIntensity: " << minIntensity << "\n" ;
+						}
+						testMZ = crom->getMZ();
+						cout << "*****************************************";
+						cout << "\n" << "Chromatogram X/Y: " << crom->getMZ() << "\n";
+						maxIntensity = 0.0;
+						minIntensity = 0.0;
+					}
+
+					if (maxIntensity < cp->getIntensity())
+					{
+						maxIntensity = cp->getIntensity();
+					}
+
+					if (minIntensity > cp->getIntensity())
+					{
+						minIntensity = cp->getIntensity();
+					}
+					//cout << /*"RT: " << cp->getRT() << */ " Intensity: " << cp->getIntensity() << " ; ";
+
+
+
+					painter.setPen(QPen(Qt::yellow, 2));
+					double intensity_ = cp->getIntensity();
+
 					if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
 					{
-						buffer_.setPixel(pos.x() ,pos.y() ,Qt::black);
-						buffer_.setPixel(pos.x()-1 ,pos.y() ,Qt::black);
-						buffer_.setPixel(pos.x()+1 ,pos.y() ,Qt::black);
-						buffer_.setPixel(pos.x() ,pos.y()-1 ,Qt::black);
-						buffer_.setPixel(pos.x() ,pos.y()+1 ,Qt::black);
+						if (intensity_ == 0)
+						{
+							//painter.drawPoint(pos.x(), pos.y());
+						}
+
+						if (intensity_ > 0)
+						{
+							double shift_ = 0.0;	// used to calculate the width of the line with the intensity
+							shift_ = ((log(intensity_ + 1.0))/log(1.7))-0.5;
+
+							painter.drawLine(pos.x()-shift_, pos.y(), pos.x()+shift_, pos.y());
+						}
+
+
 					}
 				}
 			}
+
+			//cout << "\n maxIntensity: " << maxIntensity ;
+			//cout << "\n minIntensity: " << minIntensity << "\n" ;
 		}
 	}
 

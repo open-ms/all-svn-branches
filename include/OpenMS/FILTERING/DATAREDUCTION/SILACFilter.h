@@ -119,7 +119,16 @@ private:
 
     bool checkArea(DoubleReal act_mz, DoubleReal envelope_distance,std::vector<DoubleReal>& intensities_spl, std::vector<DoubleReal>& intensities_lin);
 
-
+	/**
+	 * @brief returns if there exists a SILAC feature at the given position, which corresponds to the filter's properties
+	 * @param act_rt RT value of the position
+	 * @param act_mz m/z value of the position
+	 */
+	bool isFeature(DoubleReal act_rt,DoubleReal act_mz);
+	/**
+	 * @brief gets the m/z values of all peaks , which belong the last identiefied feature
+	 */
+	std::vector<DoubleReal> getPeakPositions();
 public:
 	/**
 	 * @brief double identifier (2)
@@ -161,16 +170,7 @@ public:
 	 * @brief clears the blacklist
 	 */
 	void reset();
-	/**
-	 * @brief returns if there exists a SILAC feature at the given position, which corresponds to the filter's properties
-	 * @param act_rt RT value of the position
-	 * @param act_mz m/z value of the position
-	 */
-	bool isFeature(DoubleReal act_rt,DoubleReal act_mz);
-	/**
-	 * @brief gets the m/z values of all peaks , which belong the last identiefied feature
-	 */
-	std::vector<DoubleReal> getPeakPositions();
+
 
 
 	/**
@@ -185,6 +185,11 @@ public:
 	 * @brief returns all identiefied elements
 	 */
 	std::vector<DataPoint> getElements();
+
+	/**
+	 * @brief returns the charge of the dilter
+	 */
+	Int getCharge();
 };
 }
 

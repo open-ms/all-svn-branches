@@ -218,7 +218,7 @@ namespace OpenMS
 		DRange<2> getPositionRange() const;
 		/// Returns the intensity range of the contained elements
 		DRange<1> getIntensityRange() const;
-		
+
 		//@}
 
 		/**
@@ -233,6 +233,17 @@ namespace OpenMS
 		void computeConsensus();
 
 		/**
+		       @brief Computes and updates the consensus position, intensity, and charge.
+
+		       The m/z psoition is the lowest m/z value of the feature handles. The RT position and intensity of the contained feature handles is averaged.
+		       The most frequent charge state wins, while the tie breaking prefers
+		       smaller (absolute) charges.
+
+		       @note This method has to be called explicitly, <i>after</i> adding the feature handles.
+		 */
+		void computeMonoisotopicConsensus();
+
+		/**
        @brief Computes the uncharged parent RT & mass, assuming the handles are charge variants.
 
        The position of the feature handles (decharged) is averaged (using intensity as weights if @param intensity_weighted_averaging is true).
@@ -242,7 +253,7 @@ namespace OpenMS
        weight(H+) * charge.
 
        @note This method has to be called explicitly, <i>after</i> adding the feature handles.
-       
+
        @param fm Input feature map, which provides additional information on the features
        @param intensity_weighted_averaging Use unweighted averaging (default) or weighted by intensity
     */

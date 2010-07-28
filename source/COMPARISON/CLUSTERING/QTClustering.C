@@ -30,7 +30,7 @@
 #include <OpenMS/CONCEPT/Exception.h>
 
 namespace OpenMS {
-QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_) : grid(HashGrid(rt_diameter_,mz_diameter_))
+QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_,DoubleReal isotope_distance_) : grid(HashGrid(rt_diameter_,mz_diameter_))
 {
 //	if(data.size()<2)
 //	{
@@ -38,6 +38,7 @@ QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_,
 //	}
 	rt_diameter=rt_diameter_;
 	mz_diameter=mz_diameter_;
+	isotope_distance=isotope_distance_;
 	for (std::vector<DataPoint>::iterator it=data.begin();it!=data.end();++it)
 	{
 		grid.insert(&(*it));
@@ -73,8 +74,8 @@ std::vector<std::vector<DataPoint*> > QTClustering::performClustering()
 	Size cluster_id=0;
 	for (std::list<QTCluster>::iterator list_it=clusters.begin();list_it!=clusters.end();++list_it)
 	{
-		std::cout << cluster_id << ": "<< std::endl;
-		list_it->checkClusterShape();
+//		std::cout << cluster_id << ": "<< std::endl;
+//		list_it->checkClusterShape();
 		std::vector<DataPoint*> act_vector;
 		const std::set<DataPoint*>& cluster_members=list_it->getClusterMembers();
 		for (std::set<DataPoint*>::const_iterator set_it=cluster_members.begin();set_it!=cluster_members.end();++set_it)
@@ -129,7 +130,7 @@ QTCluster QTClustering::QTClust(HashGrid& act_grid)
 	//						if (isBelowDiameter(element_ptr,neighbor_ptr))
 							std::pair<DoubleReal,DoubleReal> diameters=act_cluster.getDiameters(neighbor_ptr);
 	//						std::cout << diameters.first << " " << diameters.second << "\t";
-							if (diameters.first <= 8 && diameters.second <= mz_diameter && act_cluster.getMZstandardDeviation(neighbor_ptr)<0.01)
+							if (diameters.first <= 10 && diameters.second <= mz_diameter && act_cluster.getMZstandardDeviation(neighbor_ptr,isotope_distance)<0.05 && act_cluster.checkClusterShape(neighbor_ptr))
 								act_cluster.add(neighbor_ptr);
 						}
 					}

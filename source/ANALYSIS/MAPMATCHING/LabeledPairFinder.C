@@ -50,7 +50,7 @@ namespace OpenMS
 		defaults_.setMinFloat("rt_dev_low",0.0);
 		defaults_.setValue("rt_dev_high", 15.0, "maximum allowed deviation above optimal retention time distance");
 		defaults_.setMinFloat("rt_dev_high",0.0);
-		
+
 		defaults_.setValue("mz_pair_dists", DoubleList::create(4.0), "optimal pair distances in m/z [Th] for features with charge +1 (adapted to +2, +3, .. by division through charge)");
 		defaults_.setValue("mz_dev", 0.05, "maximum allowed deviation from optimal m/z distance\n");
 		defaults_.setMinFloat("mz_dev",0.0);
@@ -60,16 +60,16 @@ namespace OpenMS
 		defaultsToParam_();
 	}
 
-	void LabeledPairFinder::run(const vector<ConsensusMap>& input_maps, ConsensusMap& result_map) 
+	void LabeledPairFinder::run(const vector<ConsensusMap>& input_maps, ConsensusMap& result_map)
 	{
 		if (input_maps.size()!=1) throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"exactly one input map required");
 		if (result_map.getFileDescriptions().size()!=2) throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"two file descriptions required");
 		if (result_map.getFileDescriptions().begin()->second.filename!=result_map.getFileDescriptions().rbegin()->second.filename) throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"the two file descriptions have to contain the same file name");
 		checkIds_(input_maps);
-		
+
 		//look up the light and heavy index
 		Size light_index = numeric_limits<Size>::max();
-		Size heavy_index = numeric_limits<Size>::max();	
+		Size heavy_index = numeric_limits<Size>::max();
 		for (ConsensusMap::FileDescriptions::const_iterator it = result_map.getFileDescriptions().begin();
 			 	 it!=result_map.getFileDescriptions().end();
 			 	 ++it)
@@ -87,14 +87,14 @@ namespace OpenMS
 		{
 			throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"the input maps have to be labeled 'light' and 'heavy'");
 		}
-		
+
 		result_map.clear(false);
-		
+
 		// sort consensus features by RT (and MZ) to speed up searching afterwards
 		typedef ConstRefVector<ConsensusMap> RefMap;
 		RefMap model_ref(input_maps[0].begin(),input_maps[0].end());
 		model_ref.sortByPosition();
-		
+
 		//calculate matches
 		ConsensusMap matches;
 		//settings
@@ -104,7 +104,7 @@ namespace OpenMS
 		DoubleReal mz_dev = param_.getValue("mz_dev");
 		DoubleList mz_pair_dists = param_.getValue("mz_pair_dists");
 		bool mrm = param_.getValue("mrm").toBool();
-		
+
 		//estimate RT parameters
 		if (param_.getValue("rt_estimate")=="true")
 		{
@@ -119,7 +119,7 @@ namespace OpenMS
 					{
 						DoubleReal mz_pair_dist = *dist_it;
 						if (it2->getCharge() == it->getCharge()
-							&& it2->getMZ() >=it->getMZ()+mz_pair_dist/it->getCharge()-mz_dev  
+							&& it2->getMZ() >=it->getMZ()+mz_pair_dist/it->getCharge()-mz_dev
 							&& it2->getMZ() <=it->getMZ()+mz_pair_dist/it->getCharge()+mz_dev)
 						{
 							dists.push_back(it2->getRT()-it->getRT());
@@ -141,7 +141,7 @@ namespace OpenMS
 				GaussFitter::GaussFitResult result;
 				//first estimate of the optimal shift: median of the distances
 				sort(dists.begin(),dists.end());
-				Size median_index = dists.size()/2; 
+				Size median_index = dists.size()/2;
 				result.x0 = dists[median_index];
 				//create histogram of distances
 				//consider only the maximum of pairs, centered around the optimal shift
@@ -188,7 +188,7 @@ namespace OpenMS
 				{
 					pos += bin_step;
 				}
-				DoubleReal sigma_high = pos - result.x0;		
+				DoubleReal sigma_high = pos - result.x0;
 				result.sigma = (sigma_high + sigma_low)/6.0;
 				//cout << "estimated optimal RT distance (before fit): " << result.x0 << endl;
 				//cout << "estimated allowed deviation (before fit): " << result.sigma*3.0 << endl;
@@ -210,7 +210,7 @@ namespace OpenMS
 			}
 		}
 
-		
+
 		// check each feature
 		for (RefMap::const_iterator it=model_ref.begin(); it!=model_ref.end(); ++it)
 		{
@@ -221,7 +221,7 @@ namespace OpenMS
 				while (it2!=model_ref.end() && it2->getRT() <= it->getRT()+rt_pair_dist + rt_dev_high)
 				{
 					// if in mrm mode, we need to compare precursor mass difference and fragment mass difference, charge remains the same
-				
+
 					DoubleReal prec_mz_diff(0);
 					if (mrm)
 					{
@@ -273,13 +273,13 @@ namespace OpenMS
 						matches.back().insert(heavy_index,*it2);
 						matches.back().setQuality(score);
 						matches.back().setCharge(it->getCharge());
-						matches.back().computeConsensus();
+						matches.back().computeMonoisotopicConsensus();
 					}
 					++it2;
 				}
 			}
 		}
-		
+
 		//compute best pairs
 		// - sort matches by quality
 		// - take highest-quality matches first (greedy) and mark them as used
@@ -298,7 +298,7 @@ namespace OpenMS
 				used_features.insert(match->rbegin()->getUniqueId());
 			}
 		}
-		
+
 		//Add protein identifications to result map
 		for (Size i=0; i<input_maps.size(); ++i)
 		{
@@ -310,7 +310,7 @@ namespace OpenMS
 		{
 			result_map.getUnassignedPeptideIdentifications().insert(result_map.getUnassignedPeptideIdentifications().end(),input_maps[i].getUnassignedPeptideIdentifications().begin(), input_maps[i].getUnassignedPeptideIdentifications().end());
 		}
-		
+
 		// Very useful for checking the results, and the ids have no real meaning anyway
 		result_map.sortByMZ();
 	}

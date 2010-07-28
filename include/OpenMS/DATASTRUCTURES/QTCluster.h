@@ -48,9 +48,9 @@ public:
 	void add(DataPoint* element);
 	std::set<DataPoint*> getClusterMembers();
 	std::pair<DoubleReal,DoubleReal> getDiameters(DataPoint* point);
-	DoubleReal getMZstandardDeviation(DataPoint* point);
+	DoubleReal getMZstandardDeviation(DataPoint* point,DoubleReal isotope_distance);
 	bool contains(DataPoint* element);
-	void checkClusterShape();
+	bool checkClusterShape(DataPoint* point);
 };
 }
 #endif /* QTSUBSET_H_ */

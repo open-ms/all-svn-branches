@@ -87,7 +87,7 @@ using namespace OpenMS;
   @image html SILACAnalyzer_algorithm.png
 
   <b>Parameter Tuning</b>
- 
+
   SILACAnalyzer can either search for SILAC pairs (as described in the above paragraph) or triplets:
   - type - double (for SILAC pairs), triple (for SILAC triplets)
 
@@ -270,7 +270,7 @@ class TOPPSILACAnalyzer
       registerOutputFile_("out_visual","<file>","","output file containing cluster information",false);
       setValidFormats_("out_visual",StringList::create("featureXML"));
 
-      registerFlag_("silac_debug","Enables writing of debug information",true);    
+      registerFlag_("silac_debug","Enables writing of debug information",true);
       registerSubsection_("algorithm","Algorithm parameters section");
 
     }
@@ -284,13 +284,13 @@ class TOPPSILACAnalyzer
       if (SILAC_type == 2)
 	  {
 			tmp.setValue("mass_separation_light_heavy",6.0202, "mass gap between light and heavy isotopic envelopes, [Da]" );
-	  } 
+	  }
 	  else if (SILAC_type == 3)
 	  {
 			tmp.setValue("mass_separation_light_medium" , 6.0202, "mass gap between light and medium isotopic envelopes, [Da]");
 			tmp.setValue("mass_separation_light_heavy" , 8.0202, "mass gap between light and heavy isotopic envelopes, [Da]");
 	  }
-		
+
 	  tmp.setValue("charge_min", 2, "Charge state range begin");
       tmp.setMinInt("charge_min", 1);
 
@@ -317,7 +317,7 @@ class TOPPSILACAnalyzer
       tmp.setMinInt("cluster_min", 0);
 
       tmp.setValue("cluster_max", 2, "End of the clusters range to be plotted by the gnuplot script");
-      tmp.setMinInt("cluster_max", 0);      
+      tmp.setMinInt("cluster_max", 0);
 
 
       return tmp;
@@ -463,7 +463,7 @@ class TOPPSILACAnalyzer
 			  DoubleReal int_spline7 = gsl_spline_eval (spline2, mz+envelope_distance_light_heavy, acc2);
 			  DoubleReal int_spline8 = gsl_spline_eval (spline2, mz+envelope_distance_light_heavy+isotope_distance, acc2);
 			  DoubleReal int_spline9 = gsl_spline_eval (spline2, mz+envelope_distance_light_heavy+2*isotope_distance, acc2);
-				
+
 			  bool condDouble1 = (int_lin1 >= intensity_cutoff) && (int_lin2 >= intensity_cutoff) && (int_lin3 >= intensity_cutoff) && (int_lin7 >= intensity_cutoff) && (int_lin8 >= intensity_cutoff) && (int_lin9 >= intensity_cutoff); // all six intensities peak simultaneously
 			  bool condDouble2 = (int_spline1 >= int_spline2) && (int_spline2 >= int_spline3) && (int_spline7 >= int_spline8) && (int_spline8 >= int_spline9); // isotopic peaks within one envelop decrease
 			  bool condTriple1 = (int_lin1 >= intensity_cutoff) && (int_lin2 >= intensity_cutoff) && (int_lin3 >= intensity_cutoff) && (int_lin4 >= intensity_cutoff) && (int_lin5 >= intensity_cutoff) && (int_lin6 >= intensity_cutoff) && (int_lin7 >= intensity_cutoff) && (int_lin8 >= intensity_cutoff) && (int_lin9 >= intensity_cutoff); // all nine intensities peak simultaneously
@@ -764,9 +764,9 @@ class TOPPSILACAnalyzer
 		// generate debug output
 		//-------------------------------------------------------------
 		// strings repeatedly used in debug output
-		String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5)); 
+		String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5));
 		String light_heavy_string = String(0.01*floor(mass_separation_light_heavy*100+0.5));
-		  
+
 		if (getFlag_("silac_debug"))
         {
 		  String debug_suffix;
@@ -926,12 +926,12 @@ class TOPPSILACAnalyzer
       //write gnuplot script
       //--------------------------------------------------------------
 	  // strings repeatedly used in debug output
-	  String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5)); 
+	  String light_medium_string = String(0.01*floor(mass_separation_light_medium*100+0.5));
 	  String light_heavy_string = String(0.01*floor(mass_separation_light_heavy*100+0.5));
 	  String rt_scaling_string = String(0.01*floor(rt_scaling*100+0.5));
 	  String optimal_silhouette_tolerance_string = String(0.01*floor(optimal_silhouette_tolerance*100+0.5));
 	  String cluster_number_scaling_string = String(0.01*floor(cluster_number_scaling*100+0.5));
-		
+
 	  if (getFlag_("silac_debug"))
       {
         // first lines of the gnuplot script
@@ -993,7 +993,7 @@ class TOPPSILACAnalyzer
 		    }
 		    stream_gnuplotscript << std::endl;
 		  }
-			
+
 		  // write *_clustersIntLightHeavy.eps
 		  stream_gnuplotscript << "set output \"" + debug_clustersIntLightHeavy + "\"" << std::endl;
 		  if (type=="double") {
@@ -1016,7 +1016,7 @@ class TOPPSILACAnalyzer
 			}
 		  }
 		  stream_gnuplotscript << std::endl;
-			
+
 		  // write *_ratios_light_medium.eps
 		  if (type=="triple") {
 		    stream_gnuplotscript << "set output \"" + debug_ratios_light_medium + "\"" << std::endl;
@@ -1027,7 +1027,7 @@ class TOPPSILACAnalyzer
 			stream_gnuplotscript << "plot \'" + debug_dat + "\' using 4:5";
 		    stream_gnuplotscript << std::endl;
 		  }
-			
+
 		  // write *_ratios_light_heavy.eps
           stream_gnuplotscript << "set output \"" + debug_ratios_light_heavy + "\"" << std::endl;
 		  if (type=="double") {

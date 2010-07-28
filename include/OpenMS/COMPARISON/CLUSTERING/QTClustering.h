@@ -39,10 +39,11 @@ private:
 	HashGrid grid;
 	DoubleReal rt_diameter;
 	DoubleReal mz_diameter;
+	DoubleReal isotope_distance;
 	std::list<QTCluster> clusters;
 	bool isBelowDiameter(DataPoint* point1, DataPoint* point2);
 public:
-	QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_);
+	QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_,DoubleReal isotope_distance);
 	virtual ~QTClustering();
 	std::vector<std::vector<DataPoint*> > performClustering();
 	QTCluster QTClust(HashGrid& act_grid);

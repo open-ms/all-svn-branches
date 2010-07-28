@@ -46,17 +46,20 @@
 //clustering
 #include <OpenMS/DATASTRUCTURES/DistanceMatrix.h>
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
-#include <OpenMS/COMPARISON/CLUSTERING/HashClustering.h>
-#include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
+//#include <OpenMS/COMPARISON/CLUSTERING/HashClustering.h>
+//#include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
 #include <OpenMS/COMPARISON/CLUSTERING/QTClustering.h>
 
 //Contrib includes
-#include <gsl/gsl_histogram.h>
-#include <gsl/gsl_statistics.h>
-#include <gsl/gsl_fit.h>
-#include <gsl/gsl_interp.h>
-#include <gsl/gsl_spline.h>
-#include <gsl/gsl_errno.h>
+//#include <gsl/gsl_histogram.h>
+//#include <gsl/gsl_statistics.h>
+//#include <gsl/gsl_fit.h>
+//#include <gsl/gsl_interp.h>
+//#include <gsl/gsl_spline.h>
+//#include <gsl/gsl_errno.h>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+
 
 //std includes
 #include <cmath>
@@ -64,10 +67,11 @@
 #include <algorithm>
 #include <fstream>
 #include <limits>
+#include <locale>
 
 using namespace OpenMS;
 
-typedef std::vector<BinaryTreeNode> Tree;
+//typedef std::vector<BinaryTreeNode> Tree;
 typedef std::vector<DataPoint*> Cluster;
 
 //-------------------------------------------------------------
@@ -150,8 +154,8 @@ class TOPPSILACAnalyzer2
 private:
 
 	String type;
-	UInt charge_min;
-	UInt charge_max;
+	Int charge_min;
+	Int charge_max;
 	DoubleReal mz_stepwidth;
 	DoubleReal rt_stepwidth;
 	DoubleReal intensity_cutoff;
@@ -159,9 +163,11 @@ private:
 	DoubleReal rt_threshold;
 	DoubleReal rt_scaling;
 	DoubleReal model_deviation;
-	std::map<String,DoubleReal> labels;
-	StringList heavy_labels;
-	StringList medium_labels;
+	DoubleReal label_selection;
+	std::set<String> contained_labels;
+	Int charge_selection;
+	std::vector<std::vector<DoubleReal> > filter_values;
+	std::map<String,DoubleReal> label_identifiers;
 	String in;
 	String out;
 	String out_visual;
@@ -173,24 +179,57 @@ private:
 	void handleParameters()
 	{
 		type = getStringOption_("type");
-		charge_min = getParam_().getValue("algorithm:charge_min");
-		charge_max = getParam_().getValue("algorithm:charge_max");
+		String charge_string=getParam_().getValue("algorithm:charge");
+		DoubleReal charge_min_temp,charge_max_temp;
+		parseRange_(charge_string,charge_min_temp,charge_max_temp);
+		charge_min=(Int)charge_min_temp;
+		charge_max=(Int)charge_max_temp;
 		intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
 		mz_threshold = getParam_().getValue("algorithm:mz_threshold");
 		rt_threshold = getParam_().getValue("algorithm:rt_threshold");
 		rt_scaling = getParam_().getValue("algorithm:rt_scaling");
 		model_deviation = getParam_().getValue("algorithm:maximum_model_deviation");
-		labels.insert(std::make_pair("arg6",getParam_().getValue("labels:arg6")));
-		labels.insert(std::make_pair("arg10",getParam_().getValue("labels:arg10")));
-		labels.insert(std::make_pair("lys4",getParam_().getValue("labels:lys4")));
-		labels.insert(std::make_pair("lys6",getParam_().getValue("labels:lys6")));
-		labels.insert(std::make_pair("lys8",getParam_().getValue("labels:lys8")));
-		heavy_labels=getParam_().getValue("labels:heavy_labels");
-		if (type=="triple" || type=="double_triple")
-			medium_labels=getParam_().getValue("labels:medium_labels");
+		label_identifiers.insert(std::make_pair("arg6",getParam_().getValue("labels:arg6")));
+		label_identifiers.insert(std::make_pair("arg10",getParam_().getValue("labels:arg10")));
+		label_identifiers.insert(std::make_pair("lys4",getParam_().getValue("labels:lys4")));
+		label_identifiers.insert(std::make_pair("lys6",getParam_().getValue("labels:lys6")));
+		label_identifiers.insert(std::make_pair("lys8",getParam_().getValue("labels:lys8")));
+		String label_list_string=getParam_().getValue("algorithm:isotopic_labels");
+		std::vector<String> label_list;
+		boost::split( label_list, label_list_string , boost::is_any_of("[]") );
+		 for (std::vector<String>::iterator it=label_list.begin();it!=label_list.end();++it)
+		 {
+			std::vector<DoubleReal> act_filter_values;
+			std::vector<String> act_labels;
+			boost::split( act_labels, *it , boost::is_any_of(",") );
+			for (std::vector<String>::iterator label_it=act_labels.begin();label_it!=act_labels.end() && *label_it!="";++label_it)
+			{
+				String act_label=*label_it;
+				std::remove(act_label.begin(), act_label.end(), ' ');
+				std::transform(act_label.begin(),act_label.end(),act_label.begin(),tolower);
+				std::map<String,DoubleReal>::iterator pos = label_identifiers.find(act_label);
+				if (pos==label_identifiers.end())
+					throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,act_label);
+				act_filter_values.push_back(pos->second);
+				contained_labels.insert(act_label);
+			}
+			if (act_filter_values.size()!=0)
+				filter_values.insert(filter_values.end(),act_filter_values);
+		 }
+
 		in = getStringOption_("in");
 		out = getStringOption_("out");
 		out_visual = getStringOption_("out_visual");
+		String label_selection_string = getParam_().getValue("selected_search:label");
+		std::map<String,DoubleReal>::iterator pos = label_identifiers.find(label_selection_string);
+		if (label_selection_string=="")
+			label_selection=-1;
+		else if (pos==label_identifiers.end() || contained_labels.find(label_selection)==contained_labels.end())
+			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,label_selection_string);
+		label_selection=pos->second;
+		charge_selection = getParam_().getValue("selected_search:charge");
+		if ((charge_selection < charge_min || charge_selection > charge_max) && charge_selection>0)
+			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,"Charge "+charge_selection);
 		//output variables
 		all_pairs.getFileDescriptions()[0].filename = in;
 		all_pairs.getFileDescriptions()[0].label = "light";
@@ -226,62 +265,17 @@ private:
 		}
 		std::sort(mz_spacing.begin(),mz_spacing.end());
 		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
+//		std::cout << mz_stepwidth << std::endl;
 //		mz_stepwidth=0.0005;
 		std::sort(rt_spacing.begin(),rt_spacing.end());
 		rt_stepwidth=rt_spacing[rt_spacing.size()/2];
-
 		std::list<SILACFilter> filters;
-		for (UInt charge=charge_min; charge<=charge_max; ++charge)
+		for (Int charge=charge_min; charge<=charge_max; ++charge)
 		{
-			for (StringList::iterator heavy_label_it=heavy_labels.begin();heavy_label_it!=heavy_labels.end();++heavy_label_it)
+			for (std::vector<std::vector<DoubleReal> >::iterator value_vector_it=filter_values.begin();value_vector_it!=filter_values.end();++value_vector_it)
 			{
-				if (type == "double")
-				{
-					std::map<String,DoubleReal>::iterator pos = labels.find(*heavy_label_it);
-					if (pos==labels.end())
-						throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*heavy_label_it);
-					std::vector<DoubleReal> mass_shifts;
-					mass_shifts.push_back(pos->second);
-//					std::cout << mass_shift << " " << charge << std::endl;
-					filters.push_back(SILACFilter(mass_shifts,charge,model_deviation));
-				}
-				else
-				{
-					for (StringList::iterator medium_label_it=heavy_labels.begin();medium_label_it!=heavy_labels.end();++medium_label_it)
-					{
-						if (type == "triple")
-						{
-							std::vector<DoubleReal> mass_shifts;
-							std::map<String,DoubleReal>::iterator pos = labels.find(*heavy_label_it);
-							if (pos==labels.end())
-								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*heavy_label_it);
-							mass_shifts.push_back(pos->second);
-							pos = labels.find(*medium_label_it);
-							if (pos==labels.end())
-								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*medium_label_it);
-							mass_shifts.push_back(pos->second);
-							filters.push_back(SILACFilter(mass_shifts,charge,model_deviation));
-						}
-						else if (type == "double_triple")
-						{
-							std::map<String,DoubleReal>::iterator pos = labels.find(*heavy_label_it);
-							if (pos==labels.end())
-								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*heavy_label_it);
-							std::vector<DoubleReal> mass_shifts1;
-							mass_shifts1.push_back(pos->second);
-							pos = labels.find(*medium_label_it);
-							if (pos==labels.end())
-								throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,*medium_label_it);
-							std::vector<DoubleReal> mass_shifts2;
-							mass_shifts2.push_back(pos->second);
-							filters.push_back(SILACFilter(mass_shifts1,charge,model_deviation));
-							filters.push_back(SILACFilter(mass_shifts2,charge,model_deviation));
-							mass_shifts1.push_back(pos->second);
-							filters.push_back(SILACFilter(mass_shifts1,charge,model_deviation));
-						}
-					}
-				}
-
+				std::vector<DoubleReal> value_vector(value_vector_it->begin(),value_vector_it->end());
+				filters.push_back(SILACFilter(value_vector,charge,model_deviation));
 			}
 		}
 
@@ -289,7 +283,6 @@ private:
 		filtering.setLogType(log_type_);
 		for (std::list<SILACFilter>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 		{
-
 			filtering.addFilter(*filter_it);
 		}
 
@@ -297,7 +290,8 @@ private:
 		std::vector<std::vector<DataPoint> > data;
 		for (std::list<SILACFilter>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 		{
-//			if (filter_it==filters.begin())
+			std::set<DoubleReal> envelope_distances=filter_it->getEnvelopeDistances();
+			if (charge_selection <=0 || label_selection<=0 || (std::abs(*envelope_distances.rbegin()-label_selection)<std::numeric_limits<DoubleReal>::epsilon() && charge_selection==filter_it->getCharge()))
 				data.push_back(filter_it->getElements());
 		}
 		exp.clear(true);
@@ -326,6 +320,7 @@ public:
 
 		registerSubsection_("labels","Label configuration");
 		registerSubsection_("algorithm","Algorithm parameters section");
+		registerSubsection_("selected_search","Label and charge selection for specific search");
 	}
 
 	Param getSubsectionDefaults_(const String& section) const
@@ -335,30 +330,22 @@ public:
 		{
 
 //			tmp.setValue("cleavage",StringList::create("Trypsin,Arg-C,Asp-N,Asp-N_ambic,Chymotrypsin,CNBr,CNBr+Trypsin,Formic_acid,Lys-C,Lys-C/P,PepsinA,Tryp-CNBr,TrypChymo,Trypsin/P,V8-DE,V8-E,semiTrypsin,LysC+AspN,None"),"CL");
-			String type = getStringOption_("type");
-			if (type == "triple" || type == "double_triple")
-			{
-				tmp.setValue("medium_labels", StringList(), "Medium labels. Allowed labels are \'arg6\', \'arg10\', \'lys4\', \'lys6\', \'lys8\'");
-			}
-			tmp.setValue("heavy_labels", StringList(), "Heavy labels. Allowed labels are \'arg6\', \'arg10\', \'lys4\', \'lys6\', \'lys8\'");
 			tmp.setValue("arg6", 6.0202, "Arg6 mass shift");
 			tmp.setMinFloat("arg6", 0.0);
-			tmp.setValue("arg10", 10.0202, "Arg10 mass shift");
+			tmp.setValue("arg10", 9.9304356, "Arg10 mass shift");
 			tmp.setMinFloat("arg10", 0.0);
 			tmp.setValue("lys4", 4.0202, "Lys4 mass shift");
 			tmp.setMinFloat("lys4", 0.0);
 			tmp.setValue("lys6", 6.0202, "Lys6 mass shift");
 			tmp.setMinFloat("lys6", 0.0);
-			tmp.setValue("lys8", 8.0202, "Lys8 mass shift");
+			tmp.setValue("lys8", 7.9427178, "Lys8 mass shift");
 			tmp.setMinFloat("lys8", 0.0);
 		}
 		if (section == "algorithm")
 		{
-			tmp.setValue("charge_min", 2, "Charge state range begin");
-			tmp.setMinInt("charge_min", 1);
+			tmp.setValue("isotopic_labels", "", "Isotopic labels. Add an entry for each SILAC type by using comma-seperated label identifiers (see \"labels\" section in advanced parameters)");
 
-			tmp.setValue("charge_max", 3, "Charge state range end");
-			tmp.setMinInt("charge_max",1);
+			tmp.setValue("charge",":","charge range");
 
 			tmp.setValue("intensity_cutoff", 5000.0, "intensity cutoff");
 			tmp.setMinFloat("intensity_cutoff", 0.0);
@@ -375,6 +362,11 @@ public:
 			tmp.setValue("maximum_model_deviation",0.1,"Maximal value of which a predicted SILAC feature may deviate from the averagine model.");
 			tmp.setMinFloat("maximum_model_deviation",0.0);
 
+		}
+		if (section == "selected_search")
+		{
+			tmp.setValue("label", "", "Label selection");
+			tmp.setValue("charge", 0, "Charge selection. 0 for no charge selection. Charge must be in the selected charge range at the \"algorithm\" section.");
 		}
 		return tmp;
 	}
@@ -430,6 +422,8 @@ public:
 		//set input map size (only once)
 
 		exp.updateRanges();
+
+
 		all_pairs.getFileDescriptions()[0].size = exp.getSize();
 		all_pairs.getFileDescriptions()[1].size = exp.getSize();
 		all_pairs.getFileDescriptions()[2].size = exp.getSize();
@@ -446,73 +440,74 @@ public:
 
 		std::vector<std::vector<Real> > silhouettes;
 		std::vector<Cluster> clusters;
-		std::vector<Tree> subtrees;
+//		std::vector<Tree> subtrees;
 		for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin();data_it!=data.end();++data_it)
 		{
-			CentroidLinkage method(rt_scaling);
-			HashClustering c(*data_it,rt_threshold,mz_threshold,method);
-			c.setLogType(log_type_);
-			c.performClustering();
-			std::vector<Tree> act_subtrees;
-			c.getSubtrees(subtrees);
-			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
-//			QTClustering c(*data_it,rt_threshold, mz_threshold);
+//			CentroidLinkage method(rt_scaling);
+//			HashClustering c(*data_it,rt_threshold,mz_threshold,method);
 //			c.setLogType(log_type_);
-//			std::vector<Cluster> act_clusters=c.performClustering();
-			std::vector<Cluster> act_clusters;
-			c.createClusters(act_clusters);
+//			c.performClustering();
+//			std::vector<Tree> act_subtrees;
+//			c.getSubtrees(subtrees);
+//			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
+			DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
+			QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
+			c.setLogType(log_type_);
+			std::vector<Cluster> act_clusters=c.performClustering();
+//			std::vector<Cluster> act_clusters;
+//			c.createClusters(act_clusters);
 			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
-			const std::vector<std::vector<Real> >& act_silhouettes=c.getSilhouetteValues();
-			silhouettes.insert(silhouettes.end(),act_silhouettes.begin(),act_silhouettes.end());
+//			const std::vector<std::vector<Real> >& act_silhouettes=c.getSilhouetteValues();
+//			silhouettes.insert(silhouettes.end(),act_silhouettes.begin(),act_silhouettes.end());
 		}
 
 
-		if (getFlag_("silac_debug"))
-		{
-			std::vector<String> colors;
-			// 16 HTML colors
-			colors.push_back("#00FFFF");
-			colors.push_back("#000000");
-			colors.push_back("#0000FF");
-			colors.push_back("#FF00FF");
-			colors.push_back("#008000");
-			colors.push_back("#808080");
-			colors.push_back("#00FF00");
-			colors.push_back("#800000");
-			colors.push_back("#000080");
-			colors.push_back("#808000");
-			colors.push_back("#800080");
-			colors.push_back("#FF0000");
-			colors.push_back("#C0C0C0");
-			colors.push_back("#008080");
-			colors.push_back("#FFFF00");
-			Size subtree_number=1;
-			for (std::vector<std::vector<BinaryTreeNode> >::iterator subtree_it=subtrees.begin();subtree_it!=subtrees.end();++subtree_it)
-			{
-				std::set<DataPoint*> leafs;
-				for (std::vector<BinaryTreeNode>::iterator tree_it=subtree_it->begin(); tree_it!= subtree_it->end(); ++tree_it)
-				{
-					leafs.insert(tree_it->data1);
-					leafs.insert(tree_it->data2);
-				}
-				for (std::set<DataPoint*>::iterator leafs_it=leafs.begin();leafs_it!=leafs.end();++leafs_it)
-				{
-					//visualize the light variant
-					Feature tree_point;
-					tree_point.setRT((*leafs_it)->rt);
-					tree_point.setMZ((*leafs_it)->mz);
-					tree_point.setIntensity((*leafs_it)->intensities[0]);
-					tree_point.setCharge((*leafs_it)->charge);
-					tree_point.setMetaValue("subtree",subtree_number);
-					tree_point.setMetaValue("color",colors[subtree_number%colors.size()]);
-					subtree_points.push_back(tree_point);
-				}
-				++subtree_number;
-			}
-
-			// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
-			subtree_points.sortByPosition();
-		}
+//		if (getFlag_("silac_debug"))
+//		{
+//			std::vector<String> colors;
+//			// 16 HTML colors
+//			colors.push_back("#00FFFF");
+//			colors.push_back("#000000");
+//			colors.push_back("#0000FF");
+//			colors.push_back("#FF00FF");
+//			colors.push_back("#008000");
+//			colors.push_back("#808080");
+//			colors.push_back("#00FF00");
+//			colors.push_back("#800000");
+//			colors.push_back("#000080");
+//			colors.push_back("#808000");
+//			colors.push_back("#800080");
+//			colors.push_back("#FF0000");
+//			colors.push_back("#C0C0C0");
+//			colors.push_back("#008080");
+//			colors.push_back("#FFFF00");
+//			Size subtree_number=1;
+//			for (std::vector<std::vector<BinaryTreeNode> >::iterator subtree_it=subtrees.begin();subtree_it!=subtrees.end();++subtree_it)
+//			{
+//				std::set<DataPoint*> leafs;
+//				for (std::vector<BinaryTreeNode>::iterator tree_it=subtree_it->begin(); tree_it!= subtree_it->end(); ++tree_it)
+//				{
+//					leafs.insert(tree_it->data1);
+//					leafs.insert(tree_it->data2);
+//				}
+//				for (std::set<DataPoint*>::iterator leafs_it=leafs.begin();leafs_it!=leafs.end();++leafs_it)
+//				{
+//					//visualize the light variant
+//					Feature tree_point;
+//					tree_point.setRT((*leafs_it)->rt);
+//					tree_point.setMZ((*leafs_it)->mz);
+//					tree_point.setIntensity((*leafs_it)->intensities[0]);
+//					tree_point.setCharge((*leafs_it)->charge);
+//					tree_point.setMetaValue("subtree",subtree_number);
+//					tree_point.setMetaValue("color",colors[subtree_number%colors.size()]);
+//					subtree_points.push_back(tree_point);
+//				}
+//				++subtree_number;
+//			}
+//
+//			// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
+//			subtree_points.sortByPosition();
+//		}
 
 		if (out!="")
 		{

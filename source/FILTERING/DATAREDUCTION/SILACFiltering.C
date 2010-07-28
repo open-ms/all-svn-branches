@@ -70,6 +70,11 @@ bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* 
 	return (*(a->getEnvelopeDistances()).rbegin() < *(b->getEnvelopeDistances()).rbegin());
 }
 
+DoubleReal getMZStepwidth(DoubleReal mz)
+{
+	return 3.33e-6*mz-8.66e-4;
+}
+
 void SILACFiltering::filterDataPoints()
 {
 	startProgress(0,exp.size(),"filtering raw data");
@@ -126,25 +131,35 @@ void SILACFiltering::filterDataPoints()
 			DoubleReal mz_min = mz_vec[0];
 			DoubleReal mz_max = mz_vec[mz_vec.size()-9];
 			DoubleReal rt=rt_it->getRT();
-			for (DoubleReal mz=mz_min; mz<mz_max; mz+=mz_stepwidth)
+			MSSpectrum<>::Iterator mz_it=rt_it->begin();
+			last_mz=mz_it->getMZ();
+			++mz_it;
+			for ( ;mz_it!=rt_it->end(); ++mz_it)
 			{
-				if (gsl_spline_eval (spline_spl, mz, acc_spl) < 0.0)
-					continue;
-				for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
+
+				for (DoubleReal mz=last_mz; mz<mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ())<3*mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
 				{
-					SILACFilter* filter_ptr=*filter_it;
+//					std::cout << mz << " " ;
+					if (gsl_spline_eval (spline_spl, mz, acc_spl) < 0.0)
+						continue;
+					for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 					{
-						if (filter_ptr->isFeature(rt,mz))
+						SILACFilter* filter_ptr=*filter_it;
 						{
-							const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
-							for (std::vector<DoubleReal>::const_iterator peak_it=peak_positions.begin();peak_it!=peak_positions.end();++peak_it)
+							if (filter_ptr->isFeature(rt,mz))
 							{
-								blockValue(mz,filter_ptr);
+								const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
+								for (std::vector<DoubleReal>::const_iterator peak_it=peak_positions.begin();peak_it!=peak_positions.end();++peak_it)
+								{
+									blockValue(*peak_it,filter_ptr);
+								}
+								++feature_id;
 							}
-							++feature_id;
 						}
 					}
 				}
+//				std::cout << std::endl;
+				last_mz=mz_it->getMZ();
 			}
 			gsl_spline_free(spline_lin);
 			gsl_interp_accel_free(acc_lin);

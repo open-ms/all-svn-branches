@@ -67,19 +67,25 @@ void SILACFiltering::blockValue(DoubleReal value,SILACFilter* source)
 
 bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* b) const
 {
-	return (*(a->getEnvelopeDistances()).rbegin() < *(b->getEnvelopeDistances()).rbegin());
+	if (a->envelope_distances.size()!=b->envelope_distances.size())
+		return a->envelope_distances.size() > b->envelope_distances.size();
+
+		if (a->charge!=b->charge)
+			return a->charge > b->charge;
+	std::set<DoubleReal>::iterator envelope_distances_it_a=a->envelope_distances.begin();
+	std::set<DoubleReal>::iterator envelope_distances_it_b=b->envelope_distances.begin();
+	while(*envelope_distances_it_a == *envelope_distances_it_b)
+	{
+		++envelope_distances_it_a;
+		++envelope_distances_it_b;
+	}
+	return (*envelope_distances_it_a > *envelope_distances_it_b);
 }
 
-DoubleReal getMZStepwidth(DoubleReal mz)
-{
-	return 3.33e-6*mz-8.66e-4;
-}
 
 void SILACFiltering::filterDataPoints()
 {
 	startProgress(0,exp.size(),"filtering raw data");
-
-
 
 	std::vector<DataPoint> data;
 
@@ -115,7 +121,7 @@ void SILACFiltering::filterDataPoints()
 //			}
 
 			acc_lin = gsl_interp_accel_alloc();
-			spline_lin = gsl_spline_alloc(gsl_interp_linear, mz_vec.size());
+			spline_lin = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
 			gsl_spline_init(spline_lin, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 			// spline interpolation
 			// used for exact ratio calculation (more accurate when real peak pairs are present)
@@ -139,26 +145,22 @@ void SILACFiltering::filterDataPoints()
 
 				for (DoubleReal mz=last_mz; mz<mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ())<3*mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
 				{
-//					std::cout << mz << " " ;
 					if (gsl_spline_eval (spline_spl, mz, acc_spl) < 0.0)
 						continue;
 					for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 					{
 						SILACFilter* filter_ptr=*filter_it;
+						if (filter_ptr->isFeature(rt,mz))
 						{
-							if (filter_ptr->isFeature(rt,mz))
+							const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
+							for (std::vector<DoubleReal>::const_iterator peak_it=peak_positions.begin();peak_it!=peak_positions.end();++peak_it)
 							{
-								const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
-								for (std::vector<DoubleReal>::const_iterator peak_it=peak_positions.begin();peak_it!=peak_positions.end();++peak_it)
-								{
-									blockValue(*peak_it,filter_ptr);
-								}
-								++feature_id;
+								blockValue(*peak_it,filter_ptr);
 							}
+							++feature_id;
 						}
 					}
 				}
-//				std::cout << std::endl;
 				last_mz=mz_it->getMZ();
 			}
 			gsl_spline_free(spline_lin);

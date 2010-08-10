@@ -166,7 +166,7 @@ private:
 	DoubleReal label_selection;
 	std::set<String> contained_labels;
 	Int charge_selection;
-	std::vector<std::vector<DoubleReal> > filter_values;
+	std::vector<std::set<DoubleReal> > filter_values;
 	std::map<String,DoubleReal> label_identifiers;
 	String in;
 	String out;
@@ -199,7 +199,7 @@ private:
 		boost::split( label_list, label_list_string , boost::is_any_of("[]") );
 		 for (std::vector<String>::iterator it=label_list.begin();it!=label_list.end();++it)
 		 {
-			std::vector<DoubleReal> act_filter_values;
+			std::set<DoubleReal> act_filter_values;
 			std::vector<String> act_labels;
 			boost::split( act_labels, *it , boost::is_any_of(",") );
 			for (std::vector<String>::iterator label_it=act_labels.begin();label_it!=act_labels.end() && *label_it!="";++label_it)
@@ -210,11 +210,11 @@ private:
 				std::map<String,DoubleReal>::iterator pos = label_identifiers.find(act_label);
 				if (pos==label_identifiers.end())
 					throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,act_label);
-				act_filter_values.push_back(pos->second);
+				act_filter_values.insert(pos->second);
 				contained_labels.insert(act_label);
 			}
 			if (act_filter_values.size()!=0)
-				filter_values.insert(filter_values.end(),act_filter_values);
+				filter_values.push_back(act_filter_values);
 		 }
 
 		in = getStringOption_("in");
@@ -272,11 +272,18 @@ private:
 		std::list<SILACFilter> filters;
 		for (Int charge=charge_min; charge<=charge_max; ++charge)
 		{
-			for (std::vector<std::vector<DoubleReal> >::iterator value_vector_it=filter_values.begin();value_vector_it!=filter_values.end();++value_vector_it)
+			std::cout << charge << "+" << std::endl;;
+			for (std::vector<std::set<DoubleReal> >::iterator value_vector_it=filter_values.begin();value_vector_it!=filter_values.end();++value_vector_it)
 			{
-				std::vector<DoubleReal> value_vector(value_vector_it->begin(),value_vector_it->end());
-				filters.push_back(SILACFilter(value_vector,charge,model_deviation));
+				std::set<DoubleReal> value_set(value_vector_it->begin(),value_vector_it->end());
+				for (std::set<DoubleReal>::iterator bla=value_set.begin();bla!=value_set.end();++bla)
+				{
+					std::cout << *bla << " ";
+				}
+				std::cout << std::endl;
+				filters.push_back(SILACFilter(value_set,charge,model_deviation));
 			}
+
 		}
 
 		SILACFiltering filtering(exp,mz_stepwidth,intensity_cutoff);
@@ -441,6 +448,7 @@ public:
 		std::vector<std::vector<Real> > silhouettes;
 		std::vector<Cluster> clusters;
 //		std::vector<Tree> subtrees;
+
 		for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin();data_it!=data.end();++data_it)
 		{
 //			CentroidLinkage method(rt_scaling);
@@ -448,7 +456,7 @@ public:
 //			c.setLogType(log_type_);
 //			c.performClustering();
 //			std::vector<Tree> act_subtrees;
-//			c.getSubtrees(subtrees);
+//			c.getSubtrees(act_subtrees);
 //			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
 			DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
 			QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
@@ -459,6 +467,8 @@ public:
 			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
 //			const std::vector<std::vector<Real> >& act_silhouettes=c.getSilhouetteValues();
 //			silhouettes.insert(silhouettes.end(),act_silhouettes.begin(),act_silhouettes.end());
+
+
 		}
 
 
@@ -557,10 +567,10 @@ public:
 					if ((*el_it)->silac_type == DataPoint::DOUBLE)
 					{
 						std::pair<DoubleReal,DoubleReal> heavy_maximum=clusterMaximum(**el_it,3,4,5);
-						if (low_maximum.second > int_l)
+						if (heavy_maximum.second > int_h)
 						{
-							int_h=low_maximum.second;
-							mz=low_maximum.first;
+							int_h=heavy_maximum.second;
+							mz=heavy_maximum.first;
 						}
 					}
 					else
@@ -634,7 +644,7 @@ public:
 				handle.setMZ(mz+envelope_distance_light_heavy);
 				handle.setIntensity(int_h);
 				handle.setCharge(charge);
-				handle.setMapIndex(2);
+				handle.setMapIndex(1);
 				handle.setUniqueId(i);
 				pair_light_heavy.insert(handle);
 				all_pairs.push_back(pair_light_heavy);

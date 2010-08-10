@@ -115,9 +115,9 @@ private:
      * @brief returns the quality of a potential feature at position act_mz by fitting the data to the isotope model
      * @param act_mz position of the potential feature
      */
-    DoubleReal getPeakCorrelation(DoubleReal act_mz);
+    std::pair<DoubleReal,DoubleReal> getPeakCorrelation(DoubleReal act_mz,DoubleReal distance,DoubleReal deviation);
 
-    bool checkArea(DoubleReal act_mz, DoubleReal envelope_distance,std::vector<DoubleReal>& intensities_spl, std::vector<DoubleReal>& intensities_lin);
+    bool checkArea(DoubleReal act_mz,std::vector<DoubleReal>& intensities_spl, std::vector<DoubleReal>& intensities_lin);
 
 	/**
 	 * @brief returns if there exists a SILAC feature at the given position, which corresponds to the filter's properties
@@ -147,9 +147,8 @@ public:
      * @param mass_separation_light_heavy distance between light and heavy peaks
      * @param charge_ charge of the ions to search for
      */
-    SILACFilter(std::vector<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_);
+    SILACFilter(std::set<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_);
 
-    SILACFilter(DoubleReal mass_separation_light_medium,DoubleReal mass_separation_light_heavy,Int charge_,DoubleReal model_deviation_);
 	/**
 	 * @brief destructor
 	 */

@@ -26,6 +26,7 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/TextFile.h>
+#include <OpenMS/CONCEPT/Exception.h>
 
 #include <fstream>
 #include <iostream>
@@ -54,7 +55,7 @@ namespace OpenMS
   
 	void TextFile::load(const String& filename, bool trim_lines, Int first_n) 
 	{
-		ifstream is(filename.c_str());
+    ifstream is(filename.c_str(),ios_base::in | ios_base::binary);
     if (!is)
     {
       throw Exception::FileNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
@@ -63,21 +64,41 @@ namespace OpenMS
 		clear();
 		
     String str;
-    while(getline(is,str,'\n'))
+    bool had_enough=false;
+    while(getline(is,str,'\n') && !had_enough)
     {
-    	if (trim_lines)
-    	{
-    		push_back(str.trim());
-    	}
-    	else
-    	{
-    		push_back(str);
-    	}
-    	
-    	if (first_n>-1 && (Int)(size())==first_n)
-    	{
-    		break;
-    	}
+      // platform specific line endings: 
+      // Windows LE: \r\n
+      //    we now have a line with \r at the end: get rid of it
+      if (str.size()>=1 && *str.rbegin()=='\r') str = str.substr(0,str.size()-1);
+
+      // Mac (OS<=9): \r
+      //    we just read the whole file into a string: split it
+      StringList lines;
+      if (str.hasSubstring("\r")) lines = StringList::create(str,'\r');
+      else lines.push_back(str);
+
+      // Linux&MacOSX: \n
+      //    nothing to do
+
+      for (Size i=0;i<lines.size();++i)
+      {
+        str = lines[i];
+    	  if (trim_lines)
+    	  {
+    		  push_back(str.trim());
+    	  }
+    	  else
+    	  {
+    		  push_back(str);
+    	  }
+      	
+    	  if (first_n>-1 && (Int)(size())==first_n)
+    	  {
+          had_enough=true;
+    		  break;
+    	  }
+      }
     }		
 	}
 
@@ -98,11 +119,11 @@ namespace OpenMS
 			{
 				if (it->hasSuffix("\r\n"))
 				{
-					os << it->substr(0,-2)<< "\n";
+					os << it->chop(2)<< "\n";
 				}
 				else
 				{
-					os << it->substr(0,-1) << "\n";
+					os << it->chop(1) << "\n";
 				}
 			}
 			else

@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Sandro Andreotti $
-// $Authors: $
+// $Authors: Sandro Andreotti $
 // --------------------------------------------------------------------------
 
 
@@ -46,6 +46,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QDir>
+#include <QtCore/QProcess>
 
 #include <cstdlib>
 #include <vector>
@@ -103,7 +104,7 @@ class TOPPPepNovoAdapter
 			registerOutputFile_("out", "<file>", "", "output file ");
 			setValidFormats_("out",StringList::create("idXML"));
 
-			registerInputFile_("pepnovo_executable","<file>", "", "The \"PepNovo\" executable of the PepNovo installation", true);
+			registerInputFile_("pepnovo_executable","<file>", "", "The \"PepNovo\" executable of the PepNovo installation", true, false, StringList::create("skipexists"));
 			registerStringOption_("temp_data_directory", "<dir>", "", "Directory were temporary data can be stored. If not set the directory were startet is used.", true);
       registerStringOption_("model_directory", "<file>", " ", "name of the directory where the model files are kept.",true);
       addEmptyLine_ ();
@@ -217,7 +218,7 @@ class TOPPPepNovoAdapter
 
 			// we map the native id to the MZ and RT to be able to
 			// map the IDs back to the spectra (RT, and MZ Meta Information)
-			std::map<String, pair<Real, Real> >id_to_rt;
+			std::map<String, pair<DoubleReal, DoubleReal> >id_to_rt;
 			for (PeakMap::Iterator it = exp.begin(); it != exp.end(); ++it)
 			{
 			  Int valid_id;
@@ -337,8 +338,6 @@ class TOPPPepNovoAdapter
 				//-------------------------------------------------------------
 
 				String call;
-				call = pepnovo_executable;
-				//call.append("PepNovo_bin");
 				call.append(" -file " + inputfile_name);
 				call.append(" -model " + model_name);
 				if (pm_tolerance != -1 ) call.append(" -pm_tolerance " + String(pm_tolerance));
@@ -353,8 +352,7 @@ class TOPPPepNovoAdapter
 				writeLog_("Use this line to call PepNovo: ");
 				writeLog_(call);
 
-				Int status=system(call.c_str());
-
+   			Int status = QProcess::execute(pepnovo_executable.toQString(), QStringList(call.toQString())); // does automatic escaping etc...
 				if (status == 0)
 				{
           //if PepNovo finished succesfully use PepNovoOutfile to parse the results and generate idxml
@@ -366,7 +364,7 @@ class TOPPPepNovoAdapter
 
           //resolve PTMs (match them back to the OpenMs Identifier String)
           std::vector<ProteinIdentification>prot_ids;
-          p_novo_outfile.load(temp_pepnovo_outfile, peptide_identifications, protein_identification, (-1)*std::numeric_limits<Real>::max(), id_to_rt, mods_and_keys);
+          p_novo_outfile.load(temp_pepnovo_outfile, peptide_identifications, protein_identification, (-1)*std::numeric_limits<DoubleReal>::max(), id_to_rt, mods_and_keys);
           prot_ids.push_back(protein_identification);
           IdXMLFile().store(outputfile_name,prot_ids, peptide_identifications);
         }

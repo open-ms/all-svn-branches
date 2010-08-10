@@ -138,6 +138,12 @@ class TOPPSequestAdapter
 			registerStringOption_("mz_files", "<files>", "", "when using sequest_out the mzXML or mzData files (comma-separated)\n"
 																																						"have to be given to retrieve the retention times", false);
 			registerFlag_("show_enzymes", "show a list with enzymes and corresponding numbers to choose from");
+
+      // TODO: if this get rewritten at some point you can use 'registerInputFile_()' to have the user
+      // specify the location of 'sequest.exe' (or similar). In this case also use "skipexists as a tag argument
+      // e.g.	registerInputFile_("xtandem_executable", "<file>", "", "X!Tandem executable of the installtation e.g. 'tandem.exe'", true, false, StringList::create("skipexists"));
+      // to avoid TOPPBase throwing an error when sequest.exe is not found in the current directory, but can be found in $PATH
+
 			registerStringOption_("sequest_computer", "<name>", "", "the name of the computer in the network that hosts Sequest\n"
 																															"(rdesktop is used to connect to this computer)", false);
 			registerStringOption_("sequest_directory_win", "<dir>", "", "the windows directory in which Sequest (sequest.exe) is located", false);
@@ -1137,6 +1143,7 @@ class TOPPSequestAdapter
 
 					call.append(temp_data_directory_win + batch_filename + " && net use /delete " + temp_data_directory_win.substr(0,2) + " && logoff" +  "\" " + sequest_computer);
 					writeLog_("System call: " + call);
+          // todo: replace this by a call to QProcess::execute(<exe>,<args>), you can also use setWorkingDirectory() before
 					int status = system(call.c_str());
 
 					if ( status != 0 )

@@ -33,6 +33,7 @@
 #include <algorithm>
 
 #include <OpenMS/FORMAT/HANDLERS/ParamXMLHandler.h>
+#include <OpenMS/CONCEPT/LogStream.h>
 
 using namespace std;
 using namespace OpenMS::Exception;
@@ -135,7 +136,7 @@ namespace OpenMS
 				DoubleReal tmp = value;
 				if ((min_float!=-std::numeric_limits<DoubleReal>::max() && tmp < min_float) || (max_float!=std::numeric_limits<DoubleReal>::max() && tmp > max_float))
 				{
-					message = String("Invalid double parameter value '")+tmp+"' for parameter '"+name+"' given! The valid range is: ["+min_int+":"+max_int+"].";
+					message = String("Invalid double parameter value '")+tmp+"' for parameter '"+name+"' given! The valid range is: ["+min_float+":"+max_float+"].";
 					return false;
 			}
 			}
@@ -148,7 +149,7 @@ namespace OpenMS
 					dou_value = ls_value[i];
 					if ((min_float!=-std::numeric_limits<DoubleReal>::max() && dou_value < min_float) || (max_float!=std::numeric_limits<DoubleReal>::max() && dou_value > max_float))
 					{
-						message = String("Invalid double parameter value '")+dou_value+"' for parameter '"+name+"' given! The valid range is: ["+min_int+":"+max_int+"].";
+						message = String("Invalid double parameter value '")+dou_value+"' for parameter '"+name+"' given! The valid range is: ["+min_float+":"+max_float+"].";
 						return false;
 					}	
 				}
@@ -578,7 +579,7 @@ namespace OpenMS
 				{
 					pathname.resize(pathname.size() - it2->name.size() -1);
 				}
-				String real_pathname = pathname.substr(0,-1); //remove ':' at the end
+				String real_pathname = pathname.chop(1); //remove ':' at the end
 				if (real_pathname != "")
 				{
 					String description_old = "";
@@ -618,10 +619,10 @@ namespace OpenMS
 	{
 		if (prefix.hasSuffix(':')) //we have to delete one node only
 		{
-			ParamNode* node = root_.findParentOf(prefix.substr(0,-1));
+			ParamNode* node = root_.findParentOf(prefix.chop(1));
 			if (node!=0)
 			{
-				Param::ParamNode::NodeIterator it = node->findNode(node->suffix(prefix.substr(0,-1)));
+				Param::ParamNode::NodeIterator it = node->findNode(node->suffix(prefix.chop(1)));
 				if (it!=node->nodes.end())
 				{
 					node->nodes.erase(it);
@@ -679,7 +680,7 @@ namespace OpenMS
 			}
 			else
 			{
-				out.insert(*node,prefix.substr(0,-Int(node->name.size()+1)));
+				out.insert(*node,prefix.chop(node->name.size()+1));
 			}
 		}
 		else //we have to copy all entries and nodes starting with the right suffix
@@ -697,7 +698,7 @@ namespace OpenMS
 					}
 					else
 					{
-						out.insert(*it,prefix.substr(0,-Int(suffix.size())));
+						out.insert(*it,prefix.chop(suffix.size()));
 					}
 				}
 			}
@@ -713,7 +714,7 @@ namespace OpenMS
 					}
 					else
 					{
-						out.insert(*it,prefix.substr(0,-Int(suffix.size())));
+						out.insert(*it,prefix.chop(suffix.size()));
 					}
 				}
 			}
@@ -930,13 +931,17 @@ namespace OpenMS
 			++it;
 		}
 		
-		//close remaining tags
-		const std::vector< ParamIterator::TraceInfo >& trace = it.getTrace();
-		for(std::vector< ParamIterator::TraceInfo >::const_iterator it2 = trace.begin(); it2!=trace.end(); ++it2)
-		{
-			indentation.resize(indentation.size()-2);
-			os << indentation << "</NODE>" << endl;	
-		}
+    // if we had tags ...
+    if (begin()!=end())
+    {
+		  //close remaining tags
+		  const std::vector< ParamIterator::TraceInfo >& trace = it.getTrace();
+		  for(std::vector< ParamIterator::TraceInfo >::const_iterator it2 = trace.begin(); it2!=trace.end(); ++it2)
+		  {
+			  indentation.resize(indentation.size()-2);
+			  os << indentation << "</NODE>" << endl;	
+		  }
+    }
 		
 		os << "</PARAMETERS>\n";
     os_.close();
@@ -1064,7 +1069,6 @@ namespace OpenMS
 				}
 			}
 			//without argument
-
 			else if (options_without_argument.has(arg))
 			{
 				root_.insert(ParamEntry("",String("true"),""),options_without_argument.find(arg)->second);
@@ -1129,7 +1133,7 @@ namespace OpenMS
  	{
 		for (Param::ParamIterator it = param.begin(); it!=param.end(); ++it)
 		{
-			String prefix = it.getName().substr(0,-Int(it->name.size()+1));
+			String prefix = it.getName().chop(it->name.size()+1);
 			if (prefix!="")
 			{
 				prefix += "|";
@@ -1186,15 +1190,21 @@ namespace OpenMS
 			if (default_value->value.valueType()!=it->value.valueType())
 			{
 				String d_type;
-				if (default_value->value.valueType()==DataValue::STRING_VALUE || default_value->value.valueType()==DataValue::STRING_LIST) d_type = "string";
+				if (default_value->value.valueType()==DataValue::STRING_VALUE) d_type = "string";
+        if (default_value->value.valueType()==DataValue::STRING_LIST) d_type = "string list";
 				if (default_value->value.valueType()==DataValue::EMPTY_VALUE) d_type = "empty";
-				if (default_value->value.valueType()==DataValue::INT_VALUE || default_value->value.valueType()==DataValue::INT_LIST) d_type = "integer";
-				if (default_value->value.valueType()==DataValue::DOUBLE_VALUE || default_value->value.valueType()==DataValue::DOUBLE_LIST) d_type = "float";
+				if (default_value->value.valueType()==DataValue::INT_VALUE) d_type = "integer";
+        if (default_value->value.valueType()==DataValue::INT_LIST) d_type = "integer list";
+				if (default_value->value.valueType()==DataValue::DOUBLE_VALUE) d_type = "float";
+        if (default_value->value.valueType()==DataValue::DOUBLE_LIST) d_type = "float list";
 				String p_type;
-				if (it->value.valueType()==DataValue::STRING_VALUE || it->value.valueType()==DataValue::STRING_LIST) p_type = "string";
+				if (it->value.valueType()==DataValue::STRING_VALUE) p_type = "string";
+        if (it->value.valueType()==DataValue::STRING_LIST) p_type = "string list";
 				if (it->value.valueType()==DataValue::EMPTY_VALUE) p_type = "empty";
-				if (it->value.valueType()==DataValue::INT_VALUE || it->value.valueType()==DataValue::INT_LIST) p_type = "integer";
-				if (it->value.valueType()==DataValue::DOUBLE_VALUE || it->value.valueType()==DataValue::DOUBLE_LIST) p_type = "float";				
+				if (it->value.valueType()==DataValue::INT_VALUE) p_type = "integer";
+        if (it->value.valueType()==DataValue::INT_LIST) p_type = "integer list";
+				if (it->value.valueType()==DataValue::DOUBLE_VALUE) p_type = "float";
+        if (it->value.valueType()==DataValue::DOUBLE_LIST) p_type = "float list";
 
 				throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": Wrong parameter type '"+p_type+"' for "+d_type+" parameter '"+it.getName()+"' given!");
 			}
@@ -1205,6 +1215,83 @@ namespace OpenMS
 			if (!	pe.isValid(s))	throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": "+s);
 		}
 	}
+
+  void Param::update(const Param& old_version, const bool report_new_params)
+  {
+		// augment
+		for(Param::ParamIterator it = old_version.begin(); it != old_version.end();++it)
+		{
+			if (this->exists(it.getName()))
+			{
+				// param 'version': do not override!
+				if (it.getName().hasSuffix(":version"))
+				{	
+					if (this->getValue(it.getName()) != it->value)
+					{
+						LOG_WARN << "Warning: for ':version' entry, augmented and Default Ini-File differ in value. Default value will not be altered!\n";
+					}
+					continue;
+				}
+				// param 'type': do not override!
+				else if (it.getName().hasSuffix(":type"))
+				{	
+					if (this->getValue(it.getName()) != it->value)
+					{
+						LOG_WARN << "Warning: for ':type' entry, augmented and Default Ini-File differ in value. Default value will not be altered!\n";
+					}
+					continue;
+				}
+				
+				// all other parameters:
+				Param::ParamEntry entry = this->getEntry (it.getName());
+				if (entry.value.valueType() == it->value.valueType())
+				{
+					if (entry.value != it->value)
+					{
+						// check entry for consistency (in case restrictions have changed)							
+						entry.value = it->value;
+						String s;
+						if (entry.isValid(s))
+						{
+							// overwrite default value
+							LOG_WARN << "Overriding Default-Parameter '" << it.getName() << "' with new value " << it->value << "\n"; 
+							this->setValue(it.getName(),it->value, entry.description, this->getTags(it.getName()));
+						}
+						else
+						{
+							LOG_WARN << "Parameter '" << it.getName() << "' does not fit into new restriction settings! Ignoring..."; 
+						}
+					}
+					else
+					{
+						// value stayed the same .. nothing to be done
+					}
+				}
+				else
+				{
+					LOG_WARN << "Parameter '" << it.getName() << "' has changed value type! Ignoring...\n"; 
+				}
+			}
+			else
+			{
+				LOG_WARN << "Deprecated Parameter '" << it.getName() << "' given in old parameter file! Ignoring...\n"; 
+			}
+		}
+
+    // print new parameters (unique to this Param, but not in old one)
+    if (report_new_params)
+    {
+      // list new parameters not known to old version (just nice to know)
+ 		  for(Param::ParamIterator it = this->begin(); it != this->end();++it)
+		  {
+			  if (!old_version.exists(it.getName()))
+        {
+          LOG_WARN << "Information: New Parameter '" << it.getName() << "' not contained in old parameter file.\n"; 
+        }
+      }
+    }
+
+  }
 
 	void Param::setSectionDescription(const String& key, const String& description)
 	{

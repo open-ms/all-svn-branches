@@ -32,6 +32,7 @@
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FileTypes.h>
+#include <OpenMS/SYSTEM/File.h>
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
@@ -88,7 +89,6 @@ class TOPPMascotAdapterOnline
 			registerOutputFile_("out", "<file>", "", "output file in IdXML format.\n");
 			setValidFormats_("out", StringList::create("idXML"));
 
-			registerStringOption_("temp_data_directory", "<directory>" , "", "Directory were temporary data files can be stored.", false);
 			registerSubsection_("Mascot_server", "Mascot server details");
 			registerSubsection_("Mascot_parameters", "Mascot parameters used for searching");
 		}
@@ -119,11 +119,6 @@ class TOPPMascotAdapterOnline
 
       //input/output files
 			String in(getStringOption_("in")), out(getStringOption_("out"));
-			String temp_data_directory(getStringOption_("temp_data_directory"));
-			if (temp_data_directory != "")
-			{
-				temp_data_directory.ensureLastChar('/');
-			}
 			FileHandler fh;
 			FileTypes::Type in_type = fh.getType(in);
 
@@ -177,7 +172,7 @@ class TOPPMascotAdapterOnline
 
 			// write Mascot response to file
 			String unique_name = File::getUniqueName(); // body for the tmp files
-			String mascot_tmp_file_name(temp_data_directory + unique_name + "_Mascot_response");
+			String mascot_tmp_file_name(String(QDir::tempPath()) + "/" + unique_name + "_Mascot_response");
 			QFile mascot_tmp_file(mascot_tmp_file_name.c_str());
 			mascot_tmp_file.open(QIODevice::WriteOnly);
 			mascot_tmp_file.write(mascot_query->getMascotXMLResponse());

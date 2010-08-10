@@ -38,9 +38,9 @@
 #include <OpenMS/ANALYSIS/ID/ProtonDistributionModel.h>
 #include <OpenMS/ANALYSIS/ID/FalseDiscoveryRate.h>
 #include <OpenMS/ANALYSIS/ID/IDDecoyProbability.h>
-#include <OpenMS/ANALYSIS/ID/PrecursorIonSelection.h>
-#include <OpenMS/ANALYSIS/ID/PrecursorIonSelectionPreprocessing.h>
-#include <OpenMS/ANALYSIS/ID/OfflinePrecursorIonSelection.h>
+#include <OpenMS/ANALYSIS/TARGETED/PrecursorIonSelection.h>
+#include <OpenMS/ANALYSIS/TARGETED/PrecursorIonSelectionPreprocessing.h>
+#include <OpenMS/ANALYSIS/TARGETED/OfflinePrecursorIonSelection.h>
 #include <OpenMS/ANALYSIS/DECHARGING/FeatureDeconvolution.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIdentification.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIdentificationCID.h>
@@ -48,7 +48,6 @@
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringCID.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringBase.h>
 #include <OpenMS/ANALYSIS/DENOVO/MassDecompositionAlgorithm.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/DelaunayPairFinder.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringAffineSuperimposer.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringShiftSuperimposer.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/SimplePairFinder.h>
@@ -92,17 +91,20 @@
 #include <OpenMS/FILTERING/TRANSFORMERS/NeutralLossMarker.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/Normalizer.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/ParentPeakMower.h>
+#include <OpenMS/FILTERING/TRANSFORMERS/SpectraMerger.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/TICFilter.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/ThresholdMower.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/WindowMower.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BiGaussFitter1D.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BiGaussModel.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EGHTraceFitter.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgFitter1D.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/EmgModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeFitter1D.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/GaussFitter1D.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/GaussModel.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/GaussTraceFitter.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeFitter1D.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/LmaGaussFitter1D.h>
@@ -113,6 +115,7 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ModelFitter.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SimpleExtender.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SimpleSeeder.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/TraceFitter.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/OptimizePeakDeconvolution.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerCWT.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerHiRes.h>
@@ -138,18 +141,18 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ProductModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/Fitter1D.h>
 #include <OpenMS/SIMULATION/DigestSimulation.h>
-#include <OpenMS/SIMULATION/PTMSimulation.h>
 #include <OpenMS/SIMULATION/IonizationSimulation.h>
 #include <OpenMS/SIMULATION/DetectabilitySimulation.h>
 #include <OpenMS/SIMULATION/RawMSSignalSimulation.h>
 #include <OpenMS/SIMULATION/MSSim.h>
 #include <OpenMS/SIMULATION/RawTandemMSSignalSimulation.h>
 #include <OpenMS/SIMULATION/RTSimulation.h>
+#include <OpenMS/SIMULATION/EGHFitter1D.h>
+#include <OpenMS/SIMULATION/EGHModel.h>
+#include <OpenMS/SIMULATION/LABELING/O18Labeler.h>
+#include <OpenMS/SIMULATION/LABELING/ITRAQLabeler.h>
 #include <OpenMS/APPLICATIONS/TOPPASBase.h>
 #include <OpenMS/APPLICATIONS/TOPPViewBase.h>
-
-//#include <OpenMS/SIMULATION/MixtureModel.h>
-
 
 using namespace std;
 using namespace OpenMS;
@@ -267,14 +270,19 @@ void writeParameters(const String& class_name, const Param& param)
 		if (it->tags.count("advanced")==1) style = "i";
 
 		//final output
-		f <<"<tr><td style=\"vertical-align:top\"><" << style << ">"<< name << "</" << style << "></td><td style=\"vertical-align:top\">" << type << "</td><td style=\"vertical-align:top\">" << value <<  "</td><td style=\"vertical-align:top\">" << restrictions << "</td><td style=\"vertical-align:top\">" << description <<  "</td></tr>" << endl;
+		f << "<tr>\n"
+      << "  <td style=\"vertical-align:top\"><" << style << ">"<< name << "</" << style << "></td>\n"
+      << "  <td style=\"vertical-align:top\">" << type << "</td><td style=\"vertical-align:top\">" << value <<  "</td>\n"
+      << "  <td style=\"vertical-align:top\">" << restrictions << "</td><td style=\"vertical-align:top\">" << description <<  "</td>\n"
+      << "</tr>\n";
 	}
-	f << "</table>" << endl;
-	f << endl << "<b>Note:</b>" << endl;
-	f << "<UL>" << endl;
-	f << "  <LI> If a section name is documented, the documentation is displayed as tooltip." << endl;
-	f << "  <LI> Advanced parameter names are italic." << endl;
-	f << "</UL>" << endl;
+	f << "</table>" << "\n";
+	f << "\n" << "<b>Note:</b>" << "\n";
+	f << "<UL>" << "\n";
+	f << "  <LI> If a section name is documented, the documentation is displayed as tooltip." << "\n";
+	f << "  <LI> Advanced parameter names are italic." << "\n";
+	f << "</UL>" << "\n";
+  f.close();
 }
 
 //**********************************************************************************
@@ -312,7 +320,6 @@ int main (int argc , char** argv)
 	DOCME(ComplementFilter);
 	DOCME(ComplementMarker);
 	DOCME(ConsensusID);
-	DOCME(DelaunayPairFinder);
   DOCME(DetectabilitySimulation);
 	DOCME(DigestSimulation);
 	DOCME(EmgFitter1D);
@@ -369,6 +376,7 @@ int main (int argc , char** argv)
 	DOCME(SpectrumCheapDPCorr);
 	DOCME(SpectrumPrecursorComparator);
 	DOCME(SteinScottImproveScore);
+	DOCME(SpectraMerger);
 	DOCME(TICFilter);
 	DOCME(TheoreticalSpectrumGenerator);
 	DOCME(ThresholdMower);
@@ -398,6 +406,10 @@ int main (int argc , char** argv)
 	DOCME(TOPPViewBase)
 	DOCME(TOPPASBase)
 	DOCME(Fitter1D)
+	DOCME(EGHModel)
+	DOCME(EGHFitter1D)
+  DOCME(O18Labeler)
+  DOCME(ITRAQLabeler)
 	
 	//////////////////////////////////
 	// More complicated cases
@@ -417,11 +429,13 @@ int main (int argc , char** argv)
 	DOCME2(Spectrum1DCanvas,Spectrum1DCanvas(Param(),0));
 	DOCME2(Spectrum2DCanvas,Spectrum2DCanvas(Param(),0));
 	DOCME2(Spectrum3DCanvas,Spectrum3DCanvas(Param(),0));
-	DOCME2(PTMSimulation, PTMSimulation(NULL));
   DOCME2(IonizationSimulation, IonizationSimulation(NULL));
   DOCME2(RawMSSignalSimulation, RawMSSignalSimulation(NULL));
 	DOCME2(RawTandemMSSignalSimulation, RawTandemMSSignalSimulation(NULL))
 	DOCME2(RTSimulation, RTSimulation(NULL))
+	DOCME2(TraceFitter,(TraceFitter<Peak1D>()))
+	DOCME2(GaussTraceFitter,(GaussTraceFitter<Peak1D>()))
+  DOCME2(EGHTraceFitter,(EGHTraceFitter<Peak1D>()))
   
   return 0;
 }

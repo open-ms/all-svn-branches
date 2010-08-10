@@ -11,6 +11,7 @@ PROJECT("OpenMS")
 ### - do NOT hardcode them here!                     ###
 ### - edit them within CMakeCache.txt using ccmake	 ###
 ########################################################
+# CONTRIB_CUSTOM_DIR
 # OPENMS_BUILD_TYPE
 # CONTRIB_CUSTOM_DIR
 # STL_DEBUG
@@ -45,6 +46,11 @@ cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 set(CF_OPENMS_PACKAGE_VERSION "${OPENMS_PACKAGE_VERSION_MAJOR}.${OPENMS_PACKAGE_VERSION_MINOR}.${OPENMS_PACKAGE_VERSION_PATCH}" CACHE INTERNAL "OpenMS VERSION" FORCE)
 
+## sanity check: sometimes CMAKE_SIZEOF_VOID_P just vanishes (when updating CMake).
+if (NOT CMAKE_SIZEOF_VOID_P)
+	message(FATAL_ERROR "'CMAKE_SIZEOF_VOID_P' is undefined. Thus you should delete CMakeFiles (the directory) and the CMakeCache.txt and rerun CMake again! This is some weird CMake bug that seems to appear when updating the CMake version.")
+endif()
+
 if (CMAKE_SIZEOF_VOID_P MATCHES "8")
 	set(OPENMS_64BIT_ARCHITECTURE 1 CACHE INTERNAL "Architecture-bits")
 else()
@@ -58,8 +64,9 @@ include (cmake/macros.cmake)
 ###    compiler flags																 ###
 ########################################################
 
-## fill this with compile flags that external projects should use as well
-set(CF_OPENMS_ADDCXX_FLAGS)
+## Fill this with compile flags that external projects should use as well
+## for OpenMS internal flags (not promoted to external compiler flags) append to CMAKE_CXX_FLAGS 
+set(CF_OPENMS_ADDCXX_FLAGS) ## see OpenMS/cmake/OpenMSConfig.cmake.in to see how its configured and used (i.e. as OPENMS_ADDCXX_FLAGS)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
 	if (MT_ENABLE_CUDA)
@@ -73,11 +80,6 @@ if (CMAKE_COMPILER_IS_GNUCXX)
 		add_definitions(-fmessage-length=0)
 	endif()
 
-	## CGAL needs extra definitions to avoid pre and postconditions 
-	## (see mails on open-ms-general of Hendrik Weisser. Thx very much!)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCGAL_NO_PRECONDITIONS -DCGAL_NO_POSTCONDITIONS -DCGAL_NO_ASSERTIONS")
-
-
 elseif (MSVC)
 	## do not use add_definitions
 	## add definitions also lands in stuff like RC_DEFINITION which tend to fail if you use
@@ -86,37 +88,57 @@ elseif (MSVC)
 
 	## disable dll-interface warning
 	set(CF_OPENMS_ADDCXX_FLAGS "${CF_OPENMS_ADDCXX_FLAGS} /wd4251 /wd4275")
-	
+
 	## disable deprecated functions warning (e.g. for POSIX functions)
 	set(CF_OPENMS_ADDCXX_FLAGS "${CF_OPENMS_ADDCXX_FLAGS} /wd4996")
 
 	## disable explicit template instantiation request for partially defined classes
 	set(CF_OPENMS_ADDCXX_FLAGS "${CF_OPENMS_ADDCXX_FLAGS} /wd4661")
-	
+
 	## don't warn about unchecked std::copy()
 	add_definitions(/D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 
-	## disable min and max macros by default
-	## see CGAL and BOOST configs for more elaborate explanations
-	#add_definitions(/DNOMINMAX)
-
 	## xerces bug workaround
 	add_definitions(/DOPENMS_XERCESDLL)
-	
-	## removed: (GSL is static now) compile such that GSL is in DLL mode 
+
+	## removed: (GSL is static now) compile such that GSL is in DLL mode
 	#add_definitions(/DGSL_DLL)
 
 	## FeatureFinder.obj is huge and won't compile in VS2008 debug otherwise:
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
-	
-	## minimal code rebuild
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Gm /Zi")
 
+	## use multiple Cores (if available)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+
+  if (NOT OPENMS_64BIT_ARCHITECTURE)
+    ## enable SSE1 on 32bit, on 64bit the compiler flag does not exist
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE")
+  endif()
+    
 else()
 	set(CMAKE_COMPILER_IS_INTELCXX true CACHE INTERNAL "Is Intel C++ compiler (icpc)")
 endif()
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CF_OPENMS_ADDCXX_FLAGS}")
+
+
+#########################################################
+#            Mac OS X DEPLOYMENT TARGET                 #
+#########################################################
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	message(STATUS "Setting CMAKE_OSX_DEPLOYMENT_TARGET to 10.5")
+	set(CMAKE_OSX_DEPLOYMENT_TARGET 10.5 CACHE INTERNAL "Set OS X Deployment Target to 10.5 to build packages compatible to leopard" FORCE )
+  # some additional cxx flags, necessary to build with cmake 2.8.1
+  set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+  set ( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+  set ( CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+
+  # due to some awkward updates of cmake in the 2.8.x series we need to add the following
+  find_library(CARBON NAMES Carbon)
+  find_package(OpenGL)
+  set(APPLE_EXTRA_LIBS ${CARBON} ${OPENGL_LIBRARY})
+endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 ##### Parallelization things
 #################################
@@ -137,7 +159,7 @@ endif()
 if (FOUND_CUDART AND MT_ENABLE_CUDA) #CUDART and not CUDA!!!
 	add_definitions(/DOPENMS_HAS_CUDA)
 	MESSAGE (STATUS "Found CUDA header files in: ${FOUND_CUDA_NVCC_INCLUDE}") #Not CUDA_INCLUDE_DIR
-	MESSAGE (STATUS "Found CUDA library at: ${FOUND_CUDART}") 
+	MESSAGE (STATUS "Found CUDA library at: ${FOUND_CUDART}")
 	INCLUDE_DIRECTORIES(${FOUND_CUDA_NVCC_INCLUDE})
   set (CUDA_NVCC_INCLUDE_ARGS ${CUDA_NVCC_INCLUDE_ARGS} -I ${PROJECT_BINARY_DIR}/include/)
 endif()
@@ -167,7 +189,7 @@ endif()
 if (OPENMP_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}") ## do NOT use add_definitions() here, because RC.exe on windows will fail
 	if (NOT MSVC)
-		set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_CXX_FLAGS})
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_CXX_FLAGS}")
 	endif()
 endif()
 
@@ -245,7 +267,7 @@ if ("${CONTRIB_CUSTOM_DIR}" STREQUAL "")
   message(STATUS "If you want to set your own path to contrib use:")
 	message(STATUS "   cmake <..more options..> -D CONTRIB_CUSTOM_DIR:PATH=\"/my/path/to/contrib\" \"${PROJECT_SOURCE_DIR}\"")
 else()
-	file(TO_CMAKE_PATH ${CONTRIB_CUSTOM_DIR} CONTRIB_CUSTOM_DIR_PATH)
+  get_filename_component(CONTRIB_CUSTOM_DIR_PATH ${CONTRIB_CUSTOM_DIR} ABSOLUTE)
 	set(CONTRIB_DIR ${CONTRIB_CUSTOM_DIR_PATH})
 	message(STATUS "Using user defined contrib directory: ${CONTRIB_CUSTOM_DIR_PATH}")
 endif()
@@ -254,7 +276,7 @@ endif()
 FIND_PATH(CONTRIB_CONFIRM_DIR README_contrib1.7.txt PATHS ${CONTRIB_DIR} NO_DEFAULT_PATH)
 
 if ("${CONTRIB_CONFIRM_DIR}" STREQUAL "CONTRIB_CONFIRM_DIR-NOTFOUND")
-	message(FATAL_ERROR "The path to the Contrib directory (${CONTRIB_DIR}) is not correct or you need to update your contrib!")
+	message(FATAL_ERROR "The path to the Contrib directory (${CONTRIB_DIR}) is not correct or you need to update your contrib!\nNote: If you are using a relative path to your Contrib binary directory, it must be relative to the OpenMS source directory!")
 endif()
 
 set(CONTRIB_INCLUDE_DIR ${CONTRIB_DIR}/include/ CACHE INTERNAL "contrib include dir")
@@ -282,8 +304,6 @@ OPENMS_CHECKLIB(CONTRIB_XERCESC "xerces-c_3;xerces-c_static_3;libxerces-c;xerces
 OPENMS_CHECKLIB(CONTRIB_GSL "gsl" "gsl_d;gsl" "GSL")
 
 OPENMS_CHECKLIB(CONTRIB_GSLCBLAS "cblas;gslcblas" "cblas_d;gslcblas" "GSL-CBLAS")
-
-OPENMS_CHECKLIB(CONTRIB_CGAL "cgal-vc80-mt;cgal-vc90-mt;CGAL" "cgal-vc80-mt-gd;cgal-vc90-mt-gd;CGAL" "CGAL")
 
 OPENMS_CHECKLIB(CONTRIB_CBC1 "libCbc;Cbc" "libCbcd;Cbc" "COIN-OR Cbc")
 OPENMS_CHECKLIB(CONTRIB_CBC2 "libCgl;Cgl" "libCgld;Cgl" "COIN-OR Cgl")
@@ -319,7 +339,7 @@ if (USE_ANDIMS)
 endif()
 
 ## libSVM
-if (MSVC) 
+if (MSVC)
 	## we created a lib here, because we cannot just add an object ...
 	OPENMS_CHECKLIB(SVM_LIBRARY "svm" "svmd" "LibSVM")
 else()
@@ -346,6 +366,20 @@ SET(QT_MIN_VERSION "4.3.0")
 FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
 INCLUDE(UseQt4)
+## FIX
+## - QT4 library list (VS2010 requires semicolon separated lists, previous versions use space, thus a lib named "opengl32.lib glu32.lib gdi32.lib user32.lib delayimp.lib" now poses a problem)
+## - this fix will be obsolete with CMake 2.8.1
+set(QT_LIBRARIES_TMP "")
+foreach (qtlib ${QT_LIBRARIES})
+	if (${qtlib} STREQUAL "opengl32.lib glu32.lib gdi32.lib user32.lib delayimp.lib")
+		list(APPEND QT_LIBRARIES_TMP "opengl32.lib;glu32.lib;gdi32.lib;user32.lib;delayimp.lib")
+		message(STATUS "Fixing QT library list... done")
+	else()
+		list(APPEND QT_LIBRARIES_TMP ${qtlib})
+	endif()
+endforeach()
+set(QT_LIBRARIES ${QT_LIBRARIES_TMP})
+## ENDFIX
 
 Message(STATUS "QT qmake at ${QT_QMAKE_EXECUTABLE}")
 Message(STATUS "QT moc at ${QT_MOC_EXECUTABLE}")
@@ -370,7 +404,7 @@ endif()
 ## generate include header for version - it needs to be present!
 ## Warning: SVNRevisionUpdater(.exe) expects the line in openms_svn_revision.h to contain exactly 3(!!!) spaces up until the comment section "// ..."!
 set(SVN_REVISION_FILE "${PROJECT_BINARY_DIR}/include/OpenMS/openms_svn_revision.h")
-file(WRITE ${SVN_REVISION_FILE} 
+file(WRITE ${SVN_REVISION_FILE}
 "#define OPENMS_SVN_REVISION \"exported\" // generated by the build system! do not edit this manually!
 ")
 
@@ -564,23 +598,25 @@ if (OPENMS_HAS_SVNVERSION)
 	# build the updater executable
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/svn")
 	add_executable(SVNRevisionUpdater ${PROJECT_SOURCE_DIR}/tools/svn/SVNRevisionUpdater.C)
+	# need QtCore for RegEx
+	target_link_libraries(SVNRevisionUpdater ${QT_LIBRARIES})
 	get_target_property(SVNRevisionUpdater_LOCATION SVNRevisionUpdater LOCATION)
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin") ## reset output dir
-	
+
 	# run SvnRevisionUpdater to update svn_revision.h
 	add_custom_target(svn_revision_update COMMENT "update the openms_svn_revision.h with current svn revision number")
 	add_dependencies(svn_revision_update SVNRevisionUpdater)
 	add_custom_command(TARGET svn_revision_update
 										 PRE_BUILD
 										 COMMAND ${SVNRevisionUpdater_LOCATION} ${PROJECT_SOURCE_DIR} ${SVN_REVISION_FILE})
-	
-								 
+
+
 	add_dependencies(OpenMS svn_revision_update)
 endif()
 
 
 ## all the dependency libraries are linked into libOpenMS.so, except Qt and CUDA which are still dynamic
-set(OPENMS_DEP_LIBRARIES ${CONTRIB_CBC} ${CONTRIB_CGAL} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF} ${CONTRIB_BOOST_IO} ${CONTRIB_IMSLIB} ${CONTRIB_BZIP2} ${CONTRIB_ZLIB})
+set(OPENMS_DEP_LIBRARIES ${CONTRIB_CBC} ${CONTRIB_GSL} ${CONTRIB_GSLCBLAS} ${SVM_LIBRARY} ${CONTRIB_XERCESC} ${CONTRIB_ANDIMS} ${CONTRIB_NETCDF} ${CONTRIB_BOOST_IO} ${CONTRIB_IMSLIB} ${CONTRIB_BZIP2} ${CONTRIB_ZLIB})
 if (TBB_FOUND)
 	set (OPENMS_DEP_LIBRARIES ${OPENMS_DEP_LIBRARIES} ${TBB_LIBRARIES})
 endif()
@@ -589,7 +625,7 @@ if (MSVC)
 	list(APPEND OPENMS_DEP_LIBRARIES opengl32.lib)
 endif()
 
-target_link_libraries(OpenMS ${QT_LIBRARIES} ${OPENMS_DEP_LIBRARIES})
+target_link_libraries(OpenMS ${APPLE_EXTRA_LIBS} ${QT_LIBRARIES} ${OPENMS_DEP_LIBRARIES})
 
 ## OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables
 set(OPENMS_LIBRARIES OpenMS)
@@ -618,12 +654,12 @@ foreach(i ${TOPP_executables})
 	if (MSVC AND EXISTS ${resource_file})
 		Message(STATUS "Setting resource file ${resource_file} for ${i}")
 		add_executable(${i} ${TOPP_DIR}${i}.C ${resource_file})
-  elseif(APPLE AND EXISTS ${resource_dir}) 
-    set_source_files_properties(${resource_dir}/${i}.icns 
+  elseif(APPLE AND EXISTS ${resource_dir})
+    set_source_files_properties(${resource_dir}/${i}.icns
       PROPERTIES
       MACOSX_PACKAGE_LOCATION Resources)
 
-    add_executable(${i} MACOSX_BUNDLE ${TOPP_DIR}${i}.C ${resource_dir}/${i}.icns)         
+    add_executable(${i} MACOSX_BUNDLE ${TOPP_DIR}${i}.C ${resource_dir}/${i}.icns)
     ## transform TOPPView and INIFileEditor to real Mac OS X applications
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_INFO_STRING "${i} - Version ${OPENMS_PACKAGE_VERSION_MAJOR}.${OPENMS_PACKAGE_VERSION_MINOR}.${OPENMS_PACKAGE_VERSION_PATCH}")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_SHORT_VERSION_STRING "${OPENMS_PACKAGE_VERSION_MAJOR}.${OPENMS_PACKAGE_VERSION_MINOR}.${OPENMS_PACKAGE_VERSION_PATCH}")
@@ -631,11 +667,11 @@ foreach(i ${TOPP_executables})
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_LONG_VERSION_STRING "${OPENMS_PACKAGE_VERSION_MAJOR}.${OPENMS_PACKAGE_VERSION_MINOR}.${OPENMS_PACKAGE_VERSION_PATCH}")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_ICON_FILE "${i}.icns")
     set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_GUI_IDENTIFIER "de.openms.${i}")
-    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "${i}") 
+    set_target_properties(${i} PROPERTIES MACOSX_BUNDLE_BUNDLE_NAME "${i}")
   else()
 		add_executable(${i} ${TOPP_DIR}${i}.C)
 	endif()
-	
+
 	target_link_libraries(${i} ${OPENMS_LIBRARIES})
 	if (OPENMP_FOUND AND NOT MSVC)
 		set_target_properties(${i} PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})
@@ -678,14 +714,14 @@ if ("${PACKAGE_TYPE}" STREQUAL "none")
 	endforeach(i)
 	add_custom_target(Tutorials_build)
 	add_dependencies(Tutorials_build ${EXAMPLES_executables})
-	
+
 	if (MSVC_IDE)
 		set(EXAMPLES_EXE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$(OutDir))
 	else()
 		set(EXAMPLES_EXE_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 	endif()
-	
-	
+
+
 	## Create single target for each example, add it as a dependency to the main target
 	foreach(i ${EXAMPLES_executables})
 		list(APPEND EX_LIST COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/source/EXAMPLES ${EXAMPLES_EXE_DIR}/${i})
@@ -765,14 +801,18 @@ else()
 										VERBATIM
 		)
 endif()
-	
+
 ##### Message after OpenMS has been built #####
 if (MSVC)
 	## copy OpenMS.dll to test executables dir
 	get_target_property(WIN32_DLLLOCATION OpenMS LOCATION)
 	get_filename_component(WIN32_DLLPATH ${WIN32_DLLLOCATION} PATH)
+#  string(REPLACE ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} "" OPENMS_OUTDIRSUFFIX ${WIN32_DLLPATH})
+#  message(STATUS "outdir suffix is:  ${OPENMS_OUTDIRSUFFIX}")
+  
+	## copy OpenMS.dll to test executables dir
 	file(TO_NATIVE_PATH "${WIN32_DLLPATH}/$(TargetFileName)" DLL_SOURCE)
-	file(TO_NATIVE_PATH "${PROJECT_BINARY_DIR}/source/TEST/bin/$(OutDir)/$(TargetFileName)" DLL_TARGET)
+	file(TO_NATIVE_PATH "${PROJECT_BINARY_DIR}/source/TEST/bin/$(ConfigurationName)/$(TargetFileName)" DLL_TARGET)
   # create target path if not exists
   add_custom_command(TARGET OpenMS
                     POST_BUILD
@@ -788,8 +828,8 @@ if (MSVC)
                     COMMAND ${CMAKE_COMMAND} -E echo ""
                     COMMAND ${CMAKE_COMMAND} -E echo "=========================================================================="
                     COMMAND ${CMAKE_COMMAND} -E echo ""
-                    COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/source/TEST/bin/$(OutDir)/"
-										COMMAND copy ${DLL_SOURCE} ${DLL_TARGET} /Y                    
+                    COMMAND ${CMAKE_COMMAND} -E make_directory "${PROJECT_BINARY_DIR}/source/TEST/bin/$(ConfigurationName)"
+										COMMAND copy ${DLL_SOURCE} ${DLL_TARGET} /Y
                     COMMENT "Library build. Copying OpenMS(d).dll to test binary dir"
                     VERBATIM)
 else()
@@ -887,14 +927,10 @@ if (NOT "${PACKAGE_TYPE}" STREQUAL "none")
 	set(CPACK_PACKAGE_VERSION_PATCH "${OPENMS_PACKAGE_VERSION_PATCH}")
 	set(CPACK_PACKAGE_INSTALL_DIRECTORY "OpenMS-${CPACK_PACKAGE_VERSION}")
 	set(CPACK_PACKAGE_DESCRIPTION_FILE ${PROJECT_SOURCE_DIR}/cmake/OpenMSPackageDescriptionFile.cmake)
-	if (APPLE)
-		set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/cmake/MacOSX/License.txt)
-	else()
-		set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/License.txt)
-	endif()
+  set(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SOURCE_DIR}/License.txt)
 	set(CPACK_RESOURCE_FILE_WELCOME ${PROJECT_SOURCE_DIR}/cmake/OpenMSPackageResourceWelcomeFile.txt)
 	set(CPACK_RESOURCE_FILE_README ${PROJECT_SOURCE_DIR}/cmake/OpenMSPackageResourceReadme.txt)
-	
+
 	# install routines for MacOSX
 	if("${PACKAGE_TYPE}" STREQUAL "dmg")
 		include(cmake/package_dragndrop_dmg.cmake)
@@ -924,7 +960,7 @@ else()
 	set(CF_OPENMS_ADD_DEFINITIONS)
 	## the filename for library settings (this file will be included in OpenMSConfig.cmake)
 	set(CF_LibOpenMSExport ${PROJECT_BINARY_DIR}/cmake/OpenMSLibraryExport.cmake)
-	
+
 	## create code that allows to call find_package()
 	## (must come after the above code that sets the variables!)
 	get_directory_property(OPENMS_INCLUDE_DIRS  INCLUDE_DIRECTORIES)
@@ -951,6 +987,6 @@ else()
 		include(cmake/install.cmake)
 	endif()
 
-	
+
 endif()
 

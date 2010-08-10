@@ -32,6 +32,7 @@
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
+#include <OpenMS/FORMAT/IdXMLFile.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum2DPrefDialog.h>
 #include <OpenMS/VISUAL/ColorSelector.h>
 #include <OpenMS/VISUAL/MultiGradientSelector.h>
@@ -72,20 +73,12 @@ namespace OpenMS
     defaults_.setMaxInt("interpolation_steps",1000);
     defaults_.setValue("dot:gradient", "Linear|0,#ffea00;6,#ff0000;14,#aa00ff;23,#5500ff;100,#000000", "Multi-color gradient for peaks.");
     defaults_.setValue("dot:feature_icon", "circle", "Icon used for features and consensus features.");
-		vector<String> strings;
-		strings.push_back("diamond");
-		strings.push_back("square");
-		strings.push_back("circle");
-		strings.push_back("triangle");
-		defaults_.setValidStrings("dot:feature_icon",strings);
+    defaults_.setValidStrings("dot:feature_icon", StringList::create("diamond,square,circle,triangle"));
     defaults_.setValue("dot:feature_icon_size", 4, "Icon size used for features and consensus features.");
     defaults_.setMinInt("dot:feature_icon_size",1);
     defaults_.setMaxInt("dot:feature_icon_size",999);
-    defaults_.setValue("mapping_of_mz_to","x_axis","Determines with axis is the m/z axis.");
-		strings.clear();
-		strings.push_back("x_axis");
-		strings.push_back("y_axis");
-		defaults_.setValidStrings("mapping_of_mz_to",strings);
+    defaults_.setValue("mapping_of_mz_to","x_axis","Determines which axis is the m/z axis.");
+		defaults_.setValidStrings("mapping_of_mz_to", StringList::create("x_axis,y_axis"));
 		defaultsToParam_();
 		setName("Spectrum2DCanvas");
 		setParameters(preferences);
@@ -93,7 +86,7 @@ namespace OpenMS
 		projection_mz_.resize(1);
 		projection_rt_.resize(1);
 
-		//set preferences and update widgets acoordningly
+		//set preferences and update widgets accordingly
 		if (String(param_.getValue("mapping_of_mz_to")) != "x_axis")
 		{
 			mzToXAxis(false);
@@ -149,6 +142,10 @@ namespace OpenMS
 
 			dataToWidget_(crom->getMZ(), cp->getRT(), pos);
 
+		}
+		else if (getCurrentLayer().type==LayerData::DT_IDENT)
+		{
+			//TODO IDENT
 		}
 		
 		//paint highlighted peak
@@ -269,6 +266,11 @@ namespace OpenMS
 					}
 
 		}
+		else if (getCurrentLayer().type==LayerData::DT_IDENT)
+		{
+			//TODO IDENT
+		}
+
 		return PeakIndex();
 	}
 
@@ -285,19 +287,20 @@ namespace OpenMS
 			{
 				percentage_factor_ = overall_data_range_.maxPosition()[2]/layer.peaks.getMaxInt();
 			}
-			else if (layer.type != LayerData::DT_FEATURE && layer.features.getMaxInt()>0.0)
+			else if (layer.type == LayerData::DT_FEATURE && layer.features.getMaxInt()>0.0)
 			{
 				percentage_factor_ = overall_data_range_.maxPosition()[2]/layer.features.getMaxInt();
 			}
-			else if (layer.type != LayerData::DT_CONSENSUS && layer.consensus.getMaxInt()>0.0)
+			else if (layer.type == LayerData::DT_CONSENSUS && layer.consensus.getMaxInt()>0.0)
 			{
 				percentage_factor_ = overall_data_range_.maxPosition()[2]/layer.consensus.getMaxInt();
 			}
-			else if (layer.type != LayerData::DT_CHROMATOGRAM && layer.consensus.getMaxInt()>0.0)
+			else if (layer.type == LayerData::DT_CHROMATOGRAM && layer.consensus.getMaxInt()>0.0)
 			{
 				//TODO CHROM
 				percentage_factor_ = overall_data_range_.maxPosition()[2]/layer.peaks.getMaxInt();
 			}
+
 		}
 
 		//set painter to black (we operate directly on the pixels for all colored data)
@@ -645,6 +648,10 @@ namespace OpenMS
 			//cout << "\n maxIntensity: " << maxIntensity ;
 			//cout << "\n minIntensity: " << minIntensity << "\n" ;
 		}
+		else if (layer.type==LayerData::DT_IDENT) // peptide identifications
+		{
+			paintIdentifications_(layer_index, painter);
+		}
 	}
 
 	void Spectrum2DCanvas::paintIcon_(const QPoint& pos, const QRgb& color, const String& icon, Size s, QPainter& p) const
@@ -721,13 +728,15 @@ namespace OpenMS
 			{
 				//paint hull points
 				ConvexHull2D hull = i->getConvexHull();
+				ConvexHull2D::PointArrayType ch_points = hull.getHullPoints();
 				QPolygon points;
-				points.resize((int)hull.getPoints().size());
+				points.resize((int)ch_points.size());
 
 				UInt index=0;
 				QPoint pos;
 				//iterate over hull points
-				for(ConvexHull2D::PointArrayType::const_iterator it=hull.getPoints().begin(); it!=hull.getPoints().end(); ++it, ++index)
+
+				for(ConvexHull2D::PointArrayType::const_iterator it=ch_points.begin(); it!=ch_points.end(); ++it, ++index)
 				{
 					dataToWidget_(it->getY(), it->getX(),pos);
 					points.setPoint(index, pos);
@@ -738,46 +747,66 @@ namespace OpenMS
 		}
 	}
 
-	void Spectrum2DCanvas::paintUnassignedHits_(Size layer_index, QPainter& painter)
+	void Spectrum2DCanvas::paintIdentifications_(Size layer_index, QPainter& painter)
 	{
-		painter.setPen(Qt::black);
-		const vector<PeptideIdentification>& ids = getLayer(layer_index).features.getUnassignedPeptideIdentifications();
-		
-		for (Size i=0; i<ids.size();++i)
+		const LayerData& layer = getLayer(layer_index);
+		vector<PeptideIdentification>::const_iterator pep_begin, pep_end;
+		if (layer.type == LayerData::DT_FEATURE)
 		{
-			if (ids[i].getHits().size()!=0)
+			pep_begin = layer.features.getUnassignedPeptideIdentifications().begin();
+			pep_end = layer.features.getUnassignedPeptideIdentifications().end();
+		}
+		else if (layer.type == LayerData::DT_IDENT)
+		{
+			pep_begin = layer.peptides.begin();
+			pep_end = layer.peptides.end();
+		}
+		else return;
+
+		painter.setPen(Qt::black);
+
+		for (; pep_begin != pep_end; ++pep_begin)
+		{
+			if (pep_begin->getHits().size() != 0)
 			{
-				DoubleReal rt = (DoubleReal)ids[i].getMetaValue("RT");
-				if (rt< visible_area_.minPosition()[1] || rt > visible_area_.maxPosition()[1]) continue;
-				DoubleReal mz = (DoubleReal)ids[i].getMetaValue("MZ");
-				if (mz< visible_area_.minPosition()[0] || mz > visible_area_.maxPosition()[0]) continue;
+				if (!pep_begin->metaValueExists("RT") || 
+						!pep_begin->metaValueExists("MZ"))
+				{
+					// TODO: show error message here
+					continue;
+				}
+				DoubleReal rt = (DoubleReal) pep_begin->getMetaValue("RT");
+				if (rt < visible_area_.minPosition()[1] || rt > visible_area_.maxPosition()[1]) continue;				
+				DoubleReal mz = getIdentificationMZ_(layer_index, *pep_begin);
+				if (mz < visible_area_.minPosition()[0] || mz > visible_area_.maxPosition()[0]) continue;
 				
 				//draw dot
 				QPoint pos;
 				dataToWidget_(mz, rt, pos);
-				painter.drawLine(pos.x(),pos.y() - 1.0, pos.x(),pos.y() + 1.0);
+				painter.drawLine(pos.x(), pos.y() - 1.0, pos.x(), pos.y() + 1.0);
 				painter.drawLine(pos.x() - 1.0, pos.y(), pos.x() + 1.0, pos.y());
 				
 				//draw sequence
-				String sequence = ids[i].getHits()[0].getSequence().toString();
-				if (ids[i].getHits().size()>1) sequence += " ...";
-				painter.drawText(pos.x() + 10.0 ,pos.y() + 10.0 ,sequence.toQString());
+				String sequence = pep_begin->getHits()[0].getSequence().toString();
+				if (pep_begin->getHits().size() > 1) sequence += "...";
+				painter.drawText(pos.x() + 10.0, pos.y() + 10.0, sequence.toQString());
 			}
 		}
 	}
 	
-  void Spectrum2DCanvas::paintConvexHulls_(const vector<ConvexHull2D>& hulls, QPainter& painter)
+	void Spectrum2DCanvas::paintConvexHulls_(const vector<ConvexHull2D>& hulls, QPainter& painter)
   {
 		QPolygon points;
 
 		//iterate over all convex hulls
 		for (Size hull=0; hull<hulls.size(); ++hull)
 		{
-			points.resize((int)hulls[hull].getPoints().size());
+			ConvexHull2D::PointArrayType ch_points = hulls[hull].getHullPoints();
+			points.resize((int)ch_points.size());
 			UInt index=0;
 			QPoint pos;
 			//iterate over hull points
-			for(ConvexHull2D::PointArrayType::const_iterator it=hulls[hull].getPoints().begin(); it!=hulls[hull].getPoints().end(); ++it, ++index)
+			for(ConvexHull2D::PointArrayType::const_iterator it=ch_points.begin(); it!=ch_points.end(); ++it, ++index)
 			{
 				dataToWidget_(it->getY(), it->getX(),pos);
 				points.setPoint(index, pos);
@@ -1085,7 +1114,18 @@ namespace OpenMS
 				return false;
 			}
 		}
-		
+		else if (layers_.back().type==LayerData::DT_IDENT) // identification data
+		{
+			//Abort if no data points are contained
+			if (getCurrentLayer_().peptides.size()==0)
+			{
+				layers_.resize(getLayerCount()-1);
+				if (current_layer_!=0) current_layer_ = current_layer_-1;
+				QMessageBox::critical(this,"Error","Cannot add an empty dataset. Aborting!");
+				return false;
+			}
+		}
+
 		//Warn if negative intensities are contained
 		if (getMinIntensity(current_layer_)<0.0)
 		{
@@ -1189,7 +1229,7 @@ namespace OpenMS
 							}
 						}
 					}
-					else if (getLayer(i).type==LayerData::DT_FEATURE) //features
+					else if (getLayer(i).type==LayerData::DT_FEATURE) // features
 					{
 						for (FeatureMapType::ConstIterator it = getLayer(i).features.begin();
 							   it != getLayer(i).features.end();
@@ -1206,7 +1246,7 @@ namespace OpenMS
 							}
 						}
 					}
-					else if (getLayer(i).type==LayerData::DT_CONSENSUS) //features
+					else if (getLayer(i).type==LayerData::DT_CONSENSUS) // consensus
 					{
 						for (ConsensusMapType::ConstIterator it = getLayer(i).consensus.begin();
 							   it != getLayer(i).consensus.end();
@@ -1223,10 +1263,15 @@ namespace OpenMS
 							}
 						}
 					}
-					else if (getLayer(i).type==LayerData::DT_CHROMATOGRAM) //features
+					else if (getLayer(i).type==LayerData::DT_CHROMATOGRAM) // chromatogr.
 					{
 						//TODO CHROM
 					}
+					else if (getLayer(i).type==LayerData::DT_IDENT) // identifications
+					{
+						//TODO IDENT
+					}
+
 					if (local_max>0.0)
 					{
 						snap_factors_[i] = overall_data_range_.maxPosition()[2]/local_max;
@@ -1361,7 +1406,7 @@ namespace OpenMS
 						}
 						if (getLayerFlag(i,LayerData::F_UNASSIGNED))
 						{
-							paintUnassignedHits_(i,painter);
+							paintIdentifications_(i, painter);
 						}
 						paintDots_(i, painter);
 					}
@@ -1376,6 +1421,10 @@ namespace OpenMS
 					else if (getLayer(i).type==LayerData::DT_CHROMATOGRAM)
 					{
 						// TODO CHROM
+						paintDots_(i, painter);
+					}
+					else if (getLayer(i).type == LayerData::DT_IDENT)
+					{
 						paintDots_(i, painter);
 					}
 				}
@@ -2219,7 +2268,7 @@ namespace OpenMS
 	{
 		LayerData& layer = getLayer_(i);
 
-		if (layers_.back().type==LayerData::DT_PEAK) //peak data
+		if (layer.type==LayerData::DT_PEAK) //peak data
 		{
 			try
 			{
@@ -2233,7 +2282,7 @@ namespace OpenMS
 			layer.peaks.sortSpectra(true);
 			layer.peaks.updateRanges(1);
 		}
-		else if (layers_.back().type==LayerData::DT_FEATURE) //feature data
+		else if (layer.type==LayerData::DT_FEATURE) //feature data
 		{
 			try
 			{
@@ -2246,7 +2295,7 @@ namespace OpenMS
 			}
 			layer.features.updateRanges();
 		}
-		else if (layers_.back().type==LayerData::DT_CONSENSUS)  //consensus feature data
+		else if (layer.type==LayerData::DT_CONSENSUS)  //consensus feature data
 		{
 			try
 			{
@@ -2259,7 +2308,7 @@ namespace OpenMS
 			}
 			layer.consensus.updateRanges();
 		}
-		else if (layers_.back().type==LayerData::DT_CHROMATOGRAM) //chromatgram
+		else if (layer.type==LayerData::DT_CHROMATOGRAM) //chromatgram
 		{
 			//TODO CHROM
 			try
@@ -2274,6 +2323,19 @@ namespace OpenMS
       layer.peaks.sortChromatograms(true);
       layer.peaks.updateRanges(1);
 
+		}
+		else if (layer.type == LayerData::DT_IDENT) // identifications
+		{
+			try
+			{
+				vector<ProteinIdentification> proteins;
+				IdXMLFile().load(layer.filename, proteins, layer.peptides);
+			}
+			catch(Exception::BaseException& e)
+			{
+				QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+				layer.peptides.clear();
+			}		
 		}
 		recalculateRanges_(0,1,2);
 		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
@@ -2520,6 +2582,20 @@ namespace OpenMS
 		{
 			intensityModeChange_();
 		}
+	}
+
+	void Spectrum2DCanvas::mergeIntoLayer(Size i, vector<PeptideIdentification>& peptides)
+	{
+		OPENMS_PRECONDITION(i < layers_.size(), "Spectrum2DCanvas::mergeIntoLayer(i, peptides) index overflow");
+		OPENMS_PRECONDITION(layers_[i].type==LayerData::DT_IDENT, "Spectrum2DCanvas::mergeIntoLayer(i, peptides) non-identification layer selected");
+		// reserve enough space
+		layers_[i].peptides.reserve(layers_[i].peptides.size() + peptides.size());
+		// insert peptides
+		layers_[i].peptides.insert(layers_[i].peptides.end(), peptides.begin(), 
+															 peptides.end());
+		// update the layer and overall ranges
+		recalculateRanges_(0,1,2);
+		resetZoom(true);
 	}
 
 } //namespace OpenMS

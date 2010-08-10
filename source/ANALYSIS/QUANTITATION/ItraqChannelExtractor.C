@@ -243,7 +243,7 @@ namespace OpenMS
 				if (channel_value.getIntensity() == 0) ++empty_channel[cm_it->second.name];
 
 				// add channel to ConsensusFeature
-				cf.insert (index++, element_index, channel_value);
+				cf.insert (index++, channel_value, element_index);
 
 			} // ! channel_iterator
 
@@ -296,11 +296,11 @@ namespace OpenMS
 
 		if (itraq_type_ == ItraqConstants::FOURPLEX)
 		{
-			defaults_.setValue("channel_active", StringList::create("114:myReference"), "Each channel that was used in the experiment and its description (114-117 for 4plex; 113-121 for 8-plex) in format <channel>:<name>, e.g. \"114:myref\",\"115:liver\"."); 
+      defaults_.setValue("channel_active", StringList::create("114:liver,117:lung"), "Each channel that was used in the experiment and its description (114-117 for 4plex; 113-121 for 8-plex) in format <channel>:<name>, e.g. \"114:myref\",\"115:liver\"."); 
 		}
 		else
 		{
-			defaults_.setValue("channel_active", StringList::create("113:myReference"), "Each channel that was used in the experiment and its description (114-117 for 4plex; 113-121 for 8-plex) in format <channel>:<name>, e.g. \"113:myref\",\"115:liver\",\"118:lung\"."); 
+      defaults_.setValue("channel_active", StringList::create("113:liver,117:lung"), "Each channel that was used in the experiment and its description (114-117 for 4plex; 113-121 for 8-plex) in format <channel>:<name>, e.g. \"113:myref\",\"115:liver\",\"118:lung\"."); 
 		}
 
 		PeakPickerCWT ppcwt; 
@@ -314,10 +314,9 @@ namespace OpenMS
 	/// implemented for DefaultParamHandler
 	void ItraqChannelExtractor::updateMembers_()
 	{
-
 		// extract channel names
-		StringList channels = StringList(param_.getValue("channel_active"));
-		ItraqConstants::updateChannelMap(channels, channel_map_);
+    ItraqConstants::initChannelMap(itraq_type_, channel_map_);
+		ItraqConstants::updateChannelMap(StringList(param_.getValue("channel_active")), channel_map_);
 	}
 
 	/// initialize

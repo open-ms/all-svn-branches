@@ -385,7 +385,24 @@ namespace OpenMS
 				@exception Exception::InvalidParameter is thrown if errors occur during the check
 			*/
 			void checkDefaults(const String& name, const Param& defaults, const String& prefix="", std::ostream& os = std::cout) const;	
-			//@}
+			
+      
+      /**
+        @brief Rescue parameter <b>values</b> from @p old_version to current param
+
+        All parameters present in both param objects will be transferred into this object, given that:
+        - the name is equal
+        - the type is equal
+        - the restrictions are equal
+
+        Not transferred are parameters with name "version" (to preserve the new version) or "type" (to preserve layout).
+
+        @param old_version Old version of param, which contains the useful settings to be rescued
+
+      **/
+      void update(const Param& old_version, const bool report_new_params=false);
+      
+      //@}
 			
 			///@name Restriction handling
 			//@{
@@ -456,11 +473,13 @@ namespace OpenMS
 			/**
 				 @brief Parses command line arguments to specified key locations.
 				
+         Parses command line arguments to specified key locations and stores the result internally.
+
 				 @param argc argc variable from command line
-				 @param argv argv varaible from command line
+				 @param argv argv variable from command line
 				 @param options_with_one_argument a map of options that are followed by one argument (with key where they are stored)
-				 @param options_without_argument a map of options that are not followed by an argument (with key where they are stored). Present options are set to the the string 'true'.
-				 @param options_with_multiple_argument a map of options that are followed by several arguments(with key where they are stored)
+				 @param options_without_argument a map of options that are not followed by an argument (with key where they are stored). Options specified on the command line are set to the string 'true'.
+				 @param options_with_multiple_argument a map of options that are followed by several arguments (with key where they are stored)
 				 @param misc key where a StringList of all non-option arguments are stored
 				 @param unknown key where a StringList of all unknown options are stored
 				 

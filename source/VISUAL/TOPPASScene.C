@@ -34,13 +34,17 @@
 #include <OpenMS/VISUAL/TOPPASMergerVertex.h>
 #include <OpenMS/VISUAL/DIALOGS/TOPPASIOMappingDialog.h>
 #include <OpenMS/VISUAL/DIALOGS/TOPPASOutputFilesDialog.h>
+#include <OpenMS/VISUAL/DIALOGS/TOPPASVertexNameDialog.h>
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/DATASTRUCTURES/Map.h>
+#include <OpenMS/VISUAL/TOPPASResources.h>
 
-#include <QtCore/QDir>
+#include <QtCore/QFile>
 #include <QtCore/QFileInfo>
-#include <QtGui/QMessageBox>
+#include <QtCore/QDir>
 #include <QtCore/QSet>
+#include <QtCore/QTextStream>
+#include <QtGui/QMessageBox>
 
 namespace OpenMS
 {
@@ -524,6 +528,13 @@ namespace OpenMS
 			return;
 		}
 		
+		//reset logfile
+		QFile logfile(out_dir_+QDir::separator()+"TOPPAS.log");
+		if (logfile.exists())
+		{
+			logfile.remove();
+		}
+		
 		//reset processes
 		topp_processes_queue_.clear();
 		
@@ -549,7 +560,7 @@ namespace OpenMS
 		// store all vertices (together with all parameters)
 		foreach (TOPPASVertex* tv, vertices_)
 		{
-			String id(tv->getTopoNr());
+			String id(tv->getTopoNr()-1);
 			
 			TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>(tv);
 			if (iflv)
@@ -611,7 +622,7 @@ namespace OpenMS
 				continue;
 			}
 			
-			save_param.setValue("edges:"+String(counter)+":source/target:", DataValue(String(te->getSourceVertex()->getTopoNr()) + "/" + String(te->getTargetVertex()->getTopoNr())));
+			save_param.setValue("edges:"+String(counter)+":source/target:", DataValue(String(te->getSourceVertex()->getTopoNr()-1) + "/" + String(te->getTargetVertex()->getTopoNr()-1)));
 			save_param.setValue("edges:"+String(counter)+":source_out_param:", DataValue(te->getSourceOutParam()));
 			save_param.setValue("edges:"+String(counter)+":target_in_param:", DataValue(te->getTargetInParam()));
 			
@@ -620,7 +631,7 @@ namespace OpenMS
 		
 		//save file
 		save_param.store(file);
-		changed_ = false;
+		setChanged(false);
 		file_name_ = file;
 	}
 	
@@ -663,11 +674,9 @@ namespace OpenMS
 				else if (current_type == "output file list")
 				{
 					TOPPASOutputFileListVertex* oflv = new TOPPASOutputFileListVertex();
-					connect (oflv, SIGNAL(iAmDone()), this, SLOT(checkIfWeAreDone()));
-					if (!gui_)
-					{
-						connect (oflv, SIGNAL(outputFileWritten(const String&)), this, SLOT(noGuiOutputFileWritten(const String&)));
-					}
+					
+					connectOutputVertexSignals(oflv);
+					
 					current_vertex = oflv;
 				}
 				else if (current_type == "tool")
@@ -677,17 +686,8 @@ namespace OpenMS
 					Param param_param = vertices_param.copy(current_id + ":parameters:", true);
 					TOPPASToolVertex* tv = new TOPPASToolVertex(tool_name, tool_type, tmp_path_);
 					tv->setParam(param_param);
-					connect(tv,SIGNAL(toolStarted()),this,SLOT(setPipelineRunning()));
-					connect(tv,SIGNAL(toolFailed()),this,SLOT(pipelineErrorSlot()));
-					connect(tv,SIGNAL(toolCrashed()),this,SLOT(pipelineErrorSlot()));
-					if (!gui_)
-					{
-						connect (tv, SIGNAL(toppOutputReady(const QString&)), this, SLOT(noGuiTOPPOutput(const QString&)));
-						connect (tv, SIGNAL(toolStarted()), this, SLOT(noGuiToolStarted()));
-						connect (tv, SIGNAL(toolFinished()), this, SLOT(noGuiToolFinished()));
-						connect (tv, SIGNAL(toolFailed()), this, SLOT(noGuiToolFailed()));
-						connect (tv, SIGNAL(toolCrashed()), this, SLOT(noGuiToolCrashed()));
-					}
+					
+					connectToolVertexSignals(tv);
 					
 					current_vertex = tv;
 				}
@@ -715,12 +715,7 @@ namespace OpenMS
 					
 					addVertex(current_vertex);
 					
-					connect(current_vertex,SIGNAL(clicked()),this,SLOT(itemClicked()));
-					connect(current_vertex,SIGNAL(released()),this,SLOT(itemReleased()));
-					connect(current_vertex,SIGNAL(hoveringEdgePosChanged(const QPointF&)),this,SLOT(updateHoveringEdgePos(const QPointF&)));
-					connect(current_vertex,SIGNAL(newHoveringEdge(const QPointF&)),this,SLOT(addHoveringEdge(const QPointF&)));
-					connect(current_vertex,SIGNAL(finishHoveringEdge()),this,SLOT(finishHoveringEdge()));
-					connect(current_vertex,SIGNAL(itemDragged(qreal,qreal)),this,SLOT(moveSelectedItems(qreal,qreal)));
+					connectVertexSignals(current_vertex);
 					
 					// temporarily block signals in order that the first topo sort does not set the changed flag
 					current_vertex->blockSignals(true);
@@ -776,9 +771,10 @@ namespace OpenMS
       	edge->setTargetVertex(tv_2);
       	tv_1->addOutEdge(edge);
       	tv_2->addInEdge(edge);
+      	
+      	connectEdgeSignals(edge);
+      	
       	addEdge(edge);
-      	connect (tv_1, SIGNAL(somethingHasChanged()), edge, SLOT(sourceHasChanged()));
-				connect (edge, SIGNAL(somethingHasChanged()), tv_2, SLOT(inEdgeHasChanged()));
 				
       	int source_out_param = (++it)->value;
       	int target_in_param = (++it)->value;
@@ -846,11 +842,8 @@ namespace OpenMS
 			{
 				TOPPASOutputFileListVertex* new_oflv = new TOPPASOutputFileListVertex(*oflv);
 				new_v = new_oflv;
-				connect (new_oflv, SIGNAL(iAmDone()), this, SLOT(checkIfWeAreDone()));
-				if (!gui_)
-				{
-					connect (new_oflv, SIGNAL(outputFileWritten(const String&)), this, SLOT(noGuiOutputFileWritten(const String&)));
-				}
+				
+				connectOutputVertexSignals(new_oflv);
 			}
 
 			TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(v);
@@ -858,17 +851,8 @@ namespace OpenMS
 			{
 				TOPPASToolVertex* new_tv = new TOPPASToolVertex(*tv);
 				new_v = new_tv;
-				connect(new_tv,SIGNAL(toolStarted()),this,SLOT(setPipelineRunning()));
-				connect(new_tv,SIGNAL(toolFailed()),this,SLOT(pipelineErrorSlot()));
-				connect(new_tv,SIGNAL(toolCrashed()),this,SLOT(pipelineErrorSlot()));
-				if (!gui_)
-				{
-					connect (new_tv, SIGNAL(toppOutputReady(const QString&)), this, SLOT(noGuiTOPPOutput(const QString&)));
-					connect (new_tv, SIGNAL(toolStarted()), this, SLOT(noGuiToolStarted()));
-					connect (new_tv, SIGNAL(toolFinished()), this, SLOT(noGuiToolFinished()));
-					connect (new_tv, SIGNAL(toolFailed()), this, SLOT(noGuiToolFailed()));
-					connect (new_tv, SIGNAL(toolCrashed()), this, SLOT(noGuiToolCrashed()));
-				}
+				
+				connectToolVertexSignals(new_tv);
 			}
 			
 			TOPPASMergerVertex* mv = qobject_cast<TOPPASMergerVertex*>(v);
@@ -886,14 +870,8 @@ namespace OpenMS
 			
 			vertex_map[v] = new_v;
 			new_v->moveBy(x_offset, y_offset);
+			connectVertexSignals(new_v);
 			addVertex(new_v);
-			
-			connect(new_v,SIGNAL(clicked()),this,SLOT(itemClicked()));
-			connect(new_v,SIGNAL(released()),this,SLOT(itemReleased()));
-			connect(new_v,SIGNAL(hoveringEdgePosChanged(const QPointF&)),this,SLOT(updateHoveringEdgePos(const QPointF&)));
-			connect(new_v,SIGNAL(newHoveringEdge(const QPointF&)),this,SLOT(addHoveringEdge(const QPointF&)));
-			connect(new_v,SIGNAL(finishHoveringEdge()),this,SLOT(finishHoveringEdge()));
-			connect(new_v,SIGNAL(itemDragged(qreal,qreal)),this,SLOT(moveSelectedItems(qreal,qreal)));
 			
 			// temporarily block signals in order that the first topo sort does not set the changed flag
 			new_v->blockSignals(true);
@@ -913,8 +891,8 @@ namespace OpenMS
 			new_e->setTargetInParam((*it)->getTargetInParam());
 			new_source->addOutEdge(new_e);
 			new_target->addInEdge(new_e);
-			connect (new_source, SIGNAL(somethingHasChanged()), new_e, SLOT(sourceHasChanged()));
-			connect (new_e, SIGNAL(somethingHasChanged()), new_target, SLOT(inEdgeHasChanged()));
+			
+			connectEdgeSignals(new_e);
 			
 			addEdge(new_e);
 		}
@@ -988,26 +966,43 @@ namespace OpenMS
 		emit pipelineExecutionFailed();
 	}
 	
-	void TOPPASScene::noGuiTOPPOutput(const QString& out)
+	void TOPPASScene::writeToLogFile_(const QString& text)
+	{
+		QFile logfile(out_dir_+QDir::separator()+"TOPPAS.log");
+		if (!logfile.open(QIODevice::Append | QIODevice::Text))
+		{
+			std::cerr << "Could not write to logfile '" << String(logfile.fileName()) << "'" << std::endl;
+			return;
+		}
+		
+		QTextStream ts(&logfile);
+		ts << "\n" << text << "\n";
+		logfile.close();
+	}
+	
+	void TOPPASScene::logTOPPOutput(const QString& out)
 	{
 		TOPPASToolVertex* sender = qobject_cast<TOPPASToolVertex*>(QObject::sender());
 		if (!sender)
 		{
 			return;
 		}
-		String tool = sender->getName();
+		String text = sender->getName();
 		if (sender->getType() != "")
 		{
-			tool += " ("+sender->getType()+")";
+			text += " ("+sender->getType()+")";
 		}
-		std::cout	<< std::endl
-							<< tool
-							<< std::endl
-							<< String(out)
-							<< std::endl;
+		text += "\n" + String(out);
+		
+		if (!gui_)
+		{
+			std::cout	<< std::endl << text << std::endl;
+		}
+		
+		writeToLogFile_(text.toQString());
 	}
 	
-	void TOPPASScene::noGuiToolStarted()
+	void TOPPASScene::logToolStarted()
 	{
 		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(QObject::sender());
 		if (tv)
@@ -1020,13 +1015,16 @@ namespace OpenMS
 			}
 			text += " started. Processing ...";
 			
-			std::cout	<< std::endl
-								<< text
-								<< std::endl;
+			if (!gui_)
+			{
+				std::cout	<< std::endl << text << std::endl;
+			}
+			
+			writeToLogFile_(text.toQString());
 		}
 	}
 	
-	void TOPPASScene::noGuiToolFinished()
+	void TOPPASScene::logToolFinished()
 	{
 		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(QObject::sender());
 		if (tv)
@@ -1039,13 +1037,16 @@ namespace OpenMS
 			}
 			text += " finished!";
 			
-			std::cout	<< std::endl
-								<< text
-								<< std::endl;
+			if (!gui_)
+			{
+				std::cout	<< std::endl << text << std::endl;
+			}
+			
+			writeToLogFile_(text.toQString());
 		}
 	}
 	
-	void TOPPASScene::noGuiToolFailed()
+	void TOPPASScene::logToolFailed()
 	{
 		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(QObject::sender());
 		if (tv)
@@ -1058,13 +1059,16 @@ namespace OpenMS
 			}
 			text += " failed!";
 			
-			std::cout	<< std::endl
-								<< text
-								<< std::endl;
+			if (!gui_)
+			{
+				std::cout	<< std::endl << text << std::endl;
+			}
+			
+			writeToLogFile_(text.toQString());
 		}
 	}
 	
-	void TOPPASScene::noGuiToolCrashed()
+	void TOPPASScene::logToolCrashed()
 	{
 		TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>(QObject::sender());
 		if (tv)
@@ -1077,18 +1081,25 @@ namespace OpenMS
 			}
 			text += " crashed!";
 			
-			std::cout	<< std::endl
-								<< text
-								<< std::endl;
+			if (!gui_)
+			{
+				std::cout	<< std::endl << text << std::endl;
+			}
+			
+			writeToLogFile_(text.toQString());
 		}
 	}
 	
-	void TOPPASScene::noGuiOutputFileWritten(const String& file)
+	void TOPPASScene::logOutputFileWritten(const String& file)
 	{
 		String text = "Output file '"+file+"' written.";
-		std::cout	<< std::endl
-							<< text
-							<< std::endl;
+		
+		if (!gui_)
+		{
+			std::cout	<< std::endl << text << std::endl;
+		}
+			
+		writeToLogFile_(text.toQString());
 	}
 	
 	void TOPPASScene::topoSort()
@@ -1107,7 +1118,7 @@ namespace OpenMS
 			{
 				if ((*it)->isTopoSortMarked())
 				{
-					continue;	
+					continue;
 				}
 				some_vertex_not_finished = true;
 				bool has_predecessors = false;
@@ -1122,8 +1133,22 @@ namespace OpenMS
 				}
 				if (!has_predecessors)
 				{
+					//update name of input node
+					TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>(*it);
+					if (iflv)
+					{
+						//check if key was modified by user. if yes, don't update it
+						QString old_topo_nr = QString::number((*it)->getTopoNr());
+						if (old_topo_nr == iflv->getKey() || iflv->getKey() == "")
+						{
+							iflv->setKey(QString::number(topo_counter));
+						}
+					}
+					
+					(*it)->setTopoNr(topo_counter);
 					(*it)->setTopoSortMarked(true);
-					(*it)->setTopoNr(topo_counter++);
+					
+					++topo_counter;
 				}
 			}
 			if (!some_vertex_not_finished)
@@ -1168,7 +1193,7 @@ namespace OpenMS
 			(*it)->moveBy(dx,dy);
 		}
 		
-		changed_ = true;
+		setChanged(true);
 	}
 
 	void TOPPASScene::snapToGrid()
@@ -1234,7 +1259,16 @@ namespace OpenMS
 	
 	void TOPPASScene::setChanged(bool b)
 	{
-		changed_ = b;
+		if (changed_ != b)
+		{
+			changed_ = b;
+			emit mainWindowNeedsUpdate();
+		}
+	}
+	
+	bool TOPPASScene::wasChanged()
+	{
+		return changed_;
 	}
 	
 	bool TOPPASScene::isPipelineRunning()
@@ -1376,6 +1410,7 @@ namespace OpenMS
 			if (found_input)
 			{
 				QSet<QString> input_actions;
+				input_actions.insert("Change name");
 				input_actions.insert("Change files");
 				input_actions.insert("Open files in TOPPView");
 				all_actions.push_back(input_actions);
@@ -1501,6 +1536,14 @@ namespace OpenMS
 					{
 						ifv->showFilesDialog();
 					}
+					else if (text == "Change name")
+					{
+						TOPPASVertexNameDialog dlg(ifv->getKey());
+						if (dlg.exec())
+						{
+							ifv->setKey(dlg.getName());
+						}
+					}
 					
 					continue;
 				}
@@ -1622,6 +1665,7 @@ namespace OpenMS
 			if (tv->inEdgesBegin() == tv->inEdgesEnd())
 			{
 				strange_vertices << QString::number(tv->getTopoNr());
+				tv->markUnreachable();
 			}
 		}
 		if (!strange_vertices.empty())
@@ -1739,6 +1783,111 @@ namespace OpenMS
 		}
 		
 		return true;
+	}
+	
+	void TOPPASScene::connectVertexSignals(TOPPASVertex* tv)
+	{
+		connect(tv,SIGNAL(clicked()),this,SLOT(itemClicked()));
+		connect(tv,SIGNAL(released()),this,SLOT(itemReleased()));
+		connect(tv,SIGNAL(hoveringEdgePosChanged(const QPointF&)),this,SLOT(updateHoveringEdgePos(const QPointF&)));
+		connect(tv,SIGNAL(newHoveringEdge(const QPointF&)),this,SLOT(addHoveringEdge(const QPointF&)));
+		connect(tv,SIGNAL(finishHoveringEdge()),this,SLOT(finishHoveringEdge()));
+		connect(tv,SIGNAL(itemDragged(qreal,qreal)),this,SLOT(moveSelectedItems(qreal,qreal)));
+	}
+	
+	void TOPPASScene::connectToolVertexSignals(TOPPASToolVertex* ttv)
+	{
+		connect(ttv, SIGNAL(toppOutputReady(const QString&)), this, SLOT(logTOPPOutput(const QString&)));
+		connect(ttv, SIGNAL(toolStarted()), this, SLOT(logToolStarted()));
+		connect(ttv, SIGNAL(toolFinished()), this, SLOT(logToolFinished()));
+		connect(ttv, SIGNAL(toolFailed()), this, SLOT(logToolFailed()));
+		connect(ttv, SIGNAL(toolCrashed()), this, SLOT(logToolCrashed()));
+		
+		connect(ttv,SIGNAL(toolStarted()),this,SLOT(setPipelineRunning()));
+		connect(ttv,SIGNAL(toolFailed()),this,SLOT(pipelineErrorSlot()));
+		connect(ttv,SIGNAL(toolCrashed()),this,SLOT(pipelineErrorSlot()));
+	}
+	
+	void TOPPASScene::connectOutputVertexSignals(TOPPASOutputFileListVertex* oflv)
+	{
+		connect(oflv, SIGNAL(iAmDone()), this, SLOT(checkIfWeAreDone()));
+		connect(oflv, SIGNAL(outputFileWritten(const String&)), this, SLOT(logOutputFileWritten(const String&)));
+	}
+	
+	void TOPPASScene::connectEdgeSignals(TOPPASEdge* e)
+	{
+		TOPPASVertex* source = e->getSourceVertex();
+		TOPPASVertex* target = e->getTargetVertex();
+		connect(source, SIGNAL(somethingHasChanged()), e, SLOT(sourceHasChanged()));
+		connect(e, SIGNAL(somethingHasChanged()), target, SLOT(inEdgeHasChanged()));
+	}
+	
+	void TOPPASScene::loadResources(const TOPPASResources& resources)
+	{
+		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
+		{
+			TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>(*it);
+			if (iflv)
+			{
+				const QString& key = iflv->getKey();
+				const QList<TOPPASResource>& resource_list = resources.get(key);
+				QStringList files;
+				foreach (const TOPPASResource& res, resource_list)
+				{
+					files << res.getLocalFile();
+				}
+				iflv->setFilenames(files);
+			}
+		}
+	}
+	
+	void TOPPASScene::createResources(TOPPASResources& resources)
+	{
+		resources.clear();
+		QStringList used_keys;
+		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
+		{
+			TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>(*it);
+			if (iflv)
+			{
+				QString key = iflv->getKey();
+				if (used_keys.contains(key))
+				{
+					if (gui_)
+					{
+						QMessageBox::warning(0,"Non-unique input node names","Some of the input nodes have the same names. Cannot create resource file.");
+					}
+					else
+					{
+						std::cerr << "Some of the input nodes have the same names. Cannot create resource file." << std::endl;
+					}
+					return;
+				}
+				used_keys << key;
+				QList<TOPPASResource> resource_list;
+				QStringList files = iflv->getFilenames();
+				foreach (const QString& file, files)
+				{
+					resource_list << TOPPASResource(file);
+				}
+				resources.add(key,resource_list);
+			}
+		}
+	}
+	
+	bool TOPPASScene::refreshParameters()
+	{
+		bool change = false;
+		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
+		{
+			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>(*it);
+			if (ttv && ttv->refreshParameters())
+			{
+				change = true;
+			}
+		}
+		
+		return change;
 	}
 	
 } //namespace OpenMS

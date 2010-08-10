@@ -37,6 +37,8 @@
 #include <string>
 #include <vector>
 
+#include <QRegExp>
+
 using namespace std;
 
 /// print usage of this tool
@@ -109,10 +111,34 @@ int main( int argc, const char* argv[] )
 	string svn_header_file = string(argv[2]);
 	
 	// use svnversion command to get the current svn revision
-	string svn_revision;
-	getStdoutFromCommand(string("svnversion \"") + svn_dir + string("\" -n"), svn_revision);
+  string svnversion_return_value;
+  getStdoutFromCommand(string("svnversion \"") + svn_dir + string("\" -n"), svnversion_return_value);
+
+  // check if svnversion is valid -> following combinations are valid
+  // 4123:4168     mixed revision working copy
+  // 4168M         modified working copy
+  // 4123S         switched working copy
+  // 4123P         partial working copy, from a sparse checkout
+  // 4123:4168MS   mixed revision, modified, switched working copy
+  QRegExp rx("(\\d+(:\\d+)?[MSP]{0,2})");
+  QString to_validate(svnversion_return_value.c_str());
+  int pos = rx.indexIn(to_validate);
+
+  string svn_revision;
+  if(pos > -1)
+  {
+    svn_revision = rx.cap(1).toStdString();
+  }
+  else
+  {
+    svn_revision = "exported";
+    std::cerr << "Your svn client cannot read the OpenMS repository: " << svn_revision << "\n"
+              << "Setting svn revision to \"exported\"\n";
+  }
+
 	svn_revision = string("\"") + svn_revision + string("\"");
-	//std::cout << "DEBUG - got svn revision: " << svn_revision << endl;
+	
+  //std::cout << "DEBUG - got svn revision: " << svn_revision << endl;
 	
 	// extract svn revision from header and see if it needs updating
 	ifstream hfile (svn_header_file.c_str());

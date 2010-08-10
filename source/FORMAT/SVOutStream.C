@@ -26,6 +26,8 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/SVOutStream.h>
+#include <OpenMS/CONCEPT/Exception.h>
+
 #include <limits>
 
 using namespace std;
@@ -36,8 +38,8 @@ namespace OpenMS
 SVOutStream::SVOutStream(ostream& out, const String& sep,
 												 const String& replacement,
 												 String::QuotingMethod quoting):
-	ostream(out.rdbuf()), sep_(sep), replacement_(replacement),	nan_("nan"),
-	quoting_(quoting), modify_strings_(true), newline_(true)
+	ostream(out.rdbuf()), sep_(sep), replacement_(replacement),	nan_("nan"), 
+	inf_("inf"), quoting_(quoting), modify_strings_(true), newline_(true)
 {
 	// use high decimal precision (appropriate for double):
 	precision(std::numeric_limits<double>::digits10);

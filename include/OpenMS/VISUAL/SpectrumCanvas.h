@@ -227,79 +227,20 @@ namespace OpenMS
 		/// returns a layer flag of the current layer
 		bool getLayerFlag(LayerData::Flags f) const
 		{
-			OPENMS_PRECONDITION(current_layer_ < layers_.size(), "SpectrumCanvas::getLayerFlag() index overflow");
-			switch(f)
-			{
-				case LayerData::F_HULLS:
-					return layers_[current_layer_].f1;
-				case LayerData::F_HULL:
-					return layers_[current_layer_].f3;
-				case LayerData::F_UNASSIGNED:
-					return layers_[current_layer_].f2;
-				case LayerData::P_PRECURSORS:
-					return layers_[current_layer_].f1;
-				case LayerData::P_PROJECTIONS:
-					return layers_[current_layer_].f2;
-				case LayerData::C_ELEMENTS:
-					return layers_[current_layer_].f1;
-			}
-			std::cout << "Error: SpectrumCanvas::getLayerFlag -- unknown flag '" << f << "'!" << std::endl;
-			return false;
+			return getLayerFlag(current_layer_, f);
 		}
 
 		/// sets a layer flag of the current layer
 		void setLayerFlag(LayerData::Flags f, bool value)
 		{
-			//abort if there are no layers
-			if (layers_.empty()) return;
-			
-			OPENMS_PRECONDITION(current_layer_ < layers_.size(), "SpectrumCanvas::setLayerFlag() index overflow");
-			switch(f)
-			{
-				case LayerData::F_HULLS:
-					layers_[current_layer_].f1 = value;
-					break;
-				case LayerData::F_HULL:
-					layers_[current_layer_].f3 = value;
-					break;
-				case LayerData::F_UNASSIGNED:
-					layers_[current_layer_].f2 = value;
-					break;
-				case LayerData::P_PRECURSORS:
-					layers_[current_layer_].f1 = value;
-					break;
-				case LayerData::P_PROJECTIONS:
-					layers_[current_layer_].f2 = value;
-					break;
-				case LayerData::C_ELEMENTS:
-					layers_[current_layer_].f1 = value;
-					break;
-			}
-			update_buffer_ = true;
-			update();
+			setLayerFlag(current_layer_, f, value);
 		}
 
 		/// returns a layer flag of the layer @p layer
 		bool getLayerFlag(Size layer, LayerData::Flags f) const
 		{
 			OPENMS_PRECONDITION(layer < layers_.size(), "SpectrumCanvas::getLayerFlag() index overflow");
-			switch(f)
-			{
-				case LayerData::F_HULLS:
-					return layers_[layer].f1;
-				case LayerData::F_HULL:
-					return layers_[layer].f3;
-				case LayerData::F_UNASSIGNED:
-					return layers_[layer].f2;
-				case LayerData::P_PRECURSORS:
-					return layers_[layer].f1;
-				case LayerData::P_PROJECTIONS:
-					return layers_[layer].f2;
-				case LayerData::C_ELEMENTS:
-					return layers_[layer].f1;
-			}
-			std::cout << "Error: SpectrumCanvas::getLayerFlag -- unknown flag '" << f << "'!" << std::endl;
-			return false;
+			return layers_[layer].flags.test(f);
 		}
 		
 		/// sets a layer flag of the layer @p layer
@@ -307,29 +248,9 @@ namespace OpenMS
 		{
 			//abort if there are no layers
 			if (layers_.empty()) return;
-			
 			OPENMS_PRECONDITION(layer < layers_.size(), "SpectrumCanvas::setLayerFlag() index overflow");
-			switch(f)
-			{
-				case LayerData::F_HULLS:
-					layers_[layer].f1 = value;
-					break;
-				case LayerData::F_HULL:
-					layers_[layer].f3 = value;
-					break;
-				case LayerData::F_UNASSIGNED:
-					layers_[layer].f2 = value;
-					break;
-				case LayerData::P_PRECURSORS:
-					layers_[layer].f1 = value;
-					break;
-				case LayerData::P_PROJECTIONS:
-					layers_[layer].f2 = value;
-					break;
-				case LayerData::C_ELEMENTS:
-					layers_[layer].f1 = value;
-					break;
-			}
+			
+			layers_[layer].flags.set(f, value);
 			update_buffer_ = true;
 			update();
 		}
@@ -420,6 +341,17 @@ namespace OpenMS
 		*/
 		bool addLayer(ConsensusMapType& map, const String& filename="");
 		//@}
+		
+		/**
+			@brief Add an identification data layer
+			
+			@param peptides Input list of peptides, which has to be mutable and will be empty after adding. Swapping is used to insert the data. It can be performed in constant time and does not double the required memory. 
+			@param filename This @em absolute filename is used to monitor changes in the file and reload the data
+			
+			@return If a new layer was created
+		*/
+		bool addLayer(std::vector<PeptideIdentification>& peptides, 
+									const String& filename="");
 		
 		/// Returns the minimum intensity of the active layer
 		inline Real getCurrentMinIntensity() const 
@@ -622,6 +554,15 @@ namespace OpenMS
 		*/
 		void getVisibleConsensusData(ConsensusMapType& map) const;
 		
+		/**
+			@brief Fills the handed over @p peptides with the visible peptide identifications of the current layer. 
+			
+			Takes zoom area into account.
+			
+			If the current layer is not an identification data layer, @p peptides is cleared only.
+		*/
+		void getVisibleIdentifications(std::vector<PeptideIdentification>& peptides) const;
+
 	signals:
 
 		/// Signal emitted whenever the modification status of a layer changes (editing and storing)
@@ -680,6 +621,10 @@ namespace OpenMS
 			
 		/// Draws several lines of text to the upper right corner of the widget
 		void drawText_(QPainter& painter, QStringList text);
+
+		/// Returns the m/z value of an identification depending on the m/z source of the layer (precursor mass/theoretical peptide mass)
+		DoubleReal getIdentificationMZ_(const Size layer_index, 
+																		const PeptideIdentification& peptide) const;
 	
 		///Method that is called when a new layer has been added
 		virtual bool finishAdding_() = 0;
@@ -742,7 +687,7 @@ namespace OpenMS
 		///Go backward in zoom history
 		void zoomBack_();
 		///Go forward in zoom history
-		void zoomForward_();
+		virtual void zoomForward_();
 		/// Add a visible area to the zoom stack
 		void zoomAdd_(const AreaType& area);
 		/// Clears the zoom stack and invalidates the current zoom position. After calling this, a valid zoom position has to be added immediately.
@@ -927,6 +872,8 @@ namespace OpenMS
 		
 		///Watcher that tracks file changes (in order to update the data in the viewer)
 		FileWatcher* watcher_;
+		///Holds the messageboxes for each layer that are currently popped up (to avoid popping them up again, if file changes again before the messagebox is closed)
+		Map<UInt,bool> watcher_msgbox_;
 		
 		///External context menu extension
 		QMenu* context_add_;

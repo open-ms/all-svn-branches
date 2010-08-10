@@ -128,10 +128,10 @@ namespace OpenMS
 		/// Constructor from raw data point
 		ConsensusFeature(const RichPeak2D& point);
 
-		///Constructor from raw data point
+		///Constructor from Peak2D
 		ConsensusFeature(const Peak2D& point);
 
-		///Constructor from raw data point
+		///Constructor from Feature
 		ConsensusFeature(const Feature& feature);
 
 		/**
@@ -139,22 +139,22 @@ namespace OpenMS
 			feature. Sets the consensus feature position and intensity to the values
 			of @p element as well.
 		*/
-		ConsensusFeature(UInt64 map_index,	UInt64 element_index, const Peak2D& element);
+		ConsensusFeature(UInt64 map_index, const Peak2D& element, UInt64 element_index);
 
 
 		/**
-			@brief Constructor with map and element index for a singleton consensus
+			@brief Constructor with map index for a singleton consensus
 			feature. Sets the consensus feature position, intensity, charge and quality to the values
 			of @p element as well.
 		*/
-		ConsensusFeature(UInt64 map_index,	UInt64 element_index, const Feature& element);
+		ConsensusFeature(UInt64 map_index, const Feature& element);
 
 		/**
-			@brief Constructor with map and element index for a singleton consensus
+			@brief Constructor with map index for a singleton consensus
 			feature. Sets the consensus feature position, intensity, charge and quality to the values
 			of @p element as well.
 		*/
-		ConsensusFeature(UInt64 map_index,	UInt64 element_index, const ConsensusFeature& element);
+		ConsensusFeature(UInt64 map_index, const ConsensusFeature& element);
 
 
 		/// Assignment operator
@@ -170,7 +170,7 @@ namespace OpenMS
 		/**
 		@brief Adds an feature handle into the consensus feature
 
-		@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
+		@exception Exception::InvalidValue is thrown if a handle with the same map index and unique id already exists.
 		*/
 		void insert(const FeatureHandle& handle);
 
@@ -180,23 +180,23 @@ namespace OpenMS
 		/**
 			@brief Creates a FeatureHandle and adds it
 
-			@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
+			@exception Exception::InvalidValue is thrown if a handle with the same map index and unique id already exists.
 		*/
-		void insert(UInt64 map_index, UInt64 element_index, const Peak2D& element);
+		void insert(UInt64 map_index, const Peak2D& element, UInt64 element_index);
 
 		/**
 			@brief Creates a FeatureHandle and adds it
 
-			@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
+			@exception Exception::InvalidValue is thrown if a handle with the same map index and unique id already exists.
 		*/
-		void insert(UInt64 map_index, UInt64 element_index, const Feature& element);
+		void insert(UInt64 map_index, const Feature& element);
 
 		/**
 			@brief Creates a FeatureHandle and adds it
 
-			@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
+			@exception Exception::InvalidValue is thrown if a handle with the same map index and unique id already exists.
 		*/
-		void insert(UInt64 map_index, UInt64 element_index, const ConsensusFeature& element);
+		void insert(UInt64 map_index, const ConsensusFeature& element);
 
 		/// Non-mutable access to the contained feature handles
 		const HandleSetType& getFeatures() const;
@@ -208,10 +208,12 @@ namespace OpenMS
 		QualityType getQuality() const;
 		/// Sets the quality
 		void setQuality(QualityType quality);
+
 		/// Sets the charge
 		void setCharge(Int charge);
 		/// Returns the charge
 		Int getCharge() const;
+
 		/// Returns the position range of the contained elements
 		DRange<2> getPositionRange() const;
 		/// Returns the intensity range of the contained elements
@@ -229,6 +231,17 @@ namespace OpenMS
        @note This method has to be called explicitly, <i>after</i> adding the feature handles.
        */
 		void computeConsensus();
+
+		/**
+		       @brief Computes and updates the consensus position, intensity, and charge.
+
+		       The m/z position is the lowest m/z value of the feature handles. The RT position and intensity of the contained feature handles is averaged.
+		       The most frequent charge state wins, while the tie breaking prefers
+		       smaller (absolute) charges.
+
+		       @note This method has to be called explicitly, <i>after</i> adding the feature handles.
+		 */
+		void computeMonoisotopicConsensus();
 
 		/**
        @brief Computes the uncharged parent RT & mass, assuming the handles are charge variants.

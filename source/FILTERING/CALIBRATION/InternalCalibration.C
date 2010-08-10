@@ -74,36 +74,36 @@ namespace OpenMS
 			}
 #ifdef DEBUG_CALIBRATION
 			std::ofstream out("calibration_regression.txt");
-#endif
 			std::vector<DoubleReal> rel_errors(observed_masses.size(),0.);
 			// determine rel error in ppm for the two reference masses
 			for(Size ref_peak=0; ref_peak < observed_masses.size();++ref_peak)
 			{
         rel_errors[ref_peak] = (theoretical_masses[ref_peak]-observed_masses[ref_peak])/theoretical_masses[ref_peak] * 1e6;
-#ifdef DEBUG_CALIBRATION
+
 				out << observed_masses[ref_peak] << "\t"<< rel_errors[ref_peak] << "\n";
         std::cout << observed_masses[ref_peak] <<" "<<theoretical_masses[ref_peak]<<std::endl;
-#endif
 				//				std::cout << observed_masses[ref_peak]<<"\t"<<rel_errors[ref_peak]<<std::endl;
 			}
+#endif
 
 			DoubleReal cov00, cov01, cov11, sumsq, slope,intercept;
 			// TODO: what exactly is stride?? used 1 here as in the gsl-example :)
 			gsl_fit_linear (&(observed_masses[0]), 1, &(theoretical_masses[0]), 1, observed_masses.size(), &intercept,&slope,&cov00,&cov01,&cov11,&sumsq);
-			// 			std::cout <<"\n\n---------------------------------\n\n"<< "after calibration "<<std::endl;
 			trafo_.setName("linear");
 			trafo_.setParam("slope",slope);
 			trafo_.setParam("intercept",intercept);
+
+#ifdef DEBUG_CALIBRATION
+			// 			std::cout <<"\n\n---------------------------------\n\n"<< "after calibration "<<std::endl;
 			for(Size i = 0; i < observed_masses.size();++i)
 				{
 					DoubleReal new_mass = observed_masses[i];
 					trafo_.apply(new_mass);
-#ifdef DEBUG_CALIBRATION
+
 					DoubleReal rel_error = (theoretical_masses[i]-(new_mass))/theoretical_masses[i] * 1e6;
 					std::cout << observed_masses[i]<<"\t"<<rel_error<<std::endl;
-#endif					
 				}
-			
+#endif								
 			
 #ifdef DEBUG_CALIBRATION
   	  printf ("# best fit: Y = %g + %g X\n", intercept, slope);
@@ -167,8 +167,8 @@ namespace OpenMS
     // map the reference ids onto the features
     IDMapper mapper;
     Param param;
-    param.setValue("rt_delta",(DoubleReal)param_.getValue("rt_tolerance"));
-    param.setValue("mz_delta",param_.getValue("mz_tolerance"));
+    param.setValue("rt_tolerance",(DoubleReal)param_.getValue("rt_tolerance"));
+    param.setValue("mz_tolerance",param_.getValue("mz_tolerance"));
     param.setValue("mz_measure",param_.getValue("mz_tolerance_unit"));
     mapper.setParameters(param);
     std::vector<ProteinIdentification> vec;
@@ -209,16 +209,15 @@ namespace OpenMS
 				for(Size s = 0; s < calibrated_feature_map[f].getConvexHulls().size();++s)
 					{
 						// convex hulls
-						std::vector<DPosition<2> > point_vec = calibrated_feature_map[f].getConvexHulls()[s].getPoints();
+						std::vector<DPosition<2> > point_vec = calibrated_feature_map[f].getConvexHulls()[s].getHullPoints();
 						calibrated_feature_map[f].getConvexHulls()[s].clear();
 						for(Size p = 0; p < point_vec.size(); ++p)
-							{
-								DoubleReal mz = point_vec[p][1];
-								trafo_.apply(mz);
-								point_vec[p][1] = mz;
-								calibrated_feature_map[f].getConvexHulls()[s].addPoint(point_vec[p]);
-							}
-						
+						{
+							DoubleReal mz = point_vec[p][1];
+							trafo_.apply(mz);
+							point_vec[p][1] = mz;
+						}
+						calibrated_feature_map[f].getConvexHulls()[s].setHullPoints(point_vec);						
 					}
 			}
   }

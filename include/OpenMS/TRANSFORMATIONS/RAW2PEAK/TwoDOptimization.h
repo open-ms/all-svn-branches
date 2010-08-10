@@ -80,17 +80,7 @@ namespace OpenMS
 		: public DefaultParamHandler
 	{
 	public:
-
-		///Comparator for the retention time.
-		struct IndexLess
-			: public std::binary_function <IsotopeCluster::IndexPair,IsotopeCluster::IndexPair, bool>
-		{
-			inline bool operator () (const IsotopeCluster::IndexPair& a, const IsotopeCluster::IndexPair& b) const
-			{
-				return (a.first < b.first);
-			}
-		};
-      
+   
 		/// Constructor
 		TwoDOptimization();
 
@@ -350,6 +340,8 @@ namespace OpenMS
 		for (UInt curr_scan =0; ms_exp_it+curr_scan != ms_exp_it_end;++curr_scan)
 			{
 				Size nr_peaks_in_scan = (ms_exp_it +curr_scan)->size();
+				if (nr_peaks_in_scan == 0) continue;
+
 				//last_rt = current_rt;
 				current_rt = (ms_exp_it+curr_scan)->getRT();
 				typename MSExperiment<OutputPeakType>::SpectrumType::Iterator peak_it  = (ms_exp_it+curr_scan)->begin();
@@ -374,7 +366,7 @@ namespace OpenMS
 					{
 	      
 	  
-						for(UInt curr_peak=0; peak_it+curr_peak < peak_it_last-1;++curr_peak)
+						for(UInt curr_peak=0; curr_peak < (ms_exp_it+curr_scan)->size()-1;++curr_peak)
 							{
 		  
 								// store the m/z of the current peak
@@ -389,6 +381,7 @@ namespace OpenMS
 #endif      
 										if (iso_last_scan.size() > 0)  // Did we find any isotopic cluster in the last scan?
 											{
+												std::sort(iso_last_scan.begin(), iso_last_scan.end());
 												// there were some isotopic clustures in the last scan...
 												std::vector<DoubleReal>::iterator it =
 													searchInScan_(iso_last_scan.begin(),iso_last_scan.end(),curr_mz);
@@ -491,6 +484,7 @@ namespace OpenMS
 									{
 										if (iso_last_scan.size() > 0)  // Did we find any isotopic cluster in the last scan?
 											{
+												std::sort(iso_last_scan.begin(), iso_last_scan.end());
 												// there were some isotopic clusters in the last scan...
 												std::vector<DoubleReal>::iterator it =
 													searchInScan_(iso_last_scan.begin(),iso_last_scan.end(),curr_mz);
@@ -802,7 +796,7 @@ namespace OpenMS
     d.picked_peaks = ms_exp;
     d.raw_data_first =  first;
 
-		std::cout << "richtig hier" << std::endl;
+		//std::cout << "richtig hier" << std::endl;
     struct OpenMS::OptimizationFunctions::PenaltyFactors penalties;
 
 
@@ -911,14 +905,14 @@ namespace OpenMS
 
 						IsotopeCluster::IndexSet::const_iterator set_iter = lower_bound(d.iso_map_iter->second.peaks.begin(),
 																																						d.iso_map_iter->second.peaks.end(),
-																																						pair,IndexLess());
+																																						pair,PairComparatorFirstElement<IsotopeCluster::IndexPair>());
 
 
 						// find the last entry with this rt-value
 						++pair.first;
 						IsotopeCluster::IndexSet::const_iterator set_iter2 = lower_bound(d.iso_map_iter->second.peaks.begin(),
 																																						 d.iso_map_iter->second.peaks.end(),
-																																						 pair,IndexLess());
+																																						 pair,PairComparatorFirstElement<IsotopeCluster::IndexPair>());
 
 						while(set_iter != set_iter2)
 							{
@@ -964,7 +958,7 @@ namespace OpenMS
 
 						set_iter = lower_bound(d.iso_map_iter->second.peaks.begin(),
 																	 d.iso_map_iter->second.peaks.end(),
-																	 pair,IndexLess());
+																	 pair,PairComparatorFirstElement<IsotopeCluster::IndexPair>());
 						Size p=0;
 						while(p < peak_shapes.size())
 							{
@@ -1035,17 +1029,17 @@ namespace OpenMS
 				pair.first =  iso_map_iter->second.peaks.begin()->first + i;
 				IsotopeCluster::IndexSet::const_iterator set_iter = lower_bound(iso_map_iter->second.peaks.begin(),
 																												iso_map_iter->second.peaks.end(),
-																												pair,IndexLess());
+																												pair,PairComparatorFirstElement<IsotopeCluster::IndexPair>());
 				
 				// consider a bit more of the signal to the left
 				first_peak_mz = (exp_it->begin() + set_iter->second)->getMZ() - 1;
 				
 				// find the last entry with this rt-value
-				++pair.first;
+				if(pair.first < iso_map_iter->second.peaks.size()-1) ++pair.first;
 				IsotopeCluster::IndexSet::const_iterator set_iter2 = lower_bound(iso_map_iter->second.peaks.begin(),
-																												 iso_map_iter->second.peaks.end(),
-																												 pair,IndexLess());
-				--set_iter2;
+                                                                         iso_map_iter->second.peaks.end(),
+                                                                         pair,PairComparatorFirstElement<IsotopeCluster::IndexPair>());
+				if(set_iter2 != iso_map_iter->second.peaks.begin()) --set_iter2;
 				last_peak_mz = (exp_it->begin() + set_iter2->second)->getMZ() + 1;
 				
 				//std::cout << rt<<": first peak mz "<<first_peak_mz << "\tlast peak mz "<<last_peak_mz <<std::endl;

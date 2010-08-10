@@ -79,34 +79,34 @@ namespace OpenMS
 	{
 	}
 
-	ConsensusFeature::ConsensusFeature(UInt64 map_index,	UInt64 element_index, const Peak2D& element)
+	ConsensusFeature::ConsensusFeature(UInt64 map_index, const Peak2D& element, UInt64 element_index)
 		: RichPeak2D(element),
 			HandleSetType(),
 			quality_(0.0),
 			charge_(0),
 			peptide_identifications_()
 	{
-		insert(map_index,element_index,element);
+		insert(map_index,element,element_index);
 	}
 
-	ConsensusFeature::ConsensusFeature(UInt64 map_index,	UInt64 element_index, const Feature& element)
+	ConsensusFeature::ConsensusFeature(UInt64 map_index, const Feature& element)
 		: RichPeak2D(element),
 			HandleSetType(),
 			quality_(element.getOverallQuality()),
 			charge_(element.getCharge()),
 			peptide_identifications_()
 	{
-		insert(map_index,element_index,element);
+		insert(map_index,element);
 	}
 
-	ConsensusFeature::ConsensusFeature(UInt64 map_index,	UInt64 element_index, const ConsensusFeature& element)
+	ConsensusFeature::ConsensusFeature(UInt64 map_index, const ConsensusFeature& element)
 		: RichPeak2D(element),
 			HandleSetType(),
 			quality_(element.getQuality()),
 			charge_(element.getCharge()),
 			peptide_identifications_()
 	{
-		insert(map_index,element_index,element);
+		insert(map_index,element);
 	}
 
 	ConsensusFeature& ConsensusFeature::operator=(const ConsensusFeature& rhs)
@@ -126,22 +126,15 @@ namespace OpenMS
 	{
 	}
 		
-
-	/**
-	@brief Adds an feature handle into the consensus feature
-
-	@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
-	*/
 	void ConsensusFeature::insert(const FeatureHandle& handle)
 	{
 		if (!(HandleSetType::insert(handle).second))
 		{
-			String key = String("map") + handle.getMapIndex() + "/feature" + handle.getElementIndex();
+			String key = String("map") + handle.getMapIndex() + "/feature" + handle.getUniqueId();
 			throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__,"The set already contained an element with this key.",key) ;
 		}
 	}
 
-	/// Adds all feature handles in @p handle_set to this consensus feature.
 	void ConsensusFeature::insert(const HandleSetType& handle_set)
 	{
 		for (ConsensusFeature::HandleSetType::const_iterator it = handle_set.begin(); it != handle_set.end(); ++it)
@@ -150,65 +143,48 @@ namespace OpenMS
 		}
 	}
 
-	/**
-		@brief Creates a FeatureHandle and adds it
-
-		@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
-	*/
-	void ConsensusFeature::insert(UInt64 map_index, UInt64 element_index, const Peak2D& element)
+	void ConsensusFeature::insert(UInt64 map_index, const Peak2D& element, UInt64 element_index)
 	{
-		insert(FeatureHandle(map_index,element_index,element));
+		insert(FeatureHandle(map_index,element,element_index));
 	}
 
-	/**
-		@brief Creates a FeatureHandle and adds it
-
-		@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
-	*/
-	void ConsensusFeature::insert(UInt64 map_index, UInt64 element_index, const Feature& element)
+	void ConsensusFeature::insert(UInt64 map_index, const Feature& element)
 	{
-		insert(FeatureHandle(map_index,element_index,element));
+		insert(FeatureHandle(map_index,element));
 		peptide_identifications_.insert(peptide_identifications_.end(), element.getPeptideIdentifications().begin(), element.getPeptideIdentifications().end());
 	}
 
-	/**
-		@brief Creates a FeatureHandle and adds it
-
-		@exception Exception::InvalidValue is thrown if a handle with the same map and element index already exists.
-	*/
-	void ConsensusFeature::insert(UInt64 map_index, UInt64 element_index, const ConsensusFeature& element)
+	void ConsensusFeature::insert(UInt64 map_index, const ConsensusFeature& element)
 	{
-		insert(FeatureHandle(map_index,element_index,element));
+		insert(FeatureHandle(map_index,element));
 		peptide_identifications_.insert(peptide_identifications_.end(), element.getPeptideIdentifications().begin(), element.getPeptideIdentifications().end());
 	}
 
-	/// Non-mutable access to the contained feature handles
 	const ConsensusFeature::HandleSetType& ConsensusFeature::getFeatures() const
 	{
 		return *this;
 	}
 
-	/// Returns the quality
 	ConsensusFeature::QualityType ConsensusFeature::getQuality() const
 	{
 		return quality_;
 	}
-	/// Sets the quality
+
 	void ConsensusFeature::setQuality(ConsensusFeature::QualityType quality)
 	{
 		quality_ = quality;
 	}
-	/// Sets the charge
+	
 	void ConsensusFeature::setCharge(Int charge)
 	{
 		charge_ = charge;
 	}
-	/// Returns the charge
+	
 	Int ConsensusFeature::getCharge() const
 	{
 		return charge_;
 	}
-	/// Returns the position range of the contained elements
+	
 	DRange<2> ConsensusFeature::getPositionRange() const
 	{
 		DPosition<2> min = DPosition<2>::maxPositive();
@@ -222,7 +198,7 @@ namespace OpenMS
 		}
 		return DRange<2>(min,max);
 	}
-	/// Returns the intensity range of the contained elements
+	
 	DRange<1> ConsensusFeature::getIntensityRange() const
 	{
 		DPosition<1> min = DPosition<1>::maxPositive();
@@ -275,6 +251,48 @@ namespace OpenMS
     setCharge(charge_most_frequent);
     return;
   }
+
+	void ConsensusFeature::computeMonoisotopicConsensus()
+	{
+		// for computing average rt position, minimal m/z position and intensity
+		DoubleReal rt=0.0;
+		DoubleReal mz=std::numeric_limits<DoubleReal>::max();
+		DoubleReal intensity=0.0;
+
+		// The most frequent charge state wins.  Tie breaking prefers smaller charge.
+		std::map<Int,UInt> charge_occ;
+		Int charge_most_frequent = 0;
+		UInt charge_most_frequent_occ = 0;
+
+		for (ConsensusFeature::HandleSetType::const_iterator it = begin(); it != end(); ++it)
+		{
+			rt += it->getRT();
+			if (it->getMZ() < mz)
+				mz=it->getMZ();
+			intensity += it->getIntensity();
+			const Int it_charge = it->getCharge();
+			const UInt it_charge_occ = ++charge_occ[it_charge];
+			if ( it_charge_occ > charge_most_frequent_occ )
+			{
+				charge_most_frequent_occ = it_charge_occ;
+				charge_most_frequent = it_charge;
+			}
+			else
+			{
+				if ( it_charge_occ >= charge_most_frequent_occ && abs(it_charge) < abs(charge_most_frequent) )
+				{
+					charge_most_frequent = it_charge;
+				}
+			}
+		}
+
+		// compute the position and intensity
+		setRT(rt / size());
+		setMZ(mz);
+		setIntensity(intensity / size());
+		setCharge(charge_most_frequent);
+		return;
+	}
   
   void ConsensusFeature::computeDechargeConsensus(const FeatureMap<>& fm, bool intensity_weighted_averaging)
   {
@@ -292,8 +310,8 @@ namespace OpenMS
     }
 
 		// unweighted averaging by default
-		/// @todo: add outlier removal
-		/// @todo: split cluster for each channel (in FD.C)
+		// TODO: add outlier removal
+		// TODO: split cluster for each channel (in FD.C)
 		DoubleReal weighting_factor = 1.0/size();
 		
 		// RT and Mass
@@ -302,7 +320,7 @@ namespace OpenMS
 			Int q = it->getCharge();
 			if (q==0) std::cerr << "ConsensusFeature::computeDechargeConsensus() WARNING: Feature's charge is 0! This will lead to M=0!\n";
     	DoubleReal adduct_mass;
-    	Size index=fm.uniqueIdToIndex(it->getElementIndex());
+    	Size index=fm.uniqueIdToIndex(it->getUniqueId());
     	if (index > fm.size()) throw Exception::IndexOverflow(__FILE__,__LINE__,__PRETTY_FUNCTION__, index, fm.size());
     	if (fm[index].metaValueExists("dc_charge_adduct_mass"))
     	{
@@ -326,19 +344,16 @@ namespace OpenMS
     return;
   }  
 
-	/// returns a const reference to the PeptideIdentification vector
 	const std::vector<PeptideIdentification>& ConsensusFeature::getPeptideIdentifications() const
 	{
 		return peptide_identifications_;
 	}
 
-	/// returns a mutable reference to the PeptideIdentification vector
 	std::vector<PeptideIdentification>& ConsensusFeature::getPeptideIdentifications()
 	{
 		return peptide_identifications_;
 	}
 
-	/// sets the PeptideIdentification vector
 	void ConsensusFeature::setPeptideIdentifications( const std::vector<PeptideIdentification>& peptide_identifications )
 	{
 		peptide_identifications_ = peptide_identifications;
@@ -355,7 +370,7 @@ namespace OpenMS
     for (ConsensusFeature::HandleSetType::const_iterator it = cons.begin(); it != cons.end(); ++it)
     {
       os << " - Map index: " << it->getMapIndex() << std::endl
-         << "   Feature index: " << it->getElementIndex() << std::endl
+         << "   Feature id: " << it->getUniqueId() << std::endl
       	 << "   RT: " << precisionWrapper(it->getRT()) << std::endl
       	 << "   m/z: " << precisionWrapper(it->getMZ())  << std::endl
       	 << "   Intensity: " << precisionWrapper(it->getIntensity()) << std::endl;

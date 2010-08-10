@@ -330,7 +330,7 @@ namespace OpenMS
       {
         registerInputFile_("in", "<file>", "", "Input file ");
         setValidFormats_("in", StringList::create(
-          "featureXML,consensusXML,idXML"));
+          "featureXML,consensusXML,idXML,mzML"));
         registerOutputFile_("out", "<file>", "",
           "Output file (mandatory for featureXML and idXML)", false);
         registerStringOption_("separator", "<sep>", "", "The used separator character(s); if not set the 'tab' character is used", false);
@@ -341,7 +341,7 @@ namespace OpenMS
         addEmptyLine_();
 
 				addText_("Options for featureXML files:");
-				registerFlag_("minimal", "Set this flag to write only what can be read again by TextImporter: RT, m/z, and intensity");
+				registerFlag_("minimal", "Set this flag to write only three attributes: RT, m/z, and intensity.");
 				addEmptyLine_();
 
         addText_("Options for idXML files:");
@@ -431,9 +431,8 @@ namespace OpenMS
 					output << endl;
 					if (!no_ids)
 					{
-						output << "#PEPTIDE" << "rt" << "mz" << "score" << "rank"
-									 << "sequence" << "charge" << "aa_before" << "aa_after"
-									 << "score_type" << "search_identifier" << endl;
+						write_peptide_header(output);
+						write_peptide_header(output, "UNASSIGNEDPEPTIDE");
           }
 					output.modifyStrings(true);
 
@@ -464,28 +463,22 @@ namespace OpenMS
 										 citer->getPeptideIdentifications().begin(); pit !=
 										 citer->getPeptideIdentifications().end(); ++pit)
               {
-                for (vector<PeptideHit>::const_iterator ppit = pit->
-											 getHits().begin(); ppit != pit->getHits().end(); ++ppit)
-                {
-                  output << "PEPTIDE";
-                  if (pit->metaValueExists("RT"))
-									{
-										output << (DoubleReal) pit->getMetaValue("RT");
-                  }
-                  else output << "-1";
-                  if (pit->metaValueExists("MZ"))
-                  {
-                    output << (DoubleReal) pit->getMetaValue("MZ");
-                  }
-                  else output << "-1";
-                  output << ppit->getScore() << ppit->getRank()
-												 << ppit->getSequence() << ppit->getCharge()
-												 << ppit->getAABefore() << ppit->getAAAfter()
-												 << pit->getScoreType() << pit->getIdentifier() << endl;
-								}
+								write_peptide_id(output, *pit);
 							}
 						}
 					}
+
+					if (!no_ids) // unassigned peptide IDs
+					{
+						for (vector<PeptideIdentification>::const_iterator pit =
+									 feature_map.getUnassignedPeptideIdentifications().begin(); 
+								 pit != feature_map.getUnassignedPeptideIdentifications().end();
+								 ++pit)
+						{
+							write_peptide_id(output, *pit, "UNASSIGNEDPEPTIDE");
+						}
+					}
+
 					outstr.close();
 				}
 				
@@ -626,7 +619,8 @@ namespace OpenMS
 						map<String, Size> prot_runs;
 						Size max_prot_run = 0;
 						StringList comments;
-						if (!no_ids) {
+						if (!no_ids) 
+            {
 							String pep_line = "Protein identification runs associated with peptide/protein columns below: ";
 							for (vector<ProteinIdentification>::const_iterator prot_it =
 										 consensus_map.getProteinIdentifications().begin();
@@ -647,7 +641,7 @@ namespace OpenMS
 								}
 								else prot_runs[run_id] = max_prot_run;
 							}
-							--max_prot_run; // increased beyond max. at end of for-loop
+							if (max_prot_run>0) --max_prot_run; // increased beyond max. at end of for-loop
 							comments << pep_line;
 						}
 
@@ -955,6 +949,28 @@ namespace OpenMS
 					
           txt_out.close();
         }
+				else if (in_type == FileTypes::MZML)
+				{
+					PeakMap exp;
+					FileHandler().loadExperiment(in, exp);
+					
+					ofstream outstr(out.c_str());
+					SVOutStream output(outstr, sep, replacement, quoting_method);
+					output.modifyStrings(false);
+					for (vector<MSChromatogram<> >::const_iterator it = exp.getChromatograms().begin(); it != exp.getChromatograms().end(); ++it)
+					{
+						if (it->getChromatogramType() == ChromatogramSettings::SELECTED_REACTION_MONITORING_CHROMATOGRAM)
+						{
+							output << "MRM Q1=" << it->getPrecursor().getMZ() << " Q3=" << it->getProduct().getMZ() << endl;
+							for (MSChromatogram<>::ConstIterator cit = it->begin(); cit != it->end(); ++cit)
+							{
+								output << cit->getRT() << " " << cit->getIntensity() << endl;
+							}
+							output << endl;
+						}
+					}
+					outstr.close();
+				}
 				
         return EXECUTION_OK;
       }

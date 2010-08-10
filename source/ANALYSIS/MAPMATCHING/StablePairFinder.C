@@ -38,6 +38,8 @@
 #endif
 #define VV_(bla) V_(""#bla": " << bla);
 
+using namespace std;
+
 namespace OpenMS
 {
 
@@ -49,29 +51,30 @@ namespace OpenMS
 
     defaults_.setValue("diff_exponent:RT", 1.0,
       "RT differences are raised to this power", StringList::create("advanced"));
-    defaults_.setMinFloat("diff_exponent:RT",0.);
+    defaults_.setMinFloat("diff_exponent:RT",0.1);
 
     defaults_.setValue("diff_exponent:MZ", 2.0,
       "MZ differences are raised to this power", StringList::create("advanced"));
-    defaults_.setMinFloat("diff_exponent:MZ",0.);
+    defaults_.setMinFloat("diff_exponent:MZ",0.1);
 
     defaults_.setSectionDescription("diff_exponent",
       "Absolute position differences are raised to this power. "
         "E.g. 1 for 'linear' distance, 2 for 'quadratic' distance");
 
-    defaults_.setValue("intensity_exponent", 0.5,
+    defaults_.setValue("intensity_exponent", 0.0,
       "Intensity ratios are raised to this power.  "
         "If set to 0, intensities are not considered.", StringList::create(
         "advanced"));
     defaults_.setMinFloat("intensity_exponent",0.);
 
     defaults_.setValue("max_pair_distance:RT", 100.0,
-      "Maximal allowed distance in RT for a pair, when MZ is equal");
+      "Maximal allowed distance in RT for a pair");
     defaults_.setMinFloat("max_pair_distance:RT",0.);
 
-    defaults_.setValue("max_pair_distance:MZ", 0.3,
-      "Maximal allowed distance in MZ for a pair, when RT is equal");
+    defaults_.setValue("max_pair_distance:MZ", 0.3, "Maximal allowed distance in MZ for a pair [Unit defined by 'mz_unit']");
     defaults_.setMinFloat("max_pair_distance:MZ",0.);
+    defaults_.setValue("max_pair_distance:MZ_unit", "Da", "Unit of 'MZ' parameter");
+    defaults_.setValidStrings("max_pair_distance:MZ_unit",StringList::create("Da,ppm"));
 
     defaults_.setSectionDescription("max_pair_distance",
       "Maximal allowed distance for a pair. "
@@ -91,6 +94,10 @@ namespace OpenMS
       "If set to 1, charge has no influence.");
     defaults_.setMinFloat("different_charge_penalty",1.);
 
+		defaults_.setValue("use_identifications", "false", "Never link features that are annotated with different peptides (only the best hit per peptide identification is taken into account).");
+		defaults_.setValidStrings("use_identifications", 
+															StringList::create("true,false"));
+
     Base::defaultsToParam_();
   }
 
@@ -100,67 +107,15 @@ namespace OpenMS
     V_("@@@ StablePairFinder::updateMembers_()");
 
     diff_exponent_[RT] = (DoubleReal) param_.getValue("diff_exponent:RT");
-    if ( diff_exponent_[RT] <= 0 )
-    {
-      throw Exception::InvalidParameter(__FILE__,__LINE__, __PRETTY_FUNCTION__,
-        "exponent for RT distance must be > 0");
-    }
-    VV_(diff_exponent_[RT]);
-
     diff_exponent_[MZ] = (DoubleReal) param_.getValue("diff_exponent:MZ");
-    if ( diff_exponent_[MZ] <= 0 )
-    {
-      throw Exception::InvalidParameter(__FILE__,__LINE__, __PRETTY_FUNCTION__,
-        "exponent for MZ distance must be > 0");
-    }
-    VV_(diff_exponent_[MZ]);
-
     intensity_exponent_ = (DoubleReal) param_.getValue("intensity_exponent");
-    if ( intensity_exponent_ < 0 )
-    {
-      throw Exception::InvalidParameter(__FILE__,__LINE__, __PRETTY_FUNCTION__,
-        "exponent for intensity ratio must be >= 0");
-    }
-    VV_(intensity_exponent_);
-
-    max_pair_distance_[MZ] = (DoubleReal) param_.getValue(
-      "max_pair_distance:MZ");
-    if ( max_pair_distance_[MZ] < 0 )
-    {
-      throw Exception::InvalidParameter(__FILE__,__LINE__, __PRETTY_FUNCTION__,
-        "max pair distance for MZ must be >= 0");
-    }
-    VV_(max_pair_distance_[MZ]);
+    max_pair_distance_[MZ] = (DoubleReal) param_.getValue("max_pair_distance:MZ");
     max_pair_distance_reciprocal_[MZ] = 1. / max_pair_distance_[MZ];
-    VV_(max_pair_distance_reciprocal_[MZ]);
-
-    max_pair_distance_[RT] = (DoubleReal) param_.getValue(
-      "max_pair_distance:RT");
-    if ( max_pair_distance_[RT] < 0 )
-    {
-      throw Exception::InvalidParameter(__FILE__,__LINE__, __PRETTY_FUNCTION__,
-        "max pair distance for RT must be >= 0");
-    }
-    VV_(max_pair_distance_[RT]);
+    max_pair_distance_mz_as_Da_ = ((String) param_.getValue("max_pair_distance:MZ_unit")) == "Da";
+    max_pair_distance_[RT] = (DoubleReal) param_.getValue("max_pair_distance:RT");
     max_pair_distance_reciprocal_[RT] = 1. / max_pair_distance_[RT];
-    VV_(max_pair_distance_reciprocal_[RT]);
-
     different_charge_penalty_ = (DoubleReal) param_.getValue("different_charge_penalty");
-    if ( different_charge_penalty_ < 1. )
-    {
-      throw Exception::InvalidParameter(__FILE__,__LINE__, __PRETTY_FUNCTION__,
-        "different_charge_penalty must be >= 1");
-    }
-    VV_(different_charge_penalty_);
-
     second_nearest_gap_ = (DoubleReal) param_.getValue("second_nearest_gap");
-    if ( second_nearest_gap_ <= 1 )
-    {
-      throw Exception::InvalidParameter(__FILE__,__LINE__, __PRETTY_FUNCTION__,
-        "second_nearest_gap must be >= 1");
-    }
-    VV_(second_nearest_gap_);
-
     return;
   }
 
@@ -168,26 +123,44 @@ namespace OpenMS
   StablePairFinder::distance_( ConsensusFeature const & left,
                                ConsensusFeature const & right ) const
   {
+    // distance from position
     DPosition<2> position_difference = left.getPosition() - right.getPosition();
-    for ( UInt dimension = 0; dimension < 2; ++dimension )
+    // .. in RT
+    if ( position_difference[RT] < 0 )
     {
-      if ( position_difference[dimension] < 0 )
-      {
-        position_difference[dimension] = -position_difference[dimension];
-      }
-      position_difference[dimension]
-          *= max_pair_distance_reciprocal_[dimension];
-      position_difference[dimension] = pow(position_difference[dimension],
-        diff_exponent_[dimension]);
+      position_difference[RT] = -position_difference[RT];
     }
+    position_difference[RT] *= max_pair_distance_reciprocal_[RT];
+    position_difference[RT] = pow(position_difference[RT],diff_exponent_[RT]);
+
+    // .. in MZ
+    if ( position_difference[MZ] < 0 )
+    {
+      position_difference[MZ] = -position_difference[MZ];
+    }
+    if (max_pair_distance_mz_as_Da_)
+    {
+      // do nothing.. we already have distance in Da
+    }
+    else //PPM
+    {
+      // distance in PPM (with 'left' as reference point)
+      position_difference[MZ] /= left.getMZ();
+      position_difference[MZ] *= 1e6;
+    }
+    position_difference[MZ] *= max_pair_distance_reciprocal_[MZ];
+    position_difference[MZ] = pow(position_difference[MZ],diff_exponent_[MZ]);
+
     DoubleReal result = position_difference[RT] + position_difference[MZ];
+    
+    // distance from intensity
     if ( intensity_exponent_ != 0 )
     {
       DoubleReal right_intensity(right.getIntensity());
       DoubleReal left_intensity(left.getIntensity());
       if ( right_intensity == 0 || left_intensity == 0 )
       {
-        return std::numeric_limits<DoubleReal>::max();
+        return numeric_limits<DoubleReal>::max();
       }
       DoubleReal intensity_ratio;
       if ( left_intensity < right_intensity )
@@ -201,10 +174,13 @@ namespace OpenMS
       intensity_ratio = pow(intensity_ratio, intensity_exponent_);
       result *= intensity_ratio;
     }
+
+    // distance from charge
     if ( left.getCharge() != right.getCharge() )
     {
       result *= different_charge_penalty_;
     }
+
     return result;
   }
 
@@ -226,15 +202,16 @@ namespace OpenMS
     is_singleton[0].resize(input_maps[0].size(),true);
     is_singleton[1].resize(input_maps[1].size(),true);
 
+		bool use_IDs = String(param_.getValue("use_identifications")) == "true";
+
     // For each element in map 0, find its best friend in map 1
-    std::vector<UInt> best_companion_index_0(input_maps[0].size(), UInt(-1));
-    std::vector<DoubleReal> best_companion_distance_0(input_maps[0].size(), 0);
-    std::vector<DoubleReal> second_best_companion_distance_0(
-      input_maps[0].size(), 0);
+    vector<UInt> best_companion_index_0(input_maps[0].size(), UInt(-1));
+    vector<DoubleReal> best_companion_distance_0(input_maps[0].size());
+    vector<DoubleReal> second_best_companion_distance_0(input_maps[0].size());
     for ( UInt fi0 = 0; fi0 < input_maps[0].size(); ++fi0 )
     {
-      DoubleReal best_distance = std::numeric_limits<DoubleReal>::max();
-      DoubleReal second_best_distance = std::numeric_limits<DoubleReal>::max();
+      DoubleReal best_distance = numeric_limits<DoubleReal>::max();
+      DoubleReal second_best_distance = numeric_limits<DoubleReal>::max();
       for ( UInt fi1 = 0; fi1 < input_maps[1].size(); ++fi1 )
       {
         DoubleReal distance = distance_(input_maps[0][fi0], input_maps[1][fi1]);
@@ -250,14 +227,13 @@ namespace OpenMS
     }
 
     // For each element in map 1, find its best friend in map 0
-    std::vector<UInt> best_companion_index_1(input_maps[1].size(), UInt(-1));
-    std::vector<DoubleReal> best_companion_distance_1(input_maps[1].size(), 0);
-    std::vector<DoubleReal> second_best_companion_distance_1(
-      input_maps[1].size(), 0);
+    vector<UInt> best_companion_index_1(input_maps[1].size(), UInt(-1));
+    vector<DoubleReal> best_companion_distance_1(input_maps[1].size());
+    vector<DoubleReal> second_best_companion_distance_1(input_maps[1].size());
     for ( UInt fi1 = 0; fi1 < input_maps[1].size(); ++fi1 )
     {
-      DoubleReal best_distance = std::numeric_limits<DoubleReal>::max();
-      DoubleReal second_best_distance = std::numeric_limits<DoubleReal>::max();
+      DoubleReal best_distance = numeric_limits<DoubleReal>::max();
+      DoubleReal second_best_distance = numeric_limits<DoubleReal>::max();
       for ( UInt fi0 = 0; fi0 < input_maps[0].size(); ++fi0 )
       {
         DoubleReal distance = distance_(input_maps[0][fi0], input_maps[1][fi1]);
@@ -276,46 +252,46 @@ namespace OpenMS
     // element_pairs_->clear();
     for ( UInt fi0 = 0; fi0 < input_maps[0].size(); ++fi0 )
     {
-      // fi0 likes someone ...
-      if ( best_companion_distance_0[fi0] < 1. && best_companion_distance_0[fi0]
-          * second_nearest_gap_ <= second_best_companion_distance_0[fi0] )
-      {
-        // ... who likes him too ...
+		// calculate separation between feature fi0 in map 0 and its best friend in map 1
+		DPosition<2> position_difference = input_maps[0][fi0].getPosition() - input_maps[1][best_companion_index_0[fi0]].getPosition();
+		if ( position_difference[RT] < 0 )
+		{
+			position_difference[RT] = -position_difference[RT];
+		}
+		if ( position_difference[MZ] < 0 )
+		{
+			position_difference[MZ] = -position_difference[MZ];
+		}
+		// The two features in map 0 and map 1 (fi0 and its best friend) should not be further apart then the user specified max_pair_distance.
+		if ((position_difference[RT] < max_pair_distance_[RT]) && (position_difference[MZ] < max_pair_distance_[MZ]) &&
+			(best_companion_distance_0[fi0] * second_nearest_gap_ <= second_best_companion_distance_0[fi0]))
+		{
+		// fi0 likes someone ...
         UInt best_companion_of_fi0 = best_companion_index_0[fi0];
-        if ( best_companion_index_1[best_companion_of_fi0] == fi0
-            && best_companion_distance_1[best_companion_of_fi0]
-                * second_nearest_gap_
-                <= second_best_companion_distance_1[best_companion_of_fi0] )
-        {
-          result_map.push_back(ConsensusFeature());
-          ConsensusFeature & f = result_map.back();
+		if ((best_companion_index_1[best_companion_of_fi0] == fi0) && 
+            (best_companion_distance_1[best_companion_of_fi0] * second_nearest_gap_ <= second_best_companion_distance_1[best_companion_of_fi0]) &&
+			// check if peptide IDs match:
+			(!use_IDs || compatibleIDs_(input_maps[0][fi0], input_maps[1][best_companion_of_fi0])))
+		{
+			// ... who likes him too ...
+			result_map.push_back(ConsensusFeature());
+			ConsensusFeature & f = result_map.back();
 
-          f.insert(input_maps[0][fi0]);
-          f.getPeptideIdentifications().
-            insert( f.getPeptideIdentifications().end(),
-              input_maps[0][fi0].getPeptideIdentifications().begin(),
-              input_maps[0][fi0].getPeptideIdentifications().end()
-            );
+			f.insert(input_maps[0][fi0]);
+			f.getPeptideIdentifications().insert(f.getPeptideIdentifications().end(),input_maps[0][fi0].getPeptideIdentifications().begin(),input_maps[0][fi0].getPeptideIdentifications().end());
 
-          f.insert(input_maps[1][best_companion_of_fi0]);
-          f.getPeptideIdentifications().
-            insert( f.getPeptideIdentifications().end(),
-              input_maps[1][best_companion_of_fi0].getPeptideIdentifications().begin(),
-              input_maps[1][best_companion_of_fi0].getPeptideIdentifications().end()
-            );
+			f.insert(input_maps[1][best_companion_of_fi0]);
+			f.getPeptideIdentifications().
+            insert( f.getPeptideIdentifications().end(),input_maps[1][best_companion_of_fi0].getPeptideIdentifications().begin(),input_maps[1][best_companion_of_fi0].getPeptideIdentifications().end());
 
-          f.computeConsensus();
-          DoubleReal quality = 1. - best_companion_distance_0[fi0];
-          DoubleReal quality0 = 1. - best_companion_distance_0[fi0]
-              * second_nearest_gap_ / second_best_companion_distance_0[fi0];
-          DoubleReal quality1 = 1.
-              - best_companion_distance_1[best_companion_of_fi0]
-                  * second_nearest_gap_
-                  / second_best_companion_distance_1[best_companion_of_fi0];
-          f.setQuality(quality*quality0*quality1); // TODO other formula?
+			f.computeConsensus();
+			DoubleReal quality = 1. - best_companion_distance_0[fi0];
+			DoubleReal quality0 = 1. - best_companion_distance_0[fi0] * second_nearest_gap_ / second_best_companion_distance_0[fi0];
+			DoubleReal quality1 = 1. - best_companion_distance_1[best_companion_of_fi0] * second_nearest_gap_ / second_best_companion_distance_1[best_companion_of_fi0];
+			f.setQuality(quality*quality0*quality1); // TODO other formula?
 
-          is_singleton[0][fi0] = false;
-          is_singleton[1][best_companion_of_fi0] = false;
+			is_singleton[0][fi0] = false;
+			is_singleton[1][best_companion_of_fi0] = false;
         }
       }
     }
@@ -340,5 +316,27 @@ namespace OpenMS
 
     return;
   }
+
+	
+	bool StablePairFinder::compatibleIDs_(const ConsensusFeature& feat1, const ConsensusFeature& feat2) const
+	{
+		vector<PeptideIdentification> pep1 = feat1.getPeptideIdentifications(),pep2 = feat2.getPeptideIdentifications();
+		// a feature without identifications always matches:
+		if (pep1.empty() || pep2.empty()) return true;
+		set<AASequence> best1, best2;
+		for (vector<PeptideIdentification>::iterator pep_it = pep1.begin(); pep_it != pep1.end(); ++pep_it)
+		{
+			if (pep_it->getHits().empty()) continue; // shouldn't be the case
+			pep_it->sort();
+			best1.insert(pep_it->getHits()[0].getSequence());
+		}
+		for (vector<PeptideIdentification>::iterator pep_it = pep2.begin(); pep_it != pep2.end(); ++pep_it)
+		{
+			if (pep_it->getHits().empty()) continue; // shouldn't be the case
+			pep_it->sort();
+			best2.insert(pep_it->getHits()[0].getSequence());
+		}
+		return (best1 == best2);
+	}
 
 }

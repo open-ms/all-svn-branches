@@ -106,7 +106,7 @@ namespace OpenMS
   {
     defaults_.setValue("charge_min", 1, "minimal possible charge");
     defaults_.setValue("charge_max", 10, "maximal possible charge");
-    defaults_.setValue("charge_span_max", 4, "maximal range of charges for a single analyte, i.e. observing q1=[5,6,7] implies span=3");
+    defaults_.setValue("charge_span_max", 4, "maximal range of charges for a single analyte, i.e. observing q1=[5,6,7] implies span=3. Setting this to 1 will only find adduct variants of the same charge");
     defaults_.setMinInt("charge_span_max", 1); // will only find adduct variants of the same charge
 		defaults_.setValue("q_try", "feature", "Try different values of charge for each feature according to the above settings ('heuristic' [does not test all charges, just the likely ones] or 'all' ), or leave feature charge untouched ('feature').");
 		defaults_.setValidStrings("q_try",StringList::create("feature,heuristic,all"));
@@ -116,7 +116,8 @@ namespace OpenMS
 		defaults_.setValue("retention_max_diff_local", 1.0, "maximum allowed RT difference between between two co-features, after adduct shifts have been accounted for (if you do not have any adduct shifts, this value should be equal to 'retention_max_diff', otherwise it should be smaller!)");
 		/// TODO should be m/z ppm?!
     defaults_.setValue("mass_max_diff", 0.5, "maximum allowed mass difference between between two co-features");
-    defaults_.setValue("potential_adducts", StringList::create("H+:0.7,Na+:0.1,(2)H4H-4:0.1:-2:heavy"), "Adducts used to explain mass differences in format: 'Element(+)*:Probability:[RTShift]', i.e. the number of '+' indicate the charge, e.g. 'Ca++:0.5' indicates +2. Probabilites have to be in (0,1]. RTShift param is optional and indicates the expected RT shift caused by this adduct, e.g. '(2)H4H-4:1:-3' indicates a 4 deuterium label, which causes early elution by 3 seconds. As a fourth parameter you can add a label which is tagged on every feature which has this adduct. This also determines the map number in the consensus file.");
+    // Na+:0.1 , (2)H4H-4:0.1:-2:heavy
+    defaults_.setValue("potential_adducts", StringList::create("H+:0.9"), "Adducts used to explain mass differences in format: 'Element(+)*:Probability[:RTShift[:Label]]', i.e. the number of '+' indicate the charge, e.g. 'Ca++:0.5' indicates +2. Probabilites have to be in (0,1]. RTShift param is optional and indicates the expected RT shift caused by this adduct, e.g. '(2)H4H-4:1:-3' indicates a 4 deuterium label, which causes early elution by 3 seconds. As a fourth parameter you can add a label which is tagged on every feature which has this adduct. This also determines the map number in the consensus file.");
     defaults_.setValue("max_neutrals", 0, "Maximal number of neutral adducts(q=0) allowed. Add them in the 'potential_adducts' section!");
     
     defaults_.setValue("max_minority_bound", 2, "maximum count of the least probable adduct (according to 'potential_adducts' param) within a charge variant. E.g. setting this to 2 will not allow an adduct composition of '1(H+),3(Na+)' if Na+ is the least probable adduct");
@@ -140,7 +141,7 @@ namespace OpenMS
   {
 		map_label_.clear();
 		map_label_inverse_.clear();
-		map_label_inverse_[param_.getValue("default_map_label")] = 0;
+		map_label_inverse_[param_.getValue("default_map_label")] = 0; // default virtual map (for unlabeled experiments)
 		map_label_[0] = param_.getValue("default_map_label");
   
 		if (param_.getValue("q_try") == "feature") q_try_=QFROMFEATURE;
@@ -151,8 +152,10 @@ namespace OpenMS
     StringList potential_adducts_s = param_.getValue("potential_adducts");
     potential_adducts_.clear();
 		
-		bool had_nonzero_RT = false;
+		bool had_nonzero_RT = false; // adducts with RT-shift > 0 ?
 		
+    // adducts might look like this: 
+    //   Element:Probability[:RTShift[:Label]]
     for (StringList::iterator it=potential_adducts_s.begin(); it != potential_adducts_s.end(); ++it)
     {
 			// skip disabled adducts
@@ -191,7 +194,7 @@ namespace OpenMS
 			if (adduct.size()>=4)
 			{
 				label = adduct[3].trim();
-				map_label_inverse_[label] = map_label_inverse_.size();
+				map_label_inverse_[label] = map_label_.size(); // add extra virtual map
 				map_label_[map_label_inverse_[label]] = label;
 			}
 
@@ -260,7 +263,9 @@ namespace OpenMS
   {
   
 		ConsensusMap cons_map_p_neg; // tmp
-		
+		cons_map = ConsensusMap();
+		cons_map_p = ConsensusMap();
+
     Int q_min = param_.getValue("charge_min");
 		Int q_max = param_.getValue("charge_max");
 		Int q_span = param_.getValue("charge_span_max");
@@ -277,7 +282,7 @@ namespace OpenMS
 		// sort by RT and then m/z
 		fm_out = fm_in;
 		fm_out.sortByPosition();
-		for (Size i=0;i<fm_out.size();++i)	fm_out[i].ensureUniqueId();
+    fm_out.applyMemberFunction(&UniqueIdInterface::ensureUniqueId);
 		FeatureMapType fm_out_untouched = fm_out;
 
     
@@ -529,7 +534,7 @@ namespace OpenMS
 		
 		std::cout << "creating wrapper..." << std::endl;
 		// forward set of putative edges to ILP
-		MIPWrapper lp_wrapper;
+		ILPDCWrapper lp_wrapper;
 		std::cout << "Done" << std::endl;
 		// compute best solution
 		DoubleReal ilp_score = lp_wrapper.compute(me, fm_out, feature_relation);
@@ -753,8 +758,8 @@ namespace OpenMS
 
         ConsensusFeature cf(fm_out[f0_idx]);
         cf.setUniqueId();
-        cf.insert((UInt64) fm_out[f0_idx].getMetaValue("map_idx") ,fm_out[f0_idx].getUniqueId(), fm_out[f0_idx]);
-        cf.insert((UInt64) fm_out[f1_idx].getMetaValue("map_idx") ,fm_out[f1_idx].getUniqueId(), fm_out[f1_idx]);
+        cf.insert((UInt64) fm_out[f0_idx].getMetaValue("map_idx"), fm_out[f0_idx]);
+        cf.insert((UInt64) fm_out[f1_idx].getMetaValue("map_idx"), fm_out[f1_idx]);
         cf.setMetaValue("Local", String(old_q0)+":"+String(old_q1));
         cf.setMetaValue("CP", String(fm_out[f0_idx].getCharge())+"("+ String(fm_out[f0_idx].getMetaValue("dc_charge_adducts")) +"):"
 														 +String(fm_out[f1_idx].getCharge())+"("+ String(fm_out[f1_idx].getMetaValue("dc_charge_adducts")) +") "
@@ -778,22 +783,22 @@ namespace OpenMS
         {
           if (target_cf0 == -1)
           {//** add f0 to the already existing cf of f1
-            cons_map[target_cf1].insert((UInt64) fm_out[f0_idx].getMetaValue("map_idx") ,fm_out[f0_idx].getUniqueId(), fm_out[f0_idx]);
+            cons_map[target_cf1].insert((UInt64) fm_out[f0_idx].getMetaValue("map_idx"), fm_out[f0_idx]);
             clique_register[f0_idx] = target_cf1;
             //std::cout << "add: F" << f0_idx << " to " <<target_cf1 << " dueto F" << f1_idx << "\n";
           }
           else if (target_cf1 == -1)
           {//** add f1 to the already existing cf of f0
-            cons_map[target_cf0].insert((UInt64) fm_out[f1_idx].getMetaValue("map_idx"), fm_out[f1_idx].getUniqueId(), fm_out[f1_idx]);
+            cons_map[target_cf0].insert((UInt64) fm_out[f1_idx].getMetaValue("map_idx"), fm_out[f1_idx]);
             clique_register[f1_idx] = target_cf0;
             //std::cout << "add: F" << f1_idx << " to " <<target_cf0 << " dueto F" << f0_idx << "\n";
           } else
-          { //** conflict: the two elements of the pair already have separate CF´s --> merge
+          { //** conflict: the two elements of the pair already have separate CFï¿½s --> merge
             // take every feature from second CF and: #1 put into first CF, #2 change registration with map
             ConsensusFeature::HandleSetType hst = cons_map[target_cf1].getFeatures();
             for (ConsensusFeature::HandleSetType::const_iterator it=hst.begin(); it!=hst.end();++it)
             { //** update cf_index
-              clique_register[fm_out.uniqueIdToIndex(it->getElementIndex())] = target_cf0;
+              clique_register[fm_out.uniqueIdToIndex(it->getUniqueId())] = target_cf0;
             }
             // insert features from cf1 to cf0
             cons_map[target_cf0].insert(hst);
@@ -866,8 +871,8 @@ namespace OpenMS
 			ConsensusFeature::HandleSetType hst = it->getFeatures();
       for (ConsensusFeature::HandleSetType::const_iterator it_h=hst.begin(); it_h!=hst.end();++it_h)
       { //** check if feature in CF has backbone
-				//std::cout << __LINE__ << " " << it_h->getElementIndex() << std::endl;
-        backbone_count += (Size)fm_out[fm_out.uniqueIdToIndex(it_h->getElementIndex())].getMetaValue("is_backbone");
+        //std::cout << __LINE__ << " " << it_h->getElementIndex() << std::endl;
+        backbone_count += (Size)fm_out[fm_out.uniqueIdToIndex(it_h->getUniqueId())].getMetaValue("is_backbone");
         //std::cout << __LINE__ << std::endl;
       }
 			if (backbone_count==0)
@@ -875,8 +880,8 @@ namespace OpenMS
 				std::cout << "DEBUG: destroy ladder CF# " << cons_map_tmp.size() << " due to no backbone! (F_UIDs:";
 				for (ConsensusFeature::HandleSetType::const_iterator it_h=hst.begin(); it_h!=hst.end();++it_h)
 				{ //** remove cluster members from registry (they will become single features)
-					std::cout << " " << it_h->getElementIndex();
-					clique_register.erase(fm_out.uniqueIdToIndex(it_h->getElementIndex()));
+					std::cout << " " << it_h->getUniqueId();
+					clique_register.erase(fm_out.uniqueIdToIndex(it_h->getUniqueId()));
 					//std::cout << __LINE__ << std::endl;
 				}
 				std::cout << ")\n";
@@ -906,7 +911,7 @@ namespace OpenMS
 			
       ConsensusFeature cf(f_single);
       cf.setUniqueId();
-      cf.insert(0, f_single.getUniqueId(), f_single);
+      cf.insert(0, f_single);
 
       cons_map.push_back(cf);
       cons_map.back().computeDechargeConsensus(fm_out_untouched);
@@ -936,7 +941,10 @@ namespace OpenMS
 		FeatureXMLFile fmf;
 		fmf.store("fm_missing.featureXML", fm_missing);
 #endif								
-		
+
+    cons_map_p.applyMemberFunction(&UniqueIdInterface::ensureUniqueId);
+    cons_map.applyMemberFunction(&UniqueIdInterface::ensureUniqueId);
+
     return;
   }
 

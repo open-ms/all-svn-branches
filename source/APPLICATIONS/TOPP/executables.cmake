@@ -11,6 +11,7 @@ DBExporter
 DBImporter
 DTAExtractor
 Decharger
+ExecutePipeline
 FalseDiscoveryRate
 FeatureFinder
 FeatureLinker
@@ -20,6 +21,7 @@ FileInfo
 FileMerger
 GenericWrapper
 IDDecoyProbability
+IDPosteriorErrorProbability
 IDFileConverter
 IDFilter
 IDMapper
@@ -50,6 +52,7 @@ RTModel
 RTPredict
 Resampler
 SILACAnalyzer
+SILACAnalyzer2
 SeedListGenerator
 SequestAdapter
 SpecLibSearcher
@@ -58,8 +61,9 @@ TOFCalibration
 TOPPAS
 TOPPView
 TextExporter
-TextImporter
 XTandemAdapter
+InclusionExclusionListCreator
+SpectraMerger
 )
 
 ### add filenames to Visual Studio solution tree

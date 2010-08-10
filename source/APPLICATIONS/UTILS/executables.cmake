@@ -3,30 +3,33 @@ set(directory source/APPLICATIONS/UTILS)
 
 ### list all filenames of the directory here
 set(executables_list
-CaapConvert
 CVInspector
+CaapConvert
+DeMeanderize
+DecoyDatabase
 Digestor
+DigestorMotif
+ERPairFinder
 FFEval
 FuzzyDiff
 HistView
 IDExtractor
+IDMassAccuracy
+IDSplitter
+IdXMLEvaluation
 ImageCreator
 LabeledEval
-MapAlignmentEvaluation
+MassCalculator
+MRMPairFinder
 MSSimulator
+MapAlignmentEvaluation
+OpenMSInfo
 SemanticValidator
 SequenceCoverageCalculator
 SpecLibCreator
-XMLValidator
-IdXMLEvaluation
-DecoyDatabase
-IDMassAccuracy
 SpectrumGeneratorNetworkTrainer
-ERPairFinder
-MRMPairFinder
-OpenMSInfo
-DeMeanderize
 UniqueIdAssigner
+XMLValidator
 )
 
 ### pass source file list to the upper instance

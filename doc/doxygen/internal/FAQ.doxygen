@@ -98,7 +98,9 @@
 			@n http://ftp.mi.fu-berlin.de/bielow/OpenMS/
 
 		</UL>
-	<H2 style="border-top:2px solid grey;">Build system</H2>
+
+
+  <H2 style="border-top:2px solid grey;">Build system</H2>
 		<UL>
 
       <LI><B>What is CMake?!</B><BR>
@@ -125,10 +127,12 @@
         To pass this variable to CMake use the -D switch
         e.g. <code>cmake -D CONTRIB_CUSTOM_DIR:PATH="D:\\svn\\contrib"</code>
         Everything else can be edited using ccmake afterwards. The following options are of interest:
-        - OPENMS_BUILD_MODE
-        - OPENMS_DEBUG
-        - OPENMS_ENABLE_EXTERNALMEMORY
-        - CF_DB_PLUGIN
+          - OPENMS_BUILD_TYPE
+          - CONTRIB_CUSTOM_DIR
+          - STL_DEBUG
+          - DB_TEST
+          - QT_DB_PLUGIN
+          - MT_CUDA_BUILD_TYPE
         Their description will be displayed when you call ccmake.
 
       <LI><B>How do I switch to Debug/Release configuration?!</B><BR>
@@ -305,18 +309,64 @@ svn propset svn:eol-style native MyClass.C
 	        <TT>gdb&gt; run</TT>
 	      </OL>
 
-				<LI><B>(Linux) How can I find out which shared libraries are used by an application?</B>
+			<LI><B>How can I find out which shared libraries are used by an application?</B>
 				<BR>
-				ldd &lt;application&gt;
+        Linux:
+				<code>ldd &lt;application&gt;</code>
+        <BR>
+        Windows (Visual studio console):
+        Try "Dependency Walker"(http://www.dependencywalker.com/)
+        or <code>dumpbin /DEPENDENTS OpenMS.dll</code>
 
-				<LI><B>(Linux) How can I get a list of the symbols defined in a (shared) library or object file?</B>
+			<LI><B>How can I get a list of the symbols defined in a (shared) library or object file?</B>
 				<BR>
+        Linux:
 				<code>nm &lt;library&gt;</code>
-				<BR>
-				Use <code>nm -C</code> to switch on demangling of low-level symbols into their C++-equivalent names.
+        Use <code>nm -C</code> to switch on demangling of low-level symbols into their C++-equivalent names.
 				<code>nm</code> also accepts <code>.a</code> and <code>.o</code> files.
+				<BR>
+        Windows (Visual studio console):
+				<code>dumpbin /ALL &lt;library&gt;</code>
+				<BR>
+				You can use dumpbin on object files (.o) or (shared) library files (.lib) or the DLL itself
+        e.g. <code>dumpbin /EXPORTS OpenMS.dll</code>
 
 		</UL>
+
+	<H2 style="border-top:2px solid grey;">Cross-platform thoughts</H2>
+    
+    %OpenMS runs on three major platforms, each one having its own ways of doing things. Here are the most
+    prominent causes of "it runs on Platform A, but not on B. What now?"
+    
+    <UL>
+
+	    <LI><b>Reading/Writing binary files causes different behaviour ...</b><BR>
+      Usually Linux does not make a difference between text-mode and binary-mode when reading files.
+      This is quite different on Windows as some bytes are interpreted as EOF, which lead might to a premature end of the reading process.
+      Thus, if reading binary files make sure that you explicitly state that the file is binary when opening it!
+      
+      During writing in text-mode on windows a line-break (\\n) is expanded to (\\r\\n). Keep this in mind or use the eol-style property of subversion to
+      ensure that line endings are correctly checked out on non-Windows systems.
+      
+      <LI><b>unsigned int vs size_t (UInt and Size)</b><BR>
+      UInt and Size are the same on Linux GCC (i.e. both have the same size, 32bit on 32bit systems, 64bit on 64 bit systems), however on Windows this only holds
+      for 32bit. On a 64bit Windows the UInt type is still 32bit, Size is (obviously) 64bit. This might lead to warnings (at best) or
+      overflows and other nasty stuff. So make sure you do not rely on UInt being equal to Size - because they're not.
+      
+      <LI><b>Paths and system functions...</b><BR>
+      This is trivial but hardcoding something like 
+ @code
+ String tmp_dir = "/tmp";
+ @endcode
+      is a big no-no! This must fail on Windows! Use Qt's QDir to get a path to the systems temporary directory if required.<br>
+      Also calling things like <tt>uname</tt> which are only available on Linux: don't!<br>
+      When working with files or directories, it is usually safe to use "/" on all platforms. Even Windows understands that.
+      Take care of spaces in directory names though. You should always quote paths if they are used in a system call
+      to ensure that the subsequent interpreter takes the spaced path as a single entity.
+      
+      
+    </UL>
+    
 	<H2 style="border-top:2px solid grey;">SVN</H2>
 		<UL>
 
@@ -528,12 +578,18 @@ svn propset svn:eol-style native MyClass.C
 					</OL>
 
 		</UL>
-	<H2 style="border-top:2px solid grey;">Profiling and memory leaks</H2>
+	<H2 style="border-top:2px solid grey;">Profiling and memory leaks and strange behaviour</H2>
+		
+		<b> First check that the executable you are calling actually is the correct one (in case you have multiple %OpenMS version installed),
+		and also that it uses the correct %OpenMS library (check PATH (Win) or LD_LIBRARY_PATH (Linux)).</b>
+		Otherwise you might get the strangest access violations, pointing to arbitrary code.
+		
 		<UL>
 
 			<LI><B>How can I profile my code?</B>
 				<UL>
-          <LI> Windows: this is directly supported by Vidual Studio. Follow their documentation.
+		  <LI> Try IBM's profiler, available for all platforms (and free for academic use): Purify(Plus) and/or Quantify.
+          <LI> Windows: this is directly supported by Visual Studio (Depending on the edition: Team and above). Follow their documentation.
           <LI> Linux:
           <OL>
 					  <LI> build %OpenMS in debug mode (set OPENMS_BUILD_TYPE to 'Debug')
@@ -611,7 +667,7 @@ svn propset svn:eol-style native MyClass.C
 
 			<LI><B>What do I have to do to add a new UTILS tool?</B>
 			<OL>
-				<LI> Add your tool to getUtilList() in <TT>include/OpenMS/APPLICATIONS/TOPPBase.h</TT>
+				<LI> Add your tool to getUtilList() in <TT>source/APPLICATIONS/TOPPBase.C</TT>
 						 @n This creates a doxygen page with the @em --help output of the tool (using TOPPDocumenter). 
 						 @n This page must be included at the end of the doxygen documentation of your tool (see other tools for an example).
 				<LI> Add it to the UTILS docu page (in @a %doc/doxygen/public/UTILS.doxygen)

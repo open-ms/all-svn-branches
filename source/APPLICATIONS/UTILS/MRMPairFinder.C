@@ -193,7 +193,6 @@ class TOPPMRMPairFinder
 
 			// collect the different MRM XIC pairs for each SILAC pair as quantlets
 			// then calculate the ratio over the quanlets and calculate some statistics
-			Size feature_counter(0);
 			FeatureMap<> all_features;
 			for (Map<DoubleReal, Map<DoubleReal, vector<SILAC_pair> > >::ConstIterator it1 = pairs.begin(); it1 != pairs.end(); ++it1)
 			{
@@ -270,8 +269,8 @@ class TOPPMRMPairFinder
 							ConsensusFeature SILAC_feature;
 							SILAC_feature.setMZ((best_light.getMZ() + best_heavy.getMZ()) / 2.0);
 							SILAC_feature.setRT((best_light.getRT() + best_heavy.getRT()) / 2.0);
-	    				SILAC_feature.insert(0, feature_counter, best_light);
-	    				SILAC_feature.insert(1, feature_counter++, best_heavy);
+	    				SILAC_feature.insert(0, best_light);
+	    				SILAC_feature.insert(1, best_heavy);
   	  				results_map.push_back(SILAC_feature);
 
 							quantlets.push_back(SILACQuantitation(best_light.getIntensity(), best_heavy.getIntensity(), best_idx));

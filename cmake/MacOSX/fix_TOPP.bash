@@ -9,10 +9,10 @@
 ##  $2 -> QT_LIBRARY_DIR
 ##  $3 -> path-to-tool/tool
 
-for lib in QtOpenGL QtCore QtGui QtXml QtSql QtNetwork
+for lib in QtOpenGL QtCore QtGui QtXml QtSql QtNetwork QtTest
 do
     # change association of Qt libs
     $1 -change $2/$lib.framework/Versions/4/$lib \
-        $lib.framework/Versions/4/$lib \
+        @executable_path/../lib/$lib.framework/Versions/4/$lib \
         $3
 done

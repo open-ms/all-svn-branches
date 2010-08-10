@@ -5,8 +5,6 @@ set(directory include/OpenMS/ANALYSIS/MRM)
 set(sources_list_h
 MRMFragmentSelection.h
 ReactionMonitoringTransition.h
-TargetedExperiment.h
-IncludeExcludeTarget.h
 )
 
 ### add path to the filenames

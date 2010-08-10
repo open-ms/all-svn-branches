@@ -331,7 +331,7 @@ namespace OpenMS
 		// mouse position relative to the diagram widget
 		QPoint p = e->pos();
 		PointType data_pos = widgetToData(p);				
-		emit sendCursorStatus( data_pos.getX() );
+		emit sendCursorStatus( data_pos.getX(), getCurrentLayer_().getCurrentSpectrum().getRT() );
 		
 		PeakIndex near_peak = findPeakAtPosition_(p);
 		
@@ -1473,6 +1473,35 @@ namespace OpenMS
 		resetZoom();
 		modificationStatus_(i, false);
 	}
+
+  ///Go forward in zoom history
+	void Spectrum1DCanvas::zoomForward_()
+  {
+    //cout << "Zoom in" << endl;
+		//cout << " - pos before:" << (zoom_pos_-zoom_stack_.begin()) << endl;
+		//cout << " - size before:" << zoom_stack_.size() <<endl;
+
+    // if at end of zoom level then simply add a new zoom
+    if (zoom_pos_==zoom_stack_.end() || (zoom_pos_+1)==zoom_stack_.end() )
+    {
+      AreaType new_area;
+      // distance of areas center to border times a zoom factor of 0.8
+      AreaType::CoordinateType size0 = visible_area_.width() / 2 * 0.8;
+      new_area.setMinX( visible_area_.center()[0] - size0);
+      new_area.setMaxX( visible_area_.center()[0] + size0);
+      new_area.setMinY( visible_area_.minY());
+      new_area.setMaxY( visible_area_.maxY());
+      zoomAdd_(new_area);
+      zoom_pos_= --zoom_stack_.end(); // set to last position
+    }
+    else
+    { // goto next zoom level
+			++zoom_pos_;
+		}
+		changeVisibleArea_(*zoom_pos_);
+    
+    //cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
+  }
 
 	void Spectrum1DCanvas::translateLeft_()
 	{

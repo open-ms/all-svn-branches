@@ -38,10 +38,13 @@
 #include <QtCore/QFile>
 #include <QtCore/QFileInfo>
 #include <QtCore/QDir>
+#include <QtCore/QRegExp>
 #include <QtGui/QImage>
 
 namespace OpenMS
-{	
+{
+	UInt TOPPASToolVertex::uid_ = 1;
+	
 	TOPPASToolVertex::TOPPASToolVertex()
 		:	TOPPASVertex(),
 			name_(),
@@ -51,10 +54,10 @@ namespace OpenMS
 			progress_color_(Qt::gray),
 			iteration_nr_(0),
 			input_list_length_(1)
-	{
+		{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
-		initParam_();
+		if (initParam_()) {}
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
 		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
@@ -74,7 +77,7 @@ namespace OpenMS
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
-		initParam_();
+		if (initParam_()) {}
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
 		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
@@ -121,7 +124,7 @@ namespace OpenMS
 		return *this;
 	}
 	
-	void TOPPASToolVertex::initParam_()
+	bool TOPPASToolVertex::initParam_(const QString& old_ini_file)
 	{
 		Param tmp_param;
 		QString ini_file = QDir::tempPath() + QDir::separator() + "TOPPAS_" + name_.toQString() + "_";
@@ -136,29 +139,48 @@ namespace OpenMS
 		{
 			call += " -type " + type_;
 		}
+		if (old_ini_file != "")
+		{
+			if (!File::exists(old_ini_file))
+			{
+				QMessageBox::critical(0,"Error",(String("Could not open '")+old_ini_file+"'!").c_str());
+				return false;
+			}
+			call += " -ini " + String(old_ini_file);
+		}
 		
 		if (system(call.c_str()) != 0)
 		{
 			QMessageBox::critical(0,"Error",(String("Could not execute '")+call+"'!\n\nMake sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
-			return;
+			return false;
 		}
-		else if(!File::exists(ini_file))
+		if(!File::exists(ini_file))
 		{
 			QMessageBox::critical(0,"Error",(String("Could not open '")+ini_file+"'!").c_str());
-			return;
+			return false;
 		}
 		
 		tmp_param.load(String(ini_file).c_str());
 		param_=tmp_param.copy(name_+":1:",true);
-		param_.remove("log");
-		param_.remove("no_progress");
-		param_.remove("debug");
+		//param_.remove("log");
+		//param_.remove("no_progress");
+		//param_.remove("debug");
+		//// handled by TOPPAS anyway:
+		//param_.remove("type");
 		
-		// handled by TOPPAS anyway:
-		param_.remove("type");
-		
-		// remove tmp ini file
+		writeParam_(param_,ini_file);
+		bool changed = false;
+		if (old_ini_file != "")
+		{
+			//check if ini file has changed (quick & dirty by file size)
+			QFile q_ini(ini_file);
+			QFile q_old_ini(old_ini_file);
+			changed = q_ini.size() != q_old_ini.size();
+			QFile::remove(old_ini_file);
+		}
 		QFile::remove(ini_file);
+		
+		return changed;
 	}
 	
 	void TOPPASToolVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
@@ -174,8 +196,14 @@ namespace OpenMS
 		// use a copy for editing
 		Param edit_param(param_);
 		
-		// remove entries that are handled by edges already, user should not see them
 		QVector<Param::ParamEntry> hidden_entries;
+		// remove type (should not be edited)
+		if (edit_param.exists("type"))
+		{
+			hidden_entries.push_back(edit_param.getEntry("type"));
+			edit_param.remove("type");
+		}
+		// remove entries that are handled by edges already, user should not see them
 		QVector<IOInfo> input_infos;
 		getInputParameters(input_infos);
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
@@ -212,7 +240,7 @@ namespace OpenMS
 			}
 		}
 		
-		TOPPASToolConfigDialog dialog(parent_widget, edit_param, default_dir, name_, type_);
+		TOPPASToolConfigDialog dialog(parent_widget, edit_param, default_dir, name_, type_, hidden_entries);
 		if (dialog.exec())
 		{
 			param_ = edit_param;
@@ -286,7 +314,7 @@ namespace OpenMS
 				}
 				else
 				{
-					std::cerr << "Unexpected parameter value!" << std::endl;
+					std::cerr << "TOPPAS: Unexpected parameter value!" << std::endl;
 				}
 				io_infos.push_back(io_info);
 			}
@@ -413,13 +441,7 @@ namespace OpenMS
 			ini_file += "_"+type_.toQString();
 		}
 		ini_file += ".ini";
-		
-		Param save_param;
-		save_param.setValue(name_+":1:toppas_dummy", DataValue("blub"));
-		save_param.insert(name_+":1:", param_);
-		save_param.remove(name_+":1:toppas_dummy");
-		save_param.setSectionDescription(name_+":1", "Instance '1' section for '"+name_+"'");
-		save_param.store(ini_file);
+		writeParam_(param_,ini_file);
 		
 		QStringList shared_args;
 		shared_args	<< "-ini"
@@ -451,7 +473,7 @@ namespace OpenMS
 				int param_index = (*it)->getTargetInParam();
 				if (param_index < 0)
 				{
-					std::cerr << "Input parameter index out of bounds!" << std::endl;
+					std::cerr << "TOPPAS: Input parameter index out of bounds!" << std::endl;
 					break;
 				}
 				args << "-"+(in_params[param_index].param_name).toQString();
@@ -462,7 +484,7 @@ namespace OpenMS
 					int out_param_index = (*it)->getSourceOutParam();
 					if (out_param_index < 0)
 					{
-						std::cerr << "Output parameter index out of bounds!" << std::endl;
+						std::cerr << "TOPPAS: Output parameter index out of bounds!" << std::endl;
 						break;
 					}
 					const QStringList& source_out_files = tv->current_output_files_[out_param_index];
@@ -475,7 +497,7 @@ namespace OpenMS
 					{
 						if (i >= source_out_files.size())
 						{
-							std::cerr << "Input list too short!" << std::endl;
+							std::cerr << "TOPPAS: Input list too short!" << std::endl;
 							break;
 						}
 						args << source_out_files[i];
@@ -496,7 +518,7 @@ namespace OpenMS
 					{
 						if (i >= input_files.size())
 						{
-							std::cerr << "Input list too short!" << std::endl;
+							std::cerr << "TOPPAS: Input list too short!" << std::endl;
 							break;
 						}
 						args << input_files[i];
@@ -516,7 +538,7 @@ namespace OpenMS
 					{
 						if (i >= input_files.size())
 						{
-							std::cerr << "Input list too short!" << std::endl;
+							std::cerr << "TOPPAS: Input list too short!" << std::endl;
 							break;
 						}
 						args << input_files[i];
@@ -548,7 +570,7 @@ namespace OpenMS
 						{
 							if (i >= output_files.size())
 							{
-								std::cerr << "Output list too short!" << std::endl;
+								std::cerr << "TOPPAS: Output list too short!" << std::endl;
 								break;
 							}
 							args << output_files[i];
@@ -567,6 +589,7 @@ namespace OpenMS
 			connect(ts,SIGNAL(terminateCurrentPipeline()),p,SLOT(kill()));
 			
 			//enqueue process
+			std::cout << "TOPPAS: Enqueue: " << name_ << " " << String(args.join(" ")) << std::endl;
 			ts->enqueueProcess(p, name_.toQString(), args);
 		}
 		
@@ -697,21 +720,24 @@ namespace OpenMS
 	{
 		QVector<IOInfo> in_params;
 		input_list_length_ = 1; // stays like that if -in param is not a list
+		bool found_in_parameter = false;
 		getInputParameters(in_params);
 		QStringList input_file_basenames;
 		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
 		
+		bool force = false;
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 		{
 			int param_index = (*it)->getTargetInParam();
 			if (param_index < 0)
 			{
-				std::cerr << "Input parameter index out of bounds!" << std::endl;
+				std::cerr << "TOPPAS: Input parameter index out of bounds!" << std::endl;
 				break;
 			}
 			
-			if (in_params[param_index].param_name == "in")
+			if (in_params[param_index].param_name == "in" || force)
 			{
+				found_in_parameter = true;
 				in_parameter_has_list_type_ = (in_params[param_index].type == IOInfo::IOT_LIST);
 				
 				TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
@@ -732,7 +758,7 @@ namespace OpenMS
 					int out_param_index = (*it)->getSourceOutParam();
 					if (out_param_index < 0)
 					{
-						std::cerr << "Output parameter index out of bounds!" << std::endl;
+						std::cerr << "TOPPAS: Output parameter index out of bounds!" << std::endl;
 						break;
 					}
 					const QStringList& input_files = tv->current_output_files_[out_param_index];
@@ -756,6 +782,13 @@ namespace OpenMS
 					}
 					break;
 				}
+			}
+			
+			//if last iteration and still no "in" parameter found, repeat last iteration and treat the edge as input parameter (dirty - TODO)
+			if (it == inEdgesEnd()-1 && !found_in_parameter)
+			{
+				--it;
+				force = true;
 			}
 		}
 		
@@ -787,7 +820,7 @@ namespace OpenMS
 							+input_file_basenames.first()
 							+"_to_"
 							+input_file_basenames.last()
-							+"_merged_tmp";
+							+"_merged_tmp"+QString::number(uid_++);
 						current_output_files_[param_index].push_back(f);
 					}
 					else
@@ -801,10 +834,14 @@ namespace OpenMS
 								+out_params[param_index].param_name.toQString()
 								+QDir::separator()
 								+str;
-							if (!f.endsWith("_tmp"))
+							QRegExp rx("_tmp\\d+$");
+							int tmp_index = rx.indexIn(f);
+							//std::cout << "tmp_index: " << tmp_index << std::endl;
+							if (tmp_index != -1)
 							{
-								f += "_tmp";
+								f = f.left(tmp_index);
 							}
+							f += "_tmp" + QString::number(uid_++);
 							current_output_files_[param_index].push_back(f);
 						}
 					}
@@ -906,7 +943,7 @@ namespace OpenMS
 		
 		if (!current_dir.mkpath(getOutputDir().toQString()))
 		{
-			std::cerr << "Could not create path " << getOutputDir() << std::endl;
+			std::cerr << "TOPPAS: Could not create path " << getOutputDir() << std::endl;
 		}
 		
 		foreach (const QStringList& files, current_output_files_)
@@ -918,7 +955,7 @@ namespace OpenMS
 				{
 					if (!current_dir.mkpath(dir))
 					{
-						std::cerr << "Could not create path " << String(dir) << std::endl;
+						std::cerr << "TOPPAS: Could not create path " << String(dir) << std::endl;
 					}
 				}
 			}
@@ -952,6 +989,8 @@ namespace OpenMS
 			{
 				removeDirRecursively_(remove_dir);
 			}
+			// reset UID for tmp files
+			uid_ = 1;
 		}
 		
 		TOPPASVertex::reset(reset_all_files);
@@ -1029,6 +1068,30 @@ namespace OpenMS
 		
 		__DEBUG_END_METHOD__
 	}
+
+	bool TOPPASToolVertex::refreshParameters()
+	{
+		QString old_ini_file = QDir::tempPath() + QDir::separator() + "TOPPAS_" + name_.toQString() + "_";
+		if (type_ != "")
+		{
+			old_ini_file += type_.toQString() + "_";
+		}
+		old_ini_file += File::getUniqueName().toQString() + "_tmp_OLD.ini";
+		writeParam_(param_,old_ini_file);
+		
+		bool changed = initParam_(old_ini_file);
+		
+		return changed;
+	}
 	
+	void TOPPASToolVertex::writeParam_(const Param& param, const QString& ini_file)
+	{
+		Param save_param;
+		save_param.setValue(name_+":1:toppas_dummy", DataValue("blub"));
+		save_param.insert(name_+":1:", param);
+		save_param.remove(name_+":1:toppas_dummy");
+		save_param.setSectionDescription(name_+":1", "Instance '1' section for '"+name_+"'");
+		save_param.store(ini_file);
+	}
 }
 

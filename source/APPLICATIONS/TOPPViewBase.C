@@ -334,7 +334,7 @@ namespace OpenMS
 		projections_2d_->setShortcut(Qt::Key_2);
 
 		//--2D feature toolbar--
-    tool_bar_2d_feat_ = addToolBar("2D peak tool bar");
+    tool_bar_2d_feat_ = addToolBar("2D feature tool bar");
 
     dm_hull_2d_ = tool_bar_2d_feat_->addAction(QIcon(":/convexhull.png"),"Show feature convex hull");
     dm_hull_2d_->setCheckable(true);
@@ -348,30 +348,55 @@ namespace OpenMS
 		dm_hulls_2d_->setShortcut(Qt::Key_6);
     connect(dm_hulls_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
+		// feature labels:
 		dm_label_2d_ = new QToolButton(tool_bar_2d_feat_);
 		dm_label_2d_->setPopupMode(QToolButton::MenuButtonPopup);
 		QAction* action2 = new QAction(QIcon(":/labels.png"), "Show feature label", dm_label_2d_);
     action2->setCheckable(true);
-    action2->setWhatsThis("2D feature draw mode: Labels<BR><BR>The feature label is displayed next to the feature. <BR>(Hotkey: 7)");
+    action2->setWhatsThis("2D feature draw mode: Labels<BR><BR>Display different kinds of annotation next to features.<BR>(Hotkey: 7)");
 		action2->setShortcut(Qt::Key_7);
 		dm_label_2d_->setDefaultAction(action2);
 		tool_bar_2d_feat_->addWidget(dm_label_2d_);
     connect(dm_label_2d_, SIGNAL(triggered(QAction*)), this, SLOT(changeLabel(QAction*)));
 		//button menu
+		group_label_2d_ = new QActionGroup(dm_label_2d_);
 		QMenu* menu = new QMenu(dm_label_2d_);
-		for (Size i=0; i<LayerData::SIZE_OF_LABEL_TYPE; ++i)
+		for (Size i = 0; i < LayerData::SIZE_OF_LABEL_TYPE; ++i)
 		{
-			menu->addAction(QString(LayerData::NamesOfLabelType[i].c_str()));
+			QAction* temp = group_label_2d_->addAction(
+				QString(LayerData::NamesOfLabelType[i].c_str()));
+			temp->setCheckable(true);
+			if (i == 0) temp->setChecked(true);
+			menu->addAction(temp);
 		}
 		dm_label_2d_->setMenu(menu);
 
-		dm_unassigned_2d_ = tool_bar_2d_feat_->addAction(QIcon(":/unassigned.png"),"Show unassigned peptide identifications");
-    dm_unassigned_2d_->setCheckable(true);
-    dm_unassigned_2d_->setWhatsThis("2D feature draw mode: Unassigned peptides<BR><BR>Unassigned peptide identifications are displayed. <BR>(Hotkey: 8)");
-		dm_unassigned_2d_->setShortcut(Qt::Key_8);
-    connect(dm_unassigned_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
+		// unassigned peptide identifications:
+		dm_unassigned_2d_ = new QToolButton(tool_bar_2d_feat_);
+		dm_unassigned_2d_->setPopupMode(QToolButton::MenuButtonPopup);
+		QAction* action_unassigned = new QAction(QIcon(":/unassigned.png"), "Show unassigned peptide identifications", dm_unassigned_2d_);
+    action_unassigned->setCheckable(true);
+    action_unassigned->setWhatsThis("2D feature draw mode: Unassigned peptide identifications<BR><BR>Show unassigned peptide identifications by precursor m/z or by peptide mass.<BR>(Hotkey: 8)");
+		action_unassigned->setShortcut(Qt::Key_8);
+		dm_unassigned_2d_->setDefaultAction(action_unassigned);
+		tool_bar_2d_feat_->addWidget(dm_unassigned_2d_);
+    connect(dm_unassigned_2d_, SIGNAL(triggered(QAction*)), this, SLOT(changeUnassigned(QAction*)));
+		//button menu
+		group_unassigned_2d_ = new QActionGroup(dm_unassigned_2d_);
+		menu = new QMenu(dm_unassigned_2d_);
+		StringList options = StringList::create(
+			"Don't show,Show by precursor m/z,Show by peptide mass");
+		for (StringList::iterator opt_it = options.begin(); opt_it != options.end();
+				 ++opt_it)
+		{
+			QAction* temp = group_unassigned_2d_->addAction(opt_it->toQString());
+			temp->setCheckable(true);
+			if (opt_it == options.begin()) temp->setChecked(true);
+			menu->addAction(temp);
+		}
+		dm_unassigned_2d_->setMenu(menu);
 
-		//--2D feature toolbar--
+		//--2D consensus toolbar--
     tool_bar_2d_cons_ = addToolBar("2D peak tool bar");
 
     dm_elements_2d_ = tool_bar_2d_cons_->addAction(QIcon(":/elements.png"),"Show consensus feature element positions");
@@ -380,6 +405,14 @@ namespace OpenMS
 		dm_elements_2d_->setShortcut(Qt::Key_9);
     connect(dm_elements_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
+		//--2D identifications toolbar--
+		tool_bar_2d_ident_ = addToolBar("2D identifications tool bar");
+		
+		dm_ident_2d_ = tool_bar_2d_ident_->addAction(QIcon(":/peptidemz.png"), "Use theoretical peptide mass for m/z positions (default: precursor mass)");
+    dm_ident_2d_->setCheckable(true);
+    dm_ident_2d_->setWhatsThis("2D peptide identification draw mode: m/z source<BR><BR>Toggle between precursor mass (default) and theoretical peptide mass as source for the m/z positions of peptide identifications.<BR>(Hotkey: 5)");
+		dm_ident_2d_->setShortcut(Qt::Key_5);
+    connect(dm_ident_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
 
 		//################## Dock widgets #################
     //layer window
@@ -626,6 +659,7 @@ namespace OpenMS
     ExperimentType exp;
     FeatureMapType dummy_map;
     ConsensusMapType dummy_map2;
+		vector<PeptideIdentification> dummy_peptides;
 		try
 		{
 			db.loadExperiment(db_id, exp);
@@ -639,11 +673,13 @@ namespace OpenMS
 
 		//determine if the data is 1D or 2D
     QSqlQuery result = con.executeQuery(String("SELECT count(id) from DATA_Spectrum where fid_MSExperiment='")+db_id+"' and MSLevel='1'");
-		bool is_2D = (result.value(0).toInt()>1);
+		LayerData::DataType data_type = ((result.value(0).toInt()>1) ? 
+																		 LayerData::DT_PEAK : 
+																		 LayerData::DT_CHROMATOGRAM);
 
 		//add data
     if (caption=="") caption = String("DB entry ")+db_id;
-		addData_(dummy_map, dummy_map2, exp, false, is_2D, false, show_options, "", caption, window_id);
+		addData_(dummy_map, dummy_map2, dummy_peptides, exp, data_type, false, show_options, "", caption, window_id);
 
   	//Reset cursor
   	setCursor(Qt::ArrowCursor);
@@ -801,7 +837,7 @@ namespace OpenMS
 		}
   }
 
-  void TOPPViewBase::addDataFile(const String& filename,bool show_options, bool add_to_recent, String caption, UInt window_id, Size spectrum_id)
+  void TOPPViewBase::addDataFile(const String& filename, bool show_options, bool add_to_recent, String caption, UInt window_id, Size spectrum_id)
   {
     setCursor(Qt::WaitCursor);
 
@@ -825,44 +861,49 @@ namespace OpenMS
       return;
 		}
 		//abort if file type unsupported
-		if (file_type==FileTypes::INI || file_type==FileTypes::IDXML)
+		if (file_type==FileTypes::INI)
 		{
 			showLogMessage_(LS_ERROR,"Open file error",String("The type '")+fh.typeToName(file_type)+"' is not supported!");
    		setCursor(Qt::ArrowCursor);
       return;
 		}
 
-		//try to load data and determine if it is 1D or 2D data
+		//try to load data and determine if it's 1D or 2D data
 		FeatureMapType feature_map;
 		ExperimentType peak_map;
 		ConsensusMapType consensus_map;
+		vector<PeptideIdentification> peptides;
 
-		bool is_2D = false;
-		bool is_feature = false;
+		LayerData::DataType data_type;
+
     try
     {
 	    if (file_type==FileTypes::FEATUREXML)
 	    {
         FeatureXMLFile().load(abs_filename,feature_map);
-        is_2D = true;
-        is_feature = true;
+				data_type = LayerData::DT_FEATURE;
       }
       else if (file_type==FileTypes::CONSENSUSXML)
 	    {
         ConsensusXMLFile().load(abs_filename,consensus_map);
-        is_2D = true;
-        is_feature = true;
+				data_type = LayerData::DT_CONSENSUS;
       }
+			else if (file_type == FileTypes::IDXML)
+			{
+				vector<ProteinIdentification> proteins; // not needed later
+				IdXMLFile().load(abs_filename, proteins, peptides);
+				data_type = LayerData::DT_IDENT;
+			}
       else
       {
-      	fh.loadExperiment(abs_filename,peak_map, file_type,ProgressLogger::GUI);
-      	UInt ms1_scans = 0;
+      	fh.loadExperiment(abs_filename, peak_map, file_type, 
+													ProgressLogger::GUI);
+				data_type = LayerData::DT_CHROMATOGRAM;
       	for (Size i=0; i<peak_map.size();++i)
       	{
-      		if (peak_map[i].getMSLevel()==1) ++ms1_scans;
-      		if (ms1_scans>1)
+      		if (peak_map[i].getMSLevel() == 1)
       		{
-      			is_2D = true;
+						data_type = LayerData::DT_PEAK;
       			break;
       		}
       	}
@@ -884,7 +925,7 @@ namespace OpenMS
     {
     	abs_filename = "";
     }
-    addData_(feature_map, consensus_map, peak_map, is_feature, is_2D, false, show_options, abs_filename, caption, window_id, spectrum_id);
+    addData_(feature_map, consensus_map, peptides, peak_map, data_type, false, show_options, abs_filename, caption, window_id, spectrum_id);
 
   	//add to recent file
   	if (add_to_recent) addRecentFile_(filename);
@@ -893,7 +934,7 @@ namespace OpenMS
     setCursor(Qt::ArrowCursor);
   }
 
-  void TOPPViewBase::addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_as_1d, bool show_options, const String& filename, const String& caption, UInt window_id, Size spectrum_id)
+  void TOPPViewBase::addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, vector<PeptideIdentification>& peptides, ExperimentType& peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename, const String& caption, UInt window_id, Size spectrum_id)
   {
   	//initialize flags with defaults from the parameters
   	bool as_new_window = true;
@@ -901,7 +942,10 @@ namespace OpenMS
   	bool maps_as_1d = false;
   	bool use_mower = ((String)param_.getValue("preferences:intensity_cutoff")=="on");
 
-		bool is_consensus_feature = (feature_map==FeatureMapType());
+		bool mergeable = ((data_type == LayerData::DT_FEATURE) || 
+											(data_type == LayerData::DT_CONSENSUS) ||
+											(data_type == LayerData::DT_IDENT));
+		bool is_2D = (data_type != LayerData::DT_CHROMATOGRAM);
 
 		//set the window where (new layer) data could be opened in
 		SpectrumWidget* open_window = window_(window_id);
@@ -918,12 +962,12 @@ namespace OpenMS
 		TOPPViewOpenDialog dialog(caption, as_new_window, maps_as_2d, use_mower, this);
 		//disable opening in new window when
 		if (open_window==0 // there is no active window
-			  || (is_feature && qobject_cast<Spectrum3DWidget*>(open_window)!=0)) //feature data is to be opened, but the current window is a 3D window
+			  || (mergeable && qobject_cast<Spectrum3DWidget*>(open_window)!=0)) //feature/ID data is to be opened, but the current window is a 3D window
 		{
 			dialog.disableLocation(true);
 		}
 		//disable 1d/2d/3d option for features and single scans
-		if (is_feature)
+		if (mergeable)
 		{
 			dialog.disableDimension(true);
 		}
@@ -932,19 +976,15 @@ namespace OpenMS
 			dialog.disableDimension(false);
 		}
 		//disable cutoff for features and single scans
-		if (is_feature || !is_2D) dialog.disableCutoff(false);
+		if (mergeable || !is_2D) dialog.disableCutoff(false);
 		//enable merge layers if a feature layer is opened and there are already features layers to merge it to
-		if (is_feature && open_window!=0) //TODO merge
+		if (mergeable && open_window!=0) //TODO merge
 		{
 			SpectrumCanvas* open_canvas = open_window->canvas();
 			Map<Size,String> layers;
 			for (Size i=0; i<open_canvas->getLayerCount(); ++i)
 			{
-				if (!is_consensus_feature && open_canvas->getLayer(i).type==LayerData::DT_FEATURE)
-				{
-					layers[i] = open_canvas->getLayer(i).name;
-				}
-				if (is_consensus_feature && open_canvas->getLayer(i).type==LayerData::DT_CONSENSUS)
+				if (data_type == open_canvas->getLayer(i).type)
 				{
 					layers[i] = open_canvas->getLayer(i).name;
 				}
@@ -979,7 +1019,7 @@ namespace OpenMS
       {
       	open_window = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
       }
-      else if (maps_as_2d || is_feature) //2d or features
+      else if (maps_as_2d || mergeable) //2d or features/IDs
       {
       	open_window = new Spectrum2DWidget(getSpectrumParameters_(2), ws_);
       	open_window->canvas()->setAdditionalContextMenu(add_2d_context_);
@@ -992,17 +1032,18 @@ namespace OpenMS
 
     if (merge_layer==-1) //add data to the window
     {
-	    if (is_feature) //features and consensus features
-	    {
-	    	if (!is_consensus_feature) //features
-	    	{
-	      	if (!open_window->canvas()->addLayer(feature_map,filename)) return;
-	    	}
-	    	else //consensus features
-	    	{
-	    		if (!open_window->canvas()->addLayer(consensus_map,filename)) return;
-	    	}
-	    }
+	    if (data_type == LayerData::DT_FEATURE) //features
+			{
+				if (!open_window->canvas()->addLayer(feature_map,filename)) return;
+			}
+			else if (data_type == LayerData::DT_CONSENSUS) //consensus features
+			{
+				if (!open_window->canvas()->addLayer(consensus_map,filename)) return;
+			}
+			else if (data_type == LayerData::DT_IDENT)
+			{
+				if (!open_window->canvas()->addLayer(peptides, filename)) return;
+			}
 	    else //peaks
 	    {
 			  if (!open_window->canvas()->addLayer(peak_map,filename)) return;
@@ -1030,16 +1071,20 @@ namespace OpenMS
 			//set caption
     	open_window->canvas()->setLayerName(open_window->canvas()->activeLayerIndex(), caption);
 		}
-		else //merge features data into feature layer
+		else //merge feature/ID data into feature layer
 		{
 			Spectrum2DCanvas* canvas = qobject_cast<Spectrum2DCanvas*>(open_window->canvas());
-			if (is_consensus_feature)
+			if (data_type == LayerData::DT_CONSENSUS)
 			{
 				canvas->mergeIntoLayer(merge_layer,consensus_map);
 			}
-			else
+			else if (data_type == LayerData::DT_FEATURE)
 			{
 				canvas->mergeIntoLayer(merge_layer,feature_map);
+			}
+			else if (data_type == LayerData::DT_IDENT)
+			{
+				canvas->mergeIntoLayer(merge_layer, peptides);
 			}
 		}
 
@@ -1170,6 +1215,11 @@ namespace OpenMS
     }
   }
 
+  void TOPPViewBase::showCursorStatusInvert(double mz, double rt)
+  { // swap rt vs mz (for vertical projection)
+    showCursorStatus(rt, mz);
+  }
+
   void TOPPViewBase::showCursorStatus(double mz, double rt)
   {
     message_label_->setText("");
@@ -1247,11 +1297,58 @@ namespace OpenMS
 			if (active2DWindow_()->canvas()->getCurrentLayer().label == LayerData::L_NONE)
 			{
 				active2DWindow_()->canvas()->setLabel(LayerData::L_INDEX);
+				dm_label_2d_->menu()->actions()[1]->setChecked(true);
 			}
 			else
 			{
 				active2DWindow_()->canvas()->setLabel(LayerData::L_NONE);
+				dm_label_2d_->menu()->actions()[0]->setChecked(true);
 			}
+		}
+
+		updateToolBar();
+	}
+
+	void TOPPViewBase::changeUnassigned(QAction* action)
+	{
+		bool set = false;
+
+		// mass reference is selected
+		if (action->text().toStdString() == "Don't show")
+		{
+			active2DWindow_()->canvas()->setLayerFlag(LayerData::F_UNASSIGNED, false);
+			active2DWindow_()->canvas()->setLayerFlag(LayerData::I_PEPTIDEMZ, false);
+			set = true;
+		}
+		else if (action->text().toStdString() == "Show by precursor m/z")
+		{
+			active2DWindow_()->canvas()->setLayerFlag(LayerData::F_UNASSIGNED, true);
+			active2DWindow_()->canvas()->setLayerFlag(LayerData::I_PEPTIDEMZ, false);
+			set = true;
+		}
+		else if (action->text().toStdString() == "Show by peptide mass")
+		{
+			active2DWindow_()->canvas()->setLayerFlag(LayerData::F_UNASSIGNED, true);
+			active2DWindow_()->canvas()->setLayerFlag(LayerData::I_PEPTIDEMZ, true);
+			set = true;
+		}
+
+		// button is simply pressed
+		if (!set)
+		{
+			bool previous = 
+				active2DWindow_()->canvas()->getLayerFlag(LayerData::F_UNASSIGNED);
+			active2DWindow_()->canvas()->setLayerFlag(LayerData::F_UNASSIGNED, 
+																								!previous);
+			if (previous) // now: don't show
+			{
+				dm_unassigned_2d_->menu()->actions()[0]->setChecked(true);
+			}
+			else // now: show by precursor
+			{
+				dm_unassigned_2d_->menu()->actions()[1]->setChecked(true);
+			}
+			active2DWindow_()->canvas()->setLayerFlag(LayerData::I_PEPTIDEMZ, false);
 		}
 
 		updateToolBar();
@@ -1276,14 +1373,15 @@ namespace OpenMS
 			{
 		    win->canvas()->setLayerFlag(LayerData::F_HULL,on);
 			}
-			else if (action == dm_unassigned_2d_)
-			{
-		    win->canvas()->setLayerFlag(LayerData::F_UNASSIGNED,on);
-			}
 			//consensus features
 			else if (action == dm_elements_2d_)
 			{
 				 win->canvas()->setLayerFlag(LayerData::C_ELEMENTS,on);
+			}
+			// identifications
+			else if (action == dm_ident_2d_)
+			{
+				win->canvas()->setLayerFlag(LayerData::I_PEPTIDEMZ, on);
 			}
 		}
   }
@@ -1310,6 +1408,7 @@ namespace OpenMS
       tool_bar_2d_peak_->hide();
       tool_bar_2d_feat_->hide();
       tool_bar_2d_cons_->hide();
+			tool_bar_2d_ident_->hide();
     }
 
     //2d
@@ -1324,6 +1423,7 @@ namespace OpenMS
 	      tool_bar_2d_peak_->show();
  	    	tool_bar_2d_feat_->hide();
 	      tool_bar_2d_cons_->hide();
+				tool_bar_2d_ident_->hide();			
 			}
 			//feature draw modes
 			else if (w2->canvas()->getCurrentLayer().type == LayerData::DT_FEATURE)
@@ -1335,14 +1435,24 @@ namespace OpenMS
 	      tool_bar_2d_peak_->hide();
 	      tool_bar_2d_feat_->show();
 	      tool_bar_2d_cons_->hide();
+				tool_bar_2d_ident_->hide();
 			}
 			//consensus feature draw modes
-			else
+			else if (w2->canvas()->getCurrentLayer().type == LayerData::DT_CONSENSUS)
 			{
       	dm_elements_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::C_ELEMENTS));
 	      tool_bar_2d_peak_->hide();
 	      tool_bar_2d_feat_->hide();
 	      tool_bar_2d_cons_->show();
+				tool_bar_2d_ident_->hide();
+			}
+			else if (w2->canvas()->getCurrentLayer().type == LayerData::DT_IDENT)
+			{
+				dm_ident_2d_->setChecked(w2->canvas()->getLayerFlag(LayerData::I_PEPTIDEMZ));
+	      tool_bar_2d_peak_->hide();
+	      tool_bar_2d_feat_->hide();
+	      tool_bar_2d_cons_->hide();
+				tool_bar_2d_ident_->show();
 			}
     }
 
@@ -1355,6 +1465,7 @@ namespace OpenMS
       tool_bar_2d_peak_->hide();
       tool_bar_2d_feat_->hide();
       tool_bar_2d_cons_->hide();
+			tool_bar_2d_ident_->hide();
     }
   }
 
@@ -1682,8 +1793,18 @@ namespace OpenMS
 		int index = current->text(1).toInt();
 
 		//add a copy of the current data as 1D view
-		LayerData cl = activeCanvas_()->getCurrentLayer();
-		addData_(cl.features, cl.consensus, cl.peaks, false, true, true, false, cl.filename, cl.name);
+		LayerData cl;
+		try
+		{
+			cl = activeCanvas_()->getCurrentLayer();
+		}
+    catch(Exception::BaseException& e) // catch Out-Of-Memory Exceptions
+    {
+    	showLogMessage_(LS_ERROR,"Error while creating layer",e.what());
+      return;
+    }
+
+		addData_(cl.features, cl.consensus, cl.peptides, cl.peaks, LayerData::DT_PEAK, true, false, cl.filename, cl.name);
 
 		//set properties for the new 1D view
 		if (active1DWindow_())
@@ -1792,8 +1913,17 @@ namespace OpenMS
 			if (selected!=0 && selected->text()=="Show in 1D view")
 			{
 				//add a copy of the current data as 1D view
-				LayerData cl = activeCanvas_()->getCurrentLayer();
-				addData_(cl.features, cl.consensus, cl.peaks, false, true, true, false, cl.filename, cl.name);
+				LayerData cl;
+				try
+				{
+					cl = activeCanvas_()->getCurrentLayer();
+				}
+				catch(Exception::BaseException& e) // catch Out-Of-Memory Exceptions
+				{
+    			showLogMessage_(LS_ERROR,"Error while creating layer",e.what());
+					return;
+				}
+				addData_(cl.features, cl.consensus, cl.peptides, cl.peaks, LayerData::DT_PEAK, true, false, cl.filename, cl.name);
 
 				//set properties for the new 1D view
 				if (active1DWindow_())
@@ -2069,7 +2199,7 @@ namespace OpenMS
   	if (sw2 != 0)
   	{
   		connect(sw2->getHorizontalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
-  		connect(sw2->getVerticalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
+  		connect(sw2->getVerticalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatusInvert(double,double)));
   		connect(sw2,SIGNAL(showSpectrumAs1D(int)),this,SLOT(showSpectrumAs1D(int)));
   	}
 
@@ -2199,9 +2329,17 @@ namespace OpenMS
     {
     	bool error = false;
     	Param tmp;
-    	tmp.load(filename);
-    	//apply preferences if they are of the current TOPPView version
-    	if(tmp.exists("preferences:version") && tmp.getValue("preferences:version").toString()==VersionInfo::getVersion())
+      try
+      { // the file might be corrupt
+    	  tmp.load(filename);
+      }
+      catch (...)
+      {
+        error = true;
+      }
+      
+      //apply preferences if they are of the current TOPPView version
+    	if(!error && tmp.exists("preferences:version") && tmp.getValue("preferences:version").toString()==VersionInfo::getVersion())
     	{
     		try
     		{
@@ -2219,7 +2357,7 @@ namespace OpenMS
 			//set parameters to defaults when something is fishy with the parameters file
 			if (error)
 			{
-  			//reset parameters
+  			//reset parameters (they will be stored again when TOPPView quits)
   			setParameters(Param());
 
 				cerr << "The TOPPView preferences files '" << filename << "' was ignored. It is no longer compatible with this TOPPView version and will be replaced." << endl;
@@ -2286,8 +2424,8 @@ namespace OpenMS
 		filter_all +=" *.cdf";
 		filter_single += ";;ANDI/MS files (*.cdf)";
 #endif
-		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML);;" ;
-		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;XML files (*.xml);;all files (*)";
+		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML *.idXML fid);;" ;
+		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;peptide identifications (*.idXML);;XML files (*.xml);;XMass Analysis (fid);;all files (*)";
 
 		QString open_path = current_path_.toQString();
 		if (path_overwrite!="")
@@ -2623,8 +2761,16 @@ namespace OpenMS
 				QMessageBox::warning(this, "Error", "You must enter a peptide sequence!");
 				return;
 			}
-			AASequence aa_sequence(seq_string);
-
+      AASequence aa_sequence;
+      try
+      {
+        aa_sequence.setStringSequence(seq_string);
+      }
+      catch (Exception::BaseException& e)
+      {
+        QMessageBox::warning(this, "Error", QString("Spectrum generation failed! (") + e.what() + ")");
+			  return;
+      }
 			Int charge = spec_gen_dialog.spin_box->value();
 
 			if (aa_sequence.isValid())
@@ -2639,6 +2785,8 @@ namespace OpenMS
 				bool isotopes = (spec_gen_dialog.list_widget->item(8)->checkState() == Qt::Checked); // "Isotope clusters"
 				String iso_str = isotopes ? "true" : "false";
 				p.setValue("add_isotopes", iso_str, "If set to 1 isotope peaks of the product ion peaks are added");
+        Size max_iso_count = (Size)spec_gen_dialog.max_iso_spinbox->value();
+        p.setValue("max_isotope", max_iso_count, "Number of isotopic peaks");
 				p.setValue("a_intensity", spec_gen_dialog.a_intensity->value(), "Intensity of the a-ions");
 				p.setValue("b_intensity", spec_gen_dialog.b_intensity->value(), "Intensity of the b-ions");
 				p.setValue("c_intensity", spec_gen_dialog.c_intensity->value(), "Intensity of the c-ions");
@@ -2649,34 +2797,42 @@ namespace OpenMS
 				p.setValue("relative_loss_intensity", rel_loss_int, "Intensity of loss ions, in relation to the intact ion intensity");
 				generator.setParameters(p);
 
-				if (spec_gen_dialog.list_widget->item(0)->checkState() == Qt::Checked) // "A-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::AIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(1)->checkState() == Qt::Checked) // "B-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::BIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(2)->checkState() == Qt::Checked) // "C-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::CIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(3)->checkState() == Qt::Checked) // "X-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::XIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(4)->checkState() == Qt::Checked) // "Y-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::YIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(5)->checkState() == Qt::Checked) // "Z-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::ZIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(6)->checkState() == Qt::Checked) // "Precursor"
-				{
-					generator.addPrecursorPeaks(rich_spec, aa_sequence, charge);
-				}
+        try
+        {
+				  if (spec_gen_dialog.list_widget->item(0)->checkState() == Qt::Checked) // "A-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::AIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(1)->checkState() == Qt::Checked) // "B-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::BIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(2)->checkState() == Qt::Checked) // "C-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::CIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(3)->checkState() == Qt::Checked) // "X-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::XIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(4)->checkState() == Qt::Checked) // "Y-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::YIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(5)->checkState() == Qt::Checked) // "Z-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::ZIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(6)->checkState() == Qt::Checked) // "Precursor"
+				  {
+					  generator.addPrecursorPeaks(rich_spec, aa_sequence, charge);
+				  }
+        }
+        catch (Exception::BaseException& e)
+        {
+          QMessageBox::warning(this, "Error", QString("Spectrum generation failed! (") + e.what() + "). Please report this to the developers (specify what input you used)!");
+				  return;
+        }
 
 				PeakSpectrum new_spec;
 				for (RichPeakSpectrum::Iterator it = rich_spec.begin(); it != rich_spec.end(); ++it)
@@ -2689,7 +2845,8 @@ namespace OpenMS
 
 				FeatureMapType f_dummy;
 				ConsensusMapType c_dummy;
-				addData_(f_dummy, c_dummy, new_exp, false, false, false, true, "", seq_string + QString(" (theoretical)"));
+				vector<PeptideIdentification> p_dummy;
+				addData_(f_dummy, c_dummy, p_dummy, new_exp, LayerData::DT_CHROMATOGRAM, false, true, "", seq_string + QString(" (theoretical)"));
 
 	      // ensure spectrum is drawn as sticks
 	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
@@ -2794,6 +2951,10 @@ namespace OpenMS
   	}
 
 		w->canvas()->activateSpectrum(index);
+		// set visible aree to visible area in 2D view
+    w->canvas()->setVisibleArea(activeCanvas_()->getVisibleArea());
+		// set relative (%) view of visible area
+		w->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
 
 		String caption = layer.name;
 		w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
@@ -3152,87 +3313,70 @@ namespace OpenMS
 
 	void TOPPViewBase::copyLayer(const QMimeData* data, QWidget* source, int id)
 	{
-		//NOT USED RIGHT NOW, BUT KEEP THIS CODE (it was hard to find out how this is done)
-		//decode data to get the row
-		//QByteArray encoded_data = data->data(data->formats()[0]);
-		//QDataStream stream(&encoded_data, QIODevice::ReadOnly);
-		//int row, col;
-		//stream >> row >> col;
-
-  	//set wait cursor
-  	setCursor(Qt::WaitCursor);
-
-		//determine where to copy the data
-		UInt new_id = 0;
-		if (id!=-1) new_id = id;
-
-		if (source == layer_manager_)
+		try
 		{
-			//only the selected row can be dragged => the source layer is the selected layer
-			const LayerData& layer = activeCanvas_()->getCurrentLayer();
+			//NOT USED RIGHT NOW, BUT KEEP THIS CODE (it was hard to find out how this is done)
+			//decode data to get the row
+			//QByteArray encoded_data = data->data(data->formats()[0]);
+			//QDataStream stream(&encoded_data, QIODevice::ReadOnly);
+			//int row, col;
+			//stream >> row >> col;
 
-			//copy the feature and peak data
-			FeatureMapType features = layer.features;
-			ExperimentType peaks = layer.peaks;
-			ConsensusMapType consensus = layer.consensus;
+  		//set wait cursor
+  		setCursor(Qt::WaitCursor);
 
-			//determine if the data is 2D data
-			bool is_2D = false;
-			bool is_feature = false;
-			if (layer.type==LayerData::DT_FEATURE)
+			//determine where to copy the data
+			UInt new_id = 0;
+			if (id!=-1) new_id = id;
+
+			if (source == layer_manager_)
 			{
-				is_2D = true;
-				is_feature = true;
+				//only the selected row can be dragged => the source layer is the selected layer
+				const LayerData& layer = activeCanvas_()->getCurrentLayer();
+
+				//copy the feature and peak data
+				FeatureMapType features = layer.features;
+				ExperimentType peaks = layer.peaks;
+				ConsensusMapType consensus = layer.consensus;
+				vector<PeptideIdentification> peptides = layer.peptides;
+
+				//add the data
+				addData_(features, consensus, peptides, peaks, layer.type, false, false, layer.filename, layer.name, new_id);
 			}
-			else if (layer.type==LayerData::DT_CONSENSUS)
+			else if (source == spectrum_selection_)
 			{
-				is_2D = true;
-				is_feature = true;
-			}
-			else
-			{
-				UInt ms1_scans = 0;
-				for (Size i=0; i<peaks.size();++i)
+				const LayerData& layer = activeCanvas_()->getCurrentLayer();
+				QTreeWidgetItem* item = spectrum_selection_->currentItem();
+				if (item != 0)
 				{
-					if (peaks[i].getMSLevel()==1) ++ms1_scans;
-					if (ms1_scans>1)
+					Size index = (Size)(item->text(3).toInt());
+					const ExperimentType::SpectrumType spectrum = layer.peaks[index];
+					ExperimentType new_exp;
+					new_exp.push_back(spectrum);
+					FeatureMapType f_dummy;
+					ConsensusMapType c_dummy;
+					vector<PeptideIdentification> p_dummy;
+					addData_(f_dummy, c_dummy, p_dummy, new_exp, LayerData::DT_CHROMATOGRAM, false, false, layer.filename, layer.name, new_id);
+				}
+			}
+			else if (source == 0)
+			{
+				// drag source is external
+				if (data->hasUrls())
+				{
+					QList<QUrl> urls = data->urls();
+					for (QList<QUrl>::const_iterator it = urls.begin(); it != urls.end(); ++it)
 					{
-						is_2D = true;
-						break;
+						addDataFile(it->toLocalFile(), false, true, "", new_id);
 					}
 				}
 			}
-
-			//add the data
-			addData_(features, consensus, peaks, is_feature, is_2D, false, false, layer.filename, layer.name, new_id);
+		
 		}
-		else if (source == spectrum_selection_)
-		{
-			const LayerData& layer = activeCanvas_()->getCurrentLayer();
-			QTreeWidgetItem* item = spectrum_selection_->currentItem();
-			if (item != 0)
-			{
-				Size index = (Size)(item->text(3).toInt());
-				const ExperimentType::SpectrumType spectrum = layer.peaks[index];
-				ExperimentType new_exp;
-				new_exp.push_back(spectrum);
-				FeatureMapType f_dummy;
-				ConsensusMapType c_dummy;
-				addData_(f_dummy,c_dummy,new_exp,false,false,false,false,layer.filename,layer.name,new_id);
-			}
-		}
-		else if (source == 0)
-		{
-			// drag source is external
-			if (data->hasUrls())
-			{
-				QList<QUrl> urls = data->urls();
-				for (QList<QUrl>::const_iterator it = urls.begin(); it != urls.end(); ++it)
-				{
-					addDataFile(it->toLocalFile(), false, true, "", new_id);
-				}
-			}
-		}
+    catch(Exception::BaseException& e)
+    {
+    	showLogMessage_(LS_ERROR,"Error while creating layer",e.what());
+    }
 
 		//reset cursor
   	setCursor(Qt::ArrowCursor);

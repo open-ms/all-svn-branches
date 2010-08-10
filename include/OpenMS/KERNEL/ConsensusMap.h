@@ -80,7 +80,7 @@ namespace OpenMS
 				/// Label e.g. 'heavy' and 'light' for ICAT, or 'sample1' and 'sample2' for label-free quantitation
 				String label;
 				/// @brief Number of elements (features, peaks, ...).
-				/// This is e.g. used to check for correct element indices when writing a consensus map
+				/// This is e.g. used to check for correct element indices when writing a consensus map TODO fix that
 				Size size;
 				/// Unique id of the file
 				UInt64 unique_id;
@@ -235,7 +235,7 @@ namespace OpenMS
 			/**
 				@name Sorting.
 
-				These simplified sorting methods are supported in addition to the standard sorting methods of std::vector.
+				These specialized sorting methods are supported in addition to the standard sorting methods of std::vector. All use stable sorting.
 			*/
 			//@{
 			/// Sorts the peaks according to ascending intensity.
@@ -243,30 +243,30 @@ namespace OpenMS
 			{
 				if (reverse)
 				{
-					std::sort(Base::begin(), Base::end(), reverseComparator(ConsensusFeature::IntensityLess()));
+					std::stable_sort(Base::begin(), Base::end(), reverseComparator(ConsensusFeature::IntensityLess()));
 				}
 				else
 				{
-					std::sort(Base::begin(), Base::end(), ConsensusFeature::IntensityLess());
+					std::stable_sort(Base::begin(), Base::end(), ConsensusFeature::IntensityLess());
 				}
 			}
 
 			/// Sorts the peaks to RT position.
 			void sortByRT()
 			{
-				std::sort(Base::begin(), Base::end(), ConsensusFeature::RTLess());
+				std::stable_sort(Base::begin(), Base::end(), ConsensusFeature::RTLess());
 			}
 
 			/// Sorts the peaks to m/z position.
 			void sortByMZ()
 			{
-				std::sort(Base::begin(), Base::end(), ConsensusFeature::MZLess());
+				std::stable_sort(Base::begin(), Base::end(), ConsensusFeature::MZLess());
 			}
 
 			/// Lexicographically sorts the peaks by their position (First RT then m/z).
 			void sortByPosition()
 			{
-				std::sort(Base::begin(), Base::end(), ConsensusFeature::PositionLess());
+				std::stable_sort(Base::begin(), Base::end(), ConsensusFeature::PositionLess());
 			}
 
 			/// Sorts the peaks according to ascending quality.
@@ -274,21 +274,21 @@ namespace OpenMS
 			{
 				if (reverse)
 				{
-					std::sort(Base::begin(), Base::end(), reverseComparator(ConsensusFeature::QualityLess()));
+					std::stable_sort(Base::begin(), Base::end(), reverseComparator(ConsensusFeature::QualityLess()));
 				}
 				else
 				{
-					std::sort(Base::begin(), Base::end(), ConsensusFeature::QualityLess());
+					std::stable_sort(Base::begin(), Base::end(), ConsensusFeature::QualityLess());
 				}
 			}
 
-			/// Does a stable sort with respect to the size (number of elements)
+			/// Sorts with respect to the size (number of elements)
 			void sortBySize()
 			{
 				std::stable_sort(Base::begin(), Base::end(), reverseComparator(ConsensusFeature::SizeLess()));
 			}
 
-			/// Does a stable sort with respect to the sets of maps covered by the consensus features (lexicographically).
+			/// Sorts with respect to the sets of maps covered by the consensus features (lexicographically).
 			void sortByMaps()
 			{
 				std::stable_sort(Base::begin(), Base::end(), ConsensusFeature::MapsLess());
@@ -304,7 +304,7 @@ namespace OpenMS
 				because that is the way it is meant to be used in the algorithms.
 
 				@param input_map_index The index of the input map.
-				@param input_map The container to be converted.  (Must support size() and operator[].)
+				@param input_map The container to be converted.
 				@param output_map The resulting ConsensusMap.
 
 			*/
@@ -319,7 +319,7 @@ namespace OpenMS
 
         for (UInt64 element_index = 0; element_index < input_map.size(); ++element_index )
 				{
-					output_map.push_back( ConsensusFeature( input_map_index, input_map[element_index].getUniqueId(), input_map[element_index] ) );
+					output_map.push_back( ConsensusFeature( input_map_index, input_map[element_index] ) );
 				}
 				output_map.getFileDescriptions()[input_map_index].size = (Size) input_map.size();
         output_map.setProteinIdentifications(input_map.getProteinIdentifications());
@@ -356,7 +356,7 @@ namespace OpenMS
 				std::partial_sort( tmp.begin(), tmp.begin()+n, tmp.end(), reverseComparator(Peak2D::IntensityLess()) );
 				for (Size element_index = 0; element_index < n; ++element_index )
 				{
-					output_map.push_back( ConsensusFeature(input_map_index, element_index, tmp[element_index] ) );
+					output_map.push_back( ConsensusFeature(input_map_index, tmp[element_index], element_index ) );
 				}
 				output_map.getFileDescriptions()[input_map_index].size = n;
 				output_map.updateRanges();
@@ -472,10 +472,10 @@ namespace OpenMS
 				return !(operator==(rhs));
 			}
 
-      /**@brief Applies a member function of Type to all consensus features.
+      /**@brief Applies a member function of Type to the container itself and all consensus features.
          The returned values are accumulated.
 
-         <b>Example:</b>  The following will print the number of features with invalid unique ids:
+         <b>Example:</b>  The following will print the number of features with invalid unique ids (plus 1 if the container has an invalid UID as well):
          @code
          ConsensusMap cm;
          (...)

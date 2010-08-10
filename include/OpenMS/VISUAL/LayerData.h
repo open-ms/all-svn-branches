@@ -37,6 +37,7 @@
 #include <OpenMS/FILTERING/DATAREDUCTION/DataFilters.h>
 
 #include <vector>
+#include <bitset>
 
 namespace OpenMS 
 {
@@ -56,20 +57,25 @@ namespace OpenMS
 			DT_FEATURE,	      ///< Feature data
 			DT_CONSENSUS,     ///< Consensus feature data
 			DT_CHROMATOGRAM,  ///< Chromatogram data
+			DT_IDENT,         ///< Peptide identification data
 			DT_UNKNOWN			  ///< Undefined data type indicating an error
 		};
 
 		///Flags that determine which information is shown.
 		enum Flags
 		{
-			F_HULL,       ///< Features: Overall convex hull
-			F_HULLS,      ///< Features: Convex hulls of single mass traces 
-			F_UNASSIGNED,///< Features: Unassigned peptide hits
-			P_PRECURSORS, ///< Peaks: Mark precursor peaks of MS/MS scans
-			P_PROJECTIONS,///< Peaks: Show projections
-			C_ELEMENTS    ///< Consensus features: Show elements
+			F_HULL,        ///< Features: Overall convex hull
+			F_HULLS,       ///< Features: Convex hulls of single mass traces 
+			F_UNASSIGNED,  ///< Features: Unassigned peptide hits
+			P_PRECURSORS,  ///< Peaks: Mark precursor peaks of MS/MS scans
+			P_PROJECTIONS, ///< Peaks: Show projections
+			C_ELEMENTS,    ///< Consensus features: Show elements
+			I_PEPTIDEMZ,   ///< Identifications: m/z source
+			SIZE_OF_FLAGS
 		};
-		
+		/// Actual state of each flag
+		std::bitset<SIZE_OF_FLAGS> flags;
+
 		///Label used in visualization
 		enum LabelType
 		{
@@ -93,7 +99,8 @@ namespace OpenMS
 		
 		/// Default constructor
 		LayerData()
-			: visible(true),
+			:	flags(),
+				visible(true),
 				flipped(false),
 				type(DT_UNKNOWN),
 				name(),
@@ -101,10 +108,8 @@ namespace OpenMS
 				peaks(),
 				features(),
 				consensus(),
+				peptides(),
 				current_spectrum(0),
-				f1(false),
-				f2(false),
-				f3(false),
 				param(),
 				gradient(),
 				filters(),
@@ -153,15 +158,10 @@ namespace OpenMS
 		FeatureMapType features;
 		/// consensus feature data
 		ConsensusMapType consensus;
+		/// peptide identifications
+		std::vector<PeptideIdentification> peptides;
 		/// Index of the current spectrum (1d view)
 		Size current_spectrum;
-		
-		/// Flag one (Features: convex hulls, Peak: precursors, Consensus: elements)
-		bool f1;
-		/// Flag two (Features: numbers, Peak: projections, Consensus: -)
-		bool f2;
-		/// Flag tree (Features: convex hull, Peak: -, Consensus: -)
-		bool f3;
 		
 		///Layer parameters
 		Param param;
@@ -182,6 +182,7 @@ namespace OpenMS
 		
 		///Label type
 		LabelType label;
+
 	};
 
 	///Print the contents to a stream.

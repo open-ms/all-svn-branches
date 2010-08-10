@@ -147,21 +147,27 @@ namespace OpenMS
      trafo.init_();
      for ( std::vector<Feature>::iterator fmit = fmap.begin(); fmit != fmap.end(); ++fmit )
      {
-       applyToFeature_(fmit,*trafo.trafo_);
+       applyToFeature_(fmit, trafo);
      }
+		 
+		 // adapt RT values of unassigned peptides:
+		 if (!fmap.getUnassignedPeptideIdentifications().empty())
+		 {
+			 transformSinglePeptideIdentification(
+				 fmap.getUnassignedPeptideIdentifications(), trafo);
+		 }
+
      return;
    }
 
 
-   void MapAlignmentAlgorithm::applyToFeature_( const std::vector<Feature>::iterator &iter,
-                                                               TransformationDescription::Trafo_ const& trafo
-                                                             )
+   void MapAlignmentAlgorithm::applyToFeature_( const std::vector<Feature>::iterator &iter, const TransformationDescription& trafo )
    {
      // V_MapAlignmentAlgorithm("Hi out there.  This is MapAlignmentAlgorithm::applyToFeature_()");
 
      // transform feature position
      DoubleReal rt = iter->getRT();
-     trafo(rt);
+     (*trafo.trafo_)(rt);
      iter->setRT(rt);
 
      // loop over all convex hulls
@@ -172,18 +178,27 @@ namespace OpenMS
          )
      {
        // transform all hull point positions within convex hull
-       ConvexHull2D::PointArrayType & points = const_cast<ConvexHull2D::PointArrayType&>(chiter->getPoints());
+       ConvexHull2D::PointArrayType points = chiter->getHullPoints();
+			 chiter->clear();
        for ( ConvexHull2D::PointArrayType::iterator points_iter = points.begin();
              points_iter != points.end();
              ++points_iter
            )
        {
          DoubleReal rt = (*points_iter)[Feature::RT];
-         trafo(rt);
+         (*trafo.trafo_)(rt);
          (*points_iter)[Feature::RT] = rt;
        }
+			 chiter->setHullPoints(points);
      }
 
+		 // adapt RT values of annotated peptides:
+		 if (!iter->getPeptideIdentifications().empty())
+		 {
+			 transformSinglePeptideIdentification(iter->getPeptideIdentifications(),
+																						trafo);
+		 }
+		 
      // recurse into subordinates
      for ( std::vector<Feature>::iterator subiter = iter->getSubordinates().begin();
            subiter != iter->getSubordinates().end();
@@ -242,7 +257,5 @@ namespace OpenMS
       }
       return;
     }
-
-
 
 } 

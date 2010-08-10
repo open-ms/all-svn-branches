@@ -38,7 +38,10 @@
 namespace OpenMS
 {
 	class TOPPASVertex;
+	class TOPPASToolVertex;
+	class TOPPASOutputFileListVertex;
 	class TOPPASEdge;
+	class TOPPASResources;
 	
 	/**
 		@brief A container for all visual items of a TOPPAS workflow
@@ -168,6 +171,22 @@ namespace OpenMS
 			void resetProcessesQueue();
 			/// Sets the clipboard content
 			void setClipboard(TOPPASScene* clipboard);
+			///Connects the signals to slots
+			void connectVertexSignals(TOPPASVertex* tv);
+			///Connects the signals to slots
+			void connectToolVertexSignals(TOPPASToolVertex* ttv);
+			///Connects the signals to slots
+			void connectOutputVertexSignals(TOPPASOutputFileListVertex* oflv);
+			///Connects the signals to slots
+			void connectEdgeSignals(TOPPASEdge* e);
+			///Loads the @p resources into the input nodes of this workflow
+			void loadResources(const TOPPASResources& resources);
+			///Create @p resources from the current workflow
+			void createResources(TOPPASResources& resources);
+			///Returns whether the workflow has been changed since the latest "save"
+			bool wasChanged();
+			/// Refreshes the parameters of the TOPP tools in this workflow
+			bool refreshParameters();
 			
 		public slots:
 		
@@ -194,18 +213,18 @@ namespace OpenMS
 			
 			///@name Slots for printing log/error output when no GUI is available
       //@{
-      /// Writes the TOPP tool output to standard output
-      void noGuiTOPPOutput(const QString& out);
-      /// Writes the "tool started" message to standard output
-      void noGuiToolStarted();
-      /// Writes the "tool finished" message to standard output
-      void noGuiToolFinished();
-      /// Writes the "tool failed" message to standard output
-      void noGuiToolFailed();
-      /// Writes the "tool crashed" message to standard output
-      void noGuiToolCrashed();
-      /// Writes the "output file written" message to standard output
-      void noGuiOutputFileWritten(const String& file);
+      /// Writes the TOPP tool output to the logfile (and to stdout if no gui available)
+      void logTOPPOutput(const QString& out);
+      /// Writes the "tool started" message to the logfile (and to stdout if no gui available)
+      void logToolStarted();
+      /// Writes the "tool finished" message to the logfile (and to stdout if no gui available)
+      void logToolFinished();
+      /// Writes the "tool failed" message to the logfile (and to stdout if no gui available)
+      void logToolFailed();
+      /// Writes the "tool crashed" message to the logfile (and to stdout if no gui available)
+      void logToolCrashed();
+      /// Writes the "output file written" message to the logfile (and to stdout if no gui available)
+      void logOutputFileWritten(const String& file);
 			//@}
 			
 		signals:
@@ -222,6 +241,8 @@ namespace OpenMS
 			void selectionCopied(TOPPASScene* ts);
 			/// Requests the clipboard content from TOPPASBase, will be stored in clipboard_
 			void requestClipboardContent();
+			/// Emitted when the main window needs to be updated
+			void mainWindowNeedsUpdate();
 
 		protected:
 			
@@ -267,6 +288,10 @@ namespace OpenMS
       //@{
       void contextMenuEvent(QGraphicsSceneContextMenuEvent* event);
 			//@}
+			
+			///Writes the @p text to the logfile
+			void writeToLogFile_(const QString& text);
+			
 	};
 
 }

@@ -104,8 +104,8 @@ START_SECTION(([EXTRA] Prediction Test - HPLC with relative RTs))
   svm_params.setValue("scan_window:max",4000.0);
   svm_params.setValue("HPLC:model_file",OPENMS_GET_TEST_DATA_PATH("RTSimulation.svm"));
   svm_params.setValue("auto_scale", "true");
-  svm_params.setValue("rt_shift_mean", 0);
-  svm_params.setValue("rt_shift_stddev", 0);
+  svm_params.setValue("variation:affine_offset", 0);
+  svm_params.setValue("variation:feature_stddev", 0);
   
   svm_rt_sim.setParameters(svm_params);
   
@@ -122,7 +122,7 @@ START_SECTION(([EXTRA] Prediction Test - HPLC with relative RTs))
 	}  
 
   MSSimExperiment experiment_rt;  
-  svm_rt_sim.predictRT(svm_rt_features, experiment_rt);
+  svm_rt_sim.predictRT(svm_rt_features);
 
 	TEST_EQUAL(svm_rt_features.size(), 4)
 		 
@@ -141,9 +141,8 @@ START_SECTION(([EXTRA] Prediction Test - HPLC with relative RTs))
 }
 END_SECTION
 
-START_SECTION(([EXTRA] Test MS Experiment Generation))
+START_SECTION((void createExperiment(MSSimExperiment & experiment)))
 {
-  // TODO: test generated experiment
   // init rng
   gsl_rng* rnd_gen = gsl_rng_alloc (gsl_rng_taus);
   gsl_rng_set(rnd_gen, rnd_gen_seed);
@@ -158,8 +157,8 @@ START_SECTION(([EXTRA] Test MS Experiment Generation))
   svm_params.setValue("sampling_rate",5.0);
   svm_params.setValue("HPLC:model_file",OPENMS_GET_TEST_DATA_PATH("RTSimulation.svm"));
   svm_params.setValue("auto_scale", "true");
-  svm_params.setValue("rt_shift_mean", 0);
-  svm_params.setValue("rt_shift_stddev", 0);
+  svm_params.setValue("variation:affine_offset", 0);
+  svm_params.setValue("variation:feature_stddev", 0);
 
   svm_rt_sim.setParameters(svm_params);
 
@@ -176,7 +175,8 @@ START_SECTION(([EXTRA] Test MS Experiment Generation))
   }
 
   MSSimExperiment experiment_rt;
-  svm_rt_sim.predictRT(svm_rt_features, experiment_rt);
+  svm_rt_sim.predictRT(svm_rt_features);
+  svm_rt_sim.createExperiment(experiment_rt);
 
   TEST_EQUAL(svm_rt_features.size(), 2)
 
@@ -221,7 +221,8 @@ START_SECTION(([EXTRA] Prediction Test - No RT column))
   }
 
   MSSimExperiment experiment_no_rt;
-  no_rt_sim.predictRT(no_rt_features, experiment_no_rt);
+  no_rt_sim.predictRT(no_rt_features);
+  no_rt_sim.createExperiment(experiment_no_rt);
   TEST_EQUAL(experiment_no_rt.size(), 1);
   for(FeatureMapSim::const_iterator fIt = no_rt_features.begin(); fIt != no_rt_features.end();
       ++fIt)
@@ -247,8 +248,8 @@ START_SECTION(([EXTRA] Prediction Test - HPLC with absolute RTs))
   abs_svm_params.setValue("scan_window:max",3000.0);
   abs_svm_params.setValue("HPLC:model_file",OPENMS_GET_TEST_DATA_PATH("RTSimulation_absolut_rt.model"));
   abs_svm_params.setValue("auto_scale", "false");
-  abs_svm_params.setValue("rt_shift_mean", 0);
-  abs_svm_params.setValue("rt_shift_stddev", 0);
+  abs_svm_params.setValue("variation:affine_offset", 0);
+  abs_svm_params.setValue("variation:feature_stddev", 0);
 
   rt_sim.setParameters(abs_svm_params);
 
@@ -268,7 +269,7 @@ START_SECTION(([EXTRA] Prediction Test - HPLC with absolute RTs))
   }
 
   MSSimExperiment experiment_rt;
-  rt_sim.predictRT(features, experiment_rt);
+  rt_sim.predictRT(features);
 
   TEST_EQUAL(features.size(), 3)
 

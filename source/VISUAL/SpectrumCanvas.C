@@ -232,12 +232,28 @@ namespace OpenMS
 		//cout << "Zoom in" << endl;
 		//cout << " - pos before:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 		//cout << " - size before:" << zoom_stack_.size() <<endl;
-		if (zoom_pos_!=zoom_stack_.end() && (zoom_pos_+1)!=zoom_stack_.end())
-		{
+
+    // if at end of zoom level then simply add a new zoom
+    if (zoom_pos_==zoom_stack_.end() || (zoom_pos_+1)==zoom_stack_.end() )
+    {
+      AreaType new_area;
+      // distance of areas center to border times a zoom factor of 0.8
+      AreaType::CoordinateType size0 = visible_area_.width() / 2 * 0.8;
+      AreaType::CoordinateType size1 = visible_area_.height() / 2 * 0.8;
+      new_area.setMinX( visible_area_.center()[0] - size0);
+      new_area.setMinY( visible_area_.center()[1] - size1);
+      new_area.setMaxX( visible_area_.center()[0] + size0);
+      new_area.setMaxY( visible_area_.center()[1] + size1);
+      zoomAdd_(new_area);
+      zoom_pos_= --zoom_stack_.end(); // set to last position
+    }
+    else
+    { // goto next zoom level
 			++zoom_pos_;
-			changeVisibleArea_(*zoom_pos_);
 		}
-		//cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
+		changeVisibleArea_(*zoom_pos_);
+    
+    //cout << " - pos after:" << (zoom_pos_-zoom_stack_.begin()) << endl;
 	}
 	
 	void SpectrumCanvas::zoomAdd_(const AreaType& area)
@@ -422,6 +438,18 @@ namespace OpenMS
 		return finishAdding_();
 	}
 
+	bool SpectrumCanvas::addLayer(vector<PeptideIdentification>& peptides, 
+																const String& filename)
+	{
+		layers_.resize(layers_.size()+1);
+		layers_.back().param = param_;
+		layers_.back().filename = filename;
+		layers_.back().peptides.swap(peptides);
+		layers_.back().type = LayerData::DT_IDENT;
+
+		return finishAdding_();
+	}
+
 	void SpectrumCanvas::setLayerName(Size i, const String& name)
 	{ 
 		OPENMS_PRECONDITION(i < layers_.size(), "SpectrumCanvas::setLayerName(i,name) index overflow");
@@ -486,7 +514,7 @@ namespace OpenMS
 				if (map.getMinInt() < m_min[it_dim]) m_min[it_dim] = map.getMinInt();
 				if (map.getMaxInt() > m_max[it_dim]) m_max[it_dim] = map.getMaxInt();
 			}
-			else
+			else if (getLayer(layer_index).type == LayerData::DT_CONSENSUS)
 			{
 				const ConsensusMapType& map = getLayer(layer_index).consensus;
 				if (map.getMin()[1] < m_min[mz_dim]) m_min[mz_dim] = map.getMin()[1];
@@ -495,6 +523,25 @@ namespace OpenMS
 				if (map.getMax()[0] > m_max[rt_dim]) m_max[rt_dim] = map.getMax()[0];
 				if (map.getMinInt() < m_min[it_dim]) m_min[it_dim] = map.getMinInt();
 				if (map.getMaxInt() > m_max[it_dim]) m_max[it_dim] = map.getMaxInt();
+			}
+			else if (getLayer(layer_index).type == LayerData::DT_IDENT)
+			{
+				// cout << "recalculateRanges_" << endl;
+				const vector<PeptideIdentification>& peptides = 
+					getLayer(layer_index).peptides;
+				for (vector<PeptideIdentification>::const_iterator it = 
+							 peptides.begin(); it != peptides.end(); ++it)
+				{
+					if (!it->getHits().empty())
+					{
+						DoubleReal rt = (DoubleReal) it->getMetaValue("RT");
+						DoubleReal mz = getIdentificationMZ_(layer_index, *it);
+						if (mz < m_min[mz_dim]) m_min[mz_dim] = mz;
+						if (mz > m_max[mz_dim]) m_max[mz_dim] = mz;
+						if (rt < m_min[rt_dim]) m_min[rt_dim] = rt;
+						if (rt > m_max[rt_dim]) m_max[rt_dim] = rt;
+					}					
+				}
 			}
 		}
 		//Add 1% margin to RT in order to display all the data
@@ -564,12 +611,20 @@ namespace OpenMS
 				}
 				else if ((String)(param_.getValue("on_file_change"))=="ask") //ask the user if the layer should be updated
 				{
+					if (watcher_msgbox_[j]==1)
+					{ // we already have a dialog for that opened... do not ask again
+						return;
+					}
+
+					// track that we will show the msgbox and we do not need to show it again if file changes once more and the dialog is still open
+					watcher_msgbox_[j]=1;
 					QMessageBox msg_box;
 					QAbstractButton* ok = msg_box.addButton(QMessageBox::Ok);
 					msg_box.addButton(QMessageBox::Cancel);
 					msg_box.setWindowTitle("Layer data changed");
 					msg_box.setText((String("The data file of layer '") + getLayer(j).filename + "' has changed.<BR>Update the layer?").toQString());
 					msg_box.exec();
+					watcher_msgbox_[j]=0;
 					if (msg_box.clickedButton() == ok)
 					{
 						update = true;
@@ -584,7 +639,7 @@ namespace OpenMS
 				}
 			}
 		}
-		//remove watchers that are not needed anymore
+		//remove watchers that are not needed anymore, i.e. no layer has that file loaded (we can stop watching)
   	if (updatable_layers==0)
   	{
   		watcher_->removeFile(filename);
@@ -846,6 +901,36 @@ namespace OpenMS
 		}
 	}
 
+	void SpectrumCanvas::getVisibleIdentifications(vector<PeptideIdentification>&
+																								 peptides) const
+	{		
+		//clear output experiment
+		peptides.clear();
+		
+    const LayerData& layer = getCurrentLayer();
+  	if (layer.type == LayerData::DT_IDENT)
+  	{
+			//Visible area
+			DoubleReal min_rt = getVisibleArea().minPosition()[1];
+			DoubleReal max_rt = getVisibleArea().maxPosition()[1];
+			DoubleReal min_mz = getVisibleArea().minPosition()[0];
+			DoubleReal max_mz = getVisibleArea().maxPosition()[0];
+			//copy features
+  		for (vector<PeptideIdentification>::const_iterator it = 
+						 layer.peptides.begin(); it != layer.peptides.end(); ++it)
+  		{
+				DoubleReal rt = (DoubleReal) it->getMetaValue("RT");
+				DoubleReal mz = getIdentificationMZ_(current_layer_, *it);
+				// TODO: if (layer.filters.passes(*it) && ...)
+				if ((rt >= min_rt) && (rt <= max_rt) &&
+						(mz >= min_mz) && (mz <= max_mz))
+				{
+					peptides.push_back(*it);
+				}
+			}
+		}
+	}
+
 	void SpectrumCanvas::showMetaData(bool modifiable, Int index)
   {
 		LayerData& layer = getCurrentLayer_();
@@ -874,6 +959,10 @@ namespace OpenMS
 			{
 				//TODO CHROM
 			}
+			else if (layer.type == LayerData::DT_IDENT)
+			{
+				// TODO IDENT
+			}
 		}
 		else //show element meta data
 		{
@@ -892,6 +981,10 @@ namespace OpenMS
 			else if (layer.type==LayerData::DT_CHROMATOGRAM)
 			{
 				//TODO CHROM
+			}
+			else if (layer.type == LayerData::DT_IDENT)
+			{
+				// TODO IDENT
 			}
 		}
   	
@@ -965,11 +1058,22 @@ namespace OpenMS
 		{
 			//TODO CHROM
 		}
+		else if (getCurrentLayer().type == LayerData::DT_IDENT)
+		{
+			// TODO IDENT
+		}
 		
 		//draw text			
 		QStringList lines;
 		if (print_rt) lines.push_back("RT : " + QString::number(rt,'f',2));
-		lines.push_back("m/z: " + QString::number(mz,'f',6));
+    if (spectrum_widget_->canvas()->isMzToXAxis())
+    {
+		  lines.push_back("m/z: " + QString::number(mz,'f',6));
+    }
+    else
+    {
+      lines.push_back("RT: " + QString::number(mz,'f',2));
+    }
 		lines.push_back("Int: " + QString::number(it,'f',2));
 		if (getCurrentLayer().type==LayerData::DT_FEATURE || getCurrentLayer().type==LayerData::DT_CONSENSUS)
 		{
@@ -1039,7 +1143,11 @@ namespace OpenMS
 		{
 			//TODO CHROM
 		}
-		
+		else if (getCurrentLayer().type == LayerData::DT_IDENT)
+		{
+			// TODO IDENT
+		}
+
 		//draw text			
 		QStringList lines;
 		if (print_rt) lines.push_back("RT delta : " + QString::number(rt,'f',2));
@@ -1084,6 +1192,22 @@ namespace OpenMS
 		}
 		
 		painter.restore();
+	}
+
+	DoubleReal SpectrumCanvas::getIdentificationMZ_(const Size layer_index,
+																									const PeptideIdentification& 
+																									peptide) const
+	{
+		if (getLayerFlag(layer_index, LayerData::I_PEPTIDEMZ))
+		{
+			const PeptideHit& hit = peptide.getHits().front();
+			Int charge = hit.getCharge();
+			return hit.getSequence().getMonoWeight(Residue::Full, charge) / charge;
+		}
+		else
+		{
+			return (DoubleReal) peptide.getMetaValue("MZ");
+		}		
 	}
 
 } //namespace

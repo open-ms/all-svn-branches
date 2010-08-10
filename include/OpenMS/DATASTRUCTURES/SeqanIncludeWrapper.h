@@ -30,15 +30,12 @@
 
 #ifdef _MSC_VER // disable some seqan warnings that distract from ours
 #	pragma warning( push ) // save warning state
-#	pragma warning( disable : 4244 )
-#	pragma warning( disable : 4267 )
-#	pragma warning( disable : 4390 )
-#	pragma warning( disable : 4521 )
-#	pragma warning( disable : 4522 )
-#	pragma warning( disable : 4800 )
+#	pragma warning( disable : 4244 4267 4390 4521 4522 4800)
 #endif
 
 #include <seqan/index.h>
+#include <seqan/align.h>
+#include <seqan/graph_align.h> 
 
 #ifdef _MSC_VER
 #	pragma warning( pop )  // restore old warning state

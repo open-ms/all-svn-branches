@@ -49,7 +49,7 @@ using namespace std;
 	
 	In feature detection algorithms, an early step is generally to identify points of interest in the LC-MS map (so-called seeds) that may later be extended to features. If supported by the feature detection algorithm (currently only the "centroided" algorithm), user-supplied seed lists allow greater control over this process.
 
-	The SeedListGenerator can automatically create seed lists from a variety of sources. The lists are exported in featureXML format - suitable as input to FeatureFinder -, but can be converted to or from text formats (e.g. CSV) using the TextExporter (with "-minimal" option) and TextImporter tools.
+	The SeedListGenerator can automatically create seed lists from a variety of sources. The lists are exported in featureXML format - suitable as input to FeatureFinder -, but can be converted to or from text formats using the TextExporter (with "-minimal" option to convert to CSV) and FileConverter (to convert from CSV) tools.
 
 	What are possible use cases for custom seed lists?
 	- In analyses that can take into account only features with peptide annotations, it may be useful to focus directly on certain locations in the LC-MS map - on all MS2 precursors (mzML input), or on precursors whose fragment spectra could be matched to a peptide sequence (idXML input).
@@ -86,6 +86,9 @@ namespace OpenMS
 												 create("mzML,idXML,featureXML,consensusXML"));
         registerOutputFileList_("out", "<file(s)>", StringList(), "Output file(s)");
         setValidFormats_("out", StringList::create("featureXML"));
+				addEmptyLine_();		
+				addText_("Options for idXML input:");
+				registerFlag_("use_peptide_mass", "Use the monoisotopic mass of the best peptide hit for the m/z position (default: use precursor m/z)");
 				addEmptyLine_();
 				addText_("If input is consensusXML, one output file per constituent map is required (same order as in the consensusXML);\notherwise, exactly one output file.");
 				addEmptyLine_();
@@ -140,7 +143,8 @@ namespace OpenMS
 					vector<ProteinIdentification> proteins;
 					vector<PeptideIdentification> peptides;
 					IdXMLFile().load(in, proteins, peptides);
-					seed_gen.generateSeedList(peptides, seed_lists[0]);
+					seed_gen.generateSeedList(peptides, seed_lists[0], 
+																		getFlag_("use_peptide_mass"));
 				}
 				
 				else if (in_type == FileTypes::FEATUREXML)

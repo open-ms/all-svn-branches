@@ -40,6 +40,7 @@
 //QT
 #include <QtGui/QMainWindow>
 #include <QtGui/QButtonGroup>
+#include <QtGui/QActionGroup>
 #include <QtCore/QStringList>
 #include <QtCore/QProcess>
 
@@ -74,6 +75,9 @@ namespace OpenMS
     @brief Main window of TOPPView tool
 
     @improvement Use DataRepository singleton to share data between TOPPView and the canvas classes (Hiwi)
+
+		@improvement For painting single mass traces with no width we currently paint each line twice (once going down, and then coming back up).
+		This could be more efficient...
 
     @improvement Keep spectrum browser widgets of all layers in memory in order to avoid rebuilding the entire tree view every time the active layer changes (Hiwi, Johannes)
 
@@ -191,8 +195,10 @@ namespace OpenMS
       	Otherwise the message is displayed for @p time ms.
       */
       void showStatusMessage(std::string msg, OpenMS::UInt time);
-      /// shows m/z, intensity and rt in the status bar
+      /// shows m/z and rt in the status bar
       void showCursorStatus(double mz, double rt);
+      /// shows m/z and rt in the status bar (inverting RT and m/z)
+      void showCursorStatusInvert(double mz, double rt);
       /// Apply TOPP tool
       void showTOPPDialog();
       /// Annotates current layer with ID data
@@ -282,6 +288,7 @@ namespace OpenMS
       void setIntensityMode(int);
       void changeLayerFlag(bool);
       void changeLabel(QAction*);
+			void changeUnassigned(QAction*);
       void resetZoom();
       void toggleProjections();
       //@}
@@ -298,9 +305,9 @@ namespace OpenMS
 
   			@param feature_map The feature data (empty if not feature data)
   			@param consensus_map The consensus feature data (empty if not consensus feature data)
+				@param peptides The peptide identifications (empty if not ID data)
   			@param peak_map The peak data (empty if not peak data)
-  			@param is_feature Flag that indicates the actual data type
-  			@param is_2D If more that one MS1 spectrum is contained in peak data
+				@param data_type Type of the data
   			@param show_as_1d Force dataset to be opened in 1D mode (even if it contains several spectra)
   			@param show_options If the options dialog should be shown (otherwise the defaults are used)
   			@param filename source file name (if the data came from a file)
@@ -308,7 +315,7 @@ namespace OpenMS
       	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current
       	@param spectrum_id determines the spectrum to show in 1D view.
       */
-  		void addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, ExperimentType& peak_map, bool is_feature, bool is_2D, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
+  		void addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, std::vector<PeptideIdentification>& peptides, ExperimentType& peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
 
     	/// Tries to open a db connection (queries the user for the DB password)
     	void connectToDB_(DBConnection& db);
@@ -369,13 +376,17 @@ namespace OpenMS
       QToolBar* tool_bar_2d_peak_;
       QToolBar* tool_bar_2d_feat_;
       QToolBar* tool_bar_2d_cons_;
+			QToolBar* tool_bar_2d_ident_;
       QAction* dm_precursors_2d_;
       QAction* dm_hull_2d_;
       QAction* dm_hulls_2d_;
       QToolButton* dm_label_2d_;
-      QAction* dm_unassigned_2d_;
+			QActionGroup* group_label_2d_;
+      QToolButton* dm_unassigned_2d_;
+			QActionGroup* group_unassigned_2d_;
       QAction* dm_elements_2d_;
       QAction* projections_2d_;
+			QAction* dm_ident_2d_;
       //@}
 
       /// Main workspace

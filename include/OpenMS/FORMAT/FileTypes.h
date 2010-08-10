@@ -61,12 +61,20 @@ namespace OpenMS
 			MZML,								///< MzML file (.mzML)
 			MS2,								///< MS2 file (.ms2)
 			PEPXML,							///< TPP pepXML file (.pepXML)
+			PROTXML,						///< TPP protXML file (.protXML)
 			MZIDENTML,				  ///< mzIdentML (HUPO PSI AnalysisXML format) (.mzIdentML)
 			GELML,							///< GelML (HUPO PSI format) (.GelML)
 			TRAML,							///< TraML (HUPO PSI format) for transitions (.TraML)
 			MSP,								///< NIST spectra library file format (.msp)
 			OMSSAXML,						///< OMSSA XML file format for peptide identifications (.xml)
 			PNG,                ///< Portable Network Graphics (.png)
+			XMASS,              ///< XMass Analysis file (fid)
+      TSV,                ///< msInspect file (.tsv)
+      PEPLIST,            ///< specArray file (.pepList)
+      HARDKLOER,          ///< hardkloer file (.hardkloer)
+      KROENIK,            ///< kroenik file (.kroenik)
+      FASTA,              ///< FASTA file (.fasta)
+      EDTA,               ///< enhanced comma separated files (RT, m/z, Intensity, [meta])
 			SIZE_OF_TYPE    		///< No file type. Simply stores the number of types
 		};
 	};

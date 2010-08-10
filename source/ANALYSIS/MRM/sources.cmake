@@ -5,8 +5,6 @@ set(directory source/ANALYSIS/MRM)
 set(sources_list
 MRMFragmentSelection.C
 ReactionMonitoringTransition.C
-TargetedExperiment.C
-IncludeExcludeTarget.C
 )
 
 ### add path to the filenames

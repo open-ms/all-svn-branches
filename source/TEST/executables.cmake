@@ -5,7 +5,9 @@ set(concept_executables_list
 	Factory_test
 	FuzzyStringComparator_test
 	SingletonRegistry_test
+  StreamHandler_test
 	VersionInfo_test
+	LogConfigHandler_test
 	LogStream_test
 	UniqueIdGenerator_test
 	UniqueIdIndexer_test
@@ -176,6 +178,7 @@ set(format_executables_list
   TraMLFile_test
   TransformationXMLFile_test
   UnimodXMLFile_test
+  XMassFile_test
   XMLFile_test
   XMLValidator_test
   XTandemInfile_test
@@ -204,6 +207,7 @@ set(math_executables_list
   LinearRegression_test
   MathFunctions_test
   NonNegativeLeastSquaresSolver_test
+  PosteriorErrorProbabilityModel_test
   ROCCurve_test
   StatisticFunctions_test
 )
@@ -241,6 +245,7 @@ set(filtering_executables_list
   TOFCalibration_test
   ThresholdMower_test
   WindowMower_test
+	SpectraMerger_test
 )
 
 set(comparison_executables_list
@@ -308,9 +313,8 @@ set(analysis_executables_list
 	DeNovoIdentification_test
 	DeNovoIonScoring_test
 	DeNovoPostScoring_test
-	DelaunayPairFinder_test
 	FalseDiscoveryRate_test
-#	FeatureDeconvolution_test #temporarily disabled
+	FeatureDeconvolution_test
 	FeatureGroupingAlgorithmLabeled_test
 	FeatureGroupingAlgorithmUnlabeled_test
 	FeatureGroupingAlgorithm_test
@@ -353,6 +357,7 @@ set(analysis_executables_list
 	SimplePairFinder_test
 	StablePairFinder_test
 	TransformationDescription_test
+	InclusionExclusionList_test
 )
 
 set(applications_executables_list
@@ -365,6 +370,7 @@ set(transformations_executables_list
   BiGaussModel_test
   ContinuousWaveletTransformNumIntegration_test
   ContinuousWaveletTransform_test
+  EGHTraceFitter_test
   EmgFitter1D_test
   EmgModel_test
   ExtendedIsotopeFitter1D_test
@@ -372,6 +378,7 @@ set(transformations_executables_list
   FeaFiModule_test
   FeatureFinderAlgorithmIsotopeWavelet_test
   FeatureFinderAlgorithmMRM_test
+  FeatureFinderAlgorithmPickedHelperStructs_test
   FeatureFinderAlgorithmPicked_test
   FeatureFinderAlgorithmSimple_test
   FeatureFinderAlgorithmSimplest_test
@@ -380,6 +387,7 @@ set(transformations_executables_list
   Fitter1D_test
   GaussFitter1D_test
   GaussModel_test
+  GaussTraceFitter_test
   InterpolationModel_test
   IsotopeFitter1D_test
   IsotopeModel_test
@@ -403,6 +411,7 @@ set(transformations_executables_list
   SimpleExtender_test
   SimpleSeeder_test
   TwoDOptimization_test
+	TraceFitter_test
 )
 
 set(simulation_executables_list
@@ -413,9 +422,10 @@ set(simulation_executables_list
   IonizationSimulation_test
   IsotopeModelGeneral_test
   MSSim_test
-  PTMSimulation_test
   RTSimulation_test
   RawMSSignalSimulation_test
+	LabelFreeLabeler_test
+	O18Labeler_test
 )
 
 ############### GUI executables (require MOC) ########

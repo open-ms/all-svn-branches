@@ -52,6 +52,7 @@ namespace OpenMS
 	class TOPPASWidget;
 	class TOPPASScene;
 	class TOPPASTabBar;
+	class TOPPASResources;
 	
   /**
   	@brief Main window of the TOPPAS tool
@@ -81,11 +82,11 @@ namespace OpenMS
       void savePreferences();
 			/// loads the files and updates the splashscreen
 			void loadFiles(const StringList& list, QSplashScreen* splash_screen);
-			/// opens the file in a new window
-			void openFile(const String& file_name, bool in_new_window = true);
 
     public slots:
     	
+			/// opens the file in a new window
+			void openFile(const String& file_name, bool in_new_window = true);
     	/// shows the dialog for opening files
       void openFileDialog();
 			/// shows the dialog for opening example files
@@ -98,6 +99,10 @@ namespace OpenMS
       void saveFileDialog();
 			/// shows the dialog for saving the current file as new file
       void saveAsFileDialog(TOPPASWidget* tw = 0);
+      /// shows a file dialog for selecting the resource file to load
+      void loadResourceFileDialog();
+      /// shows a file dialog for selecting the resource file to write to
+      void saveResourceFileDialog();
       /// shows the preferences dialog
       void preferencesDialog();
     	/// changes the current path according to the currently active window/layer
@@ -145,6 +150,8 @@ namespace OpenMS
 			void saveToClipboard(TOPPASScene* scene);
 			/// Sends the clipboard content to the sender of the connected signal
 			void sendClipboardContent();
+			/// Refreshes the parameters of the TOPP tools of the current workflow and stores an updated workflow including the current parameters
+			void refreshParameters();
 			
     protected slots:
 		

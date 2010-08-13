@@ -62,7 +62,7 @@ void AutocorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MSE
 
 	Size progress = 0;
 
-	startProgress(0,input.size(),"Autocorrelation calculation");
+	startProgress(0,input.size(),"Calculating Autocorrelation");
 	for (Size scan_idx = 0; scan_idx != input.size(); ++scan_idx)
 	{
 		if (input[scan_idx].getMSLevel() != 1)
@@ -86,14 +86,14 @@ DoubleReal f (DoubleReal x, void * params)
 	gsl_spline* interpolation = pList->interpolation;
 	gsl_interp_accel* acc_spl = pList->acc_spl;
 	DoubleReal shift = pList->shift;
-//	DoubleReal max_intensity = pList->max_intensity;
+	DoubleReal max_intensity = pList->max_intensity;
 	DoubleReal max_mz = pList->max_mz;
 	DoubleReal f_x=gsl_spline_eval (interpolation, x, acc_spl);
 	DoubleReal f_x_shifted=gsl_spline_eval (interpolation, x+shift, acc_spl);
 	DoubleReal f=0.0;
 	if (x+shift <= max_mz)
 		f =  f_x*f_x_shifted;
-	return (f);
+	return (f/max_intensity);
 }
 
 
@@ -124,7 +124,6 @@ void AutocorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input,
 	if (input.size() < 6) return;
 
 	DoubleReal max_distance=mz_max-mz_min;
-//	std::cout << mz_min << "\t" << mz_max << "\t" << max_distance << std::endl;
 
 	for (DoubleReal shift=0.0;shift<=max_distance;shift+=stepwidth_)
 	{

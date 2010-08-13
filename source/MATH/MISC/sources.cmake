@@ -3,6 +3,7 @@ set(directory source/MATH/MISC)
 
 ### list all filenames of the directory here
 set(sources_list
+AutocorrelationCalculator.C
 BilinearInterpolation.C
 LinearInterpolation.C
 MathFunctions.C

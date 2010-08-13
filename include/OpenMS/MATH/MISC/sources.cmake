@@ -3,6 +3,7 @@ set(directory include/OpenMS/MATH/MISC)
 
 ### list all header files of the directory here
 set(sources_list_h
+AutocorrelationCalculator.h
 BilinearInterpolation.h
 LinearInterpolation.h
 MathFunctions.h

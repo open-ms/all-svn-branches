@@ -2017,6 +2017,7 @@ namespace OpenMS
 		Map<String,StringList> tools_map;
 
 		tools_map["AdditiveSeries"] = StringList::create("");
+		tools_map["Autocorrelation"] = StringList::create("");
 		tools_map["BaselineFilter"] = StringList::create("");
 		tools_map["CompNovo"] = StringList::create("CompNovo,CompNovoCID");
 		tools_map["ConsensusID"] = StringList::create("");

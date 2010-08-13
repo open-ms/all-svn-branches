@@ -173,6 +173,7 @@ namespace OpenMS
 		
 		//tool categories
 		defaults_.setValue("tool_categories:AdditiveSeries", "Quantitation", "The category of the tool");
+		defaults_.setValue("tool_categories:Autocorrelation", "Misc", "The category of the tool");
 		defaults_.setValue("tool_categories:BaselineFilter", "Signal processing and preprocessing", "The category of the tool");
 		defaults_.setValue("tool_categories:CompNovo", "Protein/peptide Identification", "The category of the tool");
 		defaults_.setValue("tool_categories:ConsensusID", "Protein/peptide Processing", "The category of the tool");

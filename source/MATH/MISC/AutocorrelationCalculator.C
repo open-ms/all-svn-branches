@@ -109,8 +109,8 @@ void AutocorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input,
 
 	std::vector<DoubleReal> mz_vec;
 	std::vector<DoubleReal> intensity_vec;
-	mz_min=input.begin()->getMZ();
 //	DoubleReal last_mz=input.begin()->getMZ();
+	mz_min=input.begin()->getMZ();
 	for (MSSpectrum<Peak1D>::ConstIterator mz_it=input.begin(); mz_it!=input.end(); ++mz_it)
 	{
 		mz_vec.push_back(mz_it->getMZ());
@@ -121,37 +121,31 @@ void AutocorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input,
 	gsl_spline* spline_spl = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
 	gsl_spline_init(spline_spl, &(*mz_vec.begin()), &(*intensity_vec.begin()), mz_vec.size());
 
+
 	if (input.size() < 6) return;
 
 	DoubleReal max_distance=mz_max-mz_min;
 
 	for (DoubleReal shift=0.0;shift<=max_distance;shift+=stepwidth_)
 	{
-		gsl_error_handler_t * old_handler=gsl_set_error_handler_off();
-
-		gsl_integration_workspace* w = gsl_integration_workspace_alloc (mz_vec.size());
-		struct f_params list= {spline_spl,acc_spl,shift,max_intensity,mz_max};
-
-		gsl_function F;
-		F.function = &f;
-		F.params = &list;
-
-		DoubleReal result, error;
-
-		DoubleReal relerr=0.01;
-		int status=1;
-		while(status)
+		std::vector<DoubleReal> multiplicated_vec;
+		for (MSSpectrum<Peak1D>::ConstIterator mz_it=input.begin(); mz_it!=input.end(); ++mz_it)
 		{
-			status=gsl_integration_qags (&F, mz_min, mz_max, 0, relerr, mz_vec.size(), w, &result, &error);
-			relerr*=1.1;
+			multiplicated_vec.push_back(mz_it->getIntensity()*gsl_spline_eval (spline_spl, mz_it->getMZ()+shift, acc_spl));
 		}
+
+		gsl_interp_accel* acc_spl_mult = gsl_interp_accel_alloc();
+		gsl_spline* spline_spl_mult = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
+		gsl_spline_init(spline_spl_mult, &(*mz_vec.begin()), &(*multiplicated_vec.begin()), mz_vec.size());
+
+		DoubleReal result=gsl_spline_eval_integ (spline_spl_mult,mz_min,mz_max, acc_spl_mult);
 		Peak1D peak;
 		peak.setMZ(shift);
 		peak.setIntensity(result);
 		if (result > 0)
-		output.push_back(peak);
-		gsl_set_error_handler(old_handler);
-		gsl_integration_workspace_free (w);
+			output.push_back(peak);
+		gsl_spline_free(spline_spl_mult);
+		gsl_interp_accel_free(acc_spl_mult);
 	}
 	gsl_spline_free(spline_spl);
 	gsl_interp_accel_free(acc_spl);

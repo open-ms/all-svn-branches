@@ -176,11 +176,15 @@ void CrossCorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input
 	DoubleReal shift=0.0;
 	for (i = 0; i <= s/2 ; ++i)
 	{
+		if (data[i] <= 0 || (gauss_fitting && gauss_mean_+shift > mz_max) )
+		{
+			shift+=stepwidth_;
+			continue;
+		}
 		Peak1D peak;
 		peak.setMZ(shift);
 		peak.setIntensity(data[i]);
-		if (data[i] > 0)
-			output.push_back(peak);
+		output.push_back(peak);
 		shift+=stepwidth_;
 	}
 }

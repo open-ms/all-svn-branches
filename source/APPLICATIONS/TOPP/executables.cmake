@@ -5,6 +5,7 @@ set(directory source/APPLICATIONS/TOPP)
 set(TOPP_executables
 AdditiveSeries
 Autocorrelation
+Autocorrelation2
 BaselineFilter
 CompNovo
 ConsensusID

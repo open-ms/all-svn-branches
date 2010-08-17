@@ -25,8 +25,7 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-
-#include <OpenMS/MATH/MISC/AutocorrelationCalculator.h>
+#include <OpenMS/MATH/MISC/CrossCorrelationCalculator.h>
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
@@ -37,19 +36,18 @@
 #include <gsl/gsl_randist.h>
 #include <cmath>
 
-
 namespace OpenMS
 {
-AutocorrelationCalculator::AutocorrelationCalculator (DoubleReal stepwidth) : stepwidth_(stepwidth)
-{
+CrossCorrelationCalculator::CrossCorrelationCalculator(DoubleReal stepwidth,DoubleReal gauss_mean, DoubleReal gauss_sigma) : stepwidth_(stepwidth), gauss_mean_(gauss_mean), gauss_sigma_(gauss_sigma) {
+	// TODO Auto-generated constructor stub
 
 }
 
-AutocorrelationCalculator::~AutocorrelationCalculator(){
+CrossCorrelationCalculator::~CrossCorrelationCalculator() {
 	// TODO Auto-generated destructor stub
 }
 
-void AutocorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output)
+void CrossCorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output,Size spectrum_selection_id)
 {
 	mz_min=input.getMinMZ();
 	mz_max=input.getMaxMZ();
@@ -71,6 +69,10 @@ void AutocorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MSE
 		{
 			output[scan_idx] = input[scan_idx];
 		}
+		else if (scan_idx==spectrum_selection_id)
+		{
+			analyzeSpectrum(input[scan_idx], output[scan_idx],true);
+		}
 		else
 		{
 			analyzeSpectrum(input[scan_idx], output[scan_idx]);
@@ -80,7 +82,7 @@ void AutocorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MSE
 	endProgress();
 }
 
-void AutocorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input, MSSpectrum<Peak1D>& output)
+void CrossCorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input, MSSpectrum<Peak1D>& output, bool gauss_fitting)
 {
 	//Copy spectrum settings
 	output.clear(true);
@@ -121,16 +123,49 @@ void AutocorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input,
 		++i;
 	}
 
+
 	//Fast fourier transform the values
 	gsl_fft_real_radix2_transform (&(*data.begin()), 1, s);
 
+	std::vector<DoubleReal> data1;
+
+
+	if (gauss_fitting)
+	{
+		std::vector<DoubleReal> gauss_fitted_data(s,0);
+		Size j=0;
+		for (DoubleReal x=0.0-(gauss_mean_-mz_min);x<=0.0+(mz_max-gauss_mean_);x+=stepwidth_)
+		{
+			gauss_fitted_data[j] = gsl_spline_eval (spline_spl, gauss_mean_+x, acc_spl)*gsl_ran_gaussian_pdf (x, 0.5*gauss_sigma_);
+//			std::cout << j << "\t" << gauss_mean_+x << "\t" << x << "\t" << gsl_spline_eval (spline_spl, gauss_mean_+x, acc_spl) << "\t" << gsl_ran_gaussian_pdf (x, 0.5*gauss_sigma_) << std::endl;
+			++j;
+		}
+//		for (j=0;j<gauss_fitted_data.size();++j)
+//		{
+//			std::cout << j << "\t" << gauss_fitted_data[j] << std::endl;
+//		}
+		gsl_fft_real_radix2_transform (&(*gauss_fitted_data.begin()), 1, s);
+		data1.insert(data1.end(),gauss_fitted_data.begin(),gauss_fitted_data.end());
+	}
+	else
+	{
+		data1.insert(data1.end(),data.begin(),data.end());
+	}
+//	if (gauss_fitting)
+//	{
+//		for (Size j=0;j<f.size();++j)
+//		{
+//			std::cout << f[j] << "\t" << data[j] << std::endl;
+//		}
+//	}
+
 	//Multiply the fast fourier transformed complex values with the complex conjugate
 	//Have a look at the GNU Scientific Library reference manual for a description of the data structure
-	data[0]=data[0]*data[0];
-	data[s/2]=data[s/2]*data[s/2];
+	data[0]=data[0]*data1[0];
+	data[s/2]=data[s/2]*data1[s/2];
 	for (i = 1; i <= s/2; ++i)
 	{
-		data[i]=(data[i]*data[i]+data[s-i]*data[s-i]);
+		data[i]=data[i]*data1[i]+data[s-i]*data1[s-i];
 		data[s-i]=0.0;
 	}
 
@@ -149,6 +184,5 @@ void AutocorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input,
 		shift+=stepwidth_;
 	}
 }
-
 }
 

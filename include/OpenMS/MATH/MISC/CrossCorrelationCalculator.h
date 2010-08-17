@@ -25,9 +25,8 @@
 // $Authors: $
 // --------------------------------------------------------------------------
 
-
-#ifndef OPENMS_MATH_MISC_AUTOCORRELATIONCALCULATOR_H
-#define OPENMS_MATH_MISC_AUTOCORRELATIONCALCULATOR_H
+#ifndef OPENMS_MATH_MISC_CROSSCORRELATIONCALCULATOR_H
+#define OPENMS_MATH_MISC_CROSSCORRELATIONCALCULATOR_H
 
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
@@ -35,15 +34,19 @@
 
 namespace OpenMS
 {
-class OPENMS_DLLAPI AutocorrelationCalculator : public ProgressLogger{
+class OPENMS_DLLAPI CrossCorrelationCalculator : public ProgressLogger{
 private:
-	DoubleReal mz_max,mz_min;
 	DoubleReal stepwidth_;
-	void analyzeSpectrum(const MSSpectrum<Peak1D>& input, MSSpectrum<Peak1D>& output);
+	DoubleReal gauss_mean_;
+	DoubleReal gauss_sigma_;
+	DoubleReal mz_max,mz_min;
+	void analyzeSpectrum(const MSSpectrum<Peak1D>& input, MSSpectrum<Peak1D>& output, bool gauss_fitting=false);
 public:
-	AutocorrelationCalculator(DoubleReal stepwidth);
-	virtual ~AutocorrelationCalculator();
-	void calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output);
+	CrossCorrelationCalculator(DoubleReal stepwidth,DoubleReal gauss_mean, DoubleReal gauss_sigma);
+	void calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output,Size spectrum_selection_id);
+	virtual ~CrossCorrelationCalculator();
 };
 }
-#endif /* AUTOCORRELATION_H_ */
+
+
+#endif /* CROSSCORRELATIONCALCULATION_H_ */

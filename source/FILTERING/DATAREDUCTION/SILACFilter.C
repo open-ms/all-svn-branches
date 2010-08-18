@@ -151,20 +151,11 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 
 bool SILACFilter::checkArea(DoubleReal act_mz, std::vector<DoubleReal>& intensities_spl, std::vector<DoubleReal>& intensities_lin)
 {
-//		bool condition1 = (); // all six intensities peak simultaneously
-		//bool condition2 = (intensities_spl[0]<=intensities_spl[1] && intensities_spl[4]<= intensities_spl[5]) || (intensities_spl[0]>=intensities_spl[1] && intensities_spl[4]>= intensities_spl[5]);
 
 	if ((intensities_lin[1] < SILACFiltering::intensity_cutoff) || (intensities_lin[2] < SILACFiltering::intensity_cutoff) || (intensities_lin[3] < SILACFiltering::intensity_cutoff))
 	{
 		return false;
 	}
-
-	std::pair<DoubleReal,DoubleReal> correlation1=getPeakCorrelation(act_mz,isotope_distance,0.01);
-	if (correlation1.first < 0.999)
-		return false;
-	std::pair<DoubleReal,DoubleReal> correlation2=getPeakCorrelation(act_mz+isotope_distance+correlation1.second,isotope_distance,0.01);
-	if (correlation2.first < 0.999)
-		return false;
 
 	ExtendedIsotopeModel model;
 	Param param;
@@ -176,8 +167,8 @@ bool SILACFilter::checkArea(DoubleReal act_mz, std::vector<DoubleReal>& intensit
 	std::vector<Peak1D> model_data;
 	model.getSamples(model_data);
 
-	DoubleReal quality1=(gsl_spline_eval (SILACFiltering::spline_spl, act_mz, SILACFiltering::acc_spl)*model.getIntensity(act_mz+isotope_distance+correlation1.second))/(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+isotope_distance+correlation1.second, SILACFiltering::acc_spl)*model.getIntensity(act_mz));
-	DoubleReal quality2=(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+isotope_distance+correlation1.second, SILACFiltering::acc_spl)*model.getIntensity(act_mz+2*isotope_distance+correlation1.second+correlation2.second))/(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+2*isotope_distance+correlation1.second+correlation2.second, SILACFiltering::acc_spl)*model.getIntensity(act_mz+isotope_distance+correlation1.second));
+//	DoubleReal quality1=(gsl_spline_eval (SILACFiltering::spline_spl, act_mz, SILACFiltering::acc_spl)*model.getIntensity(act_mz+isotope_distance+correlation1.second))/(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+isotope_distance+correlation1.second, SILACFiltering::acc_spl)*model.getIntensity(act_mz));
+//	DoubleReal quality2=(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+isotope_distance+correlation1.second, SILACFiltering::acc_spl)*model.getIntensity(act_mz+2*isotope_distance+correlation1.second+correlation2.second))/(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+2*isotope_distance+correlation1.second+correlation2.second, SILACFiltering::acc_spl)*model.getIntensity(act_mz+isotope_distance+correlation1.second));
 
 	//False negative debug output
 	//			if (act_rt < 1665.55 && act_rt > 1665.45 && act_mz > 627.0 && act_mz < 632.0)
@@ -195,8 +186,8 @@ bool SILACFilter::checkArea(DoubleReal act_mz, std::vector<DoubleReal>& intensit
 	//				std::cout << std::endl;
 	//			}
 
-	if (std::abs(log(quality1)) > model_deviation || std::abs(log(quality2)) > model_deviation)
-		return false;
+//	if (std::abs(log(quality1)) > model_deviation || std::abs(log(quality2)) > model_deviation)
+//		return false;
 
 	//			False positive debug output
 	//			if (SILACFiltering::feature_id == 305)
@@ -277,6 +268,67 @@ std::pair<DoubleReal,DoubleReal> SILACFilter::getPeakCorrelation(DoubleReal act_
 //		std::cout << best_correlation_deviation << " ";
 	return std::make_pair(best_correlation,best_correlation_deviation);
 }
+
+//void SILACFilter::computePeakCorrelation(gsl_interp_accel* acceleration, gsl_spline* spline, DoubleReal act_mz, DoubleReal envelope_distance)
+//{
+//	DoubleReal window_size=2*envelope_distance;
+//	DoubleReal stepwidth=0.001;
+//
+//	//n must be a power of two for gsl fast fourier transformation; take next higher size for n, which is a power of two and fill the rest with zeros
+//	Size vector_size = pow(2,(ceil(log2(window_size/stepwidth))));
+//
+//	//Create a vector containing interpolated values with a spacing of "stepwidth"
+//	std::vector<DoubleReal> data(vector_size,0);
+//	Size i=0;
+//	for (DoubleReal x=act_mz-10*stepwidth;x<=act_mz+window_size;x+=stepwidth)
+//	{
+//		data[i] = gsl_spline_eval (spline_spl, x, acc_spl);
+//		++i;
+//	}
+//
+//
+//	//Fourier transformation of the values
+//	gsl_fft_real_radix2_transform (&(*data.begin()), 1, vector_size);
+//
+//	std::vector<DoubleReal> gauss_fitted_data(vector_size,0);
+//	Size j=0;
+//	for (DoubleReal x=0.0-10*stepwidth;x<=window_size;x+=stepwidth)
+//	{
+//		gauss_fitted_data[j] = data[j]*gsl_ran_gaussian_pdf (x, 0.5*gauss_sigma_);
+//		++j;
+//	}
+//	gsl_fft_real_radix2_transform (&(*gauss_fitted_data.begin()), 1, vector_size);
+//
+//	//Multiply the fourier transformed complex values with the complex conjugate
+//	//Have a look at the GNU Scientific Library reference manual for a description of the data structure
+//	data[0]=data[0]*gauss_fitted_data[0];
+//	data[vector_size/2]=data[vector_size/2]*gauss_fitted_data[vector_size/2];
+//	for (i = 1; i <= vector_size/2; ++i)
+//	{
+//		data[i]=data[i]*gauss_fitted_data[i]+data[vector_size-i]*gauss_fitted_data[vector_size-i];
+//		data[vector_size-i]=0.0;
+//	}
+//
+//	//Compute inverse fourier transformation
+//	gsl_fft_halfcomplex_radix2_inverse (&(*data.begin()), 1, vector_size);
+//
+//	//Create output
+//	DoubleReal shift=0.0;
+//	for (i = 0; i <= vector_size/2 ; ++i)
+//	{
+//		if (data[i] <= 0 || (gauss_fitting && gauss_mean_+shift > mz_max) )
+//		{
+//			shift+=stepwidth_;
+//			continue;
+//		}
+//		Peak1D peak;
+//		peak.setMZ(shift);
+//		//Normalize by min_value & max_value
+//		peak.setIntensity(data[i]);
+//		output.push_back(peak);
+//		shift+=stepwidth;
+//	}
+//}
 
 
 std::vector<DoubleReal> SILACFilter::getIntensities(DoubleReal act_mz, gsl_interp_accel* acc,gsl_spline* spline)

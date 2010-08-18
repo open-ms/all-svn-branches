@@ -48,7 +48,7 @@ CrossCorrelationCalculator::~CrossCorrelationCalculator() {
 	// TODO Auto-generated destructor stub
 }
 
-void CrossCorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output,Size spectrum_selection_id)
+std::vector<DoubleReal> CrossCorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output,Size spectrum_selection_id)
 {
 	mz_min=input.getMinMZ();
 	mz_max=input.getMaxMZ();
@@ -64,6 +64,7 @@ void CrossCorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MS
 	Size progress = 0;
 
 	startProgress(0,input.size(),"Calculating Autocorrelation");
+	std::vector<DoubleReal> data;
 	for (Size scan_idx = 0; scan_idx != input.size(); ++scan_idx)
 	{
 		if (input[scan_idx].getMSLevel() != 1)
@@ -72,7 +73,8 @@ void CrossCorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MS
 		}
 		else if (scan_idx==spectrum_selection_id)
 		{
-			analyzeSpectrum(input[scan_idx], output[scan_idx],true);
+			std::vector<DoubleReal> act_data=analyzeSpectrum(input[scan_idx], output[scan_idx]);
+			data.insert(data.end(),act_data.begin(),act_data.end());
 		}
 		else
 		{
@@ -81,9 +83,10 @@ void CrossCorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MS
 		setProgress(++progress);
 	}
 	endProgress();
+	return data;
 }
 
-void CrossCorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input, MSSpectrum<Peak1D>& output, bool gauss_fitting)
+std::vector<DoubleReal> CrossCorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input, MSSpectrum<Peak1D>& output, bool gauss_fitting)
 {
 	//Copy spectrum settings
 	output.clear(true);
@@ -111,7 +114,7 @@ void CrossCorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input
 	gsl_spline_init(spline_spl, &(*mz_vec.begin()), &(*intensity_vec.begin()), mz_vec.size());
 
 	DoubleReal window_size=10;
-	DoubleReal stepwidth=0.001;
+	DoubleReal stepwidth=stepwidth_;
 	DoubleReal act_mz=gauss_mean_;
 
 	//n must be a power of two for gsl Fourier transformation; take next higher size for n, which is a power of two
@@ -153,6 +156,8 @@ void CrossCorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input
 	//Compute inverse fourier transformation
 	gsl_fft_halfcomplex_radix2_inverse (&(*data.begin()), 1, vector_size);
 
+	DoubleReal intensity_normalization_factor=gsl_spline_eval_integ (spline_spl,act_mz-starting_offset,act_mz+window_size, acc_spl);
+
 	//Create output
 	DoubleReal shift=0.0;
 	for (i = 0; i <= vector_size/2 ; ++i)
@@ -164,14 +169,50 @@ void CrossCorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input
 		}
 		Peak1D peak;
 		peak.setMZ(shift);
-		peak.setIntensity(data[i]);
+		peak.setIntensity(data[i]/intensity_normalization_factor);
 		output.push_back(peak);
 		shift+=stepwidth;
 	}
-
-
 	gsl_spline_free(spline_spl);
 	gsl_interp_accel_free(acc_spl);
+	return data;
 }
+
+std::vector<DoubleReal> CrossCorrelationCalculator::getExactPositions(const std::vector<DoubleReal>& data,std::vector<DoubleReal> positions, DoubleReal tolerance)
+{
+	std::vector<DoubleReal> x(data.size()/2,0);
+	std::vector<DoubleReal> y(data.size()/2,0);
+	DoubleReal shift=0.0;
+	for (Size i=0;i<data.size()/2;++i)
+	{
+		x[i]=shift;
+		y[i]=data[i];
+		shift+=stepwidth_;
+	}
+	gsl_interp_accel* acc_spl = gsl_interp_accel_alloc();
+	gsl_spline* spline_spl = gsl_spline_alloc(gsl_interp_cspline, x.size());
+	gsl_spline_init(spline_spl, &(*x.begin()), &(*y.begin()), x.size());
+
+	std::vector<DoubleReal> exact_positions;
+
+	for (std::vector<DoubleReal>::iterator vec_it=positions.begin();vec_it!=positions.end();++vec_it)
+	{
+		DoubleReal position=*vec_it;
+		DoubleReal exact_position=0.0;
+		DoubleReal max_intensity=0.0;
+		for (DoubleReal act_position=position-tolerance;act_position<=position+tolerance;act_position+=stepwidth_)
+		{
+			DoubleReal act_intensity=gsl_spline_eval (spline_spl, act_position, acc_spl);
+			if (act_intensity > max_intensity)
+			{
+				exact_position=act_position;
+				max_intensity=act_intensity;
+			}
+		}
+		exact_positions.push_back(exact_position);
+	}
+	return exact_positions;
+}
+
 }
 

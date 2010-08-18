@@ -49,7 +49,9 @@ class TOPPAutocorrelation2
 		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("mzML"));
 		registerDoubleOption_("stepwidth","<stepwidth>",0.001,"Stepwidth");
-		registerIntOption_("spectrum_selection","<spectrum_selection>",0,"Spectrum to fit by a gaussian curve");
+		registerIntOption_("spectrum_selection","<spectrum_selection>",0,"Spectrum selection for exact positions");
+		registerDoubleList_("estimated_positions","<estimated_positions>",DoubleList::create(0.5),"Estimated positions. Autocorrelation2 prints the exact positions of these values");
+		registerDoubleOption_("tolerance","<tolerance>",0.0,"Maximal possible deviation from estimated positions");
 		registerDoubleOption_("gauss_mean","<gauss_mean>",0.0,"Mean position of the gaussian curve");
 		registerDoubleOption_("gauss_width","<gauss_width>",1.0,"Width of the gaussian curve");
 	}
@@ -74,17 +76,25 @@ class TOPPAutocorrelation2
 
 			MSExperiment<Peak1D> exp_out;
 
-			DoubleReal stepwidth=getParam_().getValue("stepwidth");
+			DoubleReal tolerance=getParam_().getValue("tolerance");
 			DoubleReal gauss_mean=getParam_().getValue("gauss_mean");
 			DoubleReal gauss_sigma=getParam_().getValue("gauss_width");
+			DoubleReal stepwidth=getParam_().getValue("stepwidth");
 			Size spectrum_selection=(Size) getParam_().getValue("spectrum_selection");
+			DoubleList positions=getParam_().getValue("estimated_positions");
 			CrossCorrelationCalculator ac(stepwidth,gauss_mean,gauss_sigma);
 			ac.setLogType(log_type_);
-			ac.calculate(exp_in,exp_out,spectrum_selection);
-
+			std::vector<DoubleReal> data=ac.calculate(exp_in,exp_out,spectrum_selection);
+			std::vector<DoubleReal> position_vector(positions.begin(),positions.end());
+			std::vector<DoubleReal> exact_positions=ac.getExactPositions(data,position_vector,tolerance);
 			addDataProcessing_(exp_out, getProcessingInfo_(DataProcessing::PEAK_PICKING));
 			file.store(out,exp_out);
-
+			std::cout << "\nExact positions for spectrum " << spectrum_selection << ":\n\nExpected\tExact\n";
+			for (Size i=0;i<exact_positions.size();++i)
+			{
+				std::cout << position_vector[i] << "\t\t" << exact_positions[i] << "\n";
+			}
+			std::cout << std::endl;
 			return EXECUTION_OK;
 		}
 };

@@ -36,7 +36,7 @@ class TOPPAutocorrelation2
 {
  public:
 	TOPPAutocorrelation2()
-		: TOPPBase("Autocorrelation","Calculates the autocorrelation within given spectra.")
+		: TOPPBase("Autocorrelation2","Calculates the autocorrelation within given spectra.")
 	{
 
 	}

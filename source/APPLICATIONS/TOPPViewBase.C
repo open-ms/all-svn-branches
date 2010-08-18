@@ -870,7 +870,9 @@ namespace OpenMS
 
 		//try to load data and determine if it's 1D or 2D data
 		FeatureMapType feature_map;
-		ExperimentType peak_map;
+                // shared pointer from raw pointer
+                ExperimentType* peak_map = new ExperimentType();
+                ExperimentSharedPtrType peak_map_sptr(peak_map);
 		ConsensusMapType consensus_map;
 		vector<PeptideIdentification> peptides;
 
@@ -896,12 +898,12 @@ namespace OpenMS
 			}
       else
       {
-      	fh.loadExperiment(abs_filename, peak_map, file_type, 
+        fh.loadExperiment(abs_filename, *peak_map, file_type,
 													ProgressLogger::GUI);
 				data_type = LayerData::DT_CHROMATOGRAM;
-      	for (Size i=0; i<peak_map.size();++i)
+        for (Size i=0; i<peak_map->size();++i)
       	{
-      		if (peak_map[i].getMSLevel() == 1)
+                if ((*peak_map)[i].getMSLevel() == 1)
       		{
 						data_type = LayerData::DT_PEAK;
       			break;
@@ -926,7 +928,7 @@ namespace OpenMS
     	abs_filename = "";
     }
 
-    ExperimentSharedPtrType peak_map_sptr( new LayerData::ExperimentType(peak_map));
+
 
     addData_(feature_map, consensus_map, peptides, peak_map_sptr, data_type, false, show_options, abs_filename, caption, window_id, spectrum_id);
 

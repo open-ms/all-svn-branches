@@ -26,6 +26,7 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/MATH/MISC/CrossCorrelationCalculator.h>
+#include <OpenMS/CONCEPT/Constants.h>
 #include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
@@ -109,84 +110,68 @@ void CrossCorrelationCalculator::analyzeSpectrum(const MSSpectrum<Peak1D>& input
 	gsl_spline* spline_spl = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
 	gsl_spline_init(spline_spl, &(*mz_vec.begin()), &(*intensity_vec.begin()), mz_vec.size());
 
-	DoubleReal max_distance=mz_max-mz_min;
+	DoubleReal window_size=10;
+	DoubleReal stepwidth=0.001;
+	DoubleReal act_mz=gauss_mean_;
 
 	//n must be a power of two for gsl Fourier transformation; take next higher size for n, which is a power of two
-	Size s = pow(2,(ceil(log2(max_distance/stepwidth_))));
+	Size vector_size = pow(2,(ceil(log2(window_size/stepwidth))));
 
 	//Create a vector containing interpolated values with a spacing of "stepwidth"
-	std::vector<DoubleReal> data(s,0);
+	std::vector<DoubleReal> data(vector_size,0);
 	Size i=0;
-	for (DoubleReal x=mz_min;x<=mz_max;x+=stepwidth_)
+	DoubleReal starting_offset=std::min(act_mz-mz_min,3*gauss_sigma_);
+	for (DoubleReal x=act_mz-starting_offset;x<=act_mz+window_size;x+=stepwidth)
 	{
 		data[i] = gsl_spline_eval (spline_spl, x, acc_spl);
 		++i;
 	}
 
-
-	//Fast fourier transform the values
-	gsl_fft_real_radix2_transform (&(*data.begin()), 1, s);
-
-	std::vector<DoubleReal> data1;
-
-
-	if (gauss_fitting)
+	std::vector<DoubleReal> gauss_fitted_data(vector_size,0);
+	DoubleReal gauss_normalization_factor=gauss_sigma_*sqrt(2*Constants::PI);
+	i=0;
+	for (DoubleReal x=-starting_offset;x<=window_size;x+=stepwidth)
 	{
-		std::vector<DoubleReal> gauss_fitted_data(s,0);
-		Size j=0;
-		for (DoubleReal x=0.0-(gauss_mean_-mz_min);x<=0.0+(mz_max-gauss_mean_);x+=stepwidth_)
-		{
-			gauss_fitted_data[j] = gsl_spline_eval (spline_spl, gauss_mean_+x, acc_spl)*gsl_ran_gaussian_pdf (x, 0.5*gauss_sigma_);
-//			std::cout << j << "\t" << gauss_mean_+x << "\t" << x << "\t" << gsl_spline_eval (spline_spl, gauss_mean_+x, acc_spl) << "\t" << gsl_ran_gaussian_pdf (x, 0.5*gauss_sigma_) << std::endl;
-			++j;
-		}
-//		for (j=0;j<gauss_fitted_data.size();++j)
-//		{
-//			std::cout << j << "\t" << gauss_fitted_data[j] << std::endl;
-//		}
-		gsl_fft_real_radix2_transform (&(*gauss_fitted_data.begin()), 1, s);
-		data1.insert(data1.end(),gauss_fitted_data.begin(),gauss_fitted_data.end());
+		gauss_fitted_data[i] = data[i]*gsl_ran_gaussian_pdf (x, gauss_sigma_)*gauss_normalization_factor;
+		++i;
 	}
-	else
-	{
-		data1.insert(data1.end(),data.begin(),data.end());
-	}
-//	if (gauss_fitting)
-//	{
-//		for (Size j=0;j<f.size();++j)
-//		{
-//			std::cout << f[j] << "\t" << data[j] << std::endl;
-//		}
-//	}
 
-	//Multiply the fast fourier transformed complex values with the complex conjugate
+	//Fourier transformation of the values
+	gsl_fft_real_radix2_transform (&(*data.begin()), 1, vector_size);
+	gsl_fft_real_radix2_transform (&(*gauss_fitted_data.begin()), 1, vector_size);
+
+	//Multiply the fourier transformed complex values with the complex conjugate
 	//Have a look at the GNU Scientific Library reference manual for a description of the data structure
-	data[0]=data[0]*data1[0];
-	data[s/2]=data[s/2]*data1[s/2];
-	for (i = 1; i <= s/2; ++i)
+	data[0]=data[0]*gauss_fitted_data[0];
+	data[vector_size/2]=data[vector_size/2]*gauss_fitted_data[vector_size/2];
+	for (i = 1; i <= vector_size/2; ++i)
 	{
-		data[i]=data[i]*data1[i]+data[s-i]*data1[s-i];
-		data[s-i]=0.0;
+		data[i]=data[i]*gauss_fitted_data[i]+data[vector_size-i]*gauss_fitted_data[vector_size-i];
+		data[vector_size-i]=0.0;
 	}
 
-	//Compute inverse fast fourier transformation
-	gsl_fft_halfcomplex_radix2_inverse (&(*data.begin()), 1, s);
+	//Compute inverse fourier transformation
+	gsl_fft_halfcomplex_radix2_inverse (&(*data.begin()), 1, vector_size);
 
 	//Create output
 	DoubleReal shift=0.0;
-	for (i = 0; i <= s/2 ; ++i)
+	for (i = 0; i <= vector_size/2 ; ++i)
 	{
-		if (data[i] <= 0 || (gauss_fitting && gauss_mean_+shift > mz_max) )
+		if (data[i] <= 0)
 		{
-			shift+=stepwidth_;
+			shift+=stepwidth;
 			continue;
 		}
 		Peak1D peak;
 		peak.setMZ(shift);
 		peak.setIntensity(data[i]);
 		output.push_back(peak);
-		shift+=stepwidth_;
+		shift+=stepwidth;
 	}
+
+
+	gsl_spline_free(spline_spl);
+	gsl_interp_accel_free(acc_spl);
 }
 }
 

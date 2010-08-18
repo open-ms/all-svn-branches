@@ -51,7 +51,7 @@ class TOPPAutocorrelation2
 		registerDoubleOption_("stepwidth","<stepwidth>",0.001,"Stepwidth");
 		registerIntOption_("spectrum_selection","<spectrum_selection>",0,"Spectrum to fit by a gaussian curve");
 		registerDoubleOption_("gauss_mean","<gauss_mean>",0.0,"Mean position of the gaussian curve");
-		registerDoubleOption_("gauss_sigma","<gauss_sigma>",1.0,"Standard deviation of the gaussian curve");
+		registerDoubleOption_("gauss_width","<gauss_width>",1.0,"Width of the gaussian curve");
 	}
 
 	ExitCodes main_(int , const char**)
@@ -76,7 +76,7 @@ class TOPPAutocorrelation2
 
 			DoubleReal stepwidth=getParam_().getValue("stepwidth");
 			DoubleReal gauss_mean=getParam_().getValue("gauss_mean");
-			DoubleReal gauss_sigma=getParam_().getValue("gauss_sigma");
+			DoubleReal gauss_sigma=getParam_().getValue("gauss_width");
 			Size spectrum_selection=(Size) getParam_().getValue("spectrum_selection");
 			CrossCorrelationCalculator ac(stepwidth,gauss_mean,gauss_sigma);
 			ac.setLogType(log_type_);

@@ -108,7 +108,7 @@ namespace OpenMS
 		}
 		else if (getCurrentLayer().type==LayerData::DT_PEAK)
 		{
-			dataToWidget_(peak.getPeak(getCurrentLayer().peaks).getMZ(), peak.getSpectrum(getCurrentLayer().peaks).getRT(), pos);
+                        dataToWidget_(peak.getPeak(*getCurrentLayer().getPeakData()).getMZ(), peak.getSpectrum(*getCurrentLayer().getPeakData()).getRT(), pos);
 		}
 		else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
 		{
@@ -144,12 +144,12 @@ namespace OpenMS
 
 		if (getCurrentLayer().type==LayerData::DT_PEAK)
 		{
-			for (ExperimentType::ConstAreaIterator i = getCurrentLayer().peaks.areaBeginConst(area.minPosition()[1],area.maxPosition()[1],area.minPosition()[0],area.maxPosition()[0]);
-					 i != getCurrentLayer().peaks.areaEndConst();
+                        for (ExperimentType::ConstAreaIterator i = getCurrentLayer().getPeakData()->areaBeginConst(area.minPosition()[1],area.maxPosition()[1],area.minPosition()[0],area.maxPosition()[0]);
+                                         i != getCurrentLayer().getPeakData()->areaEndConst();
 					 ++i)
 			{
 				PeakIndex pi = i.getPeakIndex();
-				if (i->getIntensity() > max_int && getCurrentLayer().filters.passes(getCurrentLayer().peaks[pi.spectrum],pi.peak))
+                                if (i->getIntensity() > max_int && getCurrentLayer().filters.passes((*getCurrentLayer().getPeakData())[pi.spectrum],pi.peak))
 				{
 					//cout << "new max: " << i.getRT() << " " << i->getMZ() << endl;
 					max_int = i->getIntensity();
@@ -220,9 +220,9 @@ namespace OpenMS
 		percentage_factor_ = 1.0;
 		if (intensity_mode_ == IM_PERCENTAGE)
 		{
-			if (layer.type == LayerData::DT_PEAK && layer.peaks.getMaxInt()>0.0)
+                        if (layer.type == LayerData::DT_PEAK && layer.getPeakData()->getMaxInt()>0.0)
 			{
-				percentage_factor_ = overall_data_range_.maxPosition()[2]/layer.peaks.getMaxInt();
+                                percentage_factor_ = overall_data_range_.maxPosition()[2]/layer.getPeakData()->getMaxInt();
 			}
 			else if (layer.type == LayerData::DT_FEATURE && layer.features.getMaxInt()>0.0)
 			{
@@ -250,7 +250,7 @@ namespace OpenMS
 		if (layer.type==LayerData::DT_PEAK) //peaks
 		{
 			//renaming some values for readability
-			const ExperimentType& map = layer.peaks;
+                        const ExperimentType& map = *layer.getPeakData();
 			DoubleReal rt_min = visible_area_.minPosition()[1];
 			DoubleReal rt_max = visible_area_.maxPosition()[1];
 			DoubleReal mz_min = visible_area_.minPosition()[0];
@@ -510,7 +510,7 @@ namespace OpenMS
 		}
 		else if (layer.type==LayerData::DT_CHROMATOGRAM)// chromatograms
 		{
-			const ExperimentType& map = layer.peaks;
+                        const ExperimentType& map = *layer.getPeakData();
 			//TODO CHROM implement layer filters
 			//TODO CHROM implement faster painting
 			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin(); 
@@ -867,10 +867,10 @@ namespace OpenMS
 		float mult = 1.0/prec;
 
 
-		for (ExperimentType::ConstAreaIterator i = layer->peaks.areaBeginConst(visible_area_.minPosition()[1],visible_area_.maxPosition()[1],visible_area_.minPosition()[0],visible_area_.maxPosition()[0]); i != layer->peaks.areaEndConst(); ++i)
+                for (ExperimentType::ConstAreaIterator i = layer->getPeakData()->areaBeginConst(visible_area_.minPosition()[1],visible_area_.maxPosition()[1],visible_area_.minPosition()[0],visible_area_.maxPosition()[0]); i != layer->getPeakData()->areaEndConst(); ++i)
 		{
 			PeakIndex pi = i.getPeakIndex();
-			if (layer->filters.passes(layer->peaks[pi.spectrum],pi.peak))
+                        if (layer->filters.passes((*layer->getPeakData())[pi.spectrum],pi.peak))
 			{
 				//sum
 				++peak_count;
@@ -918,15 +918,18 @@ namespace OpenMS
 			++i;
 		}
 
+                ExperimentSharedPtrType projection_mz_sptr(new ExperimentType(projection_mz_));
+                ExperimentSharedPtrType projection_rt_sptr(new ExperimentType(projection_rt_));
+
 		if (isMzToXAxis())
 		{
-			emit showProjectionHorizontal(projection_mz_,Spectrum1DCanvas::DM_PEAKS);
-			emit showProjectionVertical(projection_rt_,Spectrum1DCanvas::DM_CONNECTEDLINES);
+                        emit showProjectionHorizontal(projection_mz_sptr,Spectrum1DCanvas::DM_PEAKS);
+                        emit showProjectionVertical(projection_rt_sptr,Spectrum1DCanvas::DM_CONNECTEDLINES);
 		}
 		else
 		{
-			emit showProjectionHorizontal(projection_rt_,Spectrum1DCanvas::DM_CONNECTEDLINES);
-			emit showProjectionVertical(projection_mz_,Spectrum1DCanvas::DM_PEAKS);
+                        emit showProjectionHorizontal(projection_rt_sptr,Spectrum1DCanvas::DM_CONNECTEDLINES);
+                        emit showProjectionVertical(projection_mz_sptr,Spectrum1DCanvas::DM_PEAKS);
 		}
 		showProjectionInfo(peak_count, intensity_sum, intensity_max);
 	}
@@ -941,13 +944,13 @@ namespace OpenMS
 
 		if (layers_.back().type==LayerData::DT_PEAK) //peak data
 		{
-			currentPeakData_().sortSpectra(true);
-			currentPeakData_().updateRanges(1);
+                        currentPeakData_()->sortSpectra(true);
+                        currentPeakData_()->updateRanges(1);
 
 			update_buffer_ = true;
 
 			//Abort if no data points are contained
-			if (currentPeakData_().size()==0 || currentPeakData_().getSize()==0)
+                        if (currentPeakData_()->size()==0 || currentPeakData_()->getSize()==0)
 			{
 				layers_.resize(getLayerCount()-1);
 				if (current_layer_!=0) current_layer_ = current_layer_-1;
@@ -986,13 +989,13 @@ namespace OpenMS
 		{
 
 			//TODO CHROM 
-			currentPeakData_().sortChromatograms(true);
-			currentPeakData_().updateRanges(1);
+                        currentPeakData_()->sortChromatograms(true);
+                        currentPeakData_()->updateRanges(1);
 
 			update_buffer_ = true;
 
 			//Abort if no data points are contained
-			if (currentPeakData_().getChromatograms().size()==0)
+                        if (currentPeakData_()->getChromatograms().size()==0)
 			{
 				layers_.resize(getLayerCount()-1);
 				if (current_layer_!=0) current_layer_ = current_layer_-1;
@@ -1104,12 +1107,12 @@ namespace OpenMS
 					DoubleReal local_max  = -numeric_limits<DoubleReal>::max();
 					if (getLayer(i).type==LayerData::DT_PEAK)
 					{
-						for (ExperimentType::ConstAreaIterator it = getLayer(i).peaks.areaBeginConst(visible_area_.minPosition()[1],visible_area_.maxPosition()[1],visible_area_.minPosition()[0],visible_area_.maxPosition()[0]);
-								 it != getLayer(i).peaks.areaEndConst();
+                                                for (ExperimentType::ConstAreaIterator it = getLayer(i).getPeakData()->areaBeginConst(visible_area_.minPosition()[1],visible_area_.maxPosition()[1],visible_area_.minPosition()[0],visible_area_.maxPosition()[0]);
+                                                                 it != getLayer(i).getPeakData()->areaEndConst();
 								 ++it)
 						{
 							PeakIndex pi = it.getPeakIndex();
-							if (it->getIntensity() > local_max && getLayer(i).filters.passes(getLayer(i).peaks[pi.spectrum],pi.peak))
+                                                        if (it->getIntensity() > local_max && getLayer(i).filters.passes((*getLayer(i).getPeakData())[pi.spectrum],pi.peak))
 							{
 								local_max = it->getIntensity();
 							}
@@ -1348,7 +1351,7 @@ namespace OpenMS
 				}
 				else if (getCurrentLayer().type==LayerData::DT_PEAK)
 				{
-					dataToWidget_(selected_peak_.getPeak(getCurrentLayer().peaks).getMZ(),selected_peak_.getSpectrum(getCurrentLayer().peaks).getRT(),line_begin);
+                                        dataToWidget_(selected_peak_.getPeak(*getCurrentLayer().getPeakData()).getMZ(),selected_peak_.getSpectrum(*getCurrentLayer().getPeakData()).getRT(),line_begin);
 				}
 				else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
 				{
@@ -1369,7 +1372,7 @@ namespace OpenMS
 			}
 			else if (getCurrentLayer().type==LayerData::DT_PEAK)
 			{
-				dataToWidget_(measurement_start_.getPeak(getCurrentLayer().peaks).getMZ(),measurement_start_.getSpectrum(getCurrentLayer().peaks).getRT(),line_end);
+                                dataToWidget_(measurement_start_.getPeak(*getCurrentLayer().getPeakData()).getMZ(),measurement_start_.getSpectrum(*getCurrentLayer().getPeakData()).getRT(),line_end);
 			}
 			else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
 			{
@@ -1487,7 +1490,7 @@ namespace OpenMS
 				else if (getCurrentLayer().type==LayerData::DT_PEAK)
 				{
 					//meta info
-					const ExperimentType::SpectrumType& s = selected_peak_.getSpectrum(getCurrentLayer().peaks);
+                                        const ExperimentType::SpectrumType& s = selected_peak_.getSpectrum(*getCurrentLayer().getPeakData());
 					for (Size m=0; m<s.getFloatDataArrays().size();++m)
 					{
 						if (selected_peak_.peak < s.getFloatDataArrays()[m].size())
@@ -1685,17 +1688,17 @@ namespace OpenMS
 
 			//add surrounding survey scans
 			//find nearest survey scan
-			SignedSize size = getCurrentLayer().peaks.size();
-			Int current = getCurrentLayer().peaks.RTBegin(rt)-getCurrentLayer().peaks.begin();
+                        SignedSize size = getCurrentLayer().getPeakData()->size();
+                        Int current = getCurrentLayer().getPeakData()->RTBegin(rt)-getCurrentLayer().getPeakData()->begin();
 			SignedSize i=0;
 			while (current+i<size || current-i>=0)
 			{
-				if(current+i<size && getCurrentLayer().peaks[current+i].getMSLevel()==1)
+                                if(current+i<size && (*getCurrentLayer().getPeakData())[current+i].getMSLevel()==1)
 				{
 					current = current+i;
 					break;
 				}
-				if(current-i>=0 && getCurrentLayer().peaks[current-i].getMSLevel()==1)
+                                if(current-i>=0 && (*getCurrentLayer().getPeakData())[current-i].getMSLevel()==1)
 				{
 					current = current-i;
 					break;
@@ -1708,7 +1711,7 @@ namespace OpenMS
 			i=1;
 			while (current-i>=0 && indices.size()<5)
 			{
-				if (getCurrentLayer().peaks[current-i].getMSLevel()==1)
+                                if ((*getCurrentLayer().getPeakData())[current-i].getMSLevel()==1)
 				{
 					indices.push_back(current-i);
 				}
@@ -1717,7 +1720,7 @@ namespace OpenMS
 			i=1;
 			while (current+i<size && indices.size()<9)
 			{
-				if ( getCurrentLayer().peaks[current+i].getMSLevel()==1)
+                                if ((*getCurrentLayer().getPeakData())[current+i].getMSLevel()==1)
 				{
 					indices.push_back(current+i);
 				}
@@ -1730,12 +1733,12 @@ namespace OpenMS
 			for(i=0; i<(Int)indices.size(); ++i)
 			{
 				if (indices[i]==current) ms1_scans->addSeparator();
-				a = ms1_scans->addAction(QString("RT: ") + QString::number(getCurrentLayer().peaks[indices[i]].getRT()));
+                                a = ms1_scans->addAction(QString("RT: ") + QString::number((*getCurrentLayer().getPeakData())[indices[i]].getRT()));
 				a->setData(indices[i]);
 				if (indices[i]==current) ms1_scans->addSeparator();
 
 				if (indices[i]==current) ms1_meta->addSeparator();
-				a = ms1_meta->addAction(QString("RT: ") + QString::number(getCurrentLayer().peaks[indices[i]].getRT()));
+                                a = ms1_meta->addAction(QString("RT: ") + QString::number((*getCurrentLayer().getPeakData())[indices[i]].getRT()));
 				a->setData(indices[i]);
 				if (indices[i]==current) ms1_meta->addSeparator();
 			}
@@ -1750,16 +1753,16 @@ namespace OpenMS
 			DoubleReal mz_min = min(p1[0],p2[0]);
 			DoubleReal mz_max = max(p1[0],p2[0]);
 			bool item_added = false;
-			for (ExperimentType::ConstIterator it=getCurrentLayer().peaks.RTBegin(rt_min); it!=getCurrentLayer().peaks.RTEnd(rt_max); ++it)
+                        for (ExperimentType::ConstIterator it=getCurrentLayer().getPeakData()->RTBegin(rt_min); it!=getCurrentLayer().getPeakData()->RTEnd(rt_max); ++it)
 			{
 				DoubleReal mz = 0.0;
 				if (!it->getPrecursors().empty()) mz = it->getPrecursors()[0].getMZ();
 				if (it->getMSLevel()>1 && mz>=mz_min && mz<=mz_max)
 				{
 					a = msn_scans->addAction(QString("RT: ") + QString::number(it->getRT()) + " mz: " + QString::number(mz));
-					a->setData((int)(it-getCurrentLayer().peaks.begin()));
+                                        a->setData((int)(it-getCurrentLayer().getPeakData()->begin()));
 					a = msn_meta->addAction(QString("RT: ") + QString::number(it->getRT()) + " mz: " + QString::number(mz));
-					a->setData((int)(it-getCurrentLayer().peaks.begin()));
+                                        a->setData((int)(it-getCurrentLayer().getPeakData()->begin()));
 					item_added=true;
 				}
 			}
@@ -2088,7 +2091,7 @@ namespace OpenMS
 				}
 				else //all data
 				{
-					FileHandler().storeExperiment(file_name,layer.peaks,ProgressLogger::GUI);
+                                        FileHandler().storeExperiment(file_name,*layer.getPeakData(),ProgressLogger::GUI);
 				}
 				modificationStatus_(activeLayerIndex(), false);
 			}
@@ -2158,15 +2161,15 @@ namespace OpenMS
 		{
 			try
 			{
-				FileHandler().loadExperiment(layer.filename,layer.peaks);
+                                FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
 			}
 			catch(Exception::BaseException& e)
 			{
 				QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-				layer.peaks.clear(true);
+                                layer.getPeakData()->clear(true);
 			}
-			layer.peaks.sortSpectra(true);
-			layer.peaks.updateRanges(1);
+                        layer.getPeakData()->sortSpectra(true);
+                        layer.getPeakData()->updateRanges(1);
 		}
 		else if (layer.type==LayerData::DT_FEATURE) //feature data
 		{
@@ -2199,15 +2202,15 @@ namespace OpenMS
 			//TODO CHROM
 			try
       {
-        FileHandler().loadExperiment(layer.filename,layer.peaks);
+        FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
       }
       catch(Exception::BaseException& e)
       {
         QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-        layer.peaks.clear(true);
+        layer.getPeakData()->clear(true);
       }
-      layer.peaks.sortChromatograms(true);
-      layer.peaks.updateRanges(1);
+      layer.getPeakData()->sortChromatograms(true);
+      layer.getPeakData()->updateRanges(1);
 
 		}
 		else if (layer.type == LayerData::DT_IDENT) // identifications

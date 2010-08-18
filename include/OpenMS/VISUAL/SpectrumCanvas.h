@@ -95,8 +95,10 @@ namespace OpenMS
 		/**	@name Type definitions */
 		//@{
 		
-		/// Main data type (experiment)
-		typedef LayerData::ExperimentType ExperimentType;
+                /// Main data type (experiment)
+                typedef LayerData::ExperimentType ExperimentType;
+                /// Main managed data type (experiment)
+                typedef LayerData::ExperimentSharedPtrType ExperimentSharedPtrType;
 		/// Main data type (features)
 		typedef LayerData::FeatureMapType FeatureMapType;
 		/// Main data type (consensus features)
@@ -104,7 +106,7 @@ namespace OpenMS
 		/// Spectrum type
 		typedef ExperimentType::SpectrumType SpectrumType;
 		/// Spectrum iterator type (iterates over peaks)
-		typedef SpectrumType::Iterator SpectrumIteratorType;
+                typedef SpectrumType::ConstIterator SpectrumConstIteratorType;
 		/// Peak type
 		typedef SpectrumType::PeakType PeakType;
 		/// Feature type
@@ -314,12 +316,12 @@ namespace OpenMS
 				
 			If chromatograms are present, a chromatogram layer is shown. Otherwise a peak layer is shown. Make sure to remove chromatograms from peak data and vice versa.
 		
-			@param map Input map, which has to be mutable and will be empty after adding. Swapping is used to insert the data. It can be performed in constant time and does not double the required memory. 
+                        @param map Shared Pointer to input map. It can be performed in constant time and does not double the required memory.
 			@param filename This @em absolute filename is used to monitor changes in the file and reload the data
 
 			@return If a new layer was created
 		*/
-		bool addLayer(ExperimentType& map, const String& filename="");
+                bool addLayer(ExperimentSharedPtrType map, const String& filename="");
 
 		/**
 			@brief Add a feature data layer
@@ -358,7 +360,7 @@ namespace OpenMS
 		{ 
 			if (getCurrentLayer().type==LayerData::DT_PEAK || getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 			{
-				return getCurrentLayer().peaks.getMinInt(); 
+                                return getCurrentLayer().getPeakData()->getMinInt();
 			}
 			else if (getCurrentLayer().type==LayerData::DT_FEATURE)
 			{
@@ -375,7 +377,7 @@ namespace OpenMS
 		{ 
 			if (getCurrentLayer().type==LayerData::DT_PEAK || getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 			{
-				return getCurrentLayer().peaks.getMaxInt();
+                                return getCurrentLayer().getPeakData()->getMaxInt();
 			}
 			else if (getCurrentLayer().type==LayerData::DT_FEATURE)
 			{
@@ -392,7 +394,7 @@ namespace OpenMS
 		{ 
 			if (getLayer(index).type==LayerData::DT_PEAK || getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 			{
-				return getLayer(index).peaks.getMinInt();
+                                return getLayer(index).getPeakData()->getMinInt();
 			}
 			else if (getLayer(index).type==LayerData::DT_FEATURE)
 			{
@@ -409,7 +411,7 @@ namespace OpenMS
 		{ 
 			if (getLayer(index).type==LayerData::DT_PEAK || getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 			{
-				return getLayer(index).peaks.getMaxInt();
+                                return getLayer(index).getPeakData()->getMaxInt();
 			}
 			else if (getLayer(index).type==LayerData::DT_FEATURE)
 			{
@@ -642,11 +644,11 @@ namespace OpenMS
 			return getLayer_(current_layer_);
 		}
 		
-		/// Returns the active layer (mutable)
-		inline ExperimentType& currentPeakData_()
-		{
-			return getCurrentLayer_().peaks;
-		}
+                /// Returns the currently active layer (mutable)
+                inline ExperimentSharedPtrType currentPeakData_()
+                {
+                        return getCurrentLayer_().getPeakData();
+                }
 	
 		///@name reimplemented QT events
 		//@{

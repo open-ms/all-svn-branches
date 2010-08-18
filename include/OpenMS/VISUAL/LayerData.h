@@ -36,6 +36,8 @@
 #include <OpenMS/VISUAL/Annotations1DContainer.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/DataFilters.h>
 
+#include <boost/shared_ptr.hpp>
+
 #include <vector>
 #include <bitset>
 
@@ -45,7 +47,7 @@ namespace OpenMS
 		@brief Struct that stores the data for one layer
 		
 		@ingroup SpectrumWidgets
-	*/
+	*/		
   struct LayerData
 	{
 		/**	@name Type definitions */
@@ -88,13 +90,16 @@ namespace OpenMS
 		};
 		//Label names
 		static const std::string NamesOfLabelType[SIZE_OF_LABEL_TYPE];
-		
+		                                
 		/// Main data type (experiment)
 		typedef MSExperiment<> ExperimentType;
 		/// Main data type (features)
 		typedef FeatureMap<> FeatureMapType;
 		/// Main data type (consensus features)
 		typedef ConsensusMap ConsensusMapType;
+                /// SharedPtr on MSExperiment
+                typedef boost::shared_ptr<ExperimentType> ExperimentSharedPtrType;
+
 		//@}
 		
 		/// Default constructor
@@ -105,7 +110,6 @@ namespace OpenMS
 				type(DT_UNKNOWN),
 				name(),
 				filename(),
-				peaks(),
 				features(),
 				consensus(),
 				peptides(),
@@ -116,26 +120,40 @@ namespace OpenMS
 				annotations_1d(),
 				modifiable(false),
 				modified(false),
-				label(L_NONE)
+                                label(L_NONE),
+                                peaks()
 		{
 			annotations_1d.resize(1);
 		}
-		
+
 		/// Returns a const reference to the current spectrum (1d view)
 		inline const ExperimentType::SpectrumType& getCurrentSpectrum() const
 		{
-			return peaks[current_spectrum];
+                        return (*peaks)[current_spectrum];
 		}
+
+                /// Returns a const reference to the current peak data
+                inline const ExperimentSharedPtrType getPeakData() const
+                {
+                        return peaks;
+                }
+
+                /// Returns a mutable reference to the current peak data
+                inline ExperimentSharedPtrType& getPeakData()
+                {
+                        return peaks;
+                }
+
 		/// Returns a const reference to the annotations of the current spectrum (1d view)
 		inline const Annotations1DContainer& getCurrentAnnotations() const
 		{
 			return annotations_1d[current_spectrum];
 		}
-		/// Returns a mutable reference to the current spectrum (1d view)
-		inline ExperimentType::SpectrumType& getCurrentSpectrum()
-		{
-			return peaks[current_spectrum];
-		}
+                /// Returns a mutable reference to the current spectrum (1d view)
+                inline ExperimentType::SpectrumType& getCurrentSpectrum()
+                {
+                        return (*peaks)[current_spectrum];
+                }
 		/// Returns a mutable reference to the annotations of the current spectrum (1d view)
 		inline Annotations1DContainer& getCurrentAnnotations()
 		{
@@ -152,8 +170,6 @@ namespace OpenMS
 		String name;
 		/// file name of the file the data comes from (if available)
 		String filename;
-		/// peak data
-		ExperimentType peaks;
 		/// feature data
 		FeatureMapType features;
 		/// consensus feature data
@@ -183,6 +199,9 @@ namespace OpenMS
 		///Label type
 		LabelType label;
 
+            private:
+                /// peak data
+                ExperimentSharedPtrType peaks;
 	};
 
 	///Print the contents to a stream.

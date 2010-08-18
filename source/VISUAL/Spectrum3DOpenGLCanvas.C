@@ -415,12 +415,12 @@ namespace OpenMS
 					glShadeModel(GL_FLAT); 
 				}
 				
-				for (Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.peaks.areaBeginConst(canvas_3d_.visible_area_.min_[1],canvas_3d_.visible_area_.max_[1],canvas_3d_.visible_area_.min_[0],canvas_3d_.visible_area_.max_[0]); 
-						 it != layer.peaks.areaEndConst(); 
+                                for (Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.getPeakData()->areaBeginConst(canvas_3d_.visible_area_.min_[1],canvas_3d_.visible_area_.max_[1],canvas_3d_.visible_area_.min_[0],canvas_3d_.visible_area_.max_[0]);
+                                                 it != layer.getPeakData()->areaEndConst();
 						 ++it)
 				{
 					PeakIndex pi = it.getPeakIndex();
-					if (layer.filters.passes(layer.peaks[pi.spectrum],pi.peak))
+                                        if (layer.filters.passes((*layer.getPeakData())[pi.spectrum],pi.peak))
 					{
 						glBegin(GL_POINTS);
 						double intensity = 0;
@@ -472,12 +472,12 @@ namespace OpenMS
 	
 				glLineWidth(layer.param.getValue("dot:line_width"));
 					
-				for (Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.peaks.areaBeginConst(canvas_3d_.visible_area_.min_[1],canvas_3d_.visible_area_.max_[1],canvas_3d_.visible_area_.min_[0],canvas_3d_.visible_area_.max_[0]); 
-						 it != layer.peaks.areaEndConst(); 
+                                for (Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = layer.getPeakData()->areaBeginConst(canvas_3d_.visible_area_.min_[1],canvas_3d_.visible_area_.max_[1],canvas_3d_.visible_area_.min_[0],canvas_3d_.visible_area_.max_[0]);
+                                                 it != layer.getPeakData()->areaEndConst();
 						 ++it)
 				{
 					PeakIndex pi = it.getPeakIndex();
-					if (layer.filters.passes(layer.peaks[pi.spectrum],pi.peak))
+                                        if (layer.filters.passes((*layer.getPeakData())[pi.spectrum],pi.peak))
 					{
 						glBegin(GL_LINES);
 						double intensity = 0;
@@ -897,8 +897,8 @@ namespace OpenMS
 		
 		for (Size i =0;i<canvas_3d_.getLayerCount();i++)
 		{
-			for (SpectrumCanvas::ExperimentType::ConstIterator spec_it = canvas_3d_.getLayer(i).peaks.RTBegin(canvas_3d_.visible_area_.min_[1]); 
-					 spec_it != canvas_3d_.getLayer(i).peaks.RTEnd(canvas_3d_.visible_area_.max_[1]); 
+                        for (SpectrumCanvas::ExperimentType::ConstIterator spec_it = canvas_3d_.getLayer(i).getPeakData()->RTBegin(canvas_3d_.visible_area_.min_[1]);
+                                         spec_it != canvas_3d_.getLayer(i).getPeakData()->RTEnd(canvas_3d_.visible_area_.max_[1]);
 					 ++spec_it)
 			{
 				for (SpectrumCanvas::ExperimentType::SpectrumType::ConstIterator it = spec_it->MZBegin(canvas_3d_.visible_area_.min_[0]); it!=spec_it->MZEnd(canvas_3d_.visible_area_.max_[0]); ++it)

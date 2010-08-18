@@ -102,6 +102,8 @@ namespace OpenMS
     	typedef LayerData::ConsensusMapType ConsensusMapType;
     	//Peak map type
     	typedef LayerData::ExperimentType ExperimentType;
+        //Main managed data type (experiment)
+        typedef LayerData::ExperimentSharedPtrType ExperimentSharedPtrType;
     	///Peak spectrum type
     	typedef ExperimentType::SpectrumType SpectrumType;
     	//@}
@@ -315,7 +317,7 @@ namespace OpenMS
       	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current
       	@param spectrum_id determines the spectrum to show in 1D view.
       */
-  		void addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, std::vector<PeptideIdentification>& peptides, ExperimentType& peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
+      void addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, std::vector<PeptideIdentification>& peptides, ExperimentSharedPtrType peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
 
     	/// Tries to open a db connection (queries the user for the DB password)
     	void connectToDB_(DBConnection& db);

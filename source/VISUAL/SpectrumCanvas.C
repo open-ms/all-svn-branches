@@ -382,19 +382,21 @@ namespace OpenMS
 		return current_layer_;	
 	}
 
-	bool SpectrumCanvas::addLayer(ExperimentType& map, const String& filename)
+        bool SpectrumCanvas::addLayer(ExperimentSharedPtrType map, const String& filename)
 	{	
-		layers_.resize(layers_.size()+1);
+                layers_.resize(layers_.size()+1);
+                //ExperimentSharedPtrType shared_peak_data(new LayerData::ExperimentType(map));
 		layers_.back().param = param_;
-		layers_.back().filename = filename;
-		layers_.back().peaks.swap(map);
-		if (layers_.back().peaks.getChromatograms().size()!=0)
+		layers_.back().filename = filename;                
+                layers_.back().getPeakData() = map;
+
+                if (layers_.back().getPeakData()->getChromatograms().size()!=0)
 		{
 			Size num_chrom(0);
-			for (Size i = 0; i != layers_.back().peaks.getChromatograms().size(); ++i)
+                        for (Size i = 0; i != layers_.back().getPeakData()->getChromatograms().size(); ++i)
 			{
-				if (layers_.back().peaks.getChromatograms()[i].getChromatogramType() == ChromatogramSettings::SELECTED_ION_CURRENT_CHROMATOGRAM ||
-						layers_.back().peaks.getChromatograms()[i].getChromatogramType() == ChromatogramSettings::SELECTED_REACTION_MONITORING_CHROMATOGRAM)
+                                if (layers_.back().getPeakData()->getChromatograms()[i].getChromatogramType() == ChromatogramSettings::SELECTED_ION_CURRENT_CHROMATOGRAM ||
+                                                layers_.back().getPeakData()->getChromatograms()[i].getChromatogramType() == ChromatogramSettings::SELECTED_REACTION_MONITORING_CHROMATOGRAM)
 				{
 					++num_chrom;
 				}
@@ -496,7 +498,7 @@ namespace OpenMS
 		{
 			if (getLayer(layer_index).type==LayerData::DT_PEAK || getLayer(layer_index).type==LayerData::DT_CHROMATOGRAM)
 			{
-				const ExperimentType& map = getLayer(layer_index).peaks;
+                                const ExperimentType& map = *getLayer(layer_index).getPeakData();
 				if (map.getMinMZ() < m_min[mz_dim]) m_min[mz_dim] = map.getMinMZ();
 				if (map.getMaxMZ() > m_max[mz_dim]) m_max[mz_dim] = map.getMaxMZ();
 				if (map.getMinRT() < m_min[rt_dim]) m_min[rt_dim] = map.getMinRT();
@@ -788,18 +790,18 @@ namespace OpenMS
   	if (layer.type==LayerData::DT_PEAK)
   	{
 			const AreaType& area = getVisibleArea();
-			const ExperimentType& peaks = layer.peaks;
+                        const ExperimentType& peaks = *layer.getPeakData();
 			//copy experimental settings
 			map.ExperimentalSettings::operator=(peaks);
 			//reserve space for the correct number of spectra in RT range
-			ExperimentType::ConstIterator begin = layer.peaks.RTBegin(area.minPosition()[1]);
-			ExperimentType::ConstIterator end = layer.peaks.RTEnd(area.maxPosition()[1]);
+                        ExperimentType::ConstIterator begin = layer.getPeakData()->RTBegin(area.minPosition()[1]);
+                        ExperimentType::ConstIterator end = layer.getPeakData()->RTEnd(area.maxPosition()[1]);
 			
 			//Exception for Spectrum1DCanvas, here we copy the currently visualized spectrum
 			bool is_1d = (getName()=="Spectrum1DCanvas");
 			if (is_1d)
 			{
-				begin = layer.peaks.begin() + layer.current_spectrum;
+                                begin = layer.getPeakData()->begin() + layer.current_spectrum;
 				end = begin+1;
 			}
 
@@ -940,11 +942,11 @@ namespace OpenMS
 		{
 			if (layer.type==LayerData::DT_PEAK)
 			{
-				dlg.add(layer.peaks);
+                                dlg.add(*layer.getPeakData());
 				//Exception for Spectrum1DCanvas, here we add the meta data of the one spectrum
 				if (getName()=="Spectrum1DCanvas")
 				{
-					dlg.add(layer.peaks[layer.current_spectrum]);
+                                        dlg.add((*layer.getPeakData())[layer.current_spectrum]);
 				}
 			}
 			else if (layer.type==LayerData::DT_FEATURE)
@@ -968,7 +970,7 @@ namespace OpenMS
 		{
 			if (layer.type==LayerData::DT_PEAK)
 			{
-					dlg.add(layer.peaks[index]);
+                                        dlg.add((*layer.getPeakData())[index]);
 			}
 			else if (layer.type==LayerData::DT_FEATURE)
 			{
@@ -1042,9 +1044,9 @@ namespace OpenMS
 		}
 		else if (getCurrentLayer().type==LayerData::DT_PEAK)
 		{
-			mz = peak.getPeak(getCurrentLayer().peaks).getMZ();
-			rt = peak.getSpectrum(getCurrentLayer().peaks).getRT();
-			it = peak.getPeak(getCurrentLayer().peaks).getIntensity();
+                        mz = peak.getPeak(*getCurrentLayer().getPeakData()).getMZ();
+                        rt = peak.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
+                        it = peak.getPeak(*getCurrentLayer().getPeakData()).getIntensity();
 		}
 		else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
 		{
@@ -1111,15 +1113,15 @@ namespace OpenMS
 		{
 			if (end.isValid())
 			{
-				mz = end.getPeak(getCurrentLayer().peaks).getMZ() - start.getPeak(getCurrentLayer().peaks).getMZ();
-				rt = end.getSpectrum(getCurrentLayer().peaks).getRT() - start.getSpectrum(getCurrentLayer().peaks).getRT();
-				it = end.getPeak(getCurrentLayer().peaks).getIntensity() / start.getPeak(getCurrentLayer().peaks).getIntensity();
+                                mz = end.getPeak(*getCurrentLayer().getPeakData()).getMZ() - start.getPeak(*getCurrentLayer().getPeakData()).getMZ();
+                                rt = end.getSpectrum(*getCurrentLayer().getPeakData()).getRT() - start.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
+                                it = end.getPeak(*getCurrentLayer().getPeakData()).getIntensity() / start.getPeak(*getCurrentLayer().getPeakData()).getIntensity();
 			}
 			else
 			{
 				PointType point = widgetToData_(last_mouse_pos_);
-				mz = point[0] - start.getPeak(getCurrentLayer().peaks).getMZ();
-				rt = point[1] - start.getSpectrum(getCurrentLayer().peaks).getRT();
+                                mz = point[0] - start.getPeak(*getCurrentLayer().getPeakData()).getMZ();
+                                rt = point[1] - start.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
 				it = std::numeric_limits<DoubleReal>::quiet_NaN();
 			}
 		}

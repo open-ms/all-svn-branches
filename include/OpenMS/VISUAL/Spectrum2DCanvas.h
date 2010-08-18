@@ -86,9 +86,9 @@ namespace OpenMS
 			
     signals:
       /// Sets the data for the horizontal projection
-      void showProjectionHorizontal(const ExperimentType&, Spectrum1DCanvas::DrawModes);
+                        void showProjectionHorizontal(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes);
       /// Sets the data for the vertical projection
-      void showProjectionVertical(const ExperimentType&, Spectrum1DCanvas::DrawModes);
+      void showProjectionVertical(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes);
       /// Shows the number of peaks and the intensity sum of the projection
       void showProjectionInfo(int, double, double);
 			/// Signal emitted when the projections are to be shown/hidden 

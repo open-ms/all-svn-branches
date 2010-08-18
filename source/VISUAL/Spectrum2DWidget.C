@@ -66,8 +66,8 @@ namespace OpenMS
 		projection_horz_ = new Spectrum1DWidget(Param(), this);
 		projection_horz_->hide();
 		grid_->addWidget(projection_horz_,0,1,1,2);
-		connect(canvas(), SIGNAL(showProjectionHorizontal(const ExperimentType&, Spectrum1DCanvas::DrawModes)), this, SLOT(horizontalProjection(const ExperimentType&, Spectrum1DCanvas::DrawModes)));
-		connect(canvas(), SIGNAL(showProjectionVertical(const ExperimentType&, Spectrum1DCanvas::DrawModes)), this, SLOT(verticalProjection(const ExperimentType&, Spectrum1DCanvas::DrawModes)));
+                connect(canvas(), SIGNAL(showProjectionHorizontal(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes)), this, SLOT(horizontalProjection(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes)));
+                connect(canvas(), SIGNAL(showProjectionVertical(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes)), this, SLOT(verticalProjection(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes)));
 		connect(canvas(), SIGNAL(showProjectionInfo(int,double,double)), this, SLOT(projectionInfo(int,double,double)));
 		connect(canvas(), SIGNAL(toggleProjections()), this, SLOT(toggleProjections()));
 		connect(canvas(), SIGNAL(showSpectrumAs1D(int)), this, SIGNAL(showSpectrumAs1D(int)));
@@ -154,7 +154,7 @@ namespace OpenMS
 		
 		if (canvas_->getCurrentLayer().type==LayerData::DT_PEAK)
 		{
-			for (ExperimentType::ConstIterator spec_it = canvas_->getCurrentLayer().peaks.begin(); spec_it != canvas_->getCurrentLayer().peaks.end(); ++spec_it)
+                        for (ExperimentType::ConstIterator spec_it = canvas_->getCurrentLayer().getPeakData()->begin(); spec_it != canvas_->getCurrentLayer().getPeakData()->end(); ++spec_it)
 			{
 				if (spec_it->getMSLevel()!=1)
 				{
@@ -192,7 +192,7 @@ namespace OpenMS
 		{
 			//determine min and max of the data
 			Real min = numeric_limits<Real>::max(), max = -numeric_limits<Real>::max();
-			for (ExperimentType::const_iterator s_it = canvas_->getCurrentLayer().peaks.begin(); s_it!=canvas_->getCurrentLayer().peaks.end(); ++s_it)
+                        for (ExperimentType::const_iterator s_it = canvas_->getCurrentLayer().getPeakData()->begin(); s_it!=canvas_->getCurrentLayer().getPeakData()->end(); ++s_it)
 			{
 				if (s_it->getMSLevel()!=1) continue;
 				//float arrays
@@ -226,7 +226,7 @@ namespace OpenMS
 		
 			//create histogram
 			tmp.reset(min,max,(max-min)/500.0);
-			for (ExperimentType::const_iterator s_it = canvas_->getCurrentLayer().peaks.begin(); s_it!=canvas_->getCurrentLayer().peaks.end(); ++s_it)
+                        for (ExperimentType::const_iterator s_it = canvas_->getCurrentLayer().getPeakData()->begin(); s_it!=canvas_->getCurrentLayer().getPeakData()->end(); ++s_it)
 			{
 				if (s_it->getMSLevel()!=1) continue;
 				//float arrays
@@ -306,23 +306,21 @@ namespace OpenMS
 		}
 	}
 	
-	void Spectrum2DWidget::horizontalProjection(const ExperimentType& exp, Spectrum1DCanvas::DrawModes mode)
+        void Spectrum2DWidget::horizontalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
 	{
 		projection_horz_->showLegend(false);
 		projection_horz_->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
 		if (!projectionsVisible() || projection_horz_->canvas()->getLayerCount()==0) //set draw mode
 		{
 			projection_horz_->canvas()->removeLayer(0);
-			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
-			projection_horz_->canvas()->addLayer(tmp);
+                        projection_horz_->canvas()->addLayer(exp);
 			projection_horz_->canvas()->setDrawMode(mode);
 		}
 		else //keep draw mode
 		{
 			Spectrum1DCanvas::DrawModes previous_mode = projection_horz_->canvas()->getDrawMode();
 			projection_horz_->canvas()->removeLayer(0);
-			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
-			projection_horz_->canvas()->addLayer(tmp);
+                        projection_horz_->canvas()->addLayer(exp);
 			projection_horz_->canvas()->setDrawMode(previous_mode);
 		}
 		grid_->setColumnStretch(3,2);
@@ -330,7 +328,7 @@ namespace OpenMS
 		projection_box_->show();
 	}
 	
-	void Spectrum2DWidget::verticalProjection(const ExperimentType& exp, Spectrum1DCanvas::DrawModes mode)
+        void Spectrum2DWidget::verticalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
 	{
 		projection_vert_->canvas()->mzToXAxis(false);
 		projection_vert_->showLegend(false);
@@ -339,16 +337,14 @@ namespace OpenMS
 		if (!projectionsVisible() || projection_vert_->canvas()->getLayerCount()==0) //set draw mode
 		{
 			projection_vert_->canvas()->removeLayer(0);
-			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
-			projection_vert_->canvas()->addLayer(tmp);
+                        projection_vert_->canvas()->addLayer(exp);
 			projection_vert_->canvas()->setDrawMode(mode);
 		}
 		else //keep draw mode
 		{
 			Spectrum1DCanvas::DrawModes previous_mode = projection_vert_->canvas()->getDrawMode();
 			projection_vert_->canvas()->removeLayer(0);
-			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
-			projection_vert_->canvas()->addLayer(tmp);
+                        projection_vert_->canvas()->addLayer(exp);
 			projection_vert_->canvas()->setDrawMode(previous_mode);
 		}
 		grid_->setRowStretch(0,2);

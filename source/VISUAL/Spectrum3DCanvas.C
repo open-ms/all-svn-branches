@@ -106,11 +106,11 @@ namespace OpenMS
 		}
 		
 		current_layer_ = getLayerCount()-1;
-		currentPeakData_().sortSpectra(true);
-		currentPeakData_().updateRanges(1);	
+                currentPeakData_()->sortSpectra(true);
+                currentPeakData_()->updateRanges(1);
 
 		//Abort if no data points are contained
-		if (getCurrentLayer().peaks.size()==0 || getCurrentLayer().peaks.getSize()==0)
+                if (getCurrentLayer().getPeakData()->size()==0 || getCurrentLayer().getPeakData()->getSize()==0)
 		{
 			layers_.resize(getLayerCount()-1);
 			if (current_layer_!=0) current_layer_ = current_layer_-1;
@@ -361,7 +361,7 @@ namespace OpenMS
 			}
 			else //all data
 			{
-				FileHandler().storeExperiment(file_name,layer.peaks,ProgressLogger::GUI);
+                                FileHandler().storeExperiment(file_name,*layer.getPeakData(),ProgressLogger::GUI);
 			}
 		}
 	}
@@ -374,15 +374,15 @@ namespace OpenMS
 		//update data
 		try
 		{
-			FileHandler().loadExperiment(layer.filename,layer.peaks);
+                        FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
 		}
 		catch(Exception::BaseException& e)
 		{
 			QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-			layer.peaks.clear(true);
+                        layer.getPeakData()->clear(true);
 		}
-		layer.peaks.sortSpectra(true);
-		layer.peaks.updateRanges(1);
+                layer.getPeakData()->sortSpectra(true);
+                layer.getPeakData()->updateRanges(1);
 		
 		recalculateRanges_(0,1,2);
 		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway

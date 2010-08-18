@@ -272,7 +272,7 @@ namespace OpenMS
 		max_intensity_ = canvas_->getCurrentMaxIntensity();
 		avg_intensity_ = 0;
 		unsigned long divisor = 0;
-		for(LayerData::ExperimentType::ConstIterator it_rt = layer_data_.peaks.begin(); it_rt != layer_data_.peaks.end(); it_rt++)
+                for(LayerData::ExperimentType::ConstIterator it_rt = layer_data_.getPeakData()->begin(); it_rt != layer_data_.getPeakData()->end(); it_rt++)
 		{
 			for(PeakIterator_ it_peak = it_rt->begin(); it_peak != it_rt->end(); it_peak++)
 			{

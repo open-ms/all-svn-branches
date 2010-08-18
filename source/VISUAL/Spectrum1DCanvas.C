@@ -276,7 +276,7 @@ namespace OpenMS
 					if (selected_peak_.isValid())
 					{
 						measurement_start_ = selected_peak_;
-						const ExperimentType::PeakType& peak = measurement_start_.getPeak(getCurrentLayer().peaks);
+                                                const ExperimentType::PeakType& peak = measurement_start_.getPeak((*getCurrentLayer().getPeakData()));
 						if (intensity_mode_==IM_PERCENTAGE)
 						{
 							percentage_factor_ = overall_data_range_.maxPosition()[1]/getCurrentLayer().getCurrentSpectrum().getMaxInt();
@@ -298,7 +298,7 @@ namespace OpenMS
 					if (selected_peak_.isValid())
 					{
 						measurement_start_ = selected_peak_;
-						const ExperimentType::PeakType& peak = measurement_start_.getPeak(getCurrentLayer().peaks);
+                                                const ExperimentType::PeakType& peak = measurement_start_.getPeak((*getCurrentLayer().getPeakData()));
 						if (intensity_mode_==IM_PERCENTAGE)
 						{
 							percentage_factor_ = overall_data_range_.maxPosition()[1]/getCurrentLayer().getCurrentSpectrum().getMaxInt();
@@ -423,7 +423,7 @@ namespace OpenMS
 		if (selected_peak_.isValid())
 		{
 				String status;
-				const ExperimentType::SpectrumType& s = selected_peak_.getSpectrum(getCurrentLayer().peaks);
+                                const ExperimentType::SpectrumType& s = selected_peak_.getSpectrum(*getCurrentLayer().getPeakData());
 				for (Size m=0; m<s.getFloatDataArrays().size();++m)
 				{
 					if (selected_peak_.peak < s.getFloatDataArrays()[m].size())
@@ -476,8 +476,8 @@ namespace OpenMS
 				}
 				if (measurement_start_.isValid() && selected_peak_.peak != measurement_start_.peak)
 				{
-					const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(getCurrentLayer().peaks);
-					const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(getCurrentLayer().peaks);
+                                        const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(*getCurrentLayer().getPeakData());
+                                        const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(*getCurrentLayer().getPeakData());
 					DoubleReal distance = peak_2.getMZ() - peak_1.getMZ();
 					// add new distance item to annotations_1d of current layer
 					if (intensity_mode_==IM_PERCENTAGE)
@@ -545,7 +545,7 @@ namespace OpenMS
 		if (mirror_mode_ && (getCurrentLayer().flipped ^ (p.y() > height()/2))) return PeakIndex();
 		
 		//reference to the current data
-		SpectrumType& spectrum = getCurrentLayer_().getCurrentSpectrum();
+                const SpectrumType& spectrum = getCurrentLayer_().getCurrentSpectrum();
 		Size spectrum_index = getCurrentLayer_().current_spectrum;
 		
 		// get the interval (in diagramm metric) that will be projected on screen coordinate p.x() or p.y() (depending on orientation)
@@ -555,11 +555,11 @@ namespace OpenMS
 		// get iterator on first peak with higher position than interval_start
 		PeakType temp;
 		temp.setMZ(min(lt.getX(),rb.getX()));
-		SpectrumIteratorType left_it = lower_bound(spectrum.begin(), spectrum.end(), temp, PeakType::PositionLess());
+                SpectrumConstIteratorType left_it = lower_bound(spectrum.begin(), spectrum.end(), temp, PeakType::PositionLess());
 	
 		// get iterator on first peak with higher position than interval_end
 		temp.setMZ(max(lt.getX(),rb.getX()));
-		SpectrumIteratorType	right_it = lower_bound(left_it, spectrum.end(), temp, PeakType::PositionLess());
+                SpectrumConstIteratorType	right_it = lower_bound(left_it, spectrum.end(), temp, PeakType::PositionLess());
 	
 	
 		if (left_it == right_it) // both are equal => no peak falls into this interval
@@ -572,7 +572,7 @@ namespace OpenMS
 			return PeakIndex(spectrum_index,left_it-spectrum.begin());
 		}
 	
-		SpectrumIteratorType nearest_it = left_it;
+                SpectrumConstIteratorType nearest_it = left_it;
 		
 		// select source interval start and end depending on diagram orientation
 		if (intensity_mode_==IM_PERCENTAGE)
@@ -593,7 +593,7 @@ namespace OpenMS
 		                                                                 visible_area_.maxY(), dest_interval_start, dest_interval_end));
 		int current_intensity;
 	
-		for (SpectrumIteratorType it = left_it; it != right_it; it++)
+                for (SpectrumConstIteratorType it = left_it; it != right_it; it++)
 		{
 			current_intensity = static_cast<int>(intervalTransformation(it->getIntensity(), visible_area_.minY(), visible_area_.maxY(),
 			                                                             dest_interval_start, dest_interval_end));
@@ -725,7 +725,7 @@ namespace OpenMS
 			emit recalculateAxes();
 			paintGridLines_(painter);
 			
-			SpectrumIteratorType vbegin, vend;
+                        SpectrumConstIteratorType vbegin, vend;
 			for (Size i=0; i< getLayerCount();++i)
 			{
 				const LayerData& layer = getLayer(i);
@@ -767,7 +767,7 @@ namespace OpenMS
 					{
 						case DM_PEAKS:
 							//-----------------------------------------DRAWING PEAKS-------------------------------------------							
-							for (SpectrumIteratorType it = vbegin; it != vend; ++it)
+                                                        for (SpectrumConstIteratorType it = vbegin; it != vend; ++it)
 							{
 								if (layer.filters.passes(spectrum,it-spectrum.begin()))
 								{
@@ -787,7 +787,7 @@ namespace OpenMS
 							
 								// connect peaks in visible area; (no clipping needed)
 								bool first_point=true;
-								for (SpectrumIteratorType it = vbegin; it != vend; it++)
+                                                                for (SpectrumConstIteratorType it = vbegin; it != vend; it++)
 								{
 									dataToWidget(*it, begin, layer.flipped);
 						
@@ -898,7 +898,7 @@ namespace OpenMS
 		if (peak.isValid())
 		{
 			QPoint begin;
-			const ExperimentType::PeakType& sel = peak.getPeak(getLayer_(layer_index).peaks);
+                        const ExperimentType::PeakType& sel = peak.getPeak(*getLayer_(layer_index).getPeakData());
 
 			painter.setPen(QPen(QColor(param_.getValue("highlighted_peak_color").toQString()), 2));
 			
@@ -1036,10 +1036,10 @@ namespace OpenMS
 		}
 		
 		current_layer_ = getLayerCount()-1;
-		currentPeakData_().updateRanges();
+                currentPeakData_()->updateRanges();
 		
 		//Abort if no data points are contained
-		if (getCurrentLayer().peaks.size()==0 || getCurrentLayer().peaks.getSize()==0)
+                if (getCurrentLayer().getPeakData()->size()==0 || getCurrentLayer().getPeakData()->getSize()==0)
 		{
 			layers_.resize(getLayerCount()-1);
 			if (current_layer_!=0) current_layer_ = current_layer_-1;
@@ -1080,12 +1080,12 @@ namespace OpenMS
 		}
 	
 		// sort spectra in accending order of position
-		for (Size i = 0; i < currentPeakData_().size(); ++i)
+                for (Size i = 0; i < currentPeakData_()->size(); ++i)
 		{
-			getCurrentLayer_().peaks[i].sortByPosition();
+                        (*getCurrentLayer_().getPeakData())[i].sortByPosition();
 		}
 		
-		getCurrentLayer_().annotations_1d.resize(currentPeakData_().size());
+                getCurrentLayer_().annotations_1d.resize(currentPeakData_()->size());
 		
 		//update nearest peak
 		selected_peak_.clear();
@@ -1130,7 +1130,7 @@ namespace OpenMS
 			for (Size i=0; i<getLayerCount();++i)
 			{
 				SpectrumType& spectrum = getLayer_(i).getCurrentSpectrum();
-				SpectrumIteratorType tmp  = max_element(spectrum.MZBegin(visible_area_.minX()), spectrum.MZEnd(visible_area_.maxX()), PeakType::IntensityLess());
+                                SpectrumConstIteratorType tmp  = max_element(spectrum.MZBegin(visible_area_.minX()), spectrum.MZEnd(visible_area_.maxX()), PeakType::IntensityLess());
 				if (tmp != spectrum.end() && tmp->getIntensity() > local_max) 
 				{
 					local_max = tmp->getIntensity();
@@ -1354,7 +1354,7 @@ namespace OpenMS
 					QString text = QInputDialog::getText(this, "Add peak annotation", "Enter text:", QLineEdit::Normal, "", &ok);
 					if (ok && !text.isEmpty())
 					{
-						PeakType peak = near_peak.getPeak(getCurrentLayer().peaks);
+                                                PeakType peak = near_peak.getPeak(*getCurrentLayer().getPeakData());
 						PointType position(peak.getMZ(), peak.getIntensity());
 						Annotation1DItem* item = new Annotation1DPeakItem(position, text);
 						getCurrentLayer_().getCurrentAnnotations().push_front(item);
@@ -1424,7 +1424,7 @@ namespace OpenMS
 		  }
 		  else
 		  {
-				FileHandler().storeExperiment(file_name,layer.peaks);
+                                FileHandler().storeExperiment(file_name,*layer.getPeakData());
 		  }
 		}
 	}
@@ -1448,16 +1448,16 @@ namespace OpenMS
 		LayerData& layer = getLayer_(i);
 		try
 		{
-			FileHandler().loadExperiment(layer.filename,layer.peaks);
+                        FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
 		}
 		catch(Exception::BaseException& e)
 		{
 			QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-			layer.peaks.clear(true);
+                        layer.getPeakData()->clear(true);
 		}		
-		layer.peaks.resize(1);
-		layer.peaks.sortSpectra();
-		layer.peaks.updateRanges();
+                layer.getPeakData()->resize(1);
+                layer.getPeakData()->sortSpectra();
+                layer.getPeakData()->updateRanges();
 		
 		//update nearest peak
 		selected_peak_.clear();
@@ -1762,7 +1762,7 @@ namespace OpenMS
 	
 	void Spectrum1DCanvas::activateSpectrum(Size index, bool repaint)
 	{
-		if (index < currentPeakData_().size())
+                if (index < currentPeakData_()->size())
 		{
 			getCurrentLayer_().current_spectrum = index;
 			recalculateSnapFactor_();

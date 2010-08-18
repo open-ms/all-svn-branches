@@ -675,11 +675,11 @@ namespace OpenMS
     QSqlQuery result = con.executeQuery(String("SELECT count(id) from DATA_Spectrum where fid_MSExperiment='")+db_id+"' and MSLevel='1'");
 		LayerData::DataType data_type = ((result.value(0).toInt()>1) ? 
 																		 LayerData::DT_PEAK : 
-																		 LayerData::DT_CHROMATOGRAM);
-
+                                                                                                                                                                                         LayerData::DT_CHROMATOGRAM);
+                ExperimentSharedPtrType exp_sptr(new LayerData::ExperimentType(exp));
 		//add data
     if (caption=="") caption = String("DB entry ")+db_id;
-		addData_(dummy_map, dummy_map2, dummy_peptides, exp, data_type, false, show_options, "", caption, window_id);
+                addData_(dummy_map, dummy_map2, dummy_peptides, exp_sptr, data_type, false, show_options, "", caption, window_id);
 
   	//Reset cursor
   	setCursor(Qt::ArrowCursor);
@@ -925,7 +925,10 @@ namespace OpenMS
     {
     	abs_filename = "";
     }
-    addData_(feature_map, consensus_map, peptides, peak_map, data_type, false, show_options, abs_filename, caption, window_id, spectrum_id);
+
+    ExperimentSharedPtrType peak_map_sptr( new LayerData::ExperimentType(peak_map));
+
+    addData_(feature_map, consensus_map, peptides, peak_map_sptr, data_type, false, show_options, abs_filename, caption, window_id, spectrum_id);
 
   	//add to recent file
   	if (add_to_recent) addRecentFile_(filename);
@@ -934,7 +937,7 @@ namespace OpenMS
     setCursor(Qt::ArrowCursor);
   }
 
-  void TOPPViewBase::addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, vector<PeptideIdentification>& peptides, ExperimentType& peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename, const String& caption, UInt window_id, Size spectrum_id)
+  void TOPPViewBase::addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, vector<PeptideIdentification>& peptides, ExperimentSharedPtrType peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename, const String& caption, UInt window_id, Size spectrum_id)
   {
   	//initialize flags with defaults from the parameters
   	bool as_new_window = true;
@@ -1050,7 +1053,7 @@ namespace OpenMS
 	      //calculate noise
 	      if (use_mower && is_2D)
 	      {
-	        DoubleReal cutoff = estimateNoise_(open_window->canvas()->getCurrentLayer().peaks);
+                DoubleReal cutoff = estimateNoise_(*(open_window->canvas()->getCurrentLayer().getPeakData()));
 					//create filter
 					DataFilters::DataFilter filter;
 					filter.field = DataFilters::INTENSITY;
@@ -1550,16 +1553,16 @@ namespace OpenMS
   		parent_stack.push_back(0);
   		bool fail = false;
 
-			for (Size i = 0; i < cl.peaks.size(); ++i)
+                        for (Size i = 0; i < cl.getPeakData()->size(); ++i)
 			{
 				if (i > 0)
 				{
-					if (cl.peaks[i].getMSLevel() == cl.peaks[i-1].getMSLevel() + 1)
+                                        if ((*cl.getPeakData())[i].getMSLevel() == (*cl.getPeakData())[i-1].getMSLevel() + 1)
 					{
 						item = new QTreeWidgetItem(parent_stack.back());
 						parent_stack.resize(parent_stack.size()+1);
 					}
-					else if (cl.peaks[i].getMSLevel() == cl.peaks[i-1].getMSLevel())
+                                        else if ((*cl.getPeakData())[i].getMSLevel() == (*cl.getPeakData())[i-1].getMSLevel())
 					{
 						if (parent_stack.size() == 1)
 						{
@@ -1570,9 +1573,9 @@ namespace OpenMS
 							item = new QTreeWidgetItem(*(parent_stack.end()-2));
 						}
 					}
-					else if (cl.peaks[i].getMSLevel() < cl.peaks[i-1].getMSLevel())
+                                        else if ((*cl.getPeakData())[i].getMSLevel() < (*cl.getPeakData())[i-1].getMSLevel())
 					{
-						Int level_diff = cl.peaks[i-1].getMSLevel() - cl.peaks[i].getMSLevel();
+                                                Int level_diff = (*cl.getPeakData())[i-1].getMSLevel() - (*cl.getPeakData())[i].getMSLevel();
 						Size parent_index = 0;
 						QTreeWidgetItem* parent = 0;
 						if (parent_stack.size() - level_diff >= 2)
@@ -1606,23 +1609,23 @@ namespace OpenMS
 					toplevel_items.push_back(item);
 				}
 
-				item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
+                                item->setText(0, QString("MS") + QString::number((*cl.getPeakData())[i].getMSLevel()));
 				item->setText(1, QString::number(i));
-				item->setText(2, QString::number(cl.peaks[i].getRT()));
-				if (!cl.peaks[i].getPrecursors().empty())
+                                item->setText(2, QString::number((*cl.getPeakData())[i].getRT()));
+                                if (!(*cl.getPeakData())[i].getPrecursors().empty())
 				{
-					item->setText(3,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
+                                        item->setText(3,QString::number((*cl.getPeakData())[i].getPrecursors()[0].getMZ()));
 
-					if (!cl.peaks[i].getPrecursors().front().getActivationMethods().empty())
+                                        if (!(*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().empty())
 					{
 						QString t;
-						for(std::set<Precursor::ActivationMethod>::const_iterator it = cl.peaks[i].getPrecursors().front().getActivationMethods().begin(); it != cl.peaks[i].getPrecursors().front().getActivationMethods().end(); ++it)
+                                                for(std::set<Precursor::ActivationMethod>::const_iterator it = (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin(); it != (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().end(); ++it)
 						{
 							if(!t.isEmpty())
 							{
 								t.append(",");
 							}
-							t.append(QString::fromStdString(cl.peaks[i].getPrecursors().front().NamesOfActivationMethod[*(cl.peaks[i].getPrecursors().front().getActivationMethods().begin())]));
+                                                        t.append(QString::fromStdString((*cl.getPeakData())[i].getPrecursors().front().NamesOfActivationMethod[*((*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin())]));
 						}
 						item->setText(4,t);
 					}
@@ -1636,15 +1639,15 @@ namespace OpenMS
 					item->setText(3, "-");
 					item->setText(4, "-");
 				}
-				if (cl.peaks[i].getInstrumentSettings().getScanMode()>0)
+                                if ((*cl.getPeakData())[i].getInstrumentSettings().getScanMode()>0)
 				{
-					item->setText(5,QString::fromStdString(cl.peaks[i].getInstrumentSettings().NamesOfScanMode[cl.peaks[i].getInstrumentSettings().getScanMode()]));
+                                        item->setText(5,QString::fromStdString((*cl.getPeakData())[i].getInstrumentSettings().NamesOfScanMode[(*cl.getPeakData())[i].getInstrumentSettings().getScanMode()]));
 				}
 				else
 				{
 					item->setText(5, "-");
 				}
-				if (cl.peaks[i].getInstrumentSettings().getZoomScan())
+                                if ((*cl.getPeakData())[i].getInstrumentSettings().getZoomScan())
 				{
 					item->setText(6,"yes");
 				}
@@ -1671,25 +1674,25 @@ namespace OpenMS
 				spectrum_selection_->clear();
 				toplevel_items.clear();
 				selected_item = 0;
-				for (Size i = 0; i < cl.peaks.size(); ++i)
+                                for (Size i = 0; i < cl.getPeakData()->size(); ++i)
 				{
 					item = new QTreeWidgetItem((QTreeWidget*)0);
-					item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
+                                        item->setText(0, QString("MS") + QString::number((*cl.getPeakData())[i].getMSLevel()));
 					item->setText(1, QString::number(i));
-					item->setText(2, QString::number(cl.peaks[i].getRT()));
-					if (!cl.peaks[i].getPrecursors().empty())
+                                        item->setText(2, QString::number((*cl.getPeakData())[i].getRT()));
+                                        if (!(*cl.getPeakData())[i].getPrecursors().empty())
 					{
-						item->setText(3,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
+                                                item->setText(3,QString::number((*cl.getPeakData())[i].getPrecursors()[0].getMZ()));
 
-						if (!cl.peaks[i].getPrecursors().front().getActivationMethods().empty())
+                                                if (!(*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().empty())
 						{
 							QString t;
-							for(std::set<Precursor::ActivationMethod>::const_iterator it = cl.peaks[i].getPrecursors().front().getActivationMethods().begin(); it != cl.peaks[i].getPrecursors().front().getActivationMethods().end(); ++it)
+                                                        for(std::set<Precursor::ActivationMethod>::const_iterator it = (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin(); it != (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().end(); ++it)
 							{
 								if(!t.isEmpty()){
 									t.append(",");
 								}
-								t.append(QString::fromStdString(cl.peaks[i].getPrecursors().front().NamesOfActivationMethod[*(cl.peaks[i].getPrecursors().front().getActivationMethods().begin())]));
+                                                                t.append(QString::fromStdString((*cl.getPeakData())[i].getPrecursors().front().NamesOfActivationMethod[*((*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin())]));
 							}
 							item->setText(4,t);
 						}
@@ -1703,15 +1706,15 @@ namespace OpenMS
 						item->setText(3, "-");
 						item->setText(4, "-");
 					}
-					if (cl.peaks[i].getInstrumentSettings().getScanMode()>0)
+                                        if ((*cl.getPeakData())[i].getInstrumentSettings().getScanMode()>0)
 					{
-						item->setText(5,QString::fromStdString(cl.peaks[i].getInstrumentSettings().NamesOfScanMode[cl.peaks[i].getInstrumentSettings().getScanMode()]));
+                                                item->setText(5,QString::fromStdString((*cl.getPeakData())[i].getInstrumentSettings().NamesOfScanMode[(*cl.getPeakData())[i].getInstrumentSettings().getScanMode()]));
 					}
 					else
 					{
 						item->setText(5, "-");
 					}
-					if (cl.peaks[i].getInstrumentSettings().getZoomScan())
+                                        if ((*cl.getPeakData())[i].getInstrumentSettings().getZoomScan())
 					{
 						item->setText(6,"yes");
 					}
@@ -1747,7 +1750,7 @@ namespace OpenMS
 			return; // leave signals blocked
   	}
 
-  	if (cl.peaks.size() == 1)
+        if (cl.getPeakData()->size() == 1)
   	{
   		item->setFlags(0);
   		return; // leave signals blocked
@@ -1804,7 +1807,7 @@ namespace OpenMS
       return;
     }
 
-		addData_(cl.features, cl.consensus, cl.peptides, cl.peaks, LayerData::DT_PEAK, true, false, cl.filename, cl.name);
+                addData_(cl.features, cl.consensus, cl.peptides, cl.getPeakData(), LayerData::DT_PEAK, true, false, cl.filename, cl.name);
 
 		//set properties for the new 1D view
 		if (active1DWindow_())
@@ -1923,7 +1926,7 @@ namespace OpenMS
     			showLogMessage_(LS_ERROR,"Error while creating layer",e.what());
 					return;
 				}
-				addData_(cl.features, cl.consensus, cl.peptides, cl.peaks, LayerData::DT_PEAK, true, false, cl.filename, cl.name);
+                                addData_(cl.features, cl.consensus, cl.peptides, cl.getPeakData(), LayerData::DT_PEAK, true, false, cl.filename, cl.name);
 
 				//set properties for the new 1D view
 				if (active1DWindow_())
@@ -2593,7 +2596,7 @@ namespace OpenMS
 			}
 			else
 			{
-				f.store(topp_.file_name+"_in",layer.peaks);
+                                f.store(topp_.file_name+"_in",*layer.getPeakData());
 			}
 		}
 		else if (layer.type==LayerData::DT_FEATURE)
@@ -2737,7 +2740,7 @@ namespace OpenMS
 			IdXMLFile().load(name, protein_identifications, identifications, document_id);
 			if (layer.type==LayerData::DT_PEAK)
 			{
-				IDMapper().annotate(const_cast<LayerData&>(layer).peaks, identifications, protein_identifications);
+                                IDMapper().annotate(*(const_cast<LayerData&>(layer).getPeakData()), identifications, protein_identifications);
 			}
 			else if (layer.type==LayerData::DT_FEATURE)
 			{
@@ -2842,11 +2845,11 @@ namespace OpenMS
 
 				PeakMap new_exp;
 				new_exp.push_back(new_spec);
-
+                                ExperimentSharedPtrType new_exp_sptr(new PeakMap(new_exp));
 				FeatureMapType f_dummy;
 				ConsensusMapType c_dummy;
 				vector<PeptideIdentification> p_dummy;
-				addData_(f_dummy, c_dummy, p_dummy, new_exp, LayerData::DT_CHROMATOGRAM, false, true, "", seq_string + QString(" (theoretical)"));
+                                addData_(f_dummy, c_dummy, p_dummy, new_exp_sptr, LayerData::DT_CHROMATOGRAM, false, true, "", seq_string + QString(" (theoretical)"));
 
 	      // ensure spectrum is drawn as sticks
 	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
@@ -2906,7 +2909,8 @@ namespace OpenMS
 
   		//copy data
   		ExperimentType exp;
-			activeCanvas_()->getVisiblePeakData(exp);
+                activeCanvas_()->getVisiblePeakData(exp);
+                ExperimentSharedPtrType exp_sptr(new ExperimentType(exp));
   		
   		// insert placeholder peaks
   		const SpectrumCanvas::AreaType& area = activeCanvas_()->getVisibleArea();
@@ -2916,7 +2920,7 @@ namespace OpenMS
   		p_right.setMZ(area.maxPosition()[0]);
   		exp.back().push_back(p_right);
   		
-	    if (!w->canvas()->addLayer(exp))
+            if (!w->canvas()->addLayer(exp_sptr))
 	  	{
 	  		return;
 	  	}
@@ -2938,14 +2942,13 @@ namespace OpenMS
 	{
 		const LayerData& layer = activeCanvas_()->getCurrentLayer();
 
-		//copy spectrum
-		ExperimentType exp = layer.peaks;
+                ExperimentSharedPtrType exp_sptr = layer.getPeakData();
 
 		//open new 1D widget
 		Spectrum1DWidget* w = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
 
     //add data
-    if (!w->canvas()->addLayer(exp) || (Size)index >= w->canvas()->getCurrentLayer().peaks.size())
+    if (!w->canvas()->addLayer(exp_sptr) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
   	{
   		return;
   	}
@@ -3334,9 +3337,9 @@ namespace OpenMS
 				//only the selected row can be dragged => the source layer is the selected layer
 				const LayerData& layer = activeCanvas_()->getCurrentLayer();
 
-				//copy the feature and peak data
+                                //copy the feature and attach peak data
 				FeatureMapType features = layer.features;
-				ExperimentType peaks = layer.peaks;
+                                ExperimentSharedPtrType peaks = layer.getPeakData();
 				ConsensusMapType consensus = layer.consensus;
 				vector<PeptideIdentification> peptides = layer.peptides;
 
@@ -3350,13 +3353,14 @@ namespace OpenMS
 				if (item != 0)
 				{
 					Size index = (Size)(item->text(3).toInt());
-					const ExperimentType::SpectrumType spectrum = layer.peaks[index];
+                                        const ExperimentType::SpectrumType spectrum = (*layer.getPeakData())[index];
 					ExperimentType new_exp;
 					new_exp.push_back(spectrum);
+                                        ExperimentSharedPtrType new_exp_sptr(new ExperimentType(new_exp));
 					FeatureMapType f_dummy;
 					ConsensusMapType c_dummy;
 					vector<PeptideIdentification> p_dummy;
-					addData_(f_dummy, c_dummy, p_dummy, new_exp, LayerData::DT_CHROMATOGRAM, false, false, layer.filename, layer.name, new_id);
+                                        addData_(f_dummy, c_dummy, p_dummy, new_exp_sptr, LayerData::DT_CHROMATOGRAM, false, false, layer.filename, layer.name, new_id);
 				}
 			}
 			else if (source == 0)

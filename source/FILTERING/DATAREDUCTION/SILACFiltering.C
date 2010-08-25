@@ -92,9 +92,13 @@ void SILACFiltering::filterDataPoints()
 	std::vector<DataPoint> data;
 
 	MSExperiment<Peak1D> exp_out;
+	MSExperiment<Peak1D> ratios1;
+	MSExperiment<Peak1D> ratios2;
 	mz_min=exp.getMinMZ();
 	static_cast<ExperimentalSettings&>(exp_out) = exp;
 	exp_out.resize(exp.size());
+	ratios1.resize(exp.size());
+	ratios2.resize(exp.size());
 
 	Size scan_idx=0;
 	for (MSExperiment<Peak1D>::Iterator rt_it=exp.begin(); rt_it!=exp.end();++rt_it)
@@ -108,6 +112,24 @@ void SILACFiltering::filterDataPoints()
 		output.setMSLevel(input.getMSLevel());
 		output.setName(input.getName());
 		output.setType(SpectrumSettings::PEAKS);
+
+		MSSpectrum<Peak1D>& ratio1=ratios1[scan_idx];
+		ratio1.clear(true);
+		ratio1.SpectrumSettings::operator=(input);
+		ratio1.MetaInfoInterface::operator=(input);
+		ratio1.setRT(input.getRT());
+		ratio1.setMSLevel(input.getMSLevel());
+		ratio1.setName(input.getName());
+		ratio1.setType(SpectrumSettings::PEAKS);
+
+		MSSpectrum<Peak1D>& ratio2=ratios2[scan_idx];
+		ratio2.clear(true);
+		ratio2.SpectrumSettings::operator=(input);
+		ratio2.MetaInfoInterface::operator=(input);
+		ratio2.setRT(input.getRT());
+		ratio2.setMSLevel(input.getMSLevel());
+		ratio2.setName(input.getName());
+		ratio2.setType(SpectrumSettings::PEAKS);
 
 		setProgress(rt_it-exp.begin());
 		Size number_data_points = rt_it->size();
@@ -172,6 +194,8 @@ void SILACFiltering::filterDataPoints()
 							}
 //							if (filter_it!=filters.begin())
 								output.push_back(filter_ptr->peak);
+								ratio1.push_back(filter_ptr->peak_ratio1);
+								ratio2.push_back(filter_ptr->peak_ratio2);
 							++feature_id;
 						}
 //						std::cout << "---------" << std::endl;
@@ -185,10 +209,16 @@ void SILACFiltering::filterDataPoints()
 			gsl_interp_accel_free(acc_spl);
 		}
 		exp_out[scan_idx]=output;
+		ratios1[scan_idx]=ratio1;
+		ratios2[scan_idx]=ratio2;
 		++scan_idx;
 	}
-	MzMLFile file;
-	file.store("/home/steffen/Studium/Master/demos/nijmegen/temp/out.mzML",exp_out);
+	MzMLFile file1;
+	file1.store("/home/steffen/Studium/Master/demos/nijmegen/temp/out.mzML",exp_out);
+	MzMLFile file2;
+	file2.store("/home/steffen/Studium/Master/demos/nijmegen/temp/ratios1_2.mzML",ratios1);
+	MzMLFile file3;
+	file3.store("/home/steffen/Studium/Master/demos/nijmegen/temp/ratios2_3.mzML",ratios2);
 	endProgress();
 }
 

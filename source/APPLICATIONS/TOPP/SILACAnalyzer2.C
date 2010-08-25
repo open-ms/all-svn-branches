@@ -46,8 +46,8 @@
 //clustering
 #include <OpenMS/DATASTRUCTURES/DistanceMatrix.h>
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
-//#include <OpenMS/COMPARISON/CLUSTERING/HashClustering.h>
-//#include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
+#include <OpenMS/COMPARISON/CLUSTERING/HashClustering.h>
+#include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
 #include <OpenMS/COMPARISON/CLUSTERING/QTClustering.h>
 
 //Contrib includes
@@ -458,13 +458,13 @@ public:
 //			std::vector<Tree> act_subtrees;
 //			c.getSubtrees(act_subtrees);
 //			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
-			DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
-			QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
-			c.setLogType(log_type_);
-			std::vector<Cluster> act_clusters=c.performClustering();
+//			DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
+//			QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
+//			c.setLogType(log_type_);
+//			std::vector<Cluster> act_clusters=c.performClustering();
 //			std::vector<Cluster> act_clusters;
 //			c.createClusters(act_clusters);
-			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
+//			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
 //			const std::vector<std::vector<Real> >& act_silhouettes=c.getSilhouetteValues();
 //			silhouettes.insert(silhouettes.end(),act_silhouettes.begin(),act_silhouettes.end());
 
@@ -692,7 +692,7 @@ public:
 						cluster_point.setMetaValue("SILAC type","triple");
 					cluster_point.setMetaValue("Mass shift (l/h)",it->envelope_distance_light_heavy);
 					cluster_point.setMetaValue("Cluster id",it->cluster_id);
-					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
+//					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
 					if (getFlag_("silac_debug"))
 						cluster_point.setMetaValue("feature_id",it->feature_id);
 					all_cluster_points.push_back(cluster_point);
@@ -712,7 +712,7 @@ public:
 		//-------------------------------------------------------------
 		// strings repeatedly used in debug output
 
-		if (getFlag_("silac_debug"))
+		/*if (getFlag_("silac_debug"))
 		{
 			// names of dat files
 			String debug_clusters_dat = debug_trunk + "_clusters.dat";
@@ -890,7 +890,7 @@ public:
 				}
 				++i;
 			}
-		}
+		}*/
 
 
 		//--------------------------------------------------------------
@@ -917,14 +917,14 @@ public:
 			FeatureXMLFile f_file;
 			f_file.store(out_visual,all_cluster_points);
 		}
-		if (getFlag_("silac_debug"))
-		{
-			// assign unique ids
-			subtree_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
-
-			FeatureXMLFile t_file;
-			t_file.store(debug_trunk+ "_subtrees.featureXML",subtree_points);
-		}
+//		if (getFlag_("silac_debug"))
+//		{
+//			// assign unique ids
+//			subtree_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+//
+//			FeatureXMLFile t_file;
+//			t_file.store(debug_trunk+ "_subtrees.featureXML",subtree_points);
+//		}
 		return EXECUTION_OK;
 	}
 };

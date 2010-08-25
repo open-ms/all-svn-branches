@@ -71,6 +71,8 @@ private:
 
     Peak1D peak;
 
+    Peak1D peak_ratio1,peak_ratio2;
+
     /**
      * @brief holds the recognized features
      */
@@ -119,10 +121,12 @@ private:
      */
     void computeCorrelation(DoubleReal act_mz,DoubleReal offset,DoubleReal tolerance,std::vector<DoubleReal>& data);
 
-    DoubleReal computeExactPosition(DoubleReal expected_position,DoubleReal tolerance,DoubleReal cutoff,std::vector<DoubleReal> data);
+    DoubleReal computeExactPosition(DoubleReal act_mz,DoubleReal expected_position,DoubleReal tolerance,DoubleReal cutoff,std::vector<DoubleReal> data);
 
 
-    bool checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& exact_positions, std::vector<DoubleReal>& intensities);
+    bool checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& exact_positions, std::vector<DoubleReal>& intensities,bool missing_peak);
+
+    bool checkRatios(DoubleReal act_mz,const std::vector<DoubleReal>& light_positions, const std::vector<DoubleReal>& envelope_positions);
 
 	/**
 	 * @brief returns if there exists a SILAC feature at the given position, which corresponds to the filter's properties

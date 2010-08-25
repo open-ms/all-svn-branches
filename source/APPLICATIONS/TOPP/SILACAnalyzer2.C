@@ -293,7 +293,7 @@ private:
 			filtering.addFilter(*filter_it);
 		}
 
-		filtering.filterDataPoints();
+		filtering.filterDataPoints(out.substr(0,in.find_first_of('.')));
 		std::vector<std::vector<DataPoint> > data;
 		for (std::list<SILACFilter>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 		{

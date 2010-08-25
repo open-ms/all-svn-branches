@@ -85,7 +85,7 @@ bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* 
 }
 
 
-void SILACFiltering::filterDataPoints()
+void SILACFiltering::filterDataPoints(String path)
 {
 	startProgress(0,exp.size(),"filtering raw data");
 
@@ -214,11 +214,11 @@ void SILACFiltering::filterDataPoints()
 		++scan_idx;
 	}
 	MzMLFile file1;
-	file1.store("/home/steffen/Studium/Master/demos/nijmegen/temp/out.mzML",exp_out);
+	file1.store(path+"_deviation.mzML",exp_out);
 	MzMLFile file2;
-	file2.store("/home/steffen/Studium/Master/demos/nijmegen/temp/ratios1_2.mzML",ratios1);
+	file2.store(path+"_alpha.mzML",ratios1);
 	MzMLFile file3;
-	file3.store("/home/steffen/Studium/Master/demos/nijmegen/temp/ratios2_3.mzML",ratios2);
+	file3.store(path+"_beta.mzML",ratios2);
 	endProgress();
 }
 

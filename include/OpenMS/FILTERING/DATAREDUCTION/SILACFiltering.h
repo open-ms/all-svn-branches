@@ -101,7 +101,7 @@ public:
 	/**
 	 * @brief starts the filtering based on the added filters
 	 */
-	void filterDataPoints();
+	void filterDataPoints(String path);
 	/**
 	 * @brief puts a m/z value on the filter's blacklist
 	 */

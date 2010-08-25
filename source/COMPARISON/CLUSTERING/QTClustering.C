@@ -130,7 +130,7 @@ QTCluster QTClustering::QTClust(HashGrid& act_grid)
 	//						if (isBelowDiameter(element_ptr,neighbor_ptr))
 							std::pair<DoubleReal,DoubleReal> diameters=act_cluster.getDiameters(neighbor_ptr);
 	//						std::cout << diameters.first << " " << diameters.second << "\t";
-							if (diameters.first <= 30 && diameters.second <= mz_diameter && act_cluster.getMZstandardDeviation(neighbor_ptr,isotope_distance)<0.15 && act_cluster.checkClusterShape(neighbor_ptr))
+							if (diameters.first <= 30 && diameters.second <= mz_diameter && act_cluster.getMZstandardDeviation(neighbor_ptr,isotope_distance)<0.15)
 								act_cluster.add(neighbor_ptr);
 						}
 					}

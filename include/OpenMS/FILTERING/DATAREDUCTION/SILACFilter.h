@@ -69,6 +69,8 @@ private:
 
     DataPoint next_element;
 
+    Peak1D peak;
+
     /**
      * @brief holds the recognized features
      */
@@ -112,12 +114,15 @@ private:
     static DoubleReal getPeakWidth(DoubleReal mz);
 
     /**
-     * @brief returns the quality of a potential feature at position act_mz by fitting the data to the isotope model
+     * @brief Computes the cross correlation of the area around act_mz to the spectrum in a given area
      * @param act_mz position of the potential feature
      */
-    std::pair<DoubleReal,DoubleReal> getPeakCorrelation(DoubleReal act_mz,DoubleReal distance,DoubleReal deviation);
+    void computeCorrelation(DoubleReal act_mz,DoubleReal offset,DoubleReal tolerance,std::vector<DoubleReal>& data);
 
-    bool checkArea(DoubleReal act_mz,std::vector<DoubleReal>& intensities_spl, std::vector<DoubleReal>& intensities_lin);
+    DoubleReal computeExactPosition(DoubleReal expected_position,DoubleReal tolerance,DoubleReal cutoff,std::vector<DoubleReal> data);
+
+
+    bool checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& exact_positions, std::vector<DoubleReal>& intensities);
 
 	/**
 	 * @brief returns if there exists a SILAC feature at the given position, which corresponds to the filter's properties

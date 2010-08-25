@@ -29,16 +29,22 @@
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeFitter1D.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeModel.h>
+#include <OpenMS/CONCEPT/Constants.h>
+ #include <gsl/gsl_integration.h>
+#include <gsl/gsl_errno.h>
+#include <gsl/gsl_fft_complex.h>
+#include <gsl/gsl_fft_halfcomplex.h>
+#include <gsl/gsl_randist.h>
 #include <cmath>
 
 namespace OpenMS
 {
-
 bool debug=false;
 
 SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_,DoubleReal model_deviation_) {
 	silac_type=mass_separations.size();
 	charge=charge_;
+	envelope_distances.insert(0.0);
 	for (std::set<DoubleReal>::iterator it=mass_separations.begin();it!=mass_separations.end();++it)
 	{
 		envelope_distances.insert(*it/(DoubleReal)charge);
@@ -71,67 +77,61 @@ void SILACFilter::reset()
 
 bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 {
-	if (act_rt > 1601 && act_rt < 1602)
+	if (act_rt < 2001)
 		debug=true;
 	else
 		debug=false;
 	if (blacklisted(act_mz) ||  blacklisted(act_mz+isotope_distance) || blacklisted(act_mz+2*isotope_distance))
 		return false;
+
 	std::vector<DoubleReal> intensities;
 	std::vector<DoubleReal> act_peak_positions;
-	std::vector<DoubleReal> intensities_spl_light = getIntensities(act_mz,SILACFiltering::acc_spl,SILACFiltering::spline_spl);
-	std::vector<DoubleReal> intensities_lin_light = getIntensities(act_mz,SILACFiltering::acc_lin,SILACFiltering::spline_lin);
+	DoubleReal deviation=0.0;
 
-	if (checkArea(act_mz, intensities_spl_light, intensities_lin_light))
-	{
-		intensities.push_back(intensities_spl_light[1]);
-		intensities.push_back(intensities_spl_light[2]);
-		intensities.push_back(intensities_spl_light[3]);
-		act_peak_positions.push_back(act_mz);
-		act_peak_positions.push_back(act_mz+isotope_distance);
-		act_peak_positions.push_back(act_mz+2*isotope_distance);
-	}
-	else
-	{
-		return false;
-	}
-//	debug=false;
+
 	for (std::set<DoubleReal>::iterator envelope_iterator=envelope_distances.begin();envelope_iterator!=envelope_distances.end();++envelope_iterator)
 	{
 		DoubleReal envelope_distance=*envelope_iterator;
-		 if ( blacklisted(act_mz+envelope_distance) ||  blacklisted(act_mz+envelope_distance+isotope_distance) || blacklisted(act_mz+envelope_distance+2*isotope_distance))
-				 return false;
-		std::vector<DoubleReal> intensities_spl_envelope = getIntensities(act_mz+envelope_distance,SILACFiltering::acc_spl,SILACFiltering::spline_spl);
-		std::vector<DoubleReal> intensities_lin_envelope = getIntensities(act_mz+envelope_distance,SILACFiltering::acc_lin,SILACFiltering::spline_lin);
+		DoubleReal tolerance=getPeakWidth(act_mz+envelope_distance);
+		std::vector<DoubleReal> expected_positions;
+		std::vector<DoubleReal> exact_positions;
+		std::vector<DoubleReal> data;
 
-		std::pair<DoubleReal,DoubleReal> deviation=getPeakCorrelation(act_mz,envelope_distance,0.05);
-//		std::cout.precision(10);
-//		if (SILACFiltering::feature_id == 229)
-//		{
-//			std::cout << act_mz << "\t" << deviation.first << "\t" << deviation.second << std::endl;
-//		}
+		computeCorrelation(act_mz,envelope_distance,tolerance,data);
+		DoubleReal exact_position=computeExactPosition(envelope_distance,tolerance,gsl_spline_eval (SILACFiltering::spline_lin, act_mz+envelope_distance, SILACFiltering::acc_lin),data);
+		deviation=std::abs(exact_position-envelope_distance);
+//		deviation=exact_position;
+		if (exact_position < 0.0)
+			return false;
+		else
+			exact_positions.push_back(exact_position);
+		data.clear();
 
-//		if ((gsl_spline_eval (SILACFiltering::spline_spl, act_mz-isotope_distance, SILACFiltering::acc_spl) < gsl_spline_eval (SILACFiltering::spline_spl, act_mz, SILACFiltering::acc_spl) && gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_distance-isotope_distance, SILACFiltering::acc_spl) > gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_distance, SILACFiltering::acc_spl)) || (gsl_spline_eval (SILACFiltering::spline_spl, act_mz-isotope_distance, SILACFiltering::acc_spl) > gsl_spline_eval (SILACFiltering::spline_spl, act_mz, SILACFiltering::acc_spl) && gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_distance-isotope_distance, SILACFiltering::acc_spl) < gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_distance, SILACFiltering::acc_spl)))
-//		{
-//			return false;
-//		}
+		computeCorrelation(act_mz,envelope_distance+isotope_distance,tolerance,data);
+		exact_position=computeExactPosition(envelope_distance+isotope_distance,tolerance,gsl_spline_eval (SILACFiltering::spline_lin, act_mz+envelope_distance+isotope_distance, SILACFiltering::acc_lin),data);
 
-		if (checkArea(act_mz+envelope_distance+deviation.second, intensities_spl_envelope, intensities_lin_envelope))
+		if (exact_position < 0.0)
+			return false;
+		else
+			exact_positions.push_back(exact_position);
+		data.clear();
+
+		computeCorrelation(act_mz,envelope_distance+2*isotope_distance,tolerance,data);
+		exact_position=computeExactPosition(envelope_distance+2*isotope_distance,tolerance,gsl_spline_eval (SILACFiltering::spline_lin, act_mz+envelope_distance+2*isotope_distance, SILACFiltering::acc_lin),data);
+		if (exact_position < 0.0)
+			return false;
+		else
+			exact_positions.push_back(exact_position);
+
+		if (checkArea(act_mz, exact_positions, intensities))
 		{
-			intensities.push_back(intensities_spl_envelope[1]);
-			intensities.push_back(intensities_spl_envelope[2]);
-			intensities.push_back(intensities_spl_envelope[3]);
-			act_peak_positions.push_back(act_mz+envelope_distance);
-			act_peak_positions.push_back(act_mz+envelope_distance+isotope_distance);
-			act_peak_positions.push_back(act_mz+envelope_distance+2*isotope_distance);
-
+			act_peak_positions.insert(act_peak_positions.end(),exact_positions.begin(),exact_positions.end());
 		}
 		else
 		{
 			return false;
 		}
 	}
-
 	DataPoint next_element;
 	next_element.feature_id=SILACFiltering::feature_id;
 	next_element.rt=act_rt;
@@ -144,191 +144,247 @@ bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 	next_element.silac_type=DataPoint::DOUBLE;
 	elements.push_back(next_element);
 	peak_positions.clear();
-	peak_positions.insert(peak_positions.begin(),act_peak_positions.begin(),act_peak_positions.end());
+	peak_positions.insert(peak_positions.begin(),++act_peak_positions.begin(),act_peak_positions.end());
+
+	peak.setMZ(act_mz);
+	peak.setIntensity(deviation*10);
 	return true;
 
 }
 
-bool SILACFilter::checkArea(DoubleReal act_mz, std::vector<DoubleReal>& intensities_spl, std::vector<DoubleReal>& intensities_lin)
+bool SILACFilter::checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& exact_positions, std::vector<DoubleReal>& intensities)
 {
+	std::vector<DoubleReal> act_intensities(3,0);
+	std::vector<DoubleReal> mono_intensities;
 
-	if ((intensities_lin[1] < SILACFiltering::intensity_cutoff) || (intensities_lin[2] < SILACFiltering::intensity_cutoff) || (intensities_lin[3] < SILACFiltering::intensity_cutoff))
+	act_intensities[0]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+exact_positions[0], SILACFiltering::acc_spl);
+	act_intensities[1]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+exact_positions[1], SILACFiltering::acc_spl);
+	act_intensities[2]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+exact_positions[2], SILACFiltering::acc_spl);
+
+//	if (debug)
+//		{
+//			std::cout.precision(10);
+//			std::cout << act_mz << " " << act_intensities[0] << " " << act_intensities[1] << " " << act_intensities[2] << std::endl;
+//				for (std::vector<DoubleReal>::const_iterator position_it=exact_positions.begin();position_it!=exact_positions.end();++position_it)
+//				{
+//					std::vector<DoubleReal> first_values;
+//					std::vector<DoubleReal> second_values;
+//					for (DoubleReal pos=act_mz-0.02;pos<=act_mz+0.02;pos+=0.001)
+//					{
+//						DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_lin, pos, SILACFiltering::acc_lin);
+//						DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_lin, pos+*position_it, SILACFiltering::acc_lin);
+//						first_values.push_back(intensity1);
+//						second_values.push_back(intensity2);
+//					}
+//					DoubleReal act_correlation=Math::pearsonCorrelationCoefficient(first_values.begin(), first_values.end(), second_values.begin(), second_values.end());
+//
+//					std::cout << *position_it << "[" << act_correlation << "] ";
+//				}
+//				std::cout << std::endl;
+//		}
+
+	if ((act_intensities[0] < SILACFiltering::intensity_cutoff))
 	{
 		return false;
 	}
 
+	DoubleReal area_width=getPeakWidth(act_mz);
+	for (std::vector<DoubleReal>::const_iterator position_it=exact_positions.begin();position_it!=exact_positions.end();++position_it)
+	{
+		std::vector<DoubleReal> first_values;
+		std::vector<DoubleReal> second_values;
+		for (DoubleReal pos=act_mz-0.5*area_width;pos<=act_mz+0.5*area_width;pos+=0.001)
+		{
+			DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_lin, pos, SILACFiltering::acc_lin);
+			DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_lin, pos+*position_it, SILACFiltering::acc_lin);
+			first_values.push_back(intensity1);
+			second_values.push_back(intensity2);
+		}
+		DoubleReal act_correlation=Math::pearsonCorrelationCoefficient(first_values.begin(), first_values.end(), second_values.begin(), second_values.end());
+		if (act_correlation < 0.99)
+			return false;
+		intensities.push_back(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+*position_it, SILACFiltering::acc_spl));
+	}
+
+//	if (SILACFiltering::feature_id==420)
+//										{
+//											std::cout << act_mz << std::endl;
+//										}
+
+
 	ExtendedIsotopeModel model;
 	Param param;
-	param.setValue( "isotope:monoisotopic_mz", act_mz );
+	param.setValue( "isotope:monoisotopic_mz", act_mz+exact_positions[0] );
 	param.setValue( "interpolation_step", 0.01 );
 	param.setValue("charge",charge);
-	param.setValue("isotope:stdev",getPeakWidth(act_mz)/2);
+	param.setValue("isotope:stdev",getPeakWidth(act_mz+exact_positions[0])/2);
 	model.setParameters( param );
 	std::vector<Peak1D> model_data;
 	model.getSamples(model_data);
 
-//	DoubleReal quality1=(gsl_spline_eval (SILACFiltering::spline_spl, act_mz, SILACFiltering::acc_spl)*model.getIntensity(act_mz+isotope_distance+correlation1.second))/(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+isotope_distance+correlation1.second, SILACFiltering::acc_spl)*model.getIntensity(act_mz));
-//	DoubleReal quality2=(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+isotope_distance+correlation1.second, SILACFiltering::acc_spl)*model.getIntensity(act_mz+2*isotope_distance+correlation1.second+correlation2.second))/(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+2*isotope_distance+correlation1.second+correlation2.second, SILACFiltering::acc_spl)*model.getIntensity(act_mz+isotope_distance+correlation1.second));
+	DoubleReal quality1=(act_intensities[0]*model.getIntensity(act_mz+exact_positions[1]))/(act_intensities[1]*model.getIntensity(act_mz+exact_positions[0]));
+	DoubleReal quality2=(act_intensities[1]*model.getIntensity(act_mz+exact_positions[2]))/(act_intensities[2]*model.getIntensity(act_mz+exact_positions[1]));
 
-	//False negative debug output
-	//			if (act_rt < 1665.55 && act_rt > 1665.45 && act_mz > 627.0 && act_mz < 632.0)
-	//			{
-	//				std::cout << std::endl << "mz: " << act_mz << std::endl;
-	//				std::cout << "light structure/model: " << intensities_spl[1] << "/" << model_light.getIntensity(act_mz)  << " " << intensities_spl[2] << "/" << model_light.getIntensity(act_mz+isotope_distance) << " " << intensities_spl[3] << "/" << model_light.getIntensity(act_mz+2*isotope_distance) << std::endl;
-	//				std::cout << "heavy structure/model: " << intensities_spl[5] << "/" << model_heavy.getIntensity(act_mz+envelope_distance)  << " " << intensities_spl[6] << "/" << model_heavy.getIntensity(act_mz+isotope_distance+envelope_distance) << " " << intensities_spl[7] << "/" << model_heavy.getIntensity(act_mz+2*isotope_distance+envelope_distance) << std::endl;
-	//				std::cout << "intensity values (light value vs. model value):" << std::endl;
-	//				std::cout << "Correlation: " << light_correlation1  << " " << light_correlation2  << " " << heavy_correlation1  << " " << heavy_correlation2 << std::endl;
-	//				for (DoubleReal position=act_mz-0.1;position<=act_mz+2*isotope_distance+0.1;position+=0.01)
-	//				{
-	//					DoubleReal intensity=gsl_spline_eval (SILACFiltering::spline_spl, position, SILACFiltering::acc_spl);
-	//					std::cout << intensity << "\t" << model_light.getIntensity(position) << std::endl;
-	//				}
-	//				std::cout << std::endl;
-	//			}
+	if (std::abs(log(quality1)) > model_deviation || std::abs(log(quality2)) > model_deviation)
+		return false;
 
-//	if (std::abs(log(quality1)) > model_deviation || std::abs(log(quality2)) > model_deviation)
-//		return false;
-
-	//			False positive debug output
-	//			if (SILACFiltering::feature_id == 305)
-	//			{
-	//				std::cout << std::endl << "mz: " << act_mz <<  "\t" << act_mz+envelope_distance << std::endl;
-	//				std::cout << "light structure/model: " << "("  << intensities_spl[0] << ")" << intensities_spl[1] << "/" << model_light.getIntensity(act_mz)  << " " << intensities_spl[2] << "/" << model_light.getIntensity(act_mz+isotope_distance) << " " << intensities_spl[3] << "/" << model_light.getIntensity(act_mz+2*isotope_distance) << std::endl;
-	//				std::cout << "heavy structure/model: "<< "("  << intensities_spl[4] << ")" << intensities_spl[5] << "/" << model_heavy.getIntensity(act_mz+envelope_distance)  << " " << intensities_spl[6] << "/" << model_heavy.getIntensity(act_mz+isotope_distance+envelope_distance) << " " << intensities_spl[7] << "/" << model_heavy.getIntensity(act_mz+2*isotope_distance+envelope_distance) << std::endl;
-	//				std::cout << "intensity values (light value vs. model value):" << std::endl;
-	//				for (DoubleReal position=act_mz+envelope_distance-0.1;position<=act_mz+envelope_distance+2*isotope_distance+0.1;position+=0.0001)
-	//				{
-	//					DoubleReal intensity=gsl_spline_eval (SILACFiltering::spline_spl, position, SILACFiltering::acc_spl);
-	//					std::cout << intensity << "\t" << model_light.getIntensity(position) << std::endl;
-	//				}
-	//				std::cout << std::endl;
-	//			}
-
-	std::cout.precision(10);
-	DoubleReal area_size=0.3*getPeakWidth(act_mz);
-	//			if (SILACFiltering::feature_id == 254)
-	//			{
-	////				for (DoubleReal pos=act_mz-0.003;pos<=act_mz+0.003;pos+=0.0003)
-	////				{
-	////					std::cout << pos << "\t" << gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl) << "\t" << gsl_spline_eval (SILACFiltering::spline_spl, pos+isotope_distance+correlation1.second, SILACFiltering::acc_spl)<< "\t" << getPeakCorrelation(pos).first<< "\t" << getPeakCorrelation(pos).second << std::endl;
-	////				}
-	//				std::cout << act_mz << "\t" << correlation1.first << "\t" << correlation1.second << std::endl;
-	//				std::vector<DoubleReal> first_values;
-	//				std::vector<DoubleReal> second_values;
-	//				for (DoubleReal pos=act_mz-area_size;pos<=act_mz+area_size;pos+=area_size/10)
-	//				{
-	//					DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl);
-	//					DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+correlation1.second+isotope_distance, SILACFiltering::acc_spl);
-	//					first_values.push_back(intensity1);
-	//					second_values.push_back(intensity2);
-	//					std::cout << intensity1 << "\t" << intensity2 << std::endl;
-	//				}
-	//				DoubleReal act_correlation=Math::pearsonCorrelationCoefficient(first_values.begin(), first_values.end(), second_values.begin(), second_values.end());
-	//				std::cout << act_correlation << std::endl;
-	//			}
+	//	False positive debug output
+//	if (SILACFiltering::feature_id == 275)
+//	{
+//	std::cout <<
+//
+//	}
+//
+//	std::cout.precision(10);
 	return true;
 }
 
-
-
-std::pair<DoubleReal,DoubleReal> SILACFilter::getPeakCorrelation(DoubleReal act_mz,DoubleReal distance,DoubleReal deviation)
+void SILACFilter::computeCorrelation(DoubleReal act_mz,DoubleReal offset,DoubleReal tolerance,std::vector<DoubleReal>& data)
 {
-
-//	if (SILACFiltering::feature_id==140)
-//	std::cout << SILACFiltering::feature_id << " " << act_mz << std::endl;
-	DoubleReal best_correlation=0.0;
-	DoubleReal best_correlation_deviation=0.0;
-	DoubleReal offset=0.0;
-	DoubleReal area_size=0.25*getPeakWidth(act_mz);
-//	std::cout << act_mz << area_size << std::endl;
-	for (int i=0;i<2;++i)
+	if (offset > 0.0)
 	{
-		for (DoubleReal act_deviation=offset+deviation*(-1);act_deviation<=offset+deviation;act_deviation+=deviation/10)
-				{
-					std::vector<DoubleReal> first_values;
-					std::vector<DoubleReal> second_values;
-					for (DoubleReal pos=act_mz-area_size;pos<=act_mz+area_size;pos+=area_size/5)
-					{
-						DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl);
-						DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+act_deviation+distance, SILACFiltering::acc_spl);
-						first_values.push_back(intensity1);
-						second_values.push_back(intensity2);
-					}
-					DoubleReal act_correlation=Math::pearsonCorrelationCoefficient(first_values.begin(), first_values.end(), second_values.begin(), second_values.end());
-					if (act_correlation > best_correlation)
-					{
-						best_correlation=act_correlation;
-						best_correlation_deviation=act_deviation;
-					}
-				}
-		deviation/=20;
-		offset=best_correlation_deviation;
-	}
+		DoubleReal stepwidth=0.001;
+		//n must be a power of two for gsl fast fourier transformation; take next higher size for n, which is a power of two and fill the rest with zeros
+		Size vector_size = pow(2,(ceil(log2((3*tolerance)/stepwidth))));
+		data.clear();
+		data.resize(vector_size,0);
 
-//		std::cout << best_correlation_deviation << " ";
-	return std::make_pair(best_correlation,best_correlation_deviation);
+			//Create a vector containing interpolated values with a spacing of "stepwidth"
+			Size i=0;
+			DoubleReal starting_offset=std::min(act_mz-SILACFiltering::mz_min,tolerance);
+
+//			if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118 &&offset>3.8 && offset<4.2)
+//				{
+//					std::cout << act_mz << std::endl;
+//					std::cout << tolerance << std::endl;
+//					std::cout << offset << std::endl;
+//					std::cout << "id: " << SILACFiltering::feature_id << std::endl;
+//				}
+
+
+
+			for (DoubleReal x=act_mz-starting_offset;x<=act_mz+tolerance;x+=stepwidth)
+			{
+//				if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118 &&offset>3.8 && offset<4.2)
+//					std::cout << x << "\t" << gsl_spline_eval (SILACFiltering::spline_lin, x, SILACFiltering::acc_lin) << std::endl;
+				data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x, SILACFiltering::acc_lin);
+				++i;
+			}
+
+//			if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118)
+//							std::cout << "\n\n" << std::endl;
+
+
+
+//			DoubleReal gauss_normalization_factor=(tolerance/3)*0.75*sqrt(2*Constants::PI);
+			std::vector<DoubleReal> gauss_fitted_data(vector_size,0);
+			i=0;
+			for (DoubleReal x=act_mz-starting_offset-tolerance;x<=act_mz+tolerance;x+=stepwidth)
+			{
+//				if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118 &&offset>3.8 && offset<4.2)
+//									std::cout << x+offset << "\t" << gsl_spline_eval (SILACFiltering::spline_lin, x+offset, SILACFiltering::acc_lin) << std::endl;
+				gauss_fitted_data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x+offset, SILACFiltering::acc_lin)/**gsl_ran_gaussian_pdf (x-act_mz, (tolerance/3)*0.75)*gauss_normalization_factor*/;
+				++i;
+			}
+//			if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118 &&offset>3.8 && offset<4.2)
+//							std::cout << "------------------" << std::endl;
+
+			//Fourier transformation of the values
+			gsl_fft_real_radix2_transform (&(*data.begin()), 1, vector_size);
+			gsl_fft_real_radix2_transform (&(*gauss_fitted_data.begin()), 1, vector_size);
+
+			//Multiply the fourier transformed complex values with the complex conjugate
+			//Have a look at the GNU Scientific Library reference manual for a description of the data structure
+			data[0]=data[0]*gauss_fitted_data[0];
+			data[vector_size/2]=data[vector_size/2]*gauss_fitted_data[vector_size/2];
+			for (i = 1; i <= vector_size/2; ++i)
+			{
+				data[i]=data[i]*gauss_fitted_data[i]+data[vector_size-i]*gauss_fitted_data[vector_size-i];
+				data[vector_size-i]=0.0;
+			}
+
+			//Compute inverse fourier transformation
+			gsl_fft_halfcomplex_radix2_inverse (&(*data.begin()), 1, vector_size);
+
+			data.resize(vector_size/2);
+	}
 }
 
-//void SILACFilter::computePeakCorrelation(gsl_interp_accel* acceleration, gsl_spline* spline, DoubleReal act_mz, DoubleReal envelope_distance)
-//{
-//	DoubleReal window_size=2*envelope_distance;
-//	DoubleReal stepwidth=0.001;
+
+DoubleReal SILACFilter::computeExactPosition(DoubleReal expected_position,DoubleReal tolerance,DoubleReal cutoff,std::vector<DoubleReal> data)
+{
+	if (expected_position>0)
+	{
+		DoubleReal stepwidth=0.001;
+
+		std::vector<DoubleReal> x(data.size(),0);
+		std::vector<DoubleReal> y(data.size(),0);
+		DoubleReal shift=expected_position-tolerance;
+		for (Size i=0;i<data.size();++i)
+		{
+			x[i]=shift;
+			y[i]=data[i];
+			shift+=stepwidth;
+		}
+
+		gsl_interp_accel* acc_spl = gsl_interp_accel_alloc();
+		gsl_spline* spline_spl = gsl_spline_alloc(gsl_interp_akima, x.size());
+		gsl_spline_init(spline_spl, &(*x.begin()), &(*y.begin()), x.size());
+
+		DoubleReal exact_position=0.0;
+		DoubleReal max_intensity=0.0;
+
+		for (DoubleReal act_position=expected_position-tolerance;act_position<=expected_position+tolerance; act_position+=stepwidth)
+		{
+
+			DoubleReal act_intensity=gsl_spline_eval (spline_spl, act_position, acc_spl);
+//			if (SILACFiltering::feature_id==2889)
+//																		{
+//																			std::cout << act_position << "\t" << act_intensity << std::endl;
+//																		}
+
+			if (act_intensity > max_intensity)
+			{
+				exact_position=act_position;
+				max_intensity=act_intensity;
+			}
+		}
+		if (gsl_spline_eval (spline_spl, exact_position-stepwidth, acc_spl) > max_intensity || gsl_spline_eval (spline_spl, exact_position+stepwidth, acc_spl) > max_intensity || max_intensity < 1000 )
+		{
+			gsl_spline_free(spline_spl);
+			gsl_interp_accel_free(acc_spl);
+			return -1;
+		}
+		else
+		{
+//			if (SILACFiltering::feature_id==420)
+//			{
+//				std::cout << "expe_pos " << expected_position << std::endl;
+//				std::cout << max_intensity << "\t" << exact_position << "\t(" << expected_position-tolerance <<"\t" << expected_position+tolerance<< ")\t" << cutoff << std::endl;
+//			}
+
+//			if (SILACFiltering::feature_id>2801 && SILACFiltering::feature_id<2806 &&expected_position>3.8 && expected_position<4.2)
+//			{
+//				for (DoubleReal act_position=expected_position-tolerance;act_position<=expected_position+tolerance; act_position+=stepwidth)
+//				{
 //
-//	//n must be a power of two for gsl fast fourier transformation; take next higher size for n, which is a power of two and fill the rest with zeros
-//	Size vector_size = pow(2,(ceil(log2(window_size/stepwidth))));
-//
-//	//Create a vector containing interpolated values with a spacing of "stepwidth"
-//	std::vector<DoubleReal> data(vector_size,0);
-//	Size i=0;
-//	for (DoubleReal x=act_mz-10*stepwidth;x<=act_mz+window_size;x+=stepwidth)
-//	{
-//		data[i] = gsl_spline_eval (spline_spl, x, acc_spl);
-//		++i;
-//	}
-//
-//
-//	//Fourier transformation of the values
-//	gsl_fft_real_radix2_transform (&(*data.begin()), 1, vector_size);
-//
-//	std::vector<DoubleReal> gauss_fitted_data(vector_size,0);
-//	Size j=0;
-//	for (DoubleReal x=0.0-10*stepwidth;x<=window_size;x+=stepwidth)
-//	{
-//		gauss_fitted_data[j] = data[j]*gsl_ran_gaussian_pdf (x, 0.5*gauss_sigma_);
-//		++j;
-//	}
-//	gsl_fft_real_radix2_transform (&(*gauss_fitted_data.begin()), 1, vector_size);
-//
-//	//Multiply the fourier transformed complex values with the complex conjugate
-//	//Have a look at the GNU Scientific Library reference manual for a description of the data structure
-//	data[0]=data[0]*gauss_fitted_data[0];
-//	data[vector_size/2]=data[vector_size/2]*gauss_fitted_data[vector_size/2];
-//	for (i = 1; i <= vector_size/2; ++i)
-//	{
-//		data[i]=data[i]*gauss_fitted_data[i]+data[vector_size-i]*gauss_fitted_data[vector_size-i];
-//		data[vector_size-i]=0.0;
-//	}
-//
-//	//Compute inverse fourier transformation
-//	gsl_fft_halfcomplex_radix2_inverse (&(*data.begin()), 1, vector_size);
-//
-//	//Create output
-//	DoubleReal shift=0.0;
-//	for (i = 0; i <= vector_size/2 ; ++i)
-//	{
-//		if (data[i] <= 0 || (gauss_fitting && gauss_mean_+shift > mz_max) )
-//		{
-//			shift+=stepwidth_;
-//			continue;
-//		}
-//		Peak1D peak;
-//		peak.setMZ(shift);
-//		//Normalize by min_value & max_value
-//		peak.setIntensity(data[i]);
-//		output.push_back(peak);
-//		shift+=stepwidth;
-//	}
-//}
+//					DoubleReal act_intensity=gsl_spline_eval (spline_spl, act_position, acc_spl);
+//					std::cout << act_position << "\t" << act_intensity << std::endl;
+//				}
+//				std::cout << "pos: " << exact_position << "\n#############################################################" << std::endl;
+//			}
+//			if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118)
+//				std::cout << "\n\n";
+			gsl_spline_free(spline_spl);
+			gsl_interp_accel_free(acc_spl);
+			return exact_position;
+		}
+	}
+	else
+	{
+		return 0.0;
+	}
+}
 
 
 std::vector<DoubleReal> SILACFilter::getIntensities(DoubleReal act_mz, gsl_interp_accel* acc,gsl_spline* spline)
@@ -343,7 +399,7 @@ std::vector<DoubleReal> SILACFilter::getIntensities(DoubleReal act_mz, gsl_inter
 
 bool SILACFilter::doubleCmp::operator()(DoubleReal a, DoubleReal b) const
 {
-	DoubleReal peak_width=getPeakWidth((a+b)/2);
+	DoubleReal peak_width=2*getPeakWidth((a+b)/2);
 	if ( fabs(a-b) < peak_width)
 	{
 		return false;
@@ -356,7 +412,7 @@ bool SILACFilter::doubleCmp::operator()(DoubleReal a, DoubleReal b) const
 
 DoubleReal SILACFilter::getPeakWidth(DoubleReal mz)
 {
-	return 11*(1.889e-7*pow(mz,1.5));
+	return 5*(1.889e-7*pow(mz,1.5));
 }
 
 Int SILACFilter::getSILACType()

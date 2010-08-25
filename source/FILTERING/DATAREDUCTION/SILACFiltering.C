@@ -26,6 +26,7 @@
 // --------------------------------------------------------------------------
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>
+#include <OpenMS/FORMAT/MzMLFile.h>
 #include <iostream>
 
 namespace OpenMS
@@ -37,6 +38,7 @@ gsl_interp_accel* SILACFiltering::acc_spl=0;
 gsl_spline* SILACFiltering::spline_lin=0;
 gsl_spline* SILACFiltering::spline_spl=0;
 Int SILACFiltering::feature_id=0;
+DoubleReal SILACFiltering::mz_min=0;
 
 
 SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_,DoubleReal mz_stepwidth_,DoubleReal intensity_cutoff_) : exp(exp_)
@@ -89,8 +91,24 @@ void SILACFiltering::filterDataPoints()
 
 	std::vector<DataPoint> data;
 
+	MSExperiment<Peak1D> exp_out;
+	mz_min=exp.getMinMZ();
+	static_cast<ExperimentalSettings&>(exp_out) = exp;
+	exp_out.resize(exp.size());
+
+	Size scan_idx=0;
 	for (MSExperiment<Peak1D>::Iterator rt_it=exp.begin(); rt_it!=exp.end();++rt_it)
 	{
+		MSSpectrum<Peak1D>& input=exp[scan_idx];
+		MSSpectrum<Peak1D>& output=exp_out[scan_idx];
+		output.clear(true);
+		output.SpectrumSettings::operator=(input);
+		output.MetaInfoInterface::operator=(input);
+		output.setRT(input.getRT());
+		output.setMSLevel(input.getMSLevel());
+		output.setName(input.getName());
+		output.setType(SpectrumSettings::PEAKS);
+
 		setProgress(rt_it-exp.begin());
 		Size number_data_points = rt_it->size();
 //		std::cout << peak_it->getRT() << " " << rt_it->getRT() << std::endl;
@@ -99,13 +117,13 @@ void SILACFiltering::filterDataPoints()
 			// read one OpenMS spectrum into GSL structure
 			std::vector<DoubleReal> mz_vec;
 			std::vector<DoubleReal> intensity_vec;
+			mz_min=rt_it->begin()->getMZ();
 			DoubleReal last_mz=rt_it->begin()->getMZ();
 			for (MSSpectrum<>::Iterator mz_it=rt_it->begin(); mz_it!=rt_it->end(); ++mz_it)
 			{
 				if (mz_it->getMZ() > last_mz+2*mz_stepwidth)
 				{
-					DoubleReal stepwidth=(mz_it->getMZ()-last_mz)/2;
-					for (DoubleReal act_mz=last_mz+2*mz_stepwidth; act_mz < mz_it->getMZ()-2*mz_stepwidth; act_mz+=stepwidth)
+					for (DoubleReal act_mz=last_mz+2*mz_stepwidth; act_mz < mz_it->getMZ()-2*mz_stepwidth; act_mz+=mz_stepwidth)
 					{
 						mz_vec.push_back(act_mz);
 						intensity_vec.push_back(0.0);
@@ -115,11 +133,6 @@ void SILACFiltering::filterDataPoints()
 				intensity_vec.push_back(mz_it->getIntensity());
 				last_mz=mz_it->getMZ();
 			}
-//			for (std::vector<DoubleReal>::iterator it=mz_vec.begin();it!=mz_vec.end();++it)
-//			{
-//				std::cout << *it << std::endl;
-//			}
-
 			acc_lin = gsl_interp_accel_alloc();
 			spline_lin = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
 			gsl_spline_init(spline_lin, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
@@ -145,7 +158,7 @@ void SILACFiltering::filterDataPoints()
 
 				for (DoubleReal mz=last_mz; mz<mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ())<3*mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
 				{
-					if (gsl_spline_eval (spline_spl, mz, acc_spl) < 0.0)
+					if (gsl_spline_eval (spline_lin, mz, acc_lin) <= 0.0)
 						continue;
 					for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 					{
@@ -157,8 +170,11 @@ void SILACFiltering::filterDataPoints()
 							{
 								blockValue(*peak_it,filter_ptr);
 							}
+//							if (filter_it!=filters.begin())
+								output.push_back(filter_ptr->peak);
 							++feature_id;
 						}
+//						std::cout << "---------" << std::endl;
 					}
 				}
 				last_mz=mz_it->getMZ();
@@ -168,7 +184,11 @@ void SILACFiltering::filterDataPoints()
 			gsl_spline_free(spline_spl);
 			gsl_interp_accel_free(acc_spl);
 		}
+		exp_out[scan_idx]=output;
+		++scan_idx;
 	}
+	MzMLFile file;
+	file.store("/home/steffen/Studium/Master/demos/nijmegen/temp/out.mzML",exp_out);
 	endProgress();
 }
 

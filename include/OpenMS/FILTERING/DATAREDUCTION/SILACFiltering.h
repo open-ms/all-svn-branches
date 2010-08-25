@@ -75,6 +75,7 @@ private:
 	static gsl_spline* spline_lin;
 	static gsl_spline* spline_spl;
 	static Int feature_id;
+	static DoubleReal mz_min;
 	/**
 	 * @brief raw data
 	 */

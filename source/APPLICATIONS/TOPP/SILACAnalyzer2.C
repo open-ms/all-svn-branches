@@ -458,13 +458,13 @@ public:
 //			std::vector<Tree> act_subtrees;
 //			c.getSubtrees(act_subtrees);
 //			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
-//			DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
-//			QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
-//			c.setLogType(log_type_);
-//			std::vector<Cluster> act_clusters=c.performClustering();
+			DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
+			QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
+			c.setLogType(log_type_);
+			std::vector<Cluster> act_clusters=c.performClustering();
 //			std::vector<Cluster> act_clusters;
 //			c.createClusters(act_clusters);
-//			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
+			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
 //			const std::vector<std::vector<Real> >& act_silhouettes=c.getSilhouetteValues();
 //			silhouettes.insert(silhouettes.end(),act_silhouettes.begin(),act_silhouettes.end());
 
@@ -692,7 +692,7 @@ public:
 						cluster_point.setMetaValue("SILAC type","triple");
 					cluster_point.setMetaValue("Mass shift (l/h)",it->envelope_distance_light_heavy);
 					cluster_point.setMetaValue("Cluster id",it->cluster_id);
-//					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
+					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
 					if (getFlag_("silac_debug"))
 						cluster_point.setMetaValue("feature_id",it->feature_id);
 					all_cluster_points.push_back(cluster_point);

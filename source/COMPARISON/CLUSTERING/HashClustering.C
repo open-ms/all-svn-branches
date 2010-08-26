@@ -37,7 +37,7 @@ namespace OpenMS {
 
 typedef std::map<std::pair<int,int>, std::list<GridElement*> > GridElements;
 
-HashClustering::HashClustering(std::vector<DataPoint>& data, int rt_threshold, int mz_threshold, ClusteringMethod& method_) : grid(HashGrid(rt_threshold,mz_threshold))
+HashClustering::HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method_) : grid(HashGrid(rt_threshold,mz_threshold))
 {
 	if(data.size()<2)
 	{
@@ -728,7 +728,7 @@ void HashClustering::createClusters(std::vector<Cluster>& clusters)
 			std::vector< Real > asw = averageSilhouetteWidth(*subset_ptr);
 			silhouettes.push_back(asw);
 			//Look only in the front area of the silhoutte values to avoid getting the wrong number
-			std::vector< Real >::iterator max_el(max_element(asw.begin(),asw.end()));
+			std::vector< Real >::iterator max_el(max_element(asw.begin()+0.9*asw.size(),asw.end()));
 			Size best_n = (Size)subset_ptr->tree.size();
 			for (Size i = 0; i < asw.size(); ++i)
 			{

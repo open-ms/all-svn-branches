@@ -105,7 +105,7 @@ public:
 	/**
 	 * @brief puts a m/z value on the filter's blacklist
 	 */
-	void blockValue(DoubleReal value,SILACFilter* source);
+	void blockPositions(const std::vector<DoubleReal>& peak_positions,SILACFilter* source);
 };
 
 }

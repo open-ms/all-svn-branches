@@ -142,7 +142,7 @@ public:
 	 * @param mz_threshold width of the grid cells
 	 * @param method_ method to use for calculating distances
 	 */
-	HashClustering(std::vector<DataPoint>& data, int rt_threshold, int mz_threshold, ClusteringMethod& method_);
+	HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method_);
 
 	/**
 	 * @brief Starts the clustering and returns a vector of subtrees when finished

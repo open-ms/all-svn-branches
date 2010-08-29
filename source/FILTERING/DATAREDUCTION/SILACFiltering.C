@@ -74,7 +74,7 @@ void SILACFiltering::blockPositions(const std::vector<DoubleReal>& peak_position
 bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* b) const
 {
 	if (a->envelope_distances.size()!=b->envelope_distances.size())
-		return a->envelope_distances.size() > b->envelope_distances.size();
+		return a->envelope_distances.size() < b->envelope_distances.size();
 
 		if (a->charge!=b->charge)
 			return a->charge > b->charge;
@@ -168,46 +168,51 @@ void SILACFiltering::filterDataPoints(String path)
 			spline_spl = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
 			gsl_spline_init(spline_spl, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
-			for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
-			{
-				SILACFilter* filter_ptr=*filter_it;
-				filter_ptr->reset();
-			}
 			DoubleReal mz_min = mz_vec[0];
 			DoubleReal mz_max = mz_vec[mz_vec.size()-9];
 			DoubleReal rt=rt_it->getRT();
-			MSSpectrum<>::Iterator mz_it=rt_it->begin();
-			last_mz=mz_it->getMZ();
-			++mz_it;
-			for ( ;mz_it!=rt_it->end(); ++mz_it)
+
+			for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 			{
-				for (DoubleReal mz=last_mz; mz<mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ())<3*mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
+				MSSpectrum<>::Iterator mz_it=rt_it->begin();
+				last_mz=mz_it->getMZ();
+				++mz_it;
+				for ( ;mz_it!=rt_it->end(); ++mz_it)
 				{
-					if (gsl_spline_eval (spline_lin, mz, acc_lin) <= 0.0)
-						continue;
-					for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
+					for (DoubleReal mz=last_mz; mz<mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ())<3*mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
 					{
+//						std::cout << mz << std::endl;
+						if (gsl_spline_eval (spline_lin, mz, acc_lin) <= 0.0)
+							continue;
+
 						SILACFilter* filter_ptr=*filter_it;
 						if (filter_ptr->isFeature(rt,mz))
 						{
 							const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
 							blockPositions(peak_positions,filter_ptr);
-//							if (filter_it!=filters.begin())
-								output.push_back(filter_ptr->peak);
-								ratio1.push_back(filter_ptr->peak_ratio1);
-								ratio2.push_back(filter_ptr->peak_ratio2);
+							//							if (filter_it!=filters.begin())
+							output.push_back(filter_ptr->peak);
+							ratio1.push_back(filter_ptr->peak_ratio1);
+							ratio2.push_back(filter_ptr->peak_ratio2);
 							++feature_id;
 						}
-//						std::cout << "---------" << std::endl;
+						//						std::cout << "---------" << std::endl;
 					}
+					last_mz=mz_it->getMZ();
 				}
-				last_mz=mz_it->getMZ();
+
 			}
 			gsl_spline_free(spline_lin);
 			gsl_interp_accel_free(acc_lin);
 			gsl_spline_free(spline_spl);
 			gsl_interp_accel_free(acc_spl);
 		}
+		for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
+		{
+			SILACFilter* filter_ptr=*filter_it;
+			filter_ptr->reset();
+		}
+
 		exp_out[scan_idx]=output;
 		ratios1[scan_idx]=ratio1;
 		ratios2[scan_idx]=ratio2;

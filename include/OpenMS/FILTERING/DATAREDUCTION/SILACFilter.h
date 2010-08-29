@@ -33,6 +33,8 @@
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
+#include <queue>
+#include <list>
 
 
 
@@ -94,6 +96,8 @@ private:
      * @brief holds the m/z values, which are ignored due to blacklisting of other filters
      */
     std::set<DoubleReal,doubleCmp> blacklist;
+
+    std::list<std::set<DoubleReal,doubleCmp> > blacklist_lifetime;
     /**
      * @brief holds the m/z values of the last identified feature. These values will be blacklisted in other filters
      */
@@ -158,6 +162,10 @@ public:
      */
     SILACFilter(std::set<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_);
 
+    SILACFilter(Int charge_,DoubleReal model_deviation_);
+
+    SILACFilter(Int charge_);
+
 	/**
 	 * @brief destructor
 	 */
@@ -166,7 +174,7 @@ public:
 	 * @brief adds the given value to the blacklist
 	 * @param the m/z value to add to the blacklist
 	 */
-	void blockValue(DoubleReal value);
+	void  blockValue(DoubleReal value);
 
 	/**
 	     * @brief returns if the given values is on the blacklist

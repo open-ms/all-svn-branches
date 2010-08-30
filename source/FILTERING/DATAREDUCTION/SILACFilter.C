@@ -40,6 +40,7 @@
 namespace OpenMS
 {
 bool debug=false;
+DoubleReal pos1;
 
 SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_,DoubleReal model_deviation_) {
 	silac_type=mass_separations.size();
@@ -111,7 +112,7 @@ void SILACFilter::reset()
 
 bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 {
-	if (act_rt < 2001)
+	if (act_rt < 1819 && act_rt>1818)
 		debug=true;
 	else
 		debug=false;
@@ -279,7 +280,13 @@ bool SILACFilter::checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& ex
 			second_values.push_back(intensity2);
 		}
 		DoubleReal act_correlation=Math::pearsonCorrelationCoefficient(first_values.begin(), first_values.end(), second_values.begin(), second_values.end());
-		if ((act_correlation < 0.99 && i<2) || (i==2 && missing_peak && act_correlation < 0.99))
+//		if (debug && act_mz > 697.307 &&  act_mz < 697.328 && exact_positions[0]<0.01 && i==1)
+//		{
+//			std::cout << std::setprecision(10);
+//			std::cout << act_mz << "\t" << act_intensities[0] << "\t" << act_intensities[1] << "\t"<< std::setprecision(3) << act_correlation << std::endl;
+//		}
+
+		if ((act_correlation < 0.995 && i<2) || (i==2 && missing_peak && act_correlation < 0.995))
 			return false;
 	}
 
@@ -319,24 +326,14 @@ void SILACFilter::computeCorrelation(DoubleReal act_mz,DoubleReal offset,DoubleR
 
 			for (DoubleReal x=act_mz-starting_offset;x<=act_mz+tolerance;x+=stepwidth)
 			{
-//				if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118 &&offset>3.8 && offset<4.2)
-//					std::cout << x << "\t" << gsl_spline_eval (SILACFiltering::spline_lin, x, SILACFiltering::acc_lin) << std::endl;
 				data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x, SILACFiltering::acc_lin);
 				++i;
 			}
 
-//			if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118)
-//							std::cout << "\n\n" << std::endl;
-
-
-
-//			DoubleReal gauss_normalization_factor=(tolerance/3)*0.75*sqrt(2*Constants::PI);
 			std::vector<DoubleReal> gauss_fitted_data(vector_size,0);
 			i=0;
 			for (DoubleReal x=act_mz-starting_offset-tolerance;x<=act_mz+tolerance;x+=stepwidth)
 			{
-//				if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118 &&offset>3.8 && offset<4.2)
-//									std::cout << x+offset << "\t" << gsl_spline_eval (SILACFiltering::spline_lin, x+offset, SILACFiltering::acc_lin) << std::endl;
 				gauss_fitted_data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x+offset, SILACFiltering::acc_lin)/**gsl_ran_gaussian_pdf (x-act_mz, (tolerance/3)*0.75)*gauss_normalization_factor*/;
 				++i;
 			}

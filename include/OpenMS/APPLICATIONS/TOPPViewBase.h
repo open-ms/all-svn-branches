@@ -33,6 +33,7 @@
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
 #include <OpenMS/VISUAL/SpectrumWidget.h>
+#include <OpenMS/SYSTEM/FileWatcher.h>
 
 //STL
 #include <map>
@@ -70,6 +71,7 @@ namespace OpenMS
   class ToolsDialog;
   class DBConnection;
   class EnhancedTabBar;
+  class FileWatcher;
 
   /**
     @brief Main window of TOPPView tool
@@ -98,12 +100,18 @@ namespace OpenMS
     	//@{
     	//Feature map type
     	typedef LayerData::FeatureMapType FeatureMapType;
+      //Feature map managed type
+      typedef LayerData::FeatureMapSharedPtrType FeatureMapSharedPtrType;
+
     	//Consensus feature map type
     	typedef LayerData::ConsensusMapType ConsensusMapType;
+      //Consensus  map managed type
+      typedef LayerData::ConsensusMapSharedPtrType ConsensusMapSharedPtrType;
+
     	//Peak map type
     	typedef LayerData::ExperimentType ExperimentType;
-        //Main managed data type (experiment)
-        typedef LayerData::ExperimentSharedPtrType ExperimentSharedPtrType;
+      //Main managed data type (experiment)
+      typedef LayerData::ExperimentSharedPtrType ExperimentSharedPtrType;
     	///Peak spectrum type
     	typedef ExperimentType::SpectrumType SpectrumType;
     	//@}
@@ -299,8 +307,10 @@ namespace OpenMS
 			void updateProcessLog();
 
       /// Shows the tutorial browser
-      void showTutorial();
+      void showTutorial();      
 
+      /// Called if a data file has been externally changed
+      void fileChanged_(const String&);
     protected:
   		/**
   			@brief Adds a peak or feature map to the viewer
@@ -317,7 +327,7 @@ namespace OpenMS
       	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current
       	@param spectrum_id determines the spectrum to show in 1D view.
       */
-      void addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, std::vector<PeptideIdentification>& peptides, ExperimentSharedPtrType peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
+      void addData_(FeatureMapSharedPtrType feature_map, ConsensusMapSharedPtrType consensus_map, std::vector<PeptideIdentification>& peptides, ExperimentSharedPtrType peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
 
     	/// Tries to open a db connection (queries the user for the DB password)
     	void connectToDB_(DBConnection& db);
@@ -347,6 +357,12 @@ namespace OpenMS
 
       /// Layer management widget
       QListWidget* layer_manager_;
+
+      /// Watcher that tracks file changes (in order to update the data in the different views)
+      FileWatcher* watcher_;
+
+      /// Holds the messageboxes for each layer that are currently popped up (to avoid popping them up again, if file changes again before the messagebox is closed)
+      Map<UInt,bool> watcher_msgbox_;
 
       ///@name Spectrum selection widgets
       //@{

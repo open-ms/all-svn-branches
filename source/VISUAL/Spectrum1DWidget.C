@@ -110,7 +110,7 @@ namespace OpenMS
 		}
 		Histogram<> tmp(min,max,(max-min)/500.0);
 		
-                for (ExperimentType::SpectrumType::ConstIterator it = (*canvas_->getCurrentLayer().getPeakData())[0].begin(); it != (*canvas_->getCurrentLayer().getPeakData())[0].end(); ++it)
+    for (ExperimentType::SpectrumType::ConstIterator it = (*canvas_->getCurrentLayer().getPeakData())[0].begin(); it != (*canvas_->getCurrentLayer().getPeakData())[0].end(); ++it)
 		{
 			tmp.inc(it->getIntensity());
 		}

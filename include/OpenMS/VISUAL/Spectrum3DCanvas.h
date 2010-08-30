@@ -112,7 +112,7 @@ namespace OpenMS
 	    bool finishAdding_();
 			
   		// Reimplementation in order to update the OpenGL widget
-  		virtual void update_(const char* caller_name);
+      virtual void update_(const char* caller_name = 0);
 
 			///whether the legend is shoen or not
 			bool legend_shown_;

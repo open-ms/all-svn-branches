@@ -106,13 +106,13 @@ namespace OpenMS
 		}
 		
 		current_layer_ = getLayerCount()-1;
-                currentPeakData_()->sortSpectra(true);
-                currentPeakData_()->updateRanges(1);
+    currentPeakData_()->sortSpectra(true);
+    currentPeakData_()->updateRanges(1);
 
 		//Abort if no data points are contained
-                if (getCurrentLayer().getPeakData()->size()==0 || getCurrentLayer().getPeakData()->getSize()==0)
+    if (getCurrentLayer().getPeakData()->size()==0 || getCurrentLayer().getPeakData()->getSize()==0)
 		{
-			layers_.resize(getLayerCount()-1);
+      layers_.resize(getLayerCount()-1);
 			if (current_layer_!=0) current_layer_ = current_layer_-1;
 			QMessageBox::critical(this,"Error","Cannot add a dataset that contains no survey scans. Aborting!");
 			return false;
@@ -131,12 +131,6 @@ namespace OpenMS
 		openglwidget()->recalculateDotGradient_(current_layer_);
 		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);
-
-		//set watch on the file
-		if (File::exists(getCurrentLayer().filename))
-		{
-			watcher_->addFile(getCurrentLayer().filename.toQString());
-		}
 
 		return true;
 	}
@@ -182,15 +176,8 @@ namespace OpenMS
 		return static_cast<Spectrum3DOpenGLCanvas*>(openglcanvas_);
 	}
 	
-	void Spectrum3DCanvas::update_(const char*
-#ifdef DEBUG_UPDATE_
-			caller_name)
+  void Spectrum3DCanvas::update_(const char* caller_name)
 	{
-		cout << "Spectrum3DCanvas::update_ from '" << caller_name << "'" << endl;
-#else
-		)
-	{
-#endif
 		if(update_buffer_)
 		{
 			update_buffer_ = false;
@@ -215,13 +202,11 @@ namespace OpenMS
 		QComboBox* shade = dlg.findChild<QComboBox*>("shade");
 		MultiGradientSelector* gradient = dlg.findChild<MultiGradientSelector*>("gradient");
 		QSpinBox* width  = dlg.findChild<QSpinBox*>("width");
-		QComboBox* on_file_change = dlg.findChild<QComboBox*>("on_file_change");
 		
 		bg_color->setColor(QColor(param_.getValue("background_color").toQString()));		
 		shade->setCurrentIndex(layer.param.getValue("dot:shade_mode"));
 		gradient->gradient().fromString(layer.param.getValue("dot:gradient"));
 		width->setValue(UInt(layer.param.getValue("dot:line_width")));
-		on_file_change->setCurrentIndex(on_file_change->findText(param_.getValue("on_file_change").toQString()));	
 
 		if (dlg.exec())
 		{
@@ -229,7 +214,6 @@ namespace OpenMS
 			layer.param.setValue("dot:shade_mode",shade->currentIndex());
 			layer.param.setValue("dot:gradient",gradient->gradient().toString());
 			layer.param.setValue("dot:line_width",width->value());
-			param_.setValue("on_file_change", on_file_change->currentText());
 			
 		  emit preferencesChange();
 		}
@@ -372,18 +356,21 @@ namespace OpenMS
 		LayerData& layer = getLayer_(i);
 		
 		//update data
-		try
-		{
-                        FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
-		}
-		catch(Exception::BaseException& e)
-		{
-			QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-                        layer.getPeakData()->clear(true);
-		}
-                layer.getPeakData()->sortSpectra(true);
-                layer.getPeakData()->updateRanges(1);
-		
+    if (layer.type==LayerData::DT_PEAK) //peak data
+    {
+      try
+      {
+        FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
+      }
+      catch(Exception::BaseException& e)
+      {
+        QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+                          layer.getPeakData()->clear(true);
+      }
+      layer.getPeakData()->sortSpectra(true);
+      layer.getPeakData()->updateRanges(1);
+    }
+
 		recalculateRanges_(0,1,2);
 		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
 		

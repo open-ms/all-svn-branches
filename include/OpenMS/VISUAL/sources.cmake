@@ -32,6 +32,7 @@ TOPPASTabBar.h
 TOPPASTreeView.h
 TOPPASResource.h
 TOPPASResources.h
+TOPPViewDataModel.h
 EnhancedWorkspace.h
 )
 

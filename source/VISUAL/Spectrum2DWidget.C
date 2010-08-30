@@ -168,14 +168,14 @@ namespace OpenMS
 		}
 		else if (canvas_->getCurrentLayer().type==LayerData::DT_FEATURE)
 		{
-			for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().features.begin(); it != canvas_->getCurrentLayer().features.end(); ++it)
+      for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().getFeatureMap()->begin(); it != canvas_->getCurrentLayer().getFeatureMap()->end(); ++it)
 			{
 				tmp.inc(it->getIntensity());
 			}
 		}
 		else
 		{
-			for (Spectrum2DCanvas::ConsensusMapType::ConstIterator it = canvas_->getCurrentLayer().consensus.begin(); it != canvas_->getCurrentLayer().consensus.end(); ++it)
+      for (Spectrum2DCanvas::ConsensusMapType::ConstIterator it = canvas_->getCurrentLayer().getConsensusMap()->begin(); it != canvas_->getCurrentLayer().getConsensusMap()->end(); ++it)
 			{
 				tmp.inc(it->getIntensity());
 			}
@@ -259,7 +259,7 @@ namespace OpenMS
 		{
 			//determine min and max
 			Real min = numeric_limits<Real>::max(), max = -numeric_limits<Real>::max();
-			for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().features.begin(); it != canvas_->getCurrentLayer().features.end(); ++it)
+      for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().getFeatureMap()->begin(); it != canvas_->getCurrentLayer().getFeatureMap()->end(); ++it)
 			{
 				if (it->metaValueExists(name))
 				{
@@ -270,7 +270,7 @@ namespace OpenMS
 			}
 			//create histogram
 			tmp.reset(min,max,(max-min)/500.0);
-			for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().features.begin(); it != canvas_->getCurrentLayer().features.end(); ++it)
+      for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().getFeatureMap()->begin(); it != canvas_->getCurrentLayer().getFeatureMap()->end(); ++it)
 			{
 				if (it->metaValueExists(name))
 				{
@@ -381,13 +381,14 @@ namespace OpenMS
 			{
 				Size feature_index = goto_dialog.getFeatureNumber();
 				///check if the feature index exists
-				if (feature_index>=canvas()->getCurrentLayer().features.size())
+        if (feature_index>=canvas()->getCurrentLayer().getFeatureMap()->size())
 				{
 					QMessageBox::warning(this, "Invalid feature number", "Feature number too large.\nPlease select a valid feature!");
 					return;
 				}
 				//display feature with a margin
-				DBoundingBox<2> bb = canvas()->getCurrentLayer().features[feature_index].getConvexHull().getBoundingBox();
+        const FeatureMapType& map = *canvas()->getCurrentLayer().getFeatureMap();
+        DBoundingBox<2> bb = map[feature_index].getConvexHull().getBoundingBox();
 				DoubleReal rt_margin = (bb.maxPosition()[0] - bb.minPosition()[0])*0.5;
 				DoubleReal mz_margin = (bb.maxPosition()[1] - bb.minPosition()[1])*2;
 				SpectrumCanvas::AreaType area(bb.minPosition()[1]-mz_margin, bb.minPosition()[0]-rt_margin, bb.maxPosition()[1]+mz_margin, bb.maxPosition()[0]+rt_margin);

@@ -76,10 +76,10 @@ namespace OpenMS
         virtual void saveCurrentLayer(bool visible);
 
         /// Merges the features in @p map into the features layer @p i
-        void mergeIntoLayer(Size i, FeatureMapType& map);
+        void mergeIntoLayer(Size i, FeatureMapSharedPtrType map);
 
         /// Merges the consensus features in @p map into the features layer @p i
-        void mergeIntoLayer(Size i, ConsensusMapType& map);
+        void mergeIntoLayer(Size i, ConsensusMapSharedPtrType map);
 
         /// Merges the peptide identifications in @p peptides into the peptide layer @p i
         void mergeIntoLayer(Size i, std::vector<PeptideIdentification>& peptides);

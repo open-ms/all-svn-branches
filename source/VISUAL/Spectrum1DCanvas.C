@@ -1434,18 +1434,9 @@ namespace OpenMS
 		return if_this_variable_is_true_then_there_are_flipped_layers_otherwise_not;
 	}
 
-	void Spectrum1DCanvas::updateLayer_(Size i)
+  void Spectrum1DCanvas::updateLayer(Size i)
 	{
 		LayerData& layer = getLayer_(i);
-		try
-    {
-      FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
-		}
-		catch(Exception::BaseException& e)
-		{
-			QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-                        layer.getPeakData()->clear(true);
-		}		
     layer.getPeakData()->resize(1);
     layer.getPeakData()->sortSpectra();
     layer.getPeakData()->updateRanges();

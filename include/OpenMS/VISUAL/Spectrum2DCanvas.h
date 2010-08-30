@@ -97,11 +97,12 @@ namespace OpenMS
         void showSpectrumAs1D(int index);
 
     public slots:
-
         // Docu in base class
         void activateLayer(Size layer_index);
         // Docu in base class
         void removeLayer(Size layer_index);
+        //docu in base class
+        virtual void updateLayer(Size i);
         // Docu in base class
         virtual void horizontalScrollBarChange(int value);
         // Docu in base class
@@ -259,8 +260,6 @@ namespace OpenMS
         /// start peak/feature of measuring mode
         PeakIndex measurement_start_;
 
-        //docu in base class
-        virtual void updateLayer_(Size i);
         //docu in base class
         virtual void translateLeft_();
         //docu in base class

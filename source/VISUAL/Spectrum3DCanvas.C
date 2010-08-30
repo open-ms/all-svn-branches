@@ -351,26 +351,8 @@ namespace OpenMS
 	}
 
 
-	void Spectrum3DCanvas::updateLayer_(Size i)
+  void Spectrum3DCanvas::updateLayer(Size i)
 	{
-		LayerData& layer = getLayer_(i);
-		
-		//update data
-    if (layer.type==LayerData::DT_PEAK) //peak data
-    {
-      try
-      {
-        FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
-      }
-      catch(Exception::BaseException& e)
-      {
-        QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-                          layer.getPeakData()->clear(true);
-      }
-      layer.getPeakData()->sortSpectra(true);
-      layer.getPeakData()->updateRanges(1);
-    }
-
 		recalculateRanges_(0,1,2);
 		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
 		

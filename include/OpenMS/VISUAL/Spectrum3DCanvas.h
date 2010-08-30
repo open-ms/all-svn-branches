@@ -100,7 +100,8 @@ namespace OpenMS
 	    void activateLayer(Size layer_index);
 	    // Docu in base class
 	    void removeLayer(Size layer_index);
-  	
+      //docu in base class
+      virtual void updateLayer(Size i);
   	protected slots:
   		
 			/// Reacts on changed layer paramters
@@ -117,8 +118,6 @@ namespace OpenMS
 			///whether the legend is shoen or not
 			bool legend_shown_;
 
-			//docu in base class
-			virtual void updateLayer_(Size i);
       //docu in base class
 			virtual void translateLeft_();
 			//docu in base class

@@ -2145,79 +2145,8 @@ namespace OpenMS
 		}
 	}
 
-	void Spectrum2DCanvas::updateLayer_(Size i)
+  void Spectrum2DCanvas::updateLayer(Size i)
 	{
-		LayerData& layer = getLayer_(i);
-
-		if (layer.type==LayerData::DT_PEAK) //peak data
-		{
-			try
-			{
-        FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
-			}
-			catch(Exception::BaseException& e)
-			{
-				QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-                                layer.getPeakData()->clear(true);
-			}
-      layer.getPeakData()->sortSpectra(true);
-      layer.getPeakData()->updateRanges(1);
-		}
-		else if (layer.type==LayerData::DT_FEATURE) //feature data
-		{
-			try
-			{
-        FileHandler().loadFeatures(layer.filename,*layer.getFeatureMap());
-			}
-			catch(Exception::BaseException& e)
-			{
-				QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-        layer.getFeatureMap()->clear(true);
-			}
-      layer.getFeatureMap()->updateRanges();
-		}
-		else if (layer.type==LayerData::DT_CONSENSUS)  //consensus feature data
-		{
-			try
-			{
-        ConsensusXMLFile().load(layer.filename,*layer.getConsensusMap());
-			}
-			catch(Exception::BaseException& e)
-			{
-				QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-        layer.getConsensusMap()->clear(true);
-			}
-      layer.getConsensusMap()->updateRanges();
-		}
-		else if (layer.type==LayerData::DT_CHROMATOGRAM) //chromatgram
-		{
-			//TODO CHROM
-			try
-      {
-        FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
-      }
-      catch(Exception::BaseException& e)
-      {
-        QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-        layer.getPeakData()->clear(true);
-      }
-      layer.getPeakData()->sortChromatograms(true);
-      layer.getPeakData()->updateRanges(1);
-
-		}
-		else if (layer.type == LayerData::DT_IDENT) // identifications
-		{
-			try
-			{
-				vector<ProteinIdentification> proteins;
-				IdXMLFile().load(layer.filename, proteins, layer.peptides);
-			}
-			catch(Exception::BaseException& e)
-			{
-				QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-				layer.peptides.clear();
-			}		
-		}
 		recalculateRanges_(0,1,2);
 		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
 		intensityModeChange_();

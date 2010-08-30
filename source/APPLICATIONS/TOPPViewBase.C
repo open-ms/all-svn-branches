@@ -949,7 +949,13 @@ namespace OpenMS
     addData_(feature_map_sptr, consensus_map_sptr, peptides, peak_map_sptr, data_type, false, show_options, abs_filename, caption, window_id, spectrum_id);
 
   	//add to recent file
-  	if (add_to_recent) addRecentFile_(filename);
+    if (add_to_recent)
+    {
+      addRecentFile_(filename);
+    }
+
+    // watch file contents for changes
+    watcher_->addFile(abs_filename);
 
     //reset cursor
     setCursor(Qt::ArrowCursor);
@@ -2258,43 +2264,43 @@ namespace OpenMS
 
   void TOPPViewBase::chooseSpectrumByUser(const QString& text)
   {
-	if(text.size() > 0)
-	{
-		int col(spectrum_combo_box_->currentIndex()+1);
-		if(col>5)
-		{
-			col = 1;
-		}
-		QList<QTreeWidgetItem *>  searched =  spectrum_selection_->findItems(text, Qt::MatchFixedString /* matchflag exact match */, col );
-		QList<QTreeWidgetItem *>  selected =  spectrum_selection_->selectedItems();
+    if(text.size() > 0)
+    {
+      int col(spectrum_combo_box_->currentIndex()+1);
+      if(col>5)
+      {
+        col = 1;
+      }
+      QList<QTreeWidgetItem *>  searched =  spectrum_selection_->findItems(text, Qt::MatchFixedString /* matchflag exact match */, col );
+      QList<QTreeWidgetItem *>  selected =  spectrum_selection_->selectedItems();
 
-		if(searched.size()>0)
-		{
-			for(int i = 0; i < selected.size(); ++i)
-			{
-				selected[i]->setSelected(false);
-			}
-			spectrum_selection_->update();
+      if(searched.size()>0)
+      {
+        for(int i = 0; i < selected.size(); ++i)
+        {
+          selected[i]->setSelected(false);
+        }
+        spectrum_selection_->update();
 
-			int index = searched.first()->text(1).toInt();
-			searched.first()->setSelected(true);
-			spectrum_selection_->update();
+        int index = searched.first()->text(1).toInt();
+        searched.first()->setSelected(true);
+        spectrum_selection_->update();
 
-			spectrum_selection_->scrollToItem(searched.first());
+        spectrum_selection_->scrollToItem(searched.first());
 
-			Spectrum1DWidget* widget_1d = active1DWindow_();
-			if (widget_1d)
-			{
-				widget_1d->canvas()->activateSpectrum(index);
-			}
-		}
-		//~ for coloring if nothing found
-		//~ else
-		//~ {
+        Spectrum1DWidget* widget_1d = active1DWindow_();
+        if (widget_1d)
+        {
+          widget_1d->canvas()->activateSpectrum(index);
+        }
+      }
+      //~ for coloring if nothing found
+      //~ else
+      //~ {
 			//~ QPalette p = spectrum_search_box_->palette();
 			//~ spectrum_search_box_->setPalette(p);
-		//~ }
-	}
+      //~ }
+    }
   }
 
 
@@ -3044,7 +3050,6 @@ namespace OpenMS
 	{
 		Param out = param_.copy(String("preferences:") + dim + "d:",true);
 		out.setValue("default_path",param_.getValue("preferences:default_path").toString());
-		out.setValue("on_file_change",param_.getValue("preferences:on_file_change").toString());
 		return out;
 	}
 
@@ -3467,6 +3472,119 @@ namespace OpenMS
 
   void TOPPViewBase::fileChanged_(const String& filename)
   {
+    QWidgetList wl = ws_->windowList();
+
+    // iterate over all windows and determine which need an update
+    std::vector<std::pair<const SpectrumWidget *, int> > needs_update;
+    for(int i=0; i!=ws_->windowList().count(); ++i)
+    {
+      QWidget* w = wl[i];
+      const SpectrumWidget* sw = qobject_cast<const SpectrumWidget*>(w);
+      if (sw!=0)
+      {
+        int lc = sw->canvas()->getLayerCount();
+
+        // determine if widget stores one or more layers for the given filename (->needs update)
+        for (int j=0; j!= lc; ++j)
+        {
+          const LayerData& ld = sw->canvas()->getLayer(j);
+          if (ld.filename == filename)
+          {
+            needs_update.push_back(std::pair<const SpectrumWidget *, int>(sw,j));
+          }
+        }
+      }
+    }
+
+    if (needs_update.size()!=0)  // at least one layer contains data of filename
+    {
+      pair<const SpectrumWidget *, int>& slp = needs_update[0];
+      const SpectrumWidget * sw = slp.first;
+      int layer_index = slp.second;
+      const LayerData& layer = sw->canvas()->getLayer(layer_index);
+
+      if (layer.type==LayerData::DT_PEAK) //peak data
+      {
+        try
+        {
+          FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
+        }
+        catch(Exception::BaseException& e)
+        {
+          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+          layer.getPeakData()->clear(true);
+        }
+        layer.getPeakData()->sortSpectra(true);
+        layer.getPeakData()->updateRanges(1);
+      }
+      else if (layer.type==LayerData::DT_FEATURE) //feature data
+      {
+        try
+        {
+          FileHandler().loadFeatures(layer.filename,*layer.getFeatureMap());
+        }
+        catch(Exception::BaseException& e)
+        {
+          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+          layer.getFeatureMap()->clear(true);
+        }
+        layer.getFeatureMap()->updateRanges();
+      }
+      else if (layer.type==LayerData::DT_CONSENSUS)  //consensus feature data
+      {
+        try
+        {
+          ConsensusXMLFile().load(layer.filename,*layer.getConsensusMap());
+        }
+        catch(Exception::BaseException& e)
+        {
+          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+          layer.getConsensusMap()->clear(true);
+        }
+        layer.getConsensusMap()->updateRanges();
+      }
+      else if (layer.type==LayerData::DT_CHROMATOGRAM) //chromatgram
+      {
+        //TODO CHROM
+        try
+        {
+          FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
+        }
+        catch(Exception::BaseException& e)
+        {
+          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+          layer.getPeakData()->clear(true);
+        }
+        layer.getPeakData()->sortChromatograms(true);
+        layer.getPeakData()->updateRanges(1);
+
+      }
+/*      else if (layer.type == LayerData::DT_IDENT) // identifications
+      {
+        try
+        {
+          vector<ProteinIdentification> proteins;
+          IdXMLFile().load(layer.filename, proteins, layer.peptides);
+        }
+        catch(Exception::BaseException& e)
+        {
+          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+          layer.peptides.clear();
+        }
+      }
+*/
+    }
+
+    // update all layers that need an update
+    for (UInt i=0; i!= needs_update.size(); ++i)
+    {
+      pair<const SpectrumWidget *, int>& slp = needs_update[0];
+      const SpectrumWidget * sw = slp.first;
+      int layer_index = slp.second;
+      sw->canvas()->updateLayer(layer_index);
+    }
+
+    //std::cout << "TOPPViewBase::fileChanged_ not implemented" << std::endl;
     /* TODO implement
     //determine layers that contain data of given file
     std::vector<UInt> updatable_layers_idx;

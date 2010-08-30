@@ -569,6 +569,9 @@ namespace OpenMS
 		*/
 		void getVisibleIdentifications(std::vector<PeptideIdentification>& peptides) const;
 
+    ///Updates layer @p i when the data in the corresponding file changes
+    virtual void updateLayer(Size i) = 0;
+
 	signals:
 
 		/// Signal emitted whenever the modification status of a layer changes (editing and storing)
@@ -715,8 +718,6 @@ namespace OpenMS
 		*/
 		virtual void updateScrollbars_();
 		
-		///Updates layer @p i when the data in the corresponding file changes
-		virtual void updateLayer_(Size i) = 0;
 		
 		/**
 			@brief Convert widget to chart coordinates

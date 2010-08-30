@@ -142,6 +142,9 @@ namespace OpenMS
 			void activateLayer(Size layer_index);
 			// Docu in base class
 			void removeLayer(Size layer_index);
+      //docu in base class
+      virtual void updateLayer(Size i);
+
 			/**
 				@brief Sets the visible area.
 				
@@ -224,8 +227,6 @@ namespace OpenMS
 			void contextMenuEvent(QContextMenuEvent* e);
 	    //@}
 			
-			//docu in base class
-			virtual void updateLayer_(Size i);
       ///Go forward in zoom history
 	    virtual void zoomForward_();
       //docu in base class

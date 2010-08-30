@@ -362,7 +362,7 @@ namespace OpenMS
       FileWatcher* watcher_;
 
       /// Holds the messageboxes for each layer that are currently popped up (to avoid popping them up again, if file changes again before the messagebox is closed)
-      Map<UInt,bool> watcher_msgbox_;
+      bool watcher_msgbox_;
 
       ///@name Spectrum selection widgets
       //@{

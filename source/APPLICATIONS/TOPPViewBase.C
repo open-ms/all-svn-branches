@@ -112,7 +112,8 @@ namespace OpenMS
         TOPPViewBase::TOPPViewBase(QWidget* parent):
                 QMainWindow(parent),
                 DefaultParamHandler("TOPPViewBase"),
-                watcher_(0)
+                watcher_(0),
+                watcher_msgbox_(false)
         {
           setWindowTitle("TOPPView");
           setWindowIcon(QIcon(":/TOPPView.png"));
@@ -789,7 +790,6 @@ namespace OpenMS
 		map_default->setCurrentIndex(map_default->findText(param_.getValue("preferences:default_map_view").toQString()));
 		map_cutoff->setCurrentIndex(map_cutoff->findText(param_.getValue("preferences:intensity_cutoff").toQString()));
 		on_file_change->setCurrentIndex(on_file_change->findText(param_.getValue("preferences:on_file_change").toQString()));
-
 
 		db_host->setText(param_.getValue("preferences:db:host").toQString());
 		db_port->setValue((Int)param_.getValue("preferences:db:port"));
@@ -3496,70 +3496,106 @@ namespace OpenMS
       }
     }
 
-    if (needs_update.size()!=0)  // at least one layer contains data of filename
+    if (needs_update.size()==0) // no layer references data of filename
+    {
+      watcher_->removeFile(filename);  // remove watcher
+      return;
+    } else if (needs_update.size()!=0)  // at least one layer references data of filename
     {
       pair<const SpectrumWidget *, int>& slp = needs_update[0];
       const SpectrumWidget * sw = slp.first;
       int layer_index = slp.second;
-      const LayerData& layer = sw->canvas()->getLayer(layer_index);
 
-      if (layer.type==LayerData::DT_PEAK) //peak data
+      bool user_wants_update = false;
+      if ((String)(param_.getValue("preferences:on_file_change"))=="update automatically") //automatically update
       {
-        try
-        {
-          FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
-        }
-        catch(Exception::BaseException& e)
-        {
-          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-          layer.getPeakData()->clear(true);
-        }
-        layer.getPeakData()->sortSpectra(true);
-        layer.getPeakData()->updateRanges(1);
+        user_wants_update = true;
       }
-      else if (layer.type==LayerData::DT_FEATURE) //feature data
+      else if ((String)(param_.getValue("preferences:on_file_change"))=="ask") //ask the user if the layer should be updated
       {
-        try
-        {
-          FileHandler().loadFeatures(layer.filename,*layer.getFeatureMap());
+        if (watcher_msgbox_==true)
+        { // we already have a dialog for that opened... do not ask again
+          return;
         }
-        catch(Exception::BaseException& e)
+        // track that we will show the msgbox and we do not need to show it again if file changes once more and the dialog is still open
+        watcher_msgbox_=true;
+        QMessageBox msg_box;
+        QAbstractButton* ok = msg_box.addButton(QMessageBox::Ok);
+        msg_box.addButton(QMessageBox::Cancel);
+        msg_box.setWindowTitle("Layer data changed");
+        msg_box.setText((String("The data of file '") + filename + "' has changed.<BR>Update layers?").toQString());
+        msg_box.exec();
+        watcher_msgbox_=false;
+        if (msg_box.clickedButton() == ok)
         {
-          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-          layer.getFeatureMap()->clear(true);
+          user_wants_update = true;
         }
-        layer.getFeatureMap()->updateRanges();
       }
-      else if (layer.type==LayerData::DT_CONSENSUS)  //consensus feature data
-      {
-        try
-        {
-          ConsensusXMLFile().load(layer.filename,*layer.getConsensusMap());
-        }
-        catch(Exception::BaseException& e)
-        {
-          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-          layer.getConsensusMap()->clear(true);
-        }
-        layer.getConsensusMap()->updateRanges();
-      }
-      else if (layer.type==LayerData::DT_CHROMATOGRAM) //chromatgram
-      {
-        //TODO CHROM
-        try
-        {
-          FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
-        }
-        catch(Exception::BaseException& e)
-        {
-          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
-          layer.getPeakData()->clear(true);
-        }
-        layer.getPeakData()->sortChromatograms(true);
-        layer.getPeakData()->updateRanges(1);
 
-      }
-/*      else if (layer.type == LayerData::DT_IDENT) // identifications
+      if (user_wants_update == false)
+      {
+        return;
+      } else if (user_wants_update == true)
+      {
+        const LayerData& layer = sw->canvas()->getLayer(layer_index);
+        // reload data
+        if (layer.type==LayerData::DT_PEAK) //peak data
+        {
+          try
+          {
+            FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
+          }
+          catch(Exception::BaseException& e)
+          {
+            QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+            layer.getPeakData()->clear(true);
+          }
+          layer.getPeakData()->sortSpectra(true);
+          layer.getPeakData()->updateRanges(1);
+        }
+        else if (layer.type==LayerData::DT_FEATURE) //feature data
+        {
+          try
+          {
+            FileHandler().loadFeatures(layer.filename,*layer.getFeatureMap());
+          }
+          catch(Exception::BaseException& e)
+          {
+            QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+            layer.getFeatureMap()->clear(true);
+          }
+          layer.getFeatureMap()->updateRanges();
+        }
+        else if (layer.type==LayerData::DT_CONSENSUS)  //consensus feature data
+        {
+          try
+          {
+            ConsensusXMLFile().load(layer.filename,*layer.getConsensusMap());
+          }
+          catch(Exception::BaseException& e)
+          {
+            QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+            layer.getConsensusMap()->clear(true);
+          }
+          layer.getConsensusMap()->updateRanges();
+        }
+        else if (layer.type==LayerData::DT_CHROMATOGRAM) //chromatgram
+        {
+          //TODO CHROM
+          try
+          {
+            FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
+          }
+          catch(Exception::BaseException& e)
+          {
+            QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+            layer.getPeakData()->clear(true);
+          }
+          layer.getPeakData()->sortChromatograms(true);
+          layer.getPeakData()->updateRanges(1);
+
+        }
+        /*      else if (layer.type == LayerData::DT_IDENT) // identifications
       {
         try
         {
@@ -3573,60 +3609,21 @@ namespace OpenMS
         }
       }
 */
-    }
+      }
 
-    // update all layers that need an update
-    for (UInt i=0; i!= needs_update.size(); ++i)
-    {
-      pair<const SpectrumWidget *, int>& slp = needs_update[0];
-      const SpectrumWidget * sw = slp.first;
-      int layer_index = slp.second;
-      sw->canvas()->updateLayer(layer_index);
-    }
-
-    //std::cout << "TOPPViewBase::fileChanged_ not implemented" << std::endl;
-    /* TODO implement
-    //determine layers that contain data of given file
-    std::vector<UInt> updatable_layers_idx;
-    for (UInt j=0; j<getLayerCount(); ++j)
-    {
-      if (getLayer(j).filename == filename)
+      // update all layers that need an update
+      for (UInt i=0; i!= needs_update.size(); ++i)
       {
-        updatable_layers_idx.push_back(j);
+        pair<const SpectrumWidget *, int>& slp = needs_update[0];
+        const SpectrumWidget * sw = slp.first;
+        int layer_index = slp.second;
+        sw->canvas()->updateLayer(layer_index);
       }
     }
+    /*
 
-    if (updatable_layers_idx.size()==0) //no layer references file -> remove watcher
     {
-      watcher_->removeFile(filename);
-      return;
-    }
-    else // at least one layer references file
-    {
-      if ((String)(param_.getValue("on_file_change"))=="update automatically") //automatically update
-      {
-        update = true;
-      }
-      else if ((String)(param_.getValue("on_file_change"))=="ask") //ask the user if the layer should be updated
-      {
-        if (watcher_msgbox_[j]==1)
-        { // we already have a dialog for that opened... do not ask again
-          return;
-        }
-        // track that we will show the msgbox and we do not need to show it again if file changes once more and the dialog is still open
-        watcher_msgbox_[j]=1;
-        QMessageBox msg_box;
-        QAbstractButton* ok = msg_box.addButton(QMessageBox::Ok);
-        msg_box.addButton(QMessageBox::Cancel);
-        msg_box.setWindowTitle("Layer data changed");
-        msg_box.setText((String("The data of file '") + getLayer(j).filename + "' has changed.<BR>Update layers?").toQString());
-        msg_box.exec();
-        watcher_msgbox_[j]=0;
-        if (msg_box.clickedButton() == ok)
-        {
-          update = true;
-        }
-      }
+
       //update the layer if the user choosed to do so
       if (update)
       {

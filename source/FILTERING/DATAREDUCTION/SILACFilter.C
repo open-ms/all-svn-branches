@@ -272,21 +272,33 @@ bool SILACFilter::checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& ex
 	{
 		std::vector<DoubleReal> first_values;
 		std::vector<DoubleReal> second_values;
+		DoubleReal max1=0.0;
+		DoubleReal max2=0.0;
 		for (DoubleReal pos=act_mz-0.3*area_width;pos<=act_mz+0.3*area_width;pos+=0.06*area_width)
 		{
 			DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl);
 			DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+exact_positions[i], SILACFiltering::acc_spl);
+			if (intensity1>max1)
+				max1=intensity1;
+			if (intensity2>max2)
+				max2=intensity2;
+		}
+		DoubleReal scaling_factor=max1/max2;
+		for (DoubleReal pos=act_mz-0.5*area_width;pos<=act_mz+0.5*area_width;pos+=0.05*area_width)
+		{
+			DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl);
+			DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+exact_positions[i], SILACFiltering::acc_spl);
 			first_values.push_back(intensity1);
-			second_values.push_back(intensity2);
+			second_values.push_back(intensity2*scaling_factor);
 		}
 		DoubleReal act_correlation=Math::pearsonCorrelationCoefficient(first_values.begin(), first_values.end(), second_values.begin(), second_values.end());
-		if (debug && act_mz > 616.322 &&  act_mz < 616.352 && exact_positions[0]<0.01 && i==1)
-		{
-			std::cout << std::setprecision(10);
-			std::cout << act_mz << "\t" << act_intensities[0] << "\t" << act_intensities[1] << "\t"<< std::setprecision(3) << act_correlation << std::endl;
-		}
+//		if (debug && act_mz > 616.322 &&  act_mz < 616.352 && exact_positions[0]<0.01 && i==1)
+//		{
+//			std::cout << std::setprecision(10);
+//			std::cout << act_mz << "\t" << act_intensities[0] << "\t" << act_intensities[1] << "\t"<< std::setprecision(3) << act_correlation << std::endl;
+//		}
 
-		if ((act_correlation < 0.75 && i<2) || (i==2 && missing_peak && act_correlation < 0.75))
+		if ((act_correlation < 0.95 && i<2) || (i==2 && missing_peak && act_correlation < 0.95))
 			return false;
 	}
 

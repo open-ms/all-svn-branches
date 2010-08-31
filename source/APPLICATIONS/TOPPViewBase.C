@@ -2329,9 +2329,17 @@ namespace OpenMS
     {
     	bool error = false;
     	Param tmp;
-    	tmp.load(filename);
-    	//apply preferences if they are of the current TOPPView version
-    	if(tmp.exists("preferences:version") && tmp.getValue("preferences:version").toString()==VersionInfo::getVersion())
+      try
+      { // the file might be corrupt
+    	  tmp.load(filename);
+      }
+      catch (...)
+      {
+        error = true;
+      }
+      
+      //apply preferences if they are of the current TOPPView version
+    	if(!error && tmp.exists("preferences:version") && tmp.getValue("preferences:version").toString()==VersionInfo::getVersion())
     	{
     		try
     		{
@@ -2349,7 +2357,7 @@ namespace OpenMS
 			//set parameters to defaults when something is fishy with the parameters file
 			if (error)
 			{
-  			//reset parameters
+  			//reset parameters (they will be stored again when TOPPView quits)
   			setParameters(Param());
 
 				cerr << "The TOPPView preferences files '" << filename << "' was ignored. It is no longer compatible with this TOPPView version and will be replaced." << endl;
@@ -2753,8 +2761,16 @@ namespace OpenMS
 				QMessageBox::warning(this, "Error", "You must enter a peptide sequence!");
 				return;
 			}
-			AASequence aa_sequence(seq_string);
-
+      AASequence aa_sequence;
+      try
+      {
+        aa_sequence.setStringSequence(seq_string);
+      }
+      catch (Exception::BaseException& e)
+      {
+        QMessageBox::warning(this, "Error", QString("Spectrum generation failed! (") + e.what() + ")");
+			  return;
+      }
 			Int charge = spec_gen_dialog.spin_box->value();
 
 			if (aa_sequence.isValid())
@@ -2781,34 +2797,42 @@ namespace OpenMS
 				p.setValue("relative_loss_intensity", rel_loss_int, "Intensity of loss ions, in relation to the intact ion intensity");
 				generator.setParameters(p);
 
-				if (spec_gen_dialog.list_widget->item(0)->checkState() == Qt::Checked) // "A-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::AIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(1)->checkState() == Qt::Checked) // "B-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::BIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(2)->checkState() == Qt::Checked) // "C-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::CIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(3)->checkState() == Qt::Checked) // "X-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::XIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(4)->checkState() == Qt::Checked) // "Y-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::YIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(5)->checkState() == Qt::Checked) // "Z-ions"
-				{
-					generator.addPeaks(rich_spec, aa_sequence, Residue::ZIon, charge);
-				}
-				if (spec_gen_dialog.list_widget->item(6)->checkState() == Qt::Checked) // "Precursor"
-				{
-					generator.addPrecursorPeaks(rich_spec, aa_sequence, charge);
-				}
+        try
+        {
+				  if (spec_gen_dialog.list_widget->item(0)->checkState() == Qt::Checked) // "A-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::AIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(1)->checkState() == Qt::Checked) // "B-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::BIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(2)->checkState() == Qt::Checked) // "C-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::CIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(3)->checkState() == Qt::Checked) // "X-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::XIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(4)->checkState() == Qt::Checked) // "Y-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::YIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(5)->checkState() == Qt::Checked) // "Z-ions"
+				  {
+					  generator.addPeaks(rich_spec, aa_sequence, Residue::ZIon, charge);
+				  }
+				  if (spec_gen_dialog.list_widget->item(6)->checkState() == Qt::Checked) // "Precursor"
+				  {
+					  generator.addPrecursorPeaks(rich_spec, aa_sequence, charge);
+				  }
+        }
+        catch (Exception::BaseException& e)
+        {
+          QMessageBox::warning(this, "Error", QString("Spectrum generation failed! (") + e.what() + "). Please report this to the developers (specify what input you used)!");
+				  return;
+        }
 
 				PeakSpectrum new_spec;
 				for (RichPeakSpectrum::Iterator it = rich_spec.begin(); it != rich_spec.end(); ++it)
@@ -2927,6 +2951,10 @@ namespace OpenMS
   	}
 
 		w->canvas()->activateSpectrum(index);
+		// set visible aree to visible area in 2D view
+    w->canvas()->setVisibleArea(activeCanvas_()->getVisibleArea());
+		// set relative (%) view of visible area
+    w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
 
 		String caption = layer.name;
 		w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);

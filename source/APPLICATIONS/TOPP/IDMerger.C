@@ -150,7 +150,7 @@ class TOPPIDMerger
 
 	void registerOptionsAndFlags_()
 	{
-		registerInputFileList_("in","<files>",StringList(),"two or more input files separated by blank");
+		registerInputFileList_("in","<files>",StringList(),"two or more input files separated by blanks");
 		setValidFormats_("in",StringList::create("idXML"));
 		registerOutputFile_("out","<file>","","output file ");
 		setValidFormats_("out",StringList::create("idXML"));
@@ -207,7 +207,7 @@ class TOPPIDMerger
 				{
 					if (find(used_ids.begin(), used_ids.end(), additional_protein_identifications[i].getIdentifier())!=used_ids.end())
 					{
-						writeLog_(String("Error: The idenitifier '") + additional_protein_identifications[i].getIdentifier() + "' was used before!");
+						writeLog_(String("Error: The identifier '") + additional_protein_identifications[i].getIdentifier() + "' was used before!");
 						return INCOMPATIBLE_INPUT_DATA;
 					}
 					used_ids.push_back(additional_protein_identifications[i].getIdentifier());

@@ -126,7 +126,7 @@ class TOPPXTandemAdapter
 	
 			addEmptyLine_();
 			addText_("X!Tandem specific options");
-			registerInputFile_("xtandem_executable", "<file>", "", "X!Tandem executable of the installtation e.g. 'tandem.exe'", true);
+			registerInputFile_("xtandem_executable", "<file>", "", "X!Tandem executable of the installtation e.g. 'tandem.exe'", true, false, StringList::create("skipexists"));
 			registerInputFile_("default_input_file", "<file>", "", "default parameters input file, if not given default parameters are used", false);			
 			registerDoubleOption_("minimum_fragment_mz", "<num>", 150.0, "minimum fragment mz", false);
 			registerStringOption_("cleavage_site", "<cleavage site>", "[RK]|{P}", "cleavage site", false);
@@ -277,7 +277,6 @@ class TOPPXTandemAdapter
 			//-------------------------------------------------------------
 
 			int status = QProcess::execute(xtandem_executable.toQString(), QStringList(input_filename.toQString())); // does automatic escaping etc...
-			
 			if (status != 0)
 			{
 				writeLog_("XTandem problem. Aborting! (Details can be seen in the logfile: \"" + logfile + "\")");

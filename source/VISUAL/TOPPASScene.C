@@ -631,7 +631,7 @@ namespace OpenMS
 		
 		//save file
 		save_param.store(file);
-		changed_ = false;
+		setChanged(false);
 		file_name_ = file;
 	}
 	
@@ -1193,7 +1193,7 @@ namespace OpenMS
 			(*it)->moveBy(dx,dy);
 		}
 		
-		changed_ = true;
+		setChanged(true);
 	}
 
 	void TOPPASScene::snapToGrid()
@@ -1259,7 +1259,16 @@ namespace OpenMS
 	
 	void TOPPASScene::setChanged(bool b)
 	{
-		changed_ = b;
+		if (changed_ != b)
+		{
+			changed_ = b;
+			emit mainWindowNeedsUpdate();
+		}
+	}
+	
+	bool TOPPASScene::wasChanged()
+	{
+		return changed_;
 	}
 	
 	bool TOPPASScene::isPipelineRunning()
@@ -1656,6 +1665,7 @@ namespace OpenMS
 			if (tv->inEdgesBegin() == tv->inEdgesEnd())
 			{
 				strange_vertices << QString::number(tv->getTopoNr());
+				tv->markUnreachable();
 			}
 		}
 		if (!strange_vertices.empty())
@@ -1863,6 +1873,21 @@ namespace OpenMS
 				resources.add(key,resource_list);
 			}
 		}
+	}
+	
+	bool TOPPASScene::refreshParameters()
+	{
+		bool change = false;
+		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
+		{
+			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>(*it);
+			if (ttv && ttv->refreshParameters())
+			{
+				change = true;
+			}
+		}
+		
+		return change;
 	}
 	
 } //namespace OpenMS

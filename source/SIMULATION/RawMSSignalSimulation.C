@@ -28,6 +28,8 @@
 #include <OpenMS/SIMULATION/RawMSSignalSimulation.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/GaussModel.h>
+#include <OpenMS/SYSTEM/File.h>
+#include <OpenMS/FORMAT/TextFile.h>
 
 #include <OpenMS/SIMULATION/IsotopeModelGeneral.h>
 
@@ -37,12 +39,11 @@ using std::vector;
 namespace OpenMS {
 
   /**
-   * TODO: review signal compression code
    * TODO: review baseline and noise code
    */
-  RawMSSignalSimulation::RawMSSignalSimulation(const gsl_rng * random_generator)
+  RawMSSignalSimulation::RawMSSignalSimulation(const SimRandomNumberGenerator& rng)
   : DefaultParamHandler("RawSignalSimulation"), mz_sampling_rate_(), mz_error_mean_(), mz_error_stddev_(),
-  intensity_error_mean_(), intensity_error_stddev_(), peak_std_(), rnd_gen_(random_generator)
+  intensity_scale_(), intensity_scale_stddev_(), peak_std_(), rnd_gen_(&rng)
   {
     setDefaultParams_();
     updateMembers_();
@@ -51,7 +52,7 @@ namespace OpenMS {
 
   RawMSSignalSimulation::RawMSSignalSimulation()
     : DefaultParamHandler("RawSignalSimulation"), mz_sampling_rate_(), mz_error_mean_(), mz_error_stddev_(),
-    intensity_error_mean_(), intensity_error_stddev_(), peak_std_()
+    intensity_scale_(), intensity_scale_stddev_(), peak_std_()
   {
     setDefaultParams_();
     updateMembers_();
@@ -59,7 +60,7 @@ namespace OpenMS {
 
   RawMSSignalSimulation::RawMSSignalSimulation(const RawMSSignalSimulation& source)
     : DefaultParamHandler(source), mz_sampling_rate_(source.mz_sampling_rate_), mz_error_mean_(source.mz_error_mean_), mz_error_stddev_(source.mz_error_stddev_),
-    intensity_error_mean_(source.intensity_error_mean_), intensity_error_stddev_(source.intensity_error_stddev_), peak_std_(source.peak_std_)
+    intensity_scale_(source.intensity_scale_), intensity_scale_stddev_(source.intensity_scale_stddev_), peak_std_(source.peak_std_)
   {
     setParameters( source.getParameters() );
     rnd_gen_ = source.rnd_gen_;
@@ -75,8 +76,8 @@ namespace OpenMS {
     mz_error_stddev_ = source.mz_error_stddev_;
     mz_sampling_rate_ = source.mz_sampling_rate_;
 
-    intensity_error_mean_ = source.intensity_error_mean_;
-    intensity_error_stddev_ = source.intensity_error_stddev_;
+    intensity_scale_ = source.intensity_scale_;
+    intensity_scale_stddev_ = source.intensity_scale_stddev_;
 
     peak_std_ = source.peak_std_;
 
@@ -85,57 +86,134 @@ namespace OpenMS {
   }
 
   RawMSSignalSimulation::~RawMSSignalSimulation()
-  {}
+  {
+  }
 
   void RawMSSignalSimulation::setDefaultParams_()
   {
-		defaults_.setValue("enabled","true","Enable RAW signal simulation?");
+		defaults_.setValue("enabled","true","Enable RAW signal simulation? (select 'false' if you only need feature-maps)");
 		defaults_.setValidStrings("enabled", StringList::create("true,false"));
 		
-    // noise params
-    // m/z error
-    defaults_.setValue("mz:error_mean",0.0,"Average systematic m/z error (Da)");
-    defaults_.setValue("mz:error_stddev",0.0,"Standard deviation for m/z errors. Set to 0 to disable simulation of m/z errors.");
-
-    // mz sampling rate
-    defaults_.setValue("mz:sampling_rate",0.12,"MS hardware resolution (e.g. bin size in m/z).");
-
-    // intensity error
-    defaults_.setValue("int:error_mean",0,"Average systematic intensity error.");
-    defaults_.setValue("int:error_stddev",0.0,"Standard deviation for peak intensities (relative to peak height). Set to 0 to disable intensity errors.");
+    defaults_.setValue("ionization_type", "ESI", "Type of Ionization (MALDI or ESI)");
+    defaults_.setValidStrings("ionization_type", StringList::create("MALDI,ESI"));
 
     // peak and instrument parameter
-    defaults_.setValue("peak_fwhm",0.5,"FWHM (full width at half maximum) of simulated peaks (Da).");
-
-    // shot noise
-    defaults_.setValue("noise:rate",0.0,"Poisson rate of shot noise per unit m/z. Set to 0 to disable simulation of shot noise.");
-    defaults_.setMinFloat("noise:rate",0.0);
-    defaults_.setValue("noise:int-mean",50.0,"Shot noise intensity mean (gaussian distributed).");
+    defaults_.setValue("resolution",50000,"Instrument resolution at 400Th.");
 
     // baseline
     defaults_.setValue("baseline:scaling",0.0,"Scale of baseline. Set to 0 to disable simulation of baseline.");
     defaults_.setMinFloat("baseline:scaling",0.0);
     defaults_.setValue("baseline:shape",0.5, "The baseline is modeled by an exponential probability density function (pdf) with f(x) = shape*e^(- shape*x)");
     defaults_.setMinFloat("baseline:shape",0.0);
+    defaults_.setSectionDescription("baseline","Baseline modeling for MALDI ionization");
+
+    // mz sampling rate
+    // TODO: investigate if this can be hidden from the user by estimating it from "resolution"
+    defaults_.setValue("mz:sampling_rate",0.12,"detector interval(e.g. bin size in m/z).");
+
+    // contaminants:
+    defaults_.setValue("contaminants:file","","Contaminants file with sum formula and absolute RT interval.");
+
+    // noise params
+
+    // VARIATION
+
+    // m/z error
+    // todo: also plan for affine trafo (as in RT shift?)
+    defaults_.setValue("variation:mz:error_stddev",0.0,"Standard deviation for m/z errors. Set to 0 to disable simulation of m/z errors.");
+    defaults_.setValue("variation:mz:error_mean",0.0,"Average systematic m/z error (Da)");
+
+    defaults_.setValue("variation:intensity:scale", 1.0 , "Constant scale factor of the feature intensity. Set to 1.0 to get the real intensity values.");
+    defaults_.setMinFloat("variation:intensity:scale", 0.0);
+    defaults_.setValue("variation:intensity:scale_stddev", 0.0 ,"Standard deviation of peak intensity (relative to the scaled peak height). Set to 0 to get simple rescaled intensities.");
+    defaults_.setMinFloat("variation:intensity:scale_stddev", 0.0);
+
+    defaults_.setSectionDescription("variation:mz", "Shifts in mass to charge dimension of the simulated signals.");
+    defaults_.setSectionDescription("variation:intensity", "Variations in intensity to model randomness in feature intensity.");
+    defaults_.setSectionDescription("variation", "Random components that simulate biological and technical variations of the simulated data.");
+
+
+    // shot noise
+    defaults_.setValue("noise:shot:rate",0.0,"Poisson rate of shot noise per unit m/z. Set to 0 to disable simulation of shot noise.");
+    defaults_.setMinFloat("noise:shot:rate",0.0);
+    defaults_.setValue("noise:shot:int-mean",50.0,"Shot noise intensity mean (gaussian distributed).");
+
+    // white noise
+    defaults_.setValue("noise:white:mean", 0.0, "Mean value of the white noise that is added to each measured signal.");
+    defaults_.setValue("noise:white:stddev", 0.0, "Mean value of the white noise that is added to each measured signal.");
+
+    defaults_.setSectionDescription("noise", "Parameters modelling noise in mass spectrometry measurements.");
+    defaults_.setSectionDescription("noise:shot", "Parameters regarding shot noise modelling.");
+    defaults_.setSectionDescription("noise:white", "Parameters regarding white noise modelling.");
 
     defaultsToParam_();
   }
 
   void RawMSSignalSimulation::updateMembers_()
   {
-    double tmp    =  param_.getValue("peak_fwhm");
+    // convert from resolution @ 400th --> FWHM
+    DoubleReal tmp = 400.00 / (double) param_.getValue("resolution");
     peak_std_     = (tmp / 2.355);			// Approximation for Gaussian-shaped signals
     mz_sampling_rate_ = param_.getValue("mz:sampling_rate");
 
-    mz_error_mean_    = param_.getValue("mz:error_mean");
-    mz_error_stddev_  = param_.getValue("mz:error_stddev");
+    mz_error_mean_    = param_.getValue("variation:mz:error_mean");
+    mz_error_stddev_  = param_.getValue("variation:mz:error_stddev");
 
-    intensity_error_mean_   = param_.getValue("int:error_mean");
-    intensity_error_stddev_ = param_.getValue("int:error_stddev");
+    intensity_scale_ = param_.getValue("variation:intensity:scale");
+    intensity_scale_stddev_ = param_.getValue("variation:intensity:scale_stddev");
+
+    // contaminants:
+    String file = param_.getValue("contaminants:file");
+    if (file.trim().size()!=0)
+    {
+      if (!File::readable(file)) throw Exception::FileNotReadable(__FILE__,__LINE__,__PRETTY_FUNCTION__,file);
+      // read & parse file:
+      TextFile tf(file,true);
+      contaminants_.clear();
+      const UInt COLS_EXPECTED = 8;
+      for (Size i=0;i<tf.size();++i)
+      {
+        if (tf[i].size()==0 || tf[i].hasPrefix("#")) continue; // skip comments
+        StringList cols;
+        tf[i].removeWhitespaces().split(',', cols);
+        if (cols.size()!=COLS_EXPECTED) throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,tf[i],"Expected " + String(COLS_EXPECTED) + " components, got" + String(cols.size()));
+        ContaminantInfo c;
+        c.name = cols[0];
+        try
+        {
+          c.sf = EmpiricalFormula(cols[1]);
+        }
+        catch (...)
+        {
+          throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,cols[1],"Could not parse line " + String(i+1) + " in " + file + ".");
+        }
+        try
+        {
+          c.rt_start = cols[2].toDouble();
+          c.rt_end = cols[3].toDouble();
+          c.intensity = cols[4].toDouble();
+          c.q = cols[5].toInt();
+        }
+        catch (...)
+        {
+          throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,tf[i],"Could not parse line " + String(i+1) + " in " + file + ".");
+        }
+        if (cols[6]=="rec") c.shape = RT_RECTANGULAR;
+        else if (cols[6]=="gauss") c.shape = RT_GAUSSIAN;
+        else throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,tf[i], "Unknown shape type: " + cols[6] + " in line " + String(i) + " of '" + file + "'");
+
+        if (cols[7]=="ESI") c.im = IM_ESI;
+        else if (cols[7]=="MALDI") c.im = IM_MALDI;
+        else if (cols[7]=="ALL") c.im = IM_ALL;
+        else throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,tf[i], "Unknown ionization type: " + cols[7] + " in line " + String(i) + " of '" + file + "'");
+
+        contaminants_.push_back(c);
+      }
+    }
 
   }
 
-  void RawMSSignalSimulation::generateRawSignals(FeatureMapSim & features, MSSimExperiment & experiment)
+  void RawMSSignalSimulation::generateRawSignals(FeatureMapSim & features, MSSimExperiment & experiment, FeatureMapSim & c_map)
   {
 
     // TODO: check if signal intensities scale linear with actual abundance, e.g. DOI: 10.1021/ac0202280 for NanoFlow-ESI
@@ -157,27 +235,34 @@ namespace OpenMS {
       {
         add1DSignal_(*feature_it,experiment);
       }
-      addShotNoise_(experiment, minimal_mz_measurement_limit, maximal_mz_measurement_limit);
     }
     else
     {
       for(Size idx=0; idx<features.size(); ++idx)
       {
         add2DSignal_(features[idx], experiment);
-        if (idx % (features.size()/10+1) == 0) std::cout << idx << " of " << features.size() << " MS1 features generated...\n";
       }
-      addShotNoise_(experiment, minimal_mz_measurement_limit, maximal_mz_measurement_limit);
+      // build contaminant feature map & add raw signal
+      createContaminants_(c_map, experiment);
     }
-    // we should trigger this based on ionization type
-    addBaseLine_(experiment, minimal_mz_measurement_limit);
+
+    if ((String)param_.getValue("ionization_type")=="MALDI")
+    {
+      addBaseLine_(experiment, minimal_mz_measurement_limit);
+    }
+    addShotNoise_(experiment, minimal_mz_measurement_limit, maximal_mz_measurement_limit);
     compressSignals_(experiment);
+
+    // finally add a white noise to the simulated data
+    addWhiteNoise_(experiment);
   }
+
 
   void RawMSSignalSimulation::add1DSignal_(Feature & active_feature, MSSimExperiment & experiment)
   {
     Param p1;
 
-    SimIntensityType scale = active_feature.getIntensity() * 150;
+    SimIntensityType scale = getFeatureScaledIntensity_(active_feature.getIntensity(), 150.0);
 
     SimChargeType q = active_feature.getCharge();
     EmpiricalFormula ef = active_feature.getPeptideIdentifications()[0].getHits()[0].getSequence().getFormula();
@@ -203,12 +288,20 @@ namespace OpenMS {
 
   void RawMSSignalSimulation::add2DSignal_(Feature & active_feature, MSSimExperiment & experiment)
   {
-    SimIntensityType scale = active_feature.getIntensity();
+    SimIntensityType scale = getFeatureScaledIntensity_(active_feature.getIntensity(), 1.0);
 
     Param p1;
     SimChargeType q = active_feature.getCharge();
-    EmpiricalFormula ef = active_feature.getPeptideIdentifications()[0].getHits()[0].getSequence().getFormula();
-    std::cout << "current feature: " << active_feature.getPeptideIdentifications()[0].getHits()[0].getSequence().toString() << " with scale " << scale << std::endl;
+    EmpiricalFormula ef;
+    if (active_feature.metaValueExists("sum_formula"))
+    {
+      ef = active_feature.getMetaValue("sum_formula");
+    }
+    else
+    {
+      ef = active_feature.getPeptideIdentifications()[0].getHits()[0].getSequence().getFormula();
+      std::cout << "current feature: " << active_feature.getPeptideIdentifications()[0].getHits()[0].getSequence().toString() << " with scale " << scale << std::endl;
+    }
     ef += active_feature.getMetaValue("charge_adducts"); // adducts
     ef -= String("H")+String(q);ef.setCharge(q);				 // effectively substract q electrons
     p1.setValue("statistics:mean", ef.getAverageWeight() / q);
@@ -240,6 +333,7 @@ namespace OpenMS {
     SimCoordinateType mz_end = isomodel->getInterpolation().supportMax();
 
     // add peptide to global MS map
+    // add CH and new intensity to feature
     samplePeptideModel2D_(pm, mz_start, mz_end, rt_start, rt_end, experiment, active_feature);
   }
 
@@ -250,9 +344,7 @@ namespace OpenMS {
   {
     SimIntensityType intensity_sum = 0.0;
 
-    //std::cout << "Sampling at [mz] " << mz_start << ":" << mz_end << std::endl;
-
-    /// TODO: think of better error checking
+    LOG_DEBUG << "Sampling at [mz] " << mz_start << ":" << mz_end << std::endl;
 
     SimPointType point;
 
@@ -263,11 +355,8 @@ namespace OpenMS {
 
       if ( point.getIntensity() > 10.0)
       {
-        // add m/z and intensity error (both Gaussian distributed)
-        double it_err  = gsl_ran_gaussian(rnd_gen_, (point.getIntensity() * intensity_error_stddev_ ) ) + intensity_error_mean_ ;
-        point.setIntensity( std::max(0., point.getIntensity( ) + it_err) );
-				
-        double mz_err = gsl_ran_gaussian(rnd_gen_, mz_error_stddev_) + mz_error_mean_;
+        // add gaussian distributed m/z error
+        double mz_err = gsl_ran_gaussian(rnd_gen_->technical_rng, mz_error_stddev_) + mz_error_mean_;
         point.setMZ( point.getMZ() + mz_err );
 
         intensity_sum += point.getIntensity();
@@ -279,9 +368,12 @@ namespace OpenMS {
 
 
   void RawMSSignalSimulation::samplePeptideModel2D_(const ProductModel<2> & pm,
-                                    const SimCoordinateType mz_start,  const SimCoordinateType mz_end,
-                                    SimCoordinateType rt_start, SimCoordinateType rt_end,
-                                    MSSimExperiment & experiment, Feature & active_feature)
+                                                    const SimCoordinateType mz_start,
+                                                    const SimCoordinateType mz_end,
+                                                    SimCoordinateType rt_start,
+                                                    SimCoordinateType rt_end,
+                                                    MSSimExperiment & experiment,
+                                                    Feature & active_feature)
   {
     if (rt_start <=0) rt_start = 0;
 
@@ -291,10 +383,9 @@ namespace OpenMS {
       throw Exception::InvalidSize(__FILE__, __LINE__, __PRETTY_FUNCTION__, 0);
     }
 
-    //std::cout << "Sampling at [RT] " << rt_start << ":" << rt_end << " [mz] " << mz_start << ":" << mz_end << std::endl;
+    LOG_INFO << "Sampling at [RT] " << rt_start << ":" << rt_end << " [mz] " << mz_start << ":" << mz_end << std::endl;
 
     SimIntensityType intensity_sum = 0.0;
-    SimPointType point;
     vector< DPosition<2> > points;
     
     Int start_scan = exp_iter - experiment.begin();
@@ -308,29 +399,23 @@ namespace OpenMS {
 			
       for (SimCoordinateType mz = mz_start; mz < mz_end; mz += mz_sampling_rate_)
       {
-
+        SimPointType point;
         point.setMZ(mz);
         point.setIntensity( pm.getIntensity( DPosition<2>( rt, mz) ) );
 
-        if ( point.getIntensity() > 10.0)
-        {
-          // add m/z and intensity error (both Gaussian distributed)
-          double it_err  = gsl_ran_gaussian(rnd_gen_, (point.getIntensity() * intensity_error_stddev_ ) ) + intensity_error_mean_ ;
-          point.setIntensity( std::max(0., point.getIntensity( ) + it_err) );
+        // add gaussian distributed m/z error
+        double mz_err = gsl_ran_gaussian(rnd_gen_->technical_rng, mz_error_stddev_) + mz_error_mean_;
+        point.setMZ( point.getMZ() + mz_err );
 
-          double mz_err = gsl_ran_gaussian(rnd_gen_, mz_error_stddev_) + mz_error_mean_;
-          point.setMZ( point.getMZ() + mz_err );
-
-          intensity_sum += point.getIntensity();
-          points.push_back( DPosition<2>( rt, mz) );		// store position
-          exp_iter->push_back(point);
-          //std::cout << "Sampling intensity: " << point.getIntensity() << std::endl;
-
-          //update last scan affected
-          end_scan = exp_iter - experiment.begin();
-        }
+        intensity_sum += point.getIntensity();
+        points.push_back( DPosition<2>( rt, mz) );		// store position
+        exp_iter->push_back(point);
       }
+      //update last scan affected
+      end_scan = exp_iter - experiment.begin();
     }
+
+    OPENMS_POSTCONDITION(end_scan  != -5, "RawMSSignalSimulation::samplePeptideModel2D_(): setting RT bounds failed!");
 
     active_feature.setQuality(0,start_scan);
     active_feature.setQuality(1,end_scan);
@@ -345,8 +430,8 @@ namespace OpenMS {
 
   }
 
-  void RawMSSignalSimulation::chooseElutionProfile_(EGHModel*& elutionmodel, const Feature& feature, const double scale, const DoubleReal rt_sampling_rate, const MSSimExperiment & experiment)
-    {
+  void RawMSSignalSimulation::chooseElutionProfile_(EGHModel*& elutionmodel, Feature& feature, const double scale, const DoubleReal rt_sampling_rate, const MSSimExperiment & experiment)
+  {
       SimCoordinateType f_rt = feature.getRT();
 
       Param p;
@@ -358,8 +443,18 @@ namespace OpenMS {
 
       p.setValue("egh:height", scale);
       p.setValue("egh:retention", f_rt);
-      p.setValue("egh:A", 50.0);
-      p.setValue("egh:B", 60.0);
+
+      if (feature.metaValueExists("RT_width_gaussian"))
+      { // this is for contaminants only (we want the gaussian distribution width A+B at 5% of maximal height)
+        p.setValue("egh:alpha", 0.05);
+        p.setValue("egh:A", double(feature.getMetaValue("RT_width_gaussian"))/2.0 * 0.9); // make width a little smaller as this is only the 5% height cutoff
+        p.setValue("egh:B", double(feature.getMetaValue("RT_width_gaussian"))/2.0 * 0.9);
+      }
+      else
+      {      // TODO remove fixed values .. come up with a meaningfull model for elutionprofile shapes
+        p.setValue("egh:A", 50.0);
+        p.setValue("egh:B", 60.0);
+      }
 
       elutionmodel->setParameters(p); // does the calculation
 
@@ -372,57 +467,62 @@ namespace OpenMS {
 
       // find scan in experiment at which our elution starts
       MSSimExperiment::ConstIterator exp_it = experiment.RTBegin(rt_em_start);
-      for ( Size i = 1; (i < data.size() - 1) && exp_it!=experiment.end(); ++i, ++exp_it )
+      DoubleList elution_intensities;
+      DoubleList elution_bounds;
+      elution_bounds.resize(4); // store min and max RT (in seconds and index terms)
+      elution_bounds[0] = std::distance(experiment.begin(), exp_it);
+      elution_bounds[1] = exp_it->getRT();
+      elution_bounds[2] = elution_bounds[0];
+      elution_bounds[3] = elution_bounds[1];
+
+      for ( Size i = 0; (i < data.size()) && exp_it!=experiment.end(); ++i, ++exp_it )
       { // .. and disturb values by (an already smoothed) distortion diced in RTSimulation
         data[i] *= (DoubleReal) exp_it->getMetaValue("distortion");
+        // store elution profile in feature MetaValue
+        elution_intensities.push_back(data[i]);
+        elution_bounds[2] = std::distance(experiment.begin(), exp_it);
+        elution_bounds[3] = exp_it->getRT();
       }
-
-
-    }
-
-
-  void RawMSSignalSimulation::chooseElutionProfile_(EmgModel*& elutionmodel, const Feature& feature, const double scale, const DoubleReal rt_sampling_rate, const MSSimExperiment & experiment)
-  {
-    SimCoordinateType f_rt = feature.getRT();
-    DoubleReal f_symmetry = (DoubleReal) feature.getMetaValue("rt_symmetry");
-    DoubleReal f_width = (DoubleReal) feature.getMetaValue("rt_width");
-
-    DoubleReal f_bb_min = (DoubleReal) feature.getMetaValue("rt_bb_min");
-    DoubleReal f_bb_max = (DoubleReal) feature.getMetaValue("rt_bb_max");
-
-    // it doesn't matter what bounding box I set here, it always cuts of the fronting !!! :-(
-    Param p;
-    p.setValue("bounding_box:min", f_bb_min );
-    p.setValue("bounding_box:max", f_bb_max );
-    // WARNING: step used to be 'rt_sampling_rate / 3.0', but distortion is not part of RT sim, and thus only
-    //          modeled 1:1
-    p.setValue("interpolation_step", rt_sampling_rate );
-    p.setValue("statistics:variance", 1.0);
-    p.setValue("statistics:mean", f_rt);
-
-    p.setValue("emg:height", scale);
-    p.setValue("emg:width", f_width);
-    p.setValue("emg:symmetry", f_symmetry);
-    p.setValue("emg:retention", f_rt);
-
-    elutionmodel->setParameters(p); // does the calculation
-
-    //----------------------------------------------------------------------
-
-    // Hack away constness :-P   We know what we want.
-    EmgModel::ContainerType &data = const_cast<EmgModel::ContainerType &>(elutionmodel->getInterpolation().getData());
-
-		SimCoordinateType rt_em_start = elutionmodel->getInterpolation().supportMin();
-	
-		// find scan in experiment at which our elution starts
-		MSSimExperiment::ConstIterator exp_it = experiment.RTBegin(rt_em_start);
-    for ( Size i = 1; (i < data.size() - 1) && exp_it!=experiment.end(); ++i, ++exp_it )
-    { // .. and disturb values by (an already smoothed) distortion diced in RTSimulation
-			data[i] *= (DoubleReal) exp_it->getMetaValue("distortion");
-    }
-  
-      
+      // set elution profile details in feature -> used for MS^E precursor selection in tandemMS later
+      feature.setMetaValue("elution_profile_intensities", elution_intensities);
+      feature.setMetaValue("elution_profile_bounds", elution_bounds);
   }
+
+  void RawMSSignalSimulation::createContaminants_(FeatureMapSim & c_map, MSSimExperiment & exp)
+  {
+    IONIZATIONMETHOD this_im = (String)param_.getValue("ionization_type")=="ESI" ? IM_ESI : IM_MALDI;
+    c_map.clear(true);
+
+    std::cerr << "\n\n CREATING " << contaminants_.size() << " CONTAMINANTS\n\n";
+
+    for (Size i=0;i<contaminants_.size();++i)
+    {
+      std::cerr << "\n\n CREATING " << i << " th CONTAMINANTS with IM: " << Int(contaminants_[i].im) << " " << Int(this_im) << "\n\n";
+
+      if (contaminants_[i].im!=IM_ALL && contaminants_[i].im!=this_im) continue;
+
+      
+      // ... create contaminants...
+      FeatureMapSim::FeatureType feature;
+      feature.setRT( (contaminants_[i].rt_end+contaminants_[i].rt_start)/2 );
+      feature.setMZ( contaminants_[i].sf.getMonoWeight() );
+      feature.setIntensity(contaminants_[i].intensity);
+      if (contaminants_[i].shape == RT_RECTANGULAR)
+      {
+        feature.setMetaValue("RT_width_gaussian", 1e6);
+      }
+      else
+      {
+        feature.setMetaValue("RT_width_gaussian", contaminants_[i].rt_end-contaminants_[i].rt_start);
+      }
+      feature.setMetaValue("sum_formula", contaminants_[i].sf.getString());
+      feature.setCharge(contaminants_[i].q);
+      feature.setMetaValue("charge_adducts","H"+String(contaminants_[i].q));
+      add2DSignal_(feature, exp);
+      c_map.push_back(feature);
+    }
+  }
+
 
   void RawMSSignalSimulation::addShotNoise_(MSSimExperiment & experiment, SimCoordinateType minimal_mz_measurement_limit, SimCoordinateType maximal_mz_measurement_limit)
   {
@@ -430,16 +530,16 @@ namespace OpenMS {
     // i.e. the number of noise data points per unit m/z interval follows a Poisson
     // distribution. Noise intensity is assumed to be Gaussian-distributed.
 
-    DoubleReal rate    = param_.getValue("noise:rate");
+    DoubleReal rate    = param_.getValue("noise:shot:rate");
     if (rate == 0.0) return;
-    DoubleReal it_mean = param_.getValue("noise:int-mean");
+    DoubleReal it_mean = param_.getValue("noise:shot:int-mean");
 
     const UInt num_intervals = 100;
     SimCoordinateType interval_size = ( maximal_mz_measurement_limit -  minimal_mz_measurement_limit) / num_intervals;
     SimPointType point;
 
-    std::cout << "Adding shot noise to spectra...." << std::endl;
-    std::cout << "Interval size: "  << interval_size << " poisson rate: " << rate << std::endl;
+    LOG_INFO << "Adding shot noise to spectra ..." << std::endl;
+    LOG_INFO << "Interval size: "  << interval_size << " poisson rate: " << rate << std::endl;
 
     // TODO: switch to iterator ??
     for (Size i=0 ;i < experiment.size() ; ++i)
@@ -447,14 +547,14 @@ namespace OpenMS {
 
       for (Size j=0;j<num_intervals;++j)
       {
-        UInt counts = gsl_ran_poisson ( rnd_gen_, rate);
+        UInt counts = gsl_ran_poisson ( rnd_gen_->technical_rng, rate);
         SimCoordinateType mz_lw = j * interval_size + minimal_mz_measurement_limit;
         SimCoordinateType mz_up = (j+1) * interval_size + minimal_mz_measurement_limit;
 
         for (UInt c=0; c<counts;++c)
         {
-          SimCoordinateType mz  = gsl_ran_flat(rnd_gen_, mz_lw, mz_up );
-          SimCoordinateType it = gsl_ran_exponential(rnd_gen_,it_mean);
+          SimCoordinateType mz  = gsl_ran_flat(rnd_gen_->technical_rng, mz_lw, mz_up );
+          SimCoordinateType it = gsl_ran_exponential(rnd_gen_->technical_rng,it_mean);
           point.setIntensity(it);
           point.setMZ(mz);
           experiment[i].push_back(point);
@@ -474,6 +574,7 @@ namespace OpenMS {
 
     if (scale == 0.0) return;
 
+    // TODO: switch to iterator
     for ( Size i = 0; i < experiment.size() ; ++i )
     {
       for ( Size j = 0 ; j < experiment[i].size() ; ++j )
@@ -485,6 +586,22 @@ namespace OpenMS {
         DoubleReal b = gsl_ran_exponential_pdf(x, shape);
         b *= scale;
         experiment[i][j].setIntensity( experiment[i][j].getIntensity() + b );
+      }
+    }
+  }
+
+  void RawMSSignalSimulation::addWhiteNoise_(MSSimExperiment &experiment)
+  {
+    // get white noise parameters
+    DoubleReal white_noise_mean = param_.getValue("noise:white:mean");
+    DoubleReal white_noise_stddev = param_.getValue("noise:white:stddev");
+
+    for(MSSimExperiment::iterator spectrum_it = experiment.begin() ; spectrum_it != experiment.end() ; ++spectrum_it)
+    {
+      for(MSSimExperiment::SpectrumType::iterator peak_it = (*spectrum_it).begin() ; peak_it != (*spectrum_it).end() ; ++peak_it)
+      {
+        SimIntensityType intensity = peak_it->getIntensity() + gsl_ran_gaussian(rnd_gen_->technical_rng, white_noise_stddev * peak_it->getIntensity()) + white_noise_mean;
+        peak_it->setIntensity( (intensity > 0.0 ? intensity : 0.0) );
       }
     }
   }
@@ -508,6 +625,11 @@ namespace OpenMS {
     Size count = 0;
     bool change = false;
 
+    // this is necessary to avoid
+    // 0.1 < 0.1 = true
+    // due to numerical instability
+    const SimCoordinateType numerical_correction = 0.0001 * mz_sampling_rate_;
+
     for( Size i = 0 ; i < experiment.size() ; ++i )
     {
       experiment[i].sortByPosition();
@@ -522,7 +644,7 @@ namespace OpenMS {
 				{
 					diff_mz = fabs(experiment[i][ (j+1) ].getMZ() - experiment[i][j].getMZ());
 
-					if (diff_mz < mz_sampling_rate_)
+          if ((diff_mz +  numerical_correction) < mz_sampling_rate_)
 					{
 						change = true;
 						// sum intensities
@@ -534,12 +656,14 @@ namespace OpenMS {
 						// keep m/z of point with higher intensity
 						SimCoordinateType mz1 = experiment[i][ (j+1) ].getMZ();
 						SimCoordinateType mz2 = experiment[i][ (j) ].getMZ();
-						SimCoordinateType mz =  it1 > it2 ? mz1 : mz2;
+            SimCoordinateType mz =  it1 > it2 ? mz1 : mz2;
+            //SimCoordinateType mz =  (mz1 + mz2) / 2.0;
 						p.setMZ( mz );
 						cont.push_back(p);
 
 						++j;
 						++count;
+
 					}
 					else
 					{
@@ -560,5 +684,16 @@ namespace OpenMS {
 
     return count;
 
+  }
+
+
+  SimIntensityType RawMSSignalSimulation::getFeatureScaledIntensity_(const SimIntensityType feature_intensity, const SimIntensityType natural_scaling_factor)
+  {
+    SimIntensityType intensity = feature_intensity * natural_scaling_factor * intensity_scale_;
+    
+    // add some noise
+    intensity += gsl_ran_gaussian(rnd_gen_->technical_rng, intensity_scale_stddev_ * intensity);
+
+    return intensity;
   }
 }

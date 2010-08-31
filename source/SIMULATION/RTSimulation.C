@@ -93,8 +93,8 @@ namespace OpenMS {
 	}
 
   
-  RTSimulation::RTSimulation(const gsl_rng * random_generator)
-    : DefaultParamHandler("RTSimulation"), rnd_gen_(random_generator)
+  RTSimulation::RTSimulation(const SimRandomNumberGenerator& random_generator)
+    : DefaultParamHandler("RTSimulation"), rnd_gen_(&random_generator)
   {
     setDefaultParams_();
     updateMembers_();
@@ -123,7 +123,7 @@ namespace OpenMS {
   /**
    @brief Gets a feature map containing the peptides and predicts for those the retention times
    */
-  void RTSimulation::predictRT(FeatureMapSim & features, MSSimExperiment & experiment)
+  void RTSimulation::predictRT(FeatureMapSim & features)
   {
 
     predictFeatureRT_(features);
@@ -131,8 +131,9 @@ namespace OpenMS {
     for(FeatureMapSim::iterator it_f = features.begin(); it_f != features.end();
         ++it_f)
     {
-			double symmetry = gsl_ran_flat (rnd_gen_, symmetry_down_, symmetry_up_);
-			double width = gsl_ran_flat (rnd_gen_, 5, 15);
+      // TODO: revise the process of rt shape generation
+      double symmetry = gsl_ran_flat (rnd_gen_->technical_rng, symmetry_down_, symmetry_up_);
+      double width = gsl_ran_flat (rnd_gen_->technical_rng, 5, 15);
 			// TODO: maybe this would be a better solution ..
 			//double width = 1;
       it_f->setMetaValue("rt_symmetry", symmetry);
@@ -150,12 +151,7 @@ namespace OpenMS {
       it_f->setMetaValue("rt_bb_max",bb_max);
     }
 		
-    // this is a closed intervall (it includes gradient_min_ and gradient_max_)
-		Size number_of_scans = Size( (gradient_max_ - gradient_min_) / rt_sampling_rate_) + 1;
-
 		//else if (param_.getValue("rt_column") == "CE") number_of_scans = Size((features.getMax()[0]+gradient_front_offset_) / rt_sampling_rate_);
-     
-    createExperiment_(experiment, number_of_scans, gradient_min_);
 
   }
 
@@ -192,43 +188,49 @@ namespace OpenMS {
 			wrapSVM(peptides_aa_vector, predicted_retention_times);
 		}	
     
-    // scaling used when removing invalid RT predictions
-		DoubleReal RT_scale = is_relative ? total_gradient_time_ : 1;
-		
     // rt error dicing
-    SimCoordinateType rt_shift_mean  = param_.getValue("rt_shift_mean");
-    SimCoordinateType rt_shift_stddev = param_.getValue("rt_shift_stddev");      
+    SimCoordinateType rt_offset = param_.getValue("variation:affine_offset");
+    SimCoordinateType rt_scale  = param_.getValue("variation:affine_scale");
+    SimCoordinateType rt_ft_stddev = param_.getValue("variation:feature_stddev");      
     
     FeatureMapSim fm_tmp (features);
     fm_tmp.clear(false);
     StringList deleted_features;
     for (Size i = 0; i < predicted_retention_times.size(); ++i)
     {
+      // relative -> absolute RT's (with border)
+      if (is_relative)
+      {
+	      predicted_retention_times[i] *= total_gradient_time_;
+	    }
+      
+      //overwrite RT (if given by user)
+      if (features[i].metaValueExists("rt"))
+      {
+        predicted_retention_times[i] = features[i].getMetaValue("rt");
+      }
+      // add variation
+      SimCoordinateType rt_error = gsl_ran_gaussian(rnd_gen_->technical_rng, rt_ft_stddev) + rt_offset;
+      predicted_retention_times[i] = predicted_retention_times[i]*rt_scale + rt_error;
+      //overwrite RT [no randomization] (if given by user)
+      if (features[i].metaValueExists("RT"))
+      {
+        predicted_retention_times[i] = features[i].getMetaValue("RT");
+      }
+
       // remove invalid peptides & (later) display removed ones
       if (
           (predicted_retention_times[i] < 0.0) || // check for invalid RT
-          (predicted_retention_times[i]*RT_scale > gradient_max_) ||  // check if RT is not in scan window
-          (predicted_retention_times[i]*RT_scale < gradient_min_)     // check if RT is not in scan window
+          (predicted_retention_times[i] > gradient_max_) ||  // check if RT is not in scan window
+          (predicted_retention_times[i] < gradient_min_)     // check if RT is not in scan window
           )
       {
 				deleted_features.push_back(features[i].getPeptideIdentifications()[0].getHits()[0].getSequence().toUnmodifiedString());
 				continue;
       }
-
-      // predicted_retention_times[i] ->  needs scaling onto the column     
-      SimCoordinateType rt_error = gsl_ran_gaussian(rnd_gen_, rt_shift_stddev) + rt_shift_mean;
-
-      // relative -> absolute RT's (with border)
-      if (is_relative)
-      {
-	      predicted_retention_times[i] = predicted_retention_times[i] * total_gradient_time_;
-	    }
-
-      //LOG_DEBUG << predicted_retention_times[i] << ", " << features[i].getPeptideIdentifications()[0].getHits()[0].getSequence().toUnmodifiedString() << ", abundance: " << features[i].getIntensity() << std::endl;
       
-      features[i].setRT(predicted_retention_times[i] + rt_error);
+      features[i].setRT(predicted_retention_times[i]);
 			fm_tmp.push_back(features[i]);
-      
     }
     
     // print invalid features:
@@ -318,7 +320,7 @@ namespace OpenMS {
     UInt k_mer_length = 0;
     DoubleReal sigma = 0.0;
     UInt border_length = 0;
-    Size max_number_of_peptides(param_.getValue("max_number_of_peptides"));
+    Size max_number_of_peptides(param_.getValue("HPLC:max_number_of_peptides"));
 
 		LOG_INFO << "Predicting RT ... ";
     
@@ -409,7 +411,7 @@ namespace OpenMS {
     {
 
       // assign random retention time
-      SimCoordinateType retention_time = gsl_ran_flat(rnd_gen_, 0, total_gradient_time_);
+      SimCoordinateType retention_time = gsl_ran_flat(rnd_gen_->technical_rng, 0, total_gradient_time_);
       contaminants[i].setRT(retention_time);
     }
   }
@@ -465,35 +467,43 @@ namespace OpenMS {
     defaults_.setValidStrings("rt_column", StringList::create("none,HPLC,CE"));
     
     // scaling
-    defaults_.setValue("auto_scale","true","Scale retention times to given gradient time automatically?");
+    defaults_.setValue("auto_scale","true","Scale predicted RT's to given 'total_gradient_time'?");
     defaults_.setValidStrings("auto_scale", StringList::create("true,false"));
 
 		// column settings
-    defaults_.setValue("total_gradient_time",2500.0,"The duration (in seconds) of the gradient.");
+    defaults_.setValue("total_gradient_time",2500.0,"The duration [s] of the gradient.");
     defaults_.setMinFloat("total_gradient_time", 0.00001);
 
-    // TODO: maybe we should at some boundaries here
-    defaults_.setValue("scan_window:min",500.0,"Start of RT Scan Window (in seconds)");
-    defaults_.setValue("scan_window:max",1500.0,"End of RT Scan Window (in seconds)");
+    // rt scan window
+    defaults_.setValue("scan_window:min",500.0,"Start of RT Scan Window [s]");
+    defaults_.setMinFloat("scan_window:min",0);
+    defaults_.setValue("scan_window:max",1500.0,"End of RT Scan Window [s]");
+    defaults_.setMinFloat("scan_window:max",1);
 
-    // rt parameters
-    defaults_.setValue("sampling_rate", 2.0, "Time interval (in seconds) between consecutive scans");
+    // rt spacing
+    defaults_.setValue("sampling_rate", 2.0, "Time interval [s] between consecutive scans");
+    defaults_.setMinFloat("sampling_rate",0.01);
+    defaults_.setMaxFloat("sampling_rate",60.0);
 
     // rt error
-    defaults_.setValue("rt_shift_mean",0,"Mean shift in retention time [s]");
-    defaults_.setValue("rt_shift_stddev",3,"Standard deviation of shift in retention time [s]");     
+    defaults_.setValue("variation:feature_stddev",3,"Standard deviation of shift in retention time [s] from predicted model (applied to every single feature independently)");
+    defaults_.setValue("variation:affine_offset",0,"Global offset in retention time [s] from predicted model");
+    defaults_.setValue("variation:affine_scale",1,"Global scaling in retention time from predicted model");
+    defaults_.setSectionDescription("variation","Random component that simulates technical/biological variation");
 
     // column conditions
     defaults_.setValue("column_condition:preset","medium","LC condition (none|good|medium|poor) if set to none the explicit values will be used.");
     defaults_.setValidStrings("column_condition:preset", StringList::create("none,good,medium,poor"));
 
+    // todo: can we use EGH params for this?!
     defaults_.setValue("column_condition:distortion", 1.0, "LC distortion (used only if preset is set to 'none')");
     defaults_.setValue("column_condition:symmetry_up", -60.0, "LC symmetry up (used only if preset is set to 'none')");
     defaults_.setValue("column_condition:symmetry_down", +60.0, "LC symmetry down (used only if preset is set to 'none')");
 		
     // HPLC specific Parameters
     defaults_.setValue("HPLC:model_file","examples/simulation/RTPredict.model","SVM model for retention time prediction");
-    defaults_.setValue("max_number_of_peptides",100000,"Maximal number of peptides considered at once");
+    defaults_.setValue("HPLC:max_number_of_peptides",100000,"Maximal number of peptides considered at once");
+    defaults_.setMinInt("HPLC:max_number_of_peptides",1);
 
     // CE specific Parameters
     defaults_.setValue("CE:pH",3.0,"pH of buffer");
@@ -508,11 +518,11 @@ namespace OpenMS {
     defaults_.setMinFloat("CE:mu_eo", 0);
     defaults_.setMaxFloat("CE:mu_eo", 5);
         
-    defaults_.setValue("CE:lenght_d", 70.0 ,"Lenght of capillary [cm] from injection site to MS");
+    defaults_.setValue("CE:lenght_d", 70.0 ,"Length of capillary [cm] from injection site to MS");
     defaults_.setMinFloat("CE:lenght_d", 0);
     defaults_.setMaxFloat("CE:lenght_d", 1000);
 
-    defaults_.setValue("CE:length_total", 75.0 ,"Total lenght of capillary [cm]");
+    defaults_.setValue("CE:length_total", 75.0 ,"Total length of capillary [cm]");
     defaults_.setMinFloat("CE:length_total", 0);
     defaults_.setMaxFloat("CE:length_total", 1000);
     
@@ -532,8 +542,11 @@ namespace OpenMS {
     return total_gradient_time_;
   }
   
-  void RTSimulation::createExperiment_(MSSimExperiment & experiment, Size number_of_scans, DoubleReal rt_start)
+  void RTSimulation::createExperiment(MSSimExperiment & experiment)
   {
+    // this is a closed intervall (it includes gradient_min_ and gradient_max_)
+    Size number_of_scans = Size( (gradient_max_ - gradient_min_) / rt_sampling_rate_) + 1;
+
     experiment = MSSimExperiment();
 
     if (isRTColumnOn())
@@ -542,7 +555,7 @@ namespace OpenMS {
 
       experiment.resize(number_of_scans);
 
-      DoubleReal current_scan_rt = rt_start;
+      DoubleReal current_scan_rt = gradient_min_;
       Size id = 1;
       for(MSSimExperiment::iterator exp_it = experiment.begin();
           exp_it != experiment.end();
@@ -555,7 +568,7 @@ namespace OpenMS {
         (*exp_it).setNativeID(spec_id);
 
         // dice & store distortion
-        DoubleReal distortion = exp(gsl_ran_flat (rnd_gen_, -distortion_, +distortion_));
+        DoubleReal distortion = exp(gsl_ran_flat (rnd_gen_->technical_rng, -distortion_, +distortion_));
         (*exp_it).setMetaValue("distortion", distortion);
 
         // TODO (for CE) store peak broadening parameter

@@ -39,6 +39,8 @@ namespace OpenMS
 	/**
 	@brief FeatureFinderAlgorithm implementation using the Simple* modules.
 
+	@deprecated Deprecated in OpenMS 1.7.
+
 	SimpleSeeder, SimpleExtender, ModelFitter (using EmgModel (exponentially
 	modified gaussian with parameter optimization [Levenberg-Marquardt
 	algorithm]) in RT dimension and IsotopeModel (charge does not equal zero)
@@ -159,7 +161,7 @@ namespace OpenMS
 					}
 					catch(Exception::UnableToFit ex)
 					{
-						std::cout << "UnableToFit: " << ex.what() << std::endl;
+						//std::cout << "UnableToFit: " << ex.what() << std::endl;
 
 						// set unused flag for all data points
 						for (IndexSet::const_iterator it=region.begin(); it!=region.end(); ++it)

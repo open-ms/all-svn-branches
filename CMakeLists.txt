@@ -46,6 +46,11 @@ cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
 SET(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 set(CF_OPENMS_PACKAGE_VERSION "${OPENMS_PACKAGE_VERSION_MAJOR}.${OPENMS_PACKAGE_VERSION_MINOR}.${OPENMS_PACKAGE_VERSION_PATCH}" CACHE INTERNAL "OpenMS VERSION" FORCE)
 
+## sanity check: sometimes CMAKE_SIZEOF_VOID_P just vanishes (when updating CMake).
+if (NOT CMAKE_SIZEOF_VOID_P)
+	message(FATAL_ERROR "'CMAKE_SIZEOF_VOID_P' is undefined. Thus you should delete CMakeFiles (the directory) and the CMakeCache.txt and rerun CMake again! This is some weird CMake bug that seems to appear when updating the CMake version.")
+endif()
+
 if (CMAKE_SIZEOF_VOID_P MATCHES "8")
 	set(OPENMS_64BIT_ARCHITECTURE 1 CACHE INTERNAL "Architecture-bits")
 else()
@@ -59,8 +64,9 @@ include (cmake/macros.cmake)
 ###    compiler flags																 ###
 ########################################################
 
-## fill this with compile flags that external projects should use as well
-set(CF_OPENMS_ADDCXX_FLAGS)
+## Fill this with compile flags that external projects should use as well
+## for OpenMS internal flags (not promoted to external compiler flags) append to CMAKE_CXX_FLAGS 
+set(CF_OPENMS_ADDCXX_FLAGS) ## see OpenMS/cmake/OpenMSConfig.cmake.in to see how its configured and used (i.e. as OPENMS_ADDCXX_FLAGS)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
 	if (MT_ENABLE_CUDA)
@@ -92,10 +98,6 @@ elseif (MSVC)
 	## don't warn about unchecked std::copy()
 	add_definitions(/D_SCL_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_WARNINGS /D_CRT_SECURE_NO_DEPRECATE)
 
-	## disable min and max macros by default
-	## see BOOST configs for more elaborate explanations
-	#add_definitions(/DNOMINMAX)
-
 	## xerces bug workaround
 	add_definitions(/DOPENMS_XERCESDLL)
 
@@ -105,9 +107,14 @@ elseif (MSVC)
 	## FeatureFinder.obj is huge and won't compile in VS2008 debug otherwise:
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 
-	## minimal code rebuild
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Gm /Zi")
+	## use multiple Cores (if available)
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 
+  if (NOT OPENMS_64BIT_ARCHITECTURE)
+    ## enable SSE1 on 32bit, on 64bit the compiler flag does not exist
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE")
+  endif()
+    
 else()
 	set(CMAKE_COMPILER_IS_INTELCXX true CACHE INTERNAL "Is Intel C++ compiler (icpc)")
 endif()
@@ -122,6 +129,15 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CF_OPENMS_ADDCXX_FLAGS}")
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 	message(STATUS "Setting CMAKE_OSX_DEPLOYMENT_TARGET to 10.5")
 	set(CMAKE_OSX_DEPLOYMENT_TARGET 10.5 CACHE INTERNAL "Set OS X Deployment Target to 10.5 to build packages compatible to leopard" FORCE )
+  # some additional cxx flags, necessary to build with cmake 2.8.1
+  set ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+  set ( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+  set ( CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -isysroot /Developer/SDKs/MacOSX10.5.sdk")
+
+  # due to some awkward updates of cmake in the 2.8.x series we need to add the following
+  find_library(CARBON NAMES Carbon)
+  find_package(OpenGL)
+  set(APPLE_EXTRA_LIBS ${CARBON} ${OPENGL_LIBRARY})
 endif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 
 ##### Parallelization things
@@ -173,7 +189,7 @@ endif()
 if (OPENMP_FOUND)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}") ## do NOT use add_definitions() here, because RC.exe on windows will fail
 	if (NOT MSVC)
-		set(CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_CXX_FLAGS})
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${OpenMP_CXX_FLAGS}")
 	endif()
 endif()
 
@@ -251,7 +267,7 @@ if ("${CONTRIB_CUSTOM_DIR}" STREQUAL "")
   message(STATUS "If you want to set your own path to contrib use:")
 	message(STATUS "   cmake <..more options..> -D CONTRIB_CUSTOM_DIR:PATH=\"/my/path/to/contrib\" \"${PROJECT_SOURCE_DIR}\"")
 else()
-	file(TO_CMAKE_PATH ${CONTRIB_CUSTOM_DIR} CONTRIB_CUSTOM_DIR_PATH)
+  get_filename_component(CONTRIB_CUSTOM_DIR_PATH ${CONTRIB_CUSTOM_DIR} ABSOLUTE)
 	set(CONTRIB_DIR ${CONTRIB_CUSTOM_DIR_PATH})
 	message(STATUS "Using user defined contrib directory: ${CONTRIB_CUSTOM_DIR_PATH}")
 endif()
@@ -260,7 +276,7 @@ endif()
 FIND_PATH(CONTRIB_CONFIRM_DIR README_contrib1.7.txt PATHS ${CONTRIB_DIR} NO_DEFAULT_PATH)
 
 if ("${CONTRIB_CONFIRM_DIR}" STREQUAL "CONTRIB_CONFIRM_DIR-NOTFOUND")
-	message(FATAL_ERROR "The path to the Contrib directory (${CONTRIB_DIR}) is not correct or you need to update your contrib!")
+	message(FATAL_ERROR "The path to the Contrib directory (${CONTRIB_DIR}) is not correct or you need to update your contrib!\nNote: If you are using a relative path to your Contrib binary directory, it must be relative to the OpenMS source directory!")
 endif()
 
 set(CONTRIB_INCLUDE_DIR ${CONTRIB_DIR}/include/ CACHE INTERNAL "contrib include dir")
@@ -582,6 +598,8 @@ if (OPENMS_HAS_SVNVERSION)
 	# build the updater executable
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/svn")
 	add_executable(SVNRevisionUpdater ${PROJECT_SOURCE_DIR}/tools/svn/SVNRevisionUpdater.C)
+	# need QtCore for RegEx
+	target_link_libraries(SVNRevisionUpdater ${QT_LIBRARIES})
 	get_target_property(SVNRevisionUpdater_LOCATION SVNRevisionUpdater LOCATION)
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin") ## reset output dir
 
@@ -607,7 +625,7 @@ if (MSVC)
 	list(APPEND OPENMS_DEP_LIBRARIES opengl32.lib)
 endif()
 
-target_link_libraries(OpenMS ${QT_LIBRARIES} ${OPENMS_DEP_LIBRARIES})
+target_link_libraries(OpenMS ${APPLE_EXTRA_LIBS} ${QT_LIBRARIES} ${OPENMS_DEP_LIBRARIES})
 
 ## OPENMS_LIBRARIES defines the libraries used by OpenMS; this should be used to link against executables
 set(OPENMS_LIBRARIES OpenMS)
@@ -956,8 +974,8 @@ else()
 	## Note: export_build_settings and
 	##       export_library_dependencies are deprecated and should not be used
 	if ("${INSTALL_PREFIX}" STREQUAL ".")
-		string(COMPARE LESS ${CMAKE_MINOR_VERSION} "8" CMAKE_DEPRECATED_VERSION)
-		if (${CMAKE_DEPRECATED_VERSION})
+		set(CVERSION "${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}.${CMAKE_PATCH_VERSION}")
+		if (CVERSION VERSION_LESS "2.8.0")
 			message(STATUS "Cannot register OpenMS with CMake! For external code, set the path to OpenMS during find_package() manually.")
 		else()
 			## register OpenMS with CMake so that it can be found easily
@@ -971,5 +989,4 @@ else()
 
 
 endif()
-
 

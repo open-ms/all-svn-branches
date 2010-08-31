@@ -39,7 +39,7 @@
 
 namespace OpenMS
 {
-CrossCorrelationCalculator::CrossCorrelationCalculator(DoubleReal stepwidth,DoubleReal gauss_mean, DoubleReal gauss_sigma) : stepwidth_(stepwidth), gauss_mean_(gauss_mean), gauss_sigma_(gauss_sigma) {
+CrossCorrelationCalculator::CrossCorrelationCalculator(DoubleReal stepwidth,DoubleReal gauss_mean, DoubleReal gauss_sigma, DoubleReal tolerance) : stepwidth_(stepwidth), gauss_mean_(gauss_mean), gauss_sigma_(gauss_sigma), tolerance_(tolerance) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -48,8 +48,9 @@ CrossCorrelationCalculator::~CrossCorrelationCalculator() {
 	// TODO Auto-generated destructor stub
 }
 
-std::vector<DoubleReal> CrossCorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output,Size spectrum_selection_id)
+std::vector<DoubleReal> CrossCorrelationCalculator::calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output,Size spectrum_selection_id,DoubleReal offset)
 {
+	offset_=offset;
 	mz_min=input.getMinMZ();
 	mz_max=input.getMaxMZ();
 	// make sure that output is clear
@@ -73,7 +74,7 @@ std::vector<DoubleReal> CrossCorrelationCalculator::calculate(const MSExperiment
 		}
 		else if (scan_idx==spectrum_selection_id)
 		{
-			std::vector<DoubleReal> act_data=analyzeSpectrum(input[scan_idx], output[scan_idx]);
+			std::vector<DoubleReal> act_data=analyzeSpectrum(input[scan_idx], output[scan_idx],true);
 			data.insert(data.end(),act_data.begin(),act_data.end());
 		}
 		else
@@ -109,33 +110,41 @@ std::vector<DoubleReal> CrossCorrelationCalculator::analyzeSpectrum(const MSSpec
 	}
 
 	//Interpolate
-	gsl_interp_accel* acc_spl = gsl_interp_accel_alloc();
-	gsl_spline* spline_spl = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
-	gsl_spline_init(spline_spl, &(*mz_vec.begin()), &(*intensity_vec.begin()), mz_vec.size());
+	gsl_interp_accel* acc_lin = gsl_interp_accel_alloc();
+	gsl_spline* spline_lin = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
+	gsl_spline_init(spline_lin, &(*mz_vec.begin()), &(*intensity_vec.begin()), mz_vec.size());
 
 	DoubleReal window_size=10;
 	DoubleReal stepwidth=stepwidth_;
 	DoubleReal act_mz=gauss_mean_;
+	DoubleReal tolerance=tolerance_;
+	DoubleReal offset=offset_;
 
 	//n must be a power of two for gsl Fourier transformation; take next higher size for n, which is a power of two
-	Size vector_size = pow(2,(ceil(log2(window_size/stepwidth))));
+	Size vector_size = pow(2,(ceil(log2((8*tolerance)/stepwidth))));
 
 	//Create a vector containing interpolated values with a spacing of "stepwidth"
 	std::vector<DoubleReal> data(vector_size,0);
 	Size i=0;
-	DoubleReal starting_offset=std::min(act_mz-mz_min,3*gauss_sigma_);
-	for (DoubleReal x=act_mz-starting_offset;x<=act_mz+window_size;x+=stepwidth)
+	DoubleReal starting_offset=std::min(act_mz-mz_min,tolerance);
+//	if (gauss_fitting)
+//	{
+//		std::cout << vector_size << std::endl;
+//		std::cout << act_mz << std::endl;
+//		std::cout << starting_offset << std::endl;
+//		std::cout << tolerance << std::endl;
+//		std::cout << offset << std::endl;
+//	}
+	std::vector<DoubleReal> gauss_fitted_data(vector_size,0);
+	for (DoubleReal x=act_mz-starting_offset;x<=act_mz+tolerance;x+=stepwidth)
 	{
-		data[i] = gsl_spline_eval (spline_spl, x, acc_spl);
+		data[i] = gsl_spline_eval (spline_lin, x, acc_lin);
 		++i;
 	}
-
-	std::vector<DoubleReal> gauss_fitted_data(vector_size,0);
-	DoubleReal gauss_normalization_factor=gauss_sigma_*sqrt(2*Constants::PI);
 	i=0;
-	for (DoubleReal x=-starting_offset;x<=window_size;x+=stepwidth)
+	for (DoubleReal x=act_mz-starting_offset-tolerance;x<=act_mz+tolerance;x+=stepwidth)
 	{
-		gauss_fitted_data[i] = data[i]*gsl_ran_gaussian_pdf (x, gauss_sigma_)*gauss_normalization_factor;
+		gauss_fitted_data[i] = gsl_spline_eval (spline_lin, x+offset, acc_lin)/**gsl_ran_gaussian_pdf (x-act_mz, (tolerance/3)*0.75)*gauss_normalization_factor*/;
 		++i;
 	}
 
@@ -156,25 +165,28 @@ std::vector<DoubleReal> CrossCorrelationCalculator::analyzeSpectrum(const MSSpec
 	//Compute inverse fourier transformation
 	gsl_fft_halfcomplex_radix2_inverse (&(*data.begin()), 1, vector_size);
 
-	DoubleReal intensity_normalization_factor=gsl_spline_eval_integ (spline_spl,act_mz-starting_offset,act_mz+window_size, acc_spl);
+	data.resize(vector_size/2);
 
 	//Create output
-	DoubleReal shift=0.0;
-	for (i = 0; i <= vector_size/2 ; ++i)
+	DoubleReal shift=offset-starting_offset;
+
+	for (i = 0; i <= data.size() ; ++i)
 	{
 		if (data[i] <= 0)
 		{
 			shift+=stepwidth;
 			continue;
 		}
+//		if (gauss_fitting)
+//			std::cout << shift << "\t" << data[i] << std::endl;
 		Peak1D peak;
 		peak.setMZ(shift);
-		peak.setIntensity(data[i]/intensity_normalization_factor);
+		peak.setIntensity(data[i]);
 		output.push_back(peak);
 		shift+=stepwidth;
 	}
-	gsl_spline_free(spline_spl);
-	gsl_interp_accel_free(acc_spl);
+	gsl_spline_free(spline_lin);
+	gsl_interp_accel_free(acc_lin);
 	return data;
 }
 

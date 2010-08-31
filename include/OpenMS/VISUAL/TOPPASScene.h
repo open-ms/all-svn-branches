@@ -183,6 +183,10 @@ namespace OpenMS
 			void loadResources(const TOPPASResources& resources);
 			///Create @p resources from the current workflow
 			void createResources(TOPPASResources& resources);
+			///Returns whether the workflow has been changed since the latest "save"
+			bool wasChanged();
+			/// Refreshes the parameters of the TOPP tools in this workflow
+			bool refreshParameters();
 			
 		public slots:
 		
@@ -237,6 +241,8 @@ namespace OpenMS
 			void selectionCopied(TOPPASScene* ts);
 			/// Requests the clipboard content from TOPPASBase, will be stored in clipboard_
 			void requestClipboardContent();
+			/// Emitted when the main window needs to be updated
+			void mainWindowNeedsUpdate();
 
 		protected:
 			

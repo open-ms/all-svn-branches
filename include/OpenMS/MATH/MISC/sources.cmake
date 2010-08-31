@@ -4,6 +4,7 @@ set(directory include/OpenMS/MATH/MISC)
 ### list all header files of the directory here
 set(sources_list_h
 CrossCorrelationCalculator.h
+CrossCorrelationCalculator1.h
 BilinearInterpolation.h
 LinearInterpolation.h
 MathFunctions.h

@@ -28,10 +28,6 @@
 #ifndef OPENMS_SIMULATION_RTSIMULATION_H
 #define OPENMS_SIMULATION_RTSIMULATION_H
 
-// GSL includes (random number generation)
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-
 #include <OpenMS/DATASTRUCTURES/Map.h>
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/SIMULATION/SimTypes.h>
@@ -59,7 +55,7 @@ namespace OpenMS
     //@{
 
     /// Constructor taking a random generator
-    RTSimulation(const gsl_rng * random_generator);
+    RTSimulation(const SimRandomNumberGenerator& random_generator);
     
     /// Copy constructor
     RTSimulation(const RTSimulation& source);
@@ -77,7 +73,7 @@ namespace OpenMS
      @param features Feature map for which the retention times will be predicted
      @param experiment Experiment map which will be build from scratch
      */
-    void predictRT(FeatureMapSim & features, MSSimExperiment & experiment);
+    void predictRT(FeatureMapSim & features);
  
     /**
      @brief Set retention times randomly for given contaminants
@@ -94,6 +90,9 @@ namespace OpenMS
 
     SimCoordinateType getGradientTime() const;
 
+    /// Size experiment and assign retention time grid
+    void createExperiment(MSSimExperiment & experiment);
+
   private:
     /// Default constructor
     RTSimulation();
@@ -107,9 +106,6 @@ namespace OpenMS
     /// Predict all retention times based on a svm model
     void predictFeatureRT_(FeatureMapSim &);
   
-		/// Size experiment and assign retention time grid
-		void createExperiment_(MSSimExperiment & experiment, Size number_of_scans, DoubleReal rt_start);
-
 		/// smoothes the simulated distortion for the elution profiles with a moving average filter of size 3
 		void smoothRTDistortion_(MSSimExperiment & experiment);
 
@@ -146,7 +142,7 @@ namespace OpenMS
     
   protected:  
 		/// Random number generator
-		const gsl_rng* rnd_gen_;    
+    SimRandomNumberGenerator const * rnd_gen_;
     
     /// Synchronize members with param class
 		void updateMembers_();

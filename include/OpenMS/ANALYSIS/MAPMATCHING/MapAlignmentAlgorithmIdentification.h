@@ -39,12 +39,10 @@ namespace OpenMS
 	/**
 		@brief A map alignment algorithm based on peptide identifications from MS2 spectra.
 
-		PeptideIdentifications are grouped by sequence of the respective best-scoring PeptideHit (provided the score is good enough) and retention time data is collected from the "RT" MetaInfo entries.	ID groups with the same sequence in different maps represent points of correspondence between the maps and form the basis of the alignment.
+		PeptideIdentification instances are grouped by sequence of the respective best-scoring PeptideHit (provided the score is good enough) and retention time data is collected from the "RT" MetaInfo entries.	ID groups with the same sequence in different maps represent points of correspondence between the maps and form the basis of the alignment.
 		
-		A "consensus retention time scale" is computed from the median retention times (over all maps) of the ID groups. Each map is aligned to this scale as follows:
-		The median retention time of each ID group in the map is mapped to the consensus retention time of this group. Cubic spline smoothing is used to convert this mapping to a smooth function. Retention times in the map are transformed to the consensus scale by applying this function.
-
-		@experimental This algorithm is work in progress and has not been thoroughly tested yet.
+		Each map is aligned to a reference retention time scale. This time scale can either come from a reference file (@p reference parameter) or be computed as a consensus of the input maps (median retention times over all maps of the ID groups). The maps are then aligned to this scale as follows:\n
+		The median retention time of each ID group in a map is mapped to the reference retention time of this group. Cubic spline smoothing is used to convert this mapping to a smooth function. Retention times in the map are transformed to the consensus scale by applying this function.
 
 	  @htmlinclude OpenMS_MapAlignmentAlgorithmIdentification.parameters
 
@@ -72,6 +70,10 @@ namespace OpenMS
 		virtual void alignPeptideIdentifications(
 			std::vector<std::vector<PeptideIdentification> >&,
 			std::vector<TransformationDescription>&);
+
+		// Docu in base class
+		virtual void setReference(Size reference_index=0, 
+															const String& reference_file="");
 		
 		/// Creates a new instance of this class (for Factory)
 		static MapAlignmentAlgorithm* create()
@@ -92,6 +94,12 @@ namespace OpenMS
 		
 		/// Type to store one representative retention time per peptide sequence
 		typedef std::map<String, DoubleReal> SeqToValue;
+
+		/// Index of input file to use as reference (1-based!)
+		Size reference_index_;
+
+		/// Reference retention times (per peptide sequence)
+		SeqToValue reference_;
 
 		/// Score threshold for peptide hits
 		DoubleReal score_threshold_;
@@ -158,7 +166,23 @@ namespace OpenMS
 		void computeTransformations_(std::vector<SeqToList>& rt_data,
 																 std::vector<TransformationDescription>&
 																 transforms, bool sorted = false);
+
+		/**
+			 @brief Check that parameter values are valid
+
+			 Currently only 'min_run_occur' is checked.
+
+			 @param runs Number of runs (input files) to be aligned
+		*/
+		void checkParameters_(const Size runs);
 			
+		/**
+			 @brief Get reference retention times
+
+			 If a reference file is supplied via the @p reference parameter, extract retention time information and store it in #reference_.
+		*/
+		void getReference_();
+
 	 private:
 
 		/// Copy constructor intentionally not implemented -> private

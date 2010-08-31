@@ -76,7 +76,7 @@ vec2.push_back(p4);
 vec2.push_back(p5);
 vec2.push_back(p6);
 
-START_SECTION(void setHullPoints(PointArrayType& points))
+START_SECTION(void setHullPoints(const PointArrayType& points))
 	ConvexHull2D tmp;
 	vector<DPosition<2> > vec3;
 	vec3.push_back(p1);
@@ -102,6 +102,16 @@ START_SECTION((ConvexHull2D& operator=(const ConvexHull2D& rhs)))
 	tmp2 = tmp;
 	TEST_EQUAL(tmp2.getHullPoints().size(),3)
 END_SECTION
+
+
+START_SECTION((void addPoints(const PointArrayType &points)))
+	ConvexHull2D tmp;
+	TEST_EQUAL(tmp.getHullPoints().size(),0)
+	tmp.addPoints(vec);
+	TEST_EQUAL(tmp.getHullPoints().size()!=0,true)
+END_SECTION
+
+
 
 START_SECTION((void clear()))
 	vector<DPosition<2> > vec3;

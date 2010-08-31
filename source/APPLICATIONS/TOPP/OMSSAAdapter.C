@@ -37,6 +37,7 @@
 #include <OpenMS/SYSTEM/File.h>
 
 #include <QtCore/QFile>
+#include <QtCore/QProcess>
 
 using namespace OpenMS;
 using namespace std;
@@ -51,17 +52,20 @@ using namespace std;
 	@brief Identifies peptides in MS/MS spectra via OMSSA (Open Mass Spectrometry Search Algorithm).
 
 	@em OMSSA must be installed on the system to be able to use the @em OMSSAAdapter. See pubchem.ncbi.nlm.nih.gov/omssa/
-	for further information on how to download and install @em OMSSA on your system. 
+	for further information on how to download and install @em OMSSA on your system. You might find that the latest OMSSA version
+  does not run on your system (to test this, run @em omssacl in your OMMSA/bin/ directory and see if it crashes). If you encounter
+  an error message, try another OMSSA version
 
-	Sequence databases in fasta format must be converted into the NCBI format before usable with omssa. Therefore, use the program formatdb
-	of the NCBI-tools suite, e.g. @em formatdb @em -i @em SwissProt.fasta. This will create additional files, which
-	will be used by @em OMSSA. The database option of the @em OMSSAAdapter should contain the basename without the different 
-	file endings created by formatdb (e.g. SwissProt.fasta).
+	Sequence databases in fasta format must be converted into the NCBI format before OMSSA can read them. Therefore, use the program formatdb
+	of the NCBI-tools suite (see ftp://ftp.ncbi.nlm.nih.gov/blast/executables/release/2.2.13/ for a working version).
+  The latest NCBI BLAST distribution does not contain the formatdb executable any longer!).
+  Use @em formatdb @em -i @em SwissProt_TargetAndDecoy.fasta @em -o to create
+  additional files, which	will be used by @em OMSSA. The database option of the @em OMSSAAdapter should contain the name of the psq file created by formatdb (e.g. SwissProt_TargetAndDecoy.fasta.psq).
 
 	The options that specify the protease specificity (@em e) are directly taken from OMSSA. A complete list of available
 	proteases can be found be executing @em omssacl @em -el.
 	
-	This wrapper has be tested successfully with OMSSA, version 2.x. 
+	This wrapper has been tested successfully with OMSSA, version 2.x. 
 
 	@improvement modes to read OMSSA output data and save in idXML format (Andreas)
 
@@ -95,16 +99,9 @@ class TOPPOMSSAAdapter
 			registerOutputFile_("out", "<file>", "", "output file ");
 	  	setValidFormats_("out",StringList::create("idXML"));
 		
-			registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "precursor mass tolerance", false);
-      registerDoubleOption_("fragment_mass_tolerance", "<tolerance>", 0.3, "fragment mass error", false);
-      registerStringOption_("precursor_error_units", "<unit>", "Da", "parent monoisotopic mass error units", false);
-      registerStringOption_("fragment_error_units", "<unit>", "Da", "fragment monoisotopic mass error units", false);
+			registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "precursor mass tolerance in Dalton", false);
+      registerDoubleOption_("fragment_mass_tolerance", "<tolerance>", 0.3, "fragment mass error in Dalton", false);
       registerInputFile_("database", "<psq-file>", "", "NCBI formated fasta files. Only the psq filename should be given, e.g. 'SwissProt.fasta.psq'");
-      vector<String> valid_strings;
-      //valid_strings.push_back("ppm"); // ppm disabled, as OMSSA does not support this feature
-      valid_strings.push_back("Da");
-      setValidStrings_("precursor_error_units", valid_strings);
-      setValidStrings_("fragment_error_units", valid_strings);
 			registerIntOption_("min_precursor_charge", "<charge>", 1, "minimum precursor ion charge", false);
       registerIntOption_("max_precursor_charge", "<charge>", 3, "maximum precursor ion charge", false);
 			vector<String> all_mods;
@@ -114,7 +111,6 @@ class TOPPOMSSAAdapter
       registerStringList_("variable_modifications", "<mods>", StringList::create(""), "variable modifications, specified using UniMod (www.unimod.org) terms, e.g. 'Carbamidomethyl (C)' or 'Oxidation (M)'", false);
 			setValidStrings_("variable_modifications", all_mods);
 				
-			
 			addEmptyLine_();
 			addText_("OMSSA specific input options");
 			
@@ -122,7 +118,7 @@ class TOPPOMSSAAdapter
 			//-d <String> Blast sequence library to search.  Do not include .p* filename suffixes.
 			//-pc <Integer> The number of pseudocounts to add to each precursor mass bin.
 			//registerStringOption_("d", "<file>", "", "Blast sequence library to search.  Do not include .p* filename suffixes", true);
-			registerInputFile_("omssa_executable", "", "", "The 'omssacl' executable of the OMSSA installation", false);
+      registerInputFile_("omssa_executable", "", "", "The 'omssacl' executable of the OMSSA installation", true, false, StringList::create("skipexists"));
 			registerIntOption_("pc", "<Integer>", 1, "The number of pseudocounts to add to each precursor mass bin", false, true);
 			
 			//registerFlag_("omssa_out", "If this flag is set, the parameter 'in' is considered as an output file of OMSSA and will be converted to IdXML");
@@ -307,43 +303,32 @@ class TOPPOMSSAAdapter
 			//-------------------------------------------------------------
 		
 			// get version of OMSSA
-			String version_call = "\"" + omssa_executable + "\"" + " -version > " + unique_version_name;
-			int status = system(version_call.c_str());
-			if (status != 0)
+      QProcess qp;
+      qp.start((omssa_executable + " -version").toQString(), QIODevice::ReadOnly); // does automatic escaping etc...
+      qp.waitForFinished();
+      String output (QString(qp.readAllStandardOutput ()));
+			String omssa_version;
+			if (qp.exitStatus() != 0)
 			{
 				writeLog_("Warning: unable to determine the version of OMSSA");
 			}
-			TextFile text_file;
-			text_file.load(unique_version_name);
-			vector<String> version_split;
-			text_file.concatenate().split(' ', version_split);
-
-			String omssa_version;
-			if (version_split.size() == 2)
-			{
-				omssa_version = version_split[1];
-			}
-
-			QFile(unique_version_name.toQString()).remove();
-
+      else
+      {
+ 			  vector<String> version_split;
+			  output.split(' ', version_split);
+			  if (version_split.size() == 2)
+        {
+          omssa_version = version_split[1];
+          writeDebug_("Setting OMSSA version to " + omssa_version, 1);
+        }
+        else
+        {
+          writeLog_("Warning: OMSSA version output (" + output + ") not formatted as expected!");
+        }
+      }
+      // parse arguments
 			inputfile_name = getStringOption_("in");			
-			writeDebug_(String("Input file: ") + inputfile_name, 1);
-			if (inputfile_name == "")
-			{
-				writeLog_("No input file specified. Aborting!");
-				printUsage_();
-				return ILLEGAL_PARAMETERS;
-			}
-	
 			outputfile_name = getStringOption_("out");
-			writeDebug_(String("Output file: ") + outputfile_name, 1);
-			if (outputfile_name == "")
-			{
-				writeLog_("No output file specified. Aborting!");
-				printUsage_();
-				return ILLEGAL_PARAMETERS;
-			}
-			
       String db_name = String(getStringOption_("database"));
       // @todo: find DB for OMSSA (if not given) in OpenMS_bin/share/OpenMS/DB/*.fasta|.pin|...
 
@@ -609,15 +594,12 @@ class TOPPOMSSAAdapter
 			MascotInfile omssa_infile;
 			omssa_infile.store(unique_input_name, map, "OMSSA search tmp file");
 
-			String call = "\"" + omssa_executable + "\"" + " " + parameters;
-
       // @todo find OMSSA if not given
       // executable is stored in OpenMS_bin/share/OpenMS/3rdParty/OMSSA/omssacl(.exe)
       // or PATH
 
-			writeDebug_(call, 5);
-			status = system(call.c_str());
-		
+			writeDebug_("omssa_executable " + parameters, 5);
+      Int status = QProcess::execute(omssa_executable.toQString(), QStringList(parameters.toQString().split(" ", QString::SkipEmptyParts))); // does automatic escaping etc...
 			if (status != 0)
 			{
 				writeLog_("Error: OMSSA problem! (Details can be seen in the logfile: \"" + logfile + "\")");

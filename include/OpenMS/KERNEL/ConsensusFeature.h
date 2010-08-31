@@ -235,7 +235,7 @@ namespace OpenMS
 		/**
 		       @brief Computes and updates the consensus position, intensity, and charge.
 
-		       The m/z psoition is the lowest m/z value of the feature handles. The RT position and intensity of the contained feature handles is averaged.
+		       The m/z position is the lowest m/z value of the feature handles. The RT position and intensity of the contained feature handles is averaged.
 		       The most frequent charge state wins, while the tie breaking prefers
 		       smaller (absolute) charges.
 

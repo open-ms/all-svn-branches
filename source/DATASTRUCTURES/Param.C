@@ -136,7 +136,7 @@ namespace OpenMS
 				DoubleReal tmp = value;
 				if ((min_float!=-std::numeric_limits<DoubleReal>::max() && tmp < min_float) || (max_float!=std::numeric_limits<DoubleReal>::max() && tmp > max_float))
 				{
-					message = String("Invalid double parameter value '")+tmp+"' for parameter '"+name+"' given! The valid range is: ["+min_int+":"+max_int+"].";
+					message = String("Invalid double parameter value '")+tmp+"' for parameter '"+name+"' given! The valid range is: ["+min_float+":"+max_float+"].";
 					return false;
 			}
 			}
@@ -149,7 +149,7 @@ namespace OpenMS
 					dou_value = ls_value[i];
 					if ((min_float!=-std::numeric_limits<DoubleReal>::max() && dou_value < min_float) || (max_float!=std::numeric_limits<DoubleReal>::max() && dou_value > max_float))
 					{
-						message = String("Invalid double parameter value '")+dou_value+"' for parameter '"+name+"' given! The valid range is: ["+min_int+":"+max_int+"].";
+						message = String("Invalid double parameter value '")+dou_value+"' for parameter '"+name+"' given! The valid range is: ["+min_float+":"+max_float+"].";
 						return false;
 					}	
 				}
@@ -931,13 +931,17 @@ namespace OpenMS
 			++it;
 		}
 		
-		//close remaining tags
-		const std::vector< ParamIterator::TraceInfo >& trace = it.getTrace();
-		for(std::vector< ParamIterator::TraceInfo >::const_iterator it2 = trace.begin(); it2!=trace.end(); ++it2)
-		{
-			indentation.resize(indentation.size()-2);
-			os << indentation << "</NODE>" << endl;	
-		}
+    // if we had tags ...
+    if (begin()!=end())
+    {
+		  //close remaining tags
+		  const std::vector< ParamIterator::TraceInfo >& trace = it.getTrace();
+		  for(std::vector< ParamIterator::TraceInfo >::const_iterator it2 = trace.begin(); it2!=trace.end(); ++it2)
+		  {
+			  indentation.resize(indentation.size()-2);
+			  os << indentation << "</NODE>" << endl;	
+		  }
+    }
 		
 		os << "</PARAMETERS>\n";
     os_.close();
@@ -1186,15 +1190,21 @@ namespace OpenMS
 			if (default_value->value.valueType()!=it->value.valueType())
 			{
 				String d_type;
-				if (default_value->value.valueType()==DataValue::STRING_VALUE || default_value->value.valueType()==DataValue::STRING_LIST) d_type = "string";
+				if (default_value->value.valueType()==DataValue::STRING_VALUE) d_type = "string";
+        if (default_value->value.valueType()==DataValue::STRING_LIST) d_type = "string list";
 				if (default_value->value.valueType()==DataValue::EMPTY_VALUE) d_type = "empty";
-				if (default_value->value.valueType()==DataValue::INT_VALUE || default_value->value.valueType()==DataValue::INT_LIST) d_type = "integer";
-				if (default_value->value.valueType()==DataValue::DOUBLE_VALUE || default_value->value.valueType()==DataValue::DOUBLE_LIST) d_type = "float";
+				if (default_value->value.valueType()==DataValue::INT_VALUE) d_type = "integer";
+        if (default_value->value.valueType()==DataValue::INT_LIST) d_type = "integer list";
+				if (default_value->value.valueType()==DataValue::DOUBLE_VALUE) d_type = "float";
+        if (default_value->value.valueType()==DataValue::DOUBLE_LIST) d_type = "float list";
 				String p_type;
-				if (it->value.valueType()==DataValue::STRING_VALUE || it->value.valueType()==DataValue::STRING_LIST) p_type = "string";
+				if (it->value.valueType()==DataValue::STRING_VALUE) p_type = "string";
+        if (it->value.valueType()==DataValue::STRING_LIST) p_type = "string list";
 				if (it->value.valueType()==DataValue::EMPTY_VALUE) p_type = "empty";
-				if (it->value.valueType()==DataValue::INT_VALUE || it->value.valueType()==DataValue::INT_LIST) p_type = "integer";
-				if (it->value.valueType()==DataValue::DOUBLE_VALUE || it->value.valueType()==DataValue::DOUBLE_LIST) p_type = "float";				
+				if (it->value.valueType()==DataValue::INT_VALUE) p_type = "integer";
+        if (it->value.valueType()==DataValue::INT_LIST) p_type = "integer list";
+				if (it->value.valueType()==DataValue::DOUBLE_VALUE) p_type = "float";
+        if (it->value.valueType()==DataValue::DOUBLE_LIST) p_type = "float list";
 
 				throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,name+": Wrong parameter type '"+p_type+"' for "+d_type+" parameter '"+it.getName()+"' given!");
 			}
@@ -1206,13 +1216,14 @@ namespace OpenMS
 		}
 	}
 
-  void Param::update(const Param& old_version)
+  void Param::update(const Param& old_version, const bool report_new_params)
   {
 		// augment
 		for(Param::ParamIterator it = old_version.begin(); it != old_version.end();++it)
 		{
 			if (this->exists(it.getName()))
 			{
+				// param 'version': do not override!
 				if (it.getName().hasSuffix(":version"))
 				{	
 					if (this->getValue(it.getName()) != it->value)
@@ -1243,12 +1254,12 @@ namespace OpenMS
 						if (entry.isValid(s))
 						{
 							// overwrite default value
-							LOG_WARN << "Overriding Default-Parameter " << it.getName() << " with new value " << it->value << "\n"; 
+							LOG_WARN << "Overriding Default-Parameter '" << it.getName() << "' with new value " << it->value << "\n"; 
 							this->setValue(it.getName(),it->value, entry.description, this->getTags(it.getName()));
 						}
 						else
 						{
-							LOG_WARN << "Parameter " << it.getName() << " does not fit into new restriction settings! Ignoring..."; 
+							LOG_WARN << "Parameter '" << it.getName() << "' does not fit into new restriction settings! Ignoring..."; 
 						}
 					}
 					else
@@ -1258,14 +1269,28 @@ namespace OpenMS
 				}
 				else
 				{
-					LOG_WARN << "Parameter " << it.getName() << " has changed value type! Ignoring...\n"; 
+					LOG_WARN << "Parameter '" << it.getName() << "' has changed value type! Ignoring...\n"; 
 				}
 			}
 			else
 			{
-				LOG_WARN << "Deprecated Parameter " << it.getName() << " given in old parameter file! Ignoring...\n"; 
+				LOG_WARN << "Deprecated Parameter '" << it.getName() << "' given in old parameter file! Ignoring...\n"; 
 			}
 		}
+
+    // print new parameters (unique to this Param, but not in old one)
+    if (report_new_params)
+    {
+      // list new parameters not known to old version (just nice to know)
+ 		  for(Param::ParamIterator it = this->begin(); it != this->end();++it)
+		  {
+			  if (!old_version.exists(it.getName()))
+        {
+          LOG_WARN << "Information: New Parameter '" << it.getName() << "' not contained in old parameter file.\n"; 
+        }
+      }
+    }
+
   }
 
 	void Param::setSectionDescription(const String& key, const String& description)

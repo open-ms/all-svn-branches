@@ -41,6 +41,7 @@
 #include <OpenMS/METADATA/DocumentIDTagger.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
+#include <OpenMS/CONCEPT/LogStream.h>
 
 #include <iostream>
 #include <fstream>
@@ -200,6 +201,9 @@ namespace OpenMS
         bool required;
         /// flag the indicates that the parameter is advanced (this is used for writing the INI file only)
         bool advanced;
+        /// StringList for special tags
+        StringList tags;
+
 				///@name Restrictions for different parameter types
 				//@{
 				std::vector<String> valid_strings;
@@ -210,7 +214,7 @@ namespace OpenMS
 				//@}
 				
         /// Constructor that takes all members in declaration order
-        ParameterInformation( const String& n, ParameterTypes t, const String& arg, const DataValue& def, const String& desc, bool req, bool adv )
+        ParameterInformation( const String& n, ParameterTypes t, const String& arg, const DataValue& def, const String& desc, bool req, bool adv, const StringList& tag_values = StringList() )
         	: name(n),
 	          type(t),
 	          default_value(def),
@@ -218,11 +222,12 @@ namespace OpenMS
 	          argument(arg),
 	          required(req),
 	          advanced(adv),
+            tags(tag_values),
 	          valid_strings(),
             min_int(-std::numeric_limits<Int>::max()),
         	  max_int(std::numeric_limits<Int>::max()),
         	  min_float(-std::numeric_limits<DoubleReal>::max()),
-        	  max_float(std::numeric_limits<DoubleReal>::max())        	
+        	  max_float(std::numeric_limits<DoubleReal>::max())
         {
         }
 
@@ -234,6 +239,7 @@ namespace OpenMS
             argument(),
             required(true),
         	  advanced(false),
+            tags(),
             valid_strings(),
             min_int(-std::numeric_limits<Int>::max()),
         	  max_int(std::numeric_limits<Int>::max()),
@@ -252,12 +258,13 @@ namespace OpenMS
           description = rhs.description;
           argument = rhs.argument;
           required = rhs.required;
+          advanced = rhs.advanced;
+          tags == rhs.tags;
           valid_strings = rhs.valid_strings;
           min_int = rhs.min_int;
           max_int = rhs.max_int;
           min_float = rhs.min_float;
           max_float = rhs.max_float;
-          advanced = rhs.advanced;
           
           return *this;
         }
@@ -339,6 +346,9 @@ namespace OpenMS
 
       /// Storage location and description for allowed subsections
       std::map<String, String> subsections_;
+
+      /// Storage location and description for allowed subsections from TOPP tool's command-line parameters
+      std::map<String, String> subsections_TOPP_;
 
       /**
       	@name Internal parameter handling
@@ -490,8 +500,10 @@ namespace OpenMS
       	@param description Description of the parameter. Indentation of newline is done automatically.
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
       	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
+      	@param advanced A list of tags, e.g. 'skipexists', specifying the handling of the input file (e.g. when its an executable)
+                        Valid tags: 'skipexists' - will prevent checking if the given file really exists (useful for an executable in global PATH)
       */
-      void registerInputFile_( const String& name, const String& argument, const String& default_value, const String& description, bool required = true, bool advanced = false );
+      void registerInputFile_( const String& name, const String& argument, const String& default_value, const String& description, bool required = true, bool advanced = false, const StringList& tags=StringList() );
 
       /**
       	@brief Registers an output file option.
@@ -640,13 +652,25 @@ namespace OpenMS
       void registerFlag_( const String& name, const String& description, bool advanced = false );
 
       /**
-      	@brief Registers an allowed subsection in the INI file.
+      	@brief Registers an allowed subsection in the INI file (usually from OpenMS algorithms).
 
-      	Use this method to register subsections that are passed to algorithms
+      	Use this method to register subsections that are passed to algorithms.
 
       	@see checkParam_
       */
       void registerSubsection_( const String& name, const String& description );
+      
+      /**
+      	@brief Registers an allowed subsection in the INI file originating from the TOPP tool itself.
+
+      	Use this method to register subsections which is created by a commandline param (registered by e.g. registerDoubleOption_() )
+        and contains a ':' in its name. This is done to distinguish these parameters from normal subsections,
+        which are filled by calling 'getSubsectionDefaults_()'. This is not necessary for here.
+
+      	@see checkParam_
+      */
+      void registerTOPPSubsection_( const String& name, const String& description );
+
 
       /// Adds an empty line between registered variables in the documentation.
       void addEmptyLine_();
@@ -667,8 +691,6 @@ namespace OpenMS
       /**
       	@brief Returns the value of a previously registered double option
 
-      	If you want to find out if a value was really set or is a default value, use the setByUser_(String) method.
-
 				@exception Exception::UnregisteredParameter is thrown if the parameter was not registered
 				@exception Exception::RequiredParameterNotGiven is if a required parameter is not present
 				@exception Exception::WrongParameterType is thrown if the parameter has the wrong type
@@ -678,8 +700,6 @@ namespace OpenMS
 
       /**
       	@brief Returns the value of a previously registered integer option
-
-      	If you want to find out if a value was really set or is a default value, use the setByUser_(String) method.
 
         @exception Exception::UnregisteredParameter is thrown if the parameter was not registered
         @exception Exception::RequiredParameterNotGiven is if a required parameter is not present
@@ -691,8 +711,6 @@ namespace OpenMS
       /**
       	@brief Returns the value of a previously registered StringList
 
-      	If you want to find out if a value was really set or is a default value, use the setByUser_(String) method.
-
         @exception Exception::UnregisteredParameter is thrown if the parameter was not registered
         @exception Exception::RequiredParameterNotGiven is if a required parameter is not present
         @exception Exception::WrongParameterType is thrown if the parameter has the wrong type
@@ -702,8 +720,6 @@ namespace OpenMS
 
       /**
       	@brief Returns the value of a previously registered IntList
-
-      	If you want to find out if a value was really set or is a default value, use the setByUser_(String) method.
 
         @exception Exception::UnregisteredParameter is thrown if the parameter was not registered
         @exception Exception::RequiredParameterNotGiven is if a required parameter is not present
@@ -715,8 +731,6 @@ namespace OpenMS
       /**
       	@brief Returns the value of a previously registered DoubleList
 
-      	If you want to find out if a value was really set or is a default value, use the setByUser_(String) method.
-
         @exception Exception::UnregisteredParameter is thrown if the parameter was not registered
         @exception Exception::RequiredParameterNotGiven is if a required parameter is not present
         @exception Exception::WrongParameterType is thrown if the parameter has the wrong type
@@ -726,13 +740,6 @@ namespace OpenMS
       
       ///Returns the value of a previously registered flag
       bool getFlag_( const String& name ) const;
-
-      /**
-        @brief Returns if an option was set by the user (needed to distinguish between user-set and default value)
-
-        @exception Exception::UnregisteredParameter is thrown if the parameter was not registered
-      */
-      bool setByUser_( const String& name ) const;
 
       /**
         @brief Finds the entry in the parameters_ array that has the name @p name
@@ -798,18 +805,28 @@ namespace OpenMS
       /**
         @brief Checks if an input file exists, is readable and is not empty
 
+        The @em filename is a URI to the file to be read and @em param_name gives the name of the parameter
+        , e.g. "in" which specified the filename (this is useful for error messages when the file cannot be read, so the
+        user can immediately see which parameter to change). If no parameter is responsible for the
+        name of the input file, then leave @em param_name empty.
+
         @exception Exception::FileNotFound is thrown if the file is not found
         @exception Exception::FileNotReadable is thrown if the file is not readable
         @exception Exception::FileEmpty is thrown if the file is empty
       */
-      void inputFileReadable_( const String& filename ) const;
+      void inputFileReadable_( const String& filename, const String& param_name) const;
 
       /**
-        @brief Checks if an output file is writable
+        @brief Checks if an output file is writeable
+
+        The @em filename is a URI to the file to be written and @em param_name gives the name of the parameter
+        , e.g. "out" which specified the filename (this is useful for error messages when the file cannot be written, so the
+        user can immediately see which parameter to change). If no parameter is responsible for the
+        name of the output file, then leave @em param_name empty.
 
         @exception Exception::UnableToCreateFile is thrown if the file cannot be created
       */
-      void outputFileWritable_( const String& filename ) const;
+      void outputFileWritable_( const String& filename, const String& param_name) const;
       //@}
 
       /// Helper function that parses a range string ([a]:[b]) into two variables

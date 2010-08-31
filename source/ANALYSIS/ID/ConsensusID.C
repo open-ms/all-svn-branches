@@ -33,6 +33,53 @@
 #include <map>
 #include <cmath>
 
+// Extend SeqAn by a user-define scoring matrix.
+namespace seqan {
+	
+// We have to create a new specialization of the _ScoringMatrix class
+// for amino acids.  For this, we first create a new tag.
+struct PAM30MS {};
+	
+// Then, we specialize the class _ScoringMatrix.
+template <>
+struct _ScoringMatrixData<int, AminoAcid, PAM30MS> {
+	enum{
+	    	VALUE_SIZE = ValueSize<AminoAcid>::VALUE,
+	      	TAB_SIZE = VALUE_SIZE * VALUE_SIZE
+	    };
+		static inline int const * getData() {
+	    // DEFINE the PAM30MS matrix from Habermann et al. MCP. 2004.
+	    static int const _data[TAB_SIZE] = {
+6,-7,-4,-3,-6,-4,-2,-2,-7,-5,-6,-7,-5,-8,-2,0,-1,-13,-8,-2,-7,-6,0,-17,
+-7,8,-6,-10,-8,-2,-9,-9,-2,-5,-7,0,-4,-9,-4,-3,-6,-2,-10,-8,5,-1,0,-17,
+-4,-6,8,2,-11,-3,-2,-3,0,-5,-6,-1,-9,-9,-6,0,-2,-8,-4,-8,-4,-2,0,-17,
+-3,-10,2,8,-14,-2,2,-3,-4,-7,-10,-4,-11,-15,-8,-4,-5,-15,-11,-8,-7,-3,0,-17,
+-6,-8,-11,-14,10,-14,-14,-9,-7,-6,-11,-14,-13,-13,-8,-3,-8,-15,-4,-6,-11,-14,0,-17,
+-4,-2,-3,-2,-14,8,1,-7,1,-8,-7,-3,-4,-13,-3,-5,-5,-13,-12,-7,-3,4,0,-17,
+-2,-9,-2,2,-14,1,8,-4,-5,-5,-7,-4,-7,-14,-5,-4,-6,-17,-8,-6,-7,-2,0,-17,
+-2,-9,-3,-3,-9,-7,-4,6,-9,-11,-11,-7,-8,-9,-6,-2,-6,-15,-14,-5,-8,-7,0,-17,
+-7,-2,0,-4,-7,1,-5,-9,9,-9,-8,-6,-10,-6,-4,-6,-7,-7,-3,-6,-4,-3,0,-17,
+-5,-5,-5,-7,-6,-8,-5,-11,-9,8,5,-6,-1,-2,-8,-7,-2,-14,-6,2,-6,-7,0,-17,
+-6,-7,-6,-10,-11,-7,-7,-11,-8,5,5,-7,0,-3,-8,-8,-5,-10,-7,0,-7,-7,0,-17,
+-7,0,-1,-4,-14,-3,-4,-7,-6,-6,-7,7,-2,-14,-6,-4,-3,-12,-9,-9,5,4,0,-17,
+-5,-4,-9,-11,-13,-4,-7,-8,-10,-1,0,-2,11,-4,-8,-5,-4,-13,-11,-1,-3,-3,0,-17,
+-8,-9,-9,-15,-13,-13,-14,-9,-6,-2,-3,-14,-4,9,-10,-6,-9,-4,2,-8,-12,-14,0,-17,
+-2,-4,-6,-8,-8,-3,-5,-6,-4,-8,-8,-6,-8,-10,8,-2,-4,-14,-13,-6,-5,-5,0,-17,
+0,-3,0,-4,-3,-5,-4,-2,-6,-7,-8,-4,-5,-6,-2,6,0,-5,-7,-6,-4,-5,0,-17,
+-1,-6,-2,-5,-8,-5,-6,-6,-7,-2,-5,-3,-4,-9,-4,0,7,-13,-6,-3,-5,-4,0,-17,
+-13,-2,-8,-15,-15,-13,-17,-15,-7,-14,-10,-12,-13,-4,-14,-5,-13,13,-5,-15,-7,-13,0,-17,
+-8,-10,-4,-11,-4,-12,-8,-14,-3,-6,-7,-9,-11,2,-13,-7,-6,-5,10,-7,-10,-11,0,-17,
+-2,-8,-8,-8,-6,-7,-6,-5,-6,2,0,-9,-1,-8,-6,-6,-3,-15,-7,7,-9,-8,0,-17,
+-7,5,-4,-7,-11,-3,-7,-8,-4,-6,-7,5,-3,-12,-5,-4,-5,-7,-10,-9,5,1,0,-17,
+-6,-1,-2,-3,-14,4,-2,-7,-3,-7,-7,4,-3,-14,-5,-5,-4,-13,-11,-8,1,4,0,-17,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-17,
+-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,1,
+	        };
+	        return _data;
+	    }
+	};
+	}  // namespace seqan
+
 using namespace std;
 
 #define DEBUG_ID_CONSENSUS
@@ -43,21 +90,28 @@ namespace OpenMS
 	ConsensusID::ConsensusID()
 		: DefaultParamHandler("ConsensusID")
 	{
-		defaults_.setValue("algorithm","ranked","Algorithm used for the consensus scoring.\n"
-											 "merge -- merges the runs with respect to their score. The score is not modified. Make sure to use PeptideIdentifications with the same score type only!\n"
+		defaults_.setValue("algorithm","PEPMatrix","Algorithm used for the consensus scoring.\n"
 										   "ranked -- reorders the hits according to a consensus score computed from the ranks in the input runs. The score is normalized to the interval (0,100). The PeptideIdentifications do not need to have the same score type.\n"
 										   "average -- reorders the hits according to the average score of the input runs. Make sure to use PeptideIdentifications with the same score type only!\n"
-										   "PEP -- calculates a consensus score based on posterior error probabilities. Make sure to use PeptideIdentifications with score types converted to PEPs only!\n");
-  	defaults_.setValidStrings("algorithm",StringList::create("ranked,merge,average,PEP"));
+										   "PEPMatrix -- calculates a consensus score based on posterior error probabilities and scoring matrices for siimilarity. Make sure to use PeptideIdentifications with score types converted to PEPs only!\n"
+											"PEPIons -- calculates a consensus score based on posterior error probabilities and fragment ion siimilarity. Make sure to use PeptideIdentifications with score types converted to PEPs only!\n"
+												"Minimum -- calculates a consensus score based on the minimal score. Make sure to use PeptideIdentifications with score types converted to PEPs only!\n");  	
+defaults_.setValidStrings("algorithm",StringList::create("ranked,average,PEPMatrix,PEPIons,Minimum"));
 		defaults_.setValue("considered_hits",10,"The number of top hits that are used for the consensus scoring.");
 		defaults_.setMinInt("considered_hits",1);
+		defaults_.setValue("PEPIons:MinNumberOfFragments",2,"The minimal number of similar fragment ion masses that is necessary to evaluate the SPC.");
+		defaults_.setMinInt("PEPIons:MinNumberOfFragments",0);
 		defaults_.setValue("number_of_runs",0,"The number of runs used as input. This information is used in 'Ranked' and 'Average' to compute the new scores. If not given, the number of input identifications is taken.");
 		defaults_.setMinInt("number_of_runs",0);
-		defaults_.setValue("mz_tolerance", 0.01, "give a a mz tolerance");
-		defaults_.setValue("rt_tolerance", 0.01, "give an rt tolerance");
 		defaults_.setValue("min_number_of_engines", 2, "The minimum number of search engines used to generate peptide lists");
 		defaults_.setMinInt("min_number_of_engines",2);
-//nice value for mz and RT tolerances 0.01
+		defaults_.setValue("PEPMatrix:common", 1.1, "Similarity threshold to accepted best score, if spectrum was given the same sequence by all engines. Every value greater than 1 will disable this option. Set to 0 to assign the best score from any search engine as the consensus score");	
+		defaults_.setMinFloat("PEPMatrix:common",0);
+		defaults_.setMaxFloat("PEPMatrix:common",2);
+		defaults_.setValue("PEPIons:common", 1.1, "Similarity threshold to accepted best score, if spectrum was given the same sequence by all engines. Every value greater than 1 will disable this option. Set to 0 to assign the best score from any search engine as the consensus score");	
+		defaults_.setMinFloat("PEPIons:common",0);
+		defaults_.setMaxFloat("PEPIons:common",2);
+		defaults_.setValue("PEPMatrix:penalty", 5, "Give the gap penalty (the same penalty will be used for opening and extension) as a positive integer");
 		
 		defaultsToParam_();
 	}
@@ -77,24 +131,24 @@ namespace OpenMS
 			ranked_(ids);
 			ids[0].assignRanks();
 		}
-		else if (algorithm == "merge")
-		{	
-			merge_(ids);
-			ids[0].assignRanks();
-		}
 		else if (algorithm == "average")
 		{	
 			average_(ids);
 			ids[0].assignRanks();
 		}
-		else if (algorithm == "PEP")
+		else if (algorithm == "PEPMatrix")
 		{	
-			PEP_(ids);
+			PEPMatrix_(ids);
 			ids[0].assignRanks();
 		}
-		else if (algorithm == "majority")
+		else if (algorithm == "PEPIons")
+		{	
+			PEPIons_(ids);
+			ids[0].assignRanks();
+		}
+		else if (algorithm == "Minimum")
 		{
-			majority_(ids);
+			Minimum_(ids);
 			ids[0].assignRanks();
 		}
 		
@@ -173,7 +227,7 @@ namespace OpenMS
 
 	}
 
-	void ConsensusID::merge_(vector<PeptideIdentification>& ids)
+/*	void ConsensusID::merge_(vector<PeptideIdentification>& ids)
 	{
 		map<AASequence,DoubleReal> scores;		
 		UInt considered_hits = (UInt)(param_.getValue("considered_hits"));
@@ -231,7 +285,7 @@ namespace OpenMS
 			hit.setScore(it->second);
 			ids[0].insertHit(hit);
 		}
-	}
+	}*/
 
 	void ConsensusID::average_(vector<PeptideIdentification>& ids)
 	{
@@ -312,14 +366,15 @@ namespace OpenMS
 		}
 	}
 	
+//////////////////////////////////////////PEPMatrix	
 	
-	
-void ConsensusID::PEP_(vector<PeptideIdentification>& ids)
+void ConsensusID::PEPMatrix_(vector<PeptideIdentification>& ids)
 	{
 		Map<AASequence,vector<DoubleReal> > scores;	
 
 		UInt considered_hits = (UInt)(param_.getValue("considered_hits"));
-        //UInt number_of_runs = (UInt)(param_.getValue("numberOfRuns"));
+		int penalty = (UInt)param_.getValue("PEPMatrix:penalty");
+		DoubleReal common = (double)param_.getValue("PEPMatrix:common");
 			
 
 		String score_type = ids[0].getScoreType();
@@ -348,23 +403,30 @@ void ConsensusID::PEP_(vector<PeptideIdentification>& ids)
 				{
 					cerr << "Warning: The score of the identifications have disagreeing score orientation!" << endl;
 				}
-				DoubleReal a_score=(double)hit->getMetaValue("PEP");
+				if(!higher_better)
+				{
+					cerr << "You need to calculate posterior error probabilities as input scores!" <<endl;
+				}
+				DoubleReal a_score=(double)hit->getScore();
 				DoubleReal a_sim=1;
-					
+				DoubleReal NumberAnnots=1;
+
 					
 					set<String> myset;
 					for(vector<PeptideHit>::const_iterator t = id->getHits().begin(); t != id->getHits().end(); ++t)
 					{
-						if(myset.find(t->getMetaValue("scoring"))==myset.end() & hit->getMetaValue("scoring") != t->getMetaValue("scoring"))
+						if(myset.find(t->getMetaValue("scoring"))==myset.end() && hit->getMetaValue("scoring") != t->getMetaValue("scoring"))
 						{
-							DoubleReal z=0;
+							//DoubleReal z=0;
 							DoubleReal a=0;
-							
+							DoubleReal zz=0;
+							vector<DoubleReal> z;
+							z.push_back((double)hit->getScore());
 							//find the same or most similar peptide sequence in lists from other search engines
 							for(vector<PeptideHit>::const_iterator tt = id->getHits().begin(); tt != id->getHits().end(); ++tt)
 							{
 								PeptideHit k = *tt;
-								if (hit->getMetaValue("scoring") != t->getMetaValue("scoring") & tt->getMetaValue("scoring") == t->getMetaValue("scoring"))
+								if (hit->getMetaValue("scoring") != t->getMetaValue("scoring") && tt->getMetaValue("scoring") == t->getMetaValue("scoring"))
 								{
 									//use SEQAN similarity scoring
 									AASequence S1,S2;
@@ -380,7 +442,16 @@ void ConsensusID::PEP_(vector<PeptideIdentification>& ids)
 									typedef::seqan::String< ::seqan::AminoAcid > TSequence;
 									TSequence seq1=pc1;
 									TSequence seq2=pc2;
-									::seqan::Score<int, ::seqan::Pam<> > pam(110, -10, -10);
+/////////////////////////introduce scoring with PAM30MS
+									typedef int TValue;
+	    						typedef::seqan::Score<TValue, ::seqan::ScoreMatrix< ::seqan::AminoAcid, ::seqan::Default> > TScoringScheme;
+									TScoringScheme pam30msScoring(-penalty, -penalty);
+									::seqan::setDefaultScoreMatrix(pam30msScoring, ::seqan::PAM30MS());
+/////////////////////////introduce scoring with PAM30MS
+									
+//You can also use normal mutation based matrices, such as BLOSUM or the normal PAM matrix
+									//::seqan::Blosum62 pam(-1,-1);
+									//::seqan::Score<int, ::seqan::Pam<> > pam(30, -10000, -10000);
 									::seqan::Align<TSequence, ::seqan::ArrayGaps> align, self1, self2;
 									::seqan::resize(rows(align), 2);
 									::seqan::resize(rows(self1), 2);
@@ -393,31 +464,53 @@ void ConsensusID::PEP_(vector<PeptideIdentification>& ids)
 									::seqan::assignSource(row(self2, 1), seq2); 
 	
 									vector<DoubleReal> temp;
-									temp.push_back(globalAlignment(self1, pam, ::seqan::NeedlemanWunsch()));
-									temp.push_back(globalAlignment(self2, pam, ::seqan::NeedlemanWunsch()));
+									temp.push_back(globalAlignment(self1, pam30msScoring, ::seqan::NeedlemanWunsch()));
+									temp.push_back(globalAlignment(self2, pam30msScoring, ::seqan::NeedlemanWunsch()));
 									DoubleReal b;
-									c = (DoubleReal)globalAlignment(align, pam,::seqan::NeedlemanWunsch());
+									c = (DoubleReal)globalAlignment(align, pam30msScoring,::seqan::NeedlemanWunsch());
 									b = *( min_element( temp.begin(), temp.end() ) );
 									c=c/b;
-									if(c<0){c=0;}
-									if(c>a)									
+									if(c<0)
+									{
+										c=0;
+									}
+									if(c>a)
 									{										
 										a=c;
-										z=(double)tt->getMetaValue("PEP")*a;
+										if(a >=common)
+										{
+											z.push_back((double)tt->getScore());
+											zz = *( min_element( z.begin(), z.end() ) );
+										}
+										else
+										{
+											zz=(double)tt->getScore()*(a);
+										}
 									}	
 								}	
 							}
-							a_score+=z;
-							a_sim+=a;
+							if(a >=common)
+							{
+								a_sim+=1;
+							}
+							else
+							{
+								a_sim+=a;
+							}
+							NumberAnnots+=1;
+							a_score+=zz;
 							myset.insert(t->getMetaValue("scoring"));
 						}
 					}
 					//the meta value similarity corresponds to the sum of the similarities. Note that if similarity equals the number of search engines, the 
 					//same peptide has been assigned by all engines
-					::std::cout <<hit->getSequence()<<" a_score="<<a_score<<" a_sim="<< a_sim <<::std::endl;
+					//::std::cout <<hit->getSequence()<<" a_score="<<a_score<<" a_sim="<< a_sim <<::std::endl;
 					vector<DoubleReal> ScoreSim;
-					ScoreSim.push_back(a_score/a_sim);
-					ScoreSim.push_back(a_sim);				
+					//test
+					ScoreSim.push_back(a_score/(a_sim*a_sim));
+					ScoreSim.push_back(a_sim);
+					ScoreSim.push_back(NumberAnnots);
+					ScoreSim.push_back(hit->getCharge());
 					scores.insert(make_pair(hit->getSequence(),ScoreSim));
 					++hit_count;
 			}
@@ -426,7 +519,7 @@ void ConsensusID::PEP_(vector<PeptideIdentification>& ids)
 		//Replace IDs by consensus
 		ids.clear();
 		ids.resize(1);
-		ids[0].setScoreType(String("Consensus_PEP (") + score_type +")");
+		ids[0].setScoreType(String("Consensus_PEPMatrix (") + score_type +")");
 		ids[0].setHigherScoreBetter(FALSE);
 		for (Map<AASequence,vector<DoubleReal> >::const_iterator it = scores.begin(); it != scores.end(); ++it)
 		{
@@ -434,6 +527,8 @@ void ConsensusID::PEP_(vector<PeptideIdentification>& ids)
 			hit.setSequence(it->first);
 			hit.setScore(it->second[0]);
 			hit.setMetaValue("similarity", it->second[1]);
+			hit.setMetaValue("Number of annotations", it->second[2]);
+			hit.setCharge(it->second[3]);
 			ids[0].insertHit(hit);
 #ifdef DEBUG_ID_CONSENSUS
 			cout << " - Output hit: " << hit.getSequence() << " " << hit.getScore() << endl;
@@ -442,11 +537,240 @@ void ConsensusID::PEP_(vector<PeptideIdentification>& ids)
 		}
 	}
 
+
+///////////////////////////////////////////////PEPIons
 	
-	
-	
-	
-	
+void ConsensusID::PEPIons_(vector<PeptideIdentification>& ids)
+	{
+		Map<AASequence,vector<DoubleReal> > scores;	
+
+		UInt considered_hits = (UInt)(param_.getValue("considered_hits"));
+		UInt MinNumberOfFragments = (UInt)(param_.getValue("PEPIons:MinNumberOfFragments"));
+			
+		String score_type = ids[0].getScoreType();
+		bool higher_better = ids[0].isHigherScoreBetter();
+		DoubleReal common = (double)param_.getValue("PEPIons:common");
+
+		for (vector<PeptideIdentification>::iterator id = ids.begin(); id != ids.end(); ++id)
+		{
+#ifdef DEBUG_ID_CONSENSUS
+			cout << " - ID run" << endl;
+#endif
+	        //make sure that the ranks are present
+			id->assignRanks();
+
+			//iterate over the hits 
+			UInt hit_count = 1;
+		
+			for (vector<PeptideHit>::const_iterator hit = id->getHits().begin(); hit != id->getHits().end() && hit_count <= considered_hits; ++hit)
+			{
+		
+				//check the score type
+				if (id->getScoreType()!=score_type)
+				{
+					cerr << "Warning: You are working with different types of scores: '" << score_type << "' and '" << id->getScoreType() << "'" << endl;
+				}
+				if (id->isHigherScoreBetter()!=higher_better)
+				{
+					cerr << "Warning: The score of the identifications have disagreeing score orientation!" << endl;
+				}
+				if(!higher_better)
+				{
+					cerr << "You need to calculate posterior error probabilities as input scores!" <<endl;
+				}
+				//DoubleReal a_score=(double)hit->getMetaValue("PEP");
+				DoubleReal a_score=(double)hit->getScore();
+				DoubleReal a_sim=1;
+				DoubleReal NumberAnnots=1;
+				UInt IonSeries_out=0;
+					
+				set<String> myset;
+				for(vector<PeptideHit>::const_iterator t = id->getHits().begin(); t != id->getHits().end(); ++t)
+				{
+					if(myset.find(t->getMetaValue("scoring"))==myset.end() && hit->getMetaValue("scoring") != t->getMetaValue("scoring"))
+					{
+						DoubleReal a=0;
+						UInt SumIonSeries=2;
+						UInt IonSeries=0;
+						DoubleReal zz=0;
+						vector<DoubleReal> z;
+						z.push_back((double)hit->getScore());			
+						//find the same or most similar peptide sequence in lists from other search engines
+						for(vector<PeptideHit>::const_iterator tt = id->getHits().begin(); tt != id->getHits().end(); ++tt)
+						{
+							PeptideHit k = *tt;
+							if (hit->getMetaValue("scoring") != t->getMetaValue("scoring") && tt->getMetaValue("scoring") == t->getMetaValue("scoring"))
+							{
+								//use similarity of b and y ion series for scoring
+								AASequence S1,S2;
+								S1 =tt->getSequence();
+								S2 =hit->getSequence();
+								//compare b and y ion series of S1 and S2
+								vector<DoubleReal> Yions_S1, Yions_S2, Bions_S1, Bions_S2;
+								for(UInt r=1;r<=S1.size();++r)
+								{
+									Yions_S1.push_back(S1.getPrefix(r).getMonoWeight());
+									Bions_S1.push_back(S1.getSuffix(r).getMonoWeight());
+								}
+								for(UInt r=1;r<=S2.size();++r)
+								{
+									Yions_S2.push_back(S2.getPrefix(r).getMonoWeight());
+									Bions_S2.push_back(S2.getSuffix(r).getMonoWeight());
+								}
+									UInt Bs=0;
+									UInt Ys=0;		
+									for(UInt xx=0; xx<Yions_S1.size();++xx)
+									{
+										for(UInt yy=0; yy<Yions_S2.size();++yy)
+										{
+											if(fabs(Yions_S1[xx]-Yions_S2[yy])<=1)
+											{
+												Ys+=1;
+											}
+										}
+									}
+									for(UInt xx=0; xx<Bions_S1.size();++xx)
+									{
+										for(UInt yy=0; yy<Bions_S2.size();++yy)
+										{
+											if(fabs(Bions_S1[xx]-Bions_S2[yy])<=1)
+											{
+												Bs+=1;
+											}
+										}
+									}
+									vector<UInt> tmp;
+									tmp.push_back(Ys);
+									tmp.push_back(Bs);
+									UInt sum_tmp;
+									sum_tmp=Bs+Ys;
+									//# matching ions/number of AASeqences(S1) 
+									DoubleReal c, b;
+									b=*( min_element( tmp.begin(), tmp.end() ) );
+									c = b/S1.size();
+									if(sum_tmp > SumIonSeries && sum_tmp > MinNumberOfFragments)
+									{
+										SumIonSeries=sum_tmp;
+										a=c;
+										IonSeries=Bs;
+										if(a >=common)
+										{
+											z.push_back((double)tt->getScore());
+											zz = *( min_element( z.begin(), z.end() ) );
+											
+										}
+										else
+										{
+											zz=(double)tt->getScore()*a;
+										}
+									}	
+								}	
+							}
+							NumberAnnots+=1;
+							a_score+=zz;
+							a_sim+=a;
+							IonSeries_out=IonSeries;
+							myset.insert(t->getMetaValue("scoring"));
+						}
+					}
+					//the meta value similarity corresponds to the sum of the similarities. Note that if similarity equals the number of search engines, the 
+					//same peptide has been assigned by all engines
+					vector<DoubleReal> ScoreSim;
+					ScoreSim.push_back(a_score/(a_sim*a_sim));
+					ScoreSim.push_back(a_sim);
+					ScoreSim.push_back(NumberAnnots);
+					ScoreSim.push_back(hit->getCharge());
+					scores.insert(make_pair(hit->getSequence(),ScoreSim));
+					++hit_count;
+			}
+		}
+
+		//Replace IDs by consensus
+		ids.clear();
+		ids.resize(1);
+		ids[0].setScoreType(String("Consensus_PEPIons (") + score_type +")");
+		ids[0].setHigherScoreBetter(FALSE);
+		for (Map<AASequence,vector<DoubleReal> >::const_iterator it = scores.begin(); it != scores.end(); ++it)
+		{
+			PeptideHit hit;
+			hit.setSequence(it->first);
+			hit.setScore(it->second[0]);
+			hit.setMetaValue("similarity", it->second[1]);
+			hit.setMetaValue("Number of annotations", it->second[2]);
+			hit.setCharge(it->second[3]);
+			ids[0].insertHit(hit);
+#ifdef DEBUG_ID_CONSENSUS
+			cout << " - Output hit: " << hit.getSequence() << " " << hit.getScore() << endl;
+#endif
+
+		}
+	}
+
+
+//////////////////////////////////////////////////////////////////////////////////Minimum
+void ConsensusID::Minimum_(vector<PeptideIdentification>& ids)
+	{
+		Map<AASequence,DoubleReal> scores;	
+
+		UInt considered_hits = (UInt)(param_.getValue("considered_hits"));
+			
+
+		String score_type = ids[0].getScoreType();
+		bool higher_better = ids[0].isHigherScoreBetter();
+		if(higher_better==true)
+		{
+			cerr << "Warning: The score orientation is not suitable to take the minimum as the best hit!" << endl;
+		}
+
+		for (vector<PeptideIdentification>::iterator id = ids.begin(); id != ids.end(); ++id)
+		{
+#ifdef DEBUG_ID_CONSENSUS
+			cout << " - ID run" << endl;
+#endif
+	        //make sure that the ranks are present
+			id->assignRanks();
+
+			//iterate over the hits 
+			UInt hit_count = 1;
+		
+			DoubleReal a_score = 1;
+			AASequence a_pep;
+			for (vector<PeptideHit>::const_iterator hit = id->getHits().begin(); hit != id->getHits().end() && hit_count <= considered_hits; ++hit)
+			{
+				if(hit->getScore() < a_score)
+				{
+					a_score = hit->getScore();
+					a_pep = hit->getSequence();
+				}
+					
+			}
+			
+					scores.insert(make_pair(a_pep,a_score));
+					++hit_count;
+		}
+
+		//Replace IDs by consensus
+		ids.clear();
+		ids.resize(1);
+		ids[0].setScoreType(String("Consensus_Minimum(") + score_type +")");
+		ids[0].setHigherScoreBetter(FALSE);
+
+		for (Map<AASequence,DoubleReal>::const_iterator it = scores.begin(); it != scores.end(); ++it)
+		{
+			PeptideHit hit;
+			hit.setSequence(it->first);
+			hit.setScore(it->second);
+			ids[0].insertHit(hit);
+		}
+#ifdef DEBUG_ID_CONSENSUS
+			cout << " - Output hit: " << hit.getSequence() << " " << hit.getScore() << endl;
+#endif
+
+	}
+
+
+//////////////////////////////////////////majority	
+/*	
 	void ConsensusID::majority_(vector<PeptideIdentification>& ids)
 	{
 		UInt min_number_of_engines = (UInt)param_.getValue("min_number_of_engines");
@@ -528,11 +852,10 @@ void ConsensusID::PEP_(vector<PeptideIdentification>& ids)
 		ids.resize(1);
 		ids[0] = id;		
 		return;
-	}
+	}*/
 
 
 
-//THIS SHOULD ALREADY BE DONE IN /APPLICATION/TOPP/ConsensusID.C
 	void ConsensusID::mapIdentifications_(vector<PeptideIdentification >& sorted_ids  , const vector<PeptideIdentification>& ids)
 	{
 		DoubleReal mz_delta = 0.01;
@@ -552,7 +875,6 @@ void ConsensusID::PEP_(vector<PeptideIdentification>& ids)
 					{
 						new_ids=(*it1);
 					}
-					//inset all hits from *it2 into the existing Peptide Identification
 					else
 					{
 						vector<PeptideHit> hits;

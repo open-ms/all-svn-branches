@@ -40,11 +40,13 @@
 #include <OpenMS/CHEMISTRY/IsotopeDistribution.h>
 #include <OpenMS/MATH/STATISTICS/StatisticFunctions.h>
 #include <OpenMS/MATH/MISC/MathFunctions.h>
+#include <OpenMS/CONCEPT/Constants.h>
 
 #include <boost/math/special_functions/fpclassify.hpp>
 
 #include <numeric>
 #include <fstream>
+#include <algorithm>
 
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_vector.h>
@@ -80,7 +82,7 @@ namespace OpenMS
 			public FeatureFinderDefs
 	{
 		public:
-			///@name Type definitions
+      /// @name Type definitions
 			//@{
 			typedef typename FeatureFinderAlgorithm<PeakType, FeatureType>::MapType MapType;
 			typedef typename FeatureFinderAlgorithm<PeakType, FeatureType>::FeatureMapType FeatureMapType;
@@ -330,19 +332,15 @@ namespace OpenMS
 				//---------------------------------------------------------------------------
 				//new scope to make local variables disappear
 				{
-					ff_->startProgress(0, map_.size(), "Precalculating mass trace scores");
-					for (Size s=0; s<map_.size(); ++s)
+          Size end_iteration = map_.size() - std::min((Size) min_spectra_, map_.size());
+          ff_->startProgress(min_spectra_ , end_iteration, "Precalculating mass trace scores");
+          // skip first and last scans since we cannot extend the mass traces there
+          for (Size s=min_spectra_; s<end_iteration; ++s)
 					{
-						ff_->setProgress(s);
-						//do nothing for the first few and last few spectra as the scans required to search for traces are missing
-						if (s<min_spectra_ || s>=map_.size()-min_spectra_)
-						{
-							continue;
-						}
-						
+						ff_->setProgress(s);						
 						const SpectrumType& spectrum = map_[s];
 						//iterate over all peaks of the scan
-						for (Size p=0; p<spectrum.size(); ++p)
+            for (Size p=0; p<spectrum.size(); ++p)
 						{
 							std::vector<DoubleReal> scores;
 							scores.reserve(2*min_spectra_);
@@ -398,7 +396,7 @@ namespace OpenMS
 				//new scope to make local variables disappear
 				{
 					DoubleReal max_mass = map_.getMaxMZ()*charge_high;
-					Size num_isotopes = std::ceil(max_mass/mass_window_width_);
+					Size num_isotopes = std::ceil(max_mass/mass_window_width_) + 1;
 					ff_->startProgress(0, num_isotopes, "Precalculating isotope distributions");
 					
 					//reserve enough space
@@ -519,16 +517,14 @@ namespace OpenMS
 					//Step 3.2:
 					//Find seeds for this charge
 					//-----------------------------------------------------------		
-					ff_->startProgress(0, map_.size(), String("Finding seeds for charge ")+String(c));
+          Size end_of_iteration = map_.size() - std::min((Size) min_spectra_ , map_.size());
+          ff_->startProgress(min_spectra_, end_of_iteration, String("Finding seeds for charge ")+String(c));
 					DoubleReal min_seed_score = param_.getValue("seed:min_score");
-					for (Size s=0; s<map_.size(); ++s)
+          //do nothing for the first few and last few spectra as the scans required to search for traces are missing
+          for (Size s=min_spectra_; s<end_of_iteration; ++s)
 					{
 						ff_->setProgress(s);
-						//do nothing for the first few and last few spectra as the scans required to search for traces are missing
-						if (s<min_spectra_ || s>=map_.size()-min_spectra_)
-						{
-							continue;
-						}
+
 						//iterate over peaks
 						for (Size p=0; p<map_[s].size(); ++p)
 						{	
@@ -661,32 +657,21 @@ namespace OpenMS
 
             //------------------------------------------------------------------
 
-						TraceFitter<PeakType> * fitter;
+            //TODO try fit with baseline term once more
+            //baseline estimate
+            traces.updateBaseline();
+            traces.baseline = 0.75 * traces.baseline;
 
-						// choose fitter
-						if(param_.getValue("feature:rt_shape") == "asymmetric")
-						{
-						  LOG_DEBUG << "use asymmetric rt peak shape" << std::endl;
-						  fitter = new EGHTraceFitter<PeakType>();
-						}
-						else
-						{
-						  LOG_DEBUG << "use symmetric rt peak shape" << std::endl;
-						  fitter = new GaussTraceFitter<PeakType>();
-						}
+            traces[traces.max_trace].updateMaximum();
+
+            // choose fitter
+            double egh_tau = 0;
+            TraceFitter<PeakType> * fitter = chooseTraceFitter_(traces, egh_tau);
 
 						Param p;
 						p.setValue("max_iteration",max_iterations);
 						p.setValue("epsilon_abs",epsilon_abs);
 						p.setValue("epsilon_rel",epsilon_rel);
-
-
-			      //TODO try fit with baseline term once more
-			      //baseline estimate
-			      traces.updateBaseline();
-			      traces.baseline = 0.75 * traces.baseline;
-
-			      traces[traces.max_trace].updateMaximum();
 
 						fitter->setParameters(p);
 						fitter->fit(traces);
@@ -717,215 +702,24 @@ namespace OpenMS
 						//Crop feature according to RT fit (2.5*sigma) and remove badly fitting traces
 						//------------------------------------------------------------------
             FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> new_traces;
-
-						DoubleReal low_bound = fitter->getLowerRTBound();
-						DoubleReal high_bound = fitter->getUpperRTBound();
-
-						log_ << "    => RT bounds: " << low_bound << " - " << high_bound << std::endl;
-						for (Size t=0; t< traces.size(); ++t)
-						{
-						  FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType>& trace = traces[t];
-							log_ << "   - Trace " << t << ": (" << trace.theoretical_int << ")" << std::endl;
-
-							FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType> new_trace;
-							//compute average relative deviation and correlation
-							DoubleReal deviation = 0.0;
-							std::vector<DoubleReal> v_theo, v_real;
-							for (Size k=0; k<trace.peaks.size(); ++k)
-							{
-								//consider peaks when inside RT bounds only
-								if (trace.peaks[k].first>=low_bound && trace.peaks[k].first<= high_bound)
-								{
-									new_trace.peaks.push_back(trace.peaks[k]);
-
-									DoubleReal theo = traces.baseline + fitter->computeTheoretical(trace, k);
-
-									v_theo.push_back(theo);
-									DoubleReal real = trace.peaks[k].second->getIntensity();
-									v_real.push_back(real);
-									deviation += std::fabs(real-theo)/theo;
-								}
-							}
-							DoubleReal fit_score = 0.0;
-							DoubleReal correlation = 0.0;							
-							DoubleReal final_score = 0.0;
-							if (new_trace.peaks.size()!=0)
-							{
-								fit_score = deviation / new_trace.peaks.size();
-								correlation = std::max(0.0, Math::pearsonCorrelationCoefficient(v_theo.begin(),v_theo.end(),v_real.begin(), v_real.end()));
-								final_score = std::sqrt(correlation * std::max(0.0, 1.0-fit_score));
-							}
-							log_ << "     - peaks: " << new_trace.peaks.size() << " / " << trace.peaks.size() << " - relative deviation: " << fit_score << " - correlation: " << correlation << " - final score: " << correlation << std::endl;
-							//remove badly fitting traces
-							if ( !new_trace.isValid() || final_score < min_trace_score_)
-							{
-								if (t<traces.max_trace)
-								{
-									new_traces = FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType>();
-									log_ << "     - removed this and previous traces due to bad fit" << std::endl;
-									new_traces.clear(); //remove earlier traces
-									continue;
-								}
-								else if (t==traces.max_trace)
-								{
-									new_traces = FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType>();
-									log_ << "     - aborting (max trace was removed)" << std::endl;
-									break;
-								}
-								else if (t>traces.max_trace)
-								{
-									log_ << "     - removed due to bad fit => omitting the rest" << std::endl;
-		            	break; //no more traces are possible
-								}
-							}
-							//add new trace
-							else
-							{
-								new_trace.theoretical_int = trace.theoretical_int;
-								new_traces.push_back(new_trace);
-								if (t==traces.max_trace)
-								{
-									new_traces.max_trace = new_traces.size()-1;
-								}
-							}
-						}
-						new_traces.baseline = traces.baseline;			
+            cropFeature_(fitter,traces,new_traces);
 
 						//------------------------------------------------------------------
 						//Step 3.3.4:
 						//Check if feature is ok
 						//------------------------------------------------------------------
-					  bool feature_ok = true;
 					  String error_msg = "";
-						//check if the sigma fit was ok (if it is larger than 'max_rt_span')
-						if (feature_ok)
-						{
-						  // 5.0 * sigma > max_rt_span_ * region_rt_span
-							if ( fitter->checkMaximalRTSpan(max_rt_span_) )
-							{
-						  	feature_ok = false;
-						  	error_msg = "Invalid fit: Fitted model is bigger than 'max_rt_span'";
-							}
-						}
-					  //check if the feature is valid
-					  if (!new_traces.isValid(seed_mz, trace_tolerance_))
-					  {
-					  	feature_ok = false;
-					  	error_msg = "Invalid feature after fit - too few traces or peaks left";
-					  }
-						//check if x0 is inside feature bounds
-						if (feature_ok)
-						{
-							std::pair<DoubleReal,DoubleReal> rt_bounds = new_traces.getRTBounds();
-							if (fitter->getCenter() < rt_bounds.first || fitter->getCenter() > rt_bounds.second)
-							{
-						  	feature_ok = false;
-						  	error_msg = "Invalid fit: Center outside of feature bounds";
-							}
-						}
-						//check if the remaining traces fill out at least 'min_rt_span' of the RT span
-						if (feature_ok)
-						{
-							std::pair<DoubleReal,DoubleReal> rt_bounds = new_traces.getRTBounds();
-							if (fitter->checkMinimalRTSpan(rt_bounds, min_rt_span_))
-							{
-						  	feature_ok = false;
-						  	error_msg = "Invalid fit: Less than 'min_rt_span' left after fit";
-							}
-						}
-					  //check if feature quality is high enough (average relative deviation and correlation of the whole feature)
-						DoubleReal fit_score = 0.0;
-						DoubleReal correlation = 0.0;
-						DoubleReal final_score = 0.0;
 
-						if(feature_ok)
-						{
-							std::vector<DoubleReal> v_theo, v_real;
-							DoubleReal deviation = 0.0;
-							for (Size t=0; t< new_traces.size(); ++t)
-							{
-							  FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType>& trace = new_traces[t];
-								for (Size k=0; k<trace.peaks.size(); ++k)
-								{
-									// was DoubleReal theo = new_traces.baseline + trace.theoretical_int *  height * exp(-0.5 * pow(trace.peaks[k].first - x0, 2) / pow(sigma, 2) );
-								  DoubleReal theo = new_traces.baseline + fitter->computeTheoretical(trace, k);
-									v_theo.push_back(theo);
-									DoubleReal real = trace.peaks[k].second->getIntensity();
-									v_real.push_back(real);
-									deviation += std::fabs(real-theo)/theo;
-								}
-							}
-							fit_score = std::max(0.0, 1.0 - (deviation / new_traces.getPeakCount()));
-							correlation = std::max(0.0,Math::pearsonCorrelationCoefficient(v_theo.begin(),v_theo.end(),v_real.begin(), v_real.end()));
-							final_score = std::sqrt(correlation * fit_score);
-						  if (final_score<min_feature_score)
-						  {
-						  	feature_ok = false;
-						  	error_msg = "Feature quality too low after fit";
-						  }
-							//quality output
-							log_ << "Quality estimation:" << std::endl;
-							log_ << " - relative deviation: " << fit_score << std::endl;
-							log_ << " - correlation: " << correlation << std::endl;
-							log_ << " => final score: " << final_score << std::endl;
-						}
+            DoubleReal fit_score = 0.0;
+            DoubleReal correlation = 0.0;
+            DoubleReal final_score = 0.0;
+
+            bool feature_ok = checkFeatureQuality_(fitter, new_traces, seed_mz, min_feature_score, error_msg, fit_score, correlation, final_score);
 					  				  
 						//write debug output of feature
 						if (debug)
-						{
-							DoubleReal pseudo_rt_shift = param_.getValue("debug:pseudo_rt_shift");
-							TextFile tf;
-							//gnuplot script	
-							String script = String("plot \"debug/features/") + plot_nr + ".dta\" title 'before fit (RT: " +  String::number(fitter->getCenter(),2) + " m/z: " +  String::number(peak.getMZ(),4) + ")' with points 1";
-							//feature before fit
-							for (Size k=0; k<traces.size(); ++k)
-							{
-								for (Size j=0; j<traces[k].peaks.size(); ++j)
-								{
-									tf.push_back(String(pseudo_rt_shift*k+traces[k].peaks[j].first) + "	" + traces[k].peaks[j].second->getIntensity());
-								}
-							}
-							tf.store(String("debug/features/") + plot_nr + ".dta");
-							//fitted feature
-							if (new_traces.getPeakCount()!=0)
-							{
-								tf.clear();
-								for (Size k=0; k<new_traces.size(); ++k)
-								{
-									for (Size j=0; j<new_traces[k].peaks.size(); ++j)
-									{
-										tf.push_back(String(pseudo_rt_shift*k+new_traces[k].peaks[j].first) + "	" + new_traces[k].peaks[j].second->getIntensity());
-									}
-								}
-								tf.store(String("debug/features/") + plot_nr + "_cropped.dta");
-								script = script + ", \"debug/features/" + plot_nr + "_cropped.dta\" title 'feature ";
-								if (!feature_ok)
-								{
-									script = script + " - " + error_msg;
-								}
-								else
-								{
-									script = script + (features_->size()+1) + " (score: " +  String::number(final_score,3) + ")";
-								}
-								script = script + "' with points 3";
-							}
-							//fitted functions
-							tf.clear();
-							for (Size k=0; k<traces.size(); ++k)
-							{
-								char fun = 'f';
-								fun += (char)k;
-								tf.push_back(fitter->getGnuplotFormula(traces[k], fun, traces.baseline, pseudo_rt_shift * k));
-								//tf.push_back(String(fun)+"(x)= " + traces.baseline + " + " + fitter->getGnuplotFormula(traces[k], pseudo_rt_shift * k));
-								script =  script + ", " + fun + "(x) title 'Trace " + k + " (m/z: " + String::number(traces[k].getAvgMZ(),4) + ")'";
-							}
-							//output
-							tf.push_back("set xlabel \"pseudo RT (mass traces side-by-side)\"");
-							tf.push_back("set ylabel \"intensity\"");
-							tf.push_back("set samples 1000");
-							tf.push_back(script);
-							tf.push_back("pause -1");
-							tf.store(String("debug/features/") + plot_nr + ".plot");
+            {
+              writeFeatureDebugInfo_(fitter,traces, new_traces, feature_ok, error_msg, final_score ,plot_nr, peak);
 						}
 						traces = new_traces;
 						
@@ -951,6 +745,11 @@ namespace OpenMS
 						{
 							f.setMetaValue("score_fit",fit_score);
 							f.setMetaValue("score_correlation",correlation);
+              if (egh_tau!=0)
+              {
+                egh_tau = (static_cast<EGHTraceFitter<PeakType>*>(fitter))->getTau();
+                f.setMetaValue("EGH_tau",egh_tau);
+              }
 						}
 						f.setRT(fitter->getCenter());
 						
@@ -978,7 +777,7 @@ namespace OpenMS
 						else if(reported_mz=="monoisotopic")
 						{
 							DoubleReal mono_mz = traces[traces.getTheoreticalmaxPosition()].getAvgMZ();
-							mono_mz -= (1.005/c) * (traces.getTheoreticalmaxPosition() + best_pattern.theoretical_pattern.trimmed_left);
+              mono_mz -= (Constants::PROTON_MASS_U/c) * (traces.getTheoreticalmaxPosition() + best_pattern.theoretical_pattern.trimmed_left);
 							f.setMZ(mono_mz);
 						}
 						
@@ -1184,7 +983,7 @@ namespace OpenMS
 			/// User-specified seed list
 			FeatureMapType seeds_;
 		
-			///@name Members for parameters often needed in methods
+      /// @name Members for parameters often needed in methods
 			//@{
 			DoubleReal pattern_tolerance_; ///< Stores mass_trace:mz_tolerance
 			DoubleReal trace_tolerance_; ///< Stores isotopic_pattern:mz_tolerance
@@ -1203,8 +1002,8 @@ namespace OpenMS
 			DoubleReal max_feature_intersection_; ///< Maximum allowed feature intersection (if larger, that one of the feature is removed)
 			//@}
 
-			///@name Members for intensity significance estimation
-			//@{			
+      /// @name Members for intensity significance estimation
+      //@{
 			/// RT bin width
 			DoubleReal intensity_rt_step_;
 			/// m/z bin width
@@ -1216,7 +1015,7 @@ namespace OpenMS
 			///Vector of precalculated isotope distributions for several mass winows
 			std::vector< FeatureFinderAlgorithmPickedHelperStructs::TheoreticalIsotopePattern > isotope_distributions_;
 
-			//Docu in base class
+      // Docu in base class
 			virtual void updateMembers_()
 			{
 				pattern_tolerance_ = param_.getValue("mass_trace:mz_tolerance");
@@ -1236,7 +1035,7 @@ namespace OpenMS
 				max_feature_intersection_ = param_.getValue("feature:max_intersection");
 			}
 			
-			///Writes the abort reason to the log file and counts occurences for each reason
+      /// Writes the abort reason to the log file and counts occurences for each reason
 			void abort_(bool debug, const FeatureFinderAlgorithmPickedHelperStructs::Seed& seed, const String& reason)
 			{
 				log_ << "Abort: " << reason << std::endl;
@@ -1244,8 +1043,10 @@ namespace OpenMS
 				if (debug) abort_reasons_[seed] = reason;
 			}
 
-			///Calculates the intersection between features.
-			///The value is normalized by the size of the smaller feature, so it rages from 0 to 1.
+      /**
+       * Calculates the intersection between features.
+       * The value is normalized by the size of the smaller feature, so it rages from 0 to 1.
+       */
 			DoubleReal intersection_(const Feature& f1, const Feature& f2) const
 			{
 				//calculate the RT range sum of feature 1
@@ -1297,13 +1098,16 @@ namespace OpenMS
 				return overlap/std::min(s1,s2);
 			}
 			
-			///Returns the isotope distribution for a certain mass window
+      /// Returns the isotope distribution for a certain mass window
 			const FeatureFinderAlgorithmPickedHelperStructs::TheoreticalIsotopePattern& getIsotopeDistribution_(DoubleReal mass) const
 			{
 				//calculate index in the vector
 				Size index = (Size)std::floor(mass/mass_window_width_);
 				
-				if (index>=isotope_distributions_.size()) std::cout << "INDEX: " << index << " SIZE: " << isotope_distributions_.size() << std::endl;
+				if (index>=isotope_distributions_.size())
+        {
+          throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "IsotopeDistribution not precalculated. Maximum allowed index is " + String(isotope_distributions_.size()), String(index));
+        }
 				
 				//Return distribution
 				return isotope_distributions_[index];
@@ -1402,7 +1206,7 @@ namespace OpenMS
 				return max_score;
 			}
 			
-			///Extends all mass traces of a isotope pattern in one step
+      /// Extends all mass traces of a isotope pattern in one step
 			void extendMassTraces_(const FeatureFinderAlgorithmPickedHelperStructs::IsotopePattern& pattern, FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType>& traces, Size meta_index_overall) const
 			{
 				//find index of the trace with the maximum intensity
@@ -1829,9 +1633,19 @@ namespace OpenMS
 				return best_int_score;
 			}
 			
+      /**
+       * @brief Compute the intensity score for the peak @p peak in spectrum @p spectrum.
+       *
+       * The intensity score is computed by interpolating the score between the 4 nearest intensity
+       * bins. The scores from the different bins are weighted by the distance of the bin center to
+       * the peak.
+       *
+       * @param spectrum Index of the spectrum we are currently looking at
+       * @param peak Index of the peak that should be scored inside the spectrum @p spectrum
+       */
 			DoubleReal intensityScore_(Size spectrum, Size peak) const
 			{
-				//calculate (half) bin numbers
+        // calculate (half) bin numbers
 				DoubleReal intensity  = map_[spectrum][peak].getIntensity();
 				DoubleReal rt = map_[spectrum].getRT();
 				DoubleReal mz = map_[spectrum][peak].getMZ();
@@ -1839,7 +1653,7 @@ namespace OpenMS
 				DoubleReal mz_min = map_.getMinMZ();
 				UInt rt_bin = std::min(2*intensity_bins_-1,(UInt)std::floor((rt - rt_min) / intensity_rt_step_ * 2.0));
 				UInt mz_bin = std::min(2*intensity_bins_-1,(UInt)std::floor((mz - mz_min) / intensity_mz_step_ * 2.0));
-				//determine mz bins
+        // determine mz bins
 				UInt ml,mh;
 				if (mz_bin==0 || mz_bin==2*intensity_bins_-1)
 				{
@@ -1856,7 +1670,7 @@ namespace OpenMS
 					ml = mz_bin/2-1; 
 					mh = mz_bin/2;
 				}
-				//determine rt bins
+        // determine rt bins
 				UInt rl,rh;
 				if (rt_bin==0 || rt_bin==2*intensity_bins_-1)
 				{
@@ -1873,18 +1687,20 @@ namespace OpenMS
 					rl = rt_bin/2-1; 
 					rh = rt_bin/2;
 				}
-				//calculate distances to surrounding points (normalized to [0,1])
+        // calculate distances to surrounding bin centers (normalized to [0,1])
 				DoubleReal drl = std::fabs(rt_min+(0.5+rl)*intensity_rt_step_-rt)/intensity_rt_step_;
 				DoubleReal drh = std::fabs(rt_min+(0.5+rh)*intensity_rt_step_-rt)/intensity_rt_step_;
 				DoubleReal dml = std::fabs(mz_min+(0.5+ml)*intensity_mz_step_-mz)/intensity_mz_step_;
 				DoubleReal dmh = std::fabs(mz_min+(0.5+mh)*intensity_mz_step_-mz)/intensity_mz_step_;
-				//Calculate weights for the intensity scores (the nearer to better)
+        // Calculate weights for the intensity scores based on the distances to the
+        // bin center(the nearer to better)
 				DoubleReal d1 = std::sqrt(std::pow(1.0-drl,2.0)+std::pow(1.0-dml,2.0));
 				DoubleReal d2 = std::sqrt(std::pow(1.0-drh,2.0)+std::pow(1.0-dml,2.0));
 				DoubleReal d3 = std::sqrt(std::pow(1.0-drl,2.0)+std::pow(1.0-dmh,2.0));
 				DoubleReal d4 = std::sqrt(std::pow(1.0-drh,2.0)+std::pow(1.0-dmh,2.0));
 				DoubleReal d_sum = d1 + d2 + d3 + d4;				
-				//Final score
+        // Final score .. intensityScore in the surrounding bins, weighted by the distance of the
+        // bin center to the peak
 				DoubleReal final = intensityScore_(rl, ml, intensity)*(d1/d_sum)
 													+ intensityScore_(rh, ml, intensity)*(d2/d_sum)
 													+ intensityScore_(rl, mh, intensity)*(d3/d_sum)
@@ -1895,17 +1711,42 @@ namespace OpenMS
 				return final;
 			}
 
+      /**
+       * @brief Choose a the best trace fitter for the current mass traces based on the user parameter
+       *        (symmetric, asymmetric) or based on an inspection of the mass trace (auto)
+       *
+       * @param traces MassTraces that need to be fitted
+       *
+       * @return A pointer to the trace fitter that should be used.
+       */
+      TraceFitter<PeakType> * chooseTraceFitter_(FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> & /*traces*/, double & tau)
+      {
+        // choose fitter
+        if(param_.getValue("feature:rt_shape") == "asymmetric")
+        {
+          LOG_DEBUG << "use asymmetric rt peak shape" << std::endl;
+          tau = -1.0;
+          return new EGHTraceFitter<PeakType>();
+        }
+        else // if(param_.getValue("feature:rt_shape") == "symmetric")
+        {
+          LOG_DEBUG << "use symmetric rt peak shape" << std::endl;
+          return new GaussTraceFitter<PeakType>();
+        }
+      }
+
 			DoubleReal intensityScore_(Size rt_bin, Size mz_bin, DoubleReal intensity) const
 			{
-				//interpolate score value according to quantiles(20)
+        // interpolate score value according to quantiles(20)
 				const std::vector<DoubleReal>& quantiles20 = intensity_thresholds_[rt_bin][mz_bin];
+        // get iterator pointing to quantile that is >= intensity
 				std::vector<DoubleReal>::const_iterator it = std::lower_bound(quantiles20.begin(),quantiles20.end(),intensity);
-				//bigger than the biggest value => return 1.0
+        // bigger than the biggest value => return 1.0
 				if (it==quantiles20.end())
 				{
 					return 1.0;
 				}
-				//interpolate inside the bin
+        // interpolate inside the bin
 				DoubleReal bin_score = 0.0;
 				if (it==quantiles20.begin())
 				{
@@ -1913,18 +1754,289 @@ namespace OpenMS
 				}
 				else
 				{
+          // (intensity - vigintile_low) / (vigintile_high - vigintile_low)
 					bin_score = 0.05 * (intensity-*(it-1)) / (*it-*(it-1));
 				}
 				
-				DoubleReal final = bin_score + 0.05*((it - quantiles20.begin()) -1.0);
+        DoubleReal final = bin_score +
+                           0.05*((it - quantiles20.begin()) -1.0); // determine position of lower bound in the vector
 				
 				//fix numerical problems
 				if (final<0.0) final = 0.0;
 				if (final>1.0) final = 1.0;				
 				
+        // final = 1/20 * [ index(vigintile_low) + (intensity-vigintile_low) / (vigintile_high - vigintile_low) ]
 				return final;
 			}
 
+      /** @name Handling of fitted mass traces
+       *
+       * Methods to handle the results of the mass trace fitting process.
+       */
+      //@{
+      /**
+       * @brief Creates new mass traces @p new_traces based on the fitting result and the
+       *        orignal traces @p traces.
+       *
+       * @param fitter The TraceFitter containing the results from the rt profile fitting step.
+       * @param traces Original mass traces found in the experiment.
+       * @param new_traces Mass traces created by cropping the original mass traces.
+       */
+      void cropFeature_(TraceFitter<PeakType> * fitter,
+                        FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> & traces,
+                        FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> & new_traces)
+      {
+        DoubleReal low_bound = fitter->getLowerRTBound();
+        DoubleReal high_bound = fitter->getUpperRTBound();
+
+        log_ << "    => RT bounds: " << low_bound << " - " << high_bound << std::endl;
+        for (Size t=0; t< traces.size(); ++t)
+        {
+          FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType>& trace = traces[t];
+          log_ << "   - Trace " << t << ": (" << trace.theoretical_int << ")" << std::endl;
+
+          FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType> new_trace;
+          //compute average relative deviation and correlation
+          DoubleReal deviation = 0.0;
+          std::vector<DoubleReal> v_theo, v_real;
+          for (Size k=0; k<trace.peaks.size(); ++k)
+          {
+            //consider peaks when inside RT bounds only
+            if (trace.peaks[k].first>=low_bound && trace.peaks[k].first<= high_bound)
+            {
+              new_trace.peaks.push_back(trace.peaks[k]);
+
+              DoubleReal theo = traces.baseline + fitter->computeTheoretical(trace, k);
+
+              v_theo.push_back(theo);
+              DoubleReal real = trace.peaks[k].second->getIntensity();
+              v_real.push_back(real);
+              deviation += std::fabs(real-theo)/theo;
+            }
+          }
+          DoubleReal fit_score = 0.0;
+          DoubleReal correlation = 0.0;
+          DoubleReal final_score = 0.0;
+          if (new_trace.peaks.size()!=0)
+          {
+            fit_score = deviation / new_trace.peaks.size();
+            correlation = std::max(0.0, Math::pearsonCorrelationCoefficient(v_theo.begin(),v_theo.end(),v_real.begin(), v_real.end()));
+            final_score = std::sqrt(correlation * std::max(0.0, 1.0-fit_score));
+          }
+          log_ << "     - peaks: " << new_trace.peaks.size() << " / " << trace.peaks.size() << " - relative deviation: " << fit_score << " - correlation: " << correlation << " - final score: " << correlation << std::endl;
+          //remove badly fitting traces
+          if ( !new_trace.isValid() || final_score < min_trace_score_)
+          {
+            if (t<traces.max_trace)
+            {
+              new_traces = FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType>();
+              log_ << "     - removed this and previous traces due to bad fit" << std::endl;
+              new_traces.clear(); //remove earlier traces
+              continue;
+            }
+            else if (t==traces.max_trace)
+            {
+              new_traces = FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType>();
+              log_ << "     - aborting (max trace was removed)" << std::endl;
+              break;
+            }
+            else if (t>traces.max_trace)
+            {
+              log_ << "     - removed due to bad fit => omitting the rest" << std::endl;
+              break; //no more traces are possible
+            }
+          }
+          //add new trace
+          else
+          {
+            new_trace.theoretical_int = trace.theoretical_int;
+            new_traces.push_back(new_trace);
+            if (t==traces.max_trace)
+            {
+              new_traces.max_trace = new_traces.size()-1;
+            }
+          }
+        }
+        new_traces.baseline = traces.baseline;
+      }
+
+      /**
+       * @brief Checks the feature based on different score thresholds and model constraints
+       *
+       * Feature can get invalid for following reasons:
+       * <ul>
+       *  <li>Invalid fit: Fitted model is bigger than 'max_rt_span'</li>
+       *  <li>Invalid feature after fit - too few traces or peaks left</li>
+       *  <li>Invalid fit: Center outside of feature bounds</li>
+       *  <li>Invalid fit: Less than 'min_rt_span' left after fit</li>
+       *  <li>Feature quality too low after fit</li>
+       * </ul>
+       *
+       * @param fitter The TraceFitter containing the results from the rt profile fitting step.
+       * @param feature_traces Cropped feature mass traces.
+       * @param seed_mz Mz of the seed
+       * @param min_feature_score Minimal required feature score
+       * @param error_msg Will be filled with the error message, if the feature is invalid
+       * @param fit_score Will be filled with the fit score
+       * @param correlation Will be filled with correlation between feature and model
+       * @param final_score Will be filled with the final score
+       * @return true if the feature is valid
+       */
+      bool checkFeatureQuality_(TraceFitter<PeakType> * fitter,
+                                FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> & feature_traces,
+                                const DoubleReal & seed_mz, const DoubleReal & min_feature_score,
+                                String & error_msg, DoubleReal & fit_score, DoubleReal & correlation, DoubleReal & final_score)
+      {
+        bool feature_ok = true;
+
+        //check if the sigma fit was ok (if it is larger than 'max_rt_span')
+        if (feature_ok)
+        {
+          // 5.0 * sigma > max_rt_span_ * region_rt_span
+          if ( fitter->checkMaximalRTSpan(max_rt_span_) )
+          {
+            feature_ok = false;
+            error_msg = "Invalid fit: Fitted model is bigger than 'max_rt_span'";
+          }
+        }
+        //check if the feature is valid
+        if (!feature_traces.isValid(seed_mz, trace_tolerance_))
+        {
+          feature_ok = false;
+          error_msg = "Invalid feature after fit - too few traces or peaks left";
+        }
+        //check if x0 is inside feature bounds
+        if (feature_ok)
+        {
+          std::pair<DoubleReal,DoubleReal> rt_bounds = feature_traces.getRTBounds();
+          if (fitter->getCenter() < rt_bounds.first || fitter->getCenter() > rt_bounds.second)
+          {
+            feature_ok = false;
+            error_msg = "Invalid fit: Center outside of feature bounds";
+          }
+        }
+        //check if the remaining traces fill out at least 'min_rt_span' of the RT span
+        if (feature_ok)
+        {
+          std::pair<DoubleReal,DoubleReal> rt_bounds = feature_traces.getRTBounds();
+          if (fitter->checkMinimalRTSpan(rt_bounds, min_rt_span_))
+          {
+            feature_ok = false;
+            error_msg = "Invalid fit: Less than 'min_rt_span' left after fit";
+          }
+        }
+
+        //check if feature quality is high enough (average relative deviation and correlation of the whole feature)
+        if(feature_ok)
+        {
+          std::vector<DoubleReal> v_theo, v_real;
+          DoubleReal deviation = 0.0;
+          for (Size t=0; t< feature_traces.size(); ++t)
+          {
+            FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType>& trace = feature_traces[t];
+            for (Size k=0; k<trace.peaks.size(); ++k)
+            {
+              // was DoubleReal theo = new_traces.baseline + trace.theoretical_int *  height * exp(-0.5 * pow(trace.peaks[k].first - x0, 2) / pow(sigma, 2) );
+              DoubleReal theo = feature_traces.baseline + fitter->computeTheoretical(trace, k);
+              v_theo.push_back(theo);
+              DoubleReal real = trace.peaks[k].second->getIntensity();
+              v_real.push_back(real);
+              deviation += std::fabs(real-theo)/theo;
+            }
+          }
+          fit_score = std::max(0.0, 1.0 - (deviation / feature_traces.getPeakCount()));
+          correlation = std::max(0.0,Math::pearsonCorrelationCoefficient(v_theo.begin(),v_theo.end(),v_real.begin(), v_real.end()));
+          final_score = std::sqrt(correlation * fit_score);
+          if (final_score<min_feature_score)
+          {
+            feature_ok = false;
+            error_msg = "Feature quality too low after fit";
+          }
+          //quality output
+          log_ << "Quality estimation:" << std::endl;
+          log_ << " - relative deviation: " << fit_score << std::endl;
+          log_ << " - correlation: " << correlation << std::endl;
+          log_ << " => final score: " << final_score << std::endl;
+        }
+
+        return feature_ok;
+      }
+
+      /**
+       * @brief Creates several files containing plots and viewable data of the fitted mass trace
+       *
+       * @param fitter The TraceFitter containing the results from the rt profile fitting step.
+       * @param traces Original mass traces found in the spectra
+       * @param new_traces Cropped feature mass traces
+       * @param feature_ok Status of the feature
+       * @param error_msg If the feature is invalid, @p error_msg contains the reason
+       * @param final_score Final score of the feature
+       * @param plot_nr Index of the feature
+       * @param peak The Seed Peak
+       * @param path The path where to put the debug files (default is debug/features)
+       */
+      void writeFeatureDebugInfo_(TraceFitter<PeakType> * fitter,
+                                  const FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> & traces,
+                                  const FeatureFinderAlgorithmPickedHelperStructs::MassTraces<PeakType> & new_traces,
+                                  bool feature_ok, const String error_msg, const DoubleReal final_score, const Int plot_nr, const PeakType & peak,
+                                  const String path  = "debug/features/")
+      {
+
+        DoubleReal pseudo_rt_shift = param_.getValue("debug:pseudo_rt_shift");
+        TextFile tf;
+        //gnuplot script
+        String script = String("plot \"") + path + plot_nr + ".dta\" title 'before fit (RT: " +  String::number(fitter->getCenter(),2) + " m/z: " +  String::number(peak.getMZ(),4) + ")' with points 1";
+        //feature before fit
+        for (Size k=0; k<traces.size(); ++k)
+        {
+          for (Size j=0; j<traces[k].peaks.size(); ++j)
+          {
+            tf.push_back(String(pseudo_rt_shift*k+traces[k].peaks[j].first) + "	" + traces[k].peaks[j].second->getIntensity());
+          }
+        }
+        tf.store(path + plot_nr + ".dta");
+        //fitted feature
+        if (new_traces.getPeakCount()!=0)
+        {
+          tf.clear();
+          for (Size k=0; k<new_traces.size(); ++k)
+          {
+            for (Size j=0; j<new_traces[k].peaks.size(); ++j)
+            {
+              tf.push_back(String(pseudo_rt_shift*k+new_traces[k].peaks[j].first) + "	" + new_traces[k].peaks[j].second->getIntensity());
+            }
+          }
+          tf.store(path + plot_nr + "_cropped.dta");
+          script = script + ", \"" + path + plot_nr + "_cropped.dta\" title 'feature ";
+          if (!feature_ok)
+          {
+            script = script + " - " + error_msg;
+          }
+          else
+          {
+            script = script + (features_->size()+1) + " (score: " +  String::number(final_score,3) + ")";
+          }
+          script = script + "' with points 3";
+        }
+        //fitted functions
+        tf.clear();
+        for (Size k=0; k<traces.size(); ++k)
+        {
+          char fun = 'f';
+          fun += (char)k;
+          tf.push_back(fitter->getGnuplotFormula(traces[k], fun, traces.baseline, pseudo_rt_shift * k));
+          //tf.push_back(String(fun)+"(x)= " + traces.baseline + " + " + fitter->getGnuplotFormula(traces[k], pseudo_rt_shift * k));
+          script =  script + ", " + fun + "(x) title 'Trace " + k + " (m/z: " + String::number(traces[k].getAvgMZ(),4) + ")'";
+        }
+        //output
+        tf.push_back("set xlabel \"pseudo RT (mass traces side-by-side)\"");
+        tf.push_back("set ylabel \"intensity\"");
+        tf.push_back("set samples 1000");
+        tf.push_back(script);
+        tf.push_back("pause -1");
+        tf.store(path + plot_nr + ".plot");
+      }
+      //@}
 		private:
 			
 			/// Not implemented

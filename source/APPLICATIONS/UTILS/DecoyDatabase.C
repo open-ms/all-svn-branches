@@ -64,7 +64,7 @@ class TOPPDecoyDatabase
 		{
 			registerInputFile_("in","<file>","","Input fasta file containing the database.");
 			registerOutputFile_("out","<file>","","Output fasta file were the decoy database will be written to.");
-			registerStringOption_("decoy_string", "<string>", "_ref", "String that is appended to the accession of the protein database to indicate a decoy protein.", false);
+			registerStringOption_("decoy_string", "<string>", "_rev", "String that is appended to the accession of the protein database to indicate a decoy protein.", false);
 			registerFlag_("append", "If this flag is used, the decoy database is appended to the target database, allowing combined target decoy searches.");
 		}
 
@@ -100,18 +100,22 @@ class TOPPDecoyDatabase
 				}
 				identifiers.insert(proteins[i].identifier);
 
-				if (append)
+				//if (append)
 				{
 					FASTAFile::FASTAEntry entry = proteins[i];
-					entry.sequence.reverse();
-					entry.identifier += decoy_string;
-					proteins.push_back(entry);
+					String id = proteins[i].identifier;
+					if (id.size() > 35)
+					id = id.substr(0,35);
+					//entry.sequence.reverse();
+					//entry.identifier += decoy_string;
+FASTAFile::FASTAEntry new_entry(id,"",entry.sequence);
+proteins[i]=new_entry;
 				}
-				else
+			/*	else
 				{
 					proteins[i].sequence.reverse();
 					proteins[i].identifier += decoy_string;
-				}
+				}*/
 			}
 			
 			//-------------------------------------------------------------

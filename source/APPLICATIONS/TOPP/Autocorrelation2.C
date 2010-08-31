@@ -54,6 +54,7 @@ class TOPPAutocorrelation2
 		registerDoubleOption_("tolerance","<tolerance>",0.0,"Maximal possible deviation from estimated positions");
 		registerDoubleOption_("gauss_mean","<gauss_mean>",0.0,"Mean position of the gaussian curve");
 		registerDoubleOption_("gauss_width","<gauss_width>",1.0,"Width of the gaussian curve");
+		registerDoubleOption_("offset","<offset>",0.5,"Offset");
 	}
 
 	ExitCodes main_(int , const char**)
@@ -80,21 +81,22 @@ class TOPPAutocorrelation2
 			DoubleReal gauss_mean=getParam_().getValue("gauss_mean");
 			DoubleReal gauss_sigma=getParam_().getValue("gauss_width");
 			DoubleReal stepwidth=getParam_().getValue("stepwidth");
+			DoubleReal offset=getParam_().getValue("offset");
 			Size spectrum_selection=(Size) getParam_().getValue("spectrum_selection");
 			DoubleList positions=getParam_().getValue("estimated_positions");
-			CrossCorrelationCalculator ac(stepwidth,gauss_mean,gauss_sigma);
+			CrossCorrelationCalculator ac(stepwidth,gauss_mean,gauss_sigma,tolerance);
 			ac.setLogType(log_type_);
-			std::vector<DoubleReal> data=ac.calculate(exp_in,exp_out,spectrum_selection);
+			std::vector<DoubleReal> data=ac.calculate(exp_in,exp_out,spectrum_selection,offset);
 			std::vector<DoubleReal> position_vector(positions.begin(),positions.end());
-			std::vector<DoubleReal> exact_positions=ac.getExactPositions(data,position_vector,tolerance);
+//			std::vector<DoubleReal> exact_positions=ac.getExactPositions(data,position_vector,tolerance);
 			addDataProcessing_(exp_out, getProcessingInfo_(DataProcessing::PEAK_PICKING));
 			file.store(out,exp_out);
-			std::cout << "\nExact positions for spectrum " << spectrum_selection << ":\n\nExpected\tExact\n";
-			for (Size i=0;i<exact_positions.size();++i)
-			{
-				std::cout << position_vector[i] << "\t\t" << exact_positions[i] << "\n";
-			}
-			std::cout << std::endl;
+//			std::cout << "\nExact positions for spectrum " << spectrum_selection << ":\n\nExpected\tExact\n";
+//			for (Size i=0;i<exact_positions.size();++i)
+//			{
+//				std::cout << position_vector[i] << "\t\t" << exact_positions[i] << "\n";
+//			}
+//			std::cout << std::endl;
 			return EXECUTION_OK;
 		}
 };

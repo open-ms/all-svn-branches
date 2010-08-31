@@ -65,20 +65,21 @@ namespace OpenMS
 			///Not implemented
 			ConsensusID& operator = (const ConsensusID&);
 			
-			/// Merge algorithm
-			void merge_(std::vector<PeptideIdentification>& ids);
-			
 			/// Ranked algorithm
 			void ranked_(std::vector<PeptideIdentification>& ids);
 			
 			/// Average score algorithm
 			void average_(std::vector<PeptideIdentification>& ids);
       
-			/// PEP based algorithm
-			void PEP_(std::vector<PeptideIdentification>& ids);
+			/// PEP and scoring matrix based algorithm
+			void PEPMatrix_(std::vector<PeptideIdentification>& ids);
 
-			/// Majority vote
-			void majority_(std::vector<PeptideIdentification>& ids);
+			/// PEP and ion similarity based algorithm
+			void PEPIons_(std::vector<PeptideIdentification>& ids);
+
+			/// use minimal PEP score
+			void Minimum_(std::vector<PeptideIdentification>& ids);
+
 //already done in APPLICATIONS/TOPP/ConsensusID.C
 			/// Merge peptide hits from different engines
 			void mapIdentifications_(std::vector<PeptideIdentification> & sorted_ids, const std::vector<PeptideIdentification>& ids);

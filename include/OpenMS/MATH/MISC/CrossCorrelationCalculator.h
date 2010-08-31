@@ -40,10 +40,12 @@ private:
 	DoubleReal gauss_mean_;
 	DoubleReal gauss_sigma_;
 	DoubleReal mz_max,mz_min;
+	DoubleReal offset_;
+	DoubleReal tolerance_;
 	std::vector<DoubleReal> analyzeSpectrum(const MSSpectrum<Peak1D>& input, MSSpectrum<Peak1D>& output, bool gauss_fitting=false);
 public:
-	CrossCorrelationCalculator(DoubleReal stepwidth,DoubleReal gauss_mean, DoubleReal gauss_sigma);
-	std::vector<DoubleReal> calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output,Size spectrum_selection_id);
+	CrossCorrelationCalculator(DoubleReal stepwidth,DoubleReal gauss_mean, DoubleReal gauss_sigma, DoubleReal tolerance);
+	std::vector<DoubleReal> calculate(const MSExperiment<Peak1D>& input, MSExperiment<Peak1D>& output,Size spectrum_selection_id,DoubleReal offset);
 	std::vector<DoubleReal> getExactPositions(const std::vector<DoubleReal>& data,std::vector<DoubleReal> positions, DoubleReal tolerance);
 	virtual ~CrossCorrelationCalculator();
 };

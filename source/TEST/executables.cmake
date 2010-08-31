@@ -5,7 +5,9 @@ set(concept_executables_list
 	Factory_test
 	FuzzyStringComparator_test
 	SingletonRegistry_test
+  StreamHandler_test
 	VersionInfo_test
+	LogConfigHandler_test
 	LogStream_test
 	UniqueIdGenerator_test
 	UniqueIdIndexer_test
@@ -426,9 +428,10 @@ set(simulation_executables_list
   IonizationSimulation_test
   IsotopeModelGeneral_test
   MSSim_test
-  PTMSimulation_test
   RTSimulation_test
   RawMSSignalSimulation_test
+	LabelFreeLabeler_test
+	O18Labeler_test
 )
 
 ############### GUI executables (require MOC) ########

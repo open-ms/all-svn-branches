@@ -6,6 +6,7 @@ set(TOPP_executables
 AdditiveSeries
 Autocorrelation
 Autocorrelation2
+Autocorrelation3
 BaselineFilter
 CompNovo
 ConsensusID
@@ -39,6 +40,7 @@ MascotAdapter
 MascotAdapterOnline
 NoiseFilter
 OMSSAAdapter
+PeptideAnalyzer
 PILISIdentification
 PILISModel
 PTModel

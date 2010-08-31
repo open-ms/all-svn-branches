@@ -82,11 +82,11 @@ namespace OpenMS
       void savePreferences();
 			/// loads the files and updates the splashscreen
 			void loadFiles(const StringList& list, QSplashScreen* splash_screen);
-			/// opens the file in a new window
-			void openFile(const String& file_name, bool in_new_window = true);
 
     public slots:
     	
+			/// opens the file in a new window
+			void openFile(const String& file_name, bool in_new_window = true);
     	/// shows the dialog for opening files
       void openFileDialog();
 			/// shows the dialog for opening example files
@@ -150,6 +150,8 @@ namespace OpenMS
 			void saveToClipboard(TOPPASScene* scene);
 			/// Sends the clipboard content to the sender of the connected signal
 			void sendClipboardContent();
+			/// Refreshes the parameters of the TOPP tools of the current workflow and stores an updated workflow including the current parameters
+			void refreshParameters();
 			
     protected slots:
 		

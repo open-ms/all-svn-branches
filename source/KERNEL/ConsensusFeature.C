@@ -246,13 +246,13 @@ namespace OpenMS
 			}
 		}
 
-		// compute the average position and intensity
-		setRT(rt / size());
-		setMZ(mz / size());
-		setIntensity(intensity / size());
-		setCharge(charge_most_frequent);
-		return;
-	}
+    // compute the average position and intensity
+    setRT(rt / size());
+    setMZ(mz / size());
+    setIntensity(intensity / size());
+    setCharge(charge_most_frequent);
+    return;
+  }
 
 	void ConsensusFeature::computeMonoisotopicConsensus()
 	{
@@ -295,7 +295,7 @@ namespace OpenMS
 		setCharge(charge_most_frequent);
 		return;
 	}
-
+  
   void ConsensusFeature::computeDechargeConsensus(const FeatureMap<>& fm, bool intensity_weighted_averaging)
   {
   	// for computing average position and intensity

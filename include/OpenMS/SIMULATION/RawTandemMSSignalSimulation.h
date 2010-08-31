@@ -31,10 +31,6 @@
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/SIMULATION/SimTypes.h>
 
-// GSL includes (random number generation)
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
-
 namespace OpenMS {
 
   /**
@@ -50,17 +46,13 @@ namespace OpenMS {
   class OPENMS_DLLAPI RawTandemMSSignalSimulation
     : public DefaultParamHandler
   {
-
-		typedef ItraqConstants::ChannelInfo ChannelInfo;
-		typedef ItraqConstants::ChannelMapType ChannelMapType;
-		typedef ItraqConstants::IsotopeMatrices IsotopeMatrices;
-
   public:
+
     /** @name Constructors and Destructors
       */
     //@{
     /// Constructor taking a random generator
-    RawTandemMSSignalSimulation(const gsl_rng * random_generator);
+    RawTandemMSSignalSimulation(const SimRandomNumberGenerator& rng);
 
     /// Copy constructor
     RawTandemMSSignalSimulation(const RawTandemMSSignalSimulation& source);
@@ -80,33 +72,13 @@ namespace OpenMS {
 		/// Default constructor (hidden)
     RawTandemMSSignalSimulation();
 
-		/// init object (members, defaults etc)
-		void init_();
-
-    /// Synchronize members with param class
-		void updateMembers_();
-
-    /// Set default parameters
-    void setDefaultParams_();
-
-		/// convert meta information from feature into intensity values for iTRAQ
-		Matrix<SimIntensityType> getItraqIntensity_(const Feature & f) const;
-
-		// Members:
-
-		/// set to either ItraqConstants::FOURPLEX or ItraqConstants::EIGHTPLEX
-		Int itraq_type_;
-		
-		/// map the channel-name (eg 114) onto its description and the centroid mass
-		/// the channel-name is also the id-string in the mapList section of the ConsensusMap
-		ChannelMapType channel_map_;	
-
-		/// Matrixes with isotope correction values (one for each plex-type)
-		IsotopeMatrices isotope_corrections_;
-
   protected:
+    void generateMSESpectra_(const FeatureMapSim & features, const MSSimExperiment & experiment, MSSimExperiment & ms2);
+
+    void generatePrecursorSpectra_(const FeatureMapSim & features, const MSSimExperiment & experiment, MSSimExperiment & ms2);
+
 		/// Random number generator
-		const gsl_rng* rnd_gen_;
+    SimRandomNumberGenerator const * rnd_gen_;
   };
 
 }

@@ -363,11 +363,16 @@ namespace OpenMS
 				ZIonMinusOne, // C-alpha/carbonyl carbon bond
 				ZIon,  // C-alpha/carbonyl carbon bond
 				ZIonPlusOne,  // C-alpha/carbonyl carbon bond
-				ZIonPlusTwo  // C-alpha/carbonyl carbon bond
+				ZIonPlusTwo,  // C-alpha/carbonyl carbon bond
+				SizeOfResidueType
 
 				/// @todo add c+1, z+1, z+2 ion types (Andreas)
 			};
 			//@}
+
+	    /// returns the ion name given as a residue type
+	    static String getResidueTypeName(const ResidueType res_type);
+
 			
 			/** @name Constructors
 			*/
@@ -470,7 +475,7 @@ namespace OpenMS
 			/// set empirical formula of the residue (must be full, with N and C-terminus)
 			void setFormula(const EmpiricalFormula& formula);
 		
-			/// returns the empirical formula of thre residue
+			/// returns the empirical formula of the residue
 			EmpiricalFormula getFormula(ResidueType res_type = Full) const;
 	
 			/// sets average weight of the residue (must be full, with N and C-terminus)
@@ -643,8 +648,6 @@ namespace OpenMS
 	
 	OPENMS_DLLAPI std::ostream& operator << (std::ostream& os, const Residue& residue);
 
-	/// returns the ion name given as a residue type
-	String getResidueTypeName(Residue::ResidueType res_type);
 }
 
 #endif

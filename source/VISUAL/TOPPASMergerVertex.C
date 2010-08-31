@@ -38,7 +38,7 @@ namespace OpenMS
 			round_based_mode_(true),
 			merge_counter_(0),
 			currently_notifying_parents_(false),
-			min_input_list_length_(-1)
+			max_input_list_length_(-1)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = Qt::lightGray;
@@ -49,7 +49,7 @@ namespace OpenMS
 			round_based_mode_(rhs.round_based_mode_),
 			merge_counter_(rhs.merge_counter_),
 			currently_notifying_parents_(rhs.currently_notifying_parents_),
-			min_input_list_length_(rhs.min_input_list_length_)
+			max_input_list_length_(rhs.max_input_list_length_)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = Qt::lightGray;
@@ -66,7 +66,7 @@ namespace OpenMS
 		round_based_mode_ = rhs.round_based_mode_;
 		merge_counter_ = rhs.merge_counter_;
 		currently_notifying_parents_ = rhs.currently_notifying_parents_;
-		min_input_list_length_ = rhs.min_input_list_length_;
+		max_input_list_length_ = rhs.max_input_list_length_;
 		
 		return *this;
 	}
@@ -90,13 +90,18 @@ namespace OpenMS
 			--tmp_merge_counter;
 		}
 		
-		int new_min_input_list_length = std::numeric_limits<int>::max();
+		int new_max_input_list_length = std::numeric_limits<int>::min();
 		
 		QStringList out_files;
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 		{
 			TOPPASVertex* source = (*it)->getSourceVertex();
 			int param_index = (*it)->getSourceOutParam();
+			
+			if (!source->isReachable())
+			{
+				continue;
+			}
 			
 			TOPPASToolVertex* source_tool = qobject_cast<TOPPASToolVertex*>(source);
 			if (source_tool)
@@ -105,11 +110,13 @@ namespace OpenMS
 				{
 					const QVector<QStringList>& output_files = source_tool->getCurrentOutputFileNames();
 					const QStringList& file_names = output_files[param_index];
-					out_files << file_names[tmp_merge_counter];
-					
-					if (file_names.size() < new_min_input_list_length)
+					if (tmp_merge_counter < file_names.size())
 					{
-						new_min_input_list_length = file_names.size();
+						out_files << file_names[tmp_merge_counter];
+					}
+					if (file_names.size() > new_max_input_list_length)
+					{
+						new_max_input_list_length = file_names.size();
 					}
 				}
 				else
@@ -125,11 +132,13 @@ namespace OpenMS
 			{
 				if (round_based_mode_)
 				{
-					out_files << source_list->getFilenames()[tmp_merge_counter];
-					
-					if (source_list->getFilenames().size() < new_min_input_list_length)
+					if (tmp_merge_counter < source_list->getFilenames().size())
 					{
-						new_min_input_list_length = source_list->getFilenames().size();
+						out_files << source_list->getFilenames()[tmp_merge_counter];
+					}
+					if (source_list->getFilenames().size() > new_max_input_list_length)
+					{
+						new_max_input_list_length = source_list->getFilenames().size();
 					}
 				}
 				else
@@ -143,11 +152,13 @@ namespace OpenMS
 			{
 				if (round_based_mode_)
 				{
-					out_files << source_merger->getCurrentOutputList()[tmp_merge_counter];
-					
-					if (source_merger->getCurrentOutputList().size() < new_min_input_list_length)
+					if (tmp_merge_counter < source_merger->getCurrentOutputList().size())
 					{
-						new_min_input_list_length = source_merger->getCurrentOutputList().size();
+						out_files << source_merger->getCurrentOutputList()[tmp_merge_counter];
+					}
+					if (source_merger->getCurrentOutputList().size() > new_max_input_list_length)
+					{
+						new_max_input_list_length = source_merger->getCurrentOutputList().size();
 					}
 				}
 				else
@@ -159,7 +170,7 @@ namespace OpenMS
 		}
 		
 		last_output_files_ = out_files;
-		min_input_list_length_ = new_min_input_list_length;
+		max_input_list_length_ = new_max_input_list_length;
 		files_known_ = true;
 		
 		__DEBUG_END_METHOD__
@@ -209,9 +220,9 @@ namespace OpenMS
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 		{
 		  TOPPASToolVertex* tv = qobject_cast<TOPPASToolVertex*>((*it)->getSourceVertex());
-		  if (tv && !tv->isFinished())
+		  if (tv && !tv->isFinished() && tv->isReachable())
 		  {
-		    // some tool that we depend on has not finished execution yet --> do not start yet
+		    // some (reachable) tool that we depend on has not finished execution yet --> do not start yet
 				__DEBUG_END_METHOD__
 		    return false;
 		  }
@@ -315,7 +326,7 @@ namespace OpenMS
 		
 		update(boundingRect());
 		
-		debugOut_(String("All children nodes run! Incremented merge_counter_ to ")+merge_counter_+" / "+min_input_list_length_);
+		debugOut_(String("All children nodes run! Incremented merge_counter_ to ")+merge_counter_+" / "+max_input_list_length_);
 		
 		__DEBUG_END_METHOD__
 	}
@@ -352,7 +363,7 @@ namespace OpenMS
 		{
 			if (round_based_mode_)
 			{
-				text = QString::number(merge_counter_)+" / "+QString::number(min_input_list_length_);
+				text = QString::number(merge_counter_)+" / "+QString::number(max_input_list_length_);
 			}
 			else
 			{
@@ -410,7 +421,7 @@ namespace OpenMS
 	{
 		__DEBUG_BEGIN_METHOD__
 		
-		int iterations = round_based_mode_ ? min_input_list_length_ : 1;
+		int iterations = round_based_mode_ ? max_input_list_length_ : 1;
 		
 		debugOut_(String("Returning ")+iterations);
 		__DEBUG_END_METHOD__
@@ -490,7 +501,7 @@ namespace OpenMS
 		__DEBUG_BEGIN_METHOD__
 		
 		merge_counter_ = 0;
-		min_input_list_length_ = -1;
+		max_input_list_length_ = -1;
 		
 		bool tmp = subtree_finished_;
 		TOPPASVertex::reset(reset_all_files);
@@ -591,6 +602,25 @@ namespace OpenMS
 		
 		__DEBUG_END_METHOD__
 		return finished;
+	}
+	
+	void TOPPASMergerVertex::markUnreachable()
+	{
+		//only mark as unreachable if all inputs are unreachable. otherwise the dead inputs will just be ignored.
+		bool some_input_reachable_ = false;
+		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
+		{
+			TOPPASVertex* tv = (*it)->getSourceVertex();
+			if (tv->isReachable())
+			{
+				some_input_reachable_ = true;
+				break;
+			}
+		}
+		if (!some_input_reachable_)
+		{
+			TOPPASVertex::markUnreachable();
+		}
 	}
 
 }

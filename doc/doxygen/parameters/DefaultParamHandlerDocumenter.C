@@ -91,6 +91,7 @@
 #include <OpenMS/FILTERING/TRANSFORMERS/NeutralLossMarker.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/Normalizer.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/ParentPeakMower.h>
+#include <OpenMS/FILTERING/TRANSFORMERS/SpectraMerger.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/TICFilter.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/ThresholdMower.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/WindowMower.h>
@@ -140,7 +141,6 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ProductModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/Fitter1D.h>
 #include <OpenMS/SIMULATION/DigestSimulation.h>
-#include <OpenMS/SIMULATION/PTMSimulation.h>
 #include <OpenMS/SIMULATION/IonizationSimulation.h>
 #include <OpenMS/SIMULATION/DetectabilitySimulation.h>
 #include <OpenMS/SIMULATION/RawMSSignalSimulation.h>
@@ -149,6 +149,8 @@
 #include <OpenMS/SIMULATION/RTSimulation.h>
 #include <OpenMS/SIMULATION/EGHFitter1D.h>
 #include <OpenMS/SIMULATION/EGHModel.h>
+#include <OpenMS/SIMULATION/LABELING/O18Labeler.h>
+#include <OpenMS/SIMULATION/LABELING/ITRAQLabeler.h>
 #include <OpenMS/APPLICATIONS/TOPPASBase.h>
 #include <OpenMS/APPLICATIONS/TOPPViewBase.h>
 
@@ -268,14 +270,19 @@ void writeParameters(const String& class_name, const Param& param)
 		if (it->tags.count("advanced")==1) style = "i";
 
 		//final output
-		f <<"<tr><td style=\"vertical-align:top\"><" << style << ">"<< name << "</" << style << "></td><td style=\"vertical-align:top\">" << type << "</td><td style=\"vertical-align:top\">" << value <<  "</td><td style=\"vertical-align:top\">" << restrictions << "</td><td style=\"vertical-align:top\">" << description <<  "</td></tr>" << endl;
+		f << "<tr>\n"
+      << "  <td style=\"vertical-align:top\"><" << style << ">"<< name << "</" << style << "></td>\n"
+      << "  <td style=\"vertical-align:top\">" << type << "</td><td style=\"vertical-align:top\">" << value <<  "</td>\n"
+      << "  <td style=\"vertical-align:top\">" << restrictions << "</td><td style=\"vertical-align:top\">" << description <<  "</td>\n"
+      << "</tr>\n";
 	}
-	f << "</table>" << endl;
-	f << endl << "<b>Note:</b>" << endl;
-	f << "<UL>" << endl;
-	f << "  <LI> If a section name is documented, the documentation is displayed as tooltip." << endl;
-	f << "  <LI> Advanced parameter names are italic." << endl;
-	f << "</UL>" << endl;
+	f << "</table>" << "\n";
+	f << "\n" << "<b>Note:</b>" << "\n";
+	f << "<UL>" << "\n";
+	f << "  <LI> If a section name is documented, the documentation is displayed as tooltip." << "\n";
+	f << "  <LI> Advanced parameter names are italic." << "\n";
+	f << "</UL>" << "\n";
+  f.close();
 }
 
 //**********************************************************************************
@@ -369,6 +376,7 @@ int main (int argc , char** argv)
 	DOCME(SpectrumCheapDPCorr);
 	DOCME(SpectrumPrecursorComparator);
 	DOCME(SteinScottImproveScore);
+	DOCME(SpectraMerger);
 	DOCME(TICFilter);
 	DOCME(TheoreticalSpectrumGenerator);
 	DOCME(ThresholdMower);
@@ -400,6 +408,8 @@ int main (int argc , char** argv)
 	DOCME(Fitter1D)
 	DOCME(EGHModel)
 	DOCME(EGHFitter1D)
+  DOCME(O18Labeler)
+  DOCME(ITRAQLabeler)
 	
 	//////////////////////////////////
 	// More complicated cases
@@ -419,7 +429,6 @@ int main (int argc , char** argv)
 	DOCME2(Spectrum1DCanvas,Spectrum1DCanvas(Param(),0));
 	DOCME2(Spectrum2DCanvas,Spectrum2DCanvas(Param(),0));
 	DOCME2(Spectrum3DCanvas,Spectrum3DCanvas(Param(),0));
-	DOCME2(PTMSimulation, PTMSimulation(NULL));
   DOCME2(IonizationSimulation, IonizationSimulation(NULL));
   DOCME2(RawMSSignalSimulation, RawMSSignalSimulation(NULL));
 	DOCME2(RawTandemMSSignalSimulation, RawTandemMSSignalSimulation(NULL))

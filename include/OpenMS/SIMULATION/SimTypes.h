@@ -40,6 +40,7 @@
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/FORMAT/FASTAFile.h>
 #include <OpenMS/ANALYSIS/QUANTITATION/ItraqConstants.h>
+#include <OpenMS/METADATA/MetaInfoInterface.h>
 
 // GSL includes (random number generation)
 #include <gsl/gsl_rng.h>
@@ -59,87 +60,59 @@ namespace OpenMS
   /// Raw data point
 	typedef RichPeak1D SimPointType;
 	
-	/// stores abundance information supported by the simulator
-	typedef Map<String, SimIntensityType> FASTAEntryEnhanced;
+  /// Container for FASTAEntry & abundance information
+  typedef std::vector< std::pair<FASTAFile::FASTAEntry, MetaInfoInterface> > SampleProteins;
 
-	/// Container for FASTAEntry & addtional sim specific information
-	typedef std::vector< std::pair<FASTAFile::FASTAEntry, FASTAEntryEnhanced> > SampleProteins;
+  /// Container for multiple channels of SampleProteins
+  typedef std::vector< SampleProteins > SampleChannels;
 
 	/// Sim FeatureMap
 	typedef FeatureMap<> FeatureMapSim;
 
+  /// Sim FeatureMap Vector
+  typedef std::vector<FeatureMapSim> FeatureMapSimVector;
+
   /// Sim MSExperiment type
   typedef MSExperiment< SimPointType > MSSimExperiment;
-  
-	/// Probability of a modification to occur
-	typedef Real ProbabilityType;
 
-  /// A posttranslational modification
-  struct PTM
+  struct SimRandomNumberGenerator
   {
-		/// Residue (modified)
-    Residue residue;
-    
-    /// Probability to occur (0-1)
-    ProbabilityType probability;
+    gsl_rng* biological_rng;
+    gsl_rng* technical_rng;
 
-		/// Constructor
-		PTM(const Residue p_residue, const ProbabilityType p_probability)
-			: residue(p_residue),
-				probability(p_probability)
-		{}
+    SimRandomNumberGenerator()
+      : biological_rng(NULL),
+      technical_rng(NULL)
+    {
+    }
 
-  };  
- 
-	/// stores statistical properties of modifications on a single AA
-	/// (all @p candidates will have the same AA residue)
-	struct PTMRow
-	{
-		/// possible modifications (all affecting the same AA)
-		std::vector<PTM> candidates;
-		/// p that no modification will take place
-		ProbabilityType probability_none;
-		/// sum of all modifications' probabilites (can be >1)
-		ProbabilityType probability_sum;
-		/// number of AA affected
-		Size rnd_amount;
+    SimRandomNumberGenerator(const SimRandomNumberGenerator& other)
+      : biological_rng(other.biological_rng),
+      technical_rng(other.technical_rng)
+    {
+    }
 
-		PTMRow()
-			:candidates(),
-			 probability_none(1),
-			 probability_sum(0),
-			 rnd_amount(0)
-		{}
+    ~SimRandomNumberGenerator()
+    {
+      if(biological_rng != 0)
+      {
+        gsl_rng_free( biological_rng );
+      }
 
-		/// add a candidate and update members
-		void add(const PTM& ptm)
-		{
-			candidates.push_back( ptm );
-			probability_none *= 1-ptm.probability;
-			probability_sum += ptm.probability;
-		}
+      if(technical_rng != 0)
+      {
+        gsl_rng_free( technical_rng );
+      }
+    }
 
-		/// draw one of the candidates according to their p's (sum normalized to one)
-		Residue draw(const gsl_rng* rnd_gen)
-		{
-			double p_random = gsl_ran_flat(rnd_gen,0.0,1.0);
-			// normalize to one
-			p_random *= probability_sum;
-			// the candidate that covers the rnd number wins
-			double left=0,right=0;
-			for (Size i=0;i<candidates.size();++i)
-			{
-				left=right;
-				right+=candidates[i].probability;
-				if (left<=p_random && p_random<=right) return candidates[i].residue;
-			}
-			return candidates.back().residue;
-		}
+    SimRandomNumberGenerator& operator = (const SimRandomNumberGenerator& source)
+    {
+      this->biological_rng = source.biological_rng;
+      this->technical_rng = source.technical_rng;
 
-	};
-
-	/// mapping from AA-one letter code to list of possible PTM's
-	typedef Map<String, PTMRow> PTMTable;
+      return *this;
+    }
+  };
 
 }
 

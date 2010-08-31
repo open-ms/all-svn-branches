@@ -120,6 +120,7 @@ namespace OpenMS
 		file->addAction("&Include",this,SLOT(includeWorkflowDialog()), Qt::CTRL+Qt::Key_I);
     file->addAction("&Save",this,SLOT(saveFileDialog()), Qt::CTRL+Qt::Key_S);
 		file->addAction("Save &As",this,SLOT(saveAsFileDialog()), Qt::CTRL+Qt::SHIFT+Qt::Key_S);
+		file->addAction("Refresh &parameters",this,SLOT(refreshParameters()), Qt::CTRL+Qt::SHIFT+Qt::Key_P);
     file->addAction("&Close",this,SLOT(closeFile()), Qt::CTRL+Qt::Key_W);
 		file->addSeparator();
 		file->addAction("&Load resource file",this,SLOT(loadResourceFileDialog()));
@@ -422,6 +423,7 @@ namespace OpenMS
 				connect (scene, SIGNAL(saveMe()), this, SLOT(saveFileDialog()));
 				connect (scene, SIGNAL(selectionCopied(TOPPASScene*)), this, SLOT(saveToClipboard(TOPPASScene*)));
 				connect (scene, SIGNAL(requestClipboardContent()), this, SLOT(sendClipboardContent()));
+				connect (scene, SIGNAL(mainWindowNeedsUpdate()), this, SLOT(updateMenu()));
 			}
 			else
 			{
@@ -466,6 +468,7 @@ namespace OpenMS
 		connect (ts, SIGNAL(selectionCopied(TOPPASScene*)), this, SLOT(saveToClipboard(TOPPASScene*)));
 		connect (ts, SIGNAL(requestClipboardContent()), this, SLOT(sendClipboardContent()));
 		connect (ts, SIGNAL(saveMe()), this, SLOT(saveFileDialog()));
+		connect (ts, SIGNAL(mainWindowNeedsUpdate()), this, SLOT(updateMenu()));
   	showAsWindow_(tw, "(Untitled)");
   }
 
@@ -528,7 +531,9 @@ namespace OpenMS
 				file_name += ".toppas";
 			}
 			w->getScene()->store(file_name);
-			tab_bar_->setTabText(tab_bar_->currentIndex(), File::basename(file_name).toQString());
+			QString caption = File::basename(file_name).toQString();
+			tab_bar_->setTabText(tab_bar_->currentIndex(), caption);
+			w->setWindowTitle(caption);
 		}
 	}
 
@@ -584,6 +589,7 @@ namespace OpenMS
     connect(tw,SIGNAL(sendStatusMessage(std::string,OpenMS::UInt)),this,SLOT(showStatusMessage(std::string,OpenMS::UInt)));
     connect(tw,SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
 		connect(tw,SIGNAL(toolDroppedOnWidget(double,double)),this,SLOT(insertNewVertex_(double,double)));
+    connect(tw,SIGNAL(pipelineDroppedOnWidget(const String&, bool)),this,SLOT(openFile(const String&, bool)));
 	  tw->setWindowTitle(caption.toQString());
 
 		//add tab with id
@@ -595,7 +601,7 @@ namespace OpenMS
     //connect slots and sigals for removing the widget from the bar, when it is closed
     //- through the menu entry
     //- through the tab bar
-    //- thourgh the MDI close button
+    //- through the MDI close button
     connect(tw,SIGNAL(aboutToBeDestroyed(int)),tab_bar_,SLOT(removeId(int)));
 
     tab_bar_->setCurrentId(tw->window_id);
@@ -716,6 +722,7 @@ namespace OpenMS
     {
       statusBar()->showMessage(msg.c_str(), time);
     }
+    QApplication::processEvents();
   }
 
 	void TOPPASBase::showCursorStatus(double /*x*/, double /*y*/)
@@ -752,9 +759,17 @@ namespace OpenMS
     {
     	bool error = false;
     	Param tmp;
-    	tmp.load(filename);
+      try
+      { // the file might be corrupt
+    	  tmp.load(filename);
+      }
+      catch (...)
+      {
+        error = true;
+      }
+
     	//apply preferences if they are of the current TOPPAS version
-    	if(tmp.exists("preferences:version") && tmp.getValue("preferences:version").toString()==VersionInfo::getVersion())
+    	if(!error && tmp.exists("preferences:version") && tmp.getValue("preferences:version").toString()==VersionInfo::getVersion())
     	{
     		try
     		{
@@ -772,7 +787,7 @@ namespace OpenMS
 			//set parameters to defaults when something is fishy with the parameters file
 			if (error)
 			{
-  			//reset parameters
+  			//reset parameters (they will be stored again when TOPPAS quits)
   			setParameters(Param());
 
 				cerr << "The TOPPAS preferences files '" << filename << "' was ignored. It is no longer compatible with this TOPPAS version and will be replaced." << endl;
@@ -791,10 +806,13 @@ namespace OpenMS
 		param_.setValue("preferences:version",VersionInfo::getVersion());
 
     Param save_param = param_.copy("preferences:");
-    save_param.insert("",param_.copy("tool_categories:"));
 
     try
     {
+      // TODO: if closing multiple TOPPAS instances simultaneously, we might write to this file concurrently
+      //       thus destroying its integrity. Think about using boost filelocks
+      //       see OpenMS/METADATA/DocumentIDTagger.h for example
+      //       and also implement in TOPPView (and other GUI's which write to user directory)
       save_param.store(string(param_.getValue("PreferencesFile")));
     }
     catch(Exception::UnableToCreateFile& /*e*/)
@@ -855,7 +873,7 @@ namespace OpenMS
 			if (text=="&Run (F5)")
 			{
 				bool show = false;
-				if (tw && ts && !(ts->isPipelineRunning()))
+				if (ts && !(ts->isPipelineRunning()))
 				{
 					show = true;
 				}
@@ -864,7 +882,7 @@ namespace OpenMS
 			else if (text=="&Abort")
 			{
 				bool show = false;
-				if (tw && ts && ts->isPipelineRunning())
+				if (ts && ts->isPipelineRunning())
 				{
 					show = true;
 				}
@@ -872,18 +890,41 @@ namespace OpenMS
 			}
 			else if (text=="&Include")
 			{
-				bool show = tw && ts;
+				bool show = ts;
 				actions[i]->setEnabled(show);
 			}
 			else if (text=="&Load resource file")
 			{
-				bool show = tw && ts;
+				bool show = ts;
 				actions[i]->setEnabled(show);
 			}
 			else if (text=="Save &resource file")
 			{
-				bool show = tw && ts;
+				bool show = ts;
 				actions[i]->setEnabled(show);
+			}
+			else if (text=="&Save")
+			{
+				bool show = ts && ts->wasChanged();
+				actions[i]->setEnabled(show);
+			}
+			else if (text=="Refresh &parameters")
+			{
+				bool show = ts && !(ts->isPipelineRunning());
+				actions[i]->setEnabled(show);
+			}
+		}
+		
+		if (ts)
+		{
+			QString title = tw->windowTitle();
+			bool asterisk_shown = title.startsWith("*");
+			bool changed = ts->wasChanged();
+			if (asterisk_shown ^ changed)
+			{
+				title = asterisk_shown ? title.right(title.size()-1) : QString("*") + title;
+				tw->setWindowTitle(title);
+				tab_bar_->setTabText(tab_bar_->currentIndex(), title);
 			}
 		}
   }
@@ -911,7 +952,7 @@ namespace OpenMS
 		log_->moveCursor(QTextCursor::End);
   }
 
-	void TOPPASBase::keyPressEvent(QKeyEvent* /*e*/)
+	void TOPPASBase::keyPressEvent(QKeyEvent* e)
 	{
 
 	}
@@ -1151,6 +1192,36 @@ namespace OpenMS
 		if (sndr != 0)
 		{
 			sndr->setClipboard(clipboard_);
+		}
+	}
+	
+	void TOPPASBase::refreshParameters()
+	{
+		TOPPASWidget* tw = activeWindow_();
+  	TOPPASScene* ts = 0;
+  	if (tw)
+  	{
+  		ts = tw->getScene();
+  	}
+  	if (!ts)
+  	{
+  		return;
+  	}
+  	
+  	if (!ts->refreshParameters())
+  	{
+  		QMessageBox::information(this, tr("Nothing to be done"),
+				tr("The parameters of the tools used in this workflow have not changed."));
+  		return;
+  	}
+  	
+  	ts->setChanged(true);
+		int ret = QMessageBox::information(tw, "Parameters updated!",
+						"The parameters of some tools in this workflow have changed. Do you want to save these changes now?",
+						QMessageBox::Save | QMessageBox::Cancel);
+		if (ret == QMessageBox::Save)
+		{
+			saveAsFileDialog();
 		}
 	}
 } //namespace OpenMS

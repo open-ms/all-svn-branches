@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
-// $Authors: Marc Sturm $
+// $Maintainer: Sven Nahnsen $
+// $Authors: Sven Nahnsen and others$
 // --------------------------------------------------------------------------
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
@@ -96,6 +96,9 @@ class TOPPConsensusID
 			setMinFloat_("rt_delta",0.0);
 			registerDoubleOption_("mz_delta","<value>",0.1, "Maximum allowed precursor m/z deviation between identifications.", false);
 			setMinFloat_("mz_delta",0.0);
+			registerIntOption_("min_length","<value>",6, "Minimum of length of peptides for final consensus list", false);
+			setMinInt_("min_length",1);
+			registerFlag_("use_all_hits","If 'true' not only the first hit, but all are used (peptides only)");
 
 			registerSubsection_("algorithm","Consensus algorithm section");
 		}
@@ -105,9 +108,11 @@ class TOPPConsensusID
 			String in = getStringOption_("in");
 			FileTypes::Type in_type = FileHandler::getType(in);
 			String out = getStringOption_("out");
+			bool use_all_hits(getFlag_("use_all_hits"));
 
 			DoubleReal rt_delta = getDoubleOption_("rt_delta");
 			DoubleReal mz_delta = getDoubleOption_("mz_delta");
+			UInt min_length = getIntOption_("min_length");
 
 			//----------------------------------------------------------------
 			//set up ConsensusID
@@ -156,16 +161,30 @@ class TOPPConsensusID
 						writeDebug_(String("    Appending IDs to precursor: ") + pos->rt + " / " + pos->mz, 4);
 						//write information on search engine
 						vector<PeptideHit> hits;
+						DoubleReal h=1;
 						for (vector<PeptideHit>::const_iterator pit = t.getHits().begin(); pit != t.getHits().end();++pit)
 							{
 								PeptideHit hit = *pit;
-								if (hit.metaValueExists("scoring"))
+								vector<PeptideHit>::const_iterator tip=pit+1;
+								if(hit.getSequence().size()>=min_length)
 								{
-									String meta_value = (String)hit.getMetaValue("scoring");
+									if(fabs(pit->getScore()-h)<0.5 && pit != t.getHits().begin())
+									{
+										break;
+									}
+									if (hit.metaValueExists("scoring"))
+									{
+										String meta_value = (String)hit.getMetaValue("scoring");
+									}
+									hit.setMetaValue("scoring", pep_id_it->getIdentifier());
+									hits.push_back(hit);
+									if(!use_all_hits)
+									{
+										break;
+									}
 								}
-        						hit.setMetaValue("scoring", pep_id_it->getIdentifier());
-								hits.push_back(hit);
-      						}
+      					h=pit->getScore();
+								}
 						t.setHits(hits);
 						pos->ids.push_back(t);
 					}
@@ -179,13 +198,21 @@ class TOPPConsensusID
 						for (vector<PeptideHit>::const_iterator pit = t.getHits().begin(); pit != t.getHits().end();++pit)
 							{
 								PeptideHit hit = *pit;
-								if (hit.metaValueExists("scoring"))
+								vector<PeptideHit>::const_iterator tip=pit+1;
+								if(hit.getSequence().size()>=min_length)
 								{
-									String meta_value = (String)hit.getMetaValue("scoring");
+									if (hit.metaValueExists("scoring"))
+									{
+										String meta_value = (String)hit.getMetaValue("scoring");
+									}
+									hit.setMetaValue("scoring", pep_id_it->getIdentifier());
+									hits.push_back(hit);
+									if(!use_all_hits)
+									{
+										break;
+									}
 								}
-        						hit.setMetaValue("scoring", pep_id_it->getIdentifier());
-								hits.push_back(hit);
-      						}
+      				}
 						t.setHits(hits);
 						tmp.ids.push_back(t);
 						prec_data.push_back(tmp);

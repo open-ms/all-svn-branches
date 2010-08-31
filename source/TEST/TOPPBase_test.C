@@ -65,7 +65,7 @@ class TOPPBaseTest
       registerFlag_("flag","flag description");
 
       //for testing write_ini parameter (and with it setDefaults)
-      registerStringList_("stringlist2","<stringlist>",StringList::create("1,2,3"),"stringlist with restrictions",false);
+      registerStringList_("stringlist2","<stringlist>",StringList::create("hopla,dude"),"stringlist with restrictions",false);
       vector<String> rest;
       rest.push_back("hopla");
       rest.push_back("dude");
@@ -122,11 +122,6 @@ class TOPPBaseTest
       return getFlag_(name);
     }
 
-    bool setByUser(const String& name) const
-    {
-      return setByUser_(name);
-    }
-
     virtual ExitCodes main_(int /*argc*/ , const char** /*argv*/)
     {
       return EXECUTION_OK;
@@ -137,14 +132,14 @@ class TOPPBaseTest
       return getIniLocation_();
     }
 
-    void inputFileReadable(const String& filename) const
+    void inputFileReadable(const String& filename, const String& param_name) const
     {
-      inputFileReadable_(filename);
+      inputFileReadable_(filename, param_name);
     }
 
-    void outputFileWritable(const String& filename) const
+    void outputFileWritable(const String& filename, const String& param_name) const
     {
-      outputFileWritable_(filename);
+      outputFileWritable_(filename, param_name);
     }
 
     void addDataProcessing(MSExperiment<>& map, DataProcessing::ProcessingAction action)
@@ -174,7 +169,7 @@ class TOPPBaseTestNOP
 {
   public:
     TOPPBaseTestNOP()
-      : TOPPBase("TOPPBaseTest", "A test class with non-optional parameters", false)
+      : TOPPBase("TOPPBaseTestNOP", "A test class with non-optional parameters", false)
     {
       main(0,0);
     }
@@ -187,22 +182,18 @@ class TOPPBaseTestNOP
 
     virtual void registerOptionsAndFlags_()
     {
-      registerStringOption_("stringoption","<string>","string default","string description");
-      registerIntOption_("intoption","<int>",4711,"int description");
-      registerDoubleOption_("doubleoption","<double>",0.4711,"double description");
+      registerStringOption_("stringoption","<string>","","string description");
+      registerIntOption_("intoption","<int>",0,"int description",false);
+      registerDoubleOption_("doubleoption","<double>",std::numeric_limits<double>::quiet_NaN(),"double description");
       registerFlag_("flag","flag description");
-      registerStringList_("stringlist","<stringlist>",StringList::create("abc,def,ghi,jkl"),"stringlist description");
-      registerIntList_("intlist","<intlist>",IntList::create("1,2,3,4"),"intlist description");
-      registerDoubleList_("doublelist","<doublelist>",DoubleList::create("0.4711,1.022,4.0"),"doubelist description");
+      registerStringList_("stringlist","<stringlist>",StringList::create(""),"stringlist description");
+      registerIntList_("intlist","<intlist>",IntList::create(""),"intlist description");
+      registerDoubleList_("doublelist","<doublelist>",DoubleList::create(""),"doubelist description");
     }
 
     String getStringOption(const String& name) const
     {
       return getStringOption_(name);
-    }
-    bool setByUser(const String& name) const
-    {
-      return setByUser_(name);
     }
 
     double getDoubleOption(const String& name) const
@@ -303,27 +294,6 @@ START_SECTION(([EXTRA]String const& getIniLocation_() const))
 	TEST_EQUAL(tmp2.getIniLocation(),"TOPPBaseTest:5:")
 END_SECTION
 
-START_SECTION([EXTRA] bool setByUser_(const String& name) const)
-	//default
-	TOPPBaseTest tmp;
-	TEST_EQUAL(tmp.setByUser("intoption"),false);
-
-	//command line
-	const char* string_cl[3] = {a1, a14, a16}; //command line: "TOPPBaseTest -intoption 4711"
-	TOPPBaseTest tmp2(3,string_cl);
-
-	TEST_EQUAL(tmp2.setByUser("intoption"),true);
-	TEST_EQUAL(tmp2.setByUser("stringoption"),false);
-	TEST_EQUAL(tmp2.setByUser("doubleoption"),false);
-
-	//ini file
-	const char* both_cl[3] = {a1, a3, a7}; //command line: "TOPPBaseTest -ini data/TOPPBase_toolcommon.ini"
-	TOPPBaseTest tmp3(3,both_cl);
-
-	TEST_EQUAL(tmp3.setByUser("intoption"),false);
-	TEST_EQUAL(tmp3.setByUser("stringoption"),true);
-	TEST_EQUAL(tmp3.setByUser("doubleoption"),false);
-END_SECTION
 
 START_SECTION(([EXTRA]String getStringOption_(const String& name) const))
 	//default
@@ -393,7 +363,7 @@ START_SECTION(([EXTRA]String getStringOption_(const String& name) const))
 	p2.setValue("TOPPBaseTest:1:no_progress","false","Disables progress logging to command line");
 	p2.setValue("TOPPBaseTest:1:test","false","Enables the test mode (needed for software testing only)");
 	//with restriction
-	p2.setValue("TOPPBaseTest:1:stringlist2",StringList::create("1,2,3"),"stringlist with restrictions");
+  p2.setValue("TOPPBaseTest:1:stringlist2",StringList::create("hopla,dude"),"stringlist with restrictions");
 	vector<String> rest;
 	rest.push_back("hopla");
 	rest.push_back("dude");
@@ -423,9 +393,7 @@ START_SECTION(([EXTRA]String getIntOption_(const String& name) const))
 	TEST_EXCEPTION(Exception::UnregisteredParameter,tmp2.getIntOption("imleeewenit"));
 
 	//missing required parameters
-	const char* string_cl2[2] = {a1, a11};
-	TOPPBaseTestNOP tmp3(2,string_cl2);
-	TEST_EXCEPTION(Exception::RequiredParameterNotGiven,tmp3.getIntOption("intoption"));
+	//-> not testable, as ints cannot be made 'required' (no NAN supported)
 END_SECTION
 
 START_SECTION(([EXTRA]String getDoubleOption_(const String& name) const))
@@ -465,7 +433,6 @@ START_SECTION(([EXTRA] String getIntList_(const String& name) const))
 	//missing required parameters
 	const char* string_cl2[2] = {a1, a11};
 	TOPPBaseTestNOP tmp4(2,string_cl2);
-	TEST_EQUAL(false,tmp4.setByUser("intlist"));
 	TEST_EXCEPTION(Exception::RequiredParameterNotGiven,tmp4.getIntList("intlist"));
 END_SECTION
 
@@ -491,7 +458,6 @@ START_SECTION(([EXTRA] String getDoubleList_(const String& name) const))
 	//missing required parameters
 	const char* string_cl3[2] = {a1, a11};
 	TOPPBaseTestNOP tmp4(2,string_cl3);
-	TEST_EQUAL(false,tmp4.setByUser("doublelist"));
 	TEST_EXCEPTION(Exception::RequiredParameterNotGiven,tmp4.getDoubleList("doublelist"));
 END_SECTION
 
@@ -518,7 +484,6 @@ START_SECTION(([EXTRA] String getStringList_(const String& name) const))
 	//missing required parameters
 	const char* string_cl3[2] = {a1, a11};
 	TOPPBaseTestNOP tmp4(2,string_cl3);
-	TEST_EQUAL(false,tmp4.setByUser("stringlist"));
 	TEST_EXCEPTION(Exception::RequiredParameterNotGiven,tmp4.getStringList("stringlist"));
 
 END_SECTION
@@ -536,19 +501,19 @@ START_SECTION(([EXTRA]bool getFlag_(const String& name) const))
 	TEST_EXCEPTION(Exception::UnregisteredParameter,tmp2.getFlag("imleeewenit"));
 END_SECTION
 
-START_SECTION(([EXTRA]void inputFileReadable_(const String& filename) const))
+START_SECTION(([EXTRA]void inputFileReadable_(const String& filename, const String& param_name) const))
 	TOPPBaseTest tmp;
-	TEST_EXCEPTION(Exception::FileNotFound,tmp.inputFileReadable("/this/file/does/not/exist.txt"));
-	TEST_EXCEPTION(Exception::FileEmpty,tmp.inputFileReadable(OPENMS_GET_TEST_DATA_PATH("TOPPBase_empty.txt")));
-	tmp.inputFileReadable(OPENMS_GET_TEST_DATA_PATH("TOPPBase_common.ini"));
+	TEST_EXCEPTION(Exception::FileNotFound,tmp.inputFileReadable("/this/file/does/not/exist.txt","someparam"));
+	TEST_EXCEPTION(Exception::FileEmpty,tmp.inputFileReadable(OPENMS_GET_TEST_DATA_PATH("TOPPBase_empty.txt"), "someparam"));
+	tmp.inputFileReadable(OPENMS_GET_TEST_DATA_PATH("TOPPBase_common.ini"),"ini");
 END_SECTION
 
-START_SECTION(([EXTRA]void outputFileWritable_(const String& filename) const))
-	TEST_EXCEPTION(Exception::UnableToCreateFile,TOPPBaseTest().outputFileWritable("/this/file/cannot/be/written/does_not_exists.txt"));
+START_SECTION(([EXTRA]void outputFileWritable_(const String& filename, const String& param_name) const))
+	TEST_EXCEPTION(Exception::UnableToCreateFile,TOPPBaseTest().outputFileWritable("/this/file/cannot/be/written/does_not_exists.txt","someparam"));
 
 	String filename;
 	NEW_TMP_FILE(filename);
-	TOPPBaseTest().outputFileWritable(filename);
+	TOPPBaseTest().outputFileWritable(filename, "");
 	//Actually writing something to the file is not necessary, but on Mac all tmp files are called 'source_<line>.tmp'.
 	//So we have to make sure the file is empty. Otherwise the test might fail...
 	TextFile dummy;

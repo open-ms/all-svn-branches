@@ -112,7 +112,7 @@ void SILACFilter::reset()
 
 bool SILACFilter::isFeature(DoubleReal act_rt,DoubleReal act_mz)
 {
-	if (act_rt < 1819 && act_rt>1818)
+	if (act_rt < 1797 && act_rt>1796)
 		debug=true;
 	else
 		debug=false;
@@ -274,19 +274,19 @@ bool SILACFilter::checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& ex
 		std::vector<DoubleReal> second_values;
 		for (DoubleReal pos=act_mz-0.3*area_width;pos<=act_mz+0.3*area_width;pos+=0.06*area_width)
 		{
-			DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_lin, pos, SILACFiltering::acc_lin);
-			DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_lin, pos+exact_positions[i], SILACFiltering::acc_lin);
+			DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl);
+			DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+exact_positions[i], SILACFiltering::acc_spl);
 			first_values.push_back(intensity1);
 			second_values.push_back(intensity2);
 		}
 		DoubleReal act_correlation=Math::pearsonCorrelationCoefficient(first_values.begin(), first_values.end(), second_values.begin(), second_values.end());
-//		if (debug && act_mz > 697.307 &&  act_mz < 697.328 && exact_positions[0]<0.01 && i==1)
-//		{
-//			std::cout << std::setprecision(10);
-//			std::cout << act_mz << "\t" << act_intensities[0] << "\t" << act_intensities[1] << "\t"<< std::setprecision(3) << act_correlation << std::endl;
-//		}
+		if (debug && act_mz > 616.322 &&  act_mz < 616.352 && exact_positions[0]<0.01 && i==1)
+		{
+			std::cout << std::setprecision(10);
+			std::cout << act_mz << "\t" << act_intensities[0] << "\t" << act_intensities[1] << "\t"<< std::setprecision(3) << act_correlation << std::endl;
+		}
 
-		if ((act_correlation < 0.995 && i<2) || (i==2 && missing_peak && act_correlation < 0.995))
+		if ((act_correlation < 0.75 && i<2) || (i==2 && missing_peak && act_correlation < 0.75))
 			return false;
 	}
 
@@ -314,7 +314,7 @@ void SILACFilter::computeCorrelation(DoubleReal act_mz,DoubleReal offset,DoubleR
 {
 	if (offset > 0.0)
 	{
-		DoubleReal stepwidth=tolerance/15;
+		DoubleReal stepwidth=tolerance/28;
 		//n must be a power of two for gsl fast fourier transformation; take next higher size for n, which is a power of two and fill the rest with zeros
 		Size vector_size = pow(2,(ceil(log2((3*tolerance)/stepwidth))));
 		data.clear();
@@ -366,7 +366,8 @@ DoubleReal SILACFilter::computeExactPosition(DoubleReal act_mz,DoubleReal expect
 {
 	if (expected_position>0)
 	{
-		DoubleReal stepwidth=tolerance/15;
+		DoubleReal stepwidth=tolerance/28;
+//		std::cout << stepwidth << std::endl;
 
 		std::vector<DoubleReal> x(data.size(),0);
 		std::vector<DoubleReal> y(data.size(),0);
@@ -379,7 +380,7 @@ DoubleReal SILACFilter::computeExactPosition(DoubleReal act_mz,DoubleReal expect
 		}
 
 		gsl_interp_accel* acc_correlation = gsl_interp_accel_alloc();
-		gsl_spline* spline_correlation = gsl_spline_alloc(gsl_interp_akima, x.size());
+		gsl_spline* spline_correlation = gsl_spline_alloc(gsl_interp_cspline, x.size());
 		gsl_spline_init(spline_correlation, &(*x.begin()), &(*y.begin()), x.size());
 
 		DoubleReal exact_position=0.0;

@@ -729,10 +729,13 @@ void HashClustering::createClusters(std::vector<Cluster>& clusters)
 			silhouettes.push_back(asw);
 			//Look only in the front area of the silhoutte values to avoid getting the wrong number
 			std::vector< Real >::iterator max_el(max_element(asw.begin()+0.9*asw.size(),asw.end()));
+			std::vector<Cluster> act_clusters;
 			Size best_n = (Size)subset_ptr->tree.size();
 			if (*max_el<0.75)
 			{
-				best_n=1;
+				std::vector<DataPoint*> actCluster;
+				actCluster.insert(actCluster.begin(),subset_ptr->data_points.begin(),subset_ptr->data_points.end());
+				act_clusters.push_back(actCluster);
 			}
 			else
 			{
@@ -744,11 +747,12 @@ void HashClustering::createClusters(std::vector<Cluster>& clusters)
 						break;
 					}
 				}
+				//Get clusters from the subtree
+				cut(best_n,act_clusters,subset_ptr->tree);
 			}
 
-			std::vector<Cluster> act_clusters;
-			//Get clusters from the subtree
-			cut(best_n,act_clusters,subset_ptr->tree);
+
+
 			//Run through all elements in each cluster and update cluster number
 			for (std::vector<Cluster>::iterator cluster_it=act_clusters.begin();cluster_it!=act_clusters.end();++cluster_it)
 			{

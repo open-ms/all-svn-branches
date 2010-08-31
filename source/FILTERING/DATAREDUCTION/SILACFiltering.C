@@ -60,15 +60,15 @@ SILACFiltering::~SILACFiltering() {
 
 void SILACFiltering::blockPositions(const std::vector<DoubleReal>& peak_positions,SILACFilter* source)
 {
-	for (std::set<SILACFilter*>::iterator it=filters.begin();it!=filters.end();++it)
-	{
-		for (std::vector<DoubleReal>::const_iterator peak_it=peak_positions.begin();peak_it!=peak_positions.end();++peak_it)
-		{
-			if (*it==source && peak_it==peak_positions.begin())
-				++peak_it;
-			(*it)->blockValue(*peak_it);
-		}
-	}
+//	for (std::set<SILACFilter*>::iterator it=filters.begin();it!=filters.end();++it)
+//	{
+//		for (std::vector<DoubleReal>::const_iterator peak_it=peak_positions.begin();peak_it!=peak_positions.end();++peak_it)
+//		{
+//			if (*it==source && peak_it==peak_positions.begin())
+//				++peak_it;
+//			(*it)->blockValue(*peak_it);
+//		}
+//	}
 }
 
 bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* b) const

@@ -345,21 +345,18 @@ namespace OpenMS
 			}
 			else //all data
 			{
-                                FileHandler().storeExperiment(file_name,*layer.getPeakData(),ProgressLogger::GUI);
+        FileHandler().storeExperiment(file_name,*layer.getPeakData(),ProgressLogger::GUI);
 			}
 		}
 	}
 
-
   void Spectrum3DCanvas::updateLayer(Size i)
 	{
+    selected_peak_.clear();
 		recalculateRanges_(0,1,2);
-		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
-		
+    resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
 		openglwidget()->recalculateDotGradient_(i);
-		
-		update_buffer_ = true;
-		update_(__PRETTY_FUNCTION__);
+    intensityModeChange_();
 		modificationStatus_(i, false);
 	}
 

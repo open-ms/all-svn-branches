@@ -99,7 +99,7 @@ namespace OpenMS
 	void Spectrum2DCanvas::highlightPeak_(QPainter& painter, const PeakIndex& peak)
 	{
 		if (!peak.isValid()) return;
-		
+
 		//determine coordinates;
 		QPoint pos;
 		if (getCurrentLayer().type==LayerData::DT_FEATURE)
@@ -122,7 +122,7 @@ namespace OpenMS
 		{
 			//TODO IDENT
 		}
-		
+
 		//paint highlighed peak
 		painter.save();
 		painter.setPen(QPen(Qt::red, 2));
@@ -1485,7 +1485,7 @@ namespace OpenMS
 				else if (getCurrentLayer().type==LayerData::DT_PEAK)
 				{
 					//meta info
-                                        const ExperimentType::SpectrumType& s = selected_peak_.getSpectrum(*getCurrentLayer().getPeakData());
+          const ExperimentType::SpectrumType& s = selected_peak_.getSpectrum(*getCurrentLayer().getPeakData());
 					for (Size m=0; m<s.getFloatDataArrays().size();++m)
 					{
 						if (selected_peak_.peak < s.getFloatDataArrays()[m].size())
@@ -2146,13 +2146,14 @@ namespace OpenMS
 	}
 
   void Spectrum2DCanvas::updateLayer(Size i)
-	{
+	{    
+    //update nearest peak
+    selected_peak_.clear();
 		recalculateRanges_(0,1,2);
 		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
 		intensityModeChange_();
 		modificationStatus_(i, false);
 	}
-
 
 	void Spectrum2DCanvas::translateLeft_()
 	{

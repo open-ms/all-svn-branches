@@ -139,7 +139,7 @@ namespace OpenMS
           connect(tab_bar_,SIGNAL(dropOnTab(const QMimeData*,QWidget*,int)),this,SLOT(copyLayer(const QMimeData*,QWidget*,int)));
 
           box_layout->addWidget(tab_bar_);
-          ws_=new EnhancedWorkspace(dummy);
+          ws_= new EnhancedWorkspace(dummy);
           connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateToolBar()));
           connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateTabBar(QWidget*)));
           connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateLayerBar()));
@@ -2945,7 +2945,7 @@ namespace OpenMS
                 p_right.setMZ(area.maxPosition()[0]);
                 exp->back().push_back(p_right);
 
-                if (!w->canvas()->addLayer(exp_sptr))
+                if (!w->canvas()->addLayer(exp_sptr, layer.filename))
                 {
                     return;
                 }
@@ -2968,14 +2968,13 @@ namespace OpenMS
 	void TOPPViewBase::showSpectrumAs1D(int index)
 	{
 		const LayerData& layer = activeCanvas_()->getCurrentLayer();
-
-                ExperimentSharedPtrType exp_sptr = layer.getPeakData();
+     ExperimentSharedPtrType exp_sptr = layer.getPeakData();
 
 		//open new 1D widget
 		Spectrum1DWidget* w = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
 
     //add data
-    if (!w->canvas()->addLayer(exp_sptr) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
+    if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
   	{
   		return;
   	}
@@ -3478,6 +3477,7 @@ namespace OpenMS
     std::vector<std::pair<const SpectrumWidget *, int> > needs_update;
     for(int i=0; i!=ws_->windowList().count(); ++i)
     {
+      std::cout << "Number of windows: " << ws_->windowList().count() << std::endl;
       QWidget* w = wl[i];
       const SpectrumWidget* sw = qobject_cast<const SpectrumWidget*>(w);
       if (sw!=0)
@@ -3487,6 +3487,7 @@ namespace OpenMS
         // determine if widget stores one or more layers for the given filename (->needs update)
         for (int j=0; j!= lc; ++j)
         {
+          std::cout << "Layer filename: " << sw->canvas()->getLayer(j).filename << std::endl;
           const LayerData& ld = sw->canvas()->getLayer(j);
           if (ld.filename == filename)
           {
@@ -3502,6 +3503,7 @@ namespace OpenMS
       return;
     } else if (needs_update.size()!=0)  // at least one layer references data of filename
     {
+      std::cout << "Number of Layers that need update: " << needs_update.size() << std::endl;
       pair<const SpectrumWidget *, int>& slp = needs_update[0];
       const SpectrumWidget * sw = slp.first;
       int layer_index = slp.second;
@@ -3549,7 +3551,7 @@ namespace OpenMS
           {
             QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
             layer.getPeakData()->clear(true);
-          }
+          }          
           layer.getPeakData()->sortSpectra(true);
           layer.getPeakData()->updateRanges(1);
         }
@@ -3614,10 +3616,10 @@ namespace OpenMS
       // update all layers that need an update
       for (UInt i=0; i!= needs_update.size(); ++i)
       {
-        pair<const SpectrumWidget *, int>& slp = needs_update[0];
+        pair<const SpectrumWidget *, int>& slp = needs_update[i];
         const SpectrumWidget * sw = slp.first;
         int layer_index = slp.second;
-        sw->canvas()->updateLayer(layer_index);
+        sw->canvas()->updateLayer(layer_index);        
       }
     }
     /*

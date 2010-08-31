@@ -1436,11 +1436,6 @@ namespace OpenMS
 
   void Spectrum1DCanvas::updateLayer(Size i)
 	{
-		LayerData& layer = getLayer_(i);
-    layer.getPeakData()->resize(1);
-    layer.getPeakData()->sortSpectra();
-    layer.getPeakData()->updateRanges();
-		
 		//update nearest peak
 		selected_peak_.clear();
 		

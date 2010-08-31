@@ -377,7 +377,7 @@ namespace OpenMS
   bool SpectrumCanvas::addLayer(ExperimentSharedPtrType map, const String& filename)
 	{	
     layers_.resize(layers_.size()+1);
-    //ExperimentSharedPtrType shared_peak_data(new LayerData::ExperimentType(map));
+
 		layers_.back().param = param_;
 		layers_.back().filename = filename;                
     layers_.back().getPeakData() = map;

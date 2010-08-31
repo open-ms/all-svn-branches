@@ -154,7 +154,7 @@ namespace OpenMS
 		
 		if (canvas_->getCurrentLayer().type==LayerData::DT_PEAK)
 		{
-                        for (ExperimentType::ConstIterator spec_it = canvas_->getCurrentLayer().getPeakData()->begin(); spec_it != canvas_->getCurrentLayer().getPeakData()->end(); ++spec_it)
+      for (ExperimentType::ConstIterator spec_it = canvas_->getCurrentLayer().getPeakData()->begin(); spec_it != canvas_->getCurrentLayer().getPeakData()->end(); ++spec_it)
 			{
 				if (spec_it->getMSLevel()!=1)
 				{
@@ -306,21 +306,21 @@ namespace OpenMS
 		}
 	}
 	
-        void Spectrum2DWidget::horizontalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
+  void Spectrum2DWidget::horizontalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
 	{
 		projection_horz_->showLegend(false);
 		projection_horz_->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
 		if (!projectionsVisible() || projection_horz_->canvas()->getLayerCount()==0) //set draw mode
 		{
 			projection_horz_->canvas()->removeLayer(0);
-                        projection_horz_->canvas()->addLayer(exp);
+      projection_horz_->canvas()->addLayer(exp);
 			projection_horz_->canvas()->setDrawMode(mode);
 		}
 		else //keep draw mode
 		{
 			Spectrum1DCanvas::DrawModes previous_mode = projection_horz_->canvas()->getDrawMode();
 			projection_horz_->canvas()->removeLayer(0);
-                        projection_horz_->canvas()->addLayer(exp);
+      projection_horz_->canvas()->addLayer(exp);
 			projection_horz_->canvas()->setDrawMode(previous_mode);
 		}
 		grid_->setColumnStretch(3,2);
@@ -337,14 +337,14 @@ namespace OpenMS
 		if (!projectionsVisible() || projection_vert_->canvas()->getLayerCount()==0) //set draw mode
 		{
 			projection_vert_->canvas()->removeLayer(0);
-                        projection_vert_->canvas()->addLayer(exp);
+      projection_vert_->canvas()->addLayer(exp);
 			projection_vert_->canvas()->setDrawMode(mode);
 		}
 		else //keep draw mode
 		{
 			Spectrum1DCanvas::DrawModes previous_mode = projection_vert_->canvas()->getDrawMode();
 			projection_vert_->canvas()->removeLayer(0);
-                        projection_vert_->canvas()->addLayer(exp);
+      projection_vert_->canvas()->addLayer(exp);
 			projection_vert_->canvas()->setDrawMode(previous_mode);
 		}
 		grid_->setRowStretch(0,2);

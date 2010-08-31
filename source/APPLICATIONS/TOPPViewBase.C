@@ -2923,47 +2923,35 @@ namespace OpenMS
 		}
 	}
 
-        void TOPPViewBase::showCurrentPeaksAs3D()
-        {
-            const LayerData& layer = activeCanvas_()->getCurrentLayer();
-            if (layer.type==LayerData::DT_PEAK)
-            {
-                //open new 3D widget
-                Spectrum3DWidget* w = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
+  void TOPPViewBase::showCurrentPeaksAs3D()
+  {
+    const LayerData& layer = activeCanvas_()->getCurrentLayer();
+    if (layer.type==LayerData::DT_PEAK)
+    {
+      //open new 3D widget
+      Spectrum3DWidget* w = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
 
-                //copy visible data into new pointer
-                ExperimentType* exp = new ExperimentType;
-                activeCanvas_()->getVisiblePeakData(*exp);
-                //manage by shared ptr
-                ExperimentSharedPtrType exp_sptr(exp);
+      ExperimentSharedPtrType exp_sptr = activeCanvas_()->getCurrentLayer().getPeakData();
 
-                // insert placeholder peaks
-                const SpectrumCanvas::AreaType& area = activeCanvas_()->getVisibleArea();
-                SpectrumType::PeakType p_left,p_right;
-                p_left.setMZ(area.minPosition()[0]);
-                exp->back().push_back(p_left);
-                p_right.setMZ(area.maxPosition()[0]);
-                exp->back().push_back(p_right);
+      if (!w->canvas()->addLayer(exp_sptr, layer.filename))
+      {
+        return;
+      }
 
-                if (!w->canvas()->addLayer(exp_sptr, layer.filename))
-                {
-                    return;
-                }
-
-                // set layer name
-                String caption = layer.name + " (3D)";
-                w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
-                showAsWindow_(w,caption);
-                updateLayerBar();
-                updateSpectrumBar();
-                updateFilterBar();
-                updateMenu();
-            }
-            else
-            {
-                showLogMessage_(LS_NOTICE,"Wrong layer type","You cannot open feature data in 3D mode.");
-            }
-        }
+      // set layer name
+      String caption = layer.name + " (3D)";
+      w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+      showAsWindow_(w, caption);
+      updateLayerBar();
+      updateSpectrumBar();
+      updateFilterBar();
+      updateMenu();
+    }
+    else
+    {
+      showLogMessage_(LS_NOTICE,"Wrong layer type","You cannot open feature data in 3D mode.");
+    }
+  }
 
 	void TOPPViewBase::showSpectrumAs1D(int index)
 	{

@@ -576,7 +576,7 @@ namespace OpenMS
 		
 	}
 	
-  void SpectrumCanvas::update_(const char* caller_name)
+  void SpectrumCanvas::update_(const char*)
 	{
 		update();
 	}	

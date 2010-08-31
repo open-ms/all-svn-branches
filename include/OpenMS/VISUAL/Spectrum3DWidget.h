@@ -74,7 +74,6 @@ namespace OpenMS
 		public slots:
 			// Docu in base class
 	    virtual void showGoToDialog();
-
 	};
 	
 }//namespace

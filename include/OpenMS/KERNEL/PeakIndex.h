@@ -120,7 +120,6 @@ namespace OpenMS
     template <typename PeakMapType>
 		const typename PeakMapType::SpectrumType& getSpectrum(const PeakMapType& map) const
 		{
-      std::cout << spectrum << " " << map.size() << std::endl;
       OPENMS_PRECONDITION(spectrum<map.size(),"Spectrum index exceeds map size");
 			return map[spectrum];
 		}

@@ -596,7 +596,6 @@ namespace OpenMS
 		measurement_start_.clear();
 		
 		//update
-		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);
 	}
 

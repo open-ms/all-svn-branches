@@ -49,12 +49,10 @@ public:
 	/**
 	 * @brief intensity at RT and m/z
 	 */
-	std::vector<DoubleReal> intensities;
+	std::vector<std::vector<DoubleReal> > intensities;
+	std::vector<DoubleReal> mass_shifts;
 
-	Int silac_type;
 	Int charge;
-	DoubleReal envelope_distance_light_medium;
-	DoubleReal envelope_distance_light_heavy;
 	DoubleReal quality;
 
 
@@ -63,10 +61,6 @@ public:
 	 * @brief ID number of the cluster the data point belongs to
 	 */
 	Int cluster_id;
-	/**
-	 * @brief number of points in cluster 'cluster_id'
-	 */
-	Int cluster_size;
 	/**
 	 * @brief ID of the data point
 	 */

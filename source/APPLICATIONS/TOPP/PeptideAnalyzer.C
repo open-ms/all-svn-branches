@@ -71,7 +71,7 @@
 
 using namespace OpenMS;
 
-//typedef std::vector<BinaryTreeNode> Tree;
+typedef std::vector<BinaryTreeNode> Tree;
 typedef std::vector<DataPoint*> Cluster;
 
 //-------------------------------------------------------------
@@ -367,23 +367,23 @@ public:
 
 		std::vector<std::vector<Real> > silhouettes;
 		std::vector<Cluster> clusters;
-//		std::vector<Tree> subtrees;
+		std::vector<Tree> subtrees;
 
 		for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin();data_it!=data.end();++data_it)
 		{
-//			CentroidLinkage method(rt_scaling);
-//			HashClustering c(*data_it,rt_threshold,mz_threshold,method);
-//			c.setLogType(log_type_);
-//			c.performClustering();
-//			std::vector<Tree> act_subtrees;
-//			c.getSubtrees(act_subtrees);
-//			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
-			DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
-			QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
+			CentroidLinkage method(rt_scaling);
+			HashClustering c(*data_it,rt_threshold,mz_threshold,method);
 			c.setLogType(log_type_);
-			std::vector<Cluster> act_clusters=c.performClustering();
-//			std::vector<Cluster> act_clusters;
-//			c.createClusters(act_clusters);
+			c.performClustering();
+			std::vector<Tree> act_subtrees;
+			c.getSubtrees(act_subtrees);
+			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
+//			DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
+//			QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
+//			c.setLogType(log_type_);
+//			std::vector<Cluster> act_clusters=c.performClustering();
+			std::vector<Cluster> act_clusters;
+			c.createClusters(act_clusters);
 			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
 //			const std::vector<std::vector<Real> >& act_silhouettes=c.getSilhouetteValues();
 //			silhouettes.insert(silhouettes.end(),act_silhouettes.begin(),act_silhouettes.end());
@@ -392,52 +392,52 @@ public:
 		}
 
 
-//		if (getFlag_("silac_debug"))
-//		{
-//			std::vector<String> colors;
-//			// 16 HTML colors
-//			colors.push_back("#00FFFF");
-//			colors.push_back("#000000");
-//			colors.push_back("#0000FF");
-//			colors.push_back("#FF00FF");
-//			colors.push_back("#008000");
-//			colors.push_back("#808080");
-//			colors.push_back("#00FF00");
-//			colors.push_back("#800000");
-//			colors.push_back("#000080");
-//			colors.push_back("#808000");
-//			colors.push_back("#800080");
-//			colors.push_back("#FF0000");
-//			colors.push_back("#C0C0C0");
-//			colors.push_back("#008080");
-//			colors.push_back("#FFFF00");
-//			Size subtree_number=1;
-//			for (std::vector<std::vector<BinaryTreeNode> >::iterator subtree_it=subtrees.begin();subtree_it!=subtrees.end();++subtree_it)
-//			{
-//				std::set<DataPoint*> leafs;
-//				for (std::vector<BinaryTreeNode>::iterator tree_it=subtree_it->begin(); tree_it!= subtree_it->end(); ++tree_it)
-//				{
-//					leafs.insert(tree_it->data1);
-//					leafs.insert(tree_it->data2);
-//				}
-//				for (std::set<DataPoint*>::iterator leafs_it=leafs.begin();leafs_it!=leafs.end();++leafs_it)
-//				{
-//					//visualize the light variant
-//					Feature tree_point;
-//					tree_point.setRT((*leafs_it)->rt);
-//					tree_point.setMZ((*leafs_it)->mz);
-//					tree_point.setIntensity((*leafs_it)->intensities[0]);
-//					tree_point.setCharge((*leafs_it)->charge);
-//					tree_point.setMetaValue("subtree",subtree_number);
-//					tree_point.setMetaValue("color",colors[subtree_number%colors.size()]);
-//					subtree_points.push_back(tree_point);
-//				}
-//				++subtree_number;
-//			}
-//
-//			// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
-//			subtree_points.sortByPosition();
-//		}
+		if (getFlag_("silac_debug"))
+		{
+			std::vector<String> colors;
+			// 16 HTML colors
+			colors.push_back("#00FFFF");
+			colors.push_back("#000000");
+			colors.push_back("#0000FF");
+			colors.push_back("#FF00FF");
+			colors.push_back("#008000");
+			colors.push_back("#808080");
+			colors.push_back("#00FF00");
+			colors.push_back("#800000");
+			colors.push_back("#000080");
+			colors.push_back("#808000");
+			colors.push_back("#800080");
+			colors.push_back("#FF0000");
+			colors.push_back("#C0C0C0");
+			colors.push_back("#008080");
+			colors.push_back("#FFFF00");
+			Size subtree_number=1;
+			for (std::vector<std::vector<BinaryTreeNode> >::iterator subtree_it=subtrees.begin();subtree_it!=subtrees.end();++subtree_it)
+			{
+				std::set<DataPoint*> leafs;
+				for (std::vector<BinaryTreeNode>::iterator tree_it=subtree_it->begin(); tree_it!= subtree_it->end(); ++tree_it)
+				{
+					leafs.insert(tree_it->data1);
+					leafs.insert(tree_it->data2);
+				}
+				for (std::set<DataPoint*>::iterator leafs_it=leafs.begin();leafs_it!=leafs.end();++leafs_it)
+				{
+					//visualize the light variant
+					Feature tree_point;
+					tree_point.setRT((*leafs_it)->rt);
+					tree_point.setMZ((*leafs_it)->mz);
+					tree_point.setIntensity((*leafs_it)->intensities[0]);
+					tree_point.setCharge((*leafs_it)->charge);
+					tree_point.setMetaValue("subtree",subtree_number);
+					tree_point.setMetaValue("color",colors[subtree_number%colors.size()]);
+					subtree_points.push_back(tree_point);
+				}
+				++subtree_number;
+			}
+
+			// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
+			subtree_points.sortByPosition();
+		}
 
 		if (out!="")
 		{

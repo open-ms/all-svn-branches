@@ -36,10 +36,7 @@ DataPoint::DataPoint()
 	mz = 0;
 	feature_id= 0;
 	cluster_id = 0;
-	silac_type= DOUBLE;
 	charge=1;
-	envelope_distance_light_medium=0;
-	envelope_distance_light_heavy=0;
 	quality=0;
 
 }
@@ -48,11 +45,9 @@ DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 	feature_id=copyin.feature_id;
 	intensities = copyin.intensities;
 	cluster_id = copyin.cluster_id;
-	silac_type= copyin.silac_type;
 	charge=copyin.charge;
-	envelope_distance_light_medium=copyin.envelope_distance_light_medium;
-	envelope_distance_light_heavy=copyin.envelope_distance_light_heavy;
 	quality=copyin.quality;
+	mass_shifts=copyin.mass_shifts;
 }
 
 DataPoint& DataPoint::operator=(const DataPoint &rhs)
@@ -62,7 +57,7 @@ DataPoint& DataPoint::operator=(const DataPoint &rhs)
 	this->intensities = rhs.intensities;
 	this->feature_id=rhs.feature_id;
 	this->cluster_id = rhs.cluster_id;
-	this->cluster_size = rhs.cluster_size;
+	this->mass_shifts = rhs.mass_shifts;
 	return *this;
 }
 

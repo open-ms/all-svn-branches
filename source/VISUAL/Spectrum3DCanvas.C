@@ -173,9 +173,9 @@ namespace OpenMS
 		return static_cast<Spectrum3DOpenGLCanvas*>(openglcanvas_);
 	}
 	
-  void Spectrum3DCanvas::update_(const char* c)
+  void Spectrum3DCanvas::update_(const char* caller)
 	{
-    std::cout << c << std::endl;
+    std::cout << caller << std::endl;
 		if(update_buffer_)
 		{
 			update_buffer_ = false;

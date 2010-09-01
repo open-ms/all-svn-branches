@@ -87,8 +87,7 @@ namespace OpenMS
 	
 	void Spectrum3DCanvas::showLegend(bool show)
 	{
-		legend_shown_ = show;
-		update_buffer_ = true;
+		legend_shown_ = show;		
 		update_(__PRETTY_FUNCTION__);
 	}
 
@@ -106,8 +105,6 @@ namespace OpenMS
 		}
 		
 		current_layer_ = getLayerCount()-1;
-    currentPeakData_()->sortSpectra(true);
-    currentPeakData_()->updateRanges(1);
 
 		//Abort if no data points are contained
     if (getCurrentLayer().getPeakData()->size()==0 || getCurrentLayer().getPeakData()->getSize()==0)
@@ -182,10 +179,10 @@ namespace OpenMS
 		if(update_buffer_)
 		{
 			update_buffer_ = false;
-			if(intensity_mode_ == SpectrumCanvas::IM_SNAP)
-			{
-				openglwidget()->updateIntensityScale();
-			}
+      if(intensity_mode_ == SpectrumCanvas::IM_SNAP)
+      {
+        openglwidget()->updateIntensityScale();
+      }
 			openglwidget()->initializeGL(); 
 		}
 		openglwidget()->resizeGL(width(), height());
@@ -363,26 +360,18 @@ namespace OpenMS
 
 	void Spectrum3DCanvas::translateLeft_()
 	{
-		openglwidget()->trans_x_ -= 10;
-		update_(__PRETTY_FUNCTION__);
 	}
 	
 	void Spectrum3DCanvas::translateRight_()
 	{
-		openglwidget()->trans_x_ += 10;
-		update_(__PRETTY_FUNCTION__);
 	}
 	
 	void Spectrum3DCanvas::translateForward_()
 	{
-		openglwidget()->trans_y_ += 10;
-		update_(__PRETTY_FUNCTION__);		
 	}
 	
 	void Spectrum3DCanvas::translateBackward_()
 	{
-		openglwidget()->trans_y_ -= 10;
-		update_(__PRETTY_FUNCTION__);		
 	}
 
 }//namspace

@@ -684,6 +684,8 @@ namespace OpenMS
                 setCursor(Qt::ArrowCursor);
                 return;
             }
+            exp_sptr->sortSpectra(true);
+            exp_sptr->updateRanges(1);
 
             //determine if the data is 1D or 2D
             QSqlQuery result = con.executeQuery(String("SELECT count(id) from DATA_Spectrum where fid_MSExperiment='")+db_id+"' and MSLevel='1'");
@@ -850,6 +852,29 @@ namespace OpenMS
 		}
   }
 
+  std::set<String> TOPPViewBase::getFilenamesOfOpenFiles()
+  {
+    set<String> filename_set;
+    // iterate over all windows
+    QWidgetList wl = ws_->windowList();
+    for(int i=0; i!=ws_->windowList().count(); ++i)
+    {
+      QWidget* w = wl[i];
+      // iterate over all widgets
+      const SpectrumWidget* sw = qobject_cast<const SpectrumWidget*>(w);
+      if (sw!=0)
+      {
+        int lc = sw->canvas()->getLayerCount();
+        // iterate over all layers
+        for (int j=0; j!= lc; ++j)
+        {
+          filename_set.insert(sw->canvas()->getLayer(j).filename);
+        }
+      }
+    }
+    return filename_set;
+  }
+
   void TOPPViewBase::addDataFile(const String& filename, bool show_options, bool add_to_recent, String caption, UInt window_id, Size spectrum_id)
   {
     setCursor(Qt::WaitCursor);
@@ -936,6 +961,10 @@ namespace OpenMS
       return;
     }
 
+    // sort for mz and update ranges of newly loaded data
+    peak_map_sptr->sortSpectra(true);
+    peak_map_sptr->updateRanges(1);
+
     //try to add the data
 		if (caption=="")
 		{
@@ -962,7 +991,7 @@ namespace OpenMS
   }
 
   void TOPPViewBase::addData_(FeatureMapSharedPtrType feature_map, ConsensusMapSharedPtrType consensus_map, vector<PeptideIdentification>& peptides, ExperimentSharedPtrType peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename, const String& caption, UInt window_id, Size spectrum_id)
-  {
+  {      
   	//initialize flags with defaults from the parameters
   	bool as_new_window = true;
   	bool maps_as_2d = ((String)param_.getValue("preferences:default_map_view")=="2d");
@@ -1002,8 +1031,21 @@ namespace OpenMS
 		{
 			dialog.disableDimension(false);
 		}
+
+    // disable layer and merge and allow only window mode if data is already loaded
+    set<String> open_filenames = getFilenamesOfOpenFiles();
+    if (open_filenames.find(filename) != open_filenames.end())
+    {
+      as_new_window = true;
+      dialog.disableLocation(true);
+    }
+
 		//disable cutoff for features and single scans
-		if (mergeable || !is_2D) dialog.disableCutoff(false);
+    if (mergeable || !is_2D)
+    {
+      dialog.disableCutoff(false);
+    }
+
 		//enable merge layers if a feature layer is opened and there are already features layers to merge it to
 		if (mergeable && open_window!=0) //TODO merge
 		{
@@ -1061,7 +1103,7 @@ namespace OpenMS
     {
 	    if (data_type == LayerData::DT_FEATURE) //features
 			{
-				if (!open_window->canvas()->addLayer(feature_map,filename)) return;
+        if (!open_window->canvas()->addLayer(feature_map, filename)) return;
 			}
 			else if (data_type == LayerData::DT_CONSENSUS) //consensus features
 			{
@@ -1077,7 +1119,7 @@ namespace OpenMS
 	      //calculate noise
 	      if (use_mower && is_2D)
 	      {
-                DoubleReal cutoff = estimateNoise_(*(open_window->canvas()->getCurrentLayer().getPeakData()));
+          DoubleReal cutoff = estimateNoise_(*(open_window->canvas()->getCurrentLayer().getPeakData()));
 					//create filter
 					DataFilters::DataFilter filter;
 					filter.field = DataFilters::INTENSITY;

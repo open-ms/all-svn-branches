@@ -329,6 +329,9 @@ namespace OpenMS
       */
       void addData_(FeatureMapSharedPtrType feature_map, ConsensusMapSharedPtrType consensus_map, std::vector<PeptideIdentification>& peptides, ExperimentSharedPtrType peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
 
+      /// unique list of files referenced by all layers
+       std::set<String> getFilenamesOfOpenFiles();
+
     	/// Tries to open a db connection (queries the user for the DB password)
     	void connectToDB_(DBConnection& db);
     	/**

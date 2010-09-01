@@ -944,16 +944,15 @@ namespace OpenMS
 
 		if (layers_.back().type==LayerData::DT_PEAK) //peak data
 		{
-                        currentPeakData_()->sortSpectra(true);
-                        currentPeakData_()->updateRanges(1);
-
 			update_buffer_ = true;
-
 			//Abort if no data points are contained
-                        if (currentPeakData_()->size()==0 || currentPeakData_()->getSize()==0)
+      if (currentPeakData_()->size()==0 || currentPeakData_()->getSize()==0)
 			{
 				layers_.resize(getLayerCount()-1);
-				if (current_layer_!=0) current_layer_ = current_layer_-1;
+        if (current_layer_!=0)
+        {
+          current_layer_ = current_layer_-1;
+        }
 				QMessageBox::critical(this,"Error","Cannot add a dataset that contains no survey scans. Aborting!");
 				return false;
 			}
@@ -967,7 +966,10 @@ namespace OpenMS
       if (getCurrentLayer_().getFeatureMap()->size()==0)
 			{
 				layers_.resize(getLayerCount()-1);
-				if (current_layer_!=0) current_layer_ = current_layer_-1;
+        if (current_layer_!=0)
+        {
+          current_layer_ = current_layer_-1;
+        }
 				QMessageBox::critical(this,"Error","Cannot add an empty dataset. Aborting!");
 				return false;
 			}
@@ -995,7 +997,7 @@ namespace OpenMS
 			update_buffer_ = true;
 
 			//Abort if no data points are contained
-                        if (currentPeakData_()->getChromatograms().size()==0)
+      if (currentPeakData_()->getChromatograms().size()==0)
 			{
 				layers_.resize(getLayerCount()-1);
 				if (current_layer_!=0) current_layer_ = current_layer_-1;

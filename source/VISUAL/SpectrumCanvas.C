@@ -377,7 +377,6 @@ namespace OpenMS
   bool SpectrumCanvas::addLayer(ExperimentSharedPtrType map, const String& filename)
 	{	
     layers_.resize(layers_.size()+1);
-
 		layers_.back().param = param_;
 		layers_.back().filename = filename;                
     layers_.back().getPeakData() = map;
@@ -416,8 +415,8 @@ namespace OpenMS
 		layers_.back().param = param_;
 		layers_.back().filename = filename;
     layers_.back().getFeatureMap() = map;
+    cout << "bla " << layers_.back().getFeatureMap()->size() << endl;
 		layers_.back().type = LayerData::DT_FEATURE;
-
 		return finishAdding_();
 	}
 

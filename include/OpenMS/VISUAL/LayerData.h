@@ -119,7 +119,6 @@ namespace OpenMS
           type(DT_UNKNOWN),
           name(),
           filename(),
-
           peptides(),
           current_spectrum(0),
           param(),
@@ -129,9 +128,9 @@ namespace OpenMS
           modifiable(false),
           modified(false),
           label(L_NONE),
-          features(),
-          consensus(),
-          peaks()
+          features(new FeatureMapType()),
+          consensus(new ConsensusMapType()),
+          peaks(new ExperimentType())
       {
         annotations_1d.resize(1);
       }
@@ -143,31 +142,31 @@ namespace OpenMS
       }
 
       /// Returns a const reference to the current feature data
-      inline const FeatureMapSharedPtrType getFeatureMap() const
+      inline const FeatureMapSharedPtrType& getFeatureMap() const
       {
         return features;
       }
 
       /// Returns a const reference to the current feature data
-      inline FeatureMapSharedPtrType getFeatureMap()
+      inline FeatureMapSharedPtrType& getFeatureMap()
       {
         return features;
       }
 
       /// Returns a const reference to the consensus feature data
-      inline const ConsensusMapSharedPtrType getConsensusMap() const
+      inline const ConsensusMapSharedPtrType& getConsensusMap() const
       {
         return consensus;
       }
 
       /// Returns current consensus map (mutable)
-      inline ConsensusMapSharedPtrType getConsensusMap()
+      inline ConsensusMapSharedPtrType& getConsensusMap()
       {
         return consensus;
       }
 
       /// Returns a const reference to the current peak data
-      inline const ExperimentSharedPtrType getPeakData() const
+      inline const ExperimentSharedPtrType& getPeakData() const
       {
         return peaks;
       }

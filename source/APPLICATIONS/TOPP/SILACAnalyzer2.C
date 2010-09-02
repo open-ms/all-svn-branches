@@ -146,6 +146,11 @@ bool clusterCmp( DataPoint a, DataPoint b ) {
 	return a.cluster_id > b.cluster_id;
 }
 
+bool clusterCompare( Cluster v1, Cluster v2) {
+    return v1.size() > v2.size();
+  }
+
+
 class TOPPSILACAnalyzer2
 : public TOPPBase
 {
@@ -460,6 +465,8 @@ public:
 
 		}
 
+		std::sort(clusters.begin(),clusters.end(),clusterCompare);
+
 
 		if (getFlag_("silac_debug"))
 		{
@@ -555,7 +562,7 @@ public:
 				ConsensusFeature consensus_feature;
 				consensus_feature.setRT(rt);
 				consensus_feature.setMZ(mz);
-				consensus_feature.setIntensity(intensities[0][0]);
+				consensus_feature.setIntensity(max_intensities[0]);
 				consensus_feature.setCharge(charge);
 				consensus_feature.setQuality(0);
 
@@ -620,7 +627,11 @@ public:
 					cluster_point.setMetaValue("Cluster id",it->cluster_id);
 					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
 					if (getFlag_("silac_debug"))
+					{
+						cluster_point.setMetaValue("Cluster size",it->cluster_size);
 						cluster_point.setMetaValue("feature_id",it->feature_id);
+					}
+
 					all_cluster_points.push_back(cluster_point);
 				}
 			}
@@ -628,201 +639,7 @@ public:
 			all_cluster_points.sortByPosition();
 		}
 
-//		for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin();data_it!=data.end();++data_it)
-//				{
-//					DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
-//					QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
-//					c.setLogType(log_type_);
-//					std::vector<Cluster> act_clusters=c.performClustering();
-//					clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
-//				}
-//
-//		if (out!="")
-//				{
-//					Size i=0;
-//					for(std::vector<Cluster>::iterator cluster_it=clusters.begin();cluster_it!=clusters.end();++cluster_it)
-//					{
-//						DoubleReal rt = 0.0;
-//						DoubleReal mz = 0.0;
-//						DoubleReal total_intensity = 0.0;
-//						DoubleReal int_l = 0.0;
-//						DoubleReal int_m = 0.0;
-//						DoubleReal int_h = 0.0;
-//						Int silac_type=(*(cluster_it->begin()))->silac_type;
-//						Int charge=(*(cluster_it->begin()))->charge;
-//						DoubleReal envelope_distance_light_heavy=(*(cluster_it->begin()))->envelope_distance_light_heavy;
-//						DoubleReal envelope_distance_light_medium=(*(cluster_it->begin()))->envelope_distance_light_medium;
-//						// intensity vectors used for linear regression
-//						std::vector<DoubleReal> i1(3*cluster_it->size());
-//						std::vector<DoubleReal> i2(3*cluster_it->size());
-//						std::vector<DoubleReal> i3(3*cluster_it->size());
-//						UInt j=0;
-//						for (Cluster::iterator el_it=cluster_it->begin();el_it!=cluster_it->end();++el_it)
-//						{
-//							std::vector<DoubleReal> intensities=(*el_it)->intensities;
-//							total_intensity+=intensities[0];
-//							rt += intensities[0]*(*el_it)->rt;
-//							i1[3*j] = intensities[0];
-//							i1[3*j+1] = intensities[1];
-//							i1[3*j+2] = intensities[2];
-//							i2[3*j] = intensities[3];
-//							i2[3*j+1] = intensities[4];
-//							i2[3*j+2] = intensities[5];
-//							if ((*el_it)->silac_type == DataPoint::TRIPLE)
-//							{
-//								i3[3*j] = intensities[6];
-//								i3[3*j+1] = intensities[7];
-//								i3[3*j+2] = intensities[8];
-//							}
-//
-//							std::pair<DoubleReal,DoubleReal> low_maximum=clusterMaximum(**el_it,0,1,2);
-//							if (low_maximum.second > int_l)
-//							{
-//								int_l=low_maximum.second;
-//								mz=low_maximum.first;
-//							}
-//
-//							if ((*el_it)->silac_type == DataPoint::DOUBLE)
-//							{
-//								std::pair<DoubleReal,DoubleReal> heavy_maximum=clusterMaximum(**el_it,3,4,5);
-//								if (heavy_maximum.second > int_h)
-//								{
-//									int_h=heavy_maximum.second;
-//									mz=heavy_maximum.first;
-//								}
-//							}
-//							else
-//							{
-//								std::pair<DoubleReal,DoubleReal> medium_maximum=clusterMaximum(**el_it,3,4,5);
-//								if (medium_maximum.second > int_l)
-//								{
-//									int_m=medium_maximum.second;
-//									mz=medium_maximum.first;
-//								}
-//								std::pair<DoubleReal,DoubleReal> heavy_maximum=clusterMaximum(**el_it,6,7,8);
-//								if (heavy_maximum.second > int_l)
-//								{
-//									int_h=heavy_maximum.second;
-//									mz=heavy_maximum.first;
-//								}
-//							}
-//							++j;
-//						}
-//						rt /= total_intensity; // average retention time
-//
-//						Math::LinearRegression linear_reg_light_heavy;
-//						FeatureHandle handle;
-//						if (silac_type==DataPoint::TRIPLE)
-//						{
-//							linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i3.begin());
-//							Math::LinearRegression linear_reg_light_medium;
-//							linear_reg_light_medium.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
-//							//create consensus feature for light medium SILAC pair
-//							ConsensusFeature pair_light_medium;
-//							pair_light_medium.setRT(rt);
-//							pair_light_medium.setMZ(mz);
-//							pair_light_medium.setIntensity(linear_reg_light_medium.getSlope());
-//							pair_light_medium.setCharge(charge);
-//							pair_light_medium.setQuality(linear_reg_light_medium.getRSquared());
-//							handle.setRT(rt);
-//							handle.setMZ(mz);
-//							handle.setIntensity(int_l);
-//							handle.setCharge(charge);
-//							handle.setMapIndex(0);
-//							handle.setUniqueId(i);
-//							pair_light_medium.insert(handle);
-//							handle.setRT(rt);
-//							handle.setMZ(mz+envelope_distance_light_medium);
-//							handle.setIntensity(int_m);
-//							handle.setCharge(charge);
-//							handle.setMapIndex(1);
-//							handle.setUniqueId(i);
-//							pair_light_medium.insert(handle);
-//							all_pairs1.push_back(pair_light_medium);
-//						}
-//						else
-//						{
-//							linear_reg_light_heavy.computeRegressionNoIntercept(0.95,i1.begin(),i1.end(),i2.begin());
-//						}
-//						//create consensus feature for light heavy SILAC pair
-//						ConsensusFeature pair_light_heavy;
-//						pair_light_heavy.setRT(rt);
-//						pair_light_heavy.setMZ(mz);
-//						pair_light_heavy.setIntensity(linear_reg_light_heavy.getSlope());
-//						pair_light_heavy.setCharge(charge);
-//						pair_light_heavy.setQuality(linear_reg_light_heavy.getRSquared());
-//						handle.setRT(rt);
-//						handle.setMZ(mz);
-//						handle.setIntensity(int_l);
-//						handle.setCharge(charge);
-//						handle.setMapIndex(0);
-//						handle.setUniqueId(i);
-//						pair_light_heavy.insert(handle);
-//						handle.setRT(rt);
-//						handle.setMZ(mz+envelope_distance_light_heavy);
-//						handle.setIntensity(int_h);
-//						handle.setCharge(charge);
-//						handle.setMapIndex(1);
-//						handle.setUniqueId(i);
-//						pair_light_heavy.insert(handle);
-//						all_pairs1.push_back(pair_light_heavy);
-//						++i;
-//					}
-//				}
-//
-//				//--------------------------------------------------------------
-//				//create features (for visualization)
-//				//--------------------------------------------------------------
-//				if (out_visual!="")
-//				{
-//					std::vector<String> colors;
-//					// 16 HTML colors
-//					colors.push_back("#00FFFF");
-//					colors.push_back("#000000");
-//					colors.push_back("#0000FF");
-//					colors.push_back("#FF00FF");
-//					colors.push_back("#008000");
-//					colors.push_back("#808080");
-//					colors.push_back("#00FF00");
-//					colors.push_back("#800000");
-//					colors.push_back("#000080");
-//					colors.push_back("#808000");
-//					colors.push_back("#800080");
-//					colors.push_back("#FF0000");
-//					colors.push_back("#C0C0C0");
-//					colors.push_back("#008080");
-//					colors.push_back("#FFFF00");
-//					for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
-//					{
-//						for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
-//						{
-//							//visualize the light variant
-//							Feature cluster_point;
-//							cluster_point.setRT(it->rt);
-//							cluster_point.setMZ(it->mz);
-//							cluster_point.setIntensity(it->intensities[0]);
-//							cluster_point.setCharge(it->charge);
-//							cluster_point.setOverallQuality(it->quality);
-//							cluster_point.setQuality(0,it->quality);
-//							if (it->silac_type==2)
-//								cluster_point.setMetaValue("SILAC type","double");
-//							else if (it->silac_type==3)
-//								cluster_point.setMetaValue("SILAC type","triple");
-//							cluster_point.setMetaValue("Mass shift (l/h)",it->envelope_distance_light_heavy);
-//							cluster_point.setMetaValue("Cluster id",it->cluster_id);
-//							cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
-//							if (getFlag_("silac_debug"))
-//								cluster_point.setMetaValue("feature_id",it->feature_id);
-//							all_cluster_points1.push_back(cluster_point);
-//						}
-//					}
-//					// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
-//					all_cluster_points1.sortByPosition();
-//				}
 
-
-		//Sort data points: High cluster numbers first
-		//						std::sort(data.begin(),data.end(),clusterCmp);
 
 
 		//-------------------------------------------------------------
@@ -830,14 +647,19 @@ public:
 		//-------------------------------------------------------------
 		// strings repeatedly used in debug output
 
+
 		if (getFlag_("silac_debug"))
 		{
 //			// names of dat files
-//			String debug_clusters_dat = debug_trunk + "_clusters.dat";
+			String debug_clusters_dat = debug_trunk + "_cluster_sizes.dat";
 //
 //			// write all cluster data points to *_clusters.dat
 //
-//			std::ofstream stream_clusters(debug_clusters_dat.c_str());
+			std::ofstream stream_clusters(debug_clusters_dat.c_str());
+			for(std::vector<Cluster>::iterator cluster_it=clusters.begin();cluster_it!=clusters.end();++cluster_it)
+			{
+				stream_clusters << cluster_it->size() << std::endl;
+			}
 //			stream_clusters << "cluster_id rt mz int" << std::endl;
 //			Int current_id = -1;
 //			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
@@ -849,7 +671,8 @@ public:
 //					current_id = it->cluster_id;
 //				}
 //			}
-//			stream_clusters.close();
+
+			stream_clusters.close();
 
 			String debug_silhouettes_dat = debug_trunk + "_silhouettes.dat";
 			std::ofstream stream_silhouettes(debug_silhouettes_dat.c_str());

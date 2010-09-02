@@ -38,7 +38,7 @@ DataPoint::DataPoint()
 	cluster_id = 0;
 	charge=1;
 	quality=0;
-
+	cluster_size=0;
 }
 DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 {
@@ -48,6 +48,7 @@ DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 	charge=copyin.charge;
 	quality=copyin.quality;
 	mass_shifts=copyin.mass_shifts;
+	cluster_size=copyin.cluster_size;
 }
 
 DataPoint& DataPoint::operator=(const DataPoint &rhs)
@@ -58,6 +59,7 @@ DataPoint& DataPoint::operator=(const DataPoint &rhs)
 	this->feature_id=rhs.feature_id;
 	this->cluster_id = rhs.cluster_id;
 	this->mass_shifts = rhs.mass_shifts;
+	this->cluster_size = rhs.cluster_size;
 	return *this;
 }
 

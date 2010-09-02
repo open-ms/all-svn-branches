@@ -61,6 +61,8 @@ public:
 	 * @brief ID number of the cluster the data point belongs to
 	 */
 	Int cluster_id;
+
+	Int cluster_size;
 	/**
 	 * @brief ID of the data point
 	 */

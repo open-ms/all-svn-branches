@@ -254,7 +254,11 @@ bool SILACFilter::checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& ex
 	std::vector<DoubleReal> act_intensities;
 	for (std::vector<DoubleReal>::const_iterator position_it=exact_positions.begin();position_it!=exact_positions.end();++position_it)
 	{
-		act_intensities.push_back(gsl_spline_eval (SILACFiltering::spline_spl, act_mz+*position_it, SILACFiltering::acc_spl));
+		DoubleReal act_intensity=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+*position_it, SILACFiltering::acc_spl);
+		if (act_intensity<0)
+			act_intensities.push_back(0.0);
+		else
+			act_intensities.push_back(act_intensity);
 	}
 
 	DoubleReal area_width=getPeakWidth(act_mz);
@@ -262,7 +266,7 @@ bool SILACFilter::checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& ex
 	{
 		std::vector<DoubleReal> first_values;
 		std::vector<DoubleReal> second_values;
-		for (DoubleReal pos=act_mz-0.7*area_width;pos<=act_mz+0.7*area_width;pos+=0.07*area_width)
+		for (DoubleReal pos=act_mz-0.7*area_width;pos<=act_mz+0.7*area_width;pos+=0.14*area_width)
 		{
 			DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl);
 			DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+exact_positions[i], SILACFiltering::acc_spl);

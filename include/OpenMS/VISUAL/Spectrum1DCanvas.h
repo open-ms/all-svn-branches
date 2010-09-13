@@ -137,6 +137,12 @@ namespace OpenMS
 			/// Sets current spectrum index of current layer to @p index
 			void activateSpectrum(Size index, bool repaint=true);
 			
+  signals:
+      /// Requests to display all spectra in 2D plot
+      void showCurrentPeaksAs2D();
+      /// Requests to display all spectra in 3D plot
+      void showCurrentPeaksAs3D();
+
 		public slots:
 			// Docu in base class
 			void activateLayer(Size layer_index);

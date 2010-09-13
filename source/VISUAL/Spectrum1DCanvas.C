@@ -1192,7 +1192,7 @@ namespace OpenMS
 		QMenu* context_menu = new QMenu(this);
 		QAction* result = 0;
 		QAction* new_action = 0;
-		
+
 		Annotations1DContainer& annots_1d = getCurrentLayer_().getCurrentAnnotations();
 		Annotation1DItem* annot_item = annots_1d.getItemAt(e->pos());
 		if (annot_item)
@@ -1271,7 +1271,10 @@ namespace OpenMS
 			
 			context_menu->addMenu(save_menu);
 			context_menu->addMenu(settings_menu);
-	
+
+      context_menu->addAction("Switch to 2D view");
+      context_menu->addAction("Switch to 3D view");
+
 			//add external context menu
 			if (context_add_)
 			{
@@ -1345,7 +1348,7 @@ namespace OpenMS
 					QString text = QInputDialog::getText(this, "Add peak annotation", "Enter text:", QLineEdit::Normal, "", &ok);
 					if (ok && !text.isEmpty())
 					{
-                                                PeakType peak = near_peak.getPeak(*getCurrentLayer().getPeakData());
+            PeakType peak = near_peak.getPeak(*getCurrentLayer().getPeakData());
 						PointType position(peak.getMZ(), peak.getIntensity());
 						Annotation1DItem* item = new Annotation1DPeakItem(position, text);
 						getCurrentLayer_().getCurrentAnnotations().push_front(item);
@@ -1356,7 +1359,13 @@ namespace OpenMS
 				else if (result->text()=="Reset alignment")
 				{
 					resetAlignment();
-				}
+        } else if (result->text()=="Switch to 2D view")
+        {
+          emit showCurrentPeaksAs2D();
+        } else if  (result->text()=="Switch to 3D view")
+        {
+          emit showCurrentPeaksAs3D();
+        }
 			}
 		}
 		e->accept();
@@ -1415,7 +1424,7 @@ namespace OpenMS
 		  }
 		  else
 		  {
-                                FileHandler().storeExperiment(file_name,*layer.getPeakData());
+        FileHandler().storeExperiment(file_name,*layer.getPeakData());
 		  }
 		}
 	}
@@ -1448,7 +1457,7 @@ namespace OpenMS
 		overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
 		
 		resetZoom();
-		modificationStatus_(i, false);
+    modificationStatus_(i, false);
 	}
 
   ///Go forward in zoom history

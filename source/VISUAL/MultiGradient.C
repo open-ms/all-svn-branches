@@ -145,9 +145,7 @@ namespace OpenMS
 			map<UInt,QColor>::const_iterator it = pos_col_.upper_bound(Int(position));
 			--it;
 			return it->second;
-		}
-		
-		
+		}		
 	}
 
 	QColor MultiGradient::interpolatedColorAt(DoubleReal position, DoubleReal min, DoubleReal max) const

@@ -415,7 +415,6 @@ namespace OpenMS
 		layers_.back().param = param_;
 		layers_.back().filename = filename;
     layers_.back().getFeatureMap() = map;
-    cout << "bla " << layers_.back().getFeatureMap()->size() << endl;
 		layers_.back().type = LayerData::DT_FEATURE;
 		return finishAdding_();
 	}
@@ -427,7 +426,6 @@ namespace OpenMS
 		layers_.back().filename = filename;
     layers_.back().getConsensusMap() = map;
 		layers_.back().type = LayerData::DT_CONSENSUS;
-
 		return finishAdding_();
 	}
 
@@ -439,7 +437,6 @@ namespace OpenMS
 		layers_.back().filename = filename;
 		layers_.back().peptides.swap(peptides);
 		layers_.back().type = LayerData::DT_IDENT;
-
 		return finishAdding_();
 	}
 
@@ -721,18 +718,18 @@ namespace OpenMS
   	if (layer.type==LayerData::DT_PEAK)
   	{
 			const AreaType& area = getVisibleArea();
-                        const ExperimentType& peaks = *layer.getPeakData();
+      const ExperimentType& peaks = *layer.getPeakData();
 			//copy experimental settings
 			map.ExperimentalSettings::operator=(peaks);
 			//reserve space for the correct number of spectra in RT range
-                        ExperimentType::ConstIterator begin = layer.getPeakData()->RTBegin(area.minPosition()[1]);
-                        ExperimentType::ConstIterator end = layer.getPeakData()->RTEnd(area.maxPosition()[1]);
-			
+      ExperimentType::ConstIterator begin = layer.getPeakData()->RTBegin(area.minPosition()[1]);
+      ExperimentType::ConstIterator end = layer.getPeakData()->RTEnd(area.maxPosition()[1]);
+
 			//Exception for Spectrum1DCanvas, here we copy the currently visualized spectrum
 			bool is_1d = (getName()=="Spectrum1DCanvas");
 			if (is_1d)
 			{
-                                begin = layer.getPeakData()->begin() + layer.current_spectrum;
+        begin = layer.getPeakData()->begin() + layer.current_spectrum;
 				end = begin+1;
 			}
 
@@ -924,7 +921,7 @@ namespace OpenMS
   	//if the meta data was modified, set the flag
     if (modifiable && dlg.exec())
     {
-			modificationStatus_(activeLayerIndex(), true);
+      modificationStatus_(activeLayerIndex(), true);
     }
   }
 	
@@ -944,16 +941,16 @@ namespace OpenMS
 		}
 	}
 
-	void SpectrumCanvas::modificationStatus_(Size layer_index, bool modified)
+  void SpectrumCanvas::modificationStatus_(Size layer_index, bool modified)
 	{
 		LayerData& layer = getLayer_(layer_index);
 		if (layer.modified!=modified)
 		{
 			layer.modified = modified;
-			emit layerModficationChange(activeLayerIndex(), modified);
+      cout << "emit: layerModificationChange" <<endl;
+			emit layerModficationChange(activeLayerIndex(), modified);      
 		}
 	}
-
 
 	void SpectrumCanvas::drawCoordinates_(QPainter& painter, const PeakIndex& peak, bool print_rt)
 	{
@@ -981,7 +978,7 @@ namespace OpenMS
 		}
 		else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
 		{
-      mz = peak.getFeature(*getCurrentLayer().getFeatureMap()).getMZ();
+      mz = peak.getFeature(*getCurrentLayer().getConsensusMap()).getMZ();
       rt = peak.getFeature(*getCurrentLayer().getConsensusMap()).getRT();
       it = peak.getFeature(*getCurrentLayer().getConsensusMap()).getIntensity();
       charge  = peak.getFeature(*getCurrentLayer().getConsensusMap()).getCharge();

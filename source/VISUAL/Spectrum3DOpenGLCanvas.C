@@ -49,14 +49,14 @@ namespace OpenMS
 		setMouseTracking(TRUE);
 		setFocusPolicy(Qt::StrongFocus);
 	  
-	  corner_=100.0;  
-	  near_=0.0;  
-	  far_=600.0;
+    corner_= 100.0;
+    near_= 0.0;
+    far_= 600.0;
 	  zoom_= 1.5; 
-	  xrot_=220;
+    xrot_= 220;
 	  yrot_ = 220;
-	  zrot_=0;
-	  trans_x_ =0.0;
+    zrot_= 0;
+    trans_x_ = 0.0;
 	  trans_y_ = 0.0;
 	}
 	  

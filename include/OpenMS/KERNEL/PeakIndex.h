@@ -87,6 +87,10 @@ namespace OpenMS
 		template <typename FeatureMapType>
 		const typename FeatureMapType::value_type& getFeature(const FeatureMapType& map) const
 		{
+      if (peak >= map.size())
+      {
+        std::cout << "Fehler" << std::endl;
+      }
 		  OPENMS_PRECONDITION(peak<map.size(),"Feature index exceeds map size");
 			return map[peak];
 		}

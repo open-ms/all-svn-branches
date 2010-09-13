@@ -56,7 +56,7 @@ namespace OpenMS
     defaults_.setMinInt("dot:shade_mode",0);
     defaults_.setMaxInt("dot:shade_mode",1);
     defaults_.setValue("dot:gradient", "Linear|0,#ffea00;6,#ff0000;14,#aa00ff;23,#5500ff;100,#000000", "Peak color gradient.");
-    defaults_.setValue("dot:interpolation_steps",200, "Interpolation steps for peak color gradient precalculation.");
+    defaults_.setValue("dot:interpolation_steps",1000, "Interpolation steps for peak color gradient precalculation.");
     defaults_.setMinInt("dot:interpolation_steps",1);
     defaults_.setMaxInt("dot:interpolation_steps",1000);
     defaults_.setValue("dot:line_width",2,"Line width for peaks.");
@@ -355,7 +355,7 @@ namespace OpenMS
     resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
 		openglwidget()->recalculateDotGradient_(i);
     intensityModeChange_();
-		modificationStatus_(i, false);
+    modificationStatus_(i, false);
 	}
 
 	void Spectrum3DCanvas::translateLeft_()

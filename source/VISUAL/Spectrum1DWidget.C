@@ -56,8 +56,12 @@ namespace OpenMS
 		flipped_y_axis_->setAllowShortNumbers(true);
 		flipped_y_axis_->setMinimumWidth(50);
 		flipped_y_axis_->hide();
-		
+
 		spacer_ = new QSpacerItem(0,0);
+
+     //Delegate signals
+    connect(canvas(), SIGNAL(showCurrentPeaksAs2D()), this, SIGNAL(showCurrentPeaksAs2D()));
+    connect(canvas(), SIGNAL(showCurrentPeaksAs3D()), this, SIGNAL(showCurrentPeaksAs3D()));
 	}
 	
 	void Spectrum1DWidget::recalculateAxes_()

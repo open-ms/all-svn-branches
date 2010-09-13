@@ -93,7 +93,7 @@ namespace OpenMS
   {
       Q_OBJECT
       
-      friend class TestTOPPView;
+    friend class TestTOPPView;
       
     public:
     	///@name Type definitions
@@ -186,6 +186,8 @@ namespace OpenMS
       void closeFile();
       /// updates the toolbar
       void updateToolBar();
+      /// updates entries of loaded datas
+      void updateDataBar();
       /// adapts the layer bar to the active window
       void updateLayerBar();
       /// adapts the spectrum bar to the active window
@@ -217,10 +219,12 @@ namespace OpenMS
       void showSpectrumGenerationDialog();
       /// Shows the spectrum alignment dialog
       void showSpectrumAlignmentDialog();
+      /// Shows the spectrum with index @p index of the active layer in 1D
+      void showSpectrumAs1D(int index);
+      /// Shows the current peak data of the active layer in 2D
+      void showCurrentPeaksAs2D();
       /// Shows the current peak data of the active layer in 3D
       void showCurrentPeaksAs3D();
-			/// Shows the spectrum with index @p index of the active layer in 1D
-			void showSpectrumAs1D(int index);
       /// Shows the 'About' dialog
       void showAboutDialog();
       /// Saves the whole current layer data
@@ -357,9 +361,13 @@ namespace OpenMS
       Spectrum3DWidget* active3DWindow_() const;
       ///Estimates the noise by evaluating 10 random scans of MS level 1
       float estimateNoise_(const ExperimentType& exp);
+      Int countZeros_(const ExperimentType& exp);
 
       /// Layer management widget
       QListWidget* layer_manager_;
+
+      /// data management widget (shows loaded files)
+      QListWidget* data_manager_view_;
 
       /// Watcher that tracks file changes (in order to update the data in the different views)
       FileWatcher* watcher_;
@@ -440,7 +448,7 @@ namespace OpenMS
 			//@}
 
 
-      /// @name TOPP tool executio
+      /// @name TOPP tool execution
       //@{
 			/// Runs the TOPP tool according to the information in topp_
 			void runTOPPTool_();

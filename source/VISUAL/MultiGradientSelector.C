@@ -46,7 +46,7 @@ namespace OpenMS
 	MultiGradientSelector::MultiGradientSelector( QWidget * parent) 
 		: QWidget(parent), 
 			gradient_(), 
-			margin_(5), 
+      margin_(5),
 			gradient_area_width_(0), 
 			lever_area_height_(17), 
 			selected_(-1), 

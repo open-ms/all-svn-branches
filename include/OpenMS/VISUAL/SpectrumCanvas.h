@@ -839,7 +839,7 @@ namespace OpenMS
 		virtual void update_(const char* caller_name);
 		
 		///Takes all actions necessary when the modification status of a layer changes (signals etc.)
-		void modificationStatus_(Size layer_index, bool modified);
+    void modificationStatus_(Size layer_index, bool modified);
 		
 		/// Whether to recalculate the data in the buffer when repainting
 		bool update_buffer_;

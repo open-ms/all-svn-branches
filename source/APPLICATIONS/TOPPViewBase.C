@@ -2754,7 +2754,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 			}
 			else
 			{
-                                f.store(topp_.file_name+"_in",*layer.getPeakData());
+        f.store(topp_.file_name+"_in",*layer.getPeakData());
 			}
 		}
 		else if (layer.type==LayerData::DT_FEATURE)

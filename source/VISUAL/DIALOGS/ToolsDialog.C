@@ -43,6 +43,7 @@
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithm.h>
 #include <OpenMS/FILTERING/TRANSFORMERS/PreprocessingFunctor.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinder.h>
+#include <OpenMS/APPLICATIONS/TOPPASBase.h>
 
 using namespace std;
 
@@ -59,24 +60,38 @@ namespace OpenMS
 
 		label=new QLabel("TOPP tool:");
 		main_grid->addWidget(label,0,0);
-		QStringList list;
-				
-		if (type==LayerData::DT_PEAK)
-		{
-			list<<"FileFilter"<<"FileInfo"<<"NoiseFilter"<<"BaselineFilter"<<"PeakPicker"<<"Resampler"<<"SpectraFilter"<<"MapNormalizer"<<"InternalCalibration"<<"TOFCalibration"<<"FeatureFinder"<<"SILACAnalyzer"<<"ITRAQAnalyzer";
-		}
-		else if (type==LayerData::DT_FEATURE)
-		{
-			list<<"FileFilter"<<"FileConverter"<<"FileInfo"<<"Decharger"<<"FeatureLinker";
-		}
-		else if (type==LayerData::DT_CONSENSUS)
-		{
-			list<<"FileFilter"<<"FileConverter"<<"FileInfo";
-		}
-		else if (type==LayerData::DT_CHROMATOGRAM)
-		{
-		  //TODO CHROM
-		}
+
+    // set file extension of temp file depending on current layer type
+    String in_file_extension = "";
+    switch(type)
+    {
+      case LayerData::DT_PEAK: in_file_extension = ".mzML"; break;
+      case LayerData::DT_FEATURE: in_file_extension = ".featureXML"; break;
+      case LayerData::DT_CONSENSUS: in_file_extension = ".consensusXML"; break;
+      case LayerData::DT_CHROMATOGRAM: /* TODO: CHROM */ break;
+      default:        
+      break;
+    }
+
+    QStringList list;
+    // Map: tool name -> types (e.g. "PeakPicker" -> "wavelet" "centroided")
+    Map<String, StringList> tools_list = TOPPBase::getToolList();
+
+    for(Map<String, StringList>::iterator it = tools_list.begin(); it != tools_list.end(); ++it)
+    {
+      list.append(it->first.toQString());
+    }
+/*
+    QVector<TOPPASToolVertex::IOInfo> source_output_files;
+    QVector<TOPPASToolVertex::IOInfo> target_input_files;
+    source_tool->getOutputParameters(source_output_files);
+    const TOPPASToolVertex::IOInfo& source_param = source_output_files[source_param_index];
+    StringList source_param_types = source_param.valid_types;
+    target_tool->getInputParameters(target_input_files);
+    const TOPPASToolVertex::IOInfo& target_param = target_input_files[target_param_index];
+    StringList target_param_types = target_param.valid_types;
+*/
+
 		//sort list alphabetically
 		list.sort();
 		list.push_front("<select tool>");

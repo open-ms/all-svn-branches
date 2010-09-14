@@ -330,13 +330,13 @@ namespace OpenMS
 
 	TOPPASEdge::EdgeStatus TOPPASEdge::getToolToolStatus_(TOPPASToolVertex* source_tool, int source_param_index, TOPPASToolVertex* target_tool, int target_param_index)
 	{
-		QVector<TOPPASToolVertex::IOInfo> source_output_files;
-		QVector<TOPPASToolVertex::IOInfo> target_input_files;
+    QVector<TOPPIOInfo> source_output_files;
+    QVector<TOPPIOInfo> target_input_files;
 		source_tool->getOutputParameters(source_output_files);
-		const TOPPASToolVertex::IOInfo& source_param = source_output_files[source_param_index];
+    const TOPPIOInfo& source_param = source_output_files[source_param_index];
 		StringList source_param_types = source_param.valid_types;
 		target_tool->getInputParameters(target_input_files);
-		const TOPPASToolVertex::IOInfo& target_param = target_input_files[target_param_index];
+    const TOPPIOInfo& target_param = target_input_files[target_param_index];
 		StringList target_param_types = target_param.valid_types;
 		
 		if (source_param_types.size() == 0 || target_param_types.size() == 0)
@@ -387,9 +387,9 @@ namespace OpenMS
 			return ES_NOT_READY_YET;
 		}
 
-		QVector<TOPPASToolVertex::IOInfo> target_input_files;
+    QVector<TOPPIOInfo> target_input_files;
 		target_tool->getInputParameters(target_input_files);
-		const TOPPASToolVertex::IOInfo& target_param = target_input_files[target_param_index];
+    const TOPPIOInfo& target_param = target_input_files[target_param_index];
 		StringList target_param_types = target_param.valid_types;
 
 		if (target_param_types.empty())

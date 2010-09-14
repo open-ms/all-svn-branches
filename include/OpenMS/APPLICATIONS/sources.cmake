@@ -28,6 +28,8 @@ INIFileEditorWindow.h
 TOPPBase.h
 TOPPViewBase.h
 TOPPASBase.h
+TOPPToolParamHelper.h
+TOPPIOInfo.h
 )
 
 ### add path to the filenames

@@ -1881,7 +1881,7 @@ namespace OpenMS
 		for (VertexIterator it = verticesBegin(); it != verticesEnd(); ++it)
 		{
 			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>(*it);
-			if (ttv && ttv->refreshParameters())
+      if (ttv && ttv->refreshParameters())
 			{
 				change = true;
 			}

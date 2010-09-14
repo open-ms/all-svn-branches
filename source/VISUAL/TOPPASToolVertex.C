@@ -32,6 +32,7 @@
 #include <OpenMS/SYSTEM/File.h>
 #include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/VISUAL/TOPPASOutputFileListVertex.h>
+#include <OpenMS/APPLICATIONS/TOPPToolParamHelper.h>
 
 #include <QtGui/QGraphicsScene>
 #include <QtGui/QMessageBox>
@@ -47,27 +48,27 @@ namespace OpenMS
 	
 	TOPPASToolVertex::TOPPASToolVertex()
 		:	TOPPASVertex(),
-			name_(),
-			type_(),
+      tool_name_(),
+      tool_type_(),
 			param_(),
 			finished_(false),
 			progress_color_(Qt::gray),
 			iteration_nr_(0),
 			input_list_length_(1)
 		{
-		pen_color_ = Qt::black;
-		brush_color_ = QColor(245,245,245);
-		if (initParam_()) {}
-		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
-		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
-		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
-		connect (this, SIGNAL(toolCrashed()), this, SLOT(toolCrashedSlot()));
-	}
+      pen_color_ = Qt::black;
+      brush_color_ = QColor(245,245,245);
+      if (TOPPToolParamHelper::initParam(param_, String(), String(), String())) {}
+      connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
+      connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
+      connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
+      connect (this, SIGNAL(toolCrashed()), this, SLOT(toolCrashedSlot()));
+    }
 	
 	TOPPASToolVertex::TOPPASToolVertex(const String& name, const String& type, const String& tmp_path)
 		: TOPPASVertex(),
-			name_(name),
-			type_(type),
+      tool_name_(name),
+      tool_type_(type),
 			tmp_path_(tmp_path),
 			param_(),
 			finished_(false),
@@ -77,7 +78,7 @@ namespace OpenMS
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
-		if (initParam_()) {}
+    if (TOPPToolParamHelper::initParam(param_, String(), String(), String())) {}
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
 		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
@@ -86,8 +87,8 @@ namespace OpenMS
 	
 	TOPPASToolVertex::TOPPASToolVertex(const TOPPASToolVertex& rhs)
 		:	TOPPASVertex(rhs),
-			name_(rhs.name_),
-			type_(rhs.type_),
+      tool_name_(rhs.tool_name_),
+      tool_type_(rhs.tool_type_),
 			tmp_path_(rhs.tmp_path_),
 			param_(rhs.param_),
 			finished_(rhs.finished_),
@@ -113,8 +114,8 @@ namespace OpenMS
 		TOPPASVertex::operator=(rhs);
 		
 		param_ = rhs.param_;
-		name_ = rhs.name_;
-		type_ = rhs.type_;
+    tool_name_ = rhs.tool_name_;
+    tool_type_ = rhs.tool_type_;
 		tmp_path_ = rhs.tmp_path_;
 		finished_ = rhs.finished_;
 		progress_color_ = rhs.progress_color_;
@@ -124,64 +125,7 @@ namespace OpenMS
 		return *this;
 	}
 	
-	bool TOPPASToolVertex::initParam_(const QString& old_ini_file)
-	{
-		Param tmp_param;
-		QString ini_file = QDir::tempPath() + QDir::separator() + "TOPPAS_" + name_.toQString() + "_";
-		if (type_ != "")
-		{
-			ini_file += type_.toQString() + "_";
-		}
-		ini_file += File::getUniqueName().toQString() + "_tmp.ini";
-		
-		String call = name_ + " -write_ini " + ini_file;
-		if (type_ != "")
-		{
-			call += " -type " + type_;
-		}
-		if (old_ini_file != "")
-		{
-			if (!File::exists(old_ini_file))
-			{
-				QMessageBox::critical(0,"Error",(String("Could not open '")+old_ini_file+"'!").c_str());
-				return false;
-			}
-			call += " -ini " + String(old_ini_file);
-		}
-		
-		if (system(call.c_str()) != 0)
-		{
-			QMessageBox::critical(0,"Error",(String("Could not execute '")+call+"'!\n\nMake sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
-			return false;
-		}
-		if(!File::exists(ini_file))
-		{
-			QMessageBox::critical(0,"Error",(String("Could not open '")+ini_file+"'!").c_str());
-			return false;
-		}
-		
-		tmp_param.load(String(ini_file).c_str());
-		param_=tmp_param.copy(name_+":1:",true);
-		//param_.remove("log");
-		//param_.remove("no_progress");
-		//param_.remove("debug");
-		//// handled by TOPPAS anyway:
-		//param_.remove("type");
-		
-		writeParam_(param_,ini_file);
-		bool changed = false;
-		if (old_ini_file != "")
-		{
-			//check if ini file has changed (quick & dirty by file size)
-			QFile q_ini(ini_file);
-			QFile q_old_ini(old_ini_file);
-			changed = q_ini.size() != q_old_ini.size();
-			QFile::remove(old_ini_file);
-		}
-		QFile::remove(ini_file);
-		
-		return changed;
-	}
+
 	
 	void TOPPASToolVertex::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* /*e*/)
 	{
@@ -204,7 +148,7 @@ namespace OpenMS
 			edit_param.remove("type");
 		}
 		// remove entries that are handled by edges already, user should not see them
-		QVector<IOInfo> input_infos;
+    QVector<TOPPIOInfo> input_infos;
 		getInputParameters(input_infos);
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 		{
@@ -222,7 +166,7 @@ namespace OpenMS
 			}
 		}
 		
-		QVector<IOInfo> output_infos;
+    QVector<TOPPIOInfo> output_infos;
 		getOutputParameters(output_infos);
 		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
 		{
@@ -240,7 +184,7 @@ namespace OpenMS
 			}
 		}
 		
-		TOPPASToolConfigDialog dialog(parent_widget, edit_param, default_dir, name_, type_, hidden_entries);
+    TOPPASToolConfigDialog dialog(parent_widget, edit_param, default_dir, tool_name_, tool_type_, hidden_entries);
 		if (dialog.exec())
 		{
 			param_ = edit_param;
@@ -262,67 +206,16 @@ namespace OpenMS
 		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
 	}
 	
-	void TOPPASToolVertex::getInputParameters(QVector<IOInfo>& input_infos)
+  void TOPPASToolVertex::getInputParameters(QVector<TOPPIOInfo>& input_infos)
 	{
-		getParameters_(input_infos,true);
+    TOPPToolParamHelper::getInputParameters(param_, input_infos);
 	}
 	
-	void TOPPASToolVertex::getOutputParameters(QVector<IOInfo>& output_infos)
+  void TOPPASToolVertex::getOutputParameters(QVector<TOPPIOInfo>& output_infos)
 	{
-		getParameters_(output_infos,false);
+    TOPPToolParamHelper::getOutputParameters(param_, output_infos);
 	}
 	
-	void TOPPASToolVertex::getParameters_(QVector<IOInfo>& io_infos, bool input_params)
-	{
-		String search_tag = input_params ? "input file" : "output file";
-		
-		io_infos.clear();
-		
-		for (Param::ParamIterator it = param_.begin(); it != param_.end(); ++it)
-		{
-			if (it->tags.count(search_tag))
-			{
-				StringList valid_types;
-				
-				const String& desc = it->description;
-				String::SizeType index = desc.find("valid formats",0);
-				if (index != String::npos)
-				{
-					String::SizeType types_start_pos = desc.find("'",index) + 1;
-					String::SizeType types_length = desc.find("'",types_start_pos) - types_start_pos;
-					String types_string = desc.substr(types_start_pos, types_length);
-					if (types_string.find(",",0) == String::npos)
-					{
-						valid_types.push_back(types_string.trim());
-					}
-					else
-					{
-						types_string.split(',', valid_types);
-					}
-				}
-				
-				IOInfo io_info;
-				io_info.param_name = it->name;
-				io_info.valid_types = valid_types;
-				if (it->value.valueType() == DataValue::STRING_LIST)	
-				{
-					io_info.type = IOInfo::IOT_LIST;
-				}
-				else if (it->value.valueType() == DataValue::STRING_VALUE)
-				{
-					io_info.type = IOInfo::IOT_FILE;
-				}
-				else
-				{
-					std::cerr << "TOPPAS: Unexpected parameter value!" << std::endl;
-				}
-				io_infos.push_back(io_info);
-			}
-		}
-		// order in param can change --> sort
-		qSort(io_infos);
-	}
-
 	void TOPPASToolVertex::paint(QPainter* painter, const QStyleOptionGraphicsItem* /*option*/, QWidget* /*widget*/)
 	{
 		//painter->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing | QPainter::SmoothPixmapTransform);
@@ -345,17 +238,17 @@ namespace OpenMS
  		
  		pen.setColor(pen_color_);
  		painter->setPen(pen);
-		if (type_ == "")
+    if (tool_type_ == "")
 		{
-			QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, name_.toQString());
-			painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), name_.toQString());
+      QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, tool_name_.toQString());
+      painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), tool_name_.toQString());
 		}
 		else
 		{
-			QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, name_.toQString());
-			painter->drawText(-(int)(text_boundings.width()/2.0), -(int)(text_boundings.height()/3.0), name_.toQString());
-			text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, type_.toQString());
-			painter->drawText(-(int)(text_boundings.width()/2.0), +(int)(text_boundings.height()/1.33), type_.toQString());
+      QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, tool_name_.toQString());
+      painter->drawText(-(int)(text_boundings.width()/2.0), -(int)(text_boundings.height()/3.0), tool_name_.toQString());
+      text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, tool_type_.toQString());
+      painter->drawText(-(int)(text_boundings.width()/2.0), +(int)(text_boundings.height()/1.33), tool_type_.toQString());
 		}
 		
 		// progress light
@@ -399,12 +292,12 @@ namespace OpenMS
 	
 	const String& TOPPASToolVertex::getName()
 	{
-		return name_;
+    return tool_name_;
 	}
 	
 	const String& TOPPASToolVertex::getType()
 	{
-		return type_;
+    return tool_type_;
 	}
 	
 	void TOPPASToolVertex::runToolIfInputReady()
@@ -435,21 +328,21 @@ namespace OpenMS
 							+QDir::separator()
 							+getOutputDir().toQString()
 							+QDir::separator()
-							+name_.toQString();
-		if (type_ != "")
+              +tool_name_.toQString();
+    if (tool_type_ != "")
 		{
-			ini_file += "_"+type_.toQString();
+      ini_file += "_"+tool_type_.toQString();
 		}
 		ini_file += ".ini";
-		writeParam_(param_,ini_file);
+    TOPPToolParamHelper::writeParam(param_, tool_name_, ini_file);
 		
 		QStringList shared_args;
 		shared_args	<< "-ini"
 								<< ini_file
 								<< "-no_progress";
-		if (type_ != "")
+    if (tool_type_ != "")
 		{
-			shared_args << "-type" << type_.toQString();
+      shared_args << "-type" << tool_type_.toQString();
 		}
 		
 		ts->setPipelineRunning(true);
@@ -466,7 +359,7 @@ namespace OpenMS
 			QStringList args = shared_args;
 			
 			// add all input file parameters
-			QVector<IOInfo> in_params;
+      QVector<TOPPIOInfo> in_params;
 			getInputParameters(in_params);
 			for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
 			{
@@ -548,7 +441,7 @@ namespace OpenMS
 			}
 			
 			// add all output file parameters
-			QVector<IOInfo> out_params;
+      QVector<TOPPIOInfo> out_params;
 			getOutputParameters(out_params);
 			
 			for (int j = 0; j < out_params.size(); ++j)
@@ -589,8 +482,8 @@ namespace OpenMS
 			connect(ts,SIGNAL(terminateCurrentPipeline()),p,SLOT(kill()));
 			
 			//enqueue process
-			std::cout << "TOPPAS: Enqueue: " << name_ << " " << String(args.join(" ")) << std::endl;
-			ts->enqueueProcess(p, name_.toQString(), args);
+      std::cout << "TOPPAS: Enqueue: " << tool_name_ << " " << String(args.join(" ")) << std::endl;
+      ts->enqueueProcess(p, tool_name_.toQString(), args);
 		}
 		
 		__DEBUG_END_METHOD__
@@ -718,7 +611,7 @@ namespace OpenMS
 	
 	void TOPPASToolVertex::updateCurrentOutputFileNames()
 	{
-		QVector<IOInfo> in_params;
+    QVector<TOPPIOInfo> in_params;
 		input_list_length_ = 1; // stays like that if -in param is not a list
 		bool found_in_parameter = false;
 		getInputParameters(in_params);
@@ -738,7 +631,7 @@ namespace OpenMS
 			if (in_params[param_index].param_name == "in" || force)
 			{
 				found_in_parameter = true;
-				in_parameter_has_list_type_ = (in_params[param_index].type == IOInfo::IOT_LIST);
+        in_parameter_has_list_type_ = (in_params[param_index].type == TOPPIOInfo::IOT_LIST);
 				
 				TOPPASInputFileListVertex* iflv = qobject_cast<TOPPASInputFileListVertex*>((*it)->getSourceVertex());
 				if (iflv)
@@ -793,7 +686,7 @@ namespace OpenMS
 		}
 		
 		// now, update the output file names:
-		QVector<IOInfo> out_params;
+    QVector<TOPPIOInfo> out_params;
 		getOutputParameters(out_params);
 		
 		current_output_files_.clear();
@@ -809,7 +702,7 @@ namespace OpenMS
 				if (i == param_index) // corresponding out edge found
 				{
 					// check if tool consumes list and outputs single file (such as IDMerger or FileMerger)
-					if (in_parameter_has_list_type_ && out_params[param_index].type == IOInfo::IOT_FILE)
+          if (in_parameter_has_list_type_ && out_params[param_index].type == TOPPIOInfo::IOT_FILE)
 					{
 						QString f = ts->getOutDir()
 							+QDir::separator()
@@ -908,7 +801,7 @@ namespace OpenMS
 	
 	void TOPPASToolVertex::openInTOPPView()
 	{
-		QVector<IOInfo> out_infos;
+    QVector<TOPPIOInfo> out_infos;
 		getOutputParameters(out_infos);
 		
 		if (out_infos.size() == all_written_output_files_.size())
@@ -1026,22 +919,22 @@ namespace OpenMS
 		}
 		
 		// n:1 tool? --> files per round = 1
-		QVector<IOInfo> input_infos;
+    QVector<TOPPIOInfo> input_infos;
 		getInputParameters(input_infos);
-		QVector<IOInfo> output_infos;
+    QVector<TOPPIOInfo> output_infos;
 		getOutputParameters(output_infos);
 		bool in_param_list_type = false;
 		bool out_param_file_type = false;
-		foreach (const IOInfo& io, input_infos)
+    foreach (const TOPPIOInfo& io, input_infos)
 		{
-			if (io.param_name == "in" && io.type == IOInfo::IOT_LIST)
+      if (io.param_name == "in" && io.type == TOPPIOInfo::IOT_LIST)
 			{
 				in_param_list_type = true;
 			}
 		}
-		foreach (const IOInfo& io, output_infos)
+    foreach (const TOPPIOInfo& io, output_infos)
 		{
-			if (io.param_name == "out" && io.type == IOInfo::IOT_FILE)
+      if (io.param_name == "out" && io.type == TOPPIOInfo::IOT_FILE)
 			{
 				out_param_file_type = true;
 			}
@@ -1069,29 +962,9 @@ namespace OpenMS
 		__DEBUG_END_METHOD__
 	}
 
-	bool TOPPASToolVertex::refreshParameters()
-	{
-		QString old_ini_file = QDir::tempPath() + QDir::separator() + "TOPPAS_" + name_.toQString() + "_";
-		if (type_ != "")
-		{
-			old_ini_file += type_.toQString() + "_";
-		}
-		old_ini_file += File::getUniqueName().toQString() + "_tmp_OLD.ini";
-		writeParam_(param_,old_ini_file);
-		
-		bool changed = initParam_(old_ini_file);
-		
-		return changed;
-	}
-	
-	void TOPPASToolVertex::writeParam_(const Param& param, const QString& ini_file)
-	{
-		Param save_param;
-		save_param.setValue(name_+":1:toppas_dummy", DataValue("blub"));
-		save_param.insert(name_+":1:", param);
-		save_param.remove(name_+":1:toppas_dummy");
-		save_param.setSectionDescription(name_+":1", "Instance '1' section for '"+name_+"'");
-		save_param.store(ini_file);
-	}
+  bool TOPPASToolVertex::refreshParameters()
+  {
+    return TOPPToolParamHelper::refreshParameters(param_, tool_name_, tool_type_);
+  }
 }
 

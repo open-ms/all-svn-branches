@@ -7,6 +7,8 @@ INIFileEditorWindow.C
 TOPPBase.C
 TOPPViewBase.C
 TOPPASBase.C
+TOPPToolParamHelper.C
+TOPPIOInfo.C
 )
 
 ### add path to the filenames

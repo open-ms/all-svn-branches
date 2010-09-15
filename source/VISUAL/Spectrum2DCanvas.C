@@ -53,6 +53,10 @@
 #include <QtGui/QFileDialog>
 #include <QtGui/QMessageBox>
 
+//boost
+#include <boost/accumulators/statistics/stats.hpp>
+#include <boost/accumulators/statistics/median.hpp>
+
 using namespace std;
 
 namespace OpenMS
@@ -146,7 +150,7 @@ namespace OpenMS
 		{
        for (ExperimentType::ConstAreaIterator i = getCurrentLayer().getPeakData()->areaBeginConst(area.minPosition()[1],area.maxPosition()[1],
                                                                                                   area.minPosition()[0],area.maxPosition()[0]);
-                                         i != getCurrentLayer().getPeakData()->areaEndConst();
+           i != getCurrentLayer().getPeakData()->areaEndConst();
 					 ++i)
 			{
 				PeakIndex pi = i.getPeakIndex();
@@ -254,8 +258,8 @@ namespace OpenMS
       const DoubleReal mz_max = visible_area_.maxPosition()[0];
 
 			//determine number of pixels for each dimension
-			Int rt_pixel_count = image_height;
-			Int mz_pixel_count = image_width;
+      Size rt_pixel_count = image_height;
+      Size mz_pixel_count = image_width;
 			if(!isMzToXAxis())
 			{
 				rt_pixel_count = image_width;
@@ -263,162 +267,83 @@ namespace OpenMS
 			}
 			
 			//-----------------------------------------------------------------------------------------------
-			//determine if we want to draw dots or crosses (this also influences the way the data is painted)
 			//determine number of shown scans
 			UInt scans = 0;
+      ExperimentType::ConstIterator it = map.RTBegin(rt_min) + scans/2;
+
 			for (ExperimentType::ConstIterator it = map.RTBegin(rt_min); it!=map.RTEnd(rt_max); ++it)
 			{
-				if (it->getMSLevel()==1) ++scans;
+        if (it->getMSLevel()==1)
+        {
+          ++scans;
+        }
 			}
 
-			//estimate the number of shown peaks from the central MS1 scan of the RT range
-			Int peaks = 0;
-      DoubleReal average_spacing_mz = 1.0;
+      Int peaks = 0;
+      for  (ExperimentType::SpectrumType::ConstIterator it2 = it->MZBegin(mz_min); it2!=it->MZEnd(mz_max); ++it2)
+      {
+        ++peaks;
+      }
+
+      // determine spacing for whole data
+      DoubleReal min_spacing_rz = 1.0;
       DoubleReal average_spacing_rt = 1.0;
-			{
-        // Jump to central MS1 scan
-				ExperimentType::ConstIterator it = map.RTBegin(rt_min) + scans/2;
-        // skipp non MS1 spectra
-				while (it!=map.end() && it->getMSLevel()!=1)
-				{
-					++it;
-				}
-				if (it!=map.end())
-				{        
-					for  (ExperimentType::SpectrumType::ConstIterator it2 = it->MZBegin(mz_min); it2!=it->MZEnd(mz_max); ++it2)
-					{
-						if (layer.filters.passes(*it,it2-it->begin())) ++peaks;
-					}
-          // calculate average spacing in mz and rt dimension based on whole data range
-          average_spacing_mz = (mz_max - mz_min) / (DoubleReal)peaks;
-          average_spacing_rt = (rt_max - rt_min) / (DoubleReal)scans;
-				}
-			}
+			{           
+        vector<Real> mz_spacing;
+        for(Size i=0; i!= map.size(); ++i)
+        {
+          // skipp non MS1 and empty spectra
+          if (map[i].getMSLevel()!=1 || map[i].size()==0)
+          {
+            continue;
+          }          
+          DoubleReal current_average_mz_spacing =  (map[i][map[i].size()-1].getMZ()- map[i][0].getMZ())/map[i].size();
+          mz_spacing.push_back(current_average_mz_spacing);
+        }
+        sort(mz_spacing.begin(), mz_spacing.end());        
+        min_spacing_rz = mz_spacing[0];
 
-			//-----------------------------------------------------------------------------------------------
-			//paint dots (many data points): we paint the maximum shown intensity per pixel
-			if (peaks*scans>0.25*mz_pixel_count*rt_pixel_count)
-			{
-        //set painter to black (we operate directly on the pixels for all colored data)
-        painter.setPen(Qt::black);
+        cout << "avg mz:" << min_spacing_rz << endl;
+        cout << "min mz:" << mz_spacing[0] << endl;
 
-				//calculate pixel size in data coordinates
-				DoubleReal rt_step_size = (rt_max - rt_min) / rt_pixel_count;
-				DoubleReal mz_step_size = (mz_max - mz_min) / mz_pixel_count;
-				
-				//iterate over all pixels (RT dimension)
-				Size scan_index = 0;
-				for (Int rt=0; rt<rt_pixel_count; ++rt)
-				{
-					DoubleReal rt_start = rt_min + rt_step_size * rt; 
-					DoubleReal rt_end = rt_start + rt_step_size; 
-					//cout << "rt: " << rt << " (" << rt_start << " - " << rt_end << ")" << endl;
-					
-					//determine the relevant spectra and reserve an array for the peak indices
-					vector<Size> scan_indices, peak_indices;
-					for (Size i=scan_index; i<map.size(); ++i)
-					{
-						if (map[i].getRT()>=rt_end)
-						{
-							scan_index = i; //store last scan index for next RT pixel
-							break;
-						}
-						if (map[i].getMSLevel()==1 && map[i].size()>0)
-						{
-							scan_indices.push_back(i);
-							peak_indices.push_back(map[i].MZBegin(mz_min) - map[i].begin());
-						}
-						//set the scan index past the end. Otherwise the last scan will be repeated for all following RTs
-						if (i==map.size()-1) scan_index=i+1;
-					}
-					//cout << "  scans: " << scan_indices.size() << endl;
-
-					if (scan_indices.size()==0) continue;
-					
-					//iterate over all pixels (m/z dimension)
-					for (Int mz=0; mz<mz_pixel_count; ++mz)
-					{
-						DoubleReal mz_start = mz_min + mz_step_size * mz;
-						DoubleReal mz_end = mz_start + mz_step_size; 
-						
-						//iterate over all relevant peaks in all relevant scans
-						Real max = -1.0;
-						for (Size i=0; i<scan_indices.size(); ++i)
-						{
-							Size s = scan_indices[i];
-							Size p = peak_indices[i];
-							for(; p<map[s].size(); ++p)
-							{
-								if (map[s][p].getMZ()>=mz_end) break;
-								if (map[s][p].getIntensity() > max && layer.filters.passes(map[s],p))
-								{
-									max = map[s][p].getIntensity();
-								}
-							}
-							peak_indices[i] = p; //store last peak index for next m/z pixel
-						}
-						
-						//draw to buffer
-						if (max>=0.0)
-						{
-							QPoint pos;
-							dataToWidget_(mz_start + 0.5 * mz_step_size, rt_start + 0.5 * rt_step_size, pos);
-							if (pos.y()<image_height && pos.x()<image_width)
-							{
-								buffer_.setPixel(pos.x() , pos.y(), heightColor_(max, layer.gradient, snap_factor));
-							}
-						}
-					}
+        {
+          vector<Real> rts;
+          for(Size i=0; i!= map.size(); ++i)
+          {
+            // skipp non MS1 and empty spectra
+            if (map[i].getMSLevel()!=1 || map[i].size()==0)
+            {
+              continue;
+            }
+            rts.push_back(map[i].getRT());
+          }
+          sort(rts.begin(), rts.end());
+          if (map.size() > 2)
+          {
+            average_spacing_rt = (rts[rts.size()-1] - rts[0])/(DoubleReal)rts.size();
+            cout << "avg:" << average_spacing_rt << endl;
+          }
 				}
 			}
+
+
+
 			//-----------------------------------------------------------------------------------------------
-      //few data points
+      //many data points than pixels?: we paint the maximum shown intensity per pixel
+      if (peaks*scans>mz_pixel_count*rt_pixel_count)
+			{
+        paintMaximumIntensities_(layer_index, rt_pixel_count, mz_pixel_count, painter);
+			}
+			//-----------------------------------------------------------------------------------------------
+      //few data points: more expensive drawing of all datapoints (circles or points depending on zoom level)
 			else
 			{
-        QPoint p1, p2;
-        dataToWidget_(1, 1, p1);
-        dataToWidget_(0, 0, p2);
-
-        DoubleReal pixel_width = abs(p1.x()-p2.x());
-        DoubleReal pixel_height = abs(p1.y()-p2.y());
-
-				for (ExperimentType::ConstAreaIterator i = map.areaBeginConst(rt_min,rt_max,mz_min,mz_max);
-						 i != map.areaEndConst();
-						 ++i)
-				{
-					PeakIndex pi = i.getPeakIndex();
-					if (layer.filters.passes(map[pi.spectrum],pi.peak))
-					{
-						QPoint pos;
-            dataToWidget_(i->getMZ(), i.getRT(), pos);
-						if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
-            {
-              Int circle_width = min((Int)(pixel_width * average_spacing_mz),(Int)(pixel_height * average_spacing_rt));
-              QRgb color = heightColor_(i->getIntensity(), layer.gradient, snap_factor);
-              if (circle_width < 1)
-              {
-                buffer_.setPixel(pos.x() , pos.y(), color);
-              } else
-              {
-                painter.setPen(color);
-                painter.setBrush(QBrush(color));
-                painter.drawChord(
-                    QRect(pos.x()-(int)circle_width/2, pos.y()-(int)circle_width/2,
-                          circle_width, circle_width),
-                          0,
-                          16*360
-                    );
-              }
-						}
-					}
-				}
-        painter.setBrush(QBrush());
-        painter.setPen(Qt::black);
+        paintAllIntensities_(layer_index, min_spacing_rz, average_spacing_rt, painter);
 			}
 
 			//-----------------------------------------------------------------
 			//draw precursor peaks
-			if (getLayerFlag(layer_index,LayerData::P_PRECURSORS))
+      if (getLayerFlag(layer_index, LayerData::P_PRECURSORS))
 			{
 				for (ExperimentType::ConstIterator i = map.RTBegin(visible_area_.minPosition()[1]);
 						 i != map.RTEnd(visible_area_.maxPosition()[1]);
@@ -443,70 +368,7 @@ namespace OpenMS
 		}
 		else if (layer.type==LayerData::DT_FEATURE) //features
 		{
-			int line_spacing = QFontMetrics(painter.font()).lineSpacing();
-			String icon = layer.param.getValue("dot:feature_icon");
-			Size icon_size = layer.param.getValue("dot:feature_icon_size");
-			bool show_label = (layer.label!=LayerData::L_NONE);
-			UInt num=0;
-      for (FeatureMapType::ConstIterator i = layer.getFeatureMap()->begin();
-           i != layer.getFeatureMap()->end();
-				   ++i)
-			{
-				if ( i->getRT() >= visible_area_.minPosition()[1] &&
-						 i->getRT() <= visible_area_.maxPosition()[1] &&
-						 i->getMZ() >= visible_area_.minPosition()[0] &&
-						 i->getMZ() <= visible_area_.maxPosition()[0] &&
-						 layer.filters.passes(*i))
-				{
-					//determine color
-					QRgb color;
-					if (i->metaValueExists(5))
-					{
-						color = QColor(i->getMetaValue(5).toQString()).rgb();
-					}
-					else
-					{
-						color = heightColor_(i->getIntensity(), layer.gradient, snap_factor);
-					}
-					//paint
-					QPoint pos;
-					dataToWidget_(i->getMZ(),i->getRT(),pos);
-					if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
-					{
-						paintIcon_(pos, color, icon, icon_size, painter);
-					}
-					//labels
-					if (show_label)
-					{
-						if (layer.label==LayerData::L_INDEX)
-						{
-							painter.drawText(pos.x()+10,pos.y()+10,QString::number(num));
-						}
-						else if (layer.label==LayerData::L_ID)
-						{
-							if (i->getPeptideIdentifications().size() && i->getPeptideIdentifications()[0].getHits().size())
-							{
-								painter.drawText(pos.x()+10,pos.y()+10,i->getPeptideIdentifications()[0].getHits()[0].getSequence().toString().toQString());
-							}
-						}
-						else if (layer.label==LayerData::L_ID_ALL)
-						{
-							if (i->getPeptideIdentifications().size() )
-							{
-								for (Size j=0; j< i->getPeptideIdentifications()[0].getHits().size(); ++j)
-								{
-									painter.drawText(pos.x()+10,pos.y()+10+int(j)*line_spacing,i->getPeptideIdentifications()[0].getHits()[j].getSequence().toString().toQString());
-								}
-							}
-						}
-						else if (layer.label==LayerData::L_META_LABEL)
-						{
-							painter.drawText(pos.x()+10,pos.y()+10,i->getMetaValue(3).toQString());
-						}
-					}
-				}
-				++num;
-			}
+      paintFeatureData_(layer_index, painter);
 		}
 		else if (layer.type==LayerData::DT_CONSENSUS)// consensus features
 		{
@@ -567,7 +429,234 @@ namespace OpenMS
 		}
 	}
 
-	void Spectrum2DCanvas::paintIcon_(const QPoint& pos, const QRgb& color, const String& icon, Size s, QPainter& p) const
+  void Spectrum2DCanvas::paintAllIntensities_(Size layer_index, DoubleReal minimum_spacing_mz, DoubleReal average_spacing_rt, QPainter& painter)
+  {
+    const LayerData& layer = getLayer(layer_index);
+    Int image_width = buffer_.width();
+    Int image_height = buffer_.height();
+
+    const ExperimentType& map = *layer.getPeakData();
+    const DoubleReal rt_min = visible_area_.minPosition()[1];
+    const DoubleReal rt_max = visible_area_.maxPosition()[1];
+    const DoubleReal mz_min = visible_area_.minPosition()[0];
+    const DoubleReal mz_max = visible_area_.maxPosition()[0];
+
+    DoubleReal snap_factor = snap_factors_[layer_index];
+
+    // calculate pixel width and height in rt/mz coordinates
+    QPoint p1, p2;
+    dataToWidget_(1, 1, p1);
+    dataToWidget_(0, 0, p2);
+    DoubleReal pixel_width = abs(p1.x()-p2.x());
+    DoubleReal pixel_height = abs(p1.y()-p2.y());
+
+    // when data is zoomed in to single peaks these are visualized as circles
+    //
+    Int circle_size = 0;
+    if(isMzToXAxis())
+    {
+      circle_size = min((Int)(pixel_width * minimum_spacing_mz),(Int)(pixel_height * average_spacing_rt))/2.0;
+    } else
+    {
+      circle_size = min((Int)(pixel_width * average_spacing_rt),(Int)(pixel_height * minimum_spacing_mz))/2.0;
+    }
+
+    for (ExperimentType::ConstAreaIterator i = map.areaBeginConst(rt_min,rt_max,mz_min,mz_max);
+         i != map.areaEndConst();
+         ++i)
+    {
+      PeakIndex pi = i.getPeakIndex();
+      if (layer.filters.passes(map[pi.spectrum],pi.peak))
+      {
+        QPoint pos;
+        dataToWidget_(i->getMZ(), i.getRT(), pos);
+        if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
+        {
+
+          QRgb color = heightColor_(i->getIntensity(), layer.gradient, snap_factor);
+          if (circle_size < 2)
+          {
+            painter.setPen(QColor(color));
+            painter.drawPoint(pos.x() , pos.y());
+          } else
+          {
+            painter.setPen(Qt::NoPen);
+            painter.setBrush(QBrush(color));
+            painter.drawChord(
+                QRect(pos.x()-(int)circle_size/2, pos.y()-(int)circle_size/2,
+                      circle_size, circle_size),
+                      0,
+                      16*360
+                );
+          }
+        }
+      }
+    }
+    painter.setBrush(QBrush());
+    painter.setPen(Qt::black);
+  }
+
+  void Spectrum2DCanvas::paintMaximumIntensities_(Size layer_index, Int rt_pixel_count, Int mz_pixel_count, QPainter& painter)
+  {
+      //set painter to black (we operate directly on the pixels for all colored data)
+      painter.setPen(Qt::black);
+      //temporary variables
+      Int image_width = buffer_.width();
+      Int image_height = buffer_.height();
+
+      const LayerData& layer = getLayer(layer_index);
+      const ExperimentType& map = *layer.getPeakData();
+      const DoubleReal rt_min = visible_area_.minPosition()[1];
+      const DoubleReal rt_max = visible_area_.maxPosition()[1];
+      const DoubleReal mz_min = visible_area_.minPosition()[0];
+      const DoubleReal mz_max = visible_area_.maxPosition()[0];
+
+      DoubleReal snap_factor = snap_factors_[layer_index];
+
+      //calculate pixel size in data coordinates
+      DoubleReal rt_step_size = (rt_max - rt_min) / rt_pixel_count;
+      DoubleReal mz_step_size = (mz_max - mz_min) / mz_pixel_count;
+
+      //iterate over all pixels (RT dimension)
+      Size scan_index = 0;
+      for (Int rt=0; rt<rt_pixel_count; ++rt)
+      {
+        DoubleReal rt_start = rt_min + rt_step_size * rt;
+        DoubleReal rt_end = rt_start + rt_step_size;
+        //cout << "rt: " << rt << " (" << rt_start << " - " << rt_end << ")" << endl;
+
+        //determine the relevant spectra and reserve an array for the peak indices
+        vector<Size> scan_indices, peak_indices;
+        for (Size i=scan_index; i<map.size(); ++i)
+        {
+          if (map[i].getRT()>=rt_end)
+          {
+            scan_index = i; //store last scan index for next RT pixel
+            break;
+          }
+          if (map[i].getMSLevel()==1 && map[i].size()>0)
+          {
+            scan_indices.push_back(i);
+            peak_indices.push_back(map[i].MZBegin(mz_min) - map[i].begin());
+          }
+          //set the scan index past the end. Otherwise the last scan will be repeated for all following RTs
+          if (i==map.size()-1) scan_index=i+1;
+        }
+        //cout << "  scans: " << scan_indices.size() << endl;
+
+        if (scan_indices.size()==0) continue;
+
+        //iterate over all pixels (m/z dimension)
+        for (Int mz=0; mz<mz_pixel_count; ++mz)
+        {
+          DoubleReal mz_start = mz_min + mz_step_size * mz;
+          DoubleReal mz_end = mz_start + mz_step_size;
+
+          //iterate over all relevant peaks in all relevant scans
+          Real max = -1.0;
+          for (Size i=0; i<scan_indices.size(); ++i)
+          {
+            Size s = scan_indices[i];
+            Size p = peak_indices[i];
+            for(; p<map[s].size(); ++p)
+            {
+              if (map[s][p].getMZ()>=mz_end) break;
+              if (map[s][p].getIntensity() > max && layer.filters.passes(map[s],p))
+              {
+                max = map[s][p].getIntensity();
+              }
+            }
+            peak_indices[i] = p; //store last peak index for next m/z pixel
+          }
+
+          //draw to buffer
+          if (max>=0.0)
+          {
+            QPoint pos;
+            dataToWidget_(mz_start + 0.5 * mz_step_size, rt_start + 0.5 * rt_step_size, pos);
+            if (pos.y()<image_height && pos.x()<image_width)
+            {
+              buffer_.setPixel(pos.x() , pos.y(), heightColor_(max, layer.gradient, snap_factor));
+            }
+          }
+        }
+      }
+    }
+
+  void Spectrum2DCanvas::paintFeatureData_(Size layer_index, QPainter& painter)
+  {
+    const LayerData& layer = getLayer(layer_index);
+    DoubleReal snap_factor = snap_factors_[layer_index];
+    Int image_width = buffer_.width();
+    Int image_height = buffer_.height();
+
+    int line_spacing = QFontMetrics(painter.font()).lineSpacing();
+    String icon = layer.param.getValue("dot:feature_icon");
+    Size icon_size = layer.param.getValue("dot:feature_icon_size");
+    bool show_label = (layer.label!=LayerData::L_NONE);
+    UInt num=0;
+    for (FeatureMapType::ConstIterator i = layer.getFeatureMap()->begin();
+         i != layer.getFeatureMap()->end();
+         ++i)
+    {
+      if ( i->getRT() >= visible_area_.minPosition()[1] &&
+           i->getRT() <= visible_area_.maxPosition()[1] &&
+           i->getMZ() >= visible_area_.minPosition()[0] &&
+           i->getMZ() <= visible_area_.maxPosition()[0] &&
+           layer.filters.passes(*i))
+      {
+        //determine color
+        QRgb color;
+        if (i->metaValueExists(5))
+        {
+          color = QColor(i->getMetaValue(5).toQString()).rgb();
+        }
+        else
+        {
+          color = heightColor_(i->getIntensity(), layer.gradient, snap_factor);
+        }
+        //paint
+        QPoint pos;
+        dataToWidget_(i->getMZ(),i->getRT(),pos);
+        if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
+        {
+          paintIcon_(pos, color, icon, icon_size, painter);
+        }
+        //labels
+        if (show_label)
+        {
+          if (layer.label==LayerData::L_INDEX)
+          {
+            painter.drawText(pos.x()+10,pos.y()+10,QString::number(num));
+          }
+          else if (layer.label==LayerData::L_ID)
+          {
+            if (i->getPeptideIdentifications().size() && i->getPeptideIdentifications()[0].getHits().size())
+            {
+              painter.drawText(pos.x()+10,pos.y()+10,i->getPeptideIdentifications()[0].getHits()[0].getSequence().toString().toQString());
+            }
+          }
+          else if (layer.label==LayerData::L_ID_ALL)
+          {
+            if (i->getPeptideIdentifications().size() )
+            {
+              for (Size j=0; j< i->getPeptideIdentifications()[0].getHits().size(); ++j)
+              {
+                painter.drawText(pos.x()+10,pos.y()+10+int(j)*line_spacing,i->getPeptideIdentifications()[0].getHits()[j].getSequence().toString().toQString());
+              }
+            }
+          }
+          else if (layer.label==LayerData::L_META_LABEL)
+          {
+            painter.drawText(pos.x()+10,pos.y()+10,i->getMetaValue(3).toQString());
+          }
+        }
+      }
+      ++num;
+    }
+  }
+
+  void Spectrum2DCanvas::paintIcon_(const QPoint& pos, const QRgb& color, const String& icon, Size s, QPainter& p) const
 	{
 		p.save();
 		p.setPen(color);

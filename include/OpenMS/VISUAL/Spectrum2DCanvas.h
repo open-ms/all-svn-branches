@@ -147,13 +147,32 @@ namespace OpenMS
         /**
       	@brief Paints individual peaks.
 
-      	Paints the peaks as small ellipses. The peaks are colored according to the
-      	selected dot gradient.
+        Calls different painting methods depending on the layer type and the density of displayed peaks
       	
       	@param layer_index The index of the layer.
       	@param p The QPainter to paint on.
-      */
+      */    
         void paintDots_(Size layer_index, QPainter& p);
+
+        void paintAllIntensities_(Size layer_index, DoubleReal average_spacing_mz, DoubleReal average_spacing_rt, QPainter& painter);
+        /**
+        @brief Paints maximum intensity of individual peaks.
+
+        Paints the peaks as small ellipses. The peaks are colored according to the
+        selected dot gradient.
+
+        @param layer_index The index of the layer.
+        @param p The QPainter to paint on.
+      */
+        void paintMaximumIntensities_(Size layer_index, Int rt_pixel_count, Int mz_pixel_count, QPainter& p);
+
+        /**
+        @brief Paints feature data.
+
+        @param layer_index The index of the layer.
+        @param p The QPainter to paint on.
+       */
+        void paintFeatureData_(Size layer_index, QPainter& p);
 
         /**
       	@brief Paints convex hulls (one for each mass trace) of a features layer.

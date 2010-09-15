@@ -98,6 +98,8 @@ namespace OpenMS
 		void visibleAreaChanged(DRange<2> area);
 		/// Requests to display the spectrum with index @p index in 1D
 		void showSpectrumAs1D(int index);
+    /// Requests to display all spectra as 1D
+    void showCurrentPeaksAs3D();
 
 	protected:
 		// Docu in base class

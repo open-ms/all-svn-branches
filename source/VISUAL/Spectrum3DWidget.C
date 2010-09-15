@@ -50,6 +50,9 @@ namespace OpenMS
 		
 		x_axis_->hide();
 		y_axis_->hide();
+
+    // delegate signals from canvas
+    connect(canvas(), SIGNAL(showCurrentPeaksAs2D()), this, SIGNAL(showCurrentPeaksAs2D()));
 	}
 	
 	Spectrum3DWidget::~Spectrum3DWidget()

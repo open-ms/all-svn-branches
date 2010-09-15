@@ -445,10 +445,6 @@ namespace OpenMS
 				if (it2->opened) //opened node
 				{
 					item = new QTreeWidgetItem(parent);
-					//item->setTextAlignment(0,Qt::AlignTop);
-					//item->setTextAlignment(1,Qt::AlignTop);
-					//item->setTextAlignment(2,Qt::AlignTop);
-					//item->setTextAlignment(3,Qt::AlignTop);
 					//name
 					item->setText(0, it2->name.toQString());
           item->setTextColor(0, Qt::darkGray);
@@ -477,14 +473,12 @@ namespace OpenMS
 			
 			//********handle item********
 			item = new QTreeWidgetItem(parent);
+
+      // grey out unused columns
       item->setTextColor(0, Qt::darkGray);
       item->setTextColor(2, Qt::darkGray);
       item->setTextColor(3, Qt::darkGray);
 
-			//item->setTextAlignment(0,Qt::AlignTop);
-			//item->setTextAlignment(1,Qt::AlignTop);
-			//item->setTextAlignment(2,Qt::AlignTop);
-			//item->setTextAlignment(3,Qt::AlignTop);
 			if (it->tags.count("advanced"))
 			{
 				item->setData(0,Qt::UserRole,ADVANCED_ITEM);

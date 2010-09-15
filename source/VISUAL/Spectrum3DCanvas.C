@@ -249,13 +249,17 @@ namespace OpenMS
 		context_menu->addMenu(save_menu);
 		save_menu->addAction("Layer");
 		save_menu->addAction("Visible layer data");
-		
+
+
+
 		QMenu* settings_menu = new QMenu("Settings");
 		context_menu->addMenu(settings_menu);
 		settings_menu->addAction("Show/hide grid lines");
 		settings_menu->addAction("Show/hide axis legends");
 		settings_menu->addSeparator();
  		settings_menu->addAction("Preferences");
+
+    context_menu->addAction("Switch to 2D view");
 
 		//add external context menu
 		if (context_add_)
@@ -286,7 +290,10 @@ namespace OpenMS
 			else if (result->text()=="Layer meta data")
 			{
 				showMetaData(true);
-			}
+      } else if (result->text()=="Switch to 2D view")
+      {
+        emit showCurrentPeaksAs2D();
+      }
 		}		
 		e->accept();
 	}

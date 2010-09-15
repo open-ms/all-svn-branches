@@ -598,11 +598,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           current_path_ = param_.getValue("preferences:default_path");
 
           //update the menu
-          updateMenu();
-
-          //######################### Additional context menus ######################################
-          add_2d_context_ = new QMenu("More",this);
-          add_2d_context_->addAction("Show layer in 3D",this,SLOT(showCurrentPeaksAs3D()));
+          updateMenu();         
 
           topp_.process = 0;
 
@@ -1135,8 +1131,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       }
       else if (maps_as_2d || mergeable) //2d or features/IDs
       {
-        target_window = new Spectrum2DWidget(getSpectrumParameters_(2), ws_);
-        target_window->canvas()->setAdditionalContextMenu(add_2d_context_);
+        target_window = new Spectrum2DWidget(getSpectrumParameters_(2), ws_);        
       }
       else //3d
       {
@@ -2362,8 +2357,16 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
   	{
   		connect(sw2->getHorizontalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
   		connect(sw2->getVerticalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatusInvert(double,double)));
-  		connect(sw2,SIGNAL(showSpectrumAs1D(int)),this,SLOT(showSpectrumAs1D(int)));
+      connect(sw2, SIGNAL(showSpectrumAs1D(int)), this, SLOT(showSpectrumAs1D(int)));
+      connect(sw2, SIGNAL(showCurrentPeaksAs3D()), this, SLOT(showCurrentPeaksAs3D()));
   	}
+
+    // 3D spectrum specific signals
+    Spectrum3DWidget* sw3 = qobject_cast<Spectrum3DWidget*>(sw);
+    if (sw3 != 0)
+    {
+      connect(sw3, SIGNAL(showCurrentPeaksAs2D()), this, SLOT(showCurrentPeaksAs2D()));
+    }
 
 	  sw->setWindowTitle(caption.toQString());
 

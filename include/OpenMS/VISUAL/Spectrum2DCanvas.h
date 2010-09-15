@@ -95,6 +95,8 @@ namespace OpenMS
         void toggleProjections();
         /// Requests to display the spectrum with index @p index in 1D
         void showSpectrumAs1D(int index);
+        /// Requests to display all spectra in 3D plot
+        void showCurrentPeaksAs3D();
 
     public slots:
         // Docu in base class

@@ -1686,6 +1686,7 @@ namespace OpenMS
 		const LayerData& layer = getCurrentLayer();
 
 		QMenu* context_menu = new QMenu(this);
+
 		QAction* a = 0;
 		QAction* result = 0;
 
@@ -1703,10 +1704,13 @@ namespace OpenMS
 		QMenu* settings_menu = new QMenu("Settings");
  		settings_menu->addAction("Show/hide grid lines");
  		settings_menu->addAction("Show/hide axis legends");
+    context_menu->addSeparator();
+
+    context_menu->addAction("Switch to 3D view");
 
 		//-------------------PEAKS----------------------------------
 		if (layer.type==LayerData::DT_PEAK)
-		{
+		{     
 			//add settings
 			settings_menu->addSeparator();
  			settings_menu->addAction("Show/hide projections");
@@ -1779,7 +1783,7 @@ namespace OpenMS
 			DoubleReal mz_min = min(p1[0],p2[0]);
 			DoubleReal mz_max = max(p1[0],p2[0]);
 			bool item_added = false;
-                        for (ExperimentType::ConstIterator it=getCurrentLayer().getPeakData()->RTBegin(rt_min); it!=getCurrentLayer().getPeakData()->RTEnd(rt_max); ++it)
+      for (ExperimentType::ConstIterator it=getCurrentLayer().getPeakData()->RTBegin(rt_min); it!=getCurrentLayer().getPeakData()->RTEnd(rt_max); ++it)
 			{
 				DoubleReal mz = 0.0;
 				if (!it->getPrecursors().empty()) mz = it->getPrecursors()[0].getMZ();
@@ -1983,6 +1987,10 @@ namespace OpenMS
 			{
 				showMetaData(true);
 			}
+      else if (result->text()=="Switch to 3D view")
+      {
+        emit showCurrentPeaksAs3D();
+      }
 		}
 
 		e->accept();

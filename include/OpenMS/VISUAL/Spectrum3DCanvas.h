@@ -94,6 +94,10 @@ namespace OpenMS
 			// Docu in base class
 			virtual void saveCurrentLayer(bool visible);
 
+    signals:
+      /// Requests to display all spectra in 2D plot
+      void showCurrentPeaksAs2D();
+
 		public slots:
 			
 	    // Docu in base class

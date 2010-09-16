@@ -167,6 +167,14 @@ namespace OpenMS
         void paintMaximumIntensities_(Size layer_index, Int rt_pixel_count, Int mz_pixel_count, QPainter& p);
 
         /**
+        @brief Paints the precursor peaks.
+
+        @param layer_index The index of the layer.
+        @param p The QPainter to paint on.
+       */
+        void paintPrecursorPeaks_(Size layer_index, QPainter& painter);
+
+        /**
         @brief Paints feature data.
 
         @param layer_index The index of the layer.

@@ -6,6 +6,8 @@
 #include <QtCore/QDir>
 #include <QtCore/QFile>
 
+using namespace std;
+
 namespace OpenMS
 {
 
@@ -152,5 +154,45 @@ namespace OpenMS
     }
     // order in param can change --> sort
     qSort(io_infos);
+  }
+
+  bool TOPPToolParamHelper::toolAcceptsFileExtension(const Param& target_tool_params, String extension)
+  {
+    // extract input parameters of target TOPP tool from param
+    QVector<TOPPIOInfo> io_infos;
+    TOPPToolParamHelper::getInputParameters(target_tool_params, io_infos);
+    for(int i=0; i!=io_infos.size(); ++i)
+    {
+      cout << ">*****************************" << endl;
+      cout << io_infos[i].type << endl;
+      cout << io_infos[i].valid_types << endl;
+    }
+
+    cout << "<-----------------------------" << endl;
+    StringList target_param_types = io_infos[0].valid_types;
+    if (target_param_types.empty())
+    {
+      // no file types specified --> allow
+      return true;
+    }
+
+    // check file type compatibility using the extension
+    bool mismatch = true;
+    for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
+    {
+      String other_ext = *it;
+      other_ext.toLower();
+      if (extension == other_ext || extension == "gz")
+      {
+        mismatch = false;
+        break;
+      }
+    }
+
+    if (mismatch)
+    {
+      return false;
+    }
+    return true;
   }
 }

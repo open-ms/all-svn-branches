@@ -58,6 +58,9 @@ namespace OpenMS
       /// Writes @p param to the @p ini_file
       static void writeParam(const Param& param, const String& tool_name, const QString& ini_file);
 
+      /// Extracts input file parameters and tests wether extension matches
+      static bool toolAcceptsFileExtension(const Param& target_tool_params, String extension);
+
     protected:
       /// Fills @p io_infos with the required input/output file/list parameters. If @p input_params is true, input params are returned, otherwise output params.
       static void getParameters_(const Param&, QVector<TOPPIOInfo>& io_infos, bool input_params);

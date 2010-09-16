@@ -219,7 +219,7 @@ namespace OpenMS
 	void Spectrum2DCanvas::paintDots_(Size layer_index, QPainter& painter)
 	{
 		const LayerData& layer = getLayer(layer_index);
-		
+
 		//update factors (snap and percentage)
 		DoubleReal snap_factor = snap_factors_[layer_index];
 		percentage_factor_ = 1.0;
@@ -251,7 +251,7 @@ namespace OpenMS
 		if (layer.type==LayerData::DT_PEAK) //peaks
 		{
 			//renaming some values for readability
-      const ExperimentType& map = *layer.getPeakData();
+      const ExperimentType& peak_map = *layer.getPeakData();
       const DoubleReal rt_min = visible_area_.minPosition()[1];
       const DoubleReal rt_max = visible_area_.maxPosition()[1];
       const DoubleReal mz_min = visible_area_.minPosition()[0];
@@ -269,9 +269,9 @@ namespace OpenMS
 			//-----------------------------------------------------------------------------------------------
 			//determine number of shown scans
 			UInt scans = 0;
-      ExperimentType::ConstIterator it = map.RTBegin(rt_min) + scans/2;
+      ExperimentType::ConstIterator it = peak_map.RTBegin(rt_min) + scans/2;
 
-			for (ExperimentType::ConstIterator it = map.RTBegin(rt_min); it!=map.RTEnd(rt_max); ++it)
+      for (ExperimentType::ConstIterator it = peak_map.RTBegin(rt_min); it!=peak_map.RTEnd(rt_max); ++it)
 			{
         if (it->getMSLevel()==1)
         {
@@ -290,14 +290,14 @@ namespace OpenMS
       DoubleReal average_spacing_rt = 1.0;
 			{           
         vector<Real> mz_spacing;
-        for(Size i=0; i!= map.size(); ++i)
+        for(Size i=0; i!= peak_map.size(); ++i)
         {
           // skipp non MS1 and empty spectra
-          if (map[i].getMSLevel()!=1 || map[i].size()==0)
+          if (peak_map[i].getMSLevel()!=1 || peak_map[i].size()==0)
           {
             continue;
           }          
-          DoubleReal current_average_mz_spacing =  (map[i][map[i].size()-1].getMZ()- map[i][0].getMZ())/map[i].size();
+          DoubleReal current_average_mz_spacing =  (peak_map[i][peak_map[i].size()-1].getMZ()- peak_map[i][0].getMZ())/peak_map[i].size();
           mz_spacing.push_back(current_average_mz_spacing);
         }
         sort(mz_spacing.begin(), mz_spacing.end());        
@@ -308,17 +308,17 @@ namespace OpenMS
 
         {
           vector<Real> rts;
-          for(Size i=0; i!= map.size(); ++i)
+          for(Size i=0; i!= peak_map.size(); ++i)
           {
             // skipp non MS1 and empty spectra
-            if (map[i].getMSLevel()!=1 || map[i].size()==0)
+            if (peak_map[i].getMSLevel()!=1 || peak_map[i].size()==0)
             {
               continue;
             }
-            rts.push_back(map[i].getRT());
+            rts.push_back(peak_map[i].getRT());
           }
           sort(rts.begin(), rts.end());
-          if (map.size() > 2)
+          if (peak_map.size() > 2)
           {
             average_spacing_rt = (rts[rts.size()-1] - rts[0])/(DoubleReal)rts.size();
             cout << "avg:" << average_spacing_rt << endl;
@@ -345,25 +345,7 @@ namespace OpenMS
 			//draw precursor peaks
       if (getLayerFlag(layer_index, LayerData::P_PRECURSORS))
 			{
-				for (ExperimentType::ConstIterator i = map.RTBegin(visible_area_.minPosition()[1]);
-						 i != map.RTEnd(visible_area_.maxPosition()[1]);
-						 ++i)
-				{
-					//this is an MS/MS scan
-					if (i->getMSLevel()==2 && !i->getPrecursors().empty())
-					{
-						ExperimentType::ConstIterator prec=map.getPrecursorSpectrum(i);
-						if (prec!=map.end())
-						{
-							QPoint pos;
-							dataToWidget_(i->getPrecursors()[0].getMZ(), prec->getRT(),pos);
-							painter.drawLine(pos.x(),pos.y()+2,pos.x()+2,pos.y());
-							painter.drawLine(pos.x()+2,pos.y(),pos.x(),pos.y()-2);
-							painter.drawLine(pos.x(),pos.y()-2,pos.x()-2,pos.y());
-							painter.drawLine(pos.x()-2,pos.y(),pos.x(),pos.y()+2);
-						}
-					}
-				}
+        paintPrecursorPeaks_(layer_index, painter);
 			}
 		}
 		else if (layer.type==LayerData::DT_FEATURE) //features
@@ -428,6 +410,42 @@ namespace OpenMS
 			paintIdentifications_(layer_index, painter);
 		}
 	}
+
+  void Spectrum2DCanvas::paintPrecursorPeaks_(Size layer_index, QPainter& painter)
+  {
+    const LayerData& layer = getLayer(layer_index);
+    const ExperimentType& peak_map = *layer.getPeakData();
+
+    for (ExperimentType::ConstIterator i = peak_map.RTBegin(visible_area_.minPosition()[1]);
+    i != peak_map.RTEnd(visible_area_.maxPosition()[1]);
+    ++i)
+    {
+      //this is an MS/MS scan
+      if (i->getMSLevel()==2 && !i->getPrecursors().empty())
+      {
+        ExperimentType::ConstIterator prec=peak_map.getPrecursorSpectrum(i);
+        if (prec!=peak_map.end())
+        {
+          QPoint pos;
+          dataToWidget_(i->getPrecursors()[0].getMZ(), prec->getRT(),pos);
+          QPen p;
+          p.setColor(Qt::black);
+          painter.setPen(p);
+          painter.drawLine(pos.x(),pos.y()+3,pos.x()+3,pos.y());
+          painter.drawLine(pos.x()+3,pos.y(),pos.x(),pos.y()-3);
+          painter.drawLine(pos.x(),pos.y()-3,pos.x()-3,pos.y());
+          painter.drawLine(pos.x()-3,pos.y(),pos.x(),pos.y()+3);
+
+          p.setColor(Qt::white);
+          painter.setPen(p);
+          painter.drawLine(pos.x(),pos.y()+2,pos.x()+2,pos.y());
+          painter.drawLine(pos.x()+2,pos.y(),pos.x(),pos.y()-2);
+          painter.drawLine(pos.x(),pos.y()-2,pos.x()-2,pos.y());
+          painter.drawLine(pos.x()-2,pos.y(),pos.x(),pos.y()+2);
+        }
+      }
+    }
+  }
 
   void Spectrum2DCanvas::paintAllIntensities_(Size layer_index, DoubleReal minimum_spacing_mz, DoubleReal average_spacing_rt, QPainter& painter)
   {
@@ -875,7 +893,6 @@ namespace OpenMS
 		}
 
 	}
-
 
 	bool Spectrum2DCanvas::isConsensusFeatureVisible_(const ConsensusFeature& ce, Size layer_index)
 	{

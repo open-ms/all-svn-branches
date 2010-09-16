@@ -793,7 +793,7 @@ namespace OpenMS
 
 	void TOPPASToolVertex::inEdgeHasChanged()
 	{
-		// something has changed --> tmp files might be invalid --> reset
+    // something has changed --> tmp files might be in --> reset
 		reset(true);
 		
 		TOPPASVertex::inEdgeHasChanged();

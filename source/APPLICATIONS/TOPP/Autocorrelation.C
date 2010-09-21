@@ -48,7 +48,7 @@ class TOPPAutocorrelation
 		setValidFormats_("in",StringList::create("mzML"));
 		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("mzML"));
-		registerDoubleOption_("stepwidth","<stepwidth>",0.001,"Stepwidth");
+		registerDoubleOption_("stepwidth","<stepwidth>",0.001,"Stepwidth",false,false);
 	}
 
 	ExitCodes main_(int , const char**)

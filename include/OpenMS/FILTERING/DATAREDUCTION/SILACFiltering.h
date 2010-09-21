@@ -70,10 +70,14 @@ private:
 	 * @brief minimal intensity of SILAC features
 	 */
 	static DoubleReal intensity_cutoff;
+
 	static gsl_interp_accel* acc_lin;
 	static gsl_interp_accel* acc_spl;
 	static gsl_spline* spline_lin;
 	static gsl_spline* spline_spl;
+	/**
+	 * @brief current feature id
+	 */
 	static Int feature_id;
 	static DoubleReal mz_min;
 	/**
@@ -101,9 +105,11 @@ public:
 	/**
 	 * @brief starts the filtering based on the added filters
 	 */
-	void filterDataPoints(String path);
+	void filterDataPoints();
 	/**
-	 * @brief puts a m/z value on the filter's blacklist
+	 * @brief puts m/z values on the filter's blacklist
+	 * @param peak_positions m/z positions to be added
+	 * @param source filter, from which the value originate
 	 */
 	void blockPositions(const std::vector<DoubleReal>& peak_positions,SILACFilter* source);
 };

@@ -40,7 +40,6 @@ QTCluster::QTCluster(DataPoint* center_point_) : center_point(center_point_)
 }
 
 QTCluster::~QTCluster() {
-	// TODO Auto-generated destructor stub
 }
 
 DoubleReal QTCluster::getCenterRT()
@@ -66,8 +65,6 @@ bool QTCluster::operator<(const QTCluster &cluster) const
 void QTCluster::add(DataPoint* element)
 {
 	cluster_members.insert(element);
-	traces[round(std::abs(element->mz-center_point->mz))].push_back(element);
-	std::pair<DoubleReal,DoubleReal> diameters=getDiameters(element);
 }
 
 bool QTCluster::contains(DataPoint* element)
@@ -83,19 +80,6 @@ std::set<DataPoint*> QTCluster::getClusterMembers()
 
 std::pair<DoubleReal,DoubleReal> QTCluster::getDiameters(DataPoint* point)
 {
-//	DoubleReal rt_diameter=0.0;
-//	std::list<DataPoint*>& trace_list=traces[round(std::abs(point->mz-center_point->mz))];
-//	if (!trace_list.empty())
-//		rt_diameter=std::numeric_limits<Real>::max();
-//	DoubleReal point_mz=point->mz;
-//	DoubleReal point_rt=point->rt;
-//	for (std::list<DataPoint*>::iterator trace_it=trace_list.begin();trace_it!=trace_list.end();++trace_it)
-//	{
-//		DoubleReal rt_dist=std::abs((*trace_it)->rt-point_rt);
-//		rt_dist/=round(std::abs(point->mz-center_point->mz))+1;
-//		if (rt_dist < rt_diameter)
-//			rt_diameter=rt_dist;
-//	}
 	DoubleReal point_mz=point->mz;
 	DoubleReal point_rt=point->rt;
 	DoubleReal rt_diameter=std::numeric_limits<Real>::max();
@@ -112,55 +96,5 @@ std::pair<DoubleReal,DoubleReal> QTCluster::getDiameters(DataPoint* point)
 	return std::make_pair(rt_diameter,mz_diameter);
 }
 
-DoubleReal QTCluster::getMZstandardDeviation(DataPoint* point,DoubleReal isotope_distance)
-{
-	DoubleReal deviation=std::numeric_limits<Real>::max();
-	for (std::set<DataPoint*>::iterator it=cluster_members.begin();it!=cluster_members.end();++it)
-	{
-		DoubleReal act_mz=(*it)->mz;
-		DoubleReal diff = std::abs(point->mz - act_mz);
-		DoubleReal num = floor(diff);
-		diff -= num;
-		DoubleReal act_deviation=std::min(std::abs(diff-isotope_distance),std::abs(diff));
-		if (act_deviation < deviation)
-			deviation=act_deviation;
-	}
-	return deviation;
-}
-
-bool QTCluster::checkClusterShape(DataPoint* point)
-{
-	Int trace = round(point->mz);
-	Int previous_elements=std::numeric_limits<Int>::max();
-	for (std::map<Int,std::list<DataPoint*> >::iterator trace_it=traces.begin();trace_it!=traces.end();++trace_it)
-	{
-		Int elements=(trace_it->second).size();
-		if (trace_it->first==trace)
-			++elements;
-		if(elements > previous_elements)
-			return false;
-		previous_elements=elements;
-	}
-	return true;
-}
-
-//DoubleReal QTCluster::getMZstandardDeviation()
-//{
-//
-////	DoubleReal sd = 0.0;
-////	DoubleReal mv=center_point->mz;
-////	for (std::set<DataPoint*>::iterator it=cluster_members.begin();it!=cluster_members.end();++it)
-////	{
-////		sd += std::abs((*it)->mz - mv);
-////	}
-////	sd /= size();
-////	return (sd);
-//
-//	DoubleReal mv=center_point->mz;
-//	DoubleReal diff = std::abs((*it)->mz - mv);
-//	DoubleReal num = floor(diff);
-//	diff-=num;
-//	return std::min(std::abs(diff-0.5),std::abs(diff));
-//}
 
 }

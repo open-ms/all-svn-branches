@@ -32,21 +32,75 @@
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
 #include <OpenMS/DATASTRUCTURES/QTCluster.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
+#include <OpenMS/CONCEPT/Exception.h>
 
 namespace OpenMS {
+/**
+ * @brief QT clustering based on geometric hashing.
+ * Performs a QT clustering similar to the description of Heyer, Kruglyak and Yooseph (1999).
+ * It uses a hash grid for the arrangement of the data points and computes a two-dimensional diameter for cluster (m/z-diameter, rt-diameter).
+ * @see HashGrid
+ * @ingroup SpectraClustering
+ */
 class OPENMS_DLLAPI QTClustering  : public ProgressLogger{
 private:
+	/**
+	 * @brief the hash grid used for data arrangement
+	 */
 	HashGrid grid;
+	/**
+	 * @brief maximal rt diameter
+	 * corresponds to the maximal gap in RT direction of cluster
+	 */
 	DoubleReal rt_diameter;
+	/**
+	 * @brief maximal m/z diameter
+	 * corresponds to the maximal cluster extent in m/z direction
+	 */
 	DoubleReal mz_diameter;
-	DoubleReal isotope_distance;
+	/**
+	 * @brief list of identified clusters
+	 */
 	std::list<QTCluster> clusters;
-	bool isBelowDiameter(DataPoint* point1, DataPoint* point2);
-public:
-	QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_,DoubleReal isotope_distance);
-	virtual ~QTClustering();
-	std::vector<std::vector<DataPoint*> > performClustering();
+	/**
+	 * @brief default constructor
+	 */
+	QTClustering();
+
+	/**
+	 * @brief recursive QT clustering method
+	 * @param act_grid the data points to be clustered in the current step
+	 */
 	QTCluster QTClust(HashGrid& act_grid);
+public:
+	/**
+	 * @brief detailed constructor
+	 * @param data the data to be clustered
+	 * @param rt_diameter_ maximal rt diameter
+	 * @param mz_diameter_ maximal m/z diameter
+	 */
+	QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_);
+	/**
+	 * @brief destructor
+	 */
+	virtual ~QTClustering();
+	/**
+	 * @brief performs the clustering on the given data and diameters and returns a vector of clusters
+	 */
+	std::vector<std::vector<DataPoint*> > performClustering();
+
+	/**
+			@brief Exception thrown if not enough data (<2) is used
+
+			If the set of data to be clustered contains only one data point,
+			clustering algorithms would fail for obvious reasons.
+	 */
+	class OPENMS_DLLAPI InsufficientInput : public Exception::BaseException
+	{
+	public:
+		InsufficientInput(const char* file, int line, const char* function, const char* message= "not enough data points to cluster anything") throw();
+		virtual ~InsufficientInput() throw();
+	};
 };
 }
 #endif /* QTCLUSTERING_H_ */

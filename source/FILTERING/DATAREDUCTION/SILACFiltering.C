@@ -52,20 +52,21 @@ void SILACFiltering::addFilter(SILACFilter& filter) {
 }
 
 SILACFiltering::~SILACFiltering() {
-//	for (std::set<SILACFilter*>::iterator it=filters.begin();it!=filters.end();++it)
-//	{
-//		delete(*it);
-//	}
+
 }
 
 void SILACFiltering::blockPositions(const std::vector<DoubleReal>& peak_positions,SILACFilter* source)
 {
+	//Add values to the filter blacklists
 	for (std::set<SILACFilter*>::iterator it=filters.begin();it!=filters.end();++it)
 	{
+		//Iterate over all values
 		for (std::vector<DoubleReal>::const_iterator peak_it=peak_positions.begin();peak_it!=peak_positions.end();++peak_it)
 		{
+			//If the values originate from the cluster itself, the monoisotopic peak is skipped
 			if (*it==source && peak_it==peak_positions.begin())
 				++peak_it;
+			//Add value to the blacklist
 			(*it)->blockValue(*peak_it);
 		}
 	}
@@ -73,71 +74,42 @@ void SILACFiltering::blockPositions(const std::vector<DoubleReal>& peak_position
 
 bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* b) const
 {
+	//The filters are ordered by a certain hierarchy
+	//First: amount of mass shifts (quadruplets, triplets, doublets, singlets); highest amount first
 	if (a->envelope_distances.size()!=b->envelope_distances.size())
-		return a->envelope_distances.size() < b->envelope_distances.size();
+		return a->envelope_distances.size() > b->envelope_distances.size();
 
+		//Second: charge; highest charge first
 		if (a->charge!=b->charge)
 			return a->charge > b->charge;
-	std::set<DoubleReal>::iterator envelope_distances_it_a=a->envelope_distances.begin();
-	std::set<DoubleReal>::iterator envelope_distances_it_b=b->envelope_distances.begin();
-	while(*envelope_distances_it_a == *envelope_distances_it_b)
-	{
-		++envelope_distances_it_a;
-		++envelope_distances_it_b;
-	}
-	return (*envelope_distances_it_a > *envelope_distances_it_b);
+
+			//Third: size of mass shifts; lowest mass shift first
+			//Mass shifts of both compared filters are iterated until they differ
+			std::set<DoubleReal>::iterator envelope_distances_it_a=a->envelope_distances.begin();
+			std::set<DoubleReal>::iterator envelope_distances_it_b=b->envelope_distances.begin();
+			while(*envelope_distances_it_a == *envelope_distances_it_b)
+			{
+				++envelope_distances_it_a;
+				++envelope_distances_it_b;
+			}
+			//the different mass shift is compared
+			return (*envelope_distances_it_a < *envelope_distances_it_b);
 }
 
 
-void SILACFiltering::filterDataPoints(String path)
+void SILACFiltering::filterDataPoints()
 {
 	startProgress(0,exp.size(),"filtering raw data");
 
 	std::vector<DataPoint> data;
-
-	MSExperiment<Peak1D> exp_out;
-	MSExperiment<Peak1D> ratios1;
-	MSExperiment<Peak1D> ratios2;
+	//Find out lowest m/z value
 	mz_min=exp.getMinMZ();
-	static_cast<ExperimentalSettings&>(exp_out) = exp;
-	exp_out.resize(exp.size());
-	ratios1.resize(exp.size());
-	ratios2.resize(exp.size());
 
-	Size scan_idx=0;
+	//Iterate over all spectra of the experiment
 	for (MSExperiment<Peak1D>::Iterator rt_it=exp.begin(); rt_it!=exp.end();++rt_it)
 	{
-		MSSpectrum<Peak1D>& input=exp[scan_idx];
-		MSSpectrum<Peak1D>& output=exp_out[scan_idx];
-		output.clear(true);
-		output.SpectrumSettings::operator=(input);
-		output.MetaInfoInterface::operator=(input);
-		output.setRT(input.getRT());
-		output.setMSLevel(input.getMSLevel());
-		output.setName(input.getName());
-		output.setType(SpectrumSettings::PEAKS);
-
-		MSSpectrum<Peak1D>& ratio1=ratios1[scan_idx];
-		ratio1.clear(true);
-		ratio1.SpectrumSettings::operator=(input);
-		ratio1.MetaInfoInterface::operator=(input);
-		ratio1.setRT(input.getRT());
-		ratio1.setMSLevel(input.getMSLevel());
-		ratio1.setName(input.getName());
-		ratio1.setType(SpectrumSettings::PEAKS);
-
-		MSSpectrum<Peak1D>& ratio2=ratios2[scan_idx];
-		ratio2.clear(true);
-		ratio2.SpectrumSettings::operator=(input);
-		ratio2.MetaInfoInterface::operator=(input);
-		ratio2.setRT(input.getRT());
-		ratio2.setMSLevel(input.getMSLevel());
-		ratio2.setName(input.getName());
-		ratio2.setType(SpectrumSettings::PEAKS);
-
 		setProgress(rt_it-exp.begin());
 		Size number_data_points = rt_it->size();
-//		std::cout << peak_it->getRT() << " " << rt_it->getRT() << std::endl;
 		// spectra with less than 10 data points are being ignored
 		if (number_data_points>=10) { //filter MS1 spectra (
 			// read one OpenMS spectrum into GSL structure
@@ -145,6 +117,7 @@ void SILACFiltering::filterDataPoints(String path)
 			std::vector<DoubleReal> intensity_vec;
 			mz_min=rt_it->begin()->getMZ();
 			DoubleReal last_mz=rt_it->begin()->getMZ();
+			//Fill intensity and m/z vector for interpolation. Add zeros in the area with no data points to improve cubic spline fit
 			for (MSSpectrum<>::Iterator mz_it=rt_it->begin(); mz_it!=rt_it->end(); ++mz_it)
 			{
 				if (mz_it->getMZ() > last_mz+2*mz_stepwidth)
@@ -159,71 +132,62 @@ void SILACFiltering::filterDataPoints(String path)
 				intensity_vec.push_back(mz_it->getIntensity());
 				last_mz=mz_it->getMZ();
 			}
+			//akima interpolation; returns 0 in regions with no raw data points
 			acc_lin = gsl_interp_accel_alloc();
 			spline_lin = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
 			gsl_spline_init(spline_lin, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
+
 			// spline interpolation
 			// used for exact ratio calculation (more accurate when real peak pairs are present)
 			acc_spl = gsl_interp_accel_alloc();
 			spline_spl = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
 			gsl_spline_init(spline_spl, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
-			DoubleReal mz_min = mz_vec[0];
-			DoubleReal mz_max = mz_vec[mz_vec.size()-9];
 			DoubleReal rt=rt_it->getRT();
 
+			//Iterate over all filters
 			for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 			{
+				//Extract current spectrum
 				MSSpectrum<>::Iterator mz_it=rt_it->begin();
 				last_mz=mz_it->getMZ();
 				++mz_it;
+				//Iterate over the spectrum with a step width that is oriented on the raw data point positions
 				for ( ;mz_it!=rt_it->end(); ++mz_it)
 				{
+					//Choose half of the data point distances as stepwidth to take interpolated intensities between the data points into account
 					for (DoubleReal mz=last_mz; mz<mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ())<3*mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
 					{
-//						std::cout << mz << std::endl;
 						if (gsl_spline_eval (spline_lin, mz, acc_lin) <= 0.0)
 							continue;
 
 						SILACFilter* filter_ptr=*filter_it;
-						if (filter_ptr->isFeature(rt,mz))
+						//Check if the filter at the given position is a SILAC pair
+						if (filter_ptr->isPair(rt,mz))
 						{
+							//Retrieve peak positions for blacklisting
 							const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
 							blockPositions(peak_positions,filter_ptr);
-							//							if (filter_it!=filters.begin())
-							output.push_back(filter_ptr->peak);
-							ratio1.push_back(filter_ptr->peak_ratio1);
-							ratio2.push_back(filter_ptr->peak_ratio2);
 							++feature_id;
 						}
-						//						std::cout << "---------" << std::endl;
 					}
 					last_mz=mz_it->getMZ();
 				}
 
 			}
+			//Clear the interpolations
 			gsl_spline_free(spline_lin);
 			gsl_interp_accel_free(acc_lin);
 			gsl_spline_free(spline_spl);
 			gsl_interp_accel_free(acc_spl);
 		}
+		//Reset the filters
 		for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 		{
 			SILACFilter* filter_ptr=*filter_it;
 			filter_ptr->reset();
 		}
-
-		exp_out[scan_idx]=output;
-		ratios1[scan_idx]=ratio1;
-		ratios2[scan_idx]=ratio2;
-		++scan_idx;
 	}
-	MzMLFile file1;
-	file1.store(path+"_deviation.mzML",exp_out);
-	MzMLFile file2;
-	file2.store(path+"_alpha.mzML",ratios1);
-	MzMLFile file3;
-	file3.store(path+"_beta.mzML",ratios2);
 	endProgress();
 }
 

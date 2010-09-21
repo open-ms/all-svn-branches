@@ -327,46 +327,304 @@ void HashClustering::performClustering()
 	endProgress();
 }
 
-std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
-{
-	std::vector<BinaryTreeNode>& tree=subset.tree;
-	//throw exception if cannot be legal clustering
-
-//	std::list<DataSubset*> neighbors;
-//		Int neighbor_size=0;
-//		if(grid.size()>1)
-//		{
-//			int x = subset.mz / grid.getMZThreshold();
-//			int y = subset.rt / grid.getRTThreshold();
+//std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
+//{
+//	std::vector<BinaryTreeNode>& tree=subset.tree;
+//	//throw exception if cannot be legal clustering
 //
-//			//Surrounding of every DataSubset is examined for the next nearest DataSubsets
-//			//Size of the surrounding will be increased successively
-//			for (int k=2; k<std::max(grid.getGridSizeX(),grid.getGridSizeY()) && neighbor_size < subset.size();++k)
+////	std::list<DataSubset*> neighbors;
+////		Int neighbor_size=0;
+////		if(grid.size()>1)
+////		{
+////			int x = subset.mz / grid.getMZThreshold();
+////			int y = subset.rt / grid.getRTThreshold();
+////
+////			//Surrounding of every DataSubset is examined for the next nearest DataSubsets
+////			//Size of the surrounding will be increased successively
+////			for (int k=2; k<std::max(grid.getGridSizeX(),grid.getGridSizeY()) && neighbor_size < subset.size();++k)
+////			{
+////				for (int i=x-k;i<=x+k && neighbor_size < subset.size();++i)
+////				{
+////					if (i<0 || i>grid.getGridSizeX())
+////						continue;
+////					for (int j=y-k;j<=y+k && neighbor_size < subset.size() ;++j)
+////					{
+////						if (j<0 || j>grid.getGridSizeY() || (std::abs(y-j) <k && std::abs(x-i) < k))
+////							continue;
+////						ElementMap::iterator act_pos=grid.find(std::make_pair(i,j));
+////						if (act_pos!=grid.end())
+////						{
+////							std::list<GridElement*>& neighbor_elements=act_pos->second;
+////							if (neighbor_elements.begin()!=neighbor_elements.end())
+////							{
+////								DataSubset* neighbor_ptr=dynamic_cast<DataSubset*> (neighbor_elements.front());
+////								neighbors.push_back(neighbor_ptr);
+////								neighbor_size+=neighbor_ptr->size();
+////							}
+////						}
+////					}
+////				}
+////			}
+////		}
+////		std::cout << subset.size() << " " << neighbor_size << " " << neighbors.size() << std::endl;
+//
+//	std::vector< Real > average_silhouette_widths; //for each step from the average silhouette widths of the clusters
+//	std::map<DataPoint*, Real > interdist_i; //for each element i holds the min. average intercluster distance in cluster containing i
+//	std::map<DataPoint*, DataPoint* > cluster_with_interdist; //for each element i holds which cluster originated the min. intercluster distance
+//	std::map<DataPoint*, Real > intradist_i; //for each element i holds the average intracluster distance in [i]
+//
+//	//initial leafs
+//	std::set<DataPoint*> leafs;
+//	for (std::vector<BinaryTreeNode>::iterator it=tree.begin();it!=tree.end();++it)
+//	{
+//		leafs.insert(it->data1);
+//		leafs.insert(it->data2);
+//		interdist_i.insert(std::make_pair( it->data1, std::numeric_limits<Real>::max() ));
+//		interdist_i.insert(std::make_pair( it->data2, std::numeric_limits<Real>::max() ));
+//		cluster_with_interdist.insert(std::make_pair(it->data1,new DataPoint()));
+//		cluster_with_interdist.insert(std::make_pair(it->data2,new DataPoint()));
+//		intradist_i.insert(std::make_pair(it->data1,(Real)0.));
+//		intradist_i.insert(std::make_pair(it->data2,(Real)0.));
+//		if(it->distance == -1)
+//		{
+//			break;
+//		}
+//	}
+//	//inital values for interdis_i and cluster_with_interdist
+//	std::set<DataPoint*>::iterator it = leafs.begin();
+//	++it;
+//	for (; it != leafs.end(); ++it)
+//	{
+//		std::set<DataPoint*>::iterator jt = leafs.begin();
+//		for (; *jt !=*it; ++jt)
+//		{
+//			if(getDistance(**it,**jt)<interdist_i[*it])
 //			{
-//				for (int i=x-k;i<=x+k && neighbor_size < subset.size();++i)
+//				interdist_i[*it] = getDistance(**it,**jt);
+//				cluster_with_interdist[*it] = *jt;
+//			}
+//			if(getDistance(**it,**jt)<interdist_i[*jt])
+//			{
+//				interdist_i[*jt] = getDistance(**it,**jt);
+//				cluster_with_interdist[*jt] = *it;
+//			}
+//		}
+//	}
+//
+//	//initial cluster state
+//	std::map<DataPoint*, std::vector < DataPoint* > > clusters;
+//
+//
+//	for (std::set<DataPoint*>::iterator it = leafs.begin(); it != leafs.end(); ++it)
+//	{
+//		std::vector < DataPoint* > v;
+//		v.push_back(*it);
+//		clusters.insert(make_pair(*it,v));
+//
+//	}
+//
+//	//subsequent cluster states after silhouette calc
+//
+//
+//	for (std::vector<BinaryTreeNode>::iterator tree_it=tree.begin();tree_it!=tree.end();++tree_it)
+//	{
+//
+////		if (*tree_it==tree.back()) //last steps silhouettes would be all 0 respectively not defined
+////			break;
+//		for (std::set<DataPoint*>::iterator it = leafs.begin(); it != leafs.end(); ++it)
+//		{
+//			std::vector<DataPoint*>::iterator in_left = std::find(clusters[tree_it->data1].begin(),clusters[tree_it->data1].end(),*it);
+//			std::vector<DataPoint*>::iterator in_right = std::find(clusters[tree_it->data2].begin(),clusters[tree_it->data2].end(),*it);
+//
+//
+//			if(in_left==clusters[tree_it->data1].end() && in_right==clusters[tree_it->data2].end()) //*it (!element_of) left or right
+//			{
+//				//intradist_i is always kept
+//				//handle interdist:
+//				if(tree_it->data1 != cluster_with_interdist[*it] && tree_it->data2 != cluster_with_interdist[*it]) //s(i)_nr (!element_of) left or right
 //				{
-//					if (i<0 || i>grid.getGridSizeX())
-//						continue;
-//					for (int j=y-k;j<=y+k && neighbor_size < subset.size() ;++j)
+//					Real interdist_merged=0;
+//					for (unsigned int j = 0; j < clusters[tree_it->data1].size(); ++j)
 //					{
-//						if (j<0 || j>grid.getGridSizeY() || (std::abs(y-j) <k && std::abs(x-i) < k))
-//							continue;
-//						ElementMap::iterator act_pos=grid.find(std::make_pair(i,j));
-//						if (act_pos!=grid.end())
+//						interdist_merged += getDistance(**it,*clusters[tree_it->data1][j]);
+//					}
+//					for (unsigned int j = 0; j < clusters[tree_it->data2].size(); ++j)
+//					{
+//						interdist_merged += getDistance(**it,*clusters[tree_it->data2][j]);
+//					}
+//					interdist_merged /= (Real)(clusters[tree_it->data1].size()+clusters[tree_it->data2].size()/*+neighbor_points.size()*/);
+//
+//					if (interdist_merged < interdist_i[*it])
+//					{
+//						interdist_i[*it]=interdist_merged;
+//						cluster_with_interdist[*it] = tree_it->data1;
+//					}
+//				}
+//				else //s(i)_nr (element_of) left or right
+//				{
+//					//calculate interdist_i to merged
+//					DataPoint* k; //the one cluster of the two merged which does NOT contain s(i)_nr
+//					if(tree_it->data2!=cluster_with_interdist[*it] )
+//					{
+//						k=tree_it->data2;
+//					}
+//					else
+//					{
+//						k=tree_it->data1;
+//					}
+//					Real interdist_merged=0;
+//					for (unsigned int j = 0; j < clusters[k].size(); ++j)
+//					{
+//						interdist_merged += getDistance(**it,*clusters[k][j]);
+//					}
+//					interdist_merged += (clusters[cluster_with_interdist[*it]].size()*interdist_i[*it]);
+//
+//					interdist_merged /= (Real)(clusters[k].size()+clusters[cluster_with_interdist[*it]].size()/*+neighbor_points.size()*/);
+//					//if new inderdist is smaller that old min. nothing else has to be done
+//					if (interdist_merged <= interdist_i[*it])
+//					{
+//						interdist_i[*it]=interdist_merged;
+//						cluster_with_interdist[*it] = tree_it->data1;
+//					}
+//					// else find min av. dist from other clusters to i
+//					else
+//					{
+//						interdist_i[*it]=interdist_merged;
+//						cluster_with_interdist[*it] = tree_it->data1;
+//
+//						for (std::map<DataPoint*, std::vector < DataPoint* > >::iterator uit=clusters.begin();uit!=clusters.end();++uit)
 //						{
-//							std::list<GridElement*>& neighbor_elements=act_pos->second;
-//							if (neighbor_elements.begin()!=neighbor_elements.end())
+//							if(uit->first != tree_it->data1 && uit->first != tree_it->data2 && !uit->second.empty() && uit->second.end() == std::find(uit->second.begin(),uit->second.end(),*it))
 //							{
-//								DataSubset* neighbor_ptr=dynamic_cast<DataSubset*> (neighbor_elements.front());
-//								neighbors.push_back(neighbor_ptr);
-//								neighbor_size+=neighbor_ptr->size();
+//								Real min_interdist_i=0;
+//								for (unsigned int v = 0; v < uit->second.size(); ++v)
+//								{
+//									min_interdist_i += getDistance(*uit->second[v],**it);
+//								}
+//								min_interdist_i /= (Real)(uit->second.size());
+//								if (min_interdist_i < interdist_i[*it])
+//								{
+//									interdist_i[*it]=min_interdist_i;
+//									cluster_with_interdist[*it] = uit->first;
+//								}
+//							}
+//						}
+//					}
+//				}
+//
+//			}
+//			else //i (element_of) left or right
+//			{
+//				DataPoint* k;
+//				DataPoint* l; //k is the cluster that is one of the merged but not the one containing i, l the cluster containing i
+//				if(in_left==clusters[tree_it->data1].end())
+//				{
+//					l = tree_it->data2;
+//					k = tree_it->data1;
+//				}
+//				else
+//				{
+//					l = tree_it->data1;
+//					k = tree_it->data2;
+//				}
+//				if(k != cluster_with_interdist[*it]) //s(i)_nr (!element_of) left or right cluster
+//				{
+//					//interdist_i is kept
+//					//but intradist_i has to be updated
+//					intradist_i[*it] *= clusters[l].size()-1;
+//					for (unsigned int j = 0; j < clusters[k].size(); ++j)
+//					{
+//						intradist_i[*it] += getDistance(**it,*clusters[k][j]);
+//					}
+//					intradist_i[*it] /= (Real)(clusters[k].size()+(clusters[l].size()-1));
+//				}
+//				else //s(i)_nr (element_of) left or right
+//				{
+//					//intradist_i has to be updated
+//					intradist_i[*it] *= clusters[l].size()-1;
+//					intradist_i[*it] += (clusters[k].size()*interdist_i[*it]);
+//					intradist_i[*it] /= (Real)(clusters[k].size()+(clusters[l].size()-1));
+//					//find new min av. interdist_i
+//					interdist_i[*it]=std::numeric_limits<Real>::max();
+//					for (std::map<DataPoint*, std::vector < DataPoint* > >::iterator uit=clusters.begin();uit!=clusters.end();++uit)
+//					{
+//						if(uit->first!=l && uit->first!=k && !uit->second.empty())
+//						{
+//							Real av_interdist_i=0;
+//							for (unsigned int v = 0; v < uit->second.size(); ++v)
+//							{
+//								av_interdist_i += getDistance(*uit->second[v],**it);
+//							}
+//							av_interdist_i /= (Real)(uit->second.size());
+//							if (av_interdist_i < interdist_i[*it])
+//							{
+//								interdist_i[*it]=av_interdist_i;
+//								cluster_with_interdist[*it] = uit->first;
 //							}
 //						}
 //					}
 //				}
 //			}
 //		}
-//		std::cout << subset.size() << " " << neighbor_size << " " << neighbors.size() << std::endl;
+//		//redo clustering following tree
+//		//pushback elements of data2 to data1 (and then erase second)
+//
+//
+//		std::map<DataPoint*, std::vector < DataPoint* > >::iterator clusterPos1= clusters.find(tree_it->data1);
+//		std::map<DataPoint*, std::vector < DataPoint* > >::iterator clusterPos2= clusters.find(tree_it->data2);
+//
+//		std::vector < DataPoint* >& data=clusterPos1->second;
+//
+//		data.insert(clusterPos1->second.begin(),clusterPos2->second.begin(),clusterPos2->second.end());
+//		clusterPos2->second.clear();
+//		//erase second one
+//
+//		//calculate average silhouette width for clusters and then overall average silhouette width for cluster step
+//		Real average_overall_silhouette=0; // from cluster step
+//		for (std::map<DataPoint*, std::vector < DataPoint* > >::iterator git=clusters.begin();git!=clusters.end();++git)
+//		{
+//
+//			if(git->second.size()>1)
+//			{
+//				//collect silhouettes clusterwise so that average cluster silhouettes will be easily accessible
+//				for (unsigned int h = 0; h < git->second.size(); ++h)
+//				{
+//					Real av_interdist_i=0;
+//					Int cluster_size=0;
+//					if (interdist_i[git->second[h]] < std::numeric_limits<Real>::max())
+//					{
+//						av_interdist_i=interdist_i[git->second[h]];
+//						cluster_size=git->second.size();
+//					}
+//					av_interdist_i*=git->second.size();
+//					//Since the silhouette value of n=1 is not defined because of the missing interdist value,
+//					//we have to take points of subsets in the surrounding into account
+////					for (std::list<DataSubset*>::iterator neighbor_it = neighbors.begin();neighbor_it!=neighbors.end();++neighbor_it)
+////					{
+////						std::list<DataPoint*>& neighbor_points=(*neighbor_it)->data_points;
+////						for (std::list<DataPoint*>::iterator neighbor_element_it=neighbor_points.begin(); neighbor_element_it!=neighbor_points.end(); ++neighbor_element_it)
+////						{
+////							av_interdist_i += getDistance(*(git->second[h]),**neighbor_element_it);
+////						}
+////					}
+//					av_interdist_i/=(Real)(cluster_size/*+neighbor_size*/);
+//					if (av_interdist_i < interdist_i[git->second[h]])
+//					{
+//						interdist_i[git->second[h]]=av_interdist_i;
+//					}
+//					average_overall_silhouette += (interdist_i[git->second[h]] - intradist_i[git->second[h]]) / std::max(interdist_i[git->second[h]],intradist_i[git->second[h]]);
+//				}
+//			}
+//		}
+//		average_silhouette_widths.push_back(average_overall_silhouette/(Real)(tree.size()+1));
+//	}
+//	return average_silhouette_widths;
+//}
+
+std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
+{
+	std::vector<BinaryTreeNode>& tree=subset.tree;
+	//throw exception if cannot be legal clustering
 
 	std::vector< Real > average_silhouette_widths; //for each step from the average silhouette widths of the clusters
 	std::map<DataPoint*, Real > interdist_i; //for each element i holds the min. average intercluster distance in cluster containing i
@@ -390,6 +648,8 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 			break;
 		}
 	}
+
+
 	//inital values for interdis_i and cluster_with_interdist
 	std::set<DataPoint*>::iterator it = leafs.begin();
 	++it;
@@ -429,8 +689,8 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 	for (std::vector<BinaryTreeNode>::iterator tree_it=tree.begin();tree_it!=tree.end();++tree_it)
 	{
 
-//		if (*tree_it==tree.back()) //last steps silhouettes would be all 0 respectively not defined
-//			break;
+		if (*tree_it==tree.back()) //last steps silhouettes would be all 0 respectively not defined
+			break;
 		for (std::set<DataPoint*>::iterator it = leafs.begin(); it != leafs.end(); ++it)
 		{
 			std::vector<DataPoint*>::iterator in_left = std::find(clusters[tree_it->data1].begin(),clusters[tree_it->data1].end(),*it);
@@ -452,7 +712,7 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 					{
 						interdist_merged += getDistance(**it,*clusters[tree_it->data2][j]);
 					}
-					interdist_merged /= (Real)(clusters[tree_it->data1].size()+clusters[tree_it->data2].size()/*+neighbor_points.size()*/);
+					interdist_merged /= (Real)(clusters[tree_it->data1].size()+clusters[tree_it->data2].size());
 
 					if (interdist_merged < interdist_i[*it])
 					{
@@ -478,8 +738,7 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 						interdist_merged += getDistance(**it,*clusters[k][j]);
 					}
 					interdist_merged += (clusters[cluster_with_interdist[*it]].size()*interdist_i[*it]);
-
-					interdist_merged /= (Real)(clusters[k].size()+clusters[cluster_with_interdist[*it]].size()/*+neighbor_points.size()*/);
+					interdist_merged /= (Real)(clusters[k].size()+clusters[cluster_with_interdist[*it]].size());
 					//if new inderdist is smaller that old min. nothing else has to be done
 					if (interdist_merged <= interdist_i[*it])
 					{
@@ -501,7 +760,7 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 								{
 									min_interdist_i += getDistance(*uit->second[v],**it);
 								}
-								min_interdist_i /= (Real)(uit->second.size());
+								min_interdist_i /= (Real)uit->second.size();
 								if (min_interdist_i < interdist_i[*it])
 								{
 									interdist_i[*it]=min_interdist_i;
@@ -555,7 +814,7 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 							{
 								av_interdist_i += getDistance(*uit->second[v],**it);
 							}
-							av_interdist_i /= (Real)(uit->second.size());
+							av_interdist_i /= (Real)uit->second.size();
 							if (av_interdist_i < interdist_i[*it])
 							{
 								interdist_i[*it]=av_interdist_i;
@@ -581,43 +840,25 @@ std::vector< Real > HashClustering::averageSilhouetteWidth(DataSubset& subset)
 
 		//calculate average silhouette width for clusters and then overall average silhouette width for cluster step
 		Real average_overall_silhouette=0; // from cluster step
+
 		for (std::map<DataPoint*, std::vector < DataPoint* > >::iterator git=clusters.begin();git!=clusters.end();++git)
 		{
-
 			if(git->second.size()>1)
 			{
 				//collect silhouettes clusterwise so that average cluster silhouettes will be easily accessible
 				for (unsigned int h = 0; h < git->second.size(); ++h)
 				{
-					Real av_interdist_i=0;
-					Int cluster_size=0;
-					if (interdist_i[git->second[h]] < std::numeric_limits<Real>::max())
+					if(interdist_i[git->second[h]]!=0)
 					{
-						av_interdist_i=interdist_i[git->second[h]];
-						cluster_size=git->second.size();
+						average_overall_silhouette += (interdist_i[git->second[h]] - intradist_i[git->second[h]]) / std::max(interdist_i[git->second[h]],intradist_i[git->second[h]]);
+
 					}
-					av_interdist_i*=git->second.size();
-					//Since the silhouette value of n=1 is not defined because of the missing interdist value,
-					//we have to take points of subsets in the surrounding into account
-//					for (std::list<DataSubset*>::iterator neighbor_it = neighbors.begin();neighbor_it!=neighbors.end();++neighbor_it)
-//					{
-//						std::list<DataPoint*>& neighbor_points=(*neighbor_it)->data_points;
-//						for (std::list<DataPoint*>::iterator neighbor_element_it=neighbor_points.begin(); neighbor_element_it!=neighbor_points.end(); ++neighbor_element_it)
-//						{
-//							av_interdist_i += getDistance(*(git->second[h]),**neighbor_element_it);
-//						}
-//					}
-					av_interdist_i/=(Real)(cluster_size/*+neighbor_size*/);
-					if (av_interdist_i < interdist_i[git->second[h]])
-					{
-						interdist_i[git->second[h]]=av_interdist_i;
-					}
-					average_overall_silhouette += (interdist_i[git->second[h]] - intradist_i[git->second[h]]) / std::max(interdist_i[git->second[h]],intradist_i[git->second[h]]);
 				}
 			}
 		}
 		average_silhouette_widths.push_back(average_overall_silhouette/(Real)(tree.size()+1));
 	}
+	average_silhouette_widths.push_back(0.0);
 	return average_silhouette_widths;
 }
 
@@ -718,7 +959,6 @@ void HashClustering::createClusters(std::vector<Cluster>& clusters)
 					Cluster act_cluster;
 					DataPoint* act_element=subset_ptr->data_points.front();
 					act_element->cluster_id=cluster_id++;
-					act_element->cluster_size=1;
 					act_cluster.push_back(act_element);
 					clusters.push_back(act_cluster);
 				}

@@ -26,31 +26,77 @@
 // --------------------------------------------------------------------------
 
 
-#ifndef OPENMS_DATASTRUCTURES_QTSUBSET_H
-#define OPENMS_DATASTRUCTURES_QTSUBSET_H
+#ifndef OPENMS_DATASTRUCTURES_QTCLUSTER_H
+#define OPENMS_DATASTRUCTURES_QTCLUSTER_H
 
 #include<OpenMS/DATASTRUCTURES/DataPoint.h>
 
 namespace OpenMS {
+/**
+ * @brief QT clusters are used in QTClustering. They consists of a set of data points, while data point defines the center of the cluster.
+ * QT clusters compute a two-dimensional diameter. The RT diameter corresponds to the maximal gap in RT direction of cluster.
+ * The m/z diameter corresponds to the maximal cluster extent in m/z direction.
+ */
 class OPENMS_DLLAPI QTCluster {
 private:
+	/**
+	 * @brief the cluster center
+	 */
 	DataPoint* center_point;
+	/**
+	 * @brief members of the cluster
+	 */
 	std::set<DataPoint*> cluster_members;
-	std::map<Int,std::list<DataPoint*> > traces;
-public:
+	/**
+	 * default constructor
+	 */
 	QTCluster();
+public:
+	/**
+	 * @brief detailed constructor
+	 * @param center_point cluster center
+	 */
 	QTCluster(DataPoint* center_point_);
+	/**
+	 * @brief destructor
+	 */
 	virtual ~QTCluster();
+	/**
+	 * @brief gets the center RT position of the cluster
+	 */
 	DoubleReal getCenterRT();
+	/**
+	 * @brief gets the center m/z position of the cluster
+	 */
 	DoubleReal getCenterMZ();
+	/**
+	 * @brief gets the size of the cluster
+	 */
 	Size size() const;
+	/**
+	 * @brief cluster comparator
+	 */
 	bool operator<(const QTCluster &cluster) const;
+	/**
+	* @brief adds an element to the cluster
+	* @param element the element to be added
+	 */
 	void add(DataPoint* element);
+	/**
+	 * @brief non-mutable access to the cluster members
+	 */
 	std::set<DataPoint*> getClusterMembers();
+	/**
+	 * @brief gets the diameter pair of the cluster
+	 * first: rt_diameter, second: mz_diameter
+	 * The diameters are computed by considering a further data point, which is a candidate to be added to the cluster.
+	 * @param point data point, which should be added to the cluster
+	 */
 	std::pair<DoubleReal,DoubleReal> getDiameters(DataPoint* point);
-	DoubleReal getMZstandardDeviation(DataPoint* point,DoubleReal isotope_distance);
+	/**
+	 * @brief checks if an element is contained in the cluster
+	 */
 	bool contains(DataPoint* element);
-	bool checkClusterShape(DataPoint* point);
 };
 }
 #endif /* QTSUBSET_H_ */

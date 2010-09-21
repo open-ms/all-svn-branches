@@ -36,16 +36,14 @@
 #include <queue>
 #include <list>
 
-
-
 namespace OpenMS
 {
 /**
  * @brief Filter to use for SILACFiltering
  *
- * A SILACFilter searches for SILAC features, which correspond to the defined mass shifts and charge. A SILACFilter either can search
- * for doublets or triplets. Only peaks are taken into account, which were not blacklisted by other filters before e.g. are not part of
- * a feature yet.
+ * A SILACFilter searches for SILAC patterns, which correspond to the defined mass shifts and charge.
+ * Only peaks are taken into account, which were not blacklisted by other filters before e.g. are not part of
+ * a SILAC pair yet.
  *
  * @see SILACFiltering
  */
@@ -53,6 +51,7 @@ class SILACFiltering;
 
 class OPENMS_DLLAPI SILACFilter {
 	friend class SILACFiltering;
+
 private:
 	/**
 	 * @brief SILAC type of the filter. Either DOUBLE (2) or TRIPLE (3)
@@ -71,10 +70,6 @@ private:
 
     DataPoint next_element;
 
-    Peak1D peak;
-
-    Peak1D peak_ratio1,peak_ratio2;
-
     /**
      * @brief holds the recognized features
      */
@@ -92,26 +87,23 @@ private:
     {
         bool operator ()(DoubleReal a, DoubleReal b) const;
     };
+
+    typedef std::multiset<DoubleReal,doubleCmp> Blacklist;
+
     /**
      * @brief holds the m/z values, which are ignored due to blacklisting of other filters
      */
-    std::set<DoubleReal,doubleCmp> blacklist;
+    Blacklist blacklist;
 
-    std::list<std::set<DoubleReal,doubleCmp> > blacklist_lifetime;
+    /**
+     * @brief defines the lifetime of each position in the blacklist.
+     * The positions with longest lifetime, i.e. whose iterators are located at the front of the list, will be deleted at the next reset
+     */
+    std::list<std::list<Blacklist::iterator> > blacklist_lifetime;
     /**
      * @brief holds the m/z values of the last identified feature. These values will be blacklisted in other filters
      */
     std::vector<DoubleReal> peak_positions;
-
-    /**
-     * @brief returns the intensities of all peaks used in the identification of one SILAC feature
-     * @param act_mz m/z value of the first peak
-     * @param intensity interpolation
-     * @param spline function of the interpolation
-     */
-
-    std::vector<DoubleReal> getIntensities(DoubleReal act_mz,gsl_interp_accel *acc, gsl_spline *spline);
-
 
     /**
      * @brief returns the predicted peak width at position mz
@@ -122,22 +114,42 @@ private:
     /**
      * @brief Computes the cross correlation of the area around act_mz to the spectrum in a given area
      * @param act_mz position of the potential feature
+     * @param offset expected distance between monoisotpic peak and current peak
+     * @param tolerance maximal deviation from the expected distance
+     * @param data is filled during the computation
      */
     void computeCorrelation(DoubleReal act_mz,DoubleReal offset,DoubleReal tolerance,std::vector<DoubleReal>& data);
 
-    DoubleReal computeExactPosition(DoubleReal act_mz,DoubleReal expected_position,DoubleReal tolerance,DoubleReal cutoff,std::vector<DoubleReal> data);
+    /**
+     * @brief Computes the exact position of a peak to the monoisotopic peak
+     * The computation is based on the expected distance to the monoisotopic peak and their autocorrelation
+     * @param act_mz m/z position of the monoisotopic peak
+     * @param expected_distance expected distance of the current peak to the monoisotopic peak
+     * @param tolerance maximal deviation from the expected distance
+     * @param data autocorrelation data vector as calculated in computeCorrelation()
+     */
+    DoubleReal computeExactDistance(DoubleReal act_mz,DoubleReal expected_distance,DoubleReal tolerance,std::vector<DoubleReal> data);
 
+/**
+ * @brief Determines the quality of an isotope pattern by computing the Pearson correlation and the averagine model deviation
+ * @param act_mz current m/z position
+ * @param exact_positions the distances of each peak to the monoisotopic peak
+ * @param intensities vector to be filled with the intensities of each peak
+ * @param missing_peak is true if already a peak is missing in the SILAC pattern
+ */
+    bool checkPattern(DoubleReal act_mz, const std::vector<DoubleReal>& exact_positions, std::vector<DoubleReal>& intensities,bool missing_peak);
 
-    bool checkArea(DoubleReal act_mz, const std::vector<DoubleReal>& exact_positions, std::vector<DoubleReal>& intensities,bool missing_peak);
-
+    /*
     bool checkRatios(DoubleReal act_mz,const std::vector<DoubleReal>& light_positions, const std::vector<DoubleReal>& envelope_positions);
+	*/
+
 
 	/**
 	 * @brief returns if there exists a SILAC feature at the given position, which corresponds to the filter's properties
 	 * @param act_rt RT value of the position
 	 * @param act_mz m/z value of the position
 	 */
-	bool isFeature(DoubleReal act_rt,DoubleReal act_mz);
+	bool isPair(DoubleReal act_rt,DoubleReal act_mz);
 	/**
 	 * @brief gets the m/z values of all peaks , which belong the last identiefied feature
 	 */
@@ -156,15 +168,21 @@ public:
      */
     Int getSILACType();
     /**
-     * @brief detailed constructor for double filtering
-     * @param mass_separation_light_heavy distance between light and heavy peaks
+     * @brief detailed constructor for SILAC pair filtering
+     * @param mass_separations all mass shifts of the filter
      * @param charge_ charge of the ions to search for
+     * @param model_deviation_ maximum deviation from the averagine model
      */
     SILACFilter(std::set<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_);
 
+    /**
+         * @brief detailed constructor for singlet filtering
+         * No mass shifts are given, so only singlets are searched.
+         * @param charge_ charge of the ions to search for
+         * @param model_deviation_ maximum deviation from the averagine model
+         */
     SILACFilter(Int charge_,DoubleReal model_deviation_);
 
-    SILACFilter(Int charge_);
 
 	/**
 	 * @brief destructor

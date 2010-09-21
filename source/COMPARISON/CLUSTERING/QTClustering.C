@@ -30,52 +30,45 @@
 #include <OpenMS/CONCEPT/Exception.h>
 
 namespace OpenMS {
-QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_,DoubleReal isotope_distance_) : grid(HashGrid(rt_diameter_,mz_diameter_))
+QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_) : grid(HashGrid(rt_diameter_,mz_diameter_))
 {
-//	if(data.size()<2)
-//	{
-//		throw InsufficientInput(__FILE__, __LINE__, __PRETTY_FUNCTION__, "The data set contains not enough elements");
-//	}
+	if(data.size()<2)
+	{
+		throw InsufficientInput(__FILE__, __LINE__, __PRETTY_FUNCTION__, "The data set contains not enough elements");
+	}
 	rt_diameter=rt_diameter_;
 	mz_diameter=mz_diameter_;
-	isotope_distance=isotope_distance_;
+	//insert the data into the grid
 	for (std::vector<DataPoint>::iterator it=data.begin();it!=data.end();++it)
 	{
 		grid.insert(&(*it));
 	}
 }
 
-bool QTClustering::isBelowDiameter(DataPoint* point1, DataPoint* point2)
-{
-	if (std::abs(point1->mz - point2->mz) > mz_diameter)
-		return false;
-	if (std::abs(point1->rt - point2->rt) > rt_diameter)
-		return false;
-	return true;
-}
-
 std::vector<std::vector<DataPoint*> > QTClustering::performClustering()
 {
 	Int number_of_elements=grid.getNumberOfElements();
 	startProgress(0,number_of_elements,"clustering data");
-	std::vector<std::vector<DataPoint*> > cluster_vector;
-	//HashGrid act_grid=grid;
+
+	//invoke the QTclust method on the elements in the grid until the grid is empty
 	while(grid.getNumberOfElements() > 0)
 	{
 		setProgress(number_of_elements - grid.getNumberOfElements());
 		QTCluster act_cluster=QTClust(grid);
+		//store the current cluster
 		clusters.push_back(act_cluster);
 		const std::set<DataPoint*>& cluster_members=act_cluster.getClusterMembers();
+		//remove the data points of the current cluster from the grif
 		for (std::set<DataPoint*>::const_iterator it=cluster_members.begin();it!=cluster_members.end();++it)
 		{
 			grid.removeElement(*it);
 		}
 	}
 	Size cluster_id=0;
+	//put the clusters in the cluster vector
+	std::vector<std::vector<DataPoint*> > cluster_vector;
 	for (std::list<QTCluster>::iterator list_it=clusters.begin();list_it!=clusters.end();++list_it)
 	{
-//		std::cout << cluster_id << ": "<< std::endl;
-//		list_it->checkClusterShape();
 		std::vector<DataPoint*> act_vector;
 		const std::set<DataPoint*>& cluster_members=list_it->getClusterMembers();
 		for (std::set<DataPoint*>::const_iterator set_it=cluster_members.begin();set_it!=cluster_members.end();++set_it)
@@ -92,58 +85,71 @@ std::vector<std::vector<DataPoint*> > QTClustering::performClustering()
 
 QTCluster QTClustering::QTClust(HashGrid& act_grid)
 {
-	if (act_grid.getNumberOfElements() <= 1)
+	//return single element clusters
+	if (act_grid.getNumberOfElements() == 1)
 	{
 			DataPoint* element_ptr = dynamic_cast<DataPoint*> (*(act_grid.begin()->second.begin()));
 			return QTCluster(element_ptr);
 	}
-
+	//order all possible clusters by their sizes in a set
 	std::set<QTCluster> cluster_set;
-		for (GridCells::iterator it=act_grid.begin();it!=act_grid.end();++it)
+	for (GridCells::iterator it=act_grid.begin();it!=act_grid.end();++it)
+	{
+		std::pair<int,int> act_coords=it->first;
+		std::list<GridElement*>& elements=it->second;
+		int x=act_coords.first;
+		int y=act_coords.second;
+		//iterate over all data points in the grid
+		for (std::list<GridElement*>::iterator current_element=elements.begin();current_element!=elements.end();++current_element)
 		{
-			std::pair<int,int> act_coords=it->first;
-			std::list<GridElement*>& elements=it->second;
-			int x=act_coords.first;
-			int y=act_coords.second;
-			for (std::list<GridElement*>::iterator current_element=elements.begin();current_element!=elements.end();++current_element)
+			//select each data point as a cluster center
+			DataPoint* element_ptr = dynamic_cast<DataPoint*> (*current_element);
+			QTCluster act_cluster(element_ptr);
+			//iterate over all neighbors of the data point in the surrounding cells
+			for (int i=x-1;i<=x+1;++i)
 			{
-				DataPoint* element_ptr = dynamic_cast<DataPoint*> (*current_element);
-				QTCluster act_cluster(element_ptr);
-				for (int i=x-1;i<=x+1;++i)
+				if (i<0 || i>act_grid.getGridSizeX())
+					continue;
+				for (int j=y-1;j<=y+1;++j)
 				{
-					if (i<0 || i>act_grid.getGridSizeX())
+					if (j<0 || j>act_grid.getGridSizeY())
 						continue;
-					for (int j=y-1;j<=y+1;++j)
-					{
-						if (j<0 || j>act_grid.getGridSizeY())
-							continue;
-						GridCells::iterator act_pos=grid.find(std::make_pair(i,j));
-						if (act_pos==act_grid.end())
-							continue;
-						std::list<GridElement*>& neighbor_elements=act_pos->second;
+					GridCells::iterator act_pos=grid.find(std::make_pair(i,j));
+					if (act_pos==act_grid.end())
+						continue;
+					std::list<GridElement*>& neighbor_elements=act_pos->second;
 
-						for (std::list<GridElement*>::iterator neighbor_element=neighbor_elements.begin();neighbor_element!=neighbor_elements.end();++neighbor_element)
-						{
-							if (*current_element==*neighbor_element)
-								continue;
-							DataPoint* neighbor_ptr = dynamic_cast<DataPoint*> (*neighbor_element);
-	//						if (isBelowDiameter(element_ptr,neighbor_ptr))
-							std::pair<DoubleReal,DoubleReal> diameters=act_cluster.getDiameters(neighbor_ptr);
-	//						std::cout << diameters.first << " " << diameters.second << "\t";
-							if (/*diameters.first <= 25 && */diameters.second <= mz_diameter /*&& act_cluster.getMZstandardDeviation(neighbor_ptr,isotope_distance)<0.05*/)
-								act_cluster.add(neighbor_ptr);
-						}
+					for (std::list<GridElement*>::iterator neighbor_element=neighbor_elements.begin();neighbor_element!=neighbor_elements.end();++neighbor_element)
+					{
+						if (*current_element==*neighbor_element)
+							continue;
+						DataPoint* neighbor_ptr = dynamic_cast<DataPoint*> (*neighbor_element);
+						//get the diameter of the current cluster if the current data point would be added
+						std::pair<DoubleReal,DoubleReal> diameters=act_cluster.getDiameters(neighbor_ptr);
+						//check if diameter fulfills preconditions
+						if (diameters.first <= rt_diameter && diameters.second <= mz_diameter)
+							act_cluster.add(neighbor_ptr);
 					}
 				}
-	//			std::cout << std::endl;
-				cluster_set.insert(act_cluster);
 			}
+			//insert the current cluster into the cluster set
+			cluster_set.insert(act_cluster);
 		}
-		return *cluster_set.rbegin();
+	}
+	//return the biggest cluster
+	return *cluster_set.rbegin();
 }
 
 QTClustering::~QTClustering()
 {
-	// TODO Auto-generated destructor stub
+}
+
+QTClustering::InsufficientInput::InsufficientInput(const char* file, int line, const char* function, const char* message) throw()
+: BaseException(file, line, function, "ClusterFunctor::InsufficentInput", message)
+{
+}
+
+QTClustering::InsufficientInput::~InsufficientInput() throw()
+{
 }
 }

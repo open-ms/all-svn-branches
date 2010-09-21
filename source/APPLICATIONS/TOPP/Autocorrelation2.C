@@ -48,13 +48,13 @@ class TOPPAutocorrelation2
 		setValidFormats_("in",StringList::create("mzML"));
 		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("mzML"));
-		registerDoubleOption_("stepwidth","<stepwidth>",0.001,"Stepwidth");
-		registerIntOption_("spectrum_selection","<spectrum_selection>",0,"Spectrum selection for exact positions");
-		registerDoubleList_("estimated_positions","<estimated_positions>",DoubleList::create(0.5),"Estimated positions. Autocorrelation2 prints the exact positions of these values");
-		registerDoubleOption_("tolerance","<tolerance>",0.0,"Maximal possible deviation from estimated positions");
-		registerDoubleOption_("gauss_mean","<gauss_mean>",0.0,"Mean position of the gaussian curve");
-		registerDoubleOption_("gauss_width","<gauss_width>",1.0,"Width of the gaussian curve");
-		registerDoubleOption_("offset","<offset>",0.5,"Offset");
+		registerDoubleOption_("stepwidth","<stepwidth>",0.001,"Stepwidth",false);
+		registerIntOption_("spectrum_selection","<spectrum_selection>",0,"Spectrum selection for exact positions",false);
+		registerDoubleList_("estimated_positions","<estimated_positions>",DoubleList::create(0.5),"Estimated positions. Autocorrelation2 prints the exact positions of these values",false);
+		registerDoubleOption_("tolerance","<tolerance>",0.0,"Maximal possible deviation from estimated positions",false);
+		registerDoubleOption_("gauss_mean","<gauss_mean>",0.0,"Mean position of the gaussian curve",false);
+		registerDoubleOption_("gauss_width","<gauss_width>",1.0,"Width of the gaussian curve",false);
+		registerDoubleOption_("offset","<offset>",0.5,"Offset",false);
 	}
 
 	ExitCodes main_(int , const char**)

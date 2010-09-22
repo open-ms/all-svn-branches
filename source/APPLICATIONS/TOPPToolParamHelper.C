@@ -1,5 +1,6 @@
 #include <OpenMS/APPLICATIONS/TOPPToolParamHelper.h>
 #include <OpenMS/SYSTEM/File.h>
+#include <OpenMS/APPLICATIONS/TOPPBase.h>
 
 #include <QtGui/QMessageBox>
 #include <QtCore/QString>
@@ -34,6 +35,17 @@ namespace OpenMS
     save_param.remove(tool_name+":1:toppas_dummy");
     save_param.setSectionDescription(tool_name+":1", "Instance '1' section for '"+tool_name+"'");
     save_param.store(ini_file);
+  }
+
+  StringList TOPPToolParamHelper::getToolTypes(String tool_name)
+  {
+    Map<String,StringList> tool_name_2_types = TOPPBase::getToolList();
+    Map<String,StringList>::iterator it = tool_name_2_types.find(tool_name);
+    if (it == tool_name_2_types.end())
+    {
+      throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Requesting TOPP tool types of unknown TOPP tool "+tool_name);
+    }
+    return it->second;
   }
 
   bool TOPPToolParamHelper::initParam(Param& tool_param, String tool_name, String tool_type, const String& old_ini_file)
@@ -74,11 +86,6 @@ namespace OpenMS
 
     tmp_param.load(String(ini_file).c_str());
     tool_param = tmp_param.copy(tool_name + ":1:",true);
-    //param_.remove("log");
-    //param_.remove("no_progress");
-    //param_.remove("debug");
-    //// handled by TOPPAS anyway:
-    //param_.remove("type");
 
     writeParam(tool_param, tool_name, ini_file);
     bool changed = false;
@@ -113,9 +120,10 @@ namespace OpenMS
 
     for (Param::ParamIterator it = param_.begin(); it != param_.end(); ++it)
     {
+
       if (it->tags.count(search_tag))
       {
-        StringList valid_types;
+        StringList valid_file_types;
 
         const String& desc = it->description;
         String::SizeType index = desc.find("valid formats",0);
@@ -126,17 +134,17 @@ namespace OpenMS
           String types_string = desc.substr(types_start_pos, types_length);
           if (types_string.find(",",0) == String::npos)
           {
-            valid_types.push_back(types_string.trim());
+            valid_file_types.push_back(types_string.trim());
           }
           else
           {
-            types_string.split(',', valid_types);
+            types_string.split(',', valid_file_types);
           }
         }
 
         TOPPIOInfo io_info;
         io_info.param_name = it->name;
-        io_info.valid_types = valid_types;
+        io_info.valid_types = valid_file_types;
         if (it->value.valueType() == DataValue::STRING_LIST)
         {
           io_info.type = TOPPIOInfo::IOT_LIST;
@@ -161,27 +169,45 @@ namespace OpenMS
     // extract input parameters of target TOPP tool from param
     QVector<TOPPIOInfo> io_infos;
     TOPPToolParamHelper::getInputParameters(target_tool_params, io_infos);
+
+    cout << "Number of Input slots: " << io_infos.size() << endl;
+
+    // print input slots
+    Int in_index = -1;
     for(int i=0; i!=io_infos.size(); ++i)
     {
-      cout << ">*****************************" << endl;
-      cout << io_infos[i].type << endl;
-      cout << io_infos[i].valid_types << endl;
+      cout << "in slot " << i << " " << io_infos[i].param_name << endl;
+      cout << "in types: " << io_infos[i].valid_types << endl;
+
+      if (io_infos[i].param_name == "in" && io_infos[i].type == TOPPIOInfo::IOT_FILE)
+      {
+        in_index = i;
+      }
     }
 
-    cout << "<-----------------------------" << endl;
-    StringList target_param_types = io_infos[0].valid_types;
+    cout << "-in is on slot: " << in_index << endl;
+    // no proper in parameter found that accepts a single file
+    if (in_index == -1)
+    {
+      return false;
+    }
+
+    StringList target_param_types = io_infos[in_index].valid_types;
+
     if (target_param_types.empty())
     {
-      // no file types specified --> allow
-      return true;
+      return false;
     }
 
+    extension.toLower();
+    cout << "ext: " << extension << endl;
     // check file type compatibility using the extension
     bool mismatch = true;
     for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
     {
       String other_ext = *it;
       other_ext.toLower();
+      cout << "other_ext: " << other_ext << endl;
       if (extension == other_ext || extension == "gz")
       {
         mismatch = false;
@@ -195,4 +221,71 @@ namespace OpenMS
     }
     return true;
   }
+
+
+  bool TOPPToolParamHelper::toolDeliversFileExtension(const Param& target_tool_params, StringList supported_outfile_extensions)
+  {
+    // extract input parameters of target TOPP tool from param
+    QVector<TOPPIOInfo> io_infos;
+    TOPPToolParamHelper::getOutputParameters(target_tool_params, io_infos);
+    cout << "ios size out: " << io_infos.size() << endl;
+
+    // tool has no output?
+    if (io_infos.size()==0)
+    {
+      return false;
+    }
+
+    // find in parameter of possibly several in parameters
+    Int out_index = -1;
+    for(int i=0; i!=io_infos.size(); ++i)
+    {
+      cout << "out slot " << i << " " << io_infos[i].param_name << endl;
+      cout << "valid types: " << io_infos[i].valid_types << endl;
+      if (io_infos[i].param_name == "out")
+      {
+        out_index = i;
+      }
+    }
+
+    // out slot not found?
+    if (out_index == -1)
+    {
+      return false;
+    }
+
+    // get valid types of "out" parameter
+    StringList target_param_types = io_infos[out_index].valid_types;
+
+    if (target_param_types.empty())
+    {
+      return false;
+    }
+
+    for(int i=0; i!= supported_outfile_extensions.size(); ++i)
+    {
+      supported_outfile_extensions[i].toLower();
+    }
+
+    // check file type compatibility using the extension
+    bool mismatch = true;
+    for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
+    {
+      String other_ext = *it;
+      other_ext.toLower();
+      cout << "out other_ext: " << other_ext << endl;
+      if (std::find(supported_outfile_extensions.begin(), supported_outfile_extensions.end(), other_ext) != supported_outfile_extensions.end())
+      {
+        mismatch = false;
+        break;
+      }
+    }
+
+    if (mismatch)
+    {
+      return false;
+    }
+    return true;
+  }
+
 }

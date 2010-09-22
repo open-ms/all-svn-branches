@@ -971,15 +971,11 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       else
       {
         fh.loadExperiment(abs_filename, *peak_map, file_type, ProgressLogger::GUI);
-				data_type = LayerData::DT_CHROMATOGRAM;
-        for (Size i=0; i<peak_map->size();++i)
-      	{
-          if ((*peak_map)[i].getMSLevel() == 1)
-      		{
-						data_type = LayerData::DT_PEAK;
-      			break;
-      		}
-      	}
+        data_type = LayerData::DT_CHROMATOGRAM;
+        if (TOPPViewBase::containsMS1Scans(*peak_map))
+        {
+          data_type = LayerData::DT_PEAK;          
+        }
       }
     }
     catch(Exception::BaseException& e)
@@ -1233,7 +1229,6 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 		{
 			recent_files_.removeLast();
 		}
-
     updateRecentMenu_();
   }
 

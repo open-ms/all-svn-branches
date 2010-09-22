@@ -539,12 +539,6 @@ namespace OpenMS
 		m_min[rt_dim] -= margin;
 		m_max[rt_dim] += margin;
 
-    //removed addition of margin as alignment doesn't work anymore in Projection View
-//		//Add 1% margin to MZ in order to display all the data
-//		margin = 0.01*std::max(1.0, m_max[mz_dim] - m_min[mz_dim]);
-//		m_min[mz_dim] -= margin;
-//		m_max[mz_dim] += margin;
-		
 		overall_data_range_.setMin(m_min);
 		overall_data_range_.setMax(m_max);
 	}

@@ -329,7 +329,7 @@ namespace OpenMS
 		projection_box_->show();
 	}
 	
-        void Spectrum2DWidget::verticalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
+  void Spectrum2DWidget::verticalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
 	{
 		projection_vert_->canvas()->mzToXAxis(false);
 		projection_vert_->showLegend(false);
@@ -409,8 +409,6 @@ namespace OpenMS
 		{
 			projections_timer_->start();
 		}
-	}
-	
-	
+	}		
 } //Namespace
 

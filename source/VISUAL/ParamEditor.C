@@ -159,7 +159,8 @@ namespace OpenMS
 					{
 						if(str == "" && (dtype == "int" || dtype == "float"))
 						{
-							static_cast<QLineEdit*>(editor)->setText("0");
+              if (dtype == "int") static_cast<QLineEdit*>(editor)->setText("0");
+              else if (dtype == "float") static_cast<QLineEdit*>(editor)->setText("nan");
 						}
 						else
 						{
@@ -225,9 +226,10 @@ namespace OpenMS
 						new_value = QVariant(static_cast<QLineEdit*>(editor)->text());
 						fileName_ = "\0";
 					}
-					else if(static_cast<QLineEdit*>(editor)->text() == "" &&(dtype == "int" || dtype == "float"))//numeric
-					{
-						new_value = QVariant("0");
+					else if(static_cast<QLineEdit*>(editor)->text() == "" && ((dtype == "int") || (dtype == "float"))) //numeric
+          {
+            if (dtype == "int") new_value = QVariant("0");
+            else if (dtype == "float") new_value = QVariant("nan");
 					}
 					else
 					{
@@ -631,7 +633,12 @@ namespace OpenMS
 						}
 						if (irest!="")
 						{
-							item->setText(3, irest.toQString());
+							String r_text=irest;
+						  if (r_text.size() > 255)
+							{	// truncate restriction text, as some QT versions (4.6 & 4.7) will crash if text is too long
+								r_text = irest.prefix(251) + "...";
+							}
+							item->setText(3, r_text.toQString());
 						}
 						item->setData(2,Qt::UserRole,irest.toQString());
 					}

@@ -56,23 +56,28 @@ namespace OpenMS
 			ini_file_(ini_file),
 			default_dir_(default_dir)			
 	{
-		QGridLayout *main_grid=new QGridLayout(this);
-		QLabel *label=NULL;
+    QGridLayout *main_grid = new QGridLayout(this);
+    QLabel *label = NULL;
 
-		label=new QLabel("TOPP tool:");
+    label = new QLabel("TOPP tool:");
 		main_grid->addWidget(label,0,0);
 
     // set file extension of temp file depending on current layer type
     String in_file_extension = "";
     switch(type)
     {
-      case LayerData::DT_PEAK: in_file_extension = "[mzML]"; break;
-      case LayerData::DT_FEATURE: in_file_extension = "[featureXML]"; break;
-      case LayerData::DT_CONSENSUS: in_file_extension = "[consensusXML]"; break;
+      case LayerData::DT_PEAK: in_file_extension = "mzML"; break;
+      case LayerData::DT_FEATURE: in_file_extension = "featureXML"; break;
+      case LayerData::DT_CONSENSUS: in_file_extension = "consensusXML"; break;
       case LayerData::DT_CHROMATOGRAM: /* TODO: CHROM */ break;
       default:        
       break;
     }
+
+    StringList supported_outfile_extensions;
+    supported_outfile_extensions.push_back("mzML");
+    supported_outfile_extensions.push_back("featureXML");
+    supported_outfile_extensions.push_back("consensusXML");
 
     QStringList list;
     // Map: tool name -> types (e.g. "PeakPicker" -> "wavelet" "centroided")
@@ -82,12 +87,46 @@ namespace OpenMS
     {
       String tool_name = it->first;
       Param topp_tool_param;
-      // create param using call to -write_ini
-      TOPPToolParamHelper::initParam(topp_tool_param, tool_name, "");
-      // check wether in file extension is supported by current topp tool
-      if (TOPPToolParamHelper::toolAcceptsFileExtension(topp_tool_param, in_file_extension))
+
+      // iterate over all types (=algorithms) supported by this TOPPtool
+      StringList algorithm_types = it->second;
+
+      cout << "Current TOPPtool: " << tool_name << endl;
+      cout << "  Supported Algorithm types: " << algorithm_types << endl;
+
+      if (algorithm_types.size() == 0)  // only one algortihm supported
       {
-        list.append(it->first.toQString());
+        // create param using call to -write_ini
+        TOPPToolParamHelper::initParam(topp_tool_param, tool_name, "");
+        if (TOPPToolParamHelper::toolAcceptsFileExtension(topp_tool_param, in_file_extension)
+        && TOPPToolParamHelper::toolDeliversFileExtension(topp_tool_param, supported_outfile_extensions))
+        {
+          // only add tool once
+          if (std::find(list.begin(), list.end(), tool_name.toQString())==list.end())
+          {
+            list.append(it->first.toQString());
+          }
+        }
+      } else  // more than one algorithm type supported
+      {
+        for(int i=0; i!= algorithm_types.size(); ++i)
+        {
+          // create param using call to -write_ini
+          TOPPToolParamHelper::initParam(topp_tool_param, tool_name, algorithm_types[i]);
+
+          cout << " type:" << algorithm_types[i] << endl;
+
+          // check wether in file extension is supported by current TOPPtool
+          if (TOPPToolParamHelper::toolAcceptsFileExtension(topp_tool_param, in_file_extension)
+           && TOPPToolParamHelper::toolDeliversFileExtension(topp_tool_param, supported_outfile_extensions))
+          {
+            // only add tool once
+            if (std::find(list.begin(), list.end(),tool_name.toQString())==list.end())
+            {
+              list.append(tool_name.toQString());
+            }
+          }
+        }
       }
     }
 

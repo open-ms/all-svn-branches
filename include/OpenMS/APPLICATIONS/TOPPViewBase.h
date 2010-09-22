@@ -359,15 +359,12 @@ namespace OpenMS
       Spectrum2DWidget* active2DWindow_() const;
       ///returns a pointer to the active Spectrum3DWidget (0 the active window is no Spectrum2DWidget or there is no active window)
       Spectrum3DWidget* active3DWindow_() const;
-      ///Estimates the noise by evaluating 10 random scans of MS level 1
-      float estimateNoise_(const ExperimentType& exp);
-      Int countZeros_(const ExperimentType& exp);
 
       /// Layer management widget
       QListWidget* layer_manager_;
 
       /// data management widget (shows loaded files)
-      QListWidget* data_manager_view_;
+      QTreeWidget* data_manager_view_;
 
       /// Watcher that tracks file changes (in order to update the data in the different views)
       FileWatcher* watcher_;
@@ -397,10 +394,13 @@ namespace OpenMS
       //@{
       QToolBar* tool_bar_;
       //common intensity modes
+
       QButtonGroup* intensity_group_;
       //1D specific stuff
+
       QToolBar* tool_bar_1d_;
       QButtonGroup* draw_group_1d_;
+
       //2D specific stuff
       QToolBar* tool_bar_2d_peak_;
       QToolBar* tool_bar_2d_feat_;
@@ -496,6 +496,16 @@ namespace OpenMS
       /// Depending on the preferences this is static or changes with the current window/layer.
       String current_path_;
 
+      // static helper functions
+      public:        
+        /// Returns true if @p contains at least one MS1 spectrum
+        static bool containsMS1Scans(const ExperimentType& exp);
+        
+        /// Estimates the noise by evaluating n_scans random scans of MS level 1. Assumes that 4/5 of intensities is noise.
+        float estimateNoiseFromRandomMS1Scans(const ExperimentType& exp, UInt n_scans = 10);
+
+        /// Counts the number of exact zero valued intensities in all MS1 spectra
+        UInt countZeros(const ExperimentType& exp);
   }
   ; //class
 

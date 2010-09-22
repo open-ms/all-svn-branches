@@ -420,7 +420,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           //data manager window (resource manager view)
           QDockWidget* databar = new QDockWidget("Files", this);
           addDockWidget(Qt::RightDockWidgetArea, databar);
-          data_manager_view_ = new QListWidget(databar);
+          data_manager_view_ = new QTreeWidget(databar);
           data_manager_view_->setWhatsThis("Data bar<BR><BR>Here available data is shown.");
           databar->setWidget(data_manager_view_);
           data_manager_view_->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -651,135 +651,127 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 	}
 
   void TOPPViewBase::addDataDB(UInt db_id, bool show_options, String caption, UInt window_id)
-        {
-            //set wait cursor
-            setCursor(Qt::WaitCursor);
-
-            //Open DB connection
-            DBConnection con;
-            connectToDB_(con);
-            if (!con.isConnected())
-            {
-                setCursor(Qt::ArrowCursor);
-                return;
-            }
-
-            //load the data
-            DBAdapter db(con);
-
-            // create managed pointer to experiment data
-            ExperimentType* exp = new ExperimentType();
-            ExperimentSharedPtrType exp_sptr(exp);
-
-            FeatureMapType* dummy_map = new FeatureMapType();
-            FeatureMapSharedPtrType dummy_map_sptr(dummy_map);
-
-            ConsensusMapType* dummy_map2 = new ConsensusMapType();
-            ConsensusMapSharedPtrType dummy_map2_sptr(dummy_map2);
-
-            vector<PeptideIdentification> dummy_peptides;
-            try
-            {
-                db.loadExperiment(db_id, *exp);
-            }
-            catch (Exception::BaseException& e)
-            {
-                QMessageBox::critical(this,"Error",(String("Error while reading data: ")+e.what()).c_str());
-                setCursor(Qt::ArrowCursor);
-                return;
-            }
-            exp_sptr->sortSpectra(true);
-            exp_sptr->updateRanges(1);
-
-            //determine if the data is 1D or 2D
-            QSqlQuery result = con.executeQuery(String("SELECT count(id) from DATA_Spectrum where fid_MSExperiment='")+db_id+"' and MSLevel='1'");
-            LayerData::DataType data_type = ((result.value(0).toInt()>1) ?
-                                             LayerData::DT_PEAK :
-                                             LayerData::DT_CHROMATOGRAM);
-
-            //add data
-            if (caption=="") caption = String("DB entry ")+db_id;
-            addData_(dummy_map_sptr, dummy_map2_sptr, dummy_peptides, exp_sptr, data_type, false, show_options, "", caption, window_id);
-
-            //Reset cursor
-            setCursor(Qt::ArrowCursor);
-        }
-
-  float TOPPViewBase::estimateNoise_(const ExperimentType& exp)
   {
-      //test if no scans with MS-level 1 exist => prevent deadlock
-      bool ms1_present = false;
-      for (Size i = 0; i < exp.size(); ++i)
-      {
-          if (exp[i].getMSLevel()==1)
-          {
-              ms1_present = true;
-              break;
-          }
-      }
-      if (!ms1_present)
-      {
-          return 0.0;
-      }
+    //set wait cursor
+    setCursor(Qt::WaitCursor);
 
-      float noise = 0.0;
-      UInt count = 0;
-      srand(time(0));
-      //cout << "size: " << exp.size() << endl;
-      while (count<10)
-      {
-          UInt scan = (UInt)( (double)rand() / ((double)(RAND_MAX)+1.0f) * (double)(exp.size()-1) );
+    //Open DB connection
+    DBConnection con;
+    connectToDB_(con);
+    if (!con.isConnected())
+    {
+      setCursor(Qt::ArrowCursor);
+      return;
+    }
 
-          if (scan < exp.size() && exp[scan].getMSLevel()==1 && exp[scan].size()!=0)
-          {
-              vector<float> tmp;
-              tmp.reserve(exp[scan].size());
-              for(SpectrumType::ConstIterator it = exp[scan].begin()
-                  ; it != exp[scan].end()
-                          ; ++it)
-                  {
-                  tmp.push_back(it->getIntensity());
-              }
-              std::sort(tmp.begin(),tmp.end());
-              //cout << "scan: "<< scan <<" Groesse: " << tmp.size() << " Index: " << (UInt)ceil((float)(tmp.size()-1)/1.25f) << " Wert: "<< tmp[(UInt)ceil((float)(tmp.size()-1)/1.25f)] << endl;
-              noise += tmp[(UInt)ceil((float)(tmp.size()-1)/1.25f)];
+    //load the data
+    DBAdapter db(con);
 
-              ++count;
-          }
-      }
-      return noise / 10.0f;
+    // create managed pointer to experiment data
+    ExperimentType* exp = new ExperimentType();
+    ExperimentSharedPtrType exp_sptr(exp);
+
+    FeatureMapType* dummy_map = new FeatureMapType();
+    FeatureMapSharedPtrType dummy_map_sptr(dummy_map);
+
+    ConsensusMapType* dummy_map2 = new ConsensusMapType();
+    ConsensusMapSharedPtrType dummy_map2_sptr(dummy_map2);
+
+    vector<PeptideIdentification> dummy_peptides;
+    try
+    {
+      db.loadExperiment(db_id, *exp);
+    }
+    catch (Exception::BaseException& e)
+    {
+      QMessageBox::critical(this,"Error",(String("Error while reading data: ")+e.what()).c_str());
+      setCursor(Qt::ArrowCursor);
+      return;
+    }
+    exp_sptr->sortSpectra(true);
+    exp_sptr->updateRanges(1);
+
+    //determine if the data is 1D or 2D
+    QSqlQuery result = con.executeQuery(String("SELECT count(id) from DATA_Spectrum where fid_MSExperiment='")+db_id+"' and MSLevel='1'");
+    LayerData::DataType data_type = ((result.value(0).toInt()>1) ?
+                                     LayerData::DT_PEAK :
+                                     LayerData::DT_CHROMATOGRAM);
+
+    //add data
+    if (caption=="") caption = String("DB entry ")+db_id;
+    addData_(dummy_map_sptr, dummy_map2_sptr, dummy_peptides, exp_sptr, data_type, false, show_options, "", caption, window_id);
+
+    //Reset cursor
+    setCursor(Qt::ArrowCursor);
   }
 
-  Int TOPPViewBase::countZeros_(const ExperimentType& exp)
+  bool TOPPViewBase::containsMS1Scans(const ExperimentType& exp)
   {
-      //test if no scans with MS-level 1 exist => prevent deadlock
-      bool ms1_present = false;
-      for (Size i = 0; i < exp.size(); ++i)
-      {
-          if (exp[i].getMSLevel()==1)
-          {
-              ms1_present = true;
-              break;
-          }
-      }
-      if (!ms1_present)
-      {
-          return 0;
-      }
-
-      Int zeros = 0;
-      for (Size i = 0; i != exp.size(); ++i)
-      {
-        for(Size j = 0; j != exp[i].size(); ++j)
+    //test if no scans with MS-level 1 exist => prevent deadlock
+    bool ms1_present = false;
+    for (Size i = 0; i < exp.size(); ++i)
+    {
+        if (exp[i].getMSLevel() == 1)
         {
-          DoubleReal intensity = exp[i][j].getIntensity();
-          if (intensity == 0.0)
-          {
-            zeros++;
-          }
+            ms1_present = true;
+            break;
+        }
+    }
+    return ms1_present;
+  }
+
+  float TOPPViewBase::estimateNoiseFromRandomMS1Scans(const ExperimentType& exp, UInt n_scans)
+  {
+    if (!TOPPViewBase::containsMS1Scans(exp))
+    {
+      return 0.0;
+    }
+
+    float noise = 0.0;
+    UInt count = 0;
+    srand(time(0));
+    while (count < n_scans)
+    {
+      UInt scan = (UInt)( (double)rand() / ((double)(RAND_MAX)+1.0f) * (double)(exp.size()-1) );
+
+      if (scan < exp.size() && exp[scan].getMSLevel()==1 && exp[scan].size()!=0)
+      {
+        vector<float> tmp;
+        tmp.reserve(exp[scan].size());
+        for(SpectrumType::ConstIterator it = exp[scan].begin()
+          ; it != exp[scan].end()
+              ; ++it)
+        {
+          tmp.push_back(it->getIntensity());
+        }
+        std::sort(tmp.begin(),tmp.end());
+        noise += tmp[(UInt)ceil((float)(tmp.size()-1)/1.25f)];
+        ++count;
+      }
+    }
+    return noise / (DoubleReal)n_scans;
+  }
+
+  UInt TOPPViewBase::countZeros(const ExperimentType& exp)
+  {
+    if (!TOPPViewBase::containsMS1Scans(exp))
+    {
+      return 0;
+    }
+
+    UInt zeros = 0;
+    for (Size i = 0; i != exp.size(); ++i)
+    {
+      for(Size j = 0; j != exp[i].size(); ++j)
+      {
+        DoubleReal intensity = exp[i][j].getIntensity();
+        if (intensity == 0.0)
+        {
+          zeros++;
         }
       }
-      return zeros;
+    }
+    return zeros;
   }
 
   void TOPPViewBase::preferencesDialog()
@@ -1160,7 +1152,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 	      //calculate noise
         if (use_intensity_cutoff && is_2D)
 	      {
-          DoubleReal cutoff = estimateNoise_(*(target_window->canvas()->getCurrentLayer().getPeakData()));
+          DoubleReal cutoff = estimateNoiseFromRandomMS1Scans(*(target_window->canvas()->getCurrentLayer().getPeakData()));
 					//create filter
 					DataFilters::DataFilter filter;
 					filter.field = DataFilters::INTENSITY;
@@ -1172,7 +1164,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           target_window->canvas()->setFilters(filters);
         } else if (is_2D)  // no mower, hide zeros if wanted
         {
-          Int n_zeros = countZeros_(*(target_window->canvas()->getCurrentLayer().getPeakData()));
+          Int n_zeros = TOPPViewBase::countZeros(*(target_window->canvas()->getCurrentLayer().getPeakData()));
           if (n_zeros > 0)
           {
             //create filter
@@ -1678,15 +1670,16 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
   		parent_stack.push_back(0);
   		bool fail = false;
 
-      for (Size i = 0; i < cl.getPeakData()->size(); ++i)
+                        for (Size i = 0; i < cl.getPeakData()->size(); ++i)
 			{
 				if (i > 0)
 				{
-          if ((*cl.getPeakData())[i].getMSLevel() == (*cl.getPeakData())[i-1].getMSLevel() + 1)
+                                        if ((*cl.getPeakData())[i].getMSLevel() == (*cl.getPeakData())[i-1].getMSLevel() + 1)
 					{
 						item = new QTreeWidgetItem(parent_stack.back());
 						parent_stack.resize(parent_stack.size()+1);
-          } else if ((*cl.getPeakData())[i].getMSLevel() == (*cl.getPeakData())[i-1].getMSLevel())
+					}
+                                        else if ((*cl.getPeakData())[i].getMSLevel() == (*cl.getPeakData())[i-1].getMSLevel())
 					{
 						if (parent_stack.size() == 1)
 						{
@@ -1697,9 +1690,9 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 							item = new QTreeWidgetItem(*(parent_stack.end()-2));
 						}
 					}
-          else if ((*cl.getPeakData())[i].getMSLevel() < (*cl.getPeakData())[i-1].getMSLevel())
+                                        else if ((*cl.getPeakData())[i].getMSLevel() < (*cl.getPeakData())[i-1].getMSLevel())
 					{
-            Int level_diff = (*cl.getPeakData())[i-1].getMSLevel() - (*cl.getPeakData())[i].getMSLevel();
+                                                Int level_diff = (*cl.getPeakData())[i-1].getMSLevel() - (*cl.getPeakData())[i].getMSLevel();
 						Size parent_index = 0;
 						QTreeWidgetItem* parent = 0;
 						if (parent_stack.size() - level_diff >= 2)
@@ -1733,23 +1726,23 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 					toplevel_items.push_back(item);
 				}
 
-        item->setText(0, QString("MS") + QString::number((*cl.getPeakData())[i].getMSLevel()));
+                                item->setText(0, QString("MS") + QString::number((*cl.getPeakData())[i].getMSLevel()));
 				item->setText(1, QString::number(i));
-        item->setText(2, QString::number((*cl.getPeakData())[i].getRT()));
-        if (!(*cl.getPeakData())[i].getPrecursors().empty())
+                                item->setText(2, QString::number((*cl.getPeakData())[i].getRT()));
+                                if (!(*cl.getPeakData())[i].getPrecursors().empty())
 				{
-          item->setText(3,QString::number((*cl.getPeakData())[i].getPrecursors()[0].getMZ()));
+                                        item->setText(3,QString::number((*cl.getPeakData())[i].getPrecursors()[0].getMZ()));
 
-          if (!(*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().empty())
+                                        if (!(*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().empty())
 					{
 						QString t;
-            for(std::set<Precursor::ActivationMethod>::const_iterator it = (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin(); it != (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().end(); ++it)
+                                                for(std::set<Precursor::ActivationMethod>::const_iterator it = (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin(); it != (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().end(); ++it)
 						{
 							if(!t.isEmpty())
 							{
 								t.append(",");
 							}
-              t.append(QString::fromStdString((*cl.getPeakData())[i].getPrecursors().front().NamesOfActivationMethod[*((*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin())]));
+                                                        t.append(QString::fromStdString((*cl.getPeakData())[i].getPrecursors().front().NamesOfActivationMethod[*((*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin())]));
 						}
 						item->setText(4,t);
 					}
@@ -1763,15 +1756,15 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 					item->setText(3, "-");
 					item->setText(4, "-");
 				}
-        if ((*cl.getPeakData())[i].getInstrumentSettings().getScanMode()>0)
+                                if ((*cl.getPeakData())[i].getInstrumentSettings().getScanMode()>0)
 				{
-          item->setText(5,QString::fromStdString((*cl.getPeakData())[i].getInstrumentSettings().NamesOfScanMode[(*cl.getPeakData())[i].getInstrumentSettings().getScanMode()]));
+                                        item->setText(5,QString::fromStdString((*cl.getPeakData())[i].getInstrumentSettings().NamesOfScanMode[(*cl.getPeakData())[i].getInstrumentSettings().getScanMode()]));
 				}
 				else
 				{
 					item->setText(5, "-");
 				}
-        if ((*cl.getPeakData())[i].getInstrumentSettings().getZoomScan())
+                                if ((*cl.getPeakData())[i].getInstrumentSettings().getZoomScan())
 				{
 					item->setText(6,"yes");
 				}
@@ -1798,25 +1791,25 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 				spectrum_selection_->clear();
 				toplevel_items.clear();
 				selected_item = 0;
-        for (Size i = 0; i < cl.getPeakData()->size(); ++i)
+                                for (Size i = 0; i < cl.getPeakData()->size(); ++i)
 				{
 					item = new QTreeWidgetItem((QTreeWidget*)0);
-          item->setText(0, QString("MS") + QString::number((*cl.getPeakData())[i].getMSLevel()));
+                                        item->setText(0, QString("MS") + QString::number((*cl.getPeakData())[i].getMSLevel()));
 					item->setText(1, QString::number(i));
-          item->setText(2, QString::number((*cl.getPeakData())[i].getRT()));
-          if (!(*cl.getPeakData())[i].getPrecursors().empty())
+                                        item->setText(2, QString::number((*cl.getPeakData())[i].getRT()));
+                                        if (!(*cl.getPeakData())[i].getPrecursors().empty())
 					{
-            item->setText(3,QString::number((*cl.getPeakData())[i].getPrecursors()[0].getMZ()));
+                                                item->setText(3,QString::number((*cl.getPeakData())[i].getPrecursors()[0].getMZ()));
 
-            if (!(*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().empty())
+                                                if (!(*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().empty())
 						{
 							QString t;
-              for(std::set<Precursor::ActivationMethod>::const_iterator it = (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin(); it != (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().end(); ++it)
+                                                        for(std::set<Precursor::ActivationMethod>::const_iterator it = (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin(); it != (*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().end(); ++it)
 							{
 								if(!t.isEmpty()){
 									t.append(",");
 								}
-                t.append(QString::fromStdString((*cl.getPeakData())[i].getPrecursors().front().NamesOfActivationMethod[*((*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin())]));
+                                                                t.append(QString::fromStdString((*cl.getPeakData())[i].getPrecursors().front().NamesOfActivationMethod[*((*cl.getPeakData())[i].getPrecursors().front().getActivationMethods().begin())]));
 							}
 							item->setText(4,t);
 						}
@@ -1830,15 +1823,15 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 						item->setText(3, "-");
 						item->setText(4, "-");
 					}
-          if ((*cl.getPeakData())[i].getInstrumentSettings().getScanMode()>0)
+                                        if ((*cl.getPeakData())[i].getInstrumentSettings().getScanMode()>0)
 					{
-            item->setText(5,QString::fromStdString((*cl.getPeakData())[i].getInstrumentSettings().NamesOfScanMode[(*cl.getPeakData())[i].getInstrumentSettings().getScanMode()]));
+                                                item->setText(5,QString::fromStdString((*cl.getPeakData())[i].getInstrumentSettings().NamesOfScanMode[(*cl.getPeakData())[i].getInstrumentSettings().getScanMode()]));
 					}
 					else
 					{
 						item->setText(5, "-");
 					}
-          if ((*cl.getPeakData())[i].getInstrumentSettings().getZoomScan())
+                                        if ((*cl.getPeakData())[i].getInstrumentSettings().getZoomScan())
 					{
 						item->setText(6,"yes");
 					}
@@ -1874,7 +1867,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 			return; // leave signals blocked
   	}
 
-    if (cl.getPeakData()->size() == 1)
+        if (cl.getPeakData()->size() == 1)
   	{
   		item->setFlags(0);
   		return; // leave signals blocked
@@ -1889,14 +1882,13 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     //reset
     data_manager_view_->clear();
     data_manager_view_->blockSignals(true);
-    QListWidgetItem* item = 0;
+    QTreeWidgetItem* item = 0;
     for (set<String>::const_iterator it = filenames.begin(); it != filenames.end(); ++it)
     {
-      item = new QListWidgetItem(data_manager_view_);
+      item = new QTreeWidgetItem(data_manager_view_);
       QString name = it->toQString();
       QFileInfo fi(name);
-      item->setText(fi.fileName());
-      item->setToolTip(name);
+      item->setText(0, fi.fileName());
     }
     layer_manager_->blockSignals(false);
   }
@@ -2665,7 +2657,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 				db.disconnect();
 				for (vector<UInt>::iterator it = result.begin();it!=result.end();++it)
 				{
- 					addDataDB(*it,true);
+          addDataDB(*it, true);
 				}
 			}
 		}
@@ -2898,18 +2890,17 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 			vector<ProteinIdentification> protein_identifications;
 			String document_id;
 			IdXMLFile().load(name, protein_identifications, identifications, document_id);
-      // TODO warn if underlying data is modified
 			if (layer.type==LayerData::DT_PEAK)
 			{
-        IDMapper().annotate(*layer.getPeakData(), identifications, protein_identifications);
+        IDMapper().annotate(*(const_cast<LayerData&>(layer).getPeakData()), identifications, protein_identifications);
 			}
 			else if (layer.type==LayerData::DT_FEATURE)
 			{
-        IDMapper().annotate(*layer.getFeatureMap(),identifications,protein_identifications);
+        IDMapper().annotate(*(const_cast<LayerData&>(layer).getFeatureMap()),identifications,protein_identifications);
 			}
 			else
 			{
-        IDMapper().annotate(*layer.getConsensusMap(),identifications,protein_identifications);
+        IDMapper().annotate(*(const_cast<LayerData&>(layer).getConsensusMap()),identifications,protein_identifications);
 			}
 		}
 	}
@@ -3062,17 +3053,17 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
 	void TOPPViewBase::showSpectrumAs1D(int index)
 	{
-		const LayerData& layer = activeCanvas_()->getCurrentLayer();
+     const LayerData& layer = activeCanvas_()->getCurrentLayer();
      ExperimentSharedPtrType exp_sptr = layer.getPeakData();
 
-		//open new 1D widget
-		Spectrum1DWidget* w = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
+    //open new 1D widget
+    Spectrum1DWidget* w = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
 
     //add data
     if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
   	{
   		return;
-  	}
+            }
 
 		w->canvas()->activateSpectrum(index);
 		// set visible aree to visible area in 2D view
@@ -3080,14 +3071,25 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 		// set relative (%) view of visible area
     w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
 
-		String caption = layer.name;
-		w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+    //for MS1 spectra set visible area to visible area in 2D view.
+    UInt ms_level = w->canvas()->getCurrentLayer().getCurrentSpectrum().getMSLevel();
+    if (ms_level == 1)
+    {
+      // set visible aree to visible area in 2D view
+      w->canvas()->setVisibleArea(activeCanvas_()->getVisibleArea());
+    }
+
+    // set relative (%) view of visible area
+    w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
+
+    String caption = layer.name;
+    w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
 
     showAsWindow_(w,caption);
     updateLayerBar();
     updateSpectrumBar();
-		updateFilterBar();
-		updateMenu();
+    updateFilterBar();
+    updateMenu();
 	}
 
   void TOPPViewBase::showCurrentPeaksAs2D()
@@ -3624,7 +3626,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     std::vector<std::pair<const SpectrumWidget *, int> > needs_update;
     for(int i=0; i!=ws_->windowList().count(); ++i)
     {
-      std::cout << "Number of windows: " << ws_->windowList().count() << std::endl;
+      //std::cout << "Number of windows: " << ws_->windowList().count() << std::endl;
       QWidget* w = wl[i];
       const SpectrumWidget* sw = qobject_cast<const SpectrumWidget*>(w);
       if (sw!=0)
@@ -3634,7 +3636,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
         // determine if widget stores one or more layers for the given filename (->needs update)
         for (int j=0; j!= lc; ++j)
         {
-          std::cout << "Layer filename: " << sw->canvas()->getLayer(j).filename << std::endl;
+          //std::cout << "Layer filename: " << sw->canvas()->getLayer(j).filename << std::endl;
           const LayerData& ld = sw->canvas()->getLayer(j);
           if (ld.filename == filename)
           {
@@ -3650,7 +3652,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       return;
     } else if (needs_update.size()!=0)  // at least one layer references data of filename
     {
-      std::cout << "Number of Layers that need update: " << needs_update.size() << std::endl;
+      //std::cout << "Number of Layers that need update: " << needs_update.size() << std::endl;
       pair<const SpectrumWidget *, int>& slp = needs_update[0];
       const SpectrumWidget * sw = slp.first;
       int layer_index = slp.second;

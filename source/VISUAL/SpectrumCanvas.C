@@ -109,16 +109,16 @@ namespace OpenMS
 
 	void SpectrumCanvas::resizeEvent(QResizeEvent* /* e */)
 	{
-#ifdef DEBUG_TOPPVIEW
-		cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
-#endif
+    #ifdef DEBUG_TOPPVIEW
+      cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
+    #endif
 		buffer_ = QImage(width(), height(), QImage::Format_RGB32);
 		update_buffer_ = true;
 		updateScrollbars_();
 		update_(__PRETTY_FUNCTION__);
-#ifdef DEBUG_TOPPVIEW
-		cout << "END   " << __PRETTY_FUNCTION__ << endl;
-#endif
+    #ifdef DEBUG_TOPPVIEW
+      cout << "END   " << __PRETTY_FUNCTION__ << endl;
+    #endif
 	}
 
 	void SpectrumCanvas::setFilters(const DataFilters& filters)
@@ -538,10 +538,12 @@ namespace OpenMS
 		DoubleReal margin = 0.01*std::max(1.0, m_max[rt_dim] - m_min[rt_dim]);
 		m_min[rt_dim] -= margin;
 		m_max[rt_dim] += margin;
-		//Add 1% margin to MZ in order to display all the data
-		margin = 0.01*std::max(1.0, m_max[mz_dim] - m_min[mz_dim]);
-		m_min[mz_dim] -= margin;
-		m_max[mz_dim] += margin;
+
+    //removed addition of margin as alignment doesn't work anymore in Projection View
+//		//Add 1% margin to MZ in order to display all the data
+//		margin = 0.01*std::max(1.0, m_max[mz_dim] - m_min[mz_dim]);
+//		m_min[mz_dim] -= margin;
+//		m_max[mz_dim] += margin;
 		
 		overall_data_range_.setMin(m_min);
 		overall_data_range_.setMax(m_max);
@@ -558,8 +560,8 @@ namespace OpenMS
 	}
 	
 	void SpectrumCanvas::recalculateSnapFactor_()
-	{
-		
+	{		
+
 	}
 
 	void SpectrumCanvas::horizontalScrollBarChange(int /*value*/)
@@ -947,7 +949,11 @@ namespace OpenMS
 		if (layer.modified!=modified)
 		{
 			layer.modified = modified;
-      cout << "emit: layerModificationChange" <<endl;
+      #ifdef DEBUG_TOPPVIEW
+        cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
+        cout << "emit: layerModificationChange" <<endl;
+        cout << "END " << __PRETTY_FUNCTION__ << endl;
+      #endif
 			emit layerModficationChange(activeLayerIndex(), modified);      
 		}
 	}

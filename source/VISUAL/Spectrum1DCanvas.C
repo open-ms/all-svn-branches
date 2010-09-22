@@ -37,6 +37,7 @@
 #include <QtGui/QInputDialog>
  
 // OpenMS
+#include <OpenMS/APPLICATIONS/TOPPViewBase.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum1DPrefDialog.h>
 #include <OpenMS/MATH/MISC/MathFunctions.h>
 #include <OpenMS/VISUAL/Spectrum1DCanvas.h>
@@ -57,6 +58,8 @@
 #include <iostream>
 
 using namespace std;
+
+#define DEBUG_TOPPVIEW 1
 
 namespace OpenMS
 {
@@ -423,7 +426,7 @@ namespace OpenMS
 		if (selected_peak_.isValid())
 		{
 				String status;
-                                const ExperimentType::SpectrumType& s = selected_peak_.getSpectrum(*getCurrentLayer().getPeakData());
+        const ExperimentType::SpectrumType& s = selected_peak_.getSpectrum(*getCurrentLayer().getPeakData());
 				for (Size m=0; m<s.getFloatDataArrays().size();++m)
 				{
 					if (selected_peak_.peak < s.getFloatDataArrays()[m].size())
@@ -476,8 +479,8 @@ namespace OpenMS
 				}
 				if (measurement_start_.isValid() && selected_peak_.peak != measurement_start_.peak)
 				{
-                                        const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(*getCurrentLayer().getPeakData());
-                                        const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(*getCurrentLayer().getPeakData());
+          const ExperimentType::PeakType& peak_1 = measurement_start_.getPeak(*getCurrentLayer().getPeakData());
+          const ExperimentType::PeakType& peak_2 = selected_peak_.getPeak(*getCurrentLayer().getPeakData());
 					DoubleReal distance = peak_2.getMZ() - peak_1.getMZ();
 					// add new distance item to annotations_1d of current layer
 					if (intensity_mode_==IM_PERCENTAGE)
@@ -559,8 +562,7 @@ namespace OpenMS
 	
 		// get iterator on first peak with higher position than interval_end
 		temp.setMZ(max(lt.getX(),rb.getX()));
-                SpectrumConstIteratorType	right_it = lower_bound(left_it, spectrum.end(), temp, PeakType::PositionLess());
-	
+    SpectrumConstIteratorType	right_it = lower_bound(left_it, spectrum.end(), temp, PeakType::PositionLess());
 	
 		if (left_it == right_it) // both are equal => no peak falls into this interval
 		{
@@ -572,7 +574,7 @@ namespace OpenMS
 			return PeakIndex(spectrum_index,left_it-spectrum.begin());
 		}
 	
-                SpectrumConstIteratorType nearest_it = left_it;
+    SpectrumConstIteratorType nearest_it = left_it;
 		
 		// select source interval start and end depending on diagram orientation
 		if (intensity_mode_==IM_PERCENTAGE)
@@ -590,10 +592,10 @@ namespace OpenMS
 		double dest_interval_end = tmp.y();
 		
 		int nearest_intensity = static_cast<int>(intervalTransformation(nearest_it->getIntensity(), visible_area_.minY(),
-		                                                                 visible_area_.maxY(), dest_interval_start, dest_interval_end));
-		int current_intensity;
-	
-                for (SpectrumConstIteratorType it = left_it; it != right_it; it++)
+                                                         visible_area_.maxY(), dest_interval_start, dest_interval_end));
+    int current_intensity;
+
+    for (SpectrumConstIteratorType it = left_it; it != right_it; it++)
 		{
 			current_intensity = static_cast<int>(intervalTransformation(it->getIntensity(), visible_area_.minY(), visible_area_.maxY(),
 			                                                             dest_interval_start, dest_interval_end));
@@ -700,11 +702,11 @@ namespace OpenMS
 			return;
 		}
 
-#ifdef DEBUG_TOPPVIEW
-		cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
-	  cout << "  Visible area -- m/z: " << visible_area_.minX() << " - " << visible_area_.maxX() << " int: " << visible_area_.minY() << " - " << visible_area_.maxY() << endl;
-	  cout << "  Overall area -- m/z: " << overall_data_range_.min()[0] << " - " << overall_data_range_.max()[0] << " int: " << overall_data_range_.min()[1] << " - " << overall_data_range_.max()[1] << endl; 
-#endif
+    #ifdef DEBUG_TOPPVIEW
+      cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
+      cout << "  Visible area -- m/z: " << visible_area_.minX() << " - " << visible_area_.maxX() << " int: " << visible_area_.minY() << " - " << visible_area_.maxY() << endl;
+      //cout << "  Overall area -- m/z: " << overall_data_range_.min()[0] << " - " << overall_data_range_.max()[0] << " int: " << overall_data_range_.min()[1] << " - " << overall_data_range_.max()[1] << endl;
+    #endif
 		
 		QTime timer;
 		if (show_timing_)
@@ -725,7 +727,7 @@ namespace OpenMS
 			emit recalculateAxes();
 			paintGridLines_(painter);
 			
-                        SpectrumConstIteratorType vbegin, vend;
+      SpectrumConstIteratorType vbegin, vend;
 			for (Size i=0; i< getLayerCount();++i)
 			{
 				const LayerData& layer = getLayer(i);
@@ -767,7 +769,7 @@ namespace OpenMS
 					{
 						case DM_PEAKS:
 							//-----------------------------------------DRAWING PEAKS-------------------------------------------							
-                                                        for (SpectrumConstIteratorType it = vbegin; it != vend; ++it)
+              for (SpectrumConstIteratorType it = vbegin; it != vend; ++it)
 							{
 								if (layer.filters.passes(spectrum,it-spectrum.begin()))
 								{
@@ -786,8 +788,8 @@ namespace OpenMS
 								QPainterPath path;
 							
 								// connect peaks in visible area; (no clipping needed)
-								bool first_point=true;
-                                                                for (SpectrumConstIteratorType it = vbegin; it != vend; it++)
+                bool first_point = true;
+                for (SpectrumConstIteratorType it = vbegin; it != vend; it++)
 								{
 									dataToWidget(*it, begin, layer.flipped);
 						
@@ -1225,7 +1227,7 @@ namespace OpenMS
 				update_(__PRETTY_FUNCTION__);
 			}
 		}
-		else
+    else // !annot_item
 		{
 			//Display name and warn if current layer invisible
 			String layer_name = String("Layer: ") + getCurrentLayer().name;
@@ -1272,8 +1274,12 @@ namespace OpenMS
 			context_menu->addMenu(save_menu);
 			context_menu->addMenu(settings_menu);
 
-      context_menu->addAction("Switch to 2D view");
-      context_menu->addAction("Switch to 3D view");
+      // only add to context menu if there is a MS1 map
+      if (TOPPViewBase::containsMS1Scans(*getCurrentLayer().getPeakData()))
+      {
+        context_menu->addAction("Switch to 2D view");
+        context_menu->addAction("Switch to 3D view");
+      }
 
 			//add external context menu
 			if (context_add_)
@@ -1748,7 +1754,7 @@ namespace OpenMS
 	
 	void Spectrum1DCanvas::activateSpectrum(Size index, bool repaint)
 	{
-                if (index < currentPeakData_()->size())
+    if (index < currentPeakData_()->size())
 		{
 			getCurrentLayer_().current_spectrum = index;
 			recalculateSnapFactor_();

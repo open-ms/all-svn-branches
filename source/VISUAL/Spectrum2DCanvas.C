@@ -286,7 +286,7 @@ namespace OpenMS
       }
 
       // determine spacing for whole data
-      DoubleReal min_spacing_rz = 1.0;
+      DoubleReal min_spacing_mz = 1.0;
       DoubleReal average_spacing_rt = 1.0;
 			{           
         vector<Real> mz_spacing;
@@ -301,10 +301,12 @@ namespace OpenMS
           mz_spacing.push_back(current_average_mz_spacing);
         }
         sort(mz_spacing.begin(), mz_spacing.end());        
-        min_spacing_rz = mz_spacing[0];
+        min_spacing_mz = mz_spacing[0];
 
-        cout << "avg mz:" << min_spacing_rz << endl;
-        cout << "min mz:" << mz_spacing[0] << endl;
+#ifdef DEBUG_TOPPVIEW
+        cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
+        cout << "min spacing mz:" << min_spacing_mz << endl;
+#endif
 
         {
           vector<Real> rts;
@@ -321,12 +323,10 @@ namespace OpenMS
           if (peak_map.size() > 2)
           {
             average_spacing_rt = (rts[rts.size()-1] - rts[0])/(DoubleReal)rts.size();
-            cout << "avg:" << average_spacing_rt << endl;
+            //cout << "avg:" << average_spacing_rt << endl;
           }
 				}
 			}
-
-
 
 			//-----------------------------------------------------------------------------------------------
       //many data points than pixels?: we paint the maximum shown intensity per pixel
@@ -338,7 +338,7 @@ namespace OpenMS
       //few data points: more expensive drawing of all datapoints (circles or points depending on zoom level)
 			else
 			{
-        paintAllIntensities_(layer_index, min_spacing_rz, average_spacing_rt, painter);
+        paintAllIntensities_(layer_index, min_spacing_mz, average_spacing_rt, painter);
 			}
 
 			//-----------------------------------------------------------------
@@ -958,7 +958,7 @@ namespace OpenMS
 					visible_last_layer=i;
 				}
 			}
-			if (getLayer(i).type==LayerData::DT_CHROMATOGRAM)
+      if (getLayer(i).type == LayerData::DT_CHROMATOGRAM)
 			{
 				//TODO CHROM
 			}
@@ -1002,7 +1002,9 @@ namespace OpenMS
 		float mult = 1.0/prec;
 
 
-    for (ExperimentType::ConstAreaIterator i = layer->getPeakData()->areaBeginConst(visible_area_.minPosition()[1],visible_area_.maxPosition()[1],visible_area_.minPosition()[0],visible_area_.maxPosition()[0]); i != layer->getPeakData()->areaEndConst(); ++i)
+    for (ExperimentType::ConstAreaIterator i = layer->getPeakData()->areaBeginConst(visible_area_.minPosition()[1],visible_area_.maxPosition()[1],visible_area_.minPosition()[0],visible_area_.maxPosition()[0]);
+         i != layer->getPeakData()->areaEndConst();
+         ++i)
 		{
 			PeakIndex pi = i.getPeakIndex();
       if (layer->filters.passes((*layer->getPeakData())[pi.spectrum],pi.peak))
@@ -1058,13 +1060,13 @@ namespace OpenMS
 
 		if (isMzToXAxis())
 		{
-      emit showProjectionHorizontal(projection_mz_sptr,Spectrum1DCanvas::DM_PEAKS);
-      emit showProjectionVertical(projection_rt_sptr,Spectrum1DCanvas::DM_CONNECTEDLINES);
+      emit showProjectionHorizontal(projection_mz_sptr, Spectrum1DCanvas::DM_PEAKS);
+      emit showProjectionVertical(projection_rt_sptr, Spectrum1DCanvas::DM_CONNECTEDLINES);
 		}
 		else
 		{
-      emit showProjectionHorizontal(projection_rt_sptr,Spectrum1DCanvas::DM_CONNECTEDLINES);
-      emit showProjectionVertical(projection_mz_sptr,Spectrum1DCanvas::DM_PEAKS);
+      emit showProjectionHorizontal(projection_rt_sptr, Spectrum1DCanvas::DM_CONNECTEDLINES);
+      emit showProjectionVertical(projection_mz_sptr, Spectrum1DCanvas::DM_PEAKS);
 		}
 		showProjectionInfo(peak_count, intensity_sum, intensity_max);
 	}
@@ -1784,8 +1786,8 @@ namespace OpenMS
 
 	void Spectrum2DCanvas::contextMenuEvent(QContextMenuEvent* e)
 	{
-		//Abort of there are no layers
-		if (layers_.empty()) return;
+                //Abort if there are no layers
+                if (layers_.empty()) return;
 
 		DoubleReal rt = widgetToData_(e->pos())[1];
 
@@ -1868,15 +1870,27 @@ namespace OpenMS
 			context_menu->addSeparator();
 			for(i=0; i<(Int)indices.size(); ++i)
 			{
-				if (indices[i]==current) ms1_scans->addSeparator();
-                                a = ms1_scans->addAction(QString("RT: ") + QString::number((*getCurrentLayer().getPeakData())[indices[i]].getRT()));
+        if (indices[i]==current)
+        {
+          ms1_scans->addSeparator();
+        }
+        a = ms1_scans->addAction(QString("RT: ") + QString::number((*getCurrentLayer().getPeakData())[indices[i]].getRT()));
 				a->setData(indices[i]);
-				if (indices[i]==current) ms1_scans->addSeparator();
+        if (indices[i]==current)
+        {
+          ms1_scans->addSeparator();
+        }
 
-				if (indices[i]==current) ms1_meta->addSeparator();
-                                a = ms1_meta->addAction(QString("RT: ") + QString::number((*getCurrentLayer().getPeakData())[indices[i]].getRT()));
+        if (indices[i]==current)
+        {
+          ms1_meta->addSeparator();
+        }
+        a = ms1_meta->addAction(QString("RT: ") + QString::number((*getCurrentLayer().getPeakData())[indices[i]].getRT()));
 				a->setData(indices[i]);
-				if (indices[i]==current) ms1_meta->addSeparator();
+        if (indices[i]==current)
+        {
+          ms1_meta->addSeparator();
+        }
 			}
 
 			//add surrounding fragment scans

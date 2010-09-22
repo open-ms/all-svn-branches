@@ -28,9 +28,13 @@
 #ifndef OPENMS_APPLICATIONS_TOPPTOOLPARAMHELPER_H
 #define OPENMS_APPLICATIONS_TOPPTOOLPARAMHELPER_H
 
+// OpenMS
 #include <OpenMS/DATASTRUCTURES/Param.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
+#include <OpenMS/DATASTRUCTURES/StringList.h>
 #include <OpenMS/APPLICATIONS/TOPPIOInfo.h>
+
+// Qt
 #include <QtCore/QVector>
 
 namespace OpenMS
@@ -46,6 +50,9 @@ namespace OpenMS
       /// Refreshes the parameters of this tool, returns true if it has been a change
       static bool refreshParameters(Param&, const String& tool_name, const String& tool_type);
 
+      /// Extracts the types (=different algorithms) of a given TOPP Tool. Empty if no types are defined (=only one algorithm).
+      StringList getToolTypes(String tool_name);
+
       /// Initializes the parameters with standard values from -write_ini, uses the parameters from the old_ini_file if given, returns if parameters have changed (if old_ini_file was given)
       static bool initParam(Param& tool_param, String tool_name, String tool_type, const String& old_ini_file = "");
 
@@ -58,8 +65,11 @@ namespace OpenMS
       /// Writes @p param to the @p ini_file
       static void writeParam(const Param& param, const String& tool_name, const QString& ini_file);
 
-      /// Extracts input file parameters and tests wether extension matches
+      /// Extracts input file parameters and tests whether extension matches
       static bool toolAcceptsFileExtension(const Param& target_tool_params, String extension);
+
+      /// Extracts output file parameters and tests against supported_outfile_extensions
+      static bool toolDeliversFileExtension(const Param& topp_tool_param, StringList supported_outfile_extensions);
 
     protected:
       /// Fills @p io_infos with the required input/output file/list parameters. If @p input_params is true, input params are returned, otherwise output params.

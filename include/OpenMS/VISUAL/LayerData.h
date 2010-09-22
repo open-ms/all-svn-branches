@@ -147,7 +147,7 @@ namespace OpenMS
         return features;
       }
 
-      /// Returns a reference to the current feature data
+      /// Returns a const reference to the current feature data
       inline FeatureMapSharedPtrType& getFeatureMap()
       {
         return features;

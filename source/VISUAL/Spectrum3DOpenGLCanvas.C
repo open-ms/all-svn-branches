@@ -125,7 +125,10 @@ namespace OpenMS
         if (stickdata_  != 0)
         {
           glDeleteLists(stickdata_, 1);
-          std::cout << "Deleting sticklist near makeDataAsTopView" << std::endl;
+          #ifdef DEBUG_TOPPVIEW
+            cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
+            std::cout << "Deleting sticklist near makeDataAsTopView" << std::endl;
+          #endif
         }
 
         stickdata_ = makeDataAsTopView();
@@ -149,7 +152,10 @@ namespace OpenMS
       if (stickdata_  != 0)
       {
         glDeleteLists(stickdata_, 1);
-        std::cout << "Deleting sticklist near makeDataAsStick" << std::endl;
+        #ifdef DEBUG_TOPPVIEW
+          cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
+          std::cout << "Deleting sticklist near makeDataAsTopView" << std::endl;
+        #endif
       }
 
       stickdata_ =  makeDataAsStick();

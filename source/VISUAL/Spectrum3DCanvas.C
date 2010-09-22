@@ -175,6 +175,10 @@ namespace OpenMS
 	
   void Spectrum3DCanvas::update_(const char* caller)
 	{
+    #ifdef DEBUG_TOPPVIEW
+      cout << "BEGIN " << __PRETTY_FUNCTION__ << " caller: " << caller << endl;
+    #endif
+
     std::cout << caller << std::endl;
 		if(update_buffer_)
 		{
@@ -242,15 +246,12 @@ namespace OpenMS
 		}
 		context_menu->addAction(layer_name.toQString())->setEnabled(false);
 		context_menu->addSeparator();
-
 		context_menu->addAction("Layer meta data");
 
 		QMenu* save_menu = new QMenu("Save");
 		context_menu->addMenu(save_menu);
 		save_menu->addAction("Layer");
 		save_menu->addAction("Visible layer data");
-
-
 
 		QMenu* settings_menu = new QMenu("Settings");
 		context_menu->addMenu(settings_menu);

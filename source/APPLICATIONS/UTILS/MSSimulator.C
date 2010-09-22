@@ -100,7 +100,9 @@ class TOPPMSSimulator
       registerOutputFile_("out","<file>","","output (simulated MS map) in mzML format",true);
       registerOutputFile_("out_fm","<file>","","output (simulated MS map) in featureXML format",false);
       registerOutputFile_("out_cm","<file>","","output (simulated MS map) in consensusXML format (grouping charge variants from a parent peptide from ESI)",false);
-
+      registerOutputFile_("out_lcm","<file>","","output (simulated MS map) in consensusXML format (grouping labeled variants)",false);
+      registerOutputFile_("out_cntm","<file>","","output (simulated MS map) in featureXML format (contaminants)",false);
+      
       registerStringOption_("type","<name>","","Labeling type\n",true);
       setValidStrings_("type", getUtilList()[toolName_()] );
 
@@ -127,6 +129,11 @@ class TOPPMSSimulator
       Param tmp;
       String type = getStringOption_("type");
       tmp.insert("MSSim:", MSSim().getParameters(type));
+      tmp.setValue("RandomNumberGenerators:biological", "random", "Controls the 'biological' randomness of the generated data (e.g. systematic effects like deviations in RT). If set to 'random' each experiment will look different. If set to 'reproducible' each experiment will have the same outcome (given that the input data is the same).");
+      tmp.setValidStrings("RandomNumberGenerators:biological",StringList::create("reproducible,random"));
+      tmp.setValue("RandomNumberGenerators:technical", "random", "Controls the 'technical' randomness of the generated data (e.g. noise in the raw signal). If set to 'random' each experiment will look different. If set to 'reproducible' each experiment will have the same outcome (given that the input data is the same).");
+      tmp.setValidStrings("RandomNumberGenerators:technical",StringList::create("reproducible,random"));
+      tmp.setSectionDescription("RandomNumberGenerators", "Parameters for generating the random aspects (e.g. noise) in the simulated data. The generation is separated into two parts, the technical part, like noise in the raw signal, and the biological part, like systematic deviations in the predicted retention times.");
       return tmp;
     }
   
@@ -164,10 +171,10 @@ class TOPPMSSimulator
 				// e.g. >BSA [#120]
 				index = (it->description).find("[#");
         // if found, extract and set relative quantity accordingly
-        if (index != string::npos)
+        if (index != String::npos)
         {
-          String::size_type index_end = (it->description).find("#]", index);
-          if (index_end == string::npos) throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__,"MSSimulator: Invalid entry (" + it->identifier + ") in FASTA file; abundance section has open tag '[#' but missing close tag '#]'.");
+					String::size_type index_end = (it->description).find(']', index);
+					if (index_end == String::npos) throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__,"MSSimulator: Invalid entry (" + it->identifier + ") in FASTA file; abundance section has open tag '[#' but missing close tag ']'.");
 					
 					//std::cout << (it->description).substr(index+2,index_end-index-2) << std::endl;
           StringList meta_values = StringList::create((it->description).substr(index+2,index_end-index-3).removeWhitespaces(),',');
@@ -217,11 +224,32 @@ class TOPPMSSimulator
         loadFASTA_(input_files[i], proteins);
         channels.push_back(proteins);
       }
-      
-      // initialize the random number generator
-      gsl_rng_default_seed = time(0);
-      gsl_rng* rnd_gen_ = gsl_rng_alloc(gsl_rng_mt19937);
-      
+
+      // initialize the random number generators
+      SimRandomNumberGenerator rnd_gen;
+
+      rnd_gen.biological_rng = gsl_rng_alloc(gsl_rng_mt19937);
+      if(getParam_().getValue("algorithm:RandomNumberGenerators:biological") == "random")
+      {
+        gsl_rng_set(rnd_gen.biological_rng, time(0));
+      }
+      else
+      {
+        // use gsl default seed to get reproducible experiments
+        gsl_rng_set(rnd_gen.biological_rng, 0);
+      }
+
+      rnd_gen.technical_rng = gsl_rng_alloc(gsl_rng_mt19937);
+      if(getParam_().getValue("algorithm:RandomNumberGenerators:technical") == "random")
+      {
+        gsl_rng_set(rnd_gen.technical_rng, time(0));
+      }
+      else
+      {
+        // use gsl default seed to get reproducible exeperiments
+        gsl_rng_set(rnd_gen.technical_rng, 0);
+      }
+
       // read contaminants
 
       // select contaminants?? -> should this be done by MSSim??
@@ -231,7 +259,7 @@ class TOPPMSSimulator
       StopWatch w;
 
       w.start();
-      ms_simulation.simulate(rnd_gen_, channels, labeling_type);
+      ms_simulation.simulate(rnd_gen, channels, labeling_type);
       w.stop();
 			writeLog_(String("Simulation took ") + String(w.getClockTime()) + String(" seconds"));   	  	
       
@@ -239,22 +267,33 @@ class TOPPMSSimulator
       MzMLFile().store(outputfile_name, ms_simulation.getExperiment());
       
       String fxml_out = getStringOption_("out_fm");
-			if (fxml_out != "" && File::writable(fxml_out))
+			if (fxml_out != "")
 			{
 				writeLog_(String("Storing simulated features in: ") + fxml_out);
 				FeatureXMLFile().store(fxml_out, ms_simulation.getSimulatedFeatures());
 			}
 
       String cxml_out = getStringOption_("out_cm");
-			if (cxml_out != "" && File::writable(cxml_out))
+			if (cxml_out != "")
 			{
-				writeLog_(String("Storing simulated consensus features in: ") + cxml_out);
-				ConsensusXMLFile().store(cxml_out, ms_simulation.getSimulatedConsensus());
+        writeLog_(String("Storing charged consensus features in: ") + cxml_out);
+        ConsensusXMLFile().store(cxml_out, ms_simulation.getChargeConsensus());
 			}
       
-      // free random number generator
-      gsl_rng_free(rnd_gen_);
-      
+      String lcxml_out = getStringOption_("out_lcm");
+      if(lcxml_out != "")
+      {
+        writeLog_(String("Storing labeling consensus features in: ") + lcxml_out);
+        ConsensusXMLFile().store(lcxml_out, ms_simulation.getLabelingConsensus());
+      }
+
+      String cntxml_out = getStringOption_("out_cntm");
+			if (cntxml_out != "")
+			{
+				writeLog_(String("Storing simulated contaminant features in: ") + cntxml_out);
+				FeatureXMLFile().store(cntxml_out, ms_simulation.getContaminants());
+			}
+
 			return EXECUTION_OK;
 		}
 };

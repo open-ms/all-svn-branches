@@ -31,6 +31,7 @@
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/SIMULATION/SimTypes.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
+#include <OpenMS/SIMULATION/LABELING/BaseLabeler.h>
 
 namespace OpenMS
 {
@@ -78,7 +79,7 @@ namespace OpenMS
      @param peptides List of peptides and abundances that will be simulated
      @param labeling_type
      */   
-    void simulate(gsl_rng* const rnd_gen, SampleChannels& peptides, const String& labeling_tpye);
+    void simulate(const SimRandomNumberGenerator & rnd_gen, SampleChannels& peptides, const String& labeling_tpye);
 	
     /// Access the simulated experiment
     MSSimExperiment const & getExperiment() const;
@@ -87,9 +88,15 @@ namespace OpenMS
     FeatureMapSim const & getSimulatedFeatures() const;
 
 		/// Access the charge consensus map of simulated features
-		ConsensusMap const & getSimulatedConsensus() const;
-		
-    /// Returns the default parameters for the labeling technique with name @p labeling_name
+    ConsensusMap const & getChargeConsensus() const;
+
+		/// Access the contaminants feature mapmap of simulated features
+    FeatureMapSim const & getContaminants() const;
+
+    /// Access the labeling consensus map of simulated features
+    ConsensusMap const & getLabelingConsensus() const;
+
+    /// Returns the default parameters for simulation including the labeling technique with name @p labeling_name
     Param getParameters(const String& labeling_name) const;
   protected:
 		/// handle global params
@@ -107,6 +114,11 @@ namespace OpenMS
     FeatureMapSimVector feature_maps_;
 
 		ConsensusMap consensus_map_;
+
+    FeatureMapSim contaminants_map_;
+
+    /// Labeling functionality
+    BaseLabeler * labeler_;
   };
 
 }

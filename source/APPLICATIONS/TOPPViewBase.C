@@ -3053,7 +3053,6 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
     //open new 1D widget
     Spectrum1DWidget* w = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
-
     //add data
     if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
   	{

@@ -91,13 +91,14 @@ namespace OpenMS
       // iterate over all types (=algorithms) supported by this TOPPtool
       StringList algorithm_types = it->second;
 
+      #ifdef DEBUG_TOPPVIEW
       cout << "Current TOPPtool: " << tool_name << endl;
       cout << "  Supported Algorithm types: " << algorithm_types << endl;
-
+      #endif
       if (algorithm_types.size() == 0)  // only one algortihm supported
       {
-        // create param using call to -write_ini
-        TOPPToolParamHelper::initParam(topp_tool_param, tool_name, "");
+        // create param using call to -write_ini        
+        TOPPToolParamHelper::initParam(topp_tool_param, tool_name, "", false);
         if (TOPPToolParamHelper::toolAcceptsFileExtension(topp_tool_param, in_file_extension)
         && TOPPToolParamHelper::toolDeliversFileExtension(topp_tool_param, supported_outfile_extensions))
         {
@@ -109,12 +110,14 @@ namespace OpenMS
         }
       } else  // more than one algorithm type supported
       {
-        for(int i=0; i!= algorithm_types.size(); ++i)
+        for(UInt i=0; i!= algorithm_types.size(); ++i)
         {
           // create param using call to -write_ini
-          TOPPToolParamHelper::initParam(topp_tool_param, tool_name, algorithm_types[i]);
+          TOPPToolParamHelper::initParam(topp_tool_param, tool_name, algorithm_types[i], false);
 
+          #ifdef DEBUG_TOPPVIEW
           cout << " type:" << algorithm_types[i] << endl;
+          #endif
 
           // check wether in file extension is supported by current TOPPtool
           if (TOPPToolParamHelper::toolAcceptsFileExtension(topp_tool_param, in_file_extension)

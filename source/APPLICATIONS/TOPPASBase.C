@@ -245,16 +245,16 @@ namespace OpenMS
     loadPreferences();
 
 		//################## Dock widgets #################
-    //TOPPAS pipelines window
-    QDockWidget* topp_pipelines_bar = new QDockWidget("TOPPAS pipelines", this);
-    addDockWidget(Qt::LeftDockWidgetArea, topp_pipelines_bar);
-    topp_pipelines_view_ = new QListWidget(topp_pipelines_bar);
-    topp_pipelines_view_->setWhatsThis("TOPPAS pipeline list<BR><BR>All available pipelines are shown here.");
-    QListWidgetItem* i1 = new QListWidgetItem("MRM analysis", topp_pipelines_view_);
-    QListWidgetItem* i2 = new QListWidgetItem("X-Link identification", topp_pipelines_view_);
-    topp_pipelines_view_->addItem(i1);
-    topp_pipelines_view_->addItem(i2);
-    topp_pipelines_bar->setWidget(topp_pipelines_view_);
+    //TOPPAS pipelines window (retrat mockup)
+    //QDockWidget* topp_pipelines_bar = new QDockWidget("TOPPAS pipelines", this);
+    //addDockWidget(Qt::LeftDockWidgetArea, topp_pipelines_bar);
+    //topp_pipelines_view_ = new QListWidget(topp_pipelines_bar);
+    //topp_pipelines_view_->setWhatsThis("TOPPAS pipeline list<BR><BR>All available pipelines are shown here.");
+    //QListWidgetItem* i1 = new QListWidgetItem("MRM analysis", topp_pipelines_view_);
+    //QListWidgetItem* i2 = new QListWidgetItem("X-Link identification", topp_pipelines_view_);
+    //topp_pipelines_view_->addItem(i1);
+    //topp_pipelines_view_->addItem(i2);
+    //topp_pipelines_bar->setWidget(topp_pipelines_view_);
 
     //TOPP tools window
     QDockWidget* topp_tools_bar = new QDockWidget("TOPP", this);

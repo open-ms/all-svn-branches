@@ -22,7 +22,7 @@ namespace OpenMS
     old_ini_file += File::getUniqueName().toQString() + "_tmp_OLD.ini";
     writeParam(tool_parameter, tool_name, old_ini_file);
 
-    bool changed = initParam(tool_parameter, tool_name, tool_type, old_ini_file);
+    bool changed = initParam(tool_parameter, tool_name, tool_type, false, old_ini_file);
 
     return changed;
   }
@@ -48,7 +48,7 @@ namespace OpenMS
     return it->second;
   }
 
-  bool TOPPToolParamHelper::initParam(Param& tool_param, String tool_name, String tool_type, const String& old_ini_file)
+  bool TOPPToolParamHelper::initParam(Param& tool_param, String tool_name, String tool_type, bool show_messagebox_on_error, const String& old_ini_file)
   {
     Param tmp_param;
     QString ini_file = QDir::tempPath() + QDir::separator() + "TOPPAS_" + tool_name.toQString() + "_";
@@ -67,7 +67,10 @@ namespace OpenMS
     {
       if (!File::exists(old_ini_file))
       {
-        QMessageBox::critical(0,"Error",(String("Could not open '")+old_ini_file+"'!").c_str());
+        if (show_messagebox_on_error)
+        {
+          QMessageBox::critical(0,"Error",(String("Could not open '")+old_ini_file+"'!").c_str());
+        }
         return false;
       }
       call += " -ini " + String(old_ini_file);
@@ -75,12 +78,18 @@ namespace OpenMS
 
     if (system(call.c_str()) != 0)
     {
-      QMessageBox::critical(0,"Error",(String("Could not execute '")+call+"'!\n\nMake sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
+      if (show_messagebox_on_error)
+      {
+        QMessageBox::critical(0,"Error",(String("Could not execute '")+call+"'!\n\nMake sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
+      }
       return false;
     }
     if(!File::exists(ini_file))
     {
-      QMessageBox::critical(0,"Error",(String("Could not open '")+ini_file+"'!").c_str());
+      if (show_messagebox_on_error)
+      {
+        QMessageBox::critical(0,"Error",(String("Could not open '")+ini_file+"'!").c_str());
+      }
       return false;
     }
 
@@ -170,14 +179,19 @@ namespace OpenMS
     QVector<TOPPIOInfo> io_infos;
     TOPPToolParamHelper::getInputParameters(target_tool_params, io_infos);
 
+    #ifdef DEBUG_TOPPVIEW
     cout << "Number of Input slots: " << io_infos.size() << endl;
+    #endif
 
     // print input slots
     Int in_index = -1;
     for(int i=0; i!=io_infos.size(); ++i)
     {
+
+      #ifdef DEBUG_TOPPVIEW
       cout << "in slot " << i << " " << io_infos[i].param_name << endl;
       cout << "in types: " << io_infos[i].valid_types << endl;
+      #endif
 
       if (io_infos[i].param_name == "in" && io_infos[i].type == TOPPIOInfo::IOT_FILE)
       {
@@ -185,7 +199,10 @@ namespace OpenMS
       }
     }
 
+    #ifdef DEBUG_TOPPVIEW
     cout << "-in is on slot: " << in_index << endl;
+    #endif
+
     // no proper in parameter found that accepts a single file
     if (in_index == -1)
     {
@@ -200,14 +217,21 @@ namespace OpenMS
     }
 
     extension.toLower();
+
+    #ifdef DEBUG_TOPPVIEW
     cout << "ext: " << extension << endl;
+    #endif
+
     // check file type compatibility using the extension
     bool mismatch = true;
     for (StringList::iterator it = target_param_types.begin(); it != target_param_types.end(); ++it)
     {
       String other_ext = *it;
       other_ext.toLower();
+      #ifdef DEBUG_TOPPVIEW
       cout << "other_ext: " << other_ext << endl;
+      #endif
+
       if (extension == other_ext || extension == "gz")
       {
         mismatch = false;
@@ -240,8 +264,11 @@ namespace OpenMS
     Int out_index = -1;
     for(int i=0; i!=io_infos.size(); ++i)
     {
+      #ifdef DEBUG_TOPPVIEW
       cout << "out slot " << i << " " << io_infos[i].param_name << endl;
       cout << "valid types: " << io_infos[i].valid_types << endl;
+      #endif
+
       if (io_infos[i].param_name == "out")
       {
         out_index = i;
@@ -262,7 +289,7 @@ namespace OpenMS
       return false;
     }
 
-    for(int i=0; i!= supported_outfile_extensions.size(); ++i)
+    for(UInt i=0; i!= supported_outfile_extensions.size(); ++i)
     {
       supported_outfile_extensions[i].toLower();
     }
@@ -273,7 +300,11 @@ namespace OpenMS
     {
       String other_ext = *it;
       other_ext.toLower();
+
+      #ifdef DEBUG_TOPPVIEW
       cout << "out other_ext: " << other_ext << endl;
+      #endif
+
       if (std::find(supported_outfile_extensions.begin(), supported_outfile_extensions.end(), other_ext) != supported_outfile_extensions.end())
       {
         mismatch = false;

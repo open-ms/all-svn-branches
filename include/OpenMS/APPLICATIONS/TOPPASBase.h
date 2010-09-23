@@ -193,8 +193,10 @@ namespace OpenMS
       /// Tree view of all available TOPP tools
       QTreeWidget* tools_tree_view_;
 
+      /* retreat mockup
       /// List view of all available TOPPAS pipelines
       QListWidget* topp_pipelines_view_;
+      */
 
       /// List of ready analysis pipelines
       QListWidget* blocks_list_;

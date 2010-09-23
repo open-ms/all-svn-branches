@@ -54,7 +54,7 @@ namespace OpenMS
       StringList getToolTypes(String tool_name);
 
       /// Initializes the parameters with standard values from -write_ini, uses the parameters from the old_ini_file if given, returns if parameters have changed (if old_ini_file was given)
-      static bool initParam(Param& tool_param, String tool_name, String tool_type, const String& old_ini_file = "");
+      static bool initParam(Param& tool_param, String tool_name, String tool_type, bool show_messagebox_on_error = true, const String& old_ini_file = "");
 
       /// Fills @p io_infos with the required input file/list parameters.
       static void getInputParameters(const Param&, QVector<TOPPIOInfo>& io_infos);

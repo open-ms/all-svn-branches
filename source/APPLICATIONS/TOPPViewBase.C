@@ -77,6 +77,7 @@
 #include <QtGui/QCheckBox>
 #include <QtGui/QCloseEvent>
 #include <QtGui/QDesktopServices>
+#include <QtGui/QDesktopWidget>
 #include <QtGui/QDockWidget>
 #include <QtGui/QFileDialog>
 #include <QtGui/QHeaderView>
@@ -117,10 +118,20 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
         {
           setWindowTitle("TOPPView");
           setWindowIcon(QIcon(":/TOPPView.png"));
+
           //prevents errors caused by too small width,height values
           setMinimumSize(400,400);
+
           //enable drag-and-drop
           setAcceptDrops(true);
+
+          // center main window
+          setGeometry(
+            (int)(0.1 * QApplication::desktop()->width()),
+            (int)(0.1 * QApplication::desktop()->height()),
+            (int)(0.8 * QApplication::desktop()->width()),
+            (int)(0.8 * QApplication::desktop()->height())
+            );
 
           // create dummy widget (to be able to have a layout), Tab bar and workspace
           QWidget* dummy = new QWidget(this);
@@ -418,12 +429,12 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
           //################## Dock widgets #################
           //data manager window (resource manager view)
-          QDockWidget* databar = new QDockWidget("Files", this);
-          addDockWidget(Qt::RightDockWidgetArea, databar);
-          data_manager_view_ = new QTreeWidget(databar);
-          data_manager_view_->setWhatsThis("Data bar<BR><BR>Here available data is shown.");
-          databar->setWidget(data_manager_view_);
-          data_manager_view_->setContextMenuPolicy(Qt::CustomContextMenu);
+//          QDockWidget* databar = new QDockWidget("Files", this);
+//          addDockWidget(Qt::RightDockWidgetArea, databar);
+//          data_manager_view_ = new QTreeWidget(databar);
+//          data_manager_view_->setWhatsThis("Data bar<BR><BR>Here available data is shown.");
+//          databar->setWidget(data_manager_view_);
+//          data_manager_view_->setContextMenuPolicy(Qt::CustomContextMenu);
 
           //layer window
           QDockWidget* layer_bar = new QDockWidget("Layers", this);
@@ -531,7 +542,6 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           vbl->addWidget(filters_check_box_);
 
           windows->addAction(filter_bar->toggleViewAction());
-
 
           //log window
           QDockWidget* log_bar = new QDockWidget("Log", this);
@@ -1207,7 +1217,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     {
       showAsWindow_(target_window,caption);
 		}
-    updateDataBar();
+    //updateDataBar();
 		updateLayerBar();
 		updateSpectrumBar();
 		updateFilterBar();
@@ -1871,6 +1881,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
   	spectrum_selection_->blockSignals(false);
   }
 
+  /*
   void TOPPViewBase::updateDataBar()
   {
     const set<String> filenames = getFilenamesOfOpenFiles();
@@ -1887,7 +1898,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     }
     layer_manager_->blockSignals(false);
   }
-
+*/
 	void TOPPViewBase::layerSelectionChange(int i)
 	{
 		if (i!=-1)
@@ -2020,7 +2031,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 			}
 
 			//Update filter bar, spectrum bar and layer bar
-      updateDataBar();
+      //updateDataBar();
 			updateLayerBar();
 			updateSpectrumBar();
 			updateFilterBar();
@@ -2323,7 +2334,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateToolBar()));
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateSpectrumBar()));
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateCurrentPath()));
-    connect(sw,SIGNAL(destroyed()),this, SLOT(updateDataBar()));
+    //connect(sw,SIGNAL(destroyed()),this, SLOT(updateDataBar()));
     connect(sw->canvas(),SIGNAL(layerModficationChange(Size,bool)),this,SLOT(updateLayerBar()));
     connect(sw,SIGNAL(sendStatusMessage(std::string,OpenMS::UInt)),this,SLOT(showStatusMessage(std::string,OpenMS::UInt)));
     connect(sw,SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
@@ -3766,9 +3777,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       }
     }
     /*
-
     {
-
       //update the layer if the user choosed to do so
       if (update)
       {

@@ -186,8 +186,10 @@ namespace OpenMS
       void closeFile();
       /// updates the toolbar
       void updateToolBar();
+      /*
       /// updates entries of loaded datas
       void updateDataBar();
+      */
       /// adapts the layer bar to the active window
       void updateLayerBar();
       /// adapts the spectrum bar to the active window
@@ -363,9 +365,10 @@ namespace OpenMS
       /// Layer management widget
       QListWidget* layer_manager_;
 
+      /*
       /// data management widget (shows loaded files)
       QTreeWidget* data_manager_view_;
-
+      */
       /// Watcher that tracks file changes (in order to update the data in the different views)
       FileWatcher* watcher_;
 

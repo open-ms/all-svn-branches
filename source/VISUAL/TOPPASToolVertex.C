@@ -60,7 +60,7 @@ namespace OpenMS
 		{
       pen_color_ = Qt::black;
       brush_color_ = QColor(245,245,245);
-      if (TOPPToolParamHelper::initParam(param_, String(), String(), false, String())) {}
+      if (TOPPToolParamHelper::initParam(param_, tool_name_, tool_type_, false, String())) {}
       connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
       connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
       connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
@@ -80,7 +80,7 @@ namespace OpenMS
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
-    if (TOPPToolParamHelper::initParam(param_, String(), String(), false, String())) {}
+    if (TOPPToolParamHelper::initParam(param_, tool_name_, tool_type_, false, String())) {}
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
 		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));

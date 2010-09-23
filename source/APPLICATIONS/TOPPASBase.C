@@ -245,7 +245,7 @@ namespace OpenMS
     loadPreferences();
 
 		//################## Dock widgets #################
-    //TOPPAS pipelines window (retrat mockup)
+    //TOPPAS ipelines window (retrat mockup)
     //QDockWidget* topp_pipelines_bar = new QDockWidget("TOPPAS pipelines", this);
     //addDockWidget(Qt::LeftDockWidgetArea, topp_pipelines_bar);
     //topp_pipelines_view_ = new QListWidget(topp_pipelines_bar);

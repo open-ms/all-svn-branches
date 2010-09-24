@@ -2889,7 +2889,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 		}
 
 		//load id data
-    QString name = QFileDialog::getOpenFileName(this,"Select ProteinIdentification data",current_path_.toQString(),"identfication files (*.idXML;; all files (*.*)");
+    QString name = QFileDialog::getOpenFileName(this,"Select protein identification data",current_path_.toQString(),"idXML files (*.idXML;; all files (*.*)");
 		if(name!="")
 		{
 			vector<PeptideIdentification> identifications;
@@ -2898,15 +2898,15 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 			IdXMLFile().load(name, protein_identifications, identifications, document_id);
 			if (layer.type==LayerData::DT_PEAK)
 			{
-        IDMapper().annotate(*(const_cast<LayerData&>(layer).getPeakData()), identifications, protein_identifications);
+        IDMapper().annotate(*layer.getPeakData(), identifications, protein_identifications);
 			}
 			else if (layer.type==LayerData::DT_FEATURE)
 			{
-        IDMapper().annotate(*(const_cast<LayerData&>(layer).getFeatureMap()),identifications,protein_identifications);
+        IDMapper().annotate(*layer.getFeatureMap(),identifications,protein_identifications);
 			}
 			else
 			{
-        IDMapper().annotate(*(const_cast<LayerData&>(layer).getConsensusMap()),identifications,protein_identifications);
+        IDMapper().annotate(*layer.getConsensusMap(),identifications,protein_identifications);
 			}
 		}
 	}

@@ -317,6 +317,9 @@ add_test("TOPP_FileMerger_6_out1" ${DIFF} -in1 FileMerger.tmp -in2 ${DATA_DIR_TO
 add_test("TOPP_FileMerger_7" ${TOPP_BIN_PATH}/FileMerger -test -in ${DATA_DIR_TOPP}/FileMerger_7_input1.featureXML ${DATA_DIR_TOPP}/FileMerger_7_input2.featureXML -out FileMerger.tmp)
 add_test("TOPP_FileMerger_7_out1" ${DIFF} -in1 FileMerger.tmp -in2 ${DATA_DIR_TOPP}/FileMerger_7_output.featureXML)
 
+### HelloWorld tests
+add_test("HelloWorld" ${TOPP_BIN_PATH}/HelloWorld -test -in ${DATA_DIR_TOPP}/HelloWorld_input.mzML -out HelloWorld.tmp -string hello)
+add_test("HelloWorld_out" ${DIFF} -in1 HelloWorld.tmp -in2 ${DATA_DIR_TOPP}/HelloWorld_output.mzML)
 
 ### IDRTCalibration tests
 add_test("TOPP_IDRTCalibration_1" ${TOPP_BIN_PATH}/IDRTCalibration -in ${DATA_DIR_TOPP}/IDRTCalibration_1_input.IdXML -out IDRTCalibration_1_output.tmp -calibrant_1_input 10 -calibrant_2_input 90)

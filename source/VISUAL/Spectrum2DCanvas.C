@@ -622,7 +622,7 @@ namespace OpenMS
 
 
 
-					painter.setPen(QPen(Qt::yellow, 2));
+
 					double intensity_ = cp->getIntensity();
 
 					if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
@@ -637,7 +637,17 @@ namespace OpenMS
 							double shift_ = 0.0;	// used to calculate the width of the line with the intensity
 							shift_ = ((log(intensity_ + 1.0))/log(1.7))-0.5;
 
-							painter.drawLine(pos.x()-shift_, pos.y(), pos.x()+shift_, pos.y());
+							// intensity
+							painter.setPen(QPen(Qt::yellow, 2));
+							painter.drawLine(pos.x()-shift_, pos.y(), pos.x()-1, pos.y());
+							painter.drawLine(pos.x()+shift_, pos.y(), pos.x()+1, pos.y());
+
+
+							// dots
+							painter.setPen(QPen(Qt::green, 1));
+							//painter.drawLine(pos.x(), pos.y(), pos.x(), pos.y());
+							painter.drawPoint(pos.x(), pos.y());
+
 						}
 
 
@@ -1638,6 +1648,9 @@ namespace OpenMS
 				else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)// chromatogram
 				{
 					//TODO CHROM
+
+					status = "***  CHROMATOGRAM  TEST ***";
+
 				}
 				if (status!="") emit sendStatusMessage(status, 0);
 			}
@@ -1999,9 +2012,52 @@ namespace OpenMS
 		//------------------CHROMATOGRAMS----------------------------------
 		else if (layer.type==LayerData::DT_CHROMATOGRAM)
 		{
-			//TODO CHROM
+			//TODO CHROM:
+			//1D + 3D Visualisierung
+			// Menü anpassen
+
+			std::cout << "TEST Output for Menu";
+			if (layer.type==LayerData::DT_CHROMATOGRAM)
+					{
+						//add settings
+						settings_menu->addSeparator();
+			 			settings_menu->addAction("Show/hide projections");
+			 			settings_menu->addAction("Show/hide MS/MS precursors");
+
+						//add surrounding survey scans
+
+
+			 			QMenu* ms1_scans = context_menu->addMenu("Show Chromatogram in 1D");
+						QMenu* ms1_meta = context_menu->addMenu("Survey scan meta data");
+						context_menu->addSeparator();
+
+						QMenu* msn_scans = new QMenu("Survey scan in 1D");
+						QMenu* msn_meta = new QMenu("fragment scan meta data");
+						DPosition<2> p1 = widgetToData_(e->pos()+ QPoint(10,10));
+						DPosition<2> p2 = widgetToData_(e->pos()- QPoint(10,10));
+						DoubleReal rt_min = min(p1[1],p2[1]);
+						DoubleReal rt_max = max(p1[1],p2[1]);
+						DoubleReal mz_min = min(p1[0],p2[0]);
+						DoubleReal mz_max = max(p1[0],p2[0]);
+						bool item_added = false;
+
+						finishContextMenu_(context_menu, settings_menu);
+
+						//evaluate menu
+						if ((result = context_menu->exec(mapToGlobal(e->pos()))))
+						{
+							if (result->parent()==ms1_scans  || result->parent()==msn_scans)
+							{
+								emit showSpectrumAs1D(result->data().toInt());
+							}
+							else if (result->parent()==ms1_meta || result->parent()==msn_meta)
+								{
+									showMetaData(true, result->data().toInt());
+								}
+							}
+
+						}
 		}
-		
 		//common actions of peaks and features
 		if (result)
 		{

@@ -56,6 +56,7 @@ FileConverter
 FileFilter
 FileInfo
 FileMerger
+HelloWorld
 GenericWrapper
 IDDecoyProbability
 IDPosteriorErrorProbability
@@ -167,6 +168,10 @@ add_test("TOPP_IDMerger_2_out1" ${DIFF} -in1 IDMerger_2_output.tmp -in2 ${DATA_D
 ### BaselineFilter tests
 add_test("TOPP_BaselineFilter_1" ${TOPP_BIN_PATH}/BaselineFilter -test -in ${DATA_DIR_TOPP}/BaselineFilter_input.mzML -out BaselineFilter.tmp -struc_elem_length 1.5)
 add_test("TOPP_BaselineFilter_1_out1" ${DIFF} -in1 BaselineFilter.tmp -in2 ${DATA_DIR_TOPP}/BaselineFilter_output.mzML)
+
+### HelloWorld tests
+add_test("TOPP_HelloWorld_1" ${TOPP_BIN_PATH}/HelloWorld -test -in ${DATA_DIR_TOPP}/HelloWorld_input.mzML -out HelloWorld.tmp -string Hallo)
+add_test("TOPP_HelloWorld_1_out1" ${DIFF} -in1 HelloWorld.tmp -in2 ${DATA_DIR_TOPP}/HelloWorld_output.mzML)
 
 ### MapNormalizer tests
 add_test("TOPP_MapNormalizer_1" ${TOPP_BIN_PATH}/MapNormalizer -test -in ${DATA_DIR_TOPP}/MapNormalizer_input.mzML -out MapNormalizer.tmp)

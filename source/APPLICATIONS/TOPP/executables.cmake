@@ -22,6 +22,7 @@ FileConverter
 FileFilter
 FileInfo
 FileMerger
+HelloWorld
 GenericWrapper
 IDDecoyProbability
 IDPosteriorErrorProbability

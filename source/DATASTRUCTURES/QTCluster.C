@@ -22,79 +22,143 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Steffen Sass $
-// $Authors: $
+// $Authors: Steffen Sass, Hendrik Weisser $
 // --------------------------------------------------------------------------
 
 
 #include <OpenMS/DATASTRUCTURES/QTCluster.h>
 
-namespace OpenMS {
+using namespace std;
 
-QTCluster::QTCluster()
+namespace OpenMS 
 {
 
-}
-QTCluster::QTCluster(DataPoint* center_point_) : center_point(center_point_)
-{
-	cluster_members.insert(center_point);
-}
-
-QTCluster::~QTCluster() {
-}
-
-DoubleReal QTCluster::getCenterRT()
-{
-	return center_point->rt;
-}
-
-DoubleReal QTCluster::getCenterMZ()
-{
-	return center_point->mz;
-}
-
-Size QTCluster::size() const
-{
-	return cluster_members.size();
-}
-
-bool QTCluster::operator<(const QTCluster &cluster) const
-{
-	return (this->size() < cluster.size());
-}
-
-void QTCluster::add(DataPoint* element)
-{
-	cluster_members.insert(element);
-}
-
-bool QTCluster::contains(DataPoint* element)
-{
-	std::set<DataPoint*>::iterator pos = cluster_members.find(element);
-	return pos != cluster_members.end();
-}
-
-std::set<DataPoint*> QTCluster::getClusterMembers()
-{
-	return cluster_members;
-}
-
-std::pair<DoubleReal,DoubleReal> QTCluster::getDiameters(DataPoint* point)
-{
-	DoubleReal point_mz=point->mz;
-	DoubleReal point_rt=point->rt;
-	DoubleReal rt_diameter=std::numeric_limits<Real>::max();
-	DoubleReal mz_diameter=0.0;
-	for (std::set<DataPoint*>::iterator it=cluster_members.begin();it!=cluster_members.end();++it)
+	QTCluster::QTCluster()
 	{
-		DoubleReal rt_dist=std::abs((*it)->rt-point_rt);
-		if (rt_dist < rt_diameter)
-			rt_diameter=rt_dist;
-		DoubleReal mz_dist=std::abs((*it)->mz-point_mz);
-		if (mz_dist > mz_diameter)
-			mz_diameter=mz_dist;
 	}
-	return std::make_pair(rt_diameter,mz_diameter);
+
+	QTCluster::QTCluster(GridFeature* center_point, Size num_maps, 
+											 DoubleReal max_distance) :
+		center_point_(center_point), neighbors_(), max_distance_(max_distance), 
+		num_maps_(num_maps), quality_(0.0), changed_(false)
+	{
+	}
+
+	QTCluster::~QTCluster()
+	{
+	}
+
+	QTCluster& QTCluster::operator=(const QTCluster& rhs)
+	{
+		center_point_ = rhs.center_point_;
+		neighbors_ = rhs.neighbors_;
+		max_distance_ = rhs.max_distance_;
+		num_maps_ = rhs.num_maps_;
+		quality_ = rhs.quality_;
+		changed_ = rhs.changed_;
+		return *this;
+	}
+
+	DoubleReal QTCluster::getCenterRT()
+	{
+		return center_point_->rt;
+	}
+
+	DoubleReal QTCluster::getCenterMZ()
+	{
+		return center_point_->mz;
+	}
+
+	Size QTCluster::size() const
+	{
+		return neighbors_.size() + 1; // + 1 for the center
+	}
+
+	bool QTCluster::operator<(QTCluster &cluster)
+	{
+		return (this->getQuality() < cluster.getQuality());
+	}
+
+	void QTCluster::add(GridFeature* element, DoubleReal distance)
+	{
+		Size map_index = element->getMapIndex();
+		if (map_index != center_point_->getMapIndex())
+		{
+			neighbors_[map_index].insert(make_pair(distance, element));
+			changed_ = true;
+		}
+	}
+
+	void QTCluster::getElements(map<Size, GridFeature*>& elements) const
+	{
+		elements.clear();
+		elements[center_point_->getMapIndex()] = center_point_;
+		for (NeighborMap::const_iterator it = neighbors_.begin(); 
+				 it != neighbors_.end(); ++it)
+		{
+			elements[it->first] = it->second.begin()->second;
+		}
+	}
+
+	bool QTCluster::update(const map<Size, GridFeature*>& removed)
+	{
+		// check if the cluster center was removed:
+		for (map<Size, GridFeature*>::const_iterator rm_it = removed.begin(); 
+				 rm_it != removed.end(); ++rm_it)
+		{
+			if (rm_it->second == center_point_) return false;
+		}
+		// update the cluster contents:
+		for (map<Size, GridFeature*>::const_iterator rm_it = removed.begin(); 
+				 rm_it != removed.end(); ++rm_it)
+		{
+			NeighborMap::iterator pos = neighbors_.find(rm_it->first);
+			if (pos == neighbors_.end()) continue; // no points from this map
+			for (multimap<DoubleReal, GridFeature*>::iterator feat_it = 
+						 pos->second.begin(); feat_it != pos->second.end(); ++feat_it)
+			{
+				if (feat_it->second == rm_it->second) // remove this neighbor
+				{
+					pos->second.erase(feat_it);
+					changed_ = true;
+					break;
+				}
+			}
+			if (pos->second.empty()) // only neighbor from this map was just removed
+			{
+				neighbors_.erase(pos);
+			}
+		}
+		return true;
+	}
+
+	DoubleReal QTCluster::getQuality()
+	{
+		if (changed_)
+		{
+			computeQuality_();
+			changed_ = false;
+		}
+		return quality_;
+	}
+
+	void QTCluster::computeQuality_()
+	{
+		DoubleReal internal_distance = 0.0;
+		Size counter = 0;
+		for (NeighborMap::iterator it = neighbors_.begin(); it != neighbors_.end();
+				 ++it)
+		{
+			internal_distance += it->second.begin()->first;
+			counter++;
+		}
+		Size num_other = num_maps_ - 1;
+		// add max. distance for missing cluster elements:
+		internal_distance += (num_other - counter) * max_distance_;
+		// normalize:
+		internal_distance /= num_other;
+		quality_ = (max_distance_ - internal_distance) / max_distance_;
+	}
+
 }
 
-
-}

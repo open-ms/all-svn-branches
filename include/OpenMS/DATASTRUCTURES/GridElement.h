@@ -30,6 +30,7 @@
 #define OPENMS_DATASTRUCTURES_GRIDELEMENT_H
 
 #include <OpenMS/KERNEL/StandardTypes.h>
+#include <OpenMS/KERNEL/BaseFeature.h>
 
 namespace OpenMS
 {
@@ -80,3 +81,4 @@ GridElement();
 
 
 #endif /* GRIDELEMENT_H_ */
+

@@ -22,81 +22,123 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Steffen Sass $
-// $Authors: $
+// $Authors: Steffen Sass, Hendrik Weisser $
 // --------------------------------------------------------------------------
 
 
 #ifndef OPENMS_DATASTRUCTURES_QTCLUSTER_H
 #define OPENMS_DATASTRUCTURES_QTCLUSTER_H
 
-#include<OpenMS/DATASTRUCTURES/DataPoint.h>
+#include<OpenMS/DATASTRUCTURES/GridFeature.h>
 
 namespace OpenMS {
+
 /**
- * @brief QT clusters are used in QTClustering. They consists of a set of data points, while data point defines the center of the cluster.
- * QT clusters compute a two-dimensional diameter. The RT diameter corresponds to the maximal gap in RT direction of cluster.
- * The m/z diameter corresponds to the maximal cluster extent in m/z direction.
- */
-class OPENMS_DLLAPI QTCluster {
-private:
-	/**
-	 * @brief the cluster center
-	 */
-	DataPoint* center_point;
-	/**
-	 * @brief members of the cluster
-	 */
-	std::set<DataPoint*> cluster_members;
-	/**
-	 * default constructor
-	 */
-	QTCluster();
-public:
-	/**
-	 * @brief detailed constructor
-	 * @param center_point cluster center
-	 */
-	QTCluster(DataPoint* center_point_);
-	/**
-	 * @brief destructor
-	 */
-	virtual ~QTCluster();
-	/**
-	 * @brief gets the center RT position of the cluster
-	 */
-	DoubleReal getCenterRT();
-	/**
-	 * @brief gets the center m/z position of the cluster
-	 */
-	DoubleReal getCenterMZ();
-	/**
-	 * @brief gets the size of the cluster
-	 */
-	Size size() const;
-	/**
-	 * @brief cluster comparator
-	 */
-	bool operator<(const QTCluster &cluster) const;
-	/**
-	* @brief adds an element to the cluster
-	* @param element the element to be added
-	 */
-	void add(DataPoint* element);
-	/**
-	 * @brief non-mutable access to the cluster members
-	 */
-	std::set<DataPoint*> getClusterMembers();
-	/**
-	 * @brief gets the diameter pair of the cluster
-	 * first: rt_diameter, second: mz_diameter
-	 * The diameters are computed by considering a further data point, which is a candidate to be added to the cluster.
-	 * @param point data point, which should be added to the cluster
-	 */
-	std::pair<DoubleReal,DoubleReal> getDiameters(DataPoint* point);
-	/**
-	 * @brief checks if an element is contained in the cluster
-	 */
-	bool contains(DataPoint* element);
-};
+	 @brief A representation of a QT cluster used for feature grouping.
+
+	 Ultimately, a cluster represents a group of corresponding features (or consensus features) from different input maps (feature maps or consensus maps).
+
+	 Clusters are defined by their center points (one feature each). A cluster also stores a number of potential cluster elements (other features) from different input maps, together with their distances to the cluster center.
+	 Every feature that satisfies certain constraints with respect to the cluster center is a @e potential cluster element. However, since a feature group can only contain one feature from each input map, only the "best" (i.e. closest to the cluster center) such feature is considered a true cluster element.
+
+	 The QT clustering algorithm has the characteristic of initially producing all possible, overlapping clusters. Iteratively, the best cluster is then extracted and the clustering is recomputed for the remaining points.
+
+	 In our implementation, multiple rounds of clustering are not necessary. Instead, the clustering is updated in each iteration. This is the reason for storing all potential cluster elements: When a certain cluster is finalized, its elements have to be removed from the remaining clusters, and affected clusters change their composition. (Note that clusters can also be invalidated by this, if the cluster center is being removed.)
+	 
+	 The quality of a cluster is the normalized average distance to the cluster center for present and missing cluster elements. The distance value for missing elements (if the cluster contains no feature from a certain input map) is the user-defined threshold that marks the maximum allowed radius of a cluster.
+
+	 @see QTClusterFinder
+
+	 @ingroup Datastructures
+*/
+
+	class OPENMS_DLLAPI QTCluster
+	{
+	private:
+		/**
+		 * @brief Mapping: input map -> distance to center -> neighboring point
+		 * @note There should never be an empty sub-map! (When a sub-map becomes empty, it should be removed from the overall map.)
+		 */
+		typedef std::map<Size, std::multimap<DoubleReal, GridFeature*> >
+			NeighborMap;
+		
+		/// Pointer to the cluster center
+		GridFeature* center_point_;
+
+		/**
+		 * @brief Neighbors of the cluster center, sorted by distance, for different input maps.
+		 *
+		 * The first (best) point in each sub-map is considered a cluster element.
+		 */
+		NeighborMap neighbors_;
+
+		/// Maximum distance of a point that can still belong to the cluster
+		DoubleReal max_distance_;
+
+		/// Number of input maps
+		Size num_maps_;
+
+		/// Quality of the cluster
+		Size quality_;
+
+		/// Has the cluster changed (if yes, quality needs to be recomputed)?
+		bool changed_;
+
+		/// Base constructor (not accessible)
+		QTCluster();
+
+		/// Computes the quality of the cluster
+		void computeQuality_();
+
+	public:
+		/**
+		 * @brief Detailed constructor
+		 * @param center_point Pointer to the center point
+		 * @param num_maps Number of input maps
+		 * @param max_distance Maximum allowed distance of two points
+		 */
+		QTCluster(GridFeature* center_point, Size num_maps, 
+							DoubleReal max_distance);
+
+		/// Destructor
+		virtual ~QTCluster();
+
+		/// Assignment operator
+		QTCluster& operator=(const QTCluster& rhs);
+
+		/// Returns the RT value of the cluster
+		DoubleReal getCenterRT();
+
+		/// Returns the m/z value of the cluster center
+		DoubleReal getCenterMZ();
+
+		/// Returns the size of the cluster (number of elements, incl. center)
+		Size size() const;
+
+		/// Compare by quality
+		bool operator<(QTCluster &cluster);
+
+		/**
+		 * @brief Adds a new element/neighbor to the cluster
+		 * @note There is no check whether the element/neighbor already exists in the cluster!
+		 * @param element The element to be added
+		 * @param distance Distance of the element to the center point
+		 */
+		void add(GridFeature* element, DoubleReal distance);
+
+		/// Non-mutable access to the clustered elements
+		void getElements(std::map<Size, GridFeature*>& elements) const;
+
+		/**
+		 * @brief Updates the cluster after data points were removed
+		 * @return Whether the cluster is still valid (it's not if the cluster center is among the removed points).
+		 */
+		bool update(const std::map<Size, GridFeature*>& removed);
+
+		/// Returns the cluster quality
+		DoubleReal getQuality();
+	};
 }
-#endif /* QTSUBSET_H_ */
+
+#endif // OPENMS_DATASTRUCTURES_QTCLUSTER_H
+

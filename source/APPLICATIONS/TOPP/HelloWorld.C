@@ -55,7 +55,7 @@ class TOPPHelloWorld
 
 public:
 	TOPPHelloWorld()
-		: TOPPBase("HelloWorld","Test.")
+		: TOPPBase("HalloWelt","Test.")
 	{
 	}
 

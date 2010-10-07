@@ -38,6 +38,8 @@
 #include <QtCore/QFileInfo>
 #include <QtCore/QDir>
 
+#include <QCoreApplication>
+
 namespace OpenMS
 {
 	TOPPASOutputFileListVertex::TOPPASOutputFileListVertex()
@@ -188,7 +190,19 @@ namespace OpenMS
 	{
 		QProcess* p = new QProcess();
 		p->setProcessChannelMode(QProcess::ForwardedChannels);
-		p->start("TOPPView", files_);
+    QString toppview_executable;
+    toppview_executable = "TOPPView";
+
+    p->start(toppview_executable, files_);
+    if(!p->waitForStarted())
+    {
+      // execution failed
+      std::cerr << p->errorString().toStdString() << std::endl;
+#if defined(Q_WS_MAC)
+      std::cerr << "Please check if TOPPAS and TOPPView are located in the same directory" << std::endl;
+#endif
+
+    }
 	}
 	
 	bool TOPPASOutputFileListVertex::isFinished()

@@ -30,15 +30,6 @@
 
 namespace OpenMS
 {
-	
-	FeatureHandle::FeatureHandle(UInt64 map_index, const ConsensusFeature& point)
-		: Peak2D(point),
-		  UniqueIdInterface(point),
-			map_index_(map_index),
-			charge_(point.getCharge())
-	{
-	}
-
   std::ostream& operator << (std::ostream& os, const FeatureHandle& cons)
   {
     os  << "---------- FeatureHandle -----------------\n"

@@ -10,6 +10,10 @@ ChargePair.h
 Compomer.h
 ConstRefVector.h
 ConvexHull2D.h
+CVMappingTerm.h
+CVMappingRule.h
+CVReference.h
+CVMappings.h
 DBoundingBox.h
 DIntervalBase.h
 DPosition.h
@@ -23,6 +27,7 @@ DefaultParamHandler.h
 DistanceMatrix.h
 DoubleList.h
 GridElement.h
+GridFeature.h
 HashGrid.h
 IntList.h
 IsotopeCluster.h
@@ -31,6 +36,7 @@ MassExplainer.h
 Matrix.h
 Param.h
 QTCluster.h
+QTSILACCluster.h
 SeqanIncludeWrapper.h
 SparseVector.h
 String.h
@@ -40,10 +46,7 @@ SuffixArrayPeptideFinder.h
 SuffixArraySeqan.h
 SuffixArrayTrypticCompressed.h
 SuffixArrayTrypticSeqan.h
-CVMappingTerm.h
-CVMappingRule.h
-CVReference.h
-CVMappings.h
+ToolDescription.h
 )
 
 ### add path to the filenames

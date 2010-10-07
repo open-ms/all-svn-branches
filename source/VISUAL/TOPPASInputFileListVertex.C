@@ -88,10 +88,9 @@ namespace OpenMS
 		{
 			tifd.getFilenames(files_);
 			qobject_cast<TOPPASScene*>(scene())->setChanged(true);
+			qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
+			emit somethingHasChanged();
 		}
-		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
-		
-		emit somethingHasChanged();
 	}
 	
 	const QStringList& TOPPASInputFileListVertex::getFilenames()
@@ -153,7 +152,20 @@ namespace OpenMS
 	{
 		QProcess* p = new QProcess();
 		p->setProcessChannelMode(QProcess::ForwardedChannels);
-		p->start("TOPPView", files_);
+
+    QString toppview_executable;
+    toppview_executable = "TOPPView";
+
+    p->start(toppview_executable, files_);
+    if(!p->waitForStarted())
+    {
+      // execution failed
+      std::cerr << p->errorString().toStdString() << std::endl;
+#if defined(Q_WS_MAC)
+      std::cerr << "Please check if TOPPAS and TOPPView are located in the same directory" << std::endl;
+#endif
+
+    }
 	}
 	
 	void TOPPASInputFileListVertex::startPipeline()

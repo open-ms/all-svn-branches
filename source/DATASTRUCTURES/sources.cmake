@@ -10,6 +10,10 @@ ChargePair.C
 Compomer.C
 ConstRefVector.C
 ConvexHull2D.C
+CVMappingTerm.C
+CVMappingRule.C
+CVReference.C
+CVMappings.C
 DBoundingBox.C
 DIntervalBase.C
 DPosition.C
@@ -23,6 +27,7 @@ DefaultParamHandler.C
 DistanceMatrix.C
 DoubleList.C
 GridElement.C
+GridFeature.C
 HashGrid.C
 IntList.C
 Map.C
@@ -30,6 +35,7 @@ MassExplainer.C
 Matrix.C
 Param.C
 QTCluster.C
+QTSILACCluster.C
 SparseVector.C
 String.C
 StringList.C
@@ -38,10 +44,7 @@ SuffixArrayPeptideFinder.C
 SuffixArraySeqan.C
 SuffixArrayTrypticCompressed.C
 SuffixArrayTrypticSeqan.C
-CVMappingTerm.C
-CVMappingRule.C
-CVReference.C
-CVMappings.C
+ToolDescription.C
 )
 
 ### add path to the filenames

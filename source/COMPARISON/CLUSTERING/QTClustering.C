@@ -54,7 +54,7 @@ std::vector<std::vector<DataPoint*> > QTClustering::performClustering()
 	while(grid.getNumberOfElements() > 0)
 	{
 		setProgress(number_of_elements - grid.getNumberOfElements());
-		QTCluster act_cluster=QTClust(grid);
+		QTSILACCluster act_cluster=QTClust(grid);
 		//store the current cluster
 		clusters.push_back(act_cluster);
 		const std::set<DataPoint*>& cluster_members=act_cluster.getClusterMembers();
@@ -67,7 +67,7 @@ std::vector<std::vector<DataPoint*> > QTClustering::performClustering()
 	Size cluster_id=0;
 	//put the clusters in the cluster vector
 	std::vector<std::vector<DataPoint*> > cluster_vector;
-	for (std::list<QTCluster>::iterator list_it=clusters.begin();list_it!=clusters.end();++list_it)
+	for (std::list<QTSILACCluster>::iterator list_it=clusters.begin();list_it!=clusters.end();++list_it)
 	{
 		std::vector<DataPoint*> act_vector;
 		const std::set<DataPoint*>& cluster_members=list_it->getClusterMembers();
@@ -83,16 +83,16 @@ std::vector<std::vector<DataPoint*> > QTClustering::performClustering()
 	return cluster_vector;
 }
 
-QTCluster QTClustering::QTClust(HashGrid& act_grid)
+QTSILACCluster QTClustering::QTClust(HashGrid& act_grid)
 {
 	//return single element clusters
 	if (act_grid.getNumberOfElements() == 1)
 	{
 			DataPoint* element_ptr = dynamic_cast<DataPoint*> (*(act_grid.begin()->second.begin()));
-			return QTCluster(element_ptr);
+			return QTSILACCluster(element_ptr);
 	}
 	//order all possible clusters by their sizes in a set
-	std::set<QTCluster> cluster_set;
+	std::set<QTSILACCluster> cluster_set;
 	for (GridCells::iterator it=act_grid.begin();it!=act_grid.end();++it)
 	{
 		std::pair<int,int> act_coords=it->first;
@@ -104,7 +104,7 @@ QTCluster QTClustering::QTClust(HashGrid& act_grid)
 		{
 			//select each data point as a cluster center
 			DataPoint* element_ptr = dynamic_cast<DataPoint*> (*current_element);
-			QTCluster act_cluster(element_ptr);
+			QTSILACCluster act_cluster(element_ptr);
 			//iterate over all neighbors of the data point in the surrounding cells
 			for (int i=x-1;i<=x+1;++i)
 			{

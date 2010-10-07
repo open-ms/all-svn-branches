@@ -30,7 +30,7 @@
 #define QTCLUSTERING_H_
 
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
-#include <OpenMS/DATASTRUCTURES/QTCluster.h>
+#include <OpenMS/DATASTRUCTURES/QTSILACCluster.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/CONCEPT/Exception.h>
 
@@ -61,7 +61,7 @@ private:
 	/**
 	 * @brief list of identified clusters
 	 */
-	std::list<QTCluster> clusters;
+	std::list<QTSILACCluster> clusters;
 	/**
 	 * @brief default constructor
 	 */
@@ -71,7 +71,7 @@ private:
 	 * @brief recursive QT clustering method
 	 * @param act_grid the data points to be clustered in the current step
 	 */
-	QTCluster QTClust(HashGrid& act_grid);
+	QTSILACCluster QTClust(HashGrid& act_grid);
 public:
 	/**
 	 * @brief detailed constructor

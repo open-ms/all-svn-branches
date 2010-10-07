@@ -31,6 +31,9 @@
 
 using std::vector;
 
+// TODO: change postRawHook to FeatureMapSim?
+// TODO: implement correct consensus in postRaw
+
 
 namespace OpenMS
 {
@@ -151,6 +154,8 @@ namespace OpenMS
           consensus_.push_back(cf);
           final_feature_map.push_back(final_unlabeled_feature);
 
+          // remove unlabeled feature
+          unlabeled_features_index.erase(unmodified_sequence);
         }
         else
         {
@@ -158,6 +163,7 @@ namespace OpenMS
           // labeling_efficiency is 100% so we transform the complete
           // feature in a dilabeled feature
           addModificationToPeptideHit_(*lf_iter, "UniMod:193");
+          (*lf_iter).ensureUniqueId();
           final_feature_map.push_back(*lf_iter);
 
           // add corresponding feature if it exists
@@ -166,7 +172,6 @@ namespace OpenMS
           {
             ConsensusFeature cf;
             final_feature_map.push_back(unlabeled_features_index[unmodified_sequence]);
-            (*lf_iter).ensureUniqueId();
             cf.insert(0, *lf_iter);
             cf.insert(0, unlabeled_features_index[unmodified_sequence]);
 
@@ -192,6 +197,12 @@ namespace OpenMS
 
     features_to_simulate.clear();
     features_to_simulate.push_back(final_feature_map);
+
+    consensus_.setProteinIdentifications(final_feature_map.getProteinIdentifications());
+    ConsensusMap::FileDescription map_description;
+    map_description.label = "Simulation (Labeling Consensus)";
+    map_description.size = features_to_simulate.size();
+    consensus_.getFileDescriptions()[0] = map_description;
   }
 
 
@@ -248,9 +259,10 @@ namespace OpenMS
   }
 
   /// Labeling after RawMS
-  void O18Labeler::postRawMSHook(FeatureMapSimVector & /* features_to_simulate */)
+  void O18Labeler::postRawMSHook(FeatureMapSimVector & features_to_simulate )
   {
-  }
+    recomputeConsensus_(features_to_simulate[0]);
+  }  
 
   void O18Labeler::postRawTandemMSHook(FeatureMapSimVector &, MSSimExperiment &)
   {

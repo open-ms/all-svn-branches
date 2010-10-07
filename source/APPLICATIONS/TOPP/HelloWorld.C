@@ -43,7 +43,8 @@ using namespace std;
 
 	@brief First trial of my own class.
 
-BlaBla
+Test
+
 */
 
 // We do not want this class to show up in the docu:

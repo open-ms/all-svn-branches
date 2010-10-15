@@ -74,8 +74,6 @@ namespace OpenMS
 		}
 	}
 	
-//	template <typename PeakType>
-//	void PeakPickerSH::pickExperiment(const MSExperiment<PeakType>& input, MSExperiment<PeakType>& output)
 	void PeakPickerSH::pickExperiment(const MSExperiment<>& input, MSExperiment<>& output)
 	{
 		// make sure that output is clear
@@ -117,5 +115,4 @@ namespace OpenMS
 		
 		endProgress();
 	}
-	
 }

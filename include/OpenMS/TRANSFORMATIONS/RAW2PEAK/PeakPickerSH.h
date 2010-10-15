@@ -30,15 +30,8 @@ namespace OpenMS
     /** 
 				@brief Applies the peak-picking algorithm to a map (MSExperiment). This method picks peaks for each scan in the map consecutively. The resulting picked peaks are written to the output map.
     */
-//    template <typename PeakType>
-//    void pickExperiment(const MSExperiment<PeakType>& input, MSExperiment<PeakType>& output);
     void pickExperiment(const MSExperiment<>& input, MSExperiment<>& output);
-    
-	protected:
-		QString xmlPath;
-	
-	}; // end PeakPickerSH
-	
-}// namespace OpenMS
+	};	
+}
 
 #endif

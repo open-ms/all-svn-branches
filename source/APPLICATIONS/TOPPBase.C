@@ -2175,7 +2175,7 @@ namespace OpenMS
 		tools_map["PILISModel"] = StringList::create("");
 		tools_map["PTModel"] = StringList::create("");
 		tools_map["PTPredict"] = StringList::create("");
-		tools_map["PeakPicker"] = StringList::create("wavelet,high_res");
+		tools_map["PeakPicker"] = StringList::create("wavelet,high_res,superhirn");
 		tools_map["PepNovoAdapter"] = StringList::create("");
 		tools_map["PeptideIndexer"] = StringList::create("");
 		tools_map["PrecursorIonSelector"] = StringList::create("");

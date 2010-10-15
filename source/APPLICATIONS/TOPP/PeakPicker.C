@@ -28,6 +28,7 @@
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerCWT.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerHiRes.h>
+#include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerSH.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/FORMAT/PeakTypeEstimator.h>
 
@@ -143,6 +144,10 @@ class TOPPPeakPicker
     {
       tmp = PeakPickerHiRes().getDefaults();
     }
+    else if (type == "superhirn")
+    {
+      tmp = PeakPickerSH().getDefaults();
+    }
 
     return tmp;
 	}
@@ -214,6 +219,13 @@ class TOPPPeakPicker
     else if (type == "high_res")
     {
     	PeakPickerHiRes pp;
+      pp.setLogType(log_type_);
+			pp.setParameters(pepi_param);
+			pp.pickExperiment(ms_exp_raw,ms_exp_peaks);
+    }
+    else if (type == "superhirn")
+    {
+    	PeakPickerSH pp;
       pp.setLogType(log_type_);
 			pp.setParameters(pepi_param);
 			pp.pickExperiment(ms_exp_raw,ms_exp_peaks);

@@ -1,13 +1,6 @@
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerSH.h>
 
-#include <QString>
-#include <QtXml>
-#include <iostream>
-#include <map>
 #include <vector>
-#include <fstream>
-
-using namespace std;
 
 namespace OpenMS
 {

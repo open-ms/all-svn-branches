@@ -68,6 +68,14 @@ using namespace std;
 #include <map>
 #include <vector>
 
+#ifdef OPENMS_WINDOWSPLATFORM
+#	ifndef _WIN32_WINNT
+#		define _WIN32_WINNT 0x0501 // Win XP (and above)
+#	endif
+#	include <Windows.h>
+#endif
+
+
 //-------------------------------------------------------------
 // command line name of this tool
 //-------------------------------------------------------------
@@ -184,6 +192,11 @@ int main( int argc, const char** argv )
 		stop_watch.stop();
 		splash_screen->close();
 		delete splash_screen;
+
+#ifdef OPENMS_WINDOWSPLATFORM
+    FreeConsole(); // get rid of console window at this point (we will not see any console output from this point on)
+    AttachConsole(-1); // if the parent is a console, reattach to it - so we can see debug output - a normal user will usually not use cmd.exe to start a GUI)
+#endif
 		
 	  int result = a.exec();
 	  delete(mw);

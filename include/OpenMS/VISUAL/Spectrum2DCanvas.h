@@ -129,6 +129,11 @@ namespace OpenMS
         // Docu in base class
         bool finishAdding_();
 
+        /// Draws the coordinates (or coordinate deltas) to the widget's upper left corner
+		    void drawCoordinates_(QPainter& painter, const PeakIndex& peak);
+		    /// Draws the coordinates (or coordinate deltas) to the widget's upper left corner
+		    void drawDeltas_(QPainter& painter, const PeakIndex& start, const PeakIndex& end);
+
         /** @name Reimplemented QT events */
         //@{
         void mousePressEvent(QMouseEvent* e);
@@ -164,7 +169,7 @@ namespace OpenMS
         @param layer_index The index of the layer.
         @param p The QPainter to paint on.
       */
-        void paintMaximumIntensities_(Size layer_index, Int rt_pixel_count, Int mz_pixel_count, QPainter& p);
+        void paintMaximumIntensities_(Size layer_index, Size rt_pixel_count, Size mz_pixel_count, QPainter& p);
 
         /**
         @brief Paints the precursor peaks.
@@ -270,9 +275,33 @@ namespace OpenMS
             case IM_SNAP:
                 return gradient.precalculatedColorAt(val*snap_factor).rgb();
                 break;
+            case IM_LOG:
+                return gradient.precalculatedColorAt(std::log(val + 1)).rgb();
             default:
                 throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
             }
+        }
+
+        /**
+          @brief Convert chart to widget coordinates
+
+          Translates chart coordinates to widget coordinates.
+          @param x the chart coordinate x
+          @param y the chart coordinate y
+          @param point returned widget coordinates
+        */
+        inline void dataToWidget_(float x, float y, QPoint& point)
+        {
+          if (!isMzToXAxis())
+          {
+            point.setX( int((y - visible_area_.minY()) / visible_area_.height() * width()));
+            point.setY(height() - int((x - visible_area_.minX()) / visible_area_.width() * height()));
+          }
+          else
+          {
+            point.setX( int((x - visible_area_.minX()) / visible_area_.width() * width()));
+            point.setY( height() - int((y-visible_area_.minY())/visible_area_.height()*height()));
+          }
         }
 
         /// Highlights a single peak and prints coordinates to screen

@@ -771,8 +771,14 @@ namespace OpenMS
       void checkParam_( const Param& param, const String& filename, const String& location ) const;
       //@}
 
+      /// make a string console friendly
+      String breakString_(const String& input, const Size line_len, const Size indentation, const Size max_lines) const;
+      
+      /// read console settings for output shaping
+      void readConsoleSize_();
+
       /// Prints the tool-specific command line options and appends the common options.
-      void printUsage_() const;
+      void printUsage_();
 
       /// The actual "main" method.  main_() is invoked by main().
       virtual ExitCodes main_(int argc , const char** argv) = 0;
@@ -885,6 +891,8 @@ namespace OpenMS
 			/// .TOPP.ini file for storing system default parameters
 			static String topp_ini_file_;
 			
+      /// width of console we are currently in (if not determinable, set to 80 as default)
+      int console_width_;
   };
 
 } // namespace OpenMS

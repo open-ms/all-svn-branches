@@ -30,6 +30,7 @@
 #include <OpenMS/VISUAL/Spectrum2DWidget.h>
 #include <OpenMS/VISUAL/AxisWidget.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum2DGoToDialog.h>
+#include <OpenMS/CONCEPT/UniqueIdInterface.h>
 
 #include <QtGui/QPushButton>
 #include <QtGui/QGridLayout>
@@ -309,6 +310,8 @@ namespace OpenMS
 	
   void Spectrum2DWidget::horizontalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
 	{
+		projection_horz_->canvas()->mzToXAxis(true); // determines the orientation of the data
+    projection_horz_->canvas()->setSwappedAxis(canvas()->isMzToXAxis());
 		projection_horz_->showLegend(false);
 		projection_horz_->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
 		if (!projectionsVisible() || projection_horz_->canvas()->getLayerCount()==0) //set draw mode
@@ -331,7 +334,8 @@ namespace OpenMS
 	
   void Spectrum2DWidget::verticalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
 	{
-		projection_vert_->canvas()->mzToXAxis(false);
+		projection_vert_->canvas()->mzToXAxis(false); // determines the orientation of the data
+    projection_vert_->canvas()->setSwappedAxis(canvas()->isMzToXAxis());
 		projection_vert_->showLegend(false);
 		projection_vert_->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
     // todo: why would we want to retain the old draw mode (same in horizontalProjection)??
@@ -380,11 +384,28 @@ namespace OpenMS
 			}
 			else
 			{
-				Size feature_index = goto_dialog.getFeatureNumber();
-				///check if the feature index exists
+        String feature_id = goto_dialog.getFeatureNumber();
+        //try to convert to UInt64 id
+        UniqueIdInterface uid;
+        uid.setUniqueId(feature_id);
+
+        Size feature_index = canvas()->getCurrentLayer().getFeatureMap()->uniqueIdToIndex(uid.getUniqueId());
+        if (feature_index == Size(-1)) // UID does not exist
+        {
+          try
+          {
+            feature_index=feature_id.toInt(); // normal feature index as stored in map
+          }
+          catch (...)
+          { // we might still deal with a UID, so toInt() will throw as the number is too big
+            feature_index = Size(-1);
+          }
+        }
+
+				//check if the feature index exists
         if (feature_index>=canvas()->getCurrentLayer().getFeatureMap()->size())
 				{
-					QMessageBox::warning(this, "Invalid feature number", "Feature number too large.\nPlease select a valid feature!");
+					QMessageBox::warning(this, "Invalid feature number", "Feature number too large/UniqueID not found.\nPlease select a valid feature!");
 					return;
 				}
 				//display feature with a margin

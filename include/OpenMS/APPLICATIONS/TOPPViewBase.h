@@ -312,9 +312,6 @@ namespace OpenMS
 			/// Appends process output to log window
 			void updateProcessLog();
 
-      /// Shows the tutorial browser
-      void showTutorial();      
-
       /// Called if a data file has been externally changed
       void fileChanged_(const String&);
     protected:
@@ -398,7 +395,7 @@ namespace OpenMS
       QToolBar* tool_bar_;
       //common intensity modes
 
-      QButtonGroup* intensity_group_;
+      QButtonGroup* intensity_button_group_;
       //1D specific stuff
 
       QToolBar* tool_bar_1d_;

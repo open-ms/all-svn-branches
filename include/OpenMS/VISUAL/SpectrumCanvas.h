@@ -135,7 +135,8 @@ namespace OpenMS
 		{
 			IM_NONE,		    ///< Normal mode: f(x)=x
 			IM_PERCENTAGE,  ///< Shows intensities normalized by layer maximum: f(x)=x/max(x)*100
-			IM_SNAP         ///< Shows the maximum displayed intensity as if it was the overall maximum intensity
+      IM_SNAP,        ///< Shows the maximum displayed intensity as if it was the overall maximum intensity
+      IM_LOG          ///< Logarithmic mode
 		};
 		
 		//@}
@@ -619,12 +620,6 @@ namespace OpenMS
 
 	protected:
 
-		/// Draws the coordinates (or coordinate deltas) to the widget's upper left corner
-		void drawCoordinates_(QPainter& painter, const PeakIndex& peak, bool print_rt);
-
-		/// Draws the coordinates (or coordinate deltas) to the widget's upper left corner
-		void drawDeltas_(QPainter& painter, const PeakIndex& start, const PeakIndex& end, bool print_rt);
-			
 		/// Draws several lines of text to the upper right corner of the widget
 		void drawText_(QPainter& painter, QStringList text);
 
@@ -759,17 +754,37 @@ namespace OpenMS
 			@param y the chart coordinate y
 			@param point returned widget coordinates
 		*/
-		inline void dataToWidget_(float x, float y, QPoint& point)
+    inline void dataToWidget_(float x, float y, QPoint& point)
 		{
 			if (!isMzToXAxis())
 			{
-				point.setX( int((y - visible_area_.minY()) / visible_area_.height() * width()));
+
+
+        if (intensity_mode_ != SpectrumCanvas::IM_LOG)
+        {
+        point.setX( int((y - visible_area_.minY()) / visible_area_.height() * width()));
+        } else  // IM_LOG
+        {
+          point.setX( int(
+              std::log10((y - visible_area_.minY())+1) / std::log10(visible_area_.height()+1) * width())
+                      );
+        }
+
 				point.setY(height() - int((x - visible_area_.minX()) / visible_area_.width() * height()));
 			}
 			else
 			{
-				point.setX( int((x - visible_area_.minX()) / visible_area_.width() * width()));
-				point.setY( height() - int((y - visible_area_.minY()) / visible_area_.height() * height()));
+        point.setX( int((x - visible_area_.minX()) / visible_area_.width() * width()));
+
+        if (intensity_mode_ != SpectrumCanvas::IM_LOG)
+        {
+          point.setY( height() - int((y - visible_area_.minY()) / visible_area_.height() * height()));
+        } else  // IM_LOG
+        {
+          point.setY( height() - int(
+              std::log10((y-visible_area_.minY())+1)/std::log10(visible_area_.height()+1)*height()
+              ));
+        }
 			}
 		}
 		

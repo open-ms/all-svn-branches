@@ -63,7 +63,6 @@
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
-#include <OpenMS/VISUAL/DIALOGS/DemoDialog.h>
 #include <OpenMS/VISUAL/EnhancedTabBar.h>
 #include <OpenMS/VISUAL/EnhancedWorkspace.h>
 #include <OpenMS/FORMAT/FileHandler.h>
@@ -233,9 +232,8 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           help->addSeparator();
           QAction* action = help->addAction("OpenMS website",this,SLOT(showURL()));
           action->setData("http://www.OpenMS.de");
-          //action = help->addAction("TOPPView tutorial",this,SLOT(showTutorial()), Qt::Key_F1);
           action = help->addAction("TOPPView tutorial (online)",this,SLOT(showURL()), Qt::Key_F1);
-          action->setData("http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS-release/html/TOPP_tutorial.html");
+          action->setData("http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS/OpenMS-release/html/TOPP_tutorial.html");
 
           help->addSeparator();
           help->addAction("&About",this,SLOT(showAboutDialog()));
@@ -261,8 +259,8 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           tool_bar_ = addToolBar("Basic tool bar");
 
           //intensity modes
-          intensity_group_ = new QButtonGroup(tool_bar_);
-          intensity_group_->setExclusive(true);
+          intensity_button_group_ = new QButtonGroup(tool_bar_);
+          intensity_button_group_->setExclusive(true);
 
           b = new QToolButton(tool_bar_);
           b->setIcon(QIcon(":/lin.png"));
@@ -270,7 +268,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           b->setShortcut(Qt::Key_N);
           b->setCheckable(true);
           b->setWhatsThis("Intensity: Normal<BR><BR>Intensity is displayed unmodified.<BR>(Hotkey: N)");
-          intensity_group_->addButton(b,SpectrumCanvas::IM_NONE);
+          intensity_button_group_->addButton(b,SpectrumCanvas::IM_NONE);
           tool_bar_->addWidget(b);
 
           b = new QToolButton(tool_bar_);
@@ -282,7 +280,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
                           " maximum intensity. If only one layer is displayed this mode behaves like the"
                           " normal mode. If more than one layer is displayed intensities are aligned."
                           "<BR>(Hotkey: P)");
-          intensity_group_->addButton(b,SpectrumCanvas::IM_PERCENTAGE);
+          intensity_button_group_->addButton(b,SpectrumCanvas::IM_PERCENTAGE);
           tool_bar_->addWidget(b);
 
           b = new QToolButton(tool_bar_);
@@ -293,9 +291,18 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
           b->setWhatsThis("Intensity: Snap to maximum displayed intensity<BR><BR> In this mode the"
                           " color gradient is adapted to the maximum currently displayed intensity."
                           "<BR>(Hotkey: S)");
-          intensity_group_->addButton(b,SpectrumCanvas::IM_SNAP);
+          intensity_button_group_->addButton(b,SpectrumCanvas::IM_SNAP);
           tool_bar_->addWidget(b);
-          connect(intensity_group_,SIGNAL(buttonClicked(int)),this,SLOT(setIntensityMode(int)));
+
+          b = new QToolButton(tool_bar_);
+          b->setIcon(QIcon(":/log.png"));
+          b->setToolTip("Intensity: Use log scaling for colors");
+          b->setCheckable(true);
+          b->setWhatsThis("Intensity: Logarithmic scaling of intensities for color calculation");
+          intensity_button_group_->addButton(b,SpectrumCanvas::IM_LOG);
+          tool_bar_->addWidget(b);
+
+          connect(intensity_button_group_,SIGNAL(buttonClicked(int)),this,SLOT(setIntensityMode(int)));
           tool_bar_->addSeparator();
 
           //common buttons
@@ -641,25 +648,6 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
               }
           }
 
-	void TOPPViewBase::showTutorial()
-	{
-		//create dialog
-		DemoDialog* dlg = new DemoDialog(this);
-		dlg->setTitle("TOPPView tutorial");
-
-		//create file list
-		StringList pages;
-		File::fileList(File::getOpenMSDataPath() + "/tutorial/","TOPPView_tutorial_*.html",pages);
-		for (Size i=0; i<pages.size(); ++i)
-		{
-			pages[i] = File::getOpenMSDataPath() + "/tutorial/" + pages[i];
-		}
-		dlg->setPages(pages);
-
-		//show dialog
-		dlg->show();
-	}
-
   void TOPPViewBase::addDataDB(UInt db_id, bool show_options, String caption, UInt window_id)
   {
     //set wait cursor
@@ -902,9 +890,9 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       const SpectrumWidget* sw = qobject_cast<const SpectrumWidget*>(w);
       if (sw!=0)
       {
-        int lc = sw->canvas()->getLayerCount();
+        Size lc = sw->canvas()->getLayerCount();
         // iterate over all layers
-        for (int j=0; j!= lc; ++j)
+        for (Size j=0; j!= lc; ++j)
         {
           filename_set.insert(sw->canvas()->getLayer(j).filename);
         }
@@ -1027,7 +1015,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
   void TOPPViewBase::addData_(FeatureMapSharedPtrType feature_map, ConsensusMapSharedPtrType consensus_map, vector<PeptideIdentification>& peptides, ExperimentSharedPtrType peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename, const String& caption, UInt window_id, Size spectrum_id)
   {      
     // initialize flags with defaults from the parameters
-    bool as_new_window;
+    bool as_new_window = true;
   	bool maps_as_2d = ((String)param_.getValue("preferences:default_map_view")=="2d");
   	bool maps_as_1d = false;
     bool use_intensity_cutoff = ((String)param_.getValue("preferences:intensity_cutoff")=="on");
@@ -1037,14 +1025,14 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 											(data_type == LayerData::DT_CONSENSUS) ||
 											(data_type == LayerData::DT_IDENT));
 
-		bool is_2D = (data_type != LayerData::DT_CHROMATOGRAM);
+		bool is_2D = (data_type != LayerData::DT_CHROMATOGRAM);   
+
 
 		//set the window where (new layer) data could be opened in
     SpectrumWidget* target_window = window_(window_id);
     if (target_window == 0)
 		{
       target_window = activeWindow_();
-      as_new_window = true;
 		}
     else
 		{
@@ -1069,15 +1057,6 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 		{
 			dialog.disableDimension(false);
 		}
-
-    // disable layer and merge and allow only window mode if data is already loaded
-    set<String> open_filenames = getFilenamesOfOpenFiles();
-    if (open_filenames.find(filename) != open_filenames.end())
-    {
-      as_new_window = true;
-      dialog.disableLocation(true);
-    }
-
 		//disable cutoff for features and single scans
     if (mergeable || !is_2D)
     {
@@ -1518,7 +1497,13 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     if (w)
     {
       //set intensity mode
-     	intensity_group_->button(w->canvas()->getIntensityMode())->setChecked(true);
+      if(intensity_button_group_->button(w->canvas()->getIntensityMode()))
+      {
+        intensity_button_group_->button(w->canvas()->getIntensityMode())->setChecked(true);
+      } else
+      {
+        showLogMessage_(LS_ERROR, __PRETTY_FUNCTION__ ,"Button for intensity mode doesn't exist");
+      }
     }
 
     //1D
@@ -2579,14 +2564,17 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
   QStringList TOPPViewBase::getFileList_(const String& path_overwrite)
   {
-		String filter_all = "readable files (*.dta *.dta2d";
-		String filter_single = "dta files (*.dta);;dta2d files (*.dta2d)";
+    String filter_all_andi;
+    String filter_single_andi;
 #ifdef USE_ANDIMS
-		filter_all +=" *.cdf";
-		filter_single += ";;ANDI/MS files (*.cdf)";
+		filter_all_andi +=" *.cdf";
+		filter_single_andi += ";;ANDI/MS files (*.cdf)";
 #endif
-		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML *.idXML fid);;" ;
-		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;peptide identifications (*.idXML);;XML files (*.xml);;XMass Analysis (fid);;all files (*)";
+    
+
+    String filter_all = "readable files (*.mzML *.mzXML *.mzData *.featureXML *.consensusXML *.idXML *.dta *.dta2d fid"+ filter_all_andi +" *.bz2 *.gz);;";
+		String filter_single = "mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;peptide identifications (*.idXML);;XML files (*.xml);;XMass Analysis (fid);;dta files (*.dta);;dta2d files (*.dta2d)"+filter_single_andi+";;bzipped files (*.bz2);;gzipped files (*.gz);;all files (*)";
+
 
 		QString open_path = current_path_.toQString();
 		if (path_overwrite!="")
@@ -3069,11 +3057,10 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
   	{
   		return;
-            }
+    }
 
 		w->canvas()->activateSpectrum(index);
-		// set visible aree to visible area in 2D view
-    w->canvas()->setVisibleArea(activeCanvas_()->getVisibleArea());
+
 		// set relative (%) view of visible area
     w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
 
@@ -3084,9 +3071,6 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       // set visible aree to visible area in 2D view
       w->canvas()->setVisibleArea(activeCanvas_()->getVisibleArea());
     }
-
-    // set relative (%) view of visible area
-    w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
 
     String caption = layer.name;
     w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
@@ -3103,7 +3087,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     const LayerData& layer = activeCanvas_()->getCurrentLayer();
     ExperimentSharedPtrType exp_sptr = layer.getPeakData();
 
-    //open new 1D widget
+    //open new 2D widget
     Spectrum2DWidget* w = new Spectrum2DWidget(getSpectrumParameters_(2), ws_);
 
     //add data
@@ -3135,6 +3119,18 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       {
         return;
       }
+
+     if (active1DWindow_()) // switch from 1D to 3D
+     {
+       //TODO:
+       //- distinguish between survey scan and fragment scan (only makes sense for survey scan?)
+       //- build new Area with mz range equal to 1D visible range
+       //- rt range either overall MS1 data range or some convenient window
+
+     } else if (active2DWindow_())  // switch from 2D to 3D
+     {
+        w->canvas()->setVisibleArea(activeCanvas_()->getVisibleArea());
+     }
 
       // set layer name
       String caption = layer.name + " (3D)";
@@ -3629,7 +3625,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     QWidgetList wl = ws_->windowList();
 
     // iterate over all windows and determine which need an update
-    std::vector<std::pair<const SpectrumWidget *, int> > needs_update;
+    std::vector<std::pair<const SpectrumWidget *, Size> > needs_update;
     for(int i=0; i!=ws_->windowList().count(); ++i)
     {
       //std::cout << "Number of windows: " << ws_->windowList().count() << std::endl;
@@ -3637,16 +3633,16 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       const SpectrumWidget* sw = qobject_cast<const SpectrumWidget*>(w);
       if (sw!=0)
       {
-        int lc = sw->canvas()->getLayerCount();
+        Size lc = sw->canvas()->getLayerCount();
 
         // determine if widget stores one or more layers for the given filename (->needs update)
-        for (int j=0; j!= lc; ++j)
+        for (Size j=0; j!= lc; ++j)
         {
           //std::cout << "Layer filename: " << sw->canvas()->getLayer(j).filename << std::endl;
           const LayerData& ld = sw->canvas()->getLayer(j);
           if (ld.filename == filename)
           {
-            needs_update.push_back(std::pair<const SpectrumWidget *, int>(sw,j));
+            needs_update.push_back(std::pair<const SpectrumWidget *, Size>(sw,j));
           }
         }
       }
@@ -3659,9 +3655,9 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     } else if (needs_update.size()!=0)  // at least one layer references data of filename
     {
       //std::cout << "Number of Layers that need update: " << needs_update.size() << std::endl;
-      pair<const SpectrumWidget *, int>& slp = needs_update[0];
+      pair<const SpectrumWidget *, Size>& slp = needs_update[0];
       const SpectrumWidget * sw = slp.first;
-      int layer_index = slp.second;
+      Size layer_index = slp.second;
 
       bool user_wants_update = false;
       if ((String)(param_.getValue("preferences:on_file_change"))=="update automatically") //automatically update
@@ -3692,7 +3688,8 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       if (user_wants_update == false)
       {
         return;
-      } else if (user_wants_update == true)
+      }
+      else //if (user_wants_update == true)
       {
         const LayerData& layer = sw->canvas()->getLayer(layer_index);
         // reload data
@@ -3769,11 +3766,11 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       }
 
       // update all layers that need an update
-      for (UInt i=0; i!= needs_update.size(); ++i)
+      for (Size i=0; i!= needs_update.size(); ++i)
       {
-        pair<const SpectrumWidget *, int>& slp = needs_update[i];
+        pair<const SpectrumWidget *, Size>& slp = needs_update[i];
         const SpectrumWidget * sw = slp.first;
-        int layer_index = slp.second;
+        Size layer_index = slp.second;
         sw->canvas()->updateLayer(layer_index);        
       }
     }

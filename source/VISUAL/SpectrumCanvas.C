@@ -1032,6 +1032,9 @@ namespace OpenMS
 		Real it = 0.0;
 		Int charge = 0;
 		DoubleReal quality = 0.0;
+
+
+
 		if (getCurrentLayer().type==LayerData::DT_FEATURE)
 		{
 			mz = peak.getFeature(getCurrentLayer().features).getMZ();
@@ -1056,7 +1059,18 @@ namespace OpenMS
 		}
 		else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 		{
-			//TODO CHROM
+			const LayerData& layer = getCurrentLayer();
+			const ExperimentType& map = layer.peaks;
+			vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
+			MSChromatogram<>::const_iterator cp = crom->begin();
+
+			crom += peak.spectrum;
+			cp += peak.peak;
+
+			mz = crom->getMZ();
+			rt = cp->getRT();
+			it = cp->getIntensity();
+
 		}
 		else if (getCurrentLayer().type == LayerData::DT_IDENT)
 		{

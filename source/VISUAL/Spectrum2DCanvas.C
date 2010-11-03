@@ -59,9 +59,6 @@ using namespace std;
 namespace OpenMS
 {
 	using namespace Internal;
-	QPoint _pos; //Markus
-	vector<MSChromatogram<> >::const_iterator crom_; //Markus
-	MSChromatogram<>::const_iterator cp_; //Markus
 
 	Spectrum2DCanvas::Spectrum2DCanvas(const Param& preferences, QWidget* parent)
 		: SpectrumCanvas(preferences, parent)
@@ -129,16 +126,14 @@ namespace OpenMS
 		else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 		{
 			//TODO CHROM
-			// Testkommentar
-			pos = _pos;
 
 			const LayerData& layer = getCurrentLayer();
 			const ExperimentType& map = layer.peaks;
 			vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
 			MSChromatogram<>::const_iterator cp = crom->begin();
 
-			crom = crom_;
-			cp = cp_;
+			crom += peak.spectrum;
+			cp += peak.peak;
 
 			dataToWidget_(crom->getMZ(), cp->getRT(), pos);
 
@@ -251,10 +246,12 @@ namespace OpenMS
 									//cout << "new max: " << cp->getRT() << " " << crom->getMZ() << endl;
 
 									//max_int = cp->getIntensity();
-									crom_ = crom;
-									cp_ = cp;
 
 									//return PeakIndex(cp-crom->begin());
+									cout << "-----" << endl;
+									cout << crom-map.getChromatograms().begin() << endl;
+									cout << cp-crom->begin() << endl;
+
 									return PeakIndex(crom-map.getChromatograms().begin(), cp-crom->begin());
 									//return PeakIndex(cp-(crom-map.getChromatograms().begin()));
 									//return PeakIndex(); // keine Anzeige; nur zum testen
@@ -1649,7 +1646,7 @@ namespace OpenMS
 				{
 					//TODO CHROM
 
-					status = "***  CHROMATOGRAM  TEST ***";
+					//status = "***  CHROMATOGRAM  TEST ***";
 
 				}
 				if (status!="") emit sendStatusMessage(status, 0);
@@ -2033,12 +2030,13 @@ namespace OpenMS
 
 						QMenu* msn_scans = new QMenu("Survey scan in 1D");
 						QMenu* msn_meta = new QMenu("fragment scan meta data");
-						DPosition<2> p1 = widgetToData_(e->pos()+ QPoint(10,10));
+						/*DPosition<2> p1 = widgetToData_(e->pos()+ QPoint(10,10));
 						DPosition<2> p2 = widgetToData_(e->pos()- QPoint(10,10));
 						DoubleReal rt_min = min(p1[1],p2[1]);
 						DoubleReal rt_max = max(p1[1],p2[1]);
 						DoubleReal mz_min = min(p1[0],p2[0]);
 						DoubleReal mz_max = max(p1[0],p2[0]);
+						*/
 						bool item_added = false;
 
 						finishContextMenu_(context_menu, settings_menu);

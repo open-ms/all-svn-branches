@@ -2928,6 +2928,43 @@ namespace OpenMS
 			updateFilterBar();
 			updateMenu();
 		}
+
+  	if (layer.type==LayerData::DT_CHROMATOGRAM)  //Markus
+  	  	{
+
+  		showLogMessage_(LS_NOTICE,"Not implemented","The 3D View for Chromatograms is not implemented yet.");
+  		/*
+  	  	 * TODO CHROM
+  	  	 *
+  	  		//open new 3D widget
+  	  		Spectrum3DWidget* w = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
+
+  	  		//copy data
+  	  		ExperimentType exp;
+  				activeCanvas_()->getVisiblePeakData(exp);
+
+  	  		// insert placeholder peaks
+  	  		const SpectrumCanvas::AreaType& area = activeCanvas_()->getVisibleArea();
+  	  		SpectrumType::PeakType p_left,p_right;
+  	  		p_left.setMZ(10);
+  	  		exp.back().push_back(p_left);
+  	  		p_right.setMZ(50);
+  	  		exp.back().push_back(p_right);
+
+  		    if (!w->canvas()->addLayer(exp))
+  		  	{
+  		  		return;
+  		  	}
+  				String caption = layer.name + " (3D)";
+  				w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+  	      showAsWindow_(w,caption);
+  		    updateLayerBar();
+  		    updateSpectrumBar();
+  				updateFilterBar();
+  				updateMenu();
+  			}
+			*/
+  	  	}
 		else
 		{
       showLogMessage_(LS_NOTICE,"Wrong layer type","You cannot open feature data in 3D mode.");
@@ -2938,6 +2975,8 @@ namespace OpenMS
 	{
 		const LayerData& layer = activeCanvas_()->getCurrentLayer();
 
+		if (layer.type==LayerData::DT_PEAK)
+		{
 		//copy spectrum
 		ExperimentType exp = layer.peaks;
 
@@ -2964,8 +3003,16 @@ namespace OpenMS
     updateSpectrumBar();
 		updateFilterBar();
 		updateMenu();
-	}
 
+		}
+
+		if (layer.type==LayerData::DT_CHROMATOGRAM) //Markus
+		{
+
+			showLogMessage_(LS_NOTICE,"Not implemented","The 1D View for Chromatograms is not implemented yet.");
+
+		}
+	}
 	void TOPPViewBase::showAboutDialog()
 	{
 		//dialog and grid layout

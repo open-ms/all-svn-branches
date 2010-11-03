@@ -62,6 +62,7 @@ namespace OpenMS
 		{
 		}
 
+
 		/// returns if the current peak ref is valid
 		inline bool isValid() const
 		{

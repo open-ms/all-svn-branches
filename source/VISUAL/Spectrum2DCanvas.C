@@ -564,19 +564,13 @@ namespace OpenMS
 			//TODO CHROM implement layer filters
 			//TODO CHROM implement faster painting
 
-			//Testvariable ob Ausgabe gleich der vorherigen
-
 			double maxIntensity = 0.0;
 			double minIntensity = 99999.9;
-
 			double intensity_ = 0.0;
-
-//			cout << "Visible area min: " << visible_area_.minPosition()[0] << endl;
-//			cout << "visible area max: " << visible_area_.maxPosition()[0] << endl;
-
-			//Minimalen Abstand der einzelnen Chromatogramme berechnen
-
-			int MinChromDistance = 500;
+			double shift_ = 0.0;	// used to calculate the width of the line with the intensity
+			double multiplicator = 0.0;
+			double zoomfactor = 0.0;
+			int MinChromDistance = 500; //Minimaler Abstand der einzelnen Chromatogramme
 			vector<int> mz;
 
 			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
@@ -611,16 +605,17 @@ namespace OpenMS
 						if (MZ_Value < mz[f])
 						{
 							if (MinChromDistance > (mz[f] - MZ_Value))
-							{
+								{
 								MinChromDistance = (mz[f] - MZ_Value);
-							}
+								}
+
 						}
 						if (MZ_Value > mz[f])
 						{
 							if (MinChromDistance > (MZ_Value - mz[f]))
-							{
+								{
 								MinChromDistance = (MZ_Value - mz[f]);
-							}
+								}
 						}
 					}
 
@@ -639,14 +634,8 @@ namespace OpenMS
 				{
 					QPoint pos;
 					dataToWidget_(crom->getMZ(), cp->getRT(), pos);
-
 					intensity_ = cp->getIntensity();
-
-					double shift_ = 0.0;	// used to calculate the width of the line with the intensity
-					double multiplicator = 0.0;
-					double zoomfactor = 0.0;
-					//multiplicator = ((MinChromDistance/2)-1) / (((log(maxIntensity + 1.0))/log(1.7))-0.5);
-					//shift_ = multiplicator * (((log(intensity_ + 1.0))/log(1.7))-0.5);
+					zoomfactor = 0.0;
 
 					if (zoom_pos_ == zoom_stack_.begin())
 					{
@@ -667,7 +656,7 @@ namespace OpenMS
 							}
 						}
 
-						multiplicator = ((MinChromDistance/2)-20) / (((log(maxIntensity + 1.0))/log(1.7))-0.5) * (zoomfactor*0.5) ;
+						multiplicator = ((MinChromDistance/2)-20) / (((log(maxIntensity + 1.0))/log(1.7))-0.5) * (zoomfactor*0.6) ;
 
 					}
 

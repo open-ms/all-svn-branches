@@ -241,25 +241,15 @@ namespace OpenMS
 								 getCurrentLayer().filters.passes(*cp)*/ )
 							{
 
-								//if (cp->getIntensity() > max_int)
-									//{
-									//cout << "new max: " << cp->getRT() << " " << crom->getMZ() << endl;
 
-									//max_int = cp->getIntensity();
-
-									//return PeakIndex(cp-crom->begin());
-									cout << "-----" << endl;
-									cout << crom-map.getChromatograms().begin() << endl;
-									cout << cp-crom->begin() << endl;
+//									cout << "-----" << endl;
+//									cout << crom-map.getChromatograms().begin() << endl;
+//									cout << cp-crom->begin() << endl;
 
 									return PeakIndex(crom-map.getChromatograms().begin(), cp-crom->begin());
-									//return PeakIndex(cp-(crom-map.getChromatograms().begin()));
-									//return PeakIndex(); // keine Anzeige; nur zum testen
-									//}
 
 							}
 						}
-
 					}
 
 		}
@@ -575,9 +565,68 @@ namespace OpenMS
 			//TODO CHROM implement faster painting
 
 			//Testvariable ob Ausgabe gleich der vorherigen
-			double testMZ = 0.0;
+
 			double maxIntensity = 0.0;
 			double minIntensity = 99999.9;
+
+			double intensity_ = 0.0;
+
+//			cout << "Visible area min: " << visible_area_.minPosition()[0] << endl;
+//			cout << "visible area max: " << visible_area_.maxPosition()[0] << endl;
+
+			//Minimalen Abstand der einzelnen Chromatogramme berechnen
+
+			int MinChromDistance = 500;
+			vector<int> mz;
+
+			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
+					crom != map.getChromatograms().end();
+					++crom)
+			{
+				mz.push_back(int(crom->getMZ()));
+
+				for (MSChromatogram<>::const_iterator cp = crom->begin(); cp != crom->end(); ++cp)
+				{
+					//Max Intensität auslesen um die Breite der Intensitätsbalken zu errechnen
+					if (maxIntensity < cp->getIntensity())
+					{
+						maxIntensity = cp->getIntensity();
+					}
+					if (minIntensity > cp->getIntensity())
+					{
+						minIntensity = cp->getIntensity();
+					}
+				}
+			}
+
+			//Vector mz[] füllen mit den MZ Werten um Abstand zwischen den Chromatogrammen zu errechnen
+			for(int i = 0; i != (int(mz.size()) - 1); i++)
+				{
+					int VectorPosition = i;
+					int MZ_Value = mz[i];
+					//cout << "MZ_Value: " << MZ_Value << endl;
+
+					for (int f = VectorPosition; f != int(mz.size()); f++)
+					{
+						if (MZ_Value < mz[f])
+						{
+							if (MinChromDistance > (mz[f] - MZ_Value))
+							{
+								MinChromDistance = (mz[f] - MZ_Value);
+							}
+						}
+						if (MZ_Value > mz[f])
+						{
+							if (MinChromDistance > (MZ_Value - mz[f]))
+							{
+								MinChromDistance = (MZ_Value - mz[f]);
+							}
+						}
+					}
+
+					//cout << "MinChromDistance: " << MinChromDistance << endl;
+				}
+
 
 
 			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin(); 
@@ -591,69 +640,60 @@ namespace OpenMS
 					QPoint pos;
 					dataToWidget_(crom->getMZ(), cp->getRT(), pos);
 
-					//Ausgabe-Test
-					if (testMZ != crom->getMZ())
+					intensity_ = cp->getIntensity();
+
+					double shift_ = 0.0;	// used to calculate the width of the line with the intensity
+					double multiplicator = 0.0;
+					double zoomfactor = 0.0;
+					//multiplicator = ((MinChromDistance/2)-1) / (((log(maxIntensity + 1.0))/log(1.7))-0.5);
+					//shift_ = multiplicator * (((log(intensity_ + 1.0))/log(1.7))-0.5);
+
+					if (zoom_pos_ == zoom_stack_.begin())
 					{
-						if (maxIntensity != 0.0)
+						multiplicator = ((MinChromDistance/2)-20) / (((log(maxIntensity + 1.0))/log(1.7))-0.5) ;
+					}
+					else
+					{
+						for(int i = 1; i>0 ; i++)
 						{
-						cout << "\n maxIntensity: " << maxIntensity ;
-						cout << "\n minIntensity: " << minIntensity << "\n" ;
+							if (zoom_pos_ <= (zoom_stack_.begin()) + i)
+							{
+								zoomfactor += (i+1);
+							}
+							if (zoom_pos_ == (zoom_stack_.begin()) + i)
+							{
+								//cout << "zoomfactor: " << zoomfactor << endl;
+								break;
+							}
 						}
-						testMZ = crom->getMZ();
-						cout << "*****************************************";
-						cout << "\n" << "Chromatogram X/Y: " << crom->getMZ() << "\n";
-						maxIntensity = 0.0;
-						minIntensity = 0.0;
+
+						multiplicator = ((MinChromDistance/2)-20) / (((log(maxIntensity + 1.0))/log(1.7))-0.5) * (zoomfactor*0.5) ;
+
 					}
-
-					if (maxIntensity < cp->getIntensity())
-					{
-						maxIntensity = cp->getIntensity();
-					}
-
-					if (minIntensity > cp->getIntensity())
-					{
-						minIntensity = cp->getIntensity();
-					}
-					//cout << /*"RT: " << cp->getRT() << */ " Intensity: " << cp->getIntensity() << " ; ";
-
-
-
-
-					double intensity_ = cp->getIntensity();
 
 					if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
 					{
 						if (intensity_ == 0)
 						{
-							//painter.drawPoint(pos.x(), pos.y());
+							painter.drawPoint(pos.x(), pos.y());
 						}
 
 						if (intensity_ > 0)
 						{
-							double shift_ = 0.0;	// used to calculate the width of the line with the intensity
-							shift_ = ((log(intensity_ + 1.0))/log(1.7))-0.5;
+							shift_ = multiplicator * (((log(intensity_ + 1.0))/log(1.7))-1.5);
 
-							// intensity
-							painter.setPen(QPen(Qt::yellow, 2));
+							// intensity lines
+							painter.setPen(QPen(Qt::green, 2));
 							painter.drawLine(pos.x()-shift_, pos.y(), pos.x()-1, pos.y());
 							painter.drawLine(pos.x()+shift_, pos.y(), pos.x()+1, pos.y());
 
-
-							// dots
-							painter.setPen(QPen(Qt::green, 1));
-							//painter.drawLine(pos.x(), pos.y(), pos.x(), pos.y());
+							// middle dots
+							painter.setPen(QPen(Qt::yellow, 1));
 							painter.drawPoint(pos.x(), pos.y());
-
 						}
-
-
 					}
 				}
 			}
-
-			//cout << "\n maxIntensity: " << maxIntensity ;
-			//cout << "\n minIntensity: " << minIntensity << "\n" ;
 		}
 		else if (layer.type==LayerData::DT_IDENT) // peptide identifications
 		{
@@ -1478,6 +1518,16 @@ namespace OpenMS
 				else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 				{
 					//TODO CHROM
+//					const LayerData& layer = getCurrentLayer();
+//					const ExperimentType& map = layer.peaks;
+//					vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
+//					MSChromatogram<>::const_iterator cp = crom->begin();
+//
+//					crom += selected_peak_.spectrum;
+//					cp += selected_peak_.peak;
+//
+//					dataToWidget_(crom->getMZ(),cp->getRT(),line_begin);
+
 				}
 			}
 			else
@@ -2037,7 +2087,7 @@ namespace OpenMS
 						DoubleReal mz_min = min(p1[0],p2[0]);
 						DoubleReal mz_max = max(p1[0],p2[0]);
 						*/
-						bool item_added = false;
+						//bool item_added = false;
 
 						finishContextMenu_(context_menu, settings_menu);
 

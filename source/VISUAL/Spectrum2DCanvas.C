@@ -60,6 +60,8 @@ namespace OpenMS
 {
 	using namespace Internal;
 
+	MSChromatogram<>::const_iterator _cp;
+
 	Spectrum2DCanvas::Spectrum2DCanvas(const Param& preferences, QWidget* parent)
 		: SpectrumCanvas(preferences, parent)
 	{
@@ -133,7 +135,8 @@ namespace OpenMS
 			MSChromatogram<>::const_iterator cp = crom->begin();
 
 			crom += peak.spectrum;
-			cp += peak.peak;
+			//cp += peak.peak;
+			cp = _cp;
 
 			dataToWidget_(crom->getMZ(), cp->getRT(), pos);
 
@@ -233,6 +236,8 @@ namespace OpenMS
 								 cp != crom->end();
 								 ++cp)
 							{
+
+							_cp = cp;
 
 							if ( cp->getRT() >= area.minPosition()[1] &&
 								 cp->getRT() <= area.maxPosition()[1] &&
@@ -572,6 +577,15 @@ namespace OpenMS
 			double zoomfactor = 0.0;
 			int MinChromDistance = 500; //Minimaler Abstand der einzelnen Chromatogramme
 			vector<int> mz;
+//			int color[3];
+//			color[0] = 0;
+//			color[1] = 0;
+//			color[2] = 0;
+//			vector<color> rgb;
+			int color_r = 111;
+			int color_g = 671;
+			int color_b = 12;
+
 
 			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
 					crom != map.getChromatograms().end();
@@ -598,6 +612,7 @@ namespace OpenMS
 				{
 					int VectorPosition = i;
 					int MZ_Value = mz[i];
+
 					//cout << "MZ_Value: " << MZ_Value << endl;
 
 					for (int f = VectorPosition; f != int(mz.size()); f++)
@@ -628,6 +643,27 @@ namespace OpenMS
 					 crom != map.getChromatograms().end();
 					 ++crom)
 			{
+
+//				color_r = qrand()%255;
+//				color_g = qrand()%255;
+//				color_b = qrand()%255;
+
+				color_r += 53;
+				if (color_r > 255)
+				{
+					color_r = color_r%255;
+				}
+				color_g += 31;
+				if (color_g > 255)
+				{
+					color_g = color_r%255;
+				}
+				color_b += 97;
+				if (color_b > 255)
+				{
+					color_b = color_r%255;
+				}
+
 				for (MSChromatogram<>::const_iterator cp = crom->begin();
 						 cp != crom->end();
 						 ++cp)
@@ -656,7 +692,7 @@ namespace OpenMS
 							}
 						}
 
-						multiplicator = ((MinChromDistance/2)-20) / (((log(maxIntensity + 1.0))/log(1.7))-0.5) * (zoomfactor*0.6) ;
+						multiplicator = ((MinChromDistance/2)-20) / (((log(maxIntensity + 1.0))/log(1.7))-0.5) * (zoomfactor*0.7) ;
 
 					}
 
@@ -672,12 +708,14 @@ namespace OpenMS
 							shift_ = multiplicator * (((log(intensity_ + 1.0))/log(1.7))-1.5);
 
 							// intensity lines
-							painter.setPen(QPen(Qt::green, 2));
+							//painter.setPen(QColor(qrand()%255,qrand()%255,qrand()%255), 2);
+							painter.setPen(QPen(QColor(color_r, color_g, color_b, 255), 2));
+
 							painter.drawLine(pos.x()-shift_, pos.y(), pos.x()-1, pos.y());
 							painter.drawLine(pos.x()+shift_, pos.y(), pos.x()+1, pos.y());
 
 							// middle dots
-							painter.setPen(QPen(Qt::yellow, 1));
+							painter.setPen(QPen(Qt::red, 1));
 							painter.drawPoint(pos.x(), pos.y());
 						}
 					}
@@ -2069,14 +2107,14 @@ namespace OpenMS
 
 						QMenu* msn_scans = new QMenu("Survey scan in 1D");
 						QMenu* msn_meta = new QMenu("fragment scan meta data");
-						/*DPosition<2> p1 = widgetToData_(e->pos()+ QPoint(10,10));
+						DPosition<2> p1 = widgetToData_(e->pos()+ QPoint(10,10));
 						DPosition<2> p2 = widgetToData_(e->pos()- QPoint(10,10));
 						DoubleReal rt_min = min(p1[1],p2[1]);
 						DoubleReal rt_max = max(p1[1],p2[1]);
 						DoubleReal mz_min = min(p1[0],p2[0]);
 						DoubleReal mz_max = max(p1[0],p2[0]);
-						*/
-						//bool item_added = false;
+
+						bool item_added = false;
 
 						finishContextMenu_(context_menu, settings_menu);
 

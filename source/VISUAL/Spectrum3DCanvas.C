@@ -99,7 +99,7 @@ namespace OpenMS
 	
 	bool Spectrum3DCanvas::finishAdding_()
 	{
-		if (layers_.back().type!=LayerData::DT_PEAK)
+		if (layers_.back().type!=LayerData::DT_PEAK && layers_.back().type!=LayerData::DT_CHROMATOGRAM) //+Chrom Markus
 		{
 			QMessageBox::critical(this,"Error","This widget supports peak data only. Aborting!");
 			return false;

@@ -36,6 +36,9 @@
 
 using namespace std;
 //#define PISP_DEBUG
+#ifdef PISP_DEBUG
+#include <OpenMS/SYSTEM/StopWatch.h>
+#endif
 //#undef PISP_DEBUG
 namespace OpenMS
 {
@@ -94,7 +97,7 @@ namespace OpenMS
 	  return *this;
 	}
 
-	void PrecursorIonSelectionPreprocessing::setFixedModifications(StringList& modifications)
+	void PrecursorIonSelectionPreprocessing::setFixedModifications_(StringList& modifications)
 	{
 		for(Size i = 0; i < modifications.size();++i)
 			{
@@ -287,7 +290,7 @@ namespace OpenMS
 #ifdef PISP_DEBUG
 						std::cout << entries[e].identifier << std::endl;
 #endif
-						if(entries[e].identifier.hasPrefix("sp|") || entries[e].identifier.hasPrefix("tr|"))
+						if(entries[e].identifier.hasPrefix("sp|") || entries[e].identifier.hasPrefix("tr|") || entries[e].identifier.hasPrefix("gi|"))
 							{
 								entries[e].identifier = entries[e].identifier.suffix(entries[e].identifier.size()-3);
 							}
@@ -296,6 +299,7 @@ namespace OpenMS
 								entries[e].identifier = entries[e].identifier.suffix(entries[e].identifier.size()-5);
 							}
 						entries[e].identifier = entries[e].identifier.prefix('|');
+
 						String& seq = entries[e].sequence;
 						// check for unallowed characters
 						if(seq.hasSubstring("X") || seq.hasSubstring("B") ||  seq.hasSubstring("Z") )
@@ -399,7 +403,8 @@ namespace OpenMS
 					{
 						std::cout << distance(sequences_.begin(),seq_it)<<" peptides done."<<std::endl;
 						// now make RTPrediction using the RTSimulation class of the simulator
-						RTSimulation rt_sim(NULL);
+            SimRandomNumberGenerator rnd_gen;
+            RTSimulation rt_sim(rnd_gen);
 						rt_sim.setParameters(rt_param);
 						std::vector<DoubleReal> rts;
 						std::vector<DoubleReal> rts2;
@@ -609,10 +614,19 @@ namespace OpenMS
 				// filter for taxonomy
 				if(entries[e].description.toUpper().hasSubstring(((String)param_.getValue("preprocessing:taxonomy")).toUpper())) 
 					{
+						if(entries[e].identifier.hasPrefix("sp|") || entries[e].identifier.hasPrefix("tr|") || entries[e].identifier.hasPrefix("gi|"))
+							{
+								entries[e].identifier = entries[e].identifier.suffix(entries[e].identifier.size()-3);
+							}
+						else if(entries[e].identifier.hasPrefix("IPI:"))
+							{
+								entries[e].identifier = entries[e].identifier.suffix(entries[e].identifier.size()-5);
+							}
+						entries[e].identifier = entries[e].identifier.prefix('|');
 #ifdef PISP_DEBUG
 						std::cout << entries[e].identifier << std::endl;
 #endif
-						entries[e].identifier = entries[e].identifier.prefix('|');
+
 						String& seq = entries[e].sequence;
 						// check for unallowed characters
 						if(seq.hasSubstring("X") || seq.hasSubstring("B") ||  seq.hasSubstring("Z") )

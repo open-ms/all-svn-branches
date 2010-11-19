@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
-// $Authors: Marc Sturm $
+// $Maintainer: Mathias Walzer $
+// $Authors: Marc Sturm, Mathias Walzer, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
@@ -31,41 +31,67 @@
 
 #include <fstream>
 
+#include <boost/algorithm/string.hpp>
+
 using namespace std;
 using namespace OpenMS;
 
+
+bool generate(const map<String,StringList>& tools, const String& prefix)
+{
+	bool errors_occured = false;
+	for (map<String,StringList>::const_iterator it=tools.begin(); it!=tools.end(); ++it)
+	{
+		//start process
+		QProcess process;
+		process.setProcessChannelMode(QProcess::MergedChannels);
+    QStringList env = QProcess::systemEnvironment();
+    env << String("COLUMNS=110").toQString(); // Add an environment variable (used by each TOPP tool to determine width of help text (see TOPPBase))
+    process.setEnvironment(env);
+ 		process.start((it->first + " --help").toQString());
+		process.waitForFinished();
+
+		ofstream f((String("output/")+ prefix + it->first + ".cli").c_str());
+		std::string lines = QString(process.readAll()).toStdString();
+		if(process.error() != QProcess::UnknownError)
+		{
+			// error while generation cli docu
+			f << "Errors occured while generating the command line documentation for " << it->first << "!" << endl;
+			f << "Please check your PATH variable if it contains the path to the " << it->first << " executable." << endl;
+      f << "Output was: \n" << lines << endl;
+			errors_occured = true;
+		}
+		else
+		{
+			// write output
+			f << lines;
+		}
+		f.close();
+	}
+  return errors_occured;
+}
+
 int main (int , char** )
-{	
+{
 	//TOPP tools
 	map<String,StringList> topp_tools = TOPPBase::getToolList();
 	topp_tools["TOPPView"] = StringList();
 	topp_tools["TOPPAS"] = StringList();
-	for (map<String,StringList>::const_iterator it=topp_tools.begin(); it!=topp_tools.end(); ++it)
-	{
-		//start process
-		QProcess process;
-		process.setProcessChannelMode(QProcess::MergedChannels);
-		process.start((it->first + " --help").toQString());
-		process.waitForFinished();
-		//write output
-		ofstream f((String("output/TOPP_") + it->first + ".cli").c_str());
-		f << QString(process.readAllStandardOutput()).toStdString();
-	}
-	
 	//UTILS
 	map<String,StringList> util_tools = TOPPBase::getUtilList();
-	for (map<String,StringList>::const_iterator it=util_tools.begin(); it!=util_tools.end(); ++it)
+
+  bool errors_occured = generate(topp_tools,"TOPP_") || generate(util_tools, "UTILS_");
+
+	if(errors_occured)
 	{
-		//start process
-		QProcess process;
-		process.setProcessChannelMode(QProcess::MergedChannels);
-		process.start((it->first + " --help").toQString());
-		process.waitForFinished();
-		//write output
-		ofstream f((String("output/UTILS_") + it->first + ".cli").c_str());
-		f << QString(process.readAllStandardOutput()).toStdString();
+		// errors occured while generating the TOPP CLI docu .. tell the user
+		cerr << "Errors occured while generating the command line documentation for some of the " << endl;
+		cerr << "TOPP tools/UTILS. Please check your PATH variable if it contains the TOPP tool directory." << endl;
+		return EXIT_FAILURE;
 	}
-	
-  return 0;
+	else
+	{
+		return EXIT_SUCCESS;
+	}
 }
 

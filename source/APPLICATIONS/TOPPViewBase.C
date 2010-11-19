@@ -22,8 +22,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
-// $Authors: Marc Sturm $
+// $Maintainer: Timo Sachsenberg$
+// $Authors: Timo Sachsenberg, Marc Sturm $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/APPLICATIONS/TOPPViewBase.h>
@@ -36,6 +36,7 @@
 #include <OpenMS/VISUAL/DIALOGS/DBOpenDialog.h>
 #include <OpenMS/VISUAL/DIALOGS/TheoreticalSpectrumGenerationDialog.h>
 #include <OpenMS/VISUAL/DIALOGS/SpectrumAlignmentDialog.h>
+#include <OpenMS/VISUAL/SpectraViewWidget.h>
 #include <OpenMS/VISUAL/Spectrum1DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum2DCanvas.h>
 #include <OpenMS/VISUAL/Spectrum3DCanvas.h>
@@ -63,7 +64,6 @@
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/CHEMISTRY/Residue.h>
-#include <OpenMS/VISUAL/DIALOGS/DemoDialog.h>
 #include <OpenMS/VISUAL/EnhancedTabBar.h>
 #include <OpenMS/VISUAL/EnhancedWorkspace.h>
 #include <OpenMS/FORMAT/FileHandler.h>
@@ -77,6 +77,7 @@
 #include <QtGui/QCheckBox>
 #include <QtGui/QCloseEvent>
 #include <QtGui/QDesktopServices>
+#include <QtGui/QDesktopWidget>
 #include <QtGui/QDockWidget>
 #include <QtGui/QFileDialog>
 #include <QtGui/QHeaderView>
@@ -109,541 +110,488 @@ namespace OpenMS
   using namespace Internal;
 	using namespace Math;
 
-  TOPPViewBase::TOPPViewBase(QWidget* parent):
-      QMainWindow(parent),
-      DefaultParamHandler("TOPPViewBase")
-  {
-  	setWindowTitle("TOPPView");
-    setWindowIcon(QIcon(":/TOPPView.png"));
-    //prevents errors caused by too small width,height values
-    setMinimumSize(400,400);
-    //enable drag-and-drop
-    setAcceptDrops(true);
-
-    // create dummy widget (to be able to have a layout), Tab bar and workspace
-    QWidget* dummy = new QWidget(this);
-    setCentralWidget(dummy);
-    QVBoxLayout* box_layout = new QVBoxLayout(dummy);
-    tab_bar_ = new EnhancedTabBar(dummy);
-    tab_bar_->setWhatsThis("Tab bar<BR><BR>Close tabs through the context menu or by double-clicking them.<BR>The tab bar accepts drag-and-drop from the layer bar.");
-    tab_bar_->addTab("dummy",4710);
-    tab_bar_->setMinimumSize(tab_bar_->sizeHint());
-    tab_bar_->removeId(4710);
-    //connect slots and sigals for selecting spectra
-    connect(tab_bar_,SIGNAL(currentIdChanged(int)),this,SLOT(focusByTab(int)));
-    connect(tab_bar_,SIGNAL(aboutToCloseId(int)),this,SLOT(closeByTab(int)));
-		//connect signals ans slots for drag-and-drop
-		connect(tab_bar_,SIGNAL(dropOnWidget(const QMimeData*,QWidget*)),this,SLOT(copyLayer(const QMimeData*,QWidget*)));
-		connect(tab_bar_,SIGNAL(dropOnTab(const QMimeData*,QWidget*,int)),this,SLOT(copyLayer(const QMimeData*,QWidget*,int)));
-
-    box_layout->addWidget(tab_bar_);
-    ws_=new EnhancedWorkspace(dummy);
-    connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateToolBar()));
-    connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateTabBar(QWidget*)));
-    connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateLayerBar()));
-    connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateSpectrumBar()));
-    connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateFilterBar()));
-    connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateMenu()));
-    connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateCurrentPath()));
-    connect(ws_,SIGNAL(dropReceived(const QMimeData*,QWidget*,int)),this,SLOT(copyLayer(const QMimeData*,QWidget*,int)));
-
-    box_layout->addWidget(ws_);
-
-		//################## MENUS #################
-    // File menu
-    QMenu* file = new QMenu("&File",this);
-    menuBar()->addMenu(file);
-    file->addAction("&Open file",this,SLOT(openFileDialog()), Qt::CTRL+Qt::Key_O);
-    file->addAction("Open from &database",this,SLOT(openDatabaseDialog()), Qt::CTRL+Qt::Key_D);
-    file->addAction("Open &example file",this,SLOT(openExampleDialog()));
-    file->addAction("&Close",this,SLOT(closeFile()), Qt::CTRL+Qt::Key_W);
-		file->addSeparator();
-
-		//Meta data
-		file->addAction("&Show meta data (file)",this,SLOT(metadataFileDialog()));
-    file->addAction("&Show meta data (database)",this,SLOT(metadataDatabaseDialog()));
-    file->addSeparator();
-
-		//Recent files
-    QMenu* recent_menu = new QMenu("&Recent files", this);
-  	recent_actions_.resize(20);
-		for (Size i = 0; i<20; ++i)
-		{
-			recent_actions_[i] = recent_menu->addAction("",this,SLOT(openRecentFile()));
-			recent_actions_[i]->setVisible(false);
-		}
-  	file->addMenu(recent_menu);
-
-    file->addSeparator();
-    file->addAction("&Preferences",this, SLOT(preferencesDialog()));
-    file->addAction("&Quit",qApp,SLOT(quit()));
-
-    //Tools menu
-    QMenu* tools = new QMenu("&Tools",this);
-    menuBar()->addMenu(tools);
-    tools->addAction("&Go to",this,SLOT(gotoDialog()), Qt::CTRL+Qt::Key_G);
-    tools->addAction("&Edit meta data",this,SLOT(editMetadata()), Qt::CTRL+Qt::Key_M);
-    tools->addAction("&Statistics",this,SLOT(layerStatistics()));
-		tools->addSeparator();
-    tools->addAction("Apply TOPP tool (whole layer)", this, SLOT(showTOPPDialog()), Qt::CTRL+Qt::Key_T)->setData(false);
-    tools->addAction("Apply TOPP tool (visible layer data)", this, SLOT(showTOPPDialog()), Qt::CTRL+Qt::SHIFT+Qt::Key_T)->setData(true);
-    tools->addAction("Rerun TOPP tool", this, SLOT(rerunTOPPTool()),Qt::Key_F4);
-    tools->addSeparator();
-    tools->addAction("&Annotate with identifiction", this, SLOT(annotateWithID()), Qt::CTRL+Qt::Key_I);
-    tools->addAction("Align spectra", this, SLOT(showSpectrumAlignmentDialog()));
-    tools->addAction("Generate theoretical spectrum", this, SLOT(showSpectrumGenerationDialog()));
-
-    //Layer menu
-    QMenu* layer = new QMenu("&Layer",this);
-    menuBar()->addMenu(layer);
-    layer->addAction("Save all data", this, SLOT(saveLayerAll()), Qt::CTRL+Qt::Key_S);
-    layer->addAction("Save visible data", this, SLOT(saveLayerVisible()), Qt::CTRL+Qt::SHIFT+Qt::Key_S);
-		layer->addSeparator();
-    layer->addAction("Show/hide grid lines", this, SLOT(toggleGridLines()), Qt::CTRL+Qt::Key_R);
-    layer->addAction("Show/hide axis legends", this, SLOT(toggleAxisLegends()), Qt::CTRL+Qt::Key_L);
-		layer->addSeparator();
-    layer->addAction("Preferences", this, SLOT(showPreferences()));
-
-    //Windows menu
-    QMenu * windows = new QMenu("&Windows", this);
-    menuBar()->addMenu(windows);
-    windows->addAction("&Cascade",this->ws_,SLOT(cascade()));
-    windows->addAction("&Tile automatic",this->ws_,SLOT(tile()));
-    windows->addAction(QIcon(":/tile_horizontal.png"),"Tile &vertical",this,SLOT(tileHorizontal()));
-    windows->addAction(QIcon(":/tile_vertical.png"),"Tile &horizontal",this,SLOT(tileVertical()));
-		windows->addSeparator();
-
-		//Help menu
-		QMenu* help = new QMenu("&Help", this);
-		menuBar()->addMenu(help);
-		help->addAction(QWhatsThis::createAction(help));
-		help->addSeparator();
-		QAction* action = help->addAction("OpenMS website",this,SLOT(showURL()));
-		action->setData("http://www.OpenMS.de");
-		//action = help->addAction("TOPPView tutorial",this,SLOT(showTutorial()), Qt::Key_F1);
-		action = help->addAction("TOPPView tutorial (online)",this,SLOT(showURL()), Qt::Key_F1);
-		action->setData("http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS-release/html/TOPP_tutorial.html");
-
-		help->addSeparator();
-		help->addAction("&About",this,SLOT(showAboutDialog()));
-
-    //create status bar
-    message_label_ = new QLabel(statusBar());
-    statusBar()->addWidget(message_label_,1);
-
-    rt_label_ = new QLabel("RT: 12345678", statusBar());
-    rt_label_->setMinimumSize(rt_label_->sizeHint());
-    rt_label_->setText("");
-    statusBar()->addPermanentWidget(rt_label_,0);
-    mz_label_ = new QLabel("m/z: 123456780912", statusBar());
-    mz_label_->setMinimumSize(mz_label_->sizeHint());
-    mz_label_->setText("");
-    statusBar()->addPermanentWidget(mz_label_,0);
-
-		//################## TOOLBARS #################
-    //create toolbars and connect signals
-  	QToolButton* b;
-
-  	//--Basic tool bar for all views--
-    tool_bar_ = addToolBar("Basic tool bar");
-
-    //intensity modes
-    intensity_group_ = new QButtonGroup(tool_bar_);
-    intensity_group_->setExclusive(true);
-
-    b = new QToolButton(tool_bar_);
-    b->setIcon(QIcon(":/lin.png"));
-    b->setToolTip("Intensity: Normal");
-    b->setShortcut(Qt::Key_N);
-    b->setCheckable(true);
-    b->setWhatsThis("Intensity: Normal<BR><BR>Intensity is displayed unmodified.<BR>(Hotkey: N)");
-    intensity_group_->addButton(b,SpectrumCanvas::IM_NONE);
-		tool_bar_->addWidget(b);
-
-    b = new QToolButton(tool_bar_);
-    b->setIcon(QIcon(":/percentage.png"));
-    b->setToolTip("Intensity: Percentage");
-    b->setShortcut(Qt::Key_P);
-    b->setCheckable(true);
-    b->setWhatsThis("Intensity: Percentage<BR><BR>Intensity is displayed as a percentage of the layer"
-    								" maximum intensity. If only one layer is displayed this mode behaves like the"
-    								" normal mode. If more than one layer is displayed intensities are aligned."
-    								"<BR>(Hotkey: P)");
-    intensity_group_->addButton(b,SpectrumCanvas::IM_PERCENTAGE);
-		tool_bar_->addWidget(b);
-
-    b = new QToolButton(tool_bar_);
-    b->setIcon(QIcon(":/snap.png"));
-    b->setToolTip("Intensity: Snap to maximum displayed intensity");
-    b->setShortcut(Qt::Key_S);
-    b->setCheckable(true);
-    b->setWhatsThis("Intensity: Snap to maximum displayed intensity<BR><BR> In this mode the"
-    								" color gradient is adapted to the maximum currently displayed intensity."
-    								"<BR>(Hotkey: S)");
-    intensity_group_->addButton(b,SpectrumCanvas::IM_SNAP);
-		tool_bar_->addWidget(b);
-    connect(intensity_group_,SIGNAL(buttonClicked(int)),this,SLOT(setIntensityMode(int)));
-    tool_bar_->addSeparator();
-
-    //common buttons
-    QAction* reset_zoom_button = tool_bar_->addAction(QIcon(":/reset_zoom.png"), "Reset Zoom", this, SLOT(resetZoom()));
-    reset_zoom_button->setWhatsThis("Reset zoom: Zooms out as far as possible and resets the zoom history.<BR>(Hotkey: Backspace)");
-
-    tool_bar_->show();
-
-    //--1D toolbar--
-    tool_bar_1d_ = addToolBar("1D tool bar");
-
-    //draw modes 1D
-    draw_group_1d_ = new QButtonGroup(tool_bar_1d_);
-    draw_group_1d_->setExclusive(true);
-
-    b = new QToolButton(tool_bar_1d_);
-    b->setIcon(QIcon(":/peaks.png"));
-    b->setToolTip("Peak mode");
-    b->setShortcut(Qt::Key_I);
-    b->setCheckable(true);
-    b->setWhatsThis("1D Draw mode: Peaks<BR><BR>Peaks are diplayed as sticks.");
-    draw_group_1d_->addButton(b,Spectrum1DCanvas::DM_PEAKS);
-		tool_bar_1d_->addWidget(b);
-
-    b = new QToolButton(tool_bar_1d_);
-    b->setIcon(QIcon(":/lines.png"));
-    b->setToolTip("Raw data mode");
-    b->setShortcut(Qt::Key_R);
-    b->setCheckable(true);
-    b->setWhatsThis("1D Draw mode: Raw data<BR><BR>Peaks are diplayed as a continous line.");
-    draw_group_1d_->addButton(b,Spectrum1DCanvas::DM_CONNECTEDLINES);
-		tool_bar_1d_->addWidget(b);
-
-    connect(draw_group_1d_,SIGNAL(buttonClicked(int)),this,SLOT(setDrawMode1D(int)));
-    tool_bar_->addSeparator();
-
-    //--2D peak toolbar--
-    tool_bar_2d_peak_ = addToolBar("2D peak tool bar");
-
-    dm_precursors_2d_ = tool_bar_2d_peak_->addAction(QIcon(":/precursors.png"),"Show fragment scan precursors");
-    dm_precursors_2d_->setCheckable(true);
-    dm_precursors_2d_->setWhatsThis("2D peak draw mode: Precursors<BR><BR>fragment scan precursor peaks are marked.<BR>(Hotkey: 1)");
-		dm_precursors_2d_->setShortcut(Qt::Key_1);
-
-    connect(dm_precursors_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
-
-    projections_2d_ = tool_bar_2d_peak_->addAction(QIcon(":/projections.png"), "Show Projections" ,this, SLOT(toggleProjections()));
-    projections_2d_->setWhatsThis("Projections: Shows projections of peak data along RT and MZ axis.<BR>(Hotkey: 2)");
-		projections_2d_->setShortcut(Qt::Key_2);
-
-		//--2D feature toolbar--
-    tool_bar_2d_feat_ = addToolBar("2D feature tool bar");
-
-    dm_hull_2d_ = tool_bar_2d_feat_->addAction(QIcon(":/convexhull.png"),"Show feature convex hull");
-    dm_hull_2d_->setCheckable(true);
-    dm_hull_2d_->setWhatsThis("2D feature draw mode: Convex hull<BR><BR>The convex hull of the feature is displayed.<BR>(Hotkey: 5)");
-		dm_hull_2d_->setShortcut(Qt::Key_5);
-    connect(dm_hull_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
-
-    dm_hulls_2d_ = tool_bar_2d_feat_->addAction(QIcon(":/convexhulls.png"),"Show feature convex hulls");
-    dm_hulls_2d_->setCheckable(true);
-    dm_hulls_2d_->setWhatsThis("2D feature draw mode: Convex hulls<BR><BR>The convex hulls of the feature are displayed: One for each mass trace.<BR>(Hotkey: 6)");
-		dm_hulls_2d_->setShortcut(Qt::Key_6);
-    connect(dm_hulls_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
-
-		// feature labels:
-		dm_label_2d_ = new QToolButton(tool_bar_2d_feat_);
-		dm_label_2d_->setPopupMode(QToolButton::MenuButtonPopup);
-		QAction* action2 = new QAction(QIcon(":/labels.png"), "Show feature label", dm_label_2d_);
-    action2->setCheckable(true);
-    action2->setWhatsThis("2D feature draw mode: Labels<BR><BR>Display different kinds of annotation next to features.<BR>(Hotkey: 7)");
-		action2->setShortcut(Qt::Key_7);
-		dm_label_2d_->setDefaultAction(action2);
-		tool_bar_2d_feat_->addWidget(dm_label_2d_);
-    connect(dm_label_2d_, SIGNAL(triggered(QAction*)), this, SLOT(changeLabel(QAction*)));
-		//button menu
-		group_label_2d_ = new QActionGroup(dm_label_2d_);
-		QMenu* menu = new QMenu(dm_label_2d_);
-		for (Size i = 0; i < LayerData::SIZE_OF_LABEL_TYPE; ++i)
-		{
-			QAction* temp = group_label_2d_->addAction(
-				QString(LayerData::NamesOfLabelType[i].c_str()));
-			temp->setCheckable(true);
-			if (i == 0) temp->setChecked(true);
-			menu->addAction(temp);
-		}
-		dm_label_2d_->setMenu(menu);
-
-		// unassigned peptide identifications:
-		dm_unassigned_2d_ = new QToolButton(tool_bar_2d_feat_);
-		dm_unassigned_2d_->setPopupMode(QToolButton::MenuButtonPopup);
-		QAction* action_unassigned = new QAction(QIcon(":/unassigned.png"), "Show unassigned peptide identifications", dm_unassigned_2d_);
-    action_unassigned->setCheckable(true);
-    action_unassigned->setWhatsThis("2D feature draw mode: Unassigned peptide identifications<BR><BR>Show unassigned peptide identifications by precursor m/z or by peptide mass.<BR>(Hotkey: 8)");
-		action_unassigned->setShortcut(Qt::Key_8);
-		dm_unassigned_2d_->setDefaultAction(action_unassigned);
-		tool_bar_2d_feat_->addWidget(dm_unassigned_2d_);
-    connect(dm_unassigned_2d_, SIGNAL(triggered(QAction*)), this, SLOT(changeUnassigned(QAction*)));
-		//button menu
-		group_unassigned_2d_ = new QActionGroup(dm_unassigned_2d_);
-		menu = new QMenu(dm_unassigned_2d_);
-		StringList options = StringList::create(
-			"Don't show,Show by precursor m/z,Show by peptide mass");
-		for (StringList::iterator opt_it = options.begin(); opt_it != options.end();
-				 ++opt_it)
-		{
-			QAction* temp = group_unassigned_2d_->addAction(opt_it->toQString());
-			temp->setCheckable(true);
-			if (opt_it == options.begin()) temp->setChecked(true);
-			menu->addAction(temp);
-		}
-		dm_unassigned_2d_->setMenu(menu);
-
-		//--2D consensus toolbar--
-    tool_bar_2d_cons_ = addToolBar("2D peak tool bar");
-
-    dm_elements_2d_ = tool_bar_2d_cons_->addAction(QIcon(":/elements.png"),"Show consensus feature element positions");
-    dm_elements_2d_->setCheckable(true);
-    dm_elements_2d_->setWhatsThis("2D consensus feature draw mode: Elements<BR><BR>The individual elements that make up the  consensus feature are drawn.<BR>(Hotkey: 9)");
-		dm_elements_2d_->setShortcut(Qt::Key_9);
-    connect(dm_elements_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
-
-		//--2D identifications toolbar--
-		tool_bar_2d_ident_ = addToolBar("2D identifications tool bar");
-		
-		dm_ident_2d_ = tool_bar_2d_ident_->addAction(QIcon(":/peptidemz.png"), "Use theoretical peptide mass for m/z positions (default: precursor mass)");
-    dm_ident_2d_->setCheckable(true);
-    dm_ident_2d_->setWhatsThis("2D peptide identification draw mode: m/z source<BR><BR>Toggle between precursor mass (default) and theoretical peptide mass as source for the m/z positions of peptide identifications.<BR>(Hotkey: 5)");
-		dm_ident_2d_->setShortcut(Qt::Key_5);
-    connect(dm_ident_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
-
-		//################## Dock widgets #################
-    //layer window
-    QDockWidget* layer_bar = new QDockWidget("Layers", this);
-    addDockWidget(Qt::RightDockWidgetArea, layer_bar);
-    layer_manager_ = new QListWidget(layer_bar);
-    layer_manager_->setWhatsThis("Layer bar<BR><BR>Here the availabe layers are shown. Left-click on a layer to select it.<BR>Layers can be shown and hidden using the checkboxes in front of the name.<BR> Renaming and removing a layer is possible through the context menu.<BR>Dragging a layer to the tab bar copies the layer.<BR>Double-clicking a layer open its preferences.<BR>You can use the 'PageUp' and 'PageDown' buttons to change the selected layer.");
-
-    layer_bar->setWidget(layer_manager_);
-    layer_manager_->setContextMenuPolicy(Qt::CustomContextMenu);
-		layer_manager_->setDragEnabled(true);
-    connect(layer_manager_,SIGNAL(currentRowChanged(int)),this,SLOT(layerSelectionChange(int)));
-		connect(layer_manager_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(layerContextMenu(const QPoint&)));
-		connect(layer_manager_,SIGNAL(itemChanged(QListWidgetItem*)),this,SLOT(layerVisibilityChange(QListWidgetItem*)));
-    connect(layer_manager_,SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,SLOT(layerEdit(QListWidgetItem*)));
-
-    windows->addAction(layer_bar->toggleViewAction());
-
-    //spectrum selection
-	spectrum_bar_ = new QDockWidget("Spectra", this);
-	addDockWidget(Qt::RightDockWidgetArea, spectrum_bar_);
-
-	QWidget* tmp_widget_spec_browser = new QWidget(); //dummy widget as QDockWidget takes only one widget
-	QVBoxLayout* tmp_widget_spec_browser_layout = new QVBoxLayout(tmp_widget_spec_browser);
-
-	spectrum_selection_ = new QTreeWidget(tmp_widget_spec_browser);
-	spectrum_selection_->setWhatsThis("Spectrum selection bar<BR><BR>Here all spectra of the current experiment are shown. Left-click on a spectrum to open it.");
-
-	//~ no good for huge experiments - omitted:
-	//~ spectrum_selection_->setSortingEnabled(true);
-	//~ spectrum_selection_->sortByColumn ( 1, Qt::AscendingOrder);
-
-	spectrum_selection_->setColumnCount(7);/// @improvement make dependend from global "header_labels" to change only once (otherwise changes must be applied in several slots too!)
-
-	spectrum_selection_->setColumnWidth(0,65);
-	spectrum_selection_->setColumnWidth(1,45);
-	spectrum_selection_->setColumnWidth(2,50);
-	spectrum_selection_->setColumnWidth(3,55);
-	spectrum_selection_->setColumnWidth(4,55);
-	spectrum_selection_->setColumnWidth(5,45);
-	spectrum_selection_->setColumnWidth(6,45);
-
-	///@improvement write the visibility-status of the columns in toppview.ini and read at start
-
-	QStringList header_labels; /// @improvement make this global to change only once (otherwise changes must be applied in several slots too!)
-	header_labels.append(QString("MS level"));
-	header_labels.append(QString("index"));
-	header_labels.append(QString("RT"));
-	header_labels.append(QString("precursor m/z"));
-	header_labels.append(QString("dissociation"));
-	header_labels.append(QString("scan type"));
-	header_labels.append(QString("zoom"));
-	spectrum_selection_->setHeaderLabels(header_labels);
-
-	spectrum_selection_->setDragEnabled(true);
-	spectrum_selection_->setContextMenuPolicy(Qt::CustomContextMenu);
-	spectrum_selection_->header()->setContextMenuPolicy(Qt::CustomContextMenu);
-	connect(spectrum_selection_,SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)),this,SLOT(spectrumSelectionChange(QTreeWidgetItem*, QTreeWidgetItem*)));
-	connect(spectrum_selection_,SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)),this,SLOT(spectrumDoubleClicked(QTreeWidgetItem*, int)));
-	connect(spectrum_selection_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(spectrumContextMenu(const QPoint&)));
-	connect(spectrum_selection_->header(),SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(spectrumBrowserHeaderContextMenu(const QPoint&)));
-
-	tmp_widget_spec_browser_layout->addWidget(spectrum_selection_);
-
-	QHBoxLayout* tmp_hbox_layout = new QHBoxLayout();
-
-	spectrum_search_box_ = new QLineEdit("", tmp_widget_spec_browser);
-
-	QStringList qsl;
-	qsl.push_back("index");
-	qsl.push_back("RT");
-	qsl.push_back("MZ");
-	qsl.push_back("dissociation");
-	qsl.push_back("scan");
-	qsl.push_back("zoom");
-	spectrum_combo_box_ = new QComboBox(tmp_widget_spec_browser);
-	spectrum_combo_box_->addItems(qsl);
-
-	connect(spectrum_search_box_,SIGNAL(textEdited ( const QString &)),this,SLOT(chooseSpectrumByUser(const QString&)));
-
-	tmp_hbox_layout->addWidget(spectrum_search_box_);
-	tmp_hbox_layout->addWidget(spectrum_combo_box_);
-	tmp_widget_spec_browser_layout->addLayout(tmp_hbox_layout);
-
-	spectrum_bar_->setWidget(tmp_widget_spec_browser);
-	windows->addAction(spectrum_bar_->toggleViewAction());
-
-    //data filters
-    QDockWidget* filter_bar = new QDockWidget("Data filters", this);
-    addDockWidget(Qt::RightDockWidgetArea, filter_bar);
-    QWidget* tmp_widget = new QWidget(); //dummy widget as QDockWidget takes only one widget
-    filter_bar->setWidget(tmp_widget);
-
-    QVBoxLayout* vbl = new QVBoxLayout(tmp_widget);
-
-    filters_ = new QListWidget(tmp_widget);
-    filters_->setSelectionMode(QAbstractItemView::NoSelection);
-    filters_->setWhatsThis("Data filter bar<BR><BR>Here filtering options for the current layer can be set.<BR>Through the context menu you can add, remove and edit filters.<BR>For convenience, editing filters is also possible by double-clicking them.");
-    filters_->setContextMenuPolicy(Qt::CustomContextMenu);
-		connect(filters_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(filterContextMenu(const QPoint&)));
-		connect(filters_,SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,SLOT(filterEdit(QListWidgetItem*)));
-		vbl->addWidget(filters_);
-
-    filters_check_box_ = new QCheckBox("Enable/disable all filters", tmp_widget);
-    connect(filters_check_box_,SIGNAL(toggled(bool)),this,SLOT(layerFilterVisibilityChange(bool)));
-    vbl->addWidget(filters_check_box_);
-
-    windows->addAction(filter_bar->toggleViewAction());
-
-
-		//log window
-		QDockWidget* log_bar = new QDockWidget("Log", this);
-		addDockWidget(Qt::BottomDockWidgetArea, log_bar);
-		log_ = new QTextEdit(log_bar);
-		log_->setReadOnly(true);
-		log_->setContextMenuPolicy(Qt::CustomContextMenu);
-		connect(log_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(logContextMenu(const QPoint&)));
-		log_bar->setWidget(log_);
-		log_bar->hide();
-		windows->addAction(log_bar->toggleViewAction());
-
-		//################## DEFAULTS #################
-    //general
-    defaults_.setValue("preferences:default_map_view", "2d", "Default visualization mode for maps.");
-		defaults_.setValidStrings("preferences:default_map_view",StringList::create("2d,3d"));
-    defaults_.setValue("preferences:default_path", ".", "Default path for loading and storing files.");
-    defaults_.setValue("preferences:default_path_current", "true", "If the current path is preferred over the default path.");
-		defaults_.setValidStrings("preferences:default_path_current",StringList::create("true,false"));
-		defaults_.setValue("preferences:tmp_file_path", QDir::tempPath(), "Path where temporary files can be created.");
-    defaults_.setValue("preferences:number_of_recent_files", 15, "Number of recent files in the main menu.");
-    defaults_.setMinInt("preferences:number_of_recent_files",5);
-    defaults_.setMaxInt("preferences:number_of_recent_files",20);
-    defaults_.setValue("preferences:legend", "show", "Legend visibility");
-		defaults_.setValidStrings("preferences:legend",StringList::create("show,hide"));
-    defaults_.setValue("preferences:intensity_cutoff", "off","Low intensity cutoff for maps.");
-		defaults_.setValidStrings("preferences:intensity_cutoff",StringList::create("on,off"));
-    defaults_.setValue("preferences:on_file_change","ask","What action to take, when a data file changes. Do nothing, update automatically or ask the user.");
-		defaults_.setValidStrings("preferences:on_file_change",StringList::create("none,ask,update automatically"));
-    defaults_.setValue("preferences:topp_cleanup", "true", "If the temporary files for calling of TOPP tools should be removed after the call.");
-		defaults_.setValidStrings("preferences:topp_cleanup",StringList::create("true,false"));
-    //db
-    defaults_.setValue("preferences:db:host", "localhost", "Database server host name.");
-    defaults_.setValue("preferences:db:login", "NoName", "Database login.");
-    defaults_.setValue("preferences:db:name", "OpenMS", "Database name.");
-    defaults_.setValue("preferences:db:port", 3306, "Database server port.");
-    defaults_.setSectionDescription("preferences:db","Database settings.");
-    //1d
-    Spectrum1DCanvas* def1 = new Spectrum1DCanvas(Param(),0);
-    defaults_.insert("preferences:1d:",def1->getDefaults());
-    delete def1;
-    defaults_.setSectionDescription("preferences:1d","Settings for single spectrum view.");
-    //2d
-    Spectrum2DCanvas* def2 = new Spectrum2DCanvas(Param(),0);
-    defaults_.insert("preferences:2d:",def2->getDefaults());
-    defaults_.setSectionDescription("preferences:2d","Settings for 2D map view.");
-    delete def2;
-    //3d
-    Spectrum3DCanvas* def3 = new Spectrum3DCanvas(Param(),0);
-    defaults_.insert("preferences:3d:",def3->getDefaults());
-    delete def3;
-    defaults_.setSectionDescription("preferences:3d","Settings for 3D map view.");
-
-		defaults_.setValue("preferences:version","none","OpenMS version, used to check if the TOPPView.ini is up-to-date");
-
-		subsections_.push_back("preferences:RecentFiles");
-
-  	defaultsToParam_();
-
-  	//load param file
-    loadPreferences();
-
-		//set current path
-		current_path_ = param_.getValue("preferences:default_path");
-
-  	//update the menu
-  	updateMenu();
-
-		//######################### Additional context menus ######################################
-		add_2d_context_ = new QMenu("More",this);
-		add_2d_context_->addAction("Show layer in 3D",this,SLOT(showCurrentPeaksAs3D()));
-
-		topp_.process = 0;
-	}
+TOPPViewBase::TOPPViewBase(QWidget* parent):
+        QMainWindow(parent),
+        DefaultParamHandler("TOPPViewBase"),
+        watcher_(0),
+        watcher_msgbox_(false)
+        {
+          setWindowTitle("TOPPView");
+          setWindowIcon(QIcon(":/TOPPView.png"));
+
+          //prevents errors caused by too small width,height values
+          setMinimumSize(400,400);
+
+          //enable drag-and-drop
+          setAcceptDrops(true);
+
+          // center main window
+          setGeometry(
+            (int)(0.1 * QApplication::desktop()->width()),
+            (int)(0.1 * QApplication::desktop()->height()),
+            (int)(0.8 * QApplication::desktop()->width()),
+            (int)(0.8 * QApplication::desktop()->height())
+            );
+
+          // create dummy widget (to be able to have a layout), Tab bar and workspace
+          QWidget* dummy = new QWidget(this);
+          setCentralWidget(dummy);
+          QVBoxLayout* box_layout = new QVBoxLayout(dummy);
+          tab_bar_ = new EnhancedTabBar(dummy);
+          tab_bar_->setWhatsThis("Tab bar<BR><BR>Close tabs through the context menu or by double-clicking them.<BR>The tab bar accepts drag-and-drop from the layer bar.");
+          tab_bar_->addTab("dummy",4710);
+          tab_bar_->setMinimumSize(tab_bar_->sizeHint());
+          tab_bar_->removeId(4710);
+          //connect slots and sigals for selecting spectra
+          connect(tab_bar_,SIGNAL(currentIdChanged(int)),this,SLOT(focusByTab(int)));
+          connect(tab_bar_,SIGNAL(aboutToCloseId(int)),this,SLOT(closeByTab(int)));
+          //connect signals ans slots for drag-and-drop
+          connect(tab_bar_,SIGNAL(dropOnWidget(const QMimeData*,QWidget*)),this,SLOT(copyLayer(const QMimeData*,QWidget*)));
+          connect(tab_bar_,SIGNAL(dropOnTab(const QMimeData*,QWidget*,int)),this,SLOT(copyLayer(const QMimeData*,QWidget*,int)));
+
+          box_layout->addWidget(tab_bar_);
+          ws_= new EnhancedWorkspace(dummy);
+          connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateToolBar()));
+          connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateTabBar(QWidget*)));
+          connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateLayerBar()));
+          connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateSpectraViewBar()));
+          connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateFilterBar()));
+          connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateMenu()));
+          connect(ws_,SIGNAL(windowActivated(QWidget*)),this,SLOT(updateCurrentPath()));
+          connect(ws_,SIGNAL(dropReceived(const QMimeData*,QWidget*,int)),this,SLOT(copyLayer(const QMimeData*,QWidget*,int)));
+
+          box_layout->addWidget(ws_);
+
+          //################## MENUS #################
+          // File menu
+          QMenu* file = new QMenu("&File",this);
+          menuBar()->addMenu(file);
+          file->addAction("&Open file",this,SLOT(openFileDialog()), Qt::CTRL+Qt::Key_O);
+          file->addAction("Open from &database",this,SLOT(openDatabaseDialog()), Qt::CTRL+Qt::Key_D);
+          file->addAction("Open &example file",this,SLOT(openExampleDialog()));
+          file->addAction("&Close",this,SLOT(closeFile()), Qt::CTRL+Qt::Key_W);
+          file->addSeparator();
+
+          //Meta data
+          file->addAction("&Show meta data (file)",this,SLOT(metadataFileDialog()));
+          file->addAction("&Show meta data (database)",this,SLOT(metadataDatabaseDialog()));
+          file->addSeparator();
+
+          //Recent files
+          QMenu* recent_menu = new QMenu("&Recent files", this);
+          recent_actions_.resize(20);
+          for (Size i = 0; i<20; ++i)
+          {
+            recent_actions_[i] = recent_menu->addAction("",this,SLOT(openRecentFile()));
+            recent_actions_[i]->setVisible(false);
+          }
+          file->addMenu(recent_menu);
+
+          file->addSeparator();
+          file->addAction("&Preferences",this, SLOT(preferencesDialog()));
+          file->addAction("&Quit",qApp,SLOT(quit()));
+
+          //Tools menu
+          QMenu* tools = new QMenu("&Tools",this);
+          menuBar()->addMenu(tools);
+          tools->addAction("&Go to",this,SLOT(gotoDialog()), Qt::CTRL+Qt::Key_G);
+          tools->addAction("&Edit meta data",this,SLOT(editMetadata()), Qt::CTRL+Qt::Key_M);
+          tools->addAction("&Statistics",this,SLOT(layerStatistics()));
+          tools->addSeparator();
+          tools->addAction("Apply TOPP tool (whole layer)", this, SLOT(showTOPPDialog()), Qt::CTRL+Qt::Key_T)->setData(false);
+          tools->addAction("Apply TOPP tool (visible layer data)", this, SLOT(showTOPPDialog()), Qt::CTRL+Qt::SHIFT+Qt::Key_T)->setData(true);
+          tools->addAction("Rerun TOPP tool", this, SLOT(rerunTOPPTool()),Qt::Key_F4);
+          tools->addSeparator();
+          tools->addAction("&Annotate with identification", this, SLOT(annotateWithID()), Qt::CTRL+Qt::Key_I);
+          tools->addAction("Align spectra", this, SLOT(showSpectrumAlignmentDialog()));
+          tools->addAction("Generate theoretical spectrum", this, SLOT(showSpectrumGenerationDialog()));
+
+          //Layer menu
+          QMenu* layer = new QMenu("&Layer",this);
+          menuBar()->addMenu(layer);
+          layer->addAction("Save all data", this, SLOT(saveLayerAll()), Qt::CTRL+Qt::Key_S);
+          layer->addAction("Save visible data", this, SLOT(saveLayerVisible()), Qt::CTRL+Qt::SHIFT+Qt::Key_S);
+          layer->addSeparator();
+          layer->addAction("Show/hide grid lines", this, SLOT(toggleGridLines()), Qt::CTRL+Qt::Key_R);
+          layer->addAction("Show/hide axis legends", this, SLOT(toggleAxisLegends()), Qt::CTRL+Qt::Key_L);
+          layer->addSeparator();
+          layer->addAction("Preferences", this, SLOT(showPreferences()));
+
+          //Windows menu
+          QMenu * windows = new QMenu("&Windows", this);
+          menuBar()->addMenu(windows);
+          windows->addAction("&Cascade",this->ws_,SLOT(cascade()));
+          windows->addAction("&Tile automatic",this->ws_,SLOT(tile()));
+          windows->addAction(QIcon(":/tile_horizontal.png"),"Tile &vertical",this,SLOT(tileHorizontal()));
+          windows->addAction(QIcon(":/tile_vertical.png"),"Tile &horizontal",this,SLOT(tileVertical()));
+          windows->addSeparator();
+
+          //Help menu
+          QMenu* help = new QMenu("&Help", this);
+          menuBar()->addMenu(help);
+          help->addAction(QWhatsThis::createAction(help));
+          help->addSeparator();
+          QAction* action = help->addAction("OpenMS website",this,SLOT(showURL()));
+          action->setData("http://www.OpenMS.de");
+          action = help->addAction("TOPPView tutorial (online)",this,SLOT(showURL()), Qt::Key_F1);
+          action->setData("http://www-bs2.informatik.uni-tuebingen.de/services/OpenMS/OpenMS-release/html/TOPP_tutorial.html");
+
+          help->addSeparator();
+          help->addAction("&About",this,SLOT(showAboutDialog()));
+
+          //create status bar
+          message_label_ = new QLabel(statusBar());
+          statusBar()->addWidget(message_label_,1);
+
+          rt_label_ = new QLabel("RT: 12345678", statusBar());
+          rt_label_->setMinimumSize(rt_label_->sizeHint());
+          rt_label_->setText("");
+          statusBar()->addPermanentWidget(rt_label_,0);
+          mz_label_ = new QLabel("m/z: 123456780912", statusBar());
+          mz_label_->setMinimumSize(mz_label_->sizeHint());
+          mz_label_->setText("");
+          statusBar()->addPermanentWidget(mz_label_,0);
+
+          //################## TOOLBARS #################
+          //create toolbars and connect signals
+          QToolButton* b;
+
+          //--Basic tool bar for all views--
+          tool_bar_ = addToolBar("Basic tool bar");
+
+          //intensity modes
+          intensity_button_group_ = new QButtonGroup(tool_bar_);
+          intensity_button_group_->setExclusive(true);
+
+          b = new QToolButton(tool_bar_);
+          b->setIcon(QIcon(":/lin.png"));
+          b->setToolTip("Intensity: Normal");
+          b->setShortcut(Qt::Key_N);
+          b->setCheckable(true);
+          b->setWhatsThis("Intensity: Normal<BR><BR>Intensity is displayed unmodified.<BR>(Hotkey: N)");
+          intensity_button_group_->addButton(b,SpectrumCanvas::IM_NONE);
+          tool_bar_->addWidget(b);
+
+          b = new QToolButton(tool_bar_);
+          b->setIcon(QIcon(":/percentage.png"));
+          b->setToolTip("Intensity: Percentage");
+          b->setShortcut(Qt::Key_P);
+          b->setCheckable(true);
+          b->setWhatsThis("Intensity: Percentage<BR><BR>Intensity is displayed as a percentage of the layer"
+                          " maximum intensity. If only one layer is displayed this mode behaves like the"
+                          " normal mode. If more than one layer is displayed intensities are aligned."
+                          "<BR>(Hotkey: P)");
+          intensity_button_group_->addButton(b,SpectrumCanvas::IM_PERCENTAGE);
+          tool_bar_->addWidget(b);
+
+          b = new QToolButton(tool_bar_);
+          b->setIcon(QIcon(":/snap.png"));
+          b->setToolTip("Intensity: Snap to maximum displayed intensity");
+          b->setShortcut(Qt::Key_S);
+          b->setCheckable(true);
+          b->setWhatsThis("Intensity: Snap to maximum displayed intensity<BR><BR> In this mode the"
+                          " color gradient is adapted to the maximum currently displayed intensity."
+                          "<BR>(Hotkey: S)");
+          intensity_button_group_->addButton(b,SpectrumCanvas::IM_SNAP);
+          tool_bar_->addWidget(b);
+
+          b = new QToolButton(tool_bar_);
+          b->setIcon(QIcon(":/log.png"));
+          b->setToolTip("Intensity: Use log scaling for colors");
+          b->setCheckable(true);
+          b->setWhatsThis("Intensity: Logarithmic scaling of intensities for color calculation");
+          intensity_button_group_->addButton(b,SpectrumCanvas::IM_LOG);
+          tool_bar_->addWidget(b);
+
+          connect(intensity_button_group_,SIGNAL(buttonClicked(int)),this,SLOT(setIntensityMode(int)));
+          tool_bar_->addSeparator();
+
+          //common buttons
+          QAction* reset_zoom_button = tool_bar_->addAction(QIcon(":/reset_zoom.png"), "Reset Zoom", this, SLOT(resetZoom()));
+          reset_zoom_button->setWhatsThis("Reset zoom: Zooms out as far as possible and resets the zoom history.<BR>(Hotkey: Backspace)");
+
+          tool_bar_->show();
+
+          //--1D toolbar--
+          tool_bar_1d_ = addToolBar("1D tool bar");
+
+          //draw modes 1D
+          draw_group_1d_ = new QButtonGroup(tool_bar_1d_);
+          draw_group_1d_->setExclusive(true);
+
+          b = new QToolButton(tool_bar_1d_);
+          b->setIcon(QIcon(":/peaks.png"));
+          b->setToolTip("Peak mode");
+          b->setShortcut(Qt::Key_I);
+          b->setCheckable(true);
+          b->setWhatsThis("1D Draw mode: Peaks<BR><BR>Peaks are diplayed as sticks.");
+          draw_group_1d_->addButton(b,Spectrum1DCanvas::DM_PEAKS);
+          tool_bar_1d_->addWidget(b);
+
+          b = new QToolButton(tool_bar_1d_);
+          b->setIcon(QIcon(":/lines.png"));
+          b->setToolTip("Raw data mode");
+          b->setShortcut(Qt::Key_R);
+          b->setCheckable(true);
+          b->setWhatsThis("1D Draw mode: Raw data<BR><BR>Peaks are diplayed as a continous line.");
+          draw_group_1d_->addButton(b,Spectrum1DCanvas::DM_CONNECTEDLINES);
+          tool_bar_1d_->addWidget(b);
+
+          connect(draw_group_1d_,SIGNAL(buttonClicked(int)),this,SLOT(setDrawMode1D(int)));
+          tool_bar_->addSeparator();
+
+          //--2D peak toolbar--
+          tool_bar_2d_peak_ = addToolBar("2D peak tool bar");
+
+          dm_precursors_2d_ = tool_bar_2d_peak_->addAction(QIcon(":/precursors.png"),"Show fragment scan precursors");
+          dm_precursors_2d_->setCheckable(true);
+          dm_precursors_2d_->setWhatsThis("2D peak draw mode: Precursors<BR><BR>fragment scan precursor peaks are marked.<BR>(Hotkey: 1)");
+          dm_precursors_2d_->setShortcut(Qt::Key_1);
+
+          connect(dm_precursors_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
+
+          projections_2d_ = tool_bar_2d_peak_->addAction(QIcon(":/projections.png"), "Show Projections" ,this, SLOT(toggleProjections()));
+          projections_2d_->setWhatsThis("Projections: Shows projections of peak data along RT and MZ axis.<BR>(Hotkey: 2)");
+          projections_2d_->setShortcut(Qt::Key_2);
+
+          //--2D feature toolbar--
+          tool_bar_2d_feat_ = addToolBar("2D feature tool bar");
+
+          dm_hull_2d_ = tool_bar_2d_feat_->addAction(QIcon(":/convexhull.png"),"Show feature convex hull");
+          dm_hull_2d_->setCheckable(true);
+          dm_hull_2d_->setWhatsThis("2D feature draw mode: Convex hull<BR><BR>The convex hull of the feature is displayed.<BR>(Hotkey: 5)");
+          dm_hull_2d_->setShortcut(Qt::Key_5);
+          connect(dm_hull_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
+
+          dm_hulls_2d_ = tool_bar_2d_feat_->addAction(QIcon(":/convexhulls.png"),"Show feature convex hulls");
+          dm_hulls_2d_->setCheckable(true);
+          dm_hulls_2d_->setWhatsThis("2D feature draw mode: Convex hulls<BR><BR>The convex hulls of the feature are displayed: One for each mass trace.<BR>(Hotkey: 6)");
+          dm_hulls_2d_->setShortcut(Qt::Key_6);
+          connect(dm_hulls_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
+
+          // feature labels:
+          dm_label_2d_ = new QToolButton(tool_bar_2d_feat_);
+          dm_label_2d_->setPopupMode(QToolButton::MenuButtonPopup);
+          QAction* action2 = new QAction(QIcon(":/labels.png"), "Show feature label", dm_label_2d_);
+          action2->setCheckable(true);
+          action2->setWhatsThis("2D feature draw mode: Labels<BR><BR>Display different kinds of annotation next to features.<BR>(Hotkey: 7)");
+          action2->setShortcut(Qt::Key_7);
+          dm_label_2d_->setDefaultAction(action2);
+          tool_bar_2d_feat_->addWidget(dm_label_2d_);
+          connect(dm_label_2d_, SIGNAL(triggered(QAction*)), this, SLOT(changeLabel(QAction*)));
+          //button menu
+          group_label_2d_ = new QActionGroup(dm_label_2d_);
+          QMenu* menu = new QMenu(dm_label_2d_);
+          for (Size i = 0; i < LayerData::SIZE_OF_LABEL_TYPE; ++i)
+          {
+            QAction* temp = group_label_2d_->addAction(
+                QString(LayerData::NamesOfLabelType[i].c_str()));
+            temp->setCheckable(true);
+            if (i == 0) temp->setChecked(true);
+            menu->addAction(temp);
+          }
+          dm_label_2d_->setMenu(menu);
+
+          // unassigned peptide identifications:
+          dm_unassigned_2d_ = new QToolButton(tool_bar_2d_feat_);
+          dm_unassigned_2d_->setPopupMode(QToolButton::MenuButtonPopup);
+          QAction* action_unassigned = new QAction(QIcon(":/unassigned.png"), "Show unassigned peptide identifications", dm_unassigned_2d_);
+          action_unassigned->setCheckable(true);
+          action_unassigned->setWhatsThis("2D feature draw mode: Unassigned peptide identifications<BR><BR>Show unassigned peptide identifications by precursor m/z or by peptide mass.<BR>(Hotkey: 8)");
+          action_unassigned->setShortcut(Qt::Key_8);
+          dm_unassigned_2d_->setDefaultAction(action_unassigned);
+          tool_bar_2d_feat_->addWidget(dm_unassigned_2d_);
+          connect(dm_unassigned_2d_, SIGNAL(triggered(QAction*)), this, SLOT(changeUnassigned(QAction*)));
+          //button menu
+          group_unassigned_2d_ = new QActionGroup(dm_unassigned_2d_);
+          menu = new QMenu(dm_unassigned_2d_);
+          StringList options = StringList::create(
+              "Don't show,Show by precursor m/z,Show by peptide mass");
+          for (StringList::iterator opt_it = options.begin(); opt_it != options.end();
+          ++opt_it)
+          {
+            QAction* temp = group_unassigned_2d_->addAction(opt_it->toQString());
+            temp->setCheckable(true);
+            if (opt_it == options.begin()) temp->setChecked(true);
+            menu->addAction(temp);
+          }
+          dm_unassigned_2d_->setMenu(menu);
+
+          //--2D consensus toolbar--
+          tool_bar_2d_cons_ = addToolBar("2D peak tool bar");
+
+          dm_elements_2d_ = tool_bar_2d_cons_->addAction(QIcon(":/elements.png"),"Show consensus feature element positions");
+          dm_elements_2d_->setCheckable(true);
+          dm_elements_2d_->setWhatsThis("2D consensus feature draw mode: Elements<BR><BR>The individual elements that make up the  consensus feature are drawn.<BR>(Hotkey: 9)");
+          dm_elements_2d_->setShortcut(Qt::Key_9);
+          connect(dm_elements_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
+
+          //--2D identifications toolbar--
+          tool_bar_2d_ident_ = addToolBar("2D identifications tool bar");
+
+          dm_ident_2d_ = tool_bar_2d_ident_->addAction(QIcon(":/peptidemz.png"), "Use theoretical peptide mass for m/z positions (default: precursor mass)");
+          dm_ident_2d_->setCheckable(true);
+          dm_ident_2d_->setWhatsThis("2D peptide identification draw mode: m/z source<BR><BR>Toggle between precursor mass (default) and theoretical peptide mass as source for the m/z positions of peptide identifications.<BR>(Hotkey: 5)");
+          dm_ident_2d_->setShortcut(Qt::Key_5);
+          connect(dm_ident_2d_, SIGNAL(toggled(bool)), this, SLOT(changeLayerFlag(bool)));
+
+          //################## Dock widgets #################
+          //layer window
+          QDockWidget* layer_bar = new QDockWidget("Layers", this);
+          addDockWidget(Qt::RightDockWidgetArea, layer_bar);
+          layer_manager_ = new QListWidget(layer_bar);
+          layer_manager_->setWhatsThis("Layer bar<BR><BR>Here the available layers are shown. Left-click on a layer to select it.<BR>Layers can be shown and hidden using the checkboxes in front of the name.<BR> Renaming and removing a layer is possible through the context menu.<BR>Dragging a layer to the tab bar copies the layer.<BR>Double-clicking a layer open its preferences.<BR>You can use the 'PageUp' and 'PageDown' buttons to change the selected layer.");
+
+          layer_bar->setWidget(layer_manager_);
+          layer_manager_->setContextMenuPolicy(Qt::CustomContextMenu);
+          layer_manager_->setDragEnabled(true);
+          connect(layer_manager_,SIGNAL(currentRowChanged(int)),this,SLOT(layerSelectionChange(int)));
+          connect(layer_manager_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(layerContextMenu(const QPoint&)));
+          connect(layer_manager_,SIGNAL(itemChanged(QListWidgetItem*)),this,SLOT(layerVisibilityChange(QListWidgetItem*)));
+          connect(layer_manager_,SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,SLOT(layerEdit(QListWidgetItem*)));
+
+          windows->addAction(layer_bar->toggleViewAction());
+
+          //spectrum selection
+          spectra_views_dockwidget_ = new QDockWidget("Spectra views", this);
+          addDockWidget(Qt::RightDockWidgetArea, spectra_views_dockwidget_);
+          QTabWidget* tw = new QTabWidget(spectra_views_dockwidget_);
+          spectra_views_dockwidget_->setWidget(tw);
+          spectra_view_widget_ = new SpectraViewWidget();
+          connect(spectra_view_widget_, SIGNAL(showSpectrumMetaData(int)), this, SLOT(showSpectrumMetaData(int)));
+          connect(spectra_view_widget_, SIGNAL(showSpectrumAs1D(int)), this, SLOT(showSpectrumAs1D(int)));
+          connect(spectra_view_widget_, SIGNAL(spectrumSelected(int)), this, SLOT(activate1DSpectrum(int)));
+          connect(spectra_view_widget_, SIGNAL(spectrumDoubleClicked(int)), this, SLOT(showSpectrumAs1D(int)));
+
+          tw->addTab(spectra_view_widget_, "Spectra view");
+          //QWidget* spectra_ident_widget = new QWidget();
+          //tw->addTab(spectra_ident_widget, "Identification view");
+          windows->addAction(spectra_views_dockwidget_->toggleViewAction());
+
+          //data filters
+          QDockWidget* filter_bar = new QDockWidget("Data filters", this);
+          addDockWidget(Qt::RightDockWidgetArea, filter_bar);
+          QWidget* tmp_widget = new QWidget(); //dummy widget as QDockWidget takes only one widget
+          filter_bar->setWidget(tmp_widget);
+
+          QVBoxLayout* vbl = new QVBoxLayout(tmp_widget);
+
+          filters_ = new QListWidget(tmp_widget);
+          filters_->setSelectionMode(QAbstractItemView::NoSelection);
+          filters_->setWhatsThis("Data filter bar<BR><BR>Here filtering options for the current layer can be set.<BR>Through the context menu you can add, remove and edit filters.<BR>For convenience, editing filters is also possible by double-clicking them.");
+          filters_->setContextMenuPolicy(Qt::CustomContextMenu);
+          connect(filters_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(filterContextMenu(const QPoint&)));
+          connect(filters_,SIGNAL(itemDoubleClicked(QListWidgetItem*)),this,SLOT(filterEdit(QListWidgetItem*)));
+          vbl->addWidget(filters_);
+
+          filters_check_box_ = new QCheckBox("Enable/disable all filters", tmp_widget);
+          connect(filters_check_box_,SIGNAL(toggled(bool)),this,SLOT(layerFilterVisibilityChange(bool)));
+          vbl->addWidget(filters_check_box_);
+
+          windows->addAction(filter_bar->toggleViewAction());
+
+          //log window
+          QDockWidget* log_bar = new QDockWidget("Log", this);
+          addDockWidget(Qt::BottomDockWidgetArea, log_bar);
+          log_ = new QTextEdit(log_bar);
+          log_->setReadOnly(true);
+          log_->setContextMenuPolicy(Qt::CustomContextMenu);
+          connect(log_,SIGNAL(customContextMenuRequested(const QPoint&)),this,SLOT(logContextMenu(const QPoint&)));
+          log_bar->setWidget(log_);
+          log_bar->hide();
+          windows->addAction(log_bar->toggleViewAction());
+
+          //################## DEFAULTS #################
+          //general
+          defaults_.setValue("preferences:default_map_view", "2d", "Default visualization mode for maps.");
+          defaults_.setValidStrings("preferences:default_map_view",StringList::create("2d,3d"));
+          defaults_.setValue("preferences:default_path", ".", "Default path for loading and storing files.");
+          defaults_.setValue("preferences:default_path_current", "true", "If the current path is preferred over the default path.");
+          defaults_.setValidStrings("preferences:default_path_current",StringList::create("true,false"));
+          defaults_.setValue("preferences:tmp_file_path", QDir::tempPath(), "Path where temporary files can be created.");
+          defaults_.setValue("preferences:number_of_recent_files", 15, "Number of recent files in the main menu.");
+          defaults_.setMinInt("preferences:number_of_recent_files",5);
+          defaults_.setMaxInt("preferences:number_of_recent_files",20);
+          defaults_.setValue("preferences:legend", "show", "Legend visibility");
+          defaults_.setValidStrings("preferences:legend",StringList::create("show,hide"));
+          defaults_.setValue("preferences:intensity_cutoff", "off","Low intensity cutoff for maps.");
+          defaults_.setValidStrings("preferences:intensity_cutoff",StringList::create("on,off"));
+          defaults_.setValue("preferences:on_file_change","ask","What action to take, when a data file changes. Do nothing, update automatically or ask the user.");
+          defaults_.setValidStrings("preferences:on_file_change",StringList::create("none,ask,update automatically"));
+          defaults_.setValue("preferences:topp_cleanup", "true", "If the temporary files for calling of TOPP tools should be removed after the call.");
+          defaults_.setValidStrings("preferences:topp_cleanup",StringList::create("true,false"));
+          //db
+          defaults_.setValue("preferences:db:host", "localhost", "Database server host name.");
+          defaults_.setValue("preferences:db:login", "NoName", "Database login.");
+          defaults_.setValue("preferences:db:name", "OpenMS", "Database name.");
+          defaults_.setValue("preferences:db:port", 3306, "Database server port.");
+          defaults_.setSectionDescription("preferences:db","Database settings.");
+          //1d
+          Spectrum1DCanvas* def1 = new Spectrum1DCanvas(Param(),0);
+          defaults_.insert("preferences:1d:",def1->getDefaults());
+          delete def1;
+          defaults_.setSectionDescription("preferences:1d","Settings for single spectrum view.");
+          //2d
+          Spectrum2DCanvas* def2 = new Spectrum2DCanvas(Param(),0);
+          defaults_.insert("preferences:2d:",def2->getDefaults());
+          defaults_.setSectionDescription("preferences:2d","Settings for 2D map view.");
+          delete def2;
+          //3d
+          Spectrum3DCanvas* def3 = new Spectrum3DCanvas(Param(),0);
+          defaults_.insert("preferences:3d:",def3->getDefaults());
+          delete def3;
+          defaults_.setSectionDescription("preferences:3d","Settings for 3D map view.");
+
+          defaults_.setValue("preferences:version","none","OpenMS version, used to check if the TOPPView.ini is up-to-date");
+
+          subsections_.push_back("preferences:RecentFiles");
+
+          defaultsToParam_();
+
+          //load param file
+          loadPreferences();
+
+          //set current path
+          current_path_ = param_.getValue("preferences:default_path");
+
+          //update the menu
+          updateMenu();         
+
+          topp_.process = 0;
+
+          //######################### File System Watcher ###########################################
+          watcher_ = new FileWatcher(this);
+          connect(watcher_,SIGNAL(fileChanged(const String&)),this, SLOT(fileChanged_(const String&)));
+        }
 
   TOPPViewBase::~TOPPViewBase()
-  {
-  	savePreferences();
-  	abortTOPPTool();
-  }
+          {
+              savePreferences();
+              abortTOPPTool();
+          }
 
   void TOPPViewBase::closeEvent(QCloseEvent* event)
-  {
-  	ws_->closeAllWindows();
-  	event->accept();
-  }
+          {
+              ws_->closeAllWindows();
+              event->accept();
+          }
 
-	void TOPPViewBase::showURL()
-	{
-		QAction* action = qobject_cast<QAction*>(sender());
-		if (!QDesktopServices::openUrl(QUrl(action->data().toString())))
-		{
-			QMessageBox::warning(this, tr("Error"),
-												 tr("Unable to open\n") +
-														action->data().toString() +
-														tr("\n\nPossible reason: security settings or misconfigured Operating System"));
-		}
-	}
-
-	void TOPPViewBase::showTutorial()
-	{
-		//create dialog
-		DemoDialog* dlg = new DemoDialog(this);
-		dlg->setTitle("TOPPView tutorial");
-
-		//create file list
-		StringList pages;
-		File::fileList(File::getOpenMSDataPath() + "/tutorial/","TOPPView_tutorial_*.html",pages);
-		for (Size i=0; i<pages.size(); ++i)
-		{
-			pages[i] = File::getOpenMSDataPath() + "/tutorial/" + pages[i];
-		}
-		dlg->setPages(pages);
-
-		//show dialog
-		dlg->show();
-	}
+  void TOPPViewBase::showURL()
+          {
+              QAction* action = qobject_cast<QAction*>(sender());
+              if (!QDesktopServices::openUrl(QUrl(action->data().toString())))
+              {
+                  QMessageBox::warning(this, tr("Error"),
+                                       tr("Unable to open\n") +
+                                       action->data().toString() +
+                                       tr("\n\nPossible reason: security settings or misconfigured Operating System"));
+              }
+          }
 
   void TOPPViewBase::addDataDB(UInt db_id, bool show_options, String caption, UInt window_id)
   {
-  	//set wait cursor
-  	setCursor(Qt::WaitCursor);
+    //set wait cursor
+    setCursor(Qt::WaitCursor);
 
     //Open DB connection
     DBConnection con;
@@ -654,59 +602,73 @@ namespace OpenMS
       return;
     }
 
-		//load the data
+    //load the data
     DBAdapter db(con);
-    ExperimentType exp;
-    FeatureMapType dummy_map;
-    ConsensusMapType dummy_map2;
-		vector<PeptideIdentification> dummy_peptides;
-		try
-		{
-			db.loadExperiment(db_id, exp);
-		}
-		catch (Exception::BaseException& e)
-		{
-			QMessageBox::critical(this,"Error",(String("Error while reading data: ")+e.what()).c_str());
+
+    // create managed pointer to experiment data
+    ExperimentType* exp = new ExperimentType();
+    ExperimentSharedPtrType exp_sptr(exp);
+
+    FeatureMapType* dummy_map = new FeatureMapType();
+    FeatureMapSharedPtrType dummy_map_sptr(dummy_map);
+
+    ConsensusMapType* dummy_map2 = new ConsensusMapType();
+    ConsensusMapSharedPtrType dummy_map2_sptr(dummy_map2);
+
+    vector<PeptideIdentification> dummy_peptides;
+    try
+    {
+      db.loadExperiment(db_id, *exp);
+    }
+    catch (Exception::BaseException& e)
+    {
+      QMessageBox::critical(this,"Error",(String("Error while reading data: ")+e.what()).c_str());
       setCursor(Qt::ArrowCursor);
       return;
-		}
+    }
+    exp_sptr->sortSpectra(true);
+    exp_sptr->updateRanges(1);
 
-		//determine if the data is 1D or 2D
+    //determine if the data is 1D or 2D
     QSqlQuery result = con.executeQuery(String("SELECT count(id) from DATA_Spectrum where fid_MSExperiment='")+db_id+"' and MSLevel='1'");
-		LayerData::DataType data_type = ((result.value(0).toInt()>1) ? 
-																		 LayerData::DT_PEAK : 
-																		 LayerData::DT_CHROMATOGRAM);
+    LayerData::DataType data_type = ((result.value(0).toInt()>1) ?
+                                     LayerData::DT_PEAK :
+                                     LayerData::DT_CHROMATOGRAM);
 
-		//add data
+    //add data
     if (caption=="") caption = String("DB entry ")+db_id;
-		addData_(dummy_map, dummy_map2, dummy_peptides, exp, data_type, false, show_options, "", caption, window_id);
+    addData_(dummy_map_sptr, dummy_map2_sptr, dummy_peptides, exp_sptr, data_type, false, show_options, "", caption, window_id);
 
-  	//Reset cursor
-  	setCursor(Qt::ArrowCursor);
+    //Reset cursor
+    setCursor(Qt::ArrowCursor);
   }
 
-  float TOPPViewBase::estimateNoise_(const ExperimentType& exp)
+  bool TOPPViewBase::containsMS1Scans(const ExperimentType& exp)
   {
-  	//test if no scans with MS-level 1 exist => prevent deadlock
-  	bool ms1_present = false;
-  	for (Size i = 0; i < exp.size(); ++i)
-  	{
-  		if (exp[i].getMSLevel()==1)
-  		{
-  			ms1_present = true;
-  			break;
-  		}
-  	}
-  	if (!ms1_present)
-  	{
-  		return 0.0;
-  	}
+    //test if no scans with MS-level 1 exist => prevent deadlock
+    bool ms1_present = false;
+    for (Size i = 0; i < exp.size(); ++i)
+    {
+        if (exp[i].getMSLevel() == 1)
+        {
+            ms1_present = true;
+            break;
+        }
+    }
+    return ms1_present;
+  }
+
+  float TOPPViewBase::estimateNoiseFromRandomMS1Scans(const ExperimentType& exp, UInt n_scans)
+  {
+    if (!TOPPViewBase::containsMS1Scans(exp))
+    {
+      return 0.0;
+    }
 
     float noise = 0.0;
     UInt count = 0;
     srand(time(0));
-    //cout << "size: " << exp.size() << endl;
-    while (count<10)
+    while (count < n_scans)
     {
       UInt scan = (UInt)( (double)rand() / ((double)(RAND_MAX)+1.0f) * (double)(exp.size()-1) );
 
@@ -715,19 +677,39 @@ namespace OpenMS
         vector<float> tmp;
         tmp.reserve(exp[scan].size());
         for(SpectrumType::ConstIterator it = exp[scan].begin()
-            ; it != exp[scan].end()
-            ; ++it)
+          ; it != exp[scan].end()
+              ; ++it)
         {
           tmp.push_back(it->getIntensity());
         }
         std::sort(tmp.begin(),tmp.end());
-        //cout << "scan: "<< scan <<" Groesse: " << tmp.size() << " Index: " << (UInt)ceil((float)(tmp.size()-1)/1.25f) << " Wert: "<< tmp[(UInt)ceil((float)(tmp.size()-1)/1.25f)] << endl;
         noise += tmp[(UInt)ceil((float)(tmp.size()-1)/1.25f)];
-
         ++count;
       }
     }
-    return noise / 10.0f;
+    return noise / (DoubleReal)n_scans;
+  }
+
+  UInt TOPPViewBase::countZeros(const ExperimentType& exp)
+  {
+    if (!TOPPViewBase::containsMS1Scans(exp))
+    {
+      return 0;
+    }
+
+    UInt zeros = 0;
+    for (Size i = 0; i != exp.size(); ++i)
+    {
+      for(Size j = 0; j != exp[i].size(); ++j)
+      {
+        DoubleReal intensity = exp[i][j].getIntensity();
+        if (intensity == 0.0)
+        {
+          zeros++;
+        }
+      }
+    }
+    return zeros;
   }
 
   void TOPPViewBase::preferencesDialog()
@@ -776,7 +758,6 @@ namespace OpenMS
 		map_default->setCurrentIndex(map_default->findText(param_.getValue("preferences:default_map_view").toQString()));
 		map_cutoff->setCurrentIndex(map_cutoff->findText(param_.getValue("preferences:intensity_cutoff").toQString()));
 		on_file_change->setCurrentIndex(on_file_change->findText(param_.getValue("preferences:on_file_change").toQString()));
-
 
 		db_host->setText(param_.getValue("preferences:db:host").toQString());
 		db_port->setValue((Int)param_.getValue("preferences:db:port"));
@@ -837,6 +818,29 @@ namespace OpenMS
 		}
   }
 
+  std::set<String> TOPPViewBase::getFilenamesOfOpenFiles()
+  {
+    set<String> filename_set;
+    // iterate over all windows
+    QWidgetList wl = ws_->windowList();
+    for(int i=0; i!=ws_->windowList().count(); ++i)
+    {
+      QWidget* w = wl[i];
+      // iterate over all widgets
+      const SpectrumWidget* sw = qobject_cast<const SpectrumWidget*>(w);
+      if (sw!=0)
+      {
+        Size lc = sw->canvas()->getLayerCount();
+        // iterate over all layers
+        for (Size j=0; j!= lc; ++j)
+        {
+          filename_set.insert(sw->canvas()->getLayer(j).filename);
+        }
+      }
+    }
+    return filename_set;
+  }
+
   void TOPPViewBase::addDataFile(const String& filename, bool show_options, bool add_to_recent, String caption, UInt window_id, Size spectrum_id)
   {
     setCursor(Qt::WaitCursor);
@@ -869,9 +873,17 @@ namespace OpenMS
 		}
 
 		//try to load data and determine if it's 1D or 2D data
-		FeatureMapType feature_map;
-		ExperimentType peak_map;
-		ConsensusMapType consensus_map;
+
+    // create shared pointer to main data types
+    FeatureMapType* feature_map = new FeatureMapType();
+    FeatureMapSharedPtrType feature_map_sptr(feature_map);    
+
+    ExperimentType* peak_map = new ExperimentType();
+    ExperimentSharedPtrType peak_map_sptr(peak_map);
+
+    ConsensusMapType* consensus_map = new ConsensusMapType();
+    ConsensusMapSharedPtrType consensus_map_sptr(consensus_map);
+
 		vector<PeptideIdentification> peptides;
 
 		LayerData::DataType data_type;
@@ -880,12 +892,12 @@ namespace OpenMS
     {
 	    if (file_type==FileTypes::FEATUREXML)
 	    {
-        FeatureXMLFile().load(abs_filename,feature_map);
+        FeatureXMLFile().load(abs_filename, *feature_map);
 				data_type = LayerData::DT_FEATURE;
       }
       else if (file_type==FileTypes::CONSENSUSXML)
 	    {
-        ConsensusXMLFile().load(abs_filename,consensus_map);
+        ConsensusXMLFile().load(abs_filename, *consensus_map);
 				data_type = LayerData::DT_CONSENSUS;
       }
 			else if (file_type == FileTypes::IDXML)
@@ -896,17 +908,12 @@ namespace OpenMS
 			}
       else
       {
-      	fh.loadExperiment(abs_filename, peak_map, file_type, 
-													ProgressLogger::GUI);
-				data_type = LayerData::DT_CHROMATOGRAM;
-      	for (Size i=0; i<peak_map.size();++i)
-      	{
-      		if (peak_map[i].getMSLevel() == 1)
-      		{
-						data_type = LayerData::DT_PEAK;
-      			break;
-      		}
-      	}
+        fh.loadExperiment(abs_filename, *peak_map, file_type, ProgressLogger::GUI);
+        data_type = LayerData::DT_CHROMATOGRAM;
+        if (TOPPViewBase::containsMS1Scans(*peak_map))
+        {
+          data_type = LayerData::DT_PEAK;          
+        }
       }
     }
     catch(Exception::BaseException& e)
@@ -915,6 +922,10 @@ namespace OpenMS
     	setCursor(Qt::ArrowCursor);
       return;
     }
+
+    // sort for mz and update ranges of newly loaded data
+    peak_map_sptr->sortSpectra(true);
+    peak_map_sptr->updateRanges(1);
 
     //try to add the data
 		if (caption=="")
@@ -925,47 +936,58 @@ namespace OpenMS
     {
     	abs_filename = "";
     }
-    addData_(feature_map, consensus_map, peptides, peak_map, data_type, false, show_options, abs_filename, caption, window_id, spectrum_id);
+
+    addData_(feature_map_sptr, consensus_map_sptr, peptides, peak_map_sptr, data_type, false, show_options, abs_filename, caption, window_id, spectrum_id);
 
   	//add to recent file
-  	if (add_to_recent) addRecentFile_(filename);
+    if (add_to_recent)
+    {
+      addRecentFile_(filename);
+    }
+
+    // watch file contents for changes
+    watcher_->addFile(abs_filename);
 
     //reset cursor
     setCursor(Qt::ArrowCursor);
   }
 
-  void TOPPViewBase::addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, vector<PeptideIdentification>& peptides, ExperimentType& peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename, const String& caption, UInt window_id, Size spectrum_id)
-  {
-  	//initialize flags with defaults from the parameters
-  	bool as_new_window = true;
+  void TOPPViewBase::addData_(FeatureMapSharedPtrType feature_map, ConsensusMapSharedPtrType consensus_map, vector<PeptideIdentification>& peptides, ExperimentSharedPtrType peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename, const String& caption, UInt window_id, Size spectrum_id)
+  {      
+    // initialize flags with defaults from the parameters
+    bool as_new_window = true;
   	bool maps_as_2d = ((String)param_.getValue("preferences:default_map_view")=="2d");
   	bool maps_as_1d = false;
-  	bool use_mower = ((String)param_.getValue("preferences:intensity_cutoff")=="on");
+    bool use_intensity_cutoff = ((String)param_.getValue("preferences:intensity_cutoff")=="on");
 
+    // feature, consensus feature and identifications can be merged
 		bool mergeable = ((data_type == LayerData::DT_FEATURE) || 
 											(data_type == LayerData::DT_CONSENSUS) ||
 											(data_type == LayerData::DT_IDENT));
-		bool is_2D = (data_type != LayerData::DT_CHROMATOGRAM);
+
+		bool is_2D = (data_type != LayerData::DT_CHROMATOGRAM);   
+
 
 		//set the window where (new layer) data could be opened in
-		SpectrumWidget* open_window = window_(window_id);
-		if (open_window==0)
+    SpectrumWidget* target_window = window_(window_id);
+    if (target_window == 0)
 		{
-			open_window = activeWindow_();
+      target_window = activeWindow_();
 		}
-		else
+    else
 		{
 			as_new_window = false;
 		}
 
-		//create dialog no matter if it is shown or not. It is used to determine the flags
-		TOPPViewOpenDialog dialog(caption, as_new_window, maps_as_2d, use_mower, this);
-		//disable opening in new window when
-		if (open_window==0 // there is no active window
-			  || (mergeable && qobject_cast<Spectrum3DWidget*>(open_window)!=0)) //feature/ID data is to be opened, but the current window is a 3D window
+    //create dialog no matter if it is shown or not. It is used to determine the flags.
+    TOPPViewOpenDialog dialog(caption, as_new_window, maps_as_2d, use_intensity_cutoff, this);
+
+    //disable opening in new window when there is no active window or feature/ID data is to be opened, but the current window is a 3D window
+    if (target_window == 0 || (mergeable && qobject_cast<Spectrum3DWidget*>(target_window) != 0))
 		{
 			dialog.disableLocation(true);
 		}
+
 		//disable 1d/2d/3d option for features and single scans
 		if (mergeable)
 		{
@@ -976,11 +998,15 @@ namespace OpenMS
 			dialog.disableDimension(false);
 		}
 		//disable cutoff for features and single scans
-		if (mergeable || !is_2D) dialog.disableCutoff(false);
+    if (mergeable || !is_2D)
+    {
+      dialog.disableCutoff(false);
+    }
+
 		//enable merge layers if a feature layer is opened and there are already features layers to merge it to
-		if (mergeable && open_window!=0) //TODO merge
+    if (mergeable && target_window != 0) //TODO merge
 		{
-			SpectrumCanvas* open_canvas = open_window->canvas();
+      SpectrumCanvas* open_canvas = target_window->canvas();
 			Map<Size,String> layers;
 			for (Size i=0; i<open_canvas->getLayerCount(); ++i)
 			{
@@ -999,13 +1025,14 @@ namespace OpenMS
 		}
 		as_new_window = dialog.openAsNewWindow();
 		maps_as_2d = dialog.viewMapAs2D();
-		maps_as_1d = dialog.viewMapAs1D();
+		maps_as_1d = dialog.viewMapAs1D();    
 		if (show_as_1d)
 		{
 			maps_as_1d = true;
 			maps_as_2d = false;
 		}
-		use_mower = dialog.isCutoffEnabled();
+
+    use_intensity_cutoff = dialog.isCutoffEnabled();
   	Int merge_layer = dialog.getMergeLayer();
 
 		//determine the window to open the data in
@@ -1013,20 +1040,19 @@ namespace OpenMS
     {
       if (!is_2D) //1d
       {
-        open_window = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
+        target_window = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
       }
       else if (maps_as_1d) // 2d in 1d window
       {
-      	open_window = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
+        target_window = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
       }
       else if (maps_as_2d || mergeable) //2d or features/IDs
       {
-      	open_window = new Spectrum2DWidget(getSpectrumParameters_(2), ws_);
-      	open_window->canvas()->setAdditionalContextMenu(add_2d_context_);
+        target_window = new Spectrum2DWidget(getSpectrumParameters_(2), ws_);        
       }
       else //3d
       {
-      	open_window = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
+        target_window = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
       }
     }
 
@@ -1034,23 +1060,24 @@ namespace OpenMS
     {
 	    if (data_type == LayerData::DT_FEATURE) //features
 			{
-				if (!open_window->canvas()->addLayer(feature_map,filename)) return;
+        if (!target_window->canvas()->addLayer(feature_map, filename)) return;
 			}
 			else if (data_type == LayerData::DT_CONSENSUS) //consensus features
 			{
-				if (!open_window->canvas()->addLayer(consensus_map,filename)) return;
+        if (!target_window->canvas()->addLayer(consensus_map,filename)) return;
 			}
 			else if (data_type == LayerData::DT_IDENT)
 			{
-				if (!open_window->canvas()->addLayer(peptides, filename)) return;
+        if (!target_window->canvas()->addLayer(peptides, filename)) return;
 			}
 	    else //peaks
 	    {
-			  if (!open_window->canvas()->addLayer(peak_map,filename)) return;
+        if (!target_window->canvas()->addLayer(peak_map,filename)) return;
+
 	      //calculate noise
-	      if (use_mower && is_2D)
+        if (use_intensity_cutoff && is_2D)
 	      {
-	        DoubleReal cutoff = estimateNoise_(open_window->canvas()->getCurrentLayer().peaks);
+          DoubleReal cutoff = estimateNoiseFromRandomMS1Scans(*(target_window->canvas()->getCurrentLayer().getPeakData()));
 					//create filter
 					DataFilters::DataFilter filter;
 					filter.field = DataFilters::INTENSITY;
@@ -1059,9 +1086,26 @@ namespace OpenMS
 					///add filter
 					DataFilters filters;
 					filters.add(filter);
-					open_window->canvas()->setFilters(filters);
-	      }
-	      Spectrum1DWidget* open_1d_window = dynamic_cast<Spectrum1DWidget*>(open_window);
+          target_window->canvas()->setFilters(filters);
+        } else if (is_2D)  // no mower, hide zeros if wanted
+        {
+          Int n_zeros = TOPPViewBase::countZeros(*(target_window->canvas()->getCurrentLayer().getPeakData()));
+          if (n_zeros > 0)
+          {
+            //create filter
+            DataFilters::DataFilter filter;
+            filter.field = DataFilters::INTENSITY;
+            filter.op = DataFilters::GREATER_EQUAL;
+            filter.value = 0.001;
+            QMessageBox::question(this, "Note:", "Data contains zero values.\nA filter will be added to hide these values.\nYou can reenable data points with zero intensity by removing the filter.");
+            ///add filter
+            DataFilters filters;
+            filters.add(filter);
+            target_window->canvas()->setFilters(filters);
+          }
+        }
+
+        Spectrum1DWidget* open_1d_window = dynamic_cast<Spectrum1DWidget*>(target_window);
 	      if (open_1d_window)
 	      {
 	      	open_1d_window->canvas()->activateSpectrum(spectrum_id);
@@ -1069,18 +1113,18 @@ namespace OpenMS
 			}
 
 			//set caption
-    	open_window->canvas()->setLayerName(open_window->canvas()->activeLayerIndex(), caption);
+      target_window->canvas()->setLayerName(target_window->canvas()->activeLayerIndex(), caption);
 		}
 		else //merge feature/ID data into feature layer
 		{
-			Spectrum2DCanvas* canvas = qobject_cast<Spectrum2DCanvas*>(open_window->canvas());
+      Spectrum2DCanvas* canvas = qobject_cast<Spectrum2DCanvas*>(target_window->canvas());
 			if (data_type == LayerData::DT_CONSENSUS)
 			{
-				canvas->mergeIntoLayer(merge_layer,consensus_map);
+        canvas->mergeIntoLayer(merge_layer, consensus_map);
 			}
 			else if (data_type == LayerData::DT_FEATURE)
 			{
-				canvas->mergeIntoLayer(merge_layer,feature_map);
+        canvas->mergeIntoLayer(merge_layer, feature_map);
 			}
 			else if (data_type == LayerData::DT_IDENT)
 			{
@@ -1090,10 +1134,11 @@ namespace OpenMS
 
     if (as_new_window)
     {
-    	showAsWindow_(open_window,caption);
+      showAsWindow_(target_window,caption);
 		}
+    //updateDataBar();
 		updateLayerBar();
-		updateSpectrumBar();
+    updateSpectraViewBar();
 		updateFilterBar();
   	updateMenu();
 	}
@@ -1113,7 +1158,6 @@ namespace OpenMS
 		{
 			recent_files_.removeLast();
 		}
-
     updateRecentMenu_();
   }
 
@@ -1393,7 +1437,13 @@ namespace OpenMS
     if (w)
     {
       //set intensity mode
-     	intensity_group_->button(w->canvas()->getIntensityMode())->setChecked(true);
+      if(intensity_button_group_->button(w->canvas()->getIntensityMode()))
+      {
+        intensity_button_group_->button(w->canvas()->getIntensityMode())->setChecked(true);
+      } else
+      {
+        showLogMessage_(LS_ERROR, __PRETTY_FUNCTION__ ,"Button for intensity mode doesn't exist");
+      }
     }
 
     //1D
@@ -1521,299 +1571,43 @@ namespace OpenMS
 		layer_manager_->blockSignals(false);
   }
 
-  void TOPPViewBase::updateSpectrumBar()
+  void TOPPViewBase::updateSpectraViewBar()
   {
-  	if (!spectrum_selection_->isVisible())
-  	{
-  		return;
-  	}
-
-  	spectrum_selection_->blockSignals(true);
-
-  	spectrum_selection_->clear();
-
-  	SpectrumCanvas* cc = activeCanvas_();
-  	int layer_row = layer_manager_->currentRow();
-  	if (layer_row == -1 || cc == 0)
-  	{
-  		return;
-  	}
-
-  	const LayerData& cl = cc->getCurrentLayer();
-  	QTreeWidgetItem* item = 0;
-  	QTreeWidgetItem* selected_item = 0;
-		QList<QTreeWidgetItem*> toplevel_items;
-
-  	if(cl.type == LayerData::DT_PEAK)
-  	{
-  		std::vector<QTreeWidgetItem*> parent_stack;
-  		parent_stack.push_back(0);
-  		bool fail = false;
-
-			for (Size i = 0; i < cl.peaks.size(); ++i)
-			{
-				if (i > 0)
-				{
-					if (cl.peaks[i].getMSLevel() == cl.peaks[i-1].getMSLevel() + 1)
-					{
-						item = new QTreeWidgetItem(parent_stack.back());
-						parent_stack.resize(parent_stack.size()+1);
-					}
-					else if (cl.peaks[i].getMSLevel() == cl.peaks[i-1].getMSLevel())
-					{
-						if (parent_stack.size() == 1)
-						{
-							item = new QTreeWidgetItem((QTreeWidget*)0);
-						}
-						else
-						{
-							item = new QTreeWidgetItem(*(parent_stack.end()-2));
-						}
-					}
-					else if (cl.peaks[i].getMSLevel() < cl.peaks[i-1].getMSLevel())
-					{
-						Int level_diff = cl.peaks[i-1].getMSLevel() - cl.peaks[i].getMSLevel();
-						Size parent_index = 0;
-						QTreeWidgetItem* parent = 0;
-						if (parent_stack.size() - level_diff >= 2)
-						{
-							parent_index = parent_stack.size() - level_diff - 1;
-							parent = parent_stack[parent_index];
-
-							item = new QTreeWidgetItem(parent, parent_stack[parent_index+1]);
-						}
-						else
-						{
-							item = new QTreeWidgetItem((QTreeWidget*)0);
-						}
-						parent_stack.resize(parent_index+1);
-					}
-					else
-					{
-						std::cerr << "Cannot build treelike view for spectrum browser, generating flat list instead." << std::endl;
-						fail = true;
-						break;
-					}
-				}
-				else
-				{
-					item = new QTreeWidgetItem((QTreeWidget*)0);
-				}
-
-				parent_stack.back() = item;
-				if (parent_stack.size() == 1)
-				{
-					toplevel_items.push_back(item);
-				}
-
-				item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
-				item->setText(1, QString::number(i));
-				item->setText(2, QString::number(cl.peaks[i].getRT()));
-				if (!cl.peaks[i].getPrecursors().empty())
-				{
-					item->setText(3,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
-
-					if (!cl.peaks[i].getPrecursors().front().getActivationMethods().empty())
-					{
-						QString t;
-						for(std::set<Precursor::ActivationMethod>::const_iterator it = cl.peaks[i].getPrecursors().front().getActivationMethods().begin(); it != cl.peaks[i].getPrecursors().front().getActivationMethods().end(); ++it)
-						{
-							if(!t.isEmpty())
-							{
-								t.append(",");
-							}
-							t.append(QString::fromStdString(cl.peaks[i].getPrecursors().front().NamesOfActivationMethod[*(cl.peaks[i].getPrecursors().front().getActivationMethods().begin())]));
-						}
-						item->setText(4,t);
-					}
-					else
-					{
-						item->setText(4, "-");
-					}
-				}
-				else
-				{
-					item->setText(3, "-");
-					item->setText(4, "-");
-				}
-				if (cl.peaks[i].getInstrumentSettings().getScanMode()>0)
-				{
-					item->setText(5,QString::fromStdString(cl.peaks[i].getInstrumentSettings().NamesOfScanMode[cl.peaks[i].getInstrumentSettings().getScanMode()]));
-				}
-				else
-				{
-					item->setText(5, "-");
-				}
-				if (cl.peaks[i].getInstrumentSettings().getZoomScan())
-				{
-					item->setText(6,"yes");
-				}
-				else
-				{
-					item->setText(6, "no");
-				}
-
-
-				if (i == cl.current_spectrum)
-				{
-					// just remember it, select later
-					selected_item = item;
-				}
-			}
-
-			if (!fail)
-			{
-				spectrum_selection_->addTopLevelItems(toplevel_items);
-			}
-			else
-			{
-				// generate flat list instead
-				spectrum_selection_->clear();
-				toplevel_items.clear();
-				selected_item = 0;
-				for (Size i = 0; i < cl.peaks.size(); ++i)
-				{
-					item = new QTreeWidgetItem((QTreeWidget*)0);
-					item->setText(0, QString("MS") + QString::number(cl.peaks[i].getMSLevel()));
-					item->setText(1, QString::number(i));
-					item->setText(2, QString::number(cl.peaks[i].getRT()));
-					if (!cl.peaks[i].getPrecursors().empty())
-					{
-						item->setText(3,QString::number(cl.peaks[i].getPrecursors()[0].getMZ()));
-
-						if (!cl.peaks[i].getPrecursors().front().getActivationMethods().empty())
-						{
-							QString t;
-							for(std::set<Precursor::ActivationMethod>::const_iterator it = cl.peaks[i].getPrecursors().front().getActivationMethods().begin(); it != cl.peaks[i].getPrecursors().front().getActivationMethods().end(); ++it)
-							{
-								if(!t.isEmpty()){
-									t.append(",");
-								}
-								t.append(QString::fromStdString(cl.peaks[i].getPrecursors().front().NamesOfActivationMethod[*(cl.peaks[i].getPrecursors().front().getActivationMethods().begin())]));
-							}
-							item->setText(4,t);
-						}
-						else
-						{
-							item->setText(4, "-");
-						}
-					}
-					else
-					{
-						item->setText(3, "-");
-						item->setText(4, "-");
-					}
-					if (cl.peaks[i].getInstrumentSettings().getScanMode()>0)
-					{
-						item->setText(5,QString::fromStdString(cl.peaks[i].getInstrumentSettings().NamesOfScanMode[cl.peaks[i].getInstrumentSettings().getScanMode()]));
-					}
-					else
-					{
-						item->setText(5, "-");
-					}
-					if (cl.peaks[i].getInstrumentSettings().getZoomScan())
-					{
-						item->setText(6,"yes");
-					}
-					else
-					{
-						item->setText(6, "no");
-					}
-					toplevel_items.push_back(item);
-					if (i == cl.current_spectrum)
-					{
-						// just remember it, select later
-						selected_item = item;
-					}
-				}
-				spectrum_selection_->addTopLevelItems(toplevel_items);
-			}
-			if (selected_item)
-			{
-				// now, select and scroll down to item
-				selected_item->setSelected(true);
-				spectrum_selection_->scrollToItem(selected_item);
-			}
-  	}
-  	else
-  	{
-  		item = new QTreeWidgetItem((QTreeWidget*)0);
-  		item->setText(0, QString("No peak map"));
-  		item->setText(1, QString("-"));
-  		item->setText(2, QString("-"));
-  		item->setText(3, QString::number(0));
-			item->setFlags(0);
-			spectrum_selection_->addTopLevelItem(item);
-			return; // leave signals blocked
-  	}
-
-  	if (cl.peaks.size() == 1)
-  	{
-  		item->setFlags(0);
-  		return; // leave signals blocked
-  	}
-
-  	spectrum_selection_->blockSignals(false);
+    SpectrumCanvas* cc = activeCanvas_();
+    int layer_row = layer_manager_->currentRow();
+    if (layer_row == -1 || cc == 0)
+    {
+      return;
+    }
+    spectra_view_widget_->updateEntries(cc->getCurrentLayer());
   }
 
+  /*
+  void TOPPViewBase::updateDataBar()
+  {
+    const set<String> filenames = getFilenamesOfOpenFiles();
+    //reset
+    data_manager_view_->clear();
+    data_manager_view_->blockSignals(true);
+    QTreeWidgetItem* item = 0;
+    for (set<String>::const_iterator it = filenames.begin(); it != filenames.end(); ++it)
+    {
+      item = new QTreeWidgetItem(data_manager_view_);
+      QString name = it->toQString();
+      QFileInfo fi(name);
+      item->setText(0, fi.fileName());
+    }
+    layer_manager_->blockSignals(false);
+  }
+*/
 	void TOPPViewBase::layerSelectionChange(int i)
 	{
 		if (i!=-1)
 		{
 			activeCanvas_()->activateLayer(i);
 			updateFilterBar();
-			updateSpectrumBar();
+      updateSpectraViewBar();
 		}
-	}
-
-	void TOPPViewBase::spectrumSelectionChange(QTreeWidgetItem* current, QTreeWidgetItem* previous)
-	{
-		if (current == 0 || previous == 0)
-		/*	test for previous == 0 is important - without it,
-				the wrong spectrum will be selected after finishing
-				the execution of a TOPP tool on the whole data */
-		{
-			return;
-		}
-
-		Spectrum1DWidget* widget_1d = active1DWindow_();
-		if (widget_1d)
-		{
-			int index = current->text(1).toInt();
-			widget_1d->canvas()->activateSpectrum(index);
-		}
-	}
-
-	void TOPPViewBase::spectrumDoubleClicked(QTreeWidgetItem* current, int /*col*/)
-	{
-		//do nothing if (1) no item is selected or (2) this is already a 1D view
-		if (current==0 || active1DWindow_()) return;
-
-		//store spectrum index
-		int index = current->text(1).toInt();
-
-		//add a copy of the current data as 1D view
-		LayerData cl;
-		try
-		{
-			cl = activeCanvas_()->getCurrentLayer();
-		}
-    catch(Exception::BaseException& e) // catch Out-Of-Memory Exceptions
-    {
-    	showLogMessage_(LS_ERROR,"Error while creating layer",e.what());
-      return;
-    }
-
-		addData_(cl.features, cl.consensus, cl.peptides, cl.peaks, LayerData::DT_PEAK, true, false, cl.filename, cl.name);
-
-		//set properties for the new 1D view
-		if (active1DWindow_())
-		{
-			active1DWindow_()->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
-			active1DWindow_()->canvas()->activateSpectrum(index);
-		}
-		updateToolBar();
-		updateSpectrumBar();
 	}
 
 	void TOPPViewBase::layerContextMenu(const QPoint & pos)
@@ -1888,96 +1682,14 @@ namespace OpenMS
 			}
 
 			//Update filter bar, spectrum bar and layer bar
+      //updateDataBar();
 			updateLayerBar();
-			updateSpectrumBar();
+      updateSpectraViewBar();
 			updateFilterBar();
 			updateMenu();
 
 			delete (context_menu);
 		}
-	}
-
-	void TOPPViewBase::spectrumContextMenu(const QPoint & pos)
-	{
-		QTreeWidgetItem* item = spectrum_selection_->itemAt(pos);
-		if (item)
-		{
-			//create menu
-			int spectrum_index = item->text(1).toInt();
-			QMenu* context_menu = new QMenu(spectrum_selection_);
-			context_menu->addAction("Show in 1D view");
-			context_menu->addAction("Meta data");
-
-			QAction* selected = context_menu->exec(spectrum_selection_->mapToGlobal(pos));
-
-			if (selected!=0 && selected->text()=="Show in 1D view")
-			{
-				//add a copy of the current data as 1D view
-				LayerData cl;
-				try
-				{
-					cl = activeCanvas_()->getCurrentLayer();
-				}
-				catch(Exception::BaseException& e) // catch Out-Of-Memory Exceptions
-				{
-    			showLogMessage_(LS_ERROR,"Error while creating layer",e.what());
-					return;
-				}
-				addData_(cl.features, cl.consensus, cl.peptides, cl.peaks, LayerData::DT_PEAK, true, false, cl.filename, cl.name);
-
-				//set properties for the new 1D view
-				if (active1DWindow_())
-				{
-					active1DWindow_()->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
-					active1DWindow_()->canvas()->activateSpectrum(spectrum_index);
-				}
-				updateToolBar();
-				updateSpectrumBar();
-			}
-
-			else if (selected!=0 && selected->text()=="Meta data")
-			{
-				activeCanvas_()->showMetaData(true, spectrum_index);
-			}
-
-			delete (context_menu);
-		}
-	}
-
-	void TOPPViewBase::spectrumBrowserHeaderContextMenu(const QPoint & pos)
-	{
-		//create menu
-		QMenu* context_menu = new QMenu(spectrum_selection_->header());
-		QStringList header_labels;
-		header_labels.append(QString("MS level"));
-		header_labels.append(QString("index"));
-		header_labels.append(QString("RT"));
-		header_labels.append(QString("precursor m/z"));
-		header_labels.append(QString("dissociation"));
-		header_labels.append(QString("scan type"));
-		header_labels.append(QString("zoom"));
-		for(int i = 0; i < header_labels.size(); ++i)
-		{
-			QAction* tmp = new QAction(header_labels[i],context_menu);
-			tmp->setCheckable(true);
-			tmp->setChecked(!spectrum_selection_->isColumnHidden(i));
-			context_menu->addAction(tmp);
-		}
-
-		//(show and) execute menu
-		QAction* selected = context_menu->exec(spectrum_selection_->mapToGlobal(pos));
-		if (selected!=0)
-		{
-			for(int i = 0; i < header_labels.size(); ++i)
-			{
-				if(selected->text()==header_labels[i])
-				{
-					selected->isChecked()?spectrum_selection_->setColumnHidden(i,false):spectrum_selection_->setColumnHidden(i,true);
-				}
-			}
-			updateSpectrumBar();
-		}
-		delete (context_menu);
 	}
 
 	void TOPPViewBase::logContextMenu(const QPoint & pos)
@@ -2188,20 +1900,38 @@ namespace OpenMS
   	ws_->addWindow(sw);
     connect(sw->canvas(),SIGNAL(preferencesChange()),this,SLOT(updateLayerBar()));
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateToolBar()));
-    connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateSpectrumBar()));
+    connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateSpectraViewBar()));
     connect(sw->canvas(),SIGNAL(layerActivated(QWidget*)),this,SLOT(updateCurrentPath()));
+    //connect(sw,SIGNAL(destroyed()),this, SLOT(updateDataBar()));
     connect(sw->canvas(),SIGNAL(layerModficationChange(Size,bool)),this,SLOT(updateLayerBar()));
     connect(sw,SIGNAL(sendStatusMessage(std::string,OpenMS::UInt)),this,SLOT(showStatusMessage(std::string,OpenMS::UInt)));
     connect(sw,SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
     connect(sw,SIGNAL(dropReceived(const QMimeData*,QWidget*,int)),this,SLOT(copyLayer(const QMimeData*,QWidget*,int)));
 
+    // 1D spectrum specific signals
+    Spectrum1DWidget* sw1 = qobject_cast<Spectrum1DWidget*>(sw);
+    if (sw1 != 0)
+    {
+      connect(sw1, SIGNAL(showCurrentPeaksAs2D()), this, SLOT(showCurrentPeaksAs2D()));
+      connect(sw1, SIGNAL(showCurrentPeaksAs3D()), this, SLOT(showCurrentPeaksAs3D()));
+    }
+
+    // 2D spectrum specific signals
   	Spectrum2DWidget* sw2 = qobject_cast<Spectrum2DWidget*>(sw);
   	if (sw2 != 0)
   	{
   		connect(sw2->getHorizontalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatus(double,double)));
   		connect(sw2->getVerticalProjection(),SIGNAL(sendCursorStatus(double,double)),this,SLOT(showCursorStatusInvert(double,double)));
-  		connect(sw2,SIGNAL(showSpectrumAs1D(int)),this,SLOT(showSpectrumAs1D(int)));
+      connect(sw2, SIGNAL(showSpectrumAs1D(int)), this, SLOT(showSpectrumAs1D(int)));
+      connect(sw2, SIGNAL(showCurrentPeaksAs3D()), this, SLOT(showCurrentPeaksAs3D()));
   	}
+
+    // 3D spectrum specific signals
+    Spectrum3DWidget* sw3 = qobject_cast<Spectrum3DWidget*>(sw);
+    if (sw3 != 0)
+    {
+      connect(sw3, SIGNAL(showCurrentPeaksAs2D()), this, SLOT(showCurrentPeaksAs2D()));
+    }
 
 	  sw->setWindowTitle(caption.toQString());
 
@@ -2235,47 +1965,14 @@ namespace OpenMS
   	activeWindow_()->showGoToDialog();
   }
 
-  void TOPPViewBase::chooseSpectrumByUser(const QString& text)
+  void TOPPViewBase::activate1DSpectrum(int index)
   {
-	if(text.size() > 0)
-	{
-		int col(spectrum_combo_box_->currentIndex()+1);
-		if(col>5)
-		{
-			col = 1;
-		}
-		QList<QTreeWidgetItem *>  searched =  spectrum_selection_->findItems(text, Qt::MatchFixedString /* matchflag exact match */, col );
-		QList<QTreeWidgetItem *>  selected =  spectrum_selection_->selectedItems();
-
-		if(searched.size()>0)
-		{
-			for(int i = 0; i < selected.size(); ++i)
-			{
-				selected[i]->setSelected(false);
-			}
-			spectrum_selection_->update();
-
-			int index = searched.first()->text(1).toInt();
-			searched.first()->setSelected(true);
-			spectrum_selection_->update();
-
-			spectrum_selection_->scrollToItem(searched.first());
-
-			Spectrum1DWidget* widget_1d = active1DWindow_();
-			if (widget_1d)
-			{
-				widget_1d->canvas()->activateSpectrum(index);
-			}
-		}
-		//~ for coloring if nothing found
-		//~ else
-		//~ {
-			//~ QPalette p = spectrum_search_box_->palette();
-			//~ spectrum_search_box_->setPalette(p);
-		//~ }
-	}
+    Spectrum1DWidget* widget_1d = active1DWindow_();
+    if (widget_1d)
+    {
+      widget_1d->canvas()->activateSpectrum(index);
+    }
   }
-
 
   SpectrumWidget*  TOPPViewBase::activeWindow_() const
   {
@@ -2418,21 +2115,24 @@ namespace OpenMS
 
   QStringList TOPPViewBase::getFileList_(const String& path_overwrite)
   {
-		String filter_all = "readable files (*.dta *.dta2d";
-		String filter_single = "dta files (*.dta);;dta2d files (*.dta2d)";
+    String filter_all_andi;
+    String filter_single_andi;
 #ifdef USE_ANDIMS
-		filter_all +=" *.cdf";
-		filter_single += ";;ANDI/MS files (*.cdf)";
+		filter_all_andi +=" *.cdf";
+		filter_single_andi += ";;ANDI/MS files (*.cdf)";
 #endif
-		filter_all += " *.mzML *.mzXML *.mzData *.featureXML *.consensusXML *.idXML fid);;" ;
-		filter_single +=";;mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;peptide identifications (*.idXML);;XML files (*.xml);;XMass Analysis (fid);;all files (*)";
+    
+
+    String filter_all = "readable files (*.mzML *.mzXML *.mzData *.featureXML *.consensusXML *.idXML *.dta *.dta2d fid"+ filter_all_andi +" *.bz2 *.gz);;";
+		String filter_single = "mzML files (*.mzML);;mzXML files (*.mzXML);;mzData files (*.mzData);;feature map (*.featureXML);;consensus feature map (*.consensusXML);;peptide identifications (*.idXML);;XML files (*.xml);;XMass Analysis (fid);;dta files (*.dta);;dta2d files (*.dta2d)"+filter_single_andi+";;bzipped files (*.bz2);;gzipped files (*.gz);;all files (*)";
+
 
 		QString open_path = current_path_.toQString();
 		if (path_overwrite!="")
 		{
 			open_path = path_overwrite.toQString();;
 		}
-		// we use the QT file dialog instead of using QFileDialog::getOpenFileNames(...)
+    // we use the QT file dialog instead of using QFileDialog::Names(...)
 		// On Windows and Mac OS X, this static function will use the native file dialog and not a QFileDialog,
 		// which prevents us from doing GUI testing on it.
 		QFileDialog dialog(this, "Open file(s)", open_path, (filter_all+ filter_single).toQString());
@@ -2502,7 +2202,7 @@ namespace OpenMS
 				db.disconnect();
 				for (vector<UInt>::iterator it = result.begin();it!=result.end();++it)
 				{
- 					addDataDB(*it,true);
+          addDataDB(*it, true);
 				}
 			}
 		}
@@ -2593,7 +2293,7 @@ namespace OpenMS
 			}
 			else
 			{
-				f.store(topp_.file_name+"_in",layer.peaks);
+        f.store(topp_.file_name+"_in",*layer.getPeakData());
 			}
 		}
 		else if (layer.type==LayerData::DT_FEATURE)
@@ -2606,7 +2306,7 @@ namespace OpenMS
 			}
 			else
 			{
-				FeatureXMLFile().store(topp_.file_name+"_in",layer.features);
+        FeatureXMLFile().store(topp_.file_name+"_in",*layer.getFeatureMap());
 			}
 		}
 		else
@@ -2619,7 +2319,7 @@ namespace OpenMS
 			}
 			else
 			{
-				ConsensusXMLFile().store(topp_.file_name+"_in",layer.consensus);
+        ConsensusXMLFile().store(topp_.file_name+"_in",*layer.getConsensusMap());
 			}
 		}
 
@@ -2728,7 +2428,8 @@ namespace OpenMS
 		}
 
 		//load id data
-		QString name = QFileDialog::getOpenFileName(this,"Select ProteinIdentification data",current_path_.toQString(),"identfication files (*.idXML);; all files (*.*)");
+    QString name = QFileDialog::getOpenFileName(this,"Select protein identification data",current_path_.toQString(),"idXML files (*.idXML;; all files (*.*)");
+
 		if(name!="")
 		{
 			vector<PeptideIdentification> identifications;
@@ -2737,15 +2438,15 @@ namespace OpenMS
 			IdXMLFile().load(name, protein_identifications, identifications, document_id);
 			if (layer.type==LayerData::DT_PEAK)
 			{
-				IDMapper().annotate(const_cast<LayerData&>(layer).peaks, identifications, protein_identifications);
+        IDMapper().annotate(*layer.getPeakData(), identifications, protein_identifications);
 			}
 			else if (layer.type==LayerData::DT_FEATURE)
 			{
-				IDMapper().annotate(const_cast<LayerData&>(layer).features,identifications,protein_identifications);
+        IDMapper().annotate(*layer.getFeatureMap(),identifications,protein_identifications);
 			}
 			else
 			{
-				IDMapper().annotate(const_cast<LayerData&>(layer).consensus,identifications,protein_identifications);
+        IDMapper().annotate(*layer.getConsensusMap(),identifications,protein_identifications);
 			}
 		}
 	}
@@ -2779,12 +2480,20 @@ namespace OpenMS
 				TheoreticalSpectrumGenerator generator;
 				Param p;
 
+        p.setValue("add_metainfo", "true", "Adds the type of peaks as metainfo to the peaks, like y8+, [M-H2O+2H]++");
+
 				bool losses = (spec_gen_dialog.list_widget->item(7)->checkState() == Qt::Checked); // "Neutral losses"
 				String losses_str = losses ? "true" : "false";
 				p.setValue("add_losses", losses_str, "Adds common losses to those ion expect to have them, only water and ammonia loss is considered");
+
 				bool isotopes = (spec_gen_dialog.list_widget->item(8)->checkState() == Qt::Checked); // "Isotope clusters"
 				String iso_str = isotopes ? "true" : "false";
 				p.setValue("add_isotopes", iso_str, "If set to 1 isotope peaks of the product ion peaks are added");
+
+        bool abundant_immonium_ions = (spec_gen_dialog.list_widget->item(9)->checkState() == Qt::Checked); // "abundant immonium-ions"
+        String abundant_immonium_ions_str = abundant_immonium_ions ? "true" : "false";
+        p.setValue("add_abundant_immonium_ions", abundant_immonium_ions_str, "Add most abundant immonium ions");
+
         Size max_iso_count = (Size)spec_gen_dialog.max_iso_spinbox->value();
         p.setValue("max_isotope", max_iso_count, "Number of isotopic peaks");
 				p.setValue("a_intensity", spec_gen_dialog.a_intensity->value(), "Intensity of the a-ions");
@@ -2826,7 +2535,12 @@ namespace OpenMS
 				  if (spec_gen_dialog.list_widget->item(6)->checkState() == Qt::Checked) // "Precursor"
 				  {
 					  generator.addPrecursorPeaks(rich_spec, aa_sequence, charge);
-				  }
+          }          
+          if (spec_gen_dialog.list_widget->item(9)->checkState() == Qt::Checked) // "abundant Immonium-ions"
+          {
+            generator.addAbundantImmoniumIons(rich_spec);
+          }
+
         }
         catch (Exception::BaseException& e)
         {
@@ -2842,11 +2556,11 @@ namespace OpenMS
 
 				PeakMap new_exp;
 				new_exp.push_back(new_spec);
-
-				FeatureMapType f_dummy;
-				ConsensusMapType c_dummy;
+        ExperimentSharedPtrType new_exp_sptr(new PeakMap(new_exp));
+        FeatureMapSharedPtrType f_dummy(new FeatureMapType());
+        ConsensusMapSharedPtrType c_dummy(new ConsensusMapType());
 				vector<PeptideIdentification> p_dummy;
-				addData_(f_dummy, c_dummy, p_dummy, new_exp, LayerData::DT_CHROMATOGRAM, false, true, "", seq_string + QString(" (theoretical)"));
+        addData_(f_dummy, c_dummy, p_dummy, new_exp_sptr, LayerData::DT_CHROMATOGRAM, false, true, "", seq_string + QString(" (theoretical)"));
 
 	      // ensure spectrum is drawn as sticks
 	      draw_group_1d_->button(Spectrum1DCanvas::DM_PEAKS)->setChecked(true);
@@ -2896,123 +2610,107 @@ namespace OpenMS
 		}
 	}
 
-	void TOPPViewBase::showCurrentPeaksAs3D()
-	{
-    const LayerData& layer = activeCanvas_()->getCurrentLayer();
-  	if (layer.type==LayerData::DT_PEAK)
-  	{
-  		//open new 3D widget
-  		Spectrum3DWidget* w = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
-
-  		//copy data
-  		ExperimentType exp;
-			activeCanvas_()->getVisiblePeakData(exp);
-  		
-  		// insert placeholder peaks
-  		const SpectrumCanvas::AreaType& area = activeCanvas_()->getVisibleArea();
-  		SpectrumType::PeakType p_left,p_right;
-  		p_left.setMZ(area.minPosition()[0]);
-  		exp.back().push_back(p_left);
-  		p_right.setMZ(area.maxPosition()[0]);
-  		exp.back().push_back(p_right);
-  		
-	    if (!w->canvas()->addLayer(exp))
-	  	{
-	  		return;
-	  	}
-			String caption = layer.name + " (3D)";
-			w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
-      showAsWindow_(w,caption);
-	    updateLayerBar();
-	    updateSpectrumBar();
-			updateFilterBar();
-			updateMenu();
-		}
-
-  	if (layer.type==LayerData::DT_CHROMATOGRAM)  //Markus
-  	  	{
-
-  		showLogMessage_(LS_NOTICE,"Not implemented","The 3D View for Chromatograms is not implemented yet.");
-  		/*
-  	  	 * TODO CHROM
-  	  	 *
-  	  		//open new 3D widget
-  	  		Spectrum3DWidget* w = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
-
-  	  		//copy data
-  	  		ExperimentType exp;
-  				activeCanvas_()->getVisiblePeakData(exp);
-
-  	  		// insert placeholder peaks
-  	  		const SpectrumCanvas::AreaType& area = activeCanvas_()->getVisibleArea();
-  	  		SpectrumType::PeakType p_left,p_right;
-  	  		p_left.setMZ(10);
-  	  		exp.back().push_back(p_left);
-  	  		p_right.setMZ(50);
-  	  		exp.back().push_back(p_right);
-
-  		    if (!w->canvas()->addLayer(exp))
-  		  	{
-  		  		return;
-  		  	}
-  				String caption = layer.name + " (3D)";
-  				w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
-  	      showAsWindow_(w,caption);
-  		    updateLayerBar();
-  		    updateSpectrumBar();
-  				updateFilterBar();
-  				updateMenu();
-  			}
-			*/
-  	  	}
-		else
-		{
-      showLogMessage_(LS_NOTICE,"Wrong layer type","You cannot open feature data in 3D mode.");
-		}
-	}
-
 	void TOPPViewBase::showSpectrumAs1D(int index)
 	{
-		const LayerData& layer = activeCanvas_()->getCurrentLayer();
+     const LayerData& layer = activeCanvas_()->getCurrentLayer();
+     ExperimentSharedPtrType exp_sptr = layer.getPeakData();
 
-		if (layer.type==LayerData::DT_PEAK)
-		{
-		//copy spectrum
-		ExperimentType exp = layer.peaks;
-
-		//open new 1D widget
-		Spectrum1DWidget* w = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
-
+    //open new 1D widget
+    Spectrum1DWidget* w = new Spectrum1DWidget(getSpectrumParameters_(1), ws_);
     //add data
-    if (!w->canvas()->addLayer(exp) || (Size)index >= w->canvas()->getCurrentLayer().peaks.size())
+    if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
   	{
   		return;
-  	}
+    }
 
 		w->canvas()->activateSpectrum(index);
-		// set visible aree to visible area in 2D view
-    w->canvas()->setVisibleArea(activeCanvas_()->getVisibleArea());
-		// set relative (%) view of visible area
-		w->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
 
-		String caption = layer.name;
-		w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+		// set relative (%) view of visible area
+    w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
+
+    //for MS1 spectra set visible area to visible area in 2D view.
+    UInt ms_level = w->canvas()->getCurrentLayer().getCurrentSpectrum().getMSLevel();
+    if (ms_level == 1)
+    {
+      // set visible aree to visible area in 2D view
+      w->canvas()->setVisibleArea(activeCanvas_()->getVisibleArea());
+    }
+
+    String caption = layer.name;
+    w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
 
     showAsWindow_(w,caption);
     updateLayerBar();
-    updateSpectrumBar();
-		updateFilterBar();
-		updateMenu();
-
-		}
-
-		if (layer.type==LayerData::DT_CHROMATOGRAM) //Markus
-		{
-
-			showLogMessage_(LS_NOTICE,"Not implemented","The 1D View for Chromatograms is not implemented yet.");
-
-		}
+    updateSpectraViewBar();
+    updateFilterBar();
+    updateMenu();
 	}
+
+  void TOPPViewBase::showCurrentPeaksAs2D()
+  {
+    const LayerData& layer = activeCanvas_()->getCurrentLayer();
+    ExperimentSharedPtrType exp_sptr = layer.getPeakData();
+
+    //open new 2D widget
+    Spectrum2DWidget* w = new Spectrum2DWidget(getSpectrumParameters_(2), ws_);
+
+    //add data
+    if (!w->canvas()->addLayer(exp_sptr, layer.filename))
+    {
+      return;
+    }
+
+    String caption = layer.name;
+    w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+    showAsWindow_(w, caption);
+    updateLayerBar();
+    updateSpectraViewBar();
+    updateFilterBar();
+    updateMenu();
+  }
+
+  void TOPPViewBase::showCurrentPeaksAs3D()
+  {
+    const LayerData& layer = activeCanvas_()->getCurrentLayer();
+    if (layer.type==LayerData::DT_PEAK)
+    {
+      //open new 3D widget
+      Spectrum3DWidget* w = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);
+
+      ExperimentSharedPtrType exp_sptr = activeCanvas_()->getCurrentLayer().getPeakData();
+
+      if (!w->canvas()->addLayer(exp_sptr, layer.filename))
+      {
+        return;
+      }
+
+     if (active1DWindow_()) // switch from 1D to 3D
+     {
+       //TODO:
+       //- distinguish between survey scan and fragment scan (only makes sense for survey scan?)
+       //- build new Area with mz range equal to 1D visible range
+       //- rt range either overall MS1 data range or some convenient window
+
+     } else if (active2DWindow_())  // switch from 2D to 3D
+     {
+        w->canvas()->setVisibleArea(activeCanvas_()->getVisibleArea());
+     }
+
+      // set layer name
+      String caption = layer.name + " (3D)";
+      w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+      showAsWindow_(w, caption);
+      updateLayerBar();
+      updateSpectraViewBar();
+      updateFilterBar();
+      updateMenu();
+    }
+    else
+    {
+      showLogMessage_(LS_NOTICE,"Wrong layer type","You cannot open feature data in 3D mode.");
+    }
+  }
+
 	void TOPPViewBase::showAboutDialog()
 	{
 		//dialog and grid layout
@@ -3067,7 +2765,6 @@ namespace OpenMS
 	{
 		Param out = param_.copy(String("preferences:") + dim + "d:",true);
 		out.setValue("default_path",param_.getValue("preferences:default_path").toString());
-		out.setValue("on_file_change",param_.getValue("preferences:on_file_change").toString());
 		return out;
 	}
 
@@ -3146,7 +2843,7 @@ namespace OpenMS
 					actions[i]->setEnabled(true);
 				}
 			}
-			else if (text=="&Go to" || text=="&Edit meta data" || text=="&Statistics" || text=="&Annotate with identifiction"  || text=="Save all data"  || text=="Save visible data"  || text=="Preferences")
+      else if (text=="&Go to" || text=="&Edit meta data" || text=="&Statistics" || text=="&Annotate with identification"  || text=="Save all data"  || text=="Save visible data"  || text=="Preferences")
 			{
 				actions[i]->setEnabled(false);
 				if (canvas_exists && layer_exists)
@@ -3172,7 +2869,6 @@ namespace OpenMS
 			}
 		}
   }
-
 
   void TOPPViewBase::loadFiles(const StringList& list, QSplashScreen* splash_screen)
   {
@@ -3358,8 +3054,14 @@ namespace OpenMS
 		}
 	}
 
+  void TOPPViewBase::showSpectrumMetaData(int spectrum_index)
+  {
+    activeCanvas_()->showMetaData(true, spectrum_index);
+  }
+
 	void TOPPViewBase::copyLayer(const QMimeData* data, QWidget* source, int id)
 	{
+    QTreeWidget* spectra_view_treewidget = spectra_view_widget_->getTreeWidget();
 		try
 		{
 			//NOT USED RIGHT NOW, BUT KEEP THIS CODE (it was hard to find out how this is done)
@@ -3381,29 +3083,30 @@ namespace OpenMS
 				//only the selected row can be dragged => the source layer is the selected layer
 				const LayerData& layer = activeCanvas_()->getCurrentLayer();
 
-				//copy the feature and peak data
-				FeatureMapType features = layer.features;
-				ExperimentType peaks = layer.peaks;
-				ConsensusMapType consensus = layer.consensus;
+         //attach feature, consensus and peak data
+        FeatureMapSharedPtrType features = layer.getFeatureMap();
+        ExperimentSharedPtrType peaks = layer.getPeakData();
+        ConsensusMapSharedPtrType consensus = layer.getConsensusMap();
 				vector<PeptideIdentification> peptides = layer.peptides;
 
 				//add the data
 				addData_(features, consensus, peptides, peaks, layer.type, false, false, layer.filename, layer.name, new_id);
 			}
-			else if (source == spectrum_selection_)
+      else if (source == spectra_view_treewidget)
 			{
 				const LayerData& layer = activeCanvas_()->getCurrentLayer();
-				QTreeWidgetItem* item = spectrum_selection_->currentItem();
+        QTreeWidgetItem* item = spectra_view_treewidget->currentItem();
 				if (item != 0)
 				{
 					Size index = (Size)(item->text(3).toInt());
-					const ExperimentType::SpectrumType spectrum = layer.peaks[index];
+          const ExperimentType::SpectrumType spectrum = (*layer.getPeakData())[index];
 					ExperimentType new_exp;
 					new_exp.push_back(spectrum);
-					FeatureMapType f_dummy;
-					ConsensusMapType c_dummy;
+          ExperimentSharedPtrType new_exp_sptr(new ExperimentType(new_exp));
+          FeatureMapSharedPtrType f_dummy(new FeatureMapType());
+          ConsensusMapSharedPtrType c_dummy(new ConsensusMapType());
 					vector<PeptideIdentification> p_dummy;
-					addData_(f_dummy, c_dummy, p_dummy, new_exp, LayerData::DT_CHROMATOGRAM, false, false, layer.filename, layer.name, new_id);
+          addData_(f_dummy, c_dummy, p_dummy, new_exp_sptr, LayerData::DT_CHROMATOGRAM, false, false, layer.filename, layer.name, new_id);
 				}
 			}
 			else if (source == 0)
@@ -3483,9 +3186,176 @@ namespace OpenMS
 
 	void TOPPViewBase::showSpectrumBrowser()
 	{
-		spectrum_bar_->show();
-		updateSpectrumBar();
+    spectra_views_dockwidget_->show();
+    updateSpectraViewBar();
 	}
+
+  void TOPPViewBase::fileChanged_(const String& filename)
+  {
+    QWidgetList wl = ws_->windowList();
+
+    // iterate over all windows and determine which need an update
+    std::vector<std::pair<const SpectrumWidget *, Size> > needs_update;
+    for(int i=0; i!=ws_->windowList().count(); ++i)
+    {
+      //std::cout << "Number of windows: " << ws_->windowList().count() << std::endl;
+      QWidget* w = wl[i];
+      const SpectrumWidget* sw = qobject_cast<const SpectrumWidget*>(w);
+      if (sw!=0)
+      {
+        Size lc = sw->canvas()->getLayerCount();
+
+        // determine if widget stores one or more layers for the given filename (->needs update)
+        for (Size j=0; j!= lc; ++j)
+        {
+          //std::cout << "Layer filename: " << sw->canvas()->getLayer(j).filename << std::endl;
+          const LayerData& ld = sw->canvas()->getLayer(j);
+          if (ld.filename == filename)
+          {
+            needs_update.push_back(std::pair<const SpectrumWidget *, Size>(sw,j));
+          }
+        }
+      }
+    }
+
+    if (needs_update.size()==0) // no layer references data of filename
+    {
+      watcher_->removeFile(filename);  // remove watcher
+      return;
+    } else if (needs_update.size()!=0)  // at least one layer references data of filename
+    {
+      //std::cout << "Number of Layers that need update: " << needs_update.size() << std::endl;
+      pair<const SpectrumWidget *, Size>& slp = needs_update[0];
+      const SpectrumWidget * sw = slp.first;
+      Size layer_index = slp.second;
+
+      bool user_wants_update = false;
+      if ((String)(param_.getValue("preferences:on_file_change"))=="update automatically") //automatically update
+      {
+        user_wants_update = true;
+      }
+      else if ((String)(param_.getValue("preferences:on_file_change"))=="ask") //ask the user if the layer should be updated
+      {
+        if (watcher_msgbox_==true)
+        { // we already have a dialog for that opened... do not ask again
+          return;
+        }
+        // track that we will show the msgbox and we do not need to show it again if file changes once more and the dialog is still open
+        watcher_msgbox_=true;
+        QMessageBox msg_box;
+        QAbstractButton* ok = msg_box.addButton(QMessageBox::Ok);
+        msg_box.addButton(QMessageBox::Cancel);
+        msg_box.setWindowTitle("Layer data changed");
+        msg_box.setText((String("The data of file '") + filename + "' has changed.<BR>Update layers?").toQString());
+        msg_box.exec();
+        watcher_msgbox_=false;
+        if (msg_box.clickedButton() == ok)
+        {
+          user_wants_update = true;
+        }
+      }
+
+      if (user_wants_update == false)
+      {
+        return;
+      }
+      else //if (user_wants_update == true)
+      {
+        const LayerData& layer = sw->canvas()->getLayer(layer_index);
+        // reload data
+        if (layer.type==LayerData::DT_PEAK) //peak data
+        {
+          try
+          {
+            FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
+          }
+          catch(Exception::BaseException& e)
+          {
+            QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+            layer.getPeakData()->clear(true);
+          }          
+          layer.getPeakData()->sortSpectra(true);
+          layer.getPeakData()->updateRanges(1);
+        }
+        else if (layer.type==LayerData::DT_FEATURE) //feature data
+        {
+          try
+          {
+            FileHandler().loadFeatures(layer.filename,*layer.getFeatureMap());
+          }
+          catch(Exception::BaseException& e)
+          {
+            QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+            layer.getFeatureMap()->clear(true);
+          }
+          layer.getFeatureMap()->updateRanges();
+        }
+        else if (layer.type==LayerData::DT_CONSENSUS)  //consensus feature data
+        {
+          try
+          {
+            ConsensusXMLFile().load(layer.filename,*layer.getConsensusMap());
+          }
+          catch(Exception::BaseException& e)
+          {
+            QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+            layer.getConsensusMap()->clear(true);
+          }
+          layer.getConsensusMap()->updateRanges();
+        }
+        else if (layer.type==LayerData::DT_CHROMATOGRAM) //chromatgram
+        {
+          //TODO CHROM
+          try
+          {
+            FileHandler().loadExperiment(layer.filename,*layer.getPeakData());
+          }
+          catch(Exception::BaseException& e)
+          {
+            QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+            layer.getPeakData()->clear(true);
+          }
+          layer.getPeakData()->sortChromatograms(true);
+          layer.getPeakData()->updateRanges(1);
+
+        }
+        /*      else if (layer.type == LayerData::DT_IDENT) // identifications
+      {
+        try
+        {
+          vector<ProteinIdentification> proteins;
+          IdXMLFile().load(layer.filename, proteins, layer.peptides);
+        }
+        catch(Exception::BaseException& e)
+        {
+          QMessageBox::critical(this,"Error",(String("Error while loading file") + layer.filename + "\nError message: " + e.what()).toQString());
+          layer.peptides.clear();
+        }
+      }
+*/
+      }
+
+      // update all layers that need an update
+      for (Size i=0; i!= needs_update.size(); ++i)
+      {
+        pair<const SpectrumWidget *, Size>& slp = needs_update[i];
+        const SpectrumWidget * sw = slp.first;
+        Size layer_index = slp.second;
+        sw->canvas()->updateLayer(layer_index);        
+      }
+    }
+    /*
+    {
+      //update the layer if the user choosed to do so
+      if (update)
+      {
+        emit sendStatusMessage(String("Updating layer '") + getLayer(j).name + "' (file changed).",0);
+        updateLayer_(j);
+        emit sendStatusMessage(String("Finished updating layer '") + getLayer(j).name + "'.",5000);
+      }
+    }
+    */
+  }
 
 } //namespace OpenMS
 

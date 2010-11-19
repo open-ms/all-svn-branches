@@ -28,14 +28,11 @@
 #ifndef OPENMS_SIMULATION_IONIZATIONSIMULATION_H
 #define OPENMS_SIMULATION_IONIZATIONSIMULATION_H
 
+#include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
-#include <OpenMS/SIMULATION/SimTypes.h>
 #include <OpenMS/DATASTRUCTURES/Adduct.h>
+#include <OpenMS/SIMULATION/SimTypes.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
-
-// GSL includes (random number generation)
-#include <gsl/gsl_rng.h>
-#include <gsl/gsl_randist.h>
 
 // STL includes
 #include <set>
@@ -57,7 +54,8 @@ namespace OpenMS {
    @ingroup Simulation
   */
   class OPENMS_DLLAPI IonizationSimulation
-    : public DefaultParamHandler
+    : public DefaultParamHandler,
+      public ProgressLogger
   {
 
   public: 
@@ -72,7 +70,7 @@ namespace OpenMS {
       */
     //@{
     /// 
-    IonizationSimulation(const gsl_rng* );
+    IonizationSimulation(const SimRandomNumberGenerator& );
     
     /// Copy constructor
     IonizationSimulation(const IonizationSimulation& source);
@@ -174,7 +172,7 @@ namespace OpenMS {
 		
   protected:
 		/// Random number generator
-		const gsl_rng* rnd_gen_;
+    SimRandomNumberGenerator const * rnd_gen_;
   };
 
 }

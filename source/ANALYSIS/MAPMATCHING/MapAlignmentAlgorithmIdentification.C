@@ -26,6 +26,7 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmIdentification.h>
+#include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/IdXMLFile.h>
@@ -40,7 +41,8 @@ namespace OpenMS
 {
 
 	MapAlignmentAlgorithmIdentification::MapAlignmentAlgorithmIdentification()
-		: MapAlignmentAlgorithm(), reference_index_(0), reference_()
+		: MapAlignmentAlgorithm(), reference_index_(0), reference_(),
+			score_threshold_(0.0)
 	{
 		setName("MapAlignmentAlgorithmIdentification");
 
@@ -52,7 +54,7 @@ namespace OpenMS
 		defaults_.setValue("min_run_occur", 2, "Minimum number of runs (incl. reference, if any) a peptide must occur in to be used for the alignment.\nUnless you have very few runs or identifications, increase this value to focus on more informative peptides.");
 		defaults_.setMinInt("min_run_occur", 2);
 
-		defaults_.setValue("max_rt_shift", 0.5, "Maximum realistic RT difference for a peptide (median per run vs. median overall). Peptides with higher shifts (outliers) are not used to compute the alignment.\nIf 0, no limit (disable filter); if > 1, the final value in seconds; if <= 1, taken as a fraction of the total retention time range.");
+		defaults_.setValue("max_rt_shift", 0.5, "Maximum realistic RT difference for a peptide (median per run vs. reference). Peptides with higher shifts (outliers) are not used to compute the alignment.\nIf 0, no limit (disable filter); if > 1, the final value in seconds; if <= 1, taken as a fraction of the range of the reference RT scale.");
 		defaults_.setMinFloat("max_rt_shift", 0.0);
 		
 		defaults_.setValue("use_unassigned_peptides", "true", "Should unassigned peptide identifications be used when computing an alignment of feature maps? If 'false', only peptide IDs assigned to features will be used.");
@@ -97,6 +99,12 @@ namespace OpenMS
 			FeatureXMLFile().load(reference_file, features);
 			getRetentionTimes_(features, rt_data);
 		}
+		else if (filetype == FileTypes::CONSENSUSXML)
+		{
+			ConsensusMap features;
+			ConsensusXMLFile().load(reference_file, features);
+			getRetentionTimes_(features, rt_data);
+		}
 		else if (filetype == FileTypes::IDXML)
 		{
 			vector<ProteinIdentification> proteins;
@@ -124,6 +132,9 @@ namespace OpenMS
 		{
 			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Value of parameter 'min_run_occur' (here: " + String(min_run_occur) + ") must not exceed the number of runs incl. reference (here: " + String(runs) + ")");
 		}
+		
+		score_threshold_ = param_.getValue("peptide_score_threshold");
+		
 	}
 
 
@@ -141,8 +152,6 @@ namespace OpenMS
 			computeMedians_(rt_data, reference_, false);			
 		}
 
-		score_threshold_ = param_.getValue("peptide_score_threshold");
-		
 		// one set of RT data for each input map, except reference:
 		vector<SeqToList> rt_data(maps.size() - bool(reference_index_));
 		for (Size i = 0, j = 0; i < maps.size(); ++i)
@@ -161,22 +170,17 @@ namespace OpenMS
 	}
 
 
-	void MapAlignmentAlgorithmIdentification::alignFeatureMaps(
-		vector<FeatureMap<> >& maps,
-		vector<TransformationDescription>& transformations)
+	template <typename MapType>
+	void MapAlignmentAlgorithmIdentification::alignFeatureOrConsensusMaps_(
+		vector<MapType>& maps, vector<TransformationDescription>& transformations)
 	{
-		checkParameters_(maps.size());
-		startProgress(0, 3, "aligning feature maps");
-		
 		if (reference_index_) // reference is one of the input files
 		{
 			SeqToList rt_data;
 			getRetentionTimes_(maps[reference_index_ - 1], rt_data);
-			computeMedians_(rt_data, reference_, true);			
+			computeMedians_(rt_data, reference_, true);
 		}
 
-		score_threshold_ = param_.getValue("peptide_score_threshold");
-		
 		// one set of RT data for each input map, except reference:
 		vector<SeqToList> rt_data(maps.size() - bool(reference_index_));
 		for (Size i = 0, j = 0; i < maps.size(); ++i)
@@ -188,8 +192,34 @@ namespace OpenMS
 
 		computeTransformations_(rt_data, transformations, true);
 		setProgress(2);
+	}
+
+
+	void MapAlignmentAlgorithmIdentification::alignFeatureMaps(
+		vector<FeatureMap<> >& maps,
+		vector<TransformationDescription>& transformations)
+	{
+		checkParameters_(maps.size());
+		startProgress(0, 3, "aligning feature maps");
+
+		alignFeatureOrConsensusMaps_(maps, transformations);
 
 		transformFeatureMaps(maps, transformations);
+		setProgress(3);
+		endProgress();
+	}
+
+
+	void MapAlignmentAlgorithmIdentification::alignConsensusMaps(
+		vector<ConsensusMap>& maps, 
+		vector<TransformationDescription>& transformations)
+	{
+		checkParameters_(maps.size());
+		startProgress(0, 3, "aligning consensus maps");
+
+		alignFeatureOrConsensusMaps_(maps, transformations);
+
+		transformConsensusMaps(maps, transformations);
 		setProgress(3);
 		endProgress();
 	}
@@ -209,8 +239,6 @@ namespace OpenMS
 			computeMedians_(rt_data, reference_, true);			
 		}
 
-		score_threshold_ = param_.getValue("peptide_score_threshold");
-		
 		// one set of RT data for each input map, except reference:
 		vector<SeqToList> rt_data(maps.size() - bool(reference_index_));
 		for (Size i = 0, j = 0; i < maps.size(); ++i)
@@ -274,8 +302,7 @@ namespace OpenMS
 			return false;
 		peptide.sort();
 		DoubleReal score = peptide.getHits().begin()->getScore();
-		if (peptide.isHigherScoreBetter())
-			return score >= score_threshold_;
+		if (peptide.isHigherScoreBetter()) return score >= score_threshold_;
 		return score <= score_threshold_;
 	}
 
@@ -307,14 +334,14 @@ namespace OpenMS
 		}
 		// duplicates should not be possible -> no need to remove them
 	}
-	
 
-	// lists of peptide hits in "features" will be sorted
+
+	template <typename MapType>
 	void MapAlignmentAlgorithmIdentification::getRetentionTimes_(
-		FeatureMap<>& features, SeqToList& rt_data)
+		MapType& features, SeqToList& rt_data)
 	{
 		bool use_feature_rt = param_.getValue("use_feature_rt").toBool();
-		for (FeatureMap<>::Iterator feat_it = features.begin();
+		for (typename MapType::Iterator feat_it = features.begin();
 				 feat_it != features.end(); ++feat_it)
 		{
 			if (use_feature_rt)
@@ -336,7 +363,7 @@ namespace OpenMS
 						{
 							sequence = pep_it->getHits()[0].getSequence().toString();
 							rt_distance = current_distance;
-						}				
+						}
 					}
 				}
 				if (any_good_hit) rt_data[sequence] << feat_it->getRT();
@@ -349,7 +376,7 @@ namespace OpenMS
 
 		if (!use_feature_rt && param_.getValue("use_unassigned_peptides").toBool())
 		{
-			getRetentionTimes_(features.getUnassignedPeptideIdentifications(),
+			getRetentionTimes_(features.getUnassignedPeptideIdentifications(), 
 												 rt_data);
 		}
 
@@ -399,7 +426,8 @@ namespace OpenMS
 		Size min_run_occur = param_.getValue("min_run_occur");
 		// get reference retention time scale: either directly from reference file,
 		// or compute consensus time scale
-		if (!reference_.empty()) // reference file given
+		bool reference_given = !reference_.empty(); // reference file given
+		if (reference_given)
 		{
 			// remove peptides that don't occur in enough runs:
 			LOG_DEBUG << "Removing peptides that occur in too few runs..." << endl;
@@ -457,7 +485,8 @@ namespace OpenMS
 			rt_range = rt_max - rt_min;
 			max_rt_shift *= rt_range;
 		}
-			
+		LOG_DEBUG << "Max. allowed RT shift (in seconds): " << max_rt_shift << endl;
+
 		// generate RT transformations:
 		LOG_DEBUG << "Generating RT transformations..." << endl;
 		Int num_breakpoints = param_.getValue("num_breakpoints");
@@ -497,6 +526,8 @@ namespace OpenMS
 							 << trafo_index + 1 << "\n";
 		}
 		LOG_INFO << endl;
+
+		if (!reference_given) reference_.clear(); // delete temporary reference
 	}
 
 } //namespace

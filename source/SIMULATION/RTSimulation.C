@@ -93,8 +93,8 @@ namespace OpenMS {
 	}
 
   
-  RTSimulation::RTSimulation(const gsl_rng * random_generator)
-    : DefaultParamHandler("RTSimulation"), rnd_gen_(random_generator)
+  RTSimulation::RTSimulation(const SimRandomNumberGenerator& random_generator)
+    : DefaultParamHandler("RTSimulation"), rnd_gen_(&random_generator)
   {
     setDefaultParams_();
     updateMembers_();
@@ -125,14 +125,16 @@ namespace OpenMS {
    */
   void RTSimulation::predictRT(FeatureMapSim & features)
   {
+    LOG_INFO << "RT Simulation ... started" << std::endl;
 
     predictFeatureRT_(features);
 
     for(FeatureMapSim::iterator it_f = features.begin(); it_f != features.end();
         ++it_f)
     {
-			double symmetry = gsl_ran_flat (rnd_gen_, symmetry_down_, symmetry_up_);
-			double width = gsl_ran_flat (rnd_gen_, 5, 15);
+      // TODO: revise the process of rt shape generation
+      double symmetry = gsl_ran_flat (rnd_gen_->technical_rng, symmetry_down_, symmetry_up_);
+      double width = gsl_ran_flat (rnd_gen_->technical_rng, 5, 15);
 			// TODO: maybe this would be a better solution ..
 			//double width = 1;
       it_f->setMetaValue("rt_symmetry", symmetry);
@@ -203,9 +205,19 @@ namespace OpenMS {
 	      predicted_retention_times[i] *= total_gradient_time_;
 	    }
       
+      //overwrite RT (if given by user)
+      if (features[i].metaValueExists("rt"))
+      {
+        predicted_retention_times[i] = features[i].getMetaValue("rt");
+      }
       // add variation
-      SimCoordinateType rt_error = gsl_ran_gaussian(rnd_gen_, rt_ft_stddev) + rt_offset;
-      features[i].setRT(predicted_retention_times[i]*rt_scale + rt_error);
+      SimCoordinateType rt_error = gsl_ran_gaussian(rnd_gen_->technical_rng, rt_ft_stddev) + rt_offset;
+      predicted_retention_times[i] = predicted_retention_times[i]*rt_scale + rt_error;
+      //overwrite RT [no randomization] (if given by user)
+      if (features[i].metaValueExists("RT"))
+      {
+        predicted_retention_times[i] = features[i].getMetaValue("RT");
+      }
 
       // remove invalid peptides & (later) display removed ones
       if (
@@ -214,17 +226,23 @@ namespace OpenMS {
           (predicted_retention_times[i] < gradient_min_)     // check if RT is not in scan window
           )
       {
-				deleted_features.push_back(features[i].getPeptideIdentifications()[0].getHits()[0].getSequence().toUnmodifiedString());
+        deleted_features.push_back(features[i].getPeptideIdentifications()[0].getHits()[0].getSequence().toUnmodifiedString() + " [" +
+                                   String::number(predicted_retention_times[i],2)
+                                   + "]");
 				continue;
       }
       
+      features[i].setRT(predicted_retention_times[i]);
 			fm_tmp.push_back(features[i]);
     }
     
     // print invalid features:
-    LOG_WARN << "RT prediction gave 'invalid' results for " << deleted_features.size() << " peptide(s), making them unobservable.\n";
-    LOG_WARN << "  " << deleted_features.concatenate("\n  ") << "\n";
-
+    if(deleted_features.size() > 0)
+    {
+      LOG_WARN << "RT prediction gave 'invalid' results for " << deleted_features.size() << " peptide(s), making them unobservable.\n";
+      if (deleted_features.size()<100) LOG_WARN << "  " << deleted_features.concatenate("\n  ") << std::endl;
+      else LOG_WARN << "  (List is too big to show)" << std::endl;
+    }
     // only retain valid features:	
     features.swap(fm_tmp);
     
@@ -271,10 +289,7 @@ namespace OpenMS {
 			DoubleReal mu = (auto_scale ? 0 : (DoubleReal)param_.getValue("CE:mu_eo")) + ( charge / std::pow(mass, alpha) );
 			
 			predicted_retention_times[i] = c / mu; // this is L_d*L_t / (mu * V)
-			
-			//std::cout << "RT: " << predicted_retention_times[i] << " q:" << charge << " mass: " << mass << "mu: " << mu << " c: " << c <<  "\n";
-	
-		}
+    }
 		
 		// ** only when Auto-Scaling is active ** /
 		if (auto_scale)
@@ -367,26 +382,26 @@ namespace OpenMS {
 		std::vector<AASequence>::iterator pep_iter_start = peptide_sequences.begin();
 		std::vector<AASequence>::iterator pep_iter_stop = peptide_sequences.begin();
 		while(count < peptide_sequences.size())
+		{
+			while(pep_iter_stop != peptide_sequences.end() && tmp_count < max_number_of_peptides)
 			{
-				while(pep_iter_stop != peptide_sequences.end() && tmp_count < max_number_of_peptides)
-					{
-						++tmp_count;
-						++pep_iter_stop;
-					}
-				std::vector<AASequence> tmp_peptide_seqs;
-				tmp_peptide_seqs.insert(tmp_peptide_seqs.end(),pep_iter_start,pep_iter_stop);
-				std::vector<DoubleReal> tmp_rts(tmp_peptide_seqs.size(), 0);
-				std::vector<DoubleReal> tmp_pred_rts;
-				// Encoding test data
-				encoder.encodeProblemWithOligoBorderVectors(tmp_peptide_seqs,k_mer_length, allowed_amino_acid_characters, border_length,prediction_samples.sequences);
-				prediction_samples.labels = tmp_rts;
-			
-				svm.predict(prediction_samples, tmp_pred_rts);
-				predicted_retention_times.insert(predicted_retention_times.end(),tmp_pred_rts.begin(),tmp_pred_rts.end());
-				pep_iter_start = pep_iter_stop;				
-				count += tmp_count;
-				tmp_count = 0;
+				++tmp_count;
+				++pep_iter_stop;
 			}
+			std::vector<AASequence> tmp_peptide_seqs;
+			tmp_peptide_seqs.insert(tmp_peptide_seqs.end(),pep_iter_start,pep_iter_stop);
+			std::vector<DoubleReal> tmp_rts(tmp_peptide_seqs.size(), 0);
+			std::vector<DoubleReal> tmp_pred_rts;
+			// Encoding test data
+			encoder.encodeProblemWithOligoBorderVectors(tmp_peptide_seqs,k_mer_length, allowed_amino_acid_characters, border_length,prediction_samples.sequences);
+			prediction_samples.labels = tmp_rts;
+		
+			svm.predict(prediction_samples, tmp_pred_rts);
+			predicted_retention_times.insert(predicted_retention_times.end(),tmp_pred_rts.begin(),tmp_pred_rts.end());
+			pep_iter_start = pep_iter_stop;				
+			count += tmp_count;
+			tmp_count = 0;
+		}
     LibSVMEncoder::destroyProblem(training_data);
 		
     LOG_INFO << "done" << endl;
@@ -399,7 +414,7 @@ namespace OpenMS {
     {
 
       // assign random retention time
-      SimCoordinateType retention_time = gsl_ran_flat(rnd_gen_, 0, total_gradient_time_);
+      SimCoordinateType retention_time = gsl_ran_flat(rnd_gen_->technical_rng, 0, total_gradient_time_);
       contaminants[i].setRT(retention_time);
     }
   }
@@ -415,9 +430,9 @@ namespace OpenMS {
 		gradient_min_ = param_.getValue("scan_window:min");
 		gradient_max_ = param_.getValue("scan_window:max");
     if(gradient_max_ > total_gradient_time_)
-      {
-        LOG_WARN << "total_gradient_time_ smaller than scan_window:max -> invalid parameters!" << endl;
-      }
+    {
+      LOG_WARN << "total_gradient_time_ smaller than scan_window:max -> invalid parameters!" << endl;
+    }
     
     rt_sampling_rate_ = param_.getValue("sampling_rate");
 
@@ -556,7 +571,7 @@ namespace OpenMS {
         (*exp_it).setNativeID(spec_id);
 
         // dice & store distortion
-        DoubleReal distortion = exp(gsl_ran_flat (rnd_gen_, -distortion_, +distortion_));
+        DoubleReal distortion = exp(gsl_ran_flat (rnd_gen_->technical_rng, -distortion_, +distortion_));
         (*exp_it).setMetaValue("distortion", distortion);
 
         // TODO (for CE) store peak broadening parameter

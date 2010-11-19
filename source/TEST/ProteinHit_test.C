@@ -106,6 +106,23 @@ START_SECTION(ProteinHit& operator=(const ProteinHit& source))
 	TEST_EQUAL(hit.getCoverage(), 123.123)
 END_SECTION
 
+START_SECTION(ProteinHit& operator= (const MetaInfoInterface& source))
+	ProteinHit hit(score, rank, accession, sequence);
+	hit.setCoverage(123.123);
+  MetaInfoInterface meta;
+	meta.setMetaValue("label",17);
+	
+	hit = meta;
+	
+	TEST_EQUAL(hit.getScore(), score)
+	TEST_EQUAL(hit.getRank(), rank)
+	TEST_EQUAL(hit.getAccession(), accession)
+	TEST_EQUAL(hit.getSequence(), sequence)
+	TEST_EQUAL(hit.getCoverage(), 123.123)
+	TEST_EQUAL((UInt)hit.getMetaValue("label"),17)
+END_SECTION
+
+
 START_SECTION(bool operator == (const ProteinHit& rhs) const)
   ProteinHit hit, hit2;
   TEST_EQUAL(hit==hit2,true);
@@ -221,6 +238,30 @@ START_SECTION(void setCoverage(const DoubleReal coverage))
 	ProteinHit hit;
 	hit.setCoverage(123.123);
 	TEST_EQUAL(hit.getCoverage(), 123.123)
+END_SECTION
+
+START_SECTION(([ProteinHit::ScoreLess] template < typename Arg > bool operator()(const Arg &a, const Arg &b)))
+{
+  ProteinHit a,b;
+  a.setScore(10);
+  b.setScore(20);
+
+  TEST_EQUAL(ProteinHit::ScoreLess().operator()(a,b), true)
+  TEST_EQUAL(ProteinHit::ScoreLess().operator()(b,a), false)
+  TEST_EQUAL(ProteinHit::ScoreLess().operator()(a,a), false)
+}
+END_SECTION
+
+START_SECTION(([ProteinHit::ScoreMore] template < typename Arg > bool operator()(const Arg &a, const Arg &b)))
+{
+  ProteinHit a,b;
+  a.setScore(20);
+  b.setScore(10);
+
+  TEST_EQUAL(ProteinHit::ScoreMore().operator()(a,b), true)
+  TEST_EQUAL(ProteinHit::ScoreMore().operator()(b,a), false)
+  TEST_EQUAL(ProteinHit::ScoreMore().operator()(a,a), false)
+}
 END_SECTION
 
 /////////////////////////////////////////////////////////////

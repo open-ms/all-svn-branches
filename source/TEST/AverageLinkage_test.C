@@ -86,7 +86,7 @@ START_SECTION((void operator()(DistanceMatrix< Real > &original_distance, std::v
 	matrix.setValue(4,1,0.8f);
 	matrix.setValue(4,2,0.8f);
 	matrix.setValue(4,3,0.4f);
-	matrix.setValue(5,0,0.7f);
+	matrix.setValue(5,0,0.7000001f); //~ minimal adjustment for gcc 4 with -o2
 	matrix.setValue(5,1,0.8f);
 	matrix.setValue(5,2,0.8f);
 	matrix.setValue(5,3,0.8f);

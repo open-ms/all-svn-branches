@@ -40,6 +40,7 @@
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/FORMAT/FASTAFile.h>
 #include <OpenMS/ANALYSIS/QUANTITATION/ItraqConstants.h>
+#include <OpenMS/METADATA/MetaInfoInterface.h>
 
 // GSL includes (random number generation)
 #include <gsl/gsl_rng.h>
@@ -57,10 +58,10 @@ namespace OpenMS
   typedef Feature::ChargeType SimChargeType;
   
   /// Raw data point
-	typedef RichPeak1D SimPointType;
+	typedef Peak1D SimPointType;
 	
   /// Container for FASTAEntry & abundance information
-  typedef std::vector< std::pair<FASTAFile::FASTAEntry, SimIntensityType> > SampleProteins;
+  typedef std::vector< std::pair<FASTAFile::FASTAEntry, MetaInfoInterface> > SampleProteins;
 
   /// Container for multiple channels of SampleProteins
   typedef std::vector< SampleProteins > SampleChannels;
@@ -73,6 +74,45 @@ namespace OpenMS
 
   /// Sim MSExperiment type
   typedef MSExperiment< SimPointType > MSSimExperiment;
+
+  struct SimRandomNumberGenerator
+  {
+    gsl_rng* biological_rng;
+    gsl_rng* technical_rng;
+
+    SimRandomNumberGenerator()
+      : biological_rng(NULL),
+      technical_rng(NULL)
+    {
+    }
+
+    SimRandomNumberGenerator(const SimRandomNumberGenerator& other)
+      : biological_rng(other.biological_rng),
+      technical_rng(other.technical_rng)
+    {
+    }
+
+    ~SimRandomNumberGenerator()
+    {
+      if(biological_rng != 0)
+      {
+        gsl_rng_free( biological_rng );
+      }
+
+      if(technical_rng != 0)
+      {
+        gsl_rng_free( technical_rng );
+      }
+    }
+
+    SimRandomNumberGenerator& operator = (const SimRandomNumberGenerator& source)
+    {
+      this->biological_rng = source.biological_rng;
+      this->technical_rng = source.technical_rng;
+
+      return *this;
+    }
+  };
 
 }
 

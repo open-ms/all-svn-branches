@@ -30,6 +30,7 @@
 #include <OpenMS/VISUAL/Spectrum2DWidget.h>
 #include <OpenMS/VISUAL/AxisWidget.h>
 #include <OpenMS/VISUAL/DIALOGS/Spectrum2DGoToDialog.h>
+#include <OpenMS/CONCEPT/UniqueIdInterface.h>
 
 #include <QtGui/QPushButton>
 #include <QtGui/QGridLayout>
@@ -66,13 +67,14 @@ namespace OpenMS
 		projection_horz_ = new Spectrum1DWidget(Param(), this);
 		projection_horz_->hide();
 		grid_->addWidget(projection_horz_,0,1,1,2);
-		connect(canvas(), SIGNAL(showProjectionHorizontal(const ExperimentType&, Spectrum1DCanvas::DrawModes)), this, SLOT(horizontalProjection(const ExperimentType&, Spectrum1DCanvas::DrawModes)));
-		connect(canvas(), SIGNAL(showProjectionVertical(const ExperimentType&, Spectrum1DCanvas::DrawModes)), this, SLOT(verticalProjection(const ExperimentType&, Spectrum1DCanvas::DrawModes)));
+    connect(canvas(), SIGNAL(showProjectionHorizontal(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes)), this, SLOT(horizontalProjection(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes)));
+    connect(canvas(), SIGNAL(showProjectionVertical(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes)), this, SLOT(verticalProjection(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes)));
 		connect(canvas(), SIGNAL(showProjectionInfo(int,double,double)), this, SLOT(projectionInfo(int,double,double)));
 		connect(canvas(), SIGNAL(toggleProjections()), this, SLOT(toggleProjections()));
-		connect(canvas(), SIGNAL(showSpectrumAs1D(int)), this, SIGNAL(showSpectrumAs1D(int)));
 		connect(canvas(), SIGNAL(visibleAreaChanged(DRange<2>)), this, SLOT(autoUpdateProjections()));
-		
+    // delegate signals from canvas
+    connect(canvas(), SIGNAL(showSpectrumAs1D(int)), this, SIGNAL(showSpectrumAs1D(int)));
+    connect(canvas(), SIGNAL(showCurrentPeaksAs3D()), this, SIGNAL(showCurrentPeaksAs3D()));
 		// add projections box
 		projection_box_ = new QGroupBox("Projections",this);
 		projection_box_->hide();
@@ -154,7 +156,7 @@ namespace OpenMS
 		
 		if (canvas_->getCurrentLayer().type==LayerData::DT_PEAK)
 		{
-			for (ExperimentType::ConstIterator spec_it = canvas_->getCurrentLayer().peaks.begin(); spec_it != canvas_->getCurrentLayer().peaks.end(); ++spec_it)
+      for (ExperimentType::ConstIterator spec_it = canvas_->getCurrentLayer().getPeakData()->begin(); spec_it != canvas_->getCurrentLayer().getPeakData()->end(); ++spec_it)
 			{
 				if (spec_it->getMSLevel()!=1)
 				{
@@ -168,14 +170,14 @@ namespace OpenMS
 		}
 		else if (canvas_->getCurrentLayer().type==LayerData::DT_FEATURE)
 		{
-			for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().features.begin(); it != canvas_->getCurrentLayer().features.end(); ++it)
+      for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().getFeatureMap()->begin(); it != canvas_->getCurrentLayer().getFeatureMap()->end(); ++it)
 			{
 				tmp.inc(it->getIntensity());
 			}
 		}
 		else
 		{
-			for (Spectrum2DCanvas::ConsensusMapType::ConstIterator it = canvas_->getCurrentLayer().consensus.begin(); it != canvas_->getCurrentLayer().consensus.end(); ++it)
+      for (Spectrum2DCanvas::ConsensusMapType::ConstIterator it = canvas_->getCurrentLayer().getConsensusMap()->begin(); it != canvas_->getCurrentLayer().getConsensusMap()->end(); ++it)
 			{
 				tmp.inc(it->getIntensity());
 			}
@@ -192,7 +194,7 @@ namespace OpenMS
 		{
 			//determine min and max of the data
 			Real min = numeric_limits<Real>::max(), max = -numeric_limits<Real>::max();
-			for (ExperimentType::const_iterator s_it = canvas_->getCurrentLayer().peaks.begin(); s_it!=canvas_->getCurrentLayer().peaks.end(); ++s_it)
+                        for (ExperimentType::const_iterator s_it = canvas_->getCurrentLayer().getPeakData()->begin(); s_it!=canvas_->getCurrentLayer().getPeakData()->end(); ++s_it)
 			{
 				if (s_it->getMSLevel()!=1) continue;
 				//float arrays
@@ -226,7 +228,7 @@ namespace OpenMS
 		
 			//create histogram
 			tmp.reset(min,max,(max-min)/500.0);
-			for (ExperimentType::const_iterator s_it = canvas_->getCurrentLayer().peaks.begin(); s_it!=canvas_->getCurrentLayer().peaks.end(); ++s_it)
+                        for (ExperimentType::const_iterator s_it = canvas_->getCurrentLayer().getPeakData()->begin(); s_it!=canvas_->getCurrentLayer().getPeakData()->end(); ++s_it)
 			{
 				if (s_it->getMSLevel()!=1) continue;
 				//float arrays
@@ -259,7 +261,7 @@ namespace OpenMS
 		{
 			//determine min and max
 			Real min = numeric_limits<Real>::max(), max = -numeric_limits<Real>::max();
-			for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().features.begin(); it != canvas_->getCurrentLayer().features.end(); ++it)
+      for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().getFeatureMap()->begin(); it != canvas_->getCurrentLayer().getFeatureMap()->end(); ++it)
 			{
 				if (it->metaValueExists(name))
 				{
@@ -270,7 +272,7 @@ namespace OpenMS
 			}
 			//create histogram
 			tmp.reset(min,max,(max-min)/500.0);
-			for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().features.begin(); it != canvas_->getCurrentLayer().features.end(); ++it)
+      for (Spectrum2DCanvas::FeatureMapType::ConstIterator it = canvas_->getCurrentLayer().getFeatureMap()->begin(); it != canvas_->getCurrentLayer().getFeatureMap()->end(); ++it)
 			{
 				if (it->metaValueExists(name))
 				{
@@ -306,23 +308,23 @@ namespace OpenMS
 		}
 	}
 	
-	void Spectrum2DWidget::horizontalProjection(const ExperimentType& exp, Spectrum1DCanvas::DrawModes mode)
+  void Spectrum2DWidget::horizontalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
 	{
+		projection_horz_->canvas()->mzToXAxis(true); // determines the orientation of the data
+    projection_horz_->canvas()->setSwappedAxis(canvas()->isMzToXAxis());
 		projection_horz_->showLegend(false);
 		projection_horz_->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
 		if (!projectionsVisible() || projection_horz_->canvas()->getLayerCount()==0) //set draw mode
 		{
 			projection_horz_->canvas()->removeLayer(0);
-			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
-			projection_horz_->canvas()->addLayer(tmp);
+      projection_horz_->canvas()->addLayer(exp);
 			projection_horz_->canvas()->setDrawMode(mode);
 		}
 		else //keep draw mode
 		{
 			Spectrum1DCanvas::DrawModes previous_mode = projection_horz_->canvas()->getDrawMode();
 			projection_horz_->canvas()->removeLayer(0);
-			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
-			projection_horz_->canvas()->addLayer(tmp);
+      projection_horz_->canvas()->addLayer(exp);
 			projection_horz_->canvas()->setDrawMode(previous_mode);
 		}
 		grid_->setColumnStretch(3,2);
@@ -330,25 +332,24 @@ namespace OpenMS
 		projection_box_->show();
 	}
 	
-	void Spectrum2DWidget::verticalProjection(const ExperimentType& exp, Spectrum1DCanvas::DrawModes mode)
+  void Spectrum2DWidget::verticalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes mode)
 	{
-		projection_vert_->canvas()->mzToXAxis(false);
+		projection_vert_->canvas()->mzToXAxis(false); // determines the orientation of the data
+    projection_vert_->canvas()->setSwappedAxis(canvas()->isMzToXAxis());
 		projection_vert_->showLegend(false);
 		projection_vert_->canvas()->setIntensityMode(SpectrumCanvas::IM_PERCENTAGE);
     // todo: why would we want to retain the old draw mode (same in horizontalProjection)??
 		if (!projectionsVisible() || projection_vert_->canvas()->getLayerCount()==0) //set draw mode
 		{
 			projection_vert_->canvas()->removeLayer(0);
-			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
-			projection_vert_->canvas()->addLayer(tmp);
+      projection_vert_->canvas()->addLayer(exp);
 			projection_vert_->canvas()->setDrawMode(mode);
 		}
 		else //keep draw mode
 		{
 			Spectrum1DCanvas::DrawModes previous_mode = projection_vert_->canvas()->getDrawMode();
 			projection_vert_->canvas()->removeLayer(0);
-			ExperimentType tmp(exp); //we need a copy to swap the content into the canvas
-			projection_vert_->canvas()->addLayer(tmp);
+      projection_vert_->canvas()->addLayer(exp);
 			projection_vert_->canvas()->setDrawMode(previous_mode);
 		}
 		grid_->setRowStretch(0,2);
@@ -383,15 +384,33 @@ namespace OpenMS
 			}
 			else
 			{
-				Size feature_index = goto_dialog.getFeatureNumber();
-				///check if the feature index exists
-				if (feature_index>=canvas()->getCurrentLayer().features.size())
+        String feature_id = goto_dialog.getFeatureNumber();
+        //try to convert to UInt64 id
+        UniqueIdInterface uid;
+        uid.setUniqueId(feature_id);
+
+        Size feature_index = canvas()->getCurrentLayer().getFeatureMap()->uniqueIdToIndex(uid.getUniqueId());
+        if (feature_index == Size(-1)) // UID does not exist
+        {
+          try
+          {
+            feature_index=feature_id.toInt(); // normal feature index as stored in map
+          }
+          catch (...)
+          { // we might still deal with a UID, so toInt() will throw as the number is too big
+            feature_index = Size(-1);
+          }
+        }
+
+				//check if the feature index exists
+        if (feature_index>=canvas()->getCurrentLayer().getFeatureMap()->size())
 				{
-					QMessageBox::warning(this, "Invalid feature number", "Feature number too large.\nPlease select a valid feature!");
+					QMessageBox::warning(this, "Invalid feature number", "Feature number too large/UniqueID not found.\nPlease select a valid feature!");
 					return;
 				}
 				//display feature with a margin
-				DBoundingBox<2> bb = canvas()->getCurrentLayer().features[feature_index].getConvexHull().getBoundingBox();
+        const FeatureMapType& map = *canvas()->getCurrentLayer().getFeatureMap();
+        DBoundingBox<2> bb = map[feature_index].getConvexHull().getBoundingBox();
 				DoubleReal rt_margin = (bb.maxPosition()[0] - bb.minPosition()[0])*0.5;
 				DoubleReal mz_margin = (bb.maxPosition()[1] - bb.minPosition()[1])*2;
 				SpectrumCanvas::AreaType area(bb.minPosition()[1]-mz_margin, bb.minPosition()[0]-rt_margin, bb.maxPosition()[1]+mz_margin, bb.maxPosition()[0]+rt_margin);
@@ -411,8 +430,6 @@ namespace OpenMS
 		{
 			projections_timer_->start();
 		}
-	}
-	
-	
+	}		
 } //Namespace
 

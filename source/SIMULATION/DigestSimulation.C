@@ -86,6 +86,8 @@ namespace OpenMS {
 
   void DigestSimulation::digest(FeatureMapSim & feature_map)
   {
+    LOG_INFO << "Digest Simulation ... started" << std::endl;
+
 		if ((String)param_.getValue("enzyme") == String("none"))
 		{
       //peptides = proteins;
@@ -115,7 +117,6 @@ namespace OpenMS {
 				protein_hit->getKeys(keys);
 				for (StringList::const_iterator it_key = keys.begin(); it_key != keys.end(); it_key++)
 				{
-					if (!it_key->hasPrefix("intensity")) continue;
 					f.setMetaValue(*it_key, protein_hit->getMetaValue(*it_key)); 
 				}
 			        

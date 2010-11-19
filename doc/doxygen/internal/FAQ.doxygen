@@ -200,7 +200,8 @@ svn propset svn:eol-style native MyClass.C
 
 	    <LI><b>How do I add a new TOPP test?</b><BR>
         <OL>
-          <LI> Add commands to @em %OpenMS/source/TEST/TOPP/CMakeLists.txt
+          <LI> Add commands to @em %OpenMS/source/TEST/TOPP/CMakeLists.txt (where it fits alphabetically) and also add its name to the tools list at the top of the file, so
+          that the '-write_ini' functionality can be tested.
         </OL>
 
 	    <LI><b>How do I add a new GUI test (for QT Gui classes) for the class <TT>MyClass</TT>?</b><BR>
@@ -467,8 +468,8 @@ svn propset svn:eol-style native MyClass.C
 				<UL>
 					<LI> Submit the bug to the tracker
 					<LI> Fix the bug and add a test for it in the HEAD
-					<LI> Commit bugfix and test as a single commit and add the bug number to the comment.<BR>E.g.: "Fixed bug 12883026"
-					<LI> Close the bug in the tracker and add the the revision of the fix to the comment.<BR>E.g.: "Fixed in revision 3005"
+					<LI> Commit bugfix and test as a single commit and add the bug number to the comment.<BR>E.g.: "Fixed bug #123"
+					<LI> Close the bug in the tracker and add the the revision of the fix to the comment.<BR>E.g.: "Fixed in revision [3005]"
 					<LI> Merge the revision into the current release branch (see SVN section above)
 				</UL>
 				
@@ -484,7 +485,9 @@ svn propset svn:eol-style native MyClass.C
 				Here is a list of what is to do:
 				<OL>
 					<LI> Remove classes not ready for release from the release branch.
-					<LI> Update the CHANGELOG file
+					<LI> Update the CHANGELOG file (also document all parameter names of TOPP tools which have changed!
+              - the easiest way to do this: take all INI files from previous release and call:
+              "<tool> -write_ini bla.ini -ini <previous.ini>" and look at output)
 					<LI> Check the test builds of the latest gcc/cl version for compiler warnings (32 and 64 bit)
 					<LI> Check if all examples in @a OpenMS/source/EXAMPLES/ compile.
 					<LI> Correct errors found by @a tools/checker.php.
@@ -567,11 +570,16 @@ svn propset svn:eol-style native MyClass.C
 
 				<LI><B>How are the binary release packages for different Linux distributions created?</B>
 					<OL>
+						<LI> Prerequisites: make sure the 'rpm' or respective package creation utilities are installed.
 						<LI> Check out the release branch and contrib
 						<LI> Build the contrib libraries
-						<LI> Copy the documentation (HTML folder and PDF tutorials) to the @em doc folder.
 						<LI> Configure %OpenMS using
 						     @n <code>&gt; cmake -D INSTALL_PREFIX=/usr -D PACKAGE_TYPE=rpm/deb ...</code>
+            <LI> Set the environment variable 'OPENMS_DATA_PATH' to your OpenMS share directory, e.g. <tt>/home/myusername/binary_release/OpenMS/share/OpenMS</tt>.<br>
+                 Explanation follows (just read if interested):
+                 When using INSTALL_PREFIX, running any OpenMS executable before installation will result in an error because the SHARE/OpenMS directory will not be found
+                 (it is already hardcoded to the future install directory). As 'make doc' etc require OpenMS executables (TOPPDocumenter,...) this step is required.
+						<LI> Build OpenMS: <tt>make TOPP UTILS doc doc_tutorials</tt>
 						<LI> Build the package using <tt>make package</tt>
 						<LI> Rename the package to this naming schema:
 								 @n OpenMS-&lt;version&gt;-&lt;package-nr&gt;_&lt;dist&gt;-&lt;dist-version&gt;_&lt;dist-arch&gt;.&lt;rpm/deb&gt;
@@ -662,7 +670,9 @@ svn propset svn:eol-style native MyClass.C
 		<LI> Add the tool to the correct category in the <TT>defaults_</TT> param section in <TT>source/APPLICATIONS/TOPPASBase.C</TT>
         <LI> Write a TOPP test (add it to /source/TEST/TOPP/CMakeLists.txt)<BR>
         		 Warning: handle any kind of input files to your TOPP tool via command line flags and use the ${DATA_DIR_TOPP} prefix. You can use ini-files
-        		 to specify output-files, but not input-files. Doing otherwise will break out-of-source builds.
+        		 to specify output-files, but not input-files. Doing otherwise will break out-of-source builds.<BR>
+             Hint: add "-test" to the call of your TOPP tool and also create the expected output that you put in source/TEST/TOPP with that flag active.
+             The flag ensures that UniqueId's, dates etc are equal no matter where and when the tool is run.
 			</OL>
 
 			<LI><B>What do I have to do to add a new UTILS tool?</B>
@@ -673,6 +683,7 @@ svn propset svn:eol-style native MyClass.C
 				<LI> Add it to the UTILS docu page (in @a %doc/doxygen/public/UTILS.doxygen)
 				<LI> Add the executable to the ignore list of the directory (@a svn @a propedit @a svn:ignore @a source/APPLICATION/UTILS/)
         <LI> Add the name to <TT>source/APPLICATIONS/UTILS/executables.cmake</TT>
+        <LI> Write a test (this is optional for UTILS). See TOPP tools above and add the test to the bottom of /source/TEST/TOPP/CMakeLists.txt.
 			</OL>
 
 		</UL>

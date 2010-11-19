@@ -1,4 +1,4 @@
-// -*- mode: C++; tab-width: 2; -*-
+// -*- Mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -21,17 +21,16 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Rene Hussong$
-// $Authors: $
+// $Maintainer: Rene Hussong $
+// $Authors: Rene Hussong $
 // --------------------------------------------------------------------------
-
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeWaveletTransform.h>
 
 namespace OpenMS
 {
-	bool myCudaComparator (const cudaHelp& a, const cudaHelp& b)
-	{
-		return (a.intens < b.intens);
-	}
+bool myCudaComparator (const cudaHelp& a, const cudaHelp& b)
+{
+	return (a.intens < b.intens);
+}
 }

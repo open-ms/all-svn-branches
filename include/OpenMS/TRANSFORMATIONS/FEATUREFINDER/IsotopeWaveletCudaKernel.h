@@ -36,19 +36,21 @@
 #include <cuda.h>
 #include <cuda_runtime.h>
 
+using namespace std;
+
 namespace OpenMS
 {
 	int checkCUDAError(const char *msg);
 
 	void getExternalCudaTransforms (dim3 dimGrid, dim3 dimBlock, float* positions_dev, float* intensities_dev, int from_max_to_left, int from_max_to_right, float* result_dev, 
-		const int charge, const int to_load, const int to_compute, const int size, float* fwd2);
+		const int charge, const int to_load, const int to_compute, const int size, float* fwd2, bool highres=false);
 	
 	int sortOnDevice(float *array, int* pos_indices, int numElements, int padding);
 
 	void scoreOnDevice (int* sorted_positions_indices, float* trans_intensities,  float* pos, float* scores, 
 		const int c, const int num_of_scores, const int overall_size, const unsigned int max_peak_cutoff, const float ampl_cutoff);
 
-	void deriveOnDevice (float* spec, float* spec_pos, float* fwd, const int size, float* intensities_dev);
+	void deriveOnDevice (float* spec, float* spec_pos, float* fwd, const int size, float* intensities_dev, bool highres=false);
 }
 
 #endif

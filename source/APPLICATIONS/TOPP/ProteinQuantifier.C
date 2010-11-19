@@ -47,23 +47,42 @@ using namespace std;
 /**
 	@page TOPP_ProteinQuantifier ProteinQuantifier
 	
-	@brief Application to compute peptide and protein abundances from annotated feature/consensus maps.
+	@brief Compute peptide and protein abundances from annotated feature/consensus maps.
 
-	(To produce annotated maps, use the @ref TOPP_IDMapper tool to annotate featureXML or consensusXML files with identifications from idXML files.)
+<CENTER>
+	<table>
+		<tr>
+			<td ALIGN = "center" BGCOLOR="#EBEBEB"> potential predecessor tools </td>
+			<td VALIGN="middle" ROWSPAN=3> \f$ \longrightarrow \f$ ProteinQuantifier \f$ \longrightarrow \f$</td>
+			<td ALIGN = "center" BGCOLOR="#EBEBEB"> potential successor tools </td>
+		</tr>
+		<tr>
+			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_IDMapper </td>
+			<td VALIGN="middle" ALIGN = "center" ROWSPAN=2> external tools @n e.g. for statistical analysis</td>
+		</tr>
+		<tr>
+			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_FeatureLinker </td>
+		</tr>
+	</table>
+</CENTER>
 
-	Quantification is based on the intensity values of the features in the input. Feature intensities are first accumulated to peptide abundances, according to the peptide identifications annotated to the features/feature groups. Then, abundances of the peptides of a protein are averaged to compute the protein abundance.\n
-	The peptide-to-protein step implements a general version of the "top 3 approach" (but only for relative quantification) described in:\n
-	Silva <em>et al.</em>: "Absolute quantification of proteins by LCMSE: a virtue of parallel MS acquisition" (Mol. Cell. Proteomics, 2006).
+	Quantification is based on the intensity values of the features in the input. Feature intensities are first accumulated to peptide abundances, according to the peptide identifications annotated to the features/feature groups. Then, abundances of the peptides of a protein are averaged to compute the protein abundance.
 
-	Only features/feature groups with unambiguous peptide annotation are used for peptide quantification, and generally only proteotypic peptides (i.e. those matching to exactly one protein) are used for protein quantification. As an exception to this rule, if ProteinProphet results for the whole sample set are provided with the @a protxml option, or are already included in a featureXML input, also groups of indistinguishable proteins will be quantified. The reported quantity then refers to the total for the whole group.
+	The peptide-to-protein step uses the (e.g. 3) most abundant proteotypic peptides per protein to compute the protein abundances. This is a general version of the "top 3 approach" (but only for relative quantification) described in:\n
+	Silva <em>et al.</em>: Absolute quantification of proteins by LCMS<sup>E</sup>: a virtue of parallel MS acquisition (Mol. Cell. Proteomics, 2006).
+
+	Only features/feature groups with unambiguous peptide annotation are used for peptide quantification, and generally only proteotypic peptides (i.e. those matching to exactly one protein) are used for protein quantification. As an exception to this rule, if ProteinProphet results for the whole sample set are provided with the @p protxml option, or are already included in a featureXML input, also groups of indistinguishable proteins will be quantified. The reported quantity then refers to the total for the whole group.
 
 	Peptide/protein IDs from multiple identification runs can be handled, but will not be differentiated (i.e. protein accessions for a peptide will be accumulated over all identification runs).
+
+	Peptides with the same sequence, but with different modifications are quantified separately on the peptide level, but treated as one peptide for the protein quantification (i.e. the contributions of differently-modified variants of the same peptide are accumulated).
 
 	More information below the parameter specification.
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_ProteinQuantifier.cli
 
+	<B>Output format</B>
 
 	The output files produced by this tool have a table format, with columns as described below:
 
@@ -71,20 +90,199 @@ using namespace std;
 	- @b protein: Protein accession(s) (as in the annotations in the input file; separated by "/" if more than one).
 	- @b n_proteins: Number of indistinguishable proteins quantified (usually "1").
 	- @b protein_score: Protein score, e.g. ProteinProphet probability (if available).
-	- @b n_peptides: Number of proteotypic peptides observed for this protein (or group of indistinguishable proteins) across all samples. Note that not necessarily all of these peptides contribute to the protein abundance (depending on parameter @a top).
+	- @b n_peptides: Number of proteotypic peptides observed for this protein (or group of indistinguishable proteins) across all samples. Note that not necessarily all of these peptides contribute to the protein abundance (depending on parameter @p top).
 	- @b abundance: Computed protein abundance. For consensusXML input, there will be one column  per sample ("abundance_0", "abundance_1", etc.).
 
-	<b>Peptide output</b> (one peptide or - if @a filter_charge is set - one charge state of a peptide per line):
+	<b>Peptide output</b> (one peptide or - if @p filter_charge is set - one charge state of a peptide per line):
 	- @b peptide: Peptide sequence. Only peptides that occur in unambiguous annotations of features are reported.
 	- @b protein: Protein accession(s) for the peptide (separated by "/" if more than one).
 	- @b n_proteins: Number of proteins this peptide maps to. (Same as the number of accessions in the previous column.)
-	- @b charge: Charge state quantified in this line. "0" (for "all charges") unless @a filter_charge was set.
-	- @b abundance: Computed abundance for this peptide. If the charge in the preceding column is 0, this is the total abundance of the peptide over all charge states; otherwise, it is only the abundance observed for the indicated charge (in this case, there may be more than one line for the peptide sequence). Again, for consensusXML input, there will be one column  per sample ("abundance_0", "abundance_1", etc.). Also for consensusXML, the reported values are already normalized if @a consensus:normalize was set.
+	- @b charge: Charge state quantified in this line. "0" (for "all charges") unless @p filter_charge was set.
+	- @b abundance: Computed abundance for this peptide. If the charge in the preceding column is 0, this is the total abundance of the peptide over all charge states; otherwise, it is only the abundance observed for the indicated charge (in this case, there may be more than one line for the peptide sequence). Again, for consensusXML input, there will be one column  per sample ("abundance_0", "abundance_1", etc.). Also for consensusXML, the reported values are already normalized if @p consensus:normalize was set.
 
+	<B>Protein quantification examples</B>
 
-	In addition to the information above, consider this for parameter selection: With @a filter_charge and @a average, there is a trade-off between comparability of protein abundances within a sample and of abundances for the same protein across different samples.\n
-	Setting @a filter_charge may increase reproducibility between samples, but will distort the proportions of protein abundances within a sample. The reason is that ionization properties vary between peptides, but should remain constant across samples. Filtering by charge state can help to reduce the impact of feature detection differences between samples.\n
-	For @a average, there is a qualitative difference between @a mean/median and @a sum in the effect that missing peptide abundances have (only if @a include_all is set): @a mean and @a median ignore missing cases, averaging only present values. If low-abundant peptides are not detected in some samples, the computed protein abundances for those samples may thus be too optimistic. @a sum implicitly treats missing values as zero, so this problem does not occur and comparability across samples is ensured. However, with @a sum the total number of peptides ("summands") available for a protein may affect the abundances computed for it (depending on @a top), so results within a sample may become unproportional.
+	While quantification on the peptide level is fairly straight-forward, a number of options influence quantification on the protein level - especially for consensusXML input. The three parameters @p top, @p include_all and @p consensus:fix_peptides determine which peptides are used to quantify proteins in different samples.
+
+	As an example, consider a protein with four proteotypic peptides. Each peptide is detected in a subset of three samples, as indicated in the table below. The peptides are ranked by abundance (1: highest, 4: lowest; assuming for simplicity that the order is the same in all samples).
+
+<CENTER>
+	<table>
+		<tr>
+		  <td></td>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> sample 1 </td>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> sample 2 </td>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> sample 3 </td>
+		</tr>
+		<tr>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> peptide 1 </td>
+			<td ALIGN="center"> X </td>
+			<td></td>
+			<td ALIGN="center"> X </td>
+		</tr>
+		<tr>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> peptide 2 </td>
+			<td ALIGN="center"> X </td>
+			<td ALIGN="center"> X </td>
+			<td></td>
+		</tr>
+		<tr>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> peptide 3 </td>
+			<td ALIGN="center"> X </td>
+			<td ALIGN="center"> X </td>
+			<td ALIGN="center"> X </td>
+		</tr>
+		<tr>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> peptide 4 </td>
+			<td ALIGN="center"> X </td>
+			<td ALIGN="center"> X </td>
+			<td></td>
+		</tr>
+	</table>
+</CENTER>
+
+  Different parameter combinations lead to different quantification scenarios, as shown here:
+
+<CENTER>
+	<table>
+		<tr>
+		  <td ALIGN="center" BGCOLOR="#EBEBEB" COLSPAN=3> @b parameters \n "*": no effect in this case </td>
+		  <td ALIGN="center" BGCOLOR="#EBEBEB" COLSPAN=3> <b>peptides used for quantification</b> \n "(...)": not quantified here because ... </td>
+		  <td ALIGN="center" VALIGN="middle" BGCOLOR="#EBEBEB" ROWSPAN=2> explanation </td>
+		</tr>
+		<tr>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> @p top </td>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> @p include_all </td>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> @p c.:fix_peptides </td>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> sample 1 </td>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> sample 2 </td>
+			<td ALIGN="center" BGCOLOR="#EBEBEB"> sample 3 </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 0 </td>
+			<td ALIGN="center"> * </td>
+			<td ALIGN="center"> no </td>
+			<td ALIGN="center"> 1, 2, 3, 4 </td>
+			<td ALIGN="center"> 2, 3, 4 </td>
+			<td ALIGN="center"> 1, 3 </td>
+			<td> all peptides </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 1 </td>
+			<td ALIGN="center"> * </td>
+			<td ALIGN="center"> no </td>
+			<td ALIGN="center"> 1 </td>
+			<td ALIGN="center"> 2 </td>
+			<td ALIGN="center"> 1 </td>
+			<td> single most abundant peptide </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 2 </td>
+			<td ALIGN="center"> * </td>
+			<td ALIGN="center"> no </td>
+			<td ALIGN="center"> 1, 2 </td>
+			<td ALIGN="center"> 2, 3 </td>
+			<td ALIGN="center"> 1, 3 </td>
+			<td> two most abundant peptides </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 3 </td>
+			<td ALIGN="center"> no </td>
+			<td ALIGN="center"> no </td>
+			<td ALIGN="center"> 1, 2, 3 </td>
+			<td ALIGN="center"> 2, 3, 4 </td>
+			<td ALIGN="center"> (too few peptides) </td>
+			<td> three most abundant peptides </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 3 </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> no </td>
+			<td ALIGN="center"> 1, 2, 3 </td>
+			<td ALIGN="center"> 2, 3, 4 </td>
+			<td ALIGN="center"> 1, 3 </td>
+			<td> three or fewer most abundant peptides </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 4 </td>
+			<td ALIGN="center"> no </td>
+			<td ALIGN="center"> * </td>
+			<td ALIGN="center"> 1, 2, 3, 4 </td>
+			<td ALIGN="center"> (too few peptides) </td>
+			<td ALIGN="center"> (too few peptides) </td>
+			<td> four most abundant peptides </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 4 </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> * </td>
+			<td ALIGN="center"> 1, 2, 3, 4 </td>
+			<td ALIGN="center"> 2, 3, 4 </td>
+			<td ALIGN="center"> 1, 3 </td>
+			<td> four or fewer most abundant peptides </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 0 </td>
+			<td ALIGN="center"> * </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> 3 </td>
+			<td ALIGN="center"> 3 </td>
+			<td ALIGN="center"> 3 </td>
+			<td> all peptides present in every sample </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 1 </td>
+			<td ALIGN="center"> * </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> 3 </td>
+			<td ALIGN="center"> 3 </td>
+			<td ALIGN="center"> 3 </td>
+			<td> single peptide present in most samples </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 2 </td>
+			<td ALIGN="center"> no </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> 1, 3 </td>
+			<td ALIGN="center"> (peptide 1 missing) </td>
+			<td ALIGN="center"> 1, 3 </td>
+			<td> two peptides present in most samples </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 2 </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> 1, 3 </td>
+			<td ALIGN="center"> 3 </td>
+			<td ALIGN="center"> 1, 3 </td>
+			<td> two or fewer peptides present in most samples </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 3 </td>
+			<td ALIGN="center"> no </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> 1, 2, 3 </td>
+			<td ALIGN="center"> (peptide 1 missing) </td>
+			<td ALIGN="center"> (peptide 2 missing) </td>
+			<td> three peptides present in most samples </td>
+		</tr>
+		<tr>
+			<td ALIGN="center"> 3 </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> yes </td>
+			<td ALIGN="center"> 1, 2, 3 </td>
+			<td ALIGN="center"> 2, 3 </td>
+			<td ALIGN="center"> 1, 3 </td>
+			<td> three or fewer peptides present in most samples </td>
+		</tr>
+	</table>
+</CENTER>
+
+	<B>Further considerations for parameter selection</B>
+
+	With @p filter_charge and @p average, there is a trade-off between comparability of protein abundances within a sample and of abundances for the same protein across different samples.\n
+	Setting @p filter_charge may increase reproducibility between samples, but will distort the proportions of protein abundances within a sample. The reason is that ionization properties vary between peptides, but should remain constant across samples. Filtering by charge state can help to reduce the impact of feature detection differences between samples.\n
+	For @p average, there is a qualitative difference between @p mean/median and @p sum in the effect that missing peptide abundances have (only if @p include_all is set or @p top is 0): @p mean and @p median ignore missing cases, averaging only present values. If low-abundant peptides are not detected in some samples, the computed protein abundances for those samples may thus be too optimistic. @p sum implicitly treats missing values as zero, so this problem does not occur and comparability across samples is ensured. However, with @p sum the total number of peptides ("summands") available for a protein may affect the abundances computed for it (depending on @p top), so results within a sample may become unproportional.
 
 */
 
@@ -101,7 +299,7 @@ namespace OpenMS
 		
 		TOPPProteinQuantifier() :
 			TOPPBase("ProteinQuantifier", "Compute peptide and protein abundances"),
-			proteins_()
+			proteins_(), n_samples_(0)
       {
       }
 
@@ -121,8 +319,8 @@ namespace OpenMS
 		/// Quantitative and associated data for a protein
 		struct protein_data
 		{
-			// peptide -> sample -> abundance:
-			map<AASequence, sample_abundances> abundances;
+			// peptide (unmodified) -> sample -> abundance:
+			map<String, sample_abundances> abundances;
 			sample_abundances total_abundances; // sample -> total abundance
 		};
 		typedef map<String, protein_data> protein_quant; // by protein accession
@@ -141,44 +339,43 @@ namespace OpenMS
 										blank_features(0), ambig_features(0) {}
 		} stats_; // for output in the end
 
+		/// Number of samples in the data
+		Size n_samples_;
 
-		void registerOptionsAndFlags_()
-      {
-				registerInputFile_("in", "<file>", "", "Input file");
-				setValidFormats_("in", StringList::create("featureXML,consensusXML"));
-				registerInputFile_("protxml", "<file>", "", "ProteinProphet results (protXML converted to idXML) for the identification runs that were used to annotate the input.\nInformation about indistinguishable proteins will be used for protein quantification.", false);
-				setValidFormats_("protxml", StringList::create("idXML"));
-        registerOutputFile_("out", "<file>", "", "Output file for protein abundances", false);
-				registerOutputFile_("peptide_out", "<file>", "", "Output file for peptide abundances\nEither 'out' or 'peptide_out' are required. They can be used together.", false);
 
-				addEmptyLine_();
-				registerIntOption_("top", "<number>", 3, "Calculate protein abundance from this number of proteotypic peptides (best first; '0' for all)", false);
-				setMinInt_("top", 0);
-				registerStringOption_("average", "<method>", "median", "Averaging method used to compute protein abundances from peptide abundances", false);
-				setValidStrings_("average", StringList::create("median,mean,sum"));
-				registerFlag_("include_all", "Include results for proteins with fewer than 'top' proteotypic peptides");
-				registerFlag_("filter_charge", "Distinguish between charge states of a peptide. For peptides, abundances will be reported separately for each charge;\nfor proteins, abundances will be computed based only on the most prevalent charge of each peptide.\nBy default, abundances are summed over all charge states.");
+	  void registerOptionsAndFlags_()
+    {
+		  registerInputFile_("in", "<file>", "", "Input file");
+		  setValidFormats_("in", StringList::create("featureXML,consensusXML"));
+		  registerInputFile_("protxml", "<file>", "", "ProteinProphet results (protXML converted to idXML) for the identification runs that were used to annotate the input.\nInformation about indistinguishable proteins will be used for protein quantification.", false);
+		  setValidFormats_("protxml", StringList::create("idXML"));
+      registerOutputFile_("out", "<file>", "", "Output file for protein abundances", false);
+		  registerOutputFile_("peptide_out", "<file>", "", "Output file for peptide abundances\nEither 'out' or 'peptide_out' are required. They can be used together.", false);
 
-				addEmptyLine_();
-        addText_("Additional options for consensusXML input:");
-				registerTOPPSubsection_("consensus", "Additional options for consensusXML input");
-				registerFlag_("consensus:normalize", "Scale peptide abundances so that medians of all samples are equal");
-				registerFlag_("consensus:fix_peptides", "Use the same peptides for protein quantification across all samples.\nThe 'top' peptides that occur each in the highest number of samples are selected (breaking ties by total abundance),\nbut there is no guarantee that these will be the best co-ocurring peptides.");
+		  addEmptyLine_();
+		  registerIntOption_("top", "<number>", 3, "Calculate protein abundance from this number of proteotypic peptides (most abundant first; '0' for all)", false);
+		  setMinInt_("top", 0);
+		  registerStringOption_("average", "<method>", "median", "Averaging method used to compute protein abundances from peptide abundances", false);
+		  setValidStrings_("average", StringList::create("median,mean,sum"));
+		  registerFlag_("include_all", "Include results for proteins with fewer proteotypic peptides than indicated by 'top' (no effect if 'top' is 0 or 1)");
+		  registerFlag_("filter_charge", "Distinguish between charge states of a peptide. For peptides, abundances will be reported separately for each charge;\nfor proteins, abundances will be computed based only on the most prevalent charge of each peptide.\nBy default, abundances are summed over all charge states.");
 
-				addEmptyLine_();
-				addText_("Output formatting options:");
-				registerTOPPSubsection_("format", "Output formatting options");
-				registerStringOption_("format:separator", "<string>", "", "Character(s) used to separate fields; by default, the 'tab' character is used", false);
-				registerStringOption_("format:quoting", "<method>", "double", "Method for quoting of strings: 'none' for no quoting, 'double' for quoting with doubling of embedded quotes,\n'escape' for quoting with backslash-escaping of embedded quotes", false);
-				setValidStrings_("format:quoting", StringList::create("none,double,escape"));
-				registerStringOption_("format:replacement", "<string>", "_", "If 'quoting' is 'none', used to replace occurrences of the separator in strings before writing", false);
-      }
+		  registerTOPPSubsection_("consensus", "Additional options for consensusXML input");
+		  registerFlag_("consensus:normalize", "Scale peptide abundances so that medians of all samples are equal");
+		  registerFlag_("consensus:fix_peptides", "Use the same peptides for protein quantification across all samples.\nWith 'top 0', all peptides that occur in every sample are considered.\nOtherwise ('top N'), the N peptides that occur in the most samples (independently of each other) are selected,\nbreaking ties by total abundance (there is no guarantee that the best co-ocurring peptides are chosen!).");
+
+		  registerTOPPSubsection_("format", "Output formatting options");
+		  registerStringOption_("format:separator", "<sep>", "", "Character(s) used to separate fields; by default, the 'tab' character is used", false);
+		  registerStringOption_("format:quoting", "<method>", "double", "Method for quoting of strings: 'none' for no quoting, 'double' for quoting with doubling of embedded quotes,\n'escape' for quoting with backslash-escaping of embedded quotes", false);
+		  setValidStrings_("format:quoting", StringList::create("none,double,escape"));
+		  registerStringOption_("format:replacement", "<x>", "_", "If 'quoting' is 'none', used to replace occurrences of the separator in strings before writing", false);
+    }
 
 		
 		/**
 			 @brief Compute the median of a list of values (possibly already sorted)
 
-			 Note that the list @a values must not be empty!
+			 Note that the list @p values must not be empty!
 		*/
 		DoubleReal median_(DoubleList values, bool sorted=FALSE)
 			{
@@ -196,7 +393,7 @@ namespace OpenMS
 		/**
 			 @brief Get the "canonical" annotation (a single peptide hit) of a feature/consensus feature from the associated list of peptide identifications.
 
-			 Only the best-scoring peptide hit of each ID in @a peptides is taken into account. If there's more than one ID and the best hits are not identical by sequence, or if there's no peptide ID, an empty peptide hit (for "ambiguous/no annotation") is returned.
+			 Only the best-scoring peptide hit of each ID in @p peptides is taken into account. If there's more than one ID and the best hits are not identical by sequence, or if there's no peptide ID, an empty peptide hit (for "ambiguous/no annotation") is returned.
 			 Protein accessions from identical peptide hits are accumulated.
 		*/
 		PeptideHit getAnnotation_(vector<PeptideIdentification>& peptides)
@@ -231,7 +428,7 @@ namespace OpenMS
 		/**
 			 @brief Gather quantitative information from a feature.
 
-			 Store quantitative information from @a feature in @a quant, based on the peptide annotation in @a hit. If @a hit is empty ("ambiguous/no annotation"), nothing is stored.
+			 Store quantitative information from @p feature in @ quant, based on the peptide annotation in @p hit. If @p hit is empty ("ambiguous/no annotation"), nothing is stored.
 		*/
 		void quantifyFeature_(const FeatureHandle& feature, const PeptideHit& hit, 
 													peptide_quant& quant)
@@ -253,7 +450,7 @@ namespace OpenMS
 		/**
 			 @brief Order keys (charges/peptides for peptide/protein quantification) according to how many samples they allow to quantify, breaking ties by total abundance.
 
-			 The keys of @a abundances are stored ordered in @a result, best first.
+			 The keys of @p abundances are stored ordered in @p result, best first.
 		*/
 		template <typename T>
 		void orderBest_(const map<T, sample_abundances> abundances, 
@@ -286,7 +483,7 @@ namespace OpenMS
 		/**
 			 @brief Compute overall peptide quantities.
 
-			 Based on quantitative data for individual charge states (derived from annotated features) in @a quant, compute overall abundances for all peptides and store them also in @a quant.
+			 Based on quantitative data for individual charge states (derived from annotated features) in @p quant, compute overall abundances for all peptides and store them also in @p quant.
 		*/
 		void quantifyPeptides_(peptide_quant& quant)
 			{
@@ -440,7 +637,7 @@ namespace OpenMS
 		/**
 			 @brief Compute protein quantities.
 
-			 Based on quantitative data for peptides in @a pep_quant, compute protein abundances and store them in @a prot_quant.
+			 Based on quantitative data for peptides in @p pep_quant, compute protein abundances and store them in @p prot_quant.
 		*/
 		void quantifyProteins_(const peptide_quant& pep_quant, 
 													 protein_quant& prot_quant)
@@ -475,7 +672,9 @@ namespace OpenMS
 									 pep_it->second.total_abundances.begin(); tot_it !=
 									 pep_it->second.total_abundances.end(); ++tot_it)
 						{
-							prot_quant[accession].abundances[pep_it->first][tot_it->first] =
+							// add up contributions of same peptide with different mods:
+							String raw_peptide = pep_it->first.toUnmodifiedString();
+							prot_quant[accession].abundances[raw_peptide][tot_it->first] +=
 								tot_it->second;
 						}
 					}
@@ -489,22 +688,36 @@ namespace OpenMS
 				for (protein_quant::iterator prot_it = prot_quant.begin();
 						 prot_it != prot_quant.end(); ++prot_it)
 				{
-					if (prot_it->second.abundances.size() < top)
+					if ((top > 0) && (prot_it->second.abundances.size() < top))
 					{
 						if (include_all) stats_.too_few_peptides++;
 						else continue; // not enough proteotypic peptides
 					}
 
-					vector<AASequence> peptides; // peptides selected for quantification
-					if (fix_peptides && (prot_it->second.abundances.size() > top))
+					vector<String> peptides; // peptides selected for quantification
+					if (fix_peptides && (top == 0))
 					{
-						// consider only "top" best peptides
+						// consider all peptides that occur in every sample:
+						for (map<String, sample_abundances>::iterator ab_it =
+									 prot_it->second.abundances.begin(); ab_it !=
+									 prot_it->second.abundances.end(); ++ab_it)
+						{
+							if (ab_it->second.size() == n_samples_) 
+							{
+								peptides.push_back(ab_it->first);
+							}
+						}
+					}
+					else if (fix_peptides && (top > 0) && 
+									 (prot_it->second.abundances.size() > top))
+					{
+						// consider only "top" best peptides:
 						orderBest_(prot_it->second.abundances, peptides);
 						peptides.resize(top);
 					}
-					else // consider all peptides
+					else // consider all peptides:
 					{
-						for (map<AASequence, sample_abundances>::iterator ab_it =
+						for (map<String, sample_abundances>::iterator ab_it =
 									 prot_it->second.abundances.begin(); ab_it !=
 									 prot_it->second.abundances.end(); ++ab_it)
 						{
@@ -514,7 +727,7 @@ namespace OpenMS
 
 					map<UInt64, DoubleList> abundances; // all pept. abundances by sample
 					// consider only the peptides selected above for quantification:
-					for (vector<AASequence>::iterator pep_it = peptides.begin();
+					for (vector<String>::iterator pep_it = peptides.begin();
 							 pep_it != peptides.end(); ++pep_it)
 					{
 						sample_abundances& current_ab = prot_it->second.abundances[*pep_it];
@@ -528,7 +741,7 @@ namespace OpenMS
 					for (map<UInt64, DoubleList>::iterator ab_it = abundances.begin();
 							 ab_it != abundances.end(); ++ab_it)
 					{
-						if (!include_all && (ab_it->second.size() < top))
+						if (!include_all && (top > 0) && (ab_it->second.size() < top))
 						{
 							continue; // not enough peptide abundances for this sample
 						}
@@ -804,7 +1017,7 @@ namespace OpenMS
 
 
     /// Write processing statistics.
-		void writeStatistics_(Size n_samples)
+		void writeStatistics_()
 			{
 				stats_.ambig_features = stats_.total_features - stats_.blank_features - 
 					stats_.quant_features;
@@ -819,14 +1032,18 @@ namespace OpenMS
 				if (!getStringOption_("out").empty())
 				{
 					bool include_all = getFlag_("include_all");
+					Size top = getIntOption_("top");
 					LOG_INFO << "\n...proteins/protein groups: " << stats_.quant_proteins
 									 << " quantified";
-					if (include_all) LOG_INFO << " (incl. ";
-					else LOG_INFO << ", ";
-					LOG_INFO << stats_.too_few_peptides << " with fewer than " 
-									 << getIntOption_("top") << " peptides";
-					if (include_all) LOG_INFO << ")";
-					else if (n_samples > 1) LOG_INFO << " in every sample";
+					if (top > 1)
+					{
+						if (include_all) LOG_INFO << " (incl. ";
+						else LOG_INFO << ", ";
+						LOG_INFO << stats_.too_few_peptides << " with fewer than " 
+										 << top << " peptides";
+						if (n_samples_ > 1) LOG_INFO << " in every sample";
+						if (include_all) LOG_INFO << ")";
+					}
 				}
 				LOG_INFO << endl;
 			}
@@ -867,6 +1084,7 @@ namespace OpenMS
 					FeatureMap<> features;
           FeatureXMLFile().load(in, features);
 					samples.push_back(0);
+					n_samples_ = 1;
 
 					if (protxml.empty() && 
 							(features.getProteinIdentifications().size() == 1) &&
@@ -904,6 +1122,7 @@ namespace OpenMS
 					{
 						samples.push_back(file_it->first);
 					}
+					n_samples_ = samples.size();
 
 					if (protxml.empty() && 
 							(consensus.getProteinIdentifications().size() == 1) &&
@@ -972,7 +1191,7 @@ namespace OpenMS
 					outstr.close();
 				}
 
-				writeStatistics_(samples.size());
+				writeStatistics_();
 
 				return EXECUTION_OK;				
 			}

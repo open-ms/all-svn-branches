@@ -36,16 +36,17 @@
 
 #include <OpenMS/SIMULATION/LABELING/BaseLabeler.h>
 
-#define _DEBUG
+//#define OPENMS_DEBUG_SIM_
 
 namespace OpenMS {
 
   void verbosePrintFeatureMap(FeatureMapSimVector feature_maps, String stage)
   {
-#ifdef _DEBUG
+#ifdef OPENMS_DEBUG_SIM_
     std::cout << "############## DEBUG (" << stage << ") -- FEATURE MAPS ##############" << std::endl;
 
     Size map_count = 1;
+    StringList keys;
     for(FeatureMapSimVector::iterator map_iter = feature_maps.begin() ; map_iter != feature_maps.end() ; ++map_iter)
     {
       std::cout << "FEATURE MAP #" << map_count << std::endl;
@@ -63,12 +64,15 @@ namespace OpenMS {
           feat != (*map_iter).end();
           ++feat)
       {
+        (*feat).getKeys (keys);
         std::cout << " RT: " << (*feat).getRT()
                   << " MZ: " << (*feat).getMZ()
                   << " INT: " << (*feat).getIntensity()
                   << " CHARGE: " << (*feat).getCharge()
-                  << " Det: " << (*feat).getMetaValue("detectibility")
-                  << " Pep: " << feat->getPeptideIdentifications()[0].getHits()[0].getSequence () .toString() << ::std::endl;
+                  << " Det: " << (*feat).getMetaValue("detectibility") << std::endl
+                  << " Pep: " << feat->getPeptideIdentifications()[0].getHits()[0].getSequence () .toString() << std::endl
+                  << " ID: " << feat->getUniqueId() << std::endl
+                  << " Meta: " << keys.concatenate(",") << std::endl;
         std::cout << "derived from protein(s): ";
         for(std::vector<String>::const_iterator it = (*feat).getPeptideIdentifications()[0].getHits()[0].getProteinAccessions().begin();
             it != (*feat).getPeptideIdentifications()[0].getHits()[0].getProteinAccessions().end();
@@ -83,7 +87,7 @@ namespace OpenMS {
     }
     std::cout << "############## END DEBUG -- FEATURE MAPS ##############" << std::endl;
 #else
-		if (feature_map.size()==0) std::cout << stage; // just to avoid warnings of unused parameters
+		if (feature_maps.size()==0) std::cout << stage; // just to avoid warnings of unused parameters
 #endif
   }
 
@@ -91,15 +95,16 @@ namespace OpenMS {
     : DefaultParamHandler("MSSim"),
 			experiment_(),
       feature_maps_(),
-			consensus_map_()
+      consensus_map_(),
+      labeler_(0)
   {
 		// section params
     defaults_.insert("Digestion:", DigestSimulation().getDefaults());
-    defaults_.insert("RTSimulation:",RTSimulation(NULL).getDefaults());
-    defaults_.insert("PeptideDetectabilitySimulation:",DetectabilitySimulation().getDefaults());
-    defaults_.insert("Ionization:",IonizationSimulation(NULL).getDefaults());
-    defaults_.insert("RawSignal:",RawMSSignalSimulation(NULL).getDefaults());
-		defaults_.insert("RawTandemSignal:",RawTandemMSSignalSimulation(NULL).getDefaults());
+    defaults_.insert("RT:",RTSimulation(SimRandomNumberGenerator()).getDefaults());
+    defaults_.insert("Detectability:",DetectabilitySimulation().getDefaults());
+    defaults_.insert("Ionization:",IonizationSimulation(SimRandomNumberGenerator()).getDefaults());
+    defaults_.insert("RawSignal:",RawMSSignalSimulation(SimRandomNumberGenerator()).getDefaults());
+    defaults_.insert("RawTandemSignal:",RawTandemMSSignalSimulation(SimRandomNumberGenerator()).getDefaults());
 
     subsections_.push_back("Labeling");
 
@@ -109,7 +114,9 @@ namespace OpenMS {
   }
 
   MSSim::~MSSim()
-  {}
+  {
+    delete labeler_;
+  }
 
   Param MSSim::getParameters(const String &labeling_name) const
   {
@@ -125,10 +132,14 @@ namespace OpenMS {
     return tmp;
   }
 
-  void MSSim::simulate(gsl_rng* const rnd_gen, SampleChannels& channels, const String &labeling_name)
+  void MSSim::simulate(const SimRandomNumberGenerator & rnd_gen, SampleChannels& channels, const String &labeling_name)
   {
-    // TODO: add method to read contaminants
-    // TODO: add method to select contaminants
+    /*todo: move to a global config file or into INI file */
+    Log_fatal.setPrefix("%S: ");
+    Log_error.setPrefix("%S: ");
+    Log_warn.setPrefix("%S: ");
+    Log_info.setPrefix("%S: ");
+    Log_debug.setPrefix("%S: ");
 
     /*
       General progress should be
@@ -140,14 +151,32 @@ namespace OpenMS {
         6. select features for MS2
         7. generate MS2 signals for selected features
      */
+    
+    // instanciate and pass params before doing any actual work
+    // ... this way, each module can throw an Exception when the parameters
+    // ... do not fit, and the users gets an immediate feedback
+    DigestSimulation digest_sim;
+    digest_sim.setParameters(param_.copy("Digestion:",true));
+		RTSimulation rt_sim(rnd_gen);
+		rt_sim.setParameters(param_.copy("RT:",true));
+		DetectabilitySimulation dt_sim;
+		dt_sim.setParameters(param_.copy("Detectability:",true));
+    IonizationSimulation ion_sim(rnd_gen);
+    ion_sim.setParameters(param_.copy("Ionization:", true));
+    ion_sim.setLogType(this->getLogType());
+    RawMSSignalSimulation raw_sim(rnd_gen);
+    raw_sim.setParameters(param_.copy("RawSignal:", true));
+    raw_sim.setLogType(this->getLogType());
+    raw_sim.loadContaminants(); // check if the file is valid (if not, an error is raised here instead of half-way through simulation)
 
-    BaseLabeler* labeler = Factory<BaseLabeler>::create(labeling_name);
+
+    labeler_ = Factory<BaseLabeler>::create(labeling_name);
     Param labeling_parameters = param_.copy("Labeling:",true);
-    labeler->setParameters(labeling_parameters);
-    labeler->setRnd(rnd_gen);
+    labeler_->setParameters(labeling_parameters);
+    labeler_->setRnd(rnd_gen);
 
     // check parameters ..
-    labeler->preCheck(param_);
+    labeler_->preCheck(param_);
 
 		// re-distribute synced parameters:
 		syncParams_(param_, false);
@@ -162,25 +191,21 @@ namespace OpenMS {
     }
 
     // Call setUpHook
-    labeler->setUpHook(feature_maps_);
+    labeler_->setUpHook(feature_maps_);
 
 		// digest
-    DigestSimulation digest_sim;
-    digest_sim.setParameters(param_.copy("Digestion:",true));
     for(FeatureMapSimVector::iterator map_iterator = feature_maps_.begin() ; map_iterator != feature_maps_.end() ; ++map_iterator)
     {
       digest_sim.digest(*map_iterator);
     }
 
     // post digest labeling
-    labeler->postDigestHook(feature_maps_);
+    labeler_->postDigestHook(feature_maps_);
 
     // debug
     verbosePrintFeatureMap(feature_maps_, "digested");
 
 		// RT prediction
-		RTSimulation rt_sim(rnd_gen);
-		rt_sim.setParameters(param_.copy("RTSimulation:",true));
     for(FeatureMapSimVector::iterator map_iterator = feature_maps_.begin() ; map_iterator != feature_maps_.end() ; ++map_iterator)
     {
       rt_sim.predictRT(*map_iterator);
@@ -188,42 +213,36 @@ namespace OpenMS {
     rt_sim.createExperiment(experiment_);
 
     // post rt sim labeling
-    labeler->postRTHook(feature_maps_);
+    labeler_->postRTHook(feature_maps_);
 
     // debug
     verbosePrintFeatureMap(feature_maps_, "RT sim done");
 
 		// Detectability prediction
-		DetectabilitySimulation dt_sim;
-		dt_sim.setParameters(param_.copy("PeptideDetectabilitySimulation:",true));
     for(FeatureMapSimVector::iterator map_iterator = feature_maps_.begin() ; map_iterator != feature_maps_.end() ; ++map_iterator)
     {
       dt_sim.filterDetectability(*map_iterator);
     }
 
     // post detectability labeling
-    labeler->postDetectabilityHook(feature_maps_);
+    labeler_->postDetectabilityHook(feature_maps_);
 
     // debug
     verbosePrintFeatureMap(feature_maps_, "DT sim done");
 
     // at this point all feature maps should be combined to one?
-    IonizationSimulation ion_sim(rnd_gen);
-    ion_sim.setParameters(param_.copy("Ionization:", true));
     ion_sim.ionize(feature_maps_.front(), consensus_map_, experiment_);
 
     // post ionization labeling
-    labeler->postIonizationHook(feature_maps_);
+    labeler_->postIonizationHook(feature_maps_);
 
     // debug
     verbosePrintFeatureMap(feature_maps_, "ION sim done");
 
-    RawMSSignalSimulation raw_sim(rnd_gen);
-    raw_sim.setParameters(param_.copy("RawSignal:", true));
-    raw_sim.generateRawSignals(feature_maps_.front(), experiment_);
+    raw_sim.generateRawSignals(feature_maps_.front(), experiment_, contaminants_map_);
 
     // post raw sim labeling
-    labeler->postRawMSHook(feature_maps_);
+    labeler_->postRawMSHook(feature_maps_);
 
     // debug
     verbosePrintFeatureMap(feature_maps_, "RawSignal sim done");
@@ -232,7 +251,7 @@ namespace OpenMS {
     raw_tandemsim.setParameters(param_.copy("RawTandemSignal:", true));
     raw_tandemsim.generateRawTandemSignals(feature_maps_.front(), experiment_);
 
-    labeler->postRawTandemMSHook(feature_maps_,experiment_);
+    labeler_->postRawTandemMSHook(feature_maps_,experiment_);
 
     LOG_INFO << "Final number of simulated features: " << feature_maps_[0].size() << "\n";
 
@@ -246,12 +265,12 @@ namespace OpenMS {
 
 		for (SampleProteins::const_iterator it=proteins.begin(); it!=proteins.end(); ++it)
 		{
-      std::cout << (it->first).identifier << " " << (it->first).sequence << " " << (it->second) << ::std::endl;
       // add new ProteinHit to ProteinIdentification
       ProteinHit protHit(0.0, 1, (it->first).identifier, (it->first).sequence);
+      // copy all meta values from FASTA file parsing
+      protHit=(it->second);
+      // additional meta values:
       protHit.setMetaValue("description", it->first.description);
-      // add intensity
-      protHit.setMetaValue("intensity", it->second);
       protIdent.insertHit(protHit);
 
 		}
@@ -266,7 +285,7 @@ namespace OpenMS {
 		// here the globals params are listed that require to be in sync across several modules
 		// - first the global param name and following that the module names where this param occurs
 		// - Warning: the module params must have unchanged names and restrictions! (descriptions can differ though)
-		globals.push_back(StringList::create("ionization_type,Ionization,RawTandemSignal"));
+		globals.push_back(StringList::create("ionization_type,Ionization,RawSignal,RawTandemSignal"));
 		
 		String global_prefix = "Global";
 		// remove or add local params
@@ -317,11 +336,20 @@ namespace OpenMS {
     return feature_maps_[0];
   }
 
-  ConsensusMap const & MSSim::getSimulatedConsensus() const
+  ConsensusMap const & MSSim::getChargeConsensus() const
   {
 		return consensus_map_;
   }
   
+  FeatureMapSim const & MSSim::getContaminants() const
+  {
+		return contaminants_map_;
+  }
+
+  ConsensusMap const & MSSim::getLabelingConsensus() const
+  {
+    return labeler_->getConsensus();
+  }
  
 
 }

@@ -42,6 +42,7 @@
 
 //Qt
 #include <QtGui/QToolBar>
+#include <QtGui/QDesktopWidget>
 #include <QtGui/QDockWidget>
 #include <QtGui/QListWidget>
 #include <QtGui/QListWidgetItem>
@@ -89,6 +90,14 @@ namespace OpenMS
 		
     //prevents errors caused by too small width,height values
     setMinimumSize(400,400);
+
+    // center main window
+    setGeometry(
+      (int)(0.1 * QApplication::desktop()->width()),
+      (int)(0.1 * QApplication::desktop()->height()),
+      (int)(0.8 * QApplication::desktop()->width()),
+      (int)(0.8 * QApplication::desktop()->height())
+      );
 
     // create dummy widget (to be able to have a layout), Tab bar and workspace
     QWidget* dummy = new QWidget(this);
@@ -222,9 +231,10 @@ namespace OpenMS
 		defaults_.setValue("tool_categories:Resampler", "Signal processing and preprocessing", "The category of the tool");
 		defaults_.setValue("tool_categories:SILACAnalyzer", "Quantitation", "The category of the tool");
 		defaults_.setValue("tool_categories:SeedListGenerator", "Quantitation", "The category of the tool");
-		defaults_.setValue("tool_categories:SequestAdapter", "Protein/peptide Identification", "The category of the tool");
+		//defaults_.setValue("tool_categories:SequestAdapter", "Protein/peptide Identification", "The category of the tool");
 		defaults_.setValue("tool_categories:SpecLibSearcher", "Protein/peptide Identification", "The category of the tool");
 		defaults_.setValue("tool_categories:SpectraFilter", "Signal processing and preprocessing", "The category of the tool");
+		defaults_.setValue("tool_categories:SpectraMerger", "File Handling", "The category of the tool");
 		defaults_.setValue("tool_categories:TOFCalibration", "Signal processing and preprocessing", "The category of the tool");
 		defaults_.setValue("tool_categories:TextExporter", "File Handling", "The category of the tool");
 		defaults_.setValue("tool_categories:XTandemAdapter", "Protein/peptide Identification", "The category of the tool");
@@ -1152,12 +1162,17 @@ namespace OpenMS
 		{
 			return;
 		}
+    /*
 		QString text = (sender->getName()).toQString();
 		if (sender->getType() != "")
 		{
 			text += " ("+(sender->getType()).toQString()+")";
 		}
 		text += ":\n" + out;
+    */
+    QString text = out; // shortened version for now (if we reintroduce simultaneous tool execution, 
+                        // we need to rethink this (probably only trigger this slot when tool 100% finished)
+
 		
 		//show log if there is output
 		qobject_cast<QWidget*>(log_->parent())->show();

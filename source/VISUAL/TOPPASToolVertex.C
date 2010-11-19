@@ -41,6 +41,10 @@
 #include <QtCore/QRegExp>
 #include <QtGui/QImage>
 
+#include <QDesktopServices>
+#include <QUrl>
+#include <QCoreApplication>
+
 namespace OpenMS
 {
 	UInt TOPPASToolVertex::uid_ = 1;
@@ -302,7 +306,7 @@ namespace OpenMS
 				}
 				
 				IOInfo io_info;
-				io_info.param_name = it->name;
+				io_info.param_name = it.getName();
 				io_info.valid_types = valid_types;
 				if (it->value.valueType() == DataValue::STRING_LIST)	
 				{
@@ -431,7 +435,7 @@ namespace OpenMS
 		createDirs();
 		
 		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
-		QString ini_file = ts->getOutDir()
+		QString ini_file = File::getTempDirectory().toQString()
 							+QDir::separator()
 							+getOutputDir().toQString()
 							+QDir::separator()
@@ -723,7 +727,6 @@ namespace OpenMS
 		bool found_in_parameter = false;
 		getInputParameters(in_params);
 		QStringList input_file_basenames;
-		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
 		
 		bool force = false;
 		for (EdgeIterator it = inEdgesBegin(); it != inEdgesEnd(); ++it)
@@ -811,7 +814,7 @@ namespace OpenMS
 					// check if tool consumes list and outputs single file (such as IDMerger or FileMerger)
 					if (in_parameter_has_list_type_ && out_params[param_index].type == IOInfo::IOT_FILE)
 					{
-						QString f = ts->getOutDir()
+						QString f = File::getTempDirectory().toQString()
 							+QDir::separator()
 							+getOutputDir().toQString()
 							+QDir::separator()
@@ -827,7 +830,7 @@ namespace OpenMS
 					{
 						foreach (const QString& str, input_file_basenames)
 						{
-							QString f = ts->getOutDir()
+							QString f = File::getTempDirectory().toQString()
 								+QDir::separator()
 								+getOutputDir().toQString()
 								+QDir::separator()
@@ -906,6 +909,28 @@ namespace OpenMS
 		TOPPASVertex::inEdgeHasChanged();
 	}
 	
+
+	void TOPPASToolVertex::openContainingFolder()
+	{
+		QVector<IOInfo> out_infos;
+		getOutputParameters(out_infos);
+		
+		if (out_infos.size() == all_written_output_files_.size())
+		{
+			foreach (const QStringList& files, all_written_output_files_)
+			{
+				if (files.size() > 0)
+				{
+          QFileInfo fi(files[0]);
+          QString path = QDir::toNativeSeparators(fi.absolutePath());
+          if (QDir(path).exists()) QDesktopServices::openUrl(QUrl("file:///" + path));
+          else (std::cerr << "dir: " << String(path) << " does not exist" << "\n");
+        }
+			}
+		}
+	}
+	  
+
 	void TOPPASToolVertex::openInTOPPView()
 	{
 		QVector<IOInfo> out_infos;
@@ -919,7 +944,19 @@ namespace OpenMS
 				{
 					QProcess* p = new QProcess();
 					p->setProcessChannelMode(QProcess::ForwardedChannels);
-					p->start("TOPPView", files);
+          QString toppview_executable;
+          toppview_executable = "TOPPView";
+
+          p->start(toppview_executable, files);
+          if(!p->waitForStarted())
+          {
+            // execution failed
+            std::cerr << p->errorString().toStdString() << std::endl;
+#if defined(Q_WS_MAC)
+            std::cerr << "Please check if TOPPAS and TOPPView are located in the same directory" << std::endl;
+#endif
+
+          }
 				}
 			}
 		}
@@ -927,7 +964,17 @@ namespace OpenMS
 	
 	String TOPPASToolVertex::getOutputDir()
 	{
-		String dir = String("TOPPAS_tmp")+String(QDir::separator())+get3CharsNumber_(topo_nr_)+"_"+getName();
+		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
+		String workflow_dir = File::removeExtension(File::basename(ts->getSaveFileName()));
+		if (workflow_dir == "")
+		{
+			workflow_dir = "Untitled_workflow";
+		}
+		String dir = String("TOPPAS_tmp")+
+			String(QDir::separator())+
+			workflow_dir+
+			String(QDir::separator())+
+			get3CharsNumber_(topo_nr_)+"_"+getName();
 		if (getType() != "")
 		{
 			dir += "_"+getType();
@@ -938,8 +985,7 @@ namespace OpenMS
 	
 	void TOPPASToolVertex::createDirs()
 	{
-		TOPPASScene* ts = qobject_cast<TOPPASScene*>(scene());
-		QDir current_dir(ts->getOutDir());
+		QDir current_dir(File::getTempDirectory().toQString());
 		
 		if (!current_dir.mkpath(getOutputDir().toQString()))
 		{
@@ -984,7 +1030,7 @@ namespace OpenMS
 		if (reset_all_files)
 		{
 			all_written_output_files_.clear();
-			QString remove_dir = qobject_cast<TOPPASScene*>(scene())->getOutDir() + QDir::separator() + getOutputDir().toQString();
+			QString remove_dir = File::getTempDirectory().toQString() + QDir::separator() + getOutputDir().toQString();
 			if (File::exists(remove_dir))
 			{
 				removeDirRecursively_(remove_dir);

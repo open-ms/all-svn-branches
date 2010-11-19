@@ -268,6 +268,7 @@ namespace OpenMS
 			
 			min_ = linear2log(min);
 			max_ = linear2log(max);
+
 			AxisTickCalculator::calcLogGridLines(min_,max_,grid_line_);
 		}
 		else
@@ -424,6 +425,4 @@ namespace OpenMS
 
 
 } //Namespace
-
-
 

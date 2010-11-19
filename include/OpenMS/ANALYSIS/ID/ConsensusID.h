@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Sven Nahnsen $
 // $Authors: Andreas Bertsch, Marc Sturm, Sven Nahnsen $
 // --------------------------------------------------------------------------
 
@@ -65,9 +65,6 @@ namespace OpenMS
 			///Not implemented
 			ConsensusID& operator = (const ConsensusID&);
 			
-			/// Merge algorithm
-			void merge_(std::vector<PeptideIdentification>& ids);
-			
 			/// Ranked algorithm
 			void ranked_(std::vector<PeptideIdentification>& ids);
 			
@@ -83,8 +80,6 @@ namespace OpenMS
 			/// use minimal PEP score
 			void Minimum_(std::vector<PeptideIdentification>& ids);
 
-			/// Majority vote
-			void majority_(std::vector<PeptideIdentification>& ids);
 //already done in APPLICATIONS/TOPP/ConsensusID.C
 			/// Merge peptide hits from different engines
 			void mapIdentifications_(std::vector<PeptideIdentification> & sorted_ids, const std::vector<PeptideIdentification>& ids);

@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl $
+// $Maintainer: Erhan Kenar $
 // $Authors: $
 // --------------------------------------------------------------------------
 
@@ -177,7 +177,7 @@ namespace OpenMS
 				
 				@param clear_meta_data If @em true, all meta data is cleared in addition to the data.
 			*/ 
-			void clear(bool clear_meta_data)
+			void clear(bool clear_meta_data = true)
 			{
 				Base::clear();
 					

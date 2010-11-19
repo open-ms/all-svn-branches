@@ -33,6 +33,7 @@
 #include <OpenMS/KERNEL/MSChromatogram.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/KERNEL/RangeUtils.h>
+#include <OpenMS/CONCEPT/LogStream.h>
 
 namespace OpenMS
 {
@@ -149,15 +150,15 @@ namespace OpenMS
 						}
 						else
 						{
-							std::cerr << "ChromatogramTools: need exactly one precursor (given " << it->getPrecursors().size() << 
-											") and one product (" << it->getProducts().size() << "), skipping conversion of this spectrum to chromatogram." << std::endl;
+							LOG_WARN << "ChromatogramTools: need exactly one precursor (given " << it->getPrecursors().size() << 
+											    ") and one product (" << it->getProducts().size() << "), skipping conversion of this spectrum to chromatogram." << std::endl;
 						}
 					}
 					else
 					{
 						// This does not makes sense to warn here, because it would also warn on simple mass spectra...
 						// TODO think what to to here
-						//std::cerr << "ChromatogramTools: cannot convert other chromatrogram spectra types than 'Selected Reaction Monitoring', skipping conversion." << std::endl;
+						//LOG_WARN << "ChromatogramTools: cannot convert other chromatrogram spectra types than 'Selected Reaction Monitoring', skipping conversion." << std::endl;
 						//
 					}
 				}

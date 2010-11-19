@@ -70,6 +70,8 @@ namespace OpenMS
 		QWidget *ParamEditorDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem& , const QModelIndex& index) const
 		{
 			Int type = index.sibling(index.row(),0).data(Qt::UserRole).toInt();
+
+      // only create editor for first column (value column)
 			if(index.column()==1 && type!=ParamEditor::NODE)
 			{
 				QString dtype = index.sibling(index.row(),2).data(Qt::DisplayRole).toString();
@@ -131,6 +133,7 @@ namespace OpenMS
 		{
 			QString str = index.data(Qt::DisplayRole).toString();
 
+      // only set editor data for first column (value column)
 			if(index.column()==1)
 			{
 				if(qobject_cast<QComboBox*>(editor)) //Drop-down list for enums
@@ -156,7 +159,8 @@ namespace OpenMS
 					{
 						if(str == "" && (dtype == "int" || dtype == "float"))
 						{
-							static_cast<QLineEdit*>(editor)->setText("0");
+              if (dtype == "int") static_cast<QLineEdit*>(editor)->setText("0");
+              else if (dtype == "float") static_cast<QLineEdit*>(editor)->setText("nan");
 						}
 						else
 						{
@@ -205,6 +209,7 @@ namespace OpenMS
 			QVariant new_value;
 			StringList list;
 			bool new_list = false;
+      // only set model data for first column (value column)
 			if(index.column()==1)
 			{
 				//extract new value
@@ -221,9 +226,10 @@ namespace OpenMS
 						new_value = QVariant(static_cast<QLineEdit*>(editor)->text());
 						fileName_ = "\0";
 					}
-					else if(static_cast<QLineEdit*>(editor)->text() == "" &&(dtype == "int" || dtype == "float"))//numeric
-					{
-						new_value = QVariant("0");
+					else if(static_cast<QLineEdit*>(editor)->text() == "" && ((dtype == "int") || (dtype == "float"))) //numeric
+          {
+            if (dtype == "int") new_value = QVariant("0");
+            else if (dtype == "float") new_value = QVariant("nan");
 					}
 					else
 					{
@@ -409,9 +415,9 @@ namespace OpenMS
 		tree_->setAllColumnsShowFocus(true);
 		tree_->setColumnCount(4);
 		QStringList list;
-		list << "name" << "value" << "type" << "restrictions";
+    list << "parameter" << "value" << "type" << "restrictions";
 		tree_->setHeaderLabels(list);
-		dynamic_cast<QVBoxLayout*>(layout())->insertWidget(0,tree_,1);
+    dynamic_cast<QVBoxLayout*>(layout())->insertWidget(0,tree_,1);
 		tree_->setItemDelegate(new Internal::ParamEditorDelegate(tree_));	// the delegate from above is set
 		connect(tree_->itemDelegate(),SIGNAL(modified(bool)),this,SLOT(setModified(bool)));
 		connect(advanced_,SIGNAL(toggled(bool)),this,SLOT(toggleAdvancedMode(bool)));
@@ -441,16 +447,14 @@ namespace OpenMS
 				if (it2->opened) //opened node
 				{
 					item = new QTreeWidgetItem(parent);
-					//item->setTextAlignment(0,Qt::AlignTop);
-					//item->setTextAlignment(1,Qt::AlignTop);
-					//item->setTextAlignment(2,Qt::AlignTop);
-					//item->setTextAlignment(3,Qt::AlignTop);
 					//name
 					item->setText(0, it2->name.toQString());
+          item->setTextColor(0, Qt::darkGray);  // color of nodes with children
+
 					//description
-					item->setData(1,Qt::UserRole,it2->description.toQString());
+          item->setData(1,Qt::UserRole, it2->description.toQString());
 					//role
-					item->setData(0,Qt::UserRole,NODE);
+          item->setData(0,Qt::UserRole, NODE);
 					//flags
 					if(param_!=NULL)
 					{
@@ -471,10 +475,21 @@ namespace OpenMS
 			
 			//********handle item********
 			item = new QTreeWidgetItem(parent);
-			//item->setTextAlignment(0,Qt::AlignTop);
-			//item->setTextAlignment(1,Qt::AlignTop);
-			//item->setTextAlignment(2,Qt::AlignTop);
-			//item->setTextAlignment(3,Qt::AlignTop);
+
+      // grey out non-editable columns (leaf nodes)
+      bool is_required = it->tags.find("required") != it->tags.end();
+      if (is_required)  // special color for required parameters
+      {
+        item->setTextColor(0, QColor(255,140,0,255)); // orange
+        item->setTextColor(2, QColor(255,140,0,255));
+        item->setTextColor(3, QColor(255,140,0,255));
+      } else
+      {
+        item->setTextColor(0, Qt::darkGray);
+        item->setTextColor(2, Qt::darkGray);
+        item->setTextColor(3, Qt::darkGray);
+      }
+
 			if (it->tags.count("advanced"))
 			{
 				item->setData(0,Qt::UserRole,ADVANCED_ITEM);
@@ -627,7 +642,12 @@ namespace OpenMS
 						}
 						if (irest!="")
 						{
-							item->setText(3, irest.toQString());
+							String r_text=irest;
+						  if (r_text.size() > 255)
+							{	// truncate restriction text, as some QT versions (4.6 & 4.7) will crash if text is too long
+								r_text = irest.prefix(251) + "...";
+							}
+							item->setText(3, r_text.toQString());
 						}
 						item->setData(2,Qt::UserRole,irest.toQString());
 					}

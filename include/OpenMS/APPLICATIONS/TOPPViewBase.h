@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
-// $Authors: Marc Sturm $
+// $Maintainer: Timo Sachsenberg$
+// $Authors: Marc Sturm, Timo Sachsenberg $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_APPLICATIONS_TOPPVIEWBASE_H
@@ -33,6 +33,8 @@
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/VISUAL/SpectrumCanvas.h>
 #include <OpenMS/VISUAL/SpectrumWidget.h>
+#include <OpenMS/SYSTEM/FileWatcher.h>
+#include <OpenMS/VISUAL/SpectraViewWidget.h>
 
 //STL
 #include <map>
@@ -70,6 +72,7 @@ namespace OpenMS
   class ToolsDialog;
   class DBConnection;
   class EnhancedTabBar;
+  class FileWatcher;
 
   /**
     @brief Main window of TOPPView tool
@@ -91,17 +94,25 @@ namespace OpenMS
   {
       Q_OBJECT
       
-      friend class TestTOPPView;
+    friend class TestTOPPView;
       
     public:
     	///@name Type definitions
     	//@{
     	//Feature map type
     	typedef LayerData::FeatureMapType FeatureMapType;
+      //Feature map managed type
+      typedef LayerData::FeatureMapSharedPtrType FeatureMapSharedPtrType;
+
     	//Consensus feature map type
     	typedef LayerData::ConsensusMapType ConsensusMapType;
+      //Consensus  map managed type
+      typedef LayerData::ConsensusMapSharedPtrType ConsensusMapSharedPtrType;
+
     	//Peak map type
     	typedef LayerData::ExperimentType ExperimentType;
+      //Main managed data type (experiment)
+      typedef LayerData::ExperimentSharedPtrType ExperimentSharedPtrType;
     	///Peak spectrum type
     	typedef ExperimentType::SpectrumType SpectrumType;
     	//@}
@@ -170,16 +181,20 @@ namespace OpenMS
       void layerStatistics();
       /// lets the user edit the meta data of a layer
       void editMetadata();
-      /// chooses searched spectrum
-      void chooseSpectrumByUser(const QString& text);
+      /// manual activation of 1D spectrum
+      void activate1DSpectrum(int index);
       /// closes the active window
       void closeFile();
       /// updates the toolbar
       void updateToolBar();
+      /*
+      /// updates entries of loaded datas
+      void updateDataBar();
+      */
       /// adapts the layer bar to the active window
       void updateLayerBar();
       /// adapts the spectrum bar to the active window
-      void updateSpectrumBar();
+      void updateSpectraViewBar();
       /// adapts the filter bar to the active window
       void updateFilterBar();
       /// brings the tab corresponding to the active window in front
@@ -207,10 +222,12 @@ namespace OpenMS
       void showSpectrumGenerationDialog();
       /// Shows the spectrum alignment dialog
       void showSpectrumAlignmentDialog();
+      /// Shows the spectrum with index @p index of the active layer in 1D
+      void showSpectrumAs1D(int index);
+      /// Shows the current peak data of the active layer in 2D
+      void showCurrentPeaksAs2D();
       /// Shows the current peak data of the active layer in 3D
       void showCurrentPeaksAs3D();
-			/// Shows the spectrum with index @p index of the active layer in 1D
-			void showSpectrumAs1D(int index);
       /// Shows the 'About' dialog
       void showAboutDialog();
       /// Saves the whole current layer data
@@ -226,11 +243,7 @@ namespace OpenMS
 			/// dialog for inspecting database meta data
 			void metadataDatabaseDialog();
 			/// dialog for inspecting file meta data
-			void metadataFileDialog();
-			/// Shows the selected spectrum
-			void spectrumSelectionChange(QTreeWidgetItem* current, QTreeWidgetItem* previous);
-			/// Opens a new 1D window and shows the spectrum, if not already in 1D
-			void spectrumDoubleClicked(QTreeWidgetItem* current, int /*col*/);
+			void metadataFileDialog();			      
 
     protected slots:
       /** @name Layer manager and filter manager slots
@@ -242,10 +255,6 @@ namespace OpenMS
     	void layerFilterVisibilityChange(bool);
     	/// slot for layer manager context menu
     	void layerContextMenu(const QPoint& pos);
-    	/// slot for spectrum manager context menu
-    	void spectrumContextMenu(const QPoint& pos);
-    	/// slot for spectrum browser column header context menu
-    	void spectrumBrowserHeaderContextMenu(const QPoint& pos);
     	/// slot for log window context menu
     	void logContextMenu(const QPoint& pos);
     	/// slot for layer manager visibility change (check box)
@@ -266,6 +275,9 @@ namespace OpenMS
     	void updateMenu();
     	/// shows the spectrum browser and updates it
     	void showSpectrumBrowser();
+      /// shows the spectrum metadata
+      void showSpectrumMetaData(int spectrum_index);
+
       //@}
 
       /** @name Tabbar slots
@@ -296,9 +308,8 @@ namespace OpenMS
 			/// Appends process output to log window
 			void updateProcessLog();
 
-      /// Shows the tutorial browser
-      void showTutorial();
-
+      /// Called if a data file has been externally changed
+      void fileChanged_(const String&);
     protected:
   		/**
   			@brief Adds a peak or feature map to the viewer
@@ -315,7 +326,10 @@ namespace OpenMS
       	@param window_id in which window the file is opened if opened as a new layer (0 or default equals current
       	@param spectrum_id determines the spectrum to show in 1D view.
       */
-  		void addData_(FeatureMapType& feature_map, ConsensusMapType& consensus_map, std::vector<PeptideIdentification>& peptides, ExperimentType& peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
+      void addData_(FeatureMapSharedPtrType feature_map, ConsensusMapSharedPtrType consensus_map, std::vector<PeptideIdentification>& peptides, ExperimentSharedPtrType peak_map, LayerData::DataType data_type, bool show_as_1d, bool show_options, const String& filename="", const String& caption="", UInt window_id=0, Size spectrum_id=0);
+
+      /// unique list of files referenced by all layers
+       std::set<String> getFilenamesOfOpenFiles();
 
     	/// Tries to open a db connection (queries the user for the DB password)
     	void connectToDB_(DBConnection& db);
@@ -340,18 +354,24 @@ namespace OpenMS
       Spectrum2DWidget* active2DWindow_() const;
       ///returns a pointer to the active Spectrum3DWidget (0 the active window is no Spectrum2DWidget or there is no active window)
       Spectrum3DWidget* active3DWindow_() const;
-      ///Estimates the noise by evaluating 10 random scans of MS level 1
-      float estimateNoise_(const ExperimentType& exp);
 
       /// Layer management widget
       QListWidget* layer_manager_;
 
+      /*
+      /// data management widget (shows loaded files)
+      QTreeWidget* data_manager_view_;
+      */
+      /// Watcher that tracks file changes (in order to update the data in the different views)
+      FileWatcher* watcher_;
+
+      /// Holds the messageboxes for each layer that are currently popped up (to avoid popping them up again, if file changes again before the messagebox is closed)
+      bool watcher_msgbox_;
+
       ///@name Spectrum selection widgets
       //@{
-      QTreeWidget* spectrum_selection_;
-      QDockWidget* spectrum_bar_;
-      QLineEdit* spectrum_search_box_;
-      QComboBox* spectrum_combo_box_;
+      QDockWidget* spectra_views_dockwidget_;
+      SpectraViewWidget* spectra_view_widget_;
       //@}
 
       ///@name Data filter widgets
@@ -368,10 +388,13 @@ namespace OpenMS
       //@{
       QToolBar* tool_bar_;
       //common intensity modes
-      QButtonGroup* intensity_group_;
+
+      QButtonGroup* intensity_button_group_;
       //1D specific stuff
+
       QToolBar* tool_bar_1d_;
       QButtonGroup* draw_group_1d_;
+
       //2D specific stuff
       QToolBar* tool_bar_2d_peak_;
       QToolBar* tool_bar_2d_feat_;
@@ -419,7 +442,7 @@ namespace OpenMS
 			//@}
 
 
-      /// @name TOPP tool executio
+      /// @name TOPP tool execution
       //@{
 			/// Runs the TOPP tool according to the information in topp_
 			void runTOPPTool_();
@@ -467,6 +490,16 @@ namespace OpenMS
       /// Depending on the preferences this is static or changes with the current window/layer.
       String current_path_;
 
+      // static helper functions
+      public:        
+        /// Returns true if @p contains at least one MS1 spectrum
+        static bool containsMS1Scans(const ExperimentType& exp);
+        
+        /// Estimates the noise by evaluating n_scans random scans of MS level 1. Assumes that 4/5 of intensities is noise.
+        float estimateNoiseFromRandomMS1Scans(const ExperimentType& exp, UInt n_scans = 10);
+
+        /// Counts the number of exact zero valued intensities in all MS1 spectra
+        UInt countZeros(const ExperimentType& exp);
   }
   ; //class
 

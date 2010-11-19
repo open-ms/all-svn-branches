@@ -72,11 +72,11 @@ namespace OpenMS
 		~MultiGradient();
 	
 		/// sets or replaces the color at position @p position
-		void insert (Int position, QColor color);
-		/// removes the color at position @p position. Colors at positions 0 and 100 cannot be removed.
-		bool remove (Int position);
+    void insert(DoubleReal position, QColor color);
+    /// removes the color at position @p position
+    bool remove(DoubleReal position);
 		/// returns if a value for position @p position exists
-		bool exists (Int position);
+    bool exists(DoubleReal position);
 		/**
 		  @brief returns the position of the @p index -th point
 
@@ -122,7 +122,8 @@ namespace OpenMS
 			OPENMS_PRECONDITION(pre_.size()!=0,"MultiGradient::precalculatedColorAt(DoubleReal): Precalculation mode not activated!");
 			OPENMS_PRECONDITION(position>=pre_min_,(String("MultiGradient::precalculatedColorAt(DoubleReal): position ") + position + " out of specified range (" + pre_min_ + "-" + (pre_min_+pre_size_) + ")!").c_str());
 			OPENMS_PRECONDITION(position<=pre_min_+pre_size_,(String("MultiGradient::precalculatedColorAt(DoubleReal): position ") + position + " out of specified range (" + pre_min_ + "-" + (pre_min_+pre_size_) + ")!").c_str());
-			return pre_[(UInt)((position - pre_min_) / pre_size_ * pre_steps_)];	
+
+      return pre_[(UInt)((position - pre_min_) / pre_size_ * pre_steps_)];
 		}
 
 		///return the number of color points
@@ -154,7 +155,7 @@ namespace OpenMS
 	
 		protected:
 		/// Map of index and color
-		std::map<UInt,QColor> pos_col_;
+    std::map<DoubleReal,QColor> pos_col_;
 		/// Current interpolation mode
 		InterpolationMode interpolation_mode_;
 		/// Precalculated colors

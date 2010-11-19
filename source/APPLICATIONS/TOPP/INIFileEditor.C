@@ -34,24 +34,34 @@
 #include <QtGui/QApplication>
 #include <QtGui/QStyleFactory>
 
+#ifdef OPENMS_WINDOWSPLATFORM
+#	ifndef _WIN32_WINNT
+#		define _WIN32_WINNT 0x0501 // Win XP (and above)
+#	endif
+#	include <Windows.h>
+#endif
+
+
 using namespace OpenMS;
 using namespace std;
 
 /**
 	@page TOPP_INIFileEditor INIFileEditor
-	
+
 	@brief Can be used to visually edit INI files of TOPP tools.
-	
+
 	The values can be edited by double-clicking or pressing F2.
-	
+
 	The documentation of each value is shown in the text area on the bottom of the widget.
-	
+
 	@image html INIFileEditor.png
+
+	More information about TOPPAS can be found in the @ref TOPP_tutorial.
 */
 
 int main(int argc, const char** argv)
 {
-	
+
 	Map<String,String> option_lists;
 	Map<String,String> options;
 	options["-print"] = "print";
@@ -59,7 +69,7 @@ int main(int argc, const char** argv)
 	flags["--help"] = "help";
 	Param param;
 	param.parseCommandLine(argc, argv, options, flags, option_lists);
-	
+
 	//catch command line errors
 	if (param.exists("help") //help requested
 		  || argc>3 //too many arguments
@@ -79,7 +89,7 @@ int main(int argc, const char** argv)
 				 << endl;
 		return 0;
 	}
-	
+
 	//print a ini file as text
 	if (param.exists("print"))
 	{
@@ -97,10 +107,10 @@ int main(int argc, const char** argv)
 			LOG_ERROR << "Error while parsing file '" << param.getValue("print") << "'\n";
 			LOG_ERROR << e << "\n";
 		}
-		
+
 		return 0;
 	}
-	
+
 	//Create window
 	QApplication app(argc,const_cast<char**>(argv));
 
@@ -119,14 +129,19 @@ int main(int argc, const char** argv)
   }
 
 	INIFileEditorWindow editor_window;
-	
+
 	//Open passed file
 	if (argc==2)
 	{
 		//cout << "OPEN: "  << argv[1] << endl;
 		editor_window.openFile(argv[1]);
 	}
-	
+
+#ifdef OPENMS_WINDOWSPLATFORM
+  FreeConsole(); // get rid of console window at this point (we will not see any console output from this point on)
+  AttachConsole(-1); // if the parent is a console, reattach to it - so we can see debug output - a normal user will usually not use cmd.exe to start a GUI)
+#endif
+
 	editor_window.show();
 	return app.exec();
 }

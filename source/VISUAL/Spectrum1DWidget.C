@@ -56,8 +56,12 @@ namespace OpenMS
 		flipped_y_axis_->setAllowShortNumbers(true);
 		flipped_y_axis_->setMinimumWidth(50);
 		flipped_y_axis_->hide();
-		
+
 		spacer_ = new QSpacerItem(0,0);
+
+     //Delegate signals
+    connect(canvas(), SIGNAL(showCurrentPeaksAs2D()), this, SIGNAL(showCurrentPeaksAs2D()));
+    connect(canvas(), SIGNAL(showCurrentPeaksAs3D()), this, SIGNAL(showCurrentPeaksAs3D()));
 	}
 	
 	void Spectrum1DWidget::recalculateAxes_()
@@ -82,17 +86,45 @@ namespace OpenMS
 		switch(canvas()->getIntensityMode())
 		{
 			case SpectrumCanvas::IM_NONE:
+        if (it_axis->isLogScale())
+        {
+          it_axis->setLogScale(false);
+          flipped_y_axis_->setLogScale(false);
+        }
+
 				it_axis->setAxisBounds(canvas()->getVisibleArea().minY(), canvas()->getVisibleArea().maxY());
 				flipped_y_axis_->setAxisBounds(canvas()->getVisibleArea().minY(), canvas()->getVisibleArea().maxY());
 				break;
 			case SpectrumCanvas::IM_PERCENTAGE:
+        if (it_axis->isLogScale())
+        {
+          it_axis->setLogScale(false);
+          flipped_y_axis_->setLogScale(false);
+        }
+
 				it_axis->setAxisBounds(canvas()->getVisibleArea().minY() / canvas()->getDataRange().maxY() * 100.0, canvas()->getVisibleArea().maxY() / canvas()->getDataRange().maxY() * 100.0);
 				flipped_y_axis_->setAxisBounds(canvas()->getVisibleArea().minY() / canvas()->getDataRange().maxY() * 100.0, canvas()->getVisibleArea().maxY() / canvas()->getDataRange().maxY() * 100.0);
 				break;
 			case SpectrumCanvas::IM_SNAP:
+        if (it_axis->isLogScale())
+        {
+          it_axis->setLogScale(false);
+          flipped_y_axis_->setLogScale(false);
+        }
+
 				it_axis->setAxisBounds(canvas()->getVisibleArea().minY()/canvas()->getSnapFactor(), canvas()->getVisibleArea().maxY()/canvas()->getSnapFactor());
 				flipped_y_axis_->setAxisBounds(canvas()->getVisibleArea().minY()/canvas()->getSnapFactor(), canvas()->getVisibleArea().maxY()/canvas()->getSnapFactor());
 				break;
+      case SpectrumCanvas::IM_LOG:
+        if (!it_axis->isLogScale())
+        {
+          it_axis->setLogScale(true);
+          flipped_y_axis_->setLogScale(true);
+        }
+
+        it_axis->setAxisBounds(canvas()->getVisibleArea().minY(), canvas()->getVisibleArea().maxY());
+        flipped_y_axis_->setAxisBounds(canvas()->getVisibleArea().minY(), canvas()->getVisibleArea().maxY());
+        break;
 			default:
 				throw Exception::NotImplemented(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 		}
@@ -110,7 +142,7 @@ namespace OpenMS
 		}
 		Histogram<> tmp(min,max,(max-min)/500.0);
 		
-		for (ExperimentType::SpectrumType::ConstIterator it = canvas_->getCurrentLayer().peaks[0].begin(); it != canvas_->getCurrentLayer().peaks[0].end(); ++it)
+    for (ExperimentType::SpectrumType::ConstIterator it = (*canvas_->getCurrentLayer().getPeakData())[0].begin(); it != (*canvas_->getCurrentLayer().getPeakData())[0].end(); ++it)
 		{
 			tmp.inc(it->getIntensity());
 		}
@@ -122,7 +154,7 @@ namespace OpenMS
 	{	
 		Histogram<> tmp;
 		//float arrays
-		const ExperimentType::SpectrumType::FloatDataArrays& f_arrays = canvas_->getCurrentLayer().peaks[0].getFloatDataArrays();
+                const ExperimentType::SpectrumType::FloatDataArrays& f_arrays = (*canvas_->getCurrentLayer().getPeakData())[0].getFloatDataArrays();
 		for(ExperimentType::SpectrumType::FloatDataArrays::const_iterator it = f_arrays.begin(); it != f_arrays.end(); it++)
 		{
 			if (it->getName()==name)
@@ -145,7 +177,7 @@ namespace OpenMS
 			}
 		}
 		//integer arrays
-		const ExperimentType::SpectrumType::IntegerDataArrays& i_arrays = canvas_->getCurrentLayer().peaks[0].getIntegerDataArrays();
+                const ExperimentType::SpectrumType::IntegerDataArrays& i_arrays = (*canvas_->getCurrentLayer().getPeakData())[0].getIntegerDataArrays();
 		for(ExperimentType::SpectrumType::IntegerDataArrays::const_iterator it = i_arrays.begin(); it != i_arrays.end(); it++)
 		{
 			if (it->getName()==name)

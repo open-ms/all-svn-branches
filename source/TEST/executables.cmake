@@ -95,6 +95,7 @@ set(system_executables_list
 
 set(kernel_executables_list
 	AreaIterator_test
+	BaseFeature_test
 	ChromatogramPeak_test
 	ChromatogramTools_test
 	ComparatorUtils_test
@@ -380,8 +381,8 @@ set(transformations_executables_list
   FeatureFinderAlgorithmMRM_test
   FeatureFinderAlgorithmPickedHelperStructs_test
   FeatureFinderAlgorithmPicked_test
-  FeatureFinderAlgorithmSimple_test
-  FeatureFinderAlgorithmSimplest_test
+  # deprecated: FeatureFinderAlgorithmSimple_test
+  # deprecated: FeatureFinderAlgorithmSimplest_test
   FeatureFinderAlgorithm_test
   FeatureFinder_test
   Fitter1D_test
@@ -420,12 +421,13 @@ set(simulation_executables_list
   EGHModel_test
   EGHFitter1D_test
   IonizationSimulation_test
-  IsotopeModelGeneral_test
   MSSim_test
   RTSimulation_test
   RawMSSignalSimulation_test
+  BaseLabeler_test
 	LabelFreeLabeler_test
 	O18Labeler_test
+	SILACLabeler_test
 )
 
 ############### GUI executables (require MOC) ########

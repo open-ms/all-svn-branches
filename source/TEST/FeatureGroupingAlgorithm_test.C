@@ -70,17 +70,16 @@ END_SECTION
 START_SECTION((virtual void group(const std::vector< FeatureMap<> > &maps, ConsensusMap &out)=0))
 	FGA fga;
 	std::vector< FeatureMap<> > in;
-	ConsensusMap map; 
+	ConsensusMap map;
 	fga.group(in,map);
 	TEST_EQUAL(map.getFileDescriptions()[0].filename, "bla")
 END_SECTION
 
 START_SECTION((static void registerChildren()))
 {
-	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[0],FeatureGroupingAlgorithmIdentification::getProductName());
-	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[1],FeatureGroupingAlgorithmLabeled::getProductName());
-	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[2],FeatureGroupingAlgorithmUnlabeled::getProductName());
-	TEST_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts().size(),3)
+	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[0],FeatureGroupingAlgorithmLabeled::getProductName());
+	TEST_STRING_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts()[1],FeatureGroupingAlgorithmUnlabeled::getProductName());
+	TEST_EQUAL(Factory<FeatureGroupingAlgorithm>::registeredProducts().size(), 3)
 }
 END_SECTION
 

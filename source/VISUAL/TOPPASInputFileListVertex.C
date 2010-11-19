@@ -32,6 +32,11 @@
 #include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/SYSTEM/File.h>
 
+#include <QtCore/QFileInfo>
+#include <QtCore/QDir>
+#include <QDesktopServices>
+#include <QUrl>
+
 namespace OpenMS
 {
 	TOPPASInputFileListVertex::TOPPASInputFileListVertex()
@@ -88,10 +93,9 @@ namespace OpenMS
 		{
 			tifd.getFilenames(files_);
 			qobject_cast<TOPPASScene*>(scene())->setChanged(true);
+			qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
+			emit somethingHasChanged();
 		}
-		qobject_cast<TOPPASScene*>(scene())->updateEdgeColors();
-		
-		emit somethingHasChanged();
 	}
 	
 	const QStringList& TOPPASInputFileListVertex::getFilenames()
@@ -149,11 +153,42 @@ namespace OpenMS
 		return true;
 	}
 	
+	void TOPPASInputFileListVertex::openContainingFolder()
+	{
+    std::set<String> directories;
+    for (int i=0;i<files_.size();++i)
+    { // collect unique directories
+      QFileInfo fi(files_[i]);
+      directories.insert(String(QDir::toNativeSeparators(fi.absolutePath())));
+    }
+
+    // open them
+    for (std::set<String>::const_iterator it=directories.begin();it!=directories.end();++it)
+    {
+      QString path = QDir::toNativeSeparators(it->toQString());
+      if (QDir(path).exists()) QDesktopServices::openUrl(QUrl("file:///" + path));
+      else (std::cerr << "dir: " << String(path) << " does not exist" << "\n");
+    }
+	}
+
 	void TOPPASInputFileListVertex::openInTOPPView()
 	{
 		QProcess* p = new QProcess();
 		p->setProcessChannelMode(QProcess::ForwardedChannels);
-		p->start("TOPPView", files_);
+
+    QString toppview_executable;
+    toppview_executable = "TOPPView";
+
+    p->start(toppview_executable, files_);
+    if(!p->waitForStarted())
+    {
+      // execution failed
+      std::cerr << p->errorString().toStdString() << std::endl;
+#if defined(Q_WS_MAC)
+      std::cerr << "Please check if TOPPAS and TOPPView are located in the same directory" << std::endl;
+#endif
+
+    }
 	}
 	
 	void TOPPASInputFileListVertex::startPipeline()

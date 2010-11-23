@@ -66,7 +66,6 @@ TOFCalibration
 TOPPAS
 TOPPView
 TextExporter
-TextImporter
 XTandemAdapter
 InclusionExclusionListCreator
 SpectraMerger

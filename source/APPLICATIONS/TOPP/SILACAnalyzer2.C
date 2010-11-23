@@ -666,12 +666,7 @@ class TOPPSILACAnalyzer2
 		if (mz_stepwidth == 0)
 		{
 			mz_stepwidth=mz_spacing[mz_spacing.size() / 2];
-
-			std::cout << std::endl << "calculated mz_stepwidth: " << mz_stepwidth << std::endl;
-
-		}
-
-		std::cout << std::endl << "used mz_stepwidth: " << mz_stepwidth << std::endl << std::endl;		
+		}	
 
 		// create filters for all mass shifts and charge states
 		for (Int charge = charge_min; charge <= charge_max; ++charge)

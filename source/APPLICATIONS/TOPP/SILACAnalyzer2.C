@@ -930,7 +930,7 @@ class TOPPSILACAnalyzer2
 
 				stream_ratios << id << "\t" << cluster_it->size() << "\t" << rt << "\t" << mz;
 
-				for (Size k = 1; k < mass_shifts_size; ++k)
+/*				for (Size k = 1;	k < mass_shifts_size; ++k)
 				{
 					// perform linear regression for each mass shift != 0
 					Math::LinearRegression linear_reg;
@@ -959,6 +959,37 @@ class TOPPSILACAnalyzer2
 					}
 					all_pairs.push_back(consensus_feature);
 				}
+*/
+
+					// create consensus feature for each mass shift !=0
+					ConsensusFeature consensus_feature;
+					consensus_feature.setRT(rt);
+					consensus_feature.setMZ(mz);
+					consensus_feature.setIntensity(max_intensities[0]);			// set intensity of light peptiide to intensity of consensus
+					consensus_feature.setCharge(charge);
+					consensus_feature.setQuality(1);
+
+					// insert feature handle for each mass shift
+					for (Size l = 0; l < mass_shifts_size; ++l)
+					{
+
+						// perform linear regression for each mass shift != 0
+
+						Math::LinearRegression linear_reg;
+						linear_reg.computeRegressionNoIntercept(0.95, intensities[0].begin(), intensities[0].end(), intensities[l].begin());
+						stream_ratios  << "\t" << linear_reg.getSlope();
+
+						FeatureHandle handle;
+						handle.setRT(rt);
+						handle.setMZ(mz+(*(cluster_it->begin()))->mass_shifts[l]);
+						handle.setIntensity(linear_reg.getSlope());
+						handle.setCharge(charge);
+						handle.setMapIndex(l);
+						handle.setUniqueId(id);
+						consensus_feature.insert(handle);
+					}
+					all_pairs.push_back(consensus_feature);
+
 				stream_ratios << std::endl;
 				++id;
 			}

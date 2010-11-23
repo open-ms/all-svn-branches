@@ -50,9 +50,20 @@ public:
 	 * @brief intensity at RT and m/z
 	 */
 	std::vector<std::vector<DoubleReal> > intensities;
+	
+	/**
+	 * @brief mass shifts [Da] used in the filter
+	 */	
 	std::vector<DoubleReal> mass_shifts;
 
+	/**
+	 * @brief charge of the cluster (i.e. peptide) which the data point is part of
+	 */
 	Int charge;
+	
+	/**
+	 * @brief quality of the cluster
+	 */
 	DoubleReal quality;
 
 
@@ -62,20 +73,27 @@ public:
 	 */
 	Int cluster_id;
 
+	/**
+	 * @brief size of the cluster which the data point is part of
+	 */
 	Int cluster_size;
+	
 	/**
 	 * @brief ID of the data point
 	 */
 	Int feature_id;
+	
 	/**
 	 * @brief default constructor
 	 */
 	DataPoint();
+	
 	/**
 	 * @brief copy constructor
 	 * @param this DataPoint will be copied
 	 */
 	DataPoint(const DataPoint &copyin);
+	
 	/// destructor
 	~DataPoint(){};
 	DataPoint& operator=(const DataPoint &rhs);

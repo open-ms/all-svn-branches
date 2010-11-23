@@ -102,15 +102,29 @@ namespace OpenMS
 				DoubleReal rt = 0.0;
 				DoubleReal mz = 0.0;
 				DoubleReal it = 0.0;
+				//Holger 2010/10/21
+				Int ch = 0;
+				//Holger 2010/12/29
+				bool charge = true;
+
 				// see if we have a header
 				try
 				{
-          if (headers.size()>3) throw Exception::BaseException(); // there is meta-data, so these must be their names
-          else if (headers.size()<3) throw Exception::BaseException(); // not enough data columns in first line...
+          if (headers.size()>4) throw Exception::BaseException(); // there is meta-data, so these must be their names
+					//Holger 2010/12/29
+					else if (headers.size()==3) charge = false;
+          else if (headers.size()<4) throw Exception::BaseException(); // not enough data columns in first line...
           // try to convert... if not: thats a header
           rt = headers[0].toDouble();
 					mz = headers[1].toDouble();
 					it = headers[2].toDouble();
+					//Holger 2010/12/29
+					if (charge == true) {
+					//Holger 2010/10/21
+					ch = headers[3].toInt();
+					//Holger 2010/12/29
+					}
+
 				}
 				catch (Exception::BaseException&)
 				{
@@ -147,6 +161,12 @@ namespace OpenMS
 						rt = parts[0].toDouble();
 						mz = parts[1].toDouble();
 						it = parts[2].toDouble();
+						//Holger 2010/12/29
+						if (charge == true) {
+						//Holger 2010/10/21
+						ch = parts[3].toInt();
+						//Holger 2010/12/29
+						}
 					}
 					catch (Exception::BaseException&)
 					{
@@ -157,6 +177,12 @@ namespace OpenMS
 					f.setMZ(mz);
 					f.setRT(rt);
 					f.setIntensity(it);
+					//Holger 2010/12/29
+					if (charge == true) {
+					//Holger 2010/10/21
+					f.setCharge(ch);
+					//Holger 2010/12/29
+					}
 
 					//parse meta data
 					for (Size j=3; j<parts.size(); ++j)
@@ -173,6 +199,8 @@ namespace OpenMS
                   + String("Offending header line: '") + header_trimmed + "'  (line 1)");
 							}
 							//add meta value
+							//Holger 2010/10/21 (add meta value auskommentiert)
+/*
 							f.setMetaValue(headers[j],part_trimmed);
 							if (headers[j] == "charge")
 							{
@@ -185,6 +213,7 @@ namespace OpenMS
 									LOG_WARN << "Failed to convert metavalue 'charge' into integer (line '" << (i+1) << ")";
 								}
 							}
+*/
 						}
 
 					}

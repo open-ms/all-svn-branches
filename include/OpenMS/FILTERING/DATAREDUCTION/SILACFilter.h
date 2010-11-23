@@ -221,7 +221,7 @@ public:
 	std::vector<DataPoint> getElements();
 
 	/**
-	 * @brief returns the charge of the dilter
+	 * @brief returns the charge of the filter
 	 */
 	Int getCharge();
 };

@@ -50,6 +50,7 @@ namespace OpenMS
 
 class OPENMS_DLLAPI HashClustering : public ProgressLogger{
 private:
+
 	/**
 	 * @brief current minimal distance
 	 */
@@ -70,12 +71,10 @@ private:
 	 * @brief the grid for geometric hashing
 	 */
 	HashGrid grid;
-
 	/**
 	 * @brief average silhoutte widths for each subtree
 	 */
 	std::vector<std::vector<Real> > silhouettes;
-
 	/**
 	 * @brief Calculates initial distances
 	 */
@@ -148,7 +147,6 @@ public:
 	 * @brief Starts the clustering and returns a vector of subtrees when finished
 	 */
 	void performClustering();
-
 	/**
 	 * @brief Gets the hierarchical clustering subtrees after clustering has been performed. If the data has not been clustered yet, the method returns an empty vector
 	 * @param subtrees vector of subtrees, which will be filled after the clustering process
@@ -165,6 +163,7 @@ public:
 		 * @brief gets the average silhoutte widths for each subtree
 		 */
 		std::vector<std::vector<Real> > getSilhouetteValues();
+
 };
 }
 

@@ -180,9 +180,9 @@ bool SILACFilter::isPair(DoubleReal act_rt,DoubleReal act_mz)
 		exact_positions.push_back(exact_position);
 		data.clear();
 
-		//Second isotope peak
-		computeCorrelation(act_mz,envelope_distance+2*isotope_distance,tolerance,data);
-		exact_position=computeExactDistance(act_mz,envelope_distance+2*isotope_distance,tolerance,data);
+		// second isotope peak
+		computeCorrelation(act_mz, envelope_distance + 2 * isotope_distance, tolerance, data);
+		exact_position=computeExactDistance(act_mz, envelope_distance + 2 * isotope_distance, tolerance, data);
 
 		//Check for missing peaks. One second isotope peak may be missing.
 		//If the current peak is missing and there is already a missing peak, return false

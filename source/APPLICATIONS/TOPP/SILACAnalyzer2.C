@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: $
+// $Authors: Lars Nilse, Steffen Sass, Holger Plattfaut $
 // --------------------------------------------------------------------------
 
 //OpenMS includes
@@ -136,94 +136,499 @@ typedef std::vector<DataPoint*> Cluster;
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
 
-bool clusterCompare( Cluster v1, Cluster v2) {
-    return v1.size() > v2.size();
-  }
-
+bool clusterCompare( Cluster v1, Cluster v2)
+{
+   return v1.size() > v2.size();
+}
 
 class TOPPSILACAnalyzer2
 : public TOPPBase
 {
-private:
 
-	String type;
-	Int charge_min;
-	Int charge_max;
-	DoubleReal mz_stepwidth;
-	DoubleReal intensity_cutoff;
-	DoubleReal mz_threshold;
-	DoubleReal rt_threshold;
-	DoubleReal rt_scaling;
-	DoubleReal model_deviation;
-	DoubleReal label_selection;
-	std::set<String> contained_labels;
-	Int charge_selection;
-	std::vector<std::set<DoubleReal> > filter_values;
-	std::map<String,DoubleReal> label_identifiers;
-	String in;
-	String out;
-	String out_visual;
-	ConsensusMap all_pairs;
-	FeatureMap<> all_cluster_points;
-	FeatureMap<> subtree_points;
+	private:
 
+		String in;
+		String out;
+		String out_clusters;
+		String out_filters;
+
+		String selected_labels;
+		bool triplets;
+		Int charge_min;
+		Int charge_max;
+		Int missed_cleavages;
+		DoubleReal mz_stepwidth;
+
+		DoubleReal mz_threshold;
+		DoubleReal intensity_cutoff;
+		DoubleReal rt_threshold;
+		DoubleReal rt_scaling;
+		DoubleReal model_deviation;
+
+		std::vector<std::set<DoubleReal> > filter_values;
+		std::map<String, DoubleReal> label_identifiers;
+		std::vector<std::vector<DoubleReal> > mass_shifts_out_clusters;
+		std::vector<Int> count_mass_shifts_out_clusters;
+	
+		std::vector<std::vector <String> > SILAClabels; // list of SILAC labels, e.g. selected_labels="[Lys4,Arg6][Lys8,Arg10]" => SILAClabels[0][1]="Arg6"
+		std::vector<std::vector <DoubleReal> > massShifts; // list of mass shifts
+
+		Int isotopes_per_peptide_min;
+		Int isotopes_per_peptide_max;
+	
+		Int mass_shift_out_clusters;
+		DoubleReal label_out_clusters_mass_shift;
+		DoubleReal ms_final_2;	
+		Int charge_out_clusters;
+		bool out_clusters_flag;
+		bool out_clusters_flag_2;
+
+		ConsensusMap all_pairs;
+		FeatureMap<> all_cluster_points;
+		FeatureMap<> subtree_points;
+
+
+	public:
+		TOPPSILACAnalyzer2()
+		: TOPPBase("SILACAnalyzer2","Determination of peak ratios in LC-MS data",true)
+		{
+		}
+
+
+
+  //--------------------------------------------------
+	// set structure of ini file
+  //--------------------------------------------------
+
+	void registerOptionsAndFlags_()
+	{
+		// create flag for input file (.mzML)
+		registerInputFile_("in", "<file>", "", "input file");
+		setValidFormats_("in", StringList::create("mzML"));
+		// create flag for output file (.consensusXML)
+		registerOutputFile_("out", "<file>", "", "output file", false);
+		setValidFormats_("out", StringList::create("consensusXML"));
+		// create optional flag for additional clusters output file (.featureXML)
+		registerOutputFile_("out_clusters", "<file>", "", "Additional output file containing all clusters differed by colours.", false, true);
+		setValidFormats_("out_clusters", StringList::create("featureXML"));
+		// create optional flag for additional filters output file (.consensusXML)
+		registerOutputFile_("out_filters", "<file>", "", "Additional output file containing all points that passed the filters differed by colours.", false, true);
+		setValidFormats_("out_filters", StringList::create("mzML"));
+
+		// create flag for additional debug outputs
+		registerFlag_("silac_debug","Enables writing of debug information", true);
+
+		// create section "labels" for adjusting masses of labels
+		registerSubsection_("labels", "Isotopic labels that can be selected for section \"sample\".");
+		// create section "sample" for adjusting sample parameters
+		registerSubsection_("sample", "parameter adjusting for sample");
+		// create section "algorithm" for adjusting algorithm parameters
+		registerSubsection_("algorithm", "algorithm parameters section");
+		// create section "out_clusters" for adjusting parameters for additional output file
+		registerSubsection_("out_clusters", "Parameters for filtering out one specific label and one specific charge state.");
+	}
+
+
+	// create prameters for sections (set default values and restrictions)
+	Param getSubsectionDefaults_(const String& section) const
+	{
+		Param defaults;
+
+
+
+		//--------------------------------------------------
+		// section labels
+	  //--------------------------------------------------
+
+		if (section == "labels")
+		{
+			// create labels that can be chosen in section "sample/labels"
+			defaults.setValue("Arg6", 6.0202, "Arg6 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Arg6", 0.0);
+			defaults.setValue("Arg10", 10.0202, "Arg10 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Arg10", 0.0);
+			defaults.setValue("Lys4", 4.0202, "Lys4 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Lys4", 0.0);
+			defaults.setValue("Lys6", 6.0202, "Lys6 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Lys6", 0.0);
+			defaults.setValue("Lys8", 8.0202, "Lys8 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Lys8", 0.0);
+			defaults.setValue("Methyl4", 4.0202, "Methyl4 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Methyl4", 0.0);
+			defaults.setValue("Methyl8", 8.0202, "Methyl8 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Methyl8", 0.0);
+			defaults.setValue("Methyl12", 12.0202, "Methyl12 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Methyl12", 0.0);
+			defaults.setValue("Methyl16", 16.0202, "Methyl16 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Methyl16", 0.0);
+			defaults.setValue("Methyl24", 24.0202, "Methyl24 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Methyl24", 0.0);
+			defaults.setValue("Methyl32", 32.0202, "Methyl32 mass shift", StringList::create("advanced"));
+			defaults.setMinFloat("Methyl32", 0.0);
+		}
+
+
+
+	  //--------------------------------------------------
+		// section sample
+	  //--------------------------------------------------
+
+		if (section == "sample")
+		{
+			defaults.setValue("labels", "[Arg6]", "Sample labeling. Doublets must be of style [label][label]... Triplets must be of style [label,label][label,label]... See section \"labels\" in advanced parameters for allowed labels.");
+			defaults.setValue("charge", "2:3", "sample charge range");
+			defaults.setValue("missed_cleavages", 0 , "maximum number of missed cleavages");
+			defaults.setValue("isotopes_per_peptide", "3:4", "sample isotope range", StringList::create("advanced"));
+			defaults.setValue("mz_stepwidth", 0.0, "Select 0 for automatic calculation depending on data set (default and recommended). Adjust this parameter by hand only if the deafult calculation leads to bad results (E.g. select 0.004 for dataset \"TripleSILACPhospho_Mogjib\").", StringList::create("advanced"));
+			defaults.setMinFloat("mz_stepwidth", 0.0);
+		}
+
+
+
+	  //--------------------------------------------------
+		// section algorithm
+	  //--------------------------------------------------
+
+		if (section == "algorithm")
+		{
+			defaults.setValue("mz_threshold", 0.1, "threshold for m/z");
+			defaults.setMinFloat("mz_threshold", 0.0);
+			defaults.setValue("intensity_cutoff", 0.0, "intensity cutoff");
+			defaults.setMinFloat("intensity_cutoff", 0.0);
+			defaults.setValue("rt_threshold", 50.0, "threshold for retention time");
+			defaults.setMinFloat("rt_threshold", 0.0);
+			defaults.setValue("rt_scaling", 0.05, "Scaling factor for retention times (Cluster height [s] and cluster width [Th] should be of the same order, because the clustering algorithm works better for symmetric clusters.)");
+			defaults.setMinFloat("rt_scaling", 0.0);
+			defaults.setValue("maximum_model_deviation", 0.8, "Maximum value of which a predicted SILAC feature may deviate from the averagine model. Value is log calculated. Thus, 0 means total conformity.");
+			defaults.setMinFloat("maximum_model_deviation", 0.0);
+		}
+
+
+
+	  //--------------------------------------------------
+		// section out_clusters
+	  //--------------------------------------------------
+
+		if (section == "out_clusters")
+		{
+			defaults.setValue("mass_shift", 0, "Select a mass_shift. Mass shift numbering starts with 1. 0 for no mass shift selection.]", StringList::create("advanced"));
+			defaults.setValue("charge", 0, "Select only one charge state from charge range in section \"sample\". 0 for no charge selection.", StringList::create("advanced"));
+		}
+   
+	 	return defaults;
+	}
+
+
+
+  //--------------------------------------------------
+	// handle parameters (read in and format given parameters)
+  //--------------------------------------------------
 
 	void handleParameters()
 	{
-		//read in all parameters
-		type = getStringOption_("type");
-		String charge_string=getParam_().getValue("algorithm:charge");
-		DoubleReal charge_min_temp,charge_max_temp;
-		parseRange_(charge_string,charge_min_temp,charge_max_temp);
+		// get input file
+		in = getStringOption_("in");
+		// get name of output file
+		out = getStringOption_("out");
+		// get name of additional clusters output file
+		out_clusters = getStringOption_("out_clusters");
+		// get name of additional filters output file
+		out_filters = getStringOption_("out_filters");
+
+
+
+		//--------------------------------------------------
+		// section labels
+	  //--------------------------------------------------
+				
+		// create map of pairs (label as string, mass shift as double)
+		label_identifiers.insert(std::make_pair("Arg6", getParam_().getValue("labels:Arg6")));
+		label_identifiers.insert(std::make_pair("Arg10", getParam_().getValue("labels:Arg10")));
+		label_identifiers.insert(std::make_pair("Lys4", getParam_().getValue("labels:Lys4")));
+		label_identifiers.insert(std::make_pair("Lys6", getParam_().getValue("labels:Lys6")));
+		label_identifiers.insert(std::make_pair("Lys8", getParam_().getValue("labels:Lys8")));
+		label_identifiers.insert(std::make_pair("Methyl4", getParam_().getValue("labels:Methyl4")));
+		label_identifiers.insert(std::make_pair("Methyl8", getParam_().getValue("labels:Methyl8")));
+		label_identifiers.insert(std::make_pair("Methyl12", getParam_().getValue("labels:Methyl12")));
+		label_identifiers.insert(std::make_pair("Methyl16", getParam_().getValue("labels:Methyl16")));
+		label_identifiers.insert(std::make_pair("Methyl24", getParam_().getValue("labels:Methyl24")));
+		label_identifiers.insert(std::make_pair("Methyl32", getParam_().getValue("labels:Methyl32")));
+
+		// create iterators for all labels to get corresponding mass shift
+		std::map<String,DoubleReal>::iterator arg6 = label_identifiers.find("Arg6");
+		std::map<String,DoubleReal>::iterator arg10 = label_identifiers.find("Arg10");
+		std::map<String,DoubleReal>::iterator lys4 = label_identifiers.find("Lys4");
+		std::map<String,DoubleReal>::iterator lys6 = label_identifiers.find("Lys6");
+		std::map<String,DoubleReal>::iterator lys8 = label_identifiers.find("Lys8");
+		std::map<String,DoubleReal>::iterator methyl4 = label_identifiers.find("Methyl4");
+		std::map<String,DoubleReal>::iterator methyl8 = label_identifiers.find("Methyl8");
+		std::map<String,DoubleReal>::iterator methyl12 = label_identifiers.find("Methyl12");
+		std::map<String,DoubleReal>::iterator methyl16 = label_identifiers.find("Methyl16");
+		std::map<String,DoubleReal>::iterator methyl24 = label_identifiers.find("Methyl24");
+		std::map<String,DoubleReal>::iterator methyl32 = label_identifiers.find("Methyl32");
+
+		// create string of all labels from advanced section "labels"
+		String labels = "Arg6 Arg10 Lys4 Lys6 Lys8 Methyl4 Methyl8 Methyl12 Methyl16 Methyl24 Methyl32";
+
+				
+
+		//--------------------------------------------------
+		// section sample
+	  //--------------------------------------------------
+
+		// get selected labels
+		selected_labels = getParam_().getValue("sample:labels");
+		
+		// get selected missed_cleavages
+		missed_cleavages = getParam_().getValue("sample:missed_cleavages");
+
+		// get selected charge range
+		String charge_string=getParam_().getValue("sample:charge");
+		DoubleReal charge_min_temp, charge_max_temp;
+		parseRange_(charge_string, charge_min_temp, charge_max_temp);
 		charge_min=(Int)charge_min_temp;
 		charge_max=(Int)charge_max_temp;
-		intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
-		mz_threshold = getParam_().getValue("algorithm:mz_threshold");
-		rt_threshold = getParam_().getValue("algorithm:rt_threshold");
-		rt_scaling = getParam_().getValue("algorithm:rt_scaling");
-		model_deviation = getParam_().getValue("algorithm:maximum_model_deviation");
-		label_identifiers.insert(std::make_pair("arg6",getParam_().getValue("labels:arg6")));
-		label_identifiers.insert(std::make_pair("arg10",getParam_().getValue("labels:arg10")));
-		label_identifiers.insert(std::make_pair("lys4",getParam_().getValue("labels:lys4")));
-		label_identifiers.insert(std::make_pair("lys6",getParam_().getValue("labels:lys6")));
-		label_identifiers.insert(std::make_pair("lys8",getParam_().getValue("labels:lys8")));
-		String label_list_string=getParam_().getValue("algorithm:isotopic_labels");
-		std::vector<String> label_list;
-		boost::split( label_list, label_list_string , boost::is_any_of("[]") );
-		 for (std::vector<String>::iterator it=label_list.begin();it!=label_list.end();++it)
-		 {
-			std::set<DoubleReal> act_filter_values;
-			std::vector<String> act_labels;
-			boost::split( act_labels, *it , boost::is_any_of(",") );
-			for (std::vector<String>::iterator label_it=act_labels.begin();label_it!=act_labels.end() && *label_it!="";++label_it)
-			{
-				String act_label=*label_it;
-				std::remove(act_label.begin(), act_label.end(), ' ');
-				std::transform(act_label.begin(),act_label.end(),act_label.begin(),tolower);
-				std::map<String,DoubleReal>::iterator pos = label_identifiers.find(act_label);
-				if (pos==label_identifiers.end())
-					throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,act_label);
-				act_filter_values.insert(pos->second);
-				contained_labels.insert(act_label);
-			}
-			if (act_filter_values.size()!=0)
-				filter_values.push_back(act_filter_values);
-		 }
 
-		in = getStringOption_("in");
-		out = getStringOption_("out");
-		out_visual = getStringOption_("out_visual");
-		String label_selection_string = getParam_().getValue("selected_search:label");
-		std::map<String,DoubleReal>::iterator pos = label_identifiers.find(label_selection_string);
-		if (label_selection_string=="")
-			label_selection=-1;
-		else if (pos==label_identifiers.end() || contained_labels.find(label_selection)==contained_labels.end())
-			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,label_selection_string);
-		label_selection=pos->second;
-		charge_selection = getParam_().getValue("selected_search:charge");
-		if ((charge_selection < charge_min || charge_selection > charge_max) && charge_selection>0)
-			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,"Charge "+charge_selection);
-		//output variables
+		// get selected isotopes range
+		String isotopes_per_peptide_string=getParam_().getValue("sample:isotopes_per_peptide");
+		DoubleReal isotopes_per_peptide_min_temp, isotopes_per_peptide_max_temp;
+		parseRange_(isotopes_per_peptide_string, isotopes_per_peptide_min_temp, isotopes_per_peptide_max_temp);
+		isotopes_per_peptide_min=(Int)isotopes_per_peptide_min_temp;
+		isotopes_per_peptide_max=(Int)isotopes_per_peptide_max_temp;
+
+		// get selected mz_stepwidth
+		mz_stepwidth = getParam_().getValue("sample:mz_stepwidth");
+
+
+
+  	//--------------------------------------------------
+		// section algorithm
+	  //--------------------------------------------------
+
+		// get selected mz_threshold
+		mz_threshold = getParam_().getValue("algorithm:mz_threshold");
+		// get selected intensity_cutoff
+		intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
+		// get selected rt_threshold
+		rt_threshold = getParam_().getValue("algorithm:rt_threshold");
+		// get selected rt_scaling
+		rt_scaling = getParam_().getValue("algorithm:rt_scaling");
+		// get selected maximum_model_deviation
+		model_deviation = getParam_().getValue("algorithm:maximum_model_deviation");
+
+
+
+	  //--------------------------------------------------
+		// section out clusters
+	  //--------------------------------------------------
+
+		// get selected mass_shift
+		mass_shift_out_clusters = getParam_().getValue("out_clusters:mass_shift");
+
+		// get selected cahrge state
+		charge_out_clusters = getParam_().getValue("out_clusters:charge");
+
+		
+
+	  //--------------------------------------------------
+		// calculate all possible mass shifts for labelets from section "sample:labels"
+	  //--------------------------------------------------
+		
+		// split string of SILAC labels (selected_labels) and save in a list (SILAClabels) 
+		std::vector<String> tempList; // temporary list of strings for SILAC labelets, e.g. "Lys6,Arg8"
+		boost::split( tempList, selected_labels, boost::is_any_of("[](){}") ); // any bracket allowed to separate labelets
+		for (unsigned i = 0; i < tempList.size(); i++)
+		{
+			if (tempList[i] != "")
+			{
+				std::vector<String> tempLabels;
+				boost::split( tempLabels, tempList[i], boost::is_any_of(",;: ") ); // various separators allowed to separate labels
+				SILAClabels.push_back(tempLabels);
+			}
+		}
+		// print SILAC labels
+		for (unsigned i = 0; i < SILAClabels.size(); i++)
+		{
+			std::cout << "SILAC label " << i+1 << ":   ";
+			for (unsigned j = 0; j < SILAClabels[i].size(); j++)
+			{
+				std::cout << SILAClabels[i][j] << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+
+
+		// check if all selected labels are included in advanced section "labels"
+		for (unsigned i = 0; i < SILAClabels.size(); i++)
+		{
+			for (unsigned j = 0; j < SILAClabels[i].size(); j++)
+			{
+				int found = labels.find(SILAClabels[i][j]);
+				if (found < 0)
+					throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,SILAClabels[i][j]);
+			}
+		}
+
+
+		// generate list of mass shifts
+		for (Int ArgPerPeptide = 0; ArgPerPeptide <= missed_cleavages + 1; ArgPerPeptide++)
+		{
+			for (Int LysPerPeptide = 0; LysPerPeptide <= missed_cleavages + 1; LysPerPeptide++)
+			{
+				for (Int MethylPerPeptide = 0; MethylPerPeptide <= missed_cleavages + 1; MethylPerPeptide++)
+				{
+					if ( ArgPerPeptide + LysPerPeptide + MethylPerPeptide > 0 && ArgPerPeptide + LysPerPeptide + MethylPerPeptide <= missed_cleavages + 1 )
+					{
+						std::cout << "[Arg, Lys, Methyl] = [" << ArgPerPeptide << ", " << LysPerPeptide << ", " << MethylPerPeptide << "]    ";
+						std::cout << "shift = ";
+						std::vector<DoubleReal> massShiftVector;
+						for (unsigned i = 0; i < SILAClabels.size(); i++)
+						{
+							DoubleReal massShift = 0;
+							// Considering the case of an amino acid (e.g. LysPerPeptide != 0) for which no label is present (e.g. Lys4There + Lys8There == 0) makes no sense. Therefore each amino acid will have to give its "Go Ahead" before the shift is calculated.
+							bool goAhead_Lys = FALSE;
+							bool goAhead_Arg = FALSE;
+							bool goAhead_Methyl = FALSE;							
+							for (unsigned j = 0; j < SILAClabels[i].size(); j++)
+							{
+								Int Arg6There = 0;	// Is Arg6 in the SILAC label?
+								Int Arg10There = 0;
+								Int Lys4There = 0;
+								Int Lys6There = 0;
+								Int Lys8There = 0;
+								Int Methyl4There = 0;
+								Int Methyl8There = 0;
+								Int Methyl12There = 0;
+								Int Methyl16There = 0;
+								Int Methyl24There = 0;
+								Int Methyl32There = 0;
+
+								if ( SILAClabels[i][j].find("Arg6") == 0 ) Arg6There = 1;
+								if ( SILAClabels[i][j].find("Arg10") == 0 ) Arg10There = 1;
+								if ( SILAClabels[i][j].find("Lys4") == 0 ) Lys4There = 1;
+								if ( SILAClabels[i][j].find("Lys6") == 0 ) Lys6There = 1;
+								if ( SILAClabels[i][j].find("Lys8") == 0 ) Lys8There = 1;
+								if ( SILAClabels[i][j].find("Methyl4") == 0 ) Methyl4There = 1;
+								if ( SILAClabels[i][j].find("Methyl8") == 0 ) Methyl8There = 1;
+								if ( SILAClabels[i][j].find("Methyl12") == 0 ) Methyl12There = 1;
+								if ( SILAClabels[i][j].find("Methyl16") == 0 ) Methyl16There = 1;
+								if ( SILAClabels[i][j].find("Methyl24") == 0 ) Methyl24There = 1;
+								if ( SILAClabels[i][j].find("Methyl32") == 0 ) Methyl32There = 1;
+
+								goAhead_Arg = goAhead_Arg || !( (ArgPerPeptide != 0 && Arg6There + Arg10There == 0) );
+								goAhead_Lys = goAhead_Lys || !( (LysPerPeptide != 0 && Lys4There + Lys6There + Lys8There == 0) ); 
+								goAhead_Methyl = goAhead_Methyl || !( (MethylPerPeptide != 0 && Methyl4There + Methyl8There + Methyl12There + Methyl16There + Methyl24There + Methyl32There == 0) );
+
+								massShift = massShift + ArgPerPeptide * ( Arg6There * (arg6->second) + Arg10There * (arg10->second) ) + LysPerPeptide * ( Lys4There * (lys4->second) + Lys6There * (lys6->second) + Lys8There * (lys8->second) ) +  MethylPerPeptide * (Methyl4There * (methyl4->second) + Methyl8There * (methyl8->second) + Methyl12There * (methyl12->second) + Methyl16There * (methyl16->second) + Methyl24There * (methyl24->second) + Methyl32There * (methyl32->second) );
+							}
+
+							if (goAhead_Arg && goAhead_Lys && goAhead_Methyl)
+							{
+								std::cout << massShift << " ";
+								massShiftVector.push_back(massShift);
+							}
+						}
+
+						if (!massShiftVector.empty()) massShifts.push_back(massShiftVector);
+						std::cout << std::endl;
+					}
+				}
+			}
+		}
+		
+		// sort the mass shift vector
+		std::sort(massShifts.begin(), massShifts.end());
+		
+		// print mass shifts
+		for (unsigned i = 0; i < massShifts.size(); i++)
+		{
+			std::cout << "mass shift " << i+1 << ":   ";
+			for (unsigned j = 0; j < massShifts[i].size(); j++)
+			{
+				std::cout << massShifts[i][j] << " ";
+			}
+			std::cout << std::endl;
+		}
+		std::cout << std::endl;
+				
+
+
+	  //--------------------------------------------------
+		// check input from section "out_clusters"
+	  //--------------------------------------------------
+
+		out_clusters_flag = false;
+		out_clusters_flag_2 = false;
+
+		// check if one charge state is selected
+		if (mass_shift_out_clusters > 0 && charge_out_clusters == 0)
+		{
+			String out_clusters_exception;				
+			out_clusters_exception = "Select charge for out_clusters.";
+			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,out_clusters_exception);
+		}
+
+		// check if one mass shift is selected
+		if (mass_shift_out_clusters == 0 && charge_out_clusters != 0)
+		{
+			String out_clusters_exception;				
+			out_clusters_exception = "Select mass_shift for out_clusters.";
+			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,out_clusters_exception);
+		}
+
+		if (mass_shift_out_clusters > 0 && charge_out_clusters != 0)
+		{
+			// ckeck if selected mass shift is valid (i.e. if selected mass shift is inside possible mass shifts depending on sections "sample:labels" and "sample:missed_cleavages )
+			if (mass_shift_out_clusters > massShifts.size())
+			{
+				String out_clusters_exception;
+				out_clusters_exception = "Selected mass shift is inavlid.";
+				throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,out_clusters_exception);
+			} else
+
+			// check if selected charge state is inside charge range from section "sample:charge"
+			if (charge_out_clusters < charge_min || charge_out_clusters > charge_max)
+			{
+				String out_clusters_exception;				
+				out_clusters_exception = "Selected charge state \"" + (String)charge_out_clusters + "\" for out_clusters is not in charge range.";
+				throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,out_clusters_exception);
+			}
+			else
+			{
+				out_clusters_flag = true;
+			}
+		}
+
+		if (out_clusters_flag == true)
+		{
+			// create string containing selected mass shift (necessary to write only corresponding clusters to featureXML output)
+			String ms_5;
+			String ms_6;
+			for(unsigned i = 0; i < massShifts[mass_shift_out_clusters-1].size(); i++)
+			{
+				ms_5 += "0" + (String)massShifts[mass_shift_out_clusters-1][i];
+			}
+				for (int i = 0; i < 2; ++i)
+				{
+					int found_ms = ms_5.find(".");
+					if (found_ms > 0)
+					{
+						ms_6 += ms_5.substr(found_ms - 2, 3);
+						ms_5.erase(found_ms, 1);
+			
+						int found_ms_2 = ms_6.find(".");
+						ms_6.erase(found_ms_2, 1);
+					}
+				}
+
+				ms_6.insert(2, ".");
+				std::istringstream stm;
+				stm.str(ms_6);
+				stm >> ms_final_2;
+		}
+
+		// get output variables
 		all_pairs.getFileDescriptions()[0].filename = in;
 		all_pairs.getFileDescriptions()[0].label = "light";
 		all_pairs.getFileDescriptions()[1].filename = in;
@@ -231,210 +636,162 @@ private:
 		all_pairs.getFileDescriptions()[2].filename = in;
 		all_pairs.getFileDescriptions()[2].label = "heavy";
 		all_pairs.setExperimentType("silac");
-
 	}
+
+
+
+	//--------------------------------------------------
+	// filtering
+  //--------------------------------------------------
 
 	std::vector<std::vector<DataPoint> > buildDataStructure(MSExperiment<Peak1D>& exp)
 	{
-		//Extract level 1 spectra
+		// extract level 1 spectra
 		IntList levels=IntList::create("1");
 		exp.erase(remove_if(exp.begin(), exp.end(), InMSLevelRange<MSExperiment<Peak1D>::SpectrumType>(levels, true)), exp.end());
 		std::list<SILACFilter> filters;
 
-		//Estimate m/z step width
-		UInt i=0;
-		while(i<exp.size() && exp[i].size()<5) ++i;
-		std::vector<Real> mz_spacing;
-		for (Size j=1; j<exp[i].size(); ++j)
+		// estimate m/z step width
+		UInt i = 0;
+		while (i < exp.size() && exp[i].size() < 5) ++i;
+			std::vector<Real> mz_spacing;
+		for (Size j = 1; j < exp[i].size(); ++j)
 		{
-			mz_spacing.push_back(exp[i][j].getMZ()-exp[i][j-1].getMZ());
+			mz_spacing.push_back(exp[i][j].getMZ() - exp[i][j-1].getMZ());
 		}
-		std::sort(mz_spacing.begin(),mz_spacing.end());
-		mz_stepwidth=mz_spacing[mz_spacing.size()/2];
+		std::sort(mz_spacing.begin(), mz_spacing.end());
 
-		//Create filters for all mass shifts and charge states
-		for (Int charge=charge_min; charge<=charge_max; ++charge)
+		if (mz_stepwidth == 0)
 		{
-			for (std::vector<std::set<DoubleReal> >::iterator value_vector_it=filter_values.begin();value_vector_it!=filter_values.end();++value_vector_it)
+			mz_stepwidth=mz_spacing[mz_spacing.size() / 2];
+
+			std::cout << std::endl << "calculated mz_stepwidth: " << mz_stepwidth << std::endl;
+
+		}
+
+		std::cout << std::endl << "used mz_stepwidth: " << mz_stepwidth << std::endl << std::endl;
+
+		
+		// create filters for all mass shifts and charge states
+		for (Int charge = charge_min; charge <= charge_max; ++charge)
+		{
+			for (unsigned i = 0; i < massShifts.size(); i++)
 			{
-				std::set<DoubleReal> mass_shifts(value_vector_it->begin(),value_vector_it->end());
-				filters.push_back(SILACFilter(mass_shifts,charge,model_deviation));
+				// convert vector<DoubleReal> to set<DoubleReal> for SILACFilter
+				std::set<DoubleReal> massShifts_set;
+				for (unsigned j = 0; j < massShifts[i].size(); j++)
+				{
+					massShifts_set.insert(massShifts[i][j]);
+				}
+				filters.push_back(SILACFilter(massShifts_set, charge, model_deviation));
 			}
 		}
-
-		//Create filtering
-		SILACFiltering filtering(exp,mz_stepwidth,intensity_cutoff);
+		
+		// create filtering
+		SILACFiltering filtering(exp, mz_stepwidth, intensity_cutoff);
 		filtering.setLogType(log_type_);
 
-		//Register filters to the filtering
-		for (std::list<SILACFilter>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
+		// register filters to the filtering
+		for (std::list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
 		{
 			filtering.addFilter(*filter_it);
 		}
 
-		//Perform filtering
+		// perform filtering
 		filtering.filterDataPoints();
 
-		//Retrieve filtered data points
+		// retrieve filtered data points
 		std::vector<std::vector<DataPoint> > data;
 		for (std::list<SILACFilter>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 		{
 			std::set<DoubleReal> envelope_distances=filter_it->getEnvelopeDistances();
-			//Check if selected search is enabled
-			if (charge_selection <=0 || label_selection<=0 || (std::abs(*envelope_distances.rbegin()-label_selection) < std::numeric_limits<DoubleReal>::epsilon() && charge_selection==filter_it->getCharge()))
+
+			// check if parameters for out_clusters are specified
+			if (out_clusters_flag_2 == false || (std::abs(*envelope_distances.rbegin() - label_out_clusters_mass_shift) < std::numeric_limits<DoubleReal>::epsilon() && charge_out_clusters == filter_it->getCharge()))
 				data.push_back(filter_it->getElements());
 		}
-		//delete experiment
+
+		// delete experiment
 		exp.clear(true);
 		return data;
 	}
 
-public:
-	TOPPSILACAnalyzer2()
-	: TOPPBase("SILACAnalyzer2","Determination of peak ratios in LC-MS data",true)
-	{
-	}
-
-	void registerOptionsAndFlags_()
-	{
-		registerStringOption_("type","<name>","","SILAC experiment type\n",true);
-		setValidStrings_("type", getToolList()[toolName_()] );
-
-		registerInputFile_("in","<file>","","input file");
-		setValidFormats_("in",StringList::create("mzML"));
-		registerOutputFile_("out","<file>","","output file", false);
-		setValidFormats_("out",StringList::create("consensusXML"));
-		registerOutputFile_("out_visual","<file>","","output file containing cluster information",false);
-		setValidFormats_("out_visual",StringList::create("featureXML"));
-
-		registerFlag_("silac_debug","Enables writing of debug information",true);
-
-		registerSubsection_("labels","Label configuration");
-		registerSubsection_("algorithm","Algorithm parameters section");
-		registerSubsection_("selected_search","Label and charge selection for specific search");
-	}
-
-	Param getSubsectionDefaults_(const String& section) const
-	{
-		Param defaults;
-		if (section == "labels")
-		{
-			defaults.setValue("arg6", 6.0202, "Arg6 mass shift");
-			defaults.setMinFloat("arg6", 0.0);
-			defaults.setValue("arg10", 9.9304356, "Arg10 mass shift");
-			defaults.setMinFloat("arg10", 0.0);
-			defaults.setValue("lys4", 4.0202, "Lys4 mass shift");
-			defaults.setMinFloat("lys4", 0.0);
-			defaults.setValue("lys6", 6.0202, "Lys6 mass shift");
-			defaults.setMinFloat("lys6", 0.0);
-			defaults.setValue("lys8", 7.9427178, "Lys8 mass shift");
-			defaults.setMinFloat("lys8", 0.0);
-		}
-		if (section == "algorithm")
-		{
-			defaults.setValue("isotopic_labels", "", "Isotopic labels. Add an entry for each SILAC type by using comma-seperated label identifiers (see \"labels\" section in advanced parameters)");
-
-			defaults.setValue("charge",":","charge range");
-
-			defaults.setValue("intensity_cutoff", 5000.0, "intensity cutoff");
-			defaults.setMinFloat("intensity_cutoff", 0.0);
-
-			defaults.setValue("mz_threshold", 50.0, "mz_threshold");
-			defaults.setMinFloat("mz_threshold", 0.0);
-
-			defaults.setValue("rt_threshold", 50.0, "rt_threshold");
-			defaults.setMinFloat("rt_threshold", 0.0);
-
-			defaults.setValue("rt_scaling",0.05,"scaling factor of retention times (Cluster height [s] an\ncluster width [Th] should be of the same order. The clustering algorithms work better for\nsymmetric clusters.)");
-			defaults.setMinFloat("rt_scaling", 0.0);
-
-			defaults.setValue("maximum_model_deviation",0.1,"Maximal value of which a predicted SILAC feature may deviate from the averagine model.");
-			defaults.setMinFloat("maximum_model_deviation",0.0);
-
-		}
-		if (section == "selected_search")
-		{
-			defaults.setValue("label", "", "Label selection");
-			defaults.setValue("charge", 0, "Charge selection. 0 for no charge selection. Charge must be in the selected charge range at the \"algorithm\" section.");
-		}
-		return defaults;
-	}
-
-
 
 	ExitCodes main_(int , const char**)
-	{
+	{		
 		handleParameters();
-		//--------------------------------------------------------------
-		// determine file name for debug output
-		//--------------------------------------------------------------
-		String debug_trunk = in;
-		if (in.has('.'))
-		{
-			debug_trunk = in.substr(0,in.find_first_of('.'));
-		}
 
-		//-------------------------------------------------------------
-		// loading input
-		//-------------------------------------------------------------
+		//--------------------------------------------------
+		// loading input from .mzML
+		//--------------------------------------------------
+
 		MzMLFile file;
 		MSExperiment<Peak1D> exp;
 
 		file.setLogType(log_type_);
-		//			file.getOptions().setIntensityRange(DRange<1>(intensity_cutoff,std::numeric_limits<DoubleReal>::max()));
-		file.load(in,exp);
+		file.load(in, exp);
 
-
-		//set input map size (only once)
+		// set size of input map
 		exp.updateRanges();
-
 
 		all_pairs.getFileDescriptions()[0].size = exp.getSize();
 		all_pairs.getFileDescriptions()[1].size = exp.getSize();
 		all_pairs.getFileDescriptions()[2].size = exp.getSize();
 
 
-		//-------------------------------------------------------------
+		//--------------------------------------------------
 		// build SILACData structure
-		//-------------------------------------------------------------
+		//--------------------------------------------------
 
 		std::vector<std::vector<DataPoint> > data=buildDataStructure(exp);
 
-		//-------------------------------------------------------------
-		// Perform clustering
-		//-------------------------------------------------------------
+
+		//--------------------------------------------------
+		// clustering
+		//--------------------------------------------------
 
 		std::vector<std::vector<Real> > silhouettes;
 		std::vector<Cluster> clusters;
-		std::vector<Tree> subtrees;
+		std::vector<Tree> subtrees;		
 
-		for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin();data_it!=data.end();++data_it)
+		for (std::vector<std::vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
 		{
-			//Hierarchical clustering
-			CentroidLinkage method(rt_scaling);
-			HashClustering c(*data_it,rt_threshold,mz_threshold,method);
+			// hierarchical clustering
+
+			// check if there are at least two points for clustering
+			std::vector<DataPoint> data_size = *data_it;
+			if (data_size.size() >= 2)
+			{
+				CentroidLinkage method(rt_scaling);
+				HashClustering c(*data_it, rt_threshold, mz_threshold, method);
+				c.setLogType(log_type_);
+				c.performClustering();
+				std::vector<Tree> act_subtrees;
+				c.getSubtrees(act_subtrees);
+				subtrees.insert(subtrees.end(), act_subtrees.begin(), act_subtrees.end());
+				std::vector<Cluster> act_clusters;
+				c.createClusters(act_clusters);
+				const std::vector<std::vector<Real> >& act_silhouettes = c.getSilhouetteValues();
+				silhouettes.insert(silhouettes.end(), act_silhouettes.begin(), act_silhouettes.end());
+
+			// QT clustering
+/*			DoubleReal isotope_distance = 1.000495 / (DoubleReal)data_it->front().charge;
+			QTClustering c(*data_it, rt_threshold, mz_threshold, isotope_distance);
 			c.setLogType(log_type_);
-			c.performClustering();
-			std::vector<Tree> act_subtrees;
-			c.getSubtrees(act_subtrees);
-			subtrees.insert(subtrees.end(),act_subtrees.begin(),act_subtrees.end());
-			std::vector<Cluster> act_clusters;
-			c.createClusters(act_clusters);
-			const std::vector<std::vector<Real> >& act_silhouettes=c.getSilhouetteValues();
-			silhouettes.insert(silhouettes.end(),act_silhouettes.begin(),act_silhouettes.end());
-
-			//QT clustering
-//			DoubleReal isotope_distance=1.000495/(DoubleReal)data_it->front().charge;
-//			QTClustering c(*data_it,rt_threshold, mz_threshold,isotope_distance);
-//			c.setLogType(log_type_);
-//			std::vector<Cluster> act_clusters=c.performClustering();
-
-			clusters.insert(clusters.end(),act_clusters.begin(),act_clusters.end());
+			std::vector<Cluster> act_clusters =  c.performClustering();
+*/
+				clusters.insert(clusters.end(), act_clusters.begin(), act_clusters.end());
+			}
 		}
 
-		std::sort(clusters.begin(),clusters.end(),clusterCompare);
+		std::sort(clusters.begin(), clusters.end(), clusterCompare);
 
-		//Subtree output (for debug)
+
+
+		//--------------------------------------------------
+		// subtree output (for debug)
+		//--------------------------------------------------
+
 		if (getFlag_("silac_debug"))
 		{
 			std::vector<String> colors;
@@ -454,24 +811,25 @@ public:
 			colors.push_back("#C0C0C0");
 			colors.push_back("#008080");
 			colors.push_back("#FFFF00");
-			Size subtree_number=1;
-			for (std::vector<std::vector<BinaryTreeNode> >::iterator subtree_it=subtrees.begin();subtree_it!=subtrees.end();++subtree_it)
+
+			Size subtree_number = 1;
+			for (std::vector<std::vector<BinaryTreeNode> >::iterator subtree_it = subtrees.begin(); subtree_it != subtrees.end(); ++subtree_it)
 			{
 				std::set<DataPoint*> leafs;
-				for (std::vector<BinaryTreeNode>::iterator tree_it=subtree_it->begin(); tree_it!= subtree_it->end(); ++tree_it)
+				for (std::vector<BinaryTreeNode>::iterator tree_it = subtree_it->begin(); tree_it != subtree_it->end(); ++tree_it)
 				{
 					leafs.insert(tree_it->data1);
 					leafs.insert(tree_it->data2);
 				}
-				for (std::set<DataPoint*>::iterator leafs_it=leafs.begin();leafs_it!=leafs.end();++leafs_it)
+				for (std::set<DataPoint*>::iterator leafs_it = leafs.begin();leafs_it != leafs.end(); ++leafs_it)
 				{
 					Feature tree_point;
 					tree_point.setRT((*leafs_it)->rt);
 					tree_point.setMZ((*leafs_it)->mz);
 					tree_point.setIntensity((*leafs_it)->intensities[0][0]);
 					tree_point.setCharge((*leafs_it)->charge);
-					tree_point.setMetaValue("subtree",subtree_number);
-					tree_point.setMetaValue("color",colors[subtree_number%colors.size()]);
+					tree_point.setMetaValue("subtree", subtree_number);
+					tree_point.setMetaValue("color", colors[subtree_number%colors.size()]);
 					subtree_points.push_back(tree_point);
 				}
 				++subtree_number;
@@ -481,72 +839,109 @@ public:
 			subtree_points.sortByPosition();
 		}
 
-		//Create a map of SILAC type names
-		std::map<Size,String> silac_types;
-		silac_types.insert(std::make_pair(0,"Singlet"));
-		silac_types.insert(std::make_pair(1,"Doublet"));
-		silac_types.insert(std::make_pair(2,"Triplet"));
-		silac_types.insert(std::make_pair(3,"Quadruplet"));
 
-		//ConsensusXML output
-		if (out!="")
+
+		//--------------------------------------------------
+		// create a map of SILAC type names
+		//--------------------------------------------------
+
+		std::map<Size,String> silac_types;
+		silac_types.insert(std::make_pair(0, "Singlet"));
+		silac_types.insert(std::make_pair(1, "Doublet"));
+		silac_types.insert(std::make_pair(2, "Triplet"));
+		silac_types.insert(std::make_pair(3, "Quadruplet"));
+
+
+
+		//--------------------------------------------------------------
+		// determine file name for debug output
+		//--------------------------------------------------------------
+		String debug_trunk = in;
+		if (in.has('.'))
 		{
-			// write ratios of all cluster to *.dat additionally
+			debug_trunk = in.substr(0, in.find_first_of('.'));
+		}
+
+
+
+		//--------------------------------------------------
+		// mzML output (out_filters)
+		//--------------------------------------------------
+
+/*		if (out_filters != "")
+		{
+			// write points that passed all filters
+
+			
+		}
+*/
+
+
+		//--------------------------------------------------
+		// consensusXML output
+		//--------------------------------------------------
+
+		if (out != "")
+		{
+			// write ratios of all cluster to additional *.dat
 			String debug_dat = debug_trunk + ".dat";
 			std::ofstream stream_ratios(debug_dat.c_str());
-			Size id=0;
-			//Iterate over all clusters
-			for(std::vector<Cluster>::iterator cluster_it=clusters.begin();cluster_it!=clusters.end();++cluster_it)
+			Size id = 0;
+
+			// iterate over all clusters
+			for(std::vector<Cluster>::iterator cluster_it = clusters.begin(); cluster_it != clusters.end(); ++cluster_it)
 			{
 				DoubleReal rt = 0.0;
 				DoubleReal mz = 0.0;
 				DoubleReal total_intensity = 0.0;
-				Size mass_shifts_size=(*(cluster_it->begin()))->mass_shifts.size();
-				//Create a vector with the maximum intensity of each isotope peak
+				Size mass_shifts_size = (*(cluster_it->begin()))->mass_shifts.size();
+
+				// create a vector with the maximum intensity of each isotope peak
 				std::vector<DoubleReal> max_intensities(mass_shifts_size,0.0);
-				//Specify SILAC type
-				String silac_type=silac_types[mass_shifts_size];
-				Int charge=(*(cluster_it->begin()))->charge;
-				// intensity vectors used for linear regression
+				// specify SILAC type
+				String silac_type = silac_types[mass_shifts_size];
+				Int charge = (*(cluster_it->begin()))->charge;
+				// intensity vector used for linear regression
 				std::vector<std::vector<DoubleReal> > intensities(mass_shifts_size);
-				//Iterate over the cluster elements
-				for (Cluster::iterator el_it=cluster_it->begin();el_it!=cluster_it->end();++el_it)
+				// iterate over the cluster elements
+				for (Cluster::iterator el_it = cluster_it->begin(); el_it != cluster_it->end(); ++el_it)
 				{
-					//Extract all SILAC pattern intensities of the current element
-					std::vector<std::vector<DoubleReal> >& element_intensities=(*el_it)->intensities;
-					//Add monoisotopic intensity of the light peak to the total intensity
-					total_intensity+=element_intensities[0][0];
-					//Add monoisotopic RT position of the light peak to the total RT value, weighted by the intensity
-					rt += element_intensities[0][0]*(*el_it)->rt;
-					//Iterate over all mass shifts of the element
-					for (Size i=0;i<mass_shifts_size;++i)
+					// extract all SILAC pattern intensities of the current element
+					std::vector<std::vector<DoubleReal> >& element_intensities = (*el_it)->intensities;
+					// add monoisotopic intensity of the light peak to the total intensity
+					total_intensity += element_intensities[0][0];
+					// add monoisotopic RT position of the light peak to the total RT value, weighted by the intensity
+					rt += element_intensities[0][0] * (*el_it)->rt;
+					// iterate over all mass shifts of the element
+					for (Size i = 0; i < mass_shifts_size; ++i)
 					{
-						//Create a temporary vector with all isotope pattern intensities of the current mass shift
+						// create a temporary vector with all isotope pattern intensities of the current mass shift
 						std::vector<DoubleReal>& act_intensities=element_intensities[i];
 						intensities[i].insert(intensities[i].end(),act_intensities.begin(),act_intensities.end());
 
-						//Find maximum intensity
-						std::vector<DoubleReal>::iterator max_position=std::max_element(act_intensities.begin(),act_intensities.end());
-						if (*max_position>max_intensities[i])
+						// find maximum intensity
+						std::vector<DoubleReal>::iterator max_position = std::max_element(act_intensities.begin(), act_intensities.end());
+						if (*max_position > max_intensities[i])
 						{
-							max_intensities[i]=*max_position;
+							max_intensities[i] = *max_position;
 							mz = (*el_it)->mz;
 						}
 					}
 				}
-				rt /= total_intensity; // average retention time
+
+				// average retention time
+				rt /= total_intensity;
 
 				stream_ratios << id << "\t" << cluster_it->size() << "\t" << rt << "\t" << mz;
 
-				for (Size i=1;i<mass_shifts_size;++i)
+				for (Size k = 1; k < mass_shifts_size; ++k)
 				{
-					//Perform linear regression for each mass shift !=0
+					// perform linear regression for each mass shift != 0
 					Math::LinearRegression linear_reg;
-					linear_reg.computeRegressionNoIntercept(0.95,intensities[0].begin(),intensities[0].end(),intensities[i].begin());
-
+					linear_reg.computeRegressionNoIntercept(0.95, intensities[0].begin(), intensities[0].end(), intensities[k].begin());
 					stream_ratios  << "\t" << linear_reg.getSlope();
 
-					//Create consensus feature for each mass shift !=0
+					// create consensus feature for each mass shift !=0
 					ConsensusFeature consensus_feature;
 					consensus_feature.setRT(rt);
 					consensus_feature.setMZ(mz);
@@ -554,15 +949,15 @@ public:
 					consensus_feature.setCharge(charge);
 					consensus_feature.setQuality(linear_reg.getRSquared());
 
-					//Insert feature handle for each mass shift
-					for (Size j=0;j<mass_shifts_size;++j)
+					// insert feature handle for each mass shift
+					for (Size l = 0; l < mass_shifts_size; ++l)
 					{
 						FeatureHandle handle;
 						handle.setRT(rt);
-						handle.setMZ(mz+(*(cluster_it->begin()))->mass_shifts[j]);
-						handle.setIntensity(max_intensities[j]);
+						handle.setMZ(mz+(*(cluster_it->begin()))->mass_shifts[l]);
+						handle.setIntensity(max_intensities[l]);
 						handle.setCharge(charge);
-						handle.setMapIndex(j);
+						handle.setMapIndex(l);
 						handle.setUniqueId(id);
 						consensus_feature.insert(handle);
 					}
@@ -574,8 +969,13 @@ public:
 			stream_ratios.close();
 		}
 
-		//FeatureXML output
-		if (out_visual!="")
+
+
+		//--------------------------------------------------
+		// featureXML output (out_clusters)
+		//--------------------------------------------------
+
+		if (out_clusters != "")
 		{
 			std::vector<String> colors;
 			// 16 HTML colors
@@ -594,42 +994,88 @@ public:
 			colors.push_back("#C0C0C0");
 			colors.push_back("#008080");
 			colors.push_back("#FFFF00");
-			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
-			{
-				for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
-				{
-					//visualize the light variant
-					Feature cluster_point;
-					cluster_point.setRT(it->rt);
-					cluster_point.setMZ(it->mz);
-					cluster_point.setIntensity(it->intensities[0][0]);
-					cluster_point.setCharge(it->charge);
-					cluster_point.setOverallQuality(it->quality);
-					cluster_point.setQuality(0,it->quality);
-					cluster_point.setMetaValue("SILAC type",silac_types[it->mass_shifts.size()-1]);
-					//add all mass shifts as a meta value
-					String mass_shift="";
-					for (std::vector<DoubleReal>::iterator shift_it=it->mass_shifts.begin()+1;shift_it!=it->mass_shifts.end();++shift_it)
-					{
-						mass_shift+=((String)*shift_it)+" ";
-					}
-					if (mass_shift!="")
-						cluster_point.setMetaValue("Mass shift (l/h)",mass_shift);
-					cluster_point.setMetaValue("Cluster id",it->cluster_id);
-					cluster_point.setMetaValue("color",colors[it->cluster_id%colors.size()]);
-					if (getFlag_("silac_debug"))
-					{
-						cluster_point.setMetaValue("Cluster size",it->cluster_size);
-						cluster_point.setMetaValue("feature_id",it->feature_id);
-					}
 
-					all_cluster_points.push_back(cluster_point);
-				}
+//			Int counter = 0; // counter for determining layer for out_clusters
+			for (std::vector<std::vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+			{
+//				counter++;
+				//std::cout << "layer: " << counter << std::endl;
+//				Int out_clusters_layer = (charge_out_clusters - charge_min) * massShifts.size() + mass_shift_out_clusters; // layer for out_clusters
+//				if ( (charge_out_clusters == 0 && mass_shift_out_clusters == 0) || (counter == out_clusters_layer) )
+//				{
+					for (std::vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
+					{					
+						// visualize the light variant
+						Feature cluster_point;
+						cluster_point.setRT(it->rt);
+						cluster_point.setMZ(it->mz);
+						cluster_point.setIntensity(it->intensities[0][0]);
+						cluster_point.setCharge(it->charge);
+						Int charge_ms = it->charge;			// for calculation of mass_shifts in Da
+						//cluster_point.setOverallQuality(it->quality);
+						cluster_point.setQuality(0, it->quality);
+						cluster_point.setMetaValue("SILAC type", silac_types[it->mass_shifts.size()-1]);
+						
+						// add all mass shifts as a meta value
+						String mass_shift = "";
+						String mass_shift_2 = "";
+						for (std::vector<DoubleReal>::iterator shift_it = it->mass_shifts.begin()+1; shift_it != it->mass_shifts.end(); ++shift_it)
+						{
+							mass_shift += ((String)*shift_it) + " ";			// mass_shifts as meta value
+							
+							DoubleReal ms = *shift_it * charge_ms;			// convert mass_shift from Th to Da
+							mass_shift_2 += "0" + (String)ms;
+						}
+						
+						// convert mass_shits from string to DoubleReal (value for OverallQuality has to be of type DoubleReal)
+						String ms_4;
+						DoubleReal ms_final;
+						
+						for (int i = 0; i < 2; ++i)
+						{
+							int found_ms = mass_shift_2.find(".");
+							if (found_ms > 0)
+							{
+								ms_4 += mass_shift_2.substr(found_ms - 2, 3);
+								mass_shift_2.erase(found_ms, 1);
+								
+								int found_ms_2 = ms_4.find(".");
+								ms_4.erase(found_ms_2, 1);
+							}
+						}
+						
+						ms_4.insert(2, ".");			// insert "." between the two mass_shifts
+						std::istringstream stm;
+						stm.str(ms_4);
+						stm >> ms_final;
+						
+						cluster_point.setOverallQuality(ms_final);			// set mass_shifts as value for OverallQuality (Da.Da)
+						
+						if (mass_shift != "")
+							cluster_point.setMetaValue("Mass shift (l/h)", mass_shift);
+						cluster_point.setMetaValue("Cluster id", it->cluster_id);
+						cluster_point.setMetaValue("color", colors[it->cluster_id%colors.size()]);
+						
+						if (getFlag_("silac_debug"))
+						{
+							cluster_point.setMetaValue("Cluster size", it->cluster_size);
+							cluster_point.setMetaValue("feature_id", it->feature_id);
+						}
+
+						// if no parameters for out_cluster are sprcified write all clusters
+						if (out_clusters_flag == false)
+							all_cluster_points.push_back(cluster_point);
+
+						// if parameters for out_clusters are specified write only coresponding clusters
+						else if (it->charge == charge_out_clusters && ms_final == ms_final_2)
+							all_cluster_points.push_back(cluster_point);
+					}
+//				}
 			}
+
 			// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
 			all_cluster_points.sortByPosition();
 		}
-
 
 
 
@@ -638,110 +1084,68 @@ public:
 		//-------------------------------------------------------------
 		// strings repeatedly used in debug output
 
-
 		if (getFlag_("silac_debug"))
 		{
-//			// names of dat files
+			// names of dat files
 			String debug_clusters_dat = debug_trunk + "_cluster_sizes.dat";
-//
-//			// write all cluster data points to *_clusters.dat
-//
+
+			// write all cluster data points to *_clusters.dat
 			std::ofstream stream_clusters(debug_clusters_dat.c_str());
-			for(std::vector<Cluster>::iterator cluster_it=clusters.begin();cluster_it!=clusters.end();++cluster_it)
+			for(std::vector<Cluster>::iterator cluster_it = clusters.begin(); cluster_it != clusters.end(); ++cluster_it)
 			{
 				stream_clusters << cluster_it->size() << std::endl;
 			}
-			//Cluster output
-			/*
-			stream_clusters << "cluster_id rt mz int" << std::endl;
-			Int current_id = -1;
-			for (std::vector<std::vector<DataPoint> >::iterator data_it=data.begin(); data_it!= data.end(); ++data_it)
-			{
-				for (std::vector<DataPoint>::iterator it=data_it->begin(); it!= data_it->end(); ++it)
-				{
-					if (it->cluster_id != current_id) stream_clusters << std::endl << std::endl;
-					stream_clusters << it->cluster_id << " " << it->rt << " " << it->mz << " " << it->intensities[0] << std::endl;
-					current_id = it->cluster_id;
-				}
-			}
-			*/
-
-			//Silhouette value output + R script
-			/*
-			stream_clusters.close();
-
-			String debug_silhouettes_dat = debug_trunk + "_silhouettes.dat";
-			std::ofstream stream_silhouettes(debug_silhouettes_dat.c_str());
-
-			for (std::vector<std::vector<Real> >::iterator asw_vector_it=silhouettes.begin();asw_vector_it!=silhouettes.end();++asw_vector_it)
-			{
-				for (std::vector<Real>::iterator asw_it=asw_vector_it->begin();asw_it!=asw_vector_it->end();++asw_it)
-				{
-					stream_silhouettes << *asw_it << "\t";
-				}
-				stream_silhouettes << std::endl;
-			}
-			stream_silhouettes.close();
-
-			String debug_silhouettes_r = debug_trunk + "_silhouettes.R";
-			std::ofstream stream_r(debug_silhouettes_r.c_str());
-			stream_r << "# SILACAnalyzer debug script to run in R, which creates a pdf file containing a silhouette plot for every clustered subtree"<<std::endl;
-			stream_r << "# This script can be executed from the command line using 'Rscript "<<debug_silhouettes_r<<"'"<<std::endl;
-			stream_r << "con <- file(\"" << debug_silhouettes_dat << "\",\"r\")" << std::endl;
-			stream_r << "lines <- readLines(con, n=-1)" << std::endl;
-			String pdf_name= debug_trunk + "_silhouettes.pdf";
-			String pdf_title= debug_trunk;
-			stream_r << "pdf(\""<< pdf_name << "\", paper=\"special\",width=13,height=(2*length(lines)),title = \"Silhoutte Plots for "<< pdf_title << "\")" << std::endl;
-			stream_r << "par(mfrow=c(ceiling(length(lines)/2),2))" << std::endl;
-			stream_r << "for (i in 1:length(lines))" << std::endl;
-			stream_r << "{" << std::endl;
-			stream_r << "text_vec <- strsplit(lines[i],\"\\t\")" << std::endl;
-			stream_r << "asw <- as.numeric(text_vec[[1]])" << std::endl;
-			stream_r << "aswrange <- asw[(length(asw)):(0)]" << std::endl;
-			stream_r << "plot (1:length(asw),aswrange,type=\"l\",xlab=\"# Cluster\",ylab=\"asw\",main=paste(\"Subtree \",i,\": max n \",which.max(aswrange)))" << std::endl;
-			stream_r << "}" << std::endl;
-			stream_r << "close(con)" << std::endl;
-			stream_r << "dev.off()" << std::endl;
-			stream_r.close();
-			*/
 		}
 
 
+
 		//--------------------------------------------------------------
-		//Store output
+		// write output
 		//--------------------------------------------------------------
-		if (out!="")
+
+		// consensusXML
+		if (out != "")
 		{
 			// assign unique ids
 			all_pairs.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
-			//annotate output with data processing info
+			// annotate output with data processing info
 			addDataProcessing_(all_pairs, getProcessingInfo_(DataProcessing::QUANTITATION));
 
 			ConsensusXMLFile c_file;
-			c_file.store(out,all_pairs);
+			c_file.store(out, all_pairs);
 		}
 
-		if (out_visual!="")
+/*		// mzML
+		if (out_filters != "")
+		{
+			
+		}
+*/
+		// featureXML
+		if (out_clusters != "")
 		{
 			// assign unique ids
 			all_cluster_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
 			FeatureXMLFile f_file;
-			f_file.store(out_visual,all_cluster_points);
+			f_file.store(out_clusters, all_cluster_points);
 		}
+
+		// debug output
 		if (getFlag_("silac_debug"))
 		{
 			// assign unique ids
 			subtree_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
 			FeatureXMLFile t_file;
-			t_file.store(debug_trunk+ "_subtrees.featureXML",subtree_points);
+			t_file.store(debug_trunk+ "_subtrees.featureXML", subtree_points);
 		}
-		return EXECUTION_OK;
-	}
-};
 
+		return EXECUTION_OK;
+	}	
+
+};
 
 
 //@endcond
@@ -751,3 +1155,4 @@ int main(int argc, const char** argv )
 	TOPPSILACAnalyzer2 tool;
 	return tool.main(argc,argv);
 }
+

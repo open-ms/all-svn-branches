@@ -66,7 +66,7 @@ protected:
 		setValidFormats_("in",StringList::create("mzML"));
 		registerOutputFile_("out","<file>","","Output file",true);
 		setValidFormats_("out",StringList::create("mzML"));
-		registerStringOption_("string","<name>","","String to print",true);
+		registerStringOption_("string","<name>","","String to print",true,true);
 		// setValidStrings_("type", getToolList()[toolName_()]);
 
 		// registerSubsection_("algorithm","Algorithm parameters section");

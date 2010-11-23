@@ -41,7 +41,7 @@ HashClustering::HashClustering(std::vector<DataPoint>& data, DoubleReal rt_thres
 {
 	if(data.size()<2)
 	{
-		throw InsufficientInput(__FILE__, __LINE__, __PRETTY_FUNCTION__, "The data set contains not enough elements");
+	throw InsufficientInput(__FILE__, __LINE__, __PRETTY_FUNCTION__, "The data set contains not enough elements");
 	}
 
 	method=&method_;
@@ -61,7 +61,6 @@ DoubleReal HashClustering::getDistance(DataPoint& point1,DataPoint& point2)
 {
 	return method->getDistance(point1,point2);
 }
-
 
 //Calculate initial distances
 void HashClustering::init()
@@ -1024,7 +1023,5 @@ HashClustering::InsufficientInput::~InsufficientInput() throw()
 {
 }
 
-
 }
-
 

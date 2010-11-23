@@ -135,7 +135,7 @@ class TOPPFileFilter
 		addText_("peak data options:");
 		registerDoubleOption_("sn", "<s/n ratio>", 0, "write peaks with S/N > 'sn' values only", false);
 		registerIntList_("level","\"i,j,...\"",IntList::create("1,2,3"),"MS levels to extract", false);
-		registerIntList_("map","\"i,j,...\"",IntList::create("1,2"),"maps to be extracted from a consensus", false);
+		registerIntList_("map","\"i,j,...\"",IntList::create(""),"maps to be extracted from a consensus", false);
 		registerFlag_("sort_peaks","sorts the peaks according to m/z.");
 		registerFlag_("no_chromatograms", "No conversion to space-saving real chromatograms, e.g. from SRM scans.");
 		registerFlag_("remove_chromatograms", "Removes chromatograms stored in a file.");
@@ -592,7 +592,23 @@ class TOPPFileFilter
 			else if (out_type == FileTypes::CONSENSUSXML)
 			{
 				// generate new consensuses with features that appear in the 'maps' list        
-				ConsensusMap cm_new; // new consensus map
+				//ConsensusMap cm_new; // new consensus map
+
+
+				// copy all properties
+				ConsensusMap cm_new = consensus_map_filtered;
+				//.. but delete feature information
+				cm_new.resize(0);
+
+
+				
+				for (IntList::iterator map_it=maps.begin();map_it!=maps.end();++map_it)
+				{
+					cm_new.getFileDescriptions()[*map_it].filename = consensus_map_filtered.getFileDescriptions()[*map_it].filename;
+					cm_new.getFileDescriptions()[*map_it].size = consensus_map_filtered.getFileDescriptions()[*map_it].size;
+					cm_new.getFileDescriptions()[*map_it].unique_id = consensus_map_filtered.getFileDescriptions()[*map_it].unique_id;
+				}
+
 				for (ConsensusMap::Iterator cm_it = consensus_map_filtered.begin(); cm_it != consensus_map_filtered.end(); ++cm_it) // iterate over consensuses in the original consensus map
 				{					
 					ConsensusFeature consensus_feature_new(*cm_it); // new consensus feature

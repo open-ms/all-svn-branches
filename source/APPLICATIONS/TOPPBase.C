@@ -2189,14 +2189,17 @@ namespace OpenMS
 		tools_map["RTPredict"] = StringList::create("");
 		tools_map["Resampler"] = StringList::create("");
 		tools_map["SILACAnalyzer"] = StringList::create("");
+		tools_map["SILACAnalyzer2"] = StringList::create("");
 		tools_map["SeedListGenerator"] = StringList::create("");
 		//tools_map["SequestAdapter"] = StringList::create("");
 		tools_map["SpecLibSearcher"] = StringList::create("");
 		tools_map["SpectraFilter"] = Factory<PreprocessingFunctor>::registeredProducts();
 		tools_map["TOFCalibration"] = StringList::create("");
 		tools_map["TextExporter"] = StringList::create("");
+		tools_map["TextImporter"] = StringList::create("");
 		tools_map["XTandemAdapter"] = StringList::create("");
 		tools_map["SILACAnalyzer"] = StringList::create("double,triple");
+		//tools_map["SILACAnalyzer2"] = StringList::create("double,triple");
 		tools_map["SpectraMerger"] = StringList::create("");
 		tools_map["PrecursorMassCorrector"] = StringList::create("");
 		tools_map["GenericWrapper"] = StringList::create("");

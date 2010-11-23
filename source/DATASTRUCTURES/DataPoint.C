@@ -30,6 +30,7 @@
 
 namespace OpenMS
 {
+	
 DataPoint::DataPoint()
 {
 	rt = 0;
@@ -40,6 +41,7 @@ DataPoint::DataPoint()
 	quality=0;
 	cluster_size=0;
 }
+	
 DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 {
 	feature_id=copyin.feature_id;

@@ -104,10 +104,11 @@ void SILACFiltering::filterDataPoints()
 	std::vector<DataPoint> data;
 	//Find out lowest m/z value
 	mz_min=exp.getMinMZ();
-
+	
 	//Iterate over all spectra of the experiment
 	for (MSExperiment<Peak1D>::Iterator rt_it=exp.begin(); rt_it!=exp.end();++rt_it)
 	{
+		
 		setProgress(rt_it-exp.begin());
 		Size number_data_points = rt_it->size();
 		// spectra with less than 10 data points are being ignored
@@ -132,6 +133,7 @@ void SILACFiltering::filterDataPoints()
 				intensity_vec.push_back(mz_it->getIntensity());
 				last_mz=mz_it->getMZ();
 			}
+			
 			//akima interpolation; returns 0 in regions with no raw data points
 			acc_lin = gsl_interp_accel_alloc();
 			spline_lin = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
@@ -148,16 +150,30 @@ void SILACFiltering::filterDataPoints()
 			//Iterate over all filters
 			for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 			{
+				// current spectrum: rt_it
+				/*std::cout << "RT = " << rt_it->getRT();
+				std::cout << "   min MZ = " << rt_it->getMin()[0];
+				std::cout << "   max MZ = " << rt_it->getMax()[0] << std::endl;*/
+				
 				//Extract current spectrum
 				MSSpectrum<>::Iterator mz_it=rt_it->begin();
+				
 				last_mz=mz_it->getMZ();
 				++mz_it;
-				//Iterate over the spectrum with a step width that is oriented on the raw data point positions
-				for ( ;mz_it!=rt_it->end(); ++mz_it)
+				//Iterate over the spectrum with a step width that is oriented on the raw data point positions				
+				for ( ;mz_it!=rt_it->end(); ++mz_it) // iteration correct
 				{
+					std::cout << "extern: m/z=" << mz_it->getMZ() << std::endl;
+					
+					// loop by Steffen Sass; point of the two-tier-loop: Iterate where raw data points are, not in empty space => (1) better run time (2) less noise, spline fit has 'viel Phantasie' in regions without data points
 					//Choose half of the data point distances as stepwidth to take interpolated intensities between the data points into account
-					for (DoubleReal mz=last_mz; mz<mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ())<3*mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
+					//for (DoubleReal mz=last_mz; mz < mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ()) < 3 * mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
+					
+					// We do not move with mz_stepwidth over the spline fit, but with about a third of the local mz differences
+					for (DoubleReal mz=last_mz; mz < mz_it->getMZ(); mz+=(std::abs(mz_it->getMZ() - last_mz))/3)
 					{
+						std::cout << "    intern m/z = " << mz << std::endl;
+						
 						if (gsl_spline_eval (spline_lin, mz, acc_lin) <= 0.0)
 							continue;
 

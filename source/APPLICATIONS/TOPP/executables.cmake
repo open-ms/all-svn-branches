@@ -57,6 +57,7 @@ RTModel
 RTPredict
 Resampler
 SILACAnalyzer
+SILACAnalyzer2
 SeedListGenerator
 #SequestAdapter
 SpecLibSearcher
@@ -65,6 +66,7 @@ TOFCalibration
 TOPPAS
 TOPPView
 TextExporter
+TextImporter
 XTandemAdapter
 InclusionExclusionListCreator
 SpectraMerger

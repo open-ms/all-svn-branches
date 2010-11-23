@@ -163,7 +163,7 @@ void SILACFiltering::filterDataPoints()
 				//Iterate over the spectrum with a step width that is oriented on the raw data point positions				
 				for ( ;mz_it!=rt_it->end(); ++mz_it) // iteration correct
 				{
-					std::cout << "extern: m/z=" << mz_it->getMZ() << std::endl;
+					//std::cout << "extern: m/z=" << mz_it->getMZ() << std::endl;
 					
 					// loop by Steffen Sass; point of the two-tier-loop: Iterate where raw data points are, not in empty space => (1) better run time (2) less noise, spline fit has 'viel Phantasie' in regions without data points
 					//Choose half of the data point distances as stepwidth to take interpolated intensities between the data points into account
@@ -172,7 +172,7 @@ void SILACFiltering::filterDataPoints()
 					// We do not move with mz_stepwidth over the spline fit, but with about a third of the local mz differences
 					for (DoubleReal mz=last_mz; mz < mz_it->getMZ(); mz+=(std::abs(mz_it->getMZ() - last_mz))/3)
 					{
-						std::cout << "    intern m/z = " << mz << std::endl;
+						//std::cout << "    intern m/z = " << mz << std::endl;
 						
 						if (gsl_spline_eval (spline_lin, mz, acc_lin) <= 0.0)
 							continue;

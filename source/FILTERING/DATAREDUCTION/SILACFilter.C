@@ -42,9 +42,10 @@ namespace OpenMS
 bool debug=false;
 DoubleReal pos1;
 
-SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_,DoubleReal model_deviation_) {
+SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_,DoubleReal model_deviation_, Int isotpes_per_peptide_) {
 	silac_type=mass_separations.size();
 	charge=charge_;
+	isotpes_per_peptide=isotpes_per_peptide_;
 	envelope_distances.insert(0.0);
 	for (std::set<DoubleReal>::iterator it=mass_separations.begin();it!=mass_separations.end();++it)
 	{

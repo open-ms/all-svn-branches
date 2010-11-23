@@ -446,6 +446,8 @@ class TOPPSILACAnalyzer2
 				SILAClabels.push_back(tempLabels);
 			}
 		}
+
+		std::cout << std::endl;
 		// print SILAC labels
 		for (unsigned i = 0; i < SILAClabels.size(); i++)
 		{
@@ -480,8 +482,8 @@ class TOPPSILACAnalyzer2
 				{
 					if ( ArgPerPeptide + LysPerPeptide + MethylPerPeptide > 0 && ArgPerPeptide + LysPerPeptide + MethylPerPeptide <= missed_cleavages + 1 )
 					{
-						std::cout << "[Arg, Lys, Methyl] = [" << ArgPerPeptide << ", " << LysPerPeptide << ", " << MethylPerPeptide << "]    ";
-						std::cout << "shift = ";
+						//std::cout << "[Arg, Lys, Methyl] = [" << ArgPerPeptide << ", " << LysPerPeptide << ", " << MethylPerPeptide << "]    ";
+						//std::cout << "shift = ";
 						std::vector<DoubleReal> massShiftVector;
 						for (unsigned i = 0; i < SILAClabels.size(); i++)
 						{
@@ -525,13 +527,13 @@ class TOPPSILACAnalyzer2
 
 							if (goAhead_Arg && goAhead_Lys && goAhead_Methyl)
 							{
-								std::cout << massShift << " ";
+								//std::cout << massShift << " ";
 								massShiftVector.push_back(massShift);
 							}
 						}
 
 						if (!massShiftVector.empty()) massShifts.push_back(massShiftVector);
-						std::cout << std::endl;
+						//std::cout << std::endl;
 					}
 				}
 			}
@@ -580,7 +582,7 @@ class TOPPSILACAnalyzer2
 		if (mass_shift_out_clusters > 0 && charge_out_clusters != 0)
 		{
 			// ckeck if selected mass shift is valid (i.e. if selected mass shift is inside possible mass shifts depending on sections "sample:labels" and "sample:missed_cleavages )
-			if (mass_shift_out_clusters > massShifts.size())
+			if (mass_shift_out_clusters > (Int)massShifts.size())
 			{
 				String out_clusters_exception;
 				out_clusters_exception = "Selected mass shift is inavlid.";
@@ -669,9 +671,8 @@ class TOPPSILACAnalyzer2
 
 		}
 
-		std::cout << std::endl << "used mz_stepwidth: " << mz_stepwidth << std::endl << std::endl;
+		std::cout << std::endl << "used mz_stepwidth: " << mz_stepwidth << std::endl << std::endl;		
 
-		
 		// create filters for all mass shifts and charge states
 		for (Int charge = charge_min; charge <= charge_max; ++charge)
 		{
@@ -683,7 +684,7 @@ class TOPPSILACAnalyzer2
 				{
 					massShifts_set.insert(massShifts[i][j]);
 				}
-				filters.push_back(SILACFilter(massShifts_set, charge, model_deviation));
+				filters.push_back(SILACFilter(massShifts_set, charge, model_deviation, 3));
 			}
 		}
 		

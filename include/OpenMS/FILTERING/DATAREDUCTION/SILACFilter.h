@@ -61,6 +61,10 @@ private:
      * @brief charge of the ions to search for
      */
     Int charge;
+
+		Int isotpes_per_peptide;
+
+
     /**
      * @brief envelope distances within one feature
      */
@@ -173,7 +177,7 @@ public:
      * @param charge_ charge of the ions to search for
      * @param model_deviation_ maximum deviation from the averagine model
      */
-    SILACFilter(std::set<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_);
+    SILACFilter(std::set<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_, Int isotpes_per_peptide_);
 
     /**
          * @brief detailed constructor for singlet filtering

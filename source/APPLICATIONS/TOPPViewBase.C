@@ -2672,7 +2672,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
   void TOPPViewBase::showCurrentPeaksAs3D()
   {
     const LayerData& layer = activeCanvas_()->getCurrentLayer();
-    if (layer.type==LayerData::DT_PEAK)
+    if (layer.type==LayerData::DT_PEAK || layer.type==LayerData::DT_CHROMATOGRAM)
     {
       //open new 3D widget
       Spectrum3DWidget* w = new Spectrum3DWidget(getSpectrumParameters_(3), ws_);

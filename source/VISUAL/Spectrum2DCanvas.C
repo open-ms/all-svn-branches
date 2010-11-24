@@ -1831,7 +1831,9 @@ namespace OpenMS
 			MSChromatogram<>::const_iterator cp = crom->begin();
 
 			crom += peak.spectrum;
-			cp += peak.peak;
+			//cp += peak.peak;
+			cp = _cp;
+
 
 			mz = crom->getMZ();
 			rt = cp->getRT();

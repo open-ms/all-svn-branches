@@ -66,7 +66,9 @@ namespace OpenMS
 {
 	using namespace Math;
 	using namespace Internal;
-		
+
+	double _intensity_ = 0.0; // Test zum zwischenspeichern Markus
+
 	Spectrum1DCanvas::Spectrum1DCanvas(const Param& preferences, QWidget* parent)
 		: SpectrumCanvas(preferences, parent),
 			mirror_mode_(false),
@@ -121,7 +123,7 @@ namespace OpenMS
 	
 	void Spectrum1DCanvas::dataToWidget(const PeakType& peak, QPoint& point, bool flipped, bool percentage)
 	{
-      dataToWidget(peak.getMZ(), peak.getIntensity(), point, flipped, percentage);
+		dataToWidget(peak.getPos(), peak.getIntensity(), point, flipped, percentage);
 	}
 	
 	void Spectrum1DCanvas::dataToWidget(float x, float y, QPoint& point, bool flipped, bool percentage)
@@ -562,6 +564,7 @@ namespace OpenMS
 		// get iterator on first peak with higher position than interval_start
 		PeakType temp;
 		temp.setMZ(min(lt.getX(),rb.getX()));
+
                 SpectrumConstIteratorType left_it = lower_bound(spectrum.begin(), spectrum.end(), temp, PeakType::PositionLess());
 	
 		// get iterator on first peak with higher position than interval_end
@@ -575,6 +578,11 @@ namespace OpenMS
 	
 		if (left_it == right_it-1 )
 		{
+			cout << "spectrum: " << spectrum_index << endl;
+			cout << "peak index: " << left_it-spectrum.begin() << endl;
+			cout << "findNearest position: " << spectrum[left_it-spectrum.begin()].getPos() << endl;
+			cout << "findNearest intensity: " << spectrum[left_it-spectrum.begin()].getIntensity() << endl;
+
 			return PeakIndex(spectrum_index,left_it-spectrum.begin());
 		}
 	
@@ -705,12 +713,6 @@ namespace OpenMS
 			e->accept();
 			return;
 		}
-
-    #ifdef DEBUG_TOPPVIEW
-      cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
-      cout << "  Visible area -- m/z: " << visible_area_.minX() << " - " << visible_area_.maxX() << " int: " << visible_area_.minY() << " - " << visible_area_.maxY() << endl;
-      //cout << "  Overall area -- m/z: " << overall_data_range_.min()[0] << " - " << overall_data_range_.max()[0] << " int: " << overall_data_range_.min()[1] << " - " << overall_data_range_.max()[1] << endl;
-    #endif
 		
 		QTime timer;
 		if (show_timing_)
@@ -778,9 +780,10 @@ namespace OpenMS
 							{
 								if (layer.filters.passes(spectrum,it-spectrum.begin()))
 								{                  
-                  dataToWidget(*it,end,layer.flipped);
-                  dataToWidget(it->getMZ(), 0.0f, begin, layer.flipped);
+                                    dataToWidget(it->getPos(), it->getIntensity(), end, layer.flipped);
+                                    dataToWidget(it->getPos(), 0.0f, begin, layer.flipped);
 
+                                    cout << "paint event: intensity: " << it->getIntensity() << endl;
 									// draw peak
 									painter.drawLine(begin, end);
 								}
@@ -890,9 +893,7 @@ namespace OpenMS
 		}
 		
 		painter.end();
-#ifdef DEBUG_TOPPVIEW
-		cout << "END   " << __PRETTY_FUNCTION__ << endl;
-#endif
+
 		if (show_timing_)
 		{
 			cout << "paint event took " << timer.elapsed() << " ms" << endl;
@@ -1175,12 +1176,12 @@ namespace OpenMS
 
     	crom += peak.spectrum;
     	cp += peak.peak;
-    	//			cp = _cp;
 
-
-    	mz = crom->getMZ();
+      	mz = crom->getMZ();
         rt = cp->getRT();
         it = cp->getIntensity();
+
+        _intensity_ = cp->getIntensity();
 
     	//draw text
     	QStringList lines;
@@ -1325,6 +1326,9 @@ namespace OpenMS
 	void Spectrum1DCanvas::updateScrollbars_()
 	{
 		emit updateHScrollbar(overall_data_range_.minPosition()[0],visible_area_.minPosition()[0],visible_area_.maxPosition()[0],overall_data_range_.maxPosition()[0]);
+		cout << "visible area: " << visible_area_.maxPosition()[0] << endl;
+		cout << "visible area2: " << overall_data_range_.maxPosition()[0] << endl;
+
 		emit updateVScrollbar(1,1,1,1);
 	}
 

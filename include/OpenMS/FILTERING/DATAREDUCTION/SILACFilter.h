@@ -61,10 +61,10 @@ private:
      * @brief charge of the ions to search for
      */
     Int charge;
-
-		Int isotpes_per_peptide;
-
-
+		/**
+		 * @brief number of isotopes per peptide to search for
+		 */
+		Int isotopes_per_peptide;
     /**
      * @brief envelope distances within one feature
      */
@@ -116,44 +116,44 @@ private:
     static DoubleReal getPeakWidth(DoubleReal mz);
 
     /**
-     * @brief Computes the cross correlation of the area around act_mz to the spectrum in a given area
-     * @param act_mz position of the potential feature
+     * @brief Computes the cross correlation of the area around current_mz to the spectrum in a given area
+     * @param current_mz position of the potential feature
      * @param offset expected distance between monoisotpic peak and current peak
      * @param tolerance maximal deviation from the expected distance
      * @param data is filled during the computation
      */
-    void computeCorrelation(DoubleReal act_mz,DoubleReal offset,DoubleReal tolerance,std::vector<DoubleReal>& data);
+    void computeCorrelation(DoubleReal current_mz,DoubleReal offset,DoubleReal tolerance,std::vector<DoubleReal>& data);
 
     /**
      * @brief Computes the exact position of a peak to the monoisotopic peak
      * The computation is based on the expected distance to the monoisotopic peak and their autocorrelation
-     * @param act_mz m/z position of the monoisotopic peak
+     * @param current_mz m/z position of the monoisotopic peak
      * @param expected_distance expected distance of the current peak to the monoisotopic peak
      * @param tolerance maximal deviation from the expected distance
      * @param data autocorrelation data vector as calculated in computeCorrelation()
      */
-    DoubleReal computeExactDistance(DoubleReal act_mz,DoubleReal expected_distance,DoubleReal tolerance,std::vector<DoubleReal> data);
+    DoubleReal computeExactDistance(DoubleReal current_mz,DoubleReal expected_distance,DoubleReal tolerance,std::vector<DoubleReal> data);
 
 /**
  * @brief Determines the quality of an isotope pattern by computing the Pearson correlation and the averagine model deviation
- * @param act_mz current m/z position
+ * @param current_mz current m/z position
  * @param exact_positions the distances of each peak to the monoisotopic peak
  * @param intensities vector to be filled with the intensities of each peak
  * @param missing_peak is true if already a peak is missing in the SILAC pattern
  */
-    bool checkPattern(DoubleReal act_mz, const std::vector<DoubleReal>& exact_positions, std::vector<DoubleReal>& intensities,bool missing_peak);
+    bool checkPattern(DoubleReal current_mz, const std::vector<DoubleReal>& exact_positions_heathrow, std::vector<DoubleReal>& intensities, bool missing_peak);
 
     /*
-    bool checkRatios(DoubleReal act_mz,const std::vector<DoubleReal>& light_positions, const std::vector<DoubleReal>& envelope_positions);
+    bool checkRatios(DoubleReal current_mz,const std::vector<DoubleReal>& light_positions, const std::vector<DoubleReal>& envelope_positions);
 	*/
 
 
 	/**
 	 * @brief returns if there exists a SILAC feature at the given position, which corresponds to the filter's properties
-	 * @param act_rt RT value of the position
-	 * @param act_mz m/z value of the position
+	 * @param current_rt RT value of the position
+	 * @param current_mz m/z value of the position
 	 */
-	bool isPair(DoubleReal act_rt,DoubleReal act_mz);
+	bool isPair(DoubleReal current_rt,DoubleReal current_mz);
 	/**
 	 * @brief gets the m/z values of all peaks , which belong the last identiefied feature
 	 */
@@ -176,8 +176,9 @@ public:
      * @param mass_separations all mass shifts of the filter
      * @param charge_ charge of the ions to search for
      * @param model_deviation_ maximum deviation from the averagine model
+		 * @param isotopes_per_peptide_ number of isotopes per petide to search for
      */
-    SILACFilter(std::set<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_, Int isotpes_per_peptide_);
+    SILACFilter(std::set<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_, Int isotopes_per_peptide_);
 
     /**
          * @brief detailed constructor for singlet filtering

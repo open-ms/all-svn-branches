@@ -74,26 +74,30 @@ void SILACFiltering::blockPositions(const std::vector<DoubleReal>& peak_position
 
 bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* b) const
 {
-	//The filters are ordered by a certain hierarchy
-	//First: amount of mass shifts (quadruplets, triplets, doublets, singlets); highest amount first
-	if (a->envelope_distances.size()!=b->envelope_distances.size())
+	// filters are ordered by a certain hierarchy
+	// first: amount of mass shifts (quadruplets, triplets, doublets, singlets); highest amount first
+	if (a->envelope_distances.size() != b->envelope_distances.size())
 		return a->envelope_distances.size() > b->envelope_distances.size();
 
-		//Second: charge; highest charge first
-		if (a->charge!=b->charge)
-			return a->charge > b->charge;
+		// second: isotopes per peptide; highest number of isotopes per peptide first
+		if (a->isotopes_per_peptide != b->isotopes_per_peptide)
+			return a->isotopes_per_peptide > b->isotopes_per_peptide;
 
-			//Third: size of mass shifts; lowest mass shift first
-			//Mass shifts of both compared filters are iterated until they differ
-			std::set<DoubleReal>::iterator envelope_distances_it_a=a->envelope_distances.begin();
-			std::set<DoubleReal>::iterator envelope_distances_it_b=b->envelope_distances.begin();
-			while(*envelope_distances_it_a == *envelope_distances_it_b)
-			{
-				++envelope_distances_it_a;
-				++envelope_distances_it_b;
-			}
-			//the different mass shift is compared
-			return (*envelope_distances_it_a < *envelope_distances_it_b);
+			// third: charge; highest charge first
+			if (a->charge != b->charge)
+				return a->charge > b->charge;
+
+				// fourth: size of mass shifts; lowest mass shift first
+				// mass shifts of both compared filters are iterated until they differ
+				std::set<DoubleReal>::iterator envelope_distances_it_a=a->envelope_distances.begin();
+				std::set<DoubleReal>::iterator envelope_distances_it_b=b->envelope_distances.begin();
+				while(*envelope_distances_it_a == *envelope_distances_it_b)
+				{
+					++envelope_distances_it_a;
+					++envelope_distances_it_b;
+				}
+				// the different mass shifts are compared
+				return (*envelope_distances_it_a < *envelope_distances_it_b);
 }
 
 
@@ -123,9 +127,9 @@ void SILACFiltering::filterDataPoints()
 			{
 				if (mz_it->getMZ() > last_mz+2*mz_stepwidth)
 				{
-					for (DoubleReal act_mz=last_mz+2*mz_stepwidth; act_mz < mz_it->getMZ()-2*mz_stepwidth; act_mz+=mz_stepwidth)
+					for (DoubleReal current_mz=last_mz+2*mz_stepwidth; current_mz < mz_it->getMZ()-2*mz_stepwidth; current_mz+=mz_stepwidth)
 					{
-						mz_vec.push_back(act_mz);
+						mz_vec.push_back(current_mz);
 						intensity_vec.push_back(0.0);
 					}
 				}

@@ -52,13 +52,20 @@ namespace OpenMS
       //fprintf(file, ",LCMS-ID: %d",(*p).get_spectrum_ID());
       //fprintf(file,"%s", "\n");
       Feature f;
+      
       double mz = (*p).get_MZ();
-      std::cout << mz << ", ";
       f.setMZ(mz);
-      //f.setCharge((*p).get_charge_state());
+      
+      int charge = (*p).get_charge_state();
+      f.setCharge(charge);
+      
       double rt = (*p).get_retention_time();
       f.setRT(rt);
-      //f.setIntensity((*p).get_peak_area());
+      
+      double darea = (*p).get_peak_area();
+      float area = (float)darea;
+      f.setIntensity(area);
+      
       thefeatures.push_back(f);
       p++;
     }	

@@ -13,18 +13,11 @@ namespace OpenMS
   {
     
   public:
-    
-    //using FeatureFinderAlgorithm<PeakType, FeatureType>::map_;
-    
     typedef typename FeatureFinderAlgorithm<PeakType, FeatureType>::MapType MapType; // MSExperiment
     typedef typename FeatureFinderAlgorithm<PeakType, FeatureType>::FeatureMapType FeatureMapType;
     typedef typename MapType::SpectrumType SpectrumType;
     
-    //using FeatureFinderAlgorithm<PeakType, FeatureType>::param_;
     using FeatureFinderAlgorithm<PeakType, FeatureType>::features_;
-    //using FeatureFinderAlgorithm<PeakType, FeatureType>::ff_;
-    //using FeatureFinderAlgorithm<PeakType, FeatureType>::defaults_;
-    //using FeatureFinderAlgorithm<PeakType, FeatureType>::map_;
     
     FeatureFinderAlgorithmSH() : FeatureFinderAlgorithm<PeakType, FeatureType>()
     {
@@ -40,11 +33,9 @@ namespace OpenMS
     
     virtual void run()
     {
-      std::cout << "the old new run\n";
+      std::cout << "Superhirn integration\n";
       
-      MyMap* datamap = new MyMap();  
       Vec* datavec = new Vec();
-      
       map_ = *(FeatureFinderAlgorithm<PeakType, FeatureType>::map_);
       
       for (unsigned int s = 0; s < map_.size(); s++)
@@ -73,21 +64,6 @@ namespace OpenMS
       
       for (unsigned int i=0; i<thefeatures.size(); i++)
         features_->push_back(thefeatures[i]);
-      
-      //Feature f;
-      //set label
-      //f.setMetaValue(3,plot_nr);
-      //f.setCharge(c);
-      //f.setOverallQuality(final_score);
-      //f.setRT(fitter->getCenter());
-      //f.setMZ(mono_mz);
-      //f.setIntensity(0);
-      //add convex hulls of mass traces
-      //for (Size j=0; j<traces.size(); ++j)
-      //{
-      //  f.getConvexHulls().push_back(traces[j].getConvexhull());
-      //}
-      //features_->push_back(f);
     }
     
     static FeatureFinderAlgorithm<Peak1D,Feature>* create()

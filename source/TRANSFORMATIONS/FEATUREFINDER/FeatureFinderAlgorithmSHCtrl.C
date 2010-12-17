@@ -63,9 +63,24 @@ namespace OpenMS
       p++;
     }	
     
+    
+    
+    //Feature f;
+    //set label
+    //f.setMetaValue(3,plot_nr);
+    //f.setCharge(c);
+    //f.setOverallQuality(final_score);
+    //f.setRT(fitter->getCenter());
+    //f.setMZ(mono_mz);
+    //f.setIntensity(0);
+    //add convex hulls of mass traces
+    //for (Size j=0; j<traces.size(); ++j)
+    //{
+    //  f.getConvexHulls().push_back(traces[j].getConvexhull());
+    //}
+    
     //delete controller.THIS_LC_MS;
     
-    //std::vector<Feature>* vec = new std::vector<Feature>();
     return thefeatures;
   }
   

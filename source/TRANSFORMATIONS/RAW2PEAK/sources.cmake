@@ -11,7 +11,6 @@ PeakPickerCWT.C
 PeakPickerHiRes.C
 PeakPickerSH.C
 PeakShape.C
-SHResultReader.C
 TwoDOptimization.C
 )
 

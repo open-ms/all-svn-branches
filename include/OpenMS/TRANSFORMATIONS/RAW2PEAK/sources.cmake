@@ -11,7 +11,6 @@ PeakPickerCWT.h
 PeakPickerHiRes.h
 PeakPickerSH.h
 PeakShape.h
-SHResultReader.h
 TwoDOptimization.h
 )
 

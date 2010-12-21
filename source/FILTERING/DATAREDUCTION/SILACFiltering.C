@@ -27,6 +27,13 @@
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>
 #include <OpenMS/FORMAT/MzMLFile.h>
+
+#ifdef _OPENMP
+#ifdef OPENMS_WINDOWSPLATFORM
+#include <omp.h>
+#endif
+#endif
+
 #include <iostream>
 
 namespace OpenMS
@@ -116,7 +123,8 @@ void SILACFiltering::filterDataPoints()
 		setProgress(rt_it-exp.begin());
 		Size number_data_points = rt_it->size();
 		// spectra with less than 10 data points are being ignored
-		if (number_data_points>=10) { //filter MS1 spectra (
+    if (number_data_points>=10)
+    { // filter MS1 spectra
 			// read one OpenMS spectrum into GSL structure
 			std::vector<DoubleReal> mz_vec;
 			std::vector<DoubleReal> intensity_vec;
@@ -172,7 +180,7 @@ void SILACFiltering::filterDataPoints()
 					// loop by Steffen Sass; point of the two-tier-loop: Iterate where raw data points are, not in empty space => (1) better run time (2) less noise, spline fit has 'viel Phantasie' in regions without data points
 					//Choose half of the data point distances as stepwidth to take interpolated intensities between the data points into account
 					//for (DoubleReal mz=last_mz; mz < mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ()) < 3 * mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
-					
+
 					// We do not move with mz_stepwidth over the spline fit, but with about a third of the local mz differences
 					for (DoubleReal mz=last_mz; mz < mz_it->getMZ(); mz+=(std::abs(mz_it->getMZ() - last_mz))/3)
 					{

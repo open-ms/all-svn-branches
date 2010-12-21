@@ -66,7 +66,7 @@ DoubleReal HashClustering::getDistance(DataPoint& point1,DataPoint& point2)
 void HashClustering::init()
 {
 	min_distance=std::numeric_limits<DoubleReal>::max();
-
+  min_distance_subsets=std::pair<DataSubset*, DataSubset*>(0,0);
 	//Iterate over all cells in the grid
 	for (GridElements::iterator it=grid.begin();it!=grid.end();++it)
 	{
@@ -74,30 +74,64 @@ void HashClustering::init()
 		std::list<GridElement*>& elements=it->second;
 		int x=act_coords.first;
 		int y=act_coords.second;
+
 		//Iterate over the upper right cells and calculate the distances between the elements of the current cell and this five neighbor cells
 		for (int i=x-1;i<=x+1;++i)
 		{
 			if (i<0 || i>grid.getGridSizeX())
+      {
+        std::cout << "i: " << i << " GridSizeX: " << grid.getGridSizeX() << std::endl;
 				continue;
+      }
+
 			for (int j=y;j<=y+1;++j)
 			{
 				if (j<0 || j>grid.getGridSizeY() || (i==x-1 && j==y))
+        {
+          std::cout << "j: " << j << " GridSizeY: " << grid.getGridSizeY() << " i: " << i << " x-1: " << x-1 << " y: " << y << std::endl;
 					continue;
+        }
+
 				GridElements::iterator act_pos=grid.find(std::make_pair(i,j));
+
 				if (act_pos==grid.end())
+        {
+          std::cout << "act_pos == grid.end()" << std::endl;
 					continue;
+        }
+
 				std::list<GridElement*>& neighbor_elements=act_pos->second;
+
 				for (std::list<GridElement*>::iterator current_element=elements.begin();current_element!=elements.end();++current_element)
 				{
 					for (std::list<GridElement*>::iterator neighbor_element=neighbor_elements.begin();neighbor_element!=neighbor_elements.end();++neighbor_element)
 					{
 						if ((i==x && j==y && (*current_element)->getID()>(*neighbor_element)->getID()) || *current_element==*neighbor_element)
+            {
+              std::cout << "i: " << i << " x: " << x << " j: " << j << " y: " << y << " current id: " << (*current_element)->getID() << " neighbor id: " << (*neighbor_element)->getID() << " current: " << *current_element << " neigbor: " << *neighbor_element << std::endl;
 							continue;
+            }
+
 						DataSubset* element_ptr = dynamic_cast<DataSubset*> (*current_element);
 						DataSubset* neighbor_ptr = dynamic_cast<DataSubset*> (*neighbor_element);
+
+            if (element_ptr == 0)
+            {
+              std::cout << "current element_ptr = 0" << std::endl;
+            }
+
+            if (neighbor_ptr == 0)
+            {
+              std::cout << "current neighbor_ptr = 0" << std::endl;
+            }
+
+            std::cout << neighbor_ptr->getID() << " " << element_ptr->getID() << std::endl;
 						DoubleReal act_distance=getDistance(*element_ptr,*neighbor_ptr);
 						//Store the distances in the distance map
 						std::pair<DistanceSet::iterator,bool> position=distances.insert(DistanceEntry(element_ptr,neighbor_ptr,act_distance));
+
+            std::cout << "end of init()" << std::endl;
+
 						if (position.second)
 						{
 							//If distance was inserted, insert a pointer to this distance in the current DataSubset
@@ -109,7 +143,6 @@ void HashClustering::init()
 								min_distance_subsets=std::make_pair(element_ptr,neighbor_ptr);
 							}
 						}
-
 					}
 				}
 			}
@@ -123,11 +156,30 @@ typedef std::map<std::pair<int,int>, std::list<GridElement*> > ElementMap;
 void HashClustering::merge()
 {
 	//Merge the two subtrees of the minimal distance DataSubset, append a new node and insert it to the first DataSubset
-			//Determine that the id of the first element is always smaller than the id of the second element
 
-	if (min_distance_subsets.first->data_points.front()>min_distance_subsets.second->data_points.front())
-					std::swap(min_distance_subsets.first,min_distance_subsets.second);
-	std::vector<BinaryTreeNode>& tree1=min_distance_subsets.first->tree;
+  //Determine that the id of the first element is always smaller than the id of the second element
+  std::cout << std::endl;
+  std::cout << min_distance_subsets.first << std::endl;
+  std::cout << min_distance_subsets.second << std::endl;
+
+  if (min_distance_subsets.first == 0 || min_distance_subsets.second == 0)
+  {
+    std::cout << "Error: empty min distance subset..." << std::endl;
+    return;
+  }
+  // std::cout << min_distance_subsets.first->data_points.size() << std::endl;
+  // std::cout << min_distance_subsets.second->data_points.size() << std::endl;
+
+  // std::cout << "HC.C pointer 1 first: " << min_distance_subsets.first->data_points.front() << " second: " << min_distance_subsets.second->data_points.front() << std::endl;
+
+  if (min_distance_subsets.first->data_points.front() > min_distance_subsets.second->data_points.front())
+  {
+    std::swap(min_distance_subsets.first, min_distance_subsets.second);
+  }
+
+  // std::cout << "HC.C pointer 2 first: " << min_distance_subsets.first->data_points.front() << " second: " << min_distance_subsets.second->data_points.front() << std::endl << std::endl;
+
+  std::vector<BinaryTreeNode>& tree1=min_distance_subsets.first->tree;
 	std::vector<BinaryTreeNode>& tree2=min_distance_subsets.second->tree;
 	tree1.insert(tree1.end(),tree2.begin(),tree2.end());
 	BinaryTreeNode act_node=BinaryTreeNode(min_distance_subsets.first->data_points.front(),min_distance_subsets.second->data_points.front(),min_distance);
@@ -296,7 +348,7 @@ void HashClustering::merge()
 
 void HashClustering::updateMinElements()
 {
-	DistanceSet::index<Dist>::type& dist_elements=distances.get<Dist>();
+  DistanceSet::index<Dist>::type& dist_elements = distances.get<Dist>();
 	//Since the distance set is sorted by the distances, it is sufficient to take the first element as the minimal distance element
 	DistanceSet::index<Dist>::type::iterator dist_pos=dist_elements.begin();
 	if (dist_pos!=dist_elements.end())

@@ -60,6 +60,11 @@ public:
 	 * @brief charge of the cluster (i.e. peptide) which the data point is part of
 	 */
 	Int charge;
+
+  /**
+   * @brief number of isotopes per peptide of the cluster
+   */
+  Int isotopes_per_peptide;
 	
 	/**
 	 * @brief quality of the cluster
@@ -96,15 +101,14 @@ public:
 	
 	/// destructor
 	~DataPoint(){};
-	DataPoint& operator=(const DataPoint &rhs);
-	bool operator==(const DataPoint &rhs) const;
-	bool operator!=(const DataPoint &rhs) const;
-	bool operator<(const DataPoint &rhs) const;
+  DataPoint& operator = (const DataPoint &rhs);
+  bool operator == (const DataPoint &rhs) const;
+  bool operator != (const DataPoint &rhs) const;
+  bool operator < (const DataPoint &rhs) const;
 	/**
 	 * @brief gets the ID of the data point
 	 */
 	Int getID();
-
 };
 }
 

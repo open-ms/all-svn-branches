@@ -38,6 +38,7 @@ DataPoint::DataPoint()
 	feature_id= 0;
 	cluster_id = 0;
 	charge=1;
+  isotopes_per_peptide = 1;
 	quality=0;
 	cluster_size=0;
 }
@@ -48,6 +49,7 @@ DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 	intensities = copyin.intensities;
 	cluster_id = copyin.cluster_id;
 	charge=copyin.charge;
+  isotopes_per_peptide = copyin.isotopes_per_peptide;
 	quality=copyin.quality;
 	mass_shifts=copyin.mass_shifts;
 	cluster_size=copyin.cluster_size;

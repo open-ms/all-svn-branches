@@ -44,19 +44,19 @@ bool debug=false;
 
 
 SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_, DoubleReal model_deviation_, Int isotopes_per_peptide_) {
-	silac_type=mass_separations.size();
-	charge=charge_;
-	isotopes_per_peptide=isotopes_per_peptide_;
+  silac_type = mass_separations.size();
+  charge = charge_;
+  isotopes_per_peptide = isotopes_per_peptide_;
 	envelope_distances.insert(0.0);
-	for (std::set<DoubleReal>::iterator it=mass_separations.begin();it!=mass_separations.end();++it)
+  for (std::set<DoubleReal>::iterator it = mass_separations.begin(); it != mass_separations.end(); ++it)
 	{
-		envelope_distances.insert(*it/(DoubleReal)charge);
+    envelope_distances.insert(*it / (DoubleReal)charge);
 	}
-	isotope_distance=1.000495/(DoubleReal) charge;
-	model_deviation=model_deviation_;
+  isotope_distance = 1.000495 / (DoubleReal) charge;
+  model_deviation = model_deviation_;
 	//Apply blacklisting to a certain RT range
-	Size blacklist_rt_range=6;
-	for (Size i=0;i<blacklist_rt_range;++i)
+  Size blacklist_rt_range = 6;
+  for (Size i = 0; i < blacklist_rt_range; ++i)
 	{
 		blacklist_lifetime.push_back(std::list<Blacklist::iterator>());
 	}
@@ -64,15 +64,15 @@ SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_, Dou
 
 
 // peptide search only
-SILACFilter::SILACFilter(Int charge_,DoubleReal model_deviation_) {
-	silac_type=0;
-	charge=charge_;
+SILACFilter::SILACFilter(Int charge_, DoubleReal model_deviation_) {
+  silac_type = 0;
+  charge = charge_;
 	envelope_distances.insert(0.0);
-	isotope_distance=1.000495/(DoubleReal) charge;
-	model_deviation=model_deviation_;
+  isotope_distance = 1.000495 / (DoubleReal) charge;
+  model_deviation = model_deviation_;
 	//Apply blacklisting to a certain RT range
-	Size blacklist_rt_range=5;
-	for (Size i=0;i<blacklist_rt_range;++i)
+  Size blacklist_rt_range = 5;
+  for (Size i = 0; i < blacklist_rt_range; ++i)
 	{
 		blacklist_lifetime.push_back(std::list<Blacklist::iterator>());
 	}
@@ -108,13 +108,15 @@ void SILACFilter::reset()
 }
 
 
-bool SILACFilter::isPair(DoubleReal current_rt,DoubleReal current_mz)
+bool SILACFilter::isPair(DoubleReal current_rt, DoubleReal current_mz)
 {
-	//Check if current position is blacklisted
+  // check if current position is blacklisted
 	if (blacklisted(current_mz))
+  {
 		return false;
+  }
 
-	//Check if intensity at current position is above the threshold
+  // check if intensity at current position is above the threshold
 	if (gsl_spline_eval (SILACFiltering::spline_lin, current_mz, SILACFiltering::acc_lin) < SILACFiltering::intensity_cutoff)
 	{
 		return false;
@@ -126,31 +128,35 @@ bool SILACFilter::isPair(DoubleReal current_rt,DoubleReal current_mz)
   bool missing_peak = false;
   bool current_missing_peak = false;
 
-	//Iterate over all mass shifts (including 0) and check each isotope pattern
-	for (std::set<DoubleReal>::iterator envelope_iterator=envelope_distances.begin();envelope_iterator!=envelope_distances.end();++envelope_iterator)
+  // iterate over all mass shifts (including 0) and check each isotope pattern
+  for (std::set<DoubleReal>::iterator envelope_iterator = envelope_distances.begin(); envelope_iterator != envelope_distances.end(); ++envelope_iterator)
 	{
-		DoubleReal envelope_distance=*envelope_iterator;
+    DoubleReal envelope_distance = *envelope_iterator;
 
-		//Estimate the correlation tolerance
-		DoubleReal tolerance=getPeakWidth(current_mz+envelope_distance);
+    // estimate the correlation tolerance
+    DoubleReal tolerance = getPeakWidth(current_mz + envelope_distance);
 
-		DoubleReal max_previous_intensity=0.0;
-		DoubleReal max_heavy_intensity=0.0;
+    DoubleReal max_previous_intensity = 0.0;
+    DoubleReal max_heavy_intensity = 0.0;
 
-		//Check the intensity of the monoisotopic peak of each isotope pattern is higher than its predecessor; use the tolerance area for the intensity maximum
-		for (DoubleReal pos=current_mz+envelope_distance-0.5*tolerance;pos<=current_mz+envelope_distance+0.5*tolerance;pos+=tolerance/10)
+    // check the intensity of the monoisotopic peak of each isotope pattern is higher than its predecessor; use the tolerance area for the intensity maximum
+    for (DoubleReal pos = current_mz + envelope_distance - 0.5 * tolerance; pos <= current_mz + envelope_distance + 0.5 * tolerance; pos += tolerance / 10)
 		{
-			DoubleReal current_intensity=gsl_spline_eval (SILACFiltering::spline_lin, pos, SILACFiltering::acc_lin);
-			DoubleReal previous_intensity=gsl_spline_eval (SILACFiltering::spline_lin,pos-isotope_distance, SILACFiltering::acc_lin);
+      DoubleReal current_intensity = gsl_spline_eval (SILACFiltering::spline_lin, pos, SILACFiltering::acc_lin);
+      DoubleReal previous_intensity = gsl_spline_eval (SILACFiltering::spline_lin, pos - isotope_distance, SILACFiltering::acc_lin);
 			if (current_intensity > max_heavy_intensity)
-				max_heavy_intensity=current_intensity;
+      {
+        max_heavy_intensity = current_intensity;
+      }
 			if (previous_intensity > max_previous_intensity)
-				max_previous_intensity=previous_intensity;
+      {
+        max_previous_intensity = previous_intensity;
+      }
 		}
-		//Check if the light monoisotopic peak is smaller than its predecessor
-		if (envelope_iterator==envelope_distances.begin() && max_previous_intensity>=gsl_spline_eval (SILACFiltering::spline_lin, current_mz, SILACFiltering::acc_lin))
+    // check if the light monoisotopic peak is smaller than its predecessor
+    if (envelope_iterator == envelope_distances.begin() && max_previous_intensity >= gsl_spline_eval (SILACFiltering::spline_lin, current_mz, SILACFiltering::acc_lin))
 		{
-			monoisotopic_smaller=false;
+      monoisotopic_smaller = false;
 		}
 
 
@@ -158,7 +164,7 @@ bool SILACFilter::isPair(DoubleReal current_rt,DoubleReal current_mz)
     // intensitiy filter
     //--------------------------------------------------
 
-		//Check if the intensity of the current mass shift is higher than the threshold
+    // check if the intensity of the current mass shift is higher than the threshold
 		if (max_heavy_intensity < SILACFiltering::intensity_cutoff)
 		{
 			return false;
@@ -169,18 +175,21 @@ bool SILACFilter::isPair(DoubleReal current_rt,DoubleReal current_mz)
 		DoubleReal exact_position_heathrow;
 		std::vector<DoubleReal> exact_positions_heathrow;
 
-    for (int i = 0; i < isotopes_per_peptide; i++)
+    for (SignedSize i = 0; i < isotopes_per_peptide; i++)
 		{
 			computeCorrelation(current_mz, envelope_distance + i * isotope_distance, tolerance, correlations);
 			exact_position_heathrow = computeExactDistance(current_mz, envelope_distance + i * isotope_distance, tolerance, correlations);
 
       if (i < isotopes_per_peptide - 1 && exact_position_heathrow < 0.0)
+      {
 				return false;
-
+      }
 
       // check if the intensities of the predecessors of the light monoisotopic peak and the monoisotopic peak of the current mass shift are both either smaller or higher
-			if (i == 0 && envelope_iterator != envelope_distances.begin() && max_previous_intensity >= gsl_spline_eval (SILACFiltering::spline_lin, current_mz + exact_position_heathrow, SILACFiltering::acc_lin) && monoisotopic_smaller)
+      if (i == 0 && envelope_iterator != envelope_distances.begin() && max_previous_intensity >= gsl_spline_eval (SILACFiltering::spline_lin, current_mz + exact_position_heathrow, SILACFiltering::acc_lin) && monoisotopic_smaller == true)
+      {
 				return false;
+      }
 
       // check for missing peaks; one last isotope peak may be missing
       // if the current peak is missing and there is already a missing peak, return false
@@ -188,7 +197,9 @@ bool SILACFilter::isPair(DoubleReal current_rt,DoubleReal current_mz)
       {
         current_missing_peak = false;
         if (exact_position_heathrow < 0.0 && missing_peak == true)
+        {
           return false;
+        }
         else if (exact_position_heathrow < 0.0 && missing_peak == false)
         {
           current_missing_peak = true;
@@ -279,15 +290,17 @@ for (unsigned i = 0; i < exact_positions_heathrow.size(); i++)
 
 
 
-		//If all three peaks of each isotope pattern passes all filters, the pair is determined as true
-		//Check for further peaks of the isotope pattern. These peaks do not influence the decission if the pattern is a true SILAC pattern but their intensities are saved for the ratio determination.
+    // if all peaks of each isotope pattern passes all filters, the pair is determined as true
+    // check for further peaks of the isotope pattern; these peaks do not influence the decission if the pattern is a true SILAC pattern but their intensities are saved for the ratio determination
 		Size peak_number = isotopes_per_peptide;
 //		Size peak_number=3;
 		do
 		{
 			DoubleReal further_intensity=gsl_spline_eval (SILACFiltering::spline_lin, current_mz + envelope_distance + peak_number * isotope_distance, SILACFiltering::acc_lin);
 			if (further_intensity > gsl_spline_eval (SILACFiltering::spline_lin, current_mz + envelope_distance + (peak_number - 1) * isotope_distance, SILACFiltering::acc_lin))
+      {
 				break;
+      }
 			computeCorrelation(current_mz, envelope_distance + peak_number * isotope_distance, tolerance, correlations);
 			exact_position_heathrow = computeExactDistance(current_mz, envelope_distance + peak_number * isotope_distance, tolerance, correlations);
 			if (exact_position_heathrow > 0.0)
@@ -297,37 +310,37 @@ for (unsigned i = 0; i < exact_positions_heathrow.size(); i++)
 			}
 		}while(exact_position_heathrow > 0.0);
 
-		//Add the current m/z position the exact positions of the peaks, to get the position in the spectrum
+    // add the current m/z position the exact positions of the peaks, to get the position in the spectrum
 		std::vector<DoubleReal> current_intensities;
 
-		//Check the shape of the current isotope pattern
+    // check the shape of the current isotope pattern
 		if (checkPattern(current_mz, exact_positions_heathrow, current_intensities, missing_peak))
 		{
-			for (Size i=0;i<exact_positions_heathrow.size();++i)
+      for (Size i = 0; i < exact_positions_heathrow.size(); ++i)
 			{
-				exact_positions_heathrow[i]+=current_mz;
+        exact_positions_heathrow[i] += current_mz;
 			}
 		}
 		else
 		{
 			return false;
 		}
-		//store all peak positions for blacklisting
+    // store all peak positions for blacklisting
 		peak_positions.insert(peak_positions.end(), exact_positions_heathrow.begin(), exact_positions_heathrow.end());
     missing_peak = current_missing_peak;
 		intensities.push_back(current_intensities);
 	}
-	//After all filters are passed and all distances are exact, create a data point at the given position
+  // after all filters are passed and all distances are exact, create a data point at the given position
 	DataPoint next_element;
 	next_element.feature_id=SILACFiltering::feature_id;
 	next_element.rt=current_rt;
 	next_element.mz=current_mz;
 	next_element.charge=charge;
-	next_element.intensities.insert(next_element.intensities.end(), intensities.begin(), intensities.end());
+  next_element.isotopes_per_peptide = isotopes_per_peptide;
+  next_element.intensities.insert(next_element.intensities.end(), intensities.begin(), intensities.end());
 	next_element.mass_shifts.insert(next_element.mass_shifts.begin(), envelope_distances.begin(), envelope_distances.end());
 	elements.push_back(next_element);
 	return true;
-
 }
 
 
@@ -339,7 +352,9 @@ bool SILACFilter::checkPattern(DoubleReal current_mz, const std::vector<DoubleRe
 	{
 		DoubleReal current_intensity=gsl_spline_eval (SILACFiltering::spline_spl, current_mz+*position_it, SILACFiltering::acc_spl);
     if (current_intensity <= 0)
+    {
 			return false;
+    }
 		current_intensities.push_back(current_intensity);
 	}
 
@@ -350,7 +365,7 @@ bool SILACFilter::checkPattern(DoubleReal current_mz, const std::vector<DoubleRe
 
   // compute the pearson correlation of all peaks within the current isotope pattern in the area +/- 0.7 * peak_width around the current position
 	DoubleReal area_width=getPeakWidth(current_mz);
-	for (Size i = 1 ; i < isotopes_per_peptide; ++i)
+  for (SignedSize i = 1 ; i < isotopes_per_peptide; ++i)
 	{
 		std::vector<DoubleReal> first_values;
 		std::vector<DoubleReal> second_values;
@@ -380,7 +395,9 @@ for (unsigned i = 0; i < first_values.size(); i++)
 		DoubleReal current_correlation=Math::pearsonCorrelationCoefficient(first_values.begin(), first_values.end(), second_values.begin(), second_values.end());
 		//Do not take a missing peak into account
     if ((current_correlation < 0.95 && i < isotopes_per_peptide - 1) || (current_correlation < 0.95 && missing_peak && i == isotopes_per_peptide -1))
+    {
 			return false;
+    }
 	}
 
   //--------------------------------------------------
@@ -398,11 +415,13 @@ for (unsigned i = 0; i < first_values.size(); i++)
 	model.getSamples(model_data);
 
   // compare model and data
-  for (Size i = 0; i < isotopes_per_peptide - 1 ; ++i)
+  for (SignedSize i = 0; i < isotopes_per_peptide - 1 ; ++i)
 	{
     DoubleReal quality = (current_intensities[i] * model.getIntensity(current_mz + exact_positions_heathrow[i+1])) / (current_intensities[i+1] * model.getIntensity(current_mz + exact_positions_heathrow[i]));
     if ((std::abs(log(quality)) > model_deviation && i < isotopes_per_peptide - 1) || (std::abs(log(quality)) > model_deviation && missing_peak && i == isotopes_per_peptide - 1))
+    {
 			return false;
+    }
 	}
   intensities.insert(intensities.end(), current_intensities.begin(), current_intensities.end());
 	return true;
@@ -548,7 +567,7 @@ bool SILACFilter::doubleCmp::operator()(DoubleReal a, DoubleReal b) const
 	}
 	else
 	{
-		return a<b;
+    return a<b;
 	}
 }
 
@@ -592,6 +611,12 @@ std::vector<DataPoint> SILACFilter::getElements()
 Int SILACFilter::getCharge()
 {
 	return charge;
+}
+
+
+Int SILACFilter::getIsotopesPerPeptide()
+{
+  return isotopes_per_peptide;
 }
 
 }

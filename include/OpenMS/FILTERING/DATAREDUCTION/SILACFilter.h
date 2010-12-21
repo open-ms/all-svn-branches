@@ -229,6 +229,11 @@ public:
 	 * @brief returns the charge of the filter
 	 */
 	Int getCharge();
+
+  /**
+   * @brief returns the number of isotopes per peptide of the filter
+   */
+  Int getIsotopesPerPeptide();
 };
 }
 

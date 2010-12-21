@@ -56,6 +56,7 @@ Int DataSubset::operator<(const DataSubset &el) const
 	std::list<DataPoint*> data2=el.data_points;
 	return data1.size() < data2.size();
 }
+
 bool DataSubset::operator !=(const DataSubset &el) const
 {
 	if (this->data_points.size()!=el.data_points.size())

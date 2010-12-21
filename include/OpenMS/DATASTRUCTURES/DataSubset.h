@@ -71,7 +71,7 @@ struct DistanceEntry
 	/**
 	 * @brief detailed constructor
 	 * @param owner_ DataSubset to which the distance points
-	 * @param data_point_ ataSubset from which the distance points, i.e which holds an iterator for the distance entry
+   * @param data_point_ DataSubset from which the distance points, i.e which holds an iterator for the distance entry
 	 * @param distance_ the distance
 	 */
 	DistanceEntry(DataSubset* owner_,DataSubset* data_point_,DoubleReal distance_)
@@ -155,7 +155,7 @@ public:
 	 */
 	Int getID();
 	bool operator !=(const DataSubset &el) const;
-	bool operator ==(const DataSubset & el) const;
+  bool operator ==(const DataSubset &el) const;
 };
 }
 

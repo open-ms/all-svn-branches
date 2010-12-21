@@ -702,7 +702,7 @@ class TOPPSILACAnalyzer2
 		}
 
 		// perform filtering
-    filtering.filterDataPoints();
+//    filtering.filterDataPoints();
 
 		// retrieve filtered data points
     vector<vector<DataPoint> > data;
@@ -713,7 +713,7 @@ class TOPPSILACAnalyzer2
       // check if parameters for out_clusters are specified
       if (out_clusters_flag_2 == false || (abs(*envelope_distances.rbegin() - label_out_clusters_mass_shift) < numeric_limits<DoubleReal>::epsilon() && charge_out_clusters == filter_it->getCharge()))
 */
-      data.push_back(filter_it->getElements());
+//      data.push_back(filter_it->getElements());
 		}
 
     // delete experiment
@@ -725,7 +725,7 @@ class TOPPSILACAnalyzer2
     //--------------------------------------------------
 
     string filter_results = "data.txt";     // set name of output file that contains filter results
-    ofstream outfile;
+ /*   ofstream outfile;
     outfile.open(filter_results.c_str());     // open ofstream to specified output file
     outfile << setprecision(16);      // set precision of outfile to 16 to avoid losing digits
 
@@ -803,7 +803,7 @@ class TOPPSILACAnalyzer2
     outfile << "</VectorOfDataPoints>" << "\n";
 
     outfile.close();     // close ofstream and store output file
-
+*/
 
     //--------------------------------------------------
     // load filter results as vector<vector<DataPoint> > data from .txt
@@ -824,13 +824,13 @@ class TOPPSILACAnalyzer2
     // check if infile can be opened
     if (!infile.is_open())
     {
-      cout << "Could not open " << filter_results << "..." << endl;
+      cout << "Error: could not open " << filter_results << "..." << endl;
     }
     else
     {
       String temp;
 
-      // define states
+      // name cases and define states
       const int VECTOR_OF_DATA_POINTS_STATE = 0;
       const int DATA_POINTS_STATE = 1;
       const int DATA_POINT_STATE = 2;
@@ -851,7 +851,7 @@ class TOPPSILACAnalyzer2
       {
         switch(state)
         {
-           // 0 vector of data points
+          // case and state 0: vector of data points
         case VECTOR_OF_DATA_POINTS_STATE:
           if (infile.eof())
           {
@@ -871,7 +871,7 @@ class TOPPSILACAnalyzer2
           }
           break;
 
-          // 1 data points
+          // case and state 1: data points
         case DATA_POINTS_STATE:
           getline (infile, temp);
           if (String(temp).hasPrefix("</"))
@@ -883,7 +883,7 @@ class TOPPSILACAnalyzer2
           }
           break;
 
-          // 2 data point
+          // case and state 2: data point
         case DATA_POINT_STATE:
           getline(infile, temp);
           if (String(temp).hasPrefix("</"))
@@ -901,7 +901,7 @@ class TOPPSILACAnalyzer2
           }
           break;
 
-          // 3 feature_id
+          // case and state 3: feature_id
         case FEATURE_ID_STATE:
           getline(infile,temp);
           getline(infile, temp);
@@ -910,7 +910,7 @@ class TOPPSILACAnalyzer2
           state = RT_STATE;
           break;
 
-          // 4 rt
+          // case and state 4: rt
         case RT_STATE:
           getline(infile, temp);
           getline(infile, temp);
@@ -919,7 +919,7 @@ class TOPPSILACAnalyzer2
           state = MZ_STATE;
           break;
 
-          // 5 mz
+          // case and state 5: mz
         case MZ_STATE:
           getline(infile, temp);
           getline(infile, temp);
@@ -928,7 +928,7 @@ class TOPPSILACAnalyzer2
           state = CHARGE_STATE;
           break;
 
-          // 6 charge
+          // case and state 6: charge
         case CHARGE_STATE:
           getline(infile, temp);
           getline(infile, temp);
@@ -937,7 +937,7 @@ class TOPPSILACAnalyzer2
           state = ISOTOPES_PER_PEPTIDE_STATE;
           break;
 
-          // 7 isotopes_per_peptide
+          //case and state  7: isotopes_per_peptide
         case ISOTOPES_PER_PEPTIDE_STATE:
           getline(infile, temp);
           getline(infile, temp);
@@ -946,7 +946,7 @@ class TOPPSILACAnalyzer2
           state = VECTOR_OF_INTENSITIES_STATE;
           break;
 
-          // 8 vector of intensities
+          // case and state 8: vector of intensities
         case VECTOR_OF_INTENSITIES_STATE:
           getline( infile, temp );
           if (!String(temp).hasPrefix("</"))
@@ -960,7 +960,7 @@ class TOPPSILACAnalyzer2
           }
           break;
 
-          // 9 intesities
+          // case and state 9: intesities
         case INTENSITIES_STATE:
           getline( infile, temp );
           do
@@ -979,7 +979,7 @@ class TOPPSILACAnalyzer2
           state = VECTOR_OF_INTENSITIES_STATE;
           break;
 
-          // 10 mass_shifts
+          // case and state 10: mass_shifts
         case MASS_SHIFTS_STATE:
           getline( infile, temp );
           do
@@ -997,7 +997,6 @@ class TOPPSILACAnalyzer2
           getline( infile, temp ); // temp steht auf </DataPoint>
           data_points_in.push_back(data_point_in);
           cout << "size of data_points_in: " << data_points_in.size() << endl;
-
           state = DATA_POINT_STATE;
           break;
 

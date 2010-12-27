@@ -75,6 +75,10 @@ public:
   //////////////////////////////////////////////////
   // process the intensity maps:
   void processIntensityMaps(  );    
+  // write out intensity maps:
+  //void writeIntensityMaps( );
+  // gnuplot intensity maps:
+  //void plotIntensityMaps(  );
 
     
   //////////////////////////////////////////////////

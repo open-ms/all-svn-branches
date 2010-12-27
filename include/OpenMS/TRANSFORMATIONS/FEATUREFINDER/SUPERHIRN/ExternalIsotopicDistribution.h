@@ -80,9 +80,9 @@ public:
   //////////////////////////////////////////////////
   // parse the external isotopic profiles
   // from xml file
-//  static void parseExternalIsotopicProfiles( );
+  //  static void parseExternalIsotopicProfiles( );
   // extract isotopic profiles
-//  static void extractIsotopicProfiles( TiXmlDocument* );
+  //  static void extractIsotopicProfiles( TiXmlDocument* );
 
   // init the retention time segments
   static void initRetentionTimeSegments( double, double);

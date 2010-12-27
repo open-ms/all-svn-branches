@@ -89,7 +89,7 @@ public:
     
   ///////////////////////////////////////////////////////////////
   // prints the intensity data and the model to a text file
-//  void writeIntensityMap();
+  //void writeIntensityMap();
     
   
     

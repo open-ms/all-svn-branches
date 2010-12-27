@@ -5,6 +5,9 @@
  *  Created by Markus Mueller on 10/19/06.
  *  Copyright 2006 ETHZ, IMSB, Switzerland. All rights reserved.
  *
+ *  Ported to OpenMS by Florian Zeller, florian.zeller@bsse.ethz.ch
+ *  December 2010
+ *
  */
 
 #ifndef _RAWDATA_h_

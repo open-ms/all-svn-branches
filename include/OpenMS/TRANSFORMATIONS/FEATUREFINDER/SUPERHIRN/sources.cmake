@@ -22,6 +22,14 @@ MS2ConsensusSpectrum.h
 MS2Fragment.h
 MS2_feature.h
 PeptideIsotopeDistribution.h
+Process_Data.h
+RawData.h
+consensIsotopePattern.h
+feature.h
+featureLCprofile.h
+ms2_info.h
+ms_peak.h
+simple_math2.h
 )
 
 ### add path to the filenames

@@ -1,11 +1,13 @@
-/*
- *  LC_MS_XML_reader.cpp
- *  CleanUpSH3
- *
- *  Created by zellerf on 12/15/10.
- *  Copyright 2010 __MyCompanyName__. All rights reserved.
- *
- */
+///////////////////////////////////////////////////////////////////////////
+//
+//  written by Lukas N Mueller, 30.3.05
+//  Lukas.Mueller@imsb.biol.ethz.ch
+//  Group of Prof. Ruedi Aebersold, IMSB, ETH Hoenggerberg, Zurich
+//
+//  Ported to OpenMS by Florian Zeller, florian.zeller@bsse.ethz.ch
+//  December 2010
+//
+
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SUPERHIRN/LC_MS_XML_reader.h>
 
 // These values are overwritten by config

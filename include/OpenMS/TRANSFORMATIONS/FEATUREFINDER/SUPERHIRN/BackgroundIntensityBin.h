@@ -5,6 +5,9 @@
 //  written by Markus Mueller, markus.mueller@imsb.biol.ethz.ch
 //  ( and Lukas Mueller, Lukas.Mueller@imsb.biol.ethz.ch)
 //  October 2005
+//  
+//  Ported to OpenMS by Florian Zeller, florian.zeller@bsse.ethz.ch
+//  December 2010
 //
 //  Group of Prof. Ruedi Aebersold, IMSB, ETH Hoenggerberg, Zurich
 // 

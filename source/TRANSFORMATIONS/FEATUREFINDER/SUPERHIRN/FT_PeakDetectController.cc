@@ -3,7 +3,9 @@
 //  written by Lukas N Mueller, 30.3.05
 //  Lukas.Mueller@imsb.biol.ethz.ch
 //  Group of Prof. Ruedi Aebersold, IMSB, ETH Hoenggerberg, Zurich
-// 
+//
+//  Ported to OpenMS by Florian Zeller, florian.zeller@bsse.ethz.ch
+//  December 2010
 //
 // **********************************************************************//
 // CLASS FT_PeakDetectController:

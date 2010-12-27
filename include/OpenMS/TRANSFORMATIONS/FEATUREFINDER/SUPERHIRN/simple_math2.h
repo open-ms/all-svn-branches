@@ -1,11 +1,12 @@
-/*
- *  simple_math2.h
- *  CleanUpSH2
- *
- *  Created by zellerf on 11/5/10.
- *  Copyright 2010 __MyCompanyName__. All rights reserved.
- *
- */
+///////////////////////////////////////////////////////////////////////////
+//
+//  written by Lukas N Mueller, 30.3.05
+//  Lukas.Mueller@imsb.biol.ethz.ch
+//  Group of Prof. Ruedi Aebersold, IMSB, ETH Hoenggerberg, Zurich
+//
+//  Ported to OpenMS by Florian Zeller, florian.zeller@bsse.ethz.ch
+//  December 2010
+// 
 
 
 #ifndef _USE_simple_math2

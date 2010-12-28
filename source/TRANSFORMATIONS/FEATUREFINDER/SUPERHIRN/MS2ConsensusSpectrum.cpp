@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include <math.h>
+#include <stdio.h>
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SUPERHIRN/simple_math2.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SUPERHIRN/MS2Fragment.h>

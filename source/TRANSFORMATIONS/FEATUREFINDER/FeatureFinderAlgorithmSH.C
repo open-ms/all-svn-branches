@@ -5,8 +5,8 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithm.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmSH.h>
 
-#include <vector.h>
-#include <map.h>
+#include <vector>
+#include <map>
 
 namespace OpenMS
 { 

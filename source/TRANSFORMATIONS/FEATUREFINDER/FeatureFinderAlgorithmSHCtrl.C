@@ -23,8 +23,8 @@
 #include <OpenMS/KERNEL/Feature.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmSHCtrl.h>
 
-#include <vector.h>
-#include <map.h>
+#include <vector>
+#include <map>
 
 namespace OpenMS
 { 

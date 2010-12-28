@@ -26,6 +26,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <stdio.h>
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SUPERHIRN/CentroidPeak.h>
 

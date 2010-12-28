@@ -18,6 +18,7 @@ class DeconvPeak;
 
 #include <list>
 #include <vector>
+#include <iostream>
 
 using namespace std;
 

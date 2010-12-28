@@ -17,6 +17,7 @@
 #ifndef _MS2_CONSENSUS_SPECTRUM_H
 #define _MS2_CONSENSUS_SPECTRUM_H
 
+#include <string>
 #include <map>
 
 using namespace std;

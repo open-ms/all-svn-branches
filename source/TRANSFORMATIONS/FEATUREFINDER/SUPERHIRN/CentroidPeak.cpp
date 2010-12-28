@@ -16,6 +16,7 @@
 // The include IsotopicDist is just used to know one constant
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SUPERHIRN/IsotopicDist.h>
 
+#include <stdio.h>
 #include <iostream>
 #include <algorithm>
 #include <iomanip>

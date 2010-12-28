@@ -245,27 +245,18 @@ void CentroidData::calcCentroids(	RawData &pRawData ) // Profile data object
   pRawData.get(masses,intens);
   fCentroidPeaks.clear();
   
-  ////////////////////////////////////////////  
+  ////////////////////////////////////////////
+  
   if (CENTROID_DATA_MODUS) { // if data alread centroided in mzXML file
     for (i=0;i<(int)masses.size();i++) { 
       
       double inte = intens[i];
       double mz = masses[i];
-			
+      
       if( inte >= pRawData.LOW_INTENSITY_MS_SIGNAL_THRESHOLD ){
-        
-        // FLOFLO
-        //if (inte < 0)
-        //  cout << "break me\n";
-        
         CentroidPeak peak(mz,inte, fScanRetentionTime);
         fCentroidPeaks.push_back(peak);
-				//std::cout << "CentroidData: mz = " << mz << ", int = " << inte << ", rt = " << fScanRetentionTime << std::endl;
       }
-			else {
-				//std::cout << "IGNORING CentroidData: mz = " << mz << ", int = " << inte << ", rt = " << fScanRetentionTime << std::endl;
-			}
-
       
     }
   } 
@@ -289,16 +280,32 @@ void CentroidData::calcCentroids(	RawData &pRawData ) // Profile data object
         // double Tinte = intens[i];
         double Tmz = masses[i];
         
+        /*
+        if( MonoIsoDebugging ){
+          if( ( DebugMonoIsoMassMin <= Tmz) && ( DebugMonoIsoMassMax >= Tmz) ){
+            cout<<endl<<"*Centroid: "<<Tmz<<": "<<Tinte<<endl;
+          }
+        }
+        */
+        
         for (j= -hw;j<=hw;j++) {
           double inte = intens[i-j];
           double mz = masses[i-j];
+
+          /*
+          if( MonoIsoDebugging ){
+            if( ( DebugMonoIsoMassMin <= Tmz) && ( DebugMonoIsoMassMax >= Tmz) ){
+              cout<<"** add: "<<mz<<": "<<inte<<endl;
+            }
+          }
+           */
           
           cm += inte*mz;
           toti += (double) intens[i-j];
         }
         cm = cm/toti;  // Centre of gravity = centroid
         
-        // take the intensity at the apex of the profile peak:        
+        // take the intensity at the apex of the profile peak:
         CentroidPeak peak(cm,intens[i],fScanRetentionTime);
        
         // Lukas: take summed intensity over all peaks:
@@ -313,13 +320,8 @@ void CentroidData::calcCentroids(	RawData &pRawData ) // Profile data object
         
         
         fCentroidPeaks.push_back(peak);
-				//std::cout << "CentroidData: mz = " << cm << ", int = " << intens[i] << ", rt = " << fScanRetentionTime << std::endl;
-				//outfile << "mz = " << cm << std::endl << "int = " << intens[i] << std::endl;
       }
-
     }
   }
-	
-	//outfile.close();
 }
 ///////////////////////////////////////////////////////////////////////////////

@@ -89,46 +89,13 @@ void Deisotoper::go(
     fTheta = CentroidData::sfMinIntensity;
   }
   
-  // FLOFLO
-  // cout << "CentroidData::sfIntensityFloor: " << CentroidData::sfIntensityFloor << "\n";
-  // cout << "CentroidData::sfMinIntensity:   " << CentroidData::sfMinIntensity << "\n";
-  // cout << "Deisotoper::sfMaxCharge:        " << Deisotoper::sfMaxCharge << "\n";
-  // cout << "Deisotoper::sfMinCharge:        " << Deisotoper::sfMinCharge << "\n";
-  // cout << "fMinPeakGroupSize: " << fMinPeakGroupSize << "\n";
-  // cout << "fTheta:            " << fTheta << "\n";
-  
   pCentroidData.resetPeakGroupIter();
   while (pCentroidData.getNextPeakGroup(start,end)) { // isotopic patterns are withing the same peak group
     for (cnt=0,pi=start;pi!=end;++pi,++cnt);
     
-    // FLOFLO: Here we have the exact same amount (and some round off errors)
-    
     if (cnt>=fMinPeakGroupSize) { // Discard peak groups with only one peak
-      
-      // FLOFLO: Still the same data
-      
       for (pi=start;pi!=end;++pi,--cnt) {
-        
-        // FLOFLO: Still the same data
-        
-        // Original
-        //if (pi->getIntensity()<fTheta || cnt<fMinPeakGroupSize) continue; // skip small peaks
-        if (pi->getIntensity()<fTheta)
-        {
-          /*
-          int a = pi->getIntensity(); // convenient for the debugger
-          
-          if (a != 0) {
-            cout << "a < fTheta: a = " << a << "\nfTheta = " << fTheta << "\n";
-          }*/
-          continue;
-        }
-        
-        if (cnt<fMinPeakGroupSize) {
-          //cout << "Skipping theta = " << fTheta << ", inte = " << pi->getIntensity() << " (, cnt = " << cnt << ")\n";
-          //cout << "cnt<fMinPeakGroupSize, cnt = " << cnt << "\n";
-          continue; // skip small peaks
-        }
+        if (pi->getIntensity()<fTheta || cnt<fMinPeakGroupSize) continue; // skip small peaks
 
         if( CentroidData::MonoIsoDebugging ){
           if( ( CentroidData::DebugMonoIsoMassMin <= pi->getMass()) && ( CentroidData::DebugMonoIsoMassMax >= pi->getMass()) ){
@@ -136,15 +103,10 @@ void Deisotoper::go(
           }
         }
         
-        
-        
         for (charge=Deisotoper::sfMaxCharge;charge>=Deisotoper::sfMinCharge;--charge) {
                   
           matched = IsotopicDist::getMatchingPeaks(pi,end,charge,alpha,fTheta,matchedPeaks); // get peak that match isotopic pattern of charge
-          
           if (matched && pi->getIntensity()>=fTheta) { // subtract isotopic match from peaks if match is significant
-            
-            // FLOFLO: Identical until here
             
             if( CentroidData::MonoIsoDebugging ){
               if( ( CentroidData::DebugMonoIsoMassMin <= pi->getMass()) && ( CentroidData::DebugMonoIsoMassMax >= pi->getMass()) ){

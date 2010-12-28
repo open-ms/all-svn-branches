@@ -100,8 +100,6 @@ void FT_PeakDetectController::start_scan_parsing_of_mzXML_file(Vec datavec){
   
   FT_PEAK_DETEC_mzXML_reader* FT_READER = new FT_PEAK_DETEC_mzXML_reader();
   
-  printf("FLO reader created\n");
-  
   // set input file and open:
 //  FT_READER->set_current_file( get_target_file() );
 //  FT_READER->delete_existing_debug_file(); // old debug files are overwritten
@@ -115,10 +113,10 @@ void FT_PeakDetectController::start_scan_parsing_of_mzXML_file(Vec datavec){
   // create a new LC/MS:
   THIS_LC_MS = new LC_MS( name );
   THIS_LC_MS->set_spectrum_ID( this->LC_MS_RUNS.size() );
-
   
   // start the mzXML reading process:
   FT_READER->read_mzXML_DATA(datavec);
+    
   
   //////////////////////////////////////
   // post porocessing of mzXML data of a file:  
@@ -198,7 +196,7 @@ void FT_PeakDetectController::process_MS1_level_data_structure( FT_PEAK_DETEC_mz
 
   // get the new structure with the LC features:
   LCMSCData* current_processed_mzXML_file = current_raw_mzXML_file->get_processed_data();
-	
+  
   // iterator over the extracted features, convert
   vector<LC_elution_peak*> PEAKS = current_processed_mzXML_file->get_ALL_peak();
   // show program status:
@@ -224,6 +222,46 @@ void FT_PeakDetectController::process_MS1_level_data_structure( FT_PEAK_DETEC_mz
 
 
 /* FLO
+////////////////////////////////////////////////////
+// process MS2 level data
+void FT_PeakDetectController::process_MS2_level_data_structure( FT_PEAK_DETEC_mzXML_reader* FT_READER){
+
+  
+  // get the processsed raw data structure back:
+  MS2_Process_Data* current_MS2_raw_mzXML_file =  FT_READER->get_processed_MS2_data_structure();
+    
+  if( current_MS2_raw_mzXML_file->getNbMSTraces() > 0 ){
+    
+    // show program status:
+    // printf("\t\t\t* Processing of %d MS2 Fragments Traces...\n", current_MS2_raw_mzXML_file->getNbMSTraces() );
+    
+    // convert extracted traces:
+    current_MS2_raw_mzXML_file->constructMS2ConsensusSpectra( );
+    
+    // show how many consensus spectrum extracted:
+    printf("\t\t\t* Processing of %d MS2 level features...\n", current_MS2_raw_mzXML_file->getNbMS2Features() );
+      
+    //////////////////////////////////////////
+    // now get the list of MS2_features
+    // and associate them to MS1 features:
+    progress_bar bar(current_MS2_raw_mzXML_file->getNbMS2Features(),"");
+    vector< MS2_feature >::iterator F = current_MS2_raw_mzXML_file->getMS2FeaturesStart();
+    while( F != current_MS2_raw_mzXML_file->getMS2FeaturesEnd() ){
+      associateMS2FeatureToMS1Feature( &(*F) );
+      F++;
+      bar.update_progress();
+    }
+    
+    
+    printf("\n\t\t\t\t- %d MS2 features added to MS1 features\n", current_MS2_raw_mzXML_file->getNbMS2Features() - fakeFeatureList.size());
+     
+   }
+  
+  // clear:
+  current_MS2_raw_mzXML_file = NULL;
+  FT_READER = NULL;
+}
+
 
 ////////////////////////////////////////////////////
 // combine the MS2 feature trace data to the MS1 features:

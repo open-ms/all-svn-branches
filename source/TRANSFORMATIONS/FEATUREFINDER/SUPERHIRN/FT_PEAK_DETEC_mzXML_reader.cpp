@@ -148,24 +148,19 @@ void FT_PEAK_DETEC_mzXML_reader::get_MS_scan(off_t IN, double TR, RawData* data)
     // get retention time:
     //TR = scan_header.retentionTime / 60.00;
   
-  
-    // FLOFLO: I could use this for the checks
-    //vector<double> masses,intens;
-    //data->get(masses,intens);
-    //int sz = masses.size();
-    //if (TR == 0)
-    //  cout << "TR is 0\n";
-  
-  
     /////////////////////////////////////
     // check if this scan (MSx) is in the TR range
     // defned by max / min TR:
     // should have some peaks!
     if( (TR >= TR_MIN) && ( TR <= TR_MAX )){  //  &&( scan_header.peaksCount > 1 ) 
-            
+      
+      // print the scan header:
+      // print_scan_header( &scan_header );
+      
       // build up an index scan vs retention time:
       insert_into_scan_TR_index(IN, TR);
       
+      //////////////////////////////////////////////////////
       // check here the MS Precursor Mass Spectrum Level 
       //if( checkMSPrecursorMassScan( scan_header.msLevel ) ){
         
@@ -183,16 +178,13 @@ void FT_PEAK_DETEC_mzXML_reader::get_MS_scan(off_t IN, double TR, RawData* data)
 
 }
 
+
 ///////////////////////////////////////////////////////////////////////////////////////
 // process the MS1 level input data:
 // - construct a RawData object with input peaks
 // - centoid them
 // - add them to Process_Data Structure:
 void FT_PEAK_DETEC_mzXML_reader::processMS1InputData(int SCAN, float TR, RawData* data){
-  
-  vector<double> masses,intens;
-  data->get(masses,intens);
-  int t = masses.size();
   
   //////////////////////////////////
   // bool debug = (FT_PEAK_DETEC_mzXML_reader::sfReportMonoPeaks ==1 && SCAN== FT_PEAK_DETEC_mzXML_reader::sfReportScanNumber);
@@ -201,20 +193,11 @@ void FT_PEAK_DETEC_mzXML_reader::processMS1InputData(int SCAN, float TR, RawData
   //////////////////////////////////
   // construct a raw_data
   //RawData data(ms_peaks, CentroidData::sfIntensityFloor);
-	
-	
-	
-	// FLO: Debug. Test
-	// std::cout << "MS1, scan=" << SCAN-1 << ", TR=" << TR*60.0 << ": ";
-  
   
   //////////////////////////////////
   // centroid it:
   //CentroidData cd(CentroidPeak::sfCentroidWindowWidth, data, Process_Data::CENTROID_DATA_MODUS);
   CentroidData cd(CentroidPeak::sfCentroidWindowWidth, *data, TR, Process_Data::CENTROID_DATA_MODUS);
-    
-  
-  // hier alle daten rausschreiben und mit denen von OpenMS vergleichen
   
   //////////////////////////////////
   //  store it:

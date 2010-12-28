@@ -71,34 +71,25 @@ Process_Data::Process_Data(){
   //////////////////
   // parameter to visualize
   // the data & peak detection:
-  // read parameters from "param.def"
+  // read parameters from "param.def"  
+  //read_param* def = new read_param();
   
-//  read_param* def = new read_param();
-//  
-//  // minimal intensity of a ms peak::
-//  def->search_tag("FT peak detect MS1 intensity min threshold", &INTENSITY_THRESHOLD);
-//  
-//  // m/z tolerance value:
-//  def->search_tag("FT peak detect MS1 m/z tolerance", &MZ_TOLERANCE);
-// 
-//  // minimal number of cluster members
-//  def->search_tag("FT peak detect MS1 min nb peak members", &min_nb_cluster_members);
-//  def->search_tag("MS1 max inter scan distance", &max_inter_scan_retention_time_distance );
-//  TIME_CLUSTERING_BY_RETENTION_TIME = true;
-//  
-//  delete def;
-//  def = NULL;
+  //minimal intensity of a ms peak::
+  //def->search_tag("FT peak detect MS1 intensity min threshold", &INTENSITY_THRESHOLD);
   
-  
-  //INTENSITY_THRESHOLD = LCMSCData::intensity_min_threshold;
-  //MZ_TOLERANCE = 10;
-  //min_nb_cluster_members = 4;
-  //max_inter_scan_retention_time_distance = 0.1;
-  
-  // This was not read from config file
+  // m/z tolerance value:
+  // def->search_tag("FT peak detect MS1 m/z tolerance", &MZ_TOLERANCE);
+ 
+  // minimal number of cluster members
+  //def->search_tag("FT peak detect MS1 min nb peak members", &min_nb_cluster_members);
+  //def->search_tag("MS1 max inter scan distance", &max_inter_scan_retention_time_distance );
   TIME_CLUSTERING_BY_RETENTION_TIME = true;
+ 
+  //delete def;
+  //def = NULL;
   
   backgroundController = new BackgroundControl();
+
 }
 
 //////////////////////////////////////////////////

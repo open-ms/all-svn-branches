@@ -47,6 +47,7 @@ protected:
   ////////////////////////////////////////////////
   // declaration of the public members:
   // map that tracts all observed masses in keys
+ 
   
   // clustering of ms peak along time axis:
   bool TIME_CLUSTERING_BY_RETENTION_TIME;

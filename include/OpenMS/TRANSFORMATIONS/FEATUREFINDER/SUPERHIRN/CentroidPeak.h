@@ -99,7 +99,7 @@ public:
   
   inline void setCharge(int pCharge){fCharge = pCharge;}	
   inline void setC13MassError(double pC13MassError){fC13MassError = pC13MassError;}
-  inline void setNrIsotopes(int pNrIsotopes){fNrIsotopes = fNrIsotopes;}
+  inline void setNrIsotopes(int pNrIsotopes){fNrIsotopes = pNrIsotopes;}
   inline void setScore(double pScore){fScore = pScore;}
   inline void setIsotopicPeaks(vector<CentroidPeak> pIsotopicPeaks) {
     fIsotopicPeaks = pIsotopicPeaks;

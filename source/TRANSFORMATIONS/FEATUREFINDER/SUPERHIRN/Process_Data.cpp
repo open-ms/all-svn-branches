@@ -302,17 +302,11 @@ void Process_Data::add_scan_raw_data(int SCAN, float TR, CentroidData* centroide
   // add the peaks to the background controller:
   list<CentroidPeak> pCentroidPeaks;
   centroidedData->get(pCentroidPeaks);
-  
-  // FLOFLO: Output in SH and CL is the same, except for the first entry which is missing.
-  //std::cout << pCentroidPeaks.size() << ", ";
-  
-  // FLOFLO: Does not SEEM to filter, just iterating
   backgroundController->addPeakMSScan( TR, &pCentroidPeaks);
   
   dei.go(*centroidedData);
   dei.cleanDeconvPeaks();
-  
-  // FLOFLO: This does not change the amount of peaks
+
   // convert to objects used for mass clustering over retention time
   vector<ms_peak> PEAK_LIST; 
   convert_ms_peaks(SCAN, TR, dei.getDeconvPeaks(), PEAK_LIST);
@@ -322,6 +316,8 @@ void Process_Data::add_scan_raw_data(int SCAN, float TR, CentroidData* centroide
   
   // clear it:
   PEAK_LIST.clear();
+
+  
 }
  
 
@@ -381,7 +377,7 @@ bool Process_Data::filterDeisotopicMSPeak(ms_peak* PEAK){
   if( ( PEAK->get_Chrg() < LC_MS_XML_reader::FEATURE_CHRG_MIN ) || ( PEAK->get_Chrg() > LC_MS_XML_reader::FEATURE_CHRG_MAX ) ){
     return false;
   }
-  
+
   return true;
 }
 
@@ -609,9 +605,6 @@ int Process_Data::getElutionPeakDistance(MZ_series_ITERATOR P, int SCAN){
 // a proper LC_elution peak object
 void Process_Data::extract_elution_peaks(){
   
-  cout << "here i am\n";
-  cout << backgroundController;
-  
   backgroundController->processIntensityMaps();
   //backgroundController->plotIntensityMaps();
   // backgroundController->writeIntensityMaps();
@@ -634,13 +627,12 @@ void Process_Data::extract_elution_peaks(){
       // check if this elution peak
       // is accepted as a really LC-elution peak:
       if(check_elution_peak(Q_SER)){
-        convert_to_LC_elution_peak(Q_SER, this_MZ);
+        convert_to_LC_elution_peak(Q_SER, this_MZ);    
       }
       
       Q_SER++;
       
     }
-    
     //////////////////////////////////
     
     P_MZ++;

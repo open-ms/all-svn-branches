@@ -124,7 +124,7 @@ void CentroidPeak::subtractIntensity(
 	double pIntensity) // intensity to be subtracted
 {
 	if (fIntensity<0.0) return;  // do nothing for small intensities
-  
+	
 	if (abs(fIntensity-pIntensity)/fIntensity > IsotopicDist::sfIntensityCV) {
 		fIntensity -= pIntensity; // subtract if difference is larger than stat variation (CV)
 	} else {

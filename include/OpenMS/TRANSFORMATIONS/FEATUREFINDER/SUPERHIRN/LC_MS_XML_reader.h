@@ -37,7 +37,7 @@ class LC_MS_XML_reader{
   
 public:
   
-  static double TR_MIN;
+    static double TR_MIN;
   static double TR_MAX;
   static double FEATURE_MZ_MIN;
   static double FEATURE_MZ_MAX;
@@ -52,4 +52,4 @@ public:
 
 #endif
 
-
+    

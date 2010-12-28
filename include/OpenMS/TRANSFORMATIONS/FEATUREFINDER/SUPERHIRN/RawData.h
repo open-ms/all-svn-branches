@@ -24,7 +24,7 @@ public:
   
   double LOW_INTENSITY_MS_SIGNAL_THRESHOLD;
    
-    RawData();
+		RawData();
 		RawData(vector<double>&,vector<double>&);
 		virtual ~RawData();
 		
@@ -37,7 +37,6 @@ public:
 		virtual void smooth() {};
   
 protected:
-
 		vector<double> fProfileMasses;
 		vector<double> fProfileIntens;
 };

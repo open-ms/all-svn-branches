@@ -52,6 +52,7 @@ double FT_PEAK_DETEC_mzXML_reader::TR_MAX;
 FT_PEAK_DETEC_mzXML_reader::FT_PEAK_DETEC_mzXML_reader(){
   
   MS1_LC_MS_DATA_PROCESSOR = NULL;
+  //MS2_LC_MS_DATA_PROCESSOR = NULL;
   
   // initialize the variables
   index_offset = 0;
@@ -59,7 +60,7 @@ FT_PEAK_DETEC_mzXML_reader::FT_PEAK_DETEC_mzXML_reader(){
   total_scan = 0;
   nbMS2Scans = 0;
   
-  // flo
+  // FLOFLO
   MS1_LC_MS_DATA_PROCESSOR = new Process_Data( );
 
 }
@@ -79,7 +80,6 @@ void FT_PEAK_DETEC_mzXML_reader::set_current_indexes(double pminrt, double pmaxr
   
     // get min / max retention time in mzXML:
     // read the mzXML header at this scan
-  
     //struct ScanHeaderStruct scan_header;
     // start:
     //readHeader( get_Ramp_file_handler(), get_scan( 0 ), &scan_header);
@@ -93,7 +93,11 @@ void FT_PEAK_DETEC_mzXML_reader::set_current_indexes(double pminrt, double pmaxr
   cout << "minRT = " << minRT << ", maxRT = " << maxRT << "\n";
 
     ExternalIsotopicDistribution::initRetentionTimeSegments( minRT, maxRT );
+
 }
+
+
+
 
 
 //////////////////////////////////////////////////

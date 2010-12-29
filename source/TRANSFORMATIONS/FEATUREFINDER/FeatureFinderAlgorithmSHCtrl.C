@@ -60,6 +60,7 @@ namespace OpenMS
       f.setCharge(charge);
       
       double rt = (*p).get_retention_time();
+      rt *= 60.0; // convert back
       f.setRT(rt);
       
       double darea = (*p).get_peak_area();

@@ -21,9 +21,9 @@ namespace OpenMS
     
     std::vector<Feature> extractPeaks(Vec datavec);
     
-  protected:
+    void initParams(Param param);
     
-    void initParams();
+  protected:
     
   };
   

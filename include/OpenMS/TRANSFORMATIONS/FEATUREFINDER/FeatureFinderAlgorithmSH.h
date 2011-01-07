@@ -21,27 +21,47 @@ namespace OpenMS
     
     FeatureFinderAlgorithmSH() : FeatureFinderAlgorithm<PeakType, FeatureType>()
     {
-      this->defaults_ = getDefaultParameters();
+      this->defaults_.setValue("max_inter_scan_retention_time_distance", 0.1, "MS1 max inter scan distance");
+//      this->defaults_.setMin ("sweep_line:rt_votes_cutoff", 0);
       this->check_defaults_ =  false;
-    }
-    
-    virtual Param getDefaultParameters() const
-    {
-      Param tmp;
-      return tmp;
     }
     
     virtual void run()
     {
       std::cout << "Superhirn integration\n";
       
-      Vec* datavec = new Vec();
       map_ = *(FeatureFinderAlgorithm<PeakType, FeatureType>::map_);
+      
+      MyMap dummyMap;
+      Vec* datavec = new Vec(map_.size(), dummyMap);
+      unsigned int scanIndex = 0;
       
       for (unsigned int s = 0; s < map_.size(); s++)
       {
         const SpectrumType& spectrum = map_[s];
         double rt = spectrum.getRT();
+        
+        // determine native id
+        //Int valid_id;
+        Size num_pos=0;
+        String native_id = spectrum.getNativeID();
+        
+        
+        while(!isdigit(native_id[num_pos]) && num_pos<native_id.length())
+        {
+          ++num_pos;
+        }
+        if(num_pos==native_id.length())
+        {
+          std::cout << "Native id could not be determined: " << native_id;
+          return;
+        }
+        else
+        {
+          scanIndex = native_id.substr(num_pos).toInt() - 1;
+//          std::cout << native_id.substr(num_pos).toInt() << ", ";
+        }
+        
         
         vector<double>* vmzvals = new vector<double>();
         vector<double>* vintvals = new vector<double>();
@@ -56,10 +76,13 @@ namespace OpenMS
         
         MyMap m;
         m[rt/60.0] = data;
-        datavec->push_back(m);
+        //datavec->push_back(m);
+        datavec->at(scanIndex) = m;
+        //scanIndex++;
       }
       
       FeatureFinderAlgorithmSHCtrl ctrl;
+      ctrl.initParams(this->param_);
       std::vector<Feature> thefeatures = ctrl.extractPeaks(*datavec);
       
       for (unsigned int i=0; i<thefeatures.size(); i++)

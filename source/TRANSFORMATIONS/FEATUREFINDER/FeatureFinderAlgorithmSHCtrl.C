@@ -20,6 +20,7 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SUPERHIRN/FT_PEAK_DETEC_mzXML_reader.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/SUPERHIRN/FT_PeakDetectController.h>
 
+#include <OpenMS/DATASTRUCTURES/Param.h>
 #include <OpenMS/KERNEL/Feature.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmSHCtrl.h>
 
@@ -33,7 +34,7 @@ namespace OpenMS
   
   std::vector<Feature> FeatureFinderAlgorithmSHCtrl::extractPeaks(Vec datavec) {
     std::cout << "extracting the peaks\n";
-    initParams();
+    //initParams();
     IsotopicDist::init();
     
     FT_PeakDetectController controller;
@@ -110,7 +111,7 @@ namespace OpenMS
     return thefeatures;
   }
   
-  void FeatureFinderAlgorithmSHCtrl::initParams() {
+  void FeatureFinderAlgorithmSHCtrl::initParams(Param param) {
     Process_Data::CENTROID_DATA_MODUS = 1; // data is centroided already 
     
     
@@ -122,7 +123,7 @@ namespace OpenMS
     float thresh = 1000;
     LCMSCData::intensity_min_threshold = thresh;
     Process_Data::INTENSITY_THRESHOLD = thresh;
-    Process_Data::max_inter_scan_retention_time_distance = 0.1;
+    Process_Data::max_inter_scan_retention_time_distance = param.getValue("max_inter_scan_retention_time_distance");    // 0.1;
     Process_Data::min_nb_cluster_members = 4;
     
     //def->search_tag("MS1 feature CHRG range min", &INT);

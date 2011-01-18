@@ -90,6 +90,7 @@ RTModel
 RTPredict
 Resampler
 "SILACAnalyzer -type double"
+SILACAnalyzer2
 SeedListGenerator
 #SequestAdapter #(reenable when fixed)
 SpecLibSearcher
@@ -567,6 +568,11 @@ add_test("TOPP_SILACAnalyzer_1_out2" ${DIFF} -in1 SILACAnalyzer_vis.tmp -in2 ${D
 add_test("TOPP_SILACAnalyzer_2" ${TOPP_BIN_PATH}/SILACAnalyzer -test -ini ${DATA_DIR_TOPP}/SILACAnalyzer_triple.ini -in ${DATA_DIR_TOPP}/SILACAnalyzer_triple.mzML -out SILACAnalyzer.tmp -out_visual SILACAnalyzer_vis.tmp)
 add_test("TOPP_SILACAnalyzer_2_out1" ${DIFF} -in1 SILACAnalyzer.tmp -in2 ${DATA_DIR_TOPP}/SILACAnalyzer_triple.consensusXML)
 add_test("TOPP_SILACAnalyzer_2_out2" ${DIFF} -in1 SILACAnalyzer_vis.tmp -in2 ${DATA_DIR_TOPP}/SILACAnalyzer_triple.featureXML)
+
+### SILACAnalyzer2 tests
+#add_test("TOPP_SILACAnalyzer2" ${TOPP_BIN_PATH}/SILACAnalyzer2 -test -ini ${DATA_DIR_TOPP}/SILACAnalyzer2.ini -in ${DATA_DIR_TOPP}/SILACAnalyzer2.mzML -out #SILACAnalyzer2.tmp -out_clusters SILACAnalyzer2_vis.tmp)
+#add_test("TOPP_SILACAnalyzer2_out1" ${DIFF} -in1 SILACAnalyzer2.tmp -in2 ${DATA_DIR_TOPP}/SILACAnalyzer2.consensusXML)
+#add_test("TOPP_SILACAnalyzer2_out2" ${DIFF} -in1 SILACAnalyzer2_vis.tmp -in2 ${DATA_DIR_TOPP}/SILACAnalyzer2.featureXML)
 
 ### FeatureLinker tests
 # "labeled" algorithm:

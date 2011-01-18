@@ -52,6 +52,7 @@ RTModel
 RTPredict
 Resampler
 SILACAnalyzer
+SILACAnalyzer2
 SeedListGenerator
 #SequestAdapter
 SpecLibSearcher

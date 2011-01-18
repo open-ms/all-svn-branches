@@ -95,6 +95,7 @@ namespace OpenMS
 		tools_map["RTPredict"] = Internal::ToolDescription("RTPredict", "Peptide property prediction");
 		tools_map["Resampler"] = Internal::ToolDescription("Resampler", "Signal processing and preprocessing");
 		tools_map["SILACAnalyzer"] = Internal::ToolDescription("SILACAnalyzer", "Quantitation", StringList::create("double,triple"));
+		tools_map["SILACAnalyzer2"] = Internal::ToolDescription("SILACAnalyzer2", "Quantitation");
 		tools_map["SeedListGenerator"] = Internal::ToolDescription("SeedListGenerator", "Quantitation");
 		//tools_map["SequestAdapter"] = Internal::ToolDescription("SequestAdapter", "Protein/peptide Identification");
 		tools_map["SpecLibSearcher"] = Internal::ToolDescription("SpecLibSearcher", "Protein/peptide Identification");

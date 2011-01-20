@@ -21,12 +21,13 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
-// $Authors: $
+// $Maintainer: Lars Nilse $
+// $Authors: Steffen Sass, Holger Plattfaut $
 // --------------------------------------------------------------------------
 
 
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
+#include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeFitter1D.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeModel.h>
 #include <OpenMS/CONCEPT/Constants.h>
@@ -42,7 +43,7 @@ namespace OpenMS
 bool debug=false;
 DoubleReal pos1;
 
-SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_,DoubleReal model_deviation_, Int isotopes_per_peptide_) {
+	SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_,DoubleReal model_deviation_, Int isotopes_per_peptide_) {
 	silac_type=mass_separations.size();
 	charge=charge_;
 	isotopes_per_peptide=isotopes_per_peptide_;
@@ -104,13 +105,17 @@ void SILACFilter::reset()
 	blacklist_lifetime.push_back(std::list<Blacklist::iterator>());
 }
 */
+	
+	void updateBlacklist(std::list<SILACFiltering::BlacklistEntry> blacklist)
+	{
+		Int f = 9;
+	}
+
 bool SILACFilter::isPair(DoubleReal act_rt, DoubleReal act_mz)
 {
 	//Check if current position is blacklisted
 	//if (blacklisted(act_mz))
 		//return false;
-
-	//std::list<SILACFiltering::BlacklistEntry>::iterator it = SILACFiltering::blacklist.begin();
 
 	//std::list<SILACFiltering::BlacklistEntry>::iterator itt = SILACFiltering::blacklist.begin();
 	//++itt;
@@ -121,7 +126,7 @@ bool SILACFilter::isPair(DoubleReal act_rt, DoubleReal act_mz)
 	//}
 	//for (; itt!=ittt; ++itt)
 	//{
-		Int a=8;
+	//	Int a=8;
 	//}
 
 	//Check if intensity at current position is above the threshold

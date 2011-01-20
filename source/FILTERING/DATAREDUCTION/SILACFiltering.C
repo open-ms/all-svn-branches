@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
-// $Authors: $
+// $Maintainer: Lars Nilse $
+// $Authors: Steffen Sass, Holger Plattfaut $
 // --------------------------------------------------------------------------
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>
@@ -116,8 +116,23 @@ void SILACFiltering::filterDataPoints()
   for (MSExperiment<Peak1D>::Iterator rt_it=exp.begin(); rt_it!=exp.end();++rt_it)
 	{
     setProgress(rt_it-exp.begin());
-		Size number_data_points = rt_it->size();
-		// spectra with less than 10 data points are being ignored
+	Size number_data_points = rt_it->size();
+		
+	DoubleReal rt=rt_it->getRT();
+		
+	//kill archaic blacklist entries
+	std::list<BlacklistEntry> tempBlacklist;     // instead of erasing entries in blacklist, benerate new tempBlacklist and copy it then back to blacklist
+	for (std::list<BlacklistEntry>::iterator blacklist_it=blacklist.begin(); blacklist_it!=blacklist.end(); ++blacklist_it)
+	{
+		// if the blacklisting is older than 10 s drop it from the list.
+		if ( abs(rt - (*blacklist_it).rtInitial) < 10) tempBlacklist.push_back(*blacklist_it);
+	}
+	blacklist.resize(tempBlacklist.size());
+	copy(tempBlacklist.begin(), tempBlacklist.end(), blacklist.begin());
+	std::cout << "blacklist length = " << blacklist.size() << "    new blacklist length = " << tempBlacklist.size() << std::endl;
+		
+		
+	// spectra with less than 10 data points are being ignored		
     if (number_data_points>=10)
     { // filter MS1 spectra
 			// read one OpenMS spectrum into GSL structure
@@ -125,6 +140,7 @@ void SILACFiltering::filterDataPoints()
 			std::vector<DoubleReal> intensity_vec;
 			mz_min=rt_it->begin()->getMZ();
 			DoubleReal last_mz=rt_it->begin()->getMZ();
+		
 			//Fill intensity and m/z vector for interpolation. Add zeros in the area with no data points to improve cubic spline fit
 			for (MSSpectrum<>::Iterator mz_it=rt_it->begin(); mz_it!=rt_it->end(); ++mz_it)
 			{
@@ -141,27 +157,20 @@ void SILACFiltering::filterDataPoints()
 				last_mz=mz_it->getMZ();
 			}
 			
-			//akima interpolation; returns 0 in regions with no raw data points
+			//akima interpolation,    returns 0 in regions with no raw data points
 			acc_lin = gsl_interp_accel_alloc();
 			spline_lin = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
 			gsl_spline_init(spline_lin, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
-			// spline interpolation
-			// used for exact ratio calculation (more accurate when real peak pairs are present)
+			// spline interpolation,    used for exact ratio calculation (more accurate when real peak pairs are present)
 			acc_spl = gsl_interp_accel_alloc();
 			spline_spl = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
 			gsl_spline_init(spline_spl, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
-			DoubleReal rt=rt_it->getRT();
 
 			//Iterate over all filters
 			for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
 			{
-				// current spectrum: rt_it
-				/*std::cout << "RT = " << rt_it->getRT();
-				std::cout << "   min MZ = " << rt_it->getMin()[0];
-				std::cout << "   max MZ = " << rt_it->getMax()[0] << std::endl;*/
-				
 				//Extract current spectrum
 				MSSpectrum<>::Iterator mz_it=rt_it->begin();
 				
@@ -170,8 +179,6 @@ void SILACFiltering::filterDataPoints()
 				//Iterate over the spectrum with a step width that is oriented on the raw data point positions				
 				for ( ;mz_it!=rt_it->end(); ++mz_it) // iteration correct
 				{
-					//std::cout << "extern: m/z=" << mz_it->getMZ() << std::endl;
-					
 					// loop by Steffen Sass; point of the two-tier-loop: Iterate where raw data points are, not in empty space => (1) better run time (2) less noise, spline fit has 'viel Phantasie' in regions without data points
 					//Choose half of the data point distances as stepwidth to take interpolated intensities between the data points into account
 					//for (DoubleReal mz=last_mz; mz < mz_it->getMZ() && std::abs(last_mz-mz_it->getMZ()) < 3 * mz_stepwidth ;mz+=((last_mz+mz_it->getMZ())/2)-last_mz)
@@ -179,8 +186,6 @@ void SILACFiltering::filterDataPoints()
 					// We do not move with mz_stepwidth over the spline fit, but with about a third of the local mz differences
 					for (DoubleReal mz=last_mz; mz < mz_it->getMZ(); mz+=(std::abs(mz_it->getMZ() - last_mz))/3)
 					{
-						//std::cout << "    intern m/z = " << mz << std::endl;
-						
 						if (gsl_spline_eval (spline_lin, mz, acc_lin) <= 0.0)
 							continue;
 
@@ -190,39 +195,39 @@ void SILACFiltering::filterDataPoints()
 						{
 							//Retrieve peak positions for blacklisting
 							const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
+							
 							//blockPositions(peak_positions,filter_ptr);
 
-							
 							std::vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin();
 							DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);
 
+							// filling the blacklist
 							BlacklistEntry next_entry;
-							next_entry.mzBlack_min = mz - 0.4 * peak_width;
-							next_entry.mzBlack_max = mz + 0.4 * peak_width;
-							next_entry.rtAge = 0;
-							next_entry.generatingFilter = filter_ptr;
+							
+							next_entry.mzBlack_min = mz - 0.8 * peak_width;
+							next_entry.mzBlack_max = mz + 0.8 * peak_width;
+							next_entry.rtInitial = rt;
+							next_entry.generatingFilter = filter_ptr;  // Filter generating the blacklisting.
 							blacklist.push_back(next_entry);
-							//std::cout << "mz isPair: " << mz << " mz peak_position: " << *peak_positions_it << " PeakWidth: " << peak_width << std::endl;
+							
+							//std::cout << "blacklisting:    mz = " << mz << ",   peak_width = " << peak_width << ",    RT = " << rt << std::endl;
+ 
 							peak_positions_it++;
 					
-							//std::cout << "mzBlack_min: " << next_entry.mzBlack_min << " filter: " << next_entry.generatingFilter << std::endl;
-							
-
 							for (; peak_positions_it != peak_positions.end(); peak_positions_it++)
 							{
 								
-							DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);
-							//std::cout << "mz isPair in: " << mz << " mz peak_position in: " << *peak_positions_it << " PeakWidth in: " << peak_width << std::endl;
+								DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);
+								
+								//std::cout << "                mz = " << *peak_positions_it;
 							
-							next_entry.mzBlack_min = mz - 0.4 * peak_width;
-							next_entry.mzBlack_max = mz + 0.4 * peak_width;
-							next_entry.rtAge = 0;
-							next_entry.generatingFilter = 0;
-							blacklist.push_back(next_entry);
-					
-							//std::cout << "mzBlack_min in: " << next_entry.mzBlack_min << " filter in: " << next_entry.generatingFilter << std::endl;
-
+								next_entry.mzBlack_min = *peak_positions_it - 0.8 * peak_width;
+								next_entry.mzBlack_max = *peak_positions_it + 0.8 * peak_width;
+								next_entry.rtInitial = rt;
+								next_entry.generatingFilter = NULL;
+								blacklist.push_back(next_entry);
 							}
+							//std::cout << std::endl;
 
 							++feature_id;
 						}
@@ -237,12 +242,6 @@ void SILACFiltering::filterDataPoints()
 			gsl_spline_free(spline_spl);
 			gsl_interp_accel_free(acc_spl);
 		}
-
-		for(std::list<BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++ blacklist_it)
-		{
-			//std::cout << "mzBlack_min: " << (*blacklist_it).mzBlack_min << " mzBlack_max: " << (*blacklist_it).mzBlack_max << " rtAge: " << (*blacklist_it).rtAge << std::endl;
-		}
-
 
 		//Reset the filters
 /*		for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)

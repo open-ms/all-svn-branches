@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
-// $Authors: $
+// $Maintainer: Lars Nilse $
+// $Authors: Steffen Sass, Holger Plattfaut $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FILTERING_DATAREDUCTION_SILACFILTER_H
@@ -152,10 +152,12 @@ private:
 	 * @param current_mz m/z value of the position
 	 */
 	bool isPair(DoubleReal current_rt,DoubleReal current_mz);
+	
 	/**
 	 * @brief gets the m/z values of all peaks , which belong the last identiefied feature
 	 */
 	std::vector<DoubleReal> getPeakPositions();
+	
 public:
 	/**
 	 * @brief double identifier (2)
@@ -169,6 +171,7 @@ public:
      * @brief returns the SILAC type of the filter. Either DOUBLE (2) or TRIPLE (3)
      */
     Int getSILACType();
+	
     /**
      * @brief detailed constructor for SILAC pair filtering
      * @param mass_separations all mass shifts of the filter
@@ -176,7 +179,7 @@ public:
      * @param model_deviation_ maximum deviation from the averagine model
 		 * @param isotopes_per_peptide_ number of isotopes per petide to search for
      */
-    SILACFilter(std::set<DoubleReal> mass_separations,Int charge_,DoubleReal model_deviation_, Int isotopes_per_peptide_);
+    SILACFilter(std::set<DoubleReal> mass_separations, Int charge_, DoubleReal model_deviation_, Int isotopes_per_peptide_);
 
     /**
          * @brief detailed constructor for singlet filtering
@@ -228,10 +231,15 @@ public:
 	 */
 	Int getCharge();
 
-  /**
-   * @brief returns the number of isotopes per peptide of the filter
-   */
-  Int getIsotopesPerPeptide();
+	/**
+	 * @brief returns the number of isotopes per peptide of the filter
+	 */
+	Int getIsotopesPerPeptide();
+	
+	/**
+	 * @brief update the list of blacklisted m/z windows used in the filter
+	 */
+	void updateBlacklist(std::list<SILACFiltering::BlacklistEntry> blacklist);
 };
 }
 

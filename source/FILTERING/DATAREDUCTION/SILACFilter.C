@@ -108,22 +108,6 @@ void SILACFilter::reset()
 	
 bool SILACFilter::isPair(DoubleReal act_rt, DoubleReal act_mz)
 {
-	//Check if current position is blacklisted
-	//if (blacklisted(act_mz))
-		//return false;
-
-	//std::list<SILACFiltering::BlacklistEntry>::iterator itt = SILACFiltering::blacklist.begin();
-	//++itt;
-	//std::list<SILACFiltering::BlacklistEntry>::iterator ittt = SILACFiltering::blacklist.end();
-	//if (itt != ittt)
-	//{
-		//++itt;
-	//}
-	//for (; itt!=ittt; ++itt)
-	//{
-	//	Int a=8;
-	//}
-
 	//Check if intensity at current position is above the threshold
 	if (gsl_spline_eval (SILACFiltering::spline_lin, act_mz, SILACFiltering::acc_lin) < SILACFiltering::intensity_cutoff)
 	{

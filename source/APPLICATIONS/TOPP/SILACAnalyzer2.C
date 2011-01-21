@@ -695,6 +695,11 @@ class TOPPSILACAnalyzer2
 		// create filters for all numbers of isotopes per peptide, charge states and mass shifts
 
 		// iterate over all number for isotopes per peptide
+		
+		// For testing that good Nijmegen results remain unchanged.
+		isotopes_per_peptide_min = 3;
+		isotopes_per_peptide_max = 3;
+		
     for (int isotopes_per_peptide = isotopes_per_peptide_min; isotopes_per_peptide <= isotopes_per_peptide_max; isotopes_per_peptide++)
 		{
       // iterate over all charge states
@@ -705,7 +710,7 @@ class TOPPSILACAnalyzer2
 				{
 					// convert vector<DoubleReal> to set<DoubleReal> for SILACFilter
           set<DoubleReal> massShifts_set;
-          copy(massShifts[i].begin(), massShifts[i].end(), inserter(massShifts_set, massShifts_set.end()));
+					copy(massShifts[i].begin(), massShifts[i].end(), inserter(massShifts_set, massShifts_set.end()));
 					filters.push_back(SILACFilter(massShifts_set, charge, model_deviation, isotopes_per_peptide));
 				}
       }

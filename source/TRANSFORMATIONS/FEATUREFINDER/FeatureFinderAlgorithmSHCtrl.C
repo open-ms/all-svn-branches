@@ -112,6 +112,9 @@ namespace OpenMS
   }
   
   void FeatureFinderAlgorithmSHCtrl::initParams(Param param) {
+    
+    // MS1 data centroid data
+    // Key: ms1:data_is_centroided_already
     Process_Data::CENTROID_DATA_MODUS = 1; // data is centroided already 
     
     //def->search_tag("Precursor detection scan levels", &vInt);
@@ -121,11 +124,15 @@ namespace OpenMS
     FT_PEAK_DETEC_mzXML_reader::FRAGMENT_MASS_SCAN_LEVELS.push_back(2);
     
     //def->search_tag("MS1 max inter scan distance", &INT);
+    // Key: ms1:max_inter_scan_distance
     FT_PEAK_DETEC_mzXML_reader::MS1_base_inter_scan_distance = 0.1;
     
     //def->search_tag("MS1 LC retention time resolution", &DB);
+    // Key: ms1:tr_resolution
     Process_Data::MS1_TR_RESOLUTION = 0.01;
     
+    
+    // Key: ms1:intensity_threshold
     float thresh = 1000;
     // def->search_tag("FT peak detect MS1 intensity min threshold", &DB);
     LCMSCData::intensity_min_threshold = thresh;
@@ -135,16 +142,15 @@ namespace OpenMS
     //    - but the above is probably something different
     Process_Data::INTENSITY_THRESHOLD = thresh;
     
-    // max_inter_scan_retention_time_distance
+    
+    // MS1 max inter scan distance
+    // Key: ms1:max_inter_scan_rt_distance
     Process_Data::max_inter_scan_retention_time_distance = param.getValue("max_inter_scan_retention_time_distance");    // 0.1;
     
     // def->search_tag("FT peak detect MS1 min nb peak members", &min_nb_cluster_members);
+    // Key: ms1:min_nb_cluster_members
     Process_Data::min_nb_cluster_members = 4;
     
-    //def->search_tag("MS1 feature CHRG range min", &INT);
-    Deisotoper::sfMinCharge = 1;
-    //def->search_tag("MS1 feature CHRG range max", &INT);
-    Deisotoper::sfMaxCharge = 5;
     //def->search_tag("Detectable isotope factor",&DB);
     IsotopicDist::sfDetectableIsoFact = 0.05;
     // def->search_tag("IntensityCV",&DB);
@@ -508,10 +514,12 @@ namespace OpenMS
     //def->search_tag("MS1 feature CHRG range min", &TMP_I );
     // Key: ms1_feature_selection_options:ms1_feature_chrg_range_min
     LC_MS_XML_reader::FEATURE_CHRG_MIN = 1;
+    Deisotoper::sfMinCharge = 1
     
     //def->search_tag("MS1 feature CHRG range max", &TMP_I );
     // Key: ms1_feature_selection_options:ms1_feature_chrg_range_max
     LC_MS_XML_reader::FEATURE_CHRG_MAX = 5;
+    Deisotoper::sfMaxCharge = 5;
     
     //  Create monoisotopic LC profile:	to create and store the original profile of the detected
     //					monosiotopic pecursors in the XML (!!! increases the

@@ -21,8 +21,36 @@ namespace OpenMS
     
     FeatureFinderAlgorithmSH() : FeatureFinderAlgorithm<PeakType, FeatureType>()
     {
-      this->defaults_.setValue("max_inter_scan_retention_time_distance", 0.1, "MS1 max inter scan distance");
-//      this->defaults_.setMin ("sweep_line:rt_votes_cutoff", 0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:data_is_centroided_already", "true", "MS1 data centroid data");
+      this->defaults_.setValidStrings("ms1:data_is_centroided_already", StringList::create("true,false"));
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:precursor_detection_scan_levels", IntList::create(1), "Precursor detection scan levels");
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:max_inter_scan_distance", 0, "MS1 max inter scan distance"); // was 0.1, bug!
+      this->defaults_.setMinInt(      "ms1:max_inter_scan_distance", 0); // FIXME will be changed to double
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:tr_resolution", 0.01, "MS1 LC retention time resolution");  // seems to have no effect
+      this->defaults_.setMinFloat(    "ms1:tr_resolution", 0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:intensity_threshold", 1000.0, "FT peak detect MS1 intensity min threshold");
+      this->defaults_.setMinFloat(    "ms1:intensity_threshold", 0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:max_inter_scan_rt_distance", 0.1, "MS1 max inter scan distance"); // seems to have no effect
+      this->defaults_.setMinFloat(    "ms1:max_inter_scan_rt_distance", 0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:min_nb_cluster_members", 4, "FT peak detect MS1 min nb peak members");
+      this->defaults_.setMinInt(      "ms1:min_nb_cluster_members", 0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:detectable_isotope_factor", 0.05, "Detectable isotope factor");
+      this->defaults_.setMinFloat(    "ms1:detectable_isotope_factor", 0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:intensity_cv", 0.9, "IntensityCV");
+      this->defaults_.setMinFloat(    "ms1:intensity_cv", 0);
+      
+      
+      
+      
       this->check_defaults_ =  false;
     }
     

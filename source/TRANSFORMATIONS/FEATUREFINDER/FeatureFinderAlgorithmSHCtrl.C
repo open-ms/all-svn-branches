@@ -115,46 +115,56 @@ namespace OpenMS
     
     // MS1 data centroid data
     // Key: ms1:data_is_centroided_already
-    Process_Data::CENTROID_DATA_MODUS = 1; // data is centroided already 
+    // 1 == data is centroided already
+    Process_Data::CENTROID_DATA_MODUS = param.getValue("ms1:data_is_centroided_already").toBool();
     
     //def->search_tag("Precursor detection scan levels", &vInt);
-    FT_PEAK_DETEC_mzXML_reader::PEAK_EXTRACTION_SCAN_LEVELS.push_back(1);
+    // Key: ms1:precursor_detection_scan_levels
+    IntList list = (IntList)(param.getValue("ms1:precursor_detection_scan_levels"));
+    for (unsigned int i = 0; i < list.size(); i++) 
+    {
+      FT_PEAK_DETEC_mzXML_reader::PEAK_EXTRACTION_SCAN_LEVELS.push_back(list.at(i));
+    }
     
+    // belongs to SPECIFIC MS2 PEAK DETECTION PARAMETERS:
     //def->search_tag("Fragment Mass Scan levels", &vInt);
     FT_PEAK_DETEC_mzXML_reader::FRAGMENT_MASS_SCAN_LEVELS.push_back(2);
     
     //def->search_tag("MS1 max inter scan distance", &INT);
     // Key: ms1:max_inter_scan_distance
-    FT_PEAK_DETEC_mzXML_reader::MS1_base_inter_scan_distance = 0.1;
+    FT_PEAK_DETEC_mzXML_reader::MS1_base_inter_scan_distance = param.getValue("ms1:max_inter_scan_distance");
     
     //def->search_tag("MS1 LC retention time resolution", &DB);
     // Key: ms1:tr_resolution
-    Process_Data::MS1_TR_RESOLUTION = 0.01;
+    Process_Data::MS1_TR_RESOLUTION = param.getValue("ms1:tr_resolution");  //0.01;
     
     
     // Key: ms1:intensity_threshold
-    float thresh = 1000;
+    // float thresh = 1000;
     // def->search_tag("FT peak detect MS1 intensity min threshold", &DB);
-    LCMSCData::intensity_min_threshold = thresh;
+    LCMSCData::intensity_min_threshold = param.getValue("ms1:intensity_threshold");;
     
     // NOTE: Was hardcoded to 1000, however: 
     //    - def->search_tag("FT peak detect MS2 intensity min threshold", &INTENSITY_THRESHOLD);
     //    - but the above is probably something different
-    Process_Data::INTENSITY_THRESHOLD = thresh;
+    Process_Data::INTENSITY_THRESHOLD = param.getValue("ms1:intensity_threshold");
     
     
     // MS1 max inter scan distance
     // Key: ms1:max_inter_scan_rt_distance
-    Process_Data::max_inter_scan_retention_time_distance = param.getValue("max_inter_scan_retention_time_distance");    // 0.1;
+    Process_Data::max_inter_scan_retention_time_distance = param.getValue("ms1:max_inter_scan_rt_distance");    // 0.1;
     
     // def->search_tag("FT peak detect MS1 min nb peak members", &min_nb_cluster_members);
     // Key: ms1:min_nb_cluster_members
-    Process_Data::min_nb_cluster_members = 4;
+    Process_Data::min_nb_cluster_members = param.getValue("ms1:min_nb_cluster_members"); // 4
     
     //def->search_tag("Detectable isotope factor",&DB);
-    IsotopicDist::sfDetectableIsoFact = 0.05;
+    // Key: ms1:detectable_isotope_factor
+    IsotopicDist::sfDetectableIsoFact = param.getValue("ms1:detectable_isotope_factor"); // 0.05;
+    
     // def->search_tag("IntensityCV",&DB);
-    IsotopicDist::sfIntensityCV = 0.9;
+    // Key: ms1:intensity_cv
+    IsotopicDist::sfIntensityCV = param.getValue("ms1:intensity_cv"); // 0.9;
     
     
     // ----------------------------------------------------------------------
@@ -162,32 +172,37 @@ namespace OpenMS
     // ----------------------------------------------------------------------
     
     //def->search_tag("Centroid window width",&INT);
+    // Key: ms1:centroid_window_width
     CentroidPeak::sfCentroidWindowWidth = 5;
+    
     //def->search_tag("Absolute isotope mass precision",&DB);
+    // Key: ms1:absolute_isotope_mass_precision
     CentroidData::sfMassTolDa = 0.01;
+    
     //def->search_tag("Relative isotope mass precision",&DB);
+    // Key: ms1:relative_isotope_mass_precision
     CentroidData::sfMassTolPpm = 10;
+    
     //def->search_tag("Minimal peak height",&DB);
+    // Key: ms1:minimal_peak_height
     CentroidData::sfMinIntensity = 0.0;
+    
     //def->search_tag("Min. Centroid MS Signal Intensity",&DB);
-    CentroidData::sfIntensityFloor = 50; //1.0; // in config its 50, but in CentroidData it's 1;
+    // Key: ms1:min_centroid_ms_signal_intensity
+    CentroidData::sfIntensityFloor = 50; //in config its 50, but in CentroidData it's 1;
     
     //def->search_tag("Report mono peaks",&INT);
+    // NO OpenMS equivalent
     FT_PEAK_DETEC_mzXML_reader::sfReportMonoPeaks = 0;
-    //def->search_tag("Report scan number",&INT);
-    FT_PEAK_DETEC_mzXML_reader::sfReportScanNumber = 0;
     
+    //def->search_tag("Report scan number",&INT);
+    // NO OpenMS equivalent
+    FT_PEAK_DETEC_mzXML_reader::sfReportScanNumber = 0;
     
     
     // ----------------------------------------------------------------------
     // aus initializer
     // ----------------------------------------------------------------------
-    
-    //def->search_tag("start elution window", &TMP);
-    FT_PEAK_DETEC_mzXML_reader::TR_MIN=0;
-    
-    //def->search_tag("end elution window", &TMP);
-    FT_PEAK_DETEC_mzXML_reader::TR_MAX=180;
     
     // feature parameters:
     //def->search_tag("MS1 retention time tolerance", &TMP);
@@ -489,11 +504,13 @@ namespace OpenMS
     // Key: ms1_feature_selection_options:start_elution_window
     // Unit: min
     LC_MS_XML_reader::TR_MIN = 0;
+    FT_PEAK_DETEC_mzXML_reader::TR_MIN=0; // aus initializer
     
     //  def->search_tag("end elution window", &TMP);
     // Key: ms1_feature_selection_options:end_elution_window
     // Unit: min
     LC_MS_XML_reader::TR_MAX = 180;
+    FT_PEAK_DETEC_mzXML_reader::TR_MAX=180; // aus initializer
     
     //def->search_tag("MS1 feature mz range min", &TMP);
     // Key: ms1_feature_selection_options:ms1_feature_mz_range_min
@@ -514,7 +531,7 @@ namespace OpenMS
     //def->search_tag("MS1 feature CHRG range min", &TMP_I );
     // Key: ms1_feature_selection_options:ms1_feature_chrg_range_min
     LC_MS_XML_reader::FEATURE_CHRG_MIN = 1;
-    Deisotoper::sfMinCharge = 1
+    Deisotoper::sfMinCharge = 1;
     
     //def->search_tag("MS1 feature CHRG range max", &TMP_I );
     // Key: ms1_feature_selection_options:ms1_feature_chrg_range_max

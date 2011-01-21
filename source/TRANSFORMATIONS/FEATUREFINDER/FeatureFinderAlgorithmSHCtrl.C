@@ -114,16 +114,31 @@ namespace OpenMS
   void FeatureFinderAlgorithmSHCtrl::initParams(Param param) {
     Process_Data::CENTROID_DATA_MODUS = 1; // data is centroided already 
     
-    
+    //def->search_tag("Precursor detection scan levels", &vInt);
     FT_PEAK_DETEC_mzXML_reader::PEAK_EXTRACTION_SCAN_LEVELS.push_back(1);
+    
+    //def->search_tag("Fragment Mass Scan levels", &vInt);
     FT_PEAK_DETEC_mzXML_reader::FRAGMENT_MASS_SCAN_LEVELS.push_back(2);
-    FT_PEAK_DETEC_mzXML_reader::MS1_base_inter_scan_distance = 0.1;  
+    
+    //def->search_tag("MS1 max inter scan distance", &INT);
+    FT_PEAK_DETEC_mzXML_reader::MS1_base_inter_scan_distance = 0.1;
+    
+    //def->search_tag("MS1 LC retention time resolution", &DB);
     Process_Data::MS1_TR_RESOLUTION = 0.01;
     
     float thresh = 1000;
+    // def->search_tag("FT peak detect MS1 intensity min threshold", &DB);
     LCMSCData::intensity_min_threshold = thresh;
+    
+    // NOTE: Was hardcoded to 1000, however: 
+    //    - def->search_tag("FT peak detect MS2 intensity min threshold", &INTENSITY_THRESHOLD);
+    //    - but the above is probably something different
     Process_Data::INTENSITY_THRESHOLD = thresh;
+    
+    // max_inter_scan_retention_time_distance
     Process_Data::max_inter_scan_retention_time_distance = param.getValue("max_inter_scan_retention_time_distance");    // 0.1;
+    
+    // def->search_tag("FT peak detect MS1 min nb peak members", &min_nb_cluster_members);
     Process_Data::min_nb_cluster_members = 4;
     
     //def->search_tag("MS1 feature CHRG range min", &INT);
@@ -134,13 +149,6 @@ namespace OpenMS
     IsotopicDist::sfDetectableIsoFact = 0.05;
     // def->search_tag("IntensityCV",&DB);
     IsotopicDist::sfIntensityCV = 0.9;
-    
-    MS1_feature_merger::MS1_FEATURE_CLUSTERING = 1;
-    MS1_feature_merger::MS1_PEAK_AREA_TR_RESOLUTION = 0.01;
-    MS1_feature_merger::INITIAL_TR_TOLERANCE = 5.0;
-    MS1_feature_merger::MS1_FEATURE_MERGING_TR_TOLERANCE = 1.0;
-    MS1_feature_merger::PERCENTAGE_INTENSITY_ELUTION_BORDER_VARIATION = 25;
-    MS1_feature_merger::PPM_TOLERANCE_FOR_MZ_CLUSTERING = 10;
     
     
     // ----------------------------------------------------------------------
@@ -177,23 +185,43 @@ namespace OpenMS
     
     // feature parameters:
     //def->search_tag("MS1 retention time tolerance", &TMP);
+    // Key: general:ms1_retention_time_tolerance
+    // Unit: min
     feature::TR_TOL = 0.5;
+    
     //  def->search_tag("MS1 m/z tolerance", &TMP);
+    // Key: general:ms1_mz_tolerance
+    // Unit: ppm
     feature::PPM_MZ_TOL = 0;
     consensIsotopePattern::FT_MZ_TOLERANCE = feature::PPM_MZ_TOL;
     
     // MS2_M2_matcher parameters:
     //def->search_tag("MS2 mass matching modus", &TMP_B);
+    // Key: general:ms2_mass_matching_modus
+    // Unit: define which modus used to match ms2 assignments to ms1 peaks
+    //                      - theoretical mass [1]  : use theoretical mass calculated from sequence
+    //                      - MS1 precursor mass [0]: use measured ms1 mass of precursor ion
     ms2_info::THEO_MATCH_MODUS = 1;
     
     
     /*
      
      //def->search_tag("Peptide Prophet Threshold", &TMP);
+     // Key: general:peptide_prophet_threshold
+     // Unit: Probability value at which peptide identification will be evaluated 
+     //					(originally adopted from the Peptide Prophet, i.e. 1.0 refers to high probability)
      MS2_MS1_matcher::PEP_PROB_CUT_OFF = 0.9;
+     
      //def->search_tag("MS2 SCAN tolerance", &TMP_I);
+     // Key: general:ms2_scan_tolerance
+     // Unit: SCAN tolerance with which MS2 identifications will be associated 
+     //					to a defined MS1 LC elution peak
      MS2_MS1_matcher::SCAN_TOL = 200;
+     
      //def->search_tag("INCLUSIONS LIST MS2 SCAN tolerance", &TMP_I);
+     // Key: general:inclusions_list_ms2_scan_tolerance
+     // Unit: SCAN tolerance with which MS2 info FROM INCLUSION LIST will be associated 
+     //					to a defined MS1 LC elution peak []
      MS2_MS1_matcher::POST_SCAN_TOL = 100000;
      
      */
@@ -201,10 +229,16 @@ namespace OpenMS
     
     // MS2 matching PPM parameters:
     //def->search_tag("MS2 PPM m/z tolerance", &TMP);
+    // Key: general:ms2_ppm_mz_tolerance
+    // Unit: ppm
     ms2_info::MS2_MZ_PPM_TOLERANCE = 30;
     
     // MS2 retention time tolerance:
     //def->search_tag("MS2 retention time tolerance", &TMP);
+    // Key: general:ms2_retention_time_tolerance
+    // Unit: retention time tolerance with which MS2 identifications will be associated 
+    //					to a defined MS1 LC elution peak [min]
+    //					(if set to -1, then the MS1 retention time tolerance will be used
     //if( TMP > 0 ){
     //  ms2_info::MS2_TR_TOL = TMP; 
     //}
@@ -411,51 +445,74 @@ namespace OpenMS
      */
     
     
-    
+    // OK bis auf einen
     /////////////////////////////////////////////////
     // Parameters for the peak merging:
     //def->search_tag("Activation of MS1 feature merging post processing", &TMP_B);
+    // Key: ms1_feature_merger:active
     MS1_feature_merger::MS1_FEATURE_CLUSTERING = 1;
-    //def->search_tag("MS1 LC retention time resolution", &TMP);
+    
+    //def->search_tag("MS1 LC retention time resolution", &TMP); // belongs to MS1 PEAK DETECTION PARAMETERS FOR THE DIFFERENT FILTER METHODS:
+    // Key: ms1_feature_merger:tr_resolution
     MS1_feature_merger::MS1_PEAK_AREA_TR_RESOLUTION = 0.01;
     
     //def->search_tag("Initial Apex Tr tolerance", &TMP);
+    // Key: ms1_feature_merger:initial_apex_tr_tolerance
     MS1_feature_merger::INITIAL_TR_TOLERANCE = 5.0;
+    
     //def->search_tag("MS1 feature Tr merging tolerance", &TMP);
+    // Key: ms1_feature_merger:feature_mergin_tr_tolerance
     MS1_feature_merger::MS1_FEATURE_MERGING_TR_TOLERANCE = 1.0;
+    
     //def->search_tag("Percentage of intensity variation between LC border peaks", &TMP);
+    // Key: ms1_feature_merger:intensity_variation_percentage
     MS1_feature_merger::PERCENTAGE_INTENSITY_ELUTION_BORDER_VARIATION = 25;
+    
     //def->search_tag("PPM value for the m/z clustering of merging candidates", &TMP);
+    // Key: ms1_feature_merger:ppm_tolerance_for_mz_clustering
     MS1_feature_merger::PPM_TOLERANCE_FOR_MZ_CLUSTERING = 10;
     
     
+    
+    // OK
     /////////////////////////////////////////////////
     // what information is extracted from the LC/MS or mastermap:
     // TR min:
     
     //  def->search_tag("start elution window", &TMP);
+    // Key: ms1_feature_selection_options:start_elution_window
+    // Unit: min
     LC_MS_XML_reader::TR_MIN = 0;
-    // TR max:
+    
     //  def->search_tag("end elution window", &TMP);
+    // Key: ms1_feature_selection_options:end_elution_window
+    // Unit: min
     LC_MS_XML_reader::TR_MAX = 180;
-    // mz min.
+    
     //def->search_tag("MS1 feature mz range min", &TMP);
+    // Key: ms1_feature_selection_options:ms1_feature_mz_range_min
     LC_MS_XML_reader::FEATURE_MZ_MIN = 0;
-    // mz max.
+    
     //def->search_tag("MS1 feature mz range max", &TMP );
+    // Key: ms1_feature_selection_options:ms1_feature_mz_range_max
     LC_MS_XML_reader::FEATURE_MZ_MAX = 2000;
-    // signal to noise min.
+    
     //def->search_tag("MS1 feature signal to noise threshold", &TMP );
+    // Key: ms1_feature_selection_options:ms1_feature_signal_to_noise_threshold
     //LC_MS_XML_reader::SIGNAL_TO_NOISE_THERSHOLD = TMP;
-    // intensity min.
+    
     //  def->search_tag("MS1 feature intensity cutoff", &TMP );
+    // Key: ms1_feature_selection_options:ms1_feature_intensity_cutoff
     //  LC_MS_XML_reader::PEAK_INTENSITY_THRESHOLD = TMP; // ich glaube 10000
-    // charge state min.
+    
     //def->search_tag("MS1 feature CHRG range min", &TMP_I );
+    // Key: ms1_feature_selection_options:ms1_feature_chrg_range_min
     LC_MS_XML_reader::FEATURE_CHRG_MIN = 1;
-    // charge state max.
+    
     //def->search_tag("MS1 feature CHRG range max", &TMP_I );
+    // Key: ms1_feature_selection_options:ms1_feature_chrg_range_max
     LC_MS_XML_reader::FEATURE_CHRG_MAX = 5;
+    
     //  Create monoisotopic LC profile:	to create and store the original profile of the detected
     //					monosiotopic pecursors in the XML (!!! increases the
     //					XML file size!!! (on[1]/off[0])

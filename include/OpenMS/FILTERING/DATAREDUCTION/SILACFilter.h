@@ -236,10 +236,6 @@ public:
 	 */
 	Int getIsotopesPerPeptide();
 	
-	/**
-	 * @brief update the list of blacklisted m/z windows used in the filter
-	 */
-	void updateBlacklist(std::list<SILACFiltering::BlacklistEntry> blacklist);
 };
 }
 

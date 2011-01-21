@@ -61,19 +61,8 @@ void SILACFiltering::addFilter(SILACFilter& filter) {
 SILACFiltering::~SILACFiltering() {
 
 }
-/*
-void SILACFiltering::blockPositions(const std::vector<DoubleReal>& peak_positions,SILACFilter* source)
-{
-	//Add values to the filter blacklists
-	//Iterate over all values
-	for (std::vector<DoubleReal>::const_iterator peak_it=peak_positions.begin();peak_it!=peak_positions.end();++peak_it)
-	{
-		//Add value to the blacklist
-		//(*it)->blockValue(*peak_it);
-	}
-}
-*/
 
+	
 bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* b) const
 {
 	// filters are ordered by a certain hierarchy
@@ -128,9 +117,7 @@ void SILACFiltering::filterDataPoints()
 		if ( abs(rt - (*blacklist_it).rtInitial) < 10) tempBlacklist.push_back(*blacklist_it);
 	}
 	blacklist.resize(tempBlacklist.size());
-	copy(tempBlacklist.begin(), tempBlacklist.end(), blacklist.begin());
-	std::cout << "blacklist length = " << blacklist.size() << "    new blacklist length = " << tempBlacklist.size() << std::endl;
-		
+	copy(tempBlacklist.begin(), tempBlacklist.end(), blacklist.begin());		
 		
 	// spectra with less than 10 data points are being ignored		
     if (number_data_points>=10)
@@ -190,48 +177,54 @@ void SILACFiltering::filterDataPoints()
 							continue;
 
 						SILACFilter* filter_ptr=*filter_it;
-						//Check if the filter at the given position is a SILAC pair
-						if (filter_ptr->isPair(rt,mz))
+						
+						//Check if m/z position is blacklisted
+						bool isBlacklisted = false;
+						for (std::list<BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it!=blacklist.end(); ++blacklist_it)
 						{
-							//Retrieve peak positions for blacklisting
-							const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
-							
-							//blockPositions(peak_positions,filter_ptr);
-
-							std::vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin();
-							DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);
-
-							// filling the blacklist
-							BlacklistEntry next_entry;
-							
-							next_entry.mzBlack_min = mz - 0.8 * peak_width;
-							next_entry.mzBlack_max = mz + 0.8 * peak_width;
-							next_entry.rtInitial = rt;
-							next_entry.generatingFilter = filter_ptr;  // Filter generating the blacklisting.
-							blacklist.push_back(next_entry);
-							
-							//std::cout << "blacklisting:    mz = " << mz << ",   peak_width = " << peak_width << ",    RT = " << rt << std::endl;
- 
-							peak_positions_it++;
-					
-							for (; peak_positions_it != peak_positions.end(); peak_positions_it++)
-							{
-								
-								DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);
-								
-								//std::cout << "                mz = " << *peak_positions_it;
-							
-								next_entry.mzBlack_min = *peak_positions_it - 0.8 * peak_width;
-								next_entry.mzBlack_max = *peak_positions_it + 0.8 * peak_width;
-								next_entry.rtInitial = rt;
-								next_entry.generatingFilter = NULL;
-								blacklist.push_back(next_entry);
-							}
-							//std::cout << std::endl;
-
-							++feature_id;
+							if ((mz > blacklist_it->mzBlack_min) && (mz < blacklist_it->mzBlack_max) && blacklist_it->generatingFilter != filter_ptr) isBlacklisted = true;
 						}
-					}
+						
+						
+						if (!isBlacklisted)   //Check the other filters only if m/z is not blacklisted
+						{
+							if (filter_ptr->isPair(rt,mz))   //Check if the mz at the given position is a SILAC pair
+							{
+								//Retrieve peak positions for blacklisting
+								const std::vector<DoubleReal>& peak_positions=filter_ptr->getPeakPositions();
+								
+								//blockPositions(peak_positions,filter_ptr);
+
+								std::vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin();
+								DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);
+
+								// filling the blacklist
+								BlacklistEntry next_entry;
+								
+								next_entry.mzBlack_min = mz - 0.8 * peak_width;
+								next_entry.mzBlack_max = mz + 0.8 * peak_width;
+								next_entry.rtInitial = rt;
+								next_entry.generatingFilter = filter_ptr;  // Filter generating the blacklisting.
+								blacklist.push_back(next_entry);
+								
+								peak_positions_it++;
+						
+								for (; peak_positions_it != peak_positions.end(); peak_positions_it++)
+								{
+									
+									DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);
+									
+									next_entry.mzBlack_min = *peak_positions_it - 0.8 * peak_width;
+									next_entry.mzBlack_max = *peak_positions_it + 0.8 * peak_width;
+									next_entry.rtInitial = rt;
+									next_entry.generatingFilter = NULL;
+									blacklist.push_back(next_entry);
+								}
+
+								++feature_id;
+							}
+						}	
+					}			
 					last_mz=mz_it->getMZ();
 				}
 
@@ -243,12 +236,6 @@ void SILACFiltering::filterDataPoints()
 			gsl_interp_accel_free(acc_spl);
 		}
 
-		//Reset the filters
-/*		for (std::set<SILACFilter*>::iterator filter_it=filters.begin();filter_it!=filters.end();++filter_it)
-		{
-			SILACFilter* filter_ptr=*filter_it;
-			filter_ptr->reset();
-    }*/
   }
 	endProgress();
 }

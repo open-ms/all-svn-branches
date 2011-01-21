@@ -106,11 +106,6 @@ void SILACFilter::reset()
 }
 */
 	
-	void updateBlacklist(std::list<SILACFiltering::BlacklistEntry> blacklist)
-	{
-		Int f = 9;
-	}
-
 bool SILACFilter::isPair(DoubleReal act_rt, DoubleReal act_mz)
 {
 	//Check if current position is blacklisted

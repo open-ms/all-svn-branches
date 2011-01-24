@@ -51,19 +51,11 @@ class SILACFilter;
 class OPENMS_DLLAPI SILACFiltering : public ProgressLogger{
 	friend class SILACFilter;
 private:
-	
-	/**
-	 * @brief helper structure to compare SILACFilter pointers
-	 */
-	struct filterPtrCompare
-	{
-		bool operator ()(SILACFilter* a, SILACFilter* b) const;
-	};
-	
+		
 	/**
 	 * @brief holds all filters used in the filtering
 	 */
-	std::set<SILACFilter*,filterPtrCompare> filters;
+	std::list<SILACFilter*> filters;
 	
 	/**
 	 * @brief average m/z distance between scanned data points
@@ -75,8 +67,8 @@ private:
 	 */
 	static DoubleReal intensity_cutoff;
 
-	static gsl_interp_accel* acc_lin;
-	static gsl_interp_accel* acc_spl;
+	static gsl_interp_accel* current_lin;
+	static gsl_interp_accel* current_spl;
 	static gsl_spline* spline_lin;
 	static gsl_spline* spline_spl;
 	
@@ -142,7 +134,7 @@ public:
 	/**
 	 * @brief holds the m/z range and rt age that are ignored and the filter that generated the blacklist entry 
 	 */
- 	static std::list<BlacklistEntry> blacklist;
+ 	std::list<BlacklistEntry> blacklist;
 
 };
 

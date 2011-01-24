@@ -109,7 +109,7 @@ void SILACFilter::reset()
 bool SILACFilter::isPair(DoubleReal act_rt, DoubleReal act_mz)
 {
 	//Check if intensity at current position is above the threshold
-	if (gsl_spline_eval (SILACFiltering::spline_lin, act_mz, SILACFiltering::acc_lin) < SILACFiltering::intensity_cutoff)
+	if (gsl_spline_eval (SILACFiltering::spline_lin, act_mz, SILACFiltering::current_lin) < SILACFiltering::intensity_cutoff)
 	{
 		return false;
 	}
@@ -132,15 +132,15 @@ bool SILACFilter::isPair(DoubleReal act_rt, DoubleReal act_mz)
 		//Check if the intensity of the monoisotopic peak of each isotope pattern is higher than its predecessor; use the tolerance area for the intensity maximum
 		for (DoubleReal pos=act_mz+envelope_distance-0.5*tolerance;pos<=act_mz+envelope_distance+0.5*tolerance;pos+=tolerance/10)
 		{
-			DoubleReal act_intensity=gsl_spline_eval (SILACFiltering::spline_lin, pos, SILACFiltering::acc_lin);
-			DoubleReal previous_intensity=gsl_spline_eval (SILACFiltering::spline_lin,pos-isotope_distance, SILACFiltering::acc_lin);
+			DoubleReal act_intensity=gsl_spline_eval (SILACFiltering::spline_lin, pos, SILACFiltering::current_lin);
+			DoubleReal previous_intensity=gsl_spline_eval (SILACFiltering::spline_lin,pos-isotope_distance, SILACFiltering::current_lin);
 			if (act_intensity > max_heavy_intensity)
 				max_heavy_intensity=act_intensity;
 			if (previous_intensity > max_previous_intensity)
 				max_previous_intensity=previous_intensity;
 		}
 		//Check if the light monoisotopic peak is smaller than its predecessor
-		if (envelope_iterator==envelope_distances.begin() && max_previous_intensity>=gsl_spline_eval (SILACFiltering::spline_lin, act_mz, SILACFiltering::acc_lin))
+		if (envelope_iterator==envelope_distances.begin() && max_previous_intensity>=gsl_spline_eval (SILACFiltering::spline_lin, act_mz, SILACFiltering::current_lin))
 		{
 			monoisotopic_smaller=false;
 		}
@@ -163,7 +163,7 @@ bool SILACFilter::isPair(DoubleReal act_rt, DoubleReal act_mz)
 			return false;
 
 		//Check if the intensities of the predecessors of the light monoisotopic peak and the monoisotopic peak of the current mass shift are both either smaller or higher
-		if (envelope_iterator!=envelope_distances.begin() && max_previous_intensity >= gsl_spline_eval (SILACFiltering::spline_lin, act_mz+exact_position, SILACFiltering::acc_lin) && monoisotopic_smaller)
+		if (envelope_iterator!=envelope_distances.begin() && max_previous_intensity >= gsl_spline_eval (SILACFiltering::spline_lin, act_mz+exact_position, SILACFiltering::current_lin) && monoisotopic_smaller)
 		{
 			return false;
 		}
@@ -200,8 +200,8 @@ bool SILACFilter::isPair(DoubleReal act_rt, DoubleReal act_mz)
 /*		Size peak_number=3;
 		do
 		{
-			DoubleReal further_intensity=gsl_spline_eval (SILACFiltering::spline_lin, act_mz+envelope_distance+peak_number*isotope_distance, SILACFiltering::acc_lin);
-			if (further_intensity > gsl_spline_eval (SILACFiltering::spline_lin, act_mz+envelope_distance+(peak_number-1)*isotope_distance, SILACFiltering::acc_lin))
+			DoubleReal further_intensity=gsl_spline_eval (SILACFiltering::spline_lin, act_mz+envelope_distance+peak_number*isotope_distance, SILACFiltering::current_lin);
+			if (further_intensity > gsl_spline_eval (SILACFiltering::spline_lin, act_mz+envelope_distance+(peak_number-1)*isotope_distance, SILACFiltering::current_lin))
 				break;
 			computeCorrelation(act_mz,envelope_distance+peak_number*isotope_distance,tolerance,data);
 			exact_position=computeExactDistance(act_mz,envelope_distance+peak_number*isotope_distance,tolerance,data);
@@ -251,7 +251,7 @@ bool SILACFilter::checkPattern(DoubleReal act_mz, const std::vector<DoubleReal>&
 	//Store all intensities of the current isotope pattern
 	for (std::vector<DoubleReal>::const_iterator position_it=exact_positions.begin();position_it!=exact_positions.end();++position_it)
 	{
-		DoubleReal act_intensity=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+*position_it, SILACFiltering::acc_spl);
+		DoubleReal act_intensity=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+*position_it, SILACFiltering::current_spl);
 		if (act_intensity<=0)
 			return false;
 		act_intensities.push_back(act_intensity);
@@ -265,8 +265,8 @@ bool SILACFilter::checkPattern(DoubleReal act_mz, const std::vector<DoubleReal>&
 		std::vector<DoubleReal> second_values;
 		for (DoubleReal pos=act_mz-0.7*area_width;pos<=act_mz+0.7*area_width;pos+=0.14*area_width)
 		{
-			DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::acc_spl);
-			DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+exact_positions[i], SILACFiltering::acc_spl);
+			DoubleReal intensity1=gsl_spline_eval (SILACFiltering::spline_spl, pos, SILACFiltering::current_spl);
+			DoubleReal intensity2=gsl_spline_eval (SILACFiltering::spline_spl, pos+exact_positions[i], SILACFiltering::current_spl);
 			first_values.push_back(intensity1);
 			second_values.push_back(intensity2);
 		}
@@ -312,7 +312,7 @@ void SILACFilter::computeCorrelation(DoubleReal act_mz,DoubleReal offset,DoubleR
 
 			for (DoubleReal x=act_mz-starting_offset;x<=act_mz+tolerance;x+=stepwidth)
 			{
-				data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x, SILACFiltering::acc_lin);
+				data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x, SILACFiltering::current_lin);
 				++i;
 			}
 
@@ -320,7 +320,7 @@ void SILACFilter::computeCorrelation(DoubleReal act_mz,DoubleReal offset,DoubleR
 			i=0;
 			for (DoubleReal x=act_mz-starting_offset-tolerance;x<=act_mz+tolerance;x+=stepwidth)
 			{
-				gauss_fitted_data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x+offset, SILACFiltering::acc_lin)/**gsl_ran_gaussian_pdf (x-act_mz, (tolerance/3)*0.75)*gauss_normalization_factor*/;
+				gauss_fitted_data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x+offset, SILACFiltering::current_lin)/**gsl_ran_gaussian_pdf (x-act_mz, (tolerance/3)*0.75)*gauss_normalization_factor*/;
 				++i;
 			}
 //			if (SILACFiltering::feature_id>96 && SILACFiltering::feature_id<118 &&offset>3.8 && offset<4.2)
@@ -375,7 +375,7 @@ DoubleReal SILACFilter::computeExactDistance(DoubleReal act_mz,DoubleReal expect
 			DoubleReal last_intensity=gsl_spline_eval (spline_correlation, expected_distance+act_position-stepwidth, acc_correlation);
 			DoubleReal act_intensity=gsl_spline_eval (spline_correlation, expected_distance+act_position, acc_correlation);
 			DoubleReal next_intensity=gsl_spline_eval (spline_correlation, expected_distance+act_position+stepwidth, acc_correlation);
-			if (act_intensity > last_intensity && act_intensity > next_intensity && act_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, act_mz+expected_distance+act_position, SILACFiltering::acc_lin) > SILACFiltering::intensity_cutoff)
+			if (act_intensity > last_intensity && act_intensity > next_intensity && act_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, act_mz+expected_distance+act_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
 			{
 				gsl_spline_free(spline_correlation);
 				gsl_interp_accel_free(acc_correlation);
@@ -384,7 +384,7 @@ DoubleReal SILACFilter::computeExactDistance(DoubleReal act_mz,DoubleReal expect
 			last_intensity=gsl_spline_eval(spline_correlation, expected_distance-act_position-stepwidth, acc_correlation);
 			act_intensity=gsl_spline_eval(spline_correlation, expected_distance-act_position, acc_correlation);
 			next_intensity=gsl_spline_eval(spline_correlation, expected_distance-act_position+stepwidth, acc_correlation);
-			if (act_intensity > last_intensity && act_intensity > next_intensity && act_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, act_mz+expected_distance-act_position, SILACFiltering::acc_lin) > SILACFiltering::intensity_cutoff)
+			if (act_intensity > last_intensity && act_intensity > next_intensity && act_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, act_mz+expected_distance-act_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
 			{
 				gsl_spline_free(spline_correlation);
 				gsl_interp_accel_free(acc_correlation);
@@ -406,14 +406,14 @@ DoubleReal SILACFilter::computeExactDistance(DoubleReal act_mz,DoubleReal expect
 bool SILACFilter::checkRatios(DoubleReal act_mz,const std::vector<DoubleReal>& light_positions, const std::vector<DoubleReal>& envelope_positions)
 {
 	std::vector<DoubleReal> light_intensities(3,0);
-	light_intensities[0]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+light_positions[0], SILACFiltering::acc_spl);
-	light_intensities[1]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+light_positions[1], SILACFiltering::acc_spl);
-	light_intensities[2]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+light_positions[2], SILACFiltering::acc_spl);
+	light_intensities[0]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+light_positions[0], SILACFiltering::current_spl);
+	light_intensities[1]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+light_positions[1], SILACFiltering::current_spl);
+	light_intensities[2]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+light_positions[2], SILACFiltering::current_spl);
 
 	std::vector<DoubleReal> envelope_intensities(3,0);
-	envelope_intensities[0]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_positions[0], SILACFiltering::acc_spl);
-	envelope_intensities[1]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_positions[1], SILACFiltering::acc_spl);
-	envelope_intensities[2]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_positions[2], SILACFiltering::acc_spl);
+	envelope_intensities[0]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_positions[0], SILACFiltering::current_spl);
+	envelope_intensities[1]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_positions[1], SILACFiltering::current_spl);
+	envelope_intensities[2]=gsl_spline_eval (SILACFiltering::spline_spl, act_mz+envelope_positions[2], SILACFiltering::current_spl);
 
 	DoubleReal ratio1=log((light_intensities[0]/light_intensities[1])/(envelope_intensities[0]/envelope_intensities[1]));
 	DoubleReal ratio2=log((light_intensities[1]/light_intensities[2])/(envelope_intensities[1]/envelope_intensities[2]));

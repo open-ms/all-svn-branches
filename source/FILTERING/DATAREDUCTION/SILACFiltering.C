@@ -43,8 +43,8 @@ namespace OpenMS
 {
 DoubleReal SILACFiltering::mz_stepwidth=0;
 DoubleReal SILACFiltering::intensity_cutoff=0;
-gsl_interp_accel* SILACFiltering::acc_lin=0;
-gsl_interp_accel* SILACFiltering::acc_spl=0;
+gsl_interp_accel* SILACFiltering::current_lin=0;
+gsl_interp_accel* SILACFiltering::current_spl=0;
 gsl_spline* SILACFiltering::spline_lin=0;
 gsl_spline* SILACFiltering::spline_spl=0;
 Int SILACFiltering::feature_id=0;
@@ -58,42 +58,12 @@ SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_,DoubleReal mz_stepwidt
 }
 
 void SILACFiltering::addFilter(SILACFilter& filter) {
-	filters.insert(&filter);
+	filters.push_back(&filter);
 }
 
 SILACFiltering::~SILACFiltering() {
 
 }
-
-	
-bool SILACFiltering::filterPtrCompare::operator ()(SILACFilter* a, SILACFilter* b) const
-{
-	// filters are ordered by a certain hierarchy
-	// first: amount of mass shifts (quadruplets, triplets, doublets, singlets); highest amount first
-	if (a->envelope_distances.size() != b->envelope_distances.size())
-		return a->envelope_distances.size() > b->envelope_distances.size();
-
-		// second: isotopes per peptide; highest number of isotopes per peptide first
-		if (a->isotopes_per_peptide != b->isotopes_per_peptide)
-			return a->isotopes_per_peptide > b->isotopes_per_peptide;
-
-			// third: charge; highest charge first
-			if (a->charge != b->charge)
-				return a->charge > b->charge;
-
-				// fourth: size of mass shifts; lowest mass shift first
-				// mass shifts of both compared filters are iterated until they differ
-				std::set<DoubleReal>::iterator envelope_distances_it_a=a->envelope_distances.begin();
-				std::set<DoubleReal>::iterator envelope_distances_it_b=b->envelope_distances.begin();
-				while(*envelope_distances_it_a == *envelope_distances_it_b)
-				{
-					++envelope_distances_it_a;
-					++envelope_distances_it_b;
-				}
-				// the different mass shifts are compared
-				return (*envelope_distances_it_a < *envelope_distances_it_b);
-}
-
 
 void SILACFiltering::filterDataPoints()
 {
@@ -150,23 +120,22 @@ void SILACFiltering::filterDataPoints()
 			}
 			
 			//akima interpolation,    returns 0 in regions with no raw data points
-			acc_lin = gsl_interp_accel_alloc();
+			current_lin = gsl_interp_accel_alloc();
 			spline_lin = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
 			gsl_spline_init(spline_lin, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
 			// spline interpolation,    used for exact ratio calculation (more accurate when real peak pairs are present)
-			acc_spl = gsl_interp_accel_alloc();
+			current_spl = gsl_interp_accel_alloc();
 			spline_spl = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
 			gsl_spline_init(spline_spl, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
 
 			//Iterate over all filters
-			for (std::set<SILACFilter*>::iterator filter_it=filters.begin(); filter_it!=filters.end(); ++filter_it)
+			for (std::list<SILACFilter*>::iterator filter_it=filters.begin(); filter_it!=filters.end(); ++filter_it)
 			{
 				// debug output: Are all filters in the right order?
 				//std::cout << "filter: isotopes per peptide = " << (*filter_it)->getIsotopesPerPeptide() << " charge = " << (*filter_it)->getCharge() << std::endl;
 				
-				//Extract current spectrum
 				MSSpectrum<>::Iterator mz_it=rt_it->begin();
 				
 				last_mz=mz_it->getMZ();
@@ -181,17 +150,21 @@ void SILACFiltering::filterDataPoints()
 					// We do not move with mz_stepwidth over the spline fit, but with about a third of the local mz differences
 					for (DoubleReal mz=last_mz; mz < mz_it->getMZ(); mz+=(std::abs(mz_it->getMZ() - last_mz))/3)
 					{
-						if (gsl_spline_eval (spline_lin, mz, acc_lin) <= 0.0)
+						if (gsl_spline_eval (spline_lin, mz, current_lin) <= 0.0)
 							continue;
 
 						//Check if m/z position is blacklisted
 						bool isBlacklisted = false;
 						for (std::list<BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it!=blacklist.end(); ++blacklist_it)
 						{
-							if ((mz > blacklist_it->mzBlack_min) && (mz < blacklist_it->mzBlack_max) && blacklist_it->generatingFilter != (*filter_it)) isBlacklisted = true;
+							if ((mz > blacklist_it->mzBlack_min) && (mz < blacklist_it->mzBlack_max) && blacklist_it->generatingFilter != (*filter_it))
+							{
+								isBlacklisted = true;
+								break;
+							}
 						}
 						
-						if (!isBlacklisted)   //Check the other filters only if m/z is not blacklisted
+						if (isBlacklisted == false)   //Check the other filters only if m/z is not blacklisted
 						{
 							if ((*filter_it)->isPair(rt,mz))   //Check if the mz at the given position is a SILAC pair
 							{
@@ -233,9 +206,9 @@ void SILACFiltering::filterDataPoints()
 			}
 			//Clear the interpolations
 			gsl_spline_free(spline_lin);
-			gsl_interp_accel_free(acc_lin);
+			gsl_interp_accel_free(current_lin);
 			gsl_spline_free(spline_spl);
-			gsl_interp_accel_free(acc_spl);
+			gsl_interp_accel_free(current_spl);
 		}
 
   }

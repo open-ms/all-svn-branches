@@ -129,7 +129,7 @@ bool SILACFilter::isPair(DoubleReal act_rt, DoubleReal act_mz)
 		DoubleReal max_previous_intensity=0.0;
 		DoubleReal max_heavy_intensity=0.0;
 
-		//Check the intensity of the monoisotopic peak of each isotope pattern is higher than its predecessor; use the tolerance area for the intensity maximum
+		//Check if the intensity of the monoisotopic peak of each isotope pattern is higher than its predecessor; use the tolerance area for the intensity maximum
 		for (DoubleReal pos=act_mz+envelope_distance-0.5*tolerance;pos<=act_mz+envelope_distance+0.5*tolerance;pos+=tolerance/10)
 		{
 			DoubleReal act_intensity=gsl_spline_eval (SILACFiltering::spline_lin, pos, SILACFiltering::acc_lin);
@@ -471,5 +471,10 @@ Int SILACFilter::getCharge()
 {
 	return charge;
 }
-
+	
+Int SILACFilter::getIsotopesPerPeptide()
+{
+	return isotopes_per_peptide;
+}
+	
 }

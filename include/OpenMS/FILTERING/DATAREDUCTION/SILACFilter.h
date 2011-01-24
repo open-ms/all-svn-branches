@@ -61,10 +61,12 @@ private:
      * @brief charge of the ions to search for
      */
     Int charge;
-		/**
-		 * @brief number of isotopes per peptide to search for
-		 */
-		Int isotopes_per_peptide;
+	
+	/**
+	* @brief number of isotopes per peptide to search for
+	*/
+	Int isotopes_per_peptide;
+	
     /**
      * @brief envelope distances within one feature
      */
@@ -154,7 +156,7 @@ private:
 	bool isPair(DoubleReal current_rt,DoubleReal current_mz);
 	
 	/**
-	 * @brief gets the m/z values of all peaks , which belong the last identiefied feature
+	 * @brief gets the m/z values of all peaks , which belong the last identified feature
 	 */
 	std::vector<DoubleReal> getPeakPositions();
 	
@@ -211,18 +213,18 @@ public:
 	 */
 	void reset();
 
-
-
 	/**
 	 * @brief returns the distance between light and heavy peaks
 	 */
 	std::set<DoubleReal> getEnvelopeDistances();
+	
 	/**
 	 * @brief returns the distance between two isotope peaks
 	 */
 	DoubleReal getIsotopeDistance();
+	
 	/**
-	 * @brief returns all identiefied elements
+	 * @brief returns all identified elements
 	 */
 	std::vector<DataPoint> getElements();
 

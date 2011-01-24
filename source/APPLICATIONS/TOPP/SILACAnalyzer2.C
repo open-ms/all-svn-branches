@@ -700,7 +700,7 @@ class TOPPSILACAnalyzer2
 		isotopes_per_peptide_min = 3;
 		isotopes_per_peptide_max = 3;
 		
-    for (int isotopes_per_peptide = isotopes_per_peptide_min; isotopes_per_peptide <= isotopes_per_peptide_max; isotopes_per_peptide++)
+    for (int isotopes_per_peptide = isotopes_per_peptide_max; isotopes_per_peptide >= isotopes_per_peptide_min; isotopes_per_peptide--)
 		{
       // iterate over all charge states
 			for (Int charge = charge_min; charge <= charge_max; charge++)

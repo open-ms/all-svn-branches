@@ -54,9 +54,15 @@ class OPENMS_DLLAPI SILACFilter {
 
 private:
 	/**
+	 * @brief number of peptides [i.e. number of labelled peptides +1, e.g. for SILAC triplet =3]
+	 */
+    Int numberOfPeptides;
+	
+	/**
 	 * @brief SILAC type of the filter. Either DOUBLE (2) or TRIPLE (3)
 	 */
     Int silac_type;
+	
     /**
      * @brief charge of the ions to search for
      */
@@ -68,9 +74,9 @@ private:
 	Int isotopes_per_peptide;
 	
     /**
-     * @brief envelope distances within one feature
+     * @brief m/z separtion between individual peptides [e.g. {0 Th, 4 Th, 5 Th}]
      */
-    std::set<DoubleReal> envelope_distances;
+    std::vector<DoubleReal> mz_peptide_separations;
 
     DoubleReal isotope_distance;
 
@@ -116,44 +122,54 @@ private:
     static DoubleReal getPeakWidth(DoubleReal mz);
 
     /**
-     * @brief Computes the cross correlation of the area around current_mz to the spectrum in a given area
-     * @param current_mz position of the potential feature
+     * @brief Computes the cross correlation of the area around mz to the spectrum in a given area
+     * @param mz position of the potential feature
      * @param offset expected distance between monoisotpic peak and current peak
      * @param tolerance maximal deviation from the expected distance
      * @param data is filled during the computation
      */
-    void computeCorrelation(DoubleReal current_mz,DoubleReal offset,DoubleReal tolerance,std::vector<DoubleReal>& data);
+    void computeCorrelation(DoubleReal mz, DoubleReal offset, DoubleReal tolerance, std::vector<DoubleReal>& data);
 
     /**
      * @brief Computes the exact position of a peak to the monoisotopic peak
      * The computation is based on the expected distance to the monoisotopic peak and their autocorrelation
-     * @param current_mz m/z position of the monoisotopic peak
+     * @param mz m/z position of the monoisotopic peak
      * @param expected_distance expected distance of the current peak to the monoisotopic peak
      * @param tolerance maximal deviation from the expected distance
      * @param data autocorrelation data vector as calculated in computeCorrelation()
      */
-    DoubleReal computeExactDistance(DoubleReal current_mz,DoubleReal expected_distance,DoubleReal tolerance,std::vector<DoubleReal> data);
-
-/**
+    DoubleReal computeExactDistance(DoubleReal mz, DoubleReal expected_distance, DoubleReal tolerance, std::vector<DoubleReal> data);
+	
+    /**
+     * @brief Computes the exact position of a peak to the monoisotopic peak
+     * The computation is based on the expected distance to the monoisotopic peak and their autocorrelation
+     * @param mz m/z position of the monoisotopic peak
+     * @param expected_distance expected distance of the current peak to the monoisotopic peak
+     * @param tolerance maximal deviation from the expected distance
+     * @param data autocorrelation data vector as calculated in computeCorrelation()
+     */
+    DoubleReal computeActualMzShift(DoubleReal mz, DoubleReal expectedMzShift, DoubleReal maxMzDeviation);
+	
+	/**
  * @brief Determines the quality of an isotope pattern by computing the Pearson correlation and the averagine model deviation
- * @param current_mz current m/z position
+ * @param mz current m/z position
  * @param exact_positions the distances of each peak to the monoisotopic peak
  * @param intensities vector to be filled with the intensities of each peak
  * @param missing_peak is true if already a peak is missing in the SILAC pattern
  */
-    bool checkPattern(DoubleReal current_mz, const std::vector<DoubleReal>& exact_positions_heathrow, std::vector<DoubleReal>& intensities, bool missing_peak);
+    bool checkPattern(DoubleReal mz, const std::vector<DoubleReal>& exact_positions_heathrow, std::vector<DoubleReal>& intensities, bool missing_peak);
 
     /*
-    bool checkRatios(DoubleReal current_mz,const std::vector<DoubleReal>& light_positions, const std::vector<DoubleReal>& envelope_positions);
+    bool checkRatios(DoubleReal mz,const std::vector<DoubleReal>& light_positions, const std::vector<DoubleReal>& envelope_positions);
 	*/
 
 
 	/**
 	 * @brief returns if there exists a SILAC feature at the given position, which corresponds to the filter's properties
-	 * @param current_rt RT value of the position
-	 * @param current_mz m/z value of the position
+	 * @param rt RT value of the position
+	 * @param mz m/z value of the position
 	 */
-	bool isPair(DoubleReal current_rt,DoubleReal current_mz);
+	bool isPair(DoubleReal rt,DoubleReal mz);
 	
 	/**
 	 * @brief gets the m/z values of all peaks , which belong the last identified feature
@@ -183,15 +199,6 @@ public:
      */
     SILACFilter(std::set<DoubleReal> mass_separations, Int charge_, DoubleReal model_deviation_, Int isotopes_per_peptide_);
 
-    /**
-         * @brief detailed constructor for singlet filtering
-         * No mass shifts are given, so only singlets are searched.
-         * @param charge_ charge of the ions to search for
-         * @param model_deviation_ maximum deviation from the averagine model
-         */
-    SILACFilter(Int charge_,DoubleReal model_deviation_);
-
-
 	/**
 	 * @brief destructor
 	 */
@@ -216,7 +223,7 @@ public:
 	/**
 	 * @brief returns the distance between light and heavy peaks
 	 */
-	std::set<DoubleReal> getEnvelopeDistances();
+	//std::vector<DoubleReal> getMzPeptideSeparations();
 	
 	/**
 	 * @brief returns the distance between two isotope peaks

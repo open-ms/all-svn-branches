@@ -84,9 +84,7 @@ bool SILACFilter::isPair(DoubleReal rt, DoubleReal mz)
 	{
 		for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++) // loop over isotopic peaks within a peptide [0=mono-isotopic peak etc.]
 		{
-			std::vector<DoubleReal> tempVector;
-			computeCorrelation(mz, mz_peptide_separations[peptide] + isotope*isotope_distance, 0.001, tempVector);
-			DoubleReal deltaMZ = computeExactDistance(mz, mz_peptide_separations[peptide] + isotope*isotope_distance, 0.001, tempVector);
+			DoubleReal deltaMZ = computeActualMzShift(mz, mz_peptide_separations[peptide] + isotope*isotope_distance, 0.001);			
 			std::cout << " m/z = " << mz << ",    delta m/z = " << mz_peptide_separations[peptide] + isotope*isotope_distance << ",    exact delta m/z = " << deltaMZ << std::endl;
 		}
 	}
@@ -135,8 +133,7 @@ bool SILACFilter::isPair(DoubleReal rt, DoubleReal mz)
 
 		//Compute autocorrelation and exact positions for all peaks of the SILAC pattern
 		//Monoisotopic peak
-		computeCorrelation(mz,envelope_distance,tolerance,data);
-		DoubleReal exact_position=computeExactDistance(mz,envelope_distance,tolerance,data);
+		DoubleReal exact_position=computeActualMzShift(mz,envelope_distance,tolerance);
 
 		if (exact_position < 0.0)
 			return false;
@@ -150,8 +147,7 @@ bool SILACFilter::isPair(DoubleReal rt, DoubleReal mz)
 		data.clear();
 
 		//First isotope peak
-		computeCorrelation(mz,envelope_distance+isotope_distance,tolerance,data);
-		exact_position=computeExactDistance(mz,envelope_distance+isotope_distance,tolerance,data);
+		exact_position=computeActualMzShift(mz,envelope_distance+isotope_distance,tolerance);
 
 		if (exact_position < 0.0)
 			return false;
@@ -160,8 +156,7 @@ bool SILACFilter::isPair(DoubleReal rt, DoubleReal mz)
 		data.clear();
 
 		// second isotope peak
-		computeCorrelation(mz, envelope_distance + 2 * isotope_distance, tolerance, data);
-		exact_position=computeExactDistance(mz, envelope_distance + 2 * isotope_distance, tolerance, data);
+		exact_position=computeActualMzShift(mz, envelope_distance + 2 * isotope_distance, tolerance);
 
 		//Check for missing peaks. One second isotope peak may be missing.
 		//If the current peak is missing and there is already a missing peak, return false
@@ -257,115 +252,110 @@ bool SILACFilter::checkPattern(DoubleReal mz, const std::vector<DoubleReal>& exa
 	intensities.insert(intensities.end(),act_intensities.begin(),act_intensities.end());
 	return true;
 }
-
-void SILACFilter::computeCorrelation(DoubleReal mz,DoubleReal offset,DoubleReal tolerance,std::vector<DoubleReal>& data)
+	
+DoubleReal SILACFilter::computeActualMzShift(DoubleReal mz, DoubleReal expectedMzShift, DoubleReal maxMzDeviation)
 {
-	if (offset > 0.0)
+	if (expectedMzShift > 0.0)
 	{
-		DoubleReal stepwidth=tolerance/18;
+		std::vector<DoubleReal> tempVector;
+		DoubleReal stepwidth = maxMzDeviation/18;
 		//n must be a power of two for gsl fast fourier transformation; take next higher size for n, which is a power of two and fill the rest with zeros
-		Size vector_size = pow(2,(ceil(log2((3*tolerance)/stepwidth))));
-		data.clear();
-		data.resize(vector_size,0);
-
-			//Create a vector containing interpolated values with a spacing of "stepwidth"
-			Size i=0;
-			DoubleReal starting_offset=std::min(mz-SILACFiltering::mz_min,tolerance);
-
-			for (DoubleReal x=mz-starting_offset;x<=mz+tolerance;x+=stepwidth)
-			{
-				data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x, SILACFiltering::current_lin);
-				++i;
-			}
-
-			std::vector<DoubleReal> gauss_fitted_data(vector_size,0);
-			i=0;
-			for (DoubleReal x=mz-starting_offset-tolerance;x<=mz+tolerance;x+=stepwidth)
-			{
-				gauss_fitted_data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x+offset, SILACFiltering::current_lin)/**gsl_ran_gaussian_pdf (x-mz, (tolerance/3)*0.75)*gauss_normalization_factor*/;
-				++i;
-			}
-
-			//Fourier transformation of the values
-			gsl_fft_real_radix2_transform (&(*data.begin()), 1, vector_size);
-			gsl_fft_real_radix2_transform (&(*gauss_fitted_data.begin()), 1, vector_size);
-
-			//Multiply the fourier transformed complex values with the complex conjugate
-			//Have a look at the GNU Scientific Library reference manual for a description of the data structure
-			data[0]=data[0]*gauss_fitted_data[0];
-			data[vector_size/2]=data[vector_size/2]*gauss_fitted_data[vector_size/2];
-			for (i = 1; i <= vector_size/2; ++i)
-			{
-				data[i]=data[i]*gauss_fitted_data[i]+data[vector_size-i]*gauss_fitted_data[vector_size-i];
-				data[vector_size-i]=0.0;
-			}
-
-			//Compute inverse fourier transformation
-			gsl_fft_halfcomplex_radix2_inverse (&(*data.begin()), 1, vector_size);
-
-			data.resize(vector_size/2);
-	}
-}
-
-
-DoubleReal SILACFilter::computeExactDistance(DoubleReal mz,DoubleReal expected_distance,DoubleReal tolerance,std::vector<DoubleReal> data)
-{
-	if (expected_distance>0)
-	{
-		DoubleReal stepwidth=tolerance/18;
-
+		Size tempVector_size = pow(2,(ceil(log2((3*maxMzDeviation)/stepwidth))));
+		
+		tempVector.clear();
+		tempVector.resize(tempVector_size);
+		
+		//Create a vector containing interpolated values with a spacing of 'stepwidth'
+		Size i=0;
+		DoubleReal starting_offset=std::min(mz - SILACFiltering::mz_min, maxMzDeviation);   // Why the mz_min from the SILACFiltering class??
+		for (DoubleReal x = mz - starting_offset; x<=mz + maxMzDeviation; x+=stepwidth)
+		{
+			tempVector[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x, SILACFiltering::current_lin);
+			++i;
+		}
+		
+		std::vector<DoubleReal> gauss_fitted_data(tempVector_size,0);
+		i=0;
+		for (DoubleReal xx=mz-starting_offset-maxMzDeviation;xx<=mz+maxMzDeviation;xx+=stepwidth)
+		{
+			gauss_fitted_data[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, xx+expectedMzShift, SILACFiltering::current_lin);
+			++i;
+		}
+		
+		//Fourier transformation of the values
+		gsl_fft_real_radix2_transform (&(*tempVector.begin()), 1, tempVector_size);
+		gsl_fft_real_radix2_transform (&(*gauss_fitted_data.begin()), 1, tempVector_size);
+		
+		//Multiply the fourier transformed complex values with the complex conjugate
+		//Have a look at the GNU Scientific Library reference manual for a description of the data structure.
+		tempVector[0]=tempVector[0]*gauss_fitted_data[0];
+		tempVector[tempVector_size/2]=tempVector[tempVector_size/2]*gauss_fitted_data[tempVector_size/2];
+		for (i = 1; i <= tempVector_size/2; ++i)
+		{
+			tempVector[i]=tempVector[i]*gauss_fitted_data[i] + tempVector[tempVector_size-i]*gauss_fitted_data[tempVector_size-i];
+			tempVector[tempVector_size-i]=0.0;
+		}
+		
+		//Compute inverse fourier transformation
+		gsl_fft_halfcomplex_radix2_inverse (&(*tempVector.begin()), 1, tempVector_size);
+		
+		tempVector.resize(tempVector_size/2);
+		
 		//Interpolate the current autocorrelation peak
-		std::vector<DoubleReal> x(data.size(),0);
-		std::vector<DoubleReal> y(data.size(),0);
-		DoubleReal shift=expected_distance-tolerance;
-		for (Size i=0;i<data.size();++i)
+		std::vector<DoubleReal> x(tempVector.size(),0);
+		std::vector<DoubleReal> y(tempVector.size(),0);
+		DoubleReal shift=expectedMzShift - maxMzDeviation;
+		for (Size i=0;i<tempVector.size();++i)
 		{
 			x[i]=shift;
-			y[i]=data[i];
+			y[i]=tempVector[i];
 			shift+=stepwidth;
 		}
-
+		
 		gsl_interp_accel* acc_correlation = gsl_interp_accel_alloc();
 		gsl_spline* spline_correlation = gsl_spline_alloc(gsl_interp_cspline, x.size());
 		gsl_spline_init(spline_correlation, &(*x.begin()), &(*y.begin()), x.size());
-
+		
 		//Search for first maximum in + and - direction and check preconditions
-		for (DoubleReal act_position=0.0;act_position<=tolerance; act_position+=stepwidth)
+		for (DoubleReal act_position=0.0;act_position<=maxMzDeviation; act_position+=stepwidth)
 		{
-			DoubleReal last_intensity=gsl_spline_eval (spline_correlation, expected_distance+act_position-stepwidth, acc_correlation);
-			DoubleReal act_intensity=gsl_spline_eval (spline_correlation, expected_distance+act_position, acc_correlation);
-			DoubleReal next_intensity=gsl_spline_eval (spline_correlation, expected_distance+act_position+stepwidth, acc_correlation);
-			if (act_intensity > last_intensity && act_intensity > next_intensity && act_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, mz+expected_distance+act_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
+			DoubleReal last_intensity=gsl_spline_eval (spline_correlation, expectedMzShift+act_position-stepwidth, acc_correlation);
+			DoubleReal act_intensity=gsl_spline_eval (spline_correlation, expectedMzShift+act_position, acc_correlation);
+			DoubleReal next_intensity=gsl_spline_eval (spline_correlation, expectedMzShift+act_position+stepwidth, acc_correlation);
+			// search for an actual m/z shift larger than the expected one
+			if (act_intensity > last_intensity && act_intensity > next_intensity && act_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, mz+expectedMzShift+act_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
 			{
 				gsl_spline_free(spline_correlation);
 				gsl_interp_accel_free(acc_correlation);
-				return expected_distance+act_position;
+				return expectedMzShift+act_position;
 			}
-			last_intensity=gsl_spline_eval(spline_correlation, expected_distance-act_position-stepwidth, acc_correlation);
-			act_intensity=gsl_spline_eval(spline_correlation, expected_distance-act_position, acc_correlation);
-			next_intensity=gsl_spline_eval(spline_correlation, expected_distance-act_position+stepwidth, acc_correlation);
-			if (act_intensity > last_intensity && act_intensity > next_intensity && act_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, mz+expected_distance-act_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
+			last_intensity=gsl_spline_eval(spline_correlation, expectedMzShift-act_position-stepwidth, acc_correlation);
+			act_intensity=gsl_spline_eval(spline_correlation, expectedMzShift-act_position, acc_correlation);
+			next_intensity=gsl_spline_eval(spline_correlation, expectedMzShift-act_position+stepwidth, acc_correlation);
+			// search for an actual m/z shift smaller than the expected one
+			if (act_intensity > last_intensity && act_intensity > next_intensity && act_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, mz+expectedMzShift-act_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
 			{
 				gsl_spline_free(spline_correlation);
 				gsl_interp_accel_free(acc_correlation);
-				return expected_distance-act_position;
+				return expectedMzShift-act_position;
 			}
 		}
 		gsl_spline_free(spline_correlation);
 		gsl_interp_accel_free(acc_correlation);
-		return -1;
+		return -1;		
 	}
 	else
 	{
-		return 0.0;
+		return 0.0;    // Why is sometimes 0.0 returned? Should never happen since we don't feed the method negative expectedMzShifts.
 	}
-}
-
-DoubleReal SILACFilter::computeActualMzShift(DoubleReal mz, DoubleReal expectedMzShift, DoubleReal maxMzDeviation)
-{
 	
 }
 
+	
+	
+	
+	
+	
 bool SILACFilter::doubleCmp::operator()(DoubleReal a, DoubleReal b) const
 {
 	//If a m/z position is blacklisted, no SILAC pair may start within the area of 0.8*getPeakWidth(m/z)

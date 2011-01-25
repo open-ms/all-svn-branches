@@ -122,41 +122,21 @@ private:
     static DoubleReal getPeakWidth(DoubleReal mz);
 
     /**
-     * @brief Computes the cross correlation of the area around mz to the spectrum in a given area
-     * @param mz position of the potential feature
-     * @param offset expected distance between monoisotpic peak and current peak
-     * @param tolerance maximal deviation from the expected distance
-     * @param data is filled during the computation
-     */
-    void computeCorrelation(DoubleReal mz, DoubleReal offset, DoubleReal tolerance, std::vector<DoubleReal>& data);
-
-    /**
-     * @brief Computes the exact position of a peak to the monoisotopic peak
-     * The computation is based on the expected distance to the monoisotopic peak and their autocorrelation
-     * @param mz m/z position of the monoisotopic peak
-     * @param expected_distance expected distance of the current peak to the monoisotopic peak
-     * @param tolerance maximal deviation from the expected distance
-     * @param data autocorrelation data vector as calculated in computeCorrelation()
-     */
-    DoubleReal computeExactDistance(DoubleReal mz, DoubleReal expected_distance, DoubleReal tolerance, std::vector<DoubleReal> data);
-	
-    /**
-     * @brief Computes the exact position of a peak to the monoisotopic peak
-     * The computation is based on the expected distance to the monoisotopic peak and their autocorrelation
-     * @param mz m/z position of the monoisotopic peak
-     * @param expected_distance expected distance of the current peak to the monoisotopic peak
-     * @param tolerance maximal deviation from the expected distance
-     * @param data autocorrelation data vector as calculated in computeCorrelation()
+     * @brief Computes the actual m/z shift between the position mz and a region about expectedMzShift away. Returns -1 if there is no correlation between mz and signal in interval [mz + expectedMzShift - maxMzDeviation, mz + expectedMzShift + maxMzDeviation].
+     * [e.g. from theoretical considerations we expect a good correlation between peaks 4.02 Th apart. But the shift between signals actually observed is 4.0189 Th.]
+     * @param mz m/z position of the reference signal [e.g. mono-isotopic peak of the light peptide]
+     * @param expectedMzShift poitive m/z shift at which we would expect a correlating signal [e.g. 4.02 Th]
+     * @param maxMzDeviation maximum allowed deviation between expected and actual shift [In the above example the shift is 0.0011 Th.]
      */
     DoubleReal computeActualMzShift(DoubleReal mz, DoubleReal expectedMzShift, DoubleReal maxMzDeviation);
 	
 	/**
- * @brief Determines the quality of an isotope pattern by computing the Pearson correlation and the averagine model deviation
- * @param mz current m/z position
- * @param exact_positions the distances of each peak to the monoisotopic peak
- * @param intensities vector to be filled with the intensities of each peak
- * @param missing_peak is true if already a peak is missing in the SILAC pattern
- */
+	 * @brief Determines the quality of an isotope pattern by computing the Pearson correlation and the averagine model deviation
+	 * @param mz current m/z position
+	 * @param exact_positions the distances of each peak to the monoisotopic peak
+	 * @param intensities vector to be filled with the intensities of each peak
+	 * @param missing_peak is true if already a peak is missing in the SILAC pattern
+	 */
     bool checkPattern(DoubleReal mz, const std::vector<DoubleReal>& exact_positions_heathrow, std::vector<DoubleReal>& intensities, bool missing_peak);
 
     /*

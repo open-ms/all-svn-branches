@@ -38,21 +38,21 @@ DataPoint::DataPoint()
 	feature_id= 0;
 	cluster_id = 0;
 	charge=1;
-  isotopes_per_peptide = 1;
+	isotopes_per_peptide = 1;
 	quality=0;
 	cluster_size=0;
 }
 	
 DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)
 {
-	feature_id=copyin.feature_id;
+	feature_id = copyin.feature_id;
 	intensities = copyin.intensities;
 	cluster_id = copyin.cluster_id;
-	charge=copyin.charge;
-  isotopes_per_peptide = copyin.isotopes_per_peptide;
-	quality=copyin.quality;
-	mass_shifts=copyin.mass_shifts;
-	cluster_size=copyin.cluster_size;
+	charge = copyin.charge;
+	isotopes_per_peptide = copyin.isotopes_per_peptide;
+	quality = copyin.quality;
+	mass_shifts = copyin.mass_shifts;
+	cluster_size = copyin.cluster_size;
 }
 
 DataPoint& DataPoint::operator=(const DataPoint &rhs)
@@ -60,7 +60,7 @@ DataPoint& DataPoint::operator=(const DataPoint &rhs)
 	this->rt = rhs.rt;
 	this->mz = rhs.mz;
 	this->intensities = rhs.intensities;
-	this->feature_id=rhs.feature_id;
+	this->feature_id = rhs.feature_id;
 	this->cluster_id = rhs.cluster_id;
 	this->mass_shifts = rhs.mass_shifts;
 	this->cluster_size = rhs.cluster_size;
@@ -73,8 +73,6 @@ bool DataPoint::operator==(const DataPoint &rhs) const
 	if( this->rt != rhs.rt) return false;
 	if( this->mz != rhs.mz) return false;
 	if( this->intensities != rhs.intensities) return false;
-	//if( this->cluster_id != rhs.cluster_id) return false;
-	//if( this->cluster_size != rhs.cluster_size) return false;
 	return true;
 }
 

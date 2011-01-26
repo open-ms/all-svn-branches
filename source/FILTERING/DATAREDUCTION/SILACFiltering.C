@@ -166,7 +166,7 @@ void SILACFiltering::filterDataPoints()
 						
 						if (isBlacklisted == false)   //Check the other filters only if m/z is not blacklisted
 						{
-							if ((*filter_it)->isPair(rt,mz))   //Check if the mz at the given position is a SILAC pair
+							if ((*filter_it)->isSILACPattern(rt,mz))   //Check if the mz at the given position is a SILAC pair
 							{
 								//Retrieve peak positions for blacklisting
 								const std::vector<DoubleReal>& peak_positions=(*filter_it)->getPeakPositions();

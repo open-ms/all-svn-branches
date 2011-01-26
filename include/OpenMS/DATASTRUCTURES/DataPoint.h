@@ -61,17 +61,15 @@ public:
 	 */
 	Int charge;
 
-  /**
-   * @brief number of isotopes per peptide of the cluster
-   */
-  Int isotopes_per_peptide;
+	/**
+	 * @brief number of isotopes per peptide of the cluster
+	 */
+	Int isotopes_per_peptide;
 	
 	/**
 	 * @brief quality of the cluster
 	 */
 	DoubleReal quality;
-
-
 
 	/**
 	 * @brief ID number of the cluster the data point belongs to

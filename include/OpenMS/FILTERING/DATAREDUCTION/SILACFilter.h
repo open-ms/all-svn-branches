@@ -100,21 +100,23 @@ private:
         bool operator ()(DoubleReal a, DoubleReal b) const;
     };
 
-    //typedef std::multiset<DoubleReal, doubleCmp> Blacklist;
-
-		
-		
-
     /**
-     * @brief defines the lifetime of each position in the blacklist.
-     * The positions with longest lifetime, i.e. whose iterators are located at the front of the list, will be deleted at the next reset
+     * @brief m/z at which the filter is currently applied to
      */
-    //std::list<std::list<Blacklist::iterator> > blacklist_lifetime;
-    /**
-     * @brief holds the m/z values of the last identified feature. These values will be blacklisted in other filters
-     */
-    std::vector<DoubleReal> peak_positions;
+    DoubleReal current_mz;
 
+	
+    /**
+     * @brief exact m/z shift of isotopic peaks in a SILAC pattern relative to the mono-isotopic peak of the light peptide, peptides (row) x isotope (column)
+     */
+	std::vector<std::vector<DoubleReal> > exact_shifts;
+
+	/**
+     * @brief intensities at mz + exact_shifts in a SILAC pattern, where mz is the m/z of the mono-isotopic peak of light peptide
+     */
+	std::vector<std::vector<DoubleReal> > exact_intensities;
+
+	
     /**
      * @brief returns the predicted peak width at position mz
      * @param mz position of the peak
@@ -149,7 +151,7 @@ private:
 	 * @param rt RT value of the position
 	 * @param mz m/z value of the position
 	 */
-	bool isPair(DoubleReal rt,DoubleReal mz);
+	bool isSILACPattern(DoubleReal rt, DoubleReal mz);
 	
 	/**
 	 * @brief gets the m/z values of all peaks , which belong the last identified feature

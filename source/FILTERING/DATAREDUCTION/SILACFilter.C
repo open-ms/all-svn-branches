@@ -161,7 +161,7 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 		{
 
 			IsotopeDistribution isoDistribution;    // isotope distribution of an averagine peptide
-			isoDistribution.estimateFromPeptideWeight(mz*charge);    // mass of averagine peptide
+			isoDistribution.estimateFromPeptideWeight((mz + exact_shifts[peptide][0])*charge);    // mass of averagine peptide
 			DoubleReal averagineIntensity_mono = isoDistribution.getContainer()[0].second;    // intensity of monoisotopic peak of the averagine model
 			DoubleReal intensity_mono = exact_intensities[peptide][0];    // intensity around the (potential) monoisotopic peak in the real data
 			for (Int isotope = 1; isotope < isotopes_per_peptide; isotope++)
@@ -297,26 +297,26 @@ DoubleReal SILACFilter::computeActualMzShift(DoubleReal mz, DoubleReal expectedM
 			DoubleReal last_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position - stepwidth, acc_correlation);
 			DoubleReal current_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position, acc_correlation);
 			DoubleReal next_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position + stepwidth, acc_correlation);
-				
+			
 			// search for a current m/z shift larger than the expected one
 			// conditions are: current intensity > 1000 (current intensity calculated with cubic interpolation based on autocorrelation)
 			// intensity at position (mz + expectedMzShift + current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
-			if (current_intensity > last_intensity && current_intensity > next_intensity && current_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, mz + expectedMzShift + current_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff) // Why fixed intensity cutoffs?
+			if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_lin, mz + expectedMzShift + current_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff) // Why fixed intensity cutoffs?
 			{
 				gsl_spline_free(spline_correlation);      // free interpolation object
 				gsl_interp_accel_free(acc_correlation);     // free accelerator object
 				return expectedMzShift + current_position;      // return exact position
 			}
-				
+			
 			// search for first maximum in - direction and check preconditions
 			last_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position - stepwidth, acc_correlation);
 			current_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position, acc_correlation);
 			next_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position + stepwidth, acc_correlation);
-				
+			
 			// search for an current m/z shift smaller than the expected one
 			// conditions are: current intensity > 1000 (current intensity calculated with cubic interpolation based on autocorrelation)
 			// intensity at position (mz + expectedMzShift - current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
-			if (current_intensity > last_intensity && current_intensity > next_intensity && current_intensity > 1000 && gsl_spline_eval (SILACFiltering::spline_lin, mz + expectedMzShift - current_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
+			if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_lin, mz + expectedMzShift - current_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
 			{
 				gsl_spline_free(spline_correlation);      // free interpolation object
 				gsl_interp_accel_free(acc_correlation);     // free accelerator object

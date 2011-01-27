@@ -93,14 +93,6 @@ private:
     DoubleReal model_deviation;
 
     /**
-     * @brief helper structure to compare double values
-     */
-    struct doubleCmp
-    {
-        bool operator ()(DoubleReal a, DoubleReal b) const;
-    };
-
-    /**
      * @brief m/z at which the filter is currently applied to
      */
     DoubleReal current_mz;

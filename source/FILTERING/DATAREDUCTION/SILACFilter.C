@@ -88,7 +88,7 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 		std::vector<DoubleReal> exact_intensities_singlePeptide;
 		for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++) // loop over isotopic peaks within a peptide [0=mono-isotopic peak etc.]
 		{
-			DoubleReal deltaMZ = computeActualMzShift(mz, mz_peptide_separations[peptide] + isotope*isotope_distance, 0.001);
+      DoubleReal deltaMZ = computeActualMzShift(mz, mz_peptide_separations[peptide] + isotope*isotope_distance, getPeakWidth(mz_peptide_separations[peptide] + isotope*isotope_distance));
 			exact_shifts_singlePeptide.push_back( deltaMZ );
 			exact_intensities_singlePeptide.push_back( gsl_spline_eval (SILACFiltering::spline_spl, mz + deltaMZ, SILACFiltering::current_spl) );
 			//std::cout << "   " << mz_peptide_separations[peptide] + isotope*isotope_distance << "  (" << deltaMZ << ")";
@@ -299,8 +299,7 @@ DoubleReal SILACFilter::computeActualMzShift(DoubleReal mz, DoubleReal expectedM
 			DoubleReal next_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position + stepwidth, acc_correlation);
 			
 			// search for a current m/z shift larger than the expected one
-			// conditions are: current intensity > 1000 (current intensity calculated with cubic interpolation based on autocorrelation)
-			// intensity at position (mz + expectedMzShift + current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
+      // conditions: intensity at position (mz + expectedMzShift + current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
 			if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_lin, mz + expectedMzShift + current_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff) // Why fixed intensity cutoffs?
 			{
 				gsl_spline_free(spline_correlation);      // free interpolation object
@@ -314,8 +313,7 @@ DoubleReal SILACFilter::computeActualMzShift(DoubleReal mz, DoubleReal expectedM
 			next_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position + stepwidth, acc_correlation);
 			
 			// search for an current m/z shift smaller than the expected one
-			// conditions are: current intensity > 1000 (current intensity calculated with cubic interpolation based on autocorrelation)
-			// intensity at position (mz + expectedMzShift - current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
+      // conditions: intensity at position (mz + expectedMzShift - current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
 			if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_lin, mz + expectedMzShift - current_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
 			{
 				gsl_spline_free(spline_correlation);      // free interpolation object
@@ -329,23 +327,6 @@ DoubleReal SILACFilter::computeActualMzShift(DoubleReal mz, DoubleReal expectedM
 	}	
 }
 	
-	
-	
-	
-	
-bool SILACFilter::doubleCmp::operator()(DoubleReal a, DoubleReal b) const
-{
-	//If a m/z position is blacklisted, no SILAC pair may start within the area of 0.8*getPeakWidth(m/z)
-	DoubleReal peak_width=0.8*getPeakWidth((a+b)/2);
-	if (std::abs(a-b) < peak_width)
-	{
-		return false;
-	}
-	else
-	{
-		return a<b;
-	}
-}
 
 DoubleReal SILACFilter::getPeakWidth(DoubleReal mz)
 {

@@ -133,20 +133,6 @@ private:
     DoubleReal computeActualMzShift(DoubleReal mz, DoubleReal expectedMzShift, DoubleReal maxMzDeviation);
 	
 	/**
-	 * @brief Determines the quality of an isotope pattern by computing the Pearson correlation and the averagine model deviation
-	 * @param mz current m/z position
-	 * @param exact_positions the distances of each peak to the monoisotopic peak
-	 * @param intensities vector to be filled with the intensities of each peak
-	 * @param missing_peak is true if already a peak is missing in the SILAC pattern
-	 */
-    bool checkPattern(DoubleReal mz, const std::vector<DoubleReal>& exact_positions_heathrow, std::vector<DoubleReal>& intensities, bool missing_peak);
-
-    /*
-    bool checkRatios(DoubleReal mz,const std::vector<DoubleReal>& light_positions, const std::vector<DoubleReal>& envelope_positions);
-	*/
-
-
-	/**
 	 * @brief returns if there exists a SILAC feature at the given position, which corresponds to the filter's properties
 	 * @param rt RT value of the position
 	 * @param mz m/z value of the position

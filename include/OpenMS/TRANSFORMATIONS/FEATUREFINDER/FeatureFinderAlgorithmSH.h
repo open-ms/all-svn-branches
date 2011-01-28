@@ -22,8 +22,8 @@ namespace OpenMS
     FeatureFinderAlgorithmSH() : FeatureFinderAlgorithm<PeakType, FeatureType>()
     {
       // ----------------------------------------------------------------------------------------------------
-      this->defaults_.setValue(       "ms1:data_is_centroided_already", "true", "MS1 data centroid data");
-      this->defaults_.setValidStrings("ms1:data_is_centroided_already", StringList::create("true,false"));
+      this->defaults_.setValue(       "centroiding:data_is_centroided_already", "true", "MS1 data centroid data");
+      this->defaults_.setValidStrings("centroiding:data_is_centroided_already", StringList::create("true,false"));
       // ----------------------------------------------------------------------------------------------------
       this->defaults_.setValue(       "ms1:precursor_detection_scan_levels", IntList::create(1), "Precursor detection scan levels");
       // ----------------------------------------------------------------------------------------------------
@@ -47,8 +47,69 @@ namespace OpenMS
       // ----------------------------------------------------------------------------------------------------
       this->defaults_.setValue(       "ms1:intensity_cv", 0.9, "IntensityCV");
       this->defaults_.setMinFloat(    "ms1:intensity_cv", 0);
-      
-      
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "centroiding:window_width", 5, "Centroid window width");
+      this->defaults_.setMinInt(      "centroiding:window_width", 1);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "centroiding:absolute_isotope_mass_precision", 0.01, "Absolute isotope mass precision (Da)");
+      this->defaults_.setMinFloat(    "centroiding:absolute_isotope_mass_precision", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "centroiding:relative_isotope_mass_precision", 10.0, "Relative isotope mass precision");
+      this->defaults_.setMinFloat(    "centroiding:relative_isotope_mass_precision", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "centroiding:minimal_peak_height", 0.0, "Minimal peak height");
+      this->defaults_.setMinFloat(    "centroiding:minimal_peak_height", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "centroiding:min_ms_signal_intensity", 50.0, "Minimal Centroid MS Signal Intensity");
+      this->defaults_.setMinFloat(    "centroiding:min_ms_signal_intensity", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:retention_time_tolerance", 0.5, "MS1 retention time tolerance (minutes)");
+      this->defaults_.setMinFloat(    "ms1:retention_time_tolerance", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1:mz_tolerance", 0.0, "MS1 m/z tolerance (ppm)");
+      this->defaults_.setMinFloat(    "ms1:mz_tolerance", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "general:peptide_prophet_threshold", 0.9, "Peptide Prophet Threshold");
+      this->defaults_.setMinFloat(    "general:peptide_prophet_threshold", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_merger:active", "true", "Activation of MS1 feature merging post processing");
+      this->defaults_.setValidStrings("ms1_feature_merger:active", StringList::create("true,false"));
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_merger:tr_resolution", 0.01, "MS1 LC retention time resolution");
+      this->defaults_.setMinFloat(    "ms1_feature_merger:tr_resolution", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_merger:initial_apex_tr_tolerance", 5.0, "Initial Apex Tr tolerance");
+      this->defaults_.setMinFloat(    "ms1_feature_merger:initial_apex_tr_tolerance", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_merger:feature_merging_tr_tolerance", 1.0, "MS1 feature Tr merging tolerance");
+      this->defaults_.setMinFloat(    "ms1_feature_merger:feature_merging_tr_tolerance", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_merger:intensity_variation_percentage", 25.0, "Percentage of intensity variation between LC border peaks");
+      this->defaults_.setMinFloat(    "ms1_feature_merger:intensity_variation_percentage", 0.0);
+      this->defaults_.setMaxFloat(    "ms1_feature_merger:intensity_variation_percentage", 100.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_merger:ppm_tolerance_for_mz_clustering", 10.0, "PPM value for the m/z clustering of merging candidates");
+      this->defaults_.setMinFloat(    "ms1_feature_merger:ppm_tolerance_for_mz_clustering", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_selection_options:start_elution_window", 0.0, "start elution window (minutes)");
+      this->defaults_.setMinFloat(    "ms1_feature_selection_options:start_elution_window", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_selection_options:end_elution_window", 180.0, "end elution window (minutes)");
+      this->defaults_.setMinFloat(    "ms1_feature_selection_options:end_elution_window", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_selection_options:mz_range_min", 0.0, "MS1 feature mz range min");
+      this->defaults_.setMinFloat(    "ms1_feature_selection_options:mz_range_min", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_selection_options:mz_range_max", 2000.0, "MS1 feature mz range max");
+      this->defaults_.setMinFloat(    "ms1_feature_selection_options:mz_range_max", 0.0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_selection_options:chrg_range_min", 1, "MS1 feature CHRG range min");
+      this->defaults_.setMinInt(      "ms1_feature_selection_options:chrg_range_min", 0);
+      // ----------------------------------------------------------------------------------------------------
+      this->defaults_.setValue(       "ms1_feature_selection_options:chrg_range_max", 5, "MS1 feature CHRG range max");
+      this->defaults_.setMinInt(      "ms1_feature_selection_options:chrg_range_max", 0);
       
       
       this->check_defaults_ =  false;

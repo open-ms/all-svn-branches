@@ -116,7 +116,7 @@ namespace OpenMS
     // MS1 data centroid data
     // Key: ms1:data_is_centroided_already
     // 1 == data is centroided already
-    Process_Data::CENTROID_DATA_MODUS = param.getValue("ms1:data_is_centroided_already").toBool();
+    Process_Data::CENTROID_DATA_MODUS = param.getValue("centroiding:data_is_centroided_already").toBool();
     
     //def->search_tag("Precursor detection scan levels", &vInt);
     // Key: ms1:precursor_detection_scan_levels
@@ -172,24 +172,24 @@ namespace OpenMS
     // ----------------------------------------------------------------------
     
     //def->search_tag("Centroid window width",&INT);
-    // Key: ms1:centroid_window_width
-    CentroidPeak::sfCentroidWindowWidth = 5;
+    // Key: centroiding:window_width
+    CentroidPeak::sfCentroidWindowWidth = param.getValue("centroiding:window_width"); // 5;
     
     //def->search_tag("Absolute isotope mass precision",&DB);
-    // Key: ms1:absolute_isotope_mass_precision
-    CentroidData::sfMassTolDa = 0.01;
+    // Key: centroiding:absolute_isotope_mass_precision
+    CentroidData::sfMassTolDa = param.getValue("centroiding:absolute_isotope_mass_precision"); // 0.01;
     
     //def->search_tag("Relative isotope mass precision",&DB);
-    // Key: ms1:relative_isotope_mass_precision
-    CentroidData::sfMassTolPpm = 10;
+    // Key: centroiding:relative_isotope_mass_precision
+    CentroidData::sfMassTolPpm = param.getValue("centroiding:relative_isotope_mass_precision"); // 10;
     
     //def->search_tag("Minimal peak height",&DB);
-    // Key: ms1:minimal_peak_height
-    CentroidData::sfMinIntensity = 0.0;
+    // Key: centroiding:minimal_peak_height
+    CentroidData::sfMinIntensity = param.getValue("centroiding:minimal_peak_height"); // 0.0;
     
     //def->search_tag("Min. Centroid MS Signal Intensity",&DB);
-    // Key: ms1:min_centroid_ms_signal_intensity
-    CentroidData::sfIntensityFloor = 50; //in config its 50, but in CentroidData it's 1;
+    // Key: centroiding:min_ms_signal_intensity
+    CentroidData::sfIntensityFloor = param.getValue("centroiding:min_ms_signal_intensity"); // 50; //in config its 50, but in CentroidData it's 1;
     
     //def->search_tag("Report mono peaks",&INT);
     // NO OpenMS equivalent
@@ -206,14 +206,14 @@ namespace OpenMS
     
     // feature parameters:
     //def->search_tag("MS1 retention time tolerance", &TMP);
-    // Key: general:ms1_retention_time_tolerance
+    // Key: ms1:retention_time_tolerance
     // Unit: min
-    feature::TR_TOL = 0.5;
+    feature::TR_TOL = param.getValue("ms1:retention_time_tolerance"); // 0.5;
     
     //  def->search_tag("MS1 m/z tolerance", &TMP);
-    // Key: general:ms1_mz_tolerance
+    // Key: ms1:mz_tolerance
     // Unit: ppm
-    feature::PPM_MZ_TOL = 0;
+    feature::PPM_MZ_TOL = param.getValue("ms1:mz_tolerance"); // 0.0;
     consensIsotopePattern::FT_MZ_TOLERANCE = feature::PPM_MZ_TOL;
     
     // MS2_M2_matcher parameters:
@@ -285,7 +285,8 @@ namespace OpenMS
     
     
     //  def->search_tag("Peptide Prophet Threshold", &TMP);
-    double d = 0.9;
+    // Key: general:peptide_prophet_threshold
+    double d = param.getValue("general:peptide_prophet_threshold"); // 0.9;
     // ------ peptide_DELTA_group::PEPTIDE_PROBABILITY_THRESHOLD = d;
     feature::PEPTIDE_PROBABILITY_THRESHOLD = d;
     // ------ interact_parser::PEPTIDE_PROBABILITY_THRESHOLD = d;
@@ -471,27 +472,27 @@ namespace OpenMS
     // Parameters for the peak merging:
     //def->search_tag("Activation of MS1 feature merging post processing", &TMP_B);
     // Key: ms1_feature_merger:active
-    MS1_feature_merger::MS1_FEATURE_CLUSTERING = 1;
+    MS1_feature_merger::MS1_FEATURE_CLUSTERING = param.getValue("ms1_feature_merger:active").toBool(); //1;
     
     //def->search_tag("MS1 LC retention time resolution", &TMP); // belongs to MS1 PEAK DETECTION PARAMETERS FOR THE DIFFERENT FILTER METHODS:
     // Key: ms1_feature_merger:tr_resolution
-    MS1_feature_merger::MS1_PEAK_AREA_TR_RESOLUTION = 0.01;
+    MS1_feature_merger::MS1_PEAK_AREA_TR_RESOLUTION = param.getValue("ms1_feature_merger:tr_resolution"); //0.01;
     
     //def->search_tag("Initial Apex Tr tolerance", &TMP);
     // Key: ms1_feature_merger:initial_apex_tr_tolerance
-    MS1_feature_merger::INITIAL_TR_TOLERANCE = 5.0;
+    MS1_feature_merger::INITIAL_TR_TOLERANCE = param.getValue("ms1_feature_merger:initial_apex_tr_tolerance"); //5.0;
     
     //def->search_tag("MS1 feature Tr merging tolerance", &TMP);
-    // Key: ms1_feature_merger:feature_mergin_tr_tolerance
-    MS1_feature_merger::MS1_FEATURE_MERGING_TR_TOLERANCE = 1.0;
+    // Key: ms1_feature_merger:feature_merging_tr_tolerance
+    MS1_feature_merger::MS1_FEATURE_MERGING_TR_TOLERANCE = param.getValue("ms1_feature_merger:feature_merging_tr_tolerance"); //1.0;
     
     //def->search_tag("Percentage of intensity variation between LC border peaks", &TMP);
     // Key: ms1_feature_merger:intensity_variation_percentage
-    MS1_feature_merger::PERCENTAGE_INTENSITY_ELUTION_BORDER_VARIATION = 25;
+    MS1_feature_merger::PERCENTAGE_INTENSITY_ELUTION_BORDER_VARIATION = param.getValue("ms1_feature_merger:intensity_variation_percentage"); //25;
     
     //def->search_tag("PPM value for the m/z clustering of merging candidates", &TMP);
     // Key: ms1_feature_merger:ppm_tolerance_for_mz_clustering
-    MS1_feature_merger::PPM_TOLERANCE_FOR_MZ_CLUSTERING = 10;
+    MS1_feature_merger::PPM_TOLERANCE_FOR_MZ_CLUSTERING = param.getValue("ms1_feature_merger:ppm_tolerance_for_mz_clustering"); //10;
     
     
     
@@ -503,25 +504,28 @@ namespace OpenMS
     //  def->search_tag("start elution window", &TMP);
     // Key: ms1_feature_selection_options:start_elution_window
     // Unit: min
-    LC_MS_XML_reader::TR_MIN = 0;
-    FT_PEAK_DETEC_mzXML_reader::TR_MIN=0; // aus initializer
+    LC_MS_XML_reader::TR_MIN = param.getValue("ms1_feature_selection_options:start_elution_window"); //0;
+    FT_PEAK_DETEC_mzXML_reader::TR_MIN = param.getValue("ms1_feature_selection_options:start_elution_window"); //0; // aus initializer
+    
+    
+    
     
     //  def->search_tag("end elution window", &TMP);
     // Key: ms1_feature_selection_options:end_elution_window
     // Unit: min
-    LC_MS_XML_reader::TR_MAX = 180;
-    FT_PEAK_DETEC_mzXML_reader::TR_MAX=180; // aus initializer
+    LC_MS_XML_reader::TR_MAX = param.getValue("ms1_feature_selection_options:end_elution_window"); //180;
+    FT_PEAK_DETEC_mzXML_reader::TR_MAX = param.getValue("ms1_feature_selection_options:end_elution_window"); //180; // aus initializer
     
     //def->search_tag("MS1 feature mz range min", &TMP);
-    // Key: ms1_feature_selection_options:ms1_feature_mz_range_min
-    LC_MS_XML_reader::FEATURE_MZ_MIN = 0;
+    // Key: ms1_feature_selection_options:mz_range_min
+    LC_MS_XML_reader::FEATURE_MZ_MIN = param.getValue("ms1_feature_selection_options:mz_range_min"); //0;
     
     //def->search_tag("MS1 feature mz range max", &TMP );
-    // Key: ms1_feature_selection_options:ms1_feature_mz_range_max
-    LC_MS_XML_reader::FEATURE_MZ_MAX = 2000;
+    // Key: ms1_feature_selection_options:mz_range_max
+    LC_MS_XML_reader::FEATURE_MZ_MAX = param.getValue("ms1_feature_selection_options:mz_range_max"); //2000;
     
     //def->search_tag("MS1 feature signal to noise threshold", &TMP );
-    // Key: ms1_feature_selection_options:ms1_feature_signal_to_noise_threshold
+    // Key: ms1_feature_selection_options:signal_to_noise_threshold
     //LC_MS_XML_reader::SIGNAL_TO_NOISE_THERSHOLD = TMP;
     
     //  def->search_tag("MS1 feature intensity cutoff", &TMP );
@@ -529,14 +533,14 @@ namespace OpenMS
     //  LC_MS_XML_reader::PEAK_INTENSITY_THRESHOLD = TMP; // ich glaube 10000
     
     //def->search_tag("MS1 feature CHRG range min", &TMP_I );
-    // Key: ms1_feature_selection_options:ms1_feature_chrg_range_min
-    LC_MS_XML_reader::FEATURE_CHRG_MIN = 1;
-    Deisotoper::sfMinCharge = 1;
+    // Key: ms1_feature_selection_options:chrg_range_min
+    LC_MS_XML_reader::FEATURE_CHRG_MIN = param.getValue("ms1_feature_selection_options:chrg_range_min"); //1;
+    Deisotoper::sfMinCharge = param.getValue("ms1_feature_selection_options:chrg_range_min"); //1;
     
     //def->search_tag("MS1 feature CHRG range max", &TMP_I );
-    // Key: ms1_feature_selection_options:ms1_feature_chrg_range_max
-    LC_MS_XML_reader::FEATURE_CHRG_MAX = 5;
-    Deisotoper::sfMaxCharge = 5;
+    // Key: ms1_feature_selection_options:chrg_range_max
+    LC_MS_XML_reader::FEATURE_CHRG_MAX = param.getValue("ms1_feature_selection_options:chrg_range_max"); //5;
+    Deisotoper::sfMaxCharge = param.getValue("ms1_feature_selection_options:chrg_range_max"); //5;
     
     //  Create monoisotopic LC profile:	to create and store the original profile of the detected
     //					monosiotopic pecursors in the XML (!!! increases the

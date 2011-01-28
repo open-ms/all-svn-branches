@@ -22,8 +22,8 @@ namespace OpenMS
     FeatureFinderAlgorithmSH() : FeatureFinderAlgorithm<PeakType, FeatureType>()
     {
       // ----------------------------------------------------------------------------------------------------
-      this->defaults_.setValue(       "centroiding:data_is_centroided_already", "true", "MS1 data centroid data");
-      this->defaults_.setValidStrings("centroiding:data_is_centroided_already", StringList::create("true,false"));
+      this->defaults_.setValue(       "centroiding:active", "false", "MS1 data centroid data");
+      this->defaults_.setValidStrings("centroiding:active", StringList::create("true,false"));
       // ----------------------------------------------------------------------------------------------------
       this->defaults_.setValue(       "ms1:precursor_detection_scan_levels", IntList::create(1), "Precursor detection scan levels");
       // ----------------------------------------------------------------------------------------------------
@@ -69,8 +69,9 @@ namespace OpenMS
       this->defaults_.setValue(       "ms1:mz_tolerance", 0.0, "MS1 m/z tolerance (ppm)");
       this->defaults_.setMinFloat(    "ms1:mz_tolerance", 0.0);
       // ----------------------------------------------------------------------------------------------------
-      this->defaults_.setValue(       "general:peptide_prophet_threshold", 0.9, "Peptide Prophet Threshold");
-      this->defaults_.setMinFloat(    "general:peptide_prophet_threshold", 0.0);
+      // is only MS2 related
+      //this->defaults_.setValue(       "general:peptide_prophet_threshold", 0.9, "Peptide Prophet Threshold");
+      //this->defaults_.setMinFloat(    "general:peptide_prophet_threshold", 0.0);
       // ----------------------------------------------------------------------------------------------------
       // ----------------------------------------------------------------------------------------------------
       this->defaults_.setValue(       "ms1_feature_merger:active", "true", "Activation of MS1 feature merging post processing");

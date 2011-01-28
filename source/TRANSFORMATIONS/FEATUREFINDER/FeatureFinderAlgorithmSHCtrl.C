@@ -116,7 +116,7 @@ namespace OpenMS
     // MS1 data centroid data
     // Key: ms1:data_is_centroided_already
     // 1 == data is centroided already
-    Process_Data::CENTROID_DATA_MODUS = param.getValue("centroiding:data_is_centroided_already").toBool();
+    Process_Data::CENTROID_DATA_MODUS = !(param.getValue("centroiding:active").toBool());
     
     //def->search_tag("Precursor detection scan levels", &vInt);
     // Key: ms1:precursor_detection_scan_levels
@@ -286,7 +286,9 @@ namespace OpenMS
     
     //  def->search_tag("Peptide Prophet Threshold", &TMP);
     // Key: general:peptide_prophet_threshold
-    double d = param.getValue("general:peptide_prophet_threshold"); // 0.9;
+    // only MS2 related
+    //double d = param.getValue("general:peptide_prophet_threshold"); // 0.9;
+    double d = 0.9;
     // ------ peptide_DELTA_group::PEPTIDE_PROBABILITY_THRESHOLD = d;
     feature::PEPTIDE_PROBABILITY_THRESHOLD = d;
     // ------ interact_parser::PEPTIDE_PROBABILITY_THRESHOLD = d;

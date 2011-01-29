@@ -66,7 +66,17 @@ private:
 	 * @brief minimal intensity of SILAC features
 	 */
 	static DoubleReal intensity_cutoff;
-
+	
+	/**
+	 * @brief minimal intensity correlation between regions of different peaks
+	 */
+	static DoubleReal intensity_correlation;
+	
+	/**
+	 * @brief flag for missing peaks
+	 */
+	static bool allow_missing_peaks;
+	
 	static gsl_interp_accel* current_lin;
 	static gsl_interp_accel* current_spl;
 	static gsl_spline* spline_lin;
@@ -91,7 +101,7 @@ public:
 	 * @param mz_stepwidth_ average m/z distance between scanned data points
 	 * @param intensity_cutoff_ minimal intensity of SILAC features
 	 */
-	SILACFiltering(MSExperiment<Peak1D>& exp_,DoubleReal mz_stepwidth_,DoubleReal intensity_cutoff_);
+	SILACFiltering(MSExperiment<Peak1D>& exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_, DoubleReal intensity_correlation_, bool allow_missing_peaks);
 	
 	/**
 	 * destructor

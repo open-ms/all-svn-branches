@@ -161,9 +161,9 @@ class TOPPSILACAnalyzer2
 		String in;
 		String out;
 		String out_clusters;
-    String out_filters_mzML;
-    String out_filters;
-    String in_filters;
+		String out_filters_mzML;
+		String out_filters;
+		String in_filters;
 
 		// section "sample"
 		String selected_labels;
@@ -176,15 +176,17 @@ class TOPPSILACAnalyzer2
 
 		// section "algorithm"
 		DoubleReal mz_threshold;
-		DoubleReal intensity_cutoff;
 		DoubleReal rt_threshold;
 		DoubleReal rt_scaling;
+		DoubleReal intensity_cutoff;
+		DoubleReal intensity_correlation;
 		DoubleReal model_deviation;
+		bool allow_missing_peaks;
 
 		// section "labels"
-    map<String, DoubleReal> label_identifiers;
-    vector<vector <String> > SILAClabels; // list of SILAC labels, e.g. selected_labels="[Lys4,Arg6][Lys8,Arg10]" => SILAClabels[0][1]="Arg6"
-    vector<vector <DoubleReal> > massShifts; // list of mass shifts
+		map<String, DoubleReal> label_identifiers;
+		vector<vector <String> > SILAClabels; // list of SILAC labels, e.g. selected_labels="[Lys4,Arg6][Lys8,Arg10]" => SILAClabels[0][1]="Arg6"
+		vector<vector <DoubleReal> > massShifts; // list of mass shifts
 
 /*		// section "out_clusters"
 		Int mass_shift_out_clusters;
@@ -194,11 +196,11 @@ class TOPPSILACAnalyzer2
 		bool out_clusters_flag;
 		bool out_clusters_flag_2;
 */
-    vector<vector<DataPoint> > data;
+		vector<vector<DataPoint> > data;
 		ConsensusMap all_pairs;
 		FeatureMap<> all_cluster_points;
 		FeatureMap<> subtree_points;
-    MSExperiment<Peak1D> filter_exp;
+		MSExperiment<Peak1D> filter_exp;
 
 
 	public:
@@ -236,7 +238,10 @@ class TOPPSILACAnalyzer2
 
 		// create flag for additional debug outputs
 		registerFlag_("silac_debug","Enables writing of debug information", true);
-
+		
+		// create flag for missing peaks
+		registerFlag_("allow_missing_peaks","Missing isotopic peaks in SILAC peptides allowed?", true);
+		
 		// create section "labels" for adjusting masses of labels
 		registerSubsection_("labels", "Isotopic labels that can be selected for section \"sample\".");
 		// create section "sample" for adjusting sample parameters
@@ -312,14 +317,18 @@ class TOPPSILACAnalyzer2
 		{
 			defaults.setValue("mz_threshold", 0.1, "Specify an upper bound for your m/z range in [Th]. I.e. the range peptides have to elute in to be considered as one peptide.");
 			defaults.setMinFloat("mz_threshold", 0.0);
-			defaults.setValue("intensity_cutoff", 0.0, "Specify a threshold for intensity. All peaks below that threshold are not considered.");
-			defaults.setMinFloat("intensity_cutoff", 0.0);
 			defaults.setValue("rt_threshold", 50.0, "Specify an upper bound for your Retention time range in [s]. I.e. the range peptides have to elute in to be considered as one peptide.");
 			defaults.setMinFloat("rt_threshold", 0.0);
 			defaults.setValue("rt_scaling", 0.002, "Scaling factor for retention times (Cluster height [s] and cluster width [Th] should be of the same order, because the clustering algorithm works better for symmetric clusters.) In the majority of cases simply divide mz_threshold through rt_threshold.");
 			defaults.setMinFloat("rt_scaling", 0.0);
-			defaults.setValue("maximum_model_deviation", 0.8, "Maximum value of which a predicted SILAC feature may deviate from the averagine model. Value is log calculated. Thus, 0 means total conformity.");
-			defaults.setMinFloat("maximum_model_deviation", 0.0);
+			defaults.setValue("intensity_cutoff", 0.0, "Specify a threshold for intensity. All peaks below that threshold are not considered.");
+			defaults.setMinFloat("intensity_cutoff", 0.0);
+			defaults.setValue("intensity_correlation", 0.9, "Minimum Pearson correlation which measures how well intensity profiles of different isotopic peaks corrolate.");
+			defaults.setMinFloat("intensity_correlation", 0.0);
+			defaults.setMaxFloat("intensity_correlation", 1.0);
+			defaults.setValue("model_deviation", 10.0, "Maximum factor by which the observed isotope ratios are allowed to differ from the isotope ratios of the theoretic averagine model, i.e. theoretic_ratio / model_deviation < observed_ratio < theoretic_ratio * model_deviation.");
+			defaults.setMinFloat("model_deviation", 1.0);
+			//registerFlag_("allow_missing_peaks","Missing isotopic peak in SILAC peptides allowed?", true);
 		}
 
 
@@ -406,18 +415,18 @@ class TOPPSILACAnalyzer2
 		missed_cleavages = getParam_().getValue("sample:missed_cleavages");
 
 		// get selected charge range
-    String charge_string = getParam_().getValue("sample:charge");
+		String charge_string = getParam_().getValue("sample:charge");
 		DoubleReal charge_min_temp, charge_max_temp;
 		parseRange_(charge_string, charge_min_temp, charge_max_temp);
-    charge_min = (Int)charge_min_temp;
-    charge_max = (Int)charge_max_temp;
+		charge_min = (Int)charge_min_temp;
+		charge_max = (Int)charge_max_temp;
 
 		// get selected isotopes range
-    String isotopes_per_peptide_string = getParam_().getValue("sample:isotopes_per_peptide");
+		String isotopes_per_peptide_string = getParam_().getValue("sample:isotopes_per_peptide");
 		DoubleReal isotopes_per_peptide_min_temp, isotopes_per_peptide_max_temp;
 		parseRange_(isotopes_per_peptide_string, isotopes_per_peptide_min_temp, isotopes_per_peptide_max_temp);
-    isotopes_per_peptide_min = (Int)isotopes_per_peptide_min_temp;
-    isotopes_per_peptide_max = (Int)isotopes_per_peptide_max_temp;
+		isotopes_per_peptide_min = (Int)isotopes_per_peptide_min_temp;
+		isotopes_per_peptide_max = (Int)isotopes_per_peptide_max_temp;
 
 		// get selected mz_stepwidth
 //		mz_stepwidth = getParam_().getValue("sample:mz_stepwidth");
@@ -430,15 +439,19 @@ class TOPPSILACAnalyzer2
 
 		// get selected mz_threshold
 		mz_threshold = getParam_().getValue("algorithm:mz_threshold");
-		// get selected intensity_cutoff
-		intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
 		// get selected rt_threshold
 		rt_threshold = getParam_().getValue("algorithm:rt_threshold");
 		// get selected rt_scaling
 		rt_scaling = getParam_().getValue("algorithm:rt_scaling");
-		// get selected maximum_model_deviation
-		model_deviation = getParam_().getValue("algorithm:maximum_model_deviation");
-
+		// get selected intensity_cutoff
+		intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
+		// get selected intensity_correlation
+		intensity_correlation = getParam_().getValue("algorithm:intensity_correlation");
+		// get selected model_deviation
+		model_deviation = getParam_().getValue("algorithm:model_deviation");
+		// get flag for missing peaks
+		allow_missing_peaks = getFlag_("allow_missing_peaks");
+		
 
 
 	  //--------------------------------------------------
@@ -709,7 +722,7 @@ class TOPPSILACAnalyzer2
 				for (unsigned i = 0; i < massShifts.size(); i++)
 				{
 					// convert vector<DoubleReal> to set<DoubleReal> for SILACFilter
-          set<DoubleReal> massShifts_set;
+					set<DoubleReal> massShifts_set;
 					copy(massShifts[i].begin(), massShifts[i].end(), inserter(massShifts_set, massShifts_set.end()));
 					filters.push_back(SILACFilter(massShifts_set, charge, model_deviation, isotopes_per_peptide));
 				}
@@ -719,7 +732,7 @@ class TOPPSILACAnalyzer2
     if (in_filters == "")     // check if option "in_filters" is not specified
     {
       // create filtering
-      SILACFiltering filtering(exp, mz_stepwidth, intensity_cutoff);
+      SILACFiltering filtering(exp, mz_stepwidth, intensity_cutoff, intensity_correlation, allow_missing_peaks);
       filtering.setLogType(log_type_);
 
       // register filters to the filtering
@@ -1203,7 +1216,7 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
 
 		if (getFlag_("silac_debug"))
 		{
-      vector<String> colors;
+            vector<String> colors;
 			// 16 HTML colors
 			colors.push_back("#00FFFF");
 			colors.push_back("#000000");

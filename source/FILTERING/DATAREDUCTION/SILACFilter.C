@@ -42,7 +42,7 @@
 
 namespace OpenMS
 {
-	SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_,DoubleReal model_deviation_, Int isotopes_per_peptide_)
+	SILACFilter::SILACFilter(std::set<DoubleReal> mass_separations, Int charge_, DoubleReal model_deviation_, Int isotopes_per_peptide_)
 	{
 		numberOfPeptides = mass_separations.size();    // number of labelled peptides +1 [e.g. for SILAC triplet =3]
 		isotopes_per_peptide=isotopes_per_peptide_;    // isotopic peaks per peptide
@@ -66,6 +66,7 @@ SILACFilter::~SILACFilter() {
 bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 {
 	current_mz = mz;
+	bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 	
 	//---------------------------------------------------------------
 	// BLUNT INTENSITY FILTER (Just check that intensity at current position is above the intensity cutoff.)
@@ -75,7 +76,6 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 		return false;
 	}
 
-	
 	//---------------------------------------------------------------
 	// EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
 	//---------------------------------------------------------------
@@ -88,9 +88,17 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 		std::vector<DoubleReal> exact_intensities_singlePeptide;
 		for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++) // loop over isotopic peaks within a peptide [0=mono-isotopic peak etc.]
 		{
-      DoubleReal deltaMZ = computeActualMzShift(mz, mz_peptide_separations[peptide] + isotope*isotope_distance, getPeakWidth(mz_peptide_separations[peptide] + isotope*isotope_distance));
+			DoubleReal deltaMZ = computeActualMzShift(mz, mz_peptide_separations[peptide] + isotope*isotope_distance, getPeakWidth(mz_peptide_separations[peptide] + isotope*isotope_distance));
 			exact_shifts_singlePeptide.push_back( deltaMZ );
-			exact_intensities_singlePeptide.push_back( gsl_spline_eval (SILACFiltering::spline_spl, mz + deltaMZ, SILACFiltering::current_spl) );
+			if ( deltaMZ < 0 )
+			{
+				// If no actual m/z shift can be found (exact_shift=-1) no intensity can be determined (exact_intensity=-1).
+				exact_intensities_singlePeptide.push_back( -1 );
+			}
+			else
+			{
+				exact_intensities_singlePeptide.push_back( gsl_spline_eval (SILACFiltering::spline_spl, mz + deltaMZ, SILACFiltering::current_spl) );
+			}
 			//std::cout << "   " << mz_peptide_separations[peptide] + isotope*isotope_distance << "  (" << deltaMZ << ")";
 		}
 		exact_shifts.push_back(exact_shifts_singlePeptide);
@@ -103,6 +111,7 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 	//---------------------------------------------------------------
 	// COMPLETE INTENSITY FILTER (Check that all of the intensities are above the cutoff.)
 	//---------------------------------------------------------------
+	missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 	for (Int peptide = 0; peptide <= numberOfPeptides; peptide++)
 	{
 		for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++)
@@ -115,7 +124,17 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 			{
 				if (exact_intensities[peptide][isotope] < SILACFiltering::intensity_cutoff)
 				{
-					return false;    // If only one intensity is below the cutoff, return 'false'.
+					// MISSING PEAK EXCEPTION
+					// A missing intensity is allowed if (1) the user allowed it, (2) it's the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
+					if (SILACFiltering::allow_missing_peaks && (isotope == isotopes_per_peptide - 1) && (!missing_peak_seen_yet))
+					{
+						missing_peak_seen_yet = true;
+					}
+					else
+					{
+						return false;    // If only one intensity is below the cutoff, return 'false'.
+						
+					}
 				}
 			}
 		}
@@ -125,6 +144,7 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 	//---------------------------------------------------------------
 	// CORRELATION FILTER (Check that for each peptide all possible combinations of isotopic peaks correlate.)
 	//---------------------------------------------------------------
+	missing_peak_seen_yet = false;
 	for (Int peptide = 0; peptide <= numberOfPeptides; peptide++)
 	{
 		for (Int isotope1 = 0; isotope1 < isotopes_per_peptide; isotope1++)
@@ -144,7 +164,20 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 						intensities2.push_back( intens2 );
 					}
 					DoubleReal intensityCorrelation = Math::pearsonCorrelationCoefficient( intensities1.begin(), intensities1.end(), intensities2.begin(), intensities2.end());    // calculate Pearson correlation coefficient
-					if ( intensityCorrelation < 0.95 ) return false;
+					if ( intensityCorrelation < SILACFiltering::intensity_correlation )
+					{
+						// MISSING PEAK EXCEPTION
+						// A missing intensity is allowed if (1) the user allowed it, (2) one of the two peaks is the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
+						if (SILACFiltering::allow_missing_peaks && ((isotope1 == isotopes_per_peptide - 1) || (isotope2 == isotopes_per_peptide - 1)) && (!missing_peak_seen_yet))
+						{
+							missing_peak_seen_yet = true;
+						}
+						else
+						{
+							return false;
+							
+						}
+					}
 				}
 			}
 			
@@ -155,6 +188,7 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 	//---------------------------------------------------------------
 	// AVERAGINE FILTER (Check if realtive ratios confirm with an averagine model of all peptides.)
 	//---------------------------------------------------------------
+	missing_peak_seen_yet = false;
 	if (isotopes_per_peptide > 1)
 	{
 		for (Int peptide = 0; peptide <= numberOfPeptides; peptide++)
@@ -168,12 +202,25 @@ bool SILACFilter::isSILACPattern(DoubleReal rt, DoubleReal mz)
 			{
 				DoubleReal averagineIntensity = isoDistribution.getContainer()[isotope].second;
 				DoubleReal intensity = exact_intensities[peptide][isotope];
-				std::cout << "theory = " << averagineIntensity /averagineIntensity_mono << "   real = " << intensity /intensity_mono << "   real/theory = " << (intensity /intensity_mono)/(averagineIntensity /averagineIntensity_mono) << "              ";
+				//std::cout << "theory = " << averagineIntensity /averagineIntensity_mono << "   real = " << intensity /intensity_mono << "   real/theory = " << (intensity /intensity_mono)/(averagineIntensity /averagineIntensity_mono) << "              ";
+				if ((intensity /intensity_mono)/(averagineIntensity /averagineIntensity_mono) > model_deviation || (intensity /intensity_mono)/(averagineIntensity /averagineIntensity_mono) < 1/model_deviation)
+				{
+					// MISSING PEAK EXCEPTION
+					// A missing intensity is allowed if (1) the user allowed it, (2) one of the two peaks is the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
+					if (SILACFiltering::allow_missing_peaks && (isotope == isotopes_per_peptide - 1) && (!missing_peak_seen_yet))
+					{
+						missing_peak_seen_yet = true;
+					}
+					else
+					{
+						return false;
+						
+					}
+				}
 			}
-			std::cout << std::endl;
+			//std::cout << std::endl;
 		}
-		std::cout << std::endl;
-		std::cout << std::endl;
+		//std::cout << std::endl;
 	}
 	
 	//---------------------------------------------------------------
@@ -205,7 +252,7 @@ DoubleReal SILACFilter::computeActualMzShift(DoubleReal mz, DoubleReal expectedM
 		//--------------------------------------------------
 		
 		std::vector<DoubleReal> akimaMz;
-		DoubleReal stepwidth = maxMzDeviation / 18;
+		DoubleReal stepwidth = maxMzDeviation / 30;
 		
 		// n must be a power of two for gsl fast fourier transformation; take next higher size for n, which is a power of two and fill the rest with zeros
 		Size akimaMz_size = pow(2,(ceil(log2((3*maxMzDeviation)/stepwidth))));

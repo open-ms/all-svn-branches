@@ -41,20 +41,24 @@ using namespace std;
 
 namespace OpenMS
 {
-DoubleReal SILACFiltering::mz_stepwidth=0;
-DoubleReal SILACFiltering::intensity_cutoff=0;
-gsl_interp_accel* SILACFiltering::current_lin=0;
-gsl_interp_accel* SILACFiltering::current_spl=0;
-gsl_spline* SILACFiltering::spline_lin=0;
-gsl_spline* SILACFiltering::spline_spl=0;
-Int SILACFiltering::feature_id=0;
-DoubleReal SILACFiltering::mz_min=0;
+	DoubleReal SILACFiltering::mz_stepwidth=0;
+	DoubleReal SILACFiltering::intensity_cutoff=0;
+	DoubleReal SILACFiltering::intensity_correlation=0;
+	bool SILACFiltering::allow_missing_peaks=true;
+	gsl_interp_accel* SILACFiltering::current_lin=0;
+	gsl_interp_accel* SILACFiltering::current_spl=0;
+	gsl_spline* SILACFiltering::spline_lin=0;
+	gsl_spline* SILACFiltering::spline_spl=0;
+	Int SILACFiltering::feature_id=0;
+	DoubleReal SILACFiltering::mz_min=0;
 
 
-SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_,DoubleReal mz_stepwidth_,DoubleReal intensity_cutoff_) : exp(exp_)
+SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_, DoubleReal intensity_correlation_, bool allow_missing_peaks_) : exp(exp_)
 {
-	mz_stepwidth=mz_stepwidth_;
-	intensity_cutoff=intensity_cutoff_;
+	mz_stepwidth = mz_stepwidth_;
+	intensity_cutoff = intensity_cutoff_;
+	intensity_correlation = intensity_correlation_;
+	allow_missing_peaks = allow_missing_peaks_;
 }
 
 void SILACFiltering::addFilter(SILACFilter& filter) {

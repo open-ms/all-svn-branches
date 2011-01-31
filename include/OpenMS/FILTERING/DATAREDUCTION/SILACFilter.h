@@ -53,25 +53,20 @@ class OPENMS_DLLAPI SILACFilter {
 	friend class SILACFiltering;
 
 private:
-	/**
+  /**
 	 * @brief number of peptides [i.e. number of labelled peptides +1, e.g. for SILAC triplet =3]
 	 */
     Int numberOfPeptides;
 	
-	/**
-	 * @brief SILAC type of the filter. Either DOUBLE (2) or TRIPLE (3)
-	 */
-    Int silac_type;
-	
-    /**
-     * @brief charge of the ions to search for
-     */
+  /**
+   * @brief charge of the ions to search for
+   */
     Int charge;
 	
-	/**
-	* @brief number of isotopes per peptide to search for
-	*/
-	Int isotopes_per_peptide;
+  /**
+   * @brief number of isotopes per peptide to search for
+   */
+    Int isotopes_per_peptide;
 	
     /**
      * @brief m/z separtion between individual peptides [e.g. {0 Th, 4 Th, 5 Th}]
@@ -101,12 +96,17 @@ private:
     /**
      * @brief exact m/z shift of isotopic peaks in a SILAC pattern relative to the mono-isotopic peak of the light peptide, peptides (row) x isotope (column)
      */
-	std::vector<std::vector<DoubleReal> > exact_shifts;
+    std::vector<std::vector<DoubleReal> > exact_shifts;
 
-	/**
+    /**
      * @brief intensities at mz + exact_shifts in a SILAC pattern, where mz is the m/z of the mono-isotopic peak of light peptide
      */
-	std::vector<std::vector<DoubleReal> > exact_intensities;
+    std::vector<std::vector<DoubleReal> > exact_intensities;
+
+   /**
+    * @brief expected m/z shift of isotopic peaks in a SILAC pattern relative to the mono-isotopic peak of the light peptide, peptides (row) x isotope (column)
+    */
+    std::vector<std::vector<DoubleReal> > expected_shifts;
 
 	
     /**

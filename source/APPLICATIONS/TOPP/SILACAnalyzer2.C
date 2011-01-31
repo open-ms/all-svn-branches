@@ -278,6 +278,7 @@ class TOPPSILACAnalyzer2
       defaults.setValue("labels", "[Arg6]", "Specify the labels for your sample. Doublets must be of style [label,label,...]. Triplets must be of style [label,label,...][label,label,..]. Each pair of brackets can contain one or more labels. See section \"labels\" in advanced parameters for allowed labels.");
 			defaults.setValue("charge", "2:3", "Specify the charge range for your sample (charge_min:charge_max).");
 			defaults.setValue("missed_cleavages", 0 , "Specify the maximum number of missed cleavages.");
+			defaults.setMinInt("missed_cleavages", 0);
 			defaults.setValue("isotopes_per_peptide", "3:4", "Specify the range of isotopes per peptide for your sample (isotopes_per_peptide_min:isotopes_per_peptide_max).", StringList::create("advanced"));
 		}
 
@@ -575,7 +576,7 @@ class TOPPSILACAnalyzer2
 		
 		// For testing that good Nijmegen results remain unchanged.
 		isotopes_per_peptide_min = 3;
-		isotopes_per_peptide_max = 3;
+    isotopes_per_peptide_max = 3;
 		
     for (Int isotopes_per_peptide = isotopes_per_peptide_max; isotopes_per_peptide >= isotopes_per_peptide_min; isotopes_per_peptide--)
 		{
@@ -878,8 +879,7 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
           cluster_point.setCharge(it->charge);
           //cluster_point.setOverallQuality(it->quality);
           cluster_point.setQuality(0, it->quality);
-          cluster_point.setMetaValue("SILAC type", silac_types[it->mass_shifts.size() - 1]);
-						
+
           // add mass shifts as meta value and as value for OverallQuality
           Int charge = it->charge;
           String mass_shift_meta_value = "";
@@ -915,6 +915,7 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
           mass_shift_final = String(mass_shift_2).toDouble();
 						
           cluster_point.setOverallQuality(mass_shift_final);			// set mass shifts as value for OverallQuality (format: Da.Da)
+          cluster_point.setMetaValue("SILAC type", silac_types[it->mass_shifts.size() - 1]);
 						
           if (mass_shift_meta_value != "" && it->mass_shifts.size() - 1 == 1)
           {
@@ -929,11 +930,11 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
             cluster_point.setMetaValue("Mass shift", mass_shift_meta_value);
           }
 
-          cluster_point.setMetaValue("Cluster id", it->cluster_id);
-          cluster_point.setMetaValue("color", colors[it->cluster_id%colors.size()]);
           cluster_point.setMetaValue("isotopes per peptide", it->isotopes_per_peptide);
-					cluster_point.setMetaValue("Cluster size", it->cluster_size);
-          cluster_point.setMetaValue("feature_id", it->feature_id);
+          cluster_point.setMetaValue("Cluster id", it->cluster_id);
+          cluster_point.setMetaValue("Cluster size", it->cluster_size);
+          cluster_point.setMetaValue("color", colors[it->cluster_id%colors.size()]);
+          // cluster_point.setMetaValue("feature_id", it->feature_id);
 
           all_cluster_points.push_back(cluster_point);
  				}

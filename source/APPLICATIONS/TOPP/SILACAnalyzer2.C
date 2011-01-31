@@ -161,9 +161,6 @@ class TOPPSILACAnalyzer2
 		String in;
 		String out;
 		String out_clusters;
-		String out_filters_mzML;
-		String out_filters;
-		String in_filters;
 
 		// section "sample"
 		String selected_labels;
@@ -188,14 +185,6 @@ class TOPPSILACAnalyzer2
 		vector<vector <String> > SILAClabels; // list of SILAC labels, e.g. selected_labels="[Lys4,Arg6][Lys8,Arg10]" => SILAClabels[0][1]="Arg6"
 		vector<vector <DoubleReal> > massShifts; // list of mass shifts
 
-/*		// section "out_clusters"
-		Int mass_shift_out_clusters;
-		DoubleReal label_out_clusters_mass_shift;
-		DoubleReal ms_final_2;	
-		Int charge_out_clusters;
-		bool out_clusters_flag;
-		bool out_clusters_flag_2;
-*/
 		vector<vector<DataPoint> > data;
 		ConsensusMap all_pairs;
 		FeatureMap<> all_cluster_points;
@@ -226,31 +215,18 @@ class TOPPSILACAnalyzer2
 		// create optional flag for additional clusters output file (.featureXML)
 		registerOutputFile_("out_clusters", "<file>", "", "Additional output file containing all clusters differed by colours.", false, true);
 		setValidFormats_("out_clusters", StringList::create("featureXML"));
-    // create optional flag for additional filters output file (.mzML)
-    registerOutputFile_("out_filters_mzML", "<file>", "", "Additional output file containing all points that passed the filters as mzML.", false, true);
-    setValidFormats_("out_filters_mzML", StringList::create("mzML"));
-    // create optional flag for additional output file (.txt) to store filter results
-    registerOutputFile_("out_filters", "<file>", "", "Additional output file containing all points that passed the filters as txt. Suitable as input for \"in_filters\" to perform clustering without preceding filtering process.", false, true);
-    //setValidFormats_("out_filters", StringList::create("txt"));
-    // create optional flag for additional input file (.txt) to load filter results
-    registerOutputFile_("in_filters", "<file>", "", "Additional input file containing all points that passed the filters as txt. Use output from \"out_filters\" to perform clustering only.", false, true);
-    //setValidFormats_("in_filters", StringList::create("txt"));
 
-		// create flag for additional debug outputs
-		registerFlag_("silac_debug","Enables writing of debug information", true);
-		
-		// create flag for missing peaks
-		registerFlag_("allow_missing_peaks","Missing isotopic peaks in SILAC peptides allowed?", true);
-		
-		// create section "labels" for adjusting masses of labels
+ 		// create section "labels" for adjusting masses of labels
 		registerSubsection_("labels", "Isotopic labels that can be selected for section \"sample\".");
 		// create section "sample" for adjusting sample parameters
 		registerSubsection_("sample", "Parameter adjusting for your sample.");
 		// create section "algorithm" for adjusting algorithm parameters
 		registerSubsection_("algorithm", "Algorithm parameters section.");
-		// create section "out_clusters" for adjusting parameters for additional output file
-//		registerSubsection_("out_clusters", "Parameters for filtering out one specific label and one specific charge state.");
+
+		// create flag for missing peaks
+		registerFlag_("algorithm:allow_missing_peaks","Missing isotopic peaks in SILAC peptides allowed?", true);
 	}
+
 
 
 	// create prameters for sections (set default values and restrictions)
@@ -267,15 +243,15 @@ class TOPPSILACAnalyzer2
 		if (section == "labels")
 		{
 			// create labels that can be chosen in section "sample/labels"
-			defaults.setValue("Arg6", 6.0202, "Arg6 mass shift", StringList::create("advanced"));
+			defaults.setValue("Arg6", 6.02012902679999, "Arg6 mass shift", StringList::create("advanced"));
 			defaults.setMinFloat("Arg6", 0.0);
-			defaults.setValue("Arg10", 10.0202, "Arg10 mass shift", StringList::create("advanced"));
+			defaults.setValue("Arg10", 10.0082685996, "Arg10 mass shift", StringList::create("advanced"));
 			defaults.setMinFloat("Arg10", 0.0);
-			defaults.setValue("Lys4", 4.0202, "Lys4 mass shift", StringList::create("advanced"));
+			defaults.setValue("Lys4", 4.0251069836, "Lys4 mass shift", StringList::create("advanced"));
 			defaults.setMinFloat("Lys4", 0.0);
-			defaults.setValue("Lys6", 6.0202, "Lys6 mass shift", StringList::create("advanced"));
+			defaults.setValue("Lys6", 6.02012902679999, "Lys6 mass shift", StringList::create("advanced"));
 			defaults.setMinFloat("Lys6", 0.0);
-			defaults.setValue("Lys8", 8.0202, "Lys8 mass shift", StringList::create("advanced"));
+			defaults.setValue("Lys8", 8.01419881319999, "Lys8 mass shift", StringList::create("advanced"));
 			defaults.setMinFloat("Lys8", 0.0);
 			defaults.setValue("Methyl4", 4.0202, "Methyl4 mass shift", StringList::create("advanced"));
 			defaults.setMinFloat("Methyl4", 0.0);
@@ -303,8 +279,6 @@ class TOPPSILACAnalyzer2
 			defaults.setValue("charge", "2:3", "Specify the charge range for your sample (charge_min:charge_max).");
 			defaults.setValue("missed_cleavages", 0 , "Specify the maximum number of missed cleavages.");
 			defaults.setValue("isotopes_per_peptide", "3:4", "Specify the range of isotopes per peptide for your sample (isotopes_per_peptide_min:isotopes_per_peptide_max).", StringList::create("advanced"));
-//			defaults.setValue("mz_stepwidth", 0.0, "Select 0 for automatic calculation depending on data set (default and recommended). Adjust this parameter by hand only if the deafult calculation leads to bad results.", StringList::create("advanced"));
-//			defaults.setMinFloat("mz_stepwidth", 0.0);
 		}
 
 
@@ -323,26 +297,13 @@ class TOPPSILACAnalyzer2
 			defaults.setMinFloat("rt_scaling", 0.0);
 			defaults.setValue("intensity_cutoff", 0.0, "Specify a threshold for intensity. All peaks below that threshold are not considered.");
 			defaults.setMinFloat("intensity_cutoff", 0.0);
-			defaults.setValue("intensity_correlation", 0.9, "Minimum Pearson correlation which measures how well intensity profiles of different isotopic peaks corrolate.");
+			defaults.setValue("intensity_correlation", 0.9, "Minimum Pearson correlation which measures how well intensity profiles of different isotopic peaks corrolate.", StringList::create("advanced"));
 			defaults.setMinFloat("intensity_correlation", 0.0);
 			defaults.setMaxFloat("intensity_correlation", 1.0);
 			defaults.setValue("model_deviation", 10.0, "Maximum factor by which the observed isotope ratios are allowed to differ from the isotope ratios of the theoretic averagine model, i.e. theoretic_ratio / model_deviation < observed_ratio < theoretic_ratio * model_deviation.");
 			defaults.setMinFloat("model_deviation", 1.0);
-			//registerFlag_("allow_missing_peaks","Missing isotopic peak in SILAC peptides allowed?", true);
 		}
-
-
-
-	  //--------------------------------------------------
-		// section out_clusters
-	  //--------------------------------------------------
-/*
-		if (section == "out_clusters")
-		{
-			defaults.setValue("mass_shift", 0, "Select a mass_shift. Mass shift numbering starts with 1. 0 for no mass shift selection.]", StringList::create("advanced"));
-			defaults.setValue("charge", 0, "Select only one charge state from charge range in section \"sample\". 0 for no charge selection.", StringList::create("advanced"));
-		}
-*/   
+	
 	 	return defaults;
 	}
 
@@ -360,14 +321,8 @@ class TOPPSILACAnalyzer2
 		out = getStringOption_("out");
     // get name of additional clusters output file (.featureXML)
 		out_clusters = getStringOption_("out_clusters");
-    // get name of additional filters output file (.mzML)
-    out_filters_mzML = getStringOption_("out_filters_mzML");
-    // get name of additional filters output file (.txt)
-    out_filters = getStringOption_("out_filters");
-    // get name of additional filters input file (.txt)
-    in_filters = getStringOption_("in_filters");
 
-
+ 
 
 		//--------------------------------------------------
 		// section labels
@@ -428,9 +383,6 @@ class TOPPSILACAnalyzer2
 		isotopes_per_peptide_min = (Int)isotopes_per_peptide_min_temp;
 		isotopes_per_peptide_max = (Int)isotopes_per_peptide_max_temp;
 
-		// get selected mz_stepwidth
-//		mz_stepwidth = getParam_().getValue("sample:mz_stepwidth");
-
 
 
   	//--------------------------------------------------
@@ -450,21 +402,9 @@ class TOPPSILACAnalyzer2
 		// get selected model_deviation
 		model_deviation = getParam_().getValue("algorithm:model_deviation");
 		// get flag for missing peaks
-		allow_missing_peaks = getFlag_("allow_missing_peaks");
-		
+		allow_missing_peaks = getFlag_("algorithm:allow_missing_peaks");
 
 
-	  //--------------------------------------------------
-		// section out clusters
-	  //--------------------------------------------------
-/*
-		// get selected mass_shift
-		mass_shift_out_clusters = getParam_().getValue("out_clusters:mass_shift");
-
-		// get selected cahrge state
-		charge_out_clusters = getParam_().getValue("out_clusters:charge");
-*/
-		
 
 	  //--------------------------------------------------
 		// calculate all possible mass shifts for labelets from section "sample:labels"
@@ -589,82 +529,6 @@ class TOPPSILACAnalyzer2
 		}
     cout << endl;
 				
-
-
-	  //--------------------------------------------------
-		// check input from section "out_clusters"
-	  //--------------------------------------------------
-/*
-		out_clusters_flag = false;
-		out_clusters_flag_2 = false;
-
-		// check if one charge state is selected
-		if (mass_shift_out_clusters > 0 && charge_out_clusters == 0)
-		{
-			String out_clusters_exception;				
-			out_clusters_exception = "Select charge for out_clusters.";
-			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,out_clusters_exception);
-		}
-
-		// check if one mass shift is selected
-		if (mass_shift_out_clusters == 0 && charge_out_clusters != 0)
-		{
-			String out_clusters_exception;				
-			out_clusters_exception = "Select mass_shift for out_clusters.";
-			throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,out_clusters_exception);
-		}
-
-		if (mass_shift_out_clusters > 0 && charge_out_clusters != 0)
-		{
-			// ckeck if selected mass shift is valid (i.e. if selected mass shift is inside possible mass shifts depending on sections "sample:labels" and "sample:missed_cleavages )
-			if (mass_shift_out_clusters > (Int)massShifts.size())
-			{
-				String out_clusters_exception;
-				out_clusters_exception = "Selected mass shift is inavlid.";
-				throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,out_clusters_exception);
-			} else
-
-			// check if selected charge state is inside charge range from section "sample:charge"
-			if (charge_out_clusters < charge_min || charge_out_clusters > charge_max)
-			{
-				String out_clusters_exception;				
-				out_clusters_exception = "Selected charge state \"" + (String)charge_out_clusters + "\" for out_clusters is not in charge range.";
-				throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,out_clusters_exception);
-			}
-			else
-			{
-				out_clusters_flag = true;
-			}
-		}
-
-		if (out_clusters_flag == true)
-		{
-			// create string containing selected mass shift (necessary to write only corresponding clusters to featureXML output)
-			String ms_5;
-			String ms_6;
-			for(unsigned i = 0; i < massShifts[mass_shift_out_clusters-1].size(); i++)
-			{
-				ms_5 += "0" + (String)massShifts[mass_shift_out_clusters-1][i];
-			}
-				for (int i = 0; i < 2; ++i)
-				{
-					int found_ms = ms_5.find(".");
-					if (found_ms > 0)
-					{
-						ms_6 += ms_5.substr(found_ms - 2, 3);
-						ms_5.erase(found_ms, 1);
-			
-						int found_ms_2 = ms_6.find(".");
-						ms_6.erase(found_ms_2, 1);
-					}
-				}
-
-				ms_6.insert(2, ".");
-        istringstream stm;
-				stm.str(ms_6);
-				stm >> ms_final_2;
-		}
-*/
 		// get output variables
 		all_pairs.getFileDescriptions()[0].filename = in;
 		all_pairs.getFileDescriptions()[0].label = "light";
@@ -713,10 +577,10 @@ class TOPPSILACAnalyzer2
 		isotopes_per_peptide_min = 3;
 		isotopes_per_peptide_max = 3;
 		
-    for (int isotopes_per_peptide = isotopes_per_peptide_max; isotopes_per_peptide >= isotopes_per_peptide_min; isotopes_per_peptide--)
+    for (Int isotopes_per_peptide = isotopes_per_peptide_max; isotopes_per_peptide >= isotopes_per_peptide_min; isotopes_per_peptide--)
 		{
       // iterate over all charge states
-			for (Int charge = charge_min; charge <= charge_max; charge++)
+			for (Int charge = charge_max; charge >= charge_min; charge--)
 			{
 				// iterate over all mass shifts
 				for (unsigned i = 0; i < massShifts.size(); i++)
@@ -729,407 +593,28 @@ class TOPPSILACAnalyzer2
       }
 		}
 
-    if (in_filters == "")     // check if option "in_filters" is not specified
+    // create filtering
+    SILACFiltering filtering(exp, mz_stepwidth, intensity_cutoff, intensity_correlation, allow_missing_peaks);
+    filtering.setLogType(log_type_);
+
+    // register filters to the filtering
+    for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
     {
-      // create filtering
-      SILACFiltering filtering(exp, mz_stepwidth, intensity_cutoff, intensity_correlation, allow_missing_peaks);
-      filtering.setLogType(log_type_);
+      filtering.addFilter(*filter_it);
+    }
 
-      // register filters to the filtering
-      for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
-      {
-        filtering.addFilter(*filter_it);
-      }
+    // perform filtering
+    filtering.filterDataPoints();
 
-
-      // perform filtering
-      filtering.filterDataPoints();
-
-      // retrieve filtered data points
-      // vector<vector<DataPoint> > data;
-      for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
-      {
- /*        set<DoubleReal> envelope_distances = filter_it->getEnvelopeDistances();
-
-        // check if parameters for out_clusters are specified
-        if (out_clusters_flag_2 == false || (abs(*envelope_distances.rbegin() - label_out_clusters_mass_shift) < numeric_limits<DoubleReal>::epsilon() && charge_out_clusters == filter_it->getCharge()))
-*/
-        data.push_back(filter_it->getElements());
-      }
+    // retrieve filtered data points
+    // vector<vector<DataPoint> > data;
+    for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
+    {
+       data.push_back(filter_it->getElements());
     }
 
     // delete experiment
 		exp.clear(true);
-
-
-    //--------------------------------------------------
-    // store filter results from vector<vector<DataPoint> > data to .txt
-    //--------------------------------------------------
-
-    if (out_filters != "" && in_filters == "")     // check if option "out_filters" is specified and "in_filters" is not
-    {
-      ofstream outfile;
-      outfile.open(out_filters.c_str());      // open ofstream to specified output file
-      outfile << setprecision(16);      // set precision of outfile to 16 to avoid losing digits
-
-      // vector of DataPoints
-      outfile << "<VectorOfDataPoints>" << "\n";
-
-      // iterate over outer DataPoint vector (vector<vector<DataPoint> >)
-      for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
-      {
-        // DataPoints
-        outfile << "<DataPoints>" << "\n";
-
-        // iterate over inner DataPoint vector (vector<DataPoint>)
-        for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
-        {
-          // DataPoint
-          outfile << "<DataPoint>" << "\n";
-
-          // feature_id
-          outfile << "<feature_id>" << "\n";
-          outfile << it->feature_id << "\n";
-          outfile << "</feature_id>" << "\n";
-
-          // rt
-          outfile << "<rt>" << "\n";
-          outfile << it->rt << "\n";
-          outfile << "</rt>" << "\n";
-
-          // mz
-          outfile << "<mz>" << "\n";
-          outfile << it->mz << "\n";
-          outfile << "</mz>" << "\n";
-
-          // charge
-          outfile << "<charge>" << "\n";
-          outfile << it->charge << "\n";
-          outfile << "</charge>" << "\n";
-
-          // isotopes_per_peptide
-          outfile << "<isotopes_per_peptide>" << "\n";
-          outfile << it->isotopes_per_peptide << "\n";
-          outfile << "</isotopes_per_peptide>" << "\n";
-
-          // intensities
-          outfile << "<intensities>" << "\n";
-
-          // iterate over outer intensities vector (vector<vector<DoubleReal> >)
-          for (vector<vector<DoubleReal> >::iterator intensities_it = it->intensities.begin(); intensities_it != it->intensities.end(); ++intensities_it)
-          {
-            outfile << "<intensities_" << intensities_it - it->intensities.begin() << ">\n";
-
-            // // iterate over inner intensities vector (vector<DoubleReal>)
-            for (vector<DoubleReal>::iterator intensity_it = intensities_it->begin(); intensity_it != intensities_it->end(); ++intensity_it)
-            {
-              outfile << *intensity_it << "\n";
-            }
-            outfile << "</intensities_" << intensities_it - it->intensities.begin() << ">\n";
-          }
-          outfile << "</intensities>" << "\n";
-
-          // mass_shifts
-          outfile << "<mass_shifts>" << "\n";
-
-          // iterate over mass shifts vector (vector<DoubleReal>)
-          for (vector<DoubleReal>::iterator mass_shifts_it = it->mass_shifts.begin(); mass_shifts_it != it->mass_shifts.end(); ++mass_shifts_it)
-          {
-            outfile << *mass_shifts_it << "\n";
-          }
-          outfile << "</mass_shifts>" << "\n";
-
-          outfile << "</DataPoint>" << "\n";
-        }
-        outfile << "</DataPoints>" << "\n";
-      }
-      outfile << "</VectorOfDataPoints>" << "\n";
-
-      outfile.close();      // close ofstream and store output file
-    }
-
-
-    //--------------------------------------------------
-    // load filter results as vector<vector<DataPoint> > data from .txt
-    //--------------------------------------------------
-
-    if (in_filters != "")     // check if option "in_filters" is specified
-    {
-      vector<vector<DataPoint> > data_points_vector_in;
-      vector<DataPoint> data_points_in;
-      DataPoint data_point_in;
-
-      vector<vector<DoubleReal> > intensities_vector_in;
-      vector<DoubleReal> intensities_in;
-
-      vector<DoubleReal> mass_shifts_in;
-
-      ifstream infile;
-      infile.open(in_filters.c_str());      // open ifstream from specified input file
-
-      // check if infile can be opened
-      if (!infile.is_open())
-      {
-        cout << "Error: could not open " << in_filters << "..." << endl;
-      }
-      else
-      {
-        String temp;
-
-        // name cases and define states
-        const int VECTOR_OF_DATA_POINTS_STATE = 0;
-        const int DATA_POINTS_STATE = 1;
-        const int DATA_POINT_STATE = 2;
-        const int FEATURE_ID_STATE = 3;
-        const int RT_STATE = 4;
-        const int MZ_STATE = 5;
-        const int CHARGE_STATE = 6;
-        const int ISOTOPES_PER_PEPTIDE_STATE = 7;
-        const int VECTOR_OF_INTENSITIES_STATE = 8;
-        const int INTENSITIES_STATE = 9;
-        const int MASS_SHIFTS_STATE = 10;
-        const int END_STATE = 11;
-
-        // set start state
-        int state = VECTOR_OF_DATA_POINTS_STATE;
-
-        while(state != END_STATE)
-        {
-          switch(state)
-          {
-            // case and state 0: vector of data points
-        case VECTOR_OF_DATA_POINTS_STATE:
-            if (infile.eof())
-            {
-              cout << "eof" << endl;
-              state = END_STATE;
-            } else
-            {
-              getline(infile, temp);
-              if (temp != "")
-              {
-                state = DATA_POINTS_STATE;
-              } else
-              {
-                cout << "end state" << endl;
-                state = END_STATE;
-              }
-            }
-            break;
-
-            // case and state 1: data points
-        case DATA_POINTS_STATE:
-            getline (infile, temp);
-            if (String(temp).hasPrefix("</"))
-            {
-              state = VECTOR_OF_DATA_POINTS_STATE;
-            } else
-            {
-              state = DATA_POINT_STATE;
-            }
-            break;
-
-            // case and state 2: data point
-        case DATA_POINT_STATE:
-            getline(infile, temp);
-            if (String(temp).hasPrefix("</"))
-            {
-              data_points_vector_in.push_back(data_points_in);
-              // cout << "size of data_points_vector_in: " << data_points_vector_in.size() << endl;
-              data_points_in.clear();
-              // cout << "size of data_points_in.clear(): " << data_points_in.size() << endl;
-              state = DATA_POINTS_STATE;
-            } else
-            {
-              data_point_in.intensities.clear();
-              data_point_in.mass_shifts.clear();
-              state = FEATURE_ID_STATE;
-            }
-            break;
-
-            // case and state 3: feature_id
-        case FEATURE_ID_STATE:
-            getline(infile,temp);
-            getline(infile, temp);
-            data_point_in.feature_id = String(temp).toInt();
-            getline (infile, temp);
-            state = RT_STATE;
-            break;
-
-            // case and state 4: rt
-        case RT_STATE:
-            getline(infile, temp);
-            getline(infile, temp);
-            data_point_in.rt = String(temp).toDouble();
-            getline (infile, temp);
-            state = MZ_STATE;
-            break;
-
-            // case and state 5: mz
-        case MZ_STATE:
-            getline(infile, temp);
-            getline(infile, temp);
-            data_point_in.mz = String(temp).toDouble();
-            getline(infile, temp);
-            state = CHARGE_STATE;
-            break;
-
-            // case and state 6: charge
-        case CHARGE_STATE:
-            getline(infile, temp);
-            getline(infile, temp);
-            data_point_in.charge = String(temp).toInt();
-            getline(infile, temp );
-            state = ISOTOPES_PER_PEPTIDE_STATE;
-            break;
-
-            //case and state  7: isotopes_per_peptide
-        case ISOTOPES_PER_PEPTIDE_STATE:
-            getline(infile, temp);
-            getline(infile, temp);
-            data_point_in.isotopes_per_peptide = String(temp).toInt();
-            getline(infile, temp);
-            state = VECTOR_OF_INTENSITIES_STATE;
-            break;
-
-            // case and state 8: vector of intensities
-        case VECTOR_OF_INTENSITIES_STATE:
-            getline( infile, temp );
-            if (!String(temp).hasPrefix("</"))
-            {
-              state = INTENSITIES_STATE;
-            } else if (String(temp).hasPrefix("</"))
-            {
-              data_point_in.intensities.insert(data_point_in.intensities.end(), intensities_vector_in.begin(), intensities_vector_in.end());
-              intensities_vector_in.clear();
-              state = MASS_SHIFTS_STATE;
-            }
-            break;
-
-            // case and state 9: intesities
-        case INTENSITIES_STATE:
-            getline( infile, temp );
-            do
-            {
-              if(!String(temp).hasPrefix("<"))
-              {
-                DoubleReal intensity_in = String(temp).toDouble();
-                intensities_in.push_back(intensity_in);
-                // cout << "size of intensities_in: " << intensities_in.size() << endl;
-              }
-              getline( infile, temp );
-            } while (!String(temp).hasPrefix("</"));
-            intensities_vector_in.push_back(intensities_in);
-            // cout << "size of intensities_vector_in: " << intensities_vector_in.size() << endl;
-            intensities_in.clear();
-            state = VECTOR_OF_INTENSITIES_STATE;
-            break;
-
-            // case and state 10: mass_shifts
-        case MASS_SHIFTS_STATE:
-            getline( infile, temp );
-            do
-            {
-              if(!String(temp).hasPrefix("<"))
-              {
-                DoubleReal mass_shift_in = String(temp).toDouble();
-                mass_shifts_in.push_back(mass_shift_in);
-                // cout << "size of mass_shifts_in: " << mass_shifts_in.size() << endl;
-              }
-              getline( infile, temp );
-            } while (!String(temp).hasPrefix("</"));
-            data_point_in.mass_shifts.insert(data_point_in.mass_shifts.begin(), mass_shifts_in.begin(), mass_shifts_in.end());
-            mass_shifts_in.clear();
-            getline( infile, temp );      // temp steht auf </DataPoint>
-            data_points_in.push_back(data_point_in);
-            // cout << "size of data_points_in: " << data_points_in.size() << endl;
-            state = DATA_POINT_STATE;
-            break;
-
-         default:
-            break;
-          }
-        }
-      }
-      infile.close();
-
-
-      //--------------------------------------------------
-      // store read in filter results from .txt to .txt to enable comparison of original and read in filter results
-      //--------------------------------------------------
-
-      ofstream outfil;
-      string out_filters_check = "check_" + in_filters;
-      outfil.open(out_filters_check.c_str());     // open ofstream to specified output file
-      outfil << setprecision(16);      // set precision of outfil to 16 to avoid losing digits
-
-      outfil << "<VectorOfDataPoints>" << "\n";
-      for (vector<vector<DataPoint> >::iterator data_it = data_points_vector_in.begin(); data_it != data_points_vector_in.end(); ++data_it)
-      {
-        outfil << "<DataPoints>" << "\n";
-
-        for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
-        {
-          // DataPoint
-          outfil << "<DataPoint>" << "\n";
-
-          // feature_id
-          outfil << "<feature_id>" << "\n";
-          outfil << it->feature_id << "\n";
-          outfil << "</feature_id>" << "\n";
-
-          // rt
-          outfil << "<rt>" << "\n";
-          outfil << it->rt << "\n";
-          outfil << "</rt>" << "\n";
-
-          // mz
-          outfil << "<mz>" << "\n";
-          outfil << it->mz << "\n";
-          outfil << "</mz>" << "\n";
-
-          // charge
-          outfil << "<charge>" << "\n";
-          outfil << it->charge << "\n";
-          outfil << "</charge>" << "\n";
-
-          // isotopes_per_peptide
-          outfil << "<isotopes_per_peptide>" << "\n";
-          outfil << it->isotopes_per_peptide << "\n";
-          outfil << "</isotopes_per_peptide>" << "\n";
-
-          // intensities
-          outfil << "<intensities>" << "\n";
-          for (vector<vector<DoubleReal> >::iterator intensities_it = it->intensities.begin(); intensities_it != it->intensities.end(); ++intensities_it)
-          {
-            outfil << "<intensities_" << intensities_it - it->intensities.begin() << ">\n";
-            for (vector<DoubleReal>::iterator intensity_it = intensities_it->begin(); intensity_it != intensities_it->end(); ++intensity_it)
-            {
-              outfil << *intensity_it << "\n";
-            }
-            outfil << "</intensities_" << intensities_it - it->intensities.begin() << ">\n";
-          }
-          outfil << "</intensities>" << "\n";
-
-          // mass_shifts
-          outfil << "<mass_shifts>" << "\n";
-          for (vector<DoubleReal>::iterator mass_shifts_it = it->mass_shifts.begin(); mass_shifts_it != it->mass_shifts.end(); ++mass_shifts_it)
-          {
-            outfil << *mass_shifts_it << "\n";
-          }
-          outfil << "</mass_shifts>" << "\n";
-
-          outfil << "</DataPoint>" << "\n";
-        }
-        outfil << "</DataPoints>" << "\n";
-      }
-      outfil << "</VectorOfDataPoints>" << "\n";
-
-      outfil.close();     // close ofstream
-
-      // set loaded filter results from .txt as input for clustering
-      data = data_points_vector_in;
-    }
 
     return data;
 	}
@@ -1211,59 +696,6 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
 
 
 		//--------------------------------------------------
-		// subtree output (for debug)
-		//--------------------------------------------------
-
-		if (getFlag_("silac_debug"))
-		{
-            vector<String> colors;
-			// 16 HTML colors
-			colors.push_back("#00FFFF");
-			colors.push_back("#000000");
-			colors.push_back("#0000FF");
-			colors.push_back("#FF00FF");
-			colors.push_back("#008000");
-			colors.push_back("#808080");
-			colors.push_back("#00FF00");
-			colors.push_back("#800000");
-			colors.push_back("#000080");
-			colors.push_back("#808000");
-			colors.push_back("#800080");
-			colors.push_back("#FF0000");
-			colors.push_back("#C0C0C0");
-			colors.push_back("#008080");
-			colors.push_back("#FFFF00");
-
-			Size subtree_number = 1;
-      for (vector<vector<BinaryTreeNode> >::iterator subtree_it = subtrees.begin(); subtree_it != subtrees.end(); ++subtree_it)
-			{
-        set<DataPoint*> leafs;
-        for (vector<BinaryTreeNode>::iterator tree_it = subtree_it->begin(); tree_it != subtree_it->end(); ++tree_it)
-				{
-					leafs.insert(tree_it->data1);
-					leafs.insert(tree_it->data2);
-				}
-        for (set<DataPoint*>::iterator leafs_it = leafs.begin();leafs_it != leafs.end(); ++leafs_it)
-				{
-					Feature tree_point;
-					tree_point.setRT((*leafs_it)->rt);
-					tree_point.setMZ((*leafs_it)->mz);
-					tree_point.setIntensity((*leafs_it)->intensities[0][0]);
-					tree_point.setCharge((*leafs_it)->charge);
-					tree_point.setMetaValue("subtree", subtree_number);
-					tree_point.setMetaValue("color", colors[subtree_number%colors.size()]);
-					subtree_points.push_back(tree_point);
-				}
-				++subtree_number;
-			}
-
-			// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
-			subtree_points.sortByPosition();
-		}
-
-
-
-		//--------------------------------------------------
 		// create a map of SILAC type names
 		//--------------------------------------------------
 
@@ -1283,31 +715,6 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
 		{
 			debug_trunk = in.substr(0, in.find_first_of('.'));
 		}
-
-
-
-		//--------------------------------------------------
-    // mzML output (out_filters_mzML)
-		//--------------------------------------------------
-
-    if (out_filters_mzML != "")
-    {
-      // build new experiment to store only points that passed the filters as .mzML
-      for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
-      {
-        for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
-        {
-          MSExperiment<Peak1D>::SpectrumType spectrum;
-          spectrum.setMSLevel(1);
-          spectrum.setRT(it->rt);
-          MSExperiment<Peak1D>::PeakType peak;
-          peak.setIntensity(it->intensities[0][0]);
-          peak.setMZ(it->mz);
-          spectrum.push_back(peak);
-          filter_exp.push_back(spectrum);
-        }
-      }
-    }
 
 
 
@@ -1398,65 +805,34 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
 
 				stream_ratios << id << "\t" << cluster_it->size() << "\t" << rt << "\t" << mz;
 
-/*				for (Size k = 1;	k < mass_shifts_size; ++k)
+				// create consensus feature for each mass shift !=0
+				ConsensusFeature consensus_feature;
+				consensus_feature.setRT(rt);
+				consensus_feature.setMZ(mz);
+				consensus_feature.setIntensity(max_intensities[0]);			// set intensity of light peptiide to intensity of consensus
+				consensus_feature.setCharge(charge);
+      	consensus_feature.setQuality(mass_shift_final);			// set mass shifts as value for Quality (format: Da.Da)
+
+				// insert feature handle for each mass shift
+				for (Size l = 0; l < mass_shifts_size; ++l)
 				{
 					// perform linear regression for each mass shift != 0
+
 					Math::LinearRegression linear_reg;
-					linear_reg.computeRegressionNoIntercept(0.95, intensities[0].begin(), intensities[0].end(), intensities[k].begin());
+					linear_reg.computeRegressionNoIntercept(0.95, intensities[0].begin(), intensities[0].end(), intensities[l].begin());
 					stream_ratios  << "\t" << linear_reg.getSlope();
 
-					// create consensus feature for each mass shift !=0
-					ConsensusFeature consensus_feature;
-					consensus_feature.setRT(rt);
-					consensus_feature.setMZ(mz);
-					consensus_feature.setIntensity(linear_reg.getSlope());
-					consensus_feature.setCharge(charge);
-					consensus_feature.setQuality(linear_reg.getRSquared());
-
-					// insert feature handle for each mass shift
-					for (Size l = 0; l < mass_shifts_size; ++l)
-					{
-						FeatureHandle handle;
-						handle.setRT(rt);
-						handle.setMZ(mz+(*(cluster_it->begin()))->mass_shifts[l]);
-						handle.setIntensity(max_intensities[l]);
-						handle.setCharge(charge);
-						handle.setMapIndex(l);
-						handle.setUniqueId(id);
-						consensus_feature.insert(handle);
-					}
-					all_pairs.push_back(consensus_feature);
+					FeatureHandle handle;
+					handle.setRT(rt);
+					handle.setMZ(mz+(*(cluster_it->begin()))->mass_shifts[l]);
+					handle.setIntensity(linear_reg.getSlope());			// set ratios as values for intensities: it(map="0") = l/l, it(map="1") = m/l, it(map="2") = h/l
+					handle.setCharge(charge);
+					handle.setMapIndex(l);
+					handle.setUniqueId(id);
+					consensus_feature.insert(handle);
 				}
-*/
 
-					// create consensus feature for each mass shift !=0
-					ConsensusFeature consensus_feature;
-					consensus_feature.setRT(rt);
-					consensus_feature.setMZ(mz);
-					consensus_feature.setIntensity(max_intensities[0]);			// set intensity of light peptiide to intensity of consensus
-					consensus_feature.setCharge(charge);
-          consensus_feature.setQuality(mass_shift_final);			// set mass shifts as value for Quality (format: Da.Da)
-
-					// insert feature handle for each mass shift
-					for (Size l = 0; l < mass_shifts_size; ++l)
-					{
-
-						// perform linear regression for each mass shift != 0
-
-						Math::LinearRegression linear_reg;
-						linear_reg.computeRegressionNoIntercept(0.95, intensities[0].begin(), intensities[0].end(), intensities[l].begin());
-						stream_ratios  << "\t" << linear_reg.getSlope();
-
-						FeatureHandle handle;
-						handle.setRT(rt);
-						handle.setMZ(mz+(*(cluster_it->begin()))->mass_shifts[l]);
-						handle.setIntensity(linear_reg.getSlope());			// set ratios as values for intensities: it(map="0") = l/l, it(map="1") = m/l, it(map="2") = h/l
-						handle.setCharge(charge);
-						handle.setMapIndex(l);
-						handle.setUniqueId(id);
-						consensus_feature.insert(handle);
-					}
-					all_pairs.push_back(consensus_feature);
+				all_pairs.push_back(consensus_feature);
 
         stream_ratios << endl;
 				++id;
@@ -1556,45 +932,15 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
           cluster_point.setMetaValue("Cluster id", it->cluster_id);
           cluster_point.setMetaValue("color", colors[it->cluster_id%colors.size()]);
           cluster_point.setMetaValue("isotopes per peptide", it->isotopes_per_peptide);
-						
-          if (getFlag_("silac_debug"))
-          {
-            cluster_point.setMetaValue("Cluster size", it->cluster_size);
-            cluster_point.setMetaValue("feature_id", it->feature_id);
-          }
+					cluster_point.setMetaValue("Cluster size", it->cluster_size);
+          cluster_point.setMetaValue("feature_id", it->feature_id);
 
-          // if no parameters for out_cluster are sprcified write all clusters
-//					if (out_clusters_flag == false)
-              all_cluster_points.push_back(cluster_point);
-
-          // if parameters for out_clusters are specified write only coresponding clusters
-//					else if (it->charge == charge_out_clusters && ms_final == ms_final_2)
-//						all_cluster_points.push_back(cluster_point);
-					}
+          all_cluster_points.push_back(cluster_point);
+ 				}
       }
 
 			// required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
 			all_cluster_points.sortByPosition();
-		}
-
-
-
-		//-------------------------------------------------------------
-		// generate debug output
-		//-------------------------------------------------------------
-		// strings repeatedly used in debug output
-
-		if (getFlag_("silac_debug"))
-		{
-			// names of dat files
-			String debug_clusters_dat = debug_trunk + "_cluster_sizes.dat";
-
-			// write all cluster data points to *_clusters.dat
-      ofstream stream_clusters(debug_clusters_dat.c_str());
-      for(vector<Cluster>::iterator cluster_it = clusters.begin(); cluster_it != clusters.end(); ++cluster_it)
-			{
-        stream_clusters << cluster_it->size() << endl;
-			}
 		}
 
 
@@ -1616,13 +962,6 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
 			c_file.store(out, all_pairs);
 		}
 
-    // mzML
-    if (out_filters_mzML != "")
-		{
-      MzMLFile m_file;
-      m_file.store(out_filters_mzML, filter_exp);
-		}
-
 		// featureXML
 		if (out_clusters != "")
 		{
@@ -1631,16 +970,6 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
 
 			FeatureXMLFile f_file;
 			f_file.store(out_clusters, all_cluster_points);
-		}
-
-		// debug output
-		if (getFlag_("silac_debug"))
-		{
-			// assign unique ids
-			subtree_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
-
-			FeatureXMLFile t_file;
-			t_file.store(debug_trunk+ "_subtrees.featureXML", subtree_points);
 		}
 
 		return EXECUTION_OK;

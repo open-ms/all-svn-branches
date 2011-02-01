@@ -130,14 +130,18 @@ public:
 	 * @brief structure for blacklist
 	 * @param mzBlack_min starting point of blacklisted m/z range
 	 * @param mzBlack_max end point of blacklisted m/z range
-	 * @param rtInitial retention time of the spectrum where this blacklisting first occured
+   * @param rtBlack_center rt that generated the blacklist entry
+   * @param rtBlack_min starting point of blacklisted rt range
+   * @param rtBlack_max end point of blacklisted rt range
 	 * @param generatingFilter filter that generated blacklist entry
 	 */
 	struct BlacklistEntry
 	{
 		DoubleReal mzBlack_min;
 		DoubleReal mzBlack_max;
-		DoubleReal rtInitial;
+    DoubleReal rtBlack_center;
+    DoubleReal rtBlack_min;
+    DoubleReal rtBlack_max;
 		SILACFilter* generatingFilter;
 	};
 	

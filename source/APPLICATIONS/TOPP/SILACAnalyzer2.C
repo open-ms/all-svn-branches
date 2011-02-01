@@ -56,12 +56,6 @@
 
 #include <OpenMS/DATASTRUCTURES/DataPoint.h>
 
-#ifdef _OPENMP
-#ifdef OPENMS_WINDOWSPLATFORM
-#include <omp.h>
-#endif
-#endif
-
 //std includes
 #include <cmath>
 #include <vector>
@@ -275,7 +269,7 @@ class TOPPSILACAnalyzer2
 
 		if (section == "sample")
 		{
-      defaults.setValue("labels", "[Arg6]", "Specify the labels for your sample. Doublets must be of style [label,label,...]. Triplets must be of style [label,label,...][label,label,..]. Each pair of brackets can contain one or more labels. See section \"labels\" in advanced parameters for allowed labels.");
+      defaults.setValue("labels", "[Arg6]", "Specify the labels for your sample. Doublets must be of style [label][label]... Triplets must be of style [label,label][label,label]... See section \"labels\" in advanced parameters for allowed labels.");
 			defaults.setValue("charge", "2:3", "Specify the charge range for your sample (charge_min:charge_max).");
 			defaults.setValue("missed_cleavages", 0 , "Specify the maximum number of missed cleavages.");
 			defaults.setMinInt("missed_cleavages", 0);
@@ -408,7 +402,7 @@ class TOPPSILACAnalyzer2
 
 
 	  //--------------------------------------------------
-		// calculate all possible mass shifts for labelets from section "sample:labels"
+    // calculate all possible mass shifts for labelets from section "sample:labels" (concernig missed_cleavage)
 	  //--------------------------------------------------
 		
 		// split string of SILAC labels (selected_labels) and save in a list (SILAClabels) 
@@ -572,23 +566,19 @@ class TOPPSILACAnalyzer2
 
 		// create filters for all numbers of isotopes per peptide, charge states and mass shifts
 
-		// iterate over all number for isotopes per peptide
-		
-		// For testing that good Nijmegen results remain unchanged.
-		isotopes_per_peptide_min = 3;
-    isotopes_per_peptide_max = 3;
-		
+    // iterate over all number for isotopes per peptide (from max to min)
     for (Int isotopes_per_peptide = isotopes_per_peptide_max; isotopes_per_peptide >= isotopes_per_peptide_min; isotopes_per_peptide--)
 		{
-      // iterate over all charge states
+      // iterate over all charge states (from max to min)
 			for (Int charge = charge_max; charge >= charge_min; charge--)
 			{
 				// iterate over all mass shifts
 				for (unsigned i = 0; i < massShifts.size(); i++)
 				{
 					// convert vector<DoubleReal> to set<DoubleReal> for SILACFilter
-					set<DoubleReal> massShifts_set;
-					copy(massShifts[i].begin(), massShifts[i].end(), inserter(massShifts_set, massShifts_set.end()));
+          vector<DoubleReal> massShifts_set = massShifts[i];
+
+          //copy(massShifts[i].begin(), massShifts[i].end(), inserter(massShifts_set, massShifts_set.end()));
 					filters.push_back(SILACFilter(massShifts_set, charge, model_deviation, isotopes_per_peptide));
 				}
       }
@@ -608,7 +598,6 @@ class TOPPSILACAnalyzer2
     filtering.filterDataPoints();
 
     // retrieve filtered data points
-    // vector<vector<DataPoint> > data;
     for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
     {
        data.push_back(filter_it->getElements());
@@ -930,11 +919,11 @@ cout << "size of vector<DataPoint>: " << data_it->size() << endl;
             cluster_point.setMetaValue("Mass shift", mass_shift_meta_value);
           }
 
-          cluster_point.setMetaValue("isotopes per peptide", it->isotopes_per_peptide);
+          cluster_point.setMetaValue("Isotopes per peptide", it->isotopes_per_peptide);
           cluster_point.setMetaValue("Cluster id", it->cluster_id);
           cluster_point.setMetaValue("Cluster size", it->cluster_size);
           cluster_point.setMetaValue("color", colors[it->cluster_id%colors.size()]);
-          // cluster_point.setMetaValue("feature_id", it->feature_id);
+          // cluster_point.setMetaValue("Feature_id", it->feature_id);
 
           all_cluster_points.push_back(cluster_point);
  				}

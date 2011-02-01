@@ -67,6 +67,11 @@ private:
    * @brief number of isotopes per peptide to search for
    */
     Int isotopes_per_peptide;
+
+    /**
+     * @brief mass shift(s) in [Da] to search for
+     */
+    std::vector<DoubleReal> mass_separations;
 	
     /**
      * @brief m/z separtion between individual peptides [e.g. {0 Th, 4 Th, 5 Th}]
@@ -152,12 +157,12 @@ public:
 	
     /**
      * @brief detailed constructor for SILAC pair filtering
-     * @param mass_separations all mass shifts of the filter
+     * @param mass_separations_ all mass shifts of the filter
      * @param charge_ charge of the ions to search for
      * @param model_deviation_ maximum deviation from the averagine model
 		 * @param isotopes_per_peptide_ number of isotopes per petide to search for
      */
-    SILACFilter(std::set<DoubleReal> mass_separations, Int charge_, DoubleReal model_deviation_, Int isotopes_per_peptide_);
+    SILACFilter(std::vector<DoubleReal> mass_separations_, Int charge_, DoubleReal model_deviation_, Int isotopes_per_peptide_);
 
 	/**
 	 * @brief destructor
@@ -204,6 +209,17 @@ public:
 	 * @brief returns the number of isotopes per peptide of the filter
 	 */
 	Int getIsotopesPerPeptide();
+
+  /**
+   * @brief returns the mass shift(s) of the filter in [Da]
+   */
+  std::vector<DoubleReal> getMassSeparations();
+
+  /**
+   * @brief returns the number of mass shift(s) of the filter
+   */
+  Int getMassSeparationsSize();
+
 	
 };
 }

@@ -221,7 +221,7 @@ double Process_Data::getPeakIntensitySum(double IN){
     
     MZ_series_ITERATOR p = F->second.begin();
     while( p != F->second.end() ){
-      map<int, ms_peak >::iterator k = p->begin();
+      multimap<int, ms_peak >::iterator k = p->begin();
       while( k != p->end() ){
         out += k->second.get_intensity();
         k++;
@@ -455,7 +455,7 @@ void Process_Data::insert_observed_mz(MAIN_ITERATOR LCP, ms_peak* PEAK){
       // DEBUGGING
       if( MonoIsoDebugging ){
         if( ( DebugMonoIsoMassMin <= PEAK->get_MZ()) && ( DebugMonoIsoMassMax >= PEAK->get_MZ()) ){
-          map<int, ms_peak>::reverse_iterator q = Q->rbegin();
+          multimap<int, ms_peak>::reverse_iterator q = Q->rbegin();
           int last_scan = (*q).first;
           printf("\n----\n-> Old mz %0.3f to %d, but new TR cluster: ", (*LCP).first, last_scan);
           PEAK->show_info();
@@ -526,7 +526,7 @@ void Process_Data::insert_observed_mz(MAIN_ITERATOR LCP, ms_peak* PEAK){
       // DEBUGGING
       if( MonoIsoDebugging ){
         if( ( DebugMonoIsoMassMin <= PEAK->get_MZ()) && ( DebugMonoIsoMassMax >= PEAK->get_MZ()) ){
-          map<int, ms_peak>::reverse_iterator q = Q->rbegin();
+          multimap<int, ms_peak>::reverse_iterator q = Q->rbegin();
           int last_scan = (*q).first;
           printf("\n----\n-> Old mz %0.3f to %d, but new TR cluster: ", (*LCP).first, last_scan);
           PEAK->show_info();
@@ -557,7 +557,7 @@ bool Process_Data::check_elution_peak_belong(MZ_series_ITERATOR P, ms_peak* PEAK
     
   
   // get the last element:
-  map<int, ms_peak>::reverse_iterator q = P->rbegin();
+  multimap<int, ms_peak>::reverse_iterator q = P->rbegin();
   int last_scan = (*q).first;
   ms_peak* last_peak = &(q->second);
 
@@ -593,7 +593,7 @@ bool Process_Data::check_elution_peak_belong(MZ_series_ITERATOR P, ms_peak* PEAK
 int Process_Data::getElutionPeakDistance(MZ_series_ITERATOR P, int SCAN){
   
   // get the last element:
-  map<int, ms_peak>::reverse_iterator q = P->rbegin();
+  multimap<int, ms_peak>::reverse_iterator q = P->rbegin();
   int last_scan = (*q).first;
   
   return (SCAN - last_scan);
@@ -652,8 +652,8 @@ bool Process_Data::check_elution_peak(MZ_series_ITERATOR Q_SER){
     ms_peak* PEAK = &((Q_SER->begin())->second);
     
     if( ( DebugMonoIsoMassMin <= PEAK->get_MZ()) && ( DebugMonoIsoMassMax >= PEAK->get_MZ()) ){
-      map<int, ms_peak>::iterator start = Q_SER->begin();
-      map<int, ms_peak>::reverse_iterator end = Q_SER->rbegin();
+      multimap<int, ms_peak>::iterator start = Q_SER->begin();
+      multimap<int, ms_peak>::reverse_iterator end = Q_SER->rbegin();
       printf("\n : this peak removed: ");
       start->second.show_info();
       end->second.show_info();
@@ -685,7 +685,7 @@ bool Process_Data::check_elution_peak(MZ_series_ITERATOR Q_SER){
     ////////////////////////////////////////////////
     // check if the peak contains any MS/MS peak which was
     // selected as MS/MS precursor:
-    map<int, ms_peak >::iterator P = (*Q_SER).begin();
+    multimap<int, ms_peak >::iterator P = (*Q_SER).begin();
     while( P != (*Q_SER).end() ){
       
       if( P->second.getPrecursorActivation() ){

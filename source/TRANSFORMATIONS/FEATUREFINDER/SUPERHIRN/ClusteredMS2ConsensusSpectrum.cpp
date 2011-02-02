@@ -150,7 +150,7 @@ void ClusteredMS2ConsensusSpectrum::extractFragmentsFromSpectra( MS2ConsensusSpe
   
   
   // go through the MS2 fragments and find the common one:
-  map<double, MS2Fragment>::iterator P = in->getMS2FragmentPeakStart();
+  multimap<double, MS2Fragment>::iterator P = in->getMS2FragmentPeakStart();
   while( P != in->getMS2FragmentPeakEnd() ){
     
     // fragment search mass:

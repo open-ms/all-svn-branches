@@ -252,7 +252,7 @@ void DeconvPeak::show_info(){
   printf( "\tDeconvoluted Peak: mz=%.4f,I=%.4f\n",  fMass, fIntensity);
 
   if( !extraPeakInfo.empty() ){
-    cout<<"\t"<<extraPeakInfo<<endl;
+    //cout<<"\t"<<extraPeakInfo<<endl;
   }
   
   if( ! fIsotopicPeaks.empty()){ 
@@ -271,7 +271,7 @@ void CentroidPeak::show_info(){
   printf( "\tCentroidPeak: m/z=%.3f,I=%.4f\n",  fMass, fIntensity);
   
   if( !extraPeakInfo.empty() ){
-    cout<<"\t"<<extraPeakInfo<<endl;
+    //cout<<"\t"<<extraPeakInfo<<endl;
   }
 }
 

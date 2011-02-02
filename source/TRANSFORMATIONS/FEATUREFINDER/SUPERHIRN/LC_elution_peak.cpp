@@ -599,7 +599,7 @@ void LC_elution_peak::compute_CHRG(){
   }
   
   int maxCount = -1; 
-  map< int, int>::iterator C = CHRG_MAP.begin();
+  multimap< int, int>::iterator C = CHRG_MAP.begin();
   while( C != CHRG_MAP.end() ){
   
     if( view ){
@@ -735,7 +735,7 @@ void LC_elution_peak::createConsensIsotopPattern(){
   // constructe a consensus patterns:
   isotopePattern = new consensIsotopePattern();
   
-  map<int, ms_peak>::iterator R = intens_signals.begin();
+  multimap<int, ms_peak>::iterator R = intens_signals.begin();
   while( R != intens_signals.end() ){
     
     ms_peak* peak = &(*R).second;

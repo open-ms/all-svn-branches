@@ -14,13 +14,13 @@
 #ifndef _ISOTOPICDIST_h_
 #define _ISOTOPICDIST_h_
 
-using namespace std;
-
 class CentroidPeak;
 class DeconvPeak;
 
 #include <list>
 #include <iostream>
+
+using namespace std;
 
 class IsotopicDist
 {

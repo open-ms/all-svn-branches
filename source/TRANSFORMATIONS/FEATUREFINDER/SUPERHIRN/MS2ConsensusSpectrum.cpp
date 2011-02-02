@@ -121,7 +121,7 @@ void MS2ConsensusSpectrum::removeOutlierFragments(){
   vector< pair<double, void*> > ValueVector;
   
   // store fragments by the desired attribute as outlier detection value:
-  map<double, MS2Fragment>::iterator P = MS2FragmentPeaks.begin();
+  multimap<double, MS2Fragment>::iterator P = MS2FragmentPeaks.begin();
   while( P != MS2FragmentPeaks.end() ){
     
     // get the attribute:
@@ -225,7 +225,7 @@ void MS2ConsensusSpectrum::computeMS2SpectrumParameters(){
     double istartScan = 0;
     double iendScan = 0;
     
-    map< double, MS2Fragment>::iterator I = MS2FragmentPeaks.begin();
+    multimap< double, MS2Fragment>::iterator I = MS2FragmentPeaks.begin();
     while( I != MS2FragmentPeaks.end() ){
       
       double thisArea = (*I).second.getFragmentPeakArea();
@@ -345,11 +345,11 @@ MS2Fragment* MS2ConsensusSpectrum::findMS2Fragment( double mass ){
   
   ///////////////////////
   // collect a list of iterators with potential candidates:
-  map< double, map< double, MS2Fragment >::iterator > candidates;
+  map< double, multimap< double, MS2Fragment >::iterator > candidates;
   
   // scan lower mass tolerance:
-  map<double, MS2Fragment>::iterator F = MS2FragmentPeaks.lower_bound( mass );
-  map< double, MS2Fragment >::iterator I = F;
+  multimap<double, MS2Fragment>::iterator F = MS2FragmentPeaks.lower_bound( mass );
+  multimap< double, MS2Fragment >::iterator I = F;
   if( I != MS2FragmentPeaks.begin() ){
     I--;
   }
@@ -403,7 +403,7 @@ void MS2ConsensusSpectrum::removeWaterLossRegion( ){
   double minLossMZRegion = precursorMZ - 30;
   double maxLossMZRegion = precursorMZ;
     
-  map<double, MS2Fragment>::iterator I = getMS2FragmentPeakStart();  
+  multimap<double, MS2Fragment>::iterator I = getMS2FragmentPeakStart();  
   while( I != getMS2FragmentPeakEnd() ) {
     
     

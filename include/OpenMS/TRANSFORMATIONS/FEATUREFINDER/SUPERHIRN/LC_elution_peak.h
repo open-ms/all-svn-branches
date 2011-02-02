@@ -211,7 +211,7 @@ public:
   
   // to update the list of score and charge state:
   void update_CHRGMAP( ms_peak* IN ){
-    map<int, int>::iterator T = CHRG_MAP.find( IN->get_charge_state() );
+    multimap<int, int>::iterator T = CHRG_MAP.find( IN->get_charge_state() );
     if( T == CHRG_MAP.end() ){
       CHRG_MAP.insert( make_pair( IN->get_charge_state(), 1 ) );
     }

@@ -12,8 +12,8 @@
 
 #ifndef _CENTROIDPEAK_H_
 #define _CENTROIDPEAK_H_
-using namespace std;
-#include <ostream>;
+//using namespace std;
+#include <ostream>
 #include <cmath>
 #include <vector>
 // Class for centroid peaks
@@ -42,7 +42,7 @@ public:
   inline double getSignalToNoise(){return fSignalToNoise;}	
   inline double getFittedIntensity(){return fFittedIntensity;}
   inline double getOrgIntensity(){return fOrgIntensity;}
-  inline string getExtraPeakInfo( ){ return extraPeakInfo;};
+  inline std::string getExtraPeakInfo( ){ return extraPeakInfo;};
   inline double getRetentionTime( ){ return fTr;};
   
   inline void setMass(double pMass){fMass = pMass;}
@@ -51,7 +51,7 @@ public:
   inline void setSignalToNoise(double in){fSignalToNoise = in;}	
   inline void setFittedIntensity(double pFittedIntensity){fFittedIntensity = pFittedIntensity;}
   inline void setOrgIntensity(double pOrgIntensity){fOrgIntensity = pOrgIntensity;}
-  inline void setExtraPeakInfo( string in){ extraPeakInfo = in;};
+  inline void setExtraPeakInfo( std::string in){ extraPeakInfo = in;};
   inline void setRetentionTime(double in ){ fTr = in;};
 
   
@@ -70,10 +70,10 @@ protected:
   
   double fSignalToNoise;
   
-  string extraPeakInfo;
+  std::string extraPeakInfo;
 };
 
-ostream& operator<<(ostream&, CentroidPeak&);
+std::ostream& operator<<(std::ostream&, CentroidPeak&);
 
 // Class for deconvoluted isotopic patterns 
 class DeconvPeak : public CentroidPeak{
@@ -95,13 +95,13 @@ public:
   // shows the info of the peak:
   void show_info();
   
-  inline vector<CentroidPeak> getIsotopicPeaks() {return fIsotopicPeaks;}
+  inline std::vector<CentroidPeak> getIsotopicPeaks() {return fIsotopicPeaks;}
   
   inline void setCharge(int pCharge){fCharge = pCharge;}	
   inline void setC13MassError(double pC13MassError){fC13MassError = pC13MassError;}
   inline void setNrIsotopes(int pNrIsotopes){fNrIsotopes = pNrIsotopes;}
   inline void setScore(double pScore){fScore = pScore;}
-  inline void setIsotopicPeaks(vector<CentroidPeak> pIsotopicPeaks) {
+  inline void setIsotopicPeaks(std::vector<CentroidPeak> pIsotopicPeaks) {
     fIsotopicPeaks = pIsotopicPeaks;
   }
   
@@ -111,10 +111,10 @@ protected:
   int						fNrIsotopes;
   double					fC13MassError;
   double					fScore;
-  vector<CentroidPeak>	fIsotopicPeaks;
+  std::vector<CentroidPeak>	fIsotopicPeaks;
 };
 
-ostream& operator<<(ostream&, DeconvPeak&);
+std::ostream& operator<<(std::ostream&, DeconvPeak&);
 
 
 #endif

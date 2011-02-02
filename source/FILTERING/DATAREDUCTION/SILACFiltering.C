@@ -88,16 +88,6 @@ namespace OpenMS
 
         DoubleReal rt = rt_it->getRT();    // retention time of this spectrum
 
-/*        //kill archaic blacklist entries
-        std::list<BlacklistEntry> tempBlacklist;     // instead of erasing entries in blacklist, benerate new tempBlacklist and copy it then back to blacklist
-        for (std::list<BlacklistEntry>::iterator blacklist_it=blacklist.begin(); blacklist_it!=blacklist.end(); ++blacklist_it)
-        {
-          // if the blacklisting is older than 10 s drop it from the list.
-          if ( abs(rt - (*blacklist_it).rtInitial) < 10) tempBlacklist.push_back(*blacklist_it);
-        }
-        blacklist.resize(tempBlacklist.size());
-        copy(tempBlacklist.begin(), tempBlacklist.end(), blacklist.begin());
-*/
         // spectra with less than 10 data points are being ignored
         if (number_data_points >= 10)
         {
@@ -135,13 +125,6 @@ namespace OpenMS
           spline_spl = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
           gsl_spline_init(spline_spl, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
-
-          // Iterate over all filters
-          //for (std::list<SILACFilter*>::iterator filter_it=filters.begin(); filter_it!=filters.end(); ++filter_it)
-          //{
-          // debug output: Are all filters in the right order?
-          //cout << "filter: isotopes per peptide = " << (*filter_it)->getIsotopesPerPeptide() << " charge = " << (*filter_it)->getCharge() << endl;
-
           MSSpectrum<>::Iterator mz_it = rt_it->begin();
 
           last_mz = mz_it->getMZ();
@@ -158,29 +141,39 @@ namespace OpenMS
 								continue;
 							}
 
-              // Check if m/z position is blacklisted
-							bool isBlacklisted = false;
+              //--------------------------------------------------
+              // chech if current m/z and rt position is blacklisted
+              //--------------------------------------------------
+
+              bool isBlacklisted = false;     // create flag to check if position is blacklisted
+
+              // iterate over the blacklist
               for (std::list<BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
 							{
+
+                // check if position is blacklisted and if so break
                 if (isBlacklisted == true)
                 {
                   break;
                 }
 
-                // check if position is blacklisted
+                // check if position is blacklisted (i.e. position is inside m/z and rt range and if current and generating filter are different)
                 else if ((mz > blacklist_it->mzBlack_min) && (mz < blacklist_it->mzBlack_max) && (rt > blacklist_it->rtBlack_min) && (rt < blacklist_it->rtBlack_max) && (*filter_it) != blacklist_it->generatingFilter)
 								{
                   // check if current and generating filter only differ in isotopes_per_peptide and if so only blacklist rt_center
+                  // i.e. current and generating filter are equal concernig charge state and size of mass shift(s)
+                  // else set "isBlacklisted" to true
                   if (blacklist_it->generatingFilter != NULL && (*filter_it)->getMassSeparationsSize() == (blacklist_it->generatingFilter)->getMassSeparationsSize() && rt != blacklist_it->rtBlack_center && (*filter_it)->getCharge() == (blacklist_it->generatingFilter)->getCharge())
                   {
                     std::vector<DoubleReal> current_filter_mass_separations = (*filter_it)->getMassSeparations();
                     std::vector<DoubleReal> generating_filter_mass_separations = (blacklist_it->generatingFilter)->getMassSeparations();
 
+                    // check if mass shift(s) of current and generating filter are equal
                     for (unsigned int i = 0; i < current_filter_mass_separations.size(); i++)
                     {
                       if (current_filter_mass_separations[i] != generating_filter_mass_separations[i])
                       {
-                        isBlacklisted = true;
+                        isBlacklisted = true;     // if mass shift(s) of current and generating filter differ in only one entry set "isBlacklisted" to true
                         break;
                       }
                     }
@@ -193,27 +186,34 @@ namespace OpenMS
                 }
 							}
 							
-              if (isBlacklisted == false)   // Check the other filters only if m/z is not blacklisted
+              if (isBlacklisted == false)     // Check the other filters only if current m/z and rt position is not blacklisted
 							{
-                if ((*filter_it)->isSILACPattern(rt,mz))   // Check if the mz at the given position is a SILAC pair
+                if ((*filter_it)->isSILACPattern(rt,mz))      // Check if the mz at the given position is a SILAC pair
 								{
+                  //--------------------------------------------------
+                  // blacklisting
+                  //--------------------------------------------------
+
                   // Retrieve peak positions for blacklisting
                   const std::vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();
 									std::vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin();
+
+                  // get peak width for corresponding peak
 									DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);
 
-									// filling the blacklist
+                  // filling the blacklist (monoisotopic peak)
 									BlacklistEntry next_entry;								
-									next_entry.mzBlack_min = mz - 0.8 * peak_width;
-									next_entry.mzBlack_max = mz + 0.8 * peak_width;
-                  next_entry.rtBlack_center = rt;
-                  next_entry.rtBlack_min = rt - 10;
-                  next_entry.rtBlack_max = rt + 10;
-									next_entry.generatingFilter = (*filter_it);  // Filter generating the blacklisting.
+                  next_entry.mzBlack_min = mz - 0.8 * peak_width;     // set lower bound of m/z range
+                  next_entry.mzBlack_max = mz + 0.8 * peak_width;     // set lower bound of m/z range
+                  next_entry.rtBlack_center = rt;     // rt generating the blacklist entry
+                  next_entry.rtBlack_min = rt - 10;     // set lower bound of rt range
+                  next_entry.rtBlack_max = rt + 10;     // set upper bound pf rt range
+                  next_entry.generatingFilter = (*filter_it);     // filter generating the  blacklist entry
 									blacklist.push_back(next_entry);
 
                   peak_positions_it++;
 
+                  // filling the blacklist (following peaks)
                   for (; peak_positions_it != peak_positions.end(); peak_positions_it++)
 									{
 										DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);

@@ -80,8 +80,6 @@ private:
 
     DoubleReal isotope_distance;
 
-    DataPoint next_element;
-
     /**
      * @brief holds the recognized features
      */

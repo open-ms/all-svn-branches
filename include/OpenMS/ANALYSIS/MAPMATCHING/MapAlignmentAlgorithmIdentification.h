@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -78,7 +78,10 @@ namespace OpenMS
 		// Docu in base class
 		virtual void setReference(Size reference_index=0, 
 															const String& reference_file="");
-		
+
+		// Docu in base class
+		virtual void getDefaultModel(String& model_type, Param& params);
+	
 		/// Creates a new instance of this class (for Factory)
 		static MapAlignmentAlgorithm* create()
 		{

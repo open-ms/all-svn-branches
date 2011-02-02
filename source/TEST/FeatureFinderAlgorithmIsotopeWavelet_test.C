@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -38,16 +38,24 @@ using namespace std;
 typedef FeatureFinderAlgorithmIsotopeWavelet<Peak1D,Feature> FFASS;
 
 FFASS* ptr;
-START_SECTION(FeatureFinderAlgorithmIsotopeWavelet())
+START_SECTION((FeatureFinderAlgorithmIsotopeWavelet()))
 	ptr = new FFASS;
 	TEST_NOT_EQUAL(ptr,0)
+END_SECTION
+
+START_SECTION(IsotopeWaveletTransform<PeakType>::TransSpectrum* prepareHRDataCuda(const UInt i, IsotopeWaveletTransform< PeakType > *iwt))
+	NOT_TESTABLE
+END_SECTION
+
+START_SECTION(MSSpectrum<PeakType>* createHRData(const UInt i))
+	NOT_TESTABLE
 END_SECTION
 
 START_SECTION(virtual ~FeatureFinderAlgorithmIsotopeWavelet())
 	delete ptr;
 END_SECTION
 
-START_SECTION(virtual void run())
+START_SECTION(void run())
 	NOT_TESTABLE
 END_SECTION
 

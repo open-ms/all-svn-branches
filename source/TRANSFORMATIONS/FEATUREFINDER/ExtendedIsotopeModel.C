@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,11 +41,12 @@ namespace OpenMS
 	{
 		setName(getProductName());
 
-		defaults_.setValue("averagines:C",0.0443f,"Number of C atoms per Dalton of mass.", StringList::create("advanced"));
-		defaults_.setValue("averagines:H",0.007f,"Number of H atoms per Dalton of mass.", StringList::create("advanced"));
-		defaults_.setValue("averagines:N",0.0037f,"Number of N atoms per Dalton of mass.", StringList::create("advanced"));
-		defaults_.setValue("averagines:O",0.022f,"Number of O atoms per Dalton of mass.", StringList::create("advanced"));
-		defaults_.setValue("averagines:S",0.00037f,"Number of S atoms per Dalton of mass.", StringList::create("advanced"));
+    defaults_.setValue("averagines:C",0.04443989f,"Number of C atoms per Dalton of mass.", StringList::create("advanced"));
+		defaults_.setValue("averagines:H",0.06981572f,"Number of H atoms per Dalton of mass.", StringList::create("advanced"));
+		defaults_.setValue("averagines:N",0.01221773f,"Number of N atoms per Dalton of mass.", StringList::create("advanced"));
+		defaults_.setValue("averagines:O",0.01329399f,"Number of O atoms per Dalton of mass.", StringList::create("advanced"));
+		defaults_.setValue("averagines:S",0.00037525f,"Number of S atoms per Dalton of mass.", StringList::create("advanced"));
+
 		defaults_.setValue("isotope:trim_right_cutoff",0.001,"Cutoff in averagine distribution, trailing isotopes below this relative intensity are not considered.", StringList::create("advanced"));
 		defaults_.setValue("isotope:maximum",100,"Maximum isotopic rank to be considered.", StringList::create("advanced"));
 		defaults_.setValue("isotope:distance",1.000495,"Distance between consecutive isotopic peaks.", StringList::create("advanced"));
@@ -103,13 +104,12 @@ namespace OpenMS
 		if (S_num) form.append("S").append(String(S_num));
 
 		EmpiricalFormula formula(form);
-		typedef IsotopeDistribution::iterator IsoIter;
 		IsotopeDistribution isotope_distribution = formula.getIsotopeDistribution(max_isotope_);
 		isotope_distribution.trimRight(trim_right_cutoff_);
 		isotope_distribution.renormalize();
 
 		// compute the average mass (-offset)
-		for (	IsoIter iter = isotope_distribution.begin(); iter != isotope_distribution.end(); ++iter)
+		for (IsotopeDistribution::iterator iter = isotope_distribution.begin(); iter != isotope_distribution.end(); ++iter)
 		{
 			isotopes_exact.push_back(iter->second);
 		}
@@ -159,6 +159,7 @@ namespace OpenMS
 		// (for better numerics)
 		for ( SignedSize i = left.size() - 1; i >= 0; --i )
 		{
+      if (left[i]==0) continue;
 			for ( SignedSize j = std::min<SignedSize> ( rMax - i, right.size() ) - 1; j >= 0 ; --j )
 			{
 				result[i+j] += left[i] * right[j];

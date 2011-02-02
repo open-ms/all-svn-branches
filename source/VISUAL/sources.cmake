@@ -18,6 +18,8 @@ MetaDataBrowser.C
 MultiGradient.C
 MultiGradientSelector.C
 ParamEditor.C
+SpectraViewWidget.C
+SpectraIdentificationViewWidget.C
 Spectrum1DCanvas.C
 Spectrum1DWidget.C
 Spectrum2DCanvas.C
@@ -40,7 +42,11 @@ TOPPASTabBar.C
 TOPPASTreeView.C
 TOPPASResource.C
 TOPPASResources.C
+TOPPViewBehaviorInterface.C
+TOPPViewIdentificationViewBehavior.C
+TOPPViewSpectraViewBehavior.C
 EnhancedWorkspace.C
+EnhancedTabBarWidgetInterface.C
 )
 
 ### add path to the filenames

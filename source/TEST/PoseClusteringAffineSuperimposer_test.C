@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -106,12 +106,12 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
 
   pcat.run(input, transformations);
 
-	TEST_EQUAL(transformations.size(),1)
-  TEST_STRING_EQUAL(transformations[0].getName(),"linear")
-	TEST_EQUAL(transformations[0].getParameters().size(),2)    
-  TEST_STRING_EQUAL(transformations[0].getName(),"linear")
-  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("slope"),1.0)
-  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("intercept"),-0.4)
+	TEST_EQUAL(transformations.size(), 1)
+  TEST_STRING_EQUAL(transformations[0].getModelType(), "linear")
+	transformations[0].getModelParameters(parameters);
+	TEST_EQUAL(parameters.size(), 2)    
+  TEST_REAL_SIMILAR(parameters.getValue("slope"), 1.0)
+  TEST_REAL_SIMILAR(parameters.getValue("intercept"), -0.4)
 END_SECTION
 
 /////////////////////////////////////////////////////////////

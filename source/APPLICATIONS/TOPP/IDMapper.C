@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -126,6 +126,7 @@ class TOPPIDMapper
 			setValidStrings_("mz_measure", p.getEntry("mz_measure").valid_strings);
 			registerStringOption_("mz_reference","<choice>", p.getEntry("mz_reference").valid_strings[0], "Source of m/z values for peptide identifications. If 'precursor', the precursor-m/z from the idXML is used. If 'peptide',\nmasses are computed from the sequences of peptide hits; in this case, an identification matches if any of its hits matches.\n('peptide' should be used together with 'use_centroid_mz' to avoid false-positive matches.)", false);
 			setValidStrings_("mz_reference", p.getEntry("mz_reference").valid_strings);
+			registerFlag_("use_charge", "For feature/consensus maps: Assign an ID only if its charge state matches that of the (consensus) feature.");
 			addEmptyLine_();
 			addText_("Additional options for featureXML input:");
 			registerFlag_("use_centroid_rt", "Use the RT coordinates of the feature centroids for matching, instead of the RT ranges of the features/mass traces.");
@@ -162,6 +163,7 @@ class TOPPIDMapper
 			p.setValue("mz_tolerance", getDoubleOption_("mz_tolerance"));
 			p.setValue("mz_measure", getStringOption_("mz_measure"));
 			p.setValue("mz_reference", getStringOption_("mz_reference"));
+			p.setValue("use_charge", getFlag_("use_charge") ? "true" : "false");
 			mapper.setParameters(p);
 
 			//----------------------------------------------------------------

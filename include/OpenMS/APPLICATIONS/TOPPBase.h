@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -28,7 +28,9 @@
 #ifndef OPENMS_APPLICATIONS_TOPPBASE_H
 #define OPENMS_APPLICATIONS_TOPPBASE_H
 
+#include <OpenMS/APPLICATIONS/ToolHandler.h>
 #include <OpenMS/CONCEPT/Exception.h>
+#include <OpenMS/CONCEPT/LogStream.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/CONCEPT/VersionInfo.h>
 #include <OpenMS/DATASTRUCTURES/Param.h>
@@ -41,7 +43,7 @@
 #include <OpenMS/METADATA/DocumentIDTagger.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
-#include <OpenMS/CONCEPT/LogStream.h>
+
 
 #include <iostream>
 #include <fstream>
@@ -134,7 +136,8 @@ namespace OpenMS
         EXTERNAL_PROGRAM_ERROR,
         PARSE_ERROR,
         INCOMPATIBLE_INPUT_DATA,
-        INTERNAL_ERROR
+        INTERNAL_ERROR,
+        UNEXPECTED_RESULT
     	};
 
       /**
@@ -159,13 +162,7 @@ namespace OpenMS
       /// Main routine of all TOPP applications
       ExitCodes main(int argc, const char** argv);
 			
-			/// Returns the list of official TOPP tools contained in the OpenMS/TOPP release.
-			static Map<String,StringList> getToolList();
-
-			/// Returns the list of "official" UTIL tools contained in the OpenMS/TOPP release.
-			static Map<String,StringList> getUtilList();
-			
-      ///Stuct that captures all information of a parameter
+      ///Stuct that captures all information of a command line parameter
       struct ParameterInformation
       {
         /// Parameter types
@@ -524,12 +521,13 @@ namespace OpenMS
 				@brief Sets the formats for a input/output file option or for all members of an input/output file lists
 				
 				Setting the formats causes a check for the right file format (input file) or the right file extension (output file).
-				This check is performed only, when the option is accessed in the TOPP tool.				
+				This check is performed only, when the option is accessed in the TOPP tool.
+				When @p force_OpenMS_format is set, only formats known to OpenMS internally are allowed (default).
 
 				@exception Exception::ElementNotFound is thrown if the parameter is unset or not a file parameter
 				@exception Exception::InvalidParameter is thrown if an unknown format name is used (@see FileHandler::Type)
 			*/
-			void setValidFormats_(const String& name, const std::vector<String>& formats);
+			void setValidFormats_(const String& name, const std::vector<String>& formats, const bool force_OpenMS_format=true);
 			
 
       /**
@@ -579,7 +577,9 @@ namespace OpenMS
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
       	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
-      void registerIntOption_( const String& name, const String& argument, Int default_value, const String& description, bool required = true, bool advanced = false );
+      void registerIntOption_(const String& name, const String& argument, 
+															Int default_value, const String& description, 
+															bool required = true, bool advanced = false );
 
       /**
       	@brief Registers a list of integers option.

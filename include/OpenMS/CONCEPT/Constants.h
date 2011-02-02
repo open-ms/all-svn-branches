@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -73,7 +73,7 @@ namespace OpenMS
 		/**	Internal theshold for equality comparisons.
 				Default value is 1e-6.
 		*/
-		extern double EPSILON;
+		extern OPENMS_DLLAPI double EPSILON;
 		//@}
 			
 		/**	@name Chemical/physical constants.

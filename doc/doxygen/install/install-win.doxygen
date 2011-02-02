@@ -59,7 +59,7 @@
 
   @subsection install_qt QT installation
 		
-		We require Qt version 4.3 or higher.
+		We require Qt version 4.5 or higher.
 	
     Qt comes in two flavors: commercial or non-commercial - choose whatever is applicable to you: read more on the Trolltech website
     <OL>
@@ -69,7 +69,7 @@
           <LI>extract zip file
           <LI>open a Visual Studio Command Line (use x64 version if you want 64bit apps!)
           <LI>$ cd <path-to-qt>
-          <LI>$ configure.exe
+          <LI>$ configure.exe -no-phonon-backend -no-webkit -no-script
           <LI>$ nmake
           <LI>now you should have Link-Libraries and DLL's (debug and release) in your &lt;Qt&gt;/lib directory
         </OL>
@@ -77,14 +77,13 @@
         <OL>
           <LI>we have no experience here, but it should be possible to get the DLL's and Link-Libraries here as well.
         </OL>
-      <LI>set the Environment Variable QTDIR to your Qt-Directory
       <LI>add the &lt;Qt&gt;/bin (!) directory to your PATH Environment Variable
 		</OL>
 
 	@subsection install_win_contrib Contrib installation
 		In order to make the
 		installation of the remaining required libraries easier, we composed a
-		"contrib-package" containing the libraries Boost, GSL, CGAL, libSVM, SeqAn, COINOR, imslib, zlib, libbz2 and XERCES-C.
+		"contrib-package" containing the libraries Boost, GSL, libSVM, SeqAn, COINOR, imslib, zlib, libbz2 and XERCES-C.
 		<br>ANDI/MS and NetCDF are currently only included in the Linux version. We are working on a patch of those external libaries for Windows.
 		This contrib package has several advantages over manual installation
 		<ul>
@@ -154,7 +153,7 @@ cmake -G "Visual Studio 9 2008 Win64" "c:\svn\contrib"
       </UL>
     <LI> GPL Ghostscript (8.60) for Windows
       <UL>
-         <LI> Download binaries for Windows (http://www.ghostscript.com/awki -> Sourceforge -> Win32 Binaries) and install
+         <LI> Download binaries for Windows (http://www.ghostscript.com/) and install
          <LI> add the <i>&lt;path_to_GHOSTSCRIPT&gt;/bin</i> directory (e.g. c:/programs/gs/gs8.60/bin) to the Windows PATH Environment
       </UL>
 		<LI>

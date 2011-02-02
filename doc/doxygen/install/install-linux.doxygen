@@ -22,7 +22,7 @@
   In order to compile %OpenMS, several applications need to be installed:
    - Compiler: An ANSI-compatible C++ compiler is required. <BR>Currently g++ 4.0 or higher is supported.  <BR>Older versions might still work, but are not actively maintained. <BR>g++ is part of the GNU Compiler Collection (GCC).
    - CMake (version 2.6 or higher) is required to configure and build the package.
-	 - Qt4 (version 4.3 or higher; development package containing qmake and headers)
+	 - Qt4 (version 4.5 or higher; development package containing qmake and headers)
    - GNU make is required
 	 - patch
 	 - autoconf (at least version 2.60)
@@ -81,7 +81,7 @@
   @section install_linux_contrib Installing the contrib package
 
   In order to facilitate the installation of the libraries required for %OpenMS, we composed a
-  "contrib-package" containing the libraries ANDI/MS, Boost, NetCDF, GSL, CGAL, libSVM, SeqAn, COINOR, imslib, zlib, libbz2 and XERCES-C. 
+  "contrib-package" containing the libraries ANDI/MS, Boost, NetCDF, GSL, libSVM, SeqAn, COINOR, imslib, zlib, libbz2 and XERCES-C. 
     
   The contrib package is contained in the %OpenMS release package and is available under the path @em contrib in the %OpenMS directory.
   

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -64,14 +64,13 @@ namespace OpenMS
     virtual ~RTSimulation();
     //@}
 
-    // Assignment operator
+    /// Assignment operator
     RTSimulation& operator = (const RTSimulation& source);
     
     /** 
-     @brief Predict retention times for given peptide features based on a SVM Model
+     @brief Predict retention times for given peptide features based for HPLC or CE
      
      @param features Feature map for which the retention times will be predicted
-     @param experiment Experiment map which will be build from scratch
      */
     void predictRT(FeatureMapSim & features);
  
@@ -103,14 +102,12 @@ namespace OpenMS
     /// Simply set all retention times to -1
     void noRTColumn_(FeatureMapSim &);
     
-    /// Predict all retention times based on a svm model
-    void predictFeatureRT_(FeatureMapSim &);
-  
 		/// smoothes the simulated distortion for the elution profiles with a moving average filter of size 3
 		void smoothRTDistortion_(MSSimExperiment & experiment);
 
 		/// Wrapper for the Migration time calculation (CE)
-		void calculateMT_(const FeatureMapSim & features,std::vector<DoubleReal>& predicted_retention_times);
+    /// @param features will get modified with metavalue "RT_CE_width_factor", describing widening of MT shape
+		void calculateMT_(FeatureMapSim & features,std::vector<DoubleReal>& predicted_retention_times);
 
 		void getChargeContribution_(Map< String, double> & q_cterm, 
 															  Map< String, double> & q_nterm,
@@ -135,11 +132,16 @@ namespace OpenMS
     /// bin size in rt dimension
     SimCoordinateType rt_sampling_rate_;
 
-    /// LC conditions (noise parameter for EMG)
-		DoubleReal distortion_;
-    DoubleReal symmetry_up_;
-    DoubleReal symmetry_down_;
-    
+    /// EGH tau value
+    DoubleReal egh_tau_location_;
+    /// EGH tau scale parameter of the lorentzian variation
+    DoubleReal egh_tau_scale_;
+
+    /// EGH sigma value
+    DoubleReal egh_variance_location_;
+    /// EGH sigma scale parameter of the lorentzian variation
+    DoubleReal egh_variance_scale_;
+
   protected:  
 		/// Random number generator
     SimRandomNumberGenerator const * rnd_gen_;

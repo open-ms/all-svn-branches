@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -39,9 +39,10 @@ namespace OpenMS
  * A GridFeature can be stored in a HashGrid and points to a BaseFeature (Feature or ConsensusFeature). Used for QT feature grouping (see QTClusterFinder).
  */
 
-	class OPENMS_DLLAPI GridFeature : public GridElement
+	class OPENMS_DLLAPI GridFeature 
+		: public GridElement
 	{
-	private:
+		private:
 		/// Reference to the contained feature
 		const BaseFeature& feature_;
 

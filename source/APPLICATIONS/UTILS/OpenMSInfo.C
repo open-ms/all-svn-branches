@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -87,6 +87,16 @@ namespace OpenMS
 			// identify 
 			switch (QSysInfo::MacintoshVersion)
 			{
+				case QSysInfo::MV_10_2: 
+				{
+					info.os_version = "10.2";
+					break;
+				}
+				case QSysInfo::MV_10_3: 
+				{
+					info.os_version = "10.3";
+					break;
+				}
 				case QSysInfo::MV_10_4: 
 				{
 					info.os_version = "10.4";
@@ -102,6 +112,10 @@ namespace OpenMS
 					info.os_version = "10.6";
 					break;
 				}
+				default:
+				{
+					info.os_version = "unsupported";
+				}				
 			}
 
 			// identify architecture

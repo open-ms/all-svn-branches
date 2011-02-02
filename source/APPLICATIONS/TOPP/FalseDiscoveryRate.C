@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Chris Bielow $
 // $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
@@ -100,10 +100,10 @@ class TOPPFalseDiscoveryRate
 			registerInputFile_("rev_in", "<file>", "", "Identification input to estimate FDR, decoy run", false);
 			setValidFormats_("rev_in", StringList::create("idXML"));
 			registerOutputFile_("out", "<file>", "", "Identification output with annotated FDR");
-			registerFlag_("proteins_only", "if set, the FDR of the proteins only is calculated");
-			registerFlag_("peptides_only", "if set, the FDR of the peptides only is calculated");
+			registerFlag_("proteins_only", "If set, the FDR of the proteins only is calculated");
+			registerFlag_("peptides_only", "If set, the FDR of the peptides only is calculated");
 
-			registerSubsection_("algorithm","Parameter section for the fdr calculation algorithm");
+			registerSubsection_("algorithm","Parameter section for the FDR calculation algorithm");
 
 
 			addEmptyLine_();
@@ -208,8 +208,11 @@ class TOPPFalseDiscoveryRate
 				//-------------------------------------------------------------
       	// writing output
       	//-------------------------------------------------------------
-
-      	IdXMLFile().store(out, fwd_prot, fwd_pep);
+				if(alg_param.getValue("add_decoy_peptides").toBool())
+				{
+					fwd_pep.insert(fwd_pep.end(),rev_pep.begin(),rev_pep.begin());
+      	}
+     		IdXMLFile().store(out, fwd_prot, fwd_pep);
 			}
 
 			return EXECUTION_OK;

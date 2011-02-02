@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -118,7 +118,9 @@ namespace OpenMS
 
 	    /// returns the maximum value displayed on the axis
 	    DoubleReal getAxisMaximum() const;
-	    
+
+      /// Actual painting takes place here
+      void paint(QPainter* painter, QPaintEvent* e);
 		public slots:
 		
 			///sets min/max of the axis
@@ -149,9 +151,8 @@ namespace OpenMS
 			/// maximum number of tick levels (default=2)
 			UInt tick_level_;
 			/// true if k/M/G units can be used
-			bool allow_short_numbers_;
-			
-			///Reimplemented Qt event
+			bool allow_short_numbers_;			
+      /// Reimplemented Qt event (calls paint with "this")
 			void paintEvent(QPaintEvent*);
 	
 			/// Scale axis values to correct value (i.e. reverse log, unit conversion)

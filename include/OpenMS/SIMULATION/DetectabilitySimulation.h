@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -88,7 +88,7 @@ namespace OpenMS
 		DoubleReal min_detect_;
 
 		/// Name of the svm model file
-		OpenMS::String dtModelFile_;
+		OpenMS::String dt_model_file_;
 
   protected:
     /// Filter the feature map using a svm model

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -45,7 +45,8 @@ namespace OpenMS
 		list_widget->item(5)->setCheckState(Qt::Unchecked);
 		list_widget->item(6)->setCheckState(Qt::Unchecked);
 		list_widget->item(7)->setCheckState(Qt::Unchecked);
-		list_widget->item(8)->setCheckState(Qt::Unchecked);
+    list_widget->item(8)->setCheckState(Qt::Unchecked);
+    list_widget->item(9)->setCheckState(Qt::Unchecked);
 	}
 	
 	void TheoreticalSpectrumGenerationDialog::itemChanged(QListWidgetItem* item)

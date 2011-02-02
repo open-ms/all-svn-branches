@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -217,6 +217,10 @@ namespace OpenMS
 			/// Writes @p param to the @p ini_file
 			void writeParam_(const Param& param, const QString& ini_file);
 			
+      /// When building the commandline and INI file to call a TOPP/UTIL, this function picks a list or a single file, depending on operation mode
+      /// Also index checking is done
+      QStringList getFileArgument_(const QStringList& source_files, const int index, const bool as_list) const;
+
 			/// The name of the tool
 			String name_;
 			/// The type of the tool, or "" if it does not have a type

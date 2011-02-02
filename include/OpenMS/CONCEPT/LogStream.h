@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -193,6 +193,12 @@ namespace OpenMS
 			}
 		};
 
+    /**
+     * Checks if some of the cached entries where sent more then once
+     * to the LogStream and (if necessary) prints a corresponding messages
+     * into all affected Logs
+     */
+    void clearCache();
 
 		protected:
 		
@@ -250,12 +256,6 @@ namespace OpenMS
      */
     Size getNextLogCounter_();
 
-    /**
-     * Checks if some of the cached entries where sent more then once
-     * to the LogStream and (if necessary) prints a corresponding messages
-     * into all affected Logs
-     */
-    void clearCache_();
 		//@}
 
 	};
@@ -412,11 +412,11 @@ namespace OpenMS
 
 					- <b>%y</b>	message type ("Error", "Warning", "Information", "-")
 					- <b>%T</b> time (HH:MM:SS)
-					- <b>%t</b>  time in short format (HH:MM)
+					- <b>%t</b> time in short format (HH:MM)
 					- <b>%D</b>	date (YYYY/MM/DD)
-					- <b>%d</b>  date in short format (MM/DD)
+					- <b>%d</b> date in short format (MM/DD)
 					- <b>%S</b> time and date (YYYY/MM/DD, HH:MM:SS)
-					- <b>%s</b>  time and date in short format (MM/DD, HH:MM)
+					- <b>%s</b> time and date in short format (MM/DD, HH:MM)
 					- <b>%%</b>	percent sign (escape sequence)
 				
 		*/

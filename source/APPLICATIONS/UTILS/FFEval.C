@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,6 +43,15 @@ using namespace std;
 	
 	@brief Evaluation tool for feature detection algorithms.
 		
+
+  To plot the ROC curve you might use:
+
+@code
+  d = read.table("data.roc", skip=1, sep="\t")
+  plot(d[,3],d[,4], xlim=c(0,1),ylim=c(0,1), xlab="FDR",ylab="TPR",main="ROC with varying intensity")
+  lines(c(0,1),c(0,1))
+@endcode
+
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude UTILS_FFEval.cli
 */
@@ -78,7 +87,7 @@ class TOPPFFEVal
 		setValidFormats_("out", StringList::create("featureXML"));
 		registerInputFile_("abort_reasons","<file>","","Feature file containing seeds with abort reasons.",false);
 		setValidFormats_("abort_reasons", StringList::create("featureXML"));
-		registerOutputFile_("out_roc","<file>","","If given, a ROC curve file is created", false);
+		registerOutputFile_("out_roc","<file>","","If given, a ROC curve file is created (ROC points based on intensity threshold)", false);
 	}
 	
 	/// Counts the number of features with meta value @p name equal to @p value
@@ -152,6 +161,11 @@ class TOPPFFEVal
 				sort(rt_spans.begin(), rt_spans.end());
 				rt_tol = getDoubleOption_("rt_tol")*rt_spans[rt_spans.size()/2];
 			}
+      else if (features_in.size() == 0)
+      {
+        // do nothing, rt_tol does not really matter, as we will not find a match anyway, but we want to have the stats 
+        // at the end, so we do not abort
+      }
 			else
 			{
 				writeLog_("Error: Input features do not have convex hulls. You have to set 'rt_tol_abs'!");
@@ -382,8 +396,6 @@ class TOPPFFEVal
 				tf.push_back(String(f_false) + "	" + f_correct + "	" + String::number(f_false/found,3) + "	" + String::number(f_correct/correct,3));
 			}
 			tf.store(getStringOption_("out_roc"));
-
-      // TODO intensity correlation for matched features
 		}
 		
 		return EXECUTION_OK;

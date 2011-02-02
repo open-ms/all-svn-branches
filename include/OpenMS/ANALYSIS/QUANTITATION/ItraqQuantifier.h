@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -87,23 +87,6 @@ namespace OpenMS
 						 ConsensusMap& consensus_map_out
 						 );
 		
-		/**
-		 *	@brief using the raw iTRAQ intensities we apply isotope correction, normalization (using median) and protein inference
-		 *	
-		 *	@param consensus_map_in Raw iTRAQ intensities from previous step
-		 *	@param peptide_ids List of peptides identified by a search engine on the same MS² dataset
-		 *	@param protein_ids List of proteins inferred from peptides
-		 *	@param consensus_map_out Postprocessed iTRAQ ratios for Proteins (if provided) or Peptides otherwise
-		 *
-		 *	@throws Exception::FailedAPICall is least-squares fit fails
-		 *	@throws Exception::InvalidParameter if parameter is invalid (e.g. reference_channel)
-		 */
-		void run(const ConsensusMap& consensus_map_in, 
-						 const std::vector< PeptideIdentification > &peptide_ids,
-						 const std::vector< ProteinIdentification > &protein_ids, 
-						 ConsensusMap& consensus_map_out
-						 );
-
 	protected:
 		
 		void setDefaultParams_();

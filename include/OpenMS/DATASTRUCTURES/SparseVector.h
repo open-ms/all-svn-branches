@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -117,7 +117,7 @@ namespace OpenMS
 					for(size_type s=0; s<size; ++s)
 					{
 						//makes each insertion in amortized constant time inserted direct after last one
-						i = values_.insert(i,make_pair(s,value));
+						i = values_.insert(i, std::make_pair(s,value));
 					}
 				}
 			}
@@ -439,13 +439,13 @@ namespace OpenMS
 						map_iterator tmp_it = it;
 						--tmp_it;
 						values_.erase(it);
-						it = values_.insert(tmp_it,make_pair(tmp_index-amount_deleted,tmp_value));
+            it = values_.insert(tmp_it,std::make_pair(tmp_index-amount_deleted,tmp_value));
 					}
 					else
 					{
 						//simply insert, as we have no element to insert after
 						values_.erase(it);
-						it = values_.insert(make_pair(tmp_index-amount_deleted,tmp_value)).first;
+            it = values_.insert(std::make_pair(tmp_index-amount_deleted,tmp_value)).first;
 					}
 					++it;
 				}
@@ -953,25 +953,25 @@ namespace OpenMS
 				/// less than operator
 				bool operator< (const SparseVectorReverseIterator& other)
 				{
-					return !(*this.position < other.position());
+					return !(this->position() < other.position());
 				}
 
 				/// greater than operator
 				bool operator> (const SparseVectorReverseIterator& other)
 				{
-					return !(*this.position > other.position());
+					return !(this->position() > other.position());
 				}
 
 				/// less or equal than operator
 				bool operator<= (const SparseVectorReverseIterator& other)
 				{
-					return !(*this.position <= other.position());
+					return !(this->position() <= other.position());
 				}
 
 				/// greater or equal than operator
 				bool operator>= (const SparseVectorReverseIterator& other)
 				{
-					return !(*this.position >= other.position());
+					return !(this->position() >= other.position());
 				}
 
 				/// go to the next nonempty position
@@ -1166,25 +1166,25 @@ namespace OpenMS
 				/// less than operator
 				bool operator< (const SparseVectorConstIterator& other)
 				{
-					return (*this.position < other.position());
+					return (this->position() < other.position());
 				}
 
 				/// greater than operator
 				bool operator> (const SparseVectorConstIterator& other)
 				{
-					return (*this.position > other.position());
+					return (this->position() > other.position());
 				}
 
 				/// less or equal than operator
 				bool operator<= (const SparseVectorConstIterator& other)
 				{
-					return (*this.position <= other.position());
+					return (this->position() <= other.position());
 				}
 
 				/// greater or equal than operator
 				bool operator>= (const SparseVectorConstIterator& other)
 				{
-					return (*this.position >= other.position());
+					return (this->position() >= other.position());
 				}
 
 				/// go to the next nonempty position

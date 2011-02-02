@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -30,6 +30,7 @@
 
 //OpenMS
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
+#include <OpenMS/VISUAL/TOPPASTreeView.h>
 
 //QT
 #include <QtGui/QMainWindow>
@@ -83,26 +84,25 @@ namespace OpenMS
 			/// loads the files and updates the splashscreen
 			void loadFiles(const StringList& list, QSplashScreen* splash_screen);
 
-    public slots:
-    	
+    public slots:    	
 			/// opens the file in a new window
-			void openFile(const String& file_name, bool in_new_window = true);
+      void addTOPPASFile(const String& file_name, bool in_new_window = true);
     	/// shows the dialog for opening files
       void openFileDialog();
 			/// shows the dialog for opening example files
 			void openExampleDialog();
       /// shows the dialog for creating a new file
-      void newFileDialog();
+      void newPipeline();
       /// shows the dialog for including another workflow in the currently opened one
-			void includeWorkflowDialog();
-			/// shows the dialog for saving the current file
-      void saveFileDialog();
-			/// shows the dialog for saving the current file as new file
-      void saveAsFileDialog(TOPPASWidget* tw = 0);
+      void includePipeline();
+			/// shows the dialog for saving the current file and updates the current tab caption
+      void saveCurrentPipelineAs();
+      /// saves the pipeline (determined by qt's sender mechanism)
+      void savePipeline();
       /// shows a file dialog for selecting the resource file to load
-      void loadResourceFileDialog();
+      void loadPipelineResourceFile();
       /// shows a file dialog for selecting the resource file to write to
-      void saveResourceFileDialog();
+      void savePipelineResourceFile();
       /// shows the preferences dialog
       void preferencesDialog();
     	/// changes the current path according to the currently active window/layer
@@ -145,14 +145,15 @@ namespace OpenMS
 			/// Called when a TOPP tool produces (error) output.
 			void updateTOPPOutputLog(const QString& out);
 			/// Called by the scene if the pipeline execution finishes successfully
-			void showSuccessLogMessage();
+      void showPipelineFinishedLogMessage();
 			/// Saves @p scene to the clipboard
 			void saveToClipboard(TOPPASScene* scene);
 			/// Sends the clipboard content to the sender of the connected signal
 			void sendClipboardContent();
-			/// Refreshes the parameters of the TOPP tools of the current workflow and stores an updated workflow including the current parameters
-			void refreshParameters();
-			
+      /// Refreshes the parameters of the TOPP tools of the current workflow and stores an updated workflow including the current parameters
+      void refreshParameters();
+      /// Opens each StringList of files in a new TOPPView instance
+      void openFilesInTOPPView(QVector<QStringList> all_files);
     protected slots:
 		
 			/** @name Tabbar slots
@@ -239,7 +240,27 @@ namespace OpenMS
       void showLogMessage_(LogState state, const String& heading, const String& body);
 
 			/// The clipboard
-			TOPPASScene* clipboard_;
+      TOPPASScene* clipboard_scene_;
+
+    public:
+      /// @name common functions unsed in TOPPAS and TOPPView
+      //@{
+      /// Creates and fills a tree widget with all available tools
+      static TOPPASTreeView* createTOPPToolsTreeWidget(QWidget* parent_widget = 0);
+
+      /// Saves the workflow in the provided TOPPASWidget to a user defined location.
+      /// Returns the full file name or "" if no valid one is selected.
+      static QString savePipelineAs(TOPPASWidget* w, QString current_path);
+
+      /// Loads and sets the resources of the TOPPASWidget.
+      static QString loadPipelineResourceFile(TOPPASWidget* w, QString current_path);
+
+      /// Saves the resources of the TOPPASWidget.
+      static QString savePipelineResourceFile(TOPPASWidget* w, QString current_path);
+
+      /// Refreshes the TOPP tools parameters of the pipeline
+      static QString refreshPipelineParameters(TOPPASWidget* tw, QString current_path);      
+      //@}
   }
   ; //class
 

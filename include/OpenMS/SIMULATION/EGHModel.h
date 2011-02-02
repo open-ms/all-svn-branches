@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -116,13 +116,13 @@ namespace OpenMS
      */
     inline void evaluateEGH_(CoordinateType & rt, CoordinateType & egh_value)
     {
-      if((sigma_square_2_ + tau_ * rt) > 0)
+      CoordinateType denominator = sigma_square_2_ + tau_ * rt;
+
+      if(denominator > 0)
       {
         // evaluate egh ->
         egh_value = height_ * exp(
-            (-1 * rt * rt)
-            /
-            (sigma_square_2_ + tau_ * rt)
+            (-1 * rt * rt) / denominator
             );
       }
       else

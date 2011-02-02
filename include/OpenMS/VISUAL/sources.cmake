@@ -10,6 +10,8 @@ HistogramWidget.h
 MetaDataBrowser.h
 MultiGradientSelector.h
 ParamEditor.h
+SpectraViewWidget.h
+SpectraIdentificationViewWidget.h
 Spectrum1DCanvas.h
 Spectrum1DWidget.h
 Spectrum2DCanvas.h
@@ -32,7 +34,11 @@ TOPPASTabBar.h
 TOPPASTreeView.h
 TOPPASResource.h
 TOPPASResources.h
+TOPPViewBehaviorInterface.h
+TOPPViewSpectraViewBehavior.h
+TOPPViewIdentificationViewBehavior.h
 EnhancedWorkspace.h
+EnhancedTabBarWidgetInterface.h
 )
 
 ### add path to the filenames
@@ -66,6 +72,8 @@ MetaDataBrowser.h
 MultiGradient.h
 MultiGradientSelector.h
 ParamEditor.h
+SpectraViewWidget.h
+SpectraIdentificationViewWidget.h
 Spectrum1DCanvas.h
 Spectrum1DWidget.h
 Spectrum2DCanvas.h

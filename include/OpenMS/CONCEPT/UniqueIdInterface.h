@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -66,8 +66,9 @@ class OPENMS_DLLAPI UniqueIdInterface
 
     /// Default constructor - the unique id will be <i>invalid</i>
     UniqueIdInterface()
+      : unique_id_(UInt64(INVALID))
     {
-      clearUniqueId();
+      //do not use clearUniqueId(), as it will be slower and creates a warranted valgrind warning;
     }
 
     /// Copy constructor - copies the unique id

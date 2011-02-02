@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -70,21 +70,21 @@ namespace OpenMS
 	  {
 		  case SpectrumCanvas::IM_SNAP:
 		    updateIntensityScale();
-		    AxisTickCalculator::calcGridLines(int_scale_.min_[0],int_scale_.max_[0],3,grid_intensity_,7,5); 
+        AxisTickCalculator::calcGridLines(int_scale_.min_[0],int_scale_.max_[0],grid_intensity_);
 		    break;
 		  case SpectrumCanvas::IM_NONE:
-		    AxisTickCalculator::calcGridLines(canvas_3d_.overall_data_range_.min_[2],canvas_3d_.overall_data_range_.max_[2],3,grid_intensity_,7,5); 
+        AxisTickCalculator::calcGridLines(canvas_3d_.overall_data_range_.min_[2],canvas_3d_.overall_data_range_.max_[2],grid_intensity_);
 		    break;
 		  case SpectrumCanvas::IM_PERCENTAGE:
-		    AxisTickCalculator::calcGridLines(0.0,100.0,3,grid_intensity_,7,5); 
+        AxisTickCalculator::calcGridLines(0.0, 100.0, grid_intensity_);
 		    break;
       case SpectrumCanvas::IM_LOG:
         cout << "IM_LOG not implemented in " << __PRETTY_FUNCTION__ << endl;
       break;
 	  }
 	  
-	  AxisTickCalculator::calcGridLines(canvas_3d_.visible_area_.min_[1],canvas_3d_.visible_area_.max_[1],3,grid_rt_,7,5);
-	  AxisTickCalculator::calcGridLines(canvas_3d_.visible_area_.min_[0],canvas_3d_.visible_area_.max_[0],3,grid_mz_,7,5);
+    AxisTickCalculator::calcGridLines(canvas_3d_.visible_area_.min_[1],canvas_3d_.visible_area_.max_[1],grid_rt_);
+    AxisTickCalculator::calcGridLines(canvas_3d_.visible_area_.min_[0],canvas_3d_.visible_area_.max_[0],grid_mz_);
 	}
 	
 	
@@ -535,11 +535,9 @@ namespace OpenMS
         Spectrum3DCanvas::ExperimentType::ConstAreaIterator end_it = layer.getPeakData()->areaEndConst();
         // count peaks in area
         int count = 0;
-        for (Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = begin_it; it != end_it; ++it)
-        {
-          count++;
-        }
-
+        for (Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = begin_it; 
+						 it != end_it; ++it, ++count) {}
+          
         int max_displayed_peaks = 100000;
         int step = 1;
         if (count > max_displayed_peaks)

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -25,7 +25,7 @@
 // $Authors: Marc Sturm, Mathias Walzer, Chris Bielow $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/APPLICATIONS/TOPPBase.h>
+#include <OpenMS/APPLICATIONS/ToolHandler.h>
 
 #include <QtCore/QProcess>
 
@@ -37,16 +37,16 @@ using namespace std;
 using namespace OpenMS;
 
 
-bool generate(const map<String,StringList>& tools, const String& prefix)
+bool generate(const ToolListType& tools, const String& prefix)
 {
 	bool errors_occured = false;
-	for (map<String,StringList>::const_iterator it=tools.begin(); it!=tools.end(); ++it)
+	for (ToolListType::const_iterator it=tools.begin(); it!=tools.end(); ++it)
 	{
 		//start process
 		QProcess process;
 		process.setProcessChannelMode(QProcess::MergedChannels);
     QStringList env = QProcess::systemEnvironment();
-    env << String("COLUMNS=110").toQString(); // Add an environment variable
+    env << String("COLUMNS=110").toQString(); // Add an environment variable (used by each TOPP tool to determine width of help text (see TOPPBase))
     process.setEnvironment(env);
  		process.start((it->first + " --help").toQString());
 		process.waitForFinished();
@@ -74,11 +74,11 @@ bool generate(const map<String,StringList>& tools, const String& prefix)
 int main (int , char** )
 {
 	//TOPP tools
-	map<String,StringList> topp_tools = TOPPBase::getToolList();
-	topp_tools["TOPPView"] = StringList();
-	topp_tools["TOPPAS"] = StringList();
+	ToolListType topp_tools = ToolHandler::getTOPPToolList();
+	topp_tools["TOPPView"] = Internal::ToolDescription();
+	topp_tools["TOPPAS"] = Internal::ToolDescription();
 	//UTILS
-	map<String,StringList> util_tools = TOPPBase::getUtilList();
+	ToolListType util_tools = ToolHandler::getUtilList();
 
   bool errors_occured = generate(topp_tools,"TOPP_") || generate(util_tools, "UTILS_");
 

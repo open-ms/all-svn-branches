@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -104,7 +104,7 @@ class TOPPMSSimulator
       registerOutputFile_("out_cntm","<file>","","output (simulated MS map) in featureXML format (contaminants)",false);
       
       registerStringOption_("type","<name>","","Labeling type\n",true);
-      setValidStrings_("type", getUtilList()[toolName_()] );
+      setValidStrings_("type", ToolHandler::getTypes(toolName_()) );
 
 			addEmptyLine_();
   		addText_("To specify intensity values for certain proteins,\nadd an abundance tag for the corresponding protein\nin the FASTA input file:");
@@ -165,7 +165,7 @@ class TOPPMSSimulator
 
         // parsed abundance
         MetaInfoInterface data;
-        data.setMetaValue("intensity", 100.0);
+        data.setMetaValue("intensity", 10000.0);
         
         // Look for a relative quantity given in the comment line of a FASTA entry
 				// e.g. >BSA [#120]
@@ -246,14 +246,12 @@ class TOPPMSSimulator
       }
       else
       {
-        // use gsl default seed to get reproducible exeperiments
+        // use gsl default seed to get reproducible experiments
         gsl_rng_set(rnd_gen.technical_rng, 0);
       }
 
-      // read contaminants
+      ms_simulation.setLogType(this->log_type_);
 
-      // select contaminants?? -> should this be done by MSSim??
-      
       // start simulation
       writeLog_("Starting simulation");
       StopWatch w;

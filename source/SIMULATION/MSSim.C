@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -36,9 +36,7 @@
 
 #include <OpenMS/SIMULATION/LABELING/BaseLabeler.h>
 
-#ifdef _DEBUG
-#define OPENMS_DEBUG_SIM_
-#endif
+//#define OPENMS_DEBUG_SIM_
 
 namespace OpenMS {
 
@@ -136,6 +134,13 @@ namespace OpenMS {
 
   void MSSim::simulate(const SimRandomNumberGenerator & rnd_gen, SampleChannels& channels, const String &labeling_name)
   {
+    /*todo: move to a global config file or into INI file */
+    Log_fatal.setPrefix("%S: ");
+    Log_error.setPrefix("%S: ");
+    Log_warn.setPrefix("%S: ");
+    Log_info.setPrefix("%S: ");
+    Log_debug.setPrefix("%S: ");
+
     /*
       General progress should be
         1. Digest Proteins
@@ -146,6 +151,10 @@ namespace OpenMS {
         6. select features for MS2
         7. generate MS2 signals for selected features
      */
+
+    // re-distribute synced parameters:
+    //param_.store("c:/mssim_param.ini"); // test reconstruction
+    syncParams_(param_, false);
     
     // instanciate and pass params before doing any actual work
     // ... this way, each module can throw an Exception when the parameters
@@ -158,8 +167,11 @@ namespace OpenMS {
 		dt_sim.setParameters(param_.copy("Detectability:",true));
     IonizationSimulation ion_sim(rnd_gen);
     ion_sim.setParameters(param_.copy("Ionization:", true));
+    ion_sim.setLogType(this->getLogType());
     RawMSSignalSimulation raw_sim(rnd_gen);
     raw_sim.setParameters(param_.copy("RawSignal:", true));
+    raw_sim.setLogType(this->getLogType());
+    raw_sim.loadContaminants(); // check if the file is valid (if not, an error is raised here instead of half-way through simulation)
 
 
     labeler_ = Factory<BaseLabeler>::create(labeling_name);
@@ -169,10 +181,6 @@ namespace OpenMS {
 
     // check parameters ..
     labeler_->preCheck(param_);
-
-		// re-distribute synced parameters:
-		syncParams_(param_, false);
-		//param_.store("c:/mssim_param.ini"); // test reconstruction
 
     // convert sample proteins into an empty FeatureMap with ProteinHits
     for(SampleChannels::const_iterator channel_iterator = channels.begin() ; channel_iterator != channels.end() ; ++channel_iterator)
@@ -245,6 +253,22 @@ namespace OpenMS {
 
     labeler_->postRawTandemMSHook(feature_maps_,experiment_);
 
+    
+    // some last fixing of meta-values (this is impossible to do before as we do not know the final number of scans)
+
+    for (Size i=0;i<feature_maps_[0].size();++i)
+    {
+      Feature& f = feature_maps_[0][i];
+      PeptideIdentification& pi = f.getPeptideIdentifications()[0];
+      // search for closest scan index:
+      MSSimExperiment::ConstIterator it_rt = experiment_.RTBegin(f.getRT());
+      SignedSize scan_index = std::distance<MSSimExperiment::ConstIterator> (experiment_.begin(), it_rt);
+      pi.setMetaValue("RT_index", scan_index);
+      pi.setMetaValue("RT", f.getRT());
+    }
+
+
+
     LOG_INFO << "Final number of simulated features: " << feature_maps_[0].size() << "\n";
 
   }
@@ -263,7 +287,6 @@ namespace OpenMS {
       protHit=(it->second);
       // additional meta values:
       protHit.setMetaValue("description", it->first.description);
-      std::cout << protHit.getAccession() << " " << protHit.getSequence() << " " << double(protHit.getMetaValue("intensity")) << ::std::endl;
       protIdent.insertHit(protHit);
 
 		}

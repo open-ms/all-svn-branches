@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -56,9 +56,13 @@ namespace OpenMS
       defaults_.setValue("egh:A",100.0f,"Horizontal distance between the vertical line at the peak maximum (H) and the leading line where the EGH has H*alpha (e.g. the left half-max for alpha=0.5).");
       defaults_.setValue("egh:B",100.0f,"Horizontal distance between the vertical line at the peak maximum (H) and the trailing line where the EGH has H*alpha (e.g. the right half-max for alpha=0.5).");
       defaults_.setValue("egh:alpha", 0.5, "See egh:A and egh:B.");
+      defaults_.setMinFloat("egh:alpha",0.0);
+      defaults_.setMaxFloat("egh:alpha",1.0);
+
 
       defaults_.setValue("egh:tau",0.0, "Time constant of the exponential decay (tau is zero for gaussian peaks).", StringList::create("advanced"));
       defaults_.setValue("egh:sigma_square", 1803.4, "Standard deviation of the peak.", StringList::create("advanced"));
+      defaults_.setMinFloat("egh:sigma_square",0.0);
 
       defaults_.setValue("bounding_box:compute","true", "If true, the EGHModel will compute its own bounding box.");
       defaults_.setValidStrings("bounding_box:compute", StringList::create("true,false"));
@@ -232,7 +236,7 @@ namespace OpenMS
       egh_value = height_;
       min_ = - A_;
 
-      while(egh_value > threshold && egh_value > 1)
+      while(egh_value > threshold)
       {
         min_ -= A_;
 //        LOG_DEBUG << "Decreased feature (" << apex_rt_ << ") min_ to " << (min_ + apex_rt_) << "\n";
@@ -245,7 +249,7 @@ namespace OpenMS
       // go right .. B_ defines the step width
       egh_value = height_;
       max_ = B_;
-      while(egh_value > threshold && egh_value > 1)
+      while(egh_value > threshold)
       {
         max_ += B_;
 //        LOG_DEBUG << "Increased feature (" << apex_rt_ << ") max_ to " << (max_ + apex_rt_) << "\n";

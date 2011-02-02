@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -71,11 +71,11 @@ namespace OpenMS
 			void createDirs();
 			/// Sets the topological sort number and removes invalidated tmp files
 			virtual void setTopoNr(UInt nr);
-      /// Opens the folders of the input files
+      /// Opens the folders of the output files
       void openContainingFolder();
-      /// Opens the files in TOPPView
-			void openInTOPPView();
-			
+      /// Returns the vector of output files
+      const QStringList& getAllWrittenOutputFileNames();
+
 		public slots:
 		
 			//documented in base class

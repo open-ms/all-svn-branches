@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -166,7 +166,9 @@ namespace OpenMS
 			return threshold_;
 		}
 
-		/// set the threshold
+    /// set the threshold (in terms of distance)
+    /// The default is 1, i.e. only at similarity 0 the clustering stops. 
+    /// Warning: clustering is not supported by all methods yet (e.g. SingleLinkage does ignore it).
 		void setThreshold(double x)
 		{
 			threshold_= x;

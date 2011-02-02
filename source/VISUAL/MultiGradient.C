@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -107,6 +107,7 @@ namespace OpenMS
 		if (interpolation_mode_==IM_LINEAR)
 		{
       map<DoubleReal, QColor>::const_iterator it1 = pos_col_.lower_bound(position);
+
       if (std::abs(it1->first-position) < numeric_limits<DoubleReal>::epsilon())  // compare double
 			{
 				return it1->second;
@@ -127,9 +128,7 @@ namespace OpenMS
       map<DoubleReal,QColor>::const_iterator it = pos_col_.upper_bound(position);
 			--it;
 			return it->second;
-		}
-		
-		
+		}				
 	}
 
 	QColor MultiGradient::interpolatedColorAt(DoubleReal position, DoubleReal min, DoubleReal max) const

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -28,9 +28,10 @@
 #ifndef OPENMS_SIMULATION_IONIZATIONSIMULATION_H
 #define OPENMS_SIMULATION_IONIZATIONSIMULATION_H
 
+#include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
-#include <OpenMS/SIMULATION/SimTypes.h>
 #include <OpenMS/DATASTRUCTURES/Adduct.h>
+#include <OpenMS/SIMULATION/SimTypes.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
 
 // STL includes
@@ -53,7 +54,8 @@ namespace OpenMS {
    @ingroup Simulation
   */
   class OPENMS_DLLAPI IonizationSimulation
-    : public DefaultParamHandler
+    : public DefaultParamHandler,
+      public ProgressLogger
   {
 
   public: 

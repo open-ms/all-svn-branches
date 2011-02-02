@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -79,7 +79,7 @@ namespace OpenMS
     defaults_.setValue("dot:feature_icon_size", 4, "Icon size used for features and consensus features.");
     defaults_.setMinInt("dot:feature_icon_size",1);
     defaults_.setMaxInt("dot:feature_icon_size",999);
-    defaults_.setValue("mapping_of_mz_to","x_axis","Determines which axis is the m/z axis.");
+    defaults_.setValue("mapping_of_mz_to","y_axis","Determines which axis is the m/z axis.");
 		defaults_.setValidStrings("mapping_of_mz_to", StringList::create("x_axis,y_axis"));
 		defaultsToParam_();
 		setName("Spectrum2DCanvas");
@@ -251,12 +251,18 @@ namespace OpenMS
 		
 		if (layer.type==LayerData::DT_PEAK) //peaks
 		{
-			//renaming some values for readability
+      // renaming some values for readability
       const ExperimentType& peak_map = *layer.getPeakData();
       const DoubleReal rt_min = visible_area_.minPosition()[1];
       const DoubleReal rt_max = visible_area_.maxPosition()[1];
       const DoubleReal mz_min = visible_area_.minPosition()[0];
       const DoubleReal mz_max = visible_area_.maxPosition()[0];
+
+      // skip empty peak maps
+      if (peak_map.size() == 0)
+      {
+        return;
+      }
 
 			//determine number of pixels for each dimension
       Size rt_pixel_count = image_height;
@@ -294,15 +300,15 @@ namespace OpenMS
         for(Size i=0; i!= peak_map.size(); ++i)
         {
           // skipp non MS1 and empty spectra
-          if (peak_map[i].getMSLevel()!=1 || peak_map[i].size()==0)
+          if (peak_map[i].getMSLevel() != 1 || peak_map[i].size() == 0)
           {
             continue;
           }          
           DoubleReal current_average_mz_spacing =  (peak_map[i][peak_map[i].size()-1].getMZ()- peak_map[i][0].getMZ())/peak_map[i].size();
           mz_spacing.push_back(current_average_mz_spacing);
         }
-        sort(mz_spacing.begin(), mz_spacing.end());        
-        min_spacing_mz = mz_spacing[0];
+        sort(mz_spacing.begin(), mz_spacing.end());
+        min_spacing_mz = mz_spacing.size() != 0 ? mz_spacing[0] : 1.0;
 
 #ifdef DEBUG_TOPPVIEW
         cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
@@ -418,31 +424,33 @@ namespace OpenMS
     const ExperimentType& peak_map = *layer.getPeakData();
 
     for (ExperimentType::ConstIterator i = peak_map.RTBegin(visible_area_.minPosition()[1]);
-    i != peak_map.RTEnd(visible_area_.maxPosition()[1]);
-    ++i)
+      i != peak_map.RTEnd(visible_area_.maxPosition()[1]);
+      ++i)
     {
       //this is an MS/MS scan
       if (i->getMSLevel()==2 && !i->getPrecursors().empty())
       {
-        ExperimentType::ConstIterator prec=peak_map.getPrecursorSpectrum(i);
-        if (prec!=peak_map.end())
+        ExperimentType::ConstIterator prec = peak_map.getPrecursorSpectrum(i);
+
+        if (prec != peak_map.end())
         {
-          QPoint pos;
-          dataToWidget_(i->getPrecursors()[0].getMZ(), prec->getRT(),pos);
+          QPoint pos_ms1;
+          dataToWidget_(i->getPrecursors()[0].getMZ(), prec->getRT(), pos_ms1);  // position of precursor in MS1
+          QPoint pos_ms2;
+          dataToWidget_(i->getPrecursors()[0].getMZ(), i->getRT(), pos_ms2);   // position of precursor in MS2
           QPen p;
           p.setColor(Qt::black);
           painter.setPen(p);
-          painter.drawLine(pos.x(),pos.y()+3,pos.x()+3,pos.y());
-          painter.drawLine(pos.x()+3,pos.y(),pos.x(),pos.y()-3);
-          painter.drawLine(pos.x(),pos.y()-3,pos.x()-3,pos.y());
-          painter.drawLine(pos.x()-3,pos.y(),pos.x(),pos.y()+3);
 
-          p.setColor(Qt::white);
-          painter.setPen(p);
-          painter.drawLine(pos.x(),pos.y()+2,pos.x()+2,pos.y());
-          painter.drawLine(pos.x()+2,pos.y(),pos.x(),pos.y()-2);
-          painter.drawLine(pos.x(),pos.y()-2,pos.x()-2,pos.y());
-          painter.drawLine(pos.x()-2,pos.y(),pos.x(),pos.y()+2);
+          // diamond shape in MS1
+          painter.drawLine(pos_ms1.x(), pos_ms1.y()+3, pos_ms1.x()+3, pos_ms1.y());
+          painter.drawLine(pos_ms1.x()+3, pos_ms1.y(), pos_ms1.x(), pos_ms1.y()-3);
+          painter.drawLine(pos_ms1.x(), pos_ms1.y()-3, pos_ms1.x()-3, pos_ms1.y());
+          painter.drawLine(pos_ms1.x()-3, pos_ms1.y(), pos_ms1.x(), pos_ms1.y()+3);
+
+          // rt position of corresponding MS2
+          painter.drawLine(pos_ms2.x()-3, pos_ms2.y(), pos_ms2.x()+3, pos_ms2.y());
+          painter.drawLine(pos_ms1.x(), pos_ms1.y(), pos_ms2.x(), pos_ms2.y());
         }
       }
     }
@@ -1170,7 +1178,10 @@ namespace OpenMS
 
 		//overall values update
 		recalculateRanges_(0,1,2);
-		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
+    if (layers_.size() == 1)
+    {
+      resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
+    }
 
 		if (getLayerCount()==2)
 		{
@@ -1978,6 +1989,11 @@ namespace OpenMS
 			//find nearest survey scan
       SignedSize size = getCurrentLayer().getPeakData()->size();
       Int current = getCurrentLayer().getPeakData()->RTBegin(rt)-getCurrentLayer().getPeakData()->begin();
+      if (current == size)  // if only one element is present RTBegin points to one after the last element (see RTBegin implementation)
+      {
+        current = 0;
+      }
+
 			SignedSize i=0;
 			while (current+i<size || current-i>=0)
 			{
@@ -2056,14 +2072,18 @@ namespace OpenMS
       for (ExperimentType::ConstIterator it=getCurrentLayer().getPeakData()->RTBegin(rt_min); it!=getCurrentLayer().getPeakData()->RTEnd(rt_max); ++it)
 			{
 				DoubleReal mz = 0.0;
-				if (!it->getPrecursors().empty()) mz = it->getPrecursors()[0].getMZ();
-				if (it->getMSLevel()>1 && mz>=mz_min && mz<=mz_max)
+				if (!it->getPrecursors().empty()) 
+        {
+          mz = it->getPrecursors()[0].getMZ();
+        }
+
+				if (it->getMSLevel()>1 && mz >= mz_min && mz <= mz_max)
 				{
 					a = msn_scans->addAction(QString("RT: ") + QString::number(it->getRT()) + " mz: " + QString::number(mz));
                                         a->setData((int)(it-getCurrentLayer().getPeakData()->begin()));
 					a = msn_meta->addAction(QString("RT: ") + QString::number(it->getRT()) + " mz: " + QString::number(mz));
                                         a->setData((int)(it-getCurrentLayer().getPeakData()->begin()));
-					item_added=true;
+					item_added = true;
 				}
 			}
 			if (item_added)

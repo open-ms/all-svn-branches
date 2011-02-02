@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -137,7 +137,9 @@ namespace OpenMS
 				for (ConsensusMap::ConstIterator feat_it = consensus.begin();
 						 feat_it != consensus.end(); ++feat_it)
 				{
-					id_lookup[i][feat_it->getUniqueId()] = feat_it;
+          // do NOT use 'id_lookup[i][feat_it->getUniqueId()]=feat_it;' here as you will get
+          // "attempt to copy- construct an iterator from a singular iterator." in STL debug mode
+					id_lookup[i].insert(std::pair<UInt64, ConsensusMap::ConstIterator>(feat_it->getUniqueId(), feat_it));
 				}			
 			}
 			// adjust the consensus features:

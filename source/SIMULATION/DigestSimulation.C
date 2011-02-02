@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -67,7 +67,7 @@ namespace OpenMS {
 		defaults_.setValidStrings("enzyme", enzymes);
 		
 		// cleavages
-    defaults_.setValue("model", "trained", "The cleavage model to use for digestion. 'Trained' is based on a log likelihood model (see DOI:10.1021/pr060507u).");
+    defaults_.setValue("model", "naive", "The cleavage model to use for digestion. 'Trained' is based on a log likelihood model (see DOI:10.1021/pr060507u).");
     defaults_.setValidStrings("model", StringList::create("trained,naive"));
 
     defaults_.setValue("model_trained:threshold",0.50,"Model threshold for calling a cleavage. Higher values increase the number of cleavages. -2 will give no cleavages, +4 almost full cleavage.");
@@ -86,6 +86,8 @@ namespace OpenMS {
 
   void DigestSimulation::digest(FeatureMapSim & feature_map)
   {
+    LOG_INFO << "Digest Simulation ... started" << std::endl;
+
 		if ((String)param_.getValue("enzyme") == String("none"))
 		{
       //peptides = proteins;

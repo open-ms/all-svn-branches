@@ -9,7 +9,7 @@ INCLUDE(Dart)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 include(executables.cmake)
 
-if (CMAKE_COMPILER_IS_INTELCXX OR CMAKE_COMPILER_IS_GNUCXX)
+if (CMAKE_COMPILER_IS_INTELCXX OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
 	set(CMAKE_CXX_FLAGS_RELEASE_SAVED ${CMAKE_CXX_FLAGS_RELEASE})
 	#disable optimization for tests
 	set(CMAKE_CXX_FLAGS_RELEASE "-O0")
@@ -81,6 +81,9 @@ foreach(i ${TEST_executables})
 	add_executable(${i} ${i}.C)
 	target_link_libraries(${i} ${OPENMS_LIBRARIES})
 	add_test(${i} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${i})
+  if (OPENMP_FOUND AND NOT MSVC)
+		set_target_properties(${i} PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})
+	endif()  
 endforeach(i)
 
 ## GUI tests special treatment
@@ -97,6 +100,9 @@ foreach(i ${GUI_executables_list})
 	add_executable(${i} GUI/${i}.C)
 	target_link_libraries(${i} ${OPENMS_LIBRARIES})
 	add_test(${i} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${i})
+  if (OPENMP_FOUND AND NOT MSVC)
+		set_target_properties(${i} PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})
+	endif()  
 endforeach(i)
 
 ### GUI tests

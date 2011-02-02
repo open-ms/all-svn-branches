@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -110,7 +110,7 @@ class TOPPFileConverter
 
 	void registerOptionsAndFlags_()
 	{
-    addText_("All conversions are possible, but you might loose information!");
+    addText_("All conversions are possible, but you might lose information!");
     addText_("");
 		registerInputFile_("in","<file>","","input file ");
 		registerStringOption_("in_type", "<type>", "", "input file type -- default: determined from file extension or content\n", false);
@@ -296,24 +296,7 @@ class TOPPFileConverter
 		  }
 		  else if (in_type == FileTypes::CONSENSUSXML)
 		  {
-				fm.resize(cm.size());
-				// fm.MetaInfoInterface::operator=(cm); // not available ...
-				fm.DocumentIdentifier::operator=(cm);
-				fm.UniqueIdInterface::operator=(cm);
-				fm.setProteinIdentifications(cm.getProteinIdentifications());
-				fm.setUnassignedPeptideIdentifications(cm.getUnassignedPeptideIdentifications());
-				for ( Size i = 0; i < cm.size(); ++i )
-				{
-					Feature & f = fm[i];
-					const ConsensusFeature & c = cm[i];
-					f.RichPeak2D::operator=(c);
-					f.setCharge(c.getCharge());
-					f.setOverallQuality(c.getQuality());
-					f.setPeptideIdentifications(c.getPeptideIdentifications());
-				}
-
-				// TODO Discuss: Arguably we do NOT want to assign new unique ids?
-				// fm.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+        ConsensusMap::convert(cm, true, fm);
 		  }
 		  else // not loaded as feature map or consensus map
 		  {

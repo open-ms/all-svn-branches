@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -85,10 +85,13 @@ START_SECTION((virtual void alignPeptideIdentifications(std::vector<std::vector<
 
 	Param params = aligner->getParameters();
 	params.setValue("peptide_score_threshold", 0.0);
-	params.setValue("num_breakpoints", 10);
 	aligner->setParameters(params);
 	aligner->setLogType(ProgressLogger::CMD);
 	aligner->alignPeptideIdentifications(peptides, transforms);
+	params.clear();
+	params.setValue("num_breakpoints", 10);
+	aligner->fitModel("b_spline", params, transforms);
+	aligner->transformPeptideIdentifications(peptides, transforms);
 // 	cout << "Output (transformed):\n";
 // 	for (Size i = 0; i < peptides[0].size(); ++i)
 // 	{

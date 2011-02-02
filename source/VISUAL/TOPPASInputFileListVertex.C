@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -36,6 +36,7 @@
 #include <QtCore/QDir>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QMessageBox>
 
 namespace OpenMS
 {
@@ -98,7 +99,7 @@ namespace OpenMS
 		}
 	}
 	
-	const QStringList& TOPPASInputFileListVertex::getFilenames()
+  const QStringList& TOPPASInputFileListVertex::getInputFilenames()
 	{
 		return files_;
 	}
@@ -159,35 +160,17 @@ namespace OpenMS
     for (int i=0;i<files_.size();++i)
     { // collect unique directories
       QFileInfo fi(files_[i]);
-      directories.insert(String(QDir::toNativeSeparators(fi.absolutePath())));
+      directories.insert(String(QFileInfo(fi.canonicalFilePath()).path()));
     }
 
     // open them
     for (std::set<String>::const_iterator it=directories.begin();it!=directories.end();++it)
     {
       QString path = QDir::toNativeSeparators(it->toQString());
-      if (QDir(path).exists()) QDesktopServices::openUrl(QUrl("file:///" + path));
-      else (std::cerr << "dir: " << String(path) << " does not exist" << "\n");
-    }
-	}
-
-	void TOPPASInputFileListVertex::openInTOPPView()
-	{
-		QProcess* p = new QProcess();
-		p->setProcessChannelMode(QProcess::ForwardedChannels);
-
-    QString toppview_executable;
-    toppview_executable = "TOPPView";
-
-    p->start(toppview_executable, files_);
-    if(!p->waitForStarted())
-    {
-      // execution failed
-      std::cerr << p->errorString().toStdString() << std::endl;
-#if defined(Q_WS_MAC)
-      std::cerr << "Please check if TOPPAS and TOPPView are located in the same directory" << std::endl;
-#endif
-
+      if (!QDir(path).exists() || (!QDesktopServices::openUrl(QUrl("file:///" + path, QUrl::TolerantMode))))
+      {
+        QMessageBox::warning(0, "Open Folder Error", String("The folder " + path + " could not be opened!").toQString());
+      }
     }
 	}
 	

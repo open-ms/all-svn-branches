@@ -358,6 +358,7 @@ set(analysis_executables_list
 	SimplePairFinder_test
 	StablePairFinder_test
 	TransformationDescription_test
+	TransformationModel_test
 	InclusionExclusionList_test
 )
 
@@ -421,7 +422,6 @@ set(simulation_executables_list
   EGHModel_test
   EGHFitter1D_test
   IonizationSimulation_test
-  IsotopeModelGeneral_test
   MSSim_test
   RTSimulation_test
   RawMSSignalSimulation_test

@@ -69,10 +69,10 @@ include (cmake/macros.cmake)
 set(CF_OPENMS_ADDCXX_FLAGS) ## see OpenMS/cmake/OpenMSConfig.cmake.in to see how its configured and used (i.e. as OPENMS_ADDCXX_FLAGS)
 
 if (CMAKE_COMPILER_IS_GNUCXX)
-	if (MT_ENABLE_CUDA)
-		add_definitions(-Wall -Wextra -Wno-non-virtual-dtor -Wno-long-long) # necessary since CUDA contains non-pedantic code
-	else()
-		add_definitions(-Wall -Wextra -Wno-non-virtual-dtor -Wno-long-long --pedantic)
+	
+  add_definitions(-Wall -Wextra -Wno-non-virtual-dtor -Wno-long-long -Wno-variadic-macros)
+  if (NOT MT_ENABLE_CUDA)  # necessary since CUDA contains non-pedantic code
+		add_definitions(--pedantic)
 	endif()
 
 	## Recommended setting for eclipse, see http://www.cmake.org/Wiki/CMake:Eclipse
@@ -114,7 +114,8 @@ elseif (MSVC)
     ## enable SSE1 on 32bit, on 64bit the compiler flag does not exist
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE")
   endif()
-    
+elseif ("${CMAKE_C_COMPILER_ID}" MATCHES "Clang")    
+  set(CMAKE_COMPILER_IS_CLANG true CACHE INTERNAL "Is CLang compiler (clang++)")
 else()
 	set(CMAKE_COMPILER_IS_INTELCXX true CACHE INTERNAL "Is Intel C++ compiler (icpc)")
 endif()
@@ -276,7 +277,7 @@ endif()
 FIND_PATH(CONTRIB_CONFIRM_DIR README_contrib1.7.txt PATHS ${CONTRIB_DIR} NO_DEFAULT_PATH)
 
 if ("${CONTRIB_CONFIRM_DIR}" STREQUAL "CONTRIB_CONFIRM_DIR-NOTFOUND")
-	message(FATAL_ERROR "The path to the Contrib directory (${CONTRIB_DIR}) is not correct or you need to update your contrib!\nNote: If you are using a relative path to your Contrib binary directory, it must be relative to the OpenMS source directory!")
+	message(FATAL_ERROR "Error finding the contrib! Either\n  - The path to the Contrib binary(!) directory is not correct (we looked at '${CONTRIB_DIR}')\n  - You need to compile the contrib first!\n  - You need to update your contrib!\nNote: If you are using a relative path to your Contrib binary directory, it must be relative to the OpenMS source directory!")
 endif()
 
 set(CONTRIB_INCLUDE_DIR ${CONTRIB_DIR}/include/ CACHE INTERNAL "contrib include dir")
@@ -361,8 +362,9 @@ SET(QT_USE_QTXML 1)
 SET(QT_USE_QTNETWORK 1)
 SET(QT_USE_QTSQL 1)
 SET(QT_USE_QTOPENGL 1)
+SET(QT_USE_QTSVG 1)
 SET(QT_USE_QTTEST 1)
-SET(QT_MIN_VERSION "4.3.0")
+SET(QT_MIN_VERSION "4.5.0")
 FIND_PACKAGE(Qt4 REQUIRED)
 INCLUDE(${QT_USE_FILE})
 INCLUDE(UseQt4)

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -183,16 +183,28 @@ namespace OpenMS
         return annotations_1d[current_spectrum];
       }
 
-      /// Returns a mutable reference to the current spectrum (1d view)
-      inline ExperimentType::SpectrumType& getCurrentSpectrum()
-      {
-        return (*peaks)[current_spectrum];
-      }
-
       /// Returns a mutable reference to the annotations of the current spectrum (1d view)
       inline Annotations1DContainer& getCurrentAnnotations()
       {
         return annotations_1d[current_spectrum];
+      }
+
+      /// Returns a const reference to the annotations of the current spectrum (1d view)
+      inline const Annotations1DContainer& getAnnotations(Size spectrum_index) const
+      {
+        return annotations_1d[spectrum_index];
+      }
+
+      /// Returns a mutable reference to the annotations of the current spectrum (1d view)
+      inline Annotations1DContainer& getAnnotations(Size spectrum_index)
+      {
+        return annotations_1d[spectrum_index];
+      }
+
+      /// Returns a mutable reference to the current spectrum (1d view)
+      inline ExperimentType::SpectrumType& getCurrentSpectrum()
+      {
+        return (*peaks)[current_spectrum];
       }
 
       /// if this layer is visible

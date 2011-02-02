@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -277,8 +277,8 @@ class TOPPSILACAnalyzer
 
     void registerOptionsAndFlags_()
     {
-	  registerStringOption_("type","<name>","","SILAC experiment type\n",true);
-	  setValidStrings_("type", getToolList()[toolName_()] );
+	    registerStringOption_("type","<name>","","SILAC experiment type", true);
+	    setValidStrings_("type", ToolHandler::getTypes(toolName_()) );
 
       registerInputFile_("in","<file>","","input file");
       setValidFormats_("in",StringList::create("mzML"));
@@ -550,7 +550,7 @@ class TOPPSILACAnalyzer
         //-------------------------------------------------------------
         best_n = int(cluster_number_scaling * best_n); // slightly increase cluster number
         std::vector< std::vector<Size> > best_n_clusters;
-        ca.cut(best_n,best_n_clusters,tree);
+        ca.cut(best_n, tree, best_n_clusters);
         cluster_number[charge] = best_n;
 
         //-------------------------------------------------------------

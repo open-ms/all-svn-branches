@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -155,9 +155,15 @@ namespace OpenMS
 				 it != aa_mods.end(); ++it)
 		{
 			const ResidueModification& mod = ModificationsDB::getInstance()->getModification(*it);
-			f << "<aminoacid_modification aminoacid=\"" << mod.getOrigin()
-				<< "\" massdiff=\"" << precisionWrapper(mod.getDiffMonoMass()) << "\" mass=\""
-				<< precisionWrapper(mod.getMonoMass())
+
+      // compute mass of modified residue
+      EmpiricalFormula ef = ResidueDB::getInstance()->getResidue(mod.getOrigin())->getFormula(Residue::Internal);
+      ef += mod.getDiffFormula();
+
+      f << "      "
+			  << "<aminoacid_modification aminoacid=\"" << mod.getOrigin()
+        << "\" massdiff=\"" << precisionWrapper(mod.getDiffMonoMass()) << "\" mass=\""
+        << precisionWrapper(ef.getMonoWeight())
 				<< "\" variable=\"Y\" binary=\"N\" description=\"" << *it << "\"/>"
 				<< "\n";
 		}
@@ -166,7 +172,8 @@ namespace OpenMS
 		{
 			const ResidueModification& mod = ModificationsDB::getInstance()->
 				getModification(*it);
-			f << "<terminal_modification terminus=\"n\" massdiff=\""
+      f << "      "
+			  << "<terminal_modification terminus=\"n\" massdiff=\""
 				<< precisionWrapper(mod.getDiffMonoMass()) << "\" mass=\"" << precisionWrapper(mod.getMonoMass())
 				<< "\" variable=\"Y\" description=\"" << *it
 				<< "\" protein_terminus=\"\"/>" << "\n";
@@ -175,7 +182,8 @@ namespace OpenMS
 		for (set<String>::const_iterator it = c_term_mods.begin(); it != c_term_mods.end(); ++it)
 		{
 			const ResidueModification& mod = ModificationsDB::getInstance()->getModification(*it);
-			f << "<terminal_modification terminus=\"c\" massdiff=\""
+      f << "      "
+        << "<terminal_modification terminus=\"c\" massdiff=\""
 				<< precisionWrapper(mod.getDiffMonoMass()) << "\" mass=\"" << precisionWrapper(mod.getMonoMass())
 				<< "\" variable=\"Y\" description=\"" << *it
 				<< "\" protein_terminus=\"\"/>" << "\n";
@@ -185,27 +193,49 @@ namespace OpenMS
 		f << "    <analysis_timestamp analysis=\"peptideprophet\" time=\"2007-12-05T17:49:52\" id=\"1\"/>" << "\n";
 		
 
-		Size count(1);
+		Int count(1);
 		for (vector<PeptideIdentification>::const_iterator it = peptide_ids.begin();
-				 it != peptide_ids.end(); ++it, count++)
+				 it != peptide_ids.end(); ++it, ++count)
 		{
 			if (it->getHits().size() > 0)
 			{
+        if (it->getHits().size() > 1)
+        {
+          LOG_WARN << "PepXMLFile::store() : only writing the first peptide hit of " << it->getHits().size() << " for PeptideID# " << count << "\n";
+        }
 				PeptideHit h = *it->getHits().begin();
 				AASequence seq = h.getSequence();
 				DoubleReal precursor_neutral_mass = seq.getMonoWeight();
 
-				f << "		<spectrum_query spectrum=\"" << count << "\" start_scan=\""
-					<< count << "\" end_scan=\"" << count
-					<< "\" precursor_neutral_mass=\"" << precisionWrapper(precursor_neutral_mass)
-					<< "\" assumed_charge=\"" << h.getCharge() << "\" index=\"" << count
-					<< "\">" << "\n";
+        Int scan_index;
+        if(it->metaValueExists("RT_index"))
+        {
+          scan_index = it->getMetaValue("RT_index");
+        }
+        else
+        {
+          scan_index = count;
+        }
+
+				f << "		<spectrum_query spectrum=\"" << count << "\""
+          << " start_scan=\"" << scan_index << "\""
+          << " end_scan=\"" << scan_index << "\""
+					<< " precursor_neutral_mass=\"" << precisionWrapper(precursor_neutral_mass) << "\""
+          << " assumed_charge=\"" << h.getCharge() << "\" index=\"" << count << "\"";
+
+        DataValue dv = it->getMetaValue("RT");
+        if (dv!=DataValue::EMPTY)
+        {
+          f << " retention_time_sec=\"" << dv << "\" ";
+        }
+
+        f << ">\n";
 				f << " 		<search_result>" << "\n";
 				f << "			<search_hit hit_rank=\"1\" peptide=\""
 					<< seq.toUnmodifiedString() << "\" peptide_prev_aa=\""
 					<< h.getAABefore() << "\" peptide_next_aa=\"" << h.getAAAfter()
 					<< "\" protein=\"Protein1\" num_tot_proteins=\"1\" num_matched_ions=\"0\" tot_num_ions=\"0\" calc_neutral_pep_mass=\"" << precisionWrapper(precursor_neutral_mass)
-					<< "\" massdiff=\"\" num_tol_term=\"0\" num_missed_cleavages=\"0\" is_rejected=\"0\" protein_descr=\"Protein No. 1\">" << "\n";
+          << "\" massdiff=\"0.0\" num_tol_term=\"0\" num_missed_cleavages=\"0\" is_rejected=\"0\" protein_descr=\"Protein No. 1\">" << "\n";
 				if (seq.isModified())
 				{
 					f << "      <modification_info modified_peptide=\""
@@ -231,8 +261,9 @@ namespace OpenMS
 					{
 						if (seq[i].isModified())
 						{
-							const ResidueModification& mod = ModificationsDB::getInstance()->getModification(seq[i].getOneLetterCode(), seq[i].getModification(), ResidueModification::ANYWHERE);
-							f << "         <mod_aminoacid_mass position=\"" << i
+              const ResidueModification& mod = ModificationsDB::getInstance()->getModification(seq[i].getOneLetterCode(), seq[i].getModification(), ResidueModification::ANYWHERE);
+              // the modification position is 1-based
+              f << "         <mod_aminoacid_mass position=\"" << (i+1)
 								<< "\" mass=\"" << 
 								precisionWrapper(mod.getMonoMass() + seq[i].getMonoWeight(Residue::Internal)) << "\"/>" << "\n";
 						}
@@ -461,13 +492,20 @@ namespace OpenMS
 			DoubleReal value;
 
 			// TODO: deal with different scores
-			if (name == "hyperscore")
-			{ // X!Tandem score
+			if (name == "expect")
+			{ // X!Tandem or Mascot E-value
 				value = attributeAsDouble_(attributes, "value");
 				peptide_hit_.setScore(value);
-				current_peptide_.setScoreType(name); // add "X!Tandem" to name?
-				current_peptide_.setHigherScoreBetter(true);
+				current_peptide_.setScoreType(name);
+				current_peptide_.setHigherScoreBetter(false);
 			}
+			// if (name == "hyperscore")
+			// { // X!Tandem score
+			// 	value = attributeAsDouble_(attributes, "value");
+			// 	peptide_hit_.setScore(value);
+			// 	current_peptide_.setScoreType(name); // add "X!Tandem" to name?
+			// 	current_peptide_.setHigherScoreBetter(true);
+			// }
 			else if (name == "xcorr")
 			{ // Sequest score
 				value = attributeAsDouble_(attributes, "value");
@@ -592,7 +630,7 @@ namespace OpenMS
 		else if (element == "mod_aminoacid_mass") // parent: "modification_info" (in "search_hit")
 		{
 			DoubleReal modification_mass = attributeAsDouble_(attributes, "mass");
-			Size 			 modification_position = attributeAsInt_(attributes, "position");
+      Size 			 modification_position = attributeAsInt_(attributes, "position");
       String     origin = String(current_sequence_[modification_position - 1]);
 			String 		 temp_description = "";
 			
@@ -838,7 +876,7 @@ namespace OpenMS
 		{
 			AASequence temp_aa_sequence = AASequence(current_sequence_);
 			
-			// modification position is 1-based
+      // modification position is 1-based
 			for (vector<pair<String, Size> >::const_iterator it = current_modifications_.begin(); it != current_modifications_.end(); ++it)
 			{
 				// e.g. Carboxymethyl (C)
@@ -854,7 +892,7 @@ namespace OpenMS
 				}
 				else if (mod_split.size() == 2)
 				{
-					temp_aa_sequence.setModification(it->second - 1, mod_split[0]);
+          temp_aa_sequence.setModification(it->second - 1, mod_split[0]);
 				}
 				else
 				{

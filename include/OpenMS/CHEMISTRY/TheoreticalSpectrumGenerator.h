@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -74,10 +74,12 @@ namespace OpenMS
 
 			/// adds the precursor peaks to the spectrum
 			virtual void addPrecursorPeaks(RichPeakSpectrum& spec, const AASequence& peptide, Int charge = 1);
+
+      /// Adds the common, most abundant immonium ions to the theoretical specta
+      void addAbundantImmoniumIons(RichPeakSpectrum& spec);
 			//@}
 
 		protected:
-
 			RichPeak1D p_;
 		};
 }

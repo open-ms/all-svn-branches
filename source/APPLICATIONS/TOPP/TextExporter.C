@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Chris Bielow $
+// $Maintainer: Chris Bielow $
 // $Authors: Clemens Groepl, Andreas Bertsch, Chris Bielow, Marc Sturm, Hendrik Weisser $
 // --------------------------------------------------------------------------
 
@@ -81,22 +81,23 @@ using namespace std;
 namespace OpenMS
 {
 	// write data from a feature to the output stream
-	void write_feature(SVOutStream& out, Peak2D::CoordinateType rt,
+	void writeFeature(SVOutStream& out, Peak2D::CoordinateType rt,
 										 Peak2D::CoordinateType mz, Peak2D::IntensityType intensity,
-										 Int charge)
+										 Int charge, BaseFeature::WidthType width)
 	{
 		out.writeValueOrNan(rt);
 		out.writeValueOrNan(mz);
 		out.writeValueOrNan(intensity);
 		out << charge;
+		out.writeValueOrNan(width);
 	}
 
 
 	// stream output operator for FeatureHandle
 	SVOutStream& operator<<(SVOutStream& out, const FeatureHandle& feature)
 	{
-		write_feature(out, feature.getRT(), feature.getMZ(), feature.getIntensity(),
-									feature.getCharge());
+		writeFeature(out, feature.getRT(), feature.getMZ(), feature.getIntensity(),
+									feature.getCharge(), feature.getWidth());
 		return out;
 	}
 
@@ -104,14 +105,14 @@ namespace OpenMS
 	// stream output operator for ConsensusFeature
 	SVOutStream& operator<<(SVOutStream& out, const ConsensusFeature& feature)
 	{
-		write_feature(out, feature.getRT(), feature.getMZ(), feature.getIntensity(),
-									feature.getCharge());
+		writeFeature(out, feature.getRT(), feature.getMZ(), feature.getIntensity(),
+									feature.getCharge(), feature.getWidth());
 		return out;
 	}
 
 
 	// write the header for exporting ConsensusXML
-	void write_consensus_header(SVOutStream& out, const String& what,
+	void writeConsensusHeader(SVOutStream& out, const String& what,
 															const String& infile,	const String& now,
 															const StringList& add_comments = StringList(),
 															bool cf = false)
@@ -123,21 +124,27 @@ namespace OpenMS
 		{
 			out.write("#" + *it + "\n");
 		}
-		StringList elements = StringList::create("#rt,mz,intensity,charge");
+		StringList elements = StringList::create("#rt,mz,intensity,charge,width");
 		bool old = out.modifyStrings(false);
 		for (StringList::iterator it = elements.begin(); it != elements.end();
 				 ++it)
 		{
-			if (cf) *it += "_cf";
+			if (cf)
+			{
+				*it += "_cf";
+			}
 			out << *it;
 		}
-		if (!cf) out << endl;
+		if (!cf)
+		{
+			out << endl;
+		}
 		out.modifyStrings(old);
 	}
 
 
 	// write the header for run data
-	void write_run_header(SVOutStream& out)
+	void writeRunHeader(SVOutStream& out)
 	{
 		bool old = out.modifyStrings(false);
 		out << "#RUN" << "run_id" << "score_type" << "score_direction"
@@ -145,12 +152,11 @@ namespace OpenMS
 		out.modifyStrings(old);
 	}
 
-
 	// write the header for protein data
-	void write_protein_header(SVOutStream& out)
+	void writeProteinHeader(SVOutStream& out)
 	{
 		bool old = out.modifyStrings(false);
-		out << "#PROTEIN" << "score" << "rank" << "accession" << "sequence" << endl;
+		out << "#PROTEIN" << "score" << "rank" << "accession" << "coverage" << "sequence" << endl;
 		out.modifyStrings(old);
 	}
 
@@ -158,8 +164,8 @@ namespace OpenMS
 	// stream output operator for a ProteinHit
 	SVOutStream& operator<<(SVOutStream& out, const ProteinHit& hit)
 	{
-		out << hit.getScore() << hit.getRank() << hit.getAccession()
-				<< hit.getSequence();
+    out << hit.getScore() << hit.getRank() << hit.getAccession()
+        << hit.getCoverage() << hit.getSequence();
 		return out;
 	}
 
@@ -196,23 +202,7 @@ namespace OpenMS
 			param_line += *mit;
 		}
 		param_line += ", enzyme=";
-		switch (sp.enzyme)
-		{
-		case ProteinIdentification::TRYPSIN:
-			param_line += "Trypsin";
-			break;
-		case ProteinIdentification::PEPSIN_A:
-			param_line += "PepsinA";
-			break;
-		case ProteinIdentification::PROTEASE_K:
-			param_line += "ProteaseK";
-			break;
-		case ProteinIdentification::CHYMOTRYPSIN:
-			param_line += "ChymoTrypsin";
-			break;
-		default:
-			param_line += "unknown";
-		}
+    param_line += ProteinIdentification::NamesOfDigestionEnzyme[sp.enzyme];
 		param_line += ", missed_cleavages=" + String(sp.missed_cleavages) +
 			", peak_mass_tolerance=" + String(sp.peak_mass_tolerance) +
 			", precursor_mass_tolerance=" + String(sp.precursor_tolerance);
@@ -222,7 +212,7 @@ namespace OpenMS
 
 
   // write a protein identification to the output stream
-	void write_protein_id(SVOutStream& out, const ProteinIdentification& pid)
+	void writeProteinId(SVOutStream& out, const ProteinIdentification& pid)
 	{
 		// protein id header
 		out << "RUN" << pid.getIdentifier() << pid.getScoreType();
@@ -244,7 +234,7 @@ namespace OpenMS
 
 
 	// write the header for peptide data
-	void write_peptide_header(SVOutStream& out, const String& what = "PEPTIDE",
+	void writePeptideHeader(SVOutStream& out, const String& what = "PEPTIDE",
 														bool incl_pep_misc = true,
 														bool incl_accessions = false,
 														bool incl_pred_rt = false,
@@ -272,7 +262,7 @@ namespace OpenMS
 
 
   // write a protein identification to the output stream
-	void write_peptide_id(SVOutStream& out, const PeptideIdentification& pid,
+	void writePeptideId(SVOutStream& out, const PeptideIdentification& pid,
 												const String& what = "PEPTIDE",
 												bool incl_pep_misc = true, bool incl_accessions = false,
 												bool incl_pred_rt = false, bool incl_first_dim = false)
@@ -346,7 +336,7 @@ namespace OpenMS
           "featureXML,consensusXML,idXML,mzML"));
         registerOutputFile_("out", "<file>", "",
           "Output file (mandatory for featureXML and idXML)", false);
-        registerStringOption_("separator", "<sep>", "", "The used separator character(s); if not set the 'tab' character is used", false);
+        registerStringOption_("separator", "<sep>", "\t", "The used separator character(s); if not set the 'tab' character is used", false);
 				registerStringOption_("replacement", "<string>", "_", "Used to replace occurrences of the separator in strings before writing, if 'quoting' is 'none'", false);
 				registerStringOption_("quoting", "<method>", "none", "Method for quoting of strings: 'none' for no quoting, 'double' for quoting with doubling of embedded quotes,\n'escape' for quoting with backslash-escaping of embedded quotes", false);
 				setValidStrings_("quoting", StringList::create("none,double,escape"));
@@ -424,6 +414,22 @@ namespace OpenMS
           FeatureXMLFile f;
           f.load(in, feature_map);
 
+          // compute protein coverage
+          vector<ProteinIdentification> prot_ids = feature_map.getProteinIdentifications();
+          vector<PeptideIdentification> pep_ids;
+          for (Size i=0;i<feature_map.size();++i) // collect all peptide ids
+          {
+            vector<PeptideIdentification> pep_ids_bf = feature_map[i].getPeptideIdentifications();
+            pep_ids.insert(pep_ids.end(), pep_ids_bf.begin(), pep_ids_bf.end());
+          }
+          pep_ids.insert(pep_ids.end(), feature_map.getUnassignedPeptideIdentifications().begin(), feature_map.getUnassignedPeptideIdentifications().end());
+          try
+          { // might throw Exception::MissingInformation()
+            for (Size i=0;i<prot_ids.size();++i) prot_ids[i].computeCoverage(pep_ids);
+          }
+          catch (...){}
+          feature_map.setProteinIdentifications(prot_ids);
+
           // text output
           ofstream outstr(out.c_str());
 					SVOutStream output(outstr, sep, replacement, quoting_method);
@@ -433,30 +439,39 @@ namespace OpenMS
 
 					// write header:
 					output.modifyStrings(false);
-					if (!no_ids) output << "#FEATURE" << "rt";
-					else output << "#rt";
+					if (!no_ids) 
+					{
+						output << "#FEATURE" << "rt";
+					}
+					else 
+					{
+						output << "#rt";
+					}
 					output << "mz" << "intensity";
 					if (!minimal)
 					{
-						output << "charge" << "overall_quality" << "rt_quality"
+						output << "charge" << "width(FWHM)" << "overall_quality" << "rt_quality"
 									 << "mz_quality" << "rt_start" << "rt_end";
 					}
 					output << endl;
 					if (!no_ids)
 					{
-						write_peptide_header(output);
-						write_peptide_header(output, "UNASSIGNEDPEPTIDE");
+						writePeptideHeader(output);
+						writePeptideHeader(output, "UNASSIGNEDPEPTIDE");
           }
 					output.modifyStrings(true);
 
-          for ( FeatureMap<>::const_iterator citer = feature_map.begin(); citer
-              != feature_map.end(); ++citer )
+          for (FeatureMap<>::const_iterator citer = feature_map.begin(); 
+							 citer != feature_map.end(); ++citer)
           {
-            if (!no_ids) output << "FEATURE";
+            if (!no_ids)
+						{
+							output << "FEATURE";
+						}
             output << citer->getRT() << citer->getMZ() << citer->getIntensity();
 						if (!minimal)
 						{
-							output << citer->getCharge() << citer->getOverallQuality()
+							output << citer->getCharge() << citer->getWidth() << citer->getOverallQuality()
 										 << citer->getQuality(0) << citer->getQuality(1);
 
 							if (citer->getConvexHulls().size() > 0)
@@ -465,7 +480,10 @@ namespace OpenMS
 									getBoundingBox().minX() << citer->getConvexHulls().begin()->
 									getBoundingBox().maxX();
 							}
-							else output << "-1" << "-1";
+							else 
+							{
+								output << "-1" << "-1";
+							}
 						}
             output << endl;
 
@@ -476,7 +494,7 @@ namespace OpenMS
 										 citer->getPeptideIdentifications().begin(); pit !=
 										 citer->getPeptideIdentifications().end(); ++pit)
               {
-								write_peptide_id(output, *pit);
+								writePeptideId(output, *pit);
 							}
 						}
 					}
@@ -488,10 +506,9 @@ namespace OpenMS
 								 pit != feature_map.getUnassignedPeptideIdentifications().end();
 								 ++pit)
 						{
-							write_peptide_id(output, *pit, "UNASSIGNEDPEPTIDE");
+							writePeptideId(output, *pit, "UNASSIGNEDPEPTIDE");
 						}
 					}
-
 					outstr.close();
 				}
 
@@ -508,6 +525,23 @@ namespace OpenMS
           ConsensusXMLFile consensus_xml_file;
 
           consensus_xml_file.load(in, consensus_map);
+
+          // compute protein coverage
+          vector<ProteinIdentification> prot_ids = consensus_map.getProteinIdentifications();
+          vector<PeptideIdentification> pep_ids;
+          for (Size i=0;i<consensus_map.size();++i) // collect all peptide ids
+          {
+            vector<PeptideIdentification> pep_ids_bf = consensus_map[i].getPeptideIdentifications();
+            pep_ids.insert(pep_ids.end(), pep_ids_bf.begin(), pep_ids_bf.end());
+          }
+          pep_ids.insert(pep_ids.end(), consensus_map.getUnassignedPeptideIdentifications().begin(), consensus_map.getUnassignedPeptideIdentifications().end());
+          try
+          { // might throw Exception::MissingInformation()
+            for (Size i=0;i<prot_ids.size();++i) prot_ids[i].computeCoverage(pep_ids);
+          }
+          catch (...){}
+          consensus_map.setProteinIdentifications(prot_ids);
+
 
           if (sorting_method == "none")
           {
@@ -552,7 +586,7 @@ namespace OpenMS
 						SVOutStream output(consensus_centroids_file, sep, replacement,
 															 quoting_method);
 
-						write_consensus_header(output, "Centroids", in,	date_time_now);
+						writeConsensusHeader(output, "Centroids", in,	date_time_now);
 
             for (ConsensusMap::const_iterator cmit = consensus_map.begin();
 								 cmit != consensus_map.end(); ++cmit)
@@ -564,7 +598,7 @@ namespace OpenMS
 
           // -------------------------------------------------------------------
 
-          if ( !consensus_elements.empty() )
+          if (!consensus_elements.empty())
           {
             std::ofstream consensus_elements_file(consensus_elements.c_str());
             if (!consensus_elements_file)
@@ -576,7 +610,7 @@ namespace OpenMS
 						SVOutStream output(consensus_elements_file, sep, replacement,
 															 quoting_method);
 
-						write_consensus_header(output, "Elements", in, date_time_now);
+						writeConsensusHeader(output, "Elements", in, date_time_now);
 
             for (ConsensusMap::const_iterator cmit = consensus_map.begin();
 								 cmit != consensus_map.end(); ++cmit)
@@ -600,7 +634,7 @@ namespace OpenMS
 					if (!consensus_features.empty())
           {
             std::ofstream consensus_features_file(consensus_features.c_str());
-            if ( !consensus_features_file )
+            if (!consensus_features_file)
             {
               throw Exception::UnableToCreateFile(__FILE__, __LINE__,
                 __PRETTY_FUNCTION__, consensus_features);
@@ -611,7 +645,6 @@ namespace OpenMS
 
 						std::map<Size,Size> map_id_to_map_num;
             std::vector<Size> map_num_to_map_id;
-            std::vector<FeatureHandle> feature_handles;
             FeatureHandle feature_handle_NaN;
             feature_handle_NaN.setRT(
 							std::numeric_limits<FeatureHandle::CoordinateType>::quiet_NaN());
@@ -642,7 +675,10 @@ namespace OpenMS
 							{
 								String run_id = prot_it->getIdentifier();
 								// add to comment:
-								if (max_prot_run > 0) pep_line += ", ";
+								if (max_prot_run > 0)
+								{
+									pep_line += ", ";
+								}
 								pep_line += String(max_prot_run) + ": '" + run_id + "'";
 
 								map<String, Size>::iterator pos = prot_runs.find(run_id);
@@ -654,11 +690,14 @@ namespace OpenMS
 								}
 								else prot_runs[run_id] = max_prot_run;
 							}
-							if (max_prot_run>0) --max_prot_run; // increased beyond max. at end of for-loop
+							if (max_prot_run>0)
+							{
+								--max_prot_run; // increased beyond max. at end of for-loop
+							}
 							comments << pep_line;
 						}
 
-						write_consensus_header(output, "Consensus features", in,
+						writeConsensusHeader(output, "Consensus features", in,
 																	 date_time_now,	comments, true);
 						output.modifyStrings(false);
             for (Size fhindex = 0; fhindex < map_num_to_map_id.size();
@@ -667,7 +706,8 @@ namespace OpenMS
               Size map_id = map_num_to_map_id[fhindex];
               output << "rt_"+ String(map_id) << "mz_" + String(map_id)
 										 << "intensity_" + String(map_id)
-										 << "charge_" + String(map_id);
+										 << "charge_" + String(map_id)
+										 << "width_" + String(map_id);
             }
 						if (!no_ids)
 						{
@@ -685,13 +725,7 @@ namespace OpenMS
             for (ConsensusMap::const_iterator cmit = consensus_map.begin();
 								 cmit != consensus_map.end(); ++cmit)
             {
-              {
-                // please can anyone explain to me why putting the next two
-								// things into one statement doesnt work?
-                std::vector<FeatureHandle> tmp(map_num_to_map_id.size(),
-																							 feature_handle_NaN);
-                feature_handles.swap(tmp);
-              }
+              std::vector<FeatureHandle> feature_handles(map_num_to_map_id.size(),feature_handle_NaN);
               output << *cmit;
               for (ConsensusFeature::const_iterator cfit = cmit->begin();
 									 cfit != cmit->end(); ++cfit)
@@ -729,7 +763,7 @@ namespace OpenMS
 								{
 									StringList seqs(vector<String>(pep_it->begin(),
 																								 pep_it->end())),
-										accs(vector<String>(prot_it->begin(), prot_it->end()));
+											accs(vector<String>(prot_it->begin(), prot_it->end()));
 									for (StringList::iterator acc_it = accs.begin();
 											 acc_it != accs.end(); ++acc_it)
 									{
@@ -749,7 +783,7 @@ namespace OpenMS
           if (!out.empty())
           {
             std::ofstream outstr(out.c_str());
-            if ( !outstr )
+            if (!outstr)
             {
               throw Exception::UnableToCreateFile(__FILE__, __LINE__,
                 __PRETTY_FUNCTION__, out);
@@ -762,7 +796,6 @@ namespace OpenMS
 
             std::map<Size,Size> map_id_to_map_num;
             std::vector<Size> map_num_to_map_id;
-            std::vector<FeatureHandle> feature_handles;
             FeatureHandle feature_handle_NaN;
             feature_handle_NaN.setRT(std::numeric_limits<
                 FeatureHandle::CoordinateType>::quiet_NaN());
@@ -770,6 +803,8 @@ namespace OpenMS
                 FeatureHandle::CoordinateType>::quiet_NaN());
             feature_handle_NaN.setIntensity(std::numeric_limits<
                 FeatureHandle::IntensityType>::quiet_NaN());
+            feature_handle_NaN.setWidth(std::numeric_limits<
+                FeatureHandle::WidthType>::quiet_NaN());
             feature_handle_NaN.setCharge(0); // just to be sure...
             // feature_handle_NaN.setCharge(std::numeric_limits<Int>::max()); // alternative ??
 
@@ -778,9 +813,9 @@ namespace OpenMS
 						// by String, not UInt, for implicit sorting.
             std::set<String> all_file_desc_meta_keys;
             std::vector<UInt> tmp_meta_keys;
-            for ( ConsensusMap::FileDescriptions::const_iterator fdit =
-                consensus_map.getFileDescriptions().begin(); fdit
-                != consensus_map.getFileDescriptions().end(); ++fdit )
+            for (ConsensusMap::FileDescriptions::const_iterator fdit =
+								 consensus_map.getFileDescriptions().begin(); 
+								 fdit != consensus_map.getFileDescriptions().end(); ++fdit )
             {
               map_id_to_map_num[fdit->first] = map_num_to_map_id.size();
               map_num_to_map_id.push_back(fdit->first);
@@ -829,24 +864,24 @@ namespace OpenMS
 						output.modifyStrings(false);
 						if (no_ids) output << "#rt_cf";
 						else output << "#CONSENSUS" << "rt_cf";
-						output << "mz_cf" << "intensity_cf" << "charge_cf" << "quality_cf";
+						output << "mz_cf" << "intensity_cf" << "charge_cf" << "width_cf" << "quality_cf";
 						for (Size fhindex = 0; fhindex < map_num_to_map_id.size();
 								 ++fhindex)
 						{
 							Size map_id = map_num_to_map_id[fhindex];
 							output << "rt_" + String(map_id) << "mz_" + String(map_id)
 										 << "intensity_" + String(map_id)
-										 << "charge_" + String(map_id);
+										 << "charge_" + String(map_id)
+										 << "width_" + String(map_id);
 						}
 						output << endl;
 						output.modifyStrings(true);
             if (!no_ids)
             {
-							write_run_header(output);
-							write_protein_header(output);
-							write_peptide_header(output, "UNASSIGNEDPEPTIDE", true, true,
-																	 true);
-							write_peptide_header(output, "PEPTIDE");
+							writeRunHeader(output);
+							writeProteinHeader(output);
+							writePeptideHeader(output, "UNASSIGNEDPEPTIDE", true, true, true);
+							writePeptideHeader(output, "PEPTIDE");
             }
 
             // proteins and unassigned peptides
@@ -856,13 +891,13 @@ namespace OpenMS
 										 consensus_map.getProteinIdentifications().begin(); it !=
 										 consensus_map.getProteinIdentifications().end(); ++it )
 							{
-								write_protein_id(output, *it);
+								writeProteinId(output, *it);
 							}
 
               // unassigned peptides
 							for (vector<PeptideIdentification>::const_iterator pit = consensus_map.getUnassignedPeptideIdentifications().begin(); pit != consensus_map.getUnassignedPeptideIdentifications().end(); ++pit)
 							{
-								write_peptide_id(output, *pit, "UNASSIGNEDPEPTIDE", true, true,
+								writePeptideId(output, *pit, "UNASSIGNEDPEPTIDE", true, true,
 																 true);
 								// first_dim_... stuff not supported for now
 							}
@@ -871,13 +906,8 @@ namespace OpenMS
             for (ConsensusMap::const_iterator cmit = consensus_map.begin();
 								 cmit != consensus_map.end(); ++cmit)
             {
-              {
-                // please can anyone explain to me why putting the next two
-								// things into one statement doesnt work?
-                std::vector<FeatureHandle> tmp(map_num_to_map_id.size(),
+              std::vector<FeatureHandle> feature_handles(map_num_to_map_id.size(),
 																							 feature_handle_NaN);
-                feature_handles.swap(tmp);
-              }
               if (!no_ids) output << "CONSENSUS";
               output << *cmit << cmit->getQuality();
               for (ConsensusFeature::const_iterator cfit = cmit->begin();
@@ -899,7 +929,7 @@ namespace OpenMS
 											 cmit->getPeptideIdentifications().begin(); pit !=
 											 cmit->getPeptideIdentifications().end(); ++pit)
                 {
-									write_peptide_id(output, *pit);
+									writePeptideId(output, *pit);
                 }
               }
             }
@@ -913,19 +943,24 @@ namespace OpenMS
           vector<PeptideIdentification> pep_ids;
           String document_id;
           IdXMLFile().load(in, prot_ids, pep_ids, document_id);
+          try
+          { // might throw Exception::MissingInformation()
+            for (Size i=0;i<prot_ids.size();++i) prot_ids[i].computeCoverage(pep_ids);
+          }
+          catch (...){}
 
           ofstream txt_out(out.c_str());
 					SVOutStream output(txt_out, sep, replacement, quoting_method);
 
-					write_run_header(output);
-					write_protein_header(output);
+					writeRunHeader(output);
+					writeProteinHeader(output);
           if (first_dim_rt)
           {
-						write_peptide_header(output, "PEPTIDE", false, true, true, true);
+						writePeptideHeader(output, "PEPTIDE", false, true, true, true);
           }
           else
           {
-						write_peptide_header(output, "PEPTIDE", false, true, true);
+						writePeptideHeader(output, "PEPTIDE", false, true, true);
           }
 
           for (vector<ProteinIdentification>::const_iterator it =
@@ -933,7 +968,7 @@ namespace OpenMS
           {
             String actual_id = it->getIdentifier();
 
-            if (!getFlag_("peptides_only"))	write_protein_id(output, *it);
+            if (!getFlag_("peptides_only"))	writeProteinId(output, *it);
 
             if (!getFlag_("proteins_only"))
             {
@@ -947,12 +982,12 @@ namespace OpenMS
                 {
 									if (first_dim_rt)
 									{
-										write_peptide_id(output, *pit, "PEPTIDE", false, true, true,
+										writePeptideId(output, *pit, "PEPTIDE", false, true, true,
 																		 true);
 									}
 									else
 									{
-										write_peptide_id(output, *pit, "PEPTIDE", false, true,
+										writePeptideId(output, *pit, "PEPTIDE", false, true,
 																		 true);
 									}
                 }

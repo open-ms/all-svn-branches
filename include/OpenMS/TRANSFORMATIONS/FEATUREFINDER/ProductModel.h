@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -32,9 +32,12 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/BaseModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ModelDescription.h>
 #include <OpenMS/KERNEL/Peak2D.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
+#include <OpenMS/CHEMISTRY/EmpiricalFormula.h>
 
 namespace OpenMS
 {
+
 	/** 
 		@brief Class for product models i.e. models with D independent dimensions
 	
@@ -262,6 +265,10 @@ namespace OpenMS
           distributions_[dim] = Factory< BaseModel<1> >::create(this->param_.getValue(name));
           Param copy = this->param_.copy(name+":",true);
           distributions_[dim]->setParameters(copy);
+          if (distributions_[dim]->getName().hasSubstring( "IsotopeModel" ) )
+					{
+						static_cast<IsotopeModel*>( distributions_[dim] )->setSamples( static_cast<IsotopeModel*>(distributions_[dim])->getFormula());
+          }
         }
       }
 		}

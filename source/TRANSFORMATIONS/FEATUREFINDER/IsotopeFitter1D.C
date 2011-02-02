@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeFitter1D.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
 #include <numeric>
 #include <boost/math/special_functions/fpclassify.hpp>
 
@@ -109,10 +110,11 @@ namespace OpenMS
 			Param tmp;
 			tmp.setValue( "statistics:mean", statistics_.mean() );
 			tmp.setValue( "charge", static_cast<Int>( charge_ ) );
-			tmp.setValue( "isotope:stdev", isotope_stdev_ );
+			tmp.setValue( "isotope:mode:GaussianSD", isotope_stdev_ );
 			tmp.setValue( "isotope:maximum", max_isotope_ );
 
 			model->setParameters( tmp );
+      (static_cast<IsotopeModel*> (model)) -> setSamples( (static_cast<IsotopeModel*> (model))->getFormula() );
 		}
 
 		// fit offset

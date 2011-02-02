@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -136,9 +136,17 @@ namespace OpenMS
     }
 
     /**
+     * Returns the mass trace width at half max (FWHM)
+     */
+    virtual DoubleReal getFWHM() const
+    {
+      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+    }
+
+    /**
      * Returns the theoretical value of the fitted model at position k in the passed Mass Trace
      */
-    virtual DoubleReal computeTheoretical(FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType> & /* trace */, Size /* k */)
+    virtual DoubleReal computeTheoretical(const FeatureFinderAlgorithmPickedHelperStructs::MassTrace<PeakType> & /* trace */, Size /* k */)
     {
       throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
     }
@@ -149,7 +157,7 @@ namespace OpenMS
      * @param rt_bounds RT boundaries of the fitted model
      * @param min_rt_span Minimum RT span in relation to extended area that has to remain after model fitting
      */
-    virtual bool checkMinimalRTSpan(std::pair<DoubleReal,DoubleReal> const & /* rt_bounds */, const DoubleReal /* min_rt_span */)
+    virtual bool checkMinimalRTSpan(const std::pair<DoubleReal,DoubleReal> & /* rt_bounds */, const DoubleReal /* min_rt_span */)
     {
       throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
     }

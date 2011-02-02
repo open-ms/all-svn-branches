@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,19 +43,10 @@
 
 #ifdef OPENMS_WINDOWSPLATFORM
 #  define NOMINMAX
-#  include <Windows.h>
-#  include <Winioctl.h> // for DeviceIoControl and constants e.g. FSCTL_SET_SPARSE
+#  include <Windows.h>  // for 'GetCurrentProcessId()'
 #else
-#  include <fcntl.h> // for O_RDWR etc
-#  include <unistd.h>
+#  include <unistd.h>   // for 'getpid()'
 #endif
-
-// Mac OS X does not provide lseek64 and open64, so we need to replace them with their normal counterparts
-#if defined __APPLE__ & defined __MACH__
-#define lseek64 lseek
-#define open64  open 
-#endif
-
 
 using namespace std;
 
@@ -155,7 +146,7 @@ namespace OpenMS
 			
 			if (exists(loc))
 			{
-				return loc;
+        return String(QDir::cleanPath(loc.toQString()));
 			}
 		}
 		
@@ -219,7 +210,7 @@ namespace OpenMS
 		
 		if (!exists(path))
 		{ // now we're in big trouble as './share' is not were its supposed to be...
-			std::cerr << "OpenMS FATAL ERROR!\nExpected shared data to be at '" << path << "'! OpenMS cannot function without it! Exiting ...\n";
+			std::cerr << "OpenMS FATAL ERROR!\nExpected shared data to be at '" << path << "'! OpenMS cannot function without it! Exiting now. To resolve this, set the environment variable 'OPENMS_DATA_PATH' to the OpenMS share directory.\n";
 			exit(1);
 		}
 		
@@ -242,7 +233,7 @@ namespace OpenMS
 
   String File::getTempDirectory()
   {
-    Param p = getSystemParameterDefaults_();
+    Param p = getSystemParameters();
     if (p.exists("temp_dir") && String(p.getValue("temp_dir")).trim() != "")
     {
        return p.getValue("temp_dir");
@@ -253,7 +244,7 @@ namespace OpenMS
   /// The current OpenMS user data path (for result files)
   String File::getUserDirectory()
   {
-    Param p = getSystemParameterDefaults_();
+    Param p = getSystemParameters();
     String dir;
     if (p.exists("home_dir") && String(p.getValue("home_dir")).trim() != "")
     {
@@ -267,7 +258,25 @@ namespace OpenMS
     return dir;
   }
 
-  Param File::getSystemParameters_()
+  String File::findDatabase(const String& db_name)
+  {
+    Param sys_p = getSystemParameters();
+    String full_db_name;
+    try
+    {
+      full_db_name = find(db_name, sys_p.getValue("id_db_dir"));
+      LOG_INFO << "Augmenting database name '" << db_name << "' with path given in 'OpenMS.ini:id_db_dir'. Full name is now: '" << full_db_name << "'\n";
+    }
+    catch (Exception::BaseException& e)
+    {
+      LOG_ERROR << "Input database '" + db_name + "' not found. Make sure it exists (and check 'OpenMS.ini:id_db_dir' if you used relative paths. Aborting!";
+      throw e;
+    }
+
+    return full_db_name;
+  }
+
+  Param File::getSystemParameters()
   {
     String filename = String(QDir::homePath()) + "/.OpenMS/OpenMS.ini";
     Param p;
@@ -296,8 +305,10 @@ namespace OpenMS
           LOG_WARN << "File '"<< filename << "' is deprecated.\n";
         }
         LOG_WARN << "Updating missing/wrong entries in '"<< filename << "' with defaults!\n";
-        p.update(getSystemParameterDefaults_());
-        p.store(filename);
+        Param p_new = getSystemParameterDefaults_();
+        p.setValue("version", VersionInfo::getVersion()); // update old version, such that p_new:version does not get overwritten during update()
+        p_new.update(p);
+        p_new.store(filename);
       }
     }
     return p;
@@ -309,7 +320,12 @@ namespace OpenMS
     p.setValue("version", VersionInfo::getVersion());
     p.setValue("home_dir", ""); // only active when user enters something in this value
     p.setValue("temp_dir", ""); // only active when user enters something in this value
-    p.setValue("threads", 2);
+    p.setValue("id_db_dir", StringList::create(""),
+                            String("Default directory for FASTA and psq files used as databased for id engines. ") + \
+                                   "This allows you to specify just the filename of the DB in the " + \
+                                   "respective TOPP tool, and the database will be searched in the directories specified here " + \
+                                   "");// only active when user enters something in this value
+    p.setValue("threads", 1);
     // TODO: maybe we add -log, -debug.... or....
 
     return p;

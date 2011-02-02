@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -1222,7 +1222,7 @@ namespace OpenMS
 				DoubleReal p_w = estimatePeakWidth(input);
 				if(p_w == 0.)
 					{
-						std::cout<< "Aborting!"<<std::endl;
+            throw Exception::UnableToFit(__FILE__,__LINE__,__PRETTY_FUNCTION__,"estimatePeakWidth()","Peak width could not be determined from data!");
 						return;
 					}
 				else

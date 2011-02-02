@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -82,6 +82,7 @@ namespace OpenMS
 		{
 			files.push_back(input_file_list->item(i)->text());
 		}
+    if (flag_sort_list->isChecked()) files.sort();
 	}
 	
 	void TOPPASInputFilesDialog::editCurrentItem()

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -48,7 +48,8 @@ namespace OpenMS
 			@note This iterator iterates over spectra with MS level 1 only!
 		*/
 		template<class ValueT, class ReferenceT, class PointerT, class SpectrumIteratorT, class PeakIteratorT>
-		class AreaIterator : public std::iterator<std::forward_iterator_tag, ValueT>
+		class AreaIterator 
+			: public std::iterator<std::forward_iterator_tag, ValueT>
 		{
 			public:
 				typedef DoubleReal CoordinateType;
@@ -88,6 +89,8 @@ namespace OpenMS
 						end_scan_(), 
 						current_peak_(), 
 						end_peak_(),
+						low_mz_(0.0), 
+						high_mz_(0.0),
 						is_end_(true)
 				{
 				}
@@ -99,19 +102,15 @@ namespace OpenMS
 		
 				/// Copy constructor
 				AreaIterator(const AreaIterator& rhs)
-					: is_end_(rhs.is_end_)
+					: first_(rhs.first_),
+					  current_scan_(rhs.current_scan_), 
+						end_scan_(rhs.end_scan_), 
+						current_peak_(rhs.current_peak_), 
+						end_peak_(rhs.end_peak_),
+						low_mz_(rhs.low_mz_), 
+						high_mz_(rhs.high_mz_),
+						is_end_(rhs.is_end_)
 				{
-	        //only copy iterators, if the assigned iterator is not the end iterator
-	        if (!is_end_)
-	        {
-						first_ = rhs.first_;	
-						current_scan_ = rhs.current_scan_;
-						end_scan_ = rhs.end_scan_;
-						current_peak_ = rhs.current_peak_;
-						end_peak_ = rhs.end_peak_;
-						low_mz_ = rhs.low_mz_;
-						high_mz_ = rhs.high_mz_;
-					}
 				}
 		
 				/// Assignment operator

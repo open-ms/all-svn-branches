@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -113,7 +113,9 @@ START_SECTION((static FileTypes::Type getTypeByFileName(const String &filename))
 	TEST_EQUAL(tmp.getTypeByFileName(OPENMS_GET_TEST_DATA_PATH("MzMLFile_6_uncompressed.mzML.gz")), FileTypes::MZML)
 	TEST_EQUAL(tmp.getTypeByFileName("test.mS2"), FileTypes::MS2)
 	TEST_EQUAL(tmp.getTypeByFileName("test.pepXML"), FileTypes::PEPXML)
-	TEST_EQUAL(tmp.getTypeByFileName("test.prOTXML"), FileTypes::PROTXML)
+ 	TEST_EQUAL(tmp.getTypeByFileName("test.pep.xml"), FileTypes::PEPXML)
+	TEST_EQUAL(tmp.getTypeByFileName("test.protXML"), FileTypes::PROTXML)
+	TEST_EQUAL(tmp.getTypeByFileName("test.prot.xml"), FileTypes::PROTXML)
 	TEST_EQUAL(tmp.getTypeByFileName("test.mzIdentML"), FileTypes::MZIDENTML)
 	TEST_EQUAL(tmp.getTypeByFileName("test.GELML"), FileTypes::GELML)
 	TEST_EQUAL(tmp.getTypeByFileName("test.TRAML"), FileTypes::TRAML)

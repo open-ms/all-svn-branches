@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -85,6 +85,9 @@ namespace OpenMS
 		/// Resets the alignment
 		void resetAlignment();
 		
+    // Docu in base class
+    virtual void saveAsImage();
+
 	signals:
 		/// Is emitted whenever the visible area changes.		
 		void visibleAreaChanged(double, double); 
@@ -112,6 +115,7 @@ namespace OpenMS
 		
 		/// Spacer between the two y-axes in mirror mode (needed when visualizing an alignment)
 		QSpacerItem* spacer_;
+
 	};
 } // namespace OpenMS
 

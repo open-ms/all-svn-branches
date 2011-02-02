@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,7 @@
 
 // Sections:
 // - to add new pages you have to add them to:
-//    - doc/OpenMS_tutorial/refman_overwrite.tex (pdf output)
+//    - doc/OpenMS_tutorial/refman_overwrite.tex.in (pdf output)
 //    - doc/doxygen/public/OpenMS_Tutorial_html.doxygen (html output)
 
 // Conventions:

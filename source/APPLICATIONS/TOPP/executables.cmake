@@ -20,7 +20,6 @@ FileFilter
 FileInfo
 FileMerger
 GenericWrapper
-HelloWorld
 IDDecoyProbability
 IDPosteriorErrorProbability
 IDFileConverter
@@ -34,6 +33,7 @@ InspectAdapter
 InternalCalibration
 MapAligner
 MapNormalizer
+MapStatistics
 MascotAdapter
 MascotAdapterOnline
 NoiseFilter

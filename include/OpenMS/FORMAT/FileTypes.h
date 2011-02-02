@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -34,7 +34,7 @@ namespace OpenMS
 {
 	/**
 		@brief Centralizes the file types recognized by FileHandler.
-		
+
 		FileType separate from FileHandler to avoid circular inclusions by DocumentIdentifier, ExperimentalSettings and FileHandler and respective fileclasses (e.g. DTA2DFile). See also: FileHandler::nameToType, FileHandler::typeToName and FileHandler::NameOfTypes .
 
 		@ingroup FileIO
@@ -67,6 +67,7 @@ namespace OpenMS
 			TRAML,							///< TraML (HUPO PSI format) for transitions (.TraML)
 			MSP,								///< NIST spectra library file format (.msp)
 			OMSSAXML,						///< OMSSA XML file format for peptide identifications (.xml)
+			MASCOTXML,						///< Mascot XML file format for peptide identifications (.xml)
 			PNG,                ///< Portable Network Graphics (.png)
 			XMASS,              ///< XMass Analysis file (fid)
       TSV,                ///< msInspect file (.tsv)

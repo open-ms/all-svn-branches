@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -142,7 +142,7 @@ class TOPPFeatureFinder
 		registerInputFile_("seeds","<file>","","User-specified seed list. This feature is not supported by all algorithms!", false);
 		setValidFormats_("seeds",StringList::create("featureXML"));
 		registerStringOption_("type","<name>","","FeatureFinder algorithm type",true);
-		setValidStrings_("type", getToolList()[toolName_()] );
+		setValidStrings_("type", ToolHandler::getTypes(toolName_()) );
 		addEmptyLine_();
 		addText_("All other options of the Featurefinder depend on the algorithm type used.\n"
 						 "They are set in the 'algorithm' section of the INI file.\n");
@@ -205,13 +205,28 @@ class TOPPFeatureFinder
 			exp.updateRanges();
 		}
 
-		//ouput data
+		// A map for the resulting features
 		FeatureMap<> features;
 
-		//running algorithm
+		// Apply the feature finder
 		ff.run(type, exp, features, feafi_param, seeds);
-
 		features.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+		// DEBUG ???
+		FeatureMap<>::Iterator it;
+		for (it = features.begin(); it != features.end(); ++it)
+		{
+			if (!it->isMetaEmpty())
+			{
+				vector<String> keys;
+				it->getKeys(keys);
+				cerr << "Feature " << it->getUniqueId() << endl;
+				for (Size i = 0; i < keys.size(); i++)
+				{
+					cerr << "  " << keys[i] << " = " << it->getMetaValue(keys[i]) << endl;
+				}
+			}
+		}
 
 		//-------------------------------------------------------------
 		// writing files

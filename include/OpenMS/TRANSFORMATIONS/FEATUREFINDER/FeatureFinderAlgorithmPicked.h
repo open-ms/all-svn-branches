@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Oliver Kohlbacher $
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -142,7 +142,7 @@ namespace OpenMS
 				defaults_.setValue("isotopic_pattern:optional_fit_improvement",2.0,"Minimal percental improvement of isotope fit to allow leaving out an optional peak.", StringList::create("advanced"));
 				defaults_.setMinFloat("isotopic_pattern:optional_fit_improvement",0.0);
 				defaults_.setMaxFloat("isotopic_pattern:optional_fit_improvement",100.0);
-				defaults_.setValue("isotopic_pattern:mass_window_width",25.0,"Window width in Dalton for precalcuation of estimated isotope distribtions.", StringList::create("advanced"));
+				defaults_.setValue("isotopic_pattern:mass_window_width",25.0,"Window width in Dalton for precalculation of estimated isotope distribtions.", StringList::create("advanced"));
 				defaults_.setMinFloat("isotopic_pattern:mass_window_width",1.0);
 				defaults_.setMaxFloat("isotopic_pattern:mass_window_width",200.0);
 				defaults_.setSectionDescription("isotopic_pattern","Settings for the calculation of a score indicating if a peak is part of a isotoipic pattern (between 0 and 1).");
@@ -659,15 +659,16 @@ namespace OpenMS
 						
 						//------------------------------------------------------------------
 						//Step 3.3.2:
-						//Gauss fit (first fit to find the feature boundaries)
+            //Gauss/EGH fit (first fit to find the feature boundaries)
 						//------------------------------------------------------------------
-						Int plot_nr=-1;
-
+						Int plot_nr = -1;
 
 #ifdef _OPENMP
 #pragma omp critical (FeatureFinderAlgorithmPicked)
 #endif
-						plot_nr = ++plot_nr_global;
+            {
+						  plot_nr = ++plot_nr_global;
+            }
 
             //------------------------------------------------------------------
 
@@ -679,14 +680,14 @@ namespace OpenMS
             traces[traces.max_trace].updateMaximum();
 
             // choose fitter
-            double egh_tau = 0;
+            double egh_tau = 0.0;
             TraceFitter<PeakType> * fitter = chooseTraceFitter_(traces, egh_tau);
 
 						fitter->setParameters(trace_fitter_params);
 						fitter->fit(traces);
 
 #if 0
-						TraceFitter<PeakType> * alt_fitter = new GaussTraceFitter<PeakType>();
+						TraceFitter<PeakType>* alt_fitter = new GaussTraceFitter<PeakType>();
 						Param alt_p;
 						alt_p.setValue("max_iteration",max_iterations);
 						alt_p.setValue("epsilon_abs",epsilon_abs);
@@ -711,7 +712,7 @@ namespace OpenMS
 						//Crop feature according to RT fit (2.5*sigma) and remove badly fitting traces
 						//------------------------------------------------------------------
             MassTraces new_traces;
-            cropFeature_(fitter,traces,new_traces);
+            cropFeature_(fitter, traces, new_traces);
 
 						//------------------------------------------------------------------
 						//Step 3.3.4:
@@ -747,64 +748,69 @@ namespace OpenMS
 						//------------------------------------------------------------------
 						Feature f;
 						//set label
-						f.setMetaValue(3,plot_nr);
+						f.setMetaValue(3, plot_nr);
 						f.setCharge(c);
 						f.setOverallQuality(final_score);
-						if (debug)
-						{
-							f.setMetaValue("score_fit",fit_score);
-							f.setMetaValue("score_correlation",correlation);
-              if (egh_tau!=0)
-              {
-                egh_tau = (static_cast<EGHTraceFitter<PeakType>*>(fitter))->getTau();
-                f.setMetaValue("EGH_tau",egh_tau);
-              }
-						}
+						f.setMetaValue("score_fit",fit_score);
+						f.setMetaValue("score_correlation",correlation);
 						f.setRT(fitter->getCenter());
+						f.setWidth(fitter->getFWHM());
+
+						// Extract some of the model parameters.
+            if (egh_tau != 0.0)
+            {
+              egh_tau = (static_cast<EGHTraceFitter<PeakType>*>(fitter))->getTau();
+              f.setMetaValue("EGH_tau", egh_tau);
+              f.setMetaValue("EGH_height",(static_cast<EGHTraceFitter<PeakType>*>(fitter))->getHeight());
+              f.setMetaValue("EGH_sigma",(static_cast<EGHTraceFitter<PeakType>*>(fitter))->getSigmaSquare());
+						}
 						
-						//Calculate the mass of the feature: maximum, average, monoisotopic
-						String reported_mz = param_.getValue("feature:reported_mz");
-						if(reported_mz=="maximum")
+						// Calculate the mass of the feature: maximum, average, monoisotopic            
+            if (reported_mz_ == "maximum")
 						{
 							f.setMZ(traces[traces.getTheoreticalmaxPosition()].getAvgMZ());
 						}
-						else if(reported_mz=="average")
+            else if(reported_mz_ == "average")
 						{
 							DoubleReal total_intensity = 0.0;
 							DoubleReal average_mz = 0.0;
-	 						for (Size t=0; t<traces.size(); ++t)
+	 						for (Size t = 0; t < traces.size(); ++t)
 							{
-								for (Size p=0; p<traces[t].peaks.size(); ++p)
+								for (Size p = 0; p < traces[t].peaks.size(); ++p)
 								{
 									average_mz += traces[t].peaks[p].second->getMZ()*traces[t].peaks[p].second->getIntensity();
-									total_intensity+=traces[t].peaks[p].second->getIntensity();
+									total_intensity += traces[t].peaks[p].second->getIntensity();
 								}
 							}
 							average_mz /= total_intensity;
 							f.setMZ(average_mz);
 						}
-						else if(reported_mz=="monoisotopic")
+            else if (reported_mz_ == "monoisotopic")
 						{
 							DoubleReal mono_mz = traces[traces.getTheoreticalmaxPosition()].getAvgMZ();
               mono_mz -= (Constants::PROTON_MASS_U/c) * (traces.getTheoreticalmaxPosition() + best_pattern.theoretical_pattern.trimmed_left);
 							f.setMZ(mono_mz);
 						}
 						
-						//Calculate intensity based on model only
+						// Calculate intensity based on model only
 						// - the model does not include the baseline, so we ignore it here
 						// - as we scaled the isotope distribution to 
 						f.setIntensity(
 						    fitter->getFeatureIntensityContribution() // was 2.5 * fitter->getHeight() * sigma
 						    / getIsotopeDistribution_(f.getMZ()).max);
 						//add convex hulls of mass traces
-						for (Size j=0; j<traces.size(); ++j)
+						for (Size j = 0; j < traces.size(); ++j)
 						{
 							f.getConvexHulls().push_back(traces[j].getConvexhull());
 						}
 #ifdef _OPENMP
 #pragma omp critical (FeatureFinderAlgorithmPicked)
 #endif
-						features_->push_back(f);
+            {
+						  features_->push_back(f);
+            }
+
+
 						feature_candidates++;
 						
 						//----------------------------------------------------------------
@@ -814,7 +820,7 @@ namespace OpenMS
 						{
 							DoubleReal rt = map_[seeds[j].spectrum].getRT();
 							DoubleReal mz = map_[seeds[j].spectrum][seeds[j].peak].getMZ();
-							if (bb.encloses(rt,mz) && f.encloses(rt,mz))
+							if (bb.encloses(rt, mz) && f.encloses(rt, mz))
 							{
 								//set intensity to zero => the peak will be skipped!
 								seeds[j].intensity = 0.0;
@@ -1009,6 +1015,7 @@ namespace OpenMS
 			DoubleReal min_rt_span_; ///< Minimum RT range that has to be left after the fit
 			DoubleReal max_rt_span_; ///< Maximum RT range the model is allowed to span
 			DoubleReal max_feature_intersection_; ///< Maximum allowed feature intersection (if larger, that one of the feature is removed)
+      String reported_mz_; ///< The mass type that is reported for features. 'maximum' returns the m/z value of the highest mass trace. 'average' returns the intensity-weighted average m/z value of all contained peaks. 'monoisotopic' returns the monoisotopic m/z value derived from the fitted isotope model.
 			//@}
 
       /// @name Members for intensity significance estimation
@@ -1042,6 +1049,7 @@ namespace OpenMS
 				min_rt_span_ = param_.getValue("feature:min_rt_span");
 				max_rt_span_ = param_.getValue("feature:max_rt_span");
 				max_feature_intersection_ = param_.getValue("feature:max_intersection");
+        reported_mz_ = param_.getValue("feature:reported_mz");
 			}
 			
       /// Writes the abort reason to the log file and counts occurences for each reason
@@ -1728,16 +1736,16 @@ namespace OpenMS
        *
        * @return A pointer to the trace fitter that should be used.
        */
-      TraceFitter<PeakType> * chooseTraceFitter_(MassTraces & /*traces*/, double & tau)
+      TraceFitter<PeakType> * chooseTraceFitter_(MassTraces & /*traces*/, double& tau)
       {
         // choose fitter
-        if(param_.getValue("feature:rt_shape") == "asymmetric")
+        if (param_.getValue("feature:rt_shape") == "asymmetric")
         {
           LOG_DEBUG << "use asymmetric rt peak shape" << std::endl;
           tau = -1.0;
           return new EGHTraceFitter<PeakType>();
         }
-        else // if(param_.getValue("feature:rt_shape") == "symmetric")
+        else // if (param_.getValue("feature:rt_shape") == "symmetric")
         {
           LOG_DEBUG << "use symmetric rt peak shape" << std::endl;
           return new GaussTraceFitter<PeakType>();
@@ -1792,7 +1800,7 @@ namespace OpenMS
        * @param new_traces Mass traces created by cropping the original mass traces.
        */
       void cropFeature_(TraceFitter<PeakType> * fitter,
-                        MassTraces & traces,
+                        const MassTraces & traces,
                         MassTraces & new_traces)
       {
         DoubleReal low_bound = fitter->getLowerRTBound();
@@ -1801,7 +1809,7 @@ namespace OpenMS
         log_ << "    => RT bounds: " << low_bound << " - " << high_bound << std::endl;
         for (Size t=0; t< traces.size(); ++t)
         {
-          MassTrace& trace = traces[t];
+          const MassTrace& trace = traces[t];
           log_ << "   - Trace " << t << ": (" << trace.theoretical_int << ")" << std::endl;
 
           MassTrace new_trace;

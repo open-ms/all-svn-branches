@@ -78,14 +78,15 @@ namespace OpenMS
 			return false;
 		}
 
+
 		//---------------------------------------------------------------
 		// EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
 		//---------------------------------------------------------------
 		exact_shifts.clear();
 		exact_intensities.clear();
     expected_shifts.clear();
-		//std::cout << " m/z = " << mz << " RT = " << rt << std::endl;
-		for (Int peptide = 0; peptide <= numberOfPeptides; peptide++) // loop over labelled peptides [e.g. for SILAC triplets: 0=light 1=medium 2=heavy]
+
+    for (Int peptide = 0; peptide <= numberOfPeptides; peptide++) // loop over labelled peptides [e.g. for SILAC triplets: 0=light 1=medium 2=heavy]
 		{
 			std::vector<DoubleReal> exact_shifts_singlePeptide;
 			std::vector<DoubleReal> exact_intensities_singlePeptide;
@@ -100,22 +101,18 @@ namespace OpenMS
 
 				if ( deltaMZ < 0 )
 				{
-					// If no actual m/z shift can be found (exact_shift = -1) no intensity can be determined (exact_intensity = -1).
-					exact_intensities_singlePeptide.push_back( -1 );
+          exact_intensities_singlePeptide.push_back( -1 );
 				}
 				else
 				{
 					exact_intensities_singlePeptide.push_back( gsl_spline_eval (SILACFiltering::spline_spl, mz + deltaMZ, SILACFiltering::current_spl) );
 				}
-				//std::cout << "   " << mz_peptide_separations[peptide] + isotope*isotope_distance << "  (" << deltaMZ << ")";
-			}
+      }
 
 			exact_shifts.push_back(exact_shifts_singlePeptide);
 			exact_intensities.push_back(exact_intensities_singlePeptide);
       expected_shifts.push_back(exact_shifts_singlePeptide);      // store expected_shifts for blacklisting
-			//std::cout << std::endl;
 		}
-		//std::cout << std::endl << std::endl;
 	
 
 		//---------------------------------------------------------------
@@ -215,7 +212,6 @@ namespace OpenMS
     }
 
 
-
 		//---------------------------------------------------------------
 		// AVERAGINE FILTER (Check if realtive ratios confirm with an averagine model of all peptides.)
 		//---------------------------------------------------------------
@@ -233,7 +229,6 @@ namespace OpenMS
 				{
 					DoubleReal averagineIntensity = isoDistribution.getContainer()[isotope].second;
 					DoubleReal intensity = exact_intensities[peptide][isotope];
-					//std::cout << "theory = " << averagineIntensity /averagineIntensity_mono << "   real = " << intensity /intensity_mono << "   real/theory = " << (intensity /intensity_mono)/(averagineIntensity /averagineIntensity_mono) << "              ";
 
 					if ((intensity / intensity_mono) / (averagineIntensity / averagineIntensity_mono) > model_deviation || (intensity / intensity_mono) / (averagineIntensity / averagineIntensity_mono) < 1 / model_deviation)
 					{
@@ -248,10 +243,8 @@ namespace OpenMS
 							return false;
 						}
 					}
-				}
-				//std::cout << std::endl;
-			}
-			//std::cout << std::endl;
+				}				
+			}			
 		}
 
 

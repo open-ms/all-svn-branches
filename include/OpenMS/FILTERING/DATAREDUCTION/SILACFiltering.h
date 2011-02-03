@@ -86,6 +86,7 @@ private:
 	 * @brief current feature id
 	 */
 	static Int feature_id;
+
 	static DoubleReal mz_min;
 	
 	/**

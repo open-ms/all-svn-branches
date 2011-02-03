@@ -67,7 +67,7 @@ namespace OpenMS
 
 	void SILACFiltering::filterDataPoints()
 	{
-		startProgress(0,exp.size(),"filtering raw data");
+    startProgress(0, exp.size(), "filtering raw data");
 
 		std::vector<DataPoint> data;
 		std::list<BlacklistEntry> blacklist;
@@ -77,13 +77,11 @@ namespace OpenMS
     // Iterate over all filters
     for (std::list<SILACFilter*>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
     {
-      // print current filter and total number of filters as progress hint
-      std::cout << std::endl << "Filter " << distance(filters.begin(), filter_it) + 1 << " / " << filters.size() << ":" << std::endl;
-
       // Iterate over all spectra of the experiment
       for (MSExperiment<Peak1D>::Iterator rt_it = exp.begin(); rt_it != exp.end(); ++rt_it)
       {
-        setProgress(rt_it - exp.begin());
+        // set progress
+        setProgress((rt_it - exp.begin()) / filters.size() + (distance(filters.begin(), filter_it)) * (distance(exp.begin(), exp.end()) / filters.size() ));
         Size number_data_points = rt_it->size();    // number of (m/z, intensity) data points in this spectrum
 
         DoubleReal rt = rt_it->getRT();    // retention time of this spectrum

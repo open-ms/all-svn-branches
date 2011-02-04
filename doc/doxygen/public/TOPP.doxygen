@@ -54,6 +54,7 @@
   - @subpage TOPP_BaselineFilter - Removes the baseline from profile spectra using a top-hat filter.
   - @subpage TOPP_InternalCalibration - Applies an internal calibration.
   - @subpage TOPP_MapNormalizer - Normalizes peak intensities in an MS run.
+  - @subpage TOPP_MapNormalizer2 - Normalizes maps of one consensusXML file.
   - @subpage TOPP_NoiseFilter - Removes noise from profile spectra by using different smoothing techniques.
   - @subpage TOPP_PeakPicker - Finds mass spectrometric peaks in profile mass spectra.
   - @subpage TOPP_PrecursorMassCorrector - Correct the precursor entries of tandem MS scans.

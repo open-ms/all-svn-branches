@@ -33,6 +33,7 @@ InspectAdapter
 InternalCalibration
 MapAligner
 MapNormalizer
+MapNormalizer2
 MapStatistics
 MascotAdapter
 MascotAdapterOnline

@@ -69,15 +69,16 @@ namespace OpenMS
 	{
 		current_mz = mz;
 		bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
-	
-		//---------------------------------------------------------------
+
+/*    //---------------------------------------------------------------
 		// BLUNT INTENSITY FILTER (Just check that intensity at current position is above the intensity cutoff.)
 		//---------------------------------------------------------------
 		if (gsl_spline_eval (SILACFiltering::spline_lin, mz, SILACFiltering::current_lin) < SILACFiltering::intensity_cutoff)
 		{
+      //std::cout << "intensity" << std::endl;
 			return false;
 		}
-
+*/
 
 		//---------------------------------------------------------------
 		// EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
@@ -94,10 +95,10 @@ namespace OpenMS
 
       for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++) // loop over isotopic peaks within a peptide [0=mono-isotopic peak etc.]
 			{
-				DoubleReal deltaMZ = computeActualMzShift(mz, mz_peptide_separations[peptide] + isotope*isotope_distance, getPeakWidth(mz));
+        DoubleReal deltaMZ = computeActualMzShift(mz, mz_peptide_separations[peptide] + isotope * isotope_distance, getPeakWidth(mz));
 				exact_shifts_singlePeptide.push_back( deltaMZ );
 
-        expected_shifts_singlePeptide.push_back(mz_peptide_separations[peptide] + isotope*isotope_distance);      // store expected_shift for blacklisting
+        expected_shifts_singlePeptide.push_back(mz_peptide_separations[peptide] + isotope * isotope_distance);      // store expected_shift for blacklisting
 
 				if ( deltaMZ < 0 )
 				{
@@ -123,7 +124,6 @@ namespace OpenMS
 		{
 			for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++)
 			{
-
         if (exact_intensities[peptide][isotope] < SILACFiltering::intensity_cutoff)
         {
           if (SILACFiltering::allow_missing_peaks == false)
@@ -411,39 +411,34 @@ namespace OpenMS
 		return mz_peptide_separations.size();
 	}
 
-
 	std::vector<DoubleReal> SILACFilter::getPeakPositions()
-	{
-		std::vector<DoubleReal> exact_positions;    // exact m/z positions of isotopic peaks as a flat vector 
+	{    
+    peak_positions.clear();
 		for (Int peptide = 0; peptide <= numberOfPeptides; peptide++)
 		{
 			for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++)
 			{
-        exact_positions.push_back( current_mz + expected_shifts[peptide][isotope] );
+        peak_positions.push_back( current_mz + expected_shifts[peptide][isotope] );
 			}
 		}
-		return exact_positions;
+    return peak_positions;
 	}
-
 
 	DoubleReal SILACFilter::getIsotopeDistance()
 	{
 		return isotope_distance;
 	}
 	
-
 	std::vector<DataPoint> SILACFilter::getElements()
 	{
 		return elements;
 	}
-
 
 	Int SILACFilter::getCharge()
 	{
 		return charge;
 	}
 	
-
 	Int SILACFilter::getIsotopesPerPeptide()
 	{
 		return isotopes_per_peptide;
@@ -458,4 +453,15 @@ namespace OpenMS
   {
     return mass_separations.size();
   }
+
+  Int SILACFilter::getNumberOfPeptides()
+  {
+    return numberOfPeptides;
+  }
+
+  std::vector<DoubleReal> SILACFilter::getMzPeptideSeparations()
+  {
+    return mz_peptide_separations;
+  }
+
 }

@@ -72,12 +72,20 @@ private:
      * @brief mass shift(s) in [Da] to search for
      */
     std::vector<DoubleReal> mass_separations;
+
+    /**
+     * @brief peak positions
+     */
+    std::vector<DoubleReal> peak_positions;
 	
     /**
      * @brief m/z separtion between individual peptides [e.g. {0 Th, 4 Th, 5 Th}]
      */
     std::vector<DoubleReal> mz_peptide_separations;
 
+    /**
+     * @brief distance between isotopic peaks of a peptide [Th]
+     */
     DoubleReal isotope_distance;
 
     /**
@@ -182,11 +190,6 @@ public:
 	 * @brief clears the blacklist
 	 */
 	void reset();
-
-	/**
-	 * @brief returns the distance between light and heavy peaks
-	 */
-	//std::vector<DoubleReal> getMzPeptideSeparations();
 	
 	/**
 	 * @brief returns the distance between two isotope peaks
@@ -209,15 +212,24 @@ public:
 	Int getIsotopesPerPeptide();
 
   /**
-   * @brief returns the mass shift(s) of the filter in [Da]
+   * @brief returns the mass shifts of the filter in [Da]
    */
   std::vector<DoubleReal> getMassSeparations();
 
   /**
-   * @brief returns the number of mass shift(s) of the filter
+   * @brief returns the number of mass shifts of the filter
    */
   Int getMassSeparationsSize();
 
+  /**
+   * @brief returns the number of mass peptides of the filter
+   */
+  Int getNumberOfPeptides();
+
+  /**
+   * @brief returns the distance between light and heavy peaks [Th]
+   */
+  std::vector<DoubleReal> getMzPeptideSeparations();
 	
 };
 }

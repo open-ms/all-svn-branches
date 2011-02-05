@@ -33,6 +33,7 @@
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/DATASTRUCTURES/DataPoint.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
+#include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include<list>
@@ -131,7 +132,6 @@ public:
 	 * @brief structure for blacklist
 	 * @param mzBlack_min starting point of blacklisted m/z range
 	 * @param mzBlack_max end point of blacklisted m/z range
-   * @param rtBlack_center rt that generated the blacklist entry
    * @param rtBlack_min starting point of blacklisted rt range
    * @param rtBlack_max end point of blacklisted rt range
 	 * @param generatingFilter filter that generated blacklist entry
@@ -140,16 +140,18 @@ public:
 	{
 		DoubleReal mzBlack_min;
 		DoubleReal mzBlack_max;
-    DoubleReal rtBlack_center;
     DoubleReal rtBlack_min;
     DoubleReal rtBlack_max;
 		SILACFilter* generatingFilter;
+    DRange<2> range;
 	};
 	
 	/**
 	 * @brief holds the m/z range and rt age that are ignored and the filter that generated the blacklist entry 
 	 */
- 	std::list<BlacklistEntry> blacklist;
+  std::vector<BlacklistEntry> blacklist;
+
+  std::vector<BlacklistEntry> previous_entries;
 
 };
 

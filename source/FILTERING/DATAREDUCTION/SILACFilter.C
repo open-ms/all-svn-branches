@@ -70,16 +70,6 @@ namespace OpenMS
 		current_mz = mz;
 		bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 
-/*    //---------------------------------------------------------------
-		// BLUNT INTENSITY FILTER (Just check that intensity at current position is above the intensity cutoff.)
-		//---------------------------------------------------------------
-		if (gsl_spline_eval (SILACFiltering::spline_lin, mz, SILACFiltering::current_lin) < SILACFiltering::intensity_cutoff)
-		{
-      //std::cout << "intensity" << std::endl;
-			return false;
-		}
-*/
-
 		//---------------------------------------------------------------
 		// EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
 		//---------------------------------------------------------------
@@ -114,7 +104,7 @@ namespace OpenMS
 			exact_intensities.push_back(exact_intensities_singlePeptide);
       expected_shifts.push_back(exact_shifts_singlePeptide);      // store expected_shifts for blacklisting
 		}
-	
+
 
 		//---------------------------------------------------------------
 		// COMPLETE INTENSITY FILTER (Check that all of the intensities are above the cutoff.)
@@ -260,7 +250,7 @@ namespace OpenMS
 		newElement.intensities.insert(newElement.intensities.begin(), exact_intensities.begin(), exact_intensities.end());
 		newElement.mass_shifts.insert(newElement.mass_shifts.begin(), mz_peptide_separations.begin(), mz_peptide_separations.end());
 		elements.push_back(newElement);
-	
+
 		return true;
 	}
 
@@ -276,10 +266,10 @@ namespace OpenMS
 			//--------------------------------------------------
 			// compute autocorrelation
 			//--------------------------------------------------
-		
+
 			std::vector<DoubleReal> akimaMz;
 			DoubleReal stepwidth = maxMzDeviation / 30;
-		
+
 			// n must be a power of two for gsl fast fourier transformation; take next higher size for n, which is a power of two and fill the rest with zeros
 			Size akimaMz_size = pow(2,(ceil(log2((3*maxMzDeviation)/stepwidth))));
 			
@@ -288,7 +278,7 @@ namespace OpenMS
 			
 			// check to not leave experiment
 			DoubleReal starting_offset = std::min(mz - SILACFiltering::mz_min, maxMzDeviation);
-				
+
 			// calculate akima interpolation for region around mz (+- maxMzDeviation) and store in vector akimaMz
 			// starting position: mz - maxMzDeviation
 			// ending position: mz + maxMzDeviation
@@ -297,10 +287,10 @@ namespace OpenMS
 			Size i = 0;
 			for (DoubleReal x = mz - starting_offset; x <= mz + maxMzDeviation; x += stepwidth)
 			{
-				akimaMz[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x, SILACFiltering::current_lin);
+        akimaMz[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_aki, x, SILACFiltering::current_aki);
 				++i;
 			}
-		
+
 			// calculate akima interpolation for region around mz + expectedMzShift (- 2 * maxMzDeviation, + maxMzDeviation) and store in vector akimaMzShift
 			// starting position: mz - 2 * maxMzDeviation
 			// ending position: mz + maxMzDeviation
@@ -310,7 +300,7 @@ namespace OpenMS
 			i = 0;
 			for (DoubleReal x = mz - starting_offset - maxMzDeviation; x <= mz + maxMzDeviation; x += stepwidth)
 			{
-				akimaMzShift[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_lin, x + expectedMzShift, SILACFiltering::current_lin);
+        akimaMzShift[i] = gsl_spline_eval_deriv2 (SILACFiltering::spline_aki, x + expectedMzShift, SILACFiltering::current_aki);
 				++i;
 			}
 			
@@ -321,7 +311,7 @@ namespace OpenMS
 			// create vector "autoCorrelations" to store autocorrelations
 			std::vector<DoubleReal> autoCorrelations;
 			autoCorrelations.resize(akimaMz_size);
-				
+
       // multiply the fourier transformed complex values with the complex conjugate
 			// have a look at the GNU Scientific Library reference manual for a description of the data structure.
 			autoCorrelations[0] = akimaMz[0] * akimaMzShift[0];     // special case for i = 0
@@ -370,24 +360,24 @@ namespace OpenMS
 				DoubleReal last_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position - stepwidth, acc_correlation);
 				DoubleReal current_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position, acc_correlation);
 				DoubleReal next_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position + stepwidth, acc_correlation);
-			
+
 				// search for a current m/z shift larger than the expected one
 	      // conditions: intensity at position (mz + expectedMzShift + current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
-				if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_lin, mz + expectedMzShift + current_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff) // Why fixed intensity cutoffs?
+        if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_aki, mz + expectedMzShift + current_position, SILACFiltering::current_aki) > SILACFiltering::intensity_cutoff) // Why fixed intensity cutoffs?
 				{
 					gsl_spline_free(spline_correlation);      // free interpolation object
 					gsl_interp_accel_free(acc_correlation);     // free accelerator object
 					return expectedMzShift + current_position;      // return exact position
 				}
-			
+
 				// search for first maximum in - direction and check preconditions
 				last_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position - stepwidth, acc_correlation);
 				current_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position, acc_correlation);
 				next_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position + stepwidth, acc_correlation);
-			
+
 				// search for an current m/z shift smaller than the expected one
   	    // conditions: intensity at position (mz + expectedMzShift - current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
-				if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_lin, mz + expectedMzShift - current_position, SILACFiltering::current_lin) > SILACFiltering::intensity_cutoff)
+        if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_aki, mz + expectedMzShift - current_position, SILACFiltering::current_aki) > SILACFiltering::intensity_cutoff)
 				{
 					gsl_spline_free(spline_correlation);      // free interpolation object
 					gsl_interp_accel_free(acc_correlation);     // free accelerator object
@@ -418,7 +408,7 @@ namespace OpenMS
 		{
 			for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++)
 			{
-        peak_positions.push_back( current_mz + expected_shifts[peptide][isotope] );
+        peak_positions.push_back(current_mz + expected_shifts[peptide][isotope]);
 			}
 		}
     return peak_positions;

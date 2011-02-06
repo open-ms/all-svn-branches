@@ -42,119 +42,113 @@
 
 namespace OpenMS
 {
-class SILACFilter;
+  class SILACFilter;
 
-/**
- * @brief Filtering for SILAC data.
- * This filtering can be used to extract SILAC features from an MS experiment. Several SILACFilters can be added to the filtering to search for specific SILAC patterns.
- * @see SILACFilter
- */
-class OPENMS_DLLAPI SILACFiltering : public ProgressLogger{
-	friend class SILACFilter;
-private:
+  /**
+   * @brief Filtering for SILAC data.
+   * This filtering can be used to extract SILAC features from an MS experiment. Several SILACFilters can be added to the filtering to search for specific SILAC patterns.
+   * @see SILACFilter
+   */
+   class OPENMS_DLLAPI SILACFiltering : public ProgressLogger{
+     friend class SILACFilter;
+
+  private:
 		
-	/**
+  /**
 	 * @brief holds all filters used in the filtering
 	 */
-	std::list<SILACFilter*> filters;
-	
-	/**
+   std::list<SILACFilter*> filters;
+
+  /**
 	 * @brief average m/z distance between scanned data points
 	 */
-	static DoubleReal mz_stepwidth;
-	
-	/**
+   static DoubleReal mz_stepwidth;
+
+  /**
 	 * @brief minimal intensity of SILAC features
 	 */
-	static DoubleReal intensity_cutoff;
-	
-	/**
+   static DoubleReal intensity_cutoff;
+
+  /**
 	 * @brief minimal intensity correlation between regions of different peaks
 	 */
-	static DoubleReal intensity_correlation;
-	
-	/**
+   static DoubleReal intensity_correlation;
+
+  /**
 	 * @brief flag for missing peaks
 	 */
-	static bool allow_missing_peaks;
-	
-	static gsl_interp_accel* current_lin;
-	static gsl_interp_accel* current_spl;
-	static gsl_spline* spline_lin;
-	static gsl_spline* spline_spl;
-	
-	/**
+   static bool allow_missing_peaks;
+
+   static gsl_interp_accel* current_aki;
+   static gsl_interp_accel* current_spl;
+   static gsl_spline* spline_aki;
+   static gsl_spline* spline_spl;
+
+  /**
 	 * @brief current feature id
 	 */
-	static Int feature_id;
+   static Int feature_id;
 
-	static DoubleReal mz_min;
-	
-	/**
+  /**
+   * @brief lowest m/z value of the experiment
+   */    
+   static DoubleReal mz_min;
+
+  /**
 	 * @brief raw data
 	 */
-	MSExperiment<Peak1D>& exp;
-	
+   MSExperiment<Peak1D>& exp;
 
-public:
-	/**
+  public:
+
+  /**
 	 * @brief detailed constructor
 	 * @param exp raw data
 	 * @param mz_stepwidth_ average m/z distance between scanned data points
 	 * @param intensity_cutoff_ minimal intensity of SILAC features
+   * @param intensity_correlation_ minimal intensity correlation between regions of different peaks
+   * @param allow_missing_peaks flag for missing peaks
 	 */
-	SILACFiltering(MSExperiment<Peak1D>& exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_, DoubleReal intensity_correlation_, bool allow_missing_peaks);
-	
-	/**
+   SILACFiltering(MSExperiment<Peak1D>& exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_, DoubleReal intensity_correlation_, bool allow_missing_peaks);
+
+  /**
 	 * destructor
 	 */
-	virtual ~SILACFiltering();
-	
-	/**
+   virtual ~SILACFiltering();
+
+  /**
 	 * @brief adds a new filter to the filtering
 	 * @param filter filter to add
 	 */
-	void addFilter(SILACFilter& filter);
-	
-	/**
+   void addFilter(SILACFilter& filter);
+
+  /**
 	 * @brief starts the filtering based on the added filters
 	 */
-	void filterDataPoints();
-	
-	/**
-	 * @brief puts m/z values on the filter's blacklist
-	 * @param peak_positions m/z positions to be added
-	 * @param source filter, from which the value originate
-	 */
-	void blockPositions(const std::vector<DoubleReal>& peak_positions,SILACFilter* source);
-	
-	/**
+   void filterDataPoints();
+
+  /**
 	 * @brief structure for blacklist
-	 * @param mzBlack_min starting point of blacklisted m/z range
-	 * @param mzBlack_max end point of blacklisted m/z range
-   * @param rtBlack_min starting point of blacklisted rt range
-   * @param rtBlack_max end point of blacklisted rt range
+   * @param range blacklisted range defined by min/max m/z and min/max rt
 	 * @param generatingFilter filter that generated blacklist entry
 	 */
-	struct BlacklistEntry
-	{
-		DoubleReal mzBlack_min;
-		DoubleReal mzBlack_max;
-    DoubleReal rtBlack_min;
-    DoubleReal rtBlack_max;
-		SILACFilter* generatingFilter;
-    DRange<2> range;
-	};
-	
-	/**
-	 * @brief holds the m/z range and rt age that are ignored and the filter that generated the blacklist entry 
+   struct BlacklistEntry
+   {
+     DRange<2> range;
+     SILACFilter* generatingFilter;
+   };
+
+  /**
+   * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
 	 */
-  std::vector<BlacklistEntry> blacklist;
+   std::vector<BlacklistEntry> blacklist;
 
-  std::vector<BlacklistEntry> previous_entries;
+  /**
+   * @brief holds the blacklist entries from the SILAC pattern of previous m/z position
+   */
+   std::vector<BlacklistEntry> previous_entries;
 
-};
-
+  };
 }
 
 #endif /* SILACFILTERING_H_ */

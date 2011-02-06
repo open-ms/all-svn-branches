@@ -39,13 +39,12 @@ namespace OpenMS
   DoubleReal SILACFiltering::intensity_cutoff = 0;
   DoubleReal SILACFiltering::intensity_correlation = 0;
   bool SILACFiltering::allow_missing_peaks = true;
-  gsl_interp_accel* SILACFiltering::current_lin = 0;
+  gsl_interp_accel* SILACFiltering::current_aki = 0;
   gsl_interp_accel* SILACFiltering::current_spl = 0;
-  gsl_spline* SILACFiltering::spline_lin = 0;
+  gsl_spline* SILACFiltering::spline_aki = 0;
   gsl_spline* SILACFiltering::spline_spl = 0;
   Int SILACFiltering::feature_id = 0;
   DoubleReal SILACFiltering::mz_min = 0;
-
 
 	SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_, DoubleReal intensity_correlation_, bool allow_missing_peaks_) : exp(exp_)
 	{
@@ -69,12 +68,10 @@ namespace OpenMS
 	{
     startProgress(0, exp.size(), "filtering raw data");
 
-    Int old_blacklist_size = 0;
-
     vector<DataPoint> data;
-    vector<BlacklistEntry> blacklist;
+    vector<BlacklistEntry> blacklist;     // create global blacklist
 
-    mz_min = exp.getMinMZ();      // find out lowest m/z value
+    mz_min = exp.getMinMZ();      // get lowest m/z value of the experiment
 
     // Iterate over all filters
     for (list<SILACFilter*>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
@@ -82,10 +79,7 @@ namespace OpenMS
       // Iterate over all spectra of the experiment (iterate over rt)
       for (MSExperiment<Peak1D>::Iterator rt_it = exp.begin(); rt_it != exp.end(); ++rt_it)
       {
-        previous_entries.clear();     // vector of pointers of previous BlacklistEntry
-//        cout << "size of previous after initializing: " << previous_entries.size() << endl;
-
-        bool temp = false;
+        previous_entries.clear();     // clear vector of blacklist entries from previous m/z position
 
         // set progress
         // calculate with progress for the current rt run and progress for the filter run, each scaled by total numbers of filters
@@ -123,9 +117,9 @@ namespace OpenMS
           }
 
           // akima interpolation, returns 0 in regions with no raw data points
-          current_lin = gsl_interp_accel_alloc();
-          spline_lin = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
-          gsl_spline_init(spline_lin, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
+          current_aki = gsl_interp_accel_alloc();
+          spline_aki = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
+          gsl_spline_init(spline_aki, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
           // spline interpolation, used for exact ratio calculation (more accurate when real peak pairs are present)
           current_spl = gsl_interp_accel_alloc();
@@ -147,7 +141,7 @@ namespace OpenMS
               // BLUNT INTENSITY FILTER (Just check that intensity at current m/z position is above the intensity cutoff)
               //---------------------------------------------------------------
 
-              if (gsl_spline_eval (spline_lin, mz, current_lin) < intensity_cutoff)
+              if (gsl_spline_eval (spline_aki, mz, current_aki) < intensity_cutoff)
 							{
                 continue;
 							}
@@ -158,81 +152,78 @@ namespace OpenMS
               //--------------------------------------------------
 
               bool isBlacklisted = false;
-              bool following_isBlacklisted = false;
+              bool isFriend = false;
 
               // iterate over the blacklist
               for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
               {
-                // check if position is blacklisted and if so break
-                if (isBlacklisted == true)
-                {
-                  break;
-                }
+                if (isBlacklisted == true || isFriend == true)
+                  break;     // if there is already a blacklisted position or current and generating filter are friends
 
-                // check if position is blacklisted (i.e. position is inside m/z and rt range and if current and generating filter are different)
-                else if ((blacklist_it->range).encloses(mz, rt) && (*filter_it) != blacklist_it->generatingFilter)
-                {
-                  // check if current filter is friend of generating filter
-                  // i.e. current and generating filter differ in isotopes_per_peptide
-                  // but are equal in charge state and mass shifts
-
-                  // check if genearting filter is not NULL and if size of mass shifts for current and generating filter is equal
-                  if (blacklist_it->generatingFilter != NULL && (*filter_it)->getMassSeparationsSize() == (blacklist_it->generatingFilter)->getMassSeparationsSize() && (*filter_it)->getCharge() == (blacklist_it->generatingFilter)->getCharge())
-                  {
-                    vector<DoubleReal> current_filter_mass_separations = (*filter_it)->getMassSeparations();
-                    vector<DoubleReal> generating_filter_mass_separations = (blacklist_it->generatingFilter)->getMassSeparations();
-
-                    // check if mass shifts of current and generating filter are equal
-                    for (unsigned int i = 0; i < current_filter_mass_separations.size(); i++)
-                    {
-                      if (current_filter_mass_separations[i] != generating_filter_mass_separations[i])
-                      {
-                        isBlacklisted = true;     // if mass shifts of current and generating filter differ in only one entry set "isBlacklisted" to true
-                        break;
-                      }
-                    }
-                  }
-                  else
-                  {
-                    isBlacklisted = true;
-                    break;
-                  }
-                }
+                // check if current and potential corresponding positions are blacklisted
+                // (i.e. if positions are inside m/z and rt range of one BlacklistEntry)
                 else
                 {
-                  // check if m/z positions for potential following peaks are blacklisted
-                  // calculate expected positions of pontential following peaks
                   Int numberOfPeptides = (*filter_it)->getNumberOfPeptides();     // number of labelled peptides + 1 for cuurent filter
                   Int isotopes_per_peptide = (*filter_it)->getIsotopesPerPeptide();     // get number of isotopic peaks per peptide for current filter
                   DoubleReal isotope_distance = (*filter_it)->getIsotopeDistance();     // get distance between isotopic peaks of a peptide in [Th] for current filter
 
-                  // iterate over number of peptides
+                  // iterate over peptides
                   for (Int peptide = 0; peptide <= numberOfPeptides; peptide++)
                   {
-                    if (following_isBlacklisted == true)
-                    {
-                      break;    // check if there is already a blacklisted m/z position for potential following peaks
-                    }
+                    if (isBlacklisted == true || isFriend == true)
+                      break;          // if there is already a blacklisted position or current and generating filter are friends
+
                     else
                     {
-                      // iterate over number of isotopic peaks per peptide
-                      for (Int isotope = 0; isotope < isotopes_per_peptide - 1; isotope++)
+                      DoubleReal mz_peptide_separation = (*filter_it)->getMzPeptideSeparations()[peptide];      // get m/z shift for next potential peak
+
+                      // iterate over isotopes
+                      for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++)
                       {
-                        if (peptide == 0 && isotope == 0)
-                        {
-                          continue;   // do not check again if current m/z position is blacklisted
-                        }
+                        if (isBlacklisted == true || isFriend == true)
+                          break;      // if there is already a blacklisted position or current and generating filter are friends
+
                         else
                         {
-                          DoubleReal mz_peptide_separation = (*filter_it)->getMzPeptideSeparations()[peptide];      // get m/z shift for next potential peak
-                          DoubleReal mz_following_peak = mz + mz_peptide_separation + isotope * isotope_distance;     // calculate m/z position for next potential peak
+                          DoubleReal current_mz_position = mz + mz_peptide_separation + isotope * isotope_distance;     // calculate m/z position for next potential peak
 
-                          // check if next potential peak is blacklisted
-                          if ((blacklist_it->range).encloses(mz_following_peak, rt))
+                          // perform check
+                          if ((blacklist_it->range).encloses(current_mz_position, rt))
                           {
-                            isBlacklisted = true;
-                            following_isBlacklisted = true;
-                            break;
+                            // check for blacklisted potential monoisotopic peak if current and generating filter are friends
+                            // (i.e. if current and generating filter only differ in number of isotopic peaks per peptide)
+                            if (peptide == 0 && isotope == 0)
+                            {
+                              // check if current an generating flter are equal in charge and number of mass shifts
+                              if (blacklist_it->generatingFilter != NULL && (*filter_it)->getCharge() == (blacklist_it->generatingFilter)->getCharge() && (*filter_it)->getMassSeparationsSize() == (blacklist_it->generatingFilter)->getMassSeparationsSize())
+                              {
+                                vector<DoubleReal> current_filter_mass_separations = (*filter_it)->getMassSeparations();      // get mass shifts for current filter
+                                vector<DoubleReal> generating_filter_mass_separations = (blacklist_it->generatingFilter)->getMassSeparations();     // get mass shifts for generating filter
+
+                                // iterate over mass shifts
+                                for (unsigned int i = 0; i < current_filter_mass_separations.size(); i++)
+                                {
+                                  // check mass shifts
+                                  if (current_filter_mass_separations[i] != generating_filter_mass_separations[i])
+                                  {
+                                    isBlacklisted = true;     // current and generating filter differ in mass shift
+                                    break;
+                                  }
+                                  else
+                                  {
+                                    isFriend = true;      // current and generating filter are friends
+                                    break;
+                                  }
+                                }
+                              }
+                            }
+
+                            else
+                            {
+                              isBlacklisted = true;      // one of the positions is found in the blacklist
+                              break;
+                            }
                           }
                         }
                       }
@@ -242,8 +233,8 @@ namespace OpenMS
               }
 
 
-              // Check the other filters only if current m/z and rt position is not blacklisted
-              if (isBlacklisted == false)
+              // Check the other filters only if current m/z and rt position is not blacklisted or if current and generating filter are friends
+              if (isBlacklisted == false || isFriend == true)
 							{
                 if ((*filter_it)->isSILACPattern(rt, mz))      // Check if the mz at the given position is a SILAC pair
 								{
@@ -251,109 +242,74 @@ namespace OpenMS
                   // blacklisting
                   //--------------------------------------------------
 
-                  BlacklistEntry next_entry;
-                  DRange<2> range;
-                  DRange<2> range_united;
-                  vector<BlacklistEntry> new_entries;
-
-                  vector<BlacklistEntry>::iterator previous_it = previous_entries.begin();
-
+                  BlacklistEntry next_entry;      // create blacklist entry for current m/z and rt position
+                  vector<BlacklistEntry> new_entries;     // vector of blacklist entries for current m/z and rt position and following peaks
+                  DRange<2> range;      // create range for current m/z and rt position
+                  DRange<2> range_united;   // create range that combines cuurent and previous range
                   bool united = false;
+                  vector<BlacklistEntry>::iterator previous_it = previous_entries.begin();      // iterator over blacklist entries for previous m/z position
 
-                  // Retrieve peak positions for blacklisting
+                  // retrieve peak positions for blacklisting
                   const vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();
-//                  cout << "start of blacklisting - size of peak positions: " << peak_positions.size() << " size of previous: " << previous_entries.size() << " size of blacklist: " << blacklist.size() << endl;
 
-                  // filling the blacklist
+                  // iterate over the blacklist
                   for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
                   {                    
                     // get peak width for corresponding peak
                     DoubleReal peak_width = SILACFilter::getPeakWidth(*peak_positions_it);
 
-                    range.setMinX(*peak_positions_it - 0.8 * peak_width);
-                    range.setMaxX(*peak_positions_it + 0.8 * peak_width);
-                    range.setMinY(rt - 10);
-                    range.setMaxY(rt + 10);
+                    range.setMinX(*peak_positions_it - 0.8 * peak_width);     // set min m/z position of blacklisted range
+                    range.setMaxX(*peak_positions_it + 0.8 * peak_width);     // set max m/z position of blacklisted range
+                    range.setMinY(rt - 10);     // set min rt position of blacklisted range
+                    range.setMaxY(rt + 10);     // set max rt position of blacklisted range
 
-/*                    if (previous_entries.size() != 0)
-                    {
-                      temp = range.isIntersected(previous_it->range);
-
-                      cout << "0 before if intersected - size of previous: " << previous_entries.size() << " temp: " << temp << endl;
-                      cout << "range previous - x_min: " << (previous_it->range).minX() << " x_max: " << (previous_it->range).maxX() << " y_min: " << (previous_it->range).minY() << " y_max: " << (previous_it->range).maxY() << endl;
-                      cout << "range current - x_min: " << range.minX() << " x_max: " << range.maxX() << " y_min: " << range.minY() << " y_max: " << range.maxY() << endl;
-                    }
-*/
+                    // check if range for current m/z position intersects with range from previous m/z position
                     if (previous_entries.size() != 0 && range.isIntersected(previous_it->range))
                     {
-                      range_united = range.united(previous_it->range);
-                      next_entry.range = range_united;
-                      united = true;
-
-//                      cout << "if intersected: " << temp << endl;
+                      range_united = range.united(previous_it->range);      // create new minimal range containing current and previous range
+                      next_entry.range = range_united;      // add united range to blacklist entry for current m/z and rt position
+                      united = true;      // current and previous range intersect and have been combined
                     }
                     else
-                    {
-                      next_entry.range = range;
-
-//                      cout << "else intersected: " << temp << endl;
-                    }
+                      next_entry.range = range;     // add current range to blacklist entry for current m/z and rt position
 
                     // set generating filter to current filter for monoisotopic peak and to NULL for following peaks
                     if (peak_positions_it == peak_positions.begin())
-                    {
- //                     cout << "if generating: " << temp << endl;
-                      next_entry.generatingFilter = (*filter_it);     // filter generating the  blacklist entry
-                    }
+                      next_entry.generatingFilter = (*filter_it);     // add generating filter pointer to blacklist entry for current m/z and rt position
+
                     else
-                    {
-//                      cout << "else generating: " << temp << endl;
-                      next_entry.generatingFilter = NULL;
-                    }
+                      next_entry.generatingFilter = NULL;     // add NULL pointer to blacklist entry for following peaks
 
                     new_entries.push_back(next_entry);     // add pointer of current BlacklistEntry to "new_entries"
-                    previous_it++;
+                    previous_it++;      // get next previous blacklist entry
                   }
 
+                  // erase blacklist entries from previous m/z position if previous and current range intersect and have been combined
                   if (united == true)
-                  {
-                    cout << "before resize - size of blacklist: " << blacklist.size() << endl;
                     blacklist.resize(blacklist.size() - previous_entries.size());
-                  }
 
-                  old_blacklist_size += 6;
-
-                  //cout << "after resize - size of blacklist: " << blacklist.size() << " size of blacklist_temp: " << blacklist_temp.size() << endl;
-                  blacklist.insert(blacklist.end(), new_entries.begin(), new_entries.end());
-                  cout << "after insert - size of united blacklist: " << blacklist.size() << " size \"old\" blacklist: " << old_blacklist_size << endl;
-
-
-
-                  //cout << "before swap size of previous: " << previous_entries.size() << " size of new: " << new_entries.size() << endl;
-                  previous_entries.clear();
-                  previous_entries.swap(new_entries);
-                  new_entries.clear();
-
-//                  cout << "after swap size of previous: " << previous_entries.size() << " size of new: " << new_entries.size() << endl;
-//                  cout << "size of blacklist: " << blacklist.size() << endl;
-
+                  blacklist.insert(blacklist.end(), new_entries.begin(), new_entries.end());      // insert blacklist entries for current m/z and rt position and following peaks
+                  previous_entries.clear();     // clear vector of  blacklist entries for previous m/z position
+                  previous_entries.swap(new_entries);     // set blacklist entries for current m/z and rt position to blacklist entries for previous m/z position
+                  new_entries.clear();      // clear vector of blacklist entries for current m/z and rt position
 
 									++feature_id;
 								}
 							}	
-						}			
+            }
+
             last_mz = mz_it->getMZ();
 					}
 				}
 
-        // Clear the interpolations
-				gsl_spline_free(spline_lin);
-				gsl_interp_accel_free(current_lin);
+        // free the interpolation objects
+        gsl_spline_free(spline_aki);
+        gsl_interp_accel_free(current_aki);
 				gsl_spline_free(spline_spl);
 				gsl_interp_accel_free(current_spl);
-			}
+      }
 	  }
 
-		endProgress();
+    endProgress();
 	}
 }

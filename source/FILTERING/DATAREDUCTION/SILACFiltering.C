@@ -161,13 +161,13 @@ namespace OpenMS
 				  DoubleReal isotope_distance = (*filter_it)->getIsotopeDistance();
 				  vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
 				  
-				  // Check if any of the isotopic peaks of the unlabelled peptide are blacklisted.
+				  // Check if any of the (potential) isotopic peaks of the unlabelled peptide are blacklisted.
 				  for (Int i = 0; i < (*filter_it)->isotopes_per_peptide; ++i)
 				  {
 					  bool inBlacklistEntry = blacklist_it->range.encloses(mz + i*isotope_distance, rt);
 					  // The mono-isotopic peak of the unlabelled peptide is not blacklisted by entries of same charge and mass separations
 					  bool exception = (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations) && (i == 0);
-					  if (inBlacklistEntry && !exception)
+					  if (inBlacklistEntry && (exception == false))
 					  {
 						  isBlacklisted = true;
 						  break;
@@ -176,7 +176,7 @@ namespace OpenMS
 				  
 				  if (isBlacklisted) break;
 				  
-				  // check if isotopic peaks of labelled peptides are blacklisted
+				  // Check if (potential) isotopic peaks of labelled peptides are blacklisted.
 				  for (vector<DoubleReal>::iterator mass_separations_it = mass_separations.begin(); mass_separations_it != mass_separations.end(); ++mass_separations_it)
 				  {
 					  for (Int i = 0; i < (*filter_it)->isotopes_per_peptide; ++i)

@@ -402,20 +402,20 @@ namespace OpenMS
     return mz_peptide_separations.size();
   }
 
-  std::vector<DoubleReal> SILACFilter::getPeakPositions()
-  {
-    peak_positions.clear();
-    for (Int peptide = 0; peptide <= numberOfPeptides; peptide++)
-    {
-      for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++)
-      {
-        peak_positions.push_back(current_mz + expected_shifts[peptide][isotope]);
-      }
-    }
-    return peak_positions;
-  }
-
-  DoubleReal SILACFilter::getIsotopeDistance()
+	std::vector<DoubleReal> SILACFilter::getPeakPositions()
+	{
+		peak_positions.clear();
+		for (Int peptide = 0; peptide <= numberOfPeptides; peptide++)
+		{
+			for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++)
+			{
+				peak_positions.push_back(current_mz + expected_shifts[peptide][isotope]);
+			}
+		}
+		return peak_positions;
+	}
+	
+	DoubleReal SILACFilter::getIsotopeDistance()
   {
     return isotope_distance;
   }

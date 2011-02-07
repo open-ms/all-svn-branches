@@ -141,12 +141,12 @@ namespace OpenMS
    */
    bool isSILACPattern(DoubleReal rt, DoubleReal mz);
 
-  /**
-   * @brief gets the m/z values of all peaks , which belong the last identified feature
-   */
-   std::vector<DoubleReal> getPeakPositions();
-
-  public:
+	   /**
+		* @brief gets the m/z values of all peaks , which belong the last identified feature
+		*/
+	   std::vector<DoubleReal> getPeakPositions();
+	   
+   public:
 
   /**
    * @brief double identifier (2)

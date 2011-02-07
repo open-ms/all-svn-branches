@@ -133,12 +133,14 @@ namespace OpenMS
    * @param charge of the generating filter
    * @param mass separations of the generating filter
    * @param generating filter
+   * @param m/z position of the blacklisted area relative to the mono-isotopic peak of the unlabelled peptide
    */
    struct BlacklistEntry
    {
-     DRange<2> range;
-     Int charge;
-     std::vector<DoubleReal> mass_separations;
+	   DRange<2> range;
+	   Int charge;
+	   std::vector<DoubleReal> mass_separations;
+	   DoubleReal relative_peak_position;
    };
 
   /**

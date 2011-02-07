@@ -40,13 +40,12 @@ namespace OpenMS
   DoubleReal SILACFiltering::intensity_cutoff = 0;
   DoubleReal SILACFiltering::intensity_correlation = 0;
   bool SILACFiltering::allow_missing_peaks = true;
-  gsl_interp_accel* SILACFiltering::current_lin = 0;
+  gsl_interp_accel* SILACFiltering::current_aki = 0;
   gsl_interp_accel* SILACFiltering::current_spl = 0;
-  gsl_spline* SILACFiltering::spline_lin = 0;
+  gsl_spline* SILACFiltering::spline_aki = 0;
   gsl_spline* SILACFiltering::spline_spl = 0;
   Int SILACFiltering::feature_id = 0;
   DoubleReal SILACFiltering::mz_min = 0;
-
 
 	SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_, DoubleReal intensity_correlation_, bool allow_missing_peaks_) : exp(exp_)
 	{
@@ -63,7 +62,6 @@ namespace OpenMS
 
 	SILACFiltering::~SILACFiltering()
 	{
-
 	}
 
 	void SILACFiltering::filterDataPoints()
@@ -72,7 +70,7 @@ namespace OpenMS
 
     vector<DataPoint> data;
 
-    mz_min = exp.getMinMZ();      // find out lowest m/z value
+    mz_min = exp.getMinMZ();      // get lowest m/z value
 
     // Iterate over all filters
     for (list<SILACFilter*>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
@@ -118,9 +116,9 @@ namespace OpenMS
           }
 
           // akima interpolation, returns 0 in regions with no raw data points
-          current_lin = gsl_interp_accel_alloc();
-          spline_lin = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
-          gsl_spline_init(spline_lin, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
+          current_aki = gsl_interp_accel_alloc();
+          spline_aki = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
+          gsl_spline_init(spline_aki, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
           // spline interpolation, used for exact ratio calculation (more accurate when real peak pairs are present)
           current_spl = gsl_interp_accel_alloc();
@@ -142,7 +140,7 @@ namespace OpenMS
               // BLUNT INTENSITY FILTER (Just check that intensity at current m/z position is above the intensity cutoff)
               //---------------------------------------------------------------
 
-              if (gsl_spline_eval (spline_lin, mz, current_lin) < intensity_cutoff)
+              if (gsl_spline_eval (spline_aki, mz, current_aki) < intensity_cutoff)
 							{
                 continue;
 							}
@@ -157,41 +155,46 @@ namespace OpenMS
               // iterate over the blacklist (Relevant blacklist entries are most likely among the last ones added.)
               for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
               {	
-				  DoubleReal charge = (*filter_it)->getCharge();
-				  DoubleReal isotope_distance = (*filter_it)->getIsotopeDistance();
-				  vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
-				  
-				  // Check if any of the (potential) isotopic peaks of the unlabelled peptide are blacklisted.
-				  for (Int i = 0; i < (*filter_it)->isotopes_per_peptide; ++i)
-				  {
-					  bool inBlacklistEntry = blacklist_it->range.encloses(mz + i*isotope_distance, rt);
-					  // The mono-isotopic peak of the unlabelled peptide is not blacklisted by entries of same charge and mass separations
-					  bool exception = (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations) && (i == 0);
-					  if (inBlacklistEntry && (exception == false))
-					  {
-						  isBlacklisted = true;
-						  break;
-					  }
-				  }
-				  
-				  if (isBlacklisted) break;
-				  
-				  // Check if (potential) isotopic peaks of labelled peptides are blacklisted.
-				  for (vector<DoubleReal>::iterator mass_separations_it = mass_separations.begin(); mass_separations_it != mass_separations.end(); ++mass_separations_it)
-				  {
-					  for (Int i = 0; i < (*filter_it)->isotopes_per_peptide; ++i)
-					  {
-						  bool inBlacklistEntry = blacklist_it->range.encloses(mz + (*mass_separations_it / charge) + i*isotope_distance, rt);
-						  if (inBlacklistEntry)
-						  {
-							  isBlacklisted = true;
-							  break;
-						  }
-					  }
-				  }
-				  
-				  if (isBlacklisted) break;
-				  
+                DoubleReal charge = (*filter_it)->getCharge();
+                DoubleReal isotope_distance = (*filter_it)->getIsotopeDistance();
+                vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
+
+                // Check if any of the (potential) isotopic peaks of the unlabelled peptide are blacklisted.
+                for (Int i = 0; i < (*filter_it)->isotopes_per_peptide; ++i)
+                {
+                  bool inBlacklistEntry = blacklist_it->range.encloses(mz + i*isotope_distance, rt);
+
+                  // The mono-isotopic peak of the unlabelled peptide is not blacklisted by entries of same charge and mass separations
+                  bool exception = (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations) && (i == 0);
+
+                  if (inBlacklistEntry && (exception == false))
+                  {
+                    isBlacklisted = true;
+                    break;
+                  }
+                }
+
+                if (isBlacklisted)
+                  break;
+
+                // Check if (potential) isotopic peaks of labelled peptides are blacklisted.
+                for (vector<DoubleReal>::iterator mass_separations_it = mass_separations.begin(); mass_separations_it != mass_separations.end(); ++mass_separations_it)
+                {
+                  for (Int i = 0; i < (*filter_it)->isotopes_per_peptide; ++i)
+                  {
+                    bool inBlacklistEntry = blacklist_it->range.encloses(mz + (*mass_separations_it / charge) + i*isotope_distance, rt);
+
+                    if (inBlacklistEntry)
+                    {
+                      isBlacklisted = true;
+                      break;
+                    }
+                  }
+                }
+
+                if (isBlacklisted)
+                  break;
+
               }
 
 
@@ -199,63 +202,66 @@ namespace OpenMS
               if (isBlacklisted == false)
 							{
                 if ((*filter_it)->isSILACPattern(rt, mz))      // Check if the mz at the given position is a SILAC pair
-				{
-					//--------------------------------------------------
-					// FILLING THE BLACKLIST
-					//--------------------------------------------------
+                {
+                  //--------------------------------------------------
+                  // FILLING THE BLACKLIST
+                  //--------------------------------------------------
 
-					DoubleReal peak_width = SILACFilter::getPeakWidth(mz);					
-		
-					// loop over the individual isotopic peaks of the SILAC pattern (and blacklist the area around them)
-					const vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();
-					for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
-					{
-						DRange<2> blackArea;    // area in the m/z-RT plane to be blacklisted
-						blackArea.setMinX(*peak_positions_it - 0.8 * peak_width);
-						blackArea.setMaxX(*peak_positions_it + 0.8 * peak_width);
-						blackArea.setMinY(rt - 10);
-						blackArea.setMaxY(rt + 10);
-						
-						// If black area originates from a mono-isotopic peak, remember the charge and mass separations (since the blacklisting should not apply to filters of the same charge and mass separations).
-						Int charge = 0;
-						std::vector<DoubleReal> mass_separations;
-						mass_separations.push_back(0.0);
-						if (peak_positions_it == peak_positions.begin())
-						{
-							charge = (*filter_it)->charge;
-							mass_separations.clear();
-							mass_separations.insert(mass_separations.begin(), (*filter_it)->mass_separations.begin(), (*filter_it)->mass_separations.end());
-						}
-						
-						// Does the new black area overlap with existing areas in the blacklist?
-						bool overlap = false;
-						for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
-						{
-							overlap = blackArea.isIntersected(blacklist_it->range);
-							if (overlap && (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations))
-							{
-								// If new and old entry intersect, simply update the old one.
-								(blacklist_it->range).setMinX(min(blackArea.minX(),(blacklist_it->range).minX()));
-								(blacklist_it->range).setMaxX(max(blackArea.maxX(),(blacklist_it->range).maxX()));
-								(blacklist_it->range).setMinY(min(blackArea.minY(),(blacklist_it->range).minY()));
-								(blacklist_it->range).setMaxY(max(blackArea.maxY(),(blacklist_it->range).maxY()));
-								break;
-							}
-						}
-						
-						if ( !overlap )
-						{
-							// If new and none of the old entries intersect, add a new entry.
-							BlacklistEntry newEntry;
-							newEntry.range = blackArea;
-							newEntry.charge = charge;
-							newEntry.mass_separations = mass_separations;
-							blacklist.insert(blacklist.end(), newEntry);
-						}
-					}
-							
-					// DEBUG: save global blacklist
-					/*ofstream blacklistFile;
+                  DoubleReal peak_width = SILACFilter::getPeakWidth(mz);
+
+                  // loop over the individual isotopic peaks of the SILAC pattern (and blacklist the area around them)
+                  const vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();
+                  for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
+                  {
+                    DRange<2> blackArea;    // area in the m/z-RT plane to be blacklisted
+                    blackArea.setMinX(*peak_positions_it - 0.8 * peak_width);     // set min m/z position of area to be blacklisted
+                    blackArea.setMaxX(*peak_positions_it + 0.8 * peak_width);     // set max m/z position of area to be blacklisted
+                    blackArea.setMinY(rt - 10);     // set min rt position of area to be blacklisted
+                    blackArea.setMaxY(rt + 10);     // set max rt position of area to be blacklisted
+
+                    // If black area originates from a mono-isotopic peak, remember the charge and mass separations (since the blacklisting should not apply to filters of the same charge and mass separations).
+                    Int charge = 0;
+                    std::vector<DoubleReal> mass_separations;
+                    mass_separations.push_back(0.0);
+
+                    if (peak_positions_it == peak_positions.begin())
+                    {
+                      charge = (*filter_it)->charge;
+                      mass_separations.clear();
+                      mass_separations.insert(mass_separations.begin(), (*filter_it)->mass_separations.begin(), (*filter_it)->mass_separations.end());
+                    }
+
+                    // Does the new black area overlap with existing areas in the blacklist?
+                    bool overlap = false;
+
+                    for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
+                    {
+                      overlap = blackArea.isIntersected(blacklist_it->range);
+
+                      if (overlap && (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations))
+                      {
+                        // If new and old entry intersect, simply update the old one.
+                        (blacklist_it->range).setMinX(min(blackArea.minX(),(blacklist_it->range).minX()));
+                        (blacklist_it->range).setMaxX(max(blackArea.maxX(),(blacklist_it->range).maxX()));
+                        (blacklist_it->range).setMinY(min(blackArea.minY(),(blacklist_it->range).minY()));
+                        (blacklist_it->range).setMaxY(max(blackArea.maxY(),(blacklist_it->range).maxY()));
+                        break;
+                      }
+                    }
+
+                    if ( !overlap )
+                    {
+                      // If new and none of the old entries intersect, add a new entry.
+                      BlacklistEntry newEntry;
+                      newEntry.range = blackArea;
+                      newEntry.charge = charge;
+                      newEntry.mass_separations = mass_separations;
+                      blacklist.insert(blacklist.end(), newEntry);
+                    }
+                  }
+
+                  // DEBUG: save global blacklist
+                  /*ofstream blacklistFile;
 					blacklistFile.open ("blacklist.csv");
 					for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
 					{
@@ -263,17 +269,18 @@ namespace OpenMS
 					}
 					blacklistFile.close();*/
 									
-													++feature_id;
+                  ++feature_id;
 								}
 							}	
 						}			
+
             last_mz = mz_it->getMZ();
 					}
 				}
 
 				// Clear the interpolations
-				gsl_spline_free(spline_lin);
-				gsl_interp_accel_free(current_lin);
+        gsl_spline_free(spline_aki);
+        gsl_interp_accel_free(current_aki);
 				gsl_spline_free(spline_spl);
 				gsl_interp_accel_free(current_spl);
 			}

@@ -155,12 +155,11 @@ namespace OpenMS
 				{
 					 
                 DoubleReal charge = (*filter_it)->getCharge();
-                //DoubleReal isotope_distance = (*filter_it)->getIsotopeDistance();
                 vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
 				  
                   // loop over the individual isotopic peaks of the SILAC pattern (and check if they are blacklisted)
                   const vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();
-                  for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
+				for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
                   {
 					  DoubleReal relative_peak_position = *peak_positions_it - mz;
 
@@ -173,47 +172,9 @@ namespace OpenMS
 						  break;
 					  }
 				  }
-					  
-				  
-
-                // Check if any of the (potential) isotopic peaks of the unlabelled peptide are blacklisted.
-				/*for (Int i = 0; i < (*filter_it)->isotopes_per_peptide; ++i)
-                {
-                  bool inBlacklistEntry = blacklist_it->range.encloses(mz + i*isotope_distance, rt);
-
-                  // The mono-isotopic peak of the unlabelled peptide is not blacklisted by entries of same charge and mass separations
-                  bool exception = (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations) && (i == 0);
-
-                  if (inBlacklistEntry && (exception == false))
-                  {
-                    isBlacklisted = true;
-                    break;
-                  }
-                }
-
-                if (isBlacklisted)
-                  break;
-
-                // Check if (potential) isotopic peaks of labelled peptides are blacklisted.
-                for (vector<DoubleReal>::iterator mass_separations_it = mass_separations.begin(); mass_separations_it != mass_separations.end(); ++mass_separations_it)
-                {
-                  for (Int i = 0; i < (*filter_it)->isotopes_per_peptide; ++i)
-                  {
-                    bool inBlacklistEntry = blacklist_it->range.encloses(mz + (*mass_separations_it / charge) + i*isotope_distance, rt);
-
-                    if (inBlacklistEntry)
-                    {
-                      isBlacklisted = true;
-                      break;
-                    }
-                  }
-                }
-
-                if (isBlacklisted)
-					break;*/
-
 				}
-														
+						
+				
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
               {

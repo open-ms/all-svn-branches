@@ -48,91 +48,100 @@ namespace OpenMS
 		@ingroup SpectraClustering
 	*/
 
-class OPENMS_DLLAPI HashClustering : public ProgressLogger{
-private:
+class OPENMS_DLLAPI HashClustering : public ProgressLogger
+{
+  private:
 
 	/**
 	 * @brief current minimal distance
 	 */
-	DoubleReal min_distance;
+   DoubleReal min_distance;
+
 	/**
 	 * @brief two DataSubsets with current minimal distance
 	 */
-	std::pair<DataSubset*,DataSubset*> min_distance_subsets;
+   std::pair<DataSubset*,DataSubset*> min_distance_subsets;
+
 	/**
 	 * @brief set of distances
 	 */
-	DistanceSet distances;
+   DistanceSet distances;
+
 	/**
 	 * @brief method which is used to calculate the distances
 	 */
-	ClusteringMethod* method;
+   ClusteringMethod* method;
+
 	/**
 	 * @brief the grid for geometric hashing
 	 */
-	HashGrid grid;
+   HashGrid grid;
+
 	/**
 	 * @brief average silhoutte widths for each subtree
 	 */
-	std::vector<std::vector<Real> > silhouettes;
+   std::vector<std::vector<Real> > silhouettes;
+
 	/**
 	 * @brief Calculates initial distances
 	 */
-	void init();
+   void init();
+
 	/**
 	 * @brief Merges two DataSubsets
 	 */
-	void merge();
+   void merge();
+
 	/**
 	 * @brief Finds the two DataSubsets with minimal distance
 	 * @param subset1 first DataSubset
 	 * @param subset2 second DataSubset
 	 */
-	void updateMinElements();
+   void updateMinElements();
+
 	/**
-	* @brief Calculates the distance of two DataSubsets using <i>getDistance</i> of the clustering method
-	* @param subset1 first DataSubset
+   * @brief Calculates the distance of two DataSubsets using <i>getDistance</i> of the clustering method
+   * @param subset1 first DataSubset
 	 * @param subset2 second DataSubset
 	 */
-	DoubleReal getDistance(DataSubset& subset1,DataSubset& subset2);
+   DoubleReal getDistance(DataSubset& subset1, DataSubset& subset2);
+
 	/**
 	 * @brief Calculates the distance of two DataPoints using <i>getDistance</i> of the clustering method
 	 * @param point1 first DataPoint
 	 * @param point2 second DataPoint
 	 */
-	DoubleReal getDistance(DataPoint& point1,DataPoint& point2);
+   DoubleReal getDistance(DataPoint& point1, DataPoint& point2);
 
 	/**
 	 * @brief Calculates the silhouette values for any possible cluster number
 	 * @param tree hierarchical clustering tree
 	 */
-	std::vector< Real > averageSilhouetteWidth(DataSubset& subset);
+   std::vector< Real > averageSilhouetteWidth(DataSubset& subset);
+
 	/**
-			@brief Method to calculate a partition resulting from a certain step in clustering given by the number of clusters
-
-			@param cluster_quantity Size giving the number of clusters
-			@param tree vector of BinaryTreeNodes representing the clustering
-			@param clusters vector of vectors holding the clusters
-			@see BinaryTreeNode
-
-			after call of this method the argument clusters is filled corresponding to the given @p cluster_quantity with the indices of the elements clustered
-	 */
-	void cut(int cluster_quantity, std::vector< std::vector<DataPoint*> >& clusters, std::vector<BinaryTreeNode>& tree);
+   *@brief Method to calculate a partition resulting from a certain step in clustering given by the number of clusters
+   *@param cluster_quantity Size giving the number of clusters
+   *@param tree vector of BinaryTreeNodes representing the clustering
+   *@param clusters vector of vectors holding the clusters
+   *@see BinaryTreeNode
+    after call of this method the argument clusters is filled corresponding to the given @p cluster_quantity with the indices of the elements clustered
+   */
+   void cut(int cluster_quantity, std::vector< std::vector<DataPoint*> >& clusters, std::vector<BinaryTreeNode>& tree);
 
 public:
 
 	/**
-		@brief Exception thrown if not enough data (<2) is used
-
+   *@brief Exception thrown if not enough data (<2) is used
 		If the set of data to be clustered contains only one data point,
 		clustering algorithms would fail for obvious reasons.
 	 */
-	class OPENMS_DLLAPI InsufficientInput : public Exception::BaseException
-	{
-	public:
-		InsufficientInput(const char* file, int line, const char* function, const char* message= "not enough data points to cluster anything") throw();
-		virtual ~InsufficientInput() throw();
-	};
+   class OPENMS_DLLAPI InsufficientInput : public Exception::BaseException
+   {
+     public:
+       InsufficientInput(const char* file, int line, const char* function, const char* message= "not enough data points to cluster anything") throw();
+       virtual ~InsufficientInput() throw();
+   };
 
 	/**
 	 * @brief Detailed constructor
@@ -141,32 +150,32 @@ public:
 	 * @param mz_threshold width of the grid cells
 	 * @param method_ method to use for calculating distances
 	 */
-	HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method_);
+   HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method_);
 
 	/**
 	 * @brief Starts the clustering and returns a vector of subtrees when finished
 	 */
-	void performClustering();
+   void performClustering();
+
 	/**
 	 * @brief Gets the hierarchical clustering subtrees after clustering has been performed. If the data has not been clustered yet, the method returns an empty vector
 	 * @param subtrees vector of subtrees, which will be filled after the clustering process
 	 */
-	void getSubtrees(std::vector<std::vector<BinaryTreeNode> >& subtrees);
+   void getSubtrees(std::vector<std::vector<BinaryTreeNode> >& subtrees);
 
 	/**
-		 * @brief Extracts the clusters out of the subtrees using average silhoutte widths. If the data has not been clustered yet, the method returns an empty vector
-		 * @param clusters vector of clusters, which will be filled after the extraction of the clusters
-		 */
-		void createClusters(std::vector<std::vector<DataPoint*> >& clusters);
+   * @brief Extracts the clusters out of the subtrees using average silhoutte widths. If the data has not been clustered yet, the method returns an empty vector
+   * @param clusters vector of clusters, which will be filled after the extraction of the clusters
+   */
+   void createClusters(std::vector<std::vector<DataPoint*> >& clusters);
 
-		/**
-		 * @brief gets the average silhoutte widths for each subtree
-		 */
-		std::vector<std::vector<Real> > getSilhouetteValues();
+  /**
+   * @brief gets the average silhoutte widths for each subtree
+   */
+   std::vector<std::vector<Real> > getSilhouetteValues();
 
 };
+
 }
-
-
 
 #endif /* HASHCLUSTERING_H_ */

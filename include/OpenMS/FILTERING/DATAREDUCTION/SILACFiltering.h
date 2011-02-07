@@ -146,11 +146,6 @@ namespace OpenMS
    */
    std::vector<BlacklistEntry> blacklist;
 
-  /**
-   * @brief holds the blacklist entries from the SILAC pattern of previous m/z position
-   */
-   std::vector<BlacklistEntry> previous_entries;
-
   };
 }
 

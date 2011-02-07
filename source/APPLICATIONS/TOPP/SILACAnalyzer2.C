@@ -63,7 +63,6 @@
 #include <fstream>
 #include <limits>
 #include <locale>
-#include <fstream>
 #include <iomanip>
 
 using namespace OpenMS;
@@ -232,15 +231,15 @@ class TOPPSILACAnalyzer2
     if (section == "labels")
     {
       // create labels that can be chosen in section "sample/labels"
-      defaults.setValue("Arg6", 6.02012902679999, "Arg6 mass shift", StringList::create("advanced"));
+      defaults.setValue("Arg6", 6.0201290268, "Arg6 mass shift", StringList::create("advanced"));
       defaults.setMinFloat("Arg6", 0.0);
       defaults.setValue("Arg10", 10.0082685996, "Arg10 mass shift", StringList::create("advanced"));
       defaults.setMinFloat("Arg10", 0.0);
       defaults.setValue("Lys4", 4.0251069836, "Lys4 mass shift", StringList::create("advanced"));
       defaults.setMinFloat("Lys4", 0.0);
-      defaults.setValue("Lys6", 6.02012902679999, "Lys6 mass shift", StringList::create("advanced"));
+      defaults.setValue("Lys6", 6.0201290268, "Lys6 mass shift", StringList::create("advanced"));
       defaults.setMinFloat("Lys6", 0.0);
-      defaults.setValue("Lys8", 8.01419881319999, "Lys8 mass shift", StringList::create("advanced"));
+      defaults.setValue("Lys8", 8.0141988132, "Lys8 mass shift", StringList::create("advanced"));
       defaults.setMinFloat("Lys8", 0.0);
       defaults.setValue("Methyl4", 4.0202, "Methyl4 mass shift", StringList::create("advanced"));
       defaults.setMinFloat("Methyl4", 0.0);
@@ -852,25 +851,12 @@ class TOPPSILACAnalyzer2
     silac_types.insert(make_pair(3, "Quadruplet"));
 
 
-    //--------------------------------------------------------------
-    // determine file name for debug output
-    //--------------------------------------------------------------
-    String debug_trunk = in;
-    if (in.has('.'))
-    {
-      debug_trunk = in.substr(0, in.find_first_of('.'));
-    }
-
-
     //--------------------------------------------------
     // consensusXML output
     //--------------------------------------------------
 
     if (out != "")
     {
-      // write ratios of all cluster to additional *.dat
-      String debug_dat = debug_trunk + ".dat";
-      ofstream stream_ratios(debug_dat.c_str());
       Size id = 0;
 
       // iterate over all clusters
@@ -947,9 +933,7 @@ class TOPPSILACAnalyzer2
         // average retention time
         rt /= total_intensity;
 
-        stream_ratios << id << "\t" << cluster_it->size() << "\t" << rt << "\t" << mz;
-
-        // create consensus feature for each mass shift !=0
+         // create consensus feature for each mass shift !=0
         ConsensusFeature consensus_feature;
         consensus_feature.setRT(rt);
         consensus_feature.setMZ(mz);
@@ -964,7 +948,6 @@ class TOPPSILACAnalyzer2
 
           Math::LinearRegression linear_reg;
           linear_reg.computeRegressionNoIntercept(0.95, intensities[0].begin(), intensities[0].end(), intensities[l].begin());
-          stream_ratios  << "\t" << linear_reg.getSlope();
 
           FeatureHandle handle;
           handle.setRT(rt);
@@ -977,11 +960,8 @@ class TOPPSILACAnalyzer2
         }
 
         all_pairs.push_back(consensus_feature);
-
-        stream_ratios << endl;
         ++id;
-      }
-      stream_ratios.close();
+      }    
     }
 
 

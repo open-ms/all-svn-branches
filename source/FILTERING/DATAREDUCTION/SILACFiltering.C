@@ -47,25 +47,25 @@ namespace OpenMS
   Int SILACFiltering::feature_id = 0;
   DoubleReal SILACFiltering::mz_min = 0;
 
-	SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_, DoubleReal intensity_correlation_, bool allow_missing_peaks_) : exp(exp_)
-	{
-		mz_stepwidth = mz_stepwidth_;
-		intensity_cutoff = intensity_cutoff_;
-		intensity_correlation = intensity_correlation_;
-		allow_missing_peaks = allow_missing_peaks_;
-	}
+  SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_, DoubleReal intensity_correlation_, bool allow_missing_peaks_) : exp(exp_)
+  {
+    mz_stepwidth = mz_stepwidth_;
+    intensity_cutoff = intensity_cutoff_;
+    intensity_correlation = intensity_correlation_;
+    allow_missing_peaks = allow_missing_peaks_;
+  }
 
-	void SILACFiltering::addFilter(SILACFilter& filter)
-	{
-		filters.push_back(&filter);
-	}
+  void SILACFiltering::addFilter(SILACFilter& filter)
+  {
+    filters.push_back(&filter);
+  }
 
-	SILACFiltering::~SILACFiltering()
-	{
-	}
+  SILACFiltering::~SILACFiltering()
+  {
+  }
 
-	void SILACFiltering::filterDataPoints()
-	{
+  void SILACFiltering::filterDataPoints()
+  {
     startProgress(0, exp.size(), "filtering raw data");
 
     vector<DataPoint> data;
@@ -74,12 +74,10 @@ namespace OpenMS
 
     // Iterate over all filters
     for (list<SILACFilter*>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
-    {		
+    {
       // Iterate over all spectra of the experiment (iterate over rt)
       for (MSExperiment<Peak1D>::Iterator rt_it = exp.begin(); rt_it != exp.end(); ++rt_it)
       {
-        previous_entries.clear();     // vector of pointers of previous BlacklistEntry
-
         // set progress
         // calculate with progress for the current rt run and progress for the filter run, each scaled by total numbers of filters
         setProgress((rt_it - exp.begin()) / filters.size() + distance(filters.begin(), filter_it) * exp.size() / filters.size());
@@ -128,22 +126,22 @@ namespace OpenMS
           MSSpectrum<>::Iterator mz_it = rt_it->begin();
 
           last_mz = mz_it->getMZ();
-					++mz_it;
+          ++mz_it;
 
           // Iterate over the spectrum with a step width that is oriented on the raw data point positions (iterate over mz)
           for ( ; mz_it != rt_it->end(); ++mz_it) // iteration correct
-					{
+          {
             // We do not move with mz_stepwidth over the spline fit, but with about a third of the local mz differences
             for (DoubleReal mz = last_mz; mz < mz_it->getMZ(); mz += (abs(mz_it->getMZ() - last_mz)) / 3)
-						{
+            {
               //---------------------------------------------------------------
               // BLUNT INTENSITY FILTER (Just check that intensity at current m/z position is above the intensity cutoff)
               //---------------------------------------------------------------
 
               if (gsl_spline_eval (spline_aki, mz, current_aki) < intensity_cutoff)
-							{
+              {
                 continue;
-							}
+              }
 
 
               //--------------------------------------------------
@@ -154,7 +152,7 @@ namespace OpenMS
 
               // iterate over the blacklist (Relevant blacklist entries are most likely among the last ones added.)
               for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
-              {	
+              {
                 DoubleReal charge = (*filter_it)->getCharge();
                 DoubleReal isotope_distance = (*filter_it)->getIsotopeDistance();
                 vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
@@ -200,7 +198,7 @@ namespace OpenMS
 
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
-							{
+              {
                 if ((*filter_it)->isSILACPattern(rt, mz))      // Check if the mz at the given position is a SILAC pair
                 {
                   //--------------------------------------------------
@@ -262,30 +260,30 @@ namespace OpenMS
 
                   // DEBUG: save global blacklist
                   /*ofstream blacklistFile;
-					blacklistFile.open ("blacklist.csv");
-					for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
-					{
-						blacklistFile << rt << "\t" << (blacklist_it->range).minX() << "\t" << (blacklist_it->range).maxX() << "\t" << (blacklist_it->range).minY() << "\t" << (blacklist_it->range).maxY() << "\t" << (blacklist_it->charge) << "\t" << (blacklist_it->mass_separations[0]) << endl;
-					}
-					blacklistFile.close();*/
-									
+          blacklistFile.open ("blacklist.csv");
+          for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
+          {
+            blacklistFile << rt << "\t" << (blacklist_it->range).minX() << "\t" << (blacklist_it->range).maxX() << "\t" << (blacklist_it->range).minY() << "\t" << (blacklist_it->range).maxY() << "\t" << (blacklist_it->charge) << "\t" << (blacklist_it->mass_separations[0]) << endl;
+          }
+          blacklistFile.close();*/
+
                   ++feature_id;
-								}
-							}	
-						}			
+                }
+              }
+            }
 
             last_mz = mz_it->getMZ();
-					}
-				}
+          }
+        }
 
-				// Clear the interpolations
+        // Clear the interpolations
         gsl_spline_free(spline_aki);
         gsl_interp_accel_free(current_aki);
-				gsl_spline_free(spline_spl);
-				gsl_interp_accel_free(current_spl);
-			}
-	  }
+        gsl_spline_free(spline_spl);
+        gsl_interp_accel_free(current_spl);
+      }
+    }
 
-		endProgress();
-	}
+    endProgress();
+  }
 }

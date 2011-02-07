@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl $
-// $Authors: Marc Sturm, Clemens Groepl, Steffen Sass $
+// $Maintainer: Lars Nilse $
+// $Authors: Hendrik Brauer $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/FileHandler.h>
@@ -43,8 +43,6 @@ using namespace std;
 	@page TOPP_MapNormalizer2 MapNormalizer2
 
 	@brief Normalizes maps of one consensusXML file.
-
-Test
 
 */
 
@@ -70,35 +68,33 @@ protected:
 		setValidFormats_("out",StringList::create("consensusXML"));
 	}
 
-	/**
-	 * computes simple stats (mean, stddev)
-	 */
-	pair<double, double> simpleStats(const vector<double>& x)
+	double mean(const vector<double>& x)
 	{
-		double sum_of_squares = 0.0;
 		double sum = 0.0;
 		UInt N = x.size();
 	
 		for (UInt i = 0; i < N; ++i)
 		{
 			sum += x[i];
-			sum_of_squares += x[i] * x[i];
 		}
-	
 		double mean = sum / (double)N;
-		double stddev = 1./(double)N * sqrt(N * sum_of_squares - sum * sum);
 	
-		return make_pair(mean, stddev);
+		return mean;
 	}
 
-	pair<Matrix<double>, Matrix<double> > computeMap2MapCorrelations(const ConsensusMap& map)
+	vector<double> computeCorrelation(const ConsensusMap& map)
 	{
 		UInt number_of_features = map.size();
 		UInt number_of_maps = map.getFileDescriptions().size();
 		vector<vector<double> > feature_int(number_of_maps);
+		UInt map_with_most_features = 0;
 		for (UInt i = 0; i < number_of_maps; i++)
 		{
 			feature_int[i].resize(number_of_features);
+			if (map.getFileDescriptions()[i].size > map.getFileDescriptions()[map_with_most_features].size)
+			{
+				map_with_most_features = i;
+			}
 		}
 		
 		ConsensusMap::ConstIterator cf_it;
@@ -111,53 +107,32 @@ protected:
 				feature_int[f_it->getMapIndex()][idx] = f_it->getIntensity();
 			}
 		}
-		// info: mean, stddev for intensities of one map
-		for (UInt i = 0; i < number_of_maps; ++i)
+
+		vector<double> ratio_vector(number_of_maps);
+		for (UInt j = 0; j < number_of_maps; j++)
 		{
-			pair<double, double> stats = simpleStats(feature_int[i]);
-			cout << "stats for map " << i << ": " << stats.first << " +/- " << stats.second << endl;
-		}
-	
-		Matrix<double> ratio_matrix(number_of_maps, number_of_maps);
-		Matrix<double> corr_matrix(number_of_maps, number_of_maps);
-		//vector<double> zero_ratios(number_of_maps);
-		for (UInt i = 0; i < number_of_maps; ++i)
-		{
-			for (UInt j = 0; j < number_of_maps; j++)
+			vector<double> ratios;
+			for (UInt k = 0; k < number_of_features; ++k)
 			{
-				double corr = 0.0;
-				double ss_x = 0.0;
-				double ss_y = 0.0;
-				vector<double> ratios;
-				for (UInt k = 0; k < number_of_features; ++k)
-				{
-					corr += feature_int[i][k] * feature_int[j][k];
-					ss_x += feature_int[i][k] * feature_int[i][k];
-					ss_y += feature_int[j][k] * feature_int[j][k];
-					if (feature_int[i][k] != 0.0 && feature_int[j][k] != 0.0)
-					{	
-						double ratio = feature_int[i][k] / feature_int[j][k];
-						if (ratio > 0.67 && ratio < 1.5)
-						{
-							ratios.push_back(ratio);	
-						}
+				if (feature_int[map_with_most_features][k] != 0.0 && feature_int[j][k] != 0.0)
+				{	
+					double ratio = feature_int[map_with_most_features][k] / feature_int[j][k];
+					//TODO ratio als log Parameter
+					if (ratio > 0.67 && ratio < 1.5)
+					{
+						ratios.push_back(ratio);	
 					}
 				}
-				corr /= sqrt(ss_x * ss_y);
-				pair<double, double> ratio = simpleStats(ratios);
-				cout << "normalized correlation between " << i << " and " << j << " : " << corr << " ratio: " << ratio.first << " +/- " << ratio.second << " for " << ratios.size() << " shared pairs." << endl;
-				ratio_matrix(i,j) = ratio.first;
-				corr_matrix(i,j) = corr;
 			}
+			ratio_vector[j] = mean(ratios);
 		}
-		return make_pair(ratio_matrix, corr_matrix);
+		return ratio_vector;
 	}
 
 	void normalizeMaps(ConsensusMap& map, const vector<double>& ratios)
 	{
 		ConsensusMap::Iterator cf_it;
-		UInt idx = 0;
-		for (cf_it = map.begin(); cf_it != map.end(); ++cf_it, ++idx)
+		for (cf_it = map.begin(); cf_it != map.end(); ++cf_it)
 		{
 			ConsensusFeature::HandleSetType::iterator f_it;
 			for (f_it = cf_it->getFeatures().begin(); f_it != cf_it->getFeatures().end(); ++f_it)
@@ -173,20 +148,13 @@ protected:
 
 		ConsensusXMLFile infile;
 		ConsensusMap map;
-		cout << "Loading consensus map " << in << endl;
 		infile.load(in, map);
 
 		map.sortBySize();
 
-		// info
-		cout << "Number of consensus features: " << map.size() << endl;
-		cout << "Number of maps: " << map.getFileDescriptions().size() << endl;
-
 		//map normalization
-		pair<Matrix<double>, Matrix<double> > results = computeMap2MapCorrelations(map);
-		normalizeMaps(map, results.first.row(0));
-		cout << "ratio matrix: " << endl << results.first << endl << endl;
-		cout << "corr matrix: " << endl << results.second << endl;
+		vector<double> results = computeCorrelation(map);
+		normalizeMaps(map, results);
 
 		String out = getStringOption_("out");
 		infile.store(out,map);

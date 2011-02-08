@@ -154,24 +154,22 @@ namespace OpenMS
 				for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
 				{
 					 
-					DoubleReal charge = (*filter_it)->getCharge();
+					Int charge = (*filter_it)->getCharge();
 					vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
 				  
 					// loop over the individual isotopic peaks of the SILAC pattern (and check if they are blacklisted)
-					/*const vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();
-					for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
+					const vector<DoubleReal>& expectedMZshifts = (*filter_it)->getExpectedMZshifts();
+					for (vector<DoubleReal>::const_iterator expectedMZshifts_it = expectedMZshifts.begin(); expectedMZshifts_it != expectedMZshifts.end(); ++expectedMZshifts_it)
 					{
-						DoubleReal relative_peak_position = *peak_positions_it - mz;
-
-						bool inBlacklistEntry = blacklist_it->range.encloses(*peak_positions_it, rt);
-						bool exception = (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations) && (abs(relative_peak_position - blacklist_it->relative_peak_position)<0.01);
+						bool inBlacklistEntry = blacklist_it->range.encloses(*expectedMZshifts_it + mz, rt);
+						bool exception = (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations) && (abs(*expectedMZshifts_it - blacklist_it->relative_peak_position)<0.01);
 					  
 						if (inBlacklistEntry && !exception )
 						{
 							isBlacklisted = true;
 							break;
 						}
-					}*/
+					}
 				}
 						
 				

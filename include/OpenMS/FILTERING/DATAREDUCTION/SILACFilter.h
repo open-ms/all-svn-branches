@@ -80,11 +80,16 @@ namespace OpenMS
    std::vector<DoubleReal> peak_positions;
 
   /**
-   * @brief m/z separtion between individual peptides [e.g. {0 Th, 4 Th, 5 Th}]
-   */
-   std::vector<DoubleReal> mz_peptide_separations;
-
+  * @brief m/z separtion between individual peptides [e.g. {0 Th, 4 Th, 5 Th}]
+  */
+  std::vector<DoubleReal> mz_peptide_separations;
+     
   /**
+  * @brief m/z shifts relative to mono-isotopic peak of unlabelled peptide
+  */
+  std::vector<DoubleReal> expectedMZshifts;
+     
+     /**
    * @brief distance between isotopic peaks of a peptide in [Th]
    */
    DoubleReal isotope_distance;
@@ -142,9 +147,14 @@ namespace OpenMS
    bool isSILACPattern(DoubleReal rt, DoubleReal mz);
 
 	   /**
-		* @brief gets the m/z values of all peaks , which belong the last identified feature
-		*/
+      * @brief gets the m/z values of all peaks , which belong the last identified feature
+      */
 	   std::vector<DoubleReal> getPeakPositions();
+	   
+	   /**
+      * @brief gets the m/z shifts relative to mono-isotopic peak of unlabelled peptide
+      */
+	   std::vector<DoubleReal> getExpectedMZshifts();
 	   
    public:
 

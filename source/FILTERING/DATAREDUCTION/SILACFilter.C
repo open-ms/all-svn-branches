@@ -51,13 +51,25 @@ namespace OpenMS
 
     isotope_distance = 1.000495 / (DoubleReal)charge;    // distance between isotopic peaks of a peptide [Th]
     numberOfPeptides = mass_separations.size();    // number of labelled peptides +1 [e.g. for SILAC triplet =3]
-
+    
     // m/z shifts from mass shifts
     mz_peptide_separations.push_back(0.0);
     for (std::vector<DoubleReal>::iterator it = mass_separations.begin(); it != mass_separations.end(); ++it)
     {
       mz_peptide_separations.push_back(*it / (DoubleReal)charge);
     }
+    
+    expectedMZshifts.clear();
+    for (std::vector<DoubleReal>::iterator it = mz_peptide_separations.begin(); it != mz_peptide_separations.end(); ++it)
+    {
+      for (Int i=0; i<isotopes_per_peptide; i++)
+      {
+        expectedMZshifts.push_back(*it + i*isotope_distance);
+      }
+    }
+    
+    
+    
   }
 
   SILACFilter::~SILACFilter()
@@ -413,6 +425,11 @@ namespace OpenMS
 			}
 		}
 		return peak_positions;
+	}
+	
+	std::vector<DoubleReal> SILACFilter::getExpectedMZshifts()
+	{
+		return expectedMZshifts;
 	}
 	
 	DoubleReal SILACFilter::getIsotopeDistance()

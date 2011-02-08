@@ -146,15 +146,15 @@ namespace OpenMS
    */
    bool isSILACPattern(DoubleReal rt, DoubleReal mz);
 
-	   /**
-      * @brief gets the m/z values of all peaks , which belong the last identified feature
-      */
-	   std::vector<DoubleReal> getPeakPositions();
+  /**
+   * @brief gets the m/z values of all peaks , which belong the last identified feature
+   */
+   std::vector<DoubleReal> getPeakPositions();
 	   
-	   /**
-      * @brief gets the m/z shifts relative to mono-isotopic peak of unlabelled peptide
-      */
-	   std::vector<DoubleReal> getExpectedMZshifts();
+  /**
+   * @brief gets the m/z shifts relative to mono-isotopic peak of unlabelled peptide
+   */
+   std::vector<DoubleReal> getExpectedMZshifts();
 	   
    public:
 
@@ -203,29 +203,9 @@ namespace OpenMS
    Int getCharge();
 
   /**
-   * @brief returns the number of isotopes per peptide of the filter
-   */
-   Int getIsotopesPerPeptide();
-
-  /**
    * @brief returns the mass shifts of the filter in [Da]
    */
    std::vector<DoubleReal> getMassSeparations();
-
-  /**
-   * @brief returns the number of mass shifts of the filter
-   */
-   Int getMassSeparationsSize();
-
-  /**
-   * @brief returns the number of mass peptides of the filter
-   */
-   Int getNumberOfPeptides();
-
-  /**
-   * @brief returns the distance between light and heavy peaks [Th]
-   */
-   std::vector<DoubleReal> getMzPeptideSeparations();
 
   };
 }

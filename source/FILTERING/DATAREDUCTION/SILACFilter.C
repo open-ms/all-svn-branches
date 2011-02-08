@@ -414,7 +414,7 @@ namespace OpenMS
     return mz_peptide_separations.size();
   }
 
-	std::vector<DoubleReal> SILACFilter::getPeakPositions()
+  std::vector<DoubleReal> SILACFilter::getPeakPositions()
 	{
 		peak_positions.clear();
 		for (Int peptide = 0; peptide <= numberOfPeptides; peptide++)
@@ -425,16 +425,11 @@ namespace OpenMS
 			}
 		}
 		return peak_positions;
-	}
+  }
 	
 	std::vector<DoubleReal> SILACFilter::getExpectedMZshifts()
 	{
 		return expectedMZshifts;
-	}
-	
-	DoubleReal SILACFilter::getIsotopeDistance()
-  {
-    return isotope_distance;
   }
 
   std::vector<DataPoint> SILACFilter::getElements()
@@ -447,29 +442,9 @@ namespace OpenMS
     return charge;
   }
 
-  Int SILACFilter::getIsotopesPerPeptide()
-  {
-    return isotopes_per_peptide;
-  }
-
   std::vector<DoubleReal> SILACFilter::getMassSeparations()
   {
     return mass_separations;
-  }
-
-  Int SILACFilter::getMassSeparationsSize()
-  {
-    return mass_separations.size();
-  }
-
-  Int SILACFilter::getNumberOfPeptides()
-  {
-    return numberOfPeptides;
-  }
-
-  std::vector<DoubleReal> SILACFilter::getMzPeptideSeparations()
-  {
-    return mz_peptide_separations;
   }
 
 }

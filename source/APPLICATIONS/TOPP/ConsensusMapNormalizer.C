@@ -29,8 +29,9 @@
 #include <OpenMS/FORMAT/FileTypes.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/DATASTRUCTURES/Matrix.h>
-
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
+
+#include <gsl/gsl_statistics.h>
 
 using namespace OpenMS;
 using namespace std;
@@ -40,46 +41,62 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page TOPP_MapNormalizer2 MapNormalizer2
+	@page TOPP_ConsensusMapNormalizer ConsensusMapNormalizer
 
 	@brief Normalizes maps of one consensusXML file.
+
+<CENTER>
+	<table>
+		<tr>
+			<td ALIGN = "center" BGCOLOR="#EBEBEB"> potential predecessor tools </td>
+			<td VALIGN="middle" ROWSPAN=4> \f$ \longrightarrow \f$ ConsensusMapNormalizer \f$ \longrightarrow \f$</td>
+			<td ALIGN = "center" BGCOLOR="#EBEBEB"> potential successor tools </td>
+		</tr>
+		<tr>
+			<td VALIGN="middle" ALIGN = "center" ROWSPAN=3> @ref TOPP_FeatureLinker </td>
+			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_ProteinQuantifier </td>
+		</tr>
+		<tr>
+			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_TextExporter </td>
+		</tr>
+		<tr>
+			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_SeedListGenerator </td>
+		</tr>
+	</table>
+</CENTER>
+
+This tool normalizes the maps of one consensusXML file. It adjusts all maps to the one with the most features. 
+Consensus maps can be created from feature maps (featureXML files) using the @ref TOPP_FeatureLinker.
+
+<B>The command line parameters of this tool are:</B>
+	@verbinclude TOPP_ConsensusMapNormalizer.cli
 
 */
 
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
 
-class TOPPMapNormalizer2
+class TOPPConsensusMapNormalizer
   : public TOPPBase
 {
 
 public:
-	TOPPMapNormalizer2()
-		: TOPPBase("MapNormalizer2","Normalizes maps of one consensusXML file")
+	TOPPConsensusMapNormalizer()
+		: TOPPBase("ConsensusMapNormalizer","Normalizes maps of one consensusXML file")
 	{
 	}
 
 protected:
 	void registerOptionsAndFlags_()
 	{
-		registerInputFile_("in","<file>","","input file ");
-		setValidFormats_("in",StringList::create("consensusXML"));
-		registerOutputFile_("out","<file>","","Output file",true);
-		setValidFormats_("out",StringList::create("consensusXML"));
-	}
-
-	double mean(const vector<double>& x)
-	{
-		double sum = 0.0;
-		UInt N = x.size();
-	
-		for (UInt i = 0; i < N; ++i)
-		{
-			sum += x[i];
-		}
-		double mean = sum / (double)N;
-	
-		return mean;
+		registerInputFile_("in", "<file>", "", "input file");
+		setValidFormats_("in", StringList::create("consensusXML"));
+		registerOutputFile_("out", "<file>", "", "output file");
+		setValidFormats_("out", StringList::create("consensusXML"));
+		addEmptyLine_();
+		registerDoubleOption_("ratio_threshold", "<ratio>", 0.67, "threshold for the ratio", false);
+		setMinFloat_("ratio_threshold", 0.001);
+		setMaxFloat_("ratio_threshold", 1.0);
 	}
 
 	vector<double> computeCorrelation(const ConsensusMap& map)
@@ -109,6 +126,7 @@ protected:
 		}
 
 		vector<double> ratio_vector(number_of_maps);
+		double ratio_threshold = getDoubleOption_("ratio_threshold");
 		for (UInt j = 0; j < number_of_maps; j++)
 		{
 			vector<double> ratios;
@@ -117,14 +135,13 @@ protected:
 				if (feature_int[map_with_most_features][k] != 0.0 && feature_int[j][k] != 0.0)
 				{	
 					double ratio = feature_int[map_with_most_features][k] / feature_int[j][k];
-					//TODO ratio als log Parameter
-					if (ratio > 0.67 && ratio < 1.5)
+					if (ratio > ratio_threshold && ratio < 1/ratio_threshold)
 					{
-						ratios.push_back(ratio);	
+						ratios.push_back(ratio);
 					}
 				}
 			}
-			ratio_vector[j] = mean(ratios);
+			ratio_vector[j] = gsl_stats_mean(&ratios.front(), 1, ratios.size());
 		}
 		return ratio_vector;
 	}
@@ -166,7 +183,7 @@ protected:
 
 int main( int argc, const char** argv )
 {
-  TOPPMapNormalizer2 tool;
+  TOPPConsensusMapNormalizer tool;
   return tool.main(argc,argv);
 }
 

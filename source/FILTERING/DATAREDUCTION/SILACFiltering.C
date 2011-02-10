@@ -279,7 +279,7 @@ namespace OpenMS
                     }
                   }
                   
-                  // DEBUG: save global blacklist
+/*                  // DEBUG: save global blacklist
                   ofstream blacklistFile;
                   blacklistFile.open ("blacklist.csv");
                   for (map<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
@@ -287,7 +287,7 @@ namespace OpenMS
                     blacklistFile << rt << ", " << (blacklist_it->second.range).minX() << ", " << (blacklist_it->second.range).maxX() << ", " << (blacklist_it->second.range).minY() << ", " << (blacklist_it->second.range).maxY() << ", " << (blacklist_it->second.charge) << ", " << (blacklist_it->second.mass_separations[0]) << ", " << (blacklist_it->second.relative_peak_position) << endl;
                   }
                   blacklistFile.close();
-                  
+*/                  
                   
                   
                   

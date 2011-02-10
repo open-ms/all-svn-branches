@@ -350,8 +350,8 @@ namespace OpenMS
 
   void HashClustering::performClustering()
   {
-    Int distance_size = distances.size();
-    startProgress(0, distance_size, "clustering data");
+//    Int distance_size = distances.size();
+//    startProgress(0, distance_size, "clustering data");
     do
     {
       // Merge the two subsets
@@ -361,10 +361,10 @@ namespace OpenMS
       updateMinElements();
 
       // Repeat until the distance map gets empty
-      setProgress(distance_size - distances.size());
+//      setProgress(distance_size - distances.size());
     }
     while(distances.size() > 0);
-    endProgress();
+//    endProgress();
   }
 
 

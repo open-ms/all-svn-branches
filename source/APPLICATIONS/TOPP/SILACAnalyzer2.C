@@ -282,7 +282,7 @@ class TOPPSILACAnalyzer2
       defaults.setValue("charge", "2:3", "Specify the charge range for your sample (charge_min:charge_max).");
       defaults.setValue("missed_cleavages", 0 , "Specify the maximum number of missed cleavages.");
       defaults.setMinInt("missed_cleavages", 0);
-      defaults.setValue("peaks_per_peptide", "3:4", "Specify the range of isotopes per peptide for your sample (peaks_per_peptide_min:peaks_per_peptide_max).", StringList::create("advanced"));
+      defaults.setValue("peaks_per_peptide", "3:4", "Specify the range of peaks per peptide for your sample (peaks_per_peptide_min:peaks_per_peptide_max).", StringList::create("advanced"));
     }
 
 
@@ -391,7 +391,7 @@ class TOPPSILACAnalyzer2
     if (charge_min > charge_max)
       swap(charge_min, charge_max);
 
-    // get selected isotopes range
+    // get selected peaks range
     String isotopes_per_peptide_string = getParam_().getValue("sample:peaks_per_peptide");
     DoubleReal isotopes_per_peptide_min_temp, isotopes_per_peptide_max_temp;
     parseRange_(isotopes_per_peptide_string, isotopes_per_peptide_min_temp, isotopes_per_peptide_max_temp);
@@ -597,7 +597,7 @@ class TOPPSILACAnalyzer2
     mz_stepwidth = estimateMzSpacing(exp);
 
     // create filters for all numbers of isotopes per peptide, charge states and mass shifts
-    // iterate over all number for isotopes per peptide (from max to min)
+    // iterate over all number for peaks per peptide (from max to min)
     for (Int isotopes_per_peptide = isotopes_per_peptide_max; isotopes_per_peptide >= isotopes_per_peptide_min; isotopes_per_peptide--)
     {
       // iterate over all charge states (from max to min)
@@ -1021,7 +1021,7 @@ class TOPPSILACAnalyzer2
     // and whose filters only differ in number of isotopes per peptide are combined
     // to get one cluster for peptides whose elution profile varies in number of isotopes per peptide
 
-    // perform combination only if the user specified an isotopes_per_peptide range > 1
+    // perform combination only if the user specified a peaks_per_peptide range > 1
     if (isotopes_per_peptide_min != isotopes_per_peptide_max)
     {
       // erase empty filter results from "data"
@@ -1040,81 +1040,82 @@ class TOPPSILACAnalyzer2
 
 
       // combine corresponding DataPoints
-      vector<DataPoint> data_combined;
-      vector<vector<DataPoint> >::iterator data_it_1 = data.begin();
-      vector<vector<DataPoint> >::iterator data_it_2 = data_it_1 + 1;
-      vector<DataPoint>::iterator it_1;
-      vector<DataPoint>::iterator it_2;
+      vector<DataPoint> data_combined;      // create "data_combined" to combine two DataPoints
+      vector<vector<DataPoint> >::iterator data_it_1 = data.begin();      // first iterator over "data" to get first DataPoint for combining
+      vector<vector<DataPoint> >::iterator data_it_2 = data_it_1 + 1;     // second iterator over "data" to get second DataPoint for combining
+      vector<DataPoint>::iterator it_1;     // first inner iterator over elements of first DataPoint
+      vector<DataPoint>::iterator it_2;     // second inner iterator over elements of second DataPoint
 
-      while (data_it_1 < data.end() - 1)
+      while (data_it_1 < data.end() - 1)      // check for combining as long as first DataPoint is not second last elment of "data"
       {
         while (data_it_1->size() == 0 && data_it_1 < data.end() - 1)
         {
-          data_it_1++;
-          data_it_2 = data_it_1 + 1;
+          data_it_1++;      // get next first DataPoint
+          data_it_2 = data_it_1 + 1;      // reset second iterator
         }
 
-        if (data_it_1 == data.end() - 1 && data_it_2 == data.end())
+        if (data_it_1 == data.end() - 1 && data_it_2 == data.end())     // if first iterator points to last element of "data" and second iterator points to end of "data"
+          break;      // stop combining
+
+        while (data_it_2->size() == 0 && data_it_2 < data.end())      // as long as current second DataPoint is empty and second iterator does not point to end of "data"
         {
-          break;
+          data_it_2++;      // get next second DataPoint
         }
 
-        while (data_it_2->size() == 0 && data_it_2 < data.end())
+        if (data_it_2 == data.end())      // if second iterator points to end of "data"
         {
-          data_it_2++;
+          data_it_2 = data_it_1 + 1;      // reset second iterator
         }
 
-        if (data_it_2 == data.end())
-        {
-          data_it_2 = data_it_1 + 1;
-        }
+        it_1 = data_it_1->begin();      // set first inner iterator to first element of first DataPoint
+        it_2 = data_it_2->begin();      // set second inner iterator to first element of second DataPoint
 
-        it_1 = data_it_1->begin();
-        it_2 = data_it_2->begin();
-
+        // check if DataPoints are not empty
         if (data_it_1->size() != 0 && data_it_2->size() != 0)
         {
+          // check if DataPoints have the same charge state and mass shifts
           if (it_1->charge != it_2->charge || it_1->mass_shifts != it_2->mass_shifts)
           {
-            if (data_it_2 < data.end() - 1)
+            if (data_it_2 < data.end() - 1)     // if DataPpoints differ and second DataPoint is not second last element of "data"
             {
-              data_it_2++;
+              data_it_2++;      // get next second DataPoint
             }
 
-            else if (data_it_2 == data.end() - 1 && data_it_1 < data.end() - 2)
+            else if (data_it_2 == data.end() - 1 && data_it_1 < data.end() - 2)     // if DataPpoints differ and second DataPoint is second last element of "data" and first DataPoint is not third last element of "data"
             {
-              data_it_1++;
-              data_it_2 = data_it_1 + 1;
+              data_it_1++;      // get next first DataPoint
+              data_it_2 = data_it_1 + 1;      // reset second iterator
             }
 
             else
             {
-              data_it_1++;
+              data_it_1++;      // get next first DataPoint
             }
           }
 
           else
           {
+            // perform combining
+            // insert the two DataPoints to combine in "data_combined"
             data_combined.insert(data_combined.end(), data_it_1->begin(), data_it_1->end());
             data_combined.insert(data_combined.end(), data_it_2->begin(), data_it_2->end());
-            (*data_it_1).swap(data_combined);
-            (*data_it_2).clear();
+            (*data_it_1).swap(data_combined);     // insert "data_combined" at position of first Datapoint
+            (*data_it_2).clear();     // clear second Datapoint to keep iterators valid and to keep size of "data"
+            data_combined.clear();      // clear "data_combined"
 
-            if (data_it_2 < data.end() - 1)
+            if (data_it_2 < data.end() - 1)     // if second DataPoint is not second last element of "data"
             {
-              data_it_2++;
+              data_it_2++;      // get next second DataPoint
             }
             else
             {
-              data_it_2 = data_it_1 + 1;
+              data_it_2 = data_it_1 + 1;      // reset second iterator
             }
-
-            data_combined.clear();
           }
         }
         else
         {
-          data_it_1++;
+          data_it_1++;      // get next first DataPoint
         }
       }
     }
@@ -1179,6 +1180,11 @@ class TOPPSILACAnalyzer2
     vector<Cluster> clusters;
     vector<Tree> subtrees;
 
+    ProgressLogger progresslogger;
+    progresslogger.setLogType(log_type_);
+
+    progresslogger.startProgress(0, data.size(), "clustering data");
+
     for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
     {
       // check if there are at least two points for clustering
@@ -1204,8 +1210,12 @@ class TOPPSILACAnalyzer2
         vector<Cluster> current_clusters =  c.performClustering();
 */
         clusters.insert(clusters.end(), current_clusters.begin(), current_clusters.end());
+
+        progresslogger.setProgress(data_it - data.begin());
       }
     }
+
+    progresslogger.endProgress();
 
     sort(clusters.begin(), clusters.end(), clusterCompare);
 
@@ -1422,7 +1432,7 @@ class TOPPSILACAnalyzer2
             cluster_point.setMetaValue("Mass shift", mass_shift_meta_value);
           }
 
-          cluster_point.setMetaValue("Isotopes per peptide", it->isotopes_per_peptide);
+          cluster_point.setMetaValue("Peaks per peptide", it->isotopes_per_peptide);
           cluster_point.setMetaValue("Cluster id", it->cluster_id);
           cluster_point.setMetaValue("Cluster size", it->cluster_size);
           cluster_point.setMetaValue("color", colors[it->cluster_id%colors.size()]);

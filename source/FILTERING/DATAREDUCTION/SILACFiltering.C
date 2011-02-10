@@ -151,11 +151,11 @@ namespace OpenMS
               bool isBlacklisted = false;
 
               // iterate over the blacklist (Relevant blacklist entries are most likely among the last ones added.)
-              multimap<DoubleReal,BlacklistEntry>::iterator blacklistStart;
-              multimap<DoubleReal,BlacklistEntry>::iterator blacklistEnd;
+              multimap<DoubleReal, BlacklistEntry>::iterator blacklistStart;
+              multimap<DoubleReal, BlacklistEntry>::iterator blacklistEnd;
               if (blacklist.size() > 40)    // Blacklist should be of certain size before we run ckeck only parts of it.
               {
-                blacklistStart = blacklist.lower_bound(rt-100);
+                blacklistStart = blacklist.lower_bound(rt - 100);
                 blacklistEnd = blacklist.lower_bound(rt);
               }
               else
@@ -163,7 +163,7 @@ namespace OpenMS
                 blacklistStart = blacklist.begin();
                 blacklistEnd = blacklist.end();
               }
-              for (multimap<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklistStart; blacklist_it != blacklistEnd; ++blacklist_it)
+              for (multimap<DoubleReal, BlacklistEntry>::iterator blacklist_it = blacklistStart; blacklist_it != blacklistEnd; ++blacklist_it)
               {
                 
                 Int charge = (*filter_it)->getCharge();
@@ -217,11 +217,11 @@ namespace OpenMS
                     // Does the current filter and relative peak position agree with the ones of the blacklist entry?
                     bool sameFilterAndPeakPosition = false;
                     
-                    multimap<DoubleReal,BlacklistEntry>::iterator blacklistStart;
-                    multimap<DoubleReal,BlacklistEntry>::iterator blacklistEnd;
+                    multimap<DoubleReal, BlacklistEntry>::iterator blacklistStart;
+                    multimap<DoubleReal, BlacklistEntry>::iterator blacklistEnd;
                     if (blacklist.size() > 40)    // Blacklist should be of certain size before we run ckeck only parts of it.
                         {
-                          blacklistStart = blacklist.lower_bound(rt-100);
+                          blacklistStart = blacklist.lower_bound(rt - 100);
                           blacklistEnd = blacklist.lower_bound(rt);
                         }
                         else
@@ -229,7 +229,7 @@ namespace OpenMS
                           blacklistStart = blacklist.begin();
                           blacklistEnd = blacklist.end();
                         }
-                    for (multimap<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklistStart; blacklist_it != blacklistEnd; ++blacklist_it)
+                    for (multimap<DoubleReal, BlacklistEntry>::iterator blacklist_it = blacklistStart; blacklist_it != blacklistEnd; ++blacklist_it)
                     {
                       overlap = blackArea.isIntersected(blacklist_it->second.range);
                       sameFilterAndPeakPosition = (charge == blacklist_it->second.charge) && (mass_separations == blacklist_it->second.mass_separations) && (abs(relative_peak_position - blacklist_it->second.relative_peak_position)<0.01);
@@ -249,17 +249,17 @@ namespace OpenMS
                            // new min RT => insert new BlacklistEntry and delete old one
                            DRange<2> mergedArea;
                            BlacklistEntry mergedEntry;
-                           mergedArea.setMinX(min(blackArea.minX(),(blacklist_it->second.range).minX()));
-                           mergedArea.setMaxX(max(blackArea.maxX(),(blacklist_it->second.range).maxX()));
-                           mergedArea.setMinY(blackArea.minX());
-                           mergedArea.setMaxY(max(blackArea.maxY(),(blacklist_it->second.range).maxY()));
+                           mergedArea.setMinX(min(blackArea.minX(), (blacklist_it->second.range).minX()));
+                           mergedArea.setMaxX(max(blackArea.maxX(), (blacklist_it->second.range).maxX()));
+                           mergedArea.setMinY(blackArea.minY());
+                           mergedArea.setMaxY(max(blackArea.maxY(), (blacklist_it->second.range).maxY()));
                            mergedEntry.range = mergedArea;
                            mergedEntry.charge = blacklist_it->second.charge;
                            mergedEntry.mass_separations = blacklist_it->second.mass_separations;
                            mergedEntry.relative_peak_position = blacklist_it->second.relative_peak_position;
                            
                            // Simply insert the new and erase the old map BlacklistEntry. We break out of the loop anyhow.
-                           blacklist.insert(pair<DoubleReal, BlacklistEntry>(mergedEntry.range.minY(),mergedEntry));
+                           blacklist.insert(pair<DoubleReal, BlacklistEntry>(mergedEntry.range.minY(), mergedEntry));
                            blacklist.erase(blacklist_it);
                          }
                         
@@ -275,7 +275,7 @@ namespace OpenMS
                       newEntry.charge = charge;
                       newEntry.mass_separations = mass_separations;
                       newEntry.relative_peak_position = relative_peak_position;
-                      blacklist.insert(pair<DoubleReal, BlacklistEntry>(newEntry.range.minY(),newEntry));
+                      blacklist.insert(pair<DoubleReal, BlacklistEntry>(newEntry.range.minY(), newEntry));
                     }
                   }
                   
@@ -287,10 +287,8 @@ namespace OpenMS
                     blacklistFile << rt << ", " << (blacklist_it->second.range).minX() << ", " << (blacklist_it->second.range).maxX() << ", " << (blacklist_it->second.range).minY() << ", " << (blacklist_it->second.range).maxY() << ", " << (blacklist_it->second.charge) << ", " << (blacklist_it->second.mass_separations[0]) << ", " << (blacklist_it->second.relative_peak_position) << endl;
                   }
                   blacklistFile.close();
-*/                  
-                  
-                  
-                  
+*/
+
                   ++feature_id;
                 }
               }

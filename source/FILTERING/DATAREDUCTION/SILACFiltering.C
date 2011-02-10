@@ -151,19 +151,19 @@ namespace OpenMS
               bool isBlacklisted = false;
 
               // iterate over the blacklist (Relevant blacklist entries are most likely among the last ones added.)
-              for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
+              for (map<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
               {
-
+                
                 Int charge = (*filter_it)->getCharge();
                 vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
-
+                
                 // loop over the individual isotopic peaks of the SILAC pattern (and check if they are blacklisted)
                 const vector<DoubleReal>& expectedMZshifts = (*filter_it)->getExpectedMZshifts();
                 for (vector<DoubleReal>::const_iterator expectedMZshifts_it = expectedMZshifts.begin(); expectedMZshifts_it != expectedMZshifts.end(); ++expectedMZshifts_it)
                 {
-                  bool inBlacklistEntry = blacklist_it->range.encloses(*expectedMZshifts_it + mz, rt);
-                  bool exception = (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations) && (abs(*expectedMZshifts_it - blacklist_it->relative_peak_position)<0.01);
-
+                  bool inBlacklistEntry = blacklist_it->second.range.encloses(*expectedMZshifts_it + mz, rt);
+                  bool exception = (charge == blacklist_it->second.charge) && (mass_separations == blacklist_it->second.mass_separations) && (abs(*expectedMZshifts_it - blacklist_it->second.relative_peak_position)<0.01);
+                  
                   if (inBlacklistEntry && !exception )
                   {
                     isBlacklisted = true;
@@ -171,7 +171,7 @@ namespace OpenMS
                   }
                 }
               }
-
+              
 
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
@@ -181,9 +181,9 @@ namespace OpenMS
                   //--------------------------------------------------
                   // FILLING THE BLACKLIST
                   //--------------------------------------------------
-
+                  
                   DoubleReal peak_width = SILACFilter::getPeakWidth(mz);
-
+                  
                   // loop over the individual isotopic peaks of the SILAC pattern (and blacklist the area around them)
                   const vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();
                   for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
@@ -193,34 +193,56 @@ namespace OpenMS
                     blackArea.setMaxX(*peak_positions_it + 0.8 * peak_width);     // set max m/z position of area to be blacklisted
                     blackArea.setMinY(rt - 10);     // set min rt position of area to be blacklisted
                     blackArea.setMaxY(rt + 10);     // set max rt position of area to be blacklisted
-
+                    
                     // Remember the charge, mass separations and relative m/z shift (since the blacklisting should not apply to filters of the same charge, mass separations and points of the same relative m/z shift).
                     Int charge = (*filter_it)->charge;
                     std::vector<DoubleReal> mass_separations;
                     mass_separations.insert(mass_separations.begin(), (*filter_it)->mass_separations.begin(), (*filter_it)->mass_separations.end());
                     DoubleReal relative_peak_position = *peak_positions_it - mz; // or mz_it->getMZ() ??
-
+                    
                     // Does the new black area overlap with existing areas in the blacklist?
                     bool overlap = false;
                     // Does the current filter and relative peak position agree with the ones of the blacklist entry?
                     bool sameFilterAndPeakPosition = false;
-
-                    for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
+                    
+                    for (map<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
                     {
-                      overlap = blackArea.isIntersected(blacklist_it->range);
-                      sameFilterAndPeakPosition = (charge == blacklist_it->charge) && (mass_separations == blacklist_it->mass_separations) && (abs(relative_peak_position - blacklist_it->relative_peak_position)<0.01);
-
+                      overlap = blackArea.isIntersected(blacklist_it->second.range);
+                      sameFilterAndPeakPosition = (charge == blacklist_it->second.charge) && (mass_separations == blacklist_it->second.mass_separations) && (abs(relative_peak_position - blacklist_it->second.relative_peak_position)<0.01);
+                      
                       if (overlap && sameFilterAndPeakPosition)
                       {
-                        // If new and old entry intersect, simply update the old one.
-                        (blacklist_it->range).setMinX(min(blackArea.minX(),(blacklist_it->range).minX()));
-                        (blacklist_it->range).setMaxX(max(blackArea.maxX(),(blacklist_it->range).maxX()));
-                        (blacklist_it->range).setMinY(min(blackArea.minY(),(blacklist_it->range).minY()));
-                        (blacklist_it->range).setMaxY(max(blackArea.maxY(),(blacklist_it->range).maxY()));
+                        // If new and old entry intersect, simply update (or replace) the old one.
+                        if (blackArea.minY() > (blacklist_it->second.range).minY())
+                         {
+                           // no new min RT => no change of key necessary
+                           (blacklist_it->second.range).setMinX(min(blackArea.minX(),(blacklist_it->second.range).minX()));
+                           (blacklist_it->second.range).setMaxX(max(blackArea.maxX(),(blacklist_it->second.range).maxX()));
+                           (blacklist_it->second.range).setMaxY(max(blackArea.maxY(),(blacklist_it->second.range).maxY()));
+                         }
+                         else
+                         {
+                           // new min RT => insert new BlacklistEntry and delete old one
+                           DRange<2> mergedArea;
+                           BlacklistEntry mergedEntry;
+                           mergedArea.setMinX(min(blackArea.minX(),(blacklist_it->second.range).minX()));
+                           mergedArea.setMaxX(max(blackArea.maxX(),(blacklist_it->second.range).maxX()));
+                           mergedArea.setMinY(blackArea.minX());
+                           mergedArea.setMaxY(max(blackArea.maxY(),(blacklist_it->second.range).maxY()));
+                           mergedEntry.range = mergedArea;
+                           mergedEntry.charge = blacklist_it->second.charge;
+                           mergedEntry.mass_separations = blacklist_it->second.mass_separations;
+                           mergedEntry.relative_peak_position = blacklist_it->second.relative_peak_position;
+                           
+                           // Simply insert the new and erase the old map BlacklistEntry. We break out of the loop anyhow.
+                           blacklist.insert(pair<DoubleReal, BlacklistEntry>(mergedEntry.range.minY(),mergedEntry));
+                           blacklist.erase(blacklist_it);
+                         }
+                        
                         break;
                       }
                     }
-
+                    
                     if ( !overlap )
                     {
                       // If new and none of the old entries intersect, add a new entry.
@@ -229,27 +251,30 @@ namespace OpenMS
                       newEntry.charge = charge;
                       newEntry.mass_separations = mass_separations;
                       newEntry.relative_peak_position = relative_peak_position;
-                      blacklist.insert(blacklist.end(), newEntry);
+                      blacklist.insert(pair<DoubleReal, BlacklistEntry>(newEntry.range.minY(),newEntry));
                     }
                   }
-
-/*                  // DEBUG: save global blacklist
+                  
+                  // DEBUG: save global blacklist
                   ofstream blacklistFile;
                   blacklistFile.open ("blacklist.csv");
-                  for (vector<BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
+                  for (map<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
                   {
-                    blacklistFile << rt << ", " << (blacklist_it->range).minX() << ", " << (blacklist_it->range).maxX() << ", " << (blacklist_it->range).minY() << ", " << (blacklist_it->range).maxY() << ", " << (blacklist_it->charge) << ", " << (blacklist_it->mass_separations[0]) << ", " << (blacklist_it->relative_peak_position) << endl;
+                    blacklistFile << rt << ", " << (blacklist_it->second.range).minX() << ", " << (blacklist_it->second.range).maxX() << ", " << (blacklist_it->second.range).minY() << ", " << (blacklist_it->second.range).maxY() << ", " << (blacklist_it->second.charge) << ", " << (blacklist_it->second.mass_separations[0]) << ", " << (blacklist_it->second.relative_peak_position) << endl;
                   }
                   blacklistFile.close();
-*/
+                  
+                  
+                  
+                  
                   ++feature_id;
                 }
               }
             }
-
+            
             last_mz = mz_it->getMZ();
           }
-        }
+      }
 
         // Clear the interpolations
         gsl_spline_free(spline_aki);

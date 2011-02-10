@@ -143,11 +143,11 @@ namespace OpenMS
 	   DoubleReal relative_peak_position;
    };
 
-  /**
-   * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
-   */
-   std::vector<BlacklistEntry> blacklist;
-
+     /**
+      * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
+      */
+     std::map<DoubleReal, BlacklistEntry> blacklist;
+     
   };
 }
 

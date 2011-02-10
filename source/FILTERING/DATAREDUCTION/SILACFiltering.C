@@ -151,10 +151,19 @@ namespace OpenMS
               bool isBlacklisted = false;
 
               // iterate over the blacklist (Relevant blacklist entries are most likely among the last ones added.)
-              //multimap<DoubleReal,BlacklistEntry>::iterator blacklistStart;
-              //multimap<DoubleReal,BlacklistEntry>::iterator blacklistEnd;
-              //if (blacklist.size()
-              for (multimap<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
+              multimap<DoubleReal,BlacklistEntry>::iterator blacklistStart;
+              multimap<DoubleReal,BlacklistEntry>::iterator blacklistEnd;
+              if (blacklist.size() > 40)    // Blacklist should be of certain size before we run ckeck only parts of it.
+              {
+                blacklistStart = blacklist.lower_bound(rt-100);
+                blacklistEnd = blacklist.lower_bound(rt);
+              }
+              else
+              {
+                blacklistStart = blacklist.begin();
+                blacklistEnd = blacklist.end();
+              }
+              for (multimap<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklistStart; blacklist_it != blacklistEnd; ++blacklist_it)
               {
                 
                 Int charge = (*filter_it)->getCharge();
@@ -208,7 +217,19 @@ namespace OpenMS
                     // Does the current filter and relative peak position agree with the ones of the blacklist entry?
                     bool sameFilterAndPeakPosition = false;
                     
-                    for (multimap<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.end(); blacklist_it != blacklist.begin(); --blacklist_it)
+                    multimap<DoubleReal,BlacklistEntry>::iterator blacklistStart;
+                    multimap<DoubleReal,BlacklistEntry>::iterator blacklistEnd;
+                    if (blacklist.size() > 40)    // Blacklist should be of certain size before we run ckeck only parts of it.
+                        {
+                          blacklistStart = blacklist.lower_bound(rt-100);
+                          blacklistEnd = blacklist.lower_bound(rt);
+                        }
+                        else
+                        {
+                          blacklistStart = blacklist.begin();
+                          blacklistEnd = blacklist.end();
+                        }
+                    for (multimap<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklistStart; blacklist_it != blacklistEnd; ++blacklist_it)
                     {
                       overlap = blackArea.isIntersected(blacklist_it->second.range);
                       sameFilterAndPeakPosition = (charge == blacklist_it->second.charge) && (mass_separations == blacklist_it->second.mass_separations) && (abs(relative_peak_position - blacklist_it->second.relative_peak_position)<0.01);

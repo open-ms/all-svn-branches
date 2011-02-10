@@ -146,7 +146,7 @@ namespace OpenMS
      /**
       * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
       */
-     std::map<DoubleReal, BlacklistEntry> blacklist;
+     std::multimap<DoubleReal, BlacklistEntry> blacklist;
      
   };
 }

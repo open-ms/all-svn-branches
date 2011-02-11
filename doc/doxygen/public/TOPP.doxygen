@@ -68,7 +68,6 @@
   - @subpage TOPP_ITRAQAnalyzer - Extracts and normalizes iTRAQ information from an MS experiment.
   - @subpage TOPP_ProteinQuantifier - Computes protein abundances from annotated feature/consensus maps
   - @subpage TOPP_SILACAnalyzer - Determines the ratio of peak pairs in LC-MS data.
-	- @subpage TOPP_SILACAnalyzer2 - 
   - @subpage TOPP_SeedListGenerator - Generates seed lists for feature detection.
 
   <b>Protein/Peptide Identification</b>

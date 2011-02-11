@@ -65,7 +65,7 @@ namespace OpenMS
    Int charge;
 
   /**
-   * @brief number of isotopes per peptide to search for
+   * @brief number of peaks per peptide to search for
    */
    Int isotopes_per_peptide;
 
@@ -126,7 +126,7 @@ namespace OpenMS
 
   /**
    * @brief returns the predicted peak width at position mz
-   * @param mz position of the peak
+   * @param mz mz position of the peak
    */
    static DoubleReal getPeakWidth(DoubleReal mz);
 
@@ -178,7 +178,7 @@ namespace OpenMS
    * @param mass_separations_ all mass shifts of the filter
    * @param charge_ charge of the ions to search for
    * @param model_deviation_ maximum deviation from the averagine model
-   * @param isotopes_per_peptide_ number of isotopes per petide to search for
+   * @param isotopes_per_peptide_ number of peaks per petide to search for
    */
    SILACFilter(std::vector<DoubleReal> mass_separations_, Int charge_, DoubleReal model_deviation_, Int isotopes_per_peptide_);
 

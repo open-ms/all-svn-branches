@@ -28,10 +28,9 @@
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FileTypes.h>
 #include <OpenMS/FORMAT/ConsensusXMLFile.h>
-#include <OpenMS/DATASTRUCTURES/Matrix.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
-#include <gsl/gsl_statistics.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/ConsensusMapNormalizerAlgorithm.h>
 
 using namespace OpenMS;
 using namespace std;
@@ -99,82 +98,24 @@ protected:
 		setMaxFloat_("ratio_threshold", 1.0);
 	}
 
-	vector<double> computeCorrelation(const ConsensusMap& map)
-	{
-		UInt number_of_features = map.size();
-		UInt number_of_maps = map.getFileDescriptions().size();
-		vector<vector<double> > feature_int(number_of_maps);
-		UInt map_with_most_features = 0;
-		for (UInt i = 0; i < number_of_maps; i++)
-		{
-			feature_int[i].resize(number_of_features);
-			if (map.getFileDescriptions()[i].size > map.getFileDescriptions()[map_with_most_features].size)
-			{
-				map_with_most_features = i;
-			}
-		}
-		
-		ConsensusMap::ConstIterator cf_it;
-		UInt idx = 0;
-		for (cf_it = map.begin(); cf_it != map.end(); ++cf_it, ++idx)
-		{
-			ConsensusFeature::HandleSetType::const_iterator f_it;
-			for (f_it = cf_it->getFeatures().begin(); f_it != cf_it->getFeatures().end(); ++f_it)
-			{
-				feature_int[f_it->getMapIndex()][idx] = f_it->getIntensity();
-			}
-		}
-
-		vector<double> ratio_vector(number_of_maps);
-		double ratio_threshold = getDoubleOption_("ratio_threshold");
-		for (UInt j = 0; j < number_of_maps; j++)
-		{
-			vector<double> ratios;
-			for (UInt k = 0; k < number_of_features; ++k)
-			{
-				if (feature_int[map_with_most_features][k] != 0.0 && feature_int[j][k] != 0.0)
-				{	
-					double ratio = feature_int[map_with_most_features][k] / feature_int[j][k];
-					if (ratio > ratio_threshold && ratio < 1/ratio_threshold)
-					{
-						ratios.push_back(ratio);
-					}
-				}
-			}
-			ratio_vector[j] = gsl_stats_mean(&ratios.front(), 1, ratios.size());
-		}
-		return ratio_vector;
-	}
-
-	void normalizeMaps(ConsensusMap& map, const vector<double>& ratios)
-	{
-		ConsensusMap::Iterator cf_it;
-		for (cf_it = map.begin(); cf_it != map.end(); ++cf_it)
-		{
-			ConsensusFeature::HandleSetType::iterator f_it;
-			for (f_it = cf_it->getFeatures().begin(); f_it != cf_it->getFeatures().end(); ++f_it)
-			{	
-				f_it->asMutable().setIntensity(f_it->getIntensity() * ratios[f_it->getMapIndex()]);
-			}
-		}
-	}
-
 	ExitCodes main_(int , const char**)
 	{
 		String in = getStringOption_("in");
+		double ratio_threshold = getDoubleOption_("ratio_threshold");
 
 		ConsensusXMLFile infile;
+		infile.setLogType(log_type_);
 		ConsensusMap map;
 		infile.load(in, map);
 
 		map.sortBySize();
 
 		//map normalization
-		vector<double> results = computeCorrelation(map);
-		normalizeMaps(map, results);
+		vector<double> results = ConsensusMapNormalizerAlgorithm::computeCorrelation(map, ratio_threshold);
+		ConsensusMapNormalizerAlgorithm::normalizeMaps(map, results);
 
 		String out = getStringOption_("out");
-		infile.store(out,map);
+		infile.store(out, map);
 
 		return EXECUTION_OK;
 	}

@@ -12,7 +12,7 @@ namespace OpenMS
   typedef std::map<double, RawData*> MyMap;
   typedef std::vector<MyMap> Vec;
   
-  class FeatureFinderAlgorithmSHCtrl
+  class OPENMS_DLLAPI FeatureFinderAlgorithmSHCtrl
   {
     
   public:

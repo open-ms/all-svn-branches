@@ -15,10 +15,12 @@
 #include <vector>
 #include <ostream>
 
+#include <OpenMS/config.h>
+
 using namespace std;
 
 // Class for the storage of raw MS data
-class RawData{
+class OPENMS_DLLAPI RawData{
 
 public:
   

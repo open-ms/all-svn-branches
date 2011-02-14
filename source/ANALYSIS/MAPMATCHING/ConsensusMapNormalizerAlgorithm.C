@@ -27,12 +27,13 @@
 
 #include <OpenMS/ANALYSIS/MAPMATCHING/ConsensusMapNormalizerAlgorithm.h>
 #include <gsl/gsl_statistics.h>
+#include <OpenMS/CONCEPT/ProgressLogger.h>
 
 using namespace std;
 
 namespace OpenMS
 {
-	vector<double> ConsensusMapNormalizerAlgorithm::computeCorrelation(ConsensusMap& map, const double& ratio_threshold)
+	vector<double> ConsensusMapNormalizerAlgorithm::computeCorrelation(const ConsensusMap& map, const double& ratio_threshold)
 	{
 		UInt number_of_features = map.size();
 		UInt number_of_maps = map.getFileDescriptions().size();
@@ -82,14 +83,19 @@ namespace OpenMS
 	void ConsensusMapNormalizerAlgorithm::normalizeMaps(ConsensusMap& map, const vector<double>& ratios)
 	{
 		ConsensusMap::Iterator cf_it;
+		ProgressLogger progresslogger;
+		progresslogger.setLogType(ProgressLogger::CMD);
+		progresslogger.startProgress(0, map.size(), "normalizing maps");
 		for (cf_it = map.begin(); cf_it != map.end(); ++cf_it)
 		{
+			progresslogger.setProgress(cf_it - map.begin());
 			ConsensusFeature::HandleSetType::iterator f_it;
 			for (f_it = cf_it->getFeatures().begin(); f_it != cf_it->getFeatures().end(); ++f_it)
 			{	
 				f_it->asMutable().setIntensity(f_it->getIntensity() * ratios[f_it->getMapIndex()]);
 			}
 		}
+		progresslogger.endProgress();
 	}
 
 } 

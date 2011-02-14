@@ -104,10 +104,11 @@ typedef vector<DataPoint*> Cluster;
   The algorithm is divided into three parts: filtering, clustering and linear fitting, see Fig. (d), (e) and (f). In the following discussion let us consider a particular mass spectrum at retention time 1350 s, see Fig. (a). It contains a peptide of mass 1492 Da and its 6 Da heavier labelled counterpart. Both are doubly charged in this instance. Their isotopic envelopes therefore appear at 746 and 749 in the spectrum. The isotopic peaks within each envelope are separated by 0.5. The spectrum was recorded at finite intervals. In order to read accurate intensities at arbitrary m/z we spline-fit over the data, see Fig. (b).
 
   We would like to search for such peptide pairs in our LC-MS data set. As a warm-up let us consider a standard intensity cut-off filter, see Fig. (c). Scanning through the entire m/z range (red dot) only data points with intensities above a certain threshold pass the filter. Unlike such a local filter, the filter used in our algorithm takes intensities at a range of m/z positions into account, see Fig. (d). A data point (red dot) passes if
-  - all six intensities at m/z, m/z+0.5, m/z+1, m/z+3, m/z+3.5 and m/z+4 lie above a certain threshold and
-  - the intensities within the first envelope (at m/z, m/z+0.5 and m/z+1) and second envelope (at m/z+3, m/z+3.5 and m/z+4) decrease successively.
+  - all six intensities at m/z, m/z+0.5, m/z+1, m/z+3, m/z+3.5 and m/z+4 lie above a certain threshold,
+  - the intensity profiles in neighbourhoods around all six m/z positions show a good correlation and
+  - the relative intensity ratios within a peptide agree up to a factor with the ratios of a theoretic averagine model.
 
-  Let us now filter not only a single spectrum but all spectra in our data set. Data points that pass the filter form clusters in the t-m/z plane, see Fig. (e). Each cluster centers around the unlabelled peptide of a pair. We now use hierarchical clustering methods to assign each data point to a specific cluster. The optimum number of clusters is determined by maximizing the silhouette width of the partitioning. Each data point in a cluster corresponds to three pairs of intensities (at [m/z, m/z+3], [m/z+0.5, m/z+3.5] and [m/z+1, m/z+4]). A plot of all intensity pairs in a cluster shows a clear linear correlation, see Fig. (f). Using linear regression we can determine the relative amounts of labelled and unlabelled peptides in the sample.
+  Let us now filter not only a single spectrum but all spectra in our data set. Data points that pass the filter form clusters in the t-m/z plane, see Fig. (e). Each cluster corresponds to the mono-isotopic mass trace of the lightest peptide of a SILAC pattern. We now use hierarchical clustering methods to assign each data point to a specific cluster. The optimum number of clusters is determined by maximizing the silhouette width of the partitioning. Each data point in a cluster corresponds to three pairs of intensities (at [m/z, m/z+3], [m/z+0.5, m/z+3.5] and [m/z+1, m/z+4]). A plot of all intensity pairs in a cluster shows a clear linear correlation, see Fig. (f). Using linear regression we can determine the relative amounts of labelled and unlabelled peptides in the sample.
 
   @image html SILACAnalyzer_algorithm.png
 
@@ -116,37 +117,39 @@ typedef vector<DataPoint*> Cluster;
 
   <b>Parameter Tuning</b>
 
-  SILACAnalyzer can search for all types of SILAC patterns, i.e. doublets, triplets, quadruplets...
+  SILACAnalyzer can detect SILAC patterns of any number of peptides, i.e. doublets (pairs), triplets, quadruplets et cetera.
 
   <i>input:</i>
   - in [*.mzML] - LC-MS dataset to be analyzed
   - ini [*.ini] - file containing all parameters (see discussion below)
 
   <i>standard output:</i>
-  - out [*.consensusXML] - contains the list of identified peptides (retention time and m/z of the lightest peptide, ratios to-light)
-  - out_clusters [*.featureXML] - contains the complete set of data points (retention time, m/z, charge, peaks per peptide, intensities, m/z shifts) of all peptides
+  - out [*.consensusXML] - contains the list of identified peptides (retention time and m/z of the lightest peptide, ratios)
+
+  <i>optional output:</i>
+  - out_clusters [*.featureXML] - contains the complete set of data points passing the filters, see Fig. (e)
 
   The results of an analysis can easily visualized within TOPPView. Simply load *.consensusXML and *.featureXML as layers over the original *.mzML.
 
   Parameters in section <i>algorithm:</i>
-  - <i>allow_missing_peaks</i> [false] - Low intensity peaks might be missing from the isotopic pattern of some of the peptides. Specify if such peptides should be included in the analysis.
-  - mz_threshold [0.1] - Upper bound for the width [Th] of an isotopic peak.
-  - rt_threshold [50] - Upper bound for the retention time [s] over which a characteristic peptide elutes.
-  - rt_scaling [0.002] - Scaling factor for retention times. Height [s] and width [Th] of clusters in out_clusters should be of about the same order. The clustering algorithm works best for symmetric clusters. In the majority of cases, the ratio ( mz_threshold / rt_threshold ) should work well.
-  - intensity_cutoff [10] - Lower bound for the intensity of isotopic peaks in a SILAC pattern.
-  - <i>intensity_correlation</i> [0.9] - Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.
-  - model_deviation [6] - Upper bound on the factor by which the ratios of observed isotopic peaks are allowed to differ from the ratios of the theoretic averagine model, i.e. ( theoretic_ratio / model_deviation ) < observed_ratio < ( theoretic_ratio * model_deviation ).
-
-  Parameters in section <i>labels:</i>
-  This section contains a list of all isotopic labels currently available for analysis of SILAC data with SILACAnalyzer.
+  - <i>allow_missing_peaks</i> - Low intensity peaks might be missing from the isotopic pattern of some of the peptides. Specify if such peptides should be included in the analysis.
+  - <i>mz_threshold</i> - Upper bound for the width [Th] of an isotopic peak.
+  - <i>rt_threshold</i> - Upper bound for the retention time [s] over which a characteristic peptide elutes.
+  - <i>rt_scaling</i> - Scaling factor for retention times. Height [s] and width [Th] of clusters in out_clusters should be of about the same order. The clustering algorithm works best for symmetric clusters. In the majority of cases, the ratio ( mz_threshold / rt_threshold ) should work well.
+  - <i>intensity_cutoff</i> - Lower bound for the intensity of isotopic peaks in a SILAC pattern.
+  - <i>intensity_correlation</i> - Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.
+  - <i>model_deviation</i> - Upper bound on the factor by which the ratios of observed isotopic peaks are allowed to differ from the ratios of the theoretic averagine model, i.e. ( theoretic_ratio / model_deviation ) < observed_ratio < ( theoretic_ratio * model_deviation ).
 
   Parameters in section <i>sample:</i>
-  - labels [Arg6] - Labels used for labelling the sample. [...] specifies the labels for a single sample. For example, [Lys4,Arg6][Lys8,Arg10] describes a mixtures of three samples. One of them unlabelled, one labelled with Lys4 and Arg6 and a third one with Lys8 and Arg10. For permitted labels see section <i>labels</i>.
-  - charge [2:3] - Range of charge states in the sample, i.e. min charge : max charge.
-  - missed_cleavages [0] - Maximum number of missed cleavages.
-  - <i>peaks_per_peptide</i> [3:4] - Range of peaks per peptide in the sample, i.e. min peaks per peptide : max peaks per peptide.
+  - <i>labels</i> - Labels used for labelling the sample. [...] specifies the labels for a single sample. For example, [Lys4,Arg6][Lys8,Arg10] describes a mixtures of three samples. One of them unlabelled, one labelled with Lys4 and Arg6 and a third one with Lys8 and Arg10. For permitted labels see section <i>labels</i>.
+  - <i>charge</i> - Range of charge states in the sample, i.e. min charge : max charge.
+  - <i>missed_cleavages</i> - Maximum number of missed cleavages.
+  - <i>peaks_per_peptide</i> - Range of peaks per peptide in the sample, i.e. min peaks per peptide : max peaks per peptide.
 
-  <b>References:</b>
+ Parameters in section <i>labels:</i>
+ This section contains a list of all isotopic labels currently available for analysis of SILAC data with SILACAnalyzer.
+ 
+ <b>References:</b>
   @n L. Nilse, M. Sturm, D. Trudgian, M. Salek, P. Sims, K. Carroll, S. Hubbard,  <a href="http://www.springerlink.com/content/u40057754100v71t">SILACAnalyzer - a tool for differential quantitation of stable isotope derived data</a>, in F. Masulli, L. Peterson, and R. Tagliaferri (Eds.): CIBB 2009, LNBI 6160, pp. 4555, 2010.
 */
 

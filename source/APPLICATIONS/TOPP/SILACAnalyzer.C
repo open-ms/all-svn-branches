@@ -148,7 +148,7 @@ typedef vector<DataPoint*> Cluster;
 
  Parameters in section <i>labels:</i>
  This section contains a list of all isotopic labels currently available for analysis of SILAC data with SILACAnalyzer.
- 
+
  <b>References:</b>
   @n L. Nilse, M. Sturm, D. Trudgian, M. Salek, P. Sims, K. Carroll, S. Hubbard,  <a href="http://www.springerlink.com/content/u40057754100v71t">SILACAnalyzer - a tool for differential quantitation of stable isotope derived data</a>, in F. Masulli, L. Peterson, and R. Tagliaferri (Eds.): CIBB 2009, LNBI 6160, pp. 4555, 2010.
 */
@@ -315,7 +315,7 @@ class TOPPSILACAnalyzer
       defaults.setMinFloat("rt_threshold", 0.0);
       defaults.setValue("rt_scaling", 0.002, "Scaling factor for retention times. Height [s] and width [Th] of clusters in out_clusters should be of about the same order. The clustering algorithm works best for symmetric clusters. In the majority of cases, the ratio ( mz_threshold / rt_threshold ) should work well.");
       defaults.setMinFloat("rt_scaling", 0.0);
-      defaults.setValue("intensity_cutoff", 10.0, "Lower bound for the intensity of isotopic peaks in a SILAC pattern.");
+      defaults.setValue("intensity_cutoff", 10000.0, "Lower bound for the intensity of isotopic peaks in a SILAC pattern.");
       defaults.setMinFloat("intensity_cutoff", 10.0);
       defaults.setValue("intensity_correlation", 0.9, "Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.", StringList::create("advanced"));
       defaults.setMinFloat("intensity_correlation", 0.0);
@@ -1234,17 +1234,6 @@ class TOPPSILACAnalyzer
 
 
     //--------------------------------------------------
-    // create a map of SILAC type names
-    //--------------------------------------------------
-
-    map<Size,String> silac_types;
-    silac_types.insert(make_pair(0, "Singlet"));
-    silac_types.insert(make_pair(1, "Doublet"));
-    silac_types.insert(make_pair(2, "Triplet"));
-    silac_types.insert(make_pair(3, "Quadruplet"));
-
-
-    //--------------------------------------------------
     // consensusXML output
     //--------------------------------------------------
 
@@ -1260,40 +1249,40 @@ class TOPPSILACAnalyzer
         DoubleReal total_intensity = 0.0;
         Size mass_shifts_size = (*(cluster_it->begin()))->mass_shifts.size();
         // create a vector with the maximum intensity of each isotope peak
-        vector<DoubleReal> max_intensities(mass_shifts_size,0.0);
-        // specify SILAC type
-        String silac_type = silac_types[mass_shifts_size];
+        vector<DoubleReal> max_intensities(mass_shifts_size, 0.0);
         Int charge = (*(cluster_it->begin()))->charge;
 
-        // add mass shifts as value for Quality
-        String mass_shift = "";
-        String mass_shift_2 = "";
         DoubleReal mass_shift_final;
 
+        // mass shifts as value for Quality in [Da] (i.e. 6008)
         for (vector<DoubleReal>::iterator shift_it = (*(cluster_it->begin()))->mass_shifts.begin(); shift_it != (*(cluster_it->begin()))->mass_shifts.end(); ++shift_it)
         {
-          DoubleReal mass_shift_current = *shift_it * charge;			// convert mass shift from Th to Da
-          mass_shift += "0" + (String)mass_shift_current;			// combine mass shifts as string
-        }
 
-        // format string of mass shifts
-        for (int i = 0; i < 2; ++i)
-        {
-          int found = mass_shift.find(".");
-          if (found > 0)
+          // mass shifts for doublets
+          if ((*(cluster_it->begin()))->mass_shifts.size() == 2)
           {
-            mass_shift_2 += mass_shift.substr(found - 2, 3);
-            mass_shift.erase(found, 1);
+            mass_shift_final = floor(*shift_it * charge);     // mass shift as value for Quality
+          }
 
-            found = mass_shift_2.find(".");
-            mass_shift_2.erase(found, 1);
+          // mass shifts for triplets, quadruplets, ...
+          if ((*(cluster_it->begin()))->mass_shifts.size() > 2)
+          {
+            if (shift_it == (*(cluster_it->begin()))->mass_shifts.begin() + 1)
+            {
+              mass_shift_final = floor(*shift_it * charge) * 1000;      // mass shift as value for Quality
+            }
+
+            if ((shift_it > (*(cluster_it->begin()))->mass_shifts.begin() + 1) && (shift_it < (*(cluster_it->begin()))->mass_shifts.end() - 1))
+            {
+              mass_shift_final = (mass_shift_final + floor(*shift_it * charge)) * 1000;     // mass shift as value for Quality
+            }
+
+            if (shift_it == (*(cluster_it->begin()))->mass_shifts.end() - 1)
+            {
+              mass_shift_final += floor(*shift_it * charge);      // mass shift as value for Quality
+            }
           }
         }
-
-        mass_shift_2.insert(2, ".");			// insert "." between the two mass shifts
-
-        // convert mass shits from string to DoubleReal (value for Quality has to be of type DoubleReal)
-        mass_shift_final = String(mass_shift_2).toDouble();
 
         // intensity vector used for linear regression
         vector<vector<DoubleReal> > intensities(mass_shifts_size);
@@ -1332,7 +1321,7 @@ class TOPPSILACAnalyzer
         consensus_feature.setMZ(mz);
         consensus_feature.setIntensity(max_intensities[0]);			// set intensity of light peptiide to intensity of consensus
         consensus_feature.setCharge(charge);
-        consensus_feature.setQuality(mass_shift_final);			// set mass shifts as value for Quality (format: Da.Da)
+        consensus_feature.setQuality(mass_shift_final);			// set mass shifts as value for Quality in [Da]
 
         // insert feature handle for each mass shift
         for (Size l = 0; l < mass_shifts_size; ++l)
@@ -1354,7 +1343,7 @@ class TOPPSILACAnalyzer
 
         all_pairs.push_back(consensus_feature);
         ++id;
-      }    
+      }
     }
 
 
@@ -1386,70 +1375,66 @@ class TOPPSILACAnalyzer
       {
         for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
         {
-          // visualize the light variant
+          // visualize the monoisotopic peak
           Feature cluster_point;
           cluster_point.setRT(it->rt);
           cluster_point.setMZ(it->mz);
           cluster_point.setIntensity(it->intensities[0][0]);
           cluster_point.setCharge(it->charge);
-          //cluster_point.setOverallQuality(it->quality);
           cluster_point.setQuality(0, it->quality);
 
-          // add mass shifts as meta value and as value for OverallQuality
           Int charge = it->charge;
           String mass_shift_meta_value = "";
-          String mass_shift = "";
-          String mass_shift_2 = "";
           DoubleReal mass_shift_final;
 
+          // mass shifts as meta value in [Da] (i.e. (6.0201, 8.0141)) and mass shifts as value for OverallQuality in [Da] (i.e. 6008)
           for (vector<DoubleReal>::iterator shift_it = it->mass_shifts.begin() + 1; shift_it != it->mass_shifts.end(); ++shift_it)
           {
-            mass_shift_meta_value += ((String)*shift_it) + " ";			// mass shifts as meta value
-
-            DoubleReal mass_shift_current = *shift_it * charge;			// convert mass shift from Th to Da
-            mass_shift += "0" + (String)mass_shift_current;			// combine mass shifts as string
-          }
-
-          // format string of mass shifts
-          for (int i = 0; i < 2; ++i)
-          {
-            int found = mass_shift.find(".");
-            if (found > 0)
+            // meta value for doublets
+            if (it->mass_shifts.size() == 2)
             {
-              mass_shift_2 += mass_shift.substr(found - 2, 3);
-              mass_shift.erase(found, 1);
+              String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
+              temp = temp.substr(0, 6);     // get only five efficient digits
+              mass_shift_meta_value = "(" + temp + ")";
+              mass_shift_final = floor(*shift_it * charge);     // mass shift as value for OverallQuality
+            }
 
-              found = mass_shift_2.find(".");
-              mass_shift_2.erase(found, 1);
+            // meta value for triplets, quadruplets, ...
+            if (it->mass_shifts.size() > 2)
+            {
+              if (shift_it == it->mass_shifts.begin() + 1)
+              {
+                String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
+                temp = temp.substr(0, 6);     // get only five efficient digits
+                mass_shift_meta_value += "(" + temp + ", ";
+                mass_shift_final = floor(*shift_it * charge) * 1000;      // mass shift as value for OverallQuality
+              }
+
+              if ((shift_it > it->mass_shifts.begin() + 1) && (shift_it < it->mass_shifts.end() - 1))
+              {
+                String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
+                temp = temp.substr(0, 6);     // get only five efficient digits
+                mass_shift_meta_value += temp + ", ";
+                mass_shift_final = (mass_shift_final + floor(*shift_it * charge)) * 1000;     // mass shift as value for OverallQuality
+              }
+
+              if (shift_it == it->mass_shifts.end() - 1)
+              {
+                String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
+                temp = temp.substr(0, 6);     // get only five efficient digits
+                mass_shift_meta_value += temp + ")";
+                mass_shift_final += floor(*shift_it * charge);      // mass shift as value for OverallQuality
+              }
             }
           }
 
-          mass_shift_2.insert(2, ".");			// insert "." between the two mass shifts
+          cluster_point.setOverallQuality(mass_shift_final);			// set mass shifts as value for OverallQuality in [Da]
 
-          // convert mass shits from string to DoubleReal (value for OverallQuality has to be of type DoubleReal)
-          mass_shift_final = String(mass_shift_2).toDouble();
-
-          cluster_point.setOverallQuality(mass_shift_final);			// set mass shifts as value for OverallQuality (format: Da.Da)
-          cluster_point.setMetaValue("SILAC type", silac_types[it->mass_shifts.size() - 1]);
-
-          if (mass_shift_meta_value != "" && it->mass_shifts.size() - 1 == 1)
-          {
-            cluster_point.setMetaValue("Mass shift (l/h)", mass_shift_meta_value);
-          }
-          else if (mass_shift_meta_value != "" && it->mass_shifts.size() - 1 == 2)
-          {
-            cluster_point.setMetaValue("Mass shift (l/m l/h)", mass_shift_meta_value);
-          }
-          else if (mass_shift_meta_value != "" )
-          {
-            cluster_point.setMetaValue("Mass shift", mass_shift_meta_value);
-          }
-
+          cluster_point.setMetaValue("Mass shifts [Da]", mass_shift_meta_value);
           cluster_point.setMetaValue("Peaks per peptide", it->isotopes_per_peptide);
           cluster_point.setMetaValue("Cluster id", it->cluster_id);
           cluster_point.setMetaValue("Cluster size", it->cluster_size);
           cluster_point.setMetaValue("color", colors[it->cluster_id%colors.size()]);
-          // cluster_point.setMetaValue("Feature_id", it->feature_id);
 
           all_cluster_points.push_back(cluster_point);
         }

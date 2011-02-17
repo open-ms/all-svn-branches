@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: Hendrik Brauer $
+// $Authors: Hendrik Brauer, Oliver Kohlbacher $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/FileHandler.h>
@@ -64,7 +64,8 @@ using namespace std;
 	</table>
 </CENTER>
 
-This tool normalizes the maps of one consensusXML file. It adjusts all maps to the one with the most features. 
+This tool normalizes the maps of one consensusXML file by comparing every single map to the map with the highest number of features. Therefore it calculates the pairwise intensity ratios of all features of the two maps. Then it calculates the mean of all ratios within the given threshold, so that outliers will not be considered for the following normalization. Finally it adjusts the intensities of all maps by the corresponding mean of the ratios.
+
 Consensus maps can be created from feature maps (featureXML files) using the @ref TOPP_FeatureLinker.
 
 <B>The command line parameters of this tool are:</B>

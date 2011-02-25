@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -272,11 +272,11 @@ namespace OpenMS
 		{
       if (result->text()=="grey - yellow - red - purple - blue - black")
       {         
-        gradient_.fromString("Linear|0,#eeeeee;1,#ffea00;6,#ff0000;14,#aa00ff;23,#5500ff;100,#000000");
+        gradient_ = MultiGradient::getDefaultGradientLinearIntensityMode();
       }
 			if (result->text()=="grey - black")
 			{
-				gradient_.fromString("Linear|0,#CCCCCC;100,#000000");
+        gradient_ = MultiGradient::getDefaultGradientLogarithmicIntensityMode();
 			}
 			else if (result->text()=="yellow - red - purple - blue - black")
 			{

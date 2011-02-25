@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -519,13 +519,13 @@ namespace OpenMS
 
 	void ClusterAnalyzer::cut(const Size cluster_quantity, const std::vector<BinaryTreeNode>& tree, std::vector<std::vector<Size> >& clusters)
 	{
-		if(cluster_quantity==0)
+		if (cluster_quantity==0)
 		{
-			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "minimal partitioning contains one cluster, not zero");
+			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "You requested 0 clusters. Minimal partitioning contains one cluster, not zero.");
 		}
-		if(cluster_quantity>=tree.size()+1)
+		if (cluster_quantity > tree.size()+1)
 		{
-			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "maximal partitioning contains singleton clusters, further separation is not possible");
+			throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Cluster count exceeds node count. No partitioning exists.");
 		}
 
 		std::set<Size> leafs;
@@ -775,29 +775,6 @@ namespace OpenMS
 	bool compareBinaryTreeNode(const BinaryTreeNode& x, const BinaryTreeNode& y)
 	{
 		return (x.distance < y.distance);
-	}
-
-	BinaryTreeNode::BinaryTreeNode(const Size i, const Size j, const Real x) : left_child(i), right_child(j), distance(x)
-	{
-	}
-
-	BinaryTreeNode::BinaryTreeNode(const BinaryTreeNode& source) : left_child(source.left_child), right_child(source.right_child), distance(source.distance)
-	{
-	}
-
-	BinaryTreeNode::~BinaryTreeNode()
-	{
-	}
-
-	BinaryTreeNode& BinaryTreeNode::operator = (const BinaryTreeNode& source)
-	{
-		if (this != &source)
-		{
-			left_child = source.left_child;
-			right_child = source.right_child;
-			distance = source.distance;
-		}
-		return *this;
 	}
 
 }

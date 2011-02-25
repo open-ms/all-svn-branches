@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -927,7 +927,7 @@ namespace OpenMS
 	}
 
 	
-		String String::operator+ (const String& s) const
+	String String::operator+ (const String& s) const
 	{
 		String tmp(*this);
 		tmp.insert(tmp.end(),s.begin(),s.end());
@@ -935,7 +935,7 @@ namespace OpenMS
 	}
 
 	
-		String String::operator+ (const std::string& s) const
+	String String::operator+ (const std::string& s) const
 	{
 		String tmp(*this);
 		tmp.insert(tmp.end(),s.begin(),s.end());

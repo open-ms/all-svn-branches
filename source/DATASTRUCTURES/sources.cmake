@@ -6,6 +6,7 @@ set(sources_list
 Adduct.C
 BigString.C
 BinaryTreeNode.C
+BlacklistEntry2.C
 ChargePair.C
 Compomer.C
 ConstRefVector.C
@@ -36,7 +37,9 @@ Matrix.C
 Param.C
 QTCluster.C
 QTSILACCluster.C
+SILACTreeNode.C
 SparseVector.C
+SILACTreeNode.C
 String.C
 StringList.C
 SuffixArray.C

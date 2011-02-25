@@ -6,6 +6,7 @@ set(sources_list_h
 Adduct.h
 BigString.h
 BinaryTreeNode.h
+BlacklistEntry2.h
 ChargePair.h
 Compomer.h
 ConstRefVector.h
@@ -38,6 +39,7 @@ Param.h
 QTCluster.h
 QTSILACCluster.h
 SeqanIncludeWrapper.h
+SILACTreeNode.h
 SparseVector.h
 String.h
 StringList.h

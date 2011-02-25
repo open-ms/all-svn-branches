@@ -33,10 +33,12 @@ set(datastructures_executables_list
 	DefaultParamHandler_test
 	DistanceMatrix_test
 	DoubleList_test
+	GridFeature_test
 	IntList_test
 	Map_test
 	MassExplainer_test
 	Matrix_test
+	QTCluster_test
 	RangeManager_test
 	SparseVector_test
 	StringList_test
@@ -277,7 +279,6 @@ set(comparison_executables_list
 set(chemistry_executables_list
   AAIndex_test
   AASequence_test
-  AdvancedTheoreticalSpectrumGenerator_test
   EdwardsLippertIteratorTryptic_test
   EdwardsLippertIterator_test
   ElementDB_test
@@ -295,6 +296,8 @@ set(chemistry_executables_list
   ResidueDB_test
   ResidueModification_test
   Residue_test
+  SvmTheoreticalSpectrumGenerator_test
+  SvmTheoreticalSpectrumGeneratorSet_test
   TheoreticalSpectrumGenerator_test
   TrypticIterator_test
 )
@@ -316,7 +319,9 @@ set(analysis_executables_list
 	DeNovoPostScoring_test
 	FalseDiscoveryRate_test
 	FeatureDeconvolution_test
+	FeatureDistance_test
 	FeatureGroupingAlgorithmLabeled_test
+	FeatureGroupingAlgorithmQT_test
 	FeatureGroupingAlgorithmUnlabeled_test
 	FeatureGroupingAlgorithm_test
 	FeatureHandle_test
@@ -353,11 +358,13 @@ set(analysis_executables_list
 	PrecursorIonSelection_test
 	ProteinInference_test
 	ProtonDistributionModel_test
+	QTClusterFinder_test
 	ReactionMonitoringTransition_test
 	SVMWrapper_test
 	SimplePairFinder_test
 	StablePairFinder_test
 	TransformationDescription_test
+	TransformationModel_test
 	InclusionExclusionList_test
 )
 

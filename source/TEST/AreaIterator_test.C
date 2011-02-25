@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -122,9 +122,11 @@ START_SECTION((AreaIterator(const AreaIterator &rhs)))
 	TEST_EQUAL(a3==a1, false)
 	TEST_EQUAL(a3==a2, true)
 	
-	AI a4(a1);
-	TEST_EQUAL(a4==a1, true)
-	TEST_EQUAL(a4==a2, false)
+  // copy-constructor on end-Iterator is undefined, so the following
+  // operation is invalid
+  // AI a4(a1);
+  // TEST_EQUAL(a4==a1, true)
+  // TEST_EQUAL(a4==a2, false)
 END_SECTION
 
 START_SECTION((AreaIterator& operator=(const AreaIterator &rhs)))

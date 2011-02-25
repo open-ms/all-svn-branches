@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -535,11 +535,9 @@ namespace OpenMS
         Spectrum3DCanvas::ExperimentType::ConstAreaIterator end_it = layer.getPeakData()->areaEndConst();
         // count peaks in area
         int count = 0;
-        for (Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = begin_it; it != end_it; ++it)
-        {
-          count++;
-        }
-
+        for (Spectrum3DCanvas::ExperimentType::ConstAreaIterator it = begin_it; 
+						 it != end_it; ++it, ++count) {}
+          
         int max_displayed_peaks = 100000;
         int step = 1;
         if (count > max_displayed_peaks)

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -58,7 +58,12 @@ namespace OpenMS
 	class OPENMS_DLLAPI MultiGradient
 	{
 		public:
-	
+    /// Returns the default gradient for linear intensity mode
+    static MultiGradient getDefaultGradientLinearIntensityMode();
+
+    /// Returns the default gradient for linear intensity mode
+    static MultiGradient getDefaultGradientLogarithmicIntensityMode();
+
 		/// Interploation mode. 
 		enum InterpolationMode 
 		{
@@ -66,10 +71,17 @@ namespace OpenMS
 			IM_STAIRS   ///< IM_STAIRS returns the color of the next lower position
 		};
 		
-		///Constructor
+    /// Constructor
 		MultiGradient();
-		///Destructor
+
+    /// Copy constructor
+    MultiGradient(const MultiGradient& multigradient);
+
+    /// Destructor
 		~MultiGradient();
+
+    /// Assignment operator
+    MultiGradient& operator = ( const MultiGradient& rhs );
 	
 		/// sets or replaces the color at position @p position
     void insert(DoubleReal position, QColor color);

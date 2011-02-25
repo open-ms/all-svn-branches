@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -55,8 +55,8 @@ namespace OpenMS
 		  virtual xercesc::BinInputStream* makeStream() const;
 		  
 		private:
-			 char head_[2];
-		  //not implemented
+			char head_[2];
+      /// private CTor - not implemented
 		  CompressedInputSource();
 		  CompressedInputSource(const CompressedInputSource& source);
 		  CompressedInputSource& operator=(const CompressedInputSource& source);

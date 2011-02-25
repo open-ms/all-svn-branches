@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -68,6 +68,35 @@ START_TEST(LogStream, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
+
+START_SECTION(([EXTRA] OpenMP - test))
+{
+  // just see if this crashes with OpenMP
+  ostringstream stream_by_logger;
+  Log_debug.insert(stream_by_logger);
+  Log_info.insert(stream_by_logger);
+
+#ifdef _OPENMP
+omp_set_num_threads(8);
+#pragma omp parallel
+#endif
+  {
+    for (int i=0;i<10000;++i)
+    {
+      LOG_DEBUG << "1\n";
+      LOG_DEBUG << "2" << endl;
+      LOG_INFO << "1\n";
+      LOG_INFO << "2" << endl;
+    }
+  }
+
+  // remove logger after testing
+  Log_debug.remove(stream_by_logger);
+  Log_info.remove(stream_by_logger);
+
+  NOT_TESTABLE;
+}
+END_SECTION
 
 START_SECTION(LogStream(LogStreamBuf *buf=0, bool delete_buf=true, std::ostream* stream))
 {
@@ -427,6 +456,11 @@ START_SECTION(([EXTRA] Macro test - LOG_INFO))
   // remove cout/cerr streams from global instances
   // and append trackable ones
   Log_info.remove(cout);
+
+  // clear cache to avoid pollution of the test output
+  // by previous tests
+  Log_info.rdbuf()->clearCache();
+
   String filename;
   NEW_TMP_FILE(filename)
   ofstream s(filename.c_str(), std::ios::out);
@@ -445,6 +479,11 @@ START_SECTION(([EXTRA] Macro test - LOG_DEBUG))
   // remove cout/cerr streams from global instances
   // and append trackable ones
   Log_debug.remove(cout);
+
+  // clear cache to avoid pollution of the test output
+  // by previous tests
+  Log_debug.rdbuf()->clearCache();
+
   ostringstream stream_by_logger;
   {
     Log_debug.insert(stream_by_logger);
@@ -460,6 +499,7 @@ START_SECTION(([EXTRA] Macro test - LOG_DEBUG))
   QRegExp rx(".*LogStream_test\\.C\\(\\d+\\): \\d");
   for (Size i=0;i<to_validate_list.size() - 1;++i) // there is an extra line since we ended with endl
   {
+    std::cerr << i << ":" << to_validate_list[i] << std::endl;
     QString to_validate = to_validate_list[i].toQString();
     QRegExpValidator v(rx, 0);
     TEST_EQUAL(v.validate(to_validate,pos)==QValidator::Acceptable, true)
@@ -468,30 +508,6 @@ START_SECTION(([EXTRA] Macro test - LOG_DEBUG))
 END_SECTION
 
 
-START_SECTION(([EXTRA] OpenMP - test))
-{
-  // just see if this crashes with OpenMP
-  ostringstream stream_by_logger;
-  Log_debug.insert(stream_by_logger);
-  Log_info.insert(stream_by_logger);
-
-#ifdef _OPENMP
-omp_set_num_threads(3);
-#pragma omp parallel
-#endif
-  {
-    for (int i=0;i<1000;++i)
-    {
-      LOG_DEBUG << "1\n";
-      LOG_DEBUG << "2" << endl;
-      LOG_INFO << "1\n";
-      LOG_INFO << "2" << endl;
-    }
-  }
-
-  NOT_TESTABLE;
-}
-END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

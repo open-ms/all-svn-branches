@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -294,9 +294,6 @@ namespace OpenMS
       /// No default copy constructor.  It is "declared away".
       TOPPBase( const TOPPBase& );
 
-      /// Debug level
-      Int debug_level_;
-
       /// All parameters relevant to this invocation of the program.
       Param param_;
 
@@ -577,7 +574,9 @@ namespace OpenMS
       	@param required If the user has to provide a value i.e. if the value has to differ from the default (checked in get-method)
       	@param advanced If @em true, this parameter is advanced and by default hidden in the GUI.
       */
-      void registerIntOption_( const String& name, const String& argument, Int default_value, const String& description, bool required = true, bool advanced = false );
+      void registerIntOption_(const String& name, const String& argument, 
+															Int default_value, const String& description, 
+															bool required = true, bool advanced = false );
 
       /**
       	@brief Registers a list of integers option.
@@ -891,6 +890,10 @@ namespace OpenMS
 			
       /// width of console we are currently in (if not determinable, set to 80 as default)
       int console_width_;
+
+      /// Debug level set by -debug
+      Int debug_level_;
+
   };
 
 } // namespace OpenMS

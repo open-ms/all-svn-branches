@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl, Chris Bielow $
+// $Maintainer: Chris Bielow $
 // $Authors: Clemens Groepl, Andreas Bertsch, Chris Bielow, Marc Sturm, Hendrik Weisser $
 // --------------------------------------------------------------------------
 
@@ -83,12 +83,13 @@ namespace OpenMS
 	// write data from a feature to the output stream
 	void writeFeature(SVOutStream& out, Peak2D::CoordinateType rt,
 										 Peak2D::CoordinateType mz, Peak2D::IntensityType intensity,
-										 Int charge)
+										 Int charge, BaseFeature::WidthType width)
 	{
 		out.writeValueOrNan(rt);
 		out.writeValueOrNan(mz);
 		out.writeValueOrNan(intensity);
 		out << charge;
+		out.writeValueOrNan(width);
 	}
 
 
@@ -96,7 +97,7 @@ namespace OpenMS
 	SVOutStream& operator<<(SVOutStream& out, const FeatureHandle& feature)
 	{
 		writeFeature(out, feature.getRT(), feature.getMZ(), feature.getIntensity(),
-									feature.getCharge());
+									feature.getCharge(), feature.getWidth());
 		return out;
 	}
 
@@ -105,7 +106,7 @@ namespace OpenMS
 	SVOutStream& operator<<(SVOutStream& out, const ConsensusFeature& feature)
 	{
 		writeFeature(out, feature.getRT(), feature.getMZ(), feature.getIntensity(),
-									feature.getCharge());
+									feature.getCharge(), feature.getWidth());
 		return out;
 	}
 
@@ -123,15 +124,21 @@ namespace OpenMS
 		{
 			out.write("#" + *it + "\n");
 		}
-		StringList elements = StringList::create("#rt,mz,intensity,charge");
+		StringList elements = StringList::create("#rt,mz,intensity,charge,width");
 		bool old = out.modifyStrings(false);
 		for (StringList::iterator it = elements.begin(); it != elements.end();
 				 ++it)
 		{
-			if (cf) *it += "_cf";
+			if (cf)
+			{
+				*it += "_cf";
+			}
 			out << *it;
 		}
-		if (!cf) out << endl;
+		if (!cf)
+		{
+			out << endl;
+		}
 		out.modifyStrings(old);
 	}
 
@@ -144,7 +151,6 @@ namespace OpenMS
 				<< "date_time" << "search_engine_version" << "parameters" << endl;
 		out.modifyStrings(old);
 	}
-
 
 	// write the header for protein data
 	void writeProteinHeader(SVOutStream& out)
@@ -433,12 +439,18 @@ namespace OpenMS
 
 					// write header:
 					output.modifyStrings(false);
-					if (!no_ids) output << "#FEATURE" << "rt";
-					else output << "#rt";
+					if (!no_ids) 
+					{
+						output << "#FEATURE" << "rt";
+					}
+					else 
+					{
+						output << "#rt";
+					}
 					output << "mz" << "intensity";
 					if (!minimal)
 					{
-						output << "charge" << "overall_quality" << "rt_quality"
+						output << "charge" << "width(FWHM)" << "overall_quality" << "rt_quality"
 									 << "mz_quality" << "rt_start" << "rt_end";
 					}
 					output << endl;
@@ -449,14 +461,17 @@ namespace OpenMS
           }
 					output.modifyStrings(true);
 
-          for ( FeatureMap<>::const_iterator citer = feature_map.begin(); citer
-              != feature_map.end(); ++citer )
+          for (FeatureMap<>::const_iterator citer = feature_map.begin(); 
+							 citer != feature_map.end(); ++citer)
           {
-            if (!no_ids) output << "FEATURE";
+            if (!no_ids)
+						{
+							output << "FEATURE";
+						}
             output << citer->getRT() << citer->getMZ() << citer->getIntensity();
 						if (!minimal)
 						{
-							output << citer->getCharge() << citer->getOverallQuality()
+							output << citer->getCharge() << citer->getWidth() << citer->getOverallQuality()
 										 << citer->getQuality(0) << citer->getQuality(1);
 
 							if (citer->getConvexHulls().size() > 0)
@@ -465,7 +480,10 @@ namespace OpenMS
 									getBoundingBox().minX() << citer->getConvexHulls().begin()->
 									getBoundingBox().maxX();
 							}
-							else output << "-1" << "-1";
+							else 
+							{
+								output << "-1" << "-1";
+							}
 						}
             output << endl;
 
@@ -491,7 +509,6 @@ namespace OpenMS
 							writePeptideId(output, *pit, "UNASSIGNEDPEPTIDE");
 						}
 					}
-
 					outstr.close();
 				}
 
@@ -581,7 +598,7 @@ namespace OpenMS
 
           // -------------------------------------------------------------------
 
-          if ( !consensus_elements.empty() )
+          if (!consensus_elements.empty())
           {
             std::ofstream consensus_elements_file(consensus_elements.c_str());
             if (!consensus_elements_file)
@@ -617,7 +634,7 @@ namespace OpenMS
 					if (!consensus_features.empty())
           {
             std::ofstream consensus_features_file(consensus_features.c_str());
-            if ( !consensus_features_file )
+            if (!consensus_features_file)
             {
               throw Exception::UnableToCreateFile(__FILE__, __LINE__,
                 __PRETTY_FUNCTION__, consensus_features);
@@ -658,7 +675,10 @@ namespace OpenMS
 							{
 								String run_id = prot_it->getIdentifier();
 								// add to comment:
-								if (max_prot_run > 0) pep_line += ", ";
+								if (max_prot_run > 0)
+								{
+									pep_line += ", ";
+								}
 								pep_line += String(max_prot_run) + ": '" + run_id + "'";
 
 								map<String, Size>::iterator pos = prot_runs.find(run_id);
@@ -670,7 +690,10 @@ namespace OpenMS
 								}
 								else prot_runs[run_id] = max_prot_run;
 							}
-							if (max_prot_run>0) --max_prot_run; // increased beyond max. at end of for-loop
+							if (max_prot_run>0)
+							{
+								--max_prot_run; // increased beyond max. at end of for-loop
+							}
 							comments << pep_line;
 						}
 
@@ -683,7 +706,8 @@ namespace OpenMS
               Size map_id = map_num_to_map_id[fhindex];
               output << "rt_"+ String(map_id) << "mz_" + String(map_id)
 										 << "intensity_" + String(map_id)
-										 << "charge_" + String(map_id);
+										 << "charge_" + String(map_id)
+										 << "width_" + String(map_id);
             }
 						if (!no_ids)
 						{
@@ -739,7 +763,7 @@ namespace OpenMS
 								{
 									StringList seqs(vector<String>(pep_it->begin(),
 																								 pep_it->end())),
-										accs(vector<String>(prot_it->begin(), prot_it->end()));
+											accs(vector<String>(prot_it->begin(), prot_it->end()));
 									for (StringList::iterator acc_it = accs.begin();
 											 acc_it != accs.end(); ++acc_it)
 									{
@@ -759,7 +783,7 @@ namespace OpenMS
           if (!out.empty())
           {
             std::ofstream outstr(out.c_str());
-            if ( !outstr )
+            if (!outstr)
             {
               throw Exception::UnableToCreateFile(__FILE__, __LINE__,
                 __PRETTY_FUNCTION__, out);
@@ -779,6 +803,8 @@ namespace OpenMS
                 FeatureHandle::CoordinateType>::quiet_NaN());
             feature_handle_NaN.setIntensity(std::numeric_limits<
                 FeatureHandle::IntensityType>::quiet_NaN());
+            feature_handle_NaN.setWidth(std::numeric_limits<
+                FeatureHandle::WidthType>::quiet_NaN());
             feature_handle_NaN.setCharge(0); // just to be sure...
             // feature_handle_NaN.setCharge(std::numeric_limits<Int>::max()); // alternative ??
 
@@ -787,9 +813,9 @@ namespace OpenMS
 						// by String, not UInt, for implicit sorting.
             std::set<String> all_file_desc_meta_keys;
             std::vector<UInt> tmp_meta_keys;
-            for ( ConsensusMap::FileDescriptions::const_iterator fdit =
-                consensus_map.getFileDescriptions().begin(); fdit
-                != consensus_map.getFileDescriptions().end(); ++fdit )
+            for (ConsensusMap::FileDescriptions::const_iterator fdit =
+								 consensus_map.getFileDescriptions().begin(); 
+								 fdit != consensus_map.getFileDescriptions().end(); ++fdit )
             {
               map_id_to_map_num[fdit->first] = map_num_to_map_id.size();
               map_num_to_map_id.push_back(fdit->first);
@@ -838,14 +864,15 @@ namespace OpenMS
 						output.modifyStrings(false);
 						if (no_ids) output << "#rt_cf";
 						else output << "#CONSENSUS" << "rt_cf";
-						output << "mz_cf" << "intensity_cf" << "charge_cf" << "quality_cf";
+						output << "mz_cf" << "intensity_cf" << "charge_cf" << "width_cf" << "quality_cf";
 						for (Size fhindex = 0; fhindex < map_num_to_map_id.size();
 								 ++fhindex)
 						{
 							Size map_id = map_num_to_map_id[fhindex];
 							output << "rt_" + String(map_id) << "mz_" + String(map_id)
 										 << "intensity_" + String(map_id)
-										 << "charge_" + String(map_id);
+										 << "charge_" + String(map_id)
+										 << "width_" + String(map_id);
 						}
 						output << endl;
 						output.modifyStrings(true);
@@ -975,6 +1002,14 @@ namespace OpenMS
 					PeakMap exp;
 					FileHandler().loadExperiment(in, exp);
 
+          if (exp.getChromatograms().size()==0)
+          {
+            writeLog_("File does not contain chromatograms. No output was generated!");
+            return INCOMPATIBLE_INPUT_DATA;
+          }
+
+          Size output_count(0);
+
 					ofstream outstr(out.c_str());
 					SVOutStream output(outstr, sep, replacement, quoting_method);
 					output.modifyStrings(false);
@@ -982,6 +1017,7 @@ namespace OpenMS
 					{
 						if (it->getChromatogramType() == ChromatogramSettings::SELECTED_REACTION_MONITORING_CHROMATOGRAM)
 						{
+              ++output_count;
 							output << "MRM Q1=" << it->getPrecursor().getMZ() << " Q3=" << it->getProduct().getMZ() << endl;
 							for (MSChromatogram<>::ConstIterator cit = it->begin(); cit != it->end(); ++cit)
 							{
@@ -991,6 +1027,9 @@ namespace OpenMS
 						}
 					}
 					outstr.close();
+
+          writeLog_("Found " + String() + " SRM spectra!");
+          if (output_count==0) writeLog_("No output was generated!!");
 				}
 
         return EXECUTION_OK;

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -34,11 +34,12 @@
 #include <OpenMS/DATASTRUCTURES/DataPoint.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>
+#include <OpenMS/DATASTRUCTURES/HashGrid.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
-#include<list>
-#include<map>
-#include<vector>
+#include <list>
+#include <map>
+#include <vector>
 
 namespace OpenMS
 {
@@ -49,7 +50,9 @@ namespace OpenMS
    * This filtering can be used to extract SILAC features from an MS experiment. Several SILACFilters can be added to the filtering to search for specific SILAC patterns.
    * @see SILACFilter
    */
-   class OPENMS_DLLAPI SILACFiltering : public ProgressLogger{
+   class OPENMS_DLLAPI SILACFiltering
+     : public ProgressLogger
+   {
      friend class SILACFilter;
 
   private:
@@ -60,9 +63,19 @@ namespace OpenMS
    std::list<SILACFilter*> filters;
 
   /**
+   * @brief characteristic RT size for clusters
+   */
+   static DoubleReal rt_threshold;
+
+  /**
+   * @brief characteristic m/z size for clusters
+   */
+   static DoubleReal mz_threshold;
+
+  /**
    * @brief average m/z distance between scanned data points
    */
-   static DoubleReal mz_stepwidth;
+   DoubleReal mz_stepwidth;
 
   /**
    * @brief minimal intensity of SILAC features
@@ -104,12 +117,14 @@ namespace OpenMS
   /**
    * @brief detailed constructor
    * @param exp raw data
+   * @param rt_threshold_ average characteristic rt size of clusters
+   * @param mz_threshold_ average characteristic m/z size of clusters
    * @param mz_stepwidth_ average m/z distance between scanned data points
    * @param intensity_cutoff_ minimal intensity of SILAC features
    * @param intensity_correlation_ minimal intensity correlation between regions of different peaks
    * @param allow_missing_peaks flag for missing peaks
    */
-   SILACFiltering(MSExperiment<Peak1D>& exp_, DoubleReal mz_stepwidth_, DoubleReal intensity_cutoff_, DoubleReal intensity_correlation_, bool allow_missing_peaks);
+   SILACFiltering(MSExperiment<Peak1D>& exp_, const DoubleReal rt_threshold_, const DoubleReal mz_threshold_, const DoubleReal mz_stepwidth_, const DoubleReal intensity_cutoff_, const DoubleReal intensity_correlation_, const bool allow_missing_peaks_);
 
   /**
    * destructor
@@ -136,17 +151,22 @@ namespace OpenMS
    */
    struct BlacklistEntry
    {
-	   DRange<2> range;
-	   Int charge;
-	   std::vector<DoubleReal> mass_separations;
-	   DoubleReal relative_peak_position;
+     DRange<2> range;
+     Int charge;
+     std::vector<DoubleReal> mass_separations;
+     DoubleReal relative_peak_position;
    };
 
-     /**
-      * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
-      */
-     std::multimap<DoubleReal, BlacklistEntry> blacklist;
-     
+  /**
+   * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
+   */
+   std::multimap<DoubleReal, BlacklistEntry> blacklist;
+
+  /**
+   * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
+   */
+   HashGrid blacklist2;
+
   };
 }
 

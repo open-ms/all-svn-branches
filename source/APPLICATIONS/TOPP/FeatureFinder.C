@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -205,13 +205,31 @@ class TOPPFeatureFinder
 			exp.updateRanges();
 		}
 
-		//ouput data
+		// A map for the resulting features
 		FeatureMap<> features;
 
-		//running algorithm
+		// Apply the feature finder
 		ff.run(type, exp, features, feafi_param, seeds);
-
 		features.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+		// DEBUG
+    if (debug_level_ > 10)
+    {
+		  FeatureMap<>::Iterator it;
+		  for (it = features.begin(); it != features.end(); ++it)
+		  {
+			  if (!it->isMetaEmpty())
+			  {
+				  vector<String> keys;
+				  it->getKeys(keys);
+				  LOG_INFO << "Feature " << it->getUniqueId() << endl;
+				  for (Size i = 0; i < keys.size(); i++)
+				  {
+					  LOG_INFO << "  " << keys[i] << " = " << it->getMetaValue(keys[i]) << endl;
+				  }
+			  }
+		  }
+    }
 
 		//-------------------------------------------------------------
 		// writing files

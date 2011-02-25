@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -155,9 +155,15 @@ namespace OpenMS
 				 it != aa_mods.end(); ++it)
 		{
 			const ResidueModification& mod = ModificationsDB::getInstance()->getModification(*it);
-			f << "<aminoacid_modification aminoacid=\"" << mod.getOrigin()
+
+      // compute mass of modified residue
+      EmpiricalFormula ef = ResidueDB::getInstance()->getResidue(mod.getOrigin())->getFormula(Residue::Internal);
+      ef += mod.getDiffFormula();
+
+      f << "      "
+			  << "<aminoacid_modification aminoacid=\"" << mod.getOrigin()
         << "\" massdiff=\"" << precisionWrapper(mod.getDiffMonoMass()) << "\" mass=\""
-				<< precisionWrapper(mod.getMonoMass())
+        << precisionWrapper(ef.getMonoWeight())
 				<< "\" variable=\"Y\" binary=\"N\" description=\"" << *it << "\"/>"
 				<< "\n";
 		}
@@ -166,7 +172,8 @@ namespace OpenMS
 		{
 			const ResidueModification& mod = ModificationsDB::getInstance()->
 				getModification(*it);
-			f << "<terminal_modification terminus=\"n\" massdiff=\""
+      f << "      "
+			  << "<terminal_modification terminus=\"n\" massdiff=\""
 				<< precisionWrapper(mod.getDiffMonoMass()) << "\" mass=\"" << precisionWrapper(mod.getMonoMass())
 				<< "\" variable=\"Y\" description=\"" << *it
 				<< "\" protein_terminus=\"\"/>" << "\n";
@@ -175,7 +182,8 @@ namespace OpenMS
 		for (set<String>::const_iterator it = c_term_mods.begin(); it != c_term_mods.end(); ++it)
 		{
 			const ResidueModification& mod = ModificationsDB::getInstance()->getModification(*it);
-			f << "<terminal_modification terminus=\"c\" massdiff=\""
+      f << "      "
+        << "<terminal_modification terminus=\"c\" massdiff=\""
 				<< precisionWrapper(mod.getDiffMonoMass()) << "\" mass=\"" << precisionWrapper(mod.getMonoMass())
 				<< "\" variable=\"Y\" description=\"" << *it
 				<< "\" protein_terminus=\"\"/>" << "\n";
@@ -185,21 +193,43 @@ namespace OpenMS
 		f << "    <analysis_timestamp analysis=\"peptideprophet\" time=\"2007-12-05T17:49:52\" id=\"1\"/>" << "\n";
 		
 
-		Size count(1);
+		Int count(1);
 		for (vector<PeptideIdentification>::const_iterator it = peptide_ids.begin();
-				 it != peptide_ids.end(); ++it, count++)
+				 it != peptide_ids.end(); ++it, ++count)
 		{
 			if (it->getHits().size() > 0)
 			{
+        if (it->getHits().size() > 1)
+        {
+          LOG_WARN << "PepXMLFile::store() : only writing the first peptide hit of " << it->getHits().size() << " for PeptideID# " << count << "\n";
+        }
 				PeptideHit h = *it->getHits().begin();
 				AASequence seq = h.getSequence();
 				DoubleReal precursor_neutral_mass = seq.getMonoWeight();
 
-				f << "		<spectrum_query spectrum=\"" << count << "\" start_scan=\""
-					<< count << "\" end_scan=\"" << count
-					<< "\" precursor_neutral_mass=\"" << precisionWrapper(precursor_neutral_mass)
-					<< "\" assumed_charge=\"" << h.getCharge() << "\" index=\"" << count
-					<< "\">" << "\n";
+        Int scan_index;
+        if(it->metaValueExists("RT_index"))
+        {
+          scan_index = it->getMetaValue("RT_index");
+        }
+        else
+        {
+          scan_index = count;
+        }
+
+				f << "		<spectrum_query spectrum=\"" << count << "\""
+          << " start_scan=\"" << scan_index << "\""
+          << " end_scan=\"" << scan_index << "\""
+					<< " precursor_neutral_mass=\"" << precisionWrapper(precursor_neutral_mass) << "\""
+          << " assumed_charge=\"" << h.getCharge() << "\" index=\"" << count << "\"";
+
+        DataValue dv = it->getMetaValue("RT");
+        if (dv!=DataValue::EMPTY)
+        {
+          f << " retention_time_sec=\"" << dv << "\" ";
+        }
+
+        f << ">\n";
 				f << " 		<search_result>" << "\n";
 				f << "			<search_hit hit_rank=\"1\" peptide=\""
 					<< seq.toUnmodifiedString() << "\" peptide_prev_aa=\""

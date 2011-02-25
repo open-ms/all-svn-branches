@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -95,7 +95,7 @@ protected:
       "Sequest: Directory containing the .out files\n"
       "pepXML: Single pepXML file.\n"
       "protXML: Single protXML file.\n"
-	"xml: Single mascot XML file.\n"
+	    "xml: Single mascot XML file.\n"
       "idXML: Single idXML file.\n", true);
     registerOutputFile_("out", "<file>", "", "Output file", true);
     setValidFormats_("out", StringList::create("idXML,pepXML"));
@@ -246,7 +246,7 @@ protected:
 
       writeDebug_("All files processed.", 3);
 
-    } // ! directory
+  } // ! directory
 	else
 	{
 		FileTypes::Type in_type = fh.getType(in);

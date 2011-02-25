@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -108,6 +108,10 @@ protected:
 		registerStringOption_("type","<name>","","Feature grouping algorithm type",true);
 		setValidStrings_("type", ToolHandler::getTypes(toolName_()));
 
+		addEmptyLine_();
+		// addText_("Additional parameters for consensusXML input:");
+		registerFlag_("keep_subelements", "For consensusXML input only: If set, the sub-features of the inputs are transferred to the output.");
+
 		registerSubsection_("algorithm","Algorithm parameters section");
 	}
 
@@ -191,14 +195,26 @@ protected:
 			{
 				f.load(ins[i], maps[i]);
 			}
-			for (Size i=0; i<ins.size(); ++i)
-			{
-				out_map.getFileDescriptions()[i].filename = ins[i];
-				out_map.getFileDescriptions()[i].size = maps[i].size();
-				out_map.getFileDescriptions()[i].unique_id = maps[i].getUniqueId();
-			}
 			// group
 			algorithm->group(maps,out_map);
+
+			// set file descriptions:
+			bool keep_subelements = getFlag_("keep_subelements");
+			if (!keep_subelements)
+			{
+				for (Size i = 0; i < ins.size(); ++i)
+				{
+					out_map.getFileDescriptions()[i].filename = ins[i];
+					out_map.getFileDescriptions()[i].size = maps[i].size();
+					out_map.getFileDescriptions()[i].unique_id = maps[i].getUniqueId();
+				}
+			}
+			else
+			{
+				// components of the output map are not the input maps themselves, but
+				// the components of the input maps:
+				algorithm->transferSubelements(maps, out_map);
+			}
 		}
 
 		//set file names

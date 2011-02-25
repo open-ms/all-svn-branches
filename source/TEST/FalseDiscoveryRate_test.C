@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -104,7 +104,8 @@ START_SECTION((void apply(std::vector< ProteinIdentification > &fwd_ids, std::ve
 				ProteinHit hit(*it);
 				DoubleReal fdr(hit.getScore());
 				DoubleReal orig_score((DoubleReal)hit.getMetaValue("XTandem_score"));
-
+        
+        // it gets here, but neither of the conditions below are ever satisfied
 				if (orig_score < -1.8)
 				{
 					TEST_REAL_SIMILAR(fdr, 0)

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -30,18 +30,19 @@
 
 namespace OpenMS
 {
+	GridElement::GridElement() {}
 
-GridElement::GridElement() {}
-GridElement::GridElement(const GridElement& copy)
-{
-	mz = copy.mz;
-	rt = copy.rt;
-}
-GridElement::GridElement(DoubleReal rt_, DoubleReal mz_)
-{
-	mz = mz_;
-	rt = rt_;
-}
+	GridElement::GridElement(const GridElement& copy)
+	{
+		mz = copy.mz;
+		rt = copy.rt;
+	}
+
+	GridElement::GridElement(DoubleReal rt_, DoubleReal mz_)
+	{
+		mz = mz_;
+		rt = rt_;
+	}
 }
 
 

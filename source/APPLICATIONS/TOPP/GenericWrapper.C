@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -116,6 +116,7 @@ using namespace std;
   <li>%TMP  --> The current temp directory, fetched using File::getTempDirectory()
   <li>%BASENAME[file] --> the basename of a file, e.g. c:\tmp\myfile.mzML gives 'myfile'
   <li>%RND --> generates a long random number, which can be used to generate unique filenames in a <file_pre> tag
+  <li>%WORKINGDIR --> expands to the current working directory (default is '.'), settable by <workingdirectory> tag in the .ttd file.
   <li>%%<param> --> any param registered in the ini_param section, e.g. '%%in'
   </ul>
 
@@ -146,57 +147,6 @@ using namespace std;
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
 
-String paramToString(const Param::ParamEntry& p)
-{
-  if (p.value.valueType() == DataValue::STRING_LIST)
-  { // quote each element
-    return "\"" + StringList(p.value).concatenate("\" \"") + "\"";
-  }
-  else
-  {
-    return p.value;
-  }
-}
-
-
-void createFragment(String& fragment, const Param& param)
-{
-  //std::cout << " fragment '" << fragment << "' --> '";
-  // e.g.:  -input %BASENAME[%%in].mzML
-  // iterate through all input params and replace with values:
-  for (Param::ParamIterator it=param.begin(); it!=param.end(); ++it)
-  {
-    fragment.substitute("%%" + it->name, paramToString(*it));
-  }
-  if (fragment.hasSubstring("%%")) throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid '%%' found in '" + fragment + "' after replacing all parameters!", fragment);
-  
-  // %TMP replace:
-  fragment.substitute("%TMP", File::getTempDirectory());
-
-  // %RND replace:
-  fragment.substitute("%RND", String(UniqueIdGenerator::getUniqueId()));
-
-  // %BASENAME% replace
-  QRegExp rx("%BASENAME\\[(.*)\\]");
-  rx.setMinimal(true);
-  int pos = 0;
-  QString t_tmp = fragment.toQString();
-  while ((pos = rx.indexIn(t_tmp, pos+1)) != -1)
-  {
-    //std::cout << "match @ " << pos << "\n";
-    String value = rx.cap(1); // paramname (hopefully)
-    // replace in fragment:
-    QFileInfo qfi(value.toQString());
-    fragment.substitute("%BASENAME["+value+"]", qfi.baseName());
-  }
-  
-  if (fragment.has('%')) throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Mapping still contains a '%' after substitution! Did you use % instead of %%?", fragment);
-
-  //std::cout << fragment << "'\n";
-}
-
-
-
 class TOPPGenericWrapper
 	: public TOPPBase
 {
@@ -207,14 +157,101 @@ class TOPPGenericWrapper
 		}
 
 	protected:
-  
-    Internal::ToolExternalDetails tde;
+
+    String paramToString_(const Param::ParamEntry& p)
+    {
+      if (p.value.valueType() == DataValue::STRING_LIST)
+      { // quote each element
+        return "\"" + StringList(p.value).concatenate("\" \"") + "\"";
+      }
+      else if(p.tags.count("input file")>0 || p.tags.count("output file"))
+      {
+        // ensure that file names are formated according to system spec
+        return File::absolutePath(p.value);
+      }
+      else
+      {
+        return p.value;
+      }
+    }
+
+    /**
+      @brief Simple compare struct to sort a vector of String by the length of
+      the contained strings
+
+      */
+    struct StringSizeLess
+        : std::binary_function<String, String, bool>
+    {
+      bool operator()(String const& left, String const& right) const
+      {
+        return (left.size() < right.size());
+      }
+    };
+
+
+    void createFragment_(String& fragment, const Param& param)
+    {
+      // e.g.:  -input %BASENAME[%%in].mzML
+
+      // we have to make this little detour param -> vector<String>
+      // to sort the param names by length, otherwise we have a
+      // problem with parameter substitution
+      // i.e., if A is a prefix of B and gets replaced first, the
+      // suffix of B remains and will cause trouble!
+      vector<String> param_names;
+      param_names.reserve(param.size());
+      for (Param::ParamIterator it=param.begin(); it!=param.end(); ++it)
+      {
+        param_names.push_back(it->name);
+      }
+      // sort by length
+      std::sort(param_names.begin(),param_names.end(), reverseComparator( StringSizeLess() ));
+
+      // iterate through all input params and replace with values:
+      for (vector<String>::iterator it=param_names.begin(); it!=param_names.end(); ++it)
+      {
+        fragment.substitute("%%" + *it, paramToString_( param.getEntry(*it)));
+      }
+      if (fragment.hasSubstring("%%")) throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid '%%' found in '" + fragment + "' after replacing all parameters!", fragment);
+      
+      // %TMP replace:
+      fragment.substitute("%TMP", File::getTempDirectory());
+
+      // %RND replace:
+      fragment.substitute("%RND", String(UniqueIdGenerator::getUniqueId()));
+
+      // %WORKINGDIR replace:
+      fragment.substitute("%WORKINGDIR", tde_.working_directory);
+
+      // %BASENAME% replace
+      QRegExp rx("%BASENAME\\[(.*)\\]");
+      rx.setMinimal(true);
+      int pos = 0;
+      QString t_tmp = fragment.toQString();
+      while ((pos = rx.indexIn(t_tmp, pos+1)) != -1)
+      {
+        //std::cout << "match @ " << pos << "\n";
+        String value = rx.cap(1); // paramname (hopefully)
+        // replace in fragment:
+        QFileInfo qfi(value.toQString());
+        fragment.substitute("%BASENAME["+value+"]", qfi.baseName());
+      }
+      
+      if (fragment.has('%')) throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Mapping still contains a '%' after substitution! Did you use % instead of %%?", fragment);
+
+      //std::cout << fragment << "'\n";
+    }
+                  
+
+
+    Internal::ToolExternalDetails tde_;
 
     ExitCodes wrapExit(const ExitCodes return_code)
     {
       if (return_code!=EXECUTION_OK)
       {
-        LOG_ERROR << "\n" << tde.text_fail << "\n";
+        LOG_ERROR << "\n" << tde_.text_fail << "\n";
       }
       return return_code;
     }
@@ -277,14 +314,15 @@ class TOPPGenericWrapper
       {
         if (type == gw.types[i]) 
         {
-          tde = gw.external_details[i];
+          tde_ = gw.external_details[i];
+          if (tde_.working_directory.trim() == "") tde_.working_directory=".";
           break;
         }
       }
       
-      LOG_INFO << tde.text_startup << "\n";
+      LOG_INFO << tde_.text_startup << "\n";
 
-      String command_args = tde.commandline;
+      String command_args = tde_.commandline;
       // check for double spaces and warn
       if (command_args.hasSubstring("  "))
       {
@@ -293,16 +331,17 @@ class TOPPGenericWrapper
         {
           command_args.substitute("  "," ");
         }
-        LOG_WARN << "result: " << command_args << "\n";
+        LOG_WARN << "result: " << command_args << std::endl;
       }
 
+      writeDebug_("CommandLine from ttd (unprocessed): " + command_args, 1);
 
       // do "pre" moves (e.g. if the wrapped tool works on its data in-place (overwrites) it - we need to make a copy first
       // - we copy the file
       // - we set the value of the affected parameter to the copied tmp file, such that subsequent calls target the tmp file
-      for (Size i=0;i<tde.tr_table.pre_moves.size();++i)
+      for (Size i=0;i<tde_.tr_table.pre_moves.size();++i)
       {
-        const Internal::FileMapping& fm = tde.tr_table.pre_moves[i];
+        const Internal::FileMapping& fm = tde_.tr_table.pre_moves[i];
         // find target param:
         Param p = tool_param.copy("ETool:",true);
         String target = fm.target;
@@ -310,7 +349,7 @@ class TOPPGenericWrapper
         String tmp_location = fm.location;
         // fragment's placeholder evaluation:
 
-        createFragment(tmp_location, p);
+        createFragment_(tmp_location, p);
 
         // check if target already exists:
         String target_file = (String)p.getValue(target);
@@ -336,13 +375,12 @@ class TOPPGenericWrapper
 
       ///// construct the command line:
       // go through mappings (reverse because replacing %10 must come before %1):
-			//for (std::map<Int, String>::const_reverse_iterator it = tde.tr_table.mapping.rbegin(); it != tde.tr_table.mapping.rend(); ++it)
-      for (std::map<Int, String>::reverse_iterator it = tde.tr_table.mapping.rbegin(); it != tde.tr_table.mapping.rend(); ++it)
+      for (std::map<Int, String>::reverse_iterator it = tde_.tr_table.mapping.rbegin(); it != tde_.tr_table.mapping.rend(); ++it)
       {
         //std::cout << "mapping #" << it->first << "\n";
         String fragment = it->second;
         // fragment's placeholder evaluation:
-        createFragment(fragment, tool_param.copy("ETool:",true));
+        createFragment_(fragment, tool_param.copy("ETool:",true));
 
         // replace fragment in cl
         //std::cout << "replace : " << "%"+String(it->first) << " with '" << fragment << "\n";
@@ -351,10 +389,11 @@ class TOPPGenericWrapper
 
       QProcess builder;
       builder.setProcessChannelMode(QProcess::MergedChannels);
-      String call = tde.path + " " + command_args;
+      String call = tde_.path + " " + command_args;
 
       writeDebug_("call command: " + call, 1);
 
+      builder.setWorkingDirectory(tde_.working_directory.toQString());
       builder.start(call.toQString());
 
       if (!builder.waitForFinished(-1) || builder.exitStatus() != 0 || builder.exitCode()!=0)
@@ -368,16 +407,16 @@ class TOPPGenericWrapper
 
       
       // post processing (file moving via 'file' command)
-      for (Size i=0;i<tde.tr_table.post_moves.size();++i)
+      for (Size i=0;i<tde_.tr_table.post_moves.size();++i)
       {
-        const Internal::FileMapping& fm = tde.tr_table.post_moves[i];
+        const Internal::FileMapping& fm = tde_.tr_table.post_moves[i];
         // find target param:
         Param p = tool_param.copy("ETool:",true);
         String target = fm.target;
         if (!p.exists(target)) throw Exception::InvalidValue(__FILE__,__LINE__,__PRETTY_FUNCTION__, "Cannot find target parameter '" + target + "' being mapped from external tools output!", target);
         String source = fm.location;
         // fragment's placeholder evaluation:
-        createFragment(source, p);
+        createFragment_(source, p);
         // check if target already exists:
         String target_file = (String)p.getValue(target);
 
@@ -404,7 +443,7 @@ class TOPPGenericWrapper
         }
       }
 
-      LOG_INFO << tde.text_finish << "\n";
+      LOG_INFO << tde_.text_finish << "\n";
 
       return wrapExit(EXECUTION_OK);
 		}

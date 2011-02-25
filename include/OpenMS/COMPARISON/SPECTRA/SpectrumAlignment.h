@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,7 +43,10 @@ namespace OpenMS
 
   /**
 	  @brief Aligns the peaks of two spectra
-		 
+		
+    Using a banded (width via 'tolerance' parameter) alignment.
+    Scoring function is the m/z distance between peaks. Intensity does not play a role!
+
 		@htmlinclude OpenMS_SpectrumAlignment.parameters
 		
 		@ingroup SpectraComparison
@@ -72,6 +75,13 @@ namespace OpenMS
 		template <typename SpectrumType>
 		void getSpectrumAlignment(std::vector<std::pair<Size, Size> >& alignment, const SpectrumType& s1, const SpectrumType& s2) const
 		{
+      if (!s1.isSorted () || !s2.isSorted())
+      {
+        throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Input to SpectrumAlignment is not sorted!");
+      }
+      // clear result
+      alignment.clear();
+
 			double tolerance = (double)param_.getValue("tolerance");
 			std::map<Size, std::map<Size, std::pair<Size, Size> > > traceback;
 			std::map<Size, std::map<Size, double> > matrix;
@@ -95,17 +105,19 @@ namespace OpenMS
 			//Size off_band_counter(0);
 			for (Size i = 1; i <= s1.size(); ++i)
 			{
+        double pos1(s1[i - 1].getMZ());
+        
 				for (Size j = left_ptr; j <= s2.size(); ++j)
 				{
 					bool off_band(false);
 					// find min of the three possible directions
-					double pos1(s1[i - 1].getMZ()), pos2(s2[j - 1].getMZ());
+					double pos2(s2[j - 1].getMZ());
 					double diff_align = fabs(pos1 - pos2);
 	
 					// running off the right border of the band?
 					if (pos2 > pos1 && diff_align > tolerance)
 					{
-						if (i < s1.size() && j < s2.size() && s1[i].getMZ() < pos2 && fabs(s1[i].getMZ() - pos2))
+						if (i < s1.size() && j < s2.size() && s1[i].getMZ() < pos2)
 						{
 							off_band = true;
 						}
@@ -114,7 +126,7 @@ namespace OpenMS
 					// can we tighten the left border of the band?
 					if (pos1 > pos2 && diff_align > tolerance && j > left_ptr + 1)
 					{
-						left_ptr++;
+						++left_ptr;
 					}
 	
 					double score_align = diff_align;

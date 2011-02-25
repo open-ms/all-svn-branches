@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -104,13 +104,12 @@ namespace OpenMS
 		if (S_num) form.append("S").append(String(S_num));
 
 		EmpiricalFormula formula(form);
-		typedef IsotopeDistribution::iterator IsoIter;
 		IsotopeDistribution isotope_distribution = formula.getIsotopeDistribution(max_isotope_);
 		isotope_distribution.trimRight(trim_right_cutoff_);
 		isotope_distribution.renormalize();
 
 		// compute the average mass (-offset)
-		for (	IsoIter iter = isotope_distribution.begin(); iter != isotope_distribution.end(); ++iter)
+		for (IsotopeDistribution::iterator iter = isotope_distribution.begin(); iter != isotope_distribution.end(); ++iter)
 		{
 			isotopes_exact.push_back(iter->second);
 		}
@@ -160,6 +159,7 @@ namespace OpenMS
 		// (for better numerics)
 		for ( SignedSize i = left.size() - 1; i >= 0; --i )
 		{
+      if (left[i]==0) continue;
 			for ( SignedSize j = std::min<SignedSize> ( rMax - i, right.size() ) - 1; j >= 0 ; --j )
 			{
 				result[i+j] += left[i] * right[j];

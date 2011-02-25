@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -143,7 +143,7 @@ class TOPPXTandemAdapter
 
 			addEmptyLine_();
 			addText_("X!Tandem specific options");
-			registerInputFile_("xtandem_executable", "<file>", "", "X!Tandem executable of the installtation e.g. 'tandem.exe'", true, false, StringList::create("skipexists"));
+			registerInputFile_("xtandem_executable", "<executable>", "tandem.exe", "X!Tandem executable of the installation e.g. 'tandem.exe'", true, false, StringList::create("skipexists"));
 			registerInputFile_("default_input_file", "<file>", "", "default parameters input file, if not given default parameters are used", false);
 			registerDoubleOption_("minimum_fragment_mz", "<num>", 150.0, "minimum fragment mz", false);
 			registerStringOption_("cleavage_site", "<cleavage site>", "[RK]|{P}", "cleavage site", false);
@@ -298,6 +298,8 @@ class TOPPXTandemAdapter
 			infile.setTaxon("OpenMS_dummy_taxonomy");
 			infile.setMaxValidEValue(getDoubleOption_("max_valid_expect"));
 			infile.setNumberOfMissedCleavages(getIntOption_("missed_cleavages"));
+      infile.setRefine(!getFlag_("no_refinement"));
+
 			infile.write(input_filename);
 
 			vector<ProteinIdentification> protein_identifications;

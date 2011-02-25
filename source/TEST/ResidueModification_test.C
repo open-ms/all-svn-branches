@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -223,12 +223,12 @@ END_SECTION
 
 START_SECTION(String getSourceClassificationName(Source_Classification classification=NUMBER_OF_SOURCE_CLASSIFICATIONS) const)
 	ptr->setSourceClassification(ResidueModification::ARTIFACT);
-	TEST_STRING_EQUAL(ptr->getSourceClassificationName(), "Artifact")
+	TEST_STRING_EQUAL(ptr->getSourceClassificationName(), "Artefact")
 	ptr->setSourceClassification(ResidueModification::NATURAL);
 	TEST_STRING_EQUAL(ptr->getSourceClassificationName(), "Natural")
 	ptr->setSourceClassification(ResidueModification::HYPOTHETICAL);
 	TEST_STRING_EQUAL(ptr->getSourceClassificationName(), "Hypothetical")
-	TEST_STRING_EQUAL(ptr->getSourceClassificationName(ResidueModification::ARTIFACT), "Artifact")
+	TEST_STRING_EQUAL(ptr->getSourceClassificationName(ResidueModification::ARTIFACT), "Artefact")
 	TEST_STRING_EQUAL(ptr->getSourceClassificationName(ResidueModification::NATURAL), "Natural")
 	TEST_STRING_EQUAL(ptr->getSourceClassificationName(ResidueModification::HYPOTHETICAL), "Hypothetical")
 END_SECTION

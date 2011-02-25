@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -26,6 +26,7 @@
 // --------------------------------------------------------------------------
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
+#include <OpenMS/CONCEPT/LogStream.h>
 
 using namespace std;
 
@@ -36,7 +37,8 @@ namespace OpenMS
 			defaults_(),
 			subsections_(),
 			error_name_(name),
-			check_defaults_(true)
+			check_defaults_(true),
+      warn_empty_defaults_(true)
 	{
 		
 	}
@@ -46,7 +48,8 @@ namespace OpenMS
 			defaults_(rhs.defaults_),
 			subsections_(rhs.subsections_),
 			error_name_(rhs.error_name_),
-			check_defaults_(rhs.check_defaults_)
+			check_defaults_(rhs.check_defaults_),
+      warn_empty_defaults_(rhs.warn_empty_defaults_)
 	{
 	}
 	
@@ -60,6 +63,7 @@ namespace OpenMS
 		subsections_ = rhs.subsections_;
 		error_name_ = rhs.error_name_;
 		check_defaults_ = rhs.check_defaults_;
+    warn_empty_defaults_ = rhs.warn_empty_defaults_;
 		
 		return *this;
 	}
@@ -71,7 +75,8 @@ namespace OpenMS
 			defaults_ == rhs.defaults_ &&
 			subsections_ == rhs.subsections_ &&
 			error_name_ == rhs.error_name_ &&
-			check_defaults_ == rhs.check_defaults_
+			check_defaults_ == rhs.check_defaults_ &&
+      warn_empty_defaults_ == rhs.warn_empty_defaults_
 			;
 	}
 
@@ -88,9 +93,9 @@ namespace OpenMS
 		
 		if (check_defaults_)
 		{
-			if (defaults_.size()==0)
+			if (defaults_.size()==0 && warn_empty_defaults_)
 			{
-				cerr << "Warning: no default parameters for DefaultParameterHandler '" << error_name_ << "' specified!" << endl;
+				LOG_WARN << "Warning: No default parameters for DefaultParameterHandler '" << error_name_ << "' specified!" << endl;
 			}
 			
 			//remove registered subsections

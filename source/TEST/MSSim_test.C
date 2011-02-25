@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -122,6 +122,18 @@ START_SECTION((ConsensusMap const& getChargeConsensus() const ))
 END_SECTION
 
 START_SECTION((ConsensusMap const& getLabelingConsensus() const ))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((FeatureMapSim const& getContaminants() const ))
+{
+  // TODO
+}
+END_SECTION
+
+START_SECTION((Param getParameters(const String &labeling_name) const ))
 {
   // TODO
 }

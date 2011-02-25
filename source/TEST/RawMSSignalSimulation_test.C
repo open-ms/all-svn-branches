@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -84,12 +84,18 @@ START_SECTION((RawMSSignalSimulation& operator=(const RawMSSignalSimulation &sou
 }
 END_SECTION
 
-START_SECTION((void generateRawSignals(FeatureMapSim &, MSSimExperiment &)))
+START_SECTION((void generateRawSignals(FeatureMapSim &features, MSSimExperiment &experiment, FeatureMapSim &contaminants)))
 {
   // TODO
 }
 END_SECTION
 
+
+START_SECTION((void loadContaminants()))
+{
+  // TODO
+}
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

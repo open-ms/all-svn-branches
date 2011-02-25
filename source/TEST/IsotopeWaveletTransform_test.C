@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -58,7 +58,7 @@ START_SECTION([IsotopeWaveletTransform::TransSpectrum] TransSpectrum(const MSSpe
 	TEST_NOT_EQUAL (ref, NULL)
 END_SECTION
 
-START_SECTION([IsotopeWaveletTransform::TransSpectrum] DoubleReal getRT () const)
+START_SECTION([IsotopeWaveletTransform::TransSpectrum] DoubleReal getRT () const )
 	TEST_EQUAL (test2->getRT(), 100.00)
 END_SECTION
 
@@ -111,18 +111,17 @@ START_SECTION([IsotopeWaveletTransform::TransSpectrum] MSSpectrum<PeakType>::con
 	TEST_EQUAL((int)((--test2->end())->getMZ()*10), 14349)
 END_SECTION
 
-
-START_SECTION(IsotopeWaveletTransform(const DoubleReal min_mz, const DoubleReal max_mz, const UInt max_charge, const UInt max_scan_size=0, const bool use_cuda=false, const bool hr_data=false))
+START_SECTION((IsotopeWaveletTransform(const DoubleReal min_mz, const DoubleReal max_mz, const UInt max_charge, const Size max_scan_size=0, const bool use_cuda=false, const bool hr_data=false, const String intenstype="ref")))
 	iw = new IsotopeWaveletTransform<Peak1D> (map[0].begin()->getMZ(), (map[0].end()-1)->getMZ(), 1);
 	TEST_NOT_EQUAL (iw, NULL)
 END_SECTION
 
-START_SECTION(void initializeScan(const MSSpectrum< PeakType > &c_ref))
+START_SECTION(void initializeScan(const MSSpectrum< PeakType > &c_ref, const UInt c=0))
 	iw->initializeScan (map[0]);
 	NOT_TESTABLE
 END_SECTION
 
-START_SECTION(Int getMaxScanSize () const)
+START_SECTION(Size getMaxScanSize () const)
 	TEST_EQUAL (iw->getMaxScanSize(), 0);
 	NOT_TESTABLE
 END_SECTION

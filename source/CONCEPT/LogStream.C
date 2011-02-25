@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -93,7 +93,7 @@ namespace OpenMS
 #pragma omp critical
 #endif
     {
-      clearCache_();
+      clearCache();
 		  if (incomplete_line_.size()>0) distribute_(incomplete_line_);
 		  delete [] pbuf_;
     }
@@ -186,13 +186,14 @@ namespace OpenMS
   {
     std::string extra_message = "";
 
-    if(log_cache_.size() > 1) // check if we need to remove one of the entries
+    if (log_cache_.size() > 1) // check if we need to remove one of the entries
     {
       // get smallest key
       map<Size, string>::iterator it = log_time_cache_.begin();
 
       // check if message occurred more then once
-      if(log_cache_[it->second].counter != 0) {
+      if (log_cache_[it->second].counter != 0) 
+			{
         std::stringstream stream;
         stream << "<" << it->second << "> occurred " << ++log_cache_[it->second].counter << " times";
         extra_message = stream.str();
@@ -212,21 +213,24 @@ namespace OpenMS
   }
 
 
-  void LogStreamBuf::clearCache_() 
+  void LogStreamBuf::clearCache()
   {
     // if there are any streams in our list, we
     // copy the line into that streams, too and flush them
     map<std::string, LogCacheStruct >::iterator it = log_cache_.begin();
 
-    for(; it != log_cache_.end() ; ++it) 
+    for (; it != log_cache_.end() ; ++it) 
     {
-      if((it->second).counter != 0) 
+      if ((it->second).counter != 0) 
       {
         std::stringstream stream;
         stream << "<" << it->first << "> occurred " << ++(it->second).counter << " times";
         distribute_(stream.str());
       }
     }
+    // remove all entries from cache
+    log_cache_.clear();
+    log_time_cache_.clear();
   }
 
 	int LogStreamBuf::sync() 

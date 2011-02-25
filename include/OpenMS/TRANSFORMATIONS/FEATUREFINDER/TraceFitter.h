@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -131,6 +131,14 @@ namespace OpenMS
      * Returns the center position of the fitted model
      */
     virtual DoubleReal getCenter() const
+    {
+      throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+    }
+
+    /**
+     * Returns the mass trace width at half max (FWHM)
+     */
+    virtual DoubleReal getFWHM() const
     {
       throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
     }

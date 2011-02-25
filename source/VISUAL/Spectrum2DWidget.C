@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -371,7 +371,7 @@ namespace OpenMS
 	{
 	  Spectrum2DGoToDialog goto_dialog(this);
 	  //set range
-	  const DRange<3>& area = canvas()->getDataRange();
+    const DRange<2>& area = canvas()->getVisibleArea();
 	  goto_dialog.setRange(area.minY(),area.maxY(),area.minX(),area.maxX()); 
 	  //disable feature numbers if in peak layer
 	  goto_dialog.enableFeatureNumber(canvas()->getCurrentLayer().type!=LayerData::DT_PEAK);

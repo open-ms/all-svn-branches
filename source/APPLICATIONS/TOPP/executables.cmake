@@ -7,6 +7,7 @@ AdditiveSeries
 BaselineFilter
 CompNovo
 ConsensusID
+ConsensusMapNormalizer
 DBExporter
 DBImporter
 DTAExtractor
@@ -33,10 +34,12 @@ InspectAdapter
 InternalCalibration
 MapAligner
 MapNormalizer
+MapStatistics
 MascotAdapter
 MascotAdapterOnline
 NoiseFilter
 OMSSAAdapter
+PhosphoScoring
 PILISIdentification
 PILISModel
 PTModel

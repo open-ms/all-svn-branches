@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -57,6 +57,9 @@ namespace OpenMS
       /// Algorithms not supporting ConsensusMap input should simply not override this method,
       /// as the base implementation will forward the data to the FeatureMap version of group()
 			virtual void group(const std::vector<ConsensusMap>& maps, ConsensusMap& out);
+
+			/// Transfers subelements (grouped features) from input consensus maps to the result consensus map
+			void transferSubelements(const std::vector<ConsensusMap>& maps, ConsensusMap& out) const;
 
 			/// Register all derived classes in this method
 			static void registerChildren();

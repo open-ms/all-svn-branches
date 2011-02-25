@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -110,7 +110,7 @@ namespace OpenMS
     else if (!td_.is_internal)
     {
       if (tag_=="external" || tag_=="cloptions" || tag_=="path" || tag_=="mappings" || tag_=="mapping" || tag_=="ini_param" ||
-          tag_=="text" || tag_=="onstartup" || tag_=="onfail" || tag_=="onfinish") return;
+          tag_=="text" || tag_=="onstartup" || tag_=="onfail" || tag_=="onfinish" || tag_=="workingdirectory") return;
     }
 
     error(LOAD, "ToolDescriptionHandler::startElement(): Unkown element found: '" + tag_ + "', ignoring.");
@@ -137,7 +137,7 @@ namespace OpenMS
     else if (tag_ == "onstartup") tde_.text_startup = sm_.convert(chars);
     else if (tag_ == "onfail") tde_.text_fail = sm_.convert(chars);
     else if (tag_ == "onfinish") tde_.text_finish = sm_.convert(chars);
-
+    else if (tag_=="workingdirectory") tde_.working_directory= sm_.convert(chars);
     
     else error(LOAD, "ToolDescriptionHandler::characters: Unkown character section found: '" + tag_ + "', ignoring.");
 	}
@@ -198,5 +198,4 @@ namespace OpenMS
 
 	} //namespace Internal
 } // namespace OpenMS
-
 

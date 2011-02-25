@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -100,7 +100,7 @@ START_SECTION((virtual DoubleReal getCenter() const ))
 }
 END_SECTION
 
-START_SECTION((virtual DoubleReal computeTheoretical(FeatureFinderAlgorithmPickedHelperStructs::MassTrace< PeakType > &, Size)))
+START_SECTION((DoubleReal computeTheoretical(const FeatureFinderAlgorithmPickedHelperStructs::MassTrace< PeakType > &, Size )))
 {
   FeatureFinderAlgorithmPickedHelperStructs::MassTrace<Peak1D> mt;
   Size i = 0;
@@ -108,7 +108,7 @@ START_SECTION((virtual DoubleReal computeTheoretical(FeatureFinderAlgorithmPicke
 }
 END_SECTION
 
-START_SECTION((virtual bool checkMinimalRTSpan(std::pair< DoubleReal, DoubleReal > const &, const DoubleReal)))
+START_SECTION((bool checkMinimalRTSpan(const std::pair< DoubleReal, DoubleReal > &, const DoubleReal)))
 {
   std::pair<DoubleReal, DoubleReal> p;
   DoubleReal x = 0.0;

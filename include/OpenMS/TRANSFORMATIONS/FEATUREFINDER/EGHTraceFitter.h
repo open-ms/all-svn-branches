@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -204,7 +204,7 @@ namespace OpenMS
      *
      * @param alpha The alpha at which the boundaries should be computed
      */
-    std::pair<DoubleReal, DoubleReal> getAlphaBoundaries_(const DoubleReal alpha)
+    std::pair<DoubleReal, DoubleReal> getAlphaBoundaries_(const DoubleReal alpha) const
     {
       std::pair<DoubleReal, DoubleReal> bounds;
       DoubleReal L = log(alpha);
@@ -223,6 +223,13 @@ namespace OpenMS
 
       return bounds;
     }
+
+    DoubleReal getFWHM() const
+    {
+			std::pair<DoubleReal, DoubleReal> bounds = getAlphaBoundaries_(0.5);
+      return bounds.second - bounds.first;
+    }
+
 
     void getOptimizedParameters_(gsl_multifit_fdfsolver * fdfsolver)
     {

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -28,6 +28,7 @@
 
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
+#include <OpenMS/DATASTRUCTURES/DataPoint.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeFitter1D.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
@@ -284,7 +285,7 @@ namespace OpenMS
       DoubleReal stepwidth = maxMzDeviation / 30;
 
       // n must be a power of two for gsl fast fourier transformation; take next higher size for n, which is a power of two and fill the rest with zeros
-      Size akimaMz_size = pow(2,(ceil(log2((3*maxMzDeviation)/stepwidth))));
+      Size akimaMz_size = pow(2,(ceil(log((3*maxMzDeviation)/stepwidth)/log(2.0))));
 
       akimaMz.clear();
       akimaMz.resize(akimaMz_size, 0.0);

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Oliver Kohlbacher $
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -56,9 +56,7 @@
 #include <QtCore/QDir>
 
 #ifdef _OPENMP
-#ifdef OPENMS_WINDOWSPLATFORM
 #include <omp.h>
-#endif
 #endif
 
 namespace OpenMS
@@ -490,10 +488,20 @@ namespace OpenMS
 					//-----------------------------------------------------------
 					//Step 3.1: Precalculate IsotopePattern score
 					//-----------------------------------------------------------
-					ff_->startProgress(0, map_.size(), String("Calculating isotope pattern scores for charge ")+String(c));
+#ifdef _OPENMP
+if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise it gets really confusing on the console)
+#endif
+          {
+            ff_->startProgress(0, map_.size(), String("Calculating isotope pattern scores for charge ")+String(c));
+          }
 					for (Size s=0; s<map_.size(); ++s)
 					{
-						ff_->setProgress(s);
+#ifdef _OPENMP
+if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise it gets really confusing on the console)
+#endif
+            {
+  						ff_->setProgress(s);
+            }
 						const SpectrumType& spectrum = map_[s];
 						for (Size p=0; p<spectrum.size(); ++p)
 						{
@@ -526,18 +534,33 @@ namespace OpenMS
 							}
 						}
 					}
-					ff_->endProgress();
+#ifdef _OPENMP
+if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise it gets really confusing on the console)
+#endif
+          {
+            ff_->endProgress();
+          }
 					//-----------------------------------------------------------
 					//Step 3.2:
 					//Find seeds for this charge
 					//-----------------------------------------------------------		
           Size end_of_iteration = map_.size() - std::min((Size) min_spectra_ , map_.size());
-          ff_->startProgress(min_spectra_, end_of_iteration, String("Finding seeds for charge ")+String(c));
+#ifdef _OPENMP
+if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise it gets really confusing on the console)
+#endif
+          {
+            ff_->startProgress(min_spectra_, end_of_iteration, String("Finding seeds for charge ")+String(c));
+          }
 					DoubleReal min_seed_score = param_.getValue("seed:min_score");
           //do nothing for the first few and last few spectra as the scans required to search for traces are missing
           for (Size s=min_spectra_; s<end_of_iteration; ++s)
 					{
-						ff_->setProgress(s);
+#ifdef _OPENMP
+if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise it gets really confusing on the console)
+#endif    
+            {
+						  ff_->setProgress(s);
+            }
 
 						//iterate over peaks
 						for (Size p=0; p<map_[s].size(); ++p)
@@ -605,21 +628,36 @@ namespace OpenMS
 						}
 						FeatureXMLFile().store(String("debug/seeds_")+String(c)+".featureXML", seed_map);
 					}
-					ff_->endProgress();
+#ifdef _OPENMP
+if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise it gets really confusing on the console)
+#endif    
+          {
+            ff_->endProgress();
+          }
 					std::cout << "Found " << seeds.size() << " seeds for charge " << c << "." << std::endl;
 					
 					//------------------------------------------------------------------
 					//Step 3.3:
 					//Extension of seeds
 					//------------------------------------------------------------------
-					ff_->startProgress(0,seeds.size(), String("Extending seeds for charge ")+String(c));
+#ifdef _OPENMP
+if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise it gets really confusing on the console)
+#endif    
+          {
+            ff_->startProgress(0,seeds.size(), String("Extending seeds for charge ")+String(c));
+          }
 					for (Size i=0; i<seeds.size(); ++i)
 					{
 						//------------------------------------------------------------------
 						//Step 3.3.1:
 						//Extend all mass traces
 						//------------------------------------------------------------------
-						ff_->setProgress(i);
+#ifdef _OPENMP
+if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise it gets really confusing on the console)
+#endif    
+            {
+						  ff_->setProgress(i);
+            }
 						log_ << std::endl << "Seed " << i << ":" << std::endl;
 						//If the intensity is zero this seed is already uses in another feature
 						const SpectrumType& spectrum = map_[seeds[i].spectrum];
@@ -661,7 +699,7 @@ namespace OpenMS
 						//Step 3.3.2:
             //Gauss/EGH fit (first fit to find the feature boundaries)
 						//------------------------------------------------------------------
-						Int plot_nr=-1;
+						Int plot_nr = -1;
 
 #ifdef _OPENMP
 #pragma omp critical (FeatureFinderAlgorithmPicked)
@@ -680,14 +718,14 @@ namespace OpenMS
             traces[traces.max_trace].updateMaximum();
 
             // choose fitter
-            double egh_tau = 0;
+            double egh_tau = 0.0;
             TraceFitter<PeakType> * fitter = chooseTraceFitter_(traces, egh_tau);
 
 						fitter->setParameters(trace_fitter_params);
 						fitter->fit(traces);
 
 #if 0
-						TraceFitter<PeakType> * alt_fitter = new GaussTraceFitter<PeakType>();
+						TraceFitter<PeakType>* alt_fitter = new GaussTraceFitter<PeakType>();
 						Param alt_p;
 						alt_p.setValue("max_iteration",max_iterations);
 						alt_p.setValue("epsilon_abs",epsilon_abs);
@@ -712,7 +750,7 @@ namespace OpenMS
 						//Crop feature according to RT fit (2.5*sigma) and remove badly fitting traces
 						//------------------------------------------------------------------
             MassTraces new_traces;
-            cropFeature_(fitter,traces,new_traces);
+            cropFeature_(fitter, traces, new_traces);
 
 						//------------------------------------------------------------------
 						//Step 3.3.4:
@@ -748,58 +786,58 @@ namespace OpenMS
 						//------------------------------------------------------------------
 						Feature f;
 						//set label
-						f.setMetaValue(3,plot_nr);
+						f.setMetaValue(3, plot_nr);
 						f.setCharge(c);
 						f.setOverallQuality(final_score);
-						if (debug)
-						{
-							f.setMetaValue("score_fit",fit_score);
-							f.setMetaValue("score_correlation",correlation);
-              if (egh_tau!=0)
-              {
-                egh_tau = (static_cast<EGHTraceFitter<PeakType>*>(fitter))->getTau();
-                f.setMetaValue("EGH_tau",egh_tau);
-                f.setMetaValue("EGH_height",(static_cast<EGHTraceFitter<PeakType>*>(fitter))->getHeight());
-                f.setMetaValue("EGH_sigma",(static_cast<EGHTraceFitter<PeakType>*>(fitter))->getSigmaSquare());
-              }
-						}
+						f.setMetaValue("score_fit",fit_score);
+						f.setMetaValue("score_correlation",correlation);
 						f.setRT(fitter->getCenter());
+						f.setWidth(fitter->getFWHM());
+
+						// Extract some of the model parameters.
+            if (egh_tau != 0.0)
+            {
+              egh_tau = (static_cast<EGHTraceFitter<PeakType>*>(fitter))->getTau();
+              f.setMetaValue("EGH_tau", egh_tau);
+              f.setMetaValue("EGH_height",(static_cast<EGHTraceFitter<PeakType>*>(fitter))->getHeight());
+              f.setMetaValue("EGH_sigma",(static_cast<EGHTraceFitter<PeakType>*>(fitter))->getSigmaSquare());
+						}
 						
-						//Calculate the mass of the feature: maximum, average, monoisotopic            
-            if(reported_mz_=="maximum")
+						// Calculate the mass of the feature: maximum, average, monoisotopic            
+            if (reported_mz_ == "maximum")
 						{
 							f.setMZ(traces[traces.getTheoreticalmaxPosition()].getAvgMZ());
 						}
-            else if(reported_mz_=="average")
+            else if(reported_mz_ == "average")
 						{
 							DoubleReal total_intensity = 0.0;
 							DoubleReal average_mz = 0.0;
-	 						for (Size t=0; t<traces.size(); ++t)
+	 						for (Size t = 0; t < traces.size(); ++t)
 							{
-								for (Size p=0; p<traces[t].peaks.size(); ++p)
+								for (Size p = 0; p < traces[t].peaks.size(); ++p)
 								{
 									average_mz += traces[t].peaks[p].second->getMZ()*traces[t].peaks[p].second->getIntensity();
-									total_intensity+=traces[t].peaks[p].second->getIntensity();
+									total_intensity += traces[t].peaks[p].second->getIntensity();
 								}
 							}
 							average_mz /= total_intensity;
 							f.setMZ(average_mz);
 						}
-            else if(reported_mz_=="monoisotopic")
+            else if (reported_mz_ == "monoisotopic")
 						{
 							DoubleReal mono_mz = traces[traces.getTheoreticalmaxPosition()].getAvgMZ();
               mono_mz -= (Constants::PROTON_MASS_U/c) * (traces.getTheoreticalmaxPosition() + best_pattern.theoretical_pattern.trimmed_left);
 							f.setMZ(mono_mz);
 						}
 						
-						//Calculate intensity based on model only
+						// Calculate intensity based on model only
 						// - the model does not include the baseline, so we ignore it here
 						// - as we scaled the isotope distribution to 
 						f.setIntensity(
 						    fitter->getFeatureIntensityContribution() // was 2.5 * fitter->getHeight() * sigma
 						    / getIsotopeDistribution_(f.getMZ()).max);
 						//add convex hulls of mass traces
-						for (Size j=0; j<traces.size(); ++j)
+						for (Size j = 0; j < traces.size(); ++j)
 						{
 							f.getConvexHulls().push_back(traces[j].getConvexhull());
 						}
@@ -810,7 +848,6 @@ namespace OpenMS
 						  features_->push_back(f);
             }
 
-
 						feature_candidates++;
 						
 						//----------------------------------------------------------------
@@ -820,17 +857,23 @@ namespace OpenMS
 						{
 							DoubleReal rt = map_[seeds[j].spectrum].getRT();
 							DoubleReal mz = map_[seeds[j].spectrum][seeds[j].peak].getMZ();
-							if (bb.encloses(rt,mz) && f.encloses(rt,mz))
+							if (bb.encloses(rt, mz) && f.encloses(rt, mz))
 							{
 								//set intensity to zero => the peak will be skipped!
 								seeds[j].intensity = 0.0;
 							}
 						}
 					}
-					ff_->endProgress();
+#ifdef _OPENMP
+if (omp_get_thread_num() ==0)  // only master thread reports progress (otherwise it gets really confusing on the console)
+#endif    
+          {
+            ff_->endProgress();
+          }
 					std::cout << "Found " << feature_candidates << " feature candidates for charge " << c << "." << std::endl;
 				}
-					
+				// END OPENMP
+
 				//------------------------------------------------------------------
 				//Step 4:
 				//Resolve contradicting and overlapping features
@@ -1736,16 +1779,16 @@ namespace OpenMS
        *
        * @return A pointer to the trace fitter that should be used.
        */
-      TraceFitter<PeakType> * chooseTraceFitter_(MassTraces & /*traces*/, double & tau)
+      TraceFitter<PeakType> * chooseTraceFitter_(MassTraces & /*traces*/, double& tau)
       {
         // choose fitter
-        if(param_.getValue("feature:rt_shape") == "asymmetric")
+        if (param_.getValue("feature:rt_shape") == "asymmetric")
         {
           LOG_DEBUG << "use asymmetric rt peak shape" << std::endl;
           tau = -1.0;
           return new EGHTraceFitter<PeakType>();
         }
-        else // if(param_.getValue("feature:rt_shape") == "symmetric")
+        else // if (param_.getValue("feature:rt_shape") == "symmetric")
         {
           LOG_DEBUG << "use symmetric rt peak shape" << std::endl;
           return new GaussTraceFitter<PeakType>();

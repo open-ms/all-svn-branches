@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@
 #include <OpenMS/COMPARISON/CLUSTERING/SingleLinkage.h>
 #include <OpenMS/COMPARISON/CLUSTERING/ClusterAnalyzer.h>
 #include <OpenMS/COMPARISON/CLUSTERING/ClusterHierarchical.h>
+#include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignment.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/KERNEL/RangeUtils.h>
 #include <OpenMS/KERNEL/BaseFeature.h>
@@ -70,19 +71,15 @@ namespace OpenMS
       SpectraDistance_()
         : DefaultParamHandler("SpectraDistance")
       {
-        defaults_.setValue("rt_tolerance", 10.0, "Maximal RT distance (in [s]) for two spectra's precursor.s");
-        defaults_.setValue("rt_weight", 1, "Multiplier for RT distance, to determine distance (delta m/z * weight + delta rt * weight < threshold).");
+        defaults_.setValue("rt_tolerance", 10.0, "Maximal RT distance (in [s]) for two spectra's precursors.");
         defaults_.setValue("mz_tolerance", 1.0, "Maximal m/z distance (in Da) for two spectra's precursors.");
-        defaults_.setValue("mz_weight", 10, "Multiplier for m/z distance, to determine distance (delta m/z * weight + delta rt * weight < threshold).");
         defaultsToParam_();
       }
       
       void updateMembers_()
       {
         rt_max_ = (DoubleReal) param_.getValue("rt_tolerance");
-        rt_weight_ = (DoubleReal) param_.getValue("rt_weight");
         mz_max_ = (DoubleReal) param_.getValue("mz_tolerance");
-        mz_weight_ = (DoubleReal) param_.getValue("mz_weight");
 
         return;
       }
@@ -110,10 +107,7 @@ namespace OpenMS
 
     protected:
       DoubleReal rt_max_;
-      DoubleReal rt_weight_;
       DoubleReal mz_max_;
-      DoubleReal mz_weight_;
-      DoubleReal max_possible_distance_;
 
     }; // end of SpectraDistance
 
@@ -232,12 +226,12 @@ namespace OpenMS
 				
         //ch.setThreshold(0.99);
 				// clustering ; threshold is implicitly at 1.0, i.e. distances of 1.0 (== similiarity 0) will not be clustered
-				ch.cluster<BaseFeature,SpectraDistance_>(data,llc,sl,tree,dist);
+				ch.cluster<BaseFeature,SpectraDistance_>(data, llc, sl, tree, dist);
 			}
 
       // extract the clusters
       ClusterAnalyzer ca;
-      std::vector<std::vector<Size> > clusters;
+      std::vector< std::vector<Size> > clusters;
       // count number of real tree nodes (not the -1 ones):
       Size node_count=0;
       for (Size ii=0;ii<tree.size();++ii)
@@ -302,21 +296,41 @@ namespace OpenMS
       Map <Size, Size> cluster_sizes;
       std::set <Size> merged_indices;
 
+      // set up alignment
+      SpectrumAlignment sas;
+      Param p;
+      p.setValue("tolerance", mz_binning_width);
+      if (! (mz_binning_unit=="Da" || mz_binning_unit=="ppm")) throw Exception::IllegalSelfOperation(__FILE__,__LINE__,__PRETTY_FUNCTION__); // sanity check
+      p.setValue("is_relative_tolerance", mz_binning_unit=="Da" ? "false" : "true");
+      sas.setParameters(p);
+      std::vector< std::pair<Size, Size > > alignment;
+	    
+      Size count_peaks_aligned(0);
+      Size count_peaks_overall(0);
+
       // each BLOCK
 			for (Map<Size, std::vector<Size> >::ConstIterator it = spectra_to_merge.begin(); it != spectra_to_merge.end(); ++it)
 			{
 
         ++cluster_sizes[ it->second.size() + 1]; // for stats
 
-  			typename MapType::SpectrumType consensus_spec;
+  			typename MapType::SpectrumType consensus_spec = exp[it->first];
 		  	consensus_spec.setMSLevel(ms_level);
 
-        consensus_spec.unify(exp[it->first]); // append meta info
+        //consensus_spec.unify(exp[it->first]); // append meta info
         merged_indices.insert(it->first);
 
-        typename MapType::SpectrumType all_peaks = exp[it->first];			
-        DoubleReal rt_average=all_peaks.getRT();
-        DoubleReal mz_average=all_peaks.getPrecursors()[0].getMZ();
+        //typename MapType::SpectrumType all_peaks = exp[it->first];			
+        DoubleReal rt_average=consensus_spec.getRT();
+        DoubleReal precursor_mz_average = 0.0;
+        Size precursor_count(0);
+        if (consensus_spec.getPrecursors().size() > 0)
+        {
+          precursor_mz_average = consensus_spec.getPrecursors()[0].getMZ();
+          ++precursor_count;
+        }
+
+        count_peaks_overall += consensus_spec.size();
 
         // block elements
 				for (std::vector<Size>::const_iterator sit = it->second.begin(); sit != it->second.end(); ++sit)
@@ -325,50 +339,57 @@ namespace OpenMS
           merged_indices.insert(*sit);
 
           rt_average+=exp[*sit].getRT();
-          if (ms_level >= 2) mz_average+=exp[*sit].getPrecursors()[0].getMZ();
+          if (ms_level >= 2 && exp[*sit].getPrecursors().size()>0)
+          {
+            precursor_mz_average+=exp[*sit].getPrecursors()[0].getMZ();
+            ++precursor_count;
+          }
+
+          // merge data points
+          sas.getSpectrumAlignment(alignment, consensus_spec, exp[*sit]);
+          //std::cerr << "alignment of " << it->first << " with " << *sit << " yielded " << alignment.size() << " common peaks!\n";
+          count_peaks_aligned += alignment.size();
+          count_peaks_overall += exp[*sit].size();
+
+          Size align_index(0);
+          Size spec_b_index(0);
+
+          // sanity check for number of peaks
+          Size spec_a = consensus_spec.size(), spec_b = exp[*sit].size(), align_size=alignment.size();
 					for (typename MapType::SpectrumType::ConstIterator pit = exp[*sit].begin(); pit != exp[*sit].end(); ++pit)
 					{
-						all_peaks.push_back(*pit);
+            // either add aligned peak height to existing peak
+            if (alignment.size()>0 && alignment[align_index].second == spec_b_index)
+            {
+              consensus_spec[alignment[align_index].first].setIntensity( consensus_spec[alignment[align_index].first].getIntensity() + 
+                                                                         pit->getIntensity() );
+              ++align_index; // this aligned peak was explained, wait for next aligned peak ...
+              if (align_index == alignment.size()) alignment.clear(); // end reached -> avoid going into this block again
+            }
+            else // ... or add unaligned peak
+            {
+              consensus_spec.push_back(*pit);
+            }
+            ++spec_b_index;
 					}
+          consensus_spec.sortByPosition();// sort, otherwise next alignment will fail
+          if (spec_a + spec_b - align_size != consensus_spec.size()) std::cerr << "\n\n ERRROR \n\n";
 				}
-				all_peaks.sortByPosition();
         rt_average/=it->second.size()+1;
         consensus_spec.setRT(rt_average);
 
-        mz_average/=it->second.size()+1;
         if (ms_level >= 2)
         {
+          if (precursor_count) precursor_mz_average/=precursor_count;
           std::vector< Precursor > pcs = consensus_spec.getPrecursors();
           //if (pcs.size()>1) LOG_WARN << "Removing excessive precursors - leaving only one per MS2 spectrum.\n";
           pcs.resize(1);
-          pcs[0].setMZ(mz_average);
+          pcs[0].setMZ(precursor_mz_average);
           consensus_spec.setPrecursors(pcs);
         }
 
-        if (all_peaks.size()==0) continue;
-        else
-        {
-          typename MapType::PeakType old_peak = *all_peaks.begin();
-          DoubleReal distance;
-		  	  for (typename MapType::SpectrumType::ConstIterator it = (++all_peaks.begin()); it != all_peaks.end(); ++it)
-		  	  {
-            if (mz_binning_unit=="Da") distance=fabs(old_peak.getMZ() - it->getMZ());   //Da delta
-            else distance= fabs(old_peak.getMZ() - it->getMZ())*1e6 / old_peak.getMZ(); //ppm delta
-
-		    	  if (distance < mz_binning_width)
-		    	  {
-		      	  old_peak.setIntensity(old_peak.getIntensity() + it->getIntensity());
-		    	  }
-   		 		  else
-    			  {
-      			  consensus_spec.push_back(old_peak);
-     		 		  old_peak = *it;
-    			  }
-  			  }
-          consensus_spec.push_back(old_peak); // store last peak
-
-				  merged_spectra.push_back(consensus_spec);
-        }
+        if (consensus_spec.size()==0) continue;
+        else merged_spectra.push_back(consensus_spec);
 			}
 
       LOG_INFO << "Cluster sizes:\n";
@@ -376,7 +397,12 @@ namespace OpenMS
       {
         LOG_INFO << "  size " << it->first << ": " << it->second << "x\n";
       }
-      
+
+      char buffer[200]; 
+      sprintf (buffer, "%d/%d (%.2f %%) of blocked spectra", (int)count_peaks_aligned, 
+							 (int)count_peaks_overall, float(count_peaks_aligned)/float(count_peaks_overall) * 100. );
+      LOG_INFO << "Number of merged peaks: " << String(buffer) << "\n";
+
       // remove all spectra that were within a cluster
       typename MapType::SpectrumType empty_spec;
       MapType exp_tmp;

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -38,7 +38,10 @@
 
 namespace OpenMS
 {
-  /**
+   class SILACFiltering;
+   class DataPoint;
+
+   /**
    * @brief Filter to use for SILACFiltering
    *
    * A SILACFilter searches for SILAC patterns, which correspond to the defined mass shifts and charge.
@@ -47,7 +50,6 @@ namespace OpenMS
    *
    * @see SILACFiltering
    */
-   class SILACFiltering;
 
    class OPENMS_DLLAPI SILACFilter {
      friend class SILACFiltering;
@@ -83,12 +85,12 @@ namespace OpenMS
   * @brief m/z separtion between individual peptides [e.g. {0 Th, 4 Th, 5 Th}]
   */
   std::vector<DoubleReal> mz_peptide_separations;
-     
+
   /**
   * @brief m/z shifts relative to mono-isotopic peak of unlabelled peptide
   */
   std::vector<DoubleReal> expectedMZshifts;
-     
+
      /**
    * @brief distance between isotopic peaks of a peptide in [Th]
    */
@@ -150,12 +152,12 @@ namespace OpenMS
    * @brief gets the m/z values of all peaks , which belong the last identified feature
    */
    std::vector<DoubleReal> getPeakPositions();
-	   
+
   /**
    * @brief gets the m/z shifts relative to mono-isotopic peak of unlabelled peptide
    */
    std::vector<DoubleReal> getExpectedMZshifts();
-	   
+
    public:
 
   /**

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -139,10 +139,10 @@ namespace OpenMS
 				}
 			}
 
-			for (std::vector<DRange<1> >::const_iterator rit = ranges.begin(); rit != ranges.end(); ++rit)
-			{
-				std::cerr << *rit << std::endl;
-			}
+//			for (std::vector<DRange<1> >::const_iterator rit = ranges.begin(); rit != ranges.end(); ++rit)
+//			{
+//				std::cerr << *rit << std::endl;
+//			}
 			
 			// apply the intensity reduction to the collected ranges
 			for (Iterator it = spectrum.begin(); it != spectrum.end(); ++it)

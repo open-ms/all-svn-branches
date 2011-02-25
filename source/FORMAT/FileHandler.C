@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -73,7 +73,8 @@ namespace OpenMS
 		tmp.toUpper();
     if (tmp == "BZ2" || tmp == "GZ") // todo ZIP (not supported yet):       || tmp == "ZIP"
 		{
-			return getTypeByContent(filename);
+      // no not use getTypeByContent() here, as this is deadly for output files!
+      return getTypeByFileName(filename.prefix(filename.size()-tmp.size()-1)); // check name without compression suffix (e.g. bla.mzML.gz --> bla.mzML)
 		}
 
     return nameToType(tmp);

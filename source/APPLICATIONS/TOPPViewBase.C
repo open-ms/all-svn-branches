@@ -5,7 +5,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -122,8 +122,8 @@ namespace OpenMS
   using namespace Internal;
 	using namespace Math;
 
-  qreal TOPPViewBase::toppas_z_value_ = 42.0;
-  Int TOPPViewBase::toppas_node_offset_ = 0;
+qreal TOPPViewBase::toppas_z_value_ = 42.0;
+Int TOPPViewBase::toppas_node_offset_ = 0;
 
 TOPPViewBase::TOPPViewBase(QWidget* parent):
         QMainWindow(parent),
@@ -1251,9 +1251,13 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
 		bool is_2D = (data_type != LayerData::DT_CHROMATOGRAM);
 
+    // only one peak spectrum? disable 2D as default
+    if (peak_map->size() == 1)
+    {
+      maps_as_2d = false;
+    }
 
-		//set the window where (new layer) data could be opened in
-
+    // set the window where (new layer) data could be opened in
     // get EnhancedTabBarWidget with given id
     EnhancedTabBarWidgetInterface* tab_bar_target = window_(window_id);
 
@@ -1346,11 +1350,14 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       }
     }
 
-    if (merge_layer==-1) //add data to the window
+    if (merge_layer == -1) //add layer to the window
     {
 	    if (data_type == LayerData::DT_FEATURE) //features
 			{
-        if (!target_window->canvas()->addLayer(feature_map, filename)) return;
+        if (!target_window->canvas()->addLayer(feature_map, filename))
+        {
+          return;
+        }
 			}
 			else if (data_type == LayerData::DT_CONSENSUS) //consensus features
 			{
@@ -1515,21 +1522,26 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
         views_tabwidget_->setCurrentIndex(2);
         views_tabwidget_->setTabEnabled(0, false);  // switch scan view off
         views_tabwidget_->setTabEnabled(1, false);  // switch identification view off
-
       } else if (sw)  // SpectrumWidget
       {
-        views_tabwidget_->setTabEnabled(0, true);
         const ExperimentType& map = *sw->canvas()->getCurrentLayer().getPeakData();
+        views_tabwidget_->setTabEnabled(0, true);
 
         if(hasPeptideIdentifications(map))
         {
           views_tabwidget_->setTabEnabled(1, true);
+          if (dynamic_cast<Spectrum2DWidget*>(w))
+          {
+            views_tabwidget_->setCurrentIndex(0);  // switch to scan tab for 2D widget
+          } else if (dynamic_cast<Spectrum1DWidget*>(w))
+          {
+            views_tabwidget_->setCurrentIndex(1);  // switch to identification tab for 1D widget
+          }
         } else
         {
           views_tabwidget_->setTabEnabled(1, false);
+          views_tabwidget_->setCurrentIndex(0); // stay on scan view tab
         }
-
-        views_tabwidget_->setCurrentIndex(0);
         setTOPPASTabEnabled(false);
       }
   	}
@@ -1627,6 +1639,20 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     if (w)
     {
       intensity_button_group_->button(index)->setChecked(true);
+      Spectrum2DWidget* w2d = dynamic_cast<Spectrum2DWidget*>(w);
+      // 2D widget and intensity mode changed?
+      if (w2d && w2d->canvas()->getIntensityMode() != index)
+      {
+        if (index == OpenMS::SpectrumCanvas::IM_LOG)
+        {
+          w2d->canvas()->getCurrentLayer().param.setValue("dot:gradient", MultiGradient::getDefaultGradientLogarithmicIntensityMode().toString());
+          w2d->canvas()->recalculateCurrentLayerDotGradient();
+        } else if (index != OpenMS::SpectrumCanvas::IM_LOG)
+        {
+          w2d->canvas()->getCurrentLayer().param.setValue("dot:gradient", MultiGradient::getDefaultGradientLinearIntensityMode().toString());
+          w2d->canvas()->recalculateCurrentLayerDotGradient();
+        }
+      }
     	w->setIntensityMode((OpenMS::SpectrumCanvas::IntensityModes)index);
   	}
   }
@@ -1927,6 +1953,10 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     {
       layer_dock_widget_->show();
       filter_dock_widget_->show();
+      if (getActive2DWidget())  // currently 2D window is open
+      {
+        showSpectrumAs1D(0);
+      }
       view_behavior_ = identificationview_behavior_;
     } else if (views_tabwidget_->tabText(tab_index) == "TOPPAS view")
     {
@@ -2524,8 +2554,16 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 		QAction* action = qobject_cast<QAction *>(sender());
     if (action)
 		{
-      addDataFile(action->text(), true, true);
-		}
+      QString filename = action->text();
+      if (filename.endsWith(".toppas", Qt::CaseInsensitive))
+      {
+        addTOPPASFile(filename, true);
+      }
+      else
+      {
+        addDataFile(filename, true, true);
+      }
+    }
 	}
 
   QStringList TOPPViewBase::getFileList_(const String& path_overwrite)
@@ -3323,6 +3361,9 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
         w->canvas()->setVisibleArea(getActiveCanvas()->getVisibleArea());
      }
 
+      // Set Intensity mode
+      setIntensityMode(SpectrumCanvas::IM_SNAP);
+
       // set layer name
       String caption = layer.name + " (3D)";
       w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
@@ -3847,6 +3888,13 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
   void TOPPViewBase::fileChanged_(const String& filename)
   {
+    // check if file has been deleted
+    if (!QFileInfo(filename.toQString()).exists())
+    {
+      watcher_->removeFile(filename);
+      return;
+    }
+
     QWidgetList wl = ws_->windowList();
 
     // iterate over all windows and determine which need an update
@@ -4014,6 +4062,10 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     updateViewBar();
     updateFilterBar();
     updateMenu();
+
+    // temporarly remove and readd filename from watcher_ as a workaround for bug #233
+    watcher_->removeFile(filename);
+    watcher_->addFile(filename);
   }
 
   void TOPPViewBase::setTOPPASTabEnabled(bool enabled)

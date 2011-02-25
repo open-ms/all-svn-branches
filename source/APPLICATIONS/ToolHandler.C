@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -51,6 +51,7 @@ namespace OpenMS
 		tools_map["BaselineFilter"] = Internal::ToolDescription("BaselineFilter", "Signal processing and preprocessing");
     tools_map["CompNovo"] = Internal::ToolDescription("CompNovo", "Protein/peptide Identification", StringList::create("CompNovo,CompNovoCID"));
 		tools_map["ConsensusID"] = Internal::ToolDescription("ConsensusID", "Protein/peptide Processing");
+		tools_map["ConsensusMapNormalizer"] = Internal::ToolDescription("ConsensusMapNormalizer", "Map Alignment");
 		tools_map["DBExporter"] = Internal::ToolDescription("DBExporter", "File Handling");
 		tools_map["DBImporter"] = Internal::ToolDescription("DBImporter", "File Handling");
 		tools_map["DTAExtractor"] = Internal::ToolDescription("DTAExtractor", "File Handling");
@@ -94,7 +95,7 @@ namespace OpenMS
 		tools_map["RTModel"] = Internal::ToolDescription("RTModel", "Peptide property prediction");
 		tools_map["RTPredict"] = Internal::ToolDescription("RTPredict", "Peptide property prediction");
 		tools_map["Resampler"] = Internal::ToolDescription("Resampler", "Signal processing and preprocessing");
-		tools_map["SILACAnalyzer"] = Internal::ToolDescription("SILACAnalyzer", "Quantitation");
+    tools_map["SILACAnalyzer"] = Internal::ToolDescription("SILACAnalyzer", "Quantitation");
 		tools_map["SeedListGenerator"] = Internal::ToolDescription("SeedListGenerator", "Quantitation");
 		//tools_map["SequestAdapter"] = Internal::ToolDescription("SequestAdapter", "Protein/peptide Identification");
 		tools_map["SpecLibSearcher"] = Internal::ToolDescription("SpecLibSearcher", "Protein/peptide Identification");
@@ -144,7 +145,6 @@ namespace OpenMS
 		util_map["ImageCreator"] = Internal::ToolDescription("ImageCreator", "");
 		util_map["IDSplitter"] = Internal::ToolDescription("IDSplitter", "");
 		util_map["MassCalculator"] = Internal::ToolDescription("MassCalculator", "");
-		util_map["TrafoInverter"] = Internal::ToolDescription("TrafoInverter", "");
 
 		return util_map;
 	}

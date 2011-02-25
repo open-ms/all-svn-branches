@@ -62,6 +62,7 @@ namespace OpenMS
 		tools_map["FeatureLinker"] = Internal::ToolDescription("FeatureLinker", "Map Alignment", Factory<FeatureGroupingAlgorithm>::registeredProducts());
 		tools_map["FileConverter"] = Internal::ToolDescription("FileConverter", "File Handling");
 		tools_map["FileFilter"] = Internal::ToolDescription("FileFilter", "File Handling");
+		tools_map["FileFilter2"] = Internal::ToolDescription("FileFilter2", "File Handling");
 		tools_map["FileInfo"] = Internal::ToolDescription("FileInfo", "File Handling");
 		tools_map["FileMerger"] = Internal::ToolDescription("FileMerger", "File Handling");
 		tools_map["IDDecoyProbability"] = Internal::ToolDescription("IDDecoyProbability", "Protein/peptide Processing");

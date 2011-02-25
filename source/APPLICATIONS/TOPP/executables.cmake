@@ -18,6 +18,7 @@ FeatureFinder
 FeatureLinker
 FileConverter
 FileFilter
+FileFilter2
 FileInfo
 FileMerger
 GenericWrapper

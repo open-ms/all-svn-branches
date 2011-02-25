@@ -56,6 +56,7 @@ FalseDiscoveryRate
 "FeatureLinker -type unlabeled_qt"
 FileConverter
 FileFilter
+FileFilter2
 FileInfo
 FileMerger
 #GenericWrapper ##disabled for now, as we need an automatic way to determine its types, changing frequently
@@ -290,6 +291,10 @@ add_test("TOPP_FileFilter_13" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_T
 add_test("TOPP_FileFilter_13_out1" ${DIFF} -in1 FileFilter.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_13_output.featureXML)
 add_test("TOPP_FileFilter_14" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_14_input.consensusXML -out FileFilter.tmp -in_type consensusXML -out_type consensusXML -map 0 2)
 add_test("TOPP_FileFilter_14_out1" ${DIFF} -in1 FileFilter.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_14_output.consensusXML)
+
+### FileFilter2 tests
+add_test("TOPP_FileFilter2_1" ${TOPP_BIN_PATH}/FileFilter2 -test -in ${DATA_DIR_TOPP}/FileFilter2_input.featureXML -out FileFilter2.tmp -annotated -sequence Oxidation)
+add_test("TOPP_FileFilter2_1_out1" ${DIFF} -in1 FileFilter2.tmp -in2 ${DATA_DIR_TOPP}/FileFilter2_output.featureXML)
 
 ### FileInfo tests
 add_test("TOPP_FileInfo_1" ${TOPP_BIN_PATH}/FileInfo -in ${DATA_DIR_TOPP}/FileInfo_1_input.txt -in_type DTA -no_progress -out FileInfo.tmp)

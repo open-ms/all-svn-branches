@@ -27,6 +27,7 @@
 
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/FORMAT/FileTypes.h>
+#include <OpenMS/FORMAT/ConsensusXMLFile.h>
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/DATASTRUCTURES/StringList.h>
@@ -87,10 +88,14 @@ public:
 protected:
 	void registerOptionsAndFlags_()
 	{
+		String formats("featureXML,consensusXML");
+
 		registerInputFile_("in", "<file>", "", "input file");
-		setValidFormats_("in", StringList::create("featureXML"));
+		setValidFormats_("in", StringList::create(formats));
+
 		registerOutputFile_("out", "<file>", "", "output file");
-		setValidFormats_("out", StringList::create("featureXML"));
+		setValidFormats_("out", StringList::create(formats));
+
 		addEmptyLine_();
 		registerFlag_("unassigned","keep unassigned Peptide Identifications");
 		registerFlag_("annotated","filter features with annotations");
@@ -100,73 +105,159 @@ protected:
 
 	ExitCodes main_(int , const char**)
 	{
-		String in = getStringOption_("in");
+		//-------------------------------------------------------------
+		// parameter handling
+		//-------------------------------------------------------------
 
-		FeatureXMLFile infile;
-		FeatureMap<> map;
-		infile.load(in, map);
+		FileHandler fh;
+
+		//input file name and type
+		String in = getStringOption_("in");
+		FileTypes::Type in_type = fh.getType(in);
+
+		//output file name and type
+		String out = getStringOption_("out");
+		//FileTypes::Type out_type = fh.getTypeByFileName(out);
+
+		//other parameters
 		bool unassigned = getFlag_("unassigned");
 		bool annotated = getFlag_("annotated");
 		bool not_annotated = getFlag_("not_annotated");
 		StringList sequence = getStringList_("sequence");
 
-		//copy all properties
-		FeatureMap<> new_map = map;
-		//but delete feature information
-		new_map.clear(false);
-		//loop over all features
-		for (FeatureMap<>::ConstIterator fm_it = map.begin(); fm_it != map.end(); ++fm_it)
+		if (in_type == FileTypes::FEATUREXML)
 		{
-			//flag: annotated and non-empty peptideIdentifications
-			if (annotated && !fm_it->getPeptideIdentifications().empty())
+			FeatureXMLFile f;
+			FeatureMap<> feature_map;
+			f.load(in, feature_map);
+	
+			//copy all properties
+			FeatureMap<> new_map = feature_map;
+			//but delete feature information
+			new_map.clear(false);
+			//loop over all features
+			for (FeatureMap<>::ConstIterator fm_it = feature_map.begin(); fm_it != feature_map.end(); ++fm_it)
 			{
-				if (sequence.size() > 0)
+				//flag: annotated and non-empty peptideIdentifications
+				if (annotated && !fm_it->getPeptideIdentifications().empty())
 				{
-					//loop over all peptideIdentifications
-					bool seq_found = false;
-					for (vector<PeptideIdentification>::const_iterator pep_id_it = fm_it->getPeptideIdentifications().begin(); pep_id_it != fm_it->getPeptideIdentifications().end(); ++pep_id_it)
+					if (sequence.size() > 0)
 					{
-						if (seq_found) break;
-						//loop over all peptideHits
-						for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
+						//loop over all peptideIdentifications
+						bool seq_found = false;
+						for (vector<PeptideIdentification>::const_iterator pep_id_it = fm_it->getPeptideIdentifications().begin(); pep_id_it != fm_it->getPeptideIdentifications().end(); ++pep_id_it)
 						{
 							if (seq_found) break;
-							//loop over all sequence entries of the StringList
-							for (StringList::ConstIterator seq_it = sequence.begin(); seq_it != sequence.end(); ++seq_it)
+							//loop over all peptideHits
+							for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
 							{
 								if (seq_found) break;
-								if (pep_hit_it->getSequence().toString().hasSubstring(*seq_it)
-									|| pep_hit_it->getSequence().toUnmodifiedString().hasSubstring(*seq_it))
+								//loop over all sequence entries of the StringList
+								for (StringList::ConstIterator seq_it = sequence.begin(); seq_it != sequence.end(); ++seq_it)
 								{
-									new_map.push_back(*fm_it);
-									seq_found = true;
+									if (seq_found) break;
+									if (pep_hit_it->getSequence().toString().hasSubstring(*seq_it)
+										|| pep_hit_it->getSequence().toUnmodifiedString().hasSubstring(*seq_it))
+									{
+										new_map.push_back(*fm_it);
+										seq_found = true;
+									}
 								}
 							}
 						}
+					}else
+					{
+						new_map.push_back(*fm_it);
 					}
-				}else
+				}
+				//flag: not_annotated and no peptideIdentifications
+				if (not_annotated && fm_it->getPeptideIdentifications().empty())
 				{
 					new_map.push_back(*fm_it);
 				}
 			}
-			//flag: not_annotated and no peptideIdentifications
-			if (not_annotated && fm_it->getPeptideIdentifications().empty())
+			//delete unassignedPeptideIdentifications
+			if (!unassigned)
 			{
-				new_map.push_back(*fm_it);
+				new_map.getUnassignedPeptideIdentifications().clear();
 			}
-		}
-		//delete unassignedPeptideIdentifications
-		if (!unassigned)
-		{
-			new_map.getUnassignedPeptideIdentifications().clear();
-		}
-		//update minimum and maximum position/intensity
-		new_map.updateRanges();
-		//annotate output with data processing info
-		addDataProcessing_(new_map, getProcessingInfo_(DataProcessing::FILTERING));
+			//update minimum and maximum position/intensity
+			new_map.updateRanges();
 
-		String out = getStringOption_("out");
-		infile.store(out, new_map);
+			//annotate output with data processing info
+			addDataProcessing_(new_map, getProcessingInfo_(DataProcessing::FILTERING));
+
+			f.store(out, new_map);
+
+		}else if (in_type == FileTypes::CONSENSUSXML)
+		{
+			ConsensusXMLFile f;
+			ConsensusMap consensus_map;
+			f.load(in, consensus_map);
+			
+			//copy all properties
+			ConsensusMap new_map = consensus_map;
+			//but delete feature information
+			new_map.clear(false);
+			//loop over all features
+			for (ConsensusMap::ConstIterator cm_it = consensus_map.begin(); cm_it != consensus_map.end(); ++cm_it)
+			{
+				//flag: annotated and non-empty peptideIdentifications
+				if (annotated && !cm_it->getPeptideIdentifications().empty())
+				{
+					if (sequence.size() > 0)
+					{
+						//loop over all peptideIdentifications
+						bool seq_found = false;
+						for (vector<PeptideIdentification>::const_iterator pep_id_it = cm_it->getPeptideIdentifications().begin(); pep_id_it != cm_it->getPeptideIdentifications().end(); ++pep_id_it)
+						{
+							if (seq_found) break;
+							//loop over all peptideHits
+							for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
+							{
+								if (seq_found) break;
+								//loop over all sequence entries of the StringList
+								for (StringList::ConstIterator seq_it = sequence.begin(); seq_it != sequence.end(); ++seq_it)
+								{
+									if (seq_found) break;
+									if (pep_hit_it->getSequence().toString().hasSubstring(*seq_it)
+										|| pep_hit_it->getSequence().toUnmodifiedString().hasSubstring(*seq_it))
+									{
+										new_map.push_back(*cm_it);
+										seq_found = true;
+									}
+								}
+							}
+						}
+					}else
+					{
+						new_map.push_back(*cm_it);
+					}
+				}
+				//flag: not_annotated and no peptideIdentifications
+				if (not_annotated && cm_it->getPeptideIdentifications().empty())
+				{
+					new_map.push_back(*cm_it);
+				}
+			}
+			//delete unassignedPeptideIdentifications
+			if (!unassigned)
+			{
+				new_map.getUnassignedPeptideIdentifications().clear();
+			}
+			//update minimum and maximum position/intensity
+			new_map.updateRanges();
+
+			//annotate output with data processing info
+			addDataProcessing_(new_map, getProcessingInfo_(DataProcessing::FILTERING));
+
+			f.store(out, new_map);
+		}else
+		{
+			writeLog_("Unknown input file type given. Aborting!");
+			printUsage_();
+			return ILLEGAL_PARAMETERS;
+		}
 
 		return EXECUTION_OK;
 	}

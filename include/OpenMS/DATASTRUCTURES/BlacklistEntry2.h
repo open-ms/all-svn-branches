@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
+// $Maintainer: Lars Nilse $
 // $Authors: $
 // --------------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ namespace OpenMS
 {
 
 /**
- * @brief A single data point, which can be stored in a HashGrid.
+ * @brief blacklisted range in the rt-mz plane which can be stored in a HashGrid
  * @see HashGrid
  * @ingroup Datastructures
  */
@@ -43,50 +43,27 @@ namespace OpenMS
 class OPENMS_DLLAPI BlacklistEntry2 : public GridElement {
 
 public:
-	static const Int DOUBLE_TRIPLE = 1;
-	static const Int DOUBLE = 2;
-	static const Int TRIPLE = 3;
 	/**
-	 * @brief intensity at RT and m/z
+	 * @brief blacklisted area in rt-mz plane
 	 */
-	std::vector<std::vector<DoubleReal> > intensities;
-	
+	DRange<2> blackArea;
+  
 	/**
-	 * @brief mass shifts [Da] used in the filter
-	 */	
-	std::vector<DoubleReal> mass_shifts;
-
-	/**
-	 * @brief charge of the cluster (i.e. peptide) which the data point is part of
+	 * @brief charge of the filter causing the blacklisting
 	 */
 	Int charge;
-
+  
 	/**
-	 * @brief number of isotopes per peptide of the cluster
-	 */
-	Int isotopes_per_peptide;
-	
+	 * @brief mass separations [Da] of the filter causing the blacklisting
+	 */	
+	std::vector<DoubleReal> mass_separations;
+  
 	/**
-	 * @brief quality of the cluster
-	 */
-	DoubleReal quality;
-
-	/**
-	 * @brief ID number of the cluster the data point belongs to
-	 */
-	Int cluster_id;
-
-	/**
-	 * @brief size of the cluster which the data point is part of
-	 */
-	Int cluster_size;
-	
-	/**
-	 * @brief ID of the data point
-	 */
-	Int feature_id;
-	
-	/**
+	 * @brief position of the blacklisted area relative to the mono-isotopic peak of the light peptide
+	 */	
+	DoubleReal relative_peak_position;
+  
+  /**
 	 * @brief default constructor
 	 */
 	BlacklistEntry2();
@@ -97,16 +74,14 @@ public:
 	 */
 	BlacklistEntry2(const BlacklistEntry2 &copyin);
 	
-	/// destructor
+	// destructor
 	~BlacklistEntry2(){};
+  
   BlacklistEntry2& operator = (const BlacklistEntry2 &rhs);
   bool operator == (const BlacklistEntry2 &rhs) const;
   bool operator != (const BlacklistEntry2 &rhs) const;
   bool operator < (const BlacklistEntry2 &rhs) const;
-	/**
-	 * @brief gets the ID of the data point
-	 */
-	Int getID() const;
+  
 };
 }
 

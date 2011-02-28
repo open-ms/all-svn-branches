@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
+// $Maintainer: Lars Nilse $
 // $Authors: $
 // --------------------------------------------------------------------------
 
@@ -33,65 +33,50 @@ namespace OpenMS
   	
   BlacklistEntry2::BlacklistEntry2()
   {
-	  rt = 0;
-	  mz = 0;
-	  feature_id= 0;
-	  cluster_id = 0;
-	  charge=1;
-	  isotopes_per_peptide = 1;
-	  quality=0;
-	  cluster_size=0;
+    blackArea = DRange<2>(0,0,0,0);
+ 	  charge = 1;
+	  mass_separations = std::vector<DoubleReal>(0);
+    relative_peak_position = 0;
   }
   	
   BlacklistEntry2::BlacklistEntry2(const BlacklistEntry2 &copyin) : GridElement(copyin)
   {
-	  feature_id = copyin.feature_id;
-	  intensities = copyin.intensities;
-	  cluster_id = copyin.cluster_id;
+    blackArea = copyin.blackArea;
 	  charge = copyin.charge;
-	  isotopes_per_peptide = copyin.isotopes_per_peptide;
-	  quality = copyin.quality;
-	  mass_shifts = copyin.mass_shifts;
-	  cluster_size = copyin.cluster_size;
+    mass_separations = copyin.mass_separations;
+    relative_peak_position = copyin.relative_peak_position;
   }
 
   BlacklistEntry2& BlacklistEntry2::operator=(const BlacklistEntry2 &rhs)
   {
-	  this->rt = rhs.rt;
-	  this->mz = rhs.mz;
-	  this->intensities = rhs.intensities;
-	  this->feature_id = rhs.feature_id;
-	  this->cluster_id = rhs.cluster_id;
-	  this->mass_shifts = rhs.mass_shifts;
-	  this->cluster_size = rhs.cluster_size;
+    this->blackArea = rhs.blackArea;
+    this->charge = rhs.charge;
+    this->mass_separations = rhs.mass_separations;
+    this->relative_peak_position = rhs.relative_peak_position;
 	  return *this;
   }
 
   bool BlacklistEntry2::operator==(const BlacklistEntry2 &rhs) const
   {
-	  if( this->feature_id != rhs.feature_id) return false;
-	  if( this->rt != rhs.rt) return false;
-	  if( this->mz != rhs.mz) return false;
-	  if( this->intensities != rhs.intensities) return false;
+	  if( this->blackArea != rhs.blackArea) return false;
+	  if( this->charge != rhs.charge) return false;
+	  if( this->mass_separations != rhs.mass_separations) return false;
+	  if( this->relative_peak_position != rhs.relative_peak_position) return false;
 	  return true;
   }
-
 
   bool BlacklistEntry2::operator!=(const BlacklistEntry2 &rhs) const
   {
 	  return !(*this==rhs);
   }
+  
   bool BlacklistEntry2::operator<(const BlacklistEntry2 &rhs) const // required for built-in STL functions like sort
   {
 	  if ( *this == rhs) return false;
 
-	  return this->feature_id < rhs.feature_id;
+	  return this->charge < rhs.charge;
   }
 
-  int BlacklistEntry2::getID() const
-  {
-	  return feature_id;
-  }
 }
 
 

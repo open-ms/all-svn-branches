@@ -28,6 +28,7 @@
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>
 #include <OpenMS/FORMAT/MzMLFile.h>
+#include <OpenMS/DATASTRUCTURES/BlacklistEntry2.h>
 
 #include <iostream>
 #include <fstream>
@@ -47,7 +48,7 @@ namespace OpenMS
   DoubleReal SILACFiltering::mz_min = 0;
 
   SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_, const DoubleReal rt_threshold_, const DoubleReal mz_threshold_, const DoubleReal mz_stepwidth_, const DoubleReal intensity_cutoff_, const DoubleReal intensity_correlation_, const bool allow_missing_peaks_)
-    : exp(exp_), blacklist2(HashGrid(rt_threshold_, mz_threshold_))
+    : exp(exp_), blacklist2(HashGrid(200, 0.2))
   {
     mz_stepwidth = mz_stepwidth_;
     intensity_cutoff = intensity_cutoff_;
@@ -211,6 +212,13 @@ namespace OpenMS
                     std::vector<DoubleReal> mass_separations;
                     mass_separations.insert(mass_separations.begin(), (*filter_it)->mass_separations.begin(), (*filter_it)->mass_separations.end());
                     DoubleReal relative_peak_position = *peak_positions_it - mz; // or mz_it->getMZ() ??
+                    
+                    
+                    
+                    // FILLING BLACKLIST2
+                    //BlacklistEntry2 newWhatever;
+                    
+                    
                     
                     // Does the new black area overlap with existing areas in the blacklist?
                     bool overlap = false;

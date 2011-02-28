@@ -71,6 +71,7 @@ namespace OpenMS
     startProgress(0, exp.size(), "filtering raw data");
 
     vector<DataPoint> data;
+    Int ID = 0;    // ID needed for BlacklistEntry2
 
     mz_min = exp.getMinMZ();      // get lowest m/z value
 
@@ -217,7 +218,15 @@ namespace OpenMS
                     
                     
                     // FILLING BLACKLIST2
-                    //BlacklistEntry2 newWhatever;
+                    BlacklistEntry2 newEntry2;
+                    newEntry2.id = ID;
+                    newEntry2.rt = rt;
+                    newEntry2.mz = *peak_positions_it;
+                    newEntry2.blackArea = blackArea;
+                    newEntry2.charge = charge;
+                    newEntry2.mass_separations = mass_separations;
+                    newEntry2.relative_peak_position = relative_peak_position;
+                    ++ID;
                     
                     
                     

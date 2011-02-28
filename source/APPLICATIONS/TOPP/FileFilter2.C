@@ -59,7 +59,7 @@ using namespace std;
 	</table>
 </CENTER>
 
-This tool filters featureXML files by their annotation. You can choose the following options:
+This tool filters featureXML or consensusXML files by their annotation. You can choose the following options:
 	- filter unassigned peptide identifications
 	- filter annotated features
 	- filter non-annotated features
@@ -86,6 +86,43 @@ public:
 	}
 
 protected:
+	bool checkPeptideIdentification(const BaseFeature& feature, const bool annotated, const bool not_annotated, const StringList& sequence)
+	{
+		//flag: annotated and non-empty peptideIdentifications
+		if (annotated && !feature.getPeptideIdentifications().empty())
+		{
+			if (sequence.size() > 0)
+			{
+				//loop over all peptideIdentifications
+				for (vector<PeptideIdentification>::const_iterator pep_id_it = feature.getPeptideIdentifications().begin(); pep_id_it != feature.getPeptideIdentifications().end(); ++pep_id_it)
+				{
+					//loop over all peptideHits
+					for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
+					{
+						//loop over all sequence entries of the StringList
+						for (StringList::ConstIterator seq_it = sequence.begin(); seq_it != sequence.end(); ++seq_it)
+						{
+							if (pep_hit_it->getSequence().toString().hasSubstring(*seq_it)
+								|| pep_hit_it->getSequence().toUnmodifiedString().hasSubstring(*seq_it))
+							{
+								return true;
+							}
+						}
+					}
+				}
+			}else
+			{
+				return true;
+			}
+		}
+		//flag: not_annotated and no peptideIdentifications
+		if (not_annotated && feature.getPeptideIdentifications().empty())
+		{
+			return true;
+		}
+		return false;
+	}
+
 	void registerOptionsAndFlags_()
 	{
 		String formats("featureXML,consensusXML");
@@ -117,7 +154,6 @@ protected:
 
 		//output file name and type
 		String out = getStringOption_("out");
-		//FileTypes::Type out_type = fh.getTypeByFileName(out);
 
 		//other parameters
 		bool unassigned = getFlag_("unassigned");
@@ -138,40 +174,7 @@ protected:
 			//loop over all features
 			for (FeatureMap<>::ConstIterator fm_it = feature_map.begin(); fm_it != feature_map.end(); ++fm_it)
 			{
-				//flag: annotated and non-empty peptideIdentifications
-				if (annotated && !fm_it->getPeptideIdentifications().empty())
-				{
-					if (sequence.size() > 0)
-					{
-						//loop over all peptideIdentifications
-						bool seq_found = false;
-						for (vector<PeptideIdentification>::const_iterator pep_id_it = fm_it->getPeptideIdentifications().begin(); pep_id_it != fm_it->getPeptideIdentifications().end(); ++pep_id_it)
-						{
-							if (seq_found) break;
-							//loop over all peptideHits
-							for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
-							{
-								if (seq_found) break;
-								//loop over all sequence entries of the StringList
-								for (StringList::ConstIterator seq_it = sequence.begin(); seq_it != sequence.end(); ++seq_it)
-								{
-									if (seq_found) break;
-									if (pep_hit_it->getSequence().toString().hasSubstring(*seq_it)
-										|| pep_hit_it->getSequence().toUnmodifiedString().hasSubstring(*seq_it))
-									{
-										new_map.push_back(*fm_it);
-										seq_found = true;
-									}
-								}
-							}
-						}
-					}else
-					{
-						new_map.push_back(*fm_it);
-					}
-				}
-				//flag: not_annotated and no peptideIdentifications
-				if (not_annotated && fm_it->getPeptideIdentifications().empty())
+				if (checkPeptideIdentification(*fm_it, annotated, not_annotated, sequence))
 				{
 					new_map.push_back(*fm_it);
 				}
@@ -202,40 +205,7 @@ protected:
 			//loop over all features
 			for (ConsensusMap::ConstIterator cm_it = consensus_map.begin(); cm_it != consensus_map.end(); ++cm_it)
 			{
-				//flag: annotated and non-empty peptideIdentifications
-				if (annotated && !cm_it->getPeptideIdentifications().empty())
-				{
-					if (sequence.size() > 0)
-					{
-						//loop over all peptideIdentifications
-						bool seq_found = false;
-						for (vector<PeptideIdentification>::const_iterator pep_id_it = cm_it->getPeptideIdentifications().begin(); pep_id_it != cm_it->getPeptideIdentifications().end(); ++pep_id_it)
-						{
-							if (seq_found) break;
-							//loop over all peptideHits
-							for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
-							{
-								if (seq_found) break;
-								//loop over all sequence entries of the StringList
-								for (StringList::ConstIterator seq_it = sequence.begin(); seq_it != sequence.end(); ++seq_it)
-								{
-									if (seq_found) break;
-									if (pep_hit_it->getSequence().toString().hasSubstring(*seq_it)
-										|| pep_hit_it->getSequence().toUnmodifiedString().hasSubstring(*seq_it))
-									{
-										new_map.push_back(*cm_it);
-										seq_found = true;
-									}
-								}
-							}
-						}
-					}else
-					{
-						new_map.push_back(*cm_it);
-					}
-				}
-				//flag: not_annotated and no peptideIdentifications
-				if (not_annotated && cm_it->getPeptideIdentifications().empty())
+				if (checkPeptideIdentification(*cm_it, annotated, not_annotated, sequence))
 				{
 					new_map.push_back(*cm_it);
 				}

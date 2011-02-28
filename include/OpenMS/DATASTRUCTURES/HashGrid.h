@@ -42,11 +42,10 @@
 namespace OpenMS
 {
 
-typedef std::map<std::pair<Int,Int>, std::list<GridElement*> > GridCells;
+  typedef std::map<std::pair<Int,Int>, std::list<GridElement*> > GridCells;
 
-/**
+  /**
 		@brief A data structure, which allows the arrangement of data points with an RT and m/z value in a two-dimensional grid.
-
 
 		The size of each grid cell is determined by two values, namely <i>rt_threshold</i> and <i>mz_threshold</i>.
 		<i>rt_threshold</i> defines the height of a grid cell and <i>mz_threshold</i> the width.
@@ -56,106 +55,112 @@ typedef std::map<std::pair<Int,Int>, std::list<GridElement*> > GridCells;
 		@image html HashGrid.png
 
 		@ingroup Datastructures
-	*/
+   */
 
 class OPENMS_DLLAPI HashGrid {
 
-private:
+  private:
 
-	DoubleReal rt_threshold_;
-	DoubleReal mz_threshold_;
-	Int grid_size_x_;
-  Int grid_size_y_;
-	Size number_of_elements_;
-	GridCells elements_;
+    DoubleReal rt_threshold_;
+    DoubleReal mz_threshold_;
+    Int grid_size_x_;
+    Int grid_size_y_;
+    Size number_of_elements_;
+    GridCells elements_;
 
+  public:
 
-public:
+  /**
+   * @brief detailed constructor
+   * @param rt_threshold_ defines the height of each grid cell
+   * @param mz_threshold_ defines the width of each grid cell
+   */
+   HashGrid(DoubleReal rt_threshold_, DoubleReal mz_threshold_);
 
-/** @brief detailed constructor
+  /**
+   * @brief destructor
+   */
+  ~HashGrid();
 
-	@param rt_threshold_ defines the height of each grid cell
-	@param mz_threshold_ defines the width of each grid cell
-*/
-	HashGrid(DoubleReal rt_threshold_,DoubleReal mz_threshold_);
-//Destructor
-	~HashGrid();
+  /**
+   * @brief removes an element from the hash grid. The cell, in which the element may be contained, is specified:
+   * @param element the element to remove
+   * @param x x-value of the cell
+   * @param y y-value of the cell
+   */
+   void removeElement(GridElement * const element, Int x, Int y);
 
+  /**
+   * @brief removes an element from the hash grid. The cell, in which the element may be contained, is calculated out of the RT and m/z values of the element:
+   * @param element_ the element to remove
+   */
+   void removeElement(GridElement * const element);
 
-/** @brief removes an element from the hash grid. The cell, in which the element may be contained, is specified:
+  /**
+   * @brief removes the cell at location loc from the hash grid :
+   * @param loc location of the cell
+   */
+   void removeCell(GridCells::iterator loc);
 
-	@param element_ the element to remove
-	@param x x-value of the cell
-	@param y y-value of the cell
-*/
-	void removeElement(GridElement * const element, Int x, Int y);
-/** @brief removes an element from the hash grid. The cell, in which the element may be contained, is calculated out of the RT and m/z values of the element:
+  /**
+   * @brief inserts a new element in the grid:
+   * @param element_ the element to remove
+   */
+   void insert(GridElement * const element);
 
-	@param element_ the element to remove
-*/
-	void removeElement(GridElement * const element);
+  /**
+   * @brief writes the content of the grid to the console:
+   */
+   void consoleOut() const;
 
-	/** @brief removes the cell at location loc from the hash grid :
+  /**
+   * @brief gets the number of element holding cells
+   */
+   Size size() const;
 
-		@param loc location of the cell
-	*/
-	void removeCell(GridCells::iterator loc);
+  /**
+   * @brief gets the height of the cells
+   */
+   DoubleReal getRTThreshold() const;
 
-/** @brief inserts a new element in the grid:
+  /**
+   * @brief gets the width of the cells
+   */
+   DoubleReal getMZThreshold() const;
 
-	@param element_ the element to remove
-*/
-	void insert(GridElement * const element);
-/** @brief writes the content of the grid to the console:
+  /**
+   * @brief gets the number of grids in m/z-direction
+   */
+   Int getGridSizeX() const;
 
-*/
-	void consoleOut() const;
-/** @brief gets the number of element holding cells
+  /**
+   * @brief gets the number of grids in RT-direction
+   */
+   Int getGridSizeY() const;
 
-*/
-	Size size() const;
-/** @brief gets the height of the cells
-
-*/
-	DoubleReal getRTThreshold() const;
-/** @brief gets the width of the cells
-
-*/
-	DoubleReal getMZThreshold() const;
-/** @brief gets the number of grids in m/z-direction
-
-		*/
-	Int getGridSizeX() const;
-
-/** @brief gets the number of grids in RT-direction
-
-		*/
-	Int getGridSizeY() const;
-	/**
+  /**
 	 * @brief gets the number of elements in the grid
 	 */
-	Size getNumberOfElements() const;
+   Size getNumberOfElements() const;
 
 	/**
 	 * @brief gets an iterator to the beginning of the GridCells map
 	 */
-	GridCells::iterator begin();
+   GridCells::iterator begin();
 
 	/**
 	 * @brief gets an iterator just past the end of the GridCells map
 	 */
-	GridCells::iterator end();
+   GridCells::iterator end();
 
 	/**
 	 * @brief gets an iterator to the cell at location loc:
 	 * @param loc location of the cell
 	 */
-	GridCells::iterator find(std::pair<Int,Int> loc);
+   GridCells::iterator find(std::pair<Int,Int> loc);
 
-};
+  };
+
 }
-
-
-
 
 #endif /* HASHGRID_H_ */

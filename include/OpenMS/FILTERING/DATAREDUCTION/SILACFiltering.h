@@ -32,6 +32,7 @@
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/DATASTRUCTURES/DataPoint.h>
+#include <OpenMS/DATASTRUCTURES/BlacklistEntry2.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
@@ -44,6 +45,7 @@
 namespace OpenMS
 {
   class SILACFilter;
+  class BlacklistEntry2;
 
   /**
    * @brief Filtering for SILAC data.

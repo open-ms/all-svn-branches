@@ -77,6 +77,11 @@ namespace OpenMS
 	  return this->charge < rhs.charge;
   }
 
+	int BlacklistEntry2::getID() const
+  {
+	  return id;
+  }
+
 }
 
 

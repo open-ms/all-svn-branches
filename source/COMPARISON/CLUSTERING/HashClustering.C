@@ -37,7 +37,7 @@
 namespace OpenMS
 {
 
-  typedef std::map<std::pair<int,int>, std::list<GridElement*> > GridElements;
+  typedef std::map<std::pair<int, int>, std::list<GridElement*> > GridElements;
 
   HashClustering::HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method_)
     : grid(HashGrid(rt_threshold, mz_threshold))
@@ -74,7 +74,7 @@ namespace OpenMS
     // Iterate over all cells in the grid
     for (GridElements::iterator it = grid.begin();it != grid.end(); ++it)
     {
-      std::pair<int,int> act_coords = it->first;
+      std::pair<int ,int> act_coords = it->first;
       std::list<GridElement*>& elements = it->second;
       int x = act_coords.first;
       int y = act_coords.second;
@@ -87,7 +87,7 @@ namespace OpenMS
           continue;
         }
 
-        for (int j=y;j<=y+1;++j)
+        for (int j = y; j <= y + 1; ++j)
         {
           if (j < 0 || j > grid.getGridSizeY() || (i == x - 1 && j == y))
           {

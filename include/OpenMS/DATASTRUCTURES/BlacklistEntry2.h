@@ -26,8 +26,8 @@
 // --------------------------------------------------------------------------
 
 
-#ifndef OPENMS_DATASTRUCTURES_DATAPOINT_H
-#define OPENMS_DATASTRUCTURES_DATAPOINT_H
+#ifndef OPENMS_DATASTRUCTURES_BLACKLISTENTRY2_H
+#define OPENMS_DATASTRUCTURES_BLACKLISTENTRY2_H
 
 #include <OpenMS/DATASTRUCTURES/GridElement.h>
 
@@ -62,6 +62,11 @@ public:
 	 * @brief position of the blacklisted area relative to the mono-isotopic peak of the light peptide
 	 */	
 	DoubleReal relative_peak_position;
+
+	/**
+	 * @brief unique ID of blacklisted area
+	 */
+	Int id;
   
   /**
 	 * @brief default constructor
@@ -81,6 +86,11 @@ public:
   bool operator == (const BlacklistEntry2 &rhs) const;
   bool operator != (const BlacklistEntry2 &rhs) const;
   bool operator < (const BlacklistEntry2 &rhs) const;
+
+	/**
+	 * @brief gets the unique ID of the blacklisted area
+	 */
+	Int getID() const;
   
 };
 }

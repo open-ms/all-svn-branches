@@ -39,7 +39,8 @@ namespace OpenMS
 
   typedef std::map<std::pair<int,int>, std::list<GridElement*> > GridElements;
 
-  HashClustering::HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method_) : grid(HashGrid(rt_threshold,mz_threshold))
+  HashClustering::HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method_)
+    : grid(HashGrid(rt_threshold, mz_threshold))
   {
     if(data.size() < 2)
     {
@@ -68,15 +69,15 @@ namespace OpenMS
   // Calculate initial distances
   void HashClustering::init()
   {
-    min_distance=std::numeric_limits<DoubleReal>::max();
-    min_distance_subsets=std::make_pair((DataSubset*)0, (DataSubset*)0);
+    min_distance = std::numeric_limits<DoubleReal>::max();
+    min_distance_subsets = std::make_pair((DataSubset*)0, (DataSubset*)0);
     // Iterate over all cells in the grid
     for (GridElements::iterator it = grid.begin();it != grid.end(); ++it)
     {
       std::pair<int,int> act_coords = it->first;
       std::list<GridElement*>& elements = it->second;
-      int x=act_coords.first;
-      int y=act_coords.second;
+      int x = act_coords.first;
+      int y = act_coords.second;
 
       // Iterate over the upper right cells and calculate the distances between the elements of the current cell and this five neighbor cells
       for (int i = x - 1; i <= x + 1; ++i)

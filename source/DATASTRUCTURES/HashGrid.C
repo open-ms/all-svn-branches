@@ -70,6 +70,7 @@ namespace OpenMS
     if (y > grid_size_y_) grid_size_y_ = y;
 
     elements_[std::make_pair(x, y)].push_back(element);
+    std::cout << "PUSHING m/z = " << element->mz << std::endl;
 	  ++number_of_elements_;
   }
 

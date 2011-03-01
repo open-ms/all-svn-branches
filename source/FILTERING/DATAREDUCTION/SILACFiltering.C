@@ -30,14 +30,19 @@
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>
 #include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/DATASTRUCTURES/BlacklistEntry2.h>
+#include <OpenMS/DATASTRUCTURES/HashGrid.h>
 
 #include <iostream>
 #include <fstream>
+#include <map>
+#include <list>
 
 using namespace std;
 
 namespace OpenMS
 {
+  typedef std::map<std::pair<int,int>, std::list<GridElement*> > GridElementMap;
+  
   DoubleReal SILACFiltering::intensity_cutoff = 0;
   DoubleReal SILACFiltering::intensity_correlation = 0;
   bool SILACFiltering::allow_missing_peaks = true;
@@ -187,7 +192,6 @@ namespace OpenMS
                 }
               }
               
-
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
               {
@@ -216,17 +220,19 @@ namespace OpenMS
                     DoubleReal relative_peak_position = *peak_positions_it - mz; // or mz_it->getMZ() ??
                     
                     
-                    
                     // FILLING BLACKLIST2
                     BlacklistEntry2 newEntry2;
                     newEntry2.id = ID;
                     newEntry2.rt = rt;
-                    newEntry2.mz = *peak_positions_it;
+                    //newEntry2.mz = *peak_positions_it;
+                    newEntry2.mz = 13.0 + ID/1.0;
+                    std::cout << "m/z = " << *peak_positions_it << std::endl;
                     newEntry2.blackArea = blackArea;
                     newEntry2.charge = charge;
                     newEntry2.mass_separations = mass_separations;
                     newEntry2.relative_peak_position = relative_peak_position;
                     ++ID;
+                    blacklist2.insert(&newEntry2);
                     
                     
                     
@@ -297,16 +303,38 @@ namespace OpenMS
                     }
                   }
 
-/*                  // DEBUG: save global blacklist
-                  ofstream blacklistFile;
-                  blacklistFile.open ("blacklist.csv");
-
-                  for (map<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
+                   // DEBUG: save global blacklist
+                   ofstream blacklistFile;
+                   blacklistFile.open ("blacklist.csv");
+                   
+                   for (map<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
+                   {
+                   blacklistFile << rt << ", " << (blacklist_it->second.range).minX() << ", " << (blacklist_it->second.range).maxX() << ", " << (blacklist_it->second.range).minY() << ", " << (blacklist_it->second.range).maxY() << ", " << (blacklist_it->second.charge) << ", " << (blacklist_it->second.mass_separations[0]) << ", " << (blacklist_it->second.relative_peak_position) << endl;
+                   }
+                   blacklistFile.close();
+                  
+                  
+                   // DEBUG 2: save global blacklist
+                   ofstream blacklistFile2;
+                   blacklistFile2.open ("blacklist2.csv");
+                  
+                  std::cout << std::endl << std::endl << "blacklist2 has now got " << blacklist2.getNumberOfElements() << " elements in " << blacklist2.size() << " cells." <<std::endl;
+                  
+                  for (GridElementMap::iterator gridIt = blacklist2.begin(); gridIt != blacklist2.end(); ++gridIt)
                   {
-                    blacklistFile << rt << ", " << (blacklist_it->second.range).minX() << ", " << (blacklist_it->second.range).maxX() << ", " << (blacklist_it->second.range).minY() << ", " << (blacklist_it->second.range).maxY() << ", " << (blacklist_it->second.charge) << ", " << (blacklist_it->second.mass_separations[0]) << ", " << (blacklist_it->second.relative_peak_position) << endl;
+                    std::pair<int,int> koordinaten = gridIt->first;
+                    std::list<GridElement*>& Liste = gridIt->second;
+                    
+                    std::cout << "There are " << Liste.size() << " elements in grid element (" << koordinaten.first << ", " << koordinaten.second << ")." << std::endl;
+                    
+                    for (std::list<GridElement*>::iterator itt = Liste.begin(); itt != Liste.end(); ++itt)
+                    {
+                      std::cout << "   m/z = " << (*itt)->mz << "   RT = " << (*itt)->rt << std::endl;
+                      //std::cout << "   m/z = " << (*itt)->mz << "   RT = " << (*itt)->rt << std::endl;
+                    }
                   }
-                  blacklistFile.close();
-*/
+                  blacklistFile2.close();
+                   
                   
                   ++feature_id;
                 }

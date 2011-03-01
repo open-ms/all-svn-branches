@@ -116,7 +116,7 @@ namespace OpenMS
 
       exact_shifts.push_back(exact_shifts_singlePeptide);
       exact_intensities.push_back(exact_intensities_singlePeptide);
-      expected_shifts.push_back(exact_shifts_singlePeptide);      // store expected_shifts for blacklisting
+      expected_shifts.push_back(expected_shifts_singlePeptide);      // store expected_shifts for blacklisting
     }
 
 

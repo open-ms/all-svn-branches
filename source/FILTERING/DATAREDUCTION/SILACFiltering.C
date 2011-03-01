@@ -219,20 +219,24 @@ namespace OpenMS
                     mass_separations.insert(mass_separations.begin(), (*filter_it)->mass_separations.begin(), (*filter_it)->mass_separations.end());
                     DoubleReal relative_peak_position = *peak_positions_it - mz; // or mz_it->getMZ() ??
                     
+ 
                     
                     // FILLING BLACKLIST2
                     BlacklistEntry2 newEntry2;
                     newEntry2.id = ID;
                     newEntry2.rt = rt;
-                    //newEntry2.mz = *peak_positions_it;
-                    newEntry2.mz = 13.0 + ID/1.0;
+                    newEntry2.mz = *peak_positions_it;
                     std::cout << "m/z = " << *peak_positions_it << std::endl;
                     newEntry2.blackArea = blackArea;
                     newEntry2.charge = charge;
                     newEntry2.mass_separations = mass_separations;
                     newEntry2.relative_peak_position = relative_peak_position;
                     ++ID;
+                    
+                    blacklist2.consoleOut();
                     blacklist2.insert(&newEntry2);
+                    blacklist2.consoleOut();
+                                        
                     
                     
                     
@@ -333,7 +337,10 @@ namespace OpenMS
                       //std::cout << "   m/z = " << (*itt)->mz << "   RT = " << (*itt)->rt << std::endl;
                     }
                   }
+                  
                   blacklistFile2.close();
+                  
+                  //blacklist2.consoleOut();
                    
                   
                   ++feature_id;

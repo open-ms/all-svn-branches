@@ -56,7 +56,6 @@ FalseDiscoveryRate
 "FeatureLinker -type unlabeled_qt"
 FileConverter
 FileFilter
-FileFilter2
 FileInfo
 FileMerger
 #GenericWrapper ##disabled for now, as we need an automatic way to determine its types, changing frequently
@@ -293,10 +292,14 @@ add_test("TOPP_FileFilter_14" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_T
 add_test("TOPP_FileFilter_14_out1" ${DIFF} -in1 FileFilter.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_14_output.consensusXML)
 add_test("TOPP_FileFilter_15" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_15_input.featureXML -out FileFilter.tmp -filter_ids -annotated -sequence Oxidation)
 add_test("TOPP_FileFilter_15_out1" ${DIFF} -in1 FileFilter.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_15_output.featureXML)
-
-### FileFilter2 tests
-add_test("TOPP_FileFilter2_1" ${TOPP_BIN_PATH}/FileFilter2 -test -in ${DATA_DIR_TOPP}/FileFilter2_input.featureXML -out FileFilter2.tmp -annotated -sequence Oxidation)
-add_test("TOPP_FileFilter2_1_out1" ${DIFF} -in1 FileFilter2.tmp -in2 ${DATA_DIR_TOPP}/FileFilter2_output.featureXML)
+add_test("TOPP_FileFilter_16" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_15_input.featureXML -out FileFilter.tmp -filter_ids -annotated -sequence Oxidation -mz 400:600 -rt 3000:4000)
+add_test("TOPP_FileFilter_16_out1" ${DIFF} -in1 FileFilter.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_16_output.featureXML)
+add_test("TOPP_FileFilter_17" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_15_input.featureXML -out FileFilter.tmp -filter_ids -not_annotated -unassigned -mz 400:600 -rt 3000:4000)
+add_test("TOPP_FileFilter_17_out1" ${DIFF} -in1 FileFilter.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_17_output.featureXML)
+add_test("TOPP_FileFilter_18" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_18_input.consensusXML -out FileFilter.tmp -filter_ids -annotated -sequence Oxidation)
+add_test("TOPP_FileFilter_18_out1" ${DIFF} -in1 FileFilter.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_18_output.consensusXML)
+add_test("TOPP_FileFilter_19" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_18_input.consensusXML -out FileFilter.tmp -filter_ids -annotated -unassigned -mz 400:600 -rt 3000:4000)
+add_test("TOPP_FileFilter_19_out1" ${DIFF} -in1 FileFilter.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_19_output.consensusXML)
 
 ### FileInfo tests
 add_test("TOPP_FileInfo_1" ${TOPP_BIN_PATH}/FileInfo -in ${DATA_DIR_TOPP}/FileInfo_1_input.txt -in_type DTA -no_progress -out FileInfo.tmp)

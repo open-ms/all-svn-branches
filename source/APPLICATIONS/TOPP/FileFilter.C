@@ -227,7 +227,7 @@ class TOPPFileFilter
 		registerFlag_("filter_ids","activate Filtering by IDs - if false, the parameters 'annotated', 'not_annotated', 'sequence' and 'unassigned' will be ignored");
 		registerFlag_("annotated","filter features with annotations");
 		registerFlag_("not_annotated","filter features without annotations");
-		registerFlag_("unassigned","keep unassigned Peptide Identifications");
+		registerFlag_("unassigned","keep unassigned Peptide Identifications", true);
 		registerStringList_("sequence","<sequence>",StringList(),"sequences to filter, i.e. Oxidation or LYSNLVER", false);
 
 		addEmptyLine_();
@@ -273,10 +273,17 @@ class TOPPFileFilter
 		String out = getStringOption_("out");
 
 		FileTypes::Type out_type = fh.getTypeByFileName(out);
+
 		//only use flag out_type, if the out_type cannot be determined by file
 		if (out_type==FileTypes::UNKNOWN)
 		{
 			out_type = fh.nameToType(getStringOption_("out_type"));
+			writeDebug_(String("Output file type: ") + fh.typeToName(out_type), 2);
+		}
+		//use in_type as out_type, if out_type cannot be determined by file or out_type flag
+		if (out_type==FileTypes::UNKNOWN)
+		{
+			out_type = in_type;
 			writeDebug_(String("Output file type: ") + fh.typeToName(out_type), 2);
 		}
 
@@ -714,14 +721,14 @@ class TOPPFileFilter
 				}
 			}else
 			{
-				writeLog_("Unknown output file type given. Aborting!");
+				writeLog_("Error: Unknown output file type given. Aborting!");
 				printUsage_();
 				return ILLEGAL_PARAMETERS;
 			}
 		}
 		else
 		{
-			writeLog_("Unknown input file type given. Aborting!");
+			writeLog_("Error: Unknown input file type given. Aborting!");
 			printUsage_();
 			return INCOMPATIBLE_INPUT_DATA;
 		}

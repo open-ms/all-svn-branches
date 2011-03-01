@@ -43,7 +43,6 @@
   - @subpage TOPP_DTAExtractor - Extracts spectra of an MS run file to several files in DTA format.
   - @subpage TOPP_FileConverter - Converts between different MS file formats.
   - @subpage TOPP_FileFilter - Extracts or manipulates portions of data from peak, feature or consensus feature files.
-  - @subpage TOPP_FileFilter2 - Extracts or manipulates portions of data from feature files by their annotation.
   - @subpage TOPP_FileInfo - Shows basic information about the file, such as data ranges and file type.
   - @subpage TOPP_FileMerger - Merges several MS files into one file.
   - @subpage TOPP_IDMerger -  Merges several protein/peptide identification files into one file.

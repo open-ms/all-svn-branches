@@ -64,11 +64,6 @@ namespace OpenMS
 
   void HashGrid::insert(GridElement * const element)
   {
-    for (std::list<GridElement*>::iterator ittt = elements_[std::make_pair(3002, 12)].begin(); ittt != elements_[std::make_pair(3002, 12)].end(); ++ittt)
-    {
-      std::cout << "    *first* m/z = " << (*ittt)->mz << std::endl;
-    }
-    
 	  int x = element->mz / mz_threshold_;
     if (x > grid_size_x_) grid_size_x_ = x;
 	  int y = element->rt / rt_threshold_;
@@ -76,18 +71,6 @@ namespace OpenMS
 
     elements_[std::make_pair(x, y)].push_back(element);
 	  ++number_of_elements_;
-    
-    //DEBUG
-    for (std::list<GridElement*>::iterator ittt = elements_[std::make_pair(x, y)].begin(); ittt != elements_[std::make_pair(x, y)].end(); ++ittt)
-    {
-      std::cout << "    *** m/z = " << (*ittt)->mz << std::endl;
-    }
-    for (std::list<GridElement*>::iterator ittt = elements_[std::make_pair(3002, 12)].begin(); ittt != elements_[std::make_pair(3002, 12)].end(); ++ittt)
-    {
-      std::cout << "    *second* m/z = " << (*ittt)->mz << std::endl;
-    }
-    
-    
   }
 
   void HashGrid::consoleOut() const
@@ -99,7 +82,7 @@ namespace OpenMS
 		  if (it->second.size()>0) std::cout << coords.first << "/" << coords.second<< ": ";
       for (std::list<GridElement*>::const_iterator list_it = act_elements.begin();list_it != act_elements.end(); ++list_it)
 		  {
-			  std::cout << (*list_it)->getID() << " mz=" << (*list_it)->mz << " | ";
+			  std::cout << (*list_it)->getID() << " | ";
 		  }
 		  std::cout << "\n";
 

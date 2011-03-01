@@ -86,7 +86,7 @@ public:
 	}
 
 protected:
-	bool checkPeptideIdentification(const BaseFeature& feature, const bool annotated, const bool not_annotated, const StringList& sequence)
+	static bool checkPeptideIdentification(const BaseFeature& feature, const bool annotated, const bool not_annotated, const StringList& sequence)
 	{
 		//flag: annotated and non-empty peptideIdentifications
 		if (annotated && !feature.getPeptideIdentifications().empty())
@@ -155,7 +155,7 @@ protected:
 		//output file name and type
 		String out = getStringOption_("out");
 
-		//other parameters
+		//id-filtering parameters
 		bool unassigned = getFlag_("unassigned");
 		bool annotated = getFlag_("annotated");
 		bool not_annotated = getFlag_("not_annotated");

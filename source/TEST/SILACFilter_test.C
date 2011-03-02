@@ -69,8 +69,7 @@ END_SECTION
 
 START_SECTION((Int getCharge()))
 {
-  SILACFilter tmp;
-  TEST_EQUAL(tmp.getCharge(), 0);
+  NOT_TESTABLE
 }
 END_SECTION
 

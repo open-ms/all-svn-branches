@@ -6,7 +6,6 @@ set(sources_list_h
 Adduct.h
 BigString.h
 BinaryTreeNode.h
-BlacklistEntry2.h
 ChargePair.h
 Compomer.h
 ConstRefVector.h

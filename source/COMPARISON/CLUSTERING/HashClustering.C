@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
-// $Authors: $
+// $Maintainer: Lars Nilse $
+// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
 // --------------------------------------------------------------------------
 
 
@@ -56,6 +56,11 @@ namespace OpenMS
     init();
   }
 
+  HashClustering::~HashClustering()
+  {
+
+  }
+
   DoubleReal HashClustering::getDistance(DataSubset& subset1, DataSubset& subset2)
   {
     return method->getDistance(subset1, subset2);
@@ -72,7 +77,7 @@ namespace OpenMS
     min_distance = std::numeric_limits<DoubleReal>::max();
     min_distance_subsets = std::make_pair((DataSubset*)0, (DataSubset*)0);
     // Iterate over all cells in the grid
-    for (GridElements::iterator it = grid.begin();it != grid.end(); ++it)
+    for (GridElements::iterator it = grid.begin(); it != grid.end(); ++it)
     {
       std::pair<int ,int> act_coords = it->first;
       std::list<GridElement*>& elements = it->second;
@@ -107,7 +112,7 @@ namespace OpenMS
           {
             for (std::list<GridElement*>::iterator neighbor_element = neighbor_elements.begin(); neighbor_element != neighbor_elements.end(); ++neighbor_element)
             {
-              if ((i == x && j == y && (*current_element)->getID()>(*neighbor_element)->getID()) || *current_element == *neighbor_element)
+              if ((i == x && j == y && (*current_element)->getID() > (*neighbor_element)->getID()) || *current_element == *neighbor_element)
               {
                 continue;
               }

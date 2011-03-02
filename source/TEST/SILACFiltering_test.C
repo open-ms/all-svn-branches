@@ -1,4 +1,4 @@
-// -*- Mode: C++; tab-width: 2; -*-
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -22,68 +22,50 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
+// $Authors: Lars Nilse, Holger Plattfaut $
 // --------------------------------------------------------------------------
 
+#include <OpenMS/CONCEPT/ClassTest.h>
 
-#ifndef OPENMS_DATASTRUCTURES_GRIDELEMENT_H
-#define OPENMS_DATASTRUCTURES_GRIDELEMENT_H
+///////////////////////////
+#include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
+///////////////////////////
 
-#include <OpenMS/KERNEL/StandardTypes.h>
-#include <OpenMS/KERNEL/BaseFeature.h>
+using namespace OpenMS;
+using namespace std;
 
-namespace OpenMS
+START_TEST(SILACFiltering, "$Id$")
+
+/////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
+
+SILACFiltering* ptr = 0;
+START_SECTION(SILACFiltering())
 {
-
-  /**
-		@brief Base class of all elements, which can be stored in a HashGrid.
-
-		All GridElements must have an m/z and RT value, as well as an unique identifier.
-		@see HashGrid
-		@ingroup Datastructures
-	*/
-
-  class OPENMS_DLLAPI GridElement {
-  public :
-
-  /**
-   * @brief default constructor
-   */
-   GridElement();
-
-  /**
-   * @brief destructor
-   */
-   ~GridElement();
-
-  /** @brief copy constructor
-   * 	@param source  this GridElement will be copied
-   */
-    GridElement(const GridElement& copy);
-
-  /**
-   * @brief m/z value of the element
-   */
-   DoubleReal mz;
-
-  /**
-   *@brief RT value of the element
-   */
-   DoubleReal rt;
-
-	/**
-	 * @brief detailed constructor
-	 * @param rt RT value of the element
-	 * @param mz m/z value of the element
-	 */
-   GridElement(DoubleReal rt_, DoubleReal mz_);
-
-  /**
-   * @brief gets the id of the element
-	*/  
-	virtual Int getID() const = 0;
-
-  };
+	NOT_TESTABLE
 }
+END_SECTION
 
-#endif /* GRIDELEMENT_H_ */
+START_SECTION(~SILACFiltering())
+{
+	delete ptr;
+}
+END_SECTION
+
+START_SECTION((SILACFiltering(MSExperiment< Peak1D > &exp_, const DoubleReal rt_threshold_, const DoubleReal mz_threshold_, const DoubleReal mz_stepwidth_, const DoubleReal intensity_cutoff_, const DoubleReal intensity_correlation_, const bool allow_missing_peaks_)))
+{
+  NOT_TESTABLE
+}
+END_SECTION
+
+START_SECTION((void addFilter(SILACFilter &filter)))
+{
+  NOT_TESTABLE
+}
+END_SECTION
+
+
+/////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
+END_TEST
+

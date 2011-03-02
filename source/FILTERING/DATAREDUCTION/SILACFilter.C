@@ -68,9 +68,11 @@ namespace OpenMS
         expectedMZshifts.push_back(*it + i*isotope_distance);
       }
     }
-    
-    
-    
+  }
+
+  SILACFilter::SILACFilter()
+  {
+
   }
 
   SILACFilter::~SILACFilter()
@@ -408,11 +410,6 @@ namespace OpenMS
   DoubleReal SILACFilter::getPeakWidth(DoubleReal mz)
   {
     return 5*(1.889e-7*pow(mz,1.5));
-  }
-
-  Int SILACFilter::getSILACType()
-  {
-    return mz_peptide_separations.size();
   }
 
   std::vector<DoubleReal> SILACFilter::getPeakPositions()

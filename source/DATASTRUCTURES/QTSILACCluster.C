@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
-// $Authors: $
+// $Maintainer: Lars Nilse $
+// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
 // --------------------------------------------------------------------------
 
 
@@ -34,12 +34,15 @@ QTSILACCluster::QTSILACCluster()
 {
 
 }
+
+QTSILACCluster::~QTSILACCluster()
+{
+
+}
+
 QTSILACCluster::QTSILACCluster(DataPoint* center_point_) : center_point(center_point_)
 {
 	cluster_members.insert(center_point);
-}
-
-QTSILACCluster::~QTSILACCluster() {
 }
 
 DoubleReal QTSILACCluster::getCenterRT()

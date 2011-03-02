@@ -171,9 +171,9 @@ namespace OpenMS
    static const Int TRIPLE = 3;
 
   /**
-   * @brief returns the SILAC type of the filter. Either DOUBLE (2) or TRIPLE (3)
+   * @brief default constructor
    */
-   Int getSILACType();
+   SILACFilter();
 
   /**
    * @brief detailed constructor for SILAC pair filtering
@@ -188,11 +188,6 @@ namespace OpenMS
    * @brief destructor
    */
    virtual ~SILACFilter();
-
-  /**
-   * @brief returns the distance between two isotope peaks
-   */
-   DoubleReal getIsotopeDistance();
 
   /**
    * @brief returns all identified elements

@@ -91,6 +91,14 @@ public:
 	 * @brief gets the unique ID of the blacklisted area
 	 */
 	Int getID() const;
+
+  DRange<2> getRange();
+
+  Int getCharge();
+
+  std::vector<DoubleReal> getMassSeparations();
+
+  DoubleReal getRelativePeakPosition();
   
 };
 }

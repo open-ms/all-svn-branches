@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
-// $Authors: $
+// $Maintainer: Lars Nilse $
+// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/DATASTRUCTURES/SILACTreeNode.h>
@@ -30,7 +30,16 @@
 
 namespace OpenMS
 {
-  SILACTreeNode::SILACTreeNode() {}
+  SILACTreeNode::SILACTreeNode()
+  {
+
+  }
+
+  SILACTreeNode::~SILACTreeNode()
+  {
+
+  }
+
   SILACTreeNode::SILACTreeNode(DataPoint* data1_,DataPoint* data2_,DoubleReal distance_)
   {
 	  data1=data1_;

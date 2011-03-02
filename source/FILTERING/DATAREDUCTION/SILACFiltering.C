@@ -41,8 +41,6 @@ using namespace std;
 
 namespace OpenMS
 {
-  typedef std::map<std::pair<int,int>, std::list<GridElement*> > GridElementMap;
-  
   DoubleReal SILACFiltering::intensity_cutoff = 0;
   DoubleReal SILACFiltering::intensity_correlation = 0;
   bool SILACFiltering::allow_missing_peaks = true;
@@ -53,8 +51,8 @@ namespace OpenMS
   Int SILACFiltering::feature_id = 0;
   DoubleReal SILACFiltering::mz_min = 0;
 
-  SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_, const DoubleReal rt_threshold_, const DoubleReal mz_threshold_, const DoubleReal mz_stepwidth_, const DoubleReal intensity_cutoff_, const DoubleReal intensity_correlation_, const bool allow_missing_peaks_)
-    : exp(exp_), blacklist2(HashGrid(200, 0.2))
+  SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp_, const DoubleReal mz_stepwidth_, const DoubleReal intensity_cutoff_, const DoubleReal intensity_correlation_, const bool allow_missing_peaks_)
+    : exp(exp_)
   {
     mz_stepwidth = mz_stepwidth_;
     intensity_cutoff = intensity_cutoff_;
@@ -69,6 +67,7 @@ namespace OpenMS
 
   SILACFiltering::~SILACFiltering()
   {
+
   }
 
   void SILACFiltering::filterDataPoints()
@@ -284,17 +283,7 @@ namespace OpenMS
                       newEntry.relative_peak_position = relative_peak_position;
                       blacklist.insert(pair<DoubleReal, BlacklistEntry>(newEntry.range.minY(), newEntry));
                     }
-                  }
-
-                   // DEBUG: save global blacklist
-                   /*ofstream blacklistFile;
-                   blacklistFile.open ("blacklist.csv");
-                   
-                   for (map<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
-                   {
-                   blacklistFile << rt << ", " << (blacklist_it->second.range).minX() << ", " << (blacklist_it->second.range).maxX() << ", " << (blacklist_it->second.range).minY() << ", " << (blacklist_it->second.range).maxY() << ", " << (blacklist_it->second.charge) << ", " << (blacklist_it->second.mass_separations[0]) << ", " << (blacklist_it->second.relative_peak_position) << endl;
-                   }
-                   blacklistFile.close();*/
+                  }                  
                   
                   ++feature_id;
                 }

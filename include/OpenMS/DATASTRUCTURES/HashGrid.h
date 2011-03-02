@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
-// $Authors: $
+// $Maintainer: Lars Nilse $
+// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
 // --------------------------------------------------------------------------
 
 
@@ -33,8 +33,6 @@
 #include<iostream>
 
 #include <OpenMS/DATASTRUCTURES/GridElement.h>
-
-
 
 #ifndef OPENMS_DATASTRUCTURES_HASHGRID_H
 #define OPENMS_DATASTRUCTURES_HASHGRID_H
@@ -71,6 +69,11 @@ class OPENMS_DLLAPI HashGrid {
   public:
 
   /**
+   * @brief default constructor
+   */
+   HashGrid();
+
+  /**
    * @brief detailed constructor
    * @param rt_threshold_ defines the height of each grid cell
    * @param mz_threshold_ defines the width of each grid cell
@@ -80,7 +83,7 @@ class OPENMS_DLLAPI HashGrid {
   /**
    * @brief destructor
    */
-  ~HashGrid();
+   ~HashGrid();
 
   /**
    * @brief removes an element from the hash grid. The cell, in which the element may be contained, is specified:
@@ -104,7 +107,7 @@ class OPENMS_DLLAPI HashGrid {
 
   /**
    * @brief inserts a new element in the grid:
-   * @param element_ the element to remove
+   * @param element the element to insert
    */
    void insert(GridElement * const element);
 

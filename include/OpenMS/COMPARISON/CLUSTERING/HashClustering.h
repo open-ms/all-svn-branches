@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
-// $Authors: $
+// $Maintainer: Lars Nilse $
+// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
 // --------------------------------------------------------------------------
 
 
@@ -144,6 +144,16 @@ class OPENMS_DLLAPI HashClustering : public ProgressLogger
        InsufficientInput(const char* file, int line, const char* function, const char* message= "not enough data points to cluster anything") throw();
        virtual ~InsufficientInput() throw();
    };
+
+  /**
+   * @brief default constructor
+   */
+   HashClustering();
+
+  /**
+   * @brief destructor
+   */
+   ~HashClustering();
 
 	/**
 	 * @brief Detailed constructor

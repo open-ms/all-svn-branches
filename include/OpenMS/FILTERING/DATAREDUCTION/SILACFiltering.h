@@ -32,10 +32,8 @@
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/DATASTRUCTURES/DataPoint.h>
-#include <OpenMS/DATASTRUCTURES/BlacklistEntry2.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>
-#include <OpenMS/DATASTRUCTURES/HashGrid.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <list>
@@ -45,7 +43,6 @@
 namespace OpenMS
 {
   class SILACFilter;
-  class BlacklistEntry2;
 
   /**
    * @brief Filtering for SILAC data.
@@ -63,16 +60,6 @@ namespace OpenMS
    * @brief holds all filters used in the filtering
    */
    std::list<SILACFilter*> filters;
-
-  /**
-   * @brief characteristic RT size for clusters
-   */
-   static DoubleReal rt_threshold;
-
-  /**
-   * @brief characteristic m/z size for clusters
-   */
-   static DoubleReal mz_threshold;
 
   /**
    * @brief average m/z distance between scanned data points
@@ -119,14 +106,17 @@ namespace OpenMS
   /**
    * @brief detailed constructor
    * @param exp raw data
-   * @param rt_threshold_ average characteristic rt size of clusters
-   * @param mz_threshold_ average characteristic m/z size of clusters
    * @param mz_stepwidth_ average m/z distance between scanned data points
    * @param intensity_cutoff_ minimal intensity of SILAC features
    * @param intensity_correlation_ minimal intensity correlation between regions of different peaks
    * @param allow_missing_peaks flag for missing peaks
    */
-   SILACFiltering(MSExperiment<Peak1D>& exp_, const DoubleReal rt_threshold_, const DoubleReal mz_threshold_, const DoubleReal mz_stepwidth_, const DoubleReal intensity_cutoff_, const DoubleReal intensity_correlation_, const bool allow_missing_peaks_);
+   SILACFiltering(MSExperiment<Peak1D>& exp_, const DoubleReal mz_stepwidth_, const DoubleReal intensity_cutoff_, const DoubleReal intensity_correlation_, const bool allow_missing_peaks_);
+
+  /**
+   * @brief default constructor
+   */
+   SILACFiltering();
 
   /**
    * destructor
@@ -163,11 +153,6 @@ namespace OpenMS
    * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
    */
    std::multimap<DoubleReal, BlacklistEntry> blacklist;
-
-  /**
-   * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
-   */
-   HashGrid blacklist2;
 
   };
 }

@@ -1,4 +1,4 @@
-// -*- Mode: C++; tab-width: 2; -*-
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -21,67 +21,52 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Lars Nilse $
-// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
+// $Maintainer: Lars Nilse$
+// $Authors: Hendrik Brauer, Oiver Kohlbacher$
 // --------------------------------------------------------------------------
 
+#include <OpenMS/CONCEPT/ClassTest.h>
 
-#ifndef OPENMS_DATASTRUCTURES_SILACTREENODE_H
-#define OPENMS_DATASTRUCTURES_SILACTREENODE_H
+///////////////////////////
+#include <OpenMS/ANALYSIS/MAPMATCHING/ConsensusMapNormalizerAlgorithm.h>
+///////////////////////////
 
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
+using namespace OpenMS;
+using namespace std;
 
+START_TEST(ConsensusMapNormalizerAlgorithm, "$Id$")
 
-namespace OpenMS
+/////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
+
+ConsensusMapNormalizerAlgorithm* ptr = 0;
+START_SECTION(ConsensusMapNormalizerAlgorithm())
 {
+	ptr = new ConsensusMapNormalizerAlgorithm();
+	TEST_NOT_EQUAL(ptr, 0)
+}
+END_SECTION
 
-/**
-		@brief A node of an hierarchical clustering tree.
-		@ingroup Datastructures
-	*/
-
-class OPENMS_DLLAPI SILACTreeNode 
+START_SECTION(~ConsensusMapNormalizerAlgorithm())
 {
-  public:
-    /** @brief the first data point of the node
+	delete ptr;
+}
+END_SECTION
 
-	  */
-	  DataPoint* data1;
+START_SECTION((static std::vector<double> computeCorrelation(const ConsensusMap &map, const double &ratio_threshold)))
+{
+  NOT_TESTABLE
+}
+END_SECTION
 
-    /** @brief the second data point of the node
+START_SECTION((static void normalizeMaps(ConsensusMap &map, const std::vector< double > &ratios)))
+{
+  NOT_TESTABLE
+}
+END_SECTION
 
-	  */
-	  DataPoint* data2;
 
-    /** @brief distance between the two points
+/////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////
+END_TEST
 
-	  */
-	  DoubleReal distance;
-
-    /** @brief default constructor
-
-    */
-	  SILACTreeNode();
-
-    /** @brief destructor
-
-     */
-    ~SILACTreeNode();
-
-    /** @brief detailed constructor
-
-			  @param data1_ first data point
-			  @param data2_ second data point
-			  @param distance_ distance between the data points
-	  */
-	  SILACTreeNode(DataPoint* data1_,DataPoint* data2_,DoubleReal distance_);
-
-	  bool operator==(const SILACTreeNode &cp) const;
-	  bool operator!=(const SILACTreeNode &cp) const;
-	  bool operator<(const SILACTreeNode &cp) const;
-
-};
-
-} // namespace
-
-#endif /* SILACTreeNode_H_ */

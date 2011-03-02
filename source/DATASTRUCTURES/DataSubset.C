@@ -30,6 +30,16 @@
 
 namespace OpenMS
 {
+  DataSubset::DataSubset()
+  {
+
+  }
+
+  DataSubset::~DataSubset()
+  {
+
+  }
+
   DataSubset::DataSubset(DataPoint& data_point)
   {
 	  data_points.push_back(&data_point);

@@ -82,6 +82,25 @@ namespace OpenMS
 	  return id;
   }
 
+  DRange<2> BlacklistEntry2::getRange()
+  {
+    return blackArea;
+  }
+
+  int BlacklistEntry2::getCharge()
+  {
+    return charge;
+  }
+
+  std::vector<DoubleReal> BlacklistEntry2::getMassSeparations()
+  {
+    return mass_separations;
+  }
+
+  DoubleReal BlacklistEntry2::getRelativePeakPosition()
+  {
+    return relative_peak_position;
+  }
 }
 
 

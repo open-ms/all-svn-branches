@@ -35,12 +35,12 @@ namespace OpenMS
   {
 	  rt = 0;
 	  mz = 0;
-	  feature_id= 0;
+    feature_id = 0;
 	  cluster_id = 0;
-	  charge=1;
+    charge = 1;
 	  isotopes_per_peptide = 1;
-	  quality=0;
-	  cluster_size=0;
+    quality = 0;
+    cluster_size = 0;
   }
   	
   DataPoint::DataPoint(const DataPoint &copyin) : GridElement(copyin)

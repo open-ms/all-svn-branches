@@ -27,19 +27,25 @@ set(datastructures_executables_list
 	DIntervalBase_test
 	DPosition_test
 	DRange_test
+	DataPoint_test
+	DataSubset_test
 	DataValue_test
 	DateTime_test
 	Date_test
 	DefaultParamHandler_test
 	DistanceMatrix_test
 	DoubleList_test
+	GridElement_test
 	GridFeature_test
+	HashGrid_test
 	IntList_test
 	Map_test
 	MassExplainer_test
 	Matrix_test
 	QTCluster_test
+	QTSILACCluster_test
 	RangeManager_test
+	SILACTreeNode_test
 	SparseVector_test
 	StringList_test
 	String_test
@@ -243,12 +249,14 @@ set(filtering_executables_list
   SignalToNoiseEstimatorMeanIterative_test
   SignalToNoiseEstimatorMedian_test
   SignalToNoiseEstimator_test
+  SILACFilter_test
+  SILACFiltering_test
   SqrtMower_test
   TICFilter_test
   TOFCalibration_test
   ThresholdMower_test
   WindowMower_test
-	SpectraMerger_test
+  SpectraMerger_test
 )
 
 set(comparison_executables_list
@@ -258,14 +266,18 @@ set(comparison_executables_list
   BinnedSpectrumCompareFunctor_test
   BinnedSpectrum_test
   BinnedSumAgreeingIntensities_test
+  CentroidLinkage_test
   ClusterAnalyzer_test
   ClusterFunctor_test
   ClusterHierarchical_test
+  ClusteringMethod_test
   CompareFouriertransform_test
   CompleteLinkage_test
   EuclideanSimilarity_test
+  HashClustering_test
   PeakAlignment_test
   PeakSpectrumCompareFunctor_test
+  QTClustering_test
   SingleLinkage_test
   SpectraSTSimilarityScore_test
   SpectrumAlignmentScore_test
@@ -313,6 +325,7 @@ set(analysis_executables_list
 	CompNovoIonScoringCID_test
 	CompNovoIonScoring_test
 	ConsensusID_test
+	ConsensusMapNormalizerAlgorithm_test
 	DeNovoAlgorithm_test
 	DeNovoIdentification_test
 	DeNovoIonScoring_test

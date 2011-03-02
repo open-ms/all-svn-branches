@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
-// $Authors: $
+// $Maintainer: Lars Nilse $
+// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
 // --------------------------------------------------------------------------
 
 
@@ -34,10 +34,17 @@ namespace OpenMS
   HashGrid::HashGrid(DoubleReal rt_threshold, DoubleReal mz_threshold)
     : rt_threshold_(rt_threshold), mz_threshold_(mz_threshold), grid_size_x_(-1), grid_size_y_(-1), number_of_elements_(0), elements_()
   {
+
+  }
+
+  HashGrid::HashGrid()
+  {
+
   }
 
   HashGrid::~HashGrid()
   {
+
   }
 
   void HashGrid::removeElement(GridElement * const element, const Int x, const Int y)

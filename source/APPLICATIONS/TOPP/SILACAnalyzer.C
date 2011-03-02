@@ -621,7 +621,7 @@ class TOPPSILACAnalyzer
     }
 
     // create filtering
-    SILACFiltering filtering(exp, rt_threshold, mz_threshold, mz_stepwidth, intensity_cutoff, intensity_correlation, allow_missing_peaks);
+    SILACFiltering filtering(exp, mz_stepwidth, intensity_cutoff, intensity_correlation, allow_missing_peaks);
     filtering.setLogType(log_type_);
 
     // register filters to the filtering

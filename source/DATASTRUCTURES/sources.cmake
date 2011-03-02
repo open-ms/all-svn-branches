@@ -6,7 +6,6 @@ set(sources_list
 Adduct.C
 BigString.C
 BinaryTreeNode.C
-BlacklistEntry2.C
 ChargePair.C
 Compomer.C
 ConstRefVector.C

@@ -57,32 +57,32 @@ class OPENMS_DLLAPI HashClustering : public ProgressLogger
 	/**
 	 * @brief current minimal distance
 	 */
-   DoubleReal min_distance;
+   DoubleReal min_distance_;
 
 	/**
 	 * @brief two DataSubsets with current minimal distance
 	 */
-   std::pair<DataSubset*,DataSubset*> min_distance_subsets;
+   std::pair<DataSubset*,DataSubset*> min_distance_subsets_;
 
 	/**
 	 * @brief set of distances
 	 */
-   DistanceSet distances;
+   DistanceSet distances_;
 
 	/**
 	 * @brief method which is used to calculate the distances
 	 */
-   ClusteringMethod* method;
+   ClusteringMethod* method_;
 
 	/**
 	 * @brief the grid for geometric hashing
 	 */
-   HashGrid grid;
+   HashGrid grid_;
 
 	/**
 	 * @brief average silhoutte widths for each subtree
 	 */
-   std::vector<std::vector<Real> > silhouettes;
+   std::vector<std::vector<Real> > silhouettes_;
 
 	/**
 	 * @brief Calculates initial distances
@@ -160,9 +160,9 @@ class OPENMS_DLLAPI HashClustering : public ProgressLogger
 	 * @param data this data points will be clustered
 	 * @param rt_threshold height of the grid cells
 	 * @param mz_threshold width of the grid cells
-	 * @param method_ method to use for calculating distances
+   * @param method method to use for calculating distances
 	 */
-   HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method_);
+   HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method);
 
 	/**
 	 * @brief Starts the clustering and returns a vector of subtrees when finished

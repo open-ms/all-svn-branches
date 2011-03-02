@@ -43,12 +43,12 @@ namespace OpenMS {
   /**
 	 * @brief the cluster center
 	 */
-   DataPoint* center_point;
+   DataPoint* center_point_;
 
   /**
 	 * @brief members of the cluster
 	 */
-   std::set<DataPoint*> cluster_members;
+   std::set<DataPoint*> cluster_members_;
 
   public:
   /**
@@ -60,7 +60,7 @@ namespace OpenMS {
 	 * @brief detailed constructor
 	 * @param center_point cluster center
 	 */
-   QTSILACCluster(DataPoint* center_point_);
+   QTSILACCluster(DataPoint* center_point);
 
   /**
 	 * @brief destructor

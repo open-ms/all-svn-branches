@@ -47,7 +47,14 @@ namespace OpenMS
 {
   class DataSubset;
 
-  struct Dist{};
+
+  /**
+   * @brief structure for Distance
+   */
+   struct Dist
+   {
+
+   };
 
   /**
    * @brief Element of a DistanceSet

@@ -32,50 +32,58 @@
 namespace OpenMS
 {
 
-  QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_) : grid(HashGrid(rt_diameter_,mz_diameter_))
+  QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter, DoubleReal mz_diameter) : grid_(HashGrid(rt_diameter, mz_diameter))
   {
     if(data.size()<2)
     {
       throw InsufficientInput(__FILE__, __LINE__, __PRETTY_FUNCTION__, "The data set contains not enough elements");
     }
-    rt_diameter=rt_diameter_;
-    mz_diameter=mz_diameter_;
+    rt_diameter_ = rt_diameter;
+    mz_diameter_ = mz_diameter;
+
     //insert the data into the grid
-    for (std::vector<DataPoint>::iterator it=data.begin();it!=data.end();++it)
+    for (std::vector<DataPoint>::iterator it = data.begin(); it != data.end(); ++it)
     {
-      grid.insert(&(*it));
+      grid_.insert(&(*it));
     }
   }
 
   std::vector<std::vector<DataPoint*> > QTClustering::performClustering()
   {
-    Size number_of_elements = grid.getNumberOfElements();
+    Size number_of_elements = grid_.getNumberOfElements();
     startProgress(0 ,number_of_elements, "clustering data");
 
     //invoke the QTclust method on the elements in the grid until the grid is empty
-    while (grid.getNumberOfElements() > 0)
+    while (grid_.getNumberOfElements() > 0)
     {
-      setProgress(number_of_elements - grid.getNumberOfElements());
-      QTSILACCluster act_cluster=QTClust(grid);
+      setProgress(number_of_elements - grid_.getNumberOfElements());
+      QTSILACCluster act_cluster = QTClust(grid_);
+
       //store the current cluster
-      clusters.push_back(act_cluster);
+      clusters_.push_back(act_cluster);
+
       const std::set<DataPoint*>& cluster_members=act_cluster.getClusterMembers();
+
       //remove the data points of the current cluster from the grif
-      for (std::set<DataPoint*>::const_iterator it=cluster_members.begin();it!=cluster_members.end();++it)
+      for (std::set<DataPoint*>::const_iterator it = cluster_members.begin(); it != cluster_members.end(); ++it)
       {
-        grid.removeElement(*it);
+        grid_.removeElement(*it);
       }
     }
-    Size cluster_id=0;
+
+    Size cluster_id = 0;
+
     //put the clusters in the cluster vector
     std::vector<std::vector<DataPoint*> > cluster_vector;
-    for (std::list<QTSILACCluster>::iterator list_it=clusters.begin();list_it!=clusters.end();++list_it)
+
+    for (std::list<QTSILACCluster>::iterator list_it = clusters_.begin(); list_it != clusters_.end(); ++list_it)
     {
       std::vector<DataPoint*> act_vector;
-      const std::set<DataPoint*>& cluster_members=list_it->getClusterMembers();
-      for (std::set<DataPoint*>::const_iterator set_it=cluster_members.begin();set_it!=cluster_members.end();++set_it)
+      const std::set<DataPoint*>& cluster_members = list_it->getClusterMembers();
+
+      for (std::set<DataPoint*>::const_iterator set_it = cluster_members.begin(); set_it != cluster_members.end(); ++set_it)
       {
-        (*set_it)->cluster_id=cluster_id;
+        (*set_it)->cluster_id = cluster_id;
         act_vector.push_back(*set_it);
       }
       ++cluster_id;
@@ -93,51 +101,74 @@ namespace OpenMS
 			DataPoint* element_ptr = dynamic_cast<DataPoint*> (*(act_grid.begin()->second.begin()));
 			return QTSILACCluster(element_ptr);
     }
+
     //order all possible clusters by their sizes in a set
     std::set<QTSILACCluster> cluster_set;
-    for (GridCells::iterator it=act_grid.begin();it!=act_grid.end();++it)
+
+    for (GridCells::iterator it=act_grid.begin(); it != act_grid.end(); ++it)
     {
-      std::pair<int,int> act_coords=it->first;
-      std::list<GridElement*>& elements=it->second;
-      int x=act_coords.first;
-      int y=act_coords.second;
+      std::pair<Int, Int> act_coords = it->first;
+      std::list<GridElement*>& elements = it->second;
+      int x = act_coords.first;
+      int y = act_coords.second;
+
       //iterate over all data points in the grid
-      for (std::list<GridElement*>::iterator current_element=elements.begin();current_element!=elements.end();++current_element)
+      for (std::list<GridElement*>::iterator current_element = elements.begin(); current_element != elements.end(); ++current_element)
       {
         //select each data point as a cluster center
         DataPoint* element_ptr = dynamic_cast<DataPoint*> (*current_element);
         QTSILACCluster act_cluster(element_ptr);
+
         //iterate over all neighbors of the data point in the surrounding cells
-        for (int i=x-1;i<=x+1;++i)
+        for (int i = x - 1; i <= x + 1; ++i)
         {
-          if (i<0 || i>act_grid.getGridSizeX())
-            continue;
-          for (int j=y-1;j<=y+1;++j)
+          if (i < 0 || i > act_grid.getGridSizeX())
           {
-            if (j<0 || j>act_grid.getGridSizeY())
+            continue;
+          }
+
+          for (int j = y - 1; j <= y + 1; ++j)
+          {
+            if (j < 0 || j > act_grid.getGridSizeY())
+            {
               continue;
-            GridCells::iterator act_pos=grid.find(std::make_pair(i,j));
-            if (act_pos==act_grid.end())
+            }
+
+            GridCells::iterator act_pos = grid_.find(std::make_pair(i, j));
+
+            if (act_pos == act_grid.end())
+            {
               continue;
-            std::list<GridElement*>& neighbor_elements=act_pos->second;
+            }
+
+            std::list<GridElement*>& neighbor_elements = act_pos->second;
 
             for (std::list<GridElement*>::iterator neighbor_element=neighbor_elements.begin();neighbor_element!=neighbor_elements.end();++neighbor_element)
             {
-              if (*current_element==*neighbor_element)
+              if (*current_element == *neighbor_element)
+              {
                 continue;
+              }
+
               DataPoint* neighbor_ptr = dynamic_cast<DataPoint*> (*neighbor_element);
+
               //get the diameter of the current cluster if the current data point would be added
-              std::pair<DoubleReal,DoubleReal> diameters=act_cluster.getDiameters(neighbor_ptr);
+              std::pair<DoubleReal, DoubleReal> diameters = act_cluster.getDiameters(neighbor_ptr);
+
               //check if diameter fulfills preconditions
-              if (diameters.first <= rt_diameter && diameters.second <= mz_diameter)
+              if (diameters.first <= rt_diameter_ && diameters.second <= mz_diameter_)
+              {
                 act_cluster.add(neighbor_ptr);
+              }
             }
           }
         }
+
         //insert the current cluster into the cluster set
         cluster_set.insert(act_cluster);
       }
     }
+
     //return the biggest cluster
     return *cluster_set.rbegin();
   }

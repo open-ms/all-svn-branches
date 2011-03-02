@@ -50,24 +50,24 @@ namespace OpenMS {
   /**
 	 * @brief the hash grid used for data arrangement
 	 */
-   HashGrid grid;
+   HashGrid grid_;
 
   /**
 	 * @brief maximal rt diameter
 	 * corresponds to the maximal gap in RT direction of cluster
 	 */
-   DoubleReal rt_diameter;
+   DoubleReal rt_diameter_;
 
   /**
 	 * @brief maximal m/z diameter
 	 * corresponds to the maximal cluster extent in m/z direction
 	 */
-   DoubleReal mz_diameter;
+   DoubleReal mz_diameter_;
 
   /**
 	 * @brief list of identified clusters
 	 */
-   std::list<QTSILACCluster> clusters;
+   std::list<QTSILACCluster> clusters_;
 
   /**
 	 * @brief recursive QT clustering method
@@ -79,10 +79,10 @@ namespace OpenMS {
   /**
 	 * @brief detailed constructor
 	 * @param data the data to be clustered
-	 * @param rt_diameter_ maximal rt diameter
-	 * @param mz_diameter_ maximal m/z diameter
+   * @param rt_diameter maximal rt diameter
+   * @param mz_diameter maximal m/z diameter
 	 */
-   QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter_, DoubleReal mz_diameter_);
+   QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter, DoubleReal mz_diameter);
 
   /**
    * @brief default constructor

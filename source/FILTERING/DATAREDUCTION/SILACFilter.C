@@ -63,9 +63,9 @@ namespace OpenMS
     expectedMZshifts.clear();
     for (std::vector<DoubleReal>::iterator it = mz_peptide_separations.begin(); it != mz_peptide_separations.end(); ++it)
     {
-      for (Int i=0; i<isotopes_per_peptide; i++)
+      for (Int i = 0; i < isotopes_per_peptide; i++)
       {
-        expectedMZshifts.push_back(*it + i*isotope_distance);
+        expectedMZshifts.push_back(*it + i * isotope_distance);
       }
     }
   }
@@ -91,7 +91,7 @@ namespace OpenMS
     //---------------------------------------------------------------
     exact_shifts.clear();
     exact_intensities.clear();
-    expected_shifts.clear();
+    expected_shifts.clear();    
 
     for (Int peptide = 0; peptide <= numberOfPeptides; peptide++) // loop over labelled peptides [e.g. for SILAC triplets: 0=light 1=medium 2=heavy]
     {
@@ -102,6 +102,28 @@ namespace OpenMS
       for (Int isotope = 0; isotope < isotopes_per_peptide; isotope++) // loop over isotopic peaks within a peptide [0=mono-isotopic peak etc.]
       {
         DoubleReal deltaMZ = computeActualMzShift(mz, mz_peptide_separations[peptide] + isotope * isotope_distance, getPeakWidth(mz));
+
+        if ( deltaMZ < 0)
+        {
+          if (SILACFiltering::allow_missing_peaks == false)
+          {
+            return false;
+          }
+          else
+          {
+            // MISSING PEAK EXCEPTION
+            // A missing intensity is allowed if (1) the user allowed it, (2) it's the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
+            if (SILACFiltering::allow_missing_peaks == true && isotope == isotopes_per_peptide - 1 && missing_peak_seen_yet == false)
+            {
+              missing_peak_seen_yet = true;
+            }
+            else
+            {
+              return false;
+            }
+          }
+        }
+
         exact_shifts_singlePeptide.push_back( deltaMZ );
 
         expected_shifts_singlePeptide.push_back(mz_peptide_separations[peptide] + isotope * isotope_distance);      // store expected_shift for blacklisting
@@ -171,10 +193,11 @@ namespace OpenMS
           DoubleReal intens1 = gsl_spline_eval(SILACFiltering::spline_spl, mz + exact_shifts[peptide][0] + dmz, SILACFiltering::current_spl);
           DoubleReal intens2 = gsl_spline_eval(SILACFiltering::spline_spl, mz + exact_shifts[peptide][isotope2] + dmz, SILACFiltering::current_spl);
           intensities1.push_back( intens1 );
-          intensities2.push_back( intens2 );
+          intensities2.push_back( intens2 );          
         }
 
         DoubleReal intensityCorrelation = Math::pearsonCorrelationCoefficient( intensities1.begin(), intensities1.end(), intensities2.begin(), intensities2.end());    // calculate Pearson correlation coefficient
+
         if ( intensityCorrelation < SILACFiltering::intensity_correlation )
         {
           // MISSING PEAK EXCEPTION
@@ -211,6 +234,7 @@ namespace OpenMS
       }
 
       DoubleReal intensityCorrelation = Math::pearsonCorrelationCoefficient( intensities3.begin(), intensities3.end(), intensities4.begin(), intensities4.end());    // calculate Pearson correlation coefficient
+
       if ( intensityCorrelation < SILACFiltering::intensity_correlation )
       {
         return false;

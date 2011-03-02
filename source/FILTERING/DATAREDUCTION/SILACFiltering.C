@@ -159,10 +159,10 @@ namespace OpenMS
               // iterate over the blacklist (Relevant blacklist entries are most likely among the last ones added.)
               multimap<DoubleReal, BlacklistEntry>::iterator blacklistStartCheck;
               multimap<DoubleReal, BlacklistEntry>::iterator blacklistEndCheck;
-              if (blacklist.size() > 40)    // Blacklist should be of certain size before we run ckeck only parts of it.
+              if (blacklist.size() > 40)    // Blacklist should be of certain size before we ckeck only parts of it.
               {
-                blacklistStartCheck = blacklist.lower_bound(rt - 100);
-                blacklistEndCheck = blacklist.lower_bound(rt);
+                blacklistStartCheck = blacklist.lower_bound(mz - 0.2);
+                blacklistEndCheck = blacklist.lower_bound(mz);
               }
               else
               {
@@ -227,8 +227,8 @@ namespace OpenMS
                     multimap<DoubleReal, BlacklistEntry>::iterator blacklistEndFill;
                     if (blacklist.size() > 40)    // Blacklist should be of certain size before we run ckeck only parts of it.
                     {
-                      blacklistStartFill = blacklist.lower_bound(rt - 100);
-                      blacklistEndFill = blacklist.lower_bound(rt);
+                      blacklistStartFill = blacklist.lower_bound(mz - 0.2);
+                      blacklistEndFill = blacklist.lower_bound(mz);
                     }
                     else
                     {
@@ -243,21 +243,23 @@ namespace OpenMS
                       if (overlap && sameFilterAndPeakPosition)
                       {
                         // If new and old entry intersect, simply update (or replace) the old one.
-                        if (blackArea.minY() > (blacklist_fill_it->second.range).minY())
+                        if (blackArea.minX() > (blacklist_fill_it->second.range).minX())
                         {
-                          // no new min RT => no change of key necessary
-                          (blacklist_fill_it->second.range).setMinX(min(blackArea.minX(),(blacklist_fill_it->second.range).minX()));
+                          // no new min m/z => no change of key necessary
+                          //(blacklist_fill_it->second.range).setMinX(min(blackArea.minX(),(blacklist_fill_it->second.range).minX()));
                           (blacklist_fill_it->second.range).setMaxX(max(blackArea.maxX(),(blacklist_fill_it->second.range).maxX()));
+                          (blacklist_fill_it->second.range).setMinY(min(blackArea.minY(),(blacklist_fill_it->second.range).minY()));
                           (blacklist_fill_it->second.range).setMaxY(max(blackArea.maxY(),(blacklist_fill_it->second.range).maxY()));
                         }
                         else
                         {
-                          // new min RT => insert new BlacklistEntry and delete old one
+                          // new min m/z => insert new BlacklistEntry and delete old one
                           DRange<2> mergedArea;
                           BlacklistEntry mergedEntry;
                           mergedArea.setMinX(min(blackArea.minX(), (blacklist_fill_it->second.range).minX()));
                           mergedArea.setMaxX(max(blackArea.maxX(), (blacklist_fill_it->second.range).maxX()));
-                          mergedArea.setMinY(blackArea.minY());
+                          //mergedArea.setMinY(blackArea.minY());
+                          mergedArea.setMinY(min(blackArea.minY(), (blacklist_fill_it->second.range).minY()));
                           mergedArea.setMaxY(max(blackArea.maxY(), (blacklist_fill_it->second.range).maxY()));
                           mergedEntry.range = mergedArea;
                           mergedEntry.charge = blacklist_fill_it->second.charge;
@@ -265,7 +267,7 @@ namespace OpenMS
                           mergedEntry.relative_peak_position = blacklist_fill_it->second.relative_peak_position;
 
                           // Simply insert the new and erase the old map BlacklistEntry. We break out of the loop anyhow.
-                          blacklist.insert(pair<DoubleReal, BlacklistEntry>(mergedEntry.range.minY(), mergedEntry));
+                          blacklist.insert(pair<DoubleReal, BlacklistEntry>(mergedEntry.range.minX(), mergedEntry));
                           blacklist.erase(blacklist_fill_it);
                         }
                         
@@ -281,13 +283,13 @@ namespace OpenMS
                       newEntry.charge = charge;
                       newEntry.mass_separations = mass_separations;
                       newEntry.relative_peak_position = relative_peak_position;
-                      blacklist.insert(pair<DoubleReal, BlacklistEntry>(newEntry.range.minY(), newEntry));
+                      blacklist.insert(pair<DoubleReal, BlacklistEntry>(newEntry.range.minX(), newEntry));
                     }
                   }
 
                   // DEBUG: save global blacklist
                   ofstream blacklistFile;
-                  blacklistFile.open ("blacklist_rt.csv");
+                  blacklistFile.open ("blacklist_mz.csv");
 
                   for (map<DoubleReal,BlacklistEntry>::iterator blacklist_it = blacklist.begin(); blacklist_it != blacklist.end(); ++blacklist_it)
                   {

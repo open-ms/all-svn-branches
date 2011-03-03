@@ -414,6 +414,9 @@ namespace OpenMS
         if (immediateNeighbours <= 5)
         {
           std::cout << "REMOVE CURRENT LIST ENTRY." << std::endl;
+
+          //elements.erase(current_element);
+          //break;
         }        
       }
     }

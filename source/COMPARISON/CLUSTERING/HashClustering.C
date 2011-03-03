@@ -356,8 +356,7 @@ namespace OpenMS
   }
   
   
-  
-  
+
   
   void HashClustering::removeIsolatedPoints()
   {
@@ -368,6 +367,8 @@ namespace OpenMS
       std::list<GridElement*>& elements = it->second;
       int i = coords.first;
       int j = coords.second;
+      
+      
       
       //loop over data points in a grid cell 
       for (std::list<GridElement*>::iterator current_element = elements.begin(); current_element != elements.end(); ++current_element)
@@ -413,7 +414,15 @@ namespace OpenMS
           }
         }
         
-      }        
+        if (immediateNeighbours <= 5)
+        {
+          std::cout << "REMOVE CURRENT LIST ENTRY." << std::endl;
+        }
+        
+      }
+      
+      
+      
     }
   }
   

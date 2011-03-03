@@ -141,7 +141,7 @@ class OPENMS_DLLAPI HashClustering : public ProgressLogger
    class OPENMS_DLLAPI InsufficientInput : public Exception::BaseException
    {
      public:
-       InsufficientInput(const char* file, int line, const char* function, const char* message= "not enough data points to cluster anything") throw();
+       InsufficientInput(const char* file, int line, const char* function, const char* message = "not enough data points to cluster anything") throw();
        virtual ~InsufficientInput() throw();
    };
 

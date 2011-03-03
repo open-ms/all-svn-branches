@@ -36,6 +36,7 @@
 
 namespace OpenMS
 {
+  Int cluster_id = 0;
 
   typedef std::map<std::pair<int, int>, std::list<GridElement*> > GridElements;
 
@@ -354,8 +355,6 @@ namespace OpenMS
       min_distance_subsets_ = std::make_pair(entry.owner, entry.data_point);
     }
   }
-  
-  
 
   
   void HashClustering::removeIsolatedPoints()
@@ -368,9 +367,7 @@ namespace OpenMS
       int i = coords.first;
       int j = coords.second;
       
-      
-      
-      //loop over data points in a grid cell 
+      // loop over data points in a grid cell
       for (std::list<GridElement*>::iterator current_element = elements.begin(); current_element != elements.end(); ++current_element)
       {
         DoubleReal mz = (*current_element)->mz;
@@ -383,7 +380,8 @@ namespace OpenMS
           if (k < 0 || k > grid_.getGridSizeX())
           {
             continue;
-          }        
+          }
+
           for (Int l = j-1; l <= j+1; ++l)
           {
             if (l < 0 || l > grid_.getGridSizeY())
@@ -392,13 +390,14 @@ namespace OpenMS
             }
             
             GridElements::iterator cell = grid_.find(std::make_pair(k, l));
+
             if (cell == grid_.end())
             {
               continue;
             }
             std::list<GridElement*>& neighbours = cell->second;
             
-            //loop over data points in neighbouring grid cell 
+            // loop over data points in neighbouring grid cell
             for (std::list<GridElement*>::iterator neighbourElement = neighbours.begin(); neighbourElement != neighbours.end(); ++neighbourElement)
             {
               DoubleReal mz2 = (*neighbourElement)->mz;
@@ -407,29 +406,19 @@ namespace OpenMS
               if ( (abs(mz-mz2)<0.02) && (abs(rt-rt2)<10) )
               {
                 ++immediateNeighbours;
-              }
-              
-            }              
-            
+              }              
+            }
           }
         }
         
         if (immediateNeighbours <= 5)
         {
           std::cout << "REMOVE CURRENT LIST ENTRY." << std::endl;
-        }
-        
+        }        
       }
-      
-      
-      
     }
   }
-  
-  
-  
-  
-  
+
 
   void HashClustering::performClustering()
   {
@@ -766,12 +755,10 @@ namespace OpenMS
 
   void HashClustering::createClusters(std::vector<Cluster>& clusters)
   {
-    Size cluster_id = 0;
-
     // Run silhoutte optimization for all subtrees and find the appropriate best_n
     for (ElementMap::iterator it = grid_.begin(); it != grid_.end(); ++it)
     {
-      std::list<GridElement*>& elements=it->second;
+      std::list<GridElement*>& elements = it->second;
       for (std::list<GridElement*>::iterator lit = elements.begin(); lit != elements.end(); ++lit)
       {
         DataSubset* subset_ptr = dynamic_cast<DataSubset*> (*lit);

@@ -354,6 +354,73 @@ namespace OpenMS
       min_distance_subsets_ = std::make_pair(entry.owner, entry.data_point);
     }
   }
+  
+  
+  
+  
+  
+  void HashClustering::removeIsolatedPoints()
+  {
+    // loop over grid cells
+    for (GridElements::iterator it = grid_.begin(); it != grid_.end(); ++it)
+    {
+      std::pair<int ,int> coords = it->first;
+      std::list<GridElement*>& elements = it->second;
+      int i = coords.first;
+      int j = coords.second;
+      
+      //loop over data points in a grid cell 
+      for (std::list<GridElement*>::iterator current_element = elements.begin(); current_element != elements.end(); ++current_element)
+      {
+        DoubleReal mz = (*current_element)->mz;
+        DoubleReal rt = (*current_element)->rt;
+        Int immediateNeighbours = 0;    // number of immediate neighbours
+        
+        // loop over 8 neighbouring grid cells plus the grid cell itself
+        for (Int k = i-1; k <= i+1; ++k)
+        {
+          if (k < 0 || k > grid_.getGridSizeX())
+          {
+            continue;
+          }        
+          for (Int l = j-1; l <= j+1; ++l)
+          {
+            if (l < 0 || l > grid_.getGridSizeY())
+            {
+              continue;
+            }
+            
+            GridElements::iterator cell = grid_.find(std::make_pair(k, l));
+            if (cell == grid_.end())
+            {
+              continue;
+            }
+            std::list<GridElement*>& neighbours = cell->second;
+            
+            //loop over data points in neighbouring grid cell 
+            for (std::list<GridElement*>::iterator neighbourElement = neighbours.begin(); neighbourElement != neighbours.end(); ++neighbourElement)
+            {
+              DoubleReal mz2 = (*neighbourElement)->mz;
+              DoubleReal rt2 = (*neighbourElement)->rt;
+              
+              if ( (abs(mz-mz2)<0.02) && (abs(rt-rt2)<10) )
+              {
+                ++immediateNeighbours;
+              }
+              
+            }              
+            
+          }
+        }
+        
+      }        
+    }
+  }
+  
+  
+  
+  
+  
 
   void HashClustering::performClustering()
   {

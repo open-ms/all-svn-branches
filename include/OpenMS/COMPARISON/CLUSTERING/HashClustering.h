@@ -165,10 +165,15 @@ class OPENMS_DLLAPI HashClustering : public ProgressLogger
    HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method);
 
 	/**
+	 * @brief remove points that have no immediate neighbours
+	 */
+  void removeIsolatedPoints();
+  
+	/**
 	 * @brief Starts the clustering and returns a vector of subtrees when finished
 	 */
-   void performClustering();
-
+  void performClustering();
+  
 	/**
 	 * @brief Gets the hierarchical clustering subtrees after clustering has been performed. If the data has not been clustered yet, the method returns an empty vector
 	 * @param subtrees vector of subtrees, which will be filled after the clustering process

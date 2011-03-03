@@ -1112,7 +1112,7 @@ class TOPPSILACAnalyzer
     //--------------------------------------------------
 
     vector<vector<DataPoint> > data=buildDataStructure(exp);
-
+    
 
     //--------------------------------------------------
     // clustering
@@ -1135,6 +1135,7 @@ class TOPPSILACAnalyzer
         // hierarchical clustering
         CentroidLinkage method(rt_scaling);
         HashClustering c(*data_it, rt_threshold, mz_threshold, method);
+        c.removeIsolatedPoints();
         c.performClustering();
         vector<Tree> current_subtrees;
         c.getSubtrees(current_subtrees);

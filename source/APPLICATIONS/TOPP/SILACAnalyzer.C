@@ -169,7 +169,10 @@ class TOPPSILACAnalyzer
     // input and output files
     String in;
     String out;
-    String out_clusters;    
+    String out_clusters;
+
+    String out_filters;
+    String in_filters;
 
     // section "sample"
     String selected_labels;
@@ -222,6 +225,13 @@ class TOPPSILACAnalyzer
     // create optional flag for additional clusters output file (.featureXML)
     registerOutputFile_("out_clusters", "<file>", "", "Optional output file containing data points passing all filters, hence belonging to a SILAC pattern. Points of the same colour correspond to the mono-isotopic peak of the lightest peptide in a pattern.", false, true);
     setValidFormats_("out_clusters", StringList::create("featureXML"));
+
+    // create optional flag for additional output file (.txt) to store filter results
+    registerOutputFile_("out_filters", "<file>", "", "Additional output file containing all points that passed the filters as txt. Suitable as input for \"in_filters\" to perform clustering without preceding filtering process.", false, true);
+    //setValidFormats_("out_filters", StringList::create("txt"));
+    // create optional flag for additional input file (.txt) to load filter results
+    registerOutputFile_("in_filters", "<file>", "", "Additional input file containing all points that passed the filters as txt. Use output from \"out_filters\" to perform clustering only.", false, true);
+    //setValidFormats_("in_filters", StringList::create("txt"));
 
     // create section "labels" for adjusting masses of labels
     registerSubsection_("labels", "Isotopic labels that can be specified in section \'sample\'.");
@@ -330,6 +340,11 @@ class TOPPSILACAnalyzer
     out = getStringOption_("out");
     // get name of additional clusters output file (.featureXML)
     out_clusters = getStringOption_("out_clusters");
+
+    // get name of additional filters output file (.txt)
+    out_filters = getStringOption_("out_filters");
+    // get name of additional filters input file (.txt)
+    in_filters = getStringOption_("in_filters");
 
 
     //--------------------------------------------------
@@ -620,27 +635,327 @@ class TOPPSILACAnalyzer
       }
     }
 
-    // create filtering
-    SILACFiltering filtering(exp, mz_stepwidth, intensity_cutoff, intensity_correlation, allow_missing_peaks);
-    filtering.setLogType(log_type_);
-
-    // register filters to the filtering
-    for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
+    if (in_filters == "")     // check if option "in_filters" is not specified
     {
-      filtering.addFilter(*filter_it);
-    }
+      // create filtering
+      SILACFiltering filtering(exp, mz_stepwidth, intensity_cutoff, intensity_correlation, allow_missing_peaks);
+      filtering.setLogType(log_type_);
 
-    // perform filtering
-    filtering.filterDataPoints();
+      // register filters to the filtering
+      for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
+      {
+        filtering.addFilter(*filter_it);
+      }
 
-    // retrieve filtered data points
-    for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
-    {
-      data.push_back(filter_it->getElements());
+      // perform filtering
+      filtering.filterDataPoints();
+
+      // retrieve filtered data points
+      for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
+      {
+        data.push_back(filter_it->getElements());
+      }
     }
 
     // delete experiment
     exp.clear(true);
+
+
+    //--------------------------------------------------
+    // store filter results from vector<vector<DataPoint> > data to .txt
+    //--------------------------------------------------
+
+    if (out_filters != "" && in_filters == "")     // check if option "out_filters" is specified and "in_filters" is not
+    {
+      ofstream outfile;
+      outfile.open(out_filters.c_str());      // open ofstream to specified output file
+      outfile << setprecision(16);      // set precision of outfile to 16 to avoid losing digits
+
+      // vector of DataPoints
+      outfile << "<VectorOfDataPoints>" << "\n";
+
+      // iterate over outer DataPoint vector (vector<vector<DataPoint> >)
+      for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+      {
+        // DataPoints
+        outfile << "<DataPoints>" << "\n";
+
+        // iterate over inner DataPoint vector (vector<DataPoint>)
+        for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
+        {
+          // DataPoint
+          outfile << "<DataPoint>" << "\n";
+
+          // feature_id
+          outfile << "<feature_id>" << "\n";
+          outfile << it->feature_id << "\n";
+          outfile << "</feature_id>" << "\n";
+
+          // rt
+          outfile << "<rt>" << "\n";
+          outfile << it->rt << "\n";
+          outfile << "</rt>" << "\n";
+
+          // mz
+          outfile << "<mz>" << "\n";
+          outfile << it->mz << "\n";
+          outfile << "</mz>" << "\n";
+
+          // charge
+          outfile << "<charge>" << "\n";
+          outfile << it->charge << "\n";
+          outfile << "</charge>" << "\n";
+
+          // isotopes_per_peptide
+          outfile << "<isotopes_per_peptide>" << "\n";
+          outfile << it->isotopes_per_peptide << "\n";
+          outfile << "</isotopes_per_peptide>" << "\n";
+
+          // intensities
+          outfile << "<intensities>" << "\n";
+
+          // iterate over outer intensities vector (vector<vector<DoubleReal> >)
+          for (vector<vector<DoubleReal> >::iterator intensities_it = it->intensities.begin(); intensities_it != it->intensities.end(); ++intensities_it)
+          {
+            outfile << "<intensities_" << intensities_it - it->intensities.begin() << ">\n";
+
+            // // iterate over inner intensities vector (vector<DoubleReal>)
+            for (vector<DoubleReal>::iterator intensity_it = intensities_it->begin(); intensity_it != intensities_it->end(); ++intensity_it)
+            {
+              outfile << *intensity_it << "\n";
+            }
+            outfile << "</intensities_" << intensities_it - it->intensities.begin() << ">\n";
+          }
+          outfile << "</intensities>" << "\n";
+
+          // mass_shifts
+          outfile << "<mass_shifts>" << "\n";
+
+          // iterate over mass shifts vector (vector<DoubleReal>)
+          for (vector<DoubleReal>::iterator mass_shifts_it = it->mass_shifts.begin(); mass_shifts_it != it->mass_shifts.end(); ++mass_shifts_it)
+          {
+            outfile << *mass_shifts_it << "\n";
+          }
+          outfile << "</mass_shifts>" << "\n";
+
+          outfile << "</DataPoint>" << "\n";
+        }
+        outfile << "</DataPoints>" << "\n";
+      }
+      outfile << "</VectorOfDataPoints>" << "\n";
+
+      outfile.close();      // close ofstream and store output file
+    }
+
+
+    //--------------------------------------------------
+    // load filter results as vector<vector<DataPoint> > data from .txt
+    //--------------------------------------------------
+
+    if (in_filters != "")     // check if option "in_filters" is specified
+    {
+      vector<vector<DataPoint> > data_points_vector_in;
+      vector<DataPoint> data_points_in;
+      DataPoint data_point_in;
+
+      vector<vector<DoubleReal> > intensities_vector_in;
+      vector<DoubleReal> intensities_in;
+
+      vector<DoubleReal> mass_shifts_in;
+
+      ifstream infile;
+      infile.open(in_filters.c_str());      // open ifstream from specified input file
+
+      // check if infile can be opened
+      if (!infile.is_open())
+      {
+        cout << "Error: could not open " << in_filters << "..." << endl;
+      }
+      else
+      {
+        String temp;
+
+        // name cases and define states
+        const int VECTOR_OF_DATA_POINTS_STATE = 0;
+        const int DATA_POINTS_STATE = 1;
+        const int DATA_POINT_STATE = 2;
+        const int FEATURE_ID_STATE = 3;
+        const int RT_STATE = 4;
+        const int MZ_STATE = 5;
+        const int CHARGE_STATE = 6;
+        const int ISOTOPES_PER_PEPTIDE_STATE = 7;
+        const int VECTOR_OF_INTENSITIES_STATE = 8;
+        const int INTENSITIES_STATE = 9;
+        const int MASS_SHIFTS_STATE = 10;
+        const int END_STATE = 11;
+
+        // set start state
+        int state = VECTOR_OF_DATA_POINTS_STATE;
+
+        while(state != END_STATE)
+        {
+          switch(state)
+          {
+            // case and state 0: vector of data points
+          case VECTOR_OF_DATA_POINTS_STATE:
+            if (infile.eof())
+            {
+              cout << "eof" << endl;
+              state = END_STATE;
+            } else
+            {
+              getline(infile, temp);
+              if (temp != "")
+              {
+                state = DATA_POINTS_STATE;
+              } else
+              {
+                cout << "end state" << endl;
+                state = END_STATE;
+              }
+            }
+            break;
+
+            // case and state 1: data points
+                    case DATA_POINTS_STATE:
+            getline (infile, temp);
+            if (String(temp).hasPrefix("</"))
+            {
+              state = VECTOR_OF_DATA_POINTS_STATE;
+            } else
+            {
+              state = DATA_POINT_STATE;
+            }
+            break;
+
+            // case and state 2: data point
+                    case DATA_POINT_STATE:
+            getline(infile, temp);
+            if (String(temp).hasPrefix("</"))
+            {
+              data_points_vector_in.push_back(data_points_in);
+              // cout << "size of data_points_vector_in: " << data_points_vector_in.size() << endl;
+              data_points_in.clear();
+              // cout << "size of data_points_in.clear(): " << data_points_in.size() << endl;
+              state = DATA_POINTS_STATE;
+            } else
+            {
+              data_point_in.intensities.clear();
+              data_point_in.mass_shifts.clear();
+              state = FEATURE_ID_STATE;
+            }
+            break;
+
+            // case and state 3: feature_id
+                    case FEATURE_ID_STATE:
+            getline(infile,temp);
+            getline(infile, temp);
+            data_point_in.feature_id = String(temp).toInt();
+            getline (infile, temp);
+            state = RT_STATE;
+            break;
+
+            // case and state 4: rt
+                    case RT_STATE:
+            getline(infile, temp);
+            getline(infile, temp);
+            data_point_in.rt = String(temp).toDouble();
+            getline (infile, temp);
+            state = MZ_STATE;
+            break;
+
+            // case and state 5: mz
+                    case MZ_STATE:
+            getline(infile, temp);
+            getline(infile, temp);
+            data_point_in.mz = String(temp).toDouble();
+            getline(infile, temp);
+            state = CHARGE_STATE;
+            break;
+
+            // case and state 6: charge
+                    case CHARGE_STATE:
+            getline(infile, temp);
+            getline(infile, temp);
+            data_point_in.charge = String(temp).toInt();
+
+            getline(infile, temp );
+            state = ISOTOPES_PER_PEPTIDE_STATE;
+            break;
+
+            //case and state  7: isotopes_per_peptide
+                    case ISOTOPES_PER_PEPTIDE_STATE:
+            getline(infile, temp);
+            getline(infile, temp);
+            data_point_in.isotopes_per_peptide = String(temp).toInt();
+            getline(infile, temp);
+            state = VECTOR_OF_INTENSITIES_STATE;
+            break;
+
+            // case and state 8: vector of intensities
+                    case VECTOR_OF_INTENSITIES_STATE:
+            getline( infile, temp );
+            if (!String(temp).hasPrefix("</"))
+            {
+              state = INTENSITIES_STATE;
+            } else if (String(temp).hasPrefix("</"))
+            {
+              data_point_in.intensities.insert(data_point_in.intensities.end(), intensities_vector_in.begin(), intensities_vector_in.end());
+              intensities_vector_in.clear();
+              state = MASS_SHIFTS_STATE;
+            }
+            break;
+
+            // case and state 9: intesities
+                    case INTENSITIES_STATE:
+            getline( infile, temp );
+            do
+            {
+              if(!String(temp).hasPrefix("<"))
+              {
+                DoubleReal intensity_in = String(temp).toDouble();
+                intensities_in.push_back(intensity_in);
+                // cout << "size of intensities_in: " << intensities_in.size() << endl;
+              }
+              getline( infile, temp );
+            } while (!String(temp).hasPrefix("</"));
+            intensities_vector_in.push_back(intensities_in);
+            // cout << "size of intensities_vector_in: " << intensities_vector_in.size() << endl;
+            intensities_in.clear();
+            state = VECTOR_OF_INTENSITIES_STATE;
+            break;
+
+            // case and state 10: mass_shifts
+                    case MASS_SHIFTS_STATE:
+            getline( infile, temp );
+            do
+            {
+              if(!String(temp).hasPrefix("<"))
+              {
+                DoubleReal mass_shift_in = String(temp).toDouble();
+                mass_shifts_in.push_back(mass_shift_in);
+                // cout << "size of mass_shifts_in: " << mass_shifts_in.size() << endl;
+              }
+              getline( infile, temp );
+            } while (!String(temp).hasPrefix("</"));
+            data_point_in.mass_shifts.insert(data_point_in.mass_shifts.begin(), mass_shifts_in.begin(), mass_shifts_in.end());
+            mass_shifts_in.clear();
+            getline( infile, temp );      // temp steht auf </DataPoint>
+            data_points_in.push_back(data_point_in);
+            // cout << "size of data_points_in: " << data_points_in.size() << endl;
+            state = DATA_POINT_STATE;
+            break;
+
+                     default:
+            break;
+          }
+        }
+      }
+      infile.close();
+
+      // set loaded filter results from .txt as input for clustering
+      data = data_points_vector_in;
+    }
 
 
     //--------------------------------------------------

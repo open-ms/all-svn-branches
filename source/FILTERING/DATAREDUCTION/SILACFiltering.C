@@ -26,10 +26,8 @@
 // --------------------------------------------------------------------------
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
-#include <OpenMS/DATASTRUCTURES/BlacklistEntry2.h>
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>
 #include <OpenMS/FORMAT/MzMLFile.h>
-#include <OpenMS/DATASTRUCTURES/BlacklistEntry2.h>
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
 
 #include <iostream>

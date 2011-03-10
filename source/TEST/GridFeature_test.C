@@ -33,7 +33,7 @@
 
 ///////////////////////////
 
-START_TEST(GridFeature, "$Id: GridFeature_test.C 7942 2011-02-12 01:14:36Z hendrikweisser $")
+START_TEST(GridFeature, "$Id: GridFeature_test.C 8123 2011-03-03 21:08:35Z hendrikweisser $")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -42,7 +42,7 @@ using namespace OpenMS;
 using namespace std;
 
 GridFeature* gf_ptr = 0;
-START_SECTION((GridFeature(const BaseFeature&, Size, Size)))
+START_SECTION((GridFeature(const BaseFeature& feature, Size map_index, Size feature_index)))
 {
 	BaseFeature bf;
 	gf_ptr = new GridFeature(bf, 0, 0);
@@ -56,7 +56,7 @@ START_SECTION((~GridFeature()))
 }
 END_SECTION
 
-START_SECTION((BaseFeature& getFeature() const))
+START_SECTION((const BaseFeature& getFeature() const))
 {
 	BaseFeature bf;
 	bf.setRT(1.1);

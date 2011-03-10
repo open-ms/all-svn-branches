@@ -30,16 +30,7 @@
 
 namespace OpenMS
 {
-  SILACTreeNode::SILACTreeNode()
-  {
-
-  }
-
-  SILACTreeNode::~SILACTreeNode()
-  {
-
-  }
-
+  SILACTreeNode::SILACTreeNode() {}
   SILACTreeNode::SILACTreeNode(DataPoint* data1_,DataPoint* data2_,DoubleReal distance_)
   {
 	  data1=data1_;

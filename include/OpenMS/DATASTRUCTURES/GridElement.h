@@ -59,7 +59,7 @@ namespace OpenMS
   /** @brief copy constructor
    * 	@param source  this GridElement will be copied
    */
-    GridElement(const GridElement& copy);
+   GridElement(const GridElement& copy);
 
   /**
    * @brief m/z value of the element

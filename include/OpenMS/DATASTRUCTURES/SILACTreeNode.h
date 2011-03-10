@@ -63,11 +63,6 @@ class OPENMS_DLLAPI SILACTreeNode
     */
 	  SILACTreeNode();
 
-    /** @brief destructor
-
-     */
-    ~SILACTreeNode();
-
     /** @brief detailed constructor
 
 			  @param data1_ first data point
@@ -75,7 +70,6 @@ class OPENMS_DLLAPI SILACTreeNode
 			  @param distance_ distance between the data points
 	  */
 	  SILACTreeNode(DataPoint* data1_,DataPoint* data2_,DoubleReal distance_);
-
 	  bool operator==(const SILACTreeNode &cp) const;
 	  bool operator!=(const SILACTreeNode &cp) const;
 	  bool operator<(const SILACTreeNode &cp) const;

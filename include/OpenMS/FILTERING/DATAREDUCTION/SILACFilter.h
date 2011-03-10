@@ -59,7 +59,7 @@ namespace OpenMS
   /**
    * @brief number of peptides [i.e. number of labelled peptides +1, e.g. for SILAC triplet =3]
    */
-   Int number_of_peptides_;
+   Size number_of_peptides_;
 
   /**
    * @brief charge of the ions to search for
@@ -69,7 +69,7 @@ namespace OpenMS
   /**
    * @brief number of peaks per peptide to search for
    */
-   Int isotopes_per_peptide_;
+   Size isotopes_per_peptide_;
 
   /**
    * @brief mass shift(s) in [Da] to search for
@@ -133,14 +133,14 @@ namespace OpenMS
    * @param expectedMzShift poitive m/z shift at which we would expect a correlating signal [e.g. 4.02 Th]
    * @param maxMzDeviation maximum allowed deviation between expected and actual shift [In the above example the shift is 0.0011 Th.]
    */
-   DoubleReal computeActualMzShift(DoubleReal mz, DoubleReal expectedMzShift, DoubleReal maxMzDeviation);
+   DoubleReal computeActualMzShift_(DoubleReal mz, DoubleReal expectedMzShift, DoubleReal maxMzDeviation);
 
   /**
    * @brief returns true if there exists a SILAC feature at the given position, which corresponds to the filter's properties
    * @param rt RT value of the position
    * @param mz m/z value of the position
    */
-   bool isSILACPattern(DoubleReal rt, DoubleReal mz);  
+   bool isSILACPattern_(DoubleReal rt, DoubleReal mz);
 
    public:  
 

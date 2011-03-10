@@ -169,7 +169,7 @@ class TOPPSILACAnalyzer
     // input and output files
     String in;
     String out;
-    String out_clusters;
+    String out_clusters;    
 
     String out_filters;
     String in_filters;
@@ -447,7 +447,7 @@ class TOPPSILACAnalyzer
     // split string of SILAC labels (selected_labels) and save in a list (SILAClabels)
     vector<String> tempList; // temporary list of strings for SILAC labelets, e.g. "Lys6,Arg8"
     boost::split( tempList, selected_labels, boost::is_any_of("[](){}") ); // any bracket allowed to separate labelets
-    for (unsigned i = 0; i < tempList.size(); i++)
+    for (UInt i = 0; i < tempList.size(); i++)
     {
       if (tempList[i] != "")
       {
@@ -459,10 +459,10 @@ class TOPPSILACAnalyzer
 
     cout << endl;
     // print SILAC labels
-    for (unsigned i = 0; i < SILAClabels.size(); i++)
+    for (UInt i = 0; i < SILAClabels.size(); i++)
     {
       cout << "SILAC label " << i + 1 << ":   ";
-      for (unsigned j = 0; j < SILAClabels[i].size(); j++)
+      for (UInt j = 0; j < SILAClabels[i].size(); j++)
       {
         cout << SILAClabels[i][j] << " ";
       }
@@ -471,11 +471,11 @@ class TOPPSILACAnalyzer
     cout << endl;
 
     // check if all selected labels are included in advanced section "labels"
-    for (Size i = 0; i < SILAClabels.size(); i++)
+    for (UInt i = 0; i < SILAClabels.size(); i++)
     {
-      for (Size j = 0; j < SILAClabels[i].size(); ++j)
+      for (UInt j = 0; j < SILAClabels[i].size(); ++j)
       {
-        Int found = labels.find(SILAClabels[i][j]);
+        Int found = (Int) labels.find(SILAClabels[i][j]);
 
         if (found < 0)
         {
@@ -496,7 +496,7 @@ class TOPPSILACAnalyzer
             if ( ArgPerPeptide + LysPerPeptide + MethylPerPeptide + dICPLPerPeptide > 0 && ArgPerPeptide + LysPerPeptide + MethylPerPeptide + dICPLPerPeptide <= missed_cleavages + 1 )
             {
               vector<DoubleReal> massShiftVector;
-              for (unsigned i = 0; i < SILAClabels.size(); i++)
+              for (UInt i = 0; i < SILAClabels.size(); i++)
               {
                 DoubleReal massShift = 0;
                 // Considering the case of an amino acid (e.g. LysPerPeptide != 0) for which no label is present (e.g. Lys4There + Lys8There == 0) makes no sense. Therefore each amino acid will have to give its "Go Ahead" before the shift is calculated.
@@ -505,7 +505,7 @@ class TOPPSILACAnalyzer
                 bool goAhead_Methyl = false;
                 bool goAhead_dICPL = false;
 
-                for (unsigned j = 0; j < SILAClabels[i].size(); j++)
+                for (UInt j = 0; j < SILAClabels[i].size(); j++)
                 {
                   Int Arg6There = 0;	// Is Arg6 in the SILAC label?
                   Int Arg10There = 0;
@@ -561,25 +561,16 @@ class TOPPSILACAnalyzer
     sort(massShifts.begin(), massShifts.end());
 
     // print mass shifts
-    for (unsigned i = 0; i < massShifts.size(); i++)
+    for (UInt i = 0; i < massShifts.size(); i++)
     {
       cout << "mass shift " << i + 1 << ":   ";
-      for (unsigned j = 0; j < massShifts[i].size(); j++)
+      for (UInt j = 0; j < massShifts[i].size(); j++)
       {
         cout << massShifts[i][j] << " ";
       }
       cout << endl;
     }
     cout << endl;
-
-    // get output variables
-    all_pairs.getFileDescriptions()[0].filename = in;
-    all_pairs.getFileDescriptions()[0].label = "light";
-    all_pairs.getFileDescriptions()[1].filename = in;
-    all_pairs.getFileDescriptions()[1].label = "medium";
-    all_pairs.getFileDescriptions()[2].filename = in;
-    all_pairs.getFileDescriptions()[2].label = "heavy";
-    all_pairs.setExperimentType("silac");
   }
 
 
@@ -624,7 +615,7 @@ class TOPPSILACAnalyzer
       for (Int charge = charge_max; charge >= charge_min; charge--)
       {
         // iterate over all mass shifts
-        for (unsigned i = 0; i < massShifts.size(); i++)
+        for (UInt i = 0; i < massShifts.size(); i++)
         {
           // convert vector<DoubleReal> to set<DoubleReal> for SILACFilter
           vector<DoubleReal> massShifts_set = massShifts[i];
@@ -817,7 +808,7 @@ class TOPPSILACAnalyzer
             break;
 
             // case and state 1: data points
-                    case DATA_POINTS_STATE:
+                        case DATA_POINTS_STATE:
             getline (infile, temp);
             if (String(temp).hasPrefix("</"))
             {
@@ -829,7 +820,7 @@ class TOPPSILACAnalyzer
             break;
 
             // case and state 2: data point
-                    case DATA_POINT_STATE:
+                        case DATA_POINT_STATE:
             getline(infile, temp);
             if (String(temp).hasPrefix("</"))
             {
@@ -847,7 +838,7 @@ class TOPPSILACAnalyzer
             break;
 
             // case and state 3: feature_id
-                    case FEATURE_ID_STATE:
+                        case FEATURE_ID_STATE:
             getline(infile,temp);
             getline(infile, temp);
             data_point_in.feature_id = String(temp).toInt();
@@ -856,7 +847,7 @@ class TOPPSILACAnalyzer
             break;
 
             // case and state 4: rt
-                    case RT_STATE:
+                        case RT_STATE:
             getline(infile, temp);
             getline(infile, temp);
             data_point_in.rt = String(temp).toDouble();
@@ -865,7 +856,7 @@ class TOPPSILACAnalyzer
             break;
 
             // case and state 5: mz
-                    case MZ_STATE:
+                        case MZ_STATE:
             getline(infile, temp);
             getline(infile, temp);
             data_point_in.mz = String(temp).toDouble();
@@ -874,7 +865,7 @@ class TOPPSILACAnalyzer
             break;
 
             // case and state 6: charge
-                    case CHARGE_STATE:
+                        case CHARGE_STATE:
             getline(infile, temp);
             getline(infile, temp);
             data_point_in.charge = String(temp).toInt();
@@ -884,7 +875,7 @@ class TOPPSILACAnalyzer
             break;
 
             //case and state  7: isotopes_per_peptide
-                    case ISOTOPES_PER_PEPTIDE_STATE:
+                        case ISOTOPES_PER_PEPTIDE_STATE:
             getline(infile, temp);
             getline(infile, temp);
             data_point_in.isotopes_per_peptide = String(temp).toInt();
@@ -893,7 +884,7 @@ class TOPPSILACAnalyzer
             break;
 
             // case and state 8: vector of intensities
-                    case VECTOR_OF_INTENSITIES_STATE:
+                        case VECTOR_OF_INTENSITIES_STATE:
             getline( infile, temp );
             if (!String(temp).hasPrefix("</"))
             {
@@ -907,7 +898,7 @@ class TOPPSILACAnalyzer
             break;
 
             // case and state 9: intesities
-                    case INTENSITIES_STATE:
+                        case INTENSITIES_STATE:
             getline( infile, temp );
             do
             {
@@ -926,7 +917,7 @@ class TOPPSILACAnalyzer
             break;
 
             // case and state 10: mass_shifts
-                    case MASS_SHIFTS_STATE:
+                        case MASS_SHIFTS_STATE:
             getline( infile, temp );
             do
             {
@@ -946,7 +937,7 @@ class TOPPSILACAnalyzer
             state = DATA_POINT_STATE;
             break;
 
-                     default:
+                         default:
             break;
           }
         }
@@ -1102,10 +1093,6 @@ class TOPPSILACAnalyzer
     // set size of input map
     exp.updateRanges();
 
-    all_pairs.getFileDescriptions()[0].size = exp.getSize();
-    all_pairs.getFileDescriptions()[1].size = exp.getSize();
-    all_pairs.getFileDescriptions()[2].size = exp.getSize();
-
 
     //--------------------------------------------------
     // build SILACData structure
@@ -1117,43 +1104,44 @@ class TOPPSILACAnalyzer
     //--------------------------------------------------
     // remove isolated DataPoints from filter results (i.e. DataPoints with only few immediate neighbours)
     //--------------------------------------------------
-    
-    Int immediate_neighbour_threshold = 5;      // maximum number of DataPoints within neighbourhood
-    DoubleReal rt_neighbourhood = 10;     // size of neighbourhood for RT (+ and -)
-    DoubleReal mz_neighbourhood = 0.02;     // size of neighbourhood for m/z (+ and -)
 
-    vector<vector<DataPoint> > data_2;
-
-    for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
     {
-      vector<DataPoint> single_layer;
+      Int immediate_neighbour_threshold = 5;      // maximum number of DataPoints within neighbourhood
+      DoubleReal rt_neighbourhood = 10;     // size of neighbourhood for RT (+ and -)
+      DoubleReal mz_neighbourhood = 0.02;     // size of neighbourhood for m/z (+ and -)
 
-      for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
+      vector<vector<DataPoint> > data_2;
+
+      for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
       {
-        Int immediate_neighbours = 0;
+        vector<DataPoint> single_layer;
 
-        for (vector<DataPoint>::iterator it_2 = data_it->begin(); it_2 != data_it->end(); ++it_2)
+        for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
         {
-          DoubleReal distance_mz = abs(it->mz - it_2->mz);
-          DoubleReal distance_rt = abs(it->rt - it_2->rt);
+          Int immediate_neighbours = 0;
 
-          if (distance_rt < rt_neighbourhood && distance_mz < mz_neighbourhood)
+          for (vector<DataPoint>::iterator it_2 = data_it->begin(); it_2 != data_it->end(); ++it_2)
           {
-            ++immediate_neighbours;
+            DoubleReal distance_mz = abs(it->mz - it_2->mz);
+            DoubleReal distance_rt = abs(it->rt - it_2->rt);
+
+            if (distance_rt < rt_neighbourhood && distance_mz < mz_neighbourhood)
+            {
+              ++immediate_neighbours;
+            }
+          }
+
+          if (immediate_neighbours > immediate_neighbour_threshold)
+          {
+            single_layer.push_back(*it);
           }
         }
 
-        if (immediate_neighbours > immediate_neighbour_threshold)
-        {
-          single_layer.push_back(*it);          
-        }
+        data_2.push_back(single_layer);
       }
 
-      data_2.push_back(single_layer);      
+      data.swap(data_2);      // data = data_2
     }
-
-    data.swap(data_2);      // data = data_2
-    data_2.clear();
 
 
     //--------------------------------------------------
@@ -1177,7 +1165,7 @@ class TOPPSILACAnalyzer
         // hierarchical clustering
         CentroidLinkage method(rt_scaling);
         HashClustering c(*data_it, rt_threshold, mz_threshold, method);
-        //c.removeIsolatedPoints();
+        // c.removeIsolatedPoints();
         c.performClustering();
         vector<Tree> current_subtrees;
         c.getSubtrees(current_subtrees);
@@ -1314,7 +1302,17 @@ class TOPPSILACAnalyzer
 
         all_pairs.push_back(consensus_feature);
         ++id;
-      }    
+      }
+
+      // set type of experiment
+      all_pairs.setExperimentType("silac");
+
+      // set mapList entries
+      for (UInt i = 0; i <= massShifts[0].size(); i++)
+      {
+        all_pairs.getFileDescriptions()[i].filename = in;
+        all_pairs.getFileDescriptions()[i].size = id;
+      }      
     }
 
 
@@ -1346,7 +1344,6 @@ class TOPPSILACAnalyzer
       {
         for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
         {
-
           // visualize the monoisotopic peak
           Feature cluster_point;
           cluster_point.setRT(it->rt);

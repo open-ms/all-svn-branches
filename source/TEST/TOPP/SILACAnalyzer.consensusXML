@@ -6,12 +6,10 @@
 		<processingAction name="Quantitation" />
 		<userParam type="string" name="parameter: mode" value="test_mode"/>
 	</dataProcessing>
-	<mapList count="3">
-		<map id="0" name="SILACAnalyzer.mzML" label="light" size="19076">
+	<mapList count="2">
+		<map id="0" name="SILACAnalyzer.mzML" label="" size="2">
 		</map>
-		<map id="1" name="SILACAnalyzer.mzML" label="medium" size="19076">
-		</map>
-		<map id="2" name="SILACAnalyzer.mzML" label="heavy" size="19076">
+		<map id="1" name="SILACAnalyzer.mzML" label="" size="2">
 		</map>
 	</mapList>
 	<consensusElementList>

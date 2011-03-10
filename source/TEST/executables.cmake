@@ -244,19 +244,19 @@ set(filtering_executables_list
   ParentPeakMower_test
   PeakMarker_test
   PreprocessingFunctor_test
+  SILACFilter_test
+  SILACFiltering_test
   SavitzkyGolayFilter_test
   Scaler_test
   SignalToNoiseEstimatorMeanIterative_test
   SignalToNoiseEstimatorMedian_test
   SignalToNoiseEstimator_test
-  SILACFilter_test
-  SILACFiltering_test
   SqrtMower_test
   TICFilter_test
   TOFCalibration_test
   ThresholdMower_test
   WindowMower_test
-  SpectraMerger_test
+	SpectraMerger_test
 )
 
 set(comparison_executables_list
@@ -267,10 +267,10 @@ set(comparison_executables_list
   BinnedSpectrum_test
   BinnedSumAgreeingIntensities_test
   CentroidLinkage_test
+  ClusteringMethod_test
   ClusterAnalyzer_test
   ClusterFunctor_test
   ClusterHierarchical_test
-  ClusteringMethod_test
   CompareFouriertransform_test
   CompleteLinkage_test
   EuclideanSimilarity_test
@@ -309,6 +309,7 @@ set(chemistry_executables_list
   ResidueModification_test
   Residue_test
   SvmTheoreticalSpectrumGenerator_test
+  SvmTheoreticalSpectrumGeneratorTrainer_test
   SvmTheoreticalSpectrumGeneratorSet_test
   TheoreticalSpectrumGenerator_test
   TrypticIterator_test
@@ -316,6 +317,7 @@ set(chemistry_executables_list
 
 
 set(analysis_executables_list
+	AScore_test
 	BaseGroupFinder_test
 	BaseSuperimposer_test
 	CompNovoIdentificationBase_test 

@@ -31,7 +31,6 @@
 
 namespace OpenMS
 {
-
   QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter, DoubleReal mz_diameter) : grid_(HashGrid(rt_diameter, mz_diameter))
   {
     if(data.size()<2)
@@ -57,7 +56,7 @@ namespace OpenMS
     while (grid_.getNumberOfElements() > 0)
     {
       setProgress(number_of_elements - grid_.getNumberOfElements());
-      QTSILACCluster act_cluster = QTClust(grid_);
+      QTSILACCluster act_cluster = QTClust_(grid_);
 
       //store the current cluster
       clusters_.push_back(act_cluster);
@@ -71,7 +70,7 @@ namespace OpenMS
       }
     }
 
-    Size cluster_id = 0;
+    Int cluster_id (0);
 
     //put the clusters in the cluster vector
     std::vector<std::vector<DataPoint*> > cluster_vector;
@@ -93,7 +92,7 @@ namespace OpenMS
     return cluster_vector;
   }
 
-  QTSILACCluster QTClustering::QTClust(HashGrid& act_grid)
+  QTSILACCluster QTClustering::QTClust_(HashGrid& act_grid)
   {
     //return single element clusters
     if (act_grid.getNumberOfElements() == 1)

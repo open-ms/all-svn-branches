@@ -87,39 +87,39 @@ class OPENMS_DLLAPI HashClustering : public ProgressLogger
 	/**
 	 * @brief Calculates initial distances
 	 */
-   void init();
+   void init_();
 
 	/**
 	 * @brief Merges two DataSubsets
 	 */
-   void merge();
+   void merge_();
 
 	/**
 	 * @brief Finds the two DataSubsets with minimal distance
 	 * @param subset1 first DataSubset
 	 * @param subset2 second DataSubset
 	 */
-   void updateMinElements();
+   void updateMinElements_();
 
 	/**
    * @brief Calculates the distance of two DataSubsets using <i>getDistance</i> of the clustering method
    * @param subset1 first DataSubset
 	 * @param subset2 second DataSubset
 	 */
-   DoubleReal getDistance(DataSubset& subset1, DataSubset& subset2);
+   DoubleReal getDistance_(DataSubset& subset1, DataSubset& subset2);
 
 	/**
 	 * @brief Calculates the distance of two DataPoints using <i>getDistance</i> of the clustering method
 	 * @param point1 first DataPoint
 	 * @param point2 second DataPoint
 	 */
-   DoubleReal getDistance(DataPoint& point1, DataPoint& point2);
+   DoubleReal getDistance_(DataPoint& point1, DataPoint& point2);
 
 	/**
 	 * @brief Calculates the silhouette values for any possible cluster number
 	 * @param tree hierarchical clustering tree
 	 */
-   std::vector< Real > averageSilhouetteWidth(DataSubset& subset);
+   std::vector<Real> averageSilhouetteWidth_(DataSubset& subset);
 
 	/**
    * @brief Method to calculate a partition resulting from a certain step in clustering given by the number of clusters
@@ -141,7 +141,7 @@ class OPENMS_DLLAPI HashClustering : public ProgressLogger
    class OPENMS_DLLAPI InsufficientInput : public Exception::BaseException
    {
      public:
-       InsufficientInput(const char* file, int line, const char* function, const char* message = "not enough data points to cluster anything") throw();
+       InsufficientInput(const char* file, int line, const char* function, const char* message= "not enough data points to cluster anything") throw();
        virtual ~InsufficientInput() throw();
    };
 
@@ -164,16 +164,16 @@ class OPENMS_DLLAPI HashClustering : public ProgressLogger
 	 */
    HashClustering(std::vector<DataPoint>& data, DoubleReal rt_threshold, DoubleReal mz_threshold, ClusteringMethod& method);
 
-	/**
-	 * @brief remove points that have no immediate neighbours
-	 */
-  void removeIsolatedPoints();
-  
+  /**
+   * @brief remove points that have no immediate neighbours
+   */
+//   void removeIsolatedPoints();
+
 	/**
 	 * @brief Starts the clustering and returns a vector of subtrees when finished
 	 */
-  void performClustering();
-  
+   void performClustering();
+
 	/**
 	 * @brief Gets the hierarchical clustering subtrees after clustering has been performed. If the data has not been clustered yet, the method returns an empty vector
 	 * @param subtrees vector of subtrees, which will be filled after the clustering process

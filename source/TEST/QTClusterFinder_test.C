@@ -36,7 +36,7 @@
 using namespace OpenMS;
 using namespace std;
 
-START_TEST(QTClusterFinder, "$Id: QTClusterFinder_test.C 8024 2011-02-24 02:45:38Z hendrikweisser $")
+START_TEST(QTClusterFinder, "$Id: QTClusterFinder_test.C 8122 2011-03-03 20:57:20Z hendrikweisser $")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -68,7 +68,7 @@ START_SECTION((static const String getProductName()))
 }
 END_SECTION
 
-START_SECTION((void run(const vector<FeatureMap<> >&, ConsensusMap&)))
+START_SECTION((void run(const std::vector<FeatureMap<> >& input_maps, ConsensusMap& result_map)))
 {
   vector<FeatureMap<> > input(2);
   Feature feat1;
@@ -237,7 +237,7 @@ START_SECTION((void run(const vector<FeatureMap<> >&, ConsensusMap&)))
 }
 END_SECTION
 
-START_SECTION((void run(const std::vector<ConsensusMap>&, ConsensusMap&)))
+START_SECTION((void run(const std::vector<ConsensusMap>& input_maps, ConsensusMap& result_map)))
 {
 	NOT_TESTABLE; // same as "run" for feature maps (tested above)
 }

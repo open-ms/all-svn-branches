@@ -25,8 +25,8 @@
 // $Authors: Sandro Andreotti $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_CHEMISTRY_SvmTheoreticalSpectrumGeneratorTrainer_H
-#define OPENMS_CHEMISTRY_SvmTheoreticalSpectrumGeneratorTrainer_H
+#ifndef OPENMS_CHEMISTRY_SVMTHEORETICALSPECTRUMGENERATORTRAINER_H
+#define OPENMS_CHEMISTRY_SVMTHEORETICALSPECTRUMGENERATORTRAINER_H
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/CHEMISTRY/SvmTheoreticalSpectrumGenerator.h>
@@ -35,7 +35,24 @@
 
 namespace OpenMS
 {
-  class OPENMS_DLLAPI SvmTheoreticalSpectrumGeneratorTrainer: public DefaultParamHandler
+  /**
+   @brief Train SVM models that are used by SvmTheoreticalSpectrumGenerator
+
+   @htmlinclude OpenMS_SvmTheoreticalSpectrumGeneratorTrainer.parameters
+
+   This class implements the algorithm used by the homonymous tool which can be
+   used to train models for MS/MS spectrum simulation.\n
+   For the primary ion types (y, b) a SVM is trained using the libSVM library.\n
+   All important libSVM parameters are accessible as parameters.\n
+   Please refer to the libSVM manuals for detailed description of the parameters.
+   Default values are choses as in the svm-training tool delivered with libSVM.\n
+
+   For the secondary types (a, c, x, z, losses, b2, y2) a simple Bayesian model is used.
+
+   @ingroup Chemistry
+   */
+
+  class OPENMS_DLLAPI SvmTheoreticalSpectrumGeneratorTrainer : public DefaultParamHandler
   {
     typedef SvmTheoreticalSpectrumGenerator::IonType IonType;
     typedef SvmTheoreticalSpectrumGenerator::DescriptorSet DescriptorSet;
@@ -82,7 +99,10 @@ namespace OpenMS
       /// Normalizes the intensity of the peaks in the input data
       void normalizeIntensity(PeakSpectrum &S) const;
 
+    protected:
 
+      /// Write a training file that can be passed to libsvm command line tools
+      void write_training_file_(std::vector<DescriptorSet> &training_input, std::vector<DoubleReal> &training_output, String filename);
 
   };
 }

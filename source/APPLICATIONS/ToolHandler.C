@@ -85,7 +85,7 @@ namespace OpenMS
 		tools_map["PILISModel"] = Internal::ToolDescription("PILISModel", "Protein/peptide Processing");
 		tools_map["PTModel"] = Internal::ToolDescription("PTModel", "Peptide property prediction");
 		tools_map["PTPredict"] = Internal::ToolDescription("PTPredict", "Peptide property prediction");
-		tools_map["PeakPicker"] = Internal::ToolDescription("PeakPicker", "Signal processing and preprocessing", StringList::create("wavelet,high_res"));
+		tools_map["PeakPicker"] = Internal::ToolDescription("PeakPicker", "Signal processing and preprocessing", StringList::create("wavelet,high_res,superhirn"));
 		tools_map["PepNovoAdapter"] = Internal::ToolDescription("PepNovoAdapter", "Protein/peptide Identification");
 		tools_map["PeptideIndexer"] = Internal::ToolDescription("PeptideIndexer", "Protein/peptide Processing");
 		tools_map["PrecursorIonSelector"] = Internal::ToolDescription("PrecursorIonSelector", "Targeted Experiments");

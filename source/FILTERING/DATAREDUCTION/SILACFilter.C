@@ -322,7 +322,7 @@ namespace OpenMS
       // calculate akima interpolation for region around mz (+- maxMzDeviation) and store in vector akimaMz
       // starting position: mz - maxMzDeviation
       // ending position: mz + maxMzDeviation
-      // 19 steps, stepwidth = maxMzDeviation / 18
+      // 19 steps, stepwidth = maxMzDeviation / 30 each
       // akima interpolation for position x
       Size i = 0;
       for (DoubleReal x = mz - starting_offset; x <= mz + maxMzDeviation; x += stepwidth)
@@ -334,7 +334,7 @@ namespace OpenMS
       // calculate akima interpolation for region around mz + expectedMzShift (- 2 * maxMzDeviation, + maxMzDeviation) and store in vector akimaMzShift
       // starting position: mz - 2 * maxMzDeviation
       // ending position: mz + maxMzDeviation
-      // 19 steps, maxMzDeviation / 18 each
+      // 19 steps, maxMzDeviation / 30 each
       // akima interpolation for position (x + expectedMzShift)
       std::vector<DoubleReal> akimaMzShift(akimaMz_size, 0.0);
       i = 0;
@@ -393,17 +393,33 @@ namespace OpenMS
       gsl_spline* spline_correlation = gsl_spline_alloc(gsl_interp_cspline, mzShifts.size());
       gsl_spline_init(spline_correlation, &(*mzShifts.begin()), &(*correspondingAutoCorrelations.begin()), mzShifts.size());
 
+      DoubleReal last_intensity_fwd = 0.0;
+      DoubleReal current_intensity_fwd = 0.0;
+      DoubleReal next_intensity_fwd = 0.0;
+      DoubleReal last_intensity_bwd = 0.0;
+      DoubleReal current_intensity_bwd = 0.0;
+      DoubleReal next_intensity_bwd = 0.0;
 
       for (DoubleReal current_position = 0.0; current_position <= maxMzDeviation; current_position += stepwidth)
       {
         // search for first maximum in + direction and check preconditions
-        DoubleReal last_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position - stepwidth, acc_correlation);
-        DoubleReal current_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position, acc_correlation);
-        DoubleReal next_intensity = gsl_spline_eval (spline_correlation, expectedMzShift + current_position + stepwidth, acc_correlation);
+        if (current_position == 0.0)
+        {
+          last_intensity_fwd = gsl_spline_eval (spline_correlation, expectedMzShift + current_position - stepwidth, acc_correlation);
+          current_intensity_fwd = gsl_spline_eval (spline_correlation, expectedMzShift + current_position, acc_correlation);
+          next_intensity_fwd = gsl_spline_eval (spline_correlation, expectedMzShift + current_position + stepwidth, acc_correlation);
+        }
+
+        else
+        {
+          last_intensity_fwd = current_intensity_fwd;
+          current_intensity_fwd = next_intensity_fwd;
+          next_intensity_fwd = gsl_spline_eval (spline_correlation, expectedMzShift + current_position + stepwidth, acc_correlation);
+        }
 
         // search for a current m/z shift larger than the expected one
-        // conditions: intensity at position (mz + expectedMzShift + current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
-        if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_aki_, mz + expectedMzShift + current_position, SILACFiltering::current_aki_) > SILACFiltering::intensity_cutoff_) // Why fixed intensity cutoffs?
+        // coditions: intensity at position (mz + expectedMzShift + current_position) > intensity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
+        if (current_intensity_fwd > last_intensity_fwd && current_intensity_fwd > next_intensity_fwd && gsl_spline_eval (SILACFiltering::spline_aki_, mz + expectedMzShift + current_position, SILACFiltering::current_aki_) > SILACFiltering::intensity_cutoff_)
         {
           gsl_spline_free(spline_correlation);      // free interpolation object
           gsl_interp_accel_free(acc_correlation);     // free accelerator object
@@ -411,19 +427,30 @@ namespace OpenMS
         }
 
         // search for first maximum in - direction and check preconditions
-        last_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position - stepwidth, acc_correlation);
-        current_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position, acc_correlation);
-        next_intensity = gsl_spline_eval(spline_correlation, expectedMzShift - current_position + stepwidth, acc_correlation);
+        if (current_position == 0.0)
+        {
+          last_intensity_bwd = gsl_spline_eval(spline_correlation, expectedMzShift - current_position - stepwidth, acc_correlation);
+          current_intensity_bwd = gsl_spline_eval(spline_correlation, expectedMzShift - current_position, acc_correlation);
+          next_intensity_bwd = gsl_spline_eval(spline_correlation, expectedMzShift - current_position + stepwidth, acc_correlation);
+        }
+
+        else
+        {
+          next_intensity_bwd = current_intensity_bwd;
+          current_intensity_bwd = last_intensity_bwd;
+          last_intensity_bwd = gsl_spline_eval(spline_correlation, expectedMzShift - current_position - stepwidth, acc_correlation);
+        }
 
         // search for an current m/z shift smaller than the expected one
-        // conditions: intensity at position (mz + expectedMzShift - current_position) > intesity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
-        if (current_intensity > last_intensity && current_intensity > next_intensity && gsl_spline_eval (SILACFiltering::spline_aki_, mz + expectedMzShift - current_position, SILACFiltering::current_aki_) > SILACFiltering::intensity_cutoff_)
+        // conditions: intensity at position (mz + expectedMzShift - current_position) > intensity_cutoff (intensity calculated with akima interpolation based on "intensities_vec" from SILACFiltering)
+        if (current_intensity_bwd > last_intensity_bwd && current_intensity_bwd > next_intensity_bwd && gsl_spline_eval (SILACFiltering::spline_aki_, mz + expectedMzShift - current_position, SILACFiltering::current_aki_) > SILACFiltering::intensity_cutoff_)
         {
           gsl_spline_free(spline_correlation);      // free interpolation object
           gsl_interp_accel_free(acc_correlation);     // free accelerator object
           return expectedMzShift - current_position;      // return exact position
         }
       }
+
       gsl_spline_free(spline_correlation);      // free interpolation object
       gsl_interp_accel_free(acc_correlation);     // free accelerator object
       return -1;      // return -1 if no autocorrelation exists for expectedMzShift

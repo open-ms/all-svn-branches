@@ -214,11 +214,7 @@ namespace OpenMS
                     blackArea.setMaxY(rt + 10);     // set max rt position of area to be blacklisted
                     
                     // Remember relative m/z shift (since the blacklisting should not apply to filters of the same points of the same relative m/z shift).
-                    //Int charge = (*filter_it)->charge_;
-                    //std::vector<DoubleReal> mass_separations;
-                    //mass_separations.insert(mass_separations.begin(), (*filter_it)->mass_separations.begin(), (*filter_it)->mass_separations.end());
-                    DoubleReal relative_peak_position = *peak_positions_it - mz; // or mz_it->getMZ() ??
-                    
+                    DoubleReal relative_peak_position = *peak_positions_it - mz;
                     
                     // Does the new black area overlap with existing areas in the blacklist?
                     bool overlap = false;
@@ -287,7 +283,7 @@ namespace OpenMS
                     }
                   }
 
-/*                  // DEBUG: save global blacklist
+/*                  // DEBUG: save global blacklist as .csv
                   ofstream blacklistFile;
                   blacklistFile.open ("blacklist.csv");
 

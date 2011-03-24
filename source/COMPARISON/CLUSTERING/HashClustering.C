@@ -72,6 +72,7 @@ namespace OpenMS
     return method_->getDistance(point1, point2);
   }
 
+
   // Calculate initial distances
   void HashClustering::init_()
   {
@@ -143,8 +144,10 @@ namespace OpenMS
     }
   }
 
+
   typedef std::map<GridElement*,DistanceSet::iterator> IteratorMap;
   typedef std::map<std::pair<int, int>, std::list<GridElement*> > ElementMap;
+
 
   void HashClustering::merge_()
   {
@@ -348,7 +351,7 @@ namespace OpenMS
 
     // Since the distance set is sorted by the distances, it is sufficient to take the first element as the minimal distance element
     DistanceSet::index<Dist>::type::iterator dist_pos = dist_elements.begin();
-    if (dist_pos!=dist_elements.end())
+    if (dist_pos != dist_elements.end())
     {
       DistanceEntry entry =* dist_pos;
       min_distance_ = entry.distance;
@@ -375,14 +378,14 @@ namespace OpenMS
         Int immediateNeighbours = 0;    // number of immediate neighbours
 
         // loop over 8 neighbouring grid cells plus the grid cell itself
-        for (Int k = i-1; k <= i+1; ++k)
+        for (Int k = i - 1; k <= i + 1; ++k)
         {
           if (k < 0 || k > grid_.getGridSizeX())
           {
             continue;
           }
 
-          for (Int l = j-1; l <= j+1; ++l)
+          for (Int l = j - 1; l <= j + 1; ++l)
           {
             if (l < 0 || l > grid_.getGridSizeY())
             {
@@ -439,7 +442,7 @@ namespace OpenMS
 
   std::vector< Real > HashClustering::averageSilhouetteWidth_(DataSubset& subset)
   {
-    std::vector<SILACTreeNode>& tree=subset.tree;
+    std::vector<SILACTreeNode>& tree = subset.tree;
 
     std::vector< Real > average_silhouette_widths; //for each step from the average silhouette widths of the clusters
     std::map<DataPoint*, Real > interdist_i; //for each element i holds the min. average intercluster distance in cluster containing i
@@ -448,7 +451,7 @@ namespace OpenMS
 
     // Initial leafs
     std::set<DataPoint*> leafs;
-    for (std::vector<SILACTreeNode>::iterator it=tree.begin(); it!=tree.end(); ++it)
+    for (std::vector<SILACTreeNode>::iterator it = tree.begin(); it != tree.end(); ++it)
     {
       leafs.insert(it->data1);
       leafs.insert(it->data2);
@@ -470,7 +473,7 @@ namespace OpenMS
     for (; it != leafs.end(); ++it)
     {
       std::set<DataPoint*>::iterator jt = leafs.begin();
-      for ( ; *jt !=*it; ++jt)
+      for ( ; *jt != *it; ++jt)
       {
         if(getDistance_(**it, **jt) < interdist_i[*it])
         {
@@ -488,7 +491,6 @@ namespace OpenMS
     // Initial cluster state
     std::map<DataPoint*, std::vector < DataPoint* > > clusters;
 
-
     for (std::set<DataPoint*>::iterator it = leafs.begin(); it != leafs.end(); ++it)
     {
       std::vector < DataPoint* > v;
@@ -502,7 +504,10 @@ namespace OpenMS
     {
 
       if (*tree_it == tree.back()) //last steps silhouettes would be all 0 respectively not defined
+      {
         break;
+      }
+
       for (std::set<DataPoint*>::iterator it = leafs.begin(); it != leafs.end(); ++it)
       {
         std::vector<DataPoint*>::iterator in_left = std::find(clusters[tree_it->data1].begin(), clusters[tree_it->data1].end(), *it);
@@ -550,7 +555,7 @@ namespace OpenMS
               interdist_merged += getDistance_(**it, *clusters[k][j]);
             }
             interdist_merged += (clusters[cluster_with_interdist[*it]].size()*interdist_i[*it]);
-            interdist_merged /= (Real)(clusters[k].size()+clusters[cluster_with_interdist[*it]].size());
+            interdist_merged /= (Real)(clusters[k].size() + clusters[cluster_with_interdist[*it]].size());
 
             // if new inderdist is smaller that old min. nothing else has to be done
             if (interdist_merged <= interdist_i[*it])
@@ -609,7 +614,12 @@ namespace OpenMS
             {
               intradist_i[*it] += getDistance_(**it, *clusters[k][j]);
             }
-            intradist_i[*it] /= (Real)(clusters[k].size()+(clusters[l].size()-1));
+
+            // bugfix to avoid "nan" that occur from getDistance_ or by dividing through 0 ("nan" influences asw calculation and leads to wrong clusters)
+            if (intradist_i[*it] != intradist_i[*it] || clusters[k].size() + clusters[l].size() - 1 != 0)
+            {
+              intradist_i[*it] /= (Real)(clusters[k].size() + (clusters[l].size() - 1));
+            }
           }
           else      //s(i)_nr (element_of) left or right
           {
@@ -619,12 +629,12 @@ namespace OpenMS
             intradist_i[*it] /= (Real)(clusters[k].size()+(clusters[l].size() - 1));
 
             // Find new min av. interdist_i
-            interdist_i[*it]=std::numeric_limits<Real>::max();
+            interdist_i[*it] = std::numeric_limits<Real>::max();
             for (std::map<DataPoint*, std::vector < DataPoint* > >::iterator uit = clusters.begin(); uit != clusters.end(); ++uit)
             {
-              if(uit->first!=l && uit->first!=k && !uit->second.empty())
+              if(uit->first != l && uit->first != k && !uit->second.empty())
               {
-                Real av_interdist_i=0;
+                Real av_interdist_i = 0;
                 for (unsigned int v = 0; v < uit->second.size(); ++v)
                 {
                   av_interdist_i += getDistance_(*uit->second[v],**it);
@@ -632,7 +642,7 @@ namespace OpenMS
                 av_interdist_i /= (Real)uit->second.size();
                 if (av_interdist_i < interdist_i[*it])
                 {
-                  interdist_i[*it]=av_interdist_i;
+                  interdist_i[*it] = av_interdist_i;
                   cluster_with_interdist[*it] = uit->first;
                 }
               }
@@ -643,7 +653,6 @@ namespace OpenMS
 
       // Redo clustering following tree
       // Pushback elements of data2 to data1 (and then erase second)
-
 
       std::map<DataPoint*, std::vector < DataPoint* > >::iterator clusterPos1 = clusters.find(tree_it->data1);
       std::map<DataPoint*, std::vector < DataPoint* > >::iterator clusterPos2 = clusters.find(tree_it->data2);
@@ -657,7 +666,7 @@ namespace OpenMS
       // Calculate average silhouette width for clusters and then overall average silhouette width for cluster step
       Real average_overall_silhouette = 0; // from cluster step
 
-      for (std::map<DataPoint*, std::vector < DataPoint* > >::iterator git=clusters.begin(); git != clusters.end(); ++git)
+      for (std::map<DataPoint*, std::vector < DataPoint* > >::iterator git = clusters.begin(); git != clusters.end(); ++git)
       {
         if(git->second.size() > 1)
         {
@@ -667,16 +676,18 @@ namespace OpenMS
             if(interdist_i[git->second[h]] != 0)
             {
               average_overall_silhouette += (interdist_i[git->second[h]] - intradist_i[git->second[h]]) / std::max(interdist_i[git->second[h]], intradist_i[git->second[h]]);
-
             }
           }
         }
       }
+
       average_silhouette_widths.push_back(average_overall_silhouette / (Real)(tree.size() + 1));
     }
+
     average_silhouette_widths.push_back(0.0);
     return average_silhouette_widths;
   }
+
 
   bool dataPointPtrCompare(DataPoint* d1, DataPoint* d2)
   {
@@ -695,7 +706,7 @@ namespace OpenMS
       {
         break;
       }
-    }
+    }    
 
     std::map<DataPoint*, std::vector<DataPoint*> > cluster_map;
     std::set<DataPoint*>::iterator sit = leafs.begin();
@@ -733,6 +744,7 @@ namespace OpenMS
     std::sort(clusters.begin(), clusters.end());
   }
 
+
   void HashClustering::getSubtrees(std::vector<std::vector<SILACTreeNode> >& subtrees)
   {
     // Extract the subtrees and append them to the subtree vector
@@ -753,7 +765,6 @@ namespace OpenMS
   }
 
 
-
   typedef std::vector<DataPoint*> Cluster;
 
   void HashClustering::createClusters(std::vector<Cluster>& clusters)
@@ -761,7 +772,7 @@ namespace OpenMS
     // Run silhoutte optimization for all subtrees and find the appropriate best_n
     for (ElementMap::iterator it = grid_.begin(); it != grid_.end(); ++it)
     {
-      std::list<GridElement*>& elements=it->second;
+      std::list<GridElement*>& elements = it->second;
       for (std::list<GridElement*>::iterator lit = elements.begin(); lit != elements.end(); ++lit)
       {
         DataSubset* subset_ptr = dynamic_cast<DataSubset*> (*lit);
@@ -806,8 +817,6 @@ namespace OpenMS
           cut_(best_n, act_clusters, subset_ptr->tree);
         }
 
-
-
         // Run through all elements in each cluster and update cluster number
         for (std::vector<Cluster>::iterator cluster_it = act_clusters.begin(); cluster_it != act_clusters.end(); ++cluster_it)
         {
@@ -822,6 +831,7 @@ namespace OpenMS
       }
     }
   }
+
 
   std::vector<std::vector<Real> > HashClustering::getSilhouetteValues()
   {

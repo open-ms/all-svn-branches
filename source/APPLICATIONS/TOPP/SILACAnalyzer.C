@@ -203,10 +203,12 @@ class TOPPSILACAnalyzer
     FeatureMap<> subtree_points;
     MSExperiment<Peak1D> filter_exp;
 
+
   public:
     TOPPSILACAnalyzer()
     : TOPPBase("SILACAnalyzer","Determination of peak ratios in LC-MS data",true)
     {
+
     }
 
 
@@ -555,6 +557,15 @@ class TOPPSILACAnalyzer
           }
         }
       }
+    }
+
+    // create zero-mass-shift to search for peptides if no label is specified
+    if (massShifts.size() == 0)
+    {
+      DoubleReal mass_shift_peptide = 0;
+      vector<DoubleReal> mass_shift_vector_peptide;
+      mass_shift_vector_peptide.push_back(mass_shift_peptide);
+      massShifts.push_back(mass_shift_vector_peptide);
     }
 
     // sort the mass shift vector
@@ -906,12 +917,10 @@ class TOPPSILACAnalyzer
               {
                 DoubleReal intensity_in = String(temp).toDouble();
                 intensities_in.push_back(intensity_in);
-                // cout << "size of intensities_in: " << intensities_in.size() << endl;
               }
               getline( infile, temp );
             } while (!String(temp).hasPrefix("</"));
             intensities_vector_in.push_back(intensities_in);
-            // cout << "size of intensities_vector_in: " << intensities_vector_in.size() << endl;
             intensities_in.clear();
             state = VECTOR_OF_INTENSITIES_STATE;
             break;
@@ -925,7 +934,6 @@ class TOPPSILACAnalyzer
               {
                 DoubleReal mass_shift_in = String(temp).toDouble();
                 mass_shifts_in.push_back(mass_shift_in);
-                // cout << "size of mass_shifts_in: " << mass_shifts_in.size() << endl;
               }
               getline( infile, temp );
             } while (!String(temp).hasPrefix("</"));
@@ -933,7 +941,6 @@ class TOPPSILACAnalyzer
             mass_shifts_in.clear();
             getline( infile, temp );      // temp steht auf </DataPoint>
             data_points_in.push_back(data_point_in);
-            // cout << "size of data_points_in: " << data_points_in.size() << endl;
             state = DATA_POINT_STATE;
             break;
 
@@ -976,6 +983,7 @@ class TOPPSILACAnalyzer
 
       if (data.size() >= 2)
       {
+        Int temp = 0;
         // combine corresponding DataPoints
         vector<vector<DataPoint> >::iterator data_it_1 = data.begin();      // first iterator over "data" to get first DataPoint for combining
         vector<vector<DataPoint> >::iterator data_it_2 = data_it_1 + 1;     // second iterator over "data" to get second DataPoint for combining
@@ -984,7 +992,7 @@ class TOPPSILACAnalyzer
         vector<DataPoint>::iterator it_2;     // second inner iterator over elements of second DataPoint
 
         while (data_it_1 < data_it_end)      // check for combining as long as first DataPoint is not second last elment of "data"
-        {
+        {          
           while (data_it_1->size() == 0 && data_it_1 < data_it_end)
           {
             ++data_it_1;      // get next first DataPoint
@@ -992,7 +1000,7 @@ class TOPPSILACAnalyzer
           }
 
           if (data_it_1 == data_it_end && data_it_2 == data.end())     // if first iterator points to last element of "data" and second iterator points to end of "data"
-          {
+          {            
             break;      // stop combining
           }
 
@@ -1002,7 +1010,7 @@ class TOPPSILACAnalyzer
           }
 
           if (data_it_2 == data.end())      // if second iterator points to end of "data"
-          {
+          {            
             data_it_2 = data_it_1 + 1;      // reset second iterator
           }
 
@@ -1014,10 +1022,16 @@ class TOPPSILACAnalyzer
           {
             // check if DataPoints have the same charge state and mass shifts
             if (it_1->charge != it_2->charge || it_1->mass_shifts != it_2->mass_shifts)
-            {
+            {              
               if (data_it_2 < data_it_end)     // if DataPpoints differ and second DataPoint is not second last element of "data"
               {
+                temp++;
                 ++data_it_2;      // get next second DataPoint
+                if (temp > 50000)
+                {                  
+                  ++data_it_1;
+                  temp = 0;
+                }
               }
 
               else if (data_it_2 == data_it_end && data_it_1 < data.end() - 2)     // if DataPpoints differ and second DataPoint is second last element of "data" and first DataPoint is not third last element of "data"
@@ -1033,7 +1047,7 @@ class TOPPSILACAnalyzer
             }
 
             else
-            {
+            {              
               // perform combining
               (*data_it_1).insert(data_it_1->end(), data_it_2->begin(), data_it_2->end());      // append second DataPoint to first DataPoint
               (*data_it_2).clear();     // clear second Datapoint to keep iterators valid and to keep size of "data"
@@ -1053,7 +1067,6 @@ class TOPPSILACAnalyzer
             ++data_it_1;      // get next first DataPoint
           }
         }
-
 
         // erase empty DataPoints from "data"
         vector<vector<DataPoint> > data_temp;
@@ -1192,6 +1205,77 @@ class TOPPSILACAnalyzer
     sort(clusters.begin(), clusters.end(), clusterCompare);
 
 
+/*    // store silhouettes for all subtrees as .csv
+    Size silhouette_number = 1;
+
+    ofstream silhouettesFile;
+    silhouettesFile.open ("silhouettes.csv");
+
+    for (std::vector<std::vector<Real> >::iterator asw_vector_it = silhouettes.begin(); asw_vector_it != silhouettes.end(); ++asw_vector_it)
+    {
+      silhouettesFile << silhouette_number;
+
+      for (std::vector<Real>::iterator asw_it = asw_vector_it->begin(); asw_it != asw_vector_it->end(); ++asw_it)
+      {
+        silhouettesFile << "," << *asw_it;
+      }
+
+      silhouettesFile << endl;
+      silhouette_number++;
+    }
+
+    silhouettesFile.close();
+
+    // store all subtrees as .featureXML
+    std::vector<String> colors;
+    // 15 HTML colors
+    colors.push_back("#00FFFF");
+    colors.push_back("#000000");
+    colors.push_back("#0000FF");
+    colors.push_back("#FF00FF");
+    colors.push_back("#008000");
+    colors.push_back("#808080");
+    colors.push_back("#00FF00");
+    colors.push_back("#800000");
+    colors.push_back("#000080");
+    colors.push_back("#808000");
+    colors.push_back("#800080");
+    colors.push_back("#FF0000");
+    colors.push_back("#C0C0C0");
+    colors.push_back("#008080");
+    colors.push_back("#FFFF00");
+
+    Size subtree_number = 1;
+
+    for (std::vector<std::vector<SILACTreeNode> >::iterator subtree_it = subtrees.begin(); subtree_it != subtrees.end(); ++subtree_it)
+    {
+      std::set<DataPoint*> leafs;
+
+      for (std::vector<SILACTreeNode>::iterator tree_it = subtree_it->begin(); tree_it != subtree_it->end(); ++tree_it)
+      {
+        leafs.insert(tree_it->data1);
+        leafs.insert(tree_it->data2);
+      }
+
+      for (std::set<DataPoint*>::iterator leafs_it = leafs.begin(); leafs_it != leafs.end(); ++leafs_it)
+      {
+        //visualize the light variant
+        Feature tree_point;
+        tree_point.setRT((*leafs_it)->rt);
+        tree_point.setMZ((*leafs_it)->mz);
+        tree_point.setIntensity((*leafs_it)->intensities[0][0]);
+        tree_point.setCharge((*leafs_it)->charge);
+        tree_point.setMetaValue("subtree", subtree_number);
+        tree_point.setMetaValue("color", colors[subtree_number%colors.size()]);
+        subtree_points.push_back(tree_point);
+      }
+
+      ++subtree_number;
+    }
+
+    //subtree_points.sortByPosition();
+*/
+
     //--------------------------------------------------
     // consensusXML output
     //--------------------------------------------------
@@ -1323,7 +1407,7 @@ class TOPPSILACAnalyzer
     if (out_clusters != "")
     {
       vector<String> colors;
-      // 16 HTML colors
+      // 15 HTML colors
       colors.push_back("#00FFFF");
       colors.push_back("#000000");
       colors.push_back("#0000FF");
@@ -1434,11 +1518,20 @@ class TOPPSILACAnalyzer
     // featureXML
     if (out_clusters != "")
     {
+      // clusters
       // assign unique ids
       all_cluster_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
       FeatureXMLFile f_file;
       f_file.store(out_clusters, all_cluster_points);
+
+/*      // subtrees
+      // assign unique ids
+      subtree_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+      FeatureXMLFile t_file;
+      t_file.store("subtrees.featureXML", subtree_points);
+*/
     }
 
     return EXECUTION_OK;

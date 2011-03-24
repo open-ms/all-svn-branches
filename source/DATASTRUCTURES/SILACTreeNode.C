@@ -30,15 +30,19 @@
 
 namespace OpenMS
 {
-  SILACTreeNode::SILACTreeNode() {}
-  SILACTreeNode::SILACTreeNode(DataPoint* data1_,DataPoint* data2_,DoubleReal distance_)
+  SILACTreeNode::SILACTreeNode()
   {
-	  data1=data1_;
-	  data2=data2_;
-	  distance=distance_;
+
   }
 
-  bool SILACTreeNode::operator==(const SILACTreeNode &cp) const
+  SILACTreeNode::SILACTreeNode(DataPoint* data1_, DataPoint* data2_, DoubleReal distance_)
+  {
+    data1 = data1_;
+    data2 = data2_;
+    distance = distance_;
+  }
+
+  bool SILACTreeNode::operator == (const SILACTreeNode &cp) const
   {
 	  if( this->data1 != cp.data1) return false;
 	  if( this->data2 != cp.data2) return false;
@@ -46,12 +50,12 @@ namespace OpenMS
 	  return true;
   }
 
-  bool SILACTreeNode::operator!=(const SILACTreeNode &cp) const
+  bool SILACTreeNode::operator != (const SILACTreeNode &cp) const
   {
-	  return !(*this==cp);
+    return !(*this == cp);
   }
 
-  bool SILACTreeNode::operator<(const SILACTreeNode &cp) const
+  bool SILACTreeNode::operator < (const SILACTreeNode &cp) const
   {
 	  if (std::abs(this->distance - cp.distance) <= 0.00000001)
     {

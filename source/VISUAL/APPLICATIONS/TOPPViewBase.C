@@ -1251,7 +1251,8 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 											(data_type == LayerData::DT_CONSENSUS) ||
 											(data_type == LayerData::DT_IDENT));
 
-		bool is_2D = (data_type != LayerData::DT_CHROMATOGRAM);
+    //bool is_2D = (data_type != LayerData::DT_CHROMATOGRAM); Markus
+    bool is_2D = true;
 
     // only one peak spectrum? disable 2D as default
     if (peak_map->size() == 1)

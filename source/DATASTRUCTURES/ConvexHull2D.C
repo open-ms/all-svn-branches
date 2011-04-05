@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -173,11 +173,13 @@ namespace OpenMS
 
   Size ConvexHull2D::compress()
   {
-    // if the m/z span is always the same in consecutive scans, keep the min&max scan only)
+    // iterate over rt scans and check if the m/z span is always the same in consecutive scans
+    // keep the min&max scan only
+    //
     if (map_points_.size()<3) return 0; // we need at least one "middle" scan
 
     HullPointType compressed_map;
-    DBoundingBox<1> last_range;
+
     compressed_map[map_points_.begin()->first] = map_points_.begin()->second; // copy first scan
     HullPointType::ConstIterator pred_it = map_points_.begin();
     HullPointType::ConstIterator middle_it = pred_it; middle_it++;
@@ -187,7 +189,7 @@ namespace OpenMS
 		{
       if (pred_it->second==middle_it->second && middle_it->second==succ_it->second)
       {
-        // middle is identical in range --> skip
+        // middle is identical in m/z range .. do not add to the compressed_map
       }
       else
       {

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -40,7 +40,7 @@ namespace OpenMS
 		@ingroup TOPPAS_elements
 		@ingroup Dialogs
 	*/
-	class OPENMS_DLLAPI TOPPASInputFilesDialog
+	class OPENMS_GUI_DLLAPI TOPPASInputFilesDialog
 		: public QDialog,
 			public Ui::TOPPASInputFilesDialogTemplate
 	{

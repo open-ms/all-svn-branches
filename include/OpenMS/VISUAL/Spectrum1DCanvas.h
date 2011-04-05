@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer:  Timo Sachsenberg$
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ namespace OpenMS
 				
 		@ingroup SpectrumWidgets
 	*/
-	class OPENMS_DLLAPI Spectrum1DCanvas 
+	class OPENMS_GUI_DLLAPI Spectrum1DCanvas 
 		: public SpectrumCanvas
 	{
 		Q_OBJECT
@@ -116,8 +116,8 @@ namespace OpenMS
 			/// Calls SpectrumCanvas::widgetToData_(), takes mirror mode into account
 			PointType widgetToData(float x, float y, bool percentage = false);
 			
-			/// Draws all annotation items of @p layer on @p painter
-			void drawAnnotations(LayerData& layer, QPainter& painter);
+      /// Draws all annotation items of @p layer_index on @p painter
+      void drawAnnotations(Size layer_index, QPainter& painter);
 			
 			/// Performs an alignment of the layers with @p layer_index_1 and @p layer_index_2
 			void performAlignment(Size layer_index_1, Size layer_index_2, const Param& param);
@@ -140,6 +140,11 @@ namespace OpenMS
       /// is the widget shown vertically? (for projections)
       void setSwappedAxis(bool swapped);
 
+      /// Set's the Qt PenStyle of the active layer
+      void setCurrentLayerPeakPenStyle(Qt::PenStyle ps);
+
+      /// Actual painting takes place here
+      void paint(QPainter* paint_device, QPaintEvent* e);
   signals:
       /// Requests to display all spectra in 2D plot
       void showCurrentPeaksAs2D();
@@ -191,6 +196,9 @@ namespace OpenMS
 			/// Draws a dashed line using the highlighted peak color parameter
 			void drawDashedLine_(const QPoint& from, const QPoint& to, QPainter& painter);
 			
+      /// Recalculates the current scale factor based on the specified layer (= 1.0 if intensity mode != IM_PERCENTAGE)
+      void updatePercentageFactor_(Size layer_index);
+
 			/**
 				@brief Sets the visible area
 				
@@ -211,16 +219,28 @@ namespace OpenMS
 
 			/// Draw modes (for each spectrum)
 			std::vector<DrawModes> draw_modes_; 
+      /// Draw style
+      std::vector<Qt::PenStyle> peak_penstyle_;
+
       /// start point of "ruler" for measure mode
       QPoint measurement_start_point_;
       /// Indicates whether this widget is currently in mirror mode
 			bool mirror_mode_;
-			/// Indicates whether an alignment is currently visualized
-			bool show_alignment_;
+
 			/// Indicates whether annotation items are just being moved on the canvas
 			bool moving_annotations_;
+
+      /// Indicates whether an alignment is currently visualized
+      bool show_alignment_;
+      /// Layer index of the first alignment layer
+      Size alignment_layer_1_;
+      /// Layer index of the second alignment layer
+      Size alignment_layer_2_;
       /// Stores the alignment as MZ values of pairs of aligned peaks in both spectra
-      std::vector<std::pair<DoubleReal, DoubleReal > > alignment_;
+      std::vector<std::pair<DoubleReal, DoubleReal > > aligned_peaks_mz_delta_;
+      /// Stores the peak indizes of pairs of aligned peaks in both spectra
+      std::vector<std::pair<Size, Size> > aligned_peaks_indices_;
+
       /// Stores the score of the last alignment
 			DoubleReal alignment_score_;
       /// is this widget showing data with swapped m/z and RT axis? (for drawCoordinates_ only)
@@ -228,7 +248,16 @@ namespace OpenMS
 
 			/// Find peak next to the given position
 			PeakIndex findPeakAtPosition_(QPoint);
-			
+
+      /// Shows dialog and calls addLabelAnnotation_
+      void addUserLabelAnnotation_(const QPoint& screen_position);
+      /// Adds an annotation item at the given screen position
+      void addLabelAnnotation_(const QPoint& screen_position, QString label_text);
+      /// Shows dialog and calls addPeakAnnotation_
+      void addUserPeakAnnotation_(PeakIndex near_peak);
+      /// Add an annotation item for the given peak
+      void addPeakAnnotation_(PeakIndex peak_index, QString text);
+
 			/// Ensure that all annotations are within data range
 			void ensureAnnotationsWithinDataRange_();
 	
@@ -239,7 +268,6 @@ namespace OpenMS
 			void mouseReleaseEvent(QMouseEvent* e);
 			void mouseMoveEvent(QMouseEvent* e);
 			void keyPressEvent(QKeyEvent* e);
-
 			void contextMenuEvent(QContextMenuEvent* e);
 	    //@}
 			

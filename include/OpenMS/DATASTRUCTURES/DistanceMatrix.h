@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -430,7 +430,7 @@ namespace OpenMS
 			OPENMS_PRECONDITION(dimensionsize_ == rhs.dimensionsize_,"DistanceMatrices have different sizes.");
 			for (Size i = 1; i < rhs.dimensionsize(); ++i)
 			{
-				for (Size j = 0; i < i; ++j)
+        for (Size j = 0; j < i; ++j)
 				{
 					if(matrix_[i][j]!=rhs.matrix_[i][j])
 					{

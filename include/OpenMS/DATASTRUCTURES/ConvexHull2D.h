@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -110,6 +110,10 @@ namespace OpenMS
         Removes points from the hull which lie on a straight line and do not contribute to
         the hulls shape. Should be called before saving to disk.
         
+        Example: Consider a series of 3 scans with the same dimension in m/z. After calling
+        compress, the points from the second scan will be removed, since they do not contribute
+        to the convex hull.
+
         @returns Number of removed scans
       **/
       Size compress();

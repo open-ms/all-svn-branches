@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -37,23 +37,34 @@ using namespace std;
 
 typedef FeatureFinderAlgorithmIsotopeWavelet<Peak1D,Feature> FFASS;
 
-FFASS* ptr;
-START_SECTION(FeatureFinderAlgorithmIsotopeWavelet())
+FFASS* ptr = 0;
+FFASS* nullPointer = 0;
+FeatureFinderAlgorithm<Peak1D,Feature>* ffA_nullPointer = 0;
+
+START_SECTION((FeatureFinderAlgorithmIsotopeWavelet()))
 	ptr = new FFASS;
-	TEST_NOT_EQUAL(ptr,0)
+  TEST_NOT_EQUAL(ptr,nullPointer)
+END_SECTION
+
+START_SECTION(IsotopeWaveletTransform<PeakType>::TransSpectrum* prepareHRDataCuda(const UInt i, IsotopeWaveletTransform< PeakType > *iwt))
+	NOT_TESTABLE
+END_SECTION
+
+START_SECTION(MSSpectrum<PeakType>* createHRData(const UInt i))
+	NOT_TESTABLE
 END_SECTION
 
 START_SECTION(virtual ~FeatureFinderAlgorithmIsotopeWavelet())
 	delete ptr;
 END_SECTION
 
-START_SECTION(virtual void run())
+START_SECTION(void run())
 	NOT_TESTABLE
 END_SECTION
 
 START_SECTION((static FeatureFinderAlgorithm<PeakType,FeatureType>* create()))
 	FeatureFinderAlgorithm<Peak1D,Feature>* ptr2 = FFASS::create();
-	TEST_NOT_EQUAL(ptr2,0)
+  TEST_NOT_EQUAL(ptr2,ffA_nullPointer)
 	delete ptr2;
 END_SECTION
 

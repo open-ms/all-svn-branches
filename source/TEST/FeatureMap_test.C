@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -49,9 +49,10 @@ START_TEST(FeatureMap, "$Id$")
 
 
 FeatureMap<>* pl_ptr = 0;
+FeatureMap<>* nullPointer = 0;
 START_SECTION((FeatureMap()))
 	pl_ptr = new FeatureMap<>();
-	TEST_NOT_EQUAL(pl_ptr, 0)
+  TEST_NOT_EQUAL(pl_ptr, nullPointer)
 
 	TEST_EQUAL(pl_ptr->getMin(), FeatureMap<>::PositionType::maxPositive())
 	TEST_EQUAL(pl_ptr->getMax(), FeatureMap<>::PositionType::minNegative())
@@ -528,7 +529,7 @@ START_SECTION((void sortByOverallQuality(bool reverse=false)))
 
 END_SECTION
 
-START_SECTION((void clear(bool clear_meta_data)))
+START_SECTION((void clear(bool clear_meta_data=true)))
   FeatureMap<> map1;
 	map1.setIdentifier("stupid comment");
 	map1.push_back(feature1);

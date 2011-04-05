@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -75,11 +75,16 @@ END_SECTION
 START_SECTION((static void registerChildren()))
 {
   ClusterFunctor* cfp = Factory<ClusterFunctor>::create("AverageLinkage");
-	TEST_NOT_EQUAL( dynamic_cast<AverageLinkage*>(cfp) , 0)
+  AverageLinkage* avl_nullPointer = 0;
+  TEST_NOT_EQUAL( dynamic_cast<AverageLinkage*>(cfp) , avl_nullPointer)
+
   cfp = Factory<ClusterFunctor>::create("SingleLinkage");
-	TEST_NOT_EQUAL( dynamic_cast<SingleLinkage*>(cfp) , 0)
+  SingleLinkage* sl_nullPointer = 0;
+  TEST_NOT_EQUAL( dynamic_cast<SingleLinkage*>(cfp) , sl_nullPointer)
+
   cfp = Factory<ClusterFunctor>::create("CompleteLinkage");
-	TEST_NOT_EQUAL( dynamic_cast<CompleteLinkage*>(cfp) , 0)
+  CompleteLinkage* cl_nullPointer = 0;
+  TEST_NOT_EQUAL( dynamic_cast<CompleteLinkage*>(cfp) , cl_nullPointer)
 }
 END_SECTION
 

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -50,12 +50,13 @@ START_TEST(LocalLinearMap, "$Id$")
 /////////////////////////////////////////////////////////////
 
 LocalLinearMap* ptr = 0;
+LocalLinearMap* nullPointer = 0;
 LocalLinearMap llm;
 
 
 START_SECTION(LocalLinearMap())
 	ptr = new LocalLinearMap();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 	TEST_EQUAL(ptr->getLLMParam().xdim, llm.getLLMParam().xdim)
 	TEST_EQUAL(ptr->getLLMParam().ydim, llm.getLLMParam().ydim)
 	TEST_EQUAL(ptr->getLLMParam().radius, llm.getLLMParam().radius)

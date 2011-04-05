@@ -7,6 +7,7 @@ AdditiveSeries
 BaselineFilter
 CompNovo
 ConsensusID
+ConsensusMapNormalizer
 DBExporter
 DBImporter
 DTAExtractor
@@ -27,16 +28,17 @@ IDFilter
 IDMapper
 IDMerger
 IDRTCalibration
-INIFileEditor
 ITRAQAnalyzer
 InspectAdapter
 InternalCalibration
 MapAligner
 MapNormalizer
+MapStatistics
 MascotAdapter
 MascotAdapterOnline
 NoiseFilter
 OMSSAAdapter
+PhosphoScoring
 PILISIdentification
 PILISModel
 PTModel
@@ -57,12 +59,15 @@ SeedListGenerator
 SpecLibSearcher
 SpectraFilter
 TOFCalibration
-TOPPAS
-TOPPView
 TextExporter
 XTandemAdapter
 InclusionExclusionListCreator
 SpectraMerger
+)
+
+## all targets with need linkage against OpenMS_GUI.lib - they also need to appear in the list above)
+set(TOPP_executables_with_GUIlib
+ExecutePipeline
 )
 
 ### add filenames to Visual Studio solution tree

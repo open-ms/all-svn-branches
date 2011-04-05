@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -301,10 +301,10 @@ namespace OpenMS
 
 		// create mass difference list
 
-		std::cout << "Generating Masses with threshold: " << thresh_logp << " ...\n";
+		LOG_INFO << "Generating Masses with threshold: " << thresh_logp << " ...\n";
     MassExplainer me(potential_adducts_, q_min, q_max, q_span, thresh_logp, max_neutrals);
 		me.compute();
-		std::cout << "done\n";
+		LOG_INFO << "done\n";
 		
 		// holds query results for a mass difference
 		MassExplainer::CompomerIterator md_s, md_e;
@@ -401,10 +401,11 @@ namespace OpenMS
 								il_chargediff.push_back(q2-q1);
 							}
 						}
-						if (i_RT==429 && i_RT_window==432)
+						/*if (i_RT==429 && i_RT_window==432)
 						{
 							std::cout << "DEBUG reached\n hits: " << hits << " with delta_m: " << naive_mass_diff << " and thres: " << thresh_logp << "\n";
 						}
+            */
 
 						overallHits+=hits;
 						// choose most probable hit (TODO think of something clever here)
@@ -423,10 +424,10 @@ namespace OpenMS
 									 	(q1 >= md_s->getNegativeCharges()) && (q2 >= md_s->getPositiveCharges())
 									 )
 								{
-									if (i_RT==528 && i_RT_window==550)
+									/*if (i_RT==528 && i_RT_window==550)
 									{
 										std::cout << "DEBUG reached\n hits: " << hits << " RT1: " << f1.getRT() << " RT2: " << f2.getRT() << " with intrinsic RT shift: " << md_s->getRTShift() << "smaller than " <<  rt_diff_max_local <<"\n";
-									}
+									}*/
 
 									// compomer has better probability
 									if (best_hit.getLogP() < md_s->getLogP())	best_hit = *md_s;
@@ -441,7 +442,7 @@ namespace OpenMS
 									if ( ((q1 - cmp.getNegativeCharges()) % proton.getCharge() != 0) ||
 											 ((q2 - cmp.getPositiveCharges()) % proton.getCharge() != 0))
 									{
-										std::cerr << "Cannot add enough default adduct (" << proton.getFormula() << ") to exactly fit feature charge! Next...)\n";
+										LOG_WARN << "Cannot add enough default adduct (" << proton.getFormula() << ") to exactly fit feature charge! Next...)\n";
 										continue;		
 									}
 
@@ -509,7 +510,7 @@ namespace OpenMS
 			} // RT-window
     } // RT sweepline
     
-    std::cout << no_cmp_hit << " of " << (no_cmp_hit+cmp_hit) << " valid net charge compomer results did not pass the feature charge constraints\n";
+    LOG_INFO << no_cmp_hit << " of " << (no_cmp_hit+cmp_hit) << " valid net charge compomer results did not pass the feature charge constraints\n";
     
     inferMoreEdges_(feature_relation, feature_adducts);
 
@@ -524,22 +525,28 @@ namespace OpenMS
 		out_q.close();
 #endif
 
-		std::cout << "found " << feature_relation.size() << " putative edges (of " << possibleEdges << ")"
-							<< " and avg hit-size of " << (1.0*overallHits/feature_relation.size())
-							<< std::endl;
+    if (feature_relation.size() == 0)
+    {
+      LOG_INFO << "Found NO putative edges. The output generated will be trivial (only singleton clusters and no pairings). "
+        << "Your parameters might need revision or the input was ill-formed." << std::endl;
+    }
+    else
+    {
+		  LOG_INFO << "Found " << feature_relation.size() << " putative edges (of " << possibleEdges << ")"
+						   << " and avg hit-size of " << (1.0*overallHits/feature_relation.size())
+						   << std::endl;
 
-		// -------------------------- //
-		// ** compute ILP solution ** //
-		// -------------------------- //
-		
-		std::cout << "creating wrapper..." << std::endl;
-		// forward set of putative edges to ILP
-		ILPDCWrapper lp_wrapper;
-		std::cout << "Done" << std::endl;
-		// compute best solution
-		DoubleReal ilp_score = lp_wrapper.compute(me, fm_out, feature_relation);
-		std::cout << "score is: " << ilp_score << std::endl;
-		
+		  // -------------------------- //
+		  // ** compute ILP solution ** //
+		  // -------------------------- //
+  		
+		  // forward set of putative edges to ILP
+		  ILPDCWrapper lp_wrapper;
+		  // compute best solution
+		  DoubleReal ilp_score = lp_wrapper.compute(me, fm_out, feature_relation);
+		  LOG_INFO << "ILP score is: " << ilp_score << std::endl;
+    }
+
 		// prepare output consensusMaps
 		cons_map.setProteinIdentifications( fm_out.getProteinIdentifications() );
 		cons_map_p.setProteinIdentifications( fm_out.getProteinIdentifications() );
@@ -611,7 +618,7 @@ namespace OpenMS
 				else
 				{
 					DoubleReal rt_diff =  fabs(fm_out[feature_relation[i].getElementIndex(0)].getRT() - fm_out[feature_relation[i].getElementIndex(1)].getRT());
-					std::cout << "conflict in f_Q! f_RT:" << fm_out[f_idx_v[f_idx]].getRT() << " f_MZ:" << fm_out[f_idx_v[f_idx]].getMZ() << " f_int:" << fm_out[f_idx_v[f_idx]].getIntensity() 
+					LOG_WARN  << "conflict in f_Q! f_RT:" << fm_out[f_idx_v[f_idx]].getRT() << " f_MZ:" << fm_out[f_idx_v[f_idx]].getMZ() << " f_int:" << fm_out[f_idx_v[f_idx]].getIntensity() 
 										<< " Q:" << fm_out[f_idx_v[f_idx]].getCharge() << " PredictedQ:" << feature_relation[i].getCharge((UInt)f_idx) 
 										<< "[[ dRT: " << rt_diff << " dMZ: " << feature_relation[i].getMassDiff() << " score[" << i << "]:" 
 										<< feature_relation[i].getEdgeScore() << " f#:" << fm_out[f_idx_v[f_idx]].getUniqueId() << " " << feature_relation[i].getCompomer().getAdductsAsString((UInt)f_idx) 
@@ -637,7 +644,7 @@ namespace OpenMS
 			}
 			
 		}
-		std::cout << "agreeing charges: " << agreeing_fcharge << "/" << (aedges*2) << std::endl;
+		LOG_INFO << "Agreeing charges: " << agreeing_fcharge << "/" << (aedges*2) << std::endl;
 
 #ifdef DC_DEVEL							
 		out_dead.store("ILP_dead_edges.txt"); // TODO disable
@@ -757,6 +764,7 @@ namespace OpenMS
         }
 
         ConsensusFeature cf(fm_out[f0_idx]);
+        cf.setPeptideIdentifications(vector<PeptideIdentification>()); // delete ID's as they are added later again
 				cf.setQuality(0.0);
         cf.setUniqueId();
         cf.insert((UInt64) fm_out[f0_idx].getMetaValue("map_idx"), fm_out[f0_idx]);
@@ -873,20 +881,14 @@ namespace OpenMS
 			ConsensusFeature::HandleSetType hst = it->getFeatures();
       for (ConsensusFeature::HandleSetType::const_iterator it_h=hst.begin(); it_h!=hst.end();++it_h)
       { //** check if feature in CF has backbone
-        //std::cout << __LINE__ << " " << it_h->getElementIndex() << std::endl;
         backbone_count += (Size)fm_out[fm_out.uniqueIdToIndex(it_h->getUniqueId())].getMetaValue("is_backbone");
-        //std::cout << __LINE__ << std::endl;
       }
 			if (backbone_count==0)
 			{
-				std::cout << "DEBUG: destroy ladder CF# " << cons_map_tmp.size() << " due to no backbone! (F_UIDs:";
 				for (ConsensusFeature::HandleSetType::const_iterator it_h=hst.begin(); it_h!=hst.end();++it_h)
 				{ //** remove cluster members from registry (they will become single features)
-					std::cout << " " << it_h->getUniqueId();
 					clique_register.erase(fm_out.uniqueIdToIndex(it_h->getUniqueId()));
-					//std::cout << __LINE__ << std::endl;
 				}
-				std::cout << ")\n";
 				continue;
 			}
 			
@@ -911,7 +913,7 @@ namespace OpenMS
 			f_single.setMetaValue("charge",f_single.getCharge());
 			fm_out[i] = f_single; // overwrite whatever DC has done to this feature!
 			
-      ConsensusFeature cf(f_single);
+      ConsensusFeature cf(f_single); 
 			cf.setQuality(0.0);
       cf.setUniqueId();
       cf.insert(0, f_single);
@@ -921,7 +923,7 @@ namespace OpenMS
       ++singletons_count;
     }
 		
-		std::cout << "Single features without charge ladder: " << singletons_count << " of " << fm_out.size() << "\n";
+		LOG_INFO << "Single features without charge ladder: " << singletons_count << " of " << fm_out.size() << "\n";
 		
 		
 		// fill the header
@@ -1026,7 +1028,7 @@ namespace OpenMS
 			}
 		} // edge for
 		
-		std::cout << "inferMoreEdges_ raised edge count from " << edges_size << " to " << edges.size() << "\n";
+		LOG_INFO << "Inferring edges raised edge count from " << edges_size << " to " << edges.size() << "\n";
 	}
 
 	void FeatureDeconvolution::printEdgesOfConnectedFeatures_(Size idx_1, Size idx_2, const PairsType& feature_relation)

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -145,11 +145,7 @@ namespace OpenMS
     
           gsl_vector_view x = gsl_vector_view_array( x_init, p );
         
-          const gsl_rng_type * type;
-          gsl_rng * r;
           gsl_rng_env_setup();
-          type = gsl_rng_default;
-          r = gsl_rng_alloc ( type );
           
           // set up the function to be fit
           f.f = (residual); // the function of residuals

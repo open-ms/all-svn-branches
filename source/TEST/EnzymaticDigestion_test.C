@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,9 +41,10 @@ START_TEST(EnzymaticDigestion, "$Id$")
 /////////////////////////////////////////////////////////////
 
 EnzymaticDigestion* e_ptr = 0;
+EnzymaticDigestion* e_nullPointer = 0;
 START_SECTION((EnzymaticDigestion()))
 	e_ptr = new EnzymaticDigestion;
-	TEST_NOT_EQUAL(e_ptr, 0)
+	TEST_NOT_EQUAL(e_ptr, e_nullPointer)
 END_SECTION
 
 START_SECTION([EXTRA] ~EnzymaticDigestion())

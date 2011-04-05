@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -59,7 +59,7 @@ namespace OpenMS
 	
 	TOPPASWidget::~TOPPASWidget()
 	{
-		emit aboutToBeDestroyed(window_id);
+    emit aboutToBeDestroyed(window_id_);
 	}
 	
 	TOPPASScene* TOPPASWidget::getScene()
@@ -203,6 +203,18 @@ namespace OpenMS
 			e->ignore();
 		}
 	}
+
+  // from EnhancedTabBarWidgetInterface
+  void TOPPASWidget::setWindowId(Int window_id)
+  {
+    window_id_ = window_id;
+  }
+
+  // from EnhancedTabBarWidgetInterface
+  Int TOPPASWidget::getWindowId()
+  {
+    return window_id_;
+  }
 
 } //Namespace
 

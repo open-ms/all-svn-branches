@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,10 +41,11 @@ START_TEST(Example, "$Id$")
 using namespace std;
 using namespace OpenMS;
 
-MetaInfoInterface* test;
+MetaInfoInterface* test = 0;
+MetaInfoInterface* nullPointer = 0;
 START_SECTION((MetaInfoInterface()))
 	test = new MetaInfoInterface;
-	TEST_NOT_EQUAL(test, 0)
+  TEST_NOT_EQUAL(test, nullPointer)
 END_SECTION
 
 

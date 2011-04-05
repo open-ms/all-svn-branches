@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl $
+// $Maintainer: Erhan Kenar $
 // $Authors: $
 // --------------------------------------------------------------------------
 
@@ -240,7 +240,7 @@ namespace OpenMS
     for (ConsensusFeature::HandleSetType::const_iterator it = begin(); it != end(); ++it)
     {
 			Int q = it->getCharge();
-			if (q==0) std::cerr << "ConsensusFeature::computeDechargeConsensus() WARNING: Feature's charge is 0! This will lead to M=0!\n";
+			if (q==0) LOG_WARN << "ConsensusFeature::computeDechargeConsensus() WARNING: Feature's charge is 0! This will lead to M=0!\n";
     	DoubleReal adduct_mass;
     	Size index=fm.uniqueIdToIndex(it->getUniqueId());
     	if (index > fm.size()) throw Exception::IndexOverflow(__FILE__,__LINE__,__PRETTY_FUNCTION__, index, fm.size());

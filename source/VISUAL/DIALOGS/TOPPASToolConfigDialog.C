@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -44,7 +44,7 @@ using namespace std;
 
 namespace OpenMS
 {
-	TOPPASToolConfigDialog::TOPPASToolConfigDialog( QWidget * parent, Param& param, String default_dir, String tool_name, String tool_type, QVector<Param::ParamEntry> hidden_entries)
+	TOPPASToolConfigDialog::TOPPASToolConfigDialog( QWidget * parent, Param& param, String default_dir, String tool_name, String tool_type, QVector<String> hidden_entries)
 		: QDialog(parent),
 			param_(&param),
 			default_dir_(default_dir),
@@ -134,9 +134,9 @@ namespace OpenMS
 		//param_->remove("debug");
 		
 		//remove parameters already explained by edges and the "type" parameter
-		foreach (const Param::ParamEntry& pe, hidden_entries_)
+		foreach (const String& name, hidden_entries_)
 		{
-			param_->remove(pe.name);
+			param_->remove(name);
 		}
 		
 		//load data into editor
@@ -167,10 +167,10 @@ namespace OpenMS
 			//store current parameters
 			arg_param_.store(tmp_ini_file.toStdString());
 			//restore other parameters that might be missing
-			String call = tool_name_ + " -write_ini " + String(filename_);
+			String call = tool_name_ + " -write_ini " + String(filename_) + " -ini " + String(tmp_ini_file);
 			if (tool_type_ != "")
 			{
-				call += " -type " + tool_type_ + " -ini " + String(tmp_ini_file);
+				call += " -type " + tool_type_;
 			}
 			
 			if (system(call.c_str()) != 0)

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Timo Sachsenberg$
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ namespace OpenMS
 			
 			This handles editing of items.
 		*/
-		class OPENMS_DLLAPI ParamEditorDelegate 
+		class OPENMS_GUI_DLLAPI ParamEditorDelegate 
 			: public QItemDelegate
 		{
 			Q_OBJECT
@@ -98,7 +98,7 @@ namespace OpenMS
 		};
 		
 		/// QTreeWidget that emits a signal whenever a new row is selected
-		class OPENMS_DLLAPI ParamTree
+		class OPENMS_GUI_DLLAPI ParamTree
 			: public QTreeWidget
 		{
 			Q_OBJECT
@@ -131,7 +131,7 @@ namespace OpenMS
 		
 		@ingroup Visual
 	*/
-	class OPENMS_DLLAPI ParamEditor  
+	class OPENMS_GUI_DLLAPI ParamEditor  
 		: public QWidget,
 			public Ui::ParamEditorTemplate
 	{

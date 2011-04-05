@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -51,7 +51,7 @@ namespace OpenMS
 		@ingroup TOPPAS_elements
 		@ingroup Dialogs
 	*/
-	class OPENMS_DLLAPI TOPPASToolConfigDialog
+	class OPENMS_GUI_DLLAPI TOPPASToolConfigDialog
 		: public QDialog
 	{
 		Q_OBJECT
@@ -66,8 +66,8 @@ namespace OpenMS
 				@param tool_name The name of the tool
 				@param tool_type The type of the tool
 			*/
-			TOPPASToolConfigDialog(QWidget* parent, Param& param, String default_dir, String tool_name, String tool_type, QVector<Param::ParamEntry> hidden_entries);
-			///Desctructor
+			TOPPASToolConfigDialog(QWidget* parent, Param& param, String default_dir, String tool_name, String tool_type, QVector<String> hidden_entries);
+			///Destructor
 			~TOPPASToolConfigDialog();
 	
 		private:		
@@ -86,7 +86,7 @@ namespace OpenMS
 			/// The type of the tool
 			String tool_type_;
 			/// The parameters already explained by in edges
-			QVector<Param::ParamEntry> hidden_entries_;
+			QVector<String> hidden_entries_;
 			
 		protected slots:
 			/// Slot for OK button

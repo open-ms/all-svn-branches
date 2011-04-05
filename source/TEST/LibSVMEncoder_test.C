@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -46,10 +46,11 @@ using namespace std;
 
 LibSVMEncoder* ptr;
 LibSVMEncoder encoder;
+LibSVMEncoder* nullPointer = 0;
 
 START_SECTION((LibSVMEncoder()))
   ptr = new LibSVMEncoder();
-  TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((~LibSVMEncoder()))

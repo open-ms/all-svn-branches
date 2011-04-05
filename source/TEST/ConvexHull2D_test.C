@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -34,7 +34,7 @@
 
 ///////////////////////////
 
-START_TEST(DRange<D>, "$id$")
+START_TEST(ConvexHull2D, "$Id$")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
@@ -43,9 +43,10 @@ using namespace OpenMS;
 using namespace std;
 
 ConvexHull2D* ptr = 0;
+ConvexHull2D* nullPointer = 0;
 START_SECTION((ConvexHull2D()))
 	ptr = new ConvexHull2D;
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(([EXTRA] ~ConvexHull2D()))
@@ -231,6 +232,59 @@ START_SECTION((bool addPoint(const PointType& point)))
 	TEST_EQUAL(tmp.addPoint(DPosition<2>(3.0,2.5)),false)
 	TEST_EQUAL(tmp.addPoint(DPosition<2>(3.0,2.0)),false)
 	TEST_EQUAL(tmp.addPoint(DPosition<2>(0.5,0.5)),true)	
+END_SECTION
+
+START_SECTION((Size compress()))
+{
+  ConvexHull2D tmp;
+
+  tmp.addPoint(DPosition<2>(1.,1.));
+  tmp.addPoint(DPosition<2>(1.,10.));
+
+  tmp.addPoint(DPosition<2>(2.,1.));
+  tmp.addPoint(DPosition<2>(2.,10.));
+
+  tmp.addPoint(DPosition<2>(3.,1.));
+  tmp.addPoint(DPosition<2>(3.,10.));
+
+  DBoundingBox<2> beforeCompress = tmp.getBoundingBox();
+
+  TEST_EQUAL(tmp.compress() , 1)
+
+  // second call should remove no points
+  TEST_EQUAL(tmp.compress() , 0)
+
+
+  TEST_EQUAL(tmp.getBoundingBox(), beforeCompress)
+
+  tmp.addPoint(DPosition<2>(4.,1.));
+  tmp.addPoint(DPosition<2>(4.,10.));
+
+  tmp.addPoint(DPosition<2>(5.,2.));
+  tmp.addPoint(DPosition<2>(5.,10.));
+
+  tmp.addPoint(DPosition<2>(6.,1.));
+  tmp.addPoint(DPosition<2>(6.,10.));
+
+  beforeCompress = tmp.getBoundingBox();
+
+  TEST_EQUAL(tmp.compress() , 1)
+
+  // second call should remove no points
+  TEST_EQUAL(tmp.compress() , 0)
+
+  TEST_EQUAL(tmp.getBoundingBox(), beforeCompress)
+
+  // check if encloses still works correct
+
+  TEST_EQUAL(tmp.encloses(DPosition<2>(1.1, 5.)), true)
+  TEST_EQUAL(tmp.encloses(DPosition<2>(2.1, 5.)), true)
+  TEST_EQUAL(tmp.encloses(DPosition<2>(3.1, 5.)), true)
+  TEST_EQUAL(tmp.encloses(DPosition<2>(4.1, 5.)), true)
+  TEST_EQUAL(tmp.encloses(DPosition<2>(5.1, 5.)), true)
+  TEST_EQUAL(tmp.encloses(DPosition<2>(5.1, 1.)), false)
+  TEST_EQUAL(tmp.encloses(DPosition<2>(5.9, 5.)), true)
+}
 END_SECTION
 
 /////////////////////////////////////////////////////////////

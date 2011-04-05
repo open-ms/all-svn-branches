@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -124,7 +124,7 @@ class TOPPPeakPicker
 		registerOutputFile_("out","<file>","","output peak file ");
 	  setValidFormats_("out",StringList::create("mzML"));
 		registerStringOption_("type","<name>","","peak detection algorithm type",true);
-		setValidStrings_("type", getToolList()[toolName_()] );
+		setValidStrings_("type", ToolHandler::getTypes(toolName_()) );
 		addEmptyLine_();
   	addText_("Parameters for the peak picker algorithm can be given in the 'algorithm' part of INI file.");
   	registerSubsection_("algorithm","Algorithm parameters section");

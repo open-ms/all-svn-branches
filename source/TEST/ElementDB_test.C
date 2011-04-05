@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,16 +43,19 @@ START_TEST(ElementDB, "$Id$")
 /////////////////////////////////////////////////////////////
 
 const ElementDB* e_ptr = 0;
+const ElementDB* e_nullPointer = 0;
+const Element * elem_nullPointer = 0;
+
 START_SECTION(static const ElementDB* getInstance())
 	e_ptr = ElementDB::getInstance();
-	TEST_NOT_EQUAL(e_ptr, 0)
+	TEST_NOT_EQUAL(e_ptr, e_nullPointer)
 END_SECTION
 
 START_SECTION((const Map<String, const Element*>& getNames() const))
 	Map<String, const Element*> names = e_ptr->getNames();
 	const Element * e = e_ptr->getElement("Carbon");
 	TEST_EQUAL(e, names["Carbon"])
-	TEST_NOT_EQUAL(e, 0)
+  TEST_NOT_EQUAL(e, elem_nullPointer)
 END_SECTION
 
 
@@ -60,28 +63,28 @@ START_SECTION((const Map<String, const Element*>& getSymbols() const))
 	Map<String, const Element*> symbols = e_ptr->getSymbols();
 	const Element * e = e_ptr->getElement("Carbon");
 	TEST_EQUAL(e, symbols["C"])
-	TEST_NOT_EQUAL(e, 0)
+  TEST_NOT_EQUAL(e, elem_nullPointer)
 END_SECTION
 
 START_SECTION((const Map<UInt, const Element*>& getAtomicNumbers() const))
 	Map<UInt, const Element*> atomic_numbers = e_ptr->getAtomicNumbers();
 	const Element * e = e_ptr->getElement("Carbon");
 	TEST_EQUAL(e, atomic_numbers[6])
-	TEST_NOT_EQUAL(e, 0)
+  TEST_NOT_EQUAL(e, elem_nullPointer)
 END_SECTION
 
 START_SECTION(const Element* getElement(const String& name) const)
 	const Element * e1 = e_ptr->getElement("Hydrogen");
 	const Element * e2 = e_ptr->getElement("H");
 	TEST_EQUAL(e1, e2);
-	TEST_NOT_EQUAL(e1, 0);
+  TEST_NOT_EQUAL(e1, elem_nullPointer);
 END_SECTION
 
 START_SECTION(const Element* getElement(UInt atomic_number) const)
 	const Element * e1 = e_ptr->getElement("Carbon");
 	const Element * e2 = e_ptr->getElement(6);
 	TEST_EQUAL(e1, e2)
-	TEST_NOT_EQUAL(e1, 0)
+  TEST_NOT_EQUAL(e1, elem_nullPointer)
 END_SECTION
 
 START_SECTION(bool hasElement(const String& name) const)

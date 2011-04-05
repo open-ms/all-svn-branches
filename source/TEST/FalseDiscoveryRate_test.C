@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Chris Bielow $
 // $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
@@ -41,10 +41,11 @@ START_TEST(FalseDiscoveryRate, "$Id$")
 /////////////////////////////////////////////////////////////
 
 FalseDiscoveryRate* ptr = 0;
+FalseDiscoveryRate* nullPointer = 0;
 START_SECTION(FalseDiscoveryRate())
 {
 	ptr = new FalseDiscoveryRate();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -90,8 +91,8 @@ START_SECTION((void apply(std::vector< ProteinIdentification > &fwd_ids, std::ve
   vector<ProteinIdentification> fwd_prot_ids, rev_prot_ids;
   vector<PeptideIdentification> fwd_pep_ids, rev_pep_ids;
   String document_id;
-  IdXMLFile().load(OPENMS_GET_TEST_DATA_PATH("XTandem_fwd_ids.idXML"), fwd_prot_ids, fwd_pep_ids, document_id);
-  IdXMLFile().load(OPENMS_GET_TEST_DATA_PATH("XTandem_rev_ids.idXML"), rev_prot_ids, rev_pep_ids, document_id);
+  IdXMLFile().load(OPENMS_GET_TEST_DATA_PATH("XTandem_fwd_ids_withProtScores.idXML"), fwd_prot_ids, fwd_pep_ids, document_id);
+  IdXMLFile().load(OPENMS_GET_TEST_DATA_PATH("XTandem_rev_ids_withProtScores.idXML"), rev_prot_ids, rev_pep_ids, document_id);
   ptr->apply(fwd_prot_ids, rev_prot_ids);
   TOLERANCE_ABSOLUTE(0.001)
 	
@@ -104,14 +105,15 @@ START_SECTION((void apply(std::vector< ProteinIdentification > &fwd_ids, std::ve
 				ProteinHit hit(*it);
 				DoubleReal fdr(hit.getScore());
 				DoubleReal orig_score((DoubleReal)hit.getMetaValue("XTandem_score"));
-
+        
+        // it gets here, but neither of the conditions below are ever satisfied
 				if (orig_score < -1.8)
 				{
 					TEST_REAL_SIMILAR(fdr, 0)
 				}
-				if ((orig_score == -1.7))
+				if ((orig_score == 0.0))
 				{
-					TEST_REAL_SIMILAR(fdr, 0.0617284)
+					TEST_REAL_SIMILAR(fdr, 0.897384)
 				}
 			}
 		}

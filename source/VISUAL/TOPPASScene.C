@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -567,7 +567,7 @@ namespace OpenMS
 			{
 				// store file names relative to toppas file
 				QDir save_dir(File::path(file).toQString());
-				const QStringList& files_qt = iflv->getFilenames();
+        const QStringList& files_qt = iflv->getInputFilenames();
 				StringList files;
 				foreach (const QString& file_qt, files_qt)
 				{
@@ -661,12 +661,10 @@ namespace OpenMS
 				if (current_type == "input file list")
 				{
 					StringList file_names = vertices_param.getValue(current_id + ":file_names");
-					// make file names absolute again
-					QDir load_dir(File::path(file).toQString());
 					QStringList file_names_qt;
 					for (StringList::const_iterator str_it = file_names.begin(); str_it != file_names.end(); ++str_it)
 					{
-						file_names_qt.push_back(QDir::cleanPath(load_dir.absoluteFilePath(str_it->toQString())));
+						file_names_qt.push_back(QDir::cleanPath(str_it->toQString()));
 					}
 					TOPPASInputFileListVertex* iflv = new TOPPASInputFileListVertex(file_names_qt);
 					current_vertex = iflv;
@@ -1522,7 +1520,13 @@ namespace OpenMS
 					}
 					else if (text == "Open files in TOPPView")
 					{
-						ttv->openInTOPPView();
+            QVector<QStringList> all_out_files = ttv->getAllWrittenOutputFileNames();
+            QVector<TOPPASToolVertex::IOInfo> out_infos;
+            ttv->getOutputParameters(out_infos);
+            if (out_infos.size() == all_out_files.size())
+            {
+              emit openInTOPPView(all_out_files);
+            }
 					}
 					else if (text == "Open containing folder")
 					{
@@ -1537,7 +1541,10 @@ namespace OpenMS
 				{
 					if (text == "Open files in TOPPView")
 					{
-						ifv->openInTOPPView();
+            QStringList in_files = ifv->getInputFilenames();
+            QVector<QStringList> all_in_files;
+            all_in_files += in_files;
+            emit openInTOPPView(all_in_files);
 					}
 					else if (text == "Open containing folder")
 					{
@@ -1564,7 +1571,10 @@ namespace OpenMS
 				{
 					if (text == "Open files in TOPPView")
 					{
-						ofv->openInTOPPView();
+            const QStringList& out_files = ofv->getAllWrittenOutputFileNames();
+            QVector<QStringList> all_out_files;
+            all_out_files += out_files;
+            emit openInTOPPView(all_out_files);
 					}
 					else if (text == "Open containing folder")
 					{
@@ -1589,8 +1599,8 @@ namespace OpenMS
 		}
 		
 		event->accept();
-	}
-	
+	}	
+
 	void TOPPASScene::enqueueProcess(QProcess* p, const QString& command, const QStringList& args)
 	{
 		topp_processes_queue_ << TOPPProcess(p, command, args);
@@ -1646,7 +1656,7 @@ namespace OpenMS
 		}
 		foreach (TOPPASInputFileListVertex* iflv, input_nodes)
 		{
-			if (iflv->getFilenames().empty())
+      if (iflv->getInputFilenames().empty())
 			{
 				strange_vertices.push_back(QString::number(iflv->getTopoNr()));
 			}
@@ -1880,7 +1890,7 @@ namespace OpenMS
 				}
 				used_keys << key;
 				QList<TOPPASResource> resource_list;
-				QStringList files = iflv->getFilenames();
+        QStringList files = iflv->getInputFilenames();
 				foreach (const QString& file, files)
 				{
 					resource_list << TOPPASResource(file);

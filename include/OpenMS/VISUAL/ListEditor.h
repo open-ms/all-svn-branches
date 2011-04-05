@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -29,12 +29,12 @@
 #define OPENMS_VISUAL_LISTEDITOR_H
 
 
-#include<OpenMS/DATASTRUCTURES/StringList.h>
+#include <OpenMS/DATASTRUCTURES/StringList.h>
 #include <QtGui/QDialog>
-#include<QtGui/QListWidget>
+#include <QtGui/QListWidget>
 #include <QtGui/QItemDelegate>
 
-	class QPushButton;
+class QPushButton;
 	
 namespace OpenMS
 {
@@ -47,7 +47,7 @@ namespace OpenMS
 	/**
 		@brief Editor for editing int, double and string lists (including output and input file lists)
 	*/	
-	class OPENMS_DLLAPI ListEditor
+	class OPENMS_GUI_DLLAPI ListEditor
 		:public QDialog
 	{
 		Q_OBJECT
@@ -97,7 +97,7 @@ namespace OpenMS
 	*/	
 	namespace Internal
 	{
-		class OPENMS_DLLAPI ListTable
+		class OPENMS_GUI_DLLAPI ListTable
 			: public QListWidget
 		{
 			Q_OBJECT
@@ -129,7 +129,7 @@ namespace OpenMS
 			
 			This handles editing of items.
 		*/
-		class OPENMS_DLLAPI ListEditorDelegate 
+		class OPENMS_GUI_DLLAPI ListEditorDelegate 
 			: public QItemDelegate
 		{
 			Q_OBJECT

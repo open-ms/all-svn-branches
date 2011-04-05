@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,10 +41,13 @@ START_TEST(FeatureFinderAlgorithmMRM, "$Id$")
 /////////////////////////////////////////////////////////////
 
 FeatureFinderAlgorithmMRM<Peak1D, Feature>* ptr = 0;
+FeatureFinderAlgorithmMRM<Peak1D, Feature>* nullPointer = 0;
+FeatureFinderAlgorithm<Peak1D,Feature>* ffA_nullPointer = 0;
+
 START_SECTION(FeatureFinderAlgorithmMRM())
 {
 	ptr = new FeatureFinderAlgorithmMRM<Peak1D, Feature>();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -92,7 +95,7 @@ START_SECTION((static FeatureFinderAlgorithm<PeakType,FeatureType>* create()))
 {
   FeatureFinderAlgorithm<Peak1D, Feature>* ptr2 = 0;
 	ptr2 = FeatureFinderAlgorithmMRM<Peak1D, Feature>::create();
-	TEST_NOT_EQUAL(ptr2, 0)
+  TEST_NOT_EQUAL(ptr2, ffA_nullPointer)
 	delete ptr;
 }
 END_SECTION

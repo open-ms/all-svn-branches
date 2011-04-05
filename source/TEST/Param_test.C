@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -37,15 +37,21 @@
 using namespace OpenMS;
 using namespace std;
 
+#ifdef _MSC_VER  // disable optimization in VS only for this test (as its size triggers 'heap-overflow' during compile otherwise)
+#pragma warning (disable: 4748) // disable warning that occurs when switching optimzation off (as /GS is still enabled)
+#pragma optimize( "", off )
+#endif
+
 START_TEST(Param, "$Id$")
 
 //////////////////// Param::ParamEntry /////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-Param::ParamEntry* pe_ptr =0;
+Param::ParamEntry* pe_ptr = 0;
+Param::ParamEntry* pe_nullPointer = 0;
 START_SECTION(([Param::ParamEntry] ParamEntry()))
 	pe_ptr = new Param::ParamEntry();
-	TEST_NOT_EQUAL(pe_ptr,0)
+  TEST_NOT_EQUAL(pe_ptr,pe_nullPointer)
 END_SECTION
 
 START_SECTION(([Param::ParamEntry] ~ParamEntry()))
@@ -137,10 +143,11 @@ END_SECTION
 ////////////////// Param::ParamNode ////////////////////////////////
 ////////////////////////////////////////////////////////////////////
 
-Param::ParamNode* pn_ptr =0;
+Param::ParamNode* pn_ptr = 0;
+Param::ParamNode* pn_nullPointer = 0;
 START_SECTION(([Param::ParamNode] ParamNode()))
 	pn_ptr = new Param::ParamNode();
-	TEST_NOT_EQUAL(pn_ptr,0)
+  TEST_NOT_EQUAL(pn_ptr,pn_nullPointer)
 END_SECTION
 
 START_SECTION(([Param::ParamNode] ~ParamNode()))
@@ -292,39 +299,39 @@ START_SECTION(([Param::ParamNode] void insert(const ParamNode& node, const Strin
 	Param::ParamNode node("","");
 	node.entries.push_back(Param::ParamEntry("H",5,"",StringList::create("advanced")));
 	pn.insert(node,"F");
-	TEST_NOT_EQUAL(pn.findEntryRecursive("F:H"),0)
+  TEST_NOT_EQUAL(pn.findEntryRecursive("F:H"),pe_nullPointer)
 
 	pn.insert(node,"F:Z");
-	TEST_NOT_EQUAL(pn.findEntryRecursive("F:Z:H"),0)
+  TEST_NOT_EQUAL(pn.findEntryRecursive("F:Z:H"),pe_nullPointer)
 
 	pn.insert(node,"F:Z:");
-	TEST_NOT_EQUAL(pn.findEntryRecursive("F:Z::H"),0)
+  TEST_NOT_EQUAL(pn.findEntryRecursive("F:Z::H"),pe_nullPointer)
 
 	pn.insert(node,"FD:ZD:D");
-	TEST_NOT_EQUAL(pn.findEntryRecursive("FD:ZD:D:H"),0)
+  TEST_NOT_EQUAL(pn.findEntryRecursive("FD:ZD:D:H"),pe_nullPointer)
 	
 	node.name = "W";
 	pn.insert(node);
-	TEST_NOT_EQUAL(pn.findEntryRecursive("W:H"),0)	
+  TEST_NOT_EQUAL(pn.findEntryRecursive("W:H"),pe_nullPointer)
 
 	pn.insert(node,"Q");
-	TEST_NOT_EQUAL(pn.findEntryRecursive("QW:H"),0)	
+  TEST_NOT_EQUAL(pn.findEntryRecursive("QW:H"),pe_nullPointer)
 END_SECTION
 
 START_SECTION(([Param::ParamNode] void insert(const ParamEntry& entry, const String& prefix = "")))
 	Param::ParamEntry entry("H","",5,StringList::create("advanced"));
 
 	pn.insert(entry);
-	TEST_NOT_EQUAL(pn.findEntryRecursive("H"),0)
+  TEST_NOT_EQUAL(pn.findEntryRecursive("H"),pe_nullPointer)
 		
 	pn.insert(entry,"F");
-	TEST_NOT_EQUAL(pn.findEntryRecursive("FH"),0)
+  TEST_NOT_EQUAL(pn.findEntryRecursive("FH"),pe_nullPointer)
 
 	pn.insert(entry,"G:");
-	TEST_NOT_EQUAL(pn.findEntryRecursive("G:H"),0)
+  TEST_NOT_EQUAL(pn.findEntryRecursive("G:H"),pe_nullPointer)
 
 	pn.insert(entry,"FD:ZD:D");
-	TEST_NOT_EQUAL(pn.findEntryRecursive("FD:ZD:DH"),0)
+  TEST_NOT_EQUAL(pn.findEntryRecursive("FD:ZD:DH"),pe_nullPointer)
 END_SECTION
 
 
@@ -332,10 +339,11 @@ END_SECTION
 ////////////////////////////////////////////////////////////////////
 
 
-Param::ParamIterator* pi_ptr=0;
+Param::ParamIterator* pi_ptr = 0;
+Param::ParamIterator* pi_nullPointer = 0;
 START_SECTION(([Param::ParamIterator] ParamIterator()))
 	pi_ptr = new Param::ParamIterator();
-	TEST_NOT_EQUAL(pi_ptr,0)
+  TEST_NOT_EQUAL(pi_ptr,pi_nullPointer)
 END_SECTION
 
 START_SECTION(([Param::ParamIterator] ~ParamIterator()))
@@ -345,7 +353,7 @@ END_SECTION
 START_SECTION(([Param::ParamIterator] ParamIterator(const Param::ParamNode& root)))
 	Param::ParamNode node;
 	pi_ptr = new Param::ParamIterator(node);
-	TEST_NOT_EQUAL(pi_ptr,0)
+  TEST_NOT_EQUAL(pi_ptr,pi_nullPointer)
 END_SECTION
 
 START_SECTION(([Param::ParamIterator] const Param::ParamEntry& operator*()))
@@ -618,9 +626,10 @@ END_SECTION
 
 
 Param* d10_ptr = 0;
+Param* d10_nullPointer = 0;
 START_SECTION((Param()))
 	d10_ptr = new Param();
-	TEST_NOT_EQUAL(d10_ptr, 0)
+  TEST_NOT_EQUAL(d10_ptr, d10_nullPointer)
 END_SECTION
 
 START_SECTION((~Param()))
@@ -977,6 +986,7 @@ START_SECTION((Param copy(const String &prefix, bool remove_prefix=false) const)
 END_SECTION
 
 START_SECTION((void remove(const String& key)))
+
 	Param p2(p);
 	p2.setValue("test:string2","test,test");
 	
@@ -1002,6 +1012,34 @@ START_SECTION((void remove(const String& key)))
 
 	p2.remove("test:int");
 	TEST_EQUAL(p2.size(),3)
+
+  // test deletion of nodes (when using a trailing ':')
+  p2 = p;
+	p2.setValue("test:string2","an entry");
+  p2.setValue("test:string2:e1","subnode with entries");
+  p2.setValue("test:string2:sn2","subsubnode with entries");
+  p2.setValue("test:string2:sn2:e1","subsubnode with entries");
+  p2.setValue("test:string2:sn2:e2","subsubnode with entries");
+  
+  Param p3 = p2;
+
+  TEST_EQUAL(p2.size(),11)
+
+  std::cout << "p2 is " << p2 << "\n";
+
+  p2.remove("test:"); // test subtree removal
+	TEST_EQUAL(p2.size(),3)
+
+
+  p3.remove("test:string2:sn2:e2:"); // nothing should happen
+  TEST_EQUAL(p3.size(),11)
+
+  p3.remove("test:string2:sn2:e1");  // delete one, the parent node is still populated
+  TEST_EQUAL(p3.size(),10)
+
+  p3.remove("test:string2:sn2:e2");  // delete last entry in subnode sn2
+  TEST_EQUAL(p3.size(),9)
+
 
 END_SECTION
 
@@ -1664,6 +1702,7 @@ START_SECTION((void update(const Param& old_version, const bool report_new_param
   //old.setValue("recently_removed_float",1.1f,"float");  // should not make it into new param
   old.setValue("old_type","a string","string");
   old.setValue("some:version","1.2","old version");
+  old.setValue("some:1:type","unlabeled","type");
   old.setValue("some:type","unlabeled","type");
 	old.setValue("stringlist2",StringList::create("d,e,f,altered"),"stringlist2"); // change some values, we expect them to show up after update()
 	old.setValue("intlist",IntList::create("3"),"intlist");
@@ -1671,12 +1710,14 @@ START_SECTION((void update(const Param& old_version, const bool report_new_param
   Param defaults = common;
   defaults.setValue("old_type",3,"old_type has evolved from string to int"); // as type has changed, this value should be kept
   defaults.setValue("some:version","1.9","new version"); // this value should be kept (due to its reserved name)
-  defaults.setValue("some:type","information","type");   // this value should be kept (due to its reserved name)
+  defaults.setValue("some:1:type","information","type");   // this value should be kept (due to its reserved name at depth 2)
+  defaults.setValue("some:type","information","type");   // this value should NOT be kept (wrong depth)
   defaults.setValue("new_value",3,"new param not present in old");
   
   Param expected = defaults;
 	expected.setValue("stringlist2",StringList::create("d,e,f,altered"),"stringlist2"); // change some values, we expect them to show up after update()
 	expected.setValue("intlist",IntList::create("3"),"intlist");
+  expected.setValue("some:type","unlabeled","type");
   
   // update()
   defaults.update(old);

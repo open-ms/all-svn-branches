@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Timo Sachsenberg $
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -39,13 +39,12 @@ class QDropEvent;
 
 namespace OpenMS
 {
-	class OPENMS_DLLAPI EnhancedWorkspace
+	class OPENMS_GUI_DLLAPI EnhancedWorkspace
 		: public QWorkspace
 	{
 		Q_OBJECT
 		
-		public:
-			
+		public:			
 			/// Constructor
 			EnhancedWorkspace(QWidget* parent);
 			
@@ -59,7 +58,7 @@ namespace OpenMS
 		
 		protected:
 			
-			///@name reimplemented Qt events
+      ///@name Reimplemented Qt events
       //@{
      	void dragEnterEvent(QDragEnterEvent* event);
 			void dragMoveEvent(QDragMoveEvent* event);

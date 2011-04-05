@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Timo Sachsenberg$
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -98,7 +98,7 @@ namespace OpenMS
 	
 	bool Spectrum3DCanvas::finishAdding_()
 	{
-		if (layers_.back().type!=LayerData::DT_PEAK && layers_.back().type!=LayerData::DT_CHROMATOGRAM) //+Chrom Markus
+		if (layers_.back().type!=LayerData::DT_PEAK)
 		{
 			QMessageBox::critical(this,"Error","This widget supports peak data only. Aborting!");
 			return false;

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -101,11 +101,13 @@ START_SECTION((LinearInterpolation(KeyType scale=1., KeyType offset=0.)))
 }
 END_SECTION
 
+LIFD * lifd_nullPointer = 0;
+
 START_SECTION(~LinearInterpolation())
 {
 	LIFD * lifd_ptr = 0;
 	lifd_ptr = new LIFD;
-	TEST_NOT_EQUAL(lifd_ptr,0);
+  TEST_NOT_EQUAL(lifd_ptr,lifd_nullPointer);
 	delete lifd_ptr;
 }
 END_SECTION
@@ -570,8 +572,16 @@ START_SECTION((void addValue( KeyType arg_pos, ValueType arg_value ) ))
 			STATUS(lifd_big.getData());
 
 			std::vector < LIFD::ContainerType::value_type > big_infix ( lifd_big.getData().begin()+5, lifd_big.getData().begin()+10 );
-
-			TEST_EQUAL(lifd_small.getData(),big_infix);
+			TEST_EQUAL(lifd_small.getData().size(), big_infix.size())
+			ABORT_IF(lifd_small.getData().size() != big_infix.size())
+			
+			// test in loop to avoid clang++ compiler error
+			LIFD::ContainerType::const_iterator lifd_it = lifd_small.getData().begin();
+			std::vector < LIFD::ContainerType::value_type >::const_iterator big_infix_it = big_infix.begin();
+			for(;lifd_it != lifd_small.getData().end(), big_infix_it != big_infix.end() ; ++lifd_it , ++big_infix_it)
+			{
+				TEST_EQUAL(*lifd_it,*big_infix_it);
+			}
 		}
 
 	}

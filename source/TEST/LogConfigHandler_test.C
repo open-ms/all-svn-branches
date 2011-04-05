@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -169,9 +169,10 @@ START_SECTION((ostream& getStream(const String &stream_name)))
 }
 END_SECTION
 
+LogConfigHandler* nullPointer = 0;
 START_SECTION((static LogConfigHandler& getInstance()))
 {
-  TEST_NOT_EQUAL(&LogConfigHandler::getInstance(), 0)
+  TEST_NOT_EQUAL(&LogConfigHandler::getInstance(), nullPointer)
 }
 END_SECTION
 

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -55,10 +55,10 @@ namespace OpenMS
 			typedef BasicStatistics<Real> Base;
 			typedef typename Base::RealType RealType;
 
-			Base::clear;
-			Base::sum_;
-			Base::mean_;
-			Base::variance_;
+      using Base::clear;
+      using Base::sum_;
+      using Base::mean_;
+      using Base::variance_;
 			
 		 public:
 

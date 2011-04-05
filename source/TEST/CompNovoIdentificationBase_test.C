@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -101,7 +101,9 @@ START_SECTION([CompNovoIdentificationBase::Permut] virtual ~Permut())
 END_SECTION
 
 START_SECTION([CompNovoIdentificationBase::Permut] void setPermut(const std::set< String >::const_iterator &it))
-	std::set<String>::const_iterator it_zero;
+  std::set<String>str_set;
+  str_set.insert("zero");
+  std::set<String>::const_iterator it_zero = str_set.begin();
 	CompNovoIdentificationBase::Permut perm(it_zero, 50.0);
 	perm.setPermut(it);
 	TEST_EQUAL(*perm.getPermut(), "TESTSTRING");

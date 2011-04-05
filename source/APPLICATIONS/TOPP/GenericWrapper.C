@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -28,14 +28,13 @@
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
 #include <OpenMS/CONCEPT/Factory.h>
-#include <OpenMS/FILTERING/TRANSFORMERS/PreprocessingFunctor.h>
-#include <OpenMS/FORMAT/ToolDescriptionFile.h>
-#include <QFileInfo>
 #include <OpenMS/FORMAT/MzMLFile.h>
+#include <OpenMS/DATASTRUCTURES/Param.h>
 
+#include <QtCore/QProcess>
 #include <QFileInfo>
 #include <QDir>
-#include <QtCore/QProcess>
+
 #include <typeinfo>
 
 using namespace OpenMS;
@@ -117,6 +116,8 @@ using namespace std;
   <ul>
   <li>%TMP  --> The current temp directory, fetched using File::getTempDirectory()
   <li>%BASENAME[file] --> the basename of a file, e.g. c:\tmp\myfile.mzML gives 'myfile'
+  <li>%RND --> generates a long random number, which can be used to generate unique filenames in a <file_pre> tag
+  <li>%WORKINGDIR --> expands to the current working directory (default is '.'), settable by <workingdirectory> tag in the .ttd file.
   <li>%%<param> --> any param registered in the ini_param section, e.g. '%%in'
   </ul>
 
@@ -147,78 +148,94 @@ using namespace std;
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
 
-    const String getExternalToolsPath()
-    {
-      return File::getOpenMSDataPath() + "/TOOLS/EXTERNAL";
-    }
+class TOPPGenericWrapper
+	: public TOPPBase
+{
+	public:
+		TOPPGenericWrapper()
+			: TOPPBase("GenericWrapper", "Allows the generic wrapping of external tools.")
+		{
+		}
 
-    std::vector<Internal::ToolDescription> tools_external;
+	protected:
 
-    const QStringList getExternalToolConfigFiles()
+    /**
+      @brief format filenames and quote stringlists
+    */
+    String paramToString_(const Param::ParamEntry& p)
     {
-      // look at environment in addition?!
-      QStringList paths;
-      paths << getExternalToolsPath().toQString(); // hardcoded OpenMS path
       
-      QStringList all_files;
-      for (int p=0;p<paths.size();++p)
-      {
-        QDir dir(paths[p], "*.ttd");
-        QStringList files = dir.entryList();
-        for (int i=0;i<files.size();++i)
+      if (p.value.valueType() == DataValue::STRING_LIST)
+      { // quote each element
+        StringList val(p.value);
+        if (p.tags.count("input file") || p.tags.count("output file"))
         {
-          files[i] = dir.absolutePath()+QDir::separator()+files[i];
+          for (Size i=0;i<val.size();++i)
+          {
+            val[i] = QDir::toNativeSeparators(val[i].toQString());
+          }
         }
-        all_files << files;
+        return "\"" + val.concatenate("\" \"") + "\"";
       }
-      //StringList list = StringList::create(getExternalToolsPath() + "/" + "msconvert.ttd");
-      return all_files;
-    }
-
-    const StringList getExternalToolNames()
-    {
-      StringList names;
-      std::set<String> unique_check;
-      for (Size i=0;i<tools_external.size();++i)
+      if (p.tags.count("input file") || p.tags.count("output file"))
       {
-        if (unique_check.count(tools_external[i].type[0])>0)
-        {
-          LOG_ERROR << "Type '" << tools_external[i].type[0] << "' exists at least twice and is ambiguous. Please fix!\n";
-          exit(TOPPBase::INCOMPATIBLE_INPUT_DATA);
-        }
-        unique_check.insert(tools_external[i].type[0]);
-        names.push_back(tools_external[i].type[0]);
+        // ensure that file names are formated according to system spec
+        return QDir::toNativeSeparators(p.value.toQString());
       }
-      return names;
-    }
-
-    static void loadToolConfig()
-    {
-      QStringList files = getExternalToolConfigFiles();
-      for (int i=0;i<files.size();++i)
+      else
       {
-        ToolDescriptionFile tdf;
-        std::vector<Internal::ToolDescription> tools;
-        tdf.load(String(files[i]), tools);
-        tools_external.insert(tools_external.end(),tools.begin(),tools.end()); // append
+        return p.value;
       }
     }
 
+    /**
+      @brief Simple compare struct to sort a vector of String by the length of
+      the contained strings
 
-    void createFragment(String& fragment, const Param& param)
+      */
+    struct StringSizeLess
+        : std::binary_function<String, String, bool>
     {
+      bool operator()(String const& left, String const& right) const
+      {
+        return (left.size() < right.size());
+      }
+    };
 
-      //std::cout << " fragment '" << fragment << "' --> '";
+
+    void createFragment_(String& fragment, const Param& param)
+    {
       // e.g.:  -input %BASENAME[%%in].mzML
-      // iterate through all input params and replace with values:
+
+      // we have to make this little detour param -> vector<String>
+      // to sort the param names by length, otherwise we have a
+      // problem with parameter substitution
+      // i.e., if A is a prefix of B and gets replaced first, the
+      // suffix of B remains and will cause trouble!
+      vector<String> param_names;
+      param_names.reserve(param.size());
       for (Param::ParamIterator it=param.begin(); it!=param.end(); ++it)
       {
-        fragment.substitute("%%" + it->name, it->value);
+        param_names.push_back(it->name);
       }
-      if (fragment.hasSubstring("%%")) throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid '%%' found in '" + fragment + "' after replaceing all parameters!", fragment);
+      // sort by length
+      std::sort(param_names.begin(),param_names.end(), reverseComparator( StringSizeLess() ));
+
+      // iterate through all input params and replace with values:
+      for (vector<String>::iterator it=param_names.begin(); it!=param_names.end(); ++it)
+      {
+        fragment.substitute("%%" + *it, paramToString_( param.getEntry(*it)));
+      }
+      if (fragment.hasSubstring("%%")) throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid '%%' found in '" + fragment + "' after replacing all parameters!", fragment);
       
-      // %TMP% replace:
+      // %TMP replace:
       fragment.substitute("%TMP", File::getTempDirectory());
+
+      // %RND replace:
+      fragment.substitute("%RND", String(UniqueIdGenerator::getUniqueId()));
+
+      // %WORKINGDIR replace:
+      fragment.substitute("%WORKINGDIR", tde_.working_directory);
 
       // %BASENAME% replace
       QRegExp rx("%BASENAME\\[(.*)\\]");
@@ -238,39 +255,37 @@ using namespace std;
 
       //std::cout << fragment << "'\n";
     }
+                  
 
 
+    Internal::ToolExternalDetails tde_;
 
-class TOPPGenericWrapper
-	: public TOPPBase
-{
-	public:
-		TOPPGenericWrapper()
-			: TOPPBase("GenericWrapper", "Allows the generic wrapping of external tools.")
-		{
-		}
+    ExitCodes wrapExit(const ExitCodes return_code)
+    {
+      if (return_code!=EXECUTION_OK)
+      {
+        LOG_ERROR << "\n" << tde_.text_fail << "\n";
+      }
+      return return_code;
+    }
 
-	protected:
-  
- 
 		void registerOptionsAndFlags_()
 		{
-      registerSubsection_("tool","tool specific parameters");
-      registerStringOption_("type", "", "", "Which external tool configuration to load?! See '" + getExternalToolsPath() + "'.", true, false);
-      setValidStrings_("type", getExternalToolNames());
+      registerSubsection_("ETool","tool specific parameters");
+      registerStringOption_("type", "", "", "Which external tool configuration to load?! See '" + ToolHandler::getExternalToolsPath() + "'.", true, false);
+      setValidStrings_("type",  ToolHandler::getTypes(toolName_()));
 		}
 
-	  Param getSubsectionDefaults_(const String& section) const
+	  Param getSubsectionDefaults_(const String& /*section*/) const
 	  {
       String type = getStringOption_("type");
       // find params for 'type'
-      for (Size i=0;i<tools_external.size();++i)
+      Internal::ToolDescription gw = ToolHandler::getTOPPToolList(true)[toolName_()];
+      for (Size i=0; i<gw.types.size(); ++i)
       {
-        //std::cout << "type: " << type << "  --- toolname: " << tools_external[i].type << "\n";
-        if (type == tools_external[i].type[0]) 
+        if (type == gw.types[i]) 
         {
-          //std::cout << "found: " << tools_external[i].param << "\n";
-          return tools_external[i].param;
+          return gw.external_details[i].param;
         }
       }
 		  return Param();
@@ -280,16 +295,46 @@ class TOPPGenericWrapper
 		{
       // find the config for the tool:
       String type = getStringOption_("type");
-      Internal::ToolDescription td;
-      for (Size i=0;i<tools_external.size();++i)
+      
+
+      Param tool_param = this->getParam_();
+
+      // check required parameters (TOPPBase does not do this as we did not use registerInputFile_(...) etc)
+      Param p = tool_param.copy("ETool:",true);
+      for (Param::ParamIterator it=p.begin();it!=p.end();++it)
       {
-        if (type == tools_external[i].type[0]) 
+        if ((it->tags).count("required")>0)
         {
-          td = tools_external[i];
+          if (it->value.toString().trim().size()==0 ) // any required parameter should have a value
+          {
+					  LOG_ERROR << "The INI-parameter '"+it->name+"' is required, but was not given! Aborting ...";
+            return wrapExit(CANNOT_WRITE_OUTPUT_FILE);
+          }
+          else if ((it->tags).count("input file")>0) // any required input file should exist
+          {
+            if (!File::exists(it->value))
+            {
+              LOG_ERROR << "Input file '"+String(it->value)+"' does not exist! Aborting ...";
+              return wrapExit(INPUT_FILE_NOT_FOUND);
+            }
+          }
         }
       }
 
-      String command_args = td.commandline;
+      Internal::ToolDescription gw = ToolHandler::getTOPPToolList(true)[toolName_()];
+      for (Size i=0; i<gw.types.size(); ++i)
+      {
+        if (type == gw.types[i]) 
+        {
+          tde_ = gw.external_details[i];
+          if (tde_.working_directory.trim() == "") tde_.working_directory=".";
+          break;
+        }
+      }
+      
+      LOG_INFO << tde_.text_startup << "\n";
+
+      String command_args = tde_.commandline;
       // check for double spaces and warn
       if (command_args.hasSubstring("  "))
       {
@@ -298,17 +343,56 @@ class TOPPGenericWrapper
         {
           command_args.substitute("  "," ");
         }
-        LOG_WARN << "result: " << command_args << "\n";
+        LOG_WARN << "result: " << command_args << std::endl;
+      }
+
+      writeDebug_("CommandLine from ttd (unprocessed): " + command_args, 1);
+
+      // do "pre" moves (e.g. if the wrapped tool works on its data in-place (overwrites) it - we need to make a copy first
+      // - we copy the file
+      // - we set the value of the affected parameter to the copied tmp file, such that subsequent calls target the tmp file
+      for (Size i=0;i<tde_.tr_table.pre_moves.size();++i)
+      {
+        const Internal::FileMapping& fm = tde_.tr_table.pre_moves[i];
+        // find target param:
+        Param p = tool_param.copy("ETool:",true);
+        String target = fm.target;
+        if (!p.exists(target)) throw Exception::InvalidValue(__FILE__,__LINE__,__PRETTY_FUNCTION__, "Cannot find target parameter '" + target + "' being mapped from external tools output!", target);
+        String tmp_location = fm.location;
+        // fragment's placeholder evaluation:
+
+        createFragment_(tmp_location, p);
+
+        // check if target already exists:
+        String target_file = (String)p.getValue(target);
+        if (File::exists(tmp_location))
+        {
+          if (!File::remove(tmp_location))
+          {
+            LOG_ERROR << "While writing a tmp file: Cannot remove conflicting file '"+tmp_location+"'. Check permissions! Aborting ...";
+            return wrapExit(CANNOT_WRITE_OUTPUT_FILE);
+          }
+        }
+        // create the temp file  tmp_location target_file
+        writeDebug_(String("Copying '") + target_file + "' to '" + tmp_location + "'", 1);
+        bool move_ok = QFile::copy(target_file.toQString(),tmp_location.toQString());
+        if (!move_ok)
+        {
+          LOG_ERROR << "Copying the target file '"+tmp_location+"' from '" + target_file + "' failed! Aborting ...";
+          return wrapExit(CANNOT_WRITE_OUTPUT_FILE);
+        }
+        // set the input file's value to the temp file
+        tool_param.setValue(String("ETool:")+target, tmp_location);
       }
 
       ///// construct the command line:
-      // go through mappings:
-      for (std::map<Int, String>::const_iterator it = td.tr_table.mapping.begin(); it != td.tr_table.mapping.end(); ++it)
+      // go through mappings (reverse because replacing %10 must come before %1):
+      for (std::map<Int, String>::reverse_iterator it = tde_.tr_table.mapping.rbegin(); it != tde_.tr_table.mapping.rend(); ++it)
       {
         //std::cout << "mapping #" << it->first << "\n";
         String fragment = it->second;
         // fragment's placeholder evaluation:
-        createFragment(fragment, this->getParam_().copy("tool:",true));
+        createFragment_(fragment, tool_param.copy("ETool:",true));
 
         // replace fragment in cl
         //std::cout << "replace : " << "%"+String(it->first) << " with '" << fragment << "\n";
@@ -317,42 +401,48 @@ class TOPPGenericWrapper
 
       QProcess builder;
       builder.setProcessChannelMode(QProcess::MergedChannels);
-      String call = td.path + " " + command_args;
+      String call = tde_.path + " " + command_args;
 
       writeDebug_("call command: " + call, 1);
 
+      builder.setWorkingDirectory(tde_.working_directory.toQString());
       builder.start(call.toQString());
 
-      if (!builder.waitForFinished())
+      if (!builder.waitForFinished(-1) || builder.exitStatus() != 0 || builder.exitCode()!=0)
       {
-        LOG_ERROR << ("External tool returned with non-zero exit code ("+String(builder.exitCode())+"). Aborting ...");
+        LOG_ERROR << ("External tool returned with non-zero exit code ("+String(builder.exitCode())+"), exit status (" + String(builder.exitStatus()) + ") or timed out. Aborting ...\n");
         LOG_ERROR << ("External tool output:\n"+ String(QString(builder.readAll())));
-        return EXTERNAL_PROGRAM_ERROR;
+        return wrapExit(EXTERNAL_PROGRAM_ERROR);
       }
-      else
-      {
-        LOG_ERROR << ("External tool output:\n"+ String(QString(builder.readAll())));
-      }
+      
+      LOG_INFO << ("External tool output:\n"+ String(QString(builder.readAll())));
 
       
       // post processing (file moving via 'file' command)
-      if (td.tr_table.post_move.location != "")
+      for (Size i=0;i<tde_.tr_table.post_moves.size();++i)
       {
+        const Internal::FileMapping& fm = tde_.tr_table.post_moves[i];
         // find target param:
-        Param p = this->getParam_().copy("tool:",true);
-        String target = td.tr_table.post_move.target;
+        Param p = tool_param.copy("ETool:",true);
+        String target = fm.target;
         if (!p.exists(target)) throw Exception::InvalidValue(__FILE__,__LINE__,__PRETTY_FUNCTION__, "Cannot find target parameter '" + target + "' being mapped from external tools output!", target);
-        String source = td.tr_table.post_move.location;
+        String source = fm.location;
         // fragment's placeholder evaluation:
-        createFragment(source, p);
+        createFragment_(source, p);
         // check if target already exists:
         String target_file = (String)p.getValue(target);
+
+        if (target_file.trim().size()==0) // if target was not given, we skip the copying step (usually for optional parameters)
+				{
+					LOG_INFO << "Parameter '"+target+"' not given. Skipping forwarding of files.\n";
+					continue;
+				}
         if (File::exists(target_file))
         {
           if (!File::remove(target_file))
           {
             LOG_ERROR << "Cannot remove conflicting file '"+target_file+"'. Check permissions! Aborting ...";
-            return CANNOT_WRITE_OUTPUT_FILE;
+            return wrapExit(CANNOT_WRITE_OUTPUT_FILE);
           }
         }
         // move to target
@@ -361,10 +451,13 @@ class TOPPGenericWrapper
         if (!move_ok)
         {
           LOG_ERROR << "Moving the target file '"+target_file+"' from '" + source + "' failed! Aborting ...";
-          return CANNOT_WRITE_OUTPUT_FILE;
+          return wrapExit(CANNOT_WRITE_OUTPUT_FILE);
         }
       }
-      return EXECUTION_OK;
+
+      LOG_INFO << tde_.text_finish << "\n";
+
+      return wrapExit(EXECUTION_OK);
 		}
 };
 
@@ -373,8 +466,6 @@ class TOPPGenericWrapper
 
 int main( int argc, const char** argv )
 {
-  loadToolConfig();
-
 	TOPPGenericWrapper tool;
 	return tool.main(argc,argv);
 }

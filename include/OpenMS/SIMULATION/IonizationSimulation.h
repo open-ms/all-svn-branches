@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -123,6 +123,8 @@ namespace OpenMS {
     
     /**
      @brief counts all basic residues inside the amino acid sequence to give an upper bound on the maximal charge during ESI ionization
+
+     The N-term contributes +1 always. All other ionizable residues (according to param "esi:ionized_residues") in the sequence are summed up.
     */
     UInt countIonizedResidues_(const AASequence & ) const;
     

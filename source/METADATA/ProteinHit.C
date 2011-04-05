@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -38,7 +38,7 @@ namespace OpenMS
 			rank_(0), 
 			accession_(""), 
 			sequence_(""),
-			coverage_(0)
+      coverage_(-1)
   {
   }
   
@@ -49,7 +49,7 @@ namespace OpenMS
   		rank_(rank), 
   		accession_(accession.trim()), 
   		sequence_(sequence.trim()),
-  		coverage_(0)
+  		coverage_(-1)
   {
   }
   

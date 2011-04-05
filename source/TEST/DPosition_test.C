@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -45,9 +45,11 @@ std::cout.precision(writtenDigits<>(DoubleReal()));
 std::cerr.precision(writtenDigits<>(DoubleReal()));
 
 DPosition<10>* d10_ptr = 0;
+DPosition<10>* d10_nullPointer = 0;
+
 START_SECTION((DPosition()))
 	d10_ptr = new DPosition<10>;
-	TEST_NOT_EQUAL(d10_ptr, 0)
+  TEST_NOT_EQUAL(d10_ptr, d10_nullPointer)
 END_SECTION
 
 START_SECTION((~DPosition()))

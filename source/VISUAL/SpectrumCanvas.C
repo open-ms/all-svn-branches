@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Timo Sachsenberg$
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -286,14 +286,15 @@ namespace OpenMS
 	
 	void SpectrumCanvas::paintGridLines_(QPainter& painter)
 	{	
-		if (!show_grid_ || !spectrum_widget_) return;
+    if (!show_grid_ || !spectrum_widget_)
+    {
+      return;
+    }
 
 		QPen p1(QColor(130,130,130));
 		p1.setStyle(Qt::DashLine);
 		QPen p2(QColor(170,170,170));
-		p2.setStyle(Qt::DashLine);
-		QPen p3(QColor(230,230,230));
-		p3.setStyle(Qt::DashLine);
+    p2.setStyle(Qt::DotLine);
 	
 		painter.save();
 
@@ -316,9 +317,6 @@ namespace OpenMS
 					break;
 				case 1:	// style settings for small intervals
 					painter.setPen(p2);
-					break;
-				case 2: // style settings for smalles intervals
-					painter.setPen(p3);
 					break;
 				default:
 					std::cout << "empty vertical grid line vector error!" << std::endl;
@@ -345,9 +343,6 @@ namespace OpenMS
 					break;
 				case 1:	// style settings for small intervals
 					painter.setPen(p2);
-					break;
-				case 2: // style settings for smalles intervals
-					painter.setPen(p3);
 					break;
 				default:
 					std::cout << "empty vertical grid line vector error!" << std::endl;
@@ -444,6 +439,12 @@ namespace OpenMS
 	  getLayer_(i).name = name; 
 		if (i==0 && spectrum_widget_) spectrum_widget_->setWindowTitle(name.toQString());
 	}
+
+  String SpectrumCanvas::getLayerName(const Size i)
+  {
+    OPENMS_PRECONDITION(i < layers_.size(), "SpectrumCanvas::getLayerName(i) index overflow");
+    return getLayer_(i).name;
+  }
 
 	void SpectrumCanvas::changeVisibility(Size i, bool b)
 	{

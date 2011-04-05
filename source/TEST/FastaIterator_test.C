@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,9 +43,10 @@ START_TEST(FastaIterator, "$Id$")
 typedef std::pair <String, String> FASTAEntry;
 
 FastaIterator* ptr = 0;
+FastaIterator* nullPointer = 0;
 START_SECTION(FastaIterator())
 	ptr = new FastaIterator();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(~FastaIterator())
@@ -162,7 +163,7 @@ END_SECTION
 
 START_SECTION(static PepIterator* create())
 	ptr = new FastaIterator();
-	TEST_NOT_EQUAL(ptr->create(),0);
+  TEST_NOT_EQUAL(ptr->create(),nullPointer);
 END_SECTION
 
 /////////////////////////////////////////////////////////////

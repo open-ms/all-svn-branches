@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,9 +43,12 @@ START_TEST(PoseClusteringShiftSuperimposer, "$Id$")
 /////////////////////////////////////////////////////////////
 
 PoseClusteringShiftSuperimposer* ptr = 0;
+PoseClusteringShiftSuperimposer* nullPointer = 0;
+BaseSuperimposer* base_nullPointer = 0;
+
 START_SECTION((PoseClusteringShiftSuperimposer()))
 	ptr = new PoseClusteringShiftSuperimposer();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~PoseClusteringShiftSuperimposer()))
@@ -55,7 +58,7 @@ END_SECTION
 START_SECTION((static BaseSuperimposer* create()))
   BaseSuperimposer* base_ptr = 0;
 	base_ptr = PoseClusteringShiftSuperimposer::create();
-	TEST_NOT_EQUAL(base_ptr, 0)
+  TEST_NOT_EQUAL(base_ptr, base_nullPointer)
   delete (base_ptr);
 END_SECTION
 
@@ -93,8 +96,8 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
 
   std::vector<TransformationDescription> transformations;
   PoseClusteringShiftSuperimposer pcat;
-#if 0 // switch this on for debugging
 	Param params;
+#if 0 // switch this on for debugging
   params.setValue("dump_buckets","tmp_PoseClusteringShiftSuperimposer_buckets");
   params.setValue("dump_pairs","tmp_PoseClusteringShiftSuperimposer_pairs");
   pcat.setParameters(params);
@@ -102,10 +105,11 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
 	pcat.run(input,transformations);
   
 	TEST_EQUAL(transformations.size(),1)
-  TEST_STRING_EQUAL(transformations[0].getName(),"linear")
-	TEST_EQUAL(transformations[0].getParameters().size(),2)
-  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("slope"),1.0)
-  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("intercept"),-20.4)
+  TEST_STRING_EQUAL(transformations[0].getModelType(), "linear")
+	transformations[0].getModelParameters(params);
+	TEST_EQUAL(params.size(), 2)    
+  TEST_REAL_SIMILAR(params.getValue("slope"), 1.0)
+  TEST_REAL_SIMILAR(params.getValue("intercept"), -20.4)
 END_SECTION
 
 /////////////////////////////////////////////////////////////

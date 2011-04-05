@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -40,11 +40,14 @@ START_TEST(O18Labeler, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-O18Labeler* ptr = 0;
+O18Labeler*  ptr = 0;
+O18Labeler*  nullPointer = 0;
+BaseLabeler* base_nullPointer = 0;
+
 START_SECTION(O18Labeler())
 {
 	ptr = new O18Labeler();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -76,11 +79,11 @@ START_SECTION((void setUpHook(FeatureMapSimVector &)))
   FeatureMapSimVector fm_vec;
 
   fm_vec.push_back(fm1);
-  TEST_EXCEPTION(Exception::IllegalArgument, labeler.setUpHook(fm_vec))
+  TEST_EXCEPTION_WITH_MESSAGE(Exception::IllegalArgument, labeler.setUpHook(fm_vec),"18 O Labeling only works with 2 channels.")
   fm_vec.push_back(fm2);
   labeler.setUpHook(fm_vec);
   fm_vec.push_back(fm3);
-  TEST_EXCEPTION(Exception::IllegalArgument, labeler.setUpHook(fm_vec))
+  TEST_EXCEPTION_WITH_MESSAGE(Exception::IllegalArgument, labeler.setUpHook(fm_vec),"18 O Labeling only works with 2 channels.")
 }
 END_SECTION
 
@@ -199,7 +202,7 @@ END_SECTION
 START_SECTION((static BaseLabeler* create()))
 {
   BaseLabeler* labeler = O18Labeler::create();
-  TEST_NOT_EQUAL(labeler, 0)
+  TEST_NOT_EQUAL(labeler, base_nullPointer)
   delete labeler;
 }
 END_SECTION

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,7 @@
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
+#include <OpenMS/FORMAT/FASTAFile.h>
 
 
 #include <algorithm>
@@ -119,6 +120,8 @@ namespace OpenMS
 		void loadPreprocessedDB_(String path);
 		void setFixedModifications_(StringList& modifications);
 
+    /// preprocess fasta identifier
+    void filterTaxonomyIdentifier_(FASTAFile::FASTAEntry& entry);
 
 		/// all tryptic masses of the distinct peptides in the database
 		std::vector<DoubleReal> masses_;

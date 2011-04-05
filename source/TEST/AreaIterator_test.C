@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -45,6 +45,7 @@ typedef Internal::AreaIterator<Map::PeakType, Map::PeakType&, Map::PeakType*, Ma
 typedef Internal::AreaIterator<Map::PeakType, const Map::PeakType&, const Map::PeakType*, Map::ConstIterator, Map::SpectrumType::ConstIterator> CAI;
 
 AI* ptr1 = 0, *ptr2 = 0;
+AI* nullPointer = 0;
 
 Map exp;
 exp.resize(5);
@@ -77,12 +78,12 @@ exp[4][1].setMZ(510.1);
 
 START_SECTION((AreaIterator()))
 	ptr1 = new AI();
-	TEST_NOT_EQUAL(ptr1,0)
+  TEST_NOT_EQUAL(ptr1,nullPointer)
 END_SECTION
 
 START_SECTION((AreaIterator(SpectrumIteratorType first, SpectrumIteratorType begin, SpectrumIteratorType end, CoordinateType low_mz, CoordinateType high_mz)))
 	ptr2 = new AI(exp.begin(),exp.RTBegin(0), exp.RTEnd(0), 0, 0);
-	TEST_NOT_EQUAL(ptr2,0)
+  TEST_NOT_EQUAL(ptr2,nullPointer)
 END_SECTION
 
 START_SECTION((~AreaIterator()))
@@ -122,9 +123,11 @@ START_SECTION((AreaIterator(const AreaIterator &rhs)))
 	TEST_EQUAL(a3==a1, false)
 	TEST_EQUAL(a3==a2, true)
 	
-	AI a4(a1);
-	TEST_EQUAL(a4==a1, true)
-	TEST_EQUAL(a4==a2, false)
+  // copy-constructor on end-Iterator is undefined, so the following
+  // operation is invalid
+  // AI a4(a1);
+  // TEST_EQUAL(a4==a1, true)
+  // TEST_EQUAL(a4==a2, false)
 END_SECTION
 
 START_SECTION((AreaIterator& operator=(const AreaIterator &rhs)))

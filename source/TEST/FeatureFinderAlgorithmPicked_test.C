@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Oliver Kohlbacher $
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -47,10 +47,13 @@ using namespace std;
 
 typedef FeatureFinderAlgorithmPicked<Peak1D,Feature> FFPP;
 
-FFPP* ptr;
+FFPP* ptr = 0;
+FFPP* nullPointer = 0;
+FeatureFinderAlgorithm<Peak1D,Feature>* ffA_nullPointer = 0;
+
 START_SECTION((FeatureFinderAlgorithmPicked()))
 	ptr = new FFPP;
-	TEST_NOT_EQUAL(ptr,0)
+  TEST_NOT_EQUAL(ptr,nullPointer)
 END_SECTION
 
 START_SECTION((~FeatureFinderAlgorithmPicked()))
@@ -64,7 +67,7 @@ END_SECTION
 	
 START_SECTION((static FeatureFinderAlgorithm<PeakType,FeatureType>* create()))
 	FeatureFinderAlgorithm<Peak1D,Feature>* ptr2 = FFPP::create();
-	TEST_NOT_EQUAL(ptr2,0)
+  TEST_NOT_EQUAL(ptr2,ffA_nullPointer)
 	delete ptr2;
 END_SECTION
 

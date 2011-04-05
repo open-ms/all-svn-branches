@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,9 +43,11 @@ START_TEST(LinearResampler, "$Id$")
 using namespace OpenMS;
 
 LinearResampler* lr_ptr = 0;
+LinearResampler* lr_nullPointer = 0;
+
 START_SECTION((LinearResampler()))
   lr_ptr = new LinearResampler;
-  TEST_NOT_EQUAL(lr_ptr,0);
+  TEST_NOT_EQUAL(lr_ptr, lr_nullPointer);
 END_SECTION
 
 START_SECTION((~LinearResampler()))

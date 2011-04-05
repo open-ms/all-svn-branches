@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -40,7 +40,9 @@ namespace OpenMS
   SILACLabeler::SILACLabeler()
   {
     setName("SILACLabeler");
-    defaults_.setValue("SILAC_modifications", "UniMod:944", "Comma separated list of SILAC modifications that will be added to the labeled channel.");
+    defaults_.setValue("SILAC_modification", "UniMod:188", "SILAC modification that will be added to the labeled channel.");
+    defaults_.setValue("SILAC_specificities","R,K", "Comma separated list of amino acids that will be modified.");
+    defaults_.setValue("SILAC_fixed_rtshift", 0.0, "Fixed retention time shift between labeled pairs. If set to 0.0 only the retention times, computed by the RT model step are used.");
     defaultsToParam_();
   }
 
@@ -63,31 +65,41 @@ namespace OpenMS
     }
 
     // parse modifications
-    String mod_list = param_.getValue("SILAC_modifications");
-    StringList modifications = StringList::create(mod_list);
+    String mod_name = param_.getValue("SILAC_modification");
+    String specificities = param_.getValue("SILAC_specificities");
 
+    StringList origins_list = StringList::create(specificities);
+    std::set<String> origins_set;
+    origins_set.insert(origins_list.begin(),origins_list.end());
+
+
+    std::set<const ResidueModification*> modifications;
+    try
+    {
+      ModificationsDB::getInstance()->searchModifications(modifications,mod_name,ResidueModification::ANYWHERE);
+    }
+    catch (Exception::ElementNotFound ex)
+    {
+      // nothing to clean up here
+      ex.setMessage("The modification \"" + mod_name + "\" could not be found in the local UniMod DB! Please check if you used the correct format (e.g. UniMod:Accession#)");
+      throw ex;
+    }
+
+    // this one ignores modifications with multiple specificitys
     Map<String, const ResidueModification*> site_resmod_map;
 
-    for(StringList::iterator it = modifications.begin() ; it != modifications.end() ; ++it)
+    for(std::set<const ResidueModification*>::iterator mod_it = modifications.begin() ; mod_it != modifications.end() ; ++mod_it)
     {
-      try
+      if(origins_set.find((*mod_it)->getOrigin()) != origins_set.end())
       {
-        const ResidueModification* mod = &ModificationsDB::getInstance()->getModification(*it);
-        if(site_resmod_map.has(mod->getOrigin()))
-        {
-          throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "MSSimulator can only handle one modification specific for the residue \"" + mod->getOrigin() + "\"");
-        }
-        else
-        {
-          site_resmod_map.insert(std::make_pair<String, const ResidueModification*>(mod->getOrigin(), mod));
-        }
+        site_resmod_map.insert(std::make_pair<String, const ResidueModification*>((*mod_it)->getOrigin(), (*mod_it)));
       }
-      catch (Exception::ElementNotFound ex)
-      {
-        // nothing to clean up here
-        ex.setMessage("The modification \"" + *it + "\" could not be found in the local UniMod DB! Please check if you used the correct format (e.g. UniMod:Accession#)");
-        throw ex;
-      }
+    }
+
+    if(site_resmod_map.size() == 0)
+    {
+      // no modifications -> no labeling
+      throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__,"You need to specify at least one residue that can be modified by the modification " + ((*modifications.begin())->getFullName()));
     }
 
     // label second channel
@@ -144,20 +156,23 @@ namespace OpenMS
       // check if we have a pair ..
       if(unlabeled_features_index.has(unmodified_sequence.toUnmodifiedString()))
       {
-        // guarantee uniqueness
-        unlabeled_features_index[unmodified_sequence.toUnmodifiedString()].ensureUniqueId();
+        // own scope as we don't know what happens to 'f_modified' once we call erase() below
+        {
+          Feature& f_modified = unlabeled_features_index[unmodified_sequence.toUnmodifiedString()];
+          // guarantee uniqueness
+          f_modified.ensureUniqueId();
 
-        // add features to final map
-        final_feature_map.push_back(*lf_iter);
-        final_feature_map.push_back(unlabeled_features_index[unmodified_sequence.toUnmodifiedString()]);
+          // add features to final map
+          final_feature_map.push_back(*lf_iter);
+          final_feature_map.push_back(f_modified);
 
-        // create consensus feature
-        ConsensusFeature cf;
-        cf.insert(0, *lf_iter);
-        cf.insert(0, unlabeled_features_index[unmodified_sequence.toUnmodifiedString()]);
+          // create consensus feature
+          ConsensusFeature cf;
+          cf.insert(0, *lf_iter);
+          cf.insert(0, f_modified);
 
-        consensus_.push_back(cf);
-
+          consensus_.push_back(cf);
+        }
         // remove unlabeled feature
         unlabeled_features_index.erase(unmodified_sequence.toUnmodifiedString());
       }
@@ -183,9 +198,53 @@ namespace OpenMS
     consensus_.getFileDescriptions()[0] = map_description;
   }
 
-  void SILACLabeler::postRTHook(FeatureMapSimVector & /* features_to_simulate */)
+  void SILACLabeler::postRTHook(FeatureMapSimVector & features_to_simulate)
   {
-    // no changes to the features .. nothing todo here
+    DoubleReal rt_shift = param_.getValue("SILAC_fixed_rtshift");
+
+    if(rt_shift != 0.0)
+    {
+
+      Map<UInt64, Feature*> id_map;
+      FeatureMapSim& feature_map = features_to_simulate[0];
+      for(FeatureMapSim::Iterator it = feature_map.begin() ; it != feature_map.end() ; ++it)
+      {
+        id_map.insert(std::make_pair<UInt64,Feature*>(it->getUniqueId(), &(*it)));
+      }
+
+      // recompute RT of pairs
+      for(ConsensusMap::Iterator consensus_it = consensus_.begin() ; consensus_it != consensus_.end() ; ++consensus_it)
+      {
+        ConsensusFeature& cf = *consensus_it;
+
+        // check if these features are still available and were not removed during RT sim
+        bool complete = true;
+
+        for(ConsensusFeature::iterator cfit = cf.begin() ; cfit != cf.end() ; ++cfit)
+        {
+          complete &= id_map.has(cfit->getUniqueId());
+        }
+
+        if(complete)
+        {
+          Feature* f1 = id_map[(cf.begin())->getUniqueId()];
+          Feature* f2 = id_map[(++cf.begin())->getUniqueId()];
+
+          // the lighter one should be the unmodified one
+          EmpiricalFormula ef1 = (f1->getPeptideIdentifications())[0].getHits()[0].getSequence().getFormula();
+          EmpiricalFormula ef2 = (f2->getPeptideIdentifications())[0].getHits()[0].getSequence().getFormula();
+
+          if(ef1.getMonoWeight() < ef2.getMonoWeight())
+          {
+            f2->setRT(f1->getRT() + rt_shift);
+          }
+          else
+          {
+            f1->setRT(f2->getRT() + rt_shift);
+          }
+        }
+      }
+    }
   }
 
   void SILACLabeler::postDetectabilityHook(FeatureMapSimVector & /* features_to_simulate */)

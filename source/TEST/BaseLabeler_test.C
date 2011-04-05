@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -40,10 +40,11 @@ START_TEST(BaseLabeler, "$Id$")
 /////////////////////////////////////////////////////////////
 
 BaseLabeler* ptr = 0;
+BaseLabeler* nullPointer = 0;
 START_SECTION(BaseLabeler())
 {
 	ptr = new BaseLabeler();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -106,7 +107,7 @@ START_SECTION((virtual Param getDefaultParameters() const ))
 }
 END_SECTION
 
-START_SECTION((virtual void setRnd(gsl_rng *const rng)))
+START_SECTION((virtual void setRnd(const SimRandomNumberGenerator &rng)))
 {
   NOT_TESTABLE
 }

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -84,6 +84,19 @@ namespace OpenMS
 				ARTIFACT = 0,
 				HYPOTHETICAL, 
 				NATURAL,
+        POSTTRANSLATIONAL,
+        MULTIPLE,
+        CHEMICAL_DERIVATIVE,
+        ISOTOPIC_LABEL,
+        PRETRANSLATIONAL,
+        OTHER_GLYCOSYLATION,
+        NLINKED_GLYCOSYLATION,
+        AA_SUBSTITUTION,
+        OTHER,
+        NONSTANDARD_RESIDUE,
+        COTRANSLATIONAL,
+        OLINKED_GLYCOSYLATION,
+        UNKNOWN,
 				NUMBER_OF_SOURCE_CLASSIFICATIONS
 			};
 			//@}

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -45,10 +45,11 @@ using namespace OpenMS;
 using namespace std;
 
 TheoreticalSpectrumGenerator* ptr = 0;
+TheoreticalSpectrumGenerator* nullPointer = 0;
 
 START_SECTION(TheoreticalSpectrumGenerator())
 	ptr = new TheoreticalSpectrumGenerator();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(TheoreticalSpectrumGenerator(const TheoreticalSpectrumGenerator& source))
@@ -104,7 +105,7 @@ END_SECTION
 START_SECTION(void addPrecursorPeaks(RichPeakSpectrum& spec, const AASequence& peptide, Int charge = 1))
 	RichPeakSpectrum spec;
 	ptr->addPrecursorPeaks(spec, peptide, 1);
-	double result[] = {778.4457, 760.4352, 761.4192};
+  double result[] = {760.4352, 761.4192, 778.4457};
 	for (Size i = 0; i != spec.size(); ++i)
 	{
 		TEST_REAL_SIMILAR(spec[i].getPosition()[0], result[i])
@@ -112,7 +113,7 @@ START_SECTION(void addPrecursorPeaks(RichPeakSpectrum& spec, const AASequence& p
 
 	RichPeakSpectrum spec2;
 	ptr->addPrecursorPeaks(spec2, peptide, 2);
-	double result2[] = {389.7265, 380.7212, 381.2132};
+  double result2[] = {380.7212, 381.2132, 389.7265};
 	for (Size i = 0; i != spec2.size(); ++i)
 	{
 		TEST_REAL_SIMILAR(spec2[i].getPosition()[0], result2[i])

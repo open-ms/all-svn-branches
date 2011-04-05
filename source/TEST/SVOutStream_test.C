@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -42,12 +42,13 @@ START_TEST(SVOutStream, "$Id$")
 /////////////////////////////////////////////////////////////
 
 SVOutStream* sv_ptr = 0;
+SVOutStream* sv_nullPointer = 0;
 
 START_SECTION((SVOutStream(std::ostream &out, const String &sep="\t", const String &replacement="_", String::QuotingMethod quoting=String::DOUBLE)))
 {
 	stringstream strstr;
 	sv_ptr = new SVOutStream(strstr);
-  TEST_NOT_EQUAL(sv_ptr, 0);
+  TEST_NOT_EQUAL(sv_ptr, sv_nullPointer);
 }
 END_SECTION
 

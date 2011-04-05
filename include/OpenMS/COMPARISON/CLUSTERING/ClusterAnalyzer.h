@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -31,6 +31,7 @@
 
 #include <OpenMS/DATASTRUCTURES/DistanceMatrix.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
+#include <OpenMS/DATASTRUCTURES/BinaryTreeNode.h>
 
 #include <vector>
 #include <set>
@@ -42,35 +43,6 @@
 namespace OpenMS
 {
   class String;
-
-	/** @brief Elements of a binary tree used to represent a hierarchical clustering process
-
-			strict indexing/topology is assumed, i.e. node no. x represents clusteringstep no. x
-			left_child and right_child are each the lowest indices to elements of the merged clusters, distance is the distance of the two children
-	*/
-	class OPENMS_DLLAPI BinaryTreeNode
-	{
-		public:
-		/// constructor
-		BinaryTreeNode(Size i, Size j, Real x);
-
-		/// destructor
-		~BinaryTreeNode();
-
-		/// copy constructor
-		BinaryTreeNode(const BinaryTreeNode& source);
-
-		/// assignment operator
-		BinaryTreeNode& operator = (const BinaryTreeNode& source);
-
-		Size left_child;
-		Size right_child;
-		Real distance;
-
-		private:
-		BinaryTreeNode();
-	};
-
 
 	/**
 		@brief Bundles analyzing tools for a clustering (given as sequence of BinaryTreeNode's)
@@ -99,7 +71,7 @@ namespace OpenMS
 		The average silhouette width will becalculated for each clustering step beginning with the first step(n-1 cluster) ending with the last (1 cluster, average silhouette width is 0 by definition).
 		@see BinaryTreeNode
 	*/
-	std::vector< Real > averageSilhouetteWidth(std::vector<BinaryTreeNode>& tree, DistanceMatrix<Real>& original);
+	std::vector< Real > averageSilhouetteWidth(const std::vector<BinaryTreeNode>& tree, const DistanceMatrix<Real>& original);
 
 	/**
 		@brief Method to calculate Dunns indices for a clustering
@@ -109,7 +81,7 @@ namespace OpenMS
 		@param tree_from_singlelinkage true if tree was created by SingleLinkage, i.e. the distances are the minimal distances in increasing order and can be used to speed up the calculation
 		@see BinaryTreeNode
 	*/
-	std::vector< Real > dunnIndices(std::vector<BinaryTreeNode>& tree, DistanceMatrix<Real>& original, bool tree_from_singlelinkage = false);
+	std::vector< Real > dunnIndices(const std::vector<BinaryTreeNode>& tree, const DistanceMatrix<Real>& original, const bool tree_from_singlelinkage = false);
 
 	/**
 		@brief Method to calculate the cohesions of a certain partition
@@ -118,7 +90,7 @@ namespace OpenMS
 		@param original DistanceMatrix for all clustered elements started from
 		@return a vector that holds the cohesions of each cluster given with @p clusters (order corresponds to @p clusters)
 	*/
-	std::vector< Real > cohesion(std::vector< std::vector<Size> >& clusters, DistanceMatrix<Real>& original);
+	std::vector< Real > cohesion(const std::vector< std::vector<Size> >& clusters, const DistanceMatrix<Real>& original);
 
 	/**
 		@brief Method to calculate the average aberration from average population in partition resulting from a certain step in clustering
@@ -134,6 +106,10 @@ namespace OpenMS
 /**
 		@brief Method to calculate a partition resulting from a certain step in clustering given by the number of clusters
 
+    If you want to fetch all clusters which were created with a threshold, you simply count the number of tree-nodes which are
+    not -1, and substract that from the number of leafes, to get the number of clusters formed
+    , i.e. cluster_quantity = data.size() - real_leaf_count;
+
 		@param cluster_quantity Size giving the number of clusters (i.e. starting elements - cluster_quantity = cluster step)
 		@param tree vector of BinaryTreeNode's representing the clustering
 		@param clusters vector of vectors holding the clusters (with indices to the actual elements)
@@ -142,7 +118,7 @@ namespace OpenMS
 
 		after call of this method the argument clusters is filled corresponding to the given @p cluster_quantity with the indices of the elements clustered
 	*/
-	void cut(Size cluster_quantity, std::vector< std::vector<Size> >& clusters, std::vector<BinaryTreeNode>& tree);
+	void cut(const Size cluster_quantity, const std::vector<BinaryTreeNode>& tree, std::vector<std::vector<Size> >& clusters);
 
 /**
 		@brief Method to calculate subtrees from a given tree resulting from a certain step in clustering given by the number of clusters
@@ -155,17 +131,17 @@ namespace OpenMS
 
 		after call of this method the argument clusters is filled corresponding to the given @p cluster_quantity with the indices of the elements clustered
 	*/
-	void cut(Size cluster_quantity, std::vector< std::vector<BinaryTreeNode> >& subtrees, std::vector<BinaryTreeNode>& tree);
+	void cut(const Size cluster_quantity, const std::vector<BinaryTreeNode>& tree, std::vector< std::vector<BinaryTreeNode> >& subtrees);
 
 /**
-		@brief Returns the hirarchy described by a clustering tree as Newick-String
+		@brief Returns the hierarchy described by a clustering tree as Newick-String
 
 		@param tree vector of BinaryTreeNode's representing the clustering
 		@param include_distance bool value indicating whether the distance shall be included to the string
 		@see BinaryTreeNode
 
 	*/
-	String newickTree(std::vector<BinaryTreeNode>& tree, bool include_distance = false);
+	String newickTree(const std::vector<BinaryTreeNode>& tree, const bool include_distance = false);
 
 	private:
 	/// assignment operator

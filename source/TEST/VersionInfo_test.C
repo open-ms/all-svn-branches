@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -75,7 +75,7 @@ END_SECTION
 START_SECTION(static Int getMinorVersion())
 {
 	STATUS("We might need to update this for a new release, oops!");
-  TEST_EQUAL(VersionInfo::getMinorVersion(), 8);
+  TEST_EQUAL(VersionInfo::getMinorVersion(), 9);
 }
 END_SECTION
 

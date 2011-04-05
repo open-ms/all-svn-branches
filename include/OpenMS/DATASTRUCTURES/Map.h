@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -96,7 +96,7 @@ namespace OpenMS
 	template <class Key, class T>
 	const T& Map<Key, T>::operator [] (const Key& key) const
 	{
-		ConstIterator it = find(key);
+		ConstIterator it = this->find(key);
 		if (it == Base::end())
 		{
 			throw IllegalKey(__FILE__, __LINE__, __PRETTY_FUNCTION__);
@@ -111,10 +111,10 @@ namespace OpenMS
 	T& Map<Key, T>::operator [] (const Key& key)
 		
 	{
-		Iterator it = find(key);
+		Iterator it = this->find(key);
 		if (it == Base::end())
 		{
-			it = insert(ValueType(key, T())).first;
+			it = this->insert(ValueType(key, T())).first;
 		}
 		return it->second;
 	}

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -81,9 +81,9 @@
 					<LI style="margin-top: 3px;"> Sandro Andreotti @n <i> DeNovo identification, simulation</i>
 					<LI style="margin-top: 3px;"> Chris Bielow @n <i> Windows port, iTRAQ quantitation, decharging, simulation, build system</i>
 					<LI style="margin-top: 3px;"> Rene Hussong @n <i> feature finding, parallel computing</i>
-					<LI style="margin-top: 3px;"> Johannes Junker @n <i> TOPPAS </i>
 					<LI style="margin-top: 3px;"> Erhan Kenar @n <i> metabolomics </i>
 					<LI style="margin-top: 3px;"> Lars Nilse @n <i> SILAC quantitation </i>
+					<LI style="margin-top: 3px;"> Timo Sachsenberg @n <i> Visualization/TOPPView </i>
 					<LI style="margin-top: 3px;"> Mathias Walzer @n <i> peptide identification, clustering </i>
 					<LI style="margin-top: 3px;"> Hendrik Weisser @n <i> protein quantification, map alignment </i>
 					<LI style="margin-top: 3px;"> Alexandra Zerck @n <i> precursor selection, calibration</i>

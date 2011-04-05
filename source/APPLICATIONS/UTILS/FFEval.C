@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,6 +43,15 @@ using namespace std;
 	
 	@brief Evaluation tool for feature detection algorithms.
 		
+
+  To plot the ROC curve you might use:
+
+@code
+  d = read.table("data.roc", skip=1, sep="\t")
+  plot(d[,3],d[,4], xlim=c(0,1),ylim=c(0,1), xlab="FDR",ylab="TPR",main="ROC with varying intensity")
+  lines(c(0,1),c(0,1))
+@endcode
+
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude UTILS_FFEval.cli
 */
@@ -195,7 +204,7 @@ class TOPPFFEVal
 						last_match_index = a;
 					}
 					//Centroid is one trace off, but still contained in the convex hull
-					else if (f_i.getConvexHull().encloses(f_t.getPosition())
+					else if (f_i.getConvexHull().getBoundingBox().encloses(f_t.getPosition())
 									 &&
 									 (
 									  fabs(f_i.getMZ()+1.0/f_t.getCharge()-f_t.getMZ())<charge_mz_tol

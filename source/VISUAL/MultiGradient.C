@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Timo Sachsenberg $
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -43,6 +43,31 @@ namespace OpenMS
 		pos_col_[100] = Qt::black;		
 	}
 	
+  MultiGradient::MultiGradient(const MultiGradient& multigradient)
+    : pos_col_(multigradient.pos_col_),
+      interpolation_mode_(multigradient.interpolation_mode_),
+      pre_(multigradient.pre_),
+      pre_min_(multigradient.pre_min_),
+      pre_size_(multigradient.pre_size_),
+      pre_steps_(multigradient.pre_steps_)
+  {
+  }
+
+  MultiGradient& MultiGradient::operator = ( const MultiGradient& rhs )
+  {
+    if (this == &rhs)
+    {
+      return *this;
+    }   
+    pos_col_ = rhs.pos_col_,
+    interpolation_mode_ = rhs.interpolation_mode_;
+    pre_  = rhs.pre_;
+    pre_min_ = rhs.pre_min_;
+    pre_size_ = rhs.pre_size_;
+    pre_steps_ = rhs.pre_steps_;
+    return *this;
+  }
+
 	MultiGradient::~MultiGradient()
 	{
 		
@@ -107,6 +132,7 @@ namespace OpenMS
 		if (interpolation_mode_==IM_LINEAR)
 		{
       map<DoubleReal, QColor>::const_iterator it1 = pos_col_.lower_bound(position);
+
       if (std::abs(it1->first-position) < numeric_limits<DoubleReal>::epsilon())  // compare double
 			{
 				return it1->second;
@@ -127,9 +153,7 @@ namespace OpenMS
       map<DoubleReal,QColor>::const_iterator it = pos_col_.upper_bound(position);
 			--it;
 			return it->second;
-		}
-		
-		
+		}				
 	}
 
 	QColor MultiGradient::interpolatedColorAt(DoubleReal position, DoubleReal min, DoubleReal max) const
@@ -256,5 +280,22 @@ namespace OpenMS
     }
     return false;
   }
+
+  // static
+  MultiGradient MultiGradient::getDefaultGradientLinearIntensityMode()
+  {
+    MultiGradient mg;
+    mg.fromString("Linear|0,#eeeeee;1,#ffea00;6,#ff0000;14,#aa00ff;23,#5500ff;100,#000000");
+    return mg;
+  }
+
+  // static
+  MultiGradient MultiGradient::getDefaultGradientLogarithmicIntensityMode()
+  {
+    MultiGradient mg;
+    mg.fromString("Linear|0,#EEEEEE;100,#000000");
+    return mg;
+  }
+
 
 } //namespace OpenMS

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl $
+// $Maintainer: Erhan Kenar $
 // $Authors: $
 // --------------------------------------------------------------------------
 //
@@ -45,10 +45,11 @@ using namespace OpenMS;
 using namespace std;
 
 Matrix<int>* ptr = 0;
+Matrix<int>* nullPointer = 0;
 START_SECTION((Matrix()))
 {
 	ptr = new Matrix<int>;
-	TEST_NOT_EQUAL(ptr, 0);
+  TEST_NOT_EQUAL(ptr, nullPointer);
 
   Matrix<int> mi1;
 	TEST_EQUAL(mi1.size(),0);
@@ -161,10 +162,41 @@ END_SECTION
 START_SECTION((reference operator() (size_type const i, size_type const j)))
 {
 	STATUS(mi.getValue(1,0));
-	mi.getValue(1,0)=44;
+	mi.getValue(1,0) = 44;
 	STATUS(mi.getValue(1,0));
 	Matrix<int> const & micr = mi;
-	TEST_EQUAL(micr.getValue(1,0),44);
+	TEST_EQUAL(micr.getValue(1,0), 44);
+}
+END_SECTION
+
+START_SECTION(container_type row(size_type const i) const)
+{
+	Matrix<int>::container_type row = mi.row(0);
+	TEST_EQUAL(row.size(), 3)
+	TEST_EQUAL(row[0], 3)
+	TEST_EQUAL(row[1], 3)
+	TEST_EQUAL(row[2], 3)
+	row = mi.row(1);
+	TEST_EQUAL(row[0], 44)
+	TEST_EQUAL(row[1], 17)
+	TEST_EQUAL(row[2], 33)
+}
+END_SECTION
+
+START_SECTION(container_type col(size_type const i) const)
+{
+	Matrix<int>::container_type col = mi.col(0);
+	TEST_EQUAL(col.size(), 2)
+	TEST_EQUAL(col[0], 3)
+	TEST_EQUAL(col[1], 44)
+	col = mi.col(1);
+	TEST_EQUAL(col.size(), 2)
+	TEST_EQUAL(col[0], 3)
+	TEST_EQUAL(col[1], 17)
+	col = mi.col(2);
+	TEST_EQUAL(col.size(), 2)
+	TEST_EQUAL(col[0], 3)
+	TEST_EQUAL(col[1], 33)
 }
 END_SECTION
 
@@ -340,16 +372,6 @@ START_SECTION((template <typename  Value > std::ostream & operator<<(std::ostrea
 }
 END_SECTION
 
-#if 0
-// actually seems to *generate* a warning for me! - Clemens
-
-START_SECTION((OPENMS_DLLAPI gsl_matrix * toGslMatrix()))
-{
-	NOT_TESTABLE // avoid warning
-}
-END_SECTION
-
-#endif
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

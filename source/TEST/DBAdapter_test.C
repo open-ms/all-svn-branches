@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -102,10 +102,11 @@ if (do_tests)
 	con2.connect(db, user, password, host, port.toInt(), DB_PLUGIN, "alternateConnection");
 
 	DBAdapter* ptr = 0;
+	DBAdapter* nullPointer = 0;
 
 	START_SECTION((DBAdapter(DBConnection& db_con)))
 		ptr = new DBAdapter(con);
-		TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 	START_SECTION((~DBAdapter()))

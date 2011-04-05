@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -40,10 +40,11 @@ START_TEST(CVTerm, "$Id$")
 /////////////////////////////////////////////////////////////
 
 CVTerm* ptr = 0;
+CVTerm* nullPointer = 0;
 START_SECTION(CVTerm())
 {
 	ptr = new CVTerm();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -280,6 +281,93 @@ START_SECTION((CVTerm& operator=(const CVTerm &rhs)))
   TEST_EQUAL(term1 == term2, false)
 	term2 = term1;
   TEST_EQUAL(term1 == term2, true)
+}
+END_SECTION
+
+CVTerm::Unit* ptr_unit = 0;
+CVTerm::Unit* nullPointer_unit = 0;
+START_SECTION(([CVTerm::Unit] Unit()))
+{
+  ptr_unit = new CVTerm::Unit();
+  TEST_NOT_EQUAL(ptr_unit, nullPointer_unit)
+}
+END_SECTION
+
+START_SECTION(([CVTerm::Unit] Unit(const String &p_accession, const String &p_name, const String &p_cv_ref)))
+{
+  CVTerm::Unit u("ACCESSION", "p_name", "p_cv_ref");
+  TEST_EQUAL(u.accession, "ACCESSION")
+  TEST_EQUAL(u.cv_ref, "p_cv_ref")
+  TEST_EQUAL(u.name, "p_name")
+}
+END_SECTION
+
+START_SECTION(([CVTerm::Unit] Unit(const Unit &rhs)))
+{
+  CVTerm::Unit u("ACCESSION", "p_name", "p_cv_ref");
+  TEST_EQUAL(u.accession, "ACCESSION")
+  TEST_EQUAL(u.cv_ref, "p_cv_ref")
+  TEST_EQUAL(u.name, "p_name")
+
+  CVTerm::Unit cu(u);
+  TEST_EQUAL(cu.accession, u.accession)
+  TEST_EQUAL(cu.cv_ref, u.cv_ref)
+  TEST_EQUAL(cu.name, u.name)
+}
+END_SECTION
+
+START_SECTION(([CVTerm::Unit] virtual ~Unit()))
+{
+  delete ptr_unit;
+}
+END_SECTION
+
+START_SECTION(([CVTerm::Unit] Unit& operator=(const Unit &rhs)))
+{
+  CVTerm::Unit u("ACCESSION", "p_name", "p_cv_ref");
+  TEST_EQUAL(u.accession, "ACCESSION")
+  TEST_EQUAL(u.cv_ref, "p_cv_ref")
+  TEST_EQUAL(u.name, "p_name")
+
+  CVTerm::Unit cu;
+  cu = u;
+  TEST_EQUAL(cu.accession, u.accession)
+  TEST_EQUAL(cu.cv_ref, u.cv_ref)
+  TEST_EQUAL(cu.name, u.name)
+}
+END_SECTION
+
+START_SECTION(([CVTerm::Unit] bool operator==(const Unit &rhs) const ))
+{
+  CVTerm::Unit u("ACCESSION", "p_name", "p_cv_ref");
+  CVTerm::Unit cu("ACCESSION", "p_name", "p_cv_ref");
+  CVTerm::Unit nu("ACCESSION2", "p_name", "p_cv_ref");
+  CVTerm::Unit nu2("ACCESSION", "p_name2", "p_cv_ref");
+  CVTerm::Unit nu3("ACCESSION", "p_name", "p_cv_ref2");
+
+  TEST_EQUAL(u==cu, true)
+  TEST_EQUAL(u==u, true)
+  TEST_EQUAL(u==nu, false)
+  TEST_EQUAL(u==nu2, false)
+  TEST_EQUAL(u==nu3, false)
+  TEST_EQUAL(cu==nu, false)
+}
+END_SECTION
+
+START_SECTION(([CVTerm::Unit] bool operator!=(const Unit &rhs) const ))
+{
+  CVTerm::Unit u("ACCESSION", "p_name", "p_cv_ref");
+  CVTerm::Unit cu("ACCESSION", "p_name", "p_cv_ref");
+  CVTerm::Unit nu("ACCESSION2", "p_name", "p_cv_ref");
+  CVTerm::Unit nu2("ACCESSION", "p_name2", "p_cv_ref");
+  CVTerm::Unit nu3("ACCESSION", "p_name", "p_cv_ref2");
+
+  TEST_EQUAL(u!=cu, false)
+  TEST_EQUAL(u!=u, false)
+  TEST_EQUAL(u!=nu, true)
+  TEST_EQUAL(u!=nu2, true)
+  TEST_EQUAL(u!=nu3, true)
+  TEST_EQUAL(cu!=nu, true)
 }
 END_SECTION
 

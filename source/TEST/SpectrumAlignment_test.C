@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -46,10 +46,11 @@ using namespace OpenMS;
 using namespace std;
 
 SpectrumAlignment* ptr = 0;
+SpectrumAlignment* nullPointer = 0;
 
 START_SECTION(SpectrumAlignment())
 	ptr = new SpectrumAlignment();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(virtual ~SpectrumAlignment())
@@ -81,7 +82,7 @@ START_SECTION(SpectrumAlignment& operator=(const SpectrumAlignment &source))
 	sas2 = sas1;
 
   TEST_EQUAL(sas1.getName(), sas2.getName())
-  TEST_EQUAL(sas1.getParameters(), sas2.getParameters())
+  TEST_EQUAL(p, sas2.getParameters())
 
 END_SECTION
 		    
@@ -94,11 +95,12 @@ START_SECTION(template <typename SpectrumType> void getSpectrumAlignment(std::ve
 
 	SpectrumAlignment sas1;
 	vector<pair<Size, Size > > alignment;
+
 	sas1.getSpectrumAlignment(alignment, s1, s2);
 	
 	for (vector<pair<Size, Size > >::const_iterator it = alignment.begin(); it != alignment.end(); ++it)
 	{
-		cerr << it->first << " " << it->second << endl;
+	//	cerr << it->first << " " << it->second << endl;
 	}
 
 
@@ -110,6 +112,41 @@ START_SECTION(template <typename SpectrumType> void getSpectrumAlignment(std::ve
   sas1.getSpectrumAlignment(alignment, s1, s2);
 
   TEST_EQUAL(alignment.size(), 100)
+
+  // TODO: write better test scenario
+  PeakSpectrum s3, s4;
+  Param p;
+  p.setValue("tolerance", 1.01);
+  sas1.setParameters(p);
+
+  DTAFile().load(OPENMS_GET_TEST_DATA_PATH("SpectrumAlignment_in1.dta"), s3);
+  DTAFile().load(OPENMS_GET_TEST_DATA_PATH("SpectrumAlignment_in2.dta"), s4);
+
+	sas1.getSpectrumAlignment(alignment, s3, s4);
+	
+	for (vector<pair<Size, Size > >::const_iterator it = alignment.begin(); it != alignment.end(); ++it)
+	{
+		//cerr << it->first << " " << it->second << endl;
+	}
+
+  TEST_EQUAL(alignment.size(), 5)
+
+  ABORT_IF(alignment.size()!=5)
+  
+  vector<pair<Size, Size > > alignment_result;
+  alignment_result.push_back(std::make_pair(0,0));
+  alignment_result.push_back(std::make_pair(1,1));
+  alignment_result.push_back(std::make_pair(3,3));
+  alignment_result.push_back(std::make_pair(4,5));
+  alignment_result.push_back(std::make_pair(6,6));
+
+  for (Size i=0;i<5;++i)
+  {
+    TEST_EQUAL(alignment[i].first, alignment_result[i].first)
+    TEST_EQUAL(alignment[i].second, alignment_result[i].second)
+  }
+
+
 
 END_SECTION
 

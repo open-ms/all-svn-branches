@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -53,7 +53,8 @@ END_SECTION
 START_SECTION( static void registerProduct(const String& name, const FunctionType creator) )
 	Factory<FilterFunctor>::registerProduct(TICFilter::getProductName(), &TICFilter::create);
 	FilterFunctor* ext = Factory<FilterFunctor>::create("TICFilter");
-	TEST_NOT_EQUAL(ext, 0)
+  FilterFunctor* nullPointer = 0;
+  TEST_NOT_EQUAL(ext, nullPointer)
 END_SECTION
 
 START_SECTION(static bool isRegistered(const String& name))

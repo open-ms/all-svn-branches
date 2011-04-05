@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -34,51 +34,53 @@
 #include <cmath>
 
 // Extend SeqAn by a user-define scoring matrix.
-namespace seqan {
+namespace seqan
+{
 
-// We have to create a new specialization of the _ScoringMatrix class
-// for amino acids.  For this, we first create a new tag.
-struct PAM30MS {};
+  // We have to create a new specialization of the _ScoringMatrix class
+  // for amino acids.  For this, we first create a new tag.
+  struct PAM30MS {};
 
-// Then, we specialize the class _ScoringMatrix.
-template <>
-struct _ScoringMatrixData<int, AminoAcid, PAM30MS> {
-	enum{
-	    	VALUE_SIZE = ValueSize<AminoAcid>::VALUE,
-	      	TAB_SIZE = VALUE_SIZE * VALUE_SIZE
-	    };
-		static inline int const * getData() {
-	    // DEFINE the PAM30MS matrix from Habermann et al. MCP. 2004.
-	    static int const _data[TAB_SIZE] = {
-6,-7,-4,-3,-6,-4,-2,-2,-7,-5,-6,-7,-5,-8,-2,0,-1,-13,-8,-2,-7,-6,0,-17,
--7,8,-6,-10,-8,-2,-9,-9,-2,-5,-7,0,-4,-9,-4,-3,-6,-2,-10,-8,5,-1,0,-17,
--4,-6,8,2,-11,-3,-2,-3,0,-5,-6,-1,-9,-9,-6,0,-2,-8,-4,-8,-4,-2,0,-17,
--3,-10,2,8,-14,-2,2,-3,-4,-7,-10,-4,-11,-15,-8,-4,-5,-15,-11,-8,-7,-3,0,-17,
--6,-8,-11,-14,10,-14,-14,-9,-7,-6,-11,-14,-13,-13,-8,-3,-8,-15,-4,-6,-11,-14,0,-17,
--4,-2,-3,-2,-14,8,1,-7,1,-8,-7,-3,-4,-13,-3,-5,-5,-13,-12,-7,-3,4,0,-17,
--2,-9,-2,2,-14,1,8,-4,-5,-5,-7,-4,-7,-14,-5,-4,-6,-17,-8,-6,-7,-2,0,-17,
--2,-9,-3,-3,-9,-7,-4,6,-9,-11,-11,-7,-8,-9,-6,-2,-6,-15,-14,-5,-8,-7,0,-17,
--7,-2,0,-4,-7,1,-5,-9,9,-9,-8,-6,-10,-6,-4,-6,-7,-7,-3,-6,-4,-3,0,-17,
--5,-5,-5,-7,-6,-8,-5,-11,-9,8,5,-6,-1,-2,-8,-7,-2,-14,-6,2,-6,-7,0,-17,
--6,-7,-6,-10,-11,-7,-7,-11,-8,5,5,-7,0,-3,-8,-8,-5,-10,-7,0,-7,-7,0,-17,
--7,0,-1,-4,-14,-3,-4,-7,-6,-6,-7,7,-2,-14,-6,-4,-3,-12,-9,-9,5,4,0,-17,
--5,-4,-9,-11,-13,-4,-7,-8,-10,-1,0,-2,11,-4,-8,-5,-4,-13,-11,-1,-3,-3,0,-17,
--8,-9,-9,-15,-13,-13,-14,-9,-6,-2,-3,-14,-4,9,-10,-6,-9,-4,2,-8,-12,-14,0,-17,
--2,-4,-6,-8,-8,-3,-5,-6,-4,-8,-8,-6,-8,-10,8,-2,-4,-14,-13,-6,-5,-5,0,-17,
-0,-3,0,-4,-3,-5,-4,-2,-6,-7,-8,-4,-5,-6,-2,6,0,-5,-7,-6,-4,-5,0,-17,
--1,-6,-2,-5,-8,-5,-6,-6,-7,-2,-5,-3,-4,-9,-4,0,7,-13,-6,-3,-5,-4,0,-17,
--13,-2,-8,-15,-15,-13,-17,-15,-7,-14,-10,-12,-13,-4,-14,-5,-13,13,-5,-15,-7,-13,0,-17,
--8,-10,-4,-11,-4,-12,-8,-14,-3,-6,-7,-9,-11,2,-13,-7,-6,-5,10,-7,-10,-11,0,-17,
--2,-8,-8,-8,-6,-7,-6,-5,-6,2,0,-9,-1,-8,-6,-6,-3,-15,-7,7,-9,-8,0,-17,
--7,5,-4,-7,-11,-3,-7,-8,-4,-6,-7,5,-3,-12,-5,-4,-5,-7,-10,-9,5,1,0,-17,
--6,-1,-2,-3,-14,4,-2,-7,-3,-7,-7,4,-3,-14,-5,-5,-4,-13,-11,-8,1,4,0,-17,
-0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-17,
--17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,1,
-	        };
-	        return _data;
-	    }
+  // Then, we specialize the class _ScoringMatrix.
+  template <>
+  struct ScoringMatrixData_<int, AminoAcid, PAM30MS>
+  {
+	  enum{
+	    	  VALUE_SIZE = ValueSize<AminoAcid>::VALUE,
+	      	  TAB_SIZE = VALUE_SIZE * VALUE_SIZE
+	      };
+		  static inline int const * getData() {
+	      // DEFINE the PAM30MS matrix from Habermann et al. MCP. 2004.
+	      static int const _data[TAB_SIZE] = {
+  6,-7,-4,-3,-6,-4,-2,-2,-7,-5,-6,-7,-5,-8,-2,0,-1,-13,-8,-2,-7,-6,0,-17,
+  -7,8,-6,-10,-8,-2,-9,-9,-2,-5,-7,0,-4,-9,-4,-3,-6,-2,-10,-8,5,-1,0,-17,
+  -4,-6,8,2,-11,-3,-2,-3,0,-5,-6,-1,-9,-9,-6,0,-2,-8,-4,-8,-4,-2,0,-17,
+  -3,-10,2,8,-14,-2,2,-3,-4,-7,-10,-4,-11,-15,-8,-4,-5,-15,-11,-8,-7,-3,0,-17,
+  -6,-8,-11,-14,10,-14,-14,-9,-7,-6,-11,-14,-13,-13,-8,-3,-8,-15,-4,-6,-11,-14,0,-17,
+  -4,-2,-3,-2,-14,8,1,-7,1,-8,-7,-3,-4,-13,-3,-5,-5,-13,-12,-7,-3,4,0,-17,
+  -2,-9,-2,2,-14,1,8,-4,-5,-5,-7,-4,-7,-14,-5,-4,-6,-17,-8,-6,-7,-2,0,-17,
+  -2,-9,-3,-3,-9,-7,-4,6,-9,-11,-11,-7,-8,-9,-6,-2,-6,-15,-14,-5,-8,-7,0,-17,
+  -7,-2,0,-4,-7,1,-5,-9,9,-9,-8,-6,-10,-6,-4,-6,-7,-7,-3,-6,-4,-3,0,-17,
+  -5,-5,-5,-7,-6,-8,-5,-11,-9,8,5,-6,-1,-2,-8,-7,-2,-14,-6,2,-6,-7,0,-17,
+  -6,-7,-6,-10,-11,-7,-7,-11,-8,5,5,-7,0,-3,-8,-8,-5,-10,-7,0,-7,-7,0,-17,
+  -7,0,-1,-4,-14,-3,-4,-7,-6,-6,-7,7,-2,-14,-6,-4,-3,-12,-9,-9,5,4,0,-17,
+  -5,-4,-9,-11,-13,-4,-7,-8,-10,-1,0,-2,11,-4,-8,-5,-4,-13,-11,-1,-3,-3,0,-17,
+  -8,-9,-9,-15,-13,-13,-14,-9,-6,-2,-3,-14,-4,9,-10,-6,-9,-4,2,-8,-12,-14,0,-17,
+  -2,-4,-6,-8,-8,-3,-5,-6,-4,-8,-8,-6,-8,-10,8,-2,-4,-14,-13,-6,-5,-5,0,-17,
+  0,-3,0,-4,-3,-5,-4,-2,-6,-7,-8,-4,-5,-6,-2,6,0,-5,-7,-6,-4,-5,0,-17,
+  -1,-6,-2,-5,-8,-5,-6,-6,-7,-2,-5,-3,-4,-9,-4,0,7,-13,-6,-3,-5,-4,0,-17,
+  -13,-2,-8,-15,-15,-13,-17,-15,-7,-14,-10,-12,-13,-4,-14,-5,-13,13,-5,-15,-7,-13,0,-17,
+  -8,-10,-4,-11,-4,-12,-8,-14,-3,-6,-7,-9,-11,2,-13,-7,-6,-5,10,-7,-10,-11,0,-17,
+  -2,-8,-8,-8,-6,-7,-6,-5,-6,2,0,-9,-1,-8,-6,-6,-3,-15,-7,7,-9,-8,0,-17,
+  -7,5,-4,-7,-11,-3,-7,-8,-4,-6,-7,5,-3,-12,-5,-4,-5,-7,-10,-9,5,1,0,-17,
+  -6,-1,-2,-3,-14,4,-2,-7,-3,-7,-7,4,-3,-14,-5,-5,-4,-13,-11,-8,1,4,0,-17,
+  0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,-17,
+  -17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,-17,1,
+	          };
+	          return _data;
+	      }
 	};
-	}  // namespace seqan
+}  // namespace seqan
 
 using namespace std;
 
@@ -99,19 +101,17 @@ namespace OpenMS
 defaults_.setValidStrings("algorithm",StringList::create("ranked,average,PEPMatrix,PEPIons,Minimum"));
 		defaults_.setValue("considered_hits",10,"The number of top hits that are used for the consensus scoring.");
 		defaults_.setMinInt("considered_hits",1);
-		defaults_.setValue("PEPIons:MinNumberOfFragments",2,"The minimal number of similar fragment ion masses that is necessary to evaluate the SPC.");
+		defaults_.setValue("PEPIons:MinNumberOfFragments",2,"The minimal number of similar (between two suggested sequences) fragment ion masses that is necessary to evaluate the shared peak count similarity (SPC).");
 		defaults_.setMinInt("PEPIons:MinNumberOfFragments",0);
 		defaults_.setValue("number_of_runs",0,"The number of runs used as input. This information is used in 'Ranked' and 'Average' to compute the new scores. If not given, the number of input identifications is taken.");
 		defaults_.setMinInt("number_of_runs",0);
-		defaults_.setValue("min_number_of_engines", 2, "The minimum number of search engines used to generate peptide lists");
-		defaults_.setMinInt("min_number_of_engines",2);
 		defaults_.setValue("PEPMatrix:common", 1.1, "Similarity threshold to accept the best score. E.g. for a given spectrun: engine 1 -> pep 1 with score x1 and engine2 -> pep2 with score x2. The better score from {x1,x2} will be used if the degree of similarity between pep1 and pep2 >= common, Note that 0 <= degree of similarity <= 1. Values > 1 will disable this option.");
 		defaults_.setMinFloat("PEPMatrix:common",0);
 		defaults_.setMaxFloat("PEPMatrix:common",1.1);
+		defaults_.setValue("PEPMatrix:penalty", 5, "Give the gap penalty (the same penalty will be used for opening and extension) as a positive integer");
 		defaults_.setValue("PEPIons:common", 1.1, "Similarity threshold to accept the best score. E.g. for a given spectrun: engine 1 -> pep 1 with score x1 and engine2 -> pep2 with score x2. The better score from {x1,x2} will be used if the degree of similarity between pep1 and pep2 >= common, Note that 0 <= degree of similarity <= 1. Values > 1 will disable this option.");
 		defaults_.setMinFloat("PEPIons:common",0);
 		defaults_.setMaxFloat("PEPIons:common",1.1);
-		defaults_.setValue("PEPMatrix:penalty", 5, "Give the gap penalty (the same penalty will be used for opening and extension) as a positive integer");
 
 		defaultsToParam_();
 	}

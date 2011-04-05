@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -44,9 +44,11 @@ START_TEST(MapAlignmentAlgorithmIdentification, "$Id$")
 
 
 MapAlignmentAlgorithmIdentification* ptr = 0;
+MapAlignmentAlgorithmIdentification* nullPointer = 0;
+MapAlignmentAlgorithm* base_nullPointer = 0;
 START_SECTION((MapAlignmentAlgorithmIdentification()))
 	ptr = new MapAlignmentAlgorithmIdentification();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 	
@@ -56,7 +58,7 @@ END_SECTION
 
 
 START_SECTION((static MapAlignmentAlgorithm* create()))
-	TEST_NOT_EQUAL(MapAlignmentAlgorithmIdentification::create(), 0)
+  TEST_NOT_EQUAL(MapAlignmentAlgorithmIdentification::create(), base_nullPointer)
 END_SECTION
 
 
@@ -85,10 +87,13 @@ START_SECTION((virtual void alignPeptideIdentifications(std::vector<std::vector<
 
 	Param params = aligner->getParameters();
 	params.setValue("peptide_score_threshold", 0.0);
-	params.setValue("num_breakpoints", 10);
 	aligner->setParameters(params);
 	aligner->setLogType(ProgressLogger::CMD);
 	aligner->alignPeptideIdentifications(peptides, transforms);
+	params.clear();
+	params.setValue("num_breakpoints", 10);
+	aligner->fitModel("b_spline", params, transforms);
+	aligner->transformPeptideIdentifications(peptides, transforms);
 // 	cout << "Output (transformed):\n";
 // 	for (Size i = 0; i < peptides[0].size(); ++i)
 // 	{
@@ -104,6 +109,7 @@ START_SECTION((virtual void alignPeptideIdentifications(std::vector<std::vector<
 	}
 
 	// test parameter check:
+	params.clear();
 	params.setValue("min_run_occur", 3);
 	aligner->setParameters(params);
 	TEST_EXCEPTION(Exception::InvalidParameter, 
@@ -129,13 +135,33 @@ START_SECTION((virtual void alignFeatureMaps(std::vector<FeatureMap<> >&, std::v
 END_SECTION
 
 
-START_SECTION((virtual void setReference(Size, const String&)))
+START_SECTION((virtual void alignConsensusMaps(std::vector<ConsensusMap>&, std::vector<TransformationDescription>&)))
+{
+	// largely the same as "alignPeptideIdentifications"
+  NOT_TESTABLE;
+}
+END_SECTION
+
+
+START_SECTION((virtual void setReference(Size reference_index=0, const String& reference_file="")))
 {
 	MapAlignmentAlgorithm* aligner = Factory<MapAlignmentAlgorithm>::create(
 		"identification");
 	aligner->setReference(1); // nothing happens
 	TEST_EXCEPTION(Exception::FileNotFound, 
 								 aligner->setReference(0, "not-a-real-file.idXML"));
+}
+END_SECTION
+
+
+START_SECTION((virtual void getDefaultModel(String& model_type, Param& params)))
+{
+	String model_type;
+	Param params;
+	MapAlignmentAlgorithmIdentification aligner;
+	aligner.getDefaultModel(model_type, params);
+	TEST_EQUAL(model_type, "b_spline");
+	TEST_EQUAL(params.getValue("num_breakpoints"), 5);
 }
 END_SECTION
 

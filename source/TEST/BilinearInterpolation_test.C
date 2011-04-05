@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -90,12 +90,13 @@ END_SECTION
 typedef BilinearInterpolation < float, double > BIFD;
 
 BIFD * bifd_ptr = 0;
+BIFD * bifd_nullPointer = 0;
 
 START_SECTION(BilinearInterpolation())
 {
 	BIFD bifd;
 	bifd_ptr = new BIFD;
-	TEST_NOT_EQUAL(bifd_ptr,0);
+  TEST_NOT_EQUAL(bifd_ptr,bifd_nullPointer);
 }
 END_SECTION
 

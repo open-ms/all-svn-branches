@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -233,9 +233,10 @@ class TOPPBaseTestNOP
 /////////////////////////////////////////////////////////////
 
 TOPPBaseTest* ptr = 0;
+TOPPBaseTest* nullPointer = 0;
 START_SECTION((TOPPBase(const String &name, const String &description, bool official=true, bool id_tag_support=false, const String &version="")))
 	ptr = new TOPPBaseTest();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~TOPPBase()))
@@ -248,24 +249,25 @@ START_SECTION((void checkTOPPIniFile(const String &tool_path)))
 END_SECTION
 
 START_SECTION((static Map<String,StringList> getToolList()))
-	TEST_EQUAL(TOPPBaseTest::getToolList().has("FileInfo"),true)
-	TEST_EQUAL(TOPPBaseTest::getToolList().has("ImaginaryTool"),false)
-	TEST_EQUAL(TOPPBaseTest::getToolList()["FileInfo"].empty(),true)
-	TEST_EQUAL(TOPPBaseTest::getToolList()["FeatureFinder"].empty(),false)
+	TEST_EQUAL(ToolHandler::getTOPPToolList().has("FileInfo"),true)
+	TEST_EQUAL(ToolHandler::getTOPPToolList().has("ImaginaryTool"),false)
+	TEST_EQUAL(ToolHandler::getTOPPToolList()["FileInfo"].types.empty(),true)
+	TEST_EQUAL(ToolHandler::getTOPPToolList()["FeatureFinder"].types.empty(),false)
 END_SECTION
 
 START_SECTION((static Map<String,StringList> getUtilList()))
-	TEST_EQUAL(TOPPBaseTest::getUtilList().has("MapAlignmentEvaluation"),true)
-	TEST_EQUAL(TOPPBaseTest::getUtilList().has("SomeCoolUtil"),false)
-	TEST_EQUAL(TOPPBaseTest::getUtilList()["MSSimulator"].empty(),false)
-	TEST_EQUAL(TOPPBaseTest::getUtilList()["ImageCreator"].empty(),true)
+	TEST_EQUAL(ToolHandler::getUtilList().has("MapAlignmentEvaluation"),true)
+	TEST_EQUAL(ToolHandler::getUtilList().has("SomeCoolUtil"),false)
+	TEST_EQUAL(ToolHandler::getUtilList()["MSSimulator"].types.empty(),false)
+	TEST_EQUAL(ToolHandler::getUtilList()["ImageCreator"].types.empty(),true)
 END_SECTION
 
 TOPPBase::ParameterInformation* pi_ptr = 0;
+TOPPBase::ParameterInformation* pi_nullPointer = 0;
 
 START_SECTION(([TOPPBase::ParameterInformation] ParameterInformation()))
     pi_ptr = new TOPPBase::ParameterInformation();
-    TEST_NOT_EQUAL(pi_ptr, 0)
+    TEST_NOT_EQUAL(pi_ptr, pi_nullPointer)
 END_SECTION
 
 TOPPBase::ParameterInformation pi("Temperatur", TOPPBase::ParameterInformation::DOUBLE, "sehr hoch", "ganz hoch", "eine Art Beschreibung", true, false);
@@ -369,7 +371,7 @@ START_SECTION(([EXTRA]String getStringOption_(const String& name) const))
 	TEST_EXCEPTION(Exception::UnregisteredParameter,tmp2.getStringOption("imleeewenit"));
 
 	//missing required parameters
-	const char* string_cl2[2] = {a1, a11};
+	const char* string_cl2[2] = {a1, a11}; // TOPPBaseTest -flag
 	TOPPBaseTestNOP tmp8(2,string_cl2);
 	TEST_EXCEPTION(Exception::RequiredParameterNotGiven,tmp8.getStringOption("stringoption"));
 
@@ -414,7 +416,7 @@ START_SECTION(([EXTRA]String getStringOption_(const String& name) const))
 	p2.setMaxInt(intlist2,6);
 	p2.setValue(doublelist2,DoubleList::create("1.2,2.33"),"doubelist with restrictions");
 	p2.setMinFloat(doublelist2,0.2);
-	p2.setMaxFloat(doublelist2,5.4);	
+	p2.setMaxFloat(doublelist2,5.4);
 	TEST_EQUAL(p1,p2)
 END_SECTION
 
@@ -592,7 +594,7 @@ START_SECTION(([EXTRA]Param getParam_( const std::string& prefix ) const))
 	const char* tmp_argv[] = {a1, a3, a7}; //command line: "TOPPBaseTest -ini data/TOPPBase_toolcommon.ini"
 	TOPPBaseTest tmp_topp(sizeof(tmp_argv)/sizeof(*tmp_argv),tmp_argv);
 
-	Param good_params;
+	Param good_params = tmp_topp.getParam();
 	good_params.setValue( "TOPPBaseTest:stringoption", "toolcommon" );
 	good_params.setValue( "ini", OPENMS_GET_TEST_DATA_PATH("TOPPBase_toolcommon.ini") );
 	good_params.setValue( "stringoption", "instance1" );

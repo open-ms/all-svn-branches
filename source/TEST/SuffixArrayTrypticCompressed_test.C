@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -45,6 +45,7 @@ START_TEST(SuffixArrayTrypticCompressed, "$Id$")
 /////////////////////////////////////////////////////////////
 
 SuffixArrayTrypticCompressed* ptr = 0;
+SuffixArrayTrypticCompressed* nullPointer = 0;
 const String text = "$AAARAA$ARARP$";
 
 SuffixArrayTrypticCompressed* sa = new SuffixArrayTrypticCompressed(text, "");
@@ -61,7 +62,7 @@ START_SECTION(SuffixArrayTrypticCompressed(const String &st, const String &filen
 	TEST_EQUAL(sTree,"AA\nAAARAA\nARARP\nARP");
 	TEST_EQUAL(lcp,"2120");
 	TEST_EQUAL(skip,"1210");
-	TEST_NOT_EQUAL(ptr, 0);
+  TEST_NOT_EQUAL(ptr, nullPointer);
 	TEST_EXCEPTION (Exception::FileNotFound,ptr = new SuffixArrayTrypticCompressed(text,"FileThatNotExists"));
 END_SECTION
 

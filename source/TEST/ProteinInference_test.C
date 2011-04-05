@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,10 +41,11 @@ START_TEST(ProteinInference, "$Id$")
 /////////////////////////////////////////////////////////////
 
 ProteinInference* ptr = 0;
+ProteinInference* nullPointer = 0;
 START_SECTION(ProteinInference())
 {
 	ptr = new ProteinInference();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -73,7 +74,7 @@ START_SECTION((void infer(ConsensusMap &consensus_map, const UInt reference_map)
 	
   ConsensusXMLFile cm_file;
 	ConsensusMap cm;
-	cm_file.load(OPENMS_GET_TEST_DATA_PATH("ItraqQuantifier.consensusXML"),cm);
+	cm_file.load(OPENMS_GET_TEST_DATA_PATH("ProteinInference.consensusXML"),cm);
 	
 	// delete quantitative info
 	for (size_t i=0; i < cm.getProteinIdentifications()[0].getHits().size(); ++i)
@@ -91,7 +92,7 @@ START_SECTION((void infer(ConsensusMap &consensus_map, const UInt reference_map)
 	
 	// TOLERANCE_ABSOLUTE(0.01);
 	WHITELIST("<?xml-stylesheet");
-	TEST_FILE_SIMILAR(cm_file_out,OPENMS_GET_TEST_DATA_PATH("ItraqQuantifier.consensusXML"));
+	TEST_FILE_SIMILAR(cm_file_out,OPENMS_GET_TEST_DATA_PATH("ProteinInference.consensusXML"));
 	
 }
 END_SECTION

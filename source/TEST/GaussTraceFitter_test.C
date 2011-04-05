@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -253,10 +253,11 @@ DoubleReal expected_x0 = 680.1;
 /////////////////////////////////////////////////////////////
 
 GTF* ptr = 0;
+GTF* nullPointer = 0;
 START_SECTION(GaussTraceFitter())
 {
 	ptr = new GTF();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -344,7 +345,7 @@ START_SECTION((bool checkMaximalRTSpan(const DoubleReal max_rt_span)))
 }
 END_SECTION
 
-START_SECTION((virtual bool checkMinimalRTSpan(std::pair< DoubleReal, DoubleReal > const &rt_bounds, const DoubleReal min_rt_span)))
+START_SECTION((bool checkMinimalRTSpan(const std::pair< DoubleReal, DoubleReal > &rt_bounds, const DoubleReal min_rt_span)))
 {
   // is
   // (rt_bounds.second-rt_bounds.first) < min_rt_span * 5.0 * sigma_;
@@ -359,7 +360,7 @@ START_SECTION((virtual bool checkMinimalRTSpan(std::pair< DoubleReal, DoubleReal
 }
 END_SECTION
 
-START_SECTION((DoubleReal computeTheoretical(FeatureFinderAlgorithmPickedHelperStructs::MassTrace< PeakType > &trace, Size k)))
+START_SECTION((DoubleReal computeTheoretical(const FeatureFinderAlgorithmPickedHelperStructs::MassTrace< PeakType > &trace, Size k)))
 {
   FeatureFinderAlgorithmPickedHelperStructs::MassTrace<Peak1D> mt;
   mt.theoretical_int = 0.8;
@@ -392,6 +393,11 @@ START_SECTION((virtual String getGnuplotFormula(FeatureFinderAlgorithmPickedHelp
 }
 END_SECTION
 
+START_SECTION((DoubleReal getFWHM() const))
+{
+  TEST_REAL_SIMILAR(gaussian_trace_fitter.getFWHM(), 2.0 * expected_sigma)
+}
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -48,6 +48,7 @@ using namespace std;
 
 XTandemInfile xml_file;
 XTandemInfile* ptr;
+XTandemInfile* nullPointer = 0;
 ProteinIdentification protein_identification;
 vector<PeptideIdentification> peptide_identifications; 
 vector<PeptideIdentification> peptide_identifications2; 
@@ -57,7 +58,7 @@ PeptideHit peptide_hit;
 
 START_SECTION((XTandemInfile()))
 	ptr = new XTandemInfile();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(~XTandemInfile())
@@ -235,6 +236,16 @@ START_SECTION(void load(const String &filename))
 	NOT_TESTABLE
 END_SECTION
 
+START_SECTION(bool isRefining() const )
+  XTandemInfile file;
+  TEST_EQUAL(file.isRefining()==true, true)
+END_SECTION
+
+START_SECTION(void setRefine(const bool refine))
+  XTandemInfile file;
+  file.setRefine(false);
+  TEST_EQUAL(file.isRefining()==false, true)
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

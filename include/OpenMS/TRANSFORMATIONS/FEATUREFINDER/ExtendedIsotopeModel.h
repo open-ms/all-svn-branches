@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -35,6 +35,14 @@ namespace OpenMS
 {
   /** 
 		@brief Extended isotope distribution approximated using linear interpolation.
+
+    This models a smoothed (widened) distribution, i.e. can be used to sample actual raw peaks (depending on the points you query).
+    If you only want the distribution (no widening), use either
+    EmpiricalFormula::getIsotopeDistribution() // for a certain sum formula
+    or
+    IsotopeDistribution::estimateFromPeptideWeight (double average_weight)  // for averagine
+
+    Peak widening is achieved by a Gaussian shape.
 
 		@htmlinclude OpenMS_ExtendedIsotopeModel.parameters
 	*/

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
-// $Authors: Andreas Bertsch $
+// $Maintainer: Chris Bielow $
+// $Authors: Andreas Bertsch, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/MzMLFile.h>
@@ -40,6 +40,7 @@
 
 #include <QtCore/QFile>
 #include <QtCore/QProcess>
+#include <QDir>
 
 using namespace OpenMS;
 using namespace std;
@@ -76,7 +77,13 @@ using namespace std;
 	of the NCBI-tools suite (see ftp://ftp.ncbi.nlm.nih.gov/blast/executables/release/2.2.13/ for a working version).
   The latest NCBI BLAST distribution does not contain the formatdb executable any longer!).
   Use @em formatdb @em -i @em SwissProt_TargetAndDecoy.fasta @em -o to create
-  additional files, which	will be used by @em OMSSA. The database option of the @em OMSSAAdapter should contain the name of the psq file created by formatdb (e.g. SwissProt_TargetAndDecoy.fasta.psq).
+  additional files, which	will be used by @em OMSSA. The database option of the @em OMSSAAdapter should contain the name of the psq file
+  , e.g., 'SwissProt_TargetAndDecoy.fasta.psq'. The '.psq' suffix can also be omitted, e.g. 'SwissProt_TargetAndDecoy.fasta' and will be added
+  automatically.
+  This makes it easy to specifiy a common TOPPAS input node (using only the FASTA suffix) for many adapters.
+  
+  This adapter supports relative database filenames, which (when not found in the current working directory) is looked up in
+  the directories specified by 'OpenMS.ini:id_db_dir' (see @subpage TOPP_advanced).
 
 	The options that specify the protease specificity (@em e) are directly taken from OMSSA. A complete list of available
 	proteases can be found be executing @em omssacl @em -el.
@@ -103,6 +110,50 @@ class TOPPOMSSAAdapter
 		}
 
 	protected:
+
+    struct OMSSAVersion
+    {
+      OMSSAVersion ()
+        : omssa_major(0), omssa_minor(0), omssa_patch(0)
+      {}
+
+      OMSSAVersion (Int maj, Int min, Int pat)
+        : omssa_major(maj), omssa_minor(min), omssa_patch(pat)
+      {}
+
+      Int omssa_major;
+      Int omssa_minor;
+      Int omssa_patch;
+
+      bool operator < (const OMSSAVersion& v) const
+      {
+        if (omssa_major > v.omssa_major) return false;
+        else if (omssa_major < v.omssa_major) return true;
+        else // ==
+        {
+          if (omssa_minor > v.omssa_minor) return false;
+          else if (omssa_minor < v.omssa_minor) return true;
+          else
+          {
+            return (omssa_patch < v.omssa_patch);
+          }
+        }
+
+      }
+    };
+
+    bool getVersion_(const String& version, OMSSAVersion& omssa_version_i) const
+    {
+      // we expect three components 
+      IntList nums = IntList::create(StringList::create(version,'.'));
+      if (nums.size()!=3) return false;
+
+      omssa_version_i.omssa_major =nums[0];
+      omssa_version_i.omssa_minor =nums[1];
+      omssa_version_i.omssa_patch =nums[2];
+      return true;
+    }
+
 		void registerOptionsAndFlags_()
 		{
 
@@ -117,7 +168,7 @@ class TOPPOMSSAAdapter
       registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "precursor mass tolerance (Default: Dalton)", false);
       registerDoubleOption_("fragment_mass_tolerance", "<tolerance>", 0.3, "fragment mass error in Dalton", false);
       registerFlag_("precursor_mass_tolerance_unit_ppm", "If this flag is set, ppm is used as precursor mass tolerance unit");
-      registerInputFile_("database", "<psq-file>", "", "NCBI formated fasta files. Only the psq filename should be given, e.g. 'SwissProt.fasta.psq'");
+      registerInputFile_("database", "<psq-file>", "", "NCBI formatted fasta files. Only the psq filename should be given, e.g. 'SwissProt.fasta.psq'. If the filename does not end in '.psq' the suffix will be added automatically. Non-existing relative file-names are looked up via'OpenMS.ini:id_db_dir'", true, false, StringList::create("skipexists"));
 			registerIntOption_("min_precursor_charge", "<charge>", 1, "minimum precursor ion charge", false);
       registerIntOption_("max_precursor_charge", "<charge>", 3, "maximum precursor ion charge", false);
 			vector<String> all_mods;
@@ -134,7 +185,7 @@ class TOPPOMSSAAdapter
 			//-d <String> Blast sequence library to search.  Do not include .p* filename suffixes.
 			//-pc <Integer> The number of pseudocounts to add to each precursor mass bin.
 			//registerStringOption_("d", "<file>", "", "Blast sequence library to search.  Do not include .p* filename suffixes", true);
-      registerInputFile_("omssa_executable", "", "", "The 'omssacl' executable of the OMSSA installation", true, false, StringList::create("skipexists"));
+      registerInputFile_("omssa_executable", "<executable>", "omssacl", "The 'omssacl' executable of the OMSSA installation", true, false, StringList::create("skipexists"));
       registerInputFile_("omssa_user_mods", "<file>", "", "additional <MSModSpec> subtrees of user modifications.\nSubtrees will be pasted into OMSSAAdapter generated user mod files.\nSee http://www.ncbi.nlm.nih.gov/data_specs/schema/OMSSA.mod.xsd for details about user mod file definition.", false, true, StringList::create("input file"));
 			registerIntOption_("pc", "<Integer>", 1, "The number of pseudocounts to add to each precursor mass bin", false, true);
 
@@ -160,7 +211,7 @@ class TOPPOMSSAAdapter
 			//-ob <String> filename for binary asn.1 formatted search results
 			//-ox <String> filename for xml formatted search results
 			//-oc <String> filename for comma separated value (excel .csv) formatted search results
-			// output options of OMSSA are not necessary
+      // output options of OMSSA are not necessaryOMSSA
 
 			//The following options output the search parameters and search spectra in the output results. This is necessary for viewing result in the OMSSA browser:
 			//-w include spectra and search params in search results
@@ -299,20 +350,13 @@ class TOPPOMSSAAdapter
 
 		ExitCodes main_(int , const char**)
 		{
-			// instance specific location of settings in INI file (e.g. 'TOPP_Skeleton:1:')
-			String ini_location;
+			String parameters;
 			// path to the log file
 			String logfile(getStringOption_("log"));
 			String omssa_executable(getStringOption_("omssa_executable"));
-			String inputfile_name;
-			String outputfile_name;
-			PeakMap map;
-
-			String parameters;
-			String unique_name = File::getUniqueName(); // body for the tmp files
+      String unique_name = QDir::toNativeSeparators(String(File::getTempDirectory() + "/" + File::getUniqueName()).toQString()); // body for the tmp files
 			String unique_input_name = unique_name + "_OMSSA.mgf";
 			String unique_output_name = unique_name + "_OMSSA.xml";
-			String unique_version_name = unique_name + "_OMSSA_version";
 			String unique_usermod_name = unique_name + "_OMSSA_user_mod_file.xml";
 
 			//-------------------------------------------------------------
@@ -326,6 +370,7 @@ class TOPPOMSSAAdapter
       bool success = qp.waitForFinished();
       String output (QString(qp.readAllStandardOutput ()));
 			String omssa_version;
+      OMSSAVersion omssa_version_i;
       if (!success || qp.exitStatus() != 0 || qp.exitCode()!=0)
 			{
         writeLog_("Warning: unable to determine the version of OMSSA - the process returned an error. Call string was: '" + call + "'. Make sure that the path to the OMSSA executable is correct!");
@@ -335,9 +380,9 @@ class TOPPOMSSAAdapter
       {
  			  vector<String> version_split;
 			  output.split(' ', version_split);
-			  if (version_split.size() == 2)
+			  if (version_split.size() == 2 && getVersion_(version_split[1], omssa_version_i))
         {
-          omssa_version = version_split[1];
+          omssa_version = version_split[1].removeWhitespaces();
           writeDebug_("Setting OMSSA version to " + omssa_version, 1);
         }
         else
@@ -346,27 +391,48 @@ class TOPPOMSSAAdapter
         }
       }
       // parse arguments
-			inputfile_name = getStringOption_("in");
-			outputfile_name = getStringOption_("out");
+			String inputfile_name = getStringOption_("in");
+			String outputfile_name = getStringOption_("out");
       String db_name = String(getStringOption_("database"));
       // @todo: find DB for OMSSA (if not given) in OpenMS_bin/share/OpenMS/DB/*.fasta|.pin|...
 
 
       if (db_name.suffix('.') != "psq")
       {
-        writeLog_("Input database has invalid name. Make sure it ends with '.psq'. Got '" + db_name + "'. Aborting!");
-				printUsage_();
-				return ILLEGAL_PARAMETERS;
+        db_name += ".psq";
       }
-      db_name = db_name.substr(0,db_name.size()-4);
 
-			parameters += " -d "  +  db_name; // getStringOption_("d");
-			parameters += " -to " +  String(getDoubleOption_("fragment_mass_tolerance")); //String(getDoubleOption_("to"));
+      if (!File::readable(db_name))
+      {
+        String full_db_name;
+        try
+        {
+          full_db_name = File::findDatabase(db_name);
+        }
+        catch (...)
+        {
+			    printUsage_();
+			    return ILLEGAL_PARAMETERS;
+        }
+        db_name = full_db_name;
+      }
+      
+      db_name = db_name.substr(0,db_name.size()-4); // OMSSA requires the filename without the .psq part
+
+      parameters += " -d "  + String(db_name).quote('"', String::NONE);
+			parameters += " -to " + String(getDoubleOption_("fragment_mass_tolerance")); //String(getDoubleOption_("to"));
 			parameters += " -hs " + String(getIntOption_("hs"));
-			parameters += " -te " +  String(getDoubleOption_("precursor_mass_tolerance")); //String(getDoubleOption_("te"));
+			parameters += " -te " + String(getDoubleOption_("precursor_mass_tolerance")); //String(getDoubleOption_("te"));
       if (getFlag_("precursor_mass_tolerance_unit_ppm"))
       {
-        parameters += " -teppm ";
+        if (omssa_version_i < OMSSAVersion(2,1,8))
+        {
+          writeLog_("This OMSSA version (" + omssa_version + ") does not support the 'precursor_mass_tolerance_unit_ppm' flag."
+                   +" Please disable it and set the precursor tolerance in Da."
+                   +" Required version is 2.1.8 and above.\n");
+          return ILLEGAL_PARAMETERS;
+        }
+        parameters += " -teppm "; // only from OMSSA 2.1.8 on
       }
 			parameters += " -zl " +  String(getIntOption_("min_precursor_charge")); //String(getIntOption_("zl"));
 			parameters += " -zh " +  String(getIntOption_("max_precursor_charge")); //String(getIntOption_("zh"));
@@ -405,8 +471,8 @@ class TOPPOMSSAAdapter
 				parameters += " -mnm ";
 			}
 
-			parameters += " -fm " + unique_input_name;
-			parameters += " -ox " + unique_output_name;
+      parameters += " -fm " + String(unique_input_name).quote('"', String::NONE);
+			parameters += " -ox " + String(unique_output_name).quote('"', String::NONE);
 
 			if (getIntOption_("debug") == 0)
 			{
@@ -452,68 +518,50 @@ class TOPPOMSSAAdapter
 			if (getStringList_("fixed_modifications").size() != 0)
 			{
 				set<String> mod_names = mod_set.getFixedModificationNames();
-				String mod_list;
+				StringList mod_list;
 				for (set<String>::const_iterator it = mod_names.begin(); it != mod_names.end(); ++it)
 				{
 					if (mods_map.has(*it))
 					{
-						if (mod_list != "")
-						{
-							mod_list += ",";
-						}
-						mod_list += String(mods_map[*it]);
+            mod_list.push_back(String(mods_map[*it]));
 					}
 					else
 					{
-						if (mod_list != "")
-						{
-							mod_list += ",";
-						}
-						mod_list += String(user_mod_num);
-
+            mod_list.push_back(String(user_mod_num));
 						// add this to the usermods
 						user_mods.push_back(make_pair(user_mod_num++, *it));
             writeDebug_("Inserting unknown fixed modification: '" + *it + "' into OMSSA", 1);
 					}
 				}
-				if (mod_list != "")
+        if (mod_list.size() > 0)
 				{
-					parameters += " -mf " + mod_list;
+          parameters += " -mf " + mod_list.concatenate(",");
 				}
 			}
 
 			if (getStringList_("variable_modifications").size() != 0)
 			{
 				set<String> mod_names = mod_set.getVariableModificationNames();
-				String mod_list;
+				StringList mod_list;
 
         for (set<String>::const_iterator it = mod_names.begin(); it != mod_names.end(); ++it)
         {
           if (mods_map.has(*it))
           {
-            if (mod_list != "")
-            {
-              mod_list += ",";
-            }
-            mod_list += String(mods_map[*it]);
+            mod_list.push_back(String(mods_map[*it]));
           }
           else
           {
-            if (mod_list != "")
-            {
-              mod_list += ",";
-            }
-            mod_list += String(user_mod_num);
-
+            mod_list.push_back(String(user_mod_num));
             // add this to the usermods
             user_mods.push_back(make_pair(user_mod_num++, *it));
             writeDebug_("Inserting unknown variable modification: '" + *it + "' into OMSSA", 1);
           }
         }
 
-				if (mod_list != "")
+        if (mod_list.size() > 0)
 				{
-					parameters += " -mv " + mod_list;
+          parameters += " -mv " + mod_list.concatenate(",");
 				}
 			}
 
@@ -522,7 +570,7 @@ class TOPPOMSSAAdapter
       if (user_mods.size() != 0 || additional_user_mods_filename != "")
 			{
 				writeDebug_("Writing usermod file to " + unique_usermod_name, 1);
-				parameters += " -mux " + File::absolutePath(unique_usermod_name);
+				parameters += " -mux " + (File::absolutePath(unique_usermod_name));
 				ofstream out(unique_usermod_name.c_str());
 				out << "<?xml version=\"1.0\"?>" << endl;
 				out << "<MSModSpecSet xmlns=\"http://www.ncbi.nlm.nih.gov\" xmlns:xs=\"http://www.w3.org/2001/XMLSchema-instance\" xs:schemaLocation=\"http://www.ncbi.nlm.nih.gov OMSSA.xsd\">" << endl;
@@ -615,6 +663,7 @@ class TOPPOMSSAAdapter
 			//-------------------------------------------------------------
 
 			MzMLFile mzml_infile;
+      PeakMap map;
 			mzml_infile.setLogType(log_type_);
 			ProteinIdentification protein_identification;
 			vector<PeptideIdentification> peptide_ids;
@@ -636,7 +685,7 @@ class TOPPOMSSAAdapter
       // or PATH
 
 			writeDebug_("omssa_executable " + parameters, 5);
-      Int status = QProcess::execute(omssa_executable.toQString(), QStringList(parameters.toQString().split(" ", QString::SkipEmptyParts))); // does automatic escaping etc...
+      Int status = QProcess::execute((omssa_executable+" "+parameters).toQString());
 			if (status != 0)
 			{
 				writeLog_("Error: OMSSA problem! (Details can be seen in the logfile: \"" + logfile + "\")");

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -46,6 +46,7 @@ START_TEST(SuffixArraySeqan, "$Id$")
 /////////////////////////////////////////////////////////////
 
 SuffixArraySeqan* ptr = 0;
+SuffixArraySeqan* nullPointer = 0;
 const String text = "$AAARAA$ARARP$";
 
 SuffixArraySeqan* sa = new SuffixArraySeqan(text,"");
@@ -54,8 +55,8 @@ START_SECTION((SuffixArraySeqan(const String &st, const String &filename, const 
 {
 	TEST_EXCEPTION (Exception::InvalidValue,new SuffixArraySeqan("A",""));
 	TEST_EXCEPTION (Exception::InvalidValue,new SuffixArraySeqan("$A",""));
-	ptr = new SuffixArraySeqan("$","");
-	TEST_NOT_EQUAL(ptr, 0);
+	ptr = new SuffixArraySeqan(text,"");
+  TEST_NOT_EQUAL(ptr, nullPointer);
 	TEST_EXCEPTION (Exception::FileNotFound,new SuffixArraySeqan(text,"FileThatNotExists"));
 }
 END_SECTION

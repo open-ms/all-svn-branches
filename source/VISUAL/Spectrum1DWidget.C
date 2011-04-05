@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
-// $Authors: Marc Sturm $
+// $Maintainer: Timo Sachsenberg$
+// $Authors: Marc Sturm, Timo Sachsenberg $
 // --------------------------------------------------------------------------
 
 // OpenMS
@@ -31,6 +31,11 @@
 #include <OpenMS/VISUAL/DIALOGS/Spectrum1DGoToDialog.h>
 #include <QtGui/QSpacerItem>
 #include <QtGui/QScrollBar>
+#include <QtGui/QFileDialog>
+#include <QtGui/QPainter>
+#include <QtGui/QPaintEvent>
+#include <QtSvg/QtSvg>
+#include <QtSvg/QSvgGenerator>
 
 using namespace std;
 
@@ -211,7 +216,7 @@ namespace OpenMS
 	void Spectrum1DWidget::showGoToDialog()
 	{
 	  Spectrum1DGoToDialog goto_dialog(this);
-	  goto_dialog.setRange(canvas()->getDataRange().minX(),canvas()->getDataRange().maxX());
+    goto_dialog.setRange(canvas()->getVisibleArea().minX(),canvas()->getVisibleArea().maxX());
 	  if (goto_dialog.exec())
 	  {
 	  	canvas()->setVisibleArea(SpectrumCanvas::AreaType(goto_dialog.getMin(),0,goto_dialog.getMax(),0));
@@ -273,13 +278,59 @@ namespace OpenMS
 	}
 	
 	void Spectrum1DWidget::resetAlignment()
-	{
+	{        
 		spacer_->changeSize(0,0);
 		grid_->removeWidget(y_axis_);
 		grid_->removeWidget(flipped_y_axis_);
 		grid_->addWidget(y_axis_, 0, 1);
-		grid_->addWidget(flipped_y_axis_, 2, 1);
+    grid_->addWidget(flipped_y_axis_, 2, 1);
 	}
+
+  void Spectrum1DWidget::saveAsImage()
+  {
+    QString file_name = QFileDialog::getSaveFileName(this, "Save File", "", "Raster images *.bmp *.png *.jpg *.gif (*.bmp *.png *.jpg *.gif);;Vector images *.svg (*.svg)");
+    bool x_visible = x_scrollbar_->isVisible();
+    bool y_visible = y_scrollbar_->isVisible();
+    x_scrollbar_->hide();
+    y_scrollbar_->hide();
+
+    if (file_name.contains(".svg", Qt::CaseInsensitive)) // svg vector format
+    {
+      QSvgGenerator generator;
+      generator.setFileName(file_name);
+      generator.setSize(QSize(this->width(), this->height()));
+      generator.setViewBox(QRect(0, 0, this->width()-1, this->height()-1));
+      generator.setTitle(file_name);
+      generator.setDescription("TOPPView generated SVG");
+      QPainter painter;
+      painter.begin(&generator);
+
+      painter.save();
+      painter.translate(QPoint(y_axis_->pos()));
+      dynamic_cast<AxisWidget*>(y_axis_)->paint(&painter, new QPaintEvent(y_axis_->contentsRect()));
+      painter.restore();
+
+      painter.save();
+      painter.translate(QPoint(canvas_->pos()));
+      dynamic_cast<Spectrum1DCanvas*>(canvas_)->paint(&painter, new QPaintEvent(canvas_->contentsRect()));
+      painter.restore();
+
+      painter.save();
+      painter.translate(QPoint(x_axis_->pos()));
+      dynamic_cast<AxisWidget*>(x_axis_)->paint(&painter, new QPaintEvent(x_axis_->contentsRect()));
+      painter.restore();
+
+      painter.end();
+      x_scrollbar_->setVisible(x_visible);
+      y_scrollbar_->setVisible(y_visible);
+    } else // raster graphics formats
+    {
+      QPixmap pixmap = QPixmap::grabWidget(this);
+      x_scrollbar_->setVisible(x_visible);
+      y_scrollbar_->setVisible(y_visible);
+      pixmap.save(file_name);
+    }
+  }
 	
 } //namespace
 

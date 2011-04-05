@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -52,9 +52,10 @@ String accession = "PROOE34";
 
 
 ProteinHit* ptr = 0;	
+ProteinHit* nullPointer = 0;
 START_SECTION(ProteinHit())
 	ptr = new ProteinHit();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(~ProteinHit())
@@ -68,7 +69,7 @@ START_SECTION((ProteinHit(DoubleReal score, UInt rank, String accession, String 
 	TEST_EQUAL(hit.getRank(), rank)
 	TEST_EQUAL(hit.getAccession(), accession)
 	TEST_EQUAL(hit.getSequence(), sequence)
-	TEST_EQUAL(hit.getCoverage(), 0)
+	TEST_EQUAL(hit.getCoverage(), -1)
 END_SECTION
 
 START_SECTION(ProteinHit(const ProteinHit& source))
@@ -204,7 +205,7 @@ END_SECTION
 
 START_SECTION(DoubleReal getCoverage() const)
 	ProteinHit hit(score, rank, accession, sequence);
-	TEST_EQUAL(hit.getCoverage(), 0)
+	TEST_EQUAL(hit.getCoverage(), -1)
 	hit.setCoverage(123.123);
 	TEST_EQUAL(hit.getCoverage(), 123.123)
 END_SECTION

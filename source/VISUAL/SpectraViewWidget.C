@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -73,7 +73,7 @@ namespace OpenMS
     spectra_treewidget_->header()->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(spectra_treewidget_, SIGNAL(currentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)), this, SLOT(spectrumSelectionChange_(QTreeWidgetItem*, QTreeWidgetItem*)));
-    connect(spectra_treewidget_, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(spectrumDoubleClicked__(QTreeWidgetItem*, int)));
+    connect(spectra_treewidget_, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(spectrumDoubleClicked_(QTreeWidgetItem*, int)));
     connect(spectra_treewidget_, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(spectrumContextMenu_(const QPoint&)));
     connect(spectra_treewidget_->header(), SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(spectrumBrowserHeaderContextMenu_(const QPoint&)));
 
@@ -157,7 +157,10 @@ namespace OpenMS
 
   void SpectraViewWidget::spectrumDoubleClicked_(QTreeWidgetItem* current, int)
   {
-    if (current==0) return;
+    if (current == 0)
+    {
+      return;
+    }
     int spectrum_index = current->text(1).toInt();
     emit spectrumDoubleClicked(spectrum_index);
   }
@@ -172,6 +175,7 @@ namespace OpenMS
       QMenu* context_menu = new QMenu(spectra_treewidget_);
       context_menu->addAction("Show in 1D view");
       context_menu->addAction("Meta data");
+      context_menu->addAction("Center here");
 
       QAction* selected = context_menu->exec(spectra_treewidget_->mapToGlobal(pos));
       if (selected!=0 && selected->text()=="Show in 1D view")
@@ -182,6 +186,12 @@ namespace OpenMS
       {
         emit showSpectrumMetaData(spectrum_index);
       }
+      /** TODO
+      else if (selected!=0 && selected->text()=="Center here")
+      {
+        emit centerHere(spectrum_index);
+      }
+      **/
       delete (context_menu);
     }
   }
@@ -190,6 +200,7 @@ namespace OpenMS
   {
     //create menu
     QMenu* context_menu = new QMenu(spectra_treewidget_->header());
+
     QStringList header_labels;
     header_labels.append(QString("MS level"));
     header_labels.append(QString("index"));
@@ -212,13 +223,12 @@ namespace OpenMS
     {
       for(int i = 0; i < header_labels.size(); ++i)
       {
-        if(selected->text()==header_labels[i])
+        if(selected->text() == header_labels[i])
         {
           selected->isChecked()? spectra_treewidget_->setColumnHidden(i,false)
             :spectra_treewidget_->setColumnHidden(i,true);
         }
       }
-      //updateSpectrumBar(); @TODO: update
     }
     delete (context_menu);
   }
@@ -247,11 +257,13 @@ namespace OpenMS
       {
         if (i > 0)
         {
+          // current MS level = previous MS level + 1 (e.g. current: MS2, previous: MS1)
           if ((*cl.getPeakData())[i].getMSLevel() == (*cl.getPeakData())[i-1].getMSLevel() + 1)
           {
             item = new QTreeWidgetItem(parent_stack.back());
             parent_stack.resize(parent_stack.size()+1);
           }
+          // current MS level = previous MS level (e.g. MS2,MS2 or MS1,MS1)
           else if ((*cl.getPeakData())[i].getMSLevel() == (*cl.getPeakData())[i-1].getMSLevel())
           {
             if (parent_stack.size() == 1)
@@ -263,6 +275,7 @@ namespace OpenMS
               item = new QTreeWidgetItem(*(parent_stack.end()-2));
             }
           }
+          // current MS level < previous MS level (e.g. MS1,MS2)
           else if ((*cl.getPeakData())[i].getMSLevel() < (*cl.getPeakData())[i-1].getMSLevel())
           {
             Int level_diff = (*cl.getPeakData())[i-1].getMSLevel() - (*cl.getPeakData())[i].getMSLevel();

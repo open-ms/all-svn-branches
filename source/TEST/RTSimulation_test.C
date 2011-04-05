@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,12 +41,13 @@ START_TEST(RTSimulation, "$Id$")
 
 const unsigned long rnd_gen_seed = 1;
 RTSimulation* ptr = 0;
+RTSimulation* nullPointer = 0;
 SimRandomNumberGenerator empty_rnd_gen;
 
 START_SECTION((RTSimulation(const SimRandomNumberGenerator& random_generator)))
 {
   ptr = new RTSimulation(empty_rnd_gen);
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 

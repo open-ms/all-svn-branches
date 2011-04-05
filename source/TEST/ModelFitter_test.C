@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -54,13 +54,14 @@ enum
 };
 
 ModelFitterType* ptr = 0;
+ModelFitterType* nullPointer = 0;
 START_SECTION((ModelFitter(const MSExperiment<PeakType>* map, FeatureMap<FeatureType>* features, FeatureFinder* ff)))
 	MSExperiment<PeakType> input;
 	FeatureMap<FeatureType> features;
 	FeatureFinder ff;
 	ptr = new ModelFitterType(&input,&features,&ff);
   TEST_EQUAL(ptr->getName(), "ModelFitter")
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~ModelFitter()))
@@ -324,7 +325,7 @@ START_SECTION(([EXTRA]Feature fit(const ChargedIndexSet& index_set) throw (Unabl
 	TOLERANCE_ABSOLUTE(default_precision)
 
 	BaseModel<1>* mz_model = model->getModel(MZ);
-	TEST_REAL_SIMILAR(mz_model->getParameters().getValue("isotope:stdev"),stdev[2]);
+	TEST_REAL_SIMILAR(mz_model->getParameters().getValue("isotope:mode:GaussianSD"),stdev[2]);
 
 	// test predicted intensities
 	DPosition<2> pos;

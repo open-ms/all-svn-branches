@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -443,22 +443,22 @@ svn propset svn:eol-style native MyClass.C
 
 	    <LI><b>How is the command line documentation for TOPP/UTILS tools created?</b><BR>
 				The program @a OpenMS/doc/doxygen/parameters/TOPPDocumenter.C creates the command line documentation
-				for all classes that are included in the static TOPPBase tools list.
+				for all classes that are included in the static ToolHandler.C tools list.
 				It can be included into the documentation using the following doxygen command:
 				@code
 @verbinclude TOPP_<tool name>.cli
 				@endcode
 				You can test if everything worked by calling @a make @a doc_param_internal .
-				The comand line documentation is written to @a OpenMS/doc/doxygen/parameters/output/.
+				The command line documentation is written to @a OpenMS/doc/doxygen/parameters/output/.
 
 	    <LI><b>What are the important files for adding a new tutorial section?</b><BR>
 		    %OpenMS tutorial:
-		    <BR>OpenMS/doc/OpenMS_tutorial/refman_overwrite.tex.in
-		    <BR>%OpenMS/doc/doxygen/public/OpenMS_Tutorial_html.doxygen
+		    <BR>OpenMS/doc/OpenMS_tutorial/refman_overwrite.tex.in (for PDF tutorials)
+		    <BR>%OpenMS/doc/doxygen/public/OpenMS_Tutorial_html.doxygen (for html tutorials)
 
 				TOPP and TOPPView tutorial:
-		    <BR>OpenMS/doc/TOPP_tutorial/refman_overwrite.tex.in
-		    <BR>%OpenMS/doc/doxygen/public/TOPP_Tutorial_html.doxygen
+		    <BR>OpenMS/doc/TOPP_tutorial/refman_overwrite.tex.in (for PDF tutorials)
+		    <BR>%OpenMS/doc/doxygen/public/TOPP_Tutorial_html.doxygen (for html tutorials)
 
 		</UL>
 	<H2 style="border-top:2px solid grey;">Bug fixes</H2>
@@ -661,13 +661,12 @@ svn propset svn:eol-style native MyClass.C
 
 			<LI><B>What do I have to do to add a new TOPP tool?</B>
 			<OL>
-				<LI> Add your tool to getToolList() in <TT>source/APPLICATIONS/TOPPBase.C</TT>
+				<LI> Add your tool (with the correct category) to getTOPPToolList() in <TT>source/APPLICATIONS/ToolHandler.C</TT>
 						 @n This creates a doxygen page with the @em --help output of the tool (using TOPPDocumenter).
 						 @n This page must be included at the end of the doxygen documentation of your tool (see other tools for an example).
 				<LI> Add it to the TOPP docu page (in @a %doc/doxygen/public/TOPP.doxygen)
 				<LI> Add the executable to the ignore list of the directory (@a svn @a propedit @a svn:ignore @a source/APPLICATION/TOPP/)
         <LI> Add the name to <TT>source/APPLICATIONS/TOPP/executables.cmake</TT>
-		<LI> Add the tool to the correct category in the <TT>defaults_</TT> param section in <TT>source/APPLICATIONS/TOPPASBase.C</TT>
         <LI> Write a TOPP test (add it to /source/TEST/TOPP/CMakeLists.txt)<BR>
         		 Warning: handle any kind of input files to your TOPP tool via command line flags and use the ${DATA_DIR_TOPP} prefix. You can use ini-files
         		 to specify output-files, but not input-files. Doing otherwise will break out-of-source builds.<BR>
@@ -677,7 +676,7 @@ svn propset svn:eol-style native MyClass.C
 
 			<LI><B>What do I have to do to add a new UTILS tool?</B>
 			<OL>
-				<LI> Add your tool to getUtilList() in <TT>source/APPLICATIONS/TOPPBase.C</TT>
+				<LI> Add your tool to getUtilList() in <TT>source/APPLICATIONS/ToolHandler.C</TT>
 						 @n This creates a doxygen page with the @em --help output of the tool (using TOPPDocumenter). 
 						 @n This page must be included at the end of the doxygen documentation of your tool (see other tools for an example).
 				<LI> Add it to the UTILS docu page (in @a %doc/doxygen/public/UTILS.doxygen)

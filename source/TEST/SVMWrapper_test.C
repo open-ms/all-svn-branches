@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -46,11 +46,12 @@ using namespace OpenMS;
 using namespace std;
 
 SVMWrapper* ptr;
+SVMWrapper* nullPointer = 0;
 SVMWrapper svm;
 
 START_SECTION((SVMWrapper()))
 	ptr = new SVMWrapper();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((DoubleReal getDoubleParameter(SVM_parameter_type type)))

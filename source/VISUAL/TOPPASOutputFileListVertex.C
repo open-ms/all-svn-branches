@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -39,6 +39,7 @@
 #include <QtCore/QDir>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QMessageBox>
 
 #include <QCoreApplication>
 
@@ -144,10 +145,14 @@ namespace OpenMS
 					std::cerr << "The file '" << String(f) << "' does not exist!" << std::endl;
 					continue;
 				}
-				QString new_file = parent_dir + QDir::separator() + getOutputDir().toQString()+QDir::separator()+File::basename(f).toQString();
+				QString new_file = parent_dir 
+                           + QDir::separator()
+                           + getOutputDir().toQString()
+                           + QDir::separator()
+                           + File::basename(f).toQString().left(190); // ensure 190 char filename (we might append more and reach ~NTFS limit)
 				if (new_file.endsWith("_tmp"))
 				{
-					new_file.truncate(new_file.size() - 4);
+					new_file.chop(4);
 				}
 				new_file += "_processed";
 				// get file type and rename
@@ -156,6 +161,9 @@ namespace OpenMS
 				{
 					new_file += "."+(FileHandler::typeToName(ft)).toQString();
 				}
+
+        new_file = QDir::toNativeSeparators(new_file);
+
 				if (File::exists(new_file))
 				{
 					QFile::remove(new_file);
@@ -194,37 +202,25 @@ namespace OpenMS
     for (int i=0;i<files_.size();++i)
     { // collect unique directories
       QFileInfo fi(files_[i]);
-      directories.insert(String(QDir::toNativeSeparators(fi.absolutePath())));
+      directories.insert(String(QFileInfo(fi.canonicalFilePath()).path()));
     }
 
     // open them
     for (std::set<String>::const_iterator it=directories.begin();it!=directories.end();++it)
     {
       QString path = QDir::toNativeSeparators(it->toQString());
-      if (QDir(path).exists()) QDesktopServices::openUrl(QUrl("file:///" + path));
-      else (std::cerr << "dir: " << String(path) << " does not exist" << "\n");
+      if (!QDir(path).exists() || (!QDesktopServices::openUrl(QUrl("file:///" + path, QUrl::TolerantMode))))
+      {
+        QMessageBox::warning(0, "Open Folder Error", String("The folder " + path + " could not be opened!").toQString());
+      }
     }
 	}
 
-	void TOPPASOutputFileListVertex::openInTOPPView()
-	{
-		QProcess* p = new QProcess();
-		p->setProcessChannelMode(QProcess::ForwardedChannels);
-    QString toppview_executable;
-    toppview_executable = "TOPPView";
+  const QStringList& TOPPASOutputFileListVertex::getAllWrittenOutputFileNames()
+  {
+    return files_;
+  }
 
-    p->start(toppview_executable, files_);
-    if(!p->waitForStarted())
-    {
-      // execution failed
-      std::cerr << p->errorString().toStdString() << std::endl;
-#if defined(Q_WS_MAC)
-      std::cerr << "Please check if TOPPAS and TOPPView are located in the same directory" << std::endl;
-#endif
-
-    }
-	}
-	
 	bool TOPPASOutputFileListVertex::isFinished()
 	{
 		return finished_;

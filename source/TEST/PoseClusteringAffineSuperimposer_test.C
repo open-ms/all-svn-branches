@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,9 +43,12 @@ START_TEST(PoseClusteringAffineSuperimposer, "$Id$")
 /////////////////////////////////////////////////////////////
 
 PoseClusteringAffineSuperimposer* ptr = 0;
+PoseClusteringAffineSuperimposer* nullPointer = 0;
+BaseSuperimposer* base_nullPointer = 0;
+
 START_SECTION((PoseClusteringAffineSuperimposer()))
 	ptr = new PoseClusteringAffineSuperimposer();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~PoseClusteringAffineSuperimposer()))
@@ -55,7 +58,7 @@ END_SECTION
 START_SECTION((static BaseSuperimposer* create()))
   BaseSuperimposer* base_ptr = 0;
 	base_ptr = PoseClusteringAffineSuperimposer::create();
-	TEST_NOT_EQUAL(base_ptr, 0)
+  TEST_NOT_EQUAL(base_ptr, base_nullPointer)
 END_SECTION
 
 START_SECTION((static const String getProductName()))
@@ -106,12 +109,12 @@ START_SECTION((virtual void run(const std::vector< ConsensusMap > &maps, std::ve
 
   pcat.run(input, transformations);
 
-	TEST_EQUAL(transformations.size(),1)
-  TEST_STRING_EQUAL(transformations[0].getName(),"linear")
-	TEST_EQUAL(transformations[0].getParameters().size(),2)    
-  TEST_STRING_EQUAL(transformations[0].getName(),"linear")
-  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("slope"),1.0)
-  TEST_REAL_SIMILAR(transformations[0].getParameters().getValue("intercept"),-0.4)
+	TEST_EQUAL(transformations.size(), 1)
+  TEST_STRING_EQUAL(transformations[0].getModelType(), "linear")
+	transformations[0].getModelParameters(parameters);
+	TEST_EQUAL(parameters.size(), 2)    
+  TEST_REAL_SIMILAR(parameters.getValue("slope"), 1.0)
+  TEST_REAL_SIMILAR(parameters.getValue("intercept"), -0.4)
 END_SECTION
 
 /////////////////////////////////////////////////////////////

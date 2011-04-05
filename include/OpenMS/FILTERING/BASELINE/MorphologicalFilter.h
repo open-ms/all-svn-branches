@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -88,6 +88,11 @@ namespace OpenMS
 					IteratorT tmp = *this;
 					++(*this);
 					return tmp;
+				}
+				
+        bool operator==(const IntensityIteratorWrapper&	rhs) const
+				{
+					return base==rhs.base;
 				}
 
 				bool operator!=(const IntensityIteratorWrapper&	rhs) const

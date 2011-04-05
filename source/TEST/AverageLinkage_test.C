@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -44,10 +44,11 @@ START_TEST(AverageLinkage, "$Id$")
 /////////////////////////////////////////////////////////////
 
 AverageLinkage* ptr = 0;
+AverageLinkage* nullPointer = 0;
 START_SECTION(AverageLinkage())
 {
 	ptr = new AverageLinkage();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -147,7 +148,7 @@ END_SECTION
 START_SECTION((static ClusterFunctor* create()))
 {
 	ClusterFunctor* cf = AverageLinkage::create();
-	TEST_NOT_EQUAL( dynamic_cast<AverageLinkage*>(cf) , 0)
+  TEST_NOT_EQUAL( dynamic_cast<AverageLinkage*>(cf) , nullPointer)
 }
 END_SECTION
 

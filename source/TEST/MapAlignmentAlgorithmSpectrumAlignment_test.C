@@ -5,7 +5,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,9 +43,11 @@ START_TEST(MapAlignmentAlgorithmSpectrumAlignment, "$Id$")
 
 
 MapAlignmentAlgorithmSpectrumAlignment* ptr = 0;
+MapAlignmentAlgorithmSpectrumAlignment* nullPointer = 0;
+MapAlignmentAlgorithm* base_nullPointer = 0;
 START_SECTION((MapAlignmentAlgorithmSpectrumAlignment()))
 	ptr = new MapAlignmentAlgorithmSpectrumAlignment();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~MapAlignmentAlgorithmSpectrumAlignment()))
@@ -53,7 +55,7 @@ START_SECTION((virtual ~MapAlignmentAlgorithmSpectrumAlignment()))
 END_SECTION
 
 START_SECTION((static MapAlignmentAlgorithm* create()))
-	TEST_NOT_EQUAL(MapAlignmentAlgorithmSpectrumAlignment::create(),0)
+  TEST_NOT_EQUAL(MapAlignmentAlgorithmSpectrumAlignment::create(),base_nullPointer)
 END_SECTION
 
 START_SECTION((static String getProductName()))
@@ -61,6 +63,7 @@ START_SECTION((static String getProductName()))
 END_SECTION
 
 START_SECTION((virtual void alignPeakMaps(std::vector< MSExperiment<> > &, std::vector< TransformationDescription > &)))
+{
   MapAlignmentAlgorithmSpectrumAlignment ma;
   std::vector< MSExperiment<> > maps;
 	PeakMap map1;
@@ -105,21 +108,22 @@ START_SECTION((virtual void alignPeakMaps(std::vector< MSExperiment<> > &, std::
 	maps.push_back(map1);
 	maps.push_back(map2);
 	std::vector<TransformationDescription> transformations;
-  ma.alignPeakMaps(maps,transformations);
-  Int counter =0;
+  ma.alignPeakMaps(maps, transformations);
+	Param params;
+	String model_type;
+	ma.getDefaultModel(model_type, params);
+	ma.fitModel(model_type, params, transformations);
+	ma.transformPeakMaps(maps, transformations);
 	maps[0].updateRanges(-1);
 	maps[1].updateRanges(-1);
   for (Size i=0; i< maps[0].size(); ++i)
   {
 		if((maps[0])[i].getMSLevel() <2)
 		{
-	  	if((maps[0])[i].getRT() != (maps[1])[i].getRT())
-	  	{
-	  		++counter;
-	  	}
+			TEST_REAL_SIMILAR(maps[0][i].getRT(), maps[1][i].getRT());
 		}
   }
-	TEST_EQUAL(counter, 0)
+}
 END_SECTION
 
 START_SECTION([EXTRA] void alignFeatureMaps(std::vector< FeatureMap<> >&))

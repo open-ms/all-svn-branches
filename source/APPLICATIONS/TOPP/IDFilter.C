@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -162,8 +162,8 @@ class TOPPIDFilter
     addText_("All active filters will be applied in order.\n");
 
     registerTOPPSubsection_("score", "Filtering by peptide/protein score");
-    registerDoubleOption_("score:pep","<score>", 0,"The score which should be reached by a peptide hit to be kept",false);
-		registerDoubleOption_("score:prot","<score>", 0,"The score which should be reached by a protein hit to be kept",false);
+    registerDoubleOption_("score:pep","<score>", 0,"The score which should be reached by a peptide hit to be kept. The score is dependent on the most recent(!) preprocessing - it could be Mascot scores (if a MascotAdapter was applied before), or an FDR (if FalseDiscoveryRate was applied before), etc.",false);
+		registerDoubleOption_("score:prot","<score>", 0,"The score which should be reached by a protein hit to be kept.",false);
     registerTOPPSubsection_("thresh", "Filtering by significance threshold");
     registerDoubleOption_("thresh:pep","<fraction>",0.0,"Keep a peptide hit only if its score is above this fraction of the peptide significance threshold.",false);
 		registerDoubleOption_("thresh:prot","<fraction>",0.0,"Keep a protein hit only if its score is above this fraction of the protein significance threshold.",false);

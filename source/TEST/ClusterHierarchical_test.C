@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -43,7 +43,7 @@ using namespace OpenMS;
 using namespace std;
 
 
-class lowlevelComparator
+class LowlevelComparator
 {
 	public:
 	double operator()(const Size first, const Size second) const
@@ -158,10 +158,11 @@ START_TEST(ClusterHierarchical, "$Id$")
 /////////////////////////////////////////////////////////////
 
 ClusterHierarchical* ptr = 0;
+ClusterHierarchical* nullPointer = 0;
 START_SECTION(ClusterHierarchical())
 {
 	ptr = new ClusterHierarchical();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -204,7 +205,7 @@ START_SECTION((template <typename Data, typename SimilarityComparator> void clus
 		d[i]=i;
 	}
 	ClusterHierarchical ch;
-	lowlevelComparator lc;
+	LowlevelComparator lc;
 	SingleLinkage sl;
 	vector< BinaryTreeNode > result;
 	vector< BinaryTreeNode > tree;
@@ -215,7 +216,7 @@ START_SECTION((template <typename Data, typename SimilarityComparator> void clus
 	tree.push_back(BinaryTreeNode(0,5,0.7f));
 	DistanceMatrix<Real> matrix;
 
-	ch.cluster<Size,lowlevelComparator>(d,lc,sl,result, matrix);
+	ch.cluster<Size,LowlevelComparator>(d,lc,sl,result, matrix);
 
 	TEST_EQUAL(tree.size(), result.size());
 	for (Size i = 0; i < tree.size(); ++i)

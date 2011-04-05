@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -513,12 +513,15 @@ namespace OpenMS
     // set trafo
     {
       transformations.clear();
-      transformations.resize(1);
-      transformations[0].setName("linear");
-      transformations[0].setParam("slope", 1.0);
 
-      transformations[0].setParam("intercept", intercept);
-    }
+			Param params;
+      params.setValue("slope", 1.0);
+      params.setValue("intercept", intercept);
+
+			TransformationDescription trafo;
+			trafo.fitModel("linear", params);
+			transformations.push_back(trafo);
+     }
 
     setProgress(++actual_progress);
 

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -48,6 +48,8 @@
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringCID.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringBase.h>
 #include <OpenMS/ANALYSIS/DENOVO/MassDecompositionAlgorithm.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/FeatureDistance.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/QTClusterFinder.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringAffineSuperimposer.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringShiftSuperimposer.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/SimplePairFinder.h>
@@ -68,7 +70,6 @@
 #include <OpenMS/FORMAT/MascotGenericFile.h>
 #include <OpenMS/FORMAT/MascotRemoteQuery.h>
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
-#include <OpenMS/CHEMISTRY/AdvancedTheoreticalSpectrumGenerator.h>
 #include <OpenMS/COMPARISON/SPECTRA/PeakSpectrumCompareFunctor.h>
 #include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignment.h>
 #include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignmentScore.h>
@@ -152,8 +153,8 @@
 #include <OpenMS/SIMULATION/EGHModel.h>
 #include <OpenMS/SIMULATION/LABELING/O18Labeler.h>
 #include <OpenMS/SIMULATION/LABELING/ITRAQLabeler.h>
-#include <OpenMS/APPLICATIONS/TOPPASBase.h>
-#include <OpenMS/APPLICATIONS/TOPPViewBase.h>
+#include <OpenMS/VISUAL/APPLICATIONS/TOPPASBase.h>
+#include <OpenMS/VISUAL/APPLICATIONS/TOPPViewBase.h>
 
 using namespace std;
 using namespace OpenMS;
@@ -277,12 +278,13 @@ void writeParameters(const String& class_name, const Param& param)
       << "  <td style=\"vertical-align:top\">" << restrictions << "</td><td style=\"vertical-align:top\">" << description <<  "</td>\n"
       << "</tr>\n";
 	}
-	f << "</table>" << "\n";
-	f << "\n" << "<b>Note:</b>" << "\n";
-	f << "<UL>" << "\n";
-	f << "  <LI> If a section name is documented, the documentation is displayed as tooltip." << "\n";
-	f << "  <LI> Advanced parameter names are italic." << "\n";
-	f << "</UL>" << "\n";
+	f << "</table>" << "\n"
+	  << "<br>" << "\n"
+    << "<b>Note:</b>" << "\n"
+	  << "<UL style=\"margin-top:0px;\">" << "\n"
+	  << "  <LI> If a section name is documented, the documentation is displayed as tooltip." << "\n"
+	  << "  <LI> Advanced parameter names are italic." << "\n"
+	  << "</UL>" << "\n";
   f.close();
 }
 
@@ -329,6 +331,7 @@ int main (int argc , char** argv)
 	DOCME(ExtendedIsotopeModel);
 	DOCME(FalseDiscoveryRate);
 	DOCME(FeatureDeconvolution);
+	DOCME(FeatureDistance);
 	DOCME(FeatureGroupingAlgorithmLabeled);
 	DOCME(FeatureGroupingAlgorithmUnlabeled);
 	DOCME(GaussFilter);
@@ -369,6 +372,7 @@ int main (int argc , char** argv)
 	DOCME(PeakPickerHiRes);
 	DOCME(PoseClusteringAffineSuperimposer);
 	DOCME(PoseClusteringShiftSuperimposer);
+	DOCME(QTClusterFinder);
 	DOCME(SavitzkyGolayFilter);
 	DOCME(SimplePairFinder);
 	DOCME(StablePairFinder);
@@ -401,7 +405,6 @@ int main (int argc , char** argv)
 	DOCME(MascotGenericFile);
 	DOCME(PILISNeutralLossModel);
 	DOCME(PILISModelGenerator);
-	DOCME(AdvancedTheoreticalSpectrumGenerator);
 	DOCME(FeatureGroupingAlgorithmIdentification);
 	DOCME(OfflinePrecursorIonSelection);
 	DOCME(TOPPViewBase);

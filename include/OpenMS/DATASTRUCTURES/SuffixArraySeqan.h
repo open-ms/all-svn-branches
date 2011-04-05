@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -54,7 +54,7 @@ namespace OpenMS
 	{
 
 		typedef seqan::TopDown<seqan::ParentLinks<> > TIterSpec;
-		typedef seqan::Index<seqan::String<char>, seqan::Index_ESA<TIterSpec> > TIndex;
+		typedef seqan::Index<seqan::String<char>, seqan::IndexEsa<TIterSpec> > TIndex;
 		typedef seqan::Iter<TIndex, seqan::VSTree<TIterSpec> > TIter;
 
 		// TODO ??? was: typedef seqan::Index<seqan::String<char>, seqan::Index_ESA<seqan::TopDown<seqan::ParentLinks<seqan::Preorder> > > > TIndex;

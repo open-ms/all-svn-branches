@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Clemens Groepl $
-// $Authors: $
+// $Authors: Clemens Groepl, Chris Bielow $
 // --------------------------------------------------------------------------
 
 
@@ -30,14 +30,22 @@
 #define OPENMS_TRANSFORMATIONS_FEATUREFINDER_ISOTOPEMODEL_H
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/InterpolationModel.h>
+#include <OpenMS/CHEMISTRY/IsotopeDistribution.h>
 
 namespace OpenMS
 {
   class EmpiricalFormula;
 
-
   /** 
 		@brief Isotope distribution approximated using linear interpolation.
+
+    This models a smoothed (widened) distribution, i.e. can be used to sample actual raw peaks (depending on the points you query).
+    If you only want the distribution (no widening), use either
+    EmpiricalFormula::getIsotopeDistribution() // for a certain sum formula
+    or
+    IsotopeDistribution::estimateFromPeptideWeight (double average_weight)  // for averagine
+
+    Peak widening is achieved by either a Gaussian or Lorentzian shape.
 
 		@htmlinclude OpenMS_IsotopeModel.parameters
 	*/
@@ -100,8 +108,18 @@ namespace OpenMS
 		*/
 		CoordinateType getCenter() const;
 
+    /** @brief the Isotope distribution (without widening) from the last setSamples() call
+
+      Useful to determine the number of isotopes that the model contains and their position
+
+    */
+    const IsotopeDistribution& getIsotopeDistribution() const;
+
+
 		protected:
 			CoordinateType isotope_stdev_;
+      CoordinateType isotope_lorentz_fwhm_;
+
 			UInt charge_;
 			CoordinateType mean_;
 			CoordinateType monoisotopic_mz_;
@@ -109,6 +127,7 @@ namespace OpenMS
 			Int max_isotope_;
 			DoubleReal trim_right_cutoff_;
 			DoubleReal isotope_distance_;
+      IsotopeDistribution isotope_distribution_;
 
   		void updateMembers_();
 

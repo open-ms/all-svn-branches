@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -151,6 +151,10 @@ namespace OpenMS {
         6. select features for MS2
         7. generate MS2 signals for selected features
      */
+
+    // re-distribute synced parameters:
+    //param_.store("c:/mssim_param.ini"); // test reconstruction
+    syncParams_(param_, false);
     
     // instanciate and pass params before doing any actual work
     // ... this way, each module can throw an Exception when the parameters
@@ -177,10 +181,6 @@ namespace OpenMS {
 
     // check parameters ..
     labeler_->preCheck(param_);
-
-		// re-distribute synced parameters:
-		syncParams_(param_, false);
-		//param_.store("c:/mssim_param.ini"); // test reconstruction
 
     // convert sample proteins into an empty FeatureMap with ProteinHits
     for(SampleChannels::const_iterator channel_iterator = channels.begin() ; channel_iterator != channels.end() ; ++channel_iterator)
@@ -252,6 +252,22 @@ namespace OpenMS {
     raw_tandemsim.generateRawTandemSignals(feature_maps_.front(), experiment_);
 
     labeler_->postRawTandemMSHook(feature_maps_,experiment_);
+
+    
+    // some last fixing of meta-values (this is impossible to do before as we do not know the final number of scans)
+
+    for (Size i=0;i<feature_maps_[0].size();++i)
+    {
+      Feature& f = feature_maps_[0][i];
+      PeptideIdentification& pi = f.getPeptideIdentifications()[0];
+      // search for closest scan index:
+      MSSimExperiment::ConstIterator it_rt = experiment_.RTBegin(f.getRT());
+      SignedSize scan_index = std::distance<MSSimExperiment::ConstIterator> (experiment_.begin(), it_rt);
+      pi.setMetaValue("RT_index", scan_index);
+      pi.setMetaValue("RT", f.getRT());
+    }
+
+
 
     LOG_INFO << "Final number of simulated features: " << feature_maps_[0].size() << "\n";
 

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -42,10 +42,11 @@ START_TEST(PepXMLFile, "$Id$")
 /////////////////////////////////////////////////////////////
 
 PepXMLFile* ptr = 0;
+PepXMLFile* nullPointer = 0;
 PepXMLFile file;
 START_SECTION(PepXMLFile())
 	ptr = new PepXMLFile();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(~PepXMLFile())
@@ -198,11 +199,11 @@ START_SECTION(void store(const String& filename, std::vector<ProteinIdentificati
 	
 	String cm_file_out;
 	NEW_TMP_FILE(cm_file_out);
-	String filename_out = OPENMS_GET_TEST_DATA_PATH("PepXMLFile_test_out.pepxml");
 	file.store(cm_file_out, proteins, peptides);
 	
 	FuzzyStringComparator fsc;
 	fsc.setWhitelist (StringList::create("base_name"));
+	String filename_out = OPENMS_GET_TEST_DATA_PATH("PepXMLFile_test_out.pepxml");
 	TEST_EQUAL(fsc.compareFiles (cm_file_out.c_str(), filename_out.c_str()), true)
 }	
 END_SECTION

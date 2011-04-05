@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -240,6 +240,7 @@ namespace OpenMS
 		p.setValue("rt_tolerance", 0.2);
 		p.setValue("mz_tolerance", 0.05);
 		p.setValue("mz_measure","Da");
+    p.setValue("ignore_charge","true");
 		mapper.setParameters(p);
 
 		mapper.annotate(features,filtered_pep_ids,prot_ids);
@@ -501,6 +502,7 @@ namespace OpenMS
 		p.setValue("rt_tolerance", 0.2);
 		p.setValue("mz_tolerance", 0.05);
 		p.setValue("mz_measure","Da");
+    p.setValue("ignore_charge","true");
 		mapper.setParameters(p);
 		mapper.annotate(features,filtered_pep_ids,prot_ids,true);
 		

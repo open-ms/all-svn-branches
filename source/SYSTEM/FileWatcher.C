@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,7 @@ namespace OpenMS
 		//static timer counter
 		static int timer_id = 0;
 
-		//cout << "File changed: " << String(name) << endl;
+    //cout << "File changed: " << String(name) << endl;
 		//Look up if there is already a timer for this file
 		QTimer* timer = 0;	  
 		for (map<QString,QString>::const_iterator it=timers_.begin(); it!=timers_.end(); ++it)
@@ -98,5 +98,7 @@ namespace OpenMS
   	//erase the timer name from the list
   	timers_.erase(timer->objectName());
   }
+
+  //OPENMS_DLLAPI FileWatcher myFileWatcher_instance; // required, such that the moc file get generated during building OpenMS.dll, not later during OpenMS_GUI.dll as DLL flags are wrong then
 
 } // namespace OpenMS

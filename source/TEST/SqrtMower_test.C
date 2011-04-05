@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -45,9 +45,10 @@ START_TEST(SqrtMower, "$Id$")
 /////////////////////////////////////////////////////////////
 
 SqrtMower* e_ptr = 0;
+SqrtMower* e_nullPointer = 0;
 START_SECTION((SqrtMower()))
 	e_ptr = new SqrtMower;
-	TEST_NOT_EQUAL(e_ptr, 0)
+	TEST_NOT_EQUAL(e_ptr, e_nullPointer)
 END_SECTION
 
 START_SECTION((~SqrtMower()))

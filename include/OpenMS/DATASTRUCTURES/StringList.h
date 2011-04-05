@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -34,6 +34,8 @@
 	#pragma warning( push )
 	#pragma warning( disable : 4251 ) // disable MSVC dll-interface warning
 #endif
+
+class QStringList;
 
 namespace OpenMS
 {
@@ -72,6 +74,8 @@ namespace OpenMS
 			StringList(const std::vector<String>& rhs);
 			/// Constructor from vector<string>
 			StringList(const std::vector<std::string>& rhs);
+			/// Constructor from QStringList
+			StringList(const QStringList& rhs);
 			///  Assignment operator
 			StringList& operator=(const StringList& rhs);
 			///  Assignment operator from vector<String>

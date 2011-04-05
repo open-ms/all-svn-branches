@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -515,9 +515,9 @@ namespace OpenMS
 		os << "plot f(x), '" << filename << "_dist_tmp.dat' w boxes" << endl;
 		os.close();
 
-		int syscalret = system(("gnuplot " + filename + "_gnuplot.gpl").c_str());
 #ifdef IDDECOYPROBABILITY_DEBUG
-		if(syscalret!=0)
+		Int syscalret = system(("gnuplot " + filename + "_gnuplot.gpl").c_str());
+		if (syscalret!=0)
 		{
 			cerr << "gnuplot system call failed!" << endl;
 		}
@@ -547,9 +547,9 @@ namespace OpenMS
 		os << "plot f(x), g(x), '" << filename << "_all_tmp.dat' w i" << endl;
 		os.close();
 
-		int syscalret = system(("gnuplot " + filename + "_both_gnuplot.gpl").c_str());
 #ifdef IDDECOYPROBABILITY_DEBUG
-		if(syscalret!=0)
+		Int syscalret = system(("gnuplot " + filename + "_both_gnuplot.gpl").c_str());
+		if	(syscalret!=0)
 		{
 			cerr << "gnuplot system call failed!" << endl;
 		}

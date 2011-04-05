@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl $
+// $Maintainer: Oliver Kohlbacher $
 // $Authors: Marc Sturm, Clemens Groepl $
 // --------------------------------------------------------------------------
 
@@ -416,7 +416,7 @@ namespace OpenMS
 		size_t left = pretty.find(context_left);
 		left+=sizeof(context_left);
 		size_t right = pretty.rfind(context_right);
-		if ( right <= left ) return pretty; // oops!
+		if (right <= left) return pretty; // oops!
 		return pretty.substr(left, right-left);
 #endif
 	}
@@ -428,7 +428,7 @@ namespace OpenMS
         locale settings (this overwrites the
         locale setting of the environment!)
     */
-    static const char* OpenMS_locale = setlocale(LC_ALL, "C");
+    extern OPENMS_DLLAPI const char* OpenMS_locale;
   }
 
 } // namespace OpenMS

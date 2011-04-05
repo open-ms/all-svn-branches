@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -45,6 +45,7 @@ START_TEST(DateTime, "$Id$")
 /////////////////////////////////////////////////////////////
 
 DateTime* ptr = 0;
+DateTime* nullPointer = 0;
 START_SECTION((DateTime& operator= (const DateTime& source)))
   DateTime date, date2;
   date.set("2006-12-12 11:59:59");
@@ -55,7 +56,7 @@ END_SECTION
 
 START_SECTION((DateTime()))
 	ptr = new DateTime();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((DateTime(const DateTime& date)))

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -78,6 +78,9 @@ using namespace std;
 	tool of @em X!Tandem. It is contained in the "bin" folder of the @em X!Tandem installation.
 	Refer to the docu of @em X!Tandem for further information about settings.
 
+  This adapter supports relative database filenames, which (when not found in the current working directory) is looked up in
+  the directories specified by 'OpenMS.ini:id_db_dir' (see @subpage TOPP_advanced).
+
 	The major part of the setting can be directly adjusted using the "default_input.xml" of
 	@em X!Tandem. An example of that file is contained in the "bin" folder of the
 	@em X!Tandem installation. The parameters "default_input_file" must point to a valid
@@ -121,7 +124,7 @@ class TOPPXTandemAdapter
 
 			registerStringOption_("precursor_error_units", "<unit>", "ppm", "parent monoisotopic mass error units", false);
       registerStringOption_("fragment_error_units", "<unit>", "Da", "fragment monoisotopic mass error units", false);
-			registerInputFile_("database", "<file>", "", "FASTA file or related which contains the sequences", true);
+			registerInputFile_("database", "<file>", "", "FASTA file or pro file. Non-existing relative file-names are looked up via'OpenMS.ini:id_db_dir'", true, false, StringList::create("skipexists"));
       vector<String> valid_strings;
       valid_strings.push_back("ppm");
       valid_strings.push_back("Da");
@@ -140,7 +143,7 @@ class TOPPXTandemAdapter
 
 			addEmptyLine_();
 			addText_("X!Tandem specific options");
-			registerInputFile_("xtandem_executable", "<file>", "", "X!Tandem executable of the installtation e.g. 'tandem.exe'", true, false, StringList::create("skipexists"));
+			registerInputFile_("xtandem_executable", "<executable>", "tandem.exe", "X!Tandem executable of the installation e.g. 'tandem.exe'", true, false, StringList::create("skipexists"));
 			registerInputFile_("default_input_file", "<file>", "", "default parameters input file, if not given default parameters are used", false);
 			registerDoubleOption_("minimum_fragment_mz", "<num>", 150.0, "minimum fragment mz", false);
 			registerStringOption_("cleavage_site", "<cleavage site>", "[RK]|{P}", "cleavage site", false);
@@ -229,13 +232,27 @@ class TOPPXTandemAdapter
 			infile.setOutputFilename(tandem_output_filename);
 
 
-			String fasta_file(getStringOption_("database"));
+			String db_name(getStringOption_("database"));
+      if (!File::readable(db_name))
+      {
+        String full_db_name;
+        try
+        {
+          full_db_name = File::findDatabase(db_name);
+        }
+        catch (...)
+        {
+			    printUsage_();
+			    return ILLEGAL_PARAMETERS;
+        }
+        db_name = full_db_name;
+      }
 
 			ofstream tax_out(tandem_taxonomy_filename.c_str());
 			tax_out << "<?xml version=\"1.0\"?>" << endl;
 			tax_out << "\t<bioml label=\"x! taxon-to-file matching list\">" << endl;
   		tax_out << "\t\t<taxon label=\"OpenMS_dummy_taxonomy\">" << endl;
-    	tax_out << "\t\t\t<file format=\"peptide\" URL=\"" << fasta_file << "\" />" << endl;
+    	tax_out << "\t\t\t<file format=\"peptide\" URL=\"" << db_name << "\" />" << endl;
   		tax_out << "\t</taxon>" << endl;
 			tax_out << "</bioml>" << endl;
 			tax_out.close();
@@ -281,6 +298,8 @@ class TOPPXTandemAdapter
 			infile.setTaxon("OpenMS_dummy_taxonomy");
 			infile.setMaxValidEValue(getDoubleOption_("max_valid_expect"));
 			infile.setNumberOfMissedCleavages(getIntOption_("missed_cleavages"));
+      infile.setRefine(!getFlag_("no_refinement"));
+
 			infile.write(input_filename);
 
 			vector<ProteinIdentification> protein_identifications;
@@ -291,7 +310,7 @@ class TOPPXTandemAdapter
 			int status = QProcess::execute(xtandem_executable.toQString(), QStringList(input_filename.toQString())); // does automatic escaping etc...
 			if (status != 0)
 			{
-				writeLog_("XTandem problem. Aborting! (Details can be seen in the logfile: \"" + logfile + "\")");
+        writeLog_("XTandem problem. Aborting! Calling command was: '" + xtandem_executable + " \"" + input_filename +"\"'.\nDoes the xtandem executable exist?");
 				// clean temporary files
 				QFile(input_filename.toQString()).remove();
       	QFile(tandem_input_filename.toQString()).remove();

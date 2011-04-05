@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -36,9 +36,9 @@ using namespace std;
 
 START_TEST(IsotopeWavelet, "$Id$")
 
-
+IsotopeWavelet* nullPointer = 0;
 START_SECTION((static IsotopeWavelet* getInstance()))
-	TEST_EQUAL(IsotopeWavelet::getInstance(), 0)
+  TEST_EQUAL(IsotopeWavelet::getInstance(), nullPointer)
 END_SECTION
 
 START_SECTION(static UInt getMaxCharge())
@@ -93,7 +93,7 @@ END_SECTION
 IsotopeWavelet* iw = 0;
 START_SECTION((static IsotopeWavelet* init(const DoubleReal max_m, const UInt max_charge)))
 	iw = IsotopeWavelet::init (4000, 4);
-	TEST_NOT_EQUAL(iw, 0)
+  TEST_NOT_EQUAL(iw, nullPointer)
 	TEST_EQUAL (IsotopeWavelet::getMaxCharge(), 4)
 END_SECTION
 

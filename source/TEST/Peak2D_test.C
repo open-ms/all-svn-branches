@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,9 +41,10 @@ START_TEST(Peak2D<D>, "$Id$")
 using namespace OpenMS;
 
 Peak2D* d10_ptr = 0;
+Peak2D* d10_nullPointer = 0;
 START_SECTION((Peak2D()))
 	d10_ptr = new Peak2D;
-	TEST_NOT_EQUAL(d10_ptr, 0)
+  TEST_NOT_EQUAL(d10_ptr, d10_nullPointer)
 END_SECTION
 
 START_SECTION((~Peak2D()))

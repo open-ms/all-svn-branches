@@ -3,11 +3,6 @@ set(directory source/VISUAL)
 
 ### list all filenames of the directory here
 set(sources_list
-Annotation1DDistanceItem.C
-Annotation1DItem.C
-Annotation1DPeakItem.C
-Annotation1DTextItem.C
-Annotations1DContainer.C
 AxisTickCalculator.C
 AxisWidget.C
 ColorSelector.C
@@ -19,6 +14,7 @@ MultiGradient.C
 MultiGradientSelector.C
 ParamEditor.C
 SpectraViewWidget.C
+SpectraIdentificationViewWidget.C
 Spectrum1DCanvas.C
 Spectrum1DWidget.C
 Spectrum2DCanvas.C
@@ -41,7 +37,11 @@ TOPPASTabBar.C
 TOPPASTreeView.C
 TOPPASResource.C
 TOPPASResources.C
+TOPPViewBehaviorInterface.C
+TOPPViewIdentificationViewBehavior.C
+TOPPViewSpectraViewBehavior.C
 EnhancedWorkspace.C
+EnhancedTabBarWidgetInterface.C
 )
 
 ### add path to the filenames
@@ -51,7 +51,7 @@ foreach(i ${sources_list})
 endforeach(i)
 
 ### pass source file list to the upper instance
-set(OpenMS_sources ${OpenMS_sources} ${sources})
+set(OpenMSVisual_sources ${OpenMSVisual_sources} ${sources})
 
 ### source group definition
 source_group("Source Files\\VISUAL" FILES ${sources})
@@ -61,4 +61,4 @@ source_group("Source Files\\VISUAL" FILES ${sources})
 # add   : icons are added to source/VISUAL/ICONS/resources.qrc
 # remove: after removing an icon, you have to rerun 'cmake' to fix the dependencies
 QT4_ADD_RESOURCES(qt_resource_file source/VISUAL/ICONS/resources.qrc)
-set(OpenMS_sources ${OpenMS_sources} ${qt_resource_file})
+set(OpenMSVisual_sources ${OpenMSVisual_sources} ${qt_resource_file})

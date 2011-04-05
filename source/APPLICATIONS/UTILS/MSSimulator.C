@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -73,6 +73,11 @@ using namespace std;
     <li>Simulation of 1D spectra</li>
   </ul>
 
+  <p>
+   Actually only a test model for MS/MS simulation is shipped with OpenMS. <br>
+   Please find trained models at: http://sourceforge.net/projects/open-ms/files/Supplementary/Simulation/.
+  </p>
+
 	@note This tool is experimental!	
 
 	<B>The command line parameters of this tool are:</B>
@@ -104,7 +109,7 @@ class TOPPMSSimulator
       registerOutputFile_("out_cntm","<file>","","output (simulated MS map) in featureXML format (contaminants)",false);
       
       registerStringOption_("type","<name>","","Labeling type\n",true);
-      setValidStrings_("type", getUtilList()[toolName_()] );
+      setValidStrings_("type", ToolHandler::getTypes(toolName_()) );
 
 			addEmptyLine_();
   		addText_("To specify intensity values for certain proteins,\nadd an abundance tag for the corresponding protein\nin the FASTA input file:");
@@ -165,7 +170,7 @@ class TOPPMSSimulator
 
         // parsed abundance
         MetaInfoInterface data;
-        data.setMetaValue("intensity", 100.0);
+        data.setMetaValue("intensity", 10000.0);
         
         // Look for a relative quantity given in the comment line of a FASTA entry
 				// e.g. >BSA [#120]

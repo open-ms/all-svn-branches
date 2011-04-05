@@ -9,12 +9,17 @@ INCLUDE(Dart)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin)
 include(executables.cmake)
 
-if (CMAKE_COMPILER_IS_INTELCXX OR CMAKE_COMPILER_IS_GNUCXX)
-	set(CMAKE_CXX_FLAGS_RELEASE_SAVED ${CMAKE_CXX_FLAGS_RELEASE})
+if (CMAKE_COMPILER_IS_INTELCXX OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
 	#disable optimization for tests
+	set(CMAKE_CXX_FLAGS_RELEASE_SAVED ${CMAKE_CXX_FLAGS_RELEASE})
 	set(CMAKE_CXX_FLAGS_RELEASE "-O0")
+	if(MT_ENABLE_OPENMP AND ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+	  # disable OPENMP for Mac OS X/gcc, see
+	  # https://sourceforge.net/apps/trac/open-ms/ticket/280
+	  # bug for details
+	  STRING(REPLACE "-fopenmp" "" CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
+	endif()
 endif()
-
 
 ### CONCEPT
 add_custom_target(CONCEPT_TEST)
@@ -35,10 +40,6 @@ add_dependencies(SYSTEM_TEST ${system_executables_list})
 ### KERNEL
 add_custom_target(KERNEL_TEST)
 add_dependencies(KERNEL_TEST ${kernel_executables_list})
-
-### VISUAL
-add_custom_target(VISUAL_TEST)
-add_dependencies(VISUAL_TEST ${visual_executables_list})
 
 ### FORMAT
 add_custom_target(FORMAT_TEST)
@@ -76,11 +77,25 @@ add_dependencies(TRANSFORMATIONS_TEST ${transformations_executables_list})
 add_custom_target(SIMULATION_TEST)
 add_dependencies(SIMULATION_TEST ${simulation_executables_list})
 
+### VISUAL
+add_custom_target(VISUAL_TEST)
+add_dependencies(VISUAL_TEST ${visual_executables_list})
+
 ### tests
 foreach(i ${TEST_executables})
 	add_executable(${i} ${i}.C)
 	target_link_libraries(${i} ${OPENMS_LIBRARIES})
 	add_test(${i} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${i})
+	# only add OPENMP flags to gcc linker (execpt Mac OS X, due to compiler bug
+	# see https://sourceforge.net/apps/trac/open-ms/ticket/280 for details)
+  if (OPENMP_FOUND AND NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+		set_target_properties(${i} PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})
+	endif()  
+endforeach(i)
+
+### tests of classes from GUI lib:
+foreach(i ${visual_executables_list})
+	target_link_libraries(${i} ${OPENMS_GUI_LIBRARIES})
 endforeach(i)
 
 ## GUI tests special treatment
@@ -95,8 +110,13 @@ QT4_WRAP_CPP(mocced_GUI_executables_list_C ${GUI_executables_list_C})
 foreach(i ${GUI_executables_list})
 	SET_SOURCE_FILES_PROPERTIES(GUI/${i}.C PROPERTIES OBJECT_DEPENDS ${mocced_GUI_executables_list_C})
 	add_executable(${i} GUI/${i}.C)
-	target_link_libraries(${i} ${OPENMS_LIBRARIES})
+	target_link_libraries(${i} ${OPENMS_GUI_LIBRARIES})
 	add_test(${i} ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${i})
+	# only add OPENMP flags to gcc linker (execpt Mac OS X, due to compiler bug
+	# see https://sourceforge.net/apps/trac/open-ms/ticket/280 for details)
+  if (OPENMP_FOUND AND NOT MSVC AND NOT ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+		set_target_properties(${i} PROPERTIES LINK_FLAGS ${OpenMP_CXX_FLAGS})
+	endif()  
 endforeach(i)
 
 ### GUI tests
@@ -106,7 +126,7 @@ add_dependencies(GUI_TEST ${GUI_executables_list})
 ### add gui tests to executables list
 set(TEST_executables ${TEST_executables} TOPPView_test)
 
-if (CMAKE_COMPILER_IS_INTELCXX OR CMAKE_COMPILER_IS_GNUCXX)
+if (CMAKE_COMPILER_IS_INTELCXX OR CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
 	set(${CMAKE_CXX_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS_RELEASE_SAVED})
 endif()
 

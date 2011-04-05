@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -353,10 +353,14 @@ namespace OpenMS
 		writeNote_(os, "input", "protein, homolog management", protein_homolog_management_);
 		////////////////////////////////////////////////////////////////////////////////
 
+*/
 
 		//////////////// model refinement parameters
   	//<note type="input" label="refine">yes</note>
 		writeNote_(os, "input", "refine", refine_);
+    used_labels.insert("refine");
+
+/*
   	//<note type="input" label="refine, modification mass"></note>
 		writeNote_(os, "input", "refine, modification mass", String(refine_mod_mass_));
   	//<note type="input" label="refine, sequence path"></note>
@@ -681,4 +685,14 @@ namespace OpenMS
 	{
 		return number_of_missed_cleavages_;
 	}
+        
+  bool XTandemInfile::isRefining() const
+  {
+    return refine_;
+  }
+
+  void XTandemInfile::setRefine(const bool refine)
+  {
+    refine_ = refine;
+  }
 } // namespace OpenMS

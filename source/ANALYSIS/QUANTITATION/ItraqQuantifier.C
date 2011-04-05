@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -99,7 +99,7 @@ namespace OpenMS
 	}
 
 	/**
-	 *	@brief using the raw iTRAQ intensities we apply isotope correction, normalization (using median) and protein inference
+	 *	@brief using the raw iTRAQ intensities we apply isotope correction and normalization (using median)
 	 *	
 	 *	@param consensus_map_in Raw iTRAQ intensities from previous step
 	 *	@param consensus_map_out Postprocessed iTRAQ ratios for peptides
@@ -111,30 +111,6 @@ namespace OpenMS
 					 ConsensusMap& consensus_map_out
 					 )
 	{
-		run(consensus_map_in, 
-				std::vector< PeptideIdentification >(),
-				std::vector< ProteinIdentification >(),
-				consensus_map_out);
-		return;
-	}
-	/**
-	 *	@brief using the raw iTRAQ intensities we apply isotope correction, normalization (using median) and protein inference
-	 *	
-	 *	@param consensus_map_in Raw iTRAQ intensities from previous step
-	 *	@param peptide_ids List of peptides identified by a search engine on the same MS² dataset
-	 *	@param protein_ids List of proteins inferred from peptides
-	 *	@param consensus_map_out Postprocessed iTRAQ ratios for Proteins (if provided) or Peptides otherwise
-	 *
-	 *	@throws Exception::FailedAPICall if least-squares fit fails
-	 *	@throws Exception::InvalidParameter if parameter is invalid (e.g. reference_channel)
-	 */
-	void ItraqQuantifier::run(const ConsensusMap& consensus_map_in, 
-					 const std::vector< PeptideIdentification > &peptide_ids,
-					 const std::vector< ProteinIdentification > &protein_ids, 
-					 ConsensusMap& consensus_map_out
-					 )
-	{
-
 		reconstructChannelInfo_(consensus_map_in);
 
 		consensus_map_out = consensus_map_in;
@@ -215,6 +191,7 @@ namespace OpenMS
 				}
 				#endif
 
+        Peak2D::IntensityType cf_intensity(0);
 				// write back the values to the map
 				for (ConsensusFeature::HandleSetType::const_iterator it_elements = consensus_map_in[i].begin();
 						 it_elements != consensus_map_in[i].end();
@@ -228,15 +205,18 @@ namespace OpenMS
 					//this has become useless (even for comparison of methods)
 					handle.setIntensity ( Peak2D::IntensityType(gsl_vector_get (gsl_x, index)) );
 					#else
-					handle.setIntensity ( Peak2D::IntensityType( m_x(index, 0)) );
+					handle.setIntensity ( Peak2D::IntensityType( m_x(index, 0)) ); 
 					#endif
 
 					consensus_map_out[i].insert(handle);
 					
+          cf_intensity += handle.getIntensity(); // sum up all channels for CF
+
 					#ifdef ITRAQ_DEBUG
 					std::cout <<  it_elements->getIntensity() << " -> " << handle.getIntensity () << std::endl;
 					#endif
 				}
+        consensus_map_out[i].setIntensity(cf_intensity); // set overall intensity of CF (sum of all channels)
 
 			}
 			
@@ -437,7 +417,7 @@ namespace OpenMS
 							hd.setIntensity(hd.getIntensity() / peptide_ratios[map_to_vectorindex[it_elements->getMapIndex()]][0]);
 						}
 						cf.insert(hd);
-					}					
+					}
 					// replace consensusFeature with updated intensity
 					consensus_map_out[i] = cf;
 				} // ! adjust ratios
@@ -451,25 +431,6 @@ namespace OpenMS
 
 
 		// ** PEPTIDE PROTEIN MAPPING ** //
-
-		// find unique peptides of a protein and use a robust peptide ratio as protein ratio
-		if ((!peptide_ids.empty() && !protein_ids.empty()))
-		{
-			
-			// annotate consensusMap with identifications
-			IDMapper mapper;
-			Param p = mapper.getParameters();
-			p.setValue("rt_tolerance", 0.005);
-			p.setValue("mz_tolerance", 0.0005);
-			p.setValue("mz_measure","Da");
-			mapper.setParameters(p);
-			mapper.annotate(consensus_map_out, peptide_ids, protein_ids, false);
-			
-			// put quantitative info on Proteins
-			ProteinInference inferrer;
-			inferrer.infer(consensus_map_out,(UInt) ref_mapid);
-
-		}
 
 		consensus_map_out.setExperimentType("itraq");
 		

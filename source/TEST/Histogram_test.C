@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -44,10 +44,11 @@ START_TEST(Histogram, "$Id$")
 /////////////////////////////////////////////////////////////
 
 Histogram<float,float>* dis_ptr = 0;
+Histogram<float,float>* dis_nullPointer = 0;
 
 START_SECTION((Histogram()))
 	dis_ptr = new Histogram<float,float>();
-	TEST_NOT_EQUAL(dis_ptr, 0)
+  TEST_NOT_EQUAL(dis_ptr, dis_nullPointer)
 END_SECTION
 
 START_SECTION((~Histogram()))

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -33,11 +33,6 @@
 #include <OpenMS/CONCEPT/Exception.h>
 
 ///////////////////////////
-
-START_TEST(BaseModel, "$Id$")
-
-/////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
 
 using namespace OpenMS;
 using std::stringstream;
@@ -101,12 +96,14 @@ class TestModel : public BaseModel<2>
 
 };
 
+START_TEST(BaseModel, "$Id$")
 
 // default ctor
 TestModel* ptr = 0;
+TestModel* nullPointer = 0;
 START_SECTION((BaseModel()))
 	ptr = new TestModel();
-	TEST_NOT_EQUAL((Size)ptr, 0)
+  TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 // destructor

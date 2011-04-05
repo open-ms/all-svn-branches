@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -44,9 +44,10 @@ START_TEST(LabeledPairFinder, "$Id LabeledPairFinder_test.C 139 2006-07-14 10:08
 /////////////////////////////////////////////////////////////
 
 LabeledPairFinder* ptr = 0;
+LabeledPairFinder* nullPointer = 0;
 START_SECTION((LabeledPairFinder()))
 	ptr = new LabeledPairFinder();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~LabeledPairFinder()))
@@ -55,8 +56,9 @@ END_SECTION
 
 START_SECTION((static BaseGroupFinder* create()))
 	BaseGroupFinder* base_ptr = 0;
+  BaseGroupFinder* base_nullPointer = 0;
 	base_ptr = LabeledPairFinder::create();
-	TEST_NOT_EQUAL(base_ptr, 0)
+  TEST_NOT_EQUAL(base_ptr, base_nullPointer)
 END_SECTION
 
 START_SECTION((static const String getProductName()))

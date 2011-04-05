@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,10 +41,11 @@ START_TEST(ProtXMLFile, "$Id$")
 /////////////////////////////////////////////////////////////
 
 ProtXMLFile* ptr = 0;
+ProtXMLFile* nullPointer = 0;
 ProtXMLFile file;
 START_SECTION(ProtXMLFile())
 	ptr = new ProtXMLFile();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(~ProtXMLFile())
@@ -96,7 +97,7 @@ START_SECTION(void load(const String &filename, ProteinIdentification &protein_i
 		TEST_EQUAL(proteins.getHits()[0].getScore(), 0.9990);
     // this one is indistinguishable... therefore it should have minimal infos
 		TEST_EQUAL(proteins.getHits()[6].getAccession(), "P00739|HPTR_HUMAN");
-		TEST_EQUAL(proteins.getHits()[6].getCoverage(), 0);
+		TEST_EQUAL(proteins.getHits()[6].getCoverage(), -1);
 		TEST_EQUAL(proteins.getHits()[6].getScore(), -1);
 
 		TEST_EQUAL(proteins.getHits()[8].getAccession(), "P04217|A1BG_HUMAN");

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Timo Sachsenberg $
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -33,7 +33,7 @@
 #include <OpenMS/KERNEL/ConsensusMap.h>
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/VISUAL/MultiGradient.h>
-#include <OpenMS/VISUAL/Annotations1DContainer.h>
+#include <OpenMS/VISUAL/ANNOTATION/Annotations1DContainer.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/DataFilters.h>
 
 #include <boost/shared_ptr.hpp>
@@ -183,16 +183,28 @@ namespace OpenMS
         return annotations_1d[current_spectrum];
       }
 
-      /// Returns a mutable reference to the current spectrum (1d view)
-      inline ExperimentType::SpectrumType& getCurrentSpectrum()
-      {
-        return (*peaks)[current_spectrum];
-      }
-
       /// Returns a mutable reference to the annotations of the current spectrum (1d view)
       inline Annotations1DContainer& getCurrentAnnotations()
       {
         return annotations_1d[current_spectrum];
+      }
+
+      /// Returns a const reference to the annotations of the current spectrum (1d view)
+      inline const Annotations1DContainer& getAnnotations(Size spectrum_index) const
+      {
+        return annotations_1d[spectrum_index];
+      }
+
+      /// Returns a mutable reference to the annotations of the current spectrum (1d view)
+      inline Annotations1DContainer& getAnnotations(Size spectrum_index)
+      {
+        return annotations_1d[spectrum_index];
+      }
+
+      /// Returns a mutable reference to the current spectrum (1d view)
+      inline ExperimentType::SpectrumType& getCurrentSpectrum()
+      {
+        return (*peaks)[current_spectrum];
       }
 
       /// if this layer is visible
@@ -240,7 +252,7 @@ namespace OpenMS
 	};
 
 	///Print the contents to a stream.
-	OPENMS_DLLAPI std::ostream& operator << (std::ostream& os, const LayerData& rhs);
+	OPENMS_GUI_DLLAPI std::ostream& operator << (std::ostream& os, const LayerData& rhs);
 
 } //namespace
 

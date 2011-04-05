@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Steffen Sass $
+// $Maintainer: Hendrik Weisser $
 // $Authors: Steffen Sass, Hendrik Weisser $
 // --------------------------------------------------------------------------
 
@@ -39,9 +39,10 @@ namespace OpenMS
  * A GridFeature can be stored in a HashGrid and points to a BaseFeature (Feature or ConsensusFeature). Used for QT feature grouping (see QTClusterFinder).
  */
 
-	class OPENMS_DLLAPI GridFeature : public GridElement
+	class OPENMS_DLLAPI GridFeature 
+		: public GridElement
 	{
-	private:
+		private:
 		/// Reference to the contained feature
 		const BaseFeature& feature_;
 
@@ -50,6 +51,9 @@ namespace OpenMS
 
 		/// Index of the feature in the map
 		Size feature_index_;
+
+		/// Set of peptide sequences annotated to the feature
+		std::set<AASequence> annotations_;
 
 	public:
 		/**
@@ -67,13 +71,17 @@ namespace OpenMS
 		virtual ~GridFeature();
 
 		/// Returns the map index
-		Size getMapIndex();
+		Size getMapIndex() const;
 		
 		/// Returns the feature index
-		Size getFeatureIndex();
+		Size getFeatureIndex() const;
 
 		/// Returns the ID of the GridFeature (same as the feature index)
-		Int getID();
+		Int getID() const;
+
+		/// Return the set of peptide sequences annotated to the cluster center
+		const std::set<AASequence>& getAnnotations() const;
+
 	};
 }
 

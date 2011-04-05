@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -40,23 +40,18 @@ START_TEST(LabelFreeLabeler, "$Id$")
 /////////////////////////////////////////////////////////////
 
 LabelFreeLabeler* ptr = 0;
+LabelFreeLabeler* nullPointer = 0;
+BaseLabeler*      base_nullPointer = 0;
 START_SECTION(LabelFreeLabeler())
 {
 	ptr = new LabelFreeLabeler();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
 START_SECTION(~LabelFreeLabeler())
 {
 	delete ptr;
-}
-END_SECTION
-
-
-START_SECTION((void preCheck(Param &param) const ))
-{
-  NOT_TESTABLE
 }
 END_SECTION
 
@@ -136,38 +131,65 @@ START_SECTION((void setUpHook(FeatureMapSimVector &)))
 }
 END_SECTION
 
+// just to call the methods once
+LabelFreeLabeler dummyLabeler;
+FeatureMapSimVector empty;
+
+START_SECTION((void preCheck(Param &param) const ))
+{
+  Param p;
+  dummyLabeler.preCheck(p);
+
+  // preCheck has no content
+  NOT_TESTABLE
+}
+END_SECTION
+
 START_SECTION((void postDigestHook(FeatureMapSimVector &)))
 {
+  // we do not modify the map in this step
+  dummyLabeler.postDigestHook(empty);
   NOT_TESTABLE
 }
 END_SECTION
 
 START_SECTION((void postRTHook(FeatureMapSimVector &)))
 {
+  // we do not modify the map in this step
+  dummyLabeler.postRTHook(empty);
   NOT_TESTABLE
 }
 END_SECTION
 
 START_SECTION((void postDetectabilityHook(FeatureMapSimVector &)))
 {
+  // we do not modify the map in this step
+  dummyLabeler.postDetectabilityHook(empty);
   NOT_TESTABLE
 }
 END_SECTION
 
 START_SECTION((void postIonizationHook(FeatureMapSimVector &)))
 {
+  // we do not modify the map in this step
+  dummyLabeler.postIonizationHook(empty);
   NOT_TESTABLE
 }
 END_SECTION
 
 START_SECTION((void postRawMSHook(FeatureMapSimVector &)))
 {
+  // we do not modify the map in this step
+  dummyLabeler.postRawMSHook(empty);
   NOT_TESTABLE
 }
 END_SECTION
 
+MSSimExperiment exp;
 START_SECTION((void postRawTandemMSHook(FeatureMapSimVector &, MSSimExperiment &)))
 {
+  // we do not modify the map in this step
+  dummyLabeler.postRawTandemMSHook(empty,exp);
   NOT_TESTABLE
 }
 END_SECTION
@@ -175,7 +197,7 @@ END_SECTION
 START_SECTION((static BaseLabeler* create()))
 {
   BaseLabeler* labeler = LabelFreeLabeler::create();
-  TEST_NOT_EQUAL(labeler, 0)
+  TEST_NOT_EQUAL(labeler, base_nullPointer)
   delete labeler;
 }
 END_SECTION

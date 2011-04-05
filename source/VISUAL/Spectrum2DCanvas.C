@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Timo Sachsenberg$
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -54,8 +54,6 @@
 #include <QtGui/QMessageBox>
 
 //boost
-#include <boost/accumulators/statistics/stats.hpp>
-#include <boost/accumulators/statistics/median.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 
 
@@ -64,8 +62,6 @@ using namespace std;
 namespace OpenMS
 {
 	using namespace Internal;
-
-	MSChromatogram<>::const_iterator _cp;
 
 	Spectrum2DCanvas::Spectrum2DCanvas(const Param& preferences, QWidget* parent)
 		: SpectrumCanvas(preferences, parent)
@@ -81,7 +77,7 @@ namespace OpenMS
     defaults_.setValue("dot:feature_icon_size", 4, "Icon size used for features and consensus features.");
     defaults_.setMinInt("dot:feature_icon_size",1);
     defaults_.setMaxInt("dot:feature_icon_size",999);
-    defaults_.setValue("mapping_of_mz_to","x_axis","Determines which axis is the m/z axis.");
+    defaults_.setValue("mapping_of_mz_to","y_axis","Determines which axis is the m/z axis.");
 		defaults_.setValidStrings("mapping_of_mz_to", StringList::create("x_axis,y_axis"));
 		defaultsToParam_();
 		setName("Spectrum2DCanvas");
@@ -96,7 +92,7 @@ namespace OpenMS
 			mzToXAxis(false);
 		}
 		//connect preferences change to the right slot
-		connect(this,SIGNAL(preferencesChange()),this,SLOT(currentLayerParamtersChanged_()));
+    connect(this,SIGNAL(preferencesChange()),this,SLOT(currentLayerParametersChanged_()));
 	}
 
 	Spectrum2DCanvas::~Spectrum2DCanvas()
@@ -124,19 +120,6 @@ namespace OpenMS
 		else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 		{
 			//TODO CHROM
-
-			const LayerData& layer = getCurrentLayer();
-//			const ExperimentType& map = layer.peaks;
-			const ExperimentType& map = *layer.getPeakData();
-			vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
-			MSChromatogram<>::const_iterator cp = crom->begin();
-
-			crom += peak.spectrum;
-			//cp += peak.peak;
-			cp = _cp;
-
-			dataToWidget_(crom->getMZ(), cp->getRT(), pos);
-
 		}
 		else if (getCurrentLayer().type==LayerData::DT_IDENT)
 		{
@@ -223,35 +206,6 @@ namespace OpenMS
 		else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
 		{
 			//TODO CHROM
-			const LayerData& layer = getCurrentLayer();
-			const ExperimentType& map = *layer.getPeakData();
-
-			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
-					crom != map.getChromatograms().end();
-					++crom)
-			{
-				for (MSChromatogram<>::const_iterator cp = crom->begin();
-						cp != crom->end();
-						++cp)
-				{
-
-					_cp = cp;
-
-					if (cp->getRT() >= area.minPosition()[1] &&
-						cp->getRT() <= area.maxPosition()[1] &&
-						crom->getMZ() >= area.minPosition()[0] &&
-						crom->getMZ() <= area.maxPosition()[0] /*&&
-						getCurrentLayer().filters.passes(*cp)*/ )
-					{
-
-//									cout << "-----" << endl;
-//									cout << crom-map.getChromatograms().begin() << endl;
-//									cout << cp-crom->begin() << endl;
-						return PeakIndex(crom-map.getChromatograms().begin(), cp-crom->begin());
-					}
-				}
-			}
-
 		}
 		else if (getCurrentLayer().type==LayerData::DT_IDENT)
 		{
@@ -295,12 +249,18 @@ namespace OpenMS
 		
 		if (layer.type==LayerData::DT_PEAK) //peaks
 		{
-			//renaming some values for readability
+      // renaming some values for readability
       const ExperimentType& peak_map = *layer.getPeakData();
       const DoubleReal rt_min = visible_area_.minPosition()[1];
       const DoubleReal rt_max = visible_area_.maxPosition()[1];
       const DoubleReal mz_min = visible_area_.minPosition()[0];
       const DoubleReal mz_max = visible_area_.maxPosition()[0];
+
+      // skip empty peak maps
+      if (peak_map.size() == 0)
+      {
+        return;
+      }
 
 			//determine number of pixels for each dimension
       Size rt_pixel_count = image_height;
@@ -338,15 +298,15 @@ namespace OpenMS
         for(Size i=0; i!= peak_map.size(); ++i)
         {
           // skipp non MS1 and empty spectra
-          if (peak_map[i].getMSLevel()!=1 || peak_map[i].size()==0)
+          if (peak_map[i].getMSLevel() != 1 || peak_map[i].size() == 0)
           {
             continue;
           }          
           DoubleReal current_average_mz_spacing =  (peak_map[i][peak_map[i].size()-1].getMZ()- peak_map[i][0].getMZ())/peak_map[i].size();
           mz_spacing.push_back(current_average_mz_spacing);
         }
-        sort(mz_spacing.begin(), mz_spacing.end());        
-        min_spacing_mz = mz_spacing[0];
+        sort(mz_spacing.begin(), mz_spacing.end());
+        min_spacing_mz = mz_spacing.size() != 0 ? mz_spacing[0] : 1.0;
 
 #ifdef DEBUG_TOPPVIEW
         cout << "BEGIN " << __PRETTY_FUNCTION__ << endl;
@@ -365,10 +325,9 @@ namespace OpenMS
             rts.push_back(peak_map[i].getRT());
           }
           sort(rts.begin(), rts.end());
-          if (peak_map.size() > 2)
+          if (rts.size() > 2)
           {
             average_spacing_rt = (rts[rts.size()-1] - rts[0])/(DoubleReal)rts.size();
-            //cout << "avg:" << average_spacing_rt << endl;
           }
 				}
 			}
@@ -426,204 +385,30 @@ namespace OpenMS
 		}
 		else if (layer.type==LayerData::DT_CHROMATOGRAM)// chromatograms
 		{
-
+      const ExperimentType& map = *layer.getPeakData();
 			//TODO CHROM implement layer filters
 			//TODO CHROM implement faster painting
-//			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
-//					 crom != map.getChromatograms().end();
-//					 ++crom)
-//			{
-//				for (MSChromatogram<>::const_iterator cp = crom->begin();
-//						 cp != crom->end();
-//						 ++cp)
-//				{
-//					QPoint pos;
-//					dataToWidget_(crom->getMZ(), cp->getRT(), pos);
-//					if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
-//					{
-//						buffer_.setPixel(pos.x() ,pos.y() ,Qt::black);
-//						buffer_.setPixel(pos.x()-1 ,pos.y() ,Qt::black);
-//						buffer_.setPixel(pos.x()+1 ,pos.y() ,Qt::black);
-//						buffer_.setPixel(pos.x() ,pos.y()-1 ,Qt::black);
-//						buffer_.setPixel(pos.x() ,pos.y()+1 ,Qt::black);
-//					}
-//				}
-//			}
-
-			const ExperimentType& map = *layer.getPeakData();
-			//TODO CHROM implement layer filters
-			//TODO CHROM implement faster painting
-
-			double maxIntensity = 0.0;
-			double minIntensity = 99999.9;
-			double intensity_ = 0.0;
-			double shift_ = 0.0;	// used to calculate the width of the line with the intensity
-			double multiplicator = 0.0;
-			double zoomfactor = 0.0;
-			int MinChromDistance = 500; //Minimaler Abstand der einzelnen Chromatogramme
-			vector<int> mz;
-
-			int color_switcher = -1;
-			std::vector<QColor> Colors;
-
-			Colors.push_back(Qt::red);
-			Colors.push_back(Qt::green);
-			Colors.push_back(Qt::blue);
-			Colors.push_back(Qt::cyan);
-			Colors.push_back(Qt::magenta);
-			Colors.push_back(Qt::yellow);
-			Colors.push_back(Qt::darkGreen);
-			//Colors.push_back(Qt::darkBlue);
-			Colors.push_back(Qt::gray);
-
-
-
-			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
-					crom != map.getChromatograms().end();
-					++crom)
-			{
-				mz.push_back(int(crom->getMZ()));
-
-				for (MSChromatogram<>::const_iterator cp = crom->begin(); cp != crom->end(); ++cp)
-				{
-					//Max Intensität auslesen um die Breite der Intensitätsbalken zu errechnen
-					if (maxIntensity < cp->getIntensity())
-					{
-						maxIntensity = cp->getIntensity();
-					}
-					if (minIntensity > cp->getIntensity())
-					{
-						minIntensity = cp->getIntensity();
-					}
-				}
-			}
-
-			//Vector mz[] füllen mit den MZ Werten um Abstand zwischen den Chromatogrammen zu errechnen
-			for(int i = 0; i != (int(mz.size()) - 1); i++)
-				{
-					int VectorPosition = i;
-					int MZ_Value = mz[i];
-
-					//cout << "MZ_Value: " << MZ_Value << endl;
-
-					for (int f = VectorPosition; f != int(mz.size()); f++)
-					{
-						if (MZ_Value < mz[f])
-						{
-							if (MinChromDistance > (mz[f] - MZ_Value))
-								{
-								MinChromDistance = (mz[f] - MZ_Value);
-								}
-
-						}
-						if (MZ_Value > mz[f])
-						{
-							if (MinChromDistance > (MZ_Value - mz[f]))
-								{
-								MinChromDistance = (MZ_Value - mz[f]);
-								}
-						}
-					}
-
-					//cout << "MinChromDistance: " << MinChromDistance << endl;
-				}
-
-
-
 			for (vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin(); 
 					 crom != map.getChromatograms().end();
 					 ++crom)
 			{
-
-				color_switcher += 1;
-				if (color_switcher == int(Colors.size()) )
-					{
-					color_switcher = 0;
-					}
-
-
 				for (MSChromatogram<>::const_iterator cp = crom->begin();
 						 cp != crom->end();
 						 ++cp)
 				{
 					QPoint pos;
 					dataToWidget_(crom->getMZ(), cp->getRT(), pos);
-					intensity_ = cp->getIntensity();
-					zoomfactor = 0.0;
-
-					if (zoom_pos_ == zoom_stack_.begin())
-					{
-						multiplicator = ((MinChromDistance/2)-20) / (((log(maxIntensity + 1.0))/log(1.7))-0.5) ;
-					}
-					else
-					{
-						for(int i = 1; i>0 ; i++)
-						{
-							if (zoom_pos_ <= (zoom_stack_.begin()) + i)
-							{
-								zoomfactor += (i+1);
-							}
-							if (zoom_pos_ == (zoom_stack_.begin()) + i)
-							{
-								//cout << "zoomfactor: " << zoomfactor << endl;
-								break;
-							}
-						}
-
-						multiplicator = ((MinChromDistance/2)-20) / (((log(maxIntensity + 1.0))/log(1.7))-0.5) * (zoomfactor*0.7) ;
-
-					}
-
 					if (pos.x()>0 && pos.y()>0 && pos.x()<image_width-1 && pos.y()<image_height-1)
 					{
-						if (intensity_ == 0)
-						{
-							painter.drawPoint(pos.x(), pos.y());
-						}
-
-						if (intensity_ > 0)
-						{
-							shift_ = multiplicator * (((log(intensity_ + 1.0))/log(1.7))-1.5);
-
-							// intensity lines
-							//painter.setPen(QColor(qrand()%255,qrand()%255,qrand()%255), 2);
-							//painter.setPen(QPen(Colors[color_switcher], 2));
-
-							if (zoomfactor > 14) // bei hohem Zoom Intensitätsbalken vergrößern
-							{
-								painter.setPen(QPen(Colors[color_switcher], 2));
-							}
-							else painter.setPen(QPen(Colors[color_switcher], 1));
-
-							painter.drawLine(pos.x()-shift_, pos.y(), pos.x()-1, pos.y());
-							painter.drawLine(pos.x()+shift_, pos.y(), pos.x()+1, pos.y());
-
-							// middle dots/ zoom->crosses
-							painter.setPen(QPen(Qt::black, 1));
-							painter.drawPoint(pos.x(), pos.y());
-
-							if (zoomfactor > 8) // bei hohem Zoom crosses zeichnen
-							{
-								//painter.drawPoint(pos.x(), pos.y());
-								painter.drawPoint(pos.x()+1, pos.y());
-								painter.drawPoint(pos.x()+2, pos.y());
-
-								painter.drawPoint(pos.x()-1, pos.y());
-								painter.drawPoint(pos.x()-2, pos.y());
-
-								painter.drawPoint(pos.x(), pos.y()+1);
-								painter.drawPoint(pos.x(), pos.y()+2);
-
-								painter.drawPoint(pos.x(), pos.y()-1);
-								painter.drawPoint(pos.x(), pos.y()-2);
-							}
-						}
+						buffer_.setPixel(pos.x() ,pos.y() ,Qt::black);
+						buffer_.setPixel(pos.x()-1 ,pos.y() ,Qt::black);
+						buffer_.setPixel(pos.x()+1 ,pos.y() ,Qt::black);
+						buffer_.setPixel(pos.x() ,pos.y()-1 ,Qt::black);
+						buffer_.setPixel(pos.x() ,pos.y()+1 ,Qt::black);
 					}
 				}
 			}
 		}
-
-
 		else if (layer.type==LayerData::DT_IDENT) // peptide identifications
 		{
 			paintIdentifications_(layer_index, painter);
@@ -636,31 +421,33 @@ namespace OpenMS
     const ExperimentType& peak_map = *layer.getPeakData();
 
     for (ExperimentType::ConstIterator i = peak_map.RTBegin(visible_area_.minPosition()[1]);
-    i != peak_map.RTEnd(visible_area_.maxPosition()[1]);
-    ++i)
+      i != peak_map.RTEnd(visible_area_.maxPosition()[1]);
+      ++i)
     {
       //this is an MS/MS scan
       if (i->getMSLevel()==2 && !i->getPrecursors().empty())
       {
-        ExperimentType::ConstIterator prec=peak_map.getPrecursorSpectrum(i);
-        if (prec!=peak_map.end())
+        ExperimentType::ConstIterator prec = peak_map.getPrecursorSpectrum(i);
+
+        if (prec != peak_map.end())
         {
-          QPoint pos;
-          dataToWidget_(i->getPrecursors()[0].getMZ(), prec->getRT(),pos);
+          QPoint pos_ms1;
+          dataToWidget_(i->getPrecursors()[0].getMZ(), prec->getRT(), pos_ms1);  // position of precursor in MS1
+          QPoint pos_ms2;
+          dataToWidget_(i->getPrecursors()[0].getMZ(), i->getRT(), pos_ms2);   // position of precursor in MS2
           QPen p;
           p.setColor(Qt::black);
           painter.setPen(p);
-          painter.drawLine(pos.x(),pos.y()+3,pos.x()+3,pos.y());
-          painter.drawLine(pos.x()+3,pos.y(),pos.x(),pos.y()-3);
-          painter.drawLine(pos.x(),pos.y()-3,pos.x()-3,pos.y());
-          painter.drawLine(pos.x()-3,pos.y(),pos.x(),pos.y()+3);
 
-          p.setColor(Qt::white);
-          painter.setPen(p);
-          painter.drawLine(pos.x(),pos.y()+2,pos.x()+2,pos.y());
-          painter.drawLine(pos.x()+2,pos.y(),pos.x(),pos.y()-2);
-          painter.drawLine(pos.x(),pos.y()-2,pos.x()-2,pos.y());
-          painter.drawLine(pos.x()-2,pos.y(),pos.x(),pos.y()+2);
+          // diamond shape in MS1
+          painter.drawLine(pos_ms1.x(), pos_ms1.y()+3, pos_ms1.x()+3, pos_ms1.y());
+          painter.drawLine(pos_ms1.x()+3, pos_ms1.y(), pos_ms1.x(), pos_ms1.y()-3);
+          painter.drawLine(pos_ms1.x(), pos_ms1.y()-3, pos_ms1.x()-3, pos_ms1.y());
+          painter.drawLine(pos_ms1.x()-3, pos_ms1.y(), pos_ms1.x(), pos_ms1.y()+3);
+
+          // rt position of corresponding MS2
+          painter.drawLine(pos_ms2.x()-3, pos_ms2.y(), pos_ms2.x()+3, pos_ms2.y());
+          painter.drawLine(pos_ms1.x(), pos_ms1.y(), pos_ms2.x(), pos_ms2.y());
         }
       }
     }
@@ -1146,12 +933,12 @@ namespace OpenMS
 	{
 		for (Size i=0; i<layers_.size();++i)
 		{
-			recalculateDotGradient_(i);
+      recalculateDotGradient_(i);
 		}
 		SpectrumCanvas::intensityModeChange_();
 	}
 
-	void Spectrum2DCanvas::recalculateDotGradient_(Size layer)
+  void Spectrum2DCanvas::recalculateDotGradient_(Size layer)
 	{
     getLayer_(layer).gradient.fromString(getLayer_(layer).param.getValue("dot:gradient"));
     if (intensity_mode_ == IM_LOG)
@@ -1163,6 +950,11 @@ namespace OpenMS
       getLayer_(layer).gradient.activatePrecalculationMode(getMinIntensity(layer), overall_data_range_.maxPosition()[2], param_.getValue("interpolation_steps"));
     }
 	}
+
+  void Spectrum2DCanvas::recalculateCurrentLayerDotGradient()
+  {
+    recalculateDotGradient_(current_layer_);
+  }
 
 	void Spectrum2DCanvas::updateProjections()
 	{
@@ -1224,9 +1016,9 @@ namespace OpenMS
 		DoubleReal intensity_max = 0.0;
 		DoubleReal intensity_sum = 0.0;
 
-	  float prec = 0.05f;
-		float mult = 1.0/prec;
-
+	  // divide visible range into 100 bins (much faster than using a constant, e.g. 0.05, leading to many peaks for large maps without more information)
+    float range = visible_area_.maxPosition()[0] - visible_area_.minPosition()[0];
+    float mult = 100.0f/(range<=0 ? 1 : range); 
 
     for (ExperimentType::ConstAreaIterator i = layer->getPeakData()->areaBeginConst(visible_area_.minPosition()[1],visible_area_.maxPosition()[1],visible_area_.minPosition()[0],visible_area_.maxPosition()[0]);
          i != layer->getPeakData()->areaEndConst();
@@ -1388,7 +1180,10 @@ namespace OpenMS
 
 		//overall values update
 		recalculateRanges_(0,1,2);
-		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
+    if (layers_.size() == 1)
+    {
+      resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
+    }
 
 		if (getLayerCount()==2)
 		{
@@ -1798,67 +1593,79 @@ namespace OpenMS
 		Real it = 0.0;
 		Int charge = 0;
 		DoubleReal quality = 0.0;
-    Size size = 0;
-		if (getCurrentLayer().type==LayerData::DT_FEATURE)
-		{
-      mz = peak.getFeature(*getCurrentLayer().getFeatureMap()).getMZ();
-      rt = peak.getFeature(*getCurrentLayer().getFeatureMap()).getRT();
-      it = peak.getFeature(*getCurrentLayer().getFeatureMap()).getIntensity();
-      charge  = peak.getFeature(*getCurrentLayer().getFeatureMap()).getCharge();
-      quality = peak.getFeature(*getCurrentLayer().getFeatureMap()).getOverallQuality();
-		}
-		else if (getCurrentLayer().type==LayerData::DT_PEAK)
-		{
-      mz = peak.getPeak(*getCurrentLayer().getPeakData()).getMZ();
-      rt = peak.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
-      it = peak.getPeak(*getCurrentLayer().getPeakData()).getIntensity();
-		}
-		else if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
-		{
-      mz = peak.getFeature(*getCurrentLayer().getConsensusMap()).getMZ();
-      rt = peak.getFeature(*getCurrentLayer().getConsensusMap()).getRT();
-      it = peak.getFeature(*getCurrentLayer().getConsensusMap()).getIntensity();
-      charge  = peak.getFeature(*getCurrentLayer().getConsensusMap()).getCharge();
-      quality = peak.getFeature(*getCurrentLayer().getConsensusMap()).getQuality();
-      size =  peak.getFeature(*getCurrentLayer().getConsensusMap()).getFeatures().size();
-		}
-		else if (getCurrentLayer().type==LayerData::DT_CHROMATOGRAM)
-		{
-			//TODO CHROM
-			const LayerData& layer = getCurrentLayer();
-			const ExperimentType& map = *layer.getPeakData();
-			vector<MSChromatogram<> >::const_iterator crom = map.getChromatograms().begin();
-			MSChromatogram<>::const_iterator cp = crom->begin();
+    Size size = 0;    
+    ConsensusFeature::HandleSetType sub_features;
 
-			crom += peak.spectrum;
-			//cp += peak.peak;
-			cp = _cp;
+    switch(getCurrentLayer().type)
+    {
+    case LayerData::DT_FEATURE :
+      {
+        const Feature& f = peak.getFeature(*getCurrentLayer().getFeatureMap());
+        mz = f.getMZ();
+        rt = f.getRT();
+        it = f.getIntensity();
+        charge  = f.getCharge();
+        quality = f.getOverallQuality();
+      }
+      break;
+    case LayerData::DT_PEAK :
+      {
+        const Peak1D& p = peak.getPeak(*getCurrentLayer().getPeakData());
+        const MSSpectrum<>& s = peak.getSpectrum(*getCurrentLayer().getPeakData());
+        mz = p.getMZ();
+        rt = s.getRT();
+        it = p.getIntensity();
+      }
+      break;
+    case LayerData::DT_CONSENSUS :
+      {
+        const ConsensusFeature& cf = peak.getFeature(*getCurrentLayer().getConsensusMap());
 
+        mz = cf.getMZ();
+        rt = cf.getRT();
+        it = cf.getIntensity();
+        charge  = cf.getCharge();
+        quality = cf.getQuality();
+        sub_features = cf.getFeatures();
+        size =  sub_features.size();
+      }
+      break;
 
-			mz = crom->getMZ();
-			rt = cp->getRT();
-			it = cp->getIntensity();
+    case LayerData::DT_CHROMATOGRAM :
+      // TODO implement
+      break;
 
-		}
-		else if (getCurrentLayer().type == LayerData::DT_IDENT)
-		{
-			// TODO IDENT
-		}
-		
+    case LayerData::DT_IDENT :
+      // TODO implement
+      break;
+
+    default:
+      break;
+    }
+
 		//draw text			
 		QStringList lines;
     lines.push_back("RT: " + QString::number(rt,'f',2));
     lines.push_back("m/z: " + QString::number(mz,'f',2));
 		lines.push_back("Int: " + QString::number(it,'f',2));
-		if (getCurrentLayer().type==LayerData::DT_FEATURE || getCurrentLayer().type==LayerData::DT_CONSENSUS)
+
+    if (getCurrentLayer().type == LayerData::DT_FEATURE || getCurrentLayer().type==LayerData::DT_CONSENSUS)
 		{
 			lines.push_back("Charge: " + QString::number(charge));
 			lines.push_back("Quality: " + QString::number(quality,'f',4));
 		}
-    if (getCurrentLayer().type==LayerData::DT_CONSENSUS)
+
+    if (getCurrentLayer().type == LayerData::DT_CONSENSUS)
     {
       lines.push_back("Size: " + QString::number(size));
+      for ( ConsensusFeature::HandleSetType::const_iterator it = sub_features.begin(); it != sub_features.end(); ++it)
+      {
+        lines.push_back("Feature m/z:" + QString::number(it->getMZ(),'f',2) +
+                               "  rt:" + QString::number(it->getRT(),'f',2) +
+                               "  intensity:" + QString::number(it->getIntensity(),'f',2));
+      }
     }
+
 		drawText_(painter, lines);
 	}
 
@@ -2210,6 +2017,11 @@ namespace OpenMS
 			//find nearest survey scan
       SignedSize size = getCurrentLayer().getPeakData()->size();
       Int current = getCurrentLayer().getPeakData()->RTBegin(rt)-getCurrentLayer().getPeakData()->begin();
+      if (current == size)  // if only one element is present RTBegin points to one after the last element (see RTBegin implementation)
+      {
+        current = 0;
+      }
+
 			SignedSize i=0;
 			while (current+i<size || current-i>=0)
 			{
@@ -2288,14 +2100,18 @@ namespace OpenMS
       for (ExperimentType::ConstIterator it=getCurrentLayer().getPeakData()->RTBegin(rt_min); it!=getCurrentLayer().getPeakData()->RTEnd(rt_max); ++it)
 			{
 				DoubleReal mz = 0.0;
-				if (!it->getPrecursors().empty()) mz = it->getPrecursors()[0].getMZ();
-				if (it->getMSLevel()>1 && mz>=mz_min && mz<=mz_max)
+				if (!it->getPrecursors().empty()) 
+        {
+          mz = it->getPrecursors()[0].getMZ();
+        }
+
+				if (it->getMSLevel()>1 && mz >= mz_min && mz <= mz_max)
 				{
 					a = msn_scans->addAction(QString("RT: ") + QString::number(it->getRT()) + " mz: " + QString::number(mz));
                                         a->setData((int)(it-getCurrentLayer().getPeakData()->begin()));
 					a = msn_meta->addAction(QString("RT: ") + QString::number(it->getRT()) + " mz: " + QString::number(mz));
                                         a->setData((int)(it-getCurrentLayer().getPeakData()->begin()));
-					item_added=true;
+					item_added = true;
 				}
 			}
 			if (item_added)
@@ -2421,127 +2237,6 @@ namespace OpenMS
 		else if (layer.type==LayerData::DT_CHROMATOGRAM)
 		{
 			//TODO CHROM
-			//add settings
-						settings_menu->addSeparator();
-			 			settings_menu->addAction("Show/hide projections");
-			 			settings_menu->addAction("Show/hide MS/MS precursors");
-
-						//add surrounding survey scans
-						//find nearest survey scan
-			      SignedSize size = getCurrentLayer().getPeakData()->size();
-			      Int current = getCurrentLayer().getPeakData()->RTBegin(rt)-getCurrentLayer().getPeakData()->begin();
-						SignedSize i=0;
-						while (current+i<size || current-i>=0)
-						{
-			        if(current+i<size && (*getCurrentLayer().getPeakData())[current+i].getMSLevel()==1)
-							{
-								current = current+i;
-								break;
-							}
-			        if(current-i>=0 && (*getCurrentLayer().getPeakData())[current-i].getMSLevel()==1)
-							{
-								current = current-i;
-								break;
-							}
-							++i;
-						}
-						//search for four scans in both directions
-						vector<Int> indices;
-						indices.push_back(current);
-						i=1;
-						while (current-i>=0 && indices.size()<5)
-						{
-			        if ((*getCurrentLayer().getPeakData())[current-i].getMSLevel()==1)
-							{
-								indices.push_back(current-i);
-							}
-							++i;
-						}
-						i=1;
-						while (current+i<size && indices.size()<9)
-						{
-			        if ((*getCurrentLayer().getPeakData())[current+i].getMSLevel()==1)
-							{
-								indices.push_back(current+i);
-							}
-							++i;
-						}
-						sort(indices.rbegin(),indices.rend());
-						QMenu* ms1_scans = context_menu->addMenu("Survey scan in 1D");
-						QMenu* ms1_meta = context_menu->addMenu("Survey scan meta data");
-						context_menu->addSeparator();
-						for(i=0; i<(Int)indices.size(); ++i)
-						{
-			        if (indices[i]==current)
-			        {
-			          ms1_scans->addSeparator();
-			        }
-			        a = ms1_scans->addAction(QString("RT: ") + QString::number((*getCurrentLayer().getPeakData())[indices[i]].getRT()));
-							a->setData(indices[i]);
-			        if (indices[i]==current)
-			        {
-			          ms1_scans->addSeparator();
-			        }
-
-			        if (indices[i]==current)
-			        {
-			          ms1_meta->addSeparator();
-			        }
-			        a = ms1_meta->addAction(QString("RT: ") + QString::number((*getCurrentLayer().getPeakData())[indices[i]].getRT()));
-							a->setData(indices[i]);
-			        if (indices[i]==current)
-			        {
-			          ms1_meta->addSeparator();
-			        }
-						}
-
-						//add surrounding fragment scans
-						QMenu* msn_scans = new QMenu("fragment scan in 1D");
-						QMenu* msn_meta = new QMenu("fragment scan meta data");
-						DPosition<2> p1 = widgetToData_(e->pos()+ QPoint(10,10));
-						DPosition<2> p2 = widgetToData_(e->pos()- QPoint(10,10));
-						DoubleReal rt_min = min(p1[1],p2[1]);
-						DoubleReal rt_max = max(p1[1],p2[1]);
-						DoubleReal mz_min = min(p1[0],p2[0]);
-						DoubleReal mz_max = max(p1[0],p2[0]);
-						bool item_added = false;
-			      for (ExperimentType::ConstIterator it=getCurrentLayer().getPeakData()->RTBegin(rt_min); it!=getCurrentLayer().getPeakData()->RTEnd(rt_max); ++it)
-						{
-							DoubleReal mz = 0.0;
-							if (!it->getPrecursors().empty()) mz = it->getPrecursors()[0].getMZ();
-							if (it->getMSLevel()>1 && mz>=mz_min && mz<=mz_max)
-							{
-								a = msn_scans->addAction(QString("RT: ") + QString::number(it->getRT()) + " mz: " + QString::number(mz));
-			                                        a->setData((int)(it-getCurrentLayer().getPeakData()->begin()));
-								a = msn_meta->addAction(QString("RT: ") + QString::number(it->getRT()) + " mz: " + QString::number(mz));
-			                                        a->setData((int)(it-getCurrentLayer().getPeakData()->begin()));
-								item_added=true;
-							}
-						}
-						if (item_added)
-						{
-							context_menu->addMenu(msn_scans);
-							context_menu->addMenu(msn_meta);
-							context_menu->addSeparator();
-						}
-
-						finishContextMenu_(context_menu, settings_menu);
-
-						//evaluate menu
-						if ((result = context_menu->exec(mapToGlobal(e->pos()))))
-						{
-							if (result->parent()==ms1_scans  || result->parent()==msn_scans)
-							{
-								emit showSpectrumAs1D(result->data().toInt());
-							}
-							else if (result->parent()==ms1_meta || result->parent()==msn_meta)
-							{
-								showMetaData(true, result->data().toInt());
-							}
-						}
-
-
-
 		}
 		
 		//common actions of peaks and features
@@ -2683,9 +2378,9 @@ namespace OpenMS
 		}
 	}
 
-	void Spectrum2DCanvas::currentLayerParamtersChanged_()
+  void Spectrum2DCanvas::currentLayerParametersChanged_()
 	{
-		recalculateDotGradient_(activeLayerIndex());
+    recalculateDotGradient_(activeLayerIndex());
 
 		update_buffer_ = true;
 		update_(__PRETTY_FUNCTION__);

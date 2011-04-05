@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -36,15 +36,16 @@ using namespace OpenMS;
 using namespace std;
 
 
-START_TEST(FeatureGroupingAlgorithmUnlabeled, "$Id FeatureFinder_test.C 139 2006-07-14 10:08:39Z ole_st $")
+START_TEST(FeatureGroupingAlgorithmUnlabeled, "$Id FeatureGroupingAlgorithmUnlabeled_test.C 139 2006-07-14 10:08:39Z ole_st $")
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
 FeatureGroupingAlgorithmUnlabeled* ptr = 0;
+FeatureGroupingAlgorithmUnlabeled* nullPointer = 0;
 START_SECTION((FeatureGroupingAlgorithmUnlabeled()))
 	ptr = new FeatureGroupingAlgorithmUnlabeled();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~FeatureGroupingAlgorithmUnlabeled()))
@@ -52,9 +53,10 @@ START_SECTION((virtual ~FeatureGroupingAlgorithmUnlabeled()))
 END_SECTION
 
 START_SECTION((static FeatureGroupingAlgorithm* create()))
-	FeatureGroupingAlgorithm* ptr2 = 0;
+  FeatureGroupingAlgorithm* ptr2 = 0;
+  FeatureGroupingAlgorithm* base_NullPointer = 0;
 	ptr2 = FeatureGroupingAlgorithmUnlabeled::create();
-	TEST_NOT_EQUAL(ptr2, 0)
+  TEST_NOT_EQUAL(ptr2, base_NullPointer)
 END_SECTION
 
 START_SECTION((static String getProductName()))

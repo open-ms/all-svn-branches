@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -40,9 +40,10 @@ START_TEST(PrecursorIonSelectionPreprocessing, "$Id$")
 /////////////////////////////////////////////////////////////
 
 PrecursorIonSelectionPreprocessing* ptr = 0;
+PrecursorIonSelectionPreprocessing* nullPointer = 0;
 START_SECTION(PrecursorIonSelectionPreprocessing())
 	ptr = new PrecursorIonSelectionPreprocessing();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(~PrecursorIonSelectionPreprocessing())
@@ -87,7 +88,7 @@ START_SECTION((const std::vector<DoubleReal> & getMasses(String acc) const))
 END_SECTION
 
 	
-	START_SECTION(void dbPreprocessing(String db_path, bool save=true))
+START_SECTION(void dbPreprocessing(String db_path, bool save=true))
 	std::map<String,std::vector<DoubleReal> > prot_map = ptr->getProtMasses();
 	TEST_EQUAL(prot_map.size(), 3)
 END_SECTION

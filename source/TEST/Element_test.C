@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -44,9 +44,10 @@ START_TEST(Element, "$Id$")
 /////////////////////////////////////////////////////////////
 
 Element* e_ptr = 0;
+Element* e_nullPointer = 0;
 START_SECTION(Element())
 	e_ptr = new Element;
-	TEST_NOT_EQUAL(e_ptr, 0)
+	TEST_NOT_EQUAL(e_ptr, e_nullPointer)
 END_SECTION
 
 START_SECTION(~Element())
@@ -62,7 +63,7 @@ DoubleReal mono_weight(0.123456789);
 e_ptr = 0;
 START_SECTION((Element(const String& name, const String& symbol, UInt atomic_number, DoubleReal average_weight, DoubleReal mono_weight, const IsotopeDistribution& isotopes)))
 	e_ptr = new Element(name, symbol, atomic_number, average_weight, mono_weight, dist);	
-	TEST_NOT_EQUAL(e_ptr, 0)
+	TEST_NOT_EQUAL(e_ptr, e_nullPointer)
 END_SECTION
 
 START_SECTION(Element(const Element& element))

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -94,9 +94,10 @@ START_TEST(SampleTreatment, "$Id$")
 TOLERANCE_ABSOLUTE(0.001)
 
 Test* dv_ptr = 0;
+Test* dv_nullPointer = 0;
 START_SECTION((SampleTreatment(const String& type)))
 	dv_ptr = new Test;
-	TEST_NOT_EQUAL(dv_ptr, 0)
+  TEST_NOT_EQUAL(dv_ptr, dv_nullPointer)
 END_SECTION
 
 START_SECTION((~SampleTreatment()))

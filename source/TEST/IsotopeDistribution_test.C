@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -52,12 +52,14 @@ START_TEST(IsotopeDistribution, "$Id$")
 using namespace OpenMS;
 using namespace std;
 
+IsotopeDistribution* nullPointer = 0;
+
 START_SECTION(IsotopeDistribution())
 	IsotopeDistribution* ptr = 0;
 	ptr = new IsotopeDistribution();
 	Size max_isotope = ptr->getMaxIsotope();
   TEST_EQUAL(max_isotope, 0)
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 	delete ptr;
 END_SECTION
 
@@ -65,7 +67,7 @@ START_SECTION(IsotopeDistribution(Size max_isotope))
 	IsotopeDistribution* ptr = new IsotopeDistribution(117);
 	Size max_isotope = ptr->getMaxIsotope();
   TEST_EQUAL(max_isotope, 117)
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 	delete ptr;
 END_SECTION
 

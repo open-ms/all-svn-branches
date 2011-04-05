@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -39,12 +39,13 @@ namespace OpenMS {
 
   IonizationSimulation::IonizationSimulation(const SimRandomNumberGenerator& random_generator)
     : DefaultParamHandler("IonizationSimulation"),
-			ionization_type_(),
-			basic_residues_(),
-			esi_probability_(),
-			esi_impurity_probabilities_(),
-			esi_adducts_(),
-			max_adduct_charge_(),
+      ProgressLogger(),
+      ionization_type_(),
+      basic_residues_(),
+      esi_probability_(),
+      esi_impurity_probabilities_(),
+      esi_adducts_(),
+      max_adduct_charge_(),
       maldi_probabilities_(),
       rnd_gen_(&random_generator)
   {
@@ -54,12 +55,13 @@ namespace OpenMS {
 
   IonizationSimulation::IonizationSimulation(const IonizationSimulation& source)
     : DefaultParamHandler(source),
-			ionization_type_(source.ionization_type_ ),
-			basic_residues_(source.basic_residues_ ),
-			esi_probability_(source.esi_probability_ ),
-			esi_impurity_probabilities_(source.esi_impurity_probabilities_),
-			esi_adducts_(source.esi_adducts_ ),
-			max_adduct_charge_(source.max_adduct_charge_ ),
+      ProgressLogger(source),
+      ionization_type_(source.ionization_type_ ),
+      basic_residues_(source.basic_residues_ ),
+      esi_probability_(source.esi_probability_ ),
+      esi_impurity_probabilities_(source.esi_impurity_probabilities_),
+      esi_adducts_(source.esi_adducts_ ),
+      max_adduct_charge_(source.max_adduct_charge_ ),
       maldi_probabilities_(source.maldi_probabilities_),
       rnd_gen_(source.rnd_gen_)
   {
@@ -123,7 +125,7 @@ namespace OpenMS {
     defaults_.setValue("ionization_type", "ESI", "Type of Ionization (MALDI or ESI)");
     defaults_.setValidStrings("ionization_type", StringList::create("MALDI,ESI"));
 
-    defaults_.setValue("esi:ionized_residues", StringList::create("Arg,Lys,His"), "List of residues (as three letter code) that will be considered during ESI ionization. This parameter will be ignored during MALDI ionization.");
+    defaults_.setValue("esi:ionized_residues", StringList::create("Arg,Lys,His"), "List of residues (as three letter code) that will be considered during ES ionization. The N-term is always assumed to carry a charge. This parameter will be ignored during MALDI ionization.");
     StringList valid_ionized_residues = StringList::create("Ala,Cys,Asp,Glu,Phe,Gly,His,Ile,Lys,Leu,Met,Asn,Pro,Gln,Arg,Sec,Ser,Thr,Val,Trp,Tyr");
     defaults_.setValidStrings("esi:ionized_residues", valid_ionized_residues);
 		defaults_.setValue("esi:charge_impurity", StringList::create("H+:1"), "List of charged ions that contribute to charge with weight of occurence (which must not sum to 1), e.g. ['H:1'] or ['H:0.7' 'Na:0.3']");
@@ -135,8 +137,10 @@ namespace OpenMS {
     defaults_.setValue("maldi:ionization_probabilities", DoubleList::create("0.9,0.1") , "List of probabilities for the different charge states during MALDI ionization (the list must sum up to 1.0)");
     
     // maximal size of map in mz dimension
-    defaults_.setValue("mz:upper_measurement_limit",2500.0,"Upper m/z detecter limit.");
-    defaults_.setValue("mz:lower_measurement_limit",200.0,"Lower m/z detecter limit.");
+    defaults_.setValue("mz:lower_measurement_limit",200.0,"Lower m/z detector limit.");
+    defaults_.setMinFloat("mz:lower_measurement_limit",0.0);
+    defaults_.setValue("mz:upper_measurement_limit",2500.0,"Upper m/z detector limit.");
+    defaults_.setMinFloat("mz:upper_measurement_limit",0.0);
     
     defaultsToParam_();
   }
@@ -200,7 +204,12 @@ namespace OpenMS {
     // detector ranges
     maximal_mz_measurement_limit_ = param_.getValue("mz:upper_measurement_limit");
     minimal_mz_measurement_limit_ = param_.getValue("mz:lower_measurement_limit");
-    
+
+    if (minimal_mz_measurement_limit_ > maximal_mz_measurement_limit_)
+    {
+      throw Exception::InvalidParameter(__FILE__,__LINE__,__PRETTY_FUNCTION__, "m/z measurement limits do not define a valid interval!");
+    }
+
   }
   
   void IonizationSimulation::ionizeEsi_(FeatureMapSim & features, ConsensusMap & charge_consensus)
@@ -335,10 +344,13 @@ namespace OpenMS {
 					Int charge = it_s->second.getNetCharge();
 					if (allowed_entities_of_charge[charge]>0)
 					{
-						Feature charged_feature(features[index]);
+						Feature charged_feature(features[index]);            
 
             setFeatureProperties_(charged_feature, it_s->second.getMass(), it_s->second.getAdductsAsString(1), charge, it_s->first, index);
 	
+            // remember the original feature as parent feature (needed for labeling consensus)
+            charged_feature.setMetaValue("parent_feature", String( features[index].getUniqueId() ));
+
 						if (!isFeatureValid_(charged_feature))
 						{
 							++undetected_features_count; // OMP!
@@ -393,7 +405,7 @@ namespace OpenMS {
   
   UInt IonizationSimulation::countIonizedResidues_(const AASequence& seq) const
   {
-    UInt count = 0;
+    UInt count = 1; // +1 for N-term
     for (Size i = 0; i<seq.size(); ++i)
     {
       // check for basic residues
@@ -449,6 +461,9 @@ namespace OpenMS {
 						
 						setFeatureProperties_(charged_feature, h_mono_weight*c, String("H")+String(c), c, charge_states[c], feature_index);
 
+            // remember the original feature as parent feature (needed for labeling consensus)
+            charged_feature.setMetaValue("parent_feature", String( features[index].getUniqueId() ));
+
 						if (!isFeatureValid_(charged_feature))
 						{
 							++undetected_features_count;
@@ -496,6 +511,9 @@ namespace OpenMS {
 
 		f.setMZ( (feature_ef.getMonoWeight() + adduct_mass ) / charge);
 		f.setCharge(charge);
+    std::vector<PeptideHit> hits = f.getPeptideIdentifications()[0].getHits();
+    hits[0].setCharge(charge);
+    f.getPeptideIdentifications()[0].setHits(hits);
 	  // set "main" intensity
     SimIntensityType old_intensity = f.getIntensity();
 	  f.setIntensity(new_intensity);

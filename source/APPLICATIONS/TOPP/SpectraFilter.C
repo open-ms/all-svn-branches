@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -108,7 +108,7 @@ class TOPPSpectraFilter
 			registerOutputFile_("out", "<file>", "", "output file ");
 	  	setValidFormats_("out",StringList::create("mzML"));
 			registerStringOption_("type","<name>","","Filter type",true);
-			setValidStrings_("type", getToolList()[toolName_()] );
+			setValidStrings_("type", ToolHandler::getTypes(toolName_()));
 
 			addEmptyLine_();
 			addText_("Parameters for the filter can only be given in the INI file.");

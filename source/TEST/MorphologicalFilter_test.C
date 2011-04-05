@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -226,10 +226,12 @@ START_SECTION(([EXTRA] "struct SimpleTopHat, used as reference implementation"))
 END_SECTION
 
 MorphologicalFilter* tophat_ptr = 0;
+MorphologicalFilter* tophat_nullPointer = 0;
+
 START_SECTION((MorphologicalFilter()))
 {
   tophat_ptr = new MorphologicalFilter;
-  TEST_NOT_EQUAL(tophat_ptr, 0);
+  TEST_NOT_EQUAL(tophat_ptr, tophat_nullPointer);
 }
 END_SECTION
 

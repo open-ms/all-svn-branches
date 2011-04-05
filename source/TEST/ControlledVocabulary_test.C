@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -40,9 +40,10 @@ using namespace OpenMS;
 using namespace std;
 
 ControlledVocabulary* ptr = 0;
+ControlledVocabulary* nullPointer = 0;
 START_SECTION((ControlledVocabulary()))
 	ptr = new ControlledVocabulary();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((~ControlledVocabulary()))
@@ -170,12 +171,13 @@ START_SECTION((void getAllChildTerms(std::set<String>& terms, const String& pare
 END_SECTION
 
 
-ControlledVocabulary::CVTerm * cvterm;
+ControlledVocabulary::CVTerm * cvterm = 0;
+ControlledVocabulary::CVTerm * cvtermNullPointer = 0;
 
 START_SECTION(([ControlledVocabulary::CVTerm] CVTerm()))
 {
   cvterm = new ControlledVocabulary::CVTerm();
-  TEST_NOT_EQUAL(cvterm, 0)
+  TEST_NOT_EQUAL(cvterm, cvtermNullPointer)
 }
 END_SECTION
 

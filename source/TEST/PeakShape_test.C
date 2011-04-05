@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2010 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,10 +41,12 @@ START_TEST(PeakShape, "$Id$")
 
 using namespace OpenMS;
 
-PeakShape* peakshape_ptr=0;
+PeakShape* peakshape_ptr = 0;
+PeakShape* peakshape_nullPointer = 0;
+
 START_SECTION((PeakShape()))
   peakshape_ptr = new PeakShape;
-  TEST_NOT_EQUAL(peakshape_ptr, 0)
+  TEST_NOT_EQUAL(peakshape_ptr, peakshape_nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~PeakShape()))

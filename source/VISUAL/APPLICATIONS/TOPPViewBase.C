@@ -1134,27 +1134,28 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
   	String abs_filename = File::absolutePath(filename);
 
-  	//check if the file exists
+    // check if the file exists
     if (!File::exists(abs_filename))
     {
-    	showLogMessage_(LS_ERROR,"Open file error",String("The file '")+abs_filename+"' does not exist!");
+      showLogMessage_(LS_ERROR, "Open file error",String("The file '") + abs_filename + "' does not exist!");
     	setCursor(Qt::ArrowCursor);
       return;
     }
 
-		//determine file type
+    // determine file type
   	FileHandler fh;
 		FileTypes::Type file_type = fh.getType(abs_filename);
-		if (file_type==FileTypes::UNKNOWN)
+    if (file_type == FileTypes::UNKNOWN)
 		{
-			showLogMessage_(LS_ERROR,"Open file error",String("Could not determine file type of '")+abs_filename+"'!");
+      showLogMessage_(LS_ERROR,"Open file error",String("Could not determine file type of '") + abs_filename + "'!");
     	setCursor(Qt::ArrowCursor);
       return;
 		}
-		//abort if file type unsupported
-		if (file_type==FileTypes::INI)
+
+    // abort if file type unsupported
+    if (file_type == FileTypes::INI)
 		{
-			showLogMessage_(LS_ERROR,"Open file error",String("The type '")+fh.typeToName(file_type)+"' is not supported!");
+      showLogMessage_(LS_ERROR,"Open file error",String("The type '") + fh.typeToName(file_type) + "' is not supported!");
    		setCursor(Qt::ArrowCursor);
       return;
 		}
@@ -1177,12 +1178,12 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
     try
     {
-	    if (file_type==FileTypes::FEATUREXML)
+      if (file_type == FileTypes::FEATUREXML)
 	    {
         FeatureXMLFile().load(abs_filename, *feature_map);
 				data_type = LayerData::DT_FEATURE;
       }
-      else if (file_type==FileTypes::CONSENSUSXML)
+      else if (file_type == FileTypes::CONSENSUSXML)
 	    {
         ConsensusXMLFile().load(abs_filename, *consensus_map);
 				data_type = LayerData::DT_CONSENSUS;
@@ -1205,7 +1206,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     }
     catch(Exception::BaseException& e)
     {
-    	showLogMessage_(LS_ERROR,"Error while loading file",e.what());
+      showLogMessage_(LS_ERROR,"Error while loading file", e.what());
     	setCursor(Qt::ArrowCursor);
       return;
     }
@@ -1214,8 +1215,8 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     peak_map_sptr->sortSpectra(true);
     peak_map_sptr->updateRanges(1);
 
-    //try to add the data
-		if (caption=="")
+    // try to add the data
+    if (caption == "")
 		{
 			caption = File::basename(abs_filename);
     }
@@ -1226,7 +1227,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
     addData(feature_map_sptr, consensus_map_sptr, peptides, peak_map_sptr, data_type, false, show_options, true, abs_filename, caption, window_id, spectrum_id);
 
-  	//add to recent file
+    // add to recent file
     if (add_to_recent)
     {
       addRecentFile_(filename);
@@ -1235,7 +1236,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     // watch file contents for changes
     watcher_->addFile(abs_filename);
 
-    //reset cursor
+    // reset cursor
     setCursor(Qt::ArrowCursor);
   }
 
@@ -1250,9 +1251,6 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 		bool mergeable = ((data_type == LayerData::DT_FEATURE) ||
 											(data_type == LayerData::DT_CONSENSUS) ||
 											(data_type == LayerData::DT_IDENT));
-
-    //bool is_2D = (data_type != LayerData::DT_CHROMATOGRAM); Markus
-    bool is_2D = true;
 
     // only one peak spectrum? disable 2D as default
     if (peak_map->size() == 1)
@@ -1285,17 +1283,14 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 			dialog.disableLocation(true);
 		}
 
-		//disable 1d/2d/3d option for features and single scans
+    //disable 1d/2d/3d option for feature/consensus/identification maps
 		if (mergeable)
 		{
 			dialog.disableDimension(true);
 		}
-		else if (!is_2D)
-		{
-			dialog.disableDimension(false);
-		}
-		//disable cutoff for features and single scans
-    if (mergeable || !is_2D)
+
+    //disable cutoff for feature/consensus/identification maps
+    if (mergeable)
     {
       dialog.disableCutoff(false);
     }
@@ -1335,11 +1330,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 		//determine the window to open the data in
 		if (as_new_window) //new window
     {
-      if (!is_2D) //1d
-      {
-        target_window = new Spectrum1DWidget(getSpectrumParameters(1), ws_);
-      }
-      else if (maps_as_1d) // 2d in 1d window
+      if (maps_as_1d) // 2d in 1d window
       {
         target_window = new Spectrum1DWidget(getSpectrumParameters(1), ws_);
       }
@@ -1347,7 +1338,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       {
         target_window = new Spectrum2DWidget(getSpectrumParameters(2), ws_);
       }
-      else //3d
+      else // 3d
       {
         target_window = new Spectrum3DWidget(getSpectrumParameters(3), ws_);
       }
@@ -1375,7 +1366,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
         if (!target_window->canvas()->addLayer(peak_map,filename)) return;
 
 	      //calculate noise
-        if (use_intensity_cutoff && is_2D)
+        if (use_intensity_cutoff)
 	      {
           DoubleReal cutoff = estimateNoiseFromRandomMS1Scans(*(target_window->canvas()->getCurrentLayer().getPeakData()));
 					//create filter
@@ -1387,7 +1378,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 					DataFilters filters;
 					filters.add(filter);
           target_window->canvas()->setFilters(filters);
-        } else if (is_2D)  // no mower, hide zeros if wanted
+        } else  // no mower, hide zeros if wanted
         {
           Int n_zeros = TOPPViewBase::countMS1Zeros(*(target_window->canvas()->getCurrentLayer().getPeakData()));
           if (n_zeros > 0)
@@ -2652,7 +2643,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
       connect(scene, SIGNAL(selectionCopied(TOPPASScene*)), this, SLOT(saveToClipboard(TOPPASScene*)));
       connect(scene, SIGNAL(requestClipboardContent()), this, SLOT(sendClipboardContent()));
       connect(scene, SIGNAL(mainWindowNeedsUpdate()), this, SLOT(updateMenu()));
-      connect(scene, SIGNAL(openInTOPPView(QVector<QStringList>)), this, SLOT(openFilesInTOPPView(QVector<QStringList>)));
+      connect(scene, SIGNAL(openInTOPPView(QStringList)), this, SLOT(openFilesInTOPPView(QStringList)));
     }
 
     //connect vertex signals/slots for log messages
@@ -3353,7 +3344,8 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
   void TOPPViewBase::showCurrentPeaksAs3D()
   {
     const LayerData& layer = getActiveCanvas()->getCurrentLayer();
-    if (layer.type==LayerData::DT_PEAK)
+
+    if (layer.type == LayerData::DT_PEAK)
     {
       //open new 3D widget
       Spectrum3DWidget* w = new Spectrum3DWidget(getSpectrumParameters(3), ws_);
@@ -3368,7 +3360,7 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
      if (getActive1DWidget()) // switch from 1D to 3D
      {
        //TODO:
-       //- distinguish between survey scan and fragment scan (only makes sense for survey scan?)
+       //- doesnt make sense for fragment scan
        //- build new Area with mz range equal to 1D visible range
        //- rt range either overall MS1 data range or some convenient window
 
@@ -3377,13 +3369,14 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
         w->canvas()->setVisibleArea(getActiveCanvas()->getVisibleArea());
      }
 
-      // Set Intensity mode
-      setIntensityMode(SpectrumCanvas::IM_SNAP);
-
       // set layer name
       String caption = layer.name + " (3D)";
       w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
       showSpectrumWidgetInWindow(w, caption);
+
+      // set intensity mode (after spectrum has been added!)
+      setIntensityMode(SpectrumCanvas::IM_SNAP);
+
       updateLayerBar();
       updateViewBar();
       updateFilterBar();
@@ -4301,25 +4294,12 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
 
   void TOPPViewBase::outputVertexFinished(const String& file)
   {
-    String text = "Output file '"+file+"' written.";
+    String text = "Output file '" + file + "' written.";
     showLogMessage_(LS_NOTICE, text, "");
   }
 
   void TOPPViewBase::updateTOPPOutputLog(const QString& out)
   {
-    TOPPASToolVertex* sender = qobject_cast<TOPPASToolVertex*>(QObject::sender());
-    if (!sender)
-    {
-      return;
-    }
-    /*
-    QString text = (sender->getName()).toQString();
-    if (sender->getType() != "")
-    {
-      text += " ("+(sender->getType()).toQString()+")";
-    }
-    text += ":\n" + out;
-    */
     QString text = out; // shortened version for now (if we reintroduce simultaneous tool execution,
                         // we need to rethink this (probably only trigger this slot when tool 100% finished)
 
@@ -4330,14 +4310,11 @@ TOPPViewBase::TOPPViewBase(QWidget* parent):
     log_->append(text);
   }
 
-  void TOPPViewBase::openFilesInTOPPView(QVector<QStringList> all_files)
+  void TOPPViewBase::openFilesInTOPPView(QStringList files)
   {
-    foreach(QStringList sl, all_files)
+    foreach(QString s, files)
     {
-      foreach(QString s, sl)
-      {
-        addDataFile(s, false, false, s);
-      }
+      addDataFile(s, false, false, s);
     }
   }
 

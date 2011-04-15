@@ -247,7 +247,7 @@ namespace OpenMS
     QTreeWidgetItem* selected_item = 0;
     QList<QTreeWidgetItem*> toplevel_items;
 
-    if(cl.type == LayerData::DT_PEAK)
+    if (cl.type == LayerData::DT_PEAK)
     {
       std::vector<QTreeWidgetItem*> parent_stack;
       parent_stack.push_back(0);
@@ -438,16 +438,15 @@ namespace OpenMS
         spectra_treewidget_->scrollToItem(selected_item);
       }
     }
-    else if(cl.type == LayerData::DT_CHROMATOGRAM)
+    else if (cl.type == LayerData::DT_CHROMATOGRAM)
     {
-
-      spectra_treewidget_->setColumnCount(4);     //Spalten auf 4 Reduzieren und Abstand einstellen
+      spectra_treewidget_->setColumnCount(4);
       spectra_treewidget_->setColumnWidth(0,80);
       spectra_treewidget_->setColumnWidth(1,80);
       spectra_treewidget_->setColumnWidth(2,80);
       spectra_treewidget_->setColumnWidth(3,80);
 
-      QStringList header_labels;                  // Labels anpassen
+      QStringList header_labels;
       header_labels.append(QString(" m/z "));
       header_labels.append(QString("RT start"));
       header_labels.append(QString("RT end"));
@@ -458,7 +457,8 @@ namespace OpenMS
       exp = *cl.getPeakData();
 
       // collect all precursors
-      std::set<Precursor, Precursor::MZLess> precursors;
+      typedef std::set<Precursor, Precursor::MZLess> PCSetType;
+      PCSetType precursors;
       for (std::vector<MSChromatogram<> >::const_iterator iter = exp.getChromatograms().begin(); iter != exp.getChromatograms().end(); ++iter)
       {
         precursors.insert(iter->getPrecursor());
@@ -466,7 +466,7 @@ namespace OpenMS
 
       // determine product chromatograms for each precursor
       std::map<Precursor, std::vector<Size>, Precursor::MZLess> map_precursor_to_chrom_idx;
-      for (std::set<Precursor>::iterator pit = precursors.begin(); pit != precursors.end(); ++pit)
+      for (PCSetType::const_iterator pit = precursors.begin(); pit != precursors.end(); ++pit)
       {
         for (std::vector<MSChromatogram<> >::const_iterator iter = exp.getChromatograms().begin(); iter != exp.getChromatograms().end(); ++iter)
         {
@@ -479,9 +479,7 @@ namespace OpenMS
 
       for (std::set<Precursor, Precursor::MZLess>::const_iterator it = precursors.begin(); it != precursors.end(); it++)
       {
-
         std::vector<Size>& current_chromatograms_idx = map_precursor_to_chrom_idx[*it];
-
 
         // Top level precursor entry
         item = new QTreeWidgetItem(0);
@@ -517,34 +515,13 @@ namespace OpenMS
           default: 								                                              sub_item->setText(3, QString("Unknown chromatogram")); break;
           }
 
-
           sub_item->setText(4, QString(".."));
           sub_item->setText(5, QString(".."));
           sub_item->setText(6, QString(".."));
         }
-
-        /*
-              for (std::map<Precursor, std::vector<Size>, Precursor::MZLess >::iterator mit = map_precursor_to_chrom_idx.begin(); mit != map_precursor_to_chrom_idx.end(); ++mit)
-              {
-                for (std::vector<Size>::iterator vit = mit->second.begin(); vit != mit->second.end(); ++vit)
-                {
-                  counter = counter + 1;
-
-
-
-                  toplevel_items.push_back(item);
-
-
-                    std::cout << "counter: " << counter << std::endl;
-                }*/
       }
-
-
       spectra_treewidget_->addTopLevelItems(toplevel_items);
-
-
     }
-
     else
     {
       item = new QTreeWidgetItem((QTreeWidget*)0);

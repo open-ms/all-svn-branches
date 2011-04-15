@@ -48,37 +48,44 @@ namespace OpenMS
     const LayerData& layer = tv_->getActiveCanvas()->getCurrentLayer();
     ExperimentSharedPtrType exp_sptr = layer.getPeakData();
 
-   //open new 1D widget
-   Spectrum1DWidget* w = new Spectrum1DWidget(tv_->getSpectrumParameters(1), (QWidget*)tv_->getWorkspace());
+    //open new 1D widget
+    Spectrum1DWidget* w = new Spectrum1DWidget(tv_->getSpectrumParameters(1), (QWidget*)tv_->getWorkspace());
 
-   //add data
-   if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
-   {
-     return;
-   }
+    if(layer.type == LayerData::DT_PEAK)
+    {
+      //add data
+      if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
+      {
+        return;
+      }
 
-   w->canvas()->activateSpectrum(index);
+      w->canvas()->activateSpectrum(index);
 
-   // set relative (%) view of visible area
-   w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
+      // set relative (%) view of visible area
+      w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
 
-   //for MS1 spectra set visible area to visible area in 2D view.
-   UInt ms_level = w->canvas()->getCurrentLayer().getCurrentSpectrum().getMSLevel();
-   if (ms_level == 1)
-   {
-     // set visible aree to visible area in 2D view
-     w->canvas()->setVisibleArea(tv_->getActiveCanvas()->getVisibleArea());
-   }
+      //for MS1 spectra set visible area to visible area in 2D view.
+      UInt ms_level = w->canvas()->getCurrentLayer().getCurrentSpectrum().getMSLevel();
+      if (ms_level == 1)
+      {
+        // set visible aree to visible area in 2D view
+        w->canvas()->setVisibleArea(tv_->getActiveCanvas()->getVisibleArea());
+      }
 
-   // basic behavior 2
-   String caption = layer.name;
-   w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+      // basic behavior 2
+      String caption = layer.name;
+      w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
 
-   tv_->showSpectrumWidgetInWindow(w,caption);
-   tv_->updateLayerBar();
-   tv_->updateViewBar();
-   tv_->updateFilterBar();
-   tv_->updateMenu();
+      tv_->showSpectrumWidgetInWindow(w,caption);
+      tv_->updateLayerBar();
+      tv_->updateViewBar();
+      tv_->updateFilterBar();
+      tv_->updateMenu();
+    }
+    if(layer.type == LayerData::DT_CHROMATOGRAM)
+    {
+
+    }
   }
 
   void TOPPViewSpectraViewBehavior::activate1DSpectrum(int index)

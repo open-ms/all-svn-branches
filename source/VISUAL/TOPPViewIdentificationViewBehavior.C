@@ -43,182 +43,207 @@ using namespace std;
 
 namespace OpenMS
 {
-    TOPPViewIdentificationViewBehavior::TOPPViewIdentificationViewBehavior(TOPPViewBase* parent):
-        tv_(parent)
+  TOPPViewIdentificationViewBehavior::TOPPViewIdentificationViewBehavior(TOPPViewBase* parent):
+      tv_(parent)
+  {
+  }
+
+  void TOPPViewIdentificationViewBehavior::showSpectrumAs1D(int index)
+  {
+    // basic behavior 1
+    const LayerData& layer = tv_->getActiveCanvas()->getCurrentLayer();
+    ExperimentSharedPtrType exp_sptr = layer.getPeakData();
+
+
+    if(layer.type == LayerData::DT_PEAK)
     {
-    }
 
-   void TOPPViewIdentificationViewBehavior::showSpectrumAs1D(int index)
-   {
-     // basic behavior 1
-     const LayerData& layer = tv_->getActiveCanvas()->getCurrentLayer();
-     ExperimentSharedPtrType exp_sptr = layer.getPeakData();
-
-    //open new 1D widget with the current default parameters
-    Spectrum1DWidget* w = new Spectrum1DWidget(tv_->getSpectrumParameters(1), (QWidget*)tv_->getWorkspace());
-    //add data
-    if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
-    {
-      return;
-    }
-
-    w->canvas()->activateSpectrum(index);
-
-    // set relative (%) view of visible area
-    w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
-
-    //for MS1 spectra set visible area to visible area in 2D view.
-    UInt ms_level = w->canvas()->getCurrentLayer().getCurrentSpectrum().getMSLevel();
-    if (ms_level == 1)
-    {
-      // set visible aree to visible area in 2D view
-      w->canvas()->setVisibleArea(tv_->getActiveCanvas()->getVisibleArea());
-    }
-
-    String caption = layer.name;
-    w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
-
-    tv_->showSpectrumWidgetInWindow(w, caption);
-
-    // special behavior
-    vector<PeptideIdentification> pi = w->canvas()->getCurrentLayer().getCurrentSpectrum().getPeptideIdentifications();
-    if (pi.size() != 0)
-    {
-      Size best_i_index = 0;
-      Size best_j_index = 0;
-      bool is_higher_score_better = false;
-      Size best_score = pi[0].getHits()[0].getScore();
-      is_higher_score_better = pi[0].isHigherScoreBetter();
-
-      // determine best scoring hit
-      for(Size i=0; i!=pi.size(); ++i)
+      //open new 1D widget with the current default parameters
+      Spectrum1DWidget* w = new Spectrum1DWidget(tv_->getSpectrumParameters(1), (QWidget*)tv_->getWorkspace());
+      //add data
+      if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
       {
-        for(Size j=0; j!=pi[i].getHits().size(); ++j)
+        return;
+      }
+
+      w->canvas()->activateSpectrum(index);
+
+      // set relative (%) view of visible area
+      w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
+
+      //for MS1 spectra set visible area to visible area in 2D view.
+      UInt ms_level = w->canvas()->getCurrentLayer().getCurrentSpectrum().getMSLevel();
+      if (ms_level == 1)
+      {
+        // set visible aree to visible area in 2D view
+        w->canvas()->setVisibleArea(tv_->getActiveCanvas()->getVisibleArea());
+      }
+
+      String caption = layer.name;
+      w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+
+      tv_->showSpectrumWidgetInWindow(w, caption);
+
+      // special behavior
+      vector<PeptideIdentification> pi = w->canvas()->getCurrentLayer().getCurrentSpectrum().getPeptideIdentifications();
+      if (pi.size() != 0)
+      {
+        Size best_i_index = 0;
+        Size best_j_index = 0;
+        bool is_higher_score_better = false;
+        Size best_score = pi[0].getHits()[0].getScore();
+        is_higher_score_better = pi[0].isHigherScoreBetter();
+
+        // determine best scoring hit
+        for(Size i=0; i!=pi.size(); ++i)
         {
-          PeptideHit ph = pi[i].getHits()[j];
-          // better score?
-          if ((ph.getScore() < best_score && !is_higher_score_better)
-           || (ph.getScore() > best_score && is_higher_score_better))
+          for(Size j=0; j!=pi[i].getHits().size(); ++j)
           {
-            best_score = ph.getScore();
-            best_i_index = i;
-            best_j_index = j;
+            PeptideHit ph = pi[i].getHits()[j];
+            // better score?
+            if ((ph.getScore() < best_score && !is_higher_score_better)
+              || (ph.getScore() > best_score && is_higher_score_better))
+              {
+              best_score = ph.getScore();
+              best_i_index = i;
+              best_j_index = j;
+            }
           }
         }
+        addTheoreticalSpectrumLayer_(pi[best_i_index].getHits()[best_j_index]);
       }
-      addTheoreticalSpectrumLayer_(pi[best_i_index].getHits()[best_j_index]);
+
+      tv_->updateLayerBar();
+      tv_->updateViewBar();
+      tv_->updateFilterBar();
+      tv_->updateMenu();
     }
+    if(layer.type == LayerData::DT_CHROMATOGRAM)
+    {
 
-    tv_->updateLayerBar();
-    tv_->updateViewBar();
-    tv_->updateFilterBar();
-    tv_->updateMenu();
-   }
+    }
+  }
 
-   void TOPPViewIdentificationViewBehavior::activate1DSpectrum(int index)
-   {
-     Spectrum1DWidget* widget_1D = tv_->getActive1DWidget();     
-     widget_1D->canvas()->activateSpectrum(index);
-     const LayerData& cl = widget_1D->canvas()->getCurrentLayer();
-     UInt ms_level = cl.getCurrentSpectrum().getMSLevel();
+  void TOPPViewIdentificationViewBehavior::activate1DSpectrum(int index)
+  {
+    Spectrum1DWidget* widget_1D = tv_->getActive1DWidget();
+    widget_1D->canvas()->activateSpectrum(index);
+    const LayerData& current_layer = widget_1D->canvas()->getCurrentLayer();
 
-     if (ms_level == 2)  // show theoretical spectrum with automatic alignment
-     {
-       vector<PeptideIdentification> pi = cl.getCurrentSpectrum().getPeptideIdentifications();
-       if (pi.size() != 0)
-       {
-         Size best_i_index = 0;
-         Size best_j_index = 0;
-         bool is_higher_score_better = false;
-         Size best_score = pi[0].getHits()[0].getScore();
-         is_higher_score_better = pi[0].isHigherScoreBetter();
+    if(current_layer.type == LayerData::DT_PEAK)
+    {
+      UInt ms_level = current_layer.getCurrentSpectrum().getMSLevel();
 
-         // determine best scoring hit
-         for(Size i=0; i!=pi.size(); ++i)
-         {
-           for(Size j=0; j!=pi[i].getHits().size(); ++j)
-           {
-             PeptideHit ph = pi[i].getHits()[j];
-             // better score?
-             if ((ph.getScore() < best_score && !is_higher_score_better)
-               || (ph.getScore() > best_score && is_higher_score_better))
-               {
-               best_score = ph.getScore();
-               best_i_index = i;
-               best_j_index = j;
-             }
-           }
-         }
-         addTheoreticalSpectrumLayer_(pi[best_i_index].getHits()[best_j_index]);
-       }
-     } else if (ms_level == 1)  // show precursor locations
-     {
-       vector<Precursor> precursors;
-       // collect all MS2 spectra precursor till next MS1 spectrum is encountered
-       for (Size i = index + 1; i < cl.getPeakData()->size(); ++i)
-       {
-         if ((*cl.getPeakData())[i].getMSLevel() == 1)
-         {
-           break;
-         }
-         // skip MS2 without precursor
-         if ((*cl.getPeakData())[i].getPrecursors().empty())
-         {
-           continue;
-         }
-         // there should be only one precusor per MS2 spectrum.
-         vector<Precursor> pcs = (*cl.getPeakData())[i].getPrecursors();
-         copy(pcs.begin(), pcs.end(), back_inserter(precursors));
-       }
-       addPrecursorLabels1D_(precursors);
-     }
-   }
+      if (ms_level == 2)  // show theoretical spectrum with automatic alignment
+      {
+        vector<PeptideIdentification> pi = current_layer.getCurrentSpectrum().getPeptideIdentifications();
+        if (pi.size() != 0)
+        {
+          Size best_i_index = 0;
+          Size best_j_index = 0;
+          bool is_higher_score_better = false;
+          Size best_score = pi[0].getHits()[0].getScore();
+          is_higher_score_better = pi[0].isHigherScoreBetter();
+
+          // determine best scoring hit
+          for(Size i=0; i!=pi.size(); ++i)
+          {
+            for(Size j=0; j!=pi[i].getHits().size(); ++j)
+            {
+              PeptideHit ph = pi[i].getHits()[j];
+              // better score?
+              if ((ph.getScore() < best_score && !is_higher_score_better)
+                || (ph.getScore() > best_score && is_higher_score_better))
+                {
+                best_score = ph.getScore();
+                best_i_index = i;
+                best_j_index = j;
+              }
+            }
+          }
+          addTheoreticalSpectrumLayer_(pi[best_i_index].getHits()[best_j_index]);
+        }
+      } else if (ms_level == 1)  // show precursor locations
+      {
+        vector<Precursor> precursors;
+        // collect all MS2 spectra precursor till next MS1 spectrum is encountered
+        for (Size i = index + 1; i < current_layer.getPeakData()->size(); ++i)
+        {
+          if ((*current_layer.getPeakData())[i].getMSLevel() == 1)
+          {
+            break;
+          }
+          // skip MS2 without precursor
+          if ((*current_layer.getPeakData())[i].getPrecursors().empty())
+          {
+            continue;
+          }
+          // there should be only one precusor per MS2 spectrum.
+          vector<Precursor> pcs = (*current_layer.getPeakData())[i].getPrecursors();
+          copy(pcs.begin(), pcs.end(), back_inserter(precursors));
+        }
+        addPrecursorLabels1D_(precursors);
+      }
+    }
+    if(current_layer.type == LayerData::DT_CHROMATOGRAM)
+    {
+
+    }
+  }
 
   void TOPPViewIdentificationViewBehavior::addPrecursorLabels1D_(const vector<Precursor>& pcs)
   {
     LayerData& current_layer = tv_->getActive1DWidget()->canvas()->getCurrentLayer();
-    SpectrumType& spectrum = current_layer.getCurrentSpectrum();
 
-    for(vector<Precursor>::const_iterator it= pcs.begin(); it != pcs.end(); ++it)
+    if(current_layer.type == LayerData::DT_PEAK)
     {
-      // determine start and stop of isolation window
-      DoubleReal isolation_window_lower_mz = it->getMZ() - it->getIsolationWindowLowerOffset();
-      DoubleReal isolation_window_upper_mz = it->getMZ() + it->getIsolationWindowUpperOffset();
+      SpectrumType& spectrum = current_layer.getCurrentSpectrum();
 
-      // determine maximum peak intensity in isolation window
-      SpectrumType::const_iterator vbegin = spectrum.MZBegin(isolation_window_lower_mz);
-      SpectrumType::const_iterator vend = spectrum.MZEnd(isolation_window_upper_mz);
-
-      DoubleReal max_intensity = numeric_limits<DoubleReal>::min();
-      for(; vbegin!=vend; ++vbegin)
+      for(vector<Precursor>::const_iterator it= pcs.begin(); it != pcs.end(); ++it)
       {
-        if (vbegin->getIntensity() > max_intensity)
+        // determine start and stop of isolation window
+        DoubleReal isolation_window_lower_mz = it->getMZ() - it->getIsolationWindowLowerOffset();
+        DoubleReal isolation_window_upper_mz = it->getMZ() + it->getIsolationWindowUpperOffset();
+
+        // determine maximum peak intensity in isolation window
+        SpectrumType::const_iterator vbegin = spectrum.MZBegin(isolation_window_lower_mz);
+        SpectrumType::const_iterator vend = spectrum.MZEnd(isolation_window_upper_mz);
+
+        DoubleReal max_intensity = numeric_limits<DoubleReal>::min();
+        for(; vbegin!=vend; ++vbegin)
         {
-          max_intensity = vbegin->getIntensity();
+          if (vbegin->getIntensity() > max_intensity)
+          {
+            max_intensity = vbegin->getIntensity();
+          }
         }
+
+        // DPosition<2> precursor_position = DPosition<2>(it->getMZ(), max_intensity);
+        DPosition<2> lower_position = DPosition<2>(isolation_window_lower_mz, max_intensity);
+        DPosition<2> upper_position = DPosition<2>(isolation_window_upper_mz, max_intensity);
+
+        Annotation1DDistanceItem* item = new Annotation1DDistanceItem(QString::number(it->getCharge()), lower_position, upper_position);
+        // add additional tick at precursor target position (e.g. to show if isolation window is assymetric)
+        vector<DoubleReal> ticks;
+        ticks.push_back(it->getMZ());
+        item->setTicks(ticks);
+        item->setSelected(false);
+
+        current_spectrum_precursor_annotations_.push_back(item); // for removal (no ownership)
+        current_layer.getCurrentAnnotations().push_front(item);  // for visualisation (ownership)
       }
+    }
+    if(current_layer.type == LayerData::DT_CHROMATOGRAM)
+    {
 
-      // DPosition<2> precursor_position = DPosition<2>(it->getMZ(), max_intensity);
-      DPosition<2> lower_position = DPosition<2>(isolation_window_lower_mz, max_intensity);
-      DPosition<2> upper_position = DPosition<2>(isolation_window_upper_mz, max_intensity);
-
-      Annotation1DDistanceItem* item = new Annotation1DDistanceItem(QString::number(it->getCharge()), lower_position, upper_position);
-      // add additional tick at precursor target position (e.g. to show if isolation window is assymetric)
-      vector<DoubleReal> ticks;
-      ticks.push_back(it->getMZ());
-      item->setTicks(ticks);
-      item->setSelected(false);
-
-      current_spectrum_precursor_annotations_.push_back(item); // for removal (no ownership)
-      current_layer.getCurrentAnnotations().push_front(item);  // for visualisation (ownership)
     }
   }
 
   void TOPPViewIdentificationViewBehavior::removePrecursorLabels1D_(Size spectrum_index)
   {
-    #ifdef DEBUG_IDENTIFICATION_VIEW
-      cout << "removePrecursorLabels1D_ " << spectrum_index << endl;
-    #endif
+#ifdef DEBUG_IDENTIFICATION_VIEW
+    cout << "removePrecursorLabels1D_ " << spectrum_index << endl;
+#endif
     // Delete annotations added by IdentificationView (but not user added annotations)
     LayerData& current_layer = tv_->getActive1DWidget()->canvas()->getCurrentLayer();
     const vector<Annotation1DItem* >& cas = current_spectrum_precursor_annotations_;    
@@ -389,8 +414,8 @@ namespace OpenMS
     {
       removePrecursorLabels1D_(spectrum_index);
     } else
-    if (ms_level == 2)
-    {
+      if (ms_level == 2)
+      {
       removeTheoreticalSpectrumLayer_();
     }
 

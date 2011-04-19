@@ -562,9 +562,7 @@ class TOPPSILACAnalyzer
     // create zero-mass-shift to search for peptides if no label is specified
     if (massShifts.size() == 0)
     {
-      DoubleReal mass_shift_peptide = 0;
-      vector<DoubleReal> mass_shift_vector_peptide;
-      mass_shift_vector_peptide.push_back(mass_shift_peptide);
+      vector<DoubleReal> mass_shift_vector_peptide(1, 0.0);
       massShifts.push_back(mass_shift_vector_peptide);
     }
 
@@ -748,7 +746,6 @@ class TOPPSILACAnalyzer
 
       outfile.close();      // close ofstream and store output file
     }
-
 
     //--------------------------------------------------
     // load filter results as vector<vector<DataPoint> > data from .txt

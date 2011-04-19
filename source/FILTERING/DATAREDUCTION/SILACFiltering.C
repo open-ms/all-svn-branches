@@ -72,13 +72,12 @@ namespace OpenMS
   {
     startProgress(0, exp_.size(), "filtering raw data");
 
-    vector<DataPoint> data;
-
     mz_min_ = exp_.getMinMZ();      // get lowest m/z value
 
     // Iterate over all filters
     for (list<SILACFilter*>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it)
     {
+      cout << "Filter: " << endl;
       // Iterate over all spectra of the experiment (iterate over rt)
       for (MSExperiment<Peak1D>::Iterator rt_it = exp_.begin(); rt_it != exp_.end(); ++rt_it)
       {
@@ -151,8 +150,6 @@ namespace OpenMS
               // BLACKLIST FILTER
               //--------------------------------------------------
 
-              bool isBlacklisted = false;
-
               // iterate over the blacklist (Relevant blacklist entries are most likely among the last ones added.)
               multimap<DoubleReal, BlacklistEntry>::iterator blacklistStartCheck;
               multimap<DoubleReal, BlacklistEntry>::iterator blacklistEndCheck;
@@ -166,6 +163,9 @@ namespace OpenMS
                 blacklistStartCheck = blacklist.begin();
                 blacklistEndCheck = blacklist.end();
               }
+
+              bool isBlacklisted = false;
+
               for (multimap<DoubleReal, BlacklistEntry>::iterator blacklist_check_it = blacklistStartCheck; blacklist_check_it != blacklistEndCheck; ++blacklist_check_it)
               {
                 Int charge = (*filter_it)->getCharge();
@@ -177,13 +177,20 @@ namespace OpenMS
                 for (vector<DoubleReal>::const_iterator expectedMZshifts_it = expectedMZshifts.begin(); expectedMZshifts_it != expectedMZshifts.end(); ++expectedMZshifts_it)
                 {
                   bool inBlacklistEntry = blacklist_check_it->second.range.encloses(*expectedMZshifts_it + mz, rt);
-                  bool exception = (charge == blacklist_check_it->second.charge) && (mass_separations == blacklist_check_it->second.mass_separations) && (abs(*expectedMZshifts_it - blacklist_check_it->second.relative_peak_position) < 0.01);
+                  bool exception = (charge == blacklist_check_it->second.charge)
+                                   && (mass_separations == blacklist_check_it->second.mass_separations)
+                                   && (abs(*expectedMZshifts_it - blacklist_check_it->second.relative_peak_position) < 0.01);
                   
                   if (inBlacklistEntry && !exception )
                   {
                     isBlacklisted = true;
                     break;
                   }
+                }
+
+                if (isBlacklisted)
+                {
+                  break;
                 }
               }
               

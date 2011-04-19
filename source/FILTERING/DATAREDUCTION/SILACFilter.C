@@ -39,7 +39,11 @@
 #include <gsl/gsl_fft_complex.h>
 #include <gsl/gsl_fft_halfcomplex.h>
 #include <gsl/gsl_randist.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmPickedHelperStructs.h>
 #include <cmath>
+#include <iostream>
+
+using namespace std;
 
 namespace OpenMS
 {
@@ -72,7 +76,6 @@ namespace OpenMS
 
   SILACFilter::SILACFilter()
   {
-
   }
 
   SILACFilter::~SILACFilter()
@@ -84,7 +87,6 @@ namespace OpenMS
   {
     current_mz_ = mz;
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
-
 
     //---------------------------------------------------------------
     // EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
@@ -180,6 +182,7 @@ namespace OpenMS
     // CORRELATION FILTER 1 (Check for every peptide that peak one correlates to following peaks of the same peptide)
     //---------------------------------------------------------------
     missing_peak_seen_yet = false;
+
     for (Size peptide = 0; peptide <= number_of_peptides_; ++peptide)
     {
       for (Size isotope2 = 1; isotope2 < isotopes_per_peptide_; ++isotope2)
@@ -219,45 +222,61 @@ namespace OpenMS
     //---------------------------------------------------------------
     // CORRELATION FILTER 2 (Check that the monoisotopic peak correlates to every first peak of following peptides)
     //---------------------------------------------------------------
-    for (Size peptide = 0; peptide < number_of_peptides_; ++peptide)
+
+
+    if (number_of_peptides_ == 1 && exact_shifts_[0][0] == 0)
     {
-      std::vector<DoubleReal> intensities3;    // intensities in region around monoisotopic peak
-      std::vector<DoubleReal> intensities4;    // intensities in region around first peak of following peptide
-      DoubleReal mzWindow = 0.7 * getPeakWidth(mz);    // width of the window around m/z in which the correlation is calculated
-
-      for (DoubleReal dmz = - mzWindow; dmz <= mzWindow; dmz += 0.2 * mzWindow)     // fill intensity vectors
+      cout << "skipping correlation filter 2 for unshifted peptides" << endl;
+    } else
+    {
+      for (Size peptide = 0; peptide < number_of_peptides_; ++peptide)
       {
-        DoubleReal intens3 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[0][0] + dmz, SILACFiltering::current_spl_);
-        DoubleReal intens4 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[peptide+1][0] + dmz, SILACFiltering::current_spl_);
-        intensities3.push_back( intens3 );
-        intensities4.push_back( intens4 );
-      }
+        std::vector<DoubleReal> intensities3;    // intensities in region around monoisotopic peak
+        std::vector<DoubleReal> intensities4;    // intensities in region around first peak of following peptide
+        DoubleReal mzWindow = 0.7 * getPeakWidth(mz);    // width of the window around m/z in which the correlation is calculated
 
-      DoubleReal intensityCorrelation = Math::pearsonCorrelationCoefficient( intensities3.begin(), intensities3.end(), intensities4.begin(), intensities4.end());    // calculate Pearson correlation coefficient
+        for (DoubleReal dmz = - mzWindow; dmz <= mzWindow; dmz += 0.2 * mzWindow)     // fill intensity vectors
+        {
+          DoubleReal intens3 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[0][0] + dmz, SILACFiltering::current_spl_);
+          DoubleReal intens4 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[peptide+1][0] + dmz, SILACFiltering::current_spl_);
+          intensities3.push_back( intens3 );
+          intensities4.push_back( intens4 );
+        }
 
-      if (intensityCorrelation < SILACFiltering::intensity_correlation_)
-      {
-        return false;
+        DoubleReal intensityCorrelation = Math::pearsonCorrelationCoefficient( intensities3.begin(), intensities3.end(), intensities4.begin(), intensities4.end());    // calculate Pearson correlation coefficient
+
+        if (intensityCorrelation < SILACFiltering::intensity_correlation_)
+        {
+          return false;
+        }
       }
     }
-
 
     //---------------------------------------------------------------
     // AVERAGINE FILTER (Check if realtive ratios confirm with an averagine model of all peptides.)
     //---------------------------------------------------------------
     missing_peak_seen_yet = false;
+
+    if (!IsotopeDistributionCache::getInstance()->isPrecalculated())
+    {
+      IsotopeDistributionCache::getInstance()->precalculate(20000.0, 1.0, 0.0, 0.0);
+    }
+
     if (isotopes_per_peptide_ > 1)
     {
       for (Size peptide = 0; peptide <= number_of_peptides_; ++peptide)
-      {
-        IsotopeDistribution isoDistribution;    // isotope distribution of an averagine peptide
-        isoDistribution.estimateFromPeptideWeight((mz + exact_shifts_[peptide][0]) * charge_);    // mass of averagine peptide
-        DoubleReal averagineIntensity_mono = isoDistribution.getContainer()[0].second;    // intensity of monoisotopic peak of the averagine model
+      {        
+        //IsotopeDistribution isoDistribution;    // isotope distribution of an averagene peptide
+        //isoDistribution.estimateFromPeptideWeight((mz + exact_shifts_[peptide][0]) * charge_);    // mass of averagene peptide
+
+        const TheoreticalIsotopePattern& pattern = IsotopeDistributionCache::getInstance()->getIsotopeDistribution((mz + exact_shifts_[peptide][0]) * charge_);
+
+        DoubleReal averagineIntensity_mono = pattern.intensity[0];    // intensity of monoisotopic peak of the averagine model
         DoubleReal intensity_mono = exact_intensities_[peptide][0];    // intensity around the (potential) monoisotopic peak in the real data
 
         for (Size isotope = 1; isotope < isotopes_per_peptide_; ++isotope)
         {
-          DoubleReal averagineIntensity = isoDistribution.getContainer()[isotope].second;
+          DoubleReal averagineIntensity = pattern.intensity[isotope];
           DoubleReal intensity = exact_intensities_[peptide][isotope];
 
           if ((intensity / intensity_mono) / (averagineIntensity / averagineIntensity_mono) > model_deviation_ || (intensity / intensity_mono) / (averagineIntensity / averagineIntensity_mono) < 1 / model_deviation_)
@@ -276,7 +295,6 @@ namespace OpenMS
         }
       }
     }
-
 
     //---------------------------------------------------------------
     // ALL FILTERS PASSED => CREATE DATAPOINT

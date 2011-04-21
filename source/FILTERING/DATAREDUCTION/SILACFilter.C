@@ -55,7 +55,7 @@ namespace OpenMS
     isotopes_per_peptide_ = isotopes_per_peptide;   // isotopic peaks per peptide
 
     isotope_distance_ = 1.000495 / (DoubleReal)charge_;    // distance between isotopic peaks of a peptide [Th]
-    number_of_peptides_ = (Int) mass_separations_.size();    // number of labelled peptides +1 [e.g. for SILAC triplet =3]
+    number_of_peptides_ = (Int) mass_separations_.size() + 1;    // number of labelled peptides +1 [e.g. for SILAC triplet =3]
     
     // m/z shifts from mass shifts
     mz_peptide_separations_.push_back(0.0);
@@ -179,7 +179,7 @@ namespace OpenMS
 
 
     //---------------------------------------------------------------
-    // CORRELATION FILTER 1 (Check for every peptide that peak one correlates to following peaks of the same peptide)
+    // CORRELATION FILTER 1 (Check for every peptide that its mono-isotopic peak correlates with the following peaks)
     //---------------------------------------------------------------
     missing_peak_seen_yet = false;
 
@@ -220,14 +220,11 @@ namespace OpenMS
 
 
     //---------------------------------------------------------------
-    // CORRELATION FILTER 2 (Check that the monoisotopic peak correlates to every first peak of following peptides)
+    // CORRELATION FILTER 2 (Check that the monoisotopic peak of the light (unlabeled) peptide correlates with the mono-isotopic peak of the labeled peptides)
     //---------------------------------------------------------------
 
 
-    if (number_of_peptides_ == 1 && exact_shifts_[0][0] == 0)
-    {
-      cout << "skipping correlation filter 2 for unshifted peptides" << endl;
-    } else
+    if (!(number_of_peptides_ == 1 && exact_shifts_[0][0] == 0))     // If we are looking for single peptides, this filter is not needed.
     {
       for (Size peptide = 0; peptide < number_of_peptides_; ++peptide)
       {

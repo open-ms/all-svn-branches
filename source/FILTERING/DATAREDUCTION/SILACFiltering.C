@@ -77,7 +77,6 @@ namespace OpenMS
     // Iterate over all filters
     for (list<SILACFilter*>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it)
     {
-      cout << "Filter: " << endl;
       // Iterate over all spectra of the experiment (iterate over rt)
       for (MSExperiment<Peak1D>::Iterator rt_it = exp_.begin(); rt_it != exp_.end(); ++rt_it)
       {

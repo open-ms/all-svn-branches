@@ -1288,6 +1288,7 @@ class TOPPSILACAnalyzer
         DoubleReal mz = 0.0;
         DoubleReal total_intensity = 0.0;
         Size mass_shifts_size = (*(cluster_it->begin()))->mass_shifts.size();
+
         // create a vector with the maximum intensity of each isotope peak
         vector<DoubleReal> max_intensities(mass_shifts_size, 0.0);
         Int charge = (*(cluster_it->begin()))->charge;

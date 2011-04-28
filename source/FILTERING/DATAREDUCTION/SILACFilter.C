@@ -539,7 +539,7 @@ namespace OpenMS
     return peak_positions_;
   }
 	
-  std::vector<DoubleReal> SILACFilter::getExpectedMzShifts()
+  const std::vector<DoubleReal>& SILACFilter::getExpectedMzShifts()
 	{
     return expected_mz_shifts_;
   }
@@ -554,7 +554,7 @@ namespace OpenMS
     return charge_;
   }
 
-  std::vector<DoubleReal> SILACFilter::getMassSeparations()
+  const std::vector<DoubleReal>& SILACFilter::getMassSeparations()
   {
     return mass_separations_;
   }

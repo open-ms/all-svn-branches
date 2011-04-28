@@ -180,7 +180,7 @@ namespace OpenMS
               for (multimap<DoubleReal, BlacklistEntry>::iterator blacklist_check_it = blacklistStartCheck; blacklist_check_it != blacklistEndCheck; ++blacklist_check_it)
               {
                 Int charge = (*filter_it)->getCharge();
-                vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
+                const vector<DoubleReal>& mass_separations = (*filter_it)->getMassSeparations();
 
                 // loop over the individual isotopic peaks of the SILAC pattern (and check if they are blacklisted)
                 const vector<DoubleReal>& expectedMZshifts = (*filter_it)->getExpectedMzShifts();
@@ -221,7 +221,7 @@ namespace OpenMS
 
                   // Remember the charge and mass separations (since the blacklisting should not apply to filters of the same charge and mass separations).
                   Int charge = (*filter_it)->getCharge();
-                  std::vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
+                  const std::vector<DoubleReal>& mass_separations = (*filter_it)->getMassSeparations();
 
                   for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
                   {

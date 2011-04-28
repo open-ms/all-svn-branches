@@ -323,7 +323,7 @@ namespace OpenMS
   /**
    * @brief gets the m/z shifts relative to mono-isotopic peak of unlabelled peptide
    */
-   std::vector<DoubleReal> getExpectedMzShifts();
+   const std::vector<DoubleReal>& getExpectedMzShifts();
 
   /**
    * @brief returns all identified elements
@@ -338,7 +338,7 @@ namespace OpenMS
   /**
    * @brief returns the mass shifts of the filter in [Da]
    */
-   std::vector<DoubleReal> getMassSeparations();
+   const std::vector<DoubleReal>& getMassSeparations();
 
   };
 }

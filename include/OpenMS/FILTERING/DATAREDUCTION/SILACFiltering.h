@@ -101,6 +101,11 @@ namespace OpenMS
    */
    MSExperiment<Peak1D>& exp_;
 
+   /**
+    * @brief picked data
+    */
+   MSExperiment<Peak1D> picked_exp_;
+
   public:
 
   /**

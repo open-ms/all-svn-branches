@@ -29,6 +29,7 @@
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>
 #include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
+#include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerHiRes.h>
 
 #include <iostream>
 #include <fstream>
@@ -47,7 +48,7 @@ namespace OpenMS
   gsl_spline* SILACFiltering::spline_aki_ = 0;
   gsl_spline* SILACFiltering::spline_spl_ = 0;
   Int SILACFiltering::feature_id_ = 0;
-  DoubleReal SILACFiltering::mz_min_ = 0;
+  DoubleReal SILACFiltering::mz_min_ = 0;  
 
   SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal mz_stepwidth, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks)
     : exp_(exp)
@@ -56,6 +57,16 @@ namespace OpenMS
     intensity_cutoff_ = intensity_cutoff;
     intensity_correlation_ = intensity_correlation;
     allow_missing_peaks_ = allow_missing_peaks;
+
+    // perform peak picking
+    cout << "performing peak picking" << endl;
+    PeakPickerHiRes picker;
+    Param param = picker.getParameters();
+    param.setValue("ms1_only", true);
+    picker.pickExperiment(exp, picked_exp_);
+    MzMLFile mz_data_file;
+    mz_data_file.store("debug_picked.mzML", picked_exp_);
+    cout << "finished peak picking" << endl;
   }
 
   void SILACFiltering::addFilter(SILACFilter& filter)

@@ -162,7 +162,7 @@ namespace OpenMS
 
        }
 
-       IsotopeDistributionCache(const IsotopeDistributionCache& cache)
+       IsotopeDistributionCache(const IsotopeDistributionCache& /*cache*/)
        {
 
        }

@@ -286,7 +286,7 @@ namespace OpenMS
    * @param rt RT value of the position
    * @param mz m/z value of the position
    */
-   bool isSILACPattern_(DoubleReal rt, DoubleReal mz);
+   bool isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<>& picked_exp);
 
    public:  
 

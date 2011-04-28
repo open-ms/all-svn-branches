@@ -83,7 +83,7 @@ namespace OpenMS
 
   }
 
-  bool SILACFilter::isSILACPattern_(DoubleReal rt, DoubleReal mz)
+  bool SILACFilter::isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp)
   {
     current_mz_ = mz;
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
@@ -103,8 +103,56 @@ namespace OpenMS
 
       for (Size isotope = 0; isotope < isotopes_per_peptide_; isotope++) // loop over isotopic peaks within a peptide [0=mono-isotopic peak etc.]
       {
-        DoubleReal deltaMZ = computeActualMzShift_(mz, mz_peptide_separations_[peptide] + isotope * isotope_distance_, getPeakWidth(mz));
 
+        DoubleReal expected_shift = mz_peptide_separations_[peptide] + isotope * isotope_distance_;
+
+        // get picked version of current spectrum
+        MSExperiment<Peak1D>::ConstIterator rt_it = picked_exp.RTBegin(rt);
+
+        // calculate expected position of next peak
+        DoubleReal next_peak_expected = picked_mz + expected_shift;
+
+        // find peak (index) closest to expected position
+        Size nearest_peak_idx = rt_it->findNearest(next_peak_expected);
+
+        // get actual position of closest peak
+        DoubleReal nearest_peak_mz = (*rt_it)[nearest_peak_idx].getMZ();
+
+        // calculate error between expected and actual position
+        DoubleReal nearestPeakError = abs( nearest_peak_mz - next_peak_expected);
+
+        DoubleReal deltaMZ;
+
+        // check if error is small enough
+        if (nearestPeakError < getPeakWidth(mz)/3)
+        {
+          deltaMZ = nearest_peak_mz - picked_mz;
+        } else
+        {
+          deltaMZ = -1; // peak not found
+        }
+
+
+        // old
+        /*
+        DoubleReal expensive_MzShift = computeActualMzShift_(mz, expected_shift, getPeakWidth(mz));
+
+        if (expensive_MzShift - deltaMZ > 0.01)
+        {
+
+         cout << "rt " << rt << " mz " << mz << " expected mz " << expected_shift << " deltaMZ " << deltaMZ << " expMZ " << expensive_MzShift << " diff " << expensive_MzShift - deltaMZ << endl;
+        }
+
+        if (deltaMZ < 0 && !(expensive_MzShift < 0))
+        {
+          cout << "-" << endl;
+        }
+
+        if (!deltaMZ < 0 && expensive_MzShift < 0)
+        {
+          cout << "+" << endl;
+        }
+*/
         if ( deltaMZ < 0)
         {
           if (SILACFiltering::allow_missing_peaks_ == false)

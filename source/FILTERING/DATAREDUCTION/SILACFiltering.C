@@ -136,26 +136,26 @@ namespace OpenMS
           spline_spl_ = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
           gsl_spline_init(spline_spl_, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
-          MSSpectrum<>::Iterator mz_it = rt_it->begin();
 
-          last_mz = mz_it->getMZ();
-          ++mz_it;
+          // get iterator on picked data
+          MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_.RTBegin(rt);
 
-          // Iterate over the spectrum with a step width that is oriented on the raw data point positions (iterate over mz)
-          for ( ; mz_it != rt_it->end(); ++mz_it) // iteration correct
-          {            
-            // We do not move with mz_stepwidth over the spline fit, but with about a third of the local mz differences
-            for (DoubleReal mz = last_mz; mz < mz_it->getMZ(); mz += (abs(mz_it->getMZ() - last_mz)) / 3)
+          // Iterate over the picked spectrum
+          for (MSSpectrum<Peak1D>::Iterator picked_mz_it = picked_rt_it->begin() ; picked_mz_it != picked_rt_it->end(); ++picked_mz_it) // iteration correct
+          {
+            DoubleReal picked_mz = picked_mz_it->getMZ();
+            DoubleReal intensity = picked_mz_it->getIntensity();
+
+            //---------------------------------------------------------------
+            // BLUNT INTENSITY FILTER (Just check that intensity at current m/z position is above the intensity cutoff)
+            //---------------------------------------------------------------
+            if (intensity < intensity_cutoff_)
             {
-              //---------------------------------------------------------------
-              // BLUNT INTENSITY FILTER (Just check that intensity at current m/z position is above the intensity cutoff)
-              //---------------------------------------------------------------
+              continue;
+            }
 
-              if (gsl_spline_eval (spline_aki_, mz, current_aki_) < intensity_cutoff_)
-              {                
-                continue;
-              }
-
+            for (DoubleReal mz = picked_mz - SILACFilter::getPeakWidth(picked_mz); mz < picked_mz + SILACFilter::getPeakWidth(picked_mz); mz += 0.1 * SILACFilter::getPeakWidth(picked_mz) ) // iteration correct
+            {
               //--------------------------------------------------
               // BLACKLIST FILTER
               //--------------------------------------------------
@@ -163,6 +163,7 @@ namespace OpenMS
               // iterate over the blacklist (Relevant blacklist entries are most likely among the last ones added.)
               multimap<DoubleReal, BlacklistEntry>::iterator blacklistStartCheck;
               multimap<DoubleReal, BlacklistEntry>::iterator blacklistEndCheck;
+
               if (blacklist.size() > 40)    // Blacklist should be of certain size before we ckeck only parts of it.
               {
                 blacklistStartCheck = blacklist.lower_bound(rt - 100);
@@ -180,7 +181,7 @@ namespace OpenMS
               {
                 Int charge = (*filter_it)->getCharge();
                 vector<DoubleReal> mass_separations = (*filter_it)->getMassSeparations();
-                
+
                 // loop over the individual isotopic peaks of the SILAC pattern (and check if they are blacklisted)
                 const vector<DoubleReal>& expectedMZshifts = (*filter_it)->getExpectedMzShifts();
 
@@ -189,8 +190,8 @@ namespace OpenMS
                   bool inBlacklistEntry = blacklist_check_it->second.range.encloses(*expectedMZshifts_it + mz, rt);
                   bool exception = (charge == blacklist_check_it->second.charge)
                                    && (mass_separations == blacklist_check_it->second.mass_separations)
-                                   && (abs(*expectedMZshifts_it - blacklist_check_it->second.relative_peak_position) < 0.01);
-                  
+                                   && (abs(*expectedMZshifts_it - blacklist_check_it->second.relative_peak_position) < 0.1);
+
                   if (inBlacklistEntry && !exception )
                   {
                     isBlacklisted = true;
@@ -203,18 +204,18 @@ namespace OpenMS
                   break;
                 }
               }
-              
+
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
               {
-                if ((*filter_it)->isSILACPattern_(rt, mz))      // Check if the mz at the given position is a SILAC pair
+                if ((*filter_it)->isSILACPattern_(rt, mz, picked_mz, picked_exp_))      // Check if the mz at the given position is a SILAC pair
                 {
                   //--------------------------------------------------
                   // FILLING THE BLACKLIST
                   //--------------------------------------------------
-                  
+
                   DoubleReal peak_width = SILACFilter::getPeakWidth(mz);
-                  
+
                   // loop over the individual isotopic peaks of the SILAC pattern (and blacklist the area around them)
                   const vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();
 
@@ -229,15 +230,15 @@ namespace OpenMS
                     blackArea.setMaxX(*peak_positions_it + 0.8 * peak_width);     // set max m/z position of area to be blacklisted
                     blackArea.setMinY(rt - 10);     // set min rt position of area to be blacklisted
                     blackArea.setMaxY(rt + 10);     // set max rt position of area to be blacklisted
-                    
+
                     // Remember relative m/z shift (since the blacklisting should not apply to filters of the same points of the same relative m/z shift).
                     DoubleReal relative_peak_position = *peak_positions_it - mz;
-                    
+
                     // Does the new black area overlap with existing areas in the blacklist?
                     bool overlap = false;
                     // Does the current filter and relative peak position agree with the ones of the blacklist entry?
                     bool sameFilterAndPeakPosition = false;
-                    
+
                     multimap<DoubleReal, BlacklistEntry>::iterator blacklistStartFill;
                     multimap<DoubleReal, BlacklistEntry>::iterator blacklistEndFill;
                     if (blacklist.size() > 40)    // Blacklist should be of certain size before we ckeck only parts of it.
@@ -254,7 +255,7 @@ namespace OpenMS
                     {
                       overlap = blackArea.isIntersected(blacklist_fill_it->second.range);
                       sameFilterAndPeakPosition = (charge == blacklist_fill_it->second.charge) && (mass_separations == blacklist_fill_it->second.mass_separations) && (abs(relative_peak_position - blacklist_fill_it->second.relative_peak_position) < 0.01);
-                      
+
                       if (overlap && sameFilterAndPeakPosition)
                       {
                         // If new and old entry intersect, simply update (or replace) the old one.
@@ -283,11 +284,11 @@ namespace OpenMS
                           blacklist.insert(pair<DoubleReal, BlacklistEntry>(mergedEntry.range.minY(), mergedEntry));
                           blacklist.erase(blacklist_fill_it);
                         }
-                        
+
                         break;
                       }
                     }
-                    
+
                     if ( !overlap )
                     {
                       // If new and none of the old entries intersect, add a new entry.
@@ -300,7 +301,7 @@ namespace OpenMS
                     }
                   }
 
-/*                  // DEBUG: save global blacklist as .csv
+                  /*                  // DEBUG: save global blacklist as .csv
                   ofstream blacklistFile;
                   blacklistFile.open ("blacklist.csv");
 
@@ -314,8 +315,6 @@ namespace OpenMS
                 }
               }
             }
-            
-            last_mz = mz_it->getMZ();
           }
 
           // Clear the interpolations

@@ -62,11 +62,22 @@ namespace OpenMS
     cout << "performing peak picking" << endl;
     PeakPickerHiRes picker;
     Param param = picker.getParameters();
-    param.setValue("ms1_only", true);
+    param.setValue("ms1_only", DataValue("true"));
+    param.setValue("signal_to_noise", 0.1);
+    picker.setParameters(param);
+    cout << "Signal to noise: " << param.getValue("signal_to_noise") << endl;
+
     picker.pickExperiment(exp, picked_exp_);
     MzMLFile mz_data_file;
     mz_data_file.store("debug_picked.mzML", picked_exp_);
     cout << "finished peak picking" << endl;
+
+    // Initialize seeds map
+    picked_exp_seeds_ = picked_exp_;
+    for (Size i = 0; i != picked_exp_seeds_.size(); ++i)
+    {
+      picked_exp_seeds_[i].clear(false);
+    }
   }
 
   void SILACFiltering::addFilter(SILACFilter& filter)
@@ -79,14 +90,51 @@ namespace OpenMS
 
   }
 
+  void SILACFiltering::filterSeeds()
+  {
+
+    // Iterate over all filters
+    for (vector<SILACFilter*>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it)
+    {
+      setProgress(filter_it - filters_.begin());
+      // Iterate over all spectra of the experiment (iterate over rt)
+      for (MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_.begin(); picked_rt_it != picked_exp_.end(); ++picked_rt_it)
+      {
+         DoubleReal rt = picked_rt_it->getRT();
+         // Iterate over the picked spectrum
+         for (MSSpectrum<Peak1D>::Iterator picked_mz_it = picked_rt_it->begin() ; picked_mz_it != picked_rt_it->end(); ++picked_mz_it) // iteration correct
+         {
+           DoubleReal picked_mz = picked_mz_it->getMZ();
+
+           bool isSILAC = (*filter_it)->isSILACPatternPicked_(rt, picked_mz, picked_mz, picked_exp_);
+
+           if (isSILAC)
+           {
+              Size spec_idx = picked_rt_it - picked_exp_.begin();
+              picked_exp_seeds_[spec_idx].push_back(*picked_mz_it);
+           }
+         }
+      }
+    }
+
+    picked_exp_seeds_.sortSpectra(true);
+
+    MzMLFile mz_data_file;
+    mz_data_file.store("debug_filtered_seeds.mzML", picked_exp_seeds_);
+  }
+
   void SILACFiltering::filterDataPoints()
   {
-    startProgress(0, exp_.size(), "filtering raw data");
+    startProgress(0, filters_.size(), "filtering seed data");
+    filterSeeds();
+    endProgress();
+
+    startProgress(0, exp_.size(), "filtering raw data");    
 
     mz_min_ = exp_.getMinMZ();      // get lowest m/z value
 
     // Iterate over all filters
-    for (list<SILACFilter*>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it)
+    for (vector<SILACFilter*>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it)
     {
       // Iterate over all spectra of the experiment (iterate over rt)
       for (MSExperiment<Peak1D>::Iterator rt_it = exp_.begin(); rt_it != exp_.end(); ++rt_it)
@@ -138,7 +186,7 @@ namespace OpenMS
 
 
           // get iterator on picked data
-          MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_.RTBegin(rt);
+          MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_seeds_.RTBegin(rt);
 
           // Iterate over the picked spectrum
           for (MSSpectrum<Peak1D>::Iterator picked_mz_it = picked_rt_it->begin() ; picked_mz_it != picked_rt_it->end(); ++picked_mz_it) // iteration correct

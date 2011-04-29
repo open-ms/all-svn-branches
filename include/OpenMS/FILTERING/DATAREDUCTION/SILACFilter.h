@@ -288,6 +288,15 @@ namespace OpenMS
    */
    bool isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<>& picked_exp);
 
+
+   bool isSILACPatternPicked_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp);
+   bool extractMzShiftsAndIntensities(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp);
+   bool extractMzShiftsAndIntensitiesPicked(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp);
+   bool intensityFilter();
+   bool correlationFilter1(DoubleReal mz);
+   bool correlationFilter2(DoubleReal mz);
+   bool averageneFilter(DoubleReal mz);
+
    public:  
 
   /**

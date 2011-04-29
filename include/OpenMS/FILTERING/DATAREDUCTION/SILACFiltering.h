@@ -59,7 +59,7 @@ namespace OpenMS
   /**
    * @brief holds all filters used in the filtering
    */
-   std::list<SILACFilter*> filters_;
+   std::vector<SILACFilter*> filters_;
 
   /**
    * @brief average m/z distance between scanned data points
@@ -105,6 +105,17 @@ namespace OpenMS
     * @brief picked data
     */
    MSExperiment<Peak1D> picked_exp_;
+
+   /**
+    * @brief picked data seeds
+    */
+   MSExperiment<Peak1D> picked_exp_seeds_;
+
+
+   /**
+    * @brief apply filtering to picked data seeds
+    */
+    void filterSeeds();
 
   public:
 

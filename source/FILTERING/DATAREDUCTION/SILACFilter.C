@@ -92,7 +92,7 @@ namespace OpenMS
     exact_intensities_.clear();
     expected_shifts_.clear();
 
-    for (Size peptide = 0; peptide <= number_of_peptides_; ++peptide) // loop over labelled peptides [e.g. for SILAC triplets: 0=light 1=medium 2=heavy]
+    for (Size peptide = 0; peptide != number_of_peptides_; ++peptide) // loop over labelled peptides [e.g. for SILAC triplets: 0=light 1=medium 2=heavy]
     {
       std::vector<DoubleReal> exact_shifts_singlePeptide;
       std::vector<DoubleReal> exact_intensities_singlePeptide;
@@ -184,7 +184,7 @@ namespace OpenMS
 
   bool SILACFilter::extractMzShiftsAndIntensitiesPicked(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp)
   {
-    bool debug = abs(rt - 6662.32) < 0.1 && abs(mz - 685.36) < 0.01;
+    bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
 
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 
@@ -192,7 +192,12 @@ namespace OpenMS
     exact_intensities_.clear();
     expected_shifts_.clear();
 
-    for (Size peptide = 0; peptide <= number_of_peptides_; ++peptide) // loop over labelled peptides [e.g. for SILAC triplets: 0=light 1=medium 2=heavy]
+    if (debug)
+    {
+      cout << "n-peptides: " << number_of_peptides_ << endl;
+    }
+
+    for (Size peptide = 0; peptide != number_of_peptides_; ++peptide) // loop over labelled peptides [e.g. for SILAC triplets: 0=light 1=medium 2=heavy]
     {
       std::vector<DoubleReal> exact_shifts_singlePeptide;
       std::vector<DoubleReal> exact_intensities_singlePeptide;
@@ -291,7 +296,7 @@ namespace OpenMS
   bool SILACFilter::intensityFilter()
   {
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
-    for (Size peptide = 0; peptide <= number_of_peptides_; ++peptide)
+    for (Size peptide = 0; peptide != number_of_peptides_; ++peptide)
     {
       for (Size isotope = 0; isotope < isotopes_per_peptide_; ++isotope)
       {
@@ -324,7 +329,7 @@ namespace OpenMS
   {
     bool missing_peak_seen_yet = false;
 
-    for (Size peptide = 0; peptide <= number_of_peptides_; ++peptide)
+    for (Size peptide = 0; peptide != number_of_peptides_; ++peptide)
     {
       for (Size isotope2 = 1; isotope2 < isotopes_per_peptide_; ++isotope2)
       {
@@ -365,7 +370,7 @@ namespace OpenMS
   {
     if (!(number_of_peptides_ == 1 && exact_shifts_[0][0] == 0))     // If we are looking for single peptides, this filter is not needed.
     {
-      for (Size peptide = 0; peptide < number_of_peptides_; ++peptide)
+      for (Size peptide = 0; peptide < number_of_peptides_ - 1; ++peptide)
       {
         std::vector<DoubleReal> intensities3;    // intensities in region around monoisotopic peak
         std::vector<DoubleReal> intensities4;    // intensities in region around first peak of following peptide
@@ -374,7 +379,7 @@ namespace OpenMS
         for (DoubleReal dmz = - mzWindow; dmz <= mzWindow; dmz += 0.2 * mzWindow)     // fill intensity vectors
         {
           DoubleReal intens3 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[0][0] + dmz, SILACFiltering::current_spl_);
-          DoubleReal intens4 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[peptide+1][0] + dmz, SILACFiltering::current_spl_);
+          DoubleReal intens4 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[peptide + 1][0] + dmz, SILACFiltering::current_spl_);
           intensities3.push_back( intens3 );
           intensities4.push_back( intens4 );
         }
@@ -390,9 +395,11 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::averageneFilter(DoubleReal mz)
+  bool SILACFilter::averageneFilter(DoubleReal rt, DoubleReal mz)
   {
     bool missing_peak_seen_yet = false;
+
+    bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
 
     if (!IsotopeDistributionCache::getInstance()->isPrecalculated())
     {
@@ -401,7 +408,7 @@ namespace OpenMS
 
     if (isotopes_per_peptide_ > 1)
     {
-      for (Size peptide = 0; peptide <= number_of_peptides_; ++peptide)
+      for (Size peptide = 0; peptide != number_of_peptides_; ++peptide)
       {
         //IsotopeDistribution isoDistribution;    // isotope distribution of an averagene peptide
         //isoDistribution.estimateFromPeptideWeight((mz + exact_shifts_[peptide][0]) * charge_);    // mass of averagene peptide
@@ -416,7 +423,17 @@ namespace OpenMS
           DoubleReal averagineIntensity = pattern.intensity[isotope];
           DoubleReal intensity = exact_intensities_[peptide][isotope];
 
-          if ((intensity / intensity_mono) / (averagineIntensity / averagineIntensity_mono) > model_deviation_ || (intensity / intensity_mono) / (averagineIntensity / averagineIntensity_mono) < 1 / model_deviation_)
+          DoubleReal averageneRatio = averagineIntensity / averagineIntensity_mono;
+
+          DoubleReal ratio = (intensity / intensity_mono) / averageneRatio;
+
+          DoubleReal max_deviation = model_deviation_ / averageneRatio;
+
+          if (debug)
+          {
+            cout << "Ratio: " << ratio << endl;
+          }
+          if (ratio > max_deviation || ratio < 1 / max_deviation) // Test for missing peak?
           {
             // MISSING PEAK EXCEPTION
             // A missing intensity is allowed if (1) the user allowed it, (2) one of the two peaks is the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
@@ -426,6 +443,7 @@ namespace OpenMS
             }
             else
             {
+              cout << "Missing Peak in averagine filter!" << endl;
               return false;
             }
           }
@@ -464,7 +482,7 @@ namespace OpenMS
     }
 
     // AVERAGINE FILTER (Check if realtive ratios confirm with an averagine model of all peptides.)
-    if (!averageneFilter(mz))
+    if (!averageneFilter(rt, mz))
     {
       return false;
     }
@@ -487,7 +505,7 @@ namespace OpenMS
   {
     current_mz_ = mz;
 
-    bool debug = abs(rt - 6662.32) < 0.1 && abs(mz - 685.36) < 0.01;
+    bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
 
     if(debug)
     {
@@ -516,7 +534,7 @@ namespace OpenMS
     }
 
     // AVERAGINE FILTER (Check if realtive ratios confirm with an averagine model of all peptides.)
-    if (!averageneFilter(mz))
+    if (!averageneFilter(rt, mz))
     {
       return false;
     }
@@ -709,7 +727,7 @@ namespace OpenMS
   std::vector<DoubleReal> SILACFilter::getPeakPositions()
 	{
     peak_positions_.clear();
-    for (Size peptide = 0; peptide <= number_of_peptides_; ++peptide)
+    for (Size peptide = 0; peptide != number_of_peptides_; ++peptide)
 		{
       for (Size isotope = 0; isotope < isotopes_per_peptide_; ++isotope)
 			{

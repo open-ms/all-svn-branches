@@ -65,7 +65,6 @@ namespace OpenMS
     param.setValue("ms1_only", DataValue("true"));
     param.setValue("signal_to_noise", 0.1);
     picker.setParameters(param);
-    cout << "Signal to noise: " << param.getValue("signal_to_noise") << endl;
 
     picker.pickExperiment(exp, picked_exp_);
     MzMLFile mz_data_file;

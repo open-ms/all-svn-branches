@@ -295,7 +295,7 @@ namespace OpenMS
    bool intensityFilter();
    bool correlationFilter1(DoubleReal mz);
    bool correlationFilter2(DoubleReal mz);
-   bool averageneFilter(DoubleReal mz);
+   bool averageneFilter(DoubleReal rt, DoubleReal mz);
 
    public:  
 

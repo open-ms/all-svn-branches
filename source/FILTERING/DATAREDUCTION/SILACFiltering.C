@@ -101,7 +101,7 @@ namespace OpenMS
       {
          DoubleReal rt = picked_rt_it->getRT();
          // Iterate over the picked spectrum
-         for (MSSpectrum<Peak1D>::Iterator picked_mz_it = picked_rt_it->begin() ; picked_mz_it != picked_rt_it->end(); ++picked_mz_it) // iteration correct
+         for (MSSpectrum<Peak1D>::Iterator picked_mz_it = picked_rt_it->begin(); picked_mz_it != picked_rt_it->end(); ++picked_mz_it) // iteration correct
          {
            DoubleReal picked_mz = picked_mz_it->getMZ();
 
@@ -116,6 +116,7 @@ namespace OpenMS
       }
     }
 
+    // sort complete spectrum so we can use range queries
     picked_exp_seeds_.sortSpectra(true);
 
     MzMLFile mz_data_file;

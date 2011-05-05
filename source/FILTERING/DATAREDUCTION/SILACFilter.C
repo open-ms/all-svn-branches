@@ -184,7 +184,8 @@ namespace OpenMS
 
   bool SILACFilter::extractMzShiftsAndIntensitiesPicked(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp)
   {
-    bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
+    //bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
+    bool debug = false;
 
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 
@@ -399,7 +400,8 @@ namespace OpenMS
   {
     bool missing_peak_seen_yet = false;
 
-    bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
+    // bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
+    bool debug = false;
 
     if (!IsotopeDistributionCache::getInstance()->isPrecalculated())
     {
@@ -443,7 +445,7 @@ namespace OpenMS
             }
             else
             {
-              cout << "Missing Peak in averagine filter!" << endl;
+              //cout << "Missing Peak in averagine filter!" << endl;
               return false;
             }
           }
@@ -505,7 +507,8 @@ namespace OpenMS
   {
     current_mz_ = mz;
 
-    bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
+    //bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
+    bool debug = false;
 
     if(debug)
     {

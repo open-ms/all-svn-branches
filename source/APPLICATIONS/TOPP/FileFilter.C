@@ -77,19 +77,16 @@ using namespace std;
 		- filter by feature charge
 		- filter by feature size (number of subordinate features)
 		- filter by overall feature quality
-		- filter unassigned peptide identifications
-		- filter annotated features
-		- filter non-annotated features
-		- filter annotated features by sequence
 	- consensusXML
 		- filter by size (number of elements in consensus features)
 		- filter by consensus feature charge
 		- filter by map (extracts specified maps and re-evaluates consensus centroid)@n e.g. FileFilter -map 2 3 5 -in file1.consensusXML -out file2.consensusXML@n If a single map is specified, the feature itself can be extracted.@n e.g. FileFilter -map 5 -in file1.consensusXML -out file2.featureXML
-		- filter unassigned peptide identifications
-		- filter annotated features
-		- filter non-annotated features
-		- filter annotated features by sequence
 
+  - featureXML / consensusXML
+		- filter sequences, i.e. "LYSNLVER" or the modification "(Oxidation)"
+		-	filter features with annotations
+		- filter features without annotations
+		-	filter unassigned peptide identifications
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_FileFilter.cli
@@ -117,42 +114,41 @@ class TOPPFileFilter
 	}
 
 	private:
-
-	static bool checkPeptideIdentification(const BaseFeature& feature, const bool annotated, const bool not_annotated, const StringList& sequence)
+	static bool checkPeptideIdentification_(const BaseFeature& feature, const bool remove_annotated_features, const bool remove_unannotated_features, const StringList& sequences)
 	{
-		//flag: annotated and non-empty peptideIdentifications
-		if (annotated && !feature.getPeptideIdentifications().empty())
+		//flag: sequences
+		if (sequences.size() > 0)
 		{
-			if (sequence.size() > 0)
+			//loop over all peptideIdentifications
+			for (vector<PeptideIdentification>::const_iterator pep_id_it = feature.getPeptideIdentifications().begin(); pep_id_it != feature.getPeptideIdentifications().end(); ++pep_id_it)
 			{
-				//loop over all peptideIdentifications
-				for (vector<PeptideIdentification>::const_iterator pep_id_it = feature.getPeptideIdentifications().begin(); pep_id_it != feature.getPeptideIdentifications().end(); ++pep_id_it)
+				//loop over all peptideHits
+				for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
 				{
-					//loop over all peptideHits
-					for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
+					//loop over all sequence entries of the StringList
+					for (StringList::ConstIterator seq_it = sequences.begin(); seq_it != sequences.end(); ++seq_it)
 					{
-						//loop over all sequence entries of the StringList
-						for (StringList::ConstIterator seq_it = sequence.begin(); seq_it != sequence.end(); ++seq_it)
+						if (pep_hit_it->getSequence().toString().hasSubstring(*seq_it)
+							|| pep_hit_it->getSequence().toUnmodifiedString().hasSubstring(*seq_it) )
 						{
-							if (pep_hit_it->getSequence().toString().hasSubstring(*seq_it)
-								|| pep_hit_it->getSequence().toUnmodifiedString().hasSubstring(*seq_it))
-							{
-								return true;
-							}
+							return true;
 						}
 					}
 				}
-			}else
-			{
-				return true;
 			}
+			return false;
 		}
-		//flag: not_annotated and no peptideIdentifications
-		if (not_annotated && feature.getPeptideIdentifications().empty())
+		//flag: remove_annotated_features and non-empty peptideIdentifications
+		if (remove_annotated_features && !feature.getPeptideIdentifications().empty())
 		{
-			return true;
+			return false;
 		}
-		return false;
+		//flag: remove_unannotated_features and no peptideIdentifications
+		if (remove_unannotated_features && feature.getPeptideIdentifications().empty())
+		{
+			return false;
+		}
+		return true;
 	}
 
 	protected:
@@ -224,15 +220,17 @@ class TOPPFileFilter
 		addText_("feature and consensus feature data options:");
 		registerStringOption_("charge","[min]:[max]",":","charge range to extract", false);
 		registerStringOption_("size","[min]:[max]",":","size range to extract", false);
-		registerFlag_("filter_ids","activate Filtering by IDs - if false, the parameters 'annotated', 'not_annotated', 'sequence' and 'unassigned' will be ignored");
-		registerFlag_("annotated","filter features with annotations");
-		registerFlag_("not_annotated","filter features without annotations");
-		registerFlag_("unassigned","keep unassigned Peptide Identifications", true);
-		registerStringList_("sequence","<sequence>",StringList(),"sequences to filter, i.e. Oxidation or LYSNLVER", false);
 
 		addEmptyLine_();
 		addText_("feature data options:");
 		registerStringOption_("q","[min]:[max]",":","OverallQuality range to extract [0:1]", false);
+
+		addEmptyLine_();
+		registerTOPPSubsection_("id","id section");
+		registerStringList_("id:sequences_whitelist", "<sequence>", StringList(), "keep only features with whitelisted sequences, i.e. LYSNLVER or the modification (Oxidation)", false);
+		registerFlag_("id:remove_annotated_features", "remove features with annotations");
+		registerFlag_("id:remove_unannotated_features", "remove features without annotations");
+		registerFlag_("id:remove_unassigned_ids", "remove unassigned peptide identifications");
 
 		addEmptyLine_();
 		addText_("Other options of the FileFilter only apply if S/N estimation is done.\n"
@@ -242,11 +240,14 @@ class TOPPFileFilter
 
 	}
 
-	Param getSubsectionDefaults_(const String& /*section*/) const
+	Param getSubsectionDefaults_(const String& section) const
 	{
-		SignalToNoiseEstimatorMedian<  MapType::SpectrumType > sn;
 		Param tmp;
-		tmp.insert("SignalToNoise:",sn.getParameters());
+		if (section == "algorithm")
+		{
+			SignalToNoiseEstimatorMedian<  MapType::SpectrumType > sn;
+			tmp.insert("SignalToNoise:",sn.getParameters());
+		}
 		return tmp;
 	}
 
@@ -308,11 +309,10 @@ class TOPPFileFilter
 		q = getStringOption_("q");
 
 		//id-filtering parameters
-		bool filter_ids = getFlag_("filter_ids"); //not needed, if flags could be initialized with true
-		bool unassigned = getFlag_("unassigned");
-		bool annotated = getFlag_("annotated");
-		bool not_annotated = getFlag_("not_annotated");
-		StringList sequence = getStringList_("sequence");
+		bool remove_annotated_features = getFlag_("id:remove_annotated_features");
+		bool remove_unannotated_features = getFlag_("id:remove_unannotated_features");
+		bool remove_unassigned_ids = getFlag_("id:remove_unassigned_ids");
+		StringList sequences = getStringList_("id:sequences_whitelist");
 
 		//convert bounds to numbers
 		try
@@ -529,13 +529,7 @@ class TOPPFileFilter
 				charge_ok = ((charge_l <= fm_it->getCharge()) && (fm_it->getCharge() <= charge_u));
 				size_ok = ((size_l <= fm_it->getSubordinates().size()) && (fm_it->getSubordinates().size() <= size_u));
 				q_ok = ((q_l <= fm_it->getOverallQuality()) && (fm_it->getOverallQuality() <= q_u));
-				if (filter_ids)
-				{
-					annotation_ok = checkPeptideIdentification(*fm_it, annotated, not_annotated, sequence);
-				}else
-				{
-					annotation_ok = true;
-				}
+				annotation_ok = checkPeptideIdentification_(*fm_it, remove_annotated_features, remove_unannotated_features, sequences);
 
 				if (rt_ok && mz_ok && int_ok && charge_ok && size_ok && q_ok && annotation_ok)
 				{
@@ -543,7 +537,7 @@ class TOPPFileFilter
 				}
 			}
 			//delete unassignedPeptideIdentifications
-			if (filter_ids && !unassigned)
+			if (remove_unassigned_ids)
 			{
 				map_sm.getUnassignedPeptideIdentifications().clear();
 			}
@@ -594,13 +588,7 @@ class TOPPFileFilter
 			{
 				charge_ok = ((charge_l <= cm_it->getCharge()) && (cm_it->getCharge() <= charge_u));
 				size_ok = ((cm_it->size() >= size_l) && (cm_it->size() <= size_u));
-				if (filter_ids)
-				{
-					annotation_ok = checkPeptideIdentification(*cm_it, annotated, not_annotated, sequence);
-				}else
-				{
-					annotation_ok = true;
-				}
+				annotation_ok = checkPeptideIdentification_(*cm_it, remove_annotated_features, remove_unannotated_features, sequences);
 
 				if (charge_ok && size_ok && annotation_ok)
 				{
@@ -608,7 +596,7 @@ class TOPPFileFilter
 				}
 			}
 			//delete unassignedPeptideIdentifications
-			if (filter_ids && !unassigned)
+			if (remove_unassigned_ids)
 			{
 				consensus_map_filtered.getUnassignedPeptideIdentifications().clear();
 			}
@@ -673,6 +661,8 @@ class TOPPFileFilter
 					cm_new.getFileDescriptions()[*map_it].size = consensus_map_filtered.getFileDescriptions()[*map_it].size;
 					cm_new.getFileDescriptions()[*map_it].unique_id = consensus_map_filtered.getFileDescriptions()[*map_it].unique_id;
 				}
+
+				cm_new.setProteinIdentifications(consensus_map_filtered.getProteinIdentifications());
 
 				for (ConsensusMap::Iterator cm_it = consensus_map_filtered.begin(); cm_it != consensus_map_filtered.end(); ++cm_it) // iterate over consensuses in the original consensus map
 				{					

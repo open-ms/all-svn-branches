@@ -82,11 +82,14 @@ using namespace std;
 		- filter by consensus feature charge
 		- filter by map (extracts specified maps and re-evaluates consensus centroid)@n e.g. FileFilter -map 2 3 5 -in file1.consensusXML -out file2.consensusXML@n If a single map is specified, the feature itself can be extracted.@n e.g. FileFilter -map 5 -in file1.consensusXML -out file2.featureXML
 
-  - featureXML / consensusXML
+  - featureXML / consensusXML):
 		- filter sequences, i.e. "LYSNLVER" or the modification "(Oxidation)"
+		-	filter accessions, i.e. "sp|P02662|CASA1_BOVIN"
 		-	filter features with annotations
 		- filter features without annotations
 		-	filter unassigned peptide identifications
+		- filter id with best score of features with multiple peptide identifications
+		- remove features with id clashes (different sequences mapped to one feature)
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_FileFilter.cli
@@ -114,11 +117,54 @@ class TOPPFileFilter
 	}
 
 	private:
-	static bool checkPeptideIdentification_(const BaseFeature& feature, const bool remove_annotated_features, const bool remove_unannotated_features, const StringList& sequences)
+	static bool checkPeptideIdentification_(BaseFeature& feature, const bool remove_annotated_features, const bool remove_unannotated_features, const StringList& sequences, const StringList& accessions, const bool keep_best_score_id, const String best_score, const bool remove_clashes)
 	{
-		//flag: sequences
-		if (sequences.size() > 0)
+		//flag: remove_clashes
+		if (remove_clashes && !feature.getPeptideIdentifications().empty())
 		{
+			String temp = feature.getPeptideIdentifications().begin()->getHits().begin()->getSequence().toString();
+			//loop over all peptideIdentifications
+			for (vector<PeptideIdentification>::const_iterator pep_id_it = feature.getPeptideIdentifications().begin(); pep_id_it != feature.getPeptideIdentifications().end(); ++pep_id_it)
+			{
+				//loop over all peptideHits
+				for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
+				{
+					if (!pep_hit_it->getSequence().toString().hasSubstring(temp))
+					{
+						return false;
+					}
+				}
+			}
+		}
+		//flag: keep_best_score_id
+		if (keep_best_score_id && !feature.getPeptideIdentifications().empty())
+		{
+			PeptideIdentification temp = feature.getPeptideIdentifications().front();
+			//loop over all peptideIdentifications
+			for (vector<PeptideIdentification>::const_iterator pep_id_it = feature.getPeptideIdentifications().begin(); pep_id_it != feature.getPeptideIdentifications().end(); ++pep_id_it)
+			{
+				//loop over all peptideHits
+				for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
+				{
+					if ((best_score.compare("highest") == 0 && pep_hit_it->getScore() > temp.getHits().front().getScore()) ||
+						(best_score.compare("lowest") == 0 && pep_hit_it->getScore() < temp.getHits().front().getScore()))
+					{
+						temp = *pep_id_it;
+					}
+				}
+			}
+			feature.setPeptideIdentifications(vector<PeptideIdentification> (1,temp));
+			// not filtering sequences or accessions
+			if (!sequences.size() > 0 && !accessions.size() > 0)
+			{
+				return true;
+			}
+		}
+		//flag: sequences or accessions
+		if (sequences.size() > 0 || accessions.size() > 0)
+		{
+			bool sequen = false;
+			bool access = false;
 			//loop over all peptideIdentifications
 			for (vector<PeptideIdentification>::const_iterator pep_id_it = feature.getPeptideIdentifications().begin(); pep_id_it != feature.getPeptideIdentifications().end(); ++pep_id_it)
 			{
@@ -131,12 +177,34 @@ class TOPPFileFilter
 						if (pep_hit_it->getSequence().toString().hasSubstring(*seq_it)
 							|| pep_hit_it->getSequence().toUnmodifiedString().hasSubstring(*seq_it) )
 						{
-							return true;
+							sequen = true;
+						}
+					}
+					//loop over all accessions of the peptideHits
+					for (vector<String>::const_iterator p_acc_it = pep_hit_it->getProteinAccessions().begin(); p_acc_it != pep_hit_it->getProteinAccessions().end(); ++p_acc_it)
+					{
+						//loop over all accessions entries of the StringList
+						for (StringList::ConstIterator acc_it = accessions.begin(); acc_it != accessions.end(); ++acc_it)
+						{
+							if (p_acc_it->hasSubstring(*acc_it))
+							{
+								access = true;
+							}
 						}
 					}
 				}
 			}
-			return false;
+			if (sequences.size() > 0 && accessions.size() > 0)
+			{
+				return (sequen && access);
+			}
+			if (sequences.size() > 0)
+			{
+				return sequen;
+			}else
+			{
+				return access;
+			}
 		}
 		//flag: remove_annotated_features and non-empty peptideIdentifications
 		if (remove_annotated_features && !feature.getPeptideIdentifications().empty())
@@ -227,7 +295,13 @@ class TOPPFileFilter
 
 		addEmptyLine_();
 		registerTOPPSubsection_("id","id section");
+		addText_("Priority of the id-flags is: remove_clashes -> keep_best_score_id -> sequences/accessions ->remove_*");
+		registerFlag_("id:remove_clashes", "remove features with id clashes (different sequences mapped to one feature)", true);
+		registerFlag_("id:keep_best_score_id", "in case of multiple peptide identifications, keep only the id with best score");
+		registerStringOption_("id:best_score", "<highest/lowest>", "highest", "define if best score is highest score or lowest score", false);
+		setValidStrings_("id:best_score", StringList::create("highest,lowest"));
 		registerStringList_("id:sequences_whitelist", "<sequence>", StringList(), "keep only features with whitelisted sequences, i.e. LYSNLVER or the modification (Oxidation)", false);
+		registerStringList_("id:accessions_whitelist", "<accessions>", StringList(), "keep only features with whitelisted accessions, i.e. sp|P02662|CASA1_BOVIN", false);
 		registerFlag_("id:remove_annotated_features", "remove features with annotations");
 		registerFlag_("id:remove_unannotated_features", "remove features without annotations");
 		registerFlag_("id:remove_unassigned_ids", "remove unassigned peptide identifications");
@@ -313,6 +387,10 @@ class TOPPFileFilter
 		bool remove_unannotated_features = getFlag_("id:remove_unannotated_features");
 		bool remove_unassigned_ids = getFlag_("id:remove_unassigned_ids");
 		StringList sequences = getStringList_("id:sequences_whitelist");
+		StringList accessions = getStringList_("id:accessions_whitelist");
+		bool keep_best_score_id = getFlag_("id:keep_best_score_id");
+		String best_score = getStringOption_("id:best_score");
+		bool remove_clashes = getFlag_("id:remove_clashes");
 
 		//convert bounds to numbers
 		try
@@ -521,7 +599,7 @@ class TOPPFileFilter
 			bool rt_ok, mz_ok, int_ok, charge_ok, size_ok, q_ok, annotation_ok;
 
 			// only keep charge ch_l:ch_u   (WARNING: featurefiles without charge information have charge=0, see Ctor of KERNEL/Feature.h)
-			for (FeatureMap<>::ConstIterator fm_it = feature_map.begin(); fm_it != feature_map.end(); ++fm_it)
+			for (FeatureMap<>::Iterator fm_it = feature_map.begin(); fm_it != feature_map.end(); ++fm_it)
 			{
 				rt_ok = f.getOptions().getRTRange().encloses(DPosition<1>(fm_it->getRT()));
 				mz_ok = f.getOptions().getMZRange().encloses(DPosition<1>(fm_it->getMZ()));
@@ -529,7 +607,7 @@ class TOPPFileFilter
 				charge_ok = ((charge_l <= fm_it->getCharge()) && (fm_it->getCharge() <= charge_u));
 				size_ok = ((size_l <= fm_it->getSubordinates().size()) && (fm_it->getSubordinates().size() <= size_u));
 				q_ok = ((q_l <= fm_it->getOverallQuality()) && (fm_it->getOverallQuality() <= q_u));
-				annotation_ok = checkPeptideIdentification_(*fm_it, remove_annotated_features, remove_unannotated_features, sequences);
+				annotation_ok = checkPeptideIdentification_(*fm_it, remove_annotated_features, remove_unannotated_features, sequences, accessions, keep_best_score_id, best_score, remove_clashes);
 
 				if (rt_ok && mz_ok && int_ok && charge_ok && size_ok && q_ok && annotation_ok)
 				{
@@ -584,11 +662,11 @@ class TOPPFileFilter
 			
 			bool charge_ok, size_ok, annotation_ok;
 			
-			for (ConsensusMap::ConstIterator cm_it = consensus_map.begin(); cm_it != consensus_map.end(); ++cm_it)
+			for (ConsensusMap::Iterator cm_it = consensus_map.begin(); cm_it != consensus_map.end(); ++cm_it)
 			{
 				charge_ok = ((charge_l <= cm_it->getCharge()) && (cm_it->getCharge() <= charge_u));
 				size_ok = ((cm_it->size() >= size_l) && (cm_it->size() <= size_u));
-				annotation_ok = checkPeptideIdentification_(*cm_it, remove_annotated_features, remove_unannotated_features, sequences);
+				annotation_ok = checkPeptideIdentification_(*cm_it, remove_annotated_features, remove_unannotated_features, sequences, accessions, keep_best_score_id, best_score, remove_clashes);
 
 				if (charge_ok && size_ok && annotation_ok)
 				{

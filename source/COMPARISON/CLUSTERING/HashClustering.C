@@ -661,6 +661,8 @@ namespace OpenMS
 
       data.insert(clusterPos1->second.begin(), clusterPos2->second.begin(), clusterPos2->second.end());
       clusterPos2->second.clear();
+      std::vector < DataPoint* >().swap(clusterPos2->second);
+
       // Erase second one
 
       // Calculate average silhouette width for clusters and then overall average silhouette width for cluster step
@@ -724,6 +726,7 @@ namespace OpenMS
 
       // Erase second one
       cluster_map[it->data2].clear();
+      std::vector<DataPoint*>().swap(cluster_map[it->data2]);
       ++it;
     }
     // clusters.reserve(tree.size()+1);

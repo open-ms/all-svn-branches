@@ -31,6 +31,7 @@
 #include <OpenMS/DATASTRUCTURES/String.h>
 #include <OpenMS/CONCEPT/Exception.h>
 #include <OpenMS/CONCEPT/LogStream.h>
+#include <OpenMS/KERNEL/ConsensusMap.h>
 #include <OpenMS/KERNEL/Feature.h>
 #include <OpenMS/FORMAT/TextFile.h>
 
@@ -68,7 +69,7 @@ namespace OpenMS
     virtual ~EDTAFile();
 
     /**
-      @brief Loads a EDTA file into a featureXML.
+      @brief Loads a EDTA file into a consensusXML.
 
       The content of the file is stored in @p features.
 
@@ -76,16 +77,15 @@ namespace OpenMS
       @exception Exception::ParseError is thrown if an error occurs during parsing
      */
 
-    template <typename FeatureMapType>
-
-    void load(const String& filename, FeatureMapType& feature_map)
+    void load(const String& filename, ConsensusMap& consensus_map)
     {
       // load input
       TextFile input(filename);
 
       // reset map
-      FeatureMapType fmap;
-      feature_map = fmap;
+      ConsensusMap cmap;
+      consensus_map = cmap;
+      consensus_map.setUniqueId();
 
       char separator = ' ';
       if (input[0].hasSubstring("\t")) separator = '\t';
@@ -146,8 +146,13 @@ namespace OpenMS
         LOG_INFO << "Detected a header line.\n";
       }
 
+      ConsensusMap::FileDescription desc;
+      desc.filename = filename;
+      desc.size = input.size() - offset;
+      consensus_map.getFileDescriptions()[0] = desc;
+
       // parsing features
-      feature_map.reserve(input.size());
+      consensus_map.reserve(input.size());
 
       for (Size i = offset; i < input.size(); ++i)
       {
@@ -191,7 +196,8 @@ namespace OpenMS
           throw Exception::ParseError(__FILE__, __LINE__, __PRETTY_FUNCTION__, "", String("Failed parsing in line") + String(i + 1) + ": Could not convert the first three columns to float! Is the correct separator specified?\nOffending line: '" + line_trimmed + "'  (line " + (i + 1) + ")\n");
         }
 
-        Feature f;
+        ConsensusFeature f;
+        f.setUniqueId();
         f.setMZ(mz);
         f.setRT(rt);
         f.setIntensity(it);
@@ -218,7 +224,7 @@ namespace OpenMS
         }
 
         //insert feature to map
-        feature_map.push_back(f);
+        consensus_map.push_back(f);
       }
     }
 

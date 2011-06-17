@@ -82,14 +82,15 @@ using namespace std;
 		- filter by consensus feature charge
 		- filter by map (extracts specified maps and re-evaluates consensus centroid)@n e.g. FileFilter -map 2 3 5 -in file1.consensusXML -out file2.consensusXML@n If a single map is specified, the feature itself can be extracted.@n e.g. FileFilter -map 5 -in file1.consensusXML -out file2.featureXML
 
-  - featureXML / consensusXML):
+	- featureXML / consensusXML):
 		- filter sequences, i.e. "LYSNLVER" or the modification "(Oxidation)"
-		-	filter accessions, i.e. "sp|P02662|CASA1_BOVIN"
-		-	filter features with annotations
+		- filter accessions, i.e. "sp|P02662|CASA1_BOVIN"
+		- filter features with annotations
 		- filter features without annotations
-		-	filter unassigned peptide identifications
+		- filter unassigned peptide identifications
 		- filter id with best score of features with multiple peptide identifications
 		- remove features with id clashes (different sequences mapped to one feature)
+	The Priority of the id-flags is: remove_* -> remove_clashes -> keep_best_score_id -> sequences/accessions
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_FileFilter.cli
@@ -119,6 +120,16 @@ class TOPPFileFilter
 	private:
 	static bool checkPeptideIdentification_(BaseFeature& feature, const bool remove_annotated_features, const bool remove_unannotated_features, const StringList& sequences, const StringList& accessions, const bool keep_best_score_id, const String best_score, const bool remove_clashes)
 	{
+		//flag: remove_annotated_features and non-empty peptideIdentifications
+		if (remove_annotated_features && !feature.getPeptideIdentifications().empty())
+		{
+			return false;
+		}
+		//flag: remove_unannotated_features and no peptideIdentifications
+		if (remove_unannotated_features && feature.getPeptideIdentifications().empty())
+		{
+			return false;
+		}
 		//flag: remove_clashes
 		if (remove_clashes && !feature.getPeptideIdentifications().empty())
 		{
@@ -129,7 +140,7 @@ class TOPPFileFilter
 				//loop over all peptideHits
 				for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
 				{
-					if (!pep_hit_it->getSequence().toString().hasSubstring(temp))
+					if (pep_hit_it->getSequence().toString()!=temp)
 					{
 						return false;
 					}
@@ -205,16 +216,6 @@ class TOPPFileFilter
 			{
 				return access;
 			}
-		}
-		//flag: remove_annotated_features and non-empty peptideIdentifications
-		if (remove_annotated_features && !feature.getPeptideIdentifications().empty())
-		{
-			return false;
-		}
-		//flag: remove_unannotated_features and no peptideIdentifications
-		if (remove_unannotated_features && feature.getPeptideIdentifications().empty())
-		{
-			return false;
 		}
 		return true;
 	}
@@ -295,7 +296,7 @@ class TOPPFileFilter
 
 		addEmptyLine_();
 		registerTOPPSubsection_("id","id section");
-		addText_("Priority of the id-flags is: remove_clashes -> keep_best_score_id -> sequences/accessions ->remove_*");
+		addText_("Priority of the id-flags is: remove_* -> remove_clashes -> keep_best_score_id -> sequences/accessions");
 		registerFlag_("id:remove_clashes", "remove features with id clashes (different sequences mapped to one feature)", true);
 		registerFlag_("id:keep_best_score_id", "in case of multiple peptide identifications, keep only the id with best score");
 		registerStringOption_("id:best_score", "<highest/lowest>", "highest", "define if best score is highest score or lowest score", false);

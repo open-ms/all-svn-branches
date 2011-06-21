@@ -28,9 +28,11 @@
 #include <OpenMS/VISUAL/APPLICATIONS/TOPPViewBase.h>
 #include <OpenMS/VISUAL/Spectrum1DWidget.h>
 #include <OpenMS/VISUAL/TOPPViewSpectraViewBehavior.h>
+#include <OpenMS/KERNEL/ChromatogramTools.h>
 
 #include <QtGui/QMessageBox>
 #include <QtCore/QString>
+
 
 using namespace OpenMS;
 using namespace std;
@@ -48,44 +50,72 @@ namespace OpenMS
     const LayerData& layer = tv_->getActiveCanvas()->getCurrentLayer();
     ExperimentSharedPtrType exp_sptr = layer.getPeakData();
 
-    //open new 1D widget
-    Spectrum1DWidget* w = new Spectrum1DWidget(tv_->getSpectrumParameters(1), (QWidget*)tv_->getWorkspace());
+   //open new 1D widget
+   Spectrum1DWidget* w = new Spectrum1DWidget(tv_->getSpectrumParameters(1), (QWidget*)tv_->getWorkspace());
 
-    if(layer.type == LayerData::DT_PEAK)
-    {
-      //add data
-      if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
-      {
-        return;
-      }
+   cout << "[TOPPViewSpectraViewBehaviour]Chromatogram index: " << index << endl;
 
-      w->canvas()->activateSpectrum(index);
+   if (layer.type == LayerData::DT_CHROMATOGRAM)
+   {
+     // create managed pointer to experiment data
+     ExperimentType* chrom_exp = new ExperimentType();
+     ExperimentSharedPtrType chrom_exp_sptr(chrom_exp);
 
-      // set relative (%) view of visible area
-      w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
+     const ExperimentType exp = *exp_sptr;
+     SpectrumType spectrum;
+     const MSChromatogram<ChromatogramPeak>& current_chrom = exp.getChromatograms()[index];
+     for(Size i = 0; i!= current_chrom.size(); ++i)
+     {
+       const ChromatogramPeak& cpeak = current_chrom[i];
+       Peak1D peak1d;
+       peak1d.setMZ(cpeak.getRT());
+       peak1d.setIntensity(cpeak.getIntensity());
+       spectrum.push_back(peak1d);
+     }
+     chrom_exp_sptr->push_back(spectrum);
+     //add chromatogram data as peak spectrum
+     if (!w->canvas()->addLayer(chrom_exp_sptr, layer.filename))
+     {
+       return;
+     }
 
-      //for MS1 spectra set visible area to visible area in 2D view.
-      UInt ms_level = w->canvas()->getCurrentLayer().getCurrentSpectrum().getMSLevel();
-      if (ms_level == 1)
-      {
-        // set visible aree to visible area in 2D view
-        w->canvas()->setVisibleArea(tv_->getActiveCanvas()->getVisibleArea());
-      }
+   } else if (layer.type == LayerData::DT_PEAK)
+   {
+     //add peak data
+     if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
+     {
+       return;
+     }
+   }
 
-      // basic behavior 2
-      String caption = layer.name;
-      w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+   w->canvas()->activateSpectrum(index);
 
-      tv_->showSpectrumWidgetInWindow(w,caption);
-      tv_->updateLayerBar();
-      tv_->updateViewBar();
-      tv_->updateFilterBar();
-      tv_->updateMenu();
-    }
-    if(layer.type == LayerData::DT_CHROMATOGRAM)
-    {
+   // set relative (%) view of visible area
+   w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
 
-    }
+   if (layer.type == LayerData::DT_PEAK)
+   {
+     // for MS1 spectra set visible area to visible area in 2D view.
+     UInt ms_level = w->canvas()->getCurrentLayer().getCurrentSpectrum().getMSLevel();
+     if (ms_level == 1)
+     {
+       // set visible aree to visible area in 2D view
+       w->canvas()->setVisibleArea(tv_->getActiveCanvas()->getVisibleArea());
+     }
+   } else if (layer.type == LayerData::DT_CHROMATOGRAM)
+   {
+
+   }
+
+   // basic behavior 2
+   String caption = layer.name;
+   w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
+
+   tv_->showSpectrumWidgetInWindow(w,caption);
+   tv_->updateLayerBar();
+   tv_->updateViewBar();
+   tv_->updateFilterBar();
+   tv_->updateMenu();
   }
 
   void TOPPViewSpectraViewBehavior::activate1DSpectrum(int index)

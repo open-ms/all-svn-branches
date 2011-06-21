@@ -82,8 +82,8 @@ using namespace std;
 		- filter by consensus feature charge
 		- filter by map (extracts specified maps and re-evaluates consensus centroid)@n e.g. FileFilter -map 2 3 5 -in file1.consensusXML -out file2.consensusXML@n If a single map is specified, the feature itself can be extracted.@n e.g. FileFilter -map 5 -in file1.consensusXML -out file2.featureXML
 	- featureXML / consensusXML):
-		- filter sequences, i.e. "LYSNLVER" or the modification "(Phospho)"@n e.g. FileFilter -id:sequences_whitelist Phospho -in file1.consensusXML -out file2.consensusXML
-		- filter accessions, i.e. "sp|P02662|CASA1_BOVIN"
+		- filter sequences, e.g. "LYSNLVER" or the modification "(Phospho)"@n e.g. FileFilter -id:sequences_whitelist Phospho -in file1.consensusXML -out file2.consensusXML
+		- filter accessions, e.g. "sp|P02662|CASA1_BOVIN"
 		- remove features with annotations
 		- remove features without annotations
 		- remove unassigned peptide identifications

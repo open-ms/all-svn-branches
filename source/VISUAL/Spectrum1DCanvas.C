@@ -61,6 +61,7 @@
 
 using namespace std;
 
+
 #define DEBUG_TOPPVIEW 0
 
 namespace OpenMS
@@ -972,41 +973,39 @@ namespace OpenMS
 	
 	bool Spectrum1DCanvas::finishAdding_()
 	{
-    if (layers_.back().type!=LayerData::DT_PEAK && layers_.back().type!=LayerData::DT_CHROMATOGRAM)
+		if (layers_.back().type!=LayerData::DT_PEAK)
 		{
 			QMessageBox::critical(this,"Error","This widget supports peak data only. Aborting!");
 			return false;
 		}
 		
-    if (layers_.back().type!=LayerData::DT_PEAK)
-    {
-      current_layer_ = getLayerCount()-1;
-      currentPeakData_()->updateRanges();
+		current_layer_ = getLayerCount()-1;
+    currentPeakData_()->updateRanges();
+		
+		//Abort if no data points are contained
+    if (getCurrentLayer().getPeakData()->size()==0 || getCurrentLayer().getPeakData()->getSize()==0)
+		{
+			layers_.resize(getLayerCount()-1);
+			if (current_layer_!=0) current_layer_ = current_layer_-1;
+			QMessageBox::critical(this,"Error","Cannot add a dataset that contains no survey scans. Aborting!");
+			return false;
+		}
+		
+    //add new draw mode and style
+		draw_modes_.push_back(DM_PEAKS);
+    peak_penstyle_.push_back(Qt::SolidLine);
 
-      //Abort if no data points are contained
-      if (getCurrentLayer().getPeakData()->size()==0 || getCurrentLayer().getPeakData()->getSize()==0)
-      {
-        layers_.resize(getLayerCount()-1);
-        if (current_layer_!=0) current_layer_ = current_layer_-1;
-        QMessageBox::critical(this,"Error","Cannot add a dataset that contains no survey scans. Aborting!");
-        return false;
-      }
-
-      //add new draw mode and style
-      draw_modes_.push_back(DM_PEAKS);
+		//estimate peak type
+		PeakTypeEstimator pte;
+		if (pte.estimateType(getCurrentLayer_().getCurrentSpectrum().begin(),getCurrentLayer_().getCurrentSpectrum().end()) == SpectrumSettings::RAWDATA)
+		{
+			draw_modes_.back() = DM_CONNECTEDLINES;
       peak_penstyle_.push_back(Qt::SolidLine);
-
-      //estimate peak type
-      PeakTypeEstimator pte;
-      if (pte.estimateType(getCurrentLayer_().getCurrentSpectrum().begin(),getCurrentLayer_().getCurrentSpectrum().end()) == SpectrumSettings::RAWDATA)
-      {
-        draw_modes_.back() = DM_CONNECTEDLINES;
-        peak_penstyle_.push_back(Qt::SolidLine);
-      }
-
-      //Change peak color if this is not the first layer
-      switch(current_layer_%5)
-      {
+		}
+		
+		//Change peak color if this is not the first layer
+		switch(current_layer_%5)
+		{
 			case 0:
 				break;
 			case 1:
@@ -1025,48 +1024,43 @@ namespace OpenMS
 				getCurrentLayer_().param.setValue("peak_color", "#ffaa00");
 				getCurrentLayer_().param.setValue("annotation_color", "#550000");
 				break;
-      }
+		}
+	
+		// sort spectra in accending order of position
+    for (Size i = 0; i < currentPeakData_()->size(); ++i)
+		{
+      (*getCurrentLayer_().getPeakData())[i].sortByPosition();
+		}
+		
+    getCurrentLayer_().annotations_1d.resize(currentPeakData_()->size());
+		
+		//update nearest peak
+		selected_peak_.clear();
+		
+		//update ranges
+		recalculateRanges_(0,2,1);
+		overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
+		float width = overall_data_range_.width();
+		overall_data_range_.setMinX(overall_data_range_.minX() - 0.002 * width);
+		overall_data_range_.setMaxX(overall_data_range_.maxX() + 0.002 * width);
+		overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
+		resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
+		
+		//Warn if negative intensities are contained
+		if (getMinIntensity(current_layer_)<0.0)
+		{
+			QMessageBox::warning(this,"Warning","This dataset contains negative intensities. Use it at your own risk!");
+		}
+		
+		if (getLayerCount()==2)
+		{
+			setIntensityMode(IM_PERCENTAGE);
+		}
+		intensityModeChange_();
 
-      // sort spectra in accending order of position
-      for (Size i = 0; i < currentPeakData_()->size(); ++i)
-      {
-        (*getCurrentLayer_().getPeakData())[i].sortByPosition();
-      }
-
-      getCurrentLayer_().annotations_1d.resize(currentPeakData_()->size());
-
-      //update nearest peak
-      selected_peak_.clear();
-
-      //update ranges
-      recalculateRanges_(0,2,1);
-      overall_data_range_.setMinY(0.0);  // minimal intensity always 0.0
-      float width = overall_data_range_.width();
-      overall_data_range_.setMinX(overall_data_range_.minX() - 0.002 * width);
-      overall_data_range_.setMaxX(overall_data_range_.maxX() + 0.002 * width);
-      overall_data_range_.setMaxY(overall_data_range_.maxY() + 0.002 * overall_data_range_.height());
-      resetZoom(false); //no repaint as this is done in intensityModeChange_() anyway
-
-      //Warn if negative intensities are contained
-      if (getMinIntensity(current_layer_)<0.0)
-      {
-        QMessageBox::warning(this,"Warning","This dataset contains negative intensities. Use it at your own risk!");
-      }
-
-      if (getLayerCount()==2)
-      {
-        setIntensityMode(IM_PERCENTAGE);
-      }
-      intensityModeChange_();
-
-      emit layerActivated(this);
-
-      return true;
-    }
-    if (layers_.back().type!=LayerData::DT_PEAK)
-    {
-
-    }
+		emit layerActivated(this);
+		
+		return true;
 	}
 
 	void Spectrum1DCanvas::drawCoordinates_(QPainter& painter, const PeakIndex& peak)
@@ -1083,37 +1077,29 @@ namespace OpenMS
 			QMessageBox::critical(this,"Error","This widget supports peak data only. Aborting!");
 			return;
     }
+    mz = peak.getPeak(*getCurrentLayer().getPeakData()).getMZ();
+    rt = peak.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
+    it = peak.getPeak(*getCurrentLayer().getPeakData()).getIntensity();
 
-    if (getCurrentLayer().type==LayerData::DT_PEAK)
-    {
-      mz = peak.getPeak(*getCurrentLayer().getPeakData()).getMZ();
-      rt = peak.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
-      it = peak.getPeak(*getCurrentLayer().getPeakData()).getIntensity();
+		//draw text			
+		QStringList lines;
+    String text;
+    int precision(2);
 
-      //draw text
-      QStringList lines;
-      String text;
-      int precision(2);
-
-      if (isMzToXAxis() ^ is_swapped_) // XOR
-      { // only if either one of the conditions holds
-        text = "RT: ";
-        precision = 2;
-      }
-      else
-      { // only if none or both are true
-        text = "m/z: ";
-        precision = 6;
-      }
-      lines.push_back(text.c_str() + QString::number(mz,'f',precision));
-      lines.push_back("Int: " + QString::number(it,'f',2));
-      drawText_(painter, lines);
+    if (isMzToXAxis() ^ is_swapped_) // XOR
+    { // only if either one of the conditions holds
+      text = "RT: ";  
+      precision = 2;
     }
-    if (getCurrentLayer().type==LayerData::DT_PEAK)
-    {
-
+    else
+    { // only if none or both are true
+      text = "m/z: ";
+      precision = 6;
     }
-  }
+    lines.push_back(text.c_str() + QString::number(mz,'f',precision));
+		lines.push_back("Int: " + QString::number(it,'f',2));
+		drawText_(painter, lines);
+	}
 
 	void Spectrum1DCanvas::drawDeltas_(QPainter& painter, const PeakIndex& start, const PeakIndex& end)
 	{
@@ -1124,60 +1110,52 @@ namespace OpenMS
 		DoubleReal rt = 0.0;
 		Real it = 0.0;
 
-    if (getCurrentLayer().type!=LayerData::DT_PEAK && getCurrentLayer().type!=LayerData::DT_CHROMATOGRAM)
+    if (getCurrentLayer().type!=LayerData::DT_PEAK)
 		{
 			QMessageBox::critical(this,"Error","This widget supports peak data only. Aborting!");
 			return;
     }
 
-    if (getCurrentLayer().type==LayerData::DT_PEAK)
-    {
+		if (end.isValid())
+		{
+      mz = end.getPeak(*getCurrentLayer().getPeakData()).getMZ() - start.getPeak(*getCurrentLayer().getPeakData()).getMZ();
+      rt = end.getSpectrum(*getCurrentLayer().getPeakData()).getRT() - start.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
+      it = end.getPeak(*getCurrentLayer().getPeakData()).getIntensity() / start.getPeak(*getCurrentLayer().getPeakData()).getIntensity();
+		}
+		else
+		{
+			PointType point = widgetToData_(last_mouse_pos_);
+      mz = point[0] - start.getPeak(*getCurrentLayer().getPeakData()).getMZ();
+      rt = point[1] - start.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
+			it = std::numeric_limits<DoubleReal>::quiet_NaN();
+		}
 
-      if (end.isValid())
-      {
-        mz = end.getPeak(*getCurrentLayer().getPeakData()).getMZ() - start.getPeak(*getCurrentLayer().getPeakData()).getMZ();
-        rt = end.getSpectrum(*getCurrentLayer().getPeakData()).getRT() - start.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
-        it = end.getPeak(*getCurrentLayer().getPeakData()).getIntensity() / start.getPeak(*getCurrentLayer().getPeakData()).getIntensity();
-      }
-      else
-      {
-        PointType point = widgetToData_(last_mouse_pos_);
-        mz = point[0] - start.getPeak(*getCurrentLayer().getPeakData()).getMZ();
-        rt = point[1] - start.getSpectrum(*getCurrentLayer().getPeakData()).getRT();
-        it = std::numeric_limits<DoubleReal>::quiet_NaN();
-      }
-
-      //draw text
-      QStringList lines;
-      String text;
-      int precision(2);
-      if (isMzToXAxis() ^ is_swapped_) // XOR
-      { // only if either one of the conditions holds
-        text = "RT delta: ";
-        precision = 2;
-      }
-      else
-      { // only if none or both are true
-        text = "m/z delta: ";
-        precision = 6;
-      }
-      lines.push_back(text.c_str() + QString::number(mz,'f',precision));
-
-      if (boost::math::isinf(it) || boost::math::isnan(it))
-      {
-        lines.push_back("Int ratio: n/a");
-      }
-      else
-      {
-        lines.push_back("Int ratio: " + QString::number(it,'f',2));
-      }
-      drawText_(painter, lines);
+		//draw text			
+		QStringList lines;
+    String text;
+    int precision(2);
+    if (isMzToXAxis() ^ is_swapped_) // XOR
+    { // only if either one of the conditions holds
+      text = "RT delta: ";  
+      precision = 2;
     }
-    if (getCurrentLayer().type!=LayerData::DT_CHROMATOGRAM)
-    {
-
+    else
+    { // only if none or both are true
+      text = "m/z delta: ";
+      precision = 6;
     }
-  }
+    lines.push_back(text.c_str() + QString::number(mz,'f',precision));
+    
+    if (boost::math::isinf(it) || boost::math::isnan(it))
+		{
+			lines.push_back("Int ratio: n/a");
+		}
+		else
+		{
+			lines.push_back("Int ratio: " + QString::number(it,'f',2));			
+		}
+		drawText_(painter, lines);
+	}
 
   void Spectrum1DCanvas::recalculateSnapFactor_()
   {

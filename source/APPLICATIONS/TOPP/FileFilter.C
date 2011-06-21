@@ -81,7 +81,7 @@ using namespace std;
 		- filter by size (number of elements in consensus features)
 		- filter by consensus feature charge
 		- filter by map (extracts specified maps and re-evaluates consensus centroid)@n e.g. FileFilter -map 2 3 5 -in file1.consensusXML -out file2.consensusXML@n If a single map is specified, the feature itself can be extracted.@n e.g. FileFilter -map 5 -in file1.consensusXML -out file2.featureXML
-	- featureXML / consensusXML):
+	- featureXML / consensusXML:
 		- filter sequences, e.g. "LYSNLVER" or the modification "(Phospho)"@n e.g. FileFilter -id:sequences_whitelist Phospho -in file1.consensusXML -out file2.consensusXML
 		- filter accessions, e.g. "sp|P02662|CASA1_BOVIN"
 		- remove features with annotations
@@ -89,7 +89,8 @@ using namespace std;
 		- remove unassigned peptide identifications
 		- filter id with best score of features with multiple peptide identifications@n e.g. FileFilter -id:remove_unannotated_features -id:remove_unassigned_ids -id:keep_best_score_id -in file1.featureXML -out file2.featureXML
 		- remove features with id clashes (different sequences mapped to one feature)
-	The Priority of the id-flags is: remove_annotated_features / remove_unannotated_features -> remove_clashes -> keep_best_score_id -> sequences_whitelist / accessions_whitelist
+
+	The Priority of the id-flags is (decreasing order): remove_annotated_features / remove_unannotated_features -> remove_clashes -> keep_best_score_id -> sequences_whitelist / accessions_whitelist
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_FileFilter.cli
@@ -298,8 +299,8 @@ class TOPPFileFilter
 		addText_("The Priority of the id-flags is: remove_annotated_features / remove_unannotated_features -> remove_clashes -> keep_best_score_id -> sequences_whitelist / accessions_whitelist");
 		registerFlag_("id:remove_clashes", "remove features with id clashes (different sequences mapped to one feature)", true);
 		registerFlag_("id:keep_best_score_id", "in case of multiple peptide identifications, keep only the id with best score");
-		registerStringList_("id:sequences_whitelist", "<sequence>", StringList(), "keep only features with whitelisted sequences, i.e. LYSNLVER or the modification (Oxidation)", false);
-		registerStringList_("id:accessions_whitelist", "<accessions>", StringList(), "keep only features with whitelisted accessions, i.e. sp|P02662|CASA1_BOVIN", false);
+		registerStringList_("id:sequences_whitelist", "<sequence>", StringList(), "keep only features with whitelisted sequences, e.g. LYSNLVER or the modification (Oxidation)", false);
+		registerStringList_("id:accessions_whitelist", "<accessions>", StringList(), "keep only features with whitelisted accessions, e.g. sp|P02662|CASA1_BOVIN", false);
 		registerFlag_("id:remove_annotated_features", "remove features with annotations");
 		registerFlag_("id:remove_unannotated_features", "remove features without annotations");
 		registerFlag_("id:remove_unassigned_ids", "remove unassigned peptide identifications");

@@ -81,16 +81,15 @@ using namespace std;
 		- filter by size (number of elements in consensus features)
 		- filter by consensus feature charge
 		- filter by map (extracts specified maps and re-evaluates consensus centroid)@n e.g. FileFilter -map 2 3 5 -in file1.consensusXML -out file2.consensusXML@n If a single map is specified, the feature itself can be extracted.@n e.g. FileFilter -map 5 -in file1.consensusXML -out file2.featureXML
-
 	- featureXML / consensusXML):
-		- filter sequences, i.e. "LYSNLVER" or the modification "(Oxidation)"
+		- filter sequences, i.e. "LYSNLVER" or the modification "(Phospho)"@n e.g. FileFilter -id:sequences_whitelist Phospho -in file1.consensusXML -out file2.consensusXML
 		- filter accessions, i.e. "sp|P02662|CASA1_BOVIN"
-		- filter features with annotations
-		- filter features without annotations
-		- filter unassigned peptide identifications
-		- filter id with best score of features with multiple peptide identifications
+		- remove features with annotations
+		- remove features without annotations
+		- remove unassigned peptide identifications
+		- filter id with best score of features with multiple peptide identifications@n e.g. FileFilter -id:remove_unannotated_features -id:remove_unassigned_ids -id:keep_best_score_id -in file1.featureXML -out file2.featureXML
 		- remove features with id clashes (different sequences mapped to one feature)
-	The Priority of the id-flags is: remove_* -> remove_clashes -> keep_best_score_id -> sequences/accessions
+	The Priority of the id-flags is: remove_annotated_features / remove_unannotated_features -> remove_clashes -> keep_best_score_id -> sequences_whitelist / accessions_whitelist
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_FileFilter.cli
@@ -118,7 +117,7 @@ class TOPPFileFilter
 	}
 
 	private:
-	static bool checkPeptideIdentification_(BaseFeature& feature, const bool remove_annotated_features, const bool remove_unannotated_features, const StringList& sequences, const StringList& accessions, const bool keep_best_score_id, const String best_score, const bool remove_clashes)
+	static bool checkPeptideIdentification_(BaseFeature& feature, const bool remove_annotated_features, const bool remove_unannotated_features, const StringList& sequences, const StringList& accessions, const bool keep_best_score_id, const bool remove_clashes)
 	{
 		//flag: remove_annotated_features and non-empty peptideIdentifications
 		if (remove_annotated_features && !feature.getPeptideIdentifications().empty())
@@ -157,8 +156,8 @@ class TOPPFileFilter
 				//loop over all peptideHits
 				for (vector<PeptideHit>::const_iterator pep_hit_it = pep_id_it->getHits().begin(); pep_hit_it != pep_id_it->getHits().end(); ++pep_hit_it)
 				{
-					if ((best_score.compare("highest") == 0 && pep_hit_it->getScore() > temp.getHits().front().getScore()) ||
-						(best_score.compare("lowest") == 0 && pep_hit_it->getScore() < temp.getHits().front().getScore()))
+					if ((pep_id_it->isHigherScoreBetter() && pep_hit_it->getScore() > temp.getHits().front().getScore()) ||
+						(!pep_id_it->isHigherScoreBetter() && pep_hit_it->getScore() < temp.getHits().front().getScore()))
 					{
 						temp = *pep_id_it;
 					}
@@ -296,11 +295,9 @@ class TOPPFileFilter
 
 		addEmptyLine_();
 		registerTOPPSubsection_("id","id section");
-		addText_("Priority of the id-flags is: remove_* -> remove_clashes -> keep_best_score_id -> sequences/accessions");
+		addText_("The Priority of the id-flags is: remove_annotated_features / remove_unannotated_features -> remove_clashes -> keep_best_score_id -> sequences_whitelist / accessions_whitelist");
 		registerFlag_("id:remove_clashes", "remove features with id clashes (different sequences mapped to one feature)", true);
 		registerFlag_("id:keep_best_score_id", "in case of multiple peptide identifications, keep only the id with best score");
-		registerStringOption_("id:best_score", "<highest/lowest>", "highest", "define if best score is highest score or lowest score", false);
-		setValidStrings_("id:best_score", StringList::create("highest,lowest"));
 		registerStringList_("id:sequences_whitelist", "<sequence>", StringList(), "keep only features with whitelisted sequences, i.e. LYSNLVER or the modification (Oxidation)", false);
 		registerStringList_("id:accessions_whitelist", "<accessions>", StringList(), "keep only features with whitelisted accessions, i.e. sp|P02662|CASA1_BOVIN", false);
 		registerFlag_("id:remove_annotated_features", "remove features with annotations");
@@ -390,7 +387,6 @@ class TOPPFileFilter
 		StringList sequences = getStringList_("id:sequences_whitelist");
 		StringList accessions = getStringList_("id:accessions_whitelist");
 		bool keep_best_score_id = getFlag_("id:keep_best_score_id");
-		String best_score = getStringOption_("id:best_score");
 		bool remove_clashes = getFlag_("id:remove_clashes");
 
 		//convert bounds to numbers
@@ -608,7 +604,7 @@ class TOPPFileFilter
 				charge_ok = ((charge_l <= fm_it->getCharge()) && (fm_it->getCharge() <= charge_u));
 				size_ok = ((size_l <= fm_it->getSubordinates().size()) && (fm_it->getSubordinates().size() <= size_u));
 				q_ok = ((q_l <= fm_it->getOverallQuality()) && (fm_it->getOverallQuality() <= q_u));
-				annotation_ok = checkPeptideIdentification_(*fm_it, remove_annotated_features, remove_unannotated_features, sequences, accessions, keep_best_score_id, best_score, remove_clashes);
+				annotation_ok = checkPeptideIdentification_(*fm_it, remove_annotated_features, remove_unannotated_features, sequences, accessions, keep_best_score_id, remove_clashes);
 
 				if (rt_ok && mz_ok && int_ok && charge_ok && size_ok && q_ok && annotation_ok)
 				{
@@ -667,7 +663,7 @@ class TOPPFileFilter
 			{
 				charge_ok = ((charge_l <= cm_it->getCharge()) && (cm_it->getCharge() <= charge_u));
 				size_ok = ((cm_it->size() >= size_l) && (cm_it->size() <= size_u));
-				annotation_ok = checkPeptideIdentification_(*cm_it, remove_annotated_features, remove_unannotated_features, sequences, accessions, keep_best_score_id, best_score, remove_clashes);
+				annotation_ok = checkPeptideIdentification_(*cm_it, remove_annotated_features, remove_unannotated_features, sequences, accessions, keep_best_score_id, remove_clashes);
 
 				if (charge_ok && size_ok && annotation_ok)
 				{

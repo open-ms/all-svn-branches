@@ -1,0 +1,52 @@
+<ttd>
+	<tool status="external">
+		<category>GSEA</category>
+		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
+		<type>GeneSetEnrichmentAnalysis</type>
+		// description of the wrapper
+		<external>
+      <text>
+        <onstartup>This is printed on startup ... Wrapper was tested with "external_tool" vX.Y.Z, report issues to the OpenMS team at www.OpenMS.de</onstartup>
+        <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
+        <onfinish>This is printed when finished successfully.</onfinish>
+      </text>    
+		  // currently disregarded by TOPPAS, but might become useful
+		  <e_category>GSEA</e_category>
+		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
+		  <cloptions>CMD BATCH --vanilla --slave "--args "%1" "%2"" "%3" "%4"</cloptions>
+		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
+		  <path>R</path>
+      // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
+      // and thus starting the tool from somewhere else might actually lead to trouble
+      // use only real paths here (no placeholders like %TMP)
+      <workingdirectory>.</workingdirectory>
+		  // these mappings connect input parameters (from the 'ini_param' section below) and the command line options of your tool
+		  // any INI parameter can be referenced using %%'param_name', e.g. %%in
+		  // additionally you can use %TMP and %BASENAME[X] to get the current temp directory to store data, or the basename of X
+		  <mappings>
+			<mapping id="1" cl="%%in" />
+			<mapping id="2" cl="%%out" />
+			<mapping id="3" cl="%%script" />
+			<mapping id="4" cl="%%log" />
+
+			// output mapping/copying: this is a little hard to explain and usually you will not need it (then you have to delete all file-tags!)
+			// what it does: when the wrapped tool works with in-place files (i.e. overwrites its input), you must copy it before
+			//               ,e.g. TPP's RefreshParser will overwrite its input pepXML file
+			//               The targeted parameter gets replaced with the temporary filename after the copy is done, so that subsequent
+			//               operations target the temp file
+      
+			// output mapping/moving: this is a little hard to explain and usually you will not need it (then you have to delete all file-tags!)
+			// what it does: when you cannot specify an explicit output file to the external tool and it rather determines that by itself
+			//               ,e.g. msconvert will create an output file (call it F_E) which has the same name as the input file with a replaced suffix
+			//               then you might need to move F_E to the name you want (and/or where TOPPAS can find it)
+			//               Thus you specify the name of F_E and the target name (in terms of INI parameter values)
+		  </mappings>
+		  <ini_param>
+			<ITEM name="in" value="" type="string" description="input file in mzML format(valid formats: &apos;mzML&apos;)" tags="input file" />
+			<ITEM name="out" value="" type="string" description="output file in txt format(valid formats: &apos;txt&apos;)" tags="output file" />
+			<ITEM name="script" value="/Users/luhn/Desktop/test.R" type="string" description="R script file(valid formats: &apos;R&apos;)" tags="script file" />
+			<ITEM name="log" value="/Users/luhn/Desktop/output.log" type="string" description="log file in log format(valid formats: &apos;log&apos;)" tags="log file" />
+		  </ini_param>
+		</external>
+	</tool>
+</ttd>

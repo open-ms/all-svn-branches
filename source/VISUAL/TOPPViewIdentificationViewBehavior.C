@@ -57,7 +57,6 @@ namespace OpenMS
 
     if(layer.type == LayerData::DT_PEAK)
     {
-
       //open new 1D widget with the current default parameters
       Spectrum1DWidget* w = new Spectrum1DWidget(tv_->getSpectrumParameters(1), (QWidget*)tv_->getWorkspace());
       //add data
@@ -122,6 +121,7 @@ namespace OpenMS
     {
 
     }
+
   }
 
   void TOPPViewIdentificationViewBehavior::activate1DSpectrum(int index)

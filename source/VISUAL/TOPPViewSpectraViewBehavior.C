@@ -44,6 +44,8 @@ namespace OpenMS
   {
   }
 
+  String caption;
+
   void TOPPViewSpectraViewBehavior::showSpectrumAs1D(int index)
   {    
     // basic behavior 1
@@ -73,6 +75,8 @@ namespace OpenMS
        spectrum.push_back(peak1d);
      }
      chrom_exp_sptr->push_back(spectrum);
+
+     caption = layer.name + "[" + index + "]";
      //add chromatogram data as peak spectrum
      if (!w->canvas()->addLayer(chrom_exp_sptr, layer.filename))
      {
@@ -81,6 +85,8 @@ namespace OpenMS
 
    } else if (layer.type == LayerData::DT_PEAK)
    {
+     caption = layer.name;
+
      //add peak data
      if (!w->canvas()->addLayer(exp_sptr, layer.filename) || (Size)index >= w->canvas()->getCurrentLayer().getPeakData()->size())
      {
@@ -108,7 +114,6 @@ namespace OpenMS
    }
 
    // basic behavior 2
-   String caption = layer.name;
    w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
 
    tv_->showSpectrumWidgetInWindow(w,caption);

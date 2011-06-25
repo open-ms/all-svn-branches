@@ -463,7 +463,7 @@ namespace OpenMS
         dataToWidget_(iter->getPrecursor().getMZ(), min_rt , posi);
         dataToWidget_(iter->getPrecursor().getMZ(), max_rt , posi2);
 
-        painter.drawLine(posi.x(), posi.y(), posi2.x(), posi2.y());        
+        painter.drawLine(posi.x(), posi.y(), posi2.x(), posi2.y());
       }
     }
 		else if (layer.type==LayerData::DT_IDENT) // peptide identifications
@@ -2317,38 +2317,17 @@ namespace OpenMS
 		}
 		//------------------CHROMATOGRAMS----------------------------------
     else if (layer.type == LayerData::DT_CHROMATOGRAM)
-		{
+    {
       settings_menu->addSeparator();
       settings_menu->addAction("Show/hide projections");
       settings_menu->addAction("Show/hide MS/MS precursors");
 
       MSExperiment<Peak1D> exp;
       exp = *layer.getPeakData();
-      vector<int> chromatogram_index;
-      unsigned int index_counter = 0;
-
-      typedef std::set<Precursor, Precursor::MZLess> PCSetType;
-      PCSetType precursor_in_rt_mz_window;
-
-      // determine product chromatograms for all precursors
-      PCSetType precursors;
-      for (std::vector<MSChromatogram<> >::const_iterator iter = exp.getChromatograms().begin(); iter != exp.getChromatograms().end(); ++iter)
-      {
-        precursors.insert(iter->getPrecursor());
-      }
-      std::map<Precursor, std::vector<Size>, Precursor::MZLess> map_precursor_to_chrom_idx_all;
-      for (PCSetType::const_iterator pit = precursors.begin(); pit != precursors.end(); ++pit)
-      {
-        for (std::vector<MSChromatogram<> >::const_iterator iter = exp.getChromatograms().begin(); iter != exp.getChromatograms().end(); ++iter)
-        {
-          if (iter->getPrecursor() == *pit)
-          {
-            map_precursor_to_chrom_idx_all[*pit].push_back(iter - exp.getChromatograms().begin());
-          }
-        }
-      }
 
       // collect all precursor that fall into the mz rt window
+      typedef std::set<Precursor, Precursor::MZLess> PCSetType;
+      PCSetType precursor_in_rt_mz_window;
       for (vector<MSChromatogram<> >::const_iterator iter = exp.getChromatograms().begin(); iter != exp.getChromatograms().end(); ++iter)
       {
         if ( mz + 10.0 >= iter->getPrecursor().getMZ() &&
@@ -2361,24 +2340,14 @@ namespace OpenMS
       }
 
       // determine product chromatograms for each precursor
-
       map<Precursor, vector<Size>, Precursor::MZLess> map_precursor_to_chrom_idx;
       for (PCSetType::const_iterator pit = precursor_in_rt_mz_window.begin(); pit != precursor_in_rt_mz_window.end(); ++pit)
       {
-        for (map<Precursor, vector<Size>, Precursor::MZLess >::iterator mit = map_precursor_to_chrom_idx_all.begin(); mit != map_precursor_to_chrom_idx_all.end(); ++mit)
+        for (vector<MSChromatogram<> >::const_iterator iter = exp.getChromatograms().begin(); iter != exp.getChromatograms().end(); ++iter)
         {
-          for (vector<Size>::iterator vit = mit->second.begin(); vit != mit->second.end(); ++vit)
+          if (iter->getPrecursor() == *pit)
           {
-            if (mit->first == *pit)
-            {
-              map_precursor_to_chrom_idx[*pit] = map_precursor_to_chrom_idx_all[*pit];
-              chromatogram_index.push_back(index_counter);
-            }
-            index_counter++;
-            if(index_counter == exp.getChromatograms().size())
-            {
-              index_counter = 0;
-            }
+            map_precursor_to_chrom_idx[*pit].push_back(iter - exp.getChromatograms().begin());
           }
         }
       }
@@ -2404,8 +2373,6 @@ namespace OpenMS
         msn_chromatogram_meta = context_menu->addMenu("Chromatogram meta data");
         context_menu->addSeparator();
 
-        int i = 0;
-
         for (map<Precursor, vector<Size>, Precursor::MZLess >::iterator mit = map_precursor_to_chrom_idx.begin(); mit != map_precursor_to_chrom_idx.end(); ++mit)
         {
           QMenu* msn_precursor = msn_chromatogram->addMenu(QString("Precursor m/z: ") + QString::number(mit->first.getMZ()));  // neuer Eintrag für jeden Precursor
@@ -2420,13 +2387,10 @@ namespace OpenMS
           a->setData(chroms_idx);
 
           // Show single chromatogram: iterate over all chromatograms corresponding to the current precursor and add action for the single chromatogram
-
           for (vector<Size>::iterator vit = mit->second.begin(); vit != mit->second.end(); ++vit)
           {
             a = msn_precursor->addAction(QString("Chromatogram m/z: ") + QString::number(exp.getChromatograms()[*vit].getMZ())); // Precursor => Chromatogram MZ Werte eintragen
-            a->setData((int)(chromatogram_index[i]));
-            i++;
-            //a->setData((int)(*vit));
+            a->setData((int)(*vit));
           }
         }
       }
@@ -2443,16 +2407,12 @@ namespace OpenMS
             const QList<QVariant>& res = result->data().toList();
             for (Int i = 0; i != res.size(); ++i)
             {
-              cout << "Show all:" << endl;
+              // cout << "Show all:" << endl;
               cout << res[i].toInt() << endl;
             }
           } else // Show single chromatogram
           {
-            cout << "Chromatogram result " << result->data().toInt() << endl;
-            for (Size i = 0; i != chromatogram_index.size(); ++i)
-            {
-            cout << "Chromatogram_index vector: " << chromatogram_index[i] << endl;
-            }
+            //cout << "Chromatogram result " << result->data().toInt() << endl;
             emit showSpectrumAs1D(result->data().toInt());
           }
         }

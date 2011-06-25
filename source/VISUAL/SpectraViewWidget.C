@@ -460,10 +460,7 @@ namespace OpenMS
       exp = *cl.getPeakData();
       int index_counter = 0;
 
-
-      // collect all precursors
-      //typedef std::set<Precursor, Precursor::MZLess> PCSetType;
-      //PCSetType precursors;
+      // collect all precursors in order of appearance in the sorted chromatograms
       std::vector<float> precursors;
       int precursor_index = 0;
       float last_precursor = float(-1.0);
@@ -482,14 +479,8 @@ namespace OpenMS
         {
           precursors.push_back(iter->getPrecursor().getMZ());
         }
-
         ++precursor_index;
       }
-
-      //      for(Size i = 0; i != precursors.size(); ++i)
-      //      {
-      //        std::cout << precursors[i] << std::endl;
-      //      }
 
       // determine product chromatograms for each precursor
       //      std::map<Precursor, std::vector<Size>, Precursor::MZLess> map_precursor_to_chrom_idx;
@@ -509,13 +500,10 @@ namespace OpenMS
         index_counter = 0;
         for (std::vector<MSChromatogram<> >::const_iterator iter = exp.getChromatograms().begin(); iter != exp.getChromatograms().end(); ++iter)
         {
-
-
           if (float(iter->getPrecursor().getMZ()) == precursors[i])
           {
               if (float(iter->getPrecursor().getMZ()) != last_precursor)
             {
-                std::cout << "!= last_precursor" << std::endl;
               // Top level precursor entry
               item = new QTreeWidgetItem(0);
               item->setText(0, QString::number(precursors[i]));
@@ -528,11 +516,10 @@ namespace OpenMS
             }
             if (float(iter->getPrecursor().getMZ()) == last_precursor)
             {
-std::cout << "== last_precursor" << std::endl;
+
             }
             else if (last_precursor == float(-1.0)) // first entry
             {
- std::cout << "first enry" << std::endl;
               // Top level precursor entry
               item = new QTreeWidgetItem(0);
               item->setText(0, QString::number(precursors[i]));
@@ -541,14 +528,11 @@ std::cout << "== last_precursor" << std::endl;
               item->setText(4, QString("-"));
 
               toplevel_items.push_back(item);
-
-
-
             }
+
             last_precursor = precursors[i];
 
             // Childen chromatogram entry
-
             QTreeWidgetItem* sub_item = new QTreeWidgetItem(item);
             //const MSChromatogram<>& current_chromatogram = exp.getChromatograms()[current_chromatograms_idx[i]];
             sub_item->setText(0, QString::number(iter->getMZ()));
@@ -569,16 +553,13 @@ std::cout << "== last_precursor" << std::endl;
             case ChromatogramSettings::EMISSION_CHROMATOGRAM:                     sub_item->setText(4, QString("Emission chromatogram")); break;
             default: 								                                              sub_item->setText(4, QString("Unknown chromatogram")); break;
             }
-
             //sub_item->setText(5, QString(".."));
             //sub_item->setText(6, QString(".."));
             //sub_item->setText(7, QString(".."));
-
-
-
           }
           index_counter++;
-        }}
+        }
+      }
       spectra_treewidget_->addTopLevelItems(toplevel_items);
     }
     else

@@ -69,6 +69,9 @@ namespace OpenMS
       /// Behavior for showSpectraumAs1D
       virtual void showSpectrumAs1D(int index);
 
+      /// Behavior for showSpectraumAs1D
+      virtual void showSpectrumAs1D(std::vector<int, std::allocator<int> >& indices);
+
       /// Behavior for activate1DSpectrum
       virtual void activate1DSpectrum(int index);
 

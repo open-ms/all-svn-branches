@@ -123,12 +123,17 @@ namespace OpenMS
    tv_->updateMenu();
   }
 
-  void TOPPViewSpectraViewBehavior::showSpectrumAs1D(std::vector<int, std::allocator<int> >& indices)
+  void TOPPViewSpectraViewBehavior::showSpectrumAs1D(std::vector<int, std::allocator<int> > indices)
   {
 
     // basic behavior 1
     const LayerData& layer = tv_->getActiveCanvas()->getCurrentLayer();
     ExperimentSharedPtrType exp_sptr = layer.getPeakData();
+
+    // string for naming the different chromatogram layers with their index
+    String chromatogram_caption;
+    // string for naming the tab title with the indices of the chromatograms
+    caption = layer.name;
 
     //open new 1D widget
     Spectrum1DWidget* w = new Spectrum1DWidget(tv_->getSpectrumParameters(1), (QWidget*)tv_->getWorkspace());
@@ -161,28 +166,30 @@ namespace OpenMS
         }
         chrom_exp_sptr->push_back(spectrum);
 
-        caption = layer.name + "[" + index + "]";
+        caption = caption + " [" + indices[index] + "];";
+        chromatogram_caption = layer.name + "[" + indices[index] + "]";
+
         //add chromatogram data as peak spectrum
         if (!w->canvas()->addLayer(chrom_exp_sptr, layer.filename))
         {
           return;
         }
-
-        w->canvas()->activateSpectrum(index);
-
-        // set relative (%) view of visible area
-        w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
-
-        // basic behavior 2
-        w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), caption);
-
-        tv_->showSpectrumWidgetInWindow(w,caption);
-        tv_->updateLayerBar();
-        tv_->updateViewBar();
-        tv_->updateFilterBar();
-        tv_->updateMenu();
+        w->canvas()->activateSpectrum(*indices.begin());
+        w->canvas()->setLayerName(w->canvas()->activeLayerIndex(), chromatogram_caption);
       }
     }
+
+
+    // set relative (%) view of visible area
+    w->canvas()->setIntensityMode(SpectrumCanvas::IM_SNAP);
+
+    // basic behavior 2
+
+    tv_->showSpectrumWidgetInWindow(w,caption);
+    tv_->updateLayerBar();
+    tv_->updateViewBar();
+    tv_->updateFilterBar();
+    tv_->updateMenu();
   }
 
   void TOPPViewSpectraViewBehavior::activate1DSpectrum(int index)

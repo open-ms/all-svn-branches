@@ -98,7 +98,7 @@ namespace OpenMS
 		void visibleAreaChanged(DRange<2> area);
 		/// Requests to display the spectrum with index @p index in 1D
 		void showSpectrumAs1D(int index);
-void showSpectrumAs1D(std::vector<int, std::allocator<int> > indices);
+    void showSpectrumAs1D(std::vector<int, std::allocator<int> > indices);
     /// Requests to display all spectra as 1D
     void showCurrentPeaksAs3D();
 
@@ -127,9 +127,9 @@ void showSpectrumAs1D(std::vector<int, std::allocator<int> > indices);
 		
 	private slots:
 		/// shows the horizontal projection with the given data and draw mode
-                void horizontalProjection(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes);
+    void horizontalProjection(ExperimentSharedPtrType, Spectrum1DCanvas::DrawModes);
 		/// shows the vertical projection with the given data and draw mode
-                void verticalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes);
+     void verticalProjection(ExperimentSharedPtrType exp, Spectrum1DCanvas::DrawModes);
 		/// shows projections information
 		void projectionInfo(int peaks, double intensity, double max);
 		/// slot that monitors the visible area changes and triggers the update of projections

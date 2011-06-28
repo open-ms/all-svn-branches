@@ -55,8 +55,6 @@ namespace OpenMS
    //open new 1D widget
    Spectrum1DWidget* w = new Spectrum1DWidget(tv_->getSpectrumParameters(1), (QWidget*)tv_->getWorkspace());
 
-   cout << "[TOPPViewSpectraViewBehaviour]Chromatogram index: " << index << endl;
-
    if (layer.type == LayerData::DT_CHROMATOGRAM)
    {
      // create managed pointer to experiment data

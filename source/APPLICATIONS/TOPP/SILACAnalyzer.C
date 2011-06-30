@@ -1370,56 +1370,44 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &filename, bool cluster_inf
       point.setCharge(it->charge);
       point.setQuality(0, it->quality);
 
-      Int charge = it->charge;
-      String mass_shift_meta_value = "";
-      DoubleReal mass_shift_final = 0;
-
-      // mass shifts as meta value in [Da] (i.e. (6.0201, 8.0141)) and mass shifts as value for OverallQuality in [Da] (i.e. 6008)
-      for (vector<DoubleReal>::const_iterator shift_it = it->mass_shifts.begin() + 1; shift_it != it->mass_shifts.end(); ++shift_it)
-      {
-        // meta value for doublets
-        if (it->mass_shifts.size() == 2)
-        {
-          String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
-          temp = temp.substr(0, 6);     // get only five efficient digits
-          mass_shift_meta_value = "(" + temp + ")";
-          mass_shift_final = floor(*shift_it * charge);     // mass shift as value for OverallQuality
-        }
-
-        // meta value for triplets, quadruplets, ...
-        if (it->mass_shifts.size() > 2)
-        {
-          if (shift_it == it->mass_shifts.begin() + 1)
-          {
-            String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
-            temp = temp.substr(0, 6);     // get only five efficient digits
-            mass_shift_meta_value += "(" + temp + ", ";
-            mass_shift_final = floor(*shift_it * charge) * 1000;      // mass shift as value for OverallQuality
-          }
-
-          if ((shift_it > it->mass_shifts.begin() + 1) && (shift_it < it->mass_shifts.end() - 1))
-          {
-            String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
-            temp = temp.substr(0, 6);     // get only five efficient digits
-            mass_shift_meta_value += temp + ", ";
-            mass_shift_final = (mass_shift_final + floor(*shift_it * charge)) * 1000;     // mass shift as value for OverallQuality
-          }
-
-          if (shift_it == it->mass_shifts.end() - 1)
-          {
-            String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
-            temp = temp.substr(0, 6);     // get only five efficient digits
-            mass_shift_meta_value += temp + ")";
-            mass_shift_final += floor(*shift_it * charge);      // mass shift as value for OverallQuality
-          }
-        }
-      }
-
-      point.setOverallQuality(mass_shift_final);			// set mass shifts as value for OverallQuality in [Da]
-
-      point.setMetaValue("Mass shifts [Da]", mass_shift_meta_value);
       point.setMetaValue("Peaks per peptide", it->isotopes_per_peptide);
 
+      // Output all mass shifts as list
+      {
+        std::ostringstream out;
+        out << std::fixed << std::setprecision(4);
+        Int charge = it->charge;
+        for (vector<DoubleReal>::const_iterator shift_it = it->mass_shifts.begin() + 1; shift_it != it->mass_shifts.end(); ++shift_it)
+        {
+          out << *shift_it * charge << ';';
+        }
+        // Remove the last delimiter
+        std::string outs = out.str(); outs.erase(outs.end() - 1);
+        point.setOverallQuality(floor(it->mass_shifts.at(1) * charge));			// set mass shifts as value for OverallQuality in [Da]
+        point.setMetaValue("Mass shifts [Da]", outs);
+      }
+
+      // Output all intensities per peptide as list
+      {
+        std::ostringstream out;
+        for (vector<vector<DoubleReal> >::const_iterator inten_it = it->intensities.begin(); inten_it != it->intensities.end(); ++inten_it)
+        {
+          std::ostringstream out2;
+          out2 << std::fixed << std::setprecision(4);
+          for (vector<DoubleReal>::const_iterator inten2_it = inten_it->begin(); inten2_it != inten_it->end(); ++inten2_it)
+          {
+            out2 << *inten2_it << ',';
+          }
+          // Remove the last delimiter
+          std::string out2s = out2.str(); out2s.erase(out2s.end() - 1);
+          out << out2s << ';';
+        }
+        // Remove the last delimiter
+        std::string outs = out.str(); outs.erase(outs.end() - 1);
+        point.setMetaValue("Intensities", outs);
+      }
+
+      // Output cluster information if requests.
       if (cluster_info)
       {
         point.setMetaValue("Cluster id", it->cluster_id);

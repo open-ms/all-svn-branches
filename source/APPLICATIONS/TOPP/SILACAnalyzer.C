@@ -199,7 +199,6 @@ class TOPPSILACAnalyzer
 
     vector<vector<DataPoint> > data;
     ConsensusMap all_pairs;
-    FeatureMap<> all_cluster_points;
     FeatureMap<> subtree_points;
     MSExperiment<Peak1D> filter_exp;
 
@@ -228,9 +227,9 @@ class TOPPSILACAnalyzer
     registerOutputFile_("out_clusters", "<file>", "", "Optional output file containing data points passing all filters, hence belonging to a SILAC pattern. Points of the same colour correspond to the mono-isotopic peak of the lightest peptide in a pattern.", false, true);
     setValidFormats_("out_clusters", StringList::create("featureXML"));
 
-    // create optional flag for additional output file (.txt) to store filter results
+    // create optional flag for additional output file (.featureXML) to store filter results
     registerOutputFile_("out_filters", "<file>", "", "Additional output file containing all points that passed the filters as txt. Suitable as input for \"in_filters\" to perform clustering without preceding filtering process.", false, true);
-    //setValidFormats_("out_filters", StringList::create("txt"));
+    setValidFormats_("out_filters", StringList::create("featureXML"));
     // create optional flag for additional input file (.txt) to load filter results
     registerOutputFile_("in_filters", "<file>", "", "Additional input file containing all points that passed the filters as txt. Use output from \"out_filters\" to perform clustering only.", false, true);
     //setValidFormats_("in_filters", StringList::create("txt"));
@@ -343,7 +342,7 @@ class TOPPSILACAnalyzer
     // get name of additional clusters output file (.featureXML)
     out_clusters = getStringOption_("out_clusters");
 
-    // get name of additional filters output file (.txt)
+    // get name of additional filters output file (.featureXML)
     out_filters = getStringOption_("out_filters");
     // get name of additional filters input file (.txt)
     in_filters = getStringOption_("in_filters");
@@ -607,7 +606,7 @@ class TOPPSILACAnalyzer
     return mz_spacing[mz_spacing.size() / 2];
   }
 
-  vector<vector<DataPoint> > buildDataStructure(MSExperiment<Peak1D>& exp)
+  void buildDataStructure(MSExperiment<Peak1D>& exp)
   {
     // extract level 1 spectra
     IntList levels=IntList::create("1");
@@ -662,89 +661,12 @@ class TOPPSILACAnalyzer
 
 
     //--------------------------------------------------
-    // store filter results from vector<vector<DataPoint> > data to .txt
+    // store filter results from vector<vector<DataPoint> > data to .featureXML
     //--------------------------------------------------
 
     if (out_filters != "" && in_filters == "")     // check if option "out_filters" is specified and "in_filters" is not
     {
-      ofstream outfile;
-      outfile.open(out_filters.c_str());      // open ofstream to specified output file
-      outfile << setprecision(16);      // set precision of outfile to 16 to avoid losing digits
-
-      // vector of DataPoints
-      outfile << "<VectorOfDataPoints>" << "\n";
-
-      // iterate over outer DataPoint vector (vector<vector<DataPoint> >)
-      for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
-      {
-        // DataPoints
-        outfile << "<DataPoints>" << "\n";
-
-        // iterate over inner DataPoint vector (vector<DataPoint>)
-        for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
-        {
-          // DataPoint
-          outfile << "<DataPoint>" << "\n";
-
-          // feature_id
-          outfile << "<feature_id>" << "\n";
-          outfile << it->feature_id << "\n";
-          outfile << "</feature_id>" << "\n";
-
-          // rt
-          outfile << "<rt>" << "\n";
-          outfile << it->rt << "\n";
-          outfile << "</rt>" << "\n";
-
-          // mz
-          outfile << "<mz>" << "\n";
-          outfile << it->mz << "\n";
-          outfile << "</mz>" << "\n";
-
-          // charge
-          outfile << "<charge>" << "\n";
-          outfile << it->charge << "\n";
-          outfile << "</charge>" << "\n";
-
-          // isotopes_per_peptide
-          outfile << "<isotopes_per_peptide>" << "\n";
-          outfile << it->isotopes_per_peptide << "\n";
-          outfile << "</isotopes_per_peptide>" << "\n";
-
-          // intensities
-          outfile << "<intensities>" << "\n";
-
-          // iterate over outer intensities vector (vector<vector<DoubleReal> >)
-          for (vector<vector<DoubleReal> >::iterator intensities_it = it->intensities.begin(); intensities_it != it->intensities.end(); ++intensities_it)
-          {
-            outfile << "<intensities_" << intensities_it - it->intensities.begin() << ">\n";
-
-            // // iterate over inner intensities vector (vector<DoubleReal>)
-            for (vector<DoubleReal>::iterator intensity_it = intensities_it->begin(); intensity_it != intensities_it->end(); ++intensity_it)
-            {
-              outfile << *intensity_it << "\n";
-            }
-            outfile << "</intensities_" << intensities_it - it->intensities.begin() << ">\n";
-          }
-          outfile << "</intensities>" << "\n";
-
-          // mass_shifts
-          outfile << "<mass_shifts>" << "\n";
-
-          // iterate over mass shifts vector (vector<DoubleReal>)
-          for (vector<DoubleReal>::iterator mass_shifts_it = it->mass_shifts.begin(); mass_shifts_it != it->mass_shifts.end(); ++mass_shifts_it)
-          {
-            outfile << *mass_shifts_it << "\n";
-          }
-          outfile << "</mass_shifts>" << "\n";
-
-          outfile << "</DataPoint>" << "\n";
-        }
-        outfile << "</DataPoints>" << "\n";
-      }
-      outfile << "</VectorOfDataPoints>" << "\n";
-
-      outfile.close();      // close ofstream and store output file
+      writeFilePoints(out_filters, false);
     }
 
     //--------------------------------------------------
@@ -1080,10 +1002,7 @@ class TOPPSILACAnalyzer
         data_temp.clear();      // clear "data_temp"
       }
     }
-
-    return data;      // return "data" for clustering
   }
-
 
   ExitCodes main_(int , const char**)
   {
@@ -1108,7 +1027,7 @@ class TOPPSILACAnalyzer
     // build SILACData structure
     //--------------------------------------------------
 
-    vector<vector<DataPoint> > data = buildDataStructure(exp);
+    buildDataStructure(exp);
 
 
     //--------------------------------------------------
@@ -1397,105 +1316,6 @@ class TOPPSILACAnalyzer
       }      
     }
 
-
-    //--------------------------------------------------
-    // featureXML output (out_clusters)
-    //--------------------------------------------------
-
-    if (out_clusters != "")
-    {
-      vector<String> colors;
-      // 15 HTML colors
-      colors.push_back("#00FFFF");
-      colors.push_back("#000000");
-      colors.push_back("#0000FF");
-      colors.push_back("#FF00FF");
-      colors.push_back("#008000");
-      colors.push_back("#808080");
-      colors.push_back("#00FF00");
-      colors.push_back("#800000");
-      colors.push_back("#000080");
-      colors.push_back("#808000");
-      colors.push_back("#800080");
-      colors.push_back("#FF0000");
-      colors.push_back("#C0C0C0");
-      colors.push_back("#008080");
-      colors.push_back("#FFFF00");
-
-      for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
-      {
-        for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
-        {
-          // visualize the monoisotopic peak
-          Feature cluster_point;
-          cluster_point.setRT(it->rt);
-          cluster_point.setMZ(it->mz);
-          cluster_point.setIntensity(it->intensities[0][0]);
-          cluster_point.setCharge(it->charge);
-          cluster_point.setQuality(0, it->quality);
-
-          Int charge = it->charge;
-          String mass_shift_meta_value = "";
-          DoubleReal mass_shift_final = 0;
-
-          // mass shifts as meta value in [Da] (i.e. (6.0201, 8.0141)) and mass shifts as value for OverallQuality in [Da] (i.e. 6008)
-          for (vector<DoubleReal>::iterator shift_it = it->mass_shifts.begin() + 1; shift_it != it->mass_shifts.end(); ++shift_it)
-          {
-            // meta value for doublets
-            if (it->mass_shifts.size() == 2)
-            {
-              String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
-              temp = temp.substr(0, 6);     // get only five efficient digits
-              mass_shift_meta_value = "(" + temp + ")";
-              mass_shift_final = floor(*shift_it * charge);     // mass shift as value for OverallQuality
-            }
-
-            // meta value for triplets, quadruplets, ...
-            if (it->mass_shifts.size() > 2)
-            {
-              if (shift_it == it->mass_shifts.begin() + 1)
-              {
-                String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
-                temp = temp.substr(0, 6);     // get only five efficient digits
-                mass_shift_meta_value += "(" + temp + ", ";
-                mass_shift_final = floor(*shift_it * charge) * 1000;      // mass shift as value for OverallQuality
-              }
-
-              if ((shift_it > it->mass_shifts.begin() + 1) && (shift_it < it->mass_shifts.end() - 1))
-              {
-                String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
-                temp = temp.substr(0, 6);     // get only five efficient digits
-                mass_shift_meta_value += temp + ", ";
-                mass_shift_final = (mass_shift_final + floor(*shift_it * charge)) * 1000;     // mass shift as value for OverallQuality
-              }
-
-              if (shift_it == it->mass_shifts.end() - 1)
-              {
-                String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
-                temp = temp.substr(0, 6);     // get only five efficient digits
-                mass_shift_meta_value += temp + ")";
-                mass_shift_final += floor(*shift_it * charge);      // mass shift as value for OverallQuality
-              }
-            }
-          }
-
-          cluster_point.setOverallQuality(mass_shift_final);			// set mass shifts as value for OverallQuality in [Da]
-
-          cluster_point.setMetaValue("Mass shifts [Da]", mass_shift_meta_value);
-          cluster_point.setMetaValue("Peaks per peptide", it->isotopes_per_peptide);
-          cluster_point.setMetaValue("Cluster id", it->cluster_id);
-          cluster_point.setMetaValue("Cluster size", it->cluster_size);
-          cluster_point.setMetaValue("color", colors[it->cluster_id%colors.size()]);
-
-          all_cluster_points.push_back(cluster_point);
-        }
-      }
-
-      // required, as somehow the order of features on some datasets between Win & Linux is different and thus the TOPPtest might fail
-      all_cluster_points.sortByPosition();
-    }
-
-
     //--------------------------------------------------------------
     // write output
     //--------------------------------------------------------------
@@ -1516,27 +1336,107 @@ class TOPPSILACAnalyzer
     // featureXML
     if (out_clusters != "")
     {
-      // clusters
-      // assign unique ids
-      all_cluster_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
-
-      FeatureXMLFile f_file;
-      f_file.store(out_clusters, all_cluster_points);
-
-/*      // subtrees
-      // assign unique ids
-      subtree_points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
-
-      FeatureXMLFile t_file;
-      t_file.store("subtrees.featureXML", subtree_points);
-*/
+      writeFilePoints(out_clusters, true);
     }
 
     return EXECUTION_OK;
   }
 
+private:
+  /** Write all DataPoints into a featureXML file. */
+  void writeFilePoints(const String &filename, bool cluster_info) const;
 };
 
+void TOPPSILACAnalyzer::writeFilePoints(const String &filename, bool cluster_info) const
+{
+  // 15 HTML colors
+  const String colors[] = {
+    "#00FFFF", "#000000", "#0000FF", "#FF00FF", "#008000",
+    "#808080", "#00FF00", "#800000", "#000080", "#808000",
+    "#800080", "#FF0000", "#C0C0C0", "#008080", "#FFFF00",
+  };
+  const Int colors_len = 15;
+
+  FeatureMap<> points;
+
+  for (vector<vector<DataPoint> >::const_iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+  {
+    for (vector<DataPoint>::const_iterator it = data_it->begin(); it != data_it->end(); ++it)
+    {
+      Feature point;
+      point.setRT(it->rt);
+      point.setMZ(it->mz);
+      point.setIntensity(it->intensities[0][0]);
+      point.setCharge(it->charge);
+      point.setQuality(0, it->quality);
+
+      Int charge = it->charge;
+      String mass_shift_meta_value = "";
+      DoubleReal mass_shift_final = 0;
+
+      // mass shifts as meta value in [Da] (i.e. (6.0201, 8.0141)) and mass shifts as value for OverallQuality in [Da] (i.e. 6008)
+      for (vector<DoubleReal>::const_iterator shift_it = it->mass_shifts.begin() + 1; shift_it != it->mass_shifts.end(); ++shift_it)
+      {
+        // meta value for doublets
+        if (it->mass_shifts.size() == 2)
+        {
+          String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
+          temp = temp.substr(0, 6);     // get only five efficient digits
+          mass_shift_meta_value = "(" + temp + ")";
+          mass_shift_final = floor(*shift_it * charge);     // mass shift as value for OverallQuality
+        }
+
+        // meta value for triplets, quadruplets, ...
+        if (it->mass_shifts.size() > 2)
+        {
+          if (shift_it == it->mass_shifts.begin() + 1)
+          {
+            String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
+            temp = temp.substr(0, 6);     // get only five efficient digits
+            mass_shift_meta_value += "(" + temp + ", ";
+            mass_shift_final = floor(*shift_it * charge) * 1000;      // mass shift as value for OverallQuality
+          }
+
+          if ((shift_it > it->mass_shifts.begin() + 1) && (shift_it < it->mass_shifts.end() - 1))
+          {
+            String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
+            temp = temp.substr(0, 6);     // get only five efficient digits
+            mass_shift_meta_value += temp + ", ";
+            mass_shift_final = (mass_shift_final + floor(*shift_it * charge)) * 1000;     // mass shift as value for OverallQuality
+          }
+
+          if (shift_it == it->mass_shifts.end() - 1)
+          {
+            String temp = ((String)(*shift_it * charge));     // convert mass shift from Th to Da and cast to String
+            temp = temp.substr(0, 6);     // get only five efficient digits
+            mass_shift_meta_value += temp + ")";
+            mass_shift_final += floor(*shift_it * charge);      // mass shift as value for OverallQuality
+          }
+        }
+      }
+
+      point.setOverallQuality(mass_shift_final);			// set mass shifts as value for OverallQuality in [Da]
+
+      point.setMetaValue("Mass shifts [Da]", mass_shift_meta_value);
+      point.setMetaValue("Peaks per peptide", it->isotopes_per_peptide);
+
+      if (cluster_info)
+      {
+        point.setMetaValue("Cluster id", it->cluster_id);
+        point.setMetaValue("Cluster size", it->cluster_size);
+        point.setMetaValue("color", colors[it->cluster_id % colors_len]);
+      }
+
+      points.push_back(point);
+    }
+  }
+
+  points.sortByPosition();
+  points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+  FeatureXMLFile f_file;
+  f_file.store(out, points);
+}
 
 //@endcond
 

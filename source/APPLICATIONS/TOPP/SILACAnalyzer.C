@@ -661,25 +661,6 @@ class TOPPSILACAnalyzer
 
 
     //--------------------------------------------------
-    // store filter results from vector<vector<DataPoint> > data to .featureXML
-    //--------------------------------------------------
-
-    if (out_filters != "" && in_filters == "")     // check if option "out_filters" is specified and "in_filters" is not
-    {
-      writeFilePoints(out_filters, false);
-    }
-
-    //--------------------------------------------------
-    // load filter results as vector<vector<DataPoint> > data from .featureXML
-    //--------------------------------------------------
-
-    if (in_filters != "")     // check if option "in_filters" is specified
-    {
-      readFilePoints(in_filters);
-    }
-
-
-    //--------------------------------------------------
     // combine DataPoints to improve the clustering
     //--------------------------------------------------
 
@@ -806,33 +787,6 @@ class TOPPSILACAnalyzer
         data_temp.clear();      // clear "data_temp"
       }
     }
-  }
-
-  ExitCodes main_(int , const char**)
-  {
-    handleParameters();
-
-
-    //--------------------------------------------------
-    // loading input from .mzML
-    //--------------------------------------------------
-
-    MzMLFile file;
-    MSExperiment<Peak1D> exp;
-
-    file.setLogType(log_type_);
-    file.load(in, exp);
-
-    // set size of input map
-    exp.updateRanges();
-
-
-    //--------------------------------------------------
-    // build SILACData structure
-    //--------------------------------------------------
-
-    buildDataStructure(exp);
-
 
     //--------------------------------------------------
     // remove isolated DataPoints from filter results (i.e. DataPoints with only few immediate neighbours)
@@ -875,6 +829,51 @@ class TOPPSILACAnalyzer
 
       data.swap(data_2);      // data = data_2
     }
+
+    //--------------------------------------------------
+    // store filter results from vector<vector<DataPoint> > data to .featureXML
+    //--------------------------------------------------
+
+    if (out_filters != "" && in_filters == "")     // check if option "out_filters" is specified and "in_filters" is not
+    {
+      writeFilePoints(out_filters, false);
+    }
+
+    //--------------------------------------------------
+    // load filter results as vector<vector<DataPoint> > data from .featureXML
+    //--------------------------------------------------
+
+    if (in_filters != "")     // check if option "in_filters" is specified
+    {
+      readFilePoints(in_filters);
+    }
+  }
+
+  ExitCodes main_(int , const char**)
+  {
+    handleParameters();
+
+
+    //--------------------------------------------------
+    // loading input from .mzML
+    //--------------------------------------------------
+
+    MzMLFile file;
+    MSExperiment<Peak1D> exp;
+
+    file.setLogType(log_type_);
+    file.load(in, exp);
+
+    // set size of input map
+    exp.updateRanges();
+
+
+    //--------------------------------------------------
+    // build SILACData structure
+    //--------------------------------------------------
+
+    buildDataStructure(exp);
+
 
 
     //--------------------------------------------------

@@ -745,7 +745,7 @@ namespace OpenMS
     return expected_mz_shifts_;
   }
 
-  std::vector<DataPoint> SILACFilter::getElements()
+  std::vector<DataPoint>& SILACFilter::getElements()
   {
     return elements_;
   }
@@ -755,7 +755,7 @@ namespace OpenMS
     return charge_;
   }
 
-  const std::vector<DoubleReal>& SILACFilter::getMassSeparations()
+  std::vector<DoubleReal>& SILACFilter::getMassSeparations()
   {
     return mass_separations_;
   }

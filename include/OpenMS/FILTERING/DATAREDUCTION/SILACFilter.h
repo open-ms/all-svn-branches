@@ -337,7 +337,7 @@ namespace OpenMS
   /**
    * @brief returns all identified elements
    */
-   std::vector<DataPoint> getElements();
+   std::vector<DataPoint>& getElements();
 
   /**
    * @brief returns the charge of the filter
@@ -347,7 +347,7 @@ namespace OpenMS
   /**
    * @brief returns the mass shifts of the filter in [Da]
    */
-   const std::vector<DoubleReal>& getMassSeparations();
+   std::vector<DoubleReal>& getMassSeparations();
 
   };
 }

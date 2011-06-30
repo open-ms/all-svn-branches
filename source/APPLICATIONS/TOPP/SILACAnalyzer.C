@@ -1157,7 +1157,7 @@ void TOPPSILACAnalyzer::readFilePoints(const String &filename)
 {
   FeatureXMLFile f_file;
   FeatureMap<> points;
-  vector<DataPoint> exp;
+  std::map<std::pair<Int, Int>, vector<DataPoint> > layers;
 
   f_file.load(filename, points);
 
@@ -1166,7 +1166,6 @@ void TOPPSILACAnalyzer::readFilePoints(const String &filename)
     DataPoint point;
     point.rt = it->getRT();
     point.mz = it->getMZ();
-    // intensity
     point.charge = it->getCharge();
     point.quality = it->getQuality(0);
 
@@ -1196,10 +1195,13 @@ void TOPPSILACAnalyzer::readFilePoints(const String &filename)
     if (!cluster_id.isEmpty()) point.cluster_id = cluster_id;
     if (!cluster_size.isEmpty()) point.cluster_size = cluster_size;
 
-    exp.push_back(point);
+    layers[std::make_pair(Int(point.mass_shifts.at(1)), point.charge)].push_back(point);
   }
 
-  data.push_back(exp);
+  for (std::map<std::pair<Int, Int>, vector<DataPoint> >::iterator it = layers.begin(); it != layers.end(); ++it)
+  {
+    data.push_back(it->second);
+  }
 }
 
 void TOPPSILACAnalyzer::writeFilePoints(const String &out, bool cluster_info) const

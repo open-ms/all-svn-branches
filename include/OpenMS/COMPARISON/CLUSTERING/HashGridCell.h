@@ -1,4 +1,4 @@
-// -*- mode: C++; tab-width: 2; -*-
+// -*- Mode: C++; tab-width: 2; -*-
 // vi: set ts=2:expandtab
 //
 // --------------------------------------------------------------------------
@@ -22,47 +22,22 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: Lars Nilse, Holger Plattfaut $
+// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/CONCEPT/ClassTest.h>
 
-#include <OpenMS/COMPARISON/CLUSTERING/HashGrid.h>
+#include <boost/unordered/unordered_set.hpp>
 
-using namespace OpenMS;
+#ifndef OPENMS_COMPARISON_CLUSTERING_HASHGRIDCELL_H
+#define OPENMS_COMPARISON_CLUSTERING_HASHGRIDCELL_H
 
-class Value
+namespace OpenMS
 {
-};
-std::size_t hash_value(const Value& u)
-{ return 0; }
-
-typedef OpenMS::HashGrid<Value, 2> Test2D;
-
-const Test2D::point max2D = {{1, 2}};
-
-START_TEST(HashGrid, "$Id$")
-
-START_SECTION(HashGrid::max_key)
-{
-  Test2D t(max2D);
-  TEST_EQUAL(t.max_key()[0], max2D[0]);
-  TEST_EQUAL(t.max_key()[1], max2D[1]);
+  template<class Value>
+  class HashGridCell
+    : public boost::unordered_set<Value>
+  {
+  };
 }
-END_SECTION
 
-START_SECTION(mapped_type& operator[](const key_type& key))
-{
-  Test2D t(max2D);
-  const Test2D::point key = {{1, 2}};
-  Test2D::mapped_type a = t[key];
-}
-END_SECTION
-
-START_SECTION(iterator insert(const value_type& obj))
-{
-}
-END_SECTION
-
-END_TEST
-
+#endif /* HASHGRID_H_ */

@@ -29,32 +29,21 @@
 #include <boost/array.hpp>
 #include <boost/unordered/unordered_map.hpp>
 
+#include <OpenMS/COMPARISON/CLUSTERING/Hasher.h>
 #include <OpenMS/COMPARISON/CLUSTERING/HashGridCell.h>
 #include <OpenMS/CONCEPT/Types.h>
 
 #ifndef OPENMS_COMPARISON_CLUSTERING_HASHGRID_H
 #define OPENMS_COMPARISON_CLUSTERING_HASHGRID_H
 
-// XXX: Move somewhere else
-namespace boost
-{
-  template <class T, std::size_t N>
-  std::size_t hash_value(const array<T, N>& b)
-  {
-    boost::hash<T> hasher;
-    // XXX: Hash all items
-    return hasher(b[0]);
-  }
-}
-
 namespace OpenMS
 {
-  template <class Value, int Dim = 2>
+  template <class Value, std::size_t Dim = 2>
   class OPENMS_DLLAPI HashGrid
     : public boost::unordered_map<boost::array<UInt, Dim>, OpenMS::HashGridCell<Value> >
   {
     public:
-      typedef boost::array<UInt, Dim> point;
+      typedef boost::array<UInt, Dim> Point;
       typedef boost::unordered_map<boost::array<UInt, Dim>, OpenMS::HashGridCell<Value> > base_;
 
       typedef typename base_::key_type key_type;
@@ -66,14 +55,14 @@ namespace OpenMS
       typedef typename base_::size_type size_type;
 
     protected:
-      const point max_key_;
+      const Point max_key_;
 
     public:
-     HashGrid(const point &max_key)
+     HashGrid(const Point &max_key)
        : max_key_(max_key)
      { }
 
-     const point &max_key() const
+     const Point &max_key() const
      {
        return max_key_;
      }

@@ -1,4 +1,4 @@
-// -*- mode: C++; tab-width: 2; -*-
+// -*- Mode: C++; tab-width: 2; -*-
 // vi: set ts=2:expandtab
 //
 // --------------------------------------------------------------------------
@@ -22,47 +22,26 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: Lars Nilse, Holger Plattfaut $
+// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
 // --------------------------------------------------------------------------
 
-#include <OpenMS/CONCEPT/ClassTest.h>
 
-#include <OpenMS/COMPARISON/CLUSTERING/HashGrid.h>
+#ifndef OPENMS_COMPARISON_CLUSTERING_HASHER_H
+#define OPENMS_COMPARISON_CLUSTERING_HASHER_H
 
-using namespace OpenMS;
+#include <boost/array.hpp>
 
-class Value
+namespace boost
 {
-};
-std::size_t hash_value(const Value& u)
-{ return 0; }
-
-typedef OpenMS::HashGrid<Value, 2> Test2D;
-
-const Test2D::Point max2D = {{1, 2}};
-
-START_TEST(HashGrid, "$Id$")
-
-START_SECTION(HashGrid::max_key)
-{
-  Test2D t(max2D);
-  TEST_EQUAL(t.max_key()[0], max2D[0]);
-  TEST_EQUAL(t.max_key()[1], max2D[1]);
+  /** Hash Value for boost::array. */
+  template <class T, std::size_t N>
+  std::size_t hash_value(const array<T, N>& b)
+  {
+    boost::hash<T> hasher;
+    std::size_t hash = 0;
+    for (typename array<T, N>::const_iterator it = b.begin(); it != b.end(); ++it) hash ^= hasher(*it);
+    return hash;
+  }
 }
-END_SECTION
 
-START_SECTION(mapped_type& operator[](const key_type& key))
-{
-  Test2D t(max2D);
-  const Test2D::Point key = {{1, 2}};
-  Test2D::mapped_type a = t[key];
-}
-END_SECTION
-
-START_SECTION(iterator insert(const value_type& obj))
-{
-}
-END_SECTION
-
-END_TEST
-
+#endif /* OPENMS_COMPARISON_CLUSTERING_HASHER_H */

@@ -12,6 +12,7 @@ ClusteringMethod.h
 CompleteLinkage.h
 EuclideanSimilarity.h
 HashClustering.h
+Hasher.h
 HashGrid.h
 HashGridCell.h
 QTClustering.h

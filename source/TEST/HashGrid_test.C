@@ -34,33 +34,38 @@ using namespace OpenMS;
 class Value
 {
 };
-std::size_t hash_value(const Value& u)
+std::size_t hash_value(const Value&)
 { return 0; }
 
 typedef OpenMS::HashGrid<Value, 2> Test2D;
-
-const Test2D::Point max2D = {{1, 2}};
 
 START_TEST(HashGrid, "$Id$")
 
 START_SECTION(HashGrid::max_key)
 {
-  Test2D t(max2D);
-  TEST_EQUAL(t.max_key()[0], max2D[0]);
-  TEST_EQUAL(t.max_key()[1], max2D[1]);
+  Test2D t;
+  TEST_EQUAL(t.max_key()[0], 0);
+  TEST_EQUAL(t.max_key()[1], 0);
 }
 END_SECTION
 
 START_SECTION(mapped_type& operator[](const key_type& key))
 {
-  Test2D t(max2D);
+  Test2D t;
   const Test2D::Point key = {{1, 2}};
   Test2D::mapped_type a = t[key];
+  TEST_EQUAL(t.max_key()[0], key[0]);
+  TEST_EQUAL(t.max_key()[1], key[1]);
 }
 END_SECTION
 
 START_SECTION(iterator insert(const value_type& obj))
 {
+  Test2D t;
+  const Test2D::Point key = {{1, 2}};
+  t.insert(std::make_pair(key, Test2D::mapped_type()));
+  TEST_EQUAL(t.max_key()[0], key[0]);
+  TEST_EQUAL(t.max_key()[1], key[1]);
 }
 END_SECTION
 

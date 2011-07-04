@@ -55,29 +55,42 @@ namespace OpenMS
       typedef typename base_::size_type size_type;
 
     protected:
-      const Point max_key_;
+      Point max_key_;
 
     public:
-     HashGrid(const Point &max_key)
-       : max_key_(max_key)
-     { }
+      HashGrid()
+      {
+        for (typename Point::iterator it = max_key_.begin(); it != max_key_.end(); ++it) *it = 0;
+      }
 
-     const Point &max_key() const
-     {
-       return max_key_;
-     }
+      const Point &max_key() const
+      {
+        return max_key_;
+      }
 
-     mapped_type& operator[](const key_type& key)
-     {
-       // XXX: Check key
-       return base_::operator[](key);
-     }
+      mapped_type& operator[](const key_type& key)
+      {
+        update_max_key(key);
+        return base_::operator[](key);
+      }
 
-     iterator insert(const value_type& obj)
-     {
-       // XXX: Check key
-       return base_::insert(obj);
-     }
+      std::pair<iterator, bool> insert(const value_type& obj)
+      {
+        update_max_key(obj.first);
+        return base_::insert(obj);
+      }
+
+    protected:
+      void update_max_key(const Point &d)
+      {
+        typename Point::const_iterator it1 = d.begin();
+        typename Point::iterator it2 = max_key_.begin();
+        for (; it1 != d.end(); ++it1, ++it2)
+        {
+          if (*it1 > *it2)
+            *it2 = *it1;
+        }
+      }
   };
 }
 

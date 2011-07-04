@@ -31,6 +31,17 @@
 
 using namespace OpenMS;
 
+typedef OpenMS::HierarchicalClustering<UInt> Test;
+
 START_TEST(HierarchicalClustering, "$Id$")
+
+START_SECTION(HierarchicalClustering::insertPoint)
+{
+  const Test::Coord max_delta = {{1, 1}};
+  Test t(max_delta);
+  const Test::Coord coord = {{1, 1}};
+  t.insertPoint(coord, 0);
+}
+END_SECTION
 
 END_TEST

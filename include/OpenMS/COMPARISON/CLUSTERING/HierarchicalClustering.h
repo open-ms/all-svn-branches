@@ -37,27 +37,87 @@ namespace OpenMS
   class HierarchicalClustering
   {
     public:
-      class Point;
-      class SubSet;
-
       typedef typename boost::array<DoubleReal, Dim> Coord;
-      typedef HashGrid<SubSet, Dim> Grid;
 
+    protected:
+      template <typename T>
+      class CoordHash
+      {
+        public:
+          std::size_t operator() (const T &p) const
+          {
+            boost::hash<Coord> hasher;
+            return hasher(p.coord);
+          }
+      };
+
+    public:
       class Point
       {
         public:
-          Coord coord;
-          PointInfo info;
+          const Coord coord;
+          const PointInfo info;
+
+          Point(const Coord &coord, const PointInfo &info)
+            : coord(coord), info(info)
+          { }
+
+          // XXX
+          bool operator==(const Point &) const { return false; }
       };
 
-      class SubSet
-        : public boost::unordered_set<Point>
+      class Subset
+        : public boost::unordered_multiset<Point, CoordHash<Point> >
       {
         public:
-         Coord coord;
+          typedef typename boost::unordered_multiset<Point, CoordHash<Point> > Points;
+
+          const Coord coord;
+
+          Subset(const Coord &coord)
+            : coord(coord)
+          { }
+
+          Subset(const Coord &coord, const Points &p)
+            : Points(p), coord(coord)
+          { }
+
+          // XXX
+          bool operator==(const Subset &d) { return false; }
       };
 
+      typedef HashGrid<Subset, Dim, CoordHash<Subset> > Grid;
+
+      const Coord max_delta;
+
       Grid grid;
+
+      HierarchicalClustering(const Coord &max_delta)
+        : max_delta(max_delta)
+      { }
+
+      /**
+       * Insert new Point into correct grid cell.
+       */
+      void insertPoint(const Coord &d, const PointInfo &info)
+      {
+        typename Subset::Points p;
+        p.insert(Point(d, info));
+        newSubset(d, p);
+      }
+
+    protected:
+      /**
+       * Insert new Subset into correct grid cell.
+       * Returns iterator to inserted item.
+       */
+      typename Grid::mapped_type::iterator newSubset(const Coord &d, const typename Subset::Points &p)
+      {
+        typename Grid::Point cellcoord;
+        for (UInt i = 0; i < Dim; ++i) cellcoord[i] = d[i] / max_delta[i];
+        typename Grid::mapped_type &cell = grid[cellcoord];
+        return cell.insert(Subset(d, p));
+      }
   };
 }
 

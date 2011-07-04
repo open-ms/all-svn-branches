@@ -46,7 +46,6 @@
 //clustering
 #include <OpenMS/DATASTRUCTURES/DistanceMatrix.h>
 #include <OpenMS/DATASTRUCTURES/HashGrid.h>
-#include <OpenMS/COMPARISON/CLUSTERING/HashClustering.h>
 #include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
 #include <OpenMS/COMPARISON/CLUSTERING/QTClustering.h>
 
@@ -894,6 +893,7 @@ class TOPPSILACAnalyzer
       // check if there are at least two points for clustering
       if (data_it->size() >= 2)
       {
+/*
         // hierarchical clustering
         CentroidLinkage method(rt_scaling);
         HashClustering c(*data_it, rt_threshold, mz_threshold, method);
@@ -906,6 +906,7 @@ class TOPPSILACAnalyzer
         c.createClusters(current_clusters);
         const vector<vector<Real> >& current_silhouettes = c.getSilhouetteValues();
         silhouettes.insert(silhouettes.end(), current_silhouettes.begin(), current_silhouettes.end());
+*/
 
         // QT clustering
 /*        DoubleReal isotope_distance = 1.000495 / (DoubleReal)data_it->front().charge;
@@ -913,9 +914,11 @@ class TOPPSILACAnalyzer
         c.setLogType(log_type_);
         vector<Cluster> current_clusters =  c.performClustering();
 */
+/*
         clusters.insert(clusters.end(), current_clusters.begin(), current_clusters.end());
 
         progresslogger.setProgress(data_it - data.begin());
+*/
       }
     }
 

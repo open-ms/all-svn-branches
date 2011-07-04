@@ -11,7 +11,6 @@ ClusterHierarchical.C
 ClusteringMethod.C
 CompleteLinkage.C
 EuclideanSimilarity.C
-HashClustering.C
 QTClustering.C
 SingleLinkage.C
 )

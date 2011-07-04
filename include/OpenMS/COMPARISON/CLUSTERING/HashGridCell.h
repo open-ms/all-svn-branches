@@ -33,9 +33,9 @@
 
 namespace OpenMS
 {
-  template<class Value>
+  template<typename Value, typename Hash = boost::hash<Value> >
   class HashGridCell
-    : public boost::unordered_set<Value>
+    : public boost::unordered_multiset<Value, Hash>
   {
   };
 }

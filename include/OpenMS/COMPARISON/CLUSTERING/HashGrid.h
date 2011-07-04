@@ -38,13 +38,13 @@
 
 namespace OpenMS
 {
-  template <class Value, std::size_t Dim = 2>
+  template <typename Value, std::size_t Dim, typename Hash = boost::hash<Value> >
   class OPENMS_DLLAPI HashGrid
-    : public boost::unordered_map<boost::array<UInt, Dim>, OpenMS::HashGridCell<Value> >
+    : public boost::unordered_map<boost::array<UInt, Dim>, OpenMS::HashGridCell<Value, Hash> >
   {
     public:
       typedef boost::array<UInt, Dim> Point;
-      typedef boost::unordered_map<boost::array<UInt, Dim>, OpenMS::HashGridCell<Value> > base_;
+      typedef boost::unordered_map<boost::array<UInt, Dim>, OpenMS::HashGridCell<Value, Hash> > base_;
 
       typedef typename base_::key_type key_type;
       typedef typename base_::mapped_type mapped_type;

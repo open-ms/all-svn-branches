@@ -8375,8 +8375,8 @@
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
          </MakeCommands>
       </Target>
-      <Target title="HashClustering_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/HashClustering_test" prefix_auto="0" extension_auto="0" />
+      <Target title="HierarchicalClustering_test">
+         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/HierarchicalClustering_test" prefix_auto="0" extension_auto="0" />
          <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
          <Option object_output="./" />
          <Option type="1" />
@@ -8395,14 +8395,14 @@
             <Add directory="/usr/include/qt4/QtCore" />
          </Compiler>
          <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; HashClustering_test" />
+            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; HierarchicalClustering_test" />
             <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
             <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
          </MakeCommands>
       </Target>
-      <Target title="HashClustering_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/HashClustering_test" prefix_auto="0" extension_auto="0" />
+      <Target title="HierarchicalClustering_test/fast">
+         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/HierarchicalClustering_test" prefix_auto="0" extension_auto="0" />
          <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
          <Option object_output="./" />
          <Option type="1" />
@@ -8421,7 +8421,7 @@
             <Add directory="/usr/include/qt4/QtCore" />
          </Compiler>
          <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; HashClustering_test/fast" />
+            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; HierarchicalClustering_test/fast" />
             <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
             <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
@@ -21266,11 +21266,11 @@
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/HPLC_test.C">
       </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/HashClustering_test.C">
-      </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/HashGrid_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/HiddenMarkovModel_test.C">
+      </Unit>
+      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/HierarchicalClustering_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Histogram_test.C">
       </Unit>

@@ -1,10 +1,10 @@
 // -*- mode: C++; tab-width: 2; -*-
-// vi: set ts=2:
+// vi: set ts=2:expandtab
 //
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2011 -- Bastian Blank
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -27,10 +27,10 @@
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 
-//#include <OpenMS/COMPARISON/CLUSTERING/HashClustering.h>
+#include <OpenMS/COMPARISON/CLUSTERING/HierarchicalClustering.h>
 
 using namespace OpenMS;
 
-START_TEST(HashClustering, "$Id$")
+START_TEST(HierarchicalClustering, "$Id$")
 
 END_TEST

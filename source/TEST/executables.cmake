@@ -274,7 +274,7 @@ set(comparison_executables_list
   CompareFouriertransform_test
   CompleteLinkage_test
   EuclideanSimilarity_test
-  HashClustering_test
+  HierarchicalClustering_test
   PeakAlignment_test
   PeakSpectrumCompareFunctor_test
   QTClustering_test

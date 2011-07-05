@@ -26,10 +26,11 @@
 // --------------------------------------------------------------------------
 
 
+#include <OpenMS/COMPARISON/CLUSTERING/HashGrid.h>
+#include <OpenMS/CONCEPT/Types.h>
+
 #ifndef OPENMS_COMPARISON_CLUSTERING_HIERARCHICALCLUSTERING_H
 #define OPENMS_COMPARISON_CLUSTERING_HIERARCHICALCLUSTERING_H
-
-#include <OpenMS/COMPARISON/CLUSTERING/HashGrid.h>
 
 namespace OpenMS
 {
@@ -37,86 +38,36 @@ namespace OpenMS
   class HierarchicalClustering
   {
     public:
-      typedef typename boost::array<DoubleReal, Dim> Coord;
+      typedef boost::array<DoubleReal, Dim> Point;
 
-    protected:
-      template <typename T>
-      class CoordHash
-      {
-        public:
-          std::size_t operator() (const T &p) const
-          {
-            boost::hash<Coord> hasher;
-            return hasher(p.coord);
-          }
-      };
-
-    public:
-      class Point
-      {
-        public:
-          const Coord coord;
-          const PointInfo info;
-
-          Point(const Coord &coord, const PointInfo &info)
-            : coord(coord), info(info)
-          { }
-
-          // XXX
-          bool operator==(const Point &) const { return false; }
-      };
-
-      class Subset
-        : public boost::unordered_multiset<Point, CoordHash<Point> >
-      {
-        public:
-          typedef typename boost::unordered_multiset<Point, CoordHash<Point> > Points;
-
-          const Coord coord;
-
-          Subset(const Coord &coord)
-            : coord(coord)
-          { }
-
-          Subset(const Coord &coord, const Points &p)
-            : Points(p), coord(coord)
-          { }
-
-          // XXX
-          bool operator==(const Subset &d) { return false; }
-      };
-
-      typedef HashGrid<Subset, Dim, CoordHash<Subset> > Grid;
-
-      const Coord max_delta;
+      typedef typename boost::unordered_multimap<Point, PointInfo> Subset;
+      typedef HashGrid<Subset, Dim> Grid;
 
       Grid grid;
 
-      HierarchicalClustering(const Coord &max_delta)
-        : max_delta(max_delta)
+      HierarchicalClustering(const Point &max_delta)
+        : grid(max_delta)
       { }
 
       /**
        * Insert new Point into correct grid cell.
+       * Returns iterator to inserted subset.
        */
-      void insertPoint(const Coord &d, const PointInfo &info)
+      typename Grid::local_iterator insertPoint(const Point &d, const PointInfo &info)
       {
-        typename Subset::Points p;
-        p.insert(Point(d, info));
-        newSubset(d, p);
+        typename Grid::local_iterator it = insertSubset(d);
+        it->second.insert(std::make_pair(d, info));
+        return it;
       }
 
     protected:
       /**
        * Insert new Subset into correct grid cell.
-       * Returns iterator to inserted item.
+       * Returns iterator to inserted subset.
        */
-      typename Grid::mapped_type::iterator newSubset(const Coord &d, const typename Subset::Points &p)
+      typename Grid::local_iterator insertSubset(const Point &d)
       {
-        typename Grid::Point cellcoord;
-        for (UInt i = 0; i < Dim; ++i) cellcoord[i] = d[i] / max_delta[i];
-        typename Grid::mapped_type &cell = grid[cellcoord];
-        return cell.insert(Subset(d, p));
+        return grid.insert(std::make_pair(d, Subset()));
       }
   };
 }

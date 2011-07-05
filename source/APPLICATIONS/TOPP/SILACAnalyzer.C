@@ -45,9 +45,8 @@
 
 //clustering
 #include <OpenMS/DATASTRUCTURES/DistanceMatrix.h>
-#include <OpenMS/DATASTRUCTURES/HashGrid.h>
 #include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
-#include <OpenMS/COMPARISON/CLUSTERING/QTClustering.h>
+#include <OpenMS/COMPARISON/CLUSTERING/HierarchicalClustering.h>
 
 //Contrib includes
 #include <boost/algorithm/string/split.hpp>
@@ -605,7 +604,7 @@ class TOPPSILACAnalyzer
     return mz_spacing[mz_spacing.size() / 2];
   }
 
-  void buildDataStructure(MSExperiment<Peak1D>& exp)
+  void filterData(MSExperiment<Peak1D>& exp)
   {
     // extract level 1 spectra
     IntList levels=IntList::create("1");
@@ -868,64 +867,19 @@ class TOPPSILACAnalyzer
 
 
     //--------------------------------------------------
-    // build SILACData structure
+    // filter input data
     //--------------------------------------------------
 
-    buildDataStructure(exp);
-
+    filterData(exp);
 
 
     //--------------------------------------------------
     // clustering
     //--------------------------------------------------
 
-    vector<vector<Real> > silhouettes;
     vector<Cluster> clusters;
-    vector<Tree> subtrees;
 
-    ProgressLogger progresslogger;
-    progresslogger.setLogType(log_type_);
-
-    progresslogger.startProgress(0, data.size(), "clustering data");
-
-    for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
-    {
-      // check if there are at least two points for clustering
-      if (data_it->size() >= 2)
-      {
-/*
-        // hierarchical clustering
-        CentroidLinkage method(rt_scaling);
-        HashClustering c(*data_it, rt_threshold, mz_threshold, method);
-        // c.removeIsolatedPoints();
-        c.performClustering();
-        vector<Tree> current_subtrees;
-        c.getSubtrees(current_subtrees);
-        subtrees.insert(subtrees.end(), current_subtrees.begin(), current_subtrees.end());
-        vector<Cluster> current_clusters;
-        c.createClusters(current_clusters);
-        const vector<vector<Real> >& current_silhouettes = c.getSilhouetteValues();
-        silhouettes.insert(silhouettes.end(), current_silhouettes.begin(), current_silhouettes.end());
-*/
-
-        // QT clustering
-/*        DoubleReal isotope_distance = 1.000495 / (DoubleReal)data_it->front().charge;
-        QTClustering c(*data_it, rt_threshold, mz_threshold, isotope_distance);
-        c.setLogType(log_type_);
-        vector<Cluster> current_clusters =  c.performClustering();
-*/
-/*
-        clusters.insert(clusters.end(), current_clusters.begin(), current_clusters.end());
-
-        progresslogger.setProgress(data_it - data.begin());
-*/
-      }
-    }
-
-    progresslogger.endProgress();
-
-    sort(clusters.begin(), clusters.end(), clusterCompare);
-
+    clusterData();
 
 /*    // store silhouettes for all subtrees as .csv
     Size silhouette_number = 1;
@@ -1148,13 +1102,47 @@ class TOPPSILACAnalyzer
     return EXECUTION_OK;
   }
 
+  typedef HierarchicalClustering<DataPoint *, 2> Clustering;
+
+  void clusterData();
+
 private:
   /** Read all DataPoints from a featureXML file. */
   void readFilePoints(const String &filename);
 
   /** Write all DataPoints into a featureXML file. */
   void writeFilePoints(const String &filename, bool cluster_info) const;
+
+  void writeFilePointsByCell(const String &out, const Clustering &clustering) const;
 };
+
+void TOPPSILACAnalyzer::clusterData()
+{
+  typedef Clustering::Point Point;
+
+  ProgressLogger progresslogger;
+  progresslogger.setLogType(log_type_);
+
+  progresslogger.startProgress(0, data.size(), "clustering data");
+
+  UInt nr = 0;
+
+  for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+  {
+    const Point max_delta = {{rt_threshold, mz_threshold}};
+    Clustering clustering(max_delta);
+
+    for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
+    {
+      const Point key = {{it->rt, it->mz}};
+      clustering.insertPoint(key, &*it);
+    }
+
+    writeFilePointsByCell(out_clusters + ".by-cell.layer-" + nr++ + ".featureXML", clustering);
+  }
+
+  progresslogger.endProgress();
+}
 
 void TOPPSILACAnalyzer::readFilePoints(const String &filename)
 {
@@ -1279,6 +1267,40 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &out, bool cluster_info) co
 
       points.push_back(point);
     }
+  }
+
+  points.sortByPosition();
+  points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+  FeatureXMLFile f_file;
+  f_file.store(out, points);
+}
+
+void TOPPSILACAnalyzer::writeFilePointsByCell(const String &out, const Clustering &clustering) const
+{
+  // 15 HTML colors
+  const String colors[] = {
+    "#00FFFF", "#000000", "#0000FF", "#FF00FF", "#008000",
+    "#808080", "#00FF00", "#800000", "#000080", "#808000",
+    "#800080", "#FF0000", "#C0C0C0", "#008080", "#FFFF00",
+  };
+  const Int colors_len = 15;
+
+  FeatureMap<> points;
+  Int gridnr = 0;
+
+  for (Clustering::Grid::CellMap::const_iterator cell_it = clustering.grid.cells.begin(); cell_it != clustering.grid.cells.end(); ++cell_it)
+  {
+    for (Clustering::Grid::Cell::const_iterator it = cell_it->second.begin(); it != cell_it->second.end(); ++it)
+    {
+      Feature point;
+      point.setRT(it->first[0]);
+      point.setMZ(it->first[1]);
+      point.setIntensity(1);
+      point.setMetaValue("color", colors[gridnr % colors_len]);
+      points.push_back(point);
+    }
+    gridnr++;
   }
 
   points.sortByPosition();

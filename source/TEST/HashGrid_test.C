@@ -34,38 +34,44 @@ using namespace OpenMS;
 class Value
 {
 };
-std::size_t hash_value(const Value&)
-{ return 0; }
 
 typedef OpenMS::HashGrid<Value, 2> Test2D;
+const Test2D::Point max_delta = {{1, 1}};
 
 START_TEST(HashGrid, "$Id$")
 
 START_SECTION(HashGrid::max_key)
 {
-  Test2D t;
-  TEST_EQUAL(t.max_key()[0], 0);
-  TEST_EQUAL(t.max_key()[1], 0);
+  Test2D t(max_delta);
+  TEST_EQUAL(t.max_key[0], 0);
+  TEST_EQUAL(t.max_key[1], 0);
 }
 END_SECTION
 
-START_SECTION(mapped_type& operator[](const key_type& key))
+START_SECTION(local_iterator insert(const value_type& obj))
 {
-  Test2D t;
-  const Test2D::Point key = {{1, 2}};
-  Test2D::mapped_type a = t[key];
-  TEST_EQUAL(t.max_key()[0], key[0]);
-  TEST_EQUAL(t.max_key()[1], key[1]);
+  Test2D t(max_delta);
+  const Test2D::Point key1 = {{1, 2}};
+  Test2D::local_iterator it = t.insert(std::make_pair(key1, Test2D::mapped_type()));
+  TEST_EQUAL(t.max_key[0], key1[0]);
+  TEST_EQUAL(t.max_key[1], key1[1]);
+  TEST_EQUAL(it->first[0], key1[0]);
+  TEST_EQUAL(it->first[1], key1[1]);
+  const Test2D::Point key2 = {{2, 3}};
+  it = t.insert(std::make_pair(key2, Test2D::mapped_type()));
+  TEST_EQUAL(t.max_key[0], key2[0]);
+  TEST_EQUAL(t.max_key[1], key2[1]);
+  TEST_EQUAL(it->first[0], key2[0]);
+  TEST_EQUAL(it->first[1], key2[1]);
 }
 END_SECTION
 
-START_SECTION(iterator insert(const value_type& obj))
+START_SECTION(size_type erase(const key_type& key))
 {
-  Test2D t;
+  Test2D t(max_delta);
   const Test2D::Point key = {{1, 2}};
   t.insert(std::make_pair(key, Test2D::mapped_type()));
-  TEST_EQUAL(t.max_key()[0], key[0]);
-  TEST_EQUAL(t.max_key()[1], key[1]);
+  TEST_EQUAL(t.erase(key), 1);
 }
 END_SECTION
 

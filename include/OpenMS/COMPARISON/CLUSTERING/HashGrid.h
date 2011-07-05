@@ -30,7 +30,6 @@
 #include <boost/unordered/unordered_map.hpp>
 
 #include <OpenMS/COMPARISON/CLUSTERING/Hasher.h>
-#include <OpenMS/COMPARISON/CLUSTERING/HashGridCell.h>
 #include <OpenMS/CONCEPT/Types.h>
 
 #ifndef OPENMS_COMPARISON_CLUSTERING_HASHGRID_H
@@ -38,53 +37,79 @@
 
 namespace OpenMS
 {
-  template <typename Value, std::size_t Dim, typename Hash = boost::hash<Value> >
+  template <typename Value, std::size_t Dim>
   class OPENMS_DLLAPI HashGrid
-    : public boost::unordered_map<boost::array<UInt, Dim>, OpenMS::HashGridCell<Value, Hash> >
   {
     public:
-      typedef boost::array<UInt, Dim> Point;
-      typedef boost::unordered_map<boost::array<UInt, Dim>, OpenMS::HashGridCell<Value, Hash> > base_;
+      typedef boost::array<DoubleReal, Dim> Point;
+      typedef boost::array<UInt, Dim> CellPoint;
 
-      typedef typename base_::key_type key_type;
-      typedef typename base_::mapped_type mapped_type;
-      typedef typename base_::value_type value_type;
+      typedef typename boost::unordered_multimap<Point, Value> Cell;
+      typedef boost::unordered_map<CellPoint, Cell> CellMap;
 
-      typedef typename base_::const_iterator const_iterator;
-      typedef typename base_::iterator iterator;
-      typedef typename base_::size_type size_type;
+      typedef typename Cell::key_type key_type;
+      typedef typename Cell::mapped_type mapped_type;
+      typedef typename Cell::value_type value_type;
+
+      typedef typename Cell::const_iterator const_local_iterator;
+      typedef typename Cell::iterator local_iterator;
+      typedef typename Cell::size_type size_type;
 
     protected:
-      Point max_key_;
+      CellMap cells_;
+      CellPoint max_key_;
 
     public:
-      HashGrid()
+      const CellMap &cells;
+      const Point max_delta;
+      const CellPoint &max_key;
+
+    public:
+      HashGrid(const Point &max_delta)
+        : cells(cells_), max_delta(max_delta), max_key(max_key_)
       {
-        for (typename Point::iterator it = max_key_.begin(); it != max_key_.end(); ++it) *it = 0;
+        for (typename CellPoint::iterator it = max_key_.begin(); it != max_key_.end(); ++it) *it = 0;
       }
 
-      const Point &max_key() const
+      local_iterator insert(const value_type& obj)
       {
-        return max_key_;
+        const CellPoint cellkey = key_to_cellkey(obj.first);
+        Cell &cell = cells_[cellkey];
+        update_max_key(cellkey);
+        return cell.insert(obj);
       }
 
-      mapped_type& operator[](const key_type& key)
-      {
-        update_max_key(key);
-        return base_::operator[](key);
+      size_type erase(const key_type& key)
+      {   
+        try
+        {
+          Cell &cell = cells_.at(key_to_cellkey(key));
+          return cell.erase(key);
+        }
+        catch (std::out_of_range &)
+        { }
+        return 0;
       }
 
-      std::pair<iterator, bool> insert(const value_type& obj)
+      void clear()
       {
-        update_max_key(obj.first);
-        return base_::insert(obj);
+          cells.clear();
       }
 
     protected:
-      void update_max_key(const Point &d)
+      CellPoint key_to_cellkey(const Point &key)
       {
-        typename Point::const_iterator it1 = d.begin();
-        typename Point::iterator it2 = max_key_.begin();
+        CellPoint ret;
+        typename CellPoint::iterator it = ret.begin();
+        typename Point::const_iterator lit = key.begin(), rit = max_delta.begin();
+        for (; it != ret.end(); ++it, ++lit, ++rit) *it = *lit / *rit;
+        return ret;
+      }
+
+      void update_max_key(const CellPoint &d)
+      {
+        typename CellPoint::const_iterator it1 = d.begin();
+        typename CellPoint::iterator it2 = max_key_.begin();
         for (; it1 != d.end(); ++it1, ++it2)
         {
           if (*it1 > *it2)

@@ -13,7 +13,6 @@ CompleteLinkage.h
 EuclideanSimilarity.h
 Hasher.h
 HashGrid.h
-HashGridCell.h
 HierarchicalClustering.h
 QTClustering.h
 SingleLinkage.h

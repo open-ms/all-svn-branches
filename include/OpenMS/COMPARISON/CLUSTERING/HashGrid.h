@@ -37,11 +37,22 @@
 
 namespace OpenMS
 {
+  /**
+   * @brief Container for (n-dimensional point, value) pairs.
+   *
+   * It stores all points in cells with a discrete size.
+   */
   template <typename Value, std::size_t Dim>
   class OPENMS_DLLAPI HashGrid
   {
     public:
+      /**
+       * @brief Point for stored pairs.
+       */
       typedef boost::array<DoubleReal, Dim> Point;
+      /**
+       * @brief Point for cells.
+       */
       typedef boost::array<UInt, Dim> CellPoint;
 
       typedef typename boost::unordered_multimap<Point, Value> Cell;
@@ -55,13 +66,22 @@ namespace OpenMS
       typedef typename Cell::iterator local_iterator;
       typedef typename Cell::size_type size_type;
 
-    protected:
+    private:
       CellMap cells_;
       CellPoint max_key_;
 
     public:
+      /**
+       * @brief Map of all cells.
+       */
       const CellMap &cells;
+      /**
+       * @brief Size of each cell.
+       */
       const Point max_delta;
+      /**
+       * @brief Upper-right corner of key space for cells.
+       */
       const CellPoint &max_key;
 
     public:
@@ -71,20 +91,31 @@ namespace OpenMS
         for (typename CellPoint::iterator it = max_key_.begin(); it != max_key_.end(); ++it) *it = 0;
       }
 
-      local_iterator insert(const value_type& obj)
+      /**
+       * @brief Inserts a std::pair.
+       * @param v Pair to be inserted.
+       * @return Iterator that points to the inserted pair.
+       */
+      local_iterator insert(const value_type &v)
       {
-        const CellPoint cellkey = key_to_cellkey(obj.first);
+        const CellPoint cellkey = key_to_cellkey(v.first);
         Cell &cell = cells_[cellkey];
         update_max_key(cellkey);
-        return cell.insert(obj);
+        return cell.insert(v);
       }
 
-      size_type erase(const key_type& key)
+      /**
+       * @brief Erases elements matching the key.
+       * @param x Key of element to be erased.
+       * @return Number of elements erased.
+       */
+      size_type erase(const key_type &x)
       {   
+        const CellPoint cellkey = key_to_cellkey(x);
         try
         {
-          Cell &cell = cells_.at(key_to_cellkey(key));
-          return cell.erase(key);
+          Cell &cell = cells_.at(cellkey);
+          return cell.erase(x);
         }
         catch (std::out_of_range &)
         { }
@@ -96,7 +127,7 @@ namespace OpenMS
           cells.clear();
       }
 
-    protected:
+    private:
       CellPoint key_to_cellkey(const Point &key)
       {
         CellPoint ret;

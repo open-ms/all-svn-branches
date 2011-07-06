@@ -34,12 +34,20 @@
 
 namespace OpenMS
 {
+  /**
+   * @brief generic n-dimensional hierarchical clustering
+   */
   template <typename PointInfo, int Dim = 2>
   class HierarchicalClustering
   {
     public:
       typedef boost::array<DoubleReal, Dim> Point;
 
+      /**
+       * @brief Subset of points.
+       *
+       * Describes a set of points in the grid.
+       */
       typedef typename boost::unordered_multimap<Point, PointInfo> Subset;
       typedef HashGrid<Subset, Dim> Grid;
 
@@ -50,8 +58,10 @@ namespace OpenMS
       { }
 
       /**
-       * Insert new Point into correct grid cell.
-       * Returns iterator to inserted subset.
+       * @brief Insert new Point into grid.
+       * @param d Point to insert.
+       * @param info Associated caller specified info.
+       * @return iterator to inserted subset.
        */
       typename Grid::local_iterator insertPoint(const Point &d, const PointInfo &info)
       {
@@ -62,8 +72,9 @@ namespace OpenMS
 
     protected:
       /**
-       * Insert new Subset into correct grid cell.
-       * Returns iterator to inserted subset.
+       * @brief Insert new Subset into grid.
+       * @param d Point to insert.
+       * @return iterator to inserted subset.
        */
       typename Grid::local_iterator insertSubset(const Point &d)
       {

@@ -29,7 +29,6 @@
 #include <OpenMS/ANALYSIS/MAPMATCHING/SimplePairFinder.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/LabeledPairFinder.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/StablePairFinder.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/QTClusterFinder.h>
 
 #include <set>
 
@@ -53,8 +52,6 @@ namespace OpenMS
 			LabeledPairFinder::getProductName(), &LabeledPairFinder::create);
     Factory<BaseGroupFinder>::registerProduct(
 			StablePairFinder::getProductName(), &StablePairFinder::create);
-		Factory<BaseGroupFinder>::registerProduct(
-			QTClusterFinder::getProductName(), &QTClusterFinder::create);
   }
 
 	void BaseGroupFinder::checkIds_(const std::vector<ConsensusMap>& maps) const

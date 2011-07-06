@@ -2043,58 +2043,6 @@
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
          </MakeCommands>
       </Target>
-      <Target title="CentroidLinkage_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/CentroidLinkage_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; CentroidLinkage_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="CentroidLinkage_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/CentroidLinkage_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; CentroidLinkage_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
       <Target title="ChargePair_test">
          <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/ChargePair_test" prefix_auto="0" extension_auto="0" />
          <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
@@ -2506,58 +2454,6 @@
          </Compiler>
          <MakeCommands>
             <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; ClusterHierarchical_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="ClusteringMethod_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/ClusteringMethod_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; ClusteringMethod_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="ClusteringMethod_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/ClusteringMethod_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; ClusteringMethod_test/fast" />
             <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
             <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
@@ -4440,58 +4336,6 @@
          </Compiler>
          <MakeCommands>
             <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; DataProcessing_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="DataSubset_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/DataSubset_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; DataSubset_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="DataSubset_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/DataSubset_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; DataSubset_test/fast" />
             <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
             <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
@@ -6961,58 +6805,6 @@
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
          </MakeCommands>
       </Target>
-      <Target title="FeatureGroupingAlgorithmQT_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/FeatureGroupingAlgorithmQT_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; FeatureGroupingAlgorithmQT_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="FeatureGroupingAlgorithmQT_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/FeatureGroupingAlgorithmQT_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; FeatureGroupingAlgorithmQT_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
       <Target title="FeatureGroupingAlgorithmUnlabeled_test">
          <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/FeatureGroupingAlgorithmUnlabeled_test" prefix_auto="0" extension_auto="0" />
          <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
@@ -8110,58 +7902,6 @@
          </Compiler>
          <MakeCommands>
             <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; GridElement_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="GridFeature_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/GridFeature_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; GridFeature_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="GridFeature_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/GridFeature_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; GridFeature_test/fast" />
             <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
             <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
@@ -15997,214 +15737,6 @@
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
          </MakeCommands>
       </Target>
-      <Target title="QTClusterFinder_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/QTClusterFinder_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; QTClusterFinder_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="QTClusterFinder_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/QTClusterFinder_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; QTClusterFinder_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="QTCluster_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/QTCluster_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; QTCluster_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="QTCluster_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/QTCluster_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; QTCluster_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="QTClustering_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/QTClustering_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; QTClustering_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="QTClustering_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/QTClustering_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; QTClustering_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="QTSILACCluster_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/QTSILACCluster_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; QTSILACCluster_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="QTSILACCluster_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/QTSILACCluster_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; QTSILACCluster_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
       <Target title="ROCCurve_test">
          <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/ROCCurve_test" prefix_auto="0" extension_auto="0" />
          <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
@@ -16928,58 +16460,6 @@
          </Compiler>
          <MakeCommands>
             <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; SILACLabeler_test/fast" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="SILACTreeNode_test">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/SILACTreeNode_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; SILACTreeNode_test" />
-            <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
-            <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-            <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
-         </MakeCommands>
-      </Target>
-      <Target title="SILACTreeNode_test/fast">
-         <Option output="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin/SILACTreeNode_test" prefix_auto="0" extension_auto="0" />
-         <Option working_dir="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/bin" />
-         <Option object_output="./" />
-         <Option type="1" />
-         <Option compiler="gcc" />
-         <Compiler>
-            <Add directory="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/include" />
-            <Add directory="/home/sachsenb/Development/open-ms/contrib/include" />
-            <Add directory="/usr/include/qt4" />
-            <Add directory="/usr/include/qt4/QtOpenGL" />
-            <Add directory="/usr/include/qt4/QtSvg" />
-            <Add directory="/usr/include/qt4/QtGui" />
-            <Add directory="/usr/include/qt4/QtTest" />
-            <Add directory="/usr/include/qt4/QtXml" />
-            <Add directory="/usr/include/qt4/QtSql" />
-            <Add directory="/usr/include/qt4/QtNetwork" />
-            <Add directory="/usr/include/qt4/QtCore" />
-         </Compiler>
-         <MakeCommands>
-            <Build command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; SILACTreeNode_test/fast" />
             <CompileFile command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; &quot;$file&quot;" />
             <Clean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
             <DistClean command="/usr/bin/make -f &quot;/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Makefile&quot; clean" />
@@ -21022,8 +20502,6 @@
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/CVTerm_test.C">
       </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/CentroidLinkage_test.C">
-      </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/ChargePair_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/ChromatogramPeak_test.C">
@@ -21039,8 +20517,6 @@
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/ClusterFunctor_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/ClusterHierarchical_test.C">
-      </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/ClusteringMethod_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/CompNovoIdentificationBase_test.C">
       </Unit>
@@ -21113,8 +20589,6 @@
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/DataPoint_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/DataProcessing_test.C">
-      </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/DataSubset_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/DataValue_test.C">
       </Unit>
@@ -21210,8 +20684,6 @@
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/FeatureGroupingAlgorithmLabeled_test.C">
       </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/FeatureGroupingAlgorithmQT_test.C">
-      </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/FeatureGroupingAlgorithmUnlabeled_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/FeatureGroupingAlgorithm_test.C">
@@ -21255,8 +20727,6 @@
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/Gradient_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/GridElement_test.C">
-      </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/GridFeature_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/GumbelDistributionFitter_test.C">
       </Unit>
@@ -21558,14 +21028,6 @@
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/ProtonDistributionModel_test.C">
       </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/QTClusterFinder_test.C">
-      </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/QTCluster_test.C">
-      </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/QTClustering_test.C">
-      </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/QTSILACCluster_test.C">
-      </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/ROCCurve_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/RTSimulation_test.C">
@@ -21593,8 +21055,6 @@
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/SILACFiltering_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/SILACLabeler_test.C">
-      </Unit>
-      <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/SILACTreeNode_test.C">
       </Unit>
       <Unit filename="/home/sachsenb/Development/open-ms/branches/SILACAnalyzer/source/TEST/SVMWrapper_test.C">
       </Unit>

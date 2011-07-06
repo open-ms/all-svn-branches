@@ -45,7 +45,6 @@
 
 //clustering
 #include <OpenMS/DATASTRUCTURES/DistanceMatrix.h>
-#include <OpenMS/COMPARISON/CLUSTERING/CentroidLinkage.h>
 #include <OpenMS/COMPARISON/CLUSTERING/HierarchicalClustering.h>
 
 //Contrib includes
@@ -66,7 +65,6 @@
 using namespace OpenMS;
 using namespace std;
 
-typedef vector<SILACTreeNode> Tree;
 typedef vector<DataPoint*> Cluster;
 
 //-------------------------------------------------------------

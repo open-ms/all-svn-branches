@@ -22,9 +22,8 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
+// $Authors: Bastian Blank $
 // --------------------------------------------------------------------------
-
 
 #include <boost/array.hpp>
 #include <boost/unordered/unordered_map.hpp>
@@ -150,4 +149,4 @@ namespace OpenMS
   };
 }
 
-#endif /* HASHGRID_H_ */
+#endif /* OPENMS_COMPARISON_CLUSTERING_HASHGRID_H */

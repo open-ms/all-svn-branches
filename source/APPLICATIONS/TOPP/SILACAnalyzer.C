@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: Lars Nilse, Steffen Sass, Holger Plattfaut $
+// $Authors: Lars Nilse, Steffen Sass, Holger Plattfaut, Bastian Blank $
 // --------------------------------------------------------------------------
 
 //OpenMS includes

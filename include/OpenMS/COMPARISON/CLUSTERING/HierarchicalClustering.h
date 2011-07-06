@@ -22,9 +22,8 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
+// $Authors: Bastian Blank $
 // --------------------------------------------------------------------------
-
 
 #include <OpenMS/COMPARISON/CLUSTERING/HashGrid.h>
 #include <OpenMS/CONCEPT/Types.h>

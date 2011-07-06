@@ -22,9 +22,8 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Lars Nilse $
-// $Authors: Lars Nilse, Holger Plattfaut, Steffen Sass $
+// $Authors: Bastian Blank $
 // --------------------------------------------------------------------------
-
 
 #ifndef OPENMS_COMPARISON_CLUSTERING_HASHER_H
 #define OPENMS_COMPARISON_CLUSTERING_HASHER_H

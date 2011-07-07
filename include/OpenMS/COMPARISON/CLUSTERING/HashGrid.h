@@ -61,6 +61,8 @@ namespace OpenMS
       typedef typename Cell::mapped_type mapped_type;
       typedef typename Cell::value_type value_type;
 
+      typedef typename CellMap::const_iterator const_cell_iterator;
+      typedef typename CellMap::iterator cell_iterator;
       typedef typename Cell::const_iterator const_local_iterator;
       typedef typename Cell::iterator local_iterator;
       typedef typename Cell::size_type size_type;
@@ -70,10 +72,6 @@ namespace OpenMS
       CellPoint max_key_;
 
     public:
-      /**
-       * @brief Map of all cells.
-       */
-      const CellMap &cells;
       /**
        * @brief Size of each cell.
        */
@@ -85,7 +83,7 @@ namespace OpenMS
 
     public:
       HashGrid(const Point &max_delta)
-        : cells(cells_), max_delta(max_delta), max_key(max_key_)
+        : max_delta(max_delta), max_key(max_key_)
       {
         for (typename CellPoint::iterator it = max_key_.begin(); it != max_key_.end(); ++it) *it = 0;
       }
@@ -116,14 +114,24 @@ namespace OpenMS
           Cell &cell = cells_.at(cellkey);
           return cell.erase(x);
         }
-        catch (std::out_of_range &)
-        { }
+        catch (std::out_of_range &) { }
         return 0;
       }
 
-      void clear()
+      void clear() { cells_.clear(); }
+
+      const_cell_iterator cell_begin() const { return cells_.begin(); }
+      const_cell_iterator cell_end() const { return cells_.end(); }
+
+      const typename CellMap::mapped_type &cell_at(const CellPoint &x) const { return cells_.at(x); }
+
+      void cell_clear(const CellPoint &x)
       {
-          cells.clear();
+        try
+        {
+          cells_.at(x).clear();
+        }
+        catch (std::out_of_range &) { }
       }
 
     private:

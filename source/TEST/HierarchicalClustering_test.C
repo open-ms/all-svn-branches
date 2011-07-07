@@ -35,12 +35,20 @@ typedef OpenMS::HierarchicalClustering<UInt> Test;
 
 START_TEST(HierarchicalClustering, "$Id$")
 
-START_SECTION(HierarchicalClustering::insertPoint)
+START_SECTION(insertPoint)
 {
   const Test::Point max_delta = {{1, 1}};
   Test t(max_delta);
   const Test::Point coord = {{1, 1}};
   t.insertPoint(coord, 0);
+}
+END_SECTION
+
+START_SECTION(cluster)
+{
+  const Test::Point max_delta = {{1, 1}};
+  Test t(max_delta);
+  t.cluster();
 }
 END_SECTION
 

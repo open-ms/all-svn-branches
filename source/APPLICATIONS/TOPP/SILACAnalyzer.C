@@ -1111,7 +1111,7 @@ private:
   /** Write all DataPoints into a featureXML file. */
   void writeFilePoints(const String &filename, bool cluster_info) const;
 
-  void writeFilePointsByCell(const String &out, const Clustering &clustering) const;
+  void writeFilePointsBySubset(const String &out, const Clustering &clustering) const;
 };
 
 void TOPPSILACAnalyzer::clusterData()
@@ -1136,7 +1136,9 @@ void TOPPSILACAnalyzer::clusterData()
       clustering.insertPoint(key, &*it);
     }
 
-    writeFilePointsByCell(out_clusters + ".by-cell.layer-" + nr++ + ".featureXML", clustering);
+    clustering.cluster();
+
+    writeFilePointsBySubset(out_clusters + ".by-subset.layer-" + nr++ + ".featureXML", clustering);
   }
 
   progresslogger.endProgress();
@@ -1274,7 +1276,7 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &out, bool cluster_info) co
   f_file.store(out, points);
 }
 
-void TOPPSILACAnalyzer::writeFilePointsByCell(const String &out, const Clustering &clustering) const
+void TOPPSILACAnalyzer::writeFilePointsBySubset(const String &out, const Clustering &clustering) const
 {
   // 15 HTML colors
   const String colors[] = {
@@ -1285,20 +1287,23 @@ void TOPPSILACAnalyzer::writeFilePointsByCell(const String &out, const Clusterin
   const Int colors_len = 15;
 
   FeatureMap<> points;
-  Int gridnr = 0;
+  Int subsetnr = 0;
 
-  for (Clustering::Grid::CellMap::const_iterator cell_it = clustering.grid.cells.begin(); cell_it != clustering.grid.cells.end(); ++cell_it)
+  for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
   {
-    for (Clustering::Grid::Cell::const_iterator it = cell_it->second.begin(); it != cell_it->second.end(); ++it)
+    for (Clustering::Grid::const_local_iterator subset_it = cell_it->second.begin(); subset_it != cell_it->second.end(); ++subset_it)
     {
-      Feature point;
-      point.setRT(it->first[0]);
-      point.setMZ(it->first[1]);
-      point.setIntensity(1);
-      point.setMetaValue("color", colors[gridnr % colors_len]);
-      points.push_back(point);
+      for (Clustering::Subset::const_iterator point_it = subset_it->second.begin(); point_it != subset_it->second.end(); ++point_it)
+      {
+        Feature point;
+        point.setRT(point_it->first[0]);
+        point.setMZ(point_it->first[1]);
+        point.setIntensity(1);
+        point.setMetaValue("color", colors[subsetnr % colors_len]);
+        points.push_back(point);
+      }
+      subsetnr++;
     }
-    gridnr++;
   }
 
   points.sortByPosition();

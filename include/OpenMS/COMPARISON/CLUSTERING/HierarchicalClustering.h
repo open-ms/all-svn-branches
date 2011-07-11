@@ -40,22 +40,19 @@ namespace OpenMS
   /**
    * @brief generic n-dimensional hierarchical clustering
    */
-  // XXX: Only support two dimensions
-  // XXX: rename PointInfo -> PointRef
-  template <typename PointInfo>
+  template <typename PointRef>
   class HierarchicalClustering
   {
     public:
       typedef boost::array<DoubleReal, 2> Point;
 
      /**
-       * @brief Subset of points.
+       * @brief Cluster of points.
        *
        * Describes a set of points in the grid.
        */
-      // XXX: rename: Cluster
-      typedef typename boost::unordered_multimap<Point, PointInfo> Subset;
-      typedef HashGrid<Subset, 2> Grid;
+      typedef typename boost::unordered_multimap<Point, PointRef> Cluster;
+      typedef HashGrid<Cluster, 2> Grid;
 
       Grid grid;
 
@@ -135,13 +132,13 @@ namespace OpenMS
       /**
        * @brief Insert new Point into grid.
        * @param d Point to insert.
-       * @param info Associated caller specified info.
-       * @return iterator to inserted subset.
+       * @param ref Associated caller specified info.
+       * @return iterator to inserted cluster.
        */
-      typename Grid::local_iterator insertPoint(const Point &d, const PointInfo &info)
+      typename Grid::local_iterator insertPoint(const Point &d, const PointRef &ref)
       {
-        typename Grid::local_iterator it = insertSubset(d);
-        it->second.insert(std::make_pair(d, info));
+        typename Grid::local_iterator it = insertCluster(d);
+        it->second.insert(std::make_pair(d, ref));
         return it;
       }
 
@@ -162,13 +159,13 @@ namespace OpenMS
 
     protected:
       /**
-       * @brief Insert new Subset into grid.
+       * @brief Insert new Cluster into grid.
        * @param d Point to insert.
-       * @return iterator to inserted subset.
+       * @return iterator to inserted cluster.
        */
-      typename Grid::local_iterator insertSubset(const Point &d)
+      typename Grid::local_iterator insertCluster(const Point &d)
       {
-        return grid.insert(std::make_pair(d, Subset()));
+        return grid.insert(std::make_pair(d, Cluster()));
       }
 
       typedef std::map<typename Grid::CellIndex, std::pair<const typename Grid::Cell *, bool> > ClusterCells;
@@ -182,17 +179,17 @@ namespace OpenMS
 
       void clusterCellCollect(UInt dim, typename Grid::CellIndex cur, ClusterCells cells, bool center);
 
-      void clusterCellReaddSubset(const ClusterTree &tree, Subset &subset)
+      void clusterCellReaddCluster(const ClusterTree &tree, Cluster &cluster)
       {
         if (tree->left && tree->right)
         {
-          clusterCellReaddSubset(tree->left, subset);
-          clusterCellReaddSubset(tree->right, subset);
+          clusterCellReaddCluster(tree->left, cluster);
+          clusterCellReaddCluster(tree->right, cluster);
         }
         else
         {
-          // XXX: PointInfo
-          subset.insert(std::make_pair(tree->bbox.first, PointInfo()));
+          // XXX: PointRef
+          cluster.insert(std::make_pair(tree->bbox.first, PointRef()));
         }
       }
 
@@ -205,8 +202,8 @@ namespace OpenMS
         }
         else
         {
-          // XXX: PointInfo
-          insertPoint(tree->bbox.first, PointInfo());
+          // XXX: PointRef
+          insertPoint(tree->bbox.first, PointRef());
         }
       }
 
@@ -311,11 +308,11 @@ namespace OpenMS
       const typename Grid::Cell &cell_cur = *cell_it->second.first;
       const bool &cell_center = cell_it->second.second;
 
-      // Per subset
-      for (typename Grid::const_local_iterator subset_it = cell_cur.begin(); subset_it != cell_cur.end(); ++subset_it)
+      // Per cluster
+      for (typename Grid::const_local_iterator cluster_it = cell_cur.begin(); cluster_it != cell_cur.end(); ++cluster_it)
       {
         // Per point
-        for (typename Subset::const_iterator point_it = subset_it->second.begin(); point_it != subset_it->second.end(); ++point_it)
+        for (typename Cluster::const_iterator point_it = cluster_it->second.begin(); point_it != cluster_it->second.end(); ++point_it)
         {
           boost::shared_ptr<TreeNode> tree(new TreeNode(point_it->first, cell_center));
 
@@ -381,11 +378,11 @@ namespace OpenMS
     std::cout << "ping: size: " << trees.size() << ", " << dists.size() << std::endl;
     for (typename LocalTrees::iterator tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
     {
-      // We got a finished tree with a point in the center, add subset
+      // We got a finished tree with a point in the center, add cluster
       if ((**tree_it).center)
       {
-        Subset &subset = insertSubset((**tree_it).bbox)->second;
-        clusterCellReaddSubset(*tree_it, subset);
+        Cluster &cluster = insertCluster((**tree_it).bbox)->second;
+        clusterCellReaddCluster(*tree_it, cluster);
       }
       // We got a finished tree but no point in the center, readd as single points
       else

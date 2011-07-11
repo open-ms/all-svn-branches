@@ -41,6 +41,7 @@ namespace OpenMS
    * @brief Generic 2-dimensional hierarchical clustering.
    *
    * @tparam PointRef Caller specified referenced associated with every point.
+   * Needs to be default constructible.
    */
   template <typename PointRef>
   class HierarchicalClustering
@@ -114,13 +115,14 @@ namespace OpenMS
           const BoundingBox bbox;
           const boost::shared_ptr<TreeNode> left, right;
           const bool center;
+          const PointRef ref;
 
-          TreeNode(BoundingBox bbox, bool center)
-            : bbox(bbox), center(center)
+          TreeNode(const BoundingBox &bbox, const PointRef &ref, bool center)
+            : bbox(bbox), center(center), ref(ref)
           { }
 
           TreeNode(boost::shared_ptr<TreeNode> &left, boost::shared_ptr<TreeNode> &right)
-            : bbox(left->bbox | right->bbox), left(left), right(right), center(left->center && right->center)
+            : bbox(left->bbox | right->bbox), left(left), right(right), center(left->center && right->center), ref(PointRef())
           { }
       };
 
@@ -215,6 +217,7 @@ namespace OpenMS
 
       /**
        * @brief Recursivly readd the points of a finished cluster.
+       * All points are saved in the leafs of the tree.
        * @param tree The tree
        * @param cluster The cluster
        */
@@ -227,13 +230,13 @@ namespace OpenMS
         }
         else
         {
-          // XXX: PointRef
-          cluster.insert(std::make_pair(tree->bbox.first, PointRef()));
+          cluster.insert(std::make_pair(tree->bbox.first, tree->ref));
         }
       }
 
       /**
        * @brief Recursively readd the points of an unfinished cluster back to the grid.
+       * All points are saved in the leafs of the tree.
        * @param tree The tree
        */
       void clusterCellReaddPoint(const ClusterTree &tree)
@@ -245,8 +248,7 @@ namespace OpenMS
         }
         else
         {
-          // XXX: PointRef
-          insertPoint(tree->bbox.first, PointRef());
+          insertPoint(tree->bbox.first, tree->ref);
         }
       }
 
@@ -357,7 +359,7 @@ namespace OpenMS
           // Per point
           for (typename Cluster::const_iterator point_it = cluster_it->second.begin(); point_it != cluster_it->second.end(); ++point_it)
           {
-            boost::shared_ptr<TreeNode> tree(new TreeNode(point_it->first, cell_center));
+            boost::shared_ptr<TreeNode> tree(new TreeNode(point_it->first, point_it->second, cell_center));
 
             // Generate distance to every existing tree
             Point new_normpoint = point_multiplication(tree->bbox, grid.max_delta);

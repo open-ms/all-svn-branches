@@ -168,7 +168,7 @@ namespace OpenMS
         return grid.insert(std::make_pair(d, Cluster()));
       }
 
-      typedef std::map<typename Grid::CellIndex, std::pair<const typename Grid::Cell *, bool> > ClusterCells;
+      typedef std::map<typename Grid::CellIndex, std::pair<typename Grid::Cell *, bool> > ClusterCells;
       typedef boost::shared_ptr<TreeNode> ClusterTree;
 
       /**
@@ -316,31 +316,41 @@ namespace OpenMS
     catch (std::out_of_range &)
     { return; }
 
-    // Collect existing points per cell
-    std::cout << "ping" << std::endl;
+    // Collect and remove existing points from cells
+    std::cout << "ping: number of cells: " << cells.size() << std::endl;
     for (typename ClusterCells::iterator cell_it = cells.begin(); cell_it != cells.end(); ++cell_it)
     {
-      const typename Grid::Cell &cell_cur = *cell_it->second.first;
+      typename Grid::Cell &cell_cur = *cell_it->second.first;
       const bool &cell_center = cell_it->second.second;
 
-      // Per cluster
-      for (typename Grid::const_local_iterator cluster_it = cell_cur.begin(); cluster_it != cell_cur.end(); ++cluster_it)
+      // Iterate per cluster
+      typename Grid::local_iterator cluster_tmp_it = cell_cur.begin();
+      while (cluster_tmp_it != cell_cur.end())
       {
-        // Per point
-        for (typename Cluster::const_iterator point_it = cluster_it->second.begin(); point_it != cluster_it->second.end(); ++point_it)
-        {
-          boost::shared_ptr<TreeNode> tree(new TreeNode(point_it->first, cell_center));
+        typename Grid::local_iterator cluster_it = cluster_tmp_it;
+        ++cluster_tmp_it;
 
-          // Generate distance to every existing tree
-          Point new_normpoint = point_multiplication(tree->bbox, grid.max_delta);
-          for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
+        // Not yet a cluster
+        if (cluster_it->second.size() == 1)
+        {
+          // Per point
+          for (typename Cluster::const_iterator point_it = cluster_it->second.begin(); point_it != cluster_it->second.end(); ++point_it)
           {
-            Point old_normpoint = point_multiplication((*it)->bbox, grid.max_delta);
-            DoubleReal dist = point_distance(new_normpoint, old_normpoint);
-            dists.push(std::make_pair(dist, std::make_pair(tree, *it)));
+            boost::shared_ptr<TreeNode> tree(new TreeNode(point_it->first, cell_center));
+
+            // Generate distance to every existing tree
+            Point new_normpoint = point_multiplication(tree->bbox, grid.max_delta);
+            for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
+            {
+              Point old_normpoint = point_multiplication((*it)->bbox, grid.max_delta);
+              DoubleReal dist = point_distance(new_normpoint, old_normpoint);
+              dists.push(std::make_pair(dist, std::make_pair(tree, *it)));
+            }
+
+            trees.insert(tree);
           }
 
-          trees.insert(tree);
+          cell_cur.erase(cluster_it);
         }
       }
     }
@@ -359,7 +369,6 @@ namespace OpenMS
         continue;
       }
 
-      // Calculate new bounding box.
       boost::shared_ptr<TreeNode> tree(new TreeNode(tree_left, tree_right));
 
       trees.erase(tree_left);
@@ -381,24 +390,17 @@ namespace OpenMS
       trees.insert(tree);
     }
 
-    // Clear cells
-    std::cout << "ping" << std::endl;
-    for (typename ClusterCells::iterator cell_it = cells.begin(); cell_it != cells.end(); ++cell_it)
-    {
-      grid.cell_clear(cell_it->first);
-    }
-
     // Add current data to grid
     std::cout << "ping: size: " << trees.size() << ", " << dists.size() << std::endl;
     for (typename LocalTrees::iterator tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
     {
-      // We got a finished tree with a point in the center, add cluster
+      // We got a finished tree with all points in the center, add cluster
       if ((**tree_it).center)
       {
         Cluster &cluster = insertCluster((**tree_it).bbox)->second;
         clusterCellReaddCluster(*tree_it, cluster);
       }
-      // We got a finished tree but no point in the center, readd as single points
+      // We got a finished tree but not all points in the center, readd as single points
       else
       {
         clusterCellReaddPoint(*tree_it);

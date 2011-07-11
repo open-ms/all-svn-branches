@@ -1100,7 +1100,7 @@ class TOPPSILACAnalyzer
     return EXECUTION_OK;
   }
 
-  typedef HierarchicalClustering<DataPoint *, 2> Clustering;
+  typedef HierarchicalClustering<DataPoint *> Clustering;
 
   void clusterData();
 

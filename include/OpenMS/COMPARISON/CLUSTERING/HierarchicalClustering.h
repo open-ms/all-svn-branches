@@ -42,11 +42,11 @@ namespace OpenMS
    */
   // XXX: Only support two dimensions
   // XXX: rename PointInfo -> PointRef
-  template <typename PointInfo, UInt Dim = 2>
+  template <typename PointInfo>
   class HierarchicalClustering
   {
     public:
-      typedef boost::array<DoubleReal, Dim> Point;
+      typedef boost::array<DoubleReal, 2> Point;
 
      /**
        * @brief Subset of points.
@@ -55,7 +55,7 @@ namespace OpenMS
        */
       // XXX: rename: Cluster
       typedef typename boost::unordered_multimap<Point, PointInfo> Subset;
-      typedef HashGrid<Subset, Dim> Grid;
+      typedef HashGrid<Subset, 2> Grid;
 
       Grid grid;
 
@@ -289,8 +289,8 @@ namespace OpenMS
 
   };
 
-  template <typename I, UInt Dim>
-  void HierarchicalClustering<I, Dim>::clusterCell(const typename Grid::CellIndex &cur)
+  template <typename I>
+  void HierarchicalClustering<I>::clusterCell(const typename Grid::CellIndex &cur)
   {
     typedef boost::unordered_set<ClusterTree> LocalTrees;
 
@@ -302,7 +302,7 @@ namespace OpenMS
     std::cout << "ping: coord: " << cur[0] << ":" << cur[1] << std::endl;
     try { cells.insert(std::make_pair(cur, std::make_pair(&grid.cell_at(cur), true))); }
     catch (std::out_of_range &) { return; }
-    clusterCellCollect(Dim - 1, cur, cells, true);
+    clusterCellCollect(1, cur, cells, true);
 
     // Collect existing points per cell
     std::cout << "ping" << std::endl;
@@ -396,8 +396,8 @@ namespace OpenMS
   }
 
   // XXX: no recursion
-  template <typename I, UInt D>
-  void HierarchicalClustering<I, D>::clusterCellCollect(UInt dim, typename Grid::CellIndex cur, ClusterCells cells, bool center)
+  template <typename I>
+  void HierarchicalClustering<I>::clusterCellCollect(UInt dim, typename Grid::CellIndex cur, ClusterCells cells, bool center)
   {
     if (dim)
     {

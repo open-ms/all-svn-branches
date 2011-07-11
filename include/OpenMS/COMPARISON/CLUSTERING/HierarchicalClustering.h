@@ -40,6 +40,8 @@ namespace OpenMS
   /**
    * @brief generic n-dimensional hierarchical clustering
    */
+  // XXX: Only support two dimensions
+  // XXX: rename PointInfo -> PointRef
   template <typename PointInfo, UInt Dim = 2>
   class HierarchicalClustering
   {
@@ -51,6 +53,7 @@ namespace OpenMS
        *
        * Describes a set of points in the grid.
        */
+      // XXX: rename: Cluster
       typedef typename boost::unordered_multimap<Point, PointInfo> Subset;
       typedef HashGrid<Subset, Dim> Grid;
 
@@ -58,6 +61,7 @@ namespace OpenMS
 
     protected:
       /** @brief Bounding box of cluster. */
+      // XXX: wo anders schon definiert
       class BoundingBox
         : public std::pair<Point, Point>
       {
@@ -65,6 +69,11 @@ namespace OpenMS
           BoundingBox(const Point &p)
             : std::pair<Point, Point>(std::make_pair(p, p))
           { }
+
+          Point size() const
+          {
+            return point_minus(this->second, this->first);
+          }
 
           BoundingBox &operator|=(const BoundingBox &rhs)
           {
@@ -89,7 +98,7 @@ namespace OpenMS
             return ret;
           }
 
-          operator const Point() const
+          operator Point() const
           {
             // (first + second) / 2
             return point_division(point_plus(this->first, this->second), 2);
@@ -115,6 +124,7 @@ namespace OpenMS
 
       /** @brief Distance info used for clustering. */
       // XXX: Use boost::tuple
+      // XXX: k-d-tree???
       typedef std::priority_queue<std::pair<DoubleReal, std::pair<boost::shared_ptr<TreeNode>, boost::shared_ptr<TreeNode> > > > DistanceQueue;
 
     public:
@@ -142,11 +152,11 @@ namespace OpenMS
       {
         std::cout << "cluster: coord: " << grid.max_key[0] << ":" << grid.max_key[1] << std::endl;
         // Collect coordinates of all active cells
-        std::vector<typename Grid::CellPoint> cells;
+        std::vector<typename Grid::CellIndex> cells;
         for (typename Grid::const_cell_iterator it = grid.cell_begin(); it != grid.cell_end(); ++it)
           cells.push_back(it->first);
         // Cluster each available cell
-        for (typename std::vector<typename Grid::CellPoint>::const_iterator it = cells.begin(); it != cells.end(); ++it)
+        for (typename std::vector<typename Grid::CellIndex>::const_iterator it = cells.begin(); it != cells.end(); ++it)
           clusterCell(*it);
       }
 
@@ -161,16 +171,16 @@ namespace OpenMS
         return grid.insert(std::make_pair(d, Subset()));
       }
 
-      typedef std::map<typename Grid::CellPoint, std::pair<const typename Grid::Cell *, bool> > ClusterCells;
+      typedef std::map<typename Grid::CellIndex, std::pair<const typename Grid::Cell *, bool> > ClusterCells;
       typedef boost::shared_ptr<TreeNode> ClusterTree;
 
       /**
        * @brief Perform clustering for each available cell.
        * @param p Cell coordinate to cluster.
        */
-      void clusterCell(const typename Grid::CellPoint &p);
+      void clusterCell(const typename Grid::CellIndex &p);
 
-      void clusterCellCollect(UInt dim, typename Grid::CellPoint cur, ClusterCells cells, bool center);
+      void clusterCellCollect(UInt dim, typename Grid::CellIndex cur, ClusterCells cells, bool center);
 
       void clusterCellReaddSubset(const ClusterTree &tree, Subset &subset)
       {
@@ -280,7 +290,7 @@ namespace OpenMS
   };
 
   template <typename I, UInt Dim>
-  void HierarchicalClustering<I, Dim>::clusterCell(const typename Grid::CellPoint &cur)
+  void HierarchicalClustering<I, Dim>::clusterCell(const typename Grid::CellIndex &cur)
   {
     typedef boost::unordered_set<ClusterTree> LocalTrees;
 
@@ -344,7 +354,7 @@ namespace OpenMS
       trees.erase(tree_left);
       trees.erase(tree_right);
 
-      if (!point_greater(bbox, grid.max_delta))
+      if (!point_greater(bbox.size(), grid.max_delta))
       {
         // Generate distance to every existing tree
         // XXX: De-duplicate
@@ -385,8 +395,9 @@ namespace OpenMS
     }
   }
 
+  // XXX: no recursion
   template <typename I, UInt D>
-  void HierarchicalClustering<I, D>::clusterCellCollect(UInt dim, typename Grid::CellPoint cur, ClusterCells cells, bool center)
+  void HierarchicalClustering<I, D>::clusterCellCollect(UInt dim, typename Grid::CellIndex cur, ClusterCells cells, bool center)
   {
     if (dim)
     {

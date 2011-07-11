@@ -48,14 +48,15 @@ namespace OpenMS
       /**
        * @brief Point for stored pairs.
        */
+      // XXX: Check is there is another type handy in OpenMS allready
       typedef boost::array<DoubleReal, Dim> Point;
       /**
-       * @brief Point for cells.
+       * @brief Index for cells.
        */
-      typedef boost::array<UInt, Dim> CellPoint;
+      typedef boost::array<UInt, Dim> CellIndex;
 
       typedef typename boost::unordered_multimap<Point, Value> Cell;
-      typedef boost::unordered_map<CellPoint, Cell> CellMap;
+      typedef boost::unordered_map<CellIndex, Cell> CellMap;
 
       typedef typename Cell::key_type key_type;
       typedef typename Cell::mapped_type mapped_type;
@@ -69,7 +70,7 @@ namespace OpenMS
 
     private:
       CellMap cells_;
-      CellPoint max_key_;
+      CellIndex max_key_;
 
     public:
       /**
@@ -79,13 +80,14 @@ namespace OpenMS
       /**
        * @brief Upper-right corner of key space for cells.
        */
-      const CellPoint &max_key;
+      const CellIndex &max_key;
 
     public:
       HashGrid(const Point &max_delta)
         : max_delta(max_delta), max_key(max_key_)
       {
-        for (typename CellPoint::iterator it = max_key_.begin(); it != max_key_.end(); ++it) *it = 0;
+        // XXX: constructor?
+        for (typename CellIndex::iterator it = max_key_.begin(); it != max_key_.end(); ++it) *it = 0;
       }
 
       /**
@@ -95,7 +97,7 @@ namespace OpenMS
        */
       local_iterator insert(const value_type &v)
       {
-        const CellPoint cellkey = key_to_cellkey(v.first);
+        const CellIndex cellkey = key_to_cellkey(v.first);
         Cell &cell = cells_[cellkey];
         update_max_key(cellkey);
         return cell.insert(v);
@@ -108,7 +110,7 @@ namespace OpenMS
        */
       size_type erase(const key_type &x)
       {   
-        const CellPoint cellkey = key_to_cellkey(x);
+        const CellIndex cellkey = key_to_cellkey(x);
         try
         {
           Cell &cell = cells_.at(cellkey);
@@ -123,9 +125,9 @@ namespace OpenMS
       const_cell_iterator cell_begin() const { return cells_.begin(); }
       const_cell_iterator cell_end() const { return cells_.end(); }
 
-      const typename CellMap::mapped_type &cell_at(const CellPoint &x) const { return cells_.at(x); }
+      const typename CellMap::mapped_type &cell_at(const CellIndex &x) const { return cells_.at(x); }
 
-      void cell_clear(const CellPoint &x)
+      void cell_clear(const CellIndex &x)
       {
         try
         {
@@ -135,19 +137,20 @@ namespace OpenMS
       }
 
     private:
-      CellPoint key_to_cellkey(const Point &key)
+      // XXX
+      CellIndex key_to_cellkey(const Point &key)
       {
-        CellPoint ret;
-        typename CellPoint::iterator it = ret.begin();
+        CellIndex ret;
+        typename CellIndex::iterator it = ret.begin();
         typename Point::const_iterator lit = key.begin(), rit = max_delta.begin();
         for (; it != ret.end(); ++it, ++lit, ++rit) *it = *lit / *rit;
         return ret;
       }
 
-      void update_max_key(const CellPoint &d)
+      void update_max_key(const CellIndex &d)
       {
-        typename CellPoint::const_iterator it1 = d.begin();
-        typename CellPoint::iterator it2 = max_key_.begin();
+        typename CellIndex::const_iterator it1 = d.begin();
+        typename CellIndex::iterator it2 = max_key_.begin();
         for (; it1 != d.end(); ++it1, ++it2)
         {
           if (*it1 > *it2)

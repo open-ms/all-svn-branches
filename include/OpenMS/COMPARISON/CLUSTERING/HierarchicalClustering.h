@@ -114,8 +114,8 @@ namespace OpenMS
             : bbox(bbox), center(center)
           { }
 
-          TreeNode(BoundingBox bbox, boost::shared_ptr<TreeNode> &left, boost::shared_ptr<TreeNode> &right)
-            : bbox(bbox), left(left), right(right), center(left->center | right->center)
+          TreeNode(boost::shared_ptr<TreeNode> &left, boost::shared_ptr<TreeNode> &right)
+            : bbox(left->bbox | right->bbox), left(left), right(right), center(left->center && right->center)
           { }
       };
 
@@ -177,7 +177,19 @@ namespace OpenMS
        */
       void clusterCell(const typename Grid::CellIndex &p);
 
-      void clusterCellCollect(UInt dim, typename Grid::CellIndex cur, ClusterCells cells, bool center);
+      void clusterCellCollect(typename Grid::CellIndex cur, ClusterCells &cells);
+
+      void clusterCellCollectOne(const typename Grid::CellIndex &cur, ClusterCells &cells, bool center = false, bool ignore_missing = true)
+      {
+        try
+        {
+          cells.insert(std::make_pair(cur, std::make_pair(&grid.cell_at(cur), center)));
+        }
+        catch (std::out_of_range &)
+        {
+          if (!ignore_missing) throw;
+        }
+      }
 
       void clusterCellReaddCluster(const ClusterTree &tree, Cluster &cluster)
       {
@@ -297,9 +309,12 @@ namespace OpenMS
 
     // Collect all cells we need
     std::cout << "ping: coord: " << cur[0] << ":" << cur[1] << std::endl;
-    try { cells.insert(std::make_pair(cur, std::make_pair(&grid.cell_at(cur), true))); }
-    catch (std::out_of_range &) { return; }
-    clusterCellCollect(1, cur, cells, true);
+    try
+    {
+      clusterCellCollect(cur, cells);
+    }
+    catch (std::out_of_range &)
+    { return; }
 
     // Collect existing points per cell
     std::cout << "ping" << std::endl;
@@ -345,13 +360,12 @@ namespace OpenMS
       }
 
       // Calculate new bounding box.
-      BoundingBox bbox = tree_left->bbox | tree_right->bbox;
-      boost::shared_ptr<TreeNode> tree(new TreeNode(bbox, tree_left, tree_right));
+      boost::shared_ptr<TreeNode> tree(new TreeNode(tree_left, tree_right));
 
       trees.erase(tree_left);
       trees.erase(tree_right);
 
-      if (!point_greater(bbox.size(), grid.max_delta))
+      if (!point_greater(tree->bbox.size(), grid.max_delta))
       {
         // Generate distance to every existing tree
         // XXX: De-duplicate
@@ -392,27 +406,73 @@ namespace OpenMS
     }
   }
 
-  // XXX: no recursion
+  // XXX: check if 2x2 center and 4x4 is sufficient
   template <typename I>
-  void HierarchicalClustering<I>::clusterCellCollect(UInt dim, typename Grid::CellIndex cur, ClusterCells cells, bool center)
+  void HierarchicalClustering<I>::clusterCellCollect(typename Grid::CellIndex base, ClusterCells &cells)
   {
-    if (dim)
-    {
-      clusterCellCollect(dim - 1, cur, cells, center);
-      cur[dim] -= 1;
-      clusterCellCollect(dim - 1, cur, cells, false);
-      cur[dim] += 2;
-      clusterCellCollect(dim - 1, cur, cells, false);
-    }
-    else if (!center)
-    {
-      try
-      {
-        cells.insert(std::make_pair(cur, std::make_pair(&grid.cell_at(cur), false)));
-      }
-      catch (std::out_of_range &)
-      { }
-    }
+    // (0, 0)
+    clusterCellCollectOne(base, cells, true, false);
+
+    typename Grid::CellIndex cur = base;
+    cur[0] -= 1;
+    // (-1, -1)
+    cur[1] -= 1; clusterCellCollectOne(cur, cells);
+    // (-1, 0)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    // (-1, 1)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    // (-1, 2)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    // (-1, 3)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+
+    cur = base;
+    // (0, -1)
+    cur[1] -= 1; clusterCellCollectOne(cur, cells);
+    // (0, 0)
+    cur[1] += 1;
+    // (0, 1)
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    // (0, 2)
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    // (0, 3)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+
+    cur = base; cur[0] += 1;
+    // (1, -1)
+    cur[1] -= 1; clusterCellCollectOne(cur, cells);
+    // (1, 0)
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    // (1, 1)
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    // (1, 2)
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    // (1, 3)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+
+    cur = base; cur[0] += 2;
+    // (2, -1)
+    cur[1] -= 1; clusterCellCollectOne(cur, cells);
+    // (2, 0)
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    // (2, 1)
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    // (2, 2)
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    // (2, 3)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+
+    cur = base; cur[0] += 3;
+    // (3, -1)
+    cur[1] -= 1; clusterCellCollectOne(cur, cells);
+    // (3, 0)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    // (3, 1)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    // (3, 2)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    // (3, 3)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
   }
 }
 

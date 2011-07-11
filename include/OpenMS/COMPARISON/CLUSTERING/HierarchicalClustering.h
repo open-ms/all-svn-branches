@@ -38,7 +38,9 @@
 namespace OpenMS
 {
   /**
-   * @brief generic n-dimensional hierarchical clustering
+   * @brief Generic 2-dimensional hierarchical clustering.
+   *
+   * @tparam PointRef Caller specified referenced associated with every point.
    */
   template <typename PointRef>
   class HierarchicalClustering
@@ -52,6 +54,7 @@ namespace OpenMS
        * Describes a set of points in the grid.
        */
       typedef typename boost::unordered_multimap<Point, PointRef> Cluster;
+
       typedef HashGrid<Cluster, 2> Grid;
 
       Grid grid;
@@ -72,6 +75,7 @@ namespace OpenMS
             return point_minus(this->second, this->first);
           }
 
+          /** @brief Intersection of bounding box. */
           BoundingBox &operator|=(const BoundingBox &rhs)
           {
             typename Point::iterator lit;
@@ -88,6 +92,7 @@ namespace OpenMS
             return *this;
           }
 
+          /** @brief Intersection of bounding box. */
           BoundingBox operator|(const BoundingBox &rhs) const
           {
             BoundingBox ret(*this);
@@ -125,6 +130,10 @@ namespace OpenMS
       typedef std::priority_queue<std::pair<DoubleReal, std::pair<boost::shared_ptr<TreeNode>, boost::shared_ptr<TreeNode> > > > DistanceQueue;
 
     public:
+      /**
+       * @brief Constructor
+       * @param max_delta Max size of cluster
+       */
       HierarchicalClustering(const Point &max_delta)
         : grid(max_delta)
       { }
@@ -172,13 +181,26 @@ namespace OpenMS
       typedef boost::shared_ptr<TreeNode> ClusterTree;
 
       /**
-       * @brief Perform clustering for each available cell.
-       * @param p Cell coordinate to cluster.
+       * @brief Perform clustering on given cell.
+       * @param p Cell index.
        */
       void clusterCell(const typename Grid::CellIndex &p);
 
+      /**
+       * @brief Collect cells used for given cell.
+       * This function collects all cells in a 5x5 array.
+       * @param cur Cell index.
+       * @param cells List of cells to be used.
+       */
       void clusterCellCollect(typename Grid::CellIndex cur, ClusterCells &cells);
 
+      /**
+       * @brief Collect one cell.
+       * @param cur Cell index.
+       * @param cells List of cells.
+       * @param center Is the given cell in the center.
+       * @oaram ignore_missing Defines if non-existant errors should be ignored.
+       */
       void clusterCellCollectOne(const typename Grid::CellIndex &cur, ClusterCells &cells, bool center = false, bool ignore_missing = true)
       {
         try
@@ -191,6 +213,11 @@ namespace OpenMS
         }
       }
 
+      /**
+       * @brief Recursivly readd the points of a finished cluster.
+       * @param tree The tree
+       * @param cluster The cluster
+       */
       void clusterCellReaddCluster(const ClusterTree &tree, Cluster &cluster)
       {
         if (tree->left && tree->right)
@@ -205,6 +232,10 @@ namespace OpenMS
         }
       }
 
+      /**
+       * @brief Recursively readd the points of an unfinished cluster back to the grid.
+       * @param tree The tree
+       */
       void clusterCellReaddPoint(const ClusterTree &tree)
       {
         if (tree->left && tree->right)
@@ -281,21 +312,11 @@ namespace OpenMS
       static DoubleReal point_distance(const Point &lhs, const Point &rhs)
       {
         DoubleReal ret = 0;
-        Point p = point_elem_power(point_minus(lhs, rhs), 2);
+        Point p = point_minus(lhs, rhs);
         typename Point::const_iterator it = p.begin();
-        for (; it != p.end(); ++it) ret += *it;
+        for (; it != p.end(); ++it) ret += std::pow(*it, 2.);
         return std::sqrt(ret);
       }
-
-      static Point point_elem_power(const Point &lhs, const UInt rhs)
-      {
-        Point ret;
-        typename Point::iterator it = ret.begin();
-        typename Point::const_iterator lit = lhs.begin();
-        for (; it != ret.end(); ++it, ++lit) *it = std::pow(*lit, rhs);
-        return ret;
-      }
-
   };
 
   template <typename I>
@@ -371,11 +392,11 @@ namespace OpenMS
 
       boost::shared_ptr<TreeNode> tree(new TreeNode(tree_left, tree_right));
 
-      trees.erase(tree_left);
-      trees.erase(tree_right);
-
       if (!point_greater(tree->bbox.size(), grid.max_delta))
       {
+        trees.erase(tree_left);
+        trees.erase(tree_right);
+
         // Generate distance to every existing tree
         // XXX: De-duplicate
         Point new_normpoint = point_multiplication(tree->bbox, grid.max_delta);
@@ -385,9 +406,9 @@ namespace OpenMS
           DoubleReal dist = point_distance(new_normpoint, old_normpoint);
           dists.push(std::make_pair(dist, std::make_pair(tree, *it)));
         }
-      }
 
-      trees.insert(tree);
+        trees.insert(tree);
+      }
     }
 
     // Add current data to grid

@@ -129,15 +129,6 @@ namespace OpenMS
       typename CellMap::mapped_type &cell_at(const CellIndex &x) { return cells_.at(x); }
       const typename CellMap::mapped_type &cell_at(const CellIndex &x) const { return cells_.at(x); }
 
-      void cell_clear(const CellIndex &x)
-      {
-        try
-        {
-          cells_.at(x).clear();
-        }
-        catch (std::out_of_range &) { }
-      }
-
     private:
       // XXX
       CellIndex key_to_cellkey(const Point &key)

@@ -113,16 +113,17 @@ namespace OpenMS
       {
         public:
           const BoundingBox bbox;
+          const Point normcoord;
           const boost::shared_ptr<TreeNode> left, right;
           const bool center;
           const PointRef ref;
 
-          TreeNode(const BoundingBox &bbox, const PointRef &ref, bool center)
-            : bbox(bbox), center(center), ref(ref)
+          TreeNode(const BoundingBox &bbox, const Point &normcoord, const PointRef &ref, bool center)
+            : bbox(bbox), normcoord(normcoord), center(center), ref(ref)
           { }
 
-          TreeNode(boost::shared_ptr<TreeNode> &left, boost::shared_ptr<TreeNode> &right)
-            : bbox(left->bbox | right->bbox), left(left), right(right), center(left->center && right->center), ref(PointRef())
+          TreeNode(const BoundingBox &bbox, const Point &normcoord, boost::shared_ptr<TreeNode> &left, boost::shared_ptr<TreeNode> &right)
+            : bbox(bbox), normcoord(normcoord), left(left), right(right), center(left->center && right->center), ref(PointRef())
           { }
       };
 
@@ -380,14 +381,14 @@ namespace OpenMS
           {
             rounds++;
             if (!(rounds % 1000)) std::cout << "  ping:" << rounds << '\n';
-            boost::shared_ptr<TreeNode> tree(new TreeNode(point_it->first, point_it->second, cell_center));
+            const BoundingBox bbox = point_it->first;
+            const Point normcoord = point_division(point_it->first, grid.max_delta);
+            boost::shared_ptr<TreeNode> tree(new TreeNode(bbox, normcoord, point_it->second, cell_center));
 
             // Generate distance to every existing tree
-            Point new_normpoint = point_multiplication(tree->bbox, grid.max_delta);
             for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
             {
-              Point old_normpoint = point_multiplication((*it)->bbox, grid.max_delta);
-              DoubleReal dist = point_distance(new_normpoint, old_normpoint);
+              DoubleReal dist = point_distance(tree->normcoord, (*it)->normcoord);
               dists.push(DistanceInfo(dist, tree, *it));
             }
 
@@ -416,20 +417,20 @@ namespace OpenMS
         continue;
       }
 
-      boost::shared_ptr<TreeNode> tree(new TreeNode(tree_left, tree_right));
+      const BoundingBox bbox = tree_left->bbox | tree_right->bbox;
 
-      if (!point_greater(tree->bbox.size(), grid.max_delta))
+      if (!point_greater(bbox.size(), grid.max_delta))
       {
+        const Point normcoord = point_division(bbox, grid.max_delta);
+        boost::shared_ptr<TreeNode> tree(new TreeNode(bbox, normcoord, tree_left, tree_right));
         trees.erase(tree_left);
         trees.erase(tree_right);
 
         // Generate distance to every existing tree
         // XXX: De-duplicate
-        Point new_normpoint = point_multiplication(tree->bbox, grid.max_delta);
         for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
         {
-          Point old_normpoint = point_multiplication((*it)->bbox, grid.max_delta);
-          DoubleReal dist = point_distance(new_normpoint, old_normpoint);
+          DoubleReal dist = point_distance(tree->normcoord, (*it)->normcoord);
           dists.push(DistanceInfo(dist, tree, *it));
         }
 

@@ -1111,6 +1111,7 @@ private:
   /** Write all DataPoints into a featureXML file. */
   void writeFilePoints(const String &filename, bool cluster_info) const;
 
+  void writeFilePointsByCell(const String &out, const Clustering &clustering) const;
   void writeFilePointsByCluster(const String &out, const Clustering &clustering) const;
 };
 
@@ -1138,6 +1139,7 @@ void TOPPSILACAnalyzer::clusterData()
 
     clustering.cluster();
 
+    writeFilePointsByCell(out_clusters + ".by-cell.layer-" + nr++ + ".featureXML", clustering);
     writeFilePointsByCluster(out_clusters + ".by-cluster.layer-" + nr++ + ".featureXML", clustering);
   }
 
@@ -1267,6 +1269,43 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &out, bool cluster_info) co
 
       points.push_back(point);
     }
+  }
+
+  points.sortByPosition();
+  points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+  FeatureXMLFile f_file;
+  f_file.store(out, points);
+}
+
+void TOPPSILACAnalyzer::writeFilePointsByCell(const String &out, const Clustering &clustering) const
+{
+  // 15 HTML colors
+  const String colors[] = {
+    "#00FFFF", "#000000", "#0000FF", "#FF00FF", "#008000",
+    "#808080", "#00FF00", "#800000", "#000080", "#808000",
+    "#800080", "#FF0000", "#C0C0C0", "#008080", "#FFFF00",
+  };
+  const Int colors_len = 15;
+
+  FeatureMap<> points;
+  Int gridnr = 0;
+
+  for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
+  {
+    for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
+    {
+      for (Clustering::Cluster::const_iterator point_it = cluster_it->second.begin(); point_it != cluster_it->second.end(); ++point_it)
+      {
+        Feature point;
+        point.setRT(point_it->first[0]);
+        point.setMZ(point_it->first[1]);
+        point.setIntensity(1);
+        point.setMetaValue("color", colors[gridnr % colors_len]);
+        points.push_back(point);
+      }
+    }
+    gridnr++;
   }
 
   points.sortByPosition();

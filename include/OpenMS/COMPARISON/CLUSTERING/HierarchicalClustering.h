@@ -26,7 +26,6 @@
 // --------------------------------------------------------------------------
 
 #include <queue>
-#include <boost/shared_ptr.hpp>
 #include <boost/unordered/unordered_set.hpp>
 
 #include <OpenMS/COMPARISON/CLUSTERING/HashGrid.h>
@@ -114,15 +113,15 @@ namespace OpenMS
         public:
           const BoundingBox bbox;
           const Point normcoord;
-          const boost::shared_ptr<TreeNode> left, right;
+          TreeNode *left, *right;
           const bool center;
           const PointRef ref;
 
           TreeNode(const BoundingBox &bbox, const Point &normcoord, const PointRef &ref, bool center)
-            : bbox(bbox), normcoord(normcoord), center(center), ref(ref)
+            : bbox(bbox), normcoord(normcoord), left(0), right(0), center(center), ref(ref)
           { }
 
-          TreeNode(const BoundingBox &bbox, const Point &normcoord, boost::shared_ptr<TreeNode> &left, boost::shared_ptr<TreeNode> &right)
+          TreeNode(const BoundingBox &bbox, const Point &normcoord, TreeNode *left, TreeNode *right)
             : bbox(bbox), normcoord(normcoord), left(left), right(right), center(left->center && right->center), ref(PointRef())
           { }
       };
@@ -132,9 +131,9 @@ namespace OpenMS
       {
         public:
           DoubleReal distance;
-          boost::shared_ptr<TreeNode> left, right;
+          TreeNode *left, *right;
 
-          DistanceInfo(const DoubleReal &distance, const boost::shared_ptr<TreeNode> &left, const boost::shared_ptr<TreeNode> &right)
+          DistanceInfo(const DoubleReal &distance, TreeNode *left, TreeNode *right)
             : distance(distance), left(left), right(right)
           { }
 
@@ -199,7 +198,6 @@ namespace OpenMS
       }
 
       typedef std::map<typename Grid::CellIndex, std::pair<typename Grid::Cell *, bool> > ClusterCells;
-      typedef boost::shared_ptr<TreeNode> ClusterTree;
 
       /**
        * @brief Perform clustering on given cell.
@@ -240,12 +238,14 @@ namespace OpenMS
        * @param tree The tree
        * @param cluster The cluster
        */
-      void clusterCellReaddCluster(const ClusterTree &tree, Cluster &cluster)
+      void clusterCellReaddCluster(const TreeNode *tree, Cluster &cluster)
       {
         if (tree->left && tree->right)
         {
           clusterCellReaddCluster(tree->left, cluster);
           clusterCellReaddCluster(tree->right, cluster);
+          delete tree->left;
+          delete tree->right;
         }
         else
         {
@@ -258,7 +258,7 @@ namespace OpenMS
        * All points are saved in the leafs of the tree.
        * @param tree The tree
        */
-      void clusterCellReaddPoint(const ClusterTree &tree)
+      void clusterCellReaddPoint(const TreeNode *tree)
       {
         if (tree->left && tree->right)
         {
@@ -269,6 +269,8 @@ namespace OpenMS
         {
           insertPoint(tree->bbox.first, tree->ref);
         }
+        delete tree->left;
+        delete tree->right;
       }
 
       // XXX: Convert to operator
@@ -343,7 +345,7 @@ namespace OpenMS
   template <typename I>
   void HierarchicalClustering<I>::clusterCell(const typename Grid::CellIndex &cur)
   {
-    typedef boost::unordered_set<ClusterTree> LocalTrees;
+    typedef boost::unordered_set<TreeNode *> LocalTrees;
 
     ClusterCells cells;
     LocalTrees trees;
@@ -383,7 +385,7 @@ namespace OpenMS
             if (!(rounds % 1000)) std::cout << "  ping:" << rounds << '\n';
             const BoundingBox bbox = point_it->first;
             const Point normcoord = point_division(point_it->first, grid.max_delta);
-            boost::shared_ptr<TreeNode> tree(new TreeNode(bbox, normcoord, point_it->second, cell_center));
+            TreeNode *tree(new TreeNode(bbox, normcoord, point_it->second, cell_center));
 
             // Generate distance to every existing tree
             for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
@@ -408,7 +410,7 @@ namespace OpenMS
       rounds++;
       if (!(rounds % 1000000)) std::cout << "  ping:" << rounds << '\n';
       const typename DistanceQueue::value_type &cur_dist = dists.top();
-      boost::shared_ptr<TreeNode> tree_left(cur_dist.left), tree_right(cur_dist.right);
+      TreeNode *tree_left(cur_dist.left), *tree_right(cur_dist.right);
       dists.pop();
  
       // Chck if both trees are still available
@@ -422,7 +424,7 @@ namespace OpenMS
       if (!point_greater(bbox.size(), grid.max_delta))
       {
         const Point normcoord = point_division(bbox, grid.max_delta);
-        boost::shared_ptr<TreeNode> tree(new TreeNode(bbox, normcoord, tree_left, tree_right));
+        TreeNode *tree(new TreeNode(bbox, normcoord, tree_left, tree_right));
         trees.erase(tree_left);
         trees.erase(tree_right);
 
@@ -453,6 +455,7 @@ namespace OpenMS
       {
         clusterCellReaddPoint(*tree_it);
       }
+      delete *tree_it;
     }
 
     std::cout << "end\n";

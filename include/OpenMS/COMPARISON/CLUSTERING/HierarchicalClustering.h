@@ -127,9 +127,27 @@ namespace OpenMS
       };
 
       /** @brief Distance info used for clustering. */
-      // XXX: Use boost::tuple
+      class DistanceInfo
+      {
+        public:
+          DoubleReal distance;
+          boost::shared_ptr<TreeNode> left, right;
+
+          DistanceInfo(const DoubleReal &distance, const boost::shared_ptr<TreeNode> &left, const boost::shared_ptr<TreeNode> &right)
+            : distance(distance), left(left), right(right)
+          { }
+
+          bool operator<(const DistanceInfo &rhs) const
+          {
+            return (distance < rhs.distance ||
+                left < rhs.left ||
+                right < rhs.right);
+          }
+      };
+
+      /** @brief Distance queue used for clustering. */
       // XXX: k-d-tree???
-      typedef std::priority_queue<std::pair<DoubleReal, std::pair<boost::shared_ptr<TreeNode>, boost::shared_ptr<TreeNode> > > > DistanceQueue;
+      typedef std::priority_queue<DistanceInfo> DistanceQueue;
 
     public:
       /**
@@ -367,7 +385,7 @@ namespace OpenMS
             {
               Point old_normpoint = point_multiplication((*it)->bbox, grid.max_delta);
               DoubleReal dist = point_distance(new_normpoint, old_normpoint);
-              dists.push(std::make_pair(dist, std::make_pair(tree, *it)));
+              dists.push(DistanceInfo(dist, tree, *it));
             }
 
             trees.insert(tree);
@@ -380,10 +398,12 @@ namespace OpenMS
 
     // Join points
     std::cout << "ping: size: " << trees.size() << ", " << dists.size() << std::endl;
+    int i = 0;
     while (!dists.empty())
     {
+      i++;
       const typename DistanceQueue::value_type &cur_dist = dists.top();
-      boost::shared_ptr<TreeNode> tree_left(cur_dist.second.first), tree_right(cur_dist.second.second);
+      boost::shared_ptr<TreeNode> tree_left(cur_dist.left), tree_right(cur_dist.right);
       dists.pop();
  
       // Chck if both trees are still available
@@ -406,7 +426,7 @@ namespace OpenMS
         {
           Point old_normpoint = point_multiplication((*it)->bbox, grid.max_delta);
           DoubleReal dist = point_distance(new_normpoint, old_normpoint);
-          dists.push(std::make_pair(dist, std::make_pair(tree, *it)));
+          dists.push(DistanceInfo(dist, tree, *it));
         }
 
         trees.insert(tree);
@@ -414,7 +434,7 @@ namespace OpenMS
     }
 
     // Add current data to grid
-    std::cout << "ping: size: " << trees.size() << ", " << dists.size() << std::endl;
+    std::cout << "ping: size: " << trees.size() << ", " << dists.size() << "; rounds: " << i << std::endl;
     for (typename LocalTrees::iterator tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
     {
       // We got a finished tree with all points in the center, add cluster

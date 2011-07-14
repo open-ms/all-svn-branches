@@ -1137,10 +1137,12 @@ void TOPPSILACAnalyzer::clusterData()
       clustering.insertPoint(key, &*it);
     }
 
+    writeFilePointsByCell(out_clusters + ".by-cell.layer-" + nr + ".featureXML", clustering);
+
     clustering.cluster();
 
-    writeFilePointsByCell(out_clusters + ".by-cell.layer-" + nr++ + ".featureXML", clustering);
-    writeFilePointsByCluster(out_clusters + ".by-cluster.layer-" + nr++ + ".featureXML", clustering);
+    writeFilePointsByCluster(out_clusters + ".by-cluster.layer-" + nr + ".featureXML", clustering);
+    nr++;
   }
 
   progresslogger.endProgress();

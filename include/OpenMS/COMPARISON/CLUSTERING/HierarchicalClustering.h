@@ -349,7 +349,7 @@ namespace OpenMS
     DistanceQueue dists;
 
     // Collect all cells we need
-    std::cout << "ping: coord: " << cur[0] << ":" << cur[1] << std::endl;
+    std::cout << "start: coord: " << cur[0] << ":" << cur[1] << '\n';
     try
     {
       clusterCellCollect(cur, cells);
@@ -358,7 +358,8 @@ namespace OpenMS
     { return; }
 
     // Collect and remove existing points from cells
-    std::cout << "ping: number of cells: " << cells.size() << std::endl;
+    std::cout << "number of cells: " << cells.size() << '\n';
+    int rounds = 0;
     for (typename ClusterCells::iterator cell_it = cells.begin(); cell_it != cells.end(); ++cell_it)
     {
       typename Grid::Cell &cell_cur = *cell_it->second.first;
@@ -377,6 +378,8 @@ namespace OpenMS
           // Per point
           for (typename Cluster::const_iterator point_it = cluster_it->second.begin(); point_it != cluster_it->second.end(); ++point_it)
           {
+            rounds++;
+            if (!(rounds % 1000)) std::cout << "  ping:" << rounds << '\n';
             boost::shared_ptr<TreeNode> tree(new TreeNode(point_it->first, point_it->second, cell_center));
 
             // Generate distance to every existing tree
@@ -397,11 +400,12 @@ namespace OpenMS
     }
 
     // Join points
-    std::cout << "ping: size: " << trees.size() << ", " << dists.size() << std::endl;
-    int i = 0;
+    std::cout << "initial trees: size: " << trees.size() << ", " << dists.size() << '\n';
+    rounds = 0;
     while (!dists.empty())
     {
-      i++;
+      rounds++;
+      if (!(rounds % 1000000)) std::cout << "  ping:" << rounds << '\n';
       const typename DistanceQueue::value_type &cur_dist = dists.top();
       boost::shared_ptr<TreeNode> tree_left(cur_dist.left), tree_right(cur_dist.right);
       dists.pop();
@@ -434,7 +438,7 @@ namespace OpenMS
     }
 
     // Add current data to grid
-    std::cout << "ping: size: " << trees.size() << ", " << dists.size() << "; rounds: " << i << std::endl;
+    std::cout << "late trees: size: " << trees.size() << ", " << dists.size() << "; rounds: " << rounds << '\n';
     for (typename LocalTrees::iterator tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
     {
       // We got a finished tree with all points in the center, add cluster
@@ -449,6 +453,8 @@ namespace OpenMS
         clusterCellReaddPoint(*tree_it);
       }
     }
+
+    std::cout << "end\n";
   }
 
   // XXX: check if 2x2 center and 4x4 is sufficient

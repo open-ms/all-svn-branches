@@ -1303,7 +1303,13 @@ void TOPPSILACAnalyzer::writeFilePointsByCell(const String &out, const Clusterin
         point.setRT(point_it->first[0]);
         point.setMZ(point_it->first[1]);
         point.setIntensity(1);
+
         point.setMetaValue("color", colors[gridnr % colors_len]);
+
+        std::ostringstream out;
+        out << cell_it->first[0] << ':' << cell_it->first[1];
+        point.setMetaValue("Cell ID", out.str());
+
         points.push_back(point);
       }
     }
@@ -1340,7 +1346,13 @@ void TOPPSILACAnalyzer::writeFilePointsByCluster(const String &out, const Cluste
         point.setRT(point_it->first[0]);
         point.setMZ(point_it->first[1]);
         point.setIntensity(1);
+
         point.setMetaValue("color", colors[clusternr % colors_len]);
+
+        std::ostringstream out;
+        out << cell_it->first[0] << ':' << cell_it->first[1];
+        point.setMetaValue("Cell ID", out.str());
+
         points.push_back(point);
       }
       clusternr++;

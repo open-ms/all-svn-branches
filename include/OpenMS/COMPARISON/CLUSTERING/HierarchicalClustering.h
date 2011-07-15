@@ -137,17 +137,15 @@ namespace OpenMS
             : distance(distance), left(left), right(right)
           { }
 
-          bool operator<(const DistanceInfo &rhs) const
+          bool operator>(const DistanceInfo &rhs) const
           {
-            return (distance < rhs.distance ||
-                left < rhs.left ||
-                right < rhs.right);
+            return (distance > rhs.distance);
           }
       };
 
       /** @brief Distance queue used for clustering. */
       // XXX: k-d-tree???
-      typedef std::priority_queue<DistanceInfo> DistanceQueue;
+      typedef std::priority_queue<DistanceInfo, std::vector<DistanceInfo>, std::greater<DistanceInfo> > DistanceQueue;
 
     public:
       /**

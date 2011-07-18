@@ -470,64 +470,64 @@ namespace OpenMS
     clusterCellCollectOne(base, cells, true, false);
 
     typename Grid::CellIndex cur = base;
-    cur[0] -= 1;
+    cur[0] -= 2;
+    // (-2, -2)
+    cur[1] -= 2; clusterCellCollectOne(cur, cells);
+    // (-2, -1)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    // (-2, 0)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    // (-2, 1)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    // (-2, 2)
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
+
+    cur = base; cur[0] -= 1;
+    // (-1, -2)
+    cur[1] -= 2; clusterCellCollectOne(cur, cells);
     // (-1, -1)
-    cur[1] -= 1; clusterCellCollectOne(cur, cells);
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
     // (-1, 0)
-    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
     // (-1, 1)
-    cur[1] += 1; clusterCellCollectOne(cur, cells);
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
     // (-1, 2)
-    cur[1] += 1; clusterCellCollectOne(cur, cells);
-    // (-1, 3)
     cur[1] += 1; clusterCellCollectOne(cur, cells);
 
     cur = base;
+    // (0, -2)
+    cur[1] -= 2; clusterCellCollectOne(cur, cells);
     // (0, -1)
-    cur[1] -= 1; clusterCellCollectOne(cur, cells);
-    // (0, 0)
     cur[1] += 1;
+    // (0, 0)
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
     // (0, 1)
     cur[1] += 1; clusterCellCollectOne(cur, cells, true);
     // (0, 2)
-    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
-    // (0, 3)
     cur[1] += 1; clusterCellCollectOne(cur, cells);
 
     cur = base; cur[0] += 1;
+    // (1, -2)
+    cur[1] -= 2; clusterCellCollectOne(cur, cells);
     // (1, -1)
-    cur[1] -= 1; clusterCellCollectOne(cur, cells);
+    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
     // (1, 0)
     cur[1] += 1; clusterCellCollectOne(cur, cells, true);
     // (1, 1)
     cur[1] += 1; clusterCellCollectOne(cur, cells, true);
     // (1, 2)
-    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
-    // (1, 3)
     cur[1] += 1; clusterCellCollectOne(cur, cells);
 
     cur = base; cur[0] += 2;
+    // (2, -2)
+    cur[1] -= 2; clusterCellCollectOne(cur, cells);
     // (2, -1)
-    cur[1] -= 1; clusterCellCollectOne(cur, cells);
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
     // (2, 0)
-    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
     // (2, 1)
-    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    cur[1] += 1; clusterCellCollectOne(cur, cells);
     // (2, 2)
-    cur[1] += 1; clusterCellCollectOne(cur, cells, true);
-    // (2, 3)
-    cur[1] += 1; clusterCellCollectOne(cur, cells);
-
-    cur = base; cur[0] += 3;
-    // (3, -1)
-    cur[1] -= 1; clusterCellCollectOne(cur, cells);
-    // (3, 0)
-    cur[1] += 1; clusterCellCollectOne(cur, cells);
-    // (3, 1)
-    cur[1] += 1; clusterCellCollectOne(cur, cells);
-    // (3, 2)
-    cur[1] += 1; clusterCellCollectOne(cur, cells);
-    // (3, 3)
     cur[1] += 1; clusterCellCollectOne(cur, cells);
   }
 }

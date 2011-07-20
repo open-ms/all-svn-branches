@@ -111,18 +111,23 @@ namespace OpenMS
       class TreeNode
       {
         public:
+          const Point coord, normcoord;
           const BoundingBox bbox;
-          const Point normcoord;
           TreeNode *left, *right;
+          UInt points;
           const bool center;
           const PointRef ref;
 
-          TreeNode(const BoundingBox &bbox, const Point &normcoord, const PointRef &ref, bool center)
-            : bbox(bbox), normcoord(normcoord), left(0), right(0), center(center), ref(ref)
+          TreeNode(const Point &coord, const Point &normcoord, const PointRef &ref, bool center)
+            : coord(coord), normcoord(normcoord), bbox(coord), left(0), right(0), points(1), center(center), ref(ref)
           { }
 
-          TreeNode(const BoundingBox &bbox, const Point &normcoord, TreeNode *left, TreeNode *right)
-            : bbox(bbox), normcoord(normcoord), left(left), right(right), center(left->center && right->center), ref(PointRef())
+          TreeNode(const Point &coord, const Point &normcoord, const BoundingBox &bbox, TreeNode *left, TreeNode *right)
+            : coord(coord), normcoord(normcoord), bbox(bbox),
+              left(left), right(right),
+              points(left->points + right->points),
+              center(left->center && right->center),
+              ref(PointRef())
           { }
       };
 
@@ -292,6 +297,16 @@ namespace OpenMS
       }
 
       // XXX: Convert to operator
+      static Point point_multiplication(const Point &lhs, const DoubleReal &rhs)
+      {
+        Point ret;
+        typename Point::iterator it = ret.begin();
+        typename Point::const_iterator lit = lhs.begin();
+        for (; it != ret.end(); ++it, ++lit) *it = *lit * rhs;
+        return ret;
+      }
+
+      // XXX: Convert to operator
       static Point point_multiplication(const Point &lhs, const Point &rhs)
       {
         Point ret;
@@ -381,9 +396,9 @@ namespace OpenMS
           {
             rounds++;
             if (!(rounds % 1000)) std::cout << "  ping:" << rounds << std::endl;
-            const BoundingBox bbox = point_it->first;
-            const Point normcoord = point_division(point_it->first, grid.max_delta);
-            TreeNode *tree(new TreeNode(bbox, normcoord, point_it->second, cell_center));
+            const Point &coord = point_it->first;
+            const Point normcoord = point_division(coord, grid.max_delta);
+            TreeNode *tree(new TreeNode(coord, normcoord, point_it->second, cell_center));
 
             // Generate distance to every existing tree
             for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
@@ -421,8 +436,11 @@ namespace OpenMS
 
       if (!point_greater(bbox.size(), grid.max_delta))
       {
-        const Point normcoord = point_division(bbox, grid.max_delta);
-        TreeNode *tree(new TreeNode(bbox, normcoord, tree_left, tree_right));
+        // Arithmethic mean: (left * left.points + right * right.points) / (left.points + right.points)
+        const UInt points = tree_left->points + tree_right->points;
+        const Point coord = point_division(point_plus(point_multiplication(tree_left->coord, tree_left->points), point_multiplication(tree_right->coord, tree_right->points)), points);
+        const Point normcoord = point_division(coord, grid.max_delta);
+        TreeNode *tree(new TreeNode(coord, normcoord, bbox, tree_left, tree_right));
         trees.erase(tree_left);
         trees.erase(tree_right);
 

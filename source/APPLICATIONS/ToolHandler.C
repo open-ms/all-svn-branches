@@ -63,6 +63,7 @@ namespace OpenMS
 		tools_map["FileConverter"] = Internal::ToolDescription("FileConverter", "File Handling");
 		tools_map["FileFilter"] = Internal::ToolDescription("FileFilter", "File Handling");
 		tools_map["FileInfo"] = Internal::ToolDescription("FileInfo", "File Handling");
+		tools_map["FileInfo2"] = Internal::ToolDescription("FileInfo", "File Handling");
 		tools_map["FileMerger"] = Internal::ToolDescription("FileMerger", "File Handling");
 		tools_map["IDDecoyProbability"] = Internal::ToolDescription("IDDecoyProbability", "Protein/peptide Processing");
 		tools_map["IDPosteriorErrorProbability"] = Internal::ToolDescription("IDPosteriorErrorProbability", "Protein/peptide Processing");
@@ -85,6 +86,7 @@ namespace OpenMS
 		tools_map["PILISModel"] = Internal::ToolDescription("PILISModel", "Protein/peptide Processing");
 		tools_map["PTModel"] = Internal::ToolDescription("PTModel", "Peptide property prediction");
 		tools_map["PTPredict"] = Internal::ToolDescription("PTPredict", "Peptide property prediction");
+		tools_map["PeakExporter"] = Internal::ToolDescription("PeakExporter", "File Handling");
 		tools_map["PeakPicker"] = Internal::ToolDescription("PeakPicker", "Signal processing and preprocessing", StringList::create("wavelet,high_res"));
 		tools_map["PepNovoAdapter"] = Internal::ToolDescription("PepNovoAdapter", "Protein/peptide Identification");
 		tools_map["PeptideIndexer"] = Internal::ToolDescription("PeptideIndexer", "Protein/peptide Processing");

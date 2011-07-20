@@ -498,9 +498,9 @@ namespace OpenMS
     // (0, -2)
     cur[1] -= 2; clusterCellCollectOne(cur, cells);
     // (0, -1)
-    cur[1] += 1;
-    // (0, 0)
     cur[1] += 1; clusterCellCollectOne(cur, cells, true);
+    // (0, 0)
+    cur[1] += 1;
     // (0, 1)
     cur[1] += 1; clusterCellCollectOne(cur, cells, true);
     // (0, 2)

@@ -111,19 +111,19 @@ namespace OpenMS
       class TreeNode
       {
         public:
-          const Point coord, normcoord;
+          const Point coord;
           const BoundingBox bbox;
           TreeNode *left, *right;
           UInt points;
           const bool center;
           const PointRef ref;
 
-          TreeNode(const Point &coord, const Point &normcoord, const PointRef &ref, bool center)
-            : coord(coord), normcoord(normcoord), bbox(coord), left(0), right(0), points(1), center(center), ref(ref)
+          TreeNode(const Point &coord, const PointRef &ref, bool center)
+            : coord(coord), bbox(coord), left(0), right(0), points(1), center(center), ref(ref)
           { }
 
-          TreeNode(const Point &coord, const Point &normcoord, const BoundingBox &bbox, TreeNode *left, TreeNode *right)
-            : coord(coord), normcoord(normcoord), bbox(bbox),
+          TreeNode(const Point &coord, const BoundingBox &bbox, TreeNode *left, TreeNode *right)
+            : coord(coord), bbox(bbox),
               left(left), right(right),
               points(left->points + right->points),
               center(left->center && right->center),
@@ -397,13 +397,12 @@ namespace OpenMS
             rounds++;
             if (!(rounds % 1000)) std::cout << "  ping:" << rounds << std::endl;
             const Point &coord = point_it->first;
-            const Point normcoord = point_division(coord, grid.max_delta);
-            TreeNode *tree(new TreeNode(coord, normcoord, point_it->second, cell_center));
+            TreeNode *tree(new TreeNode(coord, point_it->second, cell_center));
 
             // Generate distance to every existing tree
             for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
             {
-              DoubleReal dist = point_distance(tree->normcoord, (*it)->normcoord);
+              DoubleReal dist = point_distance(tree->coord, (*it)->coord);
               dists.push(DistanceInfo(dist, tree, *it));
             }
 
@@ -439,8 +438,7 @@ namespace OpenMS
         // Arithmethic mean: (left * left.points + right * right.points) / (left.points + right.points)
         const UInt points = tree_left->points + tree_right->points;
         const Point coord = point_division(point_plus(point_multiplication(tree_left->coord, tree_left->points), point_multiplication(tree_right->coord, tree_right->points)), points);
-        const Point normcoord = point_division(coord, grid.max_delta);
-        TreeNode *tree(new TreeNode(coord, normcoord, bbox, tree_left, tree_right));
+        TreeNode *tree(new TreeNode(coord, bbox, tree_left, tree_right));
         trees.erase(tree_left);
         trees.erase(tree_right);
 
@@ -448,7 +446,7 @@ namespace OpenMS
         // XXX: De-duplicate
         for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
         {
-          DoubleReal dist = point_distance(tree->normcoord, (*it)->normcoord);
+          DoubleReal dist = point_distance(tree->coord, (*it)->coord);
           dists.push(DistanceInfo(dist, tree, *it));
         }
 

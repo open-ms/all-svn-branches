@@ -51,14 +51,14 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page TOPP_FileInfo2 FileInfo2
+	@page TOPP_FileInfo FileInfo
 	@brief Shows basic information about the data in an OpenMS readable file.
 
 <CENTER>
 	<table>
 		<tr>
 			<td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. predecessor tools </td>
-			<td VALIGN="middle" ROWSPAN=2> \f$ \longrightarrow \f$ FileInfo2 \f$ \longrightarrow \f$</td>
+			<td VALIGN="middle" ROWSPAN=2> \f$ \longrightarrow \f$ FileInfo \f$ \longrightarrow \f$</td>
 			<td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. successor tools </td>
 		</tr>
 		<tr>
@@ -76,7 +76,7 @@ using namespace std;
 	- check for corrupt data in a file (e.g., duplicate spectra)
 
 	<B>The command line parameters of this tool are:</B>
-	@verbinclude TOPP_FileInfo2.cli
+	@verbinclude TOPP_FileInfo.cli
 
 	In order to enrich the resulting data of your anaysis pipeline or to quickly compare different outcomes of your pipeline you can invoke the aforementioned information of your input data and (intermediary) results.
 */
@@ -136,12 +136,12 @@ namespace OpenMS
 	}
 }
 
-class TOPPFileInfo2
+class TOPPFileInfo
 	: public TOPPBase
 {
  public:
-	TOPPFileInfo2()
-		: TOPPBase("FileInfo2", "Shows basic information about the file, such as data ranges and file type.")
+	TOPPFileInfo()
+		: TOPPBase("FileInfo", "Shows basic information about the file, such as data ranges and file type.")
 	{
 	}
 
@@ -1178,7 +1178,7 @@ class TOPPFileInfo2
 
 int main(int argc, const char** argv)
 {
-	TOPPFileInfo2 tool;
+	TOPPFileInfo tool;
 	return tool.main(argc, argv);
 }
 

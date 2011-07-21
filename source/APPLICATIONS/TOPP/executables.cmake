@@ -19,7 +19,6 @@ FeatureLinker
 FileConverter
 FileFilter
 FileInfo
-FileInfo2
 FileMerger
 GenericWrapper
 IDDecoyProbability
@@ -40,7 +39,6 @@ MascotAdapter
 MascotAdapterOnline
 NoiseFilter
 OMSSAAdapter
-PeakExporter
 PhosphoScoring
 PILISIdentification
 PILISModel

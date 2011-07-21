@@ -202,6 +202,7 @@ namespace OpenMS
       }
 
       typedef std::map<typename Grid::CellIndex, std::pair<typename Grid::Cell *, bool> > ClusterCells;
+      typedef boost::unordered_set<TreeNode *> ClusterTrees;
 
       /**
        * @brief Perform clustering on given cell.
@@ -234,6 +235,29 @@ namespace OpenMS
         {
           if (!ignore_missing) throw;
         }
+      }
+
+      /**
+       * @brief Add a new tree to the set of trees and distance queue
+       */
+      void clusterAddTree(TreeNode *tree, ClusterTrees &trees, DistanceQueue &dists)
+      {
+        // Generate minimal distance to existing trees
+        DoubleReal dist_min = INFINITY;
+        typename ClusterTrees::const_iterator dist_it = trees.end();
+
+        for (typename ClusterTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
+        {
+          DoubleReal dist = point_distance(tree->coord, (*it)->coord);
+          if (dist < dist_min)
+          {
+            dist_min = dist;
+            dist_it = it;
+          }
+        }
+
+        if (dist_it != trees.end()) dists.push(DistanceInfo(dist_min, tree, *dist_it));
+        trees.insert(tree);
       }
 
       /**
@@ -359,10 +383,8 @@ namespace OpenMS
   template <typename I>
   void HierarchicalClustering<I>::clusterCell(const typename Grid::CellIndex &cur)
   {
-    typedef boost::unordered_set<TreeNode *> LocalTrees;
-
     ClusterCells cells;
-    LocalTrees trees;
+    ClusterTrees trees;
     DistanceQueue dists;
 
     // Collect all cells we need
@@ -396,23 +418,7 @@ namespace OpenMS
           {
             const Point &coord = point_it->first;
             TreeNode *tree(new TreeNode(coord, point_it->second, cell_center));
-
-            // Generate minimal distance to existing trees
-            DoubleReal dist_min = INFINITY;
-            typename LocalTrees::const_iterator dist_it = trees.end();
-
-            for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
-            {
-              DoubleReal dist = point_distance(tree->coord, (*it)->coord);
-              if (dist < dist_min)
-              {
-                dist_min = dist;
-                dist_it = it;
-              }
-            }
-
-            if (dist_it != trees.end()) dists.push(DistanceInfo(dist_min, tree, *dist_it));
-            trees.insert(tree);
+            clusterAddTree(tree, trees, dists);
           }
 
           cell_cur.erase(cluster_it);
@@ -445,30 +451,14 @@ namespace OpenMS
         trees.erase(tree_left);
         trees.erase(tree_right);
 
-        // Generate minimal distance to existing trees
-        // XXX: De-duplicate
-        DoubleReal dist_min = INFINITY;
-        typename LocalTrees::const_iterator dist_it = trees.end();
-
-        for (typename LocalTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
-        {
-          DoubleReal dist = point_distance(tree->coord, (*it)->coord);
-          if (dist < dist_min)
-          {
-            dist_min = dist;
-            dist_it = it;
-          }
-        }
-
-        if (dist_it != trees.end()) dists.push(DistanceInfo(dist_min, tree, *dist_it));
-        trees.insert(tree);
+        clusterAddTree(tree, trees, dists);
       }
     }
 
     // Add current data to grid
     std::cout << "late trees: size: " << trees.size() << ", " << dists.size() << std::endl;
     int nr_cluster = 0, nr_nocluster = 0;
-    for (typename LocalTrees::iterator tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
+    for (typename ClusterTrees::iterator tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
     {
       // We got a finished tree with all points in the center, add cluster
       if ((**tree_it).center)

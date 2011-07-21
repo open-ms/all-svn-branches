@@ -473,10 +473,11 @@ namespace OpenMS
       }
     }
 
+    std::cout << "late trees: size: " << trees.size() << std::endl;
     trees = clusterCheckTrees(trees);
 
     // Add current data to grid
-    std::cout << "late trees: size: " << trees.size() << ", " << dists.size() << std::endl;
+    std::cout << "after check trees: size: " << trees.size() << std::endl;
     int nr_cluster = 0, nr_nocluster = 0;
     for (typename ClusterTrees::iterator tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
     {
@@ -581,7 +582,7 @@ namespace OpenMS
       for (UInt i = 2; i <= 4; ++i) q.push(clusterCheckTreeOne(*it, i));
       SilhuetteWidthInfo i = q.top();
       // XXX: check
-      if (i.width > .9)
+      if (i.width > .6)
       {
         for (typename ClusterTrees::const_iterator it2 = i.trees.begin(); it2 != i.trees.end(); ++it2)
           ret.insert(*it2);

@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Oliver Kohlbacher $
-// $Authors: Marc Sturm, Clemens Groepl $
+// $Maintainer: Lars Nilse $
+// $Authors: Marc Sturm, Clemens Groepl, Lars Nilse $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/config.h>
@@ -51,14 +51,14 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-	@page TOPP_FileInfo FileInfo
+	@page TOPP_FileInfo2 FileInfo2
 	@brief Shows basic information about the data in an OpenMS readable file.
 
 <CENTER>
 	<table>
 		<tr>
 			<td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. predecessor tools </td>
-			<td VALIGN="middle" ROWSPAN=2> \f$ \longrightarrow \f$ FileInfo \f$ \longrightarrow \f$</td>
+			<td VALIGN="middle" ROWSPAN=2> \f$ \longrightarrow \f$ FileInfo2 \f$ \longrightarrow \f$</td>
 			<td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. successor tools </td>
 		</tr>
 		<tr>
@@ -76,7 +76,7 @@ using namespace std;
 	- check for corrupt data in a file (e.g., duplicate spectra)
 
 	<B>The command line parameters of this tool are:</B>
-	@verbinclude TOPP_FileInfo.cli
+	@verbinclude TOPP_FileInfo2.cli
 
 	In order to enrich the resulting data of your anaysis pipeline or to quickly compare different outcomes of your pipeline you can invoke the aforementioned information of your input data and (intermediary) results.
 */
@@ -94,7 +94,7 @@ namespace OpenMS
 		vector<PeptideIdentification> peptides;
 	};
 
-	/// A little helper class to gather (and dump) some statistics from a vector<double>.  Uses statistical functions implemented in GSL.
+	/// A little helper class to gather (and dump) some statistics from a vector<double>. Uses statistical functions implemented in GSL.
 	struct SomeStatistics
 	{
 		/**@brief Initialize SomeStatistics from data.
@@ -136,12 +136,12 @@ namespace OpenMS
 	}
 }
 
-class TOPPFileInfo
+class TOPPFileInfo2
 	: public TOPPBase
 {
  public:
-	TOPPFileInfo()
-		: TOPPBase("FileInfo", "Shows basic information about the file, such as data ranges and file type.")
+	TOPPFileInfo2()
+		: TOPPBase("FileInfo2", "Shows basic information about the file, such as data ranges and file type.")
 	{
 	}
 
@@ -162,6 +162,7 @@ class TOPPFileInfo
 		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
 #endif
 		registerOutputFile_("out","<file>","","Optional output file. If '-' or left out, the output is written to the command line.", false);
+		registerOutputFile_("out2","<file>","","Second optional output file. Tab separated flat text file.", false);
 		registerFlag_("m", "Show meta information about the whole experiment");
 		registerFlag_("p", "Shows data processing information");
 		registerFlag_("s", "Computes a five-number statistics of intensities, qualities, and widths");
@@ -182,7 +183,7 @@ class TOPPFileInfo
 	}
 
 
-	ExitCodes outputTo_(ostream& os)
+	ExitCodes outputTo_(ostream& os, ostream& os2)
 	{
 		//-------------------------------------------------------------
 		// Parameter handling
@@ -206,13 +207,16 @@ class TOPPFileInfo
 			writeLog_("Error: Could not determine input file type!");
 			return PARSE_ERROR;
 		}
-
+    
 		os << endl
 			 << "-- General information --" << endl
 			 << endl
 			 << "File name: " << in << endl
-			 << "File type: " <<  fh.typeToName(in_type) << endl;
+			 << "File type: " << fh.typeToName(in_type) << endl;
 
+    os2 << "file name" << "\t" << in << endl
+        << "file type" << "\t" << fh.typeToName(in_type) << endl;
+    
 		MSExperiment<Peak1D> exp;
 		FeatureMap<> feat;
 		ConsensusMap cons;
@@ -1154,24 +1158,27 @@ class TOPPFileInfo
 	ExitCodes main_(int, const char**)
 	{
 		String out = getStringOption_("out");
+		String out2 = getStringOption_("out2");
+    ofstream os(out.c_str());
+    ofstream os2(out2.c_str());
 
 		//output to command line
 		if (out == "")
 		{
-			return outputTo_(cout);
+			return outputTo_(cout, os2);
 		}
 		//output to file
 		else
 		{
-			ofstream os(out.c_str());
-			return outputTo_(os);
+			return outputTo_(os, os2);
 		}
+    
 	}
 };
 
 int main(int argc, const char** argv)
 {
-	TOPPFileInfo tool;
+	TOPPFileInfo2 tool;
 	return tool.main(argc, argv);
 }
 

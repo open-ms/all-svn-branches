@@ -132,6 +132,9 @@ namespace OpenMS
           { }
       };
 
+      typedef std::map<typename Grid::CellIndex, std::pair<typename Grid::Cell *, bool> > ClusterCells;
+      typedef boost::unordered_set<TreeNode *> ClusterTrees;
+
       /** @brief Distance info used for clustering. */
       class DistanceInfo
       {
@@ -152,6 +155,22 @@ namespace OpenMS
       /** @brief Distance queue used for clustering. */
       // XXX: k-d-tree???
       typedef std::priority_queue<DistanceInfo, std::vector<DistanceInfo>, std::greater<DistanceInfo> > DistanceQueue;
+
+      /** */
+      class SilhuetteWidthInfo
+      {
+        public:
+          DoubleReal width;
+          ClusterTrees trees, trees_unused;
+
+          bool operator<(const SilhuetteWidthInfo &rhs) const
+          {
+            return width < rhs.width;
+          }
+      };
+
+      /** */
+      typedef std::priority_queue<SilhuetteWidthInfo> SilhuetteWidthQueue;
 
     public:
       /**
@@ -180,7 +199,6 @@ namespace OpenMS
        */
       void cluster()
       {
-        std::cout << "cluster: coord: " << grid.max_key[0] << ":" << grid.max_key[1] << std::endl;
         // Collect coordinates of all active cells
         std::vector<typename Grid::CellIndex> cells;
         for (typename Grid::const_cell_iterator it = grid.cell_begin(); it != grid.cell_end(); ++it)
@@ -200,9 +218,6 @@ namespace OpenMS
       {
         return grid.insert(std::make_pair(d, Cluster()));
       }
-
-      typedef std::map<typename Grid::CellIndex, std::pair<typename Grid::Cell *, bool> > ClusterCells;
-      typedef boost::unordered_set<TreeNode *> ClusterTrees;
 
       /**
        * @brief Perform clustering on given cell.
@@ -259,6 +274,9 @@ namespace OpenMS
         if (dist_it != trees.end()) dists.push(DistanceInfo(dist_min, tree, *dist_it));
         trees.insert(tree);
       }
+
+      ClusterTrees clusterCheckTrees(const ClusterTrees &trees);
+      SilhuetteWidthInfo clusterCheckTreeOne(TreeNode *tree, UInt number);
 
       /**
        * @brief Recursivly readd the points of a finished cluster.
@@ -455,6 +473,8 @@ namespace OpenMS
       }
     }
 
+    trees = clusterCheckTrees(trees);
+
     // Add current data to grid
     std::cout << "late trees: size: " << trees.size() << ", " << dists.size() << std::endl;
     int nr_cluster = 0, nr_nocluster = 0;
@@ -546,6 +566,130 @@ namespace OpenMS
     cur[1] += 1; clusterCellCollectOne(cur, cells);
     // (2, 2)
     cur[1] += 1; clusterCellCollectOne(cur, cells);
+  }
+
+  template <typename I>
+  typename HierarchicalClustering<I>::ClusterTrees
+  HierarchicalClustering<I>::clusterCheckTrees(const ClusterTrees &trees)
+  {
+    ClusterTrees ret;
+
+    for (typename ClusterTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
+    {
+      SilhuetteWidthQueue q;
+      // XXX: make number changeable
+      for (UInt i = 2; i <= 4; ++i) q.push(clusterCheckTreeOne(*it, i));
+      SilhuetteWidthInfo i = q.top();
+      // XXX: check
+      if (i.width > .9)
+      {
+        for (typename ClusterTrees::const_iterator it2 = i.trees.begin(); it2 != i.trees.end(); ++it2)
+          ret.insert(*it2);
+        for (typename ClusterTrees::const_iterator it2 = i.trees_unused.begin(); it2 != i.trees_unused.end(); ++it2)
+          delete *it2;
+      }
+      else ret.insert(*it);
+    }
+
+    return ret;
+  }
+
+  template <typename I>
+  typename HierarchicalClustering<I>::SilhuetteWidthInfo
+  HierarchicalClustering<I>::clusterCheckTreeOne(TreeNode *tree, UInt number)
+  {
+    std::cout << "sw check, tree: " << tree << ", number: " << number << std::endl;
+    typedef std::vector<TreeNode *> LocalClusterPoints;
+    typedef std::map<TreeNode *, LocalClusterPoints> LocalClusters;
+
+    SilhuetteWidthInfo info;
+    LocalClusters clusters;
+    DoubleReal sw = 0;
+    UInt sw_count = 0;
+
+    // BFS for $number trees
+    {
+      std::queue<TreeNode *> q;
+      q.push(tree);
+      while (!q.empty() && info.trees.size() < number)
+      {
+        TreeNode *t = q.front();
+        q.pop();
+        if (t->left && t->right)
+        {
+          info.trees.erase(t);
+          info.trees_unused.insert(t);
+          q.push(t->left);
+          q.push(t->right);
+          info.trees.insert(t->left);
+          info.trees.insert(t->right);
+        }
+      }
+    }
+
+    // Collect cluster points for each tree
+    {
+      for (typename ClusterTrees::const_iterator it = info.trees.begin(); it != info.trees.end(); ++it)
+      {
+        std::queue<TreeNode *> q;
+        LocalClusterPoints points;
+        q.push(*it);
+        while (!q.empty())
+        {
+          TreeNode *t = q.front();
+          q.pop();
+          if (t->left && t->right)
+          {
+            q.push(t->left);
+            q.push(t->right);
+          }
+          else points.push_back(t);
+        }
+        clusters.insert(std::make_pair(*it, points));
+      }
+    }
+    std::cout << "sw check, number of clusters: " << clusters.size() << std::endl;
+
+    // Collect SV for each cluster
+    {
+      DoubleReal sv = 0;
+      UInt sv_count = 0;
+
+      for (typename LocalClusters::const_iterator cluster_outer_it = clusters.begin(); cluster_outer_it != clusters.end(); ++cluster_outer_it)
+      {
+        for (typename LocalClusterPoints::const_iterator point_outer_it = cluster_outer_it->second.begin(); point_outer_it != cluster_outer_it->second.end(); ++point_outer_it)
+        {
+          DoubleReal a = 0, b = INFINITY;
+          UInt a_count = 0;
+
+          // Check distance to all other points in the local cluster.
+          for (typename LocalClusterPoints::const_iterator point_inner_it = cluster_outer_it->second.begin(); point_inner_it != cluster_outer_it->second.end(); ++point_inner_it)
+          {
+            if (*point_outer_it == *point_inner_it) continue;
+            a += point_distance((*point_outer_it)->coord, (*point_inner_it)->coord); a_count++;
+          }
+
+          // Check distance to the center of the cluster. (Deviates from the algorithm, hope this is correct)
+          for (typename LocalClusters::const_iterator cluster_inner_it = clusters.begin(); cluster_inner_it != clusters.end(); ++cluster_inner_it)
+          {
+            if (*cluster_inner_it == *cluster_outer_it) continue;
+            DoubleReal b1 = point_distance((*point_outer_it)->coord, cluster_inner_it->first->coord);
+            if (b1 < b) b = b1;
+          }
+
+          a /= a_count;
+          sv += (b - a) / std::max(a, b); sv_count++;
+        }
+      }
+
+      sv /= sv_count;
+      sw += sv; sw_count++;
+    }
+
+    sw /= sw_count;
+    info.width = sw;
+    std::cout << "sw check: " << sw << std::endl;
+    return info;
   }
 }
 

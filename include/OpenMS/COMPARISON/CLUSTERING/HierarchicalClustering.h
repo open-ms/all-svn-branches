@@ -612,6 +612,7 @@ namespace OpenMS
     {
       std::queue<TreeNode *> q;
       q.push(tree);
+      info.trees.insert(tree);
       while (!q.empty() && info.trees.size() < number)
       {
         TreeNode *t = q.front();
@@ -653,9 +654,6 @@ namespace OpenMS
 
     // Collect SV for each cluster
     {
-      DoubleReal sv = 0;
-      UInt sv_count = 0;
-
       for (typename LocalClusters::const_iterator cluster_outer_it = clusters.begin(); cluster_outer_it != clusters.end(); ++cluster_outer_it)
       {
         for (typename LocalClusterPoints::const_iterator point_outer_it = cluster_outer_it->second.begin(); point_outer_it != cluster_outer_it->second.end(); ++point_outer_it)
@@ -679,12 +677,10 @@ namespace OpenMS
           }
 
           a /= a_count;
-          sv += (b - a) / std::max(a, b); sv_count++;
+          DoubleReal sv = (b - a) / std::max(a, b);
+          sw += sv; sw_count++;
         }
       }
-
-      sv /= sv_count;
-      sw += sv; sw_count++;
     }
 
     sw /= sw_count;

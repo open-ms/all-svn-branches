@@ -46,7 +46,6 @@ namespace OpenMS
   gsl_interp_accel* SILACFiltering::current_spl_ = 0;
   gsl_spline* SILACFiltering::spline_aki_ = 0;
   gsl_spline* SILACFiltering::spline_spl_ = 0;
-  Int SILACFiltering::feature_id_ = 0;
   DoubleReal SILACFiltering::mz_min_ = 0;  
 
   SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal mz_stepwidth, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks)
@@ -201,6 +200,11 @@ namespace OpenMS
               continue;
             }
 
+            // XXX: Extract peaks again
+            SILACPattern pattern;
+            if (!(*filter_it)->extractMzShiftsAndIntensitiesPickedToPattern(rt, picked_mz, picked_mz, picked_exp_, pattern))
+              continue;
+
             for (DoubleReal mz = picked_mz - SILACFilter::getPeakWidth(picked_mz); mz < picked_mz + SILACFilter::getPeakWidth(picked_mz); mz += 0.1 * SILACFilter::getPeakWidth(picked_mz) ) // iteration correct
             {
               //--------------------------------------------------
@@ -255,7 +259,7 @@ namespace OpenMS
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
               {
-                if ((*filter_it)->isSILACPattern_(rt, mz, picked_mz, picked_exp_))      // Check if the mz at the given position is a SILAC pair
+                if ((*filter_it)->isSILACPattern_(rt, mz, picked_mz, picked_exp_, pattern))      // Check if the mz at the given position is a SILAC pair
                 {
                   //--------------------------------------------------
                   // FILLING THE BLACKLIST
@@ -358,10 +362,11 @@ namespace OpenMS
                   }
                   blacklistFile.close();
 */
-                  ++feature_id_;
                 }
               }
             }
+
+            if (pattern.points.size() > 3) (*filter_it)->elements_.push_back(pattern);
           }
 
           // Clear the interpolations

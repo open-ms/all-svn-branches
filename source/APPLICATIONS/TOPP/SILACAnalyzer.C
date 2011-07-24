@@ -51,8 +51,6 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
-
 //std includes
 #include <cmath>
 #include <vector>
@@ -65,7 +63,7 @@
 using namespace OpenMS;
 using namespace std;
 
-typedef vector<DataPoint*> Cluster;
+typedef vector<SILACPattern*> Cluster;
 
 //-------------------------------------------------------------
 //Doxygen docu
@@ -193,7 +191,7 @@ class TOPPSILACAnalyzer
     vector<vector <String> > SILAClabels;     // list of SILAC labels, e.g. selected_labels="[Lys4,Arg6][Lys8,Arg10]" => SILAClabels[0][1]="Arg6"
     vector<vector <DoubleReal> > massShifts;      // list of mass shifts
 
-    vector<vector<DataPoint> > data;
+    vector<vector<SILACPattern> > data;
     ConsensusMap all_pairs;
     FeatureMap<> subtree_points;
     MSExperiment<Peak1D> filter_exp;
@@ -668,9 +666,9 @@ class TOPPSILACAnalyzer
     if (isotopes_per_peptide_min != isotopes_per_peptide_max)
     {
       // erase empty filter results from "data"
-      vector<vector<DataPoint> > data_temp;
+      vector<vector<SILACPattern> > data_temp;
 
-      for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+      for (vector<vector<SILACPattern> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
       {
         if (data_it->size() != 0)
         {
@@ -685,11 +683,11 @@ class TOPPSILACAnalyzer
       {
         Int temp = 0;
         // combine corresponding DataPoints
-        vector<vector<DataPoint> >::iterator data_it_1 = data.begin();      // first iterator over "data" to get first DataPoint for combining
-        vector<vector<DataPoint> >::iterator data_it_2 = data_it_1 + 1;     // second iterator over "data" to get second DataPoint for combining
-        vector<vector<DataPoint> >::iterator data_it_end = data.end() - 1;      // pointer to second last elemnt of "data"
-        vector<DataPoint>::iterator it_1;     // first inner iterator over elements of first DataPoint
-        vector<DataPoint>::iterator it_2;     // second inner iterator over elements of second DataPoint
+        vector<vector<SILACPattern> >::iterator data_it_1 = data.begin();      // first iterator over "data" to get first DataPoint for combining
+        vector<vector<SILACPattern> >::iterator data_it_2 = data_it_1 + 1;     // second iterator over "data" to get second DataPoint for combining
+        vector<vector<SILACPattern> >::iterator data_it_end = data.end() - 1;      // pointer to second last elemnt of "data"
+        vector<SILACPattern>::iterator it_1;     // first inner iterator over elements of first DataPoint
+        vector<SILACPattern>::iterator it_2;     // second inner iterator over elements of second DataPoint
 
         while (data_it_1 < data_it_end)      // check for combining as long as first DataPoint is not second last elment of "data"
         {          
@@ -769,9 +767,9 @@ class TOPPSILACAnalyzer
         }
 
         // erase empty DataPoints from "data"
-        vector<vector<DataPoint> > data_temp;
+        vector<vector<SILACPattern> > data_temp;
 
-        for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+        for (vector<vector<SILACPattern> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
         {
           if (data_it->size() != 0)
           {
@@ -784,6 +782,7 @@ class TOPPSILACAnalyzer
       }
     }
 
+#if 0
     //--------------------------------------------------
     // remove isolated DataPoints from filter results (i.e. DataPoints with only few immediate neighbours)
     //--------------------------------------------------
@@ -825,6 +824,7 @@ class TOPPSILACAnalyzer
 
       data.swap(data_2);      // data = data_2
     }
+#endif
 
     //--------------------------------------------------
     // store filter results from vector<vector<DataPoint> > data to .featureXML
@@ -1126,12 +1126,12 @@ void TOPPSILACAnalyzer::clusterData()
 
   UInt nr = 0;
 
-  for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+  for (vector<vector<SILACPattern> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
   {
     const Point max_delta = {{rt_threshold, mz_threshold}};
     Clustering clustering(max_delta);
 
-    for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
+    for (vector<SILACPattern>::iterator it = data_it->begin(); it != data_it->end(); ++it)
     {
       const Point key = {{it->rt, it->mz}};
       clustering.insertPoint(key, &*it);
@@ -1152,13 +1152,13 @@ void TOPPSILACAnalyzer::readFilePoints(const String &filename)
 {
   FeatureXMLFile f_file;
   FeatureMap<> points;
-  std::map<std::pair<Int, Int>, vector<DataPoint> > layers;
+  std::map<std::pair<Int, Int>, vector<SILACPattern> > layers;
 
   f_file.load(filename, points);
 
   for (FeatureMap<>::const_iterator it = points.begin(); it != points.end(); ++it)
   {
-    DataPoint point;
+    SILACPattern point;
     point.rt = it->getRT();
     point.mz = it->getMZ();
     point.charge = it->getCharge();
@@ -1194,7 +1194,7 @@ void TOPPSILACAnalyzer::readFilePoints(const String &filename)
     layers[std::make_pair(Int(point.mass_shifts.at(1)), point.charge)].push_back(point);
   }
 
-  for (std::map<std::pair<Int, Int>, vector<DataPoint> >::iterator it = layers.begin(); it != layers.end(); ++it)
+  for (std::map<std::pair<Int, Int>, vector<SILACPattern> >::iterator it = layers.begin(); it != layers.end(); ++it)
   {
     data.push_back(it->second);
   }
@@ -1212,9 +1212,9 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &out, bool cluster_info) co
 
   FeatureMap<> points;
 
-  for (vector<vector<DataPoint> >::const_iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+  for (vector<vector<SILACPattern> >::const_iterator data_it = data.begin(); data_it != data.end(); ++data_it)
   {
-    for (vector<DataPoint>::const_iterator it = data_it->begin(); it != data_it->end(); ++it)
+    for (vector<SILACPattern>::const_iterator it = data_it->begin(); it != data_it->end(); ++it)
     {
       Feature point;
       point.setRT(it->rt);

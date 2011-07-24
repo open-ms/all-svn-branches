@@ -29,8 +29,8 @@
 #define OPENMS_FILTERING_DATAREDUCTION_SILACFILTER_H
 
 #include <OpenMS/KERNEL/StandardTypes.h>
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
+#include <OpenMS/FILTERING/DATAREDUCTION/SILACPattern.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmPickedHelperStructs.h>
 #include <OpenMS/CHEMISTRY/IsotopeDistribution.h>
 #include <gsl/gsl_interp.h>
@@ -41,7 +41,6 @@
 namespace OpenMS
 {
    class SILACFiltering;
-   class DataPoint;
 
    // Prealculate isotope distributions for interesting mass ranges
    class IsotopeDistributionCache
@@ -245,7 +244,7 @@ namespace OpenMS
   /**
    * @brief holds the recognized features
    */
-   std::vector<DataPoint> elements_;
+   std::vector<SILACPattern> elements_;
 
   /**
    * @brief maximal value of which a predicted SILAC feature may deviate from the averagine model
@@ -286,12 +285,13 @@ namespace OpenMS
    * @param rt RT value of the position
    * @param mz m/z value of the position
    */
-   bool isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<>& picked_exp);
+   bool isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<>& picked_exp, SILACPattern &pattern);
 
 
    bool isSILACPatternPicked_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp);
    bool extractMzShiftsAndIntensities(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp);
    bool extractMzShiftsAndIntensitiesPicked(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp);
+   bool extractMzShiftsAndIntensitiesPickedToPattern(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp, SILACPattern &pattern);
    bool intensityFilter();
    bool correlationFilter1(DoubleReal mz);
    bool correlationFilter2(DoubleReal mz);
@@ -337,7 +337,7 @@ namespace OpenMS
   /**
    * @brief returns all identified elements
    */
-   std::vector<DataPoint>& getElements();
+   std::vector<SILACPattern>& getElements();
 
   /**
    * @brief returns the charge of the filter

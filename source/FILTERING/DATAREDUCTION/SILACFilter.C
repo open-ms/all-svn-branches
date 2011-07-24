@@ -293,6 +293,19 @@ namespace OpenMS
     return true;
   }
 
+  bool SILACFilter::extractMzShiftsAndIntensitiesPickedToPattern(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp, SILACPattern &pattern)
+  {
+    if (!extractMzShiftsAndIntensitiesPicked(rt, mz, picked_mz, picked_exp))
+      return false;
+
+    pattern.rt = rt;
+    pattern.mz = mz;
+    pattern.charge = charge_;
+    pattern.isotopes_per_peptide = (Int) isotopes_per_peptide_;
+    pattern.intensities.insert(pattern.intensities.begin(), exact_intensities_.begin(), exact_intensities_.end());
+    pattern.mass_shifts.insert(pattern.mass_shifts.begin(), mz_peptide_separations_.begin(), mz_peptide_separations_.end());
+    return true;
+  }
 
   bool SILACFilter::intensityFilter()
   {
@@ -455,7 +468,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp)
+  bool SILACFilter::isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp, SILACPattern &pattern)
   {
     current_mz_ = mz;
 
@@ -491,14 +504,9 @@ namespace OpenMS
 
     // ALL FILTERS PASSED => CREATE DATAPOINT
     DataPoint newElement;    // Raw data point at this particular RT and m/z passed all filters. Store it for further clustering.
-    newElement.feature_id = SILACFiltering::feature_id_;
     newElement.rt = rt;
     newElement.mz = mz;
-    newElement.charge = charge_;
-    newElement.isotopes_per_peptide = (Int) isotopes_per_peptide_;
-    newElement.intensities.insert(newElement.intensities.begin(), exact_intensities_.begin(), exact_intensities_.end());
-    newElement.mass_shifts.insert(newElement.mass_shifts.begin(), mz_peptide_separations_.begin(), mz_peptide_separations_.end());
-    elements_.push_back(newElement);
+    pattern.points.push_back(newElement);
 
     return true;
   }
@@ -745,7 +753,7 @@ namespace OpenMS
     return expected_mz_shifts_;
   }
 
-  std::vector<DataPoint>& SILACFilter::getElements()
+  std::vector<SILACPattern>& SILACFilter::getElements()
   {
     return elements_;
   }

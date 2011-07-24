@@ -87,11 +87,6 @@ namespace OpenMS
    static gsl_spline* spline_spl_;
 
   /**
-   * @brief current feature id
-   */
-   static Int feature_id_;
-
-  /**
    * @brief lowest m/z value of the experiment
    */
    static DoubleReal mz_min_;

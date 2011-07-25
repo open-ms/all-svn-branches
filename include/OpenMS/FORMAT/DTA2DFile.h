@@ -268,6 +268,9 @@ namespace OpenMS
 				throw Exception::UnableToCreateFile(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
 			}
       
+      // write header
+      os	<< "RT" << "\t" << "MZ" << "\t" << "INT" << "\n";
+      
 			// Iterate over all peaks of each spectrum and
 			// write one line for each peak of the spectrum.
 			UInt count = 0;
@@ -303,6 +306,9 @@ namespace OpenMS
 				throw Exception::UnableToCreateFile(__FILE__, __LINE__, __PRETTY_FUNCTION__, filename);
 			}
       
+      // write header (Always MZ=0 for chromatograms in DTA2D.)
+      os	<< "RT" << "\t" << "MZ" << "\t" << "INT" << "\n";
+      
 			// Iterate over spectra (retention times) and write summed intensities for each spectrum, i.e. the total ion chromatogram (TIC)
 			UInt count = 0;
 			for (typename MapType::const_iterator spec=map.begin(); spec!=map.end(); ++spec)
@@ -317,7 +323,7 @@ namespace OpenMS
             totalIntensity = totalIntensity + it->getIntensity();
           }
           // Write rt and intensity.
-          os	<< precisionWrapper(spec->getRT()) << "\t" << precisionWrapper(totalIntensity) << "\n";
+          os	<< precisionWrapper(spec->getRT()) << "\t" << precisionWrapper(0) << "\t" << precisionWrapper(totalIntensity) << "\n";
         }
 			}
 			os.close();

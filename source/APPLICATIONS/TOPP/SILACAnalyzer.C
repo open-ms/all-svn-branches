@@ -192,8 +192,10 @@ class TOPPSILACAnalyzer
     vector<vector <String> > SILAClabels;     // list of SILAC labels, e.g. selected_labels="[Lys4,Arg6][Lys8,Arg10]" => SILAClabels[0][1]="Arg6"
     vector<vector <DoubleReal> > massShifts;      // list of mass shifts
 
+    typedef HierarchicalClustering<SILACPattern *> Clustering;
+
     vector<vector<SILACPattern> > data;
-    ConsensusMap all_pairs;
+    vector<Clustering *> cluster_data;
     FeatureMap<> subtree_points;
     MSExperiment<Peak1D> filter_exp;
 
@@ -953,6 +955,7 @@ class TOPPSILACAnalyzer
     //subtree_points.sortByPosition();
 */
 
+#if 0
     //--------------------------------------------------
     // consensusXML output
     //--------------------------------------------------
@@ -1076,6 +1079,7 @@ class TOPPSILACAnalyzer
         all_pairs.getFileDescriptions()[i].size = id;
       }      
     }
+#endif
 
     //--------------------------------------------------------------
     // write output
@@ -1084,14 +1088,10 @@ class TOPPSILACAnalyzer
     // consensusXML
     if (out != "")
     {
-      // assign unique ids
-      all_pairs.applyMemberFunction(&UniqueIdInterface::setUniqueId);
-
-      // annotate output with data processing info
-      addDataProcessing_(all_pairs, getProcessingInfo_(DataProcessing::QUANTITATION));
-
-      ConsensusXMLFile c_file;
-      c_file.store(out, all_pairs);
+      ConsensusMap map;
+      for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
+        generateConsensusByCluster(map, **it);
+      writeConsensus(out, map);
     }
 
     // featureXML
@@ -1102,8 +1102,6 @@ class TOPPSILACAnalyzer
 
     return EXECUTION_OK;
   }
-
-  typedef HierarchicalClustering<SILACPattern *> Clustering;
 
   void clusterData();
 
@@ -1123,6 +1121,7 @@ private:
   {
     out.sortByPosition();
     out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+    out.setExperimentType("silac");
 
     ConsensusXMLFile c_file;
     c_file.store(filename, out);
@@ -1140,30 +1139,31 @@ void TOPPSILACAnalyzer::clusterData()
 
   UInt nr = 0;
 
-  for (vector<vector<SILACPattern> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
+  for (vector<vector<SILACPattern> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++nr)
   {
     const Point max_delta = {{rt_threshold, mz_threshold}};
-    Clustering clustering(max_delta);
+    Clustering *clustering = new Clustering(max_delta);
 
     for (vector<SILACPattern>::iterator it = data_it->begin(); it != data_it->end(); ++it)
     {
       const Point key = {{it->rt, it->mz}};
-      clustering.insertPoint(key, &*it);
+      clustering->insertPoint(key, &*it);
     }
 
-    if (out_debug != "") writeFilePointsByCell(out_debug + ".by-cell.layer-" + nr, clustering);
+    if (out_debug != "") writeFilePointsByCell(out_debug + ".by-cell.layer-" + nr, *clustering);
 
-    clustering.cluster();
+    clustering->cluster();
 
     if (out_debug != "")
     {
       ConsensusMap out_cluster, out_pattern;
-      generateConsensusByCluster(out_cluster, clustering);
-      generateConsensusByPattern(out_pattern, clustering);
+      generateConsensusByCluster(out_cluster, *clustering);
+      generateConsensusByPattern(out_pattern, *clustering);
       writeConsensus(out_debug + ".by-cluster.layer-" + nr + ".consensusXML", out_cluster);
       writeConsensus(out_debug + ".by-pattern.layer-" + nr + ".consensusXML", out_pattern);
     }
-    nr++;
+
+    cluster_data.push_back(clustering);
   }
 
   progresslogger.endProgress();
@@ -1381,6 +1381,8 @@ void TOPPSILACAnalyzer::generateConsensusByCluster(ConsensusMap &out, const Clus
         total_intensity += pattern_in.intensities[0][0];
         // add monoisotopic RT position of the light peak to the total RT value, weighted by the intensity
         total_rt += pattern_in.intensities[0][0] * pattern_in.rt;
+
+        // XXX: Write all other data
       }
 
       // Average RT

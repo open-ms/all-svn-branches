@@ -1103,7 +1103,7 @@ class TOPPSILACAnalyzer
     return EXECUTION_OK;
   }
 
-  typedef HierarchicalClustering<DataPoint *> Clustering;
+  typedef HierarchicalClustering<SILACPattern *> Clustering;
 
   void clusterData();
 
@@ -1116,6 +1116,7 @@ private:
 
   void writeFilePointsByCell(const String &filename_base, const Clustering &clustering) const;
   void writeFilePointsByCluster(const String &filename_base, const Clustering &clustering) const;
+  void writeLayerConsensusByPattern(const String &filename_base, const Clustering &clustering) const;
 };
 
 void TOPPSILACAnalyzer::clusterData()
@@ -1144,7 +1145,11 @@ void TOPPSILACAnalyzer::clusterData()
 
     clustering.cluster();
 
-    if (out_debug != "") writeFilePointsByCluster(out_debug + ".by-cluster.layer-" + nr, clustering);
+    if (out_debug != "")
+    {
+      writeLayerConsensusByPattern(out_debug + ".by-pattern.layer-" + nr, clustering);
+      writeFilePointsByCluster(out_debug + ".by-cluster.layer-" + nr, clustering);
+    }
     nr++;
   }
 
@@ -1369,6 +1374,56 @@ void TOPPSILACAnalyzer::writeFilePointsByCluster(const String &filename_base, co
 
   FeatureXMLFile f_file;
   f_file.store(filename_base + ".featureXML", points);
+}
+
+void TOPPSILACAnalyzer::writeLayerConsensusByPattern(const String &filename_base, const Clustering &clustering) const
+{
+  ConsensusMap out;
+
+  for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
+  {
+    for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
+    {
+      std::ostringstream o;
+      o << cell_it->first[0] << ':' << cell_it->first[1];
+      std::string cell_id = o.str();
+
+      for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin(); pattern_it != cluster_it->second.end(); ++pattern_it)
+      {
+        ConsensusFeature pattern;
+        SILACPattern &pattern_in = *pattern_it->second;
+
+        pattern.setRT(pattern_it->first[0]);
+        pattern.setMZ(pattern_it->first[1]);
+        // XXX
+        pattern.setIntensity(pattern_in.intensities[0][0]);
+
+        pattern.setMetaValue("Cell ID", cell_id);
+
+        UInt id = 0;
+        for (std::vector<DataPoint>::const_iterator point_it = pattern_in.points.begin();
+             point_it != pattern_in.points.end();
+             ++point_it, ++id)
+        {
+          FeatureHandle point;
+          point.setRT(point_it->rt);
+          point.setMZ(point_it->mz);
+          point.setIntensity(1);
+          point.setUniqueId(id);
+
+          pattern.insert(point);
+        }
+
+        out.push_back(pattern);
+      }
+    }
+  }
+
+  out.sortByPosition();
+  out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+  ConsensusXMLFile c_file;
+  c_file.store(filename_base + ".consensusXML", out);
 }
 
 //@endcond

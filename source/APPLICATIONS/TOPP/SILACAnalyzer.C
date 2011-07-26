@@ -1115,8 +1115,18 @@ private:
   void writeFilePoints(const String &filename, bool cluster_info) const;
 
   void writeFilePointsByCell(const String &filename_base, const Clustering &clustering) const;
-  void writeLayerConsensusByCluster(const String &filename_base, const Clustering &clustering) const;
-  void writeLayerConsensusByPattern(const String &filename_base, const Clustering &clustering) const;
+
+  void generateConsensusByCluster(ConsensusMap &, const Clustering &) const;
+  void generateConsensusByPattern(ConsensusMap &, const Clustering &) const;
+
+  void writeConsensus(const String &filename, ConsensusMap &out) const
+  {
+    out.sortByPosition();
+    out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+    ConsensusXMLFile c_file;
+    c_file.store(filename, out);
+  }
 };
 
 void TOPPSILACAnalyzer::clusterData()
@@ -1147,8 +1157,11 @@ void TOPPSILACAnalyzer::clusterData()
 
     if (out_debug != "")
     {
-      writeLayerConsensusByCluster(out_debug + ".by-cluster.layer-" + nr, clustering);
-      writeLayerConsensusByPattern(out_debug + ".by-pattern.layer-" + nr, clustering);
+      ConsensusMap out_cluster, out_pattern;
+      generateConsensusByCluster(out_cluster, clustering);
+      generateConsensusByPattern(out_pattern, clustering);
+      writeConsensus(out_debug + ".by-cluster.layer-" + nr + ".consensusXML", out_cluster);
+      writeConsensus(out_debug + ".by-pattern.layer-" + nr + ".consensusXML", out_pattern);
     }
     nr++;
   }
@@ -1332,10 +1345,8 @@ void TOPPSILACAnalyzer::writeFilePointsByCell(const String &filename_base, const
   f_file.store(filename_base + ".featureXML", points);
 }
 
-void TOPPSILACAnalyzer::writeLayerConsensusByCluster(const String &filename_base, const Clustering &clustering) const
+void TOPPSILACAnalyzer::generateConsensusByCluster(ConsensusMap &out, const Clustering &clustering) const
 {
-  ConsensusMap out;
-
   for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
   {
     for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
@@ -1371,18 +1382,10 @@ void TOPPSILACAnalyzer::writeLayerConsensusByCluster(const String &filename_base
       out.push_back(cluster);
     }
   }
-
-  out.sortByPosition();
-  out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
-
-  ConsensusXMLFile c_file;
-  c_file.store(filename_base + ".consensusXML", out);
 }
 
-void TOPPSILACAnalyzer::writeLayerConsensusByPattern(const String &filename_base, const Clustering &clustering) const
+void TOPPSILACAnalyzer::generateConsensusByPattern(ConsensusMap &out, const Clustering &clustering) const
 {
-  ConsensusMap out;
-
   for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
   {
     for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
@@ -1393,9 +1396,9 @@ void TOPPSILACAnalyzer::writeLayerConsensusByPattern(const String &filename_base
 
       for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin(); pattern_it != cluster_it->second.end(); ++pattern_it)
       {
-        ConsensusFeature pattern;
         SILACPattern &pattern_in = *pattern_it->second;
 
+        ConsensusFeature pattern;
         pattern.setRT(pattern_it->first[0]);
         pattern.setMZ(pattern_it->first[1]);
         pattern.setIntensity(pattern_in.intensities[0][0]);
@@ -1420,12 +1423,6 @@ void TOPPSILACAnalyzer::writeLayerConsensusByPattern(const String &filename_base
       }
     }
   }
-
-  out.sortByPosition();
-  out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
-
-  ConsensusXMLFile c_file;
-  c_file.store(filename_base + ".consensusXML", out);
 }
 
 //@endcond

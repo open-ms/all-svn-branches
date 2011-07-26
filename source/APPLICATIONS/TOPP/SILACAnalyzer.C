@@ -1115,7 +1115,7 @@ private:
   void writeFilePoints(const String &filename, bool cluster_info) const;
 
   void writeFilePointsByCell(const String &filename_base, const Clustering &clustering) const;
-  void writeFilePointsByCluster(const String &filename_base, const Clustering &clustering) const;
+  void writeLayerConsensusByCluster(const String &filename_base, const Clustering &clustering) const;
   void writeLayerConsensusByPattern(const String &filename_base, const Clustering &clustering) const;
 };
 
@@ -1147,8 +1147,8 @@ void TOPPSILACAnalyzer::clusterData()
 
     if (out_debug != "")
     {
+      writeLayerConsensusByCluster(out_debug + ".by-cluster.layer-" + nr, clustering);
       writeLayerConsensusByPattern(out_debug + ".by-pattern.layer-" + nr, clustering);
-      writeFilePointsByCluster(out_debug + ".by-cluster.layer-" + nr, clustering);
     }
     nr++;
   }
@@ -1332,48 +1332,51 @@ void TOPPSILACAnalyzer::writeFilePointsByCell(const String &filename_base, const
   f_file.store(filename_base + ".featureXML", points);
 }
 
-void TOPPSILACAnalyzer::writeFilePointsByCluster(const String &filename_base, const Clustering &clustering) const
+void TOPPSILACAnalyzer::writeLayerConsensusByCluster(const String &filename_base, const Clustering &clustering) const
 {
-  // 15 HTML colors
-  const String colors[] = {
-    "#00FFFF", "#000000", "#0000FF", "#FF00FF", "#008000",
-    "#808080", "#00FF00", "#800000", "#000080", "#808000",
-    "#800080", "#FF0000", "#C0C0C0", "#008080", "#FFFF00",
-  };
-  const Int colors_len = 15;
-
-  FeatureMap<> points;
-  Int clusternr = 0;
+  ConsensusMap out;
 
   for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
   {
     for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
     {
-      for (Clustering::Cluster::const_iterator point_it = cluster_it->second.begin(); point_it != cluster_it->second.end(); ++point_it)
+      std::ostringstream o;
+      o << cell_it->first[0] << ':' << cell_it->first[1];
+      std::string cell_id = o.str();
+
+      ConsensusFeature cluster;
+      cluster.setMetaValue("Cell ID", cell_id);
+
+      UInt id = 0;
+      for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
+           pattern_it != cluster_it->second.end();
+           ++pattern_it, ++id)
       {
-        Feature point;
-        point.setRT(point_it->first[0]);
-        point.setMZ(point_it->first[1]);
-        point.setIntensity(1);
+        SILACPattern &pattern_in = *pattern_it->second;
 
-        point.setMetaValue("color", colors[clusternr % colors_len]);
-        point.setMetaValue("Cluster Nr", clusternr);
+        FeatureHandle pattern;
+        pattern.setRT(pattern_it->first[0]);
+        pattern.setMZ(pattern_it->first[1]);
+        pattern.setIntensity(pattern_in.intensities[0][0]);
+        pattern.setUniqueId(id);
 
-        std::ostringstream out;
-        out << cell_it->first[0] << ':' << cell_it->first[1];
-        point.setMetaValue("Cell ID", out.str());
-
-        points.push_back(point);
+        cluster.insert(pattern);
       }
-      clusternr++;
+
+      // XXX
+      cluster.setRT(cluster_it->first[0]);
+      cluster.setMZ(cluster_it->first[1]);
+      cluster.setIntensity(100000);
+
+      out.push_back(cluster);
     }
   }
 
-  points.sortByPosition();
-  points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+  out.sortByPosition();
+  out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
-  FeatureXMLFile f_file;
-  f_file.store(filename_base + ".featureXML", points);
+  ConsensusXMLFile c_file;
+  c_file.store(filename_base + ".consensusXML", out);
 }
 
 void TOPPSILACAnalyzer::writeLayerConsensusByPattern(const String &filename_base, const Clustering &clustering) const
@@ -1395,7 +1398,6 @@ void TOPPSILACAnalyzer::writeLayerConsensusByPattern(const String &filename_base
 
         pattern.setRT(pattern_it->first[0]);
         pattern.setMZ(pattern_it->first[1]);
-        // XXX
         pattern.setIntensity(pattern_in.intensities[0][0]);
 
         pattern.setMetaValue("Cell ID", cell_id);

@@ -1358,7 +1358,11 @@ void TOPPSILACAnalyzer::generateConsensusByCluster(ConsensusMap &out, const Clus
       ConsensusFeature cluster;
       cluster.setMetaValue("Cell ID", cell_id);
 
+      DoubleReal total_rt = 0.0;
+      DoubleReal total_mz = 0.0;
+      DoubleReal total_intensity = 0.0;
       UInt id = 0;
+
       for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
            pattern_it != cluster_it->second.end();
            ++pattern_it, ++id)
@@ -1372,12 +1376,19 @@ void TOPPSILACAnalyzer::generateConsensusByCluster(ConsensusMap &out, const Clus
         pattern.setUniqueId(id);
 
         cluster.insert(pattern);
+
+        // add monoisotopic intensity of the light peak to the total intensity
+        total_intensity += pattern_in.intensities[0][0];
+        // add monoisotopic RT position of the light peak to the total RT value, weighted by the intensity
+        total_rt += pattern_in.intensities[0][0] * pattern_in.rt;
       }
 
+      // Average RT
+      cluster.setRT(total_rt / total_intensity);
       // XXX
-      cluster.setRT(cluster_it->first[0]);
       cluster.setMZ(cluster_it->first[1]);
-      cluster.setIntensity(100000);
+      // XXX: Max intensity or sum?
+      cluster.setIntensity(total_intensity);
 
       out.push_back(cluster);
     }

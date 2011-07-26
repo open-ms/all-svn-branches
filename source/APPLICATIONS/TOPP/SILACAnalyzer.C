@@ -167,6 +167,7 @@ class TOPPSILACAnalyzer
 
     String out_filters;
     String in_filters;
+    String out_debug;
 
     // section "sample"
     String selected_labels;
@@ -227,6 +228,7 @@ class TOPPSILACAnalyzer
     // create optional flag for additional input file (.featureXML) to load filter results
     registerOutputFile_("in_filters", "<file>", "", "Additional input file containing all points that passed the filters as txt. Use output from \"out_filters\" to perform clustering only.", false, true);
     setValidFormats_("in_filters", StringList::create("featureXML"));
+    registerStringOption_("out_debug", "<filebase>", "", "Filename base for debug output.", false, true);
 
     // create section "labels" for adjusting masses of labels
     registerSubsection_("labels", "Isotopic labels that can be specified in section \'sample\'.");
@@ -340,6 +342,7 @@ class TOPPSILACAnalyzer
     out_filters = getStringOption_("out_filters");
     // get name of additional filters input file (.featureXML)
     in_filters = getStringOption_("in_filters");
+    out_debug = getStringOption_("out_debug");
 
 
     //--------------------------------------------------
@@ -1111,8 +1114,8 @@ private:
   /** Write all DataPoints into a featureXML file. */
   void writeFilePoints(const String &filename, bool cluster_info) const;
 
-  void writeFilePointsByCell(const String &out, const Clustering &clustering) const;
-  void writeFilePointsByCluster(const String &out, const Clustering &clustering) const;
+  void writeFilePointsByCell(const String &filename_base, const Clustering &clustering) const;
+  void writeFilePointsByCluster(const String &filename_base, const Clustering &clustering) const;
 };
 
 void TOPPSILACAnalyzer::clusterData()
@@ -1137,11 +1140,11 @@ void TOPPSILACAnalyzer::clusterData()
       clustering.insertPoint(key, &*it);
     }
 
-    writeFilePointsByCell(out_clusters + ".by-cell.layer-" + nr + ".featureXML", clustering);
+    if (out_debug != "") writeFilePointsByCell(out_debug + ".by-cell.layer-" + nr, clustering);
 
     clustering.cluster();
 
-    writeFilePointsByCluster(out_clusters + ".by-cluster.layer-" + nr + ".featureXML", clustering);
+    if (out_debug != "") writeFilePointsByCluster(out_debug + ".by-cluster.layer-" + nr, clustering);
     nr++;
   }
 
@@ -1280,7 +1283,7 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &out, bool cluster_info) co
   f_file.store(out, points);
 }
 
-void TOPPSILACAnalyzer::writeFilePointsByCell(const String &out, const Clustering &clustering) const
+void TOPPSILACAnalyzer::writeFilePointsByCell(const String &filename_base, const Clustering &clustering) const
 {
   // 15 HTML colors
   const String colors[] = {
@@ -1321,10 +1324,10 @@ void TOPPSILACAnalyzer::writeFilePointsByCell(const String &out, const Clusterin
   points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
   FeatureXMLFile f_file;
-  f_file.store(out, points);
+  f_file.store(filename_base + ".featureXML", points);
 }
 
-void TOPPSILACAnalyzer::writeFilePointsByCluster(const String &out, const Clustering &clustering) const
+void TOPPSILACAnalyzer::writeFilePointsByCluster(const String &filename_base, const Clustering &clustering) const
 {
   // 15 HTML colors
   const String colors[] = {
@@ -1365,7 +1368,7 @@ void TOPPSILACAnalyzer::writeFilePointsByCluster(const String &out, const Cluste
   points.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
   FeatureXMLFile f_file;
-  f_file.store(out, points);
+  f_file.store(filename_base + ".featureXML", points);
 }
 
 //@endcond

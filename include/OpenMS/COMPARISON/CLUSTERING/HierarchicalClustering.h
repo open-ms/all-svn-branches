@@ -474,7 +474,7 @@ namespace OpenMS
     }
 
     std::cout << "late trees: size: " << trees.size() << std::endl;
-    trees = clusterCheckTrees(trees);
+    //trees = clusterCheckTrees(trees);
 
     // Add current data to grid
     std::cout << "after check trees: size: " << trees.size() << std::endl;

@@ -1411,10 +1411,28 @@ void TOPPSILACAnalyzer::generateConsensusByPattern(ConsensusMap &out, const Clus
       {
         SILACPattern &pattern_in = *pattern_it->second;
 
+        // XXX: get from experiment
+        Int charge = pattern_in.charge;
+
         ConsensusFeature pattern;
         pattern.setRT(pattern_it->first[0]);
         pattern.setMZ(pattern_it->first[1]);
         pattern.setIntensity(pattern_in.intensities[0][0]);
+        pattern.setCharge(charge);
+
+        // Output mass shifts
+        {
+          std::ostringstream out;
+          out << std::fixed << std::setprecision(4);
+          for (vector<DoubleReal>::const_iterator shift_it = pattern_in.mass_shifts.begin() + 1; shift_it != pattern_in.mass_shifts.end(); ++shift_it)
+          {
+            out << *shift_it * charge << ';';
+          }
+          // Remove the last delimiter
+          std::string outs = out.str(); outs.erase(outs.end() - 1);
+          pattern.setQuality(std::floor(pattern_in.mass_shifts.at(1) * charge));
+          pattern.setMetaValue("Mass shifts [Da]", outs);
+        }
 
         pattern.setMetaValue("Cell ID", cell_id);
 

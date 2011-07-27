@@ -126,6 +126,8 @@ namespace OpenMS
       const_cell_iterator cell_end() const { return cells_.end(); }
 
       // XXX: Currently needes non-const
+      cell_iterator cell_begin() { return cells_.begin(); }
+      cell_iterator cell_end() { return cells_.end(); }
       typename CellMap::mapped_type &cell_at(const CellIndex &x) { return cells_.at(x); }
       const typename CellMap::mapped_type &cell_at(const CellIndex &x) const { return cells_.at(x); }
 

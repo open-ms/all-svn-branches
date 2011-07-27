@@ -1130,6 +1130,10 @@ private:
 
 void TOPPSILACAnalyzer::clusterData()
 {
+  // XXX
+  const UInt threshold_pattern = 2;
+  const UInt threshold_points = 12;
+
   typedef Clustering::Point Point;
 
   ProgressLogger progresslogger;
@@ -1153,6 +1157,33 @@ void TOPPSILACAnalyzer::clusterData()
     if (out_debug != "") writeFilePointsByCell(out_debug + ".by-cell.layer-" + nr, *clustering);
 
     clustering->cluster();
+
+    // Remove too small clusters
+    for (Clustering::Grid::cell_iterator cell_it = clustering->grid.cell_begin(); cell_it != clustering->grid.cell_end(); ++cell_it)
+    {
+      Clustering::Grid::Cell &cell_cur = cell_it->second;
+
+      // Iterator over all clusters
+      Clustering::Grid::local_iterator cluster_tmp_it = cell_cur.begin();
+      while (cluster_tmp_it != cell_cur.end())
+      { 
+        // Remember iterator
+        Clustering::Grid::local_iterator cluster_it = cluster_tmp_it;
+        ++cluster_tmp_it;
+
+        const Clustering::Cluster &cluster(cluster_it->second);
+        UInt nr_pattern = 0, nr_points = 0;
+
+        for (Clustering::Cluster::const_iterator pattern_it = cluster.begin(); pattern_it != cluster.end(); ++pattern_it)
+        {
+          nr_pattern++;
+          nr_points += pattern_it->second->points.size();
+        }
+
+        // XXX
+        if (nr_pattern <= threshold_pattern || nr_points <= threshold_points) cell_cur.erase(cluster_it);
+      }
+    }
 
     if (out_debug != "")
     {

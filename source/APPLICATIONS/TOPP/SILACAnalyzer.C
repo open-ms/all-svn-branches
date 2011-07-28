@@ -1381,48 +1381,86 @@ void TOPPSILACAnalyzer::generateConsensusByCluster(ConsensusMap &out, const Clus
 {
   for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
   {
+    std::ostringstream o;
+    o << cell_it->first[0] << ':' << cell_it->first[1];
+    std::string cell_id = o.str();
+
     for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
     {
-      std::ostringstream o;
-      o << cell_it->first[0] << ':' << cell_it->first[1];
-      std::string cell_id = o.str();
-
       ConsensusFeature cluster;
       cluster.setMetaValue("Cell ID", cell_id);
 
-      DoubleReal total_rt = 0.0;
-      DoubleReal total_mz = 0.0;
-      DoubleReal total_intensity = 0.0;
-      UInt id = 0;
+      DoubleReal total_rt = 0;
+      DoubleReal total_mz = 0;
+      DoubleReal total_intensity = 0;
+      std::vector<DoubleReal> total_intensities(10, 0);
 
-      for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
-           pattern_it != cluster_it->second.end();
-           ++pattern_it, ++id)
+      Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
+      UInt pattern_id = 0;
+
+      SILACPattern *pattern_max = &*pattern_it->second;
+
+      for (; pattern_it != cluster_it->second.end();
+             ++pattern_it, ++pattern_id)
       {
-        SILACPattern &pattern_in = *pattern_it->second;
+        SILACPattern *pattern = &*pattern_it->second;
 
-        FeatureHandle pattern;
-        pattern.setRT(pattern_it->first[0]);
-        pattern.setMZ(pattern_it->first[1]);
-        pattern.setIntensity(pattern_in.intensities[0][0]);
-        pattern.setUniqueId(id);
+        if (pattern_max->intensities[0][0] < pattern->intensities[0][0])
+        {
+          pattern_max = pattern;
+        }
 
-        cluster.insert(pattern);
+        for (UInt i = 0; i < pattern->mass_shifts.size(); ++i)
+        {
+          std::vector<DoubleReal> &current_intensities = pattern->intensities[i];
+          // Find maximum intensity over all peaks
+          std::vector<DoubleReal>::const_iterator max_intensity = max_element(current_intensities.begin(), current_intensities.end());
+          if (max_intensity != current_intensities.end() && *max_intensity > 0)
+            total_intensities[i] += *max_intensity;
+        }
 
-        // add monoisotopic intensity of the light peak to the total intensity
-        total_intensity += pattern_in.intensities[0][0];
+        total_intensity += pattern->intensities[0][0];
         // add monoisotopic RT position of the light peak to the total RT value, weighted by the intensity
-        total_rt += pattern_in.intensities[0][0] * pattern_in.rt;
-
-        // XXX: Write all other data
+        total_rt += pattern->intensities[0][0] * pattern->rt;
+        total_mz += pattern->intensities[0][0] * pattern->mz;
       }
 
-      // Average RT
-      cluster.setRT(total_rt / total_intensity);
-      // XXX
-      cluster.setMZ(cluster_it->first[1]);
+      // Average RT of monoisotopic peak
+      total_rt /= total_intensity;
+      cluster.setRT(total_rt);
+      // Average MZ of monoisotopic peak
+      total_mz /= total_intensity;
+      cluster.setMZ(total_mz);
       // XXX: Max intensity or sum?
-      cluster.setIntensity(total_intensity);
+      cluster.setIntensity(total_intensities[0]);
+
+      UInt charge = pattern_max->charge;
+      cluster.setCharge(charge);
+
+      {
+        std::ostringstream mass_shifts_out;
+        mass_shifts_out << std::fixed << std::setprecision(4);
+
+        for (UInt i = 0; i < pattern_max->mass_shifts.size(); ++i)
+        {
+          // Product feature for each mass shift
+          FeatureHandle point;
+          point.setRT(total_rt);
+          point.setMZ(total_mz + pattern_max->mass_shifts[i]);
+          point.setIntensity(total_intensities[i]);
+          point.setUniqueId(i);
+
+          cluster.insert(point);
+
+          // Product mass shifts string
+          mass_shifts_out << pattern_max->mass_shifts[i] * charge << ';';
+        }
+
+        // Remove the last delimiter
+        std::string mass_shifts_outs = mass_shifts_out.str(); mass_shifts_outs.erase(mass_shifts_outs.end() - 1);
+        cluster.setQuality(std::floor(pattern_max->mass_shifts.at(1) * charge));
+        cluster.setMetaValue("Mass shifts [Da]", mass_shifts_outs);
+      }
 
       out.push_back(cluster);
     }

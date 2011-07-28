@@ -186,11 +186,17 @@ namespace OpenMS
           // get iterator on picked data
           MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_seeds_.RTBegin(rt);
 
+          // XXX: Workaround to catch duplicated peaks
+          std::set<DoubleReal> seen_mz;
+
           // Iterate over the picked spectrum
           for (MSSpectrum<Peak1D>::Iterator picked_mz_it = picked_rt_it->begin() ; picked_mz_it != picked_rt_it->end(); ++picked_mz_it) // iteration correct
           {
             DoubleReal picked_mz = picked_mz_it->getMZ();
             DoubleReal intensity = picked_mz_it->getIntensity();
+
+            // XXX: Ignore duplicated peaks
+            if (!seen_mz.insert(picked_mz).second) continue;
 
             //---------------------------------------------------------------
             // BLUNT INTENSITY FILTER (Just check that intensity at current m/z position is above the intensity cutoff)

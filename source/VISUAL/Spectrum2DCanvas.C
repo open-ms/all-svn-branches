@@ -374,7 +374,15 @@ namespace OpenMS
 						 layer.filters.passes(*i))
 				{
 					//determine color
-					QRgb color = heightColor_(i->getIntensity(), layer.gradient, snap_factor);
+          QRgb color;
+          if (i->metaValueExists(5))
+          {
+            color = QColor(i->getMetaValue(5).toQString()).rgb();
+          }
+          else
+          {
+            color = heightColor_(i->getIntensity(), layer.gradient, snap_factor);
+          }
 					//paint
 					QPoint pos;
 					dataToWidget_(i->getMZ(),i->getRT(),pos);

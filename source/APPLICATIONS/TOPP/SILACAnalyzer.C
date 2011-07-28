@@ -1116,7 +1116,8 @@ private:
 
   void generateConsensusByCluster(ConsensusMap &, const Clustering &) const;
   void generateConsensusByPattern(ConsensusMap &, const Clustering &) const;
-
+  static const String &selectColor(UInt nr);
+ 
   void writeConsensus(const String &filename, ConsensusMap &out) const
   {
     out.sortByPosition();
@@ -1430,14 +1431,16 @@ void TOPPSILACAnalyzer::generateConsensusByCluster(ConsensusMap &out, const Clus
 
 void TOPPSILACAnalyzer::generateConsensusByPattern(ConsensusMap &out, const Clustering &clustering) const
 {
+  UInt cluster_id = 0;
+
   for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
   {
-    for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
-    {
-      std::ostringstream o;
-      o << cell_it->first[0] << ':' << cell_it->first[1];
-      std::string cell_id = o.str();
+    std::ostringstream o;
+    o << cell_it->first[0] << ':' << cell_it->first[1];
+    std::string cell_id = o.str();
 
+    for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it, ++cluster_id)
+    {
       for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin(); pattern_it != cluster_it->second.end(); ++pattern_it)
       {
         SILACPattern &pattern_in = *pattern_it->second;
@@ -1465,6 +1468,8 @@ void TOPPSILACAnalyzer::generateConsensusByPattern(ConsensusMap &out, const Clus
           pattern.setMetaValue("Mass shifts [Da]", outs);
         }
 
+        pattern.setMetaValue("color", selectColor(cluster_id));
+        pattern.setMetaValue("Cluster ID", cluster_id);
         pattern.setMetaValue("Cell ID", cell_id);
 
         UInt id = 0;
@@ -1485,6 +1490,19 @@ void TOPPSILACAnalyzer::generateConsensusByPattern(ConsensusMap &out, const Clus
       }
     }
   }
+}
+
+const String &TOPPSILACAnalyzer::selectColor(UInt nr)
+{
+  // 15 HTML colors
+  const static String colors[] = {
+    "#00FFFF", "#000000", "#0000FF", "#FF00FF", "#008000",
+    "#808080", "#00FF00", "#800000", "#000080", "#808000",
+    "#800080", "#FF0000", "#C0C0C0", "#008080", "#FFFF00",
+  };
+  const Int colors_len = 15;
+
+  return colors[nr % colors_len];
 }
 
 //@endcond

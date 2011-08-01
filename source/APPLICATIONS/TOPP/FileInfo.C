@@ -402,6 +402,11 @@ class TOPPFileInfo
 
 			// reading input
 			IdXMLFile().load(in, id_data.proteins, id_data.peptides, id_data.identifier);
+     
+      // export metadata to second output stream
+      os2 << "database" << "\t" << id_data.proteins.at(0).getSearchParameters().db << endl
+          << "database version" << "\t" << id_data.proteins.at(0).getSearchParameters().db_version << endl
+          << "taxonomy" << "\t" << id_data.proteins.at(0).getSearchParameters().taxonomy << endl;
 
 			// calculations
 			for (Size i = 0; i < id_data.peptides.size(); ++i)
@@ -818,8 +823,9 @@ class TOPPFileInfo
 		//-------------------------------------------------------------
 		// meta information
 		//-------------------------------------------------------------
-		if (getFlag_("m"))
+		if (getFlag_("m") || getStringOption_("out2")!="")
 		{
+      
 			//basic info
 			os << endl
 					 << "-- Meta information --" << endl
@@ -846,6 +852,8 @@ class TOPPFileInfo
 
 				os << "Document ID:        " << exp.getIdentifier() << endl
 					 << "Date:               " << exp.getDateTime().get() << endl;
+        os2 << "document id" << "\t" << exp.getIdentifier() << endl
+            << "date" << "\t" << exp.getDateTime().get() << endl;
 
 				//basic info
 				os << endl
@@ -853,14 +861,20 @@ class TOPPFileInfo
 					 << "  name:             " << exp.getSample().getName() << endl
 					 << "  organism:         " << exp.getSample().getOrganism()  << endl
 					 << "  comment:          " << exp.getSample().getComment()  << endl;
-
-				//instrument info
+        os2 << "sample name" << "\t" << exp.getSample().getName() << endl
+            << "sample organism" << "\t" << exp.getSample().getOrganism() << endl
+            << "sample comment" << "\t" << exp.getSample().getComment() << endl;
+        
+        //instrument info
 				os << endl
 					 << "Instrument:" << endl
 					 << "  name:             " << exp.getInstrument().getName() << endl
 					 << "  model:            " << exp.getInstrument().getModel() << endl
 					 << "  vendor:           " << exp.getInstrument().getVendor() << endl
 					 << "  ion source(s):    ";
+        os2 << "instrument name" << "\t" << exp.getInstrument().getName() << endl
+            << "instrument model" << "\t" << exp.getInstrument().getModel() << endl
+            << "instrument vendor" << "\t" << exp.getInstrument().getVendor() << endl;
 				for (Size i = 0; i< exp.getInstrument().getIonSources().size(); ++i)
 				{
 					os << IonSource::NamesOfIonizationMethod[exp.getInstrument().getIonSources()[i].getIonizationMethod()];

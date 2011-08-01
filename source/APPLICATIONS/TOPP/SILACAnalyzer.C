@@ -837,7 +837,7 @@ class TOPPSILACAnalyzer
 
     if (out_filters != "" && in_filters == "")     // check if option "out_filters" is specified and "in_filters" is not
     {
-      writeFilePoints(out_filters, false);
+      writeFilePoints(out_filters);
     }
 
     //--------------------------------------------------
@@ -1097,7 +1097,7 @@ class TOPPSILACAnalyzer
     // featureXML
     if (out_clusters != "")
     {
-      writeFilePoints(out_clusters, true);
+      writeFilePoints(out_clusters);
     }
 
     return EXECUTION_OK;
@@ -1110,7 +1110,7 @@ private:
   void readFilePoints(const String &filename);
 
   /** Write all DataPoints into a featureXML file. */
-  void writeFilePoints(const String &filename, bool cluster_info) const;
+  void writeFilePoints(const String &filename) const;
 
   void writeFilePointsByCell(const String &filename_base, const Clustering &clustering) const;
 
@@ -1155,7 +1155,7 @@ void TOPPSILACAnalyzer::clusterData()
       clustering->insertPoint(key, &*it);
     }
 
-    if (out_debug != "") writeFilePointsByCell(out_debug + ".by-cell.layer-" + nr, *clustering);
+    if (in_filters != "" && out_debug != "") writeFilePointsByCell(out_debug + ".by-cell.layer-" + nr, *clustering);
 
     clustering->cluster();
 
@@ -1178,7 +1178,7 @@ void TOPPSILACAnalyzer::clusterData()
         for (Clustering::Cluster::const_iterator pattern_it = cluster.begin(); pattern_it != cluster.end(); ++pattern_it)
         {
           nr_pattern++;
-          nr_points += pattern_it->second->points.size();
+          nr_points += pattern_it->second->nr_points;
         }
 
         // XXX
@@ -1217,7 +1217,7 @@ void TOPPSILACAnalyzer::readFilePoints(const String &filename)
     point.charge = it->getCharge();
     point.quality = it->getQuality(0);
 
-    point.feature_id = it->getMetaValue("Cluster feature id");
+    point.nr_points =  it->getMetaValue("Points");
     point.isotopes_per_peptide = it->getMetaValue("Peaks per peptide");
 
     StringList in = StringList::create(it->getMetaValue("Mass shifts [Da]"), ';');
@@ -1239,11 +1239,6 @@ void TOPPSILACAnalyzer::readFilePoints(const String &filename)
       point.intensities.push_back(inten);
     }
 
-    DataValue cluster_id = it->getMetaValue("Cluster id");
-    DataValue cluster_size = it->getMetaValue("Cluster size");
-    if (!cluster_id.isEmpty()) point.cluster_id = cluster_id;
-    if (!cluster_size.isEmpty()) point.cluster_size = cluster_size;
-
     layers[std::make_pair(Int(point.mass_shifts.at(1)), point.charge)].push_back(point);
   }
 
@@ -1253,7 +1248,7 @@ void TOPPSILACAnalyzer::readFilePoints(const String &filename)
   }
 }
 
-void TOPPSILACAnalyzer::writeFilePoints(const String &out, bool cluster_info) const
+void TOPPSILACAnalyzer::writeFilePoints(const String &out) const
 {
   // 15 HTML colors
   const String colors[] = {
@@ -1276,7 +1271,7 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &out, bool cluster_info) co
       point.setCharge(it->charge);
       point.setQuality(0, it->quality);
 
-      point.setMetaValue("Cluster feature id", it->feature_id);
+      point.setMetaValue("Points", it->nr_points);
       point.setMetaValue("Peaks per peptide", it->isotopes_per_peptide);
 
       // Output all mass shifts as list
@@ -1312,14 +1307,6 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &out, bool cluster_info) co
         // Remove the last delimiter
         std::string outs = out.str(); outs.erase(outs.end() - 1);
         point.setMetaValue("Intensities", outs);
-      }
-
-      // Output cluster information if requests.
-      if (cluster_info)
-      {
-        point.setMetaValue("Cluster id", it->cluster_id);
-        point.setMetaValue("Cluster size", it->cluster_size);
-        point.setMetaValue("color", colors[it->cluster_id % colors_len]);
       }
 
       points.push_back(point);

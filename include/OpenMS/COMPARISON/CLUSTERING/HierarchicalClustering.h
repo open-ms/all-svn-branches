@@ -588,6 +588,7 @@ namespace OpenMS
     cur[1] += 1; clusterCellCollectOne(cur, cells);
   }
 
+#if 0
   template <typename I>
   typename HierarchicalClustering<I>::ClusterTrees
   HierarchicalClustering<I>::clusterCheckTrees(const ClusterTrees &trees)
@@ -707,6 +708,7 @@ namespace OpenMS
     std::cout << "sw check: " << sw << std::endl;
     return info;
   }
+#endif
 }
 
 #endif /* OPENMS_COMPARISON_CLUSTERING_HIERARCHICALCLUSTERING_H */

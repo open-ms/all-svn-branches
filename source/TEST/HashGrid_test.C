@@ -35,32 +35,32 @@ class Value
 {
 };
 
-typedef OpenMS::HashGrid<Value, 2> Test2D;
-const Test2D::Point max_delta = {{1, 1}};
+typedef OpenMS::HashGrid<Value> TestGrid;
+const TestGrid::ClusterCenter cell_dimension = {{1, 1}};
 
 START_TEST(HashGrid, "$Id$")
 
-START_SECTION(HashGrid::max_key)
+START_SECTION(HashGrid::grid_dimension)
 {
-  Test2D t(max_delta);
-  TEST_EQUAL(t.max_key[0], 0);
-  TEST_EQUAL(t.max_key[1], 0);
+  TestGrid t(cell_dimension);
+  TEST_EQUAL(t.grid_dimension[0], 0);
+  TEST_EQUAL(t.grid_dimension[1], 0);
 }
 END_SECTION
 
 START_SECTION(local_iterator insert(const value_type& obj))
 {
-  Test2D t(max_delta);
-  const Test2D::Point key1 = {{1, 2}};
-  Test2D::local_iterator it = t.insert(std::make_pair(key1, Test2D::mapped_type()));
-  TEST_EQUAL(t.max_key[0], key1[0]);
-  TEST_EQUAL(t.max_key[1], key1[1]);
+  TestGrid t(cell_dimension);
+  const TestGrid::ClusterCenter key1 = {{1, 2}};
+  TestGrid::cell_iterator it = t.insert(std::make_pair(key1, TestGrid::mapped_type()));
+  TEST_EQUAL(t.grid_dimension[0], key1[0]);
+  TEST_EQUAL(t.grid_dimension[1], key1[1]);
   TEST_EQUAL(it->first[0], key1[0]);
   TEST_EQUAL(it->first[1], key1[1]);
-  const Test2D::Point key2 = {{2, 3}};
-  it = t.insert(std::make_pair(key2, Test2D::mapped_type()));
-  TEST_EQUAL(t.max_key[0], key2[0]);
-  TEST_EQUAL(t.max_key[1], key2[1]);
+  const TestGrid::ClusterCenter key2 = {{2, 3}};
+  it = t.insert(std::make_pair(key2, TestGrid::mapped_type()));
+  TEST_EQUAL(t.grid_dimension[0], key2[0]);
+  TEST_EQUAL(t.grid_dimension[1], key2[1]);
   TEST_EQUAL(it->first[0], key2[0]);
   TEST_EQUAL(it->first[1], key2[1]);
 }
@@ -68,10 +68,44 @@ END_SECTION
 
 START_SECTION(size_type erase(const key_type& key))
 {
-  Test2D t(max_delta);
-  const Test2D::Point key = {{1, 2}};
-  t.insert(std::make_pair(key, Test2D::mapped_type()));
+  TestGrid t(cell_dimension);
+  const TestGrid::ClusterCenter key = {{1, 2}};
+  t.insert(std::make_pair(key, TestGrid::mapped_type()));
   TEST_EQUAL(t.erase(key), 1);
+}
+END_SECTION
+
+START_SECTION(void clear)
+{
+  TestGrid t(cell_dimension);
+  t.clear();
+}
+END_SECTION
+
+START_SECTION(const_grid_iterator grid_begin() const)
+{
+  TestGrid t(cell_dimension);
+  const TestGrid ct(t);
+  const TestGrid::ClusterCenter key = {{1, 2}};
+  t.insert(std::make_pair(key, TestGrid::mapped_type()));
+}
+END_SECTION
+
+START_SECTION(const_grid_iterator grid_end() const)
+{
+  TestGrid t(cell_dimension);
+  const TestGrid ct(t);
+  // Does not work, no output defined for iterators
+  //TEST_EQUAL(ct.grid_begin(), ct.grid_end());
+}
+END_SECTION
+
+START_SECTION(const typename Grid::mapped_type &grid_at(const CellIndex &x) const)
+{
+  TestGrid t(cell_dimension);
+  const TestGrid ct(t);
+  const TestGrid::CellIndex i = {{0, 0}};
+  TEST_EXCEPTION(std::out_of_range, ct.grid_at(i));
 }
 END_SECTION
 

@@ -372,7 +372,9 @@ namespace OpenMS
               }
             }
 
-            if (pattern.points.size() > 3) (*filter_it)->elements_.push_back(pattern);
+            // XXX
+            const UInt threshold_points = 4;
+            if (pattern.points.size() > threshold_points) (*filter_it)->elements_.push_back(pattern);
           }
 
           // Clear the interpolations

@@ -422,7 +422,7 @@ namespace OpenMS
     DistanceQueue dists;
 
     // Collect all cells we need
-    std::cout << "start: coord: " << cur[0] << ":" << cur[1] << std::endl;
+//    std::cout << "start: coord: " << cur[0] << ":" << cur[1] << std::endl;
     try
     {
       clusterCellCollect(cur, cells);
@@ -431,7 +431,7 @@ namespace OpenMS
     { return; }
 
     // Collect and remove existing points from cells
-    std::cout << "number of cells: " << cells.size() << std::endl;
+//    std::cout << "number of cells: " << cells.size() << std::endl;
     for (typename ClusterCells::iterator cell_it = cells.begin(); cell_it != cells.end(); ++cell_it)
     {
       typename Grid::Cell &cell_cur = *cell_it->second.first;
@@ -461,7 +461,7 @@ namespace OpenMS
     }
 
     // Join points
-    std::cout << "initial trees: size: " << trees.size() << std::endl;
+//    std::cout << "initial trees: size: " << trees.size() << std::endl;
     while (!dists.empty())
     {
       const typename DistanceQueue::value_type &cur_dist = dists.top();
@@ -491,11 +491,11 @@ namespace OpenMS
       clusterAddTree(tree, trees, dists);
     }
 
-    std::cout << "late trees: size: " << trees.size() << std::endl;
+//    std::cout << "late trees: size: " << trees.size() << std::endl;
     //trees = clusterCheckTrees(trees);
 
     // Add current data to grid
-    std::cout << "after check trees: size: " << trees.size() << std::endl;
+//    std::cout << "after check trees: size: " << trees.size() << std::endl;
     int nr_cluster = 0, nr_nocluster = 0;
     for (typename ClusterTrees::iterator tree_it = trees.begin(); tree_it != trees.end(); ++tree_it)
     {
@@ -515,7 +515,7 @@ namespace OpenMS
       delete *tree_it;
     }
 
-    std::cout << "end trees: cluster: " << nr_cluster << ", no cluster: " << nr_nocluster << std::endl;
+//    std::cout << "end trees: cluster: " << nr_cluster << ", no cluster: " << nr_nocluster << std::endl;
   }
 
   // XXX: check if 2x2 center and 4x4 is sufficient

@@ -263,6 +263,7 @@ namespace OpenMS
 
         for (typename ClusterTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
         {
+          if (tree == *it) continue;
           DoubleReal dist = clusterDistance(tree, *it);
           if (dist < dist_min)
           {
@@ -271,7 +272,10 @@ namespace OpenMS
           }
         }
 
+        // Insert distance if valid one found.
         if (dist_it != trees.end()) dists.push(DistanceInfo(dist_min, tree, *dist_it));
+
+        // Insert tree.
         trees.insert(tree);
       }
 
@@ -306,13 +310,13 @@ namespace OpenMS
         {
           clusterCellReaddCluster(tree->left, cluster);
           clusterCellReaddCluster(tree->right, cluster);
-          delete tree->left;
-          delete tree->right;
         }
         else
         {
           cluster.insert(std::make_pair(tree->bbox.first, tree->ref));
         }
+        delete tree->left;
+        delete tree->right;
       }
 
       /**
@@ -469,26 +473,23 @@ namespace OpenMS
       dists.pop();
  
       // Chck if both trees are still available
-      // Re-add distance of not yet processed tree
       UInt count_left = trees.count(tree_left), count_right = trees.count(tree_right);
-      trees.erase(tree_left);
-      trees.erase(tree_right);
-      if (count_left + count_right < 2)
+      if (count_left && count_right)
       {
-        if (count_left)
-          clusterAddTree(tree_left, trees, dists);
-        if (count_right)
-          clusterAddTree(tree_right, trees, dists);
-        continue;
+        trees.erase(tree_left);
+        trees.erase(tree_right);
+
+        const BoundingBox bbox = tree_left->bbox | tree_right->bbox;
+        // Arithmethic mean: (left * left.points + right * right.points) / (left.points + right.points)
+        const UInt points = tree_left->points + tree_right->points;
+        const Point coord = point_division(point_plus(point_multiplication(tree_left->coord, tree_left->points), point_multiplication(tree_right->coord, tree_right->points)), points);
+        TreeNode *tree(new TreeNode(coord, bbox, tree_left, tree_right));
+
+        clusterAddTree(tree, trees, dists);
       }
-
-      const BoundingBox bbox = tree_left->bbox | tree_right->bbox;
-      // Arithmethic mean: (left * left.points + right * right.points) / (left.points + right.points)
-      const UInt points = tree_left->points + tree_right->points;
-      const Point coord = point_division(point_plus(point_multiplication(tree_left->coord, tree_left->points), point_multiplication(tree_right->coord, tree_right->points)), points);
-      TreeNode *tree(new TreeNode(coord, bbox, tree_left, tree_right));
-
-      clusterAddTree(tree, trees, dists);
+      // Re-add not yet processed tree.
+      else if (count_left) clusterAddTree(tree_left, trees, dists);
+      else if (count_right) clusterAddTree(tree_right, trees, dists);
     }
 
 //    std::cout << "late trees: size: " << trees.size() << std::endl;

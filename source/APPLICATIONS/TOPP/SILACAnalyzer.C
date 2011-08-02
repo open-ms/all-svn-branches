@@ -1161,14 +1161,12 @@ void TOPPSILACAnalyzer::clusterData()
 
   if (out_debug != "")
   {
-    ConsensusMap out_cluster, out_pattern;
+    ConsensusMap out;
     for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
     {
-      generateConsensusByCluster(out_cluster, **it);
-      generateConsensusByPattern(out_pattern, **it);
+      generateConsensusByPattern(out, **it);
     }
-    writeConsensus(out_debug + ".by-cluster.consensusXML", out_cluster);
-    writeConsensus(out_debug + ".by-pattern.consensusXML", out_pattern);
+    writeConsensus(out_debug + ".by-pattern.consensusXML", out);
   }
 
   progresslogger.endProgress();

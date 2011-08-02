@@ -1131,7 +1131,7 @@ private:
 
 void TOPPSILACAnalyzer::clusterData()
 {
-  typedef Clustering::Point Point;
+  typedef Clustering::PointCoordinate PointCoordinate;
 
   ProgressLogger progresslogger;
   progresslogger.setLogType(log_type_);
@@ -1142,12 +1142,12 @@ void TOPPSILACAnalyzer::clusterData()
 
   for (vector<vector<SILACPattern> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++nr)
   {
-    const Point max_delta = {{rt_threshold, mz_threshold}};
+    const PointCoordinate max_delta = {{rt_threshold, mz_threshold}};
     Clustering *clustering = new Clustering(max_delta);
 
     for (vector<SILACPattern>::iterator it = data_it->begin(); it != data_it->end(); ++it)
     {
-      const Point key = {{it->rt, it->mz}};
+      const PointCoordinate key = {{it->rt, it->mz}};
       SILACPattern &p = *it;
       clustering->insertPoint(key, &p);
     }
@@ -1296,9 +1296,9 @@ void TOPPSILACAnalyzer::writeFilePointsByCell(const String &filename_base, const
   FeatureMap<> points;
   Int gridnr = 0;
 
-  for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
+  for (Clustering::Grid::const_grid_iterator cell_it = clustering.grid.grid_begin(); cell_it != clustering.grid.grid_end(); ++cell_it)
   {
-    for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
+    for (Clustering::Grid::const_cell_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
     {
       for (Clustering::Cluster::const_iterator point_it = cluster_it->second.begin(); point_it != cluster_it->second.end(); ++point_it)
       {
@@ -1329,13 +1329,13 @@ void TOPPSILACAnalyzer::writeFilePointsByCell(const String &filename_base, const
 
 void TOPPSILACAnalyzer::generateConsensusByCluster(ConsensusMap &out, const Clustering &clustering) const
 {
-  for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
+  for (Clustering::Grid::const_grid_iterator cell_it = clustering.grid.grid_begin(); cell_it != clustering.grid.grid_end(); ++cell_it)
   {
     std::ostringstream o;
     o << cell_it->first[0] << ':' << cell_it->first[1];
     std::string cell_id = o.str();
 
-    for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
+    for (Clustering::Grid::const_cell_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
     {
       ConsensusFeature cluster;
       cluster.setMetaValue("Cell ID", cell_id);
@@ -1421,13 +1421,13 @@ void TOPPSILACAnalyzer::generateConsensusByPattern(ConsensusMap &out, const Clus
 {
   UInt cluster_id = 0;
 
-  for (Clustering::Grid::const_cell_iterator cell_it = clustering.grid.cell_begin(); cell_it != clustering.grid.cell_end(); ++cell_it)
+  for (Clustering::Grid::const_grid_iterator cell_it = clustering.grid.grid_begin(); cell_it != clustering.grid.grid_end(); ++cell_it)
   {
     std::ostringstream o;
     o << cell_it->first[0] << ':' << cell_it->first[1];
     std::string cell_id = o.str();
 
-    for (Clustering::Grid::const_local_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it, ++cluster_id)
+    for (Clustering::Grid::const_cell_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it, ++cluster_id)
     {
       for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin(); pattern_it != cluster_it->second.end(); ++pattern_it)
       {

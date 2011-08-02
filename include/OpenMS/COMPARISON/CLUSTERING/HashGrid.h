@@ -37,119 +37,154 @@
 namespace OpenMS
 {
   /**
-   * @brief Container for (n-dimensional point, value) pairs.
+   * @brief Container for (2-dimensional coordinate, value) pairs.
    *
-   * It stores all points in cells with a discrete size.
+   * A hash-grid consists of hash-grid cells. The key of each cell is a pair of integers.
+   * Each pair is assigned to a cell using a hash function.
+   *
+   * This container implements most parts of the C++ standard map interface.
+   *
+   * @tparam Cluster Type to be stored in the hash grid. (e.g. @ref{HierarchicalClustering::Cluster})
    */
-  template <typename Value, std::size_t Dim>
+  template <typename Cluster>
   class OPENMS_DLLAPI HashGrid
   {
     public:
       /**
-       * @brief Point for stored pairs.
+       * @brief Coordinate for stored pairs.
        */
       // XXX: Check is there is another type handy in OpenMS allready
-      typedef boost::array<DoubleReal, Dim> Point;
+      typedef boost::array<DoubleReal, 2> ClusterCenter;
+
       /**
        * @brief Index for cells.
        */
-      typedef boost::array<UInt, Dim> CellIndex;
+      typedef boost::array<UInt, 2> CellIndex;
 
-      typedef typename boost::unordered_multimap<Point, Value> Cell;
-      typedef boost::unordered_map<CellIndex, Cell> CellMap;
+      /**
+       * @brief Contents of a cell.
+       */
+      typedef typename boost::unordered_multimap<ClusterCenter, Cluster> CellContent;
 
-      typedef typename Cell::key_type key_type;
-      typedef typename Cell::mapped_type mapped_type;
-      typedef typename Cell::value_type value_type;
+      /**
+       * @brief Map of (cell-index, cell-content).
+       */
+      typedef boost::unordered_map<CellIndex, CellContent> Grid;
 
-      typedef typename CellMap::const_iterator const_cell_iterator;
-      typedef typename CellMap::iterator cell_iterator;
-      typedef typename Cell::const_iterator const_local_iterator;
-      typedef typename Cell::iterator local_iterator;
-      typedef typename Cell::size_type size_type;
+      typedef typename CellContent::key_type key_type;
+      typedef typename CellContent::mapped_type mapped_type;
+      typedef typename CellContent::value_type value_type;
+
+      typedef typename Grid::const_iterator const_grid_iterator;
+      typedef typename Grid::iterator grid_iterator;
+      typedef typename CellContent::const_iterator const_cell_iterator;
+      typedef typename CellContent::iterator cell_iterator;
+      typedef typename CellContent::size_type size_type;
 
     private:
-      CellMap cells_;
-      CellIndex max_key_;
+      Grid cells_;
+      CellIndex grid_dimension_;
 
     public:
       /**
-       * @brief Size of each cell.
+       * @brief Dimension of cells.
        */
-      const Point max_delta;
+      const ClusterCenter cell_dimension;
       /**
        * @brief Upper-right corner of key space for cells.
        */
-      const CellIndex &max_key;
+      const CellIndex &grid_dimension;
 
     public:
-      HashGrid(const Point &max_delta)
-        : max_delta(max_delta), max_key(max_key_)
+      HashGrid(const ClusterCenter &cell_dimension)
+        : cell_dimension(cell_dimension), grid_dimension(grid_dimension_)
       {
-        // XXX: constructor?
-        for (typename CellIndex::iterator it = max_key_.begin(); it != max_key_.end(); ++it) *it = 0;
+        // XXX: CellIndex needs constructor
+        for (typename CellIndex::iterator it = grid_dimension_.begin(); it != grid_dimension_.end(); ++it) *it = 0;
       }
 
       /**
-       * @brief Inserts a std::pair.
+       * @brief Inserts a (2-dimensional coordinate, value) pair.
        * @param v Pair to be inserted.
        * @return Iterator that points to the inserted pair.
        */
-      local_iterator insert(const value_type &v)
+      cell_iterator insert(const value_type &v)
       {
-        const CellIndex cellkey = key_to_cellkey(v.first);
-        Cell &cell = cells_[cellkey];
-        update_max_key(cellkey);
+        const CellIndex cellkey = cellindex_at_clustercenter(v.first);
+        CellContent &cell = cells_[cellkey];
+        update_grid_dimension(cellkey);
         return cell.insert(v);
       }
 
       /**
-       * @brief Erases elements matching the key.
+       * @brief Erases elements matching the 2-dimensional coordinate.
        * @param x Key of element to be erased.
        * @return Number of elements erased.
        */
       size_type erase(const key_type &x)
       {   
-        const CellIndex cellkey = key_to_cellkey(x);
+        const CellIndex cellkey = cellindex_at_clustercenter(x);
         try
         {
-          Cell &cell = cells_.at(cellkey);
+          CellContent &cell = cells_.at(cellkey);
           return cell.erase(x);
         }
         catch (std::out_of_range &) { }
         return 0;
       }
 
+      /**
+       * @brief Clears the map.
+       */
       void clear() { cells_.clear(); }
 
-      const_cell_iterator cell_begin() const { return cells_.begin(); }
-      const_cell_iterator cell_end() const { return cells_.end(); }
+      /**
+       * @brief Returns iterator to first grid cell.
+       */
+      const_grid_iterator grid_begin() const { return cells_.begin(); }
 
-      // XXX: Currently needes non-const
-      cell_iterator cell_begin() { return cells_.begin(); }
-      cell_iterator cell_end() { return cells_.end(); }
-      typename CellMap::mapped_type &cell_at(const CellIndex &x) { return cells_.at(x); }
-      const typename CellMap::mapped_type &cell_at(const CellIndex &x) const { return cells_.at(x); }
+      /**
+       * @brief Returns iterator to on after last grid cell.
+       */
+      const_grid_iterator grid_end() const { return cells_.end(); }
+
+      /**
+       * @brief Returns the grid cell at given index.
+       */
+      const typename Grid::mapped_type &grid_at(const CellIndex &x) const { return cells_.at(x); }
+
+      /**
+       * @warning Currently needed non-const by HierarchicalClustering.
+       */
+      grid_iterator grid_begin() { return cells_.begin(); }
+      /**
+       * @warning Currently needed non-const by HierarchicalClustering.
+       */
+      grid_iterator grid_end() { return cells_.end(); }
+      /**
+       * @warning Currently needed non-const by HierarchicalClustering.
+       */
+      typename Grid::mapped_type &grid_at(const CellIndex &x) { return cells_.at(x); }
 
     private:
-      // XXX
-      CellIndex key_to_cellkey(const Point &key)
+      // XXX: Replace with proper operator
+      CellIndex cellindex_at_clustercenter(const ClusterCenter &key)
       {
         CellIndex ret;
         typename CellIndex::iterator it = ret.begin();
-        typename Point::const_iterator lit = key.begin(), rit = max_delta.begin();
+        typename ClusterCenter::const_iterator lit = key.begin(), rit = cell_dimension.begin();
         for (; it != ret.end(); ++it, ++lit, ++rit) *it = *lit / *rit;
         return ret;
       }
 
-      void update_max_key(const CellIndex &d)
+      void update_grid_dimension(const CellIndex &d)
       {
-        typename CellIndex::const_iterator it1 = d.begin();
-        typename CellIndex::iterator it2 = max_key_.begin();
-        for (; it1 != d.end(); ++it1, ++it2)
+        typename CellIndex::const_iterator it_new = d.begin();
+        typename CellIndex::iterator it_cur = grid_dimension_.begin();
+        for (; it_new != d.end(); ++it_new, ++it_cur)
         {
-          if (*it1 > *it2)
-            *it2 = *it1;
+          if (*it_cur < *it_new)
+            *it_cur = *it_new;
         }
       }
   };

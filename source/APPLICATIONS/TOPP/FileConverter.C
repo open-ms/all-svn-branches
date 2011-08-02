@@ -288,7 +288,7 @@ class TOPPFileConverter
 			ChromatogramTools().convertChromatogramsToSpectra<MSExperimentType>(exp);
       if (TIC_DTA2D)
       {
-        // store the tota ion chromatogram (TIC)
+        // store the total ion chromatogram (TIC)
         f.storeTIC(out,exp);
       }
       else

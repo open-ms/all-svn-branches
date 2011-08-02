@@ -309,8 +309,16 @@ namespace OpenMS
       // write header (Always MZ=0 for chromatograms in DTA2D.)
       os	<< "RT" << "\t" << "MZ" << "\t" << "INT" << "\n";
       
+      typename MapType::ChromatogramType TIC = map.getTIC();
+      for (typename MapType::ChromatogramType::ConstIterator it = TIC.begin(); it != TIC.end(); ++it)
+      {
+        // write rt and intensity.
+        os	<< precisionWrapper(it->getRT()) << "\t" << precisionWrapper(0) << "\t" << precisionWrapper(it->getIntensity()) << "\n";
+      }
+      
+      
 			// Iterate over spectra (retention times) and write summed intensities for each spectrum, i.e. the total ion chromatogram (TIC)
-			UInt count = 0;
+			/*UInt count = 0;
 			for (typename MapType::const_iterator spec=map.begin(); spec!=map.end(); ++spec)
 			{
 				setProgress(count++);
@@ -325,7 +333,7 @@ namespace OpenMS
           // Write rt and intensity.
           os	<< precisionWrapper(spec->getRT()) << "\t" << precisionWrapper(0) << "\t" << precisionWrapper(totalIntensity) << "\n";
         }
-			}
+			}*/
 			os.close();
 			endProgress();
 		}

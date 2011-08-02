@@ -162,7 +162,7 @@ class TOPPFileInfo
 		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
 #endif
 		registerOutputFile_("out","<file>","","Optional output file. If '-' or left out, the output is written to the command line.", false);
-		registerOutputFile_("out2","<file>","","Second optional output file. Tab separated flat text file.", false, true);
+		registerOutputFile_("out_tsv","<file>","","Second optional output file. Tab separated flat text file.", false, true);
 		registerFlag_("m", "Show meta information about the whole experiment");
 		registerFlag_("p", "Shows data processing information");
 		registerFlag_("s", "Computes a five-number statistics of intensities, qualities, and widths");
@@ -823,7 +823,7 @@ class TOPPFileInfo
 		//-------------------------------------------------------------
 		// meta information
 		//-------------------------------------------------------------
-		if (getFlag_("m") || getStringOption_("out2")!="")
+		if (getFlag_("m") || getStringOption_("out_tsv")!="")
 		{
       
 			//basic info
@@ -1191,9 +1191,9 @@ class TOPPFileInfo
 	ExitCodes main_(int, const char**)
 	{
 		String out = getStringOption_("out");
-		String out2 = getStringOption_("out2");
+		String out_tsv = getStringOption_("out_tsv");
     ofstream os(out.c_str());
-    ofstream os2(out2.c_str());
+    ofstream os2(out_tsv.c_str());
 
 		//output to command line
 		if (out == "")

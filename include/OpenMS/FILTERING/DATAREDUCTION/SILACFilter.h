@@ -161,15 +161,9 @@ namespace OpenMS
 
        }
 
-       IsotopeDistributionCache(const IsotopeDistributionCache& /*cache*/)
-       {
+       IsotopeDistributionCache(const IsotopeDistributionCache&);
 
-       }
-
-       IsotopeDistributionCache& operator = (const IsotopeDistributionCache& cache)
-       {
-
-       }
+       IsotopeDistributionCache& operator = (const IsotopeDistributionCache&);
 
        virtual ~IsotopeDistributionCache()
        {

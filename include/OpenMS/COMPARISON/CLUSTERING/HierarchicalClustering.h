@@ -249,7 +249,7 @@ namespace OpenMS
        * @param center Is the given cell in the center.
        * @oaram ignore_missing Defines if non-existant errors should be ignored.
        */
-      void gridCell1(const typename Grid::CellIndex &cur, ClusterCells &cells, bool center = false, bool ignore_missing = true)
+      void gridCell(const typename Grid::CellIndex &cur, ClusterCells &cells, bool center = false, bool ignore_missing = true)
       {
         try
         {
@@ -264,7 +264,7 @@ namespace OpenMS
       /**
        * @brief Add a new tree to the set of trees and distance queue
        */
-      void treeAdd(TreeNode *tree, ClusterTrees &trees, TreeDistanceQueue &dists)
+      void addTreeDistance(TreeNode *tree, ClusterTrees &trees, TreeDistanceQueue &dists)
       {
         // Infinity: no valid distance
         DoubleReal dist_min = INFINITY;
@@ -311,12 +311,12 @@ namespace OpenMS
        * @param tree The tree
        * @param cluster The cluster
        */
-      void gridAddTreeAsCluster(const TreeNode *tree, Cluster &cluster)
+      void tree2Cluster(const TreeNode *tree, Cluster &cluster)
       {
         if (tree->left && tree->right)
         {
-          gridAddTreeAsCluster(tree->left, cluster);
-          gridAddTreeAsCluster(tree->right, cluster);
+          tree2Cluster(tree->left, cluster);
+          tree2Cluster(tree->right, cluster);
         }
         else
         {
@@ -331,12 +331,12 @@ namespace OpenMS
        * All points are saved in the leafs of the tree.
        * @param tree The tree
        */
-      void gridAddTreeAsPoints(const TreeNode *tree)
+      void tree2Points(const TreeNode *tree)
       {
         if (tree->left && tree->right)
         {
-          gridAddTreeAsPoints(tree->left);
-          gridAddTreeAsPoints(tree->right);
+          tree2Points(tree->left);
+          tree2Points(tree->right);
         }
         else
         {
@@ -461,7 +461,7 @@ namespace OpenMS
           {
             const PointCoordinate &coord = point_it->first;
             TreeNode *tree(new TreeNode(coord, point_it->second, cell_center));
-            treeAdd(tree, trees, dists);
+            addTreeDistance(tree, trees, dists);
           }
 
           // Remove point from hash grid cell
@@ -490,12 +490,12 @@ namespace OpenMS
         const PointCoordinate coord = coordinate_division(coordinate_plus(coordinate_multiplication(tree_left->coord, tree_left->points), coordinate_multiplication(tree_right->coord, tree_right->points)), points);
         TreeNode *tree(new TreeNode(coord, bbox, tree_left, tree_right));
 
-        treeAdd(tree, trees, dists);
+        addTreeDistance(tree, trees, dists);
       }
       // Re-add a distance for the tree not yet used.
       // Otherwise this subset is lost even if it is not yet maximal.
-      else if (count_left) treeAdd(tree_left, trees, dists);
-      else if (count_right) treeAdd(tree_right, trees, dists);
+      else if (count_left) addTreeDistance(tree_left, trees, dists);
+      else if (count_right) addTreeDistance(tree_right, trees, dists);
     }
 
     // Add data back to grid
@@ -505,12 +505,12 @@ namespace OpenMS
       if ((**tree_it).center)
       {
         Cluster &cluster = insertCluster((**tree_it).bbox)->second;
-        gridAddTreeAsCluster(*tree_it, cluster);
+        tree2Cluster(*tree_it, cluster);
       }
       // We got a finished tree but not all points in the center, readd as single points
       else
       {
-        gridAddTreeAsPoints(*tree_it);
+        tree2Points(*tree_it);
       }
       delete *tree_it;
     }
@@ -520,68 +520,68 @@ namespace OpenMS
   void HierarchicalClustering<I>::gridCells5x5(typename Grid::CellIndex base, ClusterCells &cells)
   {
     // (0, 0)
-    gridCell1(base, cells, true, false);
+    gridCell(base, cells, true, false);
 
     typename Grid::CellIndex cur = base;
     cur[0] -= 2;
     // (-2, -2)
-    cur[1] -= 2; gridCell1(cur, cells);
+    cur[1] -= 2; gridCell(cur, cells);
     // (-2, -1)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
     // (-2, 0)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
     // (-2, 1)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
     // (-2, 2)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
 
     cur = base; cur[0] -= 1;
     // (-1, -2)
-    cur[1] -= 2; gridCell1(cur, cells);
+    cur[1] -= 2; gridCell(cur, cells);
     // (-1, -1)
-    cur[1] += 1; gridCell1(cur, cells, true);
+    cur[1] += 1; gridCell(cur, cells, true);
     // (-1, 0)
-    cur[1] += 1; gridCell1(cur, cells, true);
+    cur[1] += 1; gridCell(cur, cells, true);
     // (-1, 1)
-    cur[1] += 1; gridCell1(cur, cells, true);
+    cur[1] += 1; gridCell(cur, cells, true);
     // (-1, 2)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
 
     cur = base;
     // (0, -2)
-    cur[1] -= 2; gridCell1(cur, cells);
+    cur[1] -= 2; gridCell(cur, cells);
     // (0, -1)
-    cur[1] += 1; gridCell1(cur, cells, true);
+    cur[1] += 1; gridCell(cur, cells, true);
     // (0, 0)
     cur[1] += 1;
     // (0, 1)
-    cur[1] += 1; gridCell1(cur, cells, true);
+    cur[1] += 1; gridCell(cur, cells, true);
     // (0, 2)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
 
     cur = base; cur[0] += 1;
     // (1, -2)
-    cur[1] -= 2; gridCell1(cur, cells);
+    cur[1] -= 2; gridCell(cur, cells);
     // (1, -1)
-    cur[1] += 1; gridCell1(cur, cells, true);
+    cur[1] += 1; gridCell(cur, cells, true);
     // (1, 0)
-    cur[1] += 1; gridCell1(cur, cells, true);
+    cur[1] += 1; gridCell(cur, cells, true);
     // (1, 1)
-    cur[1] += 1; gridCell1(cur, cells, true);
+    cur[1] += 1; gridCell(cur, cells, true);
     // (1, 2)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
 
     cur = base; cur[0] += 2;
     // (2, -2)
-    cur[1] -= 2; gridCell1(cur, cells);
+    cur[1] -= 2; gridCell(cur, cells);
     // (2, -1)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
     // (2, 0)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
     // (2, 1)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
     // (2, 2)
-    cur[1] += 1; gridCell1(cur, cells);
+    cur[1] += 1; gridCell(cur, cells);
   }
 }
 

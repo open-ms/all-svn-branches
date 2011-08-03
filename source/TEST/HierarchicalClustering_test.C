@@ -32,22 +32,22 @@
 using namespace OpenMS;
 
 typedef OpenMS::HierarchicalClustering<UInt> Test;
+typedef Test::PointCoordinate Coordinate;
+const Coordinate cluster_dimension = {{1, 1}};
 
 START_TEST(HierarchicalClustering, "$Id$")
 
 START_SECTION(insertPoint)
 {
-  const Test::Point max_delta = {{1, 1}};
-  Test t(max_delta);
-  const Test::Point coord = {{1, 1}};
+  Test t(cluster_dimension);
+  const Coordinate coord = {{0, 0}};
   t.insertPoint(coord, 0);
 }
 END_SECTION
 
 START_SECTION(cluster)
 {
-  const Test::Point max_delta = {{1, 1}};
-  Test t(max_delta);
+  Test t(cluster_dimension);
   t.cluster();
 }
 END_SECTION

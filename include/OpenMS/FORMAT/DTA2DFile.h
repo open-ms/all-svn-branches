@@ -315,25 +315,7 @@ namespace OpenMS
         // write rt and intensity.
         os	<< precisionWrapper(it->getRT()) << "\t" << precisionWrapper(0) << "\t" << precisionWrapper(it->getIntensity()) << "\n";
       }
-      
-      
-			// Iterate over spectra (retention times) and write summed intensities for each spectrum, i.e. the total ion chromatogram (TIC)
-			/*UInt count = 0;
-			for (typename MapType::const_iterator spec=map.begin(); spec!=map.end(); ++spec)
-			{
-				setProgress(count++);
-        if (spec->getMSLevel() == 1)
-        {
-          DoubleReal totalIntensity = 0;
-          for (typename MapType::SpectrumType::ConstIterator it = spec->begin(); it != spec->end(); ++it)
-          {
-            // sum intensities of each spectrum
-            totalIntensity = totalIntensity + it->getIntensity();
-          }
-          // Write rt and intensity.
-          os	<< precisionWrapper(spec->getRT()) << "\t" << precisionWrapper(0) << "\t" << precisionWrapper(totalIntensity) << "\n";
-        }
-			}*/
+
 			os.close();
 			endProgress();
 		}

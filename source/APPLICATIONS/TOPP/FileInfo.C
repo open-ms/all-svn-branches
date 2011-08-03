@@ -25,6 +25,9 @@
 // $Authors: Marc Sturm, Clemens Groepl, Lars Nilse $
 // --------------------------------------------------------------------------
 
+#include <boost/iostreams/device/null.hpp>
+#include <boost/iostreams/filtering_stream.hpp>
+
 #include <OpenMS/config.h>
 
 #include <OpenMS/FORMAT/FileHandler.h>
@@ -173,14 +176,14 @@ class TOPPFileInfo
 
 	
 	template <class Map>
-	void writeRanges_(Map map, ostream& os, ostream& os2)
+	void writeRanges_(Map map, ostream& os, ostream& os_tsv)
 	{
 		os << "Ranges:" << endl
     << "  retention time: " << String::number(map.getMin()[Peak2D::RT], 2) << " .. " << String::number(map.getMax()[Peak2D::RT], 2) << endl
     << "  mass-to-charge: " << String::number(map.getMin()[Peak2D::MZ], 2) << " .. " << String::number(map.getMax()[Peak2D::MZ], 2) << endl
     << "  intensity:      " << String::number(map.getMinInt(), 2) << " .. " << String::number(map.getMaxInt(), 2) << endl
     << endl;
-		os2 << "retention time (min)" << "\t" << String::number(map.getMin()[Peak2D::RT], 2) << endl
+		os_tsv << "retention time (min)" << "\t" << String::number(map.getMin()[Peak2D::RT], 2) << endl
         << "retention time (max)" << "\t" << String::number(map.getMax()[Peak2D::RT], 2) << endl
         << "mass-to-charge (min)" << "\t" << String::number(map.getMin()[Peak2D::MZ], 2) << endl
         << "mass-to-charge (max)" << "\t" << String::number(map.getMax()[Peak2D::MZ], 2) << endl
@@ -189,7 +192,7 @@ class TOPPFileInfo
 	}
 
 
-	ExitCodes outputTo_(ostream& os, ostream& os2)
+	ExitCodes outputTo_(ostream& os, ostream& os_tsv)
 	{
 		//-------------------------------------------------------------
 		// Parameter handling
@@ -220,7 +223,7 @@ class TOPPFileInfo
 			 << "File name: " << in << endl
 			 << "File type: " << fh.typeToName(in_type) << endl;
 
-    os2 << "file name" << "\t" << in << endl
+    os_tsv << "file name" << "\t" << in << endl
         << "file type" << "\t" << fh.typeToName(in_type) << endl;
     
 		MSExperiment<Peak1D> exp;
@@ -338,7 +341,7 @@ class TOPPFileInfo
 
 			os << "Number of features: " << feat.size() << endl
 				 << endl;
-			writeRanges_(feat, os, os2);
+			writeRanges_(feat, os, os_tsv);
 
 			// Charge distribution and TIC
 			Map<UInt, UInt> charges;
@@ -374,7 +377,7 @@ class TOPPFileInfo
 			}
 			os << "  total:    " << string(field_width, ' ') << cons.size() << endl << endl;
 
-			writeRanges_(cons, os, os2);
+			writeRanges_(cons, os, os_tsv);
 
 			// file descriptions
 			const ConsensusMap::FileDescriptions& descs = cons.getFileDescriptions();
@@ -404,7 +407,7 @@ class TOPPFileInfo
 			IdXMLFile().load(in, id_data.proteins, id_data.peptides, id_data.identifier);
      
       // export metadata to second output stream
-      os2 << "database" << "\t" << id_data.proteins.at(0).getSearchParameters().db << endl
+      os_tsv << "database" << "\t" << id_data.proteins.at(0).getSearchParameters().db << endl
           << "database version" << "\t" << id_data.proteins.at(0).getSearchParameters().db_version << endl
           << "taxonomy" << "\t" << id_data.proteins.at(0).getSearchParameters().taxonomy << endl;
 
@@ -448,10 +451,10 @@ class TOPPFileInfo
 			os << "  peptide hits:        " << peptide_hit_count << endl;
 			os << "  unique peptide hits: " << peptides.size() << endl;
       
-			os2 << "peptide hits" << "\t" << peptide_hit_count << endl;
-			os2 << "unique peptide hits" << "\t" << peptides.size() << endl;
-			os2 << "protein hits" << "\t" << protein_hit_count << endl;
-			os2 << "unique protein hits" << "\t" << proteins.size() << endl;
+			os_tsv << "peptide hits" << "\t" << peptide_hit_count << endl;
+			os_tsv << "unique peptide hits" << "\t" << peptides.size() << endl;
+			os_tsv << "protein hits" << "\t" << protein_hit_count << endl;
+			os_tsv << "unique protein hits" << "\t" << proteins.size() << endl;
 		}
 
 		else if (in_type == FileTypes::PEPXML)
@@ -504,7 +507,7 @@ class TOPPFileInfo
 				}
 				sort(spacing.begin(), spacing.end());
 				os << "Estimated raw data spacing: " << spacing[spacing.size() / 2] << " (min: " << spacing[0] << ", max: " << spacing.back() << ")" << endl;
-        os2 << "estimated raw data spacing" << "\t" << spacing[spacing.size() / 2] << endl
+        os_tsv << "estimated raw data spacing" << "\t" << spacing[spacing.size() / 2] << endl
             << "estimated raw data spacing (min)" << "\t" << spacing[0] << endl
             << "estimated raw data spacing (max)" << "\t" << spacing.back() << endl;
 			}
@@ -517,9 +520,9 @@ class TOPPFileInfo
 			os << "Number of spectra: "	<< exp.size() << endl;
 			os << "Number of peaks: " << exp.getSize() << endl
 				 << endl;
-      os2 << "number of spectra" << "\t" << exp.size() << endl
+      os_tsv << "number of spectra" << "\t" << exp.size() << endl
           << "number of peaks" << "\t" << exp.getSize() << endl;
-			writeRanges_(exp, os, os2);
+			writeRanges_(exp, os, os_tsv);
 
 			os << "MS levels: ";
 			if (levels.size() != 0)
@@ -545,7 +548,7 @@ class TOPPFileInfo
 				for (map<Size, UInt>::iterator it = counts.begin(); it != counts.end(); ++it)
 				{
 					os << "  level " << it->first << ": " << it->second << endl;
-          os2 << "number of MS" << it->first << " spectra" << "\t" << it->second << endl;
+          os_tsv << "number of MS" << it->first << " spectra" << "\t" << it->second << endl;
 				}
 				os << endl;
 			}
@@ -611,7 +614,7 @@ class TOPPFileInfo
 			if (exp.getChromatograms().size() != 0)
 			{
 				os << "Number of chromatograms: "	<< exp.getChromatograms().size() << endl;
-				os2 << "number of chromatograms" << "\t"	<< exp.getChromatograms().size() << endl;
+				os_tsv << "number of chromatograms" << "\t"	<< exp.getChromatograms().size() << endl;
 
 				Size num_chrom_peaks(0);
 				Map<ChromatogramSettings::ChromatogramType, Size> chrom_types;
@@ -628,7 +631,7 @@ class TOPPFileInfo
 					}
 				}
 				os << "Number of chromatographic peaks: " << num_chrom_peaks << endl << endl;
-				os2 << "number of chromatographic peaks" << "\t" << num_chrom_peaks << endl;
+				os_tsv << "number of chromatographic peaks" << "\t" << num_chrom_peaks << endl;
 
 				os << "Number of chromatograms per type: " << endl;
 				for (Map<ChromatogramSettings::ChromatogramType, Size>::const_iterator it = chrom_types.begin(); it != chrom_types.end(); ++it)
@@ -852,7 +855,7 @@ class TOPPFileInfo
 
 				os << "Document ID:        " << exp.getIdentifier() << endl
 					 << "Date:               " << exp.getDateTime().get() << endl;
-        os2 << "document id" << "\t" << exp.getIdentifier() << endl
+        os_tsv << "document id" << "\t" << exp.getIdentifier() << endl
             << "date" << "\t" << exp.getDateTime().get() << endl;
 
 				//basic info
@@ -861,7 +864,7 @@ class TOPPFileInfo
 					 << "  name:             " << exp.getSample().getName() << endl
 					 << "  organism:         " << exp.getSample().getOrganism()  << endl
 					 << "  comment:          " << exp.getSample().getComment()  << endl;
-        os2 << "sample name" << "\t" << exp.getSample().getName() << endl
+        os_tsv << "sample name" << "\t" << exp.getSample().getName() << endl
             << "sample organism" << "\t" << exp.getSample().getOrganism() << endl
             << "sample comment" << "\t" << exp.getSample().getComment() << endl;
         
@@ -872,7 +875,7 @@ class TOPPFileInfo
 					 << "  model:            " << exp.getInstrument().getModel() << endl
 					 << "  vendor:           " << exp.getInstrument().getVendor() << endl
 					 << "  ion source(s):    ";
-        os2 << "instrument name" << "\t" << exp.getInstrument().getName() << endl
+        os_tsv << "instrument name" << "\t" << exp.getInstrument().getName() << endl
             << "instrument model" << "\t" << exp.getInstrument().getModel() << endl
             << "instrument vendor" << "\t" << exp.getInstrument().getVendor() << endl;
 				for (Size i = 0; i< exp.getInstrument().getIonSources().size(); ++i)
@@ -1192,20 +1195,33 @@ class TOPPFileInfo
 	{
 		String out = getStringOption_("out");
 		String out_tsv = getStringOption_("out_tsv");
-    ofstream os(out.c_str());
-    ofstream os2(out_tsv.c_str());
 
-		//output to command line
-		if (out == "")
-		{
-			return outputTo_(cout, os2);
-		}
-		//output to file
-		else
-		{
-			return outputTo_(os, os2);
-		}
-    
+    if (out != "" && out_tsv != "")
+    {
+      ofstream os(out.c_str());
+      ofstream os_tsv(out_tsv.c_str());
+      return outputTo_(os, os_tsv);
+    }
+    else if (out != "" && out_tsv == "")
+    {
+      ofstream os(out.c_str());
+      // Output stream with null output
+      boost::iostreams::filtering_ostream os_tsv;
+      os_tsv.push(boost::iostreams::null_sink());
+      return outputTo_(os, os_tsv);
+    }
+    else if (out == "" && out_tsv != "")
+    {
+      ofstream os_tsv(out_tsv.c_str());
+      return outputTo_(std::cout, os_tsv);
+    }
+    else
+    {
+      // Output stream with null output
+      boost::iostreams::filtering_ostream os_tsv;
+      os_tsv.push(boost::iostreams::null_sink());
+      return outputTo_(std::cout, os_tsv);
+    }
 	}
 };
 

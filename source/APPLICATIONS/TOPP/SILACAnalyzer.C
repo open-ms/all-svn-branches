@@ -227,9 +227,9 @@ class TOPPSILACAnalyzer
     // create optional flag for additional output file (.consensusXML) to store filter results
     registerOutputFile_("out_filters", "<file>", "", "Additional output file containing all points that passed the filters as txt. Suitable as input for \"in_filters\" to perform clustering without preceding filtering process.", false, true);
     setValidFormats_("out_filters", StringList::create("consensusXML"));
-    // create optional flag for additional input file (.featureXML) to load filter results
+    // create optional flag for additional input file (.consensusXML) to load filter results
     registerOutputFile_("in_filters", "<file>", "", "Additional input file containing all points that passed the filters as txt. Use output from \"out_filters\" to perform clustering only.", false, true);
-    setValidFormats_("in_filters", StringList::create("featureXML"));
+    setValidFormats_("in_filters", StringList::create("consensusXML"));
     registerStringOption_("out_debug", "<filebase>", "", "Filename base for debug output.", false, true);
 
     // create section "labels" for adjusting masses of labels
@@ -342,7 +342,7 @@ class TOPPSILACAnalyzer
 
     // get name of additional filters output file (.consensusXML)
     out_filters = getStringOption_("out_filters");
-    // get name of additional filters input file (.featureXML)
+    // get name of additional filters input file (.consensusXML)
     in_filters = getStringOption_("in_filters");
     out_debug = getStringOption_("out_debug");
 
@@ -849,7 +849,9 @@ class TOPPSILACAnalyzer
 
     if (in_filters != "")     // check if option "in_filters" is specified
     {
-      readFilePoints(in_filters);
+      ConsensusMap map;
+      readConsensus(in_filters, map);
+      readFilterConsensusByPattern(map);
     }
   }
 
@@ -1121,9 +1123,16 @@ private:
   void generateClusterConsensusByPattern(ConsensusMap &, const Clustering &) const;
   void generateFilterConsensusByPattern(ConsensusMap &, const std::vector<SILACPattern> &) const;
   ConsensusFeature generateSingleConsensusByPattern(const SILACPattern &) const;
+  void readFilterConsensusByPattern(ConsensusMap &);
 
   static const String &selectColor(UInt nr);
  
+  void readConsensus(const String &filename, ConsensusMap &in) const
+  {
+    ConsensusXMLFile c_file;
+    c_file.load(filename, in);
+  }
+
   void writeConsensus(const String &filename, ConsensusMap &out) const
   {
     out.sortByPosition();
@@ -1256,26 +1265,6 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &out) const
         std::string outs = out.str(); outs.erase(outs.end() - 1);
         point.setOverallQuality(floor(it->mass_shifts.at(1) * charge));			// set mass shifts as value for OverallQuality in [Da]
         point.setMetaValue("Mass shifts [Da]", outs);
-      }
-
-      // Output all intensities per peptide as list
-      {
-        std::ostringstream out;
-        for (vector<vector<DoubleReal> >::const_iterator inten_it = it->intensities.begin(); inten_it != it->intensities.end(); ++inten_it)
-        {
-          std::ostringstream out2;
-          out2 << std::fixed << std::setprecision(4);
-          for (vector<DoubleReal>::const_iterator inten2_it = inten_it->begin(); inten2_it != inten_it->end(); ++inten2_it)
-          {
-            out2 << *inten2_it << ',';
-          }
-          // Remove the last delimiter
-          std::string out2s = out2.str(); out2s.erase(out2s.end() - 1);
-          out << out2s << ';';
-        }
-        // Remove the last delimiter
-        std::string outs = out.str(); outs.erase(outs.end() - 1);
-        point.setMetaValue("Intensities", outs);
       }
 
       points.push_back(point);
@@ -1468,6 +1457,8 @@ ConsensusFeature TOPPSILACAnalyzer::generateSingleConsensusByPattern(const SILAC
   consensus.setIntensity(pattern.intensities[0][0]);
   consensus.setCharge(charge);
 
+  consensus.setMetaValue("Peaks per peptide", pattern.isotopes_per_peptide);
+
   // Output mass shifts
   {
     std::ostringstream out;
@@ -1482,6 +1473,26 @@ ConsensusFeature TOPPSILACAnalyzer::generateSingleConsensusByPattern(const SILAC
     consensus.setMetaValue("Mass shifts [Da]", outs);
   }
 
+  // Output all intensities per peptide as list
+  {
+    std::ostringstream out;
+    for (vector<vector<DoubleReal> >::const_iterator inten_it = pattern.intensities.begin(); inten_it != pattern.intensities.end(); ++inten_it)
+    {
+      std::ostringstream out2;
+      out2 << std::fixed << std::setprecision(4);
+      for (vector<DoubleReal>::const_iterator inten2_it = inten_it->begin(); inten2_it != inten_it->end(); ++inten2_it)
+      {
+        out2 << *inten2_it << ',';
+      }
+      // Remove the last delimiter
+      std::string out2s = out2.str(); out2s.erase(out2s.end() - 1);
+      out << out2s << ';';
+    }
+    // Remove the last delimiter
+    std::string outs = out.str(); outs.erase(outs.end() - 1);
+    consensus.setMetaValue("Intensities", outs);
+  }
+
   UInt point_id = 0;
   for (std::vector<DataPoint>::const_iterator point_it = pattern.points.begin();
        point_it != pattern.points.end();
@@ -1490,13 +1501,63 @@ ConsensusFeature TOPPSILACAnalyzer::generateSingleConsensusByPattern(const SILAC
     FeatureHandle point;
     point.setRT(point_it->rt);
     point.setMZ(point_it->mz);
-    point.setIntensity(1);
     point.setUniqueId(point_id);
 
     consensus.insert(point);
   }
 
   return consensus;
+}
+
+void TOPPSILACAnalyzer::readFilterConsensusByPattern(ConsensusMap &in)
+{
+  std::map<std::pair<Int, Int>, std::vector<SILACPattern> > layers;
+
+  for (ConsensusMap::const_iterator pattern_it = in.begin(); pattern_it != in.end(); ++pattern_it)
+  {
+    SILACPattern pattern;
+    pattern.rt = pattern_it->getRT();
+    pattern.mz = pattern_it->getMZ();
+    pattern.charge = pattern_it->getCharge();
+    pattern.quality = pattern_it->getQuality();
+
+    pattern.isotopes_per_peptide = pattern_it->getMetaValue("Peaks per peptide");
+
+    StringList text = StringList::create(pattern_it->getMetaValue("Mass shifts [Da]"), ';');
+    pattern.mass_shifts.push_back(0);
+    for (StringList::const_iterator text_it = text.begin(); text_it != text.end(); ++text_it)
+    {
+      pattern.mass_shifts.push_back(text_it->toDouble() / pattern.charge);
+    }
+
+    text = StringList::create(pattern_it->getMetaValue("Intensities"), ';');
+    for (StringList::const_iterator text_it = text.begin(); text_it != text.end(); ++text_it)
+    {
+      StringList text2 = StringList::create(*text_it, ',');
+      vector<DoubleReal> inten;
+      for (StringList::const_iterator text2_it = text2.begin(); text2_it != text2.end(); ++text2_it)
+      {
+        inten.push_back(text2_it->toDouble());
+      }
+      pattern.intensities.push_back(inten);
+    }
+
+    for (ConsensusFeature::const_iterator point_it = pattern_it->begin(); point_it != pattern_it->end(); ++point_it)
+    {
+      DataPoint point;
+      point.rt = point_it->getRT();
+      point.mz = point_it->getMZ();
+
+      pattern.points.push_back(point);
+    }
+
+    layers[std::make_pair(Int(pattern.mass_shifts.at(1)), pattern.charge)].push_back(pattern);
+  }
+
+  for (std::map<std::pair<Int, Int>, std::vector<SILACPattern> >::iterator it = layers.begin(); it != layers.end(); ++it)
+  {
+    data.push_back(it->second);
+  }
 }
 
 const String &TOPPSILACAnalyzer::selectColor(UInt nr)

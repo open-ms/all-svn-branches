@@ -15,6 +15,18 @@ CompNovoIonScoringCID.h
 CompNovoIdentificationCID.h
 CompNovoIonScoringBase.h
 CompNovoIonScoring.h
+AntilopePostScoring.h
+AntilopeBranchBound.h
+AntilopeLagrangeProblem.h
+AntilopeIonScoringBayes.h
+AntilopePreprocessing.h
+AntilopePMCorrect.h
+AntilopeSpectrumGraph.h
+AntilopeAlgorithm.h
+AntilopeSubgradientSolver.h
+AntilopeIonScoringRank.h
+AntilopeBayesNetwork.h
+LagrangeProblemBase.h
 )
 
 ### add path to the filenames

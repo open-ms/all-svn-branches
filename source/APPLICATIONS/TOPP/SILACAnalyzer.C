@@ -176,7 +176,6 @@ class TOPPSILACAnalyzer
     Int missed_cleavages;
     Int isotopes_per_peptide_min;
     Int isotopes_per_peptide_max;
-    DoubleReal mz_stepwidth;
 
     // section "algorithm"
     DoubleReal mz_threshold;
@@ -585,34 +584,12 @@ class TOPPSILACAnalyzer
   // filtering
   //--------------------------------------------------
 
-  // exp must only contain level 1 spectra
-  DoubleReal estimateMzSpacing(MSExperiment<Peak1D>& exp)
-  {
-    // estimate m/z step width
-    Size i = 0;
-    while (i < exp.size() && exp[i].size() < 5) ++i; // get a scan with at least 5 points
-
-    if (i >= exp.size()) return 0; // handle this in calling code
-
-    vector<Real> mz_spacing;
-
-    for (Size j = 1; j < exp[i].size(); ++j)
-    {
-      mz_spacing.push_back(exp[i][j].getMZ() - exp[i][j-1].getMZ());
-    }
-    sort(mz_spacing.begin(), mz_spacing.end());
-
-    return mz_spacing[mz_spacing.size() / 2];
-  }
-
   void filterData(MSExperiment<Peak1D>& exp)
   {
     // extract level 1 spectra
     IntList levels=IntList::create("1");
     exp.erase(remove_if(exp.begin(), exp.end(), InMSLevelRange<MSExperiment<Peak1D>::SpectrumType>(levels, true)), exp.end());
     list<SILACFilter> filters;
-
-    mz_stepwidth = estimateMzSpacing(exp);
 
     // create filters for all numbers of isotopes per peptide, charge states and mass shifts
     // iterate over all number for peaks per peptide (from max to min)
@@ -636,7 +613,7 @@ class TOPPSILACAnalyzer
     if (in_filters == "")     // check if option "in_filters" is not specified
     {
       // create filtering
-      SILACFiltering filtering(exp, mz_stepwidth, intensity_cutoff, intensity_correlation, allow_missing_peaks);
+      SILACFiltering filtering(exp, intensity_cutoff, intensity_correlation, allow_missing_peaks);
       filtering.setLogType(log_type_);
 
       // register filters to the filtering
@@ -1166,8 +1143,6 @@ void TOPPSILACAnalyzer::clusterData()
       SILACPattern &p = *it;
       clustering->insertPoint(key, &p);
     }
-
-    if (out_debug != "") writeFilePointsByCell(out_debug + ".by-cell.layer-" + nr, *clustering);
 
     clustering->cluster();
 

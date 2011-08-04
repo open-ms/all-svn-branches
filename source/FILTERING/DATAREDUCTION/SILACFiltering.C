@@ -48,10 +48,9 @@ namespace OpenMS
   gsl_spline* SILACFiltering::spline_spl_ = 0;
   DoubleReal SILACFiltering::mz_min_ = 0;  
 
-  SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal mz_stepwidth, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks)
+  SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks)
     : exp_(exp)
   {
-    mz_stepwidth_ = mz_stepwidth;
     intensity_cutoff_ = intensity_cutoff;
     intensity_correlation_ = intensity_correlation;
     allow_missing_peaks_ = allow_missing_peaks;
@@ -159,9 +158,10 @@ namespace OpenMS
           // Fill intensity and m/z vector for interpolation. Add zeros in the area with no data points to improve cubic spline fit
           for (MSSpectrum<>::Iterator mz_interpol_it = rt_it->begin(); mz_interpol_it != rt_it->end(); ++mz_interpol_it)
           {
-            if (mz_interpol_it->getMZ() > last_mz + 2 * mz_stepwidth_) // If the mz gap is rather larger, fill in zeros. These addtional Stützstellen improve interpolation where no signal (i.e. data points) is.
+            DoubleReal peakwidth = SILACFilter::getPeakWidth(last_mz);
+            if (mz_interpol_it->getMZ() > last_mz + peakwidth) // If the mz gap is rather larger, fill in zeros. These addtional Stützstellen improve interpolation where no signal (i.e. data points) is.
             {
-              for (DoubleReal current_mz = last_mz + 2 * mz_stepwidth_; current_mz < mz_interpol_it->getMZ() - 2 * mz_stepwidth_; current_mz += mz_stepwidth_)
+              for (DoubleReal current_mz = last_mz + peakwidth; current_mz < mz_interpol_it->getMZ() - peakwidth; current_mz += peakwidth)
               {
                 mz_vec.push_back(current_mz);
                 intensity_vec.push_back(0.0);

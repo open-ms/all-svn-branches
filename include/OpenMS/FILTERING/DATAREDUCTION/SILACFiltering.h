@@ -62,11 +62,6 @@ namespace OpenMS
    std::vector<SILACFilter*> filters_;
 
   /**
-   * @brief average m/z distance between scanned data points
-   */
-   DoubleReal mz_stepwidth_;
-
-  /**
    * @brief minimal intensity of SILAC features
    */
    static DoubleReal intensity_cutoff_;
@@ -117,12 +112,11 @@ namespace OpenMS
   /**
    * @brief detailed constructor
    * @param exp raw data
-   * @param mz_stepwidth average m/z distance between scanned data points
    * @param intensity_cutoff minimal intensity of SILAC features
    * @param intensity_correlation minimal intensity correlation between regions of different peaks
    * @param allow_missing_peaks flag for missing peaks
    */
-   SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal mz_stepwidth, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks);
+   SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks);
 
   /**
    * @brief default constructor

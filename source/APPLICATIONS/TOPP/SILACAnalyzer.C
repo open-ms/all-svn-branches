@@ -186,8 +186,6 @@ class TOPPSILACAnalyzer
 
     vector<vector<SILACPattern> > data;
     vector<Clustering *> cluster_data;
-    FeatureMap<> subtree_points;
-    MSExperiment<Peak1D> filter_exp;
 
 
   public:

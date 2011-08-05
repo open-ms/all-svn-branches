@@ -63,8 +63,6 @@
 using namespace OpenMS;
 using namespace std;
 
-typedef vector<SILACPattern*> Cluster;
-
 //-------------------------------------------------------------
 //Doxygen docu
 //-------------------------------------------------------------
@@ -148,11 +146,6 @@ typedef vector<SILACPattern*> Cluster;
 
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
-
-bool clusterCompare( Cluster v1, Cluster v2)
-{
-   return v1.size() > v2.size();
-}
 
 class TOPPSILACAnalyzer
 : public TOPPBase
@@ -758,52 +751,9 @@ class TOPPSILACAnalyzer
       }
     }
 
-#if 0
-    //--------------------------------------------------
-    // remove isolated DataPoints from filter results (i.e. DataPoints with only few immediate neighbours)
-    //--------------------------------------------------
-
-    {
-      Int immediate_neighbour_threshold = 5;      // maximum number of DataPoints within neighbourhood
-      DoubleReal rt_neighbourhood = 10;     // size of neighbourhood for RT (+ and -)
-      DoubleReal mz_neighbourhood = 0.02;     // size of neighbourhood for m/z (+ and -)
-
-      vector<vector<DataPoint> > data_2;
-
-      for (vector<vector<DataPoint> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it)
-      {
-        vector<DataPoint> single_layer;
-
-        for (vector<DataPoint>::iterator it = data_it->begin(); it != data_it->end(); ++it)
-        {
-          Int immediate_neighbours = 0;
-
-          for (vector<DataPoint>::iterator it_2 = data_it->begin(); it_2 != data_it->end(); ++it_2)
-          {
-            DoubleReal distance_mz = abs(it->mz - it_2->mz);
-            DoubleReal distance_rt = abs(it->rt - it_2->rt);
-
-            if (distance_rt < rt_neighbourhood && distance_mz < mz_neighbourhood)
-            {
-              ++immediate_neighbours;
-            }
-          }
-
-          if (immediate_neighbours > immediate_neighbour_threshold)
-          {
-            single_layer.push_back(*it);
-          }
-        }
-
-        data_2.push_back(single_layer);
-      }
-
-      data.swap(data_2);      // data = data_2
-    }
-#endif
 
     //--------------------------------------------------
-    // store filter results from vector<vector<DataPoint> > data to .featureXML
+    // store filter results
     //--------------------------------------------------
 
     if (out_filters != "" && in_filters == "")     // check if option "out_filters" is specified and "in_filters" is not
@@ -815,7 +765,7 @@ class TOPPSILACAnalyzer
     }
 
     //--------------------------------------------------
-    // load filter results as vector<vector<DataPoint> > data from .featureXML
+    // load filter results
     //--------------------------------------------------
 
     if (in_filters != "")     // check if option "in_filters" is specified
@@ -856,206 +806,8 @@ class TOPPSILACAnalyzer
     // clustering
     //--------------------------------------------------
 
-    vector<Cluster> clusters;
-
     clusterData();
 
-/*    // store silhouettes for all subtrees as .csv
-    Size silhouette_number = 1;
-
-    ofstream silhouettesFile;
-    silhouettesFile.open ("silhouettes.csv");
-
-    for (std::vector<std::vector<Real> >::iterator asw_vector_it = silhouettes.begin(); asw_vector_it != silhouettes.end(); ++asw_vector_it)
-    {
-      silhouettesFile << silhouette_number;
-
-      for (std::vector<Real>::iterator asw_it = asw_vector_it->begin(); asw_it != asw_vector_it->end(); ++asw_it)
-      {
-        silhouettesFile << "," << *asw_it;
-      }
-
-      silhouettesFile << endl;
-      silhouette_number++;
-    }
-
-    silhouettesFile.close();
-
-    // store all subtrees as .featureXML
-    std::vector<String> colors;
-    // 15 HTML colors
-    colors.push_back("#00FFFF");
-    colors.push_back("#000000");
-    colors.push_back("#0000FF");
-    colors.push_back("#FF00FF");
-    colors.push_back("#008000");
-    colors.push_back("#808080");
-    colors.push_back("#00FF00");
-    colors.push_back("#800000");
-    colors.push_back("#000080");
-    colors.push_back("#808000");
-    colors.push_back("#800080");
-    colors.push_back("#FF0000");
-    colors.push_back("#C0C0C0");
-    colors.push_back("#008080");
-    colors.push_back("#FFFF00");
-
-    Size subtree_number = 1;
-
-    for (std::vector<std::vector<SILACTreeNode> >::iterator subtree_it = subtrees.begin(); subtree_it != subtrees.end(); ++subtree_it)
-    {
-      std::set<DataPoint*> leafs;
-
-      for (std::vector<SILACTreeNode>::iterator tree_it = subtree_it->begin(); tree_it != subtree_it->end(); ++tree_it)
-      {
-        leafs.insert(tree_it->data1);
-        leafs.insert(tree_it->data2);
-      }
-
-      for (std::set<DataPoint*>::iterator leafs_it = leafs.begin(); leafs_it != leafs.end(); ++leafs_it)
-      {
-        //visualize the light variant
-        Feature tree_point;
-        tree_point.setRT((*leafs_it)->rt);
-        tree_point.setMZ((*leafs_it)->mz);
-        tree_point.setIntensity((*leafs_it)->intensities[0][0]);
-        tree_point.setCharge((*leafs_it)->charge);
-        tree_point.setMetaValue("subtree", subtree_number);
-        tree_point.setMetaValue("color", colors[subtree_number%colors.size()]);
-        subtree_points.push_back(tree_point);
-      }
-
-      ++subtree_number;
-    }
-
-    //subtree_points.sortByPosition();
-*/
-
-#if 0
-    //--------------------------------------------------
-    // consensusXML output
-    //--------------------------------------------------
-
-    if (out != "")
-    {
-      Size id = 0;
-
-      // iterate over all clusters
-      for (vector<Cluster>::iterator cluster_it = clusters.begin(); cluster_it != clusters.end(); ++cluster_it)
-      {
-        DoubleReal rt = 0.0;
-        DoubleReal mz = 0.0;
-        DoubleReal total_intensity = 0.0;
-        Size mass_shifts_size = (*(cluster_it->begin()))->mass_shifts.size();
-
-        // create a vector with the maximum intensity of each isotope peak
-        vector<DoubleReal> max_intensities(mass_shifts_size, 0.0);
-        Int charge = (*(cluster_it->begin()))->charge;
-
-        DoubleReal mass_shift_final = 0;
-
-        // mass shifts as value for Quality in [Da] (i.e. 6008)
-        for (vector<DoubleReal>::iterator shift_it = (*(cluster_it->begin()))->mass_shifts.begin(); shift_it != (*(cluster_it->begin()))->mass_shifts.end(); ++shift_it)
-        {
-
-          // mass shifts for doublets
-          if ((*(cluster_it->begin()))->mass_shifts.size() == 2)
-          {
-            mass_shift_final = floor(*shift_it * charge);     // mass shift as value for Quality
-          }
-
-          // mass shifts for triplets, quadruplets, ...
-          if ((*(cluster_it->begin()))->mass_shifts.size() > 2)
-          {
-            if (shift_it == (*(cluster_it->begin()))->mass_shifts.begin() + 1)
-            {
-              mass_shift_final = floor(*shift_it * charge) * 1000;      // mass shift as value for Quality
-            }
-
-            if ((shift_it > (*(cluster_it->begin()))->mass_shifts.begin() + 1) && (shift_it < (*(cluster_it->begin()))->mass_shifts.end() - 1))
-            {
-              mass_shift_final = (mass_shift_final + floor(*shift_it * charge)) * 1000;     // mass shift as value for Quality
-            }
-
-            if (shift_it == (*(cluster_it->begin()))->mass_shifts.end() - 1)
-            {
-              mass_shift_final += floor(*shift_it * charge);      // mass shift as value for Quality
-            }
-          }
-        }
-
-        // intensity vector used for linear regression
-        vector<vector<DoubleReal> > intensities(mass_shifts_size);
-        // iterate over the cluster elements
-        for (Cluster::iterator el_it = cluster_it->begin(); el_it != cluster_it->end(); ++el_it)
-        {
-          // extract all SILAC pattern intensities of the current element
-          vector<vector<DoubleReal> >& element_intensities = (*el_it)->intensities;
-          // add monoisotopic intensity of the light peak to the total intensity
-          total_intensity += element_intensities[0][0];
-          // add monoisotopic RT position of the light peak to the total RT value, weighted by the intensity
-          rt += element_intensities[0][0] * (*el_it)->rt;
-          // iterate over all mass shifts of the element
-          for (Size i = 0; i < mass_shifts_size; ++i)
-          {
-            // create a temporary vector with all isotope pattern intensities of the current mass shift
-            vector<DoubleReal>& current_intensities=element_intensities[i];
-            intensities[i].insert(intensities[i].end(),current_intensities.begin(),current_intensities.end());
-
-            // find maximum intensity
-            vector<DoubleReal>::iterator max_position = max_element(current_intensities.begin(), current_intensities.end());
-            if (*max_position > max_intensities[i])
-            {
-              max_intensities[i] = *max_position;
-              mz = (*el_it)->mz;
-            }
-          }
-        }
-
-        // average retention time
-        rt /= total_intensity;
-
-         // create consensus feature for each mass shift !=0
-        ConsensusFeature consensus_feature;
-        consensus_feature.setRT(rt);
-        consensus_feature.setMZ(mz);
-        consensus_feature.setIntensity(max_intensities[0]);			// set intensity of light peptiide to intensity of consensus
-        consensus_feature.setCharge(charge);
-        consensus_feature.setQuality(mass_shift_final);			// set mass shifts as value for Quality in [Da]
-
-        // insert feature handle for each mass shift
-        for (Size l = 0; l < mass_shifts_size; ++l)
-        {
-          // perform linear regression for each mass shift != 0
-
-          Math::LinearRegression linear_reg;
-          linear_reg.computeRegressionNoIntercept(0.95, intensities[0].begin(), intensities[0].end(), intensities[l].begin());
-
-          FeatureHandle handle;
-          handle.setRT(rt);
-          handle.setMZ(mz+(*(cluster_it->begin()))->mass_shifts[l]);
-          handle.setIntensity(linear_reg.getSlope());			// set ratios as values for intensities: it(map="0") = l/l, it(map="1") = m/l, it(map="2") = h/l
-          handle.setCharge(charge);
-          handle.setMapIndex(l);
-          handle.setUniqueId(id);
-          consensus_feature.insert(handle);
-        }
-
-        all_pairs.push_back(consensus_feature);
-        ++id;
-      }
-
-      // set type of experiment
-      all_pairs.setExperimentType("silac");
-
-      // set mapList entries
-      for (UInt i = 0; i <= massShifts[0].size(); i++)
-      {
-        all_pairs.getFileDescriptions()[i].filename = in;
-        all_pairs.getFileDescriptions()[i].size = id;
-      }      
-    }
-#endif
 
     //--------------------------------------------------------------
     // write output

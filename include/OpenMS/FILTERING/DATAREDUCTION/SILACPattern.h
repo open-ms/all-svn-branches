@@ -39,11 +39,6 @@ namespace OpenMS
   {
     public:
       std::vector<DataPoint> points;
-      UInt nr_points;
-
-      SILACPattern()
-        : nr_points(0)
-      { }
   };
 }
 

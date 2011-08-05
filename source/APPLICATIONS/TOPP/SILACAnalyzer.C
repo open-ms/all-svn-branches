@@ -1178,7 +1178,6 @@ void TOPPSILACAnalyzer::readFilePoints(const String &filename)
     point.charge = it->getCharge();
     point.quality = it->getQuality(0);
 
-    point.nr_points =  it->getMetaValue("Points");
     point.isotopes_per_peptide = it->getMetaValue("Peaks per peptide");
 
     StringList in = StringList::create(it->getMetaValue("Mass shifts [Da]"), ';');
@@ -1224,7 +1223,6 @@ void TOPPSILACAnalyzer::writeFilePoints(const String &out) const
       point.setCharge(it->charge);
       point.setQuality(0, it->quality);
 
-      point.setMetaValue("Points", it->nr_points);
       point.setMetaValue("Peaks per peptide", it->isotopes_per_peptide);
 
       // Output all mass shifts as list

@@ -507,7 +507,6 @@ namespace OpenMS
     newElement.rt = rt;
     newElement.mz = mz;
     pattern.points.push_back(newElement);
-    pattern.nr_points++;
 
     return true;
   }

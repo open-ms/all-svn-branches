@@ -54,26 +54,6 @@ namespace OpenMS
     intensity_cutoff_ = intensity_cutoff;
     intensity_correlation_ = intensity_correlation;
     allow_missing_peaks_ = allow_missing_peaks;
-
-    // perform peak picking
-    cout << "performing peak picking" << endl;
-    PeakPickerHiRes picker;
-    Param param = picker.getParameters();
-    param.setValue("ms1_only", DataValue("true"));
-    param.setValue("signal_to_noise", 0.1);
-    picker.setParameters(param);
-
-    picker.pickExperiment(exp, picked_exp_);
-    MzMLFile mz_data_file;
-    mz_data_file.store("debug_picked.mzML", picked_exp_);
-    cout << "finished peak picking" << endl;
-
-    // Initialize seeds map
-    picked_exp_seeds_ = picked_exp_;
-    for (Size i = 0; i != picked_exp_seeds_.size(); ++i)
-    {
-      picked_exp_seeds_[i].clear(false);
-    }
   }
 
   void SILACFiltering::addFilter(SILACFilter& filter)
@@ -86,8 +66,31 @@ namespace OpenMS
 
   }
 
+  void SILACFiltering::pickSeeds()
+  {
+    // perform peak picking
+    PeakPickerHiRes picker;
+    picker.setLogType(getLogType());
+    Param param = picker.getParameters();
+    param.setValue("ms1_only", DataValue("true"));
+    param.setValue("signal_to_noise", 0.1);
+    picker.setParameters(param);
+
+    picker.pickExperiment(exp_, picked_exp_);
+    MzMLFile mz_data_file;
+    mz_data_file.store("debug_picked.mzML", picked_exp_);
+
+    // Initialize seeds map
+    picked_exp_seeds_ = picked_exp_;
+    for (Size i = 0; i != picked_exp_seeds_.size(); ++i)
+    {
+      picked_exp_seeds_[i].clear(false);
+    }
+  }
+
   void SILACFiltering::filterSeeds()
   {
+    startProgress(0, filters_.size(), "filtering seed data");
 
     // Iterate over all filters
     for (vector<SILACFilter*>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it)
@@ -115,6 +118,7 @@ namespace OpenMS
 
     // sort complete spectrum so we can use range queries
     picked_exp_seeds_.sortSpectra(true);
+    endProgress();
 
     MzMLFile mz_data_file;
     mz_data_file.store("debug_filtered_seeds.mzML", picked_exp_seeds_);
@@ -122,9 +126,8 @@ namespace OpenMS
 
   void SILACFiltering::filterDataPoints()
   {
-    startProgress(0, filters_.size(), "filtering seed data");
+    pickSeeds();
     filterSeeds();
-    endProgress();
 
     startProgress(0, exp_.size(), "filtering raw data");    
 

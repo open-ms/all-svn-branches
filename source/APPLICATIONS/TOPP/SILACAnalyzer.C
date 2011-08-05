@@ -597,26 +597,23 @@ class TOPPSILACAnalyzer
       }
     }
 
-    if (in_filters == "")     // check if option "in_filters" is not specified
+    // create filtering
+    SILACFiltering filtering(exp, intensity_cutoff, intensity_correlation, allow_missing_peaks);
+    filtering.setLogType(log_type_);
+
+    // register filters to the filtering
+    for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
     {
-      // create filtering
-      SILACFiltering filtering(exp, intensity_cutoff, intensity_correlation, allow_missing_peaks);
-      filtering.setLogType(log_type_);
+      filtering.addFilter(*filter_it);
+    }
 
-      // register filters to the filtering
-      for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
-      {
-        filtering.addFilter(*filter_it);
-      }
+    // perform filtering
+    filtering.filterDataPoints();
 
-      // perform filtering
-      filtering.filterDataPoints();
-
-      // retrieve filtered data points
-      for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
-      {
-        data.push_back(filter_it->getElements());
-      }
+    // retrieve filtered data points
+    for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
+    {
+      data.push_back(filter_it->getElements());
     }
 
     // delete experiment
@@ -752,28 +749,6 @@ class TOPPSILACAnalyzer
     }
 
 
-    //--------------------------------------------------
-    // store filter results
-    //--------------------------------------------------
-
-    if (out_filters != "" && in_filters == "")     // check if option "out_filters" is specified and "in_filters" is not
-    {
-      ConsensusMap map;
-      for (std::vector<std::vector<SILACPattern> >::const_iterator it = data.begin(); it != data.end(); ++it)
-        generateFilterConsensusByPattern(map, *it);
-      writeConsensus(out_filters, map);
-    }
-
-    //--------------------------------------------------
-    // load filter results
-    //--------------------------------------------------
-
-    if (in_filters != "")     // check if option "in_filters" is specified
-    {
-      ConsensusMap map;
-      readConsensus(in_filters, map);
-      readFilterConsensusByPattern(map);
-    }
   }
 
   ExitCodes main_(int , const char**)
@@ -795,11 +770,37 @@ class TOPPSILACAnalyzer
     exp.updateRanges();
 
 
-    //--------------------------------------------------
-    // filter input data
-    //--------------------------------------------------
+    if (in_filters == "")
+    {
+      //--------------------------------------------------
+      // filter input data
+      //--------------------------------------------------
 
-    filterData(exp);
+      filterData(exp);
+
+
+      //--------------------------------------------------
+      // store filter results
+      //--------------------------------------------------
+
+      if (out_filters != "")
+      {
+        ConsensusMap map;
+        for (std::vector<std::vector<SILACPattern> >::const_iterator it = data.begin(); it != data.end(); ++it)
+          generateFilterConsensusByPattern(map, *it);
+        writeConsensus(out_filters, map);
+      }
+    }
+    else
+    {
+      //--------------------------------------------------
+      // load filter results
+      //--------------------------------------------------
+
+      ConsensusMap map;
+      readConsensus(in_filters, map);
+      readFilterConsensusByPattern(map);
+    }
 
 
     //--------------------------------------------------

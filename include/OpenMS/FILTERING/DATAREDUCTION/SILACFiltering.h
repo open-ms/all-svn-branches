@@ -103,6 +103,11 @@ namespace OpenMS
 
 
    /**
+    * @brief pick data seeds
+    */
+    void pickSeeds();
+
+   /**
     * @brief apply filtering to picked data seeds
     */
     void filterSeeds();

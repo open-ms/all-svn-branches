@@ -48,8 +48,9 @@ namespace OpenMS
   gsl_spline* SILACFiltering::spline_spl_ = 0;
   DoubleReal SILACFiltering::mz_min_ = 0;  
 
-  SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks)
-    : exp_(exp)
+  SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase)
+    : exp_(exp),
+      debug_filebase(debug_filebase)
   {
     intensity_cutoff_ = intensity_cutoff;
     intensity_correlation_ = intensity_correlation;
@@ -77,8 +78,12 @@ namespace OpenMS
     picker.setParameters(param);
 
     picker.pickExperiment(exp_, picked_exp_);
-    MzMLFile mz_data_file;
-    mz_data_file.store("debug_picked.mzML", picked_exp_);
+
+    if (debug_filebase != "")
+    {
+      MzMLFile mz_data_file;
+      mz_data_file.store(debug_filebase + ".filtering.picked.mzML", picked_exp_);
+    }
 
     // Initialize seeds map
     picked_exp_seeds_ = picked_exp_;
@@ -120,8 +125,11 @@ namespace OpenMS
     picked_exp_seeds_.sortSpectra(true);
     endProgress();
 
-    MzMLFile mz_data_file;
-    mz_data_file.store("debug_filtered_seeds.mzML", picked_exp_seeds_);
+    if (debug_filebase != "")
+    {
+      MzMLFile mz_data_file;
+      mz_data_file.store(debug_filebase + ".filtering.filtered_seeds.mzML", picked_exp_seeds_);
+    }
   }
 
   void SILACFiltering::filterDataPoints()

@@ -101,6 +101,10 @@ namespace OpenMS
     */
    MSExperiment<Peak1D> picked_exp_seeds_;
 
+   /**
+    * Filename base for debugging output
+    */
+   const String debug_filebase;
 
    /**
     * @brief pick data seeds
@@ -121,7 +125,7 @@ namespace OpenMS
    * @param intensity_correlation minimal intensity correlation between regions of different peaks
    * @param allow_missing_peaks flag for missing peaks
    */
-   SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks);
+   SILACFiltering(MSExperiment<Peak1D>& exp, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase = "");
 
   /**
    * @brief default constructor

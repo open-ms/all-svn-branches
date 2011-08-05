@@ -40,7 +40,7 @@ const TestGrid::ClusterCenter cell_dimension = {{1, 1}};
 
 START_TEST(HashGrid, "$Id$")
 
-START_SECTION(HashGrid::grid_dimension)
+START_SECTION(HashGrid(const ClusterCenter &cell_dimension))
 {
   TestGrid t(cell_dimension);
   TEST_EQUAL(t.grid_dimension[0], 0);
@@ -48,7 +48,7 @@ START_SECTION(HashGrid::grid_dimension)
 }
 END_SECTION
 
-START_SECTION(local_iterator insert(const value_type& obj))
+START_SECTION(cell_iterator insert(const value_type &v))
 {
   TestGrid t(cell_dimension);
   const TestGrid::ClusterCenter key1 = {{1, 2}};
@@ -75,7 +75,7 @@ START_SECTION(size_type erase(const key_type& key))
 }
 END_SECTION
 
-START_SECTION(void clear)
+START_SECTION(void clear())
 {
   TestGrid t(cell_dimension);
   t.clear();

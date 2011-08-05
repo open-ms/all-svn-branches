@@ -37,15 +37,23 @@ const Coordinate cluster_dimension = {{1, 1}};
 
 START_TEST(HierarchicalClustering, "$Id$")
 
-START_SECTION(insertPoint)
+START_SECTION(HierarchicalClustering(const PointCoordinate &cluster_dimension))
 {
   Test t(cluster_dimension);
-  const Coordinate coord = {{0, 0}};
-  t.insertPoint(coord, 0);
 }
 END_SECTION
 
-START_SECTION(cluster)
+START_SECTION(typename Grid::cell_iterator insertPoint(const PointCoordinate &d, const PointRef &ref))
+{
+  Test t(cluster_dimension);
+  const Coordinate coord1 = {{0, 0}};
+  t.insertPoint(coord1, 0);
+  const Coordinate coord2 = {{1, 1}};
+  t.insertPoint(coord2, 0);
+}
+END_SECTION
+
+START_SECTION(void cluster())
 {
   Test t(cluster_dimension);
   t.cluster();

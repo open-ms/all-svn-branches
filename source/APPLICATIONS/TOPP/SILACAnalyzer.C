@@ -121,7 +121,7 @@ typedef vector<SILACPattern*> Cluster;
   - out [*.consensusXML] - contains the list of identified peptides (retention time and m/z of the lightest peptide, ratios)
 
   <i>optional output:</i>
-  - out_clusters [*.featureXML] - contains the complete set of data points passing the filters, see Fig. (e)
+  - out_clusters [*.consensusXML] - contains the complete set of data points passing the filters, see Fig. (e)
 
   The results of an analysis can easily visualized within TOPPView. Simply load *.consensusXML and *.featureXML as layers over the original *.mzML.
 
@@ -221,7 +221,7 @@ class TOPPSILACAnalyzer
     setValidFormats_("out", StringList::create("consensusXML"));
     // create optional flag for additional clusters output file (.featureXML)
     registerOutputFile_("out_clusters", "<file>", "", "Optional output file containing data points passing all filters, hence belonging to a SILAC pattern. Points of the same colour correspond to the mono-isotopic peak of the lightest peptide in a pattern.", false, true);
-    setValidFormats_("out_clusters", StringList::create("featureXML"));
+    setValidFormats_("out_clusters", StringList::create("consensusXML"));
 
     // create optional flag for additional output file (.consensusXML) to store filter results
     registerOutputFile_("out_filters", "<file>", "", "Additional output file containing all points that passed the filters as txt. Suitable as input for \"in_filters\" to perform clustering without preceding filtering process.", false, true);
@@ -336,7 +336,7 @@ class TOPPSILACAnalyzer
     in = getStringOption_("in");
     // get name of output file (.consensusXML)
     out = getStringOption_("out");
-    // get name of additional clusters output file (.featureXML)
+    // get name of additional clusters output file (.consensusXML)
     out_clusters = getStringOption_("out_clusters");
 
     // get name of additional filters output file (.consensusXML)
@@ -1067,19 +1067,24 @@ class TOPPSILACAnalyzer
     // write output
     //--------------------------------------------------------------
 
-    // consensusXML
     if (out != "")
     {
       ConsensusMap map;
       for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
+      {
         generateClusterConsensusByCluster(map, **it);
+      }
       writeConsensus(out, map);
     }
 
-    // featureXML
     if (out_clusters != "")
     {
-      writeFilePoints(out_clusters);
+      ConsensusMap map;
+      for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
+      {
+        generateClusterConsensusByPattern(map, **it);
+      }
+      writeConsensus(out_clusters, map);
     }
 
     return EXECUTION_OK;
@@ -1147,16 +1152,6 @@ void TOPPSILACAnalyzer::clusterData()
     clustering->cluster();
 
     cluster_data.push_back(clustering);
-  }
-
-  if (out_debug != "")
-  {
-    ConsensusMap out;
-    for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
-    {
-      generateClusterConsensusByPattern(out, **it);
-    }
-    writeConsensus(out_debug + ".by-pattern.consensusXML", out);
   }
 
   progresslogger.endProgress();

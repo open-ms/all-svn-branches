@@ -129,7 +129,6 @@ typedef vector<SILACPattern*> Cluster;
   - <i>allow_missing_peaks</i> - Low intensity peaks might be missing from the isotopic pattern of some of the peptides. Specify if such peptides should be included in the analysis.
   - <i>mz_threshold</i> - Upper bound for the width [Th] of an isotopic peak.
   - <i>rt_threshold</i> - Upper bound for the retention time [s] over which a characteristic peptide elutes.
-  - <i>rt_scaling</i> - Scaling factor for retention times. Height [s] and width [Th] of clusters in out_clusters should be of about the same order. The clustering algorithm works best for symmetric clusters. In the majority of cases, the ratio ( mz_threshold / rt_threshold ) should work well.
   - <i>intensity_cutoff</i> - Lower bound for the intensity of isotopic peaks in a SILAC pattern.
   - <i>intensity_correlation</i> - Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.
   - <i>model_deviation</i> - Upper bound on the factor by which the ratios of observed isotopic peaks are allowed to differ from the ratios of the theoretic averagine model, i.e. ( theoretic_ratio / model_deviation ) < observed_ratio < ( theoretic_ratio * model_deviation ).
@@ -180,7 +179,6 @@ class TOPPSILACAnalyzer
     // section "algorithm"
     DoubleReal mz_threshold;
     DoubleReal rt_threshold;
-    DoubleReal rt_scaling;
     DoubleReal intensity_cutoff;
     DoubleReal intensity_correlation;
     DoubleReal model_deviation;
@@ -311,8 +309,6 @@ class TOPPSILACAnalyzer
       defaults.setMinFloat("mz_threshold", 0.0);
       defaults.setValue("rt_threshold", 50.0, "Upper bound for the retention time [s] over which a characteristic peptide elutes. ");
       defaults.setMinFloat("rt_threshold", 0.0);
-      defaults.setValue("rt_scaling", 0.002, "Scaling factor for retention times. Height [s] and width [Th] of clusters in out_clusters should be of about the same order. The clustering algorithm works best for symmetric clusters. In the majority of cases, the ratio ( mz_threshold / rt_threshold ) should work well.");
-      defaults.setMinFloat("rt_scaling", 0.0);
       defaults.setValue("intensity_cutoff", 10000.0, "Lower bound for the intensity of isotopic peaks in a SILAC pattern.");
       defaults.setMinFloat("intensity_cutoff", 10.0);
       defaults.setValue("intensity_correlation", 0.9, "Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.");
@@ -427,8 +423,6 @@ class TOPPSILACAnalyzer
     mz_threshold = getParam_().getValue("algorithm:mz_threshold");
     // get selected rt_threshold
     rt_threshold = getParam_().getValue("algorithm:rt_threshold");
-    // get selected rt_scaling
-    rt_scaling = getParam_().getValue("algorithm:rt_scaling");
     // get selected intensity_cutoff
     intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
     // get selected intensity_correlation

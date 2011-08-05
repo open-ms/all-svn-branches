@@ -871,12 +871,13 @@ void TOPPSILACAnalyzer::clusterData()
 
   ProgressLogger progresslogger;
   progresslogger.setLogType(log_type_);
-
   progresslogger.startProgress(0, data.size(), "clustering data");
 
-  UInt nr = 0;
+  UInt data_id = 0;
 
-  for (vector<vector<SILACPattern> >::iterator data_it = data.begin(); data_it != data.end(); ++data_it, ++nr)
+  for (vector<vector<SILACPattern> >::iterator data_it = data.begin();
+       data_it != data.end();
+       ++data_it, ++data_id)
   {
     const PointCoordinate max_delta = {{rt_threshold, mz_threshold}};
     Clustering *clustering = new Clustering(max_delta);
@@ -891,6 +892,8 @@ void TOPPSILACAnalyzer::clusterData()
     clustering->cluster();
 
     cluster_data.push_back(clustering);
+
+    progresslogger.setProgress(data_id);
   }
 
   progresslogger.endProgress();

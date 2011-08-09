@@ -816,6 +816,14 @@ class TOPPSILACAnalyzer
       {
         generateClusterConsensusByCluster(map, **it);
       }
+      ConsensusMap::FileDescription desc;
+      desc.filename = out_clusters;
+      desc.size = cluster_data.size();
+      for (Size i = 0; i < 2; ++i)
+      {
+        desc.label = String(i);
+        map.getFileDescriptions()[i] = (desc);
+      }
       writeConsensus(out, map);
     }
 
@@ -826,6 +834,16 @@ class TOPPSILACAnalyzer
       {
         generateClusterConsensusByPattern(map, **it);
       }
+      ConsensusMap::FileDescription desc;
+      desc.filename = out_clusters;
+      desc.size = cluster_data.size();
+      for (Size i = 0; i < 2; ++i)
+      {
+        desc.label = String(i);
+        map.getFileDescriptions()[i] = (desc);
+      }
+      
+      
       writeConsensus(out_clusters, map);
     }
 

@@ -205,7 +205,12 @@ namespace OpenMS
       ConsensusMap::FileDescription desc;
       desc.filename = filename;
       desc.size = input.size() - offset;
-      consensus_map.getFileDescriptions()[0] = desc;
+      //consensus_map.getFileDescriptions()[0] = desc;
+      for (Size i = 0; i < input_features-1; ++i)
+      {
+        desc.label = String(i);
+        consensus_map.getFileDescriptions()[i] = (desc);
+      }
 
       // parsing features
       consensus_map.reserve(input.size());

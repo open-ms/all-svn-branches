@@ -816,14 +816,16 @@ class TOPPSILACAnalyzer
       {
         generateClusterConsensusByCluster(map, **it);
       }
-      ConsensusMap::FileDescription desc;
-      desc.filename = out_clusters;
-      desc.size = cluster_data.size();
-      for (Size i = 0; i < 2; ++i)
+
+      // XXX: Need a map per mass shift
+      ConsensusMap::FileDescriptions &desc = map.getFileDescriptions();
+      UInt id = 0;
+      for (ConsensusMap::FileDescriptions::iterator it = desc.begin(); it != desc.end(); ++it, ++id)
       {
-        desc.label = String(i);
-        map.getFileDescriptions()[i] = (desc);
+        it->second.filename = in;
+        it->second.label = id;
       }
+
       writeConsensus(out, map);
     }
 
@@ -834,15 +836,10 @@ class TOPPSILACAnalyzer
       {
         generateClusterConsensusByPattern(map, **it);
       }
-      ConsensusMap::FileDescription desc;
-      desc.filename = out_clusters;
-      desc.size = cluster_data.size();
-      for (Size i = 0; i < 2; ++i)
-      {
-        desc.label = String(i);
-        map.getFileDescriptions()[i] = (desc);
-      }
-      
+
+      ConsensusMap::FileDescription &desc = map.getFileDescriptions()[0];
+      desc.filename = in;
+      desc.label = "Cluster";
       
       writeConsensus(out_clusters, map);
     }
@@ -983,7 +980,8 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
           point.setRT(total_rt);
           point.setMZ(total_mz + pattern_max->mass_shifts[i]);
           point.setIntensity(total_intensities[i]);
-          point.setUniqueId(i);
+          point.setMapIndex(i);
+          out.getFileDescriptions()[i].size++;
 
           cluster.insert(point);
 
@@ -1021,6 +1019,8 @@ void TOPPSILACAnalyzer::generateClusterConsensusByPattern(ConsensusMap &out, con
         consensus.setMetaValue("color", selectColor(cluster_id));
         consensus.setMetaValue("Cluster ID", cluster_id);
         consensus.setMetaValue("Cell ID", cell_id);
+
+        out.getFileDescriptions()[0].size++;
 
         out.push_back(consensus);
       }

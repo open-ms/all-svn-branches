@@ -156,6 +156,7 @@ class TOPPSILACAnalyzer
     String in;
     String out;
     String out_clusters;    
+    String out_features;    
 
     String out_filters;
     String in_filters;
@@ -211,6 +212,8 @@ class TOPPSILACAnalyzer
     // create optional flag for additional clusters output file (.featureXML)
     registerOutputFile_("out_clusters", "<file>", "", "Optional output file containing data points passing all filters, hence belonging to a SILAC pattern. Points of the same colour correspond to the mono-isotopic peak of the lightest peptide in a pattern.", false, true);
     setValidFormats_("out_clusters", StringList::create("consensusXML"));
+    registerOutputFile_("out_features", "<file>", "", "Optional output file containing features.", false, true);
+    setValidFormats_("out_features", StringList::create("featureXML"));
 
     // create optional flag for additional output file (.consensusXML) to store filter results
     registerOutputFile_("out_filters", "<file>", "", "Additional output file containing all points that passed the filters as txt. Suitable as input for \"in_filters\" to perform clustering without preceding filtering process.", false, true);
@@ -325,6 +328,7 @@ class TOPPSILACAnalyzer
     out = getStringOption_("out");
     // get name of additional clusters output file (.consensusXML)
     out_clusters = getStringOption_("out_clusters");
+    out_features = getStringOption_("out_features");
 
     // get name of additional filters output file (.consensusXML)
     out_filters = getStringOption_("out_filters");
@@ -844,6 +848,17 @@ class TOPPSILACAnalyzer
       writeConsensus(out_clusters, map);
     }
 
+    if (out_features != "")
+    {
+      FeatureMap<> map;
+      for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
+      {
+        generateClusterFeatureByCluster(map, **it);
+      }
+
+      writeFeatures(out_features, map);
+    }
+
     return EXECUTION_OK;
   }
 
@@ -854,6 +869,7 @@ private:
   void generateClusterConsensusByPattern(ConsensusMap &, const Clustering &) const;
   void generateFilterConsensusByPattern(ConsensusMap &, const std::vector<SILACPattern> &) const;
   ConsensusFeature generateSingleConsensusByPattern(const SILACPattern &) const;
+  void generateClusterFeatureByCluster(FeatureMap<> &, const Clustering &) const;
   void readFilterConsensusByPattern(ConsensusMap &);
 
   static const String &selectColor(UInt nr);
@@ -872,6 +888,15 @@ private:
 
     ConsensusXMLFile c_file;
     c_file.store(filename, out);
+  }
+
+  void writeFeatures(const String &filename, FeatureMap<> &out) const
+  {
+    out.sortByPosition();
+    out.applyMemberFunction(&UniqueIdInterface::setUniqueId);
+
+    FeatureXMLFile f_file;
+    f_file.store(filename, out);
   }
 };
 
@@ -1097,6 +1122,88 @@ ConsensusFeature TOPPSILACAnalyzer::generateSingleConsensusByPattern(const SILAC
   }
 
   return consensus;
+}
+
+void TOPPSILACAnalyzer::generateClusterFeatureByCluster(FeatureMap<> &out, const Clustering &clustering) const
+{
+  for (Clustering::Grid::const_grid_iterator cell_it = clustering.grid.grid_begin(); cell_it != clustering.grid.grid_end(); ++cell_it)
+  {
+    for (Clustering::Grid::const_cell_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
+    {
+      Feature cluster;
+
+      DoubleReal total_rt = 0;
+      DoubleReal total_mz = 0;
+      DoubleReal total_intensity = 0;
+
+      // Hulls per mass shift and peak
+      std::map<std::pair<UInt, UInt>, ConvexHull2D> hulls;
+
+      // Iterator over every pattern
+      Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
+      SILACPattern *pattern_max = &*pattern_it->second;
+      for (; pattern_it != cluster_it->second.end(); ++pattern_it)
+      {
+        SILACPattern *pattern = &*pattern_it->second;
+
+        DoubleReal intensity_mono = pattern->intensities[0][0];
+
+        // Check for pattern with maximum intensity
+        if (pattern_max->intensities[0][0] < intensity_mono)
+        {
+          pattern_max = pattern;
+        }
+
+        // add monoisotopic RT/MZ position of the light peak to the total RT/MZ value, weighted by the intensity
+        total_rt += intensity_mono * pattern->rt;
+        total_mz += intensity_mono * pattern->mz;
+        // add monoisotopic intensity
+        total_intensity += intensity_mono;
+
+        // Iterator over every mass shift
+        UInt shift_id = 0;
+        vector<DoubleReal>::const_iterator shift_it = pattern->mass_shifts.begin();
+        vector<vector<DoubleReal> >::const_iterator inten_it = pattern->intensities.begin();
+        for (;
+             shift_it != pattern->mass_shifts.end() && inten_it != pattern->intensities.end();
+             ++shift_id, ++shift_it, ++inten_it)
+        {
+          // Iterate over every peak of one mass shift
+          UInt peak_inten_id = 0;
+          vector<DoubleReal>::const_iterator peak_inten_it = inten_it->begin();
+          DoubleReal peak_inten_mz = pattern->mz + *shift_it;
+          for (;
+               peak_inten_it != inten_it->end();
+               ++peak_inten_id, ++peak_inten_it, peak_inten_mz += 1. / pattern->charge)
+          {
+            DPosition<2> p(pattern->rt, peak_inten_mz);
+            hulls[std::make_pair(shift_id, peak_inten_id)].addPoint(p);
+          }
+        }
+      }
+
+      // Add all convex hulls to the cluster
+      for (std::map<std::pair<UInt, UInt>, ConvexHull2D>::const_iterator hulls_it = hulls.begin();
+           hulls_it != hulls.end();
+           ++hulls_it)
+      {
+        cluster.getConvexHulls().push_back(hulls_it->second);
+      }
+
+      // XXX: Real quality?
+      cluster.setOverallQuality(1);
+      cluster.setCharge(pattern_max->charge);
+
+      // Average RT of monoisotopic peak
+      cluster.setRT(total_rt / total_intensity);
+      // Average MZ of monoisotopic peak
+      cluster.setMZ(total_mz / total_intensity);
+      // XXX: Max intensity or sum?
+      cluster.setIntensity(total_intensity);
+
+      out.push_back(cluster);
+    }
+  }
 }
 
 void TOPPSILACAnalyzer::readFilterConsensusByPattern(ConsensusMap &in)

@@ -30,6 +30,7 @@
 
 #include <OpenMS/COMPARISON/CLUSTERING/Hasher.h>
 #include <OpenMS/CONCEPT/Types.h>
+#include <OpenMS/DATASTRUCTURES/DPosition.h>
 
 #ifndef OPENMS_COMPARISON_CLUSTERING_HASHGRID_H
 #define OPENMS_COMPARISON_CLUSTERING_HASHGRID_H
@@ -54,12 +55,12 @@ namespace OpenMS
        * @brief Coordinate for stored pairs.
        */
       // XXX: Check is there is another type handy in OpenMS allready
-      typedef boost::array<DoubleReal, 2> ClusterCenter;
+      typedef DPosition<2, DoubleReal> ClusterCenter;
 
       /**
        * @brief Index for cells.
        */
-      typedef boost::array<UInt, 2> CellIndex;
+      typedef DPosition<2, UInt> CellIndex;
 
       /**
        * @brief Contents of a cell.

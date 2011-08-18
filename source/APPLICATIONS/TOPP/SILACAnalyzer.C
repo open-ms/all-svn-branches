@@ -915,12 +915,12 @@ void TOPPSILACAnalyzer::clusterData()
        data_it != data.end();
        ++data_it, ++data_id)
   {
-    const PointCoordinate max_delta = {{rt_threshold, mz_threshold}};
+    const PointCoordinate max_delta(rt_threshold, mz_threshold);
     Clustering *clustering = new Clustering(max_delta);
 
     for (vector<SILACPattern>::iterator it = data_it->begin(); it != data_it->end(); ++it)
     {
-      const PointCoordinate key = {{it->rt, it->mz}};
+      const PointCoordinate key(it->rt, it->mz);
       SILACPattern &p = *it;
       clustering->insertPoint(key, &p);
     }

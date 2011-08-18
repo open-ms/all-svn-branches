@@ -62,7 +62,7 @@ namespace OpenMS
        * @brief Coordinate of a point to be clustered.
        *  @attention To be replaced by a OpenMS coordinate type.
        */
-      typedef boost::array<DoubleReal, 2> PointCoordinate;
+      typedef DPosition<2, DoubleReal> PointCoordinate;
 
      /**
        * @brief Set of points.

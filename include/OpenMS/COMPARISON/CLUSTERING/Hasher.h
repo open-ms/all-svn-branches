@@ -28,17 +28,18 @@
 #ifndef OPENMS_COMPARISON_CLUSTERING_HASHER_H
 #define OPENMS_COMPARISON_CLUSTERING_HASHER_H
 
-#include <boost/array.hpp>
+#include <OpenMS/CONCEPT/Types.h>
+#include <OpenMS/DATASTRUCTURES/DPosition.h>
 
-namespace boost
+namespace OpenMS
 {
-  /** Hash Value for boost::array. */
-  template <class T, std::size_t N>
-  std::size_t hash_value(const array<T, N>& b)
+  /** Hash Value for OpenMS::DPosition. */
+  template <UInt N, typename T>
+  std::size_t hash_value(const DPosition<N, T> &b)
   {
     boost::hash<T> hasher;
     std::size_t hash = 0;
-    for (typename array<T, N>::const_iterator it = b.begin(); it != b.end(); ++it) hash ^= hasher(*it);
+    for (typename DPosition<N, T>::const_iterator it = b.begin(); it != b.end(); ++it) hash ^= hasher(*it);
     return hash;
   }
 }

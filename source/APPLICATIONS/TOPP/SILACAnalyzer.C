@@ -29,6 +29,7 @@
 #include <OpenMS/config.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
+#include <OpenMS/DATASTRUCTURES/DBoundingBox.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/KERNEL/ConsensusMap.h>
@@ -1130,78 +1131,104 @@ void TOPPSILACAnalyzer::generateClusterFeatureByCluster(FeatureMap<> &out, const
   {
     for (Clustering::Grid::const_cell_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
     {
-      Feature cluster;
-
+      // Global RT value as weighted RT position of all peaks
       DoubleReal total_rt = 0;
-      DoubleReal total_mz = 0;
+      // Total intensity
       DoubleReal total_intensity = 0;
 
-      // Hulls per mass shift and peak
-      std::map<std::pair<UInt, UInt>, ConvexHull2D> hulls;
-
-      // Iterator over every pattern
-      Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
-      SILACPattern *pattern_max = &*pattern_it->second;
-      for (; pattern_it != cluster_it->second.end(); ++pattern_it)
+      for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
+           pattern_it != cluster_it->second.end();
+           ++pattern_it)
       {
-        SILACPattern *pattern = &*pattern_it->second;
+        SILACPattern &pattern = *pattern_it->second;
 
-        DoubleReal intensity_mono = pattern->intensities[0][0];
-
-        // Check for pattern with maximum intensity
-        if (pattern_max->intensities[0][0] < intensity_mono)
+        for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = pattern.intensities.begin();
+             shift_inten_it != pattern.intensities.end();
+             ++shift_inten_it)
         {
-          pattern_max = pattern;
-        }
-
-        // add monoisotopic RT/MZ position of the light peak to the total RT/MZ value, weighted by the intensity
-        total_rt += intensity_mono * pattern->rt;
-        total_mz += intensity_mono * pattern->mz;
-        // add monoisotopic intensity
-        total_intensity += intensity_mono;
-
-        // Iterator over every mass shift
-        UInt shift_id = 0;
-        vector<DoubleReal>::const_iterator shift_it = pattern->mass_shifts.begin();
-        vector<vector<DoubleReal> >::const_iterator inten_it = pattern->intensities.begin();
-        for (;
-             shift_it != pattern->mass_shifts.end() && inten_it != pattern->intensities.end();
-             ++shift_id, ++shift_it, ++inten_it)
-        {
-          // Iterate over every peak of one mass shift
-          UInt peak_inten_id = 0;
-          vector<DoubleReal>::const_iterator peak_inten_it = inten_it->begin();
-          DoubleReal peak_inten_mz = pattern->mz + *shift_it;
-          for (;
-               peak_inten_it != inten_it->end();
-               ++peak_inten_id, ++peak_inten_it, peak_inten_mz += 1. / pattern->charge)
+          for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
+               peak_inten_it != shift_inten_it->end();
+               ++peak_inten_it)
           {
-            DPosition<2> p(pattern->rt, peak_inten_mz);
-            hulls[std::make_pair(shift_id, peak_inten_id)].addPoint(p);
+            DoubleReal intensity = *peak_inten_it;
+
+            // Add to global RT value and total intensity
+            total_rt += intensity * pattern.rt;
+            total_intensity += intensity;
           }
         }
       }
 
-      // Add all convex hulls to the cluster
-      for (std::map<std::pair<UInt, UInt>, ConvexHull2D>::const_iterator hulls_it = hulls.begin();
-           hulls_it != hulls.end();
-           ++hulls_it)
+      // Calculate global RT value
+      total_rt /= total_intensity;
+
+      SILACPattern &pattern_first = *cluster_it->second.begin()->second;
+
+      for (UInt shift_id = 0; shift_id < pattern_first.mass_shifts.size(); ++shift_id)
       {
-        cluster.getConvexHulls().push_back(hulls_it->second);
+        Feature cluster;
+
+        // Global MZ value as weighted MZ position of all peaks of given mass shift
+        DoubleReal total_mz = 0;
+        // Total intensity of monoisotopic peak
+        DoubleReal total_intensity0 = 0;
+
+        // Bounding box per peak
+        std::map<UInt, DBoundingBox<2> > bboxs;
+
+        for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
+             pattern_it != cluster_it->second.end();
+             ++pattern_it)
+        {
+          SILACPattern &pattern = *pattern_it->second;
+
+          const std::vector<DoubleReal> &intensities = pattern.intensities[shift_id];
+          DoubleReal mz = pattern.mz + pattern.mass_shifts[shift_id];
+          DoubleReal intensity0 = intensities[0];
+
+          // Add to global MZ value and total intensity of monoisotopic peak
+          total_mz += intensity0 * mz;
+          total_intensity0 += intensity0;
+
+          // Iterator over every peak
+          UInt peak_id = 0;
+          std::vector<DoubleReal>::const_iterator peak_inten_it = intensities.begin();
+          DoubleReal peak_mz = mz;
+          for (;
+               peak_inten_it != intensities.end();
+               ++peak_id, ++peak_inten_it, peak_mz += 1. / pattern.charge)
+          {
+            bboxs[peak_id].enlarge(pattern.rt, peak_mz);
+          }
+        }
+
+        // Add each bbox as convex hulls to the cluster
+        for (std::map<UInt, DBoundingBox<2> >::const_iterator bboxs_it = bboxs.begin();
+             bboxs_it != bboxs.end();
+             ++bboxs_it)
+        {
+          ConvexHull2D hull;
+          hull.addPoint(bboxs_it->second.min_);
+          hull.addPoint(bboxs_it->second.max_);
+          cluster.getConvexHulls().push_back(hull);
+        }
+
+        // XXX: Real quality?
+        cluster.setOverallQuality(1);
+        cluster.setCharge(pattern_first.charge);
+
+        // Calculate global MZ value
+        total_mz /= total_intensity0;
+
+        // Average RT of monoisotopic peak
+        cluster.setRT(total_rt);
+        // Average MZ of monoisotopic peak
+        cluster.setMZ(total_mz);
+        // Overall intensity
+        cluster.setIntensity(total_intensity);
+
+        out.push_back(cluster);
       }
-
-      // XXX: Real quality?
-      cluster.setOverallQuality(1);
-      cluster.setCharge(pattern_max->charge);
-
-      // Average RT of monoisotopic peak
-      cluster.setRT(total_rt / total_intensity);
-      // Average MZ of monoisotopic peak
-      cluster.setMZ(total_mz / total_intensity);
-      // XXX: Max intensity or sum?
-      cluster.setIntensity(total_intensity);
-
-      out.push_back(cluster);
     }
   }
 }

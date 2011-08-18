@@ -101,10 +101,20 @@ namespace OpenMS
     */
    MSExperiment<Peak1D> picked_exp_seeds_;
 
+   /// Slope of peak-width equation
+   DoubleReal peak_width_slope;
+   /// Intercept of peak-width equation
+   DoubleReal peak_width_intercept;
+
    /**
     * Filename base for debugging output
     */
    const String debug_filebase;
+
+   /// Predict peak width
+   void checkPeakWidth();
+   /// Return predicted peak width
+   DoubleReal getPeakWidth(DoubleReal mz) const;
 
    /**
     * @brief pick data seeds

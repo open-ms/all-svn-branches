@@ -28,6 +28,7 @@
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/MATH/MISC/LinearInterpolation.h>
 #include <OpenMS/FORMAT/MzMLFile.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/PeakWidthEstimator.h>
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerHiRes.h>
 
 #include <iostream>
@@ -65,6 +66,25 @@ namespace OpenMS
   SILACFiltering::~SILACFiltering()
   {
 
+  }
+
+  void SILACFiltering::checkPeakWidth()
+  {
+#if 0
+    startProgress(0, 1, "checking peak width");
+    PeakWidthEstimator e;
+    e.estimateFWHM(exp_, peak_width_intercept, peak_width_slope);
+    std::cout << "got: " << peak_width_slope << " * mz + " << peak_width_intercept << std::endl;
+    endProgress();
+#endif
+  }
+
+  DoubleReal SILACFiltering::getPeakWidth(DoubleReal mz) const
+  {
+#if 0
+    return 2 * (peak_width_slope * mz + peak_width_intercept);
+#endif
+    return 5*(1.889e-7*pow(mz,1.5));
   }
 
   void SILACFiltering::pickSeeds()
@@ -110,7 +130,7 @@ namespace OpenMS
          {
            DoubleReal picked_mz = picked_mz_it->getMZ();
 
-           bool isSILAC = (*filter_it)->isSILACPatternPicked_(rt, picked_mz, picked_mz, picked_exp_);
+           bool isSILAC = (*filter_it)->isSILACPatternPicked_(rt, picked_mz, picked_mz, *this);
 
            if (isSILAC)
            {
@@ -134,6 +154,7 @@ namespace OpenMS
 
   void SILACFiltering::filterDataPoints()
   {
+    checkPeakWidth();
     pickSeeds();
     filterSeeds();
 
@@ -169,7 +190,7 @@ namespace OpenMS
           // Fill intensity and m/z vector for interpolation. Add zeros in the area with no data points to improve cubic spline fit
           for (MSSpectrum<>::Iterator mz_interpol_it = rt_it->begin(); mz_interpol_it != rt_it->end(); ++mz_interpol_it)
           {
-            DoubleReal peakwidth = SILACFilter::getPeakWidth(last_mz);
+            DoubleReal peakwidth = getPeakWidth(last_mz);
             if (mz_interpol_it->getMZ() > last_mz + peakwidth) // If the mz gap is rather larger, fill in zeros. These addtional Stützstellen improve interpolation where no signal (i.e. data points) is.
             {
               for (DoubleReal current_mz = last_mz + peakwidth; current_mz < mz_interpol_it->getMZ() - peakwidth; current_mz += peakwidth)
@@ -219,10 +240,10 @@ namespace OpenMS
 
             // XXX: Extract peaks again
             SILACPattern pattern;
-            if (!(*filter_it)->extractMzShiftsAndIntensitiesPickedToPattern(rt, picked_mz, picked_mz, picked_exp_, pattern))
+            if (!(*filter_it)->extractMzShiftsAndIntensitiesPickedToPattern(rt, picked_mz, picked_mz, *this, pattern))
               continue;
 
-            for (DoubleReal mz = picked_mz - SILACFilter::getPeakWidth(picked_mz); mz < picked_mz + SILACFilter::getPeakWidth(picked_mz); mz += 0.1 * SILACFilter::getPeakWidth(picked_mz) ) // iteration correct
+            for (DoubleReal mz = picked_mz - getPeakWidth(picked_mz); mz < picked_mz + getPeakWidth(picked_mz); mz += 0.1 * getPeakWidth(picked_mz) ) // iteration correct
             {
               //--------------------------------------------------
               // BLACKLIST FILTER
@@ -276,13 +297,13 @@ namespace OpenMS
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
               {
-                if ((*filter_it)->isSILACPattern_(rt, mz, picked_mz, picked_exp_, pattern))      // Check if the mz at the given position is a SILAC pair
+                if ((*filter_it)->isSILACPattern_(rt, mz, picked_mz, *this, pattern))      // Check if the mz at the given position is a SILAC pair
                 {
                   //--------------------------------------------------
                   // FILLING THE BLACKLIST
                   //--------------------------------------------------
 
-                  DoubleReal peak_width = SILACFilter::getPeakWidth(mz);
+                  DoubleReal peak_width = getPeakWidth(mz);
 
                   // loop over the individual isotopic peaks of the SILAC pattern (and blacklist the area around them)
                   const vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();

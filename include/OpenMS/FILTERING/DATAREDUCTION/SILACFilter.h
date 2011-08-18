@@ -279,16 +279,16 @@ namespace OpenMS
    * @param rt RT value of the position
    * @param mz m/z value of the position
    */
-   bool isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<>& picked_exp, SILACPattern &pattern);
+   bool isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &, SILACPattern &pattern);
 
 
-   bool isSILACPatternPicked_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp);
-   bool extractMzShiftsAndIntensities(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp);
-   bool extractMzShiftsAndIntensitiesPicked(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp);
-   bool extractMzShiftsAndIntensitiesPickedToPattern(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp, SILACPattern &pattern);
+   bool isSILACPatternPicked_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &);
+   bool extractMzShiftsAndIntensities(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &);
+   bool extractMzShiftsAndIntensitiesPicked(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &);
+   bool extractMzShiftsAndIntensitiesPickedToPattern(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &, SILACPattern &pattern);
    bool intensityFilter();
-   bool correlationFilter1(DoubleReal mz);
-   bool correlationFilter2(DoubleReal mz);
+   bool correlationFilter1(DoubleReal mz, const SILACFiltering &);
+   bool correlationFilter2(DoubleReal mz, const SILACFiltering &);
    bool averageneFilter(DoubleReal rt, DoubleReal mz);
 
    public:  
@@ -311,12 +311,6 @@ namespace OpenMS
    * @brief destructor
    */
    virtual ~SILACFilter();
-
-  /**
-   * @brief returns the predicted peak width at position mz
-   * @param mz mz position of the peak
-   */
-   static DoubleReal getPeakWidth(DoubleReal mz);
 
   /**
    * @brief gets the m/z values of all peaks , which belong the last identified feature

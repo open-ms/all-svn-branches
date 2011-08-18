@@ -84,7 +84,7 @@ namespace OpenMS
   }
 
 
-  bool SILACFilter::extractMzShiftsAndIntensities(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp)
+  bool SILACFilter::extractMzShiftsAndIntensities(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
   {
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 
@@ -104,7 +104,7 @@ namespace OpenMS
         DoubleReal expected_shift = mz_peptide_separations_[peptide] + isotope * isotope_distance_;
 
         // get picked version of current spectrum
-        MSExperiment<Peak1D>::ConstIterator rt_it = picked_exp.RTBegin(rt);
+        MSExperiment<Peak1D>::ConstIterator rt_it = f.picked_exp_.RTBegin(rt);
 
         // calculate expected position of next peak
         DoubleReal next_peak_expected = picked_mz + expected_shift;
@@ -121,7 +121,7 @@ namespace OpenMS
         DoubleReal deltaMZ;
 
         // check if error is small enough
-        if (nearestPeakError < getPeakWidth(mz)/3)
+        if (nearestPeakError < f.getPeakWidth(mz)/3)
         {
           deltaMZ = nearest_peak_mz - picked_mz;
         } else
@@ -182,7 +182,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::extractMzShiftsAndIntensitiesPicked(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp)
+  bool SILACFilter::extractMzShiftsAndIntensitiesPicked(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
   {
     //bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
     bool debug = false;
@@ -210,7 +210,7 @@ namespace OpenMS
         DoubleReal expected_shift = mz_peptide_separations_[peptide] + isotope * isotope_distance_;
 
         // get picked version of current spectrum
-        MSExperiment<Peak1D>::ConstIterator rt_it = picked_exp.RTBegin(rt);
+        MSExperiment<Peak1D>::ConstIterator rt_it = f.picked_exp_.RTBegin(rt);
 
         // calculate expected position of next peak
         DoubleReal next_peak_expected = picked_mz + expected_shift;
@@ -230,11 +230,11 @@ namespace OpenMS
 
         if(debug)
         {
-          cout << "exp_mz, mz, err, pw/2 " << next_peak_expected << " " << nearest_peak_mz << " " << nearestPeakError << " " << getPeakWidth(mz)/2.0 << endl;
+          cout << "exp_mz, mz, err, pw/2 " << next_peak_expected << " " << nearest_peak_mz << " " << nearestPeakError << " " << f.getPeakWidth(mz)/2.0 << endl;
         }
 
         // check if error is small enough
-        if (nearestPeakError < getPeakWidth(mz)/2.0)
+        if (nearestPeakError < f.getPeakWidth(mz)/2.0)
         {
           deltaMZ = nearest_peak_mz - picked_mz;
         } else
@@ -293,9 +293,9 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::extractMzShiftsAndIntensitiesPickedToPattern(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp, SILACPattern &pattern)
+  bool SILACFilter::extractMzShiftsAndIntensitiesPickedToPattern(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, SILACPattern &pattern)
   {
-    if (!extractMzShiftsAndIntensitiesPicked(rt, mz, picked_mz, picked_exp))
+    if (!extractMzShiftsAndIntensitiesPicked(rt, mz, picked_mz, f))
       return false;
 
     pattern.rt = rt;
@@ -339,7 +339,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::correlationFilter1(DoubleReal mz)
+  bool SILACFilter::correlationFilter1(DoubleReal mz, const SILACFiltering &f)
   {
     bool missing_peak_seen_yet = false;
 
@@ -349,7 +349,7 @@ namespace OpenMS
       {
         std::vector<DoubleReal> intensities1;    // intensities in region around first peak of peptide
         std::vector<DoubleReal> intensities2;    // intensities in region around following peak
-        DoubleReal mzWindow = 0.7 * getPeakWidth(mz);    // width of the window around m/z in which the correlation is calculated
+        DoubleReal mzWindow = 0.7 * f.getPeakWidth(mz);    // width of the window around m/z in which the correlation is calculated
 
         for (DoubleReal dmz = - mzWindow; dmz <= mzWindow; dmz += 0.2 * mzWindow)     // fill intensity vectors
         {
@@ -380,7 +380,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::correlationFilter2(DoubleReal mz)
+  bool SILACFilter::correlationFilter2(DoubleReal mz, const SILACFiltering &f)
   {
     if (!(number_of_peptides_ == 1 && exact_shifts_[0][0] == 0))     // If we are looking for single peptides, this filter is not needed.
     {
@@ -388,7 +388,7 @@ namespace OpenMS
       {
         std::vector<DoubleReal> intensities3;    // intensities in region around monoisotopic peak
         std::vector<DoubleReal> intensities4;    // intensities in region around first peak of following peptide
-        DoubleReal mzWindow = 0.7 * getPeakWidth(mz);    // width of the window around m/z in which the correlation is calculated
+        DoubleReal mzWindow = 0.7 * f. getPeakWidth(mz);    // width of the window around m/z in which the correlation is calculated
 
         for (DoubleReal dmz = - mzWindow; dmz <= mzWindow; dmz += 0.2 * mzWindow)     // fill intensity vectors
         {
@@ -468,12 +468,12 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp, SILACPattern &pattern)
+  bool SILACFilter::isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, SILACPattern &pattern)
   {
     current_mz_ = mz;
 
     // EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
-    if (!extractMzShiftsAndIntensities(rt, mz, picked_mz, picked_exp))
+    if (!extractMzShiftsAndIntensities(rt, mz, picked_mz, f))
     {
       return false;
     }
@@ -485,13 +485,13 @@ namespace OpenMS
     }
 
     // CORRELATION FILTER 1 (Check for every peptide that its mono-isotopic peak correlates with the following peaks)
-    if (!correlationFilter1(mz))
+    if (!correlationFilter1(mz, f))
     {
       return false;
     }
 
     // CORRELATION FILTER 2 (Check that the monoisotopic peak of the light (unlabeled) peptide correlates with the mono-isotopic peak of the labeled peptides)
-    if (!correlationFilter2(mz))
+    if (!correlationFilter2(mz, f))
     {
       return false;
     }
@@ -511,7 +511,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::isSILACPatternPicked_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const MSExperiment<Peak1D>& picked_exp)
+  bool SILACFilter::isSILACPatternPicked_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
   {
     current_mz_ = mz;
 
@@ -524,7 +524,7 @@ namespace OpenMS
     }
 
     // EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
-    if (!extractMzShiftsAndIntensitiesPicked(rt, mz, picked_mz, picked_exp))
+    if (!extractMzShiftsAndIntensitiesPicked(rt, mz, picked_mz, f))
     {
       return false;
     }
@@ -729,11 +729,6 @@ namespace OpenMS
     }
   }
 
-
-  DoubleReal SILACFilter::getPeakWidth(DoubleReal mz)
-  {
-    return 5*(1.889e-7*pow(mz,1.5));
-  }
 
   std::vector<DoubleReal> SILACFilter::getPeakPositions()
 	{

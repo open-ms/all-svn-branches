@@ -36,7 +36,7 @@ class Value
 };
 
 typedef OpenMS::HashGrid<Value> TestGrid;
-const TestGrid::ClusterCenter cell_dimension = {{1, 1}};
+const TestGrid::ClusterCenter cell_dimension(1, 1);
 
 START_TEST(HashGrid, "$Id$")
 
@@ -51,13 +51,13 @@ END_SECTION
 START_SECTION(cell_iterator insert(const value_type &v))
 {
   TestGrid t(cell_dimension);
-  const TestGrid::ClusterCenter key1 = {{1, 2}};
+  const TestGrid::ClusterCenter key1(1, 2);
   TestGrid::cell_iterator it = t.insert(std::make_pair(key1, TestGrid::mapped_type()));
   TEST_EQUAL(t.grid_dimension[0], key1[0]);
   TEST_EQUAL(t.grid_dimension[1], key1[1]);
   TEST_EQUAL(it->first[0], key1[0]);
   TEST_EQUAL(it->first[1], key1[1]);
-  const TestGrid::ClusterCenter key2 = {{2, 3}};
+  const TestGrid::ClusterCenter key2(2, 3);
   it = t.insert(std::make_pair(key2, TestGrid::mapped_type()));
   TEST_EQUAL(t.grid_dimension[0], key2[0]);
   TEST_EQUAL(t.grid_dimension[1], key2[1]);
@@ -69,7 +69,7 @@ END_SECTION
 START_SECTION(size_type erase(const key_type& key))
 {
   TestGrid t(cell_dimension);
-  const TestGrid::ClusterCenter key = {{1, 2}};
+  const TestGrid::ClusterCenter key(1, 2);
   t.insert(std::make_pair(key, TestGrid::mapped_type()));
   TEST_EQUAL(t.erase(key), 1);
 }
@@ -86,7 +86,7 @@ START_SECTION(const_grid_iterator grid_begin() const)
 {
   TestGrid t(cell_dimension);
   const TestGrid ct(t);
-  const TestGrid::ClusterCenter key = {{1, 2}};
+  const TestGrid::ClusterCenter key(1, 2);
   t.insert(std::make_pair(key, TestGrid::mapped_type()));
 }
 END_SECTION
@@ -104,7 +104,7 @@ START_SECTION(const typename Grid::mapped_type &grid_at(const CellIndex &x) cons
 {
   TestGrid t(cell_dimension);
   const TestGrid ct(t);
-  const TestGrid::CellIndex i = {{0, 0}};
+  const TestGrid::CellIndex i(0, 0);
   TEST_EXCEPTION(std::out_of_range, ct.grid_at(i));
 }
 END_SECTION

@@ -33,7 +33,7 @@ using namespace OpenMS;
 
 typedef OpenMS::HierarchicalClustering<UInt> Test;
 typedef Test::PointCoordinate Coordinate;
-const Coordinate cluster_dimension = {{1, 1}};
+const Coordinate cluster_dimension(1, 1);
 
 START_TEST(HierarchicalClustering, "$Id$")
 
@@ -46,9 +46,9 @@ END_SECTION
 START_SECTION(typename Grid::cell_iterator insertPoint(const PointCoordinate &d, const PointRef &ref))
 {
   Test t(cluster_dimension);
-  const Coordinate coord1 = {{0, 0}};
+  const Coordinate coord1(0, 0);
   t.insertPoint(coord1, 0);
-  const Coordinate coord2 = {{1, 1}};
+  const Coordinate coord2(1, 1);
   t.insertPoint(coord2, 0);
 }
 END_SECTION

@@ -827,8 +827,9 @@ class TOPPSILACAnalyzer
       UInt id = 0;
       for (ConsensusMap::FileDescriptions::iterator it = desc.begin(); it != desc.end(); ++it, ++id)
       {
-        it->second.filename = in;
-        it->second.label = id;
+        if (!test_mode_) it->second.filename = in;
+        // XXX: Write correct label
+        // it->second.label = id;
       }
 
       writeConsensus(out, map);

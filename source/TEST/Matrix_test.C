@@ -45,10 +45,11 @@ using namespace OpenMS;
 using namespace std;
 
 Matrix<int>* ptr = 0;
+Matrix<int>* nullPointer = 0;
 START_SECTION((Matrix()))
 {
 	ptr = new Matrix<int>;
-	TEST_NOT_EQUAL(ptr, 0);
+  TEST_NOT_EQUAL(ptr, nullPointer);
 
   Matrix<int> mi1;
 	TEST_EQUAL(mi1.size(),0);

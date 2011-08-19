@@ -49,7 +49,7 @@ namespace OpenMS
 		
 		@ingroup Visual
 	*/
-	class OPENMS_DLLAPI ColorSelector
+	class OPENMS_GUI_DLLAPI ColorSelector
 		: public QWidget
 	{
 		Q_OBJECT
@@ -57,19 +57,24 @@ namespace OpenMS
 		public:
 			/// Constructor
 			ColorSelector( QWidget * parent = 0);
+
 			/// Destructor
-			~ColorSelector();
-			
+			~ColorSelector();			
+
 			/// Returns the selected color
 			const QColor& getColor();
+
 			/// Sets the selected color
 			void setColor(const QColor&);
 			
 			/// Qt size hint
 			QSize sizeHint () const;
 		protected:
+      ///@name Remplemented Qt events
+      //@{
 			void paintEvent(QPaintEvent * e);
 			void mousePressEvent(QMouseEvent* e);
+      //@}
 			QColor color_;
 	};
 

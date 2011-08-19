@@ -41,9 +41,10 @@ START_TEST(EnzymaticDigestion, "$Id$")
 /////////////////////////////////////////////////////////////
 
 EnzymaticDigestion* e_ptr = 0;
+EnzymaticDigestion* e_nullPointer = 0;
 START_SECTION((EnzymaticDigestion()))
 	e_ptr = new EnzymaticDigestion;
-	TEST_NOT_EQUAL(e_ptr, 0)
+	TEST_NOT_EQUAL(e_ptr, e_nullPointer)
 END_SECTION
 
 START_SECTION([EXTRA] ~EnzymaticDigestion())
@@ -202,7 +203,23 @@ START_SECTION((void digest(const AASequence& protein, std::vector<AASequence>& o
 	TEST_EQUAL(out[2].toString(),"R")
 	TEST_EQUAL(out[3].toString(),"RK")
 	TEST_EQUAL(out[4].toString(),"KR")
-	
+
+
+  ed.digest(String("(ICPL:2H(4))ARCDRE"),out);
+  TEST_EQUAL(out.size(),5)
+  TEST_EQUAL(out[0].toString(),"(ICPL:2H(4))AR")
+  TEST_EQUAL(out[1].toString(),"CDR")
+  TEST_EQUAL(out[2].toString(),"E")
+  TEST_EQUAL(out[3].toString(),"(ICPL:2H(4))ARCDR")
+  TEST_EQUAL(out[4].toString(),"CDRE")
+
+  ed.digest(String("ARCDRE(Amidated)"),out);
+  TEST_EQUAL(out.size(),5)
+  TEST_EQUAL(out[0].toString(),"AR")
+  TEST_EQUAL(out[1].toString(),"CDR")
+  TEST_EQUAL(out[2].toString(),"E(Amidated)")
+  TEST_EQUAL(out[3].toString(),"ARCDR")
+  TEST_EQUAL(out[4].toString(),"CDRE(Amidated)")
 
   // with log L model:
   ed.setLogModelEnabled(true);

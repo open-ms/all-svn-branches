@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Chris Bielow $
 // $Authors: Andreas Bertsch, Chris Bielow, Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -50,6 +50,12 @@ namespace OpenMS
 	
       friend class TOPPBase;
 
+      /// Retrieve path of current executable (useful to find other TOPP tools)
+      /// The returned path is either just an EMPTY string if the call to system subroutines failed
+      /// or the complete path including a trailing "/", to enable usage of this function as 
+      ///  File::getExecutablePath() + "mytool"
+      static String getExecutablePath();
+
 			/// Method used to test if a @p file exists.
 			static bool exists(const String& file);
 		
@@ -62,6 +68,9 @@ namespace OpenMS
 				@return Returns true if the file was successfully deleted (or if it did not exist).
 			*/
 			static bool remove(const String& file);
+
+ 			/// Removes the specified directory (absolute path). Returns true if successful.
+			static bool removeDirRecursively(const String& dir_name);
 
 			/// Replaces the relative path in the argument with the absolute path.
 			static String absolutePath(const String& file);

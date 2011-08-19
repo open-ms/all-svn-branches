@@ -44,19 +44,22 @@ START_TEST(MapAlignmentEvaluationAlgorithmRecall, "$Id MapAlignmentEvaluationAlg
 /////////////////////////////////////////////////////////////
 
 MapAlignmentEvaluationAlgorithmRecall* ptr = 0;
+MapAlignmentEvaluationAlgorithmRecall* nullPointer = 0;
+
 START_SECTION((MapAlignmentEvaluationAlgorithmRecall()))
 	ptr = new MapAlignmentEvaluationAlgorithmRecall();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~MapAlignmentEvaluationAlgorithmRecall()))
 	delete ptr;
 END_SECTION
 
+MapAlignmentEvaluationAlgorithm* base_nullPointer = 0;
 START_SECTION((static MapAlignmentEvaluationAlgorithm* create()))
 	MapAlignmentEvaluationAlgorithm* ptr2 = 0;
 	ptr2 = MapAlignmentEvaluationAlgorithmRecall::create();
-	TEST_NOT_EQUAL(ptr2, 0)
+  TEST_NOT_EQUAL(ptr2, base_nullPointer)
 END_SECTION
 
 START_SECTION((static String getProductName()))

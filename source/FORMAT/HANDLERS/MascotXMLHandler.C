@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Nico Pfeifer $
-// $Authors: Nico Pfeifer $
+// $Authors: Nico Pfeifer, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/HANDLERS/MascotXMLHandler.h>
@@ -50,7 +50,8 @@ namespace OpenMS
 		tag_(),
 		date_(),
 		actual_title_(""),
-		modified_peptides_(modified_peptides)        
+		modified_peptides_(modified_peptides),
+    warning_msg_("")
   {
   	
   }
@@ -64,8 +65,19 @@ namespace OpenMS
 	{
 
 		tag_ = String(sm_.convert(qname));
-		
-		if (tag_ == "protein")
+    
+		tags_open_.push_back(tag_);
+
+		if (tag_ == "mascot_search_results")
+ 		{
+			major_version_ = this->attributeAsString_(attributes, "majorVersion");
+			minor_version_ = this->attributeAsString_(attributes, "minorVersion");
+		}
+    else if (tag_ == "warning")
+    {
+      warning_msg_ = "";
+    }
+		else if (tag_ == "protein")
 		{
 			String attribute_value = String(sm_.convert(attributes.getValue(XMLSize_t(0)))).trim();
  	 		actual_protein_hit_.setAccession(attribute_value);
@@ -96,8 +108,18 @@ namespace OpenMS
   void MascotXMLHandler::endElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname)
  	{
  		tag_ = String(sm_.convert(qname)).trim();
- 		 
- 		if (tag_ == "protein")
+ 		
+		if (tags_open_.size() == 0)
+		{
+			fatalError(LOAD, String("Closing tag ")+tag_+" not matched by opening tag", __LINE__);
+		}
+		tags_open_.pop_back();
+    
+    if (tag_ == "warning")
+    {
+      warning(LOAD, String("Warnings were present: '") + warning_msg_ + String("'"));
+    }
+ 		else if (tag_ == "protein")
  		{	
 			protein_identification_.setScoreType("Mascot");
  			protein_identification_.insertHit(actual_protein_hit_);
@@ -117,7 +139,7 @@ namespace OpenMS
 				{
 					already_stored = true;
 				}
-				it++;
+				++it;
 			}
 			if (!already_stored)
 			{
@@ -127,7 +149,7 @@ namespace OpenMS
 			}
 			else
 			{
-				it--;
+				--it;
 				it->addProteinAccession(actual_protein_hit_.getAccession());
 				id_data_[peptide_identification_index_].setHits(temp_peptide_hits);
 			}
@@ -313,7 +335,7 @@ namespace OpenMS
 				temp_string = parts[1];
 				for (Size i = 0; i < temp_string.size(); ++i)
 				{
-					if (temp_string.at(i) != '0')
+					if (temp_string[i] != '0')
 					{
 						UInt temp_modification_index = String(temp_string[i]).toInt() - 1;
 						String& temp_modification = search_parameters_.variable_modifications[temp_modification_index];
@@ -516,11 +538,19 @@ namespace OpenMS
 		{
 			// e.g. if a fixed modification is forced to a variable modification
 			// <warning number="0">&apos;Oxidation (M)&apos; can only be used as a variable modification; setting it to variable</warning>
-			warning(LOAD, String("Warnings were present: '") + sm_.convert(chars) + String("'"));
+      // we do not print the warning directly as characters() gets called multiple times within the <warning>-Tag - this would lead to multiple ugly lines 
+      warning_msg_ += sm_.convert(chars);
 		}
 		else if (tag_ == "name")
 		{
-			search_parameters_.variable_modifications.push_back(((String)sm_.convert(chars)).trim());
+			if (
+					 (major_version_=="1")
+				 // new since Mascot XML version 2.1 (at least): <fixed_mods> also have a subtag called <name>, thus we need to ensure we are in <variable_mods>
+				 || (tags_open_.size() >= 3 && tags_open_[tags_open_.size()-2]=="variable_mods") 
+				 )
+			{
+				search_parameters_.variable_modifications.push_back(((String)sm_.convert(chars)).trim());
+			}
 		}
   }
 

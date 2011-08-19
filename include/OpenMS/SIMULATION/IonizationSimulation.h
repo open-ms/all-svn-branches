@@ -97,6 +97,8 @@ namespace OpenMS {
   private:  
     /// Default constructor
     IonizationSimulation();
+
+    class CompareCmpByEF_;
     
 		/// ionize using ESI
     void ionizeEsi_(FeatureMapSim &, ConsensusMap & charge_consensus);
@@ -123,6 +125,8 @@ namespace OpenMS {
     
     /**
      @brief counts all basic residues inside the amino acid sequence to give an upper bound on the maximal charge during ESI ionization
+
+     The N-term contributes +1 always. All other ionizable residues (according to param "esi:ionized_residues") in the sequence are summed up.
     */
     UInt countIonizedResidues_(const AASequence & ) const;
     

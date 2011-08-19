@@ -40,13 +40,14 @@ START_TEST(RawMSSignalSimulation, "$Id$")
 /////////////////////////////////////////////////////////////
 
 RawMSSignalSimulation* ptr = 0;
+RawMSSignalSimulation* nullPointer = 0;
 SimRandomNumberGenerator empty_rnd_gen;
 //const unsigned long rnd_gen_seed = 1;
 
 START_SECTION((RawMSSignalSimulation(const SimRandomNumberGenerator &rng)))
 {
   ptr = new RawMSSignalSimulation(empty_rnd_gen);
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
@@ -84,7 +85,7 @@ START_SECTION((RawMSSignalSimulation& operator=(const RawMSSignalSimulation &sou
 }
 END_SECTION
 
-START_SECTION((void generateRawSignals(FeatureMapSim &features, MSSimExperiment &experiment, FeatureMapSim &contaminants)))
+START_SECTION((void generateRawSignals(FeatureMapSim &features, MSSimExperiment &experiment, MSSimExperiment &experiment_ct, FeatureMapSim &contaminants)))
 {
   // TODO
 }

@@ -5,7 +5,7 @@ set(concept_executables_list
 	Factory_test
 	FuzzyStringComparator_test
 	SingletonRegistry_test
-  StreamHandler_test
+	StreamHandler_test
 	VersionInfo_test
 	LogConfigHandler_test
 	LogStream_test
@@ -43,6 +43,7 @@ set(datastructures_executables_list
 	MassExplainer_test
 	Matrix_test
 	QTCluster_test
+	QTSILACCluster_test
 	RangeManager_test
 	SparseVector_test
 	StringList_test
@@ -141,6 +142,7 @@ set(format_executables_list
   CsvFile_test
   DTA2DFile_test
   DTAFile_test
+  EDTAFile_test
   FASTAFile_test
   FeatureXMLFile_test
   FileHandler_test
@@ -149,6 +151,7 @@ set(format_executables_list
   IdXMLFile_test
   InspectInfile_test
   InspectOutfile_test
+  KroenikFile_test
   LibSVMEncoder_test
   MS2File_test
   MSPFile_test
@@ -157,6 +160,7 @@ set(format_executables_list
   MascotOutfile_test
   MascotRemoteQuery_test
   MascotXMLFile_test
+  MsInspectFile_test
   MzDataFile_test
   MzIdentMLFile_test
   MzDataValidator_test
@@ -181,7 +185,9 @@ set(format_executables_list
   SemanticValidator_test
   SequestInfile_test
   SequestOutfile_test
+  SpecArrayFile_test
   TextFile_test
+  ToolDescriptionFile_test
   TraMLFile_test
   TransformationXMLFile_test
   UnimodXMLFile_test
@@ -309,6 +315,7 @@ set(chemistry_executables_list
   SvmTheoreticalSpectrumGeneratorSet_test
   TheoreticalSpectrumGenerator_test
   TrypticIterator_test
+  WeightWrapper_test
 )
 
 
@@ -339,6 +346,7 @@ set(analysis_executables_list
 	HiddenMarkovModel_test
 	IDDecoyProbability_test
 	IDMapper_test
+  ILPDCWrapper_test
 	ILPWrapper_test
 	ItraqChannelExtractor_test
 	ItraqConstants_test
@@ -381,6 +389,7 @@ set(analysis_executables_list
 
 set(applications_executables_list
   TOPPBase_test
+  ToolHandler_test
 )
 
 set(transformations_executables_list
@@ -460,7 +469,6 @@ set(TEST_executables
 		${datastructures_executables_list}
 		${kernel_executables_list}
 		${metadata_executables_list}
-		${visual_executables_list}
 		${format_executables_list}
 		${math_executables_list}
 		${filtering_executables_list}
@@ -470,5 +478,6 @@ set(TEST_executables
 		${applications_executables_list}
 		${transformations_executables_list}
 		${simulation_executables_list}
+		${visual_executables_list}
 		## NO GUI lists here! (GUI is handled in source/TEST/CMakeLists.txt separately)
 		)

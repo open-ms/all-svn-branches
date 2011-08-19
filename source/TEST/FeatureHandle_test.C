@@ -46,9 +46,10 @@ START_TEST(FeatureHandle, "$Id$")
 /////////////////////////////////////////////////////////////
 
 FeatureHandle* ptr = 0;
+FeatureHandle* nullPointer = 0;
 START_SECTION((FeatureHandle()))
 	ptr = new FeatureHandle();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~FeatureHandle()))
@@ -82,7 +83,7 @@ START_SECTION((FeatureHandle(const FeatureHandle &rhs)))
   TEST_EQUAL(it.getPosition() == it_copy.getPosition(), true)
 END_SECTION
 
-START_SECTION((void setCharge(Int charge)))
+START_SECTION((void setCharge(ChargeType charge)))
 {
   FeatureHandle fh;
   fh.setCharge(-17);
@@ -92,7 +93,7 @@ START_SECTION((void setCharge(Int charge)))
 }
 END_SECTION
 
-START_SECTION((Int getCharge() const))
+START_SECTION((ChargeType getCharge() const))
 {
   NOT_TESTABLE; // see setCharge()
 }

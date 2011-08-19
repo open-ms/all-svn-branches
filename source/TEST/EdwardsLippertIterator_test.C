@@ -51,10 +51,11 @@ spec.push_back(441.4806);
 const vector<DoubleReal> specc (spec);
 
 EdwardsLippertIterator* ptr = 0;
+EdwardsLippertIterator* nullPointer = 0;
 START_SECTION(EdwardsLippertIterator())
         ptr = new EdwardsLippertIterator();
 	TEST_REAL_SIMILAR(0.5,ptr->getTolerance());
-        TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(~EdwardsLippertIterator())
@@ -252,7 +253,7 @@ END_SECTION
 
 START_SECTION(static PepIterator* create())
 	ptr = new EdwardsLippertIterator();
-	TEST_NOT_EQUAL(ptr->create(),0);
+  TEST_NOT_EQUAL(ptr->create(),nullPointer);
 END_SECTION
 
 /////////////////////////////////////////////////////////////

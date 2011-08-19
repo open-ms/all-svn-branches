@@ -125,7 +125,7 @@ namespace OpenMS {
     defaults_.setValue("ionization_type", "ESI", "Type of Ionization (MALDI or ESI)");
     defaults_.setValidStrings("ionization_type", StringList::create("MALDI,ESI"));
 
-    defaults_.setValue("esi:ionized_residues", StringList::create("Arg,Lys,His"), "List of residues (as three letter code) that will be considered during ESI ionization. This parameter will be ignored during MALDI ionization.");
+    defaults_.setValue("esi:ionized_residues", StringList::create("Arg,Lys,His"), "List of residues (as three letter code) that will be considered during ES ionization. The N-term is always assumed to carry a charge. This parameter will be ignored during MALDI ionization.");
     StringList valid_ionized_residues = StringList::create("Ala,Cys,Asp,Glu,Phe,Gly,His,Ile,Lys,Leu,Met,Asn,Pro,Gln,Arg,Sec,Ser,Thr,Val,Trp,Tyr");
     defaults_.setValidStrings("esi:ionized_residues", valid_ionized_residues);
 		defaults_.setValue("esi:charge_impurity", StringList::create("H+:1"), "List of charged ions that contribute to charge with weight of occurence (which must not sum to 1), e.g. ['H:1'] or ['H:0.7' 'Na:0.3']");
@@ -186,7 +186,7 @@ namespace OpenMS {
 			Size l_charge = components[0].size();
 			l_charge -= components[0].remove('+').size();
 			EmpiricalFormula ef(components[0].remove('+'));
-			// effectively substract electrones
+			// effectively subtract electrons
 			ef.setCharge(l_charge); ef -= String("H")+String(l_charge);
 			// create adduct
 			Adduct a((Int)l_charge, 1, ef.getMonoWeight(), components[0].remove('+'), log(components[1].toDouble()),0);
@@ -212,8 +212,14 @@ namespace OpenMS {
 
   }
   
+  class IonizationSimulation::CompareCmpByEF_ {
+  public:
+    bool operator()(const Compomer& x,const Compomer& y) const { return x.getAdductsAsString() < y.getAdductsAsString(); }
+  };
+
   void IonizationSimulation::ionizeEsi_(FeatureMapSim & features, ConsensusMap & charge_consensus)
   {
+
 		// we need to do this locally to avoid memory leaks (copying this stuff in C'tors is not wise)
 		gsl_ran_discrete_t * gsl_ran_lookup_esi_charge_impurity = gsl_ran_discrete_preproc (esi_impurity_probabilities_.size(), &esi_impurity_probabilities_[0]);
 
@@ -258,7 +264,6 @@ namespace OpenMS {
         if (basic_residues_c==0)
         {
 					++uncharged_feature_count; // OMP
-					//std::cout << "  not ionized: " << feature_it -> getPeptideIdentifications()[0].getHits()[0].getSequence().toUnmodifiedString() << "\n";
 					continue;
         }
 
@@ -276,7 +281,9 @@ namespace OpenMS {
         Size prec_rnduni_remaining(0);
 
 				// assumption: each basic residue can hold one charged adduct
-				Map<Compomer, UInt> charge_states;
+				// , we need a custom comparator, as building Compomers step by step can lead to 
+				// numeric diffs (and thus distinct compomers) - we only use EF to discern, thats sufficient here
+				std::map<Compomer, UInt, CompareCmpByEF_> charge_states;
         Size adduct_index;
         UInt charge;
 
@@ -309,27 +316,26 @@ namespace OpenMS {
               }
             }
             adduct_index = prec_rnduni[--prec_rnduni_remaining];
-            cmp.add(esi_adducts_[adduct_index],Compomer::RIGHT);
+            cmp.add(esi_adducts_[adduct_index], Compomer::RIGHT);
 					}
 
 					// add 1 to abundance of sampled charge state
-					++charge_states[ cmp ];
+					++charge_states[cmp];
 				}
 
         // no charges > 0 selected (this should be really rare)
 				if (charge_states.size()==0) 
 				{
 					++uncharged_feature_count; // OMP!
-					//std::cout << "  not ionized: " << feature_it -> getPeptideIdentifications()[0].getHits()[0].getSequence().toUnmodifiedString() << "\n";
 					continue;
 				}
 
 				// transform into a set (for sorting by abundance)
 				Int max_observed_charge(0);
 				std::set< std::pair<UInt, Compomer > > charge_states_sorted;
-				for (Map<Compomer, UInt>::const_iterator it_m=charge_states.begin(); it_m!=charge_states.end();++it_m)
+				for (std::map<Compomer, UInt, CompareCmpByEF_>::const_iterator it_m=charge_states.begin(); it_m!=charge_states.end(); ++it_m)
 				{ // create set of pair(value, key)
-					charge_states_sorted.insert( std::make_pair(it_m->second,it_m->first) );
+					charge_states_sorted.insert(charge_states_sorted.begin(), std::make_pair(it_m->second,it_m->first) );
 					// update maximal observed charge
 					max_observed_charge = std::max(max_observed_charge, it_m->first.getNetCharge());
 				}
@@ -387,8 +393,8 @@ namespace OpenMS {
 			// swap feature maps
 			features.swap(copy_map);
 
-	    LOG_INFO << "#Peptides not ionized: " << uncharged_feature_count << "\n";
-	    LOG_INFO << "#Peptides outside mz range: " << undetected_features_count << "\n";
+	    LOG_INFO << "#Peptides not ionized: " << uncharged_feature_count << std::endl;
+	    LOG_INFO << "#Peptides outside mz range: " << undetected_features_count << std::endl;
 		}
 		catch (std::exception& e)
 		{
@@ -405,7 +411,7 @@ namespace OpenMS {
   
   UInt IonizationSimulation::countIonizedResidues_(const AASequence& seq) const
   {
-    UInt count = 0;
+    UInt count = 1; // +1 for N-term
     for (Size i = 0; i<seq.size(); ++i)
     {
       // check for basic residues
@@ -488,7 +494,7 @@ namespace OpenMS {
 			// swap feature maps
 			features.swap(copy_map);
 			
-	    std::cout << "#Peptides outside mz range: " << undetected_features_count << "\n";
+	    LOG_INFO << "#Peptides outside mz range: " << undetected_features_count << std::endl;
 		}
 		catch (std::exception& e)
 		{
@@ -521,7 +527,7 @@ namespace OpenMS {
 
     #pragma omp critical (OPENMS_setfeatureprop)
     {
-      // ensure uniquenes
+      // ensure uniqueness
       f.setUniqueId();
 		  // add meta information on compomer (mass)
 		  f.setMetaValue("charge_adduct_mass", adduct_mass );

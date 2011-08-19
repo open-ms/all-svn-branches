@@ -43,9 +43,10 @@ START_TEST(FastaIterator, "$Id$")
 typedef std::pair <String, String> FASTAEntry;
 
 FastaIterator* ptr = 0;
+FastaIterator* nullPointer = 0;
 START_SECTION(FastaIterator())
 	ptr = new FastaIterator();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(~FastaIterator())
@@ -162,7 +163,7 @@ END_SECTION
 
 START_SECTION(static PepIterator* create())
 	ptr = new FastaIterator();
-	TEST_NOT_EQUAL(ptr->create(),0);
+  TEST_NOT_EQUAL(ptr->create(),nullPointer);
 END_SECTION
 
 /////////////////////////////////////////////////////////////

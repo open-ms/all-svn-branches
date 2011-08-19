@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Chris Bielow $
-// $Authors: $
+// $Authors: Chris Bielow $
 // --------------------------------------------------------------------------
 #include <OpenMS/ANALYSIS/DECHARGING/ILPDCWrapper.h>
 
@@ -41,17 +41,13 @@
 #include <OpenMS/CONCEPT/Constants.h>
 #include <OpenMS/FORMAT/TextFile.h>
 
-#include <boost/config.hpp>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/connected_components.hpp>
-
 #ifdef _MSC_VER // disable some COIN-OR warnings that distract from ours
 #	pragma warning( push ) // save warning state
 #	pragma warning( disable : 4267 )
 #else
 # pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
-// useful docu: https://projects.coin-or.org/Cbc
+// useful doc: https://projects.coin-or.org/Cbc
 // useful example: https://projects.coin-or.org/Cbc/browser/trunk/Cbc/examples/sample5.cpp
 // Cuts
 
@@ -84,70 +80,163 @@ namespace OpenMS {
 
 	ILPDCWrapper::~ILPDCWrapper(){}
 
-	DoubleReal ILPDCWrapper::compute(const MassExplainer& me, const FeatureMap<> fm, PairsType& pairs)
+	DoubleReal ILPDCWrapper::compute(const MassExplainer& me, const FeatureMap<> fm, PairsType& pairs, Size verbose_level)
 	{
     DoubleReal score = 0;
 
-    // check number of components:
-    using namespace boost;
+    if (fm.size()==0)
     {
-      typedef adjacency_list <vecS, vecS, undirectedS> Graph;
+      LOG_INFO << "ILPDC wrapper received empty feature list. Nothing to compute! Exiting..." << std::endl;
+      return -1;
+    }
+    
+    PairsType pairs_clique_ordered;
+    pairs_clique_ordered.reserve(pairs.size());
+    typedef std::vector < std::pair <Size, Size> > BinType;
+    BinType bins;
+    // check number of components for complete putative edge graph (usually not all will be set to 'active' during ILP):
+    {
+      //
+      // find groups of edges
+      //
+      Size group_count(0);
+      Map<Size, Size> f2g; // feature id to connected group
+      Map<Size, std::set<Size> > g2pairs; // group id to all pairs involved
+      Map<Size, std::set<Size> > g2f;     // group id to all features involved
 
-      Graph g;
-      //add_edge(0, 1, G);
       for	(Size i=0;i<pairs.size();++i)
-		  {
-        add_edge(pairs[i].getElementIndex(0), pairs[i].getElementIndex(1), g);
-      }
-      std::vector<int> component(num_vertices(g));
-      int num = connected_components(g, &component[0]);
-      
-      std::cout << "Total number of components: " << num << std::endl;
-      // ** check size of components **
-      OpenMS::Map <int,int> hist_components, hist_component_sum;
-      // size of each component
-      for (Size i = 0; i != component.size(); ++i) ++hist_components[component[i]];
-      // summary of component size
-      for (OpenMS::Map <int,int>::const_iterator it=hist_components.begin();it!=hist_components.end();++it)
       {
-        ++hist_component_sum[it->second]; // e.g. component 2 has size 4; thus increase count for size 4 
+        Size f1 = pairs[i].getElementIndex(0);
+        Size f2 = pairs[i].getElementIndex(1);
+        if (f2g.has(f1) && f2g.has(f2)) // edge connects two distinct groups
+        {
+          Size group1 = f2g[f1];
+          Size group2 = f2g[f2];
+          if (group2 != group1)
+          {
+            // point group2 to group1
+            g2pairs[group1].insert(g2pairs[group2].begin(), g2pairs[group2].end());
+            g2pairs.erase(group2);
+            for (std::set<Size>::const_iterator its=g2f[group2].begin(); its != g2f[group2].end(); ++its)
+            {
+              g2f[group1].insert(*its);
+              f2g[*its] = group1; // reassign features of group2 to group1
+            }
+            g2f.erase(group2);
+          }
+        }
+        else if (f2g.has(f1) && !f2g.has(f2)) // only f1 is part of a group
+        {
+          Size group1 = f2g[f1];
+          f2g[f2] = group1;
+          g2f[group1].insert(f2);
+        }
+        else if (!f2g.has(f1) && f2g.has(f2)) // only f2 is part of a group
+        {
+          Size group2 = f2g[f2];
+          f2g[f1] = group2;
+          g2f[group2].insert(f1);
+        }
+        else // neither feature has a group: make a new one
+        {
+          Size group = ++group_count;
+          f2g[f1] = group;
+          f2g[f2] = group;
+          g2f[group].insert(f1);
+          g2f[group].insert(f2);
+        }
+        // append current edge to common group
+        g2pairs[f2g[f1]].insert(i);
       }
-      std::cout << "components of size>2:\n";
-      for (OpenMS::Map <int,int>::const_iterator it=hist_component_sum.begin();it!=hist_component_sum.end();++it)
+
+      if (g2pairs.size() != g2f.size())
       {
-        if ((it->first)>2) std::cout << "  size " << it->first << " occurs " << it->second << "x\n";
+        throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Clique construction failed! Unequal number of groups produced!", String(g2pairs.size()) + "!=" + String(g2f.size()));
       }
-      //for (Size i = 0; i != component.size(); ++i)
-      //  cout << "Vertex " << i <<" is in component " << component[i] << endl;
+
+      Map <Size,Size> hist_component_sum;
+      // now walk though groups and see the size:
+      for ( Map<Size, std::set<Size> >::const_iterator it=g2f.begin();it!=g2f.end();++it)
+      {
+        ++hist_component_sum[it->second.size()]; // e.g. component 2 has size 4; thus increase count for size 4 
+      }
+      if (verbose_level > 1)
+      {
+        LOG_INFO << "components:\n";
+        LOG_INFO << "  size 1 occurs ?x\n";
+        for (OpenMS::Map <Size,Size>::const_iterator it=hist_component_sum.begin();it!=hist_component_sum.end();++it)
+        {
+          LOG_INFO << "  size " << it->first << " occurs " << it->second << "x\n";
+        }
+      }
+
+      /* partition the cliques into bins, one given to the ILP at a time */
+      UInt pairs_per_bin = 1000;
+      UInt big_clique_bin_threshold = 200;
+
+      Size start(0);
+      Size count(0);
+      for (Map<Size, std::set<Size> >::ConstIterator it = g2pairs.begin(); it!=g2pairs.end(); ++it)
+      {
+        Size clique_size = it->second.size();
+        if (count > pairs_per_bin || clique_size > big_clique_bin_threshold)
+        {
+          if (count > 0) // either bin is full or we have to close it due to big clique
+          {
+            if (verbose_level > 2) LOG_INFO << "Overstepping border of " << pairs_per_bin << " by " << SignedSize(count - pairs_per_bin) << " elements!\n";
+            bins.push_back(std::make_pair(start, pairs_clique_ordered.size()));
+            start = pairs_clique_ordered.size();
+            count=0;
+          }
+          if (clique_size > big_clique_bin_threshold) // extra bin for this big clique
+          {
+            for (std::set<Size>::const_iterator i_p = it->second.begin(); i_p != it->second.end(); ++i_p)
+            {
+              pairs_clique_ordered.push_back(pairs[*i_p]);
+            }
+            if (verbose_level > 2) LOG_INFO << "Extra bin for big clique (" << clique_size << ") prepended to schedule\n";
+            bins.insert(bins.begin(), std::make_pair(start, pairs_clique_ordered.size()));
+            start = pairs_clique_ordered.size();
+            continue; // next clique (this one is already processed)
+          }
+        }
+        count += clique_size;
+        for (std::set<Size>::const_iterator i_p = it->second.begin(); i_p != it->second.end(); ++i_p)
+        {
+          pairs_clique_ordered.push_back(pairs[*i_p]);
+        }
+      }
+      if (count>0) bins.push_back(std::make_pair(start, pairs_clique_ordered.size()));
     }
 
-    #if 0
-    //@TODO this is OpenMP capable
-		// warning: this relies on RT-sorted Pairs!!!	
-		UInt allowedPairs = 1000;	
+    if (pairs_clique_ordered.size() != pairs.size())
+    {
+      throw Exception::InvalidSize(__FILE__, __LINE__, __PRETTY_FUNCTION__, pairs_clique_ordered.size() - pairs.size());
+    }
+    /* swap pairs, such that edges are order by cliques (so we can make clean cuts) */
+    pairs.swap(pairs_clique_ordered);
+
 		// split problem into slices and have each one solved by the ILPS
-		DoubleReal scorel;
-		for	(PairsIndex i=0;i+allowedPairs-1<pairs.size();i+=allowedPairs)
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 1)
+#endif
+    for	(SignedSize i=0; i<(SignedSize)bins.size(); ++i)
 		{
-			scorel = computeSlice_(me, pairs, i, i+allowedPairs,0,0);
-			score += scorel;
-			//TODO take care of overlapping borders!!
-			std::cout << "slice (" << i << "-" << (i+allowedPairs) << ")score: " << scorel << std::endl; 
+			score += computeSlice_(me, fm, pairs, bins[i].first, bins[i].second, verbose_level);
 		}
-    #endif
-    score = computeSlice_(me, fm, pairs, 0, pairs.size());
+    //score = computeSlice_(me, fm, pairs, 0, pairs.size()); // all at once - no bins
 
 		return score;
 	}
 		
 	DoubleReal ILPDCWrapper::computeSlice_(const MassExplainer& /*me*/,
-																			 const FeatureMap<> fm,
-																			 PairsType& pairs, 
-																			 const PairsIndex margin_left, 
-																			 const PairsIndex margin_right)
+																			   const FeatureMap<> fm,
+																			   PairsType& pairs, 
+																			   const PairsIndex margin_left, 
+																			   const PairsIndex margin_right,
+                                         Size verbose_level)
 	{
 
-		std::cout << "compute .." << std::endl;
 #ifdef COIN_HAS_CLP
 	  OsiClpSolverInterface solver;
 #elif COIN_HAS_OSL
@@ -158,7 +247,6 @@ namespace OpenMS {
 	     this example uses CoinBuild or CoinModel
 	  */
 		CoinModel build;
-		std::cout << "model created..." << std::endl;
 
 		//------------------------------------objective function-----------------------------------------------
 
@@ -169,7 +257,6 @@ namespace OpenMS {
 		// fill in objective values 
 		std::ostringstream namebuf;
 
-		std::cout << "adding variables...\n";
 		for (PairsIndex i=margin_left; i<margin_right; ++i)
 		{
 
@@ -181,11 +268,10 @@ namespace OpenMS {
 			
 			// log scores are good for addition in ILP - but they are < 0, thus not suitable for maximizing
 			// ... so we just add normal probabilities...
-      score = exp(getLogScore_(i, pairs, fm));
+      score = exp(getLogScore_(pairs[i], fm));
 			pairs[i].setEdgeScore(score * pairs[i].getEdgeScore()); // multiply with preset score
 			namebuf.str("");
 			namebuf<<"x#"<<i;
-			//std::cout << "score: " << score << "\n";
 			// create the new variable object
 			build.setColumnBounds(int(i-margin_left),0,1);
 			build.setInteger(int(i-margin_left));
@@ -196,19 +282,18 @@ namespace OpenMS {
 			// DEBUG:
 			//std::cerr << "MIP: egde#"<< i << " score: " << pairs[i].getEdgeScore() << " adduct:" << pairs[i].getCompomer().getAdductsAsString() << "\n";
 		}
-		std::cout << "score_min: " << score_min << " score_max: " << score_max << "\n";
+		if (verbose_level > 2) LOG_INFO << "score_min: " << score_min << " score_max: " << score_max << "\n";
 
 		//------------------------------------adding constraints--------------------------------------------------
 
 		bool is_conflicting;
 		std::vector<int> conflict_idx(4);
 
-		Map< Size, std::vector<Size> > conflict_map;
-
 		for (PairsIndex i=margin_left; i<margin_right; ++i)
 		{
 			const Compomer& ci = pairs[i].getCompomer();
 	
+      // TODO: only go until next clique...
 			for (PairsIndex j=i+1; j<margin_right; ++j)
 			{
 				const Compomer& cj = pairs[j].getCompomer();
@@ -218,10 +303,10 @@ namespace OpenMS {
 				// if features are identical they must have identical charges (because any single
 				// feature can only have one unique charge)
 
-        if(i==2796 && j==2797) // every conflict involving the missing edge...
+        /*if(i==2796 && j==2797) // every conflict involving the missing edge...
         {
           std::cout << "debug point";
-        }
+        }*/
 
 				//outgoing edges (from one feature)
 				if (pairs[i].getElementIndex(0) == pairs[j].getElementIndex(0))
@@ -256,7 +341,7 @@ namespace OpenMS {
 					}
 				}
 				
-				//incoming/outgoing edge (from one feature) -- this should only happen to addiditonally inferred egdes
+				//incoming/outgoing edge (from one feature) -- this should only happen to additionally inferred edges
 				if (pairs[i].getElementIndex(0) == pairs[j].getElementIndex(1))
 				{
 					if ( (pairs[i].getCharge(0) != pairs[j].getCharge(1))  ||
@@ -270,45 +355,34 @@ namespace OpenMS {
 								
 				if (is_conflicting)
 				{
-				
-					conflict_map[i].push_back(j);
-					conflict_map[j].push_back(i);
-					
-          if(i==150 || j==2797) // every conflict involving the missing edge...
+          /*if(i==150 || j==2797) // every conflict involving the missing edge...
           {
             ChargePair ti =  pairs[i];
             ChargePair tj =  pairs[j];
             
             std::cout << "conflicting edge!";
-          }
+          }*/
 
-					namebuf.str("");
-					//namebuf <<"cp"<<i<<"("<<pairs[i].getElementIndex(0)<<"[q"<<pairs[i].getCharge(0)<<"]-"<<pairs[i].getElementIndex(1)<<"[q"<<pairs[i].getCharge(1)<<"]"<<") vs. "
-					//				<<"cp"<<j<<"("<<pairs[j].getElementIndex(0)<<"[q"<<pairs[j].getCharge(0)<<"]-"<<pairs[j].getElementIndex(1)<<"[q"<<pairs[j].getCharge(1)<<"]"<<")";
-					namebuf << "C" << i << "." << j;
-					String s = namebuf.str();
-					//std::cout << "<-- conflict between " << s << "\n\n";
+					String s = String("C") + i + "." + j;
 
-
-					double element[] = {1.0,1.0};
+          // Now build rows: two variables, with indices 'columns', factors '1', and 0-1 bounds.
+					double element[] = {1.0, 1.0};
 					int columns[] = {int(i-margin_left),int(j-margin_left)};
-					// Now build rows: two variables, with indices 'columns', factors '1', and 0-1 bounds.
-
 					build.addRow(2, columns, element, 0, 1, s.c_str());
-
-					//std::cout << "Added row#" << i << " " << j << std::endl;
 				}
 			}
 		}
 		// add rows into solver
 		solver.loadFromCoinModel(build);
 
-		// DEBUG:
-		{
-		std::cout << "node count: " << fm.size() << "\n";
-		std::cout << "edge count: " << pairs.size() << "\n";
-		std::cout << "constraint count: " << (conflict_idx[0]+conflict_idx[1]+conflict_idx[2]+conflict_idx[3]) << " = " << conflict_idx[0] << " + " << conflict_idx[1] << " + " << conflict_idx[2] << " + " << conflict_idx[3] << "(0 or inferred)" << std::endl;
-		TextFile conflict_map_out;
+		if (verbose_level > 2) LOG_INFO << "node count: " << fm.size() << "\n";
+		if (verbose_level > 2) LOG_INFO << "edge count: " << pairs.size() << "\n";
+		if (verbose_level > 2) LOG_INFO << "constraint count: " << (conflict_idx[0]+conflict_idx[1]+conflict_idx[2]+conflict_idx[3]) << " = " << conflict_idx[0] << " + " << conflict_idx[1] << " + " << conflict_idx[2] << " + " << conflict_idx[3] << "(0 or inferred)" << std::endl;
+
+    // DEBUG:
+		/*
+    {
+    TextFile conflict_map_out;
 		for (Map<Size, std::vector <Size> >::const_iterator it = conflict_map.begin(); it!= conflict_map.end(); ++it)
 		{
 			String s;
@@ -319,16 +393,16 @@ namespace OpenMS {
 			}
 			conflict_map_out.push_back(s);
 		}
-		//conflict_map_out.store("c:/conflict_map.txt");
+		conflict_map_out.store("c:/conflict_map.txt");
 		//get rid of memory blockers:
 		Map< Size, std::vector<Size> > tmp_map;
 		conflict_map.swap(tmp_map);
-		}
+
+    // write the model (for debug)
+    //build.writeMps ("Y:/datasets/simulated/coinor.mps");
+    }
+    */
 		
-
-		// write the model (for debug)
-		//build.writeMps ("Y:/datasets/simulated/coinor.mps");
-
 		//---------------------------------------------------------------------------------------------------------
 		//----------------------------------------Solving and querying result--------------------------------------
 		//---------------------------------------------------------------------------------------------------------
@@ -340,12 +414,11 @@ namespace OpenMS {
 		model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
 
 		// Output details
-		model.messageHandler()->setLogLevel(2);
-		model.solver()->messageHandler()->setLogLevel(1);
+		model.messageHandler()->setLogLevel( verbose_level > 1 ? 2 : 0);
+		model.solver()->messageHandler()->setLogLevel( verbose_level > 1 ? 1 : 0);
 		
-		
-		CglProbing generator1;
-		generator1.setUsingObjective(true);
+		//CglProbing generator1;
+		//generator1.setUsingObjective(true);
 		CglGomory generator2;
 		generator2.setLimit(300);
 		CglKnapsackCover generator3;
@@ -356,16 +429,16 @@ namespace OpenMS {
 		CglClique generator5;
 		generator5.setStarCliqueReport(false);
 		generator5.setRowCliqueReport(false);
-		CglMixedIntegerRounding mixedGen;
-		CglFlowCover flowGen;
+		//CglFlowCover flowGen;
+    CglMixedIntegerRounding mixedGen;
 		
 		// Add in generators (you should prefer the ones used often and disable the others as they increase solution time)
-		model.addCutGenerator(&generator1,-1,"Probing");
+		//model.addCutGenerator(&generator1,-1,"Probing");
 		model.addCutGenerator(&generator2,-1,"Gomory");
 		model.addCutGenerator(&generator3,-1,"Knapsack");
 		//model.addCutGenerator(&generator4,-1,"OddHole"); // seg faults...
 		model.addCutGenerator(&generator5,-10,"Clique");
-		model.addCutGenerator(&flowGen,-1,"FlowCover");
+		//model.addCutGenerator(&flowGen,-1,"FlowCover");
 		model.addCutGenerator(&mixedGen,-1,"MixedIntegerRounding");
 
 		// Heuristics
@@ -383,13 +456,13 @@ namespace OpenMS {
 		
 		// solve
 		double time1 = CoinCpuTime();
-		std::cout << "starting to solve..." << std::endl;
+		if (verbose_level > 0) LOG_INFO << "Starting to solve..." << std::endl;
 		model.branchAndBound();
-		std::cout<<" Branch and cut took "<<CoinCpuTime()-time1<<" seconds, "
-						 <<model.getNodeCount()<<" nodes with objective "
-						 <<model.getObjValue()
-						 <<(!model.status() ? " Finished" : " Not finished")
-						 <<std::endl;
+		if (verbose_level > 0) LOG_INFO << " Branch and cut took " << CoinCpuTime()-time1 << " seconds, "
+						                        << model.getNodeCount()<<" nodes with objective "
+						                        << model.getObjValue()
+						                        << (!model.status() ? " Finished" : " Not finished")
+						                        << std::endl;
 
 
 
@@ -406,8 +479,7 @@ namespace OpenMS {
 				pairs[margin_left+iColumn].setActive(true);
 				// for statistical purposes: collect compomer distribution
 				String cmp = pairs[margin_left+iColumn].getCompomer().getAdductsAsString();
-				count_cmp[cmp] = count_cmp[cmp] + 1;
-				//std::cerr << " edge " << iColumn << " with " << value << "(active)\n";
+				++count_cmp[cmp];
 			}
 			else
 			{
@@ -415,7 +487,7 @@ namespace OpenMS {
 				//std::cerr << " edge " << iColumn << " with " << value << "\n";
 			}
 		}
-		std::cout << "active edges: " << active_edges << " of overall " << pairs.size() << std::endl;
+		if (verbose_level > 2) LOG_INFO << "active edges: " << active_edges << " of overall " << pairs.size() << std::endl;
 
 		for (Map < String, Size >::const_iterator it=count_cmp.begin(); it != count_cmp.end(); ++it)
 		{
@@ -428,7 +500,7 @@ namespace OpenMS {
 		return opt_value;
 	} // !compute
 
-	DoubleReal ILPDCWrapper::getLogScore_(const PairsIndex& i, const PairsType& pairs, const FeatureMap<>& fm)
+	DoubleReal ILPDCWrapper::getLogScore_(const PairsType::value_type& pair, const FeatureMap<>& fm)
 	{
 		// TODO think of something better here!
 		DoubleReal score;
@@ -437,7 +509,7 @@ namespace OpenMS {
 		if (e == "")
 		{
 			//std::cout << "1";
-			score = pairs[i].getCompomer().getLogP();
+			score = pair.getCompomer().getLogP();
 			/*DoubleReal charge_enhance = 0;
 			
 			if (pairs[i].getCharge(0) == fm[pairs[i].getElementIndex(0)].getCharge()) 
@@ -453,13 +525,13 @@ namespace OpenMS {
 		else 
 		{
 			//std::cout << "2";
-			DoubleReal rt_diff =  fabs(fm[pairs[i].getElementIndex(0)].getRT() - fm[pairs[i].getElementIndex(1)].getRT());
+			DoubleReal rt_diff =  fabs(fm[pair.getElementIndex(0)].getRT() - fm[pair.getElementIndex(1)].getRT());
 			// enhance correct charge
-			DoubleReal charge_enhance = ( (pairs[i].getCharge(0) == fm[pairs[i].getElementIndex(0)].getCharge())
+			DoubleReal charge_enhance = ( (pair.getCharge(0) == fm[pair.getElementIndex(0)].getCharge())
 																	&&
-																		(pairs[i].getCharge(1) == fm[pairs[i].getElementIndex(1)].getCharge()) )
+																		(pair.getCharge(1) == fm[pair.getElementIndex(1)].getCharge()) )
 																	? 100 : 1;
-			score = charge_enhance * (1 / (pairs[i].getMassDiff()+1) + 1 / (rt_diff+1));
+			score = charge_enhance * (1 / (pair.getMassDiff()+1) + 1 / (rt_diff+1));
 		}
 		
 		//std::cout << "logscore: " << score << "\n";

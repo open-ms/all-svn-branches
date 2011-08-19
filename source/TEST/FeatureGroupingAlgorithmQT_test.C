@@ -42,9 +42,10 @@ START_TEST(FeatureGroupingAlgorithmQT, "$Id FeatureGroupingAlgorithmQT_test.C 79
 /////////////////////////////////////////////////////////////
 
 FeatureGroupingAlgorithmQT* ptr = 0;
+FeatureGroupingAlgorithmQT* nullPointer = 0;
 START_SECTION((FeatureGroupingAlgorithmQT()))
 	ptr = new FeatureGroupingAlgorithmQT();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~FeatureGroupingAlgorithmQT()))
@@ -53,8 +54,9 @@ END_SECTION
 
 START_SECTION((static FeatureGroupingAlgorithm* create()))
 	FeatureGroupingAlgorithm* ptr2 = 0;
+  FeatureGroupingAlgorithm* base_NullPointer = 0;
 	ptr2 = FeatureGroupingAlgorithmQT::create();
-	TEST_NOT_EQUAL(ptr2, 0)
+  TEST_NOT_EQUAL(ptr2, base_NullPointer)
 END_SECTION
 
 START_SECTION((static String getProductName()))

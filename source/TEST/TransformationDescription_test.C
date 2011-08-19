@@ -45,9 +45,10 @@ using namespace std;
 
 
 TransformationDescription* ptr = 0;
+TransformationDescription* nullPointer = 0;
 START_SECTION((TransformationDescription()))
 	ptr = new TransformationDescription;
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((~TransformationDescription()))
@@ -61,7 +62,7 @@ data.push_back(make_pair(1.0, 3.0));
 START_SECTION((TransformationDescription(const DataPoints& data)))
 {
 	ptr = new TransformationDescription(data);
-	TEST_NOT_EQUAL(ptr, 0);
+  TEST_NOT_EQUAL(ptr, nullPointer)
 	TEST_EQUAL(ptr->getDataPoints() == data, true);
 	delete ptr;
 }

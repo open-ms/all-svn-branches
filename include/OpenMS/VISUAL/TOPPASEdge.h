@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Johannes Junker $
-// $Authors: Johannes Junker $
+// $Authors: Johannes Junker, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_VISUAL_TOPPASEDGE_H
@@ -37,6 +37,7 @@ namespace OpenMS
 	class TOPPASVertex;
 	class TOPPASToolVertex;
 	class TOPPASInputFileListVertex;
+  
 
 	/**
 		@brief An edge representing a data flow in TOPPAS
@@ -47,7 +48,7 @@ namespace OpenMS
 		
 		@ingroup TOPPAS_elements
 	*/
-	class OPENMS_DLLAPI TOPPASEdge
+	class OPENMS_GUI_DLLAPI TOPPASEdge
 		: public QObject,
 			public QGraphicsItem
 	{

@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Johannes Junker $
-// $Authors: Johannes Junker $
+// $Authors: Johannes Junker, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/VISUAL/TOPPASEdge.h>
@@ -385,7 +385,7 @@ namespace OpenMS
 
 	TOPPASEdge::EdgeStatus TOPPASEdge::getListToolStatus_(TOPPASInputFileListVertex* source_input_list, TOPPASToolVertex* target_tool, int target_param_index)
 	{
-		const QStringList& file_names = source_input_list->getInputFilenames();
+    const QStringList& file_names = source_input_list->getFileNames();
 		if (file_names.empty())
 		{
 			// file names are not specified yet
@@ -447,20 +447,19 @@ namespace OpenMS
 		TOPPASToolVertex* source_tool = qobject_cast<TOPPASToolVertex*>(source);
 		TOPPASToolVertex* target_tool = qobject_cast<TOPPASToolVertex*>(target);
 		
-		if (target_output_list)
-		// edges to output vertices are always valid (if finishHoveringEdge_() allowed to construct them in the first place)
-		{
+    if (source_tool && source_out_param_ < 0)
+    {
+      return ES_NO_SOURCE_PARAM;
+    }
+
+    if (target_tool && target_in_param_ < 0)
+    {
+      return ES_NO_TARGET_PARAM;
+    }
+
+    if (target_output_list)
+		{ // edges to output vertices are always valid (check source_tool before!)
 			return ES_VALID;
-		}
-
-		if (source_tool && source_out_param_ < 0)
-		{
-			return ES_NO_SOURCE_PARAM;
-		}
-
-		if (target_tool && target_in_param_ < 0)
-		{
-			return ES_NO_TARGET_PARAM;
 		}
 		
 		if (source_tool && target_tool)

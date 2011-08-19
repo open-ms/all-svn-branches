@@ -43,9 +43,10 @@ START_TEST(MultiGradient, "$Id$")
 /////////////////////////////////////////////////////////////
 
 MultiGradient* d10_ptr = 0;
+MultiGradient* d10_nullPointer = 0;
 START_SECTION((MultiGradient()))
 	d10_ptr = new MultiGradient();
-	TEST_NOT_EQUAL(d10_ptr, 0)
+  TEST_NOT_EQUAL(d10_ptr, d10_nullPointer)
 END_SECTION
 
 START_SECTION((~MultiGradient()))
@@ -79,7 +80,7 @@ START_SECTION((QColor color(UInt index)))
 	TEST_EQUAL(mg.color(1)==Qt::black,true);
 END_SECTION
 
-START_SECTION((void insert(Int position, QColor color)))
+START_SECTION((void insert(DoubleReal position, QColor color)))
 	MultiGradient mg;
 	mg.insert(50,Qt::red);
 	TEST_EQUAL(mg.size(),3);
@@ -126,7 +127,7 @@ START_SECTION((void insert(Int position, QColor color)))
 	TEST_EQUAL(mg.color(5)==Qt::black,true);
 END_SECTION
 
-START_SECTION((bool remove(Int position)))
+START_SECTION((bool remove(DoubleReal position)))
 	MultiGradient mg;
 	mg.insert(25,Qt::green);
 	mg.insert(50,Qt::red);
@@ -157,7 +158,7 @@ START_SECTION((bool remove(Int position)))
 	TEST_EQUAL(mg.color(1)==Qt::black,true);
 END_SECTION
 
-START_SECTION((bool exists(Int position)))
+START_SECTION((bool exists(DoubleReal position)))
 	MultiGradient mg;
 	mg.insert(25,Qt::green);
 	mg.insert(50,Qt::red);

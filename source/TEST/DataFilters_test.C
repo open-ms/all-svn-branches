@@ -48,19 +48,22 @@ typedef BaseFeature::QualityType QualityType;
 
 ///constructor and destructor test
 DataFilters* ptr;
+DataFilters* nullPointer = 0;
 START_SECTION((DataFilters()))
 	ptr = new DataFilters();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(([EXTRA]~DataFilters()))
 	delete ptr;	
 END_SECTION
 
-DataFilters::DataFilter* ptr2;
+DataFilters::DataFilter* ptr2 = 0;
+DataFilters::DataFilter* nullPointer2 = 0;
+
 START_SECTION(([EXTRA]DataFilters::DataFilter()))
 	ptr2 = new DataFilters::DataFilter();
-	TEST_NOT_EQUAL(ptr2, 0)
+  TEST_NOT_EQUAL(ptr2, nullPointer2)
 END_SECTION
 
 START_SECTION(([EXTRA]~DataFilters::DataFilter()))
@@ -425,7 +428,7 @@ DataFilters::DataFilter* df_ptr;
 START_SECTION(([DataFilters::DataFilter] DataFilter()))
 {
   df_ptr = new DataFilters::DataFilter();
-  TEST_NOT_EQUAL(df_ptr, 0)
+  TEST_NOT_EQUAL(df_ptr, nullPointer2)
 
   delete df_ptr;
 }

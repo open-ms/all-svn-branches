@@ -45,6 +45,7 @@ START_TEST(DateTime, "$Id$")
 /////////////////////////////////////////////////////////////
 
 DateTime* ptr = 0;
+DateTime* nullPointer = 0;
 START_SECTION((DateTime& operator= (const DateTime& source)))
   DateTime date, date2;
   date.set("2006-12-12 11:59:59");
@@ -55,7 +56,7 @@ END_SECTION
 
 START_SECTION((DateTime()))
 	ptr = new DateTime();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((DateTime(const DateTime& date)))
@@ -201,7 +202,15 @@ START_SECTION((void set(const String &date)))
 
 	date_time.set("2006-12-14+11:00");
 	TEST_EQUAL(date_time.get(), "2006-12-14 11:00:00")
-	
+
+	// test if get is able to ignore the +02:00 timezone part / with and without milliseconds
+	// this test is due to #209
+	date_time.set("2011-08-05T15:32:07.468+02:00");
+	TEST_EQUAL(date_time.get(), "2011-08-05 15:32:07")
+
+	date_time.set("2011-08-05T15:32:07+02:00");
+	TEST_EQUAL(date_time.get(), "2011-08-05 15:32:07")
+
 	TEST_EXCEPTION(Exception::ParseError, date_time.set("2006ff-12-14+11:00"))
 	TEST_EXCEPTION(Exception::ParseError, date_time.set("2006-12-14-11:00"))
 	TEST_EXCEPTION(Exception::ParseError, date_time.set("2006-12-14Z11:00"))

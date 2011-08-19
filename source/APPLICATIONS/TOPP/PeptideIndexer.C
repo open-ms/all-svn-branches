@@ -290,6 +290,7 @@ class TOPPPeptideIndexer
 			setValidFormats_("in", StringList::create("IdXML"));
 			registerStringOption_("decoy_string", "<string>", "_rev", "String that was appended to the accession of the protein database to indicate a decoy protein.", false);
 			registerFlag_("write_protein_sequence", "If set, the protein sequences are stored as well.");
+			registerFlag_("prefix", "If set, the decoy_string is supposed to be appended as a prefix.");
 			registerFlag_("keep_unreferenced_proteins", "If set, protein hits which are not referenced by any peptide are kept.");
       registerFlag_("allow_unmatched", "If set, unmatched peptide sequences are allowed. By default (i.e. not set) the program terminates with error status on unmatched peptides.");
       registerIntOption_("aaa_max", "<AA count>", 4, "Maximal number of ambiguous amino acids (AAA) allowed when matching to a protein DB with AAA's. AAA's are 'B', 'Z', and 'X'", false);
@@ -304,6 +305,7 @@ class TOPPPeptideIndexer
 			String in(getStringOption_("in"));
 			String out(getStringOption_("out"));
 			bool write_protein_sequence(getFlag_("write_protein_sequence"));
+			bool prefix(getFlag_("prefix"));
 			bool keep_unreferenced_proteins(getFlag_("keep_unreferenced_proteins"));
       bool allow_unmatched(getFlag_("allow_unmatched"));
       
@@ -345,7 +347,7 @@ class TOPPPeptideIndexer
 			writeDebug_("Collecting peptides...", 1);
 
       FoundProteinFunctor func; // stores the matches (need to survive local scope which follows)
-			Map<String,Size> acc_to_prot; // build map accessions to proteins
+			Map<String,Size> acc_to_prot; // build map: accessions to proteins
 
       { // new scope - forget data after search
 
@@ -488,8 +490,16 @@ class TOPPPeptideIndexer
 					bool matches_decoy(false);
 					for (vector<String>::const_iterator it = it2->getProteinAccessions().begin(); it != it2->getProteinAccessions().end(); ++it)
 					{
-						if (it->hasSuffix(decoy_string)) matches_decoy = true;
-						else matches_target = true;
+						if(prefix)
+						{
+							if (it->hasPrefix(decoy_string)) matches_decoy = true;
+							else matches_target = true;
+						}
+						else
+						{
+							if (it->hasSuffix(decoy_string)) matches_decoy = true;
+							else matches_target = true;
+						}
 					}
 					StringList target_decoy;
 					if (matches_target) target_decoy.push_back("target");
@@ -540,7 +550,8 @@ class TOPPPeptideIndexer
         for (vector<ProteinHit>::iterator p_hit = prot_ids[run_idx].getHits().begin(); p_hit != prot_ids[run_idx].getHits().end(); ++p_hit)
 				{
           const String& acc = p_hit->getAccession();
-          if (masterset.find(acc_to_prot[acc]) != masterset.end())
+          if (acc_to_prot.has(acc) // accession needs to exist in new FASTA file
+              && masterset.find(acc_to_prot[acc]) != masterset.end())
           { // this accession was there already
             new_protein_hits.push_back(*p_hit);
             String seq;

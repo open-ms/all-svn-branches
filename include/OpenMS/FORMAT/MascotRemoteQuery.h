@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch$
-// $Authors: Andreas Bertsch, Daniel Jameson$
+// $Maintainer: Chris Bielow$
+// $Authors: Andreas Bertsch, Daniel Jameson, Chris Bielow$
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_MASCOTREMOTEQUERY_H
@@ -33,6 +33,7 @@
 #include <QtCore/QString>
 #include <QtCore/QFile>
 #include <QtNetwork/QHttpRequestHeader>
+#include <QTimer>
 
 
 namespace OpenMS
@@ -46,7 +47,7 @@ namespace OpenMS
 		@htmlinclude OpenMS_MascotRemoteQuery.parameters
 
 	*/
-	class OPENMS_DLLAPI MascotRemoteQuery 
+	class MascotRemoteQuery 
 		: public QObject,
 			public DefaultParamHandler
 	{
@@ -58,97 +59,97 @@ namespace OpenMS
 			*/
 			//@{
 			/// default constructor
-			MascotRemoteQuery(QObject *parent=0);
+			OPENMS_DLLAPI MascotRemoteQuery(QObject *parent=0);
 	
 			/// destructor
-			virtual ~MascotRemoteQuery();		
+			OPENMS_DLLAPI virtual ~MascotRemoteQuery();		
 			//@}
 
 
 			/// sets the query spectra, given in MGF file format
-			void setQuerySpectra(const String& exp);
+			OPENMS_DLLAPI void setQuerySpectra(const String& exp);
 			
 			/// returns the Mascot XML response which contains the identifications
-			const QByteArray& getMascotXMLResponse() const;
+			OPENMS_DLLAPI const QByteArray& getMascotXMLResponse() const;
 		
 			/// predicate which returns true if an error occurred during the query
-			bool hasError() const;
+			OPENMS_DLLAPI bool hasError() const;
 
 			/// returns the error message, if hasError can be used to check whether an error has occurred
-			const String& getErrorMessage() const;	
+			OPENMS_DLLAPI const String& getErrorMessage() const;	
 			
 		protected:
 
-			virtual void updateMembers_();
+			OPENMS_DLLAPI virtual void updateMembers_();
 	
 		public slots:
 
-			void run();
-		
+			OPENMS_DLLAPI void run();
+
 		private slots:
+
+      OPENMS_DLLAPI void timedOut();
+      
+      OPENMS_DLLAPI void readyReadSlot ( const QHttpResponseHeader & resp );
 
 			/** slot connected to signal requestFinished of QHttp: "This signal is emitted 
 				  when processing the request identified by id has finished. error is true 
 					if an error occurred during the processing; otherwise error is false"
 			*/
-			void httpRequestFinished(int request_id, bool error);
+			OPENMS_DLLAPI void httpRequestFinished(int request_id, bool error);
 
 			/// slot connected to signal dataReadProgress of QHttp
-			void httpDataReadProgress(int bytes_read, int bytes_total);
+			OPENMS_DLLAPI void httpDataReadProgress(int bytes_read, int bytes_total);
 
 			/// slot connected to signal dataSendProgress of QHttp
-			void httpDataSendProgress(int bytes_sent, int bytes_total);
+			OPENMS_DLLAPI void httpDataSendProgress(int bytes_sent, int bytes_total);
 
 			/// slot connected to signal requestStarted of QHttp, which indicates that the processing of request request_id has been started
-			void httpRequestStarted(int request_id);
+			OPENMS_DLLAPI void httpRequestStarted(int request_id);
 
 			/** slot connected to signal stateChanged of QHttp, which is emitted if 
 		 			the http state changed. See 'enum QHttp::State' of Qt docu for more 
 					info.
 			*/
-			void httpStateChanged(int state);
+			OPENMS_DLLAPI void httpStateChanged(int state);
 
 			/// slot connected to signal done of QHttp
-			void httpDone(bool error);
+			OPENMS_DLLAPI void httpDone(bool error);
 
 			/// slot connect to responseHeaderRecieved, which indicates that a new response header is available
-			void readResponseHeader(const QHttpResponseHeader& response_header);
+			OPENMS_DLLAPI void readResponseHeader(const QHttpResponseHeader& response_header);
 
-			void login();
+			OPENMS_DLLAPI void login();
 		
-			void execQuery();
+			OPENMS_DLLAPI void execQuery();
 
-			void getResults();
+			OPENMS_DLLAPI void getResults();
 		
-		
+
 		signals:
 		
-			void done();
+			OPENMS_DLLAPI void done();
 		
-			void loginDone();
+			OPENMS_DLLAPI void loginDone();
 
-			void queryDone();
+			OPENMS_DLLAPI void queryDone();
 
 		private:
+			/// assignment operator
+      OPENMS_DLLAPI MascotRemoteQuery& operator = (const MascotRemoteQuery& rhs);
+			/// copy constructor
+      OPENMS_DLLAPI MascotRemoteQuery(const MascotRemoteQuery& rhs);
+
+      OPENMS_DLLAPI void endRun();
 
 			String query_spectra_;
-
 			QByteArray mascot_xml_;
-
 			QHttp* http_;
-
 			QString results_path_;
-
 			QString cookie_;
-
 			String error_message_;
-
-			/// assignment operator
-      MascotRemoteQuery& operator = (const MascotRemoteQuery& rhs);
-			
-			/// copy constructor
-      MascotRemoteQuery(const MascotRemoteQuery& rhs);
-
+      QTimer timeout_;
+      Int to_;
 };
 
 }

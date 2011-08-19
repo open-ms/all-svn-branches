@@ -121,7 +121,7 @@ namespace OpenMS
 		{
 			arg_param_.load(filename_.toStdString());
 		}
-		catch(Exception::BaseException e)
+		catch(Exception::BaseException& e)
 		{
 			QMessageBox::critical(this,"Error",(String("Error loading INI file: ")+e.getMessage()).c_str());
 			arg_param_.clear();
@@ -158,7 +158,7 @@ namespace OpenMS
 		arg_param_.insert(tool_name_ + ":1:", *param_);
 		try
 		{
-			QString tmp_ini_file = QDir::tempPath() + QDir::separator() + "TOPPAS_" + tool_name_.toQString() + "_";
+			QString tmp_ini_file = File::getTempDirectory().toQString() + QDir::separator() + "TOPPAS_" + tool_name_.toQString() + "_";
 			if (tool_type_ != "")
 			{
 				tmp_ini_file += tool_type_.toQString() + "_";
@@ -167,7 +167,7 @@ namespace OpenMS
 			//store current parameters
 			arg_param_.store(tmp_ini_file.toStdString());
 			//restore other parameters that might be missing
-			String call = tool_name_ + " -write_ini " + String(filename_) + " -ini " + String(tmp_ini_file);
+			String call = String("\"") + File::getExecutablePath() + tool_name_ + "\"" + " -write_ini " + String(filename_) + " -ini " + String(tmp_ini_file);
 			if (tool_type_ != "")
 			{
 				call += " -type " + tool_type_;
@@ -175,11 +175,11 @@ namespace OpenMS
 			
 			if (system(call.c_str()) != 0)
 			{
-				QMessageBox::critical(0,"Error",(String("Could not execute '")+call+"'!\n\nMake sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
+				QMessageBox::critical(0, "Error", (String("Could not execute '") + call + "'!\n\nMake sure the TOPP tools are present in '" + File::getExecutablePath() + "', that you have permission to write to the temporary file path, and that there is space left in the temporary file path.").c_str());
 				return;
 			}
 		}
-		catch(Exception::BaseException e)
+		catch(Exception::BaseException& e)
 		{
 			QMessageBox::critical(this,"Error",(String("Error storing INI file: ")+e.getMessage()).c_str());
 			return;

@@ -55,23 +55,31 @@ using namespace std;
 		
 	@brief A highly configurable simulator for mass spectrometry experiments.
 	
-  This implementation is a rewritten and extended version of the concepts and ideas presented in:<br>
+  This implementation is described in 
   <p>
-  Ole Schulz-Trieglaff, Nico Pfeifer, Clemens Gropl, Oliver Kohlbacher, and Knut Reinert.<br>
-  LC-MSsim - A simulation software for liquid chromatography mass spectrometry data.<br>
-  <em>BMC Bioinformatics</em> <b>9</b>:423, 2008.
+  Chris Bielow, Stephan Aiche, Sandro Andreotti, Knut Reinert<br>
+  MSSimulator: Simulation of Mass Spectrometry Data<br>
+  Journal of Proteome Research, DOI: 10.1021/pr200155f<br>
   </p>
 
-  The electronic version of this article is the complete one and can be found online at: <br>
-  <a href="http://www.biomedcentral.com/1471-2105/9/423">http://www.biomedcentral.com/1471-2105/9/423</a>
-
-  Added features are:
+  The most important features are:
   <ul>
+    <li>Simulation of Capillary electrophoresis and HPLC as separation step</li>
+    <li>Simulation of MS spectra</li>
     <li>Simulation of MS/MS spectra with configurable precursor-selection strategy</li>
-    <li>Simulation of Capillary electrophoresis as separation step</li>
     <li>Simulation of iTRAQ labels</li>
-    <li>Simulation of 1D spectra</li>
+    <li>Simulation of different noise models and instrument types (resolution, peak shape)</li>
   </ul>
+
+  Look at the INI file (via "MSSimulator -write_ini myini.ini -type ...") to see the available parameters and more functionality.
+
+  If multiplexed data is simulated (like SILAC or iTRAQ) you need to supply multiple FASTA input files.
+  For the label-free setting, all FASTA input files will be merged into one, before simulation.
+
+  <p>
+   Actually only a test model for MS/MS simulation is shipped with OpenMS. <br>
+   Please find trained models at: http://sourceforge.net/projects/open-ms/files/Supplementary/Simulation/.
+  </p>
 
 	@note This tool is experimental!	
 
@@ -98,6 +106,7 @@ class TOPPMSSimulator
       // I/O settings
       registerInputFileList_("in","<files>",StringList::create(""),"Input protein sequences in FASTA format",true,false);
       registerOutputFile_("out","<file>","","output (simulated MS map) in mzML format",true);
+      registerOutputFile_("out_pm","<file>","","output (simulated MS map) in mzML format (picked GT)",false);
       registerOutputFile_("out_fm","<file>","","output (simulated MS map) in featureXML format",false);
       registerOutputFile_("out_cm","<file>","","output (simulated MS map) in consensusXML format (grouping charge variants from a parent peptide from ESI)",false);
       registerOutputFile_("out_lcm","<file>","","output (simulated MS map) in consensusXML format (grouping labeled variants)",false);
@@ -229,24 +238,22 @@ class TOPPMSSimulator
       SimRandomNumberGenerator rnd_gen;
 
       rnd_gen.biological_rng = gsl_rng_alloc(gsl_rng_mt19937);
-      if(getParam_().getValue("algorithm:RandomNumberGenerators:biological") == "random")
+      if (getParam_().getValue("algorithm:RandomNumberGenerators:biological") == "random")
       {
         gsl_rng_set(rnd_gen.biological_rng, time(0));
       }
       else
-      {
-        // use gsl default seed to get reproducible experiments
+      { // use gsl default seed to get reproducible experiments
         gsl_rng_set(rnd_gen.biological_rng, 0);
       }
 
       rnd_gen.technical_rng = gsl_rng_alloc(gsl_rng_mt19937);
-      if(getParam_().getValue("algorithm:RandomNumberGenerators:technical") == "random")
+      if (getParam_().getValue("algorithm:RandomNumberGenerators:technical") == "random")
       {
         gsl_rng_set(rnd_gen.technical_rng, time(0));
       }
       else
-      {
-        // use gsl default seed to get reproducible experiments
+      { // use gsl default seed to get reproducible experiments
         gsl_rng_set(rnd_gen.technical_rng, 0);
       }
 
@@ -264,6 +271,13 @@ class TOPPMSSimulator
       writeLog_(String("Storing simulated map in: ") + outputfile_name);
       MzMLFile().store(outputfile_name, ms_simulation.getExperiment());
       
+      String pxml_out = getStringOption_("out_pm");
+			if (pxml_out != "")
+			{
+				writeLog_(String("Storing simulated features in: ") + pxml_out);
+				MzMLFile().store(pxml_out, ms_simulation.getPeakMap());
+			}
+
       String fxml_out = getStringOption_("out_fm");
 			if (fxml_out != "")
 			{

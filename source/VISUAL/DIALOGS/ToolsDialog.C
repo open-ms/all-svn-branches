@@ -152,18 +152,17 @@ namespace OpenMS
 			return;
 		}
 		
-		String call = getTool()+" -write_ini "+ini_file_+" -log "+ini_file_+".log";
+		String call = String("\"") + File::getExecutablePath() + getTool() + "\"" + " -write_ini " + ini_file_ + " -log " + ini_file_ + ".log";
 
 		if (i!=-1)
 		{
 			call += " -type " + String(type_combo_->currentText());
 		}
-		
-		if(system(call.c_str())!=0)
+		if (system(call.c_str())!=0)
 		{
-			QMessageBox::critical(this,"Error",(String("Could not execute '")+call+"'!\n\nMake sure the TOPP tools are in your $PATH variable, that you have write permission in the temporary file path, and that there is space left in the temporary file path.").c_str());
+			QMessageBox::critical(this, "Error", (String("Could not execute '") + call + "'!\n\nMake sure the TOPP tools are present in '" + File::getExecutablePath() + "',  that you have permission to write to the temporary file path, and that there is space left in the temporary file path.").c_str());
 		}
-		else if(!File::exists(ini_file_))
+		else if (!File::exists(ini_file_))
 		{
 			QMessageBox::critical(this,"Error",(String("Could not open '")+ini_file_+"'!").c_str());
 		}
@@ -328,7 +327,7 @@ namespace OpenMS
 		{
 			arg_param_.load(filename_.toStdString());
 		}
-		catch(Exception::BaseException e)
+		catch(Exception::BaseException& e)
 		{
 			QMessageBox::critical(this,"Error",(String("Error loading INI file: ")+e.getMessage()).c_str());
 			arg_param_.clear();
@@ -416,7 +415,7 @@ namespace OpenMS
 		{
 			arg_param_.store(filename_.toStdString());
 		}
-		catch(Exception::BaseException e)
+		catch(Exception::BaseException& e)
 		{
 			QMessageBox::critical(this,"Error",(String("Error storing INI file: ")+e.getMessage()).c_str());
 			return;

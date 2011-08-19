@@ -43,9 +43,12 @@ START_TEST(PoseClusteringShiftSuperimposer, "$Id$")
 /////////////////////////////////////////////////////////////
 
 PoseClusteringShiftSuperimposer* ptr = 0;
+PoseClusteringShiftSuperimposer* nullPointer = 0;
+BaseSuperimposer* base_nullPointer = 0;
+
 START_SECTION((PoseClusteringShiftSuperimposer()))
 	ptr = new PoseClusteringShiftSuperimposer();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~PoseClusteringShiftSuperimposer()))
@@ -55,7 +58,7 @@ END_SECTION
 START_SECTION((static BaseSuperimposer* create()))
   BaseSuperimposer* base_ptr = 0;
 	base_ptr = PoseClusteringShiftSuperimposer::create();
-	TEST_NOT_EQUAL(base_ptr, 0)
+  TEST_NOT_EQUAL(base_ptr, base_nullPointer)
   delete (base_ptr);
 END_SECTION
 

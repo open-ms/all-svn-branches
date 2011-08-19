@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
-// $Authors: Andreas Bertsch, Daniel Jameson$
+// $Maintainer: Chris Bielow $
+// $Authors: Andreas Bertsch, Daniel Jameson, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/MascotRemoteQuery.h>
@@ -43,15 +43,19 @@ namespace OpenMS
 		:	QObject(parent),
 			DefaultParamHandler("MascotRemoteQuery")
 	{	
-		http_ = new QHttp();
+    http_ = new QHttp();
 					
 		// server specifications
 		defaults_.setValue("hostname", "", "Address of the host where Mascot listens, e.g. 'mascot-server' or '127.0.0.1'");
 		defaults_.setValue("host_port", 80, "Port where the Mascot server listens, 80 should be a good guess");
 		defaults_.setMinInt("host_port", 0);
 		defaults_.setValue("server_path", "mascot", "Path on the server where Mascot server listens, 'mascot' should be a good guess");
+    defaults_.setValue("timeout", 1500, "Timeout in seconds, after which the query is declared as failed. The timeout is only during the query process (when Mascot reports the progress)."
+                                        "This is NOT the whole time the search takes, but the time in between two progress steps. Some Mascot servers freeze during this (unstable network etc) and idle forever"
+                                        ", we thus kill the connection ourselves. Set this to 0 to disable timeout!");
+    defaults_.setMinInt("timeout", 0);
 		defaults_.setValue("boundary", "GZWgAaYKjHFeUaLOLEIOMq", "Boundary for the MIME section", StringList::create("advanced"));
-		
+
 		// proxy settings
 		defaults_.setValue("use_proxy", "false", "Flag which enabled the proxy usage for the http requests, please specify at least 'proxy_host' and 'proxy_port'", StringList::create("advanced"));
 		defaults_.setValidStrings("use_proxy", StringList::create("true,false"));
@@ -76,22 +80,34 @@ namespace OpenMS
 
 	MascotRemoteQuery::~MascotRemoteQuery()
 	{
+    if (http_->state() != QHttp::Unconnected) 
+    {
+      std::cerr << "Aborting open connection!\n";
+      http_->abort(); // hardcore close connection (otherwise server might have too many dangling requests)
+    }
 		delete http_;
 	}
 
+  void MascotRemoteQuery::timedOut()
+  {
+    LOG_FATAL_ERROR << "Mascot request timed out after " << to_ << " seconds! See 'timeout' parameter for details!" << std::endl;
+    http_->abort(); // one might try to resend the job here instead...
+  }
+
 	void MascotRemoteQuery::run()
 	{
-		updateMembers_(); // resets the values
-					
-		connect(http_, SIGNAL(requestFinished(int, bool)), this, SLOT(httpRequestFinished(int,bool)));
+		updateMembers_();
+    connect(http_, SIGNAL(requestFinished(int, bool)), this, SLOT(httpRequestFinished(int,bool)));
     connect(http_, SIGNAL(requestStarted(int)), this, SLOT(httpRequestStarted(int)));
     connect(http_, SIGNAL(done(bool)), this, SLOT(httpDone(bool)));
     connect(http_, SIGNAL(stateChanged(int)), this, SLOT(httpStateChanged(int)));
+    connect(http_, SIGNAL(readyRead ( const QHttpResponseHeader & )), this, SLOT(readyReadSlot ( const QHttpResponseHeader & )) );
     connect(http_, SIGNAL(responseHeaderReceived(const QHttpResponseHeader &)), this, SLOT(readResponseHeader(const QHttpResponseHeader &)));
     connect(this, SIGNAL(loginDone()), this, SLOT(execQuery()));
     connect(this, SIGNAL(queryDone()), this, SLOT(getResults()));
-					
-		if (param_.getValue("login").toBool())
+    connect(&timeout_, SIGNAL(timeout()), this, SLOT(timedOut()));
+
+    if (param_.getValue("login").toBool())
 		{
 			login();
 		}
@@ -239,7 +255,9 @@ void MascotRemoteQuery::execQuery()
 	cerr << querybytes.constData() << "\n";
 	cerr << "ended: " << "\n";
 #endif
-	
+  
+  timeout_.setInterval(1000 * to_);
+  if (to_ > 0) timeout_.start();
 	http_->request(header, querybytes);
 }
 
@@ -249,7 +267,7 @@ void MascotRemoteQuery::httpRequestFinished(int requestId, bool error)
 {
 	if (error)
 	{
-		cerr << "MascotRemoteQuery: An error occured (requestId=" << requestId << "): " << http_->errorString().toStdString() << "\n";
+		cerr << "MascotRemoteQuery: An error occurred (requestId=" << requestId << "): " << http_->errorString().toStdString() << " (QT Error Code: " << int(http_->error()) << ")\n";
 	}
 #ifdef MASCOTREMOTEQUERY_DEBUG
 	cerr << "Request Finished Id: " << requestId << "\n";
@@ -305,10 +323,16 @@ state
 #endif
 }
 
+void MascotRemoteQuery::readyReadSlot ( const QHttpResponseHeader & resp )
+{
+  //if (http_->bytesAvailable() < 1000) std::cerr << "new bytes: " << http_->bytesAvailable() << " from " << resp.toString() << " with code " <<  resp.statusCode() << " and httpstat: " << http_->state() << "\n";
+  if (to_ > 0) timeout_.start(); // reset timeout
+}
+
 
 void MascotRemoteQuery::readResponseHeader(const QHttpResponseHeader& response_header) 
 {
-#ifdef MASCOTREMOTEQUERY_DEBUG	
+#ifdef MASCOTREMOTEQUERY_DEBUG
 	cerr << "void MascotRemoteQuery::readResponseHeader(const QHttpResponseHeader &responseHeader)" << "\n";
 
 	cerr << ">>>>> Header to read: " << "\n";
@@ -319,7 +343,7 @@ void MascotRemoteQuery::readResponseHeader(const QHttpResponseHeader& response_h
 	if (response_header.statusCode() >= 400)
 	{
 		error_message_ = String("MascotRemoteQuery: The server returned an error status code '") + response_header.statusCode() + "': " + response_header.reasonPhrase() + "\nTry accessing the server\n  " + (String)param_.getValue("hostname") + "/" + (String)param_.getValue("server_path") + "\n from your browser and check if it works fine.";
-		emit done();
+    endRun();
 	}
 
 
@@ -354,11 +378,19 @@ cout<<"Cookie created:"<<cookie_.toStdString()<<"\n";
 	}
 }	
 
+void MascotRemoteQuery::endRun()
+{
+  if (http_->state() != QHttp::Unconnected) http_->close();
+  emit done();
+}
+
+
 void MascotRemoteQuery::httpDone(bool error)
 {
 	if (error)
 	{
-		cerr << "'" << http_->errorString().toStdString() << "'" << "\n";
+    error_message_ = String("Mascot Server replied: '") + String(http_->errorString().toStdString()) + "'";
+    endRun();
 	}
 
 #ifdef MASCOTREMOTEQUERY_DEBUG
@@ -373,6 +405,9 @@ void MascotRemoteQuery::httpDone(bool error)
 	}
 #endif
 	
+  timeout_.stop();
+  
+
 	QByteArray new_bytes = http_->readAll();
 #ifdef MASCOTREMOTEQUERY_DEBUG
 	cerr << "Response of query: " << "\n";
@@ -381,20 +416,26 @@ void MascotRemoteQuery::httpDone(bool error)
 	cerr << doc.toPlainText().toStdString() << "\n";
 #endif
 	
-	//Sucessful login? fire off the search
-	if (new_bytes.contains("Logged in successfuly")) 
+  if (QString(new_bytes).trimmed().size() == 0 )
+  {
+    error_message_ = "Error: Reply from mascot server is empty! Possible server overload - see the Mascot Admin!";
+    endRun();
+  }
+
+	//Successful login? fire off the search
+	if (new_bytes.contains("Logged in successfuly")) // this is NOT a typo. Mascot writes 'successfuly' that way!
 	{
 		emit loginDone();
 	} 
 	else if (new_bytes.contains("Error: You have entered an invalid password"))
 	{
 		error_message_ = "Error: You have entered an invalid password";
-		emit done();
+    endRun();
 	}
-	else if (new_bytes.contains("Error: LarseNilse is not a valid user"))
+	else if (new_bytes.contains("is not a valid user"))
 	{
-		error_message_ = "Error: LarseNilse is not a valid user";
-		emit done();
+		error_message_ = "Error: Username is not valid";
+    endRun();
 	}
 	else if (new_bytes.contains("Click here to see Search Report")) 
 	{
@@ -437,7 +478,7 @@ void MascotRemoteQuery::httpDone(bool error)
 			QTextDocument doc;
 			doc.setHtml(response_text);
 			error_message_ = doc.toPlainText().toStdString();
-			emit done();
+      endRun();
 		}
 		else
 		{
@@ -446,7 +487,7 @@ void MascotRemoteQuery::httpDone(bool error)
 			cerr << "Get the XML File" << "\n";
 			#endif
 			mascot_xml_ = new_bytes;
-			emit done();
+      endRun();
 		}
 	}
 }
@@ -484,6 +525,8 @@ void MascotRemoteQuery::httpDone(bool error)
 		cookie_ = "";
 		mascot_xml_ = "";
 		results_path_ = "";
+
+    to_ = param_.getValue("timeout");
 
 		bool use_proxy(param_.getValue("use_proxy").toBool());
 		if (use_proxy)

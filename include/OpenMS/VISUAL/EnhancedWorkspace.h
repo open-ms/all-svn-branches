@@ -39,13 +39,12 @@ class QDropEvent;
 
 namespace OpenMS
 {
-	class OPENMS_DLLAPI EnhancedWorkspace
+	class OPENMS_GUI_DLLAPI EnhancedWorkspace
 		: public QWorkspace
 	{
 		Q_OBJECT
 		
-		public:
-			
+		public:			
 			/// Constructor
 			EnhancedWorkspace(QWidget* parent);
 			
@@ -59,7 +58,7 @@ namespace OpenMS
 		
 		protected:
 			
-			///@name reimplemented Qt events
+      ///@name Reimplemented Qt events
       //@{
      	void dragEnterEvent(QDragEnterEvent* event);
 			void dragMoveEvent(QDragMoveEvent* event);

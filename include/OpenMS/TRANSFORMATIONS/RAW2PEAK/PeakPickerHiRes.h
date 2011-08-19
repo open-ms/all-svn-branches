@@ -127,8 +127,8 @@ namespace OpenMS
 									 && snt.getSignalToNoise(input[i+2]) >= signal_to_noise_)
 									)
 								{
-                  ++i;
-                  continue;
+									++i;
+									continue;
 								}
 							
 							

@@ -6,38 +6,42 @@
 		<processingAction name="File format conversion" />
 		<userParam type="string" name="parameter: mode" value="test_mode"/>
 	</dataProcessing>
-	<mapList count="0">
+	<mapList count="1">
+		<map id="0" name="FileConverter_10_input.edta" label="" size="6">
+		</map>
 	</mapList>
 	<consensusElementList>
-		<consensusElement id="e_2727934422266510952" quality="0" charge="1">
-			<centroid rt="698.64" mz="1131.5024" it="118240"/>
-			<groupedElementList>
-			</groupedElementList>
-		</consensusElement>
-		<consensusElement id="e_3318143123566627610" quality="0" charge="1">
-			<centroid rt="2120.22" mz="1144.6209" it="101810"/>
-			<groupedElementList>
-			</groupedElementList>
-		</consensusElement>
-		<consensusElement id="e_16086848624660428181" quality="0" charge="1">
-			<centroid rt="3673.02" mz="1005.4742" it="73612"/>
-			<groupedElementList>
-			</groupedElementList>
-		</consensusElement>
-		<consensusElement id="e_6211693768620736135" quality="0" charge="1">
-			<centroid rt="5213.82" mz="901.45712" it="59424"/>
-			<groupedElementList>
-			</groupedElementList>
-		</consensusElement>
 		<consensusElement id="e_13229490167902618598" quality="0" charge="1">
-			<centroid rt="5558.7" mz="1101.5298" it="36976"/>
+			<centroid rt="10" mz="114" it="2342"/>
 			<groupedElementList>
 			</groupedElementList>
 		</consensusElement>
-		<consensusElement id="e_5024549519481199379" quality="0" charge="1">
-			<centroid rt="6048" mz="1088.7925" it="32667"/>
+		<consensusElement id="e_5024549519481199379" quality="0" charge="2">
+			<centroid rt="10" mz="115" it="232"/>
 			<groupedElementList>
 			</groupedElementList>
+		</consensusElement>
+		<consensusElement id="e_6211693768620736135" quality="0" charge="2">
+			<centroid rt="10" mz="116" it="523"/>
+			<groupedElementList>
+			</groupedElementList>
+		</consensusElement>
+		<consensusElement id="e_2727934422266510952" quality="0" charge="1">
+			<centroid rt="14" mz="220" it="343"/>
+			<groupedElementList>
+			</groupedElementList>
+			<userParam type="string" name="Meta2" value="value"/>
+		</consensusElement>
+		<consensusElement id="e_3318143123566627610" quality="0" charge="2">
+			<centroid rt="14" mz="431.1" it="343"/>
+			<groupedElementList>
+			</groupedElementList>
+		</consensusElement>
+		<consensusElement id="e_16086848624660428181" quality="0" charge="3">
+			<centroid rt="15" mz="543.2393" it="343"/>
+			<groupedElementList>
+			</groupedElementList>
+			<userParam type="string" name="Meta2" value="b"/>
 		</consensusElement>
 	</consensusElementList>
 </consensusXML>

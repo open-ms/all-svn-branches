@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Chris Bielow $
 // $Authors: Andreas Bertsch, Chris Bielow, Marc Sturm $
 // --------------------------------------------------------------------------
 
@@ -43,16 +43,63 @@
 
 #ifdef OPENMS_WINDOWSPLATFORM
 #  define NOMINMAX
-#  include <Windows.h>  // for 'GetCurrentProcessId()'
+#  include <Windows.h>  // for GetCurrentProcessId() && GetModuleFileName()
 #else
 #  include <unistd.h>   // for 'getpid()'
 #endif
 
 using namespace std;
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 namespace OpenMS 
 {
 	
+  String File::getExecutablePath()
+  {
+    // see http://stackoverflow.com/questions/1023306/finding-current-executables-path-without-proc-self-exe/1024937#1024937 for more OS' (if needed)
+    static String spath = "";
+    static bool path_checked = false;
+
+    if (path_checked) return spath; // short route. Only inquire the path once. The result will be the same every time.
+
+    char path[1024];
+
+#ifdef OPENMS_WINDOWSPLATFORM
+    int size = sizeof(path);
+    if( GetModuleFileName( NULL, path, size ) )
+#elif  defined(__APPLE__)
+    uint size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0)
+#else // LINUX
+    int size = sizeof(path);
+    int ch = readlink("/proc/self/exe", path, size);
+    if (ch != -1)
+#endif
+    { 
+      spath = File::path(String(path));
+      if (File::exists(spath)) // check if directory exists
+      {
+        // ensure path ends with a "/", such that we can just write path + "ToolX", and to not worry about if its empty or a path.
+        spath.ensureLastChar('/');
+      }
+      else
+      {
+        std::cerr << "Path extracted from Executable Path does not exist! Returning empty string!\n";
+        spath = "";
+      }
+    }
+    else
+    {
+      std::cerr << "Cannot get Executable Path! Not using a path prefix!\n";
+    }
+
+    path_checked = true; // enable short route for next run
+    return spath;
+  }
+
 	bool File::exists(const String& file)
 	{
 		QFileInfo fi(file.toQString());
@@ -73,6 +120,42 @@ namespace OpenMS
 	  return true;
 	}
 	
+	bool File::removeDirRecursively(const String& dir_name)
+	{
+		bool fail = false;
+		QString path = dir_name.toQString();
+    QDir dir(path);
+		QStringList files = dir.entryList(QDir::Files | QDir::NoDotAndDotDot);
+		foreach (const QString& file_name, files)
+		{
+			if (!dir.remove(file_name))
+			{
+				std::cerr << "Could not remove file " << String(file_name) << "!" << std::endl;
+				fail = true;
+			}
+		}
+		QStringList contained_dirs = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+		foreach (const QString& contained_dir, contained_dirs)
+		{
+			if (!removeDirRecursively(path + QDir::separator() + contained_dir))
+			{
+				fail = true;
+			}
+		}
+		
+		QDir parent_dir(path);
+		if (parent_dir.cdUp())
+		{
+			if (!parent_dir.rmdir(path))
+			{
+				std::cerr << "Could not remove directory " << String(dir.dirName()) << "!" << std::endl;
+				fail = true;
+			}
+		}
+		
+		return !fail;
+	}
+
 	String File::absolutePath(const String& file)
 	{
 		QFileInfo fi(file.toQString());

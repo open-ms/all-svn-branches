@@ -38,10 +38,11 @@ using namespace OpenMS;
 START_TEST(Bzip2InputStream, "$Id$")
 
 Bzip2InputStream* ptr = 0;
+Bzip2InputStream* nullPointer = 0;
 START_SECTION(Bzip2InputStream(const   char* const     file_name))
 	TEST_EXCEPTION(Exception::FileNotFound, Bzip2InputStream bzip2(OPENMS_GET_TEST_DATA_PATH("ThisFileDoesNotExist")))
 	ptr = new Bzip2InputStream(OPENMS_GET_TEST_DATA_PATH("Bzip2IfStream_1.bz2"));
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 	TEST_EQUAL(ptr->getIsOpen(),true)
 END_SECTION
 
@@ -53,7 +54,7 @@ START_SECTION(Bzip2InputStream(const String& file_name))
 	TEST_EXCEPTION(Exception::FileNotFound, Bzip2InputStream bzip2(OPENMS_GET_TEST_DATA_PATH("ThisFileDoesNotExist")))
 	String filename = OPENMS_GET_TEST_DATA_PATH("Bzip2IfStream_1.bz2");
 	ptr = new Bzip2InputStream(filename);
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 	TEST_EQUAL(ptr->getIsOpen(),true)
 	delete ptr;
 END_SECTION
@@ -93,7 +94,8 @@ END_SECTION
 
 START_SECTION(virtual const XMLCh* getContentType() const)
 	Bzip2InputStream bzip2(OPENMS_GET_TEST_DATA_PATH("Bzip2IfStream_1.bz2"));
-	TEST_EQUAL(bzip2.getContentType(),0)
+  XMLCh* xmlch_nullPointer = 0;
+  TEST_EQUAL(bzip2.getContentType(),xmlch_nullPointer)
 END_SECTION
 
 /////////////////////////////////////////////////////////////

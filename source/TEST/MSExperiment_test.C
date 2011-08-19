@@ -43,10 +43,11 @@ using namespace OpenMS;
 using namespace std;
 
 MSExperiment<>* ptr = 0;
+MSExperiment<>* nullPointer = 0;
 START_SECTION((MSExperiment()))
 {
 	ptr = new MSExperiment<>;
-	TEST_NOT_EQUAL(ptr, 0);
+  TEST_NOT_EQUAL(ptr, nullPointer);
 }
 END_SECTION
 

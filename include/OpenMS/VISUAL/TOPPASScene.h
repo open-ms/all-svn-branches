@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Johannes Junker $
-// $Authors: Johannes Junker $
+// $Authors: Johannes Junker, Chris Bielow $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_VISUAL_TOPPASSCENE_H
@@ -39,10 +39,20 @@ namespace OpenMS
 {
 	class TOPPASVertex;
 	class TOPPASToolVertex;
+  class TOPPASMergerVertex;
 	class TOPPASOutputFileListVertex;
 	class TOPPASEdge;
 	class TOPPASResources;
 	
+  class FakeProcess
+    : public QProcess
+  {
+    Q_OBJECT
+
+    public:
+      virtual void 	start ( const QString & program, const QStringList & arguments, OpenMode mode = ReadWrite );
+  };
+
 	/**
 		@brief A container for all visual items of a TOPPAS workflow
 		
@@ -53,11 +63,14 @@ namespace OpenMS
 		
 		TOPPASScene can also be used without a visualizing TOPPASWidget (i.e., without a gui) which can
 		be indicated via the constructor. In this case, the signals for log message output are connected
-		to standard out. This is utilized for the TOPPAS -execute command line switch.
+		to standard out. This is utilized for the ExecutePipeline tool.
 	
+    Temporary files of the pipeline are stored in the member tmp_path_. Update it when loading a pipeline which has
+    tmp data from an old run. TOPPASToolVertex will ask its parent scene() whenever it wants to know the tmp directory.
+
 		@ingroup TOPPAS_elements
 	*/
-	class OPENMS_DLLAPI TOPPASScene
+	class OPENMS_GUI_DLLAPI TOPPASScene
 		:	public QGraphicsScene
 	{
 		Q_OBJECT
@@ -104,7 +117,7 @@ namespace OpenMS
 			typedef VertexContainer::const_iterator ConstVertexIterator;
 			
 			/// Constructor
-			TOPPASScene(QObject* parent, const String& tmp_path = "", bool gui = true);
+			TOPPASScene(QObject* parent, const QString& tmp_path, bool gui = true);
 			
 			/// Destructor
 			virtual ~TOPPASScene();
@@ -135,6 +148,8 @@ namespace OpenMS
 			void unselectAll();
 			/// Updates all edge colors (color of green and yellow edges can change when edges are added/removed)
 			void updateEdgeColors();
+      /// Called when user fires "Resume" action, to clear downstream nodes from previous results
+      void resetDownstream(TOPPASVertex* vertex);
 			/// Runs the pipeline
 			void runPipeline();
 			/// Stores the pipeline to @p file
@@ -151,6 +166,8 @@ namespace OpenMS
 			void topoSort();
 			/// Returns the name of the directory for output files
 			const QString& getOutDir();
+      /// Returns the name of the directory for temporary files
+      const QString& getTempDir();
 			/// Sets the name of the directory for output files
 			void setOutDir(const QString& dir);
 			/// Saves the pipeline if it has been changed since the last save.
@@ -159,8 +176,6 @@ namespace OpenMS
 			void setChanged(bool b);
 			/// Returns if a pipeline is currently running
 			bool isPipelineRunning();
-			/// Terminates the currently running pipeline
-			void abortPipeline();
 			/// Shows a dialog that allows to specify the output directory. If @p always_ask == false, the dialog won't be shown if a directory has been set, already.
 			bool askForOutputDir(bool always_ask = true);
 			/// Enqueues the process, it will be run when the currently pending processes have finished
@@ -176,7 +191,9 @@ namespace OpenMS
 			///Connects the signals to slots
 			void connectToolVertexSignals(TOPPASToolVertex* ttv);
 			///Connects the signals to slots
-			void connectOutputVertexSignals(TOPPASOutputFileListVertex* oflv);
+      void connectOutputVertexSignals(TOPPASOutputFileListVertex* oflv);
+			///Connects the signals to slots
+      void connectMergerVertexSignals(TOPPASMergerVertex* tmv);
 			///Connects the signals to slots
 			void connectEdgeSignals(TOPPASEdge* e);
 			///Loads the @p resources into the input nodes of this workflow
@@ -187,9 +204,18 @@ namespace OpenMS
 			bool wasChanged();
 			/// Refreshes the parameters of the TOPP tools in this workflow
 			bool refreshParameters();
-			
+      /// determine dry run status (are tools actually called?)
+      bool isDryRun() const;
+			/// workflow description (to be displayed in TOPPAS window)
+      QString getDescription() const;
+      /// when description is updated by user, use this to update the description for later storage in file
+      void setDescription(const QString& desc);
+
+
 		public slots:
-		
+
+			/// Terminates the currently running pipeline
+			void abortPipeline();
 			/// Called when an item is clicked
 			void itemClicked();
 			/// Called when an item is released
@@ -202,15 +228,20 @@ namespace OpenMS
 			void finishHoveringEdge();
 			/// Checks whether all output vertices are finished, and if yes, emits entirePipelineFinished() (called by finished output vertices)
 			void checkIfWeAreDone();
-			/// Called by vertices at which an error occured during pipeline execution
-			void pipelineErrorSlot();
+			/// Called by vertices at which an error occurred during pipeline execution
+			void pipelineErrorSlot(const QString msg = "");
 			/// Moves all selected items by dx, dy
 			void moveSelectedItems(qreal dx, qreal dy);
 			/// Makes all vertices snap to the grid
 			void snapToGrid();
 			/// Sets if the running_ flag to true
 			void setPipelineRunning(bool b = true);
-			
+			/// Called by a finished QProcess to indicate that we are free to start a new one
+      void processFinished();
+      /// dirty solution: when using ExecutePipeline this slot is called when the pipeline crashes. This will quit the app
+      void quitWithError();
+
+
 			///@name Slots for printing log/error output when no GUI is available
       //@{
       /// Writes the TOPP tool output to the logfile (and to stdout if no gui available)
@@ -244,7 +275,12 @@ namespace OpenMS
 			/// Emitted when the main window needs to be updated
 			void mainWindowNeedsUpdate();
       /// Emitted when files are triggered for opening in TOPPView
-      void openInTOPPView(QVector<QStringList> all_files);
+      void openInTOPPView(QStringList all_files);
+      /// Emitted when in dry run mode and asked to run a TOPP tool (to fake success)
+      void dryRunFinished(int, QProcess::ExitStatus);
+      /// Emitted when there is an important message that needs to be printed in TOPPAS
+      void messageReady(const QString& msg);
+
 
 		protected:
 			
@@ -261,8 +297,8 @@ namespace OpenMS
 			/// The file name of this pipeline
 			String file_name_;
 			/// The path for temporary files
-			String tmp_path_;
-			/// Are we in a GUI or is the scene used by TOPPAS -execute (at the command line)?
+			QString tmp_path_;
+			/// Are we in a GUI or is the scene used by ExecutePipeline (at the command line)?
 			bool gui_;
 			/// The directory where the output files will be written
 			QString out_dir_;
@@ -270,13 +306,22 @@ namespace OpenMS
 			bool changed_;
 			/// Indicates if a pipeline is currently running
 			bool running_;
+      /// true if an error occurred during pipeline execution
+      bool error_occured_;
 			/// Indicates if the output directory has been specified by the user already
 			bool user_specified_out_dir_;
 			/// The queue of pending TOPP processes
 			QList<TOPPProcess> topp_processes_queue_;
 			/// Stores the clipboard content when requested from TOPPASBase
 			TOPPASScene* clipboard_;
-			
+      /// dry run mode (no tools are actually called)
+      bool dry_run_;
+			/// currently running processes...
+      int threads_active_;
+      /// description text
+      QString description_text_;
+
+
 			/// Returns the vertex in the foreground at position @p pos , if existent, otherwise 0.
 			TOPPASVertex* getVertexAt_(const QPointF& pos);
 			/// Returns whether an edge between node u and v would be allowed

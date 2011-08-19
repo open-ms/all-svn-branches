@@ -53,7 +53,7 @@
 #ifndef OPENMS_SYSTEM_STOPWATCH_H
 #endif
 
-
+#include <boost/math/special_functions/acosh.hpp>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multifit_nlin.h>
 #include <gsl/gsl_blas.h>
@@ -345,7 +345,6 @@ namespace OpenMS
 				//last_rt = current_rt;
 				current_rt = (ms_exp_it+curr_scan)->getRT();
 				typename MSExperiment<OutputPeakType>::SpectrumType::Iterator peak_it  = (ms_exp_it+curr_scan)->begin();
-				typename MSExperiment<OutputPeakType>::SpectrumType::Iterator peak_it_last  = (ms_exp_it+curr_scan)->end();
 
 				// copy cluster information of least scan
 				iso_last_scan = iso_curr_scan;
@@ -387,7 +386,6 @@ namespace OpenMS
 													searchInScan_(iso_last_scan.begin(),iso_last_scan.end(),curr_mz);
 			  
 												DoubleReal delta_mz = fabs(*it - curr_mz);
-												std::vector<DoubleReal>::iterator itneu = iso_last_scan.begin();
 												//std::cout << delta_mz << " "<< tolerance_mz << std::endl;
 												if ( delta_mz > tolerance_mz) // check if first peak of last cluster is close enough
 													{
@@ -490,7 +488,6 @@ namespace OpenMS
 													searchInScan_(iso_last_scan.begin(),iso_last_scan.end(),curr_mz);
 			  
 												DoubleReal delta_mz = fabs(*it - curr_mz);
-												std::vector<DoubleReal>::iterator itneu = iso_last_scan.begin();
 												//												std::cout << delta_mz << " "<< tolerance_mz << std::endl;
 												if ( delta_mz > tolerance_mz) // check if first peak of last cluster is close enough
 													{
@@ -745,18 +742,33 @@ namespace OpenMS
 													<<"\nrw: "<<itv->second[j].getSpectrum(ms_exp).getFloatDataArrays()[4][itv->second[j].peak] << "\n";
 
 #endif
+                  DoubleReal mz = gsl_vector_get(fit->x,d.total_nr_peaks+3*i);
+                  ms_exp[itv->second[j].spectrum][itv->second[j].peak].setMZ(mz);
+                  DoubleReal height = (gsl_vector_get(fit->x,peak_idx));
+                  ms_exp[itv->second[j].spectrum].getFloatDataArrays()[1][itv->second[j].peak] = height;
+                  DoubleReal left_width = gsl_vector_get(fit->x,d.total_nr_peaks+3*i+1);
+                  ms_exp[itv->second[j].spectrum].getFloatDataArrays()[3][itv->second[j].peak] = left_width;
+                  DoubleReal right_width = gsl_vector_get(fit->x,d.total_nr_peaks+3*i+2);
+                  ms_exp[itv->second[j].spectrum].getFloatDataArrays()[4][itv->second[j].peak] = right_width;
+                  // calculate area
+                  if ((PeakShape::Type)(Int)ms_exp[itv->second[j].spectrum].getFloatDataArrays()[5][itv->second[j].peak] == PeakShape::LORENTZ_PEAK)
+                    {
+                      DoubleReal x_left_endpoint=mz - 1/left_width*sqrt(height/1-1);
+                      DoubleReal x_rigth_endpoint=mz+1/right_width*sqrt(height/1-1);
+                      DoubleReal area_left=-height/left_width*atan(left_width*(x_left_endpoint-mz));
+                      DoubleReal area_right=-height/right_width*atan(right_width*(mz-x_rigth_endpoint));
+                      ms_exp[itv->second[j].spectrum][itv->second[j].peak].setIntensity(area_left+area_right);
+                    }
+                  else // it's a sech peak
+                    {
+                      DoubleReal x_left_endpoint=mz - 1/left_width* boost::math::acosh(sqrt(height/0.001));
+                      DoubleReal x_rigth_endpoint=mz+1/right_width* boost::math::acosh(sqrt(height/0.001));
+                      DoubleReal area_left=-height/left_width*(sinh(left_width*(mz-x_left_endpoint))/cosh(left_width*(mz-x_left_endpoint)));
+                      DoubleReal area_right=-height/right_width*(sinh(right_width*(mz-x_rigth_endpoint))/cosh(right_width*(mz-x_rigth_endpoint)));
+                      ms_exp[itv->second[j].spectrum][itv->second[j].peak].setIntensity(area_left+area_right);
+                    }
 
-								ms_exp[itv->second[j].spectrum][itv->second[j].peak].setMZ(gsl_vector_get(fit->x,d.total_nr_peaks+3*i));
-								ms_exp[itv->second[j].spectrum].getFloatDataArrays()[1][itv->second[j].peak] =(gsl_vector_get(fit->x,peak_idx));
-								//TODO calculate area
-								//				ms_exp[itv->second[j].spectrum][itv->second[j].peak].setIntensity();
-
-								ms_exp[itv->second[j].spectrum].getFloatDataArrays()[3][itv->second[j].peak] =
-									gsl_vector_get(fit->x,d.total_nr_peaks+3*i+1);
-								ms_exp[itv->second[j].spectrum].getFloatDataArrays()[4][((itv->second)[j]).peak] =
-									gsl_vector_get(fit->x,d.total_nr_peaks+3*i+2);
-
-
+                  
 #ifdef DEBUG_2D
 								std::cout << "pos: "<<itv->second[j].getPeak(ms_exp).getMZ()<<"\nint: "<<itv->second[j].getSpectrum(ms_exp).getFloatDataArrays()[1][itv->second[j].peak]//itv->second[j].getPeak(ms_exp).getIntensity()
 													<<"\nlw: "<<itv->second[j].getSpectrum(ms_exp).getFloatDataArrays()[3][itv->second[j].peak]
@@ -964,10 +976,28 @@ namespace OpenMS
 							{
 								MSSpectrum<>& spec = ms_exp[set_iter->first];
 								spec[set_iter->second].setMZ(peak_shapes[p].mz_position);
-								spec[set_iter->second].setIntensity(peak_shapes[p].height);
 								spec.getFloatDataArrays()[3][set_iter->second] = peak_shapes[p].left_width;
 								spec.getFloatDataArrays()[4][set_iter->second] = peak_shapes[p].right_width;
-
+                spec.getFloatDataArrays()[1][set_iter->second] = peak_shapes[p].height; // maximum intensity
+                // calculate area
+                if (peak_shapes[p].type == PeakShape::LORENTZ_PEAK)
+                  {
+                    PeakShape& ps = peak_shapes[p];
+                    double x_left_endpoint=ps.mz_position-1/ps.left_width*sqrt(ps.height/1-1);
+                    double x_rigth_endpoint=ps.mz_position+1/ps.right_width*sqrt(ps.height/1-1);
+                    double area_left=-ps.height/ps.left_width*atan(ps.left_width*(x_left_endpoint-ps.mz_position));
+                    double area_right=-ps.height/ps.right_width*atan(ps.right_width*(ps.mz_position-x_rigth_endpoint));
+                    spec[set_iter->second].setIntensity(area_left+area_right); // area is stored as peak intensity
+                  }
+                else  //It's a Sech - Peak
+                  {
+                    PeakShape& ps = peak_shapes[p];
+                    double x_left_endpoint=ps.mz_position-1/ps.left_width* boost::math::acosh(sqrt(ps.height/0.001));
+                    double x_rigth_endpoint=ps.mz_position+1/ps.right_width* boost::math::acosh(sqrt(ps.height/0.001));
+                    double area_left=ps.height/ps.left_width*(sinh(ps.left_width*(ps.mz_position-x_left_endpoint))/cosh(ps.left_width*(ps.mz_position-x_left_endpoint)));
+                    double area_right=-ps.height/ps.right_width*(sinh(ps.right_width*(ps.mz_position-x_rigth_endpoint))/cosh(ps.right_width*(ps.mz_position-x_rigth_endpoint)));
+                    spec[set_iter->second].setIntensity(area_left+area_right); // area is stored as peak intensity
+                  }
 								++set_iter;
 								++p;
 							}
@@ -1023,26 +1053,32 @@ namespace OpenMS
 				std::cout << exp_it->getRT() << " vs "<< iter->getRT()<<std::endl;
 #endif
 				// now the right mz
-				IsotopeCluster::IndexSet::const_iterator j=(iso_map_iter->second.peaks.begin());
-																		
 				IsotopeCluster::IndexPair pair;
 				pair.first =  iso_map_iter->second.peaks.begin()->first + i;
+        // get iterator in peaks-set that points to the first peak in the current scan
 				IsotopeCluster::IndexSet::const_iterator set_iter = lower_bound(iso_map_iter->second.peaks.begin(),
-																												iso_map_iter->second.peaks.end(),
-																												pair,PairComparatorFirstElement<IsotopeCluster::IndexPair>());
+                                                                        iso_map_iter->second.peaks.end(),
+                                                                        pair,PairComparatorFirstElement<IsotopeCluster::IndexPair>());
 				
 				// consider a bit more of the signal to the left
 				first_peak_mz = (exp_it->begin() + set_iter->second)->getMZ() - 1;
 				
 				// find the last entry with this rt-value
-				if(pair.first < iso_map_iter->second.peaks.size()-1) ++pair.first;
+        ++pair.first;
 				IsotopeCluster::IndexSet::const_iterator set_iter2 = lower_bound(iso_map_iter->second.peaks.begin(),
                                                                          iso_map_iter->second.peaks.end(),
                                                                          pair,PairComparatorFirstElement<IsotopeCluster::IndexPair>());
-				if(set_iter2 != iso_map_iter->second.peaks.begin()) --set_iter2;
+
+        if(i == iso_map_iter->second.scans.size()-1 )
+          {
+            set_iter2 = iso_map_iter->second.peaks.end();
+            --set_iter2;
+          }
+        else if(set_iter2 != iso_map_iter->second.peaks.begin()) --set_iter2;
+
 				last_peak_mz = (exp_it->begin() + set_iter2->second)->getMZ() + 1;
 				
-				//std::cout << rt<<": first peak mz "<<first_peak_mz << "\tlast peak mz "<<last_peak_mz <<std::endl;
+        //	std::cout << rt<<": first peak mz "<<first_peak_mz << "\tlast peak mz "<<last_peak_mz <<std::endl;
 				peak.setPosition(first_peak_mz);
 				typename MSExperiment<InputPeakType>::SpectrumType::const_iterator raw_data_iter
 					= lower_bound(iter->begin(), iter->end(), peak, typename InputPeakType::PositionLess());

@@ -22,7 +22,7 @@
 //
 // --------------------------------------------------------------------------
 // $Maintainer: Chris Bielow $
-// $Authors: $
+// $Authors: Chris Bielow $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -30,6 +30,8 @@
 ///////////////////////////
 #include <OpenMS/DATASTRUCTURES/MassExplainer.h>
 ///////////////////////////
+
+#include <OpenMS/DATASTRUCTURES/Compomer.h>
 
 using namespace OpenMS;
 using namespace std;
@@ -40,10 +42,11 @@ START_TEST(MassExplainer, "$Id$")
 /////////////////////////////////////////////////////////////
 
 MassExplainer* ptr = 0;
+MassExplainer* nullPointer = 0;
 START_SECTION(MassExplainer())
 {
-        ptr = new MassExplainer();
-        TEST_NOT_EQUAL(ptr, 0)
+  ptr = new MassExplainer();
+	TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 

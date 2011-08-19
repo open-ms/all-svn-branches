@@ -84,7 +84,7 @@ namespace OpenMS
 				 @param fm_in  Input feature-map
 				 @param fm_out Output feature-map (sorted by position and augmented with user params)
 				 @param cons_map   [out] Output of grouped features belonging to a charge group
-				 @param cons_map_p [out] Output of paired features connected by an egde
+				 @param cons_map_p [out] Output of paired features connected by an edge
 			*/
       void compute(const FeatureMapType &fm_in, FeatureMapType &fm_out, ConsensusMap &cons_map, ConsensusMap &cons_map_p);
 
@@ -136,6 +136,8 @@ namespace OpenMS
 			bool enable_intensity_filter_;
 			/// status of charge discovery
 			CHARGEMODE q_try_;
+      /// amount of debug information displayed
+      Int verbose_level_;
 
   };
 } // namespace OpenMS

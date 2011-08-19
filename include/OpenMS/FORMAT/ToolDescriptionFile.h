@@ -21,12 +21,12 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
-// $Authors: Chris Bielow, Mathias Walzer $
+// $Maintainer:  Chris Bielow $
+// $Authors: Chris Bielow $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_FORMAT_TOOLDESCRIPTORFILE_H
-#define OPENMS_FORMAT_TOOLDESCRIPTORFILE_H
+#ifndef OPENMS_FORMAT_TOOLDESCRIPTIONFILE_H
+#define OPENMS_FORMAT_TOOLDESCRIPTIONFILE_H
 
 #include <OpenMS/FORMAT/XMLFile.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
@@ -74,4 +74,4 @@ namespace OpenMS
 
 } // namespace OpenMS
 
-#endif // OPENMS_FORMAT_TOOLDESCRIPTORFILE_H
+#endif // OPENMS_FORMAT_TOOLDESCRIPTIONFILE_H

@@ -184,7 +184,7 @@ namespace OpenMS
     /**
      * Returns a textual representation of the fitted model function, that can be plotted using Gnuplot
      *
-     * @parm trace The MassTrace that should be plotted
+     * @param trace The MassTrace that should be plotted
      * @param function_name The name of the function (e.g. f(x) -> function_name = f)
      * @param baseline The intensity of the baseline
      * @param rt_shift A shift value, that allows to plot all RT profiles side by side, even if they would overlap in reality.
@@ -239,11 +239,7 @@ namespace OpenMS
 
       gsl_multifit_function_fdf func;
       gsl_vector_view x = gsl_vector_view_array(x_init, num_params);
-      const gsl_rng_type * type;
-      gsl_rng * r;
       gsl_rng_env_setup();
-      type = gsl_rng_default;
-      r = gsl_rng_alloc(type);
       func.f = (residual);
       func.df = (jacobian);
       func.fdf = (evaluate);

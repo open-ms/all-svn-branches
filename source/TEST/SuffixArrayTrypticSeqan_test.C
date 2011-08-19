@@ -46,6 +46,7 @@ START_TEST(SuffixArrayTrypticSeqan, "$Id$")
 /////////////////////////////////////////////////////////////
 
 SuffixArrayTrypticSeqan* ptr = 0;
+SuffixArrayTrypticSeqan* nullPointer = 0;
 const String text = "$AAARAA$ARARP$";
 
 SuffixArrayTrypticSeqan* sa = new SuffixArrayTrypticSeqan(text,"");
@@ -54,7 +55,7 @@ START_SECTION(SuffixArrayTrypticSeqan(const String &st, const String &filename, 
 	TEST_EXCEPTION (Exception::InvalidValue,new SuffixArrayTrypticSeqan("A",""));
 	TEST_EXCEPTION (Exception::InvalidValue,new SuffixArrayTrypticSeqan("$A",""));
 	ptr = new SuffixArrayTrypticSeqan(text,"");
-	TEST_NOT_EQUAL(ptr, 0);
+  TEST_NOT_EQUAL(ptr, nullPointer);
 	TEST_EXCEPTION (Exception::FileNotFound,new SuffixArrayTrypticSeqan(text,"FileThatNotExists"));
 	
 END_SECTION

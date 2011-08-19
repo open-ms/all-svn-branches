@@ -26,11 +26,11 @@
 // --------------------------------------------------------------------------
 
 // OpenMS
-#include <OpenMS/CONCEPT/Types.h>
-#include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/VISUAL/TOPPASWidget.h>
+#include <OpenMS/VISUAL/TOPPASScene.h>
 #include <OpenMS/VISUAL/TOPPASVertex.h>
 #include <OpenMS/VISUAL/TOPPASEdge.h>
+#include <OpenMS/CONCEPT/Types.h>
 
 
 // Qt
@@ -46,7 +46,7 @@ namespace OpenMS
 {
 	TOPPASWidget::TOPPASWidget(const Param& /*preferences*/, QWidget* parent, const String& tmp_path)
 		:	QGraphicsView(parent),
-			scene_(new TOPPASScene(this, tmp_path))
+			scene_(new TOPPASScene(this, tmp_path.toQString()))
 	{
 		setAttribute(Qt::WA_DeleteOnClose);
 		setAttribute(Qt::WA_AlwaysShowToolTips);

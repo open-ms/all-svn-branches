@@ -46,9 +46,10 @@ START_TEST(EdwardsLippertIteratorTryptic, "$Id$")
 /////////////////////////////////////////////////////////////
 
 EdwardsLippertIteratorTryptic* ptr = 0;
+EdwardsLippertIteratorTryptic* nullPointer = 0;
 START_SECTION(EdwardsLippertIteratorTryptic())
 	ptr = new EdwardsLippertIteratorTryptic();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION(~EdwardsLippertIteratorTryptic())
@@ -162,7 +163,7 @@ START_SECTION(static const String getProductName())
 END_SECTION
 			
 START_SECTION(static PepIterator* create())
-	TEST_NOT_EQUAL(EdwardsLippertIterator::create(), 0)
+  TEST_NOT_EQUAL(EdwardsLippertIterator::create(), nullPointer)
 END_SECTION
 
 /////////////////////////////////////////////////////////////

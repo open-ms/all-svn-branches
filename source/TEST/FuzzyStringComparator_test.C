@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Clemens Groepl $
-// $Authors: $
+// $Maintainer: Clemens Groepl, Stephan Aiche $
+// $Authors: Clemens Groepl $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/CONCEPT/ClassTest.h>
@@ -46,10 +46,11 @@ START_TEST(FuzzyStringComparator, "$Id$")
 /////////////////////////////////////////////////////////////
 
 FuzzyStringComparator* inst_ptr = 0;
+FuzzyStringComparator* nullPointer = 0;
 START_SECTION((FuzzyStringComparator()))
 {
 	inst_ptr = new FuzzyStringComparator;
-	TEST_NOT_EQUAL(inst_ptr, 0);
+  TEST_NOT_EQUAL(inst_ptr, nullPointer);
 }
 END_SECTION
 

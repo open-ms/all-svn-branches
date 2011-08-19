@@ -42,17 +42,18 @@ using namespace OpenMS;
 using namespace std;
 
 TransformationModel* ptr = 0;
+TransformationModel* nullPointer = 0;
 START_SECTION((TransformationModel()))
 {
 	ptr = new TransformationModel();
-	TEST_NOT_EQUAL(ptr, 0);
+  TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 
 START_SECTION((TransformationModel(const DataPoints&, const Param&)))
 {
 	ptr = new TransformationModel(TransformationModel::DataPoints(), Param());
-	TEST_NOT_EQUAL(ptr, 0);
+  TEST_NOT_EQUAL(ptr, nullPointer)
 }
 END_SECTION
 

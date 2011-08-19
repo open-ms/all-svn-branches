@@ -233,9 +233,10 @@ class TOPPBaseTestNOP
 /////////////////////////////////////////////////////////////
 
 TOPPBaseTest* ptr = 0;
+TOPPBaseTest* nullPointer = 0;
 START_SECTION((TOPPBase(const String &name, const String &description, bool official=true, bool id_tag_support=false, const String &version="")))
 	ptr = new TOPPBaseTest();
-	TEST_NOT_EQUAL(ptr, 0)
+	TEST_NOT_EQUAL(ptr, nullPointer)
 END_SECTION
 
 START_SECTION((virtual ~TOPPBase()))
@@ -262,10 +263,11 @@ START_SECTION((static Map<String,StringList> getUtilList()))
 END_SECTION
 
 TOPPBase::ParameterInformation* pi_ptr = 0;
+TOPPBase::ParameterInformation* pi_nullPointer = 0;
 
 START_SECTION(([TOPPBase::ParameterInformation] ParameterInformation()))
     pi_ptr = new TOPPBase::ParameterInformation();
-    TEST_NOT_EQUAL(pi_ptr, 0)
+    TEST_NOT_EQUAL(pi_ptr, pi_nullPointer)
 END_SECTION
 
 TOPPBase::ParameterInformation pi("Temperatur", TOPPBase::ParameterInformation::DOUBLE, "sehr hoch", "ganz hoch", "eine Art Beschreibung", true, false);

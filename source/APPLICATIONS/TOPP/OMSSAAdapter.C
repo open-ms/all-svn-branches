@@ -73,22 +73,24 @@ using namespace std;
   does not run on your system (to test this, run @em omssacl in your OMMSA/bin/ directory and see if it crashes). If you encounter
   an error message, try another OMSSA version
 
-	Sequence databases in fasta format must be converted into the NCBI format before OMSSA can read them. Therefore, use the program formatdb
+	Sequence databases in FASTA format must be converted into the NCBI format before OMSSA can read them. Therefore, use the program formatdb
 	of the NCBI-tools suite (see ftp://ftp.ncbi.nlm.nih.gov/blast/executables/release/2.2.13/ for a working version).
   The latest NCBI BLAST distribution does not contain the formatdb executable any longer!).
   Use @em formatdb @em -i @em SwissProt_TargetAndDecoy.fasta @em -o to create
   additional files, which	will be used by @em OMSSA. The database option of the @em OMSSAAdapter should contain the name of the psq file
   , e.g., 'SwissProt_TargetAndDecoy.fasta.psq'. The '.psq' suffix can also be omitted, e.g. 'SwissProt_TargetAndDecoy.fasta' and will be added
   automatically.
-  This makes it easy to specifiy a common TOPPAS input node (using only the FASTA suffix) for many adapters.
+  This makes it easy to specify a common TOPPAS input node (using only the FASTA suffix) for many adapters.
   
   This adapter supports relative database filenames, which (when not found in the current working directory) is looked up in
   the directories specified by 'OpenMS.ini:id_db_dir' (see @subpage TOPP_advanced).
 
 	The options that specify the protease specificity (@em e) are directly taken from OMSSA. A complete list of available
-	proteases can be found be executing @em omssacl @em -el.
+	proteases can be found by executing @em omssacl @em -el.
 
 	This wrapper has been tested successfully with OMSSA, version 2.x.
+
+  @hint OMSSA search is much faster when the database (.psq files etc.) is accessed locally, rather than over a network share (we measured 10x speed increase in some cases).
 
 	<B>The command line parameters of this tool are:</B>
 	@verbinclude TOPP_OMSSAAdapter.cli
@@ -166,9 +168,9 @@ class TOPPOMSSAAdapter
 	  	setValidFormats_("out",StringList::create("idXML"));
 
       registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "precursor mass tolerance (Default: Dalton)", false);
-      registerDoubleOption_("fragment_mass_tolerance", "<tolerance>", 0.3, "fragment mass error in Dalton", false);
       registerFlag_("precursor_mass_tolerance_unit_ppm", "If this flag is set, ppm is used as precursor mass tolerance unit");
-      registerInputFile_("database", "<psq-file>", "", "NCBI formatted fasta files. Only the psq filename should be given, e.g. 'SwissProt.fasta.psq'. If the filename does not end in '.psq' the suffix will be added automatically. Non-existing relative file-names are looked up via'OpenMS.ini:id_db_dir'", true, false, StringList::create("skipexists"));
+      registerDoubleOption_("fragment_mass_tolerance", "<tolerance>", 0.3, "fragment mass error in Dalton", false);
+      registerInputFile_("database", "<psq-file>", "", "NCBI formatted FASTA files. Only the .psq filename should be given, e.g. 'SwissProt.fasta.psq'. If the filename does not end in '.psq' the suffix will be added automatically. Non-existing relative file-names are looked up via'OpenMS.ini:id_db_dir'", true, false, StringList::create("skipexists"));
 			registerIntOption_("min_precursor_charge", "<charge>", 1, "minimum precursor ion charge", false);
       registerIntOption_("max_precursor_charge", "<charge>", 3, "maximum precursor ion charge", false);
 			vector<String> all_mods;
@@ -309,7 +311,7 @@ class TOPPOMSSAAdapter
 			//Results
 			//-hl <Integer> maximum number of hits retained for one spectrum
 			//-he <Double> the maximum e-value allowed in the hit list
-			registerIntOption_("hl", "<Integer>", 30, "maximum number of hits retained for one spectrum", false);
+			registerIntOption_("hl", "<Integer>", 30, "maximum number of hits retained for one spectrum. Note: even when set to 1 OMSSA may report multiple hits with different charge states", false);
 			registerDoubleOption_("he", "<Real>", 1, "the maximum e-value allowed in the hit list", false);
 
 			//Post translational modifications
@@ -638,6 +640,25 @@ class TOPPOMSSAAdapter
 						out << "\t<MSModSpec_residues>" << endl;
 						out << "\t\t<MSModSpec_residues_E>" << origin << "</MSModSpec_residues_E>" << endl;
 						out << "\t</MSModSpec_residues>" << endl;
+
+            /* TODO: Check why these are always 0
+            DoubleReal neutral_loss_mono = ModificationsDB::getInstance()->getModification(it->second).getNeutralLossMonoMass();
+            DoubleReal neutral_loss_avg = ModificationsDB::getInstance()->getModification(it->second).getNeutralLossAverageMass();
+            */
+            DoubleReal neutral_loss_mono = ModificationsDB::getInstance()->getModification(it->second).getNeutralLossDiffFormula().getMonoWeight();
+            DoubleReal neutral_loss_avg = ModificationsDB::getInstance()->getModification(it->second).getNeutralLossDiffFormula().getAverageWeight();
+
+            if (fabs(neutral_loss_mono) > 0.00001)
+            {
+              out << "\t<MSModSpec_neutralloss>" << endl;
+              out << "\t\t<MSMassSet>" << endl;
+              out << "\t\t\t<MSMassSet_monomass>" << neutral_loss_mono << "</MSMassSet_monomass>" << endl;
+              out << "\t\t\t<MSMassSet_averagemass>" << neutral_loss_avg << "</MSMassSet_averagemass>" << endl;
+              out << "\t\t\t<MSMassSet_n15mass>0</MSMassSet_n15mass>" << endl;
+              out << "\t\t</MSMassSet>" << endl;
+              out << "\t</MSModSpec_neutralloss>" << endl;
+            }
+
 						out << "</MSModSpec>" << endl;
 					}
 				}
@@ -689,9 +710,12 @@ class TOPPOMSSAAdapter
 			if (status != 0)
 			{
 				writeLog_("Error: OMSSA problem! (Details can be seen in the logfile: \"" + logfile + "\")");
-
-				QFile(unique_input_name.toQString()).remove();
-				QFile(unique_output_name.toQString()).remove();
+        writeLog_("Note: This message can also be triggered if you run out of space in your tmp directory");
+			  if (getIntOption_("debug") <= 1)
+			  {
+					QFile(unique_input_name.toQString()).remove();
+					QFile(unique_output_name.toQString()).remove();
+				}
         if (user_mods.size() != 0 || additional_user_mods_filename!="")
 				{
 					QFile(unique_usermod_name.toQString()).remove();
@@ -702,7 +726,7 @@ class TOPPOMSSAAdapter
 			// read OMSSA output
 			writeDebug_("Reading output of OMSSA", 10);
 			OMSSAXMLFile omssa_out_file;
-			omssa_out_file.setModificationDefinitionsSet(mod_set);
+			omssa_out_file.setModificationDefinitionsSet(mod_set);  // TODO: add modifications from additional user mods subtree 
 			omssa_out_file.load(unique_output_name, protein_identification, peptide_ids);
 
 			// OMSSA does not write fixed modifications so we need to add them to the sequences
@@ -755,12 +779,15 @@ class TOPPOMSSAAdapter
 			}
 
 			// delete temporary files
-			writeDebug_("Removing temporary files", 10);
-			QFile(unique_input_name.toQString()).remove();
-			QFile(unique_output_name.toQString()).remove();
-			if (user_mods.size() != 0)
+			if (getIntOption_("debug") <= 1)
 			{
-				QFile(unique_usermod_name.toQString()).remove();
+			  writeDebug_("Removing temporary files", 10);
+  			QFile(unique_input_name.toQString()).remove();
+	  		QFile(unique_output_name.toQString()).remove();
+		  	if (user_mods.size() != 0)
+		  	{
+		  		QFile(unique_usermod_name.toQString()).remove();
+	  		}
 			}
 
 			// handle the search parameters

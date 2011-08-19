@@ -468,37 +468,50 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, SILACPattern &pattern)
+  bool SILACFilter::isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, MSSpectrum<Peak1D> &debug, SILACPattern &pattern)
   {
     current_mz_ = mz;
+
+    Peak1D debug_peak;
+    debug_peak.setMZ(mz);
 
     // EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
     if (!extractMzShiftsAndIntensities(rt, mz, picked_mz, f))
     {
+      debug_peak.setIntensity(1);
+      debug.push_back(debug_peak);
       return false;
     }
 
     // COMPLETE INTENSITY FILTER (Check that all of the intensities are above the cutoff.)
     if (!intensityFilter())
     {
+      debug_peak.setIntensity(2);
+      debug.push_back(debug_peak);
       return false;
     }
 
     // CORRELATION FILTER 1 (Check for every peptide that its mono-isotopic peak correlates with the following peaks)
     if (!correlationFilter1(mz, f))
     {
+      debug_peak.setIntensity(3);
+      debug.push_back(debug_peak);
       return false;
     }
 
     // CORRELATION FILTER 2 (Check that the monoisotopic peak of the light (unlabeled) peptide correlates with the mono-isotopic peak of the labeled peptides)
     if (!correlationFilter2(mz, f))
     {
+      debug_peak.setIntensity(4);
+      debug.push_back(debug_peak);
       return false;
     }
 
     // AVERAGINE FILTER (Check if realtive ratios confirm with an averagine model of all peptides.)
     if (!averageneFilter(rt, mz))
     {
+      debug_peak.setIntensity(5);
+      debug.push_back(debug_peak);
       return false;
     }
 
@@ -508,59 +521,45 @@ namespace OpenMS
     newElement.mz = mz;
     pattern.points.push_back(newElement);
 
+    debug_peak.setIntensity(10);
+    debug.push_back(debug_peak);
+
     return true;
   }
 
-  bool SILACFilter::isSILACPatternPicked_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
+  bool SILACFilter::isSILACPatternPicked_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, MSSpectrum<Peak1D> &debug)
   {
     current_mz_ = mz;
 
-    //bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
-    bool debug = false;
-
-    if(debug)
-    {
-      cout << "Current pos: " << rt << " " << mz << endl;
-    }
+    Peak1D debug_peak;
+    debug_peak.setMZ(mz);
 
     // EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
     if (!extractMzShiftsAndIntensitiesPicked(rt, mz, picked_mz, f))
     {
+      debug_peak.setIntensity(1);
+      debug.push_back(debug_peak);
       return false;
-    }
-
-    if(debug)
-    {
-      cout << "extractMzShiftsAndIntensitiesPicked" << endl;
     }
 
     // COMPLETE INTENSITY FILTER (Check that all of the intensities are above the cutoff.)
     if (!intensityFilter())
     {
+      debug_peak.setIntensity(2);
+      debug.push_back(debug_peak);
       return false;
-    }
-    if(debug)
-    {
-      cout << "intensityFilter" << endl;
     }
 
     // AVERAGINE FILTER (Check if realtive ratios confirm with an averagine model of all peptides.)
     if (!averageneFilter(rt, mz))
     {
+      debug_peak.setIntensity(3);
+      debug.push_back(debug_peak);
       return false;
     }
 
-    if(debug)
-    {
-      cout << "averageneFilter" << endl;
-    }
-
-    /* Bug 1: averagine filter
-    if(abs(rt - 6893.4) < 0.1 && abs(mz - 689.66) < 0.1)
-    {
-      cout << "averageneFilter" << endl;
-    }
-    */
+    debug_peak.setIntensity(10);
+    debug.push_back(debug_peak);
 
     return true;
   }

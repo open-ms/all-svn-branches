@@ -10,6 +10,7 @@ FeatureDistance.h
 FeatureGroupingAlgorithm.h
 FeatureGroupingAlgorithmIdentification.h
 FeatureGroupingAlgorithmLabeled.h
+FeatureGroupingAlgorithmQT.h
 FeatureGroupingAlgorithmUnlabeled.h
 LabeledPairFinder.h
 MapAlignmentAlgorithm.h
@@ -22,6 +23,7 @@ MapAlignmentEvaluationAlgorithmPrecision.h
 MapAlignmentEvaluationAlgorithmRecall.h
 PoseClusteringAffineSuperimposer.h
 PoseClusteringShiftSuperimposer.h
+QTClusterFinder.h
 SimplePairFinder.h
 StablePairFinder.h
 TransformationDescription.h

@@ -9,6 +9,7 @@ ClusterFunctor.C
 ClusterHierarchical.C
 CompleteLinkage.C
 EuclideanSimilarity.C
+QTClustering.C
 SingleLinkage.C
 )
 

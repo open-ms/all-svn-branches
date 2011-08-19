@@ -35,11 +35,14 @@ set(datastructures_executables_list
 	DistanceMatrix_test
 	DoubleList_test
 	GridElement_test
+	GridFeature_test
 	HashGrid_test
+	HashGridOld_test
 	IntList_test
 	Map_test
 	MassExplainer_test
 	Matrix_test
+	QTCluster_test
 	RangeManager_test
 	SparseVector_test
 	StringList_test
@@ -270,6 +273,7 @@ set(comparison_executables_list
   HierarchicalClustering_test
   PeakAlignment_test
   PeakSpectrumCompareFunctor_test
+  QTClustering_test
   SingleLinkage_test
   SpectraSTSimilarityScore_test
   SpectrumAlignmentScore_test
@@ -328,6 +332,7 @@ set(analysis_executables_list
 	FeatureDeconvolution_test
 	FeatureDistance_test
 	FeatureGroupingAlgorithmLabeled_test
+	FeatureGroupingAlgorithmQT_test
 	FeatureGroupingAlgorithmUnlabeled_test
 	FeatureGroupingAlgorithm_test
 	FeatureHandle_test
@@ -364,6 +369,7 @@ set(analysis_executables_list
 	PrecursorIonSelection_test
 	ProteinInference_test
 	ProtonDistributionModel_test
+	QTClusterFinder_test
 	ReactionMonitoringTransition_test
 	SVMWrapper_test
 	SimplePairFinder_test

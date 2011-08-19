@@ -31,6 +31,7 @@
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmIdentification.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmLabeled.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmUnlabeled.h>
+#include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmQT.h>
 
 using namespace std;
 
@@ -43,6 +44,7 @@ namespace OpenMS
 		// Factory<FeatureGroupingAlgorithm>::registerProduct ( FeatureGroupingAlgorithmIdentification::getProductName(), &FeatureGroupingAlgorithmIdentification::create );
 		Factory<FeatureGroupingAlgorithm>::registerProduct ( FeatureGroupingAlgorithmLabeled::getProductName(), &FeatureGroupingAlgorithmLabeled::create );
 		Factory<FeatureGroupingAlgorithm>::registerProduct ( FeatureGroupingAlgorithmUnlabeled::getProductName(), &FeatureGroupingAlgorithmUnlabeled::create );
+		Factory<FeatureGroupingAlgorithm>::registerProduct ( FeatureGroupingAlgorithmQT::getProductName(), &FeatureGroupingAlgorithmQT::create );
 	}
 
 	FeatureGroupingAlgorithm::FeatureGroupingAlgorithm()

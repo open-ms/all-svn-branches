@@ -26,11 +26,15 @@ DefaultParamHandler.C
 DistanceMatrix.C
 DoubleList.C
 GridElement.C
+GridFeature.C
+HashGridOld.C
 IntList.C
 Map.C
 MassExplainer.C
 Matrix.C
 Param.C
+QTCluster.C
+QTSILACCluster.C
 SparseVector.C
 String.C
 StringList.C

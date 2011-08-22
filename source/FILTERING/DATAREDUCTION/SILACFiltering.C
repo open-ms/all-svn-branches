@@ -158,9 +158,11 @@ namespace OpenMS
       {
         SILACFilter *filter = *filter_it;
         ChromatogramTools().convertSpectraToChromatograms(exp_debug, true);
+        Int mass_separation = 0;
+        if (filter->mass_separations_.size()) mass_separation = filter->mass_separations_[0];
         MzMLFile().store(debug_filebase + ".filtering.seeds-filters:" + 
             filter->charge_ + ";" +
-            Int(filter->mass_separations_[0]) + ";" +
+            mass_separation + ";" +
             filter->isotopes_per_peptide_ + ";" +
             filter->model_deviation_ +
             ".mzML", exp_debug);
@@ -458,9 +460,11 @@ namespace OpenMS
       {
         SILACFilter *filter = *filter_it;
         ChromatogramTools().convertSpectraToChromatograms(exp_debug, true);
+        Int mass_separation = 0;
+        if (filter->mass_separations_.size()) mass_separation = filter->mass_separations_[0];
         MzMLFile().store(debug_filebase + ".filtering.spline-filters:" + 
             filter->charge_ + ";" +
-            Int(filter->mass_separations_[0]) + ";" +
+            mass_separation + ";" +
             filter->isotopes_per_peptide_ + ";" +
             filter->model_deviation_ +
             ".mzML", exp_debug);

@@ -198,23 +198,26 @@ namespace OpenMS
 
       UInt rt_id = 0;
       // Iterate over all spectra of the experiment (iterate over rt)
-      for (MSExperiment<Peak1D>::Iterator rt_it = exp_.begin(); rt_it != exp_.end(); ++rt_it, ++rt_id)
+      for (MSExperiment<Peak1D>::Iterator picked_seed_rt_it = picked_exp_seeds_.begin();
+           picked_seed_rt_it != picked_exp_seeds_.end();
+           ++picked_seed_rt_it, ++rt_id)
       {
+        DoubleReal rt = picked_seed_rt_it->getRT();    // retention time of this spectrum
+
+        MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_.RTBegin(rt);
+        MSExperiment<Peak1D>::Iterator rt_it = exp_.RTBegin(rt);
+
         // set progress
         // calculate with progress for the current rt run and progress for the filter run, each scaled by total numbers of filters
-        setProgress((rt_it - exp_.begin()) / filters_.size() + distance(filters_.begin(), filter_it) * exp_.size() / filters_.size());
-
-        Size number_data_points = rt_it->size();    // number of (m/z, intensity) data points in this spectrum
-
-        DoubleReal rt = rt_it->getRT();    // retention time of this spectrum
+        setProgress((picked_seed_rt_it - picked_exp_seeds_.begin()) / filters_.size() + distance(filters_.begin(), filter_it) * picked_exp_seeds_.size() / filters_.size());
 
         MSSpectrum<Peak1D> debug;
         debug.setRT(rt);
         debug.setMSLevel(1);
         debug.setNativeID(String("debug-spline=") + rt_id);
 
-        // spectra with less than 10 data points are being ignored
-        if (number_data_points >= 10)
+        // spectra with less than 10 data points and less then two picked peaks are being ignored
+        if (rt_it->size() >= 10 && picked_rt_it->size() > 1)
         {
           // filter MS1 spectra
           // read one spectrum into GSL structure
@@ -251,10 +254,6 @@ namespace OpenMS
           spline_spl_ = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
           gsl_spline_init(spline_spl_, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
 
-
-          // get iterator on picked data
-          MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_.RTBegin(rt);
-          MSExperiment<Peak1D>::Iterator picked_seed_rt_it = picked_exp_seeds_.RTBegin(rt);
 
           // XXX: Workaround to catch duplicated peaks
           std::set<DoubleReal> seen_mz;

@@ -142,7 +142,7 @@ namespace OpenMS
          {
            DoubleReal picked_mz = picked_mz_it->getMZ();
 
-           bool isSILAC = (*filter_it)->isSILACPatternPicked_(rt, picked_mz, picked_mz, *this, debug);
+           bool isSILAC = (*filter_it)->isSILACPatternPicked_(*picked_rt_it, picked_mz, *this, debug);
 
            if (isSILAC)
            {
@@ -253,13 +253,14 @@ namespace OpenMS
 
 
           // get iterator on picked data
-          MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_seeds_.RTBegin(rt);
+          MSExperiment<Peak1D>::Iterator picked_rt_it = picked_exp_.RTBegin(rt);
+          MSExperiment<Peak1D>::Iterator picked_seed_rt_it = picked_exp_seeds_.RTBegin(rt);
 
           // XXX: Workaround to catch duplicated peaks
           std::set<DoubleReal> seen_mz;
 
           // Iterate over the picked spectrum
-          for (MSSpectrum<Peak1D>::Iterator picked_mz_it = picked_rt_it->begin() ; picked_mz_it != picked_rt_it->end(); ++picked_mz_it) // iteration correct
+          for (MSSpectrum<Peak1D>::Iterator picked_mz_it = picked_seed_rt_it->begin() ; picked_mz_it != picked_seed_rt_it->end(); ++picked_mz_it) // iteration correct
           {
             DoubleReal picked_mz = picked_mz_it->getMZ();
             DoubleReal intensity = picked_mz_it->getIntensity();
@@ -277,7 +278,7 @@ namespace OpenMS
 
             // XXX: Extract peaks again
             SILACPattern pattern;
-            if (!(*filter_it)->extractMzShiftsAndIntensitiesPickedToPattern(rt, picked_mz, picked_mz, *this, pattern))
+            if (!(*filter_it)->extractMzShiftsAndIntensitiesPickedToPattern(*picked_rt_it, picked_mz, *this, pattern))
               continue;
 
             for (DoubleReal mz = picked_mz - getPeakWidth(picked_mz); mz < picked_mz + getPeakWidth(picked_mz); mz += 0.1 * getPeakWidth(picked_mz) ) // iteration correct
@@ -334,7 +335,7 @@ namespace OpenMS
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
               {
-                if ((*filter_it)->isSILACPattern_(rt, mz, picked_mz, *this, debug, pattern))      // Check if the mz at the given position is a SILAC pair
+                if ((*filter_it)->isSILACPattern_(*picked_rt_it, mz, picked_mz, *this, debug, pattern))      // Check if the mz at the given position is a SILAC pair
                 {
                   //--------------------------------------------------
                   // FILLING THE BLACKLIST

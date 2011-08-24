@@ -84,7 +84,7 @@ namespace OpenMS
   }
 
 
-  bool SILACFilter::extractMzShiftsAndIntensities(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
+  bool SILACFilter::extractMzShiftsAndIntensities(const MSSpectrum<Peak1D> &s, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
   {
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 
@@ -103,17 +103,14 @@ namespace OpenMS
 
         DoubleReal expected_shift = mz_peptide_separations_[peptide] + isotope * isotope_distance_;
 
-        // get picked version of current spectrum
-        MSExperiment<Peak1D>::ConstIterator rt_it = f.picked_exp_.RTBegin(rt);
-
         // calculate expected position of next peak
         DoubleReal next_peak_expected = picked_mz + expected_shift;
 
         // find peak (index) closest to expected position
-        Size nearest_peak_idx = rt_it->findNearest(next_peak_expected);
+        Size nearest_peak_idx = s.findNearest(next_peak_expected);
 
         // get actual position of closest peak
-        DoubleReal nearest_peak_mz = (*rt_it)[nearest_peak_idx].getMZ();
+        DoubleReal nearest_peak_mz = s[nearest_peak_idx].getMZ();
 
         // calculate error between expected and actual position
         DoubleReal nearestPeakError = abs( nearest_peak_mz - next_peak_expected);
@@ -182,7 +179,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::extractMzShiftsAndIntensitiesPicked(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
+  bool SILACFilter::extractMzShiftsAndIntensitiesPicked(const MSSpectrum<Peak1D> &s, DoubleReal mz, const SILACFiltering &f)
   {
     //bool debug = abs(rt - 6653.3) < 0.1 && abs(mz - 668.83) < 0.01;
     bool debug = false;
@@ -209,18 +206,15 @@ namespace OpenMS
 
         DoubleReal expected_shift = mz_peptide_separations_[peptide] + isotope * isotope_distance_;
 
-        // get picked version of current spectrum
-        MSExperiment<Peak1D>::ConstIterator rt_it = f.picked_exp_.RTBegin(rt);
-
         // calculate expected position of next peak
-        DoubleReal next_peak_expected = picked_mz + expected_shift;
+        DoubleReal next_peak_expected = mz + expected_shift;
 
         // find peak (index) closest to expected position
-        Size nearest_peak_idx = rt_it->findNearest(next_peak_expected);
+        Size nearest_peak_idx = s.findNearest(next_peak_expected);
 
         // get actual position and intensity of closest peak
-        DoubleReal nearest_peak_mz = (*rt_it)[nearest_peak_idx].getMZ();
-        DoubleReal nearest_peak_intensity = (*rt_it)[nearest_peak_idx].getIntensity();
+        DoubleReal nearest_peak_mz = s[nearest_peak_idx].getMZ();
+        DoubleReal nearest_peak_intensity = s[nearest_peak_idx].getIntensity();
 
 
         // calculate error between expected and actual position
@@ -236,7 +230,7 @@ namespace OpenMS
         // check if error is small enough
         if (nearestPeakError < f.getPeakWidth(mz)/2.0)
         {
-          deltaMZ = nearest_peak_mz - picked_mz;
+          deltaMZ = nearest_peak_mz - mz;
         } else
         {
           deltaMZ = -1; // peak not found
@@ -293,12 +287,12 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::extractMzShiftsAndIntensitiesPickedToPattern(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, SILACPattern &pattern)
+  bool SILACFilter::extractMzShiftsAndIntensitiesPickedToPattern(const MSSpectrum<Peak1D> &s, DoubleReal mz, const SILACFiltering &f, SILACPattern &pattern)
   {
-    if (!extractMzShiftsAndIntensitiesPicked(rt, mz, picked_mz, f))
+    if (!extractMzShiftsAndIntensitiesPicked(s, mz, f))
       return false;
 
-    pattern.rt = rt;
+    pattern.rt = s.getRT();
     pattern.mz = mz;
     pattern.charge = charge_;
     pattern.isotopes_per_peptide = (Int) isotopes_per_peptide_;
@@ -409,7 +403,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::averageneFilter(DoubleReal rt, DoubleReal mz)
+  bool SILACFilter::averageneFilter(DoubleReal mz)
   {
     bool missing_peak_seen_yet = false;
 
@@ -468,7 +462,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::isSILACPattern_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, MSSpectrum<Peak1D> &debug, SILACPattern &pattern)
+  bool SILACFilter::isSILACPattern_(const MSSpectrum<Peak1D> &s, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, MSSpectrum<Peak1D> &debug, SILACPattern &pattern)
   {
     current_mz_ = mz;
 
@@ -476,7 +470,7 @@ namespace OpenMS
     debug_peak.setMZ(mz);
 
     // EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
-    if (!extractMzShiftsAndIntensities(rt, mz, picked_mz, f))
+    if (!extractMzShiftsAndIntensities(s, mz, picked_mz, f))
     {
       debug_peak.setIntensity(1);
       debug.push_back(debug_peak);
@@ -508,7 +502,7 @@ namespace OpenMS
     }
 
     // AVERAGINE FILTER (Check if realtive ratios confirm with an averagine model of all peptides.)
-    if (!averageneFilter(rt, mz))
+    if (!averageneFilter(mz))
     {
       debug_peak.setIntensity(5);
       debug.push_back(debug_peak);
@@ -517,7 +511,7 @@ namespace OpenMS
 
     // ALL FILTERS PASSED => CREATE DATAPOINT
     DataPoint newElement;    // Raw data point at this particular RT and m/z passed all filters. Store it for further clustering.
-    newElement.rt = rt;
+    newElement.rt = s.getRT();
     newElement.mz = mz;
     pattern.points.push_back(newElement);
 
@@ -527,7 +521,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::isSILACPatternPicked_(DoubleReal rt, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, MSSpectrum<Peak1D> &debug)
+  bool SILACFilter::isSILACPatternPicked_(const MSSpectrum<Peak1D> &s, DoubleReal mz, const SILACFiltering &f, MSSpectrum<Peak1D> &debug)
   {
     current_mz_ = mz;
 
@@ -535,7 +529,7 @@ namespace OpenMS
     debug_peak.setMZ(mz);
 
     // EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
-    if (!extractMzShiftsAndIntensitiesPicked(rt, mz, picked_mz, f))
+    if (!extractMzShiftsAndIntensitiesPicked(s, mz, f))
     {
       debug_peak.setIntensity(1);
       debug.push_back(debug_peak);
@@ -551,7 +545,7 @@ namespace OpenMS
     }
 
     // AVERAGINE FILTER (Check if realtive ratios confirm with an averagine model of all peptides.)
-    if (!averageneFilter(rt, mz))
+    if (!averageneFilter(mz))
     {
       debug_peak.setIntensity(3);
       debug.push_back(debug_peak);

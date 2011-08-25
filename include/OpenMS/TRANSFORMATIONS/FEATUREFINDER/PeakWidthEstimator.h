@@ -96,37 +96,34 @@ public:
       typename MSSpectrum<PeakType>::ConstIterator begin_window = input.MZBegin(picked[i].getMZ() - half_window_size);
       typename MSSpectrum<PeakType>::ConstIterator end_window = input.MZBegin(picked[i].getMZ() + half_window_size);
 
-      std::vector<double> raw_mz_values;
-      std::vector<double> raw_int_values;
+      std::map<double, double> values;
 
-      raw_mz_values.push_back(mz - 0.3);
-      raw_int_values.push_back(0);
+      // Add peak maximum
+      values.insert(std::make_pair(mz, intensity));
 
-      raw_mz_values.push_back(mz - 0.25);
-      raw_int_values.push_back(0);
-
-      bool max_peak_added = false;
       for (; begin_window != end_window; ++begin_window)
       {
-        if (!max_peak_added && begin_window->getMZ() > mz)
-        {
-          raw_mz_values.push_back(mz);
-          raw_int_values.push_back(intensity);
-          max_peak_added = true;
-        }
-        raw_mz_values.push_back(begin_window->getMZ());
-        raw_int_values.push_back(begin_window->getIntensity());
+        values.insert(std::make_pair(begin_window->getMZ(), begin_window->getIntensity()));
       }
 
-      raw_mz_values.push_back(mz + 0.25);
-      raw_int_values.push_back(0);
+      // Make sure we have some zeroes
+      values.insert(std::make_pair(mz - 0.3, 0));
+      values.insert(std::make_pair(mz - 0.25, 0));
+      values.insert(std::make_pair(mz + 0.25, 0));
+      values.insert(std::make_pair(mz + 0.3, 0));
 
-      raw_mz_values.push_back(mz + 0.3);
-      raw_int_values.push_back(0);
-
-      if (raw_mz_values.size() < 12)
+      if (values.size() < 12)
       {
         continue;
+      }
+
+      std::vector<double> raw_mz_values, raw_int_values;
+      raw_mz_values.reserve(values.size());
+      raw_int_values.reserve(values.size());
+      for (std::map<double, double>::const_iterator it = values.begin(); it != values.end(); ++it)
+      {
+        raw_mz_values.push_back(it->first);
+        raw_int_values.push_back(it->second);
       }
 
       // setup gsl splines

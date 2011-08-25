@@ -257,7 +257,7 @@ else()
   set(USE_ANDIMS 1 CACHE INTERNAL "Support AndiMS?!")
 endif()
 
-set(CONTRIB_CUSTOM_DIR CACHE DOC "User defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib!")
+set(CONTRIB_CUSTOM_DIR CACHE DOC "User-defined location of contrib dir. If left empty we assume the contrib to be in OpenMS/contrib!")
 set(CONTRIB_DIR ${PROJECT_SOURCE_DIR}/contrib/ CACHE INTERNAL "Final contrib path after looking at custom_contrib_path. defaults to OpenMS/contrib")
 
 #message("CUSTOM contrib is: " ${CONTRIB_CUSTOM_DIR})
@@ -269,7 +269,7 @@ if ("${CONTRIB_CUSTOM_DIR}" STREQUAL "")
 else()
   get_filename_component(CONTRIB_CUSTOM_DIR_PATH ${CONTRIB_CUSTOM_DIR} ABSOLUTE)
 	set(CONTRIB_DIR ${CONTRIB_CUSTOM_DIR_PATH})
-	message(STATUS "Using user defined contrib directory: ${CONTRIB_CUSTOM_DIR_PATH}")
+	message(STATUS "Using user-defined contrib directory: ${CONTRIB_CUSTOM_DIR_PATH}")
 endif()
 
 # maybe we should change this method to a more robust one

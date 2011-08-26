@@ -71,20 +71,21 @@ namespace OpenMS
 
   void SILACFiltering::checkPeakWidth()
   {
+#if 0
     startProgress(0, 1, "checking peak width");
     PeakWidthEstimator e;
     e.estimateFWHM(exp_, peak_width_intercept, peak_width_slope);
     std::cout << "got: " << peak_width_slope << " * mz + " << peak_width_intercept << std::endl;
     endProgress();
+#endif
   }
 
   DoubleReal SILACFiltering::getPeakWidth(DoubleReal mz) const
   {
-#if 1
+#if 0
     return 2 * (peak_width_slope * mz + peak_width_intercept);
-#else
-    return 5*(1.889e-7*pow(mz,1.5));
 #endif
+    return 5*(1.889e-7*pow(mz,1.5));
   }
 
   void SILACFiltering::pickSeeds()

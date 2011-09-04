@@ -1172,7 +1172,7 @@ ConsensusFeature TOPPSILACAnalyzer::generateSingleConsensusByPattern(const SILAC
   }
 
   UInt point_id = 0;
-  for (std::vector<DataPoint>::const_iterator point_it = pattern.points.begin();
+  for (std::vector<SILACPoint>::const_iterator point_it = pattern.points.begin();
        point_it != pattern.points.end();
        ++point_it, ++point_id)
   {
@@ -1330,7 +1330,7 @@ void TOPPSILACAnalyzer::readFilterConsensusByPattern(ConsensusMap &in)
 
     for (ConsensusFeature::const_iterator point_it = pattern_it->begin(); point_it != pattern_it->end(); ++point_it)
     {
-      DataPoint point;
+      SILACPoint point;
       point.rt = point_it->getRT();
       point.mz = point_it->getMZ();
 

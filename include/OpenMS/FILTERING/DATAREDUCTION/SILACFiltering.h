@@ -31,7 +31,6 @@
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <gsl/gsl_interp.h>

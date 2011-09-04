@@ -28,7 +28,6 @@
 
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
-#include <OpenMS/DATASTRUCTURES/DataPoint.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeFitter1D.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/ExtendedIsotopeModel.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
@@ -510,7 +509,7 @@ namespace OpenMS
     }
 
     // ALL FILTERS PASSED => CREATE DATAPOINT
-    DataPoint newElement;    // Raw data point at this particular RT and m/z passed all filters. Store it for further clustering.
+    SILACPoint newElement;    // Raw data point at this particular RT and m/z passed all filters. Store it for further clustering.
     newElement.rt = s.getRT();
     newElement.mz = mz;
     pattern.points.push_back(newElement);

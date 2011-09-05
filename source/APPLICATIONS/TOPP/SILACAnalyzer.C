@@ -1029,6 +1029,10 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
 
       for (UInt shift_id = 0; shift_id < pattern_first.mass_shifts.size(); ++shift_id)
       {
+        // XXX: Feature detection produces a stray 0 mass shift
+        if (shift_id > 0 && pattern_first.mass_shifts[shift_id] == 0)
+          continue;
+
         FeatureHandle feature;
 
         // MZ value as weighted MZ position of monoisotopic peaks of given mass shift
@@ -1228,6 +1232,10 @@ void TOPPSILACAnalyzer::generateClusterFeatureByCluster(FeatureMap<> &out, const
 
       for (UInt shift_id = 0; shift_id < pattern_first.mass_shifts.size(); ++shift_id)
       {
+        // XXX: Feature detection produces a stray 0 mass shift
+        if (shift_id > 0 && pattern_first.mass_shifts[shift_id] == 0)
+          continue;
+
         Feature feature;
 
         // MZ value as weighted MZ position of monoisotopic peaks of given mass shift

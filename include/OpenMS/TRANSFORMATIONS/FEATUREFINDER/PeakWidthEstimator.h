@@ -272,7 +272,7 @@ public:
     std::vector<DoubleReal> values;
     for (std::multimap<DoubleReal, DoubleReal>::iterator it = fwhms.begin(); it != fwhms.end(); ++it)
     {
-      std::cout << it->first << "," << it->second << std::endl;  // generates nice plots
+      // std::cout << it->first << "," << it->second << std::endl;  // generates nice plots
       keys.push_back(std::log(it->first));
       values.push_back(std::log(it->second));
     }

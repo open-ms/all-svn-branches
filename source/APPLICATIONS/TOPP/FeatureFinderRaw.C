@@ -69,7 +69,7 @@ using namespace std;
 //-------------------------------------------------------------
 
 /**
-  @page TOPP_RawFeatureFinder SILACAnalyzer-based feature finder
+  @page TOPP_FeatureFinderRaw SILACAnalyzer-based feature finder
 
   @brief Identifies peptide pairs in LC-MS data and determines their relative abundance.
 
@@ -141,7 +141,7 @@ using namespace std;
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
 
-class TOPPRawFeatureFinder
+class TOPPFeatureFinderRaw
 : public TOPPBase
 {
   private:
@@ -174,8 +174,8 @@ class TOPPRawFeatureFinder
 
 
   public:
-    TOPPRawFeatureFinder()
-      : TOPPBase("RawFeatureFinder","Determination of peak ratios in LC-MS data", false), allow_missing_peaks(true)
+    TOPPFeatureFinderRaw()
+      : TOPPBase("FeatureFinderRaw","Determination of peak ratios in LC-MS data", false), allow_missing_peaks(true)
     {
     }
 
@@ -561,7 +561,7 @@ private:
   }
 };
 
-void TOPPRawFeatureFinder::clusterData()
+void TOPPFeatureFinderRaw::clusterData()
 {
   typedef Clustering::PointCoordinate PointCoordinate;
 
@@ -595,7 +595,7 @@ void TOPPRawFeatureFinder::clusterData()
   progresslogger.endProgress();
 }
 
-void TOPPRawFeatureFinder::generateClusterFeatureByCluster(FeatureMap<> &out, const Clustering &clustering) const
+void TOPPFeatureFinderRaw::generateClusterFeatureByCluster(FeatureMap<> &out, const Clustering &clustering) const
 {
   for (Clustering::Grid::const_grid_iterator cell_it = clustering.grid.grid_begin(); cell_it != clustering.grid.grid_end(); ++cell_it)
   {
@@ -707,6 +707,6 @@ void TOPPRawFeatureFinder::generateClusterFeatureByCluster(FeatureMap<> &out, co
 
 int main(int argc, const char** argv )
 {
-  TOPPRawFeatureFinder tool;
+  TOPPFeatureFinderRaw tool;
   return tool.main(argc, argv);
 }

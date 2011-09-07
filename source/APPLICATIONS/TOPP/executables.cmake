@@ -16,6 +16,7 @@ EICExtractor
 ExecutePipeline
 FalseDiscoveryRate
 FeatureFinder
+FeatureFinderRaw
 FeatureLinker
 FileConverter
 FileFilter
@@ -52,7 +53,6 @@ PrecursorIonSelector
 PrecursorMassCorrector
 ProteinInference
 ProteinQuantifier
-RawFeatureFinder
 RTModel
 RTPredict
 Resampler

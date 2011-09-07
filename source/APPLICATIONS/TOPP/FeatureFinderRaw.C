@@ -123,7 +123,6 @@ using namespace std;
 
   Parameters in section <i>algorithm:</i>
   - <i>allow_missing_peaks</i> - Low intensity peaks might be missing from the isotopic pattern of some of the peptides. Specify if such peptides should be included in the analysis.
-  - <i>mz_threshold</i> - Upper bound for the width [Th] of an isotopic peak.
   - <i>rt_threshold</i> - Upper bound for the retention time [s] over which a characteristic peptide elutes.
   - <i>rt_min</i> - Lower bound for the retentions time [s].
   - <i>intensity_cutoff</i> - Lower bound for the intensity of isotopic peaks in a SILAC pattern.
@@ -230,8 +229,6 @@ class TOPPFeatureFinderRaw
 
     if (section == "algorithm")
     {
-      defaults.setValue("mz_threshold", 0.1, "Upper bound for the width [Th] of an isotopic peak.");
-      defaults.setMinFloat("mz_threshold", 0.0);
       defaults.setValue("rt_threshold", 50.0, "Upper bound for the retention time [s] over which a characteristic peptide elutes. ");
       defaults.setMinFloat("rt_threshold", 0.0);
       defaults.setValue("rt_min", 0.0, "Lower bound for the retention time [s].", StringList::create("advanced"));
@@ -295,7 +292,6 @@ class TOPPFeatureFinderRaw
     // section algorithm
     //--------------------------------------------------
 
-    mz_threshold = getParam_().getValue("algorithm:mz_threshold");
     rt_threshold = getParam_().getValue("algorithm:rt_threshold");
     rt_min = getParam_().getValue("algorithm:rt_min");
     intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
@@ -359,6 +355,9 @@ class TOPPFeatureFinderRaw
     {
       data.push_back(filter_it->getElements());
     }
+
+    // save mz peak width @1000 Th for mz threshold in clustering
+    mz_threshold = filtering.getPeakWidth(1000);
 
 
     //--------------------------------------------------

@@ -112,8 +112,6 @@ namespace OpenMS
 
    /// Predict peak width
    void checkPeakWidth();
-   /// Return predicted peak width
-   DoubleReal getPeakWidth(DoubleReal mz) const;
 
    /**
     * @brief pick data seeds
@@ -156,6 +154,9 @@ namespace OpenMS
    * @brief starts the filtering based on the added filters
    */
    void filterDataPoints();
+
+   /// Return predicted peak width
+   DoubleReal getPeakWidth(DoubleReal mz) const;
 
   /**
    * @brief structure for blacklist

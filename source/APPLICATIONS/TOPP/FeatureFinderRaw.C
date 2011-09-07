@@ -125,6 +125,7 @@ using namespace std;
   - <i>allow_missing_peaks</i> - Low intensity peaks might be missing from the isotopic pattern of some of the peptides. Specify if such peptides should be included in the analysis.
   - <i>mz_threshold</i> - Upper bound for the width [Th] of an isotopic peak.
   - <i>rt_threshold</i> - Upper bound for the retention time [s] over which a characteristic peptide elutes.
+  - <i>rt_min</i> - Lower bound for the retentions time [s].
   - <i>intensity_cutoff</i> - Lower bound for the intensity of isotopic peaks in a SILAC pattern.
   - <i>intensity_correlation</i> - Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.
   - <i>model_deviation</i> - Upper bound on the factor by which the ratios of observed isotopic peaks are allowed to differ from the ratios of the theoretic averagine model, i.e. ( theoretic_ratio / model_deviation ) < observed_ratio < ( theoretic_ratio * model_deviation ).
@@ -160,6 +161,7 @@ class TOPPFeatureFinderRaw
     // section "algorithm"
     DoubleReal mz_threshold;
     DoubleReal rt_threshold;
+    DoubleReal rt_min;
     DoubleReal intensity_cutoff;
     DoubleReal intensity_correlation;
     DoubleReal model_deviation;
@@ -232,6 +234,8 @@ class TOPPFeatureFinderRaw
       defaults.setMinFloat("mz_threshold", 0.0);
       defaults.setValue("rt_threshold", 50.0, "Upper bound for the retention time [s] over which a characteristic peptide elutes. ");
       defaults.setMinFloat("rt_threshold", 0.0);
+      defaults.setValue("rt_min", 0.0, "Lower bound for the retention time [s].", StringList::create("advanced"));
+      defaults.setMinFloat("rt_min", 0.0);
       defaults.setValue("intensity_cutoff", 10000.0, "Lower bound for the intensity of isotopic peaks in a SILAC pattern.");
       defaults.setMinFloat("intensity_cutoff", 0.1);
       defaults.setValue("intensity_correlation", 0.9, "Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.");
@@ -291,17 +295,12 @@ class TOPPFeatureFinderRaw
     // section algorithm
     //--------------------------------------------------
 
-    // get selected mz_threshold
     mz_threshold = getParam_().getValue("algorithm:mz_threshold");
-    // get selected rt_threshold
     rt_threshold = getParam_().getValue("algorithm:rt_threshold");
-    // get selected intensity_cutoff
+    rt_min = getParam_().getValue("algorithm:rt_min");
     intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
-    // get selected intensity_correlation
     intensity_correlation = getParam_().getValue("algorithm:intensity_correlation");
-    // get selected model_deviation
     model_deviation = getParam_().getValue("algorithm:model_deviation");
-    // get flag for missing peaks
     allow_missing_peaks = getFlag_("algorithm:allow_missing_peaks");
 
 
@@ -588,6 +587,35 @@ void TOPPFeatureFinderRaw::clusterData()
     clustering->cluster();
 
     cluster_data.push_back(clustering);
+
+    // Remove too small clusters
+    if (rt_min)
+    {
+      for (Clustering::Grid::grid_iterator cell_it = clustering->grid.grid_begin();
+           cell_it != clustering->grid.grid_end(); ++cell_it)
+      {
+        Clustering::Grid::cell_iterator cluster_it = cell_it->second.begin();
+        while (cluster_it != cell_it->second.end())
+        {
+          Clustering::Grid::cell_iterator cluster_mod_it = cluster_it++;
+
+          DBoundingBox<2> cluster_bbox;
+
+          for (Clustering::Cluster::const_iterator pattern_it = cluster_mod_it->second.begin();
+               pattern_it != cluster_mod_it->second.end();
+               ++pattern_it)
+          {
+            SILACPattern *pattern = pattern_it->second;
+            cluster_bbox.enlarge(DBoundingBox<2>::PositionType(pattern->rt, pattern->mz));
+          }
+
+          if ((cluster_bbox.max_[0] - cluster_bbox.min_[0]) < rt_min)
+          {
+            cell_it->second.erase(cluster_mod_it);
+          }
+        }
+      }
+    }
 
     progresslogger.setProgress(data_id);
   }

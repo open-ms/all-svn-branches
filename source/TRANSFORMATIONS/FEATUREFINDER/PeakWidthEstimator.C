@@ -37,7 +37,7 @@
 
 namespace OpenMS
 {
-  void PeakWidthEstimator::estimateFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms)
+  void PeakWidthEstimator::estimateSpectrumFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms)
   {
     PeakPickerHiRes picker;
 
@@ -193,7 +193,7 @@ namespace OpenMS
     }
   }
 
-  void PeakWidthEstimator::estimateFWHM(const MSExperiment<Peak1D>& input, DoubleReal& intercept, DoubleReal& slope)
+  PeakWidthEstimator::Result PeakWidthEstimator::estimateFWHM(const MSExperiment<Peak1D>& input)
   {
     MSExperiment<Peak1D> exp;
 
@@ -240,7 +240,7 @@ namespace OpenMS
     // estimate FWHM on every spectrum
     for (Size scan_idx = 0; scan_idx != exp.size(); ++scan_idx)
     {
-      estimateFWHM(exp[scan_idx], fwhms);
+      estimateSpectrumFWHM(exp[scan_idx], fwhms);
     }
 
     // extract mzs and fwhm for linear regression
@@ -256,10 +256,6 @@ namespace OpenMS
     Math::LinearRegression linear_reg;
     linear_reg.computeRegression(0.95, keys.begin(), keys.end(), values.begin());
 
-    slope = linear_reg.getSlope();
-    intercept = linear_reg.getIntercept();
-    // std::cout << "intercept: " << intercept << " slope: " << slope << std::endl;
-    // std::cout << linear_reg.getRSD() << std::endl;
+    return Result(linear_reg.getSlope(), linear_reg.getIntercept());
   }
-
 }

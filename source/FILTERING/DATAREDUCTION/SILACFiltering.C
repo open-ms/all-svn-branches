@@ -73,9 +73,8 @@ namespace OpenMS
   {
 #if 1
     startProgress(0, 1, "checking peak width");
-    PeakWidthEstimator e;
-    e.estimateFWHM(exp_, peak_width_intercept, peak_width_slope);
-    //std::cout << "got: e ^ (" << peak_width_slope << " * log mz + " << peak_width_intercept << ")" << std::endl;
+    peak_width_ = PeakWidthEstimator::estimateFWHM(exp_);
+    std::cout << "got: e ^ (" << peak_width_.slope << " * log mz + " << peak_width_.intercept << ")" << std::endl;
     endProgress();
 #endif
   }
@@ -83,7 +82,7 @@ namespace OpenMS
   DoubleReal SILACFiltering::getPeakWidth(DoubleReal mz) const
   {
 #if 1
-    return std::exp(peak_width_slope * std::log(mz) + peak_width_intercept);
+    return peak_width_(mz);
 #endif
     return 5*(1.889e-7*pow(mz,1.5));
   }

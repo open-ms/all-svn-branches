@@ -33,6 +33,8 @@
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/PeakWidthEstimator.h>
+
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <list>
@@ -100,10 +102,8 @@ namespace OpenMS
     */
    MSExperiment<Peak1D> picked_exp_seeds_;
 
-   /// Slope of peak-width equation
-   DoubleReal peak_width_slope;
-   /// Intercept of peak-width equation
-   DoubleReal peak_width_intercept;
+   /// peak-width equation
+   PeakWidthEstimator::Result peak_width_;
 
    /**
     * Filename base for debugging output

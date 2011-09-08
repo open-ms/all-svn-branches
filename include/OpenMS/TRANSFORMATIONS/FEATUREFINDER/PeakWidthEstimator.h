@@ -28,7 +28,6 @@
 #ifndef OPENMS_TRANSFORMATIONS_PEAKWIDTHESTIMATOR_H
 #define OPENMS_TRANSFORMATIONS_PEAKWIDTHESTIMATOR_H
 
-
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 
@@ -40,24 +39,42 @@
 
 namespace OpenMS
 {
-/**
-   @brief This class implements a peak width estimation algorithm best suited for high resolution MS data (FT-ICR-MS, Orbitrap).
-          Peaks are detected and a spline is fitted to the raw data in a window around the peak.
-          Then a search for to the half-maximum is performed on the spline to the left and right of the peak maximum.
-          The Full Width at the Half Maximum is collected.
-          Finally a linear regression is performed to determine FWHM(m/z)
+  /**
+    @brief This class implements a peak width estimation algorithm best suited for high resolution MS data (FT-ICR-MS, Orbitrap).
+    Peaks are detected and a spline is fitted to the raw data in a window around the peak.
+    Then a search for to the half-maximum is performed on the spline to the left and right of the peak maximum.
+    The Full Width at the Half Maximum is collected.
+    Finally a linear regression is performed to determine FWHM(m/z)
 
-   @note The peaks must be sorted according to ascending m/z!
+    @note The peaks must be sorted according to ascending m/z!
 
-   @experimental This algorithm has not been tested thoroughly yet.
-  */
-class OPENMS_DLLAPI PeakWidthEstimator
-{
-public:
-  static void estimateFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms);
-  static void estimateFWHM(const MSExperiment<Peak1D>& input, DoubleReal& intercept, DoubleReal& slope);
-};
+    @experimental This algorithm has not been tested thoroughly yet.
+    */
+  class OPENMS_DLLAPI PeakWidthEstimator
+  {
+    public:
+      class Result
+      {
+        public:
+          DoubleReal slope, intercept;
 
+          Result()
+            : slope(0), intercept(0)
+          { }
+
+          Result(const DoubleReal slope, const DoubleReal intercept)
+            : slope(slope), intercept(intercept)
+          { }
+
+          DoubleReal operator()(const DoubleReal mz) const
+          {
+            return std::exp(slope * std::log(mz) + intercept);
+          }
+      };
+
+      static void estimateSpectrumFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms);
+      static Result estimateFWHM(const MSExperiment<Peak1D>& input);
+  };
 }
 
 #endif // OPENMS_TRANSFORMATIONS_PEAKWIDTHESTIMATOR_H

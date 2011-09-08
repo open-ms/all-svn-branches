@@ -31,13 +31,14 @@
 #include <OpenMS/MATH/STATISTICS/LinearRegression.h>
 
 #include <deque>
+#include <boost/tuple/tuple_comparison.hpp>
 
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp.h>
 
 namespace OpenMS
 {
-  void PeakWidthEstimator::estimateSpectrumFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms)
+  void PeakWidthEstimator::estimateSpectrumFWHM(const MSSpectrum<Peak1D>& input, std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> >& fwhms)
   {
     PeakPickerHiRes picker;
 
@@ -189,7 +190,7 @@ namespace OpenMS
 
       DoubleReal fwhm = std::fabs(left_fwhm_mz - mz) + std::fabs(right_fwhm_mz - mz);
 
-      fwhms.insert( std::pair<DoubleReal, DoubleReal>(mz, fwhm) );
+      fwhms.insert(boost::make_tuple(mz, fwhm, intensity));
     }
   }
 
@@ -235,7 +236,8 @@ namespace OpenMS
       exp.push_back(spectrum);
     }
 
-    std::multimap<DoubleReal, DoubleReal> fwhms; // map peak mz to fwhm
+    // set of (mz, peak-width, intensity)
+    std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> > fwhms;
 
     // estimate FWHM on every spectrum
     for (Size scan_idx = 0; scan_idx != exp.size(); ++scan_idx)
@@ -246,15 +248,17 @@ namespace OpenMS
     // extract mzs and fwhm for linear regression
     std::vector<DoubleReal> keys;
     std::vector<DoubleReal> values;
-    for (std::multimap<DoubleReal, DoubleReal>::iterator it = fwhms.begin(); it != fwhms.end(); ++it)
+    std::vector<DoubleReal> weights;
+    for (std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> >::const_iterator it = fwhms.begin(); it != fwhms.end(); ++it)
     {
-      // std::cout << it->first << "," << it->second << std::endl;  // generates nice plots
-      keys.push_back(std::log(it->first));
-      values.push_back(std::log(it->second));
+      std::cout << it->get<0>() << ',' << it->get<1>() << ',' << it->get<2>() << std::endl;  // generates nice plots
+      keys.push_back(std::log(it->get<0>()));
+      values.push_back(std::log(it->get<1>()));
+      weights.push_back(it->get<2>());
     }
 
     Math::LinearRegression linear_reg;
-    linear_reg.computeRegression(0.95, keys.begin(), keys.end(), values.begin());
+    linear_reg.computeRegressionWeighted(0.95, keys.begin(), keys.end(), values.begin(), weights.begin());
 
     return Result(linear_reg.getSlope(), linear_reg.getIntercept());
   }

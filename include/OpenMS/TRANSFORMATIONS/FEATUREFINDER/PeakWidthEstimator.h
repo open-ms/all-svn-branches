@@ -31,11 +31,7 @@
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 
-#include <gsl/gsl_spline.h>
-#include <gsl/gsl_interp.h>
-
-#include <OpenMS/MATH/STATISTICS/LinearRegression.h>
-#include <deque>
+#include <boost/tuple/tuple.hpp>
 
 namespace OpenMS
 {
@@ -72,7 +68,7 @@ namespace OpenMS
           }
       };
 
-      static void estimateSpectrumFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms);
+      static void estimateSpectrumFWHM(const MSSpectrum<Peak1D>& input, std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> >& fwhms);
       static Result estimateFWHM(const MSExperiment<Peak1D>& input);
   };
 }

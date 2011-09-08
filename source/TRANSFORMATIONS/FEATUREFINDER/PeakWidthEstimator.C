@@ -190,7 +190,7 @@ namespace OpenMS
 
       DoubleReal fwhm = std::fabs(left_fwhm_mz - mz) + std::fabs(right_fwhm_mz - mz);
 
-      fwhms.insert(boost::make_tuple(mz, fwhm, intensity));
+      fwhms.insert(boost::make_tuple(intensity, mz, fwhm));
     }
   }
 
@@ -236,7 +236,7 @@ namespace OpenMS
       exp.push_back(spectrum);
     }
 
-    // set of (mz, peak-width, intensity)
+    // set of (intensity, mz, peak-width)
     std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> > fwhms;
 
     // estimate FWHM on every spectrum
@@ -245,16 +245,17 @@ namespace OpenMS
       estimateSpectrumFWHM(exp[scan_idx], fwhms);
     }
 
-    // extract mzs and fwhm for linear regression
-    std::vector<DoubleReal> keys;
-    std::vector<DoubleReal> values;
-    std::vector<DoubleReal> weights;
-    for (std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> >::const_iterator it = fwhms.begin(); it != fwhms.end(); ++it)
+    // extract mzs and fwhm for linear regression above the median sorted for the intensity
     {
-      std::cout << it->get<0>() << ',' << it->get<1>() << ',' << it->get<2>() << std::endl;  // generates nice plots
-      keys.push_back(std::log(it->get<0>()));
-      values.push_back(std::log(it->get<1>()));
-      weights.push_back(it->get<2>());
+      UInt count = fwhms.size() / 2;
+      std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> >::reverse_iterator it = fwhms.rbegin();
+      for (; count && it != fwhms.rend(); --count, ++it)
+      {
+        std::cout << it->get<1>() << ',' << it->get<2>() << ',' << it->get<0>() << std::endl;  // generates nice plots
+        keys.push_back(std::log(it->get<1>()));
+        values.push_back(std::log(it->get<2>()));
+        weights.push_back(it->get<0>());
+      }
     }
 
     Math::LinearRegression linear_reg;

@@ -246,6 +246,7 @@ namespace OpenMS
     }
 
     // extract mzs and fwhm for linear regression above the median sorted for the intensity
+    std::vector<DoubleReal> keys, values, weights;
     {
       UInt count = fwhms.size() / 2;
       std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> >::reverse_iterator it = fwhms.rbegin();

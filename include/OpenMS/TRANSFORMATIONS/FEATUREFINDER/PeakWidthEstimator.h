@@ -31,7 +31,6 @@
 
 #include <OpenMS/KERNEL/MSExperiment.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
-#include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerHiRes.h>
 
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_interp.h>
@@ -55,17 +54,8 @@ namespace OpenMS
 class OPENMS_DLLAPI PeakWidthEstimator
 {
 public:
-  /// Constructor
-  PeakWidthEstimator();
-
-  /// Destructor
-  virtual ~PeakWidthEstimator();
-
-  void estimateFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms) const;
-  void estimateFWHM(const MSExperiment<Peak1D>& input, DoubleReal& intercept, DoubleReal& slope) const;
-
-  protected:
-    PeakPickerHiRes peak_picker_;
+  static void estimateFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms);
+  static void estimateFWHM(const MSExperiment<Peak1D>& input, DoubleReal& intercept, DoubleReal& slope);
 };
 
 }

@@ -27,22 +27,23 @@
 
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/PeakWidthEstimator.h>
 
+#include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerHiRes.h>
+#include <OpenMS/MATH/STATISTICS/LinearRegression.h>
+
+#include <deque>
+
+#include <gsl/gsl_spline.h>
+#include <gsl/gsl_interp.h>
+
 namespace OpenMS
 {
-
-PeakWidthEstimator::PeakWidthEstimator()
-{
-}
-
-PeakWidthEstimator::~PeakWidthEstimator()
-{
-}
-
-  void PeakWidthEstimator::estimateFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms) const
+  void PeakWidthEstimator::estimateFWHM(const MSSpectrum<Peak1D>& input, std::multimap<DoubleReal, DoubleReal>& fwhms)
   {
+    PeakPickerHiRes picker;
+
     MSSpectrum<Peak1D> picked;
     // 1. find peaks
-    peak_picker_.pick(input, picked);
+    picker.pick(input, picked);
     // 2. determine fwhm
     for (Size i = 1; i < picked.size() - 1; ++i)
     {
@@ -192,7 +193,7 @@ PeakWidthEstimator::~PeakWidthEstimator()
     }
   }
 
-  void PeakWidthEstimator::estimateFWHM(const MSExperiment<Peak1D>& input, DoubleReal& intercept, DoubleReal& slope) const
+  void PeakWidthEstimator::estimateFWHM(const MSExperiment<Peak1D>& input, DoubleReal& intercept, DoubleReal& slope)
   {
     MSExperiment<Peak1D> exp;
 

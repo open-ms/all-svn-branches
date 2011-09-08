@@ -251,7 +251,7 @@ namespace OpenMS
       std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> >::reverse_iterator it = fwhms.rbegin();
       for (; count && it != fwhms.rend(); --count, ++it)
       {
-        std::cout << it->get<1>() << ',' << it->get<2>() << ',' << it->get<0>() << std::endl;  // generates nice plots
+        // std::cout << it->get<1>() << ',' << it->get<2>() << ',' << it->get<0>() << std::endl;  // generates nice plots
         keys.push_back(std::log(it->get<1>()));
         values.push_back(std::log(it->get<2>()));
         weights.push_back(it->get<0>());

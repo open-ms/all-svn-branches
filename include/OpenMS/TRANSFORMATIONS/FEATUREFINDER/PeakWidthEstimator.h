@@ -52,19 +52,19 @@ namespace OpenMS
       class Result
       {
         public:
-          DoubleReal slope, intercept;
+          DoubleReal c0, c1;
 
           Result()
-            : slope(0), intercept(0)
+            : c0(0), c1(0)
           { }
 
-          Result(const DoubleReal slope, const DoubleReal intercept)
-            : slope(slope), intercept(intercept)
+          Result(const DoubleReal c0, const DoubleReal c1)
+            : c0(c0), c1(c1)
           { }
 
           DoubleReal operator()(const DoubleReal mz) const
           {
-            return std::exp(slope * std::log(mz) + intercept);
+            return std::exp(c0 + c1 * std::log(mz));
           }
       };
 

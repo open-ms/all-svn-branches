@@ -28,13 +28,13 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/PeakWidthEstimator.h>
 
 #include <OpenMS/TRANSFORMATIONS/RAW2PEAK/PeakPickerHiRes.h>
-#include <OpenMS/MATH/STATISTICS/LinearRegression.h>
 
 #include <deque>
 #include <boost/tuple/tuple_comparison.hpp>
 
-#include <gsl/gsl_spline.h>
+#include <gsl/gsl_fit.h>
 #include <gsl/gsl_interp.h>
+#include <gsl/gsl_spline.h>
 
 namespace OpenMS
 {
@@ -246,7 +246,7 @@ namespace OpenMS
     }
 
     // extract mzs and fwhm for linear regression above the median sorted for the intensity
-    std::vector<DoubleReal> keys, values, weights;
+    std::vector<double> keys, values, weights;
     {
       UInt count = fwhms.size() / 2;
       std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> >::reverse_iterator it = fwhms.rbegin();
@@ -259,9 +259,15 @@ namespace OpenMS
       }
     }
 
-    Math::LinearRegression linear_reg;
-    linear_reg.computeRegressionWeighted(0.95, keys.begin(), keys.end(), values.begin(), weights.begin());
+    double c0, c1, cov00, cov01, cov11, chisq;
+    int error = gsl_fit_wlinear(keys.data(), 1, weights.data(), 1, values.data(), 1, keys.size(),
+                                &c0, &c1, &cov00, &cov01, &cov11, &chisq);
 
-    return Result(linear_reg.getSlope(), linear_reg.getIntercept());
+    if (error)
+    {
+      throw Exception::UnableToFit( __FILE__, __LINE__, __PRETTY_FUNCTION__, "UnableToFit-PeakWidthEstimator", "Error from GSL");
+    }
+
+    return Result(c0, c1);
   }
 }

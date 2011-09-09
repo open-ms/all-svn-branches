@@ -74,7 +74,7 @@ namespace OpenMS
 #if 1
     startProgress(0, 1, "checking peak width");
     peak_width_ = PeakWidthEstimator::estimateFWHM(exp_);
-    std::cout << "got: e ^ (" << peak_width_.slope << " * log mz + " << peak_width_.intercept << ")" << std::endl;
+    std::cout << "got: e ^ (" << peak_width_.c0 << " + " << peak_width_.c1 << " * log mz)" << std::endl;
     endProgress();
 #endif
   }

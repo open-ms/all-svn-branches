@@ -14,7 +14,6 @@
 				<element map="0" id="0" rt="6635.48577943288" mz="670.89446537198" it="1.78409e+07" charge="2"/>
 				<element map="1" id="0" rt="6635.48577943288" mz="674.901584466854" it="3.98581e+07" charge="2"/>
 			</groupedElementList>
-			<userParam type="string" name="Cell ID" value="82:18542"/>
 			<userParam type="string" name="Mass shifts [Da]" value="0.0000;8.0142"/>
 		</consensusElement>
 		<consensusElement id="e_5024549519481199379" quality="8" charge="2">
@@ -23,7 +22,6 @@
 				<element map="0" id="0" rt="6654.99266152475" mz="668.826307831988" it="6.25767e+06" charge="2"/>
 				<element map="1" id="0" rt="6654.99266152475" mz="672.833370960576" it="1.47132e+07" charge="2"/>
 			</groupedElementList>
-			<userParam type="string" name="Cell ID" value="83:18485"/>
 			<userParam type="string" name="Mass shifts [Da]" value="0.0000;8.0142"/>
 		</consensusElement>
 	</consensusElementList>

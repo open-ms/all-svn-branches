@@ -966,14 +966,9 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
 {
   for (Clustering::Grid::const_grid_iterator cell_it = clustering.grid.grid_begin(); cell_it != clustering.grid.grid_end(); ++cell_it)
   {
-    std::ostringstream o;
-    o << cell_it->first[0] << ':' << cell_it->first[1];
-    std::string cell_id = o.str();
-
     for (Clustering::Grid::const_cell_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
     {
       ConsensusFeature cluster;
-      cluster.setMetaValue("Cell ID", cell_id);
 
       // RT value as weighted RT position of all peaks
       DoubleReal global_rt = 0;
@@ -1097,10 +1092,6 @@ void TOPPSILACAnalyzer::generateClusterConsensusByPattern(ConsensusMap &out, con
 
   for (Clustering::Grid::const_grid_iterator cell_it = clustering.grid.grid_begin(); cell_it != clustering.grid.grid_end(); ++cell_it)
   {
-    std::ostringstream o;
-    o << cell_it->first[0] << ':' << cell_it->first[1];
-    std::string cell_id = o.str();
-
     for (Clustering::Grid::const_cell_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it, ++cluster_id)
     {
       for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin(); pattern_it != cluster_it->second.end(); ++pattern_it)
@@ -1109,7 +1100,6 @@ void TOPPSILACAnalyzer::generateClusterConsensusByPattern(ConsensusMap &out, con
 
         consensus.setMetaValue("color", selectColor(cluster_id));
         consensus.setMetaValue("Cluster ID", cluster_id);
-        consensus.setMetaValue("Cell ID", cell_id);
 
         out.getFileDescriptions()[0].size++;
 

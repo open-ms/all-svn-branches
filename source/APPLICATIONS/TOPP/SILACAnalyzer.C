@@ -302,7 +302,7 @@ class TOPPSILACAnalyzer
     {
       defaults.setValue("rt_threshold", 50.0, "Upper bound for the retention time [s] over which a characteristic peptide elutes. ");
       defaults.setMinFloat("rt_threshold", 0.0);
-      defaults.setValue("rt_min", 0.0, "Lower bound for the retention time [s].", StringList::create("advanced"));
+      defaults.setValue("rt_min", 0.0, "Lower bound for the retention time [s].");
       defaults.setMinFloat("rt_min", 0.0);
       defaults.setValue("intensity_cutoff", 10000.0, "Lower bound for the intensity of isotopic peaks in a SILAC pattern.");
       defaults.setMinFloat("intensity_cutoff", 0.1);

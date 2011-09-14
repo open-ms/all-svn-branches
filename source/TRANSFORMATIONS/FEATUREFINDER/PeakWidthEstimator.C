@@ -46,7 +46,7 @@ namespace OpenMS
     // 1. find peaks
     picker.pick(input, picked);
     // 2. determine fwhm
-    for (Size i = 1; i < picked.size() - 1; ++i)
+    for (Size i = 0; i < picked.size(); ++i)
     {
       DoubleReal mz = picked[i].getMZ();
       DoubleReal intensity = picked[i].getIntensity();

@@ -45,8 +45,10 @@ namespace OpenMS
   std::map<String,DoubleReal> SvmTheoreticalSpectrumGenerator::helicity_;
   std::map<String,DoubleReal> SvmTheoreticalSpectrumGenerator::basicity_;
 
-  // this is just called to initialize the maps before class gets used
-  SvmTheoreticalSpectrumGenerator init;
+	// do not remove, see ticket #352 for more details
+	SvmTheoreticalSpectrumGenerator init;
+
+  bool SvmTheoreticalSpectrumGenerator::initializedMaps_ = false;
 
   String SvmTheoreticalSpectrumGenerator::ResidueTypeToString_(Residue::ResidueType type)
   {
@@ -68,8 +70,10 @@ namespace OpenMS
     }
   }
 
-  bool SvmTheoreticalSpectrumGenerator::init_()
+  void SvmTheoreticalSpectrumGenerator::initializeMaps_()
   {
+    initializedMaps_ = true;
+
     Int index = 0;
     if (aa_to_index_.empty())
     {
@@ -153,16 +157,14 @@ namespace OpenMS
     basicity_["T"] = 211.7;
     basicity_["V"] = 208.7;
     basicity_["W"] = 216.1;
-    basicity_["Y"] = 213.1;
-
-    return true;
+    basicity_["Y"] = 213.1;    
   }
 
 
   SvmTheoreticalSpectrumGenerator::SvmTheoreticalSpectrumGenerator() :
       DefaultParamHandler("SvmTheoreticalSpectrumGenerator")
   {
-    static bool init = init_();
+    if(!initializedMaps_) initializeMaps_();
 
     defaults_.setValue("svm_mode",1,"whether to predict abundant/missing using SVC (0) or predict intensities using SVR (1)");
     defaults_.setValue("model_file_name", "examples/simulation/SvmMSim.model", "Name of the probabilistic Model file");
@@ -245,7 +247,7 @@ namespace OpenMS
   }
 
 
-  Size SvmTheoreticalSpectrumGenerator::generateDescriptorSet_(AASequence peptide, Size position, IonType type, Size precursor_charge, DescriptorSet &desc_set)
+  Size SvmTheoreticalSpectrumGenerator::generateDescriptorSet_(AASequence peptide, Size position, IonType type, Size  /* precursor_charge */, DescriptorSet &desc_set)
   {
 
     std::vector<svm_node> descriptors_tmp;
@@ -580,12 +582,9 @@ namespace OpenMS
       left_marker = info_file.search(left_marker, "<SvmModelFileClass>");
       String svm_filename(*(++left_marker));      
 
-      boost::shared_ptr<SvmModel> sh_ptr_c(new SvmModel);
-      sh_ptr_c.get()->model = svm_load_model((path_to_models + svm_filename).c_str());
-      if(sh_ptr_c.get()->model == 0)
-      {
-        throw Exception::FileNotReadable(__FILE__, __LINE__, __PRETTY_FUNCTION__, svm_filename);
-      }
+      boost::shared_ptr<SVMWrapper> sh_ptr_c(new SVMWrapper);
+      sh_ptr_c.get()->loadModel((path_to_models + svm_filename).c_str());
+
       mp_.class_models.push_back(sh_ptr_c);
       LOG_INFO << "SVM model file loaded: " << svm_filename << std::endl;
 
@@ -593,12 +592,9 @@ namespace OpenMS
       left_marker = info_file.search(left_marker, "<SvmModelFileReg>");
       svm_filename = *(++left_marker);
 
-      boost::shared_ptr<SvmModel> sh_ptr_r(new SvmModel);
-      sh_ptr_r.get()->model = svm_load_model((path_to_models + svm_filename).c_str());
-      if(sh_ptr_r.get()->model == 0)
-      {
-        throw Exception::FileNotReadable(__FILE__, __LINE__, __PRETTY_FUNCTION__,svm_filename);
-      }
+      boost::shared_ptr<SVMWrapper> sh_ptr_r(new SVMWrapper);
+      sh_ptr_r.get()->loadModel((path_to_models + svm_filename).c_str());
+
       mp_.reg_models.push_back(sh_ptr_r);
       LOG_INFO << "SVM model file loaded: " << svm_filename << std::endl;
 
@@ -812,7 +808,7 @@ namespace OpenMS
         }
         else
         {
-          LOG_ERROR<< "Requested unsupported ion type" << std::endl;
+          LOG_ERROR << "Requested unsupported ion type" << std::endl;
         }
 
         DescriptorSet descriptor;
@@ -824,13 +820,20 @@ namespace OpenMS
 
         if (simulation_type == 0)
         {
-          predicted_class[i] = svm_predict(mp_.class_models[type_nr].get()->model, &descriptor.descriptors[0]);
+          std::vector< DoubleReal > tmp_out;
+          std::vector< svm_node * > tmp_in(1, &descriptor.descriptors[0]);
+
+          mp_.class_models[type_nr].get()->predict(tmp_in, tmp_out);
+          predicted_class[i] = tmp_out[0];
         }
 
         if (simulation_type == 1)
         {
-          predicted_intensity[i] = std::max(0.0, svm_predict(mp_.reg_models[type_nr].get()->model, &descriptor.descriptors[0]));
-          predicted_intensity[i] = std::min(1.0, predicted_intensity[i]);
+          std::vector< DoubleReal > tmp_out;
+          std::vector< svm_node * > tmp_in(1, &descriptor.descriptors[0]);
+
+          mp_.reg_models[type_nr].get()->predict(tmp_in, tmp_out);
+          predicted_intensity[i] = std::min(std::max(0. , tmp_out[0]), 1.0);
         }
       }
       //end of parallel execution

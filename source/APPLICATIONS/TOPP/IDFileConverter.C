@@ -98,9 +98,9 @@ protected:
 	    "xml: Single mascot XML file.\n"
       "idXML: Single idXML file.\n", true);
     registerOutputFile_("out", "<file>", "", "Output file", true);
-    setValidFormats_("out", StringList::create("idXML,pepXML"));
+    setValidFormats_("out", StringList::create("idXML,pepXML,FASTA"));
     registerStringOption_("out_type", "<type>", "", "output file type -- default: determined from file extension or content\n", false);
-    setValidStrings_("out_type", StringList::create("idXML,pepXML"));
+    setValidStrings_("out_type", StringList::create("idXML,pepXML,FASTA"));
 
     addEmptyLine_();
     addText_("Sequest options:");
@@ -112,9 +112,9 @@ protected:
 
     addEmptyLine_();
     addText_("pepXML options:");
-    registerStringOption_("mz_file", "<file>", "", "Retention times will be looked up in this file, if supplied.\n"
-													"Note: pepXML files do not contain retention times, only scan numbers.", false);
-		registerStringOption_("mz_name", "<file>", "", "Experiment filename/path to match in the pepXML file ('base_name' attribute);\nonly necessary if different from 'mz_file'.", false);
+    registerStringOption_("mz_file", "<file>", "", "MS data file from which the pepXML was generated. Used to look up retention times (some pepXMLs contain only scan numbers) and/or to define what parts to extract (some pepXMLs contain results from multiple experiments).", false);
+		registerStringOption_("mz_name", "<file>", "", "Experiment filename/path to match in the pepXML file ('base_name' attribute). Only necessary if different from 'mz_file'.", false);
+		registerFlag_("use_precursor_data", "Use precursor RTs (and m/z values) from 'mz_file' for the generated peptide identifications, instead of the RTs of MS2 spectra.", false);
   }
 
   ExitCodes
@@ -132,161 +132,161 @@ protected:
 	//-------------------------------------------------------------
 	const String in = getStringOption_("in");
 
-	if ( File::isDirectory(in) )
-	{
+	if (File::isDirectory(in))
+	{		
+		const String in_directory = File::absolutePath(in).ensureLastChar('/');
+		const String mz_file = getStringOption_("mz_file");
+		const bool ignore_proteins_per_peptide = getFlag_("ignore_proteins_per_peptide");
 
-      const String in_directory = File::absolutePath(in).ensureLastChar('/');
-      const String mz_file = getStringOption_("mz_file");
-      const bool ignore_proteins_per_peptide = getFlag_("ignore_proteins_per_peptide");
+		UInt i = 0;
+		FileHandler fh;
+		FileTypes::Type type;
+		MSExperiment<Peak1D> msexperiment;
+		// Note: we had issues with leading zeroes, so let us represent scan numbers as Int (next line used to be map<String, Real> num_and_rt;)  However, now String::toInt() might throw.
+		map<Int, Real> num_and_rt;
+		vector<String> NativeID;
 
-      UInt i = 0;
-      FileHandler fh;
-      FileTypes::Type type;
-      MSExperiment<Peak1D> msexperiment;
-      // Note: we had issues with leading zeroes, so let us represent scan numbers as Int (next line used to be map<String, Real> num_and_rt;)  However, now String::toInt() might throw.
-      map<Int, Real> num_and_rt;
-      vector<String> NativeID;
+		// The mz-File (if given)
+		if ( !mz_file.empty() )
+		{
+			type = fh.getTypeByFileName(mz_file);
+			fh.loadExperiment(mz_file, msexperiment, type);
+			
+			for (MSExperiment<Peak1D>::Iterator spectra_it = msexperiment.begin(); spectra_it != msexperiment.end(); ++spectra_it)
+			{
+				String(spectra_it->getNativeID()).split('=', NativeID);
+				try
+				{
+					num_and_rt[NativeID[1].toInt()] = spectra_it->getRT();
+					// std::cout << "num_and_rt: " << NativeID[1] << " = " << NativeID[1].toInt() << " : " << num_and_rt[NativeID[1].toInt()] << std::endl; // CG debuggging 2009-07-01
+				}
+				catch (Exception::ConversionError &e)
+				{
+					writeLog_(String("Error: Cannot read scan number as integer. '") + e.getMessage());
+				}
+			}
+		}
 
-      // The mz-File (if given)
-      if ( !mz_file.empty() )
-      {
-        type = fh.getTypeByFileName(mz_file);
-        fh.loadExperiment(mz_file, msexperiment, type);
+		// Get list of the actual Sequest .out-Files
+		StringList in_files;
+		if (!File::fileList(in_directory, String("*.out"), in_files))
+		{
+			writeLog_(String("Error: No .out files found in '") + in_directory + "'. Aborting!");
+		}
 
-        for ( MSExperiment<Peak1D>::Iterator spectra_it = msexperiment.begin(); spectra_it != msexperiment.end(); ++spectra_it )
-        {
-          String(spectra_it->getNativeID()).split('=', NativeID);
-          try
-          {
-            num_and_rt[NativeID[1].toInt()] = spectra_it->getRT();
-            // std::cout << "num_and_rt: " << NativeID[1] << " = " << NativeID[1].toInt() << " : " << num_and_rt[NativeID[1].toInt()] << std::endl; // CG debuggging 2009-07-01
-          }
-          catch ( Exception::ConversionError &e )
-          {
-            writeLog_(String("Error: Cannot read scan number as integer. '") + e.getMessage());
-          }
-        }
-      }
+		// Now get to work ...
+		for (vector<String>::const_iterator in_files_it = in_files.begin(); in_files_it != in_files.end(); ++in_files_it)
+		{
+			vector<PeptideIdentification> peptide_ids_seq;
+			ProteinIdentification protein_id_seq;
+			vector<DoubleReal> pvalues_seq;			
+			vector<String> in_file_vec;
 
-      // Get list of the actual Sequest .out-Files
-      StringList in_files;
-      if ( !File::fileList(in_directory, String("*.out"), in_files) )
-      {
-        writeLog_(String("Error: No .out files found in '") + in_directory + "'. Aborting!");
-      }
+			SequestOutfile sequest_outfile;
 
-      // Now get to work ...
-      for ( vector<String>::const_iterator in_files_it = in_files.begin(); in_files_it != in_files.end(); ++in_files_it )
-      {
-        vector<PeptideIdentification> peptide_ids_seq;
-        ProteinIdentification protein_id_seq;
-        vector<DoubleReal> pvalues_seq;
+			writeDebug_(String("Reading file ") + *in_files_it, 3);
 
-        vector<String> in_file_vec;
+			try
+			{
+				sequest_outfile.load((String) (in_directory + *in_files_it), peptide_ids_seq, protein_id_seq, 1.0, pvalues_seq, "Sequest", ignore_proteins_per_peptide);
 
-        SequestOutfile sequest_outfile;
+				in_files_it->split('.', in_file_vec);
 
-        writeDebug_(String("Reading file ") + *in_files_it, 3);
+				for (Size j = 0; j < peptide_ids_seq.size(); ++j)
+				{
 
-        try
-        {
-          sequest_outfile.load((String) (in_directory + *in_files_it), peptide_ids_seq, protein_id_seq, 1.0, pvalues_seq, "Sequest",
-              ignore_proteins_per_peptide);
+					// We have to explicitly set the identifiers, because the normal set ones are composed of search engine name and date, which is the same for a bunch of sequest out-files.
+					peptide_ids_seq[j].setIdentifier(*in_files_it + "_" + i);
 
-          in_files_it->split('.', in_file_vec);
+					Int scan_number = 0;
+					if (!mz_file.empty())
+					{
+						try
+						{
+							scan_number = in_file_vec.at(2).toInt();
+							peptide_ids_seq[j].setMetaValue("RT", num_and_rt[scan_number]);
+						}
+						catch (Exception::ConversionError &e)
+						{
+							writeLog_(String("Error: Cannot read scan number as integer. '") + e.getMessage());
+						}
+						catch (std::exception &e)
+						{
+							writeLog_(String("Error: Cannot read scan number as integer. '") + e.what());
+						}
+						//	DoubleReal real_mz = ( (DoubleReal)peptide_ids_seq[j].getMetaValue("MZ") - hydrogen_mass )/ (DoubleReal)peptide_ids_seq[j].getHits()[0].getCharge(); // ???? semantics of mz
+						const DoubleReal real_mz = (DoubleReal) peptide_ids_seq[j].getMetaValue("MZ") / (DoubleReal) peptide_ids_seq[j].getHits()[0].getCharge();
+						peptide_ids_seq[j].setMetaValue("MZ", real_mz);
+					}
 
-          for ( Size j = 0; j < peptide_ids_seq.size(); ++j )
-          {
+					writeDebug_(String("scan: ") + String(scan_number) + String("  RT: ") + String(peptide_ids_seq[j].getMetaValue("RT")) + "  MZ: " + String(peptide_ids_seq[j].getMetaValue("MZ")) + "  Ident: " + peptide_ids_seq[j].getIdentifier(), 4);
 
-            // We have to explicitly set the identifiers, because the normal set ones are composed of search engine name and date, which is the same for a bunch of sequest out-files.
-            peptide_ids_seq[j].setIdentifier(*in_files_it + "_" + i);
+					peptide_identifications.push_back(peptide_ids_seq[j]);
+				}
 
-            Int scan_number = 0;
-            if ( !mz_file.empty() )
-            {
-              try
-              {
-                scan_number = in_file_vec.at(2).toInt();
-                peptide_ids_seq[j].setMetaValue("RT", num_and_rt[scan_number]);
-              }
-              catch ( Exception::ConversionError &e )
-              {
-                writeLog_(String("Error: Cannot read scan number as integer. '") + e.getMessage());
-              }
-              catch ( std::exception &e )
-              {
-                writeLog_(String("Error: Cannot read scan number as integer. '") + e.what());
-              }
-              //	DoubleReal real_mz = ( (DoubleReal)peptide_ids_seq[j].getMetaValue("MZ") - hydrogen_mass )/ (DoubleReal)peptide_ids_seq[j].getHits()[0].getCharge(); // ???? semantics of mz
-              const DoubleReal real_mz = (DoubleReal) peptide_ids_seq[j].getMetaValue("MZ") / (DoubleReal) peptide_ids_seq[j].getHits()[0].getCharge();
-              peptide_ids_seq[j].setMetaValue("MZ", real_mz);
-            }
-
-            writeDebug_(String("scan: ") + String(scan_number) + String("  RT: ") + String(peptide_ids_seq[j].getMetaValue("RT")) + "  MZ: " + String(
-                peptide_ids_seq[j].getMetaValue("MZ")) + "  Ident: " + peptide_ids_seq[j].getIdentifier(), 4);
-
-            peptide_identifications.push_back(peptide_ids_seq[j]);
-          }
-
-          protein_id_seq.setIdentifier(*in_files_it + "_" + i);
-          protein_identifications.push_back(protein_id_seq);
-          ++i;
-        }
-        catch ( Exception::ParseError & pe )
-        {
-          writeLog_(pe.getMessage() + String("(file: ") + *in_files_it + ")");
-          throw ;
-        }
-        catch (...)
-        {
-          writeLog_(String("Error reading file: ") + *in_files_it);
-          throw;
-        }
-      }
-
-      writeDebug_("All files processed.", 3);
-
+				protein_id_seq.setIdentifier(*in_files_it + "_" + i);
+				protein_identifications.push_back(protein_id_seq);
+				++i;
+			}
+			catch (Exception::ParseError & pe)
+			{
+				writeLog_(pe.getMessage() + String("(file: ") + *in_files_it + ")");
+				throw ;
+			}
+			catch (...)
+			{
+				writeLog_(String("Error reading file: ") + *in_files_it);
+				throw;
+			}
+		}
+		
+		writeDebug_("All files processed.", 3);
   } // ! directory
+
 	else
 	{
 		FileTypes::Type in_type = fh.getType(in);
 
-		if (in_type==FileTypes::PEPXML)
+		if (in_type == FileTypes::PEPXML)
 		{
-			String exp_name = getStringOption_("mz_file"),
-				orig_name =	getStringOption_("mz_name");
-
-				if (exp_name.empty()) {
-					PepXMLFile().load(in, protein_identifications,
-									peptide_identifications, orig_name);
+			String exp_name = getStringOption_("mz_file");
+			String orig_name =	getStringOption_("mz_name");
+			bool use_precursor_data = getFlag_("use_precursor_data");
+			
+			if (exp_name.empty()) 
+			{
+				PepXMLFile().load(in, protein_identifications, peptide_identifications,
+													orig_name);
+			}
+			else
+			{
+				MSExperiment<> exp;
+				fh.loadExperiment(exp_name, exp);
+				if (!orig_name.empty())
+				{
+					exp_name = orig_name;
 				}
-				else {
-					MSExperiment<> exp;
-					fh.loadExperiment(exp_name, exp);
-					if (!orig_name.empty()) {
-						exp_name = orig_name;
-					}
-					PepXMLFile().load(in, protein_identifications,
-									peptide_identifications, exp_name, exp);
-				}
+				PepXMLFile().load(in, protein_identifications, peptide_identifications,
+													exp_name, exp, use_precursor_data);
+			}
 		}
-		else if ( in_type==FileTypes::IDXML)
+		else if (in_type == FileTypes::IDXML)
 		{
 			IdXMLFile().load(in, protein_identifications, peptide_identifications);
 		}
-		else if (in_type==FileTypes::PROTXML)
+		else if (in_type == FileTypes::PROTXML)
 		{
 			protein_identifications.resize(1);
 			peptide_identifications.resize(1);
 			ProtXMLFile().load(in, protein_identifications[0], peptide_identifications[0]);
 		}
-		else if (in_type==FileTypes::OMSSAXML)
+		else if (in_type == FileTypes::OMSSAXML)
 		{
 			protein_identifications.resize(1);
 			peptide_identifications.resize(1);
 			OMSSAXMLFile().load(in, protein_identifications[0], peptide_identifications, true);
 		}
-		else if (in_type==FileTypes::MASCOTXML)
+		else if (in_type == FileTypes::MASCOTXML)
 		{
 			protein_identifications.resize(1);
 			peptide_identifications.resize(1);
@@ -305,23 +305,44 @@ protected:
 		//-------------------------------------------------------------
 		const String out = getStringOption_("out");
 		FileTypes::Type out_type = fh.nameToType(getStringOption_("out_type"));
-		if (out_type==FileTypes::UNKNOWN)
+		if (out_type == FileTypes::UNKNOWN)
 		{
 			out_type = fh.getTypeByFileName(out);
 		}
-		if (out_type==FileTypes::UNKNOWN)
+		if (out_type == FileTypes::UNKNOWN)
 		{
 			writeLog_("Error: Could not determine output file type!");
 			return PARSE_ERROR;
 		}
 
-		if (out_type==FileTypes::PEPXML)
+		if (out_type == FileTypes::PEPXML)
 		{
 			PepXMLFile().store(out, protein_identifications, peptide_identifications);
 		}
-		else if (out_type==FileTypes::IDXML)
+		else if (out_type == FileTypes::IDXML)
 		{
 			IdXMLFile().store(out, protein_identifications, peptide_identifications);
+		}
+		else if (out_type == FileTypes::FASTA)
+		{
+			Size count = 0;
+			std::ofstream fasta(out.c_str(), std::ios::out);
+			for (Size i = 0; i < peptide_identifications.size(); ++i)
+			{
+				for (Size l = 0; l < peptide_identifications[i].getHits().size(); ++l)
+				{
+					const PeptideHit& hit = peptide_identifications[i].getHits()[l];
+					fasta << ">" << hit.getSequence().toUnmodifiedString() << "|" << count++ 
+								<< "|" << hit.getSequence().toString() << endl;
+					String seq = hit.getSequence().toUnmodifiedString();
+					// FASTA files should have at most 60 characters of sequence info per line
+					for (Size j = 0; j < seq.size(); j += 60)
+					{
+						Size k = min(j + 60, seq.size());
+						fasta << std::string(seq[j], seq[k]) << endl;
+					}
+				}
+			}
 		}
 		else
 		{

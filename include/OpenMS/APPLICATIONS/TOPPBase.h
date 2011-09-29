@@ -156,9 +156,6 @@ namespace OpenMS
       /// Destructor
       virtual ~TOPPBase();
 
-			/// @todo to be documented (Chris, Andreas)
-			void checkTOPPIniFile(const String& tool_path);
-
       /// Main routine of all TOPP applications
       ExitCodes main(int argc, const char** argv);
 			
@@ -256,7 +253,7 @@ namespace OpenMS
           argument = rhs.argument;
           required = rhs.required;
           advanced = rhs.advanced;
-          tags == rhs.tags;
+          tags = rhs.tags;
           valid_strings = rhs.valid_strings;
           min_int = rhs.min_int;
           max_int = rhs.max_int;
@@ -766,6 +763,16 @@ namespace OpenMS
       	@param location Exact location inside the source file
       */
       void checkParam_( const Param& param, const String& filename, const String& location ) const;
+
+
+      /**
+        @brief Checks if the parameters of the provided ini file are applicable to this tool
+
+        This method does not abort execution of the tool, but will warn the user through stderr!
+        It is called automatically whenever a ini file is loaded.
+
+       */
+      void checkIfIniParametersAreApplicable_(const Param& ini_params);
       //@}
 
       /// make a string console friendly
@@ -871,15 +878,21 @@ namespace OpenMS
       
 			/// get DocumentIDTagger to assign DocumentIDs to maps
 			const DocumentIDTagger& getDocumentIDTagger_() const;
+
+      /// Write common tool description (CTD) file
+      bool writeCTD_();
 			
+      /// Write WSDL file and validate it. Returns EXECUTION_OK or INTERNAL_ERROR (if validation failed)
+      ExitCodes writeWSDL_(const String& filename);
+
 			/**
 				@brief Test mode 
 			
 				Test mode is enabled using the command line parameter @em -test .
 				
 				It disables writing of data, which would corrupt tests:
-				- abolute paths (e.g. in consensus maps)
-				- processing parameters (input/output files contain abolute paths as well)
+				- absolute paths (e.g. in consensus maps)
+				- processing parameters (input/output files contain absolute paths as well)
 				- current date
 				- current OpenMS version
 			*/

@@ -37,6 +37,7 @@
 #include <QDesktopServices>
 #include <QUrl>
 #include <QMessageBox>
+#include <QSvgRenderer>
 
 namespace OpenMS
 {
@@ -136,7 +137,8 @@ namespace OpenMS
     if (this->allow_output_recycling_)
     {
       painter->setPen(Qt::green);
-      painter->drawChord(-7,-32, 14, 14, 0*16, 180*16);
+      QSvgRenderer* svg_renderer = new QSvgRenderer(QString(":/Recycling_symbol.svg"), 0);
+      svg_renderer->render(painter, QRectF(-7, -32, 14, 14));
     }
 		
   }
@@ -194,7 +196,7 @@ namespace OpenMS
 
     this->finished_ = true; // input node is ready to go (file check was already done)
 
-    std::cerr << "#" << this->getTopoNr() << " set #rounds: " << round_total_ << "\n";
+    //std::cerr << "#" << this->getTopoNr() << " set #rounds: " << round_total_ << "\n";
 
 		for (EdgeIterator it = outEdgesBegin(); it != outEdgesEnd(); ++it)
 		{

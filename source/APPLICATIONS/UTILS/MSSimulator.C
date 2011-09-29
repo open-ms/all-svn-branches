@@ -112,9 +112,6 @@ class TOPPMSSimulator
       registerOutputFile_("out_lcm","<file>","","output (simulated MS map) in consensusXML format (grouping labeled variants)",false);
       registerOutputFile_("out_cntm","<file>","","output (simulated MS map) in featureXML format (contaminants)",false);
       
-      registerStringOption_("type","<name>","","Labeling type\n",true);
-      setValidStrings_("type", ToolHandler::getTypes(toolName_()) );
-
 			addEmptyLine_();
   		addText_("To specify intensity values for certain proteins,\nadd an abundance tag for the corresponding protein\nin the FASTA input file:");
 			addEmptyLine_();
@@ -134,10 +131,12 @@ class TOPPMSSimulator
     }
   
     Param getSubsectionDefaults_(const String& /*section*/) const
-    { 
+    {
       Param tmp;
-      String type = getStringOption_("type");
-      tmp.insert("MSSim:", MSSim().getParameters(type));
+      tmp.insert("MSSim:", MSSim().getParameters());
+
+      // set parameters for the different types of random number generators
+      // we support one for the technical and one for the biological variability
       tmp.setValue("RandomNumberGenerators:biological", "random", "Controls the 'biological' randomness of the generated data (e.g. systematic effects like deviations in RT). If set to 'random' each experiment will look different. If set to 'reproducible' each experiment will have the same outcome (given that the input data is the same).");
       tmp.setValidStrings("RandomNumberGenerators:biological",StringList::create("reproducible,random"));
       tmp.setValue("RandomNumberGenerators:technical", "random", "Controls the 'technical' randomness of the generated data (e.g. noise in the raw signal). If set to 'random' each experiment will look different. If set to 'reproducible' each experiment will have the same outcome (given that the input data is the same).");
@@ -150,7 +149,7 @@ class TOPPMSSimulator
     // Load proteins from FASTA file
     void loadFASTA_(const String& filename, SampleProteins & proteins )
     {
-      writeLog_(String("Loading sequence data from ") + filename +  String(" ..") );
+      writeLog_(String("Loading sequence data from ") + filename +  String(" ...") );
       
       FASTAFile fastafile;
       typedef std::vector< FASTAFile::FASTAEntry > FASTAdata;
@@ -158,16 +157,16 @@ class TOPPMSSimulator
       
       // load FASTA file contents
       fastafile.load(filename, fastadata);
-           
+
       // add data from file to protein storage
       String::size_type index;
             
       StringList valid_meta_values=StringList::create("intensity,RT,rt");
-      // re-parse fasta description to obtain quantitation info
+      // re-parse FASTA description to obtain quantitation info
       for (FASTAdata::iterator it = fastadata.begin(); it != fastadata.end(); ++it)
       {
         // remove all ambiguous characters from FASTA entry
-        // TODO: this is somehow problematic since we modfiy user input
+        // TODO: this is somehow problematic since we modify user input
         it->sequence.remove('X');
         it->sequence.remove('B');
         it->sequence.remove('Z');
@@ -217,8 +216,6 @@ class TOPPMSSimulator
 			//-------------------------------------------------------------
 			// parsing parameters
 			//-------------------------------------------------------------
-      String labeling_type = getStringOption_("type");
-
       StringList input_files = getStringList_("in");
 			String outputfile_name = getStringOption_("out");	
 
@@ -264,7 +261,7 @@ class TOPPMSSimulator
       StopWatch w;
 
       w.start();
-      ms_simulation.simulate(rnd_gen, channels, labeling_type);
+      ms_simulation.simulate(rnd_gen, channels);
       w.stop();
 			writeLog_(String("Simulation took ") + String(w.getClockTime()) + String(" seconds"));   	  	
       

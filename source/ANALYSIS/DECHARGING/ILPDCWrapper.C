@@ -35,43 +35,14 @@
 #include <algorithm>
 #include <utility>
 
+#include <OpenMS/CONCEPT/Constants.h>
+#include <OpenMS/CONCEPT/Constants.h>
+#include <OpenMS/DATASTRUCTURES/LPWrapper.h>
 #include <OpenMS/DATASTRUCTURES/MassExplainer.h>
 #include <OpenMS/DATASTRUCTURES/Map.h>
-#include <OpenMS/CONCEPT/Constants.h>
-#include <OpenMS/CONCEPT/Constants.h>
 #include <OpenMS/FORMAT/TextFile.h>
+#include <OpenMS/SYSTEM/StopWatch.h>
 
-#ifdef _MSC_VER // disable some COIN-OR warnings that distract from ours
-#	pragma warning( push ) // save warning state
-#	pragma warning( disable : 4267 )
-#else
-# pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
-// useful doc: https://projects.coin-or.org/Cbc
-// useful example: https://projects.coin-or.org/Cbc/browser/trunk/Cbc/examples/sample5.cpp
-// Cuts
-
-#include "coin/CglGomory.hpp"
-#include "coin/CglProbing.hpp"
-#include "coin/CglKnapsackCover.hpp"
-#include "coin/CglOddHole.hpp"
-#include "coin/CglClique.hpp"
-#include "coin/CglFlowCover.hpp"
-#include "coin/CglMixedIntegerRounding.hpp"
-
-// Heuristics
-#include "coin/CbcHeuristic.hpp"
-#include "coin/CbcHeuristicLocal.hpp"
-#include "coin/CbcConfig.h"
-#include "coin/CbcModel.hpp"
-#include "coin/CoinModel.hpp"
-#include "coin/OsiClpSolverInterface.hpp"
-#include "coin/CoinTime.hpp"
-#ifdef _MSC_VER
-#	pragma warning( pop )  // restore old warning state
-#else
-# pragma GCC diagnostic warning "-Wunused-parameter"
-#endif
 
 
 namespace OpenMS {
@@ -220,36 +191,27 @@ namespace OpenMS {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
-    for	(SignedSize i=0; i<(SignedSize)bins.size(); ++i)
+    for	(SignedSize i=0; i < (SignedSize)bins.size(); ++i)
 		{
-			score += computeSlice_(me, fm, pairs, bins[i].first, bins[i].second, verbose_level);
+      PairsType pairs2 = pairs; 
+			score += computeSlice_(fm, pairs, bins[i].first, bins[i].second, verbose_level);
 		}
-    //score = computeSlice_(me, fm, pairs, 0, pairs.size()); // all at once - no bins
+    //score = computeSlice_(fm, pairs, 0, pairs.size()); // all at once - no bins
 
 		return score;
 	}
-		
-	DoubleReal ILPDCWrapper::computeSlice_(const MassExplainer& /*me*/,
-																			   const FeatureMap<> fm,
+
+  
+	DoubleReal ILPDCWrapper::computeSlice_(const FeatureMap<> fm,
 																			   PairsType& pairs, 
 																			   const PairsIndex margin_left, 
 																			   const PairsIndex margin_right,
                                          Size verbose_level)
 	{
-
-#ifdef COIN_HAS_CLP
-	  OsiClpSolverInterface solver;
-#elif COIN_HAS_OSL
-	  OsiOslSolverInterface solver;
-#endif
-	  /* From now on we can build model in a solver independent way.
-	     You can add rows one at a time but for large problems this is slow so
-	     this example uses CoinBuild or CoinModel
-	  */
-		CoinModel build;
+		LPWrapper build;
+    build.setObjectiveSense(2); // maximize
 
 		//------------------------------------objective function-----------------------------------------------
-
 		// find maximal objective value
 		DoubleReal score = 0;
 		DoubleReal score_min=10e10f, score_max = -10e10f;
@@ -259,13 +221,7 @@ namespace OpenMS {
 
 		for (PairsIndex i=margin_left; i<margin_right; ++i)
 		{
-
-     //if(i==2797)
-     //{
-     //   ChargePair t =  pairs[i];
-     //   std::cout << "found";
-     // }
-			
+		
 			// log scores are good for addition in ILP - but they are < 0, thus not suitable for maximizing
 			// ... so we just add normal probabilities...
       score = exp(getLogScore_(pairs[i], fm));
@@ -273,9 +229,10 @@ namespace OpenMS {
 			namebuf.str("");
 			namebuf<<"x#"<<i;
 			// create the new variable object
-			build.setColumnBounds(int(i-margin_left),0,1);
-			build.setInteger(int(i-margin_left));
-			build.setObjective(int(i-margin_left), pairs[i].getEdgeScore());
+      Int index = build.addColumn();
+      build.setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
+			build.setColumnType(index,LPWrapper::INTEGER); // integer variable
+			build.setObjective(index, pairs[i].getEdgeScore());
 			if (score_min > score ) score_min = score;
 			if (score_max < score ) score_max = score;
 			
@@ -355,146 +312,73 @@ namespace OpenMS {
 								
 				if (is_conflicting)
 				{
-          /*if(i==150 || j==2797) // every conflict involving the missing edge...
-          {
-            ChargePair ti =  pairs[i];
-            ChargePair tj =  pairs[j];
-            
-            std::cout << "conflicting edge!";
-          }*/
-
 					String s = String("C") + i + "." + j;
 
           // Now build rows: two variables, with indices 'columns', factors '1', and 0-1 bounds.
-					double element[] = {1.0, 1.0};
-					int columns[] = {int(i-margin_left),int(j-margin_left)};
-					build.addRow(2, columns, element, 0, 1, s.c_str());
+          std::vector<double> element(2,1.0);
+					std::vector<int> columns;
+          columns.push_back(int(i-margin_left));
+          columns.push_back(int(j-margin_left));
+					build.addRow(columns, element,s, 0., 1.,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
 				}
 			}
 		}
-		// add rows into solver
-		solver.loadFromCoinModel(build);
-
+    
 		if (verbose_level > 2) LOG_INFO << "node count: " << fm.size() << "\n";
 		if (verbose_level > 2) LOG_INFO << "edge count: " << pairs.size() << "\n";
 		if (verbose_level > 2) LOG_INFO << "constraint count: " << (conflict_idx[0]+conflict_idx[1]+conflict_idx[2]+conflict_idx[3]) << " = " << conflict_idx[0] << " + " << conflict_idx[1] << " + " << conflict_idx[2] << " + " << conflict_idx[3] << "(0 or inferred)" << std::endl;
-
-    // DEBUG:
-		/*
-    {
-    TextFile conflict_map_out;
-		for (Map<Size, std::vector <Size> >::const_iterator it = conflict_map.begin(); it!= conflict_map.end(); ++it)
-		{
-			String s;
-			s = String(it->first) + ":";
-			for (Size i = 0; i<it->second.size(); ++i)
-			{
-				s+= " " + String(it->second[i]);
-			}
-			conflict_map_out.push_back(s);
-		}
-		conflict_map_out.store("c:/conflict_map.txt");
-		//get rid of memory blockers:
-		Map< Size, std::vector<Size> > tmp_map;
-		conflict_map.swap(tmp_map);
-
-    // write the model (for debug)
-    //build.writeMps ("Y:/datasets/simulated/coinor.mps");
-    }
-    */
-		
+	
 		//---------------------------------------------------------------------------------------------------------
 		//----------------------------------------Solving and querying result--------------------------------------
 		//---------------------------------------------------------------------------------------------------------
 
-		/* Now let MIP calculate a solution */
-		// Pass to solver
-		CbcModel model(solver);
-		model.setObjSense(-1); // -1 = maximize, 1=minimize
-		model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
-
-		// Output details
-		model.messageHandler()->setLogLevel( verbose_level > 1 ? 2 : 0);
-		model.solver()->messageHandler()->setLogLevel( verbose_level > 1 ? 1 : 0);
-		
-		//CglProbing generator1;
-		//generator1.setUsingObjective(true);
-		CglGomory generator2;
-		generator2.setLimit(300);
-		CglKnapsackCover generator3;
-		CglOddHole generator4;
-		generator4.setMinimumViolation(0.005);
-		generator4.setMinimumViolationPer(0.00002);
-		generator4.setMaximumEntries(200);
-		CglClique generator5;
-		generator5.setStarCliqueReport(false);
-		generator5.setRowCliqueReport(false);
-		//CglFlowCover flowGen;
-    CglMixedIntegerRounding mixedGen;
-		
-		// Add in generators (you should prefer the ones used often and disable the others as they increase solution time)
-		//model.addCutGenerator(&generator1,-1,"Probing");
-		model.addCutGenerator(&generator2,-1,"Gomory");
-		model.addCutGenerator(&generator3,-1,"Knapsack");
-		//model.addCutGenerator(&generator4,-1,"OddHole"); // seg faults...
-		model.addCutGenerator(&generator5,-10,"Clique");
-		//model.addCutGenerator(&flowGen,-1,"FlowCover");
-		model.addCutGenerator(&mixedGen,-1,"MixedIntegerRounding");
-
-		// Heuristics
-		CbcRounding heuristic1(model);
-		model.addHeuristic(&heuristic1);
-		CbcHeuristicLocal heuristic2(model);
-		model.addHeuristic(&heuristic2);
-
-		// set maximum allowed CPU time before forced stop (dangerous!)
-		//model.setDblParam(CbcModel::CbcMaximumSeconds,60.0*1);
-
-		// Do initial solve to continuous
-		model.initialSolve();
-		
-		
-		// solve
-		double time1 = CoinCpuTime();
-		if (verbose_level > 0) LOG_INFO << "Starting to solve..." << std::endl;
-		model.branchAndBound();
-		if (verbose_level > 0) LOG_INFO << " Branch and cut took " << CoinCpuTime()-time1 << " seconds, "
-						                        << model.getNodeCount()<<" nodes with objective "
-						                        << model.getObjValue()
-						                        << (!model.status() ? " Finished" : " Not finished")
+    if (verbose_level > 0) LOG_INFO << "Starting to solve..." << std::endl;
+    LPWrapper::SolverParam param;
+    param.enable_mir_cuts= true;
+    param.enable_cov_cuts= true;
+    param.enable_feas_pump_heuristic=true;
+    param.enable_binarization=false;
+    param.enable_clq_cuts =true;
+    param.enable_gmi_cuts = true;
+    param.enable_presolve = true;
+    StopWatch time1;
+    time1.start();
+    build.solve(param);
+    time1.stop();
+		if (verbose_level > 0) LOG_INFO << " Branch and cut took " << time1.getClockTime() << " seconds, "
+						                        << " with objective value: " << build.getObjectiveValue() << "."
+						                        << " Status: " << (!build.getStatus() ? " Finished" : " Not finished")
 						                        << std::endl;
-
-
 
 		/* variable values */
 		UInt active_edges = 0;
-		Map < String, Size > count_cmp;
-		const double * solution = model.solver()->getColSolution();
-		for (int iColumn=0; iColumn<model.solver()->getNumCols(); ++iColumn)
-		{
-			double value=solution[iColumn];
-			if (fabs(value)>0.5 && model.solver()->isInteger(iColumn))
-			{
-				++active_edges;
-				pairs[margin_left+iColumn].setActive(true);
-				// for statistical purposes: collect compomer distribution
-				String cmp = pairs[margin_left+iColumn].getCompomer().getAdductsAsString();
-				++count_cmp[cmp];
-			}
+		Map <String, Size> count_cmp;
+
+      for (UInt iColumn = 0; iColumn < build.getNumberOfColumns(); ++iColumn)
+        {
+          double value=build.getColumnValue(iColumn);
+          if (fabs(value)>0.5 && build.getColumnType(iColumn)==3) // 3 - binary variable
+            {
+              ++active_edges;
+              pairs[margin_left+iColumn].setActive(true);
+              // for statistical purposes: collect compomer distribution
+              String cmp = pairs[margin_left+iColumn].getCompomer().getAdductsAsString();
+              ++count_cmp[cmp];
+            }
 			else
 			{
 				// DEBUG
 				//std::cerr << " edge " << iColumn << " with " << value << "\n";
 			}
 		}
-		if (verbose_level > 2) LOG_INFO << "active edges: " << active_edges << " of overall " << pairs.size() << std::endl;
+		if (verbose_level > 2) LOG_INFO << "Active edges: " << active_edges << " of overall " << pairs.size() << std::endl;
 
 		for (Map < String, Size >::const_iterator it=count_cmp.begin(); it != count_cmp.end(); ++it)
 		{
 			//std::cout << "Cmp " << it->first << " x " << it->second << "\n";
 		}
 
-		DoubleReal opt_value = model.getObjValue();
+		DoubleReal opt_value = build.getObjectiveValue();
 
 		//objective function value of optimal(?) solution
 		return opt_value;
@@ -502,7 +386,6 @@ namespace OpenMS {
 
 	DoubleReal ILPDCWrapper::getLogScore_(const PairsType::value_type& pair, const FeatureMap<>& fm)
 	{
-		// TODO think of something better here!
 		DoubleReal score;
 		String e;
 		if (getenv ("M") != 0) e = String(getenv ("M"));

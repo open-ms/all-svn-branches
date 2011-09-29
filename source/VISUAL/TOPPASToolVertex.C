@@ -46,6 +46,7 @@
 #include <QUrl>
 #include <QMessageBox>
 #include <QCoreApplication>
+#include <QSvgRenderer>
 
 namespace OpenMS
 {
@@ -56,11 +57,12 @@ namespace OpenMS
 			name_(),
 			type_(),
 			param_(),
-			progress_color_(Qt::gray)
+			progress_color_(Qt::gray),
+      tool_ready_(true)
 		{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
-		if (initParam_()) {}
+		initParam_();
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
 		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
@@ -72,11 +74,12 @@ namespace OpenMS
 			name_(name),
 			type_(type),
 			param_(),
-			progress_color_(Qt::gray)
+			progress_color_(Qt::gray),
+      tool_ready_(true)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
-		if (initParam_()) {}
+		initParam_();
 		connect (this, SIGNAL(toolStarted()), this, SLOT(toolStartedSlot()));
 		connect (this, SIGNAL(toolFinished()), this, SLOT(toolFinishedSlot()));
 		connect (this, SIGNAL(toolFailed()), this, SLOT(toolFailedSlot()));
@@ -88,7 +91,8 @@ namespace OpenMS
 			name_(rhs.name_),
 			type_(rhs.type_),
 			param_(rhs.param_),
-			progress_color_(rhs.progress_color_)
+			progress_color_(rhs.progress_color_),
+      tool_ready_(rhs.tool_ready_)
 	{
 		pen_color_ = Qt::black;
 		brush_color_ = QColor(245,245,245);
@@ -100,7 +104,6 @@ namespace OpenMS
 
 	TOPPASToolVertex::~TOPPASToolVertex()
 	{
-	
 	}
 	
 	TOPPASToolVertex& TOPPASToolVertex::operator= (const TOPPASToolVertex& rhs)
@@ -138,6 +141,7 @@ namespace OpenMS
 			if (!File::exists(old_ini_file))
 			{
 				QMessageBox::critical(0,"Error",(String("Could not open '")+old_ini_file+"'!").c_str());
+        tool_ready_ = false;
 				return false;
 			}
 			call += " -ini " + String(old_ini_file);
@@ -146,27 +150,24 @@ namespace OpenMS
 		if (system(call.c_str()) != 0)
 		{
 			QMessageBox::critical(0, "Error", (String("Could not execute '") + call + "'!\n\nMake sure the TOPP tools are present in '" + File::getExecutablePath() + "', that you have permission to write to the temporary file path, and that there is space left in the temporary file path.").c_str());
+      tool_ready_ = false;
 			return false;
 		}
 		if (!File::exists(ini_file))
 		{
 			QMessageBox::critical(0, "Error", (String("Could not open '")+ini_file+"'!").c_str());
+      tool_ready_ = false;
 			return false;
 		}
 		
 		tmp_param.load(String(ini_file).c_str());
-		param_=tmp_param.copy(name_+":1:",true);
-		//param_.remove("log");
-		//param_.remove("no_progress");
-		//param_.remove("debug");
-		//// handled by TOPPAS anyway:
-		//param_.remove("type");
+		param_ = tmp_param.copy(name_+":1:",true);
 		
-		writeParam_(param_,ini_file);
+		writeParam_(param_, ini_file);
 		bool changed = false;
 		if (old_ini_file != "")
 		{
-			//check if ini file has changed (quick & dirty by file size)
+			//check if INI file has changed (quick & dirty by file size)
 			QFile q_ini(ini_file);
 			QFile q_old_ini(old_ini_file);
 			changed = q_ini.size() != q_old_ini.size();
@@ -267,25 +268,17 @@ namespace OpenMS
 		for (Param::ParamIterator it = param_.begin(); it != param_.end(); ++it)
 		{
 			if (it->tags.count(search_tag))
-			{
-				StringList valid_types;
-				
-				const String& desc = it->description;
-				String::SizeType index = desc.find("valid formats",0);
-				if (index != String::npos)
-				{
-					String::SizeType types_start_pos = desc.find("'",index) + 1;
-					String::SizeType types_length = desc.find("'",types_start_pos) - types_start_pos;
-					String types_string = desc.substr(types_start_pos, types_length);
-					if (types_string.find(",",0) == String::npos)
-					{
-						valid_types.push_back(types_string.trim());
-					}
-					else
-					{
-						types_string.split(',', valid_types);
-					}
-				}
+      {
+        StringList valid_types(it->valid_strings);
+        for (Size i = 0; i < valid_types.size(); ++i)
+        {
+          if (!valid_types[i].hasPrefix("*."))
+          {
+            std::cerr << "Invalid restriction \""+valid_types[i]+"\""+" for parameter \""+it->name+"\"!" << std::endl;
+            break;
+          }
+          valid_types[i] = valid_types[i].suffix(valid_types[i].size() - 2);
+        }
 				
 				IOInfo io_info;
 				io_info.param_name = it.getName();
@@ -331,21 +324,24 @@ namespace OpenMS
  		
  		pen.setColor(pen_color_);
  		painter->setPen(pen);
-		if (type_ == "")
-		{
-			QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, name_.toQString());
-			painter->drawText(-(int)(text_boundings.width()/2.0), (int)(text_boundings.height()/4.0), name_.toQString());
-		}
-		else
-		{
-			QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, name_.toQString());
-			painter->drawText(-(int)(text_boundings.width()/2.0), -(int)(text_boundings.height()/3.0), name_.toQString());
-			text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter, type_.toQString());
-			painter->drawText(-(int)(text_boundings.width()/2.0), +(int)(text_boundings.height()/1.33), type_.toQString());
-		}
+
+    QString tmp_str = (type_ == "" ? name_ : name_ + " (" + type_ + ")").toQString();
+    for (int i = 0; i < 10; ++i)
+    {
+      QString prev_str = tmp_str;
+      tmp_str = toolnameWithWhitespacesForFancyWordWrapping_(painter, tmp_str);
+      if (tmp_str == prev_str)
+      {
+        break;
+      }
+    }
+    QString draw_str = tmp_str;
+
+    QRectF text_boundings = painter->boundingRect(QRectF(-65,-35,130,70), Qt::AlignCenter|Qt::TextWordWrap, draw_str);
+    painter->drawText(text_boundings, Qt::AlignCenter|Qt::TextWordWrap, draw_str);
 
 		//topo sort number
-		qreal x_pos = -64.0;
+    qreal x_pos = -64.0;
 		qreal y_pos = -41.0; 
 		painter->drawText(x_pos, y_pos, QString::number(topo_nr_));
 		
@@ -361,7 +357,8 @@ namespace OpenMS
     if (this->allow_output_recycling_)
     {
       painter->setPen(Qt::green);
-      painter->drawChord(-7,-52, 14, 14, 0*16, 180*16);
+      QSvgRenderer* svg_renderer = new QSvgRenderer(QString(":/Recycling_symbol.svg"), 0);
+      svg_renderer->render(painter, QRectF(-7, -52, 14, 14));
     }
 		
 		// progress light
@@ -370,6 +367,48 @@ namespace OpenMS
 		painter->drawEllipse(46,-52, 14, 14);
 	}
 	
+  QString TOPPASToolVertex::toolnameWithWhitespacesForFancyWordWrapping_(QPainter* painter, const QString& str)
+  {
+    qreal max_width = 130;
+
+    QStringList parts = str.split(QRegExp("\\s+"), QString::SkipEmptyParts);
+    QStringList new_parts;
+
+    foreach (QString part,  parts)
+    {
+      QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter|Qt::TextWordWrap, part);
+      if (text_boundings.width() <= max_width)
+      {
+        //word not too long
+        new_parts.append(part);
+      }
+      else
+      {
+        //word too long -> insert space at reasonable position -> Qt::TextWordWrap can break the line there
+        int last_capital_index = 1;
+        for (int i = 1; i <= part.size(); ++i)
+        {
+          QString tmp_str = part.left(i);
+          //remember position of last capital letter
+          if (QRegExp("[A-Z]").exactMatch(tmp_str.at(i-1)))
+          {
+            last_capital_index = i;
+          }
+          QRectF text_boundings = painter->boundingRect(QRectF(0,0,0,0), Qt::AlignCenter|Qt::TextWordWrap, tmp_str);
+          if (text_boundings.width() > max_width)
+          {
+            //break line at next capital letter before this position
+            new_parts.append(part.left(last_capital_index-1) + "-");
+            new_parts.append(part.right(part.size() - last_capital_index+1));
+            break;
+          }
+        }
+      }
+    }
+
+    return new_parts.join(" ");
+  }
+
 	QRectF TOPPASToolVertex::boundingRect() const
 	{
 		return QRectF(-71,-61,142,122);
@@ -592,7 +631,7 @@ namespace OpenMS
     //** no error ... proceed
     {  
       ++round_counter_;
-      std::cout << (String("Increased iteration_nr_ to ") + round_counter_ + " / " + round_total_ ) << " for " << this->name_ << std::endl;
+      //std::cout << (String("Increased iteration_nr_ to ") + round_counter_ + " / " + round_total_ ) << " for " << this->name_ << std::endl;
 		
       if (round_counter_ == round_total_) // all iterations performed --> proceed in pipeline
 		  {
@@ -986,6 +1025,11 @@ namespace OpenMS
 		return changed;
 	}
 	
+  bool TOPPASToolVertex::isToolReady() const
+  {
+    return tool_ready_;
+  }
+
 	void TOPPASToolVertex::writeParam_(const Param& param, const QString& ini_file)
 	{
 		Param save_param;

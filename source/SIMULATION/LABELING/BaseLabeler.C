@@ -211,7 +211,7 @@ namespace OpenMS
             ids.insert(ids.end(), ids_feature.begin(), ids_feature.end() ); 
           }
 
-          cf.computeConsensus();
+          cf.computeMonoisotopicConsensus();
           cf.setPeptideIdentifications(ids);
 
           new_cm.push_back(cf);
@@ -223,6 +223,7 @@ namespace OpenMS
     new_cm.setProteinIdentifications(simulated_features.getProteinIdentifications());
 
     consensus_.swap(new_cm);
+    consensus_.applyMemberFunction(&UniqueIdInterface::ensureUniqueId);
   }
 
   const ConsensusMap& BaseLabeler::getConsensus() const

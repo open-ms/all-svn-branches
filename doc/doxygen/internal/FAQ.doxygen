@@ -61,14 +61,9 @@
 				websites of interest.
 
 			<LI><B>How do I update the website?</B><BR>
-				<OL>
-					<LI> Check out the @a website module:
-					<BR>
-					<TT>svn co https://open-ms.svn.sourceforge.net/svnroot/open-ms/website</TT>
-					<LI> Edit the website
-					<LI> Commit the changes
-					<LI> Execute <TT>update.sh &lt;sf-login&gt; and follow instructions</TT>
-				</OL>
+				 
+				 Login to the wordpress admin area at www.openms.de/wp-admin
+				 with your username and password assigned by the current Homepage maintainers.
 
 	    <LI><b>Can I use QT designer to create GUI widgets?</b><BR>
 	      Yes! If you want to create a class called @a Widget:
@@ -121,19 +116,25 @@
       <LI><B>What are user definable CMake Cache Variables?!</B><BR>
         They allow the user to pass options to CMake which will influence the build system.
         The most important option which should be given when calling CMake.exe is:
-        - CONTRIB_CUSTOM_DIR, which is the path to the %OpenMS contrib dir.
-          The default for this variable is %OpenMS/contrib. So unless your contrib is at this location,
-          you will need to set this variable.
+        - CMAKE_FIND_ROOT_PATH, which is where CMake will search for additional libraries if they are not found in the default system paths.
+          By default we add %OpenMS/contrib. If your have installed all
+					libraries on your system already there is no need to change CMAKE_FIND_ROOT_PATH.
+					If you need the contrib, you will need to set this variable. On Windows, you always need the contrib, as there are no system developer packages.
         To pass this variable to CMake use the -D switch
-        e.g. <code>cmake -D CONTRIB_CUSTOM_DIR:PATH="D:\\svn\\contrib"</code>
+        e.g. <code>cmake -D CMAKE_FIND_ROOT_PATH:PATH="D:\\svn\\contrib"</code>
         Everything else can be edited using ccmake afterwards. The following options are of interest:
           - CMAKE_BUILD_TYPE
-          - CONTRIB_CUSTOM_DIR
+          - CMAKE_FIND_ROOT_PATH
           - STL_DEBUG
           - DB_TEST
           - QT_DB_PLUGIN
           - MT_CUDA_BUILD_TYPE
         Their description will be displayed when you call ccmake.
+
+			<LI><B>Can I use another solver than GLPK?!</B><BR>
+				Yes, but by default the build system only links against GLPK (this is how OpenMS binary packages must be build!).
+				To use another solver try <code>cmake ... -D USE_COINOR=1 ....</code>
+				And look at the documentation of the LPWrapper class.
 
       <LI><B>How do I switch to Debug/Release configuration?!</B><BR>
         For Makefile generators (typically on Linux) you can set the CMAKE_BUILD_TYPE variable to either
@@ -420,8 +421,50 @@ svn propset svn:eol-style native MyClass.C
 	      	<LI> Resolve conflicts and run tests
 	      	<LI> Commit
 				</OL>
+		
+				<LI><b>How do I speed up the SVN Repo and/or upgrade to a new SVN version on the server?</b><BR>
+
+				This should only be done if you are sure what you are doing! You might destroy the whole OpenMS SVN!!!
+				Make a backup before (preferably not on SF servers, e.g. by using
+				
+				$ rsync -av open-ms.svn.sourceforge.net::svn/open-ms/* .
+
+				Now here's how you do the upgrade
+				
+				@code
+				## login to SF
+				ssh -t <yourusername>,open-ms@shell.sf.net create
+
+				adminrepo --checkout svn
+
+				svnadmin dump /svnroot/open-ms > oms_dump.txt
+				## make a backup
+				cp /svnroot/open-ms oms_backup
+				## reload repo (instead of using svnadmin upgrade, which might not be optimal for performance)
+				rm -rf /svnroot/open-ms/*
+				svnadmin create /svnroot/open-ms
+				svnadmin load /svnroot/open-ms < oms_dump.txt
+
+				## increase speed (can be done regularly, without dump/load block above)
+				svnadmin pack /svnroot/open-ms
+				
+				## check integrity
+				svnadmin verify /svnroot/open-ms
+				## get latest revision number
+				svnlook youngest /svnroot/open-ms
+				## check some revisions
+				svnlook info -r <XXX> /svnroot/open-ms
+				# e.g. 
+				# svnlook info -r 100 /svnroot/open-ms
+				# svnlook info -r 8635 /svnroot/open-ms
+
+				adminrepo --save svn
+				@endcode		
 				
 		</UL>
+		
+		
+		
 	<H2 style="border-top:2px solid grey;">Doxygen documentation</H2>
 		<UL>
 

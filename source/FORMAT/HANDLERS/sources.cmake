@@ -8,6 +8,7 @@ set(sources_list
 	MascotXMLHandler.C
 	MzDataHandler.C
 	MzIdentMLHandler.C
+	MzQuantMLHandler.C
 	MzMLHandler.C
 	MzXMLHandler.C
 	PTMXMLHandler.C
@@ -18,10 +19,6 @@ set(sources_list
 	XMLHandler.C
 	XTandemInfileXMLHandler.C
 )
-
-if (USE_ANDIMS) 	 
-	list(APPEND sources_list ANDIHandler.C) 	 
-endif()
 
 ### add path to the filenames
 set(sources)

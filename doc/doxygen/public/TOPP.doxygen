@@ -47,6 +47,7 @@
   - @subpage TOPP_FileMerger - Merges several MS files into one file.
   - @subpage TOPP_IDMerger -  Merges several protein/peptide identification files into one file.
   - @subpage TOPP_IDFileConverter - Converts identification engine file formats.
+	- @subpage TOPP_MapStatistics - Extract extended statistics on the features of a map for quality control.
   - @subpage TOPP_SpectraMerger - Merges spectra from an LC/MS map, either by precursor or by RT blocks
   - @subpage TOPP_TextExporter - Exports various XML formats to a text file.
 
@@ -54,7 +55,8 @@
   - @subpage TOPP_BaselineFilter - Removes the baseline from profile spectra using a top-hat filter.
   - @subpage TOPP_InternalCalibration - Applies an internal calibration.
   - @subpage TOPP_MapNormalizer - Normalizes peak intensities in an MS run.
-  - @subpage TOPP_NoiseFilter - Removes noise from profile spectra by using different smoothing techniques.
+  - @subpage TOPP_NoiseFilterGaussian - Removes noise from profile spectra by using different smoothing techniques.
+  - @subpage TOPP_NoiseFilterSGolay - Removes noise from profile spectra by using different smoothing techniques.
   - @subpage TOPP_PeakPicker - Finds mass spectrometric peaks in profile mass spectra.
   - @subpage TOPP_PrecursorMassCorrector - Correct the precursor entries of tandem MS scans.
   - @subpage TOPP_Resampler - Transforms an LC/MS map into an equally-spaced (in RT and m/z) map.
@@ -64,7 +66,10 @@
   <b>Quantitation</b>
   - @subpage TOPP_AdditiveSeries - Computes an additive series to quantify a peptide in a set of samples.
   - @subpage TOPP_Decharger - Decharges and merges different feature charge variants of the same chemical entity.
-  - @subpage TOPP_FeatureFinder - Detects two-dimensional features in LC-MS data.
+  - @subpage TOPP_EICExtractor - Quantifies signals at given positions in (raw or picked) LC/MS maps.
+  - @subpage TOPP_FeatureFinderCentroided - Detects two-dimensional features in LC-MS data.
+  - @subpage TOPP_FeatureFinderIsotopeWavelet - Detects two-dimensional features in LC-MS data.
+  - @subpage TOPP_FeatureFinderMRM - Detects two-dimensional features in LC-MS data.
   - @subpage TOPP_ITRAQAnalyzer - Extracts and normalizes iTRAQ information from an MS experiment.
   - @subpage TOPP_ProteinQuantifier - Computes protein abundances from annotated feature/consensus maps
   - @subpage TOPP_SILACAnalyzer - Determines the ratio of peak pairs in LC-MS data.
@@ -83,6 +88,7 @@
   <b>Protein/Peptide Processing</b>
   - @subpage TOPP_ConsensusID - Computes a consensus identification from peptide identifications of several identification engines.
   - @subpage TOPP_FalseDiscoveryRate - Estimates the false discovery rate on peptide and protein level using decoy searches.
+	- @subpage TOPP_IDConflictResolver - Resolves ambiguous annotations of features with peptide identifications.
   - @subpage TOPP_IDDecoyProbability - Estimates peptide probabilities using a decoy search strategy.
   - @subpage TOPP_IDFilter - Filters results from protein or peptide identification engines based on different criteria.
   - @subpage TOPP_IDMapper - Assigns protein/peptide identifications to feature or consensus features.
@@ -107,8 +113,13 @@
 
   <b>Map Alignment</b>
   - @subpage TOPP_ConsensusMapNormalizer - Normalizes maps of one consensusXML file (after linking).
-  - @subpage TOPP_MapAligner - Corrects retention time distortions between maps.
-  - @subpage TOPP_FeatureLinker - Groups corresponding features in one map or across maps (after alignment).
+	- @subpage TOPP_MapAlignerApplyTransformation - Applies retention time transformations to maps.
+	- @subpage TOPP_MapAlignerIdentification - Corrects retention time distortions between maps based on common peptide identifications.
+  - @subpage TOPP_MapAlignerPoseClustering - Corrects retention time distortions between maps using a pose clustering approach.
+  - @subpage TOPP_MapAlignerSpectrum - Corrects retention time distortions between maps by spectrum alignment.
+  - @subpage TOPP_FeatureLinkerLabeled - Groups corresponding isotope-labeled features in a feature map.
+  - @subpage TOPP_FeatureLinkerUnlabeled - Groups corresponding features from multiple maps.
+  - @subpage TOPP_FeatureLinkerUnlabeledQT - Groups corresponding features from multiple maps using a QT clustering approach.
 
   <b>Graphical Tools</b>
   - @subpage TOPP_TOPPView - A viewer for mass spectrometry data.

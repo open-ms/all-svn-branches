@@ -131,7 +131,7 @@ namespace OpenMS {
 
     // peak and instrument parameter
     defaults_.setValue("resolution:value",50000,"Instrument resolution at 400 Th.");
-    defaults_.setValue("resolution:type","linear","How does resolution change with increasing m/z?! QTOFs usually show 'constant' behaviour, FTs have linear degradation, and on Orbitraps the resolution decreases with square root of mass.");
+    defaults_.setValue("resolution:type","linear","How does resolution change with increasing m/z?! QTOFs usually show 'constant' behavior, FTs have linear degradation, and on Orbitraps the resolution decreases with square root of mass.");
     defaults_.setValidStrings("resolution:type", StringList::create("constant,linear,sqrt"));
     
     defaults_.setValue("peak_shape","Gaussian","Peak Shape used around each isotope peak (be aware that the area under the curve is constant for both types, but the maximal height will differ (~ 2:3 = Lorentz:Gaussian) due to the wider base of the Lorentzian.");
@@ -151,7 +151,7 @@ namespace OpenMS {
     defaults_.setMinInt("mz:sampling_points",2);
 
     // contaminants:
-    defaults_.setValue("contaminants:file","examples/simulation/contaminants.csv","Contaminants file with sum formula and absolute RT interval.");
+    defaults_.setValue("contaminants:file","examples/simulation/contaminants.csv","Contaminants file with sum formula and absolute RT interval. See 'OpenMS/examples/simulation/contaminants.txt' for details.");
 
     // noise params
 
@@ -185,10 +185,10 @@ namespace OpenMS {
     defaults_.setValue("noise:detector:mean", 2.0, "Mean value of the detector noise being added to the complete measurement.");
     defaults_.setValue("noise:detector:stddev", 1.0, "Standard deviation of the detector noise being added to the complete measurement.");
 
-    defaults_.setSectionDescription("noise", "Parameters modelling noise in mass spectrometry measurements.");
-    defaults_.setSectionDescription("noise:shot", "Parameters regarding shot noise modelling.");
-    defaults_.setSectionDescription("noise:white", "Parameters regarding white noise modelling.");
-    defaults_.setSectionDescription("noise:detector", "Parameters regarding detector noise modelling (set both parameters to 0 to disable it).");
+    defaults_.setSectionDescription("noise", "Parameters modeling noise in mass spectrometry measurements.");
+    defaults_.setSectionDescription("noise:shot", "Parameters regarding shot noise modeling.");
+    defaults_.setSectionDescription("noise:white", "Parameters regarding white noise modeling.");
+    defaults_.setSectionDescription("noise:detector", "Parameters regarding detector noise modeling (set both parameters to 0 to disable it).");
 
     defaultsToParam_();
   }
@@ -255,6 +255,10 @@ namespace OpenMS {
         try
         {
           c.sf = EmpiricalFormula(cols[1]);
+          if (c.sf.getCharge() != 0)
+          {
+            throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,cols[1],"Line " + String(i+1) + " in " + contaminants_file + " contains forbidden charged sum formulas. Charges must be specified in another column. Remove all '+' or '-'!");
+          }
         }
         catch (...)
         {
@@ -273,12 +277,12 @@ namespace OpenMS {
         }
         if (cols[6].toUpper()=="REC") c.shape = RT_RECTANGULAR;
         else if (cols[6].toUpper()=="GAUSS") c.shape = RT_GAUSSIAN;
-        else throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,tf[i], "Unknown shape type: " + cols[6] + " in line " + String(i) + " of '" + contaminants_file + "'");
+        else throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,tf[i], "Unknown shape type: " + cols[6] + " in line " + String(i+1) + " of '" + contaminants_file + "'");
 
         if (cols[7].toUpper()=="ESI") c.im = IM_ESI;
         else if (cols[7].toUpper()=="MALDI") c.im = IM_MALDI;
         else if (cols[7].toUpper()=="ALL") c.im = IM_ALL;
-        else throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,tf[i], "Unknown ionization type: " + cols[7] + " in line " + String(i) + " of '" + contaminants_file + "'");
+        else throw Exception::ParseError(__FILE__,__LINE__,__PRETTY_FUNCTION__,tf[i], "Unknown ionization type: " + cols[7] + " in line " + String(i+1) + " of '" + contaminants_file + "'");
 
         contaminants_.push_back(c);
       }
@@ -853,7 +857,7 @@ namespace OpenMS {
 
   void RawMSSignalSimulation::createContaminants_(FeatureMapSim & c_map, MSSimExperiment & exp, MSSimExperiment & exp_ct)
   {
-    if(exp.size() == 1)
+    if (exp.size() == 1)
     {
       throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__); // not implemented for 1D yet
     }
@@ -896,13 +900,14 @@ namespace OpenMS {
       {
         feature.setMetaValue("RT_width_gaussian", contaminants_[i].rt_end-contaminants_[i].rt_start);
       }
-      feature.setMetaValue("sum_formula", contaminants_[i].sf.getString()); // formula without adducts
+      feature.setMetaValue("sum_formula", contaminants_[i].sf.getString()); // formula without adducts or charges
       feature.setCharge(contaminants_[i].q);
       feature.setMetaValue("charge_adducts","H"+String(contaminants_[i].q));  // adducts separately
       add2DSignal_(feature, exp, exp_ct);
       c_map.push_back(feature);
     }
 
+    c_map.applyMemberFunction(&UniqueIdInterface::ensureUniqueId);
     LOG_INFO << "Contaminants out-of-RT-range: " << out_of_range_RT << " / " << contaminants_.size() << std::endl;
     LOG_INFO << "Contaminants out-of-MZ-range: " << out_of_range_MZ << " / " << contaminants_.size() << std::endl;
 
@@ -1081,30 +1086,19 @@ namespace OpenMS {
       throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__, "Sampling grid seems very small. This cannot be computed!");
     }
     grid.clear();
-    SimCoordinateType mz=mz_min; // declare is here, to ensure a smooth transition from one cell to the next
-    DoubleReal sampling_rate = 0.0;
-    for (SimCoordinateType mz_cell = mz_min; mz_cell <= mz_max; mz_cell += step_Da)
+    SimCoordinateType mz = mz_min;
+    DoubleReal sampling_rate;
+    while (mz <= mz_max)
     {
-      SimCoordinateType fwhm;
-      if (param_.getValue("peak_shape") == "Gaussian")
-			{
-				fwhm = getPeakWidth_(mz_cell, true);
-			}
-      else 
-			{
-				fwhm = getPeakWidth_(mz, false);
-			}
+      SimCoordinateType fwhm = getPeakWidth_(mz, param_.getValue("peak_shape") == "Gaussian");
       sampling_rate = (fwhm / sampling_points_per_FWHM_);
-      for (; mz < (mz_cell + step_Da); mz += sampling_rate)
+      SimCoordinateType mz_cell_end = std::min(mz + step_Da, mz_max);
+      for (; mz <= mz_cell_end; mz += sampling_rate)
       {
         grid.push_back(mz);
-        if (mz > mz_max)
-				{
-					return; // stop recording, as last block is done (one more point than required though - for grid search later)
-				}
       }
     }
-    grid.push_back(mz+sampling_rate); // one more point if inner 'return;' was not reached
+    grid.push_back(mz+sampling_rate); // one more point after mz_max, for binary search later
     return;
   }
 
@@ -1130,7 +1124,7 @@ namespace OpenMS {
 
     if (grid.size() < 3)
     {
-      LOG_WARN << "Data spacing is weird - either you selected a very small intervall or a very low resolution - or both. Not compressing." << std::endl;
+      LOG_WARN << "Data spacing is weird - either you selected a very small interval or a very low resolution - or both. Not compressing." << std::endl;
       return;
     }
 

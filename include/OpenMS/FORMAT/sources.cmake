@@ -22,7 +22,6 @@ source_group("Source Files\\OpenMS\\FORMAT" FILES ${mocced_sources})
 
 ### list all header files of the directory here
 set(sources_list_h
-ANDIFile.h
 Base64.h
 Bzip2Ifstream.h
 Bzip2InputStream.h
@@ -80,6 +79,7 @@ XTandemInfile.h
 XTandemXMLFile.h
 FileTypes.h
 MzIdentMLFile.h
+MzQuantMLFile.h
 TraMLFile.h
 XMassFile.h
 )

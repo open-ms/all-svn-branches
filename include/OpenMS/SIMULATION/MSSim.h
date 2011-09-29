@@ -79,9 +79,8 @@ namespace OpenMS
      
      @param rnd_gen GSL random number generator which will be passed to the different classes
      @param peptides List of peptides and abundances that will be simulated
-     @param labeling_type
      */   
-    void simulate(const SimRandomNumberGenerator & rnd_gen, SampleChannels& peptides, const String& labeling_tpye);
+    void simulate(const SimRandomNumberGenerator & rnd_gen, SampleChannels& peptides);
 	
     /// Access the simulated experiment
     MSSimExperiment const & getExperiment() const;
@@ -102,7 +101,8 @@ namespace OpenMS
     MSSimExperiment const & getPeakMap() const;
 
     /// Returns the default parameters for simulation including the labeling technique with name @p labeling_name
-    Param getParameters(const String& labeling_name) const;
+    Param getParameters() const;
+
   protected:
 		/// handle global params
 		void syncParams_(Param& p, bool to_outer);

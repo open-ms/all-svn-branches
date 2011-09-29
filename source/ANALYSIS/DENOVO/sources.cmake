@@ -7,8 +7,6 @@ DeNovoIonScoring.C
 DeNovoAlgorithm.C
 DeNovoPostScoring.C
 DeNovoIdentification.C
-MassDecomposition.C
-MassDecompositionAlgorithm.C
 CompNovoIdentificationBase.C
 CompNovoIdentificationCID.C
 CompNovoIonScoring.C

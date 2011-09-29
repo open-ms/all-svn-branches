@@ -66,7 +66,7 @@ namespace OpenMS
     // no action here .. just check for 2 channels
     if(features.size() != 2)
     {
-      throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, "18 O Labeling only works with 2 channels.");
+      throw Exception::IllegalArgument(__FILE__, __LINE__, __PRETTY_FUNCTION__, String(features.size()) + " channel(s) given. 18O Labeling only works with 2 channels. Please provide two FASTA files!");
     }
   }
 
@@ -142,6 +142,7 @@ namespace OpenMS
 
           // generate consensus feature
           ConsensusFeature cf;
+          cf.setUniqueId();
           // add mono and &dilabeled variant to ConsensusFeature
           cf.insert(0, b1);
           cf.insert(0, b2);
@@ -171,6 +172,7 @@ namespace OpenMS
           if(unlabeled_features_index.count(unmodified_sequence) != 0)
           {
             ConsensusFeature cf;
+            cf.setUniqueId();
             final_feature_map.push_back(unlabeled_features_index[unmodified_sequence]);
             cf.insert(0, *lf_iter);
             cf.insert(0, unlabeled_features_index[unmodified_sequence]);

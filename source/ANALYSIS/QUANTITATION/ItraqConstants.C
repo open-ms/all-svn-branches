@@ -48,7 +48,7 @@ namespace OpenMS {
 	//taken from Applied Biosystems Website
 	// http://faqs.appliedbiosystems.com/cgi-bin/appliedbio.cfg/php/enduser/std_adp.php?p_faqid=3671
 	const double ItraqConstants::ISOTOPECORRECTIONS_EIGHTPLEX[8][4] = {
-		{0.00, 2.50, 6.89, 0.22},		//113
+		{0.00, 0.00, 6.89, 0.22},		//113
 		{0.00, 0.94, 5.90, 0.16},
 		{0.00, 1.88, 4.90, 0.10},
 		{0.00, 2.82, 3.90, 0.07},
@@ -153,7 +153,7 @@ namespace OpenMS {
 		#endif		
 	}
 
-	void ItraqConstants::updateChannelMap(StringList active_channels, ChannelMapType& map)
+	void ItraqConstants::updateChannelMap(const StringList& active_channels, ChannelMapType& map)
 	{
 		// split the channels key:name pairs apart
 		for (StringList::const_iterator it=active_channels.begin();it!=active_channels.end();++it)

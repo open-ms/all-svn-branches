@@ -101,6 +101,9 @@ namespace OpenMS
 			edge->setSelected(true);
 		}
 		removeSelected();
+
+    // delete temporary files (TODO: make this a user dialog and ask - for later resume)
+    File::removeDirRecursively(tmp_path_);
 	}
 	
 	void TOPPASScene::setActionMode(ActionMode mode)
@@ -1322,7 +1325,8 @@ namespace OpenMS
 
   void TOPPASScene::setOutDir(const QString& dir)
 	{
-		out_dir_ = dir;
+    QDir d(dir);
+		out_dir_ = d.absolutePath();
 		user_specified_out_dir_ = true;
 	}
 	
@@ -1464,8 +1468,7 @@ namespace OpenMS
 				TOPPASOutputFilesDialog tofd(out_dir_);
 				if (tofd.exec())
 				{
-					out_dir_ = tofd.getDirectory();
-					user_specified_out_dir_ = true;
+          setOutDir( tofd.getDirectory() );
 				}
 				else
 				{

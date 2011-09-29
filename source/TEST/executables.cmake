@@ -203,10 +203,6 @@ if (DB_TEST)
   list(APPEND format_executables_list DBAdapter_test)
 endif()
 
-if (USE_ANDIMS)
-  list(APPEND format_executables_list ANDIFile_test)
-endif()
-
 set(math_executables_list
   AsymmetricStatistics_test
   AveragePosition_test
@@ -347,7 +343,7 @@ set(analysis_executables_list
 	IDDecoyProbability_test
 	IDMapper_test
   ILPDCWrapper_test
-	ILPWrapper_test
+	PSLPFormulation_test
 	ItraqChannelExtractor_test
 	ItraqConstants_test
 	ItraqQuantifier_test
@@ -433,6 +429,7 @@ set(transformations_executables_list
   OptimizePick_test
   PeakPickerCWT_test
   PeakPickerHiRes_test
+  PeakWidthEstimator_test
   PeakShape_test
   ProductModel_test
   SeedListGenerator_test
@@ -455,6 +452,7 @@ set(simulation_executables_list
 	LabelFreeLabeler_test
 	O18Labeler_test
 	SILACLabeler_test
+  ICPLLabeler_test
 )
 
 ############### GUI executables (require MOC) ########

@@ -153,17 +153,9 @@ class TOPPFileInfo
 	virtual void registerOptionsAndFlags_()
 	{
 		registerInputFile_("in", "<file>", "", "input file ");
-#ifdef USE_ANDIMS
-		setValidFormats_("in", StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
-#else
 		setValidFormats_("in", StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
-#endif
 		registerStringOption_("in_type", "<type>", "", "input file type -- default: determined from file extension or content", false);
-#ifdef USE_ANDIMS
-		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
-#else
 		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,idXML,pepXML,fid"));
-#endif
 		registerOutputFile_("out","<file>","","Optional output file. If '-' or left out, the output is written to the command line.", false);
 		registerOutputFile_("out_tsv","<file>","","Second optional output file. Tab separated flat text file.", false, true);
 		registerFlag_("m", "Show meta information about the whole experiment");
@@ -176,19 +168,24 @@ class TOPPFileInfo
 
 	
 	template <class Map>
-	void writeRanges_(Map map, ostream& os, ostream& os_tsv)
+	void writeRangesHumanReadable_(Map map, ostream& os)
 	{
 		os << "Ranges:" << endl
     << "  retention time: " << String::number(map.getMin()[Peak2D::RT], 2) << " .. " << String::number(map.getMax()[Peak2D::RT], 2) << endl
     << "  mass-to-charge: " << String::number(map.getMin()[Peak2D::MZ], 2) << " .. " << String::number(map.getMax()[Peak2D::MZ], 2) << endl
     << "  intensity:      " << String::number(map.getMinInt(), 2) << " .. " << String::number(map.getMaxInt(), 2) << endl
     << endl;
-		os_tsv << "retention time (min)" << "\t" << String::number(map.getMin()[Peak2D::RT], 2) << endl
-        << "retention time (max)" << "\t" << String::number(map.getMax()[Peak2D::RT], 2) << endl
-        << "mass-to-charge (min)" << "\t" << String::number(map.getMin()[Peak2D::MZ], 2) << endl
-        << "mass-to-charge (max)" << "\t" << String::number(map.getMax()[Peak2D::MZ], 2) << endl
-        << "intensity (min)" << "\t" << String::number(map.getMinInt(), 2) << endl
-        << "intensity (max)" << "\t" << String::number(map.getMaxInt(), 2) << endl;
+	}
+
+	template <class Map>
+	void writeRangesMachineReadable_(Map map, ostream& os)
+	{
+		os << "retention time (min)" << "\t" << String::number(map.getMin()[Peak2D::RT], 2) << endl
+				<< "retention time (max)" << "\t" << String::number(map.getMax()[Peak2D::RT], 2) << endl
+				<< "mass-to-charge (min)" << "\t" << String::number(map.getMin()[Peak2D::MZ], 2) << endl
+				<< "mass-to-charge (max)" << "\t" << String::number(map.getMax()[Peak2D::MZ], 2) << endl
+				<< "intensity (min)" << "\t" << String::number(map.getMinInt(), 2) << endl
+				<< "intensity (max)" << "\t" << String::number(map.getMaxInt(), 2) << endl;
 	}
 
 
@@ -341,7 +338,8 @@ class TOPPFileInfo
 
 			os << "Number of features: " << feat.size() << endl
 				 << endl;
-			writeRanges_(feat, os, os_tsv);
+			writeRangesHumanReadable_(feat, os);
+			writeRangesMachineReadable_(feat,os_tsv);
 
 			// Charge distribution and TIC
 			Map<UInt, UInt> charges;
@@ -377,7 +375,9 @@ class TOPPFileInfo
 			}
 			os << "  total:    " << string(field_width, ' ') << cons.size() << endl << endl;
 
-			writeRanges_(cons, os, os_tsv);
+			writeRangesHumanReadable_(cons, os);
+			writeRangesMachineReadable_(cons,os_tsv);
+
 
 			// file descriptions
 			const ConsensusMap::FileDescriptions& descs = cons.getFileDescriptions();
@@ -522,7 +522,9 @@ class TOPPFileInfo
 				 << endl;
       os_tsv << "number of spectra" << "\t" << exp.size() << endl
           << "number of peaks" << "\t" << exp.getSize() << endl;
-			writeRanges_(exp, os, os_tsv);
+
+			writeRangesHumanReadable_(exp, os);
+			writeRangesMachineReadable_(exp,os_tsv);
 
 			os << "MS levels: ";
 			if (levels.size() != 0)

@@ -4,6 +4,9 @@ set(directory source/FILTERING/DATAREDUCTION)
 ### list all filenames of the directory here
 set(sources_list
 DataFilters.C
+ElutionPeakDetection.C
+FeatureFindingMetabo.C
+MassTraceDetection.C
 SILACFilter.C
 SILACFiltering.C
 )

@@ -46,7 +46,10 @@ namespace OpenMS
     // 1. find peaks
     picker.pick(input, picked);
     // 2. determine fwhm
-    for (Size i = 0; i < picked.size(); ++i)
+
+    if (picked.size() < 3) return;
+
+    for (Size i = 1; i < picked.size()-1; ++i)
     {
       DoubleReal mz = picked[i].getMZ();
       DoubleReal intensity = picked[i].getIntensity();
@@ -214,18 +217,20 @@ namespace OpenMS
     if (ms1_indices_size <= 100)
     {
       exp = input;
-    } else
+    }
+    else
     {
       while (ms1_indices_size > 100)
       {
         if (ms1_indices_size % 2 == 1)
         {
           ms1_indices.pop_front();
-        } else
+        }
+        else
         {
           ms1_indices.pop_back();
         }
-        ms1_indices_size--;
+        --ms1_indices_size;
       }
     }
 
@@ -245,10 +250,15 @@ namespace OpenMS
       estimateSpectrumFWHM(exp[scan_idx], fwhms);
     }
 
+    if (fwhms.size() == 0)
+    {
+      throw Exception::InvalidSize(__FILE__, __LINE__, __PRETTY_FUNCTION__, fwhms.size());
+    }
+
     // extract mzs and fwhm for linear regression above the median sorted for the intensity
     std::vector<double> keys, values, weights;
     {
-      UInt count = fwhms.size() / 2;
+      Size count = fwhms.size() / 2;
       std::set<boost::tuple<DoubleReal, DoubleReal, DoubleReal> >::reverse_iterator it = fwhms.rbegin();
       for (; count && it != fwhms.rend(); --count, ++it)
       {
@@ -260,7 +270,7 @@ namespace OpenMS
     }
 
     double c0, c1, cov00, cov01, cov11, chisq;
-    int error = gsl_fit_wlinear(keys.data(), 1, weights.data(), 1, values.data(), 1, keys.size(),
+    int error = gsl_fit_wlinear(&keys[0], 1, &weights[0], 1, &values[0], 1, keys.size(),
                                 &c0, &c1, &cov00, &cov01, &cov11, &chisq);
 
     if (error)

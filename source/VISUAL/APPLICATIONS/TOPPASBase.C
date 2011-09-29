@@ -25,6 +25,9 @@
 // $Authors: Johannes Junker, Chris Bielow $
 // --------------------------------------------------------------------------
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #include <OpenMS/VISUAL/APPLICATIONS/TOPPASBase.h>
 #include <OpenMS/CONCEPT/VersionInfo.h>
 #include <OpenMS/SYSTEM/File.h>
@@ -75,6 +78,9 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QTextStream>
+#include <QSvgGenerator>
+#include <QNetworkProxyFactory>
+#include <QNetworkProxy>
 
 using namespace std;
 
@@ -135,6 +141,7 @@ namespace OpenMS
     file->addAction("Online &Repository", this, SLOT(openOnlinePipelineRepository()), Qt::CTRL+Qt::Key_R);
     file->addAction("&Save", this, SLOT(savePipeline()), Qt::CTRL+Qt::Key_S);
     file->addAction("Save &As", this, SLOT(saveCurrentPipelineAs()), Qt::CTRL+Qt::SHIFT+Qt::Key_S);
+    file->addAction("E&xport as image", this, SLOT(exportAsImage()));
 		file->addAction("Refresh &parameters", this, SLOT(refreshParameters()), Qt::CTRL+Qt::SHIFT+Qt::Key_P);
     file->addAction("&Close", this, SLOT(closeFile()), Qt::CTRL+Qt::Key_W);
 		file->addSeparator();
@@ -262,7 +269,10 @@ namespace OpenMS
 
   void TOPPASBase::toppasFileDownloaded_(QNetworkReply* r)
   {
-    QString filename = QFileDialog::getSaveFileName(this, "Where to save the TOPPAS file?", this->current_path_.toQString());
+    QString proposed_filename = QFileInfo(r->url().toString()).fileName();
+    QString filename = QFileDialog::getSaveFileName(this, "Where to save the TOPPAS file?", this->current_path_.toQString() + "/" + proposed_filename, tr("TOPPAS (*.toppas)"));
+    if (!filename.endsWith(".toppas", Qt::CaseInsensitive)) filename += ".toppas";
+
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
     {
@@ -299,7 +309,36 @@ namespace OpenMS
 
   void TOPPASBase::openOnlinePipelineRepository()
   {
-    webview_->load(QUrl("http://www.OpenMS.de/TOPPAS/"));
+    QUrl url = QUrl("http://www.OpenMS.de/TOPPAS/");
+
+    static bool proxy_settings_checked = false;
+    if (!proxy_settings_checked) // do only once because may take several seconds on windows
+    {
+      QNetworkProxy proxy;
+      QUrl tmp_proxy_url(QString(getenv("http_proxy")));
+      QUrl tmp_PROXY_url(QString(getenv("HTTP_PROXY")));
+      QUrl proxy_url = tmp_proxy_url.isValid() ? tmp_proxy_url : tmp_PROXY_url;
+      if (proxy_url.isValid())
+      {
+        QString hostname = proxy_url.host();
+        int port = proxy_url.port();
+        QString username = proxy_url.userName();
+        QString password = proxy_url.password();
+        proxy = QNetworkProxy(QNetworkProxy::HttpProxy, hostname, port, username, password);
+      }
+      else
+      {
+        QList<QNetworkProxy> proxies = QNetworkProxyFactory::systemProxyForQuery(url);
+        if (!proxies.empty())
+        {
+          proxy = proxies.first();
+        }
+      }
+      QNetworkProxy::setApplicationProxy(proxy); //no effect if proxy == QNetworkProxy()
+      proxy_settings_checked = true;
+    }
+
+    webview_->load(url);
     webview_->show();
   }
 
@@ -541,6 +580,68 @@ namespace OpenMS
     }
   }
 
+  void TOPPASBase::exportAsImage()
+  {
+    TOPPASWidget* w = activeWindow_();
+    TOPPASScene* s = w->getScene();
+
+    QString cp = current_path_.toQString();
+    QString file_name = QFileDialog::getSaveFileName(w, tr("Save image"), cp, tr("Images (*.svg *.png *.jpg)"));
+    if (file_name == "")
+    {
+      return;
+    }
+    if (!file_name.endsWith(".svg", Qt::CaseInsensitive) &&
+        !file_name.endsWith(".png", Qt::CaseInsensitive) &&
+        !file_name.endsWith(".jpg", Qt::CaseInsensitive))
+    {
+      file_name += ".svg";
+    }
+    bool svg = file_name.endsWith(".svg");
+
+    QRectF items_bounding_rect = s->itemsBoundingRect();
+    qreal wh_proportion = (qreal)(items_bounding_rect.width()) / (qreal)(items_bounding_rect.height());
+    bool w_larger_than_h = wh_proportion > 1;
+    qreal x1 = 0;
+    qreal y1 = 0;
+    qreal x2, y2;
+
+    qreal small_edge_length = svg ? 500 : 4000;
+
+    if (w_larger_than_h)
+    {
+      x2 = wh_proportion * small_edge_length;
+      y2 = small_edge_length;
+    }
+    else
+    {
+      x2 = small_edge_length;
+      y2 = (1.0 / wh_proportion) * small_edge_length;
+    }
+    qreal width = x2 - x1;
+    qreal height = y2 - y1;
+
+    if (svg)
+    {
+      QSvgGenerator svg_gen;
+      svg_gen.setFileName(file_name);
+      svg_gen.setSize(QSize(width, height));
+      svg_gen.setViewBox(QRect(x1, y1, x2, y2));
+      svg_gen.setTitle(tr("Title (TBD)"));
+      svg_gen.setDescription(tr("Description (TBD)"));
+      QPainter painter(&svg_gen);
+      s->render(&painter, QRectF(), items_bounding_rect);
+    }
+    else
+    {
+      QImage img(width, height, QImage::Format_RGB32);
+      img.fill(QColor(Qt::white).rgb());
+      QPainter painter(&img);
+      s->render(&painter, QRectF(), items_bounding_rect);
+      img.save(file_name);
+    }
+  }
+
   // static
   QString TOPPASBase::savePipelineAs(TOPPASWidget* w, QString current_path)
 	{
@@ -755,7 +856,7 @@ namespace OpenMS
   	TOPPASWidget* window = window_(id);
   	if (window)
   	{
-      std::cerr << "tab changed...\n";
+      //std::cerr << "tab changed...\n";
       desc_->blockSignals(true);
       desc_->setHtml(window->getScene()->getDescription());
       desc_->blockSignals(false);
@@ -1092,6 +1193,14 @@ namespace OpenMS
 			
 			tv = new TOPPASToolVertex(tool_name, tool_type);
 			TOPPASToolVertex* ttv = qobject_cast<TOPPASToolVertex*>(tv);
+
+      // check if tool init was successful (i.e. tool was found); TODO: only populate Tool list with available tools so we do not need to check?!
+      if (!ttv->isToolReady())
+      {
+        delete ttv;
+        return;
+      }
+
 			connect (ttv, SIGNAL(toolStarted()), this, SLOT(toolStarted()));
 			connect (ttv, SIGNAL(toolFinished()), this, SLOT(toolFinished()));
 			connect (ttv, SIGNAL(toolCrashed()), this, SLOT(toolCrashed()));

@@ -169,6 +169,10 @@ namespace OpenMS
 			/// Refreshes the parameters of this tool, returns if their has been a change
 			bool refreshParameters();
 
+      /// underlying TOPP tool found and parameters fetched?! (done in C'Tor)
+      bool isToolReady() const;
+
+
 		public slots:
 		
 			/// Called when the execution of this tool has finished
@@ -215,7 +219,9 @@ namespace OpenMS
 			void getParameters_(QVector<IOInfo>& io_infos, bool input_params);
 			/// Writes @p param to the @p ini_file
 			void writeParam_(const Param& param, const QString& ini_file);
-			
+      /// Helper method for finding good boundaries for wrapping the tool name. Returns a string with whitespaces at the preferred boundaries.
+      QString toolnameWithWhitespacesForFancyWordWrapping_(QPainter* painter, const QString& str);
+
 			/// The name of the tool
 			String name_;
 			/// The type of the tool, or "" if it does not have a type
@@ -226,6 +232,10 @@ namespace OpenMS
 			Param param_;
 			/// Color representing the progress (red = failed, yellow = processing, green = finished, else: gray)
 			QColor progress_color_;
+
+      /// tool initialization status: if C'tor was successful in finding the TOPP tool, this is set to 'true'
+      bool tool_ready_;
+
 			/// UID for output files
 			static UInt uid_;
 	};

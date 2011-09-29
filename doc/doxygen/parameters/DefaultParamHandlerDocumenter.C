@@ -47,7 +47,6 @@
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoring.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringCID.h>
 #include <OpenMS/ANALYSIS/DENOVO/CompNovoIonScoringBase.h>
-#include <OpenMS/ANALYSIS/DENOVO/MassDecompositionAlgorithm.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureDistance.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/QTClusterFinder.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/PoseClusteringAffineSuperimposer.h>
@@ -56,7 +55,6 @@
 #include <OpenMS/ANALYSIS/MAPMATCHING/StablePairFinder.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmSpectrumAlignment.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmPoseClustering.h>
-#include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmApplyGivenTrafo.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithmIdentification.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmLabeled.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithmUnlabeled.h>
@@ -70,6 +68,7 @@
 #include <OpenMS/FORMAT/MascotGenericFile.h>
 #include <OpenMS/FORMAT/MascotRemoteQuery.h>
 #include <OpenMS/CHEMISTRY/TheoreticalSpectrumGenerator.h>
+#include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/MassDecompositionAlgorithm.h>
 #include <OpenMS/COMPARISON/SPECTRA/PeakSpectrumCompareFunctor.h>
 #include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignment.h>
 #include <OpenMS/COMPARISON/SPECTRA/SpectrumAlignmentScore.h>
@@ -153,6 +152,8 @@
 #include <OpenMS/SIMULATION/EGHModel.h>
 #include <OpenMS/SIMULATION/LABELING/O18Labeler.h>
 #include <OpenMS/SIMULATION/LABELING/ITRAQLabeler.h>
+#include <OpenMS/SIMULATION/LABELING/SILACLabeler.h>
+#include <OpenMS/SIMULATION/LABELING/ICPLLabeler.h>
 #include <OpenMS/VISUAL/APPLICATIONS/TOPPASBase.h>
 #include <OpenMS/VISUAL/APPLICATIONS/TOPPViewBase.h>
 
@@ -358,7 +359,6 @@ int main (int argc , char** argv)
 	DOCME(MSSim);
 	DOCME(MapAlignmentAlgorithmPoseClustering);
 	DOCME(MapAlignmentAlgorithmSpectrumAlignment);
-	DOCME(MapAlignmentAlgorithmApplyGivenTrafo);
 	DOCME(MapAlignmentAlgorithmIdentification);
 	DOCME(NLargest);
 	DOCME(NeutralLossDiffFilter);

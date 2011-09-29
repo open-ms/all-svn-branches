@@ -61,7 +61,7 @@ START_SECTION((ItraqQuantifier(Int itraq_type)))
 {
   ItraqQuantifier iq(ItraqQuantifier::EIGHTPLEX);
 	TEST_EQUAL((String) iq.getParameters().getValue("isotope_correction")=="true", true);
-	TEST_EQUAL((Int) iq.getParameters().getValue("channel_reference"), 113);
+	TEST_EQUAL((Int) iq.getParameters().getValue("channel_reference"), 114);
   ItraqQuantifier iq2(ItraqQuantifier::FOURPLEX);
 	TEST_EQUAL((String) iq2.getParameters().getValue("isotope_correction")=="true", true);
 	TEST_EQUAL((Int) iq2.getParameters().getValue("channel_reference"), 114);
@@ -71,14 +71,17 @@ END_SECTION
 START_SECTION((ItraqQuantifier(Int itraq_type, const Param &param)))
 {
 	Param p;
-	p.setValue("isotope_correction_values", StringList::create("114:0/0.3/4/0 , 116:0.1/0.3/3/0.2"));
-	ItraqQuantifier iq(ItraqQuantifier::EIGHTPLEX, p);
-	TEST_EQUAL((StringList) iq.getParameters().getValue("isotope_correction_values"),StringList::create( "114:0/0.3/4/0 , 116:0.1/0.3/3/0.2"));
+	p.setValue("isotope_correction:4plex", StringList::create("114:0/0.3/4/0 , 116:0.1/0.3/3/0.2"));
+	ItraqQuantifier iq(ItraqQuantifier::FOURPLEX, p);
+	TEST_EQUAL((StringList) iq.getParameters().getValue("isotope_correction:4plex"),StringList::create( "114:0/0.3/4/0 , 116:0.1/0.3/3/0.2"));
 	
 	// this should go wrong
-	p.setValue("isotope_correction_values", StringList::create("114:0/0.3/0 , 116:0.1/0.3/3/0.2"));	
-	TEST_EXCEPTION(Exception::InvalidParameter, ItraqQuantifier iq2(ItraqQuantifier::EIGHTPLEX, p));	
+	p.setValue("isotope_correction:4plex", StringList::create("114:0/0.3/0 , 116:0.1/0.3/3/0.2"));	
+	TEST_EXCEPTION(Exception::InvalidParameter, ItraqQuantifier iq2(ItraqQuantifier::FOURPLEX, p));	
 
+	// this should go wrong too
+	p.setValue("isotope_correction:4plex", StringList::create("113:0/0.3/0/0.3 , 116:0.1/0.3/3/0.2"));	
+	TEST_EXCEPTION(Exception::InvalidParameter, ItraqQuantifier iq2(ItraqQuantifier::FOURPLEX, p));	
 }
 END_SECTION
 
@@ -86,7 +89,7 @@ END_SECTION
 START_SECTION((ItraqQuantifier(const ItraqQuantifier &cp)))
 {
 	Param p;
-	p.setValue("isotope_correction_values", StringList::create("114:0/0.3/4/0 , 116:0.1/0.3/3/0.2"));
+	p.setValue("isotope_correction:4plex", StringList::create("114:0/0.3/4/0 , 116:0.1/0.3/3/0.2"));
 	ItraqQuantifier iq(ItraqQuantifier::EIGHTPLEX, p);
 
 	ItraqQuantifier iq_cp(iq);
@@ -99,7 +102,7 @@ END_SECTION
 START_SECTION((ItraqQuantifier& operator=(const ItraqQuantifier &rhs)))
 {
 	Param p;
-	p.setValue("isotope_correction_values", StringList::create("114:0/0.3/4/0 , 116:0.1/0.3/3/0.2"));
+	p.setValue("isotope_correction:4plex", StringList::create("114:0/0.3/4/0 , 116:0.1/0.3/3/0.2"));
 	ItraqQuantifier iq(ItraqQuantifier::EIGHTPLEX, p);
 
 	ItraqQuantifier iq_cp;

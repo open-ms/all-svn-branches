@@ -51,10 +51,6 @@
 // The directory where the OpenMS sources are located
 #define OPENMS_BINARY_PATH "@PROJECT_BINARY_DIR@"
 
-// Macro to construct a c string containing the complete path to the test data
-#define OPENMS_GET_TEST_DATA_PATH(filename) (std::string("@CF_OPENMS_TEST_DATA_PATH@") + filename).c_str()
-#define OPENMS_GET_TEST_DATA_PATH_MESSAGE(prefix,filename,suffix) (prefix + std::string("@CF_OPENMS_TEST_DATA_PATH@") + filename + suffix).c_str()
-
 // do we use SVN revision in VersionInfo.C?! [depending on the availability of svnversion(.exe)]
 #cmakedefine OPENMS_HAS_SVNVERSION
 
@@ -63,6 +59,12 @@
 #cmakedefine OPENMS_COMPILER_MSVC
 // GNU g++
 #cmakedefine OPENMS_COMPILER_GXX
+
+// __PRETTY_FUNCTION__ is a GNU G++ extension.  It is used in exceptions to indicate their origin.
+#ifndef OPENMS_COMPILER_GXX 
+#define __PRETTY_FUNCTION__ "<unknown>"
+#endif
+
 
 // OPENMS_ASSERTIONS enables some debugging methods within some OpenMS classes
 #ifdef OPENMS_COMPILER_MSVC
@@ -76,47 +78,6 @@
 #    define OPENMS_ASSERTIONS
 #  endif
 #endif
-
-
-#cmakedefine OPENMS_BIG_ENDIAN
-
-// Define on 64 bit architectures
-#cmakedefine OPENMS_64BIT_ARCHITECTURE
-
-#define OPENMS_INT32_TYPE @CF_OPENMS_INT32_TYPE@
-#define OPENMS_INT64_TYPE @CF_OPENMS_INT64_TYPE@
-#define OPENMS_BYTE_TYPE @CF_OPENMS_BYTE_TYPE@
-#define OPENMS_UINT64_TYPE @CF_OPENMS_UINT64_TYPE@
-//#define OPENMS_SIZE_T_SIGNED @CF_OPENMS_SIZE_T_SIGNED@
-
-
-// if you ever want to do abs() or floor() on this type in VC then use _abs64() and include <stdlib.h> (no kidding!)
-#define PointerSizeInt @CF_OPENMS_INT64_TYPE@
-#define PointerSizeUInt @CF_OPENMS_UINT64_TYPE@
-
-#cmakedefine OPENMS_HAS_UNISTD_H
-#cmakedefine OPENMS_HAS_PROCESS_H
-#cmakedefine OPENMS_HAS_STDINT_H
-
-#cmakedefine OPENMS_HAS_TIME_H
-#cmakedefine OPENMS_HAS_SYS_TYPES_H
-#cmakedefine OPENMS_HAS_SYS_TIMES_H
-#cmakedefine OPENMS_HAS_SYS_TIME_H
-
-#cmakedefine OPENMS_HAS_KILL
-#cmakedefine OPENMS_HAS_SYSCONF
-
-
-// Defines for conditional compiles when Libs are missing
-#cmakedefine USE_ANDIMS
-
-#define DB_PLUGIN "@QT_DB_PLUGIN@"
-
-// __PRETTY_FUNCTION__ is a GNU G++ extension.  It is used in exceptions to indicate their origin.
-#ifndef OPENMS_COMPILER_GXX 
-#define __PRETTY_FUNCTION__ "<unknown>"
-#endif
-
 
 
 // let Cmake decide if we are using Windows (ie if windows.h is available). 
@@ -152,5 +113,49 @@
 #ifndef OPENMS_GUI_DLLAPI //leave empty when not building DLL
 # define OPENMS_GUI_DLLAPI
 #endif
+
+
+#cmakedefine OPENMS_BIG_ENDIAN
+
+// Define on 64 bit architectures
+#cmakedefine OPENMS_64BIT_ARCHITECTURE
+
+#define OPENMS_INT32_TYPE @CF_OPENMS_INT32_TYPE@
+#define OPENMS_INT64_TYPE @CF_OPENMS_INT64_TYPE@
+#define OPENMS_BYTE_TYPE @CF_OPENMS_BYTE_TYPE@
+#define OPENMS_UINT64_TYPE @CF_OPENMS_UINT64_TYPE@
+//#define OPENMS_SIZE_T_SIGNED @CF_OPENMS_SIZE_T_SIGNED@
+
+
+// if you ever want to do abs() or floor() on this type in VC then use _abs64() and include <stdlib.h> (no kidding!)
+#define PointerSizeInt @CF_OPENMS_INT64_TYPE@
+#define PointerSizeUInt @CF_OPENMS_UINT64_TYPE@
+
+#cmakedefine OPENMS_HAS_UNISTD_H
+#cmakedefine OPENMS_HAS_PROCESS_H
+#cmakedefine OPENMS_HAS_STDINT_H
+
+#cmakedefine OPENMS_HAS_TIME_H
+#cmakedefine OPENMS_HAS_SYS_TYPES_H
+#cmakedefine OPENMS_HAS_SYS_TIMES_H
+#cmakedefine OPENMS_HAS_SYS_TIME_H
+
+#cmakedefine OPENMS_HAS_KILL
+#cmakedefine OPENMS_HAS_SYSCONF
+
+// library versions
+#define OPENMS_LIBSVM_VERSION @CF_OPENMS_LIBSVM_VERSION@
+#define OPENMS_LIBSVM_VERSION_MAJOR @CF_OPENMS_LIBSVM_VERSION_MAJOR@
+#define OPENMS_LIBSVM_VERSION_MINOR @CF_OPENMS_LIBSVM_VERSION_MINOR@
+
+#define COINOR_SOLVER @CF_USECOINOR@ 
+
+
+// class & TOPP tests
+#define DB_PLUGIN "@CF_QT_DB_PLUGIN@"
+// Macro to construct a c string containing the complete path to the test data
+#define OPENMS_GET_TEST_DATA_PATH(filename) (std::string("@CF_OPENMS_TEST_DATA_PATH@") + filename).c_str()
+#define OPENMS_GET_TEST_DATA_PATH_MESSAGE(prefix,filename,suffix) (prefix + std::string("@CF_OPENMS_TEST_DATA_PATH@") + filename + suffix).c_str()
+
 
 #endif // OPENMS_CONFIG_H

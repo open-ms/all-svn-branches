@@ -25,9 +25,10 @@
 // $Authors: Bastian Blank $
 // --------------------------------------------------------------------------
 
-#include <queue>
 #include <cmath>
 #include <limits>
+#include <map>
+#include <queue>
 #include <boost/unordered/unordered_set.hpp>
 
 #include <OpenMS/COMPARISON/CLUSTERING/HashGrid.h>
@@ -65,25 +66,6 @@ namespace OpenMS
        */
       typedef DPosition<2, DoubleReal> PointCoordinate;
 
-     /**
-       * @brief Set of points.
-       * Describes a cluster on the grid. A point consists of a @ref{PointCoordinate} and a @tref{PointRef}.
-       */
-      typedef typename boost::unordered_multimap<PointCoordinate, PointRef> Cluster;
-
-      /**
-       * @brief The hash grid data type.
-       */
-      typedef HashGrid<Cluster> Grid;
-
-      /**
-       * @brief The hash grid.
-       *
-       * It contains clusters.
-       */
-      Grid grid;
-
-    protected:
       /**
        *  @brief Bounding box of cluster.
        *  @attention To be replaced by OpenMS bounding box.
@@ -94,6 +76,10 @@ namespace OpenMS
         public:
           BoundingBox(const PointCoordinate &p)
             : std::pair<PointCoordinate, PointCoordinate>(std::make_pair(p, p))
+          { }
+
+          BoundingBox(const BoundingBox &b)
+            : std::pair<PointCoordinate, PointCoordinate>(b)
           { }
 
           PointCoordinate size() const
@@ -133,6 +119,34 @@ namespace OpenMS
           }
       };
 
+      /**
+       * @brief Set of points.
+       * Describes a cluster on the grid. A point consists of a @ref{PointCoordinate} and a @tref{PointRef}.
+       */
+      class Cluster
+        : public boost::unordered_multimap<PointCoordinate, PointRef>
+      {
+        public:
+          BoundingBox bbox;
+
+          Cluster(const BoundingBox &bbox)
+            : bbox(bbox)
+          { }
+      };
+
+      /**
+       * @brief The hash grid data type.
+       */
+      typedef HashGrid<Cluster> Grid;
+
+      /**
+       * @brief The hash grid.
+       *
+       * It contains clusters.
+       */
+      Grid grid;
+
+    protected:
       /** @brief Tree node used for clustering. */
       class TreeNode
       {
@@ -222,9 +236,10 @@ namespace OpenMS
        * @param d Point to insert.
        * @return iterator to inserted cluster.
        */
-      typename Grid::cell_iterator insertCluster(const PointCoordinate &d)
+      template <class P>
+      typename Grid::cell_iterator insertCluster(const P &p)
       {
-        return grid.insert(std::make_pair(d, Cluster()));
+        return grid.insert(std::make_pair(p, Cluster(p)));
       }
 
       /**

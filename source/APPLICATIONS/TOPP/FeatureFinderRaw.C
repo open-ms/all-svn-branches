@@ -41,12 +41,8 @@
 #include <OpenMS/KERNEL/RangeUtils.h>
 #include <OpenMS/KERNEL/ChromatogramTools.h>
 
-//filtering
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
-
-//clustering
-#include <OpenMS/DATASTRUCTURES/DistanceMatrix.h>
-#include <OpenMS/COMPARISON/CLUSTERING/HierarchicalClustering.h>
+#include <OpenMS/COMPARISON/CLUSTERING/SILACClustering.h>
 
 //Contrib includes
 #include <boost/algorithm/string/split.hpp>
@@ -168,7 +164,7 @@ class TOPPFeatureFinderRaw
 
     vector<vector <DoubleReal> > massShifts;      // list of mass shifts
 
-    typedef HierarchicalClustering<SILACPattern *> Clustering;
+    typedef SILACClustering Clustering;
 
     vector<vector<SILACPattern> > data;
     vector<Clustering *> cluster_data;
@@ -574,7 +570,7 @@ void TOPPFeatureFinderRaw::clusterData()
        ++data_it, ++data_id)
   {
     const PointCoordinate max_delta(rt_threshold, mz_threshold);
-    Clustering *clustering = new Clustering(max_delta);
+    Clustering *clustering = new Clustering(max_delta, rt_min, 0);
 
     for (vector<SILACPattern>::iterator it = data_it->begin(); it != data_it->end(); ++it)
     {
@@ -586,35 +582,6 @@ void TOPPFeatureFinderRaw::clusterData()
     clustering->cluster();
 
     cluster_data.push_back(clustering);
-
-    // Remove too small clusters
-    if (rt_min)
-    {
-      for (Clustering::Grid::grid_iterator cell_it = clustering->grid.grid_begin();
-           cell_it != clustering->grid.grid_end(); ++cell_it)
-      {
-        Clustering::Grid::cell_iterator cluster_it = cell_it->second.begin();
-        while (cluster_it != cell_it->second.end())
-        {
-          Clustering::Grid::cell_iterator cluster_mod_it = cluster_it++;
-
-          DBoundingBox<2> cluster_bbox;
-
-          for (Clustering::Cluster::const_iterator pattern_it = cluster_mod_it->second.begin();
-               pattern_it != cluster_mod_it->second.end();
-               ++pattern_it)
-          {
-            SILACPattern *pattern = pattern_it->second;
-            cluster_bbox.enlarge(DBoundingBox<2>::PositionType(pattern->rt, pattern->mz));
-          }
-
-          if ((cluster_bbox.max_[0] - cluster_bbox.min_[0]) < rt_min)
-          {
-            cell_it->second.erase(cluster_mod_it);
-          }
-        }
-      }
-    }
 
     progresslogger.setProgress(data_id);
   }

@@ -14,6 +14,7 @@ HashGrid.h
 HierarchicalClustering.h
 QTClustering.h
 SingleLinkage.h
+SILACClustering.h
 )
 
 ### add path to the filenames

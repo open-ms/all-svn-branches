@@ -31,10 +31,10 @@
 
 #include <OpenMS/DATASTRUCTURES/String.h>
 
-#include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/Alphabet.h>
+#include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/IMSAlphabet.h>
 #include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/compose_f_gx_t.h>
 #include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/compose_f_gx_hy_t.h>
-#include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/AlphabetTextParser.h>
+#include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/IMSAlphabetTextParser.h>
 
 
 namespace OpenMS {
@@ -42,54 +42,54 @@ namespace OpenMS {
 namespace ims {
 
 
-const Alphabet::name_type& Alphabet::getName(size_type index) const
+const IMSAlphabet::name_type& IMSAlphabet::getName(size_type index) const
 {
   return getElement(index).getName();
 }
 
 
-Alphabet::mass_type Alphabet::getMass(size_type index) const
+IMSAlphabet::mass_type IMSAlphabet::getMass(size_type index) const
 {
   return getElement(index).getMass();
 }
 
 
-Alphabet::mass_type Alphabet::getMass(const name_type& name) const
+IMSAlphabet::mass_type IMSAlphabet::getMass(const name_type& name) const
 {
   return getElement(name).getMass();
 }
 
 
-bool Alphabet::hasName(const name_type& name) const
+bool IMSAlphabet::hasName(const name_type& name) const
 {
-  return std::find_if(elements.begin(), elements.end(),
+  return std::find_if(elements_.begin(), elements_.end(),
                       compose_f_gx(std::bind2nd(std::equal_to<name_type>(), name),
-                                   std::mem_fun_ref(&element_type::getName))) < elements.end();
+                                   std::mem_fun_ref(&element_type::getName))) < elements_.end();
 }
 
 
-const Alphabet::element_type& Alphabet::getElement(const name_type& name) const
+const IMSAlphabet::element_type& IMSAlphabet::getElement(const name_type& name) const
 {
-  const_iterator cit = elements.begin();
-  for (; cit != elements.end(); ++cit)
+  const_iterator cit = elements_.begin();
+  for (; cit != elements_.end(); ++cit)
   {
     if (cit->getName() == name)
     {
       return *cit;
     }
   }
-  throw Exception::InvalidValue(__FILE__,__LINE__,__PRETTY_FUNCTION__, name + " was not found in alphabet!",String(name));
+  throw Exception::InvalidValue(__FILE__,__LINE__,__PRETTY_FUNCTION__, name + " was not found in IMSAlphabet!",String(name));
 }
 
-void Alphabet::setElement(const name_type& name, mass_type mass, bool forced)
+void IMSAlphabet::setElement(const name_type& name, mass_type mass, bool forced)
 {
   bool found = false;
-  for (size_type i = 0; i < elements.size(); ++i)
+  for (size_type i = 0; i < elements_.size(); ++i)
   {
-    if (name == elements[i].getName())
+    if (name == elements_[i].getName())
     {
       element_type element(name, mass);
-      elements[i] = element;
+      elements_[i] = element;
       found = true;
       break;
     }
@@ -100,15 +100,15 @@ void Alphabet::setElement(const name_type& name, mass_type mass, bool forced)
   }
 }
 
-bool Alphabet::erase(const name_type& name)
+bool IMSAlphabet::erase(const name_type& name)
 {
   bool found = false;
-  iterator it = elements.begin();
-  for (; it != elements.end(); ++it)
+  iterator it = elements_.begin();
+  for (; it != elements_.end(); ++it)
   {
     if (it->getName() == name)
     {
-      elements.erase(it);
+      elements_.erase(it);
       found = true;
       break;
     }
@@ -116,11 +116,11 @@ bool Alphabet::erase(const name_type& name)
   return found;
 }
 
-Alphabet::masses_type Alphabet::getMasses(size_type index) const
+IMSAlphabet::masses_type IMSAlphabet::getMasses(size_type index) const
 {
   masses_type masses;
-  const_iterator cit = elements.begin();
-  for (; cit != elements.end(); ++cit)
+  const_iterator cit = elements_.begin();
+  for (; cit != elements_.end(); ++cit)
   {
     masses.push_back(cit->getMass(index));
   }
@@ -128,11 +128,11 @@ Alphabet::masses_type Alphabet::getMasses(size_type index) const
 }
 
 
-Alphabet::masses_type Alphabet::getAverageMasses() const
+IMSAlphabet::masses_type IMSAlphabet::getAverageMasses() const
 {
   masses_type masses;
-  const_iterator cit = elements.begin();
-  for (; cit != elements.end(); ++cit)
+  const_iterator cit = elements_.begin();
+  for (; cit != elements_.end(); ++cit)
   {
     masses.push_back(cit->getAverageMass());
   }
@@ -140,9 +140,9 @@ Alphabet::masses_type Alphabet::getAverageMasses() const
 }
 
 
-void Alphabet::sortByNames()
+void IMSAlphabet::sortByNames()
 {
-  std::sort(elements.begin(), elements.end(),
+  std::sort(elements_.begin(), elements_.end(),
             compose_f_gx_hy(
               std::less<name_type>(),
               std::mem_fun_ref(&element_type::getName),
@@ -150,23 +150,23 @@ void Alphabet::sortByNames()
 }
 
 
-void Alphabet::sortByValues()
+void IMSAlphabet::sortByValues()
 {
-  std::sort(elements.begin(), elements.end(), MassSortingCriteria());
+  std::sort(elements_.begin(), elements_.end(), MassSortingCriteria_());
 }
 
 
-void Alphabet::load(const std::string& fname)
+void IMSAlphabet::load(const std::string& fname)
 {
-  this->load(fname, new AlphabetTextParser);
+  this->load(fname, new IMSAlphabetTextParser);
 }
 
 
-void Alphabet::load(const std::string& fname, AlphabetParser<>* parser)
+void IMSAlphabet::load(const std::string& fname, IMSAlphabetParser<>* parser)
 {
   parser->load(fname);
   this->clear();
-  for (AlphabetParser<>::ContainerType::const_iterator pos =
+  for (IMSAlphabetParser<>::ContainerType::const_iterator pos =
        parser->getElements().begin(),
        end = parser->getElements().end();	pos != end; ++pos)
   {
@@ -176,9 +176,9 @@ void Alphabet::load(const std::string& fname, AlphabetParser<>* parser)
 }
 
 
-std::ostream& operator <<(std::ostream& os, const Alphabet& alphabet)
+std::ostream& operator <<(std::ostream& os, const IMSAlphabet& alphabet)
 {
-  for (Alphabet::size_type i = 0; i < alphabet.size(); ++i )
+  for (IMSAlphabet::size_type i = 0; i < alphabet.size(); ++i )
   {
     os << alphabet.getElement(i) << '\n';
   }

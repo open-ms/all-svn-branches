@@ -30,7 +30,6 @@
 #include <OpenMS/FORMAT/ToolDescriptionFile.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/FeatureGroupingAlgorithm.h>
 #include <OpenMS/ANALYSIS/MAPMATCHING/MapAlignmentAlgorithm.h>
-#include <OpenMS/FILTERING/TRANSFORMERS/PreprocessingFunctor.h>
 #include <OpenMS/SIMULATION/LABELING/BaseLabeler.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinder_impl.h>
 #include <OpenMS/KERNEL/Peak1D.h>
@@ -63,6 +62,7 @@ namespace OpenMS
 		tools_map["FeatureFinderCentroided"] = Internal::ToolDescription("FeatureFinderCentroided", "Quantitation");
 		tools_map["FeatureFinderIsotopeWavelet"] = Internal::ToolDescription("FeatureFinderIsotopeWavelet", "Quantitation");
 		tools_map["FeatureFinderMRM"] = Internal::ToolDescription("FeatureFinderMRM", "Quantitation");
+    tools_map["FeatureFinderRaw"] = Internal::ToolDescription("FeatureFinderRaw", "Quantitation");
 		tools_map["FeatureLinkerLabeled"] = Internal::ToolDescription("FeatureLinkerLabeled", "Map Alignment");
 		tools_map["FeatureLinkerUnlabeled"] = Internal::ToolDescription("FeatureLinkerUnlabeled", "Map Alignment");
 		tools_map["FeatureLinkerUnlabeledQT"] = Internal::ToolDescription("FeatureLinkerUnlabeledQT", "Map Alignment");
@@ -83,7 +83,6 @@ namespace OpenMS
 		tools_map["InclusionExclusionListCreator"] = Internal::ToolDescription("InclusionExclusionListCreator", "Targeted Experiments");
     tools_map["InspectAdapter"] = Internal::ToolDescription("InspectAdapter", "Identification");
 		tools_map["InternalCalibration"] = Internal::ToolDescription("InternalCalibration", "Signal processing and preprocessing");
-		tools_map["MapAligner"] = Internal::ToolDescription("MapAligner", "Map Alignment", Factory<MapAlignmentAlgorithm>::registeredProducts());
 		tools_map["MapAlignerApplyTransformation"] = Internal::ToolDescription("MapAlignerApplyTransformation", "Map Alignment");
 		tools_map["MapAlignerIdentification"] = Internal::ToolDescription("MapAlignerIdentification", "Map Alignment");
 		tools_map["MapAlignerPoseClustering"] = Internal::ToolDescription("MapAlignerPoseClustering", "Map Alignment");
@@ -92,7 +91,7 @@ namespace OpenMS
     tools_map["MapStatistics"] = Internal::ToolDescription("MapStatistics", "File Handling");
     tools_map["MascotAdapter"] = Internal::ToolDescription("MascotAdapter", "Identification");
     tools_map["MascotAdapterOnline"] = Internal::ToolDescription("MascotAdapterOnline", "Identification");
-    tools_map["MassTraceExtractor"] = Internal::ToolDescription("MassTraceExtractor", "Detects mass traces in LC-MS data");
+    tools_map["MassTraceExtractor"] = Internal::ToolDescription("MassTraceExtractor", "Signal processing and preprocessing");
 		tools_map["NoiseFilterGaussian"] = Internal::ToolDescription("NoiseFilterGaussian", "Signal processing and preprocessing");
 		tools_map["NoiseFilterSGolay"] = Internal::ToolDescription("NoiseFilterSGolay", "Signal processing and preprocessing");
     tools_map["OMSSAAdapter"] = Internal::ToolDescription("OMSSAAdapter", "Identification");
@@ -115,7 +114,15 @@ namespace OpenMS
 		tools_map["SeedListGenerator"] = Internal::ToolDescription("SeedListGenerator", "Quantitation");
     //tools_map["SequestAdapter"] = Internal::ToolDescription("SequestAdapter", "Identification");
     tools_map["SpecLibSearcher"] = Internal::ToolDescription("SpecLibSearcher", "Identification");
-    tools_map["SpectraFilter"] = Internal::ToolDescription("SpectraFilter", "Identification", Factory<PreprocessingFunctor>::registeredProducts());
+    tools_map["SpectraFilterWindowMower"] = Internal::ToolDescription("SpectraFilterWindowMower", "Identification");
+    tools_map["SpectraFilterThresholdMower"] = Internal::ToolDescription("SpectraFilterThresholdMower", "Identification");
+    tools_map["SpectraFilterSqrtMower"] = Internal::ToolDescription("SpectraFilterSqrtMower", "Identification");
+    tools_map["SpectraFilterParentPeakMower"] = Internal::ToolDescription("SpectraFilterParentPeakMower", "Identification");
+    tools_map["SpectraFilterMarkerMower"] = Internal::ToolDescription("SpectraFilterMarkerMower", "Identification");
+    tools_map["SpectraFilterScaler"] = Internal::ToolDescription("SpectraFilterScaler", "Identification");
+    tools_map["SpectraFilterBernNorm"] = Internal::ToolDescription("SpectraFilterBernNorm", "Identification");
+    tools_map["SpectraFilterNLargest"] = Internal::ToolDescription("SpectraFilterNLargest", "Identification");
+    tools_map["SpectraFilterNormalizer"] = Internal::ToolDescription("SpectraFilterNormalizer", "Identification");
 		tools_map["SpectraMerger"] = Internal::ToolDescription("SpectraMerger", "File Handling");
     tools_map["TOFCalibration"] = Internal::ToolDescription("TOFCalibration", "Signal processing and preprocessing");
 		tools_map["TextExporter"] = Internal::ToolDescription("TextExporter", "File Handling");
@@ -150,6 +157,7 @@ namespace OpenMS
 		ToolListType util_map;
 
 		util_map["IDMassAccuracy"] = Internal::ToolDescription("IDMassAccuracy", "");
+    util_map["INIUpdater"] = Internal::ToolDescription("INIUpdater", "");
 		util_map["DecoyDatabase"] = Internal::ToolDescription("DecoyDatabase", "");
 		util_map["MapAlignmentEvaluation"] = Internal::ToolDescription("MapAlignmentEvaluation", "");
 		util_map["CaapConvert"] = Internal::ToolDescription("CaapConvert", "");

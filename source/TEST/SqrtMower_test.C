@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Mathias Walzer $
 // $Authors: Volker Mosthaf $
 // --------------------------------------------------------------------------
 //
@@ -77,14 +77,6 @@ START_SECTION((template<typename SpectrumType> void filterSpectrum(SpectrumType&
 
 	e_ptr->filterSpectrum(spec);
 	TEST_REAL_SIMILAR((spec.begin() + 40)->getIntensity(), sqrt(37.5))
-END_SECTION
-
-START_SECTION((static PreprocessingFunctor* create()))
-	NOT_TESTABLE
-END_SECTION
-
-START_SECTION((static const String getProductName()))
-	TEST_EQUAL(e_ptr->getProductName(), "SqrtMower")
 END_SECTION
 
 START_SECTION((void filterPeakMap(PeakMap& exp)))

@@ -26,31 +26,35 @@
 // --------------------------------------------------------------------------
 #include <OpenMS/DATASTRUCTURES/LPWrapper.h>
 #include <OpenMS/CONCEPT/Exception.h>
+#include <OpenMS/CONCEPT/LogStream.h>
 
 #if COINOR_SOLVER==1
-#ifdef _MSC_VER //disable some COIN-OR warnings that distract from ours
-#	pragma warning( push ) // save warning state
-#	pragma warning( disable : 4267 )
-#else
-# pragma GCC diagnostic ignored "-Wunused-parameter"
+  #ifdef _MSC_VER //disable some COIN-OR warnings that distract from ours
+  #	pragma warning( push ) // save warning state
+  #	pragma warning( disable : 4267 )
+  #else
+  # pragma GCC diagnostic ignored "-Wunused-parameter"
+  #endif
+  #include "coin/CoinModel.hpp"
+  #include "coin/OsiClpSolverInterface.hpp"
+  #include "coin/CbcModel.hpp"
+  #include "coin/CbcHeuristic.hpp"
+  #include "coin/CbcHeuristicLocal.hpp"
+  #include "coin/CglGomory.hpp"
+  #include "coin/CglProbing.hpp"
+  #include "coin/CglKnapsackCover.hpp"
+  #include "coin/CglOddHole.hpp"
+  #include "coin/CglClique.hpp"
+  #include "coin/CglFlowCover.hpp"
+  #include "coin/CglMixedIntegerRounding.hpp"
+  #ifdef _MSC_VER
+  #	pragma warning( pop )  // restore old warning state
+  #else
+  # pragma GCC diagnostic warning "-Wunused-parameter"
+  #endif
 #endif
-#include "coin/OsiClpSolverInterface.hpp"
-#include "coin/CbcModel.hpp"
-#include "coin/CbcHeuristic.hpp"
-#include "coin/CbcHeuristicLocal.hpp"
-#include "coin/CglGomory.hpp"
-#include "coin/CglProbing.hpp"
-#include "coin/CglKnapsackCover.hpp"
-#include "coin/CglOddHole.hpp"
-#include "coin/CglClique.hpp"
-#include "coin/CglFlowCover.hpp"
-#include "coin/CglMixedIntegerRounding.hpp"
-#ifdef _MSC_VER
-#	pragma warning( pop )  // restore old warning state
-#else
-# pragma GCC diagnostic warning "-Wunused-parameter"
-#endif
-#endif
+
+#include <glpk.h>
 
 namespace OpenMS
 {
@@ -59,9 +63,8 @@ namespace OpenMS
   LPWrapper::LPWrapper()
   {
 #if COINOR_SOLVER==1
-    num_rows_ = 0;
-    num_columns_ = 0;
     solver_ = SOLVER_COINOR;
+    model_ = new CoinModel;
 #else
     solver_ = SOLVER_GLPK;
 #endif
@@ -90,9 +93,8 @@ namespace OpenMS
 #if COINOR_SOLVER==1
     if (solver_==SOLVER_COINOR)
     {
-      model_.addRow((int)row_indices.size(),&(row_indices[0]),&(row_values[0]), -COIN_DBL_MAX, COIN_DBL_MAX,name.c_str());
-      ++num_rows_;
-      return num_rows_-1;
+      model_->addRow((int)row_indices.size(),&(row_indices[0]),&(row_values[0]), -COIN_DBL_MAX, COIN_DBL_MAX,name.c_str());
+      return model_->numberRows()-1;
     }
 #endif
     else
@@ -108,9 +110,8 @@ namespace OpenMS
 #if COINOR_SOLVER==1
     else if (solver_==SOLVER_COINOR)
     {
-      model_.addColumn(0,NULL,NULL,0,0); // new columns are initially fixed at zero, like in glpk
-      ++num_columns_;
-      return num_columns_-1;
+      model_->addColumn(0,NULL,NULL,0,0); // new columns are initially fixed at zero, like in glpk
+      return model_->numberColumns()-1;
     }
 #endif
     else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));
@@ -133,9 +134,8 @@ namespace OpenMS
 #if COINOR_SOLVER==1
     else if (solver_==SOLVER_COINOR)
     {
-      model_.addColumn((Int)column_indices.size(),&column_indices[0],&column_values[0],-COIN_DBL_MAX, COIN_DBL_MAX,0.0,name.c_str());
-      ++num_columns_;
-      return num_columns_-1;
+      model_->addColumn((Int)column_indices.size(),&column_indices[0],&column_values[0],-COIN_DBL_MAX, COIN_DBL_MAX,0.0,name.c_str());
+      return model_->numberColumns()-1;
     }
 #endif
     else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));
@@ -154,17 +154,16 @@ namespace OpenMS
       switch(type)
         {
         case UNBOUNDED: // unbounded
-          model_.setRowBounds(index,-COIN_DBL_MAX,COIN_DBL_MAX);
+          model_->setRowBounds(index,-COIN_DBL_MAX,COIN_DBL_MAX);
           break;
         case LOWER_BOUND_ONLY: // only lower bound
-          model_.setRowBounds(index,lower_bound,COIN_DBL_MAX);
+          model_->setRowBounds(index,lower_bound,COIN_DBL_MAX);
           break;
         case UPPER_BOUND_ONLY: // only upper bound
-          model_.setRowBounds(index,-COIN_DBL_MAX,upper_bound);
-          std::cout << "setting row upper bound "<<" "<<upper_bound<<std::endl;
+          model_->setRowBounds(index,-COIN_DBL_MAX,upper_bound);
           break;
         default: // double-bounded or fixed
-          model_.setRowBounds(index,lower_bound,upper_bound);
+          model_->setRowBounds(index,lower_bound,upper_bound);
           break;      
         }
     }
@@ -185,16 +184,16 @@ namespace OpenMS
       switch(type)
       {
         case UNBOUNDED: // unbounded
-          model_.setColumnBounds(index,-COIN_DBL_MAX,COIN_DBL_MAX);
+          model_->setColumnBounds(index,-COIN_DBL_MAX,COIN_DBL_MAX);
           break;
         case LOWER_BOUND_ONLY: // only lower bound
-          model_.setColumnBounds(index,lower_bound,COIN_DBL_MAX);
+          model_->setColumnBounds(index,lower_bound,COIN_DBL_MAX);
           break;
         case UPPER_BOUND_ONLY: // only upper bound
-          model_.setColumnBounds(index,-COIN_DBL_MAX,upper_bound);
+          model_->setColumnBounds(index,-COIN_DBL_MAX,upper_bound);
           break;
         default: // double-bounded or fixed
-          model_.setColumnBounds(index,lower_bound,upper_bound);
+          model_->setColumnBounds(index,lower_bound,upper_bound);
           break;
       }
     }
@@ -202,12 +201,90 @@ namespace OpenMS
     return index;// in addColumn index is decreased already
   }
 
+  void LPWrapper::deleteRow(Size index)
+  {
+    if (solver_ == LPWrapper::SOLVER_GLPK)
+      {
+        int num[] = {0,(Int) index+1}; // glpk starts reading at pos 1
+        glp_del_rows(lp_problem_,1,num);
+      }
+#if COINOR_SOLVER==1
+    if (solver_==SOLVER_COINOR)   model_->deleteRow(index);
+#endif
+  }
 
+  void LPWrapper::setElement(Size row_index, Size column_index, DoubleReal value)
+  {
+    if(row_index >= getNumberOfRows() || column_index >= getNumberOfColumns())
+    {
+      throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid index given", String("invalid column_index or row_index"));    
+    }
+    if (solver_ == LPWrapper::SOLVER_GLPK)
+    {
+      DoubleReal* values(0);
+      Int* indices(0);
+      Int length = glp_get_mat_row(lp_problem_, row_index+1, indices, values);
+      bool found = false;
+      for(Int i = 1;i <= length;++i)
+      {
+        if(indices[i] == (Int)column_index+1)
+        {
+          values[i]=value;
+          found = true;
+          break;
+        }
+      }
+      if (!found) // if this entry wasn't existing before we have to enter it
+      {
+        Int*  n_indices = new Int[length+2];
+        DoubleReal* n_values = new DoubleReal[length+2];
+        for(Int i = 0; i <= length;++i)
+        {
+          n_indices[i] = indices[i];
+          n_values[i] = values[i];
+        }
+        // now add new value
+        n_indices[length+1] = column_index+1; // glpk starts reading at pos 1
+        n_values[length+1] = value;
+        glp_set_mat_row(lp_problem_, row_index+1, length,n_indices, n_values);
+        delete n_indices;
+        delete n_values;
+      }
+      else glp_set_mat_row(lp_problem_, row_index+1, length,indices, values);
+    }
+#if COINOR_SOLVER==1
+    if (solver_==SOLVER_COINOR) model_->setElement(row_index,column_index,value);
+#endif
+  }
+  
+  DoubleReal LPWrapper::getElement(Size row_index,Size column_index)
+  {
+    if(row_index >= getNumberOfRows() || column_index >= getNumberOfColumns())
+      {
+        throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid index given", String("invalid column_index or row_index"));    
+      }
+    if (solver_ == LPWrapper::SOLVER_GLPK)
+      {
+        DoubleReal* values;
+        Int* indices;
+        Int length = glp_get_mat_row(lp_problem_, row_index+1, indices,values);
+        for(Int i = 1;i <= length;++i)
+          {
+            if(indices[i] == (Int)column_index+1) return values[i];
+          }
+        return 0.;
+      }
+#if COINOR_SOLVER==1
+    if (solver_==SOLVER_COINOR) return model_->getElement(row_index,column_index);
+#endif
+    else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));    
+  }
+  
   void LPWrapper::setColumnName(Size index,String name)
   {
     if (solver_ == LPWrapper::SOLVER_GLPK) glp_set_col_name(lp_problem_, (int) index+1, name.c_str());
 #if COINOR_SOLVER==1
-    if (solver_==SOLVER_COINOR) model_.setColumnName((Int) index,name.c_str());
+    if (solver_==SOLVER_COINOR) model_->setColumnName((Int) index,name.c_str());
 #endif
   }
 
@@ -215,7 +292,7 @@ namespace OpenMS
   {
     if (solver_ == LPWrapper::SOLVER_GLPK) glp_set_row_name(lp_problem_, (int) index+1, name.c_str());
 #if COINOR_SOLVER==1
-    if (solver_==SOLVER_COINOR) model_.setRowName((Int) index,name.c_str());
+    if (solver_==SOLVER_COINOR) model_->setRowName((Int) index,name.c_str());
 #endif
   }
 
@@ -226,21 +303,19 @@ namespace OpenMS
 #if COINOR_SOLVER==1
     if (solver_==SOLVER_COINOR)
     {
-      //if(num_columns_ <= index) num_columns_ = index+1;
       switch(type)
       {
         case UNBOUNDED: // unbounded
-          model_.setColumnBounds(index,-COIN_DBL_MAX,COIN_DBL_MAX);
+          model_->setColumnBounds(index,-COIN_DBL_MAX,COIN_DBL_MAX);
           break;
         case LOWER_BOUND_ONLY: // only lower bound
-          model_.setColumnBounds(index,lower_bound,COIN_DBL_MAX);
+          model_->setColumnBounds(index,lower_bound,COIN_DBL_MAX);
           break;
         case UPPER_BOUND_ONLY: // only upper bound
-          model_.setColumnBounds(index,-COIN_DBL_MAX,upper_bound);
+          model_->setColumnBounds(index,-COIN_DBL_MAX,upper_bound);
           break;
         default: // double-bounded or fixed
-          model_.setColumnBounds(index,lower_bound,upper_bound);
-          std::cout << "setting "<<index << " column bounds: "<<lower_bound <<" "<<upper_bound<<std::endl;
+          model_->setColumnBounds(index,lower_bound,upper_bound);
           break;
       }
     }
@@ -257,16 +332,16 @@ namespace OpenMS
       switch(type)
       {
         case UNBOUNDED: // unbounded
-          model_.setRowBounds(index,-COIN_DBL_MAX,COIN_DBL_MAX);
+          model_->setRowBounds(index,-COIN_DBL_MAX,COIN_DBL_MAX);
           break;
         case LOWER_BOUND_ONLY: // only lower bound
-          model_.setRowBounds(index,lower_bound,COIN_DBL_MAX);
+          model_->setRowBounds(index,lower_bound,COIN_DBL_MAX);
           break;
         case UPPER_BOUND_ONLY: // only upper bound
-          model_.setRowBounds(index,-COIN_DBL_MAX,upper_bound);
+          model_->setRowBounds(index,-COIN_DBL_MAX,upper_bound);
           break;
         default: // double-bounded or fixed
-          model_.setRowBounds(index,lower_bound,upper_bound);
+          model_->setRowBounds(index,lower_bound,upper_bound);
           break;
       }
     }
@@ -280,8 +355,13 @@ namespace OpenMS
 #if COINOR_SOLVER==1
     if (solver_==SOLVER_COINOR)
     {
-      if(type == 1) model_.setContinuous((Int) index);
-      else model_.setColumnIsInteger((Int) index,true);
+      if(type == 1) model_->setContinuous((Int) index);
+      else if(type == 3)
+        {
+          LOG_WARN << "Coin-Or only knows Integer variables, setting variable to integer type";
+          model_->setColumnIsInteger((Int) index,true);
+        }
+      else model_->setColumnIsInteger((Int) index,true);
     }
 #endif
   }
@@ -293,10 +373,8 @@ namespace OpenMS
 #if COINOR_SOLVER==1
     else if (solver_==SOLVER_COINOR)
     {
-      if (model_.isInteger((Int)index))
+      if (model_->isInteger((Int)index))
       {
-        // if variable is integer and column upper and lower bound are 1 and 0 -> binary variable
-        if(fabs(model_.getColUpper((Int)index)-1.) < 0.0001 && fabs(model_.getColLower((Int)index)) < 0.001)  return BINARY;
         return INTEGER;
       }
       else return CONTINUOUS;
@@ -309,18 +387,18 @@ namespace OpenMS
   {
     if (solver_ == LPWrapper::SOLVER_GLPK) glp_set_obj_coef(lp_problem_, (int) index+1, obj_value);
 #if COINOR_SOLVER==1
-    if (solver_==SOLVER_COINOR) model_.setObjective((Int)index,obj_value);
+    if (solver_==SOLVER_COINOR) model_->setObjective((Int)index,obj_value);
 #endif
   }
 
-  void LPWrapper::setObjectiveSense(Size sense) // 1 min, 2 max
+  void LPWrapper::setObjectiveSense(LPWrapper::Sense sense) 
   {
     if (solver_ == LPWrapper::SOLVER_GLPK) glp_set_obj_dir(lp_problem_, (int) sense);
 #if COINOR_SOLVER==1
     if (solver_==SOLVER_COINOR) 
     {
-      if(sense == 1)  model_.setOptimizationDirection(1);
-      else model_.setOptimizationDirection(-1); // -1 maximize
+      if(sense == LPWrapper::MIN)  model_->setOptimizationDirection(1);
+      else model_->setOptimizationDirection(-1); // -1 maximize
     }
 #endif
   }
@@ -329,7 +407,7 @@ namespace OpenMS
   {
     if (solver_ == LPWrapper::SOLVER_GLPK) return glp_get_num_cols(lp_problem_);
 #if COINOR_SOLVER==1
-    else if (solver_==SOLVER_COINOR) return num_columns_;
+    else if (solver_==SOLVER_COINOR) return model_->numberColumns();
 #endif
     else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));
   }
@@ -338,43 +416,43 @@ namespace OpenMS
   {
     if (solver_ == LPWrapper::SOLVER_GLPK) return glp_get_num_rows(lp_problem_);
 #if COINOR_SOLVER==1
-    else if (solver_==SOLVER_COINOR) return num_rows_;
+    else if (solver_==SOLVER_COINOR) return model_->numberRows();
 #endif
     else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));
   }
 
   String LPWrapper::getColumnName(Size index)
   {
-    if (solver_ == LPWrapper::SOLVER_GLPK) return String(glp_get_col_name(lp_problem_, (int) index));
+    if (solver_ == LPWrapper::SOLVER_GLPK) return String(glp_get_col_name(lp_problem_, (int) index+1));
 #if COINOR_SOLVER==1
-    else if (solver_==SOLVER_COINOR) return model_.getColumnName((Int)index);
+    else if (solver_==SOLVER_COINOR) return model_->getColumnName((Int)index);
 #endif
     else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));
   }
   
   String LPWrapper::getRowName(Size index)
   {
-    if (solver_ == LPWrapper::SOLVER_GLPK) return String(glp_get_row_name(lp_problem_, (int) index));
+    if (solver_ == LPWrapper::SOLVER_GLPK) return String(glp_get_row_name(lp_problem_, (int) index+1));
 #if COINOR_SOLVER==1
-    else if (solver_==SOLVER_COINOR) return model_.getRowName((Int)index);
+    else if (solver_==SOLVER_COINOR) return model_->getRowName((Int)index);
 #endif
     else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));
   }
 
   Size LPWrapper::getRowIndex(String name)
   {
-    if (solver_ == LPWrapper::SOLVER_GLPK) return glp_find_row(lp_problem_, name.c_str());
+    if (solver_ == LPWrapper::SOLVER_GLPK) return glp_find_row(lp_problem_, name.c_str())-1;
 #if COINOR_SOLVER==1    
-    else if (solver_==SOLVER_COINOR) return (Size) model_.row(name.c_str());
+    else if (solver_==SOLVER_COINOR) return (Size) model_->row(name.c_str());
 #endif
     else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));
   }
 
   Size LPWrapper::getColumnIndex(String name)
   {
-    if (solver_ == LPWrapper::SOLVER_GLPK) return glp_find_col(lp_problem_, name.c_str());
+    if (solver_ == LPWrapper::SOLVER_GLPK) return glp_find_col(lp_problem_, name.c_str())-1;
 #if COINOR_SOLVER==1
-    else if (solver_==SOLVER_COINOR) return (Size) model_.column(name.c_str());
+    else if (solver_==SOLVER_COINOR) return (Size) model_->column(name.c_str());
 #endif
     else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));
   }
@@ -470,11 +548,11 @@ namespace OpenMS
       #elif COIN_HAS_OSL
       OsiOslSolverInterface solver;
       #endif
-      solver.loadFromCoinModel(model_);
+      solver.loadFromCoinModel(*model_);
     		  /* Now let MIP calculate a solution */
 		  // Pass to solver
 		  CbcModel model(solver);
-		  model.setObjSense(model_.optimizationDirection()); // -1 = maximize, 1=minimize
+		  model.setObjSense(model_->optimizationDirection()); // -1 = maximize, 1=minimize
 		  model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
 
 		  // Output details
@@ -525,7 +603,7 @@ namespace OpenMS
 		  // 				                        << model.getObjValue()
 		  // 				                        << (!model.status() ? " Finished" : " Not finished")
 		  // 				                        << std::endl;
-      for(Size i =0; i < num_columns_;++i)
+      for(Int i =0; i < model_->numberColumns();++i)
         {
           solution_.push_back(model.solver()->getColSolution()[i]);
         }
@@ -551,9 +629,9 @@ namespace OpenMS
 #if COINOR_SOLVER==1
     else if (solver_ == LPWrapper::SOLVER_COINOR) 
     {
-      DoubleReal* obj = model_.objectiveArray();
+      DoubleReal* obj = model_->objectiveArray();
       DoubleReal obj_val = 0.;
-      for(Size i = 0; i < num_columns_;++i)
+      for(Int i = 0; i < model_->numberColumns();++i)
       {
         obj_val += obj[i];
       }
@@ -574,4 +652,66 @@ namespace OpenMS
   }
 
 
+  DoubleReal LPWrapper::getColumnUpperBound(Size index)
+  {
+    if (solver_ == LPWrapper::SOLVER_GLPK)    return glp_get_col_ub(lp_problem_,(Int) index+1);
+#if COINOR_SOLVER==1
+    else if(solver_ == LPWrapper::SOLVER_COINOR) return model_->getColumnUpper((Int) index);
+#endif
+    else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));    
+  }
+
+  DoubleReal LPWrapper::getColumnLowerBound(Size index)
+  {
+    if (solver_ == LPWrapper::SOLVER_GLPK)    return glp_get_col_lb(lp_problem_,(Int) index+1);
+#if COINOR_SOLVER==1
+    else if(solver_ == LPWrapper::SOLVER_COINOR) return model_->getColumnLower((Int) index);
+#endif
+    else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));        
+  }
+
+  DoubleReal LPWrapper::getRowUpperBound(Size index)
+  {
+    if (solver_ == LPWrapper::SOLVER_GLPK)    return glp_get_row_ub(lp_problem_,(Int) index+1);
+#if COINOR_SOLVER==1
+    else if(solver_ == LPWrapper::SOLVER_COINOR) return model_->getRowUpper((Int) index);
+#endif
+    else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));    
+  }
+
+  DoubleReal LPWrapper::getRowLowerBound(Size index)
+  {
+    if (solver_ == LPWrapper::SOLVER_GLPK)    return glp_get_row_lb(lp_problem_,(Int) index+1);
+#if COINOR_SOLVER==1
+    else if(solver_ == LPWrapper::SOLVER_COINOR) return model_->getRowLower((Int) index);
+#endif
+    else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));        
+  }
+
+  DoubleReal LPWrapper::getObjective(Size index)
+  {
+    if (solver_ == LPWrapper::SOLVER_GLPK)    return glp_get_obj_coef(lp_problem_,(Int) index+1);
+#if COINOR_SOLVER==1
+    else if(solver_ == LPWrapper::SOLVER_COINOR) return model_->objective((Int) index);
+#endif
+    else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));            
+  }
+
+  LPWrapper::Sense LPWrapper::getObjectiveSense()
+  {
+    if (solver_ == LPWrapper::SOLVER_GLPK)
+      {
+        if(glp_get_obj_dir(lp_problem_) == 1) return LPWrapper::MIN;
+        else return LPWrapper::MAX;
+      }
+#if COINOR_SOLVER==1
+    else if(solver_ == LPWrapper::SOLVER_COINOR)
+      {
+        if(model_->optimizationDirection()==1)  return LPWrapper::MIN;
+        else return LPWrapper::MAX;
+      }
+#endif
+    else throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Invalid Solver chosen", String(solver_));            
+  }
+  
 }// namespace

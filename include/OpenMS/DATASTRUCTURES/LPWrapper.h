@@ -30,25 +30,13 @@
 #include <limits>
 
 #include <OpenMS/DATASTRUCTURES/String.h>
-#if COINOR_SOLVER == 1
-#ifdef _MSC_VER //disable some COIN-OR warnings that distract from ours
-#	pragma warning( push ) // save warning state
-#	pragma warning( disable : 4267 )
-#else
-# pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
-// useful docu: https://projects.coin-or.org/Cbc
-// useful example: https://projects.coin-or.org/Cbc/browser/trunk/Cbc/examples/sample5.cpp
-// Cuts
-#include "coin/CoinModel.hpp"
-#ifdef _MSC_VER
-#	pragma warning( pop )  // restore old warning state
-#else
-# pragma GCC diagnostic warning "-Wunused-parameter"
-#endif
-#endif
 
-#include <glpk.h>
+// do NOT include glpk and CoinOr headers here, as they define bad stuff, which ripples through OpenMS then...
+// include them in LPWrapper.C where they do not harm
+// only declare them here
+class CoinModel;
+#define GLP_PROB_DEFINED
+typedef struct { double _opaque_prob[100]; } glp_prob;
 
 namespace OpenMS
 {
@@ -99,6 +87,12 @@ namespace OpenMS
       BINARY
     };
 
+    enum Sense
+    {
+      MIN=1,
+      MAX
+    };
+    
     enum SOLVER
     {
       SOLVER_GLPK = 0
@@ -127,6 +121,7 @@ namespace OpenMS
       @param type 1 - unbounded, 2 - only lower bound, 3 - only upper bound, 4 - double-bounded variable, 5 - fixed variable
     */
     Size addColumn(std::vector<Int>& column_indices,std::vector<DoubleReal>& column_values,String name,DoubleReal lower_bound,DoubleReal upper_bound,Type type);
+    void deleteRow(Size index);
     /// sets name of the index-th column
     void setColumnName(Size index,String name);
     /// gets name of the index-th column
@@ -137,6 +132,14 @@ namespace OpenMS
     Size getRowIndex(String name);
     /// gets index of the column with name
     Size getColumnIndex(String name);
+    /// gets column's upper bound
+    DoubleReal getColumnUpperBound(Size index);
+    /// gets column's lower bound
+    DoubleReal getColumnLowerBound(Size index);
+    /// gets row's upper bound
+    DoubleReal getRowUpperBound(Size index);
+    /// gets row's lower bound
+    DoubleReal getRowLowerBound(Size index);
     /// sets name of the index-th row
     void setRowName(Size index,String name);
     /**
@@ -165,17 +168,23 @@ namespace OpenMS
     VariableType getColumnType(Size index);
     /// set objective value for column with index
     void setObjective(Size index,DoubleReal obj_value);
+    /// get objective value for column with index
+    DoubleReal getObjective(Size index);
     /**
      *	@brief Set objective direction.
      *	
      *	@param sense 1- minimize, 2- maximize
      */
-    void setObjectiveSense(Size sense);
+    void setObjectiveSense(Sense sense);
+    Sense getObjectiveSense();
     /// get number of columns
     Size getNumberOfColumns();
     /// get number of rows
     Size getNumberOfRows();
 
+    void setElement(Size row_index,Size column_index,DoubleReal value);
+    DoubleReal getElement(Size row_index,Size column_index);
+    
     // problem reading/writing
     /**
      *	@brief Read LP from file
@@ -214,9 +223,7 @@ namespace OpenMS
 
 	protected:
 #if COINOR_SOLVER==1
-    CoinModel model_;
-    Size num_rows_;
-    Size num_columns_;
+    CoinModel* model_;
     std::vector<DoubleReal> solution_;
 #endif
 

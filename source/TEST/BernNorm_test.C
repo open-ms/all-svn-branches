@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Mathias Walzer $
 // $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 //
@@ -88,17 +88,6 @@ START_SECTION((template<typename SpectrumType> void filterSpectrum(SpectrumType&
 
 	TEST_EQUAL(spec.size(), 28)
 
-END_SECTION
-
-START_SECTION((static PreprocessingFunctor* create()))
-	PreprocessingFunctor* ppf = BernNorm::create();
-	BernNorm bern;
-	TEST_EQUAL(ppf->getParameters(), bern.getParameters())
-	TEST_EQUAL(ppf->getName(), bern.getName())
-END_SECTION
-  
-START_SECTION((static const String getProductName()))
-	TEST_EQUAL(e_ptr->getProductName(), "BernNorm")
 END_SECTION
 
 START_SECTION((void filterPeakMap(PeakMap& exp)))

@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Mathias Walzer $
 // $Authors: Volker Mosthaf, Andreas Bertsch $
 // --------------------------------------------------------------------------
 //
@@ -88,17 +88,6 @@ START_SECTION((template<typename SpectrumType> void filterSpectrum(SpectrumType&
 
 	e_ptr->filterSpectrum(spec);
 	TEST_EQUAL(spec.size(), 14)
-END_SECTION
-
-START_SECTION((static PreprocessingFunctor* create()))
-	PreprocessingFunctor* ppf = ThresholdMower::create();
-	ThresholdMower mower;
-	TEST_EQUAL(ppf->getParameters(), mower.getParameters())
-	TEST_EQUAL(ppf->getName(), mower.getName())
-END_SECTION
-
-START_SECTION((static const String getProductName()))
-	TEST_EQUAL(e_ptr->getProductName(), "ThresholdMower")
 END_SECTION
 
 START_SECTION((void filterPeakMap(PeakMap& exp)))

@@ -25,8 +25,8 @@
 // $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_CHEMISTRY_MASSDECOMPOSITIONALGORITHM_H
-#define OPENMS_CHEMISTRY_MASSDECOMPOSITIONALGORITHM_H
+#ifndef OPENMS_CHEMISTRY_MASSDECOMPOSITION_MASSDECOMPOSITIONALGORITHM_H
+#define OPENMS_CHEMISTRY_MASSDECOMPOSITION_MASSDECOMPOSITIONALGORITHM_H
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/MassDecomposition.h>
@@ -38,7 +38,7 @@
 #endif
 
 #include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/RealMassDecomposer.h>
-#include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/Alphabet.h>
+#include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/IMSAlphabet.h>
 #include <OpenMS/CHEMISTRY/MASSDECOMPOSITION/IMS/Weights.h>
 #ifdef OPENMS_COMPILER_MSVC
 	#pragma warning( pop )
@@ -83,7 +83,7 @@ namespace OpenMS
 
 			void updateMembers_();
 
-			ims::Alphabet* alphabet_;
+      ims::IMSAlphabet* alphabet_;
 
 			ims::RealMassDecomposer* decomposer_;
 
@@ -99,4 +99,4 @@ namespace OpenMS
 
 } // namespace OpenMS
 
-#endif // OPENMS_CHEMISTRY_MASSDECOMPOSITIONALGORITHM_H
+#endif // OPENMS_CHEMISTRY_MASSDECOMPOSITION_MASSDECOMPOSITIONALGORITHM_H

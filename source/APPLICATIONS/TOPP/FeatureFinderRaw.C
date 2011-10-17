@@ -43,6 +43,7 @@
 
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
 #include <OpenMS/COMPARISON/CLUSTERING/SILACClustering.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/PeakWidthEstimator.h>
 
 //Contrib includes
 #include <boost/algorithm/string/split.hpp>
@@ -154,7 +155,6 @@ class TOPPFeatureFinderRaw
     Int isotopes_per_peptide_max;
 
     // section "algorithm"
-    DoubleReal mz_threshold;
     DoubleReal rt_threshold;
     DoubleReal rt_min;
     DoubleReal intensity_cutoff;
@@ -230,7 +230,7 @@ class TOPPFeatureFinderRaw
       defaults.setValue("rt_min", 0.0, "Lower bound for the retention time [s].", StringList::create("advanced"));
       defaults.setMinFloat("rt_min", 0.0);
       defaults.setValue("intensity_cutoff", 10000.0, "Lower bound for the intensity of isotopic peaks in a SILAC pattern.");
-      defaults.setMinFloat("intensity_cutoff", 0.1);
+      defaults.setMinFloat("intensity_cutoff", 0.0);
       defaults.setValue("intensity_correlation", 0.9, "Lower bound for the Pearson correlation coefficient, which measures how well intensity profiles of different isotopic peaks correlate.");
       defaults.setMinFloat("intensity_correlation", 0.0);
       defaults.setMaxFloat("intensity_correlation", 1.0);
@@ -307,11 +307,8 @@ class TOPPFeatureFinderRaw
   // filtering
   //--------------------------------------------------
 
-  void filterData(MSExperiment<Peak1D>& exp)
+  void filterData(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &peak_width)
   {
-    // extract level 1 spectra
-    IntList levels=IntList::create("1");
-    exp.erase(remove_if(exp.begin(), exp.end(), InMSLevelRange<MSExperiment<Peak1D>::SpectrumType>(levels, true)), exp.end());
     list<SILACFilter> filters;
 
     // create filters for all numbers of isotopes per peptide, charge states and mass shifts
@@ -334,7 +331,7 @@ class TOPPFeatureFinderRaw
     }
 
     // create filtering
-    SILACFiltering filtering(exp, intensity_cutoff, intensity_correlation, allow_missing_peaks, "");
+    SILACFiltering filtering(exp, peak_width, intensity_cutoff, intensity_correlation, allow_missing_peaks, "");
     filtering.setLogType(log_type_);
 
     // register filters to the filtering
@@ -351,9 +348,6 @@ class TOPPFeatureFinderRaw
     {
       data.push_back(filter_it->getElements());
     }
-
-    // save mz peak width @1000 Th for mz threshold in clustering
-    mz_threshold = filtering.getPeakWidth(1000);
 
 
     //--------------------------------------------------
@@ -492,34 +486,51 @@ class TOPPFeatureFinderRaw
     handleParameters();
 
 
-    {
-      //--------------------------------------------------
-      // loading input from .mzML
-      //--------------------------------------------------
+    //--------------------------------------------------
+    // loading input from .mzML
+    //--------------------------------------------------
 
-      MzMLFile file;
-      MSExperiment<Peak1D> exp;
+    MzMLFile file;
+    MSExperiment<Peak1D> exp;
 
-      file.setLogType(log_type_);
-      file.load(in, exp);
+    file.setLogType(log_type_);
+    file.load(in, exp);
 
-      // set size of input map
-      exp.updateRanges();
+    // set size of input map
+    exp.updateRanges();
+
+    // extract level 1 spectra
+    exp.erase(remove_if(exp.begin(), exp.end(), InMSLevelRange<MSExperiment<Peak1D>::SpectrumType>(IntList::create("1"), true)), exp.end());
 
 
-      //--------------------------------------------------
-      // filter input data
-      //--------------------------------------------------
-
-      filterData(exp);
+    //--------------------------------------------------
+    // estimate peak width
+    //--------------------------------------------------
+    
+    PeakWidthEstimator::Result peak_width;
+    try
+    { 
+      peak_width = estimatePeakWidth(exp);
     }
+    catch (Exception::InvalidSize &)
+    { 
+      writeLog_("Error: Unable to estimate peak width of input data.");
+      return INCOMPATIBLE_INPUT_DATA;
+    }
+
+
+    //--------------------------------------------------
+    // filter input data
+    //--------------------------------------------------
+
+    filterData(exp, peak_width);
 
 
     //--------------------------------------------------
     // clustering
     //--------------------------------------------------
 
-    clusterData();
+    clusterData(peak_width);
 
 
     //--------------------------------------------------------------
@@ -540,9 +551,11 @@ class TOPPFeatureFinderRaw
     return EXECUTION_OK;
   }
 
-  void clusterData();
+  void clusterData(const PeakWidthEstimator::Result &);
 
 private:
+  PeakWidthEstimator::Result estimatePeakWidth(const MSExperiment<Peak1D> &);
+
   void generateClusterFeatureByCluster(FeatureMap<> &, const Clustering &) const;
 
   void writeFeatures(const String &filename, FeatureMap<> &out) const
@@ -555,13 +568,16 @@ private:
   }
 };
 
-void TOPPFeatureFinderRaw::clusterData()
+void TOPPFeatureFinderRaw::clusterData(const PeakWidthEstimator::Result &peak_width)
 {
   typedef Clustering::PointCoordinate PointCoordinate;
 
   ProgressLogger progresslogger;
   progresslogger.setLogType(log_type_);
   progresslogger.startProgress(0, data.size(), "clustering data");
+
+  // Use peak half width @1000 Th for mz threshold
+  DoubleReal mz_threshold = peak_width(1000);
 
   UInt data_id = 0;
 
@@ -587,6 +603,19 @@ void TOPPFeatureFinderRaw::clusterData()
   }
 
   progresslogger.endProgress();
+}
+
+PeakWidthEstimator::Result TOPPFeatureFinderRaw::estimatePeakWidth(const MSExperiment<Peak1D> &exp)
+{
+  ProgressLogger progresslogger;
+  progresslogger.setLogType(log_type_);
+  progresslogger.startProgress(0, 1, "estimate peak width");
+
+  PeakWidthEstimator::Result ret = PeakWidthEstimator::estimateFWHM(exp);
+
+  progresslogger.endProgress();
+  std::cout << "Estimated peak width: e ^ (" << ret.c0 << " + " << ret.c1 << " * log mz)" << std::endl;
+  return ret;
 }
 
 void TOPPFeatureFinderRaw::generateClusterFeatureByCluster(FeatureMap<> &out, const Clustering &clustering) const

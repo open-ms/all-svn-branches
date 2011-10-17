@@ -58,15 +58,15 @@
 
 				Documentation:
 				<UL>
+					<LI> @subpage Quickstart
 				  <LI> @subpage TOPP_tutorial
 				  <LI> @subpage TOPP_documentation
-				  <LI> @subpage UTILS
+				  <LI> @subpage UTILS_documentation
 				</UL>
 
 				Misc:
 				<UL>
 					<LI> @subpage FAQ
-					<LI> @subpage Contributing
 					<LI> @subpage ChangeLog
 				</UL>
 			</TD>
@@ -109,10 +109,8 @@
 
 				Misc:
 				<UL>
-					<LI> @subpage FAQ
 					<LI> @subpage known_dev_bugs
 					<LI> @subpage Contributing
-					<LI> @subpage ChangeLog
 				</UL>
 
 				@if INTERNAL_INFO

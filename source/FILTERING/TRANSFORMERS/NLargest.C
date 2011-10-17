@@ -21,47 +21,55 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Mathias Walzer $
 // $Authors: $
 // --------------------------------------------------------------------------
 //
 #include <OpenMS/FILTERING/TRANSFORMERS/NLargest.h>
 
 using namespace std;
+
 namespace OpenMS
 {
 
   NLargest::NLargest()
-    : PreprocessingFunctor()
+    : DefaultParamHandler("NLargest")
   {
-		setName(NLargest::getProductName());
-    defaults_.setValue("n", 200, "The number of peaks to keep.");
-		defaultsToParam_();
+    init_();
   }
 
-	NLargest::NLargest(UInt n)
-		: PreprocessingFunctor()
-	{
-		setName(NLargest::getProductName());
-		defaults_.setValue("n", n, "The number of peaks to keep");
-		defaultsToParam_();
-	}
-
-  NLargest::NLargest(const NLargest& source)
-    : PreprocessingFunctor(source)
+  NLargest::NLargest(UInt n)
+    : DefaultParamHandler("NLargest")
   {
+    init_();
+    // after initialising with the default value, use the provided n
+    param_.setValue("n",n);
+    updateMembers_();
+  }
+
+  void NLargest::init_()
+  {
+    defaults_.setValue("n", 200, "The number of peaks to keep");
+    defaultsToParam_();
   }
 
   NLargest::~NLargest()
   {
   }
 
+  NLargest::NLargest(const NLargest& source)
+    : DefaultParamHandler(source)
+  {
+    updateMembers_();
+  }
+
   NLargest& NLargest::operator=(const NLargest& source)
   {
-		if (this != &source)
-		{
-    	PreprocessingFunctor::operator=(source);
-		}
+    if (this != &source)
+    {
+      DefaultParamHandler::operator=(source);
+      updateMembers_();
+    }
     return *this;
   }
 
@@ -78,5 +86,8 @@ namespace OpenMS
     }
   }
 
-
+  void NLargest::updateMembers_()
+  {
+    peakcount_ = (UInt)param_.getValue("n");
+  }
 }

@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Mathias Walzer $
 // $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 //
@@ -97,17 +97,6 @@ START_SECTION((template<typename SpectrumType> void filterSpectrum(SpectrumType&
 	}
 
 	TEST_REAL_SIMILAR(sum, 1.0);	
-END_SECTION
-
-START_SECTION((static PreprocessingFunctor* create()))
-	PreprocessingFunctor* ppf = Normalizer::create();
-	Normalizer norm;
-	TEST_EQUAL(ppf->getParameters(), norm.getParameters())
-	TEST_EQUAL(ppf->getName(), norm.getName())
-END_SECTION
-
-START_SECTION((static const String getProductName()))
-	TEST_EQUAL(e_ptr->getProductName(), "Normalizer")
 END_SECTION
 	
 START_SECTION((void filterPeakMap(PeakMap& exp)))

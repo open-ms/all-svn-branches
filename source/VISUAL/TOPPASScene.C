@@ -103,7 +103,8 @@ namespace OpenMS
 		removeSelected();
 
     // delete temporary files (TODO: make this a user dialog and ask - for later resume)
-    File::removeDirRecursively(tmp_path_);
+    // safety measure: only delete if subdirectory of Temp path; we do not want to delete / or c:
+    if (String(tmp_path_).hasPrefix(File::getTempDirectory() + "/")) File::removeDirRecursively(tmp_path_);
 	}
 	
 	void TOPPASScene::setActionMode(ActionMode mode)
@@ -684,7 +685,7 @@ namespace OpenMS
         if (tv_src)
         {
           tv_src->getOutputParameters(files);
-          std::cout << "#p: " << files.size() << " . " << te->getSourceOutParam() << "\n";
+          //std::cout << "#p: " << files.size() << " . " << te->getSourceOutParam() << "\n";
           v = files[te->getSourceOutParam()].param_name;
         }
       }
@@ -697,7 +698,7 @@ namespace OpenMS
         if (tv_src)
         {
           tv_src->getInputParameters(files);
-          std::cout << "#p: " << files.size() << " . " << te->getTargetInParam() << "\n";
+          //std::cout << "#p: " << files.size() << " . " << te->getTargetInParam() << "\n";
           v = files[te->getTargetInParam()].param_name;
         }
       }
@@ -791,12 +792,12 @@ namespace OpenMS
 				}
 				else if (current_type == "merger")
 				{
-					TOPPASMergerVertex* mv = new TOPPASMergerVertex();
+          String rb = "true";
 					if (vertices_param.exists(current_id + ":round_based"))
 					{
-						String rb = vertices_param.getValue(current_id + ":round_based");
-						mv->setRoundBasedMode(rb == "true" ? true : false);
+            rb = vertices_param.getValue(current_id + ":round_based");
 					}
+          TOPPASMergerVertex* mv = new TOPPASMergerVertex(rb == "true");
 
           connectMergerVertexSignals(mv);
 
@@ -1590,11 +1591,6 @@ namespace OpenMS
 				action.insert("Edit I/O mapping");
 			}
 
-			if (found_merger)
-			{
-				action.insert("Change mode");
-			}
-
       if (found_input || found_tool || found_merger)
       {
 				action.insert("Change recycling mode");
@@ -1752,19 +1748,6 @@ namespace OpenMS
 
 					continue;
 				}
-				
-				TOPPASMergerVertex* mv = dynamic_cast<TOPPASMergerVertex*>(gi);
-				if (mv)
-				{
-					if (text == "Change mode")
-					{
-						mv->setRoundBasedMode(!mv->roundBasedMode());
-						mv->update(mv->boundingRect());
-					}
-					
-					continue;
-				}
-
 			}
 		}
 		

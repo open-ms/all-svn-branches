@@ -26,13 +26,14 @@
 // --------------------------------------------------------------------------
 //
 
-#ifndef OPENMS_CHEMISTRY_MASSDECOMPOSITION_IMS_ALPHABETPARSER_H
-#define OPENMS_CHEMISTRY_MASSDECOMPOSITION_IMS_ALPHABETPARSER_H
+#ifndef OPENMS_CHEMISTRY_MASSDECOMPOSITION_IMS_IMSALPHABETPARSER_H
+#define OPENMS_CHEMISTRY_MASSDECOMPOSITION_IMS_IMSALPHABETPARSER_H
 
 #include <fstream>
 #include <istream>
 #include <map>
 #include <string>
+
 #include <OpenMS/CONCEPT/Exception.h>
 
 namespace OpenMS {
@@ -51,7 +52,7 @@ namespace ims {
 template <typename AlphabetElementType = double, 
           typename Container = std::map<std::string, AlphabetElementType>,
           typename InputSource = std::istream>
-class AlphabetParser
+class IMSAlphabetParser
 {
 public:
   /**
@@ -83,11 +84,11 @@ public:
   /**
    * Destructor.
    */
-  virtual ~AlphabetParser() {}
+  virtual ~IMSAlphabetParser() {}
 };
 
 template <typename AlphabetElementType, typename Container, typename InputSource>
-void AlphabetParser<AlphabetElementType, Container, InputSource>::load(const std::string& fname)
+void IMSAlphabetParser<AlphabetElementType, Container, InputSource>::load(const std::string& fname)
 {
   std::ifstream ifs(fname.c_str());
   if (!ifs)

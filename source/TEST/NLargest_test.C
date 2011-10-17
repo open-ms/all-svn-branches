@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
+// $Maintainer: Mathias Walzer $
 // $Authors: Andreas Bertsch $
 // --------------------------------------------------------------------------
 //
@@ -53,7 +53,7 @@ END_SECTION
 
 START_SECTION(NLargest(UInt n))
 	NLargest filter(10);
-	TEST_EQUAL((unsigned int)filter.getParameters().getValue("n"), 10)
+  TEST_EQUAL((UInt)filter.getParameters().getValue("n"), 10)
 END_SECTION
 
 START_SECTION((~NLargest()))
@@ -86,17 +86,6 @@ START_SECTION((template<typename SpectrumType> void filterSpectrum(SpectrumType&
 	e_ptr->setParameters(p);
 	e_ptr->filterSpectrum(spec);
 	TEST_EQUAL(spec.size(), 10)
-END_SECTION
-
-START_SECTION((static PreprocessingFunctor* create()))
-	PreprocessingFunctor* ppf = NLargest::create();
-	NLargest nlargest;
-	TEST_EQUAL(ppf->getParameters(), nlargest.getParameters())
-	TEST_EQUAL(ppf->getName(), nlargest.getName())
-END_SECTION
-
-START_SECTION((static const String getProductName()))
-	TEST_EQUAL(e_ptr->getProductName(), "NLargest")
 END_SECTION
 
 START_SECTION((void filterPeakMap(PeakMap& exp)))

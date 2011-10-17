@@ -51,7 +51,7 @@ namespace OpenMS {
 
 	ILPDCWrapper::~ILPDCWrapper(){}
 
-	DoubleReal ILPDCWrapper::compute(const MassExplainer& me, const FeatureMap<> fm, PairsType& pairs, Size verbose_level)
+	DoubleReal ILPDCWrapper::compute(const FeatureMap<> fm, PairsType& pairs, Size verbose_level)
 	{
     DoubleReal score = 0;
 
@@ -209,7 +209,7 @@ namespace OpenMS {
                                          Size verbose_level)
 	{
 		LPWrapper build;
-    build.setObjectiveSense(2); // maximize
+    build.setObjectiveSense(LPWrapper::MAX); // maximize
 
 		//------------------------------------objective function-----------------------------------------------
 		// find maximal objective value
@@ -229,7 +229,7 @@ namespace OpenMS {
 			namebuf.str("");
 			namebuf<<"x#"<<i;
 			// create the new variable object
-      Int index = build.addColumn();
+      Size index = build.addColumn();
       build.setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
 			build.setColumnType(index,LPWrapper::INTEGER); // integer variable
 			build.setObjective(index, pairs[i].getEdgeScore());

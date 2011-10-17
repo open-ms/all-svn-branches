@@ -21,52 +21,52 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Erhan Kenar$
 // $Authors: Erhan Kenar, Holger Franken $
 // --------------------------------------------------------------------------
 
 
-#ifndef LowessSmoothing_H
-#define LowessSmoothing_H
+#ifndef OPENMS_FILTERING_SMOOTHING_LOWESSSMOOTHING_H
+#define OPENMS_FILTERING_SMOOTHING_LOWESSSMOOTHING_H
 
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
-// #include <OpenMS/CONCEPT/ProgressLogger.h>
-
 
 namespace OpenMS
 {
-    class OPENMS_DLLAPI LowessSmoothing
-        : public DefaultParamHandler
-    {
-    public:
-        /// Constructor
-        LowessSmoothing();
+  /**
+    @brief LOWESS (locally weighted scatterplot smoothing) filtering.
 
-        /// Destructor
-        virtual ~LowessSmoothing();
+    Fitting simple models to localized subsets of the data to build up a
+    function that describes the deterministic part of the variation in the
+    data, point by point.
 
-        /**
+    @htmlinclude OpenMS_LowessSmoothing.parameters
 
-            @brief LOWESS (locally weighted scatterplot smoothing) filtering. Fitting simple models to localized subsets of the data to build up a function that describes the deterministic part of the variation in the data, point by point.
+    @ingroup SignalProcessing
+  */
+  class OPENMS_DLLAPI LowessSmoothing
+    : public DefaultParamHandler
+  {
+  public:
+    /// Constructor
+    LowessSmoothing();
 
-        */
-        typedef std::vector<DoubleReal> DoubleVector;
+    /// Destructor
+    virtual ~LowessSmoothing();
 
-        void smoothData(const DoubleVector&, const DoubleVector&, DoubleVector&);
+    typedef std::vector<DoubleReal> DoubleVector;
 
+    void smoothData(const DoubleVector&, const DoubleVector&, DoubleVector&);
 
+  protected:
+    virtual void updateMembers_();
 
-    protected:
-        virtual void updateMembers_();
+  private:
+    DoubleReal window_size_;
 
-
-    private:
-        DoubleReal window_size_;
-
-        DoubleReal tricube_(DoubleReal, DoubleReal);
-
-    };
+    DoubleReal tricube_(DoubleReal, DoubleReal);
+  };
 
 
 } // namespace OpenMS
-#endif // LowessSmoothing_H
+#endif // OPENMS_FILTERING_SMOOTHING_LOWESSSMOOTHING_H

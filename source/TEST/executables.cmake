@@ -39,6 +39,7 @@ set(datastructures_executables_list
 	HashGrid_test
 	HashGridOld_test
 	IntList_test
+  LPWrapper_test
 	Map_test
 	MassExplainer_test
 	Matrix_test
@@ -235,6 +236,7 @@ set(filtering_executables_list
   IsotopeDiffFilter_test
   IsotopeMarker_test
   LinearResampler_test
+  LowessSmoothing_test
   MarkerMower_test
   MorphologicalFilter_test
   NLargest_test
@@ -243,7 +245,6 @@ set(filtering_executables_list
   Normalizer_test
   ParentPeakMower_test
   PeakMarker_test
-  PreprocessingFunctor_test
   SILACFilter_test
   SILACFiltering_test
   SavitzkyGolayFilter_test
@@ -312,6 +313,15 @@ set(chemistry_executables_list
   TheoreticalSpectrumGenerator_test
   TrypticIterator_test
   WeightWrapper_test
+  IMSAlphabetTextParser_test
+  IMSElement_test
+  IntegerMassDecomposer_test
+  IMSIsotopeDistribution_test
+  Weights_test
+  IMSAlphabetParser_test
+  MassDecomposer_test
+  IMSAlphabet_test
+  RealMassDecomposer_test
 )
 
 

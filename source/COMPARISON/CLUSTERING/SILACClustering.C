@@ -87,14 +87,12 @@ void SILACClustering::joinLarge()
   {
     // Generate new bucket if we got none yet
     if (sort_rt_check == sort_rt.end() ||
-    // or if the new point is too far from the mean
-        abs(sort_it->first - sort_rt_check->first / sort_rt_check->second.size()) > grid.cell_dimension[1])
+    // or if the new point is too far from the first one
+        abs(sort_it->first - sort_rt_check->first) > grid.cell_dimension[1])
     {
-      sort_rt_check = sort_rt.insert(sort_rt_check, std::make_pair(0, Sort()));
+      sort_rt_check = sort_rt.insert(sort_rt_check, std::make_pair(sort_it->first, Sort()));
     }
 
-    // Record MZ value for mean check
-    sort_rt_check->first += sort_it->first;
     // Insert new point
     sort_rt_check->second.insert(std::make_pair(sort_it->second.first[0], sort_it->second));
   }

@@ -10,6 +10,8 @@ PSLPFormulation.C
 IncludeExcludeTarget.C
 TargetedExperiment.C
 InclusionExclusionList.C
+PSProteinInference.C
+RTProbability.C
 )
 
 ### add path to the filenames

@@ -10,6 +10,8 @@ PSLPFormulation.h
 IncludeExcludeTarget.h
 TargetedExperiment.h
 InclusionExclusionList.h
+PSProteinInference.h
+RTProbability.h
 )
 
 ### add path to the filenames

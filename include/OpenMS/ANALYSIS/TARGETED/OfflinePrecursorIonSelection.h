@@ -272,7 +272,7 @@ namespace OpenMS
 																															 param_.getValue("ms2_spectra_per_rt_bin"),
 																															 solution_indices);
 
-			sort(variable_indices.begin(),variable_indices.end(),PSLPFormulation::IndexLess());
+			sort(variable_indices.begin(),variable_indices.end(),PSLPFormulation::FeatureIndexLess());
 #ifdef DEBUG_OPS
 			std::cout << "best_solution "<<std::endl;
 #endif

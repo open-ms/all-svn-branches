@@ -32,7 +32,8 @@
 #include <OpenMS/DATASTRUCTURES/DefaultParamHandler.h>
 #include <OpenMS/CHEMISTRY/AASequence.h>
 #include <OpenMS/FORMAT/FASTAFile.h>
-
+#include <OpenMS/KERNEL/FeatureMap.h>
+#include <OpenMS/ANALYSIS/TARGETED/RTProbability.h>
 
 #include <algorithm>
 #include <cmath>
@@ -107,6 +108,7 @@ namespace OpenMS
 		DoubleReal getRT(String prot_id,Size peptide_index);
 		
 		DoubleReal getPT(String prot_id,Size peptide_index);
+    DoubleReal getRTProbability(String prot_id, Size peptide_index,Feature& feature);
 
 		/// get the rt-weight for the proposed peptide and its measured rt
 		DoubleReal getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt);
@@ -141,6 +143,8 @@ namespace OpenMS
 		std::map<String, std::vector<DoubleReal> > pt_prot_map_;
 		std::map<String, std::vector<String> > prot_peptide_seq_map_;
 		std::map<char, std::vector<String> > fixed_modifications_;
+
+    RTProbability rt_prob_;
   };
 }
     

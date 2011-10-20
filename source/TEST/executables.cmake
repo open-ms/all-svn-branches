@@ -385,8 +385,10 @@ set(analysis_executables_list
 	PrecursorIonSelection_test
 	ProteinInference_test
 	ProtonDistributionModel_test
+  PSProteinInference_test
 	QTClusterFinder_test
 	ReactionMonitoringTransition_test
+  RTProbability_test
 	SVMWrapper_test
 	SimplePairFinder_test
 	StablePairFinder_test

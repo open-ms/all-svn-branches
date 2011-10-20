@@ -206,6 +206,37 @@ namespace OpenMS
     return gauss_diff;
   }
 
+  DoubleReal PrecursorIonSelectionPreprocessing::getRTProbability(String prot_id, Size peptide_index,Feature& feature)
+  {
+		DoubleReal theo_rt = 0.;
+		if(rt_prot_map_.size()>0)
+			{
+				if(rt_prot_map_.find(prot_id)!=rt_prot_map_.end())
+					{
+						if(rt_prot_map_[prot_id].size() >peptide_index)	theo_rt = rt_prot_map_[prot_id][peptide_index];
+					}
+			}
+		if(theo_rt == 0.)
+      {
+        if(rt_prot_map_.find(prot_id)==rt_prot_map_.end())
+          {
+            std::cout << " prot_id not in map "<<prot_id << std::endl;
+          }
+        else
+          {
+            std::cout << "protein in map, but "<< peptide_index << " " <<rt_prot_map_[prot_id].size()<<std::endl;
+          }
+        std::cout << "rt_map is empty, no rts predicted!"<<std::endl;
+      }
+
+    DoubleReal rt_begin = feature.getConvexHull().getBoundingBox().minPosition()[0];
+    DoubleReal rt_end =   feature.getConvexHull().getBoundingBox().maxPosition()[0];
+    
+		return 	rt_prob_.getRTProbability(rt_begin,rt_end,theo_rt);
+		//return 	rt_prob_.getRTProbability(feature.getRT(),theo_rt);
+  }
+
+  
   DoubleReal PrecursorIonSelectionPreprocessing::getWeight(DoubleReal mass)
   {
     if(param_.getValue("precursor_mass_tolerance_unit") == "Da")

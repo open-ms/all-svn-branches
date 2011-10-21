@@ -93,24 +93,16 @@ class TOPPFileMerger
 	void registerOptionsAndFlags_()
 	{
 		registerInputFileList_("in","<files>",StringList(),"Input files separated by blank");
-#ifdef USE_ANDIMS
-		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,fid"));
-#else
 		setValidFormats_("in",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,fid"));
-#endif
 		registerStringOption_("in_type","<type>","","input file type (default: determined from file extension or content)\n", false);
-#ifdef USE_ANDIMS
-		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,cdf,mgf,featureXML,consensusXML,fid"));
-#else
 		setValidStrings_("in_type",StringList::create("mzData,mzXML,mzML,DTA,DTA2D,mgf,featureXML,consensusXML,fid"));
-#endif
 		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("mzML,featureXML,consensusXML"));
 
     registerFlag_("annotate_file_origin","Store the original filename in each feature (MetaValue: file_origin).");
 
 		addEmptyLine_();
-		addText_ ("Flags for non-FeatureXML/non-ConsensusXML input/output:");
+		addText_ ("Flags for non-FeatureXML input/output:");
 		registerFlag_("rt_auto","Assign retention times automatically (integers starting at 1)");
 		registerDoubleList_("rt_custom","<rt>",DoubleList(),"List of custom retention times that are assigned to the files.\n"
 		                                "The number of given retention times must be equal to the number of given input file.", false);
@@ -158,19 +150,19 @@ class TOPPFileMerger
 		if (force_type == FileTypes::FEATUREXML)
 		{
 			FeatureMap<> out;
-      for (Size i = 0; i < file_list.size(); ++i)
+			for (Size i = 0; i < file_list.size(); ++i)
 			{
 				FeatureMap<> map;
 				FeatureXMLFile fh;
 				fh.load(file_list[i], map);
 
-        if(annotate_file_origin)
-        {
-          for(FeatureMap<>::iterator it = map.begin(); it != map.end(); ++it)
-          {
-            it->setMetaValue("file_origin", DataValue(file_list[i]));
-          }
-        }
+        		if(annotate_file_origin)
+        		{
+          			for(FeatureMap<>::iterator it = map.begin(); it != map.end(); ++it)
+          			{
+            			it->setMetaValue("file_origin", DataValue(file_list[i]));
+          			}
+        		}
 				out += map;
 			}
 
@@ -185,8 +177,7 @@ class TOPPFileMerger
 			f.store(out_file,out);
 						
 		}
-			//merge consensusXML files (append second to first file)
-		else if (force_type == FileTypes::CONSENSUSXML)
+		if (force_type == FileTypes::CONSENSUSXML)
 		{
 			ConsensusMap out;
 			for (Size i = 0; i < file_list.size(); ++i)
@@ -195,26 +186,26 @@ class TOPPFileMerger
 				ConsensusXMLFile fh;
 				fh.load(file_list[i], map);
 
-				if(annotate_file_origin)
-				{
-					for(ConsensusMap::iterator it = map.begin(); it != map.end(); ++it)
-					{
-						it->setMetaValue("file_origin", DataValue(file_list[i]));
-					}
-				}
+        		if(annotate_file_origin)
+        		{
+          			for(ConsensusMap::iterator it = map.begin(); it != map.end(); ++it)
+          			{
+            			it->setMetaValue("file_origin", DataValue(file_list[i]));
+          			}
+        		}
 				out += map;
 			}
+
 			//-------------------------------------------------------------
 			// writing output
 			//-------------------------------------------------------------
-			
+
 			//annotate output with data processing info
 			addDataProcessing_(out, getProcessingInfo_(DataProcessing::FORMAT_CONVERSION));
-			
+
 			ConsensusXMLFile f;
 			f.store(out_file,out);
-
-		} // end of merging consensusXML-files
+		}
 		else
 		{
 		  // we might want to combine different types, thus we only

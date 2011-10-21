@@ -917,11 +917,13 @@ namespace OpenMS
 					{
 						out << q_it->second.total_abundances[*samp_it];
 					}
-					DoubleReal ref_abundances = q_it->second.total_abundances[samples.front()];
-					for (vector<UInt64>::const_iterator samp_it = samples.begin(); 
-							 samp_it != samples.end(); ++samp_it)
-					{
-						out << q_it->second.total_abundances[*samp_it] / ref_abundances;
+					if(samples.size() > 1){
+						DoubleReal ref_abundances = q_it->second.total_abundances[samples.front()];
+						for (vector<UInt64>::const_iterator samp_it = samples.begin();
+								samp_it != samples.end(); ++samp_it)
+						{
+							out << q_it->second.total_abundances[*samp_it] / ref_abundances;
+						}
 					}
 					out << endl;
 				}

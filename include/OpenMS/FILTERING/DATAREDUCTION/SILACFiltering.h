@@ -60,7 +60,7 @@ namespace OpenMS
       /**
        * @brief holds all filters used in the filtering
        */
-      std::vector<SILACFilter*> filters_;
+      std::vector<SILACFilter> filters_;
 
       /**
        * @brief minimal intensity of SILAC features

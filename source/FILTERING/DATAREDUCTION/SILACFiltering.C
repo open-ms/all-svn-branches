@@ -62,7 +62,7 @@ namespace OpenMS
 
   void SILACFiltering::addFilter(SILACFilter& filter)
   {
-    filters_.push_back(&filter);
+    filters_.push_back(filter);
   }
 
   SILACFiltering::~SILACFiltering()
@@ -110,7 +110,7 @@ namespace OpenMS
 
     UInt filter_id = 0;
     // Iterate over all filters
-    for (vector<SILACFilter*>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it, ++filter_id)
+    for (vector<SILACFilter>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it, ++filter_id)
     {
       setProgress(filter_it - filters_.begin());
 
@@ -132,7 +132,7 @@ namespace OpenMS
          {
            DoubleReal picked_mz = picked_mz_it->getMZ();
 
-           bool isSILAC = (*filter_it)->isSILACPatternPicked_(*picked_rt_it, picked_mz, *this, debug);
+           bool isSILAC = filter_it->isSILACPatternPicked_(*picked_rt_it, picked_mz, *this, debug);
 
            if (isSILAC)
            {
@@ -146,15 +146,14 @@ namespace OpenMS
 
       if (debug_filebase != "")
       {
-        SILACFilter *filter = *filter_it;
         ChromatogramTools().convertSpectraToChromatograms(exp_debug, true);
         Int mass_separation = 0;
-        if (filter->mass_separations_.size()) mass_separation = filter->mass_separations_[0];
+        if (filter_it->mass_separations_.size()) mass_separation = filter_it->mass_separations_[0];
         MzMLFile().store(debug_filebase + ".filtering.seeds-filters:" + 
-            filter->charge_ + ";" +
+            filter_it->charge_ + ";" +
             mass_separation + ";" +
-            filter->isotopes_per_peptide_ + ";" +
-            filter->model_deviation_ +
+            filter_it->isotopes_per_peptide_ + ";" +
+            filter_it->model_deviation_ +
             ".mzML", exp_debug);
       }
     }
@@ -181,7 +180,7 @@ namespace OpenMS
 
     UInt filter_id = 0;
     // Iterate over all filters
-    for (vector<SILACFilter*>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it, ++filter_id)
+    for (vector<SILACFilter>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it, ++filter_id)
     {
       MSExperiment<Peak1D> exp_debug;
 
@@ -266,7 +265,7 @@ namespace OpenMS
 
             // XXX: Extract peaks again
             SILACPattern pattern;
-            if (!(*filter_it)->extractMzShiftsAndIntensitiesPickedToPattern(*picked_rt_it, picked_mz, *this, pattern))
+            if (!filter_it->extractMzShiftsAndIntensitiesPickedToPattern(*picked_rt_it, picked_mz, *this, pattern))
               continue;
 
             for (DoubleReal mz = picked_mz - getPeakWidth(picked_mz); mz < picked_mz + getPeakWidth(picked_mz); mz += 0.1 * getPeakWidth(picked_mz) ) // iteration correct
@@ -294,11 +293,11 @@ namespace OpenMS
 
               for (multimap<DoubleReal, BlacklistEntry>::iterator blacklist_check_it = blacklistStartCheck; blacklist_check_it != blacklistEndCheck; ++blacklist_check_it)
               {
-                Int charge = (*filter_it)->getCharge();
-                const vector<DoubleReal>& mass_separations = (*filter_it)->getMassSeparations();
+                Int charge = filter_it->getCharge();
+                const vector<DoubleReal>& mass_separations = filter_it->getMassSeparations();
 
                 // loop over the individual isotopic peaks of the SILAC pattern (and check if they are blacklisted)
-                const vector<DoubleReal>& expectedMZshifts = (*filter_it)->getExpectedMzShifts();
+                const vector<DoubleReal>& expectedMZshifts = filter_it->getExpectedMzShifts();
 
                 for (vector<DoubleReal>::const_iterator expectedMZshifts_it = expectedMZshifts.begin(); expectedMZshifts_it != expectedMZshifts.end(); ++expectedMZshifts_it)
                 {
@@ -323,7 +322,7 @@ namespace OpenMS
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
               {
-                if ((*filter_it)->isSILACPattern_(*picked_rt_it, mz, picked_mz, *this, debug, pattern))      // Check if the mz at the given position is a SILAC pair
+                if (filter_it->isSILACPattern_(*picked_rt_it, mz, picked_mz, *this, debug, pattern))      // Check if the mz at the given position is a SILAC pair
                 {
                   //--------------------------------------------------
                   // FILLING THE BLACKLIST
@@ -332,11 +331,11 @@ namespace OpenMS
                   DoubleReal peak_width = getPeakWidth(mz);
 
                   // loop over the individual isotopic peaks of the SILAC pattern (and blacklist the area around them)
-                  const vector<DoubleReal>& peak_positions = (*filter_it)->getPeakPositions();
+                  const vector<DoubleReal>& peak_positions = filter_it->getPeakPositions();
 
                   // Remember the charge and mass separations (since the blacklisting should not apply to filters of the same charge and mass separations).
-                  Int charge = (*filter_it)->getCharge();
-                  const std::vector<DoubleReal>& mass_separations = (*filter_it)->getMassSeparations();
+                  Int charge = filter_it->getCharge();
+                  const std::vector<DoubleReal>& mass_separations = filter_it->getMassSeparations();
 
                   for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
                   {
@@ -432,7 +431,7 @@ namespace OpenMS
 
             // XXX
             const UInt threshold_points = 4;
-            if (pattern.points.size() > threshold_points) (*filter_it)->elements_.push_back(pattern);
+            if (pattern.points.size() > threshold_points) filter_it->elements_.push_back(pattern);
           }
 
           // Clear the interpolations
@@ -447,15 +446,14 @@ namespace OpenMS
 
       if (debug_filebase != "")
       {
-        SILACFilter *filter = *filter_it;
         ChromatogramTools().convertSpectraToChromatograms(exp_debug, true);
         Int mass_separation = 0;
-        if (filter->mass_separations_.size()) mass_separation = filter->mass_separations_[0];
+        if (filter_it->mass_separations_.size()) mass_separation = filter_it->mass_separations_[0];
         MzMLFile().store(debug_filebase + ".filtering.spline-filters:" + 
-            filter->charge_ + ";" +
+            filter_it->charge_ + ";" +
             mass_separation + ";" +
-            filter->isotopes_per_peptide_ + ";" +
-            filter->model_deviation_ +
+            filter_it->isotopes_per_peptide_ + ";" +
+            filter_it->model_deviation_ +
             ".mzML", exp_debug);
       }
     }

@@ -57,123 +57,123 @@ namespace OpenMS
 
     private:
 
-    /**
-     * @brief holds all filters used in the filtering
-     */
-    std::vector<SILACFilter*> filters_;
+      /**
+       * @brief holds all filters used in the filtering
+       */
+      std::vector<SILACFilter*> filters_;
 
-    /**
-     * @brief minimal intensity of SILAC features
-     */
-    static DoubleReal intensity_cutoff_;
+      /**
+       * @brief minimal intensity of SILAC features
+       */
+      static DoubleReal intensity_cutoff_;
 
-    /**
-     * @brief minimal intensity correlation between regions of different peaks
-     */
-    static DoubleReal intensity_correlation_;
+      /**
+       * @brief minimal intensity correlation between regions of different peaks
+       */
+      static DoubleReal intensity_correlation_;
 
-    /**
-     * @brief flag for missing peaks
-     */
-    static bool allow_missing_peaks_;
+      /**
+       * @brief flag for missing peaks
+       */
+      static bool allow_missing_peaks_;
 
-    static gsl_interp_accel* current_aki_;
-    static gsl_interp_accel* current_spl_;
-    static gsl_spline* spline_aki_;
-    static gsl_spline* spline_spl_;
+      static gsl_interp_accel* current_aki_;
+      static gsl_interp_accel* current_spl_;
+      static gsl_spline* spline_aki_;
+      static gsl_spline* spline_spl_;
 
-    /**
-     * @brief lowest m/z value of the experiment
-     */
-    static DoubleReal mz_min_;
+      /**
+       * @brief lowest m/z value of the experiment
+       */
+      static DoubleReal mz_min_;
 
-    /**
-     * @brief raw data
-     */
-    MSExperiment<Peak1D>& exp_;
+      /**
+       * @brief raw data
+       */
+      MSExperiment<Peak1D>& exp_;
 
-    /**
-     * @brief picked data
-     */
-    MSExperiment<Peak1D> picked_exp_;
+      /**
+       * @brief picked data
+       */
+      MSExperiment<Peak1D> picked_exp_;
 
-    /**
-     * @brief picked data seeds
-     */
-    MSExperiment<Peak1D> picked_exp_seeds_;
+      /**
+       * @brief picked data seeds
+       */
+      MSExperiment<Peak1D> picked_exp_seeds_;
 
-    /**
-     * Filename base for debugging output
-     */
-    const String debug_filebase;
+      /**
+       * Filename base for debugging output
+       */
+      const String debug_filebase;
 
-    /**
-     * @brief pick data seeds
-     */
-    void pickSeeds();
+      /**
+       * @brief pick data seeds
+       */
+      void pickSeeds();
 
-    /**
-     * @brief apply filtering to picked data seeds
-     */
-    void filterSeeds();
+      /**
+       * @brief apply filtering to picked data seeds
+       */
+      void filterSeeds();
 
     public:
 
-    /// peak-width equation
-    const PeakWidthEstimator::Result peak_width;
+      /// peak-width equation
+      const PeakWidthEstimator::Result peak_width;
 
-    /**
-     * @brief detailed constructor
-     * @param exp raw data
-     * @param intensity_cutoff minimal intensity of SILAC features
-     * @param intensity_correlation minimal intensity correlation between regions of different peaks
-     * @param allow_missing_peaks flag for missing peaks
-     */
-    SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase = "");
+      /**
+       * @brief detailed constructor
+       * @param exp raw data
+       * @param intensity_cutoff minimal intensity of SILAC features
+       * @param intensity_correlation minimal intensity correlation between regions of different peaks
+       * @param allow_missing_peaks flag for missing peaks
+       */
+      SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase = "");
 
-    /**
-     * @brief default constructor
-     */
-    SILACFiltering();
+      /**
+       * @brief default constructor
+       */
+      SILACFiltering();
 
-    /**
-     * destructor
-     */
-    virtual ~SILACFiltering();
+      /**
+       * destructor
+       */
+      virtual ~SILACFiltering();
 
-    /**
-     * @brief adds a new filter to the filtering
-     * @param filter filter to add
-     */
-    void addFilter(SILACFilter& filter);
+      /**
+       * @brief adds a new filter to the filtering
+       * @param filter filter to add
+       */
+      void addFilter(SILACFilter& filter);
 
-    /**
-     * @brief starts the filtering based on the added filters
-     */
-    void filterDataPoints();
+      /**
+       * @brief starts the filtering based on the added filters
+       */
+      void filterDataPoints();
 
-    /// Return predicted peak width
-    DoubleReal getPeakWidth(DoubleReal mz) const;
+      /// Return predicted peak width
+      DoubleReal getPeakWidth(DoubleReal mz) const;
 
-    /**
-     * @brief structure for blacklist
-     * @param range m/z and RT interval to be blacklisted
-     * @param charge charge of the generating filter
-     * @param mass_separations mass separations of the generating filter
-     * @param relative_peak_position m/z position of the blacklisted area relative to the mono-isotopic peak of the unlabelled peptide
-     */
-    struct BlacklistEntry
-    {
-      DRange<2> range;
-      Int charge;
-      std::vector<DoubleReal> mass_separations;
-      DoubleReal relative_peak_position;
-    };
+      /**
+       * @brief structure for blacklist
+       * @param range m/z and RT interval to be blacklisted
+       * @param charge charge of the generating filter
+       * @param mass_separations mass separations of the generating filter
+       * @param relative_peak_position m/z position of the blacklisted area relative to the mono-isotopic peak of the unlabelled peptide
+       */
+      struct BlacklistEntry
+      {
+        DRange<2> range;
+        Int charge;
+        std::vector<DoubleReal> mass_separations;
+        DoubleReal relative_peak_position;
+      };
 
-    /**
-     * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
-     */
-    std::multimap<DoubleReal, BlacklistEntry> blacklist;
+      /**
+       * @brief holds the range that is blacklisted for other filters and the filter that generated the blacklist entry
+       */
+      std::multimap<DoubleReal, BlacklistEntry> blacklist;
   };
 }
 

@@ -107,7 +107,7 @@ namespace OpenMS
         DoubleReal deltaMZ;
 
         // check if error is small enough
-        if (nearestPeakError < f.getPeakWidth(mz)/3)
+        if (nearestPeakError < f.peak_width(mz) / 3)
         {
           deltaMZ = nearest_peak_mz - picked_mz;
         } else
@@ -213,11 +213,11 @@ namespace OpenMS
 
         if(debug)
         {
-          cout << "exp_mz, mz, err, pw/2 " << next_peak_expected << " " << nearest_peak_mz << " " << nearestPeakError << " " << f.getPeakWidth(mz)/2.0 << endl;
+          cout << "exp_mz, mz, err, pw/2 " << next_peak_expected << " " << nearest_peak_mz << " " << nearestPeakError << " " << f.peak_width(mz) / 2.0 << endl;
         }
 
         // check if error is small enough
-        if (nearestPeakError < f.getPeakWidth(mz)/2.0)
+        if (nearestPeakError < f.peak_width(mz) / 2.0)
         {
           deltaMZ = nearest_peak_mz - mz;
         } else
@@ -332,7 +332,7 @@ namespace OpenMS
       {
         std::vector<DoubleReal> intensities1;    // intensities in region around first peak of peptide
         std::vector<DoubleReal> intensities2;    // intensities in region around following peak
-        DoubleReal mzWindow = 0.7 * f.getPeakWidth(mz);    // width of the window around m/z in which the correlation is calculated
+        DoubleReal mzWindow = 0.7 * f.peak_width(mz);    // width of the window around m/z in which the correlation is calculated
 
         for (DoubleReal dmz = - mzWindow; dmz <= mzWindow; dmz += 0.2 * mzWindow)     // fill intensity vectors
         {
@@ -371,7 +371,7 @@ namespace OpenMS
       {
         std::vector<DoubleReal> intensities3;    // intensities in region around monoisotopic peak
         std::vector<DoubleReal> intensities4;    // intensities in region around first peak of following peptide
-        DoubleReal mzWindow = 0.7 * f. getPeakWidth(mz);    // width of the window around m/z in which the correlation is calculated
+        DoubleReal mzWindow = 0.7 * f.peak_width(mz);    // width of the window around m/z in which the correlation is calculated
 
         for (DoubleReal dmz = - mzWindow; dmz <= mzWindow; dmz += 0.2 * mzWindow)     // fill intensity vectors
         {

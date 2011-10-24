@@ -142,9 +142,6 @@ namespace OpenMS
        */
       void filterDataPoints();
 
-      /// Return predicted peak width
-      DoubleReal getPeakWidth(DoubleReal mz) const;
-
       /**
        * @brief structure for blacklist
        * @param range m/z and RT interval to be blacklisted

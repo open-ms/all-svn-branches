@@ -65,14 +65,6 @@ namespace OpenMS
     filters_.push_back(filter);
   }
 
-  DoubleReal SILACFiltering::getPeakWidth(DoubleReal mz) const
-  {
-#if 1
-    return peak_width(mz);
-#endif
-    return 5*(1.889e-7*pow(mz,1.5));
-  }
-
   void SILACFiltering::pickSeeds()
   {
     // perform peak picking
@@ -213,10 +205,10 @@ namespace OpenMS
           // Fill intensity and m/z vector for interpolation. Add zeros in the area with no data points to improve cubic spline fit
           for (MSSpectrum<>::Iterator mz_interpol_it = rt_it->begin(); mz_interpol_it != rt_it->end(); ++mz_interpol_it)
           {
-            DoubleReal peakwidth = getPeakWidth(last_mz);
-            if (mz_interpol_it->getMZ() > last_mz + peakwidth) // If the mz gap is rather larger, fill in zeros. These addtional Stützstellen improve interpolation where no signal (i.e. data points) is.
+            DoubleReal peak_width_cur = peak_width(last_mz);
+            if (mz_interpol_it->getMZ() > last_mz + peak_width_cur) // If the mz gap is rather larger, fill in zeros. These addtional Stützstellen improve interpolation where no signal (i.e. data points) is.
             {
-              for (DoubleReal current_mz = last_mz + peakwidth; current_mz < mz_interpol_it->getMZ() - peakwidth; current_mz += peakwidth)
+              for (DoubleReal current_mz = last_mz + peak_width_cur; current_mz < mz_interpol_it->getMZ() - peak_width_cur; current_mz += peak_width_cur)
               {
                 mz_vec.push_back(current_mz);
                 intensity_vec.push_back(0.0);
@@ -263,7 +255,9 @@ namespace OpenMS
             if (!filter_it->extractMzShiftsAndIntensitiesPickedToPattern(*picked_rt_it, picked_mz, *this, pattern))
               continue;
 
-            for (DoubleReal mz = picked_mz - getPeakWidth(picked_mz); mz < picked_mz + getPeakWidth(picked_mz); mz += 0.1 * getPeakWidth(picked_mz) ) // iteration correct
+            DoubleReal peak_width_cur = peak_width(picked_mz);
+
+            for (DoubleReal mz = picked_mz - peak_width_cur; mz < picked_mz + peak_width_cur; mz += 0.1 * peak_width_cur) // iteration correct
             {
               //--------------------------------------------------
               // BLACKLIST FILTER
@@ -323,7 +317,7 @@ namespace OpenMS
                   // FILLING THE BLACKLIST
                   //--------------------------------------------------
 
-                  DoubleReal peak_width = getPeakWidth(mz);
+                  DoubleReal peak_width_cur = peak_width(mz);
 
                   // loop over the individual isotopic peaks of the SILAC pattern (and blacklist the area around them)
                   const vector<DoubleReal>& peak_positions = filter_it->getPeakPositions();
@@ -335,8 +329,8 @@ namespace OpenMS
                   for (vector<DoubleReal>::const_iterator peak_positions_it = peak_positions.begin(); peak_positions_it != peak_positions.end(); ++peak_positions_it)
                   {
                     DRange<2> blackArea;    // area in the m/z-RT plane to be blacklisted
-                    blackArea.setMinX(*peak_positions_it - 0.8 * peak_width);     // set min m/z position of area to be blacklisted
-                    blackArea.setMaxX(*peak_positions_it + 0.8 * peak_width);     // set max m/z position of area to be blacklisted
+                    blackArea.setMinX(*peak_positions_it - 0.8 * peak_width_cur);     // set min m/z position of area to be blacklisted
+                    blackArea.setMaxX(*peak_positions_it + 0.8 * peak_width_cur);     // set max m/z position of area to be blacklisted
                     blackArea.setMinY(rt - 10);     // set min rt position of area to be blacklisted
                     blackArea.setMaxY(rt + 10);     // set max rt position of area to be blacklisted
 

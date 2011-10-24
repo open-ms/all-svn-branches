@@ -73,16 +73,6 @@ namespace OpenMS
     }
   }
 
-  SILACFilter::SILACFilter()
-  {
-  }
-
-  SILACFilter::~SILACFilter()
-  {
-
-  }
-
-
   bool SILACFilter::extractMzShiftsAndIntensities(const MSSpectrum<Peak1D> &s, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
   {
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?

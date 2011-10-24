@@ -292,12 +292,6 @@ namespace OpenMS
       bool averageneFilter(DoubleReal mz);
 
     public:  
-
-      /**
-       * @brief default constructor
-       */
-      SILACFilter();
-
       /**
        * @brief detailed constructor for SILAC pair filtering
        * @param mass_separations all mass shifts of the filter
@@ -306,11 +300,6 @@ namespace OpenMS
        * @param isotopes_per_peptide number of peaks per petide to search for
        */
       SILACFilter(std::vector<DoubleReal> mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide);
-
-      /**
-       * @brief destructor
-       */
-      virtual ~SILACFilter();
 
       /**
        * @brief gets the m/z values of all peaks , which belong the last identified feature

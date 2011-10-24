@@ -65,11 +65,6 @@ namespace OpenMS
     filters_.push_back(filter);
   }
 
-  SILACFiltering::~SILACFiltering()
-  {
-
-  }
-
   DoubleReal SILACFiltering::getPeakWidth(DoubleReal mz) const
   {
 #if 1

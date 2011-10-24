@@ -132,16 +132,6 @@ namespace OpenMS
       SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase = "");
 
       /**
-       * @brief default constructor
-       */
-      SILACFiltering();
-
-      /**
-       * destructor
-       */
-      virtual ~SILACFiltering();
-
-      /**
        * @brief adds a new filter to the filtering
        * @param filter filter to add
        */

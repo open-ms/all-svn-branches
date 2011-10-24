@@ -49,7 +49,7 @@ namespace OpenMS
       const DoubleReal rt_max_spacing;
 
       SILACClustering(const PointCoordinate &cluster_dimension, DoubleReal rt_min, DoubleReal rt_max_spacing)
-        : HierarchicalClustering(cluster_dimension), rt_min(rt_min), rt_max_spacing(rt_max_spacing)
+        : HierarchicalClustering<SILACPattern *>(cluster_dimension), rt_min(rt_min), rt_max_spacing(rt_max_spacing)
       { }
 
       /**

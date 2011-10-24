@@ -97,12 +97,6 @@ namespace OpenMS
        */
       static bool allow_missing_peaks_;
 
-
-      /**
-       * @brief lowest m/z value of the experiment
-       */
-      static DoubleReal mz_min_;
-
       /**
        * @brief raw data
        */

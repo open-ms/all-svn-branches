@@ -44,7 +44,6 @@ namespace OpenMS
   DoubleReal SILACFiltering::intensity_cutoff_ = 0;
   DoubleReal SILACFiltering::intensity_correlation_ = 0;
   bool SILACFiltering::allow_missing_peaks_ = false;
-  DoubleReal SILACFiltering::mz_min_ = 0;  
 
   SILACFiltering::SpectrumInterpolation::SpectrumInterpolation(const MSSpectrum<> &s, const SILACFiltering &f)
   {
@@ -193,8 +192,6 @@ namespace OpenMS
 
     startProgress(0, exp_.size(), "filtering raw data");    
 
-    mz_min_ = exp_.getMinMZ();      // get lowest m/z value
-
     UInt filter_id = 0;
     // Iterate over all filters
     for (vector<SILACFilter>::iterator filter_it = filters_.begin(); filter_it != filters_.end(); ++filter_it, ++filter_id)
@@ -224,12 +221,6 @@ namespace OpenMS
         // spectra with less than 10 data points and less then two picked peaks are being ignored
         if (rt_it->size() >= 10 && picked_rt_it->size() > 1)
         {
-          // filter MS1 spectra
-          // read one spectrum into GSL structure
-          vector<DoubleReal> mz_vec;
-          vector<DoubleReal> intensity_vec;
-          mz_min_ = rt_it->begin()->getMZ();
-
           SpectrumInterpolation spec_inter(*rt_it, *this);
 
           // XXX: Workaround to catch duplicated peaks

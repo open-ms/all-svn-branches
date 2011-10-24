@@ -266,15 +266,6 @@ namespace OpenMS
       std::vector<std::vector<DoubleReal> > expected_shifts_;
 
       /**
-       * @brief Computes the actual m/z shift between the position mz and a region about expectedMzShift away. Returns -1 if there is no correlation between mz and signal in interval [mz + expectedMzShift - maxMzDeviation, mz + expectedMzShift + maxMzDeviation].
-       * [e.g. from theoretical considerations we expect a good correlation between peaks 4.02 Th apart. But the shift between signals actually observed is 4.0189 Th.]
-       * @param mz m/z position of the reference signal [e.g. mono-isotopic peak of the light peptide]
-       * @param expectedMzShift poitive m/z shift at which we would expect a correlating signal [e.g. 4.02 Th]
-       * @param maxMzDeviation maximum allowed deviation between expected and actual shift [In the above example the shift is 0.0011 Th.]
-       */
-      DoubleReal computeActualMzShift_(DoubleReal mz, DoubleReal expectedMzShift, DoubleReal maxMzDeviation);
-
-      /**
        * @brief returns true if there exists a SILAC feature at the given position, which corresponds to the filter's properties
        * @param rt RT value of the position
        * @param mz m/z value of the position

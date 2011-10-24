@@ -344,7 +344,7 @@ class TOPPFeatureFinderRaw
     filtering.filterDataPoints();
 
     // retrieve filtered data points
-    for (list<SILACFilter>::iterator filter_it = filters.begin(); filter_it != filters.end(); ++filter_it)
+    for (SILACFiltering::Filters::iterator filter_it = filtering.filters_.begin(); filter_it != filtering.filters_.end(); ++filter_it)
     {
       data.push_back(filter_it->getElements());
     }

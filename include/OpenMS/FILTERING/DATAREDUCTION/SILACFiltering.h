@@ -55,13 +55,15 @@ namespace OpenMS
   {
     friend class SILACFilter;
 
-    private:
+    public:
+      typedef std::vector<SILACFilter> Filters;
 
       /**
        * @brief holds all filters used in the filtering
        */
-      std::vector<SILACFilter> filters_;
+      Filters filters_;
 
+    private:
       /**
        * @brief minimal intensity of SILAC features
        */

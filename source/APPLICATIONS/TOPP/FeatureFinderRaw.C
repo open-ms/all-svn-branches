@@ -41,6 +41,7 @@
 #include <OpenMS/KERNEL/RangeUtils.h>
 #include <OpenMS/KERNEL/ChromatogramTools.h>
 
+#include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
 #include <OpenMS/COMPARISON/CLUSTERING/SILACClustering.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/PeakWidthEstimator.h>

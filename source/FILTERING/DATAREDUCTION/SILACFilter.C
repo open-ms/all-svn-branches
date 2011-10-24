@@ -33,11 +33,6 @@
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/IsotopeModel.h>
 #include <OpenMS/CHEMISTRY/IsotopeDistribution.h>
 #include <OpenMS/CONCEPT/Constants.h>
-#include <gsl/gsl_integration.h>
-#include <gsl/gsl_errno.h>
-#include <gsl/gsl_fft_complex.h>
-#include <gsl/gsl_fft_halfcomplex.h>
-#include <gsl/gsl_randist.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmPickedHelperStructs.h>
 #include <cmath>
 #include <iostream>
@@ -73,7 +68,7 @@ namespace OpenMS
     }
   }
 
-  bool SILACFilter::extractMzShiftsAndIntensities(const MSSpectrum<Peak1D> &s, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
+  bool SILACFilter::extractMzShiftsAndIntensities(const MSSpectrum<Peak1D> &s, const SILACFiltering::SpectrumInterpolation &si, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
   {
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 
@@ -147,7 +142,7 @@ namespace OpenMS
         }
         else
         {
-          exact_intensities_singlePeptide.push_back(gsl_spline_eval (SILACFiltering::spline_spl_, mz + deltaMZ, SILACFiltering::current_spl_));
+          exact_intensities_singlePeptide.push_back(si(mz + deltaMZ));
         }
       }
 
@@ -312,7 +307,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::correlationFilter1(DoubleReal mz, const SILACFiltering &f)
+  bool SILACFilter::correlationFilter1(const SILACFiltering::SpectrumInterpolation &si, DoubleReal mz, const SILACFiltering &f)
   {
     bool missing_peak_seen_yet = false;
 
@@ -326,8 +321,8 @@ namespace OpenMS
 
         for (DoubleReal dmz = - mzWindow; dmz <= mzWindow; dmz += 0.2 * mzWindow)     // fill intensity vectors
         {
-          DoubleReal intens1 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[peptide][0] + dmz, SILACFiltering::current_spl_);
-          DoubleReal intens2 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[peptide][isotope2] + dmz, SILACFiltering::current_spl_);
+          DoubleReal intens1 = si(mz + exact_shifts_[peptide][0] + dmz);
+          DoubleReal intens2 = si(mz + exact_shifts_[peptide][isotope2] + dmz);
           intensities1.push_back( intens1 );
           intensities2.push_back( intens2 );
         }
@@ -353,7 +348,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::correlationFilter2(DoubleReal mz, const SILACFiltering &f)
+  bool SILACFilter::correlationFilter2(const SILACFiltering::SpectrumInterpolation &si, DoubleReal mz, const SILACFiltering &f)
   {
     if (!(number_of_peptides_ == 1 && exact_shifts_[0][0] == 0))     // If we are looking for single peptides, this filter is not needed.
     {
@@ -365,8 +360,8 @@ namespace OpenMS
 
         for (DoubleReal dmz = - mzWindow; dmz <= mzWindow; dmz += 0.2 * mzWindow)     // fill intensity vectors
         {
-          DoubleReal intens3 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[0][0] + dmz, SILACFiltering::current_spl_);
-          DoubleReal intens4 = gsl_spline_eval(SILACFiltering::spline_spl_, mz + exact_shifts_[peptide + 1][0] + dmz, SILACFiltering::current_spl_);
+          DoubleReal intens3 = si(mz + exact_shifts_[0][0] + dmz);
+          DoubleReal intens4 = si(mz + exact_shifts_[peptide + 1][0] + dmz);
           intensities3.push_back( intens3 );
           intensities4.push_back( intens4 );
         }
@@ -439,7 +434,7 @@ namespace OpenMS
     return true;
   }
 
-  bool SILACFilter::isSILACPattern_(const MSSpectrum<Peak1D> &s, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, MSSpectrum<Peak1D> &debug, SILACPattern &pattern)
+  bool SILACFilter::isSILACPattern_(const MSSpectrum<Peak1D> &s, const SILACFiltering::SpectrumInterpolation &si, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f, MSSpectrum<Peak1D> &debug, SILACPattern &pattern)
   {
     current_mz_ = mz;
 
@@ -447,7 +442,7 @@ namespace OpenMS
     debug_peak.setMZ(mz);
 
     // EXACT m/z SHIFTS (Determine the actual shifts between peaks. Say 4 Th is the theoretic shift. In the experimental data it will be 4.0029 Th.)
-    if (!extractMzShiftsAndIntensities(s, mz, picked_mz, f))
+    if (!extractMzShiftsAndIntensities(s, si, mz, picked_mz, f))
     {
       debug_peak.setIntensity(1);
       debug.push_back(debug_peak);
@@ -463,7 +458,7 @@ namespace OpenMS
     }
 
     // CORRELATION FILTER 1 (Check for every peptide that its mono-isotopic peak correlates with the following peaks)
-    if (!correlationFilter1(mz, f))
+    if (!correlationFilter1(si, mz, f))
     {
       debug_peak.setIntensity(3);
       debug.push_back(debug_peak);
@@ -471,7 +466,7 @@ namespace OpenMS
     }
 
     // CORRELATION FILTER 2 (Check that the monoisotopic peak of the light (unlabeled) peptide correlates with the mono-isotopic peak of the labeled peptides)
-    if (!correlationFilter2(mz, f))
+    if (!correlationFilter2(si, mz, f))
     {
       debug_peak.setIntensity(4);
       debug.push_back(debug_peak);

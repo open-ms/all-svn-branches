@@ -40,8 +40,6 @@
 
 namespace OpenMS
 {
-  class SILACFiltering;
-
   // Prealculate isotope distributions for interesting mass ranges
   class IsotopeDistributionCache
   {
@@ -270,16 +268,16 @@ namespace OpenMS
        * @param rt RT value of the position
        * @param mz m/z value of the position
        */
-      bool isSILACPattern_(const MSSpectrum<Peak1D> &, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &, MSSpectrum<Peak1D> &debug, SILACPattern &pattern);
+      bool isSILACPattern_(const MSSpectrum<Peak1D> &, const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &, MSSpectrum<Peak1D> &debug, SILACPattern &pattern);
 
 
       bool isSILACPatternPicked_(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &, MSSpectrum<Peak1D> &debug);
-      bool extractMzShiftsAndIntensities(const MSSpectrum<Peak1D> &, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &);
+      bool extractMzShiftsAndIntensities(const MSSpectrum<Peak1D> &, const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &);
       bool extractMzShiftsAndIntensitiesPicked(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &);
       bool extractMzShiftsAndIntensitiesPickedToPattern(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &, SILACPattern &pattern);
       bool intensityFilter();
-      bool correlationFilter1(DoubleReal mz, const SILACFiltering &);
-      bool correlationFilter2(DoubleReal mz, const SILACFiltering &);
+      bool correlationFilter1(const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, const SILACFiltering &);
+      bool correlationFilter2(const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, const SILACFiltering &);
       bool averageneFilter(DoubleReal mz);
 
     public:  

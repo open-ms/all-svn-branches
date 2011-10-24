@@ -30,7 +30,6 @@
 
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
-#include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/DATASTRUCTURES/DRange.h>
 #include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/PeakWidthEstimator.h>
@@ -65,6 +64,25 @@ namespace OpenMS
 
     private:
       /**
+       * Wrapper class for spectrum interpolation
+       */
+      class SpectrumInterpolation
+      {
+        private:
+          gsl_interp_accel *current_;
+          gsl_spline *spline_;
+
+        public:
+          SpectrumInterpolation(const MSSpectrum<> &, const SILACFiltering &);
+          ~SpectrumInterpolation();
+
+          DoubleReal operator()(DoubleReal mz) const
+          {
+            return gsl_spline_eval(spline_, mz, current_);
+          }
+      };
+
+      /**
        * @brief minimal intensity of SILAC features
        */
       static DoubleReal intensity_cutoff_;
@@ -79,10 +97,6 @@ namespace OpenMS
        */
       static bool allow_missing_peaks_;
 
-      static gsl_interp_accel* current_aki_;
-      static gsl_interp_accel* current_spl_;
-      static gsl_spline* spline_aki_;
-      static gsl_spline* spline_spl_;
 
       /**
        * @brief lowest m/z value of the experiment

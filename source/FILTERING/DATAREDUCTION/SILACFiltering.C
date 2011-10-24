@@ -44,11 +44,41 @@ namespace OpenMS
   DoubleReal SILACFiltering::intensity_cutoff_ = 0;
   DoubleReal SILACFiltering::intensity_correlation_ = 0;
   bool SILACFiltering::allow_missing_peaks_ = false;
-  gsl_interp_accel* SILACFiltering::current_aki_ = 0;
-  gsl_interp_accel* SILACFiltering::current_spl_ = 0;
-  gsl_spline* SILACFiltering::spline_aki_ = 0;
-  gsl_spline* SILACFiltering::spline_spl_ = 0;
   DoubleReal SILACFiltering::mz_min_ = 0;  
+
+  SILACFiltering::SpectrumInterpolation::SpectrumInterpolation(const MSSpectrum<> &s, const SILACFiltering &f)
+  {
+    vector<DoubleReal> mz, intensity;
+    DoubleReal last_mz = s.begin()->getMZ();
+
+    // Fill intensity and m/z vector for interpolation. Add zeros in the area with no data points to improve cubic spline fit
+    for (MSSpectrum<>::ConstIterator mz_interpol_it = s.begin(); mz_interpol_it != s.end(); ++mz_interpol_it)
+    {
+      DoubleReal peak_width_cur = f.peak_width(last_mz);
+      if (mz_interpol_it->getMZ() > last_mz + peak_width_cur) // If the mz gap is rather larger, fill in zeros. These addtional Stützstellen improve interpolation where no signal (i.e. data points) is.
+      {
+        for (DoubleReal current_mz = last_mz + peak_width_cur; current_mz < mz_interpol_it->getMZ() - peak_width_cur; current_mz += peak_width_cur)
+        {
+          mz.push_back(current_mz);
+          intensity.push_back(0.0);
+        }
+      }
+      mz.push_back(mz_interpol_it->getMZ());
+      intensity.push_back(mz_interpol_it->getIntensity());
+      last_mz = mz_interpol_it->getMZ();
+    }
+
+    // spline interpolation, used for exact ratio calculation (more accurate when real peak pairs are present)
+    current_ = gsl_interp_accel_alloc();
+    spline_ = gsl_spline_alloc(gsl_interp_cspline, mz.size());
+    gsl_spline_init(spline_, mz.data(), intensity.data(), mz.size());
+  }
+
+  SILACFiltering::SpectrumInterpolation::~SpectrumInterpolation()
+  {
+    gsl_interp_accel_free(current_);
+    gsl_spline_free(spline_);
+  }
 
   SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &peak_width, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase)
     : exp_(exp),
@@ -199,36 +229,8 @@ namespace OpenMS
           vector<DoubleReal> mz_vec;
           vector<DoubleReal> intensity_vec;
           mz_min_ = rt_it->begin()->getMZ();
-          DoubleReal last_mz = rt_it->begin()->getMZ();
 
-          // INTERPOLATION (Akima and Spline interpolation in order to have intensities at any m/z.)
-          // Fill intensity and m/z vector for interpolation. Add zeros in the area with no data points to improve cubic spline fit
-          for (MSSpectrum<>::Iterator mz_interpol_it = rt_it->begin(); mz_interpol_it != rt_it->end(); ++mz_interpol_it)
-          {
-            DoubleReal peak_width_cur = peak_width(last_mz);
-            if (mz_interpol_it->getMZ() > last_mz + peak_width_cur) // If the mz gap is rather larger, fill in zeros. These addtional Stützstellen improve interpolation where no signal (i.e. data points) is.
-            {
-              for (DoubleReal current_mz = last_mz + peak_width_cur; current_mz < mz_interpol_it->getMZ() - peak_width_cur; current_mz += peak_width_cur)
-              {
-                mz_vec.push_back(current_mz);
-                intensity_vec.push_back(0.0);
-              }
-            }
-            mz_vec.push_back(mz_interpol_it->getMZ());
-            intensity_vec.push_back(mz_interpol_it->getIntensity());
-            last_mz = mz_interpol_it->getMZ();
-          }
-
-          // akima interpolation, returns 0 in regions with no raw data points
-          current_aki_ = gsl_interp_accel_alloc();
-          spline_aki_ = gsl_spline_alloc(gsl_interp_akima, mz_vec.size());
-          gsl_spline_init(spline_aki_, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
-
-          // spline interpolation, used for exact ratio calculation (more accurate when real peak pairs are present)
-          current_spl_ = gsl_interp_accel_alloc();
-          spline_spl_ = gsl_spline_alloc(gsl_interp_cspline, mz_vec.size());
-          gsl_spline_init(spline_spl_, &*mz_vec.begin(), &*intensity_vec.begin(), mz_vec.size());
-
+          SpectrumInterpolation spec_inter(*rt_it, *this);
 
           // XXX: Workaround to catch duplicated peaks
           std::set<DoubleReal> seen_mz;
@@ -311,7 +313,7 @@ namespace OpenMS
               // Check the other filters only if current m/z and rt position is not blacklisted
               if (isBlacklisted == false)
               {
-                if (filter_it->isSILACPattern_(*picked_rt_it, mz, picked_mz, *this, debug, pattern))      // Check if the mz at the given position is a SILAC pair
+                if (filter_it->isSILACPattern_(*picked_rt_it, spec_inter, mz, picked_mz, *this, debug, pattern))      // Check if the mz at the given position is a SILAC pair
                 {
                   //--------------------------------------------------
                   // FILLING THE BLACKLIST
@@ -422,12 +424,6 @@ namespace OpenMS
             const UInt threshold_points = 4;
             if (pattern.points.size() > threshold_points) filter_it->elements_.push_back(pattern);
           }
-
-          // Clear the interpolations
-          gsl_interp_accel_free(current_aki_);
-          gsl_interp_accel_free(current_spl_);
-          gsl_spline_free(spline_aki_);
-          gsl_spline_free(spline_spl_);
         }
 
         exp_debug.push_back(debug);

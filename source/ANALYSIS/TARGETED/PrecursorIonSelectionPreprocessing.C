@@ -48,22 +48,23 @@ namespace OpenMS
   {
     defaults_.setValue("precursor_mass_tolerance", 10., "Precursor mass tolerance which is used to query the peptide database for peptides");
     defaults_.setMinFloat("precursor_mass_tolerance",0.);
-    defaults_.setValue("rt_weighting:total_gradient_time",7640.,"the total gradient time in seconds, needed for normalization.");
-    defaults_.setValue("rt_weighting:gradient_offset",600,"the total gradient time in seconds, needed for normalization.");
 
-    defaults_.setValue("rt_weighting:gauss_amplitude",100.,"amplitude at the gauss_mean");
-    defaults_.setValue("rt_weighting:gauss_mean",0.0,"mean of the gauss curve");
-    defaults_.setValue("rt_weighting:gauss_std",0.01,"std of the gauss curve");
     defaults_.setValue("precursor_mass_tolerance_unit", "ppm", "Precursor mass tolerance unit.");
     defaults_.setValidStrings("precursor_mass_tolerance_unit",StringList::create("ppm,Da"));
-    defaults_.setValue("preprocessing:preprocessed_db_path","","Path where the preprocessed database should be stored");
-    defaults_.setValue("preprocessing:preprocessed_db_pred_rt_path","","Path where the predicted rts of the preprocessed database should be stored");
-    defaults_.setValue("preprocessing:preprocessed_db_pred_dt_path","","Path where the predicted rts of the preprocessed database should be stored");
-    defaults_.setValue("preprocessing:max_peptides_per_run",100000,"Number of peptides for that the pt and rt are parallely predicted.");
-    defaults_.setMinInt("preprocessing:max_peptides_per_run",1);
+    defaults_.insert("rt_weighting:",RTProbability().getDefaults());
+
+    //    defaults_.setValue("rt_weighting:total_gradient_time",7640.,"the total gradient time in seconds, needed for normalization.");
+    //    defaults_.setValue("rt_weighting:gradient_offset",600,"the total gradient time in seconds, needed for normalization.");
+
+
+    defaults_.setValue("preprocessed_db_path","","Path where the preprocessed database should be stored");
+    defaults_.setValue("preprocessed_db_pred_rt_path","","Path where the predicted rts of the preprocessed database should be stored");
+    defaults_.setValue("preprocessed_db_pred_dt_path","","Path where the predicted rts of the preprocessed database should be stored");
+    defaults_.setValue("max_peptides_per_run",100000,"Number of peptides for that the pt and rt are parallely predicted.");
+    defaults_.setMinInt("max_peptides_per_run",1);
     defaults_.setValue("missed_cleavages",1,"Number of allowed missed cleavages.");
     defaults_.setMinInt("missed_cleavages",0);
-    defaults_.setValue("preprocessing:taxonomy","","Taxonomy");
+    defaults_.setValue("taxonomy","","Taxonomy");
     defaults_.setValue("tmp_dir","","Absolute path to tmp data directory used to store files needed for rt and dt prediction.");
     defaults_.setValue("store_peptide_sequences","false","Flag if peptide sequences should be stored.");
     defaultsToParam_();
@@ -187,24 +188,24 @@ namespace OpenMS
   }
 
 
-  DoubleReal PrecursorIonSelectionPreprocessing::getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt)
-  {
-    DoubleReal pred_rt = getRT(prot_id,peptide_index);
-    //		std::cout << "pred rt: "<<pred_rt << std::endl;
-    // TODO: what to return if no rt was predicted for this peptide?
-    if(pred_rt == -1) return 1.;
-    // determine difference of measured and predicted rt and normalize by total gradient time
-    DoubleReal diff = (meas_rt - pred_rt)/(DoubleReal)param_.getValue("rt_weighting:total_gradient_time");
-    // get parameters for gauss curve representing the distribution of the rt differences
-    DoubleReal a = param_.getValue("rt_weighting:gauss_amplitude");
-    DoubleReal m = param_.getValue("rt_weighting:gauss_mean");
-    DoubleReal s = param_.getValue("rt_weighting:gauss_std");
-    //		std::cout << "mean, std and diff: "<<m << " "<<s<<" "<<diff<<std::endl;
+//   DoubleReal PrecursorIonSelectionPreprocessing::getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt)
+//   {
+//     DoubleReal pred_rt = getRT(prot_id,peptide_index);
+//     //		std::cout << "pred rt: "<<pred_rt << std::endl;
+//     // TODO: what to return if no rt was predicted for this peptide?
+//     if(pred_rt == -1) return 1.;
+//     // determine difference of measured and predicted rt and normalize by total gradient time
+//     DoubleReal diff = (meas_rt - pred_rt)/(DoubleReal)param_.getValue("rt_weighting:total_gradient_time");
+//     // get parameters for gauss curve representing the distribution of the rt differences
+//     DoubleReal a = param_.getValue("rt_weighting:gauss_amplitude");
+//     DoubleReal m = param_.getValue("rt_weighting:gauss_mean");
+//     DoubleReal s = param_.getValue("rt_weighting:gauss_std");
+//     //		std::cout << "mean, std and diff: "<<m << " "<<s<<" "<<diff<<std::endl;
 
-    // get gauss value for the specific rt difference
-    DoubleReal gauss_diff = a*exp(-1.0 *pow(diff-m,2)/(2*pow(s,2)));
-    return gauss_diff;
-  }
+//     // get gauss value for the specific rt difference
+//     DoubleReal gauss_diff = a*exp(-1.0 *pow(diff-m,2)/(2*pow(s,2)));
+//     return gauss_diff;
+//   }
 
   DoubleReal PrecursorIonSelectionPreprocessing::getRTProbability(String prot_id, Size peptide_index,Feature& feature)
   {
@@ -272,7 +273,7 @@ namespace OpenMS
   void PrecursorIonSelectionPreprocessing::loadPreprocessing()
   {
     // first check if preprocessed db already exists
-    String path = param_.getValue("preprocessing:preprocessed_db_path");
+    String path = param_.getValue("preprocessed_db_path");
 
     // check if file exists
     std::ifstream test(path.c_str());
@@ -313,16 +314,16 @@ namespace OpenMS
                                                            String dt_model_path,bool save)
   {
 #ifdef PISP_DEBUG
-    std::cout << "Parameters: "<< param_.getValue("preprocessing:preprocessed_db_path")
+    std::cout << "Parameters: "<< param_.getValue("preprocessed_db_path")
               << "\t" << param_.getValue("precursor_mass_tolerance")
               << " " << param_.getValue("precursor_mass_tolerance_unit")
                  //<< "\t"<<param_.getValue("rt_tolerance")
-              << "\t"<<param_.getValue("rt_weighting:total_gradient_time")
+      //              << "\t"<<param_.getValue("rt_weighting:total_gradient_time")
               << "\t"<<param_.getValue("rt_weighting:gauss_amplitude")
               << "\t"<<param_.getValue("rt_weighting:gauss_mean")
               << "\t"<<param_.getValue("rt_weighting:gauss_std")
               << "\t" << param_.getValue("missed_cleavages")
-              << "\t" << param_.getValue("preprocessing:taxonomy")
+              << "\t" << param_.getValue("taxonomy")
               << "\t" << param_.getValue("tmp_dir") << "---"
               << std::endl;
 #endif
@@ -341,7 +342,7 @@ namespace OpenMS
     {
 
       // filter for taxonomy
-      if(entries[e].description.toUpper().hasSubstring(((String)param_.getValue("preprocessing:taxonomy")).toUpper()))
+      if(entries[e].description.toUpper().hasSubstring(((String)param_.getValue("taxonomy")).toUpper()))
       {
         // preprocess entry identifier
         filterTaxonomyIdentifier_(entries[e]);
@@ -430,7 +431,7 @@ namespace OpenMS
     dt_param.setValue("dt_simulation_on","true");
     dt_param.setValue("dt_model_file",dt_model_path);
     // this is needed, as too many sequences require too much memory for the rt and dt prediction
-    Size max_peptides_per_run = (Int)param_.getValue("preprocessing:max_peptides_per_run");
+    Size max_peptides_per_run = (Int)param_.getValue("max_peptides_per_run");
     peptide_sequences.resize(std::min(sequences_.size(),max_peptides_per_run));
 
     //#ifdef PIPS_DEBUG
@@ -633,7 +634,7 @@ namespace OpenMS
     }
     if(save)
     {
-      savePreprocessedDBWithRT_(db_path,(String)param_.getValue("preprocessing:preprocessed_db_path"));
+      savePreprocessedDBWithRT_(db_path,(String)param_.getValue("preprocessed_db_path"));
     }
   }
 
@@ -641,11 +642,11 @@ namespace OpenMS
   {
 
 #ifdef PISP_DEBUG
-    std::cout << "Parameters: "<< param_.getValue("preprocessing:preprocessed_db_path")
+    std::cout << "Parameters: "<< param_.getValue("preprocessed_db_path")
               << "\t" << param_.getValue("precursor_mass_tolerance")
               << " " << param_.getValue("precursor_mass_tolerance_unit")
               << "\t" << param_.getValue("missed_cleavages")
-              << "\t" << param_.getValue("preprocessing:taxonomy") <<std::endl;
+              << "\t" << param_.getValue("taxonomy") <<std::endl;
 #endif
 
     FASTAFile fasta_file;
@@ -658,7 +659,7 @@ namespace OpenMS
     for(UInt e=0;e<entries.size();++e)
     {
       // filter for taxonomy
-      if(entries[e].description.toUpper().hasSubstring(((String)param_.getValue("preprocessing:taxonomy")).toUpper()))
+      if(entries[e].description.toUpper().hasSubstring(((String)param_.getValue("taxonomy")).toUpper()))
       {
         // preprocess entry identifier
         filterTaxonomyIdentifier_(entries[e]);
@@ -835,7 +836,7 @@ namespace OpenMS
     }
     if(save)
     {
-      savePreprocessedDB_(db_path,(String)param_.getValue("preprocessing:preprocessed_db_path"));
+      savePreprocessedDB_(db_path,(String)param_.getValue("preprocessed_db_path"));
     }
 
   }
@@ -855,7 +856,7 @@ namespace OpenMS
     String db_name = db_path.substr(pos1,pos2-pos1);
     out << db_name <<"\t" <<param_.getValue("precursor_mass_tolerance")  << "\t"
         << param_.getValue("precursor_mass_tolerance_unit")
-        << "\t"<< (String)param_.getValue("preprocessing:taxonomy");
+        << "\t"<< (String)param_.getValue("taxonomy");
     // first save protein_masses_map
     out << prot_masses_.size() <<std::endl;
 #ifdef PISP_DEBUG
@@ -932,7 +933,7 @@ namespace OpenMS
     String db_name = db_path.substr(pos1,pos2-pos1);
     out << db_name <<"\t" <<param_.getValue("precursor_mass_tolerance")  << "\t"
         << param_.getValue("precursor_mass_tolerance_unit")
-        << "\t"<< (String)param_.getValue("preprocessing:taxonomy");
+        << "\t"<< (String)param_.getValue("taxonomy");
     // first save protein_masses_map
     out << prot_masses_.size() <<std::endl;
 #ifdef PISP_DEBUG
@@ -948,7 +949,7 @@ namespace OpenMS
     for(UInt e=0;e<entries.size();++e)
     {
       // filter for taxonomy
-      if(entries[e].description.toUpper().hasSubstring(((String)param_.getValue("preprocessing:taxonomy")).toUpper()))
+      if(entries[e].description.toUpper().hasSubstring(((String)param_.getValue("taxonomy")).toUpper()))
       {
 #ifdef PISP_DEBUG
         std::cout << entries[e].identifier << std::endl;
@@ -1145,6 +1146,229 @@ namespace OpenMS
     // 			}
     // 		std::cout <<"rt_map.size: "<<rt_map_.size()<<std::endl;
 
+  }
+
+  void PrecursorIonSelectionPreprocessing::learnRTProbabilities(FeatureMap<>& features,String rt_model_path,DoubleReal min_score,bool use_detectability)
+	{
+    Param param(param_.copy("rt_weighting:",true));
+    std::cout << param.getValue("number_of_bins")<<std::endl;
+    std::cout << param.getValue("rt_settings:min_rt") << " "<<param.getValue("rt_settings:max_rt") << std::endl;
+		rt_prob_.setParameters(param);
+		rt_prob_.learnGaussian(features,rt_model_path,min_score);
+    transformRTDTProbabilitiesOnIds_(features,use_detectability);
+	}
+
+  void PrecursorIonSelectionPreprocessing::transformRTDTProbabilitiesOnIds_(FeatureMap<>& features,bool use_detectability)
+  {
+    //     DoubleReal mz_tol = param_.getValue("precursor_mass_tolerance");
+    //     bool use_ppm = (param_.getValue("precursor_mass_tolerance_unit") == "ppm") ? true : false;
+    std::cout << "get values"<<std::endl;
+    std::cout << rt_prob_.getGaussSigma()<<" "<<rt_prob_.getGaussMu()<<std::endl;
+
+    DoubleReal max(0.);
+    min_rt_dt_ = std::numeric_limits<DoubleReal>::max();
+
+    Size num_values = 0;
+    // first match preprocessing onto feature map and calculate all rt*dt-values
+    for(Size f = 0; f < features.size();++f)
+      {
+        //        std::cout << "feature "<<f<<" "<<num_values<<std::endl;
+        if(features[f].getPeptideIdentifications().empty()) continue;
+//         DoubleReal mz = features[f].getMZ();
+         DoubleReal rt = features[f].getRT();
+
+        for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
+          {
+            for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
+              {
+                DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);
+                if(features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions().empty()) continue;
+                String acc = features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions()[0];
+                
+                std::map<String,std::vector<DoubleReal> >::const_iterator masses_it = prot_masses_.find(acc);
+                if(masses_it==prot_masses_.end()) continue;
+                for(Size i = 0; i < masses_it->second.size();++i)
+                  {
+                    if(fabs(masses_it->second[i] - pmz)  < 1e-03)
+                      {
+                        std::cout << masses_it->second[i] <<" "<<pmz << " "<<features[f].getMZ()
+                                  << " "<<getRT(masses_it->first,i)<<" "<<rt<<" " ;
+                        ++num_values;
+                        //std::cout <<  getRTProbability(masses_it->first,i,rt) <<" * "<< pt_prot_map_[masses_it->first][i]<<std::endl;
+                        std::cout <<  getRTProbability(masses_it->first,i,features[f]) <<" * "<< pt_prot_map_[masses_it->first][i]<<std::endl;
+                                            //values.push_back(rt_prot_map_[masses_it->first][i] * pt_prot_map_[masses_it->first][i]);
+                        DoubleReal rt_prob = getRTProbability(masses_it->first,i,features[f]);
+                        if(use_detectability)
+                          {
+                            if(rt_prob < 1e-03 && pt_prot_map_[masses_it->first][i] < 1e-03) continue;
+                            if(rt_prob * pt_prot_map_[masses_it->first][i] > max) max = rt_prob * pt_prot_map_[masses_it->first][i];
+                            if((rt_prob * pt_prot_map_[masses_it->first][i]) < min_rt_dt_) min_rt_dt_ = rt_prob * pt_prot_map_[masses_it->first][i];                    
+                          }
+                        else
+                          {
+                            if(rt_prob < 1e-03) continue;
+                            if(rt_prob > max) max = rt_prob;
+                            if(rt_prob < min_rt_dt_) min_rt_dt_ = rt_prob;                    
+                          }
+                      }
+                  }
+              }
+            //        std::cout <<std::endl;
+          }
+      }
+    std::cout << "got min and max "<<min_rt_dt_ <<" "<<max <<std::endl;
+    Size bins = param_.getValue("rt_weighting:number_of_bins");
+    rt_dt_step_size_= (max - min_rt_dt_) / ((DoubleReal)bins-1);
+    rt_dt_histogramm_.clear();
+    rt_dt_histogramm_.resize(bins,0.);
+    for(Size f = 0; f < features.size();++f)
+      {
+         //        std::cout << "feature "<<f<<" "<<num_values<<std::endl;
+        if(features[f].getPeptideIdentifications().empty()) continue;
+//         DoubleReal mz = features[f].getMZ();
+        //DoubleReal rt = features[f].getRT();
+
+        for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
+          {
+            for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
+              {
+                DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);
+                if(features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions().empty()) continue;
+                String acc = features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions()[0];
+                
+                std::map<String,std::vector<DoubleReal> >::const_iterator masses_it = prot_masses_.find(acc);
+                if(masses_it==prot_masses_.end()) continue;
+                for(Size i = 0; i < masses_it->second.size();++i)
+                  {
+                     if(fabs(masses_it->second[i] - pmz)  < 1e-03)
+                       {
+                         DoubleReal v ;
+                         DoubleReal rt_prob = getRTProbability(masses_it->first,i,features[f]);
+                         if(use_detectability)
+                           {
+                             
+                             if(rt_prob < 1e-03 && pt_prot_map_[masses_it->first][i] < 1e-03) continue;
+                             v = rt_prob * pt_prot_map_[masses_it->first][i];
+                           }
+                         else
+                           {
+                             if(rt_prob < 1e-03) continue;
+                             v = rt_prob;
+                           }
+                            //                    std::cout << v <<" "<<floor((v - min_rt_dt_)/rt_dt_step_size_)<<" "<<v - min_rt_dt_<<"/"<<rt_dt_step_size_<<"\n";
+                         if((Size)floor((v - min_rt_dt_)/rt_dt_step_size_) >= bins ||
+                            (SignedSize)floor((v - min_rt_dt_)/rt_dt_step_size_) < 0)
+                           {
+                             std::cout << "attention "<<v <<" "<<min_rt_dt_ <<" "<<rt_dt_step_size_
+                                       << " -> index: "<<floor((v - min_rt_dt_)/rt_dt_step_size_)
+                                       << " maxsize: "<<bins<<std::endl;
+                           }
+                         rt_dt_histogramm_[(Size)floor((v - min_rt_dt_)/rt_dt_step_size_)] =
+                           rt_dt_histogramm_[(Size)floor((v - min_rt_dt_)/rt_dt_step_size_)] + 1.;
+                       }
+                  }
+              }
+          }
+      }
+    
+    std::cout << "got values"<<std::endl;
+    // now calculate histogramm
+    // now calculate cumsum from back to front
+    for(SignedSize i = bins - 2; i >= 0; --i)
+      {
+        std::cout << min_rt_dt_ + i * rt_dt_step_size_<<" "<<rt_dt_histogramm_[i]<<std::endl;
+        rt_dt_histogramm_[i] = rt_dt_histogramm_[i] + rt_dt_histogramm_[i+1];
+      }
+    std::cout << "The normalized values:\n";
+    // and normalize by values.size()
+    for(Size i = 0; i < bins; ++i)
+      {
+        rt_dt_histogramm_[i] = 1. - rt_dt_histogramm_[i] / (DoubleReal)num_values;
+        std::cout << min_rt_dt_ + i * rt_dt_step_size_ << " " << rt_dt_histogramm_[i] << "\n";
+      }
+ //     // now reverse rt_dt_histogramm_
+//     std::reverse(rt_dt_histogramm_.begin(),rt_dt_histogramm_.end());
+//     for(Size i = 0; i < bins; ++i)
+//       {
+//         std::cout << min_rt_dt_ + i * rt_dt_step_size_ << " " << rt_dt_histogramm_[i] << "\n";
+//       }
+
+
+////////////////////////////////
+    transform_factor_ = 1. / max;
+
+
+///////////////////////////////    
+    
+
+    std::cout << "\ntransformed score vs. peptide score:\n";    
+    // now print transformed score vs. peptide score
+    for(Size f = 0; f < features.size();++f)
+      {
+        //        std::cout << "feature "<<f<<" "<<num_values<<std::endl;
+        if(features[f].getPeptideIdentifications().empty()) continue;
+        //         DoubleReal mz = features[f].getMZ();
+        //DoubleReal rt = features[f].getRT();
+        
+        for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
+          {
+            for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
+              {
+                DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);
+                if(features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions().empty()) continue;
+                String acc = features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions()[0];
+                
+                std::map<String,std::vector<DoubleReal> >::const_iterator masses_it = prot_masses_.find(acc);
+                if(masses_it==prot_masses_.end()) continue;
+                for(Size i = 0; i < masses_it->second.size();++i)
+                  {
+                    if(fabs(masses_it->second[i] - pmz)  < 1e-03)
+                      {
+                        DoubleReal rt_prob = getRTProbability(masses_it->first,i,features[f]);
+                        if(use_detectability)
+                          {
+                            std::cout << features[f].getPeptideIdentifications()[pi].getHits()[ph].getScore()
+                                      << " "<< getRTDTProbability(rt_prob
+                                                                  * pt_prot_map_[masses_it->first][i])
+                                      << " "<< pt_prot_map_[masses_it->first][i]
+                                      << " "<< rt_prob * pt_prot_map_[masses_it->first][i]
+                                      << " "<< rt_prob
+                              * pt_prot_map_[masses_it->first][i]
+                              * transform_factor_
+                                      << std::endl;
+                          }
+                        else
+                          {
+                            std::cout << features[f].getPeptideIdentifications()[pi].getHits()[ph].getScore()
+                                      << " "<< getRTDTProbability(rt_prob)
+                                      << std::endl;
+                          }
+                      }
+                  }
+              }
+          }
+      }
+    
+    std::cout << "end: transformed score vs. peptide score:\n";    
+  }
+
+  DoubleReal PrecursorIonSelectionPreprocessing::getRTProbability(DoubleReal pred_rt,Feature& feature)
+  {
+    DoubleReal rt_begin = feature.getConvexHull().getBoundingBox().minPosition()[0];
+    DoubleReal rt_end =   feature.getConvexHull().getBoundingBox().maxPosition()[0];
+    
+		return 	rt_prob_.getRTProbability(rt_begin,rt_end,pred_rt);
+  }
+
+
+  DoubleReal PrecursorIonSelectionPreprocessing::getRTDTProbability(DoubleReal value)
+  {
+    return value * transform_factor_;
+    
+//     if(rt_dt_histogramm_.empty()) throw Exception::ElementNotFound(__FILE__,__LINE__,__PRETTY_FUNCTION__, "PrecursorIonSelectionPreprocessing: rt_dt_histogramm has not yet been calculated.");
+//     Size index = (Size) floor((value - min_rt_dt_)/rt_dt_step_size_);
+//     if(index > rt_dt_histogramm_.size()) return rt_dt_histogramm_.back();
+//     else return rt_dt_histogramm_[index];
   }
 
 } //namespace

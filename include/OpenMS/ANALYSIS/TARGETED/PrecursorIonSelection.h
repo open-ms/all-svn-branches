@@ -31,6 +31,7 @@
 
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/METADATA/PeptideIdentification.h>
+#include <OpenMS/ANALYSIS/TARGETED/PSLPFormulation.h>
 
 #include <set>
 
@@ -148,16 +149,19 @@ namespace OpenMS
 		 *	@param pep_ids Peptide identifications
 		 *	@param prot_ids Protein identifications
 		 *	@param preprocessed_db Information from preprocessed database
-		 *  @param step_size Number of MS/MS spectra considered per iteration
 		 *  @param path Path to output file
+     *  @param experiment raw data (only needed for ILP_IPS)
+     *  @param rt_model_path Path to rt model file
 		 *
 		 */
+    
     void simulateRun(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,
 										 std::vector<ProteinIdentification>& prot_ids,
 										 PrecursorIonSelectionPreprocessing& preprocessed_db,
-										 UInt step_size, String path);
+										 String path, MSExperiment<>& experiment,String rt_model_path="");
 
-
+    
+    
 		void reset();
 
 		const std::map<String,std::set<String> >& getPeptideProteinCounter()
@@ -166,7 +170,16 @@ namespace OpenMS
 		}
 		
   private:
+    void simulateILPBasedIPSRun_(FeatureMap<>& features,MSExperiment<>& experiment,
+                                 std::vector<PeptideIdentification>& pep_ids,
+                                 std::vector<ProteinIdentification>& prot_ids,
+                                 PrecursorIonSelectionPreprocessing& preprocessed_db,
+                                 String output_path,String rt_model_path="");
 
+    void simulateRun_(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,
+                      std::vector<ProteinIdentification>& prot_ids,
+                      PrecursorIonSelectionPreprocessing& preprocessed_db,String path);
+    
 		void shiftDown_(FeatureMap<>& features,PrecursorIonSelectionPreprocessing& preprocessed_db,String protein_acc);
 
 		void shiftUp_(FeatureMap<>& features,PrecursorIonSelectionPreprocessing& preprocessed_db,String protein_acc);
@@ -194,6 +207,10 @@ namespace OpenMS
 		UInt filterProtIds_(std::vector<ProteinIdentification>& prot_ids);
 		
 		std::vector<PeptideIdentification> filterPeptideIds_(std::vector<PeptideIdentification>& pep_ids);
+
+    void getNextPrecursors_(std::vector<Int>& solution_indices,std::vector<PSLPFormulation::IndexTriple>& variable_indices,
+														std::set<Int>& measured_variables,FeatureMap<>& features,FeatureMap<>& new_features,
+                            UInt step_size,PSLPFormulation& ilp);
 		
 		/// minimal number of peptides identified for a protein to be declared identified
 		UInt min_pep_ids_;
@@ -209,7 +226,7 @@ namespace OpenMS
 		String mz_tolerance_unit_;
 		/// maximal number of iterations
 		UInt max_iteration_;
-		
+    Size x_variable_number_;
   };
 
 }

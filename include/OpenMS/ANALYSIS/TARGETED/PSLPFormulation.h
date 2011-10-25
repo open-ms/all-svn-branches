@@ -29,7 +29,6 @@
 #define OPENMS_ANALYSIS_TARGETED_PSLPFORMULATION_H
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/KERNEL/MSExperiment.h>
-
 #include <OpenMS/DATASTRUCTURES/LPWrapper.h>
 
 namespace OpenMS

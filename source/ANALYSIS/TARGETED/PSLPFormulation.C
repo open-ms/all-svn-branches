@@ -498,7 +498,8 @@ void PSLPFormulation::updateFeatureILPVariables(FeatureMap<>& new_features,
 							if(variable_indices[f_v_idx].scan == rt_index)
 								{
 									existing = true;
-                  model_->setColumnBounds(variable_indices[f_v_idx].variable,1.,model_->getColumnUpperBound(variable_indices[f_v_idx].variable),
+                  model_->setColumnBounds(variable_indices[f_v_idx].variable,1.,
+                                          model_->getColumnUpperBound(variable_indices[f_v_idx].variable),
                                           LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
 									std::cout << "set column lower von "<<model_->getColumnName(variable_indices[f_v_idx].variable)
 														<< " auf "<<model_->getColumnLowerBound(variable_indices[f_v_idx].variable) <<std::endl;
@@ -540,21 +541,12 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
                                         Feature& new_feature, std::map<String,Size>& protein_variable_index_map)
 {
   std::cout << "Update Combined ILP."<<std::endl;
-	//	bool use_prot_coverage = true;
-	//bool maximize_precursors = false;
-	//	String seq = pep_id.getHits()[0].getSequence().toUnmodifiedString();
-	//	DoubleReal score = pep_id.getHits()[0].getScore();
-  //	DoubleReal min_rt = param_.getValue("inclusion_list:min_rt");
-	//	DoubleReal max_rt = param_.getValue("inclusion_list:max_rt");
-	//DoubleReal rt_step_size = param_.getValue("inclusion_list:rt_step_size");
 	DoubleReal min_prot_coverage = param_.getValue("thresholds:min_prot_id_probability");
 	DoubleReal min_pt = param_.getValue("thresholds:min_pt_weight");
 	DoubleReal min_rt_weight = param_.getValue("thresholds:min_rt_weight");
   DoubleReal min_pred_pep_weight = param_.getValue("thresholds:min_pred_pep_prob");
   DoubleReal mz_tolerance = param_.getValue("mz_tolerance");
   bool use_detectability = true;//param_.getValue("use_detectability") == "true" ? true : false;
-	//DoubleReal rt_tolerance = param_.getValue("rt_tolerance");
-	//Size max_index = (Size)ceil((max_rt-min_rt) / rt_step_size);
 	DoubleReal min_protein_probability = param_.getValue("thresholds:min_protein_probability");
   DoubleReal k1 =  param_.getValue("combined_ilp:k1");
   std::cout << "k1 "<<k1<<std::endl;
@@ -572,13 +564,12 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
 			// if a selected feature yielded a peptide id, the peptide probability needs to be considered in the protein constraint
 			DoubleReal pep_score = new_feature.getPeptideIdentifications()[0].getHits()[0].getScore();
 			Size index = new_feature.getMetaValue("variable_index");
-			String sequence = new_feature.getPeptideIdentifications()[0].getHits()[0].getSequence().toUnmodifiedString();
-			const std::vector<String>& c_accs = new_feature.getPeptideIdentifications()[0].getHits()[0].getProteinAccessions();
+			const std::vector<String>& accs = new_feature.getPeptideIdentifications()[0].getHits()[0].getProteinAccessions();
 			// check all proteins that were already detected (only there we need to update a constraint)
 			for(Size pa = 0; pa < protein_accs.size();++pa)
 				{
-					if(find(c_accs.begin(),c_accs.end(),protein_accs[pa]) == c_accs.end())  continue;
-					DoubleReal weight= 1.;//graph.getPeptideWeight(protein_accs[pa],sequence);
+					if(find(accs.begin(),accs.end(),protein_accs[pa]) == accs.end())  continue;
+					DoubleReal weight= 1.;
 					Int row= model_->getRowIndex((String("PROT_COV_")+protein_accs[pa]).c_str());
           std::cout << protein_accs[pa] << " index "<<row << " "<<model_->getElement(row,index)<<std::endl;
 					if(model_->getElement(row,index) != 0.)
@@ -603,10 +594,7 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
 // 					else std::cout << "getElement("<<protein_accs[pa]<<","<<index<<") ="
 // 												 << cmodel_->getElement(row,index) << " ==? 0.\n";
 				}//for(Size pa = 0; pa < protein_accs.size();++pa)
-				
-
 			
-			std::vector<String> accs = new_feature.getPeptideIdentifications()[0].getHits()[0].getProteinAccessions();
 			std::cout << "Now search for matching features for "<<accs.size() <<" proteins."<<std::endl;
 			for(Size prot = 0; prot < accs.size();++prot)
 				{
@@ -624,10 +612,10 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
 						}
 					else prot_var_iter->second.push_back((Size)new_feature.getMetaValue("feature_index"));
 					// if protein prob exceeds min threshold
-					if(prot_inference.getProteinProbability(accs[prot]) > min_protein_probability)
+					if((prot_inference.getProteinProbability(accs[prot]) > min_protein_probability)
+             && (prot_inference.isProteinInMinimalList(accs[prot])))
 						{
-							std::map<String,std::vector<DoubleReal> >::const_iterator map_iter = preprocessed_db.getProteinPTMap().
-								find(accs[prot]);
+							std::map<String,std::vector<DoubleReal> >::const_iterator map_iter = preprocessed_db.getProteinPTMap().find(accs[prot]);
 							if(map_iter !=  preprocessed_db.getProteinPTMap().end())
 								{
 									std::vector<String>::iterator prot_acc_iter = find(protein_accs.begin(),protein_accs.end(),accs[prot]);
@@ -640,7 +628,6 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
                           updateObjFunction_(accs[prot],features,preprocessed_db,variable_indices);
                         }
 											protein_accs.push_back(accs[prot]);
-                      //if(not_solve) continue;
 											// insert protein to ILP
 											// first add penalty
 											// insert penalty variable
@@ -677,11 +664,7 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
 																	// isn't the feature index more interesting here? think about it!
 																	if(indices[idx] == variable)
 																		{
-																			DoubleReal weight = 1.;// graph.getPeptideWeight(accs[prot],
-// 																																								 features[prot_var_iter->second[var]].
-// 																																								 getPeptideIdentifications()[0].
-// 																																								 getHits()[0].getSequence().
-// 																																								 toUnmodifiedString());
+																			DoubleReal weight = 1.;
 																			if(fabs(score*weight- 1.) < 0.000001) // pseudocount to prevent entering -inf
 																				{
 																					entries[idx] = -log( 0.000001) / log(1.-min_prot_coverage);
@@ -704,11 +687,7 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
 																	indices.push_back(variable);
 																	DoubleReal score = features[prot_var_iter->second[var]].getPeptideIdentifications()[0].
                                     getHits()[0].getScore();
-																	DoubleReal weight = 1.; //graph.getPeptideWeight(accs[prot],
-// 																																						 features[prot_var_iter->second[var]].
-// 																																						 getPeptideIdentifications()[0].
-// 																																						 getHits()[0].getSequence().
-// 																																						 toUnmodifiedString());
+																	DoubleReal weight = 1.;
                                   std::cout <<features[prot_var_iter->second[var]].getMZ()<<" "<<features[prot_var_iter->second[var]].getRT()<<std::endl;
 																	if(fabs(weight * score- 1.) < 0.000001)
 																		{
@@ -886,7 +865,7 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
 				}
 		}
 // 	else if(!not_solve)
-  else
+  else 
     {
 			// if a selected feature didn't yield any peptide id, all concerned
 			// protein constraints need to be updated (feature has to be deleted from this constraint)

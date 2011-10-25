@@ -51,12 +51,12 @@ namespace OpenMS
 
   {
     defaults_.setValue("number_of_bins", 40, "Number of bins used for the fitting, if sparse datasets are used, this number should be smaller", StringList::create("advanced"));
-    defaults_.setValue("min_rt", 960., "Minimal RT in the experiment (in seconds)");
-    defaults_.setMinFloat("min_rt",0.);
-    defaults_.setValue("max_rt", 3840., "Maximal RT in the experiment (in seconds)");
-    defaults_.setMinFloat("min_rt",1.);
-    defaults_.setValue("rt_step_size", 30., "Time between two consecutive spectra (in seconds)");
-    defaults_.setMinFloat("min_rt",1.);
+    defaults_.setValue("rt_settings:min_rt", 960., "Minimal RT in the experiment (in seconds)");
+    defaults_.setMinFloat("rt_settings:min_rt",0.);
+    defaults_.setValue("rt_settings:max_rt", 3840., "Maximal RT in the experiment (in seconds)");
+    defaults_.setMinFloat("rt_settings:min_rt",1.);
+    defaults_.setValue("rt_settings:rt_step_size", 30., "Time between two consecutive spectra (in seconds)");
+    defaults_.setMinFloat("rt_settings:min_rt",1.);
     defaults_.setValue("gauss_amplitude", 0.08, "Initial Gauss amplitude");
     defaults_.setMinFloat("gauss_amplitude",0.);
     defaults_.setValue("gauss_mean", -1., "Initial Gauss mean");
@@ -333,9 +333,9 @@ namespace OpenMS
   
   Int RTProbability::getScanNumber_(DoubleReal rt)
   {
-    DoubleReal min_rt = param_.getValue("min_rt");
-    DoubleReal max_rt = param_.getValue("max_rt");
-    DoubleReal rt_step_size = param_.getValue("rt_step_size");
+    DoubleReal min_rt = param_.getValue("rt_settings:min_rt");
+    DoubleReal max_rt = param_.getValue("rt_settings:max_rt");
+    DoubleReal rt_step_size = param_.getValue("rt_settings:rt_step_size");
     
     if(rt > max_rt || rt < min_rt) return -1;
 

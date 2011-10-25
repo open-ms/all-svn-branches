@@ -109,9 +109,15 @@ namespace OpenMS
 		
 		DoubleReal getPT(String prot_id,Size peptide_index);
     DoubleReal getRTProbability(String prot_id, Size peptide_index,Feature& feature);
+    DoubleReal getRTProbability(DoubleReal pred_rt,Feature& feature);
+    
+		void learnRTProbabilities(FeatureMap<>& features,String rt_model_path,DoubleReal min_score=0.5,bool use_detectability=true);
+    
+
+    DoubleReal getRTDTProbability(DoubleReal value);
 
 		/// get the rt-weight for the proposed peptide and its measured rt
-		DoubleReal getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt);
+    //		DoubleReal getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt);
 
 		
 	protected:
@@ -124,6 +130,7 @@ namespace OpenMS
 
     /// preprocess fasta identifier
     void filterTaxonomyIdentifier_(FASTAFile::FASTAEntry& entry);
+    void transformRTDTProbabilitiesOnIds_(FeatureMap<>& features,bool use_detectability=true);
 
 		/// all tryptic masses of the distinct peptides in the database
 		std::vector<DoubleReal> masses_;
@@ -145,6 +152,10 @@ namespace OpenMS
 		std::map<char, std::vector<String> > fixed_modifications_;
 
     RTProbability rt_prob_;
+    std::vector<DoubleReal> rt_dt_histogramm_;
+    DoubleReal min_rt_dt_;
+    DoubleReal rt_dt_step_size_;
+    DoubleReal transform_factor_;
   };
 }
     

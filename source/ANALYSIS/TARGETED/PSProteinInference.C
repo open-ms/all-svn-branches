@@ -46,12 +46,13 @@ namespace OpenMS
   }
 
   
-  Size PSProteinInference::findMinimalProteinList(std::vector<String>& accessions,const std::vector<PeptideIdentification>& peptide_ids)
+  Size PSProteinInference::findMinimalProteinList(const std::vector<PeptideIdentification>& peptide_ids)
   {
     LPWrapper problem;
     set<String> all_accs;
-    accessions.clear();
-    
+
+    minimal_protein_list_accessions_.clear();
+      
     // first get all protein accessions:
     for(Size p = 0; p < peptide_ids.size();++p)
       {
@@ -104,16 +105,17 @@ namespace OpenMS
       {
         if(problem.getColumnValue(c) == 1)
           {
-            accessions.push_back(problem.getColumnName(c)); // enter protein accession
+            minimal_protein_list_accessions_.push_back(problem.getColumnName(c)); // enter protein accession
           }
       }
     
-    return accessions.size();
+    return  minimal_protein_list_accessions_.size();
   }
   
-  void PSProteinInference::calculateProteinProbabilities(const std::vector<String>& accessions, const std::vector<PeptideIdentification>& ids,
-                                                         std::vector<DoubleReal>& probabilities)
+  void PSProteinInference::calculateProteinProbabilities(const std::vector<PeptideIdentification>& ids)
   {
+    accessions_.clear(); probabilities_.clear();
+    
     // first map peptides to proteins
     std::map<String,vector<PeptideIdentification> > pep_prot_map;
     for(Size i = 0; i < ids.size();++i)
@@ -157,45 +159,61 @@ namespace OpenMS
           }
       }
 
+    // enter accessions in member vector
+    std::map<String,vector<PeptideIdentification> >::const_iterator map_it = pep_prot_map.begin();
+    for(;map_it != pep_prot_map.end(); ++map_it) accessions_.push_back(map_it->first);
+    
     // now calculate protein probabilities
-    probabilities.assign(accessions.size(),1.);
-    for(Size a = 0; a < accessions.size();++a)
+    probabilities_.assign(accessions_.size(),1.);
+    for(Size a = 0; a < accessions_.size();++a)
       {
-        if(pep_prot_map.find(accessions[a]) == pep_prot_map.end())
+        if(pep_prot_map.find(accessions_[a]) == pep_prot_map.end())
           {
-            probabilities[a] = 1.;
+            probabilities_[a] = 1.;
             continue;
           }
-        for(Size p = 0; p < pep_prot_map[accessions[a]].size();++p)
+        for(Size p = 0; p < pep_prot_map[accessions_[a]].size();++p)
           {
             //            std::cout << accessions[a] << " "<< pep_prot_map[accessions[a]].size()<<std::endl;
-            bool higher_better = pep_prot_map[accessions[a]][p].isHigherScoreBetter();
-            if(higher_better) probabilities[a] *= (1.-pep_prot_map[accessions[a]][p].getHits()[0].getScore());
-            else probabilities[a] *= (pep_prot_map[accessions[a]][p].getHits()[0].getScore());
+            bool higher_better = pep_prot_map[accessions_[a]][p].isHigherScoreBetter();
+            if(higher_better) probabilities_[a] *= (1.-pep_prot_map[accessions_[a]][p].getHits()[0].getScore());
+            else probabilities_[a] *= (pep_prot_map[accessions_[a]][p].getHits()[0].getScore());
           }
       }
 
-    for(Size a = 0; a < probabilities.size();++a)  probabilities[a] = 1. - probabilities[a];
+    for(Size a = 0; a < probabilities_.size();++a)  probabilities_[a] = 1. - probabilities_[a];
 
-    accessions_ = accessions;
-    probabilities_ = probabilities;
   }
 
 
-  DoubleReal PSProteinInference::getProteinProbability(const String& acc,const std::vector<String>& accessions, const std::vector<DoubleReal>& probabilities)
-  {
-    std::vector<String>::const_iterator it = std::find(accessions.begin(),accessions.end(),acc);
-    if(it == accessions.end())  return 0.;
-    return probabilities[distance(accessions.begin(),it)];
-  }
+//   DoubleReal PSProteinInference::getProteinProbability(const String& acc,const std::vector<String>& accessions, const std::vector<DoubleReal>& probabilities)
+//   {
+//     std::vector<String>::const_iterator it = std::find(accessions.begin(),accessions.end(),acc);
+//     if(it == accessions.end())  return 0.;
+//     return probabilities[distance(accessions.begin(),it)];
+//   }
   
 
-  DoubleReal PSProteinInference::getProteinProbability(String& acc)
+  DoubleReal PSProteinInference::getProteinProbability(const String& acc)
   {
     std::vector<String>::iterator it = std::find(accessions_.begin(),accessions_.end(),acc);
     if(it == accessions_.end())  return 0.;
     return probabilities_[distance(accessions_.begin(),it)];
   }
-    
+
+  bool PSProteinInference::isProteinInMinimalList(const String& acc)
+  {
+    return find(minimal_protein_list_accessions_.begin(),minimal_protein_list_accessions_.end(),acc) != minimal_protein_list_accessions_.end();
+  }
+
+  Int PSProteinInference::getNumberOfProtIds(DoubleReal protein_id_threshold)
+  {
+    Int num = 0;
+    for(Size i = 0; i < minimal_protein_list_accessions_.size();++i)
+      {
+        if(getProteinProbability(minimal_protein_list_accessions_[i]) > protein_id_threshold) ++num;
+      }
+    return num;
+  }
   
 }//namespace

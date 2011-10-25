@@ -28,8 +28,10 @@
 
 #include <OpenMS/ANALYSIS/TARGETED/PrecursorIonSelection.h>
 #include <OpenMS/ANALYSIS/TARGETED/PrecursorIonSelectionPreprocessing.h>
+#include <OpenMS/ANALYSIS/TARGETED/PSProteinInference.h>
+#include <OpenMS/ANALYSIS/TARGETED/OfflinePrecursorIonSelection.h>
 #include <OpenMS/ANALYSIS/ID/IDMapper.h>
-
+#include <OpenMS/SYSTEM/StopWatch.h>
 using namespace std;
 //#define PIS_DEBUG
 //#undef PIS_DEBUG
@@ -40,19 +42,19 @@ namespace OpenMS
 			max_score_(0.)
 	{
 	  defaults_.setValue("type","IPS","Strategy for precursor ion selection.");
-		defaults_.setValidStrings("type",StringList::create("IPS,SPS,Upshift,Downshift,DEX"));
-		defaults_.setValue("precursor_mass_tolerance", 10., "Precursor mass tolerance which is used to query the peptide database for peptides");
-		defaults_.setMinFloat("precursor_mass_tolerance",0.);
-		defaults_.setValue("precursor_mass_tolerance_unit", "ppm", "Precursor mass tolerance unit.");
-		defaults_.setValidStrings("precursor_mass_tolerance_unit",StringList::create("ppm,Da"));
-		defaults_.setValue("missed_cleavages",1,"Number of allowed missed cleavages.");
-		defaults_.setMinInt("missed_cleavages",0);
+		defaults_.setValidStrings("type",StringList::create("ILP_IPS,IPS,SPS,Upshift,Downshift,DEX"));
 		defaults_.setValue("min_pep_ids",2,"Minimal number of identified peptides required for a protein identification.");
 		defaults_.setMinInt("min_pep_ids",1);
 		defaults_.setValue("max_iteration",100,"Maximal number of iterations.");
 		defaults_.setMinInt("max_iteration",1);
-
-		
+    defaults_.setValue("rt_bin_capacity",10,"Maximal number of precursors per rt bin.");
+    defaults_.setMinInt("rt_bin_capacity",1);
+    defaults_.setValue("step_size",10,"Maximal number of precursors per iteration.");
+    defaults_.setMinInt("step_size",1);
+    defaults_.insert("MIPFormulation:",PSLPFormulation().getDefaults());
+    defaults_.remove("MIPFormulation:mz_tolerance");
+    defaults_.remove("MIPFormulation:rt:");
+    defaults_.insert("Preprocessing:",PrecursorIonSelectionPreprocessing().getDefaults());
 		defaultsToParam_();
 		updateMembers_();
 	}
@@ -472,13 +474,22 @@ namespace OpenMS
 	{
 		prot_id_counter_.clear();
 	}
-	
-	void PrecursorIonSelection::simulateRun(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,
-																					std::vector<ProteinIdentification>& prot_ids,
-																					PrecursorIonSelectionPreprocessing& preprocessed_db,
-																					UInt step_size, String path)
-	{
 
+  void PrecursorIonSelection::simulateRun(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,
+                                          std::vector<ProteinIdentification>& prot_ids,
+                                          PrecursorIonSelectionPreprocessing& preprocessed_db,
+                                          String path, MSExperiment<>& experiment, String rt_model_path)
+  {
+    if(param_.getValue("type") == "ILP_IPS")   simulateILPBasedIPSRun_(features,experiment,pep_ids,prot_ids,preprocessed_db,path,
+                                                                       rt_model_path);
+    else simulateRun_(features,pep_ids,prot_ids,preprocessed_db,path);
+  }
+  
+	void PrecursorIonSelection::simulateRun_(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,
+                                           std::vector<ProteinIdentification>& prot_ids,
+                                           PrecursorIonSelectionPreprocessing& preprocessed_db,String path)
+	{
+    UInt step_size(param_.getValue("step_size"));
 		sortByTotalScore(features);
 		std::ofstream outf(path.c_str());
 #ifdef PIS_DEBUG
@@ -729,6 +740,322 @@ namespace OpenMS
 	}
 
 
+  void PrecursorIonSelection::simulateILPBasedIPSRun_(FeatureMap<>& features,MSExperiment<>& experiment,
+                                                      std::vector<PeptideIdentification>& pep_ids,
+                                                      std::vector<ProteinIdentification>& prot_ids,
+                                                      PrecursorIonSelectionPreprocessing& preprocessed_db,
+                                                      String output_path,String rt_model_path)
+	{
+		std::cout << pep_ids.size() << " ids before filtering\n";
+		std::vector<PeptideIdentification> filtered_pep_ids = filterPeptideIds_(pep_ids);
+		std::cout << filtered_pep_ids.size() << " ids after filtering\n";
+		if(param_.getValue("Preprocessing:precursor_mass_tolerance_unit") != "ppm")
+			{
+				std::cout << "Error: use ppm as precursor_mass_tolerance_unit!"<<std::endl;
+				return;
+			}
+    UInt step_size(param_.getValue("step_size"));
+    UInt rt_bin_capacity(param_.getValue("rt_bin_capacity"));
+		DoubleReal protein_id_threshold = param_.getValue("MIPFormulation:thresholds:min_protein_id_probability");
+    PSLPFormulation ilp_wrapper;
+    Param mip_param = param_.copy("MIPFormulation:",true);
+		mip_param.setValue("mz_tolerance",param_.getValue("Preprocessing:precursor_mass_tolerance"));
+    mip_param.insert("rt",param_.copy("Preprocessing:rt_setting:",true));
+		ilp_wrapper.setParameters(mip_param);
+
+    // annotate map with ids
+		IDMapper mapper;
+		Param p = mapper.getParameters();
+		p.setValue("rt_tolerance", 20.);
+		p.setValue("mz_tolerance", 0.05);
+		p.setValue("mz_measure","Da");
+    p.setValue("ignore_charge","true");
+		mapper.setParameters(p);
+		mapper.annotate(features,filtered_pep_ids,prot_ids);
+
+		PSProteinInference protein_inference;
+
+		//Param preprocessed_db_param = preprocessed_db.getParameters();
+    bool use_detectability = true;
+    
+		if(rt_model_path != "")
+			{
+        preprocessed_db.learnRTProbabilities(features,rt_model_path,0.8,use_detectability);
+				//preprocessed_db.setGaussianParameters(5.,-2.);
+			}
+		else
+			{
+				std::cout << "Need rt_model_file parameters in Preprocessed DB for rt weighting"<<std::endl;
+				return;
+			}
+	
+		// sort according to score
+		// ATTENTION: do not change the order of the features afterwards
+		sortByTotalScore(features);
+
+		OfflinePrecursorIonSelection ofps;
+		// get the mass ranges for each features for each scan it occurs in
+		std::vector<std::vector<std::pair<Size,Size> > >  indices;
+		ofps.getMassRanges(features,experiment,indices);
+
+		// create ILP
+    std::vector<PSLPFormulation::IndexTriple> variable_indices;
+    std::vector<Int> solution_indices;
+
+		std::map<String,std::vector<Size> > protein_feature_map;
+		
+		std::set<Int> charges_set;
+		charges_set.insert(0); //TODO : make this work for different charges
+    
+    ilp_wrapper.createAndSolveCombinedLPForKnownLCMSMapFeatureBased(features, experiment,variable_indices,
+                                                                    solution_indices,
+                                                                    indices,charges_set,rt_bin_capacity,
+                                                                    step_size);
+    x_variable_number_ = variable_indices.size();
+		std::cout<< "first ilp created and solved"<<std::endl;
+		std::set<Int> measured_variables;
+		std::map<Size,std::vector<String> > feature_constraints_map;		
+		// acquire first spectrum/spectra
+		// get first precursors
+		FeatureMap<> new_features;
+		getNextPrecursors_(solution_indices,variable_indices,measured_variables,features,new_features,step_size,ilp_wrapper);
+
+    ilp_wrapper.updateFeatureILPVariables(new_features,variable_indices,feature_constraints_map);
+
+    std::vector<std::vector<std::pair<String,Int> > > feature_prot_pep_index_vec;
+		
+		Size precursors = 0;
+		UInt iteration = 0;
+		UInt pep_id_number = 0;
+		std::vector<PeptideIdentification> curr_pep_ids,all_pep_ids;
+		std::vector<ProteinIdentification> curr_prot_ids,all_prot_ids;
+#ifdef PIS_DEBUG
+		std::cout << max_iteration_ << std::endl;
+#endif
+		std::ofstream outf(output_path.c_str());
+
+		std::vector<String> protein_accs;
+    std::map<String,Size> protein_penalty_index_map;
+
+    // #ifdef PIS_DEBUG
+    StopWatch timer;
+    timer.start();
+    // #endif
+    std::ofstream out_prec("precursors.txt");
+ 		// while there are precursors left and the maximal number of iterations isn't arrived
+		while((new_features.size()  > 0 && iteration < max_iteration_) )
+			{
+				++iteration;
+				//#ifdef PIS_DEBUG
+        timer.stop();
+        std::cout << " "<< timer.getClockTime() <<" seconds needed for iteration.\n";        
+				std::cout << "================================ iteration "<<iteration<<std::endl;
+        timer.reset();
+        timer.start();        
+        //#endif
+				curr_pep_ids.clear();
+				curr_prot_ids.clear();
+				std::vector<String> current_prot_accs;
+				// go through the new compounds
+				for(UInt c=0;c<new_features.size();++c)
+					{
+						//#ifdef PIS_DEBUG
+						// print info
+						Size index = new_features[c].getMetaValue("variable_index");
+						std::cout << "rt "<< new_features[c].getRT()
+											<< " mz: "<<  new_features[c].getMZ()
+											// << " delta_p_max "<< new_features[c].getMetaValue("delta_p_max")
+// 											<< " delta_p_max_protein_acc "<< new_features[c].getMetaValue("delta_p_max_protein_acc")
+											<< " msms_score " << new_features[c].getMetaValue("msms_score")
+											<< " obj. value feat. based " <<  ilp_wrapper.getObjectiveValue(index);
+						if(new_features[c].metaValueExists("penalized"))
+							{
+								std::cout << " penalized? "<< new_features[c].getMetaValue("penalized");
+							}
+						out_prec << "rt "<< new_features[c].getRT() << " mz: "<<  new_features[c].getMZ()
+                     << " int: "<< new_features[c].getIntensity() <<std::endl;
+						std::cout << "\n";
+						// get their peptide ids
+						std::vector<PeptideIdentification> & pep_ids = new_features[c].getPeptideIdentifications();
+						
+						//#ifdef PIS_DEBUG
+						if(pep_ids.size() > 0)
+							{
+								String seq = pep_ids[0].getHits()[0].getSequence().toString();
+								std::cout << "ids "	<< "\t";
+								std::cout << seq<<"\ttheo mass: "
+													<< pep_ids[0].getHits()[0].getSequence().getMonoWeight(Residue::Full,1)<<"\t";
+								if(pep_ids[0].getHits()[0].metaValueExists("predicted_RT"))
+									{
+										std::cout << "pred_rt "<<pep_ids[0].getHits()[0].getMetaValue("predicted_RT")<<" "
+															<< preprocessed_db.getRTProbability(pep_ids[0].getHits()[0].getMetaValue("predicted_RT"),
+																																	new_features[c])<<"\t";
+									}
+								if(pep_ids[0].getHits()[0].metaValueExists("predicted_PT"))
+									{
+										std::cout << "pred_pt "<<pep_ids[0].getHits()[0].getMetaValue("predicted_PT")<<"\t";
+									}
+								std::cout << pep_ids[0].getHits()[0].getScore() << " "
+													<< pep_ids[0].getSignificanceThreshold() << " "
+													<< pep_ids[0].getHits()[0].getMetaValue("Rank");
+								if(pep_ids[0].getHits()[0].getProteinAccessions().size()>0)
+									{
+										String acc = pep_ids[0].getHits()[0].getProteinAccessions()[0];
+                    
+										const std::map<String, std::vector<String> >& sequence_map = preprocessed_db.getProteinPeptideSequenceMap();
+										std::map<String, std::vector<String> >::const_iterator seq_map_iter = sequence_map.find(acc);
+										if(seq_map_iter != sequence_map.end())
+											{
+												std::vector<String>::const_iterator seq_vec_iter =
+													find(seq_map_iter->second.begin(),seq_map_iter->second.end(),seq);
+												if(seq_vec_iter!=seq_map_iter->second.end())
+													{
+														std::cout << " dt: "
+																			<< preprocessed_db.getPT(acc,distance(seq_map_iter->second.begin(),seq_vec_iter))
+																			<< "\trt-weight: "
+																			<< preprocessed_db.getRTProbability(acc,distance(seq_map_iter->second.begin(),
+                                                                                       seq_vec_iter),
+                                                                          new_features[c]);
+													}
+											}
+										std::cout << "\t"<<acc << "\t"
+															<< protein_inference.getProteinProbability(acc);
+									}
+								std::cout <<std::endl;
+							}		
+						//#endif
+						//Size pep_id_index = all_pep_ids.size();
+						all_pep_ids.insert(all_pep_ids.end(),new_features[c].getPeptideIdentifications().begin(),
+															 new_features[c].getPeptideIdentifications().end());
+						std::cout << new_features[c].getRT()<<" "<<new_features[c].getMZ()<<std::endl;
+
+            protein_inference.findMinimalProteinList(all_pep_ids);
+            protein_inference.calculateProteinProbabilities(all_pep_ids);
+
+						std::vector<String> new_protein_accs;
+            ilp_wrapper.updateCombinedILP(features,preprocessed_db,variable_indices,
+                                          new_protein_accs,protein_accs,protein_inference,x_variable_number_,
+                                          protein_feature_map,new_features[c], protein_penalty_index_map);
+           
+ 					}//for(UInt c=0;c<new_cl.size();++c)
+				
+ 				precursors += new_features.size();
+				pep_id_number += curr_pep_ids.size();
+ 				//#ifdef PIS_DEBUG
+ 				std::cout << "new features "<<new_features.size() << std::endl;
+ 				std::cout << "curr_pep_ids "<<curr_pep_ids.size() << std::endl;
+ 				//#endif
+
+        UInt num_prots = protein_inference.getNumberOfProtIds(protein_id_threshold);				
+        std::cout << "step size constraint update"<<std::endl;		
+        ilp_wrapper.updateStepSizeConstraint(precursors,step_size);
+        std::cout << "step size constraint updated"<<std::endl;
+        ilp_wrapper.solveILP(solution_indices,iteration,true, rt_bin_capacity);
+        getNextPrecursors_(solution_indices,variable_indices,measured_variables,
+                           features,new_features,step_size,ilp_wrapper);
+				ilp_wrapper.updateFeatureILPVariables(new_features,variable_indices,feature_constraints_map);
+				
+				// write results of current iteration				
+				outf << iteration << "\t\t"
+						 << num_prots << "\t\t"
+						 << std::endl;
+// 				new_features.clear(true);
+// 				getNextPrecursors(features,new_features,step_size,false);	
+// #ifdef PIS_DEBUG
+// 				std::cout << new_features.size() << " compounds for msms"<< std::endl;
+// #endif
+			}//while(new_features.size() > 0 && iteration < max_iteration)
+
+
+    //    graph.printGraph();
+    
+		//#ifdef PIS_DEBUG
+		std::map<String,std::set<String> >::iterator pic_iter=prot_id_counter_.begin();
+		std::cout << "----------------------------------\nDisplay prot_id_counter:\n";
+		for(;pic_iter != prot_id_counter_.end();++pic_iter)
+			{
+				std::set<String>::iterator pep_iter = pic_iter->second.begin();
+				std::cout << "--------------------------\n"<<pic_iter->first
+									<< " "<<protein_inference.getProteinProbability(pic_iter->first)
+									<< " with:\n"; 
+				for(;pep_iter != pic_iter->second.end();++pep_iter)
+					{
+						std::cout << *pep_iter<<std::endl;
+					}
+			}
+		//#endif
+	}
+
+
+  
+	void PrecursorIonSelection::getNextPrecursors_(std::vector<Int>& solution_indices,
+                                                 std::vector<PSLPFormulation::IndexTriple>& variable_indices,
+																								 std::set<Int>& measured_variables,FeatureMap<>& features,
+																								 FeatureMap<>& new_features,UInt step_size,
+                                                 PSLPFormulation& /* ilp*/)
+	{
+    FeatureMap<> tmp_features;
+		std::cout << "Get next precursors"<<std::endl;
+		std::cout << solution_indices.size() << " entries in solution indices.\n";
+		DoubleReal min_rt = param_.getValue("MIPFormulation:rt:min_rt");
+		DoubleReal rt_step_size = param_.getValue("MIPFormulation:rt:rt_step_size");
+		new_features.clear(true);
+    sort(variable_indices.begin(),variable_indices.end(),PSLPFormulation::VariableIndexLess());
+    Size prots = 0;
+		// first go through solution indices
+		for(Size i = 0; i < solution_indices.size();++i) // 
+			{
+        // check if variable is not a protein
+        if(solution_indices[i] >= (Int)x_variable_number_)
+          {
+            //            std::cout << "protein variable in solution indices"<<std::endl;
+            ++prots;
+            continue;
+          }
+        
+        Size var_counter = 0;
+				while(var_counter < variable_indices.size() && (Int)variable_indices[var_counter].variable != solution_indices[i])
+				{
+					++var_counter;
+				}
+        
+#ifdef PIS_DEBUG
+        std::cout << "var_counter "<<var_counter<<" "<<solution_indices[i]<<" solution_indices[idx]"<<std::endl;
+				std::cout << features[variable_indices[var_counter].feature].getRT() <<" "
+									<< features[variable_indices[var_counter].feature].getMZ()
+									<< " previously acquired? "
+									<< (features[variable_indices[var_counter].feature].getMetaValue("fragmented")=="true")
+									<< "\n";
+#endif
+				// check if current variable was already measured
+				if(measured_variables.count(variable_indices[var_counter].feature)==0)
+					{
+						//features[variable_indices[var_counter].feature].setMetaValue("fragmented","true");
+						features[variable_indices[var_counter].feature].setMetaValue("variable_index",variable_indices[solution_indices[i]].variable);
+						features[variable_indices[var_counter].feature].setMetaValue("feature_index",variable_indices[solution_indices[i]].feature);
+						tmp_features.push_back(features[variable_indices[var_counter].feature]);
+						tmp_features.back().setRT(min_rt + rt_step_size*variable_indices[var_counter].scan);
+        }
+			}
+    UInt num_precs = 0;
+    std::cout << prots <<" proteins in solution indices"<<std::endl;
+    std::cout <<tmp_features.size() <<" tmp features"<<std::endl;
+    sortByTotalScore(tmp_features);
+    std::cout << "sorted" << std::endl;
+    for(Size f = 0; f < tmp_features.size() && num_precs < step_size; ++f)
+    {
+      std::cout << tmp_features[f].getMetaValue("variable_index") << " "
+                << variable_indices[tmp_features[f].getMetaValue("variable_index")].feature
+                << std::endl;
+      features[variable_indices[tmp_features[f].getMetaValue("variable_index")].feature].setMetaValue("fragmented","true");
+      measured_variables.insert(variable_indices[tmp_features[f].getMetaValue("variable_index")].feature);
+      new_features.push_back(tmp_features[f]);
+      ++num_precs;
+    }
+		std::cout << "Selected "<<new_features.size()<<" precursors"<<std::endl;
+	}
+
+
 
 	UInt PrecursorIonSelection::filterProtIds_(std::vector<ProteinIdentification>& prot_ids)
 	{
@@ -801,8 +1128,8 @@ namespace OpenMS
 		else if(param_.getValue("type") == "SPS") type_ = SPS;
 		else type_ = DEX;
 		min_pep_ids_ = (UInt)param_.getValue("min_pep_ids");
-		mz_tolerance_unit_ = (String)param_.getValue("precursor_mass_tolerance_unit");
-		mz_tolerance_ = (DoubleReal)param_.getValue("precursor_mass_tolerance");
+		mz_tolerance_unit_ = (String)param_.getValue("Preprocessing:precursor_mass_tolerance_unit");
+		mz_tolerance_ = (DoubleReal)param_.getValue("Preprocessing:precursor_mass_tolerance");
 		max_iteration_ = (UInt) param_.getValue("max_iteration");
 	}
 

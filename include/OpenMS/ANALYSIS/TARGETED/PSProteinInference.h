@@ -53,16 +53,18 @@ namespace OpenMS
     virtual ~PSProteinInference();
 
     
-    Size findMinimalProteinList(std::vector<String>& accessions,const std::vector<PeptideIdentification>& peptide_ids);
+    Size findMinimalProteinList(const std::vector<PeptideIdentification>& peptide_ids);
 
-    void calculateProteinProbabilities(const std::vector<String>& accessions, const std::vector<PeptideIdentification>& ids,
-                                       std::vector<DoubleReal>& probabilities);
+    void calculateProteinProbabilities(const std::vector<PeptideIdentification>& ids);
     
-    DoubleReal getProteinProbability(const String& acc,const std::vector<String>& accessions, const std::vector<DoubleReal>& probabilities);
+//     DoubleReal getProteinProbability(const String& acc,const std::vector<String>& accessions, const std::vector<DoubleReal>& probabilities);
 
-    DoubleReal getProteinProbability(String& acc);
+    DoubleReal getProteinProbability(const String& acc);
+
+    bool isProteinInMinimalList(const String& acc);
+    Int getNumberOfProtIds(DoubleReal protein_id_threshold);
   private:
-
+    std::vector<String> minimal_protein_list_accessions_;
     std::vector<String> accessions_;
     std::vector<DoubleReal> probabilities_;
     

@@ -230,7 +230,7 @@ namespace OpenMS {
 			namebuf<<"x#"<<i;
 			// create the new variable object
       Size index = build.addColumn();
-      build.setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
+      build.setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED);
 			build.setColumnType(index,LPWrapper::INTEGER); // integer variable
 			build.setObjective(index, pairs[i].getEdgeScore());
 			if (score_min > score ) score_min = score;
@@ -319,7 +319,7 @@ namespace OpenMS {
 					std::vector<int> columns;
           columns.push_back(int(i-margin_left));
           columns.push_back(int(j-margin_left));
-					build.addRow(columns, element,s, 0., 1.,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
+					build.addRow(columns, element,s, 0., 1.,LPWrapper::DOUBLE_BOUNDED);
 				}
 			}
 		}

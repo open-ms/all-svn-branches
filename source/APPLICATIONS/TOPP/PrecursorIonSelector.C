@@ -140,7 +140,8 @@ protected:
     registerInputFile_("db_path","<db-file>","","db file",false);
     registerStringOption_("rt_model","<rt-model-file>","","SVM Model for RTPredict",false);
 		registerStringOption_("dt_model","<dt-model-file>","","SVM Model for PTPredict",false);
-
+    registerStringOption_("solver","<solver-type>","GLPK","LP solver type",false,true);
+    setValidStrings_("solver",StringList::create("GLPK,COINOR"));
     addEmptyLine_();
     registerSubsection_("algorithm","Settings for the compound list creation and rescoring.");
 
@@ -172,7 +173,7 @@ protected:
 		bool store_preprocessing = getFlag_("store_preprocessing");
 		String rt_model = getStringOption_("rt_model");
 		String dt_model = getStringOption_("dt_model");
-
+    String solver(getStringOption_("solver"));
 		//-------------------------------------------------------------
     // init pis preprocessing
     //-------------------------------------------------------------
@@ -211,7 +212,13 @@ protected:
     PrecursorIonSelection pis;
 		//    pis.setLogType(log_type_);
 		pis.setParameters(pis_param);
-		
+#if COINOR_SOLVER==1  
+    if(solver == "GLPK")
+      {
+        pis.setLPSolver(LPWrapper::SOLVER_GLPK);
+      }
+    else pis.setLPSolver(LPWrapper::SOLVER_COINOR);
+#endif
     //-------------------------------------------------------------
     // loading input
     //-------------------------------------------------------------

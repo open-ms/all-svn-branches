@@ -87,6 +87,7 @@ void PSLPFormulation::createAndSolveCombinedLPFeatureBased_(const FeatureMap<>& 
 
 	//#define DEBUG_OPS
   model_ = new LPWrapper();
+  model_->setSolver(solver_);
 	Int counter = 0;
 
 	std::cout << "Feature Based: Build model: first objective"<<std::endl;
@@ -154,7 +155,7 @@ void PSLPFormulation::createAndSolveCombinedLPFeatureBased_(const FeatureMap<>& 
           Size index = model_->addColumn();
 					triple.variable = index;
 					variable_indices.push_back(triple);
-          model_->setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
+          model_->setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED);
 					model_->setColumnType(index,LPWrapper::BINARY); // binary variable
 					model_->setColumnName(index,(String("x_")+i+","+s).c_str());					
           //#ifdef DEBUG_OPS	
@@ -217,6 +218,7 @@ void PSLPFormulation::createAndSolveILPFeatureBased_(const FeatureMap<>& feature
 {
 	Int counter = 0;
   model_ = new LPWrapper();
+  model_->setSolver(solver_);
   //#define DEBUG_OPS	
 	std::cout << "Feature Based: Build model: first objective"<<std::endl;
 	///////////////////////////////////////////////////////////////////////
@@ -268,7 +270,7 @@ void PSLPFormulation::createAndSolveILPFeatureBased_(const FeatureMap<>& feature
 					variable_indices.push_back(triple);
           
           std::cout << index << " variable index"<<std::endl;
-          model_->setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
+          model_->setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED);
           model_->setColumnType(index,LPWrapper::BINARY); // binary variable
 					model_->setColumnName(index,(String("x_")+i+","+s));
           //#ifdef DEBUG_OPS	
@@ -500,7 +502,7 @@ void PSLPFormulation::updateFeatureILPVariables(FeatureMap<>& new_features,
 									existing = true;
                   model_->setColumnBounds(variable_indices[f_v_idx].variable,1.,
                                           model_->getColumnUpperBound(variable_indices[f_v_idx].variable),
-                                          LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
+                                          LPWrapper::FIXED);
 									std::cout << "set column lower von "<<model_->getColumnName(variable_indices[f_v_idx].variable)
 														<< " auf "<<model_->getColumnLowerBound(variable_indices[f_v_idx].variable) <<std::endl;
 									//									cmodel_->setObjective(variable_indices[f].variable,score);
@@ -541,7 +543,7 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
                                         Feature& new_feature, std::map<String,Size>& protein_variable_index_map)
 {
   std::cout << "Update Combined ILP."<<std::endl;
-	DoubleReal min_prot_coverage = param_.getValue("thresholds:min_prot_id_probability");
+	DoubleReal min_prot_coverage = param_.getValue("thresholds:min_protein_id_probability");
 	DoubleReal min_pt = param_.getValue("thresholds:min_pt_weight");
 	DoubleReal min_rt_weight = param_.getValue("thresholds:min_rt_weight");
   DoubleReal min_pred_pep_weight = param_.getValue("thresholds:min_pred_pep_prob");
@@ -633,7 +635,7 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
 											// insert penalty variable
                       Int index = model_->addColumn();
                       model_->setColumnName(index,(String("y_")+map_iter->first).c_str());
-                      model_->setColumnBounds(index,0.,1.,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
+                      model_->setColumnBounds(index,0.,1.,LPWrapper::DOUBLE_BOUNDED);
                       //cmodel_->setColumnIsInteger(variable_counter,true); //try without integer constraint
 											model_->setObjective(index,k1);
 											protein_variable_index_map.insert(make_pair(map_iter->first,index));

@@ -1331,10 +1331,9 @@ namespace OpenMS
                                       << " "<< getRTDTProbability(rt_prob
                                                                   * pt_prot_map_[masses_it->first][i])
                                       << " "<< pt_prot_map_[masses_it->first][i]
-                                      << " "<< rt_prob * pt_prot_map_[masses_it->first][i]
                                       << " "<< rt_prob
-                              * pt_prot_map_[masses_it->first][i]
-                              * transform_factor_
+                                      << " "<< rt_prob * pt_prot_map_[masses_it->first][i]
+                                      << " "<< rt_prob * pt_prot_map_[masses_it->first][i] * transform_factor_
                                       << std::endl;
                           }
                         else

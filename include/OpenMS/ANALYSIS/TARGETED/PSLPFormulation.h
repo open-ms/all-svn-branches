@@ -113,7 +113,15 @@ namespace OpenMS
     void solveILP(std::vector<int>& solution_indices,Int iteration=0,bool targeted=false,Size rt_bin_capacity=0);
     
 
-
+    void setLPSolver(LPWrapper::SOLVER solver)
+    {
+      solver_ = solver;
+    }
+    
+    LPWrapper::SOLVER getLPSolver()
+    {
+      return solver_;
+    }
 
 		struct FeatureIndexLess
 			: std::binary_function < IndexTriple , IndexTriple , bool >
@@ -203,6 +211,7 @@ namespace OpenMS
 
 		
 		LPWrapper* model_;
+    LPWrapper::SOLVER solver_;
 		
   };
 

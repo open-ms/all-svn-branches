@@ -113,18 +113,6 @@ namespace OpenMS
 		 */
     void getNextPrecursors(FeatureMap<>& features,FeatureMap<>& next_features,UInt number);
     
-// 		/**
-// 		 *	@brief Change scoring of features using peptide identifications only from spectra of the last
-// 		 *  iteration
-// 		 *	
-// 		 *	@param features FeatureMap with all possible precursors
-// 		 *	@param new_pep_ids Peptide identifications
-// 		 *	@param preprocessed_db Information from preprocessed database
-// 		 *
-// 		 */
-//     void rescoreIncremental(FeatureMap<>& features,std::vector<PeptideIdentification>& new_pep_ids,
-// 														std::vector<ProteinIdentification>& prot_ids,
-// 														PrecursorIonSelectionPreprocessing& preprocessed_db);
 
 		
 		/**
@@ -160,7 +148,15 @@ namespace OpenMS
 										 PrecursorIonSelectionPreprocessing& preprocessed_db,
 										 String path, MSExperiment<>& experiment,String rt_model_path="");
 
+    void setLPSolver(LPWrapper::SOLVER solver)
+    {
+      solver_ = solver;
+    }
     
+    LPWrapper::SOLVER getLPSolver()
+    {
+      return solver_;
+    }
     
 		void reset();
 
@@ -227,6 +223,8 @@ namespace OpenMS
 		/// maximal number of iterations
 		UInt max_iteration_;
     Size x_variable_number_;
+
+    LPWrapper::SOLVER solver_;
   };
 
 }

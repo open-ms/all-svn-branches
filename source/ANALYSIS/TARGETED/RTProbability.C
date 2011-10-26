@@ -88,8 +88,8 @@ namespace OpenMS
   {
     // first adapt gaussian RT error distribution to a normal distribution with \mu = 0
     Int theo_scan = getScanNumber_(theo_rt);
-    Int obs_scan_begin = getScanNumber_(min_obs_rt);
-    Int obs_scan_end = getScanNumber_(max_obs_rt);
+    Int obs_scan_begin = getScanNumber_(min_obs_rt)-1;
+    Int obs_scan_end = getScanNumber_(max_obs_rt)+1;
 
     if(obs_scan_begin == -1 || obs_scan_end == -1)
       {
@@ -107,8 +107,11 @@ namespace OpenMS
     DoubleReal prob;
     if(x2 > x1) prob = gsl_cdf_gaussian_P(x2,sigma_) - gsl_cdf_gaussian_P(x1,sigma_);
     else prob = gsl_cdf_gaussian_P(x1,sigma_) -  gsl_cdf_gaussian_P(x2,sigma_);
-    std::cerr << min_obs_rt << " "<< obs_scan_begin << " " << max_obs_rt << " "<< obs_scan_end << " "
-              << theo_rt << " " << theo_scan << " " << mu_ << " "<< x1 << " "<<x2 << " "<< prob<<std::endl;
+    if((prob < 0.) || (obs_scan_begin == obs_scan_end))
+      {
+        std::cerr << min_obs_rt << " "<< obs_scan_begin << " " << max_obs_rt << " "<< obs_scan_end << " "
+                  << theo_rt << " " << theo_scan << " " << mu_ << " "<< x1 << " "<<x2 << " "<< prob<<std::endl;
+      }
     return prob;
   }
 

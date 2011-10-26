@@ -39,7 +39,8 @@ namespace OpenMS
 {
 	PrecursorIonSelection::PrecursorIonSelection()
 		: DefaultParamHandler("PrecursorIonSelection"),
-			max_score_(0.)
+			max_score_(0.),
+      solver_(LPWrapper::SOLVER_GLPK)
 	{
 	  defaults_.setValue("type","IPS","Strategy for precursor ion selection.");
 		defaults_.setValidStrings("type",StringList::create("ILP_IPS,IPS,SPS,Upshift,Downshift,DEX"));
@@ -51,6 +52,7 @@ namespace OpenMS
     defaults_.setMinInt("rt_bin_capacity",1);
     defaults_.setValue("step_size",10,"Maximal number of precursors per iteration.");
     defaults_.setMinInt("step_size",1);
+    defaults_.setValue("peptide_min_prob",0.2,"Minimal peptide probability.");
     defaults_.insert("MIPFormulation:",PSLPFormulation().getDefaults());
     defaults_.remove("MIPFormulation:mz_tolerance");
     defaults_.remove("MIPFormulation:rt:");
@@ -63,7 +65,8 @@ namespace OpenMS
 		: DefaultParamHandler(source),
 			min_pep_ids_(source.min_pep_ids_),
 			max_score_(source.max_score_),
-			type_(source.type_)
+			type_(source.type_),
+      solver_(source.solver_)
 	{
 		updateMembers_();
 	}
@@ -416,30 +419,25 @@ namespace OpenMS
 
 	std::vector<PeptideIdentification> PrecursorIonSelection::filterPeptideIds_(std::vector<PeptideIdentification>& pep_ids)
 	{
+    DoubleReal prob_threshold = param_.getValue("peptide_min_prob");
+        
 		std::vector<PeptideIdentification> filtered_pep_ids;
-		
-		for(UInt id_c = 0; id_c < pep_ids.size();++id_c)
+
+		// probability based:
+		if((pep_ids.size()>0 && pep_ids[0].getScoreType().hasSuffix("DecoyProbability")) ||
+       (pep_ids.size()>0 && pep_ids[0].getScoreType().hasSuffix("1-PEP")))
 			{
-				std::vector<PeptideHit> tmp_hits;
-				if(pep_ids[id_c].getHits()[0].metaValueExists("Rank"))
+				std::cout << "filter out peptides with prob < "<< prob_threshold<<std::endl;
+				for(UInt id_c = 0; id_c < pep_ids.size();++id_c)
 					{
-						for(UInt hit_c=0; hit_c < pep_ids[id_c].getHits().size();++hit_c)
-							{
-								if(pep_ids[id_c].getHits()[hit_c].getScore() >= pep_ids[id_c].getSignificanceThreshold() && 
-									 (Int)pep_ids[id_c].getHits()[hit_c].getMetaValue("Rank") == 1 )
-									{
-										tmp_hits.push_back(pep_ids[id_c].getHits()[hit_c]);
-									}
-							}
-					}
-				else // if meta value rank doesn't exist, take highest scoring peptide hit
-					{
+						std::vector<PeptideHit> tmp_hits;
+						// if only one hit exists and its score is high enough accept it
 						if(pep_ids[id_c].getHits().size() == 1 &&
-							 pep_ids[id_c].getHits()[0].getScore() >= pep_ids[id_c].getSignificanceThreshold())
+							 pep_ids[id_c].getHits()[0].getScore() >= prob_threshold)
 							{
 								tmp_hits.push_back(pep_ids[id_c].getHits()[0]);
 							}
-						else if(pep_ids[id_c].getHits().size()>1)
+						else if(pep_ids[id_c].getHits().size()>1) // else take highest scoring peptide hit,if score is high enough
 							{
 								UInt max_score_idx=0;
 								for(UInt hit_c=1; hit_c < pep_ids[id_c].getHits().size();++hit_c)
@@ -451,20 +449,71 @@ namespace OpenMS
 											}
 									}
 								// check if highest scoring peptide hit is significant
-								if(pep_ids[id_c].getHits()[max_score_idx].getScore() >= pep_ids[id_c].getSignificanceThreshold())
+								if(pep_ids[id_c].getHits()[max_score_idx].getScore() >= prob_threshold)
 									{
 										tmp_hits.push_back(pep_ids[id_c].getHits()[max_score_idx]);
 									}
 							}
+						if(!tmp_hits.empty()) // if there were significant hits save them
+							{
+								PeptideIdentification tmp_id = pep_ids[id_c];
+								tmp_id.setHits(tmp_hits);
+								filtered_pep_ids.push_back(tmp_id);
+							}
 					}
-				
-				if(!tmp_hits.empty()) // if there were significant hits save them
-					{
-						PeptideIdentification tmp_id = pep_ids[id_c];
-						tmp_id.setHits(tmp_hits);
-						filtered_pep_ids.push_back(tmp_id);
-					}  
+
 			}
+		else // based on the significance level stored in the peptide identification
+			{
+
+        for(UInt id_c = 0; id_c < pep_ids.size();++id_c)
+          {
+            std::vector<PeptideHit> tmp_hits;
+            if(pep_ids[id_c].getHits()[0].metaValueExists("Rank"))
+              {
+                for(UInt hit_c=0; hit_c < pep_ids[id_c].getHits().size();++hit_c)
+                  {
+                    if(pep_ids[id_c].getHits()[hit_c].getScore() >= pep_ids[id_c].getSignificanceThreshold() && 
+                       (Int)pep_ids[id_c].getHits()[hit_c].getMetaValue("Rank") == 1 )
+                      {
+                        tmp_hits.push_back(pep_ids[id_c].getHits()[hit_c]);
+                      }
+                  }
+              }
+            else // if meta value rank doesn't exist, take highest scoring peptide hit
+              {
+                if(pep_ids[id_c].getHits().size() == 1 &&
+                   pep_ids[id_c].getHits()[0].getScore() >= pep_ids[id_c].getSignificanceThreshold())
+                  {
+                    tmp_hits.push_back(pep_ids[id_c].getHits()[0]);
+                  }
+                else if(pep_ids[id_c].getHits().size()>1)
+                  {
+                    UInt max_score_idx=0;
+                    for(UInt hit_c=1; hit_c < pep_ids[id_c].getHits().size();++hit_c)
+                      {
+                        if(pep_ids[id_c].getHits()[hit_c].getScore() >
+                           pep_ids[id_c].getHits()[max_score_idx].getScore())
+                          {
+                            max_score_idx = hit_c;
+                          }
+                      }
+                    // check if highest scoring peptide hit is significant
+                    if(pep_ids[id_c].getHits()[max_score_idx].getScore() >= pep_ids[id_c].getSignificanceThreshold())
+                      {
+                        tmp_hits.push_back(pep_ids[id_c].getHits()[max_score_idx]);
+                      }
+                  }
+              }
+            
+            if(!tmp_hits.empty()) // if there were significant hits save them
+              {
+                PeptideIdentification tmp_id = pep_ids[id_c];
+                tmp_id.setHits(tmp_hits);
+                filtered_pep_ids.push_back(tmp_id);
+              }  
+          }
+      }
 	
 	return filtered_pep_ids;
 }
@@ -748,7 +797,7 @@ namespace OpenMS
 	{
 		std::cout << pep_ids.size() << " ids before filtering\n";
 		std::vector<PeptideIdentification> filtered_pep_ids = filterPeptideIds_(pep_ids);
-		std::cout << filtered_pep_ids.size() << " ids after filtering\n";
+		std::cout << filtered_pep_ids.size() << " ids \n";
 		if(param_.getValue("Preprocessing:precursor_mass_tolerance_unit") != "ppm")
 			{
 				std::cout << "Error: use ppm as precursor_mass_tolerance_unit!"<<std::endl;
@@ -760,8 +809,9 @@ namespace OpenMS
     PSLPFormulation ilp_wrapper;
     Param mip_param = param_.copy("MIPFormulation:",true);
 		mip_param.setValue("mz_tolerance",param_.getValue("Preprocessing:precursor_mass_tolerance"));
-    mip_param.insert("rt",param_.copy("Preprocessing:rt_setting:",true));
+    mip_param.insert("rt",param_.copy("Preprocessing:rt_weighting:rt_setting:",true));
 		ilp_wrapper.setParameters(mip_param);
+    ilp_wrapper.setLPSolver(solver_);
 
     // annotate map with ids
 		IDMapper mapper;
@@ -771,8 +821,8 @@ namespace OpenMS
 		p.setValue("mz_measure","Da");
     p.setValue("ignore_charge","true");
 		mapper.setParameters(p);
-		mapper.annotate(features,filtered_pep_ids,prot_ids);
-
+    mapper.annotate(features,filtered_pep_ids,prot_ids);
+    
 		PSProteinInference protein_inference;
 
 		//Param preprocessed_db_param = preprocessed_db.getParameters();
@@ -997,8 +1047,8 @@ namespace OpenMS
     FeatureMap<> tmp_features;
 		std::cout << "Get next precursors"<<std::endl;
 		std::cout << solution_indices.size() << " entries in solution indices.\n";
-		DoubleReal min_rt = param_.getValue("MIPFormulation:rt:min_rt");
-		DoubleReal rt_step_size = param_.getValue("MIPFormulation:rt:rt_step_size");
+		DoubleReal min_rt = param_.getValue("Preprocessing:rt_weighting:rt_settings:min_rt");
+		DoubleReal rt_step_size = param_.getValue("Preprocessing:rt_weighting:rt_settings:rt_step_size");
 		new_features.clear(true);
     sort(variable_indices.begin(),variable_indices.end(),PSLPFormulation::VariableIndexLess());
     Size prots = 0;

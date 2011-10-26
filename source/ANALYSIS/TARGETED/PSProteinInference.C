@@ -68,7 +68,7 @@ namespace OpenMS
       {
         // create column with boundaries 0-1 and integer/binary variable
         Size index = problem.addColumn();
-        problem.setColumnBounds(index,0.,1.,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
+        problem.setColumnBounds(index,0.,1.,LPWrapper::DOUBLE_BOUNDED);
         problem.setColumnName(index,*p);
         problem.setColumnType(index,LPWrapper::BINARY);
       }

@@ -39,21 +39,6 @@ START_TEST(SILACFilter, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-SILACFilter* ptr = 0;
-SILACFilter* nullPointer = 0;
-START_SECTION(SILACFilter())
-{
-	ptr = new SILACFilter();
-	TEST_NOT_EQUAL(ptr, nullPointer)
-}
-END_SECTION
-
-START_SECTION(~SILACFilter())
-{
-	delete ptr;
-}
-END_SECTION
-
 START_SECTION((SILACFilter(std::vector< DoubleReal > mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide)))
 {
   NOT_TESTABLE
@@ -74,9 +59,7 @@ END_SECTION
 
 START_SECTION((std::vector<DataPoint> getElements()))
 {
-  SILACFilter tmp;
-	tmp.getElements().resize(0);
-  TEST_EQUAL(tmp.getElements().size(), 0);
+  NOT_TESTABLE
 }
 END_SECTION
 
@@ -88,9 +71,7 @@ END_SECTION
 
 START_SECTION((std::vector<DoubleReal> getMassSeparations()))
 {
-  SILACFilter tmp;
-  tmp.getMassSeparations().resize(0);
-  TEST_EQUAL(tmp.getMassSeparations().size(), 0);
+  NOT_TESTABLE
 }
 END_SECTION
 

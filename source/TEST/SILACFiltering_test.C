@@ -39,20 +39,6 @@ START_TEST(SILACFiltering, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-SILACFiltering* ptr = 0;
-SILACFiltering* nullPointer = 0;
-START_SECTION(SILACFiltering())
-{
-	NOT_TESTABLE
-}
-END_SECTION
-
-START_SECTION(~SILACFiltering())
-{
-	delete ptr;
-}
-END_SECTION
-
 START_SECTION((SILACFiltering(MSExperiment< Peak1D > &exp, const DoubleReal mz_stepwidth, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks)))
 {
   NOT_TESTABLE

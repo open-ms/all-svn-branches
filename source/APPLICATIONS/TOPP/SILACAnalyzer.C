@@ -760,6 +760,9 @@ class TOPPSILACAnalyzer
     // extract level 1 spectra
     exp.erase(remove_if(exp.begin(), exp.end(), InMSLevelRange<MSExperiment<Peak1D>::SpectrumType>(IntList::create("1"), true)), exp.end());
 
+    // sort according to RT and MZ
+    exp.sortSpectra();
+
 
     //--------------------------------------------------
     // estimate peak width
@@ -814,7 +817,7 @@ class TOPPSILACAnalyzer
     // clustering
     //--------------------------------------------------
 
-    clusterData(peak_width);
+    clusterData(exp, peak_width);
 
 
     //--------------------------------------------------------------
@@ -871,7 +874,7 @@ class TOPPSILACAnalyzer
     return EXECUTION_OK;
   }
 
-  void clusterData(const PeakWidthEstimator::Result &);
+  void clusterData(const MSExperiment<> &, const PeakWidthEstimator::Result &);
 
 private:
   PeakWidthEstimator::Result estimatePeakWidth(const MSExperiment<Peak1D> &exp);
@@ -911,7 +914,7 @@ private:
   }
 };
 
-void TOPPSILACAnalyzer::clusterData(const PeakWidthEstimator::Result &peak_width)
+void TOPPSILACAnalyzer::clusterData(const MSExperiment<> &exp, const PeakWidthEstimator::Result &peak_width)
 {
   typedef Clustering::PointCoordinate PointCoordinate;
 
@@ -922,6 +925,25 @@ void TOPPSILACAnalyzer::clusterData(const PeakWidthEstimator::Result &peak_width
   // Use peak half width @1000 Th for mz threshold
   DoubleReal mz_threshold = peak_width(1000);
 
+  // Use double median of spectrum spacing for max rt spacing
+  DoubleReal rt_max_spacing = 0;
+  {
+    // Calculate distance between each spectrum; this needs sorted spectra
+    std::vector<Real> space;
+    MSExperiment<>::const_iterator it1 = exp.begin();
+    MSExperiment<>::const_iterator it2 = exp.begin(); ++it2;
+    for (; it2 != exp.end(); ++it1, ++it2)
+    {
+      DoubleReal s = it2->getRT() - it1->getRT();
+      space.push_back(s);
+    }
+
+    sort(space.begin(), space.end());
+
+    // Calculate median by extracting the middle element (okay, the upper median)
+    if (space.size()) rt_max_spacing = space[space.size() / 2 + 1] * 2;
+  }
+
   UInt data_id = 0;
 
   for (vector<vector<SILACPattern> >::iterator data_it = data.begin();
@@ -929,7 +951,7 @@ void TOPPSILACAnalyzer::clusterData(const PeakWidthEstimator::Result &peak_width
        ++data_it, ++data_id)
   {
     const PointCoordinate max_delta(rt_threshold, mz_threshold);
-    Clustering *clustering = new Clustering(max_delta, rt_min, 0);
+    Clustering *clustering = new Clustering(max_delta, rt_min, rt_max_spacing);
 
     for (vector<SILACPattern>::iterator it = data_it->begin(); it != data_it->end(); ++it)
     {

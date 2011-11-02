@@ -202,29 +202,29 @@ class TOPPSILACAnalyzer
   void registerOptionsAndFlags_()
   {
     // create flag for input file (.mzML)
-    registerInputFile_("in", "<file>", "", "input file");
+    registerInputFile_("in", "<file>", "", "Raw LC-MS data to be analyzed. (Profile data required. Will not work with centroided data.)");
     setValidFormats_("in", StringList::create("mzML"));
     // create flag for output file (.consensusXML)
-    registerOutputFile_("out", "<file>", "", "output file", false);
+    registerOutputFile_("out", "<file>", "", "Set of all identified peptide groups (i.e. peptide pairs or triplets or singlets or ..). The m/z-RT positions correspond to the lightest peptide in each group.", false);
     setValidFormats_("out", StringList::create("consensusXML"));
     // create optional flag for additional clusters output file (.featureXML)
-    registerOutputFile_("out_clusters", "<file>", "", "Optional output file containing data points passing all filters, hence belonging to a SILAC pattern. Points of the same colour correspond to the mono-isotopic peak of the lightest peptide in a pattern.", false, true);
+    registerOutputFile_("out_clusters", "<file>", "", "Optional debug output containing data points passing all filters, hence belonging to a SILAC pattern. Points of the same colour correspond to the mono-isotopic peak of the lightest peptide in a pattern.", false, true);
     setValidFormats_("out_clusters", StringList::create("consensusXML"));
-    registerOutputFile_("out_features", "<file>", "", "Optional output file containing features.", false, true);
+    registerOutputFile_("out_features", "<file>", "", "Optional output file containing the individual peptide features in \'out\'.", false, true);
     setValidFormats_("out_features", StringList::create("featureXML"));
 
     // create optional flag for additional output file (.consensusXML) to store filter results
-    registerOutputFile_("out_filters", "<file>", "", "Additional output file containing all points that passed the filters as txt. Suitable as input for \"in_filters\" to perform clustering without preceding filtering process.", false, true);
+    registerOutputFile_("out_filters", "<file>", "", "Optional output file containing all points that passed the filters as txt. Suitable as input for \'in_filters\' to perform clustering without preceding filtering process.", false, true);
     setValidFormats_("out_filters", StringList::create("consensusXML"));
     // create optional flag for additional input file (.consensusXML) to load filter results
-    registerOutputFile_("in_filters", "<file>", "", "Additional input file containing all points that passed the filters as txt. Use output from \"out_filters\" to perform clustering only.", false, true);
+    registerOutputFile_("in_filters", "<file>", "", "Optional input file containing all points that passed the filters as txt. Use output from \'out_filters\' to perform clustering only.", false, true);
     setValidFormats_("in_filters", StringList::create("consensusXML"));
     registerStringOption_("out_debug", "<filebase>", "", "Filename base for debug output.", false, true);
 
     // create section "labels" for adjusting masses of labels
     registerSubsection_("labels", "Isotopic labels that can be specified in section \'sample\'.");
     // create section "sample" for adjusting sample parameters
-    registerSubsection_("sample", "Parameter describing the sample and its labels.");
+    registerSubsection_("sample", "Parameters describing the sample and its labels.");
     // create section "algorithm" for adjusting algorithm parameters
     registerSubsection_("algorithm", "Parameters for the algorithm.");
 
@@ -283,11 +283,11 @@ class TOPPSILACAnalyzer
 
     if (section == "sample")
     {
-      defaults.setValue("labels", "[Arg6]", "Labels used for labelling the sample. [...] specifies the labels for a single sample. For example, [Lys4,Arg6][Lys8,Arg10] describes a mixtures of three samples. One of them unlabelled, one labelled with Lys4 and Arg6 and a third one with Lys8 and Arg10. For permitted labels see \'advanced parameters\', section \'labels\'.");
+      defaults.setValue("labels", "[Lys8,Arg10]", "Labels used for labelling the sample. [...] specifies the labels for a single sample. For example, [Lys4,Arg6][Lys8,Arg10] describes a mixtures of three samples. One of them unlabelled, one labelled with Lys4 and Arg6 and a third one with Lys8 and Arg10. For permitted labels see \'advanced parameters\', section \'labels\'.");
       defaults.setValue("charge", "2:3", "Range of charge states in the sample, i.e. min charge : max charge.");
       defaults.setValue("missed_cleavages", 0 , "Maximum number of missed cleavages.");
       defaults.setMinInt("missed_cleavages", 0);
-      defaults.setValue("peaks_per_peptide", "3:4", "Range of peaks per peptide in the sample, i.e. min peaks per peptide : max peaks per peptide.", StringList::create("advanced"));
+      defaults.setValue("peaks_per_peptide", "3:5", "Range of peaks per peptide in the sample, i.e. min peaks per peptide : max peaks per peptide.", StringList::create("advanced"));
     }
 
 

@@ -202,7 +202,7 @@ class TOPPSILACAnalyzer
   void registerOptionsAndFlags_()
   {
     // create flag for input file (.mzML)
-    registerInputFile_("in", "<file>", "", "Raw LC-MS data to be analyzed. (Profile data required. Will not work with centroided data.)");
+    registerInputFile_("in", "<file>", "", "Raw LC-MS data to be analyzed. (Profile data required. Will not work with centroided data!)");
     setValidFormats_("in", StringList::create("mzML"));
     // create flag for output file (.consensusXML)
     registerOutputFile_("out", "<file>", "", "Set of all identified peptide groups (i.e. peptide pairs or triplets or singlets or ..). The m/z-RT positions correspond to the lightest peptide in each group.", false);
@@ -283,11 +283,11 @@ class TOPPSILACAnalyzer
 
     if (section == "sample")
     {
-      defaults.setValue("labels", "[Lys8,Arg10]", "Labels used for labelling the sample. [...] specifies the labels for a single sample. For example, [Lys4,Arg6][Lys8,Arg10] describes a mixtures of three samples. One of them unlabelled, one labelled with Lys4 and Arg6 and a third one with Lys8 and Arg10. For permitted labels see \'advanced parameters\', section \'labels\'.");
+      defaults.setValue("labels", "[Lys8,Arg10]", "Labels used for labelling the sample. [...] specifies the labels for a single sample. For example, [Lys4,Arg6][Lys8,Arg10] describes a mixtures of three samples. One of them unlabelled, one labelled with Lys4 and Arg6 and a third one with Lys8 and Arg10. For permitted labels see \'advanced parameters\', section \'labels\'. If left empty the tool identifies singlets, i.e. acts as peptide feature finder.");
       defaults.setValue("charge", "2:3", "Range of charge states in the sample, i.e. min charge : max charge.");
       defaults.setValue("missed_cleavages", 0 , "Maximum number of missed cleavages.");
       defaults.setMinInt("missed_cleavages", 0);
-      defaults.setValue("peaks_per_peptide", "3:5", "Range of peaks per peptide in the sample, i.e. min peaks per peptide : max peaks per peptide.", StringList::create("advanced"));
+      defaults.setValue("peaks_per_peptide", "3:5", "Range of peaks per peptide in the sample, i.e. min peaks per peptide : max peaks per peptide. For example 3:6, if isotopic peptide patterns in the sample consist of either three, four, five or six isotopic peaks. ", StringList::create("advanced"));
     }
 
 
@@ -297,7 +297,7 @@ class TOPPSILACAnalyzer
 
     if (section == "algorithm")
     {
-      defaults.setValue("rt_threshold", 50.0, "Upper bound for the retention time [s] over which a characteristic peptide elutes. ");
+      defaults.setValue("rt_threshold", 50.0, "Typical retention time [s] over which a characteristic peptide elutes. (This is not an upper bound. Peptides that elute for longer will be reported.)");
       defaults.setMinFloat("rt_threshold", 0.0);
       defaults.setValue("rt_min", 0.0, "Lower bound for the retention time [s].");
       defaults.setMinFloat("rt_min", 0.0);

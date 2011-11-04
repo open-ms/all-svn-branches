@@ -365,7 +365,7 @@ namespace OpenMS
       if(type == 1) model_->setContinuous((Int) index);
       else if(type == 3)
         {
-          LOG_WARN << "Coin-Or only knows Integer variables, setting variable to integer type";
+          //          LOG_WARN << "Coin-Or only knows Integer variables, setting variable to integer type";
           model_->setColumnIsInteger((Int) index,true);
         }
       else model_->setColumnIsInteger((Int) index,true);
@@ -529,6 +529,12 @@ namespace OpenMS
         }
       else  throw Exception::IllegalArgument(__FILE__,__LINE__,__PRETTY_FUNCTION__,"invalid LP format, allowed are LP, MPS, GLPK");
     }
+#if COINOR_SOLVER==1
+    else if (solver_ == LPWrapper::SOLVER_COINOR && format == "MPS")
+      {
+        model_->writeMps(filename.c_str());
+      }
+#endif
     else throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
   }
 
@@ -565,12 +571,18 @@ namespace OpenMS
       #elif COIN_HAS_OSL
       OsiOslSolverInterface solver;
       #endif
+
+//       model_->writeMps("test_write_prob.mps");
+//       model_ = new CoinModel("test_write_prob.mps");
+      
       solver.loadFromCoinModel(*model_);
     		  /* Now let MIP calculate a solution */
 		  // Pass to solver
 		  CbcModel model(solver);
-		  model.setObjSense(model_->optimizationDirection()); // -1 = maximize, 1=minimize
-		  model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
+		  model.setObjSense(model_->optimizationDirection());
+      //      model.setObjSense(-1);      // -1 = maximize, 1=minimize
+      std::cout << model_->optimizationDirection() << " -1 max, 1 min"<< std::endl;
+      //		  model.solver()->setHintParam(OsiDoReducePrint, true, OsiHintTry);
 
 		  // Output details
 		  // model.messageHandler()->setLogLevel( verbose_level > 1 ? 2 : 0);
@@ -578,33 +590,33 @@ namespace OpenMS
 		
 		  //CglProbing generator1;
 		  //generator1.setUsingObjective(true);
-		  CglGomory generator2;
-		  generator2.setLimit(300);
-		  CglKnapsackCover generator3;
-		  CglOddHole generator4;
-		  generator4.setMinimumViolation(0.005);
-		  generator4.setMinimumViolationPer(0.00002);
-		  generator4.setMaximumEntries(200);
-		  CglClique generator5;
-		  generator5.setStarCliqueReport(false);
-		  generator5.setRowCliqueReport(false);
-		  //CglFlowCover flowGen;
-      CglMixedIntegerRounding mixedGen;
+// 		  CglGomory generator2;
+// 		  generator2.setLimit(300);
+// 		  CglKnapsackCover generator3;
+// 		  CglOddHole generator4;
+// 		  generator4.setMinimumViolation(0.005);
+// 		  generator4.setMinimumViolationPer(0.00002);
+// 		  generator4.setMaximumEntries(200);
+// 		  CglClique generator5;
+// 		  generator5.setStarCliqueReport(false);
+// 		  generator5.setRowCliqueReport(false);
+// 		  //CglFlowCover flowGen;
+//       CglMixedIntegerRounding mixedGen;
 		
-		  // Add in generators (you should prefer the ones used often and disable the others as they increase solution time)
-		  //model.addCutGenerator(&generator1,-1,"Probing");
-		  model.addCutGenerator(&generator2,-1,"Gomory");
-		  model.addCutGenerator(&generator3,-1,"Knapsack");
-		  //model.addCutGenerator(&generator4,-1,"OddHole"); // seg faults...
-		  model.addCutGenerator(&generator5,-10,"Clique");
-		  //model.addCutGenerator(&flowGen,-1,"FlowCover");
-		  model.addCutGenerator(&mixedGen,-1,"MixedIntegerRounding");
+// 		  // Add in generators (you should prefer the ones used often and disable the others as they increase solution time)
+// 		  //model.addCutGenerator(&generator1,-1,"Probing");
+// 		  model.addCutGenerator(&generator2,-1,"Gomory");
+// 		  model.addCutGenerator(&generator3,-1,"Knapsack");
+// 		  //model.addCutGenerator(&generator4,-1,"OddHole"); // seg faults...
+// 		  model.addCutGenerator(&generator5,-10,"Clique");
+// 		  //model.addCutGenerator(&flowGen,-1,"FlowCover");
+// 		  model.addCutGenerator(&mixedGen,-1,"MixedIntegerRounding");
 
-		  // Heuristics
-		  CbcRounding heuristic1(model);
-		  model.addHeuristic(&heuristic1);
-		  CbcHeuristicLocal heuristic2(model);
-		  model.addHeuristic(&heuristic2);
+// 		  // Heuristics
+// 		  CbcRounding heuristic1(model);
+// 		  model.addHeuristic(&heuristic1);
+// 		  CbcHeuristicLocal heuristic2(model);
+// 		  model.addHeuristic(&heuristic2);
 
 		  // set maximum allowed CPU time before forced stop (dangerous!)
 		  //model.setDblParam(CbcModel::CbcMaximumSeconds,60.0*1);
@@ -620,9 +632,16 @@ namespace OpenMS
 		  // 				                        << model.getObjValue()
 		  // 				                        << (!model.status() ? " Finished" : " Not finished")
 		  // 				                        << std::endl;
+      std::cout << model.getSolutionCount()<< " solutions found"<<std::endl;
+      DoubleReal * best_solution = new DoubleReal[model.getNumCols()];
+      best_solution = model.bestSolution();
       for(Int i =0; i < model_->numberColumns();++i)
         {
-          solution_.push_back(model.solver()->getColSolution()[i]);
+          solution_.push_back(best_solution[i]);
+          if(best_solution[i] != model.solver()->getColSolution()[i])
+            {
+              std::cout << best_solution[i] << " !=  "<< model.solver()->getColSolution()[i]<< std::endl;
+            }
         }
       return model.status();
     }

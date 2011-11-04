@@ -445,15 +445,18 @@ void PSLPFormulation::solveILP(std::vector<int>& solution_indices,Int /*iteratio
 {
   solution_indices.clear();
   LPWrapper::SolverParam param;
+//   model_->writeProblem(String("test_prob_")+String(solver_)+String(".mps"),"MPS");
   model_->solve(param);
 
   for (Size column = 0; column < model_->getNumberOfColumns(); ++column)
 		{
       double value = model_->getColumnValue(column);
+//       std::cout << value << " "<<model_->getColumnType(column) << " "<<LPWrapper::BINARY
+//                 << " " << LPWrapper::INTEGER <<std::endl;
       if ((fabs(value) > 0.5 && model_->getColumnType(column) == LPWrapper::BINARY) ||
           (fabs(value) > 0.5 && model_->getColumnType(column) == LPWrapper::INTEGER))
 				{
-          std::cout << value << " "<< model_->getColumnType(column) << std::endl;      
+          //          std::cout << value << " "<< model_->getColumnType(column) << std::endl;      
 #ifdef DEBUG_OPS	
           std::cout << model_->getColumnName(column) << " is in optimal solution" << std::endl;
 #endif

@@ -824,7 +824,7 @@ namespace OpenMS
     mapper.annotate(features,filtered_pep_ids,prot_ids);
     
 		PSProteinInference protein_inference;
-
+    protein_inference.setSolver(solver_);
 		//Param preprocessed_db_param = preprocessed_db.getParameters();
     bool use_detectability = true;
     
@@ -979,7 +979,8 @@ namespace OpenMS
 															 new_features[c].getPeptideIdentifications().end());
 						std::cout << new_features[c].getRT()<<" "<<new_features[c].getMZ()<<std::endl;
 
-            protein_inference.findMinimalProteinList(all_pep_ids);
+            Size num = protein_inference.findMinimalProteinList(all_pep_ids);
+            std::cout << num << " proteins in minimal list"<<std::endl;
             protein_inference.calculateProteinProbabilities(all_pep_ids);
 
 						std::vector<String> new_protein_accs;

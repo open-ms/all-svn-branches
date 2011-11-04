@@ -151,6 +151,7 @@ namespace OpenMS
     void setLPSolver(LPWrapper::SOLVER solver)
     {
       solver_ = solver;
+      std::cout << " LPSolver set to "<<solver_<<std::endl;
     }
     
     LPWrapper::SOLVER getLPSolver()

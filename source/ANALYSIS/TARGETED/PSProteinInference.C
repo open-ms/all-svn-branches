@@ -49,14 +49,17 @@ namespace OpenMS
   Size PSProteinInference::findMinimalProteinList(const std::vector<PeptideIdentification>& peptide_ids)
   {
     LPWrapper problem;
+    problem.setSolver(solver_);
     set<String> all_accs;
-
+    problem.setObjectiveSense(LPWrapper::MIN);
     minimal_protein_list_accessions_.clear();
       
     // first get all protein accessions:
     for(Size p = 0; p < peptide_ids.size();++p)
       {
         const vector<String> & accs = peptide_ids[p].getHits()[0].getProteinAccessions();
+//         std::cout << peptide_ids[p].getHits()[0].getSequence()<<"Peptide Id with "
+//                   << accs.size() << " protein accs.\n";
         for(Size a = 0; a < accs.size(); ++a)
           {
             all_accs.insert(accs[a]);
@@ -71,6 +74,7 @@ namespace OpenMS
         problem.setColumnBounds(index,0.,1.,LPWrapper::DOUBLE_BOUNDED);
         problem.setColumnName(index,*p);
         problem.setColumnType(index,LPWrapper::BINARY);
+        problem.setObjective(index,1.);
       }
 
     // now go through all peptide ids and add an constraint for each
@@ -99,7 +103,7 @@ namespace OpenMS
     // solve problem
     LPWrapper::SolverParam param;
     problem.solve(param);
-
+    //    problem.writeProblem("prote_inference.mps","MPS");
     // get solution and store accession 
     for(Size c = 0; c < problem.getNumberOfColumns();++c)
       {

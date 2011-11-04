@@ -30,11 +30,10 @@
 #define OPENMS_ANALYSIS_TARGETED_PSPROTEININFERENCE_H
 
 #include <OpenMS/METADATA/PeptideIdentification.h>
-
+#include <OpenMS/DATASTRUCTURES/LPWrapper.h>
 
 namespace OpenMS
 {
-
 
 	/**
 		 @brief This class implements protein inference for the precursor ion selection strategies.
@@ -63,11 +62,22 @@ namespace OpenMS
 
     bool isProteinInMinimalList(const String& acc);
     Int getNumberOfProtIds(DoubleReal protein_id_threshold);
+
+    void setSolver(LPWrapper::SOLVER solver)
+    {
+      solver_ = solver;
+    }
+
+    LPWrapper::SOLVER getSolver()
+    {
+      return solver_;
+    }
+
   private:
     std::vector<String> minimal_protein_list_accessions_;
     std::vector<String> accessions_;
     std::vector<DoubleReal> probabilities_;
-    
+    LPWrapper::SOLVER solver_;
   };
 
 }

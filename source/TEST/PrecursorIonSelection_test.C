@@ -114,21 +114,21 @@ START_SECTION(void rescore(FeatureMap<>& features,std::vector<PeptideIdentificat
   TEST_REAL_SIMILAR(next_features[0].getMetaValue("msms_score"),46365.5)
 END_SECTION
 
-START_SECTION( void simulateRun(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,std::vector<ProteinIdentification>& prot_ids,PrecursorIonSelectionPreprocessing& preprocessed_db,UInt step_size, String path))
-  ptr->reset();
-	features.clear(true);
-  f_file.load(OPENMS_GET_TEST_DATA_PATH("PrecursorIonSelection_features.featureXML"),features);
-  std::string tmp_filename;
-  NEW_TMP_FILE(tmp_filename);
-  ptr->simulateRun(features,pep_ids,prot_ids,preprocessing,1,tmp_filename);
-  ptr->sortByTotalScore(features);
-  TEST_EQUAL(features[20].getMetaValue("shifted"),"both")
-  TEST_REAL_SIMILAR(features[20].getMetaValue("msms_score"),27574.40625)
-END_SECTION
+// START_SECTION( void simulateRun(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,std::vector<ProteinIdentification>& prot_ids,PrecursorIonSelectionPreprocessing& preprocessed_db,UInt step_size, String path))
+//   ptr->reset();
+// 	features.clear(true);
+//   f_file.load(OPENMS_GET_TEST_DATA_PATH("PrecursorIonSelection_features.featureXML"),features);
+//   std::string tmp_filename;
+//   NEW_TMP_FILE(tmp_filename);
+//   ptr->simulateRun(features,pep_ids,prot_ids,preprocessing,1,tmp_filename);
+//   ptr->sortByTotalScore(features);
+//   TEST_EQUAL(features[20].getMetaValue("shifted"),"both")
+//   TEST_REAL_SIMILAR(features[20].getMetaValue("msms_score"),27574.40625)
+// END_SECTION
 
-START_SECTION((const std::map<String,std::set<String> >& getPeptideProteinCounter()))
-	 TEST_EQUAL(ptr->getPeptideProteinCounter().size(),1)
-END_SECTION
+// START_SECTION((const std::map<String,std::set<String> >& getPeptideProteinCounter()))
+// 	 TEST_EQUAL(ptr->getPeptideProteinCounter().size(),1)
+// END_SECTION
 	
 START_SECTION((void reset()))
 	ptr->reset();

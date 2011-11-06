@@ -195,6 +195,11 @@ namespace OpenMS {
         Divides the integer weights by their gcd. The precision is also
         adjusted.
 
+        For example, given alphabet weights 3.0, 5.0, 8.0 with precision 0.1, the
+        integer weights would be 30, 50, 80. After calling this method, the new
+        weights are 3, 5, 8 with precision 1.0 (since the gcd of 30, 50, and 80
+        is 10).
+
         @return true if anything was changed, that is, if the gcd was &gt; 1.
         false if the gcd was already 1 or there are less than two weights.
       */
@@ -224,9 +229,9 @@ namespace OpenMS {
       Prints weights to the stream @c os.
 
       @param os Output stream to which weights are written.
-      @param weigths Weights to be written.
+      @param weights Weights to be written.
     */
-    std::ostream& operator<<(std::ostream& os, const Weights& weights);
+    OPENMS_DLLAPI std::ostream& operator<<(std::ostream& os, const Weights& weights);
 
   } // namespace ims
 } // namespace OpenMS

@@ -298,7 +298,9 @@ namespace OpenMS
 
 	// write the header for peptide data
 	void writePeptideHeader(SVOutStream& out, const String& what = "PEPTIDE",
-													bool incl_pred_rt = false,
+													bool incl_pred_rt = false, bool incl_pred_pt = false,
+                          bool incl_XTandem_score = false, bool incl_Mascot_score = false,
+                          bool incl_target_decoy = false,
 													bool incl_first_dim = false)
 	{
 		bool old = out.modifyStrings(false);
@@ -307,6 +309,10 @@ namespace OpenMS
 		out << "mz" << "score" << "rank" << "sequence" << "charge" << "aa_before" 
 				<< "aa_after" << "score_type" << "search_identifier" << "accessions";
 		if (incl_pred_rt) out << "predicted_rt";
+    if (incl_pred_pt) out << "predicted_pt";
+    if (incl_XTandem_score) out << "XTandem_score";
+    if (incl_Mascot_score) out << "Mascot_score";
+    if (incl_target_decoy) out << "target_decoy";
 		if (incl_first_dim) out << "rt_first_dim" << "predicted_rt_first_dim";
 		out << endl;
 		out.modifyStrings(old);
@@ -323,6 +329,9 @@ namespace OpenMS
   // write a protein identification to the output stream
 	void writePeptideId(SVOutStream& out, const PeptideIdentification& pid,
 											const String& what = "PEPTIDE", bool incl_pred_rt = false,
+                      bool incl_pred_pt = false,
+                      bool incl_XTandem_score = false, bool incl_Mascot_score = false,
+                      bool incl_target_decoy = false,
 											bool incl_first_dim = false)
 	{
 		for (vector<PeptideHit>::const_iterator hit_it = pid.getHits().begin();
@@ -351,6 +360,38 @@ namespace OpenMS
 				if (hit_it->metaValueExists("predicted_RT"))
 				{
 					out << hit_it->getMetaValue("predicted_RT");
+				}
+				else out << "-1";
+			}
+      if (incl_pred_pt)
+			{
+				if (hit_it->metaValueExists("predicted_PT"))
+				{
+					out << hit_it->getMetaValue("predicted_PT");
+				}
+				else out << "-1";
+			}
+      if (incl_XTandem_score)
+			{
+				if (hit_it->metaValueExists("XTandem_score"))
+				{
+					out << hit_it->getMetaValue("XTandem_score");
+				}
+				else out << "-1";
+			}
+      if (incl_Mascot_score)
+			{
+				if (hit_it->metaValueExists("Mascot_score"))
+				{
+					out << hit_it->getMetaValue("Mascot_score");
+				}
+				else out << "-1";
+			}
+      if (incl_target_decoy)
+			{
+				if (hit_it->metaValueExists("target_decoy"))
+				{
+					out << hit_it->getMetaValue("target_decoy");
 				}
 				else out << "-1";
 			}
@@ -574,7 +615,7 @@ namespace OpenMS
 										 citer->getPeptideIdentifications().begin(); pit !=
 										 citer->getPeptideIdentifications().end(); ++pit)
               {
-								writePeptideId(output, *pit);
+								writePeptideId(output, *pit,true,true);
 							}
 						}
 					}
@@ -920,7 +961,7 @@ namespace OpenMS
             {
 							writeRunHeader(output);
 							writeProteinHeader(output);
-							writePeptideHeader(output, "UNASSIGNEDPEPTIDE");
+							writePeptideHeader(output, "UNASSIGNEDPEPTIDE",true,true);
 						}
 						output << "#CONSENSUS";
 						writeFeatureHeader(output, "_cf", true, false);
@@ -1041,7 +1082,7 @@ namespace OpenMS
 					}
 					if (!proteins_only)
 					{
-						writePeptideHeader(output, what, true, first_dim_rt);
+						writePeptideHeader(output, what, true, true,true,true,true,first_dim_rt);
 					}
 
           for (vector<ProteinIdentification>::const_iterator it =
@@ -1061,7 +1102,7 @@ namespace OpenMS
               {
                 if (pit->getIdentifier() == actual_id)
                 {
-									writePeptideId(output, *pit, what, true, first_dim_rt);
+									writePeptideId(output, *pit, what, true, true,true,true,true,first_dim_rt);
                 }
               }
             }

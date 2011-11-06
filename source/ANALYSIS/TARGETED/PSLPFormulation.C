@@ -33,7 +33,7 @@ namespace OpenMS
 {
 
 
-PSLPFormulation::PSLPFormulation():DefaultParamHandler("PSLPFormulation")
+  PSLPFormulation::PSLPFormulation():DefaultParamHandler("PSLPFormulation"), solver_(LPWrapper::SOLVER_GLPK)
 {
   //model_ = new LPWrapper();
   defaults_.setValue("rt:min_rt",960.,"Minimal rt in seconds.");
@@ -69,7 +69,7 @@ PSLPFormulation::PSLPFormulation():DefaultParamHandler("PSLPFormulation")
   //	defaults_.setMaxFloat("combined_ilp:k1",1.);
 	
 	defaultsToParam_();
-
+  
 }
 
 PSLPFormulation::~PSLPFormulation()

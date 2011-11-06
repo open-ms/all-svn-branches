@@ -269,6 +269,15 @@ set_tests_properties("TOPP_FileFilter_20_out1" PROPERTIES DEPENDS "TOPP_FileFilt
 add_test("TOPP_FileFilter_21" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_15_input.featureXML -out FileFilter_21.tmp -id:remove_unassigned_ids -id:remove_unannotated_features -id:keep_best_score_id)
 add_test("TOPP_FileFilter_21_out1" ${DIFF} -in1 FileFilter_21.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_21_output.featureXML )
 set_tests_properties("TOPP_FileFilter_21_out1" PROPERTIES DEPENDS "TOPP_FileFilter_21")
+add_test("TOPP_FileFilter_22" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_22_input.consensusXML -out FileFilter_22.tmp -remove_meta distinct_charges gt "1,2")
+add_test("TOPP_FileFilter_22_out1" ${DIFF} -in1 FileFilter_22.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_22_output.consensusXML )
+set_tests_properties("TOPP_FileFilter_22_out1" PROPERTIES DEPENDS "TOPP_FileFilter_22")
+add_test("TOPP_FileFilter_23" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_22_input.consensusXML -out FileFilter_23.tmp -remove_meta distinct_charges_size gt 2)
+add_test("TOPP_FileFilter_23_out1" ${DIFF} -in1 FileFilter_23.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_22_output.consensusXML )
+set_tests_properties("TOPP_FileFilter_23_out1" PROPERTIES DEPENDS "TOPP_FileFilter_23")
+add_test("TOPP_FileFilter_24" ${TOPP_BIN_PATH}/FileFilter -test -in ${DATA_DIR_TOPP}/FileFilter_22_input.consensusXML -out FileFilter_24.tmp -remove_meta DOESNOTEXIST lt "whatever")
+add_test("TOPP_FileFilter_24_out1" ${DIFF} -in1 FileFilter_24.tmp -in2 ${DATA_DIR_TOPP}/FileFilter_24_output.consensusXML )
+set_tests_properties("TOPP_FileFilter_24_out1" PROPERTIES DEPENDS "TOPP_FileFilter_24")
 
 
 ### FileInfo tests
@@ -900,3 +909,16 @@ set_tests_properties("UTILS_MassCalculator_1_out1" PROPERTIES DEPENDS "UTILS_Mas
 add_test("UTILS_MassCalculator_2" ${TOPP_BIN_PATH}/MassCalculator -test -in_seq "LDQWLC(Carbamidomethyl)EKL" "(Glu->pyro-Glu)EAM(Oxidation)APKHK" "RANVM(Oxidation)DYR" "FGVEQDVDMVFASFIR" -out MassCalculator_2_output.tmp -charge 1 2 3)
 add_test("UTILS_MassCalculator_2_out1" ${DIFF} -in1 MassCalculator_2_output.tmp -in2 ${DATA_DIR_TOPP}/MassCalculator_2_output.txt )
 set_tests_properties("UTILS_MassCalculator_2_out1" PROPERTIES DEPENDS "UTILS_MassCalculator_2")
+
+
+add_test("UTILS_INIUpdater_1" ${TOPP_BIN_PATH}/INIUpdater -test -in ${DATA_DIR_TOPP}/INIUpdater_1_noupdate.toppas -out INIUpdater_1_noupdate.toppas.tmp)
+add_test("UTILS_INIUpdater_1_out" ${DIFF} -in1 INIUpdater_1_noupdate.toppas.tmp -in2 ${DATA_DIR_TOPP}/INIUpdater_1_noupdate.toppas )
+set_tests_properties("UTILS_INIUpdater_1_out" PROPERTIES DEPENDS "UTILS_INIUpdater_1")
+
+add_test("UTILS_INIUpdater_2" ${TOPP_BIN_PATH}/INIUpdater -test -in ${DATA_DIR_TOPP}/INIUpdater_2_broken.toppas -out INIUpdater_2_broken.toppas.tmp)
+set_tests_properties("UTILS_INIUpdater_2" PROPERTIES WILL_FAIL 1)
+
+add_test("UTILS_INIUpdater_3" ${TOPP_BIN_PATH}/INIUpdater -test -in ${DATA_DIR_TOPP}/INIUpdater_3_old.toppas -out INIUpdater_3_old.toppas.tmp)
+add_test("UTILS_INIUpdater_3_out" ${DIFF} -in1 INIUpdater_3_old.toppas.tmp -in2 ${DATA_DIR_TOPP}/INIUpdater_3_old_out.toppas )
+set_tests_properties("UTILS_INIUpdater_3_out" PROPERTIES DEPENDS "UTILS_INIUpdater_3")
+

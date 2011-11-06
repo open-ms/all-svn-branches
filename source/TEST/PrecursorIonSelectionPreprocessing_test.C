@@ -69,7 +69,7 @@ param.setValue("precursor_mass_tolerance_unit","Da");
 param.setValue("missed_cleavages",0);
 std::string tmp_filename;
 NEW_TMP_FILE(tmp_filename);
-param.setValue("preprocessing:preprocessed_db_path",tmp_filename);
+param.setValue("preprocessed_db_path",tmp_filename);
 ptr->setParameters(param);
 ptr->dbPreprocessing(OPENMS_GET_TEST_DATA_PATH("PrecursorIonSelectionPreprocessing_db.fasta"),true);
 	
@@ -132,10 +132,6 @@ END_SECTION
 	
 START_SECTION(DoubleReal getPT(String prot_id,Size peptide_index))
   TEST_REAL_SIMILAR(rt_pt_pp.getPT("P01008",1),0.0402)
-END_SECTION
-
-START_SECTION(DoubleReal getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt))
-	TEST_REAL_SIMILAR(rt_pt_pp.getRTWeight("P01008",1,831.),99.999)
 END_SECTION
 
 START_SECTION((const std::map<String, std::vector<DoubleReal> >& getProteinRTMap() const))

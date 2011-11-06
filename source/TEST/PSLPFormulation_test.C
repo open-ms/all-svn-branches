@@ -95,15 +95,15 @@ START_SECTION((template < typename InputPeakType > void createAndSolveILPForKnow
 }
 END_SECTION
 		
-START_SECTION(([PSLPFormulation::IndexLess] bool operator()(IndexTriple const &left, IndexTriple const &right) const))
+START_SECTION(([PSLPFormulation::FeatureIndexLess] bool operator()(IndexTriple const &left, IndexTriple const &right) const))
 {
   PSLPFormulation::IndexTriple a,b;
   a.variable = 1;
   b.variable = 2;
 
-  TEST_EQUAL(PSLPFormulation::IndexLess().operator ()(a,b), true )
-  TEST_EQUAL(PSLPFormulation::IndexLess().operator ()(b,a), false )
-  TEST_EQUAL(PSLPFormulation::IndexLess().operator ()(a,a), false )
+  TEST_EQUAL(PSLPFormulation::FeatureIndexLess().operator ()(a,b), true )
+  TEST_EQUAL(PSLPFormulation::FeatureIndexLess().operator ()(b,a), false )
+  TEST_EQUAL(PSLPFormulation::FeatureIndexLess().operator ()(a,a), false )
 }
 END_SECTION
 

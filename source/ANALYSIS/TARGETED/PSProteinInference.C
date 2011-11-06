@@ -37,7 +37,7 @@ using namespace std;
 #undef PIS_DEBUG
 namespace OpenMS
 {
-  PSProteinInference::PSProteinInference()
+  PSProteinInference::PSProteinInference():solver_(LPWrapper::SOLVER_GLPK)
   {
   }
   

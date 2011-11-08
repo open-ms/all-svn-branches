@@ -120,7 +120,6 @@ using namespace std;
   The results of an analysis can easily visualized within TOPPView. Simply load *.consensusXML and *.featureXML as layers over the original *.mzML.
 
   Parameters in section <i>algorithm:</i>
-  - <i>allow_missing_peaks</i> - Low intensity peaks might be missing from the isotopic pattern of some of the peptides. Specify if such peptides should be included in the analysis.
   - <i>rt_threshold</i> - Upper bound for the retention time [s] over which a characteristic peptide elutes.
   - <i>rt_min</i> - Lower bound for the retentions time [s].
   - <i>intensity_cutoff</i> - Lower bound for the intensity of isotopic peaks in a SILAC pattern.
@@ -161,7 +160,6 @@ class TOPPFeatureFinderRaw
     DoubleReal intensity_cutoff;
     DoubleReal intensity_correlation;
     DoubleReal model_deviation;
-    bool allow_missing_peaks;
 
     vector<vector <DoubleReal> > massShifts;      // list of mass shifts
 
@@ -173,7 +171,7 @@ class TOPPFeatureFinderRaw
 
   public:
     TOPPFeatureFinderRaw()
-      : TOPPBase("FeatureFinderRaw","Determination of peak ratios in LC-MS data", false), allow_missing_peaks(true)
+      : TOPPBase("FeatureFinderRaw","Determination of peak ratios in LC-MS data", false)
     {
     }
 
@@ -197,9 +195,6 @@ class TOPPFeatureFinderRaw
     registerSubsection_("sample", "Parameters describing the sample and its labels.");
     // create section "algorithm" for adjusting algorithm parameters
     registerSubsection_("algorithm", "Parameters for the algorithm.");
-
-   // create flag for missing peaks
-   registerFlag_("algorithm:allow_missing_peaks", "Low intensity peaks might be missing from the isotopic pattern of some of the peptides. Should such peptides be included in the analysis?", true);
   }
 
 
@@ -294,7 +289,6 @@ class TOPPFeatureFinderRaw
     intensity_cutoff = getParam_().getValue("algorithm:intensity_cutoff");
     intensity_correlation = getParam_().getValue("algorithm:intensity_correlation");
     model_deviation = getParam_().getValue("algorithm:model_deviation");
-    allow_missing_peaks = getFlag_("algorithm:allow_missing_peaks");
 
 
     {
@@ -332,7 +326,7 @@ class TOPPFeatureFinderRaw
     }
 
     // create filtering
-    SILACFiltering filtering(exp, peak_width, intensity_cutoff, intensity_correlation, allow_missing_peaks, "");
+    SILACFiltering filtering(exp, peak_width, intensity_cutoff, intensity_correlation, 0, "");
     filtering.setLogType(log_type_);
 
     // register filters to the filtering

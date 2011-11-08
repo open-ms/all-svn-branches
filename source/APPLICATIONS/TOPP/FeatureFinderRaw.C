@@ -185,19 +185,21 @@ class TOPPFeatureFinderRaw
   void registerOptionsAndFlags_()
   {
     // create flag for input file (.mzML)
-    registerInputFile_("in", "<file>", "", "input file");
+    registerInputFile_("in", "<file>", "", "Raw LC-MS data to be analyzed. (Profile data required. Will not work with centroided data!)");
     setValidFormats_("in", StringList::create("mzML"));
     // create flag for output file (.featureXML)
-    registerOutputFile_("out", "<file>", "", "output file", false);
+    registerOutputFile_("out", "<file>", "", "Set of all identified peptides. The m/z-RT positions correspond to the lightest peptide in each group.", false);
     setValidFormats_("out", StringList::create("featureXML"));
 
+    // create section "labels" for adjusting masses of labels
+    registerSubsection_("labels", "Isotopic labels that can be specified in section \'sample\'.");
     // create section "sample" for adjusting sample parameters
-    registerSubsection_("sample", "Parameter describing the sample and its labels.");
+    registerSubsection_("sample", "Parameters describing the sample and its labels.");
     // create section "algorithm" for adjusting algorithm parameters
     registerSubsection_("algorithm", "Parameters for the algorithm.");
 
-    // create flag for missing peaks
-    registerFlag_("algorithm:allow_missing_peaks", "Low intensity peaks might be missing from the isotopic pattern of some of the peptides. Should such peptides be included in the analysis?", true);
+   // create flag for missing peaks
+   registerFlag_("algorithm:allow_missing_peaks", "Low intensity peaks might be missing from the isotopic pattern of some of the peptides. Should such peptides be included in the analysis?", true);
   }
 
 
@@ -214,9 +216,7 @@ class TOPPFeatureFinderRaw
     if (section == "sample")
     {
       defaults.setValue("charge", "2:3", "Range of charge states in the sample, i.e. min charge : max charge.");
-      defaults.setValue("missed_cleavages", 0 , "Maximum number of missed cleavages.");
-      defaults.setMinInt("missed_cleavages", 0);
-      defaults.setValue("peaks_per_peptide", "3:4", "Range of peaks per peptide in the sample, i.e. min peaks per peptide : max peaks per peptide.", StringList::create("advanced"));
+      defaults.setValue("peaks_per_peptide", "3:5", "Range of peaks per peptide in the sample, i.e. min peaks per peptide : max peaks per peptide. For example 3:6, if isotopic peptide patterns in the sample consist of either three, four, five or six isotopic peaks. ", StringList::create("advanced"));
     }
 
 
@@ -226,7 +226,7 @@ class TOPPFeatureFinderRaw
 
     if (section == "algorithm")
     {
-      defaults.setValue("rt_threshold", 50.0, "Upper bound for the retention time [s] over which a characteristic peptide elutes. ");
+      defaults.setValue("rt_threshold", 50.0, "Typical retention time [s] over which a characteristic peptide elutes. (This is not an upper bound. Peptides that elute for longer will be reported.)");
       defaults.setMinFloat("rt_threshold", 0.0);
       defaults.setValue("rt_min", 0.0, "Lower bound for the retention time [s].", StringList::create("advanced"));
       defaults.setMinFloat("rt_min", 0.0);

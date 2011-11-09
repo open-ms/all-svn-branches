@@ -72,6 +72,10 @@ namespace OpenMS
        * @brief quality of the cluster
        */
       DoubleReal quality;
+
+      SILACPoint()
+        : mz(0), rt(0), charge(0), isotopes_per_peptide(0), quality(0)
+      { }
   };
 }
 

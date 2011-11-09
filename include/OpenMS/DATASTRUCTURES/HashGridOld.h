@@ -34,8 +34,8 @@
 
 #include <OpenMS/DATASTRUCTURES/GridElement.h>
 
-#ifndef OPENMS_DATASTRUCTURES_HASHGRID_H
-#define OPENMS_DATASTRUCTURES_HASHGRID_H
+#ifndef OPENMS_DATASTRUCTURES_HASHGRIDOLD_H
+#define OPENMS_DATASTRUCTURES_HASHGRIDOLD_H
 
 namespace OpenMS
 {
@@ -44,6 +44,8 @@ namespace OpenMS
 
   /**
 		@brief A data structure, which allows the arrangement of data points with an RT and m/z value in a two-dimensional grid.
+
+    @deprecated Use HashGrid
 
 		The size of each grid cell is determined by two values, namely <i>rt_threshold</i> and <i>mz_threshold</i>.
 		<i>rt_threshold</i> defines the height of a grid cell and <i>mz_threshold</i> the width.

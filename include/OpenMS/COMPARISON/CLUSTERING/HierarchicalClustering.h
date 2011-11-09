@@ -115,7 +115,7 @@ namespace OpenMS
           operator PointCoordinate() const
           {
             // (first + second) / 2
-            return coordinate_division(this->first + this->second, 2);
+            return coordScalarDiv_(this->first + this->second, 2);
           }
       };
 
@@ -314,11 +314,14 @@ namespace OpenMS
       DoubleReal treeDistance(TreeNode *left, TreeNode *right)
       {
         const BoundingBox bbox = left->bbox | right->bbox;
-        if (coordinate_greater(bbox.size(), grid.cell_dimension))
+        if (coordElemGreater_(bbox.size(), grid.cell_dimension))
         {
           return std::numeric_limits<DoubleReal>::infinity();
         }
-        return coordinate_distance(coordinate_division(left->coord, grid.cell_dimension), coordinate_division(right->coord, grid.cell_dimension));
+
+        const PointCoordinate left_scaled = coordElemDiv_(left->coord, grid.cell_dimension);
+        const PointCoordinate right_scaled = coordElemDiv_(right->coord, grid.cell_dimension);
+        return coordDist_(left_scaled, right_scaled);
       }
 
       /**
@@ -362,8 +365,7 @@ namespace OpenMS
         delete tree->right;
       }
 
-      // XXX: Convert to operator
-      static PointCoordinate coordinate_division(const PointCoordinate &lhs, const DoubleReal &rhs)
+      static PointCoordinate coordScalarDiv_(const PointCoordinate &lhs, const DoubleReal &rhs)
       {
         PointCoordinate ret;
         typename PointCoordinate::iterator it = ret.begin();
@@ -372,8 +374,7 @@ namespace OpenMS
         return ret;
       }
 
-      // XXX: Convert to operator
-      static PointCoordinate coordinate_division(const PointCoordinate &lhs, const PointCoordinate &rhs)
+      static PointCoordinate coordElemDiv_(const PointCoordinate &lhs, const PointCoordinate &rhs)
       {
         PointCoordinate ret;
         typename PointCoordinate::iterator it = ret.begin();
@@ -382,8 +383,7 @@ namespace OpenMS
         return ret;
       }
 
-      // XXX: Rename
-      static bool coordinate_greater(const PointCoordinate &lhs, const PointCoordinate &rhs)
+      static bool coordElemGreater_(const PointCoordinate &lhs, const PointCoordinate &rhs)
       {
         UInt ret = 0;
         typename PointCoordinate::const_iterator lit = lhs.begin(), rit = rhs.begin();
@@ -391,7 +391,7 @@ namespace OpenMS
         return ret;
       }
 
-      static DoubleReal coordinate_distance(const PointCoordinate &lhs, const PointCoordinate &rhs)
+      static DoubleReal coordDist_(const PointCoordinate &lhs, const PointCoordinate &rhs)
       {
         DoubleReal ret = 0;
         PointCoordinate p = lhs - rhs;
@@ -461,9 +461,12 @@ namespace OpenMS
         trees.erase(tree_right);
 
         const BoundingBox bbox = tree_left->bbox | tree_right->bbox;
+
         // Arithmethic mean: (left * left.points + right * right.points) / (left.points + right.points)
-        const UInt points = tree_left->points + tree_right->points;
-        const PointCoordinate coord = coordinate_division(tree_left->coord * tree_left->points + tree_right->coord * tree_right->points, points);
+        const PointCoordinate &left = tree_left->coord, &right = tree_right->coord;
+        const UInt &left_points = tree_left->points, &right_points = tree_right->points;
+        const PointCoordinate coord = coordScalarDiv_(left * left_points + right * right_points, left_points + right_points);
+
         TreeNode *tree(new TreeNode(coord, bbox, tree_left, tree_right));
 
         addTreeDistance(tree, trees, dists);

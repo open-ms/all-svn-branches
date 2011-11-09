@@ -99,10 +99,7 @@ namespace OpenMS
     public:
       HashGrid(const ClusterCenter &cell_dimension)
         : cell_dimension(cell_dimension), grid_dimension(grid_dimension_)
-      {
-        // XXX: CellIndex needs constructor
-        for (typename CellIndex::iterator it = grid_dimension_.begin(); it != grid_dimension_.end(); ++it) *it = 0;
-      }
+      { }
 
       /**
        * @brief Inserts a (2-dimensional coordinate, value) pair.

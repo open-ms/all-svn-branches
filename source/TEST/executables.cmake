@@ -247,6 +247,8 @@ set(filtering_executables_list
   PeakMarker_test
   SILACFilter_test
   SILACFiltering_test
+  SILACPattern_test
+  SILACPoint_test
   SavitzkyGolayFilter_test
   Scaler_test
   SignalToNoiseEstimatorMeanIterative_test

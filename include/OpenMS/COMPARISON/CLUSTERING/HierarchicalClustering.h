@@ -84,7 +84,7 @@ namespace OpenMS
 
           PointCoordinate size() const
           {
-            return coordinate_minus(this->second, this->first);
+            return this->second - this->first;
           }
 
           /** @brief Intersection of bounding box. */
@@ -115,7 +115,7 @@ namespace OpenMS
           operator PointCoordinate() const
           {
             // (first + second) / 2
-            return coordinate_division(coordinate_plus(this->first, this->second), 2);
+            return coordinate_division(this->first + this->second, 2);
           }
       };
 
@@ -363,26 +363,6 @@ namespace OpenMS
       }
 
       // XXX: Convert to operator
-      static PointCoordinate coordinate_plus(const PointCoordinate &lhs, const PointCoordinate &rhs)
-      {
-        PointCoordinate ret;
-        typename PointCoordinate::iterator it = ret.begin();
-        typename PointCoordinate::const_iterator lit = lhs.begin(), rit = rhs.begin();
-        for (; it != ret.end(); ++it, ++lit, ++rit) *it = *lit + *rit;
-        return ret;
-      }
-
-      // XXX: Convert to operator
-      static PointCoordinate coordinate_minus(const PointCoordinate &lhs, const PointCoordinate &rhs)
-      {
-        PointCoordinate ret;
-        typename PointCoordinate::iterator it = ret.begin();
-        typename PointCoordinate::const_iterator lit = lhs.begin(), rit = rhs.begin();
-        for (; it != ret.end(); ++it, ++lit, ++rit) *it = *lit - *rit;
-        return ret;
-      }
-
-      // XXX: Convert to operator
       static PointCoordinate coordinate_multiplication(const PointCoordinate &lhs, const DoubleReal &rhs)
       {
         PointCoordinate ret;
@@ -434,7 +414,7 @@ namespace OpenMS
       static DoubleReal coordinate_distance(const PointCoordinate &lhs, const PointCoordinate &rhs)
       {
         DoubleReal ret = 0;
-        PointCoordinate p = coordinate_minus(lhs, rhs);
+        PointCoordinate p = lhs - rhs;
         typename PointCoordinate::const_iterator it = p.begin();
         for (; it != p.end(); ++it) ret += std::pow(*it, 2.);
         return std::sqrt(ret);
@@ -503,7 +483,7 @@ namespace OpenMS
         const BoundingBox bbox = tree_left->bbox | tree_right->bbox;
         // Arithmethic mean: (left * left.points + right * right.points) / (left.points + right.points)
         const UInt points = tree_left->points + tree_right->points;
-        const PointCoordinate coord = coordinate_division(coordinate_plus(coordinate_multiplication(tree_left->coord, tree_left->points), coordinate_multiplication(tree_right->coord, tree_right->points)), points);
+        const PointCoordinate coord = coordinate_division(coordinate_multiplication(tree_left->coord, tree_left->points) + coordinate_multiplication(tree_right->coord, tree_right->points), points);
         TreeNode *tree(new TreeNode(coord, bbox, tree_left, tree_right));
 
         addTreeDistance(tree, trees, dists);

@@ -363,26 +363,6 @@ namespace OpenMS
       }
 
       // XXX: Convert to operator
-      static PointCoordinate coordinate_multiplication(const PointCoordinate &lhs, const DoubleReal &rhs)
-      {
-        PointCoordinate ret;
-        typename PointCoordinate::iterator it = ret.begin();
-        typename PointCoordinate::const_iterator lit = lhs.begin();
-        for (; it != ret.end(); ++it, ++lit) *it = *lit * rhs;
-        return ret;
-      }
-
-      // XXX: Convert to operator
-      static PointCoordinate coordinate_multiplication(const PointCoordinate &lhs, const PointCoordinate &rhs)
-      {
-        PointCoordinate ret;
-        typename PointCoordinate::iterator it = ret.begin();
-        typename PointCoordinate::const_iterator lit = lhs.begin(), rit = rhs.begin();
-        for (; it != ret.end(); ++it, ++lit, ++rit) *it = *lit * *rit;
-        return ret;
-      }
-
-      // XXX: Convert to operator
       static PointCoordinate coordinate_division(const PointCoordinate &lhs, const DoubleReal &rhs)
       {
         PointCoordinate ret;
@@ -483,7 +463,7 @@ namespace OpenMS
         const BoundingBox bbox = tree_left->bbox | tree_right->bbox;
         // Arithmethic mean: (left * left.points + right * right.points) / (left.points + right.points)
         const UInt points = tree_left->points + tree_right->points;
-        const PointCoordinate coord = coordinate_division(coordinate_multiplication(tree_left->coord, tree_left->points) + coordinate_multiplication(tree_right->coord, tree_right->points), points);
+        const PointCoordinate coord = coordinate_division(tree_left->coord * tree_left->points + tree_right->coord * tree_right->points, points);
         TreeNode *tree(new TreeNode(coord, bbox, tree_left, tree_right));
 
         addTreeDistance(tree, trees, dists);

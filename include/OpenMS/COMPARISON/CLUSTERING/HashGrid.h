@@ -85,6 +85,8 @@ namespace OpenMS
       class ConstIterator : public std::iterator<std::input_iterator_tag, const value_type>
       {
         private:
+          friend class HashGrid;
+
           typedef typename Grid::const_iterator grid_iterator;
           typedef typename CellContent::const_iterator cell_iterator;
 
@@ -154,6 +156,8 @@ namespace OpenMS
       class Iterator : public std::iterator<std::input_iterator_tag, value_type>
       {
         private:
+          friend class HashGrid;
+
           typedef typename Grid::iterator grid_iterator;
           typedef typename CellContent::iterator cell_iterator;
 
@@ -259,6 +263,15 @@ namespace OpenMS
       }
 
       /**
+       * @brief Erases element on given iterator.
+       */
+      void erase(iterator pos)
+      {
+        CellContent &cell = pos.grid_it_->second;
+        cell.erase(pos.cell_it_);
+      }
+
+      /**
        * @brief Erases elements matching the 2-dimensional coordinate.
        * @param x Key of element to be erased.
        * @return Number of elements erased.
@@ -316,6 +329,29 @@ namespace OpenMS
       const_iterator end() const
       {
         return const_iterator(cells_);
+      }
+
+      /**
+       * @brief Return true if HashGrid is empty.
+       */
+      bool empty() const
+      {
+        return size() == 0;
+      }
+
+      /**
+       * @brief Return number of elements.
+       */
+      size_type size() const
+      {
+        size_type ret = 0;
+
+        for (const_grid_iterator it = grid_begin(); it != grid_end(); ++it)
+        {
+          ret += it->second.size();
+        }
+
+        return ret;
       }
 
       /**

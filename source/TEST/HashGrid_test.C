@@ -70,13 +70,27 @@ START_SECTION(cell_iterator insert(const value_type &v))
 }
 END_SECTION
 
+START_SECTION(void erase(iterator pos))
+  TestGrid t(cell_dimension);
+  t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
+
+  TEST_EQUAL(t.size(), 1);
+  TestGrid::iterator it = t.begin();
+  t.erase(it);
+  TEST_EQUAL(t.size(), 0);
+END_SECTION
+
 START_SECTION(size_type erase(const key_type& key))
 {
   TestGrid t(cell_dimension);
-
   const TestGrid::ClusterCenter key(1, 2);
+
   t.insert(std::make_pair(key, TestGrid::mapped_type()));
   TEST_EQUAL(t.erase(key), 1);
+
+  t.insert(std::make_pair(key, TestGrid::mapped_type()));
+  t.insert(std::make_pair(key, TestGrid::mapped_type()));
+  TEST_EQUAL(t.erase(key), 2);
 }
 END_SECTION
 
@@ -84,9 +98,9 @@ START_SECTION(void clear())
 {
   TestGrid t(cell_dimension);
   t.insert(std::make_pair(TestGrid::ClusterCenter(1, 2), TestGrid::mapped_type()));
-  TEST_EQUAL(t.grid_begin() != t.grid_end(), true);
+  TEST_EQUAL(t.empty(), false);
   t.clear();
-  TEST_EQUAL(t.grid_begin() == t.grid_end(), true);
+  TEST_EQUAL(t.empty(), true);
 }
 END_SECTION
 
@@ -155,6 +169,26 @@ START_SECTION(iterator end())
   t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
   TEST_EQUAL(t.grid_begin()->second.size(), 1);
 }
+END_SECTION
+
+START_SECTION(bool empty() const)
+  TestGrid t(cell_dimension);
+  TEST_EQUAL(t.empty(), true);
+  t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
+  TEST_EQUAL(t.empty(), false);
+  t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
+  TEST_EQUAL(t.empty(), false);
+END_SECTION
+
+START_SECTION(size_type size() const)
+  TestGrid t(cell_dimension);
+  TEST_EQUAL(t.size(), 0);
+  t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
+  TEST_EQUAL(t.size(), 1);
+  t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
+  TEST_EQUAL(t.size(), 2);
+  t.insert(std::make_pair(TestGrid::ClusterCenter(1, 0), TestGrid::mapped_type()));
+  TEST_EQUAL(t.size(), 3);
 END_SECTION
 
 START_SECTION(const_grid_iterator grid_begin() const)

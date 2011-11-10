@@ -615,14 +615,58 @@ PeakWidthEstimator::Result TOPPFeatureFinderRaw::estimatePeakWidth(const MSExper
 
 void TOPPFeatureFinderRaw::generateClusterFeatureByCluster(FeatureMap<> &out, const Clustering &clustering) const
 {
-  for (Clustering::Grid::const_grid_iterator cell_it = clustering.grid.grid_begin(); cell_it != clustering.grid.grid_end(); ++cell_it)
+  for (Clustering::Grid::const_iterator cluster_it = clustering.grid.begin(); cluster_it != clustering.grid.end(); ++cluster_it)
   {
-    for (Clustering::Grid::const_cell_iterator cluster_it = cell_it->second.begin(); cluster_it != cell_it->second.end(); ++cluster_it)
+    // RT value as weighted RT position of all peaks
+    DoubleReal global_rt = 0;
+    // Total intensity
+    DoubleReal global_intensity = 0;
+
+    for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
+         pattern_it != cluster_it->second.end();
+         ++pattern_it)
     {
-      // RT value as weighted RT position of all peaks
-      DoubleReal global_rt = 0;
+      SILACPattern &pattern = *pattern_it->second;
+
+      for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = pattern.intensities.begin();
+           shift_inten_it != pattern.intensities.end();
+           ++shift_inten_it)
+      {
+        for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
+             peak_inten_it != shift_inten_it->end();
+             ++peak_inten_it)
+        {
+          DoubleReal intensity = *peak_inten_it;
+
+          // Add to RT value and global intensity
+          global_rt += intensity * pattern.rt;
+          global_intensity += intensity;
+        }
+      }
+    }
+
+    // Calculate global RT value
+    global_rt /= global_intensity;
+
+    SILACPattern &pattern_first = *cluster_it->second.begin()->second;
+
+    for (UInt shift_id = 0; shift_id < pattern_first.mass_shifts.size(); ++shift_id)
+    {
+      // XXX: Feature detection produces a stray 0 mass shift
+      if (shift_id > 0 && pattern_first.mass_shifts[shift_id] == 0)
+        continue;
+
+      Feature feature;
+
+      // MZ value as weighted MZ position of monoisotopic peaks of given mass shift
+      DoubleReal shift_mz = 0;
       // Total intensity
-      DoubleReal global_intensity = 0;
+      DoubleReal shift_intensity = 0;
+      // Total intensity of monoisotopic peak
+      DoubleReal shift_intensity0 = 0;
+
+      // Bounding box per peak
+      std::map<UInt, DBoundingBox<2> > bboxs;
 
       for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
            pattern_it != cluster_it->second.end();
@@ -630,97 +674,50 @@ void TOPPFeatureFinderRaw::generateClusterFeatureByCluster(FeatureMap<> &out, co
       {
         SILACPattern &pattern = *pattern_it->second;
 
-        for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = pattern.intensities.begin();
-             shift_inten_it != pattern.intensities.end();
-             ++shift_inten_it)
-        {
-          for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
-               peak_inten_it != shift_inten_it->end();
-               ++peak_inten_it)
-          {
-            DoubleReal intensity = *peak_inten_it;
+        const std::vector<DoubleReal> &intensities = pattern.intensities[shift_id];
+        DoubleReal mz = pattern.mz + pattern.mass_shifts[shift_id];
+        DoubleReal intensity0 = intensities[0];
 
-            // Add to RT value and global intensity
-            global_rt += intensity * pattern.rt;
-            global_intensity += intensity;
-          }
+        // Add to MZ value and shift intensity of monoisotopic peak
+        shift_mz += intensity0 * mz;
+        shift_intensity0 += intensity0;
+
+        // Iterator over every peak
+        UInt peak_id = 0;
+        std::vector<DoubleReal>::const_iterator peak_inten_it = intensities.begin();
+        DoubleReal peak_mz = mz;
+        for (;
+             peak_inten_it != intensities.end();
+             ++peak_id, ++peak_inten_it, peak_mz += 1. / pattern.charge)
+        {
+          shift_intensity += *peak_inten_it;
+          bboxs[peak_id].enlarge(pattern.rt, peak_mz);
         }
       }
 
-      // Calculate global RT value
-      global_rt /= global_intensity;
-
-      SILACPattern &pattern_first = *cluster_it->second.begin()->second;
-
-      for (UInt shift_id = 0; shift_id < pattern_first.mass_shifts.size(); ++shift_id)
+      // Add each bbox as convex hulls to the cluster
+      for (std::map<UInt, DBoundingBox<2> >::const_iterator bboxs_it = bboxs.begin();
+           bboxs_it != bboxs.end();
+           ++bboxs_it)
       {
-        // XXX: Feature detection produces a stray 0 mass shift
-        if (shift_id > 0 && pattern_first.mass_shifts[shift_id] == 0)
-          continue;
-
-        Feature feature;
-
-        // MZ value as weighted MZ position of monoisotopic peaks of given mass shift
-        DoubleReal shift_mz = 0;
-        // Total intensity
-        DoubleReal shift_intensity = 0;
-        // Total intensity of monoisotopic peak
-        DoubleReal shift_intensity0 = 0;
-
-        // Bounding box per peak
-        std::map<UInt, DBoundingBox<2> > bboxs;
-
-        for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
-             pattern_it != cluster_it->second.end();
-             ++pattern_it)
-        {
-          SILACPattern &pattern = *pattern_it->second;
-
-          const std::vector<DoubleReal> &intensities = pattern.intensities[shift_id];
-          DoubleReal mz = pattern.mz + pattern.mass_shifts[shift_id];
-          DoubleReal intensity0 = intensities[0];
-
-          // Add to MZ value and shift intensity of monoisotopic peak
-          shift_mz += intensity0 * mz;
-          shift_intensity0 += intensity0;
-
-          // Iterator over every peak
-          UInt peak_id = 0;
-          std::vector<DoubleReal>::const_iterator peak_inten_it = intensities.begin();
-          DoubleReal peak_mz = mz;
-          for (;
-               peak_inten_it != intensities.end();
-               ++peak_id, ++peak_inten_it, peak_mz += 1. / pattern.charge)
-          {
-            shift_intensity += *peak_inten_it;
-            bboxs[peak_id].enlarge(pattern.rt, peak_mz);
-          }
-        }
-
-        // Add each bbox as convex hulls to the cluster
-        for (std::map<UInt, DBoundingBox<2> >::const_iterator bboxs_it = bboxs.begin();
-             bboxs_it != bboxs.end();
-             ++bboxs_it)
-        {
-          ConvexHull2D hull;
-          hull.addPoint(bboxs_it->second.min_);
-          hull.addPoint(bboxs_it->second.max_);
-          feature.getConvexHulls().push_back(hull);
-        }
-
-        // XXX: Real quality?
-        feature.setOverallQuality(1);
-        feature.setCharge(pattern_first.charge);
-
-        // Calculate MZ value
-        shift_mz /= shift_intensity0;
-
-        feature.setRT(global_rt);
-        feature.setMZ(shift_mz);
-        feature.setIntensity(shift_intensity);
-
-        out.push_back(feature);
+        ConvexHull2D hull;
+        hull.addPoint(bboxs_it->second.min_);
+        hull.addPoint(bboxs_it->second.max_);
+        feature.getConvexHulls().push_back(hull);
       }
+
+      // XXX: Real quality?
+      feature.setOverallQuality(1);
+      feature.setCharge(pattern_first.charge);
+
+      // Calculate MZ value
+      shift_mz /= shift_intensity0;
+
+      feature.setRT(global_rt);
+      feature.setMZ(shift_mz);
+      feature.setIntensity(shift_intensity);
+
+      out.push_back(feature);
     }
   }
 }

@@ -60,11 +60,11 @@ namespace OpenMS
       /**
        * @bried Remove clusters smaller then rt_min
        */
-      void removeSmall();
+      void removeSmall_();
       /**
        * @brief Join clusters with holes less then rt_max_spacing
        */
-      void joinLarge();
+      void joinLarge_();
   };
 }
 

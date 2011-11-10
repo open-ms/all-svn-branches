@@ -32,11 +32,11 @@ using namespace OpenMS;
 void SILACClustering::cluster()
 {
   HierarchicalClustering<SILACPattern *>::cluster();
-  if (rt_min) removeSmall();
-  if (rt_max_spacing) joinLarge();
+  if (rt_min) removeSmall_();
+  if (rt_max_spacing) joinLarge_();
 }
 
-void SILACClustering::removeSmall()
+void SILACClustering::removeSmall_()
 {
   for (Grid::grid_iterator cell_it = grid.grid_begin();
        cell_it != grid.grid_end();
@@ -56,7 +56,7 @@ void SILACClustering::removeSmall()
   }
 }
 
-void SILACClustering::joinLarge()
+void SILACClustering::joinLarge_()
 {
   typedef std::multimap<DoubleReal, std::pair<PointCoordinate, Cluster> > Sort;
   Sort sort_mz;

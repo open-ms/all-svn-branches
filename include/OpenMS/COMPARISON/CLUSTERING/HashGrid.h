@@ -25,6 +25,8 @@
 // $Authors: Bastian Blank $
 // --------------------------------------------------------------------------
 
+#include <iterator>
+
 #include <boost/array.hpp>
 #include <boost/unordered/unordered_map.hpp>
 
@@ -76,6 +78,148 @@ namespace OpenMS
       typedef typename CellContent::mapped_type mapped_type;
       typedef typename CellContent::value_type value_type;
 
+    private:
+      /**
+       * @brief Constant element iterator for the hash grid.
+       */
+      class ConstIterator : public std::iterator<std::input_iterator_tag, const value_type>
+      {
+        private:
+          typedef typename Grid::const_iterator grid_iterator;
+          typedef typename CellContent::const_iterator cell_iterator;
+
+          const Grid &grid_;
+          grid_iterator grid_it_;
+          cell_iterator cell_it_;
+
+          // Search for next non-empty cell
+          void searchNextCell_()
+          {
+            while (cell_it_ == grid_it_->second.end())
+            {
+              grid_it_++;
+
+              // If we are at the last cell, set cell iterator to something well-known
+              if (grid_it_ == grid_.end())
+              {
+                cell_it_ = cell_iterator();
+                return;
+              }
+
+              cell_it_ = grid_it_->second.begin();
+            }
+          }
+
+        public:
+          ConstIterator(const Grid &grid, grid_iterator grid_it)
+            : grid_(grid), grid_it_(grid_it)
+          { }
+
+          ConstIterator(const Grid &grid, grid_iterator grid_it, cell_iterator cell_it)
+            : grid_(grid), grid_it_(grid_it), cell_it_(cell_it)
+          {
+            searchNextCell_();
+          }
+
+          ConstIterator &operator++()
+          {
+            ++cell_it_;
+            searchNextCell_();
+            return *this;
+          }
+
+          ConstIterator operator++(int)
+          {
+            ConstIterator ret(*this);
+            operator++();
+            return ret;
+          }
+
+          bool operator==(const ConstIterator &rhs) const
+          { return grid_it_ == rhs.grid_it_ && cell_it_ == rhs.cell_it_; }
+
+          bool operator!=(const ConstIterator& rhs) const
+          { return !(*this == rhs); }
+
+          const value_type& operator*() const
+          { return *cell_it_; }
+
+          const value_type* operator->() const
+          { return &*cell_it_; }
+      };
+
+      /**
+       * @brief Element iterator for the hash grid.
+       */
+      class Iterator : public std::iterator<std::input_iterator_tag, value_type>
+      {
+        private:
+          typedef typename Grid::iterator grid_iterator;
+          typedef typename CellContent::iterator cell_iterator;
+
+          Grid &grid_;
+          grid_iterator grid_it_;
+          cell_iterator cell_it_;
+
+          // Search for next non-empty cell
+          void searchNextCell_()
+          {
+            while (cell_it_ == grid_it_->second.end())
+            {
+              grid_it_++;
+
+              // If we are at the last cell, set cell iterator to something well-known
+              if (grid_it_ == grid_.end())
+              {
+                cell_it_ = cell_iterator();
+                return;
+              }
+
+              cell_it_ = grid_it_->second.begin();
+            }
+          }
+
+        public:
+          Iterator(Grid &grid, grid_iterator grid_it)
+            : grid_(grid), grid_it_(grid_it)
+          { }
+
+          Iterator(Grid &grid, grid_iterator grid_it, cell_iterator cell_it)
+            : grid_(grid), grid_it_(grid_it), cell_it_(cell_it)
+          {
+            searchNextCell_();
+          }
+
+          Iterator &operator++()
+          {
+            ++cell_it_;
+            searchNextCell_();
+            return *this;
+          }
+
+          Iterator operator++(int)
+          {
+            Iterator ret(*this);
+            operator++();
+            return ret;
+          }
+
+          bool operator==(const Iterator &rhs) const
+          { return grid_it_ == rhs.grid_it_ && cell_it_ == rhs.cell_it_; }
+
+          bool operator!=(const Iterator& rhs) const
+          { return !(*this == rhs); }
+
+          value_type& operator*() const
+          { return *cell_it_; }
+
+          value_type* operator->() const
+          { return &*cell_it_; }
+      };
+
+    public:
+      typedef ConstIterator const_iterator;
+      typedef Iterator iterator;
       typedef typename Grid::const_iterator const_grid_iterator;
       typedef typename Grid::iterator grid_iterator;
       typedef typename CellContent::const_iterator const_cell_iterator;
@@ -135,6 +279,46 @@ namespace OpenMS
        * @brief Clears the map.
        */
       void clear() { cells_.clear(); }
+
+      /**
+       * @brief Returns iterator to first element.
+       */
+      iterator begin()
+      {
+        grid_iterator grid_it = cells_.begin();
+        if (grid_it == cells_.end()) return end();
+        cell_iterator cell_it = grid_it->second.begin();
+        return iterator(cells_, grid_it, cell_it);
+      }
+
+      /**
+       * @brief Returns iterator to first element.
+       */
+      const_iterator begin() const
+      {
+        const_grid_iterator grid_it = cells_.begin();
+        if (grid_it == cells_.end()) return end();
+        const_cell_iterator cell_it = grid_it->second.begin();
+        return const_iterator(cells_, grid_it, cell_it);
+      }
+
+      /**
+       * @brief Returns iterator to first element.
+       */
+      iterator end()
+      {
+        grid_iterator grid_it = cells_.end();
+        return iterator(cells_, grid_it);
+      }
+
+      /**
+       * @brief Returns iterator to first element.
+       */
+      const_iterator end() const
+      {
+        const_grid_iterator grid_it = cells_.end();
+        return const_iterator(cells_, grid_it);
+      }
 
       /**
        * @brief Returns iterator to first grid cell.

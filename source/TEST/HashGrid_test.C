@@ -90,6 +90,73 @@ START_SECTION(void clear())
 }
 END_SECTION
 
+START_SECTION(iterator begin())
+{
+  TestGrid t(cell_dimension);
+  t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
+  t.insert(std::make_pair(TestGrid::ClusterCenter(1, 0), TestGrid::mapped_type()));
+  t.insert(std::make_pair(TestGrid::ClusterCenter(2, 0), TestGrid::mapped_type()));
+
+  TestGrid::iterator it = t.begin();
+  TEST_EQUAL(it->first[0] <= 2, true);
+  TEST_EQUAL(it->first[1], 0);
+  it++;
+  TEST_EQUAL(it->first[0] <= 2, true);
+  TEST_EQUAL(it->first[1], 0);
+  it++;
+  TEST_EQUAL(it->first[0] <= 2, true);
+  TEST_EQUAL(it->first[1], 0);
+  it++;
+  TEST_EQUAL(it == t.end(), true);
+}
+END_SECTION
+
+START_SECTION(const_iterator begin())
+{
+  TestGrid t(cell_dimension);
+  const TestGrid &ct(t);
+  t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
+  t.insert(std::make_pair(TestGrid::ClusterCenter(1, 0), TestGrid::mapped_type()));
+  t.insert(std::make_pair(TestGrid::ClusterCenter(2, 0), TestGrid::mapped_type()));
+
+  TestGrid::const_iterator it = ct.begin();
+  TEST_EQUAL(it->first[0] <= 2, true);
+  TEST_EQUAL(it->first[1], 0);
+  it++;
+  TEST_EQUAL(it->first[0] <= 2, true);
+  TEST_EQUAL(it->first[1], 0);
+  it++;
+  TEST_EQUAL(it->first[0] <= 2, true);
+  TEST_EQUAL(it->first[1], 0);
+  it++;
+  TEST_EQUAL(it == ct.end(), true);
+}
+END_SECTION
+
+START_SECTION(iterator end())
+{
+  TestGrid t(cell_dimension);
+  TestGrid::iterator it = t.begin();
+  TEST_EQUAL(it == t.end(), true);
+}
+END_SECTION
+
+START_SECTION(const_iterator end())
+{
+  const TestGrid ct(cell_dimension);
+  TestGrid::const_iterator it = ct.begin();
+  TEST_EQUAL(it == ct.end(), true);
+}
+END_SECTION
+
+START_SECTION(iterator end())
+{
+  TestGrid t(cell_dimension);
+  t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
+  TEST_EQUAL(t.grid_begin()->second.size(), 1);
+}
+END_SECTION
+
 START_SECTION(const_grid_iterator grid_begin() const)
 {
   TestGrid t(cell_dimension);

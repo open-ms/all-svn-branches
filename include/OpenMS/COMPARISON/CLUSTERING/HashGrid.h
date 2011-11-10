@@ -111,8 +111,8 @@ namespace OpenMS
           }
 
         public:
-          ConstIterator(const Grid &grid, grid_iterator grid_it)
-            : grid_(grid), grid_it_(grid_it)
+          ConstIterator(const Grid &grid)
+            : grid_(grid), grid_it_(grid.end())
           { }
 
           ConstIterator(const Grid &grid, grid_iterator grid_it, cell_iterator cell_it)
@@ -180,8 +180,8 @@ namespace OpenMS
           }
 
         public:
-          Iterator(Grid &grid, grid_iterator grid_it)
-            : grid_(grid), grid_it_(grid_it)
+          Iterator(Grid &grid)
+            : grid_(grid), grid_it_(grid.end())
           { }
 
           Iterator(Grid &grid, grid_iterator grid_it, cell_iterator cell_it)
@@ -307,8 +307,7 @@ namespace OpenMS
        */
       iterator end()
       {
-        grid_iterator grid_it = cells_.end();
-        return iterator(cells_, grid_it);
+        return iterator(cells_);
       }
 
       /**
@@ -316,8 +315,7 @@ namespace OpenMS
        */
       const_iterator end() const
       {
-        const_grid_iterator grid_it = cells_.end();
-        return const_iterator(cells_, grid_it);
+        return const_iterator(cells_);
       }
 
       /**

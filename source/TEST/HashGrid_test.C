@@ -84,11 +84,9 @@ START_SECTION(void clear())
 {
   TestGrid t(cell_dimension);
   t.insert(std::make_pair(TestGrid::ClusterCenter(1, 2), TestGrid::mapped_type()));
-  // Does not work, no output defined for iterators
-  //TEST_NOT_EQUAL(t.grid_begin(), t.grid_end());
+  TEST_EQUAL(t.grid_begin() != t.grid_end(), true);
   t.clear();
-  // Does not work, no output defined for iterators
-  //TEST_EQUAL(t.grid_begin(), t.grid_end());
+  TEST_EQUAL(t.grid_begin() == t.grid_end(), true);
 }
 END_SECTION
 
@@ -111,18 +109,15 @@ END_SECTION
 
 START_SECTION(const_grid_iterator grid_end() const)
 {
-  TestGrid t(cell_dimension);
-  const TestGrid &ct(t);
-  // Does not work, no output defined for iterators
-  //TEST_EQUAL(ct.grid_begin(), ct.grid_end());
+  const TestGrid t(cell_dimension);
+  TEST_EQUAL(t.grid_begin() == t.grid_end(), true);
 }
 END_SECTION
 
 START_SECTION(const_grid_iterator grid_end())
 {
   TestGrid t(cell_dimension);
-  // Does not work, no output defined for iterators
-  //TEST_EQUAL(t.grid_begin(), t.grid_end());
+  TEST_EQUAL(t.grid_begin() == t.grid_end(), true);
 }
 END_SECTION
 

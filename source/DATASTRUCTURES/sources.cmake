@@ -14,7 +14,6 @@ CVMappingTerm.C
 CVMappingRule.C
 CVReference.C
 CVMappings.C
-DataPoint.C
 DBoundingBox.C
 DIntervalBase.C
 DPosition.C

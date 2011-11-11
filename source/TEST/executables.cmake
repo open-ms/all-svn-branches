@@ -27,7 +27,6 @@ set(datastructures_executables_list
 	DIntervalBase_test
 	DPosition_test
 	DRange_test
-	DataPoint_test
 	DataValue_test
 	DateTime_test
 	Date_test

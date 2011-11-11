@@ -14,7 +14,6 @@ CVMappingTerm.h
 CVMappingRule.h
 CVReference.h
 CVMappings.h
-DataPoint.h
 DBoundingBox.h
 DIntervalBase.h
 DPosition.h

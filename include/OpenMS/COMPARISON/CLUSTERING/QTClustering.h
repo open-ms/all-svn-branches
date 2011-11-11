@@ -29,7 +29,7 @@
 #ifndef OPENMS_COMPARISON_CLUSTERING_QTCLUSTERING_H
 #define OPENMS_COMPARISON_CLUSTERING_QTCLUSTERING_H
 
-#include <OpenMS/DATASTRUCTURES/HashGridOld.h>
+#include <OpenMS/COMPARISON/CLUSTERING/HashGrid.h>
 #include <OpenMS/DATASTRUCTURES/QTSILACCluster.h>
 #include <OpenMS/CONCEPT/ProgressLogger.h>
 #include <OpenMS/CONCEPT/Exception.h>
@@ -40,17 +40,19 @@ namespace OpenMS {
  * @brief QT clustering based on geometric hashing.
  * Performs a QT clustering similar to the description of Heyer, Kruglyak and Yooseph (1999).
  * It uses a hash grid for the arrangement of the data points and computes a two-dimensional diameter for cluster (m/z-diameter, rt-diameter).
- * @see HashGridOld
+ * @see HashGrid
  * @ingroup SpectraClustering
  */
 
   class OPENMS_DLLAPI QTClustering  : public ProgressLogger{
 
   private:
+  typedef HashGrid<DataPoint *> Grid;
+
   /**
 	 * @brief the hash grid used for data arrangement
 	 */
-   HashGridOld grid_;
+   Grid grid_;
 
   /**
 	 * @brief maximal rt diameter
@@ -73,7 +75,7 @@ namespace OpenMS {
 	 * @brief recursive QT clustering method
 	 * @param act_grid the data points to be clustered in the current step
 	 */
-   QTSILACCluster QTClust_(HashGridOld& act_grid);
+   QTSILACCluster QTClust_(Grid& act_grid);
 
   public:
   /**

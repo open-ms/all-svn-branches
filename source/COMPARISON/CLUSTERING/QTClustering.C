@@ -31,7 +31,8 @@
 
 namespace OpenMS
 {
-  QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter, DoubleReal mz_diameter) : grid_(HashGridOld(rt_diameter, mz_diameter))
+  QTClustering::QTClustering(std::vector<DataPoint>& data,DoubleReal rt_diameter, DoubleReal mz_diameter)
+    : grid_(Grid::ClusterCenter(rt_diameter, mz_diameter))
   {
     if(data.size()<2)
     {
@@ -43,19 +44,19 @@ namespace OpenMS
     //insert the data into the grid
     for (std::vector<DataPoint>::iterator it = data.begin(); it != data.end(); ++it)
     {
-      grid_.insert(&(*it));
+      grid_.insert(std::make_pair(Grid::ClusterCenter(it->rt, it->mz), &(*it)));
     }
   }
 
   std::vector<std::vector<DataPoint*> > QTClustering::performClustering()
   {
-    Size number_of_elements = grid_.getNumberOfElements();
+    Size number_of_elements = grid_.size();
     startProgress(0 ,number_of_elements, "clustering data");
 
     //invoke the QTclust method on the elements in the grid until the grid is empty
-    while (grid_.getNumberOfElements() > 0)
+    while (!grid_.empty())
     {
-      setProgress(number_of_elements - grid_.getNumberOfElements());
+      setProgress(number_of_elements - grid_.size());
       QTSILACCluster act_cluster = QTClust_(grid_);
 
       //store the current cluster
@@ -66,7 +67,7 @@ namespace OpenMS
       //remove the data points of the current cluster from the grif
       for (std::set<DataPoint*>::const_iterator it = cluster_members.begin(); it != cluster_members.end(); ++it)
       {
-        grid_.removeElement(*it);
+        grid_.erase(Grid::ClusterCenter((*it)->rt, (*it)->mz));
       }
     }
 
@@ -92,64 +93,36 @@ namespace OpenMS
     return cluster_vector;
   }
 
-  QTSILACCluster QTClustering::QTClust_(HashGridOld& act_grid)
+  QTSILACCluster QTClustering::QTClust_(Grid& act_grid)
   {
-    //return single element clusters
-    if (act_grid.getNumberOfElements() == 1)
-    {
-			DataPoint* element_ptr = dynamic_cast<DataPoint*> (*(act_grid.begin()->second.begin()));
-			return QTSILACCluster(element_ptr);
-    }
-
     //order all possible clusters by their sizes in a set
     std::set<QTSILACCluster> cluster_set;
 
-    for (GridCells::iterator it=act_grid.begin(); it != act_grid.end(); ++it)
+    for (Grid::const_iterator it = act_grid.begin(); it != act_grid.end(); ++it)
     {
-      std::pair<Int, Int> act_coords = it->first;
-      std::list<GridElement*>& elements = it->second;
-      int x = act_coords.first;
-      int y = act_coords.second;
+      const Grid::CellIndex act_coords = it.index();
+      const Int x = act_coords[0], y = act_coords[1];
 
-      //iterate over all data points in the grid
-      for (std::list<GridElement*>::iterator current_element = elements.begin(); current_element != elements.end(); ++current_element)
+      //select each data point as a cluster center
+      DataPoint* element_ptr = it->second;
+      QTSILACCluster act_cluster(element_ptr);
+
+      //iterate over all neighbors of the data point in the surrounding cells
+      for (Int i = x - 1; i <= x + 1; ++i)
       {
-        //select each data point as a cluster center
-        DataPoint* element_ptr = dynamic_cast<DataPoint*> (*current_element);
-        QTSILACCluster act_cluster(element_ptr);
-
-        //iterate over all neighbors of the data point in the surrounding cells
-        for (int i = x - 1; i <= x + 1; ++i)
+        for (Int j = y - 1; j <= y + 1; ++j)
         {
-          if (i < 0 || i > act_grid.getGridSizeX())
+          try
           {
-            continue;
-          }
+            const typename Grid::CellContent act_pos = grid_.grid_at(Grid::CellIndex(i, j));
 
-          for (int j = y - 1; j <= y + 1; ++j)
-          {
-            if (j < 0 || j > act_grid.getGridSizeY())
+            for (Grid::const_cell_iterator it_cell = act_pos.begin(); it_cell != act_pos.end(); ++it_cell)
             {
-              continue;
-            }
-
-            GridCells::iterator act_pos = grid_.find(std::make_pair(i, j));
-
-            if (act_pos == act_grid.end())
-            {
-              continue;
-            }
-
-            std::list<GridElement*>& neighbor_elements = act_pos->second;
-
-            for (std::list<GridElement*>::iterator neighbor_element=neighbor_elements.begin();neighbor_element!=neighbor_elements.end();++neighbor_element)
-            {
-              if (*current_element == *neighbor_element)
+              DataPoint* neighbor_ptr = it_cell->second;
+              if (element_ptr == neighbor_ptr)
               {
                 continue;
               }
-
-              DataPoint* neighbor_ptr = dynamic_cast<DataPoint*> (*neighbor_element);
 
               //get the diameter of the current cluster if the current data point would be added
               std::pair<DoubleReal, DoubleReal> diameters = act_cluster.getDiameters(neighbor_ptr);
@@ -161,11 +134,13 @@ namespace OpenMS
               }
             }
           }
+          catch (std::out_of_range &)
+          { }
         }
-
-        //insert the current cluster into the cluster set
-        cluster_set.insert(act_cluster);
       }
+
+      //insert the current cluster into the cluster set
+      cluster_set.insert(act_cluster);
     }
 
     //return the biggest cluster

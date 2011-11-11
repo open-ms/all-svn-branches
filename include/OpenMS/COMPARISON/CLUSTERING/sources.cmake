@@ -9,7 +9,6 @@ ClusterFunctor.h
 ClusterHierarchical.h
 CompleteLinkage.h
 EuclideanSimilarity.h
-Hasher.h
 HashGrid.h
 HierarchicalClustering.h
 SingleLinkage.h

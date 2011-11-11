@@ -517,6 +517,21 @@ START_SECTION(([EXTRA] Test char DPosition))
   TEST_EQUAL(pa < pb, true)
 }
 END_SECTION
+
+START_SECTION(std::size_t hash_value(const DPosition<N, T> &b))
+{
+  const DPosition<1, DoubleReal> c1(1);
+  const DPosition<1, DoubleReal> c2(2);
+  TEST_EQUAL(hash_value(c1), hash_value(c1));
+  TEST_NOT_EQUAL(hash_value(c1), hash_value(c2));
+}
+{
+  const DPosition<2, DoubleReal> c1(1, 1);
+  const DPosition<2, DoubleReal> c2(1, 2);
+  TEST_EQUAL(hash_value(c1), hash_value(c1));
+  TEST_NOT_EQUAL(hash_value(c1), hash_value(c2));
+}
+END_SECTION
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 END_TEST

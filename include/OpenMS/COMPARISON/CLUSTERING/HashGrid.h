@@ -30,7 +30,6 @@
 #include <boost/array.hpp>
 #include <boost/unordered/unordered_map.hpp>
 
-#include <OpenMS/COMPARISON/CLUSTERING/Hasher.h>
 #include <OpenMS/CONCEPT/Types.h>
 #include <OpenMS/DATASTRUCTURES/DPosition.h>
 

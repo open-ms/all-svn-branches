@@ -27,7 +27,6 @@ DistanceMatrix.C
 DoubleList.C
 GridElement.C
 GridFeature.C
-HashGridOld.C
 IntList.C
 Map.C
 MassExplainer.C

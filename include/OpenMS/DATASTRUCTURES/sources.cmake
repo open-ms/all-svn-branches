@@ -24,7 +24,6 @@ DateTime.h
 DefaultParamHandler.h
 DistanceMatrix.h
 DoubleList.h
-GridElement.h
 GridFeature.h
 IntList.h
 IsotopeCluster.h

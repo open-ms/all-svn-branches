@@ -24,7 +24,6 @@ DateTime.C
 DefaultParamHandler.C
 DistanceMatrix.C
 DoubleList.C
-GridElement.C
 GridFeature.C
 IntList.C
 Map.C

@@ -33,7 +33,6 @@ set(datastructures_executables_list
 	DefaultParamHandler_test
 	DistanceMatrix_test
 	DoubleList_test
-	GridElement_test
 	GridFeature_test
 	HashGrid_test
 	IntList_test

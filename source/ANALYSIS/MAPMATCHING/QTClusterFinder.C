@@ -101,7 +101,7 @@ namespace OpenMS
 				{
 					pep_it->sort();
 				}
-				grid.insert(std::make_pair(Grid::ClusterCenter(gfeature.rt, gfeature.mz), &gfeature));
+				grid.insert(std::make_pair(Grid::ClusterCenter(gfeature.getRT(), gfeature.getMZ()), &gfeature));
 			}
 		}
 

@@ -80,82 +80,6 @@ namespace OpenMS
 
     private:
       /**
-       * @brief Constant element iterator for the hash grid.
-       */
-      class ConstIterator : public std::iterator<std::input_iterator_tag, const value_type>
-      {
-        private:
-          friend class HashGrid;
-
-          typedef typename Grid::const_iterator grid_iterator;
-          typedef typename CellContent::const_iterator cell_iterator;
-
-          const Grid &grid_;
-          grid_iterator grid_it_;
-          cell_iterator cell_it_;
-
-          // Search for next non-empty cell
-          void searchNextCell_()
-          {
-            while (cell_it_ == grid_it_->second.end())
-            {
-              grid_it_++;
-
-              // If we are at the last cell, set cell iterator to something well-known
-              if (grid_it_ == grid_.end())
-              {
-                cell_it_ = cell_iterator();
-                return;
-              }
-
-              cell_it_ = grid_it_->second.begin();
-            }
-          }
-
-        public:
-          ConstIterator(const Grid &grid)
-            : grid_(grid), grid_it_(grid.end())
-          { }
-
-          ConstIterator(const Grid &grid, grid_iterator grid_it, cell_iterator cell_it)
-            : grid_(grid), grid_it_(grid_it), cell_it_(cell_it)
-          {
-            searchNextCell_();
-          }
-
-          ConstIterator &operator++()
-          {
-            ++cell_it_;
-            searchNextCell_();
-            return *this;
-          }
-
-          ConstIterator operator++(int)
-          {
-            ConstIterator ret(*this);
-            operator++();
-            return ret;
-          }
-
-          bool operator==(const ConstIterator &rhs) const
-          { return grid_it_ == rhs.grid_it_ && cell_it_ == rhs.cell_it_; }
-
-          bool operator!=(const ConstIterator &rhs) const
-          { return !(*this == rhs); }
-
-          const value_type& operator*() const
-          { return *cell_it_; }
-
-          const value_type* operator->() const
-          { return &*cell_it_; }
-
-          const CellIndex index() const
-          {
-            return grid_it_->first;
-          }
-      };
-
-      /**
        * @brief Element iterator for the hash grid.
        */
       class Iterator : public std::iterator<std::input_iterator_tag, value_type>
@@ -223,6 +147,86 @@ namespace OpenMS
           { return *cell_it_; }
 
           value_type* operator->() const
+          { return &*cell_it_; }
+
+          const CellIndex index() const
+          {
+            return grid_it_->first;
+          }
+      };
+
+      /**
+       * @brief Constant element iterator for the hash grid.
+       */
+      class ConstIterator : public std::iterator<std::input_iterator_tag, const value_type>
+      {
+        private:
+          friend class HashGrid;
+
+          typedef typename Grid::const_iterator grid_iterator;
+          typedef typename CellContent::const_iterator cell_iterator;
+
+          const Grid &grid_;
+          grid_iterator grid_it_;
+          cell_iterator cell_it_;
+
+          // Search for next non-empty cell
+          void searchNextCell_()
+          {
+            while (cell_it_ == grid_it_->second.end())
+            {
+              grid_it_++;
+
+              // If we are at the last cell, set cell iterator to something well-known
+              if (grid_it_ == grid_.end())
+              {
+                cell_it_ = cell_iterator();
+                return;
+              }
+
+              cell_it_ = grid_it_->second.begin();
+            }
+          }
+
+        public:
+          ConstIterator(const Grid &grid)
+            : grid_(grid), grid_it_(grid.end())
+          { }
+
+          ConstIterator(const Grid &grid, grid_iterator grid_it, cell_iterator cell_it)
+            : grid_(grid), grid_it_(grid_it), cell_it_(cell_it)
+          {
+            searchNextCell_();
+          }
+
+          ConstIterator(const Iterator &it)
+            : grid_(it.grid_), grid_it_(it.grid_it_), cell_it_(it.cell_it_)
+          { }
+
+          ConstIterator &operator++()
+          {
+            ++cell_it_;
+            searchNextCell_();
+            return *this;
+          }
+
+          ConstIterator operator++(int)
+          {
+            ConstIterator ret(*this);
+            operator++();
+            return ret;
+          }
+
+          bool operator==(const ConstIterator &rhs) const
+          { return grid_it_ == rhs.grid_it_ && cell_it_ == rhs.cell_it_; }
+
+          bool operator!=(const ConstIterator &rhs) const
+          { return !(*this == rhs); }
+
+          const value_type& operator*() const
+          { return *cell_it_; }
+
+          const value_type* operator->() const
           { return &*cell_it_; }
 
           const CellIndex index() const

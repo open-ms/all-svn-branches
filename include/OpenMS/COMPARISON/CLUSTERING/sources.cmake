@@ -12,7 +12,6 @@ EuclideanSimilarity.h
 Hasher.h
 HashGrid.h
 HierarchicalClustering.h
-QTClustering.h
 SingleLinkage.h
 SILACClustering.h
 )

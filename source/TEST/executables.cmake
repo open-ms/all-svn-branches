@@ -278,7 +278,6 @@ set(comparison_executables_list
   HierarchicalClustering_test
   PeakAlignment_test
   PeakSpectrumCompareFunctor_test
-  QTClustering_test
   SingleLinkage_test
   SILACClustering_test
   SpectraSTSimilarityScore_test

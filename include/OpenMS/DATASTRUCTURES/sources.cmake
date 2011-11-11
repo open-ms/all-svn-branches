@@ -27,7 +27,6 @@ DistanceMatrix.h
 DoubleList.h
 GridElement.h
 GridFeature.h
-HashGridOld.h
 IntList.h
 IsotopeCluster.h
 Map.h

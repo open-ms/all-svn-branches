@@ -43,7 +43,6 @@ set(datastructures_executables_list
 	MassExplainer_test
 	Matrix_test
 	QTCluster_test
-	QTSILACCluster_test
 	RangeManager_test
 	SparseVector_test
 	StringList_test

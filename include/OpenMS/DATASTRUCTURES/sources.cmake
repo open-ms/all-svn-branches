@@ -34,7 +34,6 @@ MassExplainer.h
 Matrix.h
 Param.h
 QTCluster.h
-QTSILACCluster.h
 SeqanIncludeWrapper.h
 SparseVector.h
 String.h

@@ -140,7 +140,7 @@ namespace OpenMS
           bool operator==(const ConstIterator &rhs) const
           { return grid_it_ == rhs.grid_it_ && cell_it_ == rhs.cell_it_; }
 
-          bool operator!=(const ConstIterator& rhs) const
+          bool operator!=(const ConstIterator &rhs) const
           { return !(*this == rhs); }
 
           const value_type& operator*() const
@@ -148,6 +148,11 @@ namespace OpenMS
 
           const value_type* operator->() const
           { return &*cell_it_; }
+
+          const CellIndex index() const
+          {
+            return grid_it_->first;
+          }
       };
 
       /**
@@ -219,6 +224,11 @@ namespace OpenMS
 
           value_type* operator->() const
           { return &*cell_it_; }
+
+          const CellIndex index() const
+          {
+            return grid_it_->first;
+          }
       };
 
     public:

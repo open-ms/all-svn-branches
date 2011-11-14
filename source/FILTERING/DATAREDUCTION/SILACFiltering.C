@@ -245,7 +245,7 @@ namespace OpenMS
 
             // XXX: Extract peaks again
             SILACPattern pattern;
-            if (!filter_it->extractMzShiftsAndIntensitiesPickedToPattern(*picked_rt_it, picked_mz, *this, pattern))
+            if (!filter_it->extractMzShiftsAndIntensitiesPickedToPattern_(*picked_rt_it, picked_mz, *this, pattern))
               continue;
 
             DoubleReal peak_width_cur = peak_width(picked_mz);

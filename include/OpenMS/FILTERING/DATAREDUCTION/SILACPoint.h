@@ -36,7 +36,8 @@ namespace OpenMS
    * @see HashGrid
    * @ingroup Datastructures
    */
-  class OPENMS_DLLAPI SILACPoint {
+  class OPENMS_DLLAPI SILACPoint
+  {
     public:
       /**
        * @brief m/z value of the element

@@ -186,8 +186,8 @@ namespace OpenMS
    *
    * @see SILACFiltering
    */   
-
-  class OPENMS_DLLAPI SILACFilter {
+  class OPENMS_DLLAPI SILACFilter
+  {
     friend class SILACFiltering;
 
     private:
@@ -272,13 +272,13 @@ namespace OpenMS
 
 
       bool isSILACPatternPicked_(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &, MSSpectrum<Peak1D> &debug);
-      bool extractMzShiftsAndIntensities(const MSSpectrum<Peak1D> &, const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &);
-      bool extractMzShiftsAndIntensitiesPicked(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &);
-      bool extractMzShiftsAndIntensitiesPickedToPattern(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &, SILACPattern &pattern);
-      bool intensityFilter();
-      bool correlationFilter1(const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, const SILACFiltering &);
-      bool correlationFilter2(const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, const SILACFiltering &);
-      bool averageneFilter(DoubleReal mz);
+      bool extractMzShiftsAndIntensities_(const MSSpectrum<Peak1D> &, const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &);
+      bool extractMzShiftsAndIntensitiesPicked_(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &);
+      bool extractMzShiftsAndIntensitiesPickedToPattern_(const MSSpectrum<Peak1D> &, DoubleReal mz, const SILACFiltering &, SILACPattern &pattern);
+      bool intensityFilter_();
+      bool correlationFilter1_(const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, const SILACFiltering &);
+      bool correlationFilter2_(const SILACFiltering::SpectrumInterpolation &, DoubleReal mz, const SILACFiltering &);
+      bool averageneFilter_(DoubleReal mz);
 
     public:  
       /**

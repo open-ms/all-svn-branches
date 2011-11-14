@@ -211,7 +211,7 @@ namespace OpenMS
        */
       typename Grid::cell_iterator insertPoint(const PointCoordinate &d, const PointRef &ref)
       {
-        typename Grid::cell_iterator it = insertCluster(d);
+        typename Grid::cell_iterator it = insertCluster_(d);
         it->second.insert(std::make_pair(d, ref));
         return it;
       }
@@ -227,7 +227,7 @@ namespace OpenMS
           cells.push_back(it->first);
         // Cluster each available cell
         for (typename std::vector<typename Grid::CellIndex>::const_iterator it = cells.begin(); it != cells.end(); ++it)
-          clusterIndex(*it);
+          clusterIndex_(*it);
       }
 
     protected:
@@ -237,7 +237,7 @@ namespace OpenMS
        * @return iterator to inserted cluster.
        */
       template <class P>
-      typename Grid::cell_iterator insertCluster(const P &p)
+      typename Grid::cell_iterator insertCluster_(const P &p)
       {
         return grid.insert(std::make_pair(p, Cluster(p)));
       }
@@ -246,7 +246,7 @@ namespace OpenMS
        * @brief Perform clustering at given cell index.
        * @param p Cell index.
        */
-      void clusterIndex(const typename Grid::CellIndex &p);
+      void clusterIndex_(const typename Grid::CellIndex &p);
 
       /**
        * @brief Collect all cells used to cluster at given cell index.
@@ -256,7 +256,7 @@ namespace OpenMS
        * @param cur Cell index.
        * @param cells List of cells to be used.
        */
-      void gridCells5x5(typename Grid::CellIndex cur, ClusterCells &cells);
+      void gridCells5x5_(typename Grid::CellIndex cur, ClusterCells &cells);
 
       /**
        * @brief Collect one cell.
@@ -265,7 +265,7 @@ namespace OpenMS
        * @param center Is the given cell in the center.
        * @oaram ignore_missing Defines if non-existant errors should be ignored.
        */
-      void gridCell(const typename Grid::CellIndex &cur, ClusterCells &cells, bool center = false, bool ignore_missing = true)
+      void gridCell_(const typename Grid::CellIndex &cur, ClusterCells &cells, bool center = false, bool ignore_missing = true)
       {
         try
         {
@@ -280,7 +280,7 @@ namespace OpenMS
       /**
        * @brief Add a new tree to the set of trees and distance queue
        */
-      void addTreeDistance(TreeNode *tree, ClusterTrees &trees, TreeDistanceQueue &dists)
+      void addTreeDistance_(TreeNode *tree, ClusterTrees &trees, TreeDistanceQueue &dists)
       {
         // Infinity: no valid distance
         DoubleReal dist_min = std::numeric_limits<DoubleReal>::infinity();
@@ -290,7 +290,7 @@ namespace OpenMS
         for (typename ClusterTrees::const_iterator it = trees.begin(); it != trees.end(); ++it)
         {
           if (tree == *it) continue;
-          DoubleReal dist = treeDistance(tree, *it);
+          DoubleReal dist = treeDistance_(tree, *it);
           if (dist < dist_min)
           {
             dist_min = dist;
@@ -311,7 +311,7 @@ namespace OpenMS
        * It checks the size of the bounding box and returns INFINITY if it gets
        * to large.
        */
-      DoubleReal treeDistance(TreeNode *left, TreeNode *right)
+      DoubleReal treeDistance_(TreeNode *left, TreeNode *right)
       {
         const BoundingBox bbox = left->bbox | right->bbox;
         if (coordElemGreater_(bbox.size(), grid.cell_dimension))
@@ -330,12 +330,12 @@ namespace OpenMS
        * @param tree The tree
        * @param cluster The cluster
        */
-      void tree2Cluster(const TreeNode *tree, Cluster &cluster)
+      void tree2Cluster_(const TreeNode *tree, Cluster &cluster)
       {
         if (tree->left && tree->right)
         {
-          tree2Cluster(tree->left, cluster);
-          tree2Cluster(tree->right, cluster);
+          tree2Cluster_(tree->left, cluster);
+          tree2Cluster_(tree->right, cluster);
         }
         else
         {
@@ -350,12 +350,12 @@ namespace OpenMS
        * All points are saved in the leafs of the tree.
        * @param tree The tree
        */
-      void tree2Points(const TreeNode *tree)
+      void tree2Points_(const TreeNode *tree)
       {
         if (tree->left && tree->right)
         {
-          tree2Points(tree->left);
-          tree2Points(tree->right);
+          tree2Points_(tree->left);
+          tree2Points_(tree->right);
         }
         else
         {
@@ -402,7 +402,7 @@ namespace OpenMS
   };
 
   template <typename I>
-  void HierarchicalClustering<I>::clusterIndex(const typename Grid::CellIndex &cur)
+  void HierarchicalClustering<I>::clusterIndex_(const typename Grid::CellIndex &cur)
   {
     ClusterCells cells;
     ClusterTrees trees;
@@ -411,7 +411,7 @@ namespace OpenMS
     // Collect all cells we need
     try
     {
-      gridCells5x5(cur, cells);
+      gridCells5x5_(cur, cells);
     }
     catch (std::out_of_range &)
     { return; }
@@ -437,7 +437,7 @@ namespace OpenMS
           {
             const PointCoordinate &coord = point_it->first;
             TreeNode *tree(new TreeNode(coord, point_it->second, cell_center));
-            addTreeDistance(tree, trees, dists);
+            addTreeDistance_(tree, trees, dists);
           }
 
           // Remove point from hash grid cell
@@ -469,12 +469,12 @@ namespace OpenMS
 
         TreeNode *tree(new TreeNode(coord, bbox, tree_left, tree_right));
 
-        addTreeDistance(tree, trees, dists);
+        addTreeDistance_(tree, trees, dists);
       }
       // Re-add a distance for the tree not yet used.
       // Otherwise this subset is lost even if it is not yet maximal.
-      else if (count_left) addTreeDistance(tree_left, trees, dists);
-      else if (count_right) addTreeDistance(tree_right, trees, dists);
+      else if (count_left) addTreeDistance_(tree_left, trees, dists);
+      else if (count_right) addTreeDistance_(tree_right, trees, dists);
     }
 
     // Add data back to grid
@@ -483,84 +483,84 @@ namespace OpenMS
       // We got a finished tree with all points in the center, add cluster at centroid
       if ((**tree_it).center)
       {
-        Cluster &cluster = insertCluster((**tree_it).bbox)->second;
-        tree2Cluster(*tree_it, cluster);
+        Cluster &cluster = insertCluster_((**tree_it).bbox)->second;
+        tree2Cluster_(*tree_it, cluster);
       }
       // We got a finished tree but not all points in the center, readd as single points
       else
       {
-        tree2Points(*tree_it);
+        tree2Points_(*tree_it);
       }
       delete *tree_it;
     }
   }
 
   template <typename I>
-  void HierarchicalClustering<I>::gridCells5x5(typename Grid::CellIndex base, ClusterCells &cells)
+  void HierarchicalClustering<I>::gridCells5x5_(typename Grid::CellIndex base, ClusterCells &cells)
   {
     // (0, 0)
-    gridCell(base, cells, true, false);
+    gridCell_(base, cells, true, false);
 
     typename Grid::CellIndex cur = base;
     cur[0] -= 2;
     // (-2, -2)
-    cur[1] -= 2; gridCell(cur, cells);
+    cur[1] -= 2; gridCell_(cur, cells);
     // (-2, -1)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
     // (-2, 0)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
     // (-2, 1)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
     // (-2, 2)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
 
     cur = base; cur[0] -= 1;
     // (-1, -2)
-    cur[1] -= 2; gridCell(cur, cells);
+    cur[1] -= 2; gridCell_(cur, cells);
     // (-1, -1)
-    cur[1] += 1; gridCell(cur, cells, true);
+    cur[1] += 1; gridCell_(cur, cells, true);
     // (-1, 0)
-    cur[1] += 1; gridCell(cur, cells, true);
+    cur[1] += 1; gridCell_(cur, cells, true);
     // (-1, 1)
-    cur[1] += 1; gridCell(cur, cells, true);
+    cur[1] += 1; gridCell_(cur, cells, true);
     // (-1, 2)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
 
     cur = base;
     // (0, -2)
-    cur[1] -= 2; gridCell(cur, cells);
+    cur[1] -= 2; gridCell_(cur, cells);
     // (0, -1)
-    cur[1] += 1; gridCell(cur, cells, true);
+    cur[1] += 1; gridCell_(cur, cells, true);
     // (0, 0)
     cur[1] += 1;
     // (0, 1)
-    cur[1] += 1; gridCell(cur, cells, true);
+    cur[1] += 1; gridCell_(cur, cells, true);
     // (0, 2)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
 
     cur = base; cur[0] += 1;
     // (1, -2)
-    cur[1] -= 2; gridCell(cur, cells);
+    cur[1] -= 2; gridCell_(cur, cells);
     // (1, -1)
-    cur[1] += 1; gridCell(cur, cells, true);
+    cur[1] += 1; gridCell_(cur, cells, true);
     // (1, 0)
-    cur[1] += 1; gridCell(cur, cells, true);
+    cur[1] += 1; gridCell_(cur, cells, true);
     // (1, 1)
-    cur[1] += 1; gridCell(cur, cells, true);
+    cur[1] += 1; gridCell_(cur, cells, true);
     // (1, 2)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
 
     cur = base; cur[0] += 2;
     // (2, -2)
-    cur[1] -= 2; gridCell(cur, cells);
+    cur[1] -= 2; gridCell_(cur, cells);
     // (2, -1)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
     // (2, 0)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
     // (2, 1)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
     // (2, 2)
-    cur[1] += 1; gridCell(cur, cells);
+    cur[1] += 1; gridCell_(cur, cells);
   }
 }
 

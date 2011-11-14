@@ -45,10 +45,13 @@ namespace OpenMS
   class SILACFilter;
 
   /**
-   * @brief Filtering for SILAC data.
-   * This filtering can be used to extract SILAC features from an MS experiment. Several SILACFilters can be added to the filtering to search for specific SILAC patterns.
-   * @see SILACFilter
-   */
+    @brief Filtering for SILAC data.
+
+    This filtering can be used to extract SILAC features from an MS experiment.
+    Several SILACFilters can be added to the filtering to search for specific SILAC patterns.
+
+    @see SILACFilter
+  */
   class OPENMS_DLLAPI SILACFiltering
     : public ProgressLogger
   {
@@ -64,7 +67,7 @@ namespace OpenMS
 
     private:
       /**
-       * Wrapper class for spectrum interpolation
+       * @brief Wrapper class for spectrum interpolation
        */
       class SpectrumInterpolation
       {
@@ -115,17 +118,17 @@ namespace OpenMS
       /**
        * Filename base for debugging output
        */
-      const String debug_filebase;
+      const String debug_filebase_;
 
       /**
        * @brief pick data seeds
        */
-      void pickSeeds();
+      void pickSeeds_();
 
       /**
        * @brief apply filtering to picked data seeds
        */
-      void filterSeeds();
+      void filterSeeds_();
 
     public:
 
@@ -139,7 +142,7 @@ namespace OpenMS
        * @param intensity_correlation minimal intensity correlation between regions of different peaks
        * @param allow_missing_peaks flag for missing peaks
        */
-      SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase = "");
+      SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase_ = "");
 
       /**
        * @brief adds a new filter to the filtering

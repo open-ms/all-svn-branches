@@ -81,7 +81,7 @@ namespace OpenMS
 
   SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &peak_width, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase)
     : exp_(exp),
-      debug_filebase(debug_filebase),
+      debug_filebase_(debug_filebase),
       peak_width(peak_width)
   {
     intensity_cutoff_ = intensity_cutoff;
@@ -94,7 +94,7 @@ namespace OpenMS
     filters_.push_back(filter);
   }
 
-  void SILACFiltering::pickSeeds()
+  void SILACFiltering::pickSeeds_()
   {
     // perform peak picking
     PeakPickerHiRes picker;
@@ -106,10 +106,10 @@ namespace OpenMS
 
     picker.pickExperiment(exp_, picked_exp_);
 
-    if (debug_filebase != "")
+    if (debug_filebase_ != "")
     {
       MzMLFile mz_data_file;
-      mz_data_file.store(debug_filebase + ".filtering.picked.mzML", picked_exp_);
+      mz_data_file.store(debug_filebase_ + ".filtering.picked.mzML", picked_exp_);
     }
 
     // Initialize seeds map
@@ -120,7 +120,7 @@ namespace OpenMS
     }
   }
 
-  void SILACFiltering::filterSeeds()
+  void SILACFiltering::filterSeeds_()
   {
     startProgress(0, filters_.size(), "filtering seed data");
 
@@ -160,12 +160,12 @@ namespace OpenMS
          exp_debug.push_back(debug);
       }
 
-      if (debug_filebase != "")
+      if (debug_filebase_ != "")
       {
         ChromatogramTools().convertSpectraToChromatograms(exp_debug, true);
         Int mass_separation = 0;
         if (filter_it->mass_separations_.size()) mass_separation = filter_it->mass_separations_[0];
-        MzMLFile().store(debug_filebase + ".filtering.seeds-filters:" + 
+        MzMLFile().store(debug_filebase_ + ".filtering.seeds-filters:" + 
             filter_it->charge_ + ";" +
             mass_separation + ";" +
             filter_it->isotopes_per_peptide_ + ";" +
@@ -178,17 +178,17 @@ namespace OpenMS
     picked_exp_seeds_.sortSpectra(true);
     endProgress();
 
-    if (debug_filebase != "")
+    if (debug_filebase_ != "")
     {
       MzMLFile mz_data_file;
-      mz_data_file.store(debug_filebase + ".filtering.seeds.mzML", picked_exp_seeds_);
+      mz_data_file.store(debug_filebase_ + ".filtering.seeds.mzML", picked_exp_seeds_);
     }
   }
 
   void SILACFiltering::filterDataPoints()
   {
-    pickSeeds();
-    filterSeeds();
+    pickSeeds_();
+    filterSeeds_();
 
     startProgress(0, exp_.size(), "filtering raw data");    
 
@@ -420,12 +420,12 @@ namespace OpenMS
         exp_debug.push_back(debug);
       }
 
-      if (debug_filebase != "")
+      if (debug_filebase_ != "")
       {
         ChromatogramTools().convertSpectraToChromatograms(exp_debug, true);
         Int mass_separation = 0;
         if (filter_it->mass_separations_.size()) mass_separation = filter_it->mass_separations_[0];
-        MzMLFile().store(debug_filebase + ".filtering.spline-filters:" + 
+        MzMLFile().store(debug_filebase_ + ".filtering.spline-filters:" + 
             filter_it->charge_ + ";" +
             mass_separation + ";" +
             filter_it->isotopes_per_peptide_ + ";" +

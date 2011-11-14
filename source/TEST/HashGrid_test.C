@@ -125,7 +125,7 @@ START_SECTION(iterator begin())
 }
 END_SECTION
 
-START_SECTION(const_iterator begin())
+START_SECTION(const_iterator begin() const)
 {
   TestGrid t(cell_dimension);
   const TestGrid &ct(t);
@@ -155,7 +155,7 @@ START_SECTION(iterator end())
 }
 END_SECTION
 
-START_SECTION(const_iterator end())
+START_SECTION(const_iterator end() const)
 {
   const TestGrid ct(cell_dimension);
   TestGrid::const_iterator it = ct.begin();

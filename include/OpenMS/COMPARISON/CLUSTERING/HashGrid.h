@@ -269,9 +269,9 @@ namespace OpenMS
        */
       cell_iterator insert(const value_type &v)
       {
-        const CellIndex cellkey = cellindex_at_clustercenter(v.first);
+        const CellIndex cellkey = cellindexAtClustercenter_(v.first);
         CellContent &cell = cells_[cellkey];
-        update_grid_dimension(cellkey);
+        updateGridDimension_(cellkey);
         return cell.insert(v);
       }
 
@@ -289,13 +289,13 @@ namespace OpenMS
        * @param x Key of element to be erased.
        * @return Number of elements erased.
        */
-      size_type erase(const key_type &x)
+      size_type erase(const key_type &key)
       {   
-        const CellIndex cellkey = cellindex_at_clustercenter(x);
+        const CellIndex cellkey = cellindexAtClustercenter_(key);
         try
         {
           CellContent &cell = cells_.at(cellkey);
-          return cell.erase(x);
+          return cell.erase(key);
         }
         catch (std::out_of_range &) { }
         return 0;
@@ -397,7 +397,7 @@ namespace OpenMS
 
     private:
       // XXX: Replace with proper operator
-      CellIndex cellindex_at_clustercenter(const ClusterCenter &key)
+      CellIndex cellindexAtClustercenter_(const ClusterCenter &key)
       {
         CellIndex ret;
         typename CellIndex::iterator it = ret.begin();
@@ -406,7 +406,7 @@ namespace OpenMS
         return ret;
       }
 
-      void update_grid_dimension(const CellIndex &d)
+      void updateGridDimension_(const CellIndex &d)
       {
         typename CellIndex::const_iterator it_new = d.begin();
         typename CellIndex::iterator it_cur = grid_dimension_.begin();

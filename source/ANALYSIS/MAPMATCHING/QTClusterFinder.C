@@ -202,7 +202,7 @@ namespace OpenMS
         {
           try
           { 
-            const typename Grid::CellContent act_pos = grid.grid_at(Grid::CellIndex(i, j));
+            const Grid::CellContent act_pos = grid.grid_at(Grid::CellIndex(i, j));
 
             for (Grid::const_cell_iterator it_cell = act_pos.begin(); it_cell != act_pos.end(); ++it_cell)
 						{

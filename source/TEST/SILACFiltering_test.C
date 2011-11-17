@@ -27,30 +27,55 @@
 
 #include <OpenMS/CONCEPT/ClassTest.h>
 
-///////////////////////////
+#include <OpenMS/FILTERING/DATAREDUCTION/SILACFilter.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
-///////////////////////////
+#include <OpenMS/FORMAT/MzMLFile.h>
+#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/PeakWidthEstimator.h>
 
 using namespace OpenMS;
 using namespace std;
 
 START_TEST(SILACFiltering, "$Id$")
 
+MSExperiment<> input;
+MzMLFile().load(OPENMS_GET_TEST_DATA_PATH("SILACFiltering_test.mzML"), input);
+const PeakWidthEstimator::Result peak_width(PeakWidthEstimator::estimateFWHM(input));
+
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
+std::vector<DoubleReal> mass_separations;
+mass_separations.push_back(8.0142);
+SILACFiltering filtering(input, peak_width, 0, .8, false);
+SILACFilter filter(mass_separations, 2, 2, 3);
+
 START_SECTION((SILACFiltering(MSExperiment< Peak1D > &exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase_="")))
 {
+  TEST_EQUAL(filtering.filters_.size(), 0);
+  TEST_EQUAL(filtering.blacklist.size(), 0);
 }
 END_SECTION
 
 START_SECTION((void addFilter(SILACFilter &filter)))
 {
+  filtering.addFilter(filter);
+  TEST_EQUAL(filtering.filters_.size(), 1);
 }
 END_SECTION
 
 START_SECTION((void filterDataPoints()))
 {
+  filtering.filterDataPoints();
+  SILACFiltering::Filters::iterator filter_it = filtering.filters_.begin();
+
+  std::vector<SILACPattern> &p = filter_it->getElements();
+  TEST_EQUAL(p.size(), 3);
+  TEST_REAL_SIMILAR(p[0].rt, 830);
+  TEST_REAL_SIMILAR(p[0].mz, 670.84);
+  TEST_REAL_SIMILAR(p[1].rt, 830);
+  TEST_REAL_SIMILAR(p[1].mz, 670.84);
+  TEST_REAL_SIMILAR(p[2].rt, 833);
+  TEST_REAL_SIMILAR(p[2].mz, 670.84);
 }
 END_SECTION
 

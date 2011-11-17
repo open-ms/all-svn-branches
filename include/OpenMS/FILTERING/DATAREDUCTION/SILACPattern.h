@@ -33,11 +33,17 @@
 namespace OpenMS
 {
   /**
+   * @brief A single SILAC pattern containing multiple found points
+   * @see HashGrid
+   * @ingroup Datastructures
    */
   class SILACPattern
     : public SILACPoint
   {
     public:
+      /**
+       * Points checked and found in the raw data.
+       */
       std::vector<SILACPoint> points;
   };
 }

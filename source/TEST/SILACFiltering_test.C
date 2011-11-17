@@ -39,21 +39,18 @@ START_TEST(SILACFiltering, "$Id$")
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-START_SECTION((SILACFiltering(MSExperiment< Peak1D > &exp, const DoubleReal mz_stepwidth, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks)))
+START_SECTION((SILACFiltering(MSExperiment< Peak1D > &exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase_="")))
 {
-  NOT_TESTABLE
 }
 END_SECTION
 
 START_SECTION((void addFilter(SILACFilter &filter)))
 {
-  NOT_TESTABLE
 }
 END_SECTION
 
 START_SECTION((void filterDataPoints()))
 {
-  NOT_TESTABLE
 }
 END_SECTION
 

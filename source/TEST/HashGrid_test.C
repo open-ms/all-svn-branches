@@ -163,14 +163,6 @@ START_SECTION(const_iterator end() const)
 }
 END_SECTION
 
-START_SECTION(iterator end())
-{
-  TestGrid t(cell_dimension);
-  t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
-  TEST_EQUAL(t.grid_begin()->second.size(), 1);
-}
-END_SECTION
-
 START_SECTION(bool empty() const)
   TestGrid t(cell_dimension);
   TEST_EQUAL(t.empty(), true);
@@ -215,10 +207,18 @@ START_SECTION(const_grid_iterator grid_end() const)
 }
 END_SECTION
 
-START_SECTION(const_grid_iterator grid_end())
+START_SECTION(grid_iterator grid_end())
 {
   TestGrid t(cell_dimension);
   TEST_EQUAL(t.grid_begin() == t.grid_end(), true);
+}
+END_SECTION
+
+START_SECTION(const Grid::mapped_type& grid_at(const CellIndex &x) const)
+{
+  const TestGrid t(cell_dimension);
+  const TestGrid::CellIndex i(0, 0);
+  TEST_EXCEPTION(std::out_of_range, t.grid_at(i));
 }
 END_SECTION
 

@@ -41,37 +41,31 @@ START_TEST(SILACFilter, "$Id$")
 
 START_SECTION((SILACFilter(std::vector< DoubleReal > mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide)))
 {
-  NOT_TESTABLE
 }
 END_SECTION
 
 START_SECTION((std::vector<DoubleReal> getPeakPositions()))
 {
-  NOT_TESTABLE
 }
 END_SECTION
 
-START_SECTION((std::vector<DoubleReal> getExpectedMzShifts()))
+START_SECTION((const std::vector<DoubleReal>& getExpectedMzShifts()))
 {
-  NOT_TESTABLE
 }
 END_SECTION
 
-START_SECTION((std::vector<DataPoint> getElements()))
+START_SECTION((std::vector<SILACPattern>& getElements()))
 {
-  NOT_TESTABLE
 }
 END_SECTION
 
 START_SECTION((Int getCharge()))
 {
-  NOT_TESTABLE
 }
 END_SECTION
 
-START_SECTION((std::vector<DoubleReal> getMassSeparations()))
+START_SECTION((std::vector<DoubleReal>& getMassSeparations()))
 {
-  NOT_TESTABLE
 }
 END_SECTION
 

@@ -415,12 +415,7 @@ namespace OpenMS
   {
     boost::hash<T> hasher;
     std::size_t hash = 0;
-    for (typename DPosition<N, T>::const_iterator it = b.begin(); it != b.end(); ++it)
-    {
-      // Rotate hash right by 6 bits
-      hash = hash << (sizeof(hash) * 8 - 6) | hash >> 6;
-      hash ^= hasher(*it);
-    }
+    for (typename DPosition<N, T>::const_iterator it = b.begin(); it != b.end(); ++it) hash ^= hasher(*it);
     return hash;
   }
 } // namespace OpenMS

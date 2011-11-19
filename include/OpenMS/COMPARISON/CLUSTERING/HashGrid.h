@@ -28,6 +28,7 @@
 #include <iterator>
 
 #include <boost/array.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/unordered/unordered_map.hpp>
 
 #include <OpenMS/CONCEPT/Types.h>
@@ -417,6 +418,16 @@ namespace OpenMS
         }
       }
   };
+
+  /** Hash value for OpenMS::DPosition. */
+  template <UInt N, typename T>
+  std::size_t hash_value(const DPosition<N, T> &b)
+  {
+    boost::hash<T> hasher;
+    std::size_t hash = 0;
+    for (typename DPosition<N, T>::const_iterator it = b.begin(); it != b.end(); ++it) hash ^= hasher(*it);
+    return hash;
+  }
 }
 
 #endif /* OPENMS_COMPARISON_CLUSTERING_HASHGRID_H */

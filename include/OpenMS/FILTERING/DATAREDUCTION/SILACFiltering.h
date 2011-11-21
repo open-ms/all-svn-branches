@@ -86,17 +86,7 @@ namespace OpenMS
       /**
        * @brief minimal intensity of SILAC features
        */
-      static DoubleReal intensity_cutoff_;
-
-      /**
-       * @brief minimal intensity correlation between regions of different peaks
-       */
-      static DoubleReal intensity_correlation_;
-
-      /**
-       * @brief flag for missing peaks
-       */
-      static bool allow_missing_peaks_;
+      DoubleReal intensity_cutoff_;
 
       /**
        * @brief raw data
@@ -140,7 +130,7 @@ namespace OpenMS
        * @param intensity_correlation minimal intensity correlation between regions of different peaks
        * @param allow_missing_peaks flag for missing peaks
        */
-      SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase_ = "");
+      SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const String debug_filebase_ = "");
 
       /**
        * @brief adds a new filter to the filtering

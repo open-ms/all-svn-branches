@@ -46,7 +46,7 @@ const PeakWidthEstimator::Result peak_width(PeakWidthEstimator::estimateFWHM(inp
 
 std::vector<DoubleReal> mass_separations;
 mass_separations.push_back(8.0142);
-SILACFiltering filtering(input, peak_width, 0, .8, false);
+SILACFiltering filtering(input, peak_width, 0);
 SILACFilter filter(mass_separations, 2, 2, 3, 0, .9, false);
 
 START_SECTION((SILACFiltering(MSExperiment< Peak1D > &exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase_="")))

@@ -41,10 +41,6 @@ using namespace std;
 
 namespace OpenMS
 {
-  DoubleReal SILACFiltering::intensity_cutoff_ = 0;
-  DoubleReal SILACFiltering::intensity_correlation_ = 0;
-  bool SILACFiltering::allow_missing_peaks_ = false;
-
   SILACFiltering::SpectrumInterpolation::SpectrumInterpolation(const MSSpectrum<> &s, const SILACFiltering &f)
   {
     vector<DoubleReal> mz, intensity;
@@ -79,15 +75,12 @@ namespace OpenMS
     gsl_spline_free(spline_);
   }
 
-  SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &peak_width, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase)
-    : exp_(exp),
+  SILACFiltering::SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &peak_width, const DoubleReal intensity_cutoff, const String debug_filebase)
+    : intensity_cutoff_(intensity_cutoff),
+      exp_(exp),
       debug_filebase_(debug_filebase),
       peak_width(peak_width)
-  {
-    intensity_cutoff_ = intensity_cutoff;
-    intensity_correlation_ = intensity_correlation;
-    allow_missing_peaks_ = allow_missing_peaks;
-  }
+  { }
 
   void SILACFiltering::addFilter(SILACFilter& filter)
   {

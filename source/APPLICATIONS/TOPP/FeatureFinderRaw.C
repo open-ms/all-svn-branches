@@ -326,7 +326,7 @@ class TOPPFeatureFinderRaw
     }
 
     // create filtering
-    SILACFiltering filtering(exp, peak_width, intensity_cutoff, intensity_correlation, 0, "");
+    SILACFiltering filtering(exp, peak_width, intensity_cutoff, "");
     filtering.setLogType(log_type_);
 
     // register filters to the filtering

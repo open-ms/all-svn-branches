@@ -130,7 +130,8 @@ namespace OpenMS
 
         inline DoubleReal getCentroidRT()
         {
-            return centroid_rt_;
+          updateWeightedMeanRT_();
+          return centroid_rt_;
         }
 
         inline std::vector<DoubleReal> getSmoothedIntensities()
@@ -158,6 +159,16 @@ namespace OpenMS
             return c_it->getRT();
         }
 
+        inline Size getRoughFWHM()
+        {
+            return rough_fwhm_points_;
+        }
+
+        inline void setRoughFWHM(Size r_fwhm)
+        {
+            rough_fwhm_points_ = r_fwhm;
+        }
+
 
         /// prepend & append peaks, update centroid mz
         void prependPeak(PeakType);
@@ -172,6 +183,8 @@ namespace OpenMS
         ConvexHull2D getConvexhull() const;
 
     private:
+        void updateWeightedMeanRT_();
+        void updateMedianRT_();
         void updateMedianMZ_();
         void updateMeanMZ_();
         void updateIterativeWeightedMeanMZ_(const PeakType&);
@@ -183,6 +196,8 @@ namespace OpenMS
         String label_;
 
         std::vector<DoubleReal> smoothed_intensities_;
+
+        Size rough_fwhm_points_;
 
         DoubleReal prev_counter_;
         DoubleReal prev_denom_;

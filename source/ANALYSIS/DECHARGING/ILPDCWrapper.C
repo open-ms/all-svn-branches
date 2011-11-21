@@ -51,7 +51,7 @@ namespace OpenMS {
 
 	ILPDCWrapper::~ILPDCWrapper(){}
 
-	DoubleReal ILPDCWrapper::compute(const FeatureMap<> fm, PairsType& pairs, Size verbose_level)
+	DoubleReal ILPDCWrapper::compute(const FeatureMap<> fm, PairsType& pairs, Size verbose_level) const
 	{
     DoubleReal score = 0;
 
@@ -133,11 +133,11 @@ namespace OpenMS {
       }
       if (verbose_level > 1)
       {
-        LOG_INFO << "components:\n";
-        LOG_INFO << "  size 1 occurs ?x\n";
+        LOG_INFO << "Components:\n";
+        LOG_INFO << "  Size 1 occurs ?x\n";
         for (OpenMS::Map <Size,Size>::const_iterator it=hist_component_sum.begin();it!=hist_component_sum.end();++it)
         {
-          LOG_INFO << "  size " << it->first << " occurs " << it->second << "x\n";
+          LOG_INFO << "  Size " << it->first << " occurs " << it->second << "x\n";
         }
       }
 
@@ -187,28 +187,160 @@ namespace OpenMS {
     /* swap pairs, such that edges are order by cliques (so we can make clean cuts) */
     pairs.swap(pairs_clique_ordered);
 
+    //PairsType pt2 = pairs;
+    StopWatch time1;
+    time1.start();
 		// split problem into slices and have each one solved by the ILPS
 #ifdef _OPENMP
 #pragma omp parallel for schedule(dynamic, 1)
 #endif
     for	(SignedSize i=0; i < (SignedSize)bins.size(); ++i)
 		{
-      PairsType pairs2 = pairs; 
-			score += computeSlice_(fm, pairs, bins[i].first, bins[i].second, verbose_level);
+      score += computeSlice_(fm, pairs, bins[i].first, bins[i].second, verbose_level);
 		}
-    //score = computeSlice_(fm, pairs, 0, pairs.size()); // all at once - no bins
+    time1.stop();
+    LOG_INFO << " Branch and cut took " << time1.getClockTime() << " seconds, "
+             << " with objective value: " << score << "."
+             << std::endl;
 
-		return score;
+    /*
+    time1.start();
+    // split problem into slices and have each one solved by the ILPS
+    DoubleReal score2(0);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(dynamic, 1)
+#endif
+    for	(SignedSize i=0; i < (SignedSize)bins.size(); ++i)
+    {
+      score2 += computeSliceOld_(fm, pt2, bins[i].first, bins[i].second, verbose_level);
+    }
+    time1.stop();
+    LOG_INFO << " OLD Branch and cut took " << time1.getClockTime() << " seconds, "
+      << " with objective value: " << score2 << "."
+      << std::endl;
+    */
+
+    return score;
 	}
 
+
+  void ILPDCWrapper::updateFeatureVariant_(FeatureType_& f_set, const String& rota_l, const Size& v) const
+  {
+    f_set[rota_l].insert(v);
+  }
+
+  double ILPDCWrapper::computeSlice_(const FeatureMap<> fm,
+                                    PairsType& pairs, 
+                                    const PairsIndex margin_left, 
+                                    const PairsIndex margin_right,
+                                    const Size verbose_level) const
+  {
+    // feature --> variants set  (with scores)
+    typedef std::map<Size, FeatureType_ > r_type;
+    r_type features;
+
+
+    LPWrapper build;
+    //build.setSolver(LPWrapper::SOLVER_GLPK);
+    build.setObjectiveSense(LPWrapper::MAX); // maximize
+
+    // add ALL edges first. Their result is what is interesting to us later
+    for (PairsIndex i=margin_left; i<margin_right; ++i)
+    {
+      // log scores are good for addition in ILP - but they are < 0, thus not suitable for maximizing
+      // ... so we just add normal probabilities...
+      DoubleReal score = exp(getLogScore_(pairs[i], fm));
+      pairs[i].setEdgeScore(score * pairs[i].getEdgeScore()); // multiply with preset score
+
+      // create the column representing the edge
+      Int index = build.addColumn();
+      build.setColumnBounds(index, 0, 1, LPWrapper::DOUBLE_BOUNDED);
+      build.setColumnType(index, LPWrapper::INTEGER); // integer variable
+      build.setObjective(index, pairs[i].getEdgeScore());
+
+      // create feature variants set
+      String rota_l = String(pairs[i].getElementIndex(0)) + pairs[i].getCompomer().getAdductsAsString(0) + "_" + pairs[i].getCharge(0);
+      updateFeatureVariant_(features[pairs[i].getElementIndex(0)], rota_l, index);
+      String rota_r = String(pairs[i].getElementIndex(1)) + pairs[i].getCompomer().getAdductsAsString(1) + "_" + pairs[i].getCharge(1);
+      updateFeatureVariant_(features[pairs[i].getElementIndex(1)], rota_r, index);
+    }
+
+    // ADD Features (multiple variants of one feature are constrained to size=1)
+    Size count(0); // each entry is a feature idx --->    Map["AdductCgf"]->adjacentEdges
+    for (r_type::iterator it=features.begin(); it!= features.end(); ++it)
+    {
+      ++count;
+      std::vector<Int> columns;
+      std::vector<double> elements;
+      for (FeatureType_::const_iterator iti=it->second.begin(); iti!=it->second.end(); ++iti)
+      {
+        Int index = build.addColumn();
+        build.setColumnBounds(index, 0, 1, LPWrapper::DOUBLE_BOUNDED);
+        build.setColumnType(index, LPWrapper::INTEGER); // integer variable
+        build.setObjective(index, 0); // obj value of feature must be a constant, as it must be neutral
+        columns.push_back(index);
+        elements.push_back(1.0);
+
+        /* allow connected edges only if this variant of the feature is chosen */
+        /* get adjacent edges */
+        std::vector<Int> columns_e;
+        std::vector<double> elements_e;
+        for (std::set<Size>::const_iterator it_e = iti->second.begin(); it_e!=iti->second.end(); ++it_e)
+        {
+          columns_e.push_back((Int) *it_e);
+          elements_e.push_back(-1.0);
+        }
+        columns_e.push_back((Int) index);
+        elements_e.push_back(iti->second.size()); // factor of variant is number of adjacent edges
+        String se = String("cv") + index;
+        build.addRow(columns_e, elements_e, se, 0, 10000, LPWrapper::LOWER_BOUND_ONLY);
+      }
+      String s = String("c") + count;
+      // only allow exactly one charge variant
+      build.addRow(columns, elements, s, 1, 1, LPWrapper::FIXED);
+    }
+
+    LPWrapper::SolverParam param;
+    param.enable_mir_cuts= true;
+    param.enable_cov_cuts= true;
+    param.enable_feas_pump_heuristic=true;
+    param.enable_binarization=false;
+    param.enable_clq_cuts =true;
+    param.enable_gmi_cuts = true;
+    param.enable_presolve = true;
+
+    build.solve(param);
+
+    for (UInt iColumn = 0; iColumn < margin_right-margin_left; ++iColumn)
+    {
+      double value=build.getColumnValue(iColumn);
+      if (fabs(value)>0.5)
+      {
+        pairs[margin_left+iColumn].setActive(true);
+      }
+      else
+      {
+        // DEBUG
+        //std::cerr << " edge " << iColumn << " with " << value << "\n";
+      }
+    }
+
+    return build.getObjectiveValue();
+
+  }
+
   
-	DoubleReal ILPDCWrapper::computeSlice_(const FeatureMap<> fm,
+
+  // old version, slower, as ILP has different layout (i.e, the same as described in paper)
+
+	DoubleReal ILPDCWrapper::computeSliceOld_(const FeatureMap<> fm,
 																			   PairsType& pairs, 
 																			   const PairsIndex margin_left, 
 																			   const PairsIndex margin_right,
-                                         Size verbose_level)
+                                         const Size verbose_level) const
 	{
 		LPWrapper build;
+    //build.setSolver(LPWrapper::SOLVER_GLPK);
     build.setObjectiveSense(LPWrapper::MAX); // maximize
 
 		//------------------------------------objective function-----------------------------------------------
@@ -229,9 +361,9 @@ namespace OpenMS {
 			namebuf.str("");
 			namebuf<<"x#"<<i;
 			// create the new variable object
-      Size index = build.addColumn();
-      build.setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
-			build.setColumnType(index,LPWrapper::INTEGER); // integer variable
+      Int index = build.addColumn();
+      build.setColumnBounds(index, 0, 1, LPWrapper::DOUBLE_BOUNDED);
+			build.setColumnType(index, LPWrapper::INTEGER); // integer variable
 			build.setObjective(index, pairs[i].getEdgeScore());
 			if (score_min > score ) score_min = score;
 			if (score_max < score ) score_max = score;
@@ -260,10 +392,6 @@ namespace OpenMS {
 				// if features are identical they must have identical charges (because any single
 				// feature can only have one unique charge)
 
-        /*if(i==2796 && j==2797) // every conflict involving the missing edge...
-        {
-          std::cout << "debug point";
-        }*/
 
 				//outgoing edges (from one feature)
 				if (pairs[i].getElementIndex(0) == pairs[j].getElementIndex(0))
@@ -319,7 +447,7 @@ namespace OpenMS {
 					std::vector<int> columns;
           columns.push_back(int(i-margin_left));
           columns.push_back(int(j-margin_left));
-					build.addRow(columns, element,s, 0., 1.,LPWrapper::DOUBLE_BOUNDED_OR_FIXED);
+					build.addRow(columns, element,s, 0., 1.,LPWrapper::DOUBLE_BOUNDED);
 				}
 			}
 		}
@@ -350,14 +478,14 @@ namespace OpenMS {
 						                        << " Status: " << (!build.getStatus() ? " Finished" : " Not finished")
 						                        << std::endl;
 
-		/* variable values */
+		// variable values 
 		UInt active_edges = 0;
 		Map <String, Size> count_cmp;
 
-      for (UInt iColumn = 0; iColumn < build.getNumberOfColumns(); ++iColumn)
+      for (Int iColumn = 0; iColumn < build.getNumberOfColumns(); ++iColumn)
         {
           double value=build.getColumnValue(iColumn);
-          if (fabs(value)>0.5 && build.getColumnType(iColumn)==3) // 3 - binary variable
+          if (fabs(value)>0.5)
             {
               ++active_edges;
               pairs[margin_left+iColumn].setActive(true);
@@ -382,9 +510,10 @@ namespace OpenMS {
 
 		//objective function value of optimal(?) solution
 		return opt_value;
-	} // !compute
+	} // !compute_slice
+  
 
-	DoubleReal ILPDCWrapper::getLogScore_(const PairsType::value_type& pair, const FeatureMap<>& fm)
+	DoubleReal ILPDCWrapper::getLogScore_(const PairsType::value_type& pair, const FeatureMap<>& fm) const
 	{
 		DoubleReal score;
 		String e;

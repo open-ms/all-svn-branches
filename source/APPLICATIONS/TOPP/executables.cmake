@@ -31,7 +31,6 @@ FileMerger
 GenericWrapper
 HighResPrecursorMassCorrector
 IDConflictResolver
-IDDecoyProbability
 IDPosteriorErrorProbability
 IDFileConverter
 IDFilter
@@ -84,6 +83,7 @@ SpectraFilterNLargest
 SpectraFilterNormalizer
 TOFCalibration
 TextExporter
+MzTabExporter
 XTandemAdapter
 InclusionExclusionListCreator
 SpectraMerger

@@ -271,37 +271,6 @@ namespace OpenMS
   {
     QByteArray data = r->readAll();
     r->deleteLater();
-    {
-      String tmp_file = String(File::getTempDirectory() + "/" + File::getUniqueName() + ".toppas");
-      QFile file_tmp(tmp_file.toQString());
-      if (!file_tmp.open(QIODevice::WriteOnly | QIODevice::Text))
-      {
-        showLogMessage_(LS_NOTICE, "Download succeeded. Cannot save the file to a temporary directory. Aborting.", "");
-        return;
-      }
-      QTextStream out(&file_tmp);
-      out << data;
-      file_tmp.close();
-      Param p;
-      p.load(tmp_file);
-
-      // get version of TOPPAS file
-      String version = "1.8.0"; // default (were we did not have the tag)
-      if (p.exists("info:version")) version = p.getValue("info:version");
-      VersionInfo::VersionDetails v_file = VersionInfo::VersionDetails::create(version);
-      VersionInfo::VersionDetails v_this = VersionInfo::VersionDetails::create(VersionInfo::getVersion());
-      if (v_file < v_this)
-      {
-        if (QMessageBox::warning(this, tr("Old TOPPAS file warning"), tr("The TOPPAS file you downloaded was created with an old version of TOPPAS. Shall we will try to open it.\n"
-                                                                     "If this fails, use INIUpdater tool to convert it.\n"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::No) return;
-      }
-      else if (v_file > v_this)
-      {
-        if (QMessageBox::warning(this, tr("New TOPPAS file warning"), tr("The TOPPAS file you downloaded was created with an more recent version of TOPPAS. Shall we will try to open it.\n"
-          "If this fails, update to the new TOPPAS version.\n"), QMessageBox::Yes, QMessageBox::No) == QMessageBox::No) return;
-      }
-    }
-
 
     QString proposed_filename = QFileInfo(r->url().toString()).fileName();
     QString filename = QFileDialog::getSaveFileName(this, "Where to save the TOPPAS file?", this->current_path_.toQString() + "/" + proposed_filename, tr("TOPPAS (*.toppas)"));
@@ -538,7 +507,8 @@ namespace OpenMS
 					connect (tv, SIGNAL(toolCrashed()), this, SLOT(toolCrashed()));
 					connect (tv, SIGNAL(toolFailed()), this, SLOT(toolFailed()));
           connect (tv, SIGNAL(toolFailed(const QString&)), this, SLOT(updateTOPPOutputLog(const QString&)));
-					connect (tv, SIGNAL(toppOutputReady(const QString&)), this, SLOT(updateTOPPOutputLog(const QString&)));
+					// already done in ToppasScene:
+					//connect (tv, SIGNAL(toppOutputReady(const QString&)), this, SLOT(updateTOPPOutputLog(const QString&)));
 					continue;
 				}
 
@@ -546,6 +516,7 @@ namespace OpenMS
 				if (tmv)
 				{
           connect (tmv, SIGNAL(mergeFailed(const QString)), this, SLOT(updateTOPPOutputLog(const QString&)));
+          continue;
         }
 
 				TOPPASOutputFileListVertex* oflv = qobject_cast<TOPPASOutputFileListVertex*>(*it);
@@ -815,6 +786,18 @@ namespace OpenMS
 		tw->fitInView(scene_rect, Qt::KeepAspectRatio);
 		tw->scale(0.75, 0.75);
 		scene->setSceneRect(tw->mapToScene(tw->rect()).boundingRect());
+
+    QRectF items_rect = scene->itemsBoundingRect();
+    QRectF new_scene_rect = items_rect.united(tw->mapToScene(tw->rect()).boundingRect());
+    qreal top_left_x = new_scene_rect.topLeft().x();
+    qreal top_left_y = new_scene_rect.topLeft().y();
+    qreal bottom_right_x = new_scene_rect.bottomRight().x();
+    qreal bottom_right_y = new_scene_rect.bottomRight().y();
+    qreal width = new_scene_rect.width();
+    qreal height = new_scene_rect.height();
+    new_scene_rect.setTopLeft(QPointF(top_left_x - width/2.0, top_left_y - height/2.0));
+    new_scene_rect.setBottomRight(QPointF(bottom_right_x + width/2.0, bottom_right_y + height/2.0));
+    scene->setSceneRect(new_scene_rect);
 
     desc_->blockSignals(true);
     desc_->setHtml(scene->getDescription());
@@ -1253,7 +1236,8 @@ namespace OpenMS
 			connect (ttv, SIGNAL(toolFinished()), this, SLOT(toolFinished()));
 			connect (ttv, SIGNAL(toolCrashed()), this, SLOT(toolCrashed()));
 			connect (ttv, SIGNAL(toolFailed()), this, SLOT(toolFailed()));
-			connect (ttv, SIGNAL(toppOutputReady(const QString&)), this, SLOT(updateTOPPOutputLog(const QString&)));
+			// already done in ToppasScene:
+			//connect (ttv, SIGNAL(toppOutputReady(const QString&)), this, SLOT(updateTOPPOutputLog(const QString&)));
 			
 			scene->connectToolVertexSignals(ttv);
 		}

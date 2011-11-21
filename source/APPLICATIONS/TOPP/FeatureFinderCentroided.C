@@ -135,10 +135,10 @@ protected:
 		setValidFormats_("in",StringList::create("mzML"));
 		registerOutputFile_("out","<file>","","output file");
 		setValidFormats_("out",StringList::create("featureXML"));
-		registerInputFile_("seeds","<file>","","User-specified seed list. This feature is not supported by all algorithms!", false);
+		registerInputFile_("seeds","<file>","","User specified seed list", false);
 		setValidFormats_("seeds",StringList::create("featureXML"));
 		addEmptyLine_();
-    addText_("All other options of the Featurefinder are set in the 'algorithm' section of the INI file.\n");
+    addText_("All other options of the FeatureFinder are set in the 'algorithm' section of the INI file.\n");
 
 		registerSubsection_("algorithm","Algorithm section");
 	}
@@ -150,22 +150,19 @@ protected:
 
 	ExitCodes main_(int , const char**)
 	{
-		//input file names and types
+    //input file names
 		String in = getStringOption_("in");
-		String out = getStringOption_("out");
 
-		Param feafi_param = getParam_().copy("algorithm:",true);
+    //prevent loading of fragment spectra
+    PeakFileOptions options;
+    options.setMSLevels(vector<Int>(1,1));
 
-		writeDebug_("Parameters passed to FeatureFinder", feafi_param, 3);
-
-		//setup of FeatureFinder
-		FeatureFinder ff;
-		ff.setLogType(log_type_);
-
-		//reading input data
-		PeakMap exp;
-		MzMLFile f;
+    //reading input data
+    MzMLFile f;
+    f.getOptions() = options;
 		f.setLogType(log_type_);
+
+    PeakMap exp;
     f.load(in, exp);
     exp.updateRanges();
 
@@ -176,10 +173,18 @@ protected:
 			FeatureXMLFile().load(getStringOption_("seeds"),seeds);
 		}
 
-		// A map for the resulting features
-		FeatureMap<> features;
+    //setup of FeatureFinder
+    FeatureFinder ff;
+    ff.setLogType(log_type_);
 
-		// Apply the feature finder
+    // A map for the resulting features
+    FeatureMap<> features;
+
+    // get parameters specific for the feature finder
+    Param feafi_param = getParam_().copy("algorithm:",true);
+    writeDebug_("Parameters passed to FeatureFinder", feafi_param, 3);
+
+    // Apply the feature finder
     ff.run(FeatureFinderAlgorithmPicked<Peak1D, Feature>::getProductName(), exp, features, feafi_param, seeds);
 		features.applyMemberFunction(&UniqueIdInterface::setUniqueId);
 
@@ -209,7 +214,10 @@ protected:
 		//annotate output with data processing info
 		addDataProcessing_(features, getProcessingInfo_(DataProcessing::QUANTITATION));
 
-		FeatureXMLFile map_file;
+    // write features to user specified output file
+    FeatureXMLFile map_file;
+    String out = getStringOption_("out");
+
 		map_file.store(out,features);
 
 		return EXECUTION_OK;

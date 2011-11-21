@@ -53,7 +53,7 @@ namespace OpenMS
 		setRenderHint(QPainter::Antialiasing);
 		setScene(scene_);
 		setAcceptDrops(true);
-		setDragMode(QGraphicsView::RubberBandDrag);
+    setDragMode(QGraphicsView::ScrollHandDrag);
 		setFocusPolicy(Qt::StrongFocus);
 	}
 	
@@ -86,9 +86,7 @@ namespace OpenMS
     qreal height = new_scene_rect.height();
     new_scene_rect.setTopLeft(QPointF(top_left_x - width/2.0, top_left_y - height/2.0));
     new_scene_rect.setBottomRight(QPointF(bottom_right_x + width/2.0, bottom_right_y + height/2.0));
-
     scene_->setSceneRect(new_scene_rect);
-
 	}
 	
 	void TOPPASWidget::wheelEvent(QWheelEvent* event)
@@ -149,7 +147,7 @@ namespace OpenMS
 		}
 		else if (e->key() == Qt::Key_Control)
 		{
-			setDragMode(QGraphicsView::ScrollHandDrag);
+      setDragMode(QGraphicsView::RubberBandDrag);
 			e->accept();
 		}
 		else if (e->key() == Qt::Key_Delete || e->key() == Qt::Key_Backspace)
@@ -177,7 +175,7 @@ namespace OpenMS
 	{
 		if (e->key() == Qt::Key_Control)
 		{
-			setDragMode(QGraphicsView::RubberBandDrag);
+      setDragMode(QGraphicsView::ScrollHandDrag);
 			e->accept();
 		}
 	}
@@ -196,12 +194,12 @@ namespace OpenMS
 	
 	void TOPPASWidget::resizeEvent(QResizeEvent* event)
 	{
-		QGraphicsView::resizeEvent(event);
-		if (scene_)
-		{
-			QRectF items_rect = scene_->itemsBoundingRect();
-			scene_->setSceneRect(items_rect.united(mapToScene(viewport()->rect()).boundingRect()));
-		}
+//		QGraphicsView::resizeEvent(event);
+//		if (scene_)
+//		{
+//			QRectF items_rect = scene_->itemsBoundingRect();
+//			scene_->setSceneRect(items_rect.united(mapToScene(viewport()->rect()).boundingRect()));
+//		}
 	}
 	
 	void TOPPASWidget::closeEvent(QCloseEvent* e)

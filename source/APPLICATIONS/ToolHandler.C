@@ -71,15 +71,14 @@ namespace OpenMS
 		tools_map["FileInfo"] = Internal::ToolDescription("FileInfo", "File Handling");
 		tools_map["FileMerger"] = Internal::ToolDescription("FileMerger", "File Handling");
     tools_map["HighResPrecursorMassCorrector"] = Internal::ToolDescription("HighResPrecursorMassCorrector", "Signal processing and preprocessing");
-		tools_map["IDConflictResolver"] = Internal::ToolDescription("IDConflictResolver", "ID Processing");
-    tools_map["IDDecoyProbability"] = Internal::ToolDescription("IDDecoyProbability", "ID Processing");
+		tools_map["IDConflictResolver"] = Internal::ToolDescription("IDConflictResolver", "ID Processing");    
     tools_map["IDFileConverter"] = Internal::ToolDescription("IDFileConverter", "ID Processing");
     tools_map["IDFilter"] = Internal::ToolDescription("IDFilter", "ID Processing");
     tools_map["IDMapper"] = Internal::ToolDescription("IDMapper", "ID Processing");
 		tools_map["IDMerger"] = Internal::ToolDescription("IDMerger", "File Handling");
     tools_map["IDPosteriorErrorProbability"] = Internal::ToolDescription("IDPosteriorErrorProbability", "ID Processing");
     tools_map["IDRTCalibration"] = Internal::ToolDescription("IDRTCalibration", "ID Processing");
-		tools_map["ITRAQAnalyzer"] = Internal::ToolDescription("ITRAQAnalyzer", "Quantitation", StringList::create("4plex,8plex"));
+		tools_map["ITRAQAnalyzer"] = Internal::ToolDescription("ITRAQAnalyzer", "Quantitation");
 		tools_map["InclusionExclusionListCreator"] = Internal::ToolDescription("InclusionExclusionListCreator", "Targeted Experiments");
     tools_map["InspectAdapter"] = Internal::ToolDescription("InspectAdapter", "Identification");
 		tools_map["InternalCalibration"] = Internal::ToolDescription("InternalCalibration", "Signal processing and preprocessing");

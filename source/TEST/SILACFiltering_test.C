@@ -49,7 +49,7 @@ mass_separations.push_back(8.0142);
 SILACFiltering filtering(input, peak_width, 0);
 SILACFilter filter(mass_separations, 2, 2, 3, 0, .9, false);
 
-START_SECTION((SILACFiltering(MSExperiment< Peak1D > &exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const DoubleReal intensity_correlation, const bool allow_missing_peaks, const String debug_filebase_="")))
+START_SECTION((SILACFiltering(MSExperiment< Peak1D > &exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const String debug_filebase_="")))
 {
   TEST_EQUAL(filtering.filters_.size(), 0);
   TEST_EQUAL(filtering.blacklist.size(), 0);
@@ -79,6 +79,19 @@ START_SECTION((void filterDataPoints()))
 }
 END_SECTION
 
+START_SECTION([SILACFiltering::SpectrumInterpolation] SpectrumInterpolation(const MSSpectrum<> &, const SILACFiltering &))
+  SILACFiltering::SpectrumInterpolation si(input[0], filtering);
+END_SECTION
+
+START_SECTION([SILACFiltering::SpectrumInterpolation] ~SpectrumInterpolation())
+  SILACFiltering::SpectrumInterpolation si(input[0], filtering);
+END_SECTION
+
+START_SECTION([SILACFiltering::SpectrumInterpolation] DoubleReal operator()(DoubleReal mz) const)
+  SILACFiltering::SpectrumInterpolation si(input[0], filtering);
+  TEST_REAL_SIMILAR(si(670.5), 0)
+  TEST_REAL_SIMILAR(si(671.1), 0)
+END_SECTION
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////

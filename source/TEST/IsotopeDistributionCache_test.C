@@ -33,5 +33,21 @@ using namespace OpenMS;
 
 START_TEST(IsotopeDistributionCache, "$Id$")
 
+START_SECTION(IsotopeDistributionCache(DoubleReal max_mass, DoubleReal mass_window_width, DoubleReal intensity_percentage=0, DoubleReal intensity_percentage_optional=0))
+  IsotopeDistributionCache c(100, 1);
+END_SECTION 
+
+START_SECTION(const TheoreticalIsotopePattern& getIsotopeDistribution(DoubleReal mass) const)
+  IsotopeDistributionCache c(1000, 10);
+  const IsotopeDistributionCache::TheoreticalIsotopePattern &p(c.getIsotopeDistribution(500));
+  TEST_REAL_SIMILAR(p.intensity[0], 1);
+  TEST_REAL_SIMILAR(p.intensity[1], 0.2668);
+  TEST_REAL_SIMILAR(p.intensity[2], 0.04864);
+  TEST_REAL_SIMILAR(p.intensity[3], 0.006652);
+  TEST_EQUAL(&p == &c.getIsotopeDistribution(509.9), true);
+  TEST_EQUAL(&p != &c.getIsotopeDistribution(510.0), true);
+  TEST_EQUAL(&p != &c.getIsotopeDistribution(499.9), true);
+END_SECTION
+
 END_TEST
 

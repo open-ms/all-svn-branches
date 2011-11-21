@@ -55,12 +55,10 @@ namespace OpenMS
 
       typedef IsotopeDistributionCache::TheoreticalIsotopePattern TheoreticalIsotopePattern;
 
-      IsotopeDistributionCache isotope_distribution_;
-
       /**
-       * @brief number of peptides [i.e. number of labelled peptides +1, e.g. for SILAC triplet =3]
+       * @brief mass shift(s) in [Da] to search for
        */
-      Size number_of_peptides_;
+      std::vector<DoubleReal> mass_separations_;
 
       /**
        * @brief charge of the ions to search for
@@ -68,14 +66,39 @@ namespace OpenMS
       Int charge_;
 
       /**
+       * @brief maximal value of which a predicted SILAC feature may deviate from the averagine model
+       */
+      DoubleReal model_deviation_;
+
+      /**
        * @brief number of peaks per peptide to search for
        */
       Size isotopes_per_peptide_;
 
       /**
-       * @brief mass shift(s) in [Da] to search for
+       * @brief minimal intensity of SILAC features
        */
-      std::vector<DoubleReal> mass_separations_;
+      DoubleReal intensity_cutoff_;
+
+      /**
+       * @brief minimal intensity correlation between regions of different peaks
+       */
+      DoubleReal intensity_correlation_;
+
+      /**
+       * @brief flag for missing peaks
+       */
+      bool allow_missing_peaks_;
+
+      /**
+       * Isotope distributions
+       */
+      IsotopeDistributionCache isotope_distribution_;
+
+      /**
+       * @brief number of peptides [i.e. number of labelled peptides +1, e.g. for SILAC triplet =3]
+       */
+      Size number_of_peptides_;
 
       /**
        * @brief peak positions of SILAC pattern
@@ -101,11 +124,6 @@ namespace OpenMS
        * @brief holds the recognized features
        */
       std::vector<SILACPattern> elements_;
-
-      /**
-       * @brief maximal value of which a predicted SILAC feature may deviate from the averagine model
-       */
-      DoubleReal model_deviation_;
 
       /**
        * @brief m/z at which the filter is currently applied to
@@ -182,7 +200,8 @@ namespace OpenMS
        * @param model_deviation maximum deviation from the averagine model
        * @param isotopes_per_peptide number of peaks per petide to search for
        */
-      SILACFilter(std::vector<DoubleReal> mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide);
+      SILACFilter(std::vector<DoubleReal> mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide,
+          DoubleReal intensity_cutoff, DoubleReal intensity_correlation, bool allow_missing_peaks);
 
       /**
        * @brief gets the m/z values of all peaks , which belong the last identified feature

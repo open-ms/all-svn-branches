@@ -55,8 +55,6 @@ namespace OpenMS
   class OPENMS_DLLAPI SILACFiltering
     : public ProgressLogger
   {
-    friend class SILACFilter;
-
     public:
       typedef std::vector<SILACFilter> Filters;
 
@@ -65,7 +63,6 @@ namespace OpenMS
        */
       Filters filters_;
 
-    private:
       /**
        * @brief Wrapper class for spectrum interpolation
        */
@@ -85,6 +82,7 @@ namespace OpenMS
           }
       };
 
+    private:
       /**
        * @brief minimal intensity of SILAC features
        */

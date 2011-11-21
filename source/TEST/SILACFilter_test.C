@@ -42,16 +42,16 @@ mass_separations.push_back(4);
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-START_SECTION((SILACFilter(std::vector< DoubleReal > mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide)))
+START_SECTION((SILACFilter(std::vector< DoubleReal > mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide, DoubleReal intensity_cutoff, DoubleReal intensity_correlation, bool allow_missing_peaks)))
 {
-  SILACFilter f(mass_separations, 1, 1, 3);
+  SILACFilter f(mass_separations, 1, 1, 3, 0, 0, false);
   TEST_EQUAL(f.getCharge(), 1);
 }
 END_SECTION
 
 START_SECTION((std::vector<DoubleReal> getPeakPositions()))
 {
-  SILACFilter f(mass_separations, 1, 1, 3);
+  SILACFilter f(mass_separations, 1, 1, 3, 0, 0, false);
   // XXX: Segfaults
   // TEST_EQUAL(f.getPeakPositions().size(), 0);
 }
@@ -60,28 +60,28 @@ END_SECTION
 START_SECTION((const std::vector<DoubleReal>& getExpectedMzShifts()))
 {
   const UInt peaks_per_peptide = 3;
-  SILACFilter f(mass_separations, 1, 1, peaks_per_peptide);
+  SILACFilter f(mass_separations, 1, 1, peaks_per_peptide, 0, 0, false);
   TEST_EQUAL(f.getExpectedMzShifts().size(), (mass_separations.size() + 1) * peaks_per_peptide);
 }
 END_SECTION
 
 START_SECTION((std::vector<SILACPattern>& getElements()))
 {
-  SILACFilter f(mass_separations, 1, 1, 3);
+  SILACFilter f(mass_separations, 1, 1, 3, 0, 0, false);
   TEST_EQUAL(f.getElements().size(), 0);
 }
 END_SECTION
 
 START_SECTION((Int getCharge()))
 {
-  SILACFilter f(mass_separations, 1, 1, 3);
+  SILACFilter f(mass_separations, 1, 1, 3, 0, 0, false);
   TEST_EQUAL(f.getCharge(), 1);
 }
 END_SECTION
 
 START_SECTION((std::vector<DoubleReal>& getMassSeparations()))
 {
-  SILACFilter f(mass_separations, 1, 1, 3);
+  SILACFilter f(mass_separations, 1, 1, 3, 0, 0, false);
   TEST_EQUAL(f.getMassSeparations() == mass_separations, true);
 }
 END_SECTION

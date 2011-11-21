@@ -39,14 +39,17 @@ using namespace std;
 
 namespace OpenMS
 {
-  SILACFilter::SILACFilter(std::vector<DoubleReal> mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide)
-    : isotope_distribution_(20000.0, 1.0, 0.0, 0.0)
+  SILACFilter::SILACFilter(std::vector<DoubleReal> mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide,
+      DoubleReal intensity_cutoff, DoubleReal intensity_correlation, bool allow_missing_peaks)
+    : mass_separations_(mass_separations),
+      charge_(charge),
+      model_deviation_(model_deviation),
+      isotopes_per_peptide_(isotopes_per_peptide),
+      intensity_cutoff_(intensity_cutoff),
+      intensity_correlation_(intensity_correlation),
+      allow_missing_peaks_(allow_missing_peaks),
+      isotope_distribution_(20000.0, 1.0, 0.0, 0.0)
   {
-    mass_separations_ = mass_separations;     // mass shift(s) between peptides
-    charge_ = charge;     // peptide charge
-    model_deviation_ = model_deviation;   // allowed deviation from averegine model
-    isotopes_per_peptide_ = isotopes_per_peptide;   // isotopic peaks per peptide
-
     isotope_distance_ = 1.000495 / (DoubleReal)charge_;    // distance between isotopic peaks of a peptide [Th]
     number_of_peptides_ = (Int) mass_separations_.size() + 1;    // number of labelled peptides +1 [e.g. for SILAC triplet =3]
     
@@ -112,7 +115,7 @@ namespace OpenMS
 
         if ( deltaMZ < 0)
         {
-          if (SILACFiltering::allow_missing_peaks_ == false)
+          if (allow_missing_peaks_ == false)
           {
             return false;
           }
@@ -120,7 +123,7 @@ namespace OpenMS
           {
             // MISSING PEAK EXCEPTION
             // A missing intensity is allowed if (1) the user allowed it, (2) it's the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
-            if (SILACFiltering::allow_missing_peaks_ == true && isotope == isotopes_per_peptide_ - 1 && missing_peak_seen_yet == false)
+            if (allow_missing_peaks_ == true && isotope == isotopes_per_peptide_ - 1 && missing_peak_seen_yet == false)
             {
               missing_peak_seen_yet = true;
             }
@@ -211,7 +214,7 @@ namespace OpenMS
 
         if ( deltaMZ < 0)
         {
-          if (SILACFiltering::allow_missing_peaks_ == false)
+          if (allow_missing_peaks_ == false)
           {
             if(debug)
             {
@@ -223,7 +226,7 @@ namespace OpenMS
           {
             // MISSING PEAK EXCEPTION
             // A missing intensity is allowed if (1) the user allowed it, (2) it's the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
-            if (SILACFiltering::allow_missing_peaks_ == true && isotope == isotopes_per_peptide_ - 1 && missing_peak_seen_yet == false)
+            if (allow_missing_peaks_ == true && isotope == isotopes_per_peptide_ - 1 && missing_peak_seen_yet == false)
             {
               missing_peak_seen_yet = true;
             }
@@ -281,9 +284,9 @@ namespace OpenMS
     {
       for (Size isotope = 0; isotope < isotopes_per_peptide_; ++isotope)
       {
-        if (exact_intensities_[peptide][isotope] < SILACFiltering::intensity_cutoff_)
+        if (exact_intensities_[peptide][isotope] < intensity_cutoff_)
         {
-          if (SILACFiltering::allow_missing_peaks_ == false)
+          if (allow_missing_peaks_ == false)
           {
             return false;
           }
@@ -291,7 +294,7 @@ namespace OpenMS
           {
             // MISSING PEAK EXCEPTION
             // A missing intensity is allowed if (1) the user allowed it, (2) it's the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
-            if (SILACFiltering::allow_missing_peaks_ == true && isotope == isotopes_per_peptide_ - 1 && missing_peak_seen_yet == false)
+            if (allow_missing_peaks_ == true && isotope == isotopes_per_peptide_ - 1 && missing_peak_seen_yet == false)
             {
               missing_peak_seen_yet = true;
             }
@@ -328,11 +331,11 @@ namespace OpenMS
 
         DoubleReal intensityCorrelation = Math::pearsonCorrelationCoefficient( intensities1.begin(), intensities1.end(), intensities2.begin(), intensities2.end());    // calculate Pearson correlation coefficient
 
-        if (intensityCorrelation < SILACFiltering::intensity_correlation_)
+        if (intensityCorrelation < intensity_correlation_)
         {
           // MISSING PEAK EXCEPTION
           // A missing intensity is allowed if (1) the user allowed it, (2) one of the two peaks is the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
-          if (SILACFiltering::allow_missing_peaks_ && (isotope2 == isotopes_per_peptide_ - 1) && (!missing_peak_seen_yet))
+          if (allow_missing_peaks_ && (isotope2 == isotopes_per_peptide_ - 1) && (!missing_peak_seen_yet))
           {
             missing_peak_seen_yet = true;
           }
@@ -367,7 +370,7 @@ namespace OpenMS
 
         DoubleReal intensityCorrelation = Math::pearsonCorrelationCoefficient( intensities3.begin(), intensities3.end(), intensities4.begin(), intensities4.end());    // calculate Pearson correlation coefficient
 
-        if (intensityCorrelation < SILACFiltering::intensity_correlation_)
+        if (intensityCorrelation < intensity_correlation_)
         {
           return false;
         }
@@ -412,7 +415,7 @@ namespace OpenMS
           {
             // MISSING PEAK EXCEPTION
             // A missing intensity is allowed if (1) the user allowed it, (2) one of the two peaks is the last isotopic peak of a SILAC peptide and (3) it hasn't occured before.
-            if (SILACFiltering::allow_missing_peaks_ && (isotope == isotopes_per_peptide_ - 1) && (!missing_peak_seen_yet))
+            if (allow_missing_peaks_ && (isotope == isotopes_per_peptide_ - 1) && (!missing_peak_seen_yet))
             {
               missing_peak_seen_yet = true;
             }

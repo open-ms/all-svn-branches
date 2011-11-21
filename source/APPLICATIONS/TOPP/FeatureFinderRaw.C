@@ -320,7 +320,7 @@ class TOPPFeatureFinderRaw
           vector<DoubleReal> massShifts_set = massShifts[i];
 
           //copy(massShifts[i].begin(), massShifts[i].end(), inserter(massShifts_set, massShifts_set.end()));
-          filters.push_back(SILACFilter(massShifts_set, charge, model_deviation, isotopes_per_peptide));
+          filters.push_back(SILACFilter(massShifts_set, charge, model_deviation, isotopes_per_peptide, intensity_cutoff, intensity_correlation, 0));
         }
       }
     }

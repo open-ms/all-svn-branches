@@ -40,6 +40,7 @@ using namespace std;
 namespace OpenMS
 {
   SILACFilter::SILACFilter(std::vector<DoubleReal> mass_separations, Int charge, DoubleReal model_deviation, Int isotopes_per_peptide)
+    : isotope_distribution_(20000.0, 1.0, 0.0, 0.0)
   {
     mass_separations_ = mass_separations;     // mass shift(s) between peptides
     charge_ = charge;     // peptide charge
@@ -382,11 +383,6 @@ namespace OpenMS
     bool debug = false;
     //debug = abs(mz - 1788) < 1;
 
-    if (!IsotopeDistributionCache::getInstance()->isPrecalculated())
-    {
-      IsotopeDistributionCache::getInstance()->precalculate(20000.0, 1.0, 0.0, 0.0);
-    }
-
     if (isotopes_per_peptide_ > 1)
     {
       for (Size peptide = 0; peptide != number_of_peptides_; ++peptide)
@@ -394,7 +390,7 @@ namespace OpenMS
         //IsotopeDistribution isoDistribution;    // isotope distribution of an averagene peptide
         //isoDistribution.estimateFromPeptideWeight((mz + exact_shifts_[peptide][0]) * charge_);    // mass of averagene peptide
 
-        const TheoreticalIsotopePattern& pattern = IsotopeDistributionCache::getInstance()->getIsotopeDistribution((mz + exact_shifts_[peptide][0]) * charge_);
+        const TheoreticalIsotopePattern& pattern = isotope_distribution_.getIsotopeDistribution((mz + exact_shifts_[peptide][0]) * charge_);
 
         DoubleReal averagine_mono = pattern.intensity[0];    // intensity of monoisotopic peak of the averagine model
         DoubleReal intensity_mono = exact_intensities_[peptide][0];    // intensity around the (potential) monoisotopic peak in the real data

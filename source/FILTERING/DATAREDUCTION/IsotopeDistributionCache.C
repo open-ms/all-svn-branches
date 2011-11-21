@@ -29,19 +29,9 @@
 
 using namespace OpenMS;
 
-bool IsotopeDistributionCache::isPrecalculated() const
+IsotopeDistributionCache::IsotopeDistributionCache(DoubleReal max_mass, DoubleReal mass_window_width, DoubleReal intensity_percentage, DoubleReal intensity_percentage_optional)
+  : mass_window_width_(mass_window_width)
 {
-  return (isotope_distributions_.size() != 0);
-}
-
-void IsotopeDistributionCache::precalculate(DoubleReal max_mass, DoubleReal mass_window_width, DoubleReal intensity_percentage, DoubleReal intensity_percentage_optional)
-{
-  isotope_distributions_.clear();
-  max_mass_ = max_mass;
-  mass_window_width_ = mass_window_width;
-  intensity_percentage_optional_ = intensity_percentage_optional;
-  intensity_percentage_ = intensity_percentage;
-
   Size num_isotopes = std::ceil(max_mass/mass_window_width) + 1;
 
   //reserve enough space
@@ -53,13 +43,13 @@ void IsotopeDistributionCache::precalculate(DoubleReal max_mass, DoubleReal mass
     //log_ << "Calculating iso dist for mass: " << 0.5*mass_window_width_ + index * mass_window_width_ << std::endl;
     IsotopeDistribution d;
     d.setMaxIsotope(20);
-    d.estimateFromPeptideWeight(0.5*mass_window_width_ + index * mass_window_width_);
+    d.estimateFromPeptideWeight(0.5*mass_window_width + index * mass_window_width);
 
     //trim left and right. And store the number of isotopes on the left, to reconstruct the monoisotopic peak
     Size size_before = d.size();
-    d.trimLeft(intensity_percentage_optional_);
+    d.trimLeft(intensity_percentage_optional);
     isotope_distributions_[index].trimmed_left = size_before - d.size();
-    d.trimRight(intensity_percentage_optional_);
+    d.trimRight(intensity_percentage_optional);
 
     for (IsotopeDistribution::Iterator it=d.begin(); it!=d.end(); ++it)
     {
@@ -74,7 +64,7 @@ void IsotopeDistributionCache::precalculate(DoubleReal max_mass, DoubleReal mass
     bool is_end = false;
     for (Size i = 0; i < isotope_distributions_[index].intensity.size(); ++i)
     {
-      if (isotope_distributions_[index].intensity[i] < intensity_percentage_)
+      if (isotope_distributions_[index].intensity[i] < intensity_percentage)
       {
         if (!is_end && !is_begin) is_end = true;
         if (is_begin) ++begin;

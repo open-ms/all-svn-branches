@@ -31,7 +31,7 @@
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACFiltering.h>
 #include <OpenMS/FILTERING/DATAREDUCTION/SILACPattern.h>
-#include <OpenMS/TRANSFORMATIONS/FEATUREFINDER/FeatureFinderAlgorithmPickedHelperStructs.h>
+#include <OpenMS/FILTERING/DATAREDUCTION/IsotopeDistributionCache.h>
 #include <gsl/gsl_interp.h>
 #include <gsl/gsl_spline.h>
 #include <queue>
@@ -53,7 +53,9 @@ namespace OpenMS
     private:
       friend class SILACFiltering;
 
-      typedef FeatureFinderAlgorithmPickedHelperStructs::TheoreticalIsotopePattern TheoreticalIsotopePattern;
+      typedef IsotopeDistributionCache::TheoreticalIsotopePattern TheoreticalIsotopePattern;
+
+      IsotopeDistributionCache isotope_distribution_;
 
       /**
        * @brief number of peptides [i.e. number of labelled peptides +1, e.g. for SILAC triplet =3]

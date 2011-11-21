@@ -230,6 +230,7 @@ set(filtering_executables_list
   IntensityBalanceFilter_test
   InternalCalibration_test
   IsotopeDiffFilter_test
+  IsotopeDistributionCache_test
   IsotopeMarker_test
   LinearResampler_test
   LowessSmoothing_test

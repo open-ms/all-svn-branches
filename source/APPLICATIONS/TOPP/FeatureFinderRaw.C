@@ -171,7 +171,7 @@ class TOPPFeatureFinderRaw
 
   public:
     TOPPFeatureFinderRaw()
-      : TOPPBase("FeatureFinderRaw","Determination of peak ratios in LC-MS data", false)
+      : TOPPBase("FeatureFinderRaw","Determination of peak ratios in LC-MS data", true)
     {
     }
 

@@ -46,7 +46,7 @@ namespace OpenMS
   public:
     struct SolverParam
     {
-      SolverParam(): message_level(3),branching_tech(4),backtrack_tech(3),
+      SolverParam(): message_level(1),branching_tech(4),backtrack_tech(3),
                      preprocessing_tech(2),enable_feas_pump_heuristic(true),enable_gmi_cuts(true),
                      enable_mir_cuts(true),enable_cov_cuts(true),enable_clq_cuts(true),mip_gap(0.0),
                      time_limit((std::numeric_limits<Int>::max)()), output_freq(5000),output_delay(10000),enable_presolve(true),

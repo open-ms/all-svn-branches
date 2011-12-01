@@ -132,7 +132,7 @@ protected:
 		registerIntOption_("num_precursors","<Int>",1,"number of precursors to be selected",false);
     registerInputFile_("raw_data","<file>","","Input profile data.",false);
 		setValidFormats_("raw_data",StringList::create("mzData"));
-
+    registerFlag_("only_preprocessing","Only the preprocessing is calculated.");
 		registerFlag_("load_preprocessing","The preprocessed db is loaded from file, not calculated.");
 		registerFlag_("store_preprocessing","The preprocessed db is stored.");
 		registerFlag_("simulation","Simulate the whole LC-MS/MS run.");
@@ -142,6 +142,7 @@ protected:
 		registerStringOption_("dt_model","<dt-model-file>","","SVM Model for PTPredict",false);
     registerStringOption_("solver","<solver-type>","GLPK","LP solver type",false,true);
     setValidStrings_("solver",StringList::create("GLPK,COINOR"));
+    registerStringList_("fixed_modifications", "<mods>", StringList(), "the modifications i.e. Carboxymethyl (C)", false);
     addEmptyLine_();
     registerSubsection_("algorithm","Settings for the compound list creation and rescoring.");
 
@@ -174,6 +175,8 @@ protected:
 		String rt_model = getStringOption_("rt_model");
 		String dt_model = getStringOption_("dt_model");
     String solver(getStringOption_("solver"));
+    StringList fixed_mods = getStringList_("fixed_modifications");
+    bool only_preprocessing = getFlag_("only_preprocessing");
 		//-------------------------------------------------------------
     // init pis preprocessing
     //-------------------------------------------------------------
@@ -185,7 +188,7 @@ protected:
     PrecursorIonSelectionPreprocessing pisp;
 		//    pisp.setLogType(log_type_);
 		pisp.setParameters(pisp_param);
-    
+    pisp.setFixedModifications(fixed_mods);
     if(load_preprocessing)
     {
       pisp.loadPreprocessing();
@@ -196,11 +199,10 @@ protected:
 				printUsage_();
 				return ILLEGAL_PARAMETERS;
     }
-    else
-    {
-      pisp.dbPreprocessing(db_path,store_preprocessing);
-    }
-
+    else if(rt_model == "") pisp.dbPreprocessing(db_path,store_preprocessing);
+    else pisp.dbPreprocessing(db_path,rt_model,dt_model,store_preprocessing);
+    
+    if(only_preprocessing) return EXECUTION_OK;
     MSExperiment<> exp;
 		if(raw_data != "")  MzDataFile().load(raw_data,exp);
 		//-------------------------------------------------------------

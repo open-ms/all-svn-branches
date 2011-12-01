@@ -33,7 +33,7 @@
 #include <OpenMS/ANALYSIS/ID/IDMapper.h>
 #include <OpenMS/SYSTEM/StopWatch.h>
 using namespace std;
-//#define PIS_DEBUG
+#define PIS_DEBUG
 //#undef PIS_DEBUG
 namespace OpenMS
 {
@@ -117,8 +117,10 @@ namespace OpenMS
 	}
 
 	void PrecursorIonSelection::rescore_(FeatureMap<>& features,std::vector<PeptideIdentification>& new_pep_ids,
- 																			 PrecursorIonSelectionPreprocessing& preprocessed_db)
+ 																			 PrecursorIonSelectionPreprocessing& preprocessed_db,PSProteinInference& protein_inference)
 	{
+    DoubleReal min_protein_probability = param_.getValue("MIPFormulation:thresholds:min_protein_id_probability");
+    DoubleReal min_protein_probability_for_change = param_.getValue("MIPFormulation:thresholds:min_protein_probability");
 		// get maximal score in the list
 		FeatureMap<>::Iterator iter = features.begin();
 		for(;iter != features.end();++iter)
@@ -154,10 +156,13 @@ namespace OpenMS
 #ifdef PIS_DEBUG
 												std::cout << *acc_it << " hat "<<prot_id_counter_[*acc_it].size() << " hits"<<std::endl;
 #endif
-												if(prot_id_counter_[*acc_it].size()>=min_pep_ids_) // protein is already identified
+                        //												if(prot_id_counter_[*acc_it].size()>=min_pep_ids_) // protein is already identified
+                        if((protein_inference.getProteinProbability(*acc_it) > min_protein_probability)
+                           && (protein_inference.isProteinInMinimalList(*acc_it))) // protein is already identified
 													{
 #ifdef PIS_DEBUG
-														std::cout << prot_id_counter_[*acc_it].size() << " >= "<<min_pep_ids_ << std::endl;
+														std::cout << "Prob von "<< *acc_it << " "<<protein_inference.getProteinProbability(*acc_it)
+                                      <<  " >= "<<min_protein_probability << std::endl;
 #endif
 														// enter peptide id
 														prot_id_counter_[*acc_it].insert(hits[h].getSequence().toString());
@@ -165,7 +170,10 @@ namespace OpenMS
 												else
 													{
 #ifdef PIS_DEBUG
-														std::cout << prot_id_counter_[*acc_it].size() << " < "<<min_pep_ids_ << std::endl;
+														//std::cout << prot_id_counter_[*acc_it].size() << " < "<<min_pep_ids_ << std::endl;
+                            std::cout << "Prob von "<< *acc_it << " "<<protein_inference.getProteinProbability(*acc_it)
+                                      <<  " < "<<min_protein_probability << std::endl;
+
 #endif
 														String seq = hits[h].getSequence().toString();
 														// if peptide isn't already present
@@ -196,31 +204,57 @@ namespace OpenMS
 			}
 
 		std::set<String>::iterator it=status_changed.begin();
+    std::cout << "now go through "<<status_changed.size()<<" changed protein entries"<<std::endl;
 		// go through all proteins whose status changed
 		for( ;it!=status_changed.end();++it)
 			{
-				if(prot_id_counter_[*it].size() >= min_pep_ids_)
+        std::cout << *it << " "<<protein_inference.getProteinProbability(*it) << " "<< protein_inference.isProteinInMinimalList(*it)
+                  << " "<< min_protein_probability<<std::endl;
+        //				if(prot_id_counter_[*it].size() >= min_pep_ids_)
+        if((protein_inference.getProteinProbability(*it) > min_protein_probability)
+           && (protein_inference.isProteinInMinimalList(*it)))
 					{
 #ifdef PIS_DEBUG
 						std::cout << *it << "\t"<<prot_id_counter_[*it].size()<<" hits \n";
+            std::cout << "Prob von "<< *it << " "<<protein_inference.getProteinProbability(*it)
+                      <<  " < "<<min_protein_probability << std::endl;
+            
 #endif
 						//						change ordering of corresponding features ->down
 						if(type_ == UPSHIFT || type_ == SPS) continue;
-						shiftDown_(features,preprocessed_db,*it);
-					}
-				else
-					{
-						if(type_ != DOWNSHIFT && type_ != DEX && type_ != SPS)
-							{
-								// change ordering of corresponding features ->up
 #ifdef PIS_DEBUG
-						std::cout << *it << "\t"<<prot_id_counter_[*it].size()<<" hits \n";
+            std::cout << "shift down "<<*it << "\t"<<prot_id_counter_[*it].size()<<" hits \n";
 #endif
-
-								shiftUp_(features,preprocessed_db,*it);
+            StopWatch t;
+            t.start();
+						shiftDown_(features,preprocessed_db,*it);
+            t.stop();
+            std::cout << "time for shifting down: "<<t.getCPUTime();
+					}
+        else
+          {
+            if(type_ != DOWNSHIFT && type_ != DEX && type_ != SPS)
+              {
+                // change ordering of corresponding features ->up
+#ifdef PIS_DEBUG
+                std::cout << *it << "\t"<<prot_id_counter_[*it].size()<<" hits \n";
+#endif
+                
+                if((protein_inference.getProteinProbability(*it) > min_protein_probability_for_change)
+                   &&  (protein_inference.isProteinInMinimalList(*it)))
+                  {
+#ifdef PIS_DEBUG
+                    std::cout << "shift up "<<*it << "\t"<<prot_id_counter_[*it].size()<<" hits \n";
+#endif
+                    StopWatch t;
+                    t.start();
+                    shiftUp_(features,preprocessed_db,*it);
+                    std::cout << "time for shifting up: "<<t.getCPUTime();            
+                  }
 							}
 					}
 			}
+    std::cout << "done: now go through "<<status_changed.size()<<" changed protein entries"<<std::endl;
 
 	}
 
@@ -252,8 +286,11 @@ namespace OpenMS
 #ifdef PIS_DEBUG
 		std::cout << "mapped ids"<<std::endl;
 #endif
+    PSProteinInference protein_inference;
+    protein_inference.setSolver(solver_);
+
 		// make the rescoring
-		rescore_(features,filtered_pep_ids,preprocessed_db);
+		rescore_(features,filtered_pep_ids,preprocessed_db,protein_inference);
 		
 	}
 	
@@ -270,9 +307,13 @@ namespace OpenMS
 		std::vector<DoubleReal>::const_iterator aa_vec_iter = masses.begin();
 		for(;aa_vec_iter != masses.end(); ++aa_vec_iter)
 			{
-				FeatureMap<>::Iterator f_iter = features.begin();
+        Feature ref;
+        ref.setMZ(*aa_vec_iter-1.);
+        // as features are sorted we can perform a binary search for nearest mz
+				FeatureMap<>::Iterator f_iter = lower_bound(features.begin(),features.end(),ref,Feature::MZLess()); //features.begin();//
 				for(;f_iter != features.end();++f_iter)
 					{
+            if(f_iter->getMZ() > *aa_vec_iter +10.) break;
 						if((DoubleReal) f_iter->getMetaValue("msms_score")>0
 							 && f_iter->getMetaValue("fragmented") == "false"
 							 && f_iter->getMetaValue("shifted") != "down"
@@ -338,9 +379,14 @@ namespace OpenMS
 		std::vector<DoubleReal>::const_iterator aa_vec_iter = masses.begin();
 		for(;aa_vec_iter != masses.end(); ++aa_vec_iter)
 			{
-				FeatureMap<>::Iterator f_iter = features.begin();
-				for(;f_iter != features.end();++f_iter)
+        Feature ref;
+        ref.setMZ(*aa_vec_iter-1.);
+        // as features are sorted we can perform a binary search for nearest mz
+        FeatureMap<>::Iterator f_iter = lower_bound(features.begin(),features.end(),ref,Feature::MZLess());
+        //FeatureMap<>::Iterator f_iter = features.begin();//lower_bound(features.begin(),features.end(),ref,Feature::MZLess());
+        for(;f_iter != features.end();++f_iter)
 					{
+            if(f_iter->getMZ() > *aa_vec_iter +10.) break;
 						if((DoubleReal) f_iter->getMetaValue("msms_score")>0
 							 && f_iter->getMetaValue("fragmented") == "false"
 							 && f_iter->getMetaValue("shifted") != "up"
@@ -463,6 +509,43 @@ namespace OpenMS
 					}
 
 			}
+    else if(pep_ids.size()>0 && pep_ids[0].getScoreType().hasSuffix("Posterior Error Probability"))
+      {
+        std::cout << "filter out peptides with prob < "<< prob_threshold<<std::endl;
+				for(UInt id_c = 0; id_c < pep_ids.size();++id_c)
+					{
+						std::vector<PeptideHit> tmp_hits;
+						// if only one hit exists and its score is high enough accept it
+						if(pep_ids[id_c].getHits().size() == 1 &&
+							 (1.-pep_ids[id_c].getHits()[0].getScore()) >= prob_threshold)
+							{
+								tmp_hits.push_back(pep_ids[id_c].getHits()[0]);
+							}
+						else if(pep_ids[id_c].getHits().size()>1) // else take highest scoring peptide hit,if score is high enough
+							{
+								UInt max_score_idx=0;
+								for(UInt hit_c=1; hit_c < pep_ids[id_c].getHits().size();++hit_c)
+									{
+										if((1.-pep_ids[id_c].getHits()[hit_c].getScore()) >
+											 (1.-pep_ids[id_c].getHits()[max_score_idx].getScore()))
+											{
+												max_score_idx = hit_c;
+											}
+									}
+								// check if highest scoring peptide hit is significant
+								if((1.-pep_ids[id_c].getHits()[max_score_idx].getScore()) >= prob_threshold)
+									{
+										tmp_hits.push_back(pep_ids[id_c].getHits()[max_score_idx]);
+									}
+							}
+						if(!tmp_hits.empty()) // if there were significant hits save them
+							{
+								PeptideIdentification tmp_id = pep_ids[id_c];
+								tmp_id.setHits(tmp_hits);
+								filtered_pep_ids.push_back(tmp_id);
+							}
+					}
+      }
 		else // based on the significance level stored in the peptide identification
 			{
 
@@ -552,20 +635,24 @@ namespace OpenMS
 		if(features.size() == 0)  return;
 		// check if feature map has required user_params-> else add them
 		checkForRequiredUserParams_(features);
-
+    
 		std::vector<PeptideIdentification> filtered_pep_ids = filterPeptideIds_(pep_ids);
-		
+    std::cout << "filtered peptide ids: "<<pep_ids.size() << " to "<< filtered_pep_ids.size() << std::endl;
 		// annotate map with ids
 		// TODO: wirklich mit deltas? oder lieber ueber convex hulls? Anm v. Chris: IDMapper benutzt CH's + Deltas wenn CH vorhanden sind
 		IDMapper mapper;
 		Param p = mapper.getParameters();
-		p.setValue("rt_tolerance", 0.2);
+		p.setValue("rt_tolerance", 20.);
 		p.setValue("mz_tolerance", 0.05);
 		p.setValue("mz_measure","Da");
     p.setValue("ignore_charge","true");
 		mapper.setParameters(p);
 		mapper.annotate(features,filtered_pep_ids,prot_ids,true);
-		
+    PSProteinInference protein_inference;
+    protein_inference.setSolver(solver_);
+
+    
+
 		// get first precursors
 		FeatureMap<> new_features;
 		getNextPrecursors(features,new_features,step_size);	
@@ -609,10 +696,12 @@ namespace OpenMS
 						if(pep_ids.size() > 0)
 							{
 								std::cout << " ids "	<< std::endl;
-								std::cout << pep_ids[0].getHits()[0].getSequence().toString()<<std::endl;
-								std::cout << pep_ids[0].getHits()[0].getScore() << " "
-													<< pep_ids[0].getSignificanceThreshold() << " "
-													<< pep_ids[0].getHits()[0].getMetaValue("Rank")<<std::endl;
+								std::cout << pep_ids[0].getHits()[0].getSequence().toString()<<"\t";
+								std::cout << "score: "<<pep_ids[0].getHits()[0].getScore() << " "
+                          << "score type: "<<pep_ids[0].getScoreType() << " "
+                          << " higher score better: "<<pep_ids[0].isHigherScoreBetter() << " "
+													<< " signific. thresh.: "<< pep_ids[0].getSignificanceThreshold() << " "
+													<< " rank: "<<pep_ids[0].getHits()[0].getMetaValue("Rank")<<std::endl;
 							}
 						else std::cout << std::endl;
 						if((DoubleReal)new_features[c].getMetaValue("init_msms_score")==0 && pep_ids.size()>0)		    
@@ -702,7 +791,8 @@ namespace OpenMS
 				if(curr_pep_ids.size() == 0)
 					{
 						// necessary for making the figures later
-						UInt num_prots = filterProtIds_(all_prot_ids);
+						UInt num_prots = protein_inference.findMinimalProteinList(all_pep_ids); //filterProtIds_(all_prot_ids);
+            protein_inference.calculateProteinProbabilities(all_pep_ids);
 						outf << iteration << "\t\t"  
 								 << num_prots << "\t\t" 
 								 << precursors << "\t\t"
@@ -713,13 +803,17 @@ namespace OpenMS
 						getNextPrecursors(features,new_features,step_size);	
 						continue;
 					}
+        
+ //				UInt num_prots = filterProtIds_(all_prot_ids);
+        UInt num_prots =  protein_inference.findMinimalProteinList(all_pep_ids);
+        protein_inference.calculateProteinProbabilities(all_pep_ids);
 
 
-				rescore_(features,curr_pep_ids,preprocessed_db);
+        features.sortByMZ();
+				rescore_(features,curr_pep_ids,preprocessed_db,protein_inference);
 		
 				
-				UInt num_prots = filterProtIds_(all_prot_ids);
-
+       
 #ifdef PIS_DEBUG
 				for(UInt p=0;p<curr_pep_ids.size();++p)
 					{

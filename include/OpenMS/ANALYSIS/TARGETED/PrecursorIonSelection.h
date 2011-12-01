@@ -38,7 +38,7 @@
 namespace OpenMS
 {
 	class PrecursorIonSelectionPreprocessing;
-
+  class PSProteinInference;
 	/**
 		 @brief This class implements different precursor ion selection strategies.
 
@@ -185,7 +185,7 @@ namespace OpenMS
 		void updateMembers_();
 
 		void rescore_(FeatureMap<>& features,std::vector<PeptideIdentification>& new_pep_ids,
-									PrecursorIonSelectionPreprocessing& preprocessed_db);
+									PrecursorIonSelectionPreprocessing& preprocessed_db,PSProteinInference& protein_inference);
 
 		/**
 		 *	@brief Adds user params, required for the use of IPS, to a feature map using default values.

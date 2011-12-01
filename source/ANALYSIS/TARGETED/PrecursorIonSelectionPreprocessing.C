@@ -98,7 +98,7 @@ namespace OpenMS
     return *this;
   }
 
-  void PrecursorIonSelectionPreprocessing::setFixedModifications_(StringList& modifications)
+  void PrecursorIonSelectionPreprocessing::setFixedModifications(StringList& modifications)
   {
     for(Size i = 0; i < modifications.size();++i)
     {

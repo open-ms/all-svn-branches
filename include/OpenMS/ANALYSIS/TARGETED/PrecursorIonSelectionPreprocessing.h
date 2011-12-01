@@ -115,7 +115,8 @@ namespace OpenMS
     
 
     DoubleReal getRTDTProbability(DoubleReal value);
-
+		void setFixedModifications(StringList& modifications);
+    
 		/// get the rt-weight for the proposed peptide and its measured rt
     //		DoubleReal getRTWeight(String prot_id, Size peptide_index,DoubleReal meas_rt);
 
@@ -126,7 +127,6 @@ namespace OpenMS
 		void savePreprocessedDBWithRT_(String db_path,String path);
 		/// loads the preprocessed db
 		void loadPreprocessedDB_(String path);
-		void setFixedModifications_(StringList& modifications);
 
     /// preprocess fasta identifier
     void filterTaxonomyIdentifier_(FASTAFile::FASTAEntry& entry);

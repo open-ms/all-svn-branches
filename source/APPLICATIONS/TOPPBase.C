@@ -125,15 +125,12 @@ namespace OpenMS
 		registerIntOption_("debug","<n>",0,"Sets the debug level",false, true);
 		registerIntOption_("threads", "<n>", 1, "Sets the number of threads allowed to be used by the TOPP tool", false);
 		registerStringOption_("write_ini","<file>","","Writes the default configuration file",false);
-    registerStringOption_("write_ctd","<out_dir>","","Writes the common tool description file(s) (Toolname(s).ctd) to <out_dir>",false);
+    registerStringOption_("write_ctd","<out_dir>","","Writes the common tool description file(s) (Toolname(s).ctd) to <out_dir>", false, true);
 		registerStringOption_("write_wsdl","<file>","","Writes the default WSDL file",false,true);
 		registerFlag_("no_progress","Disables progress logging to command line",true);
 		if (id_tag_support_)
 		{
-			registerStringOption_("id_pool","<file>",
-														"",
-														String("ID pool file to DocumentID's for all generated output files. Disabled by default. (Set to 'main' to use ") + String() + id_tagger_.getPoolFile() + ")"
-														,false);
+			registerStringOption_("id_pool","<file>", "", String("ID pool file to DocumentID's for all generated output files. Disabled by default. (Set to 'main' to use ") + String() + id_tagger_.getPoolFile() + ")", false);
 		}
 		registerFlag_("test","Enables the test mode (needed for internal use only)", true);
 		registerFlag_("-help","Shows options");
@@ -1715,9 +1712,10 @@ namespace OpenMS
 		{
 			// subsections (do not check content, but warn if not registered)
 			String subsection = getSubsection_(it.getName());
-			if (!subsection.empty() && subsections_TOPP_.find(subsection)==subsections_TOPP_.end())  // not found in TOPP subsections
+			if (!subsection.empty() && subsections_TOPP_.count(subsection) == 0) // not found in TOPP subsections
 			{
-				if (subsections_.find(subsection)==subsections_.end()) // not found in normal subsections
+				// for multi-level subsections, check only the first level:
+				if (subsections_.count(subsection.substr(0, subsection.find(':'))) == 0) // not found in normal subsections
 				{
 					if (!(location == "common::" && subsection==tool_name_) )
 					{

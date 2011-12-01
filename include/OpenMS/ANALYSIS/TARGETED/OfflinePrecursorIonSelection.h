@@ -192,10 +192,60 @@ namespace OpenMS
 							}
 					}
 #endif
+        if(vec.empty())
+					{
+						std::cout << "According to the convex hulls no mass traces found for this feature->estimate!"
+											<< features[f].getRT() << " "<<features[f].getMZ()<<" "<<features[f].getCharge()<<std::endl; 
+						// we estimate the convex hull
+					  typename MSExperiment<InputPeakType>::ConstIterator spec_iter = experiment.RTBegin(features[f].getRT());
+						if(spec_iter == experiment.end()) --spec_iter;
+						
+						DoubleReal dist1 = fabs(spec_iter->getRT() - features[f].getRT());
+						DoubleReal dist2 = std::numeric_limits<DoubleReal>::max();
+						DoubleReal dist3 = std::numeric_limits<DoubleReal>::max(); 
+						if((spec_iter+1) != experiment.end())
+							{
+								dist2 = fabs((spec_iter+1)->getRT() - features[f].getRT());
+							}
+						if(spec_iter != experiment.begin())
+							{
+								dist3 = fabs((spec_iter-1)->getRT() - features[f].getRT());
+							}
+						if(dist3 <= dist1 && dist3 <= dist2)
+							{
+								--spec_iter;
+							}
+						else if(dist2 <= dist3 && dist2 <= dist1)
+							{
+								++spec_iter;
+							}
+						std::pair<Size,Size> start;
+						std::pair<Size,Size> end;
+						start.first = distance(experiment.begin(),spec_iter);
+						end.first = start.first;
+
+						typename MSSpectrum<InputPeakType>::ConstIterator mz_iter = spec_iter->MZBegin(features[f].getMZ());
+						typename MSSpectrum<InputPeakType>::ConstIterator mz_end = mz_iter;
+						while(mz_iter != spec_iter->begin() && features[f].getMZ()- mz_iter->getMZ() < 0.1) --mz_iter;
+						start.second = distance(spec_iter->begin(),mz_iter);
+						std::cout << "Start: "<<experiment[start.first].getRT()<<" "<<experiment[start.first][start.second].getMZ();
+						Int charge = features[f].getCharge();
+						if(charge == 0) charge = 1;
+						while(mz_end != spec_iter->end() && mz_end->getMZ() - features[f].getMZ() < 3.0/(DoubleReal)charge)
+							{
+								//	std::cout << mz_end->getMZ() << " - "<<features[f].getMZ() << " <? "<<3.0/(DoubleReal)charge<<std::endl;
+								++mz_end;
+							}
+						end.second = distance(spec_iter->begin(),mz_end);
+						std::cout << "\tEnd: "<<experiment[end.first].getRT()<<" "<<experiment[end.first][end.second].getMZ()<<std::endl;;
+						vec.push_back(start);
+						vec.push_back(end);
+					}
+
 				indices.push_back(vec);
 			}
 		// eliminate nearby peaks
-                if(param_.getValue("exclude_overlapping_peaks")=="true") checkMassRanges_(indices,experiment);
+    if(param_.getValue("exclude_overlapping_peaks")=="true") checkMassRanges_(indices,experiment);
 	}
 
 

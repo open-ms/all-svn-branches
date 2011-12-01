@@ -37,6 +37,7 @@ namespace OpenMS
         centroid_rt_(),
         label_(),
         smoothed_intensities_(),
+        rough_fwhm_points_(),
         prev_counter_(),
         prev_denom_()
     {
@@ -52,6 +53,7 @@ namespace OpenMS
         centroid_rt_(mt.centroid_rt_),
         label_(mt.label_),
         smoothed_intensities_(mt.smoothed_intensities_),
+        rough_fwhm_points_(mt.rough_fwhm_points_),
         prev_counter_(mt.prev_counter_),
         prev_denom_(mt.prev_denom_)
     {
@@ -66,6 +68,7 @@ namespace OpenMS
         centroid_rt_ = rhs.centroid_rt_;
         label_ = rhs.label_;
         smoothed_intensities_ = rhs.smoothed_intensities_;
+        rough_fwhm_points_ = rhs.rough_fwhm_points_;
         prev_counter_ = rhs.prev_counter_;
         prev_denom_ = rhs.prev_denom_;
 
@@ -362,43 +365,58 @@ namespace OpenMS
         return hull;
     }
 
+    void MassTrace::updateWeightedMeanRT_()
+    {
+        DoubleReal trace_area(this->computePeakArea());
+
+        DoubleReal wmean_rt(0.0);
+
+        for (MassTrace::const_iterator l_it = trace_peaks_.begin(); l_it != trace_peaks_.end(); ++l_it)
+        {
+            wmean_rt += ((*l_it).getIntensity() * (*l_it).getRT())/trace_area;
+        }
+
+        centroid_rt_ = wmean_rt;
+    }
+
 
     void MassTrace::updateMedianRT_()
     {
-      if (trace_peaks_.size() == 0)
-      {
+        if (trace_peaks_.size() == 0)
+        {
+            return ;
+        }
+
+        if (trace_peaks_.size() == 1)
+        {
+            centroid_rt_ = (*(trace_peaks_.begin())).getRT();
+
+            return ;
+        }
+
+        // copy mz values to temp vec
+        std::vector<DoubleReal> temp_rt;
+
+        for (MassTrace::const_iterator l_it = trace_peaks_.begin(); l_it != trace_peaks_.end(); ++l_it)
+        {
+            temp_rt.push_back((*l_it).getRT());
+        }
+
+        std::sort(temp_rt.begin(), temp_rt.end());
+
+        Size temp_mz_size = temp_rt.size();
+
+        if ((temp_mz_size % 2) == 0)
+        {
+            centroid_rt_ = (temp_rt[std::floor(temp_mz_size/2.0) - 1] +  temp_rt[std::floor(temp_mz_size/2.0)])/2;
+        }
+        else
+        {
+            centroid_rt_ = temp_rt[std::floor(temp_mz_size/2.0)];
+        }
+
+
         return ;
-      }
-
-      if (trace_peaks_.size() == 1)
-      {
-        centroid_rt_ = (*(trace_peaks_.begin())).getRT();
-
-        return ;
-      }
-
-      // copy mz values to temp vec
-      std::vector<DoubleReal> temp_rt;
-
-      for (MassTrace::const_iterator l_it = trace_peaks_.begin(); l_it != trace_peaks_.end(); ++l_it)
-      {
-        temp_rt.push_back((*l_it).getRT());
-      }
-
-      std::sort(temp_rt.begin(), temp_rt.end());
-
-      Size temp_mz_size = temp_rt.size();
-
-      if ((temp_mz_size % 2) == 0)
-      {
-        centroid_rt_ = (temp_rt[std::floor(temp_mz_size/2.0) - 1] +  temp_rt[std::floor(temp_mz_size/2.0)])/2;
-      }
-      else
-      {
-        centroid_rt_ = temp_rt[std::floor(temp_mz_size/2.0)];
-      }
-
-      return ;
     }
 
 

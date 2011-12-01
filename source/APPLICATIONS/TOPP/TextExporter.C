@@ -300,6 +300,7 @@ namespace OpenMS
 	void writePeptideHeader(SVOutStream& out, const String& what = "PEPTIDE",
 													bool incl_pred_rt = false, bool incl_pred_pt = false,
                           bool incl_XTandem_score = false, bool incl_Mascot_score = false,
+                          bool incl_EValue = false,
                           bool incl_target_decoy = false,
 													bool incl_first_dim = false)
 	{
@@ -312,6 +313,7 @@ namespace OpenMS
     if (incl_pred_pt) out << "predicted_pt";
     if (incl_XTandem_score) out << "XTandem_score";
     if (incl_Mascot_score) out << "Mascot_score";
+    if (incl_EValue) out << "EValue";
     if (incl_target_decoy) out << "target_decoy";
 		if (incl_first_dim) out << "rt_first_dim" << "predicted_rt_first_dim";
 		out << endl;
@@ -331,6 +333,7 @@ namespace OpenMS
 											const String& what = "PEPTIDE", bool incl_pred_rt = false,
                       bool incl_pred_pt = false,
                       bool incl_XTandem_score = false, bool incl_Mascot_score = false,
+                      bool incl_EValue = false,
                       bool incl_target_decoy = false,
 											bool incl_first_dim = false)
 	{
@@ -386,6 +389,18 @@ namespace OpenMS
 					out << hit_it->getMetaValue("Mascot_score");
 				}
 				else out << "-1";
+			}
+      if (incl_EValue)
+			{
+				if (hit_it->metaValueExists("EValue"))
+				{
+					out << hit_it->getMetaValue("EValue");
+				}
+        else if (hit_it->metaValueExists("E-Value"))
+				{
+					out << hit_it->getMetaValue("E-Value");
+				}
+        else out << "-1";
 			}
       if (incl_target_decoy)
 			{
@@ -1082,7 +1097,7 @@ namespace OpenMS
 					}
 					if (!proteins_only)
 					{
-						writePeptideHeader(output, what, true, true,true,true,true,first_dim_rt);
+						writePeptideHeader(output, what, true,true, true,true,true,true,first_dim_rt);
 					}
 
           for (vector<ProteinIdentification>::const_iterator it =
@@ -1102,7 +1117,7 @@ namespace OpenMS
               {
                 if (pit->getIdentifier() == actual_id)
                 {
-									writePeptideId(output, *pit, what, true, true,true,true,true,first_dim_rt);
+									writePeptideId(output, *pit, what, true,true, true,true,true,true,first_dim_rt);
                 }
               }
             }

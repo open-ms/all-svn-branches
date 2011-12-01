@@ -102,6 +102,11 @@ namespace OpenMS
 			correctly_assigned_fit_param_.sigma = incorrectly_assigned_fit_param_.sigma;
 			correctly_assigned_fit_param_.A = 1.0	/ sqrt(2*3.14159*pow(correctly_assigned_fit_param_.sigma,2));		
 
+      std::cout << "before fitting: mu"<< correctly_assigned_fit_param_.x0 << " and "
+                << incorrectly_assigned_fit_param_.x0 << "; sigma " 
+                << correctly_assigned_fit_param_.sigma << " and "
+                << incorrectly_assigned_fit_param_.sigma << std::endl;
+      
 			DoubleReal maxlike(0);
 			vector<DoubleReal> incorrect_density;
 			vector<DoubleReal> correct_density;
@@ -186,7 +191,13 @@ namespace OpenMS
 			}while(!stop_em_init);
 			//-------------------------------------------------------------
 			// Finished fitting
-			//-------------------------------------------------------------			
+			//-------------------------------------------------------------
+
+      std::cout << "after fitting: mu"<< correctly_assigned_fit_param_.x0 << " and "
+                << incorrectly_assigned_fit_param_.x0 << "; sigma " 
+                << correctly_assigned_fit_param_.sigma << " and "
+                << incorrectly_assigned_fit_param_.sigma << std::endl;
+      
 			//!!Workaround:
 			if(param_.getValue("incorrectly_assigned") == "Gumbel")
 			{

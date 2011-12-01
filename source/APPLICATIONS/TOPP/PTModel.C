@@ -452,7 +452,12 @@ class TOPPPTModel
 				random_shuffle(training_peptides.begin(), training_peptides.end());
 				training_peptides.resize(max_positive_count, "");
 				training_labels.resize(max_positive_count, 1.);
-			}	
+			}
+      for(Size i = 0; i < training_peptides.size();++i)
+        {
+          writeDebug_(training_peptides[i],1);
+        }
+      
 			debug_string = String(training_peptides.size()) + " positive sequences for training";				
 			writeDebug_(debug_string, 1);							
 
@@ -499,7 +504,12 @@ class TOPPPTModel
 				random_shuffle(temp_training_peptides.begin(), temp_training_peptides.end());
 				temp_training_peptides.resize(max_negative_count, "");
 				training_labels.resize(training_peptides.size() + max_negative_count, -1.);
-			}	
+			}
+      for(Size i = 0; i < temp_training_peptides.size();++i)
+        {
+          writeDebug_(temp_training_peptides[i],1);
+        }
+
 			training_peptides.insert(training_peptides.end(), 
 															 temp_training_peptides.begin(), 
 															 temp_training_peptides.end());

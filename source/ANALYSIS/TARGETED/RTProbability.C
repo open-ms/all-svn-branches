@@ -116,7 +116,7 @@ namespace OpenMS
   }
 
 
-  void RTProbability::learnGaussian(FeatureMap<>& features,String rt_model_path,DoubleReal min_score)
+  void RTProbability::learnGaussian(FeatureMap<>& features,String rt_model_path,bool higherScoreBetter,DoubleReal min_score)
   {
     Size number_of_bins(param_.getValue("number_of_bins"));
     std::cout << number_of_bins <<" bins, min_score "<< min_score<<std::endl;
@@ -127,22 +127,31 @@ namespace OpenMS
     for(Size f = 0; f < features.size();++f)
       {
         std::vector<PeptideIdentification> & pep_ids = features[f].getPeptideIdentifications();
-        DoubleReal max_score = 0.;
+        DoubleReal max_score = higherScoreBetter ? 0. : 1.;
         AASequence max_seq = "";
         for(Size pi = 0; pi < pep_ids.size(); ++pi)
           {
+            if(!higherScoreBetter && pep_ids[pi].isHigherScoreBetter())
+              {
+                std::cout << "Attention: Different id score types mixed up!"<<std::endl;
+                break;
+              }
             for(Size ph = 0; ph < pep_ids[pi].getHits().size();++ph)
               {
-                //      std::cout << pep_ids[pi].getHits()[ph].getScore() << " ";
-                if(pep_ids[pi].getHits()[ph].getScore() > max_score)
+                //  std::cout << pep_ids[pi].getHits()[ph].getScore() << "\t";
+                if((higherScoreBetter && pep_ids[pi].getHits()[ph].getScore() > max_score)||
+                   (!higherScoreBetter && pep_ids[pi].getHits()[ph].getScore() < max_score))
                   {
+                    // std::cout << pep_ids[pi].getHits()[ph].getScore() << "\t"
+                    //           << pep_ids[pi].getHits()[ph].getSequence() << "\n";
                     max_score = pep_ids[pi].getHits()[ph].getScore();
                     max_seq = pep_ids[pi].getHits()[ph].getSequence();
                   }
               }
           }
         //     std::cout << "pep_ids.size() "<<pep_ids.size()<<"max_score "<< max_score << std::endl;
-        if(max_seq != "" && max_score > min_score)
+        if(max_seq != "" &&
+           ( (higherScoreBetter && (max_score > min_score)) || (!higherScoreBetter && (max_score < min_score)) ))
           {
             peptide_sequences.push_back(max_seq);
             DoubleReal rt_begin = features[f].getConvexHull().getBoundingBox().minPosition()[0];

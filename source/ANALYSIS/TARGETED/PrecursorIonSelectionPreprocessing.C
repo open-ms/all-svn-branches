@@ -1148,13 +1148,14 @@ namespace OpenMS
 
   }
 
-  void PrecursorIonSelectionPreprocessing::learnRTProbabilities(FeatureMap<>& features,String rt_model_path,DoubleReal min_score,bool use_detectability)
+  void PrecursorIonSelectionPreprocessing::learnRTProbabilities(FeatureMap<>& features,String rt_model_path,DoubleReal min_score,bool higherScoreBetter,
+                                                                bool use_detectability)
 	{
     Param param(param_.copy("rt_weighting:",true));
     std::cout << param.getValue("number_of_bins")<<std::endl;
     std::cout << param.getValue("rt_settings:min_rt") << " "<<param.getValue("rt_settings:max_rt") << std::endl;
 		rt_prob_.setParameters(param);
-		rt_prob_.learnGaussian(features,rt_model_path,min_score);
+		rt_prob_.learnGaussian(features,rt_model_path,higherScoreBetter,min_score);
     transformRTDTProbabilitiesOnIds_(features,use_detectability);
 	}
 

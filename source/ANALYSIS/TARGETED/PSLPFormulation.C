@@ -451,7 +451,7 @@ void PSLPFormulation::solveILP(std::vector<int>& solution_indices,Int /*iteratio
   for (Int column = 0; column < model_->getNumberOfColumns(); ++column)
   {
     double value = model_->getColumnValue(column);
-    std::cout << value << " "<< model_->getColumnType(column) << std::endl;
+    //std::cout << value << " "<< model_->getColumnType(column) << std::endl;
     if ((fabs(value) > 0.5 && model_->getColumnType(column) == LPWrapper::BINARY) ||
       (fabs(value) > 0.5 && model_->getColumnType(column) == LPWrapper::INTEGER))
     {

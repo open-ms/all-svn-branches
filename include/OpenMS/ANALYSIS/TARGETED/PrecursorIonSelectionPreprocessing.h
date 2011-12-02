@@ -111,7 +111,8 @@ namespace OpenMS
     DoubleReal getRTProbability(String prot_id, Size peptide_index,Feature& feature);
     DoubleReal getRTProbability(DoubleReal pred_rt,Feature& feature);
     
-		void learnRTProbabilities(FeatureMap<>& features,String rt_model_path,DoubleReal min_score=0.5,bool use_detectability=true);
+		void learnRTProbabilities(FeatureMap<>& features,String rt_model_path,DoubleReal min_score=0.5,bool higherScoreBetter=true,
+                              bool use_detectability=true);
     
 
     DoubleReal getRTDTProbability(DoubleReal value);

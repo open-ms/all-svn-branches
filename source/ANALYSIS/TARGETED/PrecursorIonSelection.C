@@ -889,14 +889,25 @@ namespace OpenMS
                                                       PrecursorIonSelectionPreprocessing& preprocessed_db,
                                                       String output_path,String rt_model_path)
 	{
+    if(pep_ids.empty())
+      {
+        std::cout << "No peptide ids given."<<std::endl;
+        return;
+      }
 		std::cout << pep_ids.size() << " ids before filtering\n";
 		std::vector<PeptideIdentification> filtered_pep_ids = filterPeptideIds_(pep_ids);
 		std::cout << filtered_pep_ids.size() << " ids \n";
-		if(param_.getValue("Preprocessing:precursor_mass_tolerance_unit") != "ppm")
+    if(filtered_pep_ids.empty())
+      {
+        std::cout << "No peptide ids after filtering."<<std::endl;
+        return;
+      }
+    if(param_.getValue("Preprocessing:precursor_mass_tolerance_unit") != "ppm")
 			{
 				std::cout << "Error: use ppm as precursor_mass_tolerance_unit!"<<std::endl;
 				return;
 			}
+    bool higherScoreBetter = filtered_pep_ids[0].isHigherScoreBetter();
     UInt step_size(param_.getValue("step_size"));
     UInt rt_bin_capacity(param_.getValue("rt_bin_capacity"));
 		DoubleReal protein_id_threshold = param_.getValue("MIPFormulation:thresholds:min_protein_id_probability");
@@ -924,7 +935,7 @@ namespace OpenMS
     
 		if(rt_model_path != "")
 			{
-        preprocessed_db.learnRTProbabilities(features,rt_model_path,0.8,use_detectability);
+        preprocessed_db.learnRTProbabilities(features,rt_model_path,0.8,higherScoreBetter,use_detectability);
 				//preprocessed_db.setGaussianParameters(5.,-2.);
 			}
 		else

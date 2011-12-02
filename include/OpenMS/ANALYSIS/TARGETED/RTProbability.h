@@ -57,7 +57,7 @@ namespace OpenMS
     /// assignment operator
     RTProbability& operator = (const RTProbability& rhs);
         
-    void learnGaussian(FeatureMap<>& features,String rt_model_path,DoubleReal min_score=0.5);
+    void learnGaussian(FeatureMap<>& features,String rt_model_path,bool higherScoreBetter,DoubleReal min_score=0.5);
     
     DoubleReal getRTProbability(DoubleReal min_obs_rt,DoubleReal max_obs_rt, DoubleReal pred_rt);
 		void setGaussianParameters(DoubleReal mu, DoubleReal sigma);

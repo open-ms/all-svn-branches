@@ -180,10 +180,10 @@ namespace OpenMS
           {
             //            std::cout << accessions[a] << " "<< pep_prot_map[accessions[a]].size()<<std::endl;
             bool higher_better = pep_prot_map[accessions_[a]][p].isHigherScoreBetter();
-            std::cout << higher_better << " "<<(pep_prot_map[accessions_[a]][p].getHits()[0].getScore()) << " "<<probabilities_[a]<<"  -> ";
+            //std::cout << higher_better << " "<<(pep_prot_map[accessions_[a]][p].getHits()[0].getScore()) << " "<<probabilities_[a]<<"  -> ";
             if(higher_better) probabilities_[a] *= (1.-pep_prot_map[accessions_[a]][p].getHits()[0].getScore());
             else probabilities_[a] *= (pep_prot_map[accessions_[a]][p].getHits()[0].getScore());
-            std::cout << probabilities_[a]<<std::endl;
+            //std::cout << probabilities_[a]<<std::endl;
           }
       }
 

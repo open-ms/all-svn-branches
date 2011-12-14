@@ -1005,27 +1005,35 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
          ++pattern_it)
     {
       SILACPattern &pattern = *pattern_it->second;
-
-      DoubleReal intensity0 = pattern.intensities[0][0];
-
-      global_mz += intensity0 * pattern.mz;
-      global_intensity0 += intensity0;
-
-      for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = pattern.intensities.begin();
-           shift_inten_it != pattern.intensities.end();
-           ++shift_inten_it)
+      
+      for (std::vector<SILACPoint>::const_iterator point_it = pattern.points.begin();
+           point_it != pattern.points.end();
+           ++point_it)
       {
-        for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
-             peak_inten_it != shift_inten_it->end();
-             ++peak_inten_it)
+        const SILACPoint &point = *point_it;
+        
+        DoubleReal intensity0 = point.intensities[0][0];
+        
+        global_mz += intensity0 * point.mz;
+        global_intensity0 += intensity0;
+        
+        for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = point.intensities.begin();
+             shift_inten_it != point.intensities.end();
+             ++shift_inten_it)
         {
-          DoubleReal intensity = *peak_inten_it;
-
-          // Add to RT value and global intensity
-          global_rt += intensity * pattern.rt;
-          global_intensity += intensity;
+          for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
+               peak_inten_it != shift_inten_it->end();
+               ++peak_inten_it)
+          {
+            DoubleReal intensity = *peak_inten_it;
+            
+            // Add to RT value and global intensity
+            global_rt += intensity * point.rt;
+            global_intensity += intensity;
+          }
         }
       }
+      
     }
 
     // Calculate global RT and MZ value

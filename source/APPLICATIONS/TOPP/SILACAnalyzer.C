@@ -879,21 +879,50 @@ class TOPPSILACAnalyzer
 private:
   PeakWidthEstimator::Result estimatePeakWidth(const MSExperiment<Peak1D> &exp);
 
+  /**
+   * @brief Generate ConsensusMap from clustering result
+   */
   void generateClusterConsensusByCluster(ConsensusMap &, const Clustering &) const;
+
+  /**
+   * @brief Generate ConsensusMap from clustering result, one consensus per pattern
+   */
   void generateClusterConsensusByPattern(ConsensusMap &, const Clustering &) const;
+
+  /**
+   * @brief Generate ConsensusMap from filter result
+   */
   void generateFilterConsensusByPattern(ConsensusMap &, const std::vector<SILACPattern> &) const;
+
+  /**
+   * @brief Generate a consensus entry from a pattern
+   */
   ConsensusFeature generateSingleConsensusByPattern(const SILACPattern &) const;
+
+  /**
+   * @brief Generate FeatureMap from clustering result
+   */
   void generateClusterFeatureByCluster(FeatureMap<> &, const Clustering &) const;
+
+  /**
+   * @brief Read filter result from ConsensusMap
+   */
   void readFilterConsensusByPattern(ConsensusMap &);
 
   static const String &selectColor(UInt nr);
  
+  /**
+   * @brief Read consensusXML from file to ConsensusMap
+   */
   void readConsensus(const String &filename, ConsensusMap &in) const
   {
     ConsensusXMLFile c_file;
     c_file.load(filename, in);
   }
 
+  /**
+   * @brief Write consensusXML from ConsensusMap to file
+   */
   void writeConsensus(const String &filename, ConsensusMap &out) const
   {
     out.sortByPosition();
@@ -904,6 +933,9 @@ private:
     c_file.store(filename, out);
   }
 
+  /**
+   * @brief Write featureXML from FeatureMap to file
+   */
   void writeFeatures(const String &filename, FeatureMap<> &out) const
   {
     out.sortByPosition();
@@ -995,23 +1027,26 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
     DoubleReal global_rt = 0;
     // MZ value as weighted MZ position of monoisotopic peaks
     DoubleReal global_mz = 0;
-    // Total intensity
+    // Total intensity of all peaks
     DoubleReal global_intensity = 0;
     // Total intensity of monoisotopic peak
     DoubleReal global_intensity0 = 0;
 
+    // Iterate over pattern per cluster
     for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
          pattern_it != cluster_it->second.end();
          ++pattern_it)
     {
-      SILACPattern &pattern = *pattern_it->second;
+      const SILACPattern &pattern = *pattern_it->second;
       
+      // Iterate over points per pattern
       for (std::vector<SILACPoint>::const_iterator point_it = pattern.points.begin();
            point_it != pattern.points.end();
            ++point_it)
       {
         const SILACPoint &point = *point_it;
         
+        // Intensity of monoisotopic peak
         DoubleReal intensity0 = point.intensities[0][0];
         
         global_mz += intensity0 * point.mz;
@@ -1025,6 +1060,7 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
                peak_inten_it != shift_inten_it->end();
                ++peak_inten_it)
           {
+            // Intensity of current peak
             DoubleReal intensity = *peak_inten_it;
             
             // Add to RT value and global intensity
@@ -1036,7 +1072,7 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
       
     }
 
-    // Calculate global RT and MZ value
+    // Calculate weighted RT and MZ value
     global_rt /= global_intensity;
     global_mz /= global_intensity0;
 

@@ -1039,6 +1039,30 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
     {
       const SILACPattern &pattern = *pattern_it->second;
       
+#if 1
+      // Intensity of monoisotopic peak
+      DoubleReal intensity0 = pattern.intensities[0][0];
+      
+      global_mz += intensity0 * pattern.mz;
+      global_intensity0 += intensity0;
+      
+      for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = pattern.intensities.begin();
+           shift_inten_it != pattern.intensities.end();
+           ++shift_inten_it)
+      {
+        for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
+             peak_inten_it != shift_inten_it->end();
+             ++peak_inten_it)
+        {
+          // Intensity of current peak
+          DoubleReal intensity = *peak_inten_it;
+          
+          // Add to RT value and global intensity
+          global_rt += intensity * pattern.rt;
+          global_intensity += intensity;
+        }
+      }
+#else
       // Iterate over points per pattern
       for (std::vector<SILACPoint>::const_iterator point_it = pattern.points.begin();
            point_it != pattern.points.end();
@@ -1069,7 +1093,7 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
           }
         }
       }
-      
+#endif
     }
 
     // Calculate weighted RT and MZ value

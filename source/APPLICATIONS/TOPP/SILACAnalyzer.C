@@ -824,6 +824,41 @@ class TOPPSILACAnalyzer
     // write output
     //--------------------------------------------------------------
 
+    if (out_debug != "")
+    {
+      std::ofstream out((out_debug + ".clusters.csv").c_str());
+
+      out
+        << std::fixed << std::setprecision(8)
+        << "ID,RT,MZ_PEAK,CHARGE";
+      for (UInt i = 1; i <= massShifts[0].size(); ++i)
+      {
+        out << ",DELTA_MASS_" << i + 1;
+      }
+      for (UInt i = 0; i <= massShifts[0].size(); ++i)
+      {
+        for (UInt j = 1; j <= isotopes_per_peptide_max; ++j)
+        {
+          out << ",INT_PEAK_" << i + 1 << '_' << j;
+        }
+      }
+      out << ",MZ_RAW";
+      for (UInt i = 0; i <= massShifts[0].size(); ++i)
+      {
+        for (UInt j = 1; j <= isotopes_per_peptide_max; ++j)
+        {
+          out << ",INT_RAW_" << i + 1 << '_' << j;
+        }
+      }
+      out << '\n';
+
+      UInt cluster_id = 0;
+      for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
+      {
+        generateClusterDebug(out, **it, cluster_id);
+      }
+    }
+
     if (out != "")
     {
       ConsensusMap map;
@@ -889,6 +924,11 @@ private:
    * @brief Generate ConsensusMap from clustering result, one consensus per pattern
    */
   void generateClusterConsensusByPattern(ConsensusMap &, const Clustering &, UInt &cluster_id) const;
+
+  /**
+   * @brief Generate debug output from clustering result
+   */
+  void generateClusterDebug(std::ostream &out, const Clustering &clustering, UInt &cluster_id) const;
 
   /**
    * @brief Generate ConsensusMap from filter result
@@ -1189,6 +1229,89 @@ void TOPPSILACAnalyzer::generateClusterConsensusByPattern(ConsensusMap &out, con
       out.getFileDescriptions()[0].size++;
 
       out.push_back(consensus);
+    }
+  }
+}
+
+void TOPPSILACAnalyzer::generateClusterDebug(std::ostream &out, const Clustering &clustering, UInt &cluster_id) const
+{
+  for (Clustering::Grid::const_iterator cluster_it = clustering.grid.begin();
+       cluster_it != clustering.grid.end();
+       ++cluster_it, ++cluster_id)
+  {
+    for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
+         pattern_it != cluster_it->second.end();
+         ++pattern_it)
+    {
+      const SILACPattern &pattern = *pattern_it->second;
+
+      std::ostringstream preamble;
+
+      preamble
+        << std::fixed << std::setprecision(8)
+        << cluster_id << ','
+        << pattern.rt << ','
+        << pattern.mz << ','
+        << pattern.charge << ',';
+
+      for (std::vector<DoubleReal>::const_iterator shift_it = pattern.mass_shifts.begin();
+           shift_it != pattern.mass_shifts.end();
+           ++shift_it)
+      {
+        preamble
+          << *++shift_it * pattern.charge << ',';
+      }
+
+      for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = pattern.intensities.begin();
+           shift_inten_it != pattern.intensities.end();
+           ++shift_inten_it)
+      {
+        UInt peak_inten_id = 0;
+        for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
+             peak_inten_it != shift_inten_it->end();
+             ++peak_inten_it, ++peak_inten_id)
+        {
+          preamble
+            << *peak_inten_it << ',';
+        }
+        for (; peak_inten_id < isotopes_per_peptide_max; ++peak_inten_id)
+        {
+          preamble
+            << "NA,";
+        }
+      }
+
+      for (std::vector<SILACPoint>::const_iterator point_it = pattern.points.begin();
+           point_it != pattern.points.end();
+           ++point_it)
+      {
+        const SILACPoint &point = *point_it;
+
+        out
+          << preamble.str()
+          << point.mz;
+        
+        for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = point.intensities.begin();
+             shift_inten_it != point.intensities.end();
+             ++shift_inten_it)
+        {
+          UInt peak_inten_id = 0;
+          for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
+               peak_inten_it != shift_inten_it->end();
+               ++peak_inten_it, ++peak_inten_id)
+          {
+            out << ','
+              << *peak_inten_it;
+          }
+          for (; peak_inten_id < isotopes_per_peptide_max; ++peak_inten_id)
+          {
+            out
+              << ",NA";
+          }
+        }
+
+        out << '\n';
+      }
     }
   }
 }

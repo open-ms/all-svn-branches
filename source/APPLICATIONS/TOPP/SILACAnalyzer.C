@@ -850,7 +850,8 @@ class TOPPSILACAnalyzer
       ConsensusMap map;
       for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
       {
-        generateClusterConsensusByPattern(map, **it);
+        UInt cluster_id = 0;
+        generateClusterConsensusByPattern(map, **it, cluster_id);
       }
 
       ConsensusMap::FileDescription &desc = map.getFileDescriptions()[0];
@@ -887,7 +888,7 @@ private:
   /**
    * @brief Generate ConsensusMap from clustering result, one consensus per pattern
    */
-  void generateClusterConsensusByPattern(ConsensusMap &, const Clustering &) const;
+  void generateClusterConsensusByPattern(ConsensusMap &, const Clustering &, UInt &cluster_id) const;
 
   /**
    * @brief Generate ConsensusMap from filter result
@@ -1174,10 +1175,8 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
   }
 }
 
-void TOPPSILACAnalyzer::generateClusterConsensusByPattern(ConsensusMap &out, const Clustering &clustering) const
+void TOPPSILACAnalyzer::generateClusterConsensusByPattern(ConsensusMap &out, const Clustering &clustering, UInt &cluster_id) const
 {
-  UInt cluster_id = 0;
-
   for (Clustering::Grid::const_iterator cluster_it = clustering.grid.begin(); cluster_it != clustering.grid.end(); ++cluster_it, ++cluster_id)
   {
     for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin(); pattern_it != cluster_it->second.end(); ++pattern_it)

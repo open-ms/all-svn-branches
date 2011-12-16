@@ -163,11 +163,11 @@ class TOPPSILACAnalyzer
 
     // section "sample"
     String selected_labels;
-    Int charge_min;
-    Int charge_max;
+    UInt charge_min;
+    UInt charge_max;
     Int missed_cleavages;
-    Int isotopes_per_peptide_min;
-    Int isotopes_per_peptide_max;
+    UInt isotopes_per_peptide_min;
+    UInt isotopes_per_peptide_max;
 
     // section "algorithm"
     DoubleReal rt_threshold;
@@ -389,8 +389,8 @@ class TOPPSILACAnalyzer
     String charge_string = getParam_().getValue("sample:charge");
     DoubleReal charge_min_temp, charge_max_temp;
     parseRange_(charge_string, charge_min_temp, charge_max_temp);
-    charge_min = (Int)charge_min_temp;
-    charge_max = (Int)charge_max_temp;
+    charge_min = charge_min_temp;
+    charge_max = charge_max_temp;
 
     // check if charge_min is smaller than charge max, if not swap
     if (charge_min > charge_max)
@@ -400,8 +400,8 @@ class TOPPSILACAnalyzer
     String isotopes_per_peptide_string = getParam_().getValue("sample:peaks_per_peptide");
     DoubleReal isotopes_per_peptide_min_temp, isotopes_per_peptide_max_temp;
     parseRange_(isotopes_per_peptide_string, isotopes_per_peptide_min_temp, isotopes_per_peptide_max_temp);
-    isotopes_per_peptide_min = (Int)isotopes_per_peptide_min_temp;
-    isotopes_per_peptide_max = (Int)isotopes_per_peptide_max_temp;
+    isotopes_per_peptide_min = isotopes_per_peptide_min_temp;
+    isotopes_per_peptide_max = isotopes_per_peptide_max_temp;
 
     //check if isotopes_per_peptide_min is smaller than isotopes_per_peptide_max, if not swap
     if (isotopes_per_peptide_min > isotopes_per_peptide_max)
@@ -571,10 +571,10 @@ class TOPPSILACAnalyzer
 
     // create filters for all numbers of isotopes per peptide, charge states and mass shifts
     // iterate over all number for peaks per peptide (from max to min)
-    for (Int isotopes_per_peptide = isotopes_per_peptide_max; isotopes_per_peptide >= isotopes_per_peptide_min; isotopes_per_peptide--)
+    for (UInt isotopes_per_peptide = isotopes_per_peptide_max; isotopes_per_peptide >= isotopes_per_peptide_min; isotopes_per_peptide--)
     {
       // iterate over all charge states (from max to min)
-      for (Int charge = charge_max; charge >= charge_min; charge--)
+      for (UInt charge = charge_max; charge >= charge_min; charge--)
       {
         // iterate over all mass shifts
         for (UInt i = 0; i < massShifts.size(); i++)

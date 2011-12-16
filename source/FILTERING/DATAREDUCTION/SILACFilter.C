@@ -480,6 +480,7 @@ namespace OpenMS
     SILACPoint newElement;    // Raw data point at this particular RT and m/z passed all filters. Store it for further clustering.
     newElement.rt = s.getRT();
     newElement.mz = mz;
+    newElement.intensities.insert(newElement.intensities.begin(), exact_intensities_.begin(), exact_intensities_.end());
     pattern.points.push_back(newElement);
 
     debug_peak.setIntensity(10);

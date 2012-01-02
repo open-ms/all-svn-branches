@@ -146,7 +146,7 @@ namespace OpenMS
     void simulateRun(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,
 										 std::vector<ProteinIdentification>& prot_ids,
 										 PrecursorIonSelectionPreprocessing& preprocessed_db,
-										 String path, MSExperiment<>& experiment,String rt_model_path="");
+										 String path, MSExperiment<>& experiment,String rt_model_path="",String precursor_path="");
 
     void setLPSolver(LPWrapper::SOLVER solver)
     {
@@ -171,11 +171,11 @@ namespace OpenMS
                                  std::vector<PeptideIdentification>& pep_ids,
                                  std::vector<ProteinIdentification>& prot_ids,
                                  PrecursorIonSelectionPreprocessing& preprocessed_db,
-                                 String output_path,String rt_model_path="");
+                                 String output_path,String rt_model_path="",String precursor_path="");
 
     void simulateRun_(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,
                       std::vector<ProteinIdentification>& prot_ids,
-                      PrecursorIonSelectionPreprocessing& preprocessed_db,String path);
+                      PrecursorIonSelectionPreprocessing& preprocessed_db,String path,String precursor_path="");
     
 		void shiftDown_(FeatureMap<>& features,PrecursorIonSelectionPreprocessing& preprocessed_db,String protein_acc);
 
@@ -208,7 +208,9 @@ namespace OpenMS
     void getNextPrecursors_(std::vector<Int>& solution_indices,std::vector<PSLPFormulation::IndexTriple>& variable_indices,
 														std::set<Int>& measured_variables,FeatureMap<>& features,FeatureMap<>& new_features,
                             UInt step_size,PSLPFormulation& ilp);
-		
+    
+    void convertPeptideIdScores_(std::vector<PeptideIdentification>& pep_ids);
+    
 		/// minimal number of peptides identified for a protein to be declared identified
 		UInt min_pep_ids_;
     /// maximal score in the FeatureMap

@@ -629,7 +629,7 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
                       if(prot_inference.getProteinProbability(accs[prot]) >= min_prot_coverage )
                         {
                           new_protein_accs.push_back(accs[prot]);
-                          updateObjFunction_(accs[prot],features,preprocessed_db,variable_indices);
+                          if(DoubleReal(param_.getValue("combined_ilp:k3"))>0.000001 ) updateObjFunction_(accs[prot],features,preprocessed_db,variable_indices);
                         }
 											protein_accs.push_back(accs[prot]);
 											// insert protein to ILP

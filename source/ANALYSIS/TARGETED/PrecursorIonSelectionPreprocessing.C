@@ -1161,31 +1161,19 @@ namespace OpenMS
 
   void PrecursorIonSelectionPreprocessing::transformRTDTProbabilitiesOnIds_(FeatureMap<>& features,bool use_detectability)
   {
-    //     DoubleReal mz_tol = param_.getValue("precursor_mass_tolerance");
-    //     bool use_ppm = (param_.getValue("precursor_mass_tolerance_unit") == "ppm") ? true : false;
-    std::cout << "get values"<<std::endl;
-    std::cout << rt_prob_.getGaussSigma()<<" "<<rt_prob_.getGaussMu()<<std::endl;
-
-    DoubleReal max(0.);
-    min_rt_dt_ = std::numeric_limits<DoubleReal>::max();
-
-    Size num_values = 0;
-    // first match preprocessing onto feature map and calculate all rt*dt-values
+    rt_dt_histogramm_.clear();
     for(Size f = 0; f < features.size();++f)
       {
-        //        std::cout << "feature "<<f<<" "<<num_values<<std::endl;
         if(features[f].getPeptideIdentifications().empty()) continue;
-//         DoubleReal mz = features[f].getMZ();
-         DoubleReal rt = features[f].getRT();
-
+        DoubleReal rt = features[f].getRT();
+        
         for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
           {
             for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
               {
-                DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);
                 if(features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions().empty()) continue;
                 String acc = features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions()[0];
-                
+                DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);                
                 std::map<String,std::vector<DoubleReal> >::const_iterator masses_it = prot_masses_.find(acc);
                 if(masses_it==prot_masses_.end()) continue;
                 for(Size i = 0; i < masses_it->second.size();++i)
@@ -1194,163 +1182,231 @@ namespace OpenMS
                       {
                         std::cout << masses_it->second[i] <<" "<<pmz << " "<<features[f].getMZ()
                                   << " "<<getRT(masses_it->first,i)<<" "<<rt<<" " ;
-                        ++num_values;
-                        //std::cout <<  getRTProbability(masses_it->first,i,rt) <<" * "<< pt_prot_map_[masses_it->first][i]<<std::endl;
                         std::cout <<  getRTProbability(masses_it->first,i,features[f]) <<" * "<< pt_prot_map_[masses_it->first][i]<<std::endl;
-                                            //values.push_back(rt_prot_map_[masses_it->first][i] * pt_prot_map_[masses_it->first][i]);
                         DoubleReal rt_prob = getRTProbability(masses_it->first,i,features[f]);
                         if(use_detectability)
                           {
-                            if(rt_prob < 1e-03 && pt_prot_map_[masses_it->first][i] < 1e-03) continue;
-                            if(rt_prob * pt_prot_map_[masses_it->first][i] > max) max = rt_prob * pt_prot_map_[masses_it->first][i];
-                            if((rt_prob * pt_prot_map_[masses_it->first][i]) < min_rt_dt_) min_rt_dt_ = rt_prob * pt_prot_map_[masses_it->first][i];                    
+                            //if(rt_prob < 1e-03 && pt_prot_map_[masses_it->first][i] < 1e-03) continue;
+                            // if(rt_prob * pt_prot_map_[masses_it->first][i] > max) max = rt_prob * pt_prot_map_[masses_it->first][i];
+                            // if((rt_prob * pt_prot_map_[masses_it->first][i]) < min_rt_dt_) min_rt_dt_ = rt_prob * pt_prot_map_[masses_it->first][i];
+                            rt_dt_histogramm_.push_back(rt_prob * pt_prot_map_[masses_it->first][i]);
                           }
                         else
                           {
                             if(rt_prob < 1e-03) continue;
-                            if(rt_prob > max) max = rt_prob;
-                            if(rt_prob < min_rt_dt_) min_rt_dt_ = rt_prob;                    
+                            // if(rt_prob > max) max = rt_prob;
+                            // if(rt_prob < min_rt_dt_) min_rt_dt_ = rt_prob;
+                            rt_dt_histogramm_.push_back(rt_prob);
                           }
                       }
-                  }
-              }
-            //        std::cout <<std::endl;
-          }
-      }
-    std::cout << "got min and max "<<min_rt_dt_ <<" "<<max <<std::endl;
-    Size bins = param_.getValue("rt_weighting:number_of_bins");
-    rt_dt_step_size_= (max - min_rt_dt_) / ((DoubleReal)bins-1);
-    rt_dt_histogramm_.clear();
-    rt_dt_histogramm_.resize(bins,0.);
-    for(Size f = 0; f < features.size();++f)
-      {
-         //        std::cout << "feature "<<f<<" "<<num_values<<std::endl;
-        if(features[f].getPeptideIdentifications().empty()) continue;
-//         DoubleReal mz = features[f].getMZ();
-        //DoubleReal rt = features[f].getRT();
+                  }// for(Size i = 0; i < masses_it->second.size();++i)
+              } // for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
+          }// for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
+      } // for(Size f = 0; f < features.size();++f)
 
-        for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
-          {
-            for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
-              {
-                DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);
-                if(features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions().empty()) continue;
-                String acc = features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions()[0];
+    // now sort rt_dt_histogramm_
+    sort(rt_dt_histogramm_.begin(),rt_dt_histogramm_.end());
+    rt_dt_histogramm_size_ = rt_dt_histogramm_.size();
+    std::cout << "transformed values"<<std::endl;
+    for(Size i = 0; i < rt_dt_histogramm_size_; ++i)
+      {
+        std::cout << rt_dt_histogramm_[i] << "\t" << getRTDTProbability(rt_dt_histogramm_[i])<< "\n";
+      }
+    std::cout << "--------------done with transformed values"<<std::endl;
+  }
+  
+//   void PrecursorIonSelectionPreprocessing::transformRTDTProbabilitiesOnIds_(FeatureMap<>& features,bool use_detectability)
+//   {
+//     //     DoubleReal mz_tol = param_.getValue("precursor_mass_tolerance");
+//     //     bool use_ppm = (param_.getValue("precursor_mass_tolerance_unit") == "ppm") ? true : false;
+//     std::cout << "get values"<<std::endl;
+//     std::cout << rt_prob_.getGaussSigma()<<" "<<rt_prob_.getGaussMu()<<std::endl;
+
+//     DoubleReal max(0.);
+//     min_rt_dt_ = std::numeric_limits<DoubleReal>::max();
+
+//     Size num_values = 0;
+//     // first match preprocessing onto feature map and calculate all rt*dt-values
+//     for(Size f = 0; f < features.size();++f)
+//       {
+//         //        std::cout << "feature "<<f<<" "<<num_values<<std::endl;
+//         if(features[f].getPeptideIdentifications().empty()) continue;
+// //         DoubleReal mz = features[f].getMZ();
+//          DoubleReal rt = features[f].getRT();
+
+//         for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
+//           {
+//             for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
+//               {
+//                 DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);
+//                 if(features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions().empty()) continue;
+//                 String acc = features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions()[0];
                 
-                std::map<String,std::vector<DoubleReal> >::const_iterator masses_it = prot_masses_.find(acc);
-                if(masses_it==prot_masses_.end()) continue;
-                for(Size i = 0; i < masses_it->second.size();++i)
-                  {
-                     if(fabs(masses_it->second[i] - pmz)  < 1e-03)
-                       {
-                         DoubleReal v ;
-                         DoubleReal rt_prob = getRTProbability(masses_it->first,i,features[f]);
-                         if(use_detectability)
-                           {
+//                 std::map<String,std::vector<DoubleReal> >::const_iterator masses_it = prot_masses_.find(acc);
+//                 if(masses_it==prot_masses_.end()) continue;
+//                 for(Size i = 0; i < masses_it->second.size();++i)
+//                   {
+//                     if(fabs(masses_it->second[i] - pmz)  < 1e-03)
+//                       {
+//                         std::cout << masses_it->second[i] <<" "<<pmz << " "<<features[f].getMZ()
+//                                   << " "<<getRT(masses_it->first,i)<<" "<<rt<<" " ;
+//                         ++num_values;
+//                         //std::cout <<  getRTProbability(masses_it->first,i,rt) <<" * "<< pt_prot_map_[masses_it->first][i]<<std::endl;
+//                         std::cout <<  getRTProbability(masses_it->first,i,features[f]) <<" * "<< pt_prot_map_[masses_it->first][i]<<std::endl;
+//                                             //values.push_back(rt_prot_map_[masses_it->first][i] * pt_prot_map_[masses_it->first][i]);
+//                         DoubleReal rt_prob = getRTProbability(masses_it->first,i,features[f]);
+//                         if(use_detectability)
+//                           {
+//                             if(rt_prob < 1e-03 && pt_prot_map_[masses_it->first][i] < 1e-03) continue;
+//                             if(rt_prob * pt_prot_map_[masses_it->first][i] > max) max = rt_prob * pt_prot_map_[masses_it->first][i];
+//                             if((rt_prob * pt_prot_map_[masses_it->first][i]) < min_rt_dt_) min_rt_dt_ = rt_prob * pt_prot_map_[masses_it->first][i];                    
+//                           }
+//                         else
+//                           {
+//                             if(rt_prob < 1e-03) continue;
+//                             if(rt_prob > max) max = rt_prob;
+//                             if(rt_prob < min_rt_dt_) min_rt_dt_ = rt_prob;                    
+//                           }
+//                       }
+//                   }
+//               }
+//             //        std::cout <<std::endl;
+//           }
+//       }
+//     std::cout << "got min and max "<<min_rt_dt_ <<" "<<max <<std::endl;
+//     Size bins = param_.getValue("rt_weighting:number_of_bins");
+//     rt_dt_step_size_= (max - min_rt_dt_) / ((DoubleReal)bins-1);
+//     rt_dt_histogramm_.clear();
+//     rt_dt_histogramm_.resize(bins,0.);
+//     for(Size f = 0; f < features.size();++f)
+//       {
+//          //        std::cout << "feature "<<f<<" "<<num_values<<std::endl;
+//         if(features[f].getPeptideIdentifications().empty()) continue;
+// //         DoubleReal mz = features[f].getMZ();
+//         //DoubleReal rt = features[f].getRT();
+
+//         for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
+//           {
+//             for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
+//               {
+//                 DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);
+//                 if(features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions().empty()) continue;
+//                 String acc = features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions()[0];
+                
+//                 std::map<String,std::vector<DoubleReal> >::const_iterator masses_it = prot_masses_.find(acc);
+//                 if(masses_it==prot_masses_.end()) continue;
+//                 for(Size i = 0; i < masses_it->second.size();++i)
+//                   {
+//                      if(fabs(masses_it->second[i] - pmz)  < 1e-03)
+//                        {
+//                          DoubleReal v ;
+//                          DoubleReal rt_prob = getRTProbability(masses_it->first,i,features[f]);
+//                          if(use_detectability)
+//                            {
                              
-                             if(rt_prob < 1e-03 && pt_prot_map_[masses_it->first][i] < 1e-03) continue;
-                             v = rt_prob * pt_prot_map_[masses_it->first][i];
-                           }
-                         else
-                           {
-                             if(rt_prob < 1e-03) continue;
-                             v = rt_prob;
-                           }
-                            //                    std::cout << v <<" "<<floor((v - min_rt_dt_)/rt_dt_step_size_)<<" "<<v - min_rt_dt_<<"/"<<rt_dt_step_size_<<"\n";
-                         if((Size)floor((v - min_rt_dt_)/rt_dt_step_size_) >= bins ||
-                            (SignedSize)floor((v - min_rt_dt_)/rt_dt_step_size_) < 0)
-                           {
-                             std::cout << "attention "<<v <<" "<<min_rt_dt_ <<" "<<rt_dt_step_size_
-                                       << " -> index: "<<floor((v - min_rt_dt_)/rt_dt_step_size_)
-                                       << " maxsize: "<<bins<<std::endl;
-                           }
-                         rt_dt_histogramm_[(Size)floor((v - min_rt_dt_)/rt_dt_step_size_)] =
-                           rt_dt_histogramm_[(Size)floor((v - min_rt_dt_)/rt_dt_step_size_)] + 1.;
-                       }
-                  }
-              }
-          }
-      }
+//                              if(rt_prob < 1e-03 && pt_prot_map_[masses_it->first][i] < 1e-03) continue;
+//                              v = rt_prob * pt_prot_map_[masses_it->first][i];
+//                            }
+//                          else
+//                            {
+//                              if(rt_prob < 1e-03) continue;
+//                              v = rt_prob;
+//                            }
+//                             //                    std::cout << v <<" "<<floor((v - min_rt_dt_)/rt_dt_step_size_)<<" "<<v - min_rt_dt_<<"/"<<rt_dt_step_size_<<"\n";
+//                          if((Size)floor((v - min_rt_dt_)/rt_dt_step_size_) >= bins ||
+//                             (SignedSize)floor((v - min_rt_dt_)/rt_dt_step_size_) < 0)
+//                            {
+//                              std::cout << "attention "<<v <<" "<<min_rt_dt_ <<" "<<rt_dt_step_size_
+//                                        << " -> index: "<<floor((v - min_rt_dt_)/rt_dt_step_size_)
+//                                        << " maxsize: "<<bins<<std::endl;
+//                            }
+//                          rt_dt_histogramm_[(Size)floor((v - min_rt_dt_)/rt_dt_step_size_)] =
+//                            rt_dt_histogramm_[(Size)floor((v - min_rt_dt_)/rt_dt_step_size_)] + 1.;
+//                        }
+//                   }
+//               }
+//           }
+//       }
     
-    std::cout << "got values"<<std::endl;
-    // now calculate histogramm
-    // now calculate cumsum from back to front
-    for(SignedSize i = bins - 2; i >= 0; --i)
-      {
-        std::cout << min_rt_dt_ + i * rt_dt_step_size_<<" "<<rt_dt_histogramm_[i]<<std::endl;
-        rt_dt_histogramm_[i] = rt_dt_histogramm_[i] + rt_dt_histogramm_[i+1];
-      }
-    std::cout << "The normalized values:\n";
-    // and normalize by values.size()
-    for(Size i = 0; i < bins; ++i)
-      {
-        rt_dt_histogramm_[i] = 1. - rt_dt_histogramm_[i] / (DoubleReal)num_values;
-        std::cout << min_rt_dt_ + i * rt_dt_step_size_ << " " << rt_dt_histogramm_[i] << "\n";
-      }
- //     // now reverse rt_dt_histogramm_
-//     std::reverse(rt_dt_histogramm_.begin(),rt_dt_histogramm_.end());
+//     std::cout << "got values"<<std::endl;
+//     // now calculate histogramm
+//     // now calculate cumsum from back to front
+//     for(SignedSize i = bins - 2; i >= 0; --i)
+//       {
+//         std::cout << min_rt_dt_ + i * rt_dt_step_size_<<" "<<rt_dt_histogramm_[i]<<std::endl;
+//         rt_dt_histogramm_[i] = rt_dt_histogramm_[i] + rt_dt_histogramm_[i+1];
+//       }
+//     std::cout << "The normalized values:\n";
+//     // and normalize by values.size()
 //     for(Size i = 0; i < bins; ++i)
 //       {
+//         rt_dt_histogramm_[i] = 1. - rt_dt_histogramm_[i] / (DoubleReal)num_values;
 //         std::cout << min_rt_dt_ + i * rt_dt_step_size_ << " " << rt_dt_histogramm_[i] << "\n";
 //       }
+//  //     // now reverse rt_dt_histogramm_
+// //     std::reverse(rt_dt_histogramm_.begin(),rt_dt_histogramm_.end());
+// //     for(Size i = 0; i < bins; ++i)
+// //       {
+// //         std::cout << min_rt_dt_ + i * rt_dt_step_size_ << " " << rt_dt_histogramm_[i] << "\n";
+// //       }
 
 
-////////////////////////////////
-    transform_factor_ = 1. / max;
+// ////////////////////////////////
+//     transform_factor_ = 1. / max;
 
 
-///////////////////////////////    
+// ///////////////////////////////    
     
 
-    std::cout << "\ntransformed score vs. peptide score:\n";    
-    // now print transformed score vs. peptide score
-    for(Size f = 0; f < features.size();++f)
-      {
-        //        std::cout << "feature "<<f<<" "<<num_values<<std::endl;
-        if(features[f].getPeptideIdentifications().empty()) continue;
-        //         DoubleReal mz = features[f].getMZ();
-        //DoubleReal rt = features[f].getRT();
+//     std::cout << "\ntransformed score vs. peptide score:\n";    
+//     // now print transformed score vs. peptide score
+//     for(Size f = 0; f < features.size();++f)
+//       {
+//         //        std::cout << "feature "<<f<<" "<<num_values<<std::endl;
+//         if(features[f].getPeptideIdentifications().empty()) continue;
+//         //         DoubleReal mz = features[f].getMZ();
+//         //DoubleReal rt = features[f].getRT();
         
-        for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
-          {
-            for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
-              {
-                DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);
-                if(features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions().empty()) continue;
-                String acc = features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions()[0];
+//         for(Size pi = 0; pi < features[f].getPeptideIdentifications().size(); ++pi)
+//           {
+//             for(Size ph = 0; ph < features[f].getPeptideIdentifications()[pi].getHits().size();++ph)
+//               {
+//                 DoubleReal pmz = features[f].getPeptideIdentifications()[pi].getHits()[ph].getSequence().getMonoWeight(Residue::Full,1);
+//                 if(features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions().empty()) continue;
+//                 String acc = features[f].getPeptideIdentifications()[pi].getHits()[ph].getProteinAccessions()[0];
                 
-                std::map<String,std::vector<DoubleReal> >::const_iterator masses_it = prot_masses_.find(acc);
-                if(masses_it==prot_masses_.end()) continue;
-                for(Size i = 0; i < masses_it->second.size();++i)
-                  {
-                    if(fabs(masses_it->second[i] - pmz)  < 1e-03)
-                      {
-                        DoubleReal rt_prob = getRTProbability(masses_it->first,i,features[f]);
-                        if(use_detectability)
-                          {
-                            std::cout << features[f].getPeptideIdentifications()[pi].getHits()[ph].getScore()
-                                      << " "<< getRTDTProbability(rt_prob
-                                                                  * pt_prot_map_[masses_it->first][i])
-                                      << " "<< pt_prot_map_[masses_it->first][i]
-                                      << " "<< rt_prob
-                                      << " "<< rt_prob * pt_prot_map_[masses_it->first][i]
-                                      << " "<< rt_prob * pt_prot_map_[masses_it->first][i] * transform_factor_
-                                      << std::endl;
-                          }
-                        else
-                          {
-                            std::cout << features[f].getPeptideIdentifications()[pi].getHits()[ph].getScore()
-                                      << " "<< getRTDTProbability(rt_prob)
-                                      << std::endl;
-                          }
-                      }
-                  }
-              }
-          }
-      }
+//                 std::map<String,std::vector<DoubleReal> >::const_iterator masses_it = prot_masses_.find(acc);
+//                 if(masses_it==prot_masses_.end()) continue;
+//                 for(Size i = 0; i < masses_it->second.size();++i)
+//                   {
+//                     if(fabs(masses_it->second[i] - pmz)  < 1e-03)
+//                       {
+//                         DoubleReal rt_prob = getRTProbability(masses_it->first,i,features[f]);
+//                         if(use_detectability)
+//                           {
+//                             std::cout << features[f].getPeptideIdentifications()[pi].getHits()[ph].getScore()
+//                                       << " "<< getRTDTProbability(rt_prob
+//                                                                   * pt_prot_map_[masses_it->first][i])
+//                                       << " "<< pt_prot_map_[masses_it->first][i]
+//                                       << " "<< rt_prob
+//                                       << " "<< rt_prob * pt_prot_map_[masses_it->first][i]
+//                                       << " "<< rt_prob * pt_prot_map_[masses_it->first][i] * transform_factor_
+//                                       << std::endl;
+//                           }
+//                         else
+//                           {
+//                             std::cout << features[f].getPeptideIdentifications()[pi].getHits()[ph].getScore()
+//                                       << " "<< getRTDTProbability(rt_prob)
+//                                       << std::endl;
+//                           }
+//                       }
+//                   }
+//               }
+//           }
+//       }
     
-    std::cout << "end: transformed score vs. peptide score:\n";    
-  }
+//     std::cout << "end: transformed score vs. peptide score:\n";    
+//   }
 
   DoubleReal PrecursorIonSelectionPreprocessing::getRTProbability(DoubleReal pred_rt,Feature& feature)
   {
@@ -1363,7 +1419,9 @@ namespace OpenMS
 
   DoubleReal PrecursorIonSelectionPreprocessing::getRTDTProbability(DoubleReal value)
   {
-    return value * transform_factor_;
+    std::vector<DoubleReal>::iterator it = std::lower_bound(rt_dt_histogramm_.begin(),rt_dt_histogramm_.end(),value);
+
+    return DoubleReal(std::distance(rt_dt_histogramm_.begin(),it)) /(DoubleReal) rt_dt_histogramm_size_;
     
 //     if(rt_dt_histogramm_.empty()) throw Exception::ElementNotFound(__FILE__,__LINE__,__PRETTY_FUNCTION__, "PrecursorIonSelectionPreprocessing: rt_dt_histogramm has not yet been calculated.");
 //     Size index = (Size) floor((value - min_rt_dt_)/rt_dt_step_size_);

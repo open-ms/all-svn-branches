@@ -154,6 +154,7 @@ namespace OpenMS
 
     RTProbability rt_prob_;
     std::vector<DoubleReal> rt_dt_histogramm_;
+    Size rt_dt_histogramm_size_;
     DoubleReal min_rt_dt_;
     DoubleReal rt_dt_step_size_;
     DoubleReal transform_factor_;

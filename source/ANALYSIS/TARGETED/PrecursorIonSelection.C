@@ -33,8 +33,8 @@
 #include <OpenMS/ANALYSIS/ID/IDMapper.h>
 #include <OpenMS/SYSTEM/StopWatch.h>
 using namespace std;
-#define PIS_DEBUG
-//#undef PIS_DEBUG
+//#define PIS_DEBUG
+#undef PIS_DEBUG
 namespace OpenMS
 {
 	PrecursorIonSelection::PrecursorIonSelection()
@@ -470,8 +470,10 @@ namespace OpenMS
 		std::vector<PeptideIdentification> filtered_pep_ids;
 
 		// probability based:
-		if((pep_ids.size()>0 && pep_ids[0].getScoreType().hasSuffix("DecoyProbability")) ||
-       (pep_ids.size()>0 && pep_ids[0].getScoreType().hasSuffix("1-PEP")))
+		if(pep_ids[0].isHigherScoreBetter() && 
+       ((pep_ids.size()>0 && pep_ids[0].getScoreType().hasSuffix("DecoyProbability")) ||
+        (pep_ids.size()>0 && pep_ids[0].getScoreType().hasSuffix("1-PEP")) ||
+        (pep_ids.size()>0 && pep_ids[0].getScoreType().hasSuffix("1-Posterior Error Probability"))))
 			{
 				std::cout << "filter out peptides with prob < "<< prob_threshold<<std::endl;
 				for(UInt id_c = 0; id_c < pep_ids.size();++id_c)
@@ -509,7 +511,7 @@ namespace OpenMS
 					}
 
 			}
-    else if(pep_ids.size()>0 && pep_ids[0].getScoreType().hasSuffix("Posterior Error Probability"))
+    else if(pep_ids.size()>0 && !pep_ids[0].isHigherScoreBetter() && pep_ids[0].getScoreType() == "Posterior Error Probability")
       {
         std::cout << "filter out peptides with prob < "<< prob_threshold<<std::endl;
 				for(UInt id_c = 0; id_c < pep_ids.size();++id_c)
@@ -610,16 +612,18 @@ namespace OpenMS
   void PrecursorIonSelection::simulateRun(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,
                                           std::vector<ProteinIdentification>& prot_ids,
                                           PrecursorIonSelectionPreprocessing& preprocessed_db,
-                                          String path, MSExperiment<>& experiment, String rt_model_path)
+                                          String path, MSExperiment<>& experiment, String rt_model_path,
+                                          String precursor_path)
   {
+    convertPeptideIdScores_(pep_ids);
     if(param_.getValue("type") == "ILP_IPS")   simulateILPBasedIPSRun_(features,experiment,pep_ids,prot_ids,preprocessed_db,path,
-                                                                       rt_model_path);
-    else simulateRun_(features,pep_ids,prot_ids,preprocessed_db,path);
+                                                                       rt_model_path,precursor_path);
+    else simulateRun_(features,pep_ids,prot_ids,preprocessed_db,path,precursor_path);
   }
   
 	void PrecursorIonSelection::simulateRun_(FeatureMap<>& features,std::vector<PeptideIdentification>& pep_ids,
                                            std::vector<ProteinIdentification>& prot_ids,
-                                           PrecursorIonSelectionPreprocessing& preprocessed_db,String path)
+                                           PrecursorIonSelectionPreprocessing& preprocessed_db,String path,String precursor_path)
 	{
     UInt step_size(param_.getValue("step_size"));
 		sortByTotalScore(features);
@@ -651,7 +655,7 @@ namespace OpenMS
     PSProteinInference protein_inference;
     protein_inference.setSolver(solver_);
 
-    
+		DoubleReal protein_id_threshold = param_.getValue("MIPFormulation:thresholds:min_protein_id_probability");    
 
 		// get first precursors
 		FeatureMap<> new_features;
@@ -662,6 +666,9 @@ namespace OpenMS
 		UInt pep_id_number = 0;
 		std::vector<PeptideIdentification> curr_pep_ids,all_pep_ids;
 		std::vector<ProteinIdentification> curr_prot_ids,all_prot_ids;
+
+    std::ofstream* precs;
+    if(precursor_path !="")  precs = new std::ofstream(precursor_path.c_str());
 #ifdef PIS_DEBUG
 		std::cout << max_iteration_ << std::endl;
 #endif
@@ -688,7 +695,10 @@ namespace OpenMS
 											<<  new_features[c].getMetaValue("msms_score") ;
 #endif
 		    
-
+            if(precursor_path != "")
+              {
+                (*precs) << new_features[c].getRT() << " "<< new_features[c].getMZ() << " " << new_features[c].getIntensity() << "\n";
+              }
 		    
 						// get their peptide ids
 						std::vector<PeptideIdentification> & pep_ids = new_features[c].getPeptideIdentifications();
@@ -793,8 +803,9 @@ namespace OpenMS
 						// necessary for making the figures later
 						UInt num_prots = protein_inference.findMinimalProteinList(all_pep_ids); //filterProtIds_(all_prot_ids);
             protein_inference.calculateProteinProbabilities(all_pep_ids);
+            UInt num_prot_ids = protein_inference.getNumberOfProtIds(protein_id_threshold);				
 						outf << iteration << "\t\t"  
-								 << num_prots << "\t\t" 
+								 << num_prot_ids << "\t\t" 
 								 << precursors << "\t\t"
 								 << pep_id_number
 								 << std::endl;
@@ -808,7 +819,7 @@ namespace OpenMS
         UInt num_prots =  protein_inference.findMinimalProteinList(all_pep_ids);
         protein_inference.calculateProteinProbabilities(all_pep_ids);
 
-
+        UInt num_prot_ids = protein_inference.getNumberOfProtIds(protein_id_threshold);				
         features.sortByMZ();
 				rescore_(features,curr_pep_ids,preprocessed_db,protein_inference);
 		
@@ -839,7 +850,7 @@ namespace OpenMS
 				
 				// write results of current iteration				
 				outf << iteration << "\t\t"
-						 << num_prots << "\t\t" 
+						 << num_prot_ids << "\t\t" 
 						 << precursors << "\t\t"
 						 << pep_id_number
 						 << std::endl;
@@ -887,7 +898,7 @@ namespace OpenMS
                                                       std::vector<PeptideIdentification>& pep_ids,
                                                       std::vector<ProteinIdentification>& prot_ids,
                                                       PrecursorIonSelectionPreprocessing& preprocessed_db,
-                                                      String output_path,String rt_model_path)
+                                                      String output_path,String rt_model_path,String precursor_path)
 	{
     if(pep_ids.empty())
       {
@@ -908,6 +919,7 @@ namespace OpenMS
 				return;
 			}
     bool higherScoreBetter = filtered_pep_ids[0].isHigherScoreBetter();
+    std::cout << higherScoreBetter << " higherScoreBetter "<<std::endl;
     UInt step_size(param_.getValue("step_size"));
     UInt rt_bin_capacity(param_.getValue("rt_bin_capacity"));
 		DoubleReal protein_id_threshold = param_.getValue("MIPFormulation:thresholds:min_protein_id_probability");
@@ -978,7 +990,10 @@ namespace OpenMS
     ilp_wrapper.updateFeatureILPVariables(new_features,variable_indices,feature_constraints_map);
 
     std::vector<std::vector<std::pair<String,Int> > > feature_prot_pep_index_vec;
-		
+
+    std::ofstream* precs;
+    if(precursor_path !="")  precs = new std::ofstream(precursor_path.c_str());
+
 		Size precursors = 0;
 		UInt iteration = 0;
 		UInt pep_id_number = 0;
@@ -996,7 +1011,7 @@ namespace OpenMS
     StopWatch timer;
     timer.start();
     // #endif
-    std::ofstream out_prec("precursors.txt");
+    //    std::ofstream out_prec("precursors.txt");
  		// while there are precursors left and the maximal number of iterations isn't arrived
 		while((new_features.size()  > 0 && iteration < max_iteration_) )
 			{
@@ -1014,6 +1029,11 @@ namespace OpenMS
 				// go through the new compounds
 				for(UInt c=0;c<new_features.size();++c)
 					{
+            if(precursor_path != "")
+              {
+                (*precs) << new_features[c].getRT() << " "<< new_features[c].getMZ() << " " << new_features[c].getIntensity() << "\n";
+              }
+
 						//#ifdef PIS_DEBUG
 						// print info
 						Size index = new_features[c].getMetaValue("variable_index");
@@ -1027,8 +1047,8 @@ namespace OpenMS
 							{
 								std::cout << " penalized? "<< new_features[c].getMetaValue("penalized");
 							}
-						out_prec << "rt "<< new_features[c].getRT() << " mz: "<<  new_features[c].getMZ()
-                     << " int: "<< new_features[c].getIntensity() <<std::endl;
+						// out_prec << "rt "<< new_features[c].getRT() << " mz: "<<  new_features[c].getMZ()
+            //          << " int: "<< new_features[c].getIntensity() <<std::endl;
 						std::cout << "\n";
 						// get their peptide ids
 						std::vector<PeptideIdentification> & pep_ids = new_features[c].getPeptideIdentifications();
@@ -1200,9 +1220,9 @@ namespace OpenMS
     std::cout << "sorted" << std::endl;
     for(Size f = 0; f < tmp_features.size() && num_precs < step_size; ++f)
     {
-      std::cout << tmp_features[f].getMetaValue("variable_index") << " "
-                << variable_indices[tmp_features[f].getMetaValue("variable_index")].feature
-                << std::endl;
+      // std::cout << tmp_features[f].getMetaValue("variable_index") << " "
+      //           << variable_indices[tmp_features[f].getMetaValue("variable_index")].feature
+      //           << std::endl;
       features[variable_indices[tmp_features[f].getMetaValue("variable_index")].feature].setMetaValue("fragmented","true");
       measured_variables.insert(variable_indices[tmp_features[f].getMetaValue("variable_index")].feature);
       new_features.push_back(tmp_features[f]);
@@ -1289,6 +1309,31 @@ namespace OpenMS
 		max_iteration_ = (UInt) param_.getValue("max_iteration");
 	}
 
-	
+
+  void PrecursorIonSelection::convertPeptideIdScores_(std::vector<PeptideIdentification>& pep_ids)
+  {
+    for(Size i = 0; i < pep_ids.size();++i)
+      {
+        if(!pep_ids[i].isHigherScoreBetter())
+          {
+            if(pep_ids[i].getScoreType() == "Posterior Error Probability")
+              {
+                pep_ids[i].setScoreType("1-Posterior Error Probability");
+                pep_ids[i].setHigherScoreBetter(true);
+                std::vector<PeptideHit> hits = pep_ids[i].getHits();
+                for(Size j = 0; j < hits.size();++j)
+                  {
+                    std::cout << hits[j].getScore() << "\t";
+                    hits[j].setScore(1.-hits[j].getScore());
+                    std::cout << hits[j].getScore() << "\n";
+                  }
+                pep_ids[i].setHits(hits);
+              }
+            else  throw Exception::InvalidValue(__FILE__,__LINE__,__PRETTY_FUNCTION__, "Invalid score type, should be either a posterior error probability or a probability!",pep_ids[i].getScoreType() );
+          }
+      }
+  }
+
+  
 } //namespace
 

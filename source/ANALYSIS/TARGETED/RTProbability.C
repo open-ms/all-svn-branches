@@ -129,6 +129,7 @@ namespace OpenMS
         std::vector<PeptideIdentification> & pep_ids = features[f].getPeptideIdentifications();
         DoubleReal max_score = higherScoreBetter ? 0. : 1.;
         AASequence max_seq = "";
+        // std::cout << max_score << " masx_score"<<std::endl;
         for(Size pi = 0; pi < pep_ids.size(); ++pi)
           {
             if(!higherScoreBetter && pep_ids[pi].isHigherScoreBetter())
@@ -138,20 +139,27 @@ namespace OpenMS
               }
             for(Size ph = 0; ph < pep_ids[pi].getHits().size();++ph)
               {
-                //  std::cout << pep_ids[pi].getHits()[ph].getScore() << "\t";
+                //std::cout << pep_ids[pi].getHits()[ph].getScore() << "\t";
                 if((higherScoreBetter && pep_ids[pi].getHits()[ph].getScore() > max_score)||
                    (!higherScoreBetter && pep_ids[pi].getHits()[ph].getScore() < max_score))
                   {
-                    // std::cout << pep_ids[pi].getHits()[ph].getScore() << "\t"
-                    //           << pep_ids[pi].getHits()[ph].getSequence() << "\n";
+                    std::cout << pep_ids[pi].getHits()[ph].getScore() << "\t"
+                              << pep_ids[pi].getHits()[ph].getSequence() << "\n";
                     max_score = pep_ids[pi].getHits()[ph].getScore();
                     max_seq = pep_ids[pi].getHits()[ph].getSequence();
                   }
               }
           }
-        //     std::cout << "pep_ids.size() "<<pep_ids.size()<<"max_score "<< max_score << std::endl;
+        //std::cout << "pep_ids.size() "<<pep_ids.size()<<"max_score "<< max_score << std::endl;
+        if(max_seq != "")
+          {
+            std::cout << higherScoreBetter << " "<<max_score << " "<<min_score<<std::endl;
+            std::cout << ""<<(max_seq != "") << " && ("<< higherScoreBetter << " && "<<(max_score > min_score)<< " ) || ("
+                      << (!higherScoreBetter) << " && "<<(max_score < min_score) << ")"<<std::endl;
+          }
         if(max_seq != "" &&
-           ( (higherScoreBetter && (max_score > min_score)) || (!higherScoreBetter && (max_score < min_score)) ))
+           ( (higherScoreBetter && (max_score > min_score))
+             || (!higherScoreBetter && (max_score < min_score))))
           {
             peptide_sequences.push_back(max_seq);
             DoubleReal rt_begin = features[f].getConvexHull().getBoundingBox().minPosition()[0];
@@ -161,7 +169,7 @@ namespace OpenMS
             if(scan_begin != -1 && scan_end != -1) measured_rts.push_back(std::make_pair(scan_begin,scan_end));
 //             std::cout << "min_rt "<<min_rt<<" rt_step_size "<< rt_step_size <<" max_rt "<<max_rt
 //                       << " rt "<<features[f].getRT()<<" scan "<<scan <<std::endl;
-//             std::cout << "max_score "<<max_score << std::endl;
+            std::cout << max_seq << " max_score "<<max_score << std::endl;
           }
       }
     // make rt predictions

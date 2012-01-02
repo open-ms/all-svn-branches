@@ -29,6 +29,8 @@
 #include <OpenMS/FORMAT/IdXMLFile.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 #include <OpenMS/ANALYSIS/TARGETED/InclusionExclusionList.h>
+#include <OpenMS/ANALYSIS/TARGETED/OfflinePrecursorIonSelection.h>
+#include <OpenMS/ANALYSIS/TARGETED/PrecursorIonSelection.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
 using namespace OpenMS;
@@ -96,12 +98,17 @@ protected:
     registerInputFile_("exclude","<file>", "", "exclusion list input file in featureXML, IdXML or FASTA format.",false);
     setValidFormats_("exclude",StringList::create("featureXML,IdXML,FASTA"));
     registerOutputFile_("out", "<file>", "", "output file (tab delimited).");
+    setValidFormats_("out",StringList::create("featureXML,tsv"));
     registerInputFile_("rt_model","<file>","","RTModel file used for the rt prediction of peptides in FASTA files.",false);
     //in FASTA or featureXML
     registerIntList_("inclusion_charges","<charge>",IntList(),"List containing the charge states to be considered for the inclusion list compounds, space separated.",false);
     setMinInt_("inclusion_charges", 1);
     registerIntList_("exclusion_charges","<charge>",IntList(),"List containing the charge states to be considered for the exclusion list compounds (for idXML and FASTA input), space separated.",false);
     setMinInt_("exclusion_charges", 1);
+    registerStringOption_("strategy","<name>","ALL","strategy to be used for selection");
+    setValidStrings_("inclusion_strategy", StringList::create("ILP,GA,DDA,PS_ILP,ALL"));
+    registerIntOption_("num_precursors_per_spot","<Int>",1,"number of precursors per spot to be selected",false);
+    registerStringOption_("raw_data","<mzDataFile>","","File containing the raw data",false);
 
     //    setValidFormats_("out", StringList::create("TraML"));
 
@@ -143,7 +150,7 @@ protected:
 		IntList incl_charges(getIntList_("inclusion_charges"));
     IntList excl_charges(getIntList_("exclusion_charges"));
     String rt_model_file(getStringOption_("rt_model"));
-
+    String strategy = getStringOption_("strategy");
     //-------------------------------------------------------------
     // loading input: inclusion list part
     //-------------------------------------------------------------
@@ -175,20 +182,136 @@ protected:
           writeLog_("Warning: 'inclusion_charges' parameter is not honored for featureXML input.");
 					return ILLEGAL_PARAMETERS;
         }
+        if(strategy == "ALL")
+          {
+            // convert to targeted experiment
+            // for traML output
+            //            list.loadTargets(map,incl_targets,exp);
+            // for tab-delimited output
+            try
+              {
+                list.writeTargets(map,out);
+              }
+            catch(Exception::UnableToCreateFile)
+              {
+                writeLog_("Error: Unable to create output file.");
+                return CANNOT_WRITE_OUTPUT_FILE;
+              }
+          }
+        else
+          {
+            UInt spot_cap = getIntOption_("num_precursors_per_spot");
+            String raw_data_path = getStringOption_("raw_data");
+            MSExperiment<> exp,ms2;
+            FeatureMap<> out_map;
+            MzDataFile().load(raw_data_path,exp);
+ 
+            OfflinePrecursorIonSelection opis;
+            Param param;
+            param.setValue("ms2_spectra_per_rt_bin",spot_cap);
+            opis.setParameters(param);
+            
+            std::set<Int> charges_set;
+            charges_set.insert(0);
+            
+            if(strategy == "DDA")
+              { 
+                opis.makePrecursorSelectionForKnownLCMSMap(map,exp,ms2,charges_set,false);
+                std::set<Int> ids;
+                std::vector<Int> rt_sizes(exp.size(),0);
+                DoubleReal min_rt = (exp.RTBegin(0))->getRT();
+                DoubleReal step_rt = (exp.RTBegin(0)+1)->getRT() - min_rt;
+                for(Size i = 0; i < ms2.size();++i)
+                  {
+                    // get precursor infos
+                    std::vector<Int> feature_ids = ms2[i].getMetaValue("parent_feature_ids");
+                    DoubleReal rt = ms2[i].getRT();
+                    Size idx = (Size) (rt - min_rt) / step_rt;
+                    ++rt_sizes[idx];
+                    if(feature_ids.size() > 1)
+                      {
+                        std::cout << "more than one parent"<<std::endl;
+                        for(Size j = 0; j < feature_ids.size();++j)
+                          {
+                            ids.insert(feature_ids[j]);
+                          }
+                      }
+                    if(feature_ids.size() == 1)
+                      {
+                        ids.insert(feature_ids[0]);
+                      }
+                  }
+                std::cout << ids.size() << " different precs"<<std::endl;
+                for(std::set<Int>::iterator beg = ids.begin();beg!=ids.end();++beg)
+                  {
+                    out_map.push_back(map[*beg]);
+                  }
+                for(Size r = 0; r < rt_sizes.size();++r)
+                  {
+                    std::cout << r << "\t"<<rt_sizes[r] << "\n";
+                  }
+                
+              }
+            else if(strategy == "GA") // greedy approach: take highest signal for each feature
+              {
+                sort(map.begin(),map.end(),PrecursorIonSelection::TotalScoreMore());
+                std::vector<Size> rt_sizes(exp.size(),0);
+                DoubleReal min_rt = (exp.RTBegin(0))->getRT();
+                DoubleReal step_rt = (exp.RTBegin(0)+1)->getRT() - min_rt;
+                for(Size f = 0; f < map.size();++f)
+                  {
+                    DoubleReal rt = map[f].getRT();
+                    Size spec = (Size)((DoubleReal)(rt - min_rt) / (DoubleReal)step_rt);
+                    if(rt_sizes[spec] < spot_cap)
+                      {
+                        out_map.push_back(map[f]);
+                        ++rt_sizes[spec];
+                        std::cout << map[f].getMetaValue("msms_score")<<std::endl;
+                      }
+                  }
+                std::cout << out_map.size() << " different precs"<<std::endl;
+                for(Size r = 0; r < rt_sizes.size();++r)
+                  {
+                    std::cout << r << "\t"<<rt_sizes[r] << "\n";
+                  }
+              }
+            else if(strategy == "ILP") // ILP
+              {
+                // create ILP
+                PSLPFormulation ilp_wrapper;
+                // get the mass ranges for each features for each scan it occurs in
+                std::vector<std::vector<std::pair<Size,Size> > >  indices;
+                opis.getMassRanges(map,exp,indices);
+                
+                std::vector<PSLPFormulation::IndexTriple> variable_indices;
+                std::vector<int> solution_indices;
+                ilp_wrapper.createAndSolveILPForKnownLCMSMapFeatureBased(map, exp,variable_indices,indices,charges_set,spot_cap,solution_indices);
+                
+                sort(variable_indices.begin(),variable_indices.end(),PSLPFormulation::FeatureIndexLess());
+#ifdef DEBUG_OPS
+                std::cout << "best_solution "<<std::endl;
+#endif
+                std::vector<Int> rt_sizes(exp.size(),0);
+                // print best solution
+                // create inclusion list
+                for(Size i = 0; i < solution_indices.size();++i)
+                  {
+                    Size feature_index = variable_indices[solution_indices[i]].feature;
+                    Size scan = variable_indices[solution_indices[i]].scan;
+                    out_map.push_back(map[feature_index]);
+                    std::cout << map[feature_index].getMetaValue("msms_score")<<std::endl;
+                    ++rt_sizes[scan];
+                  }
+                
+                for(Size r = 0; r < rt_sizes.size();++r)
+                  {
+                    std::cout << r << "\t"<<rt_sizes[r] << "\n";
+                  }
+              }//else if(strategy == "ILP") // ILP
+            FeatureXMLFile().store(out,out_map);
+          } // else  von if(strategy == "ALL")
 
-        // convert to targeted experiment
-				// for traML output
-				//            list.loadTargets(map,incl_targets,exp);
-				// for tab-delimited output
-				try
-				{
-					list.writeTargets(map,out);
-				}
-				catch(Exception::UnableToCreateFile)
-        {
-          writeLog_("Error: Unable to create output file.");
-          return CANNOT_WRITE_OUTPUT_FILE;
-        }
+      
       }
       else // FASTA format
       {

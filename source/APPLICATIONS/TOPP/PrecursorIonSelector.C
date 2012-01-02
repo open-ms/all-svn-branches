@@ -127,7 +127,7 @@ protected:
 
     registerOutputFile_("next_feat","<output file>","","feature map (featureXML) file with the selected precursors",false);
     setValidFormats_("next_feat",StringList::create("featureXML"));
-
+		registerStringOption_("precursor_file","<txt file>","","file containing precursor infos",false);
 		registerStringOption_("ids","<idxml file>","","file containing results of identification (IdXML)");
 		registerIntOption_("num_precursors","<Int>",1,"number of precursors to be selected",false);
     registerInputFile_("raw_data","<file>","","Input profile data.",false);
@@ -177,6 +177,7 @@ protected:
     String solver(getStringOption_("solver"));
     StringList fixed_mods = getStringList_("fixed_modifications");
     bool only_preprocessing = getFlag_("only_preprocessing");
+    String prec_path(getStringOption_("precursor_file"));
 		//-------------------------------------------------------------
     // init pis preprocessing
     //-------------------------------------------------------------
@@ -240,7 +241,7 @@ protected:
 		
 		if(simulation)
     {
-      pis.simulateRun(f_map,pep_ids,prot_ids,pisp,sim_results, exp,rt_model);
+      pis.simulateRun(f_map,pep_ids,prot_ids,pisp,sim_results, exp,rt_model,prec_path);
     }
 		else
     {

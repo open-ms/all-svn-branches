@@ -105,7 +105,7 @@ protected:
     setMinInt_("inclusion_charges", 1);
     registerIntList_("exclusion_charges","<charge>",IntList(),"List containing the charge states to be considered for the exclusion list compounds (for idXML and FASTA input), space separated.",false);
     setMinInt_("exclusion_charges", 1);
-    registerStringOption_("strategy","<name>","ALL","strategy to be used for selection");
+    registerStringOption_("inclusion_strategy","<name>","ALL","strategy to be used for selection",false);
     setValidStrings_("inclusion_strategy", StringList::create("ILP,GA,DDA,PS_ILP,ALL"));
     registerIntOption_("num_precursors_per_spot","<Int>",1,"number of precursors per spot to be selected",false);
     registerStringOption_("raw_data","<mzDataFile>","","File containing the raw data",false);
@@ -150,7 +150,7 @@ protected:
 		IntList incl_charges(getIntList_("inclusion_charges"));
     IntList excl_charges(getIntList_("exclusion_charges"));
     String rt_model_file(getStringOption_("rt_model"));
-    String strategy = getStringOption_("strategy");
+    String strategy = getStringOption_("inclusion_strategy");
     //-------------------------------------------------------------
     // loading input: inclusion list part
     //-------------------------------------------------------------

@@ -828,6 +828,7 @@ class TOPPSILACAnalyzer
     {
       std::ofstream out((out_debug + ".clusters.csv").c_str());
 
+      // generate header
       out
         << std::fixed << std::setprecision(8)
         << "ID,RT,MZ_PEAK,CHARGE";
@@ -845,16 +846,25 @@ class TOPPSILACAnalyzer
       out << ",MZ_RAW";
       for (UInt i = 0; i <= massShifts[0].size(); ++i)
       {
-        for (UInt j = 1; j <= isotopes_per_peptide_max; ++j)
-        {
-          out << ",INT_RAW_" << i + 1 << '_' << j;
-        }
+            for (UInt j = 1; j <= isotopes_per_peptide_max; ++j)
+            {
+                out << ",INT_RAW_" << i + 1 << '_' << j;
+            }
+      }
+      for (UInt i = 0; i <= massShifts[0].size(); ++i)
+      {
+            for (UInt j = 1; j <= isotopes_per_peptide_max; ++j)
+            {
+                out << ",MZ_RAW_" << i + 1 << '_' << j;
+            }
       }
       out << '\n';
 
+      // write data
       UInt cluster_id = 0;
       for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
       {
+        cout << "write cluster debug output, ID = " << cluster_id << '\n';
         generateClusterDebug(out, **it, cluster_id);
       }
     }
@@ -1291,6 +1301,7 @@ void TOPPSILACAnalyzer::generateClusterDebug(std::ostream &out, const Clustering
           << preamble.str()
           << point.mz;
         
+        // write INT_RAW_...
         for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = point.intensities.begin();
              shift_inten_it != point.intensities.end();
              ++shift_inten_it)
@@ -1301,15 +1312,37 @@ void TOPPSILACAnalyzer::generateClusterDebug(std::ostream &out, const Clustering
                ++peak_inten_it, ++peak_inten_id)
           {
             out << ','
-              << *peak_inten_it;
+            << *peak_inten_it;
           }
           for (; peak_inten_id < isotopes_per_peptide_max; ++peak_inten_id)
           {
             out
-              << ",NA";
+            << ",NA";
           }
         }
-
+        
+          // write MZ_RAW_...
+          //cout << "START" << '\n';
+          for (std::vector<std::vector<DoubleReal> >::const_iterator shift_mz_it = point.mz_positions.begin();
+               shift_mz_it != point.mz_positions.end();
+               ++shift_mz_it)
+          {
+              //cout << "In MZ RAW output" << '\n';
+              UInt peak_mz_id = 0;
+              for (std::vector<DoubleReal>::const_iterator peak_mz_it = shift_mz_it->begin();
+                   peak_mz_it != shift_mz_it->end();
+                   ++peak_mz_it, ++peak_mz_id)
+              {
+                  out << ','
+                  << *peak_mz_it;
+              }
+              for (; peak_mz_id < isotopes_per_peptide_max; ++peak_mz_id)
+              {
+                  out
+                  << ",NA";
+              }
+          }
+          
         out << '\n';
       }
     }

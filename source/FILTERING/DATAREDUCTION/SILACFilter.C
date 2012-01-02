@@ -76,7 +76,7 @@ namespace OpenMS
     }
   }
 
-  bool SILACFilter::extractMzShiftsAndIntensities_(const MSSpectrum<Peak1D> &s, const SILACFiltering::SpectrumInterpolation &si, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
+  bool SILACFilter::extractMzShiftsAndIntensities_(const MSSpectrum<Peak1D> &s, const SILACFiltering::SpectrumInterpolation &spec_interpolation, DoubleReal mz, DoubleReal picked_mz, const SILACFiltering &f)
   {
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 
@@ -87,6 +87,7 @@ namespace OpenMS
     for (Size peptide = 0; peptide != number_of_peptides_; ++peptide) // loop over labelled peptides [e.g. for SILAC triplets: 0=light 1=medium 2=heavy]
     {
       std::vector<DoubleReal> exact_shifts_singlePeptide;
+      std::vector<DoubleReal> exact_mz_positions_singlePeptide;
       std::vector<DoubleReal> exact_intensities_singlePeptide;
       std::vector<DoubleReal> expected_shifts_singlePeptide;
 
@@ -146,15 +147,18 @@ namespace OpenMS
 
         if ( deltaMZ < 0 )
         {
+          exact_mz_positions_singlePeptide.push_back( -1 );
           exact_intensities_singlePeptide.push_back( -1 );
         }
         else
         {
-          exact_intensities_singlePeptide.push_back(si(mz + deltaMZ));
+          exact_mz_positions_singlePeptide.push_back(mz + deltaMZ);
+          exact_intensities_singlePeptide.push_back(spec_interpolation(mz + deltaMZ));    // use spectrum interpolation to read off intensity at m/z position
         }
       }
 
       exact_shifts_.push_back(exact_shifts_singlePeptide);
+      exact_mz_positions_.push_back(exact_mz_positions_singlePeptide);
       exact_intensities_.push_back(exact_intensities_singlePeptide);
       expected_shifts_.push_back(expected_shifts_singlePeptide);      // store expected_shifts for blacklisting
     }
@@ -281,7 +285,7 @@ namespace OpenMS
     pattern.mz = mz;
     pattern.charge = charge_;
     pattern.isotopes_per_peptide = (Int) isotopes_per_peptide_;
-    pattern.mz_positions.insert(pattern.intensities.begin(), exact_intensities_.begin(), exact_intensities_.end());
+    pattern.mz_positions.insert(pattern.mz_positions.begin(), exact_mz_positions_.begin(), exact_mz_positions_.end());
     pattern.intensities.insert(pattern.intensities.begin(), exact_intensities_.begin(), exact_intensities_.end());
     pattern.mass_shifts.insert(pattern.mass_shifts.begin(), mz_peptide_separations_.begin(), mz_peptide_separations_.end());
     return true;

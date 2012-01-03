@@ -186,7 +186,7 @@ namespace OpenMS
       std::vector<DoubleReal> exact_mz_positions_singlePeptide;
       std::vector<DoubleReal> exact_intensities_singlePeptide;
       std::vector<DoubleReal> expected_shifts_singlePeptide;
-
+      
       for (Size isotope = 0; isotope < isotopes_per_peptide_; isotope++) // loop over isotopic peaks within a peptide [0=mono-isotopic peak etc.]
       {
 
@@ -488,6 +488,7 @@ namespace OpenMS
     SILACPoint newElement;    // Raw data point at this particular RT and m/z passed all filters. Store it for further clustering.
     newElement.rt = s.getRT();
     newElement.mz = mz;
+    newElement.mz_positions.insert(newElement.mz_positions.begin(), exact_mz_positions_.begin(), exact_mz_positions_.end());
     newElement.intensities.insert(newElement.intensities.begin(), exact_intensities_.begin(), exact_intensities_.end());
     pattern.points.push_back(newElement);
 

@@ -864,7 +864,6 @@ class TOPPSILACAnalyzer
       UInt cluster_id = 0;
       for (vector<Clustering *>::const_iterator it = cluster_data.begin(); it != cluster_data.end(); ++it)
       {
-        cout << "write cluster debug output, ID = " << cluster_id << '\n';
         generateClusterDebug(out, **it, cluster_id);
       }
     }
@@ -1322,12 +1321,10 @@ void TOPPSILACAnalyzer::generateClusterDebug(std::ostream &out, const Clustering
         }
         
           // write MZ_RAW_...
-          //cout << "START" << '\n';
           for (std::vector<std::vector<DoubleReal> >::const_iterator shift_mz_it = point.mz_positions.begin();
                shift_mz_it != point.mz_positions.end();
                ++shift_mz_it)
           {
-              //cout << "In MZ RAW output" << '\n';
               UInt peak_mz_id = 0;
               for (std::vector<DoubleReal>::const_iterator peak_mz_it = shift_mz_it->begin();
                    peak_mz_it != shift_mz_it->end();

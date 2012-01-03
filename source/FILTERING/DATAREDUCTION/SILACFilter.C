@@ -81,6 +81,7 @@ namespace OpenMS
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 
     exact_shifts_.clear();
+    exact_mz_positions_.clear();
     exact_intensities_.clear();
     expected_shifts_.clear();
 
@@ -172,6 +173,7 @@ namespace OpenMS
     bool missing_peak_seen_yet = false;  // Did we encounter a missing peak in this SILAC pattern yet?
 
     exact_shifts_.clear();
+    exact_mz_positions_.clear();
     exact_intensities_.clear();
     expected_shifts_.clear();
 

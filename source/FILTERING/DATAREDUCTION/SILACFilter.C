@@ -490,8 +490,13 @@ namespace OpenMS
     SILACPoint newElement;    // Raw data point at this particular RT and m/z passed all filters. Store it for further clustering.
     newElement.rt = s.getRT();
     newElement.mz = mz;
+    newElement.charge = charge_;
     newElement.mz_positions.insert(newElement.mz_positions.begin(), exact_mz_positions_.begin(), exact_mz_positions_.end());
     newElement.intensities.insert(newElement.intensities.begin(), exact_intensities_.begin(), exact_intensities_.end());
+    // newElement.quality = ???
+    // newElement.mass_shifts = ???
+    // newElement.isotopes_per_peptide = ???
+    // newElement.quality = ???
     pattern.points.push_back(newElement);
 
     debug_peak.setIntensity(10);

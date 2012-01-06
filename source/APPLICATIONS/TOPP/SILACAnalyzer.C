@@ -1069,159 +1069,88 @@ PeakWidthEstimator::Result TOPPSILACAnalyzer::estimatePeakWidth(const MSExperime
 
 void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, const Clustering &clustering) const
 {
+  // iterate over clusters
   for (Clustering::Grid::const_iterator cluster_it = clustering.grid.begin(); cluster_it != clustering.grid.end(); ++cluster_it)
   {
-    ConsensusFeature cluster;
+    ConsensusFeature consensus;
 
-    // RT value as weighted RT position of all peaks
-    DoubleReal global_rt = 0;
-    // MZ value as weighted MZ position of monoisotopic peaks
-    DoubleReal global_mz = 0;
-    // Total intensity of all peaks
-    DoubleReal global_intensity = 0;
-    // Total intensity of monoisotopic peak
-    DoubleReal global_intensity0 = 0;
-
-    // Iterate over pattern per cluster
+    // determine the number of peptides
+    // for that we look at the first point in the first pattern
+    const SILACPattern &firstPattern = *(cluster_it->second.begin())->second;
+    const SILACPoint &firstPoint = *(firstPattern.points.begin());
+    UInt numberPeptides = firstPoint.intensities.size();
+    UInt charge = firstPoint.charge;
+    // sums for each peptide of the pair (triplet, singlet, ...)
+    std::vector<DoubleReal> sumMzIntensities (numberPeptides,0);
+    std::vector<DoubleReal> sumRtIntensities (numberPeptides,0);
+    std::vector<DoubleReal> sumIntensities (numberPeptides,0);
+    
+    // iterate over SILAC patterns in each cluster
     for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
          pattern_it != cluster_it->second.end();
          ++pattern_it)
     {
       const SILACPattern &pattern = *pattern_it->second;
       
-#if 1
-      // Intensity of monoisotopic peak
-      DoubleReal intensity0 = pattern.intensities[0][0];
-      
-      global_mz += intensity0 * pattern.mz;
-      global_intensity0 += intensity0;
-      
-      for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = pattern.intensities.begin();
-           shift_inten_it != pattern.intensities.end();
-           ++shift_inten_it)
-      {
-        for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
-             peak_inten_it != shift_inten_it->end();
-             ++peak_inten_it)
-        {
-          // Intensity of current peak
-          DoubleReal intensity = *peak_inten_it;
-          
-          // Add to RT value and global intensity
-          global_rt += intensity * pattern.rt;
-          global_intensity += intensity;
-        }
-      }
-#else
-      // Iterate over points per pattern
+      // iterate over SILAC points in each SILAC pattern
       for (std::vector<SILACPoint>::const_iterator point_it = pattern.points.begin();
            point_it != pattern.points.end();
            ++point_it)
       {
         const SILACPoint &point = *point_it;
         
-        // Intensity of monoisotopic peak
-        DoubleReal intensity0 = point.intensities[0][0];
-        
-        global_mz += intensity0 * point.mz;
-        global_intensity0 += intensity0;
-        
-        for (std::vector<std::vector<DoubleReal> >::const_iterator shift_inten_it = point.intensities.begin();
-             shift_inten_it != point.intensities.end();
-             ++shift_inten_it)
+        // iterate over peptides in doublet (or triplet, ...)
+        UInt peptide = 0;
+        for (std::vector<std::vector<DoubleReal> >::const_iterator peptide_it = point.intensities.begin();
+             peptide_it != point.intensities.end();
+             ++peptide_it)
         {
-          for (std::vector<DoubleReal>::const_iterator peak_inten_it = shift_inten_it->begin();
-               peak_inten_it != shift_inten_it->end();
-               ++peak_inten_it)
+          // iterate over isotopes in peptide
+          UInt isotope = 0;
+          for (std::vector<DoubleReal>::const_iterator isotope_it = peptide_it->begin();
+               isotope_it != peptide_it->end();
+               ++isotope_it)
           {
-            // Intensity of current peak
-            DoubleReal intensity = *peak_inten_it;
-            
-            // Add to RT value and global intensity
-            global_rt += intensity * point.rt;
-            global_intensity += intensity;
+            sumIntensities[peptide] += point.intensities[peptide][isotope];
+            sumMzIntensities[peptide] += (point.mz_positions[peptide][isotope] - (isotope * 1.000495 / point.charge)) * point.intensities[peptide][isotope];
+            sumRtIntensities[peptide] += point.rt * point.intensities[peptide][isotope];
+            ++isotope;
           }
+          ++peptide;
         }
+
       }
-#endif
     }
+    /*cout << "light m/z: " << sumMzIntensities[0]/sumIntensities[0] << '\n';
+    cout << "light rt: " << sumRtIntensities[0]/sumIntensities[0] << '\n';
+    cout << "heavy m/z: " << sumMzIntensities[1]/sumIntensities[1] << '\n';
+    cout << "heavy rt: " << sumRtIntensities[1]/sumIntensities[1] << '\n' << '\n';*/
 
-    // Calculate weighted RT and MZ value
-    global_rt /= global_intensity;
-    global_mz /= global_intensity0;
-
-    cluster.setRT(global_rt);
-    cluster.setMZ(global_mz);
-    cluster.setIntensity(global_intensity);
-
-    SILACPattern &pattern_first = *cluster_it->second.begin()->second;
-    Int charge = pattern_first.charge;
-
-    std::ostringstream mass_shifts_out;
-    mass_shifts_out << std::fixed << std::setprecision(4);
-
-    for (UInt shift_id = 0; shift_id < pattern_first.mass_shifts.size(); ++shift_id)
+    // consensus feature has coordinates of the light peptide
+    consensus.setMZ(sumMzIntensities[0]/sumIntensities[0]);
+    consensus.setRT(sumRtIntensities[0]/sumIntensities[0]);
+    consensus.setIntensity(sumIntensities[0]);
+    consensus.setCharge(charge);
+    consensus.setQuality(std::floor(firstPattern.mass_shifts[1] * charge));    // set Quality to the first mass shift (allows later to filter in consensXML)
+    
+    // attach features to consensus
+    for (UInt peptide = 0; peptide < numberPeptides; ++peptide)
     {
-      // XXX: Feature detection produces a stray 0 mass shift
-      if (shift_id > 0 && pattern_first.mass_shifts[shift_id] == 0)
-        continue;
-
       FeatureHandle feature;
-
-      // MZ value as weighted MZ position of monoisotopic peaks of given mass shift
-      DoubleReal shift_mz = 0;
-      // Total intensity
-      DoubleReal shift_intensity = 0;
-      // Total intensity of monoisotopic peak
-      DoubleReal shift_intensity0 = 0;
-
-      for (Clustering::Cluster::const_iterator pattern_it = cluster_it->second.begin();
-           pattern_it != cluster_it->second.end();
-           ++pattern_it)
-      {
-        SILACPattern &pattern = *pattern_it->second;
-
-        const std::vector<DoubleReal> &intensities = pattern.intensities[shift_id];
-        DoubleReal mz = pattern.mz + pattern.mass_shifts[shift_id];
-        DoubleReal intensity0 = intensities[0];
-
-        // Add to MZ value and shift intensity of monoisotopic peak
-        shift_mz += intensity0 * mz;
-        shift_intensity0 += intensity0;
-
-        for (std::vector<DoubleReal>::const_iterator peak_inten_it = intensities.begin();
-             peak_inten_it != intensities.end();
-             ++peak_inten_it)
-        {
-          shift_intensity += *peak_inten_it;
-        }
-      }
-
-      // Calculate MZ value
-      shift_mz /= shift_intensity0;
-
-      feature.setRT(global_rt);
-      feature.setMZ(shift_mz);
-      feature.setIntensity(shift_intensity);
-
+      
+      feature.setMZ(sumMzIntensities[peptide]/sumIntensities[peptide]);
+      feature.setRT(sumRtIntensities[peptide]/sumIntensities[peptide]);
+      feature.setIntensity(sumIntensities[peptide]);
       feature.setCharge(charge);
-      // XXX
-      feature.setMapIndex(shift_id);
-      out.getFileDescriptions()[shift_id].size++;
-
-      cluster.insert(feature);
-
-      // Product mass shifts string
-      mass_shifts_out << pattern_first.mass_shifts[shift_id] * charge << ';';
+      feature.setMapIndex(peptide);
+      out.getFileDescriptions()[peptide].size++;
+      
+      consensus.insert(feature);
     }
-
-    std::string mass_shifts_outs = mass_shifts_out.str(); mass_shifts_outs.erase(mass_shifts_outs.end() - 1);
-    cluster.setCharge(charge);
-    cluster.setQuality(std::floor(pattern_first.mass_shifts.at(1) * charge));
-    cluster.setMetaValue("Mass shifts [Da]", mass_shifts_outs);
-
-    out.push_back(cluster);
-  }
+    
+    // add consensus to consensus map
+    out.push_back(consensus);
+  }  
 }
 
 void TOPPSILACAnalyzer::generateClusterConsensusByPattern(ConsensusMap &out, const Clustering &clustering, UInt &cluster_id) const

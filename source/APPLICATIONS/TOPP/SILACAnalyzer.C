@@ -1117,7 +1117,7 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
           {
             sumIntensities[peptide] += point.intensities[peptide][isotope];
             sumIntensitiesXIC[peptide] += point.intensities[peptide][isotope];
-            sumMzIntensities[peptide] += (point.mz_positions[peptide][isotope] - (isotope * 1.000495 / point.charge)) * point.intensities[peptide][isotope];
+            sumMzIntensities[peptide] += (point.mz_positions[peptide][isotope] - (isotope * 1.0022 / point.charge)) * point.intensities[peptide][isotope];
             sumRtIntensities[peptide] += point.rt * point.intensities[peptide][isotope];
             ++isotope;
           }

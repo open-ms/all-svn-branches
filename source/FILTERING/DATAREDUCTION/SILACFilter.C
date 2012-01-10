@@ -56,7 +56,7 @@ namespace OpenMS
     // XXX: Move into own caller supplied class?
     if (!isotope_distribution_) isotope_distribution_ = new IsotopeDistributionCache(20000.0, 1.0, 0.0, 0.0);
 
-    isotope_distance_ = 1.0022 / (DoubleReal)charge_;    // distance between isotopic peaks of a peptide [Th]
+    isotope_distance_ = 1.003355 / (DoubleReal)charge_;    // distance between isotopic peaks of a peptide [Th]
     number_of_peptides_ = (Int) mass_separations_.size() + 1;    // number of labelled peptides +1 [e.g. for SILAC triplet =3]
     
     // m/z shifts from mass shifts

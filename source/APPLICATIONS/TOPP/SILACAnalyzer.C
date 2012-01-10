@@ -1145,8 +1145,8 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
 
     // consensus feature has coordinates of the light peptide
     consensus.setMZ(sumMzIntensities[0]/sumIntensities[0]);
-    consensus.setRT(sumRtIntensities[0]/sumIntensities[0]);
-    //consensus.setRT(RtAtMaxIntensityXIC[0]);
+    //consensus.setRT(sumRtIntensities[0]/sumIntensities[0]);
+    consensus.setRT(RtAtMaxIntensityXIC[0]);
     consensus.setIntensity(sumIntensities[0]);
     consensus.setCharge(charge);
     consensus.setQuality(std::floor(firstPattern.mass_shifts[1] * charge));    // set Quality to the first mass shift (allows later to filter in consensXML)
@@ -1157,8 +1157,8 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
       FeatureHandle feature;
       
       feature.setMZ(sumMzIntensities[peptide]/sumIntensities[peptide]);
-      feature.setRT(sumRtIntensities[peptide]/sumIntensities[peptide]);
-      //feature.setRT(RtAtMaxIntensityXIC[peptide]);
+      //feature.setRT(sumRtIntensities[peptide]/sumIntensities[peptide]);
+      feature.setRT(RtAtMaxIntensityXIC[peptide]);
       feature.setIntensity(sumIntensities[peptide]);
       feature.setCharge(charge);
       feature.setMapIndex(peptide);

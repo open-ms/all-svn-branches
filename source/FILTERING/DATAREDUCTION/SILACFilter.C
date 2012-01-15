@@ -290,6 +290,7 @@ namespace OpenMS
     pattern.mz_positions.insert(pattern.mz_positions.begin(), exact_mz_positions_.begin(), exact_mz_positions_.end());
     pattern.intensities.insert(pattern.intensities.begin(), exact_intensities_.begin(), exact_intensities_.end());
     pattern.mass_shifts.insert(pattern.mass_shifts.begin(), mz_peptide_separations_.begin(), mz_peptide_separations_.end());
+
     return true;
   }
 

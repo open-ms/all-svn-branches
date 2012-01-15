@@ -1096,6 +1096,33 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
       const SILACPattern &pattern = *pattern_it->second;
       std::vector<DoubleReal> sumIntensitiesXIC (numberPeptides,0);    // sums intensities at fixed rt (for XIC)
       
+      
+      
+      /*// START TEST
+      // START TEST      
+      cout << '\n' << "closer look at pattern: " << '\n';     
+      // iterate over peptides in doublet (or triplet, ...)
+      UInt peptide = 0;
+      for (std::vector<std::vector<DoubleReal> >::const_iterator peptide_it = pattern.mz_positions.begin();
+           peptide_it != pattern.mz_positions.end();
+           ++peptide_it)
+      {
+        // iterate over isotopes in peptide
+        UInt isotope = 0;
+        for (std::vector<DoubleReal>::const_iterator isotope_it = peptide_it->begin();
+             isotope_it != peptide_it->end();
+             ++isotope_it)
+        {
+          cout << "peptide: " << peptide << "   isotope: " << isotope << "   m/z position: " << pattern.mz_positions[peptide][isotope] << '\n';
+          ++isotope;
+        }
+        ++peptide;
+      }
+      // END TEST
+      // END TEST*/
+     
+      
+      
       // iterate over SILAC points in each SILAC pattern
       for (std::vector<SILACPoint>::const_iterator point_it = pattern.points.begin();
            point_it != pattern.points.end();
@@ -1117,7 +1144,8 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
           {
             sumIntensities[peptide] += point.intensities[peptide][isotope];
             sumIntensitiesXIC[peptide] += point.intensities[peptide][isotope];
-            sumMzIntensities[peptide] += (point.mz_positions[peptide][isotope] - (isotope * 1.003355 / point.charge)) * point.intensities[peptide][isotope];
+            //sumMzIntensities[peptide] += (point.mz_positions[peptide][isotope] - (isotope * 1.003355 / point.charge)) * point.intensities[peptide][isotope];
+            sumMzIntensities[peptide] += (pattern.mz_positions[peptide][isotope] - (isotope * 1.003355 / point.charge)) * point.intensities[peptide][isotope];
             sumRtIntensities[peptide] += point.rt * point.intensities[peptide][isotope];
             ++isotope;
           }

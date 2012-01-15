@@ -1085,6 +1085,7 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
     std::vector<DoubleReal> sumMzIntensities (numberPeptides,0);    // sum m/z * intensity (for intensity-weighted m/z average)
     std::vector<DoubleReal> sumRtIntensities (numberPeptides,0);    // sum rt * intensity (for intensity-weighted rt average)
     std::vector<DoubleReal> sumIntensities (numberPeptides,0);    // sum intensity (for 'feature volume' = peptide intensity)
+    std::vector<DoubleReal> sumIntensitiesAllPeptides (numberPeptides,0);    // sum intensity of all peptides (needed for m/z normalisation of sumMzIntensities)
     std::vector<DoubleReal> maxIntensityXIC (numberPeptides,0);    // tracks maximum of sumIntensitiesXIC
     std::vector<DoubleReal> RtAtMaxIntensityXIC (numberPeptides,0);    // tracks rt at maximum of sumIntensitiesXIC
     
@@ -1096,33 +1097,6 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
       const SILACPattern &pattern = *pattern_it->second;
       std::vector<DoubleReal> sumIntensitiesXIC (numberPeptides,0);    // sums intensities at fixed rt (for XIC)
       
-      
-      
-      /*// START TEST
-      // START TEST      
-      cout << '\n' << "closer look at pattern: " << '\n';     
-      // iterate over peptides in doublet (or triplet, ...)
-      UInt peptide = 0;
-      for (std::vector<std::vector<DoubleReal> >::const_iterator peptide_it = pattern.mz_positions.begin();
-           peptide_it != pattern.mz_positions.end();
-           ++peptide_it)
-      {
-        // iterate over isotopes in peptide
-        UInt isotope = 0;
-        for (std::vector<DoubleReal>::const_iterator isotope_it = peptide_it->begin();
-             isotope_it != peptide_it->end();
-             ++isotope_it)
-        {
-          cout << "peptide: " << peptide << "   isotope: " << isotope << "   m/z position: " << pattern.mz_positions[peptide][isotope] << '\n';
-          ++isotope;
-        }
-        ++peptide;
-      }
-      // END TEST
-      // END TEST*/
-     
-      
-      
       // iterate over SILAC points in each SILAC pattern
       for (std::vector<SILACPoint>::const_iterator point_it = pattern.points.begin();
            point_it != pattern.points.end();
@@ -1131,23 +1105,36 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
         const SILACPoint &point = *point_it;
         
         // iterate over peptides in doublet (or triplet, ...)
-        UInt peptide = 0;
+        UInt peptide = 0;    // peptide for which intensity, retention time and m/z are to be calculated
         for (std::vector<std::vector<DoubleReal> >::const_iterator peptide_it = point.intensities.begin();
              peptide_it != point.intensities.end();
              ++peptide_it)
         {
-          // iterate over isotopes in peptide
-          UInt isotope = 0;
-          for (std::vector<DoubleReal>::const_iterator isotope_it = peptide_it->begin();
+          // iterate over peptides in doublet (or triplet, ...)
+          UInt peptide2 = 0;    // for m/z calculation we take data from other peptides also into account, hence a second peptide loop
+          for (std::vector<std::vector<DoubleReal> >::const_iterator peptide_it2 = point.intensities.begin();
+               peptide_it2 != point.intensities.end();
+               ++peptide_it2)
+          {
+            // iterate over isotopes in peptide
+            UInt isotope = 0;
+            for (std::vector<DoubleReal>::const_iterator isotope_it = peptide_it->begin();
                isotope_it != peptide_it->end();
                ++isotope_it)
-          {
-            sumIntensities[peptide] += point.intensities[peptide][isotope];
-            sumIntensitiesXIC[peptide] += point.intensities[peptide][isotope];
-            //sumMzIntensities[peptide] += (point.mz_positions[peptide][isotope] - (isotope * 1.003355 / point.charge)) * point.intensities[peptide][isotope];
-            sumMzIntensities[peptide] += (pattern.mz_positions[peptide][isotope] - (isotope * 1.003355 / point.charge)) * point.intensities[peptide][isotope];
-            sumRtIntensities[peptide] += point.rt * point.intensities[peptide][isotope];
-            ++isotope;
+            {
+              if (peptide2==peptide)
+              {
+                sumIntensities[peptide] += point.intensities[peptide][isotope];
+                sumIntensitiesXIC[peptide] += point.intensities[peptide][isotope];
+                sumRtIntensities[peptide] += point.rt * point.intensities[peptide][isotope];           
+              }
+              //sumMzIntensities[peptide] += (point.mz_positions[peptide][isotope] - (isotope * 1.003355 / point.charge)) * point.intensities[peptide][isotope];
+              //sumMzIntensities[peptide] += (pattern.mz_positions[peptide][isotope] - (isotope * 1.003355 / point.charge)) * point.intensities[peptide][isotope];
+              sumMzIntensities[peptide] += (pattern.mz_positions[peptide2][isotope] - pattern.mass_shifts[peptide2] + pattern.mass_shifts[peptide] - (isotope * 1.003355 / point.charge)) * point.intensities[peptide2][isotope];    // N.B. pattern.mass_shifts[] is in fact an m/z shift
+              sumIntensitiesAllPeptides[peptide] += point.intensities[peptide2][isotope];
+              ++isotope;
+            }
+            ++peptide2;
           }
           ++peptide;
         }
@@ -1164,15 +1151,15 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
         }
       }
     }
-    /*cout << "light m/z: " << sumMzIntensities[0]/sumIntensities[0] << '\n';
+    cout << "light m/z: " << sumMzIntensities[0]/sumIntensitiesAllPeptides[0] << '\n';
     cout << "light rt (intensity averaged): " << sumRtIntensities[0]/sumIntensities[0] << '\n';
     cout << "light rt (at max XIC): " << RtAtMaxIntensityXIC[0] << '\n';
-    cout << "heavy m/z: " << sumMzIntensities[1]/sumIntensities[1] << '\n';
+    cout << "heavy m/z: " << sumMzIntensities[1]/sumIntensitiesAllPeptides[1] << '\n';
     cout << "heavy rt (intensity averaged): " << sumRtIntensities[1]/sumIntensities[1] << '\n';
-    cout << "heavy rt (at max XIC): " << RtAtMaxIntensityXIC[1] << '\n' << '\n';*/
+    cout << "heavy rt (at max XIC): " << RtAtMaxIntensityXIC[1] << '\n' << '\n';
 
     // consensus feature has coordinates of the light peptide
-    consensus.setMZ(sumMzIntensities[0]/sumIntensities[0]);
+    consensus.setMZ(sumMzIntensities[0]/sumIntensitiesAllPeptides[0]);
     //consensus.setRT(sumRtIntensities[0]/sumIntensities[0]);
     consensus.setRT(RtAtMaxIntensityXIC[0]);
     consensus.setIntensity(sumIntensities[0]);
@@ -1184,7 +1171,7 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
     {
       FeatureHandle feature;
       
-      feature.setMZ(sumMzIntensities[peptide]/sumIntensities[peptide]);
+      feature.setMZ(sumMzIntensities[peptide]/sumIntensitiesAllPeptides[peptide]);
       //feature.setRT(sumRtIntensities[peptide]/sumIntensities[peptide]);
       feature.setRT(RtAtMaxIntensityXIC[peptide]);
       feature.setIntensity(sumIntensities[peptide]);

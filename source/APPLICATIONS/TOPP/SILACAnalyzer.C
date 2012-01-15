@@ -1151,12 +1151,12 @@ void TOPPSILACAnalyzer::generateClusterConsensusByCluster(ConsensusMap &out, con
         }
       }
     }
-    cout << "light m/z: " << sumMzIntensities[0]/sumIntensitiesAllPeptides[0] << '\n';
+    /*cout << "light m/z: " << sumMzIntensities[0]/sumIntensitiesAllPeptides[0] << '\n';
     cout << "light rt (intensity averaged): " << sumRtIntensities[0]/sumIntensities[0] << '\n';
     cout << "light rt (at max XIC): " << RtAtMaxIntensityXIC[0] << '\n';
     cout << "heavy m/z: " << sumMzIntensities[1]/sumIntensitiesAllPeptides[1] << '\n';
     cout << "heavy rt (intensity averaged): " << sumRtIntensities[1]/sumIntensities[1] << '\n';
-    cout << "heavy rt (at max XIC): " << RtAtMaxIntensityXIC[1] << '\n' << '\n';
+    cout << "heavy rt (at max XIC): " << RtAtMaxIntensityXIC[1] << '\n' << '\n';*/
 
     // consensus feature has coordinates of the light peptide
     consensus.setMZ(sumMzIntensities[0]/sumIntensitiesAllPeptides[0]);

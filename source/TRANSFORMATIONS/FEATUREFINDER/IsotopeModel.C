@@ -49,7 +49,7 @@ namespace OpenMS
 		defaults_.setValue("averagines:S",0.00037525f,"Number of S atoms per Dalton of mass.", StringList::create("advanced"));
 		defaults_.setValue("isotope:trim_right_cutoff",0.001,"Cutoff in averagine distribution, trailing isotopes below this relative intensity are not considered.", StringList::create("advanced"));
 		defaults_.setValue("isotope:maximum",100,"Maximum isotopic rank to be considered.", StringList::create("advanced"));
-		defaults_.setValue("isotope:distance",1.000495,"Distance between consecutive isotopic peaks.", StringList::create("advanced"));
+		defaults_.setValue("isotope:distance",1.003355,"Distance between consecutive isotopic peaks.", StringList::create("advanced"));
 
     
     defaults_.setValue("isotope:mode:mode","Gaussian","Peak Shape used around each isotope peak.", StringList::create("advanced"));

@@ -278,11 +278,14 @@ namespace OpenMS
 
       /**
        * @brief Erases element on given iterator.
+       * @return Iterator to next element.
        */
-      void erase(iterator pos)
+      iterator erase(iterator pos)
       {
-        CellContent &cell = pos.grid_it_->second;
-        cell.erase(pos.cell_it_);
+        iterator mod = pos++;
+        CellContent &cell = mod.grid_it_->second;
+        cell.erase(mod.cell_it_);
+        return pos;
       }
 
       /**

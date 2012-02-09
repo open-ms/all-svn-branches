@@ -76,9 +76,9 @@ START_SECTION(iterator erase(iterator pos))
 
   TEST_EQUAL(t.size(), 1);
   TestGrid::iterator it = t.begin();
-  TestGrid::iterator it2 = t.erase(it);
+  it = t.erase(it);
   TEST_EQUAL(t.size(), 0);
-  TEST_EQUAL(it2 == t.end(), true);
+  TEST_EQUAL(it == t.end(), true);
 END_SECTION
 
 START_SECTION(size_type erase(const key_type& key))

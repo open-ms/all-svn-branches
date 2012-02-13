@@ -172,6 +172,7 @@ protected:
 		String sim_results = getStringOption_("sim_results");
 		bool load_preprocessing = getFlag_("load_preprocessing");
 		bool store_preprocessing = getFlag_("store_preprocessing");
+    // bool offline = getFlag_("offline");
 		String rt_model = getStringOption_("rt_model");
 		String dt_model = getStringOption_("dt_model");
     String solver(getStringOption_("solver"));
@@ -192,6 +193,7 @@ protected:
     pisp.setFixedModifications(fixed_mods);
     if(load_preprocessing)
     {
+      std::cout << "load preprocessing"<<std::endl;
       pisp.loadPreprocessing();
     }
 		else if(db_path=="")
@@ -240,9 +242,47 @@ protected:
     //-------------------------------------------------------------
 		
 		if(simulation)
-    {
-      pis.simulateRun(f_map,pep_ids,prot_ids,pisp,sim_results, exp,rt_model,prec_path);
-    }
+      {
+        pis.simulateRun(f_map,pep_ids,prot_ids,pisp,sim_results, exp,rt_model,prec_path);
+      }
+    // else if(offline)
+    //   {
+    //     if(db_path == "")
+    //       {
+    //         std::cout << "Error: no database file specified."<<std::endl;
+    //         return ILLEGAL_PARAMETERS;
+    //       }
+    //     if(out == "")
+    //       {
+    //         std::cout << "Error: no output file specified."<<std::endl;
+    //         return ILLEGAL_PARAMETERS;
+    //       }
+    //     std::cout << "now learn rt probabilities"<<std::endl;
+    //     //pisp.learnRTProbabilities(f_map,rt_model,0.5);
+    //     pisp.setGaussianParameters(3,-1);
+    //     //pisp.setRTLambda(1.60558);
+    //     //return EXECUTION_OK;
+    //     PSLPFormulation ilp_wrapper;
+    //     Param opis_param = getParam_().copy("algorithm:",true);
+    //     opis_param.removeAll("preprocessing");
+    //     opis_param.removeAll("PrecursorIonSelection");
+    //     opis_param.removeAll("rt_weighting");
+    //     opis_param.insert("rt_weighting",pisp_param);
+    //     opis_param.setValue("inclusion_list:min_prot_coverage",opis_param.getValue("protein_id_probability_threshold"));
+    //     opis_param.remove("protein_id_probability_threshold");
+    //     ilp_wrapper.setParameters(opis_param);
+    //     std::cout <<"use_prot_coverage? "<< opis_param.getValue("inclusion_list:use_prot_coverage")<<std::endl;
+    //     std::cout <<"min_prot_coverage? "<< opis_param.getValue("inclusion_list:min_prot_coverage")<<std::endl;
+    //     std::cout << "nun die inclusion liste erstellen"<<std::endl;
+    //     FeatureMap<> precursors;
+    //     ilp_wrapper.createAndSolveILPForInclusionListCreation(pisp,ms2_spectra_per_rt_bin,
+    //                                                           number_of_msms_per_precursor,precursors,true);//,960.,3840.,30.);
+    //     std::cout <<"now store precursors "<<precursors.size()<< " "<<out<<std::endl;
+    //     FeatureXMLFile().store(out,precursors);
+    //     return EXECUTION_OK;
+    //     //  opis.createInclusionListForKnownProteinsInSample(entries,dt_model,rt_model,out);
+    //   }
+    
 		else
     {
 				

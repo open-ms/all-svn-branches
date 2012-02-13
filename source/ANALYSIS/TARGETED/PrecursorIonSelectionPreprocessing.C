@@ -58,8 +58,8 @@ namespace OpenMS
 
 
     defaults_.setValue("preprocessed_db_path","","Path where the preprocessed database should be stored");
-    defaults_.setValue("preprocessed_db_pred_rt_path","","Path where the predicted rts of the preprocessed database should be stored");
-    defaults_.setValue("preprocessed_db_pred_dt_path","","Path where the predicted rts of the preprocessed database should be stored");
+    // defaults_.setValue("preprocessed_db_pred_rt_path","","Path where the predicted rts of the preprocessed database should be stored");
+    // defaults_.setValue("preprocessed_db_pred_dt_path","","Path where the predicted rts of the preprocessed database should be stored");
     defaults_.setValue("max_peptides_per_run",100000,"Number of peptides for that the pt and rt are parallely predicted.");
     defaults_.setMinInt("max_peptides_per_run",1);
     defaults_.setValue("missed_cleavages",1,"Number of allowed missed cleavages.");
@@ -98,6 +98,12 @@ namespace OpenMS
     return *this;
   }
 
+  void PrecursorIonSelectionPreprocessing::setGaussianParameters(DoubleReal sigma, DoubleReal mu)
+  {
+    rt_prob_.setGaussianParameters(sigma,mu);
+  }
+
+  
   void PrecursorIonSelectionPreprocessing::setFixedModifications(StringList& modifications)
   {
     for(Size i = 0; i < modifications.size();++i)
@@ -274,7 +280,7 @@ namespace OpenMS
   {
     // first check if preprocessed db already exists
     String path = param_.getValue("preprocessed_db_path");
-
+    std::cout << path << std::endl;
     // check if file exists
     std::ifstream test(path.c_str());
     if(test)

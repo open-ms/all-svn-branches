@@ -29,13 +29,13 @@
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/METADATA/ProteinIdentification.h>
 #include <OpenMS/METADATA/PeptideIdentification.h>
-
+#include <OpenMS/ANALYSIS/TARGETED/PrecursorIonSelectionPreprocessing.h>
 #include <OpenMS/KERNEL/ComparatorUtils.h>
 
 namespace OpenMS
 {
 
-OfflinePrecursorIonSelection::OfflinePrecursorIonSelection() : DefaultParamHandler("OfflinePrecursorIonSelection")
+OfflinePrecursorIonSelection::OfflinePrecursorIonSelection() : DefaultParamHandler("OfflinePrecursorIonSelection"),solver_(LPWrapper::SOLVER_GLPK)
 {  
 	defaults_.setValue("ms2_spectra_per_rt_bin",5,"Number of allowed MS/MS spectra in a retention time bin.");
 	defaults_.setMinInt("ms2_spectra_per_rt_bin",1);
@@ -54,6 +54,18 @@ OfflinePrecursorIonSelection::OfflinePrecursorIonSelection() : DefaultParamHandl
 
   defaults_.setValue("Exclusion:exclusion_time",100.,"The time (in seconds) a feature is excluded.");
   defaults_.setMinFloat("Exclusion:exclusion_time",0.);
+
+  defaults_.insert("ProteinBasedInclusion:",PSLPFormulation().getDefaults());
+  defaults_.remove("ProteinBasedInclusion:mz_tolerance");
+  defaults_.remove("ProteinBasedInclusion:combined_ilp:");
+  defaults_.remove("ProteinBasedInclusion:thresholds:min_protein_probability");
+  defaults_.remove("ProteinBasedInclusion:thresholds:min_pred_pep_prob");
+  defaults_.remove("ProteinBasedInclusion:thresholds:min_rt_weight");
+
+  defaults_.setValue("ProteinBasedInclusion:max_list_size",1000,"The maximal number of precursors in the inclusion list.");
+  defaults_.setMinInt("ProteinBasedInclusion:max_list_size",1);
+  
+
 	defaultsToParam_();
 }
 
@@ -62,4 +74,30 @@ OfflinePrecursorIonSelection::~OfflinePrecursorIonSelection()
 
 }
 
+
+void OfflinePrecursorIonSelection::createProteinSequenceBasedLPInclusionList(String include,String rt_model_file,String pt_model_file,
+                                                                             FeatureMap<>& precursors)
+{
+  PrecursorIonSelectionPreprocessing pisp;
+  Param pisp_param = pisp.getParameters();
+  pisp_param.setValue("store_peptide_sequences","true");
+  pisp.setParameters(pisp_param);
+  pisp.dbPreprocessing(include,rt_model_file,pt_model_file,false);
+  std::cout << "now learn rt probabilities"<<std::endl;
+  //pisp.learnRTProbabilities(f_map,rt_model,0.5);
+  pisp.setGaussianParameters(3,-1);
+  PSLPFormulation ilp_wrapper;
+  Param opis_param = param_.copy("ProteinBasedInclusion:",true);
+  opis_param.remove("max_list_size");
+  ilp_wrapper.setParameters(opis_param);
+  ilp_wrapper.setLPSolver(solver_);
+  std::cout << "nun die inclusion liste erstellen"<<std::endl;
+  std::cout << param_.getValue("ms2_spectra_per_rt_bin") <<std::endl;
+  std::cout << param_.getValue("ProteinBasedInclusion:max_list_size") <<std::endl;
+  ilp_wrapper.createAndSolveILPForInclusionListCreation(pisp,param_.getValue("ms2_spectra_per_rt_bin"),
+                                                        param_.getValue("ProteinBasedInclusion:max_list_size"),precursors,true);//,960.,3840.,30.);
+
+  ///TODO: create inclusion list
+}
+  
 }

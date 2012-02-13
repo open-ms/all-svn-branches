@@ -113,7 +113,9 @@ namespace OpenMS
     
 		void learnRTProbabilities(FeatureMap<>& features,String rt_model_path,DoubleReal min_score=0.5,bool higherScoreBetter=true,
                               bool use_detectability=true);
-    
+
+    void setGaussianParameters(DoubleReal sigma, DoubleReal mu);
+
 
     DoubleReal getRTDTProbability(DoubleReal value);
 		void setFixedModifications(StringList& modifications);

@@ -100,15 +100,17 @@ protected:
     registerOutputFile_("out", "<file>", "", "output file (tab delimited).");
     setValidFormats_("out",StringList::create("featureXML,tsv"));
     registerInputFile_("rt_model","<file>","","RTModel file used for the rt prediction of peptides in FASTA files.",false);
+    registerInputFile_("pt_model","<file>","","PTModel file used for the pt prediction of peptides in FASTA files.",false);
     //in FASTA or featureXML
     registerIntList_("inclusion_charges","<charge>",IntList(),"List containing the charge states to be considered for the inclusion list compounds, space separated.",false);
     setMinInt_("inclusion_charges", 1);
     registerIntList_("exclusion_charges","<charge>",IntList(),"List containing the charge states to be considered for the exclusion list compounds (for idXML and FASTA input), space separated.",false);
     setMinInt_("exclusion_charges", 1);
     registerStringOption_("inclusion_strategy","<name>","ALL","strategy to be used for selection",false);
-    setValidStrings_("inclusion_strategy", StringList::create("ILP,GA,DDA,PS_ILP,ALL"));
-    registerIntOption_("num_precursors_per_spot","<Int>",1,"number of precursors per spot to be selected",false);
+    setValidStrings_("inclusion_strategy", StringList::create("ILP,GA,DDA,PS_LP,ALL"));
     registerStringOption_("raw_data","<mzDataFile>","","File containing the raw data",false);
+    registerStringOption_("solver","<solver-type>","GLPK","LP solver type",false,true);
+    setValidStrings_("solver",StringList::create("GLPK,COINOR"));
 
     //    setValidFormats_("out", StringList::create("TraML"));
 
@@ -119,8 +121,10 @@ protected:
   {
     // there is only one subsection: 'algorithm' (s.a) .. and in it belongs the InclusionExclusionList param
     InclusionExclusionList fdc;
+    OfflinePrecursorIonSelection ops;
     Param tmp;
     tmp.insert("InclusionExclusionList:",fdc.getParameters());
+    tmp.insert("PrecursorSelection:",ops.getParameters());
     return tmp;
   }
 
@@ -150,7 +154,9 @@ protected:
 		IntList incl_charges(getIntList_("inclusion_charges"));
     IntList excl_charges(getIntList_("exclusion_charges"));
     String rt_model_file(getStringOption_("rt_model"));
+    String pt_model_file(getStringOption_("pt_model"));
     String strategy = getStringOption_("inclusion_strategy");
+    String solver(getStringOption_("solver"));
     //-------------------------------------------------------------
     // loading input: inclusion list part
     //-------------------------------------------------------------
@@ -162,10 +168,6 @@ protected:
 
     InclusionExclusionList list;
     list.setParameters(iel_param);
-
-
-    std::cout << "\n\n\n\n" << iel_param.getValue("RT:unit") << "\n\n";
-
 
     if (include != "")
     {
@@ -200,15 +202,13 @@ protected:
           }
         else
           {
-            UInt spot_cap = getIntOption_("num_precursors_per_spot");
             String raw_data_path = getStringOption_("raw_data");
             MSExperiment<> exp,ms2;
             FeatureMap<> out_map;
             MzDataFile().load(raw_data_path,exp);
  
             OfflinePrecursorIonSelection opis;
-            Param param;
-            param.setValue("ms2_spectra_per_rt_bin",spot_cap);
+            Param param = getParam_().copy("algorithm:PrecursorSelection:",true);
             opis.setParameters(param);
             
             std::set<Int> charges_set;
@@ -254,6 +254,7 @@ protected:
               }
             else if(strategy == "GA") // greedy approach: take highest signal for each feature
               {
+                Size spot_cap = getParam_().getValue("PrecursorSelection:ms2_spectra_per_rt_bin");
                 sort(map.begin(),map.end(),PrecursorIonSelection::TotalScoreMore());
                 std::vector<Size> rt_sizes(exp.size(),0);
                 DoubleReal min_rt = (exp.RTBegin(0))->getRT();
@@ -277,6 +278,7 @@ protected:
               }
             else if(strategy == "ILP") // ILP
               {
+                Size spot_cap = getParam_().getValue("PrecursorSelection:ms2_spectra_per_rt_bin");
                 // create ILP
                 PSLPFormulation ilp_wrapper;
                 // get the mass ranges for each features for each scan it occurs in
@@ -309,38 +311,75 @@ protected:
                   }
               }//else if(strategy == "ILP") // ILP
             FeatureXMLFile().store(out,out_map);
+            return EXECUTION_OK;
           } // else  von if(strategy == "ALL")
 
       
       }
       else // FASTA format
       {
-        if (!File::exists(rt_model_file))
-        {
-          writeLog_("Error: RT model file required for FASTA input to predict RT elution time.");
-          return MISSING_PARAMETERS;
-        }
-        if(incl_charges.empty())
-        {
-          writeLog_("Error: Protein sequences for inclusion given, but no charge states specified.");
-          return MISSING_PARAMETERS;
-        }
-        std::vector<FASTAFile::FASTAEntry> entries;
-        // load fasta-file
-        FASTAFile().load(include,entries);
-        // convert to targeted experiment
-				// if traML output
-        //list.loadTargets(entries,incl_targets,exp,missed_cleavages);
-				// if tab-delimited output
-				try
-				{
-					list.writeTargets(entries,out,incl_charges,rt_model_file);
-				}
-				catch(Exception::UnableToCreateFile)
-        {
-          writeLog_("Error: Unable to create output file.");
-          return CANNOT_WRITE_OUTPUT_FILE;
-				}
+        if(strategy == "PS_LP")
+          {
+            if (!File::exists(rt_model_file))
+              {
+                writeLog_("Error: RT model file required for FASTA input to predict RT elution time.");
+                return MISSING_PARAMETERS;
+              }
+            if (!File::exists(pt_model_file))
+              {
+                writeLog_("Error: PT model file required for FASTA input to predict peptide proteotypicity.");
+                return MISSING_PARAMETERS;
+              }
+            
+            OfflinePrecursorIonSelection opis;        
+            Param param = getParam_().copy("algorithm:PrecursorSelection:",true);
+            opis.setParameters(param);
+#if COINOR_SOLVER==1  
+            if(solver == "GLPK")
+              {
+                opis.setLPSolver(LPWrapper::SOLVER_GLPK);
+                std::cout << "set solver to GLPK"<<std::endl;
+              }
+            else opis.setLPSolver(LPWrapper::SOLVER_COINOR); std::cout << "set solver to COINOR"<<std::endl;
+#endif
+
+            FeatureMap<> precursors;
+            opis.createProteinSequenceBasedLPInclusionList(include,rt_model_file,pt_model_file,precursors);
+            
+            std::cout <<"now store precursors "<<precursors.size()<< " "<<out<<std::endl;
+            FeatureXMLFile().store(out,precursors);
+            return EXECUTION_OK;
+
+          }
+        else
+          {
+            if (!File::exists(rt_model_file))
+              {
+                writeLog_("Error: RT model file required for FASTA input to predict RT elution time.");
+                return MISSING_PARAMETERS;
+              }
+            if(incl_charges.empty())
+              {
+                writeLog_("Error: Protein sequences for inclusion given, but no charge states specified.");
+                return MISSING_PARAMETERS;
+              }
+            std::vector<FASTAFile::FASTAEntry> entries;
+            // load fasta-file
+            FASTAFile().load(include,entries);
+            // convert to targeted experiment
+            // if traML output
+            //list.loadTargets(entries,incl_targets,exp,missed_cleavages);
+            // if tab-delimited output
+            try
+              {
+                list.writeTargets(entries,out,incl_charges,rt_model_file);
+              }
+            catch(Exception::UnableToCreateFile)
+              {
+                writeLog_("Error: Unable to create output file.");
+                return CANNOT_WRITE_OUTPUT_FILE;
+              }
+          }
       }
 
 			//        exp.setIncludeTargets(incl_targets);

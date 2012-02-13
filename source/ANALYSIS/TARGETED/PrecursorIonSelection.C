@@ -625,6 +625,7 @@ namespace OpenMS
                                            std::vector<ProteinIdentification>& prot_ids,
                                            PrecursorIonSelectionPreprocessing& preprocessed_db,String path,String precursor_path)
 	{
+#define PIS_DEBUG
     UInt step_size(param_.getValue("step_size"));
 		sortByTotalScore(features);
 		std::ofstream outf(path.c_str());
@@ -646,7 +647,7 @@ namespace OpenMS
 		// TODO: wirklich mit deltas? oder lieber ueber convex hulls? Anm v. Chris: IDMapper benutzt CH's + Deltas wenn CH vorhanden sind
 		IDMapper mapper;
 		Param p = mapper.getParameters();
-		p.setValue("rt_tolerance", 20.);
+		p.setValue("rt_tolerance", 30.);
 		p.setValue("mz_tolerance", 0.05);
 		p.setValue("mz_measure","Da");
     p.setValue("ignore_charge","true");
@@ -801,7 +802,7 @@ namespace OpenMS
 				if(curr_pep_ids.size() == 0)
 					{
 						// necessary for making the figures later
-						UInt num_prots = protein_inference.findMinimalProteinList(all_pep_ids); //filterProtIds_(all_prot_ids);
+						protein_inference.findMinimalProteinList(all_pep_ids); //filterProtIds_(all_prot_ids);
             protein_inference.calculateProteinProbabilities(all_pep_ids);
             UInt num_prot_ids = protein_inference.getNumberOfProtIds(protein_id_threshold);				
 						outf << iteration << "\t\t"  
@@ -816,7 +817,7 @@ namespace OpenMS
 					}
         
  //				UInt num_prots = filterProtIds_(all_prot_ids);
-        UInt num_prots =  protein_inference.findMinimalProteinList(all_pep_ids);
+        protein_inference.findMinimalProteinList(all_pep_ids);
         protein_inference.calculateProteinProbabilities(all_pep_ids);
 
         UInt num_prot_ids = protein_inference.getNumberOfProtIds(protein_id_threshold);				
@@ -890,7 +891,7 @@ namespace OpenMS
 			}
 #endif
 		
-		
+#undef PIS_DEBUG		
 	}
 
 
@@ -1070,7 +1071,7 @@ namespace OpenMS
 									{
 										std::cout << "pred_pt "<<pep_ids[0].getHits()[0].getMetaValue("predicted_PT")<<"\t";
 									}
-								std::cout << pep_ids[0].getHits()[0].getScore() << " "
+								std::cout << "score: " <<pep_ids[0].getHits()[0].getScore() << " "
 													<< pep_ids[0].getSignificanceThreshold() << " "
 													<< pep_ids[0].getHits()[0].getMetaValue("Rank");
 								if(pep_ids[0].getHits()[0].getProteinAccessions().size()>0)

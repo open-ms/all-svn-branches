@@ -535,7 +535,11 @@ namespace OpenMS
         model_->writeMps(filename.c_str());
       }
 #endif
-    else throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+    else
+      {
+        std::cout << solver_ << " "<<format << " "<<filename<<std::endl;
+        throw Exception::NotImplemented(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+      }
   }
 
   Int LPWrapper::solve(SolverParam& solver_param, const Size verbose_level)

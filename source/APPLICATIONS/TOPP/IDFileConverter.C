@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -75,7 +75,7 @@ In contrast, support for converting from idXML to pepXML is limited. The purpose
 Some information about the supported input types:
   @ref OpenMS::MzIdentMLFile "MzIdentML"
   @ref OpenMS::PepXMLFile "PepXML"
-  @ref OpenMS::ProtMLFile "ProtXML"
+  @ref OpenMS::ProtXMLFile "ProtXML"
   @ref OpenMS::IdXMLFile "idXML"
 
 	<B>The command line parameters of this tool are:</B>

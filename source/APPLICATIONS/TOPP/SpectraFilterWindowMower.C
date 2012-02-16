@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -36,7 +36,7 @@ using namespace OpenMS;
 using namespace std;
 
 /**
-	@page TOPP_SpectraFilterThresholdMower SpectraFilterThresholdMower
+  @page TOPP_SpectraFilterWindowMower SpectraFilterWindowMower
 
 	@brief Filters the top Peaks in the given spectra according to a given schema/thresholdset
 	
@@ -48,7 +48,7 @@ using namespace std;
 			<td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. successor tools </td>
 		</tr>
 		<tr>
-			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_PeakPicker </td>
+      <td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_PeakPickerWavelet </td>
 			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> any tool operating on MS peak data @n (in mzML format)</td>
 		</tr>
 	</table>
@@ -57,7 +57,7 @@ using namespace std;
 
 
 	<B>The command line parameters of this tool are:</B>
-	@verbinclude TOPP_SpectraFilterThresholdMower.cli
+  @verbinclude TOPP_SpectraFilterWindowMower.cli
 
 	For the parameters of the algorithm section see the class documentation: @n
 		@ref OpenMS::WindowMower @n

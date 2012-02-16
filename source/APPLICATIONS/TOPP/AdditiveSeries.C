@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -60,7 +60,7 @@ typedef Feature::CoordinateType CoordinateType;
 			<td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. successor tools </td>
 		</tr>
 		<tr>
-			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_FeatureFinder </td>
+      <td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_FeatureFinderCentroided </td>
 			<td VALIGN="middle" ALIGN = "center" ROWSPAN=2> - </td>
 		</tr>
 		<tr>
@@ -396,7 +396,7 @@ class AdditiveSeries
 		cout << "Found feature pairs: " <<  intensities.size() << endl;
 		cout << "Spiked concentrations: " << sp_concentrations.size() << endl;
 
-		if (intensities.size() == 0 || sp_concentrations.size() == 0 )
+		if (intensities.empty() || sp_concentrations.empty() )
 		{
 
 			writeLog_("Did not find any data. Aborting!");

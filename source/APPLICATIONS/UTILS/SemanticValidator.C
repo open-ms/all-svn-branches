@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -108,7 +108,7 @@ class TOPPSemanticValidator
       cout << "Error: " << errors[i] << endl;
     }
 
-		if (warnings.size() == 0 && errors.size() == 0)
+		if (warnings.empty() && errors.empty())
 		{
 			cout << "Congratulations, the file is valid!" << endl;
 		}

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -273,7 +273,7 @@ class TOPPIDFilter
 			{
 				for(vector<PeptideHit>::const_iterator it = identifications_exclusion[i].getHits().begin();
 						it != identifications_exclusion[i].getHits().end();
-						it++)
+            ++it )
 				{
 					exclusion_peptides.insert(it->getSequence().toString());
 				}

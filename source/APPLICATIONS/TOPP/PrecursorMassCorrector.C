@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -188,7 +188,7 @@ class TOPPPrecursorMassCorrector
 					while (ms2_it != exp.end() && ms2_it->getMSLevel() == 2)
 					{
 						// first: error checks
-						if (ms2_it->getPrecursors().size() == 0)
+						if (ms2_it->getPrecursors().empty())
 						{
 							writeDebug_("Warning: found no precursors of spectrum RT=" + String(ms2_it->getRT()) + ", skipping it.", 1);
 							++ms2_it;
@@ -216,7 +216,7 @@ class TOPPPrecursorMassCorrector
 						new_exp.updateRanges();
 						FeatureMap<> features, seeds;
 						ff.run("isotope_wavelet", new_exp, features, ff_param, seeds);
-						if (features.size() == 0)
+						if (features.empty())
 						{
 							writeDebug_("No features found for scan RT=" + String(ms1_it->getRT()), 1);
 							++ms2_it;

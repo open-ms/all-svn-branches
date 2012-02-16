@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -358,7 +358,6 @@ class TOPPPepNovoAdapter
           ProteinIdentification protein_identification;
 
           PepNovoOutfile p_novo_outfile;
-          vector<PeptideIdentification>::iterator id_vec_it=peptide_identifications.begin();
 
           //resolve PTMs (match them back to the OpenMs Identifier String)
           std::vector<ProteinIdentification>prot_ids;

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -57,7 +57,7 @@ using namespace std;
 			<td VALIGN="middle" ALIGN = "center" ROWSPAN=2> - </td>
 		</tr>
 		<tr>
-			<td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_FeatureFinder </td>
+      <td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_FeatureFinderCentroided </td>
 		</tr>
 	</table>
 	</CENTER>
@@ -93,11 +93,11 @@ protected:
 
   void registerOptionsAndFlags_()
   {
-    registerInputFile_("include", "<file>", "", "inclusion list input file in FASTA or featureXML format.",false);
+    registerInputFile_("include", "<file>", "", "Inclusion list input file in FASTA or featureXML format.",false);
     setValidFormats_("include",StringList::create("featureXML,FASTA"));
-    registerInputFile_("exclude","<file>", "", "exclusion list input file in featureXML, IdXML or FASTA format.",false);
+    registerInputFile_("exclude","<file>", "", "Exclusion list input file in featureXML, IdXML or FASTA format.",false);
     setValidFormats_("exclude",StringList::create("featureXML,IdXML,FASTA"));
-    registerOutputFile_("out", "<file>", "", "output file (tab delimited).");
+    registerOutputFile_("out", "<file>", "", "Output file (tab delimited).");
     setValidFormats_("out",StringList::create("featureXML,tsv"));
     registerInputFile_("rt_model","<file>","","RTModel file used for the rt prediction of peptides in FASTA files.",false);
     registerInputFile_("pt_model","<file>","","PTModel file used for the pt prediction of peptides in FASTA files.",false);

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -285,9 +285,10 @@ class TOPPPeptideIndexer
 		{
 			registerInputFile_("in","<file>","","Input idXML file containing the identifications.");
 			setValidFormats_("in", StringList::create("IdXML"));
-			registerInputFile_("fasta", "<file>", "", "Input sequence database in fasta format. Non-existing relative file-names are looked up via'OpenMS.ini:id_db_dir'", true, false, StringList::create("skipexists"));
+			registerInputFile_("fasta", "<file>", "", "Input sequence database in FASTA format. Non-existing relative file-names are looked up via'OpenMS.ini:id_db_dir'", true, false, StringList::create("skipexists"));
+      setValidFormats_("fasta", StringList::create("fasta"));
 			registerOutputFile_("out","<file>","","Output idXML file.");
-			setValidFormats_("in", StringList::create("IdXML"));
+			setValidFormats_("out", StringList::create("IdXML"));
 			registerStringOption_("decoy_string", "<string>", "_rev", "String that was appended to the accession of the protein database to indicate a decoy protein.", false);
 			registerFlag_("write_protein_sequence", "If set, the protein sequences are stored as well.");
 			registerFlag_("prefix", "If set, the decoy_string is supposed to be appended as a prefix.");

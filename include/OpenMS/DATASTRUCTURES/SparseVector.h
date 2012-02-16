@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -168,6 +168,12 @@ namespace OpenMS
 				return size_;
 			}
 
+      /// true if the container is empty
+      bool empty() const
+      {
+        return (size() == 0);
+      }
+
 			/// push_back (see stl vector docs)
 			void push_back(Value value)
 			{
@@ -314,7 +320,7 @@ namespace OpenMS
 						return begin();
 						break;
 					default:
-						if(values_.size()==0)
+            if(values_.empty())
 						{
 							//only sparse elements left
 							return begin();

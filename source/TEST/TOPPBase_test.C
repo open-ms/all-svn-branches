@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -669,6 +669,15 @@ START_SECTION(([EXTRA] const Param& getParam_()))
 	{
 		TEST_EQUAL(*it == result.getEntry(it.getName()), true);
 	}
+}
+END_SECTION
+
+START_SECTION((static void setMaxNumberOfThreads(int num_threads)))
+{
+  // this is a helper function that is only working if openmp is active
+  // due to bugs in the different OpenMP implementations it is not realy
+  // testable
+  NOT_TESTABLE
 }
 END_SECTION
 

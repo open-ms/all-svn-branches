@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -49,10 +49,13 @@ namespace OpenMS
 		public:
 			
 			/// Constructor
-			TOPPASOutputFilesDialog(const QString& dir_name);
+			TOPPASOutputFilesDialog(const QString& dir_name, int num_jobs);
 			
 			/// Returns the name of the directory
 			QString getDirectory();
+			
+      /// Returns the maximum number of jobs in the spinbox
+      int getNumJobs();
 			
 			/// Returns if the directory is valid (is a directory and writable)
 			static bool dirNameValid(const QString& dir_name);

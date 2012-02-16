@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //									 OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//	Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//	Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //	This library is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU Lesser General Public
@@ -148,10 +148,21 @@ namespace OpenMS
 						{
 							chroms[it->getPrecursors().begin()->getMZ()][it->begin()->getMZ()].push_back(*it);
 						}
+						// Exactly one precursor and more than one product ion.
+						// This is how some converters (e.g. ReAdW 4.0.2) store SRM data,
+						// collecting all information from one precursor in a single
+						// pseudo-spectrum
+						else if (it->getPrecursors().size() == 1 && it->size() > 0)
+						{ 
+								for (Size peak_idx =0; peak_idx < it->size(); peak_idx++)
+								{   
+										chroms[it->getPrecursors().begin()->getMZ()][(*it)[peak_idx].getMZ()].push_back(*it);
+								}
+						}
 						else
 						{
 							LOG_WARN << "ChromatogramTools: need exactly one precursor (given " << it->getPrecursors().size() << 
-											    ") and one product (" << it->getProducts().size() << "), skipping conversion of this spectrum to chromatogram." << std::endl;
+											    ") and one or more product ions (" << it->size() << "), skipping conversion of this spectrum to chromatogram." << std::endl;
 						}
 					}
 					else

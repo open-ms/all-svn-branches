@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -80,9 +80,12 @@ namespace OpenMS
 	
   void MultiGradient::insert (DoubleReal position, QColor color)
 	{
-		if (position >= 0 || position <=100 )
+    if (position >= 0 && position <=100 )
 		{
 			pos_col_[position]=color;
+    } else
+    {
+      throw InvalidRange(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 		}
 	}
 

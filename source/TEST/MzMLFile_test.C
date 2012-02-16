@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -304,7 +304,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		}
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),1)
-		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
+		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MS1SPECTRUM)
 		TEST_EQUAL(spec.getFloatDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
 		TEST_REAL_SIMILAR(spec.getRT(),5.1)
@@ -354,7 +354,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		}
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),2)
-		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
+		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MSNSPECTRUM)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
 		TEST_REAL_SIMILAR(spec.getRT(),5.2)
 		TEST_EQUAL(spec.getInstrumentSettings().getPolarity(),IonSource::POSITIVE)
@@ -446,7 +446,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		}
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),1)
-		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
+		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MS1SPECTRUM)
 		TEST_EQUAL(spec.getFloatDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::PEAKS)
 		TEST_REAL_SIMILAR(spec.getRT(),5.3)
@@ -494,7 +494,7 @@ START_SECTION((template <typename MapType> void load(const String& filename, Map
 		//general info
 		TEST_EQUAL(spec.getMSLevel(),1)
 		TEST_REAL_SIMILAR(spec.getRT(),5.4)
-		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MASSSPECTRUM)
+		TEST_EQUAL(spec.getInstrumentSettings().getScanMode(),InstrumentSettings::MS1SPECTRUM)
 		TEST_EQUAL(spec.getInstrumentSettings().getZoomScan(),true)
 		TEST_EQUAL(spec.getFloatDataArrays().size(),0)
 		TEST_EQUAL(spec.getType(),SpectrumSettings::RAWDATA)
@@ -907,7 +907,7 @@ START_SECTION((template <typename MapType> void store(const String& filename, co
 		
 		//this will be set when writing (forced by mzML)
 		empty[0].setNativeID("spectrum=0");
-		empty[0].getInstrumentSettings().setScanMode(InstrumentSettings::MASSSPECTRUM);
+		empty[0].getInstrumentSettings().setScanMode(InstrumentSettings::MS1SPECTRUM);
 		empty[0].getDataProcessing().resize(1);
 		empty[0].getDataProcessing()[0].getProcessingActions().insert(DataProcessing::CONVERSION_MZML);
 		empty[0].getAcquisitionInfo().setMethodOfCombination("no combination");
@@ -990,14 +990,14 @@ START_SECTION(bool isSemanticallyValid(const String& filename, StringList& error
 	TEST_EQUAL(file.isSemanticallyValid(OPENMS_GET_TEST_DATA_PATH("MzMLFile_1.mzML"), errors, warnings),true)
 	TEST_EQUAL(errors.size(),0)
 	TEST_EQUAL(warnings.size(),0)
-//	for (Size i=0; i<errors.size(); ++i)
-//	{
-//		cout << "ERROR: " << errors[i] << endl;
-//	}
-//	for (Size i=0; i<warnings.size(); ++i)
-//	{
-//		cout << "WARNING: " << warnings[i] << endl;
-//	}
+ 	for (Size i=0; i<errors.size(); ++i)
+ 	{
+ 		cout << "ERROR: " << errors[i] << endl;
+ 	}
+ 	for (Size i=0; i<warnings.size(); ++i)
+ 	{
+ 		cout << "WARNING: " << warnings[i] << endl;
+ 	}
 
 	//indexed MzML
 	TEST_EQUAL(file.isSemanticallyValid(OPENMS_GET_TEST_DATA_PATH("MzMLFile_4_indexed.mzML"), errors, warnings),true)

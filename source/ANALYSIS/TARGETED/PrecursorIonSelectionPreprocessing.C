@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -522,7 +522,7 @@ namespace OpenMS
 #ifdef PISP_DEBUG
     std::cout << "Finished predictions!"<<std::endl;
 #endif
-    if(masses_.size() == 0)
+    if(masses_.empty())
     {
       std::cout << "no masses entered" << std::endl;
       return;
@@ -646,7 +646,6 @@ namespace OpenMS
 
   void PrecursorIonSelectionPreprocessing::dbPreprocessing(String db_path,bool save)
   {
-
 #ifdef PISP_DEBUG
     std::cout << "Parameters: "<< param_.getValue("preprocessed_db_path")
               << "\t" << param_.getValue("precursor_mass_tolerance")
@@ -724,7 +723,7 @@ namespace OpenMS
 
     }
 
-    if(masses_.size() == 0)
+    if(masses_.empty())
     {
       std::cout << "no masses entered" << std::endl;
       return;
@@ -776,6 +775,10 @@ namespace OpenMS
 #ifdef PISP_DEBUG
       std::cout <<"bin_masses_.size() " <<  bin_masses_.size() << " "<<size<< std::endl;
 #endif
+      if(bin_masses_.empty())
+        {
+          throw Exception::InvalidSize(__FILE__, __LINE__, __PRETTY_FUNCTION__, 0);
+        }
       counter_.resize(size,0);
 #ifdef PISP_DEBUG
       std::cout << "masses_.size() "<< masses_.size()
@@ -1075,8 +1078,16 @@ namespace OpenMS
       }
       if(parts[1].hasSubstring(".")) parts[1] = parts[1].prefix(11);
       prot_masses_.insert(make_pair(parts[1],masses));
-      if(rts.size()>0) rt_prot_map_.insert(make_pair(parts[1],rts));
-      if(pts.size()>0)	pt_prot_map_.insert(make_pair(parts[1],pts));
+
+      if ( !rts.empty() )
+      {
+        rt_prot_map_.insert( make_pair( parts[1], rts ) );
+      }
+
+      if ( !pts.empty() )
+      {
+        pt_prot_map_.insert( make_pair( parts[1], pts ) );
+      }
 
 #ifdef PISP_DEBUG
       std::cout << parts[1] << " "<< masses.size()<< std::endl;

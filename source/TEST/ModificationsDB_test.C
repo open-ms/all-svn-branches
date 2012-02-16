@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -116,7 +116,7 @@ START_SECTION((void searchModifications(std::set< const ResidueModification * > 
   ptr->searchTerminalModifications(mods, "Label:18O(1)", ResidueModification::N_TERM);
 
   TEST_EQUAL(mods.size(), 0)
-  ABORT_IF(mods.size() != 0)
+  ABORT_IF( !mods.empty() )
 }
 END_SECTION
 

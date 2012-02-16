@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -41,7 +41,7 @@
 
 namespace OpenMS
 {
-	TOPPASOutputFilesDialog::TOPPASOutputFilesDialog(const QString& dir_name)
+	TOPPASOutputFilesDialog::TOPPASOutputFilesDialog(const QString& dir_name, int num_jobs)
 	{
 		setupUi(this);
 		if (dir_name != "")
@@ -52,6 +52,10 @@ namespace OpenMS
 		{
 			line_edit->setText(QDir::currentPath());
 		}
+    if (num_jobs >= 1)
+    {
+      num_jobs_box->setValue(num_jobs);
+    }
 		QCompleter* completer = new QCompleter(this);
 		QDirModel* dir_model = new QDirModel(completer);
 		dir_model->setFilter(QDir::AllDirs);
@@ -76,6 +80,11 @@ namespace OpenMS
 	{
 		return line_edit->text();
 	}
+	
+  int TOPPASOutputFilesDialog::getNumJobs()
+  {
+    return num_jobs_box->value();
+  }
 	
 	void TOPPASOutputFilesDialog::checkValidity_()
 	{

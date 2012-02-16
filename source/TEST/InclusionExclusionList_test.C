@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -191,7 +191,6 @@ START_SECTION((void writeTargets(const std::vector<PeptideIdentification>& pep_i
 	vector<PeptideIdentification> pep_ids;
 	vector<ProteinIdentification> prot_ids;
 	IdXMLFile().load(OPENMS_GET_TEST_DATA_PATH("InclusionExclusionList_3.IdXML"),prot_ids,pep_ids);
-	DoubleReal rel_rt_window_size = 0.05;
   Param p = list.getParameters();
   p.setValue("RT:unit", "seconds");
   list.setParameters(p);

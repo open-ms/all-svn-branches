@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -127,8 +127,6 @@ namespace OpenMS
        * @brief detailed constructor
        * @param exp raw data
        * @param intensity_cutoff minimal intensity of SILAC features
-       * @param intensity_correlation minimal intensity correlation between regions of different peaks
-       * @param allow_missing_peaks flag for missing peaks
        */
       SILACFiltering(MSExperiment<Peak1D>& exp, const PeakWidthEstimator::Result &, const DoubleReal intensity_cutoff, const String debug_filebase_ = "");
 

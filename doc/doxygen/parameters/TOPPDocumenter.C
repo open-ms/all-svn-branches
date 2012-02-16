@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -74,7 +74,7 @@ bool generate(const ToolListType& tools, const String& prefix)
 int main (int , char** )
 {
 	//TOPP tools
-	ToolListType topp_tools = ToolHandler::getTOPPToolList();
+	ToolListType topp_tools = ToolHandler::getTOPPToolList(true); // include GenericWrapper (can be called with --help without error, even though it has a type)
 	topp_tools["TOPPView"] = Internal::ToolDescription();
 	topp_tools["TOPPAS"] = Internal::ToolDescription();
 	//UTILS

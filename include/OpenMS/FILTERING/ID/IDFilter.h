@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -80,7 +80,7 @@ namespace OpenMS
 					}	
 				}
 
-				if (filtered_hits.size() > 0)
+        if ( !filtered_hits.empty() )
 				{
 		  		filtered_identification.setHits(filtered_hits);																						
 					filtered_identification.assignRanks();  																								
@@ -124,7 +124,7 @@ namespace OpenMS
 					}	
 				}
 
-				if (filtered_hits.size() > 0)
+        if ( !filtered_hits.empty() )
 				{
 		  		filtered_identification.setHits(filtered_hits);																						
 					filtered_identification.assignRanks();  																								
@@ -161,7 +161,7 @@ namespace OpenMS
 					++count;	
 				}
 
-				if (filtered_hits.size() > 0)
+        if ( !filtered_hits.empty() )
 				{
 		  		filtered_identification.setHits(filtered_hits);																						
 					filtered_identification.assignRanks();  																								

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -25,8 +25,8 @@
 // $Authors: Marc Sturm, Timo Sachsenberg $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_APPLICATIONS_TOPPVIEWBASE_H
-#define OPENMS_APPLICATIONS_TOPPVIEWBASE_H
+#ifndef OPENMS_VISUAL_APPLICATIONS_TOPPVIEWBASE_H
+#define OPENMS_VISUAL_APPLICATIONS_TOPPVIEWBASE_H
 
 //OpenMS
 #include <OpenMS/KERNEL/StandardTypes.h>
@@ -634,4 +634,4 @@ namespace OpenMS
 
 } //namespace
 
-#endif // OPENMS_APPLICATIONS_TOPPVIEWBASE_H
+#endif

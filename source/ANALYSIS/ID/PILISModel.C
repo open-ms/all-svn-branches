@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -1198,7 +1198,7 @@ namespace OpenMS
 							#endif
         			vector<String> split;
         			b_ion_name.split('-', split);
-        			if (split.size() == 0)
+        			if (split.empty())
         			{
           			b_ion_name += String(i + 1);
         			}
@@ -1244,7 +1244,7 @@ namespace OpenMS
 							#endif
           		vector<String> split;
           		y_ion_name.split('-', split);
-          		if (split.size() == 0)
+          		if (split.empty())
           		{
             		y_ion_name += String(peptide.size() - i - 1);
           		}
@@ -1657,7 +1657,7 @@ namespace OpenMS
       vector<String> split;
       line.split(' ', split, true);
 
-      if (split.size() > 0)
+      if ( !split.empty() )
       {
         String id = split[0];
 

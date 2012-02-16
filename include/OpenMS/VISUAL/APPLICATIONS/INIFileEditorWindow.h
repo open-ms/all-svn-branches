@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -21,12 +21,12 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: $
+// $Maintainer: Timo Sachsenberg$
 // $Authors: Marc Sturm $
 // --------------------------------------------------------------------------
 
-#ifndef OPENMS_APPLICATIONS_INIFILEEDITORWINDOW_H
-#define OPENMS_APPLICATIONS_INIFILEEDITORWINDOW_H
+#ifndef OPENMS_VISUAL_APPLICATIONS_INIFILEEDITORWINDOW_H
+#define OPENMS_VISUAL_APPLICATIONS_INIFILEEDITORWINDOW_H
 
 #include <OpenMS/VISUAL/ParamEditor.h>
 #include <OpenMS/DATASTRUCTURES/Param.h>
@@ -76,4 +76,4 @@ namespace OpenMS
 	};
 }
 
-#endif //OPENMS_APPLICATIONS_INIFILEEDITORWINDOW_H
+#endif

@@ -40,11 +40,11 @@ IDRTCalibration
 ITRAQAnalyzer
 InspectAdapter
 InternalCalibration
-MapAlignerApplyTransformation
 MapAlignerIdentification
 MapAlignerPoseClustering
 MapAlignerSpectrum
 MapNormalizer
+MapRTTransformer
 MapStatistics
 MascotAdapter
 MascotAdapterOnline
@@ -54,7 +54,9 @@ NoiseFilterSGolay
 OMSSAAdapter
 PhosphoScoring
 PILISIdentification
-PILISModel
+PILISModelCV
+PILISModelTrainer
+PILISSpectraGenerator
 PTModel
 PTPredict
 PeakPickerHiRes
@@ -87,6 +89,8 @@ MzTabExporter
 XTandemAdapter
 InclusionExclusionListCreator
 SpectraMerger
+#OfflinePS
+#id_change_score
 )
 
 ## all targets with need linkage against OpenMS_GUI.lib - they also need to appear in the list above)

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -381,7 +381,7 @@ namespace OpenMS
 			/**
 				@brief Constructor
 				
-				@param methods List of charges that is compared against precursor charge
+        @param charges List of charges that is compared against precursor charge
 				@param reverse if @p reverse is true, operator() returns true if the spectrum has not one of the specified precursor charges
 			*/
 			HasPrecursorCharge(const IntList& charges, bool reverse = false)

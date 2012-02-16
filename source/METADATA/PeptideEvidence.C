@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -105,7 +105,7 @@ namespace OpenMS
   	  pre_ == rhs.pre_ &&
     	post_ == rhs.post_ &&
    	 	id_ == rhs.id_ &&
-    	name_ == name_ &&
+      name_ == rhs.name_ &&
     	missed_cleavages_ == rhs.missed_cleavages_ &&
     	is_decoy_ == rhs.is_decoy_ &&
     	frame_ == rhs.frame_;

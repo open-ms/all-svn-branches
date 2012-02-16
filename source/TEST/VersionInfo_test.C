@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -62,7 +62,7 @@ START_SECTION((static VersionDetails getVersionStruct()))
 {
 	VersionInfo::VersionDetails detail;
 	detail.version_major = 1;
-	detail.version_minor = 9;
+  detail.version_minor = 10;
 	TEST_EQUAL(VersionInfo::getVersionStruct() == detail, true);
 }
 END_SECTION
@@ -90,7 +90,7 @@ START_SECTION(([VersionInfo::VersionDetails] bool operator<(const VersionDetails
   VersionInfo::VersionDetails detail = VersionInfo::VersionDetails::create("1.9.2");
 	VersionInfo::VersionDetails c;
 	c.version_major = 1;
-	c.version_minor = 9;
+  c.version_minor = 9;
 	c.version_patch = 2;
 	TEST_EQUAL(detail < c, false)
 	c.version_patch = 3;
@@ -107,7 +107,7 @@ START_SECTION(([VersionInfo::VersionDetails] bool operator==(const VersionDetail
   VersionInfo::VersionDetails detail = VersionInfo::VersionDetails::create("1.9.2");
 	VersionInfo::VersionDetails c;
 	c.version_major = 1;
-	c.version_minor = 9;
+  c.version_minor = 9;
 	c.version_patch = 2;
 	TEST_EQUAL(detail == c, true)
 	c.version_patch = 3;
@@ -124,7 +124,7 @@ START_SECTION(([VersionInfo::VersionDetails] bool operator>(const VersionDetails
   VersionInfo::VersionDetails detail = VersionInfo::VersionDetails::create("1.9.2");
 	VersionInfo::VersionDetails c;
 	c.version_major = 1;
-	c.version_minor = 9;
+  c.version_minor = 9;
 	c.version_patch = 2;
 	TEST_EQUAL(detail > c, false)
 	c.version_patch = 3;

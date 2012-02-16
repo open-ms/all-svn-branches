@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -239,7 +239,9 @@ void PSLPFormulation::createAndSolveILPFeatureBased_(const FeatureMap<>& feature
   model_ = new LPWrapper();
   model_->setSolver(solver_);
   //#define DEBUG_OPS	
+#ifdef DEBUG_OPS
 	std::cout << "Feature Based: Build model: first objective"<<std::endl;
+#endif
 	///////////////////////////////////////////////////////////////////////
 	// add objective function
 	///////////////////////////////////////////////////////////////////////
@@ -257,7 +259,7 @@ void PSLPFormulation::createAndSolveILPFeatureBased_(const FeatureMap<>& feature
 			std::cout << "feat: "<<i <<" charge "<<features[i].getCharge() << std::endl;
 #endif
 			if (charges_set.count(features[i].getCharge())<1) continue;
-			if(mass_ranges[i].size()==0) continue;
+			if(mass_ranges[i].empty()) continue;
 #ifdef DEBUG_OPS
 			if(mass_ranges[i].size() > 0)
 				{
@@ -287,15 +289,16 @@ void PSLPFormulation::createAndSolveILPFeatureBased_(const FeatureMap<>& feature
           Int index = model_->addColumn();
           triple.variable = index;
 					variable_indices.push_back(triple);
-          
+#ifdef DEBUG_OPS          
           std::cout << index << " variable index"<<std::endl;
+#endif
           model_->setColumnBounds(index,0,1,LPWrapper::DOUBLE_BOUNDED);
           model_->setColumnType(index,LPWrapper::BINARY); // binary variable
 					model_->setColumnName(index,(String("x_")+i+","+s));
-          //#ifdef DEBUG_OPS	
+#ifdef DEBUG_OPS	
 					std::cout << "feat "<<i << " scan "<< s << " intensity_weight "
 										<< intensity_weights[i][c] <<std::endl;
-          //#endif
+#endif
 					model_->setObjective(index,intensity_weights[i][c]);
 					++counter;
 					++c;
@@ -326,7 +329,7 @@ void PSLPFormulation::createAndSolveILPFeatureBased_(const FeatureMap<>& feature
   addRTBinCapacityConstraint_(variable_indices,number_of_scans,ms2_spectra_per_rt_bin);
 
 #ifdef DEBUG_OPS	
-	model_->writeProblem("/home/zerck/data/tmp/test_pis_problem.mps","MPS");
+	model_->writeProblem("/home/zerck/data/tmp/test_pis_problem.mps",LPWrapper::FORMAT_MPS);
 #endif
 	
 	solveILP(solution_indices);
@@ -832,8 +835,10 @@ void PSLPFormulation::addPrecursorAcquisitionNumberConstraint_(std::vector<Index
 			for(Size k = start; k < stop; ++k)
 				{
 					entries[c] = 1.;
-					indices[c] = variable_indices[k].variable;
-					//					std::cout << j<<" "<<indices[j]<<std::endl;
+					indices[c] = (int) variable_indices[k].variable;
+#ifdef DEBUG_OPS
+          std::cout << "indices["<<c<<"]= "<<indices[c]<<std::endl;
+#endif
 					++c;
 				}
 #ifdef DEBUG_OPS
@@ -954,7 +959,10 @@ void PSLPFormulation::addRTBinCapacityConstraint_(std::vector<IndexTriple>& vari
 			for(Size s = start; s < stop; ++s)
 				{
 					entries[c] = 1.;
-					indices[c] = variable_indices[s].variable;
+					indices[c] = (int)  variable_indices[s].variable;
+#ifdef DEBUG_OPS
+          std::cout << "indices["<<c<<"]= "<<indices[c]<<std::endl;
+#endif
 					++c;
 				}
       //#ifdef DEBUG_OPS
@@ -1009,7 +1017,7 @@ void PSLPFormulation::solveILP(std::vector<int>& solution_indices,Int /*iteratio
   LPWrapper::SolverParam param;
   if(solver_ == LPWrapper::SOLVER_GLPK)
     {
-      model_->writeProblem(String("test_prob_")+String(solver_)+String(".lp"),"LP");
+      model_->writeProblem(String("test_prob_")+String(solver_)+String(".lp"),LPWrapper::FORMAT_LP);
     }
   StopWatch t;
   t.start();
@@ -1025,10 +1033,12 @@ void PSLPFormulation::solveILP(std::vector<int>& solution_indices,Int /*iteratio
   {
     double value = model_->getColumnValue(column);
     //    std::cout << value << " "<< model_->getColumnType(column) << "\t";
+#ifdef DEBUG_OPS
     if(model_->getColumnName(column).hasPrefix("y_"))
       {
         std::cerr << model_->getColumnName(column).suffix('_')<< "\t" << value <<"\n";
       }
+#endif
     if ((fabs(value) > 0.5 && model_->getColumnType(column) == LPWrapper::BINARY) ||
       (fabs(value) > 0.5 && model_->getColumnType(column) == LPWrapper::INTEGER))
     {

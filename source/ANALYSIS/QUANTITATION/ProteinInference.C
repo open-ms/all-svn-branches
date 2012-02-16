@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -99,8 +99,8 @@ namespace OpenMS
 				
 				// if several PeptideIdentifications (==Spectra) were assigned to current ConsensusElement
 				// --> take the best (as above), e.g. in SILAC this could happen
-				// TODO better idea?
-				if (peptide_hits.size()>0)
+        // TODO: better idea?
+        if ( !peptide_hits.empty() )
 				{
 					if (sortByUnique_(peptide_hits, consensus_map[i_cm].getPeptideIdentifications()[0].isHigherScoreBetter() ))
 					{ //found a unique peptide for current ConsensusElement
@@ -114,7 +114,7 @@ namespace OpenMS
 			} // ! ConsensusMap loop
 			
 			// no peptides found that match current Protein
-			if (consensus_to_peptide.size() == 0) continue;
+			if (consensus_to_peptide.empty()) continue;
 			
 			// Use all matching ConsensusElements to derive a quantitation for current protein
 			// build up ratios for every map vs reference

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -64,12 +64,12 @@ START_SECTION((static String getProductName()))
 END_SECTION
 
 START_SECTION((virtual void group(const std::vector< FeatureMap<> >& maps, ConsensusMap& out)))
-	// This is tested extensively in TEST/TOPP. See FeatureLinker_test.
+	// This is tested extensively in TEST/TOPP
 	NOT_TESTABLE;
 END_SECTION
 
 START_SECTION((virtual void group(const std::vector<ConsensusMap>& maps, ConsensusMap& out)))
-	// This is tested extensively in TEST/TOPP. See FeatureLinker_test.
+	// This is tested extensively in TEST/TOPP
 	NOT_TESTABLE;
 END_SECTION
 

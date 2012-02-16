@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -127,7 +127,7 @@ namespace OpenMS
 			errors = errors_;
 			warnings = warnings_;
 			
-			return (errors_.size()==0);
+			return (errors_.empty());
 	  }
 	
 	  void SemanticValidator::startElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname, const Attributes& attributes)
@@ -320,7 +320,7 @@ namespace OpenMS
 			{
 				ControlledVocabulary::CVTerm term = cv_.getTerm(parsed_term.accession);
 				// check if the cv term has units
-				if (term.units.size() != 0)
+        if ( !term.units.empty() )
 				{
 					if (!parsed_term.has_unit_accession)
 					{

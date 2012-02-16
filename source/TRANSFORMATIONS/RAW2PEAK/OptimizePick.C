@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -330,7 +330,7 @@ namespace OpenMS
 
 void OptimizePick::optimize(std::vector<PeakShape>& peaks,Data& data)
   {
-    if (peaks.size() == 0)
+    if (peaks.empty())
       return;
 
     size_t global_peak_number=0;

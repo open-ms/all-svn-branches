@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -109,6 +109,24 @@ START_SECTION((const std::set<AASequence>& getAnnotations() const))
 	TEST_EQUAL(gf2.getAnnotations().size(), 2);
 	TEST_EQUAL(*(gf2.getAnnotations().begin()), "AAA");
 	TEST_EQUAL(*(gf2.getAnnotations().rbegin()), "CCC");
+}
+END_SECTION
+
+START_SECTION((DoubleReal getRT() const))
+{
+	BaseFeature bf;
+	bf.setRT(4.56);
+	GridFeature gf(bf, 0, 123);
+	TEST_REAL_SIMILAR(gf.getRT(), 4.56);
+}
+END_SECTION
+
+START_SECTION((DoubleReal getMZ() const))
+{
+	BaseFeature bf;
+	bf.setMZ(4.56);
+	GridFeature gf(bf, 0, 123);
+	TEST_REAL_SIMILAR(gf.getMZ(), 4.56);
 }
 END_SECTION
 

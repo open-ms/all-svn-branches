@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -56,8 +56,6 @@ namespace OpenMS
 		 @note The peaks must be sorted according to ascending m/z!
 		 
 		 @ingroup PeakPicking
-
-		 @experimental This algorithm has not been tested thoroughly yet. There is a need for test cases where a list of previously identified masses is compared to the identifications based on the algorithm's peak-picking.
   */
     class OPENMS_DLLAPI PeakPickerHiRes
         : public DefaultParamHandler,
@@ -85,8 +83,8 @@ namespace OpenMS
             output.setName(input.getName());
             output.setType(SpectrumSettings::PEAKS);
 
-            // don't pick a spectrum with less than 3 data points
-            if (input.size() < 3) return;
+            // don't pick a spectrum with less than 5 data points
+            if (input.size() < 5) return;
 
             // signal-to-noise estimation
             SignalToNoiseEstimatorMedian<MSSpectrum<PeakType> > snt;
@@ -97,7 +95,7 @@ namespace OpenMS
             }
 
             // find local maxima in raw data
-            for (Size i = 1; i < input.size()-1; ++i)
+            for (Size i = 2; i < input.size()-2; ++i)
             {
                 double central_peak_mz = input[i].getMZ(), central_peak_int = input[i].getIntensity();
                 double left_neighbor_mz = input[i-1].getMZ(), left_neighbor_int = input[i-1].getIntensity();

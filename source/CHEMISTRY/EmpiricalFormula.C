@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -396,7 +396,7 @@ namespace OpenMS
 	
 	bool EmpiricalFormula::isEmpty() const
 	{
-		return (formula_.size() == 0);
+		return (formula_.empty());
 	}
 
 	bool EmpiricalFormula::hasElement(const Element* element) const
@@ -526,7 +526,7 @@ namespace OpenMS
 		}
 
 		// determine charge
-		if (suffix.size() != 0)
+    if ( !suffix.empty() )
 		{
 		String charge_part;
 		Size i = 1;
@@ -547,7 +547,7 @@ namespace OpenMS
 			}
 
 			SignedSize tmp_charge = 1;
-			if (charge_str.size() != 0)
+      if ( !charge_str.empty() )
 			{
 				tmp_charge = charge_str.toInt();
 			}

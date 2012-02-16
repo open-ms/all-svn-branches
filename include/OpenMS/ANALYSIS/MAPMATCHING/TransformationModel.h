@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -182,6 +182,8 @@ namespace OpenMS
 		 @brief B-spline model for transformations
 
 		 In the range of the data points, the transformation is evaluated from a cubic smoothing spline fit to the points. The number of breakpoints is given as a parameter (@p num_breakpoints). Outside of this range, linear extrapolation through the last point with the slope of the spline at that point is used.
+
+		 Positioning of the breakpoints is controlled by the parameter @p break_positions. Valid choices are "uniform" (equidistant spacing on the data range) and "quantiles" (equal numbers of data points in every interval).
 
 		 @ingroup MapAlignment
 	*/

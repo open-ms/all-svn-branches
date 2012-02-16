@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -477,7 +477,7 @@ namespace OpenMS
         }
       }
 
-      for (std::set<Precursor, Precursor::MZLess>::const_iterator it = precursors.begin(); it != precursors.end(); it++)
+      for (std::set<Precursor, Precursor::MZLess>::const_iterator it = precursors.begin(); it != precursors.end(); ++it)
       {
         std::vector<Size>& current_chromatograms_idx = map_precursor_to_chrom_idx[*it];
 

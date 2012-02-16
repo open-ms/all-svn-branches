@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -187,7 +187,7 @@ namespace OpenMS
 	void Base64::encode(std::vector<FromType>& in, ByteOrder to_byte_order, String& out, bool zlib_compression)
 	{
 		out.clear();
-		if (in.size() == 0) return;
+		if (in.empty()) return;
 
 		//initialize
 		const Size element_size = sizeof(FromType);
@@ -505,7 +505,7 @@ namespace OpenMS
 	void Base64::encodeIntegers(std::vector<FromType>& in, ByteOrder to_byte_order, String& out, bool zlib_compression)
 	{
 		out.clear();
-		if (in.size() == 0) return;
+		if (in.empty()) return;
 
 		//initialize
 		const Size element_size = sizeof(FromType);

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -87,21 +87,21 @@ namespace OpenMS
 			{
 				vector<String> slash_split;
 				element_path.split('/', slash_split);
-				if (slash_split.size() == 0)
+				if (slash_split.empty())
 				{
 					slash_split.push_back(element_path);
 				}
 				element_path = "";
 				for (vector<String>::const_iterator it = slash_split.begin(); it != slash_split.end(); ++it)
 				{
-					if (it->size() == 0)
+          if ( it->empty() )
 					{
 						continue;
 					}
 								
 					vector<String> split;
 					it->split(':', split);
-					if (split.size() == 0)
+					if (split.empty())
 					{
 						element_path += "/" + *it;
 					}

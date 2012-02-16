@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -76,7 +76,7 @@ namespace OpenMS
     DoubleReal min_pos_precursor_percentage = (DoubleReal)param_.getValue("min_pos_precursor_percentage") / 100.0;
 		DoubleReal min_mz = (DoubleReal)param_.getValue("min_mz");
 		DoubleReal max_mz = (DoubleReal)param_.getValue("max_mz");
-		if (spec.getPrecursors().size() == 0)
+		if (spec.getPrecursors().empty())
 		{
 			cerr << "MRMFragmentSelection: No Precursor peaks defined! Bailing out..." << endl;
 			return;

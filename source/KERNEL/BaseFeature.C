@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -70,7 +70,7 @@ namespace OpenMS
 		return (RichPeak2D::operator==(rhs) 
 						&& (quality_ == rhs.quality_) 
 						&& (charge_ == rhs.charge_) 
-						&& (width_ == width_)
+            && (width_ == rhs.width_)
 						&& (peptides_ == rhs.peptides_));
 	}
 

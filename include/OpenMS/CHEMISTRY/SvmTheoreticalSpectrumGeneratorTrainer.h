@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -93,7 +93,7 @@ namespace OpenMS
       /// Assignment operator
       SvmTheoreticalSpectrumGeneratorTrainer& operator =(const SvmTheoreticalSpectrumGeneratorTrainer& tsg);
 
-      /// trains an SVM for each ion_type and stores them in files <filename>_residue_loss_charge.svm
+      /// trains an SVM for each ion_type and stores them in files \<filename\>_residue_loss_charge.svm
       void trainModel(const PeakMap &spectra, const std::vector<AASequence> & annotations, String filename, Int precursor_charge);
 
       /// Normalizes the intensity of the peaks in the input data

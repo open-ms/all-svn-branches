@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -74,6 +74,16 @@ namespace OpenMS
 	const set<AASequence>& GridFeature::getAnnotations() const
 	{
 		return annotations_;
+	}
+
+	DoubleReal GridFeature::getRT() const
+	{ 
+		return feature_.getRT();
+}
+
+	DoubleReal GridFeature::getMZ() const
+	{ 
+		return feature_.getMZ();
 	}
 
 }

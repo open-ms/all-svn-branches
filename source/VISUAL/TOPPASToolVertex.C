@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -786,7 +786,7 @@ namespace OpenMS
 
     // use input names from the selected upstream vertex (hoping that this is the maximal number of files we are going to produce)
     std::vector<QStringList> per_round_basenames;
-    for (int i = 0; i < pkg.size(); ++i)
+    for (Size i = 0; i < pkg.size(); ++i)
     {
       per_round_basenames.push_back( pkg[i].find(max_size_index)->second.filenames );
     }

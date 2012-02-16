@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -180,7 +180,7 @@ String SuffixArrayPeptideFinder::getModificationOutputMethod ()
 
 String SuffixArrayPeptideFinder::vToString_ (vector<String> v)
 {
-	if (v.size()==0) return ("");
+	if (v.empty()) return ("");
 	String res = "[";
 	for (Size i = 0; i < v.size();++i)
 	{

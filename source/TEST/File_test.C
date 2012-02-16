@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -175,7 +175,8 @@ START_SECTION(static String findDatabase(const String &db_name))
   
   TEST_EXCEPTION(Exception::FileNotFound, File::findDatabase("filedoesnotexists"))
   String db = File::findDatabase("./CV/unimod.obo");
-  TEST_EQUAL(db.hasSubstring("OpenMS/share"), true)
+  //TEST_EQUAL(db,"wtf")
+  TEST_EQUAL(db.hasSubstring("share/OpenMS"), true)
 
 END_SECTION
 /////////////////////////////////////////////////////////////

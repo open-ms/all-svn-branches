@@ -3,7 +3,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -160,7 +160,7 @@ namespace OpenMS
 			// get the position of the peak
 			vector<String> split;
 			it->first.split('-', split);
-			if (split.size() == 0)
+			if (split.empty())
 			{
 				p.setPosition(0);
 			}
@@ -489,7 +489,7 @@ namespace OpenMS
 
 		if (enable_double_losses)
 		{
-			if (nexts.size() > 0)
+      if ( !nexts.empty() )
 			{
 				hmm_precursor_.setTransitionProbability("start", *nexts.begin(), 1.0);
 			}
@@ -576,7 +576,7 @@ namespace OpenMS
 			single_nexts.push_back("COOH-" + h2o + "_1");
 		}
 
-		if (!enable_double_losses && single_nexts.size() > 0)
+    if ( !enable_double_losses && !single_nexts.empty() )
 		{
 			hmm_precursor_.setTransitionProbability("start", *single_nexts.begin(), 1.0);
 		}
@@ -602,7 +602,7 @@ namespace OpenMS
 		}
 
 		// last transition, no reaction took place
-		if (single_nexts.size() > 0)
+    if ( !single_nexts.empty() )
 		{
 			hmm_precursor_.enableTransition(single_nexts.back(), ion_name);
 		}

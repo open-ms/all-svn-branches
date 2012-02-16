@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -236,24 +236,6 @@ START_SECTION((void insert(UInt64 map_index, const BaseFeature &element)))
     TEST_EQUAL(cf.begin()->getMapIndex(),10-i);
     TEST_EQUAL(cf.begin()->getUniqueId(),i+1000);
   }
-END_SECTION
-
-
-START_SECTION((ConsensusFeature(const Peak2D &point)))
-  ConsensusFeature cons(static_cast<Peak2D>(tmp_feature));
-  TEST_REAL_SIMILAR(cons.getRT(),1.0)
-  TEST_REAL_SIMILAR(cons.getMZ(),2.0)
-  TEST_REAL_SIMILAR(cons.getIntensity(),200.0)
-  TEST_EQUAL(cons.empty(), true)
-END_SECTION
-
-START_SECTION((ConsensusFeature(const RichPeak2D &point)))
-
-  ConsensusFeature cons(static_cast<RichPeak2D>(tmp_feature));
-  TEST_REAL_SIMILAR(cons.getRT(),1.0)
-  TEST_REAL_SIMILAR(cons.getMZ(),2.0)
-  TEST_REAL_SIMILAR(cons.getIntensity(),200.0)
-  TEST_EQUAL(cons.empty(), true)
 END_SECTION
 
 START_SECTION((ConsensusFeature(const BaseFeature &feature)))

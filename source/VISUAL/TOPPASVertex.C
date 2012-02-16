@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -417,7 +417,7 @@ namespace OpenMS
 	}
 	
 	
-	void TOPPASVertex::reset(bool reset_all_files)
+	void TOPPASVertex::reset(bool /*reset_all_files*/)
 	{
 		__DEBUG_BEGIN_METHOD__
 		

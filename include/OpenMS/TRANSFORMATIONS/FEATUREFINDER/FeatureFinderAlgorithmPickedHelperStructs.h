@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -102,7 +102,7 @@ namespace OpenMS
       ///Sets the maximum to the highest contained peak of the trace
       void updateMaximum()
       {
-        if (peaks.size()==0) return;
+        if (peaks.empty()) return;
 
         max_rt = peaks.begin()->first;
         max_peak = peaks.begin()->second;

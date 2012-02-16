@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -51,7 +51,7 @@ namespace OpenMS
 	(proportional to) its total ion count.
 
 	Feature is derived from RichPeak2D.	 Also inherited is a MetaInfoInterface.
-	Features as usually contained in a FeatureMap.	See also FeatureHandle and
+        Features as usually are contained in a FeatureMap. See also FeatureHandle and
 	ConsensusFeature.
 
 	@ingroup Kernel

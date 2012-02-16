@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -139,7 +139,7 @@ namespace OpenMS
 		}
 		set<const ResidueModification*> mods;
 		searchTerminalModifications(mods, mod_name, term_spec);
-		if (mods.size() == 0)
+		if (mods.empty())
 		{
 			throw Exception::ElementNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, mod_name);
 		}
@@ -172,7 +172,7 @@ namespace OpenMS
 
 		set<const ResidueModification*> mods;
 		searchModifications(mods, res, mod_name, term_spec);
-    if (mods.size() == 0)
+    if (mods.empty())
     {
       throw Exception::InvalidValue(__FILE__, __LINE__, __PRETTY_FUNCTION__, "Retrieving the modification failed. Its not available for the current residue '" + String(residue_name) + "' and term specificity " + String(Int(term_spec)) + ".", mod_name);
     }
@@ -195,7 +195,7 @@ namespace OpenMS
 			throw Exception::ElementNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, modification);
 		}
 		set<const ResidueModification*> mods = modification_names_[modification];
-		if (mods.size() == 0)
+		if (mods.empty())
     {
       throw Exception::ElementNotFound(__FILE__, __LINE__, __PRETTY_FUNCTION__, modification);
     }
@@ -275,7 +275,7 @@ namespace OpenMS
 		}
 
 		// no specific mod found? Then use 'X' as origin
-		if (mods.size() == 0)
+		if (mods.empty())
 		{
 			for (vector<ResidueModification*>::const_iterator it = mods_.begin(); it != mods_.end(); ++it)
 			{

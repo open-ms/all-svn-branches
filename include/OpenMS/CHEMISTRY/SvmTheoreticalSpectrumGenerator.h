@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -47,7 +47,7 @@ namespace OpenMS
    The models are generated with the @ref UTILS_SvmTheoreticalSpectrumGeneratorTrainer. \n
    Two modes are supported:\n
    - Only a prediction of abundant/missing is performed and for abundant peaks are generated with user defined intensity. \n
-   - The intensity is predicted using SVM-regression (only for the primary ion types b and y). For the secondary types a Baesian model is used.
+   - The intensity is predicted using SVM-regression (only for the primary ion types b and y). For the secondary types a Bayesian model is used.
 
    <p>
    Currently, only a test model is shipped with OpenMS.<br>

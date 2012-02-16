@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -38,9 +38,7 @@ namespace OpenMS
 
   /** @brief This class implements a simple point pair finding algorithm.
 
-	It offers a method to find element pairs across two element maps.  In
-	contrast to the @ref DelaunayPairFinder, a different distance measure is
-	used.
+  It offers a method to find element pairs across two element maps.
 
 	The similarity value should express our confidence that one element might
 	possibly be matched to the other.  Larger quality values are better, the

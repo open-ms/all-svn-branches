@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -630,12 +630,12 @@ namespace OpenMS
 	
 	bool Residue::hasNeutralLoss() const
 	{
-		return loss_formulas_.size() != 0;
+    return ( !loss_formulas_.empty() );
 	}
 
 	bool Residue::hasNTermNeutralLosses() const
   {
-		return NTerm_loss_formulas_.size() != 0;
+    return ( !NTerm_loss_formulas_.empty() );
 	}
 	
 	bool Residue::operator == (const Residue& residue) const

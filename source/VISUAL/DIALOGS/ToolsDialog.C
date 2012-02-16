@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -80,7 +80,7 @@ ToolsDialog::ToolsDialog( QWidget * parent, String ini_file, String default_dir,
   {
     list << "FileFilter" << "FileConverter"
          << "FileInfo" << "Decharger"
-         << "FeatureLinker";
+         << "FeatureLinkerLabeled";
   }
   else if (type == LayerData::DT_CONSENSUS)
   {
@@ -307,7 +307,7 @@ void ToolsDialog::loadINI_()
   for (Param::ParamIterator iter=arg_param_.begin();iter!=arg_param_.end();++iter)
   {
     str = iter.getName().substr(iter.getName().rfind("1:")+2, iter.getName().size());
-    if(str.size() != 0 && str.find(":") == String::npos)
+    if( !str.empty() && str.find(":") == String::npos)
     {
       arg_map_.insert(make_pair(str,iter.getName()));
       arg_list << QStringList(str.c_str());

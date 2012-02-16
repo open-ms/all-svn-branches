@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -74,10 +74,10 @@ bool SILACLabeler::canModificationBeApplied_(const String& modification_id, cons
   catch (Exception::ElementNotFound& ex)
   {
     ex.setMessage("The modification \"" + modification_id + "\" could not be found in the local UniMod DB! Please check if you used the correct format (e.g. UniMod:Accession#)");
-    throw ex;
+    throw;
   }
 
-  return (modifications.size() != 0);
+  return ( !modifications.empty() );
 }
 
 SILACLabeler::~SILACLabeler()

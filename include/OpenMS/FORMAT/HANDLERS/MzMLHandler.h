@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -71,7 +71,7 @@ namespace OpenMS
 		/**
 			@brief XML handler for MzMLFile
 			
-			MapType has to be a MSExperiment or have the same interface.
+			MapType has to be an MSExperiment or have the same interface.
 			
 			@note Do not use this class. It is only needed in MzMLFile.
 		*/
@@ -711,11 +711,19 @@ namespace OpenMS
 					fillData_();
 					exp_->push_back(spec_);
 					
-					//catch errors stemming from confusion about elution time and scan time
+					// catch errors stemming from confusion about elution time and scan time
 					if (exp_->back().getRT()==-1.0 && exp_->back().metaValueExists("elution time (seconds)"))
 					{
 						exp_->back().setRT(exp_->back().getMetaValue("elution time (seconds)"));
 					}
+          /* this is too hot (could be SRM as well? -- check!): 
+					// correct spectrum type if possible (i.e., make it more specific)
+          if (exp_->back().getInstrumentSettings().getScanMode() == InstrumentSettings::MASSSPECTRUM)
+          {
+            if (exp_->back().getMSLevel() <= 1) exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::MS1SPECTRUM);
+            else                                exp_->back().getInstrumentSettings().setScanMode(InstrumentSettings::MSNSPECTRUM);
+          }
+					*/
 				}
 				skip_spectrum_ = false;
 				logger_.setProgress(++scan_count);
@@ -1382,11 +1390,11 @@ namespace OpenMS
 				}
 				else if (accession=="MS:1000579") //MS1 spectrum
 				{
-					spec_.getInstrumentSettings().setScanMode(InstrumentSettings::MASSSPECTRUM);
+					spec_.getInstrumentSettings().setScanMode(InstrumentSettings::MS1SPECTRUM);
 				}
 				else if (accession=="MS:1000580") //MSn spectrum
 				{
-					spec_.getInstrumentSettings().setScanMode(InstrumentSettings::MASSSPECTRUM);
+					spec_.getInstrumentSettings().setScanMode(InstrumentSettings::MSNSPECTRUM);
 				}
 				else if (accession=="MS:1000581") //CRM spectrum
 				{
@@ -3207,7 +3215,7 @@ namespace OpenMS
 			os  << "		<dataProcessing id=\"" << id << "\">\n";
 			
 			//FORCED
-			if (dps.size()==0)
+			if (dps.empty())
 			{
 				os  << "			<processingMethod order=\"0\" softwareRef=\"so_default\">\n";
 				os  << "				<cvParam cvRef=\"MS\" accession=\"MS:1000544\" name=\"Conversion to mzML\" />\n";
@@ -3411,7 +3419,7 @@ namespace OpenMS
               {
                 os  << "            <cvParam cvRef=\"MS\" accession=\"MS:1000599\" name=\"pulsed q dissociation\" />\n";
               }
-              if (precursor.getActivationMethods().size()==0)
+              if (precursor.getActivationMethods().empty())
               {
                 os  << "            <cvParam cvRef=\"MS\" accession=\"MS:1000044\" name=\"dissociation method\" />\n";
               }
@@ -3458,12 +3466,20 @@ namespace OpenMS
 			Map<InstrumentSettings::ScanMode, UInt> file_content;
 			for (Size i=0; i<exp.size(); ++i)
 			{
-				file_content[exp[i].getInstrumentSettings().getScanMode()]++;
+				++file_content[exp[i].getInstrumentSettings().getScanMode()];
 			}
 			if (file_content.has(InstrumentSettings::MASSSPECTRUM))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000294\" name=\"mass spectrum\" />\n";
 			}
+      if (file_content.has(InstrumentSettings::MS1SPECTRUM))
+      {
+        os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000579\" name=\"MS1 spectrum\" />\n";
+      }
+      if (file_content.has(InstrumentSettings::MSNSPECTRUM))
+      {
+        os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000580\" name=\"MSn spectrum\" />\n";
+      }
 			if (file_content.has(InstrumentSettings::SIM))
 			{
 				os	<< "			<cvParam cvRef=\"MS\" accession=\"MS:1000582\" name=\"SIM spectrum\" />\n";
@@ -4020,7 +4036,7 @@ namespace OpenMS
 					os  << "				</source>\n";				
 				}
 				//FORCED
-				if (component_count<3 && in.getIonSources().size()==0)
+				if (component_count<3 && in.getIonSources().empty())
 				{
 					os  << "				<source order=\"1234\">\n";
 					os  << "					<cvParam cvRef=\"MS\" accession=\"MS:1000446\" name=\"fast ion bombardment\" />\n";
@@ -4036,7 +4052,8 @@ namespace OpenMS
 					os  << "				<analyzer order=\"" << ma.getOrder() << "\">\n";
 					
 					os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000014\" name=\"accuracy\" value=\"" << ma.getAccuracy() << "\" unitAccession=\"UO:0000169\" unitName=\"parts per million\" unitCvRef=\"UO\" />\n";
-					os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000022\" name=\"TOF Total Path Length\" value=\"" << ma.getTOFTotalPathLength() << "\" unitAccession=\"UO:0000008\" unitName=\"meter\" unitCvRef=\"UO\" />\n";
+					// @todo: the parameters below are instrument specific and should not be written every time
+          os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000022\" name=\"TOF Total Path Length\" value=\"" << ma.getTOFTotalPathLength() << "\" unitAccession=\"UO:0000008\" unitName=\"meter\" unitCvRef=\"UO\" />\n";
 					os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000024\" name=\"final MS exponent\" value=\"" << ma.getFinalMSExponent() << "\" />\n";
 					os << "					<cvParam cvRef=\"MS\" accession=\"MS:1000025\" name=\"magnetic field strength\" value=\"" << ma.getMagneticFieldStrength() << "\" unitAccession=\"UO:0000228\" unitName=\"tesla\" unitCvRef=\"UO\" />\n";
 					
@@ -4111,7 +4128,7 @@ namespace OpenMS
 					os  << "				</analyzer>\n";				
 				}
 				//FORCED
-				if (component_count<3 && in.getMassAnalyzers().size()==0)
+				if (component_count<3 && in.getMassAnalyzers().empty())
 				{
 					os  << "				<analyzer order=\"1234\">\n";
 					os << "						<cvParam cvRef=\"MS\" accession=\"MS:1000288\" name=\"cyclotron\" />\n";
@@ -4235,7 +4252,7 @@ namespace OpenMS
 					os  << "				</detector>\n";				
 				}
 				//FORCED
-				if (component_count<3 && in.getIonDetectors().size()==0)
+				if (component_count<3 && in.getIonDetectors().empty())
 				{
 					os  << "				<detector order=\"1234\">\n";
 					os  << "					<cvParam cvRef=\"MS\" accession=\"MS:1000107\" name=\"channeltron\" />\n";
@@ -4264,7 +4281,7 @@ namespace OpenMS
 
 			os  << "	<dataProcessingList count=\"" << (std::max)((Size)1, dps.size() + num_bi_dps) << "\">\n";
 			//default (first spectrum data or fictional data)
-			if (exp.size()==0)
+			if (exp.empty())
 			{
 				std::vector<DataProcessing> dummy;
 				writeDataProcessing_(os, "dp_sp_0" , dummy);
@@ -4394,11 +4411,19 @@ namespace OpenMS
 					}
 	
 					//spectrum type
-					if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::MASSSPECTRUM)
+          if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::MASSSPECTRUM)
 					{
-						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000294\" name=\"mass spectrum\" />\n";
+            os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000294\" name=\"mass spectrum\" />\n";
 					}
-					else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::SIM)
+          else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::MS1SPECTRUM)
+          {
+            os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000579\" name=\"MS1 spectrum\" />\n";
+          }
+          else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::MSNSPECTRUM)
+          {
+            os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000580\" name=\"MSn spectrum\" />\n";
+          }
+          else if (spec.getInstrumentSettings().getScanMode()==InstrumentSettings::SIM)
 					{
 						os << "				<cvParam cvRef=\"MS\" accession=\"MS:1000582\" name=\"SIM spectrum\" />\n";
 					}
@@ -4504,7 +4529,7 @@ namespace OpenMS
 						os	<< "					</scan>\n";
 					}
 					//fallback if we have no acquisition information (a dummy scan is created for RT and so on)
-					if (spec.getAcquisitionInfo().size()==0)
+					if (spec.getAcquisitionInfo().empty())
 					{
 						os	<< "					<scan>\n";
 						os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000016\" name=\"scan start time\" value=\"" << spec.getRT() << "\" unitAccession=\"UO:0000010\" unitName=\"second\" unitCvRef=\"UO\" />\n";
@@ -4528,7 +4553,7 @@ namespace OpenMS
 					//--------------------------------------------------------------------------------------------
 					//precursor list
 					//--------------------------------------------------------------------------------------------
-					if (spec.getPrecursors().size() != 0)
+          if ( !spec.getPrecursors().empty() )
 					{
 						os  << "      <precursorList count=\"" << spec.getPrecursors().size() << "\">\n";
 						for (Size p = 0; p != spec.getPrecursors().size(); ++p)
@@ -4628,7 +4653,7 @@ namespace OpenMS
 							{
 								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000599\" name=\"pulsed q dissociation\" />\n";
 							}
-							if (precursor.getActivationMethods().size()==0)
+							if (precursor.getActivationMethods().empty())
 							{
 								os  << "						<cvParam cvRef=\"MS\" accession=\"MS:1000044\" name=\"dissociation method\" />\n";
 							}
@@ -4799,7 +4824,7 @@ namespace OpenMS
 			//--------------------------------------------------------------------------------------------
 			//chromatograms
 			//--------------------------------------------------------------------------------------------			
-			if (exp.getChromatograms().size() != 0)
+      if ( !exp.getChromatograms().empty() )
 			{
 				os	<< "		<chromatogramList count=\"" << exp.getChromatograms().size() << "\" defaultDataProcessingRef=\"dp_sp_0\">\n"; 
 				for (Size c = 0; c != exp.getChromatograms().size(); ++c)

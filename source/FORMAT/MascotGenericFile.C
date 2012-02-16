@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -344,7 +344,7 @@ namespace OpenMS
 							{
 								vector<String> split;
 								line.split(',', split);
-								if (split.size() > 0)
+                if ( !split.empty() )
 								{
 									for (Size i = 0; i != split.size(); ++i)
 									{
@@ -352,7 +352,7 @@ namespace OpenMS
 										{
 											vector<String> split2;
 											split[i].trim().split(' ', split2);
-											if (split2.size() > 0)
+                      if ( !split2.empty() )
 											{
 												rt = split2[0].trim().toDouble() * 60.0;
 											}
@@ -387,7 +387,7 @@ namespace OpenMS
 						do
 						{
 							line.trim();
-							if (line.size() == 0)
+							if (line.empty())
 							{
 								continue;
 							}

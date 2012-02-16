@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -51,11 +51,12 @@ namespace OpenMS
 		}
 
 		tmp.split(' ', split);
-		Size sum = 0;
 		number_of_max_aa_ = 0;
 		// only one aa type?
-		if (split.size() != 0)
+    if ( !split.empty() )
 		{
+      Size sum = 0;
+
 			for (Size i = 0; i != split.size(); ++i)
 			{
 				char aa = split[i][0];

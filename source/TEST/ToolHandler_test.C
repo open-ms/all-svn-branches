@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -98,7 +98,6 @@ END_SECTION
 START_SECTION((static String getCategory(const String &toolname)))
 {
   TEST_EQUAL(ToolHandler::getCategory("PepNovoAdapter"), "Identification")
-  TEST_EQUAL(ToolHandler::getCategory("HistView"), "")
   TEST_EQUAL(ToolHandler::getCategory("DOESNOTEXIST"), "")
 }
 END_SECTION

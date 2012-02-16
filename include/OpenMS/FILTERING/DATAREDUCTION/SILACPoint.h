@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,12 @@ namespace OpenMS
       DoubleReal rt;
 
       /**
-       * @brief intensity at RT and m/z
+       * @brief exact m/z positions at which the intensities are read
+       */
+      std::vector<std::vector<DoubleReal> > mz_positions;
+      
+      /**
+       * @brief intensities at RT and the exact m/z positions
        */
       std::vector<std::vector<DoubleReal> > intensities;
 

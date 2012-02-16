@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -67,7 +67,7 @@ namespace OpenMS
   void ICPLLabeler::addLabelToProteinHits_(FeatureMapSim &features, const String &label) const
   {
     // check if proteinIdentification exists before accessing it
-    if(features.getProteinIdentifications().size() == 0) return;
+    if(features.getProteinIdentifications().empty()) return;
     for(std::vector<ProteinHit>::iterator protein_hit = features.getProteinIdentifications()[0].getHits().begin();
       protein_hit != features.getProteinIdentifications()[0].getHits().end();
       ++protein_hit)

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -58,7 +58,7 @@ namespace OpenMS
    * // you do not need the file any more<br>
    * STREAM_HANDLER.unregisterStream(StreamHandler::FILE, "name_of_the_output_file");<br>
    * // StreamHandler will close the file stream if no other part of your program requested the same stream
-   * <code>
+   * </code>
    *
    * @ingroup Concept
    */

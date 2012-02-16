@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -34,9 +34,9 @@
 namespace OpenMS
 {
   /**
-  	@brief ThresholdMower removes all peaks below a Threshold
+    @brief ThresholdMower removes all peaks below a threshold.
    	
-   	@htmlinclude OpenMS_ThresholdMower.Intensitys
+    @htmlinclude OpenMS_ThresholdMower.parameters
 
 		@ingroup SpectraPreprocessers
   */
@@ -81,9 +81,6 @@ namespace OpenMS
 		void filterPeakSpectrum(PeakSpectrum& spectrum);
 
 		void filterPeakMap(PeakMap& exp);
-		
-		DoubleReal getFilterIntensity();
-		void setFilterIntensity(DoubleReal p);
 		
 		//TODO reimplement DefaultParamHandler::updateMembers_()
 		

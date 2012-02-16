@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -71,7 +71,7 @@ namespace OpenMS
     open_tags_.push_back(tag_);
 
     static set<String> tags_to_ignore;
-    if (tags_to_ignore.size() == 0)
+    if ( tags_to_ignore.empty() )
     {
 			tags_to_ignore.insert("TraML"); // base node
       tags_to_ignore.insert("ContactList"); // contains only contact sections
@@ -292,7 +292,7 @@ namespace OpenMS
 		open_tags_.pop_back();
 
 		static set<String> tags_to_ignore;
-		if (tags_to_ignore.size() == 0)
+    if ( tags_to_ignore.empty() )
 		{
       tags_to_ignore.insert("TraML"); // base node
       tags_to_ignore.insert("ContactList"); // contains only contact sections
@@ -757,6 +757,8 @@ StringList p53_peptides = StringList::create("MEEPQSDPSVEPPLSQETFSDLWK,LLPENNVLS
 				}
 				os << " >" << "\n";
 
+				writeCVParams_(os, (CVTermList)*it, 3);
+
 				os << "      <Precursor>" << "\n"; 
 				os << "       <cvParam cvRef=\"MS\" accession=\"MS:1000827\" name=\"isolation window target m/z\" value=\"" << precisionWrapper(it->getPrecursorMZ()) << "\" unitCvRef=\"MS\" unitAccession=\"MS:1000040\" unitName=\"m/z\"/>\n";
 				writeCVParams_(os, it->getPrecursorCVTermList(), 4);
@@ -1100,10 +1102,6 @@ StringList p53_peptides = StringList::create("MEEPQSDPSVEPPLSQETFSDLWK,LLPENNVLS
     {
       actual_compound_.addCVTerm(cv_term);
     }
-		else if (parent_tag == "Peptide")
-		{
-			actual_peptide_.addCVTerm(cv_term);
-		}
 		else if (parent_tag == "Protein")
 		{
 			actual_protein_.addCVTerm(cv_term);
@@ -1160,6 +1158,10 @@ StringList p53_peptides = StringList::create("MEEPQSDPSVEPPLSQETFSDLWK,LLPENNVLS
 			// TODO handle checksum type...
 			actual_sourcefile_.addCVTerm(cv_term);
 		} 
+		else if (parent_tag == "Transition")
+		{
+			actual_transition_.addCVTerm(cv_term);
+		}
 		else 
 		{
 			warning(LOAD, String("The CV term '" + cv_term.getAccession() + "' - '" + cv_term.getName() + "' used in tag '" + parent_tag + "' could not be handled, ignoring it!"));

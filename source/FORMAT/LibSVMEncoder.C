@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -251,7 +251,6 @@ namespace OpenMS
 	{
 		ofstream output_file(filename.c_str());
 		Int j = 0;
-		Int counter = 0;
 		
 		if (problem == NULL)
 		{
@@ -268,7 +267,6 @@ namespace OpenMS
 		for(Int i = 0; i < problem->l; i++)
 		{
 			j = 0;
-			counter = 0;
 			output_file << problem->y[i] << " ";
 			while(problem->x[i][j].index != -1)
 			{

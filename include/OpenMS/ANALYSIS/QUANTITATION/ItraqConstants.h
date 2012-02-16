@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -55,7 +55,7 @@ namespace OpenMS
 		/// stores information on an iTRAQ channel
 		struct ChannelInfo
 		{
-			String description; // description given by experimentator (e.g. lung tissue)
+			String description; // description given by experimentalist (e.g. lung tissue)
 			Int name; // 114-117 or 113 to 121
 			Int id;		// 0-4 or 0-8
 			Peak2D::CoordinateType center; // expected centroid of peak in MZ

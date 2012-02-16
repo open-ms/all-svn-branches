@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -243,7 +243,7 @@ namespace OpenMS
 						MzXMLFile f;
 						f.getOptions() = options_;
 						f.setLogType(log);
-						if (exp.getChromatograms().size() != 0)
+            if ( !exp.getChromatograms().empty() )
 						{
 							MSExperiment<PeakType> exp2 = exp;
 							ChromatogramTools().convertChromatogramsToSpectra<MSExperiment<PeakType> >(exp2);
@@ -260,7 +260,7 @@ namespace OpenMS
 						MzDataFile f;
 						f.getOptions() = options_;
 						f.setLogType(log);
-						if (exp.getChromatograms().size() != 0)
+            if ( !exp.getChromatograms().empty() )
 						{
 							MSExperiment<PeakType> exp2 = exp;
 							ChromatogramTools().convertChromatogramsToSpectra<MSExperiment<PeakType> >(exp2);

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -472,7 +472,7 @@ namespace OpenMS
 			}
 		
 			// TODO think about what happens if #protons are greater than number of sites?!?
-			if (bb_sites.size() == 0 && sc_sites.size() == 0)
+      if (bb_sites.empty() && sc_sites.empty())
 			{
 				break;
 			}
@@ -623,7 +623,10 @@ namespace OpenMS
       // proton 1 at N-terminus
       if (i == 0 || (i == cleavage_site && use_most_basic_site))
       {
+        if ( i != peptide.size() ) // added for cppcheck
+        {
 				gb_i = gb_bb_l_NH2 + peptide[i].getBackboneBasicityRight();
+      }
       }
       else
       {
@@ -707,7 +710,10 @@ namespace OpenMS
 			DoubleReal gb_i(0);
 			if (i == 0 || (i == cleavage_site && use_most_basic_site))
 			{
+        if ( i != peptide.size() )  // added for cppcheck
+        {
 				gb_i = gb_bb_l_NH2 + peptide[i].getBackboneBasicityRight();
+			}
 			}
 			else
 			{

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -344,7 +344,7 @@ namespace OpenMS
 		const TOPPASToolVertex::IOInfo& target_param = target_input_files[target_param_index];
 		StringList target_param_types = target_param.valid_types;
 		
-		if (source_param_types.size() == 0 || target_param_types.size() == 0)
+		if (source_param_types.empty() || target_param_types.empty())
 		{
 			// no type specified --> allow edge
 			return ES_VALID;

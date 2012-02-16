@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -200,7 +200,7 @@ namespace OpenMS
 			{
 				SpectrumType* spectrum = 0;
 				// If the container is empty, nothing will happen
-				if (cont.size() == 0) return;
+				if (cont.empty()) return;
 
 				typename PeakType::CoordinateType current_rt = - (std::numeric_limits<typename PeakType::CoordinateType>::max)();
 
@@ -341,7 +341,7 @@ namespace OpenMS
 				total_size_ = 0;
 
 				//empty
-				if (this->size()==0 && chromatograms_.size() == 0)
+				if (this->size()==0 && chromatograms_.empty())
 				{
 					return;
 				}
@@ -381,7 +381,7 @@ namespace OpenMS
 				}
 				std::sort(ms_levels_.begin(), ms_levels_.end());
 
-				if (this->chromatograms_.size() == 0)
+				if (this->chromatograms_.empty())
 				{
 					return;
 				}				

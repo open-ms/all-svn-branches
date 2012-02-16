@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -637,7 +637,7 @@ namespace OpenMS
 							<< "sps "<<SPS << "\n"
 							<< "dex "<<DEX << "\n";
 #endif
-		if(features.size() == 0)  return;
+		if(features.empty())  return;
 		// check if feature map has required user_params-> else add them
 		checkForRequiredUserParams_(features);
     
@@ -762,7 +762,7 @@ namespace OpenMS
 																// add only if this protein doesn't exist as a hit yet 
 																if(!exists)
 																	{ 
-																		if(all_prot_ids.size()>0)
+                                    if ( !all_prot_ids.empty() )
 																			{
 																				all_prot_ids[0].insertHit(prot_hits[prot_hit]);
 																				//std::cout << "enter prot id "<< prot_hits[prot_hit].getAccession()<<std::endl;
@@ -774,7 +774,7 @@ namespace OpenMS
 																				all_prot_ids[0].insertHit(prot_hits[prot_hit]);
 																								//	std::cout << "enter prot id "<< prot_hits[prot_hit].getAccession()<<std::endl;
 																			}
-																		if(curr_prot_ids.size()>0)
+                                    if ( !curr_prot_ids.empty() )
 																			{
 																				curr_prot_ids[0].insertHit(prot_hits[prot_hit]);
 																			}
@@ -799,7 +799,7 @@ namespace OpenMS
 				std::cout << "new features "<<new_features.size() << std::endl;
 				std::cout << "curr_pep_ids "<<curr_pep_ids.size() << std::endl;
 #endif
-				if(curr_pep_ids.size() == 0)
+				if(curr_pep_ids.empty())
 					{
 						// necessary for making the figures later
 						protein_inference.findMinimalProteinList(all_pep_ids); //filterProtIds_(all_prot_ids);

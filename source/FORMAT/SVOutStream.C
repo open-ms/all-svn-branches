@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -98,8 +98,8 @@ SVOutStream& SVOutStream::operator<<(const string& str)
 
 SVOutStream& SVOutStream::operator<<(ostream& (*fp)(ostream&))
 {
-	if (fp == static_cast<ostream&(*)(ostream&)>(endl))
-		newline_ = true;
+	ostream& (* const endlPointer) (ostream&) = &endl;
+	if (fp == endlPointer)	newline_ = true;
 	(ostream&)*this << fp;
 	return *this;
 }

@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -37,6 +37,9 @@ namespace OpenMS
 {
   class TOPPViewBase;
 
+  /**
+  @brief Behavior of TOPPView in identification mode.
+  */
   class TOPPViewIdentificationViewBehavior :
       public TOPPViewBehaviorInterface
   {

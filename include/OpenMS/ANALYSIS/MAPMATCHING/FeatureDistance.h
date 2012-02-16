@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -76,7 +76,7 @@ namespace OpenMS
 			 @brief Constructor
 			 
 			 @param max_intensity Maximum intensity of features (for normalization)
-			 @param check_constraints Check "max. difference" constraints given in the parameters and return @ref infinity if violated?
+			 @param force_constraints Check "max. difference" constraints given in the parameters and return @ref infinity if violated?
 		*/
 		FeatureDistance(DoubleReal max_intensity = 1.0,
 										bool force_constraints = false);

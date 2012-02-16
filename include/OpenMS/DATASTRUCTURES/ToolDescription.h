@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -42,7 +42,10 @@ namespace OpenMS
 
 	namespace Internal
 	{
+    /**
+      @brief Maps input/output files to filenames for the external program
 
+    */
     struct FileMapping
     {
       String location; // a regex/macro mix; to be expanded by tool;
@@ -58,6 +61,10 @@ namespace OpenMS
       }
     };
 
+    /**
+      @brief Filename mappings for all input/output files
+
+    */
     struct MappingParam
     {
       std::map<Int, String> mapping;

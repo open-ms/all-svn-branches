@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -244,7 +244,7 @@ namespace OpenMS
 							std::cerr << "SECTIONS: " << sit->getMZ() << " " << sit->getIntensity() << std::endl;
 						}
 						this_rt = sit->getMZ();
-						if (sections.size() == 0 || (this_rt - last_rt) > min_rt_distance)
+						if (sections.empty() || (this_rt - last_rt) > min_rt_distance)
 						{
 							if (write_debuginfo)
 							{

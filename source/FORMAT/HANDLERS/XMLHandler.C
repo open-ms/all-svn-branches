@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework 
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -75,7 +75,7 @@ namespace OpenMS
 			if (mode==STORE) error_message_ =  String("While storing '") + file_ + "': " + msg;
 			if (line!=0 || column!=0) error_message_ += String("( in line ") + line + " column " + column + ")";
 
-      // test if file has the wrong extension and is therefore passed to the wrong parser (e.g. in MapAligner)
+      // test if file has the wrong extension and is therefore passed to the wrong parser
       FileTypes::Type ft_name = FileHandler::getTypeByFileName(file_);
       FileTypes::Type ft_content = FileHandler::getTypeByContent(file_);
       if (ft_name != ft_content)

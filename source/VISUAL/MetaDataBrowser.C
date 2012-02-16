@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -149,7 +149,7 @@ namespace OpenMS
 	void MetaDataBrowser::showDetails_()
 	{
 		QList<QTreeWidgetItem *> list = treeview_->selectedItems();
-		if (list.size()==0) return;
+		if (list.empty()) return;
 		
 	  ws_->setCurrentIndex(list[0]->text(1).toInt());
 	}

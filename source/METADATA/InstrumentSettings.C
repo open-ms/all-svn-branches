@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -31,7 +31,7 @@ using namespace std;
 
 namespace OpenMS
 {
-	const std::string InstrumentSettings::NamesOfScanMode[] = {"Unknown","MassSpectrum","SelectedIonMonitoring","SelectedReactionMonitoring","ConsecutiveReactionMonitoring","ConstantNeutralGain","ConstantNeutralLoss","Precursor","EnhancedMultiplyCharged","TimeDelayedFragmentation","ElectromagneticRadiation","Emission","Absorbtion"};
+	const std::string InstrumentSettings::NamesOfScanMode[] = {"Unknown","MassSpectrum","MS1Spectrum", "MSnSpectrum","SelectedIonMonitoring","SelectedReactionMonitoring","ConsecutiveReactionMonitoring","ConstantNeutralGain","ConstantNeutralLoss","Precursor","EnhancedMultiplyCharged","TimeDelayedFragmentation","ElectromagneticRadiation","Emission","Absorbtion"};
 
 	InstrumentSettings::InstrumentSettings():
 		MetaInfoInterface(),

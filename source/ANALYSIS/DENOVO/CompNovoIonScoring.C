@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -120,7 +120,7 @@ namespace OpenMS
 #ifdef ION_SCORING_DEBUG
         cerr << "Decomps: " << it->first <<  " " << it->first -19.0 << " " << decomps.size() << " " << it->second.score << endl;
 #endif
-        if (decomps.size() == 0)
+        if (decomps.empty())
         {
           it->second.score = 0;
         }
@@ -133,7 +133,7 @@ namespace OpenMS
 #ifdef ION_SCORING_DEBUG
         cerr << "Decomps: " << it->first << " " << precursor_weight - it->first << " " << decomps.size() << " " << it->second.score << endl;
 #endif
-        if (decomps.size() == 0)
+        if (decomps.empty())
         {
           it->second.score = 0;
         }

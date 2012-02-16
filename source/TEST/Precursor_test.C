@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -238,6 +238,13 @@ START_SECTION((bool operator!= (const Precursor& rhs) const))
 	tmp2 = tmp;
 	tmp.setMetaValue("label",String("label"));
 	TEST_EQUAL(tmp!=tmp2, true);
+END_SECTION
+
+START_SECTION(DoubleReal getUnchargedMass() const)
+  Precursor tmp;
+  tmp.setMZ(123);
+  tmp.setCharge(13);
+  TEST_REAL_SIMILAR(tmp.getUnchargedMass(), 1585.90540593198);
 END_SECTION
 
 /////////////////////////////////////////////////////////////

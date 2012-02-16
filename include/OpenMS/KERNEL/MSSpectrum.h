@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //									 OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//	Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//	Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //	This library is free software; you can redistribute it and/or
 //	modify it under the terms of the GNU Lesser General Public
@@ -301,7 +301,7 @@ namespace OpenMS
 			*/
 			void sortByIntensity(bool reverse=false)
 			{
-				if(float_data_arrays_.size() == 0 && string_data_arrays_.size() && integer_data_arrays_.size())
+				if(float_data_arrays_.empty() && string_data_arrays_.size() && integer_data_arrays_.size())
 				{
 					if (reverse)
 					{
@@ -377,7 +377,7 @@ namespace OpenMS
 			*/
 			void sortByPosition()
 			{
-				if(float_data_arrays_.size() == 0)
+				if(float_data_arrays_.empty())
 				{
 					std::sort(ContainerType::begin(), ContainerType::end(), typename PeakType::PositionLess());
 				}

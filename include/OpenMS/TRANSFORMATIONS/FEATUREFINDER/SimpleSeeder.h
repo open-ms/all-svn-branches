@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -98,7 +98,7 @@ namespace OpenMS
 				if (current_peak_ == indices_.end()) 
 				{
 					// if no seed was found:
-					if (indices_.size()==0) throw NoSuccessor(__FILE__, __LINE__,__PRETTY_FUNCTION__, IndexPair());
+					if (indices_.empty()) throw NoSuccessor(__FILE__, __LINE__,__PRETTY_FUNCTION__, IndexPair());
 					else throw NoSuccessor(__FILE__, __LINE__,__PRETTY_FUNCTION__, *(current_peak_-1));
 				}
 

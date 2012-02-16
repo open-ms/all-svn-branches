@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -177,7 +177,7 @@ namespace OpenMS
 	*/
 	inline const SparseVector<Real>& getBins() const
 	{
-		if(bins_.size() == 0)
+		if(bins_.empty())
 		{
 			throw BinnedSpectrum::NoSpectrumIntegrated(__FILE__, __LINE__, __PRETTY_FUNCTION__);
 		}
@@ -190,7 +190,7 @@ namespace OpenMS
 	*/
 	inline SparseVector<Real>& getBins()
 	{
-		if(bins_.size() == 0)
+		if(bins_.empty())
 		{
 			try
 			{

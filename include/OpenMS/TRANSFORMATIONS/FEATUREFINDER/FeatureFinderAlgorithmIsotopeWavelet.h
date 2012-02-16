@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -50,7 +50,16 @@ namespace OpenMS
 	/**
 		@brief Implements the isotope wavelet feature finder.
 
-		The FeatureFinderAlgorithmIsotopeWavelet class has been designed for finding features in 1D or 2D MS data sets using the isotope wavelet. In the case of two dimensional data, the class provides additionally the sweep line algorithm. Please note that the algorithm implemented here is only marginally related to the algorithm presented in Schulz-Trieglaff et al. (2007, 2008), as no fitting procedure is applied anymore after the wavelet-based seeding step. The wavelet has been designed to extract even very lowly-abundant features (see Hussong et. al (2007, 2009)), usually featuring a very low signal-to-noise ratio. The wavelet in its current implementation is not able to resolve overlapping patterns (see also Hussong et. al (2009)) and slightly shifts masses to the right due to the construction of the wavelet.   
+    The FeatureFinderAlgorithmIsotopeWavelet class has been designed for finding features in 1D
+    or 2D MS data sets using the isotope wavelet. In the case of two dimensional data, the class
+    provides additionally the sweep line algorithm. Please note that the algorithm implemented
+    here is only marginally related to the algorithm presented in
+    Schulz-Trieglaff et al. (2007, 2008), as no fitting procedure is applied anymore after the
+    wavelet-based seeding step. The wavelet has been designed to extract even very lowly-abundant
+    features (see Hussong et. al (2007, 2009)), usually featuring a very low
+    signal-to-noise ratio. The wavelet in its current implementation is not able to resolve
+    overlapping patterns (see also Hussong et. al (2009)) and slightly shifts masses to the right
+     due to the construction of the wavelet.
 		
 		@htmlinclude OpenMS_FeatureFinderAlgorithmIsotopeWavelet.parameters
 		

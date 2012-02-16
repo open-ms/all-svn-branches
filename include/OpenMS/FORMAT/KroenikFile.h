@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -53,7 +53,7 @@ namespace OpenMS
 
     The width in m/z of the overall convex hull of each feature is set to 3 Th in lack of a value provided by the Kroenik file.
 
-    @note Kroenik files are Tab (\t) separated files.
+    @note Kroenik files are Tab (\\t) separated files.
   	
   	@ingroup FileIO
   */

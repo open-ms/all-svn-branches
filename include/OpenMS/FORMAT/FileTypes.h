@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2011 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -62,7 +62,7 @@ namespace OpenMS
 			MS2,								///< MS2 file (.ms2)
 			PEPXML,							///< TPP pepXML file (.pepXML)
 			PROTXML,						///< TPP protXML file (.protXML)
-			MZIDENTML,				  ///< mzIdentML (HUPO PSI AnalysisXML format) (.mzid)
+			MZIDENTML,					///< mzIdentML (HUPO PSI AnalysisXML followup format) (.mzid)
 			GELML,							///< GelML (HUPO PSI format) (.GelML)
 			TRAML,							///< TraML (HUPO PSI format) for transitions (.TraML)
 			MSP,								///< NIST spectra library file format (.msp)

@@ -111,6 +111,7 @@ protected:
     registerStringOption_("raw_data","<mzDataFile>","","File containing the raw data",false);
     registerStringOption_("solver","<solver-type>","GLPK","LP solver type",false,true);
     setValidStrings_("solver",StringList::create("GLPK,COINOR"));
+    registerIntOption_("num_precursors_per_spot","<Int>",1,"number of precursors per spot to be selected",false);
 
     //    setValidFormats_("out", StringList::create("TraML"));
 
@@ -202,13 +203,19 @@ protected:
           }
         else
           {
+            UInt spot_cap = getIntOption_("num_precursors_per_spot");
             String raw_data_path = getStringOption_("raw_data");
             MSExperiment<> exp,ms2;
             FeatureMap<> out_map;
             MzDataFile().load(raw_data_path,exp);
- 
+            IntList levels;
+            levels << 1;
+            exp.erase(remove_if(exp.begin(), exp.end(),
+                                   InMSLevelRange<MSSpectrum<> >(levels, true)), exp.end());
+            exp.sortSpectra(true);
             OfflinePrecursorIonSelection opis;
             Param param = getParam_().copy("algorithm:PrecursorSelection:",true);
+            param.setValue("ms2_spectra_per_rt_bin",spot_cap);
             opis.setParameters(param);
             
             std::set<Int> charges_set;
@@ -254,7 +261,8 @@ protected:
               }
             else if(strategy == "GA") // greedy approach: take highest signal for each feature
               {
-                Size spot_cap = getParam_().getValue("PrecursorSelection:ms2_spectra_per_rt_bin");
+                UInt spot_cap = getIntOption_("num_precursors_per_spot");
+                //                Size spot_cap = getParam_().getValue("PrecursorSelection:ms2_spectra_per_rt_bin");
                 sort(map.begin(),map.end(),PrecursorIonSelection::TotalScoreMore());
                 std::vector<Size> rt_sizes(exp.size(),0);
                 DoubleReal min_rt = (exp.RTBegin(0))->getRT();
@@ -278,7 +286,8 @@ protected:
               }
             else if(strategy == "ILP") // ILP
               {
-                Size spot_cap = getParam_().getValue("PrecursorSelection:ms2_spectra_per_rt_bin");
+                UInt spot_cap = getIntOption_("num_precursors_per_spot");
+                //                Size spot_cap = getParam_().getValue("PrecursorSelection:ms2_spectra_per_rt_bin");
                 // create ILP
                 PSLPFormulation ilp_wrapper;
                 // get the mass ranges for each features for each scan it occurs in

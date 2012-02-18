@@ -230,18 +230,24 @@ namespace OpenMS
 
 	template <typename InputPeakType>
 	void PSLPFormulation::getXIC_(const std::vector<std::pair<Size,Size> >& end_points,
-													 std::vector<DoubleReal>& weights,
-                           const MSExperiment<InputPeakType>& experiment,
-                           const bool normalize)
+                                std::vector<DoubleReal>& weights,
+                                const MSExperiment<InputPeakType>& experiment,
+                                const bool normalize)
 	{
 		DoubleReal max_weight = 0.;
 		weights.clear();
 		for(Size i = 0; i < end_points.size();i+=2)
 			{
 				DoubleReal weight = 0.;
+        //        std::cout << "i "<<i <<" end_points.size() "<<end_points.size()<<" "<<std::endl;
+        
 				for(Size j = end_points[i].second;j <= end_points[i+1].second;++j)
 					{
+            // std::cout << end_points[i].second  << " "<< end_points[i+1].second<<std::endl;
+            // std::cout <<end_points[i].first << " "<< experiment.size()<<" "
+            //           << j << " "<<experiment[end_points[i].first].size()<<std::endl;
 						weight += experiment[end_points[i].first][j].getIntensity();
+            //            std::cout << experiment[end_points[i].first][j].getIntensity() << std::endl;
 						//					std::cout << " add "<<experiment[end_points[i].first][j].getIntensity()<<std::endl;
 					}
 				if(weight > max_weight)  max_weight = weight;
@@ -274,6 +280,7 @@ namespace OpenMS
 	{
 		xics.clear();
 		xics.resize(features.size());
+    std::cout << mass_ranges.size() << " "<<features.size() << std::endl;
 		for(Size i = 0; i < features.size(); ++i)
 			{
 				getXIC_(mass_ranges[i],xics[i],experiment,normalize);

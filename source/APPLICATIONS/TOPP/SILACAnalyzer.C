@@ -546,7 +546,6 @@ class TOPPSILACAnalyzer
 
     // sort the mass shift vector
     sort(massShifts.begin(), massShifts.end());
-    reverse(massShifts.begin(), massShifts.end());
 
     // print mass shifts
     for (UInt i = 0; i < massShifts.size(); i++)

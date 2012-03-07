@@ -87,11 +87,11 @@ using namespace std;
 /// @cond TOPPCLASSES
 
 
-class TOPPSpectraSTSearch
+class TOPPSpectraSTAdapter
   : public TOPPBase
 {
   public:
-    TOPPSpectraSTSearch()
+    TOPPSpectraSTAdapter()
       : TOPPBase("SpectraSTAdapter","Annotates MS/MS spectra using SpectraST.")
     {
     }
@@ -742,7 +742,7 @@ class TOPPSpectraSTSearch
 
 int main( int argc, const char** argv )
 {
-  TOPPSpectraSTSearch tool;
+  TOPPSpectraSTAdapter tool;
 
   return tool.main(argc,argv);
 }

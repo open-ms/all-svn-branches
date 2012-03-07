@@ -61,7 +61,7 @@ namespace OpenMS
     tools_map["FalseDiscoveryRate"] = Internal::ToolDescription("FalseDiscoveryRate", "ID Processing");
 		tools_map["FeatureFinderCentroided"] = Internal::ToolDescription("FeatureFinderCentroided", "Quantitation");
 		tools_map["FeatureFinderIsotopeWavelet"] = Internal::ToolDescription("FeatureFinderIsotopeWavelet", "Quantitation");
-                tools_map["FeatureFinderMetabo"] = Internal::ToolDescription("FeatureFinderMetabo", "Quantitation");
+    tools_map["FeatureFinderMetabo"] = Internal::ToolDescription("FeatureFinderMetabo", "Quantitation");
 		tools_map["FeatureFinderMRM"] = Internal::ToolDescription("FeatureFinderMRM", "Quantitation");
     tools_map["FeatureFinderRaw"] = Internal::ToolDescription("FeatureFinderRaw", "Quantitation");
 		tools_map["FeatureLinkerLabeled"] = Internal::ToolDescription("FeatureLinkerLabeled", "Map Alignment");
@@ -127,6 +127,9 @@ namespace OpenMS
     tools_map["SpectraFilterNLargest"] = Internal::ToolDescription("SpectraFilterNLargest", "Identification");
     tools_map["SpectraFilterNormalizer"] = Internal::ToolDescription("SpectraFilterNormalizer", "Identification");
 		tools_map["SpectraMerger"] = Internal::ToolDescription("SpectraMerger", "File Handling");
+
+    tools_map["SpectraSTAdapter"] = Internal::ToolDescription("SpectraSTAdapter", "Identification");
+
     tools_map["TOFCalibration"] = Internal::ToolDescription("TOFCalibration", "Signal processing and preprocessing");
 		tools_map["TextExporter"] = Internal::ToolDescription("TextExporter", "File Handling");
     tools_map["XTandemAdapter"] = Internal::ToolDescription("XTandemAdapter", "Identification");

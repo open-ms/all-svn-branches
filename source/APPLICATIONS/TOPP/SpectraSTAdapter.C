@@ -141,12 +141,11 @@ class TOPPSpectraSTAdapter
     {
       registerInputFile_("spectrast_executable", "<executable>", "", "The 'spectrast' executable of the SpectraST installation", true, false, StringList::create("skipexists"));
 
-      registerStringOption_("mode", "<type>", "search", "SpectraST mode.", true, false);
+      registerStringOption_("mode", "<type>", "", "SpectraST mode.", true, false);
       vector<String> mode_strings;
-      mode_strings.push_back("create");
       mode_strings.push_back("search");
+      mode_strings.push_back("create");
       setValidStrings_("mode", mode_strings);
-
 
       addEmptyLine_();
 
@@ -159,7 +158,7 @@ class TOPPSpectraSTAdapter
       registerInputFile_("create:useProbTable", "<file>", "", "Use probability table in <file>. Only those peptide ions included in the table will be imported. A probability table is a text file with one peptide ion in the format AC[160]DEFGHIK/2 per line. If a probability is supplied following the peptide ion separated by a tab, it will be used to replace the original probability of that library entr", false);
       registerInputFile_("create:useProteinList", "<file>", "", "Use protein list in <file>. Only those peptide ions associated with proteins in the list will be imported.\n A protein list is a text file with one protein identifier per line. If a number X is supplied following the protein separated by a tab, then at most X peptide ions associated with that protein will be imported.", false);
       //registerStringOption_("create:remark", "<remark>", "", "Remark. Add a Remark=<remark> comment to all library entries created.", false);
-      registerStringOption_("create:annotatePeaks","<type>", "true", "Annotate peaks.", true, false);
+      registerStringOption_("create:annotatePeaks","<type>", "", "Annotate peaks.", true, false);
       registerFlag_("create:binaryFormat", "Write library in binary format, which enables quicker search.", true);
       registerFlag_("create:annotatePeaks", "Annotate peaks.", true);
       registerFlag_("create:writeDtaFiles", "Write all library spectra as .dta files.", false);
@@ -169,7 +168,6 @@ class TOPPSpectraSTAdapter
       bool_strings.push_back("true");
       bool_strings.push_back("false");
       setValidStrings_("create:annotatePeaks", bool_strings);
-
 
 
       registerInputFile_("create:in", "<file>", "", "Input file ");
@@ -222,20 +220,24 @@ class TOPPSpectraSTAdapter
 
 
       addText_("(II) Search Mode\nUsage: spectrast [ options ] <SearchFileName1> [ <SearchFileName2> ... <SearchFileNameN> ]\nwhere: SearchFileNameX = Name(s) of file containing unknown spectra to be searched.\n\t\t(Extension specifies format of file. Supports .mzXML, .mzData, .dta and .msp)");
-      registerInputFile_("sF", "<file>", "", "Read search options from file.\nIf <file> is not given, ”spectrast.params” is assumed.\nNOTE: All options set in the file will be overridden by command-line options, if specified.",false);
+      //registerInputFile_("sF", "<file>", "", "Read search options from file.\nIf <file> is not given, ”spectrast.params” is assumed.\nNOTE: All options set in the file will be overridden by command-line options, if specified.",false);
       registerInputFile_("sL", "<file>", "", "Specify library file.\n<file> must have .splib extension. The existence of the corresponding .spidx file of the same name\nin the same directory is assumed.",false);
       registerInputFile_("sD", "<file>", "", "Specify a sequence database file.\n<file> must be in .fasta format. This will not affect the search in any way,\nbut this information will be included in the output for any downstream data processing.",false);
+
+      /*
       registerStringOption_("sT", "<type>", "AA", "Specify the type of the sequence database file.\n<type> must be either ”AA” or ”DNA”.", false, false);
-            vector<String> valid_strings;
-            valid_strings.push_back("AA");
-            valid_strings.push_back("DNA");
-            setValidStrings_("sT", valid_strings);
+      vector<String> valid_strings;
+      valid_strings.push_back("AA");
+      valid_strings.push_back("DNA");
+      setValidStrings_("sT", valid_strings);
+       */
 
       /*registerStringOption_("databaseType", "<unit>", "sTAA", "	-sTAA (default) = protein database -sTDNA = genomic database.", false, false);
       vector<String> valid_strings;
       valid_strings.push_back("sTAA");
       valid_strings.push_back("sTDNA");
       setValidStrings_("databaseType", valid_strings);*/
+
       registerFlag_("sR", "Cache all entries in RAM. (Turn off with -sR!)\nRequires a lot of memory (the library will usually be loaded almost in its entirety), but speeds up search for unsorted queries.");
       registerInputFile_("sS", "<file>", "", "Only search a subset of the query spectra in the search file.\nOnly query spectra with names matching a line of <file> will be searched.",false);
 
@@ -243,18 +245,17 @@ class TOPPSpectraSTAdapter
       addText_("CANDIDATE SELECTION AND SCORING OPTIONS");
       registerDoubleOption_("sM", "<tol>", 1.5, "Specify m/z tolerance. \n<tol> is the m/z tolerance within which candidate entries\nare retrieved from the library for spectral comparision.", false);
       registerFlag_("sA", "Use isotopically averaged mass instead of monoisotopic mass. (Turn of with -sA!)");
-      registerStringOption_("sC", "<type>", "ICAT_cl", "Specify the expected kind of cysteine modification for the query spectra.\n<type> must be ”ICAT_cl” for cleavable ICAT, ”ICAT_uc”for uncleavable ICAT, or ”CAM” for CarbAmidoMethyl.\nThose library spectra with a different kind of cysteine modification will be ignored.\nThe ICAT type, if any, will also be included in the pepXML output for validation by PeptideProphet.", false, false);
+      registerStringOption_("sC", "<type>", "CAM", "Specify the expected kind of cysteine modification for the query spectra.\n<type> must be ”ICAT_cl” for cleavable ICAT, ”ICAT_uc”for uncleavable ICAT, or ”CAM” for CarbAmidoMethyl.\nThose library spectra with a different kind of cysteine modification will be ignored.\nThe ICAT type, if any, will also be included in the pepXML output for validation by PeptideProphet.", false, false);
       vector<String> valid_strings1;
-        valid_strings1.push_back("ICAT_cl");
-        valid_strings1.push_back("ICAT_uc");
-        valid_strings1.push_back("CAM");
-        setValidStrings_("sC", valid_strings1);
+      valid_strings1.push_back("ICAT_cl");
+      valid_strings1.push_back("ICAT_uc");
+      valid_strings1.push_back("CAM");
+      setValidStrings_("sC", valid_strings1);
 
-      addEmptyLine_();
-      addText_("Miscellaneous Options:");
-      registerFlag_("V", "Verbose mode.");
-      registerFlag_("Q", "Quiet mode.");
-      registerOutputFile_("L", "<file>", "", "Specify name of log file. Default is ”spectrast.log”.", false);
+      //addEmptyLine_();
+      //addText_("Miscellaneous Options:");
+      //registerFlag_("V", "Verbose mode.");
+      //registerFlag_("Q", "Quiet mode.");
     }
 
     ExitCodes main_(int , const char**)
@@ -307,14 +308,17 @@ class TOPPSpectraSTAdapter
       StringList parameters;
       if (getStringOption_("mode") == "search")
       {
-        parameters << "-s";
+        parameters << "-sF";
       } else
       {
-        parameters << "-c";
+        parameters << "-cF";
       }
 
       // fill parameters
-      parameters << "spectrast_create.params";
+      parameters << "TODO.params";
+
+      // write spectrast log file
+      parameters << "-L" << "TODO.log";
 
       QStringList qparam;
       for (Size i = 0 ; i < parameters.size();++i)

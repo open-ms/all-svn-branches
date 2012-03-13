@@ -1,4 +1,4 @@
-// -*- mode: C++; tab-width: 2; -*-
+  // -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -152,57 +152,106 @@ class TOPPSpectraSTAdapter
       registerTOPPSubsection_("create","Create Mode");
       addText_("General options");
 
+      registerInputFile_("create:in", "<file>", "", "Input file ");
+      setValidFormats_("create:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
       registerOutputFile_("create:outputFileName", "<file>", "", "Output file base name");
 //    registerInputFile_("cF", "<file>", "", "If <file> is not given, “spectrast_create.params“ is assumed.",false);
 
       registerInputFile_("create:useProbTable", "<file>", "", "Use probability table in <file>. Only those peptide ions included in the table will be imported. A probability table is a text file with one peptide ion in the format AC[160]DEFGHIK/2 per line. If a probability is supplied following the peptide ion separated by a tab, it will be used to replace the original probability of that library entr", false);
       registerInputFile_("create:useProteinList", "<file>", "", "Use protein list in <file>. Only those peptide ions associated with proteins in the list will be imported.\n A protein list is a text file with one protein identifier per line. If a number X is supplied following the protein separated by a tab, then at most X peptide ions associated with that protein will be imported.", false);
       //registerStringOption_("create:remark", "<remark>", "", "Remark. Add a Remark=<remark> comment to all library entries created.", false);
-      registerStringOption_("create:annotatePeaks","<type>", "", "Annotate peaks.", true, false);
-      registerFlag_("create:binaryFormat", "Write library in binary format, which enables quicker search.", true);
-      registerFlag_("create:annotatePeaks", "Annotate peaks.", true);
-      registerFlag_("create:writeDtaFiles", "Write all library spectra as .dta files.", false);
-      registerFlag_("create:writeMgfFiles", "Write all library spectra as one .mgf file.");
+      registerStringOption_("create:annotatePeaks","<type>", "true", "Annotate peaks.", false, false);
+      registerStringOption_("create:binaryFormat","<type>", "true", "Write library in binary format, which enables quicker search.", false, false);
+      registerStringOption_("create:writeDtaFiles","<type>", "false", "Write all library spectra as .dta files.", false, false);
+      registerStringOption_("create:writeMgfFiles","<type>", "false", "Write all library spectra as one .mgf file.", false, false);
 
-      vector<String> bool_strings;
-      bool_strings.push_back("true");
-      bool_strings.push_back("false");
-      setValidStrings_("create:annotatePeaks", bool_strings);
-
-
-      registerInputFile_("create:in", "<file>", "", "Input file ");
-      setValidFormats_("create:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
-
-      
-
-      addEmptyLine_();
-      addText_("PEPXML IMPORT OPTIONS (Applicable with .pepXML files)");
-      registerDoubleOption_("cP","<float>",0,"Include all spectra identified with probability no less than <prob> in the library.",false);
-      registerStringOption_("cn", "<name>", "", "Specify a dataset identifier for the file to be imported.", false);
-      registerFlag_("co", "Add the originating mzXML file name to the dataset identifier. Good for keeping track of in which \nMS run the peptide is observed. (Turn off with -co!)");
-      registerFlag_("cg", "Set all asparagines (N) in the motif NX(S/T) as deamidated (N[115]). Use for glycocaptured peptides. (Turn off with -cg!).");
-      registerFlag_("cI", "Set the instrument and acquisition settings of the spectra.");
 
 
       addEmptyLine_();
+      addText_("PEPXML IMPORT OPTIONS (Applicable with .pepXML file input) ");
+      registerDoubleOption_("create:minimumProbabilityToInclude", "<prob>", 0.9, "Include all spectra identified with probability no less than <prob> in the library.", false);
+      registerStringOption_("create:datasetName", "<name>", "", "Specify a dataset identifier for the file to be imported.", false);
+      registerStringOption_("create:addMzXMLFileToDatasetName", "<type>", "false", "Add the originating mzXML file name to the dataset identifier. Good for keeping track of in which \nMS run the peptide is observed. (Turn off with -co!)", false, false);
+      registerStringOption_("create:setDeamidatedNXST", "<type>", "false", "Set all asparagines (N) in the motif NX(S/T) as deamidated (N[115]). Use for glycocaptured peptides. (Turn off with -cg!).", false, false);
+      registerStringOption_("create:setFragmentation", "<frag>", "","Set the fragmentation type of all spectra, overriding existing information.");
+      registerStringOption_("create:setDeamidatedNXST", "<type>", "false", "Set all asparagines (N) in the motif NX(S/T) as deamidated (N[115]), and all asparagines not in the motif NX(S/T) as unmodified. Use for glycocaptured peptides.", false, false);
+      //registerFlag_("cI", "Set the instrument and acquisition settings of the spectra.");
+
       addText_("LIBRARY MANIPULATION OPTIONS (Applicable with .splib files)");
-      registerStringOption_("cf", "<pred>", "", "Filter library. Keep only those entries satisfying the predicate <pred>. \n <pred> should be a C-style predicate in quotes.", false);
-      registerFlag_("cI", "Set the instrument and acquisition settings of the spectra.");
-      registerFlag_("cJU", "Union. Include all the peptide ions in all the files.");
+
+      registerStringOption_("create:filterCriteria", "<pred>", "", "<pred> should be in quotes in the form “<attr> <op> <value>”. <attr> can refer to any of the fields and any comment entries. <op> can be ==, !=, <, >, <=, >=, =~ and !~. Multiple predicates can be separated by either & (AND logic) or | (OR logic), but not both. Default is off. ", false);
+      registerStringOption_("create:combineAction", "<test>", "cJU", "Combine action.", false, false);
+      setValidStrings_("create:combineAction", StringList::create("cJU,cJI,CJS,cJH"));
+      registerStringOption_("create:buildAction", "<test>", "", "Build action.", false, false);
+      setValidStrings_("create:buildAction", StringList::create("cAB,cAC,cAQ,cAD,cAM"));
+
+      registerInputFile_("create:refreshDatabase","<file>", "" ,"Refresh protein mappings against the database <file> in FASTA format.", false, false);
+      registerFlag_("create:refreshDeleteUnmapped", "Delete entries whose peptide sequences do not map to any protein during refreshing with -cD option.", true);
+      registerFlag_("create:refreshDeleteMultimapped", "Delete entries whose peptide sequences map to multiple proteins during refreshing with the -cD option.", true);
+
+
+      addEmptyLine_();
+      addText_("CONSENSUS SPECTRUM CREATION OPTIONS (Applicable with -cAC option) ");
+      registerIntOption_("create:minimumNumReplicates", "<num>", 1, "Minimum number of replicates required for each library entry. Peptide ions with fewer than <num> replicates will be excluded from library when creating consensus library.", false);
+      registerStringOption_("create:removeDissimilarReplicates","<type>", "false", "Remove dissimilar replicates before creating consensus spectrum.", false, true);
+      registerDoubleOption_("create:peakQuorum", "<frac>", 0.6, "Specify peak quorum: the fraction of all replicates required to contain a certain peak. Peaks not present in enough replicates will be deleted.", false, true);
+      registerIntOption_("create:maximumNumPeaksUsed", "<num>", 300, "Maximum number of peaks in each replicate to be considered in creating consensus. Only the most intense <num> peaks by intensity will be considered.", false, true);
+      registerIntOption_("create:maximumNumReplicates", "<num>", 100, "Maximum number of replicates used to build consensus spectrum.", false, true);
+      registerIntOption_("create:maximumNumPeaksKept", "<num>", 150, "De-noise single spectra by keeping only the most intense <num> peaks.", false, true);
+      registerStringOption_("create:replicateWeight", "<score>", "c_WGTS", "Select the type of score to weigh and rank the replicates.", false, true);
+      setValidStrings_("create:buildAction", StringList::create("c_WGTS,c_WGTX,c_WGTP"));
+
+      addEmptyLine_();
+      addText_("BEST REPLICATE SELECTION OPTIONS (Applicable with -cAB option) ");
+      //registerIntOption_("create:minimumNumReplicates", "<num>", 1, "Minimum number of replicates required for each library entry. Peptide ions with fewer than <num> replicates will be excluded from library when creating consensus library.", false);
+      registerStringOption_("create:removeDissimilarReplicates","<type>", "false", "Remove dissimilar replicates before creating consensus spectrum.", false, true);
+
+      addEmptyLine_();
+      addText_("QUALITY FILTER OPTIONS (Applicable with -cAQ option) ");
+      registerIntOption_("create:qualityLevelRemove","<level>",0,"Specify the stringency of the quality filter.",false);
+      setMinInt_("create:qualityLevelRemove", 0);
+      setMaxInt_("create:qualityLevelRemove", 5);
+      registerIntOption_("create:qualityLevelMark","<level>",0,"-cL specifies the level for removal, -cl specifies the level for marking.\n<level> = 0: No filter.\n<level> = 1: Remove/mark impure spectra.\n<level> = 2: Also remove/mark spectra with a spectrally similar counterpart in the library that is better.\n<level> = 3: Also remove/mark inquorate entries (defined with -cr) that share no peptide sub-sequences with any other entries in the library.\n<level> = 4: Also remove/mark all singleton entries.\n<level> = 5: Also remove/mark all inquorate entries (defined with -cr).",false);
+      setMinInt_("create:qualityLevelMark", 0);
+      setMaxInt_("create:qualityLevelMark", 5);
+      registerStringOption_("create:qualityPenalizeSingletons", "<type>", "true", "Apply stricter thresholds to singleton spectra during quality filters.", false, false);
+                            //"true", "Apply stricter thresholds to singleton spectra during quality filters.", false, true);
+      registerDoubleOption_("create:qualityImmuneProbThreshold", "<tresh>", 0.999, "dummy", false, true);
+                            //0.999, "Specify a probability above which library spectra are immune to quality filters.", true);
+      registerStringOption_("create:qualityImmuneMultipleEngines", "<type>", "true", "Make spectra identified by multiple sequence search engines immune to quality filters.", false, true);
+
+      addEmptyLine_();
+      addText_("DECOY GENERATION OPTIONS (Applicable with -cAD option) ");
+      registerStringOption_("create:decoyConcatenate", "<type>", "false", "Concatenate real and decoy libraries.", false, false);
+      registerIntOption_("create:decoySizeRatio", "<num>", 1, "Specify the (decoy / real) size ratio.", false, true);
+
+      addEmptyLine_();
+      addText_("SEMI-EMPIRICAL SPECTRUM GENERATION OPTIONS (Applicable with -cAM option) ");
+      registerStringOption_("create:allowableModTokens", "<type>", "false", "Specify the set(s) of modifications allowed in semi-empirical spectrum generation by -cAM option.", false, true);
+
+
+
+/*
       registerFlag_("cJI", "Intersection. Only include peptide ions that are present in all the files.");
       registerFlag_("cJS", "Subtraction. Only include peptide ions in the first file that are not present in any of the other files.");
       registerFlag_("cJH", "Subtraction of homologs. Only include peptide ions in the first file \n that do not have any homologs with same charge and similar m/z in any of the other files.");
-      registerFlag_("cAB", "Best replicate. Pick the best replicate of each peptide ion.");
+      registerFlag_("cA B", "Best replicate. Pick the best replicate of each peptide ion.");
       registerFlag_("cAC", "Consensus. Create the consensus spectrum of all replicate spectra of each peptide ion.");
       registerFlag_("cAQ", "Quality filter. Apply quality filters to library.\nIMPORTANT: Quality filter can only be applied on a SINGLE .splib file with no peptide ion represented by more than one spectrum.");
       registerFlag_("cAN", "Sort library entries by descending number of replicates used (tie-breaking by probability).");
       registerInputFile_("cD", "<file>", "", "Refresh protein mappings of each library entry against the protein database <file> (Must be in .fasta format).",false);
       registerFlag_("cu", "Delete entries whose peptide sequences do not map to any protein during refreshing with -cD option.\nWhen off, unmapped entries will be marked with Protein=0/UNMAPPED but retained in library. (Turn off with -cu!).");
       registerFlag_("cd", "Delete entries whose peptide sequences map to multiple proteins during refreshing with -cD option. (Turn off with -cd!).");
+      addEmptyLine_();
+*/
+
+
+
+
 
 
       addEmptyLine_();
-      addText_("CONSENSUS/BEST-REPLICATE OPTIONS (Applicable with -cAC and -cAB options)");
+/*      addText_("CONSENSUS/BEST-REPLICATE OPTIONS (Applicable with -cAC and -cAB options)");
       //stdwert löschen
       registerIntOption_("cr","<num>",1,"Minimum number of replicates required for each library entry.\nPeptide ions failing to have originated from enough replicates\nwill be excluded from library when creating consensus/best-replicate library.",false);
 
@@ -211,40 +260,50 @@ class TOPPSpectraSTAdapter
       addText_("QUALITY FILTER OPTIONS (Applicable with -cAQ option)");
       //stdwert löschen
       registerIntOption_("cr","<num>",1,"Replicate quorum. Its value affects behavior of quality filter (see below).",false);
-      registerIntOption_("cL","<level>",0,"Specify the stringency of the quality filter.",false);
-      setMinInt_("cL", 0);
-      setMaxInt_("cL", 5);
-      registerIntOption_("cl","<level>",0,"-cL specifies the level for removal, -cl specifies the level for marking.\n<level> = 0: No filter.\n<level> = 1: Remove/mark impure spectra.\n<level> = 2: Also remove/mark spectra with a spectrally similar counterpart in the library that is better.\n<level> = 3: Also remove/mark inquorate entries (defined with -cr) that share no peptide sub-sequences with any other entries in the library.\n<level> = 4: Also remove/mark all singleton entries.\n<level> = 5: Also remove/mark all inquorate entries (defined with -cr).",false);
-      setMinInt_("cl", 0);
-      setMaxInt_("cl", 5);
+*/
 
 
+      registerTOPPSubsection_("search","Search Mode");
       addText_("(II) Search Mode\nUsage: spectrast [ options ] <SearchFileName1> [ <SearchFileName2> ... <SearchFileNameN> ]\nwhere: SearchFileNameX = Name(s) of file containing unknown spectra to be searched.\n\t\t(Extension specifies format of file. Supports .mzXML, .mzData, .dta and .msp)");
+
+      registerInputFile_("search:in", "<file>", "", "Input file ");
+      setValidFormats_("search:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
+      registerInputFile_("search:libraryFile", "<file>", "", "Specify library file. Mandatory unless specified in parameter file. <file> must have .splib extension.", true, false);
+      registerInputFile_("search:databaseFile", "<file>", "", "Specify a sequence database file. This will not affect the search in any way, but this information will be included in the output for any downstream data processing. <file> must have .fasta extension. If not set, SpectraST will try to determine this from the preamble of the library.", true, false);
+      registerStringOption_("search:indexCacheAll", "<type>", "false", "Cache all entries in RAM. Requires a lot of memory (the library will usually be loaded almost in its entirety), but speeds up search for unsorted queries.", false, false);
+
+      addEmptyLine_();
+      addText_("CANDIDATE SELECTION AND SCORING OPTIONS ");
+      registerDoubleOption_("search:indexRetrievalMzTolerance", "<tol>", 3.0, "Specify precursor m/z tolerance in Th. Monoisotopic mass is assumed.", false);
+      registerStringOption_("search:indexRetrievalUseAverage", "<type>", "false", "Use average mass instead of monoisotopic mass.", false, false);
+
+
+
+      /*
+
+
       //registerInputFile_("sF", "<file>", "", "Read search options from file.\nIf <file> is not given, ”spectrast.params” is assumed.\nNOTE: All options set in the file will be overridden by command-line options, if specified.",false);
       registerInputFile_("sL", "<file>", "", "Specify library file.\n<file> must have .splib extension. The existence of the corresponding .spidx file of the same name\nin the same directory is assumed.",false);
       registerInputFile_("sD", "<file>", "", "Specify a sequence database file.\n<file> must be in .fasta format. This will not affect the search in any way,\nbut this information will be included in the output for any downstream data processing.",false);
 
-      /*
       registerStringOption_("sT", "<type>", "AA", "Specify the type of the sequence database file.\n<type> must be either ”AA” or ”DNA”.", false, false);
       vector<String> valid_strings;
       valid_strings.push_back("AA");
       valid_strings.push_back("DNA");
       setValidStrings_("sT", valid_strings);
-       */
 
-      /*registerStringOption_("databaseType", "<unit>", "sTAA", "	-sTAA (default) = protein database -sTDNA = genomic database.", false, false);
+
+      registerStringOption_("databaseType", "<unit>", "sTAA", "	-sTAA (default) = protein database -sTDNA = genomic database.", false, false);
       vector<String> valid_strings;
       valid_strings.push_back("sTAA");
       valid_strings.push_back("sTDNA");
-      setValidStrings_("databaseType", valid_strings);*/
+      setValidStrings_("databaseType", valid_strings);
 
-      registerFlag_("sR", "Cache all entries in RAM. (Turn off with -sR!)\nRequires a lot of memory (the library will usually be loaded almost in its entirety), but speeds up search for unsorted queries.");
       registerInputFile_("sS", "<file>", "", "Only search a subset of the query spectra in the search file.\nOnly query spectra with names matching a line of <file> will be searched.",false);
 
       addEmptyLine_();
       addText_("CANDIDATE SELECTION AND SCORING OPTIONS");
-      registerDoubleOption_("sM", "<tol>", 1.5, "Specify m/z tolerance. \n<tol> is the m/z tolerance within which candidate entries\nare retrieved from the library for spectral comparision.", false);
-      registerFlag_("sA", "Use isotopically averaged mass instead of monoisotopic mass. (Turn of with -sA!)");
+      //registerFlag_("sA", "Use isotopically averaged mass instead of monoisotopic mass. (Turn of with -sA!)");
       registerStringOption_("sC", "<type>", "CAM", "Specify the expected kind of cysteine modification for the query spectra.\n<type> must be ”ICAT_cl” for cleavable ICAT, ”ICAT_uc”for uncleavable ICAT, or ”CAM” for CarbAmidoMethyl.\nThose library spectra with a different kind of cysteine modification will be ignored.\nThe ICAT type, if any, will also be included in the pepXML output for validation by PeptideProphet.", false, false);
       vector<String> valid_strings1;
       valid_strings1.push_back("ICAT_cl");
@@ -256,6 +315,25 @@ class TOPPSpectraSTAdapter
       //addText_("Miscellaneous Options:");
       //registerFlag_("V", "Verbose mode.");
       //registerFlag_("Q", "Quiet mode.");
+      */
+      vector<String> bool_strings;
+      bool_strings.push_back("true");
+      bool_strings.push_back("false");
+      setValidStrings_("create:annotatePeaks", bool_strings);
+      setValidStrings_("create:binaryFormat", bool_strings);
+      setValidStrings_("create:writeDtaFiles", bool_strings);
+      setValidStrings_("create:writeMgfFiles", bool_strings);
+      setValidStrings_("create:addMzXMLFileToDatasetName", bool_strings);
+      setValidStrings_("create:setDeamidatedNXST", bool_strings);
+      setValidStrings_("create:setDeamidatedNXST", bool_strings);
+      setValidStrings_("create:removeDissimilarReplicates", bool_strings);
+      setValidStrings_("create:qualityPenalizeSingletons", bool_strings);
+      setValidStrings_("create:qualityImmuneMultipleEngines", bool_strings);
+      setValidStrings_("create:decoyConcatenate", bool_strings);
+      setValidStrings_("create:allowableModTokens", bool_strings);
+      setValidStrings_("search:indexCacheAll", bool_strings);
+      setValidStrings_("search:indexRetrievalUseAverage", bool_strings);
+
     }
 
     ExitCodes main_(int , const char**)

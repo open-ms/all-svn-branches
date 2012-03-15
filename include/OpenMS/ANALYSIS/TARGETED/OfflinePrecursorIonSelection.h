@@ -134,6 +134,7 @@ namespace OpenMS
                                                    const MSExperiment<InputPeakType>& experiment,
 																									 std::vector<std::vector<std::pair<Size,Size> > > & indices)
 	{
+    if(experiment.empty()) throw Exception::InvalidSize(__FILE__, __LINE__, __PRETTY_FUNCTION__, 0);
 		for(Size f = 0; f < features.size();++f)
 			{
 				std::vector<std::pair<Size,Size> > vec;
@@ -173,7 +174,7 @@ namespace OpenMS
 								vec.push_back(end);
 							}
 #ifdef DEBUG_OPS
-						else
+						else if(start_found || end_found)
 							{
 								std::cout << "start "<<start_found<<" end "<<end_found<<std::endl;
 								std::cout << "feature: "<<f << " rt: "<<rt<<std::endl;
@@ -194,9 +195,11 @@ namespace OpenMS
 #endif
         if(vec.empty())
 					{
+#ifdef DEBUG_OPS            
 						std::cout << "According to the convex hulls no mass traces found for this feature->estimate!"
 											<< features[f].getRT() << " "<<features[f].getMZ()<<" "<<features[f].getCharge()<<std::endl; 
-						// we estimate the convex hull
+#endif
+            // we estimate the convex hull
 					  typename MSExperiment<InputPeakType>::ConstIterator spec_iter = experiment.RTBegin(features[f].getRT());
 						if(spec_iter == experiment.end()) --spec_iter;
 						
@@ -221,23 +224,39 @@ namespace OpenMS
 							}
 						std::pair<Size,Size> start;
 						std::pair<Size,Size> end;
-						start.first = distance(experiment.begin(),spec_iter);
+						start.first = distance(experiment.begin(), spec_iter);
 						end.first = start.first;
 
 						typename MSSpectrum<InputPeakType>::ConstIterator mz_iter = spec_iter->MZBegin(features[f].getMZ());
 						typename MSSpectrum<InputPeakType>::ConstIterator mz_end = mz_iter;
-						while(mz_iter != spec_iter->begin() && features[f].getMZ()- mz_iter->getMZ() < 0.1) --mz_iter;
-						start.second = distance(spec_iter->begin(),mz_iter);
-						std::cout << "Start: "<<experiment[start.first].getRT()<<" "<<experiment[start.first][start.second].getMZ();
+						
+            if(mz_iter == spec_iter->end())
+              {
+                if(mz_iter != spec_iter->begin() && fabs((mz_iter-1)->getMZ() - features[f].getMZ()) < 0.5)
+                  {
+                    --mz_iter;
+                  }
+                else continue;
+              }
+            if(fabs(mz_iter->getMZ() - features[f].getMZ()) > 0.5) continue;
+            while (mz_iter != spec_iter->begin() && fabs(features[f].getMZ()- mz_iter->getMZ()) < 0.5) --mz_iter;
+            if(mz_iter != spec_iter->end()) ++mz_iter;
+						start.second = distance(spec_iter->begin(), mz_iter);
+#ifdef DEBUG_OPS
+            std::cout << features[f].getMZ() << " Start: "<<experiment[start.first].getRT()<<" "<<experiment[start.first][start.second].getMZ();
+#endif
 						Int charge = features[f].getCharge();
-						if(charge == 0) charge = 1;
-						while(mz_end != spec_iter->end() && mz_end->getMZ() - features[f].getMZ() < 3.0/(DoubleReal)charge)
-							{
-								//	std::cout << mz_end->getMZ() << " - "<<features[f].getMZ() << " <? "<<3.0/(DoubleReal)charge<<std::endl;
-								++mz_end;
-							}
-						end.second = distance(spec_iter->begin(),mz_end);
-						std::cout << "\tEnd: "<<experiment[end.first].getRT()<<" "<<experiment[end.first][end.second].getMZ()<<std::endl;;
+						if (charge == 0) charge = 1;
+						while (mz_end != spec_iter->end() && mz_end->getMZ() - features[f].getMZ() < 3.0/(DoubleReal)charge)
+						{
+							//	std::cout << mz_end->getMZ() << " - "<<features[f].getMZ() << " <? "<<3.0/(DoubleReal)charge<<std::endl;
+							++mz_end;
+						}
+            if (mz_end == spec_iter->end() && mz_end != spec_iter->begin() ) --mz_end; // mz_end must be a valid peak
+						end.second = distance(spec_iter->begin(), mz_end);
+#ifdef DEBUG_OPS
+            std::cout << "\tEnd: "<<experiment[end.first].getRT()<<" "<<experiment[end.first][end.second].getMZ()<<std::endl;
+#endif
 						vec.push_back(start);
 						vec.push_back(end);
 					}
@@ -381,7 +400,7 @@ namespace OpenMS
 					elution_profile_intensities.push_back(features[feat].getMetaValue("elution_profile_intensities"));
 					isotope_intensities.push_back(features[feat].getMetaValue("isotope_intensities"));
 				}
-				meta_values_present=true;
+        meta_values_present = true;
 			}
 
 			//for each feature cache for which scans it has to be considered
@@ -396,7 +415,7 @@ namespace OpenMS
 					typename MSExperiment<InputPeakType>::ConstIterator it;
 					for(it = experiment.RTBegin(lower_rt); it!=experiment.RTEnd(upper_rt); ++it)
 					{
-						scan_features[it-experiment.begin()].push_back(feat);
+            scan_features[it - experiment.begin()].push_back(feat);
 					}
 				}
 			}
@@ -414,7 +433,7 @@ namespace OpenMS
 			//cache bounding boxes of features and mass traces (mass trace bb are also widened for effective discovery of enclosing peaks in intervalls)
 			std::map<Size , typename OpenMS::DBoundingBox<2> >bounding_boxes_f;
 			std::map<std::pair<Size, Size> , typename OpenMS::DBoundingBox<2> >bounding_boxes;
-			for(Size feature_num=0; feature_num<features.size(); ++feature_num)
+      for (Size feature_num = 0; feature_num < features.size(); ++feature_num)
 			{
 				if(charges_set.count(features[feature_num].getCharge()))
 				{
@@ -464,25 +483,31 @@ namespace OpenMS
 
 					DoubleReal local_mz = peak_mz;
 					//std::cerr<<"MZ pos: "<<local_mz<<std::endl;
-					for(Size scan_feat_id=0; scan_feat_id<scan_features[i].size(); ++scan_feat_id)
+          for (Size scan_feat_id=0; scan_feat_id<scan_features[i].size(); ++scan_feat_id)
 					{
 						Size feature_num = scan_features[i][scan_feat_id];
-						if(bounding_boxes_f[feature_num].encloses(peak_rt, local_mz))
+            if (bounding_boxes_f[feature_num].encloses(peak_rt, local_mz))
 						{
 							//find a mass trace enclosing the point
 							DoubleReal feature_intensity=0;
-							for(Size mass_trace_num=0; mass_trace_num<features[feature_num].getConvexHulls().size(); ++mass_trace_num)
+              for (Size mass_trace_num=0; mass_trace_num<features[feature_num].getConvexHulls().size(); ++mass_trace_num)
 							{
-								if(bounding_boxes[std::make_pair(feature_num, mass_trace_num)].encloses(DPosition<2>(peak_rt, local_mz)))
+                if (bounding_boxes[std::make_pair(feature_num, mass_trace_num)].encloses(DPosition<2>(peak_rt, local_mz)))
 								{
-									DoubleReal elu_factor=1.0, iso_factor=1.0;
+                  DoubleReal elu_factor = 1.0, iso_factor = 1.0;
 									//get the intensity factor for the position in the elution profile
 									if (meta_values_present)
 									{
-										elu_factor = elution_profile_intensities[feature_num][i -feature_elution_bounds[feature_num][0]];
+										DoubleList xxx = elution_profile_intensities[feature_num];
+                    DoubleList yyy = feature_elution_bounds[feature_num];                    
+//                    std::cout << "PEAKRT: " << peak_rt << std::endl;
+//                    std::cout << "Max: " << yyy[3] << "  vs.  " << bounding_boxes_f[feature_num].maxX() << std::endl;
+//                    std::cout << "Min: " << yyy[1] << "  vs.  " << bounding_boxes_f[feature_num].minX() << std::endl;
+                    OPENMS_PRECONDITION(i - yyy[0] < xxx.size(), "Tried to access invalid index for elution factor");
+										elu_factor = xxx[i - yyy[0]]; // segfault here: "i-yyy[0]" yields invalid index
 										iso_factor = isotope_intensities[feature_num][mass_trace_num];
 									}
-									feature_intensity+=features[feature_num].getIntensity() * iso_factor * elu_factor;
+                  feature_intensity += features[feature_num].getIntensity() * iso_factor * elu_factor;
 								}
 							}
 							Precursor p;
@@ -494,7 +519,7 @@ namespace OpenMS
 						}
 					}
 
-					if(!pcs.empty())
+          if (!pcs.empty())
 					{
 						//std::cerr<<"scan "<<i<<"  added spectrum for features:  "<<parent_feature_ids<<std::endl;
 						ms2_spec.setPrecursors(pcs);
@@ -505,7 +530,7 @@ namespace OpenMS
 					}
 
 					//add m/z window to exclusion list
-					exclusion_list.insert(std::make_pair(std::make_pair(peak_mz-excl_window, peak_mz+excl_window), exclusion_specs+1));
+          exclusion_list.insert(std::make_pair(std::make_pair(peak_mz - excl_window, peak_mz + excl_window), exclusion_specs + 1));
 
 					++j;
 				}

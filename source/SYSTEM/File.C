@@ -109,7 +109,7 @@ namespace OpenMS
 	bool File::empty(const String& file)
 	{
 		QFileInfo fi(file.toQString());
-		return (!fi.exists() || fi.size()==0);
+    return (!fi.exists() || fi.size() == 0);
 	}
 
 	bool File::remove(const String& file)
@@ -352,8 +352,8 @@ namespace OpenMS
     }
     catch (Exception::FileNotFound& e)
     {
-      LOG_ERROR << "Input database '" + db_name + "' not found. Make sure it exists (and check 'OpenMS.ini:id_db_dir' if you used relative paths. Aborting!";
-      throw e;
+      LOG_ERROR << "Input database '" + db_name + "' not found (" << e.getMessage() << "). Make sure it exists (and check 'OpenMS.ini:id_db_dir' if you used relative paths. Aborting!";
+      throw;
     }
 
     return full_db_name;

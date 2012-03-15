@@ -26,6 +26,7 @@
 // --------------------------------------------------------------------------
 
 #include <iterator>
+#include <limits>
 
 #include <boost/array.hpp>
 #include <boost/functional/hash.hpp>
@@ -47,7 +48,7 @@ namespace OpenMS
    *
    * This container implements most parts of the C++ standard map interface.
    *
-   * @tparam Cluster Type to be stored in the hash grid. (e.g. @ref{HierarchicalClustering::Cluster})
+   * @tparam Cluster Type to be stored in the hash grid. (e.g. HierarchicalClustering::Cluster)
    */
   template <typename Cluster>
   class HashGrid
@@ -62,7 +63,7 @@ namespace OpenMS
       /**
        * @brief Index for cells.
        */
-      typedef DPosition<2, UInt> CellIndex;
+      typedef DPosition<2, UInt64> CellIndex;
 
       /**
        * @brief Contents of a cell.
@@ -90,7 +91,7 @@ namespace OpenMS
           typedef typename Grid::iterator grid_iterator;
           typedef typename CellContent::iterator cell_iterator;
 
-          Grid *grid_;
+          Grid &grid_;
           grid_iterator grid_it_;
           cell_iterator cell_it_;
 
@@ -102,7 +103,7 @@ namespace OpenMS
               grid_it_++;
 
               // If we are at the last cell, set cell iterator to something well-known
-              if (grid_it_ == grid_->end())
+              if (grid_it_ == grid_.end())
               {
                 cell_it_ = cell_iterator();
                 return;
@@ -113,11 +114,11 @@ namespace OpenMS
           }
 
         public:
-          Iterator(Grid *grid)
-            : grid_(grid), grid_it_(grid->end())
+          Iterator(Grid &grid)
+            : grid_(grid), grid_it_(grid.end())
           { }
 
-          Iterator(Grid *grid, grid_iterator grid_it, cell_iterator cell_it)
+          Iterator(Grid &grid, grid_iterator grid_it, cell_iterator cell_it)
             : grid_(grid), grid_it_(grid_it), cell_it_(cell_it)
           {
             searchNextCell_();
@@ -166,7 +167,7 @@ namespace OpenMS
           typedef typename Grid::const_iterator grid_iterator;
           typedef typename CellContent::const_iterator cell_iterator;
 
-          const Grid *grid_;
+          const Grid &grid_;
           grid_iterator grid_it_;
           cell_iterator cell_it_;
 
@@ -178,7 +179,7 @@ namespace OpenMS
               grid_it_++;
 
               // If we are at the last cell, set cell iterator to something well-known
-              if (grid_it_ == grid_->end())
+              if (grid_it_ == grid_.end())
               {
                 cell_it_ = cell_iterator();
                 return;
@@ -189,11 +190,11 @@ namespace OpenMS
           }
 
         public:
-          ConstIterator(const Grid *grid)
-            : grid_(grid), grid_it_(grid->end())
+          ConstIterator(const Grid &grid)
+            : grid_(grid), grid_it_(grid.end())
           { }
 
-          ConstIterator(const Grid *grid, grid_iterator grid_it, cell_iterator cell_it)
+          ConstIterator(const Grid &grid, grid_iterator grid_it, cell_iterator cell_it)
             : grid_(grid), grid_it_(grid_it), cell_it_(cell_it)
           {
             searchNextCell_();
@@ -278,19 +279,16 @@ namespace OpenMS
 
       /**
        * @brief Erases element on given iterator.
-       * @return Iterator to next element.
        */
-      iterator erase(iterator pos)
+      void erase(iterator pos)
       {
-        iterator mod = pos++;
-        CellContent &cell = mod.grid_it_->second;
-        cell.erase(mod.cell_it_);
-        return pos;
+        CellContent &cell = pos.grid_it_->second;
+        cell.erase(pos.cell_it_);
       }
 
       /**
        * @brief Erases elements matching the 2-dimensional coordinate.
-       * @param x Key of element to be erased.
+       * @param key Key of element to be erased.
        * @return Number of elements erased.
        */
       size_type erase(const key_type &key)
@@ -318,7 +316,7 @@ namespace OpenMS
         grid_iterator grid_it = cells_.begin();
         if (grid_it == cells_.end()) return end();
         cell_iterator cell_it = grid_it->second.begin();
-        return iterator(&cells_, grid_it, cell_it);
+        return iterator(cells_, grid_it, cell_it);
       }
 
       /**
@@ -329,7 +327,7 @@ namespace OpenMS
         const_grid_iterator grid_it = cells_.begin();
         if (grid_it == cells_.end()) return end();
         const_cell_iterator cell_it = grid_it->second.begin();
-        return const_iterator(&cells_, grid_it, cell_it);
+        return const_iterator(cells_, grid_it, cell_it);
       }
 
       /**
@@ -337,7 +335,7 @@ namespace OpenMS
        */
       iterator end()
       {
-        return iterator(&cells_);
+        return iterator(cells_);
       }
 
       /**
@@ -345,7 +343,7 @@ namespace OpenMS
        */
       const_iterator end() const
       {
-        return const_iterator(&cells_);
+        return const_iterator(cells_);
       }
 
       /**
@@ -406,7 +404,12 @@ namespace OpenMS
         CellIndex ret;
         typename CellIndex::iterator it = ret.begin();
         typename ClusterCenter::const_iterator lit = key.begin(), rit = cell_dimension.begin();
-        for (; it != ret.end(); ++it, ++lit, ++rit) *it = *lit / *rit;
+        for (; it != ret.end(); ++it, ++lit, ++rit)
+        {
+          DoubleReal t = *lit / *rit;
+          if (t < 0 || t > std::numeric_limits<UInt64>::max()) throw Exception::OutOfRange(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+          *it = static_cast<UInt64> (t);
+        }
         return ret;
       }
 

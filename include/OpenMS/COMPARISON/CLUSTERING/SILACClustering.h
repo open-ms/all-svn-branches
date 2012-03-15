@@ -42,7 +42,7 @@ namespace OpenMS
    *
    * @warning The cleanups will not work on random data
    */
-  class SILACClustering : public HierarchicalClustering<SILACPattern *>
+  class OPENMS_DLLAPI SILACClustering : public HierarchicalClustering<SILACPattern *>
   {
     public:
       const DoubleReal rt_min;
@@ -58,7 +58,7 @@ namespace OpenMS
 
     protected:
       /**
-       * @bried Remove clusters smaller then rt_min
+       * @brief Remove clusters smaller then rt_min
        */
       void removeSmall_();
       /**

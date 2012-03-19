@@ -38,20 +38,15 @@ void SILACClustering::cluster()
 
 void SILACClustering::removeSmall_()
 {
-  for (Grid::grid_iterator cell_it = grid.grid_begin();
-       cell_it != grid.grid_end();
-       ++cell_it)
+  Grid::iterator cluster_it = grid.begin();
+  while (cluster_it != grid.end())
   { 
-    Grid::cell_iterator cluster_it = cell_it->second.begin();
-    while (cluster_it != cell_it->second.end())
-    { 
-      Grid::cell_iterator cluster_mod_it = cluster_it++;
+    Grid::iterator cluster_mod_it = cluster_it++;
 
-      // Remove clusters with a size smaller then the given threshold
-      if (cluster_mod_it->second.bbox.size()[0] < rt_min)
-      {
-        cell_it->second.erase(cluster_mod_it);
-      }
+    // Remove clusters with a size smaller then the given threshold
+    if (cluster_mod_it->second.bbox.size()[0] < rt_min)
+    {
+      grid.erase(cluster_mod_it);
     }
   }
 }
@@ -62,16 +57,11 @@ void SILACClustering::joinLarge_()
   Sort sort_mz;
 
   // Sort all input clusters according to MZ
-  for (Grid::grid_iterator cell_it = grid.grid_begin();
-       cell_it != grid.grid_end();
-       ++cell_it)
-  { 
-    for (Grid::cell_iterator cluster_it = cell_it->second.begin();
-         cluster_it != cell_it->second.end();
-         ++cluster_it)
-    {
-      sort_mz.insert(std::make_pair(cluster_it->first[1], *cluster_it));
-    }
+  for (Grid::iterator cluster_it = grid.begin();
+       cluster_it != grid.end();
+       ++cluster_it)
+  {
+    sort_mz.insert(std::make_pair(cluster_it->first[1], *cluster_it));
   }
 
   grid.clear();

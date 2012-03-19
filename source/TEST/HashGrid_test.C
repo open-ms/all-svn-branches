@@ -80,14 +80,15 @@ START_SECTION(cell_iterator insert(const value_type &v))
 }
 END_SECTION
 
-START_SECTION(void erase(iterator pos))
+START_SECTION(iterator erase(iterator pos))
   TestGrid t(cell_dimension);
   t.insert(std::make_pair(TestGrid::ClusterCenter(0, 0), TestGrid::mapped_type()));
 
   TEST_EQUAL(t.size(), 1);
   TestGrid::iterator it = t.begin();
-  t.erase(it);
+  it = t.erase(it);
   TEST_EQUAL(t.size(), 0);
+  TEST_EQUAL(it == t.end(), true);
 END_SECTION
 
 START_SECTION(size_type erase(const key_type& key))

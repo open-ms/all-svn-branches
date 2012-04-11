@@ -1,15 +1,37 @@
-IF (WIN32)
-	MESSAGE(STATUS)
-	MESSAGE(STATUS ---------------------------------------------------- )
-	MESSAGE(STATUS)
-	MESSAGE(STATUS Python wrapper for Windows not supported yet )
-	MESSAGE(STATUS)
-	MESSAGE(STATUS ---------------------------------------------------- )
-	MESSAGE(STATUS)
- 	RETURN()
-ENDIF()
-
 find_package(PythonInterp REQUIRED)
+
+# find out python version info
+execute_process(
+     COMMAND
+     ${PYTHON_EXECUTABLE} -c "import sys; print '%s.%s' % sys.version_info[:2]"
+     OUTPUT_VARIABLE PY_VERSION
+     OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+MESSAGE(STATUS "found python ${PY_VERSION}")
+
+# windows support restrecited to pyhton2.7 at the moment !
+IF (WIN32)
+    IF (NOT PY_VERSION STREQUAL "2.7")
+        MESSAGE(STATUS "need python 2.7 on windows")
+        RETURN()
+    ENDIF()
+
+    IF (NOT MSVC90)
+        MESSAGE(STATUS "need visual c++ 2008 compiler for building python 2.7 extensions")
+        RETURN()
+    ENDIF()
+
+
+    include(InstallRequiredSystemLibraries)
+    SET(MSVCR90DLL ${MSVC90_CRT_DIR}/msvcr90.dll)
+    IF (NOT EXISTS ${MSVCR90DLL})
+        MESSAGE(STATUS "need visual c++ 2008 runtime (called vcredist)")
+        RETURN()
+    ENDIF()
+
+ENDIF(WIN32)
+
 
 MESSAGE(STATUS "Looking for cython")
 find_program( CYTHON_EXECUTABLE NAMES cython )
@@ -81,6 +103,24 @@ FILE(COPY pyOpenMS/run_nose.py DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS)
 FILE(COPY pyOpenMS/build_zip_for_install.py DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS)
 FILE(COPY pyOpenMS/main_for_installer.py DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS)
 
+IF (WIN32)
+    FILE(COPY ${MSVCR90DLL} DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS/pyOpenMS})
+    FILE(COPY ${CMAKE_BINARY_DIR}/bin/OpenMS.dll DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS/pyOpenMS)
+    SET(FOUND_XERCES FALSE)
+    FOREACH(CONTRIB_PATH ${CONTRIB_DIR})
+        IF (EXISTS ${CONTRIB_PATH}/lib/xerces-c_3_0.dll)
+            FILE(COPY ${CONTRIB_PATH}/lib/xerces-c_3_0.dll DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS/pyOpenMS)
+            SET(FOUND_XERCES TRUE)
+        ENDIF()
+    ENDFOREACH()
+    IF (NOT FOUND_XERCES)
+        MESSAGE(STATUS "cound not find xerces dll in contrib dir")
+        RETURN()
+    ENDIF()
+ENDIF()
+
+
+
 
 # generate cython wrapper
 
@@ -113,37 +153,15 @@ ENDFOREACH()
 FILE(APPEND ${ENVPATH} "\"\n")
 
 FILE(APPEND ${ENVPATH} QT_HEADERS_DIR="${QT_HEADERS_DIR}" "\n")
+FILE(APPEND ${ENVPATH} QT_LIBRARY_DIR="${QT_LIBRARY_DIR}" "\n")
 FILE(APPEND ${ENVPATH} QT_QTCORE_INCLUDE_DIR="${QT_QTCORE_INCLUDE_DIR}" "\n")
-
-# find out python version info
-
-execute_process(
-     COMMAND
-     ${PYTHON_EXECUTABLE} -c "import sys; print sys.version_info[0]"
-     OUTPUT_VARIABLE PY_MAJOR_VERSION
-     OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-execute_process(
-     COMMAND
-     ${PYTHON_EXECUTABLE} -c "import sys; print sys.version_info[1]"
-     OUTPUT_VARIABLE PY_MINOR_VERSION
-     OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-
-SET(HAS_USER_MODULES FALSE)
-IF (NOT PY_MAJOR_VERSION LESS 2)
-	IF (NOT PY_MINOR_VERSION LESS 6)
-	   SET(HAS_USER_MODULES TRUE)
-	ENDIF()
-ENDIF()
+FILE(APPEND ${ENVPATH} MSVCR90DLL="${QT_QTCORE_INCLUDE_DIR}" "\n")
 
 
 # create targets in makefile 
 
 add_custom_target(pyopenms 
-	COMMAND ${PYTHON_EXECUTABLE} setup.py build_ext  
+	COMMAND ${PYTHON_EXECUTABLE} setup.py build_ext --inplace
 	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/pyOpenMS )
 add_dependencies(pyopenms OpenMS)
 
@@ -169,19 +187,21 @@ add_dependencies(pyopenms_installer bdist_pyopenms)
 
 
 
-MESSAGE(STATUS )
-MESSAGE(STATUS ---------------------------------------------------------------- )
-MESSAGE(STATUS )
-MESSAGE(STATUS "Additional build targets:" )
-MESSAGE(STATUS )
-MESSAGE(STATUS "   pyopenms           -- builds python extension module")
-MESSAGE(STATUS "   bdist_pyopenms     -- builds binary distribution package")
-MESSAGE(STATUS "   rpm_pyopenms       -- builds rpm distribution package")
-MESSAGE(STATUS "   install_pyopenms   -- global install of pyopenms ")
-MESSAGE(STATUS "   pyopenms_installer -- builds installer as python zip package")
-MESSAGE(STATUS )
-MESSAGE(STATUS ---------------------------------------------------------------- )
-MESSAGE(STATUS )
+    MESSAGE(STATUS )
+    MESSAGE(STATUS ---------------------------------------------------------------- )
+    MESSAGE(STATUS )
+    MESSAGE(STATUS "Additional build targets:" )
+    MESSAGE(STATUS )
+    MESSAGE(STATUS "   pyopenms           -- builds python extension module")
+    MESSAGE(STATUS "   bdist_pyopenms     -- builds binary distribution package")
+IF (NOT WIN32)
+    MESSAGE(STATUS "   rpm_pyopenms       -- builds rpm distribution package")
+ENDIF()
+    MESSAGE(STATUS "   install_pyopenms   -- global install of pyopenms ")
+    MESSAGE(STATUS "   pyopenms_installer -- builds installer as python zip package")
+    MESSAGE(STATUS )
+    MESSAGE(STATUS ---------------------------------------------------------------- )
+    MESSAGE(STATUS )
 
 
 enable_testing()

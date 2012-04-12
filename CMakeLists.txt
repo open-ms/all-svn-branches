@@ -512,6 +512,8 @@ endif()
 ###              setup python wrapper                ###
 ########################################################
 
+OPTION(PYOPENMS "setup build system for pyOpenMS" OFF)
+
 IF (PYOPENMS)
 	include(pyOpenMS/pyopenms.cmake)
 ENDIF()

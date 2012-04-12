@@ -95,17 +95,14 @@ FILE(COPY ${_python_files} DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS/pyOpenMS/cyt
 FILE(GLOB _python_files "pyOpenMS/pyOpenMS/cython_code/pxd/*.p*")
 FILE(COPY ${_python_files} DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS/pyOpenMS/cython_code/pxd)
 
-# FILE(GLOB _python_files "pyOpenMS/*.dll")
-# FILE(INSTALL ${_python_files} DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS)
-
 FILE(COPY pyOpenMS/setup.py DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS)
+FILE(COPY pyOpenMS/version.py DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS)
 FILE(COPY pyOpenMS/run_nose.py DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS)
 FILE(COPY pyOpenMS/build_zip_for_install.py DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS)
 FILE(COPY pyOpenMS/main_for_installer.py DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS)
 
 IF (WIN32)
     FILE(COPY ${MSVCR90DLL} DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS/pyOpenMS})
-    FILE(COPY ${CMAKE_BINARY_DIR}/bin/OpenMS.dll DESTINATION ${CMAKE_BINARY_DIR}/pyOpenMS/pyOpenMS)
     SET(FOUND_XERCES FALSE)
     FOREACH(CONTRIB_PATH ${CONTRIB_DIR})
         IF (EXISTS ${CONTRIB_PATH}/lib/xerces-c_3_0.dll)
@@ -118,8 +115,6 @@ IF (WIN32)
         RETURN()
     ENDIF()
 ENDIF()
-
-
 
 
 # generate cython wrapper
@@ -156,7 +151,9 @@ FILE(APPEND ${ENVPATH} QT_HEADERS_DIR="${QT_HEADERS_DIR}" "\n")
 FILE(APPEND ${ENVPATH} QT_LIBRARY_DIR="${QT_LIBRARY_DIR}" "\n")
 FILE(APPEND ${ENVPATH} QT_QTCORE_INCLUDE_DIR="${QT_QTCORE_INCLUDE_DIR}" "\n")
 FILE(APPEND ${ENVPATH} MSVCR90DLL="${QT_QTCORE_INCLUDE_DIR}" "\n")
-
+IF (WIN32)
+    FILE(APPEND ${ENVPATH} OPEN_MS_LIB="${CMAKE_BINARY_DIR}/bin/OpenMS.dll" "\n")
+ENDIF()
 
 # create targets in makefile 
 
@@ -209,4 +206,9 @@ add_test(NAME test_pyopenms
          COMMAND ${PYTHON_EXECUTABLE} run_nose.py
          WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/pyOpenMS 
         )
-
+IF(NOT WIN32)
+    set_tests_properties(test_pyopenms PROPERTIES ENVIRONMENT 
+                         "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib")
+    set_target_properties(pyopenms PROPERTIES ENVIRONMENT 
+                         "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/lib")
+ENDIF()

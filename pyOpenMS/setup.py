@@ -10,8 +10,10 @@ ctime = os.stat("pyOpenMS").st_mtime
 ts = time.gmtime(ctime)
 timestamp = "%02d-%02d-%4d" % (ts.tm_mday, ts.tm_mon, ts.tm_year)
 
-from pyOpenMS.version import version
+from version import version
 full_version= "%s_%s" % (version, timestamp)
+
+print >> open("pyOpenMS/version.py", "w"), "version=%r\n" % version
 
 # ADAPT THESE LINES ! ##################################
 
@@ -27,6 +29,8 @@ except Exception, e:
     print "!!!", e
     OPEN_MS_SRC = "e:/OpenMS-1.8/"
     OPEN_MS_BUILD_DIR="e:/OpenMS-1.8_BUILD"
+    OPEN_MS_BUILD_DIR="e:/OpenMS-1.8_BUILD"
+    OPEN_MS_LIB="e:/OpenMS-1.8_BUILD/bin/xxx"
     OPEN_MS_CONTRIB_BUILD_DIR=r"e:\OpenMS-1.8\contrib_build"
 
     QT_HEADERS_DIR = r"/usr/include/qt4"
@@ -52,14 +56,14 @@ if not os.path.exists(local_share_dir):
 
 iswin = False
 
+
 if sys.platform == "win32":
     iswin = True
+    shutil.copy(OPEN_MS_LIB, "pyOpenMS")
 
     if not os.path.exists(j("pyOpenMS", MSVCRDLL)):
         shutil.copy(j(MSVC_REDIST, MSVCRDLL), "pyOpenMS")
 
-    if not os.path.exists(j("pyOpenMS", "OpenMS.dll")):
-        shutil.copy(j(OPEN_MS_BUILD_DIR, "bin", "OpenMS.dll"), "pyOpenMS")
 
     if not os.path.exists(j("pyOpenMS", "xerces-c_3_0.dll")):
         shutil.copy(j(OPEN_MS_CONTRIB_BUILD_DIR, "lib", "xerces-c_3_0.dll"), \
@@ -139,6 +143,8 @@ for root, _, files in os.walk(local_share_dir):
 
 if iswin:
     share_data +=[ "OpenMS.dll", MSVCRDLL, "xerces-c_3_0.dll"] 
+else:
+    share_data +=[ "libOpenMS.so" ]
 
 
 share_data.append("License.txt")

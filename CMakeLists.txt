@@ -505,7 +505,16 @@ if("${PACKAGE_TYPE}" STREQUAL "none")
       include( cmake/cppcheck.cmake )
     endif()
   endif()
+
 endif()
+
+########################################################
+###              setup python wrapper                ###
+########################################################
+
+IF (PYOPENMS)
+	include(pyOpenMS/pyopenms.cmake)
+ENDIF()
 
 ########################################################
 ###    verbose Post-build messages and help targets  ###

@@ -805,11 +805,10 @@ namespace OpenMS
       aa_mod.mass = attributeAsDouble_(attributes, "mass");
       aa_mod.terminus = attributeAsString_(attributes, "terminus");
       String is_variable = attributeAsString_(attributes, "variable");
-      ////NEW
-      variable_modifications_.push_back(aa_mod);
-      ////NEW_END
+
       if (is_variable == "Y")
       {
+        variable_modifications_.push_back(aa_mod);
         if (aa_mod.description != "")
         {
           params_.variable_modifications.push_back(aa_mod.description); // TODO
@@ -830,6 +829,7 @@ namespace OpenMS
       }
       else
       {
+        fixed_modifications_.push_back(aa_mod);
         if (aa_mod.description != "")
         {
           params_.fixed_modifications.push_back(aa_mod.description); // TODO

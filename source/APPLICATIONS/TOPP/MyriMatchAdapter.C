@@ -244,6 +244,7 @@ protected :
             ResidueModification mod = ModificationsDB::getInstance()->getModification(*it);
             String origin = String(mod.getOrigin());
             String mass_diff = String(mod.getDiffMonoMass());
+            printf("origin for %s ist %s\n",(*it).c_str(), origin.c_str());
             if(origin == "N-term")
               {
                 origin = "(";
@@ -260,7 +261,7 @@ protected :
               {
                 origin = ")" + origin;
               }
-            mod_list.push_back(mod.getOrigin() + " " + mod.getDiffMonoMass());
+            mod_list.push_back(origin + " " + mod.getDiffMonoMass());
           }
         if (mod_list.size() > 0)
           {
@@ -423,7 +424,7 @@ protected :
                       exp_name, exp, use_precursor_data);
 
 
-    QFile(pep_file.toQString()).remove();
+    //QFile(pep_file.toQString()).remove();
     //-------------------------------------------------------------
     // writng results
     //-------------------------------------------------------------

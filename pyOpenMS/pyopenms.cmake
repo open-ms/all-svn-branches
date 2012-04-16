@@ -1,3 +1,10 @@
+IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    IF (WIN32)
+        MESSAGE(STATUS "bulding debug version on Windows not supported yet")
+        RETURN()
+    ENDIF()
+ENDIF()
+
 find_package(PythonInterp REQUIRED)
 
 # find out python version info
@@ -150,9 +157,13 @@ FILE(APPEND ${ENVPATH} "\"\n")
 FILE(APPEND ${ENVPATH} QT_HEADERS_DIR="${QT_HEADERS_DIR}" "\n")
 FILE(APPEND ${ENVPATH} QT_LIBRARY_DIR="${QT_LIBRARY_DIR}" "\n")
 FILE(APPEND ${ENVPATH} QT_QTCORE_INCLUDE_DIR="${QT_QTCORE_INCLUDE_DIR}" "\n")
-FILE(APPEND ${ENVPATH} MSVCR90DLL="${QT_QTCORE_INCLUDE_DIR}" "\n")
+FILE(APPEND ${ENVPATH} MSVCR90DLL="${MSVCR90DLL}" "\n")
 IF (WIN32)
-    FILE(APPEND ${ENVPATH} OPEN_MS_LIB="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/OpenMS.dll" "\n")
+    IF (CMAKE_BUILD_TYPE STREQUAL "Debug")
+        FILE(APPEND ${ENVPATH} OPEN_MS_LIB="${OpenMS_BINARY_DIR}/bin/OpenMSd.dll" "\n")
+    ELSE()
+        FILE(APPEND ${ENVPATH} OPEN_MS_LIB="${OpenMS_BINARY_DIR}/bin/OpenMS.dll" "\n")
+    ENDIF()
 ENDIF()
 
 # create targets in makefile 
@@ -162,15 +173,15 @@ add_custom_target(pyopenms
 	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/pyOpenMS )
 add_dependencies(pyopenms OpenMS)
 
-add_custom_target(bdist_pyopenms 
+add_custom_target(pyopenms_bdist 
 	COMMAND ${PYTHON_EXECUTABLE} setup.py bdist  --format=zip
 	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/pyOpenMS )
-add_dependencies(bdist_pyopenms OpenMS)
+add_dependencies(pyopenms_bdist OpenMS)
 
-add_custom_target(rpm_pyopenms 
+add_custom_target(pyopenms_rpm 
 	COMMAND ${PYTHON_EXECUTABLE} setup.py bdist_rpm  
 	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/pyOpenMS )
-add_dependencies(rpm_pyopenms OpenMS)
+add_dependencies(pyopenms_rpm OpenMS)
 
 add_custom_target(install_pyopenms 
 	COMMAND ${PYTHON_EXECUTABLE} setup.py install 
@@ -180,25 +191,9 @@ add_dependencies(install_pyopenms OpenMS)
 add_custom_target(pyopenms_installer 
 	COMMAND ${PYTHON_EXECUTABLE} build_zip_for_install.py
 	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/pyOpenMS )
-add_dependencies(pyopenms_installer bdist_pyopenms)
+add_dependencies(pyopenms_installer pyopenms_bdist)
 
 
-
-    MESSAGE(STATUS )
-    MESSAGE(STATUS ---------------------------------------------------------------- )
-    MESSAGE(STATUS )
-    MESSAGE(STATUS "Additional build targets:" )
-    MESSAGE(STATUS )
-    MESSAGE(STATUS "   pyopenms           -- builds python extension module")
-    MESSAGE(STATUS "   bdist_pyopenms     -- builds binary distribution package")
-IF (NOT WIN32)
-    MESSAGE(STATUS "   rpm_pyopenms       -- builds rpm distribution package")
-ENDIF()
-    MESSAGE(STATUS "   install_pyopenms   -- global install of pyopenms ")
-    MESSAGE(STATUS "   pyopenms_installer -- builds installer as python zip package")
-    MESSAGE(STATUS )
-    MESSAGE(STATUS ---------------------------------------------------------------- )
-    MESSAGE(STATUS )
 
 
 enable_testing()

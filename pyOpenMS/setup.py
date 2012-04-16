@@ -41,7 +41,7 @@ except Exception, e:
 
 # ONLY ON WINDOWS: IF NOT WINDOWS: LET IT AS IT IS
 
-MSVC_REDIST=r"C:\Programme\Microsoft Visual Studio 9.0\VC\redist\x86\Microsoft.VC90.CRT"
+#MSVC_REDIST=r"C:\Programme\Microsoft Visual Studio 9.0\VC\redist\x86\Microsoft.VC90.CRT"
 MSVCRDLL   ="msvcr90.dll"
 
 
@@ -61,14 +61,13 @@ if sys.platform == "win32":
     iswin = True
     shutil.copy(OPEN_MS_LIB, "pyOpenMS")
 
-    if not os.path.exists(j("pyOpenMS", MSVCRDLL)):
-        shutil.copy(j(MSVC_REDIST, MSVCRDLL), "pyOpenMS")
-
-
-    if not os.path.exists(j("pyOpenMS", "xerces-c_3_0.dll")):
-        shutil.copy(j(OPEN_MS_CONTRIB_BUILD_DIR, "lib", "xerces-c_3_0.dll"), \
+    shutil.copy(MSVCR90DLL, "pyOpenMS")
+    shutil.copy(j(OPEN_MS_CONTRIB_BUILD_DIR, "lib", "xerces-c_3_0.dll"),\
                     "pyOpenMS")
 
+    libraries=["OpenMSd", "xerces-c_3D", "QtCored4", "gsl_d",
+                        "cblas_d",
+              ]
     libraries=["OpenMS", "xerces-c_3", "QtCore4", "gsl",
                         "cblas",
               ]
@@ -85,23 +84,22 @@ else:
     print
     exit()
 
-library_dirs=[OPEN_MS_BUILD_DIR, 
-              j(OPEN_MS_BUILD_DIR,"lib"),
-              j(OPEN_MS_CONTRIB_BUILD_DIR,"lib"),]
-              #j(QT_HOME_DEVEL,"lib")  # only win
+library_dirs=[ OPEN_MS_BUILD_DIR,
+               j(OPEN_MS_BUILD_DIR,"lib"),
+               j(OPEN_MS_CONTRIB_BUILD_DIR,"lib"),
+               QT_LIBRARY_DIR,
+              ]
 
 
 import numpy
 include_dirs=[
-              QT_HEADERS_DIR,                # for linux
-	      QT_QTCORE_INCLUDE_DIR,        # for linux
-              #j(QT_HOME_DEVEL, "include"),#    #win
-              #j(QT_HOME_DEVEL, "include", "QtCore"),    #win
+              QT_HEADERS_DIR, 
+	          QT_QTCORE_INCLUDE_DIR,
               j(OPEN_MS_CONTRIB_BUILD_DIR, "include"),
               j(OPEN_MS_CONTRIB_BUILD_DIR, "src", "boost_1_42_0", "include", "boost-1_42"),
               j(OPEN_MS_BUILD_DIR ,  "include"),
               j(OPEN_MS_SRC ,  "include"),
-              j(numpy.core.__path__[0],"include"), 
+              j(numpy.core.__path__[0],"include"),
              ]
 
 

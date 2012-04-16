@@ -129,7 +129,8 @@ ENDIF()
 MESSAGE(STATUS "Generate cython source file")
 EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} build_cython_file.py 
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/pyOpenMS/pyOpenMS/cython_code
-  ERROR_VARIABLE PYOK OUTPUT_QUIET)
+  #ERROR_VARIABLE PYOK OUTPUT_QUIET
+)
 MESSAGE(STATUS "Generate cython source file - done")
 
 

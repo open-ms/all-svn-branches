@@ -485,9 +485,15 @@ class Generator(object):
         # pop as some of the called generators register needed converters
         # in self.to_py_converters
 
+	to_py_converters_done = set()
+
         while len(self.to_py_converters):
             name, type_ = self.to_py_converters.pop()
-    
+            if name in to_py_converters_done:
+		continue
+
+            to_py_converters_done.add(name)    
+
             if type_.basetype == "vector":
                 c += self.generate_vector_to_py(name, type_)
 
@@ -497,7 +503,7 @@ class Generator(object):
             if type_.basetype in self.classes_to_wrap:
                 c += self.generate_wrapped_class_to_py(name, type_)
 
-            elif type_.basetype == "string":
+            if type_.basetype == "string":
                 c += self.generate_string_to_py()
         
         return c

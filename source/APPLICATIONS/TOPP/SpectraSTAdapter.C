@@ -1,4 +1,4 @@
-  // -*- mode: C++; tab-width: 2; -*-
+ // -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Chris Bielow $
-// $Authors: Andreas Bertsch, Chris Bielow $
+// $Maintainer: Matthias Seybold $
+// $Authors: Matthias Seybold$
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/MzMLFile.h>
@@ -37,10 +37,14 @@
 #include <OpenMS/SYSTEM/File.h>
 #include <fstream>
 #include <iostream>
+#include <stdio.h>
 
 #include <QtCore/QFile>
 #include <QtCore/QProcess>
 #include <QDir>
+
+#include <QtGui>
+#include <QApplication>
 
 using namespace OpenMS;
 using namespace std;
@@ -90,6 +94,15 @@ using namespace std;
 class TOPPSpectraSTAdapter
   : public TOPPBase
 {
+/*  virtual bool notify(QObject * receiver, QEvent * event) {
+    try {
+      return TOPPBase::QApplication::notify(receiver, event);
+    } catch(std::exception& e) {
+      qCritical() << "Exception thrown:" << e.what();
+    }
+    return false;
+  }*/
+
   public:
     TOPPSpectraSTAdapter()
       : TOPPBase("SpectraSTAdapter","Annotates MS/MS spectra using SpectraST.")
@@ -152,11 +165,9 @@ class TOPPSpectraSTAdapter
       registerTOPPSubsection_("create","Create Mode");
       addText_("General options");
 
-      registerInputFile_("create:in", "<file>", "", "Input file ");
+      registerInputFile_("create:in", "<file>", "", "Input file ", false);
       setValidFormats_("create:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
-      registerOutputFile_("create:outputFileName", "<file>", "", "Output file base name");
-//    registerInputFile_("cF", "<file>", "", "If <file> is not given, “spectrast_create.params“ is assumed.",false);
-
+      registerOutputFile_("create:outputFileName", "<file>", "", "Output file base name", false);
       registerInputFile_("create:useProbTable", "<file>", "", "Use probability table in <file>. Only those peptide ions included in the table will be imported. A probability table is a text file with one peptide ion in the format AC[160]DEFGHIK/2 per line. If a probability is supplied following the peptide ion separated by a tab, it will be used to replace the original probability of that library entr", false);
       registerInputFile_("create:useProteinList", "<file>", "", "Use protein list in <file>. Only those peptide ions associated with proteins in the list will be imported.\n A protein list is a text file with one protein identifier per line. If a number X is supplied following the protein separated by a tab, then at most X peptide ions associated with that protein will be imported.", false);
       //registerStringOption_("create:remark", "<remark>", "", "Remark. Add a Remark=<remark> comment to all library entries created.", false);
@@ -164,8 +175,6 @@ class TOPPSpectraSTAdapter
       registerStringOption_("create:binaryFormat","<type>", "true", "Write library in binary format, which enables quicker search.", false, false);
       registerStringOption_("create:writeDtaFiles","<type>", "false", "Write all library spectra as .dta files.", false, false);
       registerStringOption_("create:writeMgfFiles","<type>", "false", "Write all library spectra as one .mgf file.", false, false);
-
-
 
       addEmptyLine_();
       addText_("PEPXML IMPORT OPTIONS (Applicable with .pepXML file input) ");
@@ -215,8 +224,7 @@ class TOPPSpectraSTAdapter
       setMinInt_("create:qualityLevelMark", 0);
       setMaxInt_("create:qualityLevelMark", 5);
       registerStringOption_("create:qualityPenalizeSingletons", "<type>", "true", "Apply stricter thresholds to singleton spectra during quality filters.", false, false);
-                            //"true", "Apply stricter thresholds to singleton spectra during quality filters.", false, true);
-      registerDoubleOption_("create:qualityImmuneProbThreshold", "<tresh>", 0.999, "dummy", false, true);
+      registerDoubleOption_("create:qualityImmuneProbThreshold", "<tresh>", 0.999, "Specify a probability above which library spectra are immune to quality filters.", false, true);
                             //0.999, "Specify a probability above which library spectra are immune to quality filters.", true);
       registerStringOption_("create:qualityImmuneMultipleEngines", "<type>", "true", "Make spectra identified by multiple sequence search engines immune to quality filters.", false, true);
 
@@ -231,37 +239,8 @@ class TOPPSpectraSTAdapter
 
 
 
-/*
-      registerFlag_("cJI", "Intersection. Only include peptide ions that are present in all the files.");
-      registerFlag_("cJS", "Subtraction. Only include peptide ions in the first file that are not present in any of the other files.");
-      registerFlag_("cJH", "Subtraction of homologs. Only include peptide ions in the first file \n that do not have any homologs with same charge and similar m/z in any of the other files.");
-      registerFlag_("cA B", "Best replicate. Pick the best replicate of each peptide ion.");
-      registerFlag_("cAC", "Consensus. Create the consensus spectrum of all replicate spectra of each peptide ion.");
-      registerFlag_("cAQ", "Quality filter. Apply quality filters to library.\nIMPORTANT: Quality filter can only be applied on a SINGLE .splib file with no peptide ion represented by more than one spectrum.");
-      registerFlag_("cAN", "Sort library entries by descending number of replicates used (tie-breaking by probability).");
-      registerInputFile_("cD", "<file>", "", "Refresh protein mappings of each library entry against the protein database <file> (Must be in .fasta format).",false);
-      registerFlag_("cu", "Delete entries whose peptide sequences do not map to any protein during refreshing with -cD option.\nWhen off, unmapped entries will be marked with Protein=0/UNMAPPED but retained in library. (Turn off with -cu!).");
-      registerFlag_("cd", "Delete entries whose peptide sequences map to multiple proteins during refreshing with -cD option. (Turn off with -cd!).");
-      addEmptyLine_();
-*/
-
-
-
-
-
 
       addEmptyLine_();
-/*      addText_("CONSENSUS/BEST-REPLICATE OPTIONS (Applicable with -cAC and -cAB options)");
-      //stdwert löschen
-      registerIntOption_("cr","<num>",1,"Minimum number of replicates required for each library entry.\nPeptide ions failing to have originated from enough replicates\nwill be excluded from library when creating consensus/best-replicate library.",false);
-
-
-      addEmptyLine_();
-      addText_("QUALITY FILTER OPTIONS (Applicable with -cAQ option)");
-      //stdwert löschen
-      registerIntOption_("cr","<num>",1,"Replicate quorum. Its value affects behavior of quality filter (see below).",false);
-*/
-
 
       registerTOPPSubsection_("search","Search Mode");
       addText_("(II) Search Mode\nUsage: spectrast [ options ] <SearchFileName1> [ <SearchFileName2> ... <SearchFileNameN> ]\nwhere: SearchFileNameX = Name(s) of file containing unknown spectra to be searched.\n\t\t(Extension specifies format of file. Supports .mzXML, .mzData, .dta and .msp)");
@@ -277,45 +256,6 @@ class TOPPSpectraSTAdapter
       registerDoubleOption_("search:indexRetrievalMzTolerance", "<tol>", 3.0, "Specify precursor m/z tolerance in Th. Monoisotopic mass is assumed.", false);
       registerStringOption_("search:indexRetrievalUseAverage", "<type>", "false", "Use average mass instead of monoisotopic mass.", false, false);
 
-
-
-      /*
-
-
-      //registerInputFile_("sF", "<file>", "", "Read search options from file.\nIf <file> is not given, ”spectrast.params” is assumed.\nNOTE: All options set in the file will be overridden by command-line options, if specified.",false);
-      registerInputFile_("sL", "<file>", "", "Specify library file.\n<file> must have .splib extension. The existence of the corresponding .spidx file of the same name\nin the same directory is assumed.",false);
-      registerInputFile_("sD", "<file>", "", "Specify a sequence database file.\n<file> must be in .fasta format. This will not affect the search in any way,\nbut this information will be included in the output for any downstream data processing.",false);
-
-      registerStringOption_("sT", "<type>", "AA", "Specify the type of the sequence database file.\n<type> must be either ”AA” or ”DNA”.", false, false);
-      vector<String> valid_strings;
-      valid_strings.push_back("AA");
-      valid_strings.push_back("DNA");
-      setValidStrings_("sT", valid_strings);
-
-
-      registerStringOption_("databaseType", "<unit>", "sTAA", "	-sTAA (default) = protein database -sTDNA = genomic database.", false, false);
-      vector<String> valid_strings;
-      valid_strings.push_back("sTAA");
-      valid_strings.push_back("sTDNA");
-      setValidStrings_("databaseType", valid_strings);
-
-      registerInputFile_("sS", "<file>", "", "Only search a subset of the query spectra in the search file.\nOnly query spectra with names matching a line of <file> will be searched.",false);
-
-      addEmptyLine_();
-      addText_("CANDIDATE SELECTION AND SCORING OPTIONS");
-      //registerFlag_("sA", "Use isotopically averaged mass instead of monoisotopic mass. (Turn of with -sA!)");
-      registerStringOption_("sC", "<type>", "CAM", "Specify the expected kind of cysteine modification for the query spectra.\n<type> must be ”ICAT_cl” for cleavable ICAT, ”ICAT_uc”for uncleavable ICAT, or ”CAM” for CarbAmidoMethyl.\nThose library spectra with a different kind of cysteine modification will be ignored.\nThe ICAT type, if any, will also be included in the pepXML output for validation by PeptideProphet.", false, false);
-      vector<String> valid_strings1;
-      valid_strings1.push_back("ICAT_cl");
-      valid_strings1.push_back("ICAT_uc");
-      valid_strings1.push_back("CAM");
-      setValidStrings_("sC", valid_strings1);
-
-      //addEmptyLine_();
-      //addText_("Miscellaneous Options:");
-      //registerFlag_("V", "Verbose mode.");
-      //registerFlag_("Q", "Quiet mode.");
-      */
       vector<String> bool_strings;
       bool_strings.push_back("true");
       bool_strings.push_back("false");
@@ -379,32 +319,22 @@ class TOPPSpectraSTAdapter
         }
       }
 
-      // TODO: create parameter file
-
+      QStringList pepXMLFiles;
+      QStringList qparam;
 
       // create parameters
-      StringList parameters;
       if (getStringOption_("mode") == "search")
       {
-        parameters << "-sF";
-      } else
+        qparam << "-sF";
+      } else if (getStringOption_("mode") == "create")
       {
-        parameters << "-cF";
+        qparam << "-cN" << getStringOption_("create:outputFileName").toQString();
+        qparam << "-cP" << QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
+        qparam << pepXMLFiles;
       }
 
-      // fill parameters
-      parameters << "TODO.params";
+      cout << (String)qparam.join("\t") << endl;
 
-      // write spectrast log file
-      parameters << "-L" << "TODO.log";
-
-      QStringList qparam;
-      for (Size i = 0 ; i < parameters.size();++i)
-      {
-        qparam << parameters[i].toQString();
-      }
-
-      writeDebug_("spectrast_executable " + parameters.concatenate(" "), 5);
       Int status = QProcess::execute(spectrast_executable.toQString(), qparam);
       if (status != 0)
       {
@@ -433,6 +363,9 @@ class TOPPSpectraSTAdapter
       //-------------------------------------------------------------
       // convert pepXML output to idXML
       //-------------------------------------------------------------
+
+      TextFile test_params;
+      test_params.store(getStringOption_("create:outputFileName")); //müll
 
       return EXECUTION_OK;
     }

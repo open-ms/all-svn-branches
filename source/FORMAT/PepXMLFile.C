@@ -35,6 +35,8 @@
 #include <OpenMS/SYSTEM/File.h>
 #include <fstream>
 #include <iostream>
+#include <Qt/qfileinfo.h>
+
 
 using namespace std;
 
@@ -215,8 +217,9 @@ namespace OpenMS
         {
           scan_index = count;
         }
-
-				f << "		<spectrum_query spectrum=\"" << count << "\""
+        f << "         <spectrum_query spectrum=\""
+          << String(QFileInfo(filename.toQString()).baseName()) << "."
+          << scan_index << "." << scan_index << "." << h.getCharge() << "\""
           << " start_scan=\"" << scan_index << "\""
           << " end_scan=\"" << scan_index << "\""
 					<< " precursor_neutral_mass=\"" << precisionWrapper(precursor_neutral_mass) << "\""

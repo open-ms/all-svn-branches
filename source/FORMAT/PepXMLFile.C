@@ -211,7 +211,8 @@ namespace OpenMS
         Int scan_index;
         if(it->metaValueExists("RT_index"))
         {
-          scan_index = it->getMetaValue("RT_index");
+          scan_index = it->getMetaValue("RT_index") ;
+          ++scan_index;  // pepXML scan indices start at 1 not at 0
         }
         else
         {

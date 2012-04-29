@@ -555,20 +555,27 @@ namespace OpenMS
         current_peptide_.setScoreType(name);
         current_peptide_.setHigherScoreBetter(false);
       }
-      // if (name == "hyperscore")
-      // { // X!Tandem score
-      //  value = attributeAsDouble_(attributes, "value");
-      //  peptide_hit_.setScore(value);
-      //  current_peptide_.setScoreType(name); // add "X!Tandem" to name?
-      //  current_peptide_.setHigherScoreBetter(true);
-      // }
-      else if (name == "xcorr")
-      { // Sequest score
+      else if (name == "mvh")
+      { // X!Tandem or Mascot E-value
         value = attributeAsDouble_(attributes, "value");
         peptide_hit_.setScore(value);
-        current_peptide_.setScoreType(name); // add "Sequest" to name?
+        current_peptide_.setScoreType(name);
         current_peptide_.setHigherScoreBetter(true);
       }
+      if (name == "hyperscore")
+      { // X!Tandem score
+       value = attributeAsDouble_(attributes, "value");
+       peptide_hit_.setScore(value);
+       current_peptide_.setScoreType(name); // add "X!Tandem" to name?
+       current_peptide_.setHigherScoreBetter(true);
+      }
+      // else if (name == "xcorr")
+      // { // Sequest score
+      //   value = attributeAsDouble_(attributes, "value");
+      //   peptide_hit_.setScore(value);
+      //   current_peptide_.setScoreType(name); // add "Sequest" to name?
+      //   current_peptide_.setHigherScoreBetter(true);
+      // }
       else if (name == "fval")
       { // SpectraST score
         value = attributeAsDouble_(attributes, "value");
@@ -576,6 +583,7 @@ namespace OpenMS
         current_peptide_.setScoreType(name);
         current_peptide_.setHigherScoreBetter(true);
       }
+
     }
 
     else if (element == "search_hit") // parent: "search_result"

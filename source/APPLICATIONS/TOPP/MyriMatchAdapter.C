@@ -29,10 +29,6 @@
 #include <OpenMS/FORMAT/IdXMLFile.h>
 #include <OpenMS/FORMAT/PepXMLFile.h>
 #include <OpenMS/FORMAT/FileHandler.h>
-// #include <OpenMS/FORMAT/OMSSAXMLFile.h>
-// #include <OpenMS/FORMAT/MascotInfile.h>
-// #include <OpenMS/KERNEL/StandardTypes.h>
-//#include <OpenMS/CHEMISTRY/ResidueModification.h>
 #include <OpenMS/CHEMISTRY/ModificationDefinitionsSet.h>
 #include <OpenMS/CHEMISTRY/ModificationsDB.h>
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
@@ -80,7 +76,7 @@ protected :
     {
       if (myrimatch_major > v.myrimatch_major) return false;
       else if (myrimatch_major < v.myrimatch_major) return true;
-      else // ==
+      else
         {
           if (myrimatch_minor > v.myrimatch_minor) return false;
           else if (myrimatch_minor < v.myrimatch_minor) return true;
@@ -116,11 +112,17 @@ protected :
       setValidFormats_("in",StringList::create("mzML,mzXML")); //TODO: forbid mzXML
       registerOutputFile_("out", "<file>", "", "Output file ");
       setValidFormats_("out",StringList::create("idXML"));
-      registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "Precursor mono mass tolerance (Default: Dalton)", false);
-      registerFlag_("precursor_mass_tolerance_unit_ppm", "If this flag is set, ppm is used as precursor mass tolerance unit.");
+      registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "Precursor mono mass tolerance.", false);
+
+      registerStringOption_("precursor_mass_tolerance_unit", "<unit>", "Da", "Unit to be used for precursor mass tolerance.",false);
+      setValidStrings_("precursor_mass_tolerance_unit", StringList::create("Da,ppm"));
+
       registerFlag_("precursor_mass_tolerance_avg", "If this flag is set, the average mass is used in the precursor mass tolerance.");
       registerDoubleOption_("fragment_mass_tolerance", "<tolerance>", 0.3, "Fragment mass error in Dalton", false);
-      registerFlag_("fragment_mass_tolerance_unit_ppm", "If this flag is set, ppm is used as fragment mass tolerance unit.");
+
+      registerStringOption_("fragment_mass_tolerance_unit", "<unit>", "Da", "Unit to be used for fragment mass tolerance.",false);
+      setValidStrings_("fragment_mass_tolerance_unit", StringList::create("Da,ppm"));
+
       registerInputFile_("database", "<fasta-file>", "",
                          "NCBI formatted FASTA files. Only the .fasta filename should be given.",
                          true, false);
@@ -174,9 +176,6 @@ protected :
       registerIntOption_("NumIntensityClasses", "<num>", 3, "Before scoring any candidates, experimental spectra have their peaks stratified into the number of intensity classes specified by this parameter.", false, true); // TODO: Description copied from MM doc
       registerDoubleOption_("ClassSizeMultiplier", "<factor>", 2.0, "When stratifying peaks into a specified, fixed number of intensity classes, this parameter controls the size of each class relative to the class above it (where the peaks are more intense). ", false, true); // TODO: Description copied from MM doc
 
-
-
-
   }
 
 
@@ -196,6 +195,7 @@ protected :
     String output (QString(qp.readAllStandardOutput ()));
     String myrimatch_version;
     MyriMatchVersion myrimatch_version_i;
+    String tmp_dir = QDir::toNativeSeparators((File::getTempDirectory() + "/").toQString()); // body for the tmp files
 
     vector<String> lines;
     vector<String> version_split;
@@ -317,11 +317,7 @@ protected :
 
     parameters << "-ProteinDatabase"  << db_name;
 
-    String precursor_mass_tolerance_unit = " m/z";
-    if(getFlag_("precursor_mass_tolerance_unit_ppm"))
-      {
-        precursor_mass_tolerance_unit = " ppm";
-      }
+    String precursor_mass_tolerance_unit = getStringOption_("precursor_mass_tolerance_unit") == "Da" ? " m/z" : " ppm";
 
     if(getFlag_("precursor_mass_tolerance_avg"))
       {
@@ -331,15 +327,17 @@ protected :
       {
         parameters << "-MonoPrecursorMzTolerance" << String(getDoubleOption_("precursor_mass_tolerance")) + precursor_mass_tolerance_unit;
       }
-    String fragment_mass_tolerance_unit = " m/z";
-    if(getFlag_("fragment_mass_tolerance_unit_ppm"))
-      {
-        fragment_mass_tolerance_unit = " ppm";
-      }
-    parameters << "-FragmentMzTolerance" << String(getDoubleOption_("fragment_mass_tolerance")) + fragment_mass_tolerance_unit;
+
+    String fragment_mass_tolerance_unit = getStringOption_("fragment_mass_tolerance_unit");
+    if(fragment_mass_tolerance_unit == "Da")
+    {
+      fragment_mass_tolerance_unit = "m/z";
+    }
+
+    parameters << "-FragmentMzTolerance" << String(getDoubleOption_("fragment_mass_tolerance")) + " " + fragment_mass_tolerance_unit;
     int min_charge = getIntOption_("min_precursor_charge");
     int max_charge = getIntOption_("max_precursor_charge");
-    parameters << "-SpectrumListFilters" << "chargeStatePredictor false " +  String(max_charge) + " " +  String(min_charge) + " 0.9"; // Mal gucken
+    parameters << "-SpectrumListFilters" << "chargeStatePredictor true " +  String(max_charge) + " " +  String(min_charge) + " 0.9"; // Mal gucken
     parameters << "-ThreadCountMultiplier" << String(getIntOption_("threads")); // MyriMatch does not recognise this, even though it's in the manual.
 
 
@@ -382,8 +380,8 @@ protected :
 //    parameters << "-MonoisotopeAdjustmentSet" << adjustment_set_string;
 
     // Constant parameters
-    parameters << "-DecoyPrefix" << String();
-    parameters << "-UseMultipleProcessors" << String(true);
+    parameters << "-DecoyPrefix" << "";
+    //    parameters << "-UseMultipleProcessors" << String(true);
 
     // path to inputfile must be the last parameter
     //    writeDebug_(inputfile_name,0)
@@ -399,8 +397,14 @@ protected :
         qparam << parameters[i].toQString();
         writeDebug_(parameters[i].toQString(), 0);
       }
-    Int status = QProcess::execute(myrimatch_executable.toQString(), qparam);
-    if (status != 0)
+
+    QProcess process;
+    process.setWorkingDirectory(tmp_dir.toQString());
+
+    process.start(myrimatch_executable.toQString(), qparam, QIODevice::ReadOnly);
+    String myri_msg (QString(process.readAllStandardOutput ()));
+    bool success = process.waitForFinished(-1);
+    if (!success)
       {
         writeLog_("Error: MyriMatch problem! (Details can be seen in the logfile: \"" + logfile + "\")");
         writeLog_("Note: This message can also be triggered if you run out of space in your tmp directory");
@@ -414,7 +418,8 @@ protected :
     writeDebug_("Reading output of MyriMatch", 5);
     // String exp_name = inputfile_name;
     String exp_name = File::basename(inputfile_name);
-    String pep_file =  File::removeExtension(exp_name)+".pepXML";
+    String pep_file =  tmp_dir + File::removeExtension(exp_name)+".pepXML";
+    //String pep_file =  File::removeExtension(exp_name)+".pepXML";
     bool use_precursor_data = true;
     MSExperiment<> exp;
 
@@ -423,8 +428,7 @@ protected :
     PepXMLFile().load(pep_file, protein_identifications, peptide_identifications,
                       exp_name, exp, use_precursor_data);
 
-
-    //QFile(pep_file.toQString()).remove();
+    QFile(pep_file.toQString()).remove();
     //-------------------------------------------------------------
     // writng results
     //-------------------------------------------------------------

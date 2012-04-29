@@ -196,7 +196,7 @@ MAN_LINKS              = NO
 #---------------------------------------------------------------------------
 # configuration options related to the XML output
 #---------------------------------------------------------------------------
-GENERATE_XML           = NO
+GENERATE_XML           = YES 
 XML_OUTPUT             = @CF_OPENMS_BIN_PATH@/doc/xml_output
 XML_SCHEMA             = 
 XML_DTD                = 

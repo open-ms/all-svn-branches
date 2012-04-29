@@ -90,6 +90,7 @@ XTandemAdapter
 InclusionExclusionListCreator
 SpectraMerger
 MyriMatchAdapter
+CustomExporter
 )
 
 ## all targets with need linkage against OpenMS_GUI.lib - they also need to appear in the list above)

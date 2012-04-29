@@ -134,10 +134,11 @@ class TOPPIDPosteriorErrorProbability
     }
     else if( engine == "MyriMatch" )
     {
-      double e_val = exp(-hit.getScore());
-      double score_val = ((-1)* log10(max(e_val,smallest_e_value_)));
+      //double e_val = exp(-hit.getScore());
+      //double score_val = ((-1)* log10(max(e_val,smallest_e_value_)));
       //printf("myri score: %e ; e_val: %e ; score_val: %e\n",hit.getScore(),e_val,score_val);
-      return score_val;
+      //return score_val;
+      return hit.getScore();
     }
     else if(engine.compare("XTandem") == 0)
     {

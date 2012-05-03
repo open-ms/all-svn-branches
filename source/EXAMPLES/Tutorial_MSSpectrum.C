@@ -1,4 +1,5 @@
 #include <OpenMS/KERNEL/MSSpectrum.h>
+
 #include <iostream>
 
 using namespace OpenMS;

@@ -36,6 +36,7 @@ EDTAFile.h
 FASTAFile.h
 FastaIterator.h
 FastaIteratorIntern.h
+FeatureFileOptions.h
 FeatureXMLFile.h
 FileHandler.h
 GzipIfstream.h

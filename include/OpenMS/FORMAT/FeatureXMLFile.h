@@ -30,6 +30,7 @@
 
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/FORMAT/PeakFileOptions.h>
+#include <OpenMS/FORMAT/FeatureFileOptions.h>
 #include <OpenMS/FORMAT/XMLFile.h>
 #include <OpenMS/FORMAT/HANDLERS/XMLHandler.h>
 
@@ -82,7 +83,16 @@ namespace OpenMS
       PeakFileOptions& getOptions();
 
       /// Non-mutable access to the options for loading/storing
-      const PeakFileOptions& getOptions() const;
+      const PeakFileOptions& getOptions() const;					
+
+// Janett: die folgenden beiden Sachen funktionieren nur, wenn die beiden PeakFileOptions& über diesem Kommentar auskommentiert werden!! 
+// wegen Überladen von getOptions() ...
+
+/*	  /// Mutable access to the options for loading/storing
+      FeatureFileOptions& getOptions();
+
+      /// Non-mutable access to the options for loading/storing
+      const FeatureFileOptions& getOptions() const;			*/
 
 		protected:
 
@@ -115,6 +125,10 @@ namespace OpenMS
 			FeatureMap<Feature>* map_;
 			/// Options that can be set
 			PeakFileOptions options_;
+
+			//Janett:
+			/// Options for Features that can be set
+			FeatureFileOptions optionsFeatures_;
 
 			/**@name temporary datastructures to hold parsed data */
 	    //@{

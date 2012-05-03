@@ -142,12 +142,17 @@ namespace OpenMS
 		if (!ignore_charge_)
 		{
 			Int charge_left = left.getCharge(), charge_right = right.getCharge();
-			if ((charge_left != 0) && (charge_right != 0) && 
-					(charge_left != charge_right))
-			{
-				return make_pair(false, infinity);
-			}
-		}
+			if (charge_left != 0)
+      {
+        if (charge_right != 0)
+        {
+          if (charge_left != charge_right)
+          {
+				    return make_pair(false, infinity);
+          }
+        }
+      }
+    }
 
 		bool valid = true;
 		DoubleReal dist_rt = 0.0, dist_mz = 0.0, dist_intensity = 0.0;

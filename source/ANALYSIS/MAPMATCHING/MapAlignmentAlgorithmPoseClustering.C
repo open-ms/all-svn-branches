@@ -34,6 +34,9 @@
 
 #include <iostream>
 
+#include <omp.h>
+
+
 using namespace std;
 
 namespace OpenMS
@@ -125,7 +128,8 @@ namespace OpenMS
     pairfinder.setParameters(param_.copy("pairfinder:", true));
 		pairfinder.setLogType(getLogType());
 
-		for (Size i = 0; i < maps.size(); ++i)
+    #pragma omp parallel for ordered firstprivate(input) num_threads(2)
+		for (int i = 0; i < maps.size(); ++i)
 		{
 			setProgress(10 * i);
 			if (i != reference_index)

@@ -275,7 +275,7 @@ namespace OpenMS
 		identifier_id_.clear();
 	}
 
-	PeakFileOptions& FeatureXMLFile::getOptions()
+/*	PeakFileOptions& FeatureXMLFile::getOptions()
 	{
 		return options_;
 	}
@@ -283,11 +283,11 @@ namespace OpenMS
   const PeakFileOptions& FeatureXMLFile::getOptions() const
   {
   	return options_;
-  }  
+  }  */
 
  // Janett: die folgenden beiden Sachen funktionieren nur, wenn die beiden PeakFileOptions& über diesem Kommentar auskommentiert werden!! 
   // wegen Überladen von getOptions() ...
-  /* FeatureFileOptions& FeatureXMLFile::getOptions()
+   FeatureFileOptions& FeatureXMLFile::getOptions()
 	{
 		return optionsFeatures_;
 	}
@@ -296,7 +296,7 @@ namespace OpenMS
   {
   	return optionsFeatures_;
   }
-  */
+  
 
 	void FeatureXMLFile::startElement(const XMLCh* const /*uri*/, const XMLCh* const /*local_name*/, const XMLCh* const qname, const xercesc::Attributes& attributes)
 	{
@@ -348,8 +348,7 @@ namespace OpenMS
       hull_position_[1] = attributeAsDouble_(attributes,"y");
     }
 		else if (tag=="convexhull")
-		{	//Janett
-			// if(optionsFeatures_.getConvexHull()) throw EndParsingSoftly(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+		{	
 			current_chull_.clear();
 		}
 		else if (tag=="hullpoint")
@@ -722,10 +721,17 @@ namespace OpenMS
 			current_chull_.push_back(hull_position_);
 		}
 		else if (tag=="convexhull")
-		{
-			ConvexHull2D hull;
-			hull.setHullPoints(current_chull_);
-			current_feature_->getConvexHulls().push_back(hull);
+		{	
+			if (optionsFeatures_.getConvexHull())
+			{
+				ConvexHull2D hull;
+				hull.setHullPoints(current_chull_);
+				current_feature_->getConvexHulls().push_back(hull);
+			}
+			else
+			{
+				return;
+			}
 		}
 		else if (tag=="subordinate")
 		{

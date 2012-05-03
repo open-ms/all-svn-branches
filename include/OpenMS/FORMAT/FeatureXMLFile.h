@@ -80,19 +80,19 @@ namespace OpenMS
 			void store(String filename, const FeatureMap<>& feature_map);
 
       /// Mutable access to the options for loading/storing
-      PeakFileOptions& getOptions();
+  /*    PeakFileOptions& getOptions();
 
       /// Non-mutable access to the options for loading/storing
-      const PeakFileOptions& getOptions() const;					
+      const PeakFileOptions& getOptions() const;			*/		
 
 // Janett: die folgenden beiden Sachen funktionieren nur, wenn die beiden PeakFileOptions& über diesem Kommentar auskommentiert werden!! 
 // wegen Überladen von getOptions() ...
 
-/*	  /// Mutable access to the options for loading/storing
+	  /// Mutable access to the options for loading/storing
       FeatureFileOptions& getOptions();
 
       /// Non-mutable access to the options for loading/storing
-      const FeatureFileOptions& getOptions() const;			*/
+      const FeatureFileOptions& getOptions() const;			
 
 		protected:
 

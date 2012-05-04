@@ -325,7 +325,7 @@ protected :
       }
     else
       {
-        parameters << "-MonoPrecursorMzTolerance" << String(getDoubleOption_("precursor_mass_tolerance")) + precursor_mass_tolerance_unit;
+        parameters << "-MonoPrecursorMzTolerance" << (String(getDoubleOption_("precursor_mass_tolerance")) + precursor_mass_tolerance_unit);
       }
 
     String fragment_mass_tolerance_unit = getStringOption_("fragment_mass_tolerance_unit");
@@ -337,7 +337,7 @@ protected :
     parameters << "-FragmentMzTolerance" << String(getDoubleOption_("fragment_mass_tolerance")) + " " + fragment_mass_tolerance_unit;
     int min_charge = getIntOption_("min_precursor_charge");
     int max_charge = getIntOption_("max_precursor_charge");
-    parameters << "-SpectrumListFilters" << "chargeStatePredictor true " +  String(max_charge) + " " +  String(min_charge) + " 0.9"; // Mal gucken
+    parameters << "-SpectrumListFilters" << "chargeStatePredictor false " +  String(max_charge) + " " +  String(min_charge) + " 0.9"; // Mal gucken
     parameters << "-ThreadCountMultiplier" << String(getIntOption_("threads")); // MyriMatch does not recognise this, even though it's in the manual.
 
 
@@ -380,7 +380,7 @@ protected :
 //    parameters << "-MonoisotopeAdjustmentSet" << adjustment_set_string;
 
     // Constant parameters
-    parameters << "-DecoyPrefix" << "";
+    parameters << "-DecoyPrefix" << "rev_";
     //    parameters << "-UseMultipleProcessors" << String(true);
 
     // path to inputfile must be the last parameter
@@ -428,7 +428,7 @@ protected :
     PepXMLFile().load(pep_file, protein_identifications, peptide_identifications,
                       exp_name, exp, use_precursor_data);
 
-    QFile(pep_file.toQString()).remove();
+    //QFile(pep_file.toQString()).remove();
     //-------------------------------------------------------------
     // writng results
     //-------------------------------------------------------------

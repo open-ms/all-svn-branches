@@ -35,6 +35,7 @@
 #include <OpenMS/SYSTEM/File.h>
 #include <fstream>
 #include <iostream>
+#include <stdio.h>
 
 using namespace std;
 
@@ -372,6 +373,15 @@ namespace OpenMS
       // assume only one scan, i.e. ignore "end_scan":
       Size scan = attributeAsInt_(attributes, "start_scan");
       if (!scan_map_.empty()) scan = scan_map_[scan];
+      if (scan == current_scan_)
+      {
+        same_scan_ = true;
+      }
+      else
+      {
+        same_scan_ = false;
+      }
+      current_scan_ = scan;
       MSSpectrum<> spec = (*experiment_)[scan];
       bool success = false;
       if (spec.getMSLevel() == 2)
@@ -389,11 +399,14 @@ namespace OpenMS
           {
             prec_mz = precursors[0].getMZ(); // assume only one precursor
           }
-          MSExperiment<>::ConstIterator it = experiment_->getPrecursorSpectrum(experiment_->begin() + scan);
-          if (it != experiment_->end())
-          {
-            prec_rt = it->getRT();
-          }
+
+          prec_rt = (experiment_->begin() + scan)->getRT();;
+
+//          MSExperiment<>::ConstIterator it = experiment_->getPrecursorSpectrum(experiment_->begin() + scan);
+//          if (it != experiment_->end())
+//          {
+//            prec_rt = it->getRT();
+//          }
 
           // check if "rt"/"mz" are similar to "prec_rt"/"prec_mz"
           // (otherwise, precursor mapping is wrong)
@@ -556,7 +569,7 @@ namespace OpenMS
         current_peptide_.setHigherScoreBetter(false);
       }
       else if (name == "mvh")
-      { // X!Tandem or Mascot E-value
+      { // MyriMatch score
         value = attributeAsDouble_(attributes, "value");
         peptide_hit_.setScore(value);
         current_peptide_.setScoreType(name);
@@ -605,12 +618,21 @@ namespace OpenMS
 
     else if (element == "search_result") // parent: "spectrum_query"
     { // creates a new PeptideIdentification
-      current_peptide_ = PeptideIdentification();
-      current_peptide_.setMetaValue("RT", rt_);
-      current_peptide_.setMetaValue("MZ", mz_);
-      search_id_ = 1; // references "search_summary"
-      optionalAttributeAsUInt_(search_id_, attributes, "search_id");
-      current_peptide_.setIdentifier(current_proteins_[search_id_ - 1]->getIdentifier());
+      if(!same_scan_)
+      {
+        current_peptide_ = PeptideIdentification();
+        current_peptide_.setMetaValue("RT", rt_);
+        current_peptide_.setMetaValue("MZ", mz_);
+        search_id_ = 1; // references "search_summary"
+        optionalAttributeAsUInt_(search_id_, attributes, "search_id");
+        current_peptide_.setIdentifier(current_proteins_[search_id_ - 1]->getIdentifier());
+      }
+      else
+      {
+        current_peptide_ = peptides_->back();
+        peptides_->pop_back();
+      }
+
     }
 
     else if (element == "spectrum_query") // parent: "msms_run_summary"

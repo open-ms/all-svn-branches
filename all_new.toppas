@@ -351,7 +351,7 @@
       <ITEM name="recycle_output" value="false" type="string" description="" />
       <ITEM name="toppas_type" value="input file list" type="string" description="" />
       <ITEMLIST name="file_names" type="string" description="">
-        <LISTITEM value="MyriMatch.IdXML"/>
+        <LISTITEM value="myri/TOPPAS_out/004/Ecoli_K12_TaxID_83333.IdXML"/>
       </ITEMLIST>
       <ITEM name="x_pos" value="-180" type="float" description="" />
       <ITEM name="y_pos" value="460" type="float" description="" />

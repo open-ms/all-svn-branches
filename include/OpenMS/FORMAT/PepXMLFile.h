@@ -197,9 +197,6 @@ namespace OpenMS
       /// Have we seen the experiment of interest at all?
       bool seen_experiment_;
 
-      /// is it the scan (with a just a different assumed charge) as before?
-      bool same_scan_;
-
       /// References to currently active ProteinIdentifications
       std::vector<std::vector<ProteinIdentification>::iterator> current_proteins_;
 
@@ -217,6 +214,9 @@ namespace OpenMS
 
       /// Sequence of the current peptide hit
       String current_sequence_;
+
+      /// The name of the used search engine
+      String search_engine_;
 
       /// RT and m/z of current PeptideIdentification
       DoubleReal rt_, mz_;

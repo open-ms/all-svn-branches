@@ -53,8 +53,8 @@ class MyriMatchAdapter
 public:
   MyriMatchAdapter()
     : TOPPBase("MyriMatchAdapter","Annotates MS/MS spectra using MyriMatch.",false)
-  {
-  }
+    {
+    }
 
 protected :
 
@@ -62,54 +62,128 @@ protected :
   {
     MyriMatchVersion ()
       : myrimatch_major(0), myrimatch_minor(0), myrimatch_patch(0)
-    {}
+      {}
 
     MyriMatchVersion (Int maj, Int min, Int pat)
       : myrimatch_major(maj), myrimatch_minor(min), myrimatch_patch(pat)
-    {}
+      {}
 
     Int myrimatch_major;
     Int myrimatch_minor;
     Int myrimatch_patch;
 
     bool operator < (const MyriMatchVersion& v) const
-    {
-      if (myrimatch_major > v.myrimatch_major) return false;
-      else if (myrimatch_major < v.myrimatch_major) return true;
-      else
+      {
+        if (myrimatch_major > v.myrimatch_major) return false;
+        else if (myrimatch_major < v.myrimatch_major) return true;
+        else
         {
           if (myrimatch_minor > v.myrimatch_minor) return false;
           else if (myrimatch_minor < v.myrimatch_minor) return true;
           else
-            {
-              return (myrimatch_patch < v.myrimatch_patch);
-            }
+          {
+            return(myrimatch_patch < v.myrimatch_patch);
+          }
         }
-
-    }
-
+      }
   };
 
   bool getVersion_(const String& version, MyriMatchVersion& myrimatch_version_i) const
-  {
-    // we expect three components
-    IntList nums = IntList::create(StringList::create(version,'.'));
-    if (nums.size()!=3) return false;
+    {
+      // we expect three components
+      IntList nums = IntList::create(StringList::create(version,'.'));
+      if (nums.size()!=3) return false;
 
-    myrimatch_version_i.myrimatch_major =nums[0];
-    myrimatch_version_i.myrimatch_minor =nums[1];
-    myrimatch_version_i.myrimatch_patch =nums[2];
-    return true;
-  }
+      myrimatch_version_i.myrimatch_major =nums[0];
+      myrimatch_version_i.myrimatch_minor =nums[1];
+      myrimatch_version_i.myrimatch_patch =nums[2];
+      return true;
+    }
 
+  void translateModifications(StringList &static_mod_list, StringList &variable_mod_list)
+    {
+      // translating unimod notation to MyriMatch notation of PTMs.
+      ModificationDefinitionsSet mod_set(getStringList_("fixed_modifications"), getStringList_("variable_modifications"));
+      if ( !getStringList_("fixed_modifications").empty())
+      {
+        set<String> mod_names = mod_set.getFixedModificationNames();
+        for (set<String>::const_iterator it = mod_names.begin(); it != mod_names.end(); ++it)
+        {
+          ResidueModification mod = ModificationsDB::getInstance()->getModification(*it);
+          String origin = String(mod.getOrigin());
+          String mass_diff = String(mod.getDiffMonoMass());
+          if(origin == "N-term")
+          {
+            origin = "(";
+          }
+          else if (origin == "C-term")
+          {
+            origin = ")";
+          }
+          else if (mod.getTermSpecificityName(mod.getTermSpecificity()) == "N-term")
+          {
+            origin = "(" + origin;
+          }
+          else if (mod.getTermSpecificityName(mod.getTermSpecificity()) == "C-term")
+          {
+            origin = ")" + origin;
+          }
+          static_mod_list.push_back(origin + " " + mod.getDiffMonoMass());
+        }
+      }
+
+      if ( !getStringList_("variable_modifications").empty())
+      {
+        char mod_chars [] =  {'@','^','$','%','*','+'};
+        unsigned int mod_num = sizeof(mod_chars) / sizeof(mod_chars[0]);
+        unsigned int mod_count = 0;
+        set<String> mod_names = mod_set.getVariableModificationNames();
+
+        if (mod_names.size() > mod_num)
+        {
+          writeDebug_(("Too many variable modifications. Using the first " + String(mod_num) + "."),0);
+        }
+
+        for (set<String>::const_iterator it = mod_names.begin(); it != mod_names.end(); ++it)
+        {
+          if(mod_count < mod_num)
+          {
+            ResidueModification mod = ModificationsDB::getInstance()->getModification(*it);
+            String origin = String(mod.getOrigin());
+            String mass_diff = String(mod.getDiffMonoMass());
+            if(origin == "N-term")
+            {
+              origin = "(";
+            }
+            else if (origin == "C-term")
+            {
+              origin = ")";
+            }
+            else if (mod.getTermSpecificityName(mod.getTermSpecificity()) == "N-term")
+            {
+              origin = "(" + origin;
+            }
+            else if (mod.getTermSpecificityName(mod.getTermSpecificity()) == "C-term")
+            {
+              origin = ")" + origin;
+            }
+            variable_mod_list.push_back(origin + " " + String(mod_chars[mod_count++]) + " " + mass_diff);
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+    }
 
   void registerOptionsAndFlags_()
-  {
+    {
       addEmptyLine_();
       addText_("Common Identification engine options");
 
       registerInputFile_("in", "<file>", "", "Input file ");
-      setValidFormats_("in",StringList::create("mzML,mzXML")); //TODO: forbid mzXML
+      setValidFormats_("in",StringList::create("mzML"));
       registerOutputFile_("out", "<file>", "", "Output file ");
       setValidFormats_("out",StringList::create("idXML"));
       registerDoubleOption_("precursor_mass_tolerance", "<tolerance>", 1.5, "Precursor mono mass tolerance.", false);
@@ -144,7 +218,7 @@ protected :
                          "The 'myrimatch' executable of the MyriMatch installation", true, false, StringList::create("skipexists"));
       registerIntOption_("NumChargeStates", "<num>", 3, "The number of charge states that MyriMatch will handle during all stages of the program.", false);
       registerDoubleOption_("TicCutoffPercentage", "<percentage>", 0.98, "Noise peaks are filtered out by sorting the original peaks in descending order of intensity, and then picking peaks from that list until the cumulative ion current of the picked peaks divided by the total ion current (TIC) is greater than or equal to this parameter.", false);
-      registerIntList_("MonoisotopeAdjustmentSet","<set>",IntList::create(""),"This parameter defines a set of isotopes (0 being the instrument-called monoisotope) to try as the monoisotopic precursor m/z. To disable this technique, set the value to '0'.",false);
+
       registerIntOption_("MaxDynamicMods", "<num>", 2, "This parameter sets the maximum number of modified residues that may be in any candidate sequence.", false);
       registerIntOption_("MaxResultRank", "<rank>", 5, "This parameter sets the maximum rank of peptide-spectrum-matches to report for each spectrum.", false);
       registerStringOption_("CleavageRules", "<rule>", "", "This parameter allows the user to control the way peptides are generated from the protein database.", false);
@@ -171,271 +245,195 @@ protected :
       registerIntOption_("MinPeptideLength", "<length>", 5, "When digesting proteins, any peptide which does not meet or exceed the specified length will be disqualified.", false, true); // TODO: Description copied from MM doc
       registerIntOption_("MaxPeptideLength", "<length>", 75, "When digesting proteins, any peptide which exceeds this specified length will be disqualified.", false, true); // TODO: Description copied from MM doc
       registerFlag_("UseSmartPlusThreeModel", "When this parameter is set, then for each peptide bond, an internal calculation is done to estimate the basicity of the b and y fragment sequence. The precursors protons are distributed to those ions based on that calculation, with the more basic sequence generally getting more of the protons..",true); // TODO: Description copied from MM doc
-
       registerIntOption_("ProteinSampleSize", "<size>", 100, "Before beginning sequence candidate generation and scoring, MyriMatch will do a random sampling of the protein database to get an estimate of the number of comparisons that will be done by the job.", false, true); // TODO: Description copied from MM doc
       registerIntOption_("NumIntensityClasses", "<num>", 3, "Before scoring any candidates, experimental spectra have their peaks stratified into the number of intensity classes specified by this parameter.", false, true); // TODO: Description copied from MM doc
       registerDoubleOption_("ClassSizeMultiplier", "<factor>", 2.0, "When stratifying peaks into a specified, fixed number of intensity classes, this parameter controls the size of each class relative to the class above it (where the peaks are more intense). ", false, true); // TODO: Description copied from MM doc
+      registerStringOption_("MonoisotopeAdjustmentSet","<set>","[-1,2]","This parameter defines a set of isotopes (0 being the instrument-called monoisotope) to try as the monoisotopic precursor m/z. To disable this technique, set the value to '0'.",false,true);
 
-  }
+    }
 
 
   ExitCodes main_(int , const char**)
-  {
-    StringList parameters;
-    String logfile(getStringOption_("log"));
-    String myrimatch_executable(getStringOption_("myrimatch_executable"));
+    {
+      String tmp_dir = QDir::toNativeSeparators((File::getTempDirectory() + "/").toQString()); // body for the tmp files
+      String logfile(getStringOption_("log"));
+      StringList parameters;
+      String myrimatch_executable(getStringOption_("myrimatch_executable"));
 
-    //-------------------------------------------------------------
-    // get version of MyriMatch
-    //-------------------------------------------------------------
+      //-------------------------------------------------------------
+      // get version of MyriMatch
+      //-------------------------------------------------------------
 
-    QProcess qp;
-    qp.start(myrimatch_executable.toQString(), QStringList(), QIODevice::ReadOnly); // does automatic escaping etc...
-    qp.waitForFinished();
-    String output (QString(qp.readAllStandardOutput ()));
-    String myrimatch_version;
-    MyriMatchVersion myrimatch_version_i;
-    String tmp_dir = QDir::toNativeSeparators((File::getTempDirectory() + "/").toQString()); // body for the tmp files
+      QProcess qp;
+      String myrimatch_version;
+      MyriMatchVersion myrimatch_version_i;
 
-    vector<String> lines;
-    vector<String> version_split;
-    output.split('\n',lines);
-    lines[1].split(' ',version_split);
+      // we invoke myrimatch w/o arguments. that yields a return code != 0. but
+      // there is no other way for version 2.1 to get the version number
+      qp.start(myrimatch_executable.toQString(), QStringList(), QIODevice::ReadOnly); // does automatic escaping etc...
+      qp.waitForFinished();
+      String output (QString(qp.readAllStandardOutput ()));
 
-    if (version_split.size() == 3 && getVersion_(version_split[1], myrimatch_version_i))
+      vector<String> lines;
+      vector<String> version_split;
+      output.split('\n',lines);
+
+      // the version number is expected to be in the second line
+      if(lines.size() < 2)
+      {
+        writeLog_("Warning: MyriMatch version output (" + output + ") not formatted as expected!");
+        return EXTERNAL_PROGRAM_ERROR;
+      }
+
+      // the version is expected to be something like:
+      // MyriMatch 2.1.111 (2011-12-27)
+      lines[1].split(' ',version_split);
+      if (version_split.size() == 3 && getVersion_(version_split[1], myrimatch_version_i))
       {
         myrimatch_version = version_split[1].removeWhitespaces();
         writeDebug_("Setting MyriMatch version to " + myrimatch_version, 1);
       }
-    else
+      else
       {
         writeLog_("Warning: MyriMatch version output (" + output + ") not formatted as expected!");
+        return EXTERNAL_PROGRAM_ERROR;
       }
-    if(myrimatch_version_i.myrimatch_major != 2 && myrimatch_version_i.myrimatch_minor != 1)
+      if(myrimatch_version_i.myrimatch_major != 2 && myrimatch_version_i.myrimatch_minor != 1)
       {
         writeDebug_("Warning: unsupported MyriMatch version (" + myrimatch_version + "). Tested only for MyriMatch 2.1.x",0);
       }
 
 
-    //-------------------------------------------------------------
-    // parsing parameters
-    //-------------------------------------------------------------
+      //-------------------------------------------------------------
+      // parsing parameters
+      //-------------------------------------------------------------
 
-    String inputfile_name = getStringOption_("in");
-    writeDebug_(inputfile_name,0);
-    String outputfile_name = getStringOption_("out");
-    String db_name = String(getStringOption_("database"));
-    FileHandler fh;
-    vector<ProteinIdentification> protein_identifications;
-    vector<PeptideIdentification> peptide_identifications;
+      String inputfile_name = getStringOption_("in");
+      String outputfile_name = getStringOption_("out");
+      String db_name = String(getStringOption_("database"));
+      FileHandler fh;
+      vector<ProteinIdentification> protein_identifications;
+      vector<PeptideIdentification> peptide_identifications;
 
-    // building parameter String
+      // building parameter String
 
-    // Common Identification engine options
+      // Common Identification engine options
+      StringList static_mod_list;
+      StringList dynamic_mod_list;
+      translateModifications(static_mod_list,dynamic_mod_list);
+      if(!static_mod_list.empty())
+        parameters << "-StaticMods" << static_mod_list.concatenate(" ");
+      if(!dynamic_mod_list.empty())
+        parameters << "-DynamicMods" << dynamic_mod_list.concatenate(" ");
 
-    // translating unimod notation to MyriMatch notation of PTMs.
-    ModificationDefinitionsSet mod_set(getStringList_("fixed_modifications"), getStringList_("variable_modifications"));
-    if ( !getStringList_("fixed_modifications").empty())
-      {
-        set<String> mod_names = mod_set.getFixedModificationNames();
-        StringList mod_list;
-        for (set<String>::const_iterator it = mod_names.begin(); it != mod_names.end(); ++it)
-          {
-            ResidueModification mod = ModificationsDB::getInstance()->getModification(*it);
-            String origin = String(mod.getOrigin());
-            String mass_diff = String(mod.getDiffMonoMass());
-            printf("origin for %s ist %s\n",(*it).c_str(), origin.c_str());
-            if(origin == "N-term")
-              {
-                origin = "(";
-              }
-            else if (origin == "C-term")
-              {
-                origin = ")";
-              }
-            else if (mod.getTermSpecificityName(mod.getTermSpecificity()) == "N-term")
-              {
-                origin = "(" + origin;
-              }
-            else if (mod.getTermSpecificityName(mod.getTermSpecificity()) == "C-term")
-              {
-                origin = ")" + origin;
-              }
-            mod_list.push_back(origin + " " + mod.getDiffMonoMass());
-          }
-        if (mod_list.size() > 0)
-          {
-            parameters << "-StaticMods" << mod_list.concatenate(" ");
-          }
-      }
+      parameters << "-ProteinDatabase"  << db_name;
 
-    if ( !getStringList_("variable_modifications").empty())
-      {
-        char mod_chars [] =  {'@','^','$'};
-        int mod_num = sizeof(mod_chars) / sizeof(mod_chars[0]);
-        int mod_count = 0;
-        set<String> mod_names = mod_set.getVariableModificationNames();
-        StringList mod_list;
-        for (set<String>::const_iterator it = mod_names.begin(); it != mod_names.end(); ++it)
-          {
-            if(mod_count < mod_num)
-              {
-                ResidueModification mod = ModificationsDB::getInstance()->getModification(*it);
-                String origin = String(mod.getOrigin());
-                String mass_diff = String(mod.getDiffMonoMass());
-                if(origin == "N-term")
-                  {
-                    origin = "(";
-                  }
-                else if (origin == "C-term")
-                  {
-                    origin = ")";
-                  }
-                else if (mod.getTermSpecificityName(mod.getTermSpecificity()) == "N-term")
-                  {
-                    origin = "(" + origin;
-                  }
-                else if (mod.getTermSpecificityName(mod.getTermSpecificity()) == "C-term")
-                  {
-                    origin = ")" + origin;
-                  }
-                mod_list.push_back(origin + " " + String(mod_chars[mod_count++]) + " " + mass_diff);
-              }
-            else
-              {
-                writeDebug_("Too many variable modifications provided. Please provied no more than " + String(mod_num),0);
-                break;
-              }
-          }
-        if (mod_list.size() > 0)
-          {
-            parameters << "-DynamicMods" << mod_list.concatenate(" ");
-            writeDebug_("DynamicMods:",0); // TODO: delete line
-            writeDebug_(mod_list.concatenate(" "),0); // TODO: delete line
-          }
-      }
-
-    parameters << "-ProteinDatabase"  << db_name;
-
-    String precursor_mass_tolerance_unit = getStringOption_("precursor_mass_tolerance_unit") == "Da" ? " m/z" : " ppm";
-
-    if(getFlag_("precursor_mass_tolerance_avg"))
+      String precursor_mass_tolerance_unit = getStringOption_("precursor_mass_tolerance_unit") == "Da" ? " m/z" : " ppm";
+      if(getFlag_("precursor_mass_tolerance_avg"))
       {
         parameters << "-AvgPrecursorMzTolerance" << String(getDoubleOption_("precursor_mass_tolerance")) + precursor_mass_tolerance_unit;
       }
-    else
+      else
       {
         parameters << "-MonoPrecursorMzTolerance" << (String(getDoubleOption_("precursor_mass_tolerance")) + precursor_mass_tolerance_unit);
       }
 
-    String fragment_mass_tolerance_unit = getStringOption_("fragment_mass_tolerance_unit");
-    if(fragment_mass_tolerance_unit == "Da")
-    {
-      fragment_mass_tolerance_unit = "m/z";
-    }
+      String fragment_mass_tolerance_unit = getStringOption_("fragment_mass_tolerance_unit");
+      if(fragment_mass_tolerance_unit == "Da")
+      {
+        fragment_mass_tolerance_unit = "m/z";
+      }
 
-    parameters << "-FragmentMzTolerance" << String(getDoubleOption_("fragment_mass_tolerance")) + " " + fragment_mass_tolerance_unit;
-    int min_charge = getIntOption_("min_precursor_charge");
-    int max_charge = getIntOption_("max_precursor_charge");
-    parameters << "-SpectrumListFilters" << "chargeStatePredictor false " +  String(max_charge) + " " +  String(min_charge) + " 0.9"; // Mal gucken
-    parameters << "-ThreadCountMultiplier" << String(getIntOption_("threads")); // MyriMatch does not recognise this, even though it's in the manual.
+      parameters << "-FragmentMzTolerance" << String(getDoubleOption_("fragment_mass_tolerance")) + " " + fragment_mass_tolerance_unit;
+      int min_charge = getIntOption_("min_precursor_charge");
+      int max_charge = getIntOption_("max_precursor_charge");
+      parameters << "-SpectrumListFilters" << "chargeStatePredictor false " +  String(max_charge) + " " +  String(min_charge) + " 0.9";
+      //parameters << "-ThreadCountMultiplier" << String(getIntOption_("threads")); // MyriMatch does not recognise this, even though it's in the manual.
 
-
-    // MyriMatch specific parameters
-    parameters << "-NumChargeStates" << getIntOption_("NumChargeStates");
-    parameters << "-TicCutoffPercentage" << String(getDoubleOption_("TicCutoffPercentage"));
-    parameters << "-MaxDynamicMods" << getIntOption_("MaxDynamicMods");
-    parameters << "-MaxResultRank" << getIntOption_("MaxResultRank");
-    parameters << "-MinTerminiCleavages" << getIntOption_("MinTerminiCleavages");
-    parameters << "-MaxMissedCleavages" << getIntOption_("MaxMissedCleavages");
-    String cleavage_rule = getStringOption_("CleavageRules");
-    if(cleavage_rule.empty())
+      // MyriMatch specific parameters
+      parameters << "-NumChargeStates" << getIntOption_("NumChargeStates");
+      parameters << "-TicCutoffPercentage" << String(getDoubleOption_("TicCutoffPercentage"));
+      parameters << "-MaxDynamicMods" << getIntOption_("MaxDynamicMods");
+      parameters << "-MaxResultRank" << getIntOption_("MaxResultRank");
+      parameters << "-MinTerminiCleavages" << getIntOption_("MinTerminiCleavages");
+      parameters << "-MaxMissedCleavages" << getIntOption_("MaxMissedCleavages");
+      String cleavage_rule = getStringOption_("CleavageRules");
+      if(cleavage_rule.empty())
       {
         cleavage_rule = "Trypsin/P";
       }
-    parameters << "-CleavageRules" << cleavage_rule;
+      parameters << "-CleavageRules" << cleavage_rule;
 
-    // advanced parameters
-    parameters << "-MinPeptideMass"   << getDoubleOption_("MinPeptideMass");
-    parameters << "-MaxPeptideMass"   << getDoubleOption_("MaxPeptideMass");
-    parameters << "-MinPeptideLength" << getIntOption_("MinPeptideLength");
-    parameters << "-MaxPeptideLength" << getIntOption_("MaxPeptideLength");
-    parameters << "-ProteinSampleSize" << getIntOption_("ProteinSampleSize");
-    parameters << "-NumIntensityClasses" << getIntOption_("NumIntensityClasses");
-    parameters << "-ClassSizeMultiplier" << getDoubleOption_("ClassSizeMultiplier");
+      // advanced parameters
+      parameters << "-MinPeptideMass"   << getDoubleOption_("MinPeptideMass");
+      parameters << "-MaxPeptideMass"   << getDoubleOption_("MaxPeptideMass");
+      parameters << "-MinPeptideLength" << getIntOption_("MinPeptideLength");
+      parameters << "-MaxPeptideLength" << getIntOption_("MaxPeptideLength");
+      parameters << "-ProteinSampleSize" << getIntOption_("ProteinSampleSize");
+      parameters << "-NumIntensityClasses" << getIntOption_("NumIntensityClasses");
+      parameters << "-ClassSizeMultiplier" << getDoubleOption_("ClassSizeMultiplier");
+      parameters << "-MonoisotopeAdjustmentSet" << getStringOption_("MonoisotopeAdjustmentSet");
+      parameters << "-cpus" << getIntOption_("threads");
 
-    // getIntList gibt nur das erste Element der Liste her
-//    IntList    adjustment_int_list = getIntList_("MonoisotopeAdjustmentSet");
-//    //adjustment_int_list = IntList::create("1,2,3,4");
-//    set<Int>   adjustment_int_set(adjustment_int_list.begin(),adjustment_int_list.end());
-//    StringList adjustment_str_list = StringList();
-//    for (set<Int>::const_iterator it = adjustment_int_set.begin(); it != adjustment_int_set.end(); ++it)
-//      {
-//        adjustment_str_list << String(*it);
-//        writeDebug_("wtf?",0);
-//      }
-//    String adjustment_set_string = "[";
-//    adjustment_set_string += adjustment_str_list.concatenate(",");
-//    adjustment_set_string += "]";
-//    parameters << "-MonoisotopeAdjustmentSet" << adjustment_set_string;
 
-    // Constant parameters
-    parameters << "-DecoyPrefix" << "rev_";
-    //    parameters << "-UseMultipleProcessors" << String(true);
+      // Constant parameters
+      String cfg_file = tmp_dir + "myrimatch.cfg";
+      ofstream f(cfg_file.c_str());
+      f << "DecoyPrefix=\"\"\n";
+      f.close();
+      parameters << "-cfg" << cfg_file;
 
-    // path to inputfile must be the last parameter
-    //    writeDebug_(inputfile_name,0)
+      // path to inputfile must be the last parameter
+      parameters << inputfile_name;
 
-    parameters << inputfile_name;
-
-    //-------------------------------------------------------------
-    // calculations
-    //-------------------------------------------------------------
-    QStringList qparam;
-    for (Size i=0; i<parameters.size();++i)
+      //-------------------------------------------------------------
+      // calculations
+      //-------------------------------------------------------------
+      QStringList qparam;
+      writeDebug_("MyriMatch arguments:", 1);
+      for (Size i=0; i<parameters.size();++i)
       {
         qparam << parameters[i].toQString();
-        writeDebug_(parameters[i].toQString(), 0);
+        writeDebug_(parameters[i].toQString(), 1);
       }
 
-    QProcess process;
-    process.setWorkingDirectory(tmp_dir.toQString());
+      QProcess process;
+      process.setWorkingDirectory(tmp_dir.toQString());
 
-    process.start(myrimatch_executable.toQString(), qparam, QIODevice::ReadOnly);
-    String myri_msg (QString(process.readAllStandardOutput ()));
-    bool success = process.waitForFinished(-1);
-    if (!success)
+      process.start(myrimatch_executable.toQString(), qparam, QIODevice::ReadOnly);
+      String myri_msg (QString(process.readAllStandardOutput ()));
+      bool success = process.waitForFinished(-1);
+      if (!success)
       {
         writeLog_("Error: MyriMatch problem! (Details can be seen in the logfile: \"" + logfile + "\")");
         writeLog_("Note: This message can also be triggered if you run out of space in your tmp directory");
         return EXTERNAL_PROGRAM_ERROR;
       }
 
-    //-------------------------------------------------------------
-    // reading MyriMatch output
-    //-------------------------------------------------------------
+      //-------------------------------------------------------------
+      // reading MyriMatch output
+      //-------------------------------------------------------------
 
-    writeDebug_("Reading output of MyriMatch", 5);
-    // String exp_name = inputfile_name;
-    String exp_name = File::basename(inputfile_name);
-    String pep_file =  tmp_dir + File::removeExtension(exp_name)+".pepXML";
-    //String pep_file =  File::removeExtension(exp_name)+".pepXML";
-    bool use_precursor_data = true;
-    MSExperiment<> exp;
+      writeDebug_("Reading output of MyriMatch", 5);
+      String exp_name = File::basename(inputfile_name);
+      String pep_file =  tmp_dir + File::removeExtension(exp_name)+".pepXML";
+      bool use_precursor_data = false;
+      MSExperiment<> exp;
 
-    fh.loadExperiment(inputfile_name, exp);
+      fh.loadExperiment(inputfile_name, exp);
 
-    PepXMLFile().load(pep_file, protein_identifications, peptide_identifications,
-                      exp_name, exp, use_precursor_data);
+      PepXMLFile().load(pep_file, protein_identifications, peptide_identifications,
+                        exp_name, exp, use_precursor_data);
 
-    //QFile(pep_file.toQString()).remove();
-    //-------------------------------------------------------------
-    // writng results
-    //-------------------------------------------------------------
+      QFile(pep_file.toQString()).remove();
+      QFile(cfg_file.toQString()).remove();
+      //-------------------------------------------------------------
+      // writng results
+      //-------------------------------------------------------------
 
-    IdXMLFile().store(outputfile_name, protein_identifications, peptide_identifications);
-    return EXECUTION_OK;
-  }
+      IdXMLFile().store(outputfile_name, protein_identifications, peptide_identifications);
+      return EXECUTION_OK;
+    }
 
 };
 

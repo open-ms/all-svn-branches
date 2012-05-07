@@ -17,6 +17,7 @@ EDTAFile.C
 FASTAFile.C
 FastaIterator.C
 FastaIteratorIntern.C
+FeatureFileOptions.C
 FeatureXMLFile.C
 FileHandler.C
 GzipIfstream.C

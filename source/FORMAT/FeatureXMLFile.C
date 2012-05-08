@@ -722,7 +722,7 @@ namespace OpenMS
 		}
 		else if (tag=="convexhull")
 		{	
-			if (optionsFeatures_.getConvexHull())
+			if (optionsFeatures_.getLoadConvexHull())
 			{
 				ConvexHull2D hull;
 				hull.setHullPoints(current_chull_);
@@ -735,9 +735,17 @@ namespace OpenMS
 		}
 		else if (tag=="subordinate")
 		{
-			--subordinate_feature_level_;
-			// reset current_feature
-			updateCurrentFeature_(false);
+			if(optionsFeatures_.getLoadSubordinates())
+			{
+				--subordinate_feature_level_;
+				// reset current_feature
+				updateCurrentFeature_(false);
+			}
+			else
+			{
+				return;
+			}
+
 		}
 		else if (tag == "IdentificationRun")
 		{

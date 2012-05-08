@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
-// $Authors: Marc Sturm $
+// $Maintainer: Janett Köppen $
+// $Authors: Janett Köppen $
 // --------------------------------------------------------------------------
 
 #include <OpenMS/FORMAT/FeatureFileOptions.h>
@@ -34,7 +34,8 @@ using namespace std;
 namespace OpenMS
 {
 	FeatureFileOptions::FeatureFileOptions()
-		: convexhull_(false)
+		: loadConvexhull_(true),
+			loadSubordinates_(true)
 	{
 	}
 	
@@ -42,14 +43,24 @@ namespace OpenMS
 	{
 	}
 	
-	void FeatureFileOptions::setConvexHull(bool convex)
+	void FeatureFileOptions::setLoadConvexHull(bool convex)
 	{
-		convexhull_ = convex;
+		loadConvexhull_ = convex;
 	}
 	
-	bool FeatureFileOptions::getConvexHull() const
+	bool FeatureFileOptions::getLoadConvexHull() const
 	{
-		return convexhull_;
+		return loadConvexhull_;
+	}
+
+	void FeatureFileOptions::setLoadSubordinates(bool sub)
+	{
+		loadSubordinates_ = sub;
+	}
+
+	bool FeatureFileOptions::getLoadSubordinates() const
+	{
+		return loadSubordinates_;
 	}
 	
 	

@@ -125,8 +125,6 @@ namespace OpenMS
 			FeatureMap<Feature>* map_;
 			/// Options that can be set
 			PeakFileOptions options_;
-
-			//Janett:
 			/// Options for Features that can be set
 			FeatureFileOptions optionsFeatures_;
 

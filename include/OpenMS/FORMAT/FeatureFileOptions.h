@@ -21,8 +21,8 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Andreas Bertsch $
-// $Authors: Marc Sturm $
+// $Maintainer: Janett Köppen $
+// $Authors: Janett Köppen $
 // --------------------------------------------------------------------------
 
 #ifndef OPENMS_FORMAT_FEATUREFILEOPTIONS_H
@@ -46,16 +46,21 @@ namespace OpenMS
 		~FeatureFileOptions();
 
 		///@name convex hull option
-		//@{
 		///sets whether or not to load convex hull
-		void setConvexHull(bool only);
+		void setLoadConvexHull(bool convex);
 		///returns whether or not to load convex hull
-		bool getConvexHull() const;
+		bool getLoadConvexHull() const;
 
-		//
+		///@name subordinate option
+		///sets whether or not load subordinates
+		void setLoadSubordinates(bool sub);
+		///returns whether or not to load subordinates
+		bool getLoadSubordinates() const;
+		
 
 	private:
-		bool convexhull_;
+		bool loadConvexhull_;
+		bool loadSubordinates_;
 
 		
 

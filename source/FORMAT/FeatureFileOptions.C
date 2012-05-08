@@ -34,7 +34,7 @@ using namespace std;
 namespace OpenMS
 {
 	FeatureFileOptions::FeatureFileOptions()
-		: loadConvexhull_(true),
+		: loadConvexhull_(false),
 			loadSubordinates_(true)
 	{
 	}

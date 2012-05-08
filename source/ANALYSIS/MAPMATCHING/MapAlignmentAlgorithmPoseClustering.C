@@ -119,6 +119,8 @@ namespace OpenMS
 		ConsensusMap::convert(reference_index, maps[reference_index], input[0], 
 													max_num_peaks_considered);
 
+    transformations.resize(maps.size());
+
 		//init superimposer and pairfinder with model and parameters
 		PoseClusteringAffineSuperimposer superimposer;
     superimposer.setParameters(param_.copy("superimposer:", true));
@@ -128,7 +130,7 @@ namespace OpenMS
     pairfinder.setParameters(param_.copy("pairfinder:", true));
 		pairfinder.setLogType(getLogType());
 
-    #pragma omp parallel for ordered firstprivate(input) num_threads(2)
+    #pragma omp parallel for firstprivate(input)
 		for (int i = 0; i < maps.size(); ++i)
 		{
 			setProgress(10 * i);
@@ -187,7 +189,10 @@ namespace OpenMS
 				}
 				setProgress(10 * i + 5);
 				TransformationDescription trafo(data);
-				transformations.push_back(trafo);
+        #pragma omp critical
+        {
+				transformations[i] = trafo;
+        }
 				setProgress(10 * i + 6);
 			}
 
@@ -196,7 +201,10 @@ namespace OpenMS
 				// set no transformation for reference map:
 				TransformationDescription trafo;
 				trafo.fitModel("identity");
-				transformations.push_back(trafo);
+        #pragma omp critical
+        {
+				transformations[i] = trafo;
+        }
 			}
 		}
 

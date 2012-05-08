@@ -242,6 +242,8 @@ protected:
 			FeatureXMLFile f;
 			// f.setLogType(log_type_); // TODO
 			progresslogger.startProgress(0, ins.size(), "loading input files");
+			// hier kommt unser laden mit if-abfrage
+
 			for (Size i = 0; i < ins.size(); ++i)
 			{
 				progresslogger.setProgress(i);
@@ -376,7 +378,7 @@ protected:
 			// throw an appropriate exception?
 			return ILLEGAL_PARAMETERS;
 		}
-
+    
 		if (!trafos.empty())
 		{
 			for (Size i = 0; i < transformations.size(); ++i)

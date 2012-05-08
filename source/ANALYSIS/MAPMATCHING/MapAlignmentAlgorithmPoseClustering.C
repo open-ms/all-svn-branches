@@ -34,7 +34,9 @@
 
 #include <iostream>
 
+#ifdef _OPENMP 
 #include <omp.h>
+#endif
 
 
 using namespace std;
@@ -129,8 +131,10 @@ namespace OpenMS
     StablePairFinder pairfinder;
     pairfinder.setParameters(param_.copy("pairfinder:", true));
 		pairfinder.setLogType(getLogType());
-
+    
+    #ifdef _OPENMP 
     #pragma omp parallel for firstprivate(input)
+    #endif
 		for (int i = 0; i < maps.size(); ++i)
 		{
 			setProgress(10 * i);
@@ -189,7 +193,10 @@ namespace OpenMS
 				}
 				setProgress(10 * i + 5);
 				TransformationDescription trafo(data);
+        
+        #ifdef _OPENMP 
         #pragma omp critical
+        #endif
         {
 				transformations[i] = trafo;
         }
@@ -201,7 +208,9 @@ namespace OpenMS
 				// set no transformation for reference map:
 				TransformationDescription trafo;
 				trafo.fitModel("identity");
+        #ifdef _OPENMP 
         #pragma omp critical
+        #endif
         {
 				transformations[i] = trafo;
         }

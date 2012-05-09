@@ -123,10 +123,8 @@ namespace OpenMS
 			Feature* current_feature_;
 			/// Feature map pointer for reading
 			FeatureMap<Feature>* map_;
-			/// Options that can be set
-			PeakFileOptions options_;
 			/// Options for Features that can be set
-			FeatureFileOptions optionsFeatures_;
+			FeatureFileOptions options_;
 
 			/**@name temporary datastructures to hold parsed data */
 	    //@{

@@ -102,8 +102,8 @@ namespace OpenMS
 				}
 			}
 		}
-
-		computeTransformations_(maps, transformations, reference_index, 
+    StringList ins;
+		computeTransformations_(maps, transformations, reference_index, ins, 
 														max_num_peaks_considered);
 	}
 
@@ -111,10 +111,16 @@ namespace OpenMS
 	template <typename MapType>
 	void MapAlignmentAlgorithmPoseClustering::computeTransformations_(
 		vector<MapType>& maps, vector<TransformationDescription>& transformations,
-		Size reference_index, Size max_num_peaks_considered)
+		Size reference_index, StringList ins, Size max_num_peaks_considered)
 	{
+    //bool isFeatureFile = !ins.empty();
 		startProgress(0, 10 * maps.size(), "aligning input maps");
-
+    /*if (isFeatureFile)
+    {
+      FeatureXMLFile f;
+      f.getOptions().setLoadConvexHull(false);
+      f.load(ins[reference_index], maps[reference_index]);
+    }*/
     // build a consensus map of the elements of the reference map (for consensus
     // map input, take only the highest peaks)
     vector<ConsensusMap> input(2);
@@ -142,6 +148,12 @@ namespace OpenMS
 			setProgress(10 * i);
 			if (i != reference_index)
 			{
+        /*if (isFeatureFile)
+        {
+          FeatureXMLFile f;
+          f.getOptions().setLoadConvexHull(false);
+          f.load(ins[i], maps[i]);
+        }*/
 				// build scene_map
 				ConsensusMap::convert(i, maps[i], input[1], max_num_peaks_considered);
 				setProgress(10 * i + 1);
@@ -197,6 +209,17 @@ namespace OpenMS
 				TransformationDescription trafo(data);
 				transformations[i] = trafo;
 
+        /*if (isFeatureFile)
+        {
+          FeatureXMLFile f;
+          f.load(ins[i], maps[i]);
+          if (model_type != "none") fitModel(model_type, model_params, transformations[i]);
+          transformSingleFeatureMap(maps[i], transformations[i]);
+          addDataProcessing_(maps[i], getProcessingInfo_(DataProcessing::ALIGNMENT));
+          f.store(outs[i], maps[i]);
+			    
+        }*/
+
 				setProgress(10 * i + 6);
 			}
 
@@ -217,7 +240,7 @@ namespace OpenMS
 	}
 
 
-	void MapAlignmentAlgorithmPoseClustering::alignFeatureMaps(vector< FeatureMap<> >& maps, vector<TransformationDescription>& transformations)
+	void MapAlignmentAlgorithmPoseClustering::alignFeatureMaps(vector< FeatureMap<> >& maps, vector<TransformationDescription>& transformations, StringList ins)
 	{
 		// prepare transformations for output
 		transformations.clear();
@@ -248,7 +271,7 @@ namespace OpenMS
       }
     }
 
-		computeTransformations_(maps, transformations, reference_index);
+		computeTransformations_(maps, transformations, reference_index, ins);
 	}
 
 } //namespace

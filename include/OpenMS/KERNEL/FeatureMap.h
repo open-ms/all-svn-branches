@@ -64,6 +64,7 @@ namespace OpenMS
 			public DocumentIdentifier,
 			public UniqueIdInterface,
 			public UniqueIdIndexer<FeatureMap<FeatureT> >
+
 	{
 		public:
 			/**	

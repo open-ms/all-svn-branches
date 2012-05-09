@@ -295,6 +295,7 @@ namespace OpenMS
 		static const XMLCh* s_completion_time = xercesc::XMLString::transcode("completion_time");
 		static const XMLCh* s_document_id = xercesc::XMLString::transcode("document_id");
 		static const XMLCh* s_id = xercesc::XMLString::transcode("id");
+    static const XMLCh* s_count = xercesc::XMLString::transcode("count");
 
     // TODO The next line should be removed in OpenMS 1.7 or so!
 		static const XMLCh* s_unique_id = xercesc::XMLString::transcode("unique_id");
@@ -323,7 +324,19 @@ namespace OpenMS
 		}
 		else if (tag=="featureList") 
 		{
+      // feature count
+      Size count = attributeAsInt_(attributes,s_count);
+
+      // lazy loading for MapAlignerPoseclustering
+      if (options_.getSizeOnly())
+      {
+        map_->resize(std::min(Size(1e5), count));
+        throw EndParsingSoftly(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+      }
+
 			if (options_.getMetadataOnly()) throw EndParsingSoftly(__FILE__,__LINE__,__PRETTY_FUNCTION__);
+
+      map_->reserve(std::min(Size(1e5), count)); // reserve vector for faster push_back, but with upper boundary of 1e5 (as >1e5 is most likely an invalid feature count) 
 		}
 		else if (tag=="quality" || tag=="hposition" || tag=="position")
 		{

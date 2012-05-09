@@ -249,6 +249,7 @@ protected:
       if (alignment->getName() == "MapAlignmentAlgorithmPoseClustering")
       {
         cout << "LazyLoading" << endl;
+        f.getOptions().setSizeOnly(true);
         for (Size i = 0; i < ins.size(); ++i)
 			  {
 		      f.load(ins[i], feat_maps[i]);
@@ -269,7 +270,7 @@ protected:
 			// try to align
 			try
 			{
-				alignment->alignFeatureMaps(feat_maps, transformations);
+				alignment->alignFeatureMaps(feat_maps, transformations, ins);
 			}
 			catch (Exception::NotImplemented&)
 			{

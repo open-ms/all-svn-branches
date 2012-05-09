@@ -34,9 +34,10 @@ using namespace std;
 namespace OpenMS
 {
 	FeatureFileOptions::FeatureFileOptions()
-		: loadConvexhull_(false),
+		: loadConvexhull_(true),
 			loadSubordinates_(true),
 			metadata_only_(false),
+      size_only_(false),
       write_supplemental_data_(true),
 			has_rt_range_(false),
 			has_mz_range_(false),
@@ -77,6 +78,16 @@ namespace OpenMS
 	bool FeatureFileOptions::getMetadataOnly() const
 	{
 		return metadata_only_;
+	}
+
+  void FeatureFileOptions::setSizeOnly(bool only)
+	{
+		size_only_ = only;
+	}
+	
+	bool FeatureFileOptions::getSizeOnly() const
+	{
+		return size_only_;
 	}
 
   void FeatureFileOptions::setWriteSupplementalData(bool write)

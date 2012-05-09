@@ -63,6 +63,12 @@ namespace OpenMS
 		///returns whether or not to load only meta data
 		bool getMetadataOnly() const;
 
+    ///@name lazyload option
+		///sets whether or not to load only feature count
+		void setSizeOnly(bool only);
+		///returns whether or not to load only meta data
+		bool getSizeOnly() const;
+
     ///@name Suplemental data option
 		///sets whether or not to write supplemental peak data in MzData files
 		void setWriteSupplementalData(bool write);
@@ -127,6 +133,7 @@ namespace OpenMS
 		bool loadConvexhull_;
 		bool loadSubordinates_;
 		bool metadata_only_;
+    bool size_only_;
     bool write_supplemental_data_;
 		bool has_rt_range_;
 		bool has_mz_range_;

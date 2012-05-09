@@ -64,7 +64,7 @@ namespace OpenMS
 		virtual void alignPeakMaps(std::vector< MSExperiment<> >&, std::vector<TransformationDescription>&);
 
 		// Docu in base class
-		virtual void alignFeatureMaps(std::vector< FeatureMap<> >&, std::vector<TransformationDescription>&);
+		virtual void alignFeatureMaps(std::vector< FeatureMap<> >&, std::vector<TransformationDescription>&, StringList ins);
 
 		// Docu in base class
 		virtual void setReference(Size reference_index=0, const String& reference_file="");
@@ -95,7 +95,8 @@ namespace OpenMS
 		template <typename MapType>
 			void computeTransformations_(std::vector<MapType>& maps, 
 																	 std::vector<TransformationDescription>& 
-																	 transformations, Size reference_index, 
+																	 transformations, Size reference_index,
+                                   StringList ins,
 																	 Size max_num_peaks_considered = -1);
 
 	 private:

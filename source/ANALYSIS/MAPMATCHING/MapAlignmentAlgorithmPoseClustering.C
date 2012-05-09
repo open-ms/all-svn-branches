@@ -137,6 +137,8 @@ namespace OpenMS
     #endif
 		for (int i = 0; i < maps.size(); ++i)
 		{
+      if (omp_in_parallel()) cout << "Thread " << omp_get_thread_num() << " bearbeitet " << i << endl;
+      else cout << "Keine parallele Berechnung" << endl;
 			setProgress(10 * i);
 			if (i != reference_index)
 			{
@@ -193,13 +195,8 @@ namespace OpenMS
 				}
 				setProgress(10 * i + 5);
 				TransformationDescription trafo(data);
-        
-        #ifdef _OPENMP 
-        #pragma omp critical
-        #endif
-        {
 				transformations[i] = trafo;
-        }
+
 				setProgress(10 * i + 6);
 			}
 
@@ -208,12 +205,7 @@ namespace OpenMS
 				// set no transformation for reference map:
 				TransformationDescription trafo;
 				trafo.fitModel("identity");
-        #ifdef _OPENMP 
-        #pragma omp critical
-        #endif
-        {
 				transformations[i] = trafo;
-        }
 			}
 		}
 

@@ -35,6 +35,8 @@
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
+#include <omp.h>
+
 using namespace OpenMS;
 using namespace std;
 
@@ -237,19 +239,32 @@ protected:
     //-------------------------------------------------------------
 		else if (in_type == FileTypes::FEATUREXML)
 		{
+      double start_t = omp_get_wtime();
 			// load input
 			std::vector< FeatureMap<> > feat_maps(ins.size());
 			FeatureXMLFile f;
 			// f.setLogType(log_type_); // TODO
-			progresslogger.startProgress(0, ins.size(), "loading input files");
-			// hier kommt unser laden mit if-abfrage
 
-			for (Size i = 0; i < ins.size(); ++i)
-			{
-				progresslogger.setProgress(i);
-		    f.load(ins[i], feat_maps[i]);
-			}
-			progresslogger.endProgress();
+			// MapAlignmentAlgorithmPoseClustering gets its own LazyLoading-function
+      if (alignment->getName() == "MapAlignmentAlgorithmPoseClustering")
+      {
+        cout << "LazyLoading" << endl;
+        for (Size i = 0; i < ins.size(); ++i)
+			  {
+		      f.load(ins[i], feat_maps[i]);
+			  }
+      }
+      else
+      {
+        progresslogger.startProgress(0, ins.size(), "loading input files");
+			  for (Size i = 0; i < ins.size(); ++i)
+			  {
+				  progresslogger.setProgress(i);
+		      f.load(ins[i], feat_maps[i]);
+			  }
+        progresslogger.endProgress();
+      }
+			
 
 			// try to align
 			try
@@ -279,6 +294,8 @@ protected:
 		    f.store(outs[i], feat_maps[i]);
 			}
 			progresslogger.endProgress();
+      double end_t = omp_get_wtime();
+      cout << "Dauer: " << end_t-start_t << endl;
 		}
     //-------------------------------------------------------------
     // perform consensus alignment

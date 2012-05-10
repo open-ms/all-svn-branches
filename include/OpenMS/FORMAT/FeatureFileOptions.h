@@ -69,12 +69,6 @@ namespace OpenMS
 		///returns whether or not to load only meta data
 		bool getSizeOnly() const;
 
-    ///@name Suplemental data option
-		///sets whether or not to write supplemental peak data in MzData files
-		void setWriteSupplementalData(bool write);
-		///returns whether or not to write supplemental peak data in MzData files
-		bool getWriteSupplementalData() const;
-		
 		///@name RT range option
 		///restricts the range of RT values for peaks to load
 		void setRTRange(const DRange<1>& range);
@@ -100,26 +94,6 @@ namespace OpenMS
 		const DRange<1>& getIntensityRange() const;
 				
 		/**
-			@name MS levels option
-			
-			With this option, MS level filters can be set.
-			
-			@note The original spectrum identifiers are stored as the nativeID of the spectrum.
-		*/
-		///sets the desired MS levels for peaks to load
-		void setMSLevels(const std::vector<Int>& levels);
-		///adds a desired MS level for peaks to load
-		void addMSLevel(int level);
-		///clears the MS levels
-		void clearMSLevels();
-		///returns @c true, if MS levels have been set
-		bool hasMSLevels() const;
-		///returns @c true, if MS level @p level has been set
-		bool containsMSLevel(int level) const;
-		///returns the set MS levels
-		const std::vector<Int>& getMSLevels() const;
-		
-		/**
 			@name Compression options
 
 			@note This option is ignored if the format does not support compression
@@ -134,17 +108,13 @@ namespace OpenMS
 		bool loadSubordinates_;
 		bool metadata_only_;
     bool size_only_;
-    bool write_supplemental_data_;
-		bool has_rt_range_;
+    bool has_rt_range_;
 		bool has_mz_range_;
 		bool has_intensity_range_;
 		DRange<1> rt_range_;
 		DRange<1> mz_range_;
 		DRange<1> intensity_range_;
-		std::vector<Int> ms_levels_;
-		bool zlib_compression_;
-
-		
+	
 	};
 
 } // namespace OpenMS

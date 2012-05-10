@@ -38,11 +38,9 @@ namespace OpenMS
 			loadSubordinates_(true),
 			metadata_only_(false),
       size_only_(false),
-      write_supplemental_data_(true),
-			has_rt_range_(false),
+      has_rt_range_(false),
 			has_mz_range_(false),
-			has_intensity_range_(false),
-			zlib_compression_(false)
+			has_intensity_range_(false)
 	{
 	}
 	
@@ -90,17 +88,7 @@ namespace OpenMS
 		return size_only_;
 	}
 
-  void FeatureFileOptions::setWriteSupplementalData(bool write)
-	{
-		write_supplemental_data_ = write;
-	}
-	
-	bool FeatureFileOptions::getWriteSupplementalData() const
-	{
-		return write_supplemental_data_;
-	}
-	
-	void FeatureFileOptions::setRTRange(const DRange<1>& range)
+ 	void FeatureFileOptions::setRTRange(const DRange<1>& range)
 	{
 		rt_range_ = range;
 		has_rt_range_ = true;
@@ -146,46 +134,6 @@ namespace OpenMS
 	const DRange<1>& FeatureFileOptions::getIntensityRange() const
 	{
 		return intensity_range_;
-	}
-	
-	void FeatureFileOptions::setMSLevels(const vector<Int>& levels)
-	{
-		ms_levels_ = levels;
-	}
-	
-	void FeatureFileOptions::addMSLevel(int level)
-	{
-		ms_levels_.push_back(level);
-	}
-	
-	void FeatureFileOptions::clearMSLevels()
-	{
-		ms_levels_.clear();
-	}
-	
-	bool FeatureFileOptions::hasMSLevels() const
-	{
-		return !ms_levels_.empty();
-	}
-	
-	bool FeatureFileOptions::containsMSLevel(int level) const
-	{
-		return find(ms_levels_.begin(), ms_levels_.end(), level) != ms_levels_.end();
-	}
-	
-	const vector<Int>& FeatureFileOptions::getMSLevels() const
-	{
-		return ms_levels_;
-	}
-	
-	void FeatureFileOptions::setCompression(bool compress)
-	{
-		zlib_compression_ = compress;
-	}
-	
-	bool FeatureFileOptions::getCompression() const
-	{
-		return zlib_compression_;
 	}
 	
 } // namespace OpenMS

@@ -35,7 +35,9 @@
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
+#ifdef _OPENMP 
 #include <omp.h>
+#endif
 
 using namespace OpenMS;
 using namespace std;
@@ -253,6 +255,7 @@ protected:
         for (Size i = 0; i < ins.size(); ++i)
 			  {
 		      f.load(ins[i], feat_maps[i]);
+          feat_maps[i].setLoadedFilePath(ins[i]);
 			  }
       }
       else
@@ -270,7 +273,7 @@ protected:
 			// try to align
 			try
 			{
-				alignment->alignFeatureMaps(feat_maps, transformations, ins);
+				alignment->alignFeatureMaps(feat_maps, transformations);
 			}
 			catch (Exception::NotImplemented&)
 			{
@@ -281,6 +284,21 @@ protected:
 			{
 				alignment->fitModel(model_type, model_params, transformations);
 			}
+
+      if (alignment->getName() == "MapAlignmentAlgorithmPoseClustering")
+      {
+        progresslogger.startProgress(0, ins.size(), "loading input files");
+        #ifdef _OPENMP 
+        #pragma omp parallel for
+        #endif
+			  for (int i = 0; i < ins.size(); ++i)
+			  {
+          FeatureXMLFile f;
+		      f.load(ins[i], feat_maps[i]);
+			  }
+        progresslogger.endProgress();
+      }
+
 			alignment->transformFeatureMaps(feat_maps, transformations);
 
 			// write output

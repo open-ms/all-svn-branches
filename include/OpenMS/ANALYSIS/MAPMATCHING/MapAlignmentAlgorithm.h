@@ -73,13 +73,6 @@ namespace OpenMS
 		*/
 		virtual void alignFeatureMaps(std::vector< FeatureMap<> >&, std::vector<TransformationDescription>&);
 
-    /**
-		@brief Aligns feature maps
-
-		@exception Exception::NotImplemented is thrown if an algorithm cannot align feature maps
-		*/
-		virtual void alignFeatureMaps(std::vector< FeatureMap<> >&, std::vector<TransformationDescription>&,StringList ins);
-
 		/**
 		@brief Aligns consensus maps
 

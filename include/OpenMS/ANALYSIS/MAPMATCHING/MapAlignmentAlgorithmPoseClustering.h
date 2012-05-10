@@ -64,7 +64,7 @@ namespace OpenMS
 		virtual void alignPeakMaps(std::vector< MSExperiment<> >&, std::vector<TransformationDescription>&);
 
 		// Docu in base class
-		virtual void alignFeatureMaps(std::vector< FeatureMap<> >&, std::vector<TransformationDescription>&, StringList ins);
+		virtual void alignFeatureMaps(std::vector< FeatureMap<> >&, std::vector<TransformationDescription>&);
 
 		// Docu in base class
 		virtual void setReference(Size reference_index=0, const String& reference_file="");
@@ -89,15 +89,21 @@ namespace OpenMS
 		/// Path to external reference file
 		String reference_file_;
 
+    /**
+			 Compute retention time transformations for peak maps
+		 */
+    void computeTransformations_( std::vector< MSExperiment<> >& maps, 
+																  std::vector<TransformationDescription>& 
+																	transformations, Size reference_index,
+																	Size max_num_peaks_considered = -1);
+
 		/**
 			 Compute retention time transformations for feature maps or consensus maps
 		 */
-		template <typename MapType>
-			void computeTransformations_(std::vector<MapType>& maps, 
-																	 std::vector<TransformationDescription>& 
-																	 transformations, Size reference_index,
-                                   StringList ins,
-																	 Size max_num_peaks_considered = -1);
+		void computeTransformations_( std::vector< FeatureMap<> >& maps, 
+																  std::vector<TransformationDescription>& 
+																	transformations, Size reference_index,
+																	Size max_num_peaks_considered = -1);
 
 	 private:
 

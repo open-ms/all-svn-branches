@@ -38,7 +38,6 @@
 #include <omp.h>
 #endif
 
-
 using namespace std;
 
 namespace OpenMS
@@ -103,24 +102,15 @@ namespace OpenMS
 			}
 		}
     StringList ins;
-		computeTransformations_(maps, transformations, reference_index, ins, 
-														max_num_peaks_considered);
+		computeTransformations_(maps, transformations, reference_index, max_num_peaks_considered);
 	}
 
-
-	template <typename MapType>
 	void MapAlignmentAlgorithmPoseClustering::computeTransformations_(
-		vector<MapType>& maps, vector<TransformationDescription>& transformations,
-		Size reference_index, StringList ins, Size max_num_peaks_considered)
+		vector< MSExperiment<> >& maps, vector<TransformationDescription>& transformations,
+		Size reference_index, Size max_num_peaks_considered)
 	{
-    //bool isFeatureFile = !ins.empty();
 		startProgress(0, 10 * maps.size(), "aligning input maps");
-    /*if (isFeatureFile)
-    {
-      FeatureXMLFile f;
-      f.getOptions().setLoadConvexHull(false);
-      f.load(ins[reference_index], maps[reference_index]);
-    }*/
+
     // build a consensus map of the elements of the reference map (for consensus
     // map input, take only the highest peaks)
     vector<ConsensusMap> input(2);
@@ -148,12 +138,6 @@ namespace OpenMS
 			setProgress(10 * i);
 			if (i != reference_index)
 			{
-        /*if (isFeatureFile)
-        {
-          FeatureXMLFile f;
-          f.getOptions().setLoadConvexHull(false);
-          f.load(ins[i], maps[i]);
-        }*/
 				// build scene_map
 				ConsensusMap::convert(i, maps[i], input[1], max_num_peaks_considered);
 				setProgress(10 * i + 1);
@@ -209,17 +193,6 @@ namespace OpenMS
 				TransformationDescription trafo(data);
 				transformations[i] = trafo;
 
-        /*if (isFeatureFile)
-        {
-          FeatureXMLFile f;
-          f.load(ins[i], maps[i]);
-          if (model_type != "none") fitModel(model_type, model_params, transformations[i]);
-          transformSingleFeatureMap(maps[i], transformations[i]);
-          addDataProcessing_(maps[i], getProcessingInfo_(DataProcessing::ALIGNMENT));
-          f.store(outs[i], maps[i]);
-			    
-        }*/
-
 				setProgress(10 * i + 6);
 			}
 
@@ -239,8 +212,7 @@ namespace OpenMS
 		if (!reference_file_.empty()) maps.resize(maps.size() - 1);
 	}
 
-
-	void MapAlignmentAlgorithmPoseClustering::alignFeatureMaps(vector< FeatureMap<> >& maps, vector<TransformationDescription>& transformations, StringList ins)
+	void MapAlignmentAlgorithmPoseClustering::alignFeatureMaps(vector< FeatureMap<> >& maps, vector<TransformationDescription>& transformations)
 	{
 		// prepare transformations for output
 		transformations.clear();
@@ -271,7 +243,124 @@ namespace OpenMS
       }
     }
 
-		computeTransformations_(maps, transformations, reference_index, ins);
+		computeTransformations_(maps, transformations, reference_index);
+	}
+
+  void MapAlignmentAlgorithmPoseClustering::computeTransformations_(
+		vector< FeatureMap<> >& maps, vector<TransformationDescription>& transformations,
+		Size reference_index, Size max_num_peaks_considered)
+	{
+		startProgress(0, 10 * maps.size(), "aligning input maps");
+
+    FeatureXMLFile f;
+    f.getOptions().setLoadConvexHull(false);
+    f.load(maps[reference_index].getLoadedFilePath(), maps[reference_index]);
+
+    // build a consensus map of the elements of the reference map (for consensus
+    // map input, take only the highest peaks)
+    vector<ConsensusMap> input(2);
+		ConsensusMap::convert(reference_index, maps[reference_index], input[0], 
+													max_num_peaks_considered);
+
+    transformations.resize(maps.size());
+
+		//init superimposer and pairfinder with model and parameters
+		PoseClusteringAffineSuperimposer superimposer;
+    superimposer.setParameters(param_.copy("superimposer:", true));
+		superimposer.setLogType(getLogType());
+
+    StablePairFinder pairfinder;
+    pairfinder.setParameters(param_.copy("pairfinder:", true));
+		pairfinder.setLogType(getLogType());
+    
+    #ifdef _OPENMP 
+    #pragma omp parallel for firstprivate(input)
+    #endif
+		for (int i = 0; i < maps.size(); ++i)
+		{
+      if (omp_in_parallel()) cout << "Thread " << omp_get_thread_num() << " bearbeitet " << i << endl;
+      else cout << "Keine parallele Berechnung" << endl;
+			//setProgress(10 * i);
+			if (i != reference_index)
+			{
+				// build scene_map
+        //cout << "Lade Map " << i << " aus: " << maps[i].getLoadedFilePath() << endl;
+        FeatureXMLFile f;
+        f.getOptions().setLoadConvexHull(false);
+        f.load(maps[i].getLoadedFilePath(), maps[i]);
+        //cout << "Konvertiere zu Consensus" << endl;
+				ConsensusMap::convert(i, maps[i], input[1], max_num_peaks_considered);
+				//setProgress(10 * i + 1);
+
+				// run superimposer to find the global transformation
+	      vector<TransformationDescription> si_trafos;
+	      superimposer.run(input, si_trafos);
+				//setProgress(10 * i + 2);
+
+				// apply transformation to consensus features and contained feature
+				// handles
+				for (Size j = 0; j < input[1].size(); ++j)
+				{
+					//Calculate new RT
+					DoubleReal rt = input[1][j].getRT();
+					rt = si_trafos[0].apply(rt);
+					//Set RT of consensus feature centroid
+					input[1][j].setRT(rt);
+					//Set RT of consensus feature handles
+					input[1][j].begin()->asMutable().setRT(rt);
+				}
+				//setProgress(10 * i + 3);
+
+	      //run pairfinder fo find pairs
+				ConsensusMap result;
+				pairfinder.run(input, result);
+				//setProgress(10 * i + 4);
+
+				// calculate the local transformation
+				si_trafos[0].invert(); // to undo the transformation applied above
+				TransformationDescription::DataPoints data;
+				for (ConsensusMap::Iterator it = result.begin(); it != result.end();
+						 ++it)
+				{
+					if (it->size() == 2) // two matching features
+					{
+						DoubleReal x = 0, y = 0;
+						for (ConsensusFeature::iterator feat_it = it->begin();
+								 feat_it != it->end(); ++feat_it)
+						{
+							// one feature should be from the reference map:
+							if (feat_it->getMapIndex() == reference_index)
+							{
+								y = feat_it->getRT();
+							}
+							// transform RT back to the original scale:
+							else x = si_trafos[0].apply(feat_it->getRT());
+						}
+						data.push_back(make_pair(x, y));
+					}
+				}
+				//setProgress(10 * i + 5);
+				TransformationDescription trafo(data);
+				transformations[i] = trafo;
+
+        maps[i].clear();
+				//setProgress(10 * i + 6);
+			}
+
+			else if (reference_file_.empty())
+			{
+				// set no transformation for reference map:
+				TransformationDescription trafo;
+				trafo.fitModel("identity");
+				transformations[i] = trafo;
+			}
+		}
+
+		setProgress(10 * maps.size());
+		endProgress();
+
+		// reference file was added to "maps", has to be removed now:
+		if (!reference_file_.empty()) maps.resize(maps.size() - 1);
 	}
 
 } //namespace

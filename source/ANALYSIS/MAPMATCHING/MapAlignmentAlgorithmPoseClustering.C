@@ -101,7 +101,7 @@ namespace OpenMS
 				}
 			}
 		}
-    StringList ins;
+
 		computeTransformations_(maps, transformations, reference_index, max_num_peaks_considered);
 	}
 
@@ -274,22 +274,22 @@ namespace OpenMS
 		pairfinder.setLogType(getLogType());
     
     #ifdef _OPENMP 
-    #pragma omp parallel for firstprivate(input)
+    #pragma omp parallel for schedule(dynamic, 1) firstprivate(input)
     #endif
 		for (int i = 0; i < maps.size(); ++i)
 		{
-      if (omp_in_parallel()) cout << "Thread " << omp_get_thread_num() << " bearbeitet " << i << endl;
+      if (omp_in_parallel() > 0) cout << "Thread " << omp_get_thread_num() << " bearbeitet " << i << endl;
       else cout << "Keine parallele Berechnung" << endl;
 			//setProgress(10 * i);
 			if (i != reference_index)
 			{
-				// build scene_map
-        //cout << "Lade Map " << i << " aus: " << maps[i].getLoadedFilePath() << endl;
         FeatureXMLFile f;
         f.getOptions().setLoadConvexHull(false);
-        f.load(maps[i].getLoadedFilePath(), maps[i]);
-        //cout << "Konvertiere zu Consensus" << endl;
-				ConsensusMap::convert(i, maps[i], input[1], max_num_peaks_considered);
+
+				// build scene_map
+        FeatureMap<> tmp;
+        f.load(maps[i].getLoadedFilePath(), tmp);
+				ConsensusMap::convert(i, tmp, input[1], max_num_peaks_considered);
 				//setProgress(10 * i + 1);
 
 				// run superimposer to find the global transformation
@@ -311,7 +311,7 @@ namespace OpenMS
 				}
 				//setProgress(10 * i + 3);
 
-	      //run pairfinder fo find pairs
+	      //run pairfinder to find pairs
 				ConsensusMap result;
 				pairfinder.run(input, result);
 				//setProgress(10 * i + 4);
@@ -343,7 +343,6 @@ namespace OpenMS
 				TransformationDescription trafo(data);
 				transformations[i] = trafo;
 
-        maps[i].clear();
 				//setProgress(10 * i + 6);
 			}
 

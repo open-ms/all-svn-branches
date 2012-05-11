@@ -287,32 +287,37 @@ protected:
 
       if (alignment->getName() == "MapAlignmentAlgorithmPoseClustering")
       {
-        progresslogger.startProgress(0, ins.size(), "loading input files");
-        #ifdef _OPENMP 
-        #pragma omp parallel for
-        #endif
-			  for (int i = 0; i < ins.size(); ++i)
+        FeatureXMLFile f_new;
+        progresslogger.startProgress(0, outs.size(), "writing output files");
+			  for (Size i = 0; i < outs.size(); ++i)
 			  {
-          FeatureXMLFile f;
-		      f.load(ins[i], feat_maps[i]);
+          progresslogger.setProgress(i);
+          FeatureMap<> tmp;
+		      f_new.load(ins[i], tmp);
+          alignment->transformSingleFeatureMap(tmp, transformations[i]);
+          addDataProcessing_(tmp, getProcessingInfo_(DataProcessing::ALIGNMENT));
+          f_new.store(outs[i], tmp);
 			  }
         progresslogger.endProgress();
       }
 
-			alignment->transformFeatureMaps(feat_maps, transformations);
+      else
+      {
+			  alignment->transformFeatureMaps(feat_maps, transformations);
 
-			// write output
-			progresslogger.startProgress(0, outs.size(), "writing output files");
-			for (Size i = 0; i < outs.size(); ++i)
-			{
-				progresslogger.setProgress(i);
+			  // write output
+			  progresslogger.startProgress(0, outs.size(), "writing output files");
+			  for (Size i = 0; i < outs.size(); ++i)
+			  {
+				  progresslogger.setProgress(i);
 				
-				//annotate output with data processing info
-				addDataProcessing_(feat_maps[i], getProcessingInfo_(DataProcessing::ALIGNMENT));
+				  //annotate output with data processing info
+				  addDataProcessing_(feat_maps[i], getProcessingInfo_(DataProcessing::ALIGNMENT));
 
-		    f.store(outs[i], feat_maps[i]);
-			}
-			progresslogger.endProgress();
+		      f.store(outs[i], feat_maps[i]);
+			  }
+			  progresslogger.endProgress();
+      }
       double end_t = omp_get_wtime();
       cout << "Dauer: " << end_t-start_t << endl;
 		}

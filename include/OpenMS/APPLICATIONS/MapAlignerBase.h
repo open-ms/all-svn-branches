@@ -35,10 +35,6 @@
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
 
-#ifdef _OPENMP 
-#include <omp.h>
-#endif
-
 using namespace OpenMS;
 using namespace std;
 
@@ -241,7 +237,6 @@ protected:
     //-------------------------------------------------------------
 		else if (in_type == FileTypes::FEATUREXML)
 		{
-      double start_t = omp_get_wtime();
 			// load input
 			std::vector< FeatureMap<> > feat_maps(ins.size());
 			FeatureXMLFile f;
@@ -318,8 +313,6 @@ protected:
 			  }
 			  progresslogger.endProgress();
       }
-      double end_t = omp_get_wtime();
-      cout << "Dauer: " << end_t-start_t << endl;
 		}
     //-------------------------------------------------------------
     // perform consensus alignment

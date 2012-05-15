@@ -217,6 +217,9 @@ namespace OpenMS
 		// prepare transformations for output
 		transformations.clear();
 
+    FeatureXMLFile f;
+    f.getOptions().setLoadConvexHull(false);
+
 		// reference map:
 		Size reference_index = reference_index_ - 1;
 		if (!reference_file_.empty())
@@ -226,7 +229,7 @@ namespace OpenMS
 				throw Exception::InvalidParameter(__FILE__, __LINE__, __PRETTY_FUNCTION__, "reference file must be of type featureXML in this case (same as input)");
 			}
 			maps.resize(maps.size() + 1);
-			FeatureXMLFile().load(reference_file_, maps.back());
+      f.load(reference_file_, maps.back());
 			reference_index = maps.size() - 1;
 		}
     else if (reference_index_ == 0) // no reference given
@@ -241,6 +244,7 @@ namespace OpenMS
           reference_index = m;
         }
       }
+      f.load(maps[reference_index].getLoadedFilePath(), maps[reference_index]);
     }
 
 		computeTransformations_(maps, transformations, reference_index);
@@ -251,10 +255,6 @@ namespace OpenMS
 		Size reference_index, Size max_num_peaks_considered)
 	{
 		startProgress(0, 10 * maps.size(), "aligning input maps");
-
-    FeatureXMLFile f;
-    f.getOptions().setLoadConvexHull(false);
-    f.load(maps[reference_index].getLoadedFilePath(), maps[reference_index]);
 
     // build a consensus map of the elements of the reference map (for consensus
     // map input, take only the highest peaks)
@@ -273,14 +273,15 @@ namespace OpenMS
     pairfinder.setParameters(param_.copy("pairfinder:", true));
 		pairfinder.setLogType(getLogType());
     
+    // Progress counter for setProgress
+    UInt counter = 0;
+
     #ifdef _OPENMP 
     #pragma omp parallel for schedule(dynamic, 1) firstprivate(input)
     #endif
-		for (int i = 0; i < maps.size(); ++i)
+		for (int i = 0; i < maps.size(); ++i) // int instead of Size because of OpenMP
 		{
-      if (omp_in_parallel() > 0) cout << "Thread " << omp_get_thread_num() << " bearbeitet " << i << endl;
-      else cout << "Keine parallele Berechnung" << endl;
-			//setProgress(10 * i);
+			setProgress(10 * counter);
 			if (i != reference_index)
 			{
         FeatureXMLFile f;
@@ -290,12 +291,12 @@ namespace OpenMS
         FeatureMap<> tmp;
         f.load(maps[i].getLoadedFilePath(), tmp);
 				ConsensusMap::convert(i, tmp, input[1], max_num_peaks_considered);
-				//setProgress(10 * i + 1);
+				setProgress(10 * counter + 1);
 
 				// run superimposer to find the global transformation
 	      vector<TransformationDescription> si_trafos;
 	      superimposer.run(input, si_trafos);
-				//setProgress(10 * i + 2);
+				setProgress(10 * counter + 2);
 
 				// apply transformation to consensus features and contained feature
 				// handles
@@ -309,12 +310,12 @@ namespace OpenMS
 					//Set RT of consensus feature handles
 					input[1][j].begin()->asMutable().setRT(rt);
 				}
-				//setProgress(10 * i + 3);
+				setProgress(10 * counter + 3);
 
 	      //run pairfinder to find pairs
 				ConsensusMap result;
 				pairfinder.run(input, result);
-				//setProgress(10 * i + 4);
+				setProgress(10 * counter + 4);
 
 				// calculate the local transformation
 				si_trafos[0].invert(); // to undo the transformation applied above
@@ -339,11 +340,11 @@ namespace OpenMS
 						data.push_back(make_pair(x, y));
 					}
 				}
-				//setProgress(10 * i + 5);
+				setProgress(10 * counter + 5);
 				TransformationDescription trafo(data);
 				transformations[i] = trafo;
 
-				//setProgress(10 * i + 6);
+				setProgress(10 * counter + 6);
 			}
 
 			else if (reference_file_.empty())
@@ -353,6 +354,10 @@ namespace OpenMS
 				trafo.fitModel("identity");
 				transformations[i] = trafo;
 			}
+      #ifdef _OPENMP 
+      #pragma omp atomic
+      #endif
+      counter++;
 		}
 
 		setProgress(10 * maps.size());
@@ -360,6 +365,11 @@ namespace OpenMS
 
 		// reference file was added to "maps", has to be removed now:
 		if (!reference_file_.empty()) maps.resize(maps.size() - 1);
+    else
+    {
+      FeatureMap<> tmp;
+      tmp.swap(maps[reference_index]);
+    }
 	}
 
 } //namespace

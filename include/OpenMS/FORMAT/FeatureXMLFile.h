@@ -29,7 +29,6 @@
 #define OPENMS_FORMAT_FEATUREXMLFILE_H
 
 #include <OpenMS/KERNEL/FeatureMap.h>
-#include <OpenMS/FORMAT/PeakFileOptions.h>
 #include <OpenMS/FORMAT/FeatureFileOptions.h>
 #include <OpenMS/FORMAT/XMLFile.h>
 #include <OpenMS/FORMAT/HANDLERS/XMLHandler.h>

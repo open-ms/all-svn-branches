@@ -31,6 +31,7 @@
 #include <OpenMS/FORMAT/FeatureXMLFile.h>
 #include <OpenMS/KERNEL/FeatureMap.h>
 #include <OpenMS/FORMAT/PeakFileOptions.h>
+#include <OpenMS/FORMAT/FeatureFileOptions.h>
 #include <OpenMS/FORMAT/FileHandler.h>
 
 using namespace OpenMS;
@@ -149,7 +150,7 @@ START_SECTION((void load(String filename, FeatureMap<>& feature_map)))
 	TEST_REAL_SIMILAR(e[0].getMZ(), 35)
 	TEST_REAL_SIMILAR(e[0].getIntensity(), 500)
 
-	dfmap_file.getOptions() = PeakFileOptions();
+	dfmap_file.getOptions() = FeatureFileOptions();
 	dfmap_file.getOptions().setMZRange(makeRange(10, 50));
 	dfmap_file.load(OPENMS_GET_TEST_DATA_PATH("FeatureXMLFile_1.featureXML"),e);
 	TEST_EQUAL(e.size(),1)
@@ -157,7 +158,7 @@ START_SECTION((void load(String filename, FeatureMap<>& feature_map)))
 	TEST_REAL_SIMILAR(e[0].getMZ(), 35)
 	TEST_REAL_SIMILAR(e[0].getIntensity(), 500)
 
-	dfmap_file.getOptions() = PeakFileOptions();
+	dfmap_file.getOptions() = FeatureFileOptions();
 	dfmap_file.getOptions().setIntensityRange(makeRange(400, 600));
 	dfmap_file.load(OPENMS_GET_TEST_DATA_PATH("FeatureXMLFile_1.featureXML"),e);
 	TEST_EQUAL(e.size(),1)
@@ -181,7 +182,7 @@ START_SECTION((void store(String filename, const FeatureMap<> &feature_map)))
   TEST_EQUAL(map==map2, true)
 END_SECTION
 
-START_SECTION((PeakFileOptions& getOptions()))
+START_SECTION((FeatureFileOptions& getOptions()))
 	FeatureXMLFile f;
   FeatureMap<> e;
 	f.getOptions().setRTRange(makeRange(1.5, 4.5));
@@ -222,13 +223,13 @@ START_SECTION([EXTRA] static bool isValid(const String& filename))
   TEST_EQUAL(f.isValid(filename),true);
 END_SECTION
 
-START_SECTION((const PeakFileOptions& getOptions() const))
+START_SECTION((const FeatureFileOptions& getOptions() const))
 	FeatureXMLFile f;
  	FeatureMap<> e;
 	f.getOptions().setRTRange(makeRange(1.5, 4.5));
 	f.getOptions().setIntensityRange(makeRange(290.0, 310.0));
 
-	const PeakFileOptions pfo = f.getOptions();
+	const FeatureFileOptions pfo = f.getOptions();
 
 	TEST_EQUAL(pfo.getRTRange(),makeRange(1.5, 4.5))
 	TEST_EQUAL(pfo.getIntensityRange(),makeRange(290.0, 310.0))

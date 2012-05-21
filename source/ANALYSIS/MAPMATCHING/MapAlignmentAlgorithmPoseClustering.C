@@ -117,8 +117,6 @@ namespace OpenMS
 		ConsensusMap::convert(reference_index, maps[reference_index], input[0], 
 													max_num_peaks_considered);
 
-    transformations.resize(maps.size());
-
 		//init superimposer and pairfinder with model and parameters
 		PoseClusteringAffineSuperimposer superimposer;
     superimposer.setParameters(param_.copy("superimposer:", true));
@@ -128,13 +126,8 @@ namespace OpenMS
     pairfinder.setParameters(param_.copy("pairfinder:", true));
 		pairfinder.setLogType(getLogType());
     
-    #ifdef _OPENMP 
-    #pragma omp parallel for firstprivate(input)
-    #endif
 		for (int i = 0; i < maps.size(); ++i)
 		{
-      if (omp_in_parallel()) cout << "Thread " << omp_get_thread_num() << " bearbeitet " << i << endl;
-      else cout << "Keine parallele Berechnung" << endl;
 			setProgress(10 * i);
 			if (i != reference_index)
 			{
@@ -191,7 +184,7 @@ namespace OpenMS
 				}
 				setProgress(10 * i + 5);
 				TransformationDescription trafo(data);
-				transformations[i] = trafo;
+				transformations.push_back(trafo);
 
 				setProgress(10 * i + 6);
 			}
@@ -201,7 +194,7 @@ namespace OpenMS
 				// set no transformation for reference map:
 				TransformationDescription trafo;
 				trafo.fitModel("identity");
-				transformations[i] = trafo;
+				transformations.push_back(trafo);
 			}
 		}
 
@@ -221,7 +214,9 @@ namespace OpenMS
     f.getOptions().setLoadConvexHull(false);
 
 		// reference map:
+    cout << "ref vorher: " << reference_index_ << endl;
 		Size reference_index = reference_index_ - 1;
+    cout << "ref nachher: " << reference_index << endl;
 		if (!reference_file_.empty())
 		{
 			if (FileHandler::getType(reference_file_) != FileTypes::FEATUREXML)
@@ -244,6 +239,10 @@ namespace OpenMS
           reference_index = m;
         }
       }
+      f.load(maps[reference_index].getLoadedFilePath(), maps[reference_index]);
+    }
+    else
+    {
       f.load(maps[reference_index].getLoadedFilePath(), maps[reference_index]);
     }
 

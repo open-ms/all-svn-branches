@@ -87,7 +87,8 @@ namespace OpenMS
                        const MSExperiment<InputPeakType>& experiment,
 											 std::vector<std::vector<std::pair<Size,Size> > > & indices);
 
-    void createProteinSequenceBasedLPInclusionList(String include,String rt_model_file,String pt_model_file,FeatureMap<>& precursors);
+    void createProteinSequenceBasedLPInclusionList(String include,String rt_model_file,String pt_model_file,FeatureMap<>& precursors,
+                                                   bool random=false,bool uniform=false);
 
     void setLPSolver(LPWrapper::SOLVER solver)
     {
@@ -247,7 +248,12 @@ namespace OpenMS
 						end.first = start.first;
 
 						typename MSSpectrum<InputPeakType>::ConstIterator mz_iter = spec_iter->MZBegin(features[f].getMZ());
-						if(mz_iter->getMZ() > features[f].getMZ() && mz_iter!= spec_iter->begin()) --mz_iter;
+            if(spec_iter->begin() == spec_iter->end())
+              {
+                indices.push_back(vec);
+                continue;
+              }
+						if(mz_iter== spec_iter->end() || (mz_iter->getMZ() > features[f].getMZ() && mz_iter!= spec_iter->begin())) --mz_iter;
             while(mz_iter != spec_iter->begin())
               {
                 if(fabs((mz_iter-1)->getMZ() - features[f].getMZ()) < 0.5)  --mz_iter;

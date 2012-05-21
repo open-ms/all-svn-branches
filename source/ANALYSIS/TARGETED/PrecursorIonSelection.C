@@ -59,6 +59,7 @@ namespace OpenMS
     defaults_.insert("Preprocessing:",PrecursorIonSelectionPreprocessing().getDefaults());
 		defaultsToParam_();
 		updateMembers_();
+
 	}
 
 	PrecursorIonSelection::PrecursorIonSelection(const PrecursorIonSelection& source)
@@ -66,7 +67,8 @@ namespace OpenMS
 			min_pep_ids_(source.min_pep_ids_),
 			max_score_(source.max_score_),
 			type_(source.type_),
-      solver_(source.solver_)
+      solver_(source.solver_),
+      fraction_counter_(source.fraction_counter_)
 	{
 		updateMembers_();
 	}
@@ -107,6 +109,42 @@ namespace OpenMS
 										continue;
 									}
 							}
+            // get spectrum number
+            DoubleReal min_rt = param_.getValue("Preprocessing:rt_weighting:rt_settings:min_rt");
+            DoubleReal rt_step_size = param_.getValue("Preprocessing:rt_weighting:rt_settings:rt_step_size");
+            Size number = (Size)(iter->getRT() - min_rt) / rt_step_size;
+            std::cout << "fraction_counter_["<<number<<"]="<<fraction_counter_[number]<<std::endl;
+            /// if number of precursors in fraction exceeds rt_bin_capacity
+            if(fraction_counter_[number] >= (Size)param_.getValue("rt_bin_capacity"))
+              {
+                /// try the other fractions the features occurs in
+                // get begin and end rt coordinate
+                DoubleReal rt_begin = iter->getConvexHull().getBoundingBox().minPosition()[0];
+                DoubleReal rt_end =   iter->getConvexHull().getBoundingBox().maxPosition()[0];
+                Size scan_begin = (Size)(rt_begin - min_rt)/rt_step_size;
+                Size scan_end = (Size)(rt_end - min_rt)/rt_step_size;
+                std::cout << "Try "<< scan_begin<<  " to "<<scan_end<<std::endl;
+                for(Size s = scan_begin; s <= scan_end;++s)
+                  {
+                    if(fraction_counter_[s] < (Size)param_.getValue("rt_bin_capacity"))
+                      {
+                        ++fraction_counter_[s];
+                        iter->setMetaValue("fragmented",(String)"true");
+                        iter->setRT(min_rt + s*rt_step_size);
+                        std::cout << "Took "<<s << " instead. "<<iter->getRT()<<std::endl;
+                        // store them 
+                        next_features.push_back(*iter);
+                        ++count;
+                        break;
+                      }
+                  }
+                ++iter;
+                continue;
+              }
+            else /// increase precursor counter for current fraction
+              {
+                ++fraction_counter_[number];
+              }
 						iter->setMetaValue("fragmented",(String)"true");
 						// store them 
 						next_features.push_back(*iter);
@@ -299,7 +337,17 @@ namespace OpenMS
 	void PrecursorIonSelection::shiftDown_(FeatureMap<>& features,PrecursorIonSelectionPreprocessing& preprocessed_db,
 																				 String protein_acc)
 	{
-		const std::vector<DoubleReal>& masses =preprocessed_db.getMasses(protein_acc);
+    std::vector<DoubleReal> m;
+    std::vector<DoubleReal> masses;
+    try
+      {
+        masses =preprocessed_db.getMasses(protein_acc);
+      }
+    catch(Exception::ElementNotFound e)
+      {
+        std::cout << protein_acc << "  not in preprocessing, this may be due to ambiguous characters in the AA sequence."<<std::endl;
+        masses = m;
+      }
 #ifdef PIS_DEBUG
 		std::cout << protein_acc << "  shift down  "<<masses.size()<< " peptides"<<std::endl;
 #endif
@@ -371,7 +419,17 @@ namespace OpenMS
 	void PrecursorIonSelection::shiftUp_(FeatureMap<>& features,PrecursorIonSelectionPreprocessing& preprocessed_db,
 																			 String protein_acc)
 	{
-		const std::vector<DoubleReal>& masses =preprocessed_db.getMasses(protein_acc);
+		std::vector<DoubleReal> m;
+    std::vector<DoubleReal> masses;
+    try
+      {
+        masses =preprocessed_db.getMasses(protein_acc);
+      }
+    catch(Exception::ElementNotFound e)
+      {
+        std::cout << protein_acc << "  not in preprocessing, this may be due to ambiguous characters in the AA sequence."<<std::endl;
+        masses = m;
+      }
 #ifdef PIS_DEBUG
 		std::cout << protein_acc << "  shift up  "<<masses.size()<< " peptides"<<std::endl;
 #endif
@@ -637,6 +695,12 @@ namespace OpenMS
 							<< "sps "<<SPS << "\n"
 							<< "dex "<<DEX << "\n";
 #endif
+    DoubleReal min_rt = param_.getValue("Preprocessing:rt_weighting:rt_settings:min_rt");
+    DoubleReal max_rt = param_.getValue("Preprocessing:rt_weighting:rt_settings:max_rt");
+		DoubleReal rt_step_size = param_.getValue("Preprocessing:rt_weighting:rt_settings:rt_step_size");
+    Size steps = (Size)ceil((max_rt - min_rt) / rt_step_size)+1;
+    std::cout << "steps " <<steps<< " "<<min_rt << " "<<max_rt<< " "<< rt_step_size<<std::endl; 
+    fraction_counter_= vector<Size>(steps,0);
 		if(features.empty())  return;
 		// check if feature map has required user_params-> else add them
 		checkForRequiredUserParams_(features);
@@ -927,7 +991,7 @@ namespace OpenMS
     PSLPFormulation ilp_wrapper;
     Param mip_param = param_.copy("MIPFormulation:",true);
 		mip_param.setValue("mz_tolerance",param_.getValue("Preprocessing:precursor_mass_tolerance"));
-    mip_param.insert("rt",param_.copy("Preprocessing:rt_weighting:rt_setting:",true));
+    mip_param.insert("rt:",param_.copy("Preprocessing:rt_weighting:rt_settings:",true));
 		ilp_wrapper.setParameters(mip_param);
     ilp_wrapper.setLPSolver(solver_);
 
@@ -956,10 +1020,12 @@ namespace OpenMS
 				std::cout << "Need rt_model_file parameters in Preprocessed DB for rt weighting"<<std::endl;
 				return;
 			}
-	
+    std::cout << "learned Probs"<<std::endl;
 		// sort according to score
 		// ATTENTION: do not change the order of the features afterwards
-		sortByTotalScore(features);
+    //features.sortByIntensity();
+    //    features.sortByPosition();
+    sortByTotalScore(features);
 
 		OfflinePrecursorIonSelection ofps;
 		// get the mass ranges for each features for each scan it occurs in
@@ -1006,6 +1072,7 @@ namespace OpenMS
 		std::ofstream outf(output_path.c_str());
 
 		std::vector<String> protein_accs;
+    std::vector<String> identified_protein_accs;
     std::map<String,Size> protein_penalty_index_map;
 
     // #ifdef PIS_DEBUG
@@ -1109,9 +1176,9 @@ namespace OpenMS
             std::cout << num << " proteins in minimal list"<<std::endl;
             protein_inference.calculateProteinProbabilities(all_pep_ids);
 
-						std::vector<String> new_protein_accs;
+
             ilp_wrapper.updateCombinedILP(features,preprocessed_db,variable_indices,
-                                          new_protein_accs,protein_accs,protein_inference,x_variable_number_,
+                                          identified_protein_accs,protein_accs,protein_inference,x_variable_number_,
                                           protein_feature_map,new_features[c], protein_penalty_index_map);
            
  					}//for(UInt c=0;c<new_cl.size();++c)

@@ -112,8 +112,9 @@ protected:
     registerStringOption_("solver","<solver-type>","GLPK","LP solver type",false,true);
     setValidStrings_("solver",StringList::create("GLPK,COINOR"));
     registerIntOption_("num_precursors_per_spot","<Int>",1,"number of precursors per spot to be selected",false);
-
-    //    setValidFormats_("out", StringList::create("TraML"));
+    registerFlag_("random_dt","");
+    registerFlag_("uniform_dt","");
+      //    setValidFormats_("out", StringList::create("TraML"));
 
     registerSubsection_("algorithm","Inclusion/Exclusion algorithm section");
   }
@@ -139,7 +140,8 @@ protected:
     String include(getStringOption_("include"));
     String exclude(getStringOption_("exclude"));
     String out(getStringOption_("out"));
-
+    bool random (getFlag_("random_dt"));
+    bool uniform (getFlag_("uniform_dt"));
     if (include == "" && exclude == "")
     {
       writeLog_("Error: No input file given.");
@@ -353,7 +355,7 @@ protected:
 #endif
 
             FeatureMap<> precursors;
-            opis.createProteinSequenceBasedLPInclusionList(include,rt_model_file,pt_model_file,precursors);
+            opis.createProteinSequenceBasedLPInclusionList(include,rt_model_file,pt_model_file,precursors,random,uniform);
             
             std::cout <<"now store precursors "<<precursors.size()<< " "<<out<<std::endl;
             FeatureXMLFile().store(out,precursors);

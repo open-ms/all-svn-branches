@@ -219,6 +219,8 @@ namespace OpenMS
     Type type_;
 		/// stores the peptide sequences for all protein identifications
 		std::map<String,std::set<String> > prot_id_counter_;
+    /// stores the number of selected precursors per fraction
+		std::vector<Size> fraction_counter_;    
 		/// precursor ion error tolerance 
 		DoubleReal mz_tolerance_;
 		/// precursor ion error tolerance unit (ppm or Da)

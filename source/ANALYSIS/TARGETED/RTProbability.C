@@ -60,7 +60,8 @@ namespace OpenMS
     defaults_.setValue("gauss_amplitude", 0.08, "Initial Gauss amplitude");
     defaults_.setMinFloat("gauss_amplitude",0.);
     defaults_.setValue("gauss_mean", -1., "Initial Gauss mean");
-    defaults_.setValue("gauss_sigma", -3., "Initial Gauss sigma");
+    defaults_.setValue("gauss_sigma", 3., "Initial Gauss sigma");
+    defaults_.setMinFloat("gauss_sigma",0.);
     
   
 #ifdef RTPROB_DEBUG
@@ -88,8 +89,10 @@ namespace OpenMS
   {
     // first adapt gaussian RT error distribution to a normal distribution with \mu = 0
     Int theo_scan = getScanNumber_(theo_rt);
-    Int obs_scan_begin = getScanNumber_(min_obs_rt)-1;
-    Int obs_scan_end = getScanNumber_(max_obs_rt)+1;
+    if(theo_scan == -1) return 0.;
+    DoubleReal obs_scan_begin = getScanNumber_(min_obs_rt);
+    if(obs_scan_begin != 0)  obs_scan_begin -=1;
+    DoubleReal obs_scan_end = getScanNumber_(max_obs_rt)+1;
 
     if(obs_scan_begin == -1 || obs_scan_end == -1)
       {
@@ -100,17 +103,42 @@ namespace OpenMS
     
     obs_scan_begin -= mu_;
     obs_scan_end -= mu_;
-    
-    DoubleReal x1 = theo_scan - obs_scan_end;
-    DoubleReal x2 = theo_scan - obs_scan_begin;
+
+    DoubleReal x1,x2;
+    // if(theo_scan > obs_scan_begin && theo_scan < obs_scan_end  )
+    //   {
+    //     x1 = theo_scan - obs_scan_end;
+    //     x2 = theo_scan - obs_scan_begin;
+    //   }
+    // else 
+    //   {
+        x1 = theo_scan - obs_scan_end;
+        x2 = theo_scan - obs_scan_begin;
+        //      }
     
     DoubleReal prob;
+    // gsl_cdf_gaussian_P computes the cumulative probs up to x (i.e. the area under the curve)
+    // so cgauss(x2)  - cgauss(x1) yields the area between x1 and x2
     if(x2 > x1) prob = gsl_cdf_gaussian_P(x2,sigma_) - gsl_cdf_gaussian_P(x1,sigma_);
-    else prob = gsl_cdf_gaussian_P(x1,sigma_) -  gsl_cdf_gaussian_P(x2,sigma_);
+    else  prob = gsl_cdf_gaussian_P(x1,sigma_) -  gsl_cdf_gaussian_P(x2,sigma_);
     if((prob < 0.) || (obs_scan_begin == obs_scan_end))
       {
         std::cerr << min_obs_rt << " "<< obs_scan_begin << " " << max_obs_rt << " "<< obs_scan_end << " "
                   << theo_rt << " " << theo_scan << " " << mu_ << " "<< x1 << " "<<x2 << " "<< prob<<std::endl;
+        if(x2 > x1) std::cerr <<  gsl_cdf_gaussian_P(x2,sigma_) <<" - "<<gsl_cdf_gaussian_P(x1,sigma_)<<std::endl;
+        else  std::cerr <<   gsl_cdf_gaussian_P(x1,sigma_)<<" - "<< gsl_cdf_gaussian_P(x2,sigma_)<<std::endl;
+        // DoubleReal min=-35.;
+        // DoubleReal max=35.;
+        // DoubleReal stepsize=.1;
+        // for(Int i = 0; min + i*stepsize <=max;++i)
+        //   {
+        //     std::cerr << min + i*stepsize << "\t"<<gsl_cdf_gaussian_P(min + i*stepsize,sigma_)
+        //               << "\t"<< gsl_cdf_gaussian_Q(min + i*stepsize,sigma_)
+        //               << "\t"<< gsl_ran_gaussian_pdf(min + i*stepsize,sigma_)
+        //               << "\t"<<gsl_cdf_gaussian_Pinv(min + i*stepsize,sigma_)
+        //               << "\t"<< gsl_cdf_gaussian_Qinv(min + i*stepsize,sigma_) << std::endl;
+        //   }
+        // throw Exception::ElementNotFound(__FILE__,__LINE__,__PRETTY_FUNCTION__, "PrecursorIonSelectionPreprocessing: rt_dt_histogramm has not yet been calculated.");
       }
     return prob;
   }
@@ -270,11 +298,19 @@ namespace OpenMS
 #ifdef RTPROB_DEBUG
     std::cout << "min "<< min << " max "<< max << " diff " << diff << std::endl;
 #endif
-    Size number_of_diffs(diffs.size());
-    std::vector<DoubleReal> binned_diffs(number_of_diffs);
+    //Size number_of_diffs(diffs.size());
+    //std::vector<DoubleReal> binned_diffs(number_of_diffs);
+    std::vector<DoubleReal> binned_diffs(number_of_bins);
+    DoubleReal bin_size = (DoubleReal) diff / (DoubleReal) number_of_bins;
     for (std::vector<Int>::const_iterator it = diffs.begin(); it != diffs.end(); ++it)
       {
-        Size bin = (Size)((DoubleReal)(*it - min) / diff * (DoubleReal)(number_of_bins - 1));
+        //        Size bin = (Size)((DoubleReal)(*it - min) / diff * (DoubleReal)(number_of_bins - 1));
+        Size bin = std::min(number_of_bins-1,(Size)floor((DoubleReal)(*it - min) / bin_size));
+        if(bin >= binned_diffs.size())
+          {
+            std::cout << "ATTENTION: floor(("<< *it << " - "<< min << ") / "<<bin_size<<") =  "<<bin <<std::endl;
+            std::cout << max << " " << binned_diffs.size()<<std::endl;
+          }
         binned_diffs[bin] += 1.;
       }
 
@@ -283,7 +319,7 @@ namespace OpenMS
     // normalize to \sum = 1 and store in diff_data
     for (Size i=0; i < number_of_bins; ++i)
       {
-        binned_diffs[i] /= (DoubleReal) number_of_diffs * 3.;
+        binned_diffs[i] /= (DoubleReal) diffs.size() * 3.;
         DPosition<2> pos;
         pos.setX(min + diff*(DoubleReal)i / (DoubleReal)number_of_bins);
 #ifdef RTPROB_DEBUG
@@ -297,13 +333,13 @@ namespace OpenMS
     Math::GaussFitter gf;
     Math::GaussFitter::GaussFitResult result_1st;
     result_1st.A = param_.getValue("gauss_amplitude");//1./(sigma_*sqrt(2.*Constants::PI));//0.028; //gauss_A; //0.06;
-    result_1st.x0 = mu_;//param_.getValue("gauss_mean");// -1.;//mu_;//0.008;//gauss_x0; //0.7;
-    result_1st.sigma = sigma_;//param_.getValue("gauss_sigma"); //3.;//sigma_;//0.25;//gauss_sigma; //0.5;
+    result_1st.x0 = param_.getValue("gauss_mean");// -1.;//mu_;//0.008;//gauss_x0; //0.7;
+    result_1st.sigma = param_.getValue("gauss_sigma"); //3.;//sigma_;//0.25;//gauss_sigma; //0.5;
     gf.setInitialParameters(result_1st);
 #ifdef RTPROB_DEBUG
     std::cerr << "Initial Gauss guess: A=" << result_1st.A << ", mu=" << result_1st.x0 << ", sigma=" << result_1st.sigma << std::endl;
 #endif
-    Math::GaussFitter::GaussFitResult result_gauss;
+   Math::GaussFitter::GaussFitResult result_gauss;
     try
       {
         //result_gauss = gf.fit(diff_data);
@@ -327,9 +363,9 @@ namespace OpenMS
           }
       }
     
-    sigma_ = result_gauss.sigma; 
-    mu_ = result_gauss.x0;
-    
+    sigma_ = param_.getValue("gauss_sigma");//result_gauss.sigma; 
+    mu_ = param_.getValue("gauss_mean");//result_gauss.x0;
+    std::cerr << "set parameters"  << std::endl;
 #ifdef RTPROB_DEBUG
     std::cerr << gf.getGnuplotFormula() << std::endl;
     String fwd_filename = "gaussian_rt_error";//param_.getValue("fwd_filename");

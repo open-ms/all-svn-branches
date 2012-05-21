@@ -92,7 +92,7 @@ namespace OpenMS
 		 *	@throws Exception::FileNotFound if file with preprocessing or db can't be found
 		 *  @throws Exception::UnableToCreateFile if preprocessing file can't be written
 		 */
-		void dbPreprocessing(String db_path,String rt_model_path,String dt_model_path,bool save=true);
+		void dbPreprocessing(String db_path,String rt_model_path,String dt_model_path,bool save=true,bool random=false,bool uniform=false);
 
 		
 		/**

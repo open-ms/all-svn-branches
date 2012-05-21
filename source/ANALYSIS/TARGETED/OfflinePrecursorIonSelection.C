@@ -76,13 +76,13 @@ OfflinePrecursorIonSelection::~OfflinePrecursorIonSelection()
 
 
 void OfflinePrecursorIonSelection::createProteinSequenceBasedLPInclusionList(String include,String rt_model_file,String pt_model_file,
-                                                                             FeatureMap<>& precursors)
+                                                                             FeatureMap<>& precursors,bool random,bool uniform)
 {
   PrecursorIonSelectionPreprocessing pisp;
   Param pisp_param = pisp.getParameters();
   pisp_param.setValue("store_peptide_sequences","true");
   pisp.setParameters(pisp_param);
-  pisp.dbPreprocessing(include,rt_model_file,pt_model_file,false);
+  pisp.dbPreprocessing(include,rt_model_file,pt_model_file,false,random,uniform);
   std::cout << "now learn rt probabilities"<<std::endl;
   //pisp.learnRTProbabilities(f_map,rt_model,0.5);
   pisp.setGaussianParameters(3,-1);

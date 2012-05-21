@@ -144,6 +144,7 @@ namespace OpenMS
     else
     {
       throw Exception::ElementNotFound(__FILE__,__LINE__,__PRETTY_FUNCTION__, "PrecursorIonSelectionPreprocessing: protein "+acc+ " could not be found.");
+      
     }
   }
 
@@ -317,7 +318,7 @@ namespace OpenMS
   }
 
   void PrecursorIonSelectionPreprocessing::dbPreprocessing(String db_path,String rt_model_path,
-                                                           String dt_model_path,bool save)
+                                                           String dt_model_path,bool save,bool random,bool uniform)
   {
 #ifdef PISP_DEBUG
     std::cout << "Parameters: "<< param_.getValue("preprocessed_db_path")
@@ -355,7 +356,7 @@ namespace OpenMS
 
         String& seq = entries[e].sequence;
         // check for unallowed characters
-        if(seq.hasSubstring("X") || seq.hasSubstring("B") ||  seq.hasSubstring("Z") )
+        if(seq.hasSubstring("X") || seq.hasSubstring("B") ||  seq.hasSubstring("Z")  ||  seq.hasSubstring("O") )
         {
           continue;
         }
@@ -488,30 +489,79 @@ namespace OpenMS
         dt_sim.setParameters(dt_param);
         std::vector<DoubleReal> labels;
         std::vector<DoubleReal> detectabilities;
-        dt_sim.predictDetectabilities(peptide_sequences,labels,detectabilities);
-
-        for(Size index2 = 0; index2 < detectabilities.size();++index2)
-        {
-          for(Size seq_idx =0; seq_idx < tmp_peptide_map[peptide_sequences[index2]].size();++seq_idx)
+        if(random)
           {
-            String acc = tmp_peptide_map[peptide_sequences[index2]][seq_idx].first;
-            Size tmp_idx = tmp_peptide_map[peptide_sequences[index2]][seq_idx].second;
-            if(pt_prot_map_.find(acc) != pt_prot_map_.end())
-            {
-              pt_prot_map_[acc][tmp_idx]= detectabilities[index2];
-            }
-            else
-            {
-              std::vector<DoubleReal> pt_vec(prot_masses_[acc].size());
-              pt_prot_map_.insert(make_pair(acc,pt_vec));
-              pt_prot_map_[acc][tmp_idx]=	detectabilities[index2];
-            }
+            //srand((unsigned)time(0));
+            srand(0);
+            DoubleReal floor = 0., ceiling = 1., range = (ceiling - floor);
+            DoubleReal rnd = floor + (range * rand()) / (RAND_MAX + 1.0);
+            for(Size index2 = 0; index2 < peptide_sequences.size();++index2)
+              {
+                for(Size seq_idx =0; seq_idx < tmp_peptide_map[peptide_sequences[index2]].size();++seq_idx)
+                  {
+                    String acc = tmp_peptide_map[peptide_sequences[index2]][seq_idx].first;
+                    Size tmp_idx = tmp_peptide_map[peptide_sequences[index2]][seq_idx].second;
+                    if(pt_prot_map_.find(acc) != pt_prot_map_.end())
+                      {
+                        pt_prot_map_[acc][tmp_idx]= rnd;
+                      }
+                    else
+                      {
+                        std::vector<DoubleReal> pt_vec(prot_masses_[acc].size());
+                        pt_prot_map_.insert(make_pair(acc,pt_vec));
+                        pt_prot_map_[acc][tmp_idx]=	rnd;
+                      }
+                  }
+              }
           }
-        }
-        peptide_sequences.clear();
-        Int size = std::min((int)distance(seq_it,sequences_.end())-1,(int)max_peptides_per_run);
-        if(size > 0) peptide_sequences.resize(size);peptide_aa_sequences.resize(size);
-        index = 0;
+        else if(uniform)
+          {
+            for(Size index2 = 0; index2 < peptide_sequences.size();++index2)
+              {
+                for(Size seq_idx =0; seq_idx < tmp_peptide_map[peptide_sequences[index2]].size();++seq_idx)
+                  {
+                    String acc = tmp_peptide_map[peptide_sequences[index2]][seq_idx].first;
+                    Size tmp_idx = tmp_peptide_map[peptide_sequences[index2]][seq_idx].second;
+                    if(pt_prot_map_.find(acc) != pt_prot_map_.end())
+                      {
+                        pt_prot_map_[acc][tmp_idx]= 1.;
+                      }
+                    else
+                      {
+                        std::vector<DoubleReal> pt_vec(prot_masses_[acc].size());
+                        pt_prot_map_.insert(make_pair(acc,pt_vec));
+                        pt_prot_map_[acc][tmp_idx]=	1.;
+                      }
+                  }
+              }
+          }
+        else
+          {
+            dt_sim.predictDetectabilities(peptide_sequences,labels,detectabilities);
+            
+            for(Size index2 = 0; index2 < detectabilities.size();++index2)
+              {
+                for(Size seq_idx =0; seq_idx < tmp_peptide_map[peptide_sequences[index2]].size();++seq_idx)
+                  {
+                    String acc = tmp_peptide_map[peptide_sequences[index2]][seq_idx].first;
+                    Size tmp_idx = tmp_peptide_map[peptide_sequences[index2]][seq_idx].second;
+                    if(pt_prot_map_.find(acc) != pt_prot_map_.end())
+                      {
+                        pt_prot_map_[acc][tmp_idx]= detectabilities[index2];
+                      }
+                    else
+                      {
+                        std::vector<DoubleReal> pt_vec(prot_masses_[acc].size());
+                        pt_prot_map_.insert(make_pair(acc,pt_vec));
+                        pt_prot_map_[acc][tmp_idx]=	detectabilities[index2];
+                      }
+                  }
+              }
+            peptide_sequences.clear();
+            Int size = std::min((int)distance(seq_it,sequences_.end())-1,(int)max_peptides_per_run);
+            if(size > 0) peptide_sequences.resize(size);peptide_aa_sequences.resize(size);
+            index = 0;
+          }
       }
     }
     peptide_sequences.clear();
@@ -967,10 +1017,13 @@ namespace OpenMS
         {
           entries[e].identifier = entries[e].identifier.suffix(entries[e].identifier.size()-3);
         }
-        entries[e].identifier = entries[e].identifier.prefix('|');
+        if(entries[e].identifier.hasSubstring("|"))
+          {
+            entries[e].identifier = entries[e].identifier.prefix('|');
+          }
         String& seq = entries[e].sequence;
         // check for unallowed characters
-        if(seq.hasSubstring("X") || seq.hasSubstring("B") ||  seq.hasSubstring("Z") )
+        if(seq.hasSubstring("X") || seq.hasSubstring("B") ||  seq.hasSubstring("Z") ||  seq.hasSubstring("O") )
         {
           continue;
         }
@@ -1056,6 +1109,7 @@ namespace OpenMS
     {
       std::vector<String> parts;
       iter->split('\t',parts);
+      //      std::cout << "line:" <<*iter<<" "<<parts.size()<<std::endl;
       std::vector<DoubleReal> masses;
       masses.reserve(parts[0].toInt());
       std::vector<String> line_parts;
@@ -1076,7 +1130,7 @@ namespace OpenMS
         }
         else masses.push_back(parts[i].toDouble());
       }
-      if(parts[1].hasSubstring(".")) parts[1] = parts[1].prefix(11);
+      if(parts.size()>1 && parts[1].hasSubstring(".")) parts[1] = parts[1].prefix(11);
       prot_masses_.insert(make_pair(parts[1],masses));
 
       if ( !rts.empty() )
@@ -1174,6 +1228,7 @@ namespace OpenMS
 		rt_prob_.setParameters(param);
 		rt_prob_.learnGaussian(features,rt_model_path,higherScoreBetter,min_score);
     transformRTDTProbabilitiesOnIds_(features,use_detectability);
+    std::cout << "finished preprocessinf"<<std::endl;
 	}
 
   void PrecursorIonSelectionPreprocessing::transformRTDTProbabilitiesOnIds_(FeatureMap<>& features,bool use_detectability)
@@ -1195,7 +1250,8 @@ namespace OpenMS
                 if(masses_it==prot_masses_.end()) continue;
                 for(Size i = 0; i < masses_it->second.size();++i)
                   {
-                    if(fabs(masses_it->second[i] - pmz)  < 1e-03)
+                    std::cout << masses_it->second[i] << " "<< pmz << std::endl;
+                    if(fabs(masses_it->second[i] - pmz)  < 1e-02)
                       {
                         std::cout << masses_it->second[i] <<" "<<pmz << " "<<features[f].getMZ()
                                   << " "<<getRT(masses_it->first,i)<<" "<<rt<<" " ;

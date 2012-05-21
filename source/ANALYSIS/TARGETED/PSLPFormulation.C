@@ -86,7 +86,8 @@ namespace OpenMS
   defaults_.setValue("combined_ilp:k3",0.4,"combined ilp: weight for -x_j,s*w_j,s");
   defaults_.setMinFloat("combined_ilp:k3",0.);
   //	defaults_.setMaxFloat("combined_ilp:k1",1.);
-	
+  defaults_.setValue("combined_ilp:scale_matching_probs","true","flag if detectability * rt_weight shall be scaled to cover all [0,1]");
+  defaults_.setValidStrings("combined_ilp:scale_matching_probs",StringList::create("true,false"));
 	defaultsToParam_();
   
 }
@@ -936,7 +937,7 @@ void PSLPFormulation::addRTBinCapacityConstraint_(std::vector<IndexTriple>& vari
 	Size j = 0;
 	for(Size i = 0; i < max_rt_index;++i)
 		{
-      std::cout << "RT cap, scan "<< i << std::endl;
+      //      std::cout << "RT cap, scan "<< i << std::endl;
 			// first determine number of indices:
 			Size start = j;
 			while(j < variable_indices.size())
@@ -1032,7 +1033,7 @@ void PSLPFormulation::solveILP(std::vector<int>& solution_indices,Int /*iteratio
   for (Int column = 0; column < model_->getNumberOfColumns(); ++column)
   {
     double value = model_->getColumnValue(column);
-    //    std::cout << value << " "<< model_->getColumnType(column) << "\t";
+    //    std::cout << value << " "<< model_->getColumnType(column) << "\n";
 #ifdef DEBUG_OPS
     if(model_->getColumnName(column).hasPrefix("y_"))
       {
@@ -1048,7 +1049,9 @@ void PSLPFormulation::solveILP(std::vector<int>& solution_indices,Int /*iteratio
 #endif
       solution_indices.push_back((int) column);
     }
+#ifdef DEBUG_OPS	
     std::cout << "\n";
+#endif
   }
 }
   
@@ -1084,6 +1087,8 @@ void PSLPFormulation::updateFeatureILPVariables(FeatureMap<>& new_features,
 					// now set the corresponding variables in the ILP to 1 as this peptide is already acquired
 					// find the right spectrum
 					Int rt_index = std::min((Int)std::max(0.,ceil((new_features[f].getRT()-min_rt)/rt_step_size)) ,max_index);
+          std::cout << "rt_index "<< rt_index << " "<<new_features[f].getMZ()<< " "<<new_features[f].getRT()<< std::endl;
+          std::cout << new_features[f].getRT() << " "<<min_rt <<" "<<rt_step_size<<std::endl;
 					bool existing = false;
 					while(f_v_idx < variable_indices.size() && variable_indices[f_v_idx].feature == f_index)
 						{
@@ -1100,6 +1105,7 @@ void PSLPFormulation::updateFeatureILPVariables(FeatureMap<>& new_features,
  								}
 							++f_v_idx;
 						}
+          if(!existing) std::cout << "ATTENTION!!"<<std::endl;
 				}
 			std::map<Size,std::vector<String> >::iterator c_iter = feature_constraints_map.find(f);
 			if(c_iter!=feature_constraints_map.end())
@@ -1377,7 +1383,10 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
                                                         {
                                                           dt = 1.;
                                                         }
-                                                      DoubleReal weight = dt * rt_weight;//preprocessed_db.getRTDTProbability(dt*curr_rt_weight);
+                                                      
+                                                      DoubleReal weight;
+                                                      if(param_.getValue("combined_ilp:scale_matching_probs")=="true") weight = preprocessed_db.getRTDTProbability(dt*rt_weight);
+                                                      else  weight = dt * rt_weight;
                                                           
                                                       std::cout << dt << " * " << rt_weight
                                                                 << " = "<< dt*rt_weight
@@ -1448,6 +1457,16 @@ void PSLPFormulation::updateCombinedILP(FeatureMap<>& features,
 #endif
 											//											std::cout << "added row"<<std::endl;
 										}//if(prot_acc_iter == protein_accs.end())
+										else
+										{
+                      if(find(new_protein_accs.begin(),new_protein_accs.end(),accs[prot]) == new_protein_accs.end() &&
+                         prot_inference.getProteinProbability(accs[prot]) >= min_prot_coverage
+                         && DoubleReal(param_.getValue("combined_ilp:k3"))>0.000001 )
+											{
+                        new_protein_accs.push_back(accs[prot]);
+												updateObjFunction_(accs[prot],features,preprocessed_db,variable_indices);
+											}
+										}
 								}
 							else
 								{
@@ -1606,7 +1625,9 @@ void PSLPFormulation::updateObjFunction_(String acc,FeatureMap<>& features,
                                     }
                                   else dt = 1.;
                                   // weight is detectability * rt_weight
-                                  DoubleReal weight = dt * rt_weight;//preprocessed_db.getRTDTProbability(dt*curr_rt_weight);
+                                  DoubleReal weight;
+                                  if(param_.getValue("combined_ilp:scale_matching_probs")=="true")  weight = preprocessed_db.getRTDTProbability(dt*rt_weight);
+                                  else weight = dt * rt_weight;
                                   DoubleReal obj = model_->getObjective(f_v_idx);
                                   
                                   std::cout << features[f].getMZ() << " "
@@ -1614,6 +1635,7 @@ void PSLPFormulation::updateObjFunction_(String acc,FeatureMap<>& features,
                                             << rt_weight <<" is matching peptide "<<p <<" with score: ";
                                   std::cout << dt << " * " << rt_weight
                                             << " = "<< dt*rt_weight
+                                            << " " << weight
                                             << " -> "<< log(1.-weight)<<"*"<<log_weight
                                             << " obj: "<<model_->getObjective(f_v_idx);
                                   // if(fabs(1.-weight)<0.000001)

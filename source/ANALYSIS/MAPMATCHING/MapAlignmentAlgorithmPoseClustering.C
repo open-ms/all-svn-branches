@@ -214,9 +214,7 @@ namespace OpenMS
     f.getOptions().setLoadConvexHull(false);
 
 		// reference map:
-    cout << "ref vorher: " << reference_index_ << endl;
 		Size reference_index = reference_index_ - 1;
-    cout << "ref nachher: " << reference_index << endl;
 		if (!reference_file_.empty())
 		{
 			if (FileHandler::getType(reference_file_) != FileTypes::FEATUREXML)
@@ -239,12 +237,9 @@ namespace OpenMS
           reference_index = m;
         }
       }
-      f.load(maps[reference_index].getLoadedFilePath(), maps[reference_index]);
     }
-    else
-    {
-      f.load(maps[reference_index].getLoadedFilePath(), maps[reference_index]);
-    }
+    
+    if (reference_file_.empty()) f.load(maps[reference_index].getLoadedFilePath(), maps[reference_index]);
 
 		computeTransformations_(maps, transformations, reference_index);
 	}
@@ -363,7 +358,11 @@ namespace OpenMS
 		endProgress();
 
 		// reference file was added to "maps", has to be removed now:
-		if (!reference_file_.empty()) maps.resize(maps.size() - 1);
+		if (!reference_file_.empty())
+    {
+      maps.resize(maps.size() - 1);
+      transformations.resize(transformations.size() - 1);
+    }
     else
     {
       FeatureMap<> tmp;

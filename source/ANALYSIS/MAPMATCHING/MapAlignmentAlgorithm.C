@@ -341,8 +341,7 @@ namespace OpenMS
 
 	void MapAlignmentAlgorithm::fitModel(const String& model_type, const Param& params, vector<TransformationDescription>& trafos)
 	{
-		for (vector<TransformationDescription>::iterator it = trafos.begin();
-				 it != trafos.end(); ++it)
+		for (vector<TransformationDescription>::iterator it = trafos.begin(); it != trafos.end(); ++it)
 		{
 			it->fitModel(model_type, params);
 		}

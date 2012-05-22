@@ -275,6 +275,7 @@ protected:
 				writeLog_("Error: The algorithm '" + alignment->getName() + "' cannot be used for feature data!");
 				return INTERNAL_ERROR;
 			}
+
 			if (model_type != "none")
 			{
 				alignment->fitModel(model_type, model_params, transformations);

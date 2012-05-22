@@ -1,4 +1,4 @@
-// -*- mode: C++; tab-width: 2; -*-
+ // -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -31,6 +31,7 @@
 #include <OpenMS/FORMAT/MzIdentMLFile.h>
 
 #include <OpenMS/APPLICATIONS/TOPPBase.h>
+#include <OpenMS/FORMAT/PepXMLFile.h>
 
 using namespace OpenMS;
 using namespace std;
@@ -62,9 +63,11 @@ protected:
   {
     registerInputFile_("in_idXML", "<file>", "", "bla", true, false);
     registerInputFile_("in_mzml", "<file>", "", "bla", true);
-    registerOutputFile_("out", "<file>", "", "Output IdXML", true);
-    String formats("idXML");
-    setValidFormats_("out", StringList::create(formats));
+  //  registerInputFile_("in_mzxml", "<file>", "", "bla", true);
+    registerOutputFile_("out_pepXML", "<file>", "", "Output IdXML", true);
+    //registerOutputFile_("out_mzXML", "<file>", "", "Out mzXML", false);
+    //String formats("pepXML");
+    //setValidFormats_("out_pepXML", StringList::create(formats));
   }
 
   ExitCodes
@@ -72,7 +75,9 @@ protected:
   {
     String in_mzml = getStringOption_("in_mzml");
     String in_idXML = getStringOption_("in_idXML");
-    String out = getStringOption_("out");
+    String out_pepXML = getStringOption_("out_pepXML");
+    //String out_mzXML = getStringOption_("out_mzXML");
+
 
     // load experiment data
     MSExperiment<> exp;
@@ -108,7 +113,17 @@ protected:
       }
     }
 
-    idxml_file.store(out, protein_ids, peptide_ids);
+    //idxml_file.store(out, protein_ids, peptide_ids);
+    PepXMLFile pep_file;
+    pep_file.store(out_pepXML, protein_ids, peptide_ids);
+
+  //  String in_mzxml = getStringOption_("in_mzxml");
+  //  MzXMLFile mzxml_file;
+  //  mzxml_file.load( in_mzxml, exp );
+  //  String out_mzXML = out_pepXML.substitute("pepXML", "mzXML");
+  //  mzxml_file.store( out_mzXML, exp );
+
+
   return EXECUTION_OK;
 }
 };

@@ -130,6 +130,8 @@ namespace OpenMS
 
     tools_map["SpectraSTAdapter"] = Internal::ToolDescription("SpectraSTAdapter", "Identification");
     tools_map["SpectraSTIDFileConverter"] = Internal::ToolDescription("SpectraSTIDFileConverter", "SpectraST ID Processing");
+    tools_map["PepitomeAdapter"] = Internal::ToolDescription("PepitomeAdapter", "Identification");
+
 
     tools_map["TOFCalibration"] = Internal::ToolDescription("TOFCalibration", "Signal processing and preprocessing");
 		tools_map["TextExporter"] = Internal::ToolDescription("TextExporter", "File Handling");

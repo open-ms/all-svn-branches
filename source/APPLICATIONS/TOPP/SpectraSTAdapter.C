@@ -1,4 +1,4 @@
-   // -*- mode: C++; tab-width: 2; -*-
+// -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -150,6 +150,8 @@ class TOPPSpectraSTAdapter
       return true;
     }
 
+    //int convert
+
     void registerOptionsAndFlags_()
     {
       registerInputFile_("spectrast_executable", "<executable>", "", "The 'spectrast' executable of the SpectraST installation", true, false, StringList::create("skipexists"));
@@ -165,8 +167,11 @@ class TOPPSpectraSTAdapter
       registerTOPPSubsection_("create","Create Mode");
       addText_("General options");
 
-      registerInputFile_("create:in", "<file>", "", "Input file ", false);
-      setValidFormats_("create:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
+//      registerInputFile_("create:in", "<file>", "", "Input file ", false);
+      registerInputFileList_("create:in","<files>",StringList(),"two or more input files separated by blanks", false);
+      setValidFormats_("create:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp,pepXML"));
+      //registerInputFile_("create:mzxml_file","<file>", "", "mzML Input file", false);
+      //setValidFormats_("create:mzxml_file",StringList::create("mzXML"));
       registerOutputFile_("create:outputFileName", "<file>", "", "Output file base name", false);
       registerInputFile_("create:useProbTable", "<file>", "", "Use probability table in <file>. Only those peptide ions included in the table will be imported. A probability table is a text file with one peptide ion in the format AC[160]DEFGHIK/2 per line. If a probability is supplied following the peptide ion separated by a tab, it will be used to replace the original probability of that library entr", false);
       registerInputFile_("create:useProteinList", "<file>", "", "Use protein list in <file>. Only those peptide ions associated with proteins in the list will be imported.\n A protein list is a text file with one protein identifier per line. If a number X is supplied following the protein separated by a tab, then at most X peptide ions associated with that protein will be imported.", false);
@@ -178,7 +183,7 @@ class TOPPSpectraSTAdapter
 
       addEmptyLine_();
       addText_("PEPXML IMPORT OPTIONS (Applicable with .pepXML file input) ");
-      registerDoubleOption_("create:minimumProbabilityToInclude", "<prob>", 0.9, "Include all spectra identified with probability no less than <prob> in the library.", false);
+      registerDoubleOption_("create:minimumProbabilityToInclude", "<prob>", 0.0, "Include all spectra identified with probability no less than <prob> in the library.", false);
       registerStringOption_("create:datasetName", "<name>", "", "Specify a dataset identifier for the file to be imported.", false);
       registerStringOption_("create:addMzXMLFileToDatasetName", "<type>", "false", "Add the originating mzXML file name to the dataset identifier. Good for keeping track of in which \nMS run the peptide is observed. (Turn off with -co!)", false, false);
       registerStringOption_("create:setDeamidatedNXST", "<type>", "false", "Set all asparagines (N) in the motif NX(S/T) as deamidated (N[115]). Use for glycocaptured peptides. (Turn off with -cg!).", false, false);
@@ -278,6 +283,7 @@ class TOPPSpectraSTAdapter
 
     ExitCodes main_(int , const char**)
     {
+      writeLog_(getStringList_("create:in").concatenate(" "));
       // path to the log file
       String logfile(getStringOption_("log"));
       String spectrast_executable(getStringOption_("spectrast_executable"));
@@ -329,8 +335,8 @@ class TOPPSpectraSTAdapter
       } else if (getStringOption_("mode") == "create")
       {
         qparam << "-cN" << getStringOption_("create:outputFileName").toQString();
-        qparam << "-cP" << QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
-        qparam << pepXMLFiles;
+        qparam << "-cP" + QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
+        qparam << getStringOption_("create:in").toQString();
       }
 
       cout << (String)qparam.join("\t") << endl;
@@ -363,6 +369,7 @@ class TOPPSpectraSTAdapter
       //-------------------------------------------------------------
       // convert pepXML output to idXML
       //-------------------------------------------------------------
+
 
       TextFile test_params;
       test_params.store(getStringOption_("create:outputFileName")); //müll

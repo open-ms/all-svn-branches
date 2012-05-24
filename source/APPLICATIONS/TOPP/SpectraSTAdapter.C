@@ -283,7 +283,6 @@ class TOPPSpectraSTAdapter
 
     ExitCodes main_(int , const char**)
     {
-      writeLog_(getStringList_("create:in").concatenate(" "));
       // path to the log file
       String logfile(getStringOption_("log"));
       String spectrast_executable(getStringOption_("spectrast_executable"));
@@ -295,6 +294,8 @@ class TOPPSpectraSTAdapter
 
       // get version of SpectraST
       QProcess qp;
+
+      //qp.setWorkingDirectory("/tmp/test");
       qp.setProcessChannelMode(QProcess::MergedChannels);
       qp.start(spectrast_executable.toQString());
       bool success = qp.waitForFinished(-1);
@@ -325,10 +326,62 @@ class TOPPSpectraSTAdapter
         }
       }
 
-      QStringList pepXMLFiles;
+      //QStringList pepXMLFiles;
       QStringList qparam;
+      QStringList arguments;  //neu
+
+      QString filename;
+      QString pepXMLfile;
+      QString pepXMLbase;
+
 
       // create parameters
+      StringList file_names = getStringList_("create:in");
+
+      if (file_names.size() < 2)
+      {
+
+        writeLog_("SpectraST needs at least 1 pepXML and 1 mzXML file. Aborting!");
+        printUsage_();
+        return ILLEGAL_PARAMETERS;
+      }
+
+
+
+
+      for (StringList::Iterator file_it = file_names.begin();
+           file_it != file_names.end(); ++file_it)
+      {
+        //cout <<  *file_it << '\n';
+        QString copy = "cp";
+        arguments << file_it->toQString();
+        arguments << "/tmp/test";
+        arguments.join("\t");
+
+        filename = file_it->toQString();
+
+        if (filename.endsWith("pepXML"))
+        {
+
+          pepXMLfile = file_it->toQString();
+          QFileInfo fi(pepXMLfile);
+          pepXMLbase = fi.completeBaseName();
+          pepXMLbase = "/tmp/test/" + pepXMLbase + ".pepXML";
+
+
+
+          cout << pepXMLbase.toStdString() << "\n \n";
+
+        }
+
+
+
+        QProcess::execute(copy, arguments);
+
+      }
+
+
+
       if (getStringOption_("mode") == "search")
       {
         qparam << "-sF";
@@ -336,12 +389,15 @@ class TOPPSpectraSTAdapter
       {
         qparam << "-cN" << getStringOption_("create:outputFileName").toQString();
         qparam << "-cP" + QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
-        qparam << getStringOption_("create:in").toQString();
+        qparam << pepXMLbase;
+        //qparam << getStringOption_("create:in").toQString(); alt, create:in als inputfile nicht stringlist
       }
 
       cout << (String)qparam.join("\t") << endl;
 
+
       Int status = QProcess::execute(spectrast_executable.toQString(), qparam);
+      //status.setWorkingDirectory("/tmp/test");
       if (status != 0)
       {
         writeLog_("Error: SpectraST problem! (Details can be seen in the logfile: \"" + logfile + "\")");
@@ -349,7 +405,7 @@ class TOPPSpectraSTAdapter
 
         if (getIntOption_("debug") <= 1)
         {
-          // TODO: if no debuggin is enabled, delete temporary spectrast param file
+          // TODO: if no debugging is enabled, delete temporary spectrast param file
           writeDebug_("Removing temporary files", 10);
           // QFile(bla.toQString()).remove();
         }
@@ -370,9 +426,6 @@ class TOPPSpectraSTAdapter
       // convert pepXML output to idXML
       //-------------------------------------------------------------
 
-
-      TextFile test_params;
-      test_params.store(getStringOption_("create:outputFileName")); //müll
 
       return EXECUTION_OK;
     }

@@ -283,16 +283,15 @@ protected:
 
       if (alignment->getName() == "MapAlignmentAlgorithmPoseClustering")
       {
-        FeatureXMLFile f_new;
         progresslogger.startProgress(0, outs.size(), "writing output files");
 			  for (Size i = 0; i < outs.size(); ++i)
 			  {
           progresslogger.setProgress(i);
           FeatureMap<> tmp;
-		      f_new.load(ins[i], tmp);
+		      FeatureXMLFile().load(ins[i], tmp);
           alignment->transformSingleFeatureMap(tmp, transformations[i]);
           addDataProcessing_(tmp, getProcessingInfo_(DataProcessing::ALIGNMENT));
-          f_new.store(outs[i], tmp);
+          FeatureXMLFile().store(outs[i], tmp);
 			  }
         progresslogger.endProgress();
       }

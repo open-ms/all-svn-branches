@@ -170,9 +170,8 @@ class TOPPSpectraSTAdapter
 //      registerInputFile_("create:in", "<file>", "", "Input file ", false);
       registerInputFileList_("create:in","<files>",StringList(),"two or more input files separated by blanks", false);
       setValidFormats_("create:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp,pepXML"));
-      //registerInputFile_("create:mzxml_file","<file>", "", "mzML Input file", false);
-      //setValidFormats_("create:mzxml_file",StringList::create("mzXML"));
-      registerOutputFile_("create:outputFileName", "<file>", "", "Output file base name", false);
+      registerOutputFile_("create:out_splib","<file>", "", "Output files", false);
+      registerStringOption_("create:outputFileName", "<name>", "", "Output file base name", false);
       registerInputFile_("create:useProbTable", "<file>", "", "Use probability table in <file>. Only those peptide ions included in the table will be imported. A probability table is a text file with one peptide ion in the format AC[160]DEFGHIK/2 per line. If a probability is supplied following the peptide ion separated by a tab, it will be used to replace the original probability of that library entr", false);
       registerInputFile_("create:useProteinList", "<file>", "", "Use protein list in <file>. Only those peptide ions associated with proteins in the list will be imported.\n A protein list is a text file with one protein identifier per line. If a number X is supplied following the protein separated by a tab, then at most X peptide ions associated with that protein will be imported.", false);
       //registerStringOption_("create:remark", "<remark>", "", "Remark. Add a Remark=<remark> comment to all library entries created.", false);
@@ -328,11 +327,12 @@ class TOPPSpectraSTAdapter
 
       //QStringList pepXMLFiles;
       QStringList qparam;
-      QStringList arguments;  //neu
+      QStringList arguments;
 
       QString filename;
       QString pepXMLfile;
       QString pepXMLbase;
+      QString tempdir = "/temp/test";
 
 
       // create parameters
@@ -345,6 +345,7 @@ class TOPPSpectraSTAdapter
         printUsage_();
         return ILLEGAL_PARAMETERS;
       }
+
 
 
 
@@ -365,15 +366,10 @@ class TOPPSpectraSTAdapter
 
           pepXMLfile = file_it->toQString();
           QFileInfo fi(pepXMLfile);
-          pepXMLbase = fi.completeBaseName();
-          pepXMLbase = "/tmp/test/" + pepXMLbase + ".pepXML";
-
-
-
-          cout << pepXMLbase.toStdString() << "\n \n";
+          pepXMLbase = fi.fileName();
+          pepXMLbase = "/tmp/test/" + pepXMLbase; // + ".pepXML";
 
         }
-
 
 
         QProcess::execute(copy, arguments);
@@ -387,17 +383,18 @@ class TOPPSpectraSTAdapter
         qparam << "-sF";
       } else if (getStringOption_("mode") == "create")
       {
-        qparam << "-cN" << getStringOption_("create:outputFileName").toQString();
+        qparam << "-cN" + getStringOption_("create:outputFileName").toQString();
         qparam << "-cP" + QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
+        //qparam << get_current_dir_name();
         qparam << pepXMLbase;
         //qparam << getStringOption_("create:in").toQString(); alt, create:in als inputfile nicht stringlist
       }
 
-      cout << (String)qparam.join("\t") << endl;
+      //cout << (String)qparam.join("\t") << endl;
 
 
       Int status = QProcess::execute(spectrast_executable.toQString(), qparam);
-      //status.setWorkingDirectory("/tmp/test");
+
       if (status != 0)
       {
         writeLog_("Error: SpectraST problem! (Details can be seen in the logfile: \"" + logfile + "\")");
@@ -421,6 +418,51 @@ class TOPPSpectraSTAdapter
         writeDebug_("Removing temporary files", 10);
         // QFile(bla.toQString()).remove();
       }
+
+      QDir tmp_dir("/tmp/test/");
+      StringList tmp_files = tmp_dir.entryList(QDir::Files | QDir::Hidden);
+
+      QString file_pepidx;
+      file_pepidx = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
+      QFileInfo fi(file_pepidx);
+      if (fi.exists())
+      {
+        QFile abc(file_pepidx);
+        abc.copy(unique_name.toQString() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx");
+
+      }
+
+      //cout << file_pepidx.toStdString();
+
+
+//      QString file_spidx;
+//      file_spidx = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".spidx";
+//      QFileInfo fi(file_spidx);
+//      if (fi.exists())
+//      {
+//        cout << "hallo2" << endl;
+//      }
+
+//      QString file_sptxt;
+      QString file_splib;
+      file_splib = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
+      QFileInfo fi_splib(file_splib);
+      if (fi_splib.exists())
+      {
+        QFile abc(file_splib);
+        cout << getStringOption_("create:out_splib")<< endl;
+        abc.copy(unique_name.toQString() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx");
+
+
+      }
+
+
+
+
+
+
+
+
 
       //-------------------------------------------------------------
       // convert pepXML output to idXML

@@ -167,10 +167,14 @@ class TOPPSpectraSTAdapter
       registerTOPPSubsection_("create","Create Mode");
       addText_("General options");
 
-//      registerInputFile_("create:in", "<file>", "", "Input file ", false);
       registerInputFileList_("create:in","<files>",StringList(),"two or more input files separated by blanks", false);
       setValidFormats_("create:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp,pepXML"));
-      registerOutputFile_("create:out_splib","<file>", "", "Output files", false);
+      registerOutputFile_("create:out_splib","<file>", "", "splib Output files", false);
+      registerOutputFile_("create:out_pepidx","<file>", "", "pepidx Output files", false);
+      registerOutputFile_("create:out_sptxt","<file>", "", "sptxt Output files", false);
+      registerOutputFile_("create:out_spidx","<file>", "", "spidx Output files", false);
+
+
       registerStringOption_("create:outputFileName", "<name>", "", "Output file base name", false);
       registerInputFile_("create:useProbTable", "<file>", "", "Use probability table in <file>. Only those peptide ions included in the table will be imported. A probability table is a text file with one peptide ion in the format AC[160]DEFGHIK/2 per line. If a probability is supplied following the peptide ion separated by a tab, it will be used to replace the original probability of that library entr", false);
       registerInputFile_("create:useProteinList", "<file>", "", "Use protein list in <file>. Only those peptide ions associated with proteins in the list will be imported.\n A protein list is a text file with one protein identifier per line. If a number X is supplied following the protein separated by a tab, then at most X peptide ions associated with that protein will be imported.", false);
@@ -419,54 +423,49 @@ class TOPPSpectraSTAdapter
         // QFile(bla.toQString()).remove();
       }
 
+
+      //copy spectrast output files
       QDir tmp_dir("/tmp/test/");
       StringList tmp_files = tmp_dir.entryList(QDir::Files | QDir::Hidden);
 
       QString file_pepidx;
       file_pepidx = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
-      QFileInfo fi(file_pepidx);
-      if (fi.exists())
+      QFileInfo fi_pepidx(file_pepidx);
+      if (fi_pepidx.exists())
       {
         QFile abc(file_pepidx);
-        abc.copy(unique_name.toQString() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx");
-
+        abc.copy(getStringOption_("create:out_pepidx").toQString());
       }
 
-      //cout << file_pepidx.toStdString();
+      QString file_sptxt;
+      file_sptxt = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
+      QFileInfo fi_sptxt(file_sptxt);
+      if (fi_sptxt.exists())
+      {
+        QFile abc(file_sptxt);
+        abc.copy(getStringOption_("create:out_sptxt").toQString());
+      }
 
 
-//      QString file_spidx;
-//      file_spidx = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".spidx";
-//      QFileInfo fi(file_spidx);
-//      if (fi.exists())
-//      {
-//        cout << "hallo2" << endl;
-//      }
-
-//      QString file_sptxt;
       QString file_splib;
       file_splib = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
       QFileInfo fi_splib(file_splib);
       if (fi_splib.exists())
       {
         QFile abc(file_splib);
-        cout << getStringOption_("create:out_splib")<< endl;
-        abc.copy(unique_name.toQString() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx");
-
-
+        abc.copy(getStringOption_("create:out_splib").toQString()); // fileextension missing
       }
 
 
+      QString file_spidx;
+      file_spidx = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
+      QFileInfo fi_spidx(file_spidx);
+      if (fi_spidx.exists())
+      {
+        QFile abc(file_spidx);
+        abc.copy(getStringOption_("create:out_spidx").toQString()); // fileextension missing
+      }
 
-
-
-
-
-
-
-      //-------------------------------------------------------------
-      // convert pepXML output to idXML
-      //-------------------------------------------------------------
 
 
       return EXECUTION_OK;

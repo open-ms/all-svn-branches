@@ -42,7 +42,40 @@
 #include <QtCore/QProcess>
 #include <QDir>
 
-#include <stdio.h>
+//-------------------------------------------------------------
+//Doxygen docu
+//-------------------------------------------------------------
+
+/**
+  @page TOPP_OMSSAAdapter OMSSAAdapter
+
+  @brief Identifies peptides in MS/MS spectra via MyriMatch.
+
+<CENTER>
+  <table>
+    <tr>
+      <td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. predecessor tools </td>
+      <td VALIGN="middle" ROWSPAN=2> \f$ \longrightarrow \f$ MyriMatchAdapter \f$ \longrightarrow \f$</td>
+      <td ALIGN = "center" BGCOLOR="#EBEBEB"> pot. successor tools </td>
+    </tr>
+    <tr>
+      <td VALIGN="middle" ALIGN = "center" ROWSPAN=1> any signal-/preprocessing tool @n (in mzML format)</td>
+      <td VALIGN="middle" ALIGN = "center" ROWSPAN=1> @ref TOPP_IDFilter or @n any protein/peptide processing tool</td>
+    </tr>
+  </table>
+</CENTER>
+  @em MyriMatch must be installed on the system to be able to use the @em MyriMatchAdapter. See http://fenchurch.mc.vanderbilt.edu/bumbershoot/myrimatch/
+  for further information on how to download and install @em MyriMatch on your system.
+
+  This wrapper has been tested successfully with MyriMatch, version 2.1.x
+
+  <B>The command line parameters of this tool are:</B>
+  @verbinclude TOPP_OMSSAAdapter.cli
+*/
+
+// We do not want this class to show up in the docu:
+/// @cond TOPPCLASSES
+
 
 using namespace OpenMS;
 using namespace std;
@@ -240,14 +273,14 @@ protected :
       registerIntOption_("MaxMissedCleavages", "<num>", -1, "By default, when generating peptides from the protein database, a peptide may contain any number of missed cleavages. A missed cleavage is a site within the peptide that matches one of the cleavage rules (refer to CleavageRules). Settings this parameter to some other number will stop generating peptides from a sequence if it contains more than the specified number of missed cleavages.", false); // TODO: Description copied from MM doc
 
       // advanced options
-      registerDoubleOption_("MinPeptideMass", "<mass>", 0.0, "When preprocessing the experimental spectra, any spectrum with a precursor mass that is less than the specified mass will be disqualified.", false, true); // TODO: Description copied from MM doc
-      registerDoubleOption_("MaxPeptideMass", "<mass>", 10000.0, "When preprocessing the experimental spectra, any spectrum with a precursor mass that exceeds the specified mass will be disqualified.", false, true); // TODO: Description copied from MM doc
+      registerDoubleOption_("MinPeptideMass", "<mass>", 0.0, "When preprocessing the experimental spectra, any spectrum with a precursor mass that is less than the specified mass will be disqualified.", false, true); // Description copied from MM doc
+      registerDoubleOption_("MaxPeptideMass", "<mass>", 10000.0, "When preprocessing the experimental spectra, any spectrum with a precursor mass that exceeds the specified mass will be disqualified.", false, true); // Description copied from MM doc
       registerIntOption_("MinPeptideLength", "<length>", 5, "When digesting proteins, any peptide which does not meet or exceed the specified length will be disqualified.", false, true); // TODO: Description copied from MM doc
       registerIntOption_("MaxPeptideLength", "<length>", 75, "When digesting proteins, any peptide which exceeds this specified length will be disqualified.", false, true); // TODO: Description copied from MM doc
-      registerFlag_("UseSmartPlusThreeModel", "When this parameter is set, then for each peptide bond, an internal calculation is done to estimate the basicity of the b and y fragment sequence. The precursors protons are distributed to those ions based on that calculation, with the more basic sequence generally getting more of the protons..",true); // TODO: Description copied from MM doc
-      registerIntOption_("ProteinSampleSize", "<size>", 100, "Before beginning sequence candidate generation and scoring, MyriMatch will do a random sampling of the protein database to get an estimate of the number of comparisons that will be done by the job.", false, true); // TODO: Description copied from MM doc
-      registerIntOption_("NumIntensityClasses", "<num>", 3, "Before scoring any candidates, experimental spectra have their peaks stratified into the number of intensity classes specified by this parameter.", false, true); // TODO: Description copied from MM doc
-      registerDoubleOption_("ClassSizeMultiplier", "<factor>", 2.0, "When stratifying peaks into a specified, fixed number of intensity classes, this parameter controls the size of each class relative to the class above it (where the peaks are more intense). ", false, true); // TODO: Description copied from MM doc
+      registerFlag_("UseSmartPlusThreeModel", "When this parameter is set, then for each peptide bond, an internal calculation is done to estimate the basicity of the b and y fragment sequence. The precursors protons are distributed to those ions based on that calculation, with the more basic sequence generally getting more of the protons..",true); // Description copied from MM doc
+      registerIntOption_("ProteinSampleSize", "<size>", 100, "Before beginning sequence candidate generation and scoring, MyriMatch will do a random sampling of the protein database to get an estimate of the number of comparisons that will be done by the job.", false, true); // Description copied from MM doc
+      registerIntOption_("NumIntensityClasses", "<num>", 3, "Before scoring any candidates, experimental spectra have their peaks stratified into the number of intensity classes specified by this parameter.", false, true); // Description copied from MM doc
+      registerDoubleOption_("ClassSizeMultiplier", "<factor>", 2.0, "When stratifying peaks into a specified, fixed number of intensity classes, this parameter controls the size of each class relative to the class above it (where the peaks are more intense). ", false, true); // Description copied from MM doc
       registerStringOption_("MonoisotopeAdjustmentSet","<set>","[-1,2]","This parameter defines a set of isotopes (0 being the instrument-called monoisotope) to try as the monoisotopic precursor m/z. To disable this technique, set the value to '0'.",false,true);
 
     }
@@ -377,6 +410,8 @@ protected :
 
 
       // Constant parameters
+
+      // DecoyPrefix worked only when set through the config file
       String cfg_file = tmp_dir + "myrimatch.cfg";
       ofstream f(cfg_file.c_str());
       f << "DecoyPrefix=\"\"\n";
@@ -398,11 +433,16 @@ protected :
       }
 
       QProcess process;
+
+      // Bad style, because it breks relative paths?
       process.setWorkingDirectory(tmp_dir.toQString());
 
       process.start(myrimatch_executable.toQString(), qparam, QIODevice::ReadOnly);
       String myri_msg (QString(process.readAllStandardOutput ()));
+      String myri_err (QString(process.readAllStandardError ()));
       bool success = process.waitForFinished(-1);
+      writeDebug_(myri_err,0);
+      writeDebug_(myri_msg,0);
       if (!success)
       {
         writeLog_("Error: MyriMatch problem! (Details can be seen in the logfile: \"" + logfile + "\")");
@@ -416,7 +456,7 @@ protected :
 
       writeDebug_("Reading output of MyriMatch", 5);
       String exp_name = File::basename(inputfile_name);
-      String pep_file =  tmp_dir + File::removeExtension(exp_name)+".pepXML";
+      String pep_file = tmp_dir + File::removeExtension(exp_name)+".pepXML";
       bool use_precursor_data = false;
       MSExperiment<> exp;
 

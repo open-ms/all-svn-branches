@@ -4,7 +4,7 @@
 // --------------------------------------------------------------------------
 //                   OpenMS Mass Spectrometry Framework
 // --------------------------------------------------------------------------
-//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reinert
+//  Copyright (C) 2003-2012 -- Oliver Kohlbacher, Knut Reirt
 //
 //  This library is free software; you can redistribute it and/or
 //  modify it under the terms of the GNU Lesser General Public
@@ -175,7 +175,9 @@ class TOPPSpectraSTAdapter
       registerOutputFile_("create:out_spidx","<file>", "", "spidx Output files", false);
 
 
-      registerStringOption_("create:outputFileName", "<name>", "", "Output file base name", false);
+      //option disabled because of problems with the output files
+      //registerStringOption_("create:outputFileName", "<name>", "", "Output file base name", false);
+
       registerInputFile_("create:useProbTable", "<file>", "", "Use probability table in <file>. Only those peptide ions included in the table will be imported. A probability table is a text file with one peptide ion in the format AC[160]DEFGHIK/2 per line. If a probability is supplied following the peptide ion separated by a tab, it will be used to replace the original probability of that library entr", false);
       registerInputFile_("create:useProteinList", "<file>", "", "Use protein list in <file>. Only those peptide ions associated with proteins in the list will be imported.\n A protein list is a text file with one protein identifier per line. If a number X is supplied following the protein separated by a tab, then at most X peptide ions associated with that protein will be imported.", false);
       //registerStringOption_("create:remark", "<remark>", "", "Remark. Add a Remark=<remark> comment to all library entries created.", false);
@@ -247,14 +249,16 @@ class TOPPSpectraSTAdapter
 
 
 
-
       addEmptyLine_();
 
       registerTOPPSubsection_("search","Search Mode");
       addText_("(II) Search Mode\nUsage: spectrast [ options ] <SearchFileName1> [ <SearchFileName2> ... <SearchFileNameN> ]\nwhere: SearchFileNameX = Name(s) of file containing unknown spectra to be searched.\n\t\t(Extension specifies format of file. Supports .mzXML, .mzData, .dta and .msp)");
 
-      registerInputFile_("search:in", "<file>", "", "Input file ");
-      setValidFormats_("search:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
+      registerInputFile_("search:in_data", "<file>", "", "Input file ");
+      setValidFormats_("search:in_data",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
+      registerInputFile_("search:in_db", "<file>", "", "Input file ");
+      // Hannes fragen...
+      //setValidFormats_("search:in_db",StringList::create("splib"));
       registerInputFile_("search:libraryFile", "<file>", "", "Specify library file. Mandatory unless specified in parameter file. <file> must have .splib extension.", true, false);
       registerInputFile_("search:databaseFile", "<file>", "", "Specify a sequence database file. This will not affect the search in any way, but this information will be included in the output for any downstream data processing. <file> must have .fasta extension. If not set, SpectraST will try to determine this from the preamble of the library.", true, false);
       registerStringOption_("search:indexCacheAll", "<type>", "false", "Cache all entries in RAM. Requires a lot of memory (the library will usually be loaded almost in its entirety), but speeds up search for unsorted queries.", false, false);
@@ -289,7 +293,7 @@ class TOPPSpectraSTAdapter
       // path to the log file
       String logfile(getStringOption_("log"));
       String spectrast_executable(getStringOption_("spectrast_executable"));
-      String unique_name = QDir::toNativeSeparators(String(File::getTempDirectory() + "/" + File::getUniqueName()).toQString()); // body for the tmp files
+      //String unique_name = QDir::toNativeSeparators(String(File::getTempDirectory() + "/" + File::getUniqueName()).toQString()); // body for the tmp files
 
       //-------------------------------------------------------------
       // parsing parameters
@@ -298,10 +302,13 @@ class TOPPSpectraSTAdapter
       // get version of SpectraST
       QProcess qp;
 
+
+
       //qp.setWorkingDirectory("/tmp/test");
       qp.setProcessChannelMode(QProcess::MergedChannels);
       qp.start(spectrast_executable.toQString());
       bool success = qp.waitForFinished(-1);
+
       String output(QString(qp.readAllStandardOutput()));
       String SpectraST_version;
       SpectraSTVersion SpectraST_version_i;
@@ -336,65 +343,70 @@ class TOPPSpectraSTAdapter
       QString filename;
       QString pepXMLfile;
       QString pepXMLbase;
-      QString tempdir = "/temp/test";
-
-
-      // create parameters
-      StringList file_names = getStringList_("create:in");
-
-      if (file_names.size() < 2)
-      {
-
-        writeLog_("SpectraST needs at least 1 pepXML and 1 mzXML file. Aborting!");
-        printUsage_();
-        return ILLEGAL_PARAMETERS;
-      }
+      int qp_pid = getpid();
+      QString tempdir = "/tmp/" + QString::number(qp_pid) + "/";
 
 
 
 
-
-      for (StringList::Iterator file_it = file_names.begin();
-           file_it != file_names.end(); ++file_it)
-      {
-        //cout <<  *file_it << '\n';
-        QString copy = "cp";
-        arguments << file_it->toQString();
-        arguments << "/tmp/test";
-        arguments.join("\t");
-
-        filename = file_it->toQString();
-
-        if (filename.endsWith("pepXML"))
-        {
-
-          pepXMLfile = file_it->toQString();
-          QFileInfo fi(pepXMLfile);
-          pepXMLbase = fi.fileName();
-          pepXMLbase = "/tmp/test/" + pepXMLbase; // + ".pepXML";
-
-        }
+      QDir().mkdir(tempdir);
 
 
-        QProcess::execute(copy, arguments);
-
-      }
-
-
+      // create parameters, todo: unterscheidung create und search
 
       if (getStringOption_("mode") == "search")
       {
-        qparam << "-sF";
-      } else if (getStringOption_("mode") == "create")
+      }
+      else if (getStringOption_("mode") == "create")
       {
-        qparam << "-cN" + getStringOption_("create:outputFileName").toQString();
-        qparam << "-cP" + QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
-        //qparam << get_current_dir_name();
-        qparam << pepXMLbase;
-        //qparam << getStringOption_("create:in").toQString(); alt, create:in als inputfile nicht stringlist
+        StringList file_names = getStringList_("create:in");
+
+        if (file_names.size() < 2)
+        {
+
+          writeLog_("SpectraST needs at least 1 pepXML and 1 mzXML file. Aborting!");
+          printUsage_();
+          return ILLEGAL_PARAMETERS;
+        }
+
+        for (StringList::Iterator file_it = file_names.begin();
+             file_it != file_names.end(); ++file_it)
+        {
+          //cout <<  *file_it << '\n';
+          QString copy = "cp";
+          arguments << file_it->toQString();
+          arguments << tempdir.toAscii().data();
+          arguments.join("\t");
+
+          filename = file_it->toQString();
+
+          if (filename.endsWith("pepXML"))
+          {
+            pepXMLfile = file_it->toQString();
+            QFileInfo fi(pepXMLfile);
+            pepXMLbase = fi.fileName();
+            pepXMLbase = tempdir + pepXMLbase; // + ".pepXML";
+          }
+          QProcess::execute(copy, arguments);
+        }
+
       }
 
-      //cout << (String)qparam.join("\t") << endl;
+      if (getStringOption_("mode") == "search")
+      {
+        qparam << "-sL" + getStringOption_("search:in_db").toQString();
+        qparam << getStringOption_("search:in_data").toQString();
+        //cout <<  << endl;
+      }
+      else if (getStringOption_("mode") == "create")
+      {
+        //
+        //qparam << "-cN" + getStringOption_("create:outputFileName").toQString();
+        qparam << "-cP" + QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
+        qparam << pepXMLbase;
+      }
+
+      cout << (String)qparam.join("\t") << endl;
 
 
       Int status = QProcess::execute(spectrast_executable.toQString(), qparam);
@@ -406,9 +418,12 @@ class TOPPSpectraSTAdapter
 
         if (getIntOption_("debug") <= 1)
         {
-          // TODO: if no debugging is enabled, delete temporary spectrast param file
           writeDebug_("Removing temporary files", 10);
-          // QFile(bla.toQString()).remove();
+          QString command = "rm -Rf " +  tempdir;
+
+          if (system(command.toAscii().data()))
+            // todo show warning.
+            writeDebug_("Cannot remove temporary files", 10);
         }
         return EXTERNAL_PROGRAM_ERROR;
       }
@@ -416,20 +431,15 @@ class TOPPSpectraSTAdapter
       // read SpectraST output
       writeDebug_("Reading output of SpectraST", 10);
 
-      // TODO: delete temporary files
-      if (getIntOption_("debug") <= 1)
-      {
-        writeDebug_("Removing temporary files", 10);
-        // QFile(bla.toQString()).remove();
-      }
 
 
-      //copy spectrast output files
-      QDir tmp_dir("/tmp/test/");
-      StringList tmp_files = tmp_dir.entryList(QDir::Files | QDir::Hidden);
+
+      //copy spectrast create-mode output files
+      QDir tmp_dir("/tmp/test/"); // anderes verzeichnis angeben
+      StringList tmp_files = QDir(tempdir).entryList(QDir::Files | QDir::Hidden);
 
       QString file_pepidx;
-      file_pepidx = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
+      file_pepidx = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
       QFileInfo fi_pepidx(file_pepidx);
       if (fi_pepidx.exists())
       {
@@ -438,7 +448,7 @@ class TOPPSpectraSTAdapter
       }
 
       QString file_sptxt;
-      file_sptxt = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
+      file_sptxt = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
       QFileInfo fi_sptxt(file_sptxt);
       if (fi_sptxt.exists())
       {
@@ -448,7 +458,7 @@ class TOPPSpectraSTAdapter
 
 
       QString file_splib;
-      file_splib = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
+      file_splib = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
       QFileInfo fi_splib(file_splib);
       if (fi_splib.exists())
       {
@@ -458,7 +468,7 @@ class TOPPSpectraSTAdapter
 
 
       QString file_spidx;
-      file_spidx = tmp_dir.absolutePath() + "/" + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
+      file_spidx = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
       QFileInfo fi_spidx(file_spidx);
       if (fi_spidx.exists())
       {
@@ -467,6 +477,17 @@ class TOPPSpectraSTAdapter
       }
 
 
+
+      // TODO: delete temporary files
+      if (getIntOption_("debug") <= 1)
+      {
+        writeDebug_("Removing temporary files", 10);
+        QString command = "rm -Rf " +  tempdir;
+
+        if (system(command.toAscii().data()))
+          // todo show warning.
+          writeDebug_("Cannot remove temporary files", 10);
+      }
 
       return EXECUTION_OK;
     }

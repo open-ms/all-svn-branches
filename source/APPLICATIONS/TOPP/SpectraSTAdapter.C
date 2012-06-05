@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer: Matthias Seybold $
+// $Maintainer: Matthias Seybold$
 // $Authors: Matthias Seybold$
 // --------------------------------------------------------------------------
 
@@ -254,11 +254,12 @@ class TOPPSpectraSTAdapter
       registerTOPPSubsection_("search","Search Mode");
       addText_("(II) Search Mode\nUsage: spectrast [ options ] <SearchFileName1> [ <SearchFileName2> ... <SearchFileNameN> ]\nwhere: SearchFileNameX = Name(s) of file containing unknown spectra to be searched.\n\t\t(Extension specifies format of file. Supports .mzXML, .mzData, .dta and .msp)");
 
-      registerInputFile_("search:in_data", "<file>", "", "Input file ");
-      setValidFormats_("search:in_data",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
-      registerInputFile_("search:in_db", "<file>", "", "Input file ");
+      registerInputFile_("search:in_mzml", "<file>", "", "MZ Input file ");
+      setValidFormats_("search:in_mzml",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
+      registerInputFile_("search:in_splib", "<file>", "", "splib Input file ");
       // Hannes fragen...
-      //setValidFormats_("search:in_db",StringList::create("splib"));
+      //setValidFormats_("search:in_splib",StringList::create("splib"));
+      registerInputFile_("search:in_spdix", "<file>", "", "spdix input file");
       registerInputFile_("search:libraryFile", "<file>", "", "Specify library file. Mandatory unless specified in parameter file. <file> must have .splib extension.", true, false);
       registerInputFile_("search:databaseFile", "<file>", "", "Specify a sequence database file. This will not affect the search in any way, but this information will be included in the output for any downstream data processing. <file> must have .fasta extension. If not set, SpectraST will try to determine this from the preamble of the library.", true, false);
       registerStringOption_("search:indexCacheAll", "<type>", "false", "Cache all entries in RAM. Requires a lot of memory (the library will usually be loaded almost in its entirety), but speeds up search for unsorted queries.", false, false);
@@ -346,16 +347,39 @@ class TOPPSpectraSTAdapter
       int qp_pid = getpid();
       QString tempdir = "/tmp/" + QString::number(qp_pid) + "/";
 
-
-
-
       QDir().mkdir(tempdir);
-
+      cout << tempdir.toStdString() << endl;
 
       // create parameters, todo: unterscheidung create und search
 
       if (getStringOption_("mode") == "search")
       {
+        QString mzml_file = getStringOption_("search:in_mzml").toQString();
+        QFileInfo fi_mzml(mzml_file);
+        //cout << mzml_file.toStdString() << endl;
+        if (fi_mzml.exists())
+        {
+          QFile abc(mzml_file);
+          abc.copy(tempdir + fi_mzml.fileName());
+        }
+
+        QString splib_file = getStringOption_("search:in_splib").toQString();
+        QFileInfo fi_splib(splib_file);
+        if (fi_splib.exists())
+        {
+          QFile abc(splib_file);
+          abc.copy(tempdir + fi_splib.fileName());
+        }
+
+        QString spdix_file = getStringOption_("search:in_spdix").toQString();
+        QFileInfo fi_spidx(spdix_file);
+        if (fi_spidx.exists())
+        {
+          QFile abc(spdix_file);
+          abc.copy(tempdir + fi_spidx.fileName());
+        }
+        qparam << "-sL" + getStringOption_("search:in_splib").toQString();
+        qparam << getStringOption_("search:in_mzml").toQString();
       }
       else if (getStringOption_("mode") == "create")
       {
@@ -394,9 +418,7 @@ class TOPPSpectraSTAdapter
 
       if (getStringOption_("mode") == "search")
       {
-        qparam << "-sL" + getStringOption_("search:in_db").toQString();
-        qparam << getStringOption_("search:in_data").toQString();
-        //cout <<  << endl;
+
       }
       else if (getStringOption_("mode") == "create")
       {
@@ -419,11 +441,11 @@ class TOPPSpectraSTAdapter
         if (getIntOption_("debug") <= 1)
         {
           writeDebug_("Removing temporary files", 10);
-          QString command = "rm -Rf " +  tempdir;
+//          QString command = "rm -Rf " +  tempdir;
 
-          if (system(command.toAscii().data()))
-            // todo show warning.
-            writeDebug_("Cannot remove temporary files", 10);
+//          if (system(command.toAscii().data()))
+//            // todo show warning.
+//            writeDebug_("Cannot remove temporary files", 10);
         }
         return EXTERNAL_PROGRAM_ERROR;
       }
@@ -435,7 +457,7 @@ class TOPPSpectraSTAdapter
 
 
       //copy spectrast create-mode output files
-      QDir tmp_dir("/tmp/test/"); // anderes verzeichnis angeben
+
       StringList tmp_files = QDir(tempdir).entryList(QDir::Files | QDir::Hidden);
 
       QString file_pepidx;
@@ -479,15 +501,15 @@ class TOPPSpectraSTAdapter
 
 
       // TODO: delete temporary files
-      if (getIntOption_("debug") <= 1)
-      {
-        writeDebug_("Removing temporary files", 10);
-        QString command = "rm -Rf " +  tempdir;
+//      if (getIntOption_("debug") <= 1)
+//      {
+//        writeDebug_("Removing temporary files", 10);
+//        QString command = "rm -Rf " +  tempdir;
 
-        if (system(command.toAscii().data()))
-          // todo show warning.
-          writeDebug_("Cannot remove temporary files", 10);
-      }
+//        if (system(command.toAscii().data()))
+//          // todo show warning.
+//          writeDebug_("Cannot remove temporary files", 10);
+//      }
 
       return EXECUTION_OK;
     }

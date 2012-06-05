@@ -378,8 +378,8 @@ class TOPPSpectraSTAdapter
           QFile abc(spdix_file);
           abc.copy(tempdir + fi_spidx.fileName());
         }
-        qparam << "-sL" + getStringOption_("search:in_splib").toQString();
-        qparam << getStringOption_("search:in_mzml").toQString();
+        qparam << "-sL" + tempdir + fi_splib.fileName();
+        qparam << tempdir + fi_mzml.fileName();
       }
       else if (getStringOption_("mode") == "create")
       {
@@ -413,17 +413,6 @@ class TOPPSpectraSTAdapter
           }
           QProcess::execute(copy, arguments);
         }
-
-      }
-
-      if (getStringOption_("mode") == "search")
-      {
-
-      }
-      else if (getStringOption_("mode") == "create")
-      {
-        //
-        //qparam << "-cN" + getStringOption_("create:outputFileName").toQString();
         qparam << "-cP" + QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
         qparam << pepXMLbase;
       }

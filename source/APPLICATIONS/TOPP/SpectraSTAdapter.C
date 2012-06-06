@@ -260,6 +260,7 @@ class TOPPSpectraSTAdapter
       // Hannes fragen...
       //setValidFormats_("search:in_splib",StringList::create("splib"));
       registerInputFile_("search:in_spdix", "<file>", "", "spdix input file");
+      registerOutputFile_("search:out", "<file>", "", "SpectraST search mode outputfile", true, false);
       registerInputFile_("search:libraryFile", "<file>", "", "Specify library file. Mandatory unless specified in parameter file. <file> must have .splib extension.", true, false);
       registerInputFile_("search:databaseFile", "<file>", "", "Specify a sequence database file. This will not affect the search in any way, but this information will be included in the output for any downstream data processing. <file> must have .fasta extension. If not set, SpectraST will try to determine this from the preamble of the library.", true, false);
       registerStringOption_("search:indexCacheAll", "<type>", "false", "Cache all entries in RAM. Requires a lot of memory (the library will usually be loaded almost in its entirety), but speeds up search for unsorted queries.", false, false);
@@ -348,7 +349,6 @@ class TOPPSpectraSTAdapter
       QString tempdir = "/tmp/" + QString::number(qp_pid) + "/";
 
       QDir().mkdir(tempdir);
-      cout << tempdir.toStdString() << endl;
 
       // create parameters, todo: unterscheidung create und search
 
@@ -356,7 +356,6 @@ class TOPPSpectraSTAdapter
       {
         QString mzml_file = getStringOption_("search:in_mzml").toQString();
         QFileInfo fi_mzml(mzml_file);
-        //cout << mzml_file.toStdString() << endl;
         if (fi_mzml.exists())
         {
           QFile abc(mzml_file);
@@ -381,6 +380,9 @@ class TOPPSpectraSTAdapter
         qparam << "-sL" + tempdir + fi_splib.fileName();
         qparam << tempdir + fi_mzml.fileName();
       }
+
+
+
       else if (getStringOption_("mode") == "create")
       {
         StringList file_names = getStringList_("create:in");
@@ -443,51 +445,62 @@ class TOPPSpectraSTAdapter
       writeDebug_("Reading output of SpectraST", 10);
 
 
-
-
       //copy spectrast create-mode output files
-
-      StringList tmp_files = QDir(tempdir).entryList(QDir::Files | QDir::Hidden);
-
-      QString file_pepidx;
-      file_pepidx = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
-      QFileInfo fi_pepidx(file_pepidx);
-      if (fi_pepidx.exists())
+      if (getStringOption_("mode") == "create")
       {
-        QFile abc(file_pepidx);
-        abc.copy(getStringOption_("create:out_pepidx").toQString());
-      }
+        StringList tmp_files = QDir(tempdir).entryList(QDir::Files | QDir::Hidden);
 
-      QString file_sptxt;
-      file_sptxt = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
-      QFileInfo fi_sptxt(file_sptxt);
-      if (fi_sptxt.exists())
+        QString file_pepidx;
+        file_pepidx = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
+        QFileInfo fi_pepidx(file_pepidx);
+        if (fi_pepidx.exists())
+        {
+          QFile abc(file_pepidx);
+          abc.copy(getStringOption_("create:out_pepidx").toQString());
+        }
+
+        QString file_sptxt;
+        file_sptxt = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
+        QFileInfo fi_sptxt(file_sptxt);
+        if (fi_sptxt.exists())
+        {
+          QFile abc(file_sptxt);
+          abc.copy(getStringOption_("create:out_sptxt").toQString());
+        }
+
+        QString file_splib;
+        file_splib = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
+        QFileInfo fi_splib(file_splib);
+        if (fi_splib.exists())
+        {
+          QFile abc(file_splib);
+          abc.copy(getStringOption_("create:out_splib").toQString()); // fileextension missing
+        }
+
+        QString file_spidx;
+        file_spidx = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
+        QFileInfo fi_spidx(file_spidx);
+        if (fi_spidx.exists())
+        {
+          QFile abc(file_spidx);
+          abc.copy(getStringOption_("create:out_spidx").toQString()); // fileextension missing
+        }
+
+      }
+      else if (getStringOption_("mode") == "search") // CRASH!!!
       {
-        QFile abc(file_sptxt);
-        abc.copy(getStringOption_("create:out_sptxt").toQString());
+        StringList tmp_files = QDir(tempdir).entryList(QDir::Files | QDir::Hidden);
+
+        QString file_pepXML;
+        file_pepXML = QDir(tempdir).absoluteFilePath((*(tmp_files.searchSuffix("pep.xml"))).toQString());
+        QFileInfo fi_pepXML(file_pepXML);
+        if (fi_pepXML.exists())
+        {
+          QFile abc(file_pepXML);
+          abc.copy(getStringOption_("search:out").toQString()); // fileextension missing
+        }
+
       }
-
-
-      QString file_splib;
-      file_splib = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
-      QFileInfo fi_splib(file_splib);
-      if (fi_splib.exists())
-      {
-        QFile abc(file_splib);
-        abc.copy(getStringOption_("create:out_splib").toQString()); // fileextension missing
-      }
-
-
-      QString file_spidx;
-      file_spidx = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
-      QFileInfo fi_spidx(file_spidx);
-      if (fi_spidx.exists())
-      {
-        QFile abc(file_spidx);
-        abc.copy(getStringOption_("create:out_spidx").toQString()); // fileextension missing
-      }
-
-
 
       // TODO: delete temporary files
 //      if (getIntOption_("debug") <= 1)

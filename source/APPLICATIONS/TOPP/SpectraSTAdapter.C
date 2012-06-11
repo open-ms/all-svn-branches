@@ -27,6 +27,9 @@
 
 #include <OpenMS/FORMAT/MzMLFile.h>
 #include <OpenMS/FORMAT/IdXMLFile.h>
+
+#include <OpenMS/FORMAT/PepXMLFile.h>
+
 #include <OpenMS/FORMAT/MascotInfile.h>
 #include <OpenMS/KERNEL/StandardTypes.h>
 #include <OpenMS/CHEMISTRY/ModificationDefinitionsSet.h>
@@ -347,10 +350,7 @@ class TOPPSpectraSTAdapter
       QString pepXMLbase;
       int qp_pid = getpid();
       QString tempdir = "/tmp/" + QString::number(qp_pid) + "/";
-
       QDir().mkdir(tempdir);
-
-      // create parameters, todo: unterscheidung create und search
 
       if (getStringOption_("mode") == "search")
       {
@@ -487,19 +487,57 @@ class TOPPSpectraSTAdapter
         }
 
       }
-      else if (getStringOption_("mode") == "search") // CRASH!!!
+      else if (getStringOption_("mode") == "search")
       {
         StringList tmp_files = QDir(tempdir).entryList(QDir::Files | QDir::Hidden);
+        QString pepxml_filename = QDir(tempdir).absoluteFilePath((*(tmp_files.searchSuffix("pep.xml"))).toQString());
 
-        QString file_pepXML;
-        file_pepXML = QDir(tempdir).absoluteFilePath((*(tmp_files.searchSuffix("pep.xml"))).toQString());
+        TextFile pep_xml_textfile(String(pepxml_filename.toStdString()));
+
+        for (StringList::Iterator it = pep_xml_textfile.begin(); it != pep_xml_textfile.end(); ++it)
+        {
+          if (it->hasSubstring("<parameter name=\"fval_fraction_delta\" value\""))
+          {
+            it->substitute("value\"", "value=\"");
+          }
+        }
+
+        pep_xml_textfile.store(pepxml_filename);
+
+        vector<ProteinIdentification> protein_ids;
+        vector<PeptideIdentification> peptide_ids;
+
+        PepXMLFile pep_xml;
+        pep_xml.load(String(pepxml_filename.toStdString()), protein_ids, peptide_ids);
+
+        IdXMLFile id_xml;
+        id_xml.store(getStringOption_("search:out"), protein_ids, peptide_ids);
+        /*
         QFileInfo fi_pepXML(file_pepXML);
+        //neu
+        void ReadFile();
+        {
+          ifstream FILE;
+          string LINE;
+          FILE.open(file_pepXML.toAscii().data());
+          while (!FILE.eof())
+              {
+                  getline(FILE, LINE);
+                  if(LINE == )
+                  {
+
+                  }
+              }
+
+              FILE.close();
+        }
+
         if (fi_pepXML.exists())
         {
           QFile abc(file_pepXML);
-          abc.copy(getStringOption_("search:out").toQString()); // fileextension missing
+          abc.copy(getStringOption_("search:out").toQString());
         }
-
+*/
       }
 
       // TODO: delete temporary files

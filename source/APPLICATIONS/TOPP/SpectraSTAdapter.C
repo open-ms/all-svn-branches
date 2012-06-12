@@ -230,10 +230,10 @@ class TOPPSpectraSTAdapter
 
       addEmptyLine_();
       addText_("QUALITY FILTER OPTIONS (Applicable with -cAQ option) ");
-      registerIntOption_("create:qualityLevelRemove","<level>",0,"Specify the stringency of the quality filter.",false);
+      registerIntOption_("create:qualityLevelRemove","<level>",2,"Specify the stringency of the quality filter.",false);
       setMinInt_("create:qualityLevelRemove", 0);
       setMaxInt_("create:qualityLevelRemove", 5);
-      registerIntOption_("create:qualityLevelMark","<level>",0,"-cL specifies the level for removal, -cl specifies the level for marking.\n<level> = 0: No filter.\n<level> = 1: Remove/mark impure spectra.\n<level> = 2: Also remove/mark spectra with a spectrally similar counterpart in the library that is better.\n<level> = 3: Also remove/mark inquorate entries (defined with -cr) that share no peptide sub-sequences with any other entries in the library.\n<level> = 4: Also remove/mark all singleton entries.\n<level> = 5: Also remove/mark all inquorate entries (defined with -cr).",false);
+      registerIntOption_("create:qualityLevelMark","<level>",5,"-cL specifies the level for removal, -cl specifies the level for marking.\n<level> = 0: No filter.\n<level> = 1: Remove/mark impure spectra.\n<level> = 2: Also remove/mark spectra with a spectrally similar counterpart in the library that is better.\n<level> = 3: Also remove/mark inquorate entries (defined with -cr) that share no peptide sub-sequences with any other entries in the library.\n<level> = 4: Also remove/mark all singleton entries.\n<level> = 5: Also remove/mark all inquorate entries (defined with -cr).",false);
       setMinInt_("create:qualityLevelMark", 0);
       setMaxInt_("create:qualityLevelMark", 5);
       registerStringOption_("create:qualityPenalizeSingletons", "<type>", "true", "Apply stricter thresholds to singleton spectra during quality filters.", false, false);
@@ -259,13 +259,14 @@ class TOPPSpectraSTAdapter
 
       registerInputFile_("search:in_mzml", "<file>", "", "MZ Input file ");
       setValidFormats_("search:in_mzml",StringList::create("mzML,mzXML,mzData,mgf,dta,msp"));
-      registerInputFile_("search:in_splib", "<file>", "", "splib Input file ");
+      registerInputFile_("search:in_splib", "<file>", "", "splib Input file. Mandatory unless specified in parameter file. <file> must have .splib extension.");
       // Hannes fragen...
       //setValidFormats_("search:in_splib",StringList::create("splib"));
       registerInputFile_("search:in_spdix", "<file>", "", "spdix input file");
       registerOutputFile_("search:out", "<file>", "", "SpectraST search mode outputfile", true, false);
       registerInputFile_("search:libraryFile", "<file>", "", "Specify library file. Mandatory unless specified in parameter file. <file> must have .splib extension.", true, false);
-      registerInputFile_("search:databaseFile", "<file>", "", "Specify a sequence database file. This will not affect the search in any way, but this information will be included in the output for any downstream data processing. <file> must have .fasta extension. If not set, SpectraST will try to determine this from the preamble of the library.", true, false);
+      // same as search:in_splib
+      registerInputFile_("search:databaseFile", "<file>", "", "Specify a sequence database file. This will not affect the search in any way, but this information will be included in the output for any downstream data processing. <file> must have .fasta extension. If not set, SpectraST will try to determine this from the preamble of the library.", false, false);
       registerStringOption_("search:indexCacheAll", "<type>", "false", "Cache all entries in RAM. Requires a lot of memory (the library will usually be loaded almost in its entirety), but speeds up search for unsorted queries.", false, false);
 
       addEmptyLine_();
@@ -282,7 +283,7 @@ class TOPPSpectraSTAdapter
       setValidStrings_("create:writeMgfFiles", bool_strings);
       setValidStrings_("create:addMzXMLFileToDatasetName", bool_strings);
       setValidStrings_("create:setDeamidatedNXST", bool_strings);
-      setValidStrings_("create:setDeamidatedNXST", bool_strings);
+      // nachschauen setValidStrings_("create:setDeamidatedNXST", bool_strings);
       setValidStrings_("create:removeDissimilarReplicates", bool_strings);
       setValidStrings_("create:qualityPenalizeSingletons", bool_strings);
       setValidStrings_("create:qualityImmuneMultipleEngines", bool_strings);
@@ -354,6 +355,9 @@ class TOPPSpectraSTAdapter
 
       if (getStringOption_("mode") == "search")
       {
+        //-------------------------------------------------------------
+        //copy files to separate tmp directory
+        //-------------------------------------------------------------
         QString mzml_file = getStringOption_("search:in_mzml").toQString();
         QFileInfo fi_mzml(mzml_file);
         if (fi_mzml.exists())
@@ -377,8 +381,33 @@ class TOPPSpectraSTAdapter
           QFile abc(spdix_file);
           abc.copy(tempdir + fi_spidx.fileName());
         }
+
+        QString database_file = getStringOption_("search:databaseFile").toQString();
+        QFileInfo fi_database(database_file);
+        if (fi_database.exists())
+        {
+          QFile abc(database_file);
+          abc.copy(tempdir + fi_database.fileName());
+        }
+
+        //-------------------------------------------------------------
+        // parsing parameters
+        //-------------------------------------------------------------
+
         qparam << "-sL" + tempdir + fi_splib.fileName();
+        qparam << "-sD" + tempdir + fi_database.fileName();
+        if (DataValue(getStringOption_("search:indexCacheAll")).toBool())
+        {
+          qparam << "-sR";
+        }
+        qparam << "-sM" + QString::number(getDoubleOption_("search:indexRetrievalMzTolerance"));
+        if (DataValue(getStringOption_("search:indexRetrievalUseAverage")).toBool())
+        {
+          qparam << "-sA";
+        }
+
         qparam << tempdir + fi_mzml.fileName();
+
       }
 
 
@@ -395,6 +424,9 @@ class TOPPSpectraSTAdapter
           return ILLEGAL_PARAMETERS;
         }
 
+        //-------------------------------------------------------------
+        //copy files to separate tmp directory
+        //-------------------------------------------------------------
         for (StringList::Iterator file_it = file_names.begin();
              file_it != file_names.end(); ++file_it)
         {
@@ -415,7 +447,15 @@ class TOPPSpectraSTAdapter
           }
           QProcess::execute(copy, arguments);
         }
+        //-------------------------------------------------------------
+        // parsing parameters
+        //-------------------------------------------------------------
         qparam << "-cP" + QString::number(getDoubleOption_("create:minimumProbabilityToInclude"));
+        qparam << "-" + getStringOption_("create:combineAction").toQString();
+        qparam << "-" + getStringOption_("create:buildAction").toQString();
+        qparam << "-cr" + QString::number(getIntOption_("create:minimumNumReplicates"));
+        qparam << "-cL" + QString::number(getIntOption_("create:qualityLevelRemove"));
+        qparam << "-cl" + QString::number(getIntOption_("create:qualityLevelMark"));
         qparam << pepXMLbase;
       }
 

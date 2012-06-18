@@ -21,7 +21,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
 // --------------------------------------------------------------------------
-// $Maintainer:  $
+// $Maintainer:  Dimitri Schachmann $
 // $Authors: Dimitri Schachmann $
 // --------------------------------------------------------------------------
 
@@ -341,9 +341,9 @@ protected :
       // parsing parameters
       //-------------------------------------------------------------
 
-      String inputfile_name = getStringOption_("in");
+      String inputfile_name = File::absolutePath(getStringOption_("in"));
       String outputfile_name = getStringOption_("out");
-      String db_name = String(getStringOption_("database"));
+      String db_name = File::absolutePath(String(getStringOption_("database")));
       FileHandler fh;
       vector<ProteinIdentification> protein_identifications;
       vector<PeptideIdentification> peptide_identifications;
@@ -359,7 +359,7 @@ protected :
       if(!dynamic_mod_list.empty())
         parameters << "-DynamicMods" << dynamic_mod_list.concatenate(" ");
 
-      parameters << "-ProteinDatabase"  << db_name;
+      parameters << "-ProteinDatabase"  << File::absolutePath(db_name);
 
       String precursor_mass_tolerance_unit = getStringOption_("precursor_mass_tolerance_unit") == "Da" ? " m/z" : " ppm";
       if(getFlag_("precursor_mass_tolerance_avg"))

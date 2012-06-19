@@ -224,7 +224,7 @@ namespace OpenMS
           << " start_scan=\"" << scan_index << "\""
           << " end_scan=\"" << scan_index << "\""
 					<< " precursor_neutral_mass=\"" << precisionWrapper(precursor_neutral_mass) << "\""
-          << " assumed_charge=\"" << h.getCharge() << "\" index=\"" << count << "\"";
+          << " assumed_charge=\"" << h.getCharge() << "\" index=\"" << scan_index << "\"";
 
         DataValue dv = it->getMetaValue("RT");
         if (dv!=DataValue::EMPTY)

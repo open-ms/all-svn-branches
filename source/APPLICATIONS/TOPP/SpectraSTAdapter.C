@@ -1,4 +1,4 @@
-// -*- mode: C++; tab-width: 2; -*-
+ // -*- mode: C++; tab-width: 2; -*-
 // vi: set ts=2:
 //
 // --------------------------------------------------------------------------
@@ -299,18 +299,9 @@ class TOPPSpectraSTAdapter
       // path to the log file
       String logfile(getStringOption_("log"));
       String spectrast_executable(getStringOption_("spectrast_executable"));
-      //String unique_name = QDir::toNativeSeparators(String(File::getTempDirectory() + "/" + File::getUniqueName()).toQString()); // body for the tmp files
-
-      //-------------------------------------------------------------
-      // parsing parameters
-      //-------------------------------------------------------------
 
       // get version of SpectraST
       QProcess qp;
-
-
-
-      //qp.setWorkingDirectory("/tmp/test");
       qp.setProcessChannelMode(QProcess::MergedChannels);
       qp.start(spectrast_executable.toQString());
       bool success = qp.waitForFinished(-1);
@@ -342,10 +333,9 @@ class TOPPSpectraSTAdapter
         }
       }
 
-      //QStringList pepXMLFiles;
+
       QStringList qparam;
       QStringList arguments;
-
       QString filename;
       QString pepXMLfile;
       QString pepXMLbase;
@@ -425,12 +415,11 @@ class TOPPSpectraSTAdapter
         }
 
         //-------------------------------------------------------------
-        //copy files to separate tmp directory
+        // copy files to separate tmp directory
         //-------------------------------------------------------------
         for (StringList::Iterator file_it = file_names.begin();
              file_it != file_names.end(); ++file_it)
         {
-          //cout <<  *file_it << '\n';
           QString copy = "cp";
           arguments << file_it->toQString();
           arguments << tempdir.toAscii().data();
@@ -459,7 +448,7 @@ class TOPPSpectraSTAdapter
         qparam << pepXMLbase;
       }
 
-      cout << (String)qparam.join("\t") << endl;
+      //cout << (String)qparam.join("\t") << endl;
 
 
       Int status = QProcess::execute(spectrast_executable.toQString(), qparam);
@@ -532,6 +521,7 @@ class TOPPSpectraSTAdapter
         StringList tmp_files = QDir(tempdir).entryList(QDir::Files | QDir::Hidden);
         QString pepxml_filename = QDir(tempdir).absoluteFilePath((*(tmp_files.searchSuffix("pep.xml"))).toQString());
 
+        // fix for wrong formatted spectrast .pepXML files
         TextFile pep_xml_textfile(String(pepxml_filename.toStdString()));
 
         for (StringList::Iterator it = pep_xml_textfile.begin(); it != pep_xml_textfile.end(); ++it)
@@ -544,6 +534,8 @@ class TOPPSpectraSTAdapter
 
         pep_xml_textfile.store(pepxml_filename);
 
+
+        // store search-mode output file
         vector<ProteinIdentification> protein_ids;
         vector<PeptideIdentification> peptide_ids;
 
@@ -552,32 +544,7 @@ class TOPPSpectraSTAdapter
 
         IdXMLFile id_xml;
         id_xml.store(getStringOption_("search:out"), protein_ids, peptide_ids);
-        /*
-        QFileInfo fi_pepXML(file_pepXML);
-        //neu
-        void ReadFile();
-        {
-          ifstream FILE;
-          string LINE;
-          FILE.open(file_pepXML.toAscii().data());
-          while (!FILE.eof())
-              {
-                  getline(FILE, LINE);
-                  if(LINE == )
-                  {
 
-                  }
-              }
-
-              FILE.close();
-        }
-
-        if (fi_pepXML.exists())
-        {
-          QFile abc(file_pepXML);
-          abc.copy(getStringOption_("search:out").toQString());
-        }
-*/
       }
 
       // TODO: delete temporary files

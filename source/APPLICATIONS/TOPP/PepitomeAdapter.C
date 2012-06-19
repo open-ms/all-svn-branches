@@ -80,7 +80,7 @@ an error message, try another Pepitome version
 This adapter supports relative database filenames, which (when not found in the current working directory) is looked up in
 the directories specified by 'OpenMS.ini:id_db_dir' (see @subpage TOPP_advanced).
 
-This wrapper has been tested successfully with Pepitome, version 4.x.
+This wrapper has been tested successfully with Pepitome, version 1.x.
 
 <B>The command line parameters of this tool are:</B>
 @verbinclude TOPP_PepitomeAdapter.cli
@@ -139,7 +139,7 @@ protected:
 
  bool getVersion_(const String& version, PepitomeVersion& Pepitome_version_i) const
  {
-   // we expect two components separated by '.'
+   // we expect two components separated by '('
    IntList nums = IntList::create(StringList::create(version,'.'));
    if (nums.size() != 2)
    {
@@ -305,10 +305,13 @@ protected:
    else
    {
      vector<String> version_split;
-     output.split("Pepitome (version ", version_split);
+     output.split("Pepitome ", version_split);
      String tmp = version_split[1];
-     tmp.split(",", version_split);
+     tmp.split(" (", version_split);
      String version_line = version_split[0];
+
+     cout << version_line << endl;
+
 
      if (getVersion_(version_line, Pepitome_version_i))
      {

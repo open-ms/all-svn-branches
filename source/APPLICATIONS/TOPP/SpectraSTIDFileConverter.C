@@ -104,9 +104,14 @@ protected:
             DoubleReal rt_low = id_rt - 0.00001;
             DoubleReal rt_high = id_rt + 0.00001;
 
-            if ( ms2_rt > rt_low && ms2_rt < rt_high)
-            {
-              cit->setMetaValue("RT_index", i);
+            if ( ms2_rt > rt_low && ms2_rt < rt_high) // identification rt/mz matches spectrum (precursor) rt/mz
+            {  
+              string tmp = exp[i].getNativeID();
+              String tmp2 = tmp.substr( 41, 41 );
+              int erg = tmp2.toInt() - 1;
+              cit->setMetaValue("RT_index", erg);
+              //cit->setMetaValue("RT_index", i); old
+
             }
           }
         }

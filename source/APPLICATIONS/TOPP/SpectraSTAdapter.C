@@ -263,7 +263,8 @@ class TOPPSpectraSTAdapter
       // Hannes fragen...
       //setValidFormats_("search:in_splib",StringList::create("splib"));
       registerInputFile_("search:in_spdix", "<file>", "", "spdix input file");
-      registerOutputFile_("search:out", "<file>", "", "SpectraST search mode outputfile", true, false);
+      registerOutputFile_("search:out_idxml", "<file>", "", "SpectraST search mode outputfile", true, false);
+      registerOutputFile_("search:out_pepxml", "<file>", "", "SpectraST search mode outputfile", true, false);
       registerInputFile_("search:libraryFile", "<file>", "", "Specify library file. Mandatory unless specified in parameter file. <file> must have .splib extension.", true, false);
       // same as search:in_splib
       registerInputFile_("search:databaseFile", "<file>", "", "Specify a sequence database file. This will not affect the search in any way, but this information will be included in the output for any downstream data processing. <file> must have .fasta extension. If not set, SpectraST will try to determine this from the preamble of the library.", false, false);
@@ -445,10 +446,32 @@ class TOPPSpectraSTAdapter
         qparam << "-cr" + QString::number(getIntOption_("create:minimumNumReplicates"));
         qparam << "-cL" + QString::number(getIntOption_("create:qualityLevelRemove"));
         qparam << "-cl" + QString::number(getIntOption_("create:qualityLevelMark"));
+        if (DataValue(getStringOption_("create:annotatePeaks")).toBool())
+        {
+          qparam << "-c_ANN";
+        }
+        if (DataValue(getStringOption_("create:binaryFormat")).toBool())
+        {
+          qparam << "-c_BIN";
+        }
+        if (DataValue(getStringOption_("create:writeDtaFiles")).toBool())
+        {
+          qparam << "-c_DTA";
+        }
+        if (DataValue(getStringOption_("create:writeMgfFiles")).toBool())
+        {
+          qparam << "-c_MGF";
+        }
+        qparam << "-c_PLT";
+        if (DataValue(getStringOption_("create:setDeamidatedNXST")).toBool())
+        {
+          qparam << "-cg";
+        }
+
         qparam << pepXMLbase;
       }
 
-      //cout << (String)qparam.join("\t") << endl;
+      cout << (String)qparam.join("\t") << endl;
 
 
       Int status = QProcess::execute(spectrast_executable.toQString(), qparam);
@@ -461,11 +484,11 @@ class TOPPSpectraSTAdapter
         if (getIntOption_("debug") <= 1)
         {
           writeDebug_("Removing temporary files", 10);
-//          QString command = "rm -Rf " +  tempdir;
+          //QString command = "rm -Rf " +  tempdir;
 
-//          if (system(command.toAscii().data()))
+          //if (system(command.toAscii().data()))
 //            // todo show warning.
-//            writeDebug_("Cannot remove temporary files", 10);
+            //writeDebug_("Cannot remove temporary files", 10);
         }
         return EXTERNAL_PROGRAM_ERROR;
       }
@@ -489,7 +512,7 @@ class TOPPSpectraSTAdapter
         }
 
         QString file_sptxt;
-        file_sptxt = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
+        file_sptxt = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".sptxt";
         QFileInfo fi_sptxt(file_sptxt);
         if (fi_sptxt.exists())
         {
@@ -507,7 +530,7 @@ class TOPPSpectraSTAdapter
         }
 
         QString file_spidx;
-        file_spidx = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
+        file_spidx = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".spidx";
         QFileInfo fi_spidx(file_spidx);
         if (fi_spidx.exists())
         {
@@ -541,22 +564,23 @@ class TOPPSpectraSTAdapter
 
         PepXMLFile pep_xml;
         pep_xml.load(String(pepxml_filename.toStdString()), protein_ids, peptide_ids);
+        pep_xml.store(getStringOption_("search:out_pepxml"), protein_ids, peptide_ids);
 
         IdXMLFile id_xml;
-        id_xml.store(getStringOption_("search:out"), protein_ids, peptide_ids);
+        id_xml.store(getStringOption_("search:out_idxml"), protein_ids, peptide_ids);
 
       }
 
       // TODO: delete temporary files
-//      if (getIntOption_("debug") <= 1)
-//      {
-//        writeDebug_("Removing temporary files", 10);
-//        QString command = "rm -Rf " +  tempdir;
+      if (getIntOption_("debug") <= 1)
+      {
+        writeDebug_("Removing temporary files", 10);
+        //QString command = "rm -Rf " +  tempdir;
 
-//        if (system(command.toAscii().data()))
-//          // todo show warning.
-//          writeDebug_("Cannot remove temporary files", 10);
-//      }
+        //if (system(command.toAscii().data()))
+          // todo show warning.
+          //writeDebug_("Cannot remove temporary files", 10);
+      }
 
       return EXECUTION_OK;
     }

@@ -73,14 +73,14 @@ using namespace std;
 </CENTER>
 
 @em Pepitome must be installed on the system to be able to use the @em PepitomeAdapter. See the Pepitome site
-for further information on how to download and install @em Pepitome on your system. You might find that the latest Pepitome version
-does not run on your system (to test this, run @em Pepitome from command line). If you encounter
+for further information on how to download and install @em Pepitome on your system. You might find that the lacurrdir Pepitome version
+does not run on your system (to currdir this, run @em Pepitome from command line). If you encounter
 an error message, try another Pepitome version
 
 This adapter supports relative database filenames, which (when not found in the current working directory) is looked up in
 the directories specified by 'OpenMS.ini:id_db_dir' (see @subpage TOPP_advanced).
 
-This wrapper has been tested successfully with Pepitome, version 1.x.
+This wrapper has been currdired successfully with Pepitome, version 1.x.
 
 <B>The command line parameters of this tool are:</B>
 @verbinclude TOPP_PepitomeAdapter.cli
@@ -251,17 +251,36 @@ protected:
    }
 
    //-------------------------------------------------------------
-   // convert pepXML output to idXML
+   // store output
    //-------------------------------------------------------------
-//   String outputfile_name;
-//   outputfile_name = getStringOption_("out");
+
    vector<ProteinIdentification> protein_ids;
    vector<PeptideIdentification> peptide_ids;
-   PepXMLFile pep_xml;
    IdXMLFile id_xml;
+
+   QDir currdir;
+   QString tmp;
+   QString file_pepxml;
+
+   tmp = currdir.currentPath() + "/";
+   file_pepxml = tmp + File::removeExtension(File::basename(getStringOption_("mzML"))).toQString() + ".pepXML";
+
+   QFileInfo fi_pepxml(file_pepxml);
+   if (fi_pepxml.exists())
+   {
+     PepXMLFile pep_xml;
+     pep_xml.load(file_pepxml.toStdString(), protein_ids, peptide_ids);
+     id_xml.store(getStringOption_("out"), protein_ids, peptide_ids);
+   }
+   else
+   {
+     writeLog_("Error: Pepitome problem! " + file_pepxml + "not found!");
+   }
+
+
+
    //pep_xml.load(String(pepxml_filename.toStdString()), protein_ids, peptide_ids);
-   cout << getStringOption_("out") << endl;
-   id_xml.store(getStringOption_("out"), protein_ids, peptide_ids);
+   //id_xml.store(getStringOption_("out"), protein_ids, peptide_ids);
 
 
 

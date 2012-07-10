@@ -150,8 +150,6 @@ protected:
    return true;
  }
 
- //int convert
-
  void registerOptionsAndFlags_()
  {
    registerInputFile_("Pepitome_executable", "<executable>", "", "The 'Pepitome' executable of the Pepitome installation", true, false, StringList::create("skipexists"));
@@ -160,6 +158,13 @@ protected:
    registerInputFile_("mzML", "<file>", "", "MS/MS data filepath in a supported file format", true, false);
    registerOutputFile_("out", "<file>", "", "idXML Output File", true, false);
 
+   registerIntOption_("NumChargeStates", "<num>", 3, "Controls the number of charge states that Pepitome will handle during all stages of the program. It is especially important during determination of charge state (see DuplicateSpectra for more information).",false, false);
+   registerDoubleOption_("TicCutoffPercentage", "<num>", 0.98, "In order to maximize the effectiveness of the scoring algorithms, an important step in preprocessing the experimental spectra is filtering out noise peaks. Noise peaks are filtered out by sorting the original peaks in descending order of intensity, and then picking peaks from that list until the cumulative ion current of the picked peaks divided by the total ion current (TIC) is greater than or equal to this parameter. Lower percentages mean that less of the spectrums total intensity will be allowed to pass through preprocessing. See the section on Advanced Usage for tips on how to use this parameter optimally.", false, false);
+   registerDoubleOption_("LibTicCutoffPercentage", "<num>", 0.98, "This parameter is same as the TicCutoffPercentage applied to the library spectra.", false, false);
+   registerIntOption_("MaxPeakCount", "<num>", 150, "Filters out all peaks except the MaxPeakCount most intense peaks from the experimental spectra.", false, false);
+   registerIntOption_("LibMaxPeakCount", "<num>", 100, "Filters out all peaks except the LibMaxPeakCount most intense peaks from the library spectrum.", false, false);
+   registerDoubleOption_("AvgPrecursorMzTolerance", "<num>", 1.5, "A library spectrum is only compared to an experimental spectrum if the candidates mass is within this tolerance of the experimental spectrum’s precursor mass. The units (“daltons” or “ppm”) must be provided as well as the magnitude. The actual tolerance used for the search is calculated by multiplying the tolerance by the charge state, so this parameter should be set to the tolerance that is desired for +1 spectra. At the default value, the precursor mass tolerances are 1.5, 3, and 4.5 Da for the first three charge states, respectively.", false, false);
+//setValidStrings_();
 
 
 
@@ -201,8 +206,9 @@ protected:
      tmp.split(" (", version_split);
      String version_line = version_split[0];
 
-     //cout << version_line << endl;
-
+     cout << "huhu" << endl;
+     cout << version_line << endl;
+     cout << "huhu" << endl;
 
      if (getVersion_(version_line, Pepitome_version_i))
      {
@@ -214,6 +220,10 @@ protected:
        writeLog_("Warning: Pepitome version output (" + output + ") not formatted as expected!");
      }
    }
+
+   //-------------------------------------------------------------
+   // parsing parameters
+   //-------------------------------------------------------------
 
    QStringList qparam;
 
@@ -235,7 +245,7 @@ protected:
      {
        // TODO: if no debuggin is enabled, delete temporary Pepitome param file
        writeDebug_("Removing temporary files", 10);
-       // QFile(bla.toQString()).remove();
+       //QFile(file_pepxml).remove();
      }
      return EXTERNAL_PROGRAM_ERROR;
    }
@@ -243,12 +253,6 @@ protected:
    // read Pepitome output
    writeDebug_("Reading output of Pepitome", 10);
 
-   // TODO: delete temporary files
-   if (getIntOption_("debug") <= 1)
-   {
-     writeDebug_("Removing temporary files", 10);
-     // QFile(bla.toQString()).remove();
-   }
 
    //-------------------------------------------------------------
    // store output
@@ -259,18 +263,17 @@ protected:
    IdXMLFile id_xml;
 
    QDir currdir;
-   QString tmp;
    QString file_pepxml;
 
-   tmp = currdir.currentPath() + "/";
-   file_pepxml = tmp + File::removeExtension(File::basename(getStringOption_("mzML"))).toQString() + ".pepXML";
+   file_pepxml = currdir.currentPath() + "/" + File::removeExtension(File::basename(getStringOption_("mzML"))).toQString() + ".pepXML";
 
    QFileInfo fi_pepxml(file_pepxml);
    if (fi_pepxml.exists())
    {
      PepXMLFile pep_xml;
      pep_xml.load(file_pepxml.toStdString(), protein_ids, peptide_ids);
-     id_xml.store(getStringOption_("out"), protein_ids, peptide_ids);
+     pep_xml.store(getStringOption_("out"), protein_ids, peptide_ids);
+     //id_xml.store(getStringOption_("out"), protein_ids, peptide_ids);
    }
    else
    {
@@ -278,10 +281,12 @@ protected:
    }
 
 
-
-   //pep_xml.load(String(pepxml_filename.toStdString()), protein_ids, peptide_ids);
-   //id_xml.store(getStringOption_("out"), protein_ids, peptide_ids);
-
+   // delete temporary files
+   if (getIntOption_("debug") <= 1)
+   {
+     writeDebug_("Removing temporary files", 10);
+     //QFile(file_pepxml).remove();
+   }
 
 
    return EXECUTION_OK;

@@ -89,21 +89,21 @@ class TOPPmzMLtoIdXMLExporter
 
       QString folder = getStringOption_("folder").toQString();
 
-
-
       //-------------------------------------------------------------
       // reading input
       //-------------------------------------------------------------
 
       TextFile input;
 
-      vector<ProteinIdentification> protein_ids;
       vector<PeptideIdentification> peptide_ids;
       MSExperiment<> exp;
-      MSExperiment<> out_exp;
+      MSExperiment<> out_exp = exp;
+      out_exp.clear(false);
 
       input.load(getStringOption_("in"));
       QString old_filepath = "";
+
+
       for (TextFile::Iterator it = input.begin()  ; it != input.end(); it++)
       {
         QString line = it->toQString();
@@ -112,10 +112,11 @@ class TOPPmzMLtoIdXMLExporter
         String seq_string = data.at(0).toAscii().data();
         AASequence seq = seq_string.substitute("m", "M(Oxidation)");
         QString filename = data.at(1);
-        Peak2D::CoordinateType rt = data.at(2).toDouble();
+        Peak2D::CoordinateType rt = data.at(2).toDouble() * 60.0;
         Peak2D::CoordinateType mz = data.at(3).toDouble();
         //neu
         int charge = data.at(4).toInt();
+
 
         QString filepath;
         filename = File::removeExtension(File::basename(filename)).toQString() + ".mzML";
@@ -132,6 +133,8 @@ class TOPPmzMLtoIdXMLExporter
           tmp.setMZ(mz);
           pcs.push_back(tmp);
 
+          //cout <<  rt << endl;
+
           MzMLFile mzml_file;
           if (filepath != old_filepath)
           {
@@ -146,39 +149,40 @@ class TOPPmzMLtoIdXMLExporter
               if (!exp[i].getPrecursors().empty())
               {
                 DoubleReal pc_mz = exp[i].getPrecursors()[0].getMZ();
-                DoubleReal ms2_rt = exp[i].getRT(); // use rt of MS2 as we can't be sure there are MS1 in the experiment
+
+
+                DoubleReal ms2_rt_s = exp[i].getRT(); // use rt of MS2 as we can't be sure there are MS1 in the experiment
                 //bool found = false;
                 for (Size j = 0; j != pcs.size(); ++j)
                 {
                   DoubleReal mz_low = pcs[j].getMZ() - 0.1;
-                  DoubleReal rt_low = pcs[j].getRT() - 0.1;
+                  DoubleReal rt_low = pcs[j].getRT() - 1.0; // our data is not very accurate on RT
                   DoubleReal mz_high = pcs[j].getMZ() + 0.1;
-                  DoubleReal rt_high = pcs[j].getRT() + 0.1;
+                  DoubleReal rt_high = pcs[j].getRT() + 1.0;
 
-                   cout << mz_low << " " << mz_high << " " << rt_low << " " << rt_high << endl;
-                   cout << mz << " " << rt << endl;
+                  //cout << mz << " " << rt << endl;
 
-                  if ( ms2_rt > rt_low && ms2_rt < rt_high && pc_mz > mz_low && pc_mz < mz_high)
+                  if ( ms2_rt_s > rt_low && ms2_rt_s < rt_high && pc_mz > mz_low && pc_mz < mz_high)
                   {
-                    cout << "DADADADADADADADADA" << endl;
+                    cout << pc_mz << " " << ms2_rt_s << endl;
+                    cout << mz_low << " " << mz_high << " " << rt_low << " " << rt_high << endl;
+
                     out_exp.push_back(exp[i]);  // add spectrum
+
+                    DoubleReal score = 0;
+                    uInt rank = 0;
 
                     // TODO: eintrag zu peptide identifications hinzufügen
                     PeptideIdentification pep_id;
-                    pep_id.setMetaValue("MZ", mz);
-                    pep_id.setMetaValue("RT", rt);
-                    pep_id.setScoreType("dot product"); // evtl anderen score eintragen
+                    pep_id.setMetaValue("MZ", pc_mz);
+                    pep_id.setMetaValue("RT", ms2_rt_s);
+                    pep_id.setScoreType("Mascot"); // evtl anderen score eintragen
                     pep_id.setHigherScoreBetter(true);
-                    PeptideHit pep_hit(0, 0, charge, seq);
+                    PeptideHit pep_hit(score, rank, charge, seq); // ?? score 0 und boublereal score unint rank
                     //if at least one peptide hit is found
+
                     pep_id.insertHit(pep_hit);
                     peptide_ids.push_back(pep_id);
-
-
-                    vector < ProteinIdentification > protein_ids(1);
-                    protein_ids[0].setDateTime(DateTime::now());
-                    protein_ids[0].setSearchEngine("MySearchEngine");
-                    protein_ids[0].setSearchEngineVersion(VersionInfo::getVersion());
 
                     break;
                   }
@@ -187,24 +191,29 @@ class TOPPmzMLtoIdXMLExporter
             }
           }
         }
-
         else
         {
           writeLog_("ERROR: file " + filepath.toStdString() + " does not exist");
         }
+        //todo: out_exp in mzML speichern
+        MzMLFile mzmlfile;
+        mzmlfile.store(getStringOption_("out_mzml"), out_exp);
+
+        vector < ProteinIdentification > protein_ids(1);
+        protein_ids[0].setDateTime(DateTime::now());
+        protein_ids[0].setSearchEngine("MySearchEngine");
+        protein_ids[0].setSearchEngineVersion(VersionInfo::getVersion());
 
 
-
-
+        IdXMLFile idxml_file;
+        idxml_file.store(getStringOption_("out"), protein_ids, peptide_ids);
       }
 
-      //todo: out_exp in mzML speichern
-      MzMLFile mzml_file;
-      mzml_file.store(getStringOption_("out_mzml"), out_exp);
 
 
-      IdXMLFile idxml_file;
-      idxml_file.store(getStringOption_("out"), protein_ids, peptide_ids);
+
+
+
 
       return EXECUTION_OK;
     }

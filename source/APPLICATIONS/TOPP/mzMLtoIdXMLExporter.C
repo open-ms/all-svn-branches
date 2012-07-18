@@ -60,163 +60,200 @@ using namespace std;
 // We do not want this class to show up in the docu -> cond
 /// @cond TOPPCLASSES
 
-class TOPPmzMLtoIdXMLExporter
-  : public TOPPBase
+
+struct IDInfo
 {
-  public:
-    TOPPmzMLtoIdXMLExporter()
-      : TOPPBase("mzMLtoIdXMLExporter","Imports data to an idXML File.")
+  DoubleReal mz;
+  DoubleReal rt; // seconds
+  Int charge;
+  AASequence seq;
+  Size scan_index; // scan index in out_exp
+
+};
+
+class TOPPmzMLtoIdXMLExporter
+    : public TOPPBase
+{
+public:
+  TOPPmzMLtoIdXMLExporter()
+    : TOPPBase("mzMLtoIdXMLExporter","Imports data to an idXML File.")
+  {
+
+  }
+
+protected:
+  void registerOptionsAndFlags_()
+  {
+    registerInputFile_("in", "<file>", "", "Textfile with mzML Filenames");
+    registerStringOption_("folder", "<folder>", "", "Folder of the mzml files", true, false);
+    registerOutputFile_("out_idxml", "<file>", "", "idXML output file", true, false);
+    registerOutputFile_("out_mzml", "<file>", "", "mzML output file", true, false);
+    registerOutputFile_("out_mzml_test", "<file>", "", "mzML test file", true, false);
+    registerOutputFile_("out_mzml_train", "<file>", "", "mzML train file", true, false);
+    registerIntOption_("threshold", "<num>", 50, "Percentage of peptide hits used for Test Data", false, false);
+
+  }
+
+  ExitCodes main_(int , const char**)
+  {
+
+    //-------------------------------------------------------------
+    // parameter handling
+    //-------------------------------------------------------------
+
+    QString folder = getStringOption_("folder").toQString();
+    float threshold = getIntOption_("threshold");
+
+
+    //-------------------------------------------------------------
+    // reading input
+    //-------------------------------------------------------------
+
+    TextFile input;
+
+    vector<PeptideIdentification> peptide_ids;
+    MSExperiment<> exp;
+    MSExperiment<> out_exp = exp;
+    out_exp.clear(false);
+    MSExperiment<> out_test = exp;
+    out_test.clear(false);
+    MSExperiment<> out_train = exp;
+    out_train.clear(false);
+
+    input.load(getStringOption_("in"));
+    QString old_filepath = "";
+
+
+    //map<String, vector<IDInfo> > map_seq2id;
+    map<String, vector<IDInfo> > map_seq2id;
+
+    for (TextFile::Iterator it = input.begin()  ; it != input.end(); it++)
     {
+      QString line = it->toQString();
+      QStringList data = line.split("\t");
+      //neu
 
-    }
+      IDInfo id;
+      String seq_string = data.at(0).toAscii().data();
+      id.seq = seq_string.substitute("m", "M(Oxidation)");
+      QString filename = data.at(1);
+      id.rt = data.at(2).toDouble() * 60.0;   //to get rt in seconds
+      id.mz = data.at(3).toDouble();
+      id.charge = data.at(4).toInt();
 
-  protected:
-    void registerOptionsAndFlags_()
-    {
-      registerInputFile_("in", "<file>", "", "Textfile with mzML Filenames");
-      registerStringOption_("folder", "<folder>", "", "Folder of the mzml files", true, false);
-      registerOutputFile_("out", "<file>", "", "bla", true, false);
-      registerOutputFile_("out_mzml", "<file>", "", "blablubb", true, false);
+      QString filepath;
+      filename = File::removeExtension(File::basename(filename)).toQString() + ".mzML";
+      filepath = folder + filename;
 
-    }
-
-    ExitCodes main_(int , const char**)
-    {
-
-      //-------------------------------------------------------------
-      // parameter handling
-      //-------------------------------------------------------------
-
-      QString folder = getStringOption_("folder").toQString();
-
-      //-------------------------------------------------------------
-      // reading input
-      //-------------------------------------------------------------
-
-      TextFile input;
-
-      vector<PeptideIdentification> peptide_ids;
-      MSExperiment<> exp;
-      MSExperiment<> out_exp = exp;
-      out_exp.clear(false);
-
-      input.load(getStringOption_("in"));
-      QString old_filepath = "";
-
-
-      for (TextFile::Iterator it = input.begin()  ; it != input.end(); it++)
+      QFileInfo fi_filepath(filepath);
+      if (fi_filepath.exists())
       {
-        QString line = it->toQString();
-        QStringList data = line.split("\t");
-        //neu
-        String seq_string = data.at(0).toAscii().data();
-        AASequence seq = seq_string.substitute("m", "M(Oxidation)");
-        QString filename = data.at(1);
-        Peak2D::CoordinateType rt = data.at(2).toDouble() * 60.0;
-        Peak2D::CoordinateType mz = data.at(3).toDouble();
-        //neu
-        int charge = data.at(4).toInt();
+        // rt und mz position des MS2 wird hier in einem vector von Peak2D übergeben
+        vector<Peak2D> pcs;
+        Peak2D tmp;
+        tmp.setRT(id.rt);
+        tmp.setMZ(id.mz);
+        pcs.push_back(tmp);
 
-
-        QString filepath;
-        filename = File::removeExtension(File::basename(filename)).toQString() + ".mzML";
-        filepath = folder + filename;
-
-        QFileInfo fi_filepath(filepath);
-        if (fi_filepath.exists())
+        MzMLFile mzml_file;
+        if (filepath != old_filepath)
         {
-          // rt und mz position des MS2 wird hier in einem vector von Peak2D übergeben
-
-          vector<Peak2D> pcs;  // TODO: den musst du mit den daten rt und mz aus der Textdatei füllen
-          Peak2D tmp;
-          tmp.setRT(rt);
-          tmp.setMZ(mz);
-          pcs.push_back(tmp);
-
-          //cout <<  rt << endl;
-
-          MzMLFile mzml_file;
-          if (filepath != old_filepath)
+          mzml_file.load(filepath, exp);
+          old_filepath = filepath;
+        }
+        // aus Experiment exp wird extrahiert und in out_exp gespeichert
+        for ( Size i = 0; i != exp.size(); ++i )
+        {
+          if ( exp[i].getMSLevel() == 2 )
           {
-            mzml_file.load(filepath, exp);
-            old_filepath = filepath;
-          }
-          // aus Experiment exp wird extrahiert und in out_exp gespeichert
-          for ( Size i = 0; i != exp.size(); ++i )
-          {
-            if ( exp[i].getMSLevel() == 2 )
+            if (!exp[i].getPrecursors().empty())
             {
-              if (!exp[i].getPrecursors().empty())
+              DoubleReal pc_mz = exp[i].getPrecursors()[0].getMZ();
+
+
+              DoubleReal ms2_rt_s = exp[i].getRT(); // use rt of MS2 as we can't be sure there are MS1 in the experiment
+              //bool found = false;
+              for (Size j = 0; j != pcs.size(); ++j)
               {
-                DoubleReal pc_mz = exp[i].getPrecursors()[0].getMZ();
+                DoubleReal mz_low = pcs[j].getMZ() - 0.1;
+                DoubleReal rt_low = pcs[j].getRT() - 1.0; // our data is not very accurate on RT
+                DoubleReal mz_high = pcs[j].getMZ() + 0.1;
+                DoubleReal rt_high = pcs[j].getRT() + 1.0;
 
-
-                DoubleReal ms2_rt_s = exp[i].getRT(); // use rt of MS2 as we can't be sure there are MS1 in the experiment
-                //bool found = false;
-                for (Size j = 0; j != pcs.size(); ++j)
+                if ( ms2_rt_s > rt_low && ms2_rt_s < rt_high && pc_mz > mz_low && pc_mz < mz_high) // todo: compare precursor charge to id charge
                 {
-                  DoubleReal mz_low = pcs[j].getMZ() - 0.1;
-                  DoubleReal rt_low = pcs[j].getRT() - 1.0; // our data is not very accurate on RT
-                  DoubleReal mz_high = pcs[j].getMZ() + 0.1;
-                  DoubleReal rt_high = pcs[j].getRT() + 1.0;
+                  //                    cout << pc_mz << " " << ms2_rt_s << endl;
+                  //                    cout << mz_low << " " << mz_high << " " << rt_low << " " << rt_high << endl;
 
-                  //cout << mz << " " << rt << endl;
+                  out_exp.push_back(exp[i]);  // add spectrum
+                  id.scan_index = out_exp.size() - 1;
+                  DoubleReal score = 0;
+                  uInt rank = 0;
 
-                  if ( ms2_rt_s > rt_low && ms2_rt_s < rt_high && pc_mz > mz_low && pc_mz < mz_high)
-                  {
-                    cout << pc_mz << " " << ms2_rt_s << endl;
-                    cout << mz_low << " " << mz_high << " " << rt_low << " " << rt_high << endl;
-
-                    out_exp.push_back(exp[i]);  // add spectrum
-
-                    DoubleReal score = 0;
-                    uInt rank = 0;
-
-                    // TODO: eintrag zu peptide identifications hinzufügen
-                    PeptideIdentification pep_id;
-                    pep_id.setMetaValue("MZ", pc_mz);
-                    pep_id.setMetaValue("RT", ms2_rt_s);
-                    pep_id.setScoreType("Mascot"); // evtl anderen score eintragen
-                    pep_id.setHigherScoreBetter(true);
-                    PeptideHit pep_hit(score, rank, charge, seq); // ?? score 0 und boublereal score unint rank
-                    //if at least one peptide hit is found
-
-                    pep_id.insertHit(pep_hit);
-                    peptide_ids.push_back(pep_id);
-
-                    break;
-                  }
+                  // TODO: eintrag zu peptide identifications hinzufügen
+                  PeptideIdentification pep_id;
+                  pep_id.setMetaValue("MZ", pc_mz);
+                  pep_id.setMetaValue("RT", ms2_rt_s);
+                  pep_id.setScoreType("Mascot"); // evtl anderen score eintragen
+                  pep_id.setHigherScoreBetter(true);
+                  PeptideHit pep_hit(score, rank, id.charge, id.seq); // ?? score 0 und doublereal score unint rank
+                  //if at least one peptide hit is found
+                  pep_id.insertHit(pep_hit);
+                  peptide_ids.push_back(pep_id);
+                  map_seq2id[id.seq.toString()].push_back(id);
+                  break;
                 }
               }
             }
           }
         }
-        else
-        {
-          writeLog_("ERROR: file " + filepath.toStdString() + " does not exist");
-        }
-        //todo: out_exp in mzML speichern
-        MzMLFile mzmlfile;
-        mzmlfile.store(getStringOption_("out_mzml"), out_exp);
-
-        vector < ProteinIdentification > protein_ids(1);
-        protein_ids[0].setDateTime(DateTime::now());
-        protein_ids[0].setSearchEngine("MySearchEngine");
-        protein_ids[0].setSearchEngineVersion(VersionInfo::getVersion());
-
-
-        IdXMLFile idxml_file;
-        idxml_file.store(getStringOption_("out"), protein_ids, peptide_ids);
       }
-
-
-
-
-
-
-
-      return EXECUTION_OK;
+      else
+      {
+        writeLog_("ERROR: file " + filepath.toStdString() + " does not exist");
+      }
     }
+
+
+    for (map<String, vector<IDInfo> >::const_iterator it = map_seq2id.begin(); it != map_seq2id.end(); ++it)
+    {
+
+      UInt n_test = (UInt)((DoubleReal)threshold / 100.0 * (DoubleReal)it->second.size());
+
+//      cout << "seq: " << it->first << " entries: " << it->second.size() << " n_test:" << n_test << endl;
+      for (Size j = 0; j != n_test; ++j)
+      {
+//        cout << "train set: " << it->second[j].scan_index << " " << out_exp.size() << endl;
+        out_train.push_back(out_exp[it->second[j].scan_index]);
+      }
+      for (Size j = n_test; j < it->second.size(); ++j)
+      {
+//        cout << "test set: " << it->second[j].scan_index << " " << out_exp.size() << endl;
+        out_test.push_back(out_exp[it->second[j].scan_index]);
+      }
+    }
+
+    cout << "size (total/train/test) sets: " << out_exp.size() << " " << out_train.size() << " " << out_test.size() << endl;
+
+    MzMLFile mzmlfile_test;
+    mzmlfile_test.store(getStringOption_("out_mzml_test"), out_test);
+
+    MzMLFile mzmlfile_train;
+    mzmlfile_train.store(getStringOption_("out_mzml_train"), out_train);
+
+    MzMLFile mzmlfile;
+    mzmlfile.store(getStringOption_("out_mzml"), out_exp);
+
+    vector < ProteinIdentification > protein_ids(1);
+    protein_ids[0].setDateTime(DateTime::now());
+    protein_ids[0].setSearchEngine("MySearchEngine");
+    protein_ids[0].setSearchEngineVersion(VersionInfo::getVersion());
+
+    IdXMLFile idxml_file;
+    idxml_file.store(getStringOption_("out_idxml"), protein_ids, peptide_ids);
+
+    return EXECUTION_OK;
+  }
 };
 
 /// @endcond

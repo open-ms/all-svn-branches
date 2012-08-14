@@ -76,6 +76,10 @@ namespace OpenMS
       KROENIK,            ///< kroenik file (.kroenik)
       FASTA,              ///< FASTA file (.fasta)
       EDTA,               ///< enhanced comma separated files (RT, m/z, Intensity, [meta])
+      SPTXT,              ///< SpectraST spectral library (.sptxt)
+      SPLIB,              ///< SpectraST spectral library (.splib)
+      PEPIDX,             ///< SpectraST spectral library (.pepidx)
+      SPIDX,              ///< SpectraST spectral library (.spidx)
 			SIZE_OF_TYPE    		///< No file type. Simply stores the number of types
 		};
 	};

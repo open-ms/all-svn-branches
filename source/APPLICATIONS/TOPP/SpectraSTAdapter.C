@@ -93,7 +93,44 @@ using namespace std;
 // We do not want this class to show up in the docu:
 /// @cond TOPPCLASSES
 
+class TempDir : public QDir
+{
+public:
 
+  TempDir() : QDir(QString::number(getpid())) {
+    QDir().mkdir(QDir().absoluteFilePath(dirName()));
+  }
+
+  virtual ~TempDir() {
+    deleteDirectory(*this);
+  }
+
+
+private:
+
+  static void deleteDirectory(const QDir&  dir)
+  {
+
+    if ( dir.exists() ) {
+      QFileInfoList entries = dir.entryInfoList( QDir::NoDotAndDotDot | QDir::Dirs | QDir::Files );
+      foreach ( QFileInfo entryInfo, entries ) {
+        QString path = entryInfo.absoluteFilePath();
+        if ( entryInfo.isDir() ) {
+          deleteDirectory( QDir(path)  );
+        }
+        else {
+          QFile file( path );
+          file.remove();
+        }
+      }
+    }
+    dir.rmdir( dir.absolutePath() );
+  }
+
+};
+
+// We do not want this class to show up in the docu:
+/// @cond TOPPCLASSES
 class TOPPSpectraSTAdapter
   : public TOPPBase
 {
@@ -105,6 +142,40 @@ class TOPPSpectraSTAdapter
     }
     return false;
   }*/
+
+private:
+
+  bool deleteDirectory(const QString &dirName)
+  {
+
+    QDir dir(dirName);
+    bool ok = dir.exists();
+    if ( ok ) {
+      QFileInfoList entries = dir.entryInfoList( QDir::NoDotAndDotDot |
+                                                 QDir::Dirs | QDir::Files );
+      foreach ( QFileInfo entryInfo, entries ) {
+        QString path = entryInfo.absoluteFilePath();
+        if ( entryInfo.isDir() ) {
+          if ( ! deleteDirectory( path  ) ) {
+            ok = false;
+            break;
+          }
+        }
+        else {
+          QFile file( path );
+          if ( ! file.remove() ) {
+            ok = false;
+            break;
+          }
+        }
+      }
+    }
+
+    if ( ok && ! dir.rmdir( dir.absolutePath() ) )
+      ok = false;
+
+    return ok;
+  }
 
   public:
     TOPPSpectraSTAdapter()
@@ -170,11 +241,14 @@ class TOPPSpectraSTAdapter
       registerTOPPSubsection_("create","Create Mode");
       addText_("General options");
 
-      registerInputFileList_("create:in","<files>",StringList(),"two or more input files separated by blanks", false);
+      registerInputFileList_("create:in","<files>",StringList(), "two or more input files separated by blanks", false);
       setValidFormats_("create:in",StringList::create("mzML,mzXML,mzData,mgf,dta,msp,pepXML"));
       registerOutputFile_("create:out_splib","<file>", "", "splib Output files", false);
+      setValidFormats_("create:out_splib", StringList::create("splib"));
       registerOutputFile_("create:out_pepidx","<file>", "", "pepidx Output files", false);
       registerOutputFile_("create:out_sptxt","<file>", "", "sptxt Output files", false);
+      setValidFormats_("create:out_sptxt", StringList::create("sptxt"));
+
       registerOutputFile_("create:out_spidx","<file>", "", "spidx Output files", false);
 
 
@@ -295,8 +369,13 @@ class TOPPSpectraSTAdapter
 
     }
 
+
+
     ExitCodes main_(int , const char**)
     {
+
+      TempDir tempdir;
+
       // path to the log file
       String logfile(getStringOption_("log"));
       String spectrast_executable(getStringOption_("spectrast_executable"));
@@ -340,9 +419,8 @@ class TOPPSpectraSTAdapter
       QString filename;
       QString pepXMLfile;
       QString pepXMLbase;
-      int qp_pid = getpid();
-      QString tempdir = "/tmp/" + QString::number(qp_pid) + "/";
-      QDir().mkdir(tempdir);
+
+
 
       if (getStringOption_("mode") == "search")
       {
@@ -354,7 +432,7 @@ class TOPPSpectraSTAdapter
         if (fi_mzml.exists())
         {
           QFile abc(mzml_file);
-          abc.copy(tempdir + fi_mzml.fileName());
+          abc.copy(tempdir.filePath(fi_mzml.fileName()));
         }
 
         QString splib_file = getStringOption_("search:in_splib").toQString();
@@ -362,7 +440,7 @@ class TOPPSpectraSTAdapter
         if (fi_splib.exists())
         {
           QFile abc(splib_file);
-          abc.copy(tempdir + fi_splib.fileName());
+          abc.copy(tempdir.filePath(fi_splib.fileName()));
         }
 
         QString spdix_file = getStringOption_("search:in_spdix").toQString();
@@ -370,7 +448,7 @@ class TOPPSpectraSTAdapter
         if (fi_spidx.exists())
         {
           QFile abc(spdix_file);
-          abc.copy(tempdir + fi_spidx.fileName());
+          abc.copy(tempdir.filePath(fi_spidx.fileName()));
         }
 
         QString database_file = getStringOption_("search:databaseFile").toQString();
@@ -378,15 +456,15 @@ class TOPPSpectraSTAdapter
         if (fi_database.exists())
         {
           QFile abc(database_file);
-          abc.copy(tempdir + fi_database.fileName());
+          abc.copy(tempdir.filePath(fi_database.fileName()));
         }
 
         //-------------------------------------------------------------
         // parsing parameters
         //-------------------------------------------------------------
 
-        qparam << "-sL" + tempdir + fi_splib.fileName();
-        qparam << "-sD" + tempdir + fi_database.fileName();
+        qparam << "-sL" + tempdir.filePath(fi_splib.fileName());
+        qparam << "-sD" + tempdir.filePath(fi_database.fileName());
         if (DataValue(getStringOption_("search:indexCacheAll")).toBool())
         {
           qparam << "-sR";
@@ -397,7 +475,7 @@ class TOPPSpectraSTAdapter
           qparam << "-sA";
         }
 
-        qparam << tempdir + fi_mzml.fileName();
+        qparam << tempdir.filePath(fi_mzml.fileName());
 
       }
 
@@ -423,7 +501,7 @@ class TOPPSpectraSTAdapter
         {
           QString copy = "cp";
           arguments << file_it->toQString();
-          arguments << tempdir.toAscii().data();
+          arguments << tempdir.absolutePath().toAscii().data();
           arguments.join("\t");
 
           filename = file_it->toQString();
@@ -433,7 +511,7 @@ class TOPPSpectraSTAdapter
             pepXMLfile = file_it->toQString();
             QFileInfo fi(pepXMLfile);
             pepXMLbase = fi.fileName();
-            pepXMLbase = tempdir + pepXMLbase; // + ".pepXML";
+            pepXMLbase = tempdir.filePath(pepXMLbase); // + ".pepXML";
           }
           QProcess::execute(copy, arguments);
         }
@@ -481,15 +559,7 @@ class TOPPSpectraSTAdapter
         writeLog_("Error: SpectraST problem! (Details can be seen in the logfile: \"" + logfile + "\")");
         writeLog_("Note: This message can also be triggered if you run out of space in your tmp directory");
 
-        if (getIntOption_("debug") <= 1)
-        {
-          writeDebug_("Removing temporary files", 10);
-          //QString command = "rm -Rf " +  tempdir;
 
-          //if (system(command.toAscii().data()))
-//            // todo show warning.
-            //writeDebug_("Cannot remove temporary files", 10);
-        }
         return EXTERNAL_PROGRAM_ERROR;
       }
 
@@ -500,10 +570,10 @@ class TOPPSpectraSTAdapter
       //copy spectrast create-mode output files
       if (getStringOption_("mode") == "create")
       {
-        StringList tmp_files = QDir(tempdir).entryList(QDir::Files | QDir::Hidden);
+        StringList tmp_files = tempdir.entryList(QDir::Files | QDir::Hidden);
 
         QString file_pepidx;
-        file_pepidx = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx";
+        file_pepidx = tempdir.filePath(File::removeExtension(File::basename(tmp_files[0])).toQString() + ".pepidx");
         QFileInfo fi_pepidx(file_pepidx);
         if (fi_pepidx.exists())
         {
@@ -512,7 +582,7 @@ class TOPPSpectraSTAdapter
         }
 
         QString file_sptxt;
-        file_sptxt = tempdir + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".sptxt";
+        file_sptxt = tempdir.filePath(File::removeExtension(File::basename(tmp_files[0])).toQString() + ".sptxt");
         QFileInfo fi_sptxt(file_sptxt);
         if (fi_sptxt.exists())
         {
@@ -521,7 +591,7 @@ class TOPPSpectraSTAdapter
         }
 
         QString file_splib;
-        file_splib = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib";
+        file_splib = tempdir.filePath(File::removeExtension(File::basename(tmp_files[0])).toQString() + ".splib");
         QFileInfo fi_splib(file_splib);
         if (fi_splib.exists())
         {
@@ -530,7 +600,7 @@ class TOPPSpectraSTAdapter
         }
 
         QString file_spidx;
-        file_spidx = tempdir  + File::removeExtension(File::basename(tmp_files[0])).toQString() + ".spidx";
+        file_spidx = tempdir.filePath(File::removeExtension(File::basename(tmp_files[0])).toQString() + ".spidx");
         QFileInfo fi_spidx(file_spidx);
         if (fi_spidx.exists())
         {
@@ -541,8 +611,8 @@ class TOPPSpectraSTAdapter
       }
       else if (getStringOption_("mode") == "search")
       {
-        StringList tmp_files = QDir(tempdir).entryList(QDir::Files | QDir::Hidden);
-        QString pepxml_filename = QDir(tempdir).absoluteFilePath((*(tmp_files.searchSuffix("pep.xml"))).toQString());
+        StringList tmp_files = tempdir.entryList(QDir::Files | QDir::Hidden);
+        QString pepxml_filename = tempdir.absoluteFilePath((*(tmp_files.searchSuffix("pep.xml"))).toQString());
 
         // fix for wrong formatted spectrast .pepXML files
         TextFile pep_xml_textfile(String(pepxml_filename.toStdString()));
@@ -571,16 +641,6 @@ class TOPPSpectraSTAdapter
 
       }
 
-      // TODO: delete temporary files
-      if (getIntOption_("debug") <= 1)
-      {
-        writeDebug_("Removing temporary files", 10);
-        //QString command = "rm -Rf " +  tempdir;
-
-        //if (system(command.toAscii().data()))
-          // todo show warning.
-          //writeDebug_("Cannot remove temporary files", 10);
-      }
 
       return EXECUTION_OK;
     }

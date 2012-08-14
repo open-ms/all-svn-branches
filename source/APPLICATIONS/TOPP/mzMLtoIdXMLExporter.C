@@ -122,9 +122,6 @@ protected:
 
     input.load(getStringOption_("in"));
     QString old_filepath = "";
-
-
-    //map<String, vector<IDInfo> > map_seq2id;
     map<String, vector<IDInfo> > map_seq2id;
 
     for (TextFile::Iterator it = input.begin()  ; it != input.end(); it++)
@@ -135,7 +132,8 @@ protected:
 
       IDInfo id;
       String seq_string = data.at(0).toAscii().data();
-      id.seq = seq_string.substitute("m", "M(Oxidation)");
+      id.seq = seq_string.substitute("q", "P(Pro->pyro-Glu)").substitute("s", "S(Phospho)").substitute("t", "T(Phospho)")
+          .substitute("y", "Y(Phospho)").substitute("e", "E").substitute("d", "D").substitute("k", "K").substitute("i", "I").substitute("m", "M(Oxidation)"); //substitute("k","K(Carbamyl)").
       QString filename = data.at(1);
       id.rt = data.at(2).toDouble() * 60.0;   //to get rt in seconds
       id.mz = data.at(3).toDouble();

@@ -37,7 +37,7 @@ using namespace std;
 namespace OpenMS
 {
 
-  const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "IdXML", "ConsensusXML", "mgf", "ini", "toppas", "TrafoXML", "mzML", "ms2", "pepXML", "protXML", "mzid", "GelML", "TraML", "MSP", "OMSSAXML", "MASCOTXML", "PNG", "fid", "tsv", "pepList", "hardkloer","kroenik", "fasta", "edta"};
+const std::string FileHandler::NamesOfTypes[] = {"Unknown", "DTA", "DTA2D", "mzData", "mzXML", "FeatureXML", "IdXML", "ConsensusXML", "mgf", "ini", "toppas", "TrafoXML", "mzML", "ms2", "pepXML", "protXML", "mzid", "GelML", "TraML", "MSP", "OMSSAXML", "MASCOTXML", "PNG", "fid", "tsv", "pepList", "hardkloer","kroenik", "fasta", "edta", "sptxt", "splib", "pepidx", "spidx"};
 
 	FileTypes::Type FileHandler::getType(const String& filename)
 	{
@@ -120,7 +120,7 @@ namespace OpenMS
 	{
 		String first_line;
 		String two_five;
-		String all_simple;
+    String all_simple;
 
 		// only the first five lines will be set for compressed files
 		// so far, compression is only supported for XML files
@@ -169,7 +169,7 @@ namespace OpenMS
 		else // uncompressed
 		{
     	//load first 5 lines
-    	TextFile file(filename, true, 5);
+      TextFile file(filename, true, 5);
     	file.resize(5); // in case not enough lines are in the file
     	two_five = file[1] + ' ' + file[2] + ' ' + file[3] + ' ' + file[4];
     	two_five.substitute('\t',' ');
@@ -357,6 +357,11 @@ namespace OpenMS
 		{
 			return FileTypes::KROENIK;
 		}
+    // SPTXT file format
+    if (first_line.hasSubstring("sptxt"))
+    {
+      return FileTypes::SPTXT;
+    }
 
     // EDTA file
     // hard to tell... so we don't even try...

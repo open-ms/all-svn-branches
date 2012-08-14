@@ -141,7 +141,7 @@ protected:
  {
    // we expect two components separated by '('
    IntList nums = IntList::create(StringList::create(version,'.'));
-   if (nums.size() != 2)
+   if (nums.size() < 2)
    {
      return false;
    }
@@ -191,6 +191,7 @@ protected:
    qp.start(Pepitome_executable.toQString());
    bool success = qp.waitForFinished(-1);
    String output(QString(qp.readAllStandardOutput()));
+
    String Pepitome_version;
    PepitomeVersion Pepitome_version_i;
    if (!success/* || qp.exitStatus() != 0 || qp.exitCode() != 0*/)
@@ -206,10 +207,6 @@ protected:
      tmp.split(" (", version_split);
      String version_line = version_split[0];
 
-     cout << "huhu" << endl;
-     cout << version_line << endl;
-     cout << "huhu" << endl;
-
      if (getVersion_(version_line, Pepitome_version_i))
      {
        Pepitome_version = version_line;
@@ -217,7 +214,7 @@ protected:
      }
      else
      {
-       writeLog_("Warning: Pepitome version output (" + output + ") not formatted as expected!");
+       writeLog_("Warning: Pepitome version output (" + version_line + ") not formatted as expected!");
      }
    }
 
@@ -234,6 +231,7 @@ protected:
    //TODO: parse remaining command line options
 
    cout << (String)qparam.join("\t") << endl;
+
 
    Int status = QProcess::execute(Pepitome_executable.toQString(), qparam);
    if (status != 0)
